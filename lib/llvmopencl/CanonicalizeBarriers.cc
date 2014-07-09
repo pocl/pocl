@@ -29,6 +29,8 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include <iostream>
 
+#include "VariableUniformityAnalysis.h"
+
 #if (defined LLVM_3_1 or defined LLVM_3_2)
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
@@ -55,6 +57,7 @@ char CanonicalizeBarriers::ID = 0;
 void
 CanonicalizeBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 {
+  AU.addPreserved<VariableUniformityAnalysis>();    
 }
 
 bool

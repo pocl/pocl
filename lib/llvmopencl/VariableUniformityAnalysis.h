@@ -41,6 +41,12 @@ namespace pocl {
    * b) 'varying', i.e., somehow dependent on the work-item id 
    * 
    * For safety, 'variable' is assumed, unless certain of a).
+   *
+   * VAU is an "accumulating" pass; it gathers uniformity information of 
+   * instructions in a way that it should invalidate even though the CFG
+   * is modified. Thus, in case the semantics of the original information
+   * does not change, it is safe for passes to set this pass preserved even
+   * though new instructions are added or the CFG manipulated.
    */
   class VariableUniformityAnalysis : public llvm::FunctionPass {
   public:

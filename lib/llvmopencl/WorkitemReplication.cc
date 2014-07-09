@@ -54,6 +54,7 @@
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "WorkitemHandlerChooser.h"
 #include "DebugHelpers.h"
+#include "VariableUniformityAnalysis.h"
 
 #include <iostream>
 #include <map>
@@ -99,6 +100,7 @@ WorkitemReplication::getAnalysisUsage(AnalysisUsage &AU) const
   AU.addRequired<DataLayoutPass>();
 #endif
   AU.addRequired<pocl::WorkitemHandlerChooser>();
+  AU.addPreserved<pocl::VariableUniformityAnalysis>();
 }
 
 bool

@@ -102,7 +102,7 @@ WorkitemLoops::getAnalysisUsage(AnalysisUsage &AU) const
 #endif
 
   AU.addRequired<VariableUniformityAnalysis>();
-  AU.addPreserved<VariableUniformityAnalysis>();
+  AU.addPreserved<pocl::VariableUniformityAnalysis>();
 
   AU.addRequired<pocl::WorkitemHandlerChooser>();
   AU.addPreserved<pocl::WorkitemHandlerChooser>();
