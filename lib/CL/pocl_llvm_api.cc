@@ -120,6 +120,11 @@ static llvm::sys::Mutex kernelCompilerLock;
 
 //#define DEBUG_POCL_LLVM_API
 
+#if defined(DEBUG_POCL_LLVM_API) && defined(NDEBUG)
+#undef NDEBUG
+#include <cassert>
+#endif
+
 // Write a kernel compilation intermediate result
 // to file on disk, if user has requested with environment
 // variable
@@ -533,7 +538,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
       input = ParseIRFile(binary_filename, Err, *GlobalContext());
       if (program->llvm_irs != NULL)
         program->llvm_irs[device_i] = input;
-      
+      assert(&input->getContext() == GlobalContext());
       if (!input) 
         {
           // TODO:
@@ -569,7 +574,6 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
       kernel_function->getArgumentList();
   kernel->num_args = arglist.size();
 
-  // This is from GenerateHeader.cc
   SmallVector<GlobalVariable *, 8> locals;
   for (llvm::Module::global_iterator i = input->global_begin(),
          e = input->global_end();
@@ -584,7 +588,6 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 
   kernel->num_locals = locals.size();
 
-  /* This is from clCreateKernel.c */
   /* Temporary store for the arguments that are set with clSetKernelArg. */
   kernel->dyn_arguments =
     (struct pocl_argument *) malloc ((kernel->num_args + kernel->num_locals) *
