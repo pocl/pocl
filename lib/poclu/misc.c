@@ -97,8 +97,11 @@ poclu_read_file(char *filename)
   fseek( file, 0, SEEK_END);
   size = ftell(file);
   src = (char*)malloc(size+1);
-  if (src == NULL)
-    return NULL;
+  if (src == NULL) 
+    {
+      fclose(file);
+      return NULL;
+    }
 
   fseek(file, 0, SEEK_SET);
   fread(src, size, 1, file);
