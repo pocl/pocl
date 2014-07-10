@@ -362,6 +362,122 @@ int pocl_llvm_build_program(cl_program program,
   return CL_SUCCESS;
 }
 
+int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
+                                      llvm::Module *input,
+                                      cl_kernel kernel)
+{
+
+  // find the right kernel in "opencl.kernels" metadata
+  llvm::NamedMDNode *opencl_kernels = input->getNamedMetadata("opencl.kernels");
+  llvm::MDNode *kernel_metadata = NULL;
+  for (unsigned i = 0, e = opencl_kernels->getNumOperands(); i != e; ++i) {
+    llvm::MDNode *kernel_iter = opencl_kernels->getOperand(i);
+
+    llvm::Function *kernel_prototype = llvm::cast<llvm::Function>(kernel_iter->getOperand(0));
+    std::string name = kernel_prototype->getName().str();
+    if (name == kernel_name) {
+      kernel_metadata = kernel_iter;
+      break;
+    }
+  }
+
+  kernel->has_arg_metadata = 0;
+  int bitcode_is_spir = input->getTargetTriple().find("spir") == 0;
+
+  assert(kernel_metadata && "kernel NOT found in opencl.kernels metadata");
+
+  unsigned e = kernel_metadata->getNumOperands();
+  for (unsigned i = 1; i != e; ++i) {
+    llvm::MDNode *meta_node = llvm::cast<MDNode>(kernel_metadata->getOperand(i));
+
+    // argument num
+    unsigned arg_num = meta_node->getNumOperands();
+    assert(((arg_num-1) == kernel->num_args) && "Kernel argument count doesn't fit metadata arg count");
+
+    llvm::MDString *meta_name_node = llvm::cast<MDString>(meta_node->getOperand(0));
+    std::string meta_name = meta_name_node->getString().str();
+
+    for (unsigned j = 1; j != arg_num; ++j) {
+      llvm::Value *meta_arg_value = meta_node->getOperand(j);
+      struct pocl_argument_info* current_arg = &kernel->arg_info[j-1];
+
+      if (isa<ConstantInt>(meta_arg_value) && meta_name=="kernel_arg_addr_space") {
+        kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER;
+        //std::cout << "is ConstantInt /  kernel_arg_addr_space" << std::endl;
+        llvm::ConstantInt *m = llvm::cast<ConstantInt>(meta_arg_value);
+        uint64_t val = m->getLimitedValue(UINT_MAX);
+        //std::cout << "with value: " << val << std::endl;
+        if(bitcode_is_spir) {
+          switch(val) {
+            case 0:
+              current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
+            case 1:
+              current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_GLOBAL; break;
+            case 3:
+              current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_LOCAL; break;
+            case 2:
+              current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_CONSTANT; break;
+          }
+        } else {
+          switch(val) {
+            case POCL_ADDRESS_SPACE_PRIVATE:
+              current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
+            case POCL_ADDRESS_SPACE_GLOBAL:
+              current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_GLOBAL; break;
+            case POCL_ADDRESS_SPACE_LOCAL:
+              current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_LOCAL; break;
+            case POCL_ADDRESS_SPACE_CONSTANT:
+              current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_CONSTANT; break;
+          }
+        }
+      }
+      else if (isa<MDString>(meta_arg_value)) {
+        //std::cout << "is MDString" << std::endl;
+        llvm::MDString *m = llvm::cast<MDString>(meta_arg_value);
+        std::string val = m->getString().str();
+        //std::cout << "with value: " << val << std::endl;
+        if (meta_name == "kernel_arg_access_qual") {
+          kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_ACCESS_QUALIFIER;
+          if (val == "read_write")
+            current_arg->access_qualifier = CL_KERNEL_ARG_ACCESS_READ_WRITE;
+          else if (val == "read_only")
+            current_arg->access_qualifier = CL_KERNEL_ARG_ACCESS_READ_ONLY;
+          else if (val == "write_only")
+            current_arg->access_qualifier = CL_KERNEL_ARG_ACCESS_WRITE_ONLY;
+          else if (val == "none")
+            current_arg->access_qualifier = CL_KERNEL_ARG_ACCESS_NONE;
+          else
+            std::cout << "UNKNOWN kernel_arg_access_qual value: " << val << std::endl;
+        } else if (meta_name == "kernel_arg_type") {
+          kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_TYPE_NAME;
+          current_arg->type_name = new char[val.size() + 1];
+          std::strcpy(current_arg->type_name, val.c_str());
+        } else if (meta_name == "kernel_arg_base_type") {
+          // may or may not be present even in SPIR
+        } else if (meta_name == "kernel_arg_type_qual") {
+          kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_TYPE_QUALIFIER;
+          current_arg->type_qualifier = 0;
+          if (val.find("const") != std::string::npos)
+            current_arg->type_qualifier |= CL_KERNEL_ARG_TYPE_CONST;
+          if (val.find("restrict") != std::string::npos)
+            current_arg->type_qualifier |= CL_KERNEL_ARG_TYPE_RESTRICT;
+          if (val.find("volatile") != std::string::npos)
+            current_arg->type_qualifier |= CL_KERNEL_ARG_TYPE_VOLATILE;
+        } else if (meta_name == "kernel_arg_name") {
+          kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_NAME;
+          current_arg->name = new char[val.size() + 1];
+          std::strcpy(current_arg->name, val.c_str());
+        } else
+          std::cout << "UNKNOWN opencl metadata name: " << meta_name << std::endl;
+      }
+      else
+        std::cout << "UNKNOWN opencl metadata class for: " << meta_name << std::endl;
+
+    }
+  }
+  return 0;
+}
+
 int pocl_llvm_get_kernel_metadata(cl_program program, 
                                   cl_kernel kernel,
                                   int device_i,     
@@ -493,6 +609,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
     }
 
   kernel->arg_info = (struct pocl_argument_info*) calloc(kernel->num_args, sizeof(struct pocl_argument_info));
+  memset(kernel->arg_info, 0, sizeof(struct pocl_argument_info)*kernel->num_args);
 
   i = 0;
   for( llvm::Function::const_arg_iterator ii = arglist.begin(), 
@@ -602,7 +719,9 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   fprintf( kobj_c,"     _%s_workgroup_fast\n",   kernel_name  );
   fprintf( kobj_c," };\n");
   fclose(kobj_c);
-  
+
+  pocl_llvm_get_kernel_arg_metadata(kernel_name, input, kernel);
+
   return 0;
   
 }

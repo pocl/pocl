@@ -72,6 +72,7 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clEnqueueNativeKernel.c	\
                    clCreateKernelsInProgram.c		\
                    clGetKernelInfo.c		\
+                   clGetKernelArgInfo.c		\
                    clGetPlatformIDs.c		\
                    clGetPlatformInfo.c		\
                    clGetDeviceIDs.c		\
