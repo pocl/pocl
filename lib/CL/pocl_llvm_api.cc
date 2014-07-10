@@ -107,15 +107,23 @@ using llvm::sys::fs::F_Binary;
  * Freeing/deleting the context crashes LLVM 3.2 (at program exit), as a
  * work-around, allocate this from heap.
  */
-static LLVMContext *globalContext=NULL;
+static LLVMContext *globalContext = NULL;
+LLVMContext *GlobalContext() {
+  if (globalContext == NULL) globalContext = new LLVMContext();
+  return globalContext;
+}
 
 /* The LLVM API interface functions are not at the moment not thread safe,
    ensure only one thread is using this layer at the time with a mutex. */
-//static pocl_lock_t kernel_compiler_lock = POCL_LOCK_INITIALIZER;
 
 static llvm::sys::Mutex kernelCompilerLock;
 
 //#define DEBUG_POCL_LLVM_API
+
+#if defined(DEBUG_POCL_LLVM_API) && defined(NDEBUG)
+#undef NDEBUG
+#include <cassert>
+#endif
 
 // Write a kernel compilation intermediate result
 // to file on disk, if user has requested with environment
@@ -139,9 +147,9 @@ write_temporary_file( const llvm::Module *mod,
 // we need to dump the file to disk first for the debugger
 // to find it.
 static inline int
-load_source( FrontendOptions &fe,
-             const char* temp_dir,
-             cl_program program )
+load_source(FrontendOptions &fe,
+            const char* temp_dir,
+            cl_program program)
 {
   std::string kernel_file(temp_dir);
   kernel_file += POCL_PROGRAM_CL_FILENAME;
@@ -165,10 +173,6 @@ int pocl_llvm_build_program(cl_program program,
 
 { 
   llvm::MutexGuard lockHolder(kernelCompilerLock);
-
-  /* TODO: This should be in a initialization function somewhere. */
-  if (globalContext==NULL)
-		globalContext = new LLVMContext();
 
   // Use CompilerInvocation::CreateFromArgs to initialize
   // CompilerInvocation. This way we can reuse the Clang's
@@ -341,7 +345,7 @@ int pocl_llvm_build_program(cl_program program,
 
   bool success = true;
   clang::CodeGenAction *action = NULL;
-  action = new clang::EmitLLVMOnlyAction(globalContext);
+  action = new clang::EmitLLVMOnlyAction(GlobalContext());
   success |= CI.ExecuteAction(*action);
   // FIXME: memleak, see FIXME below
   if (!success) return CL_BUILD_PROGRAM_FAILURE;
@@ -499,12 +503,6 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   assert(program->devices[device_i]->llvm_target_triplet && 
          "Device has no target triple set"); 
 
-  /* TODO: This should be in a initialization function somewhere. */
-  if (globalContext==NULL)
-		globalContext = new LLVMContext();
-
-  LLVMContext *context = NULL;
-
   if (program->llvm_irs != NULL &&
       program->llvm_irs[device_i] != NULL)
     {
@@ -512,7 +510,6 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 #ifdef DEBUG_POCL_LLVM_API
       printf("### use a saved llvm::Module\n");
 #endif
-      context = globalContext;
     }
 
   snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
@@ -524,8 +521,6 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 
   if (input == NULL)
     {
-      // Reuse the held llvm::Module object, if available. No
-      // need to write the program to disk first.
       (void) snprintf(binary_filename, POCL_FILENAME_LENGTH,
                        "%s/kernel.bc",
                        tmpdir);
@@ -540,8 +535,10 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
         return CL_OUT_OF_HOST_MEMORY;
       fclose(binary_file); 
 
-      context = globalContext;
-      input = ParseIRFile(binary_filename, Err, *context);
+      input = ParseIRFile(binary_filename, Err, *GlobalContext());
+      if (program->llvm_irs != NULL)
+        program->llvm_irs[device_i] = input;
+      assert(&input->getContext() == GlobalContext());
       if (!input) 
         {
           // TODO:
@@ -565,11 +562,11 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   }
 
   DataLayout *TD = 0;
-  #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
   const std::string &ModuleDataLayout = input->getDataLayout();
-  #else
+#else
   const std::string &ModuleDataLayout = input->getDataLayout()->getStringRepresentation();
-  #endif
+#endif
   if (!ModuleDataLayout.empty())
     TD = new DataLayout(ModuleDataLayout);
 
@@ -577,7 +574,6 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
       kernel_function->getArgumentList();
   kernel->num_args = arglist.size();
 
-  // This is from GenerateHeader.cc
   SmallVector<GlobalVariable *, 8> locals;
   for (llvm::Module::global_iterator i = input->global_begin(),
          e = input->global_end();
@@ -592,7 +588,6 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 
   kernel->num_locals = locals.size();
 
-  /* This is from clCreateKernel.c */
   /* Temporary store for the arguments that are set with clSetKernelArg. */
   kernel->dyn_arguments =
     (struct pocl_argument *) malloc ((kernel->num_args + kernel->num_locals) *
@@ -1130,7 +1125,7 @@ kernel_library
     }
 
   SMDiagnostic Err;
-  llvm::Module *lib = ParseIRFile(kernellib, Err, *globalContext);
+  llvm::Module *lib = ParseIRFile(kernellib, Err, *GlobalContext());
   assert (lib != NULL);
   libs[device] = lib;
 
@@ -1156,8 +1151,6 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
 
   Triple triple(device->llvm_target_triplet);
 
-
-  LLVMContext *Context = globalContext;
   SMDiagnostic Err;
   std::string errmsg;
 
@@ -1166,13 +1159,19 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
   if (kernel->program->llvm_irs != NULL && 
       kernel->program->llvm_irs[device->dev_id] != NULL) 
     {
+#ifdef DEBUG_POCL_LLVM_API        
+      printf("### cloning the preloaded LLVM IR\n");
+#endif
       input = 
         llvm::CloneModule
         ((llvm::Module*)kernel->program->llvm_irs[device->dev_id]);
     }
   else
     {
-      input = ParseIRFile(kernel_filename, Err, *Context);
+#ifdef DEBUG_POCL_LLVM_API        
+      printf("### loading the kernel bitcode from disk\n");
+#endif
+      input = ParseIRFile(kernel_filename, Err, *GlobalContext());
     }
 
   // Later this should be replaced with indexed linking of source code
@@ -1306,7 +1305,7 @@ pocl_llvm_codegen( cl_kernel kernel,
 #endif
     llvm::Triple triple(device->llvm_target_triplet);
     llvm::TargetMachine *target = GetTargetMachine(device);
-    llvm::Module *input = ParseIRFile(infilename, Err, *globalContext);
+    llvm::Module *input = ParseIRFile(infilename, Err, *GlobalContext());
 
     llvm::PassManager PM;
     llvm::TargetLibraryInfo *TLI = new TargetLibraryInfo(triple);
