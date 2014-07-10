@@ -74,6 +74,14 @@ fi
 echo "copying hwloc to sysroot...."
 cp -rf $PREBUILT_HWLOC/* $ANDROID_TOOLCHAIN/sysroot/usr/
 
+PREBUILT_BINUTILS=$PWD/pocl-android-prebuilts/arm/binutils
+if [ ! -e $PREBUILT_BINUTILS/bin/ld ]; then
+    echo "Build and place binutils for android at " $PREBUILT_BINUTILS
+    exit
+fi
+echo "copying ld to "$INSTALL_PREFIX
+cp -rf $PREBUILT_BINUTILS/* $INSTALL_PREFIX/
+
 ln -sf $ANDROID_TOOLCHAIN/sysroot/usr/lib/libc.so $ANDROID_TOOLCHAIN/sysroot/usr/lib/libpthread.so
 ln -sf $ANDROID_TOOLCHAIN/sysroot/usr/include/GLES $ANDROID_TOOLCHAIN/sysroot/usr/include/GL
 rm $ANDROID_TOOLCHAIN/sysroot/usr/lib/libstdc++.*

@@ -56,6 +56,16 @@ remove_directory (const char *path_name)
 }
 
 void
+remove_file(const char *file_path)
+{
+  int str_size = 10 + strlen(file_path) + 1;
+  char *cmd = (char*)malloc(str_size);
+  snprintf (cmd, str_size, "rm -f '%s'", file_path);
+  system (cmd);
+  free (cmd);
+}
+
+void
 make_directory (const char *path_name)
 {
   int str_size = 12 + strlen(path_name) + 1;
@@ -69,7 +79,7 @@ void create_or_update_file(const char* file_name, char* content)
 {
     FILE *fp = fopen(file_name, "w");
     if((fp == NULL) || (content == NULL))
-        return NULL;
+        return;
 
     fprintf(fp, "%s", content);
 
@@ -92,6 +102,7 @@ char* get_file_contents(const char* file_name)
 
     str = (char*) malloc((file_size + 1) * sizeof(char));
     fread(str, sizeof(char), file_size, fp);
+    str[file_size] = '\0';
 
     return str;
 }
@@ -149,12 +160,14 @@ pocl_create_temp_dir(char *source, int source_length)
 
     // Simple hash-function based on source length. SHA is an overkill
     int found_in_cache = 0;
+
+    sprintf(s1, "%s/%d", path_name, source_length);
+
+#ifdef KERNEL_CACHE
     DIR *dp;
     struct dirent *ep;
 
-    sprintf(s1, "%s/%d", path_name, source_length);
     dp = opendir(s1);
-
     if(dp && source)
     {
         while((ep = readdir(dp)) && (!found_in_cache))
@@ -172,6 +185,7 @@ pocl_create_temp_dir(char *source, int source_length)
         }
         closedir(dp);
     }
+#endif
 
     if(!found_in_cache)
     {
@@ -421,28 +435,83 @@ void pocl_command_enqueue(cl_command_queue command_queue,
 
 char* pocl_get_process_name()
 {
-    char tmpStr[32], *processName;
+    char tmpStr[64], cmdline[256], *processName = NULL;
     FILE *statusFile;
+    int len, i, begin;
 
-    sprintf(tmpStr, "/proc/%d/status", getpid());
+    sprintf(tmpStr, "/proc/%d/cmdline", getpid());
     statusFile = fopen(tmpStr, "r");
     if(statusFile == NULL)
         return NULL;
 
-    processName = (char*)malloc(64 * sizeof(char));
-
-    // First line will be like this
-    // Name:    process-name
-    if(fgets(processName, 64, statusFile) != NULL)
+    if(fgets(cmdline, 255, statusFile) != NULL)
     {
-        processName += 5; // Skip "Name:"
-        while((((*processName) == ' ') || ((*processName) == '\t'))
-                    && ((*processName) != '\0'))
-            processName ++;   // Skip empty spaces
-
-        processName[strlen(processName) - 1] = '\0';
+        len = strlen(cmdline);
+        begin = 0;
+        for(i=len-1; i>=0; i--)     // Extract program-name after last '/'
+        {
+            if(cmdline[i] == '/')
+            {
+                begin = i + 1;
+                break;
+            }
+        }
+        processName = strdup(cmdline + begin);
     }
 
     fclose(statusFile);
     return processName;
+}
+
+void check_and_invalidate_cache(cl_program program, int device_i, const char* device_tmpdir)
+{
+    int cache_dirty = 0;
+    char version_file[256], options_file[256], *content;
+
+    // Check for driver version match
+    sprintf(version_file, "%s/pocl_version", device_tmpdir);
+    if(access(version_file, F_OK) == 0)
+    {
+        content = get_file_contents(version_file);
+        if(strcmp(content, program->devices[device_i]->driver_version) != 0) {
+          cache_dirty = 1;
+        }
+
+        if(content)
+          free(content);
+    }
+    else {
+        create_or_update_file(version_file, program->devices[device_i]->driver_version);
+    }
+
+    // Check for build option match
+    sprintf(options_file, "%s/build_options", device_tmpdir);
+    if(access(options_file, F_OK) == 0)
+    {
+        content = get_file_contents(options_file);
+        if(strcmp(content, program->compiler_options) != 0) {
+          cache_dirty = 1;
+        }
+
+        if(content)
+          free(content);
+    }
+    else {
+        create_or_update_file(options_file, program->compiler_options);
+    }
+
+    // If program contains "#include", disable caching
+    // Included headers might get modified, force recompilation in all the cases
+    if(strstr(program->source, "#include")) {
+      cache_dirty = 1;
+    }
+
+    if(cache_dirty)
+    {
+      remove_directory(device_tmpdir);
+      mkdir(device_tmpdir, S_IRWXU);
+
+      create_or_update_file(version_file, program->devices[device_i]->driver_version);
+      create_or_update_file(options_file, program->compiler_options);
+    }
 }

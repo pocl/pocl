@@ -77,6 +77,7 @@
 #include <vector>
 #include <sstream>
 #include <string>
+#include <unistd.h>
 
 // Note - LLVM/Clang uses symbols defined in Khronos' headers in macros, 
 // causing compilation error if they are included before the LLVM headers.
@@ -84,7 +85,11 @@
 #include "pocl_runtime_config.h"
 #include "install-paths.h"
 #include "LLVMUtils.h"
+<<<<<<< HEAD
 #include "linker.h"
+=======
+#include "pocl_util.h"
+>>>>>>> kernel cache improvements
 
 using namespace clang;
 using namespace llvm;
@@ -550,7 +555,10 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 
   snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
             device_tmpdir, kernel_name);
-  mkdir(tmpdir, S_IRWXU);
+
+  if(access (tmpdir, F_OK) != 0) {
+    mkdir(tmpdir, S_IRWXU);
+	}
 
   (void) snprintf(descriptor_filename, POCL_FILENAME_LENGTH,
                     "%s/%s/descriptor.so", device_tmpdir, kernel_name);
@@ -583,6 +591,8 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
           os.flush();
           exit(1);
         }
+
+      remove_file(binary_filename);
     }
 
 
@@ -716,6 +726,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   kernel->reqd_wg_size[1] = reqdy;
   kernel->reqd_wg_size[2] = reqdz;
   
+#ifndef ANDROID
   // Generate the kernel_obj.c file. This should be optional
   // and generated only for the heterogeneous devices which need
   // these definitions to accompany the kernels, for the launcher
@@ -758,9 +769,14 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   fprintf( kobj_c,"     _%s_workgroup_fast\n",   kernel_name  );
   fprintf( kobj_c," };\n");
   fclose(kobj_c);
+<<<<<<< HEAD
 
   pocl_llvm_get_kernel_arg_metadata(kernel_name, input, kernel);
 
+=======
+#endif
+  
+>>>>>>> kernel cache improvements
   return 0;
   
 }

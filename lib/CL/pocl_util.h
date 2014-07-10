@@ -41,6 +41,7 @@ extern "C" {
  */
 char *pocl_create_temp_dir(char *source, int source_length);
 void remove_directory (const char *path_name);
+void remove_file(const char *file_path);
 void make_directory (const char *path_name);
 
 uint32_t byteswap_uint32_t (uint32_t word, char should_swap);
@@ -126,5 +127,7 @@ char* pocl_get_process_name();
 void create_or_update_file(const char* file_name, char* content);
 
 char* get_file_contents(const char* file_name);
+
+void check_and_invalidate_cache(cl_program program, int device_i, const char* device_tmpdir);
 
 #endif
