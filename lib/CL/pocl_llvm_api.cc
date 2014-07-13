@@ -85,11 +85,8 @@
 #include "pocl_runtime_config.h"
 #include "install-paths.h"
 #include "LLVMUtils.h"
-<<<<<<< HEAD
 #include "linker.h"
-=======
 #include "pocl_util.h"
->>>>>>> kernel cache improvements
 
 using namespace clang;
 using namespace llvm;
@@ -769,16 +766,12 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   fprintf( kobj_c,"     _%s_workgroup_fast\n",   kernel_name  );
   fprintf( kobj_c," };\n");
   fclose(kobj_c);
-<<<<<<< HEAD
+
 
   pocl_llvm_get_kernel_arg_metadata(kernel_name, input, kernel);
 
-=======
 #endif
-  
->>>>>>> kernel cache improvements
   return 0;
-  
 }
 
 /* helpers copied from LLVM opt START */
@@ -1126,7 +1119,7 @@ kernel_library
 #ifdef LLVM_3_2 
       else if (triple.getArch() == Triple::cellspu) 
         {
-          kernellib += "cellspu"; 
+          kernellib += "cellspu";
         }
 #endif
       else 

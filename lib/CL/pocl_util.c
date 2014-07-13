@@ -33,6 +33,7 @@
 #include "pocl_util.h"
 #include "pocl_cl.h"
 #include "utlist.h"
+#include "common.h"
 #include "pocl_mem_management.h"
 
 #define TEMP_DIR_PATH_CHARS 512
@@ -107,6 +108,26 @@ char* get_file_contents(const char* file_name)
     return str;
 }
 
+unsigned char* get_binfile_contents(const char* file_name)
+{
+    unsigned char *bin;
+    FILE *fp;
+    struct stat st;
+    int file_size;
+
+    stat(file_name, &st);
+    file_size = (int)st.st_size;
+
+    fp = fopen(file_name, "rb");
+    if(fp == NULL)
+        return NULL;
+
+    bin = (unsigned char*) malloc(file_size * sizeof(unsigned char));
+    fread(bin, file_size, sizeof(unsigned char), fp);
+
+    return bin;
+}
+
 #define POCL_TEMPDIR_ENV "POCL_TEMP_DIR"
 
 #ifdef KERNEL_CACHE
@@ -116,10 +137,9 @@ char* get_file_contents(const char* file_name)
 #endif
 
 char*
-pocl_create_temp_dir(char *source, int source_length)
+pocl_choose_dir()
 {  
     char *path_name, *process_name;
-    char s1[1024], s2[1024];
 
     path_name = (char*)malloc(TEMP_DIR_PATH_CHARS);
     process_name = pocl_get_process_name();
@@ -158,46 +178,114 @@ pocl_create_temp_dir(char *source, int source_length)
 
     // TODO : delete contents if size exceeds some limit
 
-    // Simple hash-function based on source length. SHA is an overkill
-    int found_in_cache = 0;
+    return path_name;
+}
 
-    sprintf(s1, "%s/%d", path_name, source_length);
+void pocl_create_source_dirs(cl_program program, int size)
+{
+
+  char s1[1024], s2[1024];
+  char *path_name = program->temp_dir;
+  char *source = program->source;
+
+  // Simple hash-function based on source length. SHA is an overkill
+  int found_in_cache = 0;
+
+  sprintf(s1, "%s/s/%d", path_name, size);
 
 #ifdef KERNEL_CACHE
-    DIR *dp;
-    struct dirent *ep;
+  DIR *dp;
+  struct dirent *ep;
 
-    dp = opendir(s1);
-    if(dp && source)
-    {
-        while((ep = readdir(dp)) && (!found_in_cache))
-        {
-            char *content;
-            sprintf(s2, "%s/%s/program.cl", s1, ep->d_name);
-            content = get_file_contents(s2);
-
-            if(content && (strcmp(content, source) == 0))
-            {               // Voila, found same program source in cache
-                sprintf(path_name, "%s/%s", s1, ep->d_name);
-                found_in_cache = 1;
-            }
-            if(content) free(content);
-        }
-        closedir(dp);
-    }
+  dp = opendir(s1);
+  if(dp)
+  {
+      while((ep = readdir(dp)) && (!found_in_cache))
+      {
+          char *content;
+          sprintf(s2, "%s/%s/program.cl", s1, ep->d_name);
+          content = get_file_contents(s2);
+          if(content && (strcmp(content, source) == 0))
+          {               // Voila, found same program source in cache
+            sprintf(path_name, "%s/%s", s1, ep->d_name);
+            found_in_cache = 1;
+          }
+          if(content) free(content);
+      }
+      closedir(dp);
+  }
 #endif
 
-    if(!found_in_cache)
-    {
-        if(access(s1, F_OK) != 0) {
-            make_directory(s1);
-        }
-
-        sprintf(path_name, "%s/XXXXXX\0", s1);
-        mkdtemp(path_name);
+  if(!found_in_cache)
+  {
+    if(access(s1, F_OK) != 0) {
+       make_directory(s1);
     }
 
-    return path_name;
+    sprintf(path_name, "%s/XXXXXX\0", s1);
+    mkdtemp(path_name);
+  }
+
+  program->temp_dir = path_name;
+}
+
+void pocl_create_binary_dirs(cl_program program, int size)
+{
+  char s1[1024], s2[1024];
+  char *path_name = program->temp_dir;
+  unsigned char **binaries = program->binaries;
+  int device_i;
+
+  // Simple hash-function based on binary length. SHA is an overkill
+  int found_in_cache = 0;
+
+  sprintf(s1, "%s/b/%d", path_name, size);
+
+#ifdef KERNEL_CACHE
+  DIR *dp;
+  struct dirent *ep;
+
+  dp = opendir(s1);
+  if(dp)
+  {
+    while(ep = readdir(dp))
+    {
+      int found_cache_in_all = 1;
+      for (device_i = 0; device_i < program->num_devices; device_i++)
+      {
+        unsigned char *bin;
+
+        sprintf(s2, "%s/%s/%s/program.bc", s1, ep->d_name,
+                          program->devices[device_i]->short_name);
+        bin = get_binfile_contents(s2);
+
+        if(!(bin && (memcmp(bin, binaries[device_i], program->binary_sizes[device_i]) == 0))) {
+          found_cache_in_all = 0;
+        }
+        if(bin) free(bin);
+      }
+
+      if(found_cache_in_all) {
+        found_in_cache = 1;
+        sprintf(path_name, "%s/%s", s1, ep->d_name);
+        break;
+      }
+    }
+    closedir(dp);
+  }
+#endif
+
+  if(!found_in_cache)
+  {
+    if(access(s1, F_OK) != 0) {
+       make_directory(s1);
+    }
+
+    sprintf(path_name, "%s/XXXXXX\0", s1);
+    mkdtemp(path_name);
+  }
+
+  program->temp_dir = path_name;
 }
 
 uint32_t

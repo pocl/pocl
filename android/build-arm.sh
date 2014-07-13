@@ -58,7 +58,7 @@ echo "copying ncurses to sysroot...."
 cp -rf $PREBUILT_NCURSES/* $ANDROID_TOOLCHAIN/sysroot/usr/
 ln -sf $ANDROID_TOOLCHAIN/sysroot/usr/lib/libncurses.a $ANDROID_TOOLCHAIN/sysroot/usr/lib/libcurses.a
 
-PREBUILT_LTDL=$PWD/pocl-android-prebuilts/arm/ltdl
+PREBUILT_LTDL=$PWD/pocl-android-prebuilts/arm/libtool
 if [ ! -e $PREBUILT_LTDL/lib/libltdl.a ]; then
     echo "Build and place libltdl for android at " $PREBUILT_LTDL
     exit
@@ -116,6 +116,10 @@ fi
 
 make -j4
 make install
+
+# Copy license files to install folder
+cp -f $ANDROID_TOOLCHAIN/sysroot/usr/share/LICENSE* $INSTALL_PREFIX/share/
+cp -f ../LICENSE $INSTALL_PREFIX/share/LICENSE.pocl
 
 echo -e "\n\nBuild completed...\nBuilt files are at "$PREFIX"\n"
 

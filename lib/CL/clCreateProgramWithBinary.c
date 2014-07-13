@@ -128,9 +128,6 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
   program->devices = malloc (sizeof(cl_device_id) * num_devices);
   program->source = NULL;
   program->kernels = NULL;
-  /* Create the temporary directory where all kernel files and compilation
-     (intermediate) results are stored. */
-  program->temp_dir = pocl_create_temp_dir(NULL, 0);
 
   pos = program->binaries[0];
   for (i = 0; i < num_devices; ++i)
@@ -144,6 +141,12 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
       if (binary_status != NULL) /* TODO: validate the binary */
         binary_status[i] = CL_SUCCESS;
     }
+
+  /* Create the temporary/cache directory where all kernel files and compilation
+     (intermediate) results are stored. */
+  program->temp_dir = pocl_choose_dir();
+  pocl_create_binary_dirs(program, total_binary_size);
+
   POCL_RETAIN_OBJECT(context);
 
   if (errcode_ret != NULL)
