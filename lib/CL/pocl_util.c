@@ -561,7 +561,7 @@ void check_and_invalidate_cache(cl_program program, int device_i, const char* de
     if(access(version_file, F_OK) == 0)
     {
         content = get_file_contents(version_file);
-        if(strcmp(content, program->devices[device_i]->driver_version) != 0) {
+        if(content && (strcmp(content, program->devices[device_i]->driver_version) != 0)) {
           cache_dirty = 1;
         }
 
@@ -577,7 +577,8 @@ void check_and_invalidate_cache(cl_program program, int device_i, const char* de
     if(access(options_file, F_OK) == 0)
     {
         content = get_file_contents(options_file);
-        if(strcmp(content, program->compiler_options) != 0) {
+        if(content && (program->compiler_options) && 
+            (strcmp(content, program->compiler_options) != 0) {
           cache_dirty = 1;
         }
 
