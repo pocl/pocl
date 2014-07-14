@@ -578,7 +578,7 @@ void check_and_invalidate_cache(cl_program program, int device_i, const char* de
     {
         content = get_file_contents(options_file);
         if(content && (program->compiler_options) && 
-            (strcmp(content, program->compiler_options) != 0) {
+            (strcmp(content, program->compiler_options) != 0)) {
           cache_dirty = 1;
         }
 
