@@ -174,14 +174,21 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   }
   
   error = snprintf
-    (parallel_filename, POCL_FILENAME_LENGTH,
-     "%s/%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
+          (parallel_filename, POCL_FILENAME_LENGTH,
+          "%s/%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
   if (error < 0)
     return CL_OUT_OF_HOST_MEMORY;
 
   error = snprintf
-    (so_filename, POCL_FILENAME_LENGTH,
-     "%s/%s.so", tmpdir, kernel->name);
+          (so_filename, POCL_FILENAME_LENGTH,
+          "%s/%s.so", tmpdir, kernel->name);
+  if (error < 0)
+    return CL_OUT_OF_HOST_MEMORY;
+
+  error = snprintf
+          (kernel_filename, POCL_FILENAME_LENGTH,
+           "%s/%s/%s/kernel.bc", kernel->program->temp_dir,
+           command_queue->device->short_name, kernel->name);
   if (error < 0)
     return CL_OUT_OF_HOST_MEMORY;
 
@@ -189,14 +196,6 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
     {
       if (kernel->program->llvm_irs[0] == NULL)
       {
-        error = snprintf
-          (kernel_filename, POCL_FILENAME_LENGTH,
-           "%s/%s/%s/kernel.bc", kernel->program->temp_dir,
-           command_queue->device->short_name, kernel->name);
-
-        if (error < 0)
-          return CL_OUT_OF_HOST_MEMORY;
-
         if (access (kernel_filename, F_OK) != 0)
           {
             kernel_file = fopen(kernel_filename, "w+");
