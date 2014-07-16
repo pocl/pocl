@@ -50,11 +50,13 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
   if (command_queue->context != memobj->context)
     return CL_INVALID_CONTEXT;
 
+  POCL_LOCK_OBJ (memobj);
   DL_FOREACH (memobj->mappings, mapping)
     {
       if (mapping->host_ptr == mapped_ptr)
           break;
     }
+  POCL_UNLOCK_OBJ (memobj);
   if (mapping == NULL)
     return CL_INVALID_VALUE;
 
