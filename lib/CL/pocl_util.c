@@ -152,9 +152,9 @@ pocl_choose_dir()
         sprintf(path_name, "%s/pocl", getenv(POCL_TEMPDIR_ENV));
     } else
     {
-        sprintf(s1, "/data/data/%s/cache", process_name);
-        if(access(s1, W_OK) == 0) {
-            sprintf(path_name, "%s/pocl", s1);
+        sprintf(path_name, "/data/data/%s/cache", process_name);
+        if(access(path_name, W_OK) == 0) {
+            strcat(path_name, "/pocl");
         }
         else {
             sprintf(path_name, "/sdcard/pocl/cache/%s", process_name);
