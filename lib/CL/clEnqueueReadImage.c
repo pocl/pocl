@@ -78,7 +78,7 @@ CL_API_SUFFIX__VERSION_1_0
   cmd->command.rw_image.rowpitch = image->image_row_pitch;
   cmd->command.rw_image.slicepitch = image->image_slice_pitch;
   cmd->command.rw_image.buffer = image;
-  pocl_command_enqueue(command_queue, cmd);
+  pocl_command_enqueue (command_queue, cmd);
   POname(clRetainMemObject) (image);  
 
   if (blocking_read)

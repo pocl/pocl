@@ -65,7 +65,7 @@ POname(clEnqueueWriteBufferRect)(cl_command_queue command_queue,
        buffer_row_pitch * (buffer_origin[1] + region[1]-1) +
        buffer_slice_pitch * (buffer_origin[2] + region[2]-1) >= buffer->size))
   {
-      POCL_ABORT_UNIMPLEMENTED();
+    POCL_ABORT_UNIMPLEMENTED();
     return CL_INVALID_VALUE;
   }
 
@@ -73,8 +73,8 @@ POname(clEnqueueWriteBufferRect)(cl_command_queue command_queue,
 
   for (i = 0; i < command_queue->context->num_devices; ++i)
     {
-        if (command_queue->context->devices[i] == device)
-            break;
+      if (command_queue->context->devices[i] == device)
+        break;
     }
   assert(i < command_queue->context->num_devices);
 

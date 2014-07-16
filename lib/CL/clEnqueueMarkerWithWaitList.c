@@ -46,8 +46,8 @@ CL_API_SUFFIX__VERSION_1_2
     goto ERROR;
 
   cmd->command.marker.data = command_queue->device->data;
-  pocl_command_enqueue(command_queue, cmd);
-        
+  pocl_command_enqueue (command_queue, cmd);
+  
   return CL_SUCCESS;
 
  ERROR:
