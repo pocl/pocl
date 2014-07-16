@@ -102,6 +102,7 @@ typedef pthread_mutex_t pocl_lock_t;
 #define POCL_LOCK(__LOCK__) pthread_mutex_lock (&(__LOCK__))
 #define POCL_UNLOCK(__LOCK__) pthread_mutex_unlock (&(__LOCK__))
 #define POCL_INIT_LOCK(__LOCK__) pthread_mutex_init (&(__LOCK__), NULL)
+#define POCL_DESTROY_LOCK(__LOCK__) pthread_mutex_destroy (&(__LOCK__))
 
 #define POCL_LOCK_OBJ(__OBJ__) POCL_LOCK((__OBJ__)->pocl_lock)
 #define POCL_UNLOCK_OBJ(__OBJ__) POCL_UNLOCK((__OBJ__)->pocl_lock)
@@ -111,7 +112,8 @@ typedef pthread_mutex_t pocl_lock_t;
     POCL_LOCK_OBJ (__OBJ__);                            \
     __NEW_REFCOUNT__ = --(__OBJ__)->pocl_refcount;      \
     POCL_UNLOCK_OBJ (__OBJ__);                          \
-  } while (0)                          
+    if (__NEW_REFCOUNT__ == 0) POCL_DESTROY_LOCK ((__OBJ__)->pocl_lock); \
+  } while (0)
 
 #define POCL_RETAIN_OBJECT(__OBJ__)             \
   do {                                          \
