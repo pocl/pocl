@@ -472,6 +472,9 @@ endif()
 if(CL_DISABLE_LONG)
   set(DEFAULT_HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} -D_CL_DISABLE_LONG")
 endif()
+if(CL_DISABLE_HALF)
+  set(DEFAULT_HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} -D_CL_DISABLE_HALF")
+endif()
 
 ####################################################################
 

@@ -25,6 +25,12 @@ foreach(PROG ${PROGRAMS_TO_BUILD})
   target_link_libraries("${PROG}" ${POCLU_LINK_OPTIONS})
 endforeach()
 
+add_executable("test_assign_loop_variable_to_privvar_makes_it_local"
+               "test_assign_loop_variable_to_privvar_makes_it_local.c")
+target_link_libraries("test_assign_loop_variable_to_privvar_makes_it_local"
+               ${POCLU_LINK_OPTIONS})
+
+
 ######################################################################
 
 #AT_SETUP([phi nodes not replicated (repl) - lp:927573])
@@ -53,6 +59,9 @@ add_test("\"regression/infinite loop (repl)\"" "test_infinite_loop")
 
 add_test("\"regression/undominated variable from conditional barrier handling (repl)\"" "test_undominated_variable")
 
+add_test("\"regression/assigning a loop iterator variable to a private makes it local (repl)\""
+                           "test_assign_loop_variable_to_privvar_makes_it_local")
+
 set_tests_properties("\"regression/phi nodes not replicated (repl)\""
   "\"regression/issues with local pointers (repl)\""
   "\"regression/barrier between two for loops (repl)\""
@@ -64,6 +73,7 @@ set_tests_properties("\"regression/phi nodes not replicated (repl)\""
   "\"regression/barrier just before return (repl)\""
   "\"regression/infinite loop (repl)\""
   "\"regression/undominated variable from conditional barrier handling (repl)\""
+  "\"regression/assigning a loop iterator variable to a private makes it local (repl)\""
   PROPERTIES
     ENVIRONMENT "POCL_WORK_GROUP_METHOD=workitemrepl"
     COST 1.5
@@ -95,6 +105,9 @@ add_test("\"regression/infinite loop (loops)\"" "test_infinite_loop")
 
 add_test("\"regression/undominated variable from conditional barrier handling (loops)\"" "test_undominated_variable")
 
+add_test("\"regression/assigning a loop iterator variable to a private makes it local (loops)\""
+                           "test_assign_loop_variable_to_privvar_makes_it_local")
+
 set_tests_properties("\"regression/phi nodes not replicated (loops)\""
   "\"regression/issues with local pointers (loops)\""
   "\"regression/barrier between two for loops (loops)\""
@@ -106,6 +119,7 @@ set_tests_properties("\"regression/phi nodes not replicated (loops)\""
   "\"regression/barrier just before return (loops)\""
   "\"regression/infinite loop (loops)\""
   "\"regression/undominated variable from conditional barrier handling (loops)\""
+  "\"regression/assigning a loop iterator variable to a private makes it local (loops)\""
   PROPERTIES
     ENVIRONMENT "POCL_WORK_GROUP_METHOD=workitemloops"
     COST 1.5
@@ -127,7 +141,12 @@ add_test("\"regression/struct kernel arguments\"" "test_structs_as_args")
 
 add_test("\"regression/vector kernel arguments\"" "test_vectors_as_args")
 
-set_tests_properties(
+set_tests_properties("\"regression/setting a buffer argument to NULL causes a segfault\""
+  "\"regression/clSetKernelArg overwriting the previous kernel's args\""
+  "\"regression/passing a constant array as an arg\""
+  "\"regression/case with multiple variable length loops and a barrier in one\""
+  "\"regression/struct kernel arguments\""
+  "\"regression/vector kernel arguments\""
   PROPERTIES
     COST 1.5
     PROCESSORS 1

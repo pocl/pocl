@@ -3,7 +3,8 @@
 set(PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_clCreateProgramWithBinary test_clGetSupportedImageFormats
   test_clSetEventCallback test_clEnqueueNativeKernel test_clBuildProgram
-  test_clCreateKernelsInProgram test_version)
+  test_clCreateKernelsInProgram test_clCreateKernel test_clGetKernelArgInfo
+  test_version)
 
 #EXTRA_DIST= \
 # test_kernel_src_in_pwd.h \
@@ -38,6 +39,10 @@ add_test(NAME "runtime/clBuildProgram"
 
 add_test("runtime/clFinish" "test_clFinish")
 
+add_test("runtime/clCreateKernel" "test_clCreateKernel")
+
+add_test("runtime/clGetKernelArgInfo" "test_clGetKernelArgInfo")
+
 add_test("runtime/clSetEventCallback" "test_clSetEventCallback")
 
 add_test("runtime/clGetSupportedImageFormats" "test_clGetSupportedImageFormats")
@@ -48,6 +53,7 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/clGetEventInfo" "runtime/clCreateProgramWithBinary"
   "runtime/clBuildProgram" "runtime/clFinish" "runtime/clSetEventCallback"
   "runtime/clGetSupportedImageFormats" "runtime/clCreateKernelsInProgram"
+  "runtime/clCreateKernel" "runtime/clGetKernelArgInfo"
   PROPERTIES
     COST 2.0
     PROCESSORS 1

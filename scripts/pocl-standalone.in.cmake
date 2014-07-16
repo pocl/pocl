@@ -130,7 +130,7 @@ fi
 
 @LLVM_OPT@ ${LLC_FLAGS} \
     -load=${pocl_kernel_compiler_lib} -domtree -workitem-handler-chooser -break-constgeps -generate-header -flatten -always-inline \
-    -globaldce -simplifycfg -loop-simplify -phistoallocas -isolate-regions -uniformity -implicit-loop-barriers -implicit-cond-barriers \
+    -globaldce -simplifycfg -loop-simplify -uniformity -phistoallocas -isolate-regions -implicit-loop-barriers -implicit-cond-barriers \
     -loop-barriers -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops \
     -allocastoentry -workgroup -kernel=${kernel} -local-size=1 1 1 -disable-simplify-libcalls \
     -target-address-spaces \
