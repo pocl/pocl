@@ -56,7 +56,8 @@ POname(clSetKernelArg)(cl_kernel kernel,
     return CL_INVALID_ARG_SIZE;
 
   p = &(kernel->dyn_arguments[arg_index]); 
-  kernel->arg_info[arg_index].is_set = false;
+  POCL_LOCK_OBJ (kernel);
+  kernel->arg_info[arg_index].is_set = 0;
   
   if (arg_value != NULL && 
       !(kernel->arg_info[arg_index].type == POCL_ARG_TYPE_POINTER && 
@@ -76,7 +77,10 @@ POname(clSetKernelArg)(cl_kernel kernel,
 
       value = pocl_aligned_malloc (arg_alignment, arg_alloc_size);
       if (value == NULL)
+      {
+        POCL_UNLOCK_OBJ (kernel);
         return CL_OUT_OF_HOST_MEMORY;
+      }
       
       memcpy (value, arg_value, arg_size);
 
@@ -95,8 +99,9 @@ POname(clSetKernelArg)(cl_kernel kernel,
 #endif
 
   p->size = arg_size;
-  kernel->arg_info[arg_index].is_set = true;
+  kernel->arg_info[arg_index].is_set = 1;
 
+  POCL_UNLOCK_OBJ (kernel);
   return CL_SUCCESS;
 }
 POsym(clSetKernelArg)

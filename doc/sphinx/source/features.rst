@@ -14,14 +14,3 @@ Frontend/Clang
 
   Tested with Clang 3.4 on 2014-07-10.
 
-Overall
--------
-
-* OpenCL 1.1: A.2 Multiple Host Threads
-
-  Currently pocl guards only the reference counter updates
-  with mutexes. Thus, it is more than likely that the full
-  thread-safety is not there. We should go through the APIs 
-  and add more locks to avoid race conditions.
-
-  Checked on 2014-07-16.
