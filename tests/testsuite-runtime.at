@@ -61,3 +61,9 @@ AT_KEYWORDS([runtime])
 AT_CHECK([$abs_top_builddir/tests/runtime/test_clCreateKernel] , 0, [OK
 ])
 AT_CLEANUP
+
+AT_SETUP([clGetKernelArgInfo])
+AT_XFAIL_IF([grep -q "#define LLVM_3_2" $abs_top_builddir/config.h])
+AT_KEYWORDS([runtime])
+AT_CHECK([$abs_top_builddir/tests/runtime/test_clGetKernelArgInfo], 0, ignore, ignore)
+AT_CLEANUP

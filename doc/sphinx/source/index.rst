@@ -16,6 +16,7 @@ Contents:
    development
    releasing
    design
+   features
 
 Back to `pocl home page <http://pocl.sourceforge.net>`_.
 

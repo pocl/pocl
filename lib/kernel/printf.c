@@ -201,7 +201,8 @@ void _cl_print_pointer(flags_t flags, int field_width, const void* val)
 // - if there is an error during parsing, a "goto error" aborts the
 //   routine, returning -1
 
-int _cl_printf(const char* restrict format, ...)
+#define OCL_CONSTANT_AS __attribute__((address_space(3)))
+int _cl_printf(const OCL_CONSTANT_AS char* restrict format, ...)
 {
   DEBUG_PRINTF(("[printf:format=%s]\n", format));
   va_list ap;

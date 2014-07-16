@@ -137,6 +137,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
     {
       program->devices[i] = device_list[i];
       program->binary_sizes[i] = lengths[i];
+      program->llvm_irs[i] = NULL;
       memcpy (pos, binaries[i], lengths[i]);
       program->binaries[i] = pos;
       pos += lengths[i];
@@ -161,9 +162,9 @@ ERROR_CLEAN_PROGRAM_AND_BINARIES:
   free(program);
 ERROR:
     if(errcode_ret != NULL)
-    {
+      {
         *errcode_ret = errcode;
-    }
+      }
     return NULL;
 }
 POsym(clCreateProgramWithBinary)

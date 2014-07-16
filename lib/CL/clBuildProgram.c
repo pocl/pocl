@@ -262,7 +262,7 @@ CL_API_SUFFIX__VERSION_1_0
   else
     {
       /* Build from a binary. The "binaries" (LLVM bitcodes) are loaded to
-         memory in the clBuildWithBinary(). Dump them to the files. */
+         memory in the clCreateProgramWithBinary(). Dump them to the files. */
       for (device_i = 0; device_i < real_num_devices; ++device_i)
         {
           int count;

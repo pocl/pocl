@@ -150,7 +150,7 @@ struct _cl_icd_dispatch {
   NULL, /* &POclCompileProgram,          */ \
   NULL, /* &POclLinkProgram,             */ \
   NULL, /* &POclUnloadPlatformCompiler,  */ \
-  NULL, /* &POclGetKernelArgInfo,        */ \
+  &POclGetKernelArgInfo,   \
   NULL, /* &POclEnqueueFillBuffer,        */ \
   &POclEnqueueFillImage,         \
   NULL, /* &POclEnqueueMigrateMemObjects, */ \

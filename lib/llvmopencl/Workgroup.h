@@ -40,6 +40,11 @@ namespace pocl {
 
     virtual bool runOnModule(llvm::Module &M);
 
+
+    void getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+        AU.setPreservesAll();
+    }
+
     static bool isKernelToProcess(const llvm::Function &F);
 
   };

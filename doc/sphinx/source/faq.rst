@@ -31,3 +31,26 @@ The solution is to rebuild the ICD loader against OpenCL 1.2 headers.
 
 See: https://github.com/pocl/pocl/issues/27
 
+"Two passes with the same argument (-barriers) attempted to be registered!"
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+If you see this error::
+
+  Two passes with the same argument (-barriers) attempted to be registered!
+  UNREACHABLE executed at <path..>/include/llvm/Support/PassNameParser.h:73!
+
+It's caused by initializers of static variables (like pocl's LLVM Pass names)
+called more than once. This happens for example when you link libpocl twice
+to your program.
+
+One way that could happen, is building pocl with ``--disable-icd`` while having
+hwloc "plugins" package installed (with the opencl plugin). What happens is:
+
+* libpocl.so gets built, and also libOpenCL.so which is it's copy
+* program gets linked to the built libOpenCL.so; that is linked to hwloc
+* at runtime, hwloc will try to open the hwloc-opencl plugin; that links to
+  system-installed libOpenCL.so (usually the ICD loader);
+* the ICD loader will try to dlopen libpocl.so -> you get the error.
+
+The solution is either to use ``--enable-icd --disable-direct-linkage``, or
+to uninstall the hwloc "plugins" package.
