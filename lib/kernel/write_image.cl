@@ -36,6 +36,18 @@ void pocl_write_pixel (void* color_, void* image, int4 coord)
   int num_channels = dev_image->num_channels;
   int elem_size = dev_image->elem_size;
 
+  if (dev_image->order == CL_A)
+    {
+      idx = (coord.x + coord.y*width + coord.z*height*width) * num_channels;
+      if (elem_size == 1)
+        ((uchar*)(dev_image->data))[idx] = (*color)[3];
+      if (elem_size == 2)
+        ((ushort*)(dev_image->data))[idx] = (*color)[3];
+      if (elem_size == 4)
+        ((uint*)(dev_image->data))[idx] = (*color)[3];
+      return;
+    }
+
   for (i = 0; i < num_channels; i++)
     {
       idx = i + (coord.x + coord.y*width + coord.z*height*width)*num_channels;

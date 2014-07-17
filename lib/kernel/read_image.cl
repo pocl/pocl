@@ -86,7 +86,22 @@ void __pocl_read_pixel (void* color, void* image, int4 coord)
   int height = dev_image->height;
   int num_channels = dev_image->num_channels;
   int elem_size = dev_image->elem_size; 
-  
+
+  if (dev_image->order == CL_A)
+    {
+      idx = (coord.x + coord.y*width + coord.z*height*width) * num_channels;
+      (*color_ptr)[0] = 0;
+      (*color_ptr)[1] = 0;
+      (*color_ptr)[2] = 0;
+      if (elem_size == 1)
+        (*color_ptr)[3] = ((uchar*)(dev_image->data))[idx];
+      if (elem_size == 2)
+        (*color_ptr)[3] = ((ushort*)(dev_image->data))[idx];
+      if (elem_size == 4)
+        (*color_ptr)[3] = ((uint*)(dev_image->data))[idx];
+      return;
+    }
+
   for (i = 0; i < num_channels; i++)
     { 
       idx = i + (coord.x + coord.y*width + coord.z*height*width) * num_channels;
