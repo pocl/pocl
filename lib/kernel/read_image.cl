@@ -1,6 +1,7 @@
 /* OpenCL built-in library: read_image()
 
    Copyright (c) 2013 Ville Korhonen
+   Copyright (c) 2014 Felix Bytow
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -98,9 +99,9 @@ void __pocl_read_pixel (void* color, void* image, int4 coord)
       */
       if (elem_size == 1)
         (*color_ptr)[3] = ((uchar*)(dev_image->data))[base_index];
-      if (elem_size == 2)
+      else if (elem_size == 2)
         (*color_ptr)[3] = ((ushort*)(dev_image->data))[base_index];
-      if (elem_size == 4)
+      else if (elem_size == 4)
         (*color_ptr)[3] = ((uint*)(dev_image->data))[base_index];
       return;
     }
