@@ -523,7 +523,7 @@ void pocl_command_enqueue(cl_command_queue command_queue,
 
 char* pocl_get_process_name()
 {
-    char tmpStr[64], cmdline[256], *processName = NULL;
+    char tmpStr[64], cmdline[512], *processName = NULL;
     FILE *statusFile;
     int len, i, begin;
 
@@ -532,7 +532,7 @@ char* pocl_get_process_name()
     if(statusFile == NULL)
         return NULL;
 
-    if(fgets(cmdline, 255, statusFile) != NULL)
+    if(fgets(cmdline, 511, statusFile) != NULL)
     {
         len = strlen(cmdline);
         begin = 0;
@@ -554,7 +554,7 @@ char* pocl_get_process_name()
 void check_and_invalidate_cache(cl_program program, int device_i, const char* device_tmpdir)
 {
     int cache_dirty = 0;
-    char version_file[256], options_file[256], *content;
+    char version_file[TEMP_DIR_PATH_CHARS], options_file[TEMP_DIR_PATH_CHARS], *content;
 
     // Check for driver version match
     sprintf(version_file, "%s/pocl_version", device_tmpdir);
