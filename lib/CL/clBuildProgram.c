@@ -137,6 +137,11 @@ CL_API_SUFFIX__VERSION_1_0
                  of the option */
               if (strlen (token) == 2)
                 token = strtok_r (NULL, " ", &saveptr);
+              else
+                {
+                  token = strtok_r (NULL, " ", &saveptr);
+                  continue;
+                }
             }
           else
             {
