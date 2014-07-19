@@ -35,6 +35,14 @@ JNIEXPORT jint JNICALL Java_org_pocl_sample1_MainActivity_vectorAddCL
 JNIEXPORT jint JNICALL Java_org_pocl_sample1_MainActivity_destroyCL
   (JNIEnv *, jobject);
 
+/*
+ * Class:     org_pocl_sample1_MainActivity
+ * Method:    setenv
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)V
+ */
+JNIEXPORT void JNICALL Java_org_pocl_sample1_MainActivity_setenv
+  (JNIEnv *, jobject, jstring, jstring);
+
 #ifdef __cplusplus
 }
 #endif

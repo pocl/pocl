@@ -1,5 +1,6 @@
 #include <CL/cl.h>
 #include <string.h>
+#include <stdlib.h>
 #include <android/log.h>
 #include "vectorAdd.h"
 
@@ -123,6 +124,13 @@ jint Java_org_pocl_sample1_MainActivity_vectorAddCL(JNIEnv *je , jobject jo,
     je->ReleaseFloatArrayElements(_C, C, 0);
 
     return 0;
+}
+
+void Java_org_pocl_sample1_MainActivity_setenv(JNIEnv *jniEnv,
+						jobject _jObj, jstring key, jstring value)
+{
+	setenv((char*) jniEnv->GetStringUTFChars(key, 0),
+			(char*) jniEnv->GetStringUTFChars(value, 0), 1);
 }
 
 

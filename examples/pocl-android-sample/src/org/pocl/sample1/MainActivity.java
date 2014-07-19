@@ -4,8 +4,6 @@ import android.app.Activity;
 import android.os.Bundle;
 import android.widget.TextView;
 
-import libcore.io.*;
-
 public class MainActivity extends Activity
 {
 	
@@ -13,6 +11,7 @@ public class MainActivity extends Activity
 	public native int initCL();
 	public native int vectorAddCL(int N, float[] A, float[] B, float[] C);
 	public native int destroyCL();
+	public native void setenv(String key, String value);
 	
 	TextView text;
 	
@@ -26,7 +25,7 @@ public class MainActivity extends Activity
     	super.onCreate(savedInstanceState);
     	
     	// Forcibly set opencl-stub to use pocl
-    	Libcore.os.setenv("LIBOPENCL_SO_PATH", "/data/data/org.pocl.libs/files/lib/libpocl.so", true);
+        setenv("LIBOPENCL_SO_PATH", "/data/data/org.pocl.libs/files/lib/libpocl.so");
     	
     	text = new TextView(this);
     	text.setText("\nOpenCL vector addition example using pocl\n");
@@ -45,15 +44,16 @@ public class MainActivity extends Activity
     
     void doVectorAdd()
     {
-    	// Error checkings are not done for simplicity
+        // Error checkings are not done for simplicity. Check logcat
     	
     	printLog("\ncalling opencl init functions... ");
     	initCL();
     	
     	// Create 2 vectors A & B
-    	float A[] = {1, 2, 3, 4, 5};
-    	float B[] = {6, 7, 8, 9, 0};
-    	float C[] = new float[A.length];
+        // And yes, this array size is embarrassingly huge for demo!
+        float A[] = {1, 2, 3, 4, 5, 6, 7};
+        float B[] = {8, 9, 0, 6, 7, 8, 9};
+        float C[] = new float[A.length];
     	
     	printLog("\n A: ");
     	for(int i=0; i<A.length; i++)
