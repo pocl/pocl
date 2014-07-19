@@ -852,9 +852,9 @@ case $host_cpu in
       #armv7l seems a popular host_cpu in distros. Clang uses "armv7", though
       arm*android*)
          llc_triple="armv7-unknown-linux-gnueabi"
-         HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=soft -I"$SYSROOTDIR"/usr/include "
-         HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=soft"
-         HOST_AS_FLAGS="$HOST_AS_FLAGS -mcpu=$llc_host_cpu -mfloat-abi=soft"
+         HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=hard -I"$SYSROOTDIR"/usr/include "
+         HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=hard"
+         HOST_AS_FLAGS="$HOST_AS_FLAGS -mcpu=$llc_host_cpu -mfloat-abi=hard"
          HOST_LD_FLAGS="$HOST_LD_FLAGS -L/system/lib/ -shared ";;
       armv7l*gnueabihf)
          llc_triple="armv7-unknown-linux-gnueabihf"
