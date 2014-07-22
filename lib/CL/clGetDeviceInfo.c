@@ -201,7 +201,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_DEVICE_INFO_STR(device->long_name);
    
   case CL_DEVICE_VENDOR                            : 
-    POCL_RETURN_DEVICE_INFO_STR("unknown"); /* TODO: CPUID */
+    POCL_RETURN_DEVICE_INFO_STR(device->vendor);
 
   case CL_DRIVER_VERSION:
     POCL_RETURN_DEVICE_INFO_STR(device->driver_version);
