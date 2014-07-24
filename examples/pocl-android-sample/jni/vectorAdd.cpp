@@ -57,7 +57,7 @@ jint Java_org_pocl_sample1_MainActivity_initCL(JNIEnv *je, jobject jo)
     size_t strSize = strlen(vector_add_str);
     clProgram = clCreateProgramWithSource(clContext, 1, &vector_add_str, &strSize, &status);
     CHECK_AND_RETURN(status, "creating program failed");
-	
+
 	status = clBuildProgram(clProgram, 1, &clDevice, NULL, NULL, NULL);
     CHECK_AND_RETURN(status, "build program failed");
 
@@ -107,12 +107,12 @@ jint Java_org_pocl_sample1_MainActivity_vectorAddCL(JNIEnv *je , jobject jo,
     status |= clSetKernelArg(clKernel, 2, sizeof(cl_mem), (void *)&B_obj);
     status |= clSetKernelArg(clKernel, 3, sizeof(cl_mem), (void *)&C_obj);
     CHECK_AND_RETURN(status, "clSetKernelArg failed");
-	
+
     size_t localSize = LOCAL_SIZE;
     size_t wgs = (N + localSize - 1) / localSize;
     size_t globalSize = wgs * localSize;
 
-    status = clEnqueueNDRangeKernel(clCommandQueue, clKernel, 1, NULL, 
+    status = clEnqueueNDRangeKernel(clCommandQueue, clKernel, 1, NULL,
                             &globalSize, &localSize, 0, NULL, NULL);
     CHECK_AND_RETURN(status, "clEnqueueNDRange failed");
 
