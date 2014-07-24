@@ -114,7 +114,7 @@ pocl_lock_t ta_pool_lock;
 static int get_max_thread_count();
 static void * workgroup_thread (void *p);
 
-void pocl_init_thread_argument_manager (void)
+static void pocl_init_thread_argument_manager (void)
 {
   if (!argument_pool_initialized)
     {
@@ -123,7 +123,7 @@ void pocl_init_thread_argument_manager (void)
     }
 }
 
-thread_arguments* new_thread_arguments ()
+static thread_arguments* new_thread_arguments ()
 {
   thread_arguments *ta = NULL;
   POCL_LOCK (ta_pool_lock);
@@ -138,7 +138,7 @@ thread_arguments* new_thread_arguments ()
   return calloc (1, sizeof (thread_arguments));
 }
 
-void free_thread_arguments (thread_arguments *ta)
+static void free_thread_arguments (thread_arguments *ta)
 {
   POCL_LOCK (ta_pool_lock);
   LL_PREPEND (thread_argument_pool, ta);
