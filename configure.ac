@@ -852,6 +852,7 @@ case $host_cpu in
       #armv7l seems a popular host_cpu in distros. Clang uses "armv7", though
       arm*android*)
          llc_triple="armv7-unknown-linux-gnueabi"
+         AC_DEFINE([HOST_FLOAT_SOFT_ABI], [], ["Use soft-float ABI to support most of android devices"])
          HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=soft -I"$SYSROOTDIR"/usr/include "
          HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=soft"
          HOST_AS_FLAGS="$HOST_AS_FLAGS -mcpu=$llc_host_cpu -mfloat-abi=soft"
