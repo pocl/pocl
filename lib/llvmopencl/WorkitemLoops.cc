@@ -122,7 +122,8 @@ WorkitemLoops::runOnFunction(Function &F)
   #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
   DT = &getAnalysis<DominatorTree>();
   #else
-  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
+  DTP = &getAnalysis<DominatorTreeWrapperPass>();
+  DT = &DTP->getDomTree();
   #endif
   LI = &getAnalysis<LoopInfo>();
   PDT = &getAnalysis<PostDominatorTree>();
@@ -240,11 +241,11 @@ WorkitemLoops::CreateLoopAround
     BasicBlock::Create(C, "pregion_for_cond", F, exitBB);
 
 
-  #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
   DT->runOnFunction(*F);
-  #else
+#else
   DTP->runOnFunction(*F);
-  #endif
+#endif
 
   //  F->viewCFG();
   /* Fix the old edges jumping to the region to jump to the basic block
