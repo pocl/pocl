@@ -292,10 +292,13 @@ cl_int pocl_create_command (_cl_command_node **cmd,
 void pocl_command_enqueue(cl_command_queue command_queue, 
                           _cl_command_node *node)
 {
-  POCL_UPDATE_EVENT_QUEUED (&node->event, command_queue);
+  POCL_LOCK_OBJ(command_queue);
   LL_APPEND (command_queue->root, node);
+  POCL_UNLOCK_OBJ(command_queue);
   #ifdef POCL_DEBUG_BUILD
   if (pocl_is_option_set("POCL_IMPLICIT_FINISH"))
     POclFinish (command_queue);
   #endif
+  POCL_UPDATE_EVENT_QUEUED (&node->event, command_queue);
+
 }

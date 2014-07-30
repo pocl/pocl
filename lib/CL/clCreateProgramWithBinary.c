@@ -44,25 +44,25 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
   int errcode;
 
   if (device_list == NULL || num_devices == 0 || lengths == NULL)
-  {
-    errcode = CL_INVALID_VALUE;
-    goto ERROR;
-  }
+    {
+      errcode = CL_INVALID_VALUE;
+      goto ERROR;
+    }
 
   if (context == NULL)
-  {
-    errcode = CL_INVALID_CONTEXT;
-    goto ERROR;
-  }
+    {
+      errcode = CL_INVALID_CONTEXT;
+      goto ERROR;
+    }
 
   total_binary_size = 0;
   for (i = 0; i < num_devices; ++i)
     {
       if (lengths[i] == 0 || binaries[i] == NULL)
-      {
-        errcode = CL_INVALID_VALUE;
-        goto ERROR;
-      }
+        {
+          errcode = CL_INVALID_VALUE;
+          goto ERROR;
+        }
       total_binary_size += lengths[i];
     }
 
@@ -98,10 +98,10 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
     }
   
   if ((program = (cl_program) malloc (sizeof (struct _cl_program))) == NULL)
-  {
-    errcode = CL_OUT_OF_HOST_MEMORY;
-    goto ERROR;
-  }
+    {
+      errcode = CL_OUT_OF_HOST_MEMORY;
+      goto ERROR;
+    }
   
   POCL_INIT_OBJECT(program);
   program->binary_sizes = NULL;
@@ -142,7 +142,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
       program->binaries[i] = pos;
       pos += lengths[i];
       if (binary_status != NULL) /* TODO: validate the binary */
-          binary_status[i] = CL_SUCCESS;
+        binary_status[i] = CL_SUCCESS;
     }
   POCL_RETAIN_OBJECT(context);
 
@@ -152,14 +152,14 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
 
 #if 0
 ERROR_CLEAN_PROGRAM_BINARIES_AND_DEVICES:
-  free(program->devices);
+  free (program->devices);
 #endif
 ERROR_CLEAN_PROGRAM_AND_BINARIES:
-  free(program->binaries[0]);
-  free(program->binaries);
-  free(program->binary_sizes);
+  free (program->binaries[0]);
+  free (program->binaries);
+  free (program->binary_sizes);
 /*ERROR_CLEAN_PROGRAM:*/
-  free(program);
+  free (program);
 ERROR:
     if(errcode_ret != NULL)
       {

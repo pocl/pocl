@@ -118,7 +118,9 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   mapping_info->host_ptr = host_ptr;
   mapping_info->offset = offset;
   mapping_info->size = size;
+  POCL_LOCK_OBJ (buffer);
   DL_APPEND (buffer->mappings, mapping_info);  
+  POCL_UNLOCK_OBJ (buffer);
   pocl_command_enqueue(command_queue, cmd);
 
   if (blocking_map != CL_TRUE)

@@ -74,7 +74,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   if (work_dim < 1 ||
       work_dim > command_queue->device->max_work_item_dimensions)
     return CL_INVALID_WORK_DIMENSION;
-  assert(command_queue->device->max_work_item_dimensions <= 3);
+  assert (command_queue->device->max_work_item_dimensions <= 3);
 
   if (global_work_offset != NULL)
     {
@@ -323,7 +323,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
       }
   }
 
-  pocl_command_enqueue(command_queue, command_node);
+  pocl_command_enqueue (command_queue, command_node);
 
   return CL_SUCCESS;
 }

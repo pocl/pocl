@@ -57,6 +57,11 @@ char CanonicalizeBarriers::ID = 0;
 void
 CanonicalizeBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 {
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+  AU.addRequired<DominatorTree>();
+#else
+  AU.addRequired<DominatorTreeWrapperPass>();
+#endif
   AU.addPreserved<VariableUniformityAnalysis>();    
 }
 

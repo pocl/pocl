@@ -38,12 +38,17 @@ static pocl_mem_manager *mm = NULL;
 
 void pocl_init_mem_manager (void)
 {
+  static unsigned int init_done = 0;
+  static pocl_lock_t pocl_init_lock = POCL_LOCK_INITIALIZER;
+
+  POCL_LOCK(pocl_init_lock);
   if (!mm)
     {
       mm = calloc (1, sizeof (pocl_mem_manager));
       POCL_INIT_LOCK (mm->event_lock);
       POCL_INIT_LOCK (mm->cmd_lock);
     }
+  POCL_UNLOCK(pocl_init_lock);
 }
 
 cl_event pocl_mem_manager_new_event ()

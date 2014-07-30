@@ -25,16 +25,37 @@
 #include "image.h"
 #include "pocl_image_rw_utils.h"
 
+#if (__clang_major__ == 3) && (__clang_minor__ >= 5)
+// Clang 3.5 crashes in case trying to cast to the private pointer,
+// adding the global qualifier fixes it. Clang 3.4 crashes if it's
+// there. The issue is in SROA.
+#define ADDRESS_SPACE global
+#else
+#define ADDRESS_SPACE
+#endif
+
 /* writes pixel to coord in image */
 void pocl_write_pixel (void* color_, void* image, int4 coord)
 {  
-  dev_image_t* dev_image = *((dev_image_t**)image);
+  ADDRESS_SPACE dev_image_t* dev_image = *((ADDRESS_SPACE dev_image_t**)image);
   uint4 *color = (uint4*)color_;
   int i, idx;
   int width = dev_image->width;
   int height = dev_image->height;
   int num_channels = dev_image->num_channels;
   int elem_size = dev_image->elem_size;
+
+  if (dev_image->order == CL_A)
+    {
+      idx = (coord.x + coord.y*width + coord.z*height*width) * num_channels;
+      if (elem_size == 1)
+        ((uchar*)(dev_image->data))[idx] = (*color)[3];
+      if (elem_size == 2)
+        ((ushort*)(dev_image->data))[idx] = (*color)[3];
+      if (elem_size == 4)
+        ((uint*)(dev_image->data))[idx] = (*color)[3];
+      return;
+    }
 
   for (i = 0; i < num_channels; i++)
     {

@@ -94,6 +94,7 @@ CL_API_SUFFIX__VERSION_1_0
     goto ERROR;
   }
 
+  POCL_LOCK_OBJ(program);
   if (program->kernels)
   {
     errcode = CL_INVALID_OPERATION;
@@ -135,6 +136,11 @@ CL_API_SUFFIX__VERSION_1_0
                  of the option */
               if (strlen (token) == 2)
                 token = strtok_r (NULL, " ", &saveptr);
+              else
+                {
+                  token = strtok_r (NULL, " ", &saveptr);
+                  continue;
+                }
             }
           else
             {
@@ -288,6 +294,7 @@ CL_API_SUFFIX__VERSION_1_0
         }      
     }
 
+  POCL_UNLOCK_OBJ(program);
   return CL_SUCCESS;
 
   /* Set pointers to NULL during cleanup so that clProgramRelease won't
@@ -307,6 +314,7 @@ ERROR_CLEAN_PROGRAM:
 ERROR_CLEAN_OPTIONS:
   free (modded_options);
 ERROR:
+  POCL_UNLOCK_OBJ(program);
   return errcode;
 }
 POsym(clBuildProgram)

@@ -229,3 +229,21 @@ Value is changed at global_id: 67599, local_id 3, group_id 16899, to: 854
 ])
 AT_CHECK([POCL_WORK_GROUP_METHOD=loops $abs_top_builddir/tests/regression/test_assign_loop_variable_to_privvar_makes_it_local], 0, expout)
 AT_CLEANUP
+
+AT_SETUP([assigning a loop iterator variable to a private makes it local 2 - issue 102 (repl)])
+AT_KEYWORDS([regression looppriv])
+AT_DATA([expout],
+[changing the value at global_id: 6, local_id 2, group_id 1, to: 3
+value is changed at global_id: 6, local_id 2, group_id 1, to: 3
+])
+AT_CHECK([POCL_WORK_GROUP_METHOD=repl $abs_top_builddir/tests/regression/test_assign_loop_variable_to_privvar_makes_it_local_2], 0, expout)
+AT_CLEANUP
+
+AT_SETUP([assigning a loop iterator variable to a private makes it local 2 - issue 102 (loops)])
+AT_KEYWORDS([regression looppriv])
+AT_DATA([expout],
+[changing the value at global_id: 6, local_id 2, group_id 1, to: 3
+value is changed at global_id: 6, local_id 2, group_id 1, to: 3
+])
+AT_CHECK([POCL_WORK_GROUP_METHOD=loops $abs_top_builddir/tests/regression/test_assign_loop_variable_to_privvar_makes_it_local_2], 0, expout)
+AT_CLEANUP

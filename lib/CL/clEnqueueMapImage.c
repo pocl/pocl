@@ -139,7 +139,9 @@ CL_API_SUFFIX__VERSION_1_0
   mapping_info->host_ptr = map;
   mapping_info->offset = offset;
   mapping_info->size = 0;/* not needed ?? */
+  POCL_LOCK_OBJ (image);
   DL_APPEND (image->mappings, mapping_info);
+  POCL_UNLOCK_OBJ (image);
 
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MAP_IMAGE, 
                                  event, num_events_in_wait_list, 

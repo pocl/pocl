@@ -43,6 +43,7 @@ POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
   if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
     POCL_ABORT_UNIMPLEMENTED();
 
+  POCL_LOCK_OBJ (command_queue);
   /* loop until queue given as parameter is empty. If command in queue has 
      unsubmitted/uncomplete event move on to command_queue assosiated with that
      event */
@@ -87,7 +88,7 @@ POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
     }
 
   exec_commands(ready_list);
-
+  POCL_UNLOCK_OBJ (command_queue);
   return CL_SUCCESS;
 }
 POsym(clFinish)

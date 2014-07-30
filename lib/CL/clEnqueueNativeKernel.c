@@ -59,23 +59,23 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
 
   /* Specification specifies that args passed to user_func is a copy of the
    * one passed to this function */
-  args_copy = malloc(cb_args);
+  args_copy = malloc (cb_args);
   if (args_copy == NULL)
     {
-      free(command_node);
+      free (command_node);
       return CL_OUT_OF_HOST_MEMORY;
     }
-  memcpy(args_copy, args, cb_args);
+  memcpy (args_copy, args, cb_args);
 
   /* recopy the cl_mem object list to free them easily after run */
   mem_list_copy = malloc(num_mem_objects * sizeof(cl_mem));
   if (mem_list_copy == NULL)
     {
-      free(args_copy);
-      free(command_node);
+      free (args_copy);
+      free (command_node);
       return CL_OUT_OF_HOST_MEMORY;
     }
-  memcpy(mem_list_copy, mem_list, num_mem_objects * sizeof(cl_mem));
+  memcpy (mem_list_copy, mem_list, num_mem_objects * sizeof(cl_mem));
   command_node->command.native.mem_list = mem_list_copy;
 
   for (i = 0; i < num_mem_objects; i++)
@@ -86,9 +86,9 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
 
       if (mem_list[i] == NULL)
         {
-          free(args_copy);
-          free(mem_list_copy);
-          free(command_node);
+          free (args_copy);
+          free (mem_list_copy);
+          free (command_node);
           return CL_INVALID_MEM_OBJECT;
         }
 
@@ -112,7 +112,7 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
 
   POname(clRetainCommandQueue) (command_queue);
 
-  pocl_command_enqueue(command_queue, command_node);
+  pocl_command_enqueue (command_queue, command_node);
 
   return CL_SUCCESS;
 }
