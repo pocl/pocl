@@ -25,10 +25,12 @@ foreach(PROG ${PROGRAMS_TO_BUILD})
   target_link_libraries("${PROG}" ${POCLU_LINK_OPTIONS})
 endforeach()
 
-add_executable("test_assign_loop_variable_to_privvar_makes_it_local"
-               "test_assign_loop_variable_to_privvar_makes_it_local.c")
-target_link_libraries("test_assign_loop_variable_to_privvar_makes_it_local"
-               ${POCLU_LINK_OPTIONS})
+set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
+     test_assign_loop_variable_to_privvar_makes_it_local_2)
+foreach(PROG ${C_PROGRAMS_TO_BUILD})
+  add_executable("${PROG}" "${PROG}.c")
+  target_link_libraries("${PROG}" ${POCLU_LINK_OPTIONS})
+endforeach()
 
 
 ######################################################################
@@ -62,6 +64,9 @@ add_test("\"regression/undominated variable from conditional barrier handling (r
 add_test("\"regression/assigning a loop iterator variable to a private makes it local (repl)\""
                            "test_assign_loop_variable_to_privvar_makes_it_local")
 
+add_test("\"regression/assigning a loop iterator variable to a private makes it local 2 (repl)\""
+                           "test_assign_loop_variable_to_privvar_makes_it_local_2")
+
 set_tests_properties("\"regression/phi nodes not replicated (repl)\""
   "\"regression/issues with local pointers (repl)\""
   "\"regression/barrier between two for loops (repl)\""
@@ -74,6 +79,7 @@ set_tests_properties("\"regression/phi nodes not replicated (repl)\""
   "\"regression/infinite loop (repl)\""
   "\"regression/undominated variable from conditional barrier handling (repl)\""
   "\"regression/assigning a loop iterator variable to a private makes it local (repl)\""
+  "\"regression/assigning a loop iterator variable to a private makes it local 2 (repl)\""
   PROPERTIES
     ENVIRONMENT "POCL_WORK_GROUP_METHOD=workitemrepl"
     COST 1.5
@@ -108,6 +114,9 @@ add_test("\"regression/undominated variable from conditional barrier handling (l
 add_test("\"regression/assigning a loop iterator variable to a private makes it local (loops)\""
                            "test_assign_loop_variable_to_privvar_makes_it_local")
 
+add_test("\"regression/assigning a loop iterator variable to a private makes it local 2 (loops)\""
+                           "test_assign_loop_variable_to_privvar_makes_it_local_2")
+
 set_tests_properties("\"regression/phi nodes not replicated (loops)\""
   "\"regression/issues with local pointers (loops)\""
   "\"regression/barrier between two for loops (loops)\""
@@ -120,6 +129,7 @@ set_tests_properties("\"regression/phi nodes not replicated (loops)\""
   "\"regression/infinite loop (loops)\""
   "\"regression/undominated variable from conditional barrier handling (loops)\""
   "\"regression/assigning a loop iterator variable to a private makes it local (loops)\""
+  "\"regression/assigning a loop iterator variable to a private makes it local 2 (loops)\""
   PROPERTIES
     ENVIRONMENT "POCL_WORK_GROUP_METHOD=workitemloops"
     COST 1.5
@@ -172,3 +182,11 @@ endif()
 
 set_tests_properties("\"regression/struct kernel arguments\""
   PROPERTIES  WILL_FAIL 1)
+
+set_tests_properties(
+  "\"regression/assigning a loop iterator variable to a private makes it local 2 (repl)\""
+  "\"regression/assigning a loop iterator variable to a private makes it local 2 (loops)\""
+    PROPERTIES PASS_REGULAR_EXPRESSION
+"changing the value at global_id: 6, local_id 2, group_id 1, to: 3
+value is changed at global_id: 6, local_id 2, group_id 1, to: 3
+")
