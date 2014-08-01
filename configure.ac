@@ -515,7 +515,8 @@ AC_SUBST([OPENCL_EXTLIBS])
 # Option to install OpenCL header files
 # By default, do not install them unless none are found in the system include directories
 AC_ARG_ENABLE([install-opencl-headers],
-              [AS_HELP_STRING([--enable-install-opencl-headers], [install OpenCL headers. Ones from Kronos should be installed instead.])],
+              [AS_HELP_STRING([--enable-install-opencl-headers],
+              [install OpenCL headers. Ones from Khronos should be installed instead.])],
               [ioh="$enableval"],
               [ioh="default"])
 
@@ -533,23 +534,13 @@ fi
 
 AM_CONDITIONAL(INSTALL_OPENCL_HEADERS, test "$ioh" = "yes")
 
-# Check cl.hpp usability. It is broken on a few platforms.
-clhpp="no"
-AC_LANG_PUSH([C++])
-AC_CHECK_HEADERS([OpenCL/cl.hpp CL/cl.hpp], [clhpp="yes"; break])
-AC_LANG_POP([C++])
-
-if test x"$clhpp" == xyes
-then
-  AC_CHECK_HEADERS([GL/gl.h OpenGL/OpenGL.h], [opengl_found="ok"; break])
-  test -z "$opengl_found" && AC_MSG_FAILURE([Please install an OpenGL implementation with gl.h or OpenGL.h. It is required by the C++ bindings.])
-  AM_CONDITIONAL([HAVE_OPENCL_HPP], true)
-  AC_DEFINE([HAVE_OPENCL_HPP], [] ,[Defined if system cl.hpp found to be working])
-else
-  AM_CONDITIONAL([HAVE_OPENCL_HPP], false)
-  AC_MSG_NOTICE([cl.hpp not available - a few tests will be skipped])
-fi
-
+# Check for OpenGL.h headers as they are required to compile
+# test cases that use cl.hpp (which requires it).
+AC_CHECK_HEADERS([GL/gl.h OpenGL/OpenGL.h], [opengl_found="ok"; break])
+test -z "$opengl_found" && \
+AC_MSG_FAILURE([Please install an OpenGL implementation with gl.h or OpenGL.h. It is required by the C++ bindings.])
+AM_CONDITIONAL([HAVE_OPENCL_HPP], true)
+AC_DEFINE([HAVE_OPENCL_HPP], [] ,[Defined if system cl.hpp found to be working])
 
 # libtool dynamic library handling library
 old_LIBS="$LIBS"
