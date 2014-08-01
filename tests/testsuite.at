@@ -103,7 +103,7 @@ AT_CLEANUP
 AT_SETUP([Kernel functions printf])
 # On 32-bit x86, accessing int4 via va_arg segfaults (wrong alignment?)
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q i686])
-AT_XFAIL_IF([! grep -q "#define LLVM_3_4" $abs_top_builddir/config.h])
+AT_XFAIL_IF([! egrep -q "#define LLVM_3_4|#define LLVM_3_5" $abs_top_builddir/config.h])
 AT_KEYWORDS([printf])
 AT_DATA([expout],
 [Running test test_printf...
