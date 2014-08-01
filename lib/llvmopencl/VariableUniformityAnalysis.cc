@@ -315,7 +315,7 @@ VariableUniformityAnalysis::isUniform(llvm::Function *f, llvm::Value* v) {
            ue = instruction->use_end();
          ui != ue; ++ui) {
       Instruction *user;
-      if ((user = dyn_cast<Instruction> (*ui)) == NULL) continue;
+      if ((user = dyn_cast<Instruction> (ui->getUser())) == NULL) continue;
       
       llvm::StoreInst *store = dyn_cast<llvm::StoreInst>(user);
       if (store) {

@@ -627,7 +627,7 @@ WorkitemLoops::FixMultiRegionVariables(ParallelRegion *region)
                ui != ue; ++ui) 
             {
               Instruction *user;
-              if ((user = dyn_cast<Instruction> (*ui)) == NULL) continue;
+              if ((user = dyn_cast<Instruction> (ui->getUser())) == NULL) continue;
               // If the instruction is used outside this region inside another
               // region (not in a regionless BB like the B-loop construct BBs),
               // need to context save it.
@@ -864,7 +864,7 @@ WorkitemLoops::AddContextSaveRestore
        ui != ue; ++ui) 
     {
       Instruction *user;
-      if ((user = dyn_cast<Instruction> (*ui)) == NULL) continue;
+      if ((user = dyn_cast<Instruction> (ui->getUser())) == NULL) continue;
       if (user == theStore) continue;
       uses.push_back(user);
     }

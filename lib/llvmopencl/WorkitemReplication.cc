@@ -203,7 +203,7 @@ WorkitemReplication::ProcessFunction(Function &F)
         for (Value::use_iterator i4 = i3->use_begin(), e4 = i3->use_end();
              i4 != e4; ++i4) {
           // Instructions can only be used by instructions.
-          Instruction *user = cast<Instruction> (*i4);
+          Instruction *user = cast<Instruction> (i4->getUser());
           
           if (find (pr->begin(), pr->end(), user->getParent()) ==
               pr->end()) {
