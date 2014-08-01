@@ -1289,12 +1289,13 @@ pocl_llvm_get_kernel_names( cl_program program, const char **knames, unsigned ma
 }
 
 /* Run LLVM codegen on input file (parallel-optimized).
- * output native object file. */
+ *
+ * Output native object file. */
 int
-pocl_llvm_codegen( cl_kernel kernel,
-                   cl_device_id device,
-                   const char *infilename,
-                   const char *outfilename)
+pocl_llvm_codegen(cl_kernel kernel,
+                  cl_device_id device,
+                  const char *infilename,
+                  const char *outfilename)
 {
     std::string error;
     SMDiagnostic Err;
