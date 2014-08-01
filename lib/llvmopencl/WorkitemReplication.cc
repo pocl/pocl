@@ -206,7 +206,7 @@ WorkitemReplication::ProcessFunction(Function &F)
 #if defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4
           llvm::Instruction *user = cast<Instruction>(*i4);
 #else
-          llvm::Instruction *user = i4->getUser();
+          llvm::Instruction *user = cast<Instruction>(i4->getUser());
 #endif
           
           if (find (pr->begin(), pr->end(), user->getParent()) ==

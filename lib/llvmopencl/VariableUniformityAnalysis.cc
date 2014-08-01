@@ -317,7 +317,7 @@ VariableUniformityAnalysis::isUniform(llvm::Function *f, llvm::Value* v) {
 #if defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4
       llvm::Instruction *user = cast<Instruction>(*ui);
 #else
-      llvm::Instruction *user = ui->getUser();
+      llvm::Instruction *user = cast<Instruction>(ui->getUser());
 #endif
       if (user == NULL) continue;
       
