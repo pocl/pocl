@@ -87,7 +87,8 @@ int pocl_cpufreq_get_max()
  * @return The clock frequency in MHz, or -1 if couldn't figure it out.
  */
 int
-pocl_cpuinfo_detect_max_clock_frequency() {
+pocl_cpuinfo_detect_max_clock_frequency()
+{
   int cpufreq=-1;
   
   // First try to get the result from cpufreq interface.
@@ -135,8 +136,6 @@ pocl_cpuinfo_detect_max_clock_frequency() {
 }
 
 
-#ifndef ANDROID
-
 /**
  * Detects the number of parallel hardware threads supported by
  * the CPU by parsing the cpuinfo.
@@ -144,8 +143,8 @@ pocl_cpuinfo_detect_max_clock_frequency() {
  * @return The number of hardware threads, or -1 if couldn't figure it out.
  */
 int
-pocl_cpuinfo_detect_compute_unit_count() {
-
+pocl_cpuinfo_detect_compute_unit_count()
+{
   if (access (cpuinfo, R_OK) != 0) 
       return -1;
   else 
@@ -215,36 +214,34 @@ pocl_cpuinfo_detect_compute_unit_count() {
   return -1;  
 }
 
-#else
 
-#define CPU_NUM_CORES_NODE    "/sys/devices/system/cpu/possible"
+#define SYSFS_CPU_NUM_CORES_NODE    "/sys/devices/system/cpu/possible"
 
 int
-pocl_cpuinfo_detect_compute_unit_count()
+pocl_sysfs_detect_compute_unit_count()
 {
   int cores = -1;
 
-  FILE *fp = fopen(CPU_NUM_CORES_NODE, "r");
+  FILE *fp = fopen(SYSFS_CPU_NUM_CORES_NODE, "r");
 
   // cpu/possible will of format
   // 0        : for single-core devices
   // 0-(n-1)  : for n-core cpus
-  if(fp)
-  {
-    cores = fgetc(fp) - '0';
-    if(!feof(fp))         // If more than 1 cores
+  if (fp)
     {
-      fgetc(fp);          // Ignore '-'
-      fscanf(fp, "%d", &cores);
+      cores = fgetc(fp) - '0';
+      if (!feof(fp))         // If more than 1 cores
+        {
+          fgetc(fp);          // Ignore '-'
+          fscanf(fp, "%d", &cores);
+        }
+      fclose(fp);
+      cores ++;             // always printed as (n-1)
     }
-    fclose(fp);
-    cores ++;             // always printed as (n-1)
-  }
 
   return cores;
 }
 
-#endif
 
 void
 pocl_cpuinfo_append_cpu_name(cl_device_id device)
@@ -281,10 +278,18 @@ pocl_cpuinfo_append_cpu_name(cl_device_id device)
 void
 pocl_cpuinfo_detect_device_info(cl_device_id device) 
 {
-  if (device->max_compute_units == 0) {
-    if ((device->max_compute_units = pocl_cpuinfo_detect_compute_unit_count()) == -1)
-      device->max_compute_units = 0;
-  }
+  if (device->max_compute_units == 0)
+    {
+#ifndef ANDROID
+      device->max_compute_units = pocl_cpuinfo_detect_compute_unit_count();
+#else
+      /* sysfs node seems more suitable for android kernels */
+      device->max_compute_units = pocl_sysfs_detect_compute_unit_count();
+#endif
+    
+      if (device->max_compute_units == -1)
+        device->max_compute_units = 0;
+    }
 
   if ((device->max_clock_frequency = pocl_cpuinfo_detect_max_clock_frequency()) == -1)
     device->max_clock_frequency = 0;

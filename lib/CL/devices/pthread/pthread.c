@@ -315,12 +315,12 @@ allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t
       assert (region_size >= size);
 
       void* space = NULL;
-      space = memalign_alloc(alignment, region_size);
-      if(space == NULL)
+      space = pocl_memalign_alloc(alignment, region_size);
+      if (space == NULL)
         {
           /* Failed to allocate a large region. Fall back to allocating 
              the smallest possible region for the buffer. */
-	        space = memalign_alloc(alignment, size);
+	        space = pocl_memalign_alloc(alignment, size);
           if (space == NULL) 
             {
               BA_UNLOCK (d->mem_regions->mem_regions_lock);
@@ -355,7 +355,7 @@ allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t
 static int
 allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t size) 
 {
-  *memptr = memalign_alloc(alignment, size);
+  *memptr = pocl_memalign_alloc(alignment, size);
   return (((*memptr) == NULL)? -1: 0);
 }
 

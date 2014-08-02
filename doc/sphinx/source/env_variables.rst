@@ -47,11 +47,15 @@ below.
  Override the default "-O3" that is passed to the LLVM opt as a final
  optimization switch.
 
-* POCL_LEAVE_TEMP_DIRS
+* POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES
 
- If this is set to 1, the kernel compiler temporary directory that contains
- all the intermediate compiler files is left to /tmp. Otherwise, it is
- be cleaned in clReleaseProgram.
+ If this is set to 1, the kernel compiler cache/temporary directory that contains
+ all the intermediate compiler files are left as it is
+
+* POCL_CLEAR_KERNEL_CACHE
+
+  If kernel cache is enabled and this is set to 1, then kernel cache will be
+  forcefully cleared at each run
 
 * POCL_MAX_PTHREAD_COUNT
 

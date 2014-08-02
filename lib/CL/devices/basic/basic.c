@@ -358,10 +358,10 @@ pocl_basic_malloc (void *device_data, cl_mem_flags flags,
 
   if (flags & CL_MEM_COPY_HOST_PTR)
     {
-      b = memalign_alloc(MAX_EXTENDED_ALIGNMENT, size);
-      if(b != NULL)
+      b = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, size);
+      if (b != NULL)
         {
-          memcpy (b, host_ptr, size);
+          memcpy(b, host_ptr, size);
           return b;
         }
       
@@ -372,8 +372,8 @@ pocl_basic_malloc (void *device_data, cl_mem_flags flags,
     {
       return host_ptr;
     }
-  b = memalign_alloc(MAX_EXTENDED_ALIGNMENT, size);
-  if(b != NULL)
+  b = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, size);
+  if (b != NULL)
     return b;
   
   return NULL;
@@ -393,11 +393,12 @@ pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
         {
           b = mem_obj->mem_host_ptr;
         }
-      else {
-	        b = memalign_alloc(MAX_EXTENDED_ALIGNMENT, mem_obj->size);
+      else
+        {
+	        b = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, mem_obj->size);
 	        if (b == NULL)
             return CL_MEM_OBJECT_ALLOCATION_FAILURE;
-	        }
+	      }
 
       if (flags & CL_MEM_COPY_HOST_PTR)
         memcpy (b, mem_obj->mem_host_ptr, mem_obj->size);

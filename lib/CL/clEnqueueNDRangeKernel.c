@@ -169,9 +169,8 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
             kernel->name, 
             local_x, local_y, local_z);
 
-  if(access (tmpdir, F_OK) != 0) {
+  if (access (tmpdir, F_OK) != 0)
     mkdir (tmpdir, S_IRWXU);
-  }
   
   error = snprintf
           (parallel_filename, POCL_FILENAME_LENGTH,
@@ -217,10 +216,14 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
            kernel, local_x, local_y, local_z,
            parallel_filename, kernel_filename);
 
-      if (error) return error;
+      if (error)  return error;
 
-      if(access (kernel_filename, F_OK) == 0)
-        remove_file(kernel_filename);
+      /* Remove intermediate files and save some space in kernel cache */
+      if (!pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
+        {
+          if (access (kernel_filename, F_OK) == 0)
+            pocl_remove_file(kernel_filename);
+        }
     }
   
   error = pocl_create_command (&command_node, command_queue,

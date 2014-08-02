@@ -1,7 +1,7 @@
 /* pocl_llvm_api.cc: C wrappers for calling the LLVM/Clang C++ APIs to invoke
    the different kernel compilation phases.
 
-   Copyright (c) 2013 Kalle Raiskila
+   Copyright (c) 2013 Kalle Raiskila 
                  2013-2014 Pekka Jääskeläinen
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -384,10 +384,12 @@ int pocl_llvm_build_program(cl_program program,
   if (*mod == NULL)
     return CL_BUILD_PROGRAM_FAILURE;
 
-#ifndef KERNEL_CACHE
-  if (pocl_get_bool_option("POCL_LEAVE_TEMP_DIRS", 0))
+#ifndef POCL_KERNEL_CACHE
+  if (pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
 #endif
   {
+    /* Retain program.bc in case of kernel-cache or
+        when POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES is set to 1 */
     write_temporary_file(*mod, binary_file_name);
   }
 
@@ -553,9 +555,8 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
             device_tmpdir, kernel_name);
 
-  if(access (tmpdir, F_OK) != 0) {
+  if (access (tmpdir, F_OK) != 0)
     mkdir(tmpdir, S_IRWXU);
-	}
 
   (void) snprintf(descriptor_filename, POCL_FILENAME_LENGTH,
                     "%s/%s/descriptor.so", device_tmpdir, kernel_name);
@@ -588,8 +589,8 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
           os.flush();
           exit(1);
         }
-
-      remove_file(binary_filename);
+      if (!pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
+        pocl_remove_file(binary_filename);
     }
 
 
@@ -732,45 +733,48 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   // gets added to this file. No checks seem to fail if that file
   // is missing though, so it is left out from there for now
   std::string kobj_s = descriptor_filename; 
-  kobj_s += ".kernel_obj.c"; 
-  FILE *kobj_c = fopen( kobj_s.c_str(), "wc");
- 
-  fprintf(kobj_c, "\n #include <pocl_device.h>\n");
+  kobj_s += ".kernel_obj.c";
 
-  fprintf(kobj_c,
-    "void _%s_workgroup(void** args, struct pocl_context*);\n", kernel_name);
-  fprintf(kobj_c,
-    "void _%s_workgroup_fast(void** args, struct pocl_context*);\n", kernel_name);
+  if(access(kobj_s.c_str(), F_OK) != 0)
+    {
+      FILE *kobj_c = fopen( kobj_s.c_str(), "wc");
 
-  fprintf(kobj_c,
-    "__attribute__((address_space(3))) __kernel_metadata _%s_md = {\n", kernel_name);
-  fprintf(kobj_c,
-    "     \"%s\", /* name */ \n", kernel_name );
-  fprintf(kobj_c,"     %d, /* num_args */\n", kernel->num_args);
-  fprintf(kobj_c,"     %d, /* num_locals */\n", kernel->num_locals);
+      fprintf(kobj_c, "\n #include <pocl_device.h>\n");
+
+      fprintf(kobj_c,
+        "void _%s_workgroup(void** args, struct pocl_context*);\n", kernel_name);
+      fprintf(kobj_c,
+        "void _%s_workgroup_fast(void** args, struct pocl_context*);\n", kernel_name);
+
+      fprintf(kobj_c,
+        "__attribute__((address_space(3))) __kernel_metadata _%s_md = {\n", kernel_name);
+      fprintf(kobj_c,
+        "     \"%s\", /* name */ \n", kernel_name );
+      fprintf(kobj_c,"     %d, /* num_args */\n", kernel->num_args);
+      fprintf(kobj_c,"     %d, /* num_locals */\n", kernel->num_locals);
 #if 0
-  // These are not used anymore. The launcher knows the arguments
-  // and sets them up, the device just obeys and launches with
-  // whatever arguments it gets. Remove if none of the private
-  // branches need them neither.
-  fprintf( kobj_c," #if _%s_NUM_LOCALS != 0\n",   kernel_name  );
-  fprintf( kobj_c,"     _%s_LOCAL_SIZE,\n",       kernel_name  );
-  fprintf( kobj_c," #else\n"    );
-  fprintf( kobj_c,"     {0}, \n"    );
-  fprintf( kobj_c," #endif\n"    );
-  fprintf( kobj_c,"     _%s_ARG_IS_LOCAL,\n",    kernel_name  );
-  fprintf( kobj_c,"     _%s_ARG_IS_POINTER,\n",  kernel_name  );
-  fprintf( kobj_c,"     _%s_ARG_IS_IMAGE,\n",    kernel_name  );
-  fprintf( kobj_c,"     _%s_ARG_IS_SAMPLER,\n",  kernel_name  );
+      // These are not used anymore. The launcher knows the arguments
+      // and sets them up, the device just obeys and launches with
+      // whatever arguments it gets. Remove if none of the private
+      // branches need them neither.
+      fprintf( kobj_c," #if _%s_NUM_LOCALS != 0\n",   kernel_name  );
+      fprintf( kobj_c,"     _%s_LOCAL_SIZE,\n",       kernel_name  );
+      fprintf( kobj_c," #else\n"    );
+      fprintf( kobj_c,"     {0}, \n"    );
+      fprintf( kobj_c," #endif\n"    );
+      fprintf( kobj_c,"     _%s_ARG_IS_LOCAL,\n",    kernel_name  );
+      fprintf( kobj_c,"     _%s_ARG_IS_POINTER,\n",  kernel_name  );
+      fprintf( kobj_c,"     _%s_ARG_IS_IMAGE,\n",    kernel_name  );
+      fprintf( kobj_c,"     _%s_ARG_IS_SAMPLER,\n",  kernel_name  );
 #endif
-  fprintf( kobj_c,"     _%s_workgroup_fast\n",   kernel_name  );
-  fprintf( kobj_c," };\n");
-  fclose(kobj_c);
-
+      fprintf( kobj_c,"     _%s_workgroup_fast\n",   kernel_name  );
+      fprintf( kobj_c," };\n");
+      fclose(kobj_c);
+   }
+#endif
 
   pocl_llvm_get_kernel_arg_metadata(kernel_name, input, kernel);
 
-#endif
   return 0;
 }
 
@@ -955,7 +959,7 @@ static PassManager& kernel_compiler_passes
      restore code (PHIs need to be at the beginning of the BB and so one cannot
      context restore them with non-PHI code if the value is needed in another PHI). */
 
-  std::vector<std::string> passes;  
+  std::vector<std::string> passes;
   passes.push_back("workitem-handler-chooser");
   passes.push_back("mem2reg");
   passes.push_back("domtree");
