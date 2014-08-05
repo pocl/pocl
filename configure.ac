@@ -104,7 +104,10 @@ case "$LLVM_VERSION" in
      AC_DEFINE([LLVM_3_4], [], "Using LLVM 3.4")     
    ;;   
      3.5*)
-     AC_DEFINE([LLVM_3_5], [], "Using upcoming LLVM 3.5")
+     AC_DEFINE([LLVM_3_5], [], "Using LLVM 3.5")
+   ;;   
+     3.6*)
+     AC_DEFINE([LLVM_3_5], [], "Using upcoming LLVM 3.6")
    ;;
      *)
    AC_MSG_ERROR(
