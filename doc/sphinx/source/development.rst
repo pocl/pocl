@@ -55,6 +55,14 @@ installed in the system).  There are now two options for such a loder:
 the open source ocl-icd loader and the Khronos supplied loader with a
 patch applied.
 
+Debugging a Failed Test
+^^^^^^^^^^^^^^^^^^^^^^^
+
+If there are failing tests in the suite, the usual way to start
+debugging is to look what was printed to the logs for the failing
+cases. After running the test suite, the logs are stored under
+``tests/testsuite.dir/[testcasenumber]/``.  
+
 Ocl-icd
 -------
 
