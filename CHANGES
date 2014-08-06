@@ -1,13 +1,25 @@
 0.10 unreleased
 ===============
 
-[updated from git log last time on 2014-02-03]
+This lists only the most interesting changes. Please
+refer to the version control log for a full listing.
+
+[updated from git log last time on 2014-08-03]
 
 Bugfixes
 --------
 - TCE: kernel building was broken when running pocl
   from install location 
 - thread-safety (as required since OpenCL 1.1) improved
+
+Kernel compiler
+---------------
+- Final code generation now done via LLVM API calls instead of
+  calling the llc binary.
+
+OpenCL C Builtin Function Implementations
+-----------------------------------------
+- Improved support for halfN functions.
 
 OpenCL Runtime/Platform API support
 -----------------------------------
@@ -18,6 +30,7 @@ OpenCL Runtime/Platform API support
 - Checks in clSetKernelArgs() for argument validity
 - Checks in clEnqueueNDRange() for arguments to be all set
 - Implement clGetKernelArgInfo()
+- clEnqueueCopyImage() 
 
 Misc
 ----
