@@ -111,8 +111,12 @@ AT_CLEANUP
 AT_SETUP([vector kernel arguments - lp:987905])
 AT_KEYWORDS([regression vectorarg])
 AT_SKIP_IF([! grep "#define HAVE_OPENCL_HPP" $abs_top_builddir/config.h])
-#this test fails with an assert. If asserts are off, it succeeds
+# This test fails with an assert. If asserts are off, it succeeds.
+# It fails depending if the argument list generated to the kernel
+# function happens to be 1:1 with the clKernelSetArgs indices or not
+# and that depends on the CC/ABI of the target at hand.
 AT_XFAIL_IF([grep LLVM_CXX_FLAGS $abs_top_builddir/config.log | grep -q -v DNDEBUG])
+AT_XFAIL_IF([grep LLVM_CXX_FLAGS $abs_top_builddir/config.log | grep -q _DEBUG])
 AT_CHECK([$abs_top_builddir/tests/regression/test_vectors_as_args], 0)
 AT_CLEANUP
 
