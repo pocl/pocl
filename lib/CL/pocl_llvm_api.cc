@@ -901,7 +901,7 @@ static PassManager& kernel_compiler_passes
      restore code (PHIs need to be at the beginning of the BB and so one cannot
      context restore them with non-PHI code if the value is needed in another PHI). */
 
-  std::vector<std::string> passes;
+  std::vector<std::string> passes;  
   passes.push_back("workitem-handler-chooser");
   passes.push_back("mem2reg");
   passes.push_back("domtree");
@@ -927,6 +927,11 @@ static PassManager& kernel_compiler_passes
   passes.push_back("allocastoentry");
   passes.push_back("workgroup");
   passes.push_back("target-address-spaces");
+  // Later passes might get confused (and expose possible bugs in them) due to
+  // UNREACHABLE blocks left by repl. So let's clean up the CFG before running the
+  // standard LLVM optimizations.
+  passes.push_back("simplifycfg");
+  //passes.push_back("print-module");
 
   /* This is a beginning of the handling of the fine-tuning parameters.
    * TODO: POCL_KERNEL_COMPILER_OPT_SWITCH
@@ -984,7 +989,15 @@ static PassManager& kernel_compiler_passes
   else if (wi_vectorizer) 
     {
       /* The legacy repl based WI autovectorizer. Deprecated but 
-         for still needed by some legacy TTA machines. */
+         still needed by some legacy TCE research machines. A known problem
+         is that it traverses instruction uses incorrectly, not calling getUser() 
+         like LLVM 3.5 API requires. 
+
+         All in all it is an unmaintable hack on top of an old BBVectorizer that was 
+         added for a research prototype core. We should move on towards using the
+         loop vectorizer as the main autovectorizer for a cleaner pass chain.  */
+      std::cerr << "pocl warning: wi-vectorize is deprecated and will be removed "
+                << "in pocl 0.11. It might not work correctly with LLVM 3.5.\n";
       passes.push_back("STANDARD_OPTS");
       passes.push_back("wi-vectorize");
       llvm::cl::Option *O;
