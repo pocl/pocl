@@ -269,7 +269,7 @@ AT_CLEANUP
 
 POAT_AMDSDK_SETUP([scanlargearrays])
 # Fails with vectorization. With wiloops and no unrolling, the vectorization won't apply.
-AT_CHECK_UNQUOTED([POCL_VECTORIZE_WORK_GROUPS=1 make test_ScanLargeArrays -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
+AT_CHECK_UNQUOTED([make test_ScanLargeArrays -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
 AT_CLEANUP

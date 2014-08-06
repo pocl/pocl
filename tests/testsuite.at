@@ -230,7 +230,7 @@ AT_DATA([expout],
 [Running test test_bitselect...
 OK
 ])
-AT_CHECK([POCL_VECTORIZE_WORK_GROUPS=0 $abs_top_builddir/tests/kernel/kernel test_bitselect], 0, expout)
+AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_bitselect], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions fabs signbit isfinite isinf isnan isnormal copysign ilogb ldexp])
