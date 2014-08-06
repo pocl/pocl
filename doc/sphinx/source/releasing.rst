@@ -46,9 +46,7 @@ A checklist and hints for testing and making a release successfully:
 * Request for testers in Twitter and/or mailing list. Point the testers to
   send their test reports to you privately or by adding them to the wiki.
   A good way is to create a wiki page for the release schedule and a test
-  log. As an example, check these pages for the 0.9 release:
-  The `release plan <https://sourceforge.net/apps/mediawiki/pocl/index.php?title=Release_plan_for_pocl_0.9>`_ and the
-  `testing log <https://sourceforge.net/apps/mediawiki/pocl/index.php?title=ReleaseTestLog>`_.    
+  log. 
 * To publish a release, after testing it thoroughly, rename the latest RC
   tar ball to omit the rcX tag, e.g.,
   pocl-0.10.tar.gz. Upload the tar ball to the sourceforge download page and 
@@ -58,7 +56,6 @@ A checklist and hints for testing and making a release successfully:
   be easily circulated in IRC, for example.
 * Update the web page with the release information.
 * Announce everywhere you can. At least in Twitter and the mailing list.
-* Update the freshmeat.net page with the new release info.
 
 In case of any problems, ask any previous release manager for help.
 Previous releases were managed by the following pocl developers:
