@@ -923,6 +923,7 @@ static PassManager& kernel_compiler_passes
   passes.push_back("isolate-regions");
   passes.push_back("wi-aa");
   passes.push_back("workitemrepl");
+  //passes.push_back("print-module");
   passes.push_back("workitemloops");
   passes.push_back("allocastoentry");
   passes.push_back("workgroup");
