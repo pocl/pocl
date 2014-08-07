@@ -1,0 +1,46 @@
+Index: test/CodeGen/blocks-opencl.cl
+===================================================================
+--- test/CodeGen/blocks-opencl.cl	(revision 0)
++++ test/CodeGen/blocks-opencl.cl	(revision 0)
+@@ -0,0 +1,16 @@
++// RUN: %clang_cc1 -O0 %s -ffake-address-space-map -emit-llvm -o - -fblocks -triple x86_64-unknown-unknown | FileCheck %s
++// This used to crash due to trying to generate a bitcase from a cstring
++// in the constant address space to i8* in AS0.
++
++void dummy(float (^op)(float))
++{
++}
++
++// CHECK: i8 addrspace(3)* getelementptr inbounds ([9 x i8] addrspace(3)* @.str, i32 0, i32 0)
++
++kernel void test_block()
++{
++  float (^X)(float) = ^(float x) { return x + 42.0f; };
++  dummy(X);
++}
++
+Index: lib/CodeGen/CGBlocks.cpp
+===================================================================
+--- lib/CodeGen/CGBlocks.cpp	(revision 214957)
++++ lib/CodeGen/CGBlocks.cpp	(working copy)
+@@ -79,6 +79,11 @@
+ 
+   llvm::Type *ulong = CGM.getTypes().ConvertType(C.UnsignedLongTy);
+   llvm::Type *i8p = CGM.getTypes().ConvertType(C.VoidPtrTy);
++  llvm::Type *constCstr = i8p;
++  if (CGM.getLangOpts().OpenCL)
++    constCstr = 
++      llvm::Type::getInt8PtrTy(
++           CGM.getLLVMContext(), C.getTargetAddressSpace(LangAS::opencl_constant));
+ 
+   SmallVector<llvm::Constant*, 6> elements;
+ 
+@@ -105,7 +110,7 @@
+   std::string typeAtEncoding =
+     CGM.getContext().getObjCEncodingForBlock(blockInfo.getBlockExpr());
+   elements.push_back(llvm::ConstantExpr::getBitCast(
+-                          CGM.GetAddrOfConstantCString(typeAtEncoding), i8p));
++                          CGM.GetAddrOfConstantCString(typeAtEncoding), constCstr));
+   
+   // GC layout.
+   if (C.getLangOpts().ObjC1) {
