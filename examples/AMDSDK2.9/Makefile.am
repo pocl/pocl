@@ -45,11 +45,11 @@ build: $(testsuite_src_dir)
 	find . -name "CMakeLists.txt" -exec sed -i \
 		-e 's/mark_as_advanced( OPENCL_LIBRARIES )/set(OPENCL_LIBRARIES "-lOpenCL")/g' \
 		-e 's/mark_as_advanced(OPENCL_LIBRARIES)/set(OPENCL_LIBRARIES "-lOpenCL")/g' "{}" \; && \
-	cmake \
+	LDFLAGS="-pthread " cmake \
 		-DBUILD_OPENCL=ON \
 		-DBUILD_OPENCV=OFF \
 		-DBUILD_BOLT=OFF .;\
-	make -k
+	make -sk
 
 test_AsyncDataTransfer:
 	cd $(amd_app_dir) && \
