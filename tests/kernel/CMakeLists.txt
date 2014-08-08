@@ -42,9 +42,6 @@ set_tests_properties( "kernel/test_as_type" "kernel/test_bitselect"
     PROCESSORS 1
     DEPENDS "pocl_version_check")
 
-set_tests_properties("kernel/test_bitselect"
-  PROPERTIES
-    ENVIRONMENT "POCL_VECTORIZE_WORK_GROUPS=0")
 
 
 add_test("kernel/test_min_max" "kernel" "test_min_max")

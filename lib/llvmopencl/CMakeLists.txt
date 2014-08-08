@@ -30,7 +30,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS}")
 # This library (just a bunch of objects really) is linked against libpocl
 # to call the kernel compiler passes directly from the host library.
 #noinst_LTLIBRARIES = libllvmpasses.la
-add_library("llvmpasses" OBJECT ${LLVMPASSES_SOURCES})
+add_library("llvmpasses" OBJECT ${LLVMPASSES_SOURCES} "linker.cpp" "linker.h")
 
 # This creates a separate llvmopencl.so that is loaded to 'opt'
 # for the pocl-workgroup version.

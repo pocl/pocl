@@ -173,7 +173,7 @@ if(POWERPC)
   endif()
 endif()
 
-if(X86_64)
+if((LLVM_CXXFLAGS MATCHES "_DEBUG") OR (NOT LLVM_CXXFLAGS MATCHES "DNDEBUG"))
   set_tests_properties("\"regression/vector kernel arguments\""
     PROPERTIES  WILL_FAIL 1)
 endif()
