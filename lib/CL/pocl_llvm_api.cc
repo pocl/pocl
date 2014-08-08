@@ -768,7 +768,6 @@ static llvm::TargetOptions GetTargetOptions() {
 #endif
   return Options;
 }
-
 // Returns the TargetMachine instance or zero if no triple is provided.
 static TargetMachine* GetTargetMachine(cl_device_id device,
  const std::vector<std::string>& MAttrs=std::vector<std::string>()) {
@@ -777,13 +776,16 @@ static TargetMachine* GetTargetMachine(cl_device_id device,
   Triple TheTriple(device->llvm_target_triplet);
   std::string MCPU =  device->llvm_cpu ? device->llvm_cpu : "";
   const Target *TheTarget = 
-    TargetRegistry::lookupTarget("" /*MArch*/, TheTriple,
-                                 Error);
-  // Some modules don't specify a triple, and this is okay.
-  if (!TheTarget) {
+    TargetRegistry::lookupTarget("", TheTriple, Error);
+  
+  // In LLVM 3.4 and earlier, the target registry falls back to 
+  // the cpp backend in case a proper match was not found. In 
+  // that case simply do not use target info in the compilation 
+  // because it can be an off-tree target not registered at
+  // this point (read: TCE).
+  if (!TheTarget || TheTarget->getName() == std::string("cpp")) {
     return 0;
   }
-
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;
   if (MAttrs.size()) {
@@ -864,15 +866,17 @@ static PassManager& kernel_compiler_passes
   TargetMachine *Machine = GetTargetMachine(device);
   // Add internal analysis passes from the target machine.
 #ifndef LLVM_3_2
-  Machine->addAnalysisPasses(*Passes);
+  if (Machine != NULL)
+    Machine->addAnalysisPasses(*Passes);
 #endif
 
-  if (module_data_layout != "")
-    #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+  if (module_data_layout != "") {
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
     Passes->add(new DataLayout(module_data_layout));
-    #else
+#else
     Passes->add(new DataLayoutPass(DataLayout(module_data_layout)));
-    #endif
+#endif
+  }
 
   /* Disables automated generation of libcalls from code patterns. 
      TCE doesn't have a runtime linker which could link the libs later on.
@@ -1121,7 +1125,7 @@ kernel_library
 #ifdef LLVM_3_2 
       else if (triple.getArch() == Triple::cellspu) 
         {
-          kernellib += "cellspu";
+          kernellib += "cellspu"; 
         }
 #endif
       else 
@@ -1318,18 +1322,21 @@ pocl_llvm_codegen(cl_kernel kernel,
     llvm::PassManager PM;
     llvm::TargetLibraryInfo *TLI = new TargetLibraryInfo(triple);
     PM.add(TLI);
+    if (target != NULL) {
 #if defined LLVM_3_2
-    PM.add(new TargetTransformInfo(target->getScalarTargetTransformInfo(),
-                                   target->getVectorTargetTransformInfo()));
+      PM.add(new TargetTransformInfo(target->getScalarTargetTransformInfo(),
+                                     target->getVectorTargetTransformInfo()));
 #else
-    target->addAnalysisPasses(PM);
+      target->addAnalysisPasses(PM);
 #endif
+    }
 
     // TODO: get DataLayout from the 'device'
 #if defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4
-    const DataLayout *TD;
-    TD = target->getDataLayout();
-    if (TD)
+    const DataLayout *TD = NULL;
+    if (target != NULL)
+      TD = target->getDataLayout();
+    if (TD != NULL)
         PM.add(new DataLayout(*TD));
     else
         PM.add(new DataLayout(input));
