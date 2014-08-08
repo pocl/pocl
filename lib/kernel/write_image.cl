@@ -22,7 +22,6 @@
 */
 
 #include "templates.h"
-#include "image.h"
 #include "pocl_image_rw_utils.h"
 
 #if (__clang_major__ == 3) && (__clang_minor__ >= 5)

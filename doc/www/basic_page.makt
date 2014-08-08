@@ -41,7 +41,8 @@
           <li class="menu_item"><a href="docs/html" class="menu_link">Documentation</a></li>
           <li class="menu_item"><a href="development.html" class="menu_link">Development</a></li>
           <li class="menu_item"><a href="discussion.html" class="menu_link">Discussion</a></li>
-          <li class="menu_item"><a href="http://sourceforge.net/apps/mediawiki/pocl" class="menu_link">Wiki</a></li>
+## Wiki is gone.
+##          <li class="menu_item"><a href="http://sourceforge.net/apps/mediawiki/pocl" class="menu_link">Wiki</a></li>
 ##          <li class="menu_item"><a href="publications.html" class="menu_link">Publications</a></li>
         </ul>
     </div>

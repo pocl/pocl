@@ -18,7 +18,7 @@ AT_BANNER([Rodinia 2.0.1 tests])
 
 POAT_ROD_SETUP([backprop],[long])
 POAT_ROD_CHECK_BUILD([backprop],[ | egrep -v "^backprop_ocl.cpp:"])
-AT_CHECK_UNQUOTED([cd $abs_top_builddir/examples/Rodinia/rodinia_2.0.1/opencl/backprop; POCL_VECTORIZE_WORK_GROUPS=0  ./run | grep .], 0,
+AT_CHECK_UNQUOTED([cd $abs_top_builddir/examples/Rodinia/rodinia_2.0.1/opencl/backprop; ./run | grep .], 0,
 [Random number generator seed: 7
 Input layer size : 65536
 Starting training kernel

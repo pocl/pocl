@@ -52,6 +52,7 @@ AT_CHECK_UNQUOTED([POCL_WORK_GROUP_METHOD=loops make test_BinomialOption -sC $ab
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([binomialoptionmultigpu])
+AT_SKIP_IF([ ! test -e $abs_top_builddir/examples/AMDSDK2.9/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/BinomialOptionMultiGPU/bin/x86_64/Release/BinomialOptionMultiGPU])
 AT_CHECK_UNQUOTED([make test_BinomialOptionMultiGPU -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])
@@ -325,6 +326,7 @@ AT_CLEANUP
 
 POAT_AMDSDK_SETUP([mandelbrot])
 AT_SKIP_IF([ grep "undef HAVE_GLEW" $abs_top_builddir/config.h ])
+AT_SKIP_IF([ ! test -e $abs_top_builddir/examples/AMDSDK2.9/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/Mandelbrot/bin/x86_64/Release/Mandelbrot])
 # undefined symbol: _Z7std_fmaDv4_fS_S_ with VML
 AT_CHECK_UNQUOTED([make test_Mandelbrot -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
@@ -441,6 +443,7 @@ AT_CLEANUP
 
 POAT_AMDSDK_SETUP([nbody])
 AT_SKIP_IF([ grep "undef HAVE_GLEW" $abs_top_builddir/config.h ])
+AT_SKIP_IF([ ! test -e $abs_top_builddir/examples/AMDSDK2.9/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/NBody/bin/x86_64/Release/NBody])
 AT_CHECK_UNQUOTED([make test_NBody -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])
@@ -478,7 +481,7 @@ AT_CLEANUP
 
 POAT_AMDSDK_SETUP([scanlargearrays])
 # Fails with vectorization. With wiloops and no unrolling, the vectorization won't apply.
-AT_CHECK_UNQUOTED([POCL_VECTORIZE_WORK_GROUPS=1 make test_ScanLargeArrays -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
+AT_CHECK_UNQUOTED([make test_ScanLargeArrays -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])
 AT_CLEANUP

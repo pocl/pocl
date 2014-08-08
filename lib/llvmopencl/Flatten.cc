@@ -160,7 +160,12 @@ Flatten::runOnModule(Module &M)
 
     for (Value::use_iterator i = v->use_begin(), e = v->use_end();
 	 i != e; ++i) {
-      if (Instruction *ci = dyn_cast<Instruction>(*i)) {
+#if defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4
+      llvm::User *user = *i;
+#else
+      llvm::User *user = i->getUser();
+#endif
+      if (Instruction *ci = dyn_cast<Instruction>(user) {
         // Prevent infinite looping on recursive functions
         // (though OpenCL does not allow this?)
         Function *f = ci->getParent()->getParent();;

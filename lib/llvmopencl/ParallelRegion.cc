@@ -2,7 +2,7 @@
 // each kernel should run in parallel.
 // 
 // Copyright (c) 2011 Universidad Rey Juan Carlos and
-//               2012 Pekka Jääskeläinen / TUT
+//               2012-2014 Pekka Jääskeläinen / TUT
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -224,11 +224,11 @@ ParallelRegion::chainAfter(ParallelRegion *region)
  * These occur with conditional barriers. The head of the path
  * leading to the conditional barrier is shared by two PRs. The
  * first work-item defines which path is taken (by definition the
- * barrier is taken by all or none). The blocks in the branches
- * are in different regions which can contain branches to blocks
- * that are in known non-taken path. This method replaces the targets
- * of such branches with undefined BBs so they will be cleaned up by the 
- * optimizer.
+ * barrier is taken by all or none of the work-items). The blocks 
+ * in the branches are in different regions which can contain branches 
+ * to blocks that are in known non-taken path. This method replaces 
+ * the targets of such branches with undefined BBs so they will be cleaned 
+ * up by the optimizer.
  */
 void
 ParallelRegion::purge()

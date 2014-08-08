@@ -23,7 +23,6 @@
 */
 
 #include "templates.h"
-#include "image.h"
 
 #if (__clang_major__ == 3) && (__clang_minor__ >= 5)
 // Clang 3.5 crashes in case trying to cast to the private pointer,

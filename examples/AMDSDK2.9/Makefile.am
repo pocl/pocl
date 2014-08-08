@@ -37,18 +37,19 @@ all: $(testsuite_src_dir) build
 $(testsuite_src_dir): AMD-APP-SDK-v2.9-RC-lnx64.tgz
 	test -d $(testsuite_src_dir) || (cd $(testsuite_pocl_dir) && tar xzf AMD-APP-SDK-v2.9-RC-lnx64.tgz)
 
+# Some of the tests do not build with OpenGL 3.0. Just skip them by using make -k.
 build: $(testsuite_src_dir) 
-	cd $(testsuite_pocl_dir) && \
+	-cd $(testsuite_pocl_dir) && \
 	( patch -sNp1 < $(testsuite_pocl_dir)/AMDSDK2_9.patch || true ) && \
 	cd $(testsuite_src_dir)/samples/ && \
 	find . -name "CMakeLists.txt" -exec sed -i \
 		-e 's/mark_as_advanced( OPENCL_LIBRARIES )/set(OPENCL_LIBRARIES "-lOpenCL")/g' \
 		-e 's/mark_as_advanced(OPENCL_LIBRARIES)/set(OPENCL_LIBRARIES "-lOpenCL")/g' "{}" \; && \
-	cmake \
+	LDFLAGS="-pthread " cmake \
 		-DBUILD_OPENCL=ON \
 		-DBUILD_OPENCV=OFF \
 		-DBUILD_BOLT=OFF .;\
-	make
+	make -sk
 
 test_AsyncDataTransfer:
 	cd $(amd_app_dir) && \

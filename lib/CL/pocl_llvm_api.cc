@@ -1,7 +1,7 @@
 /* pocl_llvm_api.cc: C wrappers for calling the LLVM/Clang C++ APIs to invoke
    the different kernel compilation phases.
 
-   Copyright (c) 2013 Kalle Raiskila 
+   Copyright (c) 2013 Kalle Raiskila
                  2013-2014 Pekka Jääskeläinen
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -33,6 +33,7 @@
 #include "llvm/PassManager.h"
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Transforms/Utils/Cloning.h"
+
 #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
 #include "llvm/Linker.h"
 #else
@@ -83,6 +84,7 @@
 #include "pocl_runtime_config.h"
 #include "install-paths.h"
 #include "LLVMUtils.h"
+#include "linker.h"
 
 using namespace clang;
 using namespace llvm;
@@ -899,7 +901,7 @@ static PassManager& kernel_compiler_passes
      restore code (PHIs need to be at the beginning of the BB and so one cannot
      context restore them with non-PHI code if the value is needed in another PHI). */
 
-  std::vector<std::string> passes;
+  std::vector<std::string> passes;  
   passes.push_back("workitem-handler-chooser");
   passes.push_back("mem2reg");
   passes.push_back("domtree");
@@ -921,10 +923,16 @@ static PassManager& kernel_compiler_passes
   passes.push_back("isolate-regions");
   passes.push_back("wi-aa");
   passes.push_back("workitemrepl");
+  //passes.push_back("print-module");
   passes.push_back("workitemloops");
   passes.push_back("allocastoentry");
   passes.push_back("workgroup");
   passes.push_back("target-address-spaces");
+  // Later passes might get confused (and expose possible bugs in them) due to
+  // UNREACHABLE blocks left by repl. So let's clean up the CFG before running the
+  // standard LLVM optimizations.
+  passes.push_back("simplifycfg");
+  //passes.push_back("print-module");
 
   /* This is a beginning of the handling of the fine-tuning parameters.
    * TODO: POCL_KERNEL_COMPILER_OPT_SWITCH
@@ -982,7 +990,15 @@ static PassManager& kernel_compiler_passes
   else if (wi_vectorizer) 
     {
       /* The legacy repl based WI autovectorizer. Deprecated but 
-         for still needed by some legacy TTA machines. */
+         still needed by some legacy TCE research machines. A known problem
+         is that it traverses instruction uses incorrectly, not calling getUser() 
+         like LLVM 3.5 API requires. 
+
+         All in all it is an unmaintable hack on top of an old BBVectorizer that was 
+         added for a research prototype core. We should move on towards using the
+         loop vectorizer as the main autovectorizer for a cleaner pass chain.  */
+      std::cerr << "pocl warning: wi-vectorize is deprecated and will be removed "
+                << "in pocl 0.11. It might not work correctly with LLVM 3.5.\n";
       passes.push_back("STANDARD_OPTS");
       passes.push_back("wi-vectorize");
       llvm::cl::Option *O;
@@ -1178,16 +1194,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
   // and/or bitcode for each kernel.
   llvm::Module *libmodule = kernel_library(device, input);
   assert (libmodule != NULL);
-#ifdef LLVM_3_2
-  Linker TheLinker("pocl", input, Linker::PreserveSource);
-  Linker::LinkModules(input, libmodule, Linker::PreserveSource, &errmsg);
-#else
-  Linker TheLinker(input);
-  TheLinker.linkInModule(libmodule, Linker::PreserveSource, &errmsg);
-#endif
-  llvm::Module *linked_bc = TheLinker.getModule();
-
-  assert (linked_bc != NULL);
+  link(input, libmodule);
 
   /* Now finally run the set of passes assembled above */
   // TODO pass these as parameters instead, this is not thread safe!
@@ -1197,16 +1204,16 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
   pocl::LocalSize.addValue(local_z);
   KernelName = kernel->name;
 
-  #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
-  kernel_compiler_passes(device, linked_bc->getDataLayout()).run(*linked_bc);
-  #else
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+  kernel_compiler_passes(device, input->getDataLayout()).run(*input);
+#else
   kernel_compiler_passes(device,
-                         linked_bc->getDataLayout()->getStringRepresentation())
-                        .run(*linked_bc);
-  #endif
+                         input->getDataLayout()->getStringRepresentation())
+                        .run(*input);
+#endif
 
   // TODO: don't write this once LLC is called via API, not system()
-  write_temporary_file(linked_bc, parallel_filename);
+  write_temporary_file(input, parallel_filename);
 
 #ifndef LLVM_3_2
   // In LLVM 3.2 the Linker object deletes the associated Modules.
@@ -1289,12 +1296,13 @@ pocl_llvm_get_kernel_names( cl_program program, const char **knames, unsigned ma
 }
 
 /* Run LLVM codegen on input file (parallel-optimized).
- * output native object file. */
+ *
+ * Output native object file. */
 int
-pocl_llvm_codegen( cl_kernel kernel,
-                   cl_device_id device,
-                   const char *infilename,
-                   const char *outfilename)
+pocl_llvm_codegen(cl_kernel kernel,
+                  cl_device_id device,
+                  const char *infilename,
+                  const char *outfilename)
 {
     std::string error;
     SMDiagnostic Err;

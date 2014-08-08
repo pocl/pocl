@@ -49,3 +49,27 @@ typedef __SIZE_TYPE__ size_t;
 typedef __PTRDIFF_TYPE__ ptrdiff_t;
 typedef ptrdiff_t intptr_t;
 typedef size_t uintptr_t;
+
+
+/* Image types.
+ * Note: there is a duplicate definition in
+ * lib/CL/devices/dev_image.h - keep in sync?
+ */
+typedef int dev_sampler_t;
+
+typedef struct dev_image_t {
+  void* data;
+  int width;
+  int height;
+  int depth;
+  int image_array_size;
+  int row_pitch;
+  int slice_pitch;
+  int num_mip_levels; /* maybe not needed */
+  int num_samples; /* maybe not needed */
+  int order;
+  int data_type;
+  int num_channels;
+  int elem_size;
+} dev_image_t;
+

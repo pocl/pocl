@@ -95,11 +95,31 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
   std::map<unsigned, unsigned> addrSpaceMap;
 
   if (arch.startswith("x86_64")) {
+#if defined LLVM_3_1 || defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4
     /* For x86_64 the default isel seems to work with the
        fake address spaces. Skip the processing as it causes 
        an overhead and is not fully implemented.
     */
-    return false; 
+    return false;
+#else
+    /* LLVM 3.5 exposes an issue with pocl's printf or another LLVM pass:
+       After the code emission optimizations there appears a
+       PHI node where the two alternative pointer assignments have different
+       address spaces:
+       %format.addr.2347 =
+          phi i8 addrspace(3)* [ %incdec.ptr58, %if.end56 ],
+                               [ %format.addr.1, %while.body45.preheader ]
+
+       This leads to an LLVM crash when it tries to generate a no-op bitcast
+       while it won't be such due to the address space difference (I assume).
+       Workaround this by flattening the address spaces to 0 here also for
+       x86_64 until the real culprit is found.
+    */
+#endif
+    addrSpaceMap[POCL_ADDRESS_SPACE_GLOBAL] =
+        addrSpaceMap[POCL_ADDRESS_SPACE_LOCAL] =
+        addrSpaceMap[POCL_ADDRESS_SPACE_CONSTANT] = 0;
+
   } else if (arch.startswith("arm")) {
     return false;
   } else if (arch.startswith("tce")) {
@@ -241,11 +261,11 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
     if (i->first->getNumUses() > 0) {
       for (Value::use_iterator ui = i->first->use_begin(), 
              ue = i->first->use_end(); ui != ue; ++ui) {
-        #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
         User* user = *ui;
-        #else
+#else
         User* user = (*ui).getUser();
-        #endif
+#endif
         user->dump();
                    
       }

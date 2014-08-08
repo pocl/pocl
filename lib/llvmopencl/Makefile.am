@@ -24,6 +24,8 @@
 
 # This library is linked against libpocl to call the kernel compiler
 # passes directly from the host library.
+# This library also contains compiler driver helper functions,
+# not linked to llvmopencl.so
 noinst_LTLIBRARIES = libllvmpasses.la
 
 # This creates a separate llvmopencl.so that is loaded to 'opt'
@@ -59,7 +61,8 @@ PASSES_SOURCES = Barrier.h						\
 						ImplicitConditionalBarriers.h \
 						DebugHelpers.h DebugHelpers.cc
 
-libllvmpasses_la_SOURCES = ${PASSES_SOURCES}
+#add compiler driver sources
+libllvmpasses_la_SOURCES = ${PASSES_SOURCES} linker.cpp
 
 # The offline compiler script (pocl-standalone) calls the kernel compiler passes 
 # from the command line, those require libllvmopencl.so.

@@ -32,4 +32,6 @@ can be used to browse the test results and logs.
 If you do something affecting piglit test results (fix something to make a 
 test pass) then you should make new reference file by 
 running:
-./piglit-run.py -v tests/all_cl.tests results/all 2>&1 | grep "pass ::" > ../piglit_ref_output
+piglit/piglit-run.py -v piglit/tests/all_cl.tests results/all 2>&1 | grep "pass ::" | LC_ALL=C sort -o sorted_ref
+
+
