@@ -399,7 +399,7 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
 
     // argument num
     unsigned arg_num = meta_node->getNumOperands();
-    assert(((arg_num-1) == kernel->num_args) && "Kernel argument count doesn't fit metadata arg count");
+    int has_meta_for_every_arg = ((arg_num-1) == kernel->num_args);
 
     llvm::MDString *meta_name_node = llvm::cast<MDString>(meta_node->getOperand(0));
     std::string meta_name = meta_name_node->getString().str();
@@ -409,6 +409,7 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
       struct pocl_argument_info* current_arg = &kernel->arg_info[j-1];
 
       if (isa<ConstantInt>(meta_arg_value) && meta_name=="kernel_arg_addr_space") {
+        assert(has_meta_for_every_arg && "kernel_arg_addr_space meta incomplete");
         kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER;
         //std::cout << "is ConstantInt /  kernel_arg_addr_space" << std::endl;
         llvm::ConstantInt *m = llvm::cast<ConstantInt>(meta_arg_value);
@@ -444,6 +445,7 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
         std::string val = m->getString().str();
         //std::cout << "with value: " << val << std::endl;
         if (meta_name == "kernel_arg_access_qual") {
+          assert(has_meta_for_every_arg && "kernel_arg_access_qual meta incomplete");
           kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_ACCESS_QUALIFIER;
           if (val == "read_write")
             current_arg->access_qualifier = CL_KERNEL_ARG_ACCESS_READ_WRITE;
@@ -456,12 +458,14 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
           else
             std::cout << "UNKNOWN kernel_arg_access_qual value: " << val << std::endl;
         } else if (meta_name == "kernel_arg_type") {
+          assert(has_meta_for_every_arg && "kernel_arg_type meta incomplete");
           kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_TYPE_NAME;
           current_arg->type_name = new char[val.size() + 1];
           std::strcpy(current_arg->type_name, val.c_str());
         } else if (meta_name == "kernel_arg_base_type") {
           // may or may not be present even in SPIR
         } else if (meta_name == "kernel_arg_type_qual") {
+          assert(has_meta_for_every_arg && "kernel_arg_type_qual meta incomplete");
           kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_TYPE_QUALIFIER;
           current_arg->type_qualifier = 0;
           if (val.find("const") != std::string::npos)
@@ -471,13 +475,14 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
           if (val.find("volatile") != std::string::npos)
             current_arg->type_qualifier |= CL_KERNEL_ARG_TYPE_VOLATILE;
         } else if (meta_name == "kernel_arg_name") {
+          assert(has_meta_for_every_arg && "kernel_arg_name meta incomplete");
           kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_NAME;
           current_arg->name = new char[val.size() + 1];
           std::strcpy(current_arg->name, val.c_str());
         } else
           std::cout << "UNKNOWN opencl metadata name: " << meta_name << std::endl;
       }
-      else
+      else if (meta_name != "reqd_work_group_size")
         std::cout << "UNKNOWN opencl metadata class for: " << meta_name << std::endl;
 
     }
