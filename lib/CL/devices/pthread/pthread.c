@@ -739,7 +739,12 @@ workgroup_thread (void *p)
           pocl_pthread_free (ta->data, 0, *(void **)(arguments[i]));
           free (arguments[i]);
         }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER || kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE || 
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
+        {
+          pocl_pthread_free (ta->data, 0, *(void **)(arguments[i]));
+          free (arguments[i]);            
+        }
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER || 
                (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && *(void**)arguments[i] == NULL))
         {
           free (arguments[i]);
