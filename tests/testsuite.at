@@ -26,8 +26,8 @@ AT_INIT()
 AT_COLOR_TESTS
 
 AT_SETUP([check for pocl version])
-AT_CHECK([$abs_top_builddir/tests/runtime/test_version], 0,
-[pthread
+AT_CHECK([POCL_DEVICES=basic $abs_top_builddir/tests/runtime/test_version], 0,
+[basic
 ])
 AT_CLEANUP
 
