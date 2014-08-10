@@ -44,33 +44,32 @@ public:
 	M *mask2;
 	const char *d_type;
 
-	testcase( unsigned n_, unsigned m_, const char* ocl_label) :
-		n(n_), m(m_),
-                nsize(n==3?4:n), msize(m==3?4:m),
-                d_type(ocl_label)
-	{
-		in1=new D[m];
-		in2=new D[m];
-		out=new D[n];
-		mask1=new M[n];
-		mask2=new M[n];
-
-		for(unsigned i=0; i<m; i++)
-		{
-			in1[i]=i;
-			in2[i]=i+m;
-		}
-		for(unsigned i=0; i<n; i++)
-		{
-			// test overflow, but don't access undefined elements
-			do {
-				mask1[i]=rand()%(10*msize);
-			} while (mask1[i] % msize >= m);
-			do {
-				mask2[i]=rand()%(20*msize);
-			} while (mask2[i] % msize >= m);
-		}
-	}
+  testcase(unsigned n_, unsigned m_, const char* ocl_label) :
+    n(n_), m(m_),
+    nsize(n==3?4:n), msize(m==3?4:m),
+    d_type(ocl_label) {
+    // Fixed pseudorandom stimuli to make the test deterministic.
+    // Random stimuli leads to randomly appearing/disappearing
+    // problems which are irritating and hard to reproduce. Values which reduce
+    // to element 3 might produce an undefined value in case of 3 element inputs so 
+    // let's not use them in the stimulus.
+    int stimuli[] = {4, 2, 69, 4, 5, 0, 45, 16, 4, 6, 1, 18, 28, 14, 
+                     22, 16, 8, 2, 0, 31, 42, 11, 62, 88, 99, 23, 13};
+    in1=new D[msize];       
+    in2=new D[msize];
+    out=new D[nsize];
+    mask1=new M[nsize];
+    mask2=new M[nsize];
+    
+    for(unsigned i=0; i<m; i++) {
+      in1[i]=i;
+      in2[i]=i+m;
+    }
+    for(unsigned i=0; i<n; i++) {
+      mask1[i] = stimuli[i];
+      mask2[i] = stimuli[i];
+    }
+  }
 
 	int create_source(char *buf)
 	{
@@ -108,11 +107,12 @@ public:
 		bool error=false;
 		for(unsigned i=0; i<n; i++)
 		{
-			unsigned m = mask2[i] % (2*msize);
-			if( m < msize )
-				error |= out[i] != in1[m];
-			else
-				error |= out[i] != in2[m-msize];
+			unsigned msk = mask2[i] % (2*msize);
+            D correct = (msk < msize) ? in1[msk] : in2[msk-msize];
+            if (out[i] != correct) {
+              error |= true;
+              printf("element %d should be %d (mask %d), got %d\n", i, (int)correct, (int)mask2[i], (int)out[i]);
+            }
 		}
 		return !error;
 	}
@@ -189,21 +189,27 @@ bool runtest( int n, int m, const char* ocl_type){
 	testcase<D,M> tc(n, m, ocl_type);
 	int size=sizeof(D);
 
+    int mAligned = m;
+    if (m == 3) mAligned = 4;
+
+    int nAligned = n;
+    if (n == 3) nAligned = 4;
+
 	mem_in1 = clCreateBuffer(ctx,
 	                         CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-	                         size * m, tc.in1, NULL);
+	                         size * mAligned, tc.in1, NULL);
 	mem_in2 = clCreateBuffer(ctx,
 	                         CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-	                         size * m, tc.in2, NULL);
+	                         size * nAligned, tc.in2, NULL);
 	mem_mask1 = clCreateBuffer(ctx,
 	                          CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-	                          size * n, tc.mask1, NULL);
+	                          size * nAligned, tc.mask1, NULL);
 	mem_mask2 = clCreateBuffer(ctx,
 	                          CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
-	                          size * n, tc.mask2, NULL);
+	                          size * nAligned, tc.mask2, NULL);
 	mem_out = clCreateBuffer(ctx,
 	                         CL_MEM_WRITE_ONLY,
-	                         size * n, NULL, NULL);
+	                         size * nAligned, NULL, NULL);
 
 	numchars = tc.create_source( buf );
 	buf[numchars]=0;
@@ -216,7 +222,7 @@ bool runtest( int n, int m, const char* ocl_type){
 	clSetKernelArg( krn, 1, sizeof(cl_mem), &mem_mask1 );
 	clSetKernelArg( krn, 2, sizeof(cl_mem), &mem_out );
 	clEnqueueTask( queue, krn, 0, NULL, NULL );
-	clEnqueueReadBuffer( queue, mem_out, CL_TRUE, 0, size*n, tc.out, 0, NULL, NULL );
+	clEnqueueReadBuffer( queue, mem_out, CL_TRUE, 0, size*nAligned, tc.out, 0, NULL, NULL );
 	clFinish(queue);
 
 	if(!tc.output_matches_1()) {
@@ -239,7 +245,7 @@ bool runtest( int n, int m, const char* ocl_type){
 	clSetKernelArg( krn, 2, sizeof(cl_mem), &mem_mask2 );
 	clSetKernelArg( krn, 3, sizeof(cl_mem), &mem_out );
 	clEnqueueTask( queue, krn, 0, NULL, NULL );
-	clEnqueueReadBuffer( queue, mem_out, CL_TRUE, 0, size*n, tc.out, 0, NULL, NULL );
+	clEnqueueReadBuffer( queue, mem_out, CL_TRUE, 0, size*nAligned, tc.out, 0, NULL, NULL );
 	clFinish(queue);
 
 	if(!tc.output_matches_2()) {
