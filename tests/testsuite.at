@@ -48,7 +48,7 @@ AT_CLEANUP
 AT_SETUP([example1: dot product (SPIR64)])
 # This SPIR example works because it does not use local memory nor
 # call builtins that are mangled with address spaces.
-AT_SKIP_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | egrep -q 'powerpc|armv7'])
+AT_SKIP_IF([! grep "#define POCL_DEVICE_ADDRESS_BITS 64" $abs_top_builddir/config.h])
 AT_KEYWORDS([spir])
 AT_DATA([expout],
 [(0.000000, 0.000000, 0.000000, 0.000000) . (0.000000, 0.000000, 0.000000, 0.000000) = 0.000000
@@ -63,7 +63,7 @@ AT_CLEANUP
 AT_SETUP([example1: dot product (SPIR32)])
 # This SPIR example works because it does not use local memory nor
 # call builtins that are mangled with address spaces.
-AT_SKIP_IF([! grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | egrep -q 'powerpc|armv7'])
+AT_SKIP_IF([! grep "#define POCL_DEVICE_ADDRESS_BITS 32" $abs_top_builddir/config.h])
 AT_KEYWORDS([spir])
 AT_DATA([expout],
 [(0.000000, 0.000000, 0.000000, 0.000000) . (0.000000, 0.000000, 0.000000, 0.000000) = 0.000000
