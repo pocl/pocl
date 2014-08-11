@@ -1340,6 +1340,8 @@ fi
 
 echo Enabled device drivers: $OCL_DRIVERS
 echo Enabled testsuites: $POAT_TESTSUITES
+echo NOTE: Initialize the examples used by the testsuites by running 
+echo \"make prepare-examples\" once.
 echo
 echo Basic and pthreads devices optimized for:
 echo architecture: $host_cpu

@@ -30,9 +30,7 @@ viennacl_tarball=ViennaCL-1.5.1.tar.gz
 testsuite_pocl_dir=${abs_top_srcdir}/examples/ViennaCL
 testsuite_src_dir=${testsuite_pocl_dir}/${viennacl_local_src_dir}
 
-.PHONY: build
-
-all: $(viennacl_local_src_dir) 
+.PHONY: prepare-examples
 
 $(srcdir)/$(viennacl_tarball):
 	cd $(srcdir) && \
@@ -58,7 +56,7 @@ build:
 		$(OPENCL_CMAKE) \
 		..
 
-check-local: $(viennacl_local_src_dir) build
+prepare-examples: $(viennacl_local_src_dir) build
 
 clean-local:
 	rm -fr $(viennacl_local_src_dir)

@@ -30,9 +30,9 @@ testsuite_pocl_dir=${abs_top_srcdir}/examples/AMDSDK2.9
 testsuite_src_dir=${testsuite_pocl_dir}/AMD-APP-SDK-v2.9-RC-lnx64
 amd_app_dir=$(testsuite_src_dir)/samples/opencl/
 
-.PHONY: build
+.PHONY: build prepare-examples
 
-all: $(testsuite_src_dir) build
+prepare-examples: $(testsuite_src_dir) build
 
 $(testsuite_src_dir): AMD-APP-SDK-v2.9-RC-lnx64.tgz
 	test -d $(testsuite_src_dir) || (cd $(testsuite_pocl_dir) && tar xzf AMD-APP-SDK-v2.9-RC-lnx64.tgz)
@@ -334,9 +334,6 @@ test_URNG:
 test_URNGNoiseGL: 
 	cd $(amd_app_dir) && \
 	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cl/URNGNoiseGL/bin/x86_64/Release/URNGNoiseGL -e
-
-
-check-local: all
 
 clean-local:
 	rm -fr $(testsuite_src_dir) Install-AMD-APP.sh default-install_lnx_64.pl ReadMe.txt

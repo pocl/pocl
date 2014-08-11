@@ -35,7 +35,7 @@ datasets_tarfile=pb2.5datasets_standard.tgz
 
 .PHONY: build
 
-all: build-prepare
+prepare-examples: build-prepare
 
 ${srcdir}/${driver_tarfile}:
 	@echo 'You need to download $@ to "$(srcdir)"'
@@ -147,8 +147,6 @@ build: build-spmv build-stencil build-tpacf build-cutcp build-mri-gridding build
 
 clean-local:
 	$(RM) -r parboil
-
-check-local: build
 
 distclean-local: clean-local
 	$(RM) -r $(testsuite_src_dir)

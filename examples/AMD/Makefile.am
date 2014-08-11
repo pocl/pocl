@@ -37,7 +37,7 @@ amd_app_dir=$(testsuite_src_dir)/samples/opencl/cl/app
 
 .PHONY: build
 
-all: $(testsuite_src_dir) build
+prepare-examples: $(testsuite_src_dir) build
 
 $(testsuite_src_dir): AMD-APP-SDK-v2.8-RC-lnx64.tgz
 	test -d $(testsuite_src_dir) || (cd $(testsuite_pocl_dir) && tar xzf AMD-APP-SDK-v2.8-RC-lnx64.tgz)
@@ -251,8 +251,6 @@ test_URNG:
 	ln -sf $(amd_app_dir)/URNG/URNG_Kernels.cl $(amd_app_dir)/URNG/build/debug/x86_64/ && \
 	ln -sf $(amd_app_dir)/URNG/URNG_Input.bmp $(amd_app_dir)/URNG/build/debug/x86_64/ && \
 	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors build/debug/x86_64/URNG -e
-
-check-local: all
 
 clean-local:
 	rm -fr $(testsuite_src_dir) Install-AMD-APP.sh default-install_lnx_64.pl ReadMe.txt
