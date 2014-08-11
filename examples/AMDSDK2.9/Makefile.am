@@ -335,7 +335,7 @@ test_URNGNoiseGL:
 	cd $(amd_app_dir) && \
 	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cl/URNGNoiseGL/bin/x86_64/Release/URNGNoiseGL -e
 
-clean-local:
+clean-examples:
 	rm -fr $(testsuite_src_dir) Install-AMD-APP.sh default-install_lnx_64.pl ReadMe.txt
 
 distclean-local: clean-local

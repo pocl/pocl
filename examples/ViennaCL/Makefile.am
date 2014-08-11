@@ -59,7 +59,7 @@ build:
 
 prepare-examples: $(viennacl_local_src_dir) build
 
-clean-local:
+clean-examples:
 	rm -fr $(viennacl_local_src_dir)
 
 distclean-local: clean-local

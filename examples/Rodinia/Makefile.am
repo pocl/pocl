@@ -121,7 +121,7 @@ build-srad: build-prepare
 	$(MAKE) clean $(MAKE_OPTS) -C $(src)/srad
 	$(MAKE) $(MAKE_OPTS) -C $(src)/srad
 
-clean-local:
+clean-examples:
 	$(RM) -r rodinia_2.0.1
 
 distclean-local: clean-local

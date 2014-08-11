@@ -33,7 +33,7 @@ if TEST_SUITE_VEXCL
 prepare-examples:
 	cd vexcl; cmake . $(OPENCL_CMAKE) ; make
 
-clean-local:
+clean-examples:
 	cd vexcl; make clean
 
 endif

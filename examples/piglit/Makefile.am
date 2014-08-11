@@ -40,7 +40,7 @@ prepare-examples:
 		-DOPENCL_opencl_LIBRARY:STRING="-l OpenCL" .; \
 	make
 
-clean-local:
+clean-examples:
 	cd piglit; make clean
 
 clean: clean-local

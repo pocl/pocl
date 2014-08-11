@@ -252,7 +252,7 @@ test_URNG:
 	ln -sf $(amd_app_dir)/URNG/URNG_Input.bmp $(amd_app_dir)/URNG/build/debug/x86_64/ && \
 	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors build/debug/x86_64/URNG -e
 
-clean-local:
+clean-examples:
 	rm -fr $(testsuite_src_dir) Install-AMD-APP.sh default-install_lnx_64.pl ReadMe.txt
 
 distclean-local: clean-local

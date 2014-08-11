@@ -32,3 +32,12 @@ prepare-examples:
 	for dir in $(EXAMPLES_TO_PREPARE); do \
 	   $(MAKE) -C $$dir prepare-examples; \
 	done
+
+clean-examples:
+	for dir in $(EXAMPLES_TO_PREPARE); do \
+	   $(MAKE) -C $$dir clean-examples; \
+	done
+
+clean:
+	@echo Call 'make clean-examples' to clean up the examples.
+
