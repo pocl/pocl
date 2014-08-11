@@ -54,7 +54,8 @@ build:
 		-D BUILD_MANUAL:BOOL=OFF \
 		-D CMAKE_CXX_FLAGS:STRING='-g -O0 -DCL_USE_DEPRECATED_OPENCL_1_1_APIS' \
 		$(OPENCL_CMAKE) \
-		..
+		.. && \
+	$(MAKE) -s
 
 prepare-examples: $(viennacl_local_src_dir) build
 

@@ -88,10 +88,13 @@ struct thread_arguments
   thread_arguments *volatile next;
 };
 
+
+#ifdef CUSTOM_BUFFER_ALLOCATOR
 typedef struct _mem_regions_management{
   ba_lock_t mem_regions_lock;
   struct memory_region *mem_regions;
 } mem_regions_management;
+#endif
 
 struct data {
   /* Currently loaded kernel. */
@@ -197,7 +200,9 @@ void
 pocl_pthread_init (cl_device_id device, const char* parameters)
 {
   struct data *d; 
+#ifdef CUSTOM_BUFFER_ALLOCATOR  
   static mem_regions_management* mrm = NULL;
+#endif
   static int global_mem_id;
   int i;
 
