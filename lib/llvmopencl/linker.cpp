@@ -152,48 +152,22 @@ copy_func_callgraph( const llvm::StringRef func_name,
     DB_PRINT("copying function %s with callgraph\n", func_name.data());
 
     find_called_functions(rootfunc, callees);
-    callees.push_back(func_name);
 
+    // Fisrt copy the callees of func, then the function itself.
+    // Recurse into callees to handle the case where kernel library
+    // functions call other kernel library functions.
     std::list<llvm::StringRef>::iterator ci,ce;
     for (ci=callees.begin(), ce=callees.end();
          ci != ce;
          ci++) {
-        DB_PRINT("  preparing copy of %s from %s's callgraph\n",
-                 ci->data(), func_name.data());
-        const Function *srcfunc=from->getFunction(*ci);
-        if (srcfunc == NULL)
-            return;              //TODO return false & raise linking error
-
-        Function *dstfunc=to->getFunction(*ci);
-        if (dstfunc == NULL) {
-            DB_PRINT(" %s not found, declaring it\n", ci->data());
-            dstfunc=
-                Function::Create(cast<FunctionType>(srcfunc->getType()->
-                                                    getElementType()),
-                                 srcfunc->getLinkage(),
-                                 srcfunc->getName(),
-                                 to);
-            dstfunc->copyAttributesFrom(srcfunc);
+        llvm::Function *SrcFunc=from->getFunction(*ci);
+        if (!SrcFunc->isDeclaration()) {
+            copy_func_callgraph(*ci,from, to, vvm);
         }
-
-        vvm[srcfunc]=dstfunc;
-        Function::arg_iterator j=dstfunc->arg_begin();
-        for (Function::const_arg_iterator i=srcfunc->arg_begin(),
-             e=srcfunc->arg_end();
-             i != e; ++i) {
-            j->setName(i->getName());
-            vvm[i]=j;
-            ++j;
-        }
-        if (!srcfunc->isDeclaration()) {
-            SmallVector<ReturnInst*, 8> ri;              // Ignore returns cloned.
-            DB_PRINT("  cloning %s\n", ci->data());
-            CloneFunctionInto(dstfunc, srcfunc, vvm, true, ri);
-        } else {
-            DB_PRINT("  found %s, but its a declaration, do nothing\n",
-                     ci->data());
-        }
+        CopyFunc(*ci, from, to, vvm);
     }
+
+    CopyFunc(func_name, from, to, vvm);
 }
 
 static inline bool
@@ -252,20 +226,6 @@ link(llvm::Module *krn, const llvm::Module *lib)
                                               gi->getType()->getAddressSpace());
         GV->copyAttributesFrom(gi);
         vvm[gi]=GV;
-    }
-    // Declare ALL the functions from lib into krn.
-    // TODO: this looks redunant, but declaring the missing functions "on-the-fly" in
-    // copy_func_callgraph() doesn't seem to work.
-    for (llvm::Module::const_iterator I=lib->begin(), E=lib->end();
-         I != E;
-         ++I) {
-        Function *NF=
-            Function::Create(cast<FunctionType>(I->getType()->getElementType()),
-                             I->getLinkage(),
-                             I->getName(),
-                             krn);
-        NF->copyAttributesFrom(I);
-        vvm[I]=NF;
     }
 
     // For each undefined function in krn, clone it from the lib to the krn module,
