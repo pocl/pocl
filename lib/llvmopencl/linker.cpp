@@ -91,6 +91,50 @@ find_called_functions(llvm::Function *            F,
     }
 }
 
+// Copies one function from one module to another
+// does not inspect it for callgraphs
+static void
+CopyFunc( const llvm::StringRef Name,
+          const llvm::Module *  From,
+          llvm::Module *        To,
+          ValueToValueMapTy &   VVMap)
+{
+    llvm::Function *SrcFunc=From->getFunction(Name);
+    // TODO: is this the linker error "not found", and not an assert?
+    assert(SrcFunc && "Did not find function to copy in kernel library");
+    llvm::Function *DstFunc=To->getFunction(Name);
+
+    if (DstFunc == NULL) {
+        DB_PRINT("   %s not found in destination module, creating\n",
+                 Name.data());
+        DstFunc=
+            Function::Create(cast<FunctionType>(
+                                 SrcFunc->getType()->getElementType()),
+                             SrcFunc->getLinkage(),
+                             SrcFunc->getName(),
+                             To);
+        DstFunc->copyAttributesFrom(SrcFunc);
+    }
+    VVMap[SrcFunc]=DstFunc;
+
+    Function::arg_iterator j=DstFunc->arg_begin();
+    for (Function::const_arg_iterator i=SrcFunc->arg_begin(),
+         e=SrcFunc->arg_end();
+         i != e; ++i) {
+        j->setName(i->getName());
+        VVMap[i]=j;
+        ++j;
+    }
+    if (!SrcFunc->isDeclaration()) {
+        SmallVector<ReturnInst*, 8> RI;          // Ignore returns cloned.
+        DB_PRINT("  cloning %s\n", Name.data());
+        CloneFunctionInto(DstFunc, SrcFunc, VVMap, true, RI);
+    } else {
+        DB_PRINT("  found %s, but its a declaration, do nothing\n",
+                 Name.data());
+    }
+}
+
 /* Copy function F and all the functions in its call graph
  * that are defined in 'from', into 'to', adding the mappings to
  * 'vvm'.
