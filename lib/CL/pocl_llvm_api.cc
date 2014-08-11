@@ -399,7 +399,9 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
 
     // argument num
     unsigned arg_num = meta_node->getNumOperands();
+#ifndef NDEBUG
     int has_meta_for_every_arg = ((arg_num-1) == kernel->num_args);
+#endif
 
     llvm::MDString *meta_name_node = llvm::cast<MDString>(meta_node->getOperand(0));
     std::string meta_name = meta_name_node->getString().str();
