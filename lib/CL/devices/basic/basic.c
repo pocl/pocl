@@ -215,7 +215,7 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
 {
   dev->type = CL_DEVICE_TYPE_CPU;
   dev->vendor_id = 0;
-  dev->max_compute_units = 1;
+  dev->max_compute_units = 0;
   dev->max_work_item_dimensions = 3;
   dev->max_work_item_sizes[0] = CL_INT_MAX;
   dev->max_work_item_sizes[1] = CL_INT_MAX;
@@ -315,8 +315,8 @@ pocl_basic_init (cl_device_id device, const char* parameters)
   d->current_kernel = NULL;
   d->current_dlhandle = 0;
   device->data = d;
-  pocl_cpuinfo_detect_device_info(device);
   pocl_topology_detect_device_info(device);
+  pocl_cpuinfo_detect_device_info(device);
 
   /* The basic driver represents only one "compute unit" as
      it doesn't exploit multiple hardware threads. Multiple

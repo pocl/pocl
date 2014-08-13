@@ -46,4 +46,15 @@ pocl_topology_detect_device_info(cl_device_id device)
     device->max_mem_alloc_size = MIN_MAX_MEM_ALLOC_SIZE;
 
   device->local_mem_size = device->max_constant_buffer_size = device->max_mem_alloc_size;
+
+  // Try to get the number of CPU cores from topology
+  int depth = hwloc_get_type_depth(pocl_topology, HWLOC_OBJ_PU);
+  if(depth != HWLOC_TYPE_DEPTH_UNKNOWN)
+    device->max_compute_units = hwloc_get_nbobjs_by_depth(pocl_topology, depth);
+
+  // Destroy topology object and return
+  hwloc_topology_destroy(pocl_topology);
+
 }
+
+
