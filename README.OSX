@@ -7,17 +7,19 @@ pocl can be installed on OS X (Darwin) as follows:
 
 2. Install llvm:
 
-svn checkout http://llvm.org/svn/llvm-project/llvm/branches/release_33 llvm-3.3
-pushd llvm-3.3/tools
-svn checkout http://llvm.org/svn/llvm-project/cfe/branches/release_33 clang
+At least 3.4 is known to work with OS X, but newer ones should work too.
+
+svn checkout http://llvm.org/svn/llvm-project/llvm/branches/release_34 llvm-3.4
+pushd llvm-3.4/tools
+svn checkout http://llvm.org/svn/llvm-project/cfe/branches/release_34 clang
 popd
 pushd llvm-trunk/projects
-svn checkout http://llvm.org/svn/llvm-project/libcxx/branches/release_33 libcxx
+svn checkout http://llvm.org/svn/llvm-project/libcxx/branches/release_34 libcxx
 popd
 
-mkdir llvm-3.3-build
-pushd llvm-3.3-build
-../llvm-3.3/configure --prefix=${HOME}/llvm-3.3 --enable-shared --enable-optimized
+mkdir llvm-3.4-build
+pushd llvm-3.4-build
+../llvm-3.4/configure --prefix=${HOME}/llvm-3.4 --enable-shared --enable-optimized
 make REQUIRES_RTTI=1 -j8
 make install -j8
 popd
@@ -29,11 +31,11 @@ popd
 
 mkdir pocl-build
 pushd pocl-build
-export PATH="${HOME}/llvm-3.3/bin:${PATH}"
-export LD_LIBRARY_PATH="${HOME}/llvm-3.3/lib:${LD_LIBRARY_PATH}"
-export DYLD_FALLBACK_LIBRARY_PATH="${HOME}/llvm-3.3/lib"
-export CC="${HOME}/llvm-3.3/bin/clang"
-export CXX="${HOME}/llvm-3.3/bin/clang++"
+export PATH="${HOME}/llvm-3.4/bin:${PATH}"
+export LD_LIBRARY_PATH="${HOME}/llvm-3.4/lib:${LD_LIBRARY_PATH}"
+export DYLD_FALLBACK_LIBRARY_PATH="${HOME}/llvm-3.4/lib"
+export CC="${HOME}/llvm-3.4/bin/clang"
+export CXX="${HOME}/llvm-3.4/bin/clang++"
 export CPPFLAGS="-I/opt/local/include"
 export LDFLAGS="-L/opt/local/lib"
 ../pocl/configure --prefix=${HOME}/pocl --disable-icd --enable-testsuites=all
@@ -46,7 +48,7 @@ popd
 Note: Some of the environment variables set above before building pocl
       also need to be set when running a program using pocl.
 
-Note: These instructions were tested on 2013-07-10
+Note: These instructions were tested on 2014-08-11
 
 
 Installation with Homebrew http://mxcl.github.io/homebrew/

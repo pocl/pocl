@@ -530,12 +530,28 @@ pocl_basic_run
   for (i = 0; i < kernel->num_args; ++i)
     {
       if (kernel->arg_info[i].is_local)
-        pocl_basic_free(data, 0, *(void **)(arguments[i]));
+        {
+          pocl_basic_free (data, 0, *(void **)(arguments[i]));
+          free (arguments[i]);
+        }
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
+        {
+          pocl_basic_free (data, 0, *(void **)(arguments[i]));
+          free (arguments[i]);            
+        }
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER || 
+               (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && *(void**)arguments[i] == NULL))
+        {
+          free (arguments[i]);
+        }
     }
   for (i = kernel->num_args;
        i < kernel->num_args + kernel->num_locals;
        ++i)
-    pocl_basic_free(data, 0, *(void **)(arguments[i]));
+    {
+      pocl_basic_free(data, 0, *(void **)(arguments[i]));
+      free (arguments[i]);
+    }
 }
 
 void

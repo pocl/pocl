@@ -52,7 +52,7 @@ PHONIES += pocl.icd
 
 endif
 
-.PHONY: ${PHONIES}
+.PHONY: ${PHONIES} prepare-examples clean-examples
 
 EXTRA_DIST = config/xclang tools/data/*.adf \
   doc/build-envs.txt doc/sphinx/* \
@@ -60,6 +60,12 @@ EXTRA_DIST = config/xclang tools/data/*.adf \
   README.OSX README.powerpc README.packaging
 
 BUILT_SOURCES = install-paths.h
+
+prepare-examples:
+	$(MAKE) -C examples prepare-examples
+
+clean-examples:
+	$(MAKE) -C examples clean-examples
 
 # Always rebuild install-paths.h as paths can be changed at each make invocation
 .PHONY: install-paths.h
@@ -74,5 +80,3 @@ install-paths.h:
 		echo "New paths, updating $@" ;\
 		mv $@.new $@ ;\
 	fi
-
-

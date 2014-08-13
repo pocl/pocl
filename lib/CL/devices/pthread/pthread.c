@@ -88,10 +88,13 @@ struct thread_arguments
   thread_arguments *volatile next;
 };
 
+
+#ifdef CUSTOM_BUFFER_ALLOCATOR
 typedef struct _mem_regions_management{
   ba_lock_t mem_regions_lock;
   struct memory_region *mem_regions;
 } mem_regions_management;
+#endif
 
 struct data {
   /* Currently loaded kernel. */
@@ -197,7 +200,9 @@ void
 pocl_pthread_init (cl_device_id device, const char* parameters)
 {
   struct data *d; 
+#ifdef CUSTOM_BUFFER_ALLOCATOR  
   static mem_regions_management* mrm = NULL;
+#endif
   static int global_mem_id;
   int i;
 
@@ -739,7 +744,12 @@ workgroup_thread (void *p)
           pocl_pthread_free (ta->data, 0, *(void **)(arguments[i]));
           free (arguments[i]);
         }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER || kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE || 
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
+        {
+          pocl_pthread_free (ta->data, 0, *(void **)(arguments[i]));
+          free (arguments[i]);            
+        }
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER || 
                (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && *(void**)arguments[i] == NULL))
         {
           free (arguments[i]);

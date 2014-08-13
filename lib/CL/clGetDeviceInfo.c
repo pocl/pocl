@@ -178,7 +178,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_ERROR_CORRECTION_SUPPORT          :
     POCL_RETURN_GETINFO(cl_bool, device->error_correction_support);
   case CL_DEVICE_PROFILING_TIMER_RESOLUTION        :
-    POCL_RETURN_GETINFO(cl_uint, device->profiling_timer_resolution);
+    POCL_RETURN_GETINFO(size_t, device->profiling_timer_resolution);
   case CL_DEVICE_ENDIAN_LITTLE                     :
     POCL_RETURN_GETINFO(cl_uint, device->endian_little);
   case CL_DEVICE_AVAILABLE                         :
@@ -193,9 +193,9 @@ POname(clGetDeviceInfo)(cl_device_id   device,
      * which is not the case in pocl currently */
     POCL_RETURN_GETINFO(cl_bool, device->compiler_available);
   case CL_DEVICE_EXECUTION_CAPABILITIES            :
-    POCL_RETURN_GETINFO(cl_uint, device->execution_capabilities);
+    POCL_RETURN_GETINFO(cl_device_exec_capabilities, device->execution_capabilities);
   case CL_DEVICE_QUEUE_PROPERTIES                  :
-    POCL_RETURN_GETINFO(cl_uint, device->queue_properties);
+    POCL_RETURN_GETINFO(cl_command_queue_properties, device->queue_properties);
    
   case CL_DEVICE_NAME:
     POCL_RETURN_DEVICE_INFO_STR(device->long_name);
