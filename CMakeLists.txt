@@ -287,8 +287,8 @@ if(NOT DEFINED DEFAULT_ENABLE_ICD)
   if(OCL_ICD_FOUND)
 
     set(HAVE_OCL_ICD 1)
-    set(OPENCL_FOUND 1)
-    set(OPENCL_LIBRARIES "-lOpenCL") # duh, why doesnt ocl-icd set this in .pc file ??
+    set(OPENCL_FOUND 1 CACHE INTERNAL "opencl ICD/library found")
+    set(OPENCL_LIBRARIES "OpenCL" CACHE INTERNAL "opencl ICD/library paths") # duh, why doesnt ocl-icd set this in .pc file ??
     set(DEFAULT_ENABLE_ICD 1 CACHE INTERNAL "ICD loader availability")
     set(DEFAULT_DIRECT_LINKAGE 0 CACHE INTERNAL "direct linkage")
     set(DEFAULT_TESTS_USE_ICD 1 CACHE INTERNAL "tests use ICD")
