@@ -25,3 +25,19 @@
 SUBDIRS = example1 example1-spir32 example1-spir64 example2 example2a trig \
 	scalarwave standalone opencl-book-samples VexCL ViennaCL Rodinia Parboil \
 	AMD AMDSDK2.9 EinsteinToolkit piglit
+
+EXAMPLES_TO_PREPARE = VexCL ViennaCL Rodinia Parboil AMD AMDSDK2.9 piglit
+
+prepare-examples:
+	for dir in $(EXAMPLES_TO_PREPARE); do \
+	   $(MAKE) -C $$dir prepare-examples; \
+	done
+
+clean-examples:
+	for dir in $(EXAMPLES_TO_PREPARE); do \
+	   $(MAKE) -C $$dir clean-examples; \
+	done
+
+clean:
+	@echo Call 'make clean-examples' to clean up the examples.
+

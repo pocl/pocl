@@ -155,7 +155,7 @@ fi
 
 AC_ARG_ENABLE([region-allocator],
 [AS_HELP_STRING([--disable-region-allocator], 
- [Do not use a custom OpenCL optimized region-based memory allocator but allocate buffers with malloc directly.])],
+ [Do not use a custom OpenCL optimized region-based memory allocator but allocate buffers with malloc directly (experimental with known issues!).])],
 [],
 [AC_DEFINE([CUSTOM_BUFFER_ALLOCATOR], [], "Use a custom buffer allocator")])
 
@@ -1340,6 +1340,8 @@ fi
 
 echo Enabled device drivers: $OCL_DRIVERS
 echo Enabled testsuites: $POAT_TESTSUITES
+echo NOTE: Initialize the examples used by the testsuites by running 
+echo \"make prepare-examples\" once.
 echo
 echo Basic and pthreads devices optimized for:
 echo architecture: $host_cpu

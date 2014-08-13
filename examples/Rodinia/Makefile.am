@@ -28,9 +28,11 @@ testsuite_pocl_dir=${abs_top_srcdir}/examples/Rodinia
 testsuite_src_dir=${testsuite_pocl_dir}/rodinia_2.0.1
 tarfile=rodinia_2.0.1.tar.gz
 
-.PHONY: build
+.PHONY: prepare-examples
 
-all: $(testsuite_src_dir)
+prepare-examples: $(testsuite_src_dir) build-backprop build-bfs build-cfd \
+	build-lud build-hotspot build-kmeans build-lavaMD build-pathfinder \
+	build-srad
 
 $(srcdir)/$(tarfile):
 	@echo 'You need to go download $(tarfile) in $(srcfile)'
@@ -119,10 +121,7 @@ build-srad: build-prepare
 	$(MAKE) clean $(MAKE_OPTS) -C $(src)/srad
 	$(MAKE) $(MAKE_OPTS) -C $(src)/srad
 
-build: build-backprop build-bfs build-cfd build-lud build-hotspot build-kmeans\
-	build-lavaMD build-pathfinder build-srad
-
-clean-local:
+clean-examples:
 	$(RM) -r rodinia_2.0.1
 
 distclean-local: clean-local

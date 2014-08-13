@@ -30,9 +30,7 @@ viennacl_tarball=ViennaCL-1.5.1.tar.gz
 testsuite_pocl_dir=${abs_top_srcdir}/examples/ViennaCL
 testsuite_src_dir=${testsuite_pocl_dir}/${viennacl_local_src_dir}
 
-.PHONY: build
-
-all: $(viennacl_local_src_dir) 
+.PHONY: prepare-examples
 
 $(srcdir)/$(viennacl_tarball):
 	cd $(srcdir) && \
@@ -56,11 +54,12 @@ build:
 		-D BUILD_MANUAL:BOOL=OFF \
 		-D CMAKE_CXX_FLAGS:STRING='-g -O0 -DCL_USE_DEPRECATED_OPENCL_1_1_APIS' \
 		$(OPENCL_CMAKE) \
-		..
+		.. && \
+	$(MAKE) -s
 
-check-local: $(viennacl_local_src_dir) build
+prepare-examples: $(viennacl_local_src_dir) build
 
-clean-local:
+clean-examples:
 	rm -fr $(viennacl_local_src_dir)
 
 distclean-local: clean-local

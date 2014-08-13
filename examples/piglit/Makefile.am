@@ -26,7 +26,7 @@ if TEST_SUITE_PIGLIT
 
 .PHONY: build
 
-build:
+prepare-examples:
 	cd piglit ; \
 	cmake \
 		-DPIGLIT_BUILD_GL_TESTS=OFF \
@@ -40,9 +40,7 @@ build:
 		-DOPENCL_opencl_LIBRARY:STRING="-l OpenCL" .; \
 	make
 
-check-local: build
-
-clean-local:
+clean-examples:
 	cd piglit; make clean
 
 clean: clean-local

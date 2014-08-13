@@ -24,7 +24,7 @@ This will build pocl without optimization, which simplifies debugging.
 (This does not influence whether pocl will optimize the code that it
 generates from OpenCL source files.)
 
-Test Suite
+Testsuite
 ----------
 
 Before changes are committed to the mainline, all tests in the 'make
@@ -39,9 +39,14 @@ pocl (e.g. ViennaCL). These test suites can be enabled at configure
 time with --enable-testsuites (you can specify a list of test suites
 if you do not want to enabled all of them, see configure help for the
 available list).  Note that these additionnal test suites require
-additionnal software (tools and libraries). The configure script check
-some of them but the check is not exhautive (patch welcome). Test
-suites are disabled if their requirement is not available.
+additionnal software (tools and libraries). The configure script checks
+some of them but the check is not exhautive. Test suites are disabled if 
+their requirement files are not available.
+
+In order to prepare the external OpenCL examples for the testsuite, you
+need to run the following build command once::
+
+   make prepare-examples
 
 The pocl OpenCL implementation can be used directly or through an ICD
 loader.  The --enable-tests-with-icd configure option allows to choose
