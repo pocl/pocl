@@ -245,8 +245,10 @@ pocl_cpuinfo_append_cpu_name(cl_device_id device)
 void
 pocl_cpuinfo_detect_device_info(cl_device_id device) 
 {
-  if ((device->max_compute_units = pocl_cpuinfo_detect_compute_unit_count()) == -1)
-    device->max_compute_units = 0;
+  if (device->max_compute_units == 0) {
+    if ((device->max_compute_units = pocl_cpuinfo_detect_compute_unit_count()) == -1)
+      device->max_compute_units = 0;
+  }
 
   if ((device->max_clock_frequency = pocl_cpuinfo_detect_max_clock_frequency()) == -1)
     device->max_clock_frequency = 0;
