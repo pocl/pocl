@@ -15,7 +15,6 @@ endif()
 
 set(WITH_LLVM_CONFIG "${WITH_LLVM_CONFIG}" CACHE PATH "Path to preferred llvm-config")
 
-
 if(NOT LLVM_CONFIG)
   message(FATAL_ERROR "llvm-config not found !")
 else()
@@ -30,6 +29,7 @@ else()
   message(STATUS "LLVM binaries suffix : ${LLVM_BINARY_SUFFIX}")
 endif()
 
+get_filename_component(LLVM_CONFIG_LOCATION "${LLVM_CONFIG}" DIRECTORY)
 
 ##########################################################################
 
@@ -48,7 +48,9 @@ macro(run_llvm_config VARIABLE_NAME)
   endif()
 endmacro(run_llvm_config)
 
-run_llvm_config( LLVM_VERSION_FULL --version)
+run_llvm_config(LLVM_PREFIX --prefix)
+set(LLVM_PREFIX_BIN "${LLVM_PREFIX}/bin")
+run_llvm_config(LLVM_VERSION_FULL --version)
 # sigh, sanitize version... `llvm --version` on debian might return 3.4.1 but llvm command names are still <command>-3.4
 string(REGEX REPLACE "([0-9]+)\\.([0-9]+).*" "\\1.\\2" LLVM_VERSION "${LLVM_VERSION_FULL}")
 message(STATUS "LLVM_VERSION: ${LLVM_VERSION}")
@@ -113,7 +115,7 @@ set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -fno-rtti")
 ####################################################################
 
 macro(find_program_or_die OUTPUT_VAR PROG_NAME DOCSTRING)
-  find_program(${OUTPUT_VAR} NAMES "${PROG_NAME}${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}" "${PROG_NAME}${CMAKE_EXECUTABLE_SUFFIX}" DOC "${DOCSTRING}")
+  find_program(${OUTPUT_VAR} NAMES "${PROG_NAME}${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}" "${PROG_NAME}${CMAKE_EXECUTABLE_SUFFIX}" HINTS "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}" DOC "${DOCSTRING}")
   if(${OUTPUT_VAR})
     message(STATUS "Found ${PROG_NAME}: ${${OUTPUT_VAR}}")
   else()
