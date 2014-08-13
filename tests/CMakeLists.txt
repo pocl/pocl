@@ -27,7 +27,8 @@
 add_test("pocl_version_check" "runtime/test_version")
 set_tests_properties("pocl_version_check"
   PROPERTIES
-  PASS_REGULAR_EXPRESSION "pthread")
+  ENVIRONMENT "POCL_DEVICES=basic"
+  PASS_REGULAR_EXPRESSION "basic")
 
 #######################################################################
 

@@ -23,6 +23,8 @@
 #
 #=============================================================================
 
+if(POCL_DEVICE_ADDRESS_BITS EQUAL "32")
+
 #AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'
 add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
@@ -51,7 +53,4 @@ OK"
     LABELS "OpenCL_Spec"
     DEPENDS "pocl_version_check")
 
-if(NOT (POWERPC OR ARMV7))
-  set_tests_properties("spec_tests/example1_dot_product_spir32"
-    PROPERTIES WILL_FAIL 1)
 endif()
