@@ -643,7 +643,7 @@ pocl_pthread_map_mem (void *data, void *buf_ptr,
 {
   /* All global pointers of the pthread/CPU device are in 
      the host address space already, and up to date. */     
-  return buf_ptr + offset;
+  return (char*)buf_ptr + offset;
 }
 
 void *
