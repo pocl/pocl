@@ -650,7 +650,7 @@ void *
 workgroup_thread (void *p)
 {
   struct thread_arguments *ta = (struct thread_arguments *) p;
-  void *arguments[ta->kernel->num_args + ta->kernel->num_locals];
+  void **arguments = (void**)alloca((ta->kernel->num_args + ta->kernel->num_locals)*sizeof(void*));
   struct pocl_argument *al;  
   unsigned i = 0;
 
