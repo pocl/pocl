@@ -173,7 +173,7 @@ Workgroup::runOnModule(Module &M)
     {
       TypeBuilder<PoclContext, true>::setSizeTWidth(64);
     }
-  if (M.getDataLayout()->getPointerSize(0) == 4)
+  else if (M.getDataLayout()->getPointerSize(0) == 4)
     {
       TypeBuilder<PoclContext, true>::setSizeTWidth(32);
     }
