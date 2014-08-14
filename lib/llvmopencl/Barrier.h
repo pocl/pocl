@@ -81,6 +81,11 @@ namespace pocl {
       return (llvm::isa<Instruction>(U) &&
               classof(llvm::cast<llvm::Instruction>(U)));
     }
+    static bool classof(const Value *V) {
+      return (llvm::isa<User>(V) &&
+              classof(llvm::cast<llvm::User>(V)));
+    }
+
 
 
     static bool hasOnlyBarrier(const llvm::BasicBlock *bb) {
