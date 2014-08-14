@@ -136,6 +136,11 @@ string(REPLACE " -pedantic" "" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
 #LLVM_CXX_FLAGS="$LLVM_CXX_FLAGS -fno-rtti"
 set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -fno-rtti")
 
+if(NOT LLVM_VERSION VERSION_LESS "3.5")
+  run_llvm_config(LLVM_SYSLIBS --system-libs)
+  set(LLVM_LDFLAGS "${LLVM_LDFLAGS} ${LLVM_SYSLIBS}")
+endif()
+
 ####################################################################
 
 macro(find_program_or_die OUTPUT_VAR PROG_NAME DOCSTRING)
