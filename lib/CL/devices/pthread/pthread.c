@@ -643,14 +643,14 @@ pocl_pthread_map_mem (void *data, void *buf_ptr,
 {
   /* All global pointers of the pthread/CPU device are in 
      the host address space already, and up to date. */     
-  return buf_ptr + offset;
+  return (char*)buf_ptr + offset;
 }
 
 void *
 workgroup_thread (void *p)
 {
   struct thread_arguments *ta = (struct thread_arguments *) p;
-  void *arguments[ta->kernel->num_args + ta->kernel->num_locals];
+  void **arguments = (void**)alloca((ta->kernel->num_args + ta->kernel->num_locals)*sizeof(void*));
   struct pocl_argument *al;  
   unsigned i = 0;
 
