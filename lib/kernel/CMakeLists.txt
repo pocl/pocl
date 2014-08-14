@@ -349,6 +349,47 @@ if(NEW_PRINTF_WORKS)
   list(APPEND SOURCES_WITHOUT_VML printf.c)
 endif()
 
+#LKERNEL_HDRS_EXTRA - headers that should be dependencies
+set(KERNEL_DEPEND_HEADERS
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vec_test.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/mathfuncs.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/mathfuncs_fabs.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vec_avx_fp8_32.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/mathfuncs_sinh.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/mathfuncs_log.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/mathfuncs_asin.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vec_pseudo.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/mathfuncs_convert.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vec_sse_float1.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vec_sse_double2.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vec_altivec_float4.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/mathfuncs_int.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/mathfuncs_sqrt.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/mathfuncs_exp.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/floatbuiltins.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/mathfuncs_sin.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vecmathlib.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vec_avx_double4.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vec_avx_float8.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/mathfuncs_asinh.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vec_qpx_double4.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vec_mic_double8.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vec_neon_float2.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/floatprops.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vec_neon_float4.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vec_avx_fp16_16.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vec_builtin.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vec_base.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vec_sse_double1.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/mathfuncs_base.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/floattypes.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vec_mask.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vec_vsx_double2.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/mathfuncs_pow.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/mathfuncs_rcp.h"
+"${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vec_sse_float4.h"
+)
+
 #*********************************************************************
 
 if(OCL_TARGETS MATCHES "host")
