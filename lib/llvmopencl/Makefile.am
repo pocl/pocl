@@ -34,7 +34,7 @@ pkglib_LTLIBRARIES = llvmopencl.la
 
 AM_CXXFLAGS = -I@top_srcdir@/fix-include -I@top_srcdir@/include @LLVM_CXX_FLAGS@
 
-AM_LDFLAGS = -module -export-dynamic -version-info ${KERNEL_COMPILER_LIB_VERSION} `@LLVM_CONFIG@ --ldflags`
+AM_LDFLAGS = -module -export-dynamic -version-info ${KERNEL_COMPILER_LIB_VERSION} @LLVM_LDFLAGS@
 
 PASSES_SOURCES = Barrier.h						\
                         BarrierBlock.h BarrierBlock.cc				\
