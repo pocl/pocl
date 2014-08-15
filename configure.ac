@@ -85,7 +85,7 @@ test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
 LLVM_VERSION=`$LLVM_CONFIG --version`
 LLVM_BINDIR=`$LLVM_CONFIG --bindir`
 LLVM_LIBDIR=`$LLVM_CONFIG --libdir`
-
+LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
 # Whether we can use our own printf implementation
 NEW_PRINTF_WORKS=true
 
@@ -105,9 +105,11 @@ case "$LLVM_VERSION" in
    ;;   
      3.5*)
      AC_DEFINE([LLVM_3_5], [], "Using LLVM 3.5")
+     LLVM_LDFLAGS="$LLVM_LDFLAGS `$LLVM_CONFIG --system-libs`"
    ;;   
      3.6*)
      AC_DEFINE([LLVM_3_5], [], "Using upcoming LLVM 3.6")
+     LLVM_LDFLAGS="$LLVM_LDFLAGS `$LLVM_CONFIG --system-libs`"
    ;;
      *)
    AC_MSG_ERROR(
@@ -118,6 +120,7 @@ Unsupported LLVM version. Please use LLVM version 3.2, 3.3, or 3.4.
    ;;
 esac
 
+AC_SUBST([LLVM_LDFLAGS], [llvm-config returned ldflags])
 AM_CONDITIONAL([NEW_PRINTF_WORKS], $NEW_PRINTF_WORKS)
 
 # When building with API linking, clang is always linked statically, so user might want to link llvm static to libpocl too
@@ -670,7 +673,7 @@ LLVM_CXX_FLAGS="$LLVM_CXX_FLAGS -fno-rtti"
 AC_MSG_CHECKING([if LLVM is built with assertions])
 CXXFLAGS="$CXXFLAGS $($LLVM_CONFIG --cxxflags) -UNDEBUG"
 LIBS="$LIBS $($LLVM_CONFIG --libs)"
-LDFLAGS="$LDFLAGS $($LLVM_CONFIG --ldflags)"
+LDFLAGS="$LDFLAGS $LLVM_LDFLAGS"
 
 AC_LINK_IFELSE(
   [AC_LANG_PROGRAM(
