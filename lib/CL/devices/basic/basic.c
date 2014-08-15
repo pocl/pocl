@@ -283,13 +283,13 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
      ensure that there is no more than a single space between
      identifiers. */
 
-#if SIZEOF_DOUBLE == 8
+#ifndef _CL_DISABLE_LONG
 #define DOUBLE_EXT "cl_khr_fp64 "
 #else
 #define DOUBLE_EXT 
 #endif
 
-#if SIZEOF___FP16 == 2
+#ifndef _CL_DISABLE_HALF
 #define HALF_EXT "cl_khr_fp16 "
 #else
 #define HALF_EXT
