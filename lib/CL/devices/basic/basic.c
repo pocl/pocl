@@ -278,7 +278,26 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->printf_buffer_size = 0;
   dev->vendor = "pocl";
   dev->profile = "FULL_PROFILE";
-  dev->extensions = "";
+  /* Note: The specification describes identifiers being delimited by
+     only a single space character. Some programs that check the device's
+     extension  string assume this rule. Future extension additions should
+     ensure that there is no more than a single space between
+     identifiers. */
+
+#if SIZEOF_DOUBLE == 8
+#define DOUBLE_EXT "cl_khr_fp64 "
+#else
+#define DOUBLE_EXT 
+#endif
+
+#if SIZEOF___FP16 == 2
+#define HALF_EXT "cl_khr_fp16 "
+#else
+#define HALF_EXT
+#endif
+
+  dev->extensions = DOUBLE_EXT HALF_EXT "cl_khr_byte_addressable_store";
+
   dev->llvm_target_triplet = OCL_KERNEL_TARGET;
   dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
   dev->has_64bit_long = 1;
