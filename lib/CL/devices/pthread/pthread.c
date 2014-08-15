@@ -187,7 +187,7 @@ pocl_pthread_init_device_infos(struct _cl_device_id* dev)
 {
   pocl_basic_init_device_infos(dev);
 
-  dev->type = CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_DEFAULT;
+  dev->type = CL_DEVICE_TYPE_CPU;
   /* This could be SIZE_T_MAX, but setting it to INT_MAX should suffice, */
   /* and may avoid errors in user code that uses int instead of size_t */
   dev->max_work_item_sizes[0] = 1024;
