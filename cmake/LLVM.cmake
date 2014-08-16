@@ -34,7 +34,13 @@ if(DEFINED WITH_LLVM_CONFIG AND WITH_LLVM_CONFIG)
   endif()
 else()
   # search for any version
-  find_program(LLVM_CONFIG NAMES "llvm-config" "llvm-config-mp-3.3" "llvm-config-3.3" "llvm-config33" "llvm-config-mp-3.4" "llvm-config-3.4" "llvm-config34" "llvm-config-mp-3.2" "llvm-config-3.2" "llvm-config32" DOC "llvm-config executable")
+  find_program(LLVM_CONFIG
+    NAMES "llvm-config"
+      "llvm-config-mp-3.3" "llvm-config-3.3" "llvm-config33"
+      "llvm-config-mp-3.4" "llvm-config-3.4" "llvm-config34"
+      "llvm-config-mp-3.5" "llvm-config-3.5" "llvm-config35"
+      "llvm-config-mp-3.2" "llvm-config-3.2" "llvm-config32"
+    DOC "llvm-config executable")
 endif()
 
 set(WITH_LLVM_CONFIG "${WITH_LLVM_CONFIG}" CACHE PATH "Path to preferred llvm-config")
