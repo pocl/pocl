@@ -202,7 +202,7 @@ macro(custom_try_compile_c_cxx COMPILER SUFFIX SOURCE1 SOURCE2 RES_VAR)
   set(SOURCE_PROG "
   ${SOURCE1}
 
-  int main() {
+  int main(int argc, char** argv) {
 
   ${SOURCE2}
 
@@ -529,7 +529,7 @@ setup_cache_var_name(CL_DISABLE_HALF "CL_DISABLE_HALF-${LLVM_HOST_TARGET}-${CLAN
 if(NOT DEFINED ${CACHE_VAR_NAME})
   set(CL_DISABLE_HALF 0)
   # TODO -march=CPU flags !
-  custom_try_compile_c_cxx("${CLANG}" "c" "__fp16 x;" "x=1; x=x+x;" RESV -c ${CLANG_TARGET_OPTION}${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${LLC_HOST_CPU})
+  custom_try_compile_c_cxx("${CLANG}" "c" "__fp16 callfp16(__fp16 a) { return a * (__fp16)1.8; };" "__fp16 x=callfp16((__fp16)argc);" RESV -c ${CLANG_TARGET_OPTION}${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${LLC_HOST_CPU})
   if(RESV)
     message(STATUS "Disabling cl_khr_fp16, seems your system doesnt support it")
     set(CL_DISABLE_HALF 1)
