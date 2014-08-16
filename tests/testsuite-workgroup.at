@@ -55,62 +55,44 @@ AT_CLEANUP
 
 AT_SETUP([barriered for loops (full replication)])
 AT_KEYWORDS([workgroup])
-AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel loopbarriers.cl 2 2 1 1], 0, stdout)
-AT_CHECK([sort -c stdout])
+AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel loopbarriers.cl 2 2 1 1], 0,
+[$(cat $abs_top_srcdir/tests/workgroup/loopbarriers_2_2_1_1.stdout)
+])
 AT_CLEANUP
 
 AT_SETUP([barriered for loops (loops)])
 AT_KEYWORDS([workgroup])
-AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel loopbarriers.cl 2 2 1 1], 0, stdout)
-AT_CHECK([sort -c stdout])
+AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel loopbarriers.cl 2 2 1 1], 0,
+[$(cat $abs_top_srcdir/tests/workgroup/loopbarriers_2_2_1_1.stdout)
+])
 AT_CLEANUP
 
 AT_SETUP([conditional barrier (full replication)])
-AT_DATA([expout],
-[LOCAL_ID=0 before if
-LOCAL_ID=1 before if
-LOCAL_ID=0 inside if
-LOCAL_ID=1 inside if
-LOCAL_ID=0 after if
-LOCAL_ID=1 after if
-])
 AT_KEYWORDS([condbar workgroup])
-AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel conditional_barriers.cl 1 2 1 1], 0, expout)
+AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel conditional_barriers.cl 1 2 1 1], 0,
+[$(cat $abs_top_srcdir/tests/workgroup/cond_barriers_1_2_1_1.stdout)
+])
 AT_CLEANUP
 
 AT_SETUP([conditional barrier (loops)])
-AT_DATA([expout],
-[LOCAL_ID=0 before if
-LOCAL_ID=1 before if
-LOCAL_ID=0 inside if
-LOCAL_ID=1 inside if
-LOCAL_ID=0 after if
-LOCAL_ID=1 after if
-])
 AT_KEYWORDS([condbar workgroup])
-AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel conditional_barriers.cl 1 2 1 1], 0, expout)
+AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel conditional_barriers.cl 1 2 1 1], 0,
+[$(cat $abs_top_srcdir/tests/workgroup/cond_barriers_1_2_1_1.stdout)
+])
 AT_CLEANUP
 
 AT_SETUP([b-loop with none of the WIs reaching the barrier (full replication)])
-AT_DATA([expout],
-[gid_x 0 after barrier at iteration 0
-gid_x 1 after barrier at iteration 0
-I am 0 and I break out from the loop.
-I am 1 and I also break out from the loop.
-])
 AT_KEYWORDS([b-loop workgroup])
-AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel tricky_for.cl 1 2 1 1], 0, expout)
+AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/workgroup/run_kernel tricky_for.cl 1 2 1 1], 0,
+[$(cat $abs_top_srcdir/tests/workgroup/tricky_for_1_2_1_1.stdout)
+])
 AT_CLEANUP
 
 AT_SETUP([b-loop with none of the WIs reaching the barrier (loops)])
-AT_DATA([expout],
-[gid_x 0 after barrier at iteration 0
-gid_x 1 after barrier at iteration 0
-I am 0 and I break out from the loop.
-I am 1 and I also break out from the loop.
-])
 AT_KEYWORDS([b-loop workgroup])
-AT_CHECK([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel tricky_for.cl 1 2 1 1], 0, expout)
+AT_CHECK_UNQUOTED([POCL_DEVICES=basic POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/workgroup/run_kernel tricky_for.cl 1 2 1 1], 0,
+[$(cat $abs_top_srcdir/tests/workgroup/tricky_for_1_2_1_1.stdout)
+])
 AT_CLEANUP
 
 AT_SETUP([forcing horizontal parallelization to some outer loops (repl)])
