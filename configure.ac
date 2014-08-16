@@ -1173,8 +1173,8 @@ AS_IF([test $ac_cv_alignof_float16 -gt $ac_cv_alignof_double16],
       [AC_DEFINE([MAX_EXTENDED_ALIGNMENT], [ALIGNOF_DOUBLE16], [Defined to greatest expected alignment for extended types, in bytes.])])
 
 AC_MSG_CHECKING([whether __fp16 supports arithmetic operations])
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[__fp16 x;]],
-                                   [[x=1; x=x+x;]])],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[__fp16 callfp16(__fp16 a) { return a * (__fp16)1.8; };]],
+                                   [[__fp16 x=callfp16((__fp16)1.643);]])],
                   [
                     AC_MSG_RESULT([yes])
                     AC_DEFINE_UNQUOTED([HAVE_WORKING_HALF], 1, [Define to 1 if __fp16 supports arithmetic operations float.])
