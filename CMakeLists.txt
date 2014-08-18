@@ -227,18 +227,18 @@ option(STATIC_LLVM "Link LLVM statically. Default is dynamic." OFF)
 
 if(STATIC_LLVM)
   message(STATUS "Linking LLVM statically")
-  set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
+  set(POCL_LLVM_LIBS "${LLVM_LIBFILES}")
 else()
-  message(STATUS "Linking LLVM dynamically")
+  message(STATUS "Trying to link LLVM dynamically")
   set(POCL_LLVM_LIBS "-lLLVM-${LLVM_VERSION}")
   # in
   find_library(LLVM_SHARED_LIB_FILE "LLVM-${LLVM_VERSION}" PATHS "${LLVM_LIBDIR}" NO_DEFAULT_PATH)
   if(LLVM_SHARED_LIB_FILE AND EXISTS "${LLVM_SHARED_LIB_FILE}")
-    message(STATUS "Using ${LLVM_SHARED_LIB_FILE}")
+    message(STATUS "..using ${LLVM_SHARED_LIB_FILE}")
   else()
-    set(POCL_LLVM_LIBS ${LLVM_LIBS})
-    message(STATUS "LLVM-${LLVM_VERSION} shared library not found (Probably because LLVM is built with cmake).
-    Linking libpocl to LLVM_LIBS")
+    set(POCL_LLVM_LIBS "${LLVM_LIBS}")
+    message(STATUS "LLVM-${LLVM_VERSION} library not found (Probably because LLVM is built with cmake).
+    Linking libpocl (possibly statically) to LLVM_LIBS")
   endif()
 endif()
 
