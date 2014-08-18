@@ -130,7 +130,7 @@ add_library("libpocl_unlinked_objs" OBJECT ${POCL_LIB_SOURCES})
 
 #################################################################
 
-set(POCL_PUBLIC_LINK_LIST "-lstdc++" "${LTDL_LIB}" ${POCL_DEVICES_LINK_LIST})
+set(POCL_PUBLIC_LINK_LIST "${LTDL_LIB}" ${POCL_DEVICES_LINK_LIST})
 
 # TODO test static POCL_LLVM_LIBS
 set(POCL_PRIVATE_LINK_LIST ${POCL_LLVM_LIBS})
