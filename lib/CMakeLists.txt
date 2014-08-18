@@ -25,6 +25,7 @@
 
 separate_arguments(HOST_CLANG_FLAGS)
 separate_arguments(HOST_LLC_FLAGS)
+string(REPLACE " " ";" POCL_LLVM_LIBS "${POCL_LLVM_LIBS}")
 
 add_subdirectory("llvmopencl")
 
