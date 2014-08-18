@@ -139,7 +139,10 @@ add_test("kernel/test_shuffle_short" "test_shuffle" "short")
 
 add_test("kernel/test_shuffle_ushort" "test_shuffle" "ushort")
 
-add_test("kernel/test_shuffle_half" "test_shuffle" "half")
+if(NOT CL_DISABLE_HALF)
+  add_test("kernel/test_shuffle_half" "test_shuffle" "half")
+  set(HALF_TEST "kernel/test_shuffle_half")
+endif()
 
 add_test("kernel/test_shuffle_int" "test_shuffle" "int")
 
@@ -154,7 +157,7 @@ add_test("kernel/test_shuffle_ulong" "test_shuffle" "ulong")
 add_test("kernel/test_shuffle_double" "test_shuffle" "double")
 
 set_tests_properties("kernel/test_shuffle_char" "kernel/test_shuffle_short"
-  "kernel/test_shuffle_ushort"   "kernel/test_shuffle_half"
+  "kernel/test_shuffle_ushort"   ${HALF_TEST}
   "kernel/test_shuffle_int"   "kernel/test_shuffle_uint"
   "kernel/test_shuffle_float"   "kernel/test_shuffle_long"
   "kernel/test_shuffle_ulong"  "kernel/test_shuffle_double"
@@ -164,8 +167,6 @@ set_tests_properties("kernel/test_shuffle_char" "kernel/test_shuffle_short"
     PROCESSORS 1
     DEPENDS "pocl_version_check")
 
-set_tests_properties("kernel/test_shuffle_half"
-  PROPERTIES WILL_FAIL 1)
 
 
 ######################################################################
