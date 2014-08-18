@@ -304,7 +304,8 @@ if(NOT DEFINED DEFAULT_ENABLE_ICD)
       # version check the found library
       if(OPENCL_LIBRARIES)
         set(CMAKE_REQUIRED_LIBRARIES "${OPENCL_LIBRARIES}")
-        CheckFunctionExists("clEnqueueFillImage" OPENCL_FOUND)
+        include(CheckFunctionExists)
+        CHECK_FUNCTION_EXISTS("clEnqueueFillImage" OPENCL_FOUND)
       endif()
     endif()
 
