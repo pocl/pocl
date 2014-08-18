@@ -385,6 +385,42 @@ else()
 
 endif()
 
+####################################################################
+
+# which C++ stdlib clang is using
+
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+
+  setup_cache_var_name(SYSTEM_CLANGXX_STDLIB "${LLVM_HOST_TARGET}-${CLANGXX}-${LLVM_CLANGXX_VERSION}")
+
+  if(NOT DEFINED ${CACHE_VAR_NAME})
+    message(STATUS "Checking if system clang++ uses libstdc++")
+    separate_arguments(_FLAGS UNIX_COMMAND "${LLVM_CXXFLAGS}")
+    custom_try_compile_clangxx("#include <llvm/Support/Debug.h>\n#include <iostream>\nusing namespace std;\n"
+        "cout << 234134; return 0;" COMPILE_RESULT ${_FLAGS} "-stdlib=libstdc++")
+    if(COMPILE_RESULT)
+      custom_try_compile_clangxx("#include <llvm/Support/Debug.h>\n#include <iostream>\nusing namespace std;\n"
+          "cout << 234134; return 0;" COMPILE_RESULT ${_FLAGS} "-stdlib=libc++")
+      if(COMPILE_RESULT)
+        message(FATAL_ERROR "System clang cannot compile with neither libstdc++ nor libc++; possibly missing llvm heaers?")
+      else()
+        set(SYSTEM_CLANGXX_STDLIB "-stdlib=libc++")
+      endif()
+    else()
+      set(SYSTEM_CLANGXX_STDLIB "-stdlib=libstdc++")
+    endif()
+  endif()
+
+  set_cache_var(SYSTEM_CLANGXX_STDLIB "Clang's c++ stdlib")
+  set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} ${SYSTEM_CLANGXX_STDLIB}")
+endif()
+
+if("${SYSTEM_CLANGXX_STDLIB}" MATCHES "libc")
+  set(LLVM_LDFLAGS "${LLVM_LDFLAGS} -lc++")
+else()
+  set(LLVM_LDFLAGS "${LLVM_LDFLAGS} -lstdc++")
+endif()
+
 
 ####################################################################
 
