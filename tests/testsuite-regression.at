@@ -198,7 +198,8 @@ AT_SETUP([block])
 AT_KEYWORDS([block])
 AT_SKIP_IF([! grep "#define HAVE_OPENCL_HPP" $abs_top_builddir/config.h])
 # Patch pending (look in tools/patches) to fix this for Clang 3.5.
-AT_XFAIL_IF([grep -q "#define LLVM_3_5" $abs_top_builddir/config.h])
+AT_XFAIL_IF([grep -q "#define LLVM_3_5" $abs_top_builddir/config.h && 
+             ! grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q arm ])
 AT_DATA([expout],
 [Running test test_block...
 op(1)=2.000000
