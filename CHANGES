@@ -6,6 +6,10 @@ refer to the version control log for a full listing.
 
 [updated from git log last time on 2014-08-03]
 
+Highlights
+----------
+- Support for building using CMake (experimental).
+
 Bugfixes
 --------
 - TCE: kernel building was broken when running pocl
