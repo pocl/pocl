@@ -126,9 +126,10 @@ char* pocl_get_process_name ();
 /* File utility functions */
 void pocl_create_or_append_file (const char* file_name, char* content);
 
-char* pocl_read_text_file (const char* file_name);
+/* Allocates memory and places file contents in it. Returns number of chars read */
+int pocl_read_text_file (const char* file_name, char** content_dptr);
 
-unsigned char* pocl_read_binary_file (const char* file_name);
+int pocl_read_binary_file (const char* file_name, unsigned char** content_dptr);
 
 void pocl_check_and_invalidate_cache (cl_program program, int device_i, const char* device_tmpdir);
 

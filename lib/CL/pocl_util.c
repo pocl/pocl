@@ -88,10 +88,9 @@ pocl_create_or_append_file (const char* file_name, char* content)
   fclose(fp);
 }
 
-char*
-pocl_read_text_file (const char* file_name)
+int
+pocl_read_text_file (const char* file_name, char** content_dptr)
 {
-  char *str;
   FILE *fp;
   struct stat st;
   int file_size;
@@ -101,19 +100,20 @@ pocl_read_text_file (const char* file_name)
 
   fp = fopen(file_name, "r");
   if (fp == NULL)
-    return NULL;
+    return 0;
 
-  str = (char*) malloc((file_size + 1) * sizeof(char));
-  fread(str, sizeof(char), file_size, fp);
-  str[file_size] = '\0';
+  *content_dptr = (char*) malloc((file_size + 1) * sizeof(char));
+  if (!(*content_dptr)) return 0;
 
-  return str;
+  int read = fread(*content_dptr, sizeof(char), file_size, fp);
+  (*content_dptr)[file_size] = '\0';
+
+  return read;
 }
 
-unsigned char*
-pocl_read_binary_file (const char* file_name)
+int
+pocl_read_binary_file (const char* file_name, unsigned char** content_dptr)
 {
-  unsigned char *bin;
   FILE *fp;
   struct stat st;
   int file_size;
@@ -123,12 +123,12 @@ pocl_read_binary_file (const char* file_name)
 
   fp = fopen(file_name, "rb");
   if (fp == NULL)
-    return NULL;
+    return 0;
 
-  bin = (unsigned char*) malloc(file_size * sizeof(unsigned char));
-  fread(bin, file_size, sizeof(unsigned char), fp);
+  *content_dptr = (unsigned char*) malloc(file_size * sizeof(unsigned char));
+  if (!(*content_dptr)) return 0;
 
-  return bin;
+  return fread(*content_dptr, file_size, sizeof(unsigned char), fp);
 }
 
 #define POCL_TEMPDIR_ENV "POCL_TEMP_DIR"
@@ -205,8 +205,8 @@ pocl_create_source_dirs (cl_program program, int size)
         {
           char *content;
           sprintf(s2, "%s/%s/program.cl", s1, ep->d_name);
-          content = pocl_read_text_file(s2);
-          if (content && (strcmp(content, source) == 0))
+          int read = pocl_read_text_file(s2, &content);
+          if (read && (strcmp(content, source) == 0))
             {               /* Voila, found same program source in cache */
               sprintf(path_name, "%s/%s", s1, ep->d_name);
               found_in_cache = 1;
@@ -259,9 +259,9 @@ pocl_create_binary_dirs (cl_program program, int size)
 
               sprintf(s2, "%s/%s/%s/program.bc", s1, ep->d_name,
                             program->devices[device_i]->short_name);
-              bin = pocl_read_binary_file(s2);
+              int read = pocl_read_binary_file(s2, &bin);
 
-              if (!(bin && (memcmp(bin, binaries[device_i], program->binary_sizes[device_i]) == 0)))
+              if (!(read && (memcmp(bin, binaries[device_i], program->binary_sizes[device_i]) == 0)))
                 found_cache_in_all = 0;
 
               if(bin) free(bin);
@@ -563,6 +563,7 @@ pocl_check_and_invalidate_cache (cl_program program,
   int cache_dirty = 0;
   char version_file[TEMP_DIR_PATH_CHARS];
   char options_file[TEMP_DIR_PATH_CHARS], *content;
+  int read = 0;
 
   if (!cache_lock_initialized)
     {
@@ -584,8 +585,8 @@ pocl_check_and_invalidate_cache (cl_program program,
   /* Check for driver version match */
   if (access (version_file, F_OK) == 0)
     {
-      content = pocl_read_text_file(version_file);
-      if(content && (strcmp(content, POCL_BUILD_TIMESTAMP) != 0))
+      read = pocl_read_text_file(version_file, &content);
+      if(read && (strcmp(content, POCL_BUILD_TIMESTAMP) != 0))
         {
           cache_dirty = 1;
         }
@@ -602,8 +603,8 @@ pocl_check_and_invalidate_cache (cl_program program,
   /* Check for build option match */
   if (access(options_file, F_OK) == 0)
     {
-      content = pocl_read_text_file(options_file);
-      if (content && (program->compiler_options)
+      read = pocl_read_text_file(options_file, &content);
+      if (read && (program->compiler_options)
           && (strcmp(content, program->compiler_options) != 0))
         {
           cache_dirty = 1;
