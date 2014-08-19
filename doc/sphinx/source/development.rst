@@ -1,6 +1,23 @@
 Information for Developers
 ==========================
 
+Using cmake to build & install pocl
+-----------------------------------
+
+Most of the important stuff on using cmake is in the INSTALL file. A few
+additional items:
+
+The
+
+     export OCL_ICD_VENDORS="PATH_TO_THE_POCL_BUILD_TREE/ocl-vendors"
+
+command must point to ocl-vendors in the  cmake *build* directory, not the
+pocl source directory.
+
+Testing is done using either "make test" or invoking "ctest" directly;
+"make check" does not work. Invoke ctest with -jX option to run X tests
+in parallel.
+
 Configuring
 -----------
 
