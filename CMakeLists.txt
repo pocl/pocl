@@ -798,6 +798,11 @@ install(FILES "${CMAKE_BINARY_DIR}/pocl.icd"
 file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/ocl-vendors")
 file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/ocl-vendors/pocl-tests.icd" CONTENT "$<TARGET_FILE:pocl>" CONDITION 1)
 
+file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/CTestCustom.cmake" CONTENT "
+  set(ENV{POCL_BUILDING} \"1\")
+  set(ENV{OCL_ICD_VENDORS} \"${CMAKE_BINARY_DIR}/ocl-vendors\")
+")
+
 ##########################################################
 
 if(UNIX)
