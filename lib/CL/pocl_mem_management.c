@@ -59,14 +59,15 @@ cl_event pocl_mem_manager_new_event ()
     {
       LL_DELETE (mm->event_list, ev);
       POCL_UNLOCK (mm->event_lock);
-      ev->pocl_refcount = 2; /* no need to lock because event is not in use */
+      POCL_INIT_LOCK (ev->pocl_lock);
+      ev->pocl_refcount = 1; /* no need to lock because event is not in use */
       return ev;
     }
   POCL_UNLOCK (mm->event_lock);
     
   ev = calloc (1, sizeof (struct _cl_event));
   POCL_INIT_OBJECT(ev);
-  ev->pocl_refcount = 2;
+  ev->pocl_refcount = 1;
   return ev;
 }
 

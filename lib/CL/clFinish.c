@@ -86,9 +86,10 @@ POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
           LL_APPEND (ready_list, node);
         }
     }
+  POCL_UNLOCK_OBJ (command_queue);
 
   exec_commands(ready_list);
-  POCL_UNLOCK_OBJ (command_queue);
+  
   return CL_SUCCESS;
 }
 POsym(clFinish)
@@ -263,16 +264,17 @@ static void exec_commands (_cl_command_node *node_list)
         }   
     }
 
-  /* event callback handling 
-     just call functions in the same order they were added */
   if (event)
     {
+      /* event callback handling 
+         just call functions in the same order they were added */
       for (cb_ptr = (*event)->callback_list; cb_ptr; cb_ptr = cb_ptr->next)
         {
           cb_ptr->callback_function ((*event), cb_ptr->trigger_status, 
                                      cb_ptr->user_data);
         }
-      clReleaseEvent(*event);
+      if ((*event)->implicit_event)
+        POname(clReleaseEvent) (*event);
     }
   
   // free the queue contents

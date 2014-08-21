@@ -212,6 +212,7 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
       POname(clRetainCommandQueue) (command_queue);
       (*event)->command_type = command_type;
       (*event)->callback_list = NULL;
+      (*event)->implicit_event = 0;
       (*event)->next = NULL;
     }
   return CL_SUCCESS;
@@ -251,6 +252,8 @@ cl_int pocl_create_command (_cl_command_node **cmd,
     }
   if (event_p)
     *event_p = *event;
+  else
+    (*event)->implicit_event = 1;
   
   /* if in-order command queue and queue is not empty, add event from 
      previous command to new commands event_waitlist */

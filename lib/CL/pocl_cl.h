@@ -536,6 +536,8 @@ struct _cl_event {
   cl_ulong time_start;  /* the time the command actually started executing */
   cl_ulong time_end;    /* the finish time of the command */   
 
+  /* impicit event = an event for pocl's internal use, not visible to user */
+  int implicit_event;
   _cl_event * volatile next;
 };
 
