@@ -3,7 +3,8 @@
 # Makefile.am for pocl/lib/llvmopencl.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
-# 
+#               2011-2014 Pekka Jääskeläinen 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -59,7 +60,8 @@ PASSES_SOURCES = Barrier.h						\
 						VariableUniformityAnalysis.h VariableUniformityAnalysis.cc \
 						AutomaticLocals.cc ImplicitConditionalBarriers.cc \
 						ImplicitConditionalBarriers.h \
-						DebugHelpers.h DebugHelpers.cc
+						DebugHelpers.h DebugHelpers.cc \
+						linker.h
 
 #add compiler driver sources
 libllvmpasses_la_SOURCES = ${PASSES_SOURCES} linker.cpp

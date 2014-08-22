@@ -27,5 +27,12 @@ noinst_PROGRAMS = run_kernel
 AM_LDFLAGS = ../../lib/poclu/libpoclu.la @OPENCL_LIBS@
 AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL -DSRCDIR='"$(abs_srcdir)"' @OPENCL_CFLAGS@
 
-EXTRA_DIST = basic_barriers.cl conditional_barriers.cl forloops.cl forloops_2_2_1_1.stdout loopbarriers.cl basic_barriers_2_2_2_2.stdout tricky_for.cl outerlooppar.cl outerlooppar_2_2_1_1.stdout for_bug.cl for_bug_1_2_1_1.stdout multilatch_bloop.cl multilatch_bloop_1_3_1_1.stdout print_all_ids.cl print_all_ids_114114.txt implicit_barriers.cl implicit_barriers_1_2_1_1.stdout
+EXTRA_DIST = basic_barriers.cl conditional_barriers.cl forloops.cl forloops_2_2_1_1.stdout loopbarriers.cl \
+	basic_barriers_2_2_2_2.stdout tricky_for.cl outerlooppar.cl outerlooppar_2_2_1_1.stdout for_bug.cl \
+	for_bug_1_2_1_1.stdout multilatch_bloop.cl multilatch_bloop_1_3_1_1.stdout print_all_ids.cl \
+	print_all_ids_114114.txt implicit_barriers.cl implicit_barriers_1_2_1_1.stdout \
+	loopbarriers_2_2_1_1.stdout cond_barriers_1_2_1_1.stdout tricky_for_1_2_1_1.stdout
+
+
+
 

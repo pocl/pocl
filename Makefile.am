@@ -54,10 +54,12 @@ endif
 
 .PHONY: ${PHONIES} prepare-examples clean-examples
 
-EXTRA_DIST = config/xclang tools/data/*.adf \
-  doc/build-envs.txt doc/sphinx/* \
-  CHANGES fix-include pocl.icd.in README README.ARM README.Cell \
+EXTRA_DIST = config/xclang tools/data/test_machine.adf tools/data/test_machine_fp16.adf \
+  doc/build-envs.txt CHANGES fix-include pocl.icd.in README README.ARM README.Cell \
   README.OSX README.powerpc README.packaging
+
+# Sphinx dist:
+EXTRA_DIST += doc/sphinx/source/conf.py doc/sphinx/source/design.rst doc/sphinx/source/development.rst doc/sphinx/source/env_variables.rst doc/sphinx/source/faq.rst doc/sphinx/source/features.rst doc/sphinx/source/host_library.rst doc/sphinx/source/index.rst doc/sphinx/source/kernel_compiler.rst doc/sphinx/source/memory_management.rst doc/sphinx/source/releasing.rst doc/sphinx/source/using.rst doc/sphinx/Makefile
 
 BUILT_SOURCES = install-paths.h
 

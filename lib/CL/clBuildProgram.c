@@ -1,7 +1,7 @@
 /* OpenCL runtime library: clBuildProgram()
 
    Copyright (c) 2011-2013 Universidad Rey Juan Carlos,
-                           Pekka Jääskeläinen / Tampere Univ. of Technology
+                 2011-2014 Pekka Jääskeläinen / Tampere Univ. of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
