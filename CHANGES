@@ -19,6 +19,8 @@ Kernel compiler
 ---------------
 - Final code generation now done via LLVM API calls instead of
   calling the llc binary.
+- Sensible linking of functions from the monolithic kernel built-in
+  library. Major compilation speedup for smaller kernels.
 
 OpenCL C Builtin Function Implementations
 -----------------------------------------
