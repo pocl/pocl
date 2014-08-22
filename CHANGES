@@ -25,6 +25,7 @@ Kernel compiler
 OpenCL C Builtin Function Implementations
 -----------------------------------------
 - Improved support for halfN functions.
+- ilogb and ldexp available with vecmathlib
 
 OpenCL Runtime/Platform API support
 -----------------------------------
