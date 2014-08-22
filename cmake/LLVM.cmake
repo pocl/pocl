@@ -323,7 +323,7 @@ macro(CHECK_SIZEOF TYPE RES_VAR TRIPLE)
   setup_cache_var_name(SIZEOF "${TYPE}-${TRIPLE}-${CLANG}")
 
   if(NOT DEFINED ${CACHE_VAR_NAME})
-    custom_try_run_lli("#include <stddef.h>\n #include <stdio.h>" "printf(\"%i\",(int)sizeof(${TYPE})); return 0;" ${RES_VAR} "${CLANG_TARGET_OPTION}${TRIPLE}")
+    custom_try_run_exe("#include <stddef.h>\n #include <stdio.h>" "printf(\"%i\",(int)sizeof(${TYPE})); return 0;" ${RES_VAR} "${CLANG_TARGET_OPTION}${TRIPLE}")
     if(NOT ${RES_VAR})
       message(SEND_ERROR "Could not determine sizeof(${TYPE})")
     endif()
@@ -337,7 +337,7 @@ macro(CHECK_ALIGNOF TYPE TYPEDEF RES_VAR TRIPLE)
 
   if(NOT DEFINED ${CACHE_VAR_NAME})
 
-    custom_try_run_lli("
+    custom_try_run_exe("
 #include <stddef.h>
 #include <stdio.h>
 
