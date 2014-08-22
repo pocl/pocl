@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 # 
 # Copyright (c) 2011-2013 Universidad Rey Juan Carlos and
-#                         Pekka Jääskeläinen / Tampere University of Technology
+#               2011-2014 Pekka Jääskeläinen / Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 
 AC_PREREQ([2.64])
-AC_INIT([pocl], [0.10-pre], [pocl-devel@lists.sourceforge.net])
+AC_INIT([pocl], [0.10], [pocl-devel@lists.sourceforge.net])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_AUX_DIR([config])
@@ -106,15 +106,11 @@ case "$LLVM_VERSION" in
      3.5*)
      AC_DEFINE([LLVM_3_5], [], "Using LLVM 3.5")
      LLVM_LDFLAGS="$LLVM_LDFLAGS `$LLVM_CONFIG --system-libs`"
-   ;;   
-     3.6*)
-     AC_DEFINE([LLVM_3_5], [], "Using upcoming LLVM 3.6")
-     LLVM_LDFLAGS="$LLVM_LDFLAGS `$LLVM_CONFIG --system-libs`"
    ;;
      *)
    AC_MSG_ERROR(
    [
-Unsupported LLVM version. Please use LLVM version 3.2, 3.3, or 3.4.
+Unsupported LLVM version. Please use LLVM version 3.2, 3.3, 3.4 or 3.5.
    ])
    LLVM_VERSION=
    ;;
