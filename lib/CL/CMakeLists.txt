@@ -130,7 +130,7 @@ add_library("libpocl_unlinked_objs" OBJECT ${POCL_LIB_SOURCES})
 
 #################################################################
 
-set(POCL_PUBLIC_LINK_LIST "${LTDL_LIB}" ${POCL_DEVICES_LINK_LIST})
+set(POCL_PUBLIC_LINK_LIST "${LTDL_LIB}" ${CMAKE_THREAD_LIBS_INIT} ${POCL_DEVICES_LINK_LIST})
 
 set(POCL_PRIVATE_LINK_LIST -lclangFrontend -lclangDriver -lclangParse -lclangSema -lclangEdit -lclangLex -lclangSerialization -lclangBasic -lclangFrontendTool -lclangRewriteFrontend -lclangStaticAnalyzerFrontend -lclangStaticAnalyzerCore -lclangAnalysis -lclangCodeGen -lclangAST  ${POCL_LLVM_LIBS})
 
