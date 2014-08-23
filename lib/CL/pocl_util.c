@@ -426,7 +426,7 @@ pocl_check_and_invalidate_cache (cl_program program,
 {
   int cache_dirty = 0;
   char version_file[CACHE_DIR_PATH_CHARS];
-  char *content;
+  char *content, *s_ptr, *ss_ptr;
   int read = 0;
 
   if (!cache_lock_initialized)
@@ -465,9 +465,20 @@ pocl_check_and_invalidate_cache (cl_program program,
 
   /* If program contains "#include", disable caching
      Included headers might get modified, force recompilation in all the cases
+     Yes, this is a very dirty way to find "# include"
+     but we can live with this for now
    */
-  if (strstr(program->source, "#include"))
-    cache_dirty = 1;
+  for (s_ptr = program->source; (*s_ptr); s_ptr++)
+    {
+      if ((*s_ptr) == '#')
+        {
+          /* Skip all the white-spaces between # & include */
+          for (ss_ptr = s_ptr+1; (*ss_ptr == ' '); ss_ptr++) ;
+
+          if (strncmp(ss_ptr, "include", 7) == 0)
+            cache_dirty = 1;
+        }
+    }
 
   bottom:
   if (cache_dirty)
