@@ -59,14 +59,21 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
   char objfile[POCL_FILENAME_LENGTH];
 
   char* module = malloc(min(POCL_FILENAME_LENGTH, 
-	   strlen(tmpdir) + strlen(function_name) + 5)); // strlen of / .so 4+1
+	   strlen(tmpdir) + strlen(kernel->function_name) + 5)); // strlen of / .so 4+1
   int error;
   cl_program program = kernel->program;
 
   error = snprintf 
     (module, POCL_FILENAME_LENGTH,
-     "%s/%s.so", tmpdir, function_name);
+     "%s/%s.so", tmpdir, kernel->function_name);
+
   assert (error >= 0);
+
+  error = snprintf
+    (objfile, POCL_FILENAME_LENGTH,
+     "%s/%s.so.o", tmpdir, kernel->function_name);
+  assert (error >= 0);
+
 
   if (access (module, F_OK) != 0)
     {
@@ -140,4 +147,5 @@ pocl_memalign_alloc(size_t align_width, size_t size)
   return ptr;
 #endif
 }
+
 

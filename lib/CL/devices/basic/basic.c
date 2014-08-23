@@ -787,16 +787,10 @@ void check_compiler_cache (_cl_command_node *cmd)
   ci->next = NULL;
   ci->tmp_dir = strdup(cmd->command.run.tmp_dir);
   ci->function_name = strdup (cmd->command.run.kernel->function_name);
-<<<<<<< HEAD
   const char* module_fn = llvm_codegen (cmd->command.run.tmp_dir,
                                         cmd->command.run.kernel,
-                                        cmd->device,
-                                        cmd->command.run.kernel->function_name);
-  dlhandle = lt_dlopen (module_fn);     
-=======
-  const char* module_fn = llvm_codegen (cmd->command.run.tmp_dir, cmd->command.run.kernel->function_name);
+                                        cmd->device);
   dlhandle = lt_dlopen (module_fn);
->>>>>>> Initial commit of android port
   if (dlhandle == NULL)
     {
       printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", 
