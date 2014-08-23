@@ -47,15 +47,24 @@ below.
  Override the default "-O3" that is passed to the LLVM opt as a final
  optimization switch.
 
+* POCL_CACHE_DIR
+
+ If this is set to an existing directory, pocl uses it as the cache
+ directory for all compilation results. This allows reusing compilation
+ results between pocl invocations. If this env is not set, then the
+ default cache directory will be used
+
 * POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES
 
- If this is set to 1, the kernel compiler cache/temporary directory that contains
- all the intermediate compiler files are left as it is
+ If this is set to 1, the kernel compiler cache/temporary directory that
+ contains all the intermediate compiler files are left as it is. This
+ will be handy for debugging
 
-* POCL_CLEAR_KERNEL_CACHE
+* POCL_FORCE_CLEAR_KERNEL_CACHE
 
-  If kernel cache is enabled and this is set to 1, then kernel cache will be
-  forcefully cleared at each run
+ If kernel cache is enabled and this is set to 1, then kernel cache will be
+ forcefully cleared at each run. This will be handy for developers to test
+ their changes and evict cache at every run
 
 * POCL_MAX_PTHREAD_COUNT
 
@@ -67,16 +76,6 @@ below.
 
  Forces the maximum WG size returned by the device or kernel work group queries
  to be at most this number.
-
-* POCL_TEMP_DIR
-
- If this is set to an existing directory, pocl uses it as the temporary
- directory for all compilation results. This allows reusing compilation
- results between pocl invocations. If this env is non-NULL, the temp
- directory is not deleted after the Program is freed. Note: the same
- temp dir will be used for all OpenCL programs thus programs
- containing kernels with the same name might use the wrong kernels
- when using this env.
 
 * POCL_USE_PCH
 

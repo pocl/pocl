@@ -29,6 +29,7 @@
 #include <sys/stat.h>
 #include "pocl_llvm.h"
 #include "pocl_hash.h"
+#include "pocl_util.h"
 
 /* supported compiler parameters which should pass to the frontend directly
    by using -Xclang */
@@ -58,16 +59,28 @@ static inline void
 build_program_compute_hash(cl_program program)
 {
   SHA1_CTX hash_ctx;
+  int total_binary_size, i;
 
   pocl_SHA1_Init(&hash_ctx);
 
-  pocl_SHA1_Update(&hash_ctx, program->source, strlen(program->source));
+  if (program->source)
+    {
+      pocl_SHA1_Update(&hash_ctx, program->source, strlen(program->source));
+    }
+  else  /* Program was created with clCreateProgramWithBinary() */
+    {
+      total_binary_size = 0;
+      for (i = 0; i < program->num_devices; ++i)
+        total_binary_size += program->binary_sizes[i];
+
+      /* Binaries are stored in continuous chunk of memory starting from binaries[0] */
+      pocl_SHA1_Update(&hash_ctx, program->binaries[0], total_binary_size);
+    }
+
   if (program->compiler_options)
     pocl_SHA1_Update(&hash_ctx, program->compiler_options, strlen(program->compiler_options));
 
   pocl_SHA1_Final(&hash_ctx, program->build_hash);
-
-  return 0;
 }
 
 CL_API_ENTRY cl_int CL_API_CALL
@@ -80,7 +93,6 @@ POname(clBuildProgram)(cl_program program,
                        void *user_data) 
 CL_API_SUFFIX__VERSION_1_0
 {
-  char tmpdir[POCL_FILENAME_LENGTH];
   char device_tmpdir[POCL_FILENAME_LENGTH];
   char source_file_name[POCL_FILENAME_LENGTH], binary_file_name[POCL_FILENAME_LENGTH];
   FILE *source_file, *binary_file;
@@ -226,15 +238,11 @@ CL_API_SUFFIX__VERSION_1_0
       real_device_list = device_list;
     }
 
+  build_program_compute_hash(program);
+  program->temp_dir = pocl_create_progam_cache_dir(program);
+
   if (program->binaries == NULL)
     {
-      build_program_compute_hash(program);
-
-      snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/", program->temp_dir);
-
-      if (access (tmpdir, F_OK) != 0)
-        mkdir(tmpdir, S_IRWXU);
-
       /* FIXME: these might have allocated already. The user might want to
          build the program with different compiler options and calls this
          repeatedly for the same source. In that case there will be a memory
@@ -273,7 +281,7 @@ CL_API_SUFFIX__VERSION_1_0
           if (access (binary_file_name, F_OK) != 0)
           {
             error = pocl_llvm_build_program
-              (program, device, device_i, tmpdir,
+              (program, device, device_i, program->temp_dir,
                binary_file_name, device_tmpdir,
                user_options);
 

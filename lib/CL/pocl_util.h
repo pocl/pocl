@@ -34,23 +34,18 @@
 extern "C" {
 #endif
 
-/* Return a tmp/cache folder name for the current program
- */
-char* pocl_generate_temp_dir_name ();
-void pocl_create_binary_dirs (cl_program program, int size);
-void pocl_create_source_dirs (cl_program program, int size);
-
 void pocl_remove_directory (const char *path_name);
 void pocl_remove_file (const char *file_path);
 void pocl_make_directory (const char *path_name);
 
 /**
- * Return a path to store program geenrated file
+ * Assign a directory for program based on already computed SHA
+ * Create the directory if not present
  * \param program the program for which a path is needed
  *
  * \return a string allocated on the heap
  */
-char *pocl_get_program_dir(cl_program program);
+char* pocl_create_progam_cache_dir(cl_program program);
 
 uint32_t byteswap_uint32_t (uint32_t word, char should_swap);
 float byteswap_float (float word, char should_swap);
@@ -136,8 +131,6 @@ void pocl_create_or_append_file (const char* file_name, char* content);
 
 /* Allocates memory and places file contents in it. Returns number of chars read */
 int pocl_read_text_file (const char* file_name, char** content_dptr);
-
-int pocl_read_binary_file (const char* file_name, unsigned char** content_dptr);
 
 void pocl_check_and_invalidate_cache (cl_program program, int device_i, const char* device_tmpdir);
 

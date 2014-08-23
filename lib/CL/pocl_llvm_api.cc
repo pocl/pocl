@@ -163,7 +163,7 @@ load_source(FrontendOptions &fe,
             cl_program program)
 {
   std::string kernel_file(temp_dir);
-  kernel_file += POCL_PROGRAM_CL_FILENAME;
+  kernel_file += "/"POCL_PROGRAM_CL_FILENAME;
   std::ofstream ofs(kernel_file.c_str());
   ofs << program->source;
   if (!ofs.good())

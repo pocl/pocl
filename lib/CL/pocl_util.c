@@ -36,7 +36,7 @@
 #include "common.h"
 #include "pocl_mem_management.h"
 
-#define TEMP_DIR_PATH_CHARS 512
+#define CACHE_DIR_PATH_CHARS 512
 
 struct list_item;
 
@@ -111,221 +111,45 @@ pocl_read_text_file (const char* file_name, char** content_dptr)
   return read;
 }
 
-int
-pocl_read_binary_file (const char* file_name, unsigned char** content_dptr)
-{
-  FILE *fp;
-  struct stat st;
-  int file_size;
-
-  stat(file_name, &st);
-  file_size = (int)st.st_size;
-
-  fp = fopen(file_name, "rb");
-  if (fp == NULL)
-    return 0;
-
-  *content_dptr = (unsigned char*) malloc(file_size * sizeof(unsigned char));
-  if (!(*content_dptr)) return 0;
-
-  return fread(*content_dptr, file_size, sizeof(unsigned char), fp);
-}
-
-#define POCL_TEMPDIR_ENV "POCL_TEMP_DIR"
-
 char*
-pocl_generate_temp_dir_name ()
-{  
-  char *path_name, *process_name;
-
-  path_name = (char*)malloc(TEMP_DIR_PATH_CHARS);
-  process_name = pocl_get_process_name();
-
-#ifdef ANDROID
-  if ((getenv(POCL_TEMPDIR_ENV) != NULL)
-          && (access(getenv (POCL_TEMPDIR_ENV), W_OK) == 0))
-    {
-      /* Optionally, applications can set POCL_TEMP_DIR to their cache folder */
-      sprintf(path_name, "%s/pocl", getenv(POCL_TEMPDIR_ENV));
-    }
-  else
-    {
-      sprintf(path_name, "/data/data/%s/cache", process_name);
-      if (access(path_name, W_OK) == 0)
-        {
-          strcat(path_name, "/pocl");
-        }
-      else
-        {
-          sprintf(path_name, "/sdcard/pocl/kcache/%s", process_name);
-        }
-    }
-#else
-  if ((getenv(POCL_TEMPDIR_ENV) != NULL)
-          && (access(getenv(POCL_TEMPDIR_ENV), W_OK) == 0))
-    {
-      strcpy(path_name, getenv(POCL_TEMPDIR_ENV));
-    }
-  else
-    {
-    #ifdef POCL_KERNEL_CACHE
-      sprintf(path_name, "%s/.pocl/kcache/%s", getenv("HOME"), process_name);
-    #else
-      sprintf(path_name, "/tmp/pocl/%s", process_name);
-    #endif
-    }
-#endif
-
-    /* TODO : delete contents if size exceeds some limit */
-
-    return path_name;
-}
-
-void
-pocl_create_source_dirs (cl_program program, int size)
+pocl_create_progam_cache_dir(cl_program program)
 {
-
-  char s1[1024], s2[1024];
-  char *path_name = program->temp_dir;
-  char *source = program->source;
-
-  /* Simple hash-function based on source length. SHA is an overkill */
-  int found_in_cache = 0;
-
-  sprintf(s1, "%s/s/%d", path_name, size);
-
-#ifdef POCL_KERNEL_CACHE
-  DIR *dp;
-  struct dirent *ep;
-
-  dp = opendir(s1);
-  if (dp)
-    {
-      while ((ep = readdir(dp)) && (!found_in_cache))
-        {
-          char *content;
-          sprintf(s2, "%s/%s/program.cl", s1, ep->d_name);
-          int read = pocl_read_text_file(s2, &content);
-          if (read && (strcmp(content, source) == 0))
-            {               /* Voila, found same program source in cache */
-              sprintf(path_name, "%s/%s", s1, ep->d_name);
-              found_in_cache = 1;
-            }
-          if (content) free(content);
-        }
-      closedir(dp);
-    }
-#endif
-
-  if (!found_in_cache)
-    {
-
-      if (access(s1, F_OK) != 0)
-        pocl_make_directory(s1);
-
-      sprintf(path_name, "%s/XXXXXX\0", s1);
-      mkdtemp(path_name);
-    }
-
-  program->temp_dir = path_name;
-}
-
-void
-pocl_create_binary_dirs (cl_program program, int size)
-{
-  char s1[1024], s2[1024];
-  char *path_name = program->temp_dir;
-  unsigned char **binaries = program->binaries;
-  int device_i;
-
-  /* Simple hash-function based on binary length. SHA is an overkill */
-  int found_in_cache = 0;
-
-  sprintf(s1, "%s/b/%d", path_name, size);
-
-#ifdef POCL_KERNEL_CACHE
-  DIR *dp;
-  struct dirent *ep;
-
-  dp = opendir(s1);
-  if (dp)
-    {
-      while (ep = readdir(dp))
-        {
-          int found_cache_in_all = 1;
-          for (device_i = 0; device_i < program->num_devices; device_i++)
-            {
-              unsigned char *bin;
-
-              sprintf(s2, "%s/%s/%s/program.bc", s1, ep->d_name,
-                            program->devices[device_i]->short_name);
-              int read = pocl_read_binary_file(s2, &bin);
-
-              if (!(read && (memcmp(bin, binaries[device_i], program->binary_sizes[device_i]) == 0)))
-                found_cache_in_all = 0;
-
-              if(bin) free(bin);
-            }
-
-          if (found_cache_in_all)
-            {
-              found_in_cache = 1;
-              sprintf(path_name, "%s/%s", s1, ep->d_name);
-              break;
-            }
-        }
-      closedir(dp);
-    }
-#endif
-
-  if (!found_in_cache)
-    {
-      if (access(s1, F_OK) != 0)
-        pocl_make_directory(s1);
-
-      sprintf(path_name, "%s/XXXXXX\0", s1);
-      mkdtemp(path_name);
-    }
-
-  program->temp_dir = path_name;
-}
-
-#define POCL_CACHE_DIR "POCL_CACHE_DIR"
-#define POCL_HOME_CACHE_DIR ".pocl"
-
-char *pocl_get_program_dir(cl_program program)
-{
-  char *tmp_path = getenv(POCL_CACHE_DIR), *cache_path = NULL;
-  unsigned int alloc_size;
+  char *tmp_path = NULL, *cache_path = NULL;
   char hash_str[SHA1_DIGEST_SIZE * 2 + 1];
   int i;
 
   for (i = 0; i < SHA1_DIGEST_SIZE; i++)
     sprintf(&hash_str[i*2], "%02x", (unsigned int) program->build_hash[i]);
 
-  if (!tmp_path)
+  cache_path = (char*)malloc(CACHE_DIR_PATH_CHARS);
+
+  tmp_path = getenv("POCL_CACHE_DIR");
+  if (tmp_path && (access(tmp_path, W_OK) == 0))
     {
-      tmp_path = getenv("HOME");
-      if (!tmp_path)
-        POCL_ABORT("Can not get user home folder\n");
-
-      alloc_size = strlen(tmp_path) + strlen(POCL_HOME_CACHE_DIR) + (SHA1_DIGEST_SIZE * 2) + 3;
-      cache_path = malloc(alloc_size);
-      if (!cache_path)
-        POCL_ABORT("Can not allocate memory for pocl cache path\n");
-
-      snprintf(cache_path, alloc_size, "%s/"POCL_HOME_CACHE_DIR"/%s", tmp_path, hash_str);
+      snprintf(cache_path, CACHE_DIR_PATH_CHARS, "%s/%s", tmp_path, hash_str);
     }
-
   else
     {
-      alloc_size = strlen(tmp_path) + (SHA1_DIGEST_SIZE * 2) + 2;
-      cache_path = malloc(alloc_size);
-      if (!cache_path)
-        POCL_ABORT("Can not allocate memory for pocl cache path\n");
+#ifdef ANDROID
+      snprintf(cache_path, CACHE_DIR_PATH_CHARS,
+                  "/data/data/%s/cache/", pocl_get_process_name());
 
-      snprintf(cache_path, alloc_size, "%s/", tmp_path, hash_str);
+      if (access(cache_path, W_OK) == 0)
+        strcat(cache_path, hash_str);
+      else
+        snprintf(cache_path, CACHE_DIR_PATH_CHARS, "/sdcard/pocl/kcache/%s", hash_str);
+#else
+      tmp_path = getenv("HOME");
+
+      if (tmp_path)
+        snprintf(cache_path, CACHE_DIR_PATH_CHARS, "%s/.pocl/%s", tmp_path, hash_str);
+      else
+        snprintf(cache_path, CACHE_DIR_PATH_CHARS, "/tmp/pocl/%s", hash_str);
+#endif
     }
+
+  if (access(cache_path, F_OK) != 0)
+    pocl_make_directory(cache_path);
 
     return cache_path;
 }
@@ -569,7 +393,7 @@ char* pocl_get_process_name ()
   FILE *statusFile;
   int len, i, begin;
 
-  sprintf(tmpStr, "/proc/%d/cmdline", getpid());
+  snprintf(tmpStr, 64, "/proc/%d/cmdline", getpid());
   statusFile = fopen(tmpStr, "r");
   if (statusFile == NULL)
     return NULL;
@@ -601,8 +425,8 @@ pocl_check_and_invalidate_cache (cl_program program,
                   int device_i, const char* device_tmpdir)
 {
   int cache_dirty = 0;
-  char version_file[TEMP_DIR_PATH_CHARS];
-  char options_file[TEMP_DIR_PATH_CHARS], *content;
+  char version_file[CACHE_DIR_PATH_CHARS];
+  char *content;
   int read = 0;
 
   if (!cache_lock_initialized)
@@ -612,11 +436,10 @@ pocl_check_and_invalidate_cache (cl_program program,
     }
 
   sprintf(version_file, "%s/pocl_build_id", device_tmpdir);
-  sprintf(options_file, "%s/program_build_options", device_tmpdir);
 
   POCL_LOCK(cache_lock);
 
-  if (pocl_get_bool_option("POCL_CLEAR_KERNEL_CACHE", 0))
+  if (pocl_get_bool_option("POCL_FORCE_CLEAR_KERNEL_CACHE", 0))
     {
       cache_dirty = 1;
       goto bottom;
@@ -640,26 +463,6 @@ pocl_check_and_invalidate_cache (cl_program program,
     }
     if (cache_dirty)  goto bottom;
 
-  /* Check for build option match */
-  if (access(options_file, F_OK) == 0)
-    {
-      read = pocl_read_text_file(options_file, &content);
-      if (read && (program->compiler_options)
-          && (strcmp(content, program->compiler_options) != 0))
-        {
-          cache_dirty = 1;
-        }
-
-      if (content)
-        free(content);
-    }
-  else
-    {
-      pocl_create_or_append_file(options_file,
-                          program->compiler_options);
-    }
-    if (cache_dirty)  goto bottom;
-
   /* If program contains "#include", disable caching
      Included headers might get modified, force recompilation in all the cases
    */
@@ -673,7 +476,6 @@ pocl_check_and_invalidate_cache (cl_program program,
       mkdir(device_tmpdir, S_IRWXU);
 
       pocl_create_or_append_file(version_file, POCL_BUILD_TIMESTAMP);
-      pocl_create_or_append_file(options_file, program->compiler_options);
     }
 
   POCL_UNLOCK(cache_lock);

@@ -110,14 +110,14 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
   program->llvm_irs = NULL;
 
   /* Allocate a continuous chunk of memory for all the binaries. */
-  if ((program->binary_sizes = 
+  if ((program->binary_sizes =
        (size_t*) malloc (sizeof (size_t) * num_devices)) == NULL ||
-      (program->binaries = (unsigned char**) 
+      (program->binaries = (unsigned char**)
        malloc (sizeof (unsigned char*) * num_devices)) == NULL ||
       (program->binaries[0] = (unsigned char*)
        malloc (sizeof (unsigned char) * total_binary_size)) == NULL ||
-      ((program->llvm_irs = 
-        (void**) calloc (pocl_num_devices, sizeof (void*))) == NULL))      
+      ((program->llvm_irs =
+        (void**) calloc (pocl_num_devices, sizeof (void*))) == NULL))
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
       goto ERROR_CLEAN_PROGRAM_AND_BINARIES;
@@ -141,11 +141,6 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
       if (binary_status != NULL) /* TODO: validate the binary */
         binary_status[i] = CL_SUCCESS;
     }
-
-  /* Create the temporary/cache directory where all kernel files and compilation
-     (intermediate) results are stored. */
-  program->temp_dir = pocl_generate_temp_dir_name();
-  pocl_create_binary_dirs(program, total_binary_size);
 
   POCL_RETAIN_OBJECT(context);
 
