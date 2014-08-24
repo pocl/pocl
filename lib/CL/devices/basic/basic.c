@@ -395,10 +395,10 @@ pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
         }
       else
         {
-	        b = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, mem_obj->size);
-	        if (b == NULL)
+          b = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, mem_obj->size);
+          if (b == NULL)
             return CL_MEM_OBJECT_ALLOCATION_FAILURE;
-	      }
+        }
 
       if (flags & CL_MEM_COPY_HOST_PTR)
         memcpy (b, mem_obj->mem_host_ptr, mem_obj->size);

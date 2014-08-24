@@ -585,10 +585,10 @@ then
 	CFLAGS="$CFLAGS -Wno-unused-result -Werror"
 fi
 
-cache_kernel="no"
+cache_kernel="yes"
 AC_ARG_ENABLE([kernel-cache],
-              [AS_HELP_STRING([--enable-kernel-cache], [Enable persistent kernel cache])],
-              [cache_kernel="yes"])
+              [AS_HELP_STRING([--disable-kernel-cache], [Disable persistent kernel cache])],
+              [cache_kernel="no"])
 if test "$cache_kernel" = "yes"
 then
   AC_DEFINE([POCL_KERNEL_CACHE], [], "Enabled kernel cache feature")

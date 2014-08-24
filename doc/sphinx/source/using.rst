@@ -4,7 +4,13 @@ Basic usage
 The basic usage of pocl should be as easy as any other OpenCL implementation.
 
 While it is possible to link against pocl directly, the recommended way is to 
-use the ICD interface. 
+use the ICD interface.
+
+Android applications can use pocl using jni. Since pocl is installed in a
+non-standard path, dynamic linking is not possible. App has to dlopen
+“/data/data/org.pocl.libs/files/lib/libpocl.so” and dlsym OpenCL function
+symbols from it. Refer examples/pocl-android-sample/ for hello-world android
+app that uses pocl
 
 Linking your program with pocl through an icd loader
 ----------------------------------------------------
