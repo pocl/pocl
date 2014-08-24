@@ -28,7 +28,7 @@ AMD-APP-SDK-v2.8-RC-lnx64.tgz:
 	wget http://developer.amd.com.php53-23.ord1-1.websitetestlink.com/wordpress/media/2012/11/AMD-APP-SDK-v2.8-lnx64.tgz && \
 	tar xzf AMD-APP-SDK-v2.8-lnx64.tgz
 
-EXTRA_DIST = *.patch
+EXTRA_DIST = $(srcdir)/*.patch
 
 if TEST_SUITE_AMD
 testsuite_pocl_dir=${abs_top_srcdir}/examples/AMD
@@ -254,8 +254,5 @@ test_URNG:
 
 clean-examples:
 	rm -fr $(testsuite_src_dir) Install-AMD-APP.sh default-install_lnx_64.pl ReadMe.txt
-
-distclean-local: clean-local
-	$(RM) -r $(testsuite_src_dir)
 
 endif

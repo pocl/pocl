@@ -23,7 +23,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-EXTRA_DIST = *.patch
+EXTRA_DIST = $(srcdir)/*.patch
 
 if TEST_SUITE_AMDSDK2_9
 testsuite_pocl_dir=${abs_top_srcdir}/examples/AMDSDK2.9
@@ -337,8 +337,5 @@ test_URNGNoiseGL:
 
 clean-examples:
 	rm -fr $(testsuite_src_dir) Install-AMD-APP.sh default-install_lnx_64.pl ReadMe.txt
-
-distclean-local: clean-local
-	$(RM) -r $(testsuite_src_dir)
 
 endif

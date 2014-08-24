@@ -43,6 +43,4 @@ prepare-examples:
 clean-examples:
 	cd piglit; make clean
 
-clean: clean-local
-
 endif

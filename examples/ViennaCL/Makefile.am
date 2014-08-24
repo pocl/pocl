@@ -62,9 +62,6 @@ prepare-examples: $(viennacl_local_src_dir) build
 clean-examples:
 	rm -fr $(viennacl_local_src_dir)
 
-distclean-local: clean-local
-	$(RM) -r $(viennacl_local_src_dir)
-	$(RM) $(testsuite_pocl_dir)/$(viennacl_tarball)
 endif
 
 EXTRA_DIST=                                  \

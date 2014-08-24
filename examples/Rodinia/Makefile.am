@@ -122,9 +122,6 @@ build-srad: build-prepare
 	$(MAKE) $(MAKE_OPTS) -C $(src)/srad
 
 clean-examples:
-	$(RM) -r rodinia_2.0.1
-
-distclean-local: clean-local
 	$(RM) -r $(testsuite_src_dir)
-	$(RM) $(testsuite_pocl_dir)/rodinia_2.0.1.tar.gz
+
 endif

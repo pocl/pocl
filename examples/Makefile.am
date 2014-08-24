@@ -77,8 +77,3 @@ clean:
 	done
 	@echo Call 'make clean-examples' to clean up the examples.
 
-distclean: clean-examples
-	for dir in $(BASIC_EXAMPLES); do \
-	   $(MAKE) -C $$dir distclean; \
-	done
-

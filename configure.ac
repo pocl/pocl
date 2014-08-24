@@ -1076,10 +1076,12 @@ PKG_CHECK_MODULES([LIBSPE], [libspe2 >= 2.2.80],
     OCL_DRIVERS="$OCL_DRIVERS spu"
     OCL_TARGETS="$OCL_TARGETS cellspu"
     AC_DEFINE([BUILD_SPU], [], [Defined when CellSPU tools are found])
+    BUILD_SPU=1
   ],
   [
     AC_MSG_NOTICE([libspe2 not found (by pkg-config). Spu driver not built.])
     LIBSPE_AVAILABLE=no
+    BUILD_SPU=0
   ])
 fi
 AM_CONDITIONAL([BUILD_SPU],[echo $OCL_DRIVERS | grep spu])

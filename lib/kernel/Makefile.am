@@ -42,3 +42,11 @@ EXTRA_DIST = $(srcdir)/*.c $(srcdir)/*.cl $(srcdir)/*.h $(srcdir)/*.ll			\
 	$(srcdir)/vecmathlib-pocl/*.py  \
 	$(srcdir)/cellspu/* \
 	$(srcdir)/tce/*
+
+
+# Distclean the dirs regardless if the target was enabled or not
+# to cleanup the Makefiles.
+distclean-local:
+	for dir in host tce cellspu; do \
+		make -C $$dir distclean;\
+	done;
