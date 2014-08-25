@@ -103,7 +103,10 @@ CL_API_SUFFIX__VERSION_1_0
   
   if (options != NULL)
     {
-      modded_options = calloc (512, 1);
+      int size = 512; 
+      int i = 1; /* terminating char */
+      char *swap_tmp;
+      modded_options = calloc (size, 1);
       temp_options = strdup (options);
       token = strtok_r (temp_options, " ", &saveptr);
       while (token != NULL)
@@ -130,6 +133,17 @@ CL_API_SUFFIX__VERSION_1_0
             }
           else if (memcmp (token, "-D", 2) == 0 || memcmp (token, "-I", 2) == 0)
             {
+              if (size <= (i + strlen (token) + 1))
+                {
+                  swap_tmp = modded_options;
+                  modded_options = malloc (size + 256);
+                  if (modded_options == NULL)
+                    return CL_OUT_OF_HOST_MEMORY;
+                  memcpy (modded_options, swap_tmp, size);
+                  free (swap_tmp);
+                  size += 256;
+                }
+              i += strlen (token) + 1;
               strcat (modded_options, token);
               strcat (modded_options, " ");
               /* if there is a space in between, then next token is part 
@@ -147,12 +161,22 @@ CL_API_SUFFIX__VERSION_1_0
               errcode = CL_INVALID_BUILD_OPTIONS;
               goto ERROR_CLEAN_OPTIONS;
             }
+          if (size <= (i + strlen (token) + 1))
+            {
+              swap_tmp = modded_options;
+              modded_options = malloc (size + 256);
+              if (modded_options == NULL)
+                return CL_OUT_OF_HOST_MEMORY;
+              memcpy (modded_options, swap_tmp, size); 
+              free (swap_tmp);
+              size += 256;
+            }
+          i += strlen (token) + 1;
           strcat (modded_options, token);
           strcat (modded_options, " ");
           token = strtok_r (NULL, " ", &saveptr);  
         }
       free (temp_options);
-      
       user_options = modded_options;
       program->compiler_options = strdup (modded_options);
     }
