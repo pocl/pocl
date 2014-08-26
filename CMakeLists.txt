@@ -27,8 +27,8 @@ cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 
 project(pocl)
 set(MAJOR_VERSION 0)
-set(MINOR_VERSION 10)
-set(VERSION_SUFFIX "")
+set(MINOR_VERSION 11)
+set(VERSION_SUFFIX "-pre")
 set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION}${VERSION_SUFFIX})
 set(POCL_VERSION ${VERSION_STRING})
 
@@ -786,9 +786,9 @@ endif()
 # 4:0:3 == 0.10 (currently backwards compatible with 0.7, thus age = 3).
 
 
-set(LIB_CURRENT_VERSION 4)
+set(LIB_CURRENT_VERSION 5)
 set(LIB_REVISION_VERSION 0)
-set(LIB_AGE_VERSION 3)
+set(LIB_AGE_VERSION 4)
 
 # LIB_FIRST_VERSION=$(($LIB_CURRENT_VERSION - $LIB_AGE_VERSION))
 math(EXPR LIB_FIRST_VERSION "${LIB_CURRENT_VERSION} - ${LIB_AGE_VERSION}")
@@ -806,7 +806,7 @@ set(LIB_API_VERSION "${LIB_FIRST_VERSION}")
 
 # DONE - lib/llvmopencl..
 # AC_SUBST([KERNEL_COMPILER_LIB_VERSION], ["3:0:0"])
-set(KERNEL_COMPILER_LIB_VERSION "3.0.0")
+set(KERNEL_COMPILER_LIB_VERSION "${LIB_CURRENT_VERSION}.0.0")
 
 ##########################################################
 
