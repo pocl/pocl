@@ -33,6 +33,7 @@ char kernelSourceCode[] =
 "constant sampler_t samp =  CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;\n"
 "typedef float4 tasty_float;\n"
 "kernel \n"
+"__attribute__((reqd_work_group_size(256, 1, 1)))"
 "void test_kernel2(const tasty_float vec1, __read_only image2d_t in, write_only image2d_t out) {\n"
 "    const int2 coord = (get_global_id(0),get_global_id(1));\n"
 "    float4 b = read_imagef(in, samp, coord);\n"
