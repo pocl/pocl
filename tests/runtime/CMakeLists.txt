@@ -91,6 +91,11 @@ set_tests_properties("runtime/clCreateKernelsInProgram"
   PROPERTIES
     PASS_REGULAR_EXPRESSION "Hello\nWorld")
 
+if(LLVM_3_2)
+  set_tests_properties("runtime/clGetKernelArgInfo"
+    PROPERTIES WILL_FAIL 1)
+endif()
+
 set_tests_properties("runtime/clSetEventCallback"
   PROPERTIES
     PASS_REGULAR_EXPRESSION "kernel in execution
