@@ -245,7 +245,7 @@ OK"
 #    PROCESSORS 1
 #    DEPENDS "pocl_version_check")
 #
-#if(LLVM_3_4 OR LLVM_3_5)
+#if(LLVM_3_4)
 #  set_tests_properties("kernel/test_block"
 #    PROPERTIES WILL_FAIL 1)
 #endif()

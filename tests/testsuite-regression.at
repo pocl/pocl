@@ -201,7 +201,6 @@ AT_CLEANUP
 AT_SETUP([block])
 AT_KEYWORDS([block])
 AT_SKIP_IF([! grep "#define HAVE_OPENCL_HPP" $abs_top_builddir/config.h])
-# Patch pending (look in tools/patches) to fix this for Clang 3.5.
 AT_DATA([expout],
 [Running test test_block...
 op(1)=2.000000
