@@ -33,7 +33,7 @@
 #clean-local:
 # rm -f $(EXTRA_DIST:.cl=.bc) $(EXTRA_DIST:.cl=.h)
 
-add_test("pocl-standalone" "/bin/bash" "${CMAKE_BINARY_DIR}/scripts/pocl-standalone"
+add_test("pocl-standalone" "/bin/sh" "${CMAKE_BINARY_DIR}/scripts/pocl-standalone"
           -h "${CMAKE_BINARY_DIR}/standalone.h"
           -o "${CMAKE_BINARY_DIR}/standalone.bc"
           "${CMAKE_CURRENT_SOURCE_DIR}/standalone.cl")
