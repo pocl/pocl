@@ -107,6 +107,10 @@ case "$LLVM_VERSION" in
      AC_DEFINE([LLVM_3_5], [], "Using LLVM 3.5")
      LLVM_LDFLAGS="$LLVM_LDFLAGS `$LLVM_CONFIG --system-libs`"
    ;;
+     3.6*)
+     AC_DEFINE([LLVM_3_6], [], "Using LLVM svn, upcoming 3.6")
+     LLVM_LDFLAGS="$LLVM_LDFLAGS `$LLVM_CONFIG --system-libs`"
+   ;;
      *)
    AC_MSG_ERROR(
    [

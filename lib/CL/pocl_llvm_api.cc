@@ -135,9 +135,14 @@ static inline void
 write_temporary_file( const llvm::Module *mod,
                       const char *filename )
 {
-  std::string ErrorInfo;
   tool_output_file *Out;
+  #if LLVM_VERSION_MAJOR==3 && LLVM_VERSION_MINOR<6
+  std::string ErrorInfo;
   Out = new tool_output_file(filename, ErrorInfo, F_Binary);
+  #else
+  std::error_code ErrorInfo;
+  Out = new tool_output_file(filename, ErrorInfo, F_Binary);
+  #endif
   WriteBitcodeToFile(mod, Out->os());
   Out->keep();
   delete Out;
@@ -164,6 +169,17 @@ load_source(FrontendOptions &fe,
 
   return 0;
 }
+
+// Compatibility function: this function existed up to LLVM 3.5
+// With 3.6 its name & signature changed
+#if !(defined LLVM_3_2 or defined LLVM_3_3 or\
+      defined LLVM_3_4 or defined LLVM_3_5)
+static llvm::Module*
+ParseIRFile(const char* fname, SMDiagnostic &Err, llvm::LLVMContext &ctx)
+{
+    return parseIRFile(fname, Err, ctx).release();
+}
+#endif
 
 int pocl_llvm_build_program(cl_program program, 
                             cl_device_id device, 
@@ -355,7 +371,11 @@ int pocl_llvm_build_program(cl_program program,
   llvm::Module **mod = (llvm::Module **)&program->llvm_irs[device_i];
   if (*mod != NULL)
     delete (llvm::Module*)*mod;
+#if LLVM_VERSION_MAJOR==3 && LLVM_VERSION_MINOR<6
   *mod = action->takeModule();
+#else
+  *mod = action->takeModule().release();
+#endif
   if (*mod == NULL)
     return CL_BUILD_PROGRAM_FAILURE;
 
@@ -628,10 +648,10 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
                                           ee = arglist.end(); 
        ii != ee ; ii++)
   {
-    Type *t = ii->getType();
+    llvm::Type *t = ii->getType();
     kernel->arg_info[i].type = POCL_ARG_TYPE_NONE;
 
-    const PointerType *p = dyn_cast<PointerType>(t);
+    const llvm::PointerType *p = dyn_cast<llvm::PointerType>(t);
     if (p && !ii->hasByValAttr()) {
       kernel->arg_info[i].type = POCL_ARG_TYPE_POINTER;
       // index 0 is for function attributes, parameters start at 1.
@@ -1152,7 +1172,7 @@ kernel_library
     }
 
   SMDiagnostic Err;
-  llvm::Module *lib = ParseIRFile(kernellib, Err, *GlobalContext());
+  llvm::Module *lib = ParseIRFile(kernellib.c_str(), Err, *GlobalContext());
   assert (lib != NULL);
   libs[device] = lib;
 
@@ -1315,11 +1335,15 @@ pocl_llvm_codegen(cl_kernel kernel,
                   const char *infilename,
                   const char *outfilename)
 {
-    std::string error;
     SMDiagnostic Err;
 #if defined LLVM_3_2 or defined LLVM_3_3
+    std::string error;
     tool_output_file outfile(outfilename, error, 0);
+#elif defined LLVM_3_4 or defined LLVM_3_5
+    std::string error;
+    tool_output_file outfile(outfilename, error, F_Binary);
 #else
+    std::error_code error;
     tool_output_file outfile(outfilename, error, F_Binary);
 #endif
     llvm::Triple triple(device->llvm_target_triplet);
