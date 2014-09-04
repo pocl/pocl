@@ -18,6 +18,9 @@ in parallel programming on heterogeneous platforms.</p>
 
 <h1>News</h1>
 
+<h2>2014-09-04: <a href="pocl-0.10.html">Portable Computing Language
+(pocl) v0.10 released</a></h2>
+
 <h2>2014-07-24: pocl's <a href="http://krblogs.com/post/92744765821/opencl-for-android-masses">Android port</a> 
 now at beta.</a></h2>
 
