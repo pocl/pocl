@@ -401,10 +401,32 @@ VariableUniformityAnalysis::isUniform(llvm::Function *f, llvm::Value* v) {
   }
 
   llvm::Instruction *instr = dyn_cast<llvm::Instruction>(v);
-  if (instr == NULL || instr->mayHaveSideEffects()) {
+  if (instr == NULL) {
     setUniform(f, v, false);
     return false;
   }
+
+  // Atomic operations might look like uniform if only considering the operands
+  // (access a global memory location of which ordering by default is not
+  // constrained), but their semantics have ordering: Each work-item should get
+  // their own value from that memory location. isAtomic() check was introduced
+  // only in LLVM 3.6 so we have to use a more general mayWriteToMemory check
+  // with earlier versions. 
+#if defined(LLVM_3_2) || defined(LLVM_3_3) || defined(LLVM_3_4) || defined(LLVM_3_5)
+  // Volatile loads are set to mayWriteToMemory (perhaps because they might read
+  // an I/O register which might update at read) which are treated as a special case 
+  // here as we know this is not the case in OpenCL C memory accesses.
+  if (instr->mayWriteToMemory() && !isa<llvm::LoadInst>(instr)) {
+      setUniform(f, v, false);
+      return false;
+  }
+#else
+  if (instr->isAtomic()) {
+      setUniform(f, v, false);
+      return false;
+  }
+#endif
+
   // not computed previously, scan all operands of the instruction
   // and figure out their uniformity recursively
   for (unsigned opr = 0; opr < instr->getNumOperands(); ++opr) {    
