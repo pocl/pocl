@@ -401,7 +401,7 @@ VariableUniformityAnalysis::isUniform(llvm::Function *f, llvm::Value* v) {
   }
 
   llvm::Instruction *instr = dyn_cast<llvm::Instruction>(v);
-  if (instr == NULL) {
+  if (instr == NULL || instr->mayHaveSideEffects()) {
     setUniform(f, v, false);
     return false;
   }

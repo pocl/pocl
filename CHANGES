@@ -3,6 +3,12 @@
 
 [git log last checked on 2014-08-22]
 
+Bugfixes
+--------
+- Fix falsely detecting operations with side-effects (especially atomic
+  operations) as uniform. This caused deadlock/race situations due to 
+  illegal implicit barrier injection.
+
 0.10 September 2014
 ===================
 
