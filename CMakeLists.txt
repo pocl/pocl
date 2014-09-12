@@ -97,6 +97,27 @@ if(NOT HWLOC_FOUND)
 endif()
 
 ######################################################################################
+#
+# Find executables to few tools required during build 
+#
+
+find_program (PATCH_EXEC 
+  NAMES patch patch.exe
+)
+
+find_program (XARGS_EXEC 
+  NAMES xargs xargs.exe
+)
+
+find_program (CAT_EXEC 
+  NAMES cat cat.exe
+)
+
+if (!PATCH_EXEC)
+  message(FATAL_ERROR "Could not find patch command.")
+endif()
+
+######################################################################################
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 include(LLVM RESULT_VARIABLE RES)

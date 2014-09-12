@@ -127,11 +127,20 @@ function(make_kernel_bc OUTPUT_VAR NAME)
 
   compile_to_bc(BC_LIST ${ARGN})
 
+  # fix too long commandline with cat and xargs
+  SET(BC_LIST_FILE_TXT "")
+  foreach(FILENAME ${BC_LIST})
+    # straight parsing semicolon separated list with xargs -d didn't work on windows.. no such switch available
+    SET(BC_LIST_FILE_TXT "${BC_LIST_FILE_TXT} \"${FILENAME}\"")
+  endforeach()
+  SET (BC_LIST_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/kernel_linklist.txt")
+  FILE (WRITE "${BC_LIST_FILE}" "${BC_LIST_FILE_TXT}")
+
   add_custom_command( OUTPUT "${KERNEL_BC}"
 # ${KERNEL_BC}: ${OBJ}
         DEPENDS ${BC_LIST}
 #	    @LLVM_LINK@ $^ -o - | @LLVM_OPT@ ${LLC_FLAGS} ${KERNEL_LIB_OPT_FLAGS} -O3 -fp-contract=off -o $@
-        COMMAND "${LLVM_LINK}" ${BC_LIST} "-o" "kernel-${NAME}-unoptimized.bc"
+        COMMAND "${XARGS_EXEC}" "${LLVM_LINK}" "-o" "kernel-${NAME}-unoptimized.bc" < "${BC_LIST_FILE}"
         COMMAND "${LLVM_OPT}" ${LLC_FLAGS} "-O3" "-fp-contract=off" "-o" "${KERNEL_BC}" "kernel-${NAME}-unoptimized.bc"
         COMMENT "Linking Kernel bitcode ${KERNEL_BC}" 
         VERBATIM)
