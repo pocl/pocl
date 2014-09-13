@@ -93,6 +93,8 @@ run_llvm_config(LLVM_LIBDIR --libdir)
 run_llvm_config(LLVM_INCLUDEDIR --includedir)
 run_llvm_config(LLVM_LIBS --libs)
 run_llvm_config(LLVM_LIBFILES --libfiles)
+run_llvm_config(LLVM_SRC_ROOT --src-root)
+run_llvm_config(LLVM_OBJ_ROOT --obj-root)
 run_llvm_config(LLVM_ALL_TARGETS --targets-built)
 run_llvm_config(LLVM_HOST_TARGET --host-target)
 # Ubuntu's llvm reports "arm-unknown-linux-gnueabihf" triple, then if one tries
@@ -146,6 +148,19 @@ if(NOT LLVM_VERSION VERSION_LESS "3.5")
   run_llvm_config(LLVM_SYSLIBS --system-libs)
   set(LLVM_LDFLAGS "${LLVM_LDFLAGS} ${LLVM_SYSLIBS}")
 endif()
+
+# Llvm-config may be installed or it might be used from build directory, in which case
+# we need to add few extra include paths to find clang includes and compiled includes
+list(APPEND LLVM_INCLUDE_DIRS 
+  "${LLVM_INCLUDEDIR}" 
+  "${LLVM_SRC_ROOT}/tools/clang/include" 
+  "${LLVM_OBJ_ROOT}/include" 
+  "${LLVM_OBJ_ROOT}/tools/clang/include")
+
+# Llvm-config --libs contain only llvm internal libraries, 
+# LLVM_ALL_LIBS has also list of clang libraries and required
+# system libs like, -lcurses etc.
+set(LLVM_ALL_LIBS "${LLVM_LIBS} ${LLVM_SYSLIBS}")
 
 ####################################################################
 
@@ -360,8 +375,12 @@ ${TYPEDEF}"  "typedef struct { char x; ${TYPE} y; } ac__type_alignof_;
 endmacro()
 
 ####################################################################
-
-# clangxx works check
+#
+# clangxx works check 
+#
+# TODO: check if clang++ of llvm requires -stdlib=libstdc++ / -stdlib=libc++ switch set
+#       test below is done for system clang++ which is not the same, used in this test.
+#
 
 if(CLANGXX)
 
@@ -386,8 +405,14 @@ else()
 endif()
 
 ####################################################################
-
-# which C++ stdlib clang is using
+#
+# Which C++ stdlib system clang is using 
+#
+# Sometimes llvm/clang installation requires that -stdlib= is given
+# to compiler. (it is strange though if cmake / llvm-config --cxxflags
+# does not set this correctly, since it should have all required
+# flags to compile llvm with host compiler).
+#
 
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 
@@ -396,19 +421,58 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   if(NOT DEFINED ${CACHE_VAR_NAME})
     message(STATUS "Checking if system clang++ uses libstdc++")
     separate_arguments(_FLAGS UNIX_COMMAND "${LLVM_CXXFLAGS}")
-    custom_try_compile_clangxx("#include <llvm/Support/Debug.h>\n#include <iostream>\nusing namespace std;\n"
-        "cout << 234134; return 0;" COMPILE_RESULT ${_FLAGS} "-stdlib=libstdc++")
-    if(COMPILE_RESULT)
-      custom_try_compile_clangxx("#include <llvm/Support/Debug.h>\n#include <iostream>\nusing namespace std;\n"
-          "cout << 234134; return 0;" COMPILE_RESULT ${_FLAGS} "-stdlib=libc++")
-      if(COMPILE_RESULT)
-        message(FATAL_ERROR "System clang cannot compile with neither libstdc++ nor libc++; possibly missing llvm heaers?")
-      else()
-        set(SYSTEM_CLANGXX_STDLIB "-stdlib=libc++")
-      endif()
+
+    SET (_TEST_SOURCE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/stdlibtest.cc")
+    FILE (WRITE "${_TEST_SOURCE}"
+      "
+        #include <llvm/Support/Debug.h>
+        #include <iostream>
+        using namespace std;
+        int main()
+        { 
+          cout << 234134; 
+          return 0;
+        }
+      ")
+
+    SET(_LIBSTDCXX "-stdlib=libstdc++")
+    SET(_LIBCXX "-stdlib=libc++")
+    set(LLVM_CXXFLAGS_WITH_LIBSTDCXX "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS} ${_LIBSTDCXX}")
+    set(LLVM_CXXFLAGS_WITH_LIBCXX "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS} ${_LIBCXX}")
+
+    TRY_COMPILE(LIBSTDCXX_LINK_SUCCESS ${CMAKE_BINARY_DIR} "${_TEST_SOURCE}"
+      CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_INCLUDE_DIRS}"
+      CMAKE_FLAGS "-DLINK_DIRECTORIES:STRING=${LLVM_LIBDIR}"
+      LINK_LIBRARIES ${LLVM_ALL_LIBS}
+      COMPILE_DEFINITIONS ${LLVM_CXXFLAGS_WITH_LIBSTDCXX}
+      OUTPUT_VARIABLE _COMPILE_OUTPUT1
+    )
+
+    TRY_COMPILE(LIBCXX_LINK_SUCCESS ${CMAKE_BINARY_DIR} "${_TEST_SOURCE}"
+      CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_INCLUDE_DIRS}"
+      CMAKE_FLAGS "-DLINK_DIRECTORIES:STRING=${LLVM_LIBDIR}"
+      LINK_LIBRARIES ${LLVM_ALL_LIBS}
+      COMPILE_DEFINITIONS ${LLVM_CXXFLAGS_WITH_LIBCXX}
+      OUTPUT_VARIABLE _COMPILE_OUTPUT2
+    )
+
+    # TODO: write these to log file
+    message(STATUS "libstdc++ compile out: ${_COMPILE_OUTPUT1}")
+    # TODO: write these to log file
+    message(STATUS "libc++    compile out: ${_COMPILE_OUTPUT2}")
+  
+    message(STATUS "Result libstdc++: ${LIBSTDCXX_LINK_SUCCESS}")
+    message(STATUS "Result libc++: ${LIBCXX_LINK_SUCCESS}")
+    if(LIBSTDCXX_LINK_SUCCESS)
+      set(SYSTEM_CLANGXX_STDLIB ${_LIBSTDCXX})
     else()
-      set(SYSTEM_CLANGXX_STDLIB "-stdlib=libstdc++")
+      if(LIBCXX_LINK_SUCCESS)
+        set(SYSTEM_CLANGXX_STDLIB ${_LIBCXX})
+      else()
+        message(FATAL_ERROR "System clang cannot compile with neither libstdc++ nor libc++; possibly missing llvm headers?")
+      endif()
     endif()
+
   endif()
 
   set_cache_var(SYSTEM_CLANGXX_STDLIB "Clang's c++ stdlib")
@@ -423,23 +487,48 @@ endif()
 
 
 ####################################################################
-
+#
 # - '-DNDEBUG' is a work-around for llvm bug 18253
-
+#
 # llvm-config does not always report the "-DNDEBUG" flag correctly
 # (see LLVM bug 18253). If LLVM and the pocl passes are built with
 # different NDEBUG settings, problems arise
+#
+# TODO: How this test should actually recognize, if llvm
+#       is built without assertions? On OSX this always
+#       passed and thinks there is no assertions...
 
 if(NOT LLVM_CXXFLAGS MATCHES "-DNDEBUG")
 
   message(STATUS "Checking if LLVM is built with assertions")
   separate_arguments(_FLAGS UNIX_COMMAND "${LLVM_CXXFLAGS}")
-  custom_try_compile_clangxx("#include <llvm/Support/Debug.h>" "llvm::DebugFlag=true;" COMPILE_RESULT ${_FLAGS} "-UNDEBUG")
-  if(COMPILE_RESULT)
+
+  SET (_TEST_SOURCE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/llvmbuiltwithassertions.cc")
+  FILE (WRITE "${_TEST_SOURCE}"
+    "
+      #include <llvm/Support/Debug.h>
+      int main(int argc, char** argv) {
+        llvm::DebugFlag=true;
+      }
+    ")
+
+  set(TRY_COMPILE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS} -UNDEBUG")
+
+  TRY_COMPILE(_TRY_SUCCESS ${CMAKE_BINARY_DIR} "${_TEST_SOURCE}"
+    CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_INCLUDE_DIRS}"
+    CMAKE_FLAGS "-DLINK_DIRECTORIES:STRING=${LLVM_LIBDIR}"
+    LINK_LIBRARIES ${LLVM_ALL_LIBS}
+    COMPILE_DEFINITIONS ${TRY_COMPILE_CXX_FLAGS}
+    OUTPUT_VARIABLE _TRY_COMPILE_OUTPUT
+  )
+
+  # TODO: write these to log file
+  message(STATUS "Test -NDEBUG flag: ${_TRY_COMPILE_OUTPUT}")
+
+  if(_TRY_SUCCESS)
     message(STATUS "no assertions... adding -DNDEBUG")
     set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -DNDEBUG")
   endif()
-  unset(_FLAGS)
 
 endif()
 
