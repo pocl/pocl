@@ -378,9 +378,6 @@ endmacro()
 #
 # clangxx works check 
 #
-# TODO: check if clang++ of llvm requires -stdlib=libstdc++ / -stdlib=libc++ switch set
-#       test below is done for system clang++ which is not the same, used in this test.
-#
 
 if(CLANGXX)
 
@@ -389,14 +386,29 @@ if(CLANGXX)
   setup_cache_var_name(CLANGXX_WORKS "${LLVM_HOST_TARGET}-${CLANGXX}-${LLVM_CLANGXX_VERSION}")
 
   if(NOT DEFINED ${CACHE_VAR_NAME})
-    set(CLANGXX_WORKS 1)
-    custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream>" "std::cout << \"Hello clang++ world!\" << std::endl;" COMPILE_RESULT)
-    if(COMPILE_RESULT)
-      set(CLANGXX_WORKS 0)
+    set(CLANGXX_WORKS 0)
+
+    custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL)
+
+    if(NOT _STATUS_FAIL)
+      set(CLANGXX_STDLIB "")
+      set(CLANGXX_WORKS 1)
+    else()
+      custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL "-stdlib=libstdc++")
+      if (NOT _STATUS_FAIL)
+        set(CLANGXX_STDLIB "-stdlib=libstdc++")
+        set(CLANGXX_WORKS 1)
+      else()
+        custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL "-stdlib=libc++")
+        if(NOT _STATUS_FAIL)
+          set(CLANGXX_STDLIB "-stdlib=libc++")
+          set(CLANGXX_WORKS 1)
+        endif()
+      endif()
     endif()
   endif()
 
-  set_cache_var(CLANGXX_WORKS "Clang++ works")
+  set_cache_var(CLANGXX_WORKS "Clang++ works with ${CLANGXX_STDLIB}")
 
 else()
 
@@ -456,10 +468,11 @@ if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
       OUTPUT_VARIABLE _COMPILE_OUTPUT2
     )
 
-    # TODO: write these to log file
-    message(STATUS "libstdc++ compile out: ${_COMPILE_OUTPUT1}")
-    # TODO: write these to log file
-    message(STATUS "libc++    compile out: ${_COMPILE_OUTPUT2}")
+    FILE(APPEND "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeOutput.log"
+     "libstdc++ compile out: ${_COMPILE_OUTPUT1}\n")
+
+    FILE(APPEND "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeOutput.log"
+     "libc++ compile out: ${_COMPILE_OUTPUT2}\n")
   
     message(STATUS "Result libstdc++: ${LIBSTDCXX_LINK_SUCCESS}")
     message(STATUS "Result libc++: ${LIBCXX_LINK_SUCCESS}")
@@ -522,8 +535,8 @@ if(NOT LLVM_CXXFLAGS MATCHES "-DNDEBUG")
     OUTPUT_VARIABLE _TRY_COMPILE_OUTPUT
   )
 
-  # TODO: write these to log file
-  message(STATUS "Test -NDEBUG flag: ${_TRY_COMPILE_OUTPUT}")
+  FILE(APPEND "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeOutput.log"
+    "Test -NDEBUG flag: ${_TRY_COMPILE_OUTPUT}\n")
 
   if(_TRY_SUCCESS)
     message(STATUS "no assertions... adding -DNDEBUG")
