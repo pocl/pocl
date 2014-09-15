@@ -210,42 +210,24 @@ endif()
 
 ######################################################################
 
-add_test("kernel/test_sizeof_uint" "kernel" "test_sizeof")
-
-set_tests_properties("kernel/test_sizeof_uint"
-  PROPERTIES
-    COST 2.0
-    PASS_REGULAR_EXPRESSION "Running test test_sizeof[.]*
-sizeof[(]uint[)] == 4
-sizeof[(]uint2[)] == 8
-sizeof[(]uint3[)] == 16
-sizeof[(]uint4[)] == 16
-sizeof[(]uint8[)] == 32
-sizeof[(]uint16[)] == 64
-OK"
-    PROCESSORS 1
-    DEPENDS "pocl_version_check")
+add_test_custom("${CMAKE_CURRENT_BINARY_DIR}/kernel" "kernel/test_sizeof_uint"
+                "${CMAKE_CURRENT_SOURCE_DIR}/test_sizeof_expout.txt" "test_sizeof")
 
 ######################################################################
 
 #Comment out this one for now. Seems the test throws an exception, 
 #and CTest doesn't think this is a WILL_FAIL, causing "Exception Other" 
 #to be printed
-#add_test("kernel/test_block" "kernel" "test_block")
-#
-#set_tests_properties("kernel/test_block"
-#  PROPERTIES
-#    COST 2.0
-#    PASS_REGULAR_EXPRESSION "Running test test_block[.]*
-#op[(]1[)]=2[.]000000
-#op[(]1[)]=2[.]000000
-#op[(]1[)]=1[.]000000
-#op[(]1[)]=2[.]000000
-#OK"
-#    PROCESSORS 1
-#    DEPENDS "pocl_version_check")
-#
+#add_test_custom("${CMAKE_CURRENT_BINARY_DIR}/kernel" "kernel/test_block"
+#                "${CMAKE_CURRENT_SOURCE_DIR}/test_block_expout.txt" "test_block")
+
 #if(LLVM_3_4)
 #  set_tests_properties("kernel/test_block"
 #    PROPERTIES WILL_FAIL 1)
 #endif()
+
+#set_tests_properties("kernel/test_sizeof_uint" "kernel/test_block" "kernel/test_printf"
+#  PROPERTIES
+#    COST 2.0
+#    PROCESSORS 1
+#    DEPENDS "pocl_version_check")

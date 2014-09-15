@@ -1,0 +1,8 @@
+Running test test_sizeof...
+sizeof(uint) == 4
+sizeof(uint2) == 8
+sizeof(uint3) == 16
+sizeof(uint4) == 16
+sizeof(uint8) == 32
+sizeof(uint16) == 64
+OK
