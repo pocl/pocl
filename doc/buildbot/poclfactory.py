@@ -5,13 +5,14 @@
 
 from buildbot.process import factory
 from buildbot.steps import source
+from buildbot.steps.source import SVN, Git
 from buildbot.steps.shell import ShellCommand, Compile
 from buildbot.status.results import *
 import os
 
 #The names of the external tests sources
 AMD_test_pkg='AMD-APP-SDK-v2.8-RC-lnx64.tgz'
-ViennaCL_test_pkg='ViennaCL-1.5.1-src.tar.gz'
+ViennaCL_test_pkg='ViennaCL-1.5.1.tar.gz'
 
 
 def createPoclFactory(	environ={},
@@ -20,9 +21,12 @@ def createPoclFactory(	environ={},
 			buildICD=True,
 			llvm_dir='/usr/',
 			icd_dir='/usr/',
-			tests_dir='',
+			tests_dir=None,
 			config_opts='',
-			pedantic=True
+			pedantic=True,
+			tcedir='',
+			git_mode='update',
+			f=None
 			):
 	"""
 	Create a buildbot factory object that builds pocl.
@@ -42,47 +46,61 @@ def createPoclFactory(	environ={},
 	config_opts	String: extra options to pass to ./configure
 	"""
 
-	environ['PATH'] = llvm_dir+"/bin/:${PATH}"
-	environ['LD_LIBRARY_PATH'] = llvm_dir+"/lib/:${LD_LIBRARY_PATH}"
+	#multiple slaves that pend on lock seem to pend after they modified environ.
+	myenviron = environ.copy()
+	myenviron['PATH'] = llvm_dir+"/bin/:${PATH}"
+	myenviron['LD_LIBRARY_PATH'] = llvm_dir+"/lib/:${LD_LIBRARY_PATH}"
+
+	if tcedir:
+		myenviron['PATH'] = tcedir+"/bin/:"+myenviron['PATH']
+		myenviron['LD_LIBRARY_PATH'] = tcedir+"/lib/:"+myenviron['LD_LIBRARY_PATH']
 
 
 
-	f = factory.BuildFactory()
-	f.addStep(source.Git(
+	the_mode=git_mode
+	if branch!="master":
+		the_mode='copy'
+
+	if f==None:
+		f = factory.BuildFactory()
+
+	f.addStep(Git(
 			repourl=repository,
-			#mode='update',
 			#rm -rf the build tree. Have this only when changing
 			#branches during releases
-			mode='clobber',
+			#mode='clobber',
+			#mode=git_mode,
+			mode=the_mode,
 			branch=branch ))
 
 
 	f.addStep(ShellCommand(command=["./autogen.sh"],
 				haltOnFailure=True,
 				name="autoconfig",
-				env=environ,
+				env=myenviron,
 				description="autoconfiging",
 				descriptionDone="autoconf"))
 
-	f.addStep(ShellCommand(
-		haltOnFailure=True,
-		command=["cp", "-u", tests_dir+AMD_test_pkg, 
-		         "examples/AMD/"+AMD_test_pkg],
-		name="copy AMD",
-		description="copying",
-		descriptionDone="copied AMD",
-		#kludge around 'cp' always complaining if source is missing
-		decodeRC={0:SUCCESS,1:SUCCESS}
-		))
-	f.addStep(ShellCommand(
-		haltOnFailure=False,
-		command=["cp", "-u", tests_dir+ViennaCL_test_pkg,
-		         "examples/ViennaCL/"+ViennaCL_test_pkg],
-		name="copy ViennaCL",
-		description="copying",
-		descriptionDone="copied ViennaCL",
-		decodeRC={0:SUCCESS,1:SUCCESS}
-		))
+	if tests_dir!=None:
+		f.addStep(ShellCommand(
+			haltOnFailure=True,
+			command=["cp", "-u", tests_dir+AMD_test_pkg,
+			         "examples/AMD/"+AMD_test_pkg],
+			name="copy AMD",
+			description="copying",
+			descriptionDone="copied AMD",
+			#kludge around 'cp' always complaining if source is missing
+			decodeRC={0:SUCCESS,1:SUCCESS}
+			))
+		f.addStep(ShellCommand(
+			haltOnFailure=False,
+			command=["cp", "-u", tests_dir+ViennaCL_test_pkg,
+			         "examples/ViennaCL/"+ViennaCL_test_pkg],
+			name="copy ViennaCL",
+			description="copying",
+			descriptionDone="copied ViennaCL",
+			decodeRC={0:SUCCESS,1:SUCCESS}
+			))
 
 	configOpts=config_opts.split(' ')
 	if pedantic==True:
@@ -92,29 +110,35 @@ def createPoclFactory(	environ={},
 
 	f.addStep(ShellCommand(command=["./configure"] + configOpts,
 				haltOnFailure=True,
-				name="configure",
-				env=environ,
+				name="configure pocl",
+				env=myenviron,
 				description="configureing",
 				descriptionDone="configure"))
-	f.addStep(Compile(env=environ ))
-	
-	#enable this later
-	ttacheck=False
-	if ttacheck:
+	f.addStep(Compile(env=myenviron ))
+
+	if tests_dir!=None:
+		f.addStep(ShellCommand(command=["make", "prepare-examples"],
+				haltOnFailure=True,
+				name="prepare examples",
+				env=myenviron,
+				description="preparing",
+				descriptionDone="prepare"))
+
+
+	if tcedir:
 		f.addStep(ShellCommand(command=["./tools/scripts/run_tta_tests"],
 				haltOnFailure=True,
 				name="checks",
-				env=environ,
+				env=myenviron,
 				description="testing",
 				descriptionDone="tests",
 				logfiles={"test.log": "tests/testsuite.log"},
 				timeout=60*60))
 	else:
 		f.addStep(ShellCommand(command=["make", "check"],
-				#for beagle, contiunu to clean it up
-				#haltOnFailure=True,
+				haltOnFailure=True,
 				name="checks",
-				env=environ,
+				env=myenviron,
 				description="testing",
 				descriptionDone="tests",
 				logfiles={"test.log": "tests/testsuite.log"},
@@ -152,30 +176,35 @@ def createPoclFactory(	environ={},
 #######
 ## LLVM/clang builder
 ##
+# srcdir	- LLVM source diectory
+# builddir	- LLVM build dir
+# installdir	- final LLVM install directory
+# test_install_dir - the LLVM install dir pocl_build tests against
+def createLLVMFactory(srcdir, builddir, installdir, test_install_dir):
 
-def createLLVMFactory(srcdir, branch, builddir, installdir):
 	f = factory.BuildFactory()
 	f.addStep(
 		SVN(
 			name='svn-llvm',
 			mode='update',
 			baseURL='http://llvm.org/svn/llvm-project/llvm/',
-			defaultBranch=branch,
+			defaultBranch='trunk',
 			workdir=srcdir))
 	f.addStep(
 		SVN(
 			name='svn-clang',
 			mode='update',
 			baseURL='http://llvm.org/svn/llvm-project/cfe/',
-			defaultBranch=branch,
+			defaultBranch='trunk',
 			workdir='%s/tools/clang' % srcdir))
 	f.addStep(
 		ShellCommand(
 			command=[
 				'%s/configure' % srcdir,
 				'--prefix=' + installdir,
+				'--enable-optimized',
 				'--enable-targets=host',
-				'--enable-shared', '--disable-static'],
+				'--enable-shared'],
 			workdir=builddir,
 			haltOnFailure=True,
 			name="configure",
@@ -183,7 +212,7 @@ def createLLVMFactory(srcdir, branch, builddir, installdir):
 			description='configuring'))
 	f.addStep(
 		ShellCommand(
-			command=['make'],
+			command=['make', '-j', '4'],
 			workdir=builddir,
 			haltOnFailure=True,
 			name = "compile",
@@ -197,6 +226,20 @@ def createLLVMFactory(srcdir, branch, builddir, installdir):
 			descriptionDone='check',
 			haltOnFailure=True,
 			description='checking'))
+	f.addStep(
+		ShellCommand(
+			command=['make', 'install'],
+			env={'DESTDIR':test_install_dir},
+			workdir=builddir,
+			haltOnFailure=True,
+			name = 'install',
+			descriptionDone='install',
+			description='installing'))
+
+	f=createPoclFactory(
+		llvm_dir=test_install_dir+installdir,
+		f=f)
+
 	f.addStep(
 		ShellCommand(
 			command=['make', 'install'],
