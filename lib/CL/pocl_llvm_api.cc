@@ -120,6 +120,8 @@ LLVMContext *GlobalContext() {
 
 static llvm::sys::Mutex kernelCompilerLock;
 
+static void InitializeLLVM();
+
 //#define DEBUG_POCL_LLVM_API
 
 #if defined(DEBUG_POCL_LLVM_API) && defined(NDEBUG)
@@ -191,6 +193,7 @@ int pocl_llvm_build_program(cl_program program,
 
 { 
   llvm::MutexGuard lockHolder(kernelCompilerLock);
+  InitializeLLVM();
 
   // Use CompilerInvocation::CreateFromArgs to initialize
   // CompilerInvocation. This way we can reuse the Clang's
@@ -827,8 +830,21 @@ static TargetMachine* GetTargetMachine(cl_device_id device,
                                         Reloc::PIC_, CodeModel::Default,
                                         CodeGenOpt::Aggressive);
 }
-
 /* helpers copied from LLVM opt END */
+
+static void InitializeLLVM() {
+  
+  static bool LLVMInitialized = false;
+  if (LLVMInitialized) return;
+  // We have not initialized any pass managers for any device yet.
+  // Run the global LLVM pass initialization functions.
+  InitializeAllTargets();
+  InitializeAllTargetMCs();
+  InitializeAllAsmPrinters();
+  InitializeAllAsmParsers();
+
+  LLVMInitialized = true;
+}
 
 /**
  * Prepare the kernel compiler passes.
@@ -853,34 +869,26 @@ static PassManager& kernel_compiler_passes
 
   const bool first_initialization_call = kernel_compiler_passes.size() == 0;
 
+  if (first_initialization_call) {
+    // TODO: do this globally, and just once per program
+    initializeCore(Registry);
+    initializeScalarOpts(Registry);
+    initializeVectorization(Registry);
+    initializeIPO(Registry);
+    initializeAnalysis(Registry);
+    initializeIPA(Registry);
+    initializeTransformUtils(Registry);
+    initializeInstCombine(Registry);
+    initializeInstrumentation(Registry);
+    initializeTarget(Registry);
+  }
+
 #if !(defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-        // Scalarizer is in LLVM upstream since 3.4.
-      const bool SCALARIZE = pocl_is_option_set("POCL_SCALARIZE_KERNELS");
+  // Scalarizer is in LLVM upstream since 3.4.
+  const bool SCALARIZE = pocl_is_option_set("POCL_SCALARIZE_KERNELS");
 #else
-      const bool SCALARIZE = false;
+  const bool SCALARIZE = false;
 #endif
-
-  if (first_initialization_call) 
-    {
-      // We have not initialized any pass managers for any device yet.
-      // Run the global LLVM pass initialization functions.
-      InitializeAllTargets();
-      InitializeAllTargetMCs();
-      InitializeAllAsmPrinters();
-      InitializeAllAsmParsers();
-
-      // TODO: do this globally, and just once per program
-      initializeCore(Registry);
-      initializeScalarOpts(Registry);
-      initializeVectorization(Registry);
-      initializeIPO(Registry);
-      initializeAnalysis(Registry);
-      initializeIPA(Registry);
-      initializeTransformUtils(Registry);
-      initializeInstCombine(Registry);
-      initializeInstrumentation(Registry);
-      initializeTarget(Registry);
-    }
 
 #ifndef LLVM_3_2
   StringMap<llvm::cl::Option*> opts;
@@ -1128,6 +1136,7 @@ kernel_library
 (cl_device_id device, llvm::Module* root)
 {
   llvm::MutexGuard lockHolder(kernelCompilerLock);
+  InitializeLLVM();
 
   static std::map<cl_device_id, llvm::Module*> libs;
 
@@ -1189,6 +1198,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
                                           const char* kernel_filename)
 {
   llvm::MutexGuard lockHolder(kernelCompilerLock);
+  InitializeLLVM();
 
 #ifdef DEBUG_POCL_LLVM_API        
   printf("### calling the kernel compiler for kernel %s local_x %zu "
@@ -1259,6 +1269,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
 void pocl_llvm_update_binaries (cl_program program) {
 
   llvm::MutexGuard lockHolder(kernelCompilerLock);
+  InitializeLLVM();
 
   // Dump the LLVM IR Modules to memory buffers. 
   assert (program->llvm_irs != NULL);
@@ -1309,6 +1320,7 @@ int
 pocl_llvm_get_kernel_names( cl_program program, const char **knames, unsigned max_num_krn )
 {
   llvm::MutexGuard lockHolder(kernelCompilerLock);
+  InitializeLLVM();
 
   // TODO: is it safe to assume every device (i.e. the index 0 here)
   // has the same set of programs & kernels?
