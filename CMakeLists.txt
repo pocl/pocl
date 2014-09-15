@@ -91,10 +91,24 @@ enable_testing()
 
 find_package(PkgConfig MODULE REQUIRED)
 
-pkg_check_modules(HWLOC REQUIRED hwloc>=1.0)
-if(NOT HWLOC_FOUND)
+######################################################################################
+
+set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+find_package( Hwloc )
+
+if(NOT Hwloc_FOUND)
   message(FATAL_ERROR "hwloc package is required!")
 endif()
+
+if("${Hwloc_VERSION}" VERSION_LESS "1.0")
+  message(FATAL_ERROR "Hwloc version must be >= 1.0 !")
+endif()
+
+message(STATUS "Hwloc_VERSION ${Hwloc_VERSION}")
+message(STATUS "Hwloc_LIBRARIES ${Hwloc_LIBRARIES}")
+message(STATUS "Hwloc_INCLUDE_DIRS ${Hwloc_INCLUDE_DIRS}")
+
+include_directories("${Hwloc_INCLUDE_DIRS}")
 
 ######################################################################################
 #
