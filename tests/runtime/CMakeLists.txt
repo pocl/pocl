@@ -67,7 +67,9 @@ add_test("runtime/clCreateKernel" "test_clCreateKernel")
 
 add_test("runtime/clGetKernelArgInfo" "test_clGetKernelArgInfo")
 
-add_test("runtime/clSetEventCallback" "test_clSetEventCallback")
+add_test_custom("${CMAKE_CURRENT_BINARY_DIR}/test_clSetEventCallback"
+                "runtime/clSetEventCallback"
+                "${CMAKE_CURRENT_SOURCE_DIR}/test_clSetEventCallback_expout.txt" )
 
 add_test("runtime/clGetSupportedImageFormats" "test_clGetSupportedImageFormats")
 
@@ -96,12 +98,6 @@ if(LLVM_3_2)
     PROPERTIES WILL_FAIL 1)
 endif()
 
-set_tests_properties("runtime/clSetEventCallback"
-  PROPERTIES
-    PASS_REGULAR_EXPRESSION "kernel in execution
-Callback function: event status: CL_SUBMITTED
-Callback function: event status: CL_RUNNING
-Callback function: event status: CL_COMPLETE")
 
 
 set_tests_properties("runtime/clFinish"
