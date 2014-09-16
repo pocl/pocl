@@ -1,0 +1,5 @@
+Jianbin Fang, Henk Sips, Pekka J&auml;&auml;skel&auml;inen, Ana Lucia Varbanescu
+Grover: Looking for Performance Improvement by Disabling Local Memory Usage in OpenCL Kernels
+http://www.pds.ewi.tudelft.nl/fileadmin/pds/homepages/fang/papers/icpp2k14a214.pdf
+The 43rd International Conference on Parallel Processing (ICPP-2014), Minneapolis, USA, September 9-12, 2014.
+

@@ -30,7 +30,7 @@
   <div id="page">
     <div id="header">
       <h1 id="title"><span style="height: 100%; vertical-align: middle;"></span>
-                    <a href="http://portablecl.org"><img src="/pocl-80x60.png" border="0" style="vertical-align: middle;"></a>
+                    <a href="http://portablecl.org"><img src="img/pocl-80x60.png" border="0" style="vertical-align: middle;"></a>
                     <span style="height: 100%; vertical-align: middle;"> Portable Computing Language${sub_page}</span></h1>
     </div>
 
@@ -41,9 +41,8 @@
           <li class="menu_item"><a href="docs/html" class="menu_link">Documentation</a></li>
           <li class="menu_item"><a href="development.html" class="menu_link">Development</a></li>
           <li class="menu_item"><a href="discussion.html" class="menu_link">Discussion</a></li>
-## Wiki is gone.
-##          <li class="menu_item"><a href="http://sourceforge.net/apps/mediawiki/pocl" class="menu_link">Wiki</a></li>
-##          <li class="menu_item"><a href="publications.html" class="menu_link">Publications</a></li>
+          <li class="menu_item"><a href="https://github.com/pocl/pocl/wiki" class="menu_link">Wiki</a></li>
+          <li class="menu_item"><a href="publications.html" class="menu_link">Publications</a></li>
         </ul>
     </div>
 
@@ -53,7 +52,7 @@
 
     <div id="footer">
       <span style="height: 100%; vertical-align: middle;"></span>
-                    <a href="http://portablecl.org"><img src="/pocl-80x60.png" border="0" style="vertical-align: middle;"></a>
+                    <a href="http://portablecl.org"><img src="img/pocl-80x60.png" border="0" style="vertical-align: middle;"></a>
                     <span style="height: 100%; vertical-align: middle;">Portable Computing Language &copy; 2010-2014 pocl developers 
                     </span>
     </div>
