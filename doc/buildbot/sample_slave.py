@@ -5,11 +5,7 @@ from buildbot.config import BuilderConfig
 from buildbot.schedulers.forcesched import *
 from poclfactory import createPoclFactory
 
-# Skeleton for adding a new buildslave.
-# Every line with "sample" must be changed!
-# Add triggers & builders as you deem necessary.
-# The Builder 'name' is the one that appears on the buildmaster waterfall page
-# Please keep this of the approximate form 'CPU-OS-<what-is-tested-with-this-build>'.
+#overrride the 'sample_slave' with a descriptive function name
 def sample_slave( c ):
         
 	#create a new slave in the master's database
@@ -26,6 +22,8 @@ def sample_slave( c ):
 			builderNames=[
 				"sample_builder_name"] ))
 	# Allow authenticated (to the buildmaster) users to force a build
+	# Optionally, force a full build, i.e. 'git clean -f -d -x' instead
+	# of a incremental build (essentially 'git pull && make)
 	c['schedulers'].append(
 		ForceScheduler(
 			name="a name for your forcescheduler",
@@ -34,7 +32,13 @@ def sample_slave( c ):
 			repository=FixedParameter(name="repository", default=""),
 			project=FixedParameter(name="repository", default=""),
 			builderNames=["sample_LLVM_builder_name"],
-			properties=[]))
+			properties=[
+				ChoiceStringParameter(
+					name="git_mode",
+					label="how to update git (see buildbot docs)",
+					choices=["incremental", "full"],
+					default="incremental")
+			]))
 
 	#create one set of steps to build pocl. See poclfactory.py for
 	#parameters to pass this function.
