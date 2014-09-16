@@ -855,6 +855,8 @@ add_subdirectory("tests")
 set(ALL_TESTSUITES "AMD;AMDSDK2.9;opencl-book-samples;Parboil;piglit;Rodinia;VexCL;ViennaCL")
 add_subdirectory("examples")
 
+add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND})
+
 ##########################################################
 
 MESSAGE(STATUS " ")
