@@ -908,8 +908,10 @@ static PassManager& kernel_compiler_passes
   if (module_data_layout != "") {
 #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
     Passes->add(new DataLayout(module_data_layout));
-#else
+#elif (defined LLVM_3_5)
     Passes->add(new DataLayoutPass(DataLayout(module_data_layout)));
+#else
+    Passes->add(new DataLayoutPass());
 #endif
   }
 
