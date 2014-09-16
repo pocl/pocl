@@ -10,15 +10,12 @@
 #
 # Once done this will define::
 #
-#   Hwloc_FOUND          - True if hwloc was found
-#   Hwloc_INCLUDE_DIRS   - include directories for hwloc
-#   Hwloc_LIBRARIES      - link against this library to use hwloc
-#   Hwloc_VERSION        - version
-#
-# The module will also define two cache variables::
-#
-#   Hwloc_INCLUDE_DIR    - the hwloc include directory
-#   Hwloc_LIBRARY        - the path to the hwloc library
+#   Hwloc_FOUND            - True if hwloc was found
+#   Hwloc_INCLUDE_DIRS     - include directories for hwloc
+#   Hwloc_LIBRARIES        - link against these libraries to use hwloc
+#   Hwloc_VERSION          - version
+#   Hwloc_CFLAGS           - include directories as compiler flags
+#   Hwloc_LDLFAGS          - link paths and libs as compiler flags
 #
 
 #=============================================================================
@@ -128,6 +125,13 @@ if(WIN32)
   mark_as_advanced(
     Hwloc_INCLUDE_DIR
     Hwloc_LIBRARY)
+
+  foreach(arg ${Hwloc_INCLUDE_DIRS})
+    set(Hwloc_CFLAGS "${Hwloc_CFLAGS} /I${arg}")
+  endforeach()
+
+  GET_FILENAME_COMPONENT(Hwloc_LIBRARY_DIRS ${Hwloc_LIBRARY} PATH)
+  set(Hwloc_LDFLAGS "/L${Hwloc_LIBRARY_DIRS}")
 
 else()
 
