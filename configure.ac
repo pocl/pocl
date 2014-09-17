@@ -120,7 +120,7 @@ Unsupported LLVM version. Please use LLVM version 3.2, 3.3, 3.4 or 3.5.
    ;;
 esac
 
-AC_SUBST([LLVM_LDFLAGS], [llvm-config returned ldflags])
+AC_SUBST([LLVM_LDFLAGS], [$LLVM_LDFLAGS], [llvm-config returned ldflags])
 AM_CONDITIONAL([NEW_PRINTF_WORKS], $NEW_PRINTF_WORKS)
 
 # When building with API linking, clang is always linked statically, so user might want to link llvm static to libpocl too
