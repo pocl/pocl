@@ -309,12 +309,22 @@ endif()
 
 ######################################################################################
 
-include(FindThreads)
-if(Threads_FOUND)
-  set(LD_FLAGS_BIN ${CMAKE_THREAD_LIBS_INIT})
+if (MSVC)
+  set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+  find_package( PthreadsWin32 )
+  if(NOT Pthreads_FOUND)
+    message(FATAL_ERROR "Could not find pthreads-win32 libs!")
+  endif()
+  include_directories("${Pthreads_INCLUDE_DIRS}")
 else()
-  message(FATAL_ERROR "Could not find threading library for this system")
+  include(FindThreads)
+  if(Threads_FOUND)
+    set(LD_FLAGS_BIN ${CMAKE_THREAD_LIBS_INIT})
+  else()
+    message(FATAL_ERROR "Could not find threading library for this system")
+  endif()
 endif()
+
 
 ######################################################################################
 # DONE
