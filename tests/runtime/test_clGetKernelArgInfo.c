@@ -145,22 +145,22 @@ int test_program(cl_program program, int is_spir) {
   err = clGetKernelArgInfo(test_kernel, 0, CL_KERNEL_ARG_TYPE_QUALIFIER,
                             BUF_LEN, &kernel_arg.type, &retsize);
   CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
-  TEST_ASSERT((kernel_arg.address==CL_KERNEL_ARG_TYPE_CONST) && "type qualifier of arg of test_kernel is not CONST");
+  TEST_ASSERT((kernel_arg.type==CL_KERNEL_ARG_TYPE_CONST) && "type qualifier of arg of test_kernel is not CONST");
 
   err = clGetKernelArgInfo(test_kernel, 1, CL_KERNEL_ARG_TYPE_QUALIFIER,
                             BUF_LEN, &kernel_arg.type, &retsize);
   CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
-  TEST_ASSERT((kernel_arg.address==CL_KERNEL_ARG_TYPE_VOLATILE) && "type qualifier of arg of test_kernel is not VOLATILE");
+  TEST_ASSERT((kernel_arg.type==CL_KERNEL_ARG_TYPE_VOLATILE) && "type qualifier of arg of test_kernel is not VOLATILE");
 
   err = clGetKernelArgInfo(test_kernel, 2, CL_KERNEL_ARG_TYPE_QUALIFIER,
                             BUF_LEN, &kernel_arg.type, &retsize);
   CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
-  TEST_ASSERT((kernel_arg.address==CL_KERNEL_ARG_TYPE_NONE) && "type qualifier of arg of test_kernel is not NONE");
+  TEST_ASSERT((kernel_arg.type==CL_KERNEL_ARG_TYPE_NONE) && "type qualifier of arg of test_kernel is not NONE");
 
   err = clGetKernelArgInfo(test_kernel, 3, CL_KERNEL_ARG_TYPE_QUALIFIER,
                             BUF_LEN, &kernel_arg.type, &retsize);
   CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
-  TEST_ASSERT((kernel_arg.address==CL_KERNEL_ARG_TYPE_CONST) && "type qualifier of arg of test_kernel is not CONST");
+  TEST_ASSERT((kernel_arg.type==CL_KERNEL_ARG_TYPE_CONST) && "type qualifier of arg of test_kernel is not CONST");
 
   /* NAME tests */
   // constant char* msg, global volatile float* in, global float* out, const float j, local int* c
