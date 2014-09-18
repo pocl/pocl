@@ -984,9 +984,10 @@ static PassManager& kernel_compiler_passes
   const std::string wg_method = 
     pocl_get_string_option("POCL_WORK_GROUP_METHOD", "auto");
 
+  /*
   const bool wi_vectorizer = 
     pocl_get_bool_option("POCL_VECTORIZE_WORK_GROUPS", 0);
-
+  */
 
 #ifndef LLVM_3_2
   if (wg_method == "loopvec")
