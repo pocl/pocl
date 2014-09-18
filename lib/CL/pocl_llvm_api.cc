@@ -1028,59 +1028,6 @@ static PassManager& kernel_compiler_passes
       passes.push_back("loop-vectorize");
       passes.push_back("slp-vectorizer");
     } 
-  else if (wi_vectorizer) 
-    {
-      /* The legacy repl based WI autovectorizer. Deprecated but 
-         still needed by some legacy TCE research machines. A known problem
-         is that it traverses instruction uses incorrectly, not calling getUser() 
-         like LLVM 3.5 API requires. 
-
-         All in all it is an unmaintable hack on top of an old BBVectorizer that was 
-         added for a research prototype core. We should move on towards using the
-         loop vectorizer as the main autovectorizer for a cleaner pass chain.  */
-      std::cerr << "pocl warning: wi-vectorize is deprecated and will be removed "
-                << "in pocl 0.11. It might not work correctly with LLVM 3.5.\n";
-      passes.push_back("STANDARD_OPTS");
-      passes.push_back("wi-vectorize");
-      llvm::cl::Option *O;
-      if (pocl_is_option_set("POCL_VECTORIZE_VECTOR_WIDTH") && 
-          first_initialization_call) 
-        {
-          /* The options cannot be unset, it seems, so we must set them 
-             only once, globally. TODO: check further if there is some way to
-             unset the options so we can control them per kernel compilation. */
-          O = opts["wi-vectorize-vector-width"];
-          assert(O && "could not find LLVM option 'wi-vectorize-vector-width'");
-          O->addOccurrence(1, StringRef("wi-vectorize-vector-width"), 
-                           pocl_get_string_option("POCL_VECTORIZE_VECTOR_WIDTH", "0"), false); 
-
-        }
-
-      if (pocl_get_bool_option("POCL_VECTORIZE_NO_FP", 0) && 
-          first_initialization_call) 
-        {
-          O = opts["wi-vectorize-no-fp"];
-          assert(O && "could not find LLVM option 'wi-vectorize-no-fp'");
-          O->addOccurrence(1, StringRef("wi-vectorize-no-fp"), StringRef(""), false); 
-        }
-
-      if (pocl_get_bool_option("POCL_VECTORIZE_MEM_ONLY", 0) && 
-          first_initialization_call) 
-        {
-          O = opts["wi-vectorize-mem-ops-only"];
-          assert(O && "could not find LLVM option 'wi-vectorize-mem-ops-only'");
-          O->addOccurrence(1, StringRef("wi-vectorize-mem-ops-only"), StringRef(""), false); 
-        }
-       if (first_initialization_call)
-        {
-#ifndef LLVM_3_2
-          llvm::cl::Option *O = opts["add-wi-metadata"];
-          O->addOccurrence(1, StringRef("add-wi-metadata"), 
-                           StringRef(""), false); 
-#endif
-        }
-
-    }
 #endif
 
   passes.push_back("STANDARD_OPTS");

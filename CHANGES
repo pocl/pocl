@@ -9,6 +9,11 @@ Bugfixes
   operations) as uniform. This caused deadlock/race situations due to 
   illegal implicit barrier injection.
 
+Misc.
+-----
+- The old BBVectorizer forked WIVectorizer removed due to bit rot and 
+  the general hackiness of it.
+  
 0.10 September 2014
 ===================
 

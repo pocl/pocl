@@ -107,17 +107,7 @@ Work-group autovectorization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 The work-group functions can be vectorized "horizontally" (across multiple
-work-items in the work-group function) in two ways:
-
-The first (deprecated) way is to use the ``WorkitemReplication`` to produce large basic 
-blocks with the instructions from all work-items. Then, a modified LLVM basic block vectorizer 
-(``WIVectorizer``) is used to combine multiple instructions from multiple
-work-items to vector instructions. WIVectorizer has been copied from the BBVectorizer of
-LLVM at round LLVM 3.0 with code added to detect the same instructions
-from multiple work-items in the replicated block. It tries to pair those instructions
-instead of searching for any instruction candidate like the original BBVectorizer did.
-
-The second (currently recommended for CPU targets) way is to use the
+work-items in the work-group function) by using the
 ``WorkitemLoops`` to produce parallel loops for the parallel regions. These
 loops are then attempted to vectorized using the standard LLVM's inner-loop 
 vectorizer. 

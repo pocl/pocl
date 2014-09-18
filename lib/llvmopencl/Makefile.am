@@ -48,7 +48,7 @@ PASSES_SOURCES = Barrier.h						\
                         Flatten.cc IsolateRegions.h IsolateRegions.cc \
 						WorkitemReplication.h WorkitemReplication.cc \
 						ImplicitLoopBarriers.h ImplicitLoopBarriers.cc \
-						WorkItemAliasAnalysis.cc WIVectorize.cc \
+						WorkItemAliasAnalysis.cc \
 						WorkitemHandler.h WorkitemHandler.cc \
 						WorkitemLoops.h WorkitemLoops.cc \
 						PHIsToAllocas.h PHIsToAllocas.cc \
