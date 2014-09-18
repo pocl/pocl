@@ -93,6 +93,8 @@ run_llvm_config(LLVM_LIBDIR --libdir)
 run_llvm_config(LLVM_INCLUDEDIR --includedir)
 run_llvm_config(LLVM_LIBS --libs)
 run_llvm_config(LLVM_LIBFILES --libfiles)
+run_llvm_config(LLVM_SRC_ROOT --src-root)
+run_llvm_config(LLVM_OBJ_ROOT --obj-root)
 run_llvm_config(LLVM_ALL_TARGETS --targets-built)
 run_llvm_config(LLVM_HOST_TARGET --host-target)
 # Ubuntu's llvm reports "arm-unknown-linux-gnueabihf" triple, then if one tries
@@ -146,6 +148,19 @@ if(NOT LLVM_VERSION VERSION_LESS "3.5")
   run_llvm_config(LLVM_SYSLIBS --system-libs)
   set(LLVM_LDFLAGS "${LLVM_LDFLAGS} ${LLVM_SYSLIBS}")
 endif()
+
+# Llvm-config may be installed or it might be used from build directory, in which case
+# we need to add few extra include paths to find clang includes and compiled includes
+list(APPEND LLVM_INCLUDE_DIRS 
+  "${LLVM_INCLUDEDIR}" 
+  "${LLVM_SRC_ROOT}/tools/clang/include" 
+  "${LLVM_OBJ_ROOT}/include" 
+  "${LLVM_OBJ_ROOT}/tools/clang/include")
+
+# Llvm-config --libs contain only llvm internal libraries, 
+# LLVM_ALL_LIBS has also list of clang libraries and required
+# system libs like, -lcurses etc.
+set(LLVM_ALL_LIBS "${LLVM_LIBS} ${LLVM_SYSLIBS}")
 
 ####################################################################
 
@@ -360,8 +375,9 @@ ${TYPEDEF}"  "typedef struct { char x; ${TYPE} y; } ac__type_alignof_;
 endmacro()
 
 ####################################################################
-
-# clangxx works check
+#
+# clangxx works check 
+#
 
 if(CLANGXX)
 
@@ -370,14 +386,29 @@ if(CLANGXX)
   setup_cache_var_name(CLANGXX_WORKS "${LLVM_HOST_TARGET}-${CLANGXX}-${LLVM_CLANGXX_VERSION}")
 
   if(NOT DEFINED ${CACHE_VAR_NAME})
-    set(CLANGXX_WORKS 1)
-    custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream>" "std::cout << \"Hello clang++ world!\" << std::endl;" COMPILE_RESULT)
-    if(COMPILE_RESULT)
-      set(CLANGXX_WORKS 0)
+    set(CLANGXX_WORKS 0)
+
+    custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL)
+
+    if(NOT _STATUS_FAIL)
+      set(CLANGXX_STDLIB "")
+      set(CLANGXX_WORKS 1)
+    else()
+      custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL "-stdlib=libstdc++")
+      if (NOT _STATUS_FAIL)
+        set(CLANGXX_STDLIB "-stdlib=libstdc++")
+        set(CLANGXX_WORKS 1)
+      else()
+        custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL "-stdlib=libc++")
+        if(NOT _STATUS_FAIL)
+          set(CLANGXX_STDLIB "-stdlib=libc++")
+          set(CLANGXX_WORKS 1)
+        endif()
+      endif()
     endif()
   endif()
 
-  set_cache_var(CLANGXX_WORKS "Clang++ works")
+  set_cache_var(CLANGXX_WORKS "Clang++ works with ${CLANGXX_STDLIB}")
 
 else()
 
@@ -386,60 +417,48 @@ else()
 endif()
 
 ####################################################################
-
-# which C++ stdlib clang is using
-
-if(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-
-  setup_cache_var_name(SYSTEM_CLANGXX_STDLIB "${LLVM_HOST_TARGET}-${CLANGXX}-${LLVM_CLANGXX_VERSION}")
-
-  if(NOT DEFINED ${CACHE_VAR_NAME})
-    message(STATUS "Checking if system clang++ uses libstdc++")
-    separate_arguments(_FLAGS UNIX_COMMAND "${LLVM_CXXFLAGS}")
-    custom_try_compile_clangxx("#include <llvm/Support/Debug.h>\n#include <iostream>\nusing namespace std;\n"
-        "cout << 234134; return 0;" COMPILE_RESULT ${_FLAGS} "-stdlib=libstdc++")
-    if(COMPILE_RESULT)
-      custom_try_compile_clangxx("#include <llvm/Support/Debug.h>\n#include <iostream>\nusing namespace std;\n"
-          "cout << 234134; return 0;" COMPILE_RESULT ${_FLAGS} "-stdlib=libc++")
-      if(COMPILE_RESULT)
-        message(FATAL_ERROR "System clang cannot compile with neither libstdc++ nor libc++; possibly missing llvm heaers?")
-      else()
-        set(SYSTEM_CLANGXX_STDLIB "-stdlib=libc++")
-      endif()
-    else()
-      set(SYSTEM_CLANGXX_STDLIB "-stdlib=libstdc++")
-    endif()
-  endif()
-
-  set_cache_var(SYSTEM_CLANGXX_STDLIB "Clang's c++ stdlib")
-  set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} ${SYSTEM_CLANGXX_STDLIB}")
-endif()
-
-if("${SYSTEM_CLANGXX_STDLIB}" MATCHES "libc")
-  set(LLVM_LDFLAGS "${LLVM_LDFLAGS} -lc++")
-else()
-  set(LLVM_LDFLAGS "${LLVM_LDFLAGS} -lstdc++")
-endif()
-
-
-####################################################################
-
+#
 # - '-DNDEBUG' is a work-around for llvm bug 18253
-
+#
 # llvm-config does not always report the "-DNDEBUG" flag correctly
 # (see LLVM bug 18253). If LLVM and the pocl passes are built with
 # different NDEBUG settings, problems arise
+#
+# TODO: How this test should actually recognize, if llvm
+#       is built without assertions? On OSX this always
+#       passed and thinks there is no assertions...
 
 if(NOT LLVM_CXXFLAGS MATCHES "-DNDEBUG")
 
   message(STATUS "Checking if LLVM is built with assertions")
   separate_arguments(_FLAGS UNIX_COMMAND "${LLVM_CXXFLAGS}")
-  custom_try_compile_clangxx("#include <llvm/Support/Debug.h>" "llvm::DebugFlag=true;" COMPILE_RESULT ${_FLAGS} "-UNDEBUG")
-  if(COMPILE_RESULT)
+
+  SET (_TEST_SOURCE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/llvmbuiltwithassertions.cc")
+  FILE (WRITE "${_TEST_SOURCE}"
+    "
+      #include <llvm/Support/Debug.h>
+      int main(int argc, char** argv) {
+        llvm::DebugFlag=true;
+      }
+    ")
+
+  set(TRY_COMPILE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS} -UNDEBUG")
+
+  TRY_COMPILE(_TRY_SUCCESS ${CMAKE_BINARY_DIR} "${_TEST_SOURCE}"
+    CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_INCLUDE_DIRS}"
+    CMAKE_FLAGS "-DLINK_DIRECTORIES:STRING=${LLVM_LIBDIR}"
+    LINK_LIBRARIES ${LLVM_ALL_LIBS}
+    COMPILE_DEFINITIONS ${TRY_COMPILE_CXX_FLAGS}
+    OUTPUT_VARIABLE _TRY_COMPILE_OUTPUT
+  )
+
+  FILE(APPEND "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeOutput.log"
+    "Test -NDEBUG flag: ${_TRY_COMPILE_OUTPUT}\n")
+
+  if(_TRY_SUCCESS)
     message(STATUS "no assertions... adding -DNDEBUG")
     set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -DNDEBUG")
   endif()
-  unset(_FLAGS)
 
 endif()
 

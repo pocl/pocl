@@ -97,6 +97,27 @@ if(NOT HWLOC_FOUND)
 endif()
 
 ######################################################################################
+#
+# Find executables to few tools required during build 
+#
+
+find_program (PATCH_EXEC 
+  NAMES patch patch.exe
+)
+
+find_program (XARGS_EXEC 
+  NAMES xargs xargs.exe
+)
+
+find_program (CAT_EXEC 
+  NAMES cat cat.exe
+)
+
+if (!PATCH_EXEC)
+  message(FATAL_ERROR "Could not find patch command.")
+endif()
+
+######################################################################################
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 include(LLVM RESULT_VARIABLE RES)
@@ -107,6 +128,10 @@ endif()
 if("${LLVM_VERSION}" VERSION_LESS "3.2")
   message(FATAL_ERROR "POCL requires LLVM version >= 3.2 !")
 endif()
+
+include_directories("${LLVM_INCLUDE_DIRS}")
+link_directories(${LLVM_LIBDIR})
+
 
 ######################################################################################
 
@@ -200,7 +225,7 @@ endif()
 option(USE_VECMATHLIB_BUILTINS_ONLY "Use only __builtin_* functions in the kernel library." OFF)
 
 if(USE_VECMATHLIB)
-  set(DEFAULT_KERNEL_CLANGXX_FLAGS "-DVML_NO_IOSTREAM")
+  set(DEFAULT_KERNEL_CLANGXX_FLAGS "-DVML_NO_IOSTREAM ${CLANGXX_STDLIB}")
 endif()
 set(DEFAULT_KERNEL_CL_FLAGS "-D__OPENCL_VERSION__=120")
 
@@ -940,8 +965,13 @@ MESSAGE(STATUS "LLVM_CPPFLAGS: ${LLVM_CPPFLAGS}")
 MESSAGE(STATUS "LLVM_LDFLAGS: ${LLVM_LDFLAGS}")
 MESSAGE(STATUS "LLVM_LIBDIR: ${LLVM_LIBDIR}")
 MESSAGE(STATUS "LLVM_INCLUDEDIR: ${LLVM_INCLUDEDIR}")
+MESSAGE(STATUS "LLVM_SRC_ROOT: ${LLVM_SRC_ROOT}")
+MESSAGE(STATUS "LLVM_OBJ_ROOT: ${LLVM_OBJ_ROOT}")
+MESSAGE(STATUS "LLVM_INCLUDE_DIRS: ${LLVM_INCLUDE_DIRS}")
 # these are a bit too long..
-#MESSAGE(STATUS "LLVM_LIBS: ${LLVM_LIBS}")
+MESSAGE(STATUS "LLVM_LIBS: ${LLVM_LIBS}")
+MESSAGE(STATUS "LLVM_SYSLIBS: ${LLVM_SYSLIBS}")
+MESSAGE(STATUS "LLVM_ALL_LIBS: ${LLVM_ALL_LIBS}")
 #MESSAGE(STATUS "LLVM_LIBFILES: ${LLVM_LIBFILES}")
 MESSAGE(STATUS "LLVM_ALL_TARGETS: ${LLVM_ALL_TARGETS}")
 MESSAGE(STATUS "LLVM_HOST_TARGET: ${LLVM_HOST_TARGET}")
