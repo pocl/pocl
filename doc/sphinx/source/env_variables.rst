@@ -79,27 +79,6 @@ below.
  Use precompiled headers for the OpenCL C built-ins when compiling kernels.
  This is an experimental feature which is known to break on some platforms.
 
-* POCL_VECTORIZE_WORK_GROUPS
-
- If set to 1, enables the (experimental) work group vectorizer that builds
- vector instructions from multiple work items. Disabled by default for now as it
- worsens the performance almost all of the cases in benchmark.py.
-
-* POCL_VECTORIZE_VECTOR_WIDTH
-
- If set to number, indicates the width of vector to use during vectorization. Default
- is 8 lanes.
-
-* POCL_VECTORIZE_MEM_ONLY
-
- If set to 1, indicates that only the memory access operations should be
- vectorized.
-
-* POCL_VECTORIZE_NO_FP
-
- If set to 1, indicates the vectorization of floating point operations is
- forbidden.
-
 * POCL_VERBOSE
 
 If set to 1, output the LLVM commands as they are executed to compile

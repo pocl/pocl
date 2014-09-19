@@ -53,7 +53,7 @@ AT_CLEANUP
 
 POAT_ROD_SETUP([lud])
 POAT_ROD_CHECK_BUILD([lud],[ | egrep -v "^lud.cpp:|^../common/common.c:" ])
-AT_CHECK_UNQUOTED([cd $abs_top_builddir/examples/Rodinia/rodinia_2.0.1/opencl/lud/ocl; POCL_VECTORIZE_WORK_GROUPS=0 ./run | grep "Time con" | cut -c -18 | grep .], 0,
+AT_CHECK_UNQUOTED([cd $abs_top_builddir/examples/Rodinia/rodinia_2.0.1/opencl/lud/ocl; ./run | grep "Time con" | cut -c -18 | grep .], 0,
 [Time consumed(ms):
 ])
 AT_CLEANUP

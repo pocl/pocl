@@ -106,23 +106,6 @@ then
 OPT_SWITCH=$POCL_KERNEL_COMPILER_OPT_SWITCH
 fi
 
-EXTRA_OPTS=""
-if ! test "x$POCL_VECTORIZE_WORK_GROUPS" = "x0";
-then
-OPT_SWITCH="-O3"
-EXTRA_OPTS="-wi-vectorize -instcombine"
-fi
-
-if test "x$POCL_VECTORIZE_VECTOR_WIDTH" != "x";
-then
-EXTRA_OPTS="$EXTRA_OPTS -wi-vectorize-vector-width="${POCL_VECTORIZE_VECTOR_WIDTH}
-fi
-
-if test "x$POCL_VECTORIZE_NO_FP" = "x1";
-then
-EXTRA_OPTS="$EXTRA_OPTS -wi-vectorize-no-fp"
-fi
-
 # -disable-simplify-libcalls was added because of TCE (it doesn't have
 # a runtime linker which could link the libs later on), but it might
 # also be harmful for wg-vectorization where we want to try to vectorize
