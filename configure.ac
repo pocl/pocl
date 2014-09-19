@@ -1121,6 +1121,13 @@ old_CPPFLAGS="$CPPFLAGS"
 old_CFLAGS="$CFLAGS"
 old_LDFLAGS="$LDFLAGS"
 CC=$srcdir/config/xclang
+if test ! -z "$host_alias"; then
+    CC="$CC -h $host_alias"
+fi
+if test ! -z "$build_alias"; then
+    CC="$CC -b $build_alias"
+fi
+
 CFLAGS=""
 CPPFLAGS=""
 LDFLAGS=""
