@@ -617,6 +617,26 @@ then
 AC_DEFINE([CLANG_SPIR], [], "Using a SPIR generator Clang from Khronos.")
 fi
 
+# Targets.
+# This is the target architecture of the basic and pthreads devices.
+# These always are the same arch as host (in current pocl implementation).
+# Also, this is the autoconf "host".
+# We have:
+# target triplet: the OCL device target triple
+# kernel dir: where to search for the ocl lib kernel
+
+# The option for specifying the target changed; try the modern syntax
+# first, and fall back to the old-style syntax if this failed
+AC_MSG_CHECKING([Clang option to specify the target])
+if [ $CLANG --target=$host -x c /dev/null -S -o - >/dev/null 2>&1 ]; then
+  CLANG_TARGET_OPTION='--target='
+elif [ $CLANG -target $host -x c /dev/null -S -o - >/dev/null 2>&1 ]; then
+  CLANG_TARGET_OPTION='-target '
+else
+  AC_MSG_ERROR([Cannot determine Clang option to specify the target])
+fi
+AC_MSG_RESULT(${CLANG_TARGET_OPTION}TARGET)
+
 # Check for a functioning clang++. It is needed to compile faster math 
 # builtins from vecmathlib.
 LLVM_PROG_WARN([CLANGXX], [clang++])
@@ -627,6 +647,8 @@ LLVM_PROG_WARN([CLANGXX], [clang++])
 if test ! -z "$CLANGXX"; then
 
 AC_LANG([C++])
+
+CLANGXX_FLAGS="${CLANG_TARGET_OPTION}$host ${CLANGXX_FLAGS}"
 
 old_CXX=$CXX
 CXX=$CLANGXX
@@ -756,26 +778,6 @@ HOST_AS_FLAGS=""
 HOST_LD_FLAGS="$LD_SHARED"
 
 
-
-# Targets.
-# This is the target architecture of the basic and pthreads devices.
-# These always are the same arch as host (in current pocl implementation).
-# Also, this is the autoconf "host".
-# We have: 
-# target triplet: the OCL device target triple
-# kernel dir: where to search for the ocl lib kernel
-
-# The option for specifying the target changed; try the modern syntax
-# first, and fall back to the old-style syntax if this failed
-AC_MSG_CHECKING([Clang option to specify the target])
-if [ $CLANG --target=$host -x c /dev/null -S -o - >/dev/null 2>&1 ]; then
-  CLANG_TARGET_OPTION='--target='
-elif [ $CLANG -target $host -x c /dev/null -S -o - >/dev/null 2>&1 ]; then
-  CLANG_TARGET_OPTION='-target '
-else
-  AC_MSG_ERROR([Cannot determine Clang option to specify the target])
-fi
-AC_MSG_RESULT(${CLANG_TARGET_OPTION}TARGET)
 
 # TODO: We need to set both target-triple and cpu-type when
 # building, since the ABI depends on both. We can either add flags
