@@ -1,0 +1,26 @@
+MIPS
+====
+
+Added initial support.
+
+With LLVM 3.5 and a big-endian MIPS32r2 system, the majority of tests fail due
+to three bugs:
+
+* config/xclang doesn't respect --build. This triggers a bug in the LLVM 3.5's
+  handling of triples where the triple (and not the ABI) makes decisions on the
+  ELF output. This can be worked around by hardcoding $build in this script to
+  mips-unknown-linux-gnu.
+* Vectors are not correctly passed in varargs. This causes cl_printf to
+  misbehave, causing most reference checks to fail.
+  At the time of writing, this has been fixed but is not yet available in
+  upstream LLVM.
+* Vectors whose size is not a multiple of 4 bytes (such as char3) trigger an
+  optimisation bug in SROA. This is still being debugged.
+
+Testing
+-------
+
+Tested on an EdgeRouter Pro running 32-bit big-endian Debian Jessie with the following
+configure command:
+
+    ./configure --host=mips-unknown-linux-gnu --build mips-unknown-linux-gnu

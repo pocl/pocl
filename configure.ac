@@ -910,6 +910,12 @@ case $host_cpu in
     CLANG_MARCH_FLAG="mcpu"
     ;;
 
+  mips*)
+    llc_triple="mips-unknown-linux-gnu"
+    CLANG_MARCH_FLAG=mcpu
+    CL_DEVICE_ADDRESS_BITS=32
+    ;;
+
   *)
     AC_MSG_ERROR([unknown/unsupported host $host])
     ;;
