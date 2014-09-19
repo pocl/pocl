@@ -129,6 +129,10 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
     /* LLVM 3.2 detects 'constant' as cuda_constant (5) in the fake
        address space map. Add it for compatibility. */
     addrSpaceMap[5] = addrSpaceMap[POCL_ADDRESS_SPACE_CONSTANT] = 5;     
+  } else if (arch.startswith("mips")) {
+    addrSpaceMap[POCL_ADDRESS_SPACE_GLOBAL] =
+        addrSpaceMap[POCL_ADDRESS_SPACE_LOCAL] =
+        addrSpaceMap[POCL_ADDRESS_SPACE_CONSTANT] = 0;
   } else {
     /* Assume the fake address space map works directly in case not
        overridden here.  */
