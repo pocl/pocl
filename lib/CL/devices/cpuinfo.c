@@ -43,6 +43,9 @@ const char* cpufreq_file="/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq"
 #elif defined __arm__
  #define FREQSTRING " "
  #define MODELSTRING "Processor"
+#elif defined __mips
+ #define FREQSTRING "BogoMIPS\t"
+ #define MODELSTRING "cpu model\t"
 #else
  #define FREQSTRING "cpu MHz"
  #define MODELSTRING "model name"
