@@ -108,7 +108,7 @@ message(STATUS "Hwloc_VERSION ${Hwloc_VERSION}")
 message(STATUS "Hwloc_LIBRARIES ${Hwloc_LIBRARIES}")
 message(STATUS "Hwloc_INCLUDE_DIRS ${Hwloc_INCLUDE_DIRS}")
 
-include_directories("${Hwloc_INCLUDE_DIRS}")
+include_directories(${Hwloc_INCLUDE_DIRS})
 
 ######################################################################################
 #
