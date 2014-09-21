@@ -339,6 +339,13 @@ endif()
 ######################################################################################
 # DONE
 
+if (MSVC)
+  message(STATUS "Building ICD not yet supported on Windows.")
+  set(DEFAULT_ENABLE_ICD 0 CACHE INTERNAL "Going to use ICD loader")
+  set(DEFAULT_DIRECT_LINKAGE 1 CACHE INTERNAL "Software links directly to pocl")
+  set(DEFAULT_TESTS_USE_ICD 0 CACHE INTERNAL "Tests use ICD")
+endif()
+
 if(NOT DEFINED DEFAULT_ENABLE_ICD)
 
   pkg_check_modules(OCL_ICD ocl-icd>=1.3)
