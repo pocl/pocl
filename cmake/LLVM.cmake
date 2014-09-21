@@ -485,7 +485,10 @@ setup_cache_var_name(LLC_TRIPLE "LLC_TRIPLE-${LLVM_HOST_TARGET}-${CLANG}")
 
 if(NOT DEFINED ${CACHE_VAR_NAME})
   message(STATUS "Find out LLC target triple (for host ${LLVM_HOST_TARGET})")
-  execute_process(COMMAND ${CLANG} "${CLANG_TARGET_OPTION}${LLVM_HOST_TARGET}" -x c /dev/null -S -emit-llvm -o - RESULT_VARIABLE RES_VAR OUTPUT_VARIABLE OUTPUT_VAR)
+  SET (_EMPTY_C_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/tripletfind.c")
+  FILE (WRITE "${_EMPTY_C_FILE}" "")
+
+  execute_process(COMMAND ${CLANG} "${CLANG_TARGET_OPTION}${LLVM_HOST_TARGET}" -x c ${_EMPTY_C_FILE} -S -emit-llvm -o - RESULT_VARIABLE RES_VAR OUTPUT_VARIABLE OUTPUT_VAR)
   if(RES_VAR)
     message(FATAL_ERROR "Error ${RES_VAR} while determining target triple")
   endif()
