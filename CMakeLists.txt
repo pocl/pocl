@@ -492,11 +492,16 @@ endif()
 ######################################################################################
 # DONE
 
-pkg_check_modules(GLEW glew)
-if(NOT GLEW_FOUND)
-  message(WARNING "libGLEW not found. A few tests will not work")
+if (MSVC)
+  message(STATUS "Finding libGLEW binary distribution (http://glew.sourceforge.net/index.html) for Widows not implemented. Consider writing FindGlew.cmake macro.")
+  message(STATUS "libGLEW not found. A few tests will not work")
 else()
-  set(HAVE_GLEW 1)
+  pkg_check_modules(GLEW glew)
+  if(NOT GLEW_FOUND)
+    message(WARNING "libGLEW not found. A few tests will not work")
+  else()
+    set(HAVE_GLEW 1)
+  endif()
 endif()
 
 ######################################################################################
