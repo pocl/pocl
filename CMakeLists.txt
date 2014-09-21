@@ -73,8 +73,12 @@ if(UNIX)
   endif()
 
 else()
-  # todo other platforms
-  message(FATAL_ERROR "not implemented yet")
+  if (MSVC)
+    message(STATUS "No automatic installing when compiling with Visual Studio")
+  else()
+    # todo other platforms
+    message(FATAL_ERROR "not implemented yet")
+  endif()
 endif()
 
 
@@ -89,7 +93,9 @@ enable_testing()
 
 ######################################################################################
 
-find_package(PkgConfig MODULE REQUIRED)
+if (UNIX)
+  find_package(PkgConfig MODULE REQUIRED)
+endif()
 
 ######################################################################################
 
