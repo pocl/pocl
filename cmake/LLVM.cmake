@@ -262,7 +262,7 @@ macro(custom_try_run_exe SOURCE1 SOURCE2 OUTPUT_VAR RES_VAR)
 endmacro()
 
 # clang try-compile-run macro, run via lli, the llvm interpreter
-macro(custom_try_run_lli SOURCE1 SOURCE2 OUTPUT_VAR)
+macro(custom_try_run_lli SOURCE1 SOURCE2 OUTPUT_VAR RES_VAR)
 # this uses "lli" - the interpreter, so we can run any -target
 # TODO variable for target !!
   set(OUTF "${CMAKE_BINARY_DIR}/try_run.bc")
@@ -271,10 +271,12 @@ macro(custom_try_run_lli SOURCE1 SOURCE2 OUTPUT_VAR)
   endif()
   custom_try_compile_c_cxx("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" RESV "-o" "${OUTF}" "-x" "c" "-emit-llvm" "-c" ${ARGN})
   set(${OUTPUT_VAR} "")
+  set(${RES_VAR} "")
   if(RESV OR (NOT EXISTS "${OUTF}"))
     message(STATUS " ########## Compilation failed")
   else()
     execute_process(COMMAND "${LLVM_LLI}" "${OUTF}" RESULT_VARIABLE RESV OUTPUT_VARIABLE ${OUTPUT_VAR} ERROR_VARIABLE EV)
+    set(${RES_VAR} ${RESV})
     file(REMOVE "${OUTF}")
     if(${RESV})
       message(STATUS " ########## The command ${OUTF}")
@@ -341,7 +343,7 @@ macro(CHECK_SIZEOF TYPE RES_VAR TRIPLE)
   setup_cache_var_name(SIZEOF "${TYPE}-${TRIPLE}-${CLANG}")
 
   if(NOT DEFINED ${CACHE_VAR_NAME})
-    custom_try_run_exe("" "return sizeof(${TYPE});" SIZEOF_STDOUT ${RES_VAR} "${CLANG_TARGET_OPTION}${TRIPLE}")
+    custom_try_run_lli("" "return sizeof(${TYPE});" SIZEOF_STDOUT ${RES_VAR} "${CLANG_TARGET_OPTION}${TRIPLE}")
     if(NOT ${RES_VAR})
       message(SEND_ERROR "Could not determine sizeof(${TYPE})")
     endif()
@@ -355,7 +357,7 @@ macro(CHECK_ALIGNOF TYPE TYPEDEF RES_VAR TRIPLE)
 
   if(NOT DEFINED ${CACHE_VAR_NAME})
 
-    custom_try_run_exe("
+    custom_try_run_lli("
 #ifndef offsetof
 #define offsetof(type, member) ((char *) &((type *) 0)->member - (char *) 0)
 #endif
