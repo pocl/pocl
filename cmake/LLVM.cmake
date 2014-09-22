@@ -234,17 +234,19 @@ macro(custom_try_compile_clangxx SOURCE1 SOURCE2 RES_VAR)
 endmacro()
 
 # clang try-compile-run macro, running via native executable
-macro(custom_try_run_exe SOURCE1 SOURCE2 OUTPUT_VAR)
+macro(custom_try_run_exe SOURCE1 SOURCE2 OUTPUT_VAR RES_VAR)
   set(OUTF "${CMAKE_BINARY_DIR}/try_run${CMAKE_EXECUTABLE_SUFFIX}")
   if(EXISTS "${OUTF}")
     file(REMOVE "${OUTF}")
   endif()
   custom_try_compile_c_cxx("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" RESV "-o" "${OUTF}" "-x" "c")
   set(${OUTPUT_VAR} "")
+  set(${RES_VAR} "")
   if(RESV OR (NOT EXISTS "${OUTF}"))
     message(STATUS " ########## Compilation failed")
   else()
     execute_process(COMMAND "${OUTF}" RESULT_VARIABLE RESV OUTPUT_VARIABLE ${OUTPUT_VAR} ERROR_VARIABLE EV)
+    set(${RES_VAR} ${RESV})
     file(REMOVE "${OUTF}")
     if(${RESV})
       message(STATUS " ########## Running ${OUTF}")
@@ -339,7 +341,7 @@ macro(CHECK_SIZEOF TYPE RES_VAR TRIPLE)
   setup_cache_var_name(SIZEOF "${TYPE}-${TRIPLE}-${CLANG}")
 
   if(NOT DEFINED ${CACHE_VAR_NAME})
-    custom_try_run_exe("#include <stddef.h>\n #include <stdio.h>" "printf(\"%i\",(int)sizeof(${TYPE})); return 0;" ${RES_VAR} "${CLANG_TARGET_OPTION}${TRIPLE}")
+    custom_try_run_exe("" "return sizeof(${TYPE});" SIZEOF_STDOUT ${RES_VAR} "${CLANG_TARGET_OPTION}${TRIPLE}")
     if(NOT ${RES_VAR})
       message(SEND_ERROR "Could not determine sizeof(${TYPE})")
     endif()
@@ -354,17 +356,13 @@ macro(CHECK_ALIGNOF TYPE TYPEDEF RES_VAR TRIPLE)
   if(NOT DEFINED ${CACHE_VAR_NAME})
 
     custom_try_run_exe("
-#include <stddef.h>
-#include <stdio.h>
-
 #ifndef offsetof
 #define offsetof(type, member) ((char *) &((type *) 0)->member - (char *) 0)
 #endif
 
-${TYPEDEF}"  "typedef struct { char x; ${TYPE} y; } ac__type_alignof_;
+${TYPEDEF}" "typedef struct { char x; ${TYPE} y; } ac__type_alignof_;
     int r = offsetof(ac__type_alignof_, y);
-    printf(\"%i\",r);
-    return 0;" ${RES_VAR} "${CLANG_TARGET_OPTION}${TRIPLE}")
+    return r;" SIZEOF_STDOUT ${RES_VAR} "${CLANG_TARGET_OPTION}${TRIPLE}")
 
     if(NOT ${RES_VAR})
       message(SEND_ERROR "Could not determine align of(${TYPE})")
