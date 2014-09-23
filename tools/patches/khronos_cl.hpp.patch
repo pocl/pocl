@@ -9,14 +9,20 @@
  #endif // linux
  
  #include <cstring>
-@@ -1038,8 +1036,8 @@
+@@ -1038,8 +1036,14 @@
  #endif // !_WIN32
      }
  
 -    inline void fence() { _mm_mfence(); }
 -}; // namespace detail
-+    inline void fence() { __sync_synchronize(); }
-+} // namespace detail
++    inline void fence() { 
++#ifdef _MSC_VER
++        _mm_mfence();
++#else
++        __sync_synchronize();
++#endif
++    }
++} // namespace detailssss
  
      
  /*! \brief class used to interface between C++ and
