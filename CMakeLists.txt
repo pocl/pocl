@@ -903,7 +903,7 @@ message(STATUS "OPENCL_LIBS: ${OPENCL_LIBS}")
 message(STATUS "OPENCL_CFLAGS: ${OPENCL_CFLAGS}")
 
 # for tests / examples
-set(POCLU_LINK_OPTIONS "-lm" ${OPENCL_LIBS} "poclu")
+set(POCLU_LINK_OPTIONS "-lm" ${OPENCL_LIBS} ${LLVM_SYSLIBS} "poclu")
 message(STATUS "POCLU LINK OPTS: ${POCLU_LINK_OPTIONS}")
 
 # DONE - just pocl-standalone script
