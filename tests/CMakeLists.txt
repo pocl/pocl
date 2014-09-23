@@ -23,7 +23,7 @@
 #
 #=============================================================================
 
-macro(add_test_custom RUN_CMD TEST_NAME RESULT_FILE)
+function(add_test_custom RUN_CMD TEST_NAME RESULT_FILE)
   foreach(LOOPVAR ${ARGN})
     set(RUN_CMD "${RUN_CMD}####${LOOPVAR}")
   endforeach()
@@ -34,7 +34,7 @@ macro(add_test_custom RUN_CMD TEST_NAME RESULT_FILE)
     -Doutput_blessed=${CMAKE_CURRENT_SOURCE_DIR}/${RESULT_FILE}
     -P "${CMAKE_SOURCE_DIR}/cmake/run_test.cmake"
   )
-endmacro()
+endfunction()
 
 add_test("pocl_version_check" "runtime/test_version")
 set_tests_properties("pocl_version_check"

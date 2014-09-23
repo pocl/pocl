@@ -23,10 +23,10 @@
 #
 #=============================================================================
 
-macro(add_test_workgroup TEST_NAME RESULT_FILE CL_FILE)
+function(add_test_workgroup TEST_NAME RESULT_FILE CL_FILE)
   add_test_custom("${CMAKE_CURRENT_BINARY_DIR}/run_kernel" "${TEST_NAME}"
                   "${RESULT_FILE}" "${CL_FILE}" ${ARGN})
-endmacro()
+endfunction()
 
 #AM_LDFLAGS = ../../lib/poclu/libpoclu.la @OPENCL_LIBS@
 #POCLU_LINK_OPTIONS
