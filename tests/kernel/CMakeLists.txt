@@ -211,7 +211,7 @@ endif()
 ######################################################################
 
 add_test_custom("${CMAKE_CURRENT_BINARY_DIR}/kernel" "kernel/test_sizeof_uint"
-                "${CMAKE_CURRENT_SOURCE_DIR}/test_sizeof_expout.txt" "test_sizeof")
+                "test_sizeof_expout.txt" "test_sizeof")
 
 ######################################################################
 
@@ -219,7 +219,7 @@ add_test_custom("${CMAKE_CURRENT_BINARY_DIR}/kernel" "kernel/test_sizeof_uint"
 #and CTest doesn't think this is a WILL_FAIL, causing "Exception Other" 
 #to be printed
 #add_test_custom("${CMAKE_CURRENT_BINARY_DIR}/kernel" "kernel/test_block"
-#                "${CMAKE_CURRENT_SOURCE_DIR}/test_block_expout.txt" "test_block")
+#                "test_block_expout.txt" "test_block")
 
 #if(LLVM_3_4)
 #  set_tests_properties("kernel/test_block"

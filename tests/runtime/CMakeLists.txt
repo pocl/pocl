@@ -68,8 +68,7 @@ add_test("runtime/clCreateKernel" "test_clCreateKernel")
 add_test("runtime/clGetKernelArgInfo" "test_clGetKernelArgInfo")
 
 add_test_custom("${CMAKE_CURRENT_BINARY_DIR}/test_clSetEventCallback"
-                "runtime/clSetEventCallback"
-                "${CMAKE_CURRENT_SOURCE_DIR}/test_clSetEventCallback_expout.txt" )
+                "runtime/clSetEventCallback" "test_clSetEventCallback_expout.txt" )
 
 add_test("runtime/clGetSupportedImageFormats" "test_clGetSupportedImageFormats")
 
