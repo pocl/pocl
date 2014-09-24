@@ -23,4 +23,7 @@
 #
 #=============================================================================
 
+if(MSVC)
+  set_source_files_properties( ttasim.h ttasim.cc PROPERTIES LANGUAGE CXX )
+endif(MSVC)
 add_library("pocl-devices-tce-ttasim" OBJECT ttasim.h ttasim.cc)

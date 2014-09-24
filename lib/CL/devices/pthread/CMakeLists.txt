@@ -23,4 +23,7 @@
 #
 #=============================================================================
 
+if(MSVC)
+  set_source_files_properties( pocl-pthread.h pthread.c PROPERTIES LANGUAGE CXX )
+endif(MSVC)
 add_library("pocl-devices-pthread" OBJECT pocl-pthread.h pthread.c)

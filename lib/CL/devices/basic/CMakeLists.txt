@@ -23,4 +23,7 @@
 #
 #=============================================================================
 
+if(MSVC)
+  set_source_files_properties( basic.h basic.c PROPERTIES LANGUAGE CXX )
+endif(MSVC)
 add_library("pocl-devices-basic" OBJECT basic.h basic.c)

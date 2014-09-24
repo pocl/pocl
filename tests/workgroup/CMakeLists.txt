@@ -39,6 +39,9 @@ add_compile_options(${OPENCL_CFLAGS})
 #EXTRA_DIST = basic_barriers.cl conditional_barriers.cl forloops.cl forloops_2_2_1_1.stdout loopbarriers.cl basic_barriers_2_2_2_2.stdout tricky_for.cl outerlooppar.cl outerlooppar_2_2_1_1.stdout for_bug.cl for_bug_1_2_1_1.stdout multilatch_bloop.cl multilatch_bloop_1_3_1_1.stdout print_all_ids.cl print_all_ids_114114.txt implicit_barriers.cl implicit_barriers_1_2_1_1.stdout
 
 #noinst_PROGRAMS = run_kernel
+if(MSVC)
+  set_source_files_properties( run_kernel.c PROPERTIES LANGUAGE CXX )
+endif(MSVC)
 add_executable("run_kernel" "run_kernel.c")
 target_link_libraries("run_kernel" ${POCLU_LINK_OPTIONS})
 

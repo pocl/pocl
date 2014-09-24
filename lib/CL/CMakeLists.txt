@@ -125,6 +125,10 @@ add_compile_options(${OCL_ICD_CFLAGS})
 # set llvm C++ flags on pocl_llvm_api.cc
 set_source_files_properties("pocl_llvm_api.cc" PROPERTIES COMPILE_FLAGS "${LLVM_CXXFLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/../llvmopencl")
 
+if(MSVC)
+  set_source_files_properties( ${POCL_LIB_SOURCES} PROPERTIES LANGUAGE CXX )
+endif(MSVC)
+
 # this is so that we don't compile twice when building both libpocl and libOpenCL
 add_library("libpocl_unlinked_objs" OBJECT ${POCL_LIB_SOURCES})
 

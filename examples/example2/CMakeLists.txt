@@ -31,6 +31,9 @@ add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 add_compile_options(${OPENCL_CFLAGS})
 
 
+if (MSVC)
+  set_source_files_properties( example2.c PROPERTIES LANGUAGE CXX )
+endif(MSVC)
 add_executable("example2" example2.c example2.cl)
 
 # example1_LDADD = @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la

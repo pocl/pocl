@@ -30,6 +30,9 @@ if(ENABLE_TCEMC)
   set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS};$<TARGET_OBJECTS:pocl-devices-tce-ttasim>" PARENT_SCOPE)
 endif()
 
+if(MSVC)
+  set_source_files_properties( tce_common.h tce_common.cc PROPERTIES LANGUAGE CXX )
+endif(MSVC)
 add_library("pocl-devices-tce" OBJECT tce_common.h tce_common.cc)
 set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS};$<TARGET_OBJECTS:pocl-devices-tce>" PARENT_SCOPE)
 
