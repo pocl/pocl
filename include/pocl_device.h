@@ -57,25 +57,30 @@ typedef struct {
     pocl_workgroup work_group_func;
 } __kernel_metadata;
 
-#define ALIGN4 __attribute__ ((aligned (4)))
-#define ALIGN8 __attribute__ ((aligned (8)))
+#ifdef _MSC_VER
+  #define ALIGN4(x) __declspec(align(4)) x
+  #define ALIGN8(x) __declspec(align(4)) x
+#else
+  #define ALIGN4(x) x __attribute__ ((aligned (4)))
+  #define ALIGN8(x) x __attribute__ ((aligned (8)))
+#endif
 
 /* A kernel invocation command. */
 typedef struct {
     /* The execution status of this queue slot. */
-    uint32_t status ALIGN8;
+    ALIGN8(uint32_t status);
     /* The kernel to execute. Points to the metadata in the device global
        memory. It will be casted to a __kernel_metadata* */
-    uint32_t kernel ALIGN8;
+    ALIGN8(uint32_t kernel);
     /* Pointers to the kernel arguments in the global memory. Will be
        casted to 32 bit void* */
-    uint32_t args[MAX_KERNEL_ARGS] ALIGN8;
+    ALIGN8(uint32_t args[MAX_KERNEL_ARGS]);
     /* Sizes of the dynamically allocated local buffers. */
 /*    uint32_t dynamic_local_arg_sizes[MAX_KERNEL_ARGS] ALIGN4; */
     /* Number of dimensions in the work space. */
-    uint32_t work_dim ALIGN4;
-    uint32_t num_groups[3] ALIGN4;
-    uint32_t global_offset[3] ALIGN4;
+    ALIGN4(uint32_t work_dim);
+    ALIGN4(uint32_t num_groups[3]);
+    ALIGN4(uint32_t global_offset[3]);
 } __kernel_exec_cmd;
 
 /* Kernel execution statuses. */
