@@ -48,6 +48,10 @@ static inline void *lt_dlsym(lt_dlhandle handle, const char *symbol) {
   return GetProcAddress(handle, symbol);
 }
 
+static inline void lt_dlinit(void) {
+   // separate init not needed in windows
+}
+
 /**
  * Memory allocation functions
  */

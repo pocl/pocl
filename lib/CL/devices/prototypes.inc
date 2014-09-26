@@ -21,8 +21,16 @@
    THE SOFTWARE.
 */
 
+#ifdef _MSC_VER
+#  define PUSH_VISIBILITY_HIDDEN
+#  define POP_VISIBILITY_HIDDEN
+#else
+#  define PUSH_VISIBILITY_HIDDEN _Pragma ("GCC visibility push(hidden)")
+#  define POP_VISIBILITY_HIDDEN _Pragma ("GCC visibility pop")
+#endif
+
 #define GEN_PROTOTYPES(__DRV__)                                         \
-  _Pragma ("GCC visibility push(hidden)")                               \
+  PUSH_VISIBILITY_HIDDEN                               \
   void pocl_##__DRV__##_init_device_infos(struct _cl_device_id* dev);  \
   void pocl_##__DRV__##_init_device_ops(struct pocl_device_ops* ops);  \
   void pocl_##__DRV__##_uninit (cl_device_id device);                   \
@@ -84,4 +92,4 @@
   cl_int pocl_##__DRV__##_get_supported_image_formats (cl_mem_flags flags,\
                                          const cl_image_format **image_formats,\
                                          cl_int *num_image_formats);\
-_Pragma ("GCC visibility pop")
+POP_VISIBILITY_HIDDEN
