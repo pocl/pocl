@@ -1,5 +1,8 @@
 /* pocl/include/vccompat.h - Compatibility header to provide some functions 
-   iwhich are not found from VC++. 
+   which are not found from VC++. 
+
+   All functions should be static inline so that they can be included in many places
+   without having problem of symbol collision.
 
    Copyright (c) 2014 Mikael Lepistö <elhigu@gmail.com>
    
@@ -23,3 +26,32 @@
 */
 
 #define __restrict__ __restrict
+
+/**
+ * ltdl compatibility functions
+ */
+#include <Windows.h>
+typedef HMODULE lt_dlhandle;
+
+static inline lt_dlhandle lt_dlopen(const char* filename) {
+  return (lt_dlhandle)LoadLibrary(filename);
+}
+
+static inline int lt_dlerror(void) {
+   return GetLastError();
+}
+
+static inline void *lt_dlsym(lt_dlhandle handle, const char *symbol) {
+  return GetProcAddress(handle, symbol);
+}
+
+/**
+ * Memory allocation functions
+ */
+static int posix_memalign(void **p, size_t align, size_t size) { 
+   void *buf = _aligned_malloc(size, align);
+   if (buf == NULL) return errno;
+   *p = buf;
+   return 0;
+}
+
