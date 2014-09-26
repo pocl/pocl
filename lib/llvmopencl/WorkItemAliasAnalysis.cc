@@ -32,7 +32,7 @@
 #include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Pass.h"
-#if (defined LLVM_3_1 or defined LLVM_3_2)
+#if (defined LLVM_3_1 || defined LLVM_3_2)
 #include "llvm/Metadata.h"
 #include "llvm/Constants.h"
 #else

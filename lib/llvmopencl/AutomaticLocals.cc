@@ -35,7 +35,7 @@
 #include "llvm/IR/DataLayout.h"
 #endif
 
-#if (defined LLVM_3_1 or defined LLVM_3_2)
+#if (defined LLVM_3_1 || defined LLVM_3_2)
 #include "llvm/Argument.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -81,7 +81,7 @@ static RegisterPass<AutomaticLocals> X("automatic-locals",
 void
 AutomaticLocals::getAnalysisUsage(AnalysisUsage &AU) const
 {
-  #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+  #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   AU.addRequired<DataLayout>();
   #else
   AU.addRequired<DataLayoutPass>();

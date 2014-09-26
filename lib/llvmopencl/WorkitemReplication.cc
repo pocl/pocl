@@ -85,7 +85,7 @@ char WorkitemReplication::ID = 0;
 void
 WorkitemReplication::getAnalysisUsage(AnalysisUsage &AU) const
 {
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   AU.addRequired<DominatorTree>();
 #else
   AU.addRequired<DominatorTreeWrapperPass>();
@@ -94,7 +94,7 @@ WorkitemReplication::getAnalysisUsage(AnalysisUsage &AU) const
   AU.addRequired<LoopInfo>();
 #ifdef LLVM_3_1
   AU.addRequired<TargetData>();
-#elif (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#elif (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   AU.addRequired<DataLayout>();
 #else
   AU.addRequired<DataLayoutPass>();
@@ -113,7 +113,7 @@ WorkitemReplication::runOnFunction(Function &F)
       pocl::WorkitemHandlerChooser::POCL_WIH_FULL_REPLICATION)
     return false;
 
-  #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+  #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   DT = &getAnalysis<DominatorTree>();
   #else
   DTP = &getAnalysis<DominatorTreeWrapperPass>();
@@ -128,7 +128,7 @@ WorkitemReplication::runOnFunction(Function &F)
   cfgPrinter->runOnFunction(F);
 #endif
 
-  #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+  #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   changed |= fixUndominatedVariableUses(DT, F);
   #else
   changed |= fixUndominatedVariableUses(DTP, F);
@@ -182,7 +182,7 @@ WorkitemReplication::ProcessFunction(Function &F)
   // Measure the required context (variables alive in more than one region).
 #ifdef LLVM_3_1
   TargetData &TD = getAnalysis<TargetData>();
-#elif (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#elif (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   DataLayout &TD = getAnalysis<DataLayout>();
 #else
   const DataLayout &TD = getAnalysis<DataLayoutPass>().getDataLayout();

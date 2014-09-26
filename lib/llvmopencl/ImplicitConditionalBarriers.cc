@@ -27,7 +27,7 @@
 #include "BarrierBlock.h"
 #include "Workgroup.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#if (defined LLVM_3_1 or defined LLVM_3_2)
+#if (defined LLVM_3_1 || defined LLVM_3_2)
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
@@ -59,7 +59,7 @@ ImplicitConditionalBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 {
   AU.addRequired<PostDominatorTree>();
   AU.addPreserved<PostDominatorTree>();
-  #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+  #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   AU.addRequired<DominatorTree>();
   AU.addPreserved<DominatorTree>();
   #else
@@ -78,7 +78,7 @@ BasicBlock*
 ImplicitConditionalBarriers::firstNonBackedgePredecessor(
     llvm::BasicBlock *bb) {
 
-    #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+    #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
     DominatorTree *DT = &getAnalysis<DominatorTree>();
     #else
     DominatorTree *DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();

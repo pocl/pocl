@@ -34,7 +34,7 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
 #include "llvm/Linker.h"
 #else
 #include "llvm/Linker/Linker.h"
@@ -176,8 +176,8 @@ load_source(FrontendOptions &fe,
 
 // Compatibility function: this function existed up to LLVM 3.5
 // With 3.6 its name & signature changed
-#if !(defined LLVM_3_2 or defined LLVM_3_3 or\
-      defined LLVM_3_4 or defined LLVM_3_5)
+#if !(defined LLVM_3_2 || defined LLVM_3_3 || \
+      defined LLVM_3_4 || defined LLVM_3_5)
 static llvm::Module*
 ParseIRFile(const char* fname, SMDiagnostic &Err, llvm::LLVMContext &ctx)
 {
@@ -600,7 +600,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   }
 
   DataLayout *TD = 0;
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   const std::string &ModuleDataLayout = input->getDataLayout();
 #else
   const std::string &ModuleDataLayout = input->getDataLayout()->getStringRepresentation();
@@ -917,7 +917,7 @@ static PassManager& kernel_compiler_passes
 #endif
 
   if (module_data_layout != "") {
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
     Passes->add(new DataLayout(module_data_layout));
 #elif (defined LLVM_3_5)
     Passes->add(new DataLayoutPass(DataLayout(module_data_layout)));
@@ -1201,7 +1201,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
   pocl::LocalSize.addValue(local_z);
   KernelName = kernel->name;
 
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   kernel_compiler_passes(device, input->getDataLayout()).run(*input);
 #else
   kernel_compiler_passes(device,
@@ -1314,10 +1314,10 @@ pocl_llvm_codegen(cl_kernel kernel,
                   const char *outfilename)
 {
     SMDiagnostic Err;
-#if defined LLVM_3_2 or defined LLVM_3_3
+#if defined LLVM_3_2 || defined LLVM_3_3
     std::string error;
     tool_output_file outfile(outfilename, error, 0);
-#elif defined LLVM_3_4 or defined LLVM_3_5
+#elif defined LLVM_3_4 || defined LLVM_3_5
     std::string error;
     tool_output_file outfile(outfilename, error, F_Binary);
 #else

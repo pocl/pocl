@@ -37,7 +37,7 @@
 #include "llvm/IR/DataLayout.h"
 #endif
 
-#if (defined LLVM_3_1 or defined LLVM_3_2)
+#if (defined LLVM_3_1 || defined LLVM_3_2)
 #include "llvm/Argument.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
@@ -94,7 +94,7 @@ static RegisterPass<GenerateHeader> X("generate-header",
 void
 GenerateHeader::getAnalysisUsage(AnalysisUsage &AU) const
 {
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   AU.addRequired<DataLayout>();
 #else
   AU.addRequired<DataLayoutPass>();
@@ -117,9 +117,9 @@ GenerateHeader::runOnModule(Module &M)
   std::error_code ErrorInfo;
   #endif
 
-  #if defined LLVM_3_2 or defined LLVM_3_3 
+  #if defined LLVM_3_2 || defined LLVM_3_3 
   raw_fd_ostream out(Header.c_str(), ErrorInfo, raw_fd_ostream::F_Append);
-  #elif defined LLVM_3_4 or defined LLVM_3_5
+  #elif defined LLVM_3_4 || defined LLVM_3_5
   raw_fd_ostream out(Header.c_str(), ErrorInfo, sys::fs::F_Append);
   #else
   raw_fd_ostream out(Header, ErrorInfo, sys::fs::F_Append);
@@ -280,7 +280,7 @@ GenerateHeader::ProcessAutomaticLocals(Function *F,
                                        raw_fd_ostream &out)
 {
   Module *M = F->getParent();
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   DataLayout &TDr = getAnalysis<DataLayout>();
   DataLayout *TD=&TDr;
 #else

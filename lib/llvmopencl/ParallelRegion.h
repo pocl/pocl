@@ -26,14 +26,14 @@
 
 #include "BarrierBlock.h"
 #include "config.h"
-#if (defined LLVM_3_1 or defined LLVM_3_2)
+#if (defined LLVM_3_1 || defined LLVM_3_2)
 #include "llvm/BasicBlock.h"
 #include "llvm/LLVMContext.h"
 #else
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/IR/LLVMContext.h"
 #endif
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
 #include "llvm/Support/CFG.h"
 #else
 #include "llvm/IR/CFG.h"

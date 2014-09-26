@@ -93,7 +93,7 @@ WorkitemLoops::getAnalysisUsage(AnalysisUsage &AU) const
 #ifdef LLVM_3_1
   AU.addRequired<TargetData>();
 #endif
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   AU.addRequired<DominatorTree>();
   AU.addRequired<DataLayout>();
 #else
@@ -119,7 +119,7 @@ WorkitemLoops::runOnFunction(Function &F)
       pocl::WorkitemHandlerChooser::POCL_WIH_LOOPS)
     return false;
 
-  #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+  #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   DT = &getAnalysis<DominatorTree>();
   #else
   DTP = &getAnalysis<DominatorTreeWrapperPass>();
@@ -149,7 +149,7 @@ WorkitemLoops::runOnFunction(Function &F)
   F.viewCFG();
 #endif
 
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   changed |= fixUndominatedVariableUses(DT, F);
 #else
   changed |= fixUndominatedVariableUses(DTP, F);
@@ -241,7 +241,7 @@ WorkitemLoops::CreateLoopAround
     BasicBlock::Create(C, "pregion_for_cond", F, exitBB);
 
 
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   DT->runOnFunction(*F);
 #else
   DTP->runOnFunction(*F);

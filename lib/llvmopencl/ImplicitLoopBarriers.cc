@@ -26,7 +26,7 @@
 #include "Barrier.h"
 #include "Workgroup.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#if (defined LLVM_3_1 or defined LLVM_3_2)
+#if (defined LLVM_3_1 || defined LLVM_3_2)
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
@@ -35,7 +35,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #endif
-#if not (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if ! (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
 #include "llvm/IR/Dominators.h"
 #endif
 
@@ -57,7 +57,7 @@ namespace {
 char ImplicitLoopBarriers::ID = 0;
 
 void ImplicitLoopBarriers::getAnalysisUsage(AnalysisUsage &AU) const {
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   AU.addRequired<DominatorTree>();
   AU.addPreserved<DominatorTree>();
 #else
