@@ -89,6 +89,7 @@ run_llvm_config(LLVM_CFLAGS --cflags)
 run_llvm_config(LLVM_CXXFLAGS --cxxflags)
 run_llvm_config(LLVM_CPPFLAGS --cppflags)
 run_llvm_config(LLVM_LDFLAGS --ldflags)
+run_llvm_config(LLVM_BINDIR --bindir)
 run_llvm_config(LLVM_LIBDIR --libdir)
 run_llvm_config(LLVM_INCLUDEDIR --includedir)
 run_llvm_config(LLVM_LIBS --libs)
@@ -165,7 +166,7 @@ set(LLVM_ALL_LIBS "${LLVM_LIBS} ${LLVM_SYSLIBS}")
 ####################################################################
 
 macro(find_program_or_die OUTPUT_VAR PROG_NAME DOCSTRING)
-  find_program(${OUTPUT_VAR} NAMES "${PROG_NAME}${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}" "${PROG_NAME}${CMAKE_EXECUTABLE_SUFFIX}" HINTS "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}" DOC "${DOCSTRING}")
+  find_program(${OUTPUT_VAR} NAMES "${PROG_NAME}${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}" "${PROG_NAME}${CMAKE_EXECUTABLE_SUFFIX}" HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}" DOC "${DOCSTRING}")
   if(${OUTPUT_VAR})
     message(STATUS "Found ${PROG_NAME}: ${${OUTPUT_VAR}}")
   else()
@@ -236,17 +237,19 @@ macro(custom_try_compile_clangxx SOURCE1 SOURCE2 RES_VAR)
 endmacro()
 
 # clang try-compile-run macro, running via native executable
-macro(custom_try_run_exe SOURCE1 SOURCE2 OUTPUT_VAR)
+macro(custom_try_run_exe SOURCE1 SOURCE2 OUTPUT_VAR RES_VAR)
   set(OUTF "${CMAKE_BINARY_DIR}/try_run${CMAKE_EXECUTABLE_SUFFIX}")
   if(EXISTS "${OUTF}")
     file(REMOVE "${OUTF}")
   endif()
   custom_try_compile_c_cxx("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" RESV "-o" "${OUTF}" "-x" "c")
   set(${OUTPUT_VAR} "")
+  set(${RES_VAR} "")
   if(RESV OR (NOT EXISTS "${OUTF}"))
     message(STATUS " ########## Compilation failed")
   else()
     execute_process(COMMAND "${OUTF}" RESULT_VARIABLE RESV OUTPUT_VARIABLE ${OUTPUT_VAR} ERROR_VARIABLE EV)
+    set(${RES_VAR} ${RESV})
     file(REMOVE "${OUTF}")
     if(${RESV})
       message(STATUS " ########## Running ${OUTF}")
@@ -262,7 +265,7 @@ macro(custom_try_run_exe SOURCE1 SOURCE2 OUTPUT_VAR)
 endmacro()
 
 # clang try-compile-run macro, run via lli, the llvm interpreter
-macro(custom_try_run_lli SOURCE1 SOURCE2 OUTPUT_VAR)
+macro(custom_try_run_lli SOURCE1 SOURCE2 OUTPUT_VAR RES_VAR)
 # this uses "lli" - the interpreter, so we can run any -target
 # TODO variable for target !!
   set(OUTF "${CMAKE_BINARY_DIR}/try_run.bc")
@@ -271,13 +274,15 @@ macro(custom_try_run_lli SOURCE1 SOURCE2 OUTPUT_VAR)
   endif()
   custom_try_compile_c_cxx("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" RESV "-o" "${OUTF}" "-x" "c" "-emit-llvm" "-c" ${ARGN})
   set(${OUTPUT_VAR} "")
+  set(${RES_VAR} "")
   if(RESV OR (NOT EXISTS "${OUTF}"))
     message(STATUS " ########## Compilation failed")
   else()
-    execute_process(COMMAND "${LLVM_LLI}" "${OUTF}" RESULT_VARIABLE RESV OUTPUT_VARIABLE ${OUTPUT_VAR} ERROR_VARIABLE EV)
+    execute_process(COMMAND "${LLVM_LLI}" "-force-interpreter" "${OUTF}" RESULT_VARIABLE RESV OUTPUT_VARIABLE ${OUTPUT_VAR} ERROR_VARIABLE EV)
+    set(${RES_VAR} ${RESV})
     file(REMOVE "${OUTF}")
     if(${RESV})
-      message(STATUS " ########## The command ${OUTF}")
+      message(STATUS " ########## The command ${LLVM_LLI} -force-interpreter ${OUTF}")
       message(STATUS " ########## Exited with nonzero status: ${RESV}")
       if(${${OUTPUT_VAR}})
         message(STATUS " ########## STDOUT: ${${OUTPUT_VAR}}")
@@ -341,7 +346,7 @@ macro(CHECK_SIZEOF TYPE RES_VAR TRIPLE)
   setup_cache_var_name(SIZEOF "${TYPE}-${TRIPLE}-${CLANG}")
 
   if(NOT DEFINED ${CACHE_VAR_NAME})
-    custom_try_run_exe("#include <stddef.h>\n #include <stdio.h>" "printf(\"%i\",(int)sizeof(${TYPE})); return 0;" ${RES_VAR} "${CLANG_TARGET_OPTION}${TRIPLE}")
+    custom_try_run_lli("" "return sizeof(${TYPE});" SIZEOF_STDOUT ${RES_VAR} "${CLANG_TARGET_OPTION}${TRIPLE}")
     if(NOT ${RES_VAR})
       message(SEND_ERROR "Could not determine sizeof(${TYPE})")
     endif()
@@ -355,18 +360,14 @@ macro(CHECK_ALIGNOF TYPE TYPEDEF RES_VAR TRIPLE)
 
   if(NOT DEFINED ${CACHE_VAR_NAME})
 
-    custom_try_run_exe("
-#include <stddef.h>
-#include <stdio.h>
-
+    custom_try_run_lli("
 #ifndef offsetof
 #define offsetof(type, member) ((char *) &((type *) 0)->member - (char *) 0)
 #endif
 
-${TYPEDEF}"  "typedef struct { char x; ${TYPE} y; } ac__type_alignof_;
+${TYPEDEF}" "typedef struct { char x; ${TYPE} y; } ac__type_alignof_;
     int r = offsetof(ac__type_alignof_, y);
-    printf(\"%i\",r);
-    return 0;" ${RES_VAR} "${CLANG_TARGET_OPTION}${TRIPLE}")
+    return r;" SIZEOF_STDOUT ${RES_VAR} "${CLANG_TARGET_OPTION}${TRIPLE}")
 
     if(NOT ${RES_VAR})
       message(SEND_ERROR "Could not determine align of(${TYPE})")
@@ -487,7 +488,10 @@ setup_cache_var_name(LLC_TRIPLE "LLC_TRIPLE-${LLVM_HOST_TARGET}-${CLANG}")
 
 if(NOT DEFINED ${CACHE_VAR_NAME})
   message(STATUS "Find out LLC target triple (for host ${LLVM_HOST_TARGET})")
-  execute_process(COMMAND ${CLANG} "${CLANG_TARGET_OPTION}${LLVM_HOST_TARGET}" -x c /dev/null -S -emit-llvm -o - RESULT_VARIABLE RES_VAR OUTPUT_VARIABLE OUTPUT_VAR)
+  SET (_EMPTY_C_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/tripletfind.c")
+  FILE (WRITE "${_EMPTY_C_FILE}" "")
+
+  execute_process(COMMAND ${CLANG} "${CLANG_TARGET_OPTION}${LLVM_HOST_TARGET}" -x c ${_EMPTY_C_FILE} -S -emit-llvm -o - RESULT_VARIABLE RES_VAR OUTPUT_VARIABLE OUTPUT_VAR)
   if(RES_VAR)
     message(FATAL_ERROR "Error ${RES_VAR} while determining target triple")
   endif()

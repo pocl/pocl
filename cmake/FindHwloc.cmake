@@ -167,8 +167,7 @@ else()
 
   if(Hwloc_FOUND)
     include(FindPackageHandleStandardArgs)
-    find_package_handle_standard_args(Hwloc DEFAULT_MSG Hwloc_LIBRARIES
-      Hwloc_INCLUDE_DIRS)
+    find_package_handle_standard_args(Hwloc DEFAULT_MSG Hwloc_LIBRARIES)
 
     if(NOT ${Hwloc_VERSION} VERSION_LESS 1.7.0)
       set(Hwloc_GL_FOUND 1)

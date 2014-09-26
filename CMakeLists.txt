@@ -38,45 +38,55 @@ set(POCL_VERSION ${VERSION_STRING})
 
 if(UNIX)
   include(GNUInstallDirs)
-
-  # for libpocl.so
-  set(POCL_INSTALL_PUBLIC_LIBDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" CACHE PATH "POCL public libdir")
-
-  # for llvmopencl.so
-  set(POCL_INSTALL_PRIVATE_LIBDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/pocl" CACHE PATH "POCL private libdir")
-
-  # for pocl.icd
-  set(POCL_INSTALL_ICD_VENDORDIR "/etc/OpenCL/vendors" CACHE PATH "POCL ICD file destination")
-
-  # for kernel-<target>.bc
-  set(POCL_INSTALL_PRIVATE_DATADIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/pocl" CACHE PATH "POCL private datadir")
-
-  # for poclu.h
-  set(POCL_INSTALL_PUBLIC_HEADER_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}" CACHE PATH "POCL public header dir")
-
-  # for _kernel.h et al
-  set(POCL_INSTALL_PRIVATE_HEADER_DIR "${POCL_INSTALL_PRIVATE_DATADIR}/include" CACHE PATH "POCL private header dir")
-
-  # for pocl-standalone et al
-  set(POCL_INSTALL_PUBLIC_BINDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}" CACHE PATH "POCL public bindir")
-
-  # for PoclConfig.cmake & stuff
-  set(POCL_INSTALL_CMAKE_CONFIG_DIR "${POCL_INSTALL_PRIVATE_LIBDIR}" CACHE PATH   "Installation directory for CMake files")
-
-  # TODO maybe use output of pkg-config --variable=pc_path pkg-config ?
-  set(POCL_INSTALL_PKGCONFIG_DIR "${POCL_INSTALL_PUBLIC_LIBDIR}/pkgconfig" CACHE PATH "Destination for pocl.pc")
-
-  if(APPLE)
-    set(POCL_INSTALL_OPENCL_HEADER_DIR "${POCL_INSTALL_PUBLIC_HEADER_DIR}/OpenCL" CACHE PATH "POCL header dir for OpenCL headers")
-  else()
-    set(POCL_INSTALL_OPENCL_HEADER_DIR "${POCL_INSTALL_PUBLIC_HEADER_DIR}/CL" CACHE PATH "POCL header dir for OpenCL headers")
-  endif()
-
 else()
-  # todo other platforms
-  message(FATAL_ERROR "not implemented yet")
+  if (WIN32)
+    set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install)
+    set(${CMAKE_INSTALL_LIBDIR} "lib")
+    set(${CMAKE_INSTALL_DATADIR} "share")
+    set(${CMAKE_INSTALL_INCLUDEDIR} "include")
+    set(${CMAKE_INSTALL_BINDIR} "bin")
+    message(STATUS "Setting installation destination on Windows to: ${CMAKE_INSTALL_PREFIX}")
+  else()
+    message(FATAL_ERROR "not implemented yet")    
+  endif()
 endif()
 
+# for libpocl.so
+set(POCL_INSTALL_PUBLIC_LIBDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}" CACHE PATH "POCL public libdir")
+
+# for llvmopencl.so
+set(POCL_INSTALL_PRIVATE_LIBDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/pocl" CACHE PATH "POCL private libdir")
+
+# for pocl.icd
+if (UNIX)
+  set(POCL_INSTALL_ICD_VENDORDIR "/etc/OpenCL/vendors" CACHE PATH "POCL ICD file destination")
+else()
+  set(POCL_INSTALL_ICD_VENDORDIR "${CMAKE_INSTALL_PREFIX}/etc/OpenCL/vendors" CACHE PATH "POCL ICD file destination")
+endif()
+
+# for kernel-<target>.bc
+set(POCL_INSTALL_PRIVATE_DATADIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/pocl" CACHE PATH "POCL private datadir")
+
+# for poclu.h
+set(POCL_INSTALL_PUBLIC_HEADER_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}" CACHE PATH "POCL public header dir")
+
+# for _kernel.h et al
+set(POCL_INSTALL_PRIVATE_HEADER_DIR "${POCL_INSTALL_PRIVATE_DATADIR}/include" CACHE PATH "POCL private header dir")
+
+# for pocl-standalone et al
+set(POCL_INSTALL_PUBLIC_BINDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}" CACHE PATH "POCL public bindir")
+
+# for PoclConfig.cmake & stuff
+set(POCL_INSTALL_CMAKE_CONFIG_DIR "${POCL_INSTALL_PRIVATE_LIBDIR}" CACHE PATH   "Installation directory for CMake files")
+
+# TODO maybe use output of pkg-config --variable=pc_path pkg-config ?
+set(POCL_INSTALL_PKGCONFIG_DIR "${POCL_INSTALL_PUBLIC_LIBDIR}/pkgconfig" CACHE PATH "Destination for pocl.pc")
+
+if(APPLE)
+  set(POCL_INSTALL_OPENCL_HEADER_DIR "${POCL_INSTALL_PUBLIC_HEADER_DIR}/OpenCL" CACHE PATH "POCL header dir for OpenCL headers")
+else()
+  set(POCL_INSTALL_OPENCL_HEADER_DIR "${POCL_INSTALL_PUBLIC_HEADER_DIR}/CL" CACHE PATH "POCL header dir for OpenCL headers")
+endif()
 
 option(BUILD_SHARED_LIBS "ON=Build shared libs, OFF=static libs" ON)
 
@@ -89,7 +99,9 @@ enable_testing()
 
 ######################################################################################
 
-find_package(PkgConfig MODULE REQUIRED)
+if (UNIX)
+  find_package(PkgConfig MODULE REQUIRED)
+endif()
 
 ######################################################################################
 
@@ -291,33 +303,54 @@ option(CUSTOM_BUFFER_ALLOCATOR "Use a custom OpenCL optimized region-based memor
 
 ######################################################################################
 
-find_library(LTDL_LIB "ltdl")
-find_file(LTDL_H "ltdl.h")
-if(LTDL_LIB AND LTDL_H)
-  message(STATUS "ltdl found")
-
-  get_filename_component(LTDL_H_INCLUDE_DIR "${LTDL_H}" DIRECTORY)
-  string(FIND "${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES}" "${LTDL_H_INCLUDE_DIR}" LTPOSITION)
-  # include the directory of ltdl.h, if its not in the default system include dirs
-  if(LTPOSITION LESS "0")
-    include_directories("${LTDL_H_INCLUDE_DIR}")
-  endif()
-
+if(WIN32)
+    message(STATUS "Using LoadLibrary/FreeLibrary in Windows, libltdl not needed.")
 else()
-  message(FATAL_ERROR "Could not find LTDL library!")
+  find_library(LTDL_LIB "ltdl")
+  find_file(LTDL_H "ltdl.h")
+  if(LTDL_LIB AND LTDL_H)
+    message(STATUS "ltdl found")
+
+    get_filename_component(LTDL_H_INCLUDE_DIR "${LTDL_H}" DIRECTORY)
+    string(FIND "${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES}" "${LTDL_H_INCLUDE_DIR}" LTPOSITION)
+    # include the directory of ltdl.h, if its not in the default system include dirs
+    if(LTPOSITION LESS "0")
+      include_directories("${LTDL_H_INCLUDE_DIR}")
+    endif()
+
+  else()
+    message(FATAL_ERROR "Could not find LTDL library!")
+  endif()
 endif()
 
 ######################################################################################
 
-include(FindThreads)
-if(Threads_FOUND)
-  set(LD_FLAGS_BIN ${CMAKE_THREAD_LIBS_INIT})
+if (MSVC)
+  set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+  find_package( PthreadsWin32 )
+  if(NOT Pthreads_FOUND)
+    message(FATAL_ERROR "Could not find pthreads-win32 libs!")
+  endif()
+  include_directories("${Pthreads_INCLUDE_DIRS}")
 else()
-  message(FATAL_ERROR "Could not find threading library for this system")
+  include(FindThreads)
+  if(Threads_FOUND)
+    set(LD_FLAGS_BIN ${CMAKE_THREAD_LIBS_INIT})
+  else()
+    message(FATAL_ERROR "Could not find threading library for this system")
+  endif()
 endif()
+
 
 ######################################################################################
 # DONE
+
+if (MSVC)
+  message(STATUS "Building ICD not yet supported on Windows.")
+  set(DEFAULT_ENABLE_ICD 0 CACHE INTERNAL "Going to use ICD loader")
+  set(DEFAULT_DIRECT_LINKAGE 1 CACHE INTERNAL "Software links directly to pocl")
+  set(DEFAULT_TESTS_USE_ICD 0 CACHE INTERNAL "Tests use ICD")
+endif()
 
 if(NOT DEFINED DEFAULT_ENABLE_ICD)
 
@@ -465,11 +498,16 @@ endif()
 ######################################################################################
 # DONE
 
-pkg_check_modules(GLEW glew)
-if(NOT GLEW_FOUND)
-  message(WARNING "libGLEW not found. A few tests will not work")
+if (MSVC)
+  message(STATUS "Finding libGLEW binary distribution (http://glew.sourceforge.net/index.html) for Widows not implemented. Consider writing FindGlew.cmake macro.")
+  message(STATUS "libGLEW not found. A few tests will not work")
 else()
-  set(HAVE_GLEW 1)
+  pkg_check_modules(GLEW glew)
+  if(NOT GLEW_FOUND)
+    message(WARNING "libGLEW not found. A few tests will not work")
+  else()
+    set(HAVE_GLEW 1)
+  endif()
 endif()
 
 ######################################################################################
@@ -865,7 +903,7 @@ message(STATUS "OPENCL_LIBS: ${OPENCL_LIBS}")
 message(STATUS "OPENCL_CFLAGS: ${OPENCL_CFLAGS}")
 
 # for tests / examples
-set(POCLU_LINK_OPTIONS "-lm" ${OPENCL_LIBS} "poclu")
+set(POCLU_LINK_OPTIONS "-lm" ${OPENCL_LIBS} ${LLVM_SYSLIBS} "poclu")
 message(STATUS "POCLU LINK OPTS: ${POCLU_LINK_OPTIONS}")
 
 # DONE - just pocl-standalone script
