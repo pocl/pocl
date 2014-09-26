@@ -30,6 +30,8 @@
 #include <stdio.h>
 #ifndef _MSC_VER
 #  include <ltdl.h>
+#else
+#  include "vccompat.hpp"
 #endif
 #include <pthread.h>
 #ifdef HAVE_CLOCK_GETTIME
@@ -249,6 +251,14 @@ typedef pthread_mutex_t pocl_lock_t;
 #  define POdeclsym(name)
 #  define POsym(name)
 #  define POsymAlways(name)
+
+#elif defined(_MSC_VER)
+/* Visual Studio does not support this magic either */
+#  define POname(name) name
+#  define POdeclsym(name)
+#  define POsym(name)
+#  define POsymAlways(name)
+#  define POdeclsym(name)
 
 #else
 /* Symbol aliases are supported */
