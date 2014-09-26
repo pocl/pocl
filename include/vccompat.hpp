@@ -25,12 +25,15 @@
    THE SOFTWARE.
 */
 
+#include <Windows.h>
 #define __restrict__ __restrict
+
+// ERROR is used as label for goto in some OCL API functions
+#undef ERROR
 
 /**
  * ltdl compatibility functions
  */
-#include <Windows.h>
 typedef HMODULE lt_dlhandle;
 
 static inline lt_dlhandle lt_dlopen(const char* filename) {
