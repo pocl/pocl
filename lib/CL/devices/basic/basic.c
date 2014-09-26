@@ -33,9 +33,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <dev_image.h>
-#include <sys/time.h>
 
 #ifndef _MSC_VER
+#  include <sys/time.h>
 #  include <unistd.h>
 #else
 #  include "vccompat.hpp"
