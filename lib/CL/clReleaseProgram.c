@@ -23,7 +23,12 @@
 */
 
 #include <string.h>
-#include <unistd.h>
+   
+#ifndef _MSC_VER
+#  include <unistd.h>
+#else
+#  include "vccompat.hpp"
+#endif
 
 #include "pocl_cl.h"
 #include "pocl_util.h"

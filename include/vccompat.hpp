@@ -25,6 +25,9 @@
    THE SOFTWARE.
 */
 
+#ifndef VCCOMPAT_HPP
+#define VCCOMPAT_HPP
+
 #include <Windows.h>
 #define __restrict__ __restrict
 
@@ -62,3 +65,4 @@ static int posix_memalign(void **p, size_t align, size_t size) {
    return 0;
 }
 
+#endif

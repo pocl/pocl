@@ -32,9 +32,14 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <dev_image.h>
 #include <sys/time.h>
+
+#ifndef _MSC_VER
+#  include <unistd.h>
+#else
+#  include "vccompat.hpp"
+#endif
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 

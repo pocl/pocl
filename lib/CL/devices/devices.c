@@ -22,9 +22,14 @@
    THE SOFTWARE.
 */
 
-#include <unistd.h>
 #include <string.h>
 #include <ctype.h>
+
+#ifndef _MSC_VER
+#  include <unistd.h>
+#else
+#  include "vccompat.hpp"
+#endif
 
 #include "devices.h"
 #include "common.h"

@@ -29,7 +29,12 @@
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
-#include <unistd.h>
+
+#ifndef _MSC_VER
+#  include <unistd.h>
+#else
+#  include "vccompat.hpp"
+#endif
 
 #define WORK_ITEMS 1
 

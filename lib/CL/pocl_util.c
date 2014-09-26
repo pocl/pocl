@@ -25,12 +25,21 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+<<<<<<< HEAD
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <utime.h>
 #include <time.h>
+=======
+
+#ifndef _MSC_VER
+#  include <unistd.h>
+#else
+#  include "vccompat.hpp"
+#endif
+>>>>>>> Fixed places where unistd.h has been included to include vccompat.hpp on Visual Studio.
 
 #include "pocl_util.h"
 #include "utlist.h"

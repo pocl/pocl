@@ -30,9 +30,14 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <pthread.h>
 #include <string>
+
+#ifndef _MSC_VER
+#  include <unistd.h>
+#else
+#  include "vccompat.hpp"
+#endif
 
 /* Supress some warnings because of including tce_config.h after pocl's config.h. */
 #undef PACKAGE

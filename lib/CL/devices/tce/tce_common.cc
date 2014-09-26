@@ -28,7 +28,11 @@
 #include "pocl_runtime_config.h"
 #include "pocl_hash.h"
 
-#include <unistd.h>
+#ifndef _MSC_VER
+#  include <unistd.h>
+#else
+#  include "vccompat.hpp"
+#endif
 
 /* Supress some warnings because of including tce_config.h after pocl's config.h. */
 #undef PACKAGE
