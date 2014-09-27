@@ -34,6 +34,17 @@
 // ERROR is used as label for goto in some OCL API functions
 #undef ERROR
 
+// if this causes linking problems, use inline function below...
+#define snprintf _snprintf
+/*
+static inline int snprintf(char *str, size_t size, const char *format, ...) {
+   va_list args;
+   va_start(args, format);
+   _snprintf(str, size, format, args);
+   va_end(args);
+}
+*/
+
 /**
  * ltdl compatibility functions
  */
