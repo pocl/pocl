@@ -192,12 +192,12 @@ GenerateHeader::ProcessPointers(Function *F,
   int num_args = F->getFunctionType()->getNumParams();
     
   out << "#define _" << F->getName() << "_NUM_ARGS " << num_args << '\n';
-      
-  bool is_pointer[num_args];
-  bool is_local[num_args];
-  bool is_image[num_args];
-  bool is_sampler[num_args];
-  
+
+  bool *is_pointer = (bool*) malloc(sizeof(bool) * num_args);
+  bool *is_local = (bool*)malloc(sizeof(bool)* num_args);
+  bool *is_image = (bool*)malloc(sizeof(bool)* num_args);
+  bool *is_sampler = (bool*)malloc(sizeof(bool)* num_args);
+
   int i = 0;
   for (Function::const_arg_iterator ii = F->arg_begin(),
          ee = F->arg_end();
@@ -272,6 +272,11 @@ GenerateHeader::ProcessPointers(Function *F,
       out << ", " << is_sampler[i];
   }
   out << "}\n";
+
+  free(is_pointer);
+  free(is_local);
+  free(is_image);
+  free(is_sampler);
 }
 
 
