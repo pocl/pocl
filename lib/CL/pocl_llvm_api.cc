@@ -1228,6 +1228,16 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
   return 0;
 }
 
+void
+pocl_update_program_llvm_irs(cl_program program,
+                             cl_device_id device, const char* program_filename)
+{
+  SMDiagnostic Err;
+
+  program->llvm_irs[device->dev_id] =
+              ParseIRFile(program_filename, Err, *GlobalContext());
+}
+
 void pocl_llvm_update_binaries (cl_program program) {
 
   llvm::MutexGuard lockHolder(kernelCompilerLock);

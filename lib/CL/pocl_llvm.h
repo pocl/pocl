@@ -99,6 +99,11 @@ int pocl_llvm_codegen ( cl_kernel kernel,
                         const char *infile,
                         const char *outfile);
 
+/* Parse program file and populate program's llvm_irs */
+void
+pocl_update_program_llvm_irs(cl_program program,
+                       cl_device_id device, const char* program_filename);
+
 #ifdef __cplusplus
 }
 #endif

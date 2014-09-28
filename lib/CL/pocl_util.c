@@ -468,17 +468,20 @@ pocl_check_and_invalidate_cache (cl_program program,
      Yes, this is a very dirty way to find "# include"
      but we can live with this for now
    */
-  for (s_ptr = program->source; (*s_ptr); s_ptr++)
-    {
-      if ((*s_ptr) == '#')
-        {
-          /* Skip all the white-spaces between # & include */
-          for (ss_ptr = s_ptr+1; (*ss_ptr == ' '); ss_ptr++) ;
+    if (program->source)
+      {
+        for (s_ptr = program->source; (*s_ptr); s_ptr++)
+          {
+            if ((*s_ptr) == '#')
+              {
+                /* Skip all the white-spaces between # & include */
+                for (ss_ptr = s_ptr+1; (*ss_ptr == ' '); ss_ptr++) ;
 
-          if (strncmp(ss_ptr, "include", 7) == 0)
-            cache_dirty = 1;
-        }
-    }
+                if (strncmp(ss_ptr, "include", 7) == 0)
+                  cache_dirty = 1;
+              }
+          }
+      }
 
   bottom:
   if (cache_dirty)

@@ -94,12 +94,13 @@ POname(clBuildProgram)(cl_program program,
 CL_API_SUFFIX__VERSION_1_0
 {
   char device_tmpdir[POCL_FILENAME_LENGTH];
-  char source_file_name[POCL_FILENAME_LENGTH], binary_file_name[POCL_FILENAME_LENGTH];
-  FILE *source_file, *binary_file;
+  char binary_file_name[POCL_FILENAME_LENGTH];
+  FILE *binary_file;
   size_t n;
   int errcode;
   int i;
   int error;
+  size_t length;
   unsigned char *binary;
   unsigned real_num_devices;
   const cl_device_id *real_device_list;
@@ -241,121 +242,96 @@ CL_API_SUFFIX__VERSION_1_0
   build_program_compute_hash(program);
   program->temp_dir = pocl_create_progam_cache_dir(program);
 
-  if (program->binaries == NULL)
+  if (program->source)
     {
-      /* FIXME: these might have allocated already. The user might want to
-         build the program with different compiler options and calls this
-         repeatedly for the same source. In that case there will be a memory
-         leak at the moment. */
-      if (((program->binary_sizes =
-            (size_t *) malloc (sizeof (size_t) * real_num_devices)) == NULL) || 
-          ((program->binaries = 
-            (unsigned char**) calloc (real_num_devices, sizeof (unsigned char*))) == NULL) ||
-          ((program->llvm_irs = 
-            (void**) calloc (real_num_devices, sizeof (void*))) == NULL)) 
-      {
-        errcode = CL_OUT_OF_HOST_MEMORY;
-        goto ERROR_CLEAN_BINARIES;
-      }
+      /* Realloc for every clBuildProgram call
+       * since clBuildProgram can be called multiple times
+       * with different options and device count
+       */
+      length = sizeof(size_t) * real_num_devices;
+      program->binary_sizes = (size_t *) realloc(program->binary_sizes, length);
+      MEM_ASSERT(program->binary_sizes == NULL, ERROR_CLEAN_PROGRAM);
+      memset(program->binary_sizes, 0, length);
 
-      /* Build the fully linked non-parallel bitcode for all
+      length = sizeof(unsigned char*) * real_num_devices;
+      program->binaries = (unsigned char**) realloc(program->binaries, length);
+      MEM_ASSERT(program->binaries == NULL, ERROR_CLEAN_PROGRAM);
+      memset(program->binaries, 0, length);
+
+      length = sizeof(void*) * real_num_devices;
+      program->llvm_irs = (void**) realloc (program->llvm_irs, length);
+      MEM_ASSERT(program->llvm_irs == NULL, ERROR_CLEAN_PROGRAM);
+      memset(program->llvm_irs, 0, length);
+    }
+
+  /* Build the fully linked non-parallel bitcode for all
          devices. */
-      for (device_i = 0; device_i < real_num_devices; ++device_i)
-        {
-          program->binaries[device_i] = NULL;
-          cl_device_id device = real_device_list[device_i];
-          snprintf (device_tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
-                    program->temp_dir, device->short_name);
+  for (device_i = 0; device_i < real_num_devices; ++device_i)
+    {
+      cl_device_id device = real_device_list[device_i];
+      snprintf(device_tmpdir, POCL_FILENAME_LENGTH, "%s/%s",
+               program->temp_dir, device->short_name);
 
-          if (access (device_tmpdir, F_OK) != 0)
-            mkdir(device_tmpdir, S_IRWXU);
+      if (access (device_tmpdir, F_OK) != 0)
+        mkdir(device_tmpdir, S_IRWXU);
 
 #ifdef POCL_KERNEL_CACHE
-          pocl_check_and_invalidate_cache(program, device_i, device_tmpdir);
+      pocl_check_and_invalidate_cache(program, device_i, device_tmpdir);
 #endif
 
-          snprintf 
-            (binary_file_name, POCL_FILENAME_LENGTH, "%s/%s", 
-             device_tmpdir, POCL_PROGRAM_BC_FILENAME);
+      snprintf(binary_file_name, POCL_FILENAME_LENGTH, "%s/%s",
+               device_tmpdir, POCL_PROGRAM_BC_FILENAME);
 
-          if (access (binary_file_name, F_OK) != 0)
-          {
-            error = pocl_llvm_build_program
-              (program, device, device_i, program->temp_dir,
-               binary_file_name, device_tmpdir,
-               user_options);
-
-            if (error != 0)
+      /* First call to clBuildProgram. Cache not filled yet */
+      if (access(binary_file_name, F_OK) != 0)
+        {
+          if (program->source)
             {
-              errcode = CL_BUILD_PROGRAM_FAILURE;
-              goto ERROR_CLEAN_BINARIES;
+              error = pocl_llvm_build_program(program, device, device_i,
+                        program->temp_dir, binary_file_name, device_tmpdir, user_options);
+
+              if (error != 0)
+                {
+                  errcode = CL_BUILD_PROGRAM_FAILURE;
+                  goto ERROR_CLEAN_BINARIES;
+                }
             }
-          }
 
-          /* In case we cached the llvm::Module, we might not have
-             dumped the bitcode yet. FIXME: always assume this and
-             fix this in the binary query API. */
-          if (program->llvm_irs[device->dev_id] == NULL)
+          if (program->binaries[device_i])
             {
-              binary_file = fopen(binary_file_name, "r");
-              if (binary_file == NULL)
-                {
-                  errcode = CL_OUT_OF_HOST_MEMORY;
-                  goto ERROR_CLEAN_BINARIES;
-                }
+              binary_file = fopen(binary_file_name, "w");
+              MEM_ASSERT(binary_file == NULL, ERROR_CLEAN_PROGRAM);
 
-              fseek(binary_file, 0, SEEK_END);
-              
-              program->binary_sizes[device_i] = ftell(binary_file);
-              fseek(binary_file, 0, SEEK_SET);
+              fwrite(program->binaries[device_i], 1,
+                     program->binary_sizes[device_i], binary_file);
 
-              binary = (unsigned char *) malloc(program->binary_sizes[device_i]);
-              if (binary == NULL)
-                {
-                  errcode = CL_OUT_OF_HOST_MEMORY;
-                  goto ERROR_CLEAN_BINARIES;
-                }
-
-              n = fread(binary, 1, program->binary_sizes[device_i], binary_file);
-              if (n < program->binary_sizes[device_i])
-                {
-                  errcode = CL_OUT_OF_HOST_MEMORY;
-                  goto ERROR_CLEAN_BINARIES;
-                }
-              program->binaries[device_i] = binary;
+              fclose (binary_file);
             }
         }
-        
-    }
-  else
-    {
-      /* Build from a binary. The "binaries" (LLVM bitcodes) are loaded to
-         memory in the clCreateProgramWithBinary(). Dump them to the files. */
-      for (device_i = 0; device_i < real_num_devices; ++device_i)
+
+      /* Read binaries from program.bc to memory */
+      if (program->binaries[device_i] == NULL)
         {
-          int count;
-          count = snprintf (device_tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
-                    program->temp_dir, real_device_list[device_i]->short_name);
-          MEM_ASSERT(count >= POCL_FILENAME_LENGTH, ERROR_CLEAN_PROGRAM);
-
-          if (access (device_tmpdir, F_OK) != 0)
-            error = mkdir(device_tmpdir, S_IRWXU);
-
-          MEM_ASSERT(error, ERROR_CLEAN_PROGRAM);
-
-          count = snprintf 
-            (binary_file_name, POCL_FILENAME_LENGTH, "%s/%s", 
-             device_tmpdir, POCL_PROGRAM_BC_FILENAME);
-          MEM_ASSERT(count >= POCL_FILENAME_LENGTH, ERROR_CLEAN_PROGRAM);
-
-          binary_file = fopen(binary_file_name, "w");
+          binary_file = fopen(binary_file_name, "r");
           MEM_ASSERT(binary_file == NULL, ERROR_CLEAN_PROGRAM);
 
-          fwrite (program->binaries[device_i], 1, program->binary_sizes[device_i],
-                  binary_file);
+          fseek(binary_file, 0, SEEK_END);
+          program->binary_sizes[device_i] = ftell(binary_file);
+          fseek(binary_file, 0, SEEK_SET);
 
-          fclose (binary_file);
-        }      
+          binary = (unsigned char *) malloc(program->binary_sizes[device_i]);
+          MEM_ASSERT(binary == NULL, ERROR_CLEAN_PROGRAM);
+
+          n = fread(binary, 1, program->binary_sizes[device_i], binary_file);
+          MEM_ASSERT((n < program->binary_sizes[device_i]), ERROR_CLEAN_PROGRAM);
+          program->binaries[device_i] = binary;
+        }
+
+      if (program->llvm_irs[device->dev_id] == NULL)
+        {
+          pocl_update_program_llvm_irs(program,
+                                       device, binary_file_name);
+        }
     }
 
   POCL_UNLOCK_OBJ(program);
