@@ -185,7 +185,7 @@ POname(clCreateBuffer)(cl_context context,
                         mem->device_ptrs[device->dev_id].mem_ptr);
     }
  ERROR_CLEAN_MEM:
-  free(mem);
+  POCL_MEM_FREE(mem);
  ERROR:
   if(errcode_ret)
     {

@@ -83,7 +83,7 @@ int pocl_device_get_env_count(const char *dev_type)
         dev_count++;
       ptr = NULL;
     }
-  free (tofree);
+  POCL_MEM_FREE(tofree);
 
   return dev_count;
 }

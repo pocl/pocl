@@ -42,7 +42,7 @@ CL_API_SUFFIX__VERSION_1_0
 
 #if 0
 ERROR_CLEAN_SAMPLER:
-  free(sampler);
+  POCL_MEM_FREE(sampler);
 #endif
 ERROR:
   if(errcode_ret)

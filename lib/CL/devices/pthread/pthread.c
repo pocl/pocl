@@ -278,15 +278,17 @@ pocl_pthread_uninit (cl_device_id device)
   struct data *d = (struct data*)device->data;
 #ifdef CUSTOM_BUFFER_ALLOCATOR
   memory_region_t *region, *temp;
+  void *ptr;
   DL_FOREACH_SAFE(d->mem_regions->mem_regions, region, temp)
     {
       DL_DELETE(d->mem_regions->mem_regions, region);
-      free ((void*)region->chunks->start_address);
-      free (region);    
+      ptr = (void*)region->chunks->start_address;
+      POCL_MEM_FREE(ptr);
+      POCL_MEM_FREE(region);
     }
   d->mem_regions->mem_regions = NULL;
 #endif  
-  free (d);
+  POCL_MEM_FREE(d);
   device->data = NULL;
 }
 
@@ -444,8 +446,8 @@ pocl_pthread_free (void *device_data, cl_mem_flags flags, void *ptr)
       /* All chunks have been deallocated. free() the whole 
          memory region at once. */
       DL_DELETE(d->mem_regions->mem_regions, region);
-      free ((void*)region->last_chunk->start_address);
-      free (region);    
+      POCL_MEM_FREE((void*)region->last_chunk->start_address);
+      POCL_MEM_FREE(region);
     }  
   BA_UNLOCK(region->lock);
   BA_UNLOCK(d->mem_regions->mem_regions_lock);
@@ -460,7 +462,7 @@ pocl_pthread_free (void *data, cl_mem_flags flags, void *ptr)
   if (flags & CL_MEM_COPY_HOST_PTR)
     return;
   
-  free (ptr);
+  POCL_MEM_FREE(ptr);
 }
 #endif
 
@@ -631,7 +633,7 @@ pocl_pthread_run
 #endif
   }
 
-  free(threads);
+  POCL_MEM_FREE(threads);
 }
 
 void *
@@ -739,17 +741,17 @@ workgroup_thread (void *p)
       if (kernel->arg_info[i].is_local )
         {
           pocl_pthread_free (ta->data, 0, *(void **)(arguments[i]));
-          free (arguments[i]);
+          POCL_MEM_FREE(arguments[i]);
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
         {
           pocl_pthread_free (ta->data, 0, *(void **)(arguments[i]));
-          free (arguments[i]);            
+          POCL_MEM_FREE(arguments[i]);
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER || 
                (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && *(void**)arguments[i] == NULL))
         {
-          free (arguments[i]);
+          POCL_MEM_FREE(arguments[i]);
         }
     }
   for (i = kernel->num_args;
@@ -757,7 +759,7 @@ workgroup_thread (void *p)
        ++i)
     {
       pocl_pthread_free (ta->data, 0, *(void **)(arguments[i]));
-      free (arguments[i]);
+      POCL_MEM_FREE(arguments[i]);
     }
   free_thread_arguments (ta);
 

@@ -131,6 +131,14 @@ typedef pthread_mutex_t pocl_lock_t;
     (__OBJ__)->pocl_refcount = 1;                  \
   } while (0)
 
+#define POCL_MEM_FREE(F_PTR)                      \
+  do {                                            \
+    if ((F_PTR)) {                                \
+      free((F_PTR));                              \
+      (F_PTR) = NULL;                             \
+      }                                           \
+    } while (0)
+
 #ifdef BUILD_ICD
 /* Most (all?) object must also initialize the ICD field */
 #  define POCL_INIT_OBJECT(__OBJ__)                \

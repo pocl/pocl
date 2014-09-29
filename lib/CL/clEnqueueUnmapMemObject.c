@@ -85,8 +85,8 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
   return CL_SUCCESS;
 
  ERROR:
-  free (*event);
-  free (cmd);
+  POCL_MEM_FREE(*event);
+  POCL_MEM_FREE(cmd);
   return errcode;
 }
 POsym(clEnqueueUnmapMemObject)

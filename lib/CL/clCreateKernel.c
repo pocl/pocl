@@ -117,7 +117,7 @@ POname(clCreateKernel)(cl_program program,
   return kernel;
 
 ERROR_CLEAN_KERNEL:
-  free(kernel);
+  POCL_MEM_FREE(kernel);
 ERROR:
   if(errcode_ret != NULL)
   {

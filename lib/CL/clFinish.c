@@ -216,14 +216,14 @@ static void exec_commands (_cl_command_node *node_list)
                 buf,  node->command.run.kernel->function_name); */
               POname(clReleaseMemObject) (buf);
             }
-          free (node->command.run.arg_buffers);
-          free (node->command.run.tmp_dir);
+          POCL_MEM_FREE(node->command.run.arg_buffers);
+          POCL_MEM_FREE(node->command.run.tmp_dir);
           for (i = 0; i < node->command.run.kernel->num_args + 
                  node->command.run.kernel->num_locals; ++i)
             {
               pocl_aligned_free (node->command.run.arguments[i].value);
             }
-          free (node->command.run.arguments);
+          POCL_MEM_FREE(node->command.run.arguments);
       
           POname(clReleaseKernel)(node->command.run.kernel);
           break;
@@ -237,8 +237,8 @@ static void exec_commands (_cl_command_node *node_list)
               if (buf == NULL) continue;
               POname(clReleaseMemObject) (buf);
             }
-          free (node->command.native.mem_list);
-          free (node->command.native.args);
+          POCL_MEM_FREE(node->command.native.mem_list);
+          POCL_MEM_FREE(node->command.native.args);
 	      break;
         case CL_COMMAND_FILL_IMAGE:
           POCL_UPDATE_EVENT_RUNNING(event, command_queue);
@@ -251,7 +251,7 @@ static void exec_commands (_cl_command_node *node_list)
              node->command.fill_image.slicepitch,
              node->command.fill_image.fill_pixel,
              node->command.fill_image.pixel_size);
-          free(node->command.fill_image.fill_pixel);
+          POCL_MEM_FREE(node->command.fill_image.fill_pixel);
           POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
           break;
         case CL_COMMAND_MARKER:

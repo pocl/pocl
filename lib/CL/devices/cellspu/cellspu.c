@@ -198,7 +198,7 @@ pocl_cellspu_free (void *data, cl_mem_flags flags, void *ptr)
   if (flags & CL_MEM_USE_HOST_PTR)
     return;
   
-  free (ptr);
+  POCL_MEM_FREE(ptr);
 }
 
 void
@@ -611,7 +611,7 @@ pocl_cellspu_uninit (cl_device_id device)
   struct data *d = (struct data*)device->data;
   POCL_ABORT_UNIMPLEMENTED();
 
-  free (d);
+  POCL_MEM_FREE(d);
   device->data = NULL;
 }
 

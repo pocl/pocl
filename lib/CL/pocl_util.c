@@ -53,7 +53,7 @@ pocl_remove_directory (const char *path_name)
   char *cmd = (char*)malloc(str_size);
   snprintf(cmd, str_size, "rm -fr '%s'", path_name);
   system(cmd);
-  free(cmd);
+  POCL_MEM_FREE(cmd);
 }
 
 void
@@ -63,7 +63,7 @@ pocl_remove_file (const char *file_path)
   char *cmd = (char*)malloc(str_size);
   snprintf(cmd, str_size, "rm -f '%s'", file_path);
   system(cmd);
-  free(cmd);
+  POCL_MEM_FREE(cmd);
 }
 
 void
@@ -73,7 +73,7 @@ pocl_make_directory (const char *path_name)
   char *cmd = (char*)malloc(str_size);
   snprintf(cmd, str_size, "mkdir -p '%s'", path_name);
   system(cmd);
-  free(cmd);
+  POCL_MEM_FREE(cmd);
 }
 
 void
@@ -276,7 +276,7 @@ pocl_aligned_free (void *ptr)
 {
   /* extract pointer from original allocation and free it */
   if (ptr)
-    free(*(void **)((uintptr_t)ptr - sizeof(void *)));
+    POCL_MEM_FREE(*(void **)((uintptr_t)ptr - sizeof(void *)));
 }
 #endif
 
@@ -328,7 +328,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
   err = pocl_create_event(event, command_queue, command_type);
   if (err != CL_SUCCESS)
     {
-      free (*cmd);
+      POCL_MEM_FREE(*cmd);
       return err;
     }
   if (event_p)
@@ -455,7 +455,7 @@ pocl_check_and_invalidate_cache (cl_program program,
         }
 
       if (content)
-        free(content);
+        POCL_MEM_FREE(content);
     }
   else
     {

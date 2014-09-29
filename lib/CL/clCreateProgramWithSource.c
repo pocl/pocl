@@ -118,7 +118,7 @@ POname(clCreateProgramWithSource)(cl_context context,
   return program;
 
 ERROR_CLEAN_PROGRAM:
-  free(program);
+  POCL_MEM_FREE(program);
 ERROR:
   if(errcode_ret)
   {

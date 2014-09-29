@@ -224,7 +224,7 @@ int pocl_llvm_build_program(cl_program program,
         {
           ss << device_switches << " ";
         }
-      free (device_switches);
+      POCL_MEM_FREE(device_switches);
     }
 
   // This can cause illegal optimizations when unaware

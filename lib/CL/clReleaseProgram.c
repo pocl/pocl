@@ -50,28 +50,28 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
         }
 
       POCL_RELEASE_OBJECT (program->context, new_refcount);
-      free (program->source);
+      POCL_MEM_FREE(program->source);
 
       if(program->devices != program->context->devices)
-        free (program->devices);
+        POCL_MEM_FREE(program->devices);
       
       if (program->binaries != NULL)
         {
-          if (program->binaries[0])
-            free (program->binaries[0]);
-          free (program->binaries);
+          POCL_MEM_FREE(program->binaries[0]);
+          POCL_MEM_FREE(program->binaries);
         }
-      free (program->binary_sizes);
+      POCL_MEM_FREE(program->binary_sizes);
 
       if ((!pocl_get_bool_option("POCL_KERNEL_CACHE", POCL_BUILD_KERNEL_CACHE)) &&
-            (!pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0)))
+            (!pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0)) &&
+            program->temp_dir)
         {
           pocl_remove_directory (program->temp_dir);
         }
 
-      free (program->llvm_irs);
-      free (program->temp_dir);
-      free (program);
+      POCL_MEM_FREE(program->llvm_irs);
+      POCL_MEM_FREE(program->temp_dir);
+      POCL_MEM_FREE(program);
     }
 
   return CL_SUCCESS;

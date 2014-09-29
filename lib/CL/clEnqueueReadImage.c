@@ -67,7 +67,7 @@ CL_API_SUFFIX__VERSION_1_0
   if (status != CL_SUCCESS)
     {
       if (event)
-        free (*event);
+        POCL_MEM_FREE(*event);
     }
 
   cmd->command.rw_image.device_ptr = 

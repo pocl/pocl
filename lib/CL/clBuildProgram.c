@@ -170,7 +170,7 @@ CL_API_SUFFIX__VERSION_1_0
                   if (modded_options == NULL)
                     return CL_OUT_OF_HOST_MEMORY;
                   memcpy (modded_options, swap_tmp, size);
-                  free (swap_tmp);
+                  POCL_MEM_FREE(swap_tmp);
                   size += 256;
                 }
               i += strlen (token) + 1;
@@ -198,7 +198,7 @@ CL_API_SUFFIX__VERSION_1_0
               if (modded_options == NULL)
                 return CL_OUT_OF_HOST_MEMORY;
               memcpy (modded_options, swap_tmp, size); 
-              free (swap_tmp);
+              POCL_MEM_FREE(swap_tmp);
               size += 256;
             }
           i += strlen (token) + 1;
@@ -206,14 +206,13 @@ CL_API_SUFFIX__VERSION_1_0
           strcat (modded_options, " ");
           token = strtok_r (NULL, " ", &saveptr);  
         }
-      free (temp_options);
+      POCL_MEM_FREE(temp_options);
       user_options = modded_options;
       program->compiler_options = strdup (modded_options);
     }
   else
     {
-      free(program->compiler_options);
-      program->compiler_options = NULL;        
+      POCL_MEM_FREE(program->compiler_options);
     }  
 
   if (program->source == NULL && program->binaries == NULL)
@@ -341,16 +340,13 @@ CL_API_SUFFIX__VERSION_1_0
 ERROR_CLEAN_BINARIES:
   for(i = 0; i < device_i; i++)
   {
-    free(program->binaries[i]);
-    program->binaries[i] = NULL;
+    POCL_MEM_FREE(program->binaries[i]);
   }
 ERROR_CLEAN_PROGRAM:
-  free(program->binaries);
-  program->binaries = NULL;
-  free(program->binary_sizes);
-  program->binary_sizes = NULL;
+  POCL_MEM_FREE(program->binaries);
+  POCL_MEM_FREE(program->binary_sizes);
 ERROR_CLEAN_OPTIONS:
-  free (modded_options);
+  POCL_MEM_FREE(modded_options);
 ERROR:
   POCL_UNLOCK_OBJ(program);
   return errcode;

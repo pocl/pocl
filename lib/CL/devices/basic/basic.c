@@ -420,7 +420,7 @@ pocl_basic_free (void *data, cl_mem_flags flags, void *ptr)
   if (flags & CL_MEM_USE_HOST_PTR)
     return;
   
-  free (ptr);
+  POCL_MEM_FREE(ptr);
 }
 
 void
@@ -553,17 +553,17 @@ pocl_basic_run
       if (kernel->arg_info[i].is_local)
         {
           pocl_basic_free (data, 0, *(void **)(arguments[i]));
-          free (arguments[i]);
+          POCL_MEM_FREE(arguments[i]);
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
         {
           pocl_basic_free (data, 0, *(void **)(arguments[i]));
-          free (arguments[i]);            
+          POCL_MEM_FREE(arguments[i]);
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER || 
                (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && *(void**)arguments[i] == NULL))
         {
-          free (arguments[i]);
+          POCL_MEM_FREE(arguments[i]);
         }
     }
   for (i = kernel->num_args;
@@ -571,7 +571,7 @@ pocl_basic_run
        ++i)
     {
       pocl_basic_free(data, 0, *(void **)(arguments[i]));
-      free (arguments[i]);
+      POCL_MEM_FREE(arguments[i]);
     }
 }
 
@@ -724,7 +724,7 @@ void
 pocl_basic_uninit (cl_device_id device)
 {
   struct data *d = (struct data*)device->data;
-  free (d);
+  POCL_MEM_FREE(d);
   device->data = NULL;
 }
 

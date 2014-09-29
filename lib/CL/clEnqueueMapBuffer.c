@@ -140,10 +140,10 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
 
  ERROR:
   if (event)
-    free(*event);
-  free(cmd);
-  free(event);
-  free (mapping_info);
+    POCL_MEM_FREE(*event);
+  POCL_MEM_FREE(cmd);
+  POCL_MEM_FREE(event);
+  POCL_MEM_FREE(mapping_info);
   if (errcode_ret)
     *errcode_ret = errcode;
   return NULL;

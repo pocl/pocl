@@ -48,7 +48,7 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
   if (status != CL_SUCCESS)
     {
       if (event)
-        free (*event);
+        POCL_MEM_FREE(*event);
       return status;
     }  
 
