@@ -45,6 +45,10 @@ static inline int snprintf(char *str, size_t size, const char *format, ...) {
 }
 */
 
+static inline char* strtok_r(char *str, const char *delim, char **saveptr) {
+   return strtok_s(str, delim, saveptr);
+}
+
 /**
  * ltdl compatibility functions
  */
