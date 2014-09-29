@@ -63,12 +63,11 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
         }
       free (program->binary_sizes);
 
-#ifndef POCL_KERNEL_CACHE
-      if (!pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
+      if ((!pocl_get_bool_option("POCL_KERNEL_CACHE", POCL_BUILD_KERNEL_CACHE)) &&
+            (!pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0)))
         {
           pocl_remove_directory (program->temp_dir);
         }
-#endif
 
       free (program->llvm_irs);
       free (program->temp_dir);

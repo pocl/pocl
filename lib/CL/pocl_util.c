@@ -439,7 +439,7 @@ pocl_check_and_invalidate_cache (cl_program program,
 
   POCL_LOCK(cache_lock);
 
-  if (pocl_get_bool_option("POCL_FORCE_CLEAR_KERNEL_CACHE", 0))
+  if (!pocl_get_bool_option("POCL_KERNEL_CACHE", POCL_BUILD_KERNEL_CACHE))
     {
       cache_dirty = 1;
       goto bottom;

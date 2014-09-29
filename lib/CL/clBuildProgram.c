@@ -275,9 +275,7 @@ CL_API_SUFFIX__VERSION_1_0
       if (access (device_tmpdir, F_OK) != 0)
         mkdir(device_tmpdir, S_IRWXU);
 
-#ifdef POCL_KERNEL_CACHE
       pocl_check_and_invalidate_cache(program, device_i, device_tmpdir);
-#endif
 
       snprintf(binary_file_name, POCL_FILENAME_LENGTH, "%s/%s",
                device_tmpdir, POCL_PROGRAM_BC_FILENAME);

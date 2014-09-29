@@ -47,6 +47,11 @@ below.
  Override the default "-O3" that is passed to the LLVM opt as a final
  optimization switch.
 
+* POCL_KERNEL_CACHE
+
+ If this is set to 0 at runtime, kernel-cache will be forcefully disabled even if
+ its enabled in configure step
+
 * POCL_CACHE_DIR
 
  If this is set to an existing directory, pocl uses it as the cache
@@ -59,12 +64,6 @@ below.
  If this is set to 1, the kernel compiler cache/temporary directory that
  contains all the intermediate compiler files are left as it is. This
  will be handy for debugging
-
-* POCL_FORCE_CLEAR_KERNEL_CACHE
-
- If kernel cache is enabled and this is set to 1, then kernel cache will be
- forcefully cleared at each run. This will be handy for developers to test
- their changes and evict cache at every run
 
 * POCL_MAX_PTHREAD_COUNT
 

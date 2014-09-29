@@ -591,7 +591,9 @@ AC_ARG_ENABLE([kernel-cache],
               [cache_kernel="no"])
 if test "$cache_kernel" = "yes"
 then
-  AC_DEFINE([POCL_KERNEL_CACHE], [], "Enabled kernel cache feature")
+  AC_DEFINE([POCL_BUILD_KERNEL_CACHE], [1], "Enabled kernel cache feature")
+else
+  AC_DEFINE([POCL_BUILD_KERNEL_CACHE], [0], "Disabled kernel cache feature")
 fi
 
 
@@ -1124,7 +1126,7 @@ PKG_CHECK_MODULES([LIBSPE], [libspe2 >= 2.2.80],
     LIBSPE_AVAILABLE=yes
     OCL_DRIVERS="$OCL_DRIVERS spu"
     OCL_TARGETS="$OCL_TARGETS cellspu"
-    AC_DEFINE([BUILD_SPU], [], [Defined when CellSPU tools are found])
+    AC_DEFINE([BUILD_SPU], [], [Defined when CellSPU tools are found])
     BUILD_SPU=1
   ],
   [

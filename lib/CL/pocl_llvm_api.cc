@@ -384,14 +384,8 @@ int pocl_llvm_build_program(cl_program program,
   if (*mod == NULL)
     return CL_BUILD_PROGRAM_FAILURE;
 
-#ifndef POCL_KERNEL_CACHE
-  if (pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
-#endif
-  {
-    /* Retain program.bc in case of kernel-cache or
-        when POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES is set to 1 */
-    write_temporary_file(*mod, binary_file_name);
-  }
+  /* Always retain program.bc. Its required in clBuildProgram */
+  write_temporary_file(*mod, binary_file_name);
 
   // FIXME: cannot delete action as it contains something the llvm::Module
   // refers to. We should create it globally, at compiler initialization time.
