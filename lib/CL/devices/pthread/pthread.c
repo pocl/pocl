@@ -149,7 +149,7 @@ static thread_arguments* new_thread_arguments ()
     }
   POCL_UNLOCK (ta_pool_lock);
     
-  return calloc (1, sizeof (thread_arguments));
+  return (thread_arguments*)calloc (1, sizeof (thread_arguments));
 }
 
 static void free_thread_arguments (thread_arguments *ta)
@@ -232,7 +232,7 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
 #ifdef CUSTOM_BUFFER_ALLOCATOR  
   if (mrm == NULL)
     {
-      mrm = malloc (sizeof (mem_regions_management));
+      mrm = (mem_regions_management*)malloc (sizeof (mem_regions_management));
       BA_INIT_LOCK (mrm->mem_regions_lock);
       mrm->mem_regions = NULL;
     }

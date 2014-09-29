@@ -36,6 +36,7 @@
 
 // if this causes linking problems, use inline function below...
 #define snprintf _snprintf
+
 /*
 static inline int snprintf(char *str, size_t size, const char *format, ...) {
    va_list args;
@@ -73,11 +74,15 @@ static inline void lt_dlinit(void) {
 /**
  * Memory allocation functions
  */
+#include <malloc.h>
+
 static int posix_memalign(void **p, size_t align, size_t size) { 
    void *buf = _aligned_malloc(size, align);
    if (buf == NULL) return errno;
    *p = buf;
    return 0;
 }
+
+#define alloca _alloca
 
 #endif
