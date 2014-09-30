@@ -466,7 +466,9 @@ pocl_basic_run
 
   d->current_kernel = kernel;
 
-  void *arguments[kernel->num_args + kernel->num_locals];
+  void **arguments = (void**)malloc(
+      sizeof(void*) * (kernel->num_args + kernel->num_locals)
+    );
 
   /* Process the kernel arguments. Convert the opaque buffer
      pointers to real device pointers, allocate dynamic local 
@@ -566,6 +568,7 @@ pocl_basic_run
       pocl_basic_free(data, 0, *(void **)(arguments[i]));
       POCL_MEM_FREE(arguments[i]);
     }
+  free(arguments);
 }
 
 void
@@ -710,7 +713,7 @@ pocl_basic_map_mem (void *data, void *buf_ptr,
   /* All global pointers of the pthread/CPU device are in 
      the host address space already, and up to date. */
   if (host_ptr != NULL) return host_ptr;
-  return buf_ptr + offset;
+  return (char*)buf_ptr + offset;
 }
 
 void
@@ -724,9 +727,21 @@ pocl_basic_uninit (cl_device_id device)
 cl_ulong
 pocl_basic_get_timer_value (void *data) 
 {
+#ifndef _MSC_VER
   struct timeval current;
   gettimeofday(&current, NULL);  
   return (current.tv_sec * 1000000 + current.tv_usec)*1000;
+#else
+  FILETIME ft;
+  cl_ulong tmpres = 0;
+  GetSystemTimeAsFileTime(&ft);
+  tmpres |= ft.dwHighDateTime;
+  tmpres <<= 32;
+  tmpres |= ft.dwLowDateTime;
+  tmpres -= 11644473600000000Ui64;
+  tmpres /= 10;
+  return tmpres;
+#endif
 }
 
 cl_int 
@@ -776,7 +791,7 @@ void check_compiler_cache (_cl_command_node *cmd)
           return;
         }
     }
-  ci = malloc (sizeof (compiler_cache_item));
+  ci = (compiler_cache_item*) malloc (sizeof (compiler_cache_item));
   ci->next = NULL;
   ci->tmp_dir = strdup(cmd->command.run.tmp_dir);
   ci->function_name = strdup (cmd->command.run.kernel->function_name);

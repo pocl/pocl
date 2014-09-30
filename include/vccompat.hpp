@@ -72,6 +72,14 @@ static inline void lt_dlinit(void) {
 }
 
 /**
+ * Filesystem stuff
+ */
+#include <io.h>
+#define R_OK    4       /* Test for read permission.  */
+#define W_OK    2       /* Test for write permission.  */
+#define F_OK    0       /* Test for existence.  */
+
+/**
  * Memory allocation functions
  */
 #include <malloc.h>

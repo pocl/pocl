@@ -24,6 +24,8 @@
 #ifndef __X86_IMAGE_H__
 #define __X86_IMAGE_H__
 
+#include "pocl_cl.h"
+
 //Definition of the image datatype used on basic and pthread (and probably tce?)
 
 typedef cl_int dev_sampler_t;

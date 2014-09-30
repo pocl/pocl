@@ -208,7 +208,7 @@ pocl_init_devices()
     }
 
   assert(pocl_num_devices > 0);
-  pocl_devices = calloc(pocl_num_devices, sizeof(struct _cl_device_id));
+  pocl_devices = (struct _cl_device_id*) calloc(pocl_num_devices, sizeof(struct _cl_device_id));
   if (pocl_devices == NULL)
     POCL_ABORT("Can not allocate memory for devices\n");
 

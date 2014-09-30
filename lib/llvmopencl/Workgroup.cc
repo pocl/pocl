@@ -65,6 +65,10 @@
 
 #include "pocl.h"
 
+#if _MSC_VER
+#  include "vccompat.hpp"
+#endif
+
 #define STRING_LENGTH 32
 
 using namespace std;
