@@ -51,7 +51,7 @@ CL_API_SUFFIX__VERSION_1_0
   
   POCL_RETURN_ERROR_COND((num_entries == 0 && image_formats != NULL), CL_INVALID_VALUE);
   
-  dev_image_formats = (cl_image_format**) calloc (context->num_devices, sizeof(cl_image_format*));
+  dev_image_formats = (const cl_image_format**) calloc (context->num_devices, sizeof(cl_image_format*));
   dev_num_image_formats = (int*) calloc (context->num_devices, sizeof(int));
   
   if (dev_image_formats == NULL || dev_num_image_formats == NULL)

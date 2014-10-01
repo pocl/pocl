@@ -94,7 +94,7 @@ _cl_command_node* pocl_mem_manager_new_command ()
   if (cmd)
     return cmd;
   
-  return calloc (1, sizeof (_cl_command_node));
+  return (_cl_command_node*) calloc (1, sizeof (_cl_command_node));
 }
 
 void pocl_mem_manager_free_command ( _cl_command_node *cmd_ptr)

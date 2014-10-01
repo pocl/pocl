@@ -127,7 +127,7 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
       mem->mem_host_ptr = (char*)buffer->mem_host_ptr + info->origin;
     }
 
-  mem->device_ptrs = (pocl_mem_identifier**)
+  mem->device_ptrs = (pocl_mem_identifier*)
     malloc(pocl_num_devices * sizeof(pocl_mem_identifier *));
   if (mem->device_ptrs == NULL)
     {
