@@ -123,7 +123,7 @@ set(LIBPOCL_OBJS "$<TARGET_OBJECTS:llvmpasses>;$<TARGET_OBJECTS:libpocl_unlinked
 add_compile_options(${OCL_ICD_CFLAGS})
 
 # set llvm C++ flags on pocl_llvm_api.cc
-set_source_files_properties("pocl_llvm_api.cc" PROPERTIES COMPILE_FLAGS "${LLVM_CXXFLAGS} -I${CMAKE_CURRENT_SOURCE_DIR}/../llvmopencl")
+set_source_files_properties("pocl_llvm_api.cc" PROPERTIES COMPILE_FLAGS "${LLVM_CXXFLAGS} -I\"${CMAKE_CURRENT_SOURCE_DIR}/../llvmopencl\"")
 
 if(MSVC)
   set_source_files_properties( ${POCL_LIB_SOURCES} PROPERTIES LANGUAGE CXX )
