@@ -41,6 +41,8 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
 {
   int num_devices;
   int errcode;
+  int i;                     // [Suggested by leekiju]
+  cl_device_id device_ptr;   // [Suggested by leekiju]
 
   /* initialize libtool here, LT will be needed when loading the kernels */     
   lt_dlinit();
@@ -91,6 +93,17 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
     }
 
   pocl_get_devices(device_type, context->devices, num_devices);
+
+  for (i = 0; i < num_devices; ++i)  // [Suggested by leekiju] device object could be retained like clCreateContext
+    {
+      device_ptr = context->devices[i];
+      if (device_ptr == NULL)
+        {
+          break;
+        }
+      
+      POname(clRetainDevice)(device_ptr);
+    } 
 
   pocl_init_mem_manager ();
 
