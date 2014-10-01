@@ -84,17 +84,17 @@ CL_API_SUFFIX__VERSION_1_2
   /* TODO: channel order, saturating data type conversion */
   if (image->image_elem_size == 1)
     {
-      ((cl_char4*)fill_pixel)->x = ((cl_int4*)fill_color)->x;
-      ((cl_char4*)fill_pixel)->y = ((cl_int4*)fill_color)->y;
-      ((cl_char4*)fill_pixel)->z = ((cl_int4*)fill_color)->z;
-      ((cl_char4*)fill_pixel)->w = ((cl_int4*)fill_color)->w;
+      ((cl_char4*)fill_pixel)->s[0] = ((cl_int4*)fill_color)->s[0];
+      ((cl_char4*)fill_pixel)->s[1] = ((cl_int4*)fill_color)->s[1];
+      ((cl_char4*)fill_pixel)->s[2] = ((cl_int4*)fill_color)->s[2];
+      ((cl_char4*)fill_pixel)->s[3] = ((cl_int4*)fill_color)->s[3];
     }
   if (image->image_elem_size == 2)
     {
-      ((cl_short4*)fill_pixel)->x = ((cl_int4*)fill_color)->x;
-      ((cl_short4*)fill_pixel)->y = ((cl_int4*)fill_color)->y;
-      ((cl_short4*)fill_pixel)->z = ((cl_int4*)fill_color)->z;
-      ((cl_short4*)fill_pixel)->w = ((cl_int4*)fill_color)->w;
+      ((cl_short4*)fill_pixel)->s[0] = ((cl_int4*)fill_color)->s[0];
+      ((cl_short4*)fill_pixel)->s[1] = ((cl_int4*)fill_color)->s[1];
+      ((cl_short4*)fill_pixel)->s[2] = ((cl_int4*)fill_color)->s[2];
+      ((cl_short4*)fill_pixel)->s[3] = ((cl_int4*)fill_color)->s[3];
     }
  if (image->image_elem_size == 4)
     {

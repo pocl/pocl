@@ -619,7 +619,7 @@ struct event_callback_item
   void (*callback_function) (cl_event, cl_int, void*);
   void *user_data;
   cl_int trigger_status;
-  void *next;
+  struct event_callback_item *next;
 };
 
 typedef struct _cl_event _cl_event;

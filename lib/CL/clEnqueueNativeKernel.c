@@ -72,7 +72,7 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
   memcpy (args_copy, args, cb_args);
 
   /* recopy the cl_mem object list to free them easily after run */
-  mem_list_copy = malloc(num_mem_objects * sizeof(cl_mem));
+  mem_list_copy = (cl_mem*) malloc(num_mem_objects * sizeof(cl_mem));
   if (mem_list_copy == NULL)
     {
       POCL_MEM_FREE(args_copy);
@@ -102,7 +102,7 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
       POname(clRetainMemObject) (mem_list[i]);
       /* args_mem_loc is a pointer relative to the original args, since we
        * recopy them, we must do some relocation */
-      off_t offset = (uintptr_t) loc - (uintptr_t) args;
+      ptrdiff_t offset = (uintptr_t) loc - (uintptr_t) args;
 
       arg_loc = (void *) ((uintptr_t) args_copy + (uintptr_t)offset);
 

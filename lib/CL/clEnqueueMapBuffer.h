@@ -23,6 +23,8 @@
 #ifndef POCL_CL_ENQUEUE_MAP_BUFFER_H
 #define POCL_CL_ENQUEUE_MAP_BUFFER_H
 
+#include "pocl_cl.h"
+
 /* Function for performing the actual mapping, used both from the
    clFinish() and the blocking call. */
 void*

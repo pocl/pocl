@@ -39,15 +39,15 @@
 
 /*
 static inline int snprintf(char *str, size_t size, const char *format, ...) {
-   va_list args;
-   va_start(args, format);
-   _snprintf(str, size, format, args);
-   va_end(args);
+  va_list args;
+  va_start(args, format);
+  _snprintf(str, size, format, args);
+  va_end(args);
 }
 */
 
 static inline char* strtok_r(char *str, const char *delim, char **saveptr) {
-   return strtok_s(str, delim, saveptr);
+  return strtok_s(str, delim, saveptr);
 }
 
 /**
@@ -60,7 +60,7 @@ static inline lt_dlhandle lt_dlopen(const char* filename) {
 }
 
 static inline int lt_dlerror(void) {
-   return GetLastError();
+  return GetLastError();
 }
 
 static inline void *lt_dlsym(lt_dlhandle handle, const char *symbol) {
@@ -68,7 +68,7 @@ static inline void *lt_dlsym(lt_dlhandle handle, const char *symbol) {
 }
 
 static inline void lt_dlinit(void) {
-   // separate init not needed in windows
+  // separate init not needed in windows
 }
 
 /**
@@ -78,6 +78,32 @@ static inline void lt_dlinit(void) {
 #define R_OK    4       /* Test for read permission.  */
 #define W_OK    2       /* Test for write permission.  */
 #define F_OK    0       /* Test for existence.  */
+
+#include <stdlib.h>
+#include <direct.h>
+#define mkdir(a,b) mkdir(a)
+
+/**
+ * TODO: test these implementations...
+ */
+
+void gen_random(char *s, const int len) {
+  static const char alphanum[] =
+    "0123456789"
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz";
+
+  for (int i = 0; i < len; ++i) {
+    s[i] = alphanum[rand() % (sizeof(alphanum)-1)];
+  }
+  s[len] = 0;
+}
+
+void mkdtemp(char *temp) {
+  int rnd_start = strlen(temp) - 6;
+  gen_random(&temp[rnd_start], 6);
+  mkdir(temp);
+}
 
 /**
  * Memory allocation functions

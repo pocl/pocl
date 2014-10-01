@@ -24,6 +24,8 @@
 #ifndef POCL_IMAGE_UTIL_H
 #define POCL_IMAGE_UTIL_H
 
+#include "pocl_cl.h"
+
 #pragma GCC visibility push(hidden)
 
 extern cl_int 

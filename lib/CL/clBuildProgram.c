@@ -139,7 +139,7 @@ CL_API_SUFFIX__VERSION_1_0
       int size = 512; 
       int i = 1; /* terminating char */
       char *swap_tmp;
-      modded_options = calloc (size, 1);
+      modded_options = (char*) calloc (size, 1);
       temp_options = strdup (options);
       token = strtok_r (temp_options, " ", &saveptr);
       while (token != NULL)
@@ -171,7 +171,7 @@ CL_API_SUFFIX__VERSION_1_0
               if (size <= (i + strlen (token) + 1))
                 {
                   swap_tmp = modded_options;
-                  modded_options = malloc (size + 256);
+                  modded_options = (char*) malloc (size + 256);
                   if (modded_options == NULL)
                     return CL_OUT_OF_HOST_MEMORY;
                   memcpy (modded_options, swap_tmp, size);
@@ -200,7 +200,7 @@ CL_API_SUFFIX__VERSION_1_0
           if (size <= (i + strlen (token) + 1))
             {
               swap_tmp = modded_options;
-              modded_options = malloc (size + 256);
+              modded_options = (char*) malloc (size + 256);
               if (modded_options == NULL)
                 return CL_OUT_OF_HOST_MEMORY;
               memcpy (modded_options, swap_tmp, size); 

@@ -35,6 +35,10 @@
 #endif
 #include "llvm/Pass.h"
 
+#if _MSC_VER
+#  include <set>
+#endif
+
 namespace pocl {
   // View CFG with visual aids to debug kernel compiler problems.
   void dumpCFG(llvm::Function& F, std::string fname="", 
