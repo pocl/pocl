@@ -167,7 +167,7 @@ pocl_init_devices()
   char dev_name[MAX_DEV_NAME_LEN] = {0};
   unsigned int device_count[POCL_NUM_DEVICE_TYPES];
 
-  if (init_done == 0) // [Suggested by leekiju] Create at once
+  if (init_done == 0)
     POCL_INIT_LOCK(pocl_init_lock);
   POCL_LOCK(pocl_init_lock);
   if (init_done) 

@@ -201,7 +201,7 @@ static void exec_commands (_cl_command_node *node_list)
           DL_DELETE((node->command.unmap.memobj)->mappings, 
                     node->command.unmap.mapping);
           (node->command.unmap.memobj)->map_count--;
-          if((node->command.unmap.memobj)->map_count == 0) //[Suggested bu leekiju] For decreasing mem object's reference count, which was increased in clEnqueueMapBuffer
+          if((node->command.unmap.memobj)->map_count == 0)
             {
               POname(clReleaseMemObject) (node->command.unmap.memobj);
               free(node->command.unmap.mapping);
@@ -268,18 +268,18 @@ static void exec_commands (_cl_command_node *node_list)
           break;
         }   
 
-        if (event)  // [Suggested by leekiju] Should be included in the loop
-        {
-          /* event callback handling 
-          just call functions in the same order they were added */
-          for (cb_ptr = (*event)->callback_list; cb_ptr; cb_ptr = cb_ptr->next)
+        if (event)
           {
-             cb_ptr->callback_function ((*event), cb_ptr->trigger_status, 
-                                        cb_ptr->user_data);
+            /* event callback handling 
+               just call functions in the same order they were added */
+            for (cb_ptr = (*event)->callback_list; cb_ptr; cb_ptr = cb_ptr->next)
+              {
+                cb_ptr->callback_function ((*event), cb_ptr->trigger_status, 
+                                           cb_ptr->user_data);
+              }
+            if ((*event)->implicit_event)
+              POname(clReleaseEvent) (*event);
           }
-          if ((*event)->implicit_event)
-          POname(clReleaseEvent) (*event);
-        }
     }
 
 
@@ -292,7 +292,7 @@ static void exec_commands (_cl_command_node *node_list)
       _cl_command_node *tmp;
       tmp = node->next;
       pocl_mem_manager_free_command (node);
-      if(node->event_wait_list != NULL)  // [Suggested by leekiju] Should be de-allocated
+      if(node->event_wait_list != NULL)
         free(node->event_wait_list);
       node = tmp;
     }

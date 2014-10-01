@@ -41,7 +41,7 @@ void pocl_init_mem_manager (void)
   static unsigned int init_done = 0;
   static pocl_lock_t pocl_init_lock = POCL_LOCK_INITIALIZER;
 
-  if(!init_done)  // [Suggested by leekiju] Created at once
+  if(!init_done)
     {
       POCL_INIT_LOCK(pocl_init_lock);
       init_done = 1;
