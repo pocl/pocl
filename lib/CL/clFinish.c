@@ -292,8 +292,6 @@ static void exec_commands (_cl_command_node *node_list)
       _cl_command_node *tmp;
       tmp = node->next;
       pocl_mem_manager_free_command (node);
-      if(node->event_wait_list != NULL)
-        free(node->event_wait_list);
       node = tmp;
     }
 }
