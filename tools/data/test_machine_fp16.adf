@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no" ?>
-<adf version="1.7">
+<adf version="1.9">
 
   <bus name="B1">
     <width>32</width>
@@ -870,6 +870,44 @@
   </socket>
 
   <socket name="mach_msuh_addh_subh_mulh_o1">
+    <writes-to>
+      <bus>B1</bus>
+      <segment>seg1</segment>
+    </writes-to>
+    <writes-to>
+      <bus>B1_1</bus>
+      <segment>seg1</segment>
+    </writes-to>
+    <writes-to>
+      <bus>B1_2</bus>
+      <segment>seg1</segment>
+    </writes-to>
+    <writes-to>
+      <bus>B1_3</bus>
+      <segment>seg1</segment>
+    </writes-to>
+  </socket>
+
+  <socket name="rtc_rtimer_i1">
+    <reads-from>
+      <bus>B1</bus>
+      <segment>seg1</segment>
+    </reads-from>
+    <reads-from>
+      <bus>B1_1</bus>
+      <segment>seg1</segment>
+    </reads-from>
+    <reads-from>
+      <bus>B1_2</bus>
+      <segment>seg1</segment>
+    </reads-from>
+    <reads-from>
+      <bus>B1_3</bus>
+      <segment>seg1</segment>
+    </reads-from>
+  </socket>
+
+  <socket name="rtc_rtimer_o1">
     <writes-to>
       <bus>B1</bus>
       <segment>seg1</segment>
@@ -1831,13 +1869,13 @@
   <function-unit name="chf">
     <port name="in1t">
       <connects-to>chf_cfh_i1</connects-to>
-      <width>16</width>
+      <width>32</width>
       <triggers/>
       <sets-opcode/>
     </port>
     <port name="out1">
       <connects-to>chf_cfh_o1</connects-to>
-      <width>16</width>
+      <width>32</width>
     </port>
     <operation>
       <name>chf</name>
@@ -2004,6 +2042,50 @@
     <address-space/>
   </function-unit>
 
+  <function-unit name="rtc_rtimer">
+    <port name="in1t">
+      <connects-to>rtc_rtimer_i1</connects-to>
+      <width>32</width>
+      <triggers/>
+      <sets-opcode/>
+    </port>
+    <port name="out1">
+      <connects-to>rtc_rtimer_o1</connects-to>
+      <width>32</width>
+    </port>
+    <operation>
+      <name>rtc</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">out1</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <writes name="2">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </writes>
+      </pipeline>
+    </operation>
+    <operation>
+      <name>rtimer</name>
+      <bind name="1">in1t</bind>
+      <bind name="2">out1</bind>
+      <pipeline>
+        <reads name="1">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </reads>
+        <writes name="2">
+          <start-cycle>0</start-cycle>
+          <cycles>1</cycles>
+        </writes>
+      </pipeline>
+    </operation>
+    <address-space>global</address-space>
+  </function-unit>
+
   <register-file name="RF">
     <type>normal</type>
     <size>50</size>
@@ -2049,7 +2131,7 @@
   <address-space name="global">
     <width>8</width>
     <min-address>0</min-address>
-    <max-address>1048575</max-address>
+    <max-address>268435455</max-address>
     <numerical-id>3</numerical-id>
     <numerical-id>5</numerical-id>
   </address-space>
