@@ -21,22 +21,8 @@
    THE SOFTWARE.
 */
 
-#include "pocl_cl.h"
 #include "pocl_util.h"
 
-
-
-#define POCL_RETURN_QUEUE_INFO(__TYPE__, __VALUE__)                     \
-  {                                                                     \
-    size_t const value_size = sizeof(__TYPE__);                         \
-    if (param_value) {                                                  \
-      if (param_value_size < value_size) return CL_INVALID_VALUE;       \
-      *(__TYPE__*)param_value = __VALUE__;                              \
-    }                                                                   \
-    if (param_value_size_ret)                                           \
-      *param_value_size_ret = value_size;                               \
-    return CL_SUCCESS;                                                  \
-  }
 
 
 

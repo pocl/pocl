@@ -21,34 +21,8 @@
    THE SOFTWARE.
 */
 
-#include "pocl_cl.h"
-#include <string.h>
+#include "pocl_util.h"
 
-
-
-#define POCL_RETURN_KERNEL_INFO(__TYPE__, __VALUE__)                    \
-  {                                                                     \
-    size_t const value_size = sizeof(__TYPE__);                         \
-    if (param_value) {                                                  \
-      if (param_value_size < value_size) return CL_INVALID_VALUE;       \
-      *(__TYPE__*)param_value = __VALUE__;                              \
-    }                                                                   \
-    if (param_value_size_ret)                                           \
-      *param_value_size_ret = value_size;                               \
-    return CL_SUCCESS;                                                  \
-  }
-
-#define POCL_RETURN_KERNEL_INFO_STR(__STR__)                        \
-  {                                                                 \
-    size_t const value_size = strlen(__STR__) + 1;                  \
-    if (param_value) {                                              \
-      if (param_value_size < value_size) return CL_INVALID_VALUE;   \
-      memcpy(param_value, __STR__, value_size);                     \
-    }                                                               \
-    if (param_value_size_ret)                                       \
-      *param_value_size_ret = value_size;                           \
-    return CL_SUCCESS;                                              \
-  }                                                                 \
 
 
 
@@ -63,15 +37,15 @@ POname(clGetKernelInfo)(cl_kernel      kernel ,
     return CL_INVALID_KERNEL;
   switch (param_name) {
   case CL_KERNEL_FUNCTION_NAME:
-    POCL_RETURN_KERNEL_INFO_STR(kernel->name);
+    POCL_RETURN_GETINFO_STR(kernel->name);
   case CL_KERNEL_NUM_ARGS:
-    POCL_RETURN_KERNEL_INFO(cl_uint, kernel->num_args);
+    POCL_RETURN_GETINFO(cl_uint, kernel->num_args);
   case CL_KERNEL_REFERENCE_COUNT:
-    POCL_RETURN_KERNEL_INFO(cl_uint, kernel->pocl_refcount);
+    POCL_RETURN_GETINFO(cl_uint, kernel->pocl_refcount);
   case CL_KERNEL_CONTEXT:
-    POCL_RETURN_KERNEL_INFO(cl_context, kernel->context);
+    POCL_RETURN_GETINFO(cl_context, kernel->context);
   case CL_KERNEL_PROGRAM:
-    POCL_RETURN_KERNEL_INFO(cl_program, kernel->program);
+    POCL_RETURN_GETINFO(cl_program, kernel->program);
   }
   return CL_INVALID_VALUE;
 }

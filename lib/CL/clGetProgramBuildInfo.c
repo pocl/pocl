@@ -21,8 +21,7 @@
    THE SOFTWARE.
 */
 
-#include "pocl_cl.h"
-#include <string.h>
+#include "pocl_util.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clGetProgramBuildInfo)(cl_program            program,
@@ -46,41 +45,19 @@ POname(clGetProgramBuildInfo)(cl_program            program,
   switch (param_name) {
   case CL_PROGRAM_BUILD_STATUS:
     {
-      size_t const value_size = strlen(retval) + 1;
-      if (param_value)
-      {
-        if (param_value_size < value_size) return CL_INVALID_VALUE;
-        memcpy(param_value, retval, value_size);
-      }
-      if (param_value_size_ret)
-        *param_value_size_ret = value_size;
-
+      POCL_RETURN_GETINFO_STR(retval);
       return CL_SUCCESS;
     }
     
   case CL_PROGRAM_BUILD_OPTIONS:
     {
-      size_t const value_size = strlen(retval) + 1;
-      if (param_value)
-      {
-        if (param_value_size < value_size) return CL_INVALID_VALUE;
-        memcpy(param_value, retval, value_size);
-      }
-      if (param_value_size_ret)
-        *param_value_size_ret = value_size;
+      POCL_RETURN_GETINFO_STR(retval);
       return CL_SUCCESS;
     }
     
   case CL_PROGRAM_BUILD_LOG:
     {
-      size_t const value_size = strlen(retval) + 1;
-      if (param_value)
-      {
-        if (param_value_size < value_size) return CL_INVALID_VALUE;
-        memcpy(param_value, retval, value_size);
-      }
-      if (param_value_size_ret)
-        *param_value_size_ret = value_size;
+      POCL_RETURN_GETINFO_STR(retval);
       return CL_SUCCESS;
     }
   }

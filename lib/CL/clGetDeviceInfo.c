@@ -21,9 +21,7 @@
    THE SOFTWARE.
 */
 
-#include "pocl_cl.h"
 #include "pocl_util.h"
-#include <string.h>
 
 /* A version for querying the info and in case the device returns 
    a zero, assume the device info query hasn't been implemented 
@@ -43,18 +41,6 @@
     return CL_SUCCESS;                                              \
   } 
 
-#define POCL_RETURN_DEVICE_INFO_STR(__STR__)                        \
-  {                                                                 \
-    size_t const value_size = strlen(__STR__) + 1;                  \
-    if (param_value)                                                \
-      {                                                             \
-        if (param_value_size < value_size) return CL_INVALID_VALUE; \
-        memcpy(param_value, __STR__, value_size);                   \
-      }                                                             \
-    if (param_value_size_ret)                                       \
-      *param_value_size_ret = value_size;                           \
-    return CL_SUCCESS;                                              \
-  }                                                                 \
     
 
   
@@ -198,19 +184,19 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_GETINFO(cl_command_queue_properties, device->queue_properties);
    
   case CL_DEVICE_NAME:
-    POCL_RETURN_DEVICE_INFO_STR(device->long_name);
+    POCL_RETURN_GETINFO_STR(device->long_name);
    
   case CL_DEVICE_VENDOR                            : 
-    POCL_RETURN_DEVICE_INFO_STR(device->vendor);
+    POCL_RETURN_GETINFO_STR(device->vendor);
 
   case CL_DRIVER_VERSION:
-    POCL_RETURN_DEVICE_INFO_STR(device->driver_version);
+    POCL_RETURN_GETINFO_STR(device->driver_version);
   case CL_DEVICE_PROFILE                           : 
-    POCL_RETURN_DEVICE_INFO_STR(device->profile);
+    POCL_RETURN_GETINFO_STR(device->profile);
   case CL_DEVICE_VERSION                           : 
-    POCL_RETURN_DEVICE_INFO_STR(device->version); 
+    POCL_RETURN_GETINFO_STR(device->version);
   case CL_DEVICE_EXTENSIONS                        : 
-    POCL_RETURN_DEVICE_INFO_STR(device->extensions);
+    POCL_RETURN_GETINFO_STR(device->extensions);
   case CL_DEVICE_PLATFORM                          :
     {
       /* Return the first platform id, assuming this is the only
@@ -242,9 +228,9 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF          : 
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->native_vector_width_half);
   case CL_DEVICE_OPENCL_C_VERSION                  :
-    POCL_RETURN_DEVICE_INFO_STR("OpenCL C 1.2");
+    POCL_RETURN_GETINFO_STR("OpenCL C 1.2");
   case CL_DEVICE_BUILT_IN_KERNELS                  :
-    POCL_RETURN_DEVICE_INFO_STR("");
+    POCL_RETURN_GETINFO_STR("");
 
   /* TODO proper device partition support. For the time being,
    * the values returned only serve the purpose of indicating

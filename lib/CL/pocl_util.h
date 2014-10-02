@@ -26,6 +26,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include "pocl_cl.h"
 
 #pragma GCC visibility push(hidden)
@@ -73,18 +74,35 @@ void pocl_aligned_free(void* ptr);
  * and have been implemented to use the same variable names, so this
  * code can be shared.
  */
-#define POCL_RETURN_GETINFO(__TYPE__, __VALUE__)                \
-  {                                                                 \
-    size_t const value_size = sizeof(__TYPE__);                     \
-    if (param_value)                                                \
-      {                                                             \
-        if (param_value_size < value_size) return CL_INVALID_VALUE; \
-        *(__TYPE__*)param_value = __VALUE__;                        \
-      }                                                             \
-    if (param_value_size_ret)                                       \
-      *param_value_size_ret = value_size;                           \
-    return CL_SUCCESS;                                              \
-  } 
+
+#define POCL_RETURN_GETINFO_INNER(__SIZE__, MEMASSIGN)                  \
+    if (param_value) {                                                  \
+      if (param_value_size < __SIZE__) return CL_INVALID_VALUE;         \
+      MEMASSIGN;                                                        \
+    }                                                                   \
+    if (param_value_size_ret)                                           \
+      *param_value_size_ret = __SIZE__;                                 \
+    return CL_SUCCESS;                                                  \
+
+#define POCL_RETURN_GETINFO_SIZE(__SIZE__, __POINTER__)                 \
+  {                                                                     \
+    POCL_RETURN_GETINFO_INNER(__SIZE__,                                 \
+                memcpy(param_value, __POINTER__, __SIZE__))             \
+  }
+
+#define POCL_RETURN_GETINFO_STR(__STR__)                                \
+  {                                                                     \
+    size_t const value_size = strlen(__STR__) + 1;                      \
+    POCL_RETURN_GETINFO_INNER(value_size,                               \
+                memcpy(param_value, __STR__, value_size))               \
+  }
+
+#define POCL_RETURN_GETINFO(__TYPE__, __VALUE__)                        \
+  {                                                                     \
+    size_t const value_size = sizeof(__TYPE__);                         \
+    POCL_RETURN_GETINFO_INNER(value_size,                               \
+                *(__TYPE__*)param_value=__VALUE__)                      \
+  }
 
 
 /* Function for creating events */

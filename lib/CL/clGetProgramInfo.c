@@ -21,10 +21,8 @@
    THE SOFTWARE.
 */
 
-#include "pocl_cl.h"
 #include "pocl_llvm.h"
 #include "pocl_util.h"
-#include <string.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clGetProgramInfo)(cl_program program,
@@ -38,10 +36,8 @@ POname(clGetProgramInfo)(cl_program program,
   {
   case CL_PROGRAM_REFERENCE_COUNT:
     POCL_RETURN_GETINFO(cl_uint, (cl_uint)program->pocl_refcount);
-    break;
   case CL_PROGRAM_CONTEXT:
     POCL_RETURN_GETINFO(cl_context, program->context);
-    break;
 
   case CL_PROGRAM_SOURCE:
     {
@@ -49,31 +45,17 @@ POname(clGetProgramInfo)(cl_program program,
       if (source == NULL)
         source = "";
 
-      size_t const value_size = strlen(source) + 1;
-      if (param_value)
-      {
-        if (param_value_size < value_size) return CL_INVALID_VALUE;
-        memcpy(param_value, source, value_size);
-      }
-      if (param_value_size_ret)
-        *param_value_size_ret = value_size;
-      return CL_SUCCESS;
+      POCL_RETURN_GETINFO_STR(source);
     }
     
   case CL_PROGRAM_BINARY_SIZES:
     {
       size_t const value_size = sizeof(size_t) * program->num_devices;
       if (param_value)
-      {
         pocl_llvm_update_binaries (program);
-        if (param_value_size < value_size) return CL_INVALID_VALUE;
-        memcpy(param_value, program->binary_sizes, value_size);
-      }
-      if (param_value_size_ret)
-        *param_value_size_ret = value_size;
-      return CL_SUCCESS;
+      POCL_RETURN_GETINFO_SIZE(value_size, program->binary_sizes);
     }
-    
+
   case CL_PROGRAM_BINARIES:
     {
       size_t const value_size = sizeof(unsigned char *) * program->num_devices;
@@ -92,17 +74,7 @@ POname(clGetProgramInfo)(cl_program program,
       return CL_SUCCESS;
     }
   case CL_PROGRAM_NUM_DEVICES:
-    {
-      size_t const value_size = sizeof(cl_uint);
-      if (param_value)
-      {
-        if (param_value_size < value_size) return CL_INVALID_VALUE;
-        *(size_t *) param_value = program->num_devices;
-      }
-      if (param_value_size_ret)
-        *param_value_size_ret = value_size;
-      return CL_SUCCESS;
-    }
+    POCL_RETURN_GETINFO(cl_uint, program->num_devices);
 
   case CL_PROGRAM_DEVICES:
     {
