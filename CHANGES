@@ -8,14 +8,8 @@ Bugfixes
 - Fix falsely detecting operations with side-effects (especially atomic
   operations) as uniform. This caused deadlock/race situations due to 
   illegal implicit barrier injection.
-- Fix reference counting in _cl_command_queue object to release the object.
-- Fix reference counting in _cl_device_id object, which is included in _cl_context object.
-- Fix reference counting in _cl_mem object, when clEnqueueMapBuffer and clEnqueueUnmapMemObject are used.
-- Fix memory leak of _cl_event list object, which is allocated in clEnqueueMapBuffer in temporary.
-- Fix memory leaks of mem_mapping_t object, which is allocated in pocl_create_command.
-- Fix memory leaks of _cl_device_id object, which is included in _cl_program object, and allocated in clCreateProgramWithBinary.
-- Fix missing the initialization of mutex in device.c and pocl_mem_management.c
-- Fix the wrong placement of clReleaseEvent in the function "exec_commands" in clFinish.c
+- Fix several reference counting issues.
+- Memory leak fixes.
 
 Misc.
 -----
