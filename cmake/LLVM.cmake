@@ -158,10 +158,49 @@ list(APPEND LLVM_INCLUDE_DIRS
   "${LLVM_OBJ_ROOT}/include" 
   "${LLVM_OBJ_ROOT}/tools/clang/include")
 
+# Llvm-config does not include clang libs
+
+list(APPEND CLANG_LIB_NAMES 
+  clangFrontend 
+  clangDriver 
+  clangParse 
+  clangSema 
+  clangEdit 
+  clangLex 
+  clangSerialization 
+  clangBasic 
+  clangFrontendTool 
+  clangRewriteFrontend 
+  clangStaticAnalyzerFrontend 
+  clangStaticAnalyzerCore 
+  clangAnalysis 
+  clangCodeGen 
+  clangAST)
+
+foreach(CLANG_LIB_NAME ${CLANG_LIB_NAMES})
+  list(APPEND CLANG_SHARED_LIBS "-l${CLANG_LIB_NAME}")
+  if (MSVC)
+    list(APPEND CLANG_STATIC_LIBS "lib${CLANG_LIB_NAME}.lib")
+  else()
+    list(APPEND CLANG_STATIC_LIBS "lib${CLANG_LIB_NAME}.a")
+  endif(MSVC)
+endforeach()
+
+# With Visual Studio llvm-config gives invalid list of static libs (.a instead of .lib)
+if (MSVC)
+  SET(LLVM_MSVC_STATIC_LIB_LIST "")
+  foreach(LIBFILE ${LLVM_LIBFILES})
+    STRING(REGEX REPLACE ".a$" "" STATIC_LIB_NAME ${LIBFILE})
+    list(APPEND LLVM_MSVC_STATIC_LIB_LIST "${STATIC_LIB_NAME}.lib")
+  endforeach()
+  set(LLVM_LIBFILES ${LLVM_MSVC_STATIC_LIB_LIST})
+endif(MSVC)
+
 # Llvm-config --libs contain only llvm internal libraries, 
 # LLVM_ALL_LIBS has also list of clang libraries and required
 # system libs like, -lcurses etc.
-set(LLVM_ALL_LIBS "${LLVM_LIBS} ${LLVM_SYSLIBS}")
+#set(LLVM_ALL_SHARED_LIBS "${LLVM_LIBS} ${CLANG_SHARED_LIBS} ${LLVM_SYSLIBS}")
+#set(LLVM_ALL_STATIC_LIBS "${LLVM_LIBFILES} ${CLANG_STATIC_LIBS} ${LLVM_SYSLIBS}")
 
 ####################################################################
 
