@@ -26,6 +26,18 @@ execute_process(
   ERROR_VARIABLE stderr
 )
 
+if( sort_output )
+  message(STATUS "SORTING FILE")
+  file(STRINGS "${RANDOM_FILE}" output_string_list)
+  list(SORT output_string_list)
+  # for some reason sorting doesn't work when list contains newlines,
+  # have to add them after the sort
+  file(REMOVE "${RANDOM_FILE}")
+  string(REPLACE ";" "\n" OUTPUT "${output_string_list}")
+  set(RANDOM_FILE "${RANDOM_FILE}_sorted")
+  file(WRITE "${RANDOM_FILE}" "${OUTPUT}\n")
+endif()
+
 if( test_not_successful )
   message( SEND_ERROR "Test exited with nonzero code: ${test_cmd_separated}\nSTDERR:\n${stderr}" )
 endif()

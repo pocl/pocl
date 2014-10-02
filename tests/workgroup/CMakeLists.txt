@@ -28,6 +28,22 @@ function(add_test_workgroup TEST_NAME RESULT_FILE CL_FILE)
                   "${RESULT_FILE}" "${CL_FILE}" ${ARGN})
 endfunction()
 
+function(add_test_workgroup_sorted TEST_NAME RESULT_FILE CL_FILE)
+  set(RUN_CMD "${CMAKE_CURRENT_BINARY_DIR}/run_kernel")
+  foreach(LOOPVAR  "${CL_FILE}" ${ARGN})
+    set(RUN_CMD "${RUN_CMD}####${LOOPVAR}")
+  endforeach()
+
+  add_test("${TEST_NAME}"
+    "${CMAKE_COMMAND}"
+    -Dtest_cmd=${RUN_CMD}
+    -Dsort_output=1
+    -Doutput_blessed=${CMAKE_CURRENT_SOURCE_DIR}/${RESULT_FILE}
+    -P "${CMAKE_SOURCE_DIR}/cmake/run_test.cmake"
+  )
+endfunction()
+
+
 #AM_LDFLAGS = ../../lib/poclu/libpoclu.la @OPENCL_LIBS@
 #POCLU_LINK_OPTIONS
 
@@ -61,8 +77,7 @@ add_test_workgroup("\"workgroup/loop with two paths to the latch (full replicati
 
 add_test_workgroup("\"workgroup/b-loop with two latches (full replication)\"" "multilatch_bloop_1_3_1_1.stdout" "multilatch_bloop.cl" 1 3 1 1)
 
-# TODO pipe-sort
-add_test_workgroup("\"workgroup/workgroup_sizes: work-items get wrong ids (full replication)\"" "print_all_ids_114114.txt" "print_all_ids.cl" 1 1 1 4)
+add_test_workgroup_sorted("\"workgroup/workgroup_sizes: work-items get wrong ids (full replication)\"" "print_all_ids_114114.txt" "print_all_ids.cl" 1 1 1 4)
 
 set_tests_properties( "\"workgroup/unconditional barriers (full replication)\""
   "\"workgroup/unbarriered for loops (full replication)\""
@@ -99,8 +114,7 @@ add_test_workgroup("\"workgroup/loop with two paths to the latch (loops)\"" "for
 
 add_test_workgroup("\"workgroup/b-loop with two latches (loops)\"" "multilatch_bloop_1_3_1_1.stdout" "multilatch_bloop.cl" 1 3 1 1)
 
-# TODO pipe-sort
-add_test_workgroup("\"workgroup/workgroup_sizes: work-items get wrong ids (loops)\"" "print_all_ids_114114.txt" "print_all_ids.cl" 1 1 1 4)
+add_test_workgroup_sorted("\"workgroup/workgroup_sizes: work-items get wrong ids (loops)\"" "print_all_ids_114114.txt" "print_all_ids.cl" 1 1 1 4)
 
 
 set_tests_properties( "\"workgroup/unconditional barriers (loops)\""
@@ -118,10 +132,3 @@ set_tests_properties( "\"workgroup/unconditional barriers (loops)\""
     LABELS "workgroup"
     ENVIRONMENT "POCL_DEVICES=basic;POCL_WORK_GROUP_METHOD=workitemloops"
     DEPENDS "pocl_version_check")
-
-#These fail in a cmake build, but not in a autotools build. (why?)
-set_tests_properties( 
-  "\"workgroup/workgroup_sizes: work-items get wrong ids (full replication)\""
-  "\"workgroup/workgroup_sizes: work-items get wrong ids (loops)\""
-  PROPERTIES
-    WILL_FAIL 1)
