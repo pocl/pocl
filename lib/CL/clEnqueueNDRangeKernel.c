@@ -289,7 +289,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
 
   command_node->next = NULL; 
   
-  POname(clRetainCommandQueue) (command_queue);
+  
   POname(clRetainKernel) (kernel);
 
   command_node->command.run.arg_buffer_count = 0;

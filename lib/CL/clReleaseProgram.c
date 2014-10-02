@@ -51,6 +51,10 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
 
       POCL_RELEASE_OBJECT (program->context, new_refcount);
       free (program->source);
+
+      if(program->devices != program->context->devices)
+        free (program->devices);
+      
       if (program->binaries != NULL)
         {
           if (program->binaries[0])
