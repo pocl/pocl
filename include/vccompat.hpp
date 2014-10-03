@@ -87,7 +87,7 @@ static inline void lt_dlinit(void) {
  * TODO: test these implementations...
  */
 
-void gen_random(char *s, const int len) {
+static inline void gen_random(char *s, const int len) {
   static const char alphanum[] =
     "0123456789"
     "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -99,7 +99,7 @@ void gen_random(char *s, const int len) {
   s[len] = 0;
 }
 
-void mkdtemp(char *temp) {
+static inline void mkdtemp(char *temp) {
   int rnd_start = strlen(temp) - 6;
   gen_random(&temp[rnd_start], 6);
   mkdir(temp);
