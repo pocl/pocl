@@ -158,6 +158,12 @@ list(APPEND LLVM_INCLUDE_DIRS
   "${LLVM_OBJ_ROOT}/include" 
   "${LLVM_OBJ_ROOT}/tools/clang/include")
 
+# Convert LLVM_LIBFILES and LLVM_LIBS from string -> list format to make handling 
+# them easier (here we could also fix some parsing problems caused by spaces in path 
+# names in Windows)
+
+separate_arguments(LLVM_LIBFILES)
+separate_arguments(LLVM_LIBS)
 # Llvm-config does not include clang libs
 
 list(APPEND CLANG_LIB_NAMES 
