@@ -134,15 +134,22 @@ add_library("libpocl_unlinked_objs" OBJECT ${POCL_LIB_SOURCES})
 
 #################################################################
 
-set(POCL_PUBLIC_LINK_LIST "${LTDL_LIB}" ${CMAKE_THREAD_LIBS_INIT} ${POCL_DEVICES_LINK_LIST})
+if (MSVC)
+  set(POCL_PUBLIC_LINK_LIST ${Hwloc_LIBRARIES} ${Pthread_LIBRARIES} ${POCL_DEVICES_LINK_LIST})
+else()
+  set(POCL_PUBLIC_LINK_LIST ${Hwloc_LIBRARIES} "${LTDL_LIB}" ${CMAKE_THREAD_LIBS_INIT} ${POCL_DEVICES_LINK_LIST})
+endif()
 
-set(POCL_PRIVATE_LINK_LIST -lclangFrontend -lclangDriver -lclangParse -lclangSema -lclangEdit -lclangLex -lclangSerialization -lclangBasic -lclangFrontendTool -lclangRewriteFrontend -lclangStaticAnalyzerFrontend -lclangStaticAnalyzerCore -lclangAnalysis -lclangCodeGen -lclangAST  ${POCL_LLVM_LIBS})
+set(POCL_PRIVATE_LINK_LIST ${POCL_LLVM_LIBS})
 
 #################################################################
 
 
 add_library("pocl" ${LIBPOCL_OBJS} )
-set_target_properties("pocl" PROPERTIES SOVERSION "${LIB_API_VERSION}" VERSION "${LIB_BUILD_VERSION}" LINK_FLAGS "${LLVM_LDFLAGS} ${ICD_LD_FLAGS}")
+
+set_target_properties("pocl" PROPERTIES SOVERSION "${LIB_API_VERSION}" 
+  VERSION "${LIB_BUILD_VERSION}" 
+  LINK_FLAGS "${LLVM_LDFLAGS} ${ICD_LD_FLAGS}")
 target_link_libraries("pocl" PUBLIC ${POCL_PUBLIC_LINK_LIST} PRIVATE ${POCL_PRIVATE_LINK_LIST} )
 install(TARGETS "pocl"
         LIBRARY DESTINATION ${POCL_INSTALL_PUBLIC_LIBDIR}
