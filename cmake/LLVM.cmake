@@ -202,12 +202,6 @@ if (MSVC)
   set(LLVM_LIBFILES ${LLVM_MSVC_STATIC_LIB_LIST})
 endif(MSVC)
 
-# Llvm-config --libs contain only llvm internal libraries, 
-# LLVM_ALL_LIBS has also list of clang libraries and required
-# system libs like, -lcurses etc.
-#set(LLVM_ALL_SHARED_LIBS "${LLVM_LIBS} ${CLANG_SHARED_LIBS} ${LLVM_SYSLIBS}")
-#set(LLVM_ALL_STATIC_LIBS "${LLVM_LIBFILES} ${CLANG_STATIC_LIBS} ${LLVM_SYSLIBS}")
-
 ####################################################################
 
 macro(find_program_or_die OUTPUT_VAR PROG_NAME DOCSTRING)
@@ -496,7 +490,7 @@ if(NOT LLVM_CXXFLAGS MATCHES "-DNDEBUG")
   TRY_COMPILE(_TRY_SUCCESS ${CMAKE_BINARY_DIR} "${_TEST_SOURCE}"
     CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_INCLUDE_DIRS}"
     CMAKE_FLAGS "-DLINK_DIRECTORIES:STRING=${LLVM_LIBDIR}"
-    LINK_LIBRARIES ${LLVM_ALL_LIBS}
+    LINK_LIBRARIES "${LLVM_LIBS} ${LLVM_SYSLIBS}"
     COMPILE_DEFINITIONS ${TRY_COMPILE_CXX_FLAGS}
     OUTPUT_VARIABLE _TRY_COMPILE_OUTPUT
   )
