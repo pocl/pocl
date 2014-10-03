@@ -3,6 +3,11 @@
 #define _BSD_SOURCE             // define M_PI
 
 #include <assert.h>
+
+#ifdef _MSC_VER
+#  include "vccompat.hpp"
+#endif
+
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -44,7 +49,7 @@ exec_scalarwave_kernel(char      const *const program_source,
     size_t ndevices;
     clGetContextInfo(context, CL_CONTEXT_DEVICES, 0, NULL, &ndevices);
     ndevices /= sizeof(cl_device_id);
-    cl_device_id devices[ndevices];
+    cl_device_id *devices = (cl_device_id*)malloc(ndevices * sizeof(cl_device_id));
     clGetContextInfo(context, CL_CONTEXT_DEVICES,
                      ndevices*sizeof(cl_device_id), devices, NULL);
     
@@ -63,7 +68,8 @@ exec_scalarwave_kernel(char      const *const program_source,
     
     kernel = clCreateKernel(program, "scalarwave", NULL);
     if (!kernel) return -1;
-    
+
+    free (devices);
   }
   
   size_t const npoints = grid->ai * grid->aj * grid->ak;
@@ -120,7 +126,7 @@ exec_scalarwave_kernel(char      const *const program_source,
   /* clReleaseProgram(program); */
   /* clReleaseCommandQueue(cmd_queue); */
   /* clReleaseContext(context); */
-  
+ 
   return 0;
 }
 
@@ -152,7 +158,7 @@ main(void)
   size_t const source_size = ftell(source_file);
   fseek(source_file, 0, SEEK_SET);
   
-  char source[source_size + 1];
+  char *source = (char*)malloc(source_size + 1);
   fread(source, source_size, 1, source_file);
   source[source_size] = '\0';
   
@@ -226,6 +232,7 @@ main(void)
   }
   
   printf ("Done.\n");
-  
+
+  free(source);
   return 0;
 }

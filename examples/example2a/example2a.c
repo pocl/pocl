@@ -28,6 +28,10 @@
 #include <CL/opencl.h>
 #include "poclu.h"
 
+#ifdef _MSC_VER
+#  include "vccompat.hpp"
+#endif
+
 #define WIDTH 256
 #define HEIGHT 4096
 #define PADDING 32

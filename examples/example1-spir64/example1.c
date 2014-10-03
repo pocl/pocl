@@ -68,14 +68,14 @@ main (void)
 
   for (i = 0; i < N; ++i)
     {
-      srcA[i].x = i;
-      srcA[i].y = i;
-      srcA[i].z = i;
-      srcA[i].w = i;
-      srcB[i].x = i;
-      srcB[i].y = i;
-      srcB[i].z = i;
-      srcB[i].w = i;
+      srcA[i].s[0] = i;
+      srcA[i].s[1] = i;
+      srcA[i].s[2] = i;
+      srcA[i].s[3] = i;
+      srcB[i].s[0] = i;
+      srcB[i].s[1] = i;
+      srcB[i].s[2] = i;
+      srcB[i].s[3] = i;
     }
 
   ierr = exec_dot_product_kernel (source, source_size, N, srcA, srcB, dst);
@@ -84,17 +84,17 @@ main (void)
   for (i = 0; i < 4; ++i)
     {
       printf ("(%f, %f, %f, %f) . (%f, %f, %f, %f) = %f\n",
-	      srcA[i].x, srcA[i].y, srcA[i].z, srcA[i].w,
-	      srcB[i].x, srcB[i].y, srcB[i].z, srcB[i].w,
-	      dst[i]);
-      if (srcA[i].x * srcB[i].x +
-	  srcA[i].y * srcB[i].y +
-	  srcA[i].z * srcB[i].z +
-	  srcA[i].w * srcB[i].w != dst[i])
-	{
-	  printf ("FAIL\n");
-	  return -1;
-	}
+        srcA[i].s[0], srcA[i].s[1], srcA[i].s[2], srcA[i].s[3],
+        srcB[i].s[0], srcB[i].s[1], srcB[i].s[2], srcB[i].s[3],
+        dst[i]);
+      if (srcA[i].s[0] * srcB[i].s[0] +
+          srcA[i].s[1] * srcB[i].s[1] +
+          srcA[i].s[2] * srcB[i].s[2] +
+          srcA[i].s[3] * srcB[i].s[3] != dst[i])
+        {
+          printf ("FAIL\n");
+          return -1;
+        }
     }
 
   printf ("OK\n");

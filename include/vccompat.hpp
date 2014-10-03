@@ -50,6 +50,11 @@ static inline char* strtok_r(char *str, const char *delim, char **saveptr) {
   return strtok_s(str, delim, saveptr);
 }
 
+#define _USE_MATH_DEFINES
+
+#define srand48(x) srand(x)
+#define drand48() (double(rand()) / RAND_MAX)
+
 /**
  * ltdl compatibility functions
  */
