@@ -5,6 +5,10 @@
 #include <CL/opencl.h>
 #include "poclu.h"
 
+#ifdef _MSC_VER
+#  include "vccompat.hpp"
+#endif
+
 #ifndef SRCDIR
 #  define SRCDIR="."
 #endif

@@ -26,6 +26,14 @@
 
 #include <CL/opencl.h>
 
+#ifdef _MSC_VER
+#define POCLU_CALL __cdecl
+#define POCLU_API __declspec(dllexport)
+#else
+#define POCLU_CALL
+#define POCLU_API
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -37,29 +45,29 @@ extern "C" {
  * Queries the target device using the OpenCL API for the endianness
  * and swaps if it differs from the host's.
  */
-cl_int
+POCLU_API cl_int POCLU_CALL
 poclu_bswap_cl_int(cl_device_id device, cl_int original);
 
-cl_half
+POCLU_API cl_half POCLU_CALL
 poclu_bswap_cl_half(cl_device_id device, cl_half original);
 
-cl_float
+POCLU_API cl_float POCLU_CALL
 poclu_bswap_cl_float(cl_device_id device, cl_float original);
 
-cl_float2
+POCLU_API cl_float2 POCLU_CALL
 poclu_bswap_cl_float2(cl_device_id device, cl_float2 original);
 
 /* In-place swapping of arrays. */
-void
+POCLU_API void POCLU_CALL
 poclu_bswap_cl_int_array(cl_device_id device, cl_int* array, size_t num_elements);
 
-void
+POCLU_API void POCLU_CALL
 poclu_bswap_cl_half_array(cl_device_id device, cl_half* array, size_t num_elements);
 
-void
+POCLU_API void POCLU_CALL
 poclu_bswap_cl_float_array(cl_device_id device, cl_float* array, size_t num_elements);
 
-void
+POCLU_API void POCLU_CALL
 poclu_bswap_cl_float2_array(cl_device_id device, cl_float2* array, size_t num_elements);
 
 /**
@@ -67,34 +75,35 @@ poclu_bswap_cl_float2_array(cl_device_id device, cl_float2* array, size_t num_el
  */
 
 /* Create a context in the first platform found. */
-cl_context
+POCLU_API cl_context POCLU_CALL
 poclu_create_any_context();
 
 /* Set up a context, device and queue for platform 0, device 0.
  * All input parameters must be allocated by caller!
  * Returns CL_SUCCESS on success, or a descriptive OpenCL error code upon failure.
  */
-cl_int
+POCLU_API cl_int POCLU_CALL
 poclu_get_any_device( cl_context *context, cl_device_id *device, cl_command_queue *queue);
 
 /**
  * cl_half related helpers.
  */
-cl_half
+POCLU_API cl_half POCLU_CALL
 poclu_float_to_cl_half(float value);
 
-float
+POCLU_API float POCLU_CALL
 poclu_cl_half_to_float(cl_half value);
 
 /* Read content of file to a malloc'd buffer, which is returned.
  * Return NULL on errors */
-char *
+POCLU_API char * POCLU_CALL
 poclu_read_file(char* filemane);
 
 /* In case cl_err != CL_SUCCESS, prints out the error + function : line to stderr,
  * and returns 1, otherwise returns 0
  */
-int check_cl_error(cl_int cl_err, int line, const char* func_name);
+POCLU_API int POCLU_CALL
+check_cl_error(cl_int cl_err, int line, const char* func_name);
 
 #ifdef __cplusplus
 }
