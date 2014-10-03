@@ -69,6 +69,30 @@ void *pocl_aligned_malloc(size_t alignment, size_t size);
 void pocl_aligned_free(void* ptr);
 #endif
 
+/* Function for creating events */
+cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
+                          cl_command_type command_type);
+
+cl_int pocl_create_command (_cl_command_node **cmd,
+                            cl_command_queue command_queue,
+                            cl_command_type command_type, cl_event *event,
+                            cl_int num_events, const cl_event *wait_list);
+
+
+void pocl_command_enqueue (cl_command_queue command_queue,
+                          _cl_command_node *node);
+
+/* Function to get current process name */
+char* pocl_get_process_name ();
+
+/* File utility functions */
+void pocl_create_or_append_file (const char* file_name, const char* content);
+
+/* Allocates memory and places file contents in it. Returns number of chars read */
+int pocl_read_text_file (const char* file_name, char** content_dptr);
+
+void pocl_check_and_invalidate_cache (cl_program program, int device_i, const char* device_tmpdir);
+
 #ifdef __cplusplus
 }
 #endif
@@ -108,30 +132,5 @@ void pocl_aligned_free(void* ptr);
     POCL_RETURN_GETINFO_INNER(value_size,                               \
                 *(__TYPE__*)param_value=__VALUE__)                      \
   }
-
-
-/* Function for creating events */
-cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue, 
-                          cl_command_type command_type);
-
-cl_int pocl_create_command (_cl_command_node **cmd, 
-                            cl_command_queue command_queue, 
-                            cl_command_type command_type, cl_event *event, 
-                            cl_int num_events, const cl_event *wait_list);
-  
-
-void pocl_command_enqueue (cl_command_queue command_queue,
-                          _cl_command_node *node);
-
-/* Function to get current process name */
-char* pocl_get_process_name ();
-
-/* File utility functions */
-void pocl_create_or_append_file (const char* file_name, char* content);
-
-/* Allocates memory and places file contents in it. Returns number of chars read */
-int pocl_read_text_file (const char* file_name, char** content_dptr);
-
-void pocl_check_and_invalidate_cache (cl_program program, int device_i, const char* device_tmpdir);
 
 #endif

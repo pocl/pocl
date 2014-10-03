@@ -51,6 +51,7 @@
 /* The filename in which the work group (parallelizable) kernel LLVM bc is stored in 
    the kernel's temp dir. */
 #define POCL_PARALLEL_BC_FILENAME "parallel.bc"
+#define POCL_BUILDLOG_FILENAME    "build.log"
 
 #if __STDC_VERSION__ < 199901L
 # if __GNUC__ >= 2
@@ -496,6 +497,8 @@ struct _cl_program {
   uint8_t build_hash[SHA1_DIGEST_SIZE];
   /* Used to store the llvm IR of the build to save disk I/O. */
   void **llvm_irs;
+  /* Use to store build status */
+  cl_build_status build_status;
 };
 
 struct _cl_kernel {

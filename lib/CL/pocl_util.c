@@ -77,7 +77,7 @@ pocl_make_directory (const char *path_name)
 }
 
 void
-pocl_create_or_append_file (const char* file_name, char* content)
+pocl_create_or_append_file (const char *file_name, const char *content)
 {
   FILE *fp = fopen(file_name, "a");
   if ((fp == NULL) || (content == NULL))
@@ -426,7 +426,7 @@ pocl_check_and_invalidate_cache (cl_program program,
 {
   int cache_dirty = 0;
   char version_file[CACHE_DIR_PATH_CHARS];
-  char *content, *s_ptr, *ss_ptr;
+  char *content = NULL, *s_ptr, *ss_ptr;
   int read = 0;
 
   if (!cache_lock_initialized)
@@ -453,9 +453,7 @@ pocl_check_and_invalidate_cache (cl_program program,
         {
           cache_dirty = 1;
         }
-
-      if (content)
-        POCL_MEM_FREE(content);
+      POCL_MEM_FREE(content);
     }
   else
     {

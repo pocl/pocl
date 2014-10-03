@@ -129,6 +129,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
   program->devices = malloc (sizeof(cl_device_id) * num_devices);
   program->source = NULL;
   program->kernels = NULL;
+  program->build_status = CL_BUILD_NONE;
 
   pos = program->binaries[0];
   for (i = 0; i < num_devices; ++i)

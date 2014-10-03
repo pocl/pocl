@@ -21,7 +21,9 @@
    THE SOFTWARE.
 */
 
+#include "pocl_cl.h"
 #include "pocl_util.h"
+#include <string.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clGetProgramBuildInfo)(cl_program            program,
@@ -31,8 +33,6 @@ POname(clGetProgramBuildInfo)(cl_program            program,
                       void *                param_value,
                       size_t *              param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
-  const char *retval = "";      /* dummy return value */
-  
   int i;
   cl_bool found;
 
@@ -45,19 +45,47 @@ POname(clGetProgramBuildInfo)(cl_program            program,
   switch (param_name) {
   case CL_PROGRAM_BUILD_STATUS:
     {
-      POCL_RETURN_GETINFO_STR(retval);
+      size_t const value_size = sizeof(cl_build_status);
+      if (param_value)
+      {
+        if (param_value_size < value_size) return CL_INVALID_VALUE;
+        memcpy(param_value, &(program->build_status), value_size);
+      }
+      if (param_value_size_ret)
+        *param_value_size_ret = value_size;
+
       return CL_SUCCESS;
     }
     
   case CL_PROGRAM_BUILD_OPTIONS:
     {
-      POCL_RETURN_GETINFO_STR(retval);
+      size_t const value_size = strlen(program->compiler_options) + 1;
+      if (param_value && program->compiler_options)
+      {
+        if (param_value_size < value_size) return CL_INVALID_VALUE;
+        memcpy(param_value, program->compiler_options, value_size);
+      }
+      if (param_value_size_ret)
+        *param_value_size_ret = value_size;
       return CL_SUCCESS;
     }
     
   case CL_PROGRAM_BUILD_LOG:
     {
-      POCL_RETURN_GETINFO_STR(retval);
+      char *build_log = NULL;
+      char buildlog_file_name[POCL_FILENAME_LENGTH];
+      snprintf(buildlog_file_name, POCL_FILENAME_LENGTH, "%s/%s",
+               program->temp_dir, POCL_BUILDLOG_FILENAME);
+
+      size_t const value_size = pocl_read_text_file(buildlog_file_name, &build_log) + 1;
+      if (param_value && build_log)
+      {
+        if (param_value_size < value_size) return CL_INVALID_VALUE;
+        memcpy(param_value, build_log, value_size);
+        POCL_MEM_FREE(build_log);
+      }
+      if (param_value_size_ret)
+        *param_value_size_ret = value_size;
       return CL_SUCCESS;
     }
   }

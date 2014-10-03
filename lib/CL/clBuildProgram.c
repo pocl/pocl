@@ -95,6 +95,7 @@ CL_API_SUFFIX__VERSION_1_0
 {
   char device_tmpdir[POCL_FILENAME_LENGTH];
   char binary_file_name[POCL_FILENAME_LENGTH];
+  char buildlog_file_name[POCL_FILENAME_LENGTH];
   FILE *binary_file;
   size_t n;
   int errcode;
@@ -111,6 +112,7 @@ CL_API_SUFFIX__VERSION_1_0
   char *modded_options = NULL;
   char *token;
   char *saveptr;
+  char *str = NULL;
 
   if (program == NULL)
   {
@@ -278,6 +280,8 @@ CL_API_SUFFIX__VERSION_1_0
 
       snprintf(binary_file_name, POCL_FILENAME_LENGTH, "%s/%s",
                device_tmpdir, POCL_PROGRAM_BC_FILENAME);
+      snprintf(buildlog_file_name, POCL_FILENAME_LENGTH, "%s/%s",
+               program->temp_dir, POCL_BUILDLOG_FILENAME);
 
       /* First call to clBuildProgram. Cache not filled yet */
       if (access(binary_file_name, F_OK) != 0)
@@ -305,6 +309,11 @@ CL_API_SUFFIX__VERSION_1_0
               fclose (binary_file);
             }
         }
+      else if (pocl_read_text_file(buildlog_file_name, &str))
+        {
+          fprintf(stderr, str);
+          POCL_MEM_FREE(str);
+        }
 
       /* Read binaries from program.bc to memory */
       if (program->binaries[device_i] == NULL)
@@ -331,6 +340,7 @@ CL_API_SUFFIX__VERSION_1_0
         }
     }
 
+  program->build_status = CL_BUILD_SUCCESS;
   POCL_UNLOCK_OBJ(program);
   return CL_SUCCESS;
 
@@ -348,6 +358,7 @@ ERROR_CLEAN_PROGRAM:
 ERROR_CLEAN_OPTIONS:
   POCL_MEM_FREE(modded_options);
 ERROR:
+  program->build_status = CL_BUILD_ERROR;
   POCL_UNLOCK_OBJ(program);
   return errcode;
 }

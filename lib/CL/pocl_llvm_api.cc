@@ -194,6 +194,7 @@ int pocl_llvm_build_program(cl_program program,
                             const char* user_options)
 
 { 
+  char build_log_filename[POCL_FILENAME_LENGTH];
   llvm::MutexGuard lockHolder(kernelCompilerLock);
   InitializeLLVM();
 
@@ -214,6 +215,13 @@ int pocl_llvm_build_program(cl_program program,
 
   // add device specific switches, if any
   std::stringstream ss;
+  std::stringstream ss_build_log;
+
+  snprintf(build_log_filename, POCL_FILENAME_LENGTH, "%s/%s",
+                temp_dir, POCL_BUILDLOG_FILENAME);
+  /* Overwrite build log */
+  FILE *fp = fopen(build_log_filename, "w");
+  if (fp) fclose(fp);
 
   if (device->ops->init_build != NULL) 
     {
@@ -284,15 +292,16 @@ int pocl_llvm_build_program(cl_program program,
       for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->err_begin(), 
              e = diagsBuffer->err_end(); i != e; ++i) 
         {
-          // TODO: transfer the errors to clGetProgramBuildInfo
-          std::cerr << "error: " << (*i).second << std::endl;
+          ss_build_log << "error: " << (*i).second << std::endl;
         }
       for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->warn_begin(), 
              e = diagsBuffer->warn_end(); i != e; ++i) 
         {
-          // TODO: transfer the warnings to clGetProgramBuildInfo
-          std::cerr << "warning: " << (*i).second << std::endl;
+          ss_build_log << "warning: " << (*i).second << std::endl;
         }
+      pocl_create_or_append_file(build_log_filename,
+                                      ss_build_log.str().c_str());
+      std::cerr << ss_build_log.str();
       return CL_INVALID_BUILD_OPTIONS;
     }
   
@@ -347,9 +356,9 @@ int pocl_llvm_build_program(cl_program program,
   // FIXME: print out any diagnostics to stdout for now. These should go to a buffer for the user
   // to dig out. (and probably to stdout too, overridable with environment variables) 
 #ifdef LLVM_3_2
-  CI.createDiagnostics(0, NULL);
+  CI.createDiagnostics(0, NULL, diagsBuffer, false);
 #else
-  CI.createDiagnostics();
+  CI.createDiagnostics(diagsBuffer, false);
 #endif 
  
   FrontendOptions &fe = pocl_build.getFrontendOpts();
@@ -370,17 +379,37 @@ int pocl_llvm_build_program(cl_program program,
   clang::CodeGenAction *action = NULL;
   action = new clang::EmitLLVMOnlyAction(GlobalContext());
   success |= CI.ExecuteAction(*action);
+
+  SourceManager &source_manager = CI.getSourceManager();
+  for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->err_begin(),
+       e = diagsBuffer->err_end(); i != e; ++i)
+    {
+      ss_build_log << "error: " << (*i).first.printToString(source_manager)
+                   << ": " << (*i).second << std::endl;
+    }
+  for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->warn_begin(),
+       e = diagsBuffer->warn_end(); i != e; ++i)
+    {
+      ss_build_log << "warning: " << (*i).first.printToString(source_manager)
+                   << ": " << (*i).second << std::endl;
+    }
+  pocl_create_or_append_file(build_log_filename,
+                                ss_build_log.str().c_str());
+  std::cerr << ss_build_log.str();
+
   // FIXME: memleak, see FIXME below
   if (!success) return CL_BUILD_PROGRAM_FAILURE;
 
   llvm::Module **mod = (llvm::Module **)&program->llvm_irs[device_i];
   if (*mod != NULL)
     delete (llvm::Module*)*mod;
+
 #if LLVM_VERSION_MAJOR==3 && LLVM_VERSION_MINOR<6
   *mod = action->takeModule();
 #else
   *mod = action->takeModule().release();
 #endif
+
   if (*mod == NULL)
     return CL_BUILD_PROGRAM_FAILURE;
 
