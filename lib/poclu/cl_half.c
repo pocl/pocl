@@ -75,7 +75,7 @@ poclu_cl_half_to_float(cl_half value)
 
   float v = (exp == 0) ? mant : mant | 0x0400; // 1.x if not denormal
   v /= 0x400;
-  float mul = exp2(exp - 15);
+  float mul = exp2((float)exp - 15);
   v *= mul;
   if (sgn) {
     v *= -1;

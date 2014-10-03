@@ -123,7 +123,7 @@ poclu_bswap_cl_float2_array(cl_device_id device, cl_float2* array,
   if (!needs_swap (device)) return;
   for (i = 0; i < num_elements; ++i) 
     {
-      GENERIC_BYTESWAP (cl_float, array[i].x);
-      GENERIC_BYTESWAP (cl_float, array[i].y);
+      GENERIC_BYTESWAP (cl_float, array[i].s[0]);
+      GENERIC_BYTESWAP (cl_float, array[i].s[1]);
     }
 }
