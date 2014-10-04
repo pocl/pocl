@@ -556,11 +556,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 {
 
   int i;
-  unsigned n;
   llvm::Module *input = NULL;
-  SMDiagnostic Err;
-  FILE *binary_file;
-  char binary_filename[POCL_FILENAME_LENGTH];
   char tmpdir[POCL_FILENAME_LENGTH];
 
   assert(program->devices[device_i]->llvm_target_triplet && 
@@ -574,48 +570,20 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
       printf("### use a saved llvm::Module\n");
 #endif
     }
-
-  snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
-            device_tmpdir, kernel_name);
-
-  if (access (tmpdir, F_OK) != 0)
-    mkdir(tmpdir, S_IRWXU);
+  else
+    {
+      *errcode = CL_INVALID_PROGRAM_EXECUTABLE;
+      return 1;
+    }
 
   (void) snprintf(descriptor_filename, POCL_FILENAME_LENGTH,
                     "%s/%s/descriptor.so", device_tmpdir, kernel_name);
 
-  if (input == NULL)
-    {
-      (void) snprintf(binary_filename, POCL_FILENAME_LENGTH,
-                       "%s/kernel.bc",
-                       tmpdir);
+  snprintf(tmpdir, POCL_FILENAME_LENGTH, "%s/%s",
+            device_tmpdir, kernel_name);
 
-      binary_file = fopen(binary_filename, "w+");
-      if (binary_file == NULL)
-        return CL_OUT_OF_HOST_MEMORY;
-
-      n = fwrite(program->binaries[device_i], 1,
-                 program->binary_sizes[device_i], binary_file);
-      if (n < program->binary_sizes[device_i])
-        return CL_OUT_OF_HOST_MEMORY;
-      fclose(binary_file); 
-
-      input = ParseIRFile(binary_filename, Err, *GlobalContext());
-      if (program->llvm_irs != NULL)
-        program->llvm_irs[device_i] = input;
-      assert(&input->getContext() == GlobalContext());
-      if (!input) 
-        {
-          // TODO:
-          raw_os_ostream os(std::cout);
-          Err.print("pocl error: bad kernel file ", os);
-          os.flush();
-          exit(1);
-        }
-      if (!pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
-        pocl_remove_file(binary_filename);
-    }
-
+  if (access(tmpdir, F_OK) != 0)
+    mkdir(tmpdir, S_IRWXU);
 
 #ifdef DEBUG_POCL_LLVM_API        
   printf("### fetching kernel metadata for kernel %s program %p input llvm::Module %p\n",

@@ -54,7 +54,6 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   size_t local_x, local_y, local_z;
   char tmpdir[POCL_FILENAME_LENGTH];
   char kernel_filename[POCL_FILENAME_LENGTH];
-  FILE *kernel_file;
   char parallel_filename[POCL_FILENAME_LENGTH];
   char so_filename[POCL_FILENAME_LENGTH];
   size_t n;
@@ -186,46 +185,21 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
 
   error = snprintf
           (kernel_filename, POCL_FILENAME_LENGTH,
-           "%s/%s/%s/kernel.bc", kernel->program->temp_dir,
-           command_queue->device->short_name, kernel->name);
+           "%s/%s/%s", kernel->program->temp_dir,
+           command_queue->device->short_name, POCL_PROGRAM_BC_FILENAME);
   if (error < 0)
     return CL_OUT_OF_HOST_MEMORY;
 
   if (access(so_filename, F_OK) != 0)
     {
-      if (kernel->program->llvm_irs[0] == NULL)
-      {
-        if (access (kernel_filename, F_OK) != 0)
-          {
-            kernel_file = fopen(kernel_filename, "w+");
-            if (kernel_file == NULL)
-              return CL_OUT_OF_HOST_MEMORY;
-
-            n = fwrite(kernel->program->binaries[command_queue->device->dev_id], 1,
-                       kernel->program->binary_sizes[command_queue->device->dev_id],
-                       kernel_file);
-            if (n < kernel->program->binary_sizes[command_queue->device->dev_id])
-              return CL_OUT_OF_HOST_MEMORY;
-
-            fclose(kernel_file);
-          }
-      }
-
       error = pocl_llvm_generate_workgroup_function
           (command_queue->device,
            kernel, local_x, local_y, local_z,
            parallel_filename, kernel_filename);
 
       if (error)  return error;
-
-      /* Remove intermediate files and save some space in kernel cache */
-      if (!pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
-        {
-          if (access (kernel_filename, F_OK) == 0)
-            pocl_remove_file(kernel_filename);
-        }
     }
-  
+
   error = pocl_create_command (&command_node, command_queue,
                                CL_COMMAND_NDRANGE_KERNEL,
                                event, num_events_in_wait_list,
