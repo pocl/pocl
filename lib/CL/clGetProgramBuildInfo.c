@@ -33,6 +33,9 @@ POname(clGetProgramBuildInfo)(cl_program            program,
                       void *                param_value,
                       size_t *              param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
+  const char *empty_str = "";      /* dummy return value */
+  const char *str;
+
   int i;
   cl_bool found;
 
@@ -45,29 +48,13 @@ POname(clGetProgramBuildInfo)(cl_program            program,
   switch (param_name) {
   case CL_PROGRAM_BUILD_STATUS:
     {
-      size_t const value_size = sizeof(cl_build_status);
-      if (param_value)
-      {
-        if (param_value_size < value_size) return CL_INVALID_VALUE;
-        memcpy(param_value, &(program->build_status), value_size);
-      }
-      if (param_value_size_ret)
-        *param_value_size_ret = value_size;
-
-      return CL_SUCCESS;
+      POCL_RETURN_GETINFO(cl_build_status, program->build_status);
     }
     
   case CL_PROGRAM_BUILD_OPTIONS:
     {
-      size_t const value_size = strlen(program->compiler_options) + 1;
-      if (param_value && program->compiler_options)
-      {
-        if (param_value_size < value_size) return CL_INVALID_VALUE;
-        memcpy(param_value, program->compiler_options, value_size);
-      }
-      if (param_value_size_ret)
-        *param_value_size_ret = value_size;
-      return CL_SUCCESS;
+      str = (program->compiler_options)? program->compiler_options: empty_str;
+      POCL_RETURN_GETINFO_STR(str);
     }
     
   case CL_PROGRAM_BUILD_LOG:
@@ -77,13 +64,16 @@ POname(clGetProgramBuildInfo)(cl_program            program,
       snprintf(buildlog_file_name, POCL_FILENAME_LENGTH, "%s/%s",
                program->temp_dir, POCL_BUILDLOG_FILENAME);
 
-      size_t const value_size = pocl_read_text_file(buildlog_file_name, &build_log) + 1;
-      if (param_value && build_log)
+      str = (pocl_read_text_file(buildlog_file_name, &build_log))?
+                        build_log: empty_str;
+
+      size_t const value_size = strlen(str) + 1;
+      if (param_value)
       {
         if (param_value_size < value_size) return CL_INVALID_VALUE;
-        memcpy(param_value, build_log, value_size);
-        POCL_MEM_FREE(build_log);
+        memcpy(param_value, str, value_size);
       }
+      POCL_MEM_FREE(build_log);
       if (param_value_size_ret)
         *param_value_size_ret = value_size;
       return CL_SUCCESS;
