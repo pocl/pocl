@@ -311,7 +311,7 @@ CL_API_SUFFIX__VERSION_1_0
         }
       else if (pocl_read_text_file(filename_str, &str))
         {
-          fprintf(stderr, str);
+          fputs(str, stderr);
           POCL_MEM_FREE(str);
         }
 
