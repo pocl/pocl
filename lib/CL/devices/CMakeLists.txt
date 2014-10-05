@@ -42,12 +42,16 @@ if(ENABLE_SPU)
   list(APPEND POCL_DEVICES_LINK_LIST "spe2")
 endif()
 
+set(POCL_DEVICES_SOURCES 
+  devices.h  devices.c
+  bufalloc.c  dev_image.h
+  common.h common.c
+  bufalloc.h  cpuinfo.c cpuinfo.h)
 
-add_library("pocl-devices" OBJECT
-        devices.h  devices.c
-        bufalloc.c  dev_image.h
-        common.h common.c
-        bufalloc.h  cpuinfo.c cpuinfo.h)
+if(MSVC)
+  set_source_files_properties( ${POCL_DEVICES_SOURCES} PROPERTIES LANGUAGE CXX )
+endif(MSVC)
+add_library("pocl-devices" OBJECT ${POCL_DEVICES_SOURCES})
 
 set(POCL_DEVICES_LINK_LIST ${POCL_DEVICES_LINK_LIST} PARENT_SCOPE)
 set(POCL_DEVICES_OBJS ${POCL_DEVICES_OBJS} PARENT_SCOPE)

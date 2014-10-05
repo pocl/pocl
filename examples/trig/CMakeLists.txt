@@ -29,6 +29,9 @@ add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 # trig_CFLAGS = @OPENCL_CFLAGS@
 add_compile_options(${OPENCL_CFLAGS})
 
+if(MSVC)
+  set_source_files_properties( trig.c trig_exec.c PROPERTIES LANGUAGE CXX )
+endif(MSVC)
 add_executable("trig" trig.c trig.cl trig_exec.c)
 
 # trig_LDADD = @OPENCL_LIBS@ -lm ../../lib/poclu/libpoclu.la

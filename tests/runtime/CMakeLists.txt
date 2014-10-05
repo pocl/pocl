@@ -42,6 +42,9 @@ set(PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
 add_compile_options(${OPENCL_CFLAGS})
 
 foreach(PROG ${PROGRAMS_TO_BUILD})
+  if(MSVC)
+    set_source_files_properties( "${PROG}.c" PROPERTIES LANGUAGE CXX )
+  endif(MSVC)
   add_executable("${PROG}" "${PROG}.c")
   target_link_libraries("${PROG}" ${POCLU_LINK_OPTIONS})
 endforeach()

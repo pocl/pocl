@@ -63,6 +63,9 @@ add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 #scalarwave_CFLAGS = -std=c99 @OPENCL_CFLAGS@
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 ${OPENCL_CFLAGS}")
 
+if (MSVC)
+  set_source_files_properties( scalarwave.c PROPERTIES LANGUAGE CXX )
+endif(MSVC)
 add_executable("scalarwave" scalarwave.c scalarwave.cl)
 
 #scalarwave_LDADD = -lm @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la

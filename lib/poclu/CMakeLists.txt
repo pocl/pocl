@@ -23,6 +23,9 @@
 #
 #=============================================================================
 
+if(MSVC)
+  set_source_files_properties( bswap.c misc.c cl_half.c PROPERTIES LANGUAGE CXX )
+endif(MSVC)
 add_library("poclu" bswap.c misc.c cl_half.c)
 
 set_target_properties("poclu" PROPERTIES SOVERSION "${LIB_API_VERSION}" VERSION "${LIB_BUILD_VERSION}")
