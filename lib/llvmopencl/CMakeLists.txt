@@ -56,8 +56,6 @@ if(MSVC)
   set_source_files_properties( ${LLVMPASSES_SOURCES} PROPERTIES LANGUAGE CXX )
 endif(MSVC)
 
-target_link_libraries("llvmopencl" ${POCL_LLVM_LIBS})
-
 # This library (just a bunch of objects really) is linked against libpocl
 # to call the kernel compiler passes directly from the host library.
 #noinst_LTLIBRARIES = libllvmpasses.la
@@ -67,6 +65,8 @@ add_library("llvmpasses" OBJECT ${LLVMPASSES_SOURCES} "linker.cpp" "linker.h")
 # for the pocl-workgroup version.
 #pkglib_LTLIBRARIES = llvmopencl.la
 add_library("llvmopencl" MODULE "$<TARGET_OBJECTS:llvmpasses>")
+
+target_link_libraries("llvmopencl" ${POCL_LLVM_LIBS})
 
 # TODO cmake should handle this, i might me missing something …
 if(APPLE)
