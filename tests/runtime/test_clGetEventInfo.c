@@ -36,7 +36,7 @@ main(void)
 	    return EXIT_FAILURE;
 
 	  const int buf_size = 1024;
-	  cl_int host_buf[buf_size];
+	  cl_int *host_buf = (cl_int*)malloc(buf_size * sizeof(cl_int));
 
 	  cl_mem buf = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(cl_int) * buf_size, NULL, &err);
 	  if (err != CL_SUCCESS)
@@ -76,6 +76,7 @@ main(void)
 	  clReleaseEvent(buf_event);
 	  clReleaseMemObject(buf);
 	  clReleaseCommandQueue(queue);
+	  free(host_buf);
 	}
     }
   return EXIT_SUCCESS;

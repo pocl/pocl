@@ -30,6 +30,7 @@
 
 #include <Windows.h>
 #define __restrict__ __restrict
+#define restrict __restrict
 
 // ERROR is used as label for goto in some OCL API functions
 #undef ERROR
@@ -86,6 +87,8 @@ static inline void lt_dlinit(void) {
 
 #include <stdlib.h>
 #include <direct.h>
+#include <process.h>
+
 #define mkdir(a,b) mkdir(a)
 
 /**

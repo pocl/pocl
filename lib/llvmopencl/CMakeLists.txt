@@ -56,6 +56,8 @@ if(MSVC)
   set_source_files_properties( ${LLVMPASSES_SOURCES} PROPERTIES LANGUAGE CXX )
 endif(MSVC)
 
+target_link_libraries("llvmopencl" ${POCL_LLVM_LIBS})
+
 # This library (just a bunch of objects really) is linked against libpocl
 # to call the kernel compiler passes directly from the host library.
 #noinst_LTLIBRARIES = libllvmpasses.la

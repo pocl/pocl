@@ -27,6 +27,10 @@
 #include <CL/opencl.h>
 #include "poclu.h"
 
+#ifdef _MSC_VER
+#  include "vccompat.hpp"
+#endif
+
 /**
  * The test kernels are assumed to:
  *

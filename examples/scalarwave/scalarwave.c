@@ -172,11 +172,11 @@ main(void)
   grid.ai = grid.aj = grid.ak = roundup(NX);
   grid.ni = grid.nj = grid.nk = NX;
   
-  cl_double *restrict phi     =
+  cl_double *restrict phi     = (cl_double*)
     malloc (grid.ai*grid.aj*grid.ak * sizeof *phi    );
-  cl_double *restrict phi_p   =
+  cl_double *restrict phi_p   = (cl_double*)
     malloc (grid.ai*grid.aj*grid.ak * sizeof *phi_p  );
-  cl_double *restrict phi_p_p =
+  cl_double *restrict phi_p_p = (cl_double*)
     malloc (grid.ai*grid.aj*grid.ak * sizeof *phi_p_p);
   
   // Set up initial data (TODO: do this on the device instead)
