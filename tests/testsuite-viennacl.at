@@ -36,7 +36,7 @@ AT_CLEANUP
 #POAT_VCL_CHECK_RUN([examples/tutorial/blas1])
 #AT_CLEANUP
 #
-POAT_VCL_SETUP([bandwidth-reduction])
+POAT_VCL_SETUP([bandwidth-reduction], [long])
 POAT_VCL_CHECK_RUN([examples/tutorial/bandwidth-reduction])
 AT_CLEANUP
 
