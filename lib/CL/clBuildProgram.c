@@ -95,7 +95,7 @@ CL_API_SUFFIX__VERSION_1_0
 {
   char device_tmpdir[POCL_FILENAME_LENGTH];
   char binary_file_name[POCL_FILENAME_LENGTH];
-  char buildlog_file_name[POCL_FILENAME_LENGTH];
+  char filename_str[POCL_FILENAME_LENGTH];
   FILE *binary_file;
   size_t n;
   int errcode;
@@ -280,7 +280,7 @@ CL_API_SUFFIX__VERSION_1_0
 
       snprintf(binary_file_name, POCL_FILENAME_LENGTH, "%s/%s",
                device_tmpdir, POCL_PROGRAM_BC_FILENAME);
-      snprintf(buildlog_file_name, POCL_FILENAME_LENGTH, "%s/%s",
+      snprintf(filename_str, POCL_FILENAME_LENGTH, "%s/%s",
                program->temp_dir, POCL_BUILDLOG_FILENAME);
 
       /* First call to clBuildProgram. Cache not filled yet */
@@ -309,7 +309,7 @@ CL_API_SUFFIX__VERSION_1_0
               fclose (binary_file);
             }
         }
-      else if (pocl_read_text_file(buildlog_file_name, &str))
+      else if (pocl_read_text_file(filename_str, &str))
         {
           fprintf(stderr, str);
           POCL_MEM_FREE(str);
@@ -339,6 +339,13 @@ CL_API_SUFFIX__VERSION_1_0
                                        device, binary_file_name);
         }
     }
+
+  /* Maintain a 'last_accessed' file in every program's
+   * cache directory. Will be useful for cache pruning script
+   * that flushes old directories based on LRU */
+  snprintf(filename_str, POCL_FILENAME_LENGTH, "%s/%s",
+           program->temp_dir, POCL_LAST_ACCESSED_FILENAME);
+  pocl_touch_file(filename_str);
 
   program->build_status = CL_BUILD_SUCCESS;
   POCL_UNLOCK_OBJ(program);

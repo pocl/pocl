@@ -50,8 +50,9 @@
 #define POCL_PROGRAM_BC_FILENAME "program.bc"
 /* The filename in which the work group (parallelizable) kernel LLVM bc is stored in 
    the kernel's temp dir. */
-#define POCL_PARALLEL_BC_FILENAME "parallel.bc"
-#define POCL_BUILDLOG_FILENAME    "build.log"
+#define POCL_PARALLEL_BC_FILENAME   "parallel.bc"
+#define POCL_BUILDLOG_FILENAME      "build.log"
+#define POCL_LAST_ACCESSED_FILENAME "last_accessed"
 
 #if __STDC_VERSION__ < 199901L
 # if __GNUC__ >= 2
@@ -134,11 +135,9 @@ typedef pthread_mutex_t pocl_lock_t;
 
 #define POCL_MEM_FREE(F_PTR)                      \
   do {                                            \
-    if ((F_PTR)) {                                \
       free((F_PTR));                              \
       (F_PTR) = NULL;                             \
-      }                                           \
-    } while (0)
+  } while (0)
 
 #ifdef BUILD_ICD
 /* Most (all?) object must also initialize the ICD field */

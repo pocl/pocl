@@ -182,8 +182,7 @@ CL_API_SUFFIX__VERSION_1_2
   
  ERROR_CLEAN:
   POCL_MEM_FREE(supported_image_formats);
-  if (*event)
-    POCL_MEM_FREE(*event);
+  POCL_MEM_FREE(*event);
   POCL_MEM_FREE(fill_pixel);
   return errcode;
 }

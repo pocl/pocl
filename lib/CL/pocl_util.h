@@ -93,6 +93,9 @@ int pocl_read_text_file (const char* file_name, char** content_dptr);
 
 void pocl_check_and_invalidate_cache (cl_program program, int device_i, const char* device_tmpdir);
 
+/* Touch file to change last modified time */
+void pocl_touch_file(const char* file_name);
+
 #ifdef __cplusplus
 }
 #endif

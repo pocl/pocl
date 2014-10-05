@@ -29,6 +29,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
+#include <utime.h>
+#include <time.h>
 
 #include "pocl_util.h"
 #include "pocl_cl.h"
@@ -491,4 +493,22 @@ pocl_check_and_invalidate_cache (cl_program program,
     }
 
   POCL_UNLOCK(cache_lock);
+}
+
+void pocl_touch_file(const char* file_name)
+{
+  struct stat file_stat;
+  struct utimbuf new_time;
+
+  if (access(file_name, F_OK) != 0)
+    {
+      FILE *fp = fopen(file_name, "w");
+      fclose(fp);
+    }
+
+  stat(file_name, &file_stat);
+
+  new_time.actime = file_stat.st_atime;
+  new_time.modtime = time(NULL);        /* set mtime to current time */
+  utime(file_name, &new_time);
 }

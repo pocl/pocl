@@ -193,8 +193,7 @@ int pocl_llvm_build_program(cl_program program,
                             const char* device_tmpdir,
                             const char* user_options)
 
-{ 
-  char build_log_filename[POCL_FILENAME_LENGTH];
+{
   llvm::MutexGuard lockHolder(kernelCompilerLock);
   InitializeLLVM();
 
@@ -217,11 +216,11 @@ int pocl_llvm_build_program(cl_program program,
   std::stringstream ss;
   std::stringstream ss_build_log;
 
-  snprintf(build_log_filename, POCL_FILENAME_LENGTH, "%s/%s",
-                temp_dir, POCL_BUILDLOG_FILENAME);
+  std::stringstream build_log_filename;
+  build_log_filename << temp_dir << "/" << POCL_BUILDLOG_FILENAME;
   /* Overwrite build log */
-  FILE *fp = fopen(build_log_filename, "w");
-  if (fp) fclose(fp);
+  std::ofstream fp(build_log_filename.str().c_str(), std::ofstream::trunc);
+  fp.close();
 
   if (device->ops->init_build != NULL) 
     {
@@ -299,7 +298,7 @@ int pocl_llvm_build_program(cl_program program,
         {
           ss_build_log << "warning: " << (*i).second << std::endl;
         }
-      pocl_create_or_append_file(build_log_filename,
+      pocl_create_or_append_file(build_log_filename.str().c_str(),
                                       ss_build_log.str().c_str());
       std::cerr << ss_build_log.str();
       return CL_INVALID_BUILD_OPTIONS;
@@ -393,7 +392,7 @@ int pocl_llvm_build_program(cl_program program,
       ss_build_log << "warning: " << (*i).first.printToString(source_manager)
                    << ": " << (*i).second << std::endl;
     }
-  pocl_create_or_append_file(build_log_filename,
+  pocl_create_or_append_file(build_log_filename.str().c_str(),
                                 ss_build_log.str().c_str());
   std::cerr << ss_build_log.str();
 
