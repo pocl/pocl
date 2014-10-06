@@ -513,6 +513,18 @@ endif()
 ######################################################################################
 # DONE
 
+option(KERNEL_CACHE "Enable the kernel compile cache." ON)
+if(KERNEL_CACHE)
+  set(POCL_BUILD_KERNEL_CACHE 1)
+else()
+  set(POCL_BUILD_KERNEL_CACHE 0)
+endif()
+#TODO: get the timestamp somehow
+set(POCL_BUILD_TIMESTAMP "3")
+
+######################################################################################
+# DONE
+
 if("${LLVM_CLANG_VERSION}" MATCHES "SPIR")
   set(CLANG_SPIR 1)
   message(STATUS "Using a SPIR generator Clang from Khronos.")
@@ -976,6 +988,7 @@ MESSAGE(STATUS "TESTS_USE_ICD: ${TESTS_USE_ICD}")
 MESSAGE(STATUS "USE_VECMATHLIB: ${USE_VECMATHLIB}")
 MESSAGE(STATUS "Available testsuites: ${ALL_TESTSUITES}")
 MESSAGE(STATUS "Enabled testsuites: ${ENABLED_TESTSUITES}")
+MESSAGE(STATUS "Kernel caching: ${KERNEL_CACHE}")
 
 MESSAGE(STATUS " ")
 MESSAGE(STATUS "******* Programs:")
