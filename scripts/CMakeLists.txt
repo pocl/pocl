@@ -30,7 +30,7 @@ if(UNIX)
   set(KERNEL_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include")
   set(ADD_INCLUDE "-I${CMAKE_BINARY_DIR}")
   set(FULL_TARGET_DIR "${CMAKE_BINARY_DIR}/lib/kernel/\${target_dir}")
-  configure_file("pocl-standalone.in.cmake" "pocl-standalone.in" ESCAPE_QUOTES @ONLY)
+  configure_file("${CMAKE_SOURCE_DIR}/scripts/pocl-standalone.in.cmake" "${CMAKE_BINARY_DIR}/scripts/pocl-standalone.in" ESCAPE_QUOTES @ONLY)
   file(GENERATE OUTPUT "scripts/pocl-standalone" INPUT "scripts/pocl-standalone.in")
 
   # install script
