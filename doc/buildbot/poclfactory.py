@@ -6,10 +6,12 @@
 from buildbot.process import factory
 from buildbot.steps import source
 from buildbot.steps.source import SVN
-from buildbot.steps.source.git import Git
+from buildbot.steps.source import Git
 from buildbot.steps.shell import ShellCommand, Compile
 from buildbot.status.results import *
 from buildbot.process.properties import Property
+from buildbot.process.properties import Interpolate
+from buildbot.process.properties import WithProperties
 import os
 
 #The names of the external tests sources
@@ -29,7 +31,8 @@ def createPoclFactory(	environ={},
 			pedantic=True,
 			tcedir='',
 			f=None,
-			cmake=False
+			cmake=False,
+			cache_dir=None
 			):
 	"""
 	Create a buildbot factory object that builds pocl.
@@ -47,11 +50,12 @@ def createPoclFactory(	environ={},
 				('cp' is used, so they need to be on the same filesystem).
 				NOTE: currently only a placeholder - not tested on the public buildbot
 	config_opts	String: extra options to pass to ./configure
-	cmake		String: use CMake instead of autotools to build pocl
+	cmake		Bool:	use CMake instead of autotools to build pocl
+	cache_dir	String: Set the pocl kernel cache to this dir. If not set, the kcache is disabled.
 	"""
 
-	#multiple slaves that pend on lock seem to pend after they modified environ.
 	myenviron = environ.copy()
+
 	if 'PATH' in myenviron.keys():
 		myenviron['PATH'] = llvm_dir+"/bin/:"+myenviron['PATH']+":${PATH}"
 	else:
@@ -65,19 +69,38 @@ def createPoclFactory(	environ={},
 		myenviron['PATH'] = tcedir+"/bin/:"+myenviron['PATH']
 		myenviron['LD_LIBRARY_PATH'] = tcedir+"/lib/:"+myenviron['LD_LIBRARY_PATH']
 
+	if cache_dir:
+		myenviron['POCL_BUILD_KERNEL_CACHE']='1'
+	else:
+		myenviron['POCL_BUILD_KERNEL_CACHE']='0'
+
+
 	if f==None:
 		f = factory.BuildFactory()
 
 	f.addStep(
-			Git(
-				repourl=repository,
-				mode=Property('git_mode'),
-				branch=branch )
-		 )
+		Git(
+			repourl=repository,
+			mode=Property('git_mode'),
+			ignore_ignores=True,
+			branch=branch )
+		)
 
+	#clear last test round's kernel cahce. 
+	#NB: if you run two slave builds on the same machine, this
+	#will not work!
+	if cache_dir:
+		f.addStep(
+			ShellCommand(
+				command=['rm', '-rf', cache_dir],
+				haltOnFailure=True,
+				name='clean kcache',
+				description='cleaning kcache',
+				descriptionDone='cleaned kcache'
+			))
 
 	if not cmake:
-	f.addStep(ShellCommand(
+		f.addStep(ShellCommand(
 				command=["./autogen.sh"],
 				haltOnFailure=True,
 				name="autoconfig",
@@ -86,28 +109,28 @@ def createPoclFactory(	environ={},
 				descriptionDone="autoconf"))
 
 	if tests_dir!=None:
-	f.addStep(ShellCommand(
-				haltOnFailure=True,
-				command=["cp", "-u", tests_dir+AMD_test_pkg,
-				"examples/AMD/"+AMD_test_pkg],
-				name="copy AMD",
-				description="copying",
-				descriptionDone="copied AMD",
-				#kludge around 'cp' always complaining if source is missing
-				decodeRC={0:SUCCESS,1:SUCCESS}
-			      ))
-	f.addStep(ShellCommand(
-				haltOnFailure=False,
-				command=["cp", "-u", tests_dir+ViennaCL_test_pkg,
-				"examples/ViennaCL/"+ViennaCL_test_pkg],
-				name="copy ViennaCL",
-				description="copying",
-				descriptionDone="copied ViennaCL",
-				decodeRC={0:SUCCESS,1:SUCCESS}
-			      ))
+		f.addStep(ShellCommand(
+			haltOnFailure=True,
+			command=["cp", "-u", tests_dir+AMD_test_pkg, 
+			         "examples/AMD/"+AMD_test_pkg],
+			name="copy AMD",
+			description="copying",
+			descriptionDone="copied AMD",
+			#kludge around 'cp' always complaining if source is missing
+			decodeRC={0:SUCCESS,1:SUCCESS}
+			))
+		f.addStep(ShellCommand(
+			haltOnFailure=False,
+			command=["cp", "-u", tests_dir+ViennaCL_test_pkg,
+			         "examples/ViennaCL/"+ViennaCL_test_pkg],
+			name="copy ViennaCL",
+			description="copying",
+			descriptionDone="copied ViennaCL",
+			decodeRC={0:SUCCESS,1:SUCCESS}
+			))
 
 	if cmake:
-	f.addStep(
+		f.addStep(
 			ShellCommand(
 				command=["cmake", "."],
 				env=myenviron,
@@ -116,20 +139,20 @@ def createPoclFactory(	environ={},
 				description="cmaking",
 				descriptionDone="cmade"))
 	else:
-	configOpts=config_opts.split(' ')
-	if pedantic==True:
-	configOpts = configOpts + ['--enable-pedantic']
-	if buildICD==False:
-	configOpts = configOpts + ['--disable-icd']
+		configOpts=config_opts.split(' ')
+		if pedantic==True:
+			configOpts = configOpts + ['--enable-pedantic']
+		if buildICD==False:
+			configOpts = configOpts + ['--disable-icd']
 
-	f.addStep(ShellCommand(
+		f.addStep(ShellCommand(
 				command=["./configure"] + configOpts,
 				haltOnFailure=True,
 				name="configure pocl",
 				env=myenviron,
 				description="configureing",
 				descriptionDone="configure"))
-
+	
 	f.addStep(Compile(env=myenviron ))
 
 	if tests_dir!=None and not cmake:
@@ -139,7 +162,8 @@ def createPoclFactory(	environ={},
 				env=myenviron,
 				description="preparing",
 				descriptionDone="prepare"))
-
+	
+	
 	if tcedir:
 		f.addStep(ShellCommand(command=["./tools/scripts/run_tta_tests"],
 				haltOnFailure=True,
@@ -159,7 +183,16 @@ def createPoclFactory(	environ={},
 				logfiles={"test.log": "tests/testsuite.log"},
 				#blas3 alone takes 15-20 min.
 				timeout=60*60))
-
+		#run the test once more, now from the kernel cache dir, if used
+		if cache_dir:
+			f.addStep(ShellCommand(command=["make", "check"],
+				haltOnFailure=True,
+				name="kcache checks",
+				env=myenviron,
+				description="testing kcache",
+				descriptionDone="tested kcache",
+				logfiles={"test.log": "tests/testsuite.log"},
+				timeout=5))			
 	return f
 
 #######
@@ -170,7 +203,7 @@ def createPoclFactory(	environ={},
 # installdir	- final LLVM install directory
 # test_install_dir - the LLVM install dir pocl_build tests against
 def createLLVMFactory(srcdir, builddir, installdir, test_install_dir):
-
+	
 	f = factory.BuildFactory()
 	f.addStep(
 		SVN(
@@ -226,7 +259,7 @@ def createLLVMFactory(srcdir, builddir, installdir, test_install_dir):
 			description='installing'))
 
 	f=createPoclFactory(
-		llvm_dir=test_install_dir+installdir,
+		llvm_dir=test_install_dir+installdir, 
 		f=f)
 
 	f.addStep(
