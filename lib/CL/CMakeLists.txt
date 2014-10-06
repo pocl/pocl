@@ -116,7 +116,7 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "pocl_icd.h" "pocl_intfn.h" "pocl_llvm.h"
                    "pocl_runtime_config.c" "pocl_runtime_config.h"
                    "pocl_mem_management.c"  "pocl_mem_management.h"
-                   "pocl_llvm_api.cc")
+                   "pocl_llvm_api.cc" "pocl_hash.c")
 
 set(LIBPOCL_OBJS "$<TARGET_OBJECTS:llvmpasses>;$<TARGET_OBJECTS:libpocl_unlinked_objs>;${POCL_DEVICES_OBJS}")
 
