@@ -69,7 +69,7 @@ build_program_compute_hash(cl_program program)
 
   if (program->source)
     {
-      pocl_SHA1_Update(&hash_ctx, program->source, strlen(program->source));
+      pocl_SHA1_Update(&hash_ctx, (uint8_t*) program->source, strlen(program->source));
     }
   else  /* Program was created with clCreateProgramWithBinary() */
     {
@@ -78,11 +78,11 @@ build_program_compute_hash(cl_program program)
         total_binary_size += program->binary_sizes[i];
 
       /* Binaries are stored in continuous chunk of memory starting from binaries[0] */
-      pocl_SHA1_Update(&hash_ctx, program->binaries[0], total_binary_size);
+      pocl_SHA1_Update(&hash_ctx, (uint8_t*) program->binaries[0], total_binary_size);
     }
 
   if (program->compiler_options)
-    pocl_SHA1_Update(&hash_ctx, program->compiler_options, strlen(program->compiler_options));
+    pocl_SHA1_Update(&hash_ctx, (uint8_t*) program->compiler_options, strlen(program->compiler_options));
 
   /*devices may include their own information to hash */
   for (i = 0; i < program->num_devices; ++i)
