@@ -121,7 +121,16 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
         addrSpaceMap[POCL_ADDRESS_SPACE_CONSTANT] = 0;
 
   } else if (arch.startswith("arm")) {
+    /* Same thing happens here as with x86_64 above.
+     * NB: LLVM 3.5 on ARM did not need this yet, for some reason
+     */
+#if defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4 || defined_LLVM_3_5
     return false;
+#else
+    addrSpaceMap[POCL_ADDRESS_SPACE_GLOBAL] =
+        addrSpaceMap[POCL_ADDRESS_SPACE_LOCAL] =
+        addrSpaceMap[POCL_ADDRESS_SPACE_CONSTANT] = 0;
+#endif
   } else if (arch.startswith("tce")) {
     /* TCE requires the remapping. */
     addrSpaceMap[POCL_ADDRESS_SPACE_GLOBAL] = 3;
