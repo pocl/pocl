@@ -77,7 +77,10 @@
 #include <vector>
 #include <sstream>
 #include <string>
-#include <unistd.h>
+
+#ifndef _MSC_VER
+#  include <unistd.h>
+#endif
 
 // Note - LLVM/Clang uses symbols defined in Khronos' headers in macros, 
 // causing compilation error if they are included before the LLVM headers.

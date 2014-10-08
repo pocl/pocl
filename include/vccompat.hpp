@@ -56,6 +56,9 @@ static inline char* strtok_r(char *str, const char *delim, char **saveptr) {
 #define srand48(x) srand(x)
 #define drand48() (double(rand()) / RAND_MAX)
 
+#include <sys/utime.h>
+#define utime _utime;
+
 /**
  * ltdl compatibility functions
  */
