@@ -60,6 +60,12 @@
  */
 #define ADDITIONAL_ALLOCATION_MAX_MB 100
 
+/* Always create regions with at least this size to avoid allocating
+   small regions when there are lots of small buffers, which would counter 
+   a purpose of having own buffer management. It would end up having a lot of
+   small regions with linear searches over them.  */
+#define NEW_REGION_MIN_MB 10
+
 /* Whether to immediately free a region in case the last chunk was
    deallocated. If 0, it can reuse the same region over multiple kernels. */
 #define FREE_EMPTY_REGIONS 0
@@ -316,8 +322,9 @@ allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t
          Allocate a larger chunk to avoid allocation overheads
          later on. */
       size_t region_size = 
-        max(min(size + ADDITIONAL_ALLOCATION_MAX_MB * 1024 * 1024, 
-                size * ALLOCATION_MULTIPLE), size);
+          max(max(min(size + ADDITIONAL_ALLOCATION_MAX_MB * 1024 * 1024, 
+                      size * ALLOCATION_MULTIPLE), size),
+              NEW_REGION_MIN_MB * 1024 * 1024);
 
       assert (region_size >= size);
 
