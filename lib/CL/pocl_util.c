@@ -231,7 +231,6 @@ pocl_aligned_malloc (size_t alignment, size_t size)
     alignment = sizeof(void* );
 
   void* result;
-  int err;
   
   result = pocl_memalign_alloc(alignment, size);
   if (result == NULL)
@@ -512,4 +511,72 @@ void pocl_touch_file(const char* file_name)
   new_time.actime = file_stat.st_atime;
   new_time.modtime = time(NULL);        /* set mtime to current time */
   utime(file_name, &new_time);
+}
+
+
+int pocl_buffer_boundcheck(cl_mem buffer, size_t offset, size_t size) {
+  POCL_RETURN_ERROR_ON((offset > buffer->size), CL_INVALID_VALUE,
+            "offset(%zu) > buffer->size(%zu)", offset, buffer->size)
+  POCL_RETURN_ERROR_ON((size > buffer->size), CL_INVALID_VALUE,
+            "size(%zu) > buffer->size(%zu)", size, buffer->size)
+  POCL_RETURN_ERROR_ON((offset + size > buffer->size), CL_INVALID_VALUE,
+            "offset + size (%zu) > buffer->size(%zu)", (offset+size), buffer->size)
+  return CL_SUCCESS;
+}
+
+int pocl_buffers_boundcheck(cl_mem src_buffer,
+                            cl_mem dst_buffer,
+                            size_t src_offset,
+                            size_t dst_offset,
+                            size_t size) {
+  POCL_RETURN_ERROR_ON((src_offset > src_buffer->size), CL_INVALID_VALUE,
+            "src_offset(%zu) > src_buffer->size(%zu)", src_offset, src_buffer->size)
+  POCL_RETURN_ERROR_ON((size > src_buffer->size), CL_INVALID_VALUE,
+            "size(%zu) > src_buffer->size(%zu)", size, src_buffer->size)
+  POCL_RETURN_ERROR_ON((src_offset + size > src_buffer->size), CL_INVALID_VALUE,
+            "src_offset + size (%zu) > src_buffer->size(%zu)", (src_offset+size), src_buffer->size)
+
+  POCL_RETURN_ERROR_ON((dst_offset > dst_buffer->size), CL_INVALID_VALUE,
+            "dst_offset(%zu) > dst_buffer->size(%zu)", dst_offset, dst_buffer->size)
+  POCL_RETURN_ERROR_ON((size > dst_buffer->size), CL_INVALID_VALUE,
+            "size(%zu) > dst_buffer->size(%zu)", size, dst_buffer->size)
+  POCL_RETURN_ERROR_ON((dst_offset + size > dst_buffer->size), CL_INVALID_VALUE,
+            "dst_offset + size (%zu) > dst_buffer->size(%zu)", (dst_offset+size), dst_buffer->size)
+  return CL_SUCCESS;
+}
+
+int pocl_buffers_overlap(cl_mem src_buffer,
+                         cl_mem dst_buffer,
+                         size_t src_offset,
+                         size_t dst_offset,
+                         size_t size) {
+  // The regions overlap if src_offset ≤ to dst_offset ≤ to src_offset + size - 1,
+  // or if dst_offset ≤ to src_offset ≤ to dst_offset + size - 1.
+  if (src_buffer == dst_buffer) {
+    POCL_RETURN_ERROR_ON(((src_offset <= dst_offset) && (dst_offset <=
+      (src_offset + size - 1))), CL_MEM_COPY_OVERLAP, "dst_offset lies inside \
+      the src region and the src_buffer == dst_buffer")
+    POCL_RETURN_ERROR_ON(((dst_offset <= src_offset) && (src_offset <=
+      (dst_offset + size - 1))), CL_MEM_COPY_OVERLAP, "src_offset lies inside \
+      the dst region and the src_buffer == dst_buffer")
+  }
+
+  // sub buffers overlap check
+  if (src_buffer->parent && dst_buffer->parent &&
+        (src_buffer->parent == dst_buffer->parent)) {
+      src_offset = (char*)src_buffer->mem_host_ptr - (char*)src_buffer->parent->mem_host_ptr +
+        src_offset;
+      dst_offset = (char*)dst_buffer->mem_host_ptr - (char*)dst_buffer->parent->mem_host_ptr +
+        dst_offset;
+
+    POCL_RETURN_ERROR_ON(((src_offset <= dst_offset) && (dst_offset <=
+      (src_offset + size - 1))), CL_MEM_COPY_OVERLAP, "dst_offset lies inside \
+      the src region and src_buffer + dst_buffer are subbuffers of the same buffer")
+    POCL_RETURN_ERROR_ON(((dst_offset <= src_offset) && (src_offset <=
+      (dst_offset + size - 1))), CL_MEM_COPY_OVERLAP, "src_offset lies inside \
+      the dst region and src_buffer + dst_buffer are subbuffers of the same buffer")
+
+  }
+
+  return CL_SUCCESS;
 }
