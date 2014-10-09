@@ -575,6 +575,24 @@ else
 	AC_DEFINE([POCL_DEBUG_BUILD], [], "Build pocl in debug mode")
 fi
 
+AC_LANG([C])
+AC_MSG_CHECKING([for clock_gettime availability])
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM(
+    [ #include <time.h> ],
+    [ struct timespec pocl_debug_timespec; clock_gettime(CLOCK_REALTIME, &pocl_debug_timespec); ]
+  )],
+  [AC_MSG_RESULT(yes)
+   AC_DEFINE([HAVE_CLOCK_GETTIME], [1], [Have clock_gettime])],
+  [AC_MSG_RESULT(no)]
+)
+
+AC_ARG_ENABLE([debug_messages],
+AS_HELP_STRING([--enable-debug-messages], [should pocl output debug messages (useful mainly for OpenCL developers)]),
+AC_DEFINE([POCL_DEBUG_MESSAGES], [1], "should pocl output debug messages"),
+[])
+
+
 be_pedantic="no"
 AC_ARG_ENABLE([pedantic],
               [AS_HELP_STRING([--enable-pedantic], [Compile host library with stricter compiler flags.])],

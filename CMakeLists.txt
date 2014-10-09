@@ -90,6 +90,10 @@ endif()
 
 option(BUILD_SHARED_LIBS "ON=Build shared libs, OFF=static libs" ON)
 
+# TODO measure slowdown with compiled but disabled debug, see if it can default to always compile in
+option(POCL_DEBUG_MESSAGES "Enable debug messages from pocl (useful for OpenCL developers), \
+        must be enabled at runtime, with env var POCL_DEBUG" OFF)
+
 # required b/c SHARED libs defaults to ON while OBJECT defaults to OFF
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -205,6 +209,17 @@ setup_cached_var(ENABLE_DOCS "Documentation building"
   "Requested enabling documentation, but could not find Sphinx ! -> disabling docs.."
   "Sphinx found, but requested disabling docs")
 
+######################################################################################
+
+include(CheckCSourceCompiles)
+CHECK_C_SOURCE_COMPILES("
+#include <time.h>
+int main() {
+  struct timespec pocl_debug_timespec;
+  clock_gettime(CLOCK_REALTIME, &pocl_debug_timespec);
+  return 0;
+}
+" HAVE_CLOCK_GETTIME)
 
 ######################################################################################
 
@@ -977,6 +992,7 @@ MESSAGE(STATUS "ENABLE_ICD: ${ENABLE_ICD}")
 MESSAGE(STATUS "ENABLE_SPU (Cell SPU enabled): ${ENABLE_SPU}")
 MESSAGE(STATUS "ENABLE_TCE: ${ENABLE_TCE}")
 MESSAGE(STATUS "ENABLE_TCEMC: ${ENABLE_TCEMC}")
+MESSAGE(STATUS "HAVE_CLOCK_GETTIME: ${HAVE_CLOCK_GETTIME}")
 MESSAGE(STATUS "HAVE_GLEW: ${HAVE_GLEW}")
 MESSAGE(STATUS "HAVE_OPENCL_HPP: ${HAVE_OPENCL_HPP}")
 MESSAGE(STATUS "INSTALL_OPENCL_HEADERS (Install our headers): ${INSTALL_OPENCL_HEADERS}")

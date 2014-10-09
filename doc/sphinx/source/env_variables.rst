@@ -36,6 +36,13 @@ below.
  POCL_TTASIM0_PARAMETERS will be passed to the first ttasim driver instantiated
  and POCL_TTASIM1_PARAMETERS to the second one.
 
+* POCL_DEBUG
+
+ Enables debug messages to stderr. This will be mostly messages from error
+ condition checks in OpenCL API calls. Useful to e.g. distinguish between various
+ reasons a call can return CL_INVALID_VALUE. If clock_gettime is available,
+ messages will include a timestamp.
+
 * POCL_IMPLICIT_FINISH
 
  Add an implicit call to clFinish afer every clEnqueue* call. Useful mostly for
