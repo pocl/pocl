@@ -66,7 +66,7 @@ add_library("llvmpasses" OBJECT ${LLVMPASSES_SOURCES} "linker.cpp" "linker.h")
 #pkglib_LTLIBRARIES = llvmopencl.la
 add_library("llvmopencl" MODULE "$<TARGET_OBJECTS:llvmpasses>")
 
-target_link_libraries("llvmopencl" ${POCL_LLVM_LIBS})
+#target_link_libraries("llvmopencl" ${POCL_LLVM_LIBS})
 
 # TODO cmake should handle this, i might me missing something …
 if(APPLE)
