@@ -35,18 +35,12 @@ POname(clCreateCommandQueue)(cl_context context,
   cl_bool found = CL_FALSE;
 
   /* validate flags */
-  if (properties > (1<<2)-1)
-  {
-    errcode = CL_INVALID_VALUE;
-    goto ERROR;
-  }
+  POCL_GOTO_ERROR_ON((properties > (1<<2)-1), CL_INVALID_VALUE,
+            "Properties must be <= 3 (there are only 2)\n");
 
   /* we don't handle out-of-order queues yet */
-  if (properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) 
-  {
-    errcode = CL_INVALID_QUEUE_PROPERTIES;
-    goto ERROR;
-  }
+  POCL_GOTO_ERROR_ON((properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE),
+      CL_INVALID_QUEUE_PROPERTIES, "Pocl doesn't have out-of-order queues yet\n");
 
   for (i=0; i<context->num_devices; i++)
     {
@@ -54,11 +48,8 @@ POname(clCreateCommandQueue)(cl_context context,
         found = CL_TRUE;
     }
 
-  if (found == CL_FALSE)
-  {
-    errcode = CL_INVALID_DEVICE; 
-    goto ERROR;
-  }
+  POCL_GOTO_ERROR_ON((found == CL_FALSE), CL_INVALID_VALUE,
+                                "Could not find device in the context\n");
 
   cl_command_queue command_queue = (cl_command_queue) malloc(sizeof(struct _cl_command_queue));
   if (command_queue == NULL)
