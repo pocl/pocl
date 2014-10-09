@@ -8,7 +8,7 @@ POname(clCreateFromGLTexture2D)(cl_context      context,
                         cl_int *        errcode_ret) 
 CL_API_SUFFIX__VERSION_1_0
 {
-  POCL_ABORT_UNIMPLEMENTED();
+  POCL_ABORT_UNIMPLEMENTED("The entire clCreateFromGLTexture2D call");
   return CL_SUCCESS;
 }
 POsym(clCreateFromGLTexture2D)
