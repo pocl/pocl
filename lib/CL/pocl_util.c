@@ -33,10 +33,11 @@
 #include <time.h>
 
 #include "pocl_util.h"
-#include "pocl_cl.h"
 #include "utlist.h"
 #include "common.h"
 #include "pocl_mem_management.h"
+#include "pocl_runtime_config.h"
+
 
 #define CACHE_DIR_PATH_CHARS 512
 
