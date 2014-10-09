@@ -74,9 +74,9 @@
 /* Debugging macros. Also macros for marking unimplemented parts of specs or
    untested parts of the implementation. */
 
-#define POCL_ABORT_UNIMPLEMENTED()                                      \
+#define POCL_ABORT_UNIMPLEMENTED(MSG)                                   \
     do {                                                                \
-        fprintf(stderr, "pocl error: encountered unimplemented part of the OpenCL specs in %s:%d\n", __FILE__, __LINE__); \
+        fprintf(stderr,"%s is unimplemented (%s:%d)\n", MSG, __FILE__, __LINE__);  \
         exit(2);                                                        \
     } while (0) 
 
