@@ -33,37 +33,28 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
                   cl_int *                 errcode_ret) CL_API_SUFFIX__VERSION_1_1 
 {
   cl_device_id device;
-  cl_mem mem;
+  cl_mem mem = NULL;
   int errcode;
   int i;
 
-  if (buffer == NULL || buffer->parent != NULL)
-  {
-    errcode = CL_INVALID_MEM_OBJECT;
-    goto ERROR;
-  }
+  POCL_GOTO_ERROR_COND((buffer == NULL), CL_INVALID_MEM_OBJECT);
 
-  if (buffer_create_type != CL_BUFFER_CREATE_TYPE_REGION ||
-      buffer_create_info == NULL)
-  {
-    errcode = CL_INVALID_VALUE;
-    goto ERROR;
-  }
+  POCL_GOTO_ERROR_ON((buffer->parent != NULL), CL_INVALID_MEM_OBJECT,
+    "buffer is already a sub-buffer\n");
+
+  POCL_GOTO_ERROR_COND((buffer_create_info == NULL), CL_INVALID_VALUE);
+
+  POCL_GOTO_ERROR_COND((buffer_create_type != CL_BUFFER_CREATE_TYPE_REGION),
+    CL_INVALID_VALUE);
 
   cl_buffer_region* info = 
     (cl_buffer_region*)buffer_create_info;
 
-  if (info->size == 0)
-  {
-    errcode = CL_INVALID_BUFFER_SIZE;
-    goto ERROR;
-  }
+  POCL_GOTO_ERROR_ON((info->size == 0), CL_INVALID_BUFFER_SIZE,
+    "buffer_create_info->size == 0\n");
   
-  if (info->size + info->origin > buffer->size)
-  {
-    errcode = CL_INVALID_VALUE;
-    goto ERROR;
-  }
+  POCL_GOTO_ERROR_ON((info->size + info->origin > buffer->size), CL_INVALID_VALUE,
+    "buffer_create_info->size+origin > buffer size\n");
 
   mem = (cl_mem) malloc(sizeof(struct _cl_mem));
   if (mem == NULL)
@@ -80,27 +71,35 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
   mem->size = info->size;
   mem->context = buffer->context;
 
-  if ((buffer->flags & CL_MEM_WRITE_ONLY &&
-       flags & (CL_MEM_READ_WRITE | CL_MEM_READ_ONLY)) ||
-      (buffer->flags & CL_MEM_READ_ONLY &&
-       flags & (CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY)) ||
-      (flags & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR | 
-                CL_MEM_COPY_HOST_PTR)))
-  {
-    errcode = CL_INVALID_VALUE;
-    goto ERROR_CLEAN_MEM;
-  }
+  POCL_GOTO_ERROR_ON((buffer->flags & CL_MEM_WRITE_ONLY &&
+       flags & (CL_MEM_READ_WRITE | CL_MEM_READ_ONLY)), CL_INVALID_VALUE,
+       "Invalid flags: buffer is CL_MEM_WRITE_ONLY, requested sub-buffer "
+       "CL_MEM_READ_WRITE or CL_MEM_READ_ONLY\n");
 
-  if ((buffer->flags & CL_MEM_HOST_WRITE_ONLY &&
-       flags & CL_MEM_HOST_READ_ONLY) ||
-      (buffer->flags & CL_MEM_HOST_READ_ONLY &&
-       flags & CL_MEM_HOST_WRITE_ONLY) ||
-      (buffer->flags & CL_MEM_HOST_NO_ACCESS &&
-       flags & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_WRITE_ONLY)))
-  {
-    errcode = CL_INVALID_VALUE;
-    goto ERROR_CLEAN_MEM;
-  }
+  POCL_GOTO_ERROR_ON((buffer->flags & CL_MEM_READ_ONLY &&
+       flags & (CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY)), CL_INVALID_VALUE,
+       "Invalid flags: buffer is CL_MEM_READ_ONLY, requested sub-buffer "
+       "CL_MEM_READ_WRITE or CL_MEM_WRITE_ONLY\n");
+
+  POCL_GOTO_ERROR_ON((flags & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR |
+                CL_MEM_COPY_HOST_PTR)), CL_INVALID_VALUE,
+                "Invalid flags: (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR | "
+                "CL_MEM_COPY_HOST_PTR)\n");
+
+  POCL_GOTO_ERROR_ON((buffer->flags & CL_MEM_HOST_WRITE_ONLY &&
+       flags & CL_MEM_HOST_READ_ONLY), CL_INVALID_VALUE,
+       "Invalid flags: buffer is CL_MEM_HOST_WRITE_ONLY, requested sub-buffer "
+       "CL_MEM_HOST_READ_ONLY\n");
+
+  POCL_GOTO_ERROR_ON((buffer->flags & CL_MEM_HOST_READ_ONLY &&
+       flags & CL_MEM_HOST_WRITE_ONLY), CL_INVALID_VALUE,
+       "Invalid flags: buffer is CL_MEM_HOST_READ_ONLY, requested sub-buffer "
+       "CL_MEM_HOST_WRITE_ONLY\n");
+
+  POCL_GOTO_ERROR_ON((buffer->flags & CL_MEM_HOST_NO_ACCESS &&
+       flags & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_WRITE_ONLY)), CL_INVALID_VALUE,
+       "Invalid flags: buffer is CL_MEM_HOST_NO_ACCESS, requested sub-buffer "
+       "(CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_WRITE_ONLY)\n");
 
   if ((flags & CL_MEM_READ_WRITE) |
       (flags & CL_MEM_READ_ONLY) |
@@ -133,7 +132,7 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
   if (mem->device_ptrs == NULL)
     {
         errcode = CL_OUT_OF_HOST_MEMORY;
-        goto ERROR_CLEAN_MEM;
+        goto ERROR;
     }
 
   for (i = 0; i < pocl_num_devices; ++i)
@@ -164,13 +163,8 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
     *errcode_ret = CL_SUCCESS;
   return mem;
 
-#if 0
-ERROR_CLEAN_MEM_AND_DEVPTR:
-    POCL_MEM_FREE(mem->device_ptrs);
-#endif
-ERROR_CLEAN_MEM:
-    POCL_MEM_FREE(mem);
 ERROR:
+  POCL_MEM_FREE(mem);
   if(errcode_ret)
   {
     *errcode_ret = errcode;
