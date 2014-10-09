@@ -21,7 +21,6 @@
    THE SOFTWARE.
 */
 
-#include "pocl_cl.h"
 #include "pocl_util.h"
 
 CL_API_ENTRY 
@@ -31,9 +30,11 @@ CL_API_SUFFIX__VERSION_1_0
 {
   _cl_command_node *cmd;
 
-  if (command_queue == NULL || command_queue->device == NULL ||
-      command_queue->context == NULL)
-    return CL_INVALID_COMMAND_QUEUE;
+  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+
+  POCL_RETURN_ERROR_COND((command_queue->device == NULL), CL_INVALID_COMMAND_QUEUE);
+
+  POCL_RETURN_ERROR_COND((command_queue->context == NULL), CL_INVALID_COMMAND_QUEUE);
 
   /* Even if we do not need to create a full command, the runtime requires it */
   pocl_create_command (&cmd, command_queue, 
