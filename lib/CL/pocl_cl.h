@@ -30,6 +30,9 @@
 #include <stdio.h>
 #include <ltdl.h>
 #include <pthread.h>
+#ifdef HAVE_CLOCK_GETTIME
+#include <time.h>
+#endif
 
 #define CL_USE_DEPRECATED_OPENCL_1_1_APIS
 #ifdef BUILD_ICD
@@ -95,6 +98,81 @@
 
 #define POCL_ERROR(x) do { if (errcode_ret != NULL) {*errcode_ret = (x); } return NULL; } while (0)
 #define POCL_SUCCESS() do { if (errcode_ret != NULL) {*errcode_ret = CL_SUCCESS; } } while (0)
+
+
+#ifdef POCL_DEBUG_MESSAGES
+
+extern int pocl_debug_messages;
+
+  #ifdef HAVE_CLOCK_GETTIME
+
+  extern struct timespec pocl_debug_timespec;
+  #define POCL_MSG_PRINT(TYPE, ERRCODE, ...)                                  \
+    do {                                                                      \
+    if (pocl_debug_messages) {                                                \
+      clock_gettime(CLOCK_REALTIME, &pocl_debug_timespec);                    \
+      fprintf(stderr, "[%li.%li] POCL: " TYPE ERRCODE " in function %s"       \
+      " at line %u: \n", (long)pocl_debug_timespec.tv_sec, (long)pocl_debug_timespec.tv_nsec, \
+        __func__, __LINE__);                                                  \
+      fprintf(stderr, __VA_ARGS__);                                           \
+    }                                                                         \
+  } while(0)
+
+  #else
+
+  #define POCL_MSG_PRINT(TYPE, ERRCODE, ...)                                  \
+    do {                                                                      \
+    if (pocl_debug_messages) {                                                \
+      fprintf(stderr, "** POCL ** : " TYPE ERRCODE " in function %s"          \
+      " at line %u: \n",  __func__, __LINE__);                                \
+      fprintf(stderr, __VA_ARGS__);                                           \
+    }                                                                         \
+  } while(0)
+
+  #endif
+
+
+#define POCL_MSG_WARN(...) POCL_MSG_PRINT("WARNING", "", __VA_ARGS__)
+#define POCL_MSG_ERR(...) POCL_MSG_PRINT("ERROR", "", __VA_ARGS__)
+
+#else
+
+#define POCL_MSG_WARN(...)
+#define POCL_MSG_ERR(...)
+#define POCL_MSG_PRINT(...)
+
+#endif
+
+
+#define POCL_GOTO_ERROR_ON(cond, err_code, ...)                             \
+  if (cond)                                                                 \
+    {                                                                       \
+      POCL_MSG_PRINT("ERROR : ", #err_code, __VA_ARGS__);                   \
+      errcode = err_code;                                                   \
+      goto ERROR;                                                           \
+    }                                                                       \
+
+#define POCL_RETURN_ERROR_ON(cond, err_code, ...)                           \
+  if (cond)                                                                 \
+    {                                                                       \
+      POCL_MSG_PRINT("ERROR : ", #err_code, __VA_ARGS__);                   \
+      return err_code;                                                      \
+    }                                                                       \
+
+#define POCL_RETURN_ERROR_COND(cond, err_code)                              \
+  if (cond)                                                                 \
+    {                                                                       \
+      POCL_MSG_PRINT("ERROR : ", #err_code, "%s\n", #cond);                 \
+      return err_code;                                                      \
+    }                                                                       \
+
+#define POCL_GOTO_ERROR_COND(cond, err_code)                                \
+  if (cond)                                                                 \
+    {                                                                       \
+      POCL_MSG_PRINT("ERROR : ", #err_code, "%s\n", #cond);                 \
+      errcode = err_code;                                                   \
+      goto ERROR;                                                           \
+    }                                                                       \
 
 typedef pthread_mutex_t pocl_lock_t;
 #define POCL_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
