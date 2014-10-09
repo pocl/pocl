@@ -32,9 +32,8 @@ POname(clCreateImage) (cl_context              context,
                        cl_int *                errcode_ret) 
 CL_API_SUFFIX__VERSION_1_2
 {
-    cl_mem mem;
-    cl_device_id device_id;
-    unsigned i, j;
+    cl_mem mem = NULL;
+    unsigned i;
     cl_uint num_entries = 0;
     cl_image_format *supported_image_formats;
     int size;
@@ -43,33 +42,23 @@ CL_API_SUFFIX__VERSION_1_2
     int slice_pitch;
     int elem_size;
     int channels;
-    
-    if (context == NULL) 
-      {
-        errcode = CL_INVALID_CONTEXT;
-        goto ERROR;
-      }  
-    
-    if (image_format == NULL)
-      {
-        errcode = CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
-        goto ERROR;
-      }
 
-    if (image_desc == NULL)
-      {
-        errcode = CL_INVALID_IMAGE_DESCRIPTOR;
-        goto ERROR;
-      }
+    POCL_GOTO_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
+
+    POCL_GOTO_ERROR_COND((image_format == NULL), CL_INVALID_IMAGE_FORMAT_DESCRIPTOR);
+
+    POCL_GOTO_ERROR_COND((image_desc == NULL), CL_INVALID_IMAGE_DESCRIPTOR);
     
-    if (image_desc->num_mip_levels != 0 || image_desc->num_samples != 0)
-      POCL_ABORT_UNIMPLEMENTED();
-    
+    if (image_desc->num_mip_levels != 0 || image_desc->num_samples != 0) {
+      POCL_ABORT_UNIMPLEMENTED("clCreateImage with image_desc->num_mip_levels != 0"
+      " || image_desc->num_samples != 0 ");
+    }
+
     errcode = POname(clGetSupportedImageFormats)
       (context, flags, image_desc->image_type, 0, NULL, &num_entries);
-    
-    if (errcode != CL_SUCCESS || num_entries == 0)
-      goto ERROR;
+
+    POCL_GOTO_ERROR_ON((errcode != CL_SUCCESS || num_entries == 0),
+      CL_INVALID_VALUE, "Couldn't find any supported image formats\n");
 
     supported_image_formats = malloc (num_entries * sizeof(cl_image_format));
     if (supported_image_formats == NULL)
@@ -81,8 +70,10 @@ CL_API_SUFFIX__VERSION_1_2
     errcode = POname(clGetSupportedImageFormats) (context, flags, 
             image_desc->image_type, num_entries, supported_image_formats, NULL);
     
-    if (errcode != CL_SUCCESS)
+    if (errcode != CL_SUCCESS){
+      POCL_MSG_ERR("Couldn't get the supported image formats\n");
       goto ERROR;
+    }
     
     for (i = 0; i < num_entries; i++)
       {
@@ -94,7 +85,8 @@ CL_API_SUFFIX__VERSION_1_2
             goto TYPE_SUPPORTED;
           }
       }
-    
+
+    POCL_MSG_ERR("Requested image format is not supported\n");
     errcode = CL_IMAGE_FORMAT_NOT_SUPPORTED;
     goto ERROR;
 
@@ -102,8 +94,10 @@ TYPE_SUPPORTED:
 
     /* maybe they are implemented */
     if (image_desc->image_type != CL_MEM_OBJECT_IMAGE2D &&
-        image_desc->image_type != CL_MEM_OBJECT_IMAGE3D)
-        POCL_ABORT_UNIMPLEMENTED();
+        image_desc->image_type != CL_MEM_OBJECT_IMAGE3D) {
+        POCL_ABORT_UNIMPLEMENTED("clCreateImage with images other than "
+        "CL_MEM_OBJECT_IMAGE2D or CL_MEM_OBJECT_IMAGE3D");
+    }
     
     pocl_get_image_information (image_format->image_channel_order,
                                 image_format->image_channel_data_type, 
@@ -135,9 +129,9 @@ TYPE_SUPPORTED:
     /* Create buffer and fill in missing parts */
     mem = POname(clCreateBuffer) (context, flags, size, host_ptr, &errcode);
 
-    if (mem == NULL)
-      goto ERROR;
-          
+    POCL_GOTO_ERROR_ON((mem == NULL), CL_OUT_OF_HOST_MEMORY,
+      "clCreateBuffer (for backing the image) failed\n");
+
     mem->type = image_desc->image_type;
     mem->is_image = CL_TRUE;
     
