@@ -27,8 +27,7 @@ CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
 {
   int new_refcount;
-  if (!context->valid)
-    return CL_INVALID_CONTEXT;
+  POCL_RETURN_ERROR_COND((!context->valid), CL_INVALID_CONTEXT);
 
   POCL_RELEASE_OBJECT(context, new_refcount);
   if (new_refcount == 0)

@@ -30,6 +30,9 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
   int new_refcount;
   cl_kernel *pk;
   int i;
+
+  POCL_RETURN_ERROR_COND((kernel == NULL), CL_INVALID_KERNEL);
+
   POCL_RELEASE_OBJECT (kernel, new_refcount);
 
   if (new_refcount == 0)

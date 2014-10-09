@@ -32,8 +32,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
   unsigned i;
   mem_mapping_t *mapping, *temp;
 
-  if (memobj == NULL)
-    return CL_INVALID_MEM_OBJECT;
+  POCL_RETURN_ERROR_COND((memobj == NULL), CL_INVALID_MEM_OBJECT);
 
   POCL_RELEASE_OBJECT(memobj, new_refcount);
 
