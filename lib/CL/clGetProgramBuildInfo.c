@@ -39,11 +39,14 @@ POname(clGetProgramBuildInfo)(cl_program            program,
   int i;
   cl_bool found;
 
+  POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
+
   found = CL_FALSE;
   for (i = 0; i < program->num_devices; i++)
     if (device == program->devices[i]) found = CL_TRUE;
 
-  if (found == CL_FALSE) return CL_INVALID_DEVICE;
+  POCL_RETURN_ERROR_ON((found == CL_FALSE), CL_INVALID_DEVICE, "Program was not "
+    "built for this device\n")
 
   switch (param_name) {
   case CL_PROGRAM_BUILD_STATUS:

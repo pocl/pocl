@@ -8,7 +8,7 @@ POname(clGetSamplerInfo)(cl_sampler          sampler ,
                  void *              param_value ,
                  size_t *            param_value_size_ret ) CL_API_SUFFIX__VERSION_1_0
 {
-  POCL_ABORT_UNIMPLEMENTED();
+  POCL_ABORT_UNIMPLEMENTED("The entire clGetSamplerInfo call");
   return CL_SUCCESS;
 }
 

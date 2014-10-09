@@ -33,9 +33,13 @@ POname(clGetEventProfilingInfo)(cl_event event,
 {
   size_t const value_size = sizeof(cl_ulong);
 
-  if ((event->queue->properties & CL_QUEUE_PROFILING_ENABLE) == 0 ||
-      event->status != CL_COMPLETE)
-    return CL_PROFILING_INFO_NOT_AVAILABLE;    
+  POCL_RETURN_ERROR_COND((event == NULL), CL_INVALID_EVENT);
+
+  POCL_RETURN_ERROR_ON(((event->queue->properties & CL_QUEUE_PROFILING_ENABLE) == 0),
+    CL_PROFILING_INFO_NOT_AVAILABLE, "Cannot return profiling info when profiling "
+      "is disabled on the queue\n");
+  POCL_RETURN_ERROR_ON((event->status != CL_COMPLETE), CL_PROFILING_INFO_NOT_AVAILABLE,
+    "Cannot return profiling info on events not CL_COMPLETE yet\n");
 
   if (param_value)
   {

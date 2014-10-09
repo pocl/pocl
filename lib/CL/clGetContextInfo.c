@@ -34,8 +34,7 @@ POname(clGetContextInfo)(cl_context context,
 {
   size_t value_size;
 
-  if (context == NULL)
-    return CL_INVALID_CONTEXT;
+  POCL_RETURN_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
 
   switch (param_name) {
   case CL_CONTEXT_REFERENCE_COUNT:

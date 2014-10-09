@@ -32,10 +32,11 @@ POname(clGetKernelArgInfo)(cl_kernel      kernel ,
                 void *         param_value ,
                 size_t *       param_value_size_ret) CL_API_SUFFIX__VERSION_1_2
 {
-  if (!kernel)
-    return CL_INVALID_KERNEL;
-  if (arg_indx >= kernel->num_args)
-    return CL_INVALID_ARG_INDEX;
+  POCL_RETURN_ERROR_COND((kernel == NULL), CL_INVALID_KERNEL);
+
+  POCL_RETURN_ERROR_ON((arg_indx >= kernel->num_args), CL_INVALID_ARG_INDEX,
+    "This kernel has %u args, cannot getInfo on arg %u\n",
+    (unsigned)kernel->num_args, (unsigned)arg_indx);
 
   struct pocl_argument_info *arg = &kernel->arg_info[arg_indx];
   switch (param_name) {

@@ -8,6 +8,8 @@ POname(clGetEventInfo)(cl_event          event ,
                        size_t *          param_value_size_ret ) 
 CL_API_SUFFIX__VERSION_1_0
 {
+  POCL_RETURN_ERROR_COND((event == NULL), CL_INVALID_EVENT);
+
   switch (param_name)
     {
     case CL_EVENT_COMMAND_EXECUTION_STATUS:

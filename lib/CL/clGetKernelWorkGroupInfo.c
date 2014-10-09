@@ -25,17 +25,19 @@ POname(clGetKernelWorkGroupInfo)
       int found_it = 0;
       for (i = 0; i < kernel->context->num_devices; i++)
         if (device == kernel->context->devices[i])
-	  {
-	    found_it = 1;
-	    break;
-	  }
-      if (!found_it)
-        return CL_INVALID_DEVICE;      
+        {
+          found_it = 1;
+          break;
+        }
+      POCL_RETURN_ERROR_ON((!found_it), CL_INVALID_DEVICE, "could not find the "
+        "device supplied in argument\n");
     }
-  else if (kernel->context->num_devices > 1)
-    return CL_INVALID_DEVICE;
   else
-    device = kernel->context->devices[0];
+    {
+      POCL_RETURN_ERROR_ON((kernel->context->num_devices > 1), CL_INVALID_DEVICE,
+        "No device given and context has > 1 device\n");
+      device = kernel->context->devices[0];
+    }
 
   switch (param_name)
     {
@@ -81,7 +83,7 @@ POname(clGetKernelWorkGroupInfo)
     }
       
     case CL_KERNEL_PRIVATE_MEM_SIZE:
-      POCL_ABORT_UNIMPLEMENTED();
+      POCL_ABORT_UNIMPLEMENTED("clGetKernelWorkGroupInfo: CL_KERNEL_PRIVATE_MEM_SIZE");
 
     default:
       return CL_INVALID_VALUE;

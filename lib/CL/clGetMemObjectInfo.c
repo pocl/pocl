@@ -32,8 +32,8 @@ POname(clGetMemObjectInfo)(cl_mem      memobj ,
                    void *      param_value ,
                    size_t *    param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
-  if (!memobj)
-    return CL_INVALID_MEM_OBJECT;
+  POCL_RETURN_ERROR_COND((memobj == NULL), CL_INVALID_MEM_OBJECT);
+
   switch (param_name) {
   case CL_MEM_TYPE:
     POCL_RETURN_GETINFO (cl_mem_object_type, memobj->type);
@@ -55,7 +55,7 @@ POname(clGetMemObjectInfo)(cl_mem      memobj ,
     if (memobj->parent == NULL)
       POCL_RETURN_GETINFO (size_t, 0);
 
-    POCL_ABORT_UNIMPLEMENTED();
+    POCL_ABORT_UNIMPLEMENTED("clGetMemObjectInfo: CL_MEM_OFFSET in subbuffers");
   }
   return CL_INVALID_VALUE;
 }
