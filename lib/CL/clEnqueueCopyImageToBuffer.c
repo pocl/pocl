@@ -12,7 +12,7 @@ POname(clEnqueueCopyImageToBuffer)(cl_command_queue  command_queue ,
                            const cl_event *  event_wait_list ,
                            cl_event *        event ) CL_API_SUFFIX__VERSION_1_0
 {
-  POCL_ABORT_UNIMPLEMENTED();
+  POCL_ABORT_UNIMPLEMENTED("The entire clEnqueueCopyImageToBuffer call");
   return CL_SUCCESS;
 }
 POsym(clEnqueueCopyImageToBuffer)
