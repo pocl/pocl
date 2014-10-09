@@ -114,24 +114,13 @@ CL_API_SUFFIX__VERSION_1_0
   char *saveptr;
   char *str = NULL;
 
-  if (program == NULL)
-  {
-    errcode = CL_INVALID_PROGRAM;
-    goto ERROR;
-  }
+  POCL_GOTO_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
 
-  if (pfn_notify == NULL && user_data != NULL)
-  {
-    errcode = CL_INVALID_VALUE;
-    goto ERROR;
-  }
+  POCL_GOTO_ERROR_COND((pfn_notify == NULL && user_data != NULL), CL_INVALID_VALUE);
 
   POCL_LOCK_OBJ(program);
-  if (program->kernels)
-  {
-    errcode = CL_INVALID_OPERATION;
-    goto ERROR;
-  }
+
+  POCL_GOTO_ERROR_ON(program->kernels, CL_INVALID_OPERATION, "Program already has kernels\n");
   
   if (options != NULL)
     {
@@ -154,11 +143,13 @@ CL_API_SUFFIX__VERSION_1_0
                 }
               else if (strstr (cl_parameters_not_yet_supported_by_clang, token))
                 {
+                  POCL_MSG_ERR("Build option isnt yet supported by clang: %s\n", token);
                   token = strtok_r (NULL, " ", &saveptr);  
                   continue;
                 }
               else
                 {
+                  POCL_MSG_ERR("Invalid build option: %s\n", token);
                   errcode = CL_INVALID_BUILD_OPTIONS;
                   goto ERROR_CLEAN_OPTIONS;
                 }
@@ -190,6 +181,7 @@ CL_API_SUFFIX__VERSION_1_0
             }
           else
             {
+              POCL_MSG_ERR("Invalid build option: %s\n", token);
               errcode = CL_INVALID_BUILD_OPTIONS;
               goto ERROR_CLEAN_OPTIONS;
             }
@@ -217,18 +209,12 @@ CL_API_SUFFIX__VERSION_1_0
       POCL_MEM_FREE(program->compiler_options);
     }  
 
-  if (program->source == NULL && program->binaries == NULL)
-  {
-    errcode = CL_INVALID_PROGRAM;
-    goto ERROR;
-  }
+  POCL_GOTO_ERROR_ON((program->source == NULL && program->binaries == NULL),
+    CL_INVALID_PROGRAM, "Program doesn't have sources or binaries! You need "
+                        "to call clCreateProgramWith{Binary|Source} first\n");
 
-  if ((num_devices > 0 && device_list == NULL) ||
-      (num_devices == 0 && device_list != NULL))
-  {
-    errcode = CL_INVALID_VALUE;
-    goto ERROR;
-  }
+  POCL_GOTO_ERROR_COND((num_devices > 0 && device_list == NULL), CL_INVALID_VALUE);
+  POCL_GOTO_ERROR_COND((num_devices == 0 && device_list != NULL), CL_INVALID_VALUE);
       
   if (num_devices == 0)
     {
