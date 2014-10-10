@@ -524,6 +524,54 @@ int pocl_buffer_boundcheck(cl_mem buffer, size_t offset, size_t size) {
   return CL_SUCCESS;
 }
 
+int pocl_buffer_boundcheck_3d(cl_mem buffer,
+                              const size_t *origin,
+                              const size_t *region,
+                              size_t *row_pitch,
+                              size_t *slice_pitch,
+                              const char* prefix)
+{
+  size_t rp = *row_pitch;
+  size_t sp = *slice_pitch;
+
+  // CL_INVALID_VALUE if row_pitch is not 0 and is less than region[0].
+  POCL_RETURN_ERROR_ON((rp != 0 && rp<region[0]),
+    CL_INVALID_VALUE, "%s_row_pitch is not 0 and is less than region[0]\n", prefix);
+
+  if (rp == 0) rp = region[0];
+
+  // CL_INVALID_VALUE if slice_pitch is not 0 and is less than region[1] * row_pitch
+  // or if slice_pitch is not 0 and is not a multiple of row_pitch.
+  POCL_RETURN_ERROR_ON((sp != 0 && sp < (region[1] * rp)),
+    CL_INVALID_VALUE, "%s_slice_pitch is not 0 and is less than "
+      "region[1] * %s_row_pitch\n", prefix, prefix);
+  POCL_RETURN_ERROR_ON((sp != 0 && (sp % rp != 0)),
+    CL_INVALID_VALUE, "%s_slice_pitch is not 0 and is not a multiple "
+      "of %s_row_pitch\n", prefix, prefix);
+
+  if (sp == 0) sp = region[1] * rp;
+
+  *row_pitch = rp;
+  *slice_pitch = sp;
+
+  size_t byte_offset_begin = origin[2] * sp +
+               origin[1] * rp +
+               origin[0];
+
+  size_t byte_offset_end = origin[0] + region[0]-1 +
+       rp * (origin[1] + region[1]-1) +
+       sp * (origin[2] + region[2]-1);
+
+
+  POCL_RETURN_ERROR_ON((byte_offset_begin > buffer->size), CL_INVALID_VALUE,
+            "%s_origin is outside the %s_buffer", prefix, prefix);
+  POCL_RETURN_ERROR_ON((byte_offset_end > buffer->size), CL_INVALID_VALUE,
+            "%s_origin+region is outside the %s_buffer", prefix, prefix);
+  return CL_SUCCESS;
+}
+
+
+
 int pocl_buffers_boundcheck(cl_mem src_buffer,
                             cl_mem dst_buffer,
                             size_t src_offset,
@@ -579,4 +627,95 @@ int pocl_buffers_overlap(cl_mem src_buffer,
   }
 
   return CL_SUCCESS;
+}
+
+/*
+ * Copyright (c) 2011 The Khronos Group Inc.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy of this
+ * software and /or associated documentation files (the "Materials "), to deal in the Materials
+ * without restriction, including without limitation the rights to use, copy, modify, merge,
+ * publish, distribute, sublicense, and/or sell copies of the Materials, and to permit persons to
+ * whom the Materials are furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included
+ * in all copies or substantial portions of the Materials.
+ *
+ * THE MATERIALS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE MATERIALS OR THE USE OR OTHER DEALINGS IN
+ * THE MATERIALS.
+ */
+
+int
+check_copy_overlap(const size_t src_offset[3],
+                   const size_t dst_offset[3],
+                   const size_t region[3],
+                   const size_t row_pitch, const size_t slice_pitch)
+{
+  const size_t src_min[] = {src_offset[0], src_offset[1], src_offset[2]};
+  const size_t src_max[] = {src_offset[0] + region[0],
+                            src_offset[1] + region[1],
+                            src_offset[2] + region[2]};
+  const size_t dst_min[] = {dst_offset[0], dst_offset[1], dst_offset[2]};
+  const size_t dst_max[] = {dst_offset[0] + region[0],
+                            dst_offset[1] + region[1],
+                            dst_offset[2] + region[2]};
+  // Check for overlap
+  int overlap = 1;
+  unsigned i;
+  for (i=0; i != 3; ++i)
+  {
+    overlap = overlap && (src_min[i] < dst_max[i])
+                      && (src_max[i] > dst_min[i]);
+  }
+
+  size_t dst_start =  dst_offset[2] * slice_pitch +
+                      dst_offset[1] * row_pitch + dst_offset[0];
+  size_t dst_end = dst_start + (region[2] * slice_pitch +
+                                region[1] * row_pitch + region[0]);
+  size_t src_start =  src_offset[2] * slice_pitch +
+                      src_offset[1] * row_pitch + src_offset[0];
+  size_t src_end = src_start + (region[2] * slice_pitch +
+                                region[1] * row_pitch + region[0]);
+
+  if (!overlap)
+  {
+    size_t delta_src_x = (src_offset[0] + region[0] > row_pitch) ?
+                          src_offset[0] + region[0] - row_pitch : 0;
+    size_t delta_dst_x = (dst_offset[0] + region[0] > row_pitch) ?
+                          dst_offset[0] + region[0] - row_pitch : 0;
+    if ( (delta_src_x > 0 && delta_src_x > dst_offset[0]) ||
+          (delta_dst_x > 0 && delta_dst_x > src_offset[0]) )
+      {
+        if ( (src_start <= dst_start && dst_start < src_end) ||
+          (dst_start <= src_start && src_start < dst_end) )
+          overlap = 1;
+      }
+
+    if (region[2] > 1)
+    {
+      size_t src_height = slice_pitch / row_pitch;
+      size_t dst_height = slice_pitch / row_pitch;
+
+      size_t delta_src_y = (src_offset[1] + region[1] > src_height) ?
+                            src_offset[1] + region[1] - src_height : 0;
+      size_t delta_dst_y = (dst_offset[1] + region[1] > dst_height) ?
+                            dst_offset[1] + region[1] - dst_height : 0;
+
+      if ( (delta_src_y > 0 && delta_src_y > dst_offset[1]) ||
+            (delta_dst_y > 0 && delta_dst_y > src_offset[1]) )
+      {
+        if ( (src_start <= dst_start && dst_start < src_end) ||
+              (dst_start <= src_start && src_start < dst_end) )
+              overlap = 1;
+      }
+    }
+  }
+
+  return overlap;
 }
