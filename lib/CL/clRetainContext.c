@@ -26,6 +26,7 @@
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clRetainContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
 {
+  POCL_RETURN_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
   POCL_RETAIN_OBJECT(context);
   return CL_SUCCESS;
 }
