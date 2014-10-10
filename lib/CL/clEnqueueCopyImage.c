@@ -1,4 +1,5 @@
-#include "pocl_cl.h"
+#include "pocl_util.h"
+#include "pocl_image_util.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clEnqueueCopyImage)(cl_command_queue      command_queue ,
@@ -11,6 +12,7 @@ POname(clEnqueueCopyImage)(cl_command_queue      command_queue ,
                    const cl_event *      event_wait_list ,
                    cl_event *            event ) CL_API_SUFFIX__VERSION_1_0
 {
+  int errcode;
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
@@ -19,6 +21,10 @@ POname(clEnqueueCopyImage)(cl_command_queue      command_queue ,
 
   POCL_RETURN_ERROR_COND((src_image == NULL), CL_INVALID_MEM_OBJECT);
   POCL_RETURN_ERROR_COND((dst_image == NULL), CL_INVALID_MEM_OBJECT);
+  POCL_RETURN_ERROR_COND((src_origin == NULL), CL_INVALID_VALUE);
+  POCL_RETURN_ERROR_COND((dst_origin == NULL), CL_INVALID_VALUE);
+  POCL_RETURN_ERROR_COND((region == NULL), CL_INVALID_VALUE);
+
 
   POCL_RETURN_ERROR_ON(((command_queue->context != src_image->context) ||
       (command_queue->context != dst_image->context)), CL_INVALID_CONTEXT,
