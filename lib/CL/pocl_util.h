@@ -105,7 +105,7 @@ int pocl_buffers_boundcheck(cl_mem src_buffer, cl_mem dst_buffer,
 int pocl_buffers_overlap(cl_mem src_buffer, cl_mem dst_buffer,
                             size_t src_offset, size_t dst_offset, size_t size);
 
-int pocl_buffer_boundcheck_3d(cl_mem buffer, const size_t *origin,
+int pocl_buffer_boundcheck_3d(const size_t buffer_size, const size_t *origin,
                               const size_t *region, size_t *row_pitch,
                               size_t *slice_pitch, const char* prefix);
 

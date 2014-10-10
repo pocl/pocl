@@ -73,12 +73,11 @@ POname(clEnqueueCopyBufferRect)(cl_command_queue command_queue,
   size_t region_bytes = region[0] * region[1] * region[2];
   POCL_RETURN_ERROR_ON((region_bytes <= 0), CL_INVALID_VALUE, "All items in region must be >0\n");
 
-  if (pocl_buffer_boundcheck_3d(src_buffer, src_origin, region, &src_row_pitch,
-      &src_slice_pitch, "src") != CL_SUCCESS) return CL_INVALID_VALUE;
+  if (pocl_buffer_boundcheck_3d(src_buffer->size, src_origin, region, &src_row_pitch,
+      &src_slice_pitch, "src_") != CL_SUCCESS) return CL_INVALID_VALUE;
 
-  if (pocl_buffer_boundcheck_3d(dst_buffer, dst_origin, region, &dst_row_pitch,
-      &dst_slice_pitch, "dst") != CL_SUCCESS) return CL_INVALID_VALUE;
-
+  if (pocl_buffer_boundcheck_3d(dst_buffer->size, dst_origin, region, &dst_row_pitch,
+      &dst_slice_pitch, "dst_") != CL_SUCCESS) return CL_INVALID_VALUE;
 
   if (src_buffer == dst_buffer) {
     POCL_RETURN_ERROR_ON((src_slice_pitch != dst_slice_pitch),

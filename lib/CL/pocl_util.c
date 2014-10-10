@@ -524,7 +524,7 @@ int pocl_buffer_boundcheck(cl_mem buffer, size_t offset, size_t size) {
   return CL_SUCCESS;
 }
 
-int pocl_buffer_boundcheck_3d(cl_mem buffer,
+int pocl_buffer_boundcheck_3d(const size_t buffer_size,
                               const size_t *origin,
                               const size_t *region,
                               size_t *row_pitch,
@@ -536,18 +536,18 @@ int pocl_buffer_boundcheck_3d(cl_mem buffer,
 
   // CL_INVALID_VALUE if row_pitch is not 0 and is less than region[0].
   POCL_RETURN_ERROR_ON((rp != 0 && rp<region[0]),
-    CL_INVALID_VALUE, "%s_row_pitch is not 0 and is less than region[0]\n", prefix);
+    CL_INVALID_VALUE, "%srow_pitch is not 0 and is less than region[0]\n", prefix);
 
   if (rp == 0) rp = region[0];
 
   // CL_INVALID_VALUE if slice_pitch is not 0 and is less than region[1] * row_pitch
   // or if slice_pitch is not 0 and is not a multiple of row_pitch.
   POCL_RETURN_ERROR_ON((sp != 0 && sp < (region[1] * rp)),
-    CL_INVALID_VALUE, "%s_slice_pitch is not 0 and is less than "
-      "region[1] * %s_row_pitch\n", prefix, prefix);
+    CL_INVALID_VALUE, "%sslice_pitch is not 0 and is less than "
+      "region[1] * %srow_pitch\n", prefix, prefix);
   POCL_RETURN_ERROR_ON((sp != 0 && (sp % rp != 0)),
-    CL_INVALID_VALUE, "%s_slice_pitch is not 0 and is not a multiple "
-      "of %s_row_pitch\n", prefix, prefix);
+    CL_INVALID_VALUE, "%sslice_pitch is not 0 and is not a multiple "
+      "of %srow_pitch\n", prefix, prefix);
 
   if (sp == 0) sp = region[1] * rp;
 
@@ -563,10 +563,10 @@ int pocl_buffer_boundcheck_3d(cl_mem buffer,
        sp * (origin[2] + region[2]-1);
 
 
-  POCL_RETURN_ERROR_ON((byte_offset_begin > buffer->size), CL_INVALID_VALUE,
-            "%s_origin is outside the %s_buffer", prefix, prefix);
-  POCL_RETURN_ERROR_ON((byte_offset_end > buffer->size), CL_INVALID_VALUE,
-            "%s_origin+region is outside the %s_buffer", prefix, prefix);
+  POCL_RETURN_ERROR_ON((byte_offset_begin > buffer_size), CL_INVALID_VALUE,
+            "%sorigin is outside the %sbuffer", prefix, prefix);
+  POCL_RETURN_ERROR_ON((byte_offset_end > buffer_size), CL_INVALID_VALUE,
+            "%sorigin+region is outside the %sbuffer", prefix, prefix);
   return CL_SUCCESS;
 }
 
