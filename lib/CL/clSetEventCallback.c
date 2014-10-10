@@ -9,14 +9,14 @@ POname(clSetEventCallback) (cl_event     event ,
 {
   event_callback_item *cb_ptr = NULL;
 
-  if (event == NULL)
-    return CL_INVALID_EVENT;
+  POCL_RETURN_ERROR_COND((event == NULL), CL_INVALID_EVENT);
 
-  if (pfn_notify == NULL || 
-      (command_exec_callback_type != CL_SUBMITTED &&
+  POCL_RETURN_ERROR_COND((pfn_notify == NULL), CL_INVALID_VALUE);
+
+  POCL_RETURN_ERROR_ON((command_exec_callback_type != CL_SUBMITTED &&
        command_exec_callback_type != CL_RUNNING && 
-       command_exec_callback_type != CL_COMPLETE))
-    return CL_INVALID_VALUE;
+       command_exec_callback_type != CL_COMPLETE), CL_INVALID_VALUE,
+       "callback type must be CL_SUBMITTED, CL_RUNNING or CL_COMPLETE");
 
   cb_ptr = malloc (sizeof (event_callback_item));
   if (cb_ptr == NULL)
