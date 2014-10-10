@@ -67,6 +67,7 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
           if (p->value != NULL)
             {
               pocl_aligned_free (p->value);
+              p->value = NULL;
             }
         }
 

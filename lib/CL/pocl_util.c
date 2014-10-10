@@ -278,7 +278,7 @@ pocl_aligned_free (void *ptr)
 {
   /* extract pointer from original allocation and free it */
   if (ptr)
-    POCL_MEM_FREE(*(void **)((uintptr_t)ptr - sizeof(void *)));
+    free(*(void **)((uintptr_t)ptr - sizeof(void *)));
 }
 #endif
 

@@ -222,6 +222,7 @@ static void exec_commands (_cl_command_node *node_list)
                  node->command.run.kernel->num_locals; ++i)
             {
               pocl_aligned_free (node->command.run.arguments[i].value);
+              node->command.run.arguments[i].value = NULL;
             }
           POCL_MEM_FREE(node->command.run.arguments);
       

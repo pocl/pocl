@@ -70,6 +70,7 @@ POname(clSetKernelArg)(cl_kernel kernel,
         *(const int*)arg_value == 0))
     {
       pocl_aligned_free (p->value);
+      p->value = NULL;
 
       /* FIXME: this is a cludge to determine an acceptable alignment,
        * we should probably extract the argument alignment from the

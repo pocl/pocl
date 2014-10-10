@@ -286,12 +286,11 @@ pocl_pthread_uninit (cl_device_id device)
   struct data *d = (struct data*)device->data;
 #ifdef CUSTOM_BUFFER_ALLOCATOR
   memory_region_t *region, *temp;
-  void *ptr;
   DL_FOREACH_SAFE(d->mem_regions->mem_regions, region, temp)
     {
       DL_DELETE(d->mem_regions->mem_regions, region);
-      ptr = (void*)region->chunks->start_address;
-      POCL_MEM_FREE(ptr);
+      free((void*)region->chunks->start_address);
+      region->chunks->start_address = 0;
       POCL_MEM_FREE(region);
     }
   d->mem_regions->mem_regions = NULL;
@@ -458,7 +457,8 @@ pocl_pthread_free (void *device_data, cl_mem_flags flags, void *ptr)
       /* All chunks have been deallocated. free() the whole 
          memory region at once. */
       DL_DELETE(d->mem_regions->mem_regions, region);
-      POCL_MEM_FREE((void*)region->last_chunk->start_address);
+      free((void*)region->last_chunk->start_address);
+      region->last_chunk->start_address = 0;
       POCL_MEM_FREE(region);
     }  
   BA_UNLOCK(region->lock);
