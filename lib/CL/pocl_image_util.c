@@ -30,11 +30,10 @@ pocl_check_image_origin_region (const cl_mem image,
                                 const size_t *origin, 
                                 const size_t *region)
 {
-  if (image == NULL)
-    return CL_INVALID_MEM_OBJECT;
+  POCL_RETURN_ERROR_COND((image == NULL), CL_INVALID_MEM_OBJECT);
 
-  if (origin == NULL || region == NULL)
-    return CL_INVALID_VALUE;
+  POCL_RETURN_ERROR_COND((origin == NULL), CL_INVALID_VALUE);
+  POCL_RETURN_ERROR_COND((region == NULL), CL_INVALID_VALUE);
   
   /* check if origin + region in each dimension is with in image bounds */
   if (((origin[0] + region[0]) > image->image_row_pitch) || 
@@ -179,10 +178,7 @@ pocl_write_image(cl_mem               image,
     
   size_t dev_elem_size = sizeof(cl_float);
   int dev_channels = 4;
-    
-  int host_elem_size = image->image_elem_size;
-  int host_channels = image->image_channels;
-    
+
   size_t tuned_origin[3] = {origin[0]*dev_elem_size*dev_channels, origin[1], 
                             origin[2]};
   size_t tuned_region[3] = {region[0]*dev_elem_size*dev_channels, region[1], 
