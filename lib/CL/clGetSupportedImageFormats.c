@@ -45,11 +45,11 @@ CL_API_SUFFIX__VERSION_1_0
   int reff_found;
   int formatCount = 0;
   
-  if (context == NULL && context->num_devices == 0)
-    return CL_INVALID_CONTEXT;
+  POCL_RETURN_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
+
+  POCL_RETURN_ERROR_COND((context->num_devices == 0), CL_INVALID_CONTEXT);
   
-  if (num_entries == 0 && image_formats != NULL)
-    return CL_INVALID_VALUE;
+  POCL_RETURN_ERROR_COND((num_entries == 0 && image_formats != NULL), CL_INVALID_VALUE);
   
   dev_image_formats = calloc (context->num_devices, sizeof(cl_image_format*));
   dev_num_image_formats = calloc (context->num_devices, sizeof(int));
