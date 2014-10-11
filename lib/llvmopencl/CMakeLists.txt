@@ -66,8 +66,12 @@ add_library("llvmpasses" OBJECT ${LLVMPASSES_SOURCES} "linker.cpp" "linker.h")
 #pkglib_LTLIBRARIES = llvmopencl.la
 add_library("llvmopencl" MODULE "$<TARGET_OBJECTS:llvmpasses>")
 
-#target_link_libraries("llvmopencl" ${POCL_LLVM_LIBS})
-
+# not sure where other platforms get their library linkage list, probably there is
+# way to make this more consistent on different platforms
+if(MSVC)
+  target_link_libraries("llvmopencl" "${POCL_LLVM_LIBS}")
+endif(MSVC)
+ 
 # TODO cmake should handle this, i might me missing something …
 if(APPLE)
   set(ADD_LD_FLAGS "-Wl,-undefined -Wl,dynamic_lookup ")
