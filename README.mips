@@ -13,6 +13,14 @@ to three bugs:
 * Vectors whose size is not a multiple of 4 bytes (such as char3) trigger an
   optimisation bug in SROA. This is still being debugged.
 
+Little-endian MIPS32r2 systems pass most tests but currently fails SPIR tests
+and shuffle tests. The shuffle tests fail because they define 16-byte aligned
+vectors on the stack which turn out to only be 8-byte aligned since stack
+frames are 8-byte aligned and LLVM 3.5 does not implement dynamic stack
+realignment for MIPS yet. An experimental patch to detect this situation and
+report an error at compile-time has revealed that many of the tests that do
+pass are affected by this issue and seem to pass by luck.
+
 Testing
 -------
 

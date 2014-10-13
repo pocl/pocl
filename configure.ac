@@ -930,6 +930,12 @@ case $host_cpu in
     CLANG_MARCH_FLAG="mcpu"
     ;;
 
+  mipsel*)
+    llc_triple="mipsel-unknown-linux-gnu"
+    CLANG_MARCH_FLAG=mcpu
+    CL_DEVICE_ADDRESS_BITS=32
+    ;;
+
   mips*)
     llc_triple="mips-unknown-linux-gnu"
     CLANG_MARCH_FLAG=mcpu
