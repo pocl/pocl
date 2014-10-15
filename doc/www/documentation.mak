@@ -10,6 +10,7 @@ The recommended way is to use the ICD interface. </p>
 See <a href="http://bazaar.launchpad.net/~pocl/pocl/trunk/view/head:/doc/envs.txt">doc/envs.txt</a>
 for the full listing.</p>
 
-<p><a href="http://sourceforge.net/apps/mediawiki/pocl/index.php?title=Main_Page">Wiki</a> can be also
-used for documentation.</p>
+## Wiki is gone.
+##<p><a href="http://sourceforge.net/apps/mediawiki/pocl/index.php?title=Main_Page">Wiki</a> can be also
+##used for documentation.</p>
 

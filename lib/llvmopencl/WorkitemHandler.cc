@@ -93,21 +93,22 @@ WorkitemHandler::Initialize(Kernel *K) {
   }
 
   llvm::Type *localIdType; 
-  #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+  size_t_width = 0;
+#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
   if (M->getPointerSize() == llvm::Module::Pointer64)
     size_t_width = 64;
   else if (M->getPointerSize() == llvm::Module::Pointer32)
     size_t_width = 32;
   else
     assert (false && "Only 32 and 64 bit size_t widths supported.");
-  #else
+#else
   if (M->getDataLayout()->getPointerSize(0) == 8)
     size_t_width = 64;
-  else if (M->getDataLayout()->getPointerSize(0) == 3)
+  else if (M->getDataLayout()->getPointerSize(0) == 4)
     size_t_width = 32;
   else
     assert (false && "Only 32 and 64 bit size_t widths supported.");
-  #endif
+#endif
 
   localIdType = IntegerType::get(K->getContext(), size_t_width);
 

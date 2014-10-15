@@ -103,16 +103,24 @@ AT_CLEANUP
 
 AT_SETUP([struct kernel arguments - lp:987905])
 AT_XFAIL_IF([true])
+# Skip for now as this passes and fails depending on the target (ABI).
+AT_SKIP_IF([true])
 AT_SKIP_IF([! grep "#define HAVE_OPENCL_HPP" $abs_top_builddir/config.h])
 AT_KEYWORDS([regression struct])
 AT_CHECK([$abs_top_builddir/tests/regression/test_structs_as_args], 0)
 AT_CLEANUP
 
 AT_SETUP([vector kernel arguments - lp:987905])
+AT_SKIP_IF([true])
+# Skip for now as this passes and fails depending on the target (ABI).
 AT_KEYWORDS([regression vectorarg])
 AT_SKIP_IF([! grep "#define HAVE_OPENCL_HPP" $abs_top_builddir/config.h])
-#this test fails with an assert. If asserts are off, it succeeds
+# This test fails with an assert. If asserts are off, it succeeds.
+# It fails depending if the argument list generated to the kernel
+# function happens to be 1:1 with the clKernelSetArgs indices or not
+# and that depends on the CC/ABI of the target at hand.
 AT_XFAIL_IF([grep LLVM_CXX_FLAGS $abs_top_builddir/config.log | grep -q -v DNDEBUG])
+AT_XFAIL_IF([grep LLVM_CXX_FLAGS $abs_top_builddir/config.log | grep -q _DEBUG])
 AT_CHECK([$abs_top_builddir/tests/regression/test_vectors_as_args], 0)
 AT_CLEANUP
 
@@ -177,31 +185,17 @@ AT_CLEANUP
 
 AT_SETUP([sizeof(uint)])
 AT_KEYWORDS([sizeof])
-AT_DATA([expout],
-[Running test test_sizeof...
-sizeof(uint) == 4
-sizeof(uint2) == 8
-sizeof(uint3) == 16
-sizeof(uint4) == 16
-sizeof(uint8) == 32
-sizeof(uint16) == 64
-OK
+AT_CHECK_UNQUOTED([$abs_top_builddir/tests/kernel/kernel test_sizeof], 0,
+[$(cat $abs_top_builddir/tests/kernel/test_sizeof_expout.txt)
 ])
-AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_sizeof], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([block])
 AT_KEYWORDS([block])
 AT_SKIP_IF([! grep "#define HAVE_OPENCL_HPP" $abs_top_builddir/config.h])
-AT_DATA([expout],
-[Running test test_block...
-op(1)=2.000000
-op(1)=2.000000
-op(1)=1.000000
-op(1)=2.000000
-OK
+AT_CHECK_UNQUOTED([$abs_top_builddir/tests/kernel/kernel test_block], 0,
+[$(cat $abs_top_builddir/tests/kernel/test_block_expout.txt)
 ])
-AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_block], 0, expout)
 # LLVM 3.4's crashes with an illegal const expr cast. Unresolved.
 AT_XFAIL_IF([grep -q "#define LLVM_3_4" $abs_top_builddir/config.h])
 AT_CLEANUP
@@ -228,4 +222,22 @@ AT_DATA([expout],
 Value is changed at global_id: 67599, local_id 3, group_id 16899, to: 854
 ])
 AT_CHECK([POCL_WORK_GROUP_METHOD=loops $abs_top_builddir/tests/regression/test_assign_loop_variable_to_privvar_makes_it_local], 0, expout)
+AT_CLEANUP
+
+AT_SETUP([assigning a loop iterator variable to a private makes it local 2 - issue 102 (repl)])
+AT_KEYWORDS([regression looppriv])
+AT_DATA([expout],
+[changing the value at global_id: 6, local_id 2, group_id 1, to: 3
+value is changed at global_id: 6, local_id 2, group_id 1, to: 3
+])
+AT_CHECK([POCL_WORK_GROUP_METHOD=repl $abs_top_builddir/tests/regression/test_assign_loop_variable_to_privvar_makes_it_local_2], 0, expout)
+AT_CLEANUP
+
+AT_SETUP([assigning a loop iterator variable to a private makes it local 2 - issue 102 (loops)])
+AT_KEYWORDS([regression looppriv])
+AT_DATA([expout],
+[changing the value at global_id: 6, local_id 2, group_id 1, to: 3
+value is changed at global_id: 6, local_id 2, group_id 1, to: 3
+])
+AT_CHECK([POCL_WORK_GROUP_METHOD=loops $abs_top_builddir/tests/regression/test_assign_loop_variable_to_privvar_makes_it_local_2], 0, expout)
 AT_CLEANUP

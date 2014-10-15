@@ -1,7 +1,7 @@
 /* basic.c - a minimalistic pocl device driver layer implementation
 
    Copyright (c) 2011-2013 Universidad Rey Juan Carlos and
-                           Pekka Jääskeläinen / Tampere University of Technology
+                 2011-2014 Pekka Jääskeläinen / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,6 @@
 #include "basic.h"
 #include "cpuinfo.h"
 #include "topology/pocl_topology.h"
-#include "install-paths.h"
 #include "common.h"
 #include "utlist.h"
 #include "devices.h"
@@ -34,7 +33,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <../dev_image.h>
+#include <dev_image.h>
 #include <sys/time.h>
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
@@ -215,7 +214,7 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
 {
   dev->type = CL_DEVICE_TYPE_CPU;
   dev->vendor_id = 0;
-  dev->max_compute_units = 1;
+  dev->max_compute_units = 0;
   dev->max_work_item_dimensions = 3;
   dev->max_work_item_sizes[0] = CL_INT_MAX;
   dev->max_work_item_sizes[1] = CL_INT_MAX;
@@ -239,21 +238,21 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->native_vector_width_half = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF;
   dev->max_clock_frequency = 0;
   dev->address_bits = POCL_DEVICE_ADDRESS_BITS;
+
+  /* Use the minimum values until we get a more sensible
+     upper limit from somewhere. */
+  dev->max_read_image_args = dev->max_write_image_args = 128;
+  dev->image2d_max_width = dev->image2d_max_height = 8192;
+  dev->image3d_max_width = dev->image3d_max_height = dev->image3d_max_depth = 2048;
+  dev->max_samplers = 16;
+  dev->max_constant_args = 8;
+
   dev->max_mem_alloc_size = 0;
   dev->image_support = CL_TRUE;
-  dev->max_read_image_args = 0;
-  dev->max_write_image_args = 0;
-  dev->image2d_max_width = 0;
-  dev->image2d_max_height = 0;
-  dev->image3d_max_width = 0;
-  dev->image3d_max_height = 0;
-  dev->image3d_max_depth = 0;
   dev->image_max_buffer_size = 0;
   dev->image_max_array_size = 0;
-  dev->max_samplers = 0;
   dev->max_parameter_size = 1024;
-  dev->mem_base_addr_align = 0;
-  dev->min_data_type_align_size = 0;
+  dev->min_data_type_align_size = dev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT;
   dev->half_fp_config = 0;
   dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
   dev->double_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
@@ -262,7 +261,6 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->global_mem_cache_size = 0;
   dev->global_mem_size = 0;
   dev->max_constant_buffer_size = 0;
-  dev->max_constant_args = 0;
   dev->local_mem_type = CL_GLOBAL;
   dev->local_mem_size = 0;
   dev->error_correction_support = CL_FALSE;
@@ -278,7 +276,26 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->printf_buffer_size = 0;
   dev->vendor = "pocl";
   dev->profile = "FULL_PROFILE";
-  dev->extensions = "";
+  /* Note: The specification describes identifiers being delimited by
+     only a single space character. Some programs that check the device's
+     extension  string assume this rule. Future extension additions should
+     ensure that there is no more than a single space between
+     identifiers. */
+
+#ifndef _CL_DISABLE_LONG
+#define DOUBLE_EXT "cl_khr_fp64 "
+#else
+#define DOUBLE_EXT 
+#endif
+
+#ifndef _CL_DISABLE_HALF
+#define HALF_EXT "cl_khr_fp16 "
+#else
+#define HALF_EXT
+#endif
+
+  dev->extensions = DOUBLE_EXT HALF_EXT "cl_khr_byte_addressable_store";
+
   dev->llvm_target_triplet = OCL_KERNEL_TARGET;
   dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
   dev->has_64bit_long = 1;
@@ -315,8 +332,8 @@ pocl_basic_init (cl_device_id device, const char* parameters)
   d->current_kernel = NULL;
   d->current_dlhandle = 0;
   device->data = d;
-  pocl_cpuinfo_detect_device_info(device);
   pocl_topology_detect_device_info(device);
+  pocl_cpuinfo_detect_device_info(device);
 
   /* The basic driver represents only one "compute unit" as
      it doesn't exploit multiple hardware threads. Multiple
@@ -341,9 +358,10 @@ pocl_basic_malloc (void *device_data, cl_mem_flags flags,
 
   if (flags & CL_MEM_COPY_HOST_PTR)
     {
-      if (posix_memalign (&b, MAX_EXTENDED_ALIGNMENT, size) == 0)
+      b = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, size);
+      if (b != NULL)
         {
-          memcpy (b, host_ptr, size);
+          memcpy(b, host_ptr, size);
           return b;
         }
       
@@ -354,8 +372,8 @@ pocl_basic_malloc (void *device_data, cl_mem_flags flags,
     {
       return host_ptr;
     }
-
-  if (posix_memalign (&b, MAX_EXTENDED_ALIGNMENT, size) == 0)
+  b = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, size);
+  if (b != NULL)
     return b;
   
   return NULL;
@@ -375,9 +393,12 @@ pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
         {
           b = mem_obj->mem_host_ptr;
         }
-      else if (posix_memalign (&b, MAX_EXTENDED_ALIGNMENT, 
-                               mem_obj->size) != 0)
-        return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+      else
+        {
+          b = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, mem_obj->size);
+          if (b == NULL)
+            return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+        }
 
       if (flags & CL_MEM_COPY_HOST_PTR)
         memcpy (b, mem_obj->mem_host_ptr, mem_obj->size);
@@ -399,7 +420,7 @@ pocl_basic_free (void *data, cl_mem_flags flags, void *ptr)
   if (flags & CL_MEM_USE_HOST_PTR)
     return;
   
-  free (ptr);
+  POCL_MEM_FREE(ptr);
 }
 
 void
@@ -530,12 +551,28 @@ pocl_basic_run
   for (i = 0; i < kernel->num_args; ++i)
     {
       if (kernel->arg_info[i].is_local)
-        pocl_basic_free(data, 0, *(void **)(arguments[i]));
+        {
+          pocl_basic_free (data, 0, *(void **)(arguments[i]));
+          POCL_MEM_FREE(arguments[i]);
+        }
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
+        {
+          pocl_basic_free (data, 0, *(void **)(arguments[i]));
+          POCL_MEM_FREE(arguments[i]);
+        }
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER || 
+               (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && *(void**)arguments[i] == NULL))
+        {
+          POCL_MEM_FREE(arguments[i]);
+        }
     }
   for (i = kernel->num_args;
        i < kernel->num_args + kernel->num_locals;
        ++i)
-    pocl_basic_free(data, 0, *(void **)(arguments[i]));
+    {
+      pocl_basic_free(data, 0, *(void **)(arguments[i]));
+      POCL_MEM_FREE(arguments[i]);
+    }
 }
 
 void
@@ -687,7 +724,7 @@ void
 pocl_basic_uninit (cl_device_id device)
 {
   struct data *d = (struct data*)device->data;
-  free (d);
+  POCL_MEM_FREE(d);
   device->data = NULL;
 }
 
@@ -753,7 +790,7 @@ void check_compiler_cache (_cl_command_node *cmd)
   const char* module_fn = llvm_codegen (cmd->command.run.tmp_dir,
                                         cmd->command.run.kernel,
                                         cmd->device);
-  dlhandle = lt_dlopen (module_fn);     
+  dlhandle = lt_dlopen (module_fn);
   if (dlhandle == NULL)
     {
       printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", 

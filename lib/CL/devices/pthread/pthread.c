@@ -23,7 +23,6 @@
 */
 
 #include "pocl-pthread.h"
-#include "install-paths.h"
 #include <assert.h>
 #include <pthread.h>
 #include <string.h>
@@ -43,7 +42,7 @@
 #ifdef CUSTOM_BUFFER_ALLOCATOR
 
 #include "bufalloc.h"
-#include <../dev_image.h>
+#include <dev_image.h>
 
 /* Instead of mallocing a buffer size for a region, try to allocate 
    this many times the buffer size to hopefully avoid mallocs for 
@@ -61,6 +60,12 @@
  */
 #define ADDITIONAL_ALLOCATION_MAX_MB 100
 
+/* Always create regions with at least this size to avoid allocating
+   small regions when there are lots of small buffers, which would counter 
+   a purpose of having own buffer management. It would end up having a lot of
+   small regions with linear searches over them.  */
+#define NEW_REGION_MIN_MB 10
+
 /* Whether to immediately free a region in case the last chunk was
    deallocated. If 0, it can reuse the same region over multiple kernels. */
 #define FREE_EMPTY_REGIONS 0
@@ -69,7 +74,7 @@
 #endif
 
 #define COMMAND_LENGTH 2048
-#define WORKGROUP_STRING_LENGTH 128
+#define WORKGROUP_STRING_LENGTH 256
 
 /* The name of the environment variable used to force a certain max thread count
    for the thread execution. */
@@ -88,10 +93,13 @@ struct thread_arguments
   thread_arguments *volatile next;
 };
 
+
+#ifdef CUSTOM_BUFFER_ALLOCATOR
 typedef struct _mem_regions_management{
   ba_lock_t mem_regions_lock;
   struct memory_region *mem_regions;
 } mem_regions_management;
+#endif
 
 struct data {
   /* Currently loaded kernel. */
@@ -114,7 +122,7 @@ pocl_lock_t ta_pool_lock;
 static int get_max_thread_count();
 static void * workgroup_thread (void *p);
 
-void pocl_init_thread_argument_manager (void)
+static void pocl_init_thread_argument_manager (void)
 {
   if (!argument_pool_initialized)
     {
@@ -123,7 +131,7 @@ void pocl_init_thread_argument_manager (void)
     }
 }
 
-thread_arguments* new_thread_arguments ()
+static thread_arguments* new_thread_arguments ()
 {
   thread_arguments *ta = NULL;
   POCL_LOCK (ta_pool_lock);
@@ -138,7 +146,7 @@ thread_arguments* new_thread_arguments ()
   return calloc (1, sizeof (thread_arguments));
 }
 
-void free_thread_arguments (thread_arguments *ta)
+static void free_thread_arguments (thread_arguments *ta)
 {
   POCL_LOCK (ta_pool_lock);
   LL_PREPEND (thread_argument_pool, ta);
@@ -184,7 +192,7 @@ pocl_pthread_init_device_infos(struct _cl_device_id* dev)
 {
   pocl_basic_init_device_infos(dev);
 
-  dev->type = CL_DEVICE_TYPE_CPU | CL_DEVICE_TYPE_DEFAULT;
+  dev->type = CL_DEVICE_TYPE_CPU;
   /* This could be SIZE_T_MAX, but setting it to INT_MAX should suffice, */
   /* and may avoid errors in user code that uses int instead of size_t */
   dev->max_work_item_sizes[0] = 1024;
@@ -197,7 +205,9 @@ void
 pocl_pthread_init (cl_device_id device, const char* parameters)
 {
   struct data *d; 
+#ifdef CUSTOM_BUFFER_ALLOCATOR  
   static mem_regions_management* mrm = NULL;
+#endif
   static int global_mem_id;
   int i;
 
@@ -241,13 +251,13 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
      ensure that there is no more than a single space between
      identifiers. */
 
-#if SIZEOF_DOUBLE == 8
+#ifndef _CL_DISABLE_LONG
 #define DOUBLE_EXT "cl_khr_fp64 "
 #else
-#define DOUBLE_EXT 
+#define DOUBLE_EXT
 #endif
 
-#if SIZEOF___FP16 == 2
+#ifndef _CL_DISABLE_HALF
 #define HALF_EXT "cl_khr_fp16 "
 #else
 #define HALF_EXT
@@ -255,8 +265,8 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
 
   device->extensions = DOUBLE_EXT HALF_EXT "cl_khr_byte_addressable_store";
 
-  pocl_cpuinfo_detect_device_info(device);
   pocl_topology_detect_device_info(device);
+  pocl_cpuinfo_detect_device_info(device);
 
   if(!strcmp(device->llvm_cpu, "(unknown)"))
     device->llvm_cpu = NULL;
@@ -276,15 +286,17 @@ pocl_pthread_uninit (cl_device_id device)
   struct data *d = (struct data*)device->data;
 #ifdef CUSTOM_BUFFER_ALLOCATOR
   memory_region_t *region, *temp;
+  void *ptr;
   DL_FOREACH_SAFE(d->mem_regions->mem_regions, region, temp)
     {
       DL_DELETE(d->mem_regions->mem_regions, region);
-      free ((void*)region->chunks->start_address);
-      free (region);    
+      ptr = (void*)region->chunks->start_address;
+      POCL_MEM_FREE(ptr);
+      POCL_MEM_FREE(region);
     }
   d->mem_regions->mem_regions = NULL;
 #endif  
-  free (d);
+  POCL_MEM_FREE(d);
   device->data = NULL;
 }
 
@@ -310,17 +322,20 @@ allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t
          Allocate a larger chunk to avoid allocation overheads
          later on. */
       size_t region_size = 
-        max(min(size + ADDITIONAL_ALLOCATION_MAX_MB * 1024 * 1024, 
-                size * ALLOCATION_MULTIPLE), size);
+          max(max(min(size + ADDITIONAL_ALLOCATION_MAX_MB * 1024 * 1024, 
+                      size * ALLOCATION_MULTIPLE), size),
+              NEW_REGION_MIN_MB * 1024 * 1024);
 
       assert (region_size >= size);
 
       void* space = NULL;
-      if ((posix_memalign (&space, alignment, region_size)) != 0)
+      space = pocl_memalign_alloc(alignment, region_size);
+      if (space == NULL)
         {
           /* Failed to allocate a large region. Fall back to allocating 
              the smallest possible region for the buffer. */
-          if ((posix_memalign (&space, alignment, size)) != 0) 
+	        space = pocl_memalign_alloc(alignment, size);
+          if (space == NULL) 
             {
               BA_UNLOCK (d->mem_regions->mem_regions_lock);
               return ENOMEM;
@@ -354,7 +369,8 @@ allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t
 static int
 allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t size) 
 {
-  return posix_memalign (memptr, alignment, size);
+  *memptr = pocl_memalign_alloc(alignment, size);
+  return (((*memptr) == NULL)? -1: 0);
 }
 
 #endif
@@ -442,8 +458,8 @@ pocl_pthread_free (void *device_data, cl_mem_flags flags, void *ptr)
       /* All chunks have been deallocated. free() the whole 
          memory region at once. */
       DL_DELETE(d->mem_regions->mem_regions, region);
-      free ((void*)region->last_chunk->start_address);
-      free (region);    
+      POCL_MEM_FREE((void*)region->last_chunk->start_address);
+      POCL_MEM_FREE(region);
     }  
   BA_UNLOCK(region->lock);
   BA_UNLOCK(d->mem_regions->mem_regions_lock);
@@ -458,7 +474,7 @@ pocl_pthread_free (void *data, cl_mem_flags flags, void *ptr)
   if (flags & CL_MEM_COPY_HOST_PTR)
     return;
   
-  free (ptr);
+  POCL_MEM_FREE(ptr);
 }
 #endif
 
@@ -629,7 +645,7 @@ pocl_pthread_run
 #endif
   }
 
-  free(threads);
+  POCL_MEM_FREE(threads);
 }
 
 void *
@@ -638,14 +654,14 @@ pocl_pthread_map_mem (void *data, void *buf_ptr,
 {
   /* All global pointers of the pthread/CPU device are in 
      the host address space already, and up to date. */     
-  return buf_ptr + offset;
+  return (char*)buf_ptr + offset;
 }
 
 void *
 workgroup_thread (void *p)
 {
   struct thread_arguments *ta = (struct thread_arguments *) p;
-  void *arguments[ta->kernel->num_args + ta->kernel->num_locals];
+  void **arguments = (void**)alloca((ta->kernel->num_args + ta->kernel->num_locals)*sizeof(void*));
   struct pocl_argument *al;  
   unsigned i = 0;
 
@@ -737,12 +753,17 @@ workgroup_thread (void *p)
       if (kernel->arg_info[i].is_local )
         {
           pocl_pthread_free (ta->data, 0, *(void **)(arguments[i]));
-          free (arguments[i]);
+          POCL_MEM_FREE(arguments[i]);
         }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER || kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE || 
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
+        {
+          pocl_pthread_free (ta->data, 0, *(void **)(arguments[i]));
+          POCL_MEM_FREE(arguments[i]);
+        }
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER || 
                (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && *(void**)arguments[i] == NULL))
         {
-          free (arguments[i]);
+          POCL_MEM_FREE(arguments[i]);
         }
     }
   for (i = kernel->num_args;
@@ -750,7 +771,7 @@ workgroup_thread (void *p)
        ++i)
     {
       pocl_pthread_free (ta->data, 0, *(void **)(arguments[i]));
-      free (arguments[i]);
+      POCL_MEM_FREE(arguments[i]);
     }
   free_thread_arguments (ta);
 

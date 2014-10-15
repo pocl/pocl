@@ -23,32 +23,33 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-EXTRA_DIST = *.patch
+EXTRA_DIST = $(srcdir)/*.patch
 
 if TEST_SUITE_AMDSDK2_9
 testsuite_pocl_dir=${abs_top_srcdir}/examples/AMDSDK2.9
 testsuite_src_dir=${testsuite_pocl_dir}/AMD-APP-SDK-v2.9-RC-lnx64
 amd_app_dir=$(testsuite_src_dir)/samples/opencl/
 
-.PHONY: build
+.PHONY: build prepare-examples
 
-all: $(testsuite_src_dir) build
+prepare-examples: $(testsuite_src_dir) build
 
 $(testsuite_src_dir): AMD-APP-SDK-v2.9-RC-lnx64.tgz
 	test -d $(testsuite_src_dir) || (cd $(testsuite_pocl_dir) && tar xzf AMD-APP-SDK-v2.9-RC-lnx64.tgz)
 
+# Some of the tests do not build with OpenGL 3.0. Just skip them by using make -k.
 build: $(testsuite_src_dir) 
-	cd $(testsuite_pocl_dir) && \
+	-cd $(testsuite_pocl_dir) && \
 	( patch -sNp1 < $(testsuite_pocl_dir)/AMDSDK2_9.patch || true ) && \
 	cd $(testsuite_src_dir)/samples/ && \
 	find . -name "CMakeLists.txt" -exec sed -i \
 		-e 's/mark_as_advanced( OPENCL_LIBRARIES )/set(OPENCL_LIBRARIES "-lOpenCL")/g' \
 		-e 's/mark_as_advanced(OPENCL_LIBRARIES)/set(OPENCL_LIBRARIES "-lOpenCL")/g' "{}" \; && \
-	cmake \
+	LDFLAGS="-pthread ${LDFLAGS}" cmake \
 		-DBUILD_OPENCL=ON \
 		-DBUILD_OPENCV=OFF \
 		-DBUILD_BOLT=OFF .;\
-	make
+	make -sk
 
 test_AsyncDataTransfer:
 	cd $(amd_app_dir) && \
@@ -334,13 +335,7 @@ test_URNGNoiseGL:
 	cd $(amd_app_dir) && \
 	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cl/URNGNoiseGL/bin/x86_64/Release/URNGNoiseGL -e
 
-
-check-local: all
-
-clean-local:
+clean-examples:
 	rm -fr $(testsuite_src_dir) Install-AMD-APP.sh default-install_lnx_64.pl ReadMe.txt
-
-distclean-local: clean-local
-	$(RM) -r $(testsuite_src_dir)
 
 endif

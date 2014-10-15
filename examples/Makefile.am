@@ -22,6 +22,58 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+# The examples under test suite are both internal ("smoke test") to pocl
+# and benchmarks/test suites that are from external SDKs. The build
+# systems of the latter should not be invoked every time 'make all' or
+# 'make check' is executed because they are not affected by pocl changes nor
+# should itself change.
+
 SUBDIRS = example1 example1-spir32 example1-spir64 example2 example2a trig \
 	scalarwave standalone opencl-book-samples VexCL ViennaCL Rodinia Parboil \
 	AMD AMDSDK2.9 EinsteinToolkit piglit
+
+BASIC_EXAMPLES = example1 example1-spir32 example1-spir64 example2 example2a trig \
+	scalarwave standalone opencl-book-samples EinsteinToolkit
+
+# The external examples which should be prepared only
+# once by calling "make prepare-examples".
+EXAMPLES_TO_PREPARE = 
+
+if TEST_SUITE_VEXCL
+EXAMPLES_TO_PREPARE += "VexCL "
+endif
+if TEST_SUITE_VIENNACL
+EXAMPLES_TO_PREPARE += "ViennaCL "
+endif
+if TEST_SUITE_RODINIA
+EXAMPLES_TO_PREPARE += "Rodinia "
+endif
+if TEST_SUITE_PARBOIL
+EXAMPLES_TO_PREPARE += "Parboil "
+endif
+if TEST_SUITE_AMD
+EXAMPLES_TO_PREPARE += "AMD "
+endif
+if TEST_SUITE_AMDSDK2_9
+EXAMPLES_TO_PREPARE += "AMDSDK2.9 "
+endif
+if TEST_SUITE_PIGLIT
+EXAMPLES_TO_PREPARE += "piglit "
+endif
+
+prepare-examples:
+	for dir in $(EXAMPLES_TO_PREPARE); do \
+	   $(MAKE) -C $$dir prepare-examples; \
+	done
+
+clean-examples:
+	for dir in $(EXAMPLES_TO_PREPARE); do \
+	   $(MAKE) -C $$dir clean-examples; \
+	done
+
+clean:
+	for dir in $(BASIC_EXAMPLES); do \
+	   $(MAKE) -C $$dir clean; \
+	done
+	@echo Call 'make clean-examples' to clean up the examples.
+

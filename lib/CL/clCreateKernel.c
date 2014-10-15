@@ -24,7 +24,6 @@
 
 #include "pocl_cl.h"
 #include "pocl_llvm.h"
-#include "install-paths.h"
 #include <string.h>
 #include <unistd.h>
 #include <sys/stat.h>
@@ -118,7 +117,7 @@ POname(clCreateKernel)(cl_program program,
   return kernel;
 
 ERROR_CLEAN_KERNEL:
-  free(kernel);
+  POCL_MEM_FREE(kernel);
 ERROR:
   if(errcode_ret != NULL)
   {

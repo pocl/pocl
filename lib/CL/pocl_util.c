@@ -26,13 +26,19 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <utime.h>
+#include <time.h>
 
 #include "pocl_util.h"
 #include "pocl_cl.h"
 #include "utlist.h"
+#include "common.h"
 #include "pocl_mem_management.h"
 
-#define TEMP_DIR_PATH_CHARS 16
+#define CACHE_DIR_PATH_CHARS 512
 
 struct list_item;
 
@@ -43,34 +49,111 @@ typedef struct list_item
 } list_item;
 
 void 
-remove_directory (const char *path_name) 
+pocl_remove_directory (const char *path_name)
 {
   int str_size = 10 + strlen(path_name) + 1;
   char *cmd = (char*)malloc(str_size);
-  snprintf (cmd, str_size, "rm -fr '%s'", path_name);
-  system (cmd);
-  free (cmd);
+  snprintf(cmd, str_size, "rm -fr '%s'", path_name);
+  system(cmd);
+  POCL_MEM_FREE(cmd);
 }
 
-#define POCL_TEMPDIR_ENV "POCL_TEMP_DIR"
+void
+pocl_remove_file (const char *file_path)
+{
+  int str_size = 10 + strlen(file_path) + 1;
+  char *cmd = (char*)malloc(str_size);
+  snprintf(cmd, str_size, "rm -f '%s'", file_path);
+  system(cmd);
+  POCL_MEM_FREE(cmd);
+}
+
+void
+pocl_make_directory (const char *path_name)
+{
+  int str_size = 12 + strlen(path_name) + 1;
+  char *cmd = (char*)malloc(str_size);
+  snprintf(cmd, str_size, "mkdir -p '%s'", path_name);
+  system(cmd);
+  POCL_MEM_FREE(cmd);
+}
+
+void
+pocl_create_or_append_file (const char *file_name, const char *content)
+{
+  FILE *fp = fopen(file_name, "a");
+  if ((fp == NULL) || (content == NULL))
+    return;
+
+  fprintf(fp, "%s", content);
+
+  fclose(fp);
+}
+
+int
+pocl_read_text_file (const char* file_name, char** content_dptr)
+{
+  FILE *fp;
+  struct stat st;
+  int file_size;
+
+  stat(file_name, &st);
+  file_size = (int)st.st_size;
+
+  fp = fopen(file_name, "r");
+  if (fp == NULL)
+    return 0;
+
+  *content_dptr = (char*) malloc((file_size + 1) * sizeof(char));
+  if (!(*content_dptr)) return 0;
+
+  int read = fread(*content_dptr, sizeof(char), file_size, fp);
+  (*content_dptr)[file_size] = '\0';
+
+  return read;
+}
 
 char*
-pocl_create_temp_dir() 
-{  
-  char *path_name; 
-  if (getenv(POCL_TEMPDIR_ENV) != NULL &&
-      access (getenv(POCL_TEMPDIR_ENV), F_OK) == 0) 
+pocl_create_progam_cache_dir(cl_program program)
+{
+  char *tmp_path = NULL, *cache_path = NULL;
+  char hash_str[SHA1_DIGEST_SIZE * 2 + 1];
+  int i;
+
+  for (i = 0; i < SHA1_DIGEST_SIZE; i++)
+    sprintf(&hash_str[i*2], "%02x", (unsigned int) program->build_hash[i]);
+
+  cache_path = (char*)malloc(CACHE_DIR_PATH_CHARS);
+
+  tmp_path = getenv("POCL_CACHE_DIR");
+  if (tmp_path && (access(tmp_path, W_OK) == 0))
     {
-      path_name = (char*)malloc (strlen(getenv(POCL_TEMPDIR_ENV)) + 1);
-      strcpy (path_name, getenv(POCL_TEMPDIR_ENV));
+      snprintf(cache_path, CACHE_DIR_PATH_CHARS, "%s/%s", tmp_path, hash_str);
     }
-  else 
+  else
     {
-      path_name = (char*)malloc (TEMP_DIR_PATH_CHARS);
-      strncpy (path_name, "/tmp/poclXXXXXX\0", TEMP_DIR_PATH_CHARS);
-      mkdtemp (path_name);  
+#ifdef ANDROID
+      snprintf(cache_path, CACHE_DIR_PATH_CHARS,
+                  "/data/data/%s/cache/", pocl_get_process_name());
+
+      if (access(cache_path, W_OK) == 0)
+        strcat(cache_path, hash_str);
+      else
+        snprintf(cache_path, CACHE_DIR_PATH_CHARS, "/sdcard/pocl/kcache/%s", hash_str);
+#else
+      tmp_path = getenv("HOME");
+
+      if (tmp_path)
+        snprintf(cache_path, CACHE_DIR_PATH_CHARS, "%s/.pocl/%s", tmp_path, hash_str);
+      else
+        snprintf(cache_path, CACHE_DIR_PATH_CHARS, "/tmp/pocl/%s", hash_str);
+#endif
     }
-  return path_name;
+
+  if (access(cache_path, F_OK) != 0)
+    pocl_make_directory(cache_path);
+
+    return cache_path;
 }
 
 uint32_t
@@ -130,7 +213,7 @@ pocl_size_ceil2(size_t x) {
 
 #ifndef HAVE_ALIGNED_ALLOC
 void *
-pocl_aligned_malloc(size_t alignment, size_t size)
+pocl_aligned_malloc (size_t alignment, size_t size)
 {
 # ifdef HAVE_POSIX_MEMALIGN
   
@@ -149,10 +232,10 @@ pocl_aligned_malloc(size_t alignment, size_t size)
   void* result;
   int err;
   
-  err = posix_memalign(&result, alignment, size);
-  if (err)
+  result = pocl_memalign_alloc(alignment, size);
+  if (result == NULL)
     {
-      errno = err;
+      errno = -1;
       return NULL;
     }
 
@@ -191,11 +274,11 @@ pocl_aligned_malloc(size_t alignment, size_t size)
 
 #if !defined HAVE_ALIGNED_ALLOC && !defined HAVE_POSIX_MEMALIGN
 void
-pocl_aligned_free(void *ptr)
+pocl_aligned_free (void *ptr)
 {
   /* extract pointer from original allocation and free it */
   if (ptr)
-    free(*(void **)((uintptr_t)ptr - sizeof(void *)));
+    POCL_MEM_FREE(*(void **)((uintptr_t)ptr - sizeof(void *)));
 }
 #endif
 
@@ -212,12 +295,13 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
       POname(clRetainCommandQueue) (command_queue);
       (*event)->command_type = command_type;
       (*event)->callback_list = NULL;
+      (*event)->implicit_event = 0;
       (*event)->next = NULL;
     }
   return CL_SUCCESS;
 }
 
-cl_int pocl_create_command (_cl_command_node **cmd, 
+cl_int pocl_create_command (_cl_command_node **cmd,
                             cl_command_queue command_queue, 
                             cl_command_type command_type, cl_event *event_p, 
                             cl_int num_events, const cl_event *wait_list)
@@ -246,11 +330,13 @@ cl_int pocl_create_command (_cl_command_node **cmd,
   err = pocl_create_event(event, command_queue, command_type);
   if (err != CL_SUCCESS)
     {
-      free (*cmd);
+      POCL_MEM_FREE(*cmd);
       return err;
     }
   if (event_p)
     *event_p = *event;
+  else
+    (*event)->implicit_event = 1;
   
   /* if in-order command queue and queue is not empty, add event from 
      previous command to new commands event_waitlist */
@@ -289,7 +375,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
   return CL_SUCCESS;
 }
 
-void pocl_command_enqueue(cl_command_queue command_queue, 
+void pocl_command_enqueue (cl_command_queue command_queue,
                           _cl_command_node *node)
 {
   POCL_LOCK_OBJ(command_queue);
@@ -301,4 +387,128 @@ void pocl_command_enqueue(cl_command_queue command_queue,
   #endif
   POCL_UPDATE_EVENT_QUEUED (&node->event, command_queue);
 
+}
+
+char* pocl_get_process_name ()
+{
+  char tmpStr[64], cmdline[512], *processName = NULL;
+  FILE *statusFile;
+  int len, i, begin;
+
+  snprintf(tmpStr, 64, "/proc/%d/cmdline", getpid());
+  statusFile = fopen(tmpStr, "r");
+  if (statusFile == NULL)
+    return NULL;
+
+  if (fgets(cmdline, 511, statusFile) != NULL)
+    {
+      len = strlen(cmdline);
+      begin = 0;
+      for (i=len-1; i>=0; i--)     /* Extract program-name after last '/' */
+        {
+          if (cmdline[i] == '/')
+            {
+              begin = i + 1;
+              break;
+            }
+        }
+      processName = strdup(cmdline + begin);
+    }
+
+  fclose(statusFile);
+  return processName;
+}
+
+static int cache_lock_initialized = 0;
+static pocl_lock_t cache_lock;
+
+void
+pocl_check_and_invalidate_cache (cl_program program,
+                  int device_i, const char* device_tmpdir)
+{
+  int cache_dirty = 0;
+  char version_file[CACHE_DIR_PATH_CHARS];
+  char *content = NULL, *s_ptr, *ss_ptr;
+  int read = 0;
+
+  if (!cache_lock_initialized)
+    {
+      cache_lock_initialized = 1;
+      POCL_INIT_LOCK(cache_lock);
+    }
+
+  sprintf(version_file, "%s/pocl_build_id", device_tmpdir);
+
+  POCL_LOCK(cache_lock);
+
+  if (!pocl_get_bool_option("POCL_KERNEL_CACHE", POCL_BUILD_KERNEL_CACHE))
+    {
+      cache_dirty = 1;
+      goto bottom;
+    }
+
+  /* Check for driver version match */
+  if (access (version_file, F_OK) == 0)
+    {
+      read = pocl_read_text_file(version_file, &content);
+      if(read && (strcmp(content, POCL_BUILD_TIMESTAMP) != 0))
+        {
+          cache_dirty = 1;
+        }
+      POCL_MEM_FREE(content);
+    }
+  else
+    {
+      pocl_create_or_append_file(version_file, POCL_BUILD_TIMESTAMP);
+    }
+    if (cache_dirty)  goto bottom;
+
+  /* If program contains "#include", disable caching
+     Included headers might get modified, force recompilation in all the cases
+     Yes, this is a very dirty way to find "# include"
+     but we can live with this for now
+   */
+    if (program->source)
+      {
+        for (s_ptr = program->source; (*s_ptr); s_ptr++)
+          {
+            if ((*s_ptr) == '#')
+              {
+                /* Skip all the white-spaces between # & include */
+                for (ss_ptr = s_ptr+1; (*ss_ptr == ' '); ss_ptr++) ;
+
+                if (strncmp(ss_ptr, "include", 7) == 0)
+                  cache_dirty = 1;
+              }
+          }
+      }
+
+  bottom:
+  if (cache_dirty)
+    {
+      pocl_remove_directory(device_tmpdir);
+      mkdir(device_tmpdir, S_IRWXU);
+
+      pocl_create_or_append_file(version_file, POCL_BUILD_TIMESTAMP);
+    }
+
+  POCL_UNLOCK(cache_lock);
+}
+
+void pocl_touch_file(const char* file_name)
+{
+  struct stat file_stat;
+  struct utimbuf new_time;
+
+  if (access(file_name, F_OK) != 0)
+    {
+      FILE *fp = fopen(file_name, "w");
+      fclose(fp);
+    }
+
+  stat(file_name, &file_stat);
+
+  new_time.actime = file_stat.st_atime;
+  new_time.modtime = time(NULL);        /* set mtime to current time */
+  utime(file_name, &new_time);
 }

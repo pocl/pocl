@@ -36,7 +36,7 @@
 #include "ParallelRegion.h"
 
 namespace llvm {
-  class PostDominatorTree;
+  struct PostDominatorTree;
 }
 
 namespace pocl {
@@ -62,9 +62,9 @@ namespace pocl {
     llvm::DominatorTree *DT;
     llvm::LoopInfo *LI;
     llvm::PostDominatorTree *PDT;
-    #if not (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if not (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
     llvm::DominatorTreeWrapperPass *DTP;
-    #endif
+#endif
 
     ParallelRegion::ParallelRegionVector *original_parallel_regions;
 

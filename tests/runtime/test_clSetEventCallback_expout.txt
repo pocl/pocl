@@ -1,0 +1,4 @@
+kernel in execution
+Callback function: event status: CL_SUBMITTED
+Callback function: event status: CL_RUNNING
+Callback function: event status: CL_COMPLETE

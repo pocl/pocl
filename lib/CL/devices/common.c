@@ -59,17 +59,19 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
   char objfile[POCL_FILENAME_LENGTH];
 
   char* module = malloc(min(POCL_FILENAME_LENGTH, 
-	   strlen(tmpdir) + strlen("/parallel.so") + 1)); 
+	   strlen(tmpdir) + strlen(kernel->function_name) + 5)); // strlen of / .so 4+1
   int error;
   cl_program program = kernel->program;
 
   error = snprintf 
     (module, POCL_FILENAME_LENGTH,
-     "%s/parallel.so", tmpdir);
+     "%s/%s.so", tmpdir, kernel->function_name);
+
   assert (error >= 0);
+
   error = snprintf
     (objfile, POCL_FILENAME_LENGTH,
-     "%s/parallel.so.o", tmpdir);
+     "%s/%s.so.o", tmpdir, kernel->function_name);
   assert (error >= 0);
 
 
@@ -84,10 +86,13 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
 
       // clang is used as the linker driver in LINK_CMD
       error = snprintf (command, COMMAND_LENGTH,
-                       LINK_CMD " " HOST_CLANG_FLAGS " " HOST_LD_FLAGS " "
-                        "-o %s %s.o",
-                       module,
-                       module);
+#ifndef ANDROID
+            LINK_CMD " " HOST_CLANG_FLAGS " " HOST_LD_FLAGS " -o %s %s",
+#else
+            ANDROID_POCL_PREFIX"/bin/ld " HOST_LD_FLAGS " -o %s %s "
+            " /system/lib/crtend_so.o /system/lib/crtbegin_so.o -ldl -lc ",
+#endif
+            module, objfile);
       assert (error >= 0);
 
       if (pocl_verbose) {
@@ -96,6 +101,13 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
       }
       error = system (command);
       assert (error == 0);
+
+      /* Save space in kernel cache */
+      if (!pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
+        {
+          pocl_remove_file(objfile);
+          pocl_remove_file(bytecode);
+        }
     }
   return module;
 }
@@ -120,3 +132,20 @@ void fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg,
                               mem->image_channel_data_type, &(di->num_channels),
                               &(di->elem_size));
 }
+
+void*
+pocl_memalign_alloc(size_t align_width, size_t size)
+{
+  void *ptr;
+  int status;
+
+#ifndef ANDROID
+  status = posix_memalign(&ptr, align_width, size);
+  return ((status == 0)? ptr: (void*)NULL);
+#else
+  ptr = memalign(align_width, size);
+  return ptr;
+#endif
+}
+
+

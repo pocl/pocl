@@ -23,17 +23,23 @@
 */
 
 #include "templates.h"
-#include "image.h"
 #include "pocl_image_rw_utils.h"
+
+#if (__clang_major__ == 3) && (__clang_minor__ >= 5)
+// Clang 3.5 crashes in case trying to cast to the private pointer,
+// adding the global qualifier fixes it. Clang 3.4 crashes if it's
+// there. The issue is in SROA.
+#define ADDRESS_SPACE global
+#else
+#define ADDRESS_SPACE
+#endif
 
 /* checks if integer coord is out of bounds. If out of bounds: Sets coord in
    bounds and returns false OR populates color with border colour and returns
    true. If in bounds, returns false */
-int __pocl_is_out_of_bounds (void* image, int4 coord,
-                             void* sampler, void *color_)
+int __pocl_is_out_of_bounds (ADDRESS_SPACE dev_image_t* dev_image, int4 coord,
+                             dev_sampler_t* dev_sampler, void *color_)
 {
-  dev_image_t* dev_image = *((dev_image_t**)image);
-  dev_sampler_t* dev_sampler = (dev_sampler_t*)sampler;
   uint4 *color = (uint4*)color_;
   if(*dev_sampler & CLK_ADDRESS_CLAMP_TO_EDGE)
     {
@@ -77,10 +83,9 @@ int __pocl_is_out_of_bounds (void* image, int4 coord,
 }
 
 /* Reads a four element pixel from image pointed by integer coords. */
-void __pocl_read_pixel (void* color, void* image, int4 coord)
+void __pocl_read_pixel (void* color, ADDRESS_SPACE dev_image_t* dev_image, int4 coord)
 {
 
-  dev_image_t* dev_image = *((dev_image_t**)image);
   uint4* color_ptr = (uint4*)color;
   int width = dev_image->width;
   int height = dev_image->height;
@@ -145,11 +150,11 @@ void __pocl_read_pixel (void* color, void* image, int4 coord)
     __RETVAL__ color;                                                   \
     int4 coord4;                                                        \
     INITCOORD##__COORD__(coord4, coord);                                \
-    if (__pocl_is_out_of_bounds (&image, coord4, &sampler, &color))          \
+    if (__pocl_is_out_of_bounds (*(ADDRESS_SPACE dev_image_t**)&image, coord4, (dev_sampler_t*)&sampler, &color)) \
       {                                                                 \
         return color;                                                   \
       }                                                                 \
-    __pocl_read_pixel (&color, &image, coord4);                           \
+    __pocl_read_pixel (&color, (*(ADDRESS_SPACE dev_image_t**)&image), coord4); \
                                                                         \
     return color;                                                       \
   }                                                                     \

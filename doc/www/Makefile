@@ -26,6 +26,7 @@
 # You need an SF account and to be an admin in the pocl project.
 
 generated_htmls=$(patsubst %.mak,%.html,$(wildcard *.mak))
+static_files=pocl-paper.bib img/pocl-80x60.png
 
 all: $(generated_htmls)
 
@@ -33,7 +34,7 @@ all: $(generated_htmls)
 	./generate_html.py $< $@
 
 publish:
-	rsync -r *.html *.css $(SOURCEFORGE_USER)@web.sourceforge.net:/home/project-web/pocl/htdocs
+	rsync -rR *.html *.css $(static_files) $(SOURCEFORGE_USER)@web.sourceforge.net:/home/project-web/pocl/htdocs
 
 clean:
 	rm -f $(generated_htmls)

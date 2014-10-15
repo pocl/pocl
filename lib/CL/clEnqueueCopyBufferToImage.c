@@ -41,7 +41,7 @@ CL_API_SUFFIX__VERSION_1_0
   cl_int ret_code = pocl_write_image (image, command_queue->device, dst_origin,
                                       region, 0, 0, temp+src_offset);
     
-  free (temp);
+  POCL_MEM_FREE(temp);
   POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
   return ret_code;
 }

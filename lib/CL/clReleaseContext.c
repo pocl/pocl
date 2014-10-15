@@ -43,9 +43,9 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
         {
           POname(clReleaseDevice) (context->devices[i]);
         }   
-      free(context->devices);
-      if (context->properties) free(context->properties);
-      free(context);
+      POCL_MEM_FREE(context->devices);
+      POCL_MEM_FREE(context->properties);
+      POCL_MEM_FREE(context);
     }
   return CL_SUCCESS;
 }

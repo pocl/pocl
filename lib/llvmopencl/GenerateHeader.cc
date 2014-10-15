@@ -111,11 +111,18 @@ GenerateHeader::runOnModule(Module &M)
   // kernels
   FunctionMapping kernels;
 
+  #if LLVM_VERSION_MAJOR <= 3 && LLVM_VERSION_MINOR <6
   string ErrorInfo;
+  #else
+  std::error_code ErrorInfo;
+  #endif
+
   #if defined LLVM_3_2 or defined LLVM_3_3 
   raw_fd_ostream out(Header.c_str(), ErrorInfo, raw_fd_ostream::F_Append);
-  #else
+  #elif defined LLVM_3_4 or defined LLVM_3_5
   raw_fd_ostream out(Header.c_str(), ErrorInfo, sys::fs::F_Append);
+  #else
+  raw_fd_ostream out(Header, ErrorInfo, sys::fs::F_Append);
   #endif
 
   for (Module::iterator mi = M.begin(), me = M.end(); mi != me; ++mi) {

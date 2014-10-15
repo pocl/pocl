@@ -62,7 +62,7 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
   args_copy = malloc (cb_args);
   if (args_copy == NULL)
     {
-      free (command_node);
+      POCL_MEM_FREE(command_node);
       return CL_OUT_OF_HOST_MEMORY;
     }
   memcpy (args_copy, args, cb_args);
@@ -71,8 +71,8 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
   mem_list_copy = malloc(num_mem_objects * sizeof(cl_mem));
   if (mem_list_copy == NULL)
     {
-      free (args_copy);
-      free (command_node);
+      POCL_MEM_FREE(args_copy);
+      POCL_MEM_FREE(command_node);
       return CL_OUT_OF_HOST_MEMORY;
     }
   memcpy (mem_list_copy, mem_list, num_mem_objects * sizeof(cl_mem));
@@ -86,9 +86,9 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
 
       if (mem_list[i] == NULL)
         {
-          free (args_copy);
-          free (mem_list_copy);
-          free (command_node);
+          POCL_MEM_FREE(args_copy);
+          POCL_MEM_FREE(mem_list_copy);
+          POCL_MEM_FREE(command_node);
           return CL_INVALID_MEM_OBJECT;
         }
 

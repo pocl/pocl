@@ -61,7 +61,7 @@ kernelSourceCode[] =
 int
 main(void)
 {
-    const int OUTPUT_SIZE = 5;
+    const size_t OUTPUT_SIZE = 5;
     const char *input = "PING\0";
     char output[OUTPUT_SIZE];
     float a = 23456.0f;

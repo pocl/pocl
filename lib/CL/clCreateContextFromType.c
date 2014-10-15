@@ -41,6 +41,8 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
 {
   int num_devices;
   int errcode;
+  int i;
+  cl_device_id device_ptr;
 
   /* initialize libtool here, LT will be needed when loading the kernels */     
   lt_dlinit();
@@ -92,6 +94,17 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
 
   pocl_get_devices(device_type, context->devices, num_devices);
 
+  for (i = 0; i < num_devices; ++i)
+    {
+      device_ptr = context->devices[i];
+      if (device_ptr == NULL)
+        {
+          break;
+        }
+      
+      POname(clRetainDevice)(device_ptr);
+    } 
+
   pocl_init_mem_manager ();
 
   if (errcode_ret != NULL)
@@ -100,9 +113,9 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
   return context;
 
 ERROR_CLEAN_CONTEXT_AND_PROPERTIES:
-  free(context->properties);
+  POCL_MEM_FREE(context->properties);
 /*ERROR_CLEAN_CONTEXT:*/
-  free(context);
+  POCL_MEM_FREE(context);
 ERROR:
   if(errcode_ret)
   {

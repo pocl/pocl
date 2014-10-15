@@ -35,11 +35,8 @@ AT_CLEANUP
 
 AT_SETUP([clSetEventCallback])
 AT_KEYWORDS([runtime])
-AT_CHECK([$abs_top_builddir/tests/runtime/test_clSetEventCallback], 0, 
-[kernel in execution
-Callback function: event status: CL_SUBMITTED
-Callback function: event status: CL_RUNNING
-Callback function: event status: CL_COMPLETE
+AT_CHECK_UNQUOTED([$abs_top_builddir/tests/runtime/test_clSetEventCallback], 0, 
+[$(cat $abs_top_builddir/tests/runtime/test_clSetEventCallback_expout.txt)
 ])
 AT_CLEANUP
 

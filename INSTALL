@@ -10,6 +10,7 @@ tools:
   * pthread (should be installed by default)
   * hwloc v1.0 or newer (e.g. libhwloc-dev)
   * pkg-config
+  * autotools or cmake
 
 IMPORTANT NOTE! In order to use LLVM with pocl you need to configure LLVM 
 with '--enable-shared' switch and some platforms also require that you 
@@ -17,6 +18,9 @@ compile it with 'make REQUIRES_RTTI=1', as follows:
 
   ./configure --enable-shared --prefix=YOUR_INSTALLATION_PREFIX_HERE 
   make REQUIRES_RTTI=1 && make install
+
+Build using autotools
+---------------------
 
 After all the requirements are installed. The installation procedure
 follows the usual autotools build+install. If you are using a development
@@ -26,6 +30,31 @@ source tree, you need to generate the autotool build files with
 
 NOTE: automake 1.11 is known to work,
       automake 1.96 might not work
+
+Build using cmake
+-----------------
+Cmake version 2.8.12 or higher is required.
+
+NOTE cmake buildsystem in pocl is not feature complete (compared to autotools);
+in particular, if you want to use external testsuites, you have to build using
+autotools. For more information on current status of cmake in pocl,
+see https://github.com/pocl/pocl/wiki/CMake-status
+
+The build+install is the usual cmake way:
+  cd <directory-with-pocl-sources>
+  mkdir build
+  cd build
+  cmake [-D<option>=<value> ...] ..
+
+To see the default values, run "cmake .." without any options, it will
+produce a summary.
+
+A few useful options are:
+  -DWITH_LLVM_CONFIG=<path-to-llvm-config> allows you to choose your llvm
+     installation to build against
+  -DENABLE_ICD=<ON/OFF> enable / disable icd
+  -DPOCL_INSTALL_<item>_DIR=<path> A path to install specific items into.
+
 
 Known issues
 ------------

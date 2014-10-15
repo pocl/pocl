@@ -27,7 +27,6 @@
 #include "pocl_llvm.h"
 #include "pocl_util.h"
 #include "utlist.h"
-#include "install-paths.h"
 #include <assert.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -55,8 +54,8 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   size_t local_x, local_y, local_z;
   char tmpdir[POCL_FILENAME_LENGTH];
   char kernel_filename[POCL_FILENAME_LENGTH];
-  FILE *kernel_file;
   char parallel_filename[POCL_FILENAME_LENGTH];
+  char so_filename[POCL_FILENAME_LENGTH];
   size_t n;
   int i, count;
   int error;
@@ -75,7 +74,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   if (work_dim < 1 ||
       work_dim > command_queue->device->max_work_item_dimensions)
     return CL_INVALID_WORK_DIMENSION;
-  assert (command_queue->device->max_work_item_dimensions <= 3);
+  assert(command_queue->device->max_work_item_dimensions <= 3);
 
   if (global_work_offset != NULL)
     {
@@ -168,70 +167,39 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
             kernel->program->temp_dir, command_queue->device->short_name, 
             kernel->name, 
             local_x, local_y, local_z);
-  mkdir (tmpdir, S_IRWXU);
 
+  if (access (tmpdir, F_OK) != 0)
+    mkdir (tmpdir, S_IRWXU);
   
   error = snprintf
-    (parallel_filename, POCL_FILENAME_LENGTH,
-     "%s/%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
+          (parallel_filename, POCL_FILENAME_LENGTH,
+          "%s/%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
   if (error < 0)
     return CL_OUT_OF_HOST_MEMORY;
 
-  if (kernel->program->llvm_irs[0] == NULL)
-    {
-      error = snprintf
-        (kernel_filename, POCL_FILENAME_LENGTH,
-         "%s/%s/%s/kernel.bc", kernel->program->temp_dir, 
-         command_queue->device->short_name, kernel->name);
+  error = snprintf
+          (so_filename, POCL_FILENAME_LENGTH,
+          "%s/%s.so", tmpdir, kernel->name);
+  if (error < 0)
+    return CL_OUT_OF_HOST_MEMORY;
 
-      if (error < 0)
-        return CL_OUT_OF_HOST_MEMORY;
+  error = snprintf
+          (kernel_filename, POCL_FILENAME_LENGTH,
+           "%s/%s/%s", kernel->program->temp_dir,
+           command_queue->device->short_name, POCL_PROGRAM_BC_FILENAME);
+  if (error < 0)
+    return CL_OUT_OF_HOST_MEMORY;
 
-      if (access (kernel_filename, F_OK) != 0) 
-        {
-          kernel_file = fopen(kernel_filename, "w+");
-          if (kernel_file == NULL)
-            return CL_OUT_OF_HOST_MEMORY;
-
-          n = fwrite(kernel->program->binaries[command_queue->device->dev_id], 1,
-                     kernel->program->binary_sizes[command_queue->device->dev_id], 
-                     kernel_file);
-          if (n < kernel->program->binary_sizes[command_queue->device->dev_id])
-            return CL_OUT_OF_HOST_MEMORY;
-  
-          fclose(kernel_file);
-
-#ifdef DEBUG_NDRANGE
-          printf("[kernel bc written] ");
-#endif
-        }
-      else
-        {
-#ifdef DEBUG_NDRANGE
-          printf("[kernel bc already written] ");
-#endif
-        }
-    }
-
-  if (access (parallel_filename, F_OK) != 0) 
+  if (access(so_filename, F_OK) != 0)
     {
       error = pocl_llvm_generate_workgroup_function
           (command_queue->device,
            kernel, local_x, local_y, local_z,
            parallel_filename, kernel_filename);
-      if (error) return error;
 
-#ifdef DEBUG_NDRANGE
-      printf("[parallel bc created]\n");
-#endif
+      if (error)  return error;
     }
-  else
-    {
-#ifdef DEBUG_NDRANGE
-      printf("[parallel bc already created]\n");
-#endif
-    }
-  
+
   error = pocl_create_command (&command_node, command_queue,
                                CL_COMMAND_NDRANGE_KERNEL,
                                event, num_events_in_wait_list,
@@ -290,12 +258,10 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
 
   command_node->next = NULL; 
   
-  POname(clRetainCommandQueue) (command_queue);
+  
   POname(clRetainKernel) (kernel);
 
   command_node->command.run.arg_buffer_count = 0;
-  /* Retain all memobjects so they won't get freed before the
-     queued kernel has been executed. */
   for (i = 0; i < kernel->num_args; ++i)
   {
     struct pocl_argument *al = &(kernel->dyn_arguments[i]);
@@ -317,6 +283,8 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
         printf ("### retaining arg %d - the buffer %x of kernel %s\n", i, buf, kernel->function_name);
 #endif
         buf = *(cl_mem *) (al->value);
+        /* Retain all memobjects so they won't get freed before the
+           queued kernel has been executed. */
         if (buf != NULL)
           POname(clRetainMemObject) (buf);
         command_node->command.run.arg_buffers[count] = buf;

@@ -26,6 +26,7 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+#include <string.h>
 #include "pocl_cl.h"
 
 #pragma GCC visibility push(hidden)
@@ -33,13 +34,18 @@
 extern "C" {
 #endif
 
-/* Create a temporary directory that is cleaned atexit.
+void pocl_remove_directory (const char *path_name);
+void pocl_remove_file (const char *file_path);
+void pocl_make_directory (const char *path_name);
+
+/**
+ * Assign a directory for program based on already computed SHA
+ * Create the directory if not present
+ * \param program the program for which a path is needed
  *
- * The returned path name is a string that will be alive
- * until the exit.
+ * \return a string allocated on the heap
  */
-char *pocl_create_temp_dir();
-void remove_directory (const char *path_name);
+char* pocl_create_progam_cache_dir(cl_program program);
 
 uint32_t byteswap_uint32_t (uint32_t word, char should_swap);
 float byteswap_float (float word, char should_swap);
@@ -63,6 +69,33 @@ void *pocl_aligned_malloc(size_t alignment, size_t size);
 void pocl_aligned_free(void* ptr);
 #endif
 
+/* Function for creating events */
+cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
+                          cl_command_type command_type);
+
+cl_int pocl_create_command (_cl_command_node **cmd,
+                            cl_command_queue command_queue,
+                            cl_command_type command_type, cl_event *event,
+                            cl_int num_events, const cl_event *wait_list);
+
+
+void pocl_command_enqueue (cl_command_queue command_queue,
+                          _cl_command_node *node);
+
+/* Function to get current process name */
+char* pocl_get_process_name ();
+
+/* File utility functions */
+void pocl_create_or_append_file (const char* file_name, const char* content);
+
+/* Allocates memory and places file contents in it. Returns number of chars read */
+int pocl_read_text_file (const char* file_name, char** content_dptr);
+
+void pocl_check_and_invalidate_cache (cl_program program, int device_i, const char* device_tmpdir);
+
+/* Touch file to change last modified time */
+void pocl_touch_file(const char* file_name);
+
 #ifdef __cplusplus
 }
 #endif
@@ -73,31 +106,34 @@ void pocl_aligned_free(void* ptr);
  * and have been implemented to use the same variable names, so this
  * code can be shared.
  */
-#define POCL_RETURN_GETINFO(__TYPE__, __VALUE__)                \
-  {                                                                 \
-    size_t const value_size = sizeof(__TYPE__);                     \
-    if (param_value)                                                \
-      {                                                             \
-        if (param_value_size < value_size) return CL_INVALID_VALUE; \
-        *(__TYPE__*)param_value = __VALUE__;                        \
-      }                                                             \
-    if (param_value_size_ret)                                       \
-      *param_value_size_ret = value_size;                           \
-    return CL_SUCCESS;                                              \
-  } 
 
+#define POCL_RETURN_GETINFO_INNER(__SIZE__, MEMASSIGN)                  \
+    if (param_value) {                                                  \
+      if (param_value_size < __SIZE__) return CL_INVALID_VALUE;         \
+      MEMASSIGN;                                                        \
+    }                                                                   \
+    if (param_value_size_ret)                                           \
+      *param_value_size_ret = __SIZE__;                                 \
+    return CL_SUCCESS;                                                  \
 
-/* Function for creating events */
-cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue, 
-                          cl_command_type command_type);
+#define POCL_RETURN_GETINFO_SIZE(__SIZE__, __POINTER__)                 \
+  {                                                                     \
+    POCL_RETURN_GETINFO_INNER(__SIZE__,                                 \
+                memcpy(param_value, __POINTER__, __SIZE__))             \
+  }
 
-cl_int pocl_create_command (_cl_command_node **cmd, 
-                            cl_command_queue command_queue, 
-                            cl_command_type command_type, cl_event *event, 
-                            cl_int num_events, const cl_event *wait_list);
-  
+#define POCL_RETURN_GETINFO_STR(__STR__)                                \
+  {                                                                     \
+    size_t const value_size = strlen(__STR__) + 1;                      \
+    POCL_RETURN_GETINFO_INNER(value_size,                               \
+                memcpy(param_value, __STR__, value_size))               \
+  }
 
-void pocl_command_enqueue(cl_command_queue command_queue, 
-                          _cl_command_node *node);
+#define POCL_RETURN_GETINFO(__TYPE__, __VALUE__)                        \
+  {                                                                     \
+    size_t const value_size = sizeof(__TYPE__);                         \
+    POCL_RETURN_GETINFO_INNER(value_size,                               \
+                *(__TYPE__*)param_value=__VALUE__)                      \
+  }
 
 #endif

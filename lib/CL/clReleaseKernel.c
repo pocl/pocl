@@ -55,8 +55,8 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
           POname(clReleaseProgram) (kernel->program);
         }
       
-      free ((char*)kernel->function_name);
-      free ((char*)kernel->name);
+      POCL_MEM_FREE(kernel->function_name);
+      POCL_MEM_FREE(kernel->name);
 
       for (i = 0; i < kernel->num_args; i++)
         {
@@ -67,9 +67,9 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
             }
         }
 
-      free (kernel->dyn_arguments);
-      free (kernel->reqd_wg_size);
-      free (kernel);
+      POCL_MEM_FREE(kernel->dyn_arguments);
+      POCL_MEM_FREE(kernel->reqd_wg_size);
+      POCL_MEM_FREE(kernel);
     }
   
   return CL_SUCCESS;

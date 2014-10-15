@@ -47,11 +47,23 @@ below.
  Override the default "-O3" that is passed to the LLVM opt as a final
  optimization switch.
 
-* POCL_LEAVE_TEMP_DIRS
+* POCL_KERNEL_CACHE
 
- If this is set to 1, the kernel compiler temporary directory that contains
- all the intermediate compiler files is left to /tmp. Otherwise, it is
- be cleaned in clReleaseProgram.
+ If this is set to 0 at runtime, kernel-cache will be forcefully disabled even if
+ its enabled in configure step
+
+* POCL_CACHE_DIR
+
+ If this is set to an existing directory, pocl uses it as the cache
+ directory for all compilation results. This allows reusing compilation
+ results between pocl invocations. If this env is not set, then the
+ default cache directory will be used
+
+* POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES
+
+ If this is set to 1, the kernel compiler cache/temporary directory that
+ contains all the intermediate compiler files are left as it is. This
+ will be handy for debugging
 
 * POCL_MAX_PTHREAD_COUNT
 
@@ -64,41 +76,10 @@ below.
  Forces the maximum WG size returned by the device or kernel work group queries
  to be at most this number.
 
-* POCL_TEMP_DIR
-
- If this is set to an existing directory, pocl uses it as the temporary
- directory for all compilation results. This allows reusing compilation
- results between pocl invocations. If this env is non-NULL, the temp
- directory is not deleted after the Program is freed. Note: the same
- temp dir will be used for all OpenCL programs thus programs
- containing kernels with the same name might use the wrong kernels
- when using this env.
-
 * POCL_USE_PCH
 
  Use precompiled headers for the OpenCL C built-ins when compiling kernels.
  This is an experimental feature which is known to break on some platforms.
-
-* POCL_VECTORIZE_WORK_GROUPS
-
- If set to 1, enables the (experimental) work group vectorizer that builds
- vector instructions from multiple work items. Disabled by default for now as it
- worsens the performance almost all of the cases in benchmark.py.
-
-* POCL_VECTORIZE_VECTOR_WIDTH
-
- If set to number, indicates the width of vector to use during vectorization. Default
- is 8 lanes.
-
-* POCL_VECTORIZE_MEM_ONLY
-
- If set to 1, indicates that only the memory access operations should be
- vectorized.
-
-* POCL_VECTORIZE_NO_FP
-
- If set to 1, indicates the vectorization of floating point operations is
- forbidden.
 
 * POCL_VERBOSE
 

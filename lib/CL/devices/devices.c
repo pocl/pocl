@@ -83,7 +83,7 @@ int pocl_device_get_env_count(const char *dev_type)
         dev_count++;
       ptr = NULL;
     }
-  free (tofree);
+  POCL_MEM_FREE(tofree);
 
   return dev_count;
 }
@@ -167,6 +167,8 @@ pocl_init_devices()
   char dev_name[MAX_DEV_NAME_LEN] = {0};
   unsigned int device_count[POCL_NUM_DEVICE_TYPES];
 
+  if (init_done == 0)
+    POCL_INIT_LOCK(pocl_init_lock);
   POCL_LOCK(pocl_init_lock);
   if (init_done) 
     {
@@ -199,7 +201,6 @@ pocl_init_devices()
       for (j = 0; j < device_count[i]; ++j)
         {
           pocl_devices[dev_index].ops = &pocl_device_ops[i];
-
           /* The default value for the global memory space identifier is
              the same as the device id. The device instance can then override 
              it to point to some other device's global memory id in case of
@@ -217,6 +218,9 @@ pocl_init_devices()
             POCL_ABORT("Unable to generate the env string.");
 
           pocl_devices[dev_index].ops->init(&pocl_devices[dev_index], getenv(env_name));
+
+          if (dev_index == 0)
+            pocl_devices[dev_index].type |= CL_DEVICE_TYPE_DEFAULT;
           
           ++dev_index;
         }

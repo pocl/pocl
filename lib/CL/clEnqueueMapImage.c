@@ -169,11 +169,11 @@ CL_API_SUFFIX__VERSION_1_0
   return map;
  
  ERROR:
-  free (map);
-  free (cmd);
-  free (mapping_info);
+  POCL_MEM_FREE(map);
+  POCL_MEM_FREE(cmd);
+  POCL_MEM_FREE(mapping_info);
   if (event != NULL)
-    free (*event);
+    POCL_MEM_FREE(*event);
   if(errcode_ret != NULL)
     (*errcode_ret) = errcode;
       

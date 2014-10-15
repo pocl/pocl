@@ -51,8 +51,8 @@ CL_API_SUFFIX__VERSION_1_2
   return CL_SUCCESS;
 
  ERROR:
-  free (event); 
-  free (cmd);
+  POCL_MEM_FREE(event);
+  POCL_MEM_FREE(cmd);
   return errcode;
 
 }

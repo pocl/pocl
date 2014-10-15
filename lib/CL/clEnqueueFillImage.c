@@ -177,14 +177,13 @@ CL_API_SUFFIX__VERSION_1_2
   cmd->command.fill_image.pixel_size = image->image_elem_size * image->image_channels;
   pocl_command_enqueue(command_queue, cmd);
   
-  free (supported_image_formats);
+  POCL_MEM_FREE(supported_image_formats);
   return errcode;
   
  ERROR_CLEAN:
-  free (supported_image_formats);
-  if (*event)
-    free (*event);
-  free (fill_pixel);
+  POCL_MEM_FREE(supported_image_formats);
+  POCL_MEM_FREE(*event);
+  POCL_MEM_FREE(fill_pixel);
   return errcode;
 }
 POsym(clEnqueueFillImage)

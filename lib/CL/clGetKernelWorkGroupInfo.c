@@ -4,21 +4,7 @@
 
 
 #include "devices/devices.h"
-#include "pocl_cl.h"
 #include "pocl_util.h"
-
-#define POCL_RETURN_KERNEL_WG_INFO(__TYPE__, __VALUE__)                \
-  {                                                                 \
-    size_t const value_size = sizeof(__TYPE__);                     \
-    if (param_value)                                                \
-      {                                                             \
-        if (param_value_size < value_size) return CL_INVALID_VALUE; \
-        *(__TYPE__*)param_value = __VALUE__;                        \
-      }                                                             \
-    if (param_value_size_ret)                                       \
-      *param_value_size_ret = value_size;                           \
-    return CL_SUCCESS;                                              \
-  } 
 
 
 extern CL_API_ENTRY cl_int CL_API_CALL
@@ -71,7 +57,7 @@ POname(clGetKernelWorkGroupInfo)
     }
       
     case CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE:
-      POCL_RETURN_KERNEL_WG_INFO(size_t, device->preferred_wg_size_multiple);
+      POCL_RETURN_GETINFO(size_t, device->preferred_wg_size_multiple);
       
     case CL_KERNEL_LOCAL_MEM_SIZE:
     {
@@ -91,7 +77,7 @@ POname(clGetKernelWorkGroupInfo)
 #if 0
       printf("### local memory usage %d\n", local_size);
 #endif
-      POCL_RETURN_KERNEL_WG_INFO(cl_ulong, local_size);
+      POCL_RETURN_GETINFO(cl_ulong, local_size);
     }
       
     case CL_KERNEL_PRIVATE_MEM_SIZE:

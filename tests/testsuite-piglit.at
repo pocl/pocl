@@ -1,9 +1,19 @@
 AT_BANNER([Piglit OpenCL tests])
 
-AT_SETUP([Piglit testsuite])
+AT_SETUP([Piglit testsuite with LLVM 3.4])
 AT_KEYWORDS([piglit long])
 AT_SKIP_IF([AS_CASE([" $POAT_TESTSUITES "],[*" piglit "*],[false],[:])])
+AT_SKIP_IF([! grep -q "#define LLVM_3_4" $abs_top_builddir/config.h])
 #AT_CHECK([make -s -C $abs_top_builddir/examples/piglit/piglit], ignore, ignore, ignore)
-AT_CHECK([$abs_top_builddir/examples/piglit/piglit/piglit-run.py -v tests/all_cl.tests $abs_top_builddir/examples/piglit/piglit/results/all 2>&1 | grep "pass ::" | sort > $abs_top_builddir/examples/piglit/result ; sort $abs_top_builddir/examples/piglit/piglit_ref_output > $abs_top_builddir/examples/piglit/sorted_ref], ignore, ignore, ignore)
-AT_CHECK([comm -23 $abs_top_builddir/examples/piglit/sorted_ref $abs_top_builddir/examples/piglit/result])
+AT_CHECK([cd $abs_top_builddir/examples/piglit/; piglit/piglit-run.py -v piglit/tests/all_cl.tests piglit/results/all 2>&1 | grep "pass ::" > result], ignore, ignore, ignore)
+AT_CHECK([cd $abs_top_builddir/examples/piglit/; LC_ALL=C sort result -o sorted_result; LC_ALL=C comm -23 sorted_ref sorted_result])
+AT_CLEANUP
+
+AT_SETUP([Piglit testsuite with LLVM 3.5])
+AT_KEYWORDS([piglit long])
+AT_SKIP_IF([AS_CASE([" $POAT_TESTSUITES "],[*" piglit "*],[false],[:])])
+AT_SKIP_IF([! grep -q "#define LLVM_3_5" $abs_top_builddir/config.h])
+#AT_CHECK([make -s -C $abs_top_builddir/examples/piglit/piglit], ignore, ignore, ignore)
+AT_CHECK([cd $abs_top_builddir/examples/piglit/; piglit/piglit-run.py -v piglit/tests/all_cl.tests piglit/results/all 2>&1 | grep "pass ::" > result], ignore, ignore, ignore)
+AT_CHECK([cd $abs_top_builddir/examples/piglit/; LC_ALL=C sort result -o sorted_result; LC_ALL=C comm -23 sorted_ref_llvm_3.5 sorted_result])
 AT_CLEANUP

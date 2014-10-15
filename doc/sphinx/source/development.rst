@@ -1,6 +1,23 @@
 Information for Developers
 ==========================
 
+Using cmake to build & install pocl
+-----------------------------------
+
+Most of the important stuff on using cmake is in the INSTALL file. A few
+additional items:
+
+The
+
+     export OCL_ICD_VENDORS="PATH_TO_THE_POCL_BUILD_TREE/ocl-vendors"
+
+command must point to ocl-vendors in the  cmake *build* directory, not the
+pocl source directory.
+
+Testing is done using either "make test" or invoking "ctest" directly;
+"make check" does not work. Invoke ctest with -jX option to run X tests
+in parallel.
+
 Configuring
 -----------
 
@@ -24,7 +41,7 @@ This will build pocl without optimization, which simplifies debugging.
 (This does not influence whether pocl will optimize the code that it
 generates from OpenCL source files.)
 
-Test Suite
+Testsuite
 ----------
 
 Before changes are committed to the mainline, all tests in the 'make
@@ -39,9 +56,14 @@ pocl (e.g. ViennaCL). These test suites can be enabled at configure
 time with --enable-testsuites (you can specify a list of test suites
 if you do not want to enabled all of them, see configure help for the
 available list).  Note that these additionnal test suites require
-additionnal software (tools and libraries). The configure script check
-some of them but the check is not exhautive (patch welcome). Test
-suites are disabled if their requirement is not available.
+additionnal software (tools and libraries). The configure script checks
+some of them but the check is not exhautive. Test suites are disabled if 
+their requirement files are not available.
+
+In order to prepare the external OpenCL examples for the testsuite, you
+need to run the following build command once::
+
+   make prepare-examples
 
 The pocl OpenCL implementation can be used directly or through an ICD
 loader.  The --enable-tests-with-icd configure option allows to choose
@@ -54,6 +76,14 @@ wont be able to work in tree (they require the ICD config file to be
 installed in the system).  There are now two options for such a loder:
 the open source ocl-icd loader and the Khronos supplied loader with a
 patch applied.
+
+Debugging a Failed Test
+^^^^^^^^^^^^^^^^^^^^^^^
+
+If there are failing tests in the suite, the usual way to start
+debugging is to look what was printed to the logs for the failing
+cases. After running the test suite, the logs are stored under
+``tests/testsuite.dir/[testcasenumber]/``.  
 
 Ocl-icd
 -------

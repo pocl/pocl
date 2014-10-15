@@ -121,8 +121,8 @@ CL_API_SUFFIX__VERSION_1_0
     }
   
  CLEAN_MEM_AND_RETURN:
-  free (dev_num_image_formats);
-  free (dev_image_formats);
+  POCL_MEM_FREE(dev_num_image_formats);
+  POCL_MEM_FREE(dev_image_formats);
   return errcode;
 } 
 POsym(clGetSupportedImageFormats)

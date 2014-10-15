@@ -28,8 +28,6 @@
   void pocl_##__DRV__##_uninit (cl_device_id device);                   \
   void pocl_##__DRV__##_init (cl_device_id device, const char* parameters); \
   unsigned int pocl_##__DRV__##_probe (struct pocl_device_ops *ops); \
-  void *pocl_##__DRV__##_malloc (void *data, cl_mem_flags flags,            \
-                                 size_t size, void *host_ptr);              \
   cl_int pocl_##__DRV__##_alloc_mem_obj (cl_device_id device, cl_mem mem_obj); \
   void *pocl_##__DRV__##_create_sub_buffer (void *device_data, void* buffer, \
                                             size_t origin, size_t size); \
@@ -77,13 +75,9 @@
   void pocl_##__DRV__##_run_native (void *data, _cl_command_node* cmd); \
   void* pocl_##__DRV__##_map_mem (void *data, void *buf_ptr,                      \
                         size_t offset, size_t size, void *host_ptr); \
+  void* pocl_##__DRV__##_unmap_mem (void *data, void *host_ptr, \
+                                    void *device_start_ptr, size_t size); \
   cl_ulong pocl_##__DRV__##_get_timer_value(void *data); \
-  int pocl_##__DRV__##_build_program (void *data,                      \
-                                    const char *source_fn,             \
-                                    const char *binary_fn,             \
-                                    const char *default_cmd,           \
-                                    const char *user_opts,             \
-                                    const char *dev_tmpdir);           \
   char* pocl_##__DRV__##_init_build (void *data, \
                                          const char *dev_tmpdir); \
   cl_int pocl_##__DRV__##_get_supported_image_formats (cl_mem_flags flags,\

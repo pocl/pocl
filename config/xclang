@@ -2,17 +2,18 @@
 
 CFLAGS=""
 
-while getopts h:o:cSEgO: o
+while getopts h:b:o:cSEgO: o
 do
     case "$o" in
         h)   host="${OPTARG}";;
+        b)   build="${OPTARG}";;
         o)   output="-o ${OPTARG}";;
         c)   mode=-c;;
         S)   mode=-S;;
         E)   mode=-E;;
         O)   CFLAGS="$CFLAGS -O${OPTARG}";;
         g)   CFLAGS="$CFLAGS -g";;
-        [?]) echo >&2 "Usage: $0 [-h <host>] [-c | -S | -E] [-o <output_file>] <input_file>" && exit 1;;
+        [?]) echo >&2 "Usage: $0 [-h <host>] [-b <build>] [-c | -S | -E] [-o <output_file>] <input_file>" && exit 1;;
     esac
 done
 shift $((${OPTIND}-1))
@@ -28,7 +29,11 @@ then
 fi
 
 config=`dirname $0`
-build=`$config/config.guess`
+build="$build"
+if [ -z "$build" ]
+then
+    build=`$config/config.guess`
+fi
 
 if [ -z $TMPDIR ]
 then

@@ -36,6 +36,7 @@
 #  include "pocl_icd.h"
 #endif
 #include "pocl.h"
+#include "pocl_hash.h"
 
 #define POCL_FILENAME_LENGTH 1024
 
@@ -49,7 +50,9 @@
 #define POCL_PROGRAM_BC_FILENAME "program.bc"
 /* The filename in which the work group (parallelizable) kernel LLVM bc is stored in 
    the kernel's temp dir. */
-#define POCL_PARALLEL_BC_FILENAME "parallel.bc"
+#define POCL_PARALLEL_BC_FILENAME   "parallel.bc"
+#define POCL_BUILDLOG_FILENAME      "build.log"
+#define POCL_LAST_ACCESSED_FILENAME "last_accessed"
 
 #if __STDC_VERSION__ < 199901L
 # if __GNUC__ >= 2
@@ -128,6 +131,12 @@ typedef pthread_mutex_t pocl_lock_t;
   do {                                           \
     POCL_INIT_LOCK ((__OBJ__)->pocl_lock);         \
     (__OBJ__)->pocl_refcount = 1;                  \
+  } while (0)
+
+#define POCL_MEM_FREE(F_PTR)                      \
+  do {                                            \
+      free((F_PTR));                              \
+      (F_PTR) = NULL;                             \
   } while (0)
 
 #ifdef BUILD_ICD
@@ -483,8 +492,12 @@ struct _cl_program {
   char *temp_dir;
   /* implementation */
   cl_kernel kernels;
+  /* program hash after build */
+  uint8_t build_hash[SHA1_DIGEST_SIZE];
   /* Used to store the llvm IR of the build to save disk I/O. */
   void **llvm_irs;
+  /* Use to store build status */
+  cl_build_status build_status;
 };
 
 struct _cl_kernel {
@@ -536,6 +549,8 @@ struct _cl_event {
   cl_ulong time_start;  /* the time the command actually started executing */
   cl_ulong time_end;    /* the finish time of the command */   
 
+  /* impicit event = an event for pocl's internal use, not visible to user */
+  int implicit_event;
   _cl_event * volatile next;
 };
 

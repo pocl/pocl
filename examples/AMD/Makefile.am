@@ -28,7 +28,7 @@ AMD-APP-SDK-v2.8-RC-lnx64.tgz:
 	wget http://developer.amd.com.php53-23.ord1-1.websitetestlink.com/wordpress/media/2012/11/AMD-APP-SDK-v2.8-lnx64.tgz && \
 	tar xzf AMD-APP-SDK-v2.8-lnx64.tgz
 
-EXTRA_DIST = *.patch
+EXTRA_DIST = $(srcdir)/*.patch
 
 if TEST_SUITE_AMD
 testsuite_pocl_dir=${abs_top_srcdir}/examples/AMD
@@ -37,7 +37,7 @@ amd_app_dir=$(testsuite_src_dir)/samples/opencl/cl/app
 
 .PHONY: build
 
-all: $(testsuite_src_dir) build
+prepare-examples: $(testsuite_src_dir) build
 
 $(testsuite_src_dir): AMD-APP-SDK-v2.8-RC-lnx64.tgz
 	test -d $(testsuite_src_dir) || (cd $(testsuite_pocl_dir) && tar xzf AMD-APP-SDK-v2.8-RC-lnx64.tgz)
@@ -47,7 +47,7 @@ build: $(testsuite_src_dir)
 	( patch -sNp1 < $(testsuite_pocl_dir)/AMDSDK.patch || true ) && \
 	cd $(testsuite_src_dir)/samples/opencl/ && \
 	find . -name "*.cl" | xargs perl -pi -e 's/cl_amd_fp64/cl_khr_fp64/g' && \
-	LDFLAGS="-lX11 ${LDFLAGS}" $(MAKE) -s 2>&1 | grep -v "No LSB modules are available" || true
+	LDFLAGS="-lX11 -pthread ${LDFLAGS}" $(MAKE) -s 2>&1 | grep -v "No LSB modules are available" || true
 
 test_AESEncryptDecrypt: 
 	cd $(amd_app_dir)/AESEncryptDecrypt && \
@@ -252,12 +252,7 @@ test_URNG:
 	ln -sf $(amd_app_dir)/URNG/URNG_Input.bmp $(amd_app_dir)/URNG/build/debug/x86_64/ && \
 	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors build/debug/x86_64/URNG -e
 
-check-local: all
-
-clean-local:
+clean-examples:
 	rm -fr $(testsuite_src_dir) Install-AMD-APP.sh default-install_lnx_64.pl ReadMe.txt
-
-distclean-local: clean-local
-	$(RM) -r $(testsuite_src_dir)
 
 endif

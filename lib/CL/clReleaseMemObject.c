@@ -64,12 +64,12 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
       POCL_RELEASE_OBJECT(memobj->context, new_refcount);
       DL_FOREACH_SAFE(memobj->mappings, mapping, temp)
         {
-          free (mapping);
+          POCL_MEM_FREE(mapping);
         }
       memobj->mappings = NULL;
       
-      free(memobj->device_ptrs);
-      free(memobj);
+      POCL_MEM_FREE(memobj->device_ptrs);
+      POCL_MEM_FREE(memobj);
     }
   return CL_SUCCESS;
 }

@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-EXTRA_DIST = *.patch
+EXTRA_DIST = $(srcdir)/*.patch
 
 if TEST_SUITE_PARBOIL
 
@@ -35,7 +35,7 @@ datasets_tarfile=pb2.5datasets_standard.tgz
 
 .PHONY: build
 
-all: build-prepare
+prepare-examples: build-prepare
 
 ${srcdir}/${driver_tarfile}:
 	@echo 'You need to download $@ to "$(srcdir)"'
@@ -145,13 +145,7 @@ run-lbm:
 build: build-spmv build-stencil build-tpacf build-cutcp build-mri-gridding build-sad \
 	build-bfs build-histo build-sgemm build-mri-q build-lbm
 
-clean-local:
+clean-examples:
 	$(RM) -r parboil
-
-check-local: build
-
-distclean-local: clean-local
-	$(RM) -r $(testsuite_src_dir)
-	$(RM) ${driver_tarfile} ${benchmarks_tarfile} ${datasets_tarfile}
 
 endif

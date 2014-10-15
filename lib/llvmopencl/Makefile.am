@@ -3,7 +3,8 @@
 # Makefile.am for pocl/lib/llvmopencl.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
-# 
+#               2011-2014 Pekka Jääskeläinen 
+#
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
 # in the Software without restriction, including without limitation the rights
@@ -24,6 +25,8 @@
 
 # This library is linked against libpocl to call the kernel compiler
 # passes directly from the host library.
+# This library also contains compiler driver helper functions,
+# not linked to llvmopencl.so
 noinst_LTLIBRARIES = libllvmpasses.la
 
 # This creates a separate llvmopencl.so that is loaded to 'opt'
@@ -32,7 +35,7 @@ pkglib_LTLIBRARIES = llvmopencl.la
 
 AM_CXXFLAGS = -I@top_srcdir@/fix-include -I@top_srcdir@/include @LLVM_CXX_FLAGS@
 
-AM_LDFLAGS = -module -export-dynamic -version-info ${KERNEL_COMPILER_LIB_VERSION} `@LLVM_CONFIG@ --ldflags`
+AM_LDFLAGS = -module -export-dynamic -version-info ${KERNEL_COMPILER_LIB_VERSION} @LLVM_LDFLAGS@
 
 PASSES_SOURCES = Barrier.h						\
                         BarrierBlock.h BarrierBlock.cc				\
@@ -45,7 +48,7 @@ PASSES_SOURCES = Barrier.h						\
                         Flatten.cc IsolateRegions.h IsolateRegions.cc \
 						WorkitemReplication.h WorkitemReplication.cc \
 						ImplicitLoopBarriers.h ImplicitLoopBarriers.cc \
-						WorkItemAliasAnalysis.cc WIVectorize.cc \
+						WorkItemAliasAnalysis.cc \
 						WorkitemHandler.h WorkitemHandler.cc \
 						WorkitemLoops.h WorkitemLoops.cc \
 						PHIsToAllocas.h PHIsToAllocas.cc \
@@ -57,9 +60,11 @@ PASSES_SOURCES = Barrier.h						\
 						VariableUniformityAnalysis.h VariableUniformityAnalysis.cc \
 						AutomaticLocals.cc ImplicitConditionalBarriers.cc \
 						ImplicitConditionalBarriers.h \
-						DebugHelpers.h DebugHelpers.cc
+						DebugHelpers.h DebugHelpers.cc \
+						linker.h
 
-libllvmpasses_la_SOURCES = ${PASSES_SOURCES}
+#add compiler driver sources
+libllvmpasses_la_SOURCES = ${PASSES_SOURCES} linker.cpp
 
 # The offline compiler script (pocl-standalone) calls the kernel compiler passes 
 # from the command line, those require libllvmopencl.so.

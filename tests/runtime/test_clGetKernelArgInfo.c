@@ -33,6 +33,7 @@ char kernelSourceCode[] =
 "constant sampler_t samp =  CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;\n"
 "typedef float4 tasty_float;\n"
 "kernel \n"
+"__attribute__((reqd_work_group_size(256, 1, 1)))"
 "void test_kernel2(const tasty_float vec1, __read_only image2d_t in, write_only image2d_t out) {\n"
 "    const int2 coord = (get_global_id(0),get_global_id(1));\n"
 "    float4 b = read_imagef(in, samp, coord);\n"
@@ -145,22 +146,22 @@ int test_program(cl_program program, int is_spir) {
   err = clGetKernelArgInfo(test_kernel, 0, CL_KERNEL_ARG_TYPE_QUALIFIER,
                             BUF_LEN, &kernel_arg.type, &retsize);
   CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
-  TEST_ASSERT((kernel_arg.address==CL_KERNEL_ARG_TYPE_CONST) && "type qualifier of arg of test_kernel is not CONST");
+  TEST_ASSERT((kernel_arg.type==CL_KERNEL_ARG_TYPE_CONST) && "type qualifier of arg of test_kernel is not CONST");
 
   err = clGetKernelArgInfo(test_kernel, 1, CL_KERNEL_ARG_TYPE_QUALIFIER,
                             BUF_LEN, &kernel_arg.type, &retsize);
   CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
-  TEST_ASSERT((kernel_arg.address==CL_KERNEL_ARG_TYPE_VOLATILE) && "type qualifier of arg of test_kernel is not VOLATILE");
+  TEST_ASSERT((kernel_arg.type==CL_KERNEL_ARG_TYPE_VOLATILE) && "type qualifier of arg of test_kernel is not VOLATILE");
 
   err = clGetKernelArgInfo(test_kernel, 2, CL_KERNEL_ARG_TYPE_QUALIFIER,
                             BUF_LEN, &kernel_arg.type, &retsize);
   CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
-  TEST_ASSERT((kernel_arg.address==CL_KERNEL_ARG_TYPE_NONE) && "type qualifier of arg of test_kernel is not NONE");
+  TEST_ASSERT((kernel_arg.type==CL_KERNEL_ARG_TYPE_NONE) && "type qualifier of arg of test_kernel is not NONE");
 
   err = clGetKernelArgInfo(test_kernel, 3, CL_KERNEL_ARG_TYPE_QUALIFIER,
                             BUF_LEN, &kernel_arg.type, &retsize);
   CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
-  TEST_ASSERT((kernel_arg.address==CL_KERNEL_ARG_TYPE_CONST) && "type qualifier of arg of test_kernel is not CONST");
+  TEST_ASSERT((kernel_arg.type==CL_KERNEL_ARG_TYPE_CONST) && "type qualifier of arg of test_kernel is not CONST");
 
   /* NAME tests */
   // constant char* msg, global volatile float* in, global float* out, const float j, local int* c

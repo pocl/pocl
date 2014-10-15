@@ -29,12 +29,12 @@ POname(clCreateKernelsInProgram)(cl_program      program ,
     *num_kernels_ret = num_kern_found;
   if (kernels ==  NULL) 
     {
-      free (knames);
+      POCL_MEM_FREE(knames);
       return CL_SUCCESS;
     }
   if (num_kernels < num_kern_found) 
     {
-      free (knames);
+      POCL_MEM_FREE(knames);
       return CL_INVALID_VALUE;
     }
 
@@ -56,7 +56,7 @@ POname(clCreateKernelsInProgram)(cl_program      program ,
           for (; idx>0; idx--) 
             {
               clReleaseKernel (kernels[idx-1]);
-              free (knames);
+              POCL_MEM_FREE(knames);
               /* If error_ret is INVALID_KERNEL_DEFINITION, returning it here
                * is against the specification. But the specs doesn't say what to 
                * do in such a case, and just returning it is the sanest thing 
@@ -66,7 +66,7 @@ POname(clCreateKernelsInProgram)(cl_program      program ,
         }
     }
   
-  free (knames);
+  POCL_MEM_FREE(knames);
   return CL_SUCCESS;
 }
 POsym(clCreateKernelsInProgram)

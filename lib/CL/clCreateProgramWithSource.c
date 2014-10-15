@@ -109,10 +109,8 @@ POname(clCreateProgramWithSource)(cl_context context,
   program->binaries = NULL;
   program->kernels = NULL;
   program->llvm_irs = NULL;
-
-  /* Create the temporary directory where all kernel files and compilation
-     (intermediate) results are stored. */
-  program->temp_dir = pocl_create_temp_dir();
+  program->temp_dir = NULL;
+  program->build_status = CL_BUILD_NONE;
 
   POCL_RETAIN_OBJECT(context);
 
@@ -121,7 +119,7 @@ POname(clCreateProgramWithSource)(cl_context context,
   return program;
 
 ERROR_CLEAN_PROGRAM:
-  free(program);
+  POCL_MEM_FREE(program);
 ERROR:
   if(errcode_ret)
   {

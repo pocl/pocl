@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 # 
 # Copyright (c) 2011-2013 Universidad Rey Juan Carlos and
-#                         Pekka Jääskeläinen / Tampere University of Technology
+#               2011-2014 Pekka Jääskeläinen / Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 
 AC_PREREQ([2.64])
-AC_INIT([pocl], [0.10-pre], [pocl-devel@lists.sourceforge.net])
+AC_INIT([pocl], [0.11-pre], [pocl-devel@lists.sourceforge.net])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_AUX_DIR([config])
@@ -85,7 +85,7 @@ test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
 LLVM_VERSION=`$LLVM_CONFIG --version`
 LLVM_BINDIR=`$LLVM_CONFIG --bindir`
 LLVM_LIBDIR=`$LLVM_CONFIG --libdir`
-
+LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
 # Whether we can use our own printf implementation
 NEW_PRINTF_WORKS=true
 
@@ -104,17 +104,23 @@ case "$LLVM_VERSION" in
      AC_DEFINE([LLVM_3_4], [], "Using LLVM 3.4")     
    ;;   
      3.5*)
-     AC_DEFINE([LLVM_3_5], [], "Using upcoming LLVM 3.5")
+     AC_DEFINE([LLVM_3_5], [], "Using LLVM 3.5")
+     LLVM_LDFLAGS="$LLVM_LDFLAGS `$LLVM_CONFIG --system-libs`"
+   ;;
+     3.6*)
+     AC_DEFINE([LLVM_3_6], [], "Using LLVM svn, upcoming 3.6")
+     LLVM_LDFLAGS="$LLVM_LDFLAGS `$LLVM_CONFIG --system-libs`"
    ;;
      *)
    AC_MSG_ERROR(
    [
-Unsupported LLVM version. Please use LLVM version 3.2, 3.3, or 3.4.
+Unsupported LLVM version. Please use LLVM version 3.2, 3.3, 3.4 or 3.5.
    ])
    LLVM_VERSION=
    ;;
 esac
 
+AC_SUBST([LLVM_LDFLAGS], [$LLVM_LDFLAGS], [llvm-config returned ldflags])
 AM_CONDITIONAL([NEW_PRINTF_WORKS], $NEW_PRINTF_WORKS)
 
 # When building with API linking, clang is always linked statically, so user might want to link llvm static to libpocl too
@@ -152,7 +158,7 @@ fi
 
 AC_ARG_ENABLE([region-allocator],
 [AS_HELP_STRING([--disable-region-allocator], 
- [Do not use a custom OpenCL optimized region-based memory allocator but allocate buffers with malloc directly.])],
+ [Do not use a custom OpenCL optimized region-based memory allocator but allocate buffers with malloc directly (experimental with known issues!).])],
 [],
 [AC_DEFINE([CUSTOM_BUFFER_ALLOCATOR], [], "Use a custom buffer allocator")])
 
@@ -515,7 +521,8 @@ AC_SUBST([OPENCL_EXTLIBS])
 # Option to install OpenCL header files
 # By default, do not install them unless none are found in the system include directories
 AC_ARG_ENABLE([install-opencl-headers],
-              [AS_HELP_STRING([--enable-install-opencl-headers], [install OpenCL headers. Ones from Kronos should be installed instead.])],
+              [AS_HELP_STRING([--enable-install-opencl-headers],
+              [install OpenCL headers. Ones from Khronos should be installed instead.])],
               [ioh="$enableval"],
               [ioh="default"])
 
@@ -533,23 +540,13 @@ fi
 
 AM_CONDITIONAL(INSTALL_OPENCL_HEADERS, test "$ioh" = "yes")
 
-# Check cl.hpp usability. It is broken on a few platforms.
-clhpp="no"
-AC_LANG_PUSH([C++])
-AC_CHECK_HEADERS([OpenCL/cl.hpp CL/cl.hpp], [clhpp="yes"; break])
-AC_LANG_POP([C++])
-
-if test x"$clhpp" == xyes
-then
-  AC_CHECK_HEADERS([GL/gl.h OpenGL/OpenGL.h], [opengl_found="ok"; break])
-  test -z "$opengl_found" && AC_MSG_FAILURE([Please install an OpenGL implementation with gl.h or OpenGL.h. It is required by the C++ bindings.])
-  AM_CONDITIONAL([HAVE_OPENCL_HPP], true)
-  AC_DEFINE([HAVE_OPENCL_HPP], [] ,[Defined if system cl.hpp found to be working])
-else
-  AM_CONDITIONAL([HAVE_OPENCL_HPP], false)
-  AC_MSG_NOTICE([cl.hpp not available - a few tests will be skipped])
-fi
-
+# Check for OpenGL.h headers as they are required to compile
+# test cases that use cl.hpp (which requires it).
+AC_CHECK_HEADERS([GL/gl.h OpenGL/OpenGL.h], [opengl_found="ok"; break])
+test -z "$opengl_found" && \
+AC_MSG_FAILURE([Please install an OpenGL implementation with gl.h or OpenGL.h. It is required by the C++ bindings.])
+AM_CONDITIONAL([HAVE_OPENCL_HPP], true)
+AC_DEFINE([HAVE_OPENCL_HPP], [] ,[Defined if system cl.hpp found to be working])
 
 # libtool dynamic library handling library
 old_LIBS="$LIBS"
@@ -588,6 +585,17 @@ then
 	CFLAGS="$CFLAGS -Wno-unused-result -Werror"
 fi
 
+cache_kernel="yes"
+AC_ARG_ENABLE([kernel-cache],
+              [AS_HELP_STRING([--disable-kernel-cache], [Disable persistent kernel cache])],
+              [cache_kernel="no"])
+if test "$cache_kernel" = "yes"
+then
+  AC_DEFINE([POCL_BUILD_KERNEL_CACHE], [1], "Enabled kernel cache feature")
+else
+  AC_DEFINE([POCL_BUILD_KERNEL_CACHE], [0], "Disabled kernel cache feature")
+fi
+
 
 PKG_CHECK_MODULES([GLEW], [glew], 
   [
@@ -620,6 +628,26 @@ then
 AC_DEFINE([CLANG_SPIR], [], "Using a SPIR generator Clang from Khronos.")
 fi
 
+# Targets.
+# This is the target architecture of the basic and pthreads devices.
+# These always are the same arch as host (in current pocl implementation).
+# Also, this is the autoconf "host".
+# We have:
+# target triplet: the OCL device target triple
+# kernel dir: where to search for the ocl lib kernel
+
+# The option for specifying the target changed; try the modern syntax
+# first, and fall back to the old-style syntax if this failed
+AC_MSG_CHECKING([Clang option to specify the target])
+if [ $CLANG --target=$host -x c /dev/null -S -o - >/dev/null 2>&1 ]; then
+  CLANG_TARGET_OPTION='--target='
+elif [ $CLANG -target $host -x c /dev/null -S -o - >/dev/null 2>&1 ]; then
+  CLANG_TARGET_OPTION='-target '
+else
+  AC_MSG_ERROR([Cannot determine Clang option to specify the target])
+fi
+AC_MSG_RESULT(${CLANG_TARGET_OPTION}TARGET)
+
 # Check for a functioning clang++. It is needed to compile faster math 
 # builtins from vecmathlib.
 LLVM_PROG_WARN([CLANGXX], [clang++])
@@ -630,6 +658,8 @@ LLVM_PROG_WARN([CLANGXX], [clang++])
 if test ! -z "$CLANGXX"; then
 
 AC_LANG([C++])
+
+CLANGXX_FLAGS="${CLANG_TARGET_OPTION}$host ${CLANGXX_FLAGS}"
 
 old_CXX=$CXX
 CXX=$CLANGXX
@@ -676,7 +706,7 @@ LLVM_CXX_FLAGS="$LLVM_CXX_FLAGS -fno-rtti"
 AC_MSG_CHECKING([if LLVM is built with assertions])
 CXXFLAGS="$CXXFLAGS $($LLVM_CONFIG --cxxflags) -UNDEBUG"
 LIBS="$LIBS $($LLVM_CONFIG --libs)"
-LDFLAGS="$LDFLAGS $($LLVM_CONFIG --ldflags)"
+LDFLAGS="$LDFLAGS $LLVM_LDFLAGS"
 
 AC_LINK_IFELSE(
   [AC_LANG_PROGRAM(
@@ -760,26 +790,6 @@ HOST_LD_FLAGS="$LD_SHARED"
 
 
 
-# Targets.
-# This is the target architecture of the basic and pthreads devices.
-# These always are the same arch as host (in current pocl implementation).
-# Also, this is the autoconf "host".
-# We have: 
-# target triplet: the OCL device target triple
-# kernel dir: where to search for the ocl lib kernel
-
-# The option for specifying the target changed; try the modern syntax
-# first, and fall back to the old-style syntax if this failed
-AC_MSG_CHECKING([Clang option to specify the target])
-if [ $CLANG --target=$host -x c /dev/null -S -o - >/dev/null 2>&1 ]; then
-  CLANG_TARGET_OPTION='--target='
-elif [ $CLANG -target $host -x c /dev/null -S -o - >/dev/null 2>&1 ]; then
-  CLANG_TARGET_OPTION='-target '
-else
-  AC_MSG_ERROR([Cannot determine Clang option to specify the target])
-fi
-AC_MSG_RESULT(${CLANG_TARGET_OPTION}TARGET)
-
 # TODO: We need to set both target-triple and cpu-type when
 # building, since the ABI depends on both. We can either add flags
 # to all the scripts, or set the respective flags here in
@@ -837,11 +847,18 @@ case $host_cpu in
       HOST_AS_FLAGS="$HOST_AS_FLAGS -mfloat-abi=hard";;
     esac
     ;;
-  armv7*)
+  arm*)
     AC_MSG_NOTICE([using the ARM optimized kernel lib for the native device])
     # check for gnueabihf, and set clang target accordingly
     case $host in
       #armv7l seems a popular host_cpu in distros. Clang uses "armv7", though
+      arm*android*)
+         llc_triple="armv7-unknown-linux-gnueabi"
+         AC_DEFINE([HOST_FLOAT_SOFT_ABI], [], ["Use soft-float ABI to support most of android devices"])
+         HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=soft -I"$SYSROOTDIR"/usr/include "
+         HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=soft"
+         HOST_AS_FLAGS="$HOST_AS_FLAGS -mcpu=$llc_host_cpu -mfloat-abi=soft"
+         HOST_LD_FLAGS="$HOST_LD_FLAGS -L/system/lib/ -shared ";;
       armv7l*gnueabihf)
          llc_triple="armv7-unknown-linux-gnueabihf"
          HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=hard"
@@ -911,6 +928,18 @@ case $host_cpu in
     use_vecmathlib=""
     HOST_AS_FLAGS="$HOST_AS_FLAGS ${CLANG_TARGET_OPTION}$llc_triple"
     CLANG_MARCH_FLAG="mcpu"
+    ;;
+
+  mipsel*)
+    llc_triple="mipsel-unknown-linux-gnu"
+    CLANG_MARCH_FLAG=mcpu
+    CL_DEVICE_ADDRESS_BITS=32
+    ;;
+
+  mips*)
+    llc_triple="mips-unknown-linux-gnu"
+    CLANG_MARCH_FLAG=mcpu
+    CL_DEVICE_ADDRESS_BITS=32
     ;;
 
   *)
@@ -1070,6 +1099,27 @@ fi
 AM_CONDITIONAL([TCE_AVAILABLE], test ! -z $TCE_AVAILABLE)
 AM_CONDITIONAL([TCEMC_AVAILABLE], test ! -z $TCEMC_AVAILABLE)
 
+# Checking for android cross-compile
+ANDROID_PRESENT="";
+AC_MSG_CHECKING([for Android])
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM(
+    [[ #include <android/log.h> ]]
+  )],
+  [AC_MSG_RESULT(yes)
+  [ANDROID_PRESENT=ok]],
+  [AC_MSG_RESULT(no)])
+
+if test "$ANDROID_PRESENT" == ok;
+then
+AC_DEFINE([ANDROID], [1], [Defined to 1 if compiling for Android])
+AC_DEFINE([ANDROID_POCL_PREFIX],
+                   ["/data/data/org.pocl.libs/files"],
+                   [Directory  where pocl files are installed in android])
+
+fi
+AM_CONDITIONAL([ANDROID], [test "$ANDROID_PRESENT" = ok])
+
 # Check if CellSPU support is found
 # The libspe version requirement is not strict. This is the only one tested.
 # SPU backend was removed in LLVM 3.3 (and we don't accept LLVM 3.1 anymore in pocl)
@@ -1082,11 +1132,13 @@ PKG_CHECK_MODULES([LIBSPE], [libspe2 >= 2.2.80],
     LIBSPE_AVAILABLE=yes
     OCL_DRIVERS="$OCL_DRIVERS spu"
     OCL_TARGETS="$OCL_TARGETS cellspu"
-    AC_DEFINE([BUILD_SPU], [], [Defined when CellSPU tools are found])
+    AC_DEFINE([BUILD_SPU], [], [Defined when CellSPU tools are found])
+    BUILD_SPU=1
   ],
   [
     AC_MSG_NOTICE([libspe2 not found (by pkg-config). Spu driver not built.])
     LIBSPE_AVAILABLE=no
+    BUILD_SPU=0
   ])
 fi
 AM_CONDITIONAL([BUILD_SPU],[echo $OCL_DRIVERS | grep spu])
@@ -1116,6 +1168,13 @@ old_CPPFLAGS="$CPPFLAGS"
 old_CFLAGS="$CFLAGS"
 old_LDFLAGS="$LDFLAGS"
 CC=$srcdir/config/xclang
+if test ! -z "$host_alias"; then
+    CC="$CC -h $host_alias"
+fi
+if test ! -z "$build_alias"; then
+    CC="$CC -b $build_alias"
+fi
+
 CFLAGS=""
 CPPFLAGS=""
 LDFLAGS=""
@@ -1171,13 +1230,21 @@ AC_SUBST([HOST_SIZEOF_VOID_P], [$ac_cv_sizeof_void_p])
 
 AC_CHECK_ALIGNOF([float16], [typedef float float16  __attribute__((__ext_vector_type__(16)));])
 AC_CHECK_ALIGNOF([double16], [typedef double double16  __attribute__((__ext_vector_type__(16)));])
+
+if test "$ANDROID_PRESENT" == ok;
+then
+AC_MSG_NOTICE([Setting float16 & double16 alignments manually in cross-compile mode])
+AC_DEFINE([ALIGNOF_FLOAT16], 64)
+AC_DEFINE([ALIGNOF_DOUBLE16], 128)
+fi
+
 AS_IF([test $ac_cv_alignof_float16 -gt $ac_cv_alignof_double16],
       [AC_DEFINE([MAX_EXTENDED_ALIGNMENT], [ALIGNOF_FLOAT16], [Defined to greatest expected alignment for extended types, in bytes.])],
       [AC_DEFINE([MAX_EXTENDED_ALIGNMENT], [ALIGNOF_DOUBLE16], [Defined to greatest expected alignment for extended types, in bytes.])])
 
 AC_MSG_CHECKING([whether __fp16 supports arithmetic operations])
-AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[__fp16 x;]],
-                                   [[x=1; x=x+x;]])],
+AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[__fp16 callfp16(__fp16 a) { return a * (__fp16)1.8; };]],
+                                   [[__fp16 x=callfp16((__fp16)1.643);]])],
                   [
                     AC_MSG_RESULT([yes])
                     AC_DEFINE_UNQUOTED([HAVE_WORKING_HALF], 1, [Define to 1 if __fp16 supports arithmetic operations float.])
@@ -1226,20 +1293,25 @@ AC_C_BIGENDIAN
 # 2:0:1 == 0.8 (currently backwards compatible with 0.7, thus age = 1).
 # 3:0:2 == 0.9 (currently backwards compatible with 0.7, thus age = 2).
 # 4:0:3 == 0.10 (currently backwards compatible with 0.7, thus age = 3).
-LIB_CURRENT_VERSION=4
+# 5:0:4 == 0.11 (currently backwards compatible with 0.7, thus age = 4).
+LIB_CURRENT_VERSION=5
 LIB_REVISION_VERSION=0
-LIB_AGE_VERSION=3
+LIB_AGE_VERSION=4
 LIB_FIRST_VERSION=$(($LIB_CURRENT_VERSION - $LIB_AGE_VERSION))
+BUILD_TIMESTAMP=""
 AC_SUBST([LIB_VERSION], ["$LIB_CURRENT_VERSION:$LIB_REVISION_VERSION:$LIB_AGE_VERSION"])
 AC_SUBST([LIB_CURRENT_VERSION], [$LIB_CURRENT_VERSION])
 AC_SUBST([LIB_REVISION_VERSION], [$LIB_REVISION_VERSION])
 AC_SUBST([LIB_AGE_VERSION], [$LIB_AGE_VERSION])
 AC_SUBST([LIB_FIRST_VERSION], [$LIB_FIRST_VERSION])
+AC_SUBST([BUILD_TIMESTAMP], [$( date +%G%m%d%H%M%N )])
+
+AC_DEFINE_UNQUOTED([POCL_BUILD_TIMESTAMP], ["$BUILD_TIMESTAMP"], [Timestamp of build])
 
 # The kernel compiler opt plugin shared library, however, changes more 
 # drastically. Let's try to follow the similar 'current' numbering as
 # the pocl host API library and perhaps tune the 'revision' and 'age' later.
-AC_SUBST([KERNEL_COMPILER_LIB_VERSION], ["3:0:0"])
+AC_SUBST([KERNEL_COMPILER_LIB_VERSION], ["$LIB_CURRENT_VERSION:0:0"])
 
 AC_SUBST([LD_FLAGS_BIN])
 
@@ -1346,6 +1418,8 @@ fi
 
 echo Enabled device drivers: $OCL_DRIVERS
 echo Enabled testsuites: $POAT_TESTSUITES
+echo NOTE: Initialize the examples used by the testsuites by running 
+echo \"make prepare-examples\" once.
 echo
 echo Basic and pthreads devices optimized for:
 echo architecture: $host_cpu

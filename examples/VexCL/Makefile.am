@@ -24,18 +24,16 @@
 
 if TEST_SUITE_VEXCL
 
-.PHONY: build
+.PHONY: prepare-examples
 
 # ViennaCL must be built in the subdirectory build/ of the extracted source
 # (it does not work elsewhere) and its source tree is modified.
 # So, copying the source tree in our build tree if required
 # (ie if $(srcdir) is not $(CURDIR) )
-build:
+prepare-examples:
 	cd vexcl; cmake . $(OPENCL_CMAKE) ; make
 
-check-local: build
-
-clean-local:
+clean-examples:
 	cd vexcl; make clean
 
 endif

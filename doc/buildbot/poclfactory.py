@@ -5,13 +5,19 @@
 
 from buildbot.process import factory
 from buildbot.steps import source
+from buildbot.steps.source import SVN
+from buildbot.steps.source import Git
 from buildbot.steps.shell import ShellCommand, Compile
 from buildbot.status.results import *
+from buildbot.process.properties import Property
+from buildbot.process.properties import Interpolate
+from buildbot.process.properties import WithProperties
 import os
 
 #The names of the external tests sources
 AMD_test_pkg='AMD-APP-SDK-v2.8-RC-lnx64.tgz'
-ViennaCL_test_pkg='ViennaCL-1.5.1-src.tar.gz'
+ViennaCL_test_pkg='ViennaCL-1.5.1.tar.gz'
+
 
 
 def createPoclFactory(	environ={},
@@ -20,9 +26,13 @@ def createPoclFactory(	environ={},
 			buildICD=True,
 			llvm_dir='/usr/',
 			icd_dir='/usr/',
-			tests_dir='',
+			tests_dir=None,
 			config_opts='',
-			pedantic=True
+			pedantic=True,
+			tcedir='',
+			f=None,
+			cmake=False,
+			cache_dir=None
 			):
 	"""
 	Create a buildbot factory object that builds pocl.
@@ -40,142 +50,183 @@ def createPoclFactory(	environ={},
 				('cp' is used, so they need to be on the same filesystem).
 				NOTE: currently only a placeholder - not tested on the public buildbot
 	config_opts	String: extra options to pass to ./configure
+	cmake		Bool:	use CMake instead of autotools to build pocl
+	cache_dir	String: Set the pocl kernel cache to this dir. If not set, the kcache is disabled.
 	"""
 
-	environ['PATH'] = llvm_dir+"/bin/:${PATH}"
-	environ['LD_LIBRARY_PATH'] = llvm_dir+"/lib/:${LD_LIBRARY_PATH}"
+	myenviron = environ.copy()
+
+	if 'PATH' in myenviron.keys():
+		myenviron['PATH'] = llvm_dir+"/bin/:"+myenviron['PATH']+":${PATH}"
+	else:
+		myenviron['PATH'] = llvm_dir+"/bin/:${PATH}"
+	if 'LD_LIBRARY_PATH' in myenviron.keys():
+		myenviron['LD_LIBRARY_PATH'] = llvm_dir+"/lib/:"+myenviron['PATH']+":${LD_LIBRARY_PATH}"
+	else:
+		myenviron['LD_LIBRARY_PATH'] = llvm_dir+"/lib/:${LD_LIBRARY_PATH}"
+
+	if tcedir:
+		myenviron['PATH'] = tcedir+"/bin/:"+myenviron['PATH']
+		myenviron['LD_LIBRARY_PATH'] = tcedir+"/lib/:"+myenviron['LD_LIBRARY_PATH']
+
+	if cache_dir:
+		myenviron['POCL_BUILD_KERNEL_CACHE']='1'
+	else:
+		myenviron['POCL_BUILD_KERNEL_CACHE']='0'
 
 
+	if f==None:
+		f = factory.BuildFactory()
 
-	f = factory.BuildFactory()
-	f.addStep(source.Git(
+	f.addStep(
+		Git(
 			repourl=repository,
-			#mode='update',
-			#rm -rf the build tree. Have this only when changing
-			#branches during releases
-			mode='clobber',
-			branch=branch ))
+			mode=Property('git_mode'),
+			ignore_ignores=True,
+			branch=branch )
+		)
 
+	#clear last test round's kernel cahce. 
+	#NB: if you run two slave builds on the same machine, this
+	#will not work!
+	if cache_dir:
+		f.addStep(
+			ShellCommand(
+				command=['rm', '-rf', cache_dir],
+				haltOnFailure=True,
+				name='clean kcache',
+				description='cleaning kcache',
+				descriptionDone='cleaned kcache'
+			))
 
-	f.addStep(ShellCommand(command=["./autogen.sh"],
+	if not cmake:
+		f.addStep(ShellCommand(
+				command=["./autogen.sh"],
 				haltOnFailure=True,
 				name="autoconfig",
-				env=environ,
+				env=myenviron,
 				description="autoconfiging",
 				descriptionDone="autoconf"))
 
-	f.addStep(ShellCommand(
-		haltOnFailure=True,
-		command=["cp", "-u", tests_dir+AMD_test_pkg, 
-		         "examples/AMD/"+AMD_test_pkg],
-		name="copy AMD",
-		description="copying",
-		descriptionDone="copied AMD",
-		#kludge around 'cp' always complaining if source is missing
-		decodeRC={0:SUCCESS,1:SUCCESS}
-		))
-	f.addStep(ShellCommand(
-		haltOnFailure=False,
-		command=["cp", "-u", tests_dir+ViennaCL_test_pkg,
-		         "examples/ViennaCL/"+ViennaCL_test_pkg],
-		name="copy ViennaCL",
-		description="copying",
-		descriptionDone="copied ViennaCL",
-		decodeRC={0:SUCCESS,1:SUCCESS}
-		))
+	if tests_dir!=None:
+		f.addStep(ShellCommand(
+			haltOnFailure=True,
+			command=["cp", "-u", tests_dir+AMD_test_pkg, 
+			         "examples/AMD/"+AMD_test_pkg],
+			name="copy AMD",
+			description="copying",
+			descriptionDone="copied AMD",
+			#kludge around 'cp' always complaining if source is missing
+			decodeRC={0:SUCCESS,1:SUCCESS}
+			))
+		f.addStep(ShellCommand(
+			haltOnFailure=False,
+			command=["cp", "-u", tests_dir+ViennaCL_test_pkg,
+			         "examples/ViennaCL/"+ViennaCL_test_pkg],
+			name="copy ViennaCL",
+			description="copying",
+			descriptionDone="copied ViennaCL",
+			decodeRC={0:SUCCESS,1:SUCCESS}
+			))
 
-	configOpts=config_opts.split(' ')
-	if pedantic==True:
-		configOpts = configOpts + ['--enable-pedantic']
-	if buildICD==False:
-		configOpts = configOpts + ['--disable-icd']
-
-	f.addStep(ShellCommand(command=["./configure"] + configOpts,
+	if cmake:
+		f.addStep(
+			ShellCommand(
+				command=["cmake", "."],
+				env=myenviron,
 				haltOnFailure=True,
-				name="configure",
-				env=environ,
+				name="CMake",
+				description="cmaking",
+				descriptionDone="cmade"))
+	else:
+		configOpts=config_opts.split(' ')
+		if pedantic==True:
+			configOpts = configOpts + ['--enable-pedantic']
+		if buildICD==False:
+			configOpts = configOpts + ['--disable-icd']
+
+		f.addStep(ShellCommand(
+				command=["./configure"] + configOpts,
+				haltOnFailure=True,
+				name="configure pocl",
+				env=myenviron,
 				description="configureing",
 				descriptionDone="configure"))
-	f.addStep(Compile(env=environ ))
 	
-	#enable this later
-	ttacheck=False
-	if ttacheck:
+	f.addStep(Compile(env=myenviron ))
+
+	if tests_dir!=None and not cmake:
+		f.addStep(ShellCommand(command=["make", "prepare-examples"],
+				haltOnFailure=True,
+				name="prepare examples",
+				env=myenviron,
+				description="preparing",
+				descriptionDone="prepare"))
+	
+	
+	if tcedir:
 		f.addStep(ShellCommand(command=["./tools/scripts/run_tta_tests"],
 				haltOnFailure=True,
 				name="checks",
-				env=environ,
+				env=myenviron,
 				description="testing",
 				descriptionDone="tests",
 				logfiles={"test.log": "tests/testsuite.log"},
 				timeout=60*60))
 	else:
 		f.addStep(ShellCommand(command=["make", "check"],
-				#for beagle, contiunu to clean it up
-				#haltOnFailure=True,
+				haltOnFailure=True,
 				name="checks",
-				env=environ,
+				env=myenviron,
 				description="testing",
 				descriptionDone="tests",
 				logfiles={"test.log": "tests/testsuite.log"},
 				#blas3 alone takes 15-20 min.
 				timeout=60*60))
-	
-
-
-	#Keep this here for a reference, if we want to record the benchmarking progress at some point in time
-	#Benchmark only the vanilla pocl
-	#if do_benchmark and baseurl=='lp:' and defaultbranch=='pocl':
-	#	f.addStep(
-	#		ShellCommand(
-	#			haltOnFailure=True,
-	#			env=environ,
-	#			command=['./tools/scripts/benchmark.py', '--lightweight', '-o', 'benchmark_log.txt' ],
-	#			logfiles = {'log.txt': 'benchmark_log.txt'},
-	#			name = 'benchmark',
-	#			description='benchmarking',
-	#			descriptionDone='benchmarked',
-	#			# 4hour timeout - PPC runs for a *long* time
-	#			timeout=60*60*4))
-	#	f.addStep(
-	#		ShellCommand(
-	#			command=[
-	#				'scp',
-	#				'benchmark_log.txt',
-	#				WithProperties("marvin:/var/www/pocl_benchmarks/benchmark-"+processor+"-r%(got_revision)s.txt")],
-	#			name = 'copy benchmark',
-	#			description='copying',
-	#			descriptionDone='copied'))
-
+		#run the test once more, now from the kernel cache dir, if used
+		if cache_dir:
+			f.addStep(ShellCommand(command=["make", "check"],
+				haltOnFailure=True,
+				name="kcache checks",
+				env=myenviron,
+				description="testing kcache",
+				descriptionDone="tested kcache",
+				logfiles={"test.log": "tests/testsuite.log"},
+				timeout=5))			
 	return f
 
 #######
 ## LLVM/clang builder
 ##
-
-def createLLVMFactory(srcdir, branch, builddir, installdir):
+# srcdir	- LLVM source diectory
+# builddir	- LLVM build dir
+# installdir	- final LLVM install directory
+# test_install_dir - the LLVM install dir pocl_build tests against
+def createLLVMFactory(srcdir, builddir, installdir, test_install_dir):
+	
 	f = factory.BuildFactory()
 	f.addStep(
 		SVN(
 			name='svn-llvm',
 			mode='update',
 			baseURL='http://llvm.org/svn/llvm-project/llvm/',
-			defaultBranch=branch,
+			defaultBranch='trunk',
 			workdir=srcdir))
 	f.addStep(
 		SVN(
 			name='svn-clang',
 			mode='update',
 			baseURL='http://llvm.org/svn/llvm-project/cfe/',
-			defaultBranch=branch,
+			defaultBranch='trunk',
 			workdir='%s/tools/clang' % srcdir))
 	f.addStep(
 		ShellCommand(
 			command=[
 				'%s/configure' % srcdir,
 				'--prefix=' + installdir,
+				'--enable-optimized',
 				'--enable-targets=host',
-				'--enable-shared', '--disable-static'],
+				'--enable-shared'],
 			workdir=builddir,
 			haltOnFailure=True,
 			name="configure",
@@ -183,7 +234,7 @@ def createLLVMFactory(srcdir, branch, builddir, installdir):
 			description='configuring'))
 	f.addStep(
 		ShellCommand(
-			command=['make'],
+			command=['make', '-j', '4'],
 			workdir=builddir,
 			haltOnFailure=True,
 			name = "compile",
@@ -197,6 +248,20 @@ def createLLVMFactory(srcdir, branch, builddir, installdir):
 			descriptionDone='check',
 			haltOnFailure=True,
 			description='checking'))
+	f.addStep(
+		ShellCommand(
+			command=['make', 'install'],
+			env={'DESTDIR':test_install_dir},
+			workdir=builddir,
+			haltOnFailure=True,
+			name = 'install',
+			descriptionDone='install',
+			description='installing'))
+
+	f=createPoclFactory(
+		llvm_dir=test_install_dir+installdir, 
+		f=f)
+
 	f.addStep(
 		ShellCommand(
 			command=['make', 'install'],
