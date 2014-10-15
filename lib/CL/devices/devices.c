@@ -188,7 +188,9 @@ pocl_init_devices()
       pocl_num_devices += device_count[i];
     }
 
-  assert(pocl_num_devices > 0);
+  if (pocl_num_devices == 0)
+    POCL_ABORT("No device detected !");
+
   pocl_devices = calloc(pocl_num_devices, sizeof(struct _cl_device_id));
   if (pocl_devices == NULL)
     POCL_ABORT("Can not allocate memory for devices\n");
