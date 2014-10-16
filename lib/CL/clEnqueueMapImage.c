@@ -62,7 +62,6 @@ CL_API_SUFFIX__VERSION_1_0
 
   POCL_GOTO_ERROR_COND((image == NULL), CL_INVALID_MEM_OBJECT);
 
-  // TODO finish types
   POCL_GOTO_ERROR_ON((!image->is_image), CL_INVALID_MEM_OBJECT,
     "image argument is not an image type cl_mem\n");
 

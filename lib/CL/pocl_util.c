@@ -534,14 +534,15 @@ int pocl_buffer_boundcheck_3d(const size_t buffer_size,
   size_t rp = *row_pitch;
   size_t sp = *slice_pitch;
 
-  // CL_INVALID_VALUE if row_pitch is not 0 and is less than region[0].
+  /* CL_INVALID_VALUE if row_pitch is not 0 and is less than region[0]. */
   POCL_RETURN_ERROR_ON((rp != 0 && rp<region[0]),
     CL_INVALID_VALUE, "%srow_pitch is not 0 and is less than region[0]\n", prefix);
 
   if (rp == 0) rp = region[0];
 
-  // CL_INVALID_VALUE if slice_pitch is not 0 and is less than region[1] * row_pitch
-  // or if slice_pitch is not 0 and is not a multiple of row_pitch.
+  /* CL_INVALID_VALUE if slice_pitch is not 0 and is less than region[1] * row_pitch
+   * or if slice_pitch is not 0 and is not a multiple of row_pitch.
+   */
   POCL_RETURN_ERROR_ON((sp != 0 && sp < (region[1] * rp)),
     CL_INVALID_VALUE, "%sslice_pitch is not 0 and is less than "
       "region[1] * %srow_pitch\n", prefix, prefix);
@@ -598,8 +599,9 @@ int pocl_buffers_overlap(cl_mem src_buffer,
                          size_t src_offset,
                          size_t dst_offset,
                          size_t size) {
-  // The regions overlap if src_offset ≤ to dst_offset ≤ to src_offset + size - 1,
-  // or if dst_offset ≤ to src_offset ≤ to dst_offset + size - 1.
+  /* The regions overlap if src_offset ≤ to dst_offset ≤ to src_offset + size - 1,
+   * or if dst_offset ≤ to src_offset ≤ to dst_offset + size - 1.
+   */
   if (src_buffer == dst_buffer) {
     POCL_RETURN_ERROR_ON(((src_offset <= dst_offset) && (dst_offset <=
       (src_offset + size - 1))), CL_MEM_COPY_OVERLAP, "dst_offset lies inside \
@@ -609,7 +611,7 @@ int pocl_buffers_overlap(cl_mem src_buffer,
       the dst region and the src_buffer == dst_buffer")
   }
 
-  // sub buffers overlap check
+  /* sub buffers overlap check  */
   if (src_buffer->parent && dst_buffer->parent &&
         (src_buffer->parent == dst_buffer->parent)) {
       src_offset = (char*)src_buffer->mem_host_ptr - (char*)src_buffer->parent->mem_host_ptr +
@@ -665,7 +667,6 @@ check_copy_overlap(const size_t src_offset[3],
   const size_t dst_max[] = {dst_offset[0] + region[0],
                             dst_offset[1] + region[1],
                             dst_offset[2] + region[2]};
-  // Check for overlap
   int overlap = 1;
   unsigned i;
   for (i=0; i != 3; ++i)

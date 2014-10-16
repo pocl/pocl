@@ -104,7 +104,6 @@ CL_API_SUFFIX__VERSION_1_2
   /* POCL uses top-left corner as origin for images and AMD SDK ImageOverlap 
      test uses bottom-left corner as origin. Because of this we need to modify 
      y-coordinate so the fill goes in the right place. */
-  // TODO this is unused
   tuned_origin[0] = origin[0];
   tuned_origin[1] = image->image_height - region[1] - origin[1];
   tuned_origin[2] = origin[2];

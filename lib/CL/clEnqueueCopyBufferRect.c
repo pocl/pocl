@@ -88,7 +88,6 @@ POname(clEnqueueCopyBufferRect)(cl_command_queue command_queue,
       CL_INVALID_VALUE, "src_buffer and dst_buffer are the same buffer object,"
       " but the given dst & src row pitch differ\n")
 
-    // TODO subbuffers case
     POCL_RETURN_ERROR_ON((check_copy_overlap(src_origin, dst_origin, region,
       src_row_pitch, src_slice_pitch)), CL_MEM_COPY_OVERLAP, "src_buffer and "
       "dst_buffer are the same buffer object, and source and destination "
