@@ -42,33 +42,58 @@ POname(clEnqueueCopyBufferRect)(cl_command_queue command_queue,
 {
   cl_device_id device_id;
   unsigned i;
-  int errcode;
 
-  if (command_queue == NULL)
-    return CL_INVALID_COMMAND_QUEUE;
+  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
-  if ((src_buffer == NULL) || (dst_buffer == NULL))
-    return CL_INVALID_MEM_OBJECT;
+  POCL_RETURN_ERROR_COND((src_buffer == NULL), CL_INVALID_MEM_OBJECT);
 
-  if ((command_queue->context != src_buffer->context) ||
-      (command_queue->context != dst_buffer->context))
-    return CL_INVALID_CONTEXT;
+  POCL_RETURN_ERROR_COND((dst_buffer == NULL), CL_INVALID_MEM_OBJECT);
 
-  if ((src_origin == NULL) ||
-      (dst_origin == NULL) ||
-      (region == NULL))
-    return CL_INVALID_VALUE;
+  POCL_RETURN_ERROR_ON((src_buffer->type != CL_MEM_OBJECT_BUFFER),
+      CL_INVALID_MEM_OBJECT, "src_buffer is not a CL_MEM_OBJECT_BUFFER\n");
+  POCL_RETURN_ERROR_ON((dst_buffer->type != CL_MEM_OBJECT_BUFFER),
+      CL_INVALID_MEM_OBJECT, "dst_buffer is not a CL_MEM_OBJECT_BUFFER\n");
 
-  if ((region[0]*region[1]*region[2] > 0) &&
-      (src_origin[0] + region[0]-1 +
-       src_row_pitch * (src_origin[1] + region[1]-1) +
-       src_slice_pitch * (src_origin[2] + region[2]-1) >= src_buffer->size))
-    return CL_INVALID_VALUE;
-  if ((region[0]*region[1]*region[2] > 0) &&
-      (dst_origin[0] + region[0]-1 +
-       dst_row_pitch * (dst_origin[1] + region[1]-1) +
-       dst_slice_pitch * (dst_origin[2] + region[2]-1) >= dst_buffer->size))
-    return CL_INVALID_VALUE;
+  POCL_RETURN_ERROR_ON(((command_queue->context != src_buffer->context) ||
+      (command_queue->context != dst_buffer->context)), CL_INVALID_CONTEXT,
+      "src_buffer, dst_buffer and command_queue are not from the same context\n");
+
+  POCL_RETURN_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
+    CL_INVALID_EVENT_WAIT_LIST);
+
+  POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
+    CL_INVALID_EVENT_WAIT_LIST);
+
+  POCL_RETURN_ERROR_COND((src_origin == NULL), CL_INVALID_VALUE);
+
+  POCL_RETURN_ERROR_COND((dst_origin == NULL), CL_INVALID_VALUE);
+
+  POCL_RETURN_ERROR_COND((region == NULL), CL_INVALID_VALUE);
+
+  size_t region_bytes = region[0] * region[1] * region[2];
+  POCL_RETURN_ERROR_ON((region_bytes <= 0), CL_INVALID_VALUE, "All items in region must be >0\n");
+
+  if (pocl_buffer_boundcheck_3d(src_buffer->size, src_origin, region, &src_row_pitch,
+      &src_slice_pitch, "src_") != CL_SUCCESS) return CL_INVALID_VALUE;
+
+  if (pocl_buffer_boundcheck_3d(dst_buffer->size, dst_origin, region, &dst_row_pitch,
+      &dst_slice_pitch, "dst_") != CL_SUCCESS) return CL_INVALID_VALUE;
+
+  if (src_buffer == dst_buffer) {
+    POCL_RETURN_ERROR_ON((src_slice_pitch != dst_slice_pitch),
+      CL_INVALID_VALUE, "src_buffer and dst_buffer are the same buffer object,"
+      " but the given dst & src slice pitch differ\n")
+
+    POCL_RETURN_ERROR_ON((src_row_pitch != dst_row_pitch),
+      CL_INVALID_VALUE, "src_buffer and dst_buffer are the same buffer object,"
+      " but the given dst & src row pitch differ\n")
+
+    POCL_RETURN_ERROR_ON((check_copy_overlap(src_origin, dst_origin, region,
+      src_row_pitch, src_slice_pitch)), CL_MEM_COPY_OVERLAP, "src_buffer and "
+      "dst_buffer are the same buffer object, and source and destination "
+      "regions overlap");
+
+  }
 
   device_id = command_queue->device;
 
@@ -84,8 +109,8 @@ POname(clEnqueueCopyBufferRect)(cl_command_queue command_queue,
      clEnqueueReadBuffer) */
   if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
     {
+      POCL_ABORT_UNIMPLEMENTED("clEnqueueCopyBufferRect: Out-of-order queue");
       /* wait for the event in event_wait_list to finish */
-      POCL_ABORT_UNIMPLEMENTED();
     }
   else
     {

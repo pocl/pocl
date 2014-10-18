@@ -96,6 +96,25 @@ void pocl_check_and_invalidate_cache (cl_program program, int device_i, const ch
 /* Touch file to change last modified time */
 void pocl_touch_file(const char* file_name);
 
+/* does several sanity checks on buffer & given memory region */
+int pocl_buffer_boundcheck(cl_mem buffer, size_t offset, size_t size);
+/* same as above just 2 buffers */
+int pocl_buffers_boundcheck(cl_mem src_buffer, cl_mem dst_buffer,
+                            size_t src_offset, size_t dst_offset, size_t size);
+/* checks for overlapping regions in buffers, including overlapping subbuffers */
+int pocl_buffers_overlap(cl_mem src_buffer, cl_mem dst_buffer,
+                            size_t src_offset, size_t dst_offset, size_t size);
+
+int pocl_buffer_boundcheck_3d(const size_t buffer_size, const size_t *origin,
+                              const size_t *region, size_t *row_pitch,
+                              size_t *slice_pitch, const char* prefix);
+
+int
+check_copy_overlap(const size_t src_offset[3],
+                   const size_t dst_offset[3],
+                   const size_t region[3],
+                   const size_t row_pitch, const size_t slice_pitch);
+
 #ifdef __cplusplus
 }
 #endif

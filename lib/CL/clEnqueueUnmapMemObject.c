@@ -40,15 +40,18 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
   mem_mapping_t *mapping = NULL;
   _cl_command_node *cmd;
 
-  if (memobj == NULL)
-    return CL_INVALID_MEM_OBJECT;
+  POCL_RETURN_ERROR_COND((memobj == NULL), CL_INVALID_MEM_OBJECT);
 
-  if (command_queue == NULL || command_queue->device == NULL ||
-      command_queue->context == NULL)
-    return CL_INVALID_COMMAND_QUEUE;
+  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
-  if (command_queue->context != memobj->context)
-    return CL_INVALID_CONTEXT;
+  POCL_RETURN_ERROR_ON((command_queue->context != memobj->context),
+    CL_INVALID_CONTEXT, "memobj and command_queue are not from the same context\n");
+
+  POCL_RETURN_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
+    CL_INVALID_EVENT_WAIT_LIST);
+
+  POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
+    CL_INVALID_EVENT_WAIT_LIST);
 
   POCL_LOCK_OBJ (memobj);
   DL_FOREACH (memobj->mappings, mapping)
@@ -57,8 +60,8 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
           break;
     }
   POCL_UNLOCK_OBJ (memobj);
-  if (mapping == NULL)
-    return CL_INVALID_VALUE;
+  POCL_RETURN_ERROR_ON((mapping == NULL), CL_INVALID_VALUE,
+      "Could not find mapping of this memobj\n");
 
   /* find the index of the device's ptr in the buffer */
   device_id = command_queue->device;

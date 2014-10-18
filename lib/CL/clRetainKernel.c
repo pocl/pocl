@@ -26,6 +26,7 @@
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clRetainKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
 {
+  POCL_RETURN_ERROR_COND((kernel == NULL), CL_INVALID_KERNEL);
   POCL_RETAIN_OBJECT (kernel);
   return CL_SUCCESS;
 }

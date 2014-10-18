@@ -30,11 +30,10 @@ pocl_check_image_origin_region (const cl_mem image,
                                 const size_t *origin, 
                                 const size_t *region)
 {
-  if (image == NULL)
-    return CL_INVALID_MEM_OBJECT;
+  POCL_RETURN_ERROR_COND((image == NULL), CL_INVALID_MEM_OBJECT);
 
-  if (origin == NULL || region == NULL)
-    return CL_INVALID_VALUE;
+  POCL_RETURN_ERROR_COND((origin == NULL), CL_INVALID_VALUE);
+  POCL_RETURN_ERROR_COND((region == NULL), CL_INVALID_VALUE);
   
   /* check if origin + region in each dimension is with in image bounds */
   if (((origin[0] + region[0]) > image->image_row_pitch) || 
@@ -44,6 +43,85 @@ pocl_check_image_origin_region (const cl_mem image,
     return CL_INVALID_VALUE;
 
   return CL_SUCCESS;
+}
+
+extern cl_int
+pocl_check_device_supports_image(const cl_mem image,
+                                 const cl_command_queue command_queue)
+{
+  cl_uint num_entries;
+  cl_int errcode;
+  const cl_device_id device = command_queue->device;
+  cl_image_format* supported_image_formats = NULL;
+  unsigned i;
+
+  POCL_RETURN_ERROR_ON((!device->image_support), CL_INVALID_OPERATION,
+          "Device does not support images");
+
+  if (image->type == CL_MEM_OBJECT_IMAGE1D ||
+      image->type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
+    {
+      POCL_RETURN_ERROR_ON((image->image_width > device->image2d_max_width),
+        CL_INVALID_IMAGE_SIZE, "Image width > device.image2d_max_width");
+    }
+
+  if (image->type == CL_MEM_OBJECT_IMAGE2D ||
+      image->type == CL_MEM_OBJECT_IMAGE2D_ARRAY)
+    {
+      POCL_RETURN_ERROR_ON((image->image_width > device->image2d_max_width),
+        CL_INVALID_IMAGE_SIZE, "Image width > device.image2d_max_width");
+      POCL_RETURN_ERROR_ON((image->image_height > device->image2d_max_height),
+        CL_INVALID_IMAGE_SIZE, "Image height > device.image2d_max_height");
+    }
+
+  if (image->type == CL_MEM_OBJECT_IMAGE3D)
+    {
+      POCL_RETURN_ERROR_ON((image->image_width > device->image3d_max_width),
+        CL_INVALID_IMAGE_SIZE, "Image width > device.image3d_max_width");
+      POCL_RETURN_ERROR_ON((image->image_height > device->image3d_max_height),
+        CL_INVALID_IMAGE_SIZE, "Image height > device.image3d_max_height");
+      POCL_RETURN_ERROR_ON((image->image_depth > device->image3d_max_depth),
+        CL_INVALID_IMAGE_SIZE, "Image depth > device.image3d_max_depth");
+    }
+
+  /* check if image format is supported */
+  errcode = POname(clGetSupportedImageFormats)
+    (command_queue->context, 0, image->type, 0, NULL, &num_entries);
+
+  POCL_RETURN_ERROR_ON((errcode != CL_SUCCESS), errcode,
+        "clGetSupportedImageFormats call failed");
+
+  POCL_RETURN_ERROR_ON((num_entries == 0), errcode,
+        "This device does not support these images "
+        "(clGetSupportedImageFormats returned 0 entries)");
+
+  supported_image_formats = malloc (num_entries * sizeof(cl_image_format));
+  if (supported_image_formats == NULL)
+      return CL_OUT_OF_HOST_MEMORY;
+
+  errcode = POname(clGetSupportedImageFormats)
+    (command_queue->context, 0, image->type, num_entries,
+     supported_image_formats, NULL);
+
+  POCL_GOTO_ERROR_ON((errcode != CL_SUCCESS), errcode,
+        "2nd call of clGetSupportedImageFormats failed");
+
+  for (i = 0; i < num_entries; i++)
+    {
+      if (supported_image_formats[i].image_channel_order ==
+          image->image_channel_order &&
+          supported_image_formats[i].image_channel_data_type ==
+          image->image_channel_data_type)
+        errcode = CL_SUCCESS;
+        goto ERROR;
+    }
+
+  POCL_GOTO_ERROR_ON(1, CL_INVALID_IMAGE_FORMAT_DESCRIPTOR,
+    "The image format is not supported by the device");
+
+ERROR:
+  free(supported_image_formats);
+  return errcode;
 }
 
 extern void
@@ -100,10 +178,7 @@ pocl_write_image(cl_mem               image,
     
   size_t dev_elem_size = sizeof(cl_float);
   int dev_channels = 4;
-    
-  int host_elem_size = image->image_elem_size;
-  int host_channels = image->image_channels;
-    
+
   size_t tuned_origin[3] = {origin[0]*dev_elem_size*dev_channels, origin[1], 
                             origin[2]};
   size_t tuned_region[3] = {region[0]*dev_elem_size*dev_channels, region[1], 

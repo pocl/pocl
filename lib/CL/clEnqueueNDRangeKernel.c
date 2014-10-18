@@ -56,24 +56,22 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   char kernel_filename[POCL_FILENAME_LENGTH];
   char parallel_filename[POCL_FILENAME_LENGTH];
   char so_filename[POCL_FILENAME_LENGTH];
-  size_t n;
   int i, count;
   int error;
   struct pocl_context pc;
   _cl_command_node *command_node;
 
-  if (command_queue == NULL)
-    return CL_INVALID_COMMAND_QUEUE;
+  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
   
-  if (kernel == NULL)
-    return CL_INVALID_KERNEL;
+  POCL_RETURN_ERROR_COND((kernel == NULL), CL_INVALID_KERNEL);
 
-  if (command_queue->context != kernel->context)
-    return CL_INVALID_CONTEXT;
+  POCL_RETURN_ERROR_ON((command_queue->context != kernel->context),
+    CL_INVALID_CONTEXT, "kernel and command_queue are not from the same context\n");
 
-  if (work_dim < 1 ||
-      work_dim > command_queue->device->max_work_item_dimensions)
-    return CL_INVALID_WORK_DIMENSION;
+  POCL_RETURN_ERROR_COND((work_dim < 1), CL_INVALID_WORK_DIMENSION);
+  POCL_RETURN_ERROR_ON((work_dim > command_queue->device->max_work_item_dimensions),
+    CL_INVALID_WORK_DIMENSION, "work_dim exceeds devices' max workitem dimensions\n");
+
   assert(command_queue->device->max_work_item_dimensions <= 3);
 
   if (global_work_offset != NULL)
@@ -93,15 +91,13 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   global_y = work_dim > 1 ? global_work_size[1] : 1;
   global_z = work_dim > 2 ? global_work_size[2] : 1;
 
-  if (global_x == 0 || global_y == 0 || global_z == 0)
-    return CL_INVALID_GLOBAL_WORK_SIZE;
+  POCL_RETURN_ERROR_COND((global_x == 0 || global_y == 0 || global_z == 0),
+    CL_INVALID_GLOBAL_WORK_SIZE);
 
   for (i = 0; i < kernel->num_args; i++)
     {
-      if (!kernel->arg_info[i].is_set)
-        {
-          return CL_INVALID_KERNEL_ARGS;
-        }
+      POCL_RETURN_ERROR_ON((!kernel->arg_info[i].is_set), CL_INVALID_KERNEL_ARGS,
+        "The %i-th kernel argument is not set!\n", i)
     }
 
   if (local_work_size != NULL) 
@@ -144,24 +140,30 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
          kernel->function_name, local_x, local_y, local_z);
 #endif
 
-  if (local_x * local_y * local_z > command_queue->device->max_work_group_size)
-    return CL_INVALID_WORK_GROUP_SIZE;
+  POCL_RETURN_ERROR_ON((local_x * local_y * local_z > command_queue->device->max_work_group_size),
+    CL_INVALID_WORK_GROUP_SIZE, "Local worksize dimensions exceed device's max workgroup size\n");
 
-  if (local_x > command_queue->device->max_work_item_sizes[0] ||
-      (work_dim > 1 &&
-       local_y > command_queue->device->max_work_item_sizes[1]) ||
-      (work_dim > 2 &&
-       local_z > command_queue->device->max_work_item_sizes[2]))
-    return CL_INVALID_WORK_ITEM_SIZE;
+  POCL_RETURN_ERROR_ON((local_x > command_queue->device->max_work_item_sizes[0]),
+    CL_INVALID_WORK_ITEM_SIZE, "local_work_size.x > device's max_workitem_sizes[0]\n");
 
-  if (global_x % local_x != 0 ||
-      global_y % local_y != 0 ||
-      global_z % local_z != 0)
-    return CL_INVALID_WORK_GROUP_SIZE;
+  if (work_dim > 1)
+    POCL_RETURN_ERROR_ON((local_y > command_queue->device->max_work_item_sizes[1]),
+    CL_INVALID_WORK_ITEM_SIZE, "local_work_size.y > device's max_workitem_sizes[1]\n");
 
-  if ((event_wait_list == NULL && num_events_in_wait_list > 0) ||
-      (event_wait_list != NULL && num_events_in_wait_list == 0))
-    return CL_INVALID_EVENT_WAIT_LIST;
+  if (work_dim > 2)
+    POCL_RETURN_ERROR_ON((local_z > command_queue->device->max_work_item_sizes[2]),
+    CL_INVALID_WORK_ITEM_SIZE, "local_work_size.z > device's max_workitem_sizes[2]\n");
+
+  POCL_RETURN_ERROR_COND((global_x % local_x != 0), CL_INVALID_WORK_GROUP_SIZE);
+  POCL_RETURN_ERROR_COND((global_y % local_y != 0), CL_INVALID_WORK_GROUP_SIZE);
+  POCL_RETURN_ERROR_COND((global_z % local_z != 0), CL_INVALID_WORK_GROUP_SIZE);
+
+  POCL_RETURN_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
+    CL_INVALID_EVENT_WAIT_LIST);
+
+  POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
+    CL_INVALID_EVENT_WAIT_LIST);
+
 
   snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/%s/%s/%zu-%zu-%zu", 
             kernel->program->temp_dir, command_queue->device->short_name, 

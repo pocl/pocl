@@ -28,6 +28,7 @@
 
 #include "devices.h"
 #include "common.h"
+#include "pocl_runtime_config.h"
 #include "basic/basic.h"
 #include "pthread/pocl-pthread.h"
 
@@ -44,6 +45,13 @@
 /* the enabled devices */
 static struct _cl_device_id* pocl_devices = NULL;
 unsigned int pocl_num_devices = 0;
+
+#ifdef POCL_DEBUG_MESSAGES
+int pocl_debug_messages;
+#ifdef HAVE_CLOCK_GETTIME
+struct timespec pocl_debug_timespec;
+#endif
+#endif
 
 /* Init function prototype */
 typedef void (*init_device_ops)(struct pocl_device_ops*);
@@ -175,6 +183,12 @@ pocl_init_devices()
       POCL_UNLOCK(pocl_init_lock);
       return;
     }
+
+  /* Set a global debug flag, so we don't have to call pocl_get_bool_option
+   * everytime we use the debug macros */
+#ifdef POCL_DEBUG_MESSAGES
+  pocl_debug_messages = pocl_get_bool_option("POCL_DEBUG", 0);
+#endif
 
   /* Init operations */
   for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)

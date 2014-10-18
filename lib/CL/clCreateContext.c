@@ -56,6 +56,7 @@ int context_set_properties(cl_context                    context,
           for(q=properties; q<p; q+=2)
             if (q[0] == p[0])
               {
+                POCL_MSG_ERR("Duplicate properties: %lu\n", (unsigned long)q[0]);
                 *errcode = CL_INVALID_PROPERTY; 
                 return 0;
               }
@@ -72,6 +73,7 @@ int context_set_properties(cl_context                    context,
 
               if (platform_found == CL_FALSE)
                 {
+                  POCL_MSG_ERR("Could not find platform %p\n", (void*)p[1]);
                   *errcode = CL_INVALID_PLATFORM;
                   return 0;
                 }
@@ -80,6 +82,7 @@ int context_set_properties(cl_context                    context,
               break;
 
             default: 
+              POCL_MSG_ERR("Unknown context property: %lu\n", (unsigned long)p[0]);
               *errcode = CL_INVALID_PROPERTY;
               return 0;
             }
@@ -122,23 +125,17 @@ POname(clCreateContext)(const cl_context_properties * properties,
   int i, j;
   cl_device_id device_ptr;
   int errcode = 0;
-    
-  if (devices == NULL || num_devices == 0)
-    {
-      errcode = CL_INVALID_VALUE;
-      goto ERROR;
-    }
+  cl_context context = NULL;
 
-  if (pfn_notify == NULL && user_data != NULL)
-    {
-      errcode = CL_INVALID_VALUE;
-      goto ERROR;
-    }
+  POCL_GOTO_ERROR_COND((devices == NULL || num_devices == 0), CL_INVALID_VALUE);
+
+  POCL_GOTO_ERROR_COND((pfn_notify == NULL && user_data != NULL), CL_INVALID_VALUE);
+
   
   lt_dlinit();
   pocl_init_devices();
 
-  cl_context context = (cl_context) malloc(sizeof(struct _cl_context));
+  context = (cl_context) malloc(sizeof(struct _cl_context));
   if (context == NULL)
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
@@ -150,7 +147,7 @@ POname(clCreateContext)(const cl_context_properties * properties,
   context_set_properties(context, properties, &errcode);
   if (errcode)
     {
-      goto ERROR_CLEAN_CONTEXT;
+      goto ERROR;
     }
   
   context->num_devices = num_devices;
@@ -158,15 +155,16 @@ POname(clCreateContext)(const cl_context_properties * properties,
   if (context->devices == NULL)
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
-      goto ERROR_CLEAN_CONTEXT;
+      goto ERROR;
     }
   
   j = 0;
-  for (i = 0; i < num_devices; ++i) 
+  for (i = 0; i < num_devices; ++i)
     {
       device_ptr = devices[i];
       if (device_ptr == NULL)
         {
+          POCL_MSG_ERR("one of the devices in device list is NULL\n");
           errcode = CL_INVALID_DEVICE;
           goto ERROR_CLEAN_CONTEXT_AND_DEVICES;
         }
@@ -176,8 +174,10 @@ POname(clCreateContext)(const cl_context_properties * properties,
           context->devices[j] = device_ptr;
           ++j;
         }
+      else
+        POCL_MSG_WARN("device not available: %s\n", device_ptr->long_name);
       POname(clRetainDevice)(device_ptr);
-    }   
+    }
 
   pocl_init_mem_manager ();
   
@@ -186,13 +186,12 @@ POname(clCreateContext)(const cl_context_properties * properties,
   context->valid = 1;
   return context;
   
- ERROR_CLEAN_CONTEXT_AND_DEVICES:
+ERROR_CLEAN_CONTEXT_AND_DEVICES:
   POCL_MEM_FREE(context->devices);
  /*ERROR_CLEAN_CONTEXT_AND_PROPERTIES:*/
   POCL_MEM_FREE(context->properties);
- ERROR_CLEAN_CONTEXT:
+ERROR:
   POCL_MEM_FREE(context);
- ERROR:
   if(errcode_ret != NULL)
     {
       *errcode_ret = errcode;

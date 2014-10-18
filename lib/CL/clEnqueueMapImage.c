@@ -50,47 +50,43 @@ CL_API_SUFFIX__VERSION_1_0
   _cl_command_node *cmd = NULL;
   mem_mapping_t *mapping_info = NULL;
 
+  POCL_GOTO_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+
   device = command_queue->device;
-  if (command_queue == NULL)
-    {
-      errcode =  CL_INVALID_COMMAND_QUEUE;
-      goto ERROR;
-    }
-  if (image == NULL)
-    {
-      errcode = CL_INVALID_MEM_OBJECT;
-      goto ERROR;
-    }
-  if (command_queue->context != image->context)
-    {
-      errcode = CL_INVALID_CONTEXT;
-      goto ERROR;
-    }
-  if ((event_wait_list == NULL && num_events_in_wait_list != 0) ||
-      (event_wait_list != NULL && num_events_in_wait_list == 0))
-    {
-      errcode = CL_INVALID_EVENT_WAIT_LIST;
-      goto ERROR;
-    }
+
+  POCL_GOTO_ERROR_ON((!command_queue->device->image_support), CL_INVALID_OPERATION,
+    "Device %s does not support images\n", command_queue->device->long_name);
+
+  POCL_GOTO_ERROR_ON((command_queue->context != image->context),
+    CL_INVALID_CONTEXT, "image and command_queue are not from the same context\n");
+
+  POCL_GOTO_ERROR_COND((image == NULL), CL_INVALID_MEM_OBJECT);
+
+  POCL_GOTO_ERROR_ON((!image->is_image), CL_INVALID_MEM_OBJECT,
+    "image argument is not an image type cl_mem\n");
+
+  POCL_GOTO_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
+    CL_INVALID_EVENT_WAIT_LIST);
+
+  POCL_GOTO_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
+    CL_INVALID_EVENT_WAIT_LIST);
+
+  errcode = pocl_check_device_supports_image(image, command_queue);
+  if (errcode != CL_SUCCESS)
+    goto ERROR;
+
+  POCL_GOTO_ERROR_COND((image_row_pitch == NULL), CL_INVALID_VALUE)
 
   errcode = pocl_check_image_origin_region(image, origin, region);
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
-  if (image_row_pitch == NULL)
-    {
-      errcode = CL_INVALID_VALUE;
-      goto ERROR;
-    }
-
-  if (image_slice_pitch == NULL && 
+  POCL_GOTO_ERROR_ON((image_slice_pitch == NULL &&
       (image->type == CL_MEM_OBJECT_IMAGE3D || 
        image->type == CL_MEM_OBJECT_IMAGE1D_ARRAY ||
-       image->type == CL_MEM_OBJECT_IMAGE2D_ARRAY))
-    {
-      errcode = CL_INVALID_VALUE;
-      goto ERROR;
-    }
+       image->type == CL_MEM_OBJECT_IMAGE2D_ARRAY)), CL_INVALID_VALUE,
+       "For a 3D image, 1D, and 2D image array, "
+       "image_slice_pitch must be a non-NULL value\n");
 
   /* TODO: more error checks */
   

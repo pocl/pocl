@@ -35,6 +35,8 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
   int new_refcount;
   cl_kernel k;
 
+  POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
+
   POCL_RELEASE_OBJECT (program, new_refcount);
 
   if (new_refcount == 0)

@@ -11,11 +11,7 @@ CL_API_SUFFIX__VERSION_1_0
   int errcode;
   cl_sampler sampler;
 
-  if (context == NULL)
-  {
-    errcode = CL_INVALID_CONTEXT;
-    goto ERROR;
-  }
+  POCL_GOTO_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
   
   sampler = (cl_sampler) malloc(sizeof(struct _cl_sampler));
   if (sampler == NULL)
@@ -25,13 +21,15 @@ CL_API_SUFFIX__VERSION_1_0
   }
   
   if (normalized_coords == CL_TRUE)
-    POCL_ABORT_UNIMPLEMENTED();
+    POCL_ABORT_UNIMPLEMENTED("clCreateSampler: normalized_coords");
   
   if (addressing_mode != CL_ADDRESS_CLAMP_TO_EDGE)
-    POCL_ABORT_UNIMPLEMENTED();
+    POCL_ABORT_UNIMPLEMENTED("clCreateSampler: Addressing modes "
+                              "other than CL_ADDRESS_CLAMP_TO_EDGE");
   
   if (filter_mode != CL_FILTER_NEAREST)
-    POCL_ABORT_UNIMPLEMENTED();
+    POCL_ABORT_UNIMPLEMENTED("clCreateSampler: Filter modes other than "
+                                    "CL_FILTER_NEAREST");
   
   POCL_INIT_ICD_OBJECT(sampler);
   sampler->normalized_coords = normalized_coords;
@@ -40,10 +38,6 @@ CL_API_SUFFIX__VERSION_1_0
   
   return sampler;
 
-#if 0
-ERROR_CLEAN_SAMPLER:
-  POCL_MEM_FREE(sampler);
-#endif
 ERROR:
   if(errcode_ret)
   {

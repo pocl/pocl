@@ -25,26 +25,30 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
   void *args_copy;
   int error;
 
-  if (command_queue == NULL)
-    return CL_INVALID_COMMAND_QUEUE;
+  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
-  if (user_func == NULL)
-    return CL_INVALID_VALUE;
+  POCL_RETURN_ERROR_COND((user_func == NULL), CL_INVALID_VALUE);
 
-  if (args == NULL && (cb_args > 0 || num_mem_objects > 0))
-    return CL_INVALID_VALUE;
+  POCL_RETURN_ERROR_COND(((args == NULL) && (cb_args > 0 )), CL_INVALID_VALUE);
+  POCL_RETURN_ERROR_COND(((args == NULL) && (num_mem_objects > 0)), CL_INVALID_VALUE);
 
-  if (args != NULL && cb_args == 0)
-    return CL_INVALID_VALUE;
+  POCL_RETURN_ERROR_COND(((args != NULL) && (cb_args == 0)), CL_INVALID_VALUE);
 
-  if (num_mem_objects > 0 && (mem_list == NULL || args_mem_loc == NULL))
-    return CL_INVALID_VALUE;
+  POCL_RETURN_ERROR_COND(((num_mem_objects > 0) && (mem_list == NULL)), CL_INVALID_VALUE);
+  POCL_RETURN_ERROR_COND(((num_mem_objects > 0) && (args_mem_loc == NULL)), CL_INVALID_VALUE);
 
-  if (num_mem_objects == 0 && (mem_list != NULL || args_mem_loc != NULL))
-    return CL_INVALID_VALUE;
+  POCL_RETURN_ERROR_COND(((num_mem_objects == 0) && (mem_list != NULL)), CL_INVALID_VALUE);
+  POCL_RETURN_ERROR_COND(((num_mem_objects == 0) && (args_mem_loc != NULL)), CL_INVALID_VALUE);
 
-  if (!(command_queue->device->execution_capabilities & CL_EXEC_NATIVE_KERNEL))
-    return CL_INVALID_OPERATION;
+  POCL_RETURN_ERROR_ON(!(command_queue->device->execution_capabilities &
+    CL_EXEC_NATIVE_KERNEL), CL_INVALID_OPERATION, "device associated with "
+    "command_queue cannot execute the native kernel\n");
+
+  POCL_RETURN_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
+    CL_INVALID_EVENT_WAIT_LIST);
+
+  POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
+    CL_INVALID_EVENT_WAIT_LIST);
 
   error = pocl_create_command (&command_node, command_queue,
                                CL_COMMAND_NATIVE_KERNEL,

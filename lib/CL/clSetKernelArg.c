@@ -37,30 +37,36 @@ POname(clSetKernelArg)(cl_kernel kernel,
 {
   size_t arg_alignment, arg_alloc_size;
   struct pocl_argument *p;
+  struct pocl_argument_info *pi;
   void *value;
-  
-  if (kernel == NULL)
-    return CL_INVALID_KERNEL;
 
-  if (arg_index >= kernel->num_args)
-    return CL_INVALID_ARG_INDEX;
-  
-  if (kernel->dyn_arguments == NULL)
-    return CL_INVALID_KERNEL;
+  POCL_RETURN_ERROR_COND((kernel == NULL), CL_INVALID_KERNEL);
 
-  if (arg_size == 0 && kernel->arg_info[arg_index].is_local)
-    return CL_INVALID_ARG_SIZE;
+  POCL_RETURN_ERROR_ON((arg_index >= kernel->num_args), CL_INVALID_ARG_INDEX,
+    "This kernel has %u args, cannot set arg %u\n",
+    (unsigned)kernel->num_args, (unsigned)arg_index);
 
-  if ((kernel->arg_info[arg_index].type == POCL_ARG_TYPE_POINTER || kernel->arg_info[arg_index].type == POCL_ARG_TYPE_IMAGE)
-        && (!kernel->arg_info[arg_index].is_local) && (arg_size != sizeof(cl_mem)))
-    return CL_INVALID_ARG_SIZE;
+  POCL_RETURN_ERROR_ON((kernel->dyn_arguments == NULL), CL_INVALID_KERNEL,
+    "This kernel has no arguments that could be set\n");
+
+  pi = &(kernel->arg_info[arg_index]);
+
+  POCL_RETURN_ERROR_ON((arg_size == 0 && pi->is_local),
+    CL_INVALID_ARG_SIZE, "arg_size == 0 and arg %u is in local address space\n",
+    arg_index);
+
+  POCL_RETURN_ERROR_ON(((pi->type == POCL_ARG_TYPE_POINTER
+    || pi->type == POCL_ARG_TYPE_IMAGE)
+    && (!pi->is_local) && (arg_size != sizeof(cl_mem))),
+    CL_INVALID_ARG_SIZE, "Arg %u is pointer/buffer/image, but arg_size is "
+    "not sizeof(cl_mem)", arg_index);
 
   p = &(kernel->dyn_arguments[arg_index]); 
   POCL_LOCK_OBJ (kernel);
-  kernel->arg_info[arg_index].is_set = 0;
+  pi->is_set = 0;
   
   if (arg_value != NULL && 
-      !(kernel->arg_info[arg_index].type == POCL_ARG_TYPE_POINTER && 
+      !(pi->type == POCL_ARG_TYPE_POINTER &&
         *(const int*)arg_value == 0))
     {
       pocl_aligned_free (p->value);
@@ -99,7 +105,7 @@ POname(clSetKernelArg)(cl_kernel kernel,
 #endif
 
   p->size = arg_size;
-  kernel->arg_info[arg_index].is_set = 1;
+  pi->is_set = 1;
 
   POCL_UNLOCK_OBJ (kernel);
   return CL_SUCCESS;

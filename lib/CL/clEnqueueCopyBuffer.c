@@ -22,7 +22,6 @@
    THE SOFTWARE.
 */
 
-#include "pocl_cl.h"
 #include "utlist.h"
 #include <assert.h>
 #include "pocl_util.h"
@@ -33,7 +32,7 @@ POname(clEnqueueCopyBuffer)(cl_command_queue command_queue,
                             cl_mem dst_buffer,
                             size_t src_offset,
                             size_t dst_offset,
-                            size_t cb, 
+                            size_t size,
                             cl_uint num_events_in_wait_list,
                             const cl_event *event_wait_list,
                             cl_event *event) 
@@ -44,19 +43,34 @@ CL_API_SUFFIX__VERSION_1_0
   _cl_command_node *cmd = NULL;
   int errcode;
 
-  if (command_queue == NULL)
-    return CL_INVALID_COMMAND_QUEUE;
+  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
-  if ((src_buffer == NULL) || (dst_buffer == NULL))
-    return CL_INVALID_MEM_OBJECT;
+  POCL_RETURN_ERROR_COND((src_buffer == NULL), CL_INVALID_MEM_OBJECT);
 
-  if ((command_queue->context != src_buffer->context) ||
-      (command_queue->context != dst_buffer->context))
-    return CL_INVALID_CONTEXT;
+  POCL_RETURN_ERROR_COND((dst_buffer == NULL), CL_INVALID_MEM_OBJECT);
 
-  if ((src_offset + cb > src_buffer->size) ||
-      (dst_offset + cb > dst_buffer->size))
-    return CL_INVALID_VALUE;
+  POCL_RETURN_ERROR_ON((src_buffer->type != CL_MEM_OBJECT_BUFFER),
+      CL_INVALID_MEM_OBJECT, "src_buffer is not a CL_MEM_OBJECT_BUFFER\n");
+  POCL_RETURN_ERROR_ON((dst_buffer->type != CL_MEM_OBJECT_BUFFER),
+      CL_INVALID_MEM_OBJECT, "dst_buffer is not a CL_MEM_OBJECT_BUFFER\n");
+
+  POCL_RETURN_ERROR_ON(((command_queue->context != src_buffer->context) ||
+      (command_queue->context != dst_buffer->context)), CL_INVALID_CONTEXT,
+      "src_buffer, dst_buffer and command_queue are not from the same context\n");
+
+  POCL_RETURN_ERROR_COND((size == 0), CL_INVALID_VALUE);
+
+  POCL_RETURN_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
+    CL_INVALID_EVENT_WAIT_LIST);
+
+  POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
+    CL_INVALID_EVENT_WAIT_LIST);
+
+  if (pocl_buffers_boundcheck(src_buffer, dst_buffer, src_offset,
+        dst_offset, size) != CL_SUCCESS) return CL_INVALID_VALUE;
+
+  if (pocl_buffers_overlap(src_buffer, dst_buffer, src_offset,
+        dst_offset, size) != CL_SUCCESS) return CL_MEM_COPY_OVERLAP;
 
   device_id = command_queue->device;
 
@@ -86,7 +100,7 @@ CL_API_SUFFIX__VERSION_1_0
     src_buffer->device_ptrs[device_id->dev_id].mem_ptr + src_offset;
   cmd->command.copy.dst_ptr = 
     dst_buffer->device_ptrs[device_id->dev_id].mem_ptr + dst_offset;
-  cmd->command.copy.cb = cb;
+  cmd->command.copy.cb = size;
 
   pocl_command_enqueue(command_queue, cmd);
 

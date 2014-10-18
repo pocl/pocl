@@ -32,6 +32,9 @@ POname(clGetProgramInfo)(cl_program program,
                  size_t *param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
   int i;
+
+  POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
+
   switch (param_name)
   {
   case CL_PROGRAM_REFERENCE_COUNT:
@@ -95,7 +98,7 @@ POname(clGetProgramInfo)(cl_program program,
   default:
     break;
   }
-  POCL_ABORT_UNIMPLEMENTED();
+  POCL_ABORT_UNIMPLEMENTED("clGetProgramInfo: unknown param_name");
   return CL_INVALID_VALUE;
 }
 POsym(clGetProgramInfo)

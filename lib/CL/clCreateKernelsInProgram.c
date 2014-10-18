@@ -32,11 +32,10 @@ POname(clCreateKernelsInProgram)(cl_program      program ,
       POCL_MEM_FREE(knames);
       return CL_SUCCESS;
     }
-  if (num_kernels < num_kern_found) 
-    {
-      POCL_MEM_FREE(knames);
-      return CL_INVALID_VALUE;
-    }
+
+  POCL_RETURN_ERROR_ON((num_kernels < num_kern_found), CL_INVALID_VALUE,
+      "kernels is not NULL and num_kernels "
+      "is less than the number of kernels in program");
 
   /* Create the kernels in the 'knames' list */ 
   for (idx = 0; idx < num_kern_found; idx++) 

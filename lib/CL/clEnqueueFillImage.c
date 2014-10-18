@@ -21,10 +21,8 @@
    THE SOFTWARE.
 */
 
-#include "pocl_cl.h"
-#include "utlist.h"
-#include "pocl_image_util.h"
 #include "pocl_util.h"
+#include "pocl_image_util.h"
 #include "cl_platform.h"
 #include <string.h>
 
@@ -40,91 +38,42 @@ POname(clEnqueueFillImage)(cl_command_queue  command_queue,
 CL_API_SUFFIX__VERSION_1_2
 {
   int errcode = CL_SUCCESS;
-  cl_uint num_entries = 0;
   _cl_command_node *cmd = NULL;
   cl_image_format *supported_image_formats = NULL;
-  int i;
   void *fill_pixel = NULL;
   size_t tuned_origin[3];
 
-  if (command_queue == NULL)
-    return CL_INVALID_COMMAND_QUEUE;
-  
-  if (image == NULL)
-    return CL_INVALID_MEM_OBJECT;
+  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+
+  POCL_RETURN_ERROR_ON((!command_queue->device->image_support), CL_INVALID_OPERATION,
+    "Device %s does not support images\n", command_queue->device->long_name);
+
+  POCL_RETURN_ERROR_COND((image == NULL), CL_INVALID_MEM_OBJECT);
+  POCL_RETURN_ERROR_COND((origin == NULL), CL_INVALID_VALUE);
+  POCL_RETURN_ERROR_COND((region == NULL), CL_INVALID_VALUE);
+  POCL_RETURN_ERROR_COND((fill_color == NULL), CL_INVALID_VALUE);
+
+  POCL_RETURN_ERROR_ON((command_queue->context != image->context), CL_INVALID_CONTEXT,
+      "image and command_queue are not from the same context\n");
+
+  POCL_RETURN_ERROR_ON((!image->is_image), CL_INVALID_MEM_OBJECT,
+                                                "image argument is not an image\n");
+
+  POCL_RETURN_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
+    CL_INVALID_EVENT_WAIT_LIST);
+
+  POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
+    CL_INVALID_EVENT_WAIT_LIST);
+
 
   errcode = pocl_check_image_origin_region (image, origin, region);
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  if (command_queue->context != image->context)
-    return CL_INVALID_CONTEXT;
-  
-  if (fill_color == NULL || origin == NULL || region == NULL) 
-    return CL_INVALID_VALUE;
-  
-  if (event_wait_list == NULL && num_events_in_wait_list > 0)
-    return CL_INVALID_EVENT_WAIT_LIST;
-
-  /* TODO: handle 1D image buffer size check. 
-     needs new attribute to device struct */
-  if (image->type == CL_MEM_OBJECT_IMAGE1D ||
-      image->type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
-    {
-      if (image->image_width > command_queue->device->image2d_max_width)
-        return CL_INVALID_IMAGE_SIZE;
-    }
-
-  if (image->type == CL_MEM_OBJECT_IMAGE2D || 
-      image->type == CL_MEM_OBJECT_IMAGE2D_ARRAY)
-    {
-      if (image->image_width > command_queue->device->image2d_max_width ||
-          image->image_height > command_queue->device->image2d_max_height)
-        return CL_INVALID_IMAGE_SIZE;
-    }
-  
-  if (image->type == CL_MEM_OBJECT_IMAGE3D)
-    {
-      if (image->image_width > command_queue->device->image3d_max_width ||
-          image->image_height > command_queue->device->image3d_max_height ||
-          image->image_depth > command_queue->device->image3d_max_depth)
-        return CL_INVALID_IMAGE_SIZE;
-    }
-  
-  /* check if image format is supported */
-  errcode = POname(clGetSupportedImageFormats)
-    (command_queue->context, 0, image->type, 0, NULL, 
-     &num_entries);
-  
-  if (errcode != CL_SUCCESS || num_entries == 0) 
+  errcode = pocl_check_device_supports_image(image, command_queue);
+  if (errcode != CL_SUCCESS)
     return errcode;
-  
-  supported_image_formats = malloc (num_entries * sizeof(cl_image_format));
-  if (supported_image_formats == NULL)
-    {
-      errcode = CL_OUT_OF_HOST_MEMORY;
-      goto ERROR_CLEAN;
-    }
-  
-  errcode = POname(clGetSupportedImageFormats)
-    (command_queue->context, 0, image->type, num_entries, 
-     supported_image_formats, NULL);
-  
-  for (i = 0; i < num_entries; i++)
-    {
-      if (supported_image_formats[i].image_channel_order == 
-          image->image_channel_order &&
-          supported_image_formats[i].image_channel_data_type ==
-          image->image_channel_data_type)
-        {
-          goto TYPE_SUPPORTED;
-        }
-    }
-  errcode = CL_INVALID_VALUE;
-  goto ERROR_CLEAN;
 
- TYPE_SUPPORTED: 
- 
   fill_pixel = malloc (4 * sizeof(int));
   if (fill_pixel == NULL)
     {

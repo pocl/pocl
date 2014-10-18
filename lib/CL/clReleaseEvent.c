@@ -28,8 +28,9 @@ CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseEvent)(cl_event event) CL_API_SUFFIX__VERSION_1_0
 {
   int new_refcount;
-  if (event == NULL || event->queue == NULL)
-    return CL_INVALID_EVENT;
+  POCL_RETURN_ERROR_COND((event == NULL), CL_INVALID_EVENT);
+
+  POCL_RETURN_ERROR_COND((event->queue == NULL), CL_INVALID_EVENT);
 
   POCL_RELEASE_OBJECT (event, new_refcount);
 

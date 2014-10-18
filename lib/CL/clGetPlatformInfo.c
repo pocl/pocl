@@ -36,12 +36,11 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
   cl_platform_id tmp_platform;
 
   // TODO: if we don't have ICD in use, platform==NULL should be valid & point to pocl
-  if (platform == NULL)
-    return CL_INVALID_PLATFORM;
+  POCL_RETURN_ERROR_COND((platform == NULL), CL_INVALID_PLATFORM);
 	
   POname(clGetPlatformIDs)(1, &tmp_platform, NULL);
-  if (platform != tmp_platform)
-    return CL_INVALID_PLATFORM;
+  POCL_RETURN_ERROR_ON((platform != tmp_platform), CL_INVALID_PLATFORM,
+    "Can only return info about the POCL platform\n");
 
   switch (param_name)
   {

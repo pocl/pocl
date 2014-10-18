@@ -45,26 +45,35 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   int errcode;
   _cl_command_node *cmd = NULL;
 
-  if (buffer == NULL)
-    POCL_ERROR(CL_INVALID_MEM_OBJECT);
+  POCL_GOTO_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
-  if (command_queue == NULL || command_queue->device == NULL ||
-      command_queue->context == NULL)
-    POCL_ERROR(CL_INVALID_COMMAND_QUEUE);
+  POCL_GOTO_ERROR_COND((buffer == NULL), CL_INVALID_MEM_OBJECT);
 
-  if (command_queue->context != buffer->context)
-    POCL_ERROR(CL_INVALID_CONTEXT);
+  POCL_GOTO_ERROR_COND((size == 0), CL_INVALID_VALUE);
 
-  if (offset + size > buffer->size)
-    POCL_ERROR(CL_INVALID_VALUE);
+  POCL_GOTO_ERROR_ON((buffer->type != CL_MEM_OBJECT_BUFFER),
+      CL_INVALID_MEM_OBJECT, "buffer is not a CL_MEM_OBJECT_BUFFER\n");
 
-  if (buffer->flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS) &&
-      map_flags & CL_MAP_READ)
-    POCL_ERROR(CL_INVALID_OPERATION);
+  POCL_GOTO_ERROR_ON((command_queue->context != buffer->context),
+    CL_INVALID_CONTEXT, "buffer and command_queue are not from the same context\n");
 
-  if (buffer->flags & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS) &&
-      map_flags & (CL_MAP_WRITE | CL_MAP_WRITE_INVALIDATE_REGION))
-    POCL_ERROR(CL_INVALID_OPERATION);
+  POCL_GOTO_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
+    CL_INVALID_EVENT_WAIT_LIST);
+
+  POCL_GOTO_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
+    CL_INVALID_EVENT_WAIT_LIST);
+
+  errcode = pocl_buffer_boundcheck(buffer, offset, size);
+  if (errcode != CL_SUCCESS) goto ERROR;
+
+  POCL_GOTO_ERROR_ON((buffer->flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS) &&
+    map_flags & CL_MAP_READ), CL_INVALID_OPERATION, "buffer has been created with "
+    "CL_MEM_HOST_WRITE_ONLY or CL_MEM_HOST_NO_ACCESS and CL_MAP_READ is set in map_flags\n")
+
+  POCL_GOTO_ERROR_ON((buffer->flags & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS) &&
+      map_flags & (CL_MAP_WRITE | CL_MAP_WRITE_INVALIDATE_REGION)), CL_INVALID_OPERATION,
+      "buffer has been created with CL_MEM_HOST_READ_ONL or CL_MEM_HOST_NO_ACCESS "
+      "and CL_MAP_WRITE or CL_MAP_WRITE_INVALIDATE_REGION is set in map_flags\n")
 
   device = command_queue->device;
  

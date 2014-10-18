@@ -41,7 +41,7 @@ POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
   cl_event *event;
   
   if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
-    POCL_ABORT_UNIMPLEMENTED();
+    POCL_ABORT_UNIMPLEMENTED("clFinish: Out-of-order queue");
 
   POCL_LOCK_OBJ (command_queue);
   /* loop until queue given as parameter is empty. If command in queue has 
@@ -259,7 +259,7 @@ static void exec_commands (_cl_command_node *node_list)
           POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
           break;
         default:
-          POCL_ABORT_UNIMPLEMENTED();
+          POCL_ABORT_UNIMPLEMENTED("clFinish: Unknown command");
           break;
         }   
 

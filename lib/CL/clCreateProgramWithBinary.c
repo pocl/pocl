@@ -43,26 +43,19 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
   int j;
   int errcode;
 
-  if (device_list == NULL || num_devices == 0 || lengths == NULL)
-    {
-      errcode = CL_INVALID_VALUE;
-      goto ERROR;
-    }
+  POCL_GOTO_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
 
-  if (context == NULL)
-    {
-      errcode = CL_INVALID_CONTEXT;
-      goto ERROR;
-    }
+  POCL_GOTO_ERROR_COND((device_list == NULL), CL_INVALID_VALUE);
+
+  POCL_GOTO_ERROR_COND((num_devices == 0), CL_INVALID_VALUE);
+
+  POCL_GOTO_ERROR_COND((lengths == NULL), CL_INVALID_VALUE);
 
   total_binary_size = 0;
   for (i = 0; i < num_devices; ++i)
     {
-      if (lengths[i] == 0 || binaries[i] == NULL)
-        {
-          errcode = CL_INVALID_VALUE;
-          goto ERROR;
-        }
+      POCL_GOTO_ERROR_ON((lengths[i] == 0 || binaries[i] == NULL), CL_INVALID_VALUE,
+        "%i-th binary is NULL or its length==0\n", i);
       total_binary_size += lengths[i];
     }
 
@@ -72,13 +65,10 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
       int found = 0;
       for (j = 0; j < context->num_devices; j++)
         {
-          found |= context->devices[i] == device_list[i];
+          found |= context->devices[j] == device_list[i];
         }
-      if (!found)
-        {
-          errcode = CL_INVALID_DEVICE;
-          goto ERROR;
-        }
+      POCL_GOTO_ERROR_ON((!found), CL_INVALID_DEVICE,
+        "device not found in the device list of the context\n");
     }
   
   // check for duplicates in device_list[].
@@ -90,11 +80,8 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
           count += context->devices[i] == device_list[j];
         }
       // duplicate devices
-      if (count > 1)
-        {
-          errcode = CL_INVALID_DEVICE;
-          goto ERROR;
-        }
+      POCL_GOTO_ERROR_ON((count > 1), CL_INVALID_DEVICE,
+        "device %s specified multiple times\n", context->devices[i]->long_name);
     }
   
   if ((program = (cl_program) malloc (sizeof (struct _cl_program))) == NULL)
