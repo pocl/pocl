@@ -640,7 +640,7 @@ pocl_tce_init_build(void *data, const char *dev_tmpdir)
 void
 pocl_tce_copy (void */*data*/, const void *src_ptr, void *__restrict__ dst_ptr, size_t cb)
 {
-  POCL_ABORT_UNIMPLEMENTED();
+  POCL_ABORT_UNIMPLEMENTED("Copy not yet supported in TCE driver.");
   if (src_ptr == dst_ptr)
     return;
   
@@ -668,7 +668,7 @@ pocl_tce_copy_rect (void */*data*/,
   
   size_t j, k;
 
-  POCL_ABORT_UNIMPLEMENTED();
+  POCL_ABORT_UNIMPLEMENTED("Copy rect not yet supported in TCE driver.");
 
   /* TODO: handle overlaping regions */
   
@@ -701,7 +701,7 @@ pocl_tce_write_rect (void */*data*/,
   size_t j, k;
 
   /* TODO: handle overlaping regions */
-  POCL_ABORT_UNIMPLEMENTED();
+  POCL_ABORT_UNIMPLEMENTED("Write rect not yet supported in TCE driver.");
   
   for (k = 0; k < region[2]; ++k)
     for (j = 0; j < region[1]; ++j)
@@ -732,7 +732,7 @@ pocl_tce_read_rect (void */*data*/,
   size_t j, k;
   
   /* TODO: handle overlaping regions */
-  POCL_ABORT_UNIMPLEMENTED();
+  POCL_ABORT_UNIMPLEMENTED("Read rect not yet supported in TCE driver.");
   
   for (k = 0; k < region[2]; ++k)
     for (j = 0; j < region[1]; ++j)
