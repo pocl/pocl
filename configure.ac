@@ -889,6 +889,12 @@ case $host_cpu in
          HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=soft"
          HOST_AS_FLAGS="$HOST_AS_FLAGS -mcpu=$llc_host_cpu"
          HOST_AS_FLAGS="$HOST_AS_FLAGS -mfloat-abi=soft";;
+      armv7hl-suse-linux-gnueabi)
+         llc_triple="armv7hl-suse-linux-gnueabi"
+         HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=hard"
+         HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=hard"
+         HOST_AS_FLAGS="$HOST_AS_FLAGS -mcpu=$llc_host_cpu"
+         HOST_AS_FLAGS="$HOST_AS_FLAGS -mfloat-abi=hard";;
       armv7hl-redhat-linux-gnu)
          llc_triple="armv7hl-redhat-linux-gnueabi"
          HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=hard"
