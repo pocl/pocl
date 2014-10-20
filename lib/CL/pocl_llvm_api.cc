@@ -430,6 +430,10 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
   // find the right kernel in "opencl.kernels" metadata
   llvm::NamedMDNode *opencl_kernels = input->getNamedMetadata("opencl.kernels");
   llvm::MDNode *kernel_metadata = NULL;
+
+  // Not sure what to do in this case
+  if (!opencl_kernels) return -1;
+
   for (unsigned i = 0, e = opencl_kernels->getNumOperands(); i != e; ++i) {
     llvm::MDNode *kernel_iter = opencl_kernels->getOperand(i);
 
