@@ -91,8 +91,10 @@ endif()
 option(BUILD_SHARED_LIBS "ON=Build shared libs, OFF=static libs" ON)
 
 # TODO measure slowdown with compiled but disabled debug, see if it can default to always compile in
-option(POCL_DEBUG_MESSAGES "Enable debug messages from pocl (useful for OpenCL developers), \
-        must be enabled at runtime, with env var POCL_DEBUG" OFF)
+option(
+  POCL_DEBUG_MESSAGES
+  "Enable debug messages from pocl (useful for OpenCL developers), must be enabled at runtime, with env var POCL_DEBUG"
+  OFF)
 
 # required b/c SHARED libs defaults to ON while OBJECT defaults to OFF
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
