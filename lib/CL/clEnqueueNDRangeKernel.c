@@ -77,8 +77,8 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   if (global_work_offset != NULL)
     {
       offset_x = global_work_offset[0];
-      offset_y = work_dim > 1 ? global_work_offset[1] : 1;
-      offset_z = work_dim > 2 ? global_work_offset[2] : 1;
+      offset_y = work_dim > 1 ? global_work_offset[1] : 0;
+      offset_z = work_dim > 2 ? global_work_offset[2] : 0;
     }
   else
     {
