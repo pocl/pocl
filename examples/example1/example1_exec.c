@@ -2,6 +2,10 @@
 #include <CL/opencl.h>
 #include <poclu.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void 
 delete_memobjs(cl_mem *memobjs, int n) 
 { 
@@ -182,3 +186,8 @@ exec_dot_product_kernel(const char *program_source,
   clReleaseContext(context); 
   return 0; // success... 
 }
+
+#ifdef __cplusplus
+}
+#endif 
+

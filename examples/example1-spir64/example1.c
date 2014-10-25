@@ -30,7 +30,13 @@
 
 #define N 128
 
-extern int exec_dot_product_kernel 
+#ifdef __cplusplus
+#  define CALLAPI "C"
+#else 
+#  define CALLAPI
+#endif
+
+extern CALLAPI int exec_dot_product_kernel 
 (const char *program_source, size_t source_size,
  int n, void *srcA, void *srcB, void *dst);
 
