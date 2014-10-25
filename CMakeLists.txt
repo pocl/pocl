@@ -300,17 +300,17 @@ if(STATIC_LLVM)
   if (MSVC)
     set(POCL_LLVM_LIBS "${LLVM_LIB_NAMES}")
   else()
-    set(POCL_LLVM_LIBS "${LLVM_LIBFILES} ${LLVM_SYSLIBS}")
+    set(POCL_LLVM_LIBS "${LLVM_LIBFILES}")
   endif()
 else()
   message(STATUS "Trying to link LLVM dynamically")
-  set(POCL_LLVM_LIBS "-lLLVM-${LLVM_VERSION} ${LLVM_SYSLIBS}")
+  set(POCL_LLVM_LIBS "-lLLVM-${LLVM_VERSION}")
   # in
   find_library(LLVM_SHARED_LIB_FILE "LLVM-${LLVM_VERSION}" PATHS "${LLVM_LIBDIR}" NO_DEFAULT_PATH)
   if(LLVM_SHARED_LIB_FILE AND EXISTS "${LLVM_SHARED_LIB_FILE}")
     message(STATUS "..using ${LLVM_SHARED_LIB_FILE}")
   else()
-    set(POCL_LLVM_LIBS "${LLVM_LIBS} ${LLVM_SYSLIBS}")
+    set(POCL_LLVM_LIBS "${LLVM_LIBS}")
     message(STATUS "LLVM-${LLVM_VERSION} library not found (Probably because LLVM is built with cmake).
     Linking libpocl (possibly statically) to LLVM_LIBS")
   endif()
@@ -938,7 +938,7 @@ message(STATUS "OPENCL_LIBS: ${OPENCL_LIBS}")
 message(STATUS "OPENCL_CFLAGS: ${OPENCL_CFLAGS}")
 
 # for tests / examples
-set(POCLU_LINK_OPTIONS "-lm" ${OPENCL_LIBS} ${LLVM_SYSLIBS} "poclu")
+set(POCLU_LINK_OPTIONS "-lm" ${OPENCL_LIBS} "poclu")
 message(STATUS "POCLU LINK OPTS: ${POCLU_LINK_OPTIONS}")
 
 # DONE - just pocl-standalone script

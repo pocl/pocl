@@ -147,7 +147,6 @@ set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -fno-rtti")
 
 if(NOT LLVM_VERSION VERSION_LESS "3.5")
   run_llvm_config(LLVM_SYSLIBS --system-libs)
-  set(LLVM_LDFLAGS "${LLVM_LDFLAGS} ${LLVM_SYSLIBS}")
 endif()
 
 # Llvm-config may be installed or it might be used from build directory, in which case

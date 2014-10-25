@@ -71,6 +71,8 @@ add_library("llvmopencl" MODULE "$<TARGET_OBJECTS:llvmpasses>")
 if(MSVC)
   target_link_libraries("llvmopencl" "${POCL_LLVM_LIBS}")
 endif(MSVC)
+
+#target_link_libraries("llvmopencl" "${LLVM_SYSLIBS}")
  
 # TODO cmake should handle this, i might me missing something …
 if(APPLE)
