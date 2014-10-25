@@ -183,13 +183,10 @@ list(APPEND CLANG_LIB_NAMES
   clangCodeGen 
   clangAST)
 
-foreach(CLANG_LIB_NAME ${CLANG_LIB_NAMES})
-  list(APPEND CLANG_SHARED_LIBS "-l${CLANG_LIB_NAME}")
-  if (MSVC)
-    list(APPEND CLANG_STATIC_LIBS "${CLANG_LIB_NAME}.lib")
-  else()
-    list(APPEND CLANG_STATIC_LIBS "lib${CLANG_LIB_NAME}.a")
-  endif(MSVC)
+# Strip -l from LLVM libnames to use list e.g. for windows build
+foreach(LIBFLAG ${LLVM_LIBS})
+  STRING(REGEX REPLACE "^-l(.*)$" "\\1" LIB_NAME ${LIBFLAG})
+  list(APPEND LLVM_LIB_NAMES "${LIB_NAME}")
 endforeach()
 
 # With Visual Studio llvm-config gives invalid list of static libs (libXXXX.a instead of XXXX.lib)

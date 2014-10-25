@@ -140,7 +140,7 @@ else()
   set(POCL_PUBLIC_LINK_LIST ${Hwloc_LIBRARIES} "${LTDL_LIB}" ${CMAKE_THREAD_LIBS_INIT} ${POCL_DEVICES_LINK_LIST})
 endif()
 
-set(POCL_PRIVATE_LINK_LIST ${POCL_LLVM_LIBS})
+set(POCL_PRIVATE_LINK_LIST ${CLANG_LIB_NAMES} ${POCL_LLVM_LIBS})
 
 #################################################################
 
