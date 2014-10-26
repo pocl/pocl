@@ -106,6 +106,14 @@ run_llvm_config(LLVM_HOST_TARGET --host-target)
 # more reasonable and reliable than llvm's own host flags
 string(REPLACE "arm-" "${CMAKE_HOST_SYSTEM_PROCESSOR}-" LLVM_HOST_TARGET "${LLVM_HOST_TARGET}")
 
+# In windows llvm-config reports --target=x86_64-pc-windows-msvc
+# however this causes clang to use MicrosoftCXXMangler, which does not
+# yet support mangling for extended vector types (with llvm 3.5)
+# so for now hardcode LLVM_HOST_TARGET to be x86_64-pc with windows
+if(WIN32)
+  set(LLVM_HOST_TARGET "x86_64-pc")
+endif(WIN32)
+
 # required for sources..
 if(LLVM_VERSION MATCHES "3[.]([0-9]+)")
   string(STRIP "${CMAKE_MATCH_1}" LLVM_MINOR)
