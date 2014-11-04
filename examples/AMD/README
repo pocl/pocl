@@ -1,6 +1,8 @@
 To enable the AMD APP SDK tests:
 
 1) run 'make AMD-APP-SDK-v2.8-RC-lnx64.tgz' to download the SDK
+
+http://developer.amd.com/tools-and-sdks/opencl-zone/amd-accelerated-parallel-processing-app-sdk/download-archive/
 2) configure pocl, it should now detect the AMD benchmark and
    enable it
 3) call 'make check TESTSUITEFLAGS="-k amdsdk"', it should build 
