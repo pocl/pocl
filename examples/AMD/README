@@ -5,7 +5,7 @@ To enable the AMD APP SDK tests:
 http://developer.amd.com/tools-and-sdks/opencl-zone/amd-accelerated-parallel-processing-app-sdk/download-archive/
 
 2) configure pocl, it should now detect the AMD benchmark and
-   enable it
+   enable it. You need libSDL installed to get it enabled.
 
 3) call 'make check TESTSUITEFLAGS="-k amdsdk"', it should build 
    the AMD cases and run the pocl test suite for the AMD SDK.
