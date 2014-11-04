@@ -7,6 +7,9 @@ Setting up AMD SDK 2.9 testsuite
 3) reconfigure pocl ( ./configure )
 
 4) amdsdk2.9 should appear in enabled testsuites list presented by configure
-   You need libSDL installed to get it enabled.
+   You need libSDL installed to get it enabled and 'cmake'
+   to get it built.
 
-5) run tests: make check TESTSUITEFLAGS="-k amdsdk2.9"
+5) call 'make prepare-examples' once to get the examples built
+
+6) run tests: make check TESTSUITEFLAGS="-k amdsdk2.9"
