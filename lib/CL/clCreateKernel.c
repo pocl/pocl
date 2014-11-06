@@ -76,7 +76,7 @@ POname(clCreateKernel)(cl_program program,
       if (access (device_tmpdir, F_OK) != 0) continue;
  
       error = pocl_llvm_get_kernel_metadata 
-          (program, kernel, device_i, kernel_name, 
+          (program, kernel, program->devices[device_i]->dev_id, kernel_name,
            device_tmpdir, descriptor_filename, &errcode);
 
       if (error)
