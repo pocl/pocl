@@ -215,6 +215,7 @@ pocl_init_devices()
       for (j = 0; j < device_count[i]; ++j)
         {
           pocl_devices[dev_index].ops = &pocl_device_ops[i];
+          pocl_devices[dev_index].dev_id = dev_index;
           /* The default value for the global memory space identifier is
              the same as the device id. The device instance can then override 
              it to point to some other device's global memory id in case of

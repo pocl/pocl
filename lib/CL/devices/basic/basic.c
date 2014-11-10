@@ -450,7 +450,6 @@ pocl_basic_run
   struct data *d;
   const char *module_fn;
   char workgroup_string[WORKGROUP_STRING_LENGTH];
-  unsigned device;
   struct pocl_argument *al;
   size_t x, y, z;
   unsigned i;
@@ -461,17 +460,6 @@ pocl_basic_run
   d = (struct data *) data;
 
   d->current_kernel = kernel;
-
-  /* Find which device number within the context correspond
-     to current device.  */
-  for (i = 0; i < kernel->context->num_devices; ++i)
-    {
-      if (kernel->context->devices[i]->data == data)
-        {
-          device = i;
-          break;
-        }
-    }
 
   void *arguments[kernel->num_args + kernel->num_locals];
 
@@ -498,12 +486,12 @@ pocl_basic_run
               *(void **)arguments[i] = NULL;
             }
           else
-            arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[device].mem_ptr);
+            arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[cmd->device->dev_id].mem_ptr);
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
         {
           dev_image_t di;
-          fill_dev_image_t (&di, al, device);
+          fill_dev_image_t (&di, al, cmd->device);
 
           void* devptr = pocl_basic_malloc (data, 0, sizeof(dev_image_t), NULL);
           arguments[i] = malloc (sizeof (void *));

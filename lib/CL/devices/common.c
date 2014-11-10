@@ -117,10 +117,10 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
  * from given kernel image argument
  */
 void fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg, 
-                       cl_int device)
+                       cl_device_id device)
 {
   cl_mem mem = *(cl_mem *)parg->value;
-  di->data = (mem->device_ptrs[device].mem_ptr);  
+  di->data = (mem->device_ptrs[device->dev_id].mem_ptr);
   di->width = mem->image_width;
   di->height = mem->image_height;
   di->depth = mem->image_depth;

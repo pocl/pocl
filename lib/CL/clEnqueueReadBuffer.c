@@ -64,13 +64,6 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
 
   device = command_queue->device;
 
-  for (i = 0; i < command_queue->context->num_devices; ++i)
-    {
-        if (command_queue->context->devices[i] == device)
-            break;
-    }
-  assert(i < command_queue->context->num_devices);
-  
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_BUFFER, 
                                  event, num_events_in_wait_list, 
                                  event_wait_list);

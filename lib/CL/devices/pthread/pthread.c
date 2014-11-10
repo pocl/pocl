@@ -85,7 +85,7 @@ struct thread_arguments
 {
   void *data;
   cl_kernel kernel;
-  unsigned device;
+  cl_device_id device;
   struct pocl_context pc;
   int last_gid_x; 
   pocl_workgroup workgroup;
@@ -430,7 +430,7 @@ pocl_pthread_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
   /* copy already allocated global mem info to devices own slot */
   mem_obj->device_ptrs[device->dev_id] = 
     mem_obj->device_ptrs[device->global_mem_id];
-    
+
   return CL_SUCCESS;
 }
 
@@ -563,8 +563,6 @@ pocl_pthread_run
   struct data *d;
   int error;
   char workgroup_string[WORKGROUP_STRING_LENGTH];
-  unsigned device;
-  cl_device_id device_ptr;
   unsigned i;
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
@@ -573,25 +571,12 @@ pocl_pthread_run
 
   d = (struct data *) data;
 
-  /* Find which device number within the context correspond
-     to current device.  */
-  for (i = 0; i < kernel->context->num_devices; ++i)
-    {
-      if (kernel->context->devices[i]->data == data)
-        {
-          device = i;
-          device_ptr = kernel->context->devices[i];
-          break;
-        }
-    }
-
-
   int num_groups_x = pc->num_groups[0];
   /* TODO: distributing the work groups in the x dimension is not always the
      best option. This assumes x dimension has enough work groups to utilize
      all the threads. */
   if (max_threads == 0)
-    max_threads = get_max_thread_count(device_ptr);
+    max_threads = get_max_thread_count(cmd->device);
 
   int num_threads = min(max_threads, num_groups_x);
   pthread_t *threads = (pthread_t*) malloc (sizeof (pthread_t)*num_threads);
@@ -623,7 +608,7 @@ pocl_pthread_run
     arguments = new_thread_arguments();
     arguments->data = data;
     arguments->kernel = kernel;
-    arguments->device = device;
+    arguments->device = cmd->device;
     arguments->pc = *pc;
     arguments->pc.group_id[0] = first_gid_x;
     arguments->workgroup = cmd->command.run.wg;
@@ -694,7 +679,7 @@ workgroup_thread (void *p)
         else
           {
             arguments[i] = 
-              &((*(cl_mem *)(al->value))->device_ptrs[ta->device].mem_ptr);
+              &((*(cl_mem *)(al->value))->device_ptrs[ta->device->dev_id].mem_ptr);
           }
       }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
