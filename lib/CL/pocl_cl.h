@@ -450,6 +450,7 @@ struct _cl_device_id {
   size_t printf_buffer_size;
   char *short_name;
   char *long_name;
+  cl_device_id parent_device;
 
   char *vendor;
   char *driver_version;

@@ -119,6 +119,7 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clGetSupportedImageFormats.c	\
                    clGetExtensionFunctionAddress.c \
                    clIcdGetPlatformIDsKHR.c \
+                   clCreateSubDevices.c \
                    clReleaseDevice.c \
                    clRetainDevice.c \
                    pocl_cl.h \
