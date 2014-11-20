@@ -80,6 +80,14 @@ build_program_compute_hash(cl_program program)
   if (program->compiler_options)
     pocl_SHA1_Update(&hash_ctx, program->compiler_options, strlen(program->compiler_options));
 
+  /*devices may include their own information to hash */
+  for (i = 0; i < program->num_devices; ++i)
+    {
+      if (program->devices[i]->ops->build_hash)
+        program->devices[i]->ops->build_hash (program->devices[i]->data, 
+                                              &hash_ctx);
+    }
+  
   pocl_SHA1_Final(&hash_ctx, program->build_hash);
 }
 
