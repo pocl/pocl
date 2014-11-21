@@ -46,6 +46,7 @@ namespace pocl {
     }
 
     static bool isKernelToProcess(const llvm::Function &F);
+    static bool hasWorkgroupBarriers(const llvm::Function &F);
 
   };
 }

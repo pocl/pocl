@@ -96,6 +96,9 @@ ImplicitConditionalBarriers::runOnFunction(Function &F) {
 {
   if (!Workgroup::isKernelToProcess(F))
     return false;
+
+  if (!Workgroup::hasWorkgroupBarriers(F))
+    return false;
   
   PDT = &getAnalysis<PostDominatorTree>();
 

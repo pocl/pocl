@@ -75,6 +75,9 @@ LoopBarriers::runOnLoop(Loop *L, LPPassManager &LPM)
   if (!Workgroup::isKernelToProcess(*L->getHeader()->getParent()))
     return false;
 
+  if (!Workgroup::hasWorkgroupBarriers(*L->getHeader()->getParent()))
+    return false;
+
 #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   DT = &getAnalysis<DominatorTree>();
 #else

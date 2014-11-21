@@ -8,6 +8,11 @@ Highlights
 - Kernel compiler cache.
 - Android support.
 
+Kernel compiler
+---------------
+- Do not add implicit barriers to kernels without WG barriers
+  to avoid WI context data overheads.
+
 Bugfixes
 --------
 - Fix falsely detecting operations with side-effects (especially atomic

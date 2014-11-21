@@ -642,3 +642,29 @@ Workgroup::isKernelToProcess(const Function &F)
 
   return false;
 }
+
+/**
+ * Returns true in case the given function is a kernel 
+ * with work-group barriers inside it.
+ */
+bool
+Workgroup::hasWorkgroupBarriers(const Function &F)
+{
+  for (llvm::Function::const_iterator i = F.begin(), e = F.end();
+       i != e; ++i) {
+    const llvm::BasicBlock* bb = i;
+    if (Barrier::hasBarrier(bb)) {
+
+      // Ignore the implicit entry and exit barriers.
+      if (Barrier::hasOnlyBarrier(bb) && bb == &F.getEntryBlock())
+        continue;
+
+      if (Barrier::hasOnlyBarrier(bb) && 
+          bb->getTerminator()->getNumSuccessors() == 0) 
+        continue;
+
+      return true;
+    }
+  }
+  return false;
+}

@@ -130,11 +130,6 @@ WorkitemLoops::runOnFunction(Function &F)
 
   tempInstructionIndex = 0;
 
-#if 0
-  std::cerr << "### original:" << std::endl;
-  chopBBs(F, *this);
-  F.viewCFG();
-#endif
 //  F.viewCFGOnly();
 
   bool changed = ProcessFunction(F);

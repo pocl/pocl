@@ -72,6 +72,14 @@ bool ImplicitLoopBarriers::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (!Workgroup::isKernelToProcess(*L->getHeader()->getParent()))
     return false;
 
+  if (!Workgroup::hasWorkgroupBarriers(*L->getHeader()->getParent())) {
+#ifdef DEBUG_ILOOP_BARRIERS
+    std::cerr << "### ILB: The kernel has no barriers, let's not add implicit ones "
+              << "either to avoid WI context switch overheads"
+              << std::endl;
+#endif
+    return false;
+  }
   return ProcessLoop(L, LPM);
 }
 
