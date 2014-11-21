@@ -221,10 +221,17 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->vendor_id = 0;
   dev->max_compute_units = 0;
   dev->max_work_item_dimensions = 3;
-  dev->max_work_item_sizes[0] = CL_INT_MAX;
-  dev->max_work_item_sizes[1] = CL_INT_MAX;
-  dev->max_work_item_sizes[2] = CL_INT_MAX;
-  dev->max_work_group_size = 1024;
+  dev->max_work_item_sizes[0] = SIZE_MAX;
+  dev->max_work_item_sizes[1] = SIZE_MAX;
+  dev->max_work_item_sizes[2] = SIZE_MAX;
+  /*
+    The hard restriction will be the context data which is
+    stored in stack that can be as small as 8K in Linux.
+    Thus, there should be enough work-items alive to fill up
+    the SIMD lanes times the vector units, but not more than
+    that to avoid stack overflow and cache trashing.
+  */
+  dev->max_work_group_size = 1024*4;
   dev->preferred_wg_size_multiple = 8;
   dev->preferred_vector_width_char = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR;
   dev->preferred_vector_width_short = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_SHORT;

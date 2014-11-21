@@ -111,6 +111,17 @@ extern int pocl_debug_messages;
   #ifdef HAVE_CLOCK_GETTIME
 
   extern struct timespec pocl_debug_timespec;
+  #define POCL_MSG_PRINT_INFO(...)                                            \
+    do {                                                                      \
+    if (pocl_debug_messages) {                                                \
+      clock_gettime(CLOCK_REALTIME, &pocl_debug_timespec);                    \
+      fprintf(stderr, "[%li.%li] POCL: in function %s"                  \
+      " at line %u:", (long)pocl_debug_timespec.tv_sec, (long)pocl_debug_timespec.tv_nsec, \
+        __func__, __LINE__);                                                  \
+      fprintf(stderr, __VA_ARGS__);                                           \
+    }                                                                         \
+  } while(0)
+
   #define POCL_MSG_PRINT(TYPE, ERRCODE, ...)                                  \
     do {                                                                      \
     if (pocl_debug_messages) {                                                \
