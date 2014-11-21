@@ -155,6 +155,7 @@ extern int pocl_debug_messages;
 #define POCL_MSG_WARN(...)
 #define POCL_MSG_ERR(...)
 #define POCL_MSG_PRINT(...)
+#define POCL_MSG_PRINT_INFO(...)
 
 #endif
 
