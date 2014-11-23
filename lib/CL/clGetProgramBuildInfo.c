@@ -65,7 +65,7 @@ POname(clGetProgramBuildInfo)(cl_program            program,
       char *build_log = NULL;
       char buildlog_file_name[POCL_FILENAME_LENGTH];
       snprintf(buildlog_file_name, POCL_FILENAME_LENGTH, "%s/%s",
-               program->temp_dir, POCL_BUILDLOG_FILENAME);
+               program->cache_dir, POCL_BUILDLOG_FILENAME);
 
       str = (pocl_read_text_file(buildlog_file_name, &build_log))?
                         build_log: empty_str;

@@ -162,10 +162,10 @@ write_temporary_file( const llvm::Module *mod,
 // to find it.
 static inline int
 load_source(FrontendOptions &fe,
-            const char* temp_dir,
+            const char* cache_dir,
             cl_program program)
 {
-  std::string kernel_file(temp_dir);
+  std::string kernel_file(cache_dir);
   kernel_file += "/" POCL_PROGRAM_CL_FILENAME;
   std::ofstream ofs(kernel_file.c_str());
   ofs << program->source;
@@ -191,7 +191,7 @@ ParseIRFile(const char* fname, SMDiagnostic &Err, llvm::LLVMContext &ctx)
 int pocl_llvm_build_program(cl_program program, 
                             cl_device_id device, 
                             int device_i,     
-                            const char* temp_dir,
+                            const char* cache_dir,
                             const char* binary_file_name,
                             const char* device_tmpdir,
                             const char* user_options)
@@ -220,7 +220,7 @@ int pocl_llvm_build_program(cl_program program,
   std::stringstream ss_build_log;
 
   std::stringstream build_log_filename;
-  build_log_filename << temp_dir << "/" << POCL_BUILDLOG_FILENAME;
+  build_log_filename << cache_dir << "/" << POCL_BUILDLOG_FILENAME;
   /* Overwrite build log */
   std::ofstream fp(build_log_filename.str().c_str(), std::ofstream::trunc);
   fp.close();
@@ -363,7 +363,7 @@ int pocl_llvm_build_program(cl_program program,
   FrontendOptions &fe = pocl_build.getFrontendOpts();
   // The CreateFromArgs created an stdin input which we should remove first.
   fe.Inputs.clear(); 
-  if (load_source(fe, temp_dir, program)!=0)
+  if (load_source(fe, cache_dir, program)!=0)
     return CL_OUT_OF_HOST_MEMORY;
 
   CodeGenOptions &cg = pocl_build.getCodeGenOpts();
@@ -1279,8 +1279,8 @@ void pocl_llvm_update_binaries (cl_program program) {
       assert (program->llvm_irs[i] != NULL);
 
       std::string binary_filename =
-        std::string(program->temp_dir) + "/" + 
-        program->devices[i]->short_name + "/" +
+        std::string(program->cache_dir) + "/" +
+        program->devices[i]->cache_dir_name + "/" +
         POCL_PROGRAM_BC_FILENAME;
 
       write_temporary_file((llvm::Module*)program->llvm_irs[i],

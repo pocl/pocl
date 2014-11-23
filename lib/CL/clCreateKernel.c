@@ -40,7 +40,7 @@ POname(clCreateKernel)(cl_program program,
                cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
   cl_kernel kernel = NULL;
-  char device_tmpdir[POCL_FILENAME_LENGTH];
+  char device_cachedir[POCL_FILENAME_LENGTH];
   char descriptor_filename[POCL_FILENAME_LENGTH];
   int errcode;
   int error;
@@ -71,17 +71,17 @@ POname(clCreateKernel)(cl_program program,
       if (device_i > 0)
         POname(clRetainKernel) (kernel);
 
-      snprintf (device_tmpdir, POCL_FILENAME_LENGTH, "%s/%s", 
-                program->temp_dir, program->devices[device_i]->short_name);
+      snprintf (device_cachedir, POCL_FILENAME_LENGTH, "%s/%s",
+                program->cache_dir, program->devices[device_i]->cache_dir_name);
 
       /* If there is no device dir for this device, the program was
          not built for that device in clBuildProgram. This seems to
          be OK by the standard. */
-      if (access (device_tmpdir, F_OK) != 0) continue;
+      if (access (device_cachedir, F_OK) != 0) continue;
  
       error = pocl_llvm_get_kernel_metadata 
-          (program, kernel, program->devices[device_i]->dev_id, kernel_name,
-           device_tmpdir, descriptor_filename, &errcode);
+          (program, kernel,  program->devices[device_i]->dev_id, kernel_name,
+           device_cachedir, descriptor_filename, &errcode);
 
       if (error)
         {
