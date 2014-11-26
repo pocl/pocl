@@ -211,7 +211,8 @@ AT_CLEANUP
 AT_SETUP([Kernel functions abs abs_diff add_sat hadd mad_hi mad_sat mul_hi rhadd sub_sat])
 # 3-element vector cases fail when vectorizer is enabled,
 # at least with Intel Core i5.
-AT_XFAIL_IF([true])
+AT_XFAIL_IF([grep OCL_KERNEL_TARGET_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q core-avx-i &&
+             grep -q "#define LLVM_3_5" $abs_top_builddir/config.h])
 AT_DATA([expout],
 [Running test test_hadd...
 OK
