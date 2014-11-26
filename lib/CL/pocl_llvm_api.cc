@@ -1031,21 +1031,23 @@ static PassManager& kernel_compiler_passes
 #endif
 
 #if !(defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-          // Enable diagnostics from the loop vectorizer.
-          O = opts["pass-remarks-missed"];
-          assert(O && "could not find LLVM option 'pass-remarks-missed'");
-          O->addOccurrence(1, StringRef("pass-remarks-missed"), StringRef("loop-vectorize"), 
-                           false); 
+          if (pocl_get_bool_option("POCL_VECTORIZER_REMARKS", 0) == 1) {
+            // Enable diagnostics from the loop vectorizer.
+            O = opts["pass-remarks-missed"];
+            assert(O && "could not find LLVM option 'pass-remarks-missed'");
+            O->addOccurrence(1, StringRef("pass-remarks-missed"), StringRef("loop-vectorize"), 
+                             false); 
 
-          O = opts["pass-remarks-analysis"];
-          assert(O && "could not find LLVM option 'pass-remarks-analysis'");
-          O->addOccurrence(1, StringRef("pass-remarks-analysis"), StringRef("loop-vectorize"), 
-                           false); 
+            O = opts["pass-remarks-analysis"];
+            assert(O && "could not find LLVM option 'pass-remarks-analysis'");
+            O->addOccurrence(1, StringRef("pass-remarks-analysis"), StringRef("loop-vectorize"), 
+                             false); 
 
-          O = opts["pass-remarks"];
-          assert(O && "could not find LLVM option 'pass-remarks'");
-          O->addOccurrence(1, StringRef("pass-remarks"), StringRef("loop-vectorize"), 
-                           false); 
+            O = opts["pass-remarks"];
+            assert(O && "could not find LLVM option 'pass-remarks'");
+            O->addOccurrence(1, StringRef("pass-remarks"), StringRef("loop-vectorize"), 
+                             false); 
+          }
 #endif
         }
 
