@@ -89,9 +89,9 @@ CanonicalizeBarriers::runOnFunction(Function &F)
       (t->getNumSuccessors() == 0) && (!isa<BarrierBlock>(b));
 
     // The function exits should have barriers.
-    if (isExitNode) {
+    if (isExitNode && !Barrier::hasOnlyBarrier(b)) {
       /* In case the bb is already terminated with a barrier,
-         split before the barrier so we dot create an empty
+         split before the barrier so we don't create an empty
          parallel region.
          
          This is because the assumptions of the other passes in the 
