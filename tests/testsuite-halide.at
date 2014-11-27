@@ -1,0 +1,13 @@
+AT_BANNER([Halide OpenCL examples])
+
+AT_SETUP([tutorial 12])
+AT_KEYWORDS([halide])
+AT_SKIP_IF([AS_CASE([" $POAT_TESTSUITES "],[*" Halide "*],[false],[:])])
+AT_CHECK_UNQUOTED([cd $abs_top_builddir/examples/Halide/Halide/tutorial ; 
+LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:../bin ../bin/tutorial_lesson_12_using_the_gpu | cut -d ' ' -f 2], 0,
+[performance
+milliseconds
+performance
+milliseconds
+])
+AT_CLEANUP
