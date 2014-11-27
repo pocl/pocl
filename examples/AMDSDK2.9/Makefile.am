@@ -213,7 +213,7 @@ test_LUDecomposition:
 
 test_Mandelbrot: 
 	cd $(amd_app_dir) && \
-	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors cl/Mandelbrot/bin/x86_64/Release/Mandelbrot -e
+	OCL_ICD_VENDORS=$(abs_top_builddir)/ocl-vendors bin/x86_64/Mandelbrot -e
 
 test_MatrixMulDouble: 
 	cd $(amd_app_dir) && \
