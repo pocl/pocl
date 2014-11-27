@@ -184,3 +184,16 @@ diff -uNr a/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cpp_cl/HistogramAtomics/His
      // Create input buffer
      inputBuffer = clCreateBuffer(context,
                                   CL_MEM_READ_ONLY,
+
+--- a/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/DeviceFission/DeviceFission.cpp
++++ b/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl/DeviceFission/DeviceFission.cpp
+@@ -97,7 +97,7 @@
+     {
+         retValue = deviceInfo.setDeviceInfo(Devices[i]);
+         CHECK_ERROR(retValue, 0, "SDKDeviceInfo::setDeviceInfo() failed");
+-        if (deviceInfo.dType == CL_DEVICE_TYPE_CPU)
++        if (deviceInfo.dType & CL_DEVICE_TYPE_CPU == CL_DEVICE_TYPE_CPU)
+         {
+             cpuDevice = Devices[i];
+         }
+

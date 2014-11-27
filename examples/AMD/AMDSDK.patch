@@ -479,3 +479,15 @@ index d310168..32358da 100755
  
  #ifdef ENABLE_DOUBLE
  #ifdef KHR_DP_EXTENSION
+
+--- a/AMD-APP-SDK-v2.8-RC-lnx64/samples/opencl/cl/app/DeviceFission/DeviceFission.cpp
++++ b/AMD-APP-SDK-v2.8-RC-lnx64/samples/opencl/cl/app/DeviceFission/DeviceFission.cpp
+@@ -94,7 +94,7 @@
+ 	{
+ 		retValue = deviceInfo.setDeviceInfo(Devices[i]);
+ 		CHECK_ERROR(retValue, 0, "SDKDeviceInfo::setDeviceInfo() failed");
+-		if (deviceInfo.dType == CL_DEVICE_TYPE_CPU)
++		if (deviceInfo.dType & CL_DEVICE_TYPE_CPU == CL_DEVICE_TYPE_CPU)
+ 		{
+ 			cpuDevice = Devices[i];
+ 		}
