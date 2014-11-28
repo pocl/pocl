@@ -201,9 +201,11 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
 
   POCL_MSG_PRINT_INFO("Qeueing kernel %s with local size %u x %u x %u group "
                       "sizes %u x %u x %u...\n",
-                      kernel->function_name, local_x, local_y, local_z,
-                      global_x / local_x, global_y / local_y, 
-                      global_z / local_z);
+                      kernel->function_name, 
+                      (unsigned)local_x, (unsigned)local_y, (unsigned)local_z,
+                      (unsigned)(global_x / local_x), 
+                      (unsigned)(global_y / local_y), 
+                      (unsigned)(global_z / local_z));
 
   POCL_RETURN_ERROR_ON((local_x * local_y * local_z > command_queue->device->max_work_group_size),
     CL_INVALID_WORK_GROUP_SIZE, "Local worksize dimensions exceed device's max workgroup size\n");
