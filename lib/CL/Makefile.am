@@ -166,9 +166,9 @@ libpocl_la_LDFLAGS += -L${top_builddir}/lib/CL/ @ICD_LD_FLAGS@
 libpocl_la_LIBADD += libpoclllvm.la
 libpocl_la_LIBADD += ${top_builddir}/lib/llvmopencl/libllvmpasses.la
 libpocl_la_LIBADD += -lclangFrontend -lclangDriver -lclangParse -lclangSema -lclangEdit -lclangLex -lclangSerialization
-libpocl_la_LIBADD += -lclangBasic -lclangFrontendTool -lclangRewriteFrontend 
+libpocl_la_LIBADD += -lclangAST -lclangBasic -lclangFrontendTool -lclangRewriteFrontend 
 libpocl_la_LIBADD += -lclangStaticAnalyzerFrontend -lclangStaticAnalyzerCore
-libpocl_la_LIBADD += -lclangAnalysis -lclangCodeGen -lclangAST 
+libpocl_la_LIBADD += -lclangAnalysis -lclangCodeGen
 libpocl_la_LIBADD += -lstdc++ -lm @LLVM_LIBS@
 
 if ! BUILD_ICD
