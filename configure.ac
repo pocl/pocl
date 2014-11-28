@@ -601,11 +601,8 @@ AC_COMPILE_IFELSE(
   [AC_MSG_RESULT(no)]
 )
 
-AC_ARG_ENABLE([debug_messages],
-AS_HELP_STRING([--enable-debug-messages], [should pocl output debug messages (useful mainly for OpenCL developers)]),
-AC_DEFINE([POCL_DEBUG_MESSAGES], [1], "should pocl output debug messages"),
-[])
-
+# Enable debug message output when the env POCL_DEBUG=1 is set.
+AC_DEFINE([POCL_DEBUG_MESSAGES], [1], [Printout debug messages in case POCL_DEBUG env is set])
 
 be_pedantic="no"
 AC_ARG_ENABLE([pedantic],
