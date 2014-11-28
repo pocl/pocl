@@ -145,6 +145,10 @@ endif
 libpocl_la_LIBADD = devices/libpocl-devices.la
 libpocl_la_LIBADD += ${LTDL_LIBS}
 
+# The POCL_DEBUG output requires the clock_gettime and older glibs
+# have it in a separate lib.
+libpocl_la_LIBADD += -lrt
+
 if BUILD_SPU
 libpocl_la_LIBADD += -lspe2
 endif
