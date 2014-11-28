@@ -27,12 +27,16 @@ if TEST_SUITE_HALIDE
 .PHONY: build
 
 prepare-examples:
-	make -sC Halide bin/tutorial_lesson_12_using_the_gpu
-	HL_TARGET=opencl make -sC Halide/apps/local_laplacian
-	HL_TARGET=opencl make -sC Halide/apps/bilateral_grid
-	HL_TARGET=opencl make -sC Halide/apps/interpolate
+	$(MAKE) -sC Halide	
+	$(MAKE) -sC Halide bin/tutorial_lesson_12_using_the_gpu
+	HL_TARGET=opencl $(MAKE) -sC Halide/apps/local_laplacian
+	HL_TARGET=opencl $(MAKE) -sC Halide/apps/bilateral_grid
+	HL_TARGET=opencl $(MAKE) -sC Halide/apps/interpolate
 
 clean-examples:
-	make -C Halide clean
+	$(MAKE) -sC Halide clean
+	$(MAKE) -sC Halide/apps/local_laplacian clean
+	$(MAKE) -sC Halide/apps/bilateral_grid clean
+	$(MAKE) -sC Halide/apps/interpolate clean
 
 endif
