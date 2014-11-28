@@ -1,8 +1,8 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/examples/VexCL
+# Makefile.am for pocl/examples/Halide
 # 
-# Copyright (c) 2013 Ville Korhonen / Tampere University of Technology
+# Copyright (c) 2014 Pekka Jääskeläinen / Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,12 +27,12 @@ if TEST_SUITE_HALIDE
 .PHONY: build
 
 prepare-examples:
-	make -C Halide bin/tutorial_lesson_12_using_the_gpu
+	make -sC Halide bin/tutorial_lesson_12_using_the_gpu
+	HL_TARGET=opencl make -sC Halide/apps/local_laplacian
+	HL_TARGET=opencl make -sC Halide/apps/bilateral_grid
+	HL_TARGET=opencl make -sC Halide/apps/interpolate
 
 clean-examples:
 	make -C Halide clean
-
-test_tutorial12:
-	@(cd Halide/tutorial ; LD_LIBRARY_PATH=${LD_LIBRARY_PATH}:../bin ../bin/tutorial_lesson_12_using_the_gpu)
 
 endif
