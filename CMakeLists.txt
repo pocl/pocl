@@ -542,8 +542,7 @@ if(KERNEL_CACHE)
 else()
   set(POCL_BUILD_KERNEL_CACHE 0)
 endif()
-#TODO: get the timestamp somehow
-set(POCL_BUILD_TIMESTAMP "3")
+string(TIMESTAMP POCL_BUILD_TIMESTAMP "%d%m%Y%H%M%S")
 
 ######################################################################################
 # DONE
