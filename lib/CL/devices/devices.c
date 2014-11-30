@@ -170,7 +170,7 @@ str_toupper(char *out, const char *in)
 }
 
 static inline void
-pocl_string_cleanup(char *str)
+pocl_string_to_dirname(char *str)
 {
   char *s_ptr;
   if (!str) return;
@@ -257,7 +257,7 @@ pocl_init_devices()
             pocl_devices[dev_index].type |= CL_DEVICE_TYPE_DEFAULT;
 
           pocl_devices[dev_index].cache_dir_name = strdup(pocl_devices[dev_index].long_name);
-          pocl_string_cleanup(pocl_devices[dev_index].cache_dir_name);
+          pocl_string_to_dirname(pocl_devices[dev_index].cache_dir_name);
           
           ++dev_index;
         }
