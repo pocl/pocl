@@ -67,10 +67,10 @@ main (void)
 
   for (i = 0; i < N; ++i)
     {
-      srcA[i].s0 = i;
-      srcA[i].s1 = i;
-      srcA[i].s2 = i;
-      srcA[i].s3 = i;
+      srcA[i].s[0] = i;
+      srcA[i].s[1] = i;
+      srcA[i].s[2] = i;
+      srcA[i].s[3] = i;
       switch (i % 5) {
       case 0: dstS[i] = cosf((float)i); break;
       case 1: dstS[i] = fabsf((float)i) + 7.3f; break;
@@ -84,20 +84,20 @@ main (void)
 
   for (i = 0; i < N; ++i)
     {
-      if (fabsf(dst[i].s0 - dstS[i]) > 1.0e-6f ||
-          fabsf(dst[i].s1 - dstS[i]) > 1.0e-6f ||
-          fabsf(dst[i].s2 - dstS[i]) > 1.0e-6f ||
-          fabsf(dst[i].s3 - dstS[i]) > 1.0e-6f)
-	{
+      if (fabsf(dst[i].s[0] - dstS[i]) > 1.0e-6f ||
+          fabsf(dst[i].s[1] - dstS[i]) > 1.0e-6f ||
+          fabsf(dst[i].s[2] - dstS[i]) > 1.0e-6f ||
+          fabsf(dst[i].s[3] - dstS[i]) > 1.0e-6f)
+  {
           printf ("input:    [%.7f, %.7f, %.7f, %.7f]\n"
                   "output:   [%.7f, %.7f, %.7f, %.7f]\n"
                   "expected: [%.7f, %.7f, %.7f, %.7f]\n",
-                  srcA[i].s0, srcA[i].s1, srcA[i].s2, srcA[i].s3,
-                  dst[i].s0, dst[i].s1, dst[i].s2, dst[i].s3,
+                  srcA[i].s[0], srcA[i].s[1], srcA[i].s[2], srcA[i].s[3],
+                  dst[i].s[0], dst[i].s[1], dst[i].s[2], dst[i].s[3],
                   dstS[i], dstS[i], dstS[i], dstS[i]);
-	  printf ("FAIL\n");
-	  return -1;
-	}
+    printf ("FAIL\n");
+    return -1;
+  }
     }
 
   printf ("OK\n");

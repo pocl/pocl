@@ -40,18 +40,13 @@ struct env_data
 };
 
 static env_data *volatile env_cache = 0;
-static pocl_lock_t lock;
+static pocl_lock_t lock = PTHREAD_MUTEX_INITIALIZER;
 
 env_data* find_env (env_data* cache, const char* key)
 {
   env_data* ed;
   char *value;
 
-  /* if cache is empty -> it is not initialized */ 
-  if (env_cache == NULL)
-    {
-      POCL_INIT_LOCK(lock);
-    }
   POCL_LOCK(lock);
   LL_FOREACH(cache, ed)
     {
@@ -63,7 +58,7 @@ env_data* find_env (env_data* cache, const char* key)
     }
   if (value = getenv(key))
     {
-      ed = malloc (sizeof (env_data));
+      ed = (env_data*) malloc (sizeof (env_data));
       ed->env = strdup (key);
       ed->value = strdup (value);
       ed->next = NULL;

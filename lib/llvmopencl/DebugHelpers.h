@@ -28,12 +28,16 @@
 #include "ParallelRegion.h"
 
 #include "config.h"
-#if (defined LLVM_3_1 or defined LLVM_3_2)
+#if (defined LLVM_3_1 || defined LLVM_3_2)
 #include "llvm/Function.h"
 #else
 #include "llvm/IR/Function.h"
 #endif
 #include "llvm/Pass.h"
+
+#if _MSC_VER
+#  include <set>
+#endif
 
 namespace pocl {
   // View CFG with visual aids to debug kernel compiler problems.

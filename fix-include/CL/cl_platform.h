@@ -21,7 +21,11 @@
    THE SOFTWARE.
 */
 
-#include_next <CL/cl_platform.h>
+#ifdef _MSC_VER
+#  include <CL/cl_platform.h>
+#else
+#  include_next <CL/cl_platform.h>
+#endif
 
 // We do not want warnings when using 1.0 and 1.1 deprecated functions:
 // We use this on purpose to provide backward compatibility

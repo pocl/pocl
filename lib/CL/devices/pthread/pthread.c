@@ -28,7 +28,13 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <unistd.h>
+
+#ifndef _MSC_VER
+#  include <unistd.h>
+#else
+#  include "vccompat.hpp"
+#endif
+
 #include "pocl_runtime_config.h"
 #include "utlist.h"
 #include "cpuinfo.h"
@@ -143,7 +149,7 @@ static thread_arguments* new_thread_arguments ()
     }
   POCL_UNLOCK (ta_pool_lock);
     
-  return calloc (1, sizeof (thread_arguments));
+  return (thread_arguments*)calloc (1, sizeof (thread_arguments));
 }
 
 static void free_thread_arguments (thread_arguments *ta)
@@ -193,11 +199,9 @@ pocl_pthread_init_device_infos(struct _cl_device_id* dev)
   pocl_basic_init_device_infos(dev);
 
   dev->type = CL_DEVICE_TYPE_CPU;
-  /* This could be SIZE_T_MAX, but setting it to INT_MAX should suffice, */
-  /* and may avoid errors in user code that uses int instead of size_t */
-  dev->max_work_item_sizes[0] = 1024;
-  dev->max_work_item_sizes[1] = 1024;
-  dev->max_work_item_sizes[2] = 1024;
+  dev->max_work_item_sizes[0] = SIZE_MAX;
+  dev->max_work_item_sizes[1] = SIZE_MAX;
+  dev->max_work_item_sizes[2] = SIZE_MAX;
 
 }
 
@@ -226,7 +230,7 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
 #ifdef CUSTOM_BUFFER_ALLOCATOR  
   if (mrm == NULL)
     {
-      mrm = malloc (sizeof (mem_regions_management));
+      mrm = (mem_regions_management*)malloc (sizeof (mem_regions_management));
       BA_INIT_LOCK (mrm->mem_regions_lock);
       mrm->mem_regions = NULL;
     }

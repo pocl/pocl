@@ -28,7 +28,11 @@
 #include "config.h"
 #include <assert.h>
 #include <stdio.h>
-#include <ltdl.h>
+#ifndef _MSC_VER
+#  include <ltdl.h>
+#else
+#  include "vccompat.hpp"
+#endif
 #include <pthread.h>
 #ifdef HAVE_CLOCK_GETTIME
 #include <time.h>
@@ -107,6 +111,17 @@ extern int pocl_debug_messages;
   #ifdef HAVE_CLOCK_GETTIME
 
   extern struct timespec pocl_debug_timespec;
+  #define POCL_MSG_PRINT_INFO(...)                                            \
+    do {                                                                      \
+    if (pocl_debug_messages) {                                                \
+      clock_gettime(CLOCK_REALTIME, &pocl_debug_timespec);                    \
+      fprintf(stderr, "[%li.%li] POCL: in function %s"                  \
+      " at line %u:", (long)pocl_debug_timespec.tv_sec, (long)pocl_debug_timespec.tv_nsec, \
+        __func__, __LINE__);                                                  \
+      fprintf(stderr, __VA_ARGS__);                                           \
+    }                                                                         \
+  } while(0)
+
   #define POCL_MSG_PRINT(TYPE, ERRCODE, ...)                                  \
     do {                                                                      \
     if (pocl_debug_messages) {                                                \
@@ -140,6 +155,7 @@ extern int pocl_debug_messages;
 #define POCL_MSG_WARN(...)
 #define POCL_MSG_ERR(...)
 #define POCL_MSG_PRINT(...)
+#define POCL_MSG_PRINT_INFO(...)
 
 #endif
 
@@ -247,6 +263,14 @@ typedef pthread_mutex_t pocl_lock_t;
 #  define POdeclsym(name)
 #  define POsym(name)
 #  define POsymAlways(name)
+
+#elif defined(_MSC_VER)
+/* Visual Studio does not support this magic either */
+#  define POname(name) name
+#  define POdeclsym(name)
+#  define POsym(name)
+#  define POsymAlways(name)
+#  define POdeclsym(name)
 
 #else
 /* Symbol aliases are supported */
@@ -377,6 +401,8 @@ void (*fill_rect) (void *data,
   char* (*init_build) 
   (void *data, 
    const char *dev_tmpdir);
+
+  void (*build_hash) (void *data, SHA1_CTX *build_hash);
 
     /* return supported image formats */
   cl_int (*get_supported_image_formats) (cl_mem_flags flags,
@@ -607,7 +633,7 @@ struct event_callback_item
   void (*callback_function) (cl_event, cl_int, void*);
   void *user_data;
   cl_int trigger_status;
-  void *next;
+  struct event_callback_item *next;
 };
 
 typedef struct _cl_event _cl_event;

@@ -27,9 +27,13 @@
 #include "pocl_llvm.h"
 #include "pocl_util.h"
 #include "utlist.h"
+#ifndef _MSC_VER
+#  include <unistd.h>
+#else
+#  include "vccompat.hpp"
+#endif
 #include <assert.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <errno.h>
 #include <string.h>
 
@@ -108,6 +112,15 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
     } 
   else 
     {
+      /* Embarrassingly parallel kernel with a free work-group
+         size. Try to figure out one which utilizes all the
+         resources efficiently. Assume work-groups are scheduled
+         to compute units, so try to split it to a number of 
+         work groups at the equal to the number of CUs, while still 
+         trying to respect the preferred WG size multiple (for better 
+         SIMD instruction utilization).          
+      */
+
       size_t preferred_wg_multiple;
       cl_int retval = 
         POname(clGetKernelWorkGroupInfo)
@@ -115,30 +128,84 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
          CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, 
          sizeof (size_t), &preferred_wg_multiple, NULL);
 
-      local_x = local_y = local_z = 1;
-      if (retval == CL_SUCCESS)
-        {
-          /* Find the largest multiple of the preferred wg multiple.
-             E.g. if the preferred is 8 it doesn't work with a
-             global size of 20. However, 4 is better than 1 in that
-             case because it still enables wi-parallelization. */
-          while (preferred_wg_multiple >= 1)
-            {
-              if (global_x % preferred_wg_multiple == 0 &&
-                  preferred_wg_multiple <= global_x)
-                {
-                  local_x = preferred_wg_multiple;
-                  break;
-                }
-              preferred_wg_multiple /= 2;
-            }
-        }
+      POCL_MSG_PRINT_INFO("Preferred WG size multiple %zu\n", 
+                          preferred_wg_multiple);
+
+      local_x = global_x;
+      local_y = global_y;
+      local_z = global_z;
+
+      /* First try to split a dimension with the WG multiple
+         to make it still be divisible with the WG multiple. */
+      do {
+        /* Split the dimension, but avoid ending up with a dimension that
+           is not multiple of the wanted size. */
+        if (local_x > 1 && local_x % 2 == 0 && 
+            (local_x / 2) % preferred_wg_multiple == 0)
+          {
+            local_x /= 2;
+            continue;
+          }
+        else if (local_y > 1 && local_y % 2 == 0 &&
+                 (local_y / 2) % preferred_wg_multiple == 0)
+          {
+            local_y /= 2;
+            continue;
+          }
+        else if (local_z > 1 && local_z % 2 == 0 &&
+                 (local_z / 2) % preferred_wg_multiple == 0)         
+          {
+            local_z /= 2;
+            continue;
+          }
+
+        /* Next find out a dimension that is not a multiple anyways,
+           so one cannot nicely vectorize over it, and set it to one. */
+        if (local_z > 1 && local_z % preferred_wg_multiple != 0) 
+          {
+            local_z = 1;
+            continue;
+          }
+        else if (local_y > 1 && local_y % preferred_wg_multiple != 0) 
+          {
+            local_y = 1;
+            continue;
+          }
+        else if (local_z > 1 && local_z % preferred_wg_multiple != 0) 
+          {
+            local_z = 1;
+            continue;
+          }
+
+        /* Finally, start setting them to zero starting from the Z 
+           dimension. */
+        if (local_z > 1) 
+          {
+            local_z = 1;
+            continue;
+          }
+        else if (local_y > 1) 
+          {
+            local_y = 1;
+            continue;
+          }
+        else if (local_x > 1) 
+          {
+            local_x = 1;
+            continue;
+          }
+      }
+      while (local_x * local_y * local_z >
+             command_queue->device->max_work_group_size);
     }
 
-#ifdef DEBUG_NDRANGE
-  printf("### queueing kernel %s for dimensions %zu x %zu x %zu...", 
-         kernel->function_name, local_x, local_y, local_z);
-#endif
+  POCL_MSG_PRINT_INFO("Qeueing kernel %s with local size %u x %u x %u group "
+                      "sizes %u x %u x %u...\n",
+                      kernel->function_name, 
+                      (unsigned)local_x, (unsigned)local_y, (unsigned)local_z,
+                      (unsigned)(global_x / local_x), 
+                      (unsigned)(global_y / local_y), 
+                      (unsigned)(global_z / local_z));
 
   POCL_RETURN_ERROR_ON((local_x * local_y * local_z > command_queue->device->max_work_group_size),
     CL_INVALID_WORK_GROUP_SIZE, "Local worksize dimensions exceed device's max workgroup size\n");

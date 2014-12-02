@@ -24,13 +24,13 @@
 #define POCL_BARRIER_TAIL_REPLICATION
 
 #include "config.h"
-#if (defined LLVM_3_1 or defined LLVM_3_2)
+#if (defined LLVM_3_1 || defined LLVM_3_2)
 #include "llvm/Function.h"
 #else
 #include "llvm/IR/Function.h"
 #endif
 
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
 #include "llvm/Analysis/Dominators.h"
 #else
 #include "llvm/IR/Dominators.h"
@@ -61,7 +61,7 @@ namespace pocl {
     typedef std::map<llvm::Value *, llvm::Value *> ValueValueMap;
 
     llvm::DominatorTree *DT;
-#if not (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if ! (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
     llvm::DominatorTreeWrapperPass *DTP;
 #endif
     llvm::LoopInfo *LI;

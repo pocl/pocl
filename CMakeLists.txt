@@ -295,7 +295,13 @@ option(STATIC_LLVM "Link LLVM statically. Default is dynamic." OFF)
 
 if(STATIC_LLVM)
   message(STATUS "Linking LLVM statically")
-  set(POCL_LLVM_LIBS "${LLVM_LIBFILES}")
+  # Using LLVM_LIB_NAMES should work on every platform, but for now used only on MSVC to avoid 
+  # possibility of regression
+  if (MSVC)
+    set(POCL_LLVM_LIBS "${LLVM_LIB_NAMES}")
+  else()
+    set(POCL_LLVM_LIBS "${LLVM_LIBFILES}")
+  endif()
 else()
   message(STATUS "Trying to link LLVM dynamically")
   set(POCL_LLVM_LIBS "-lLLVM-${LLVM_VERSION}")
@@ -932,7 +938,7 @@ message(STATUS "OPENCL_LIBS: ${OPENCL_LIBS}")
 message(STATUS "OPENCL_CFLAGS: ${OPENCL_CFLAGS}")
 
 # for tests / examples
-set(POCLU_LINK_OPTIONS "-lm" ${OPENCL_LIBS} ${LLVM_SYSLIBS} "poclu")
+set(POCLU_LINK_OPTIONS "-lm" ${OPENCL_LIBS} "poclu")
 message(STATUS "POCLU LINK OPTS: ${POCLU_LINK_OPTIONS}")
 
 # DONE - just pocl-standalone script
@@ -1051,11 +1057,17 @@ MESSAGE(STATUS "LLVM_INCLUDEDIR: ${LLVM_INCLUDEDIR}")
 MESSAGE(STATUS "LLVM_SRC_ROOT: ${LLVM_SRC_ROOT}")
 MESSAGE(STATUS "LLVM_OBJ_ROOT: ${LLVM_OBJ_ROOT}")
 MESSAGE(STATUS "LLVM_INCLUDE_DIRS: ${LLVM_INCLUDE_DIRS}")
-# these are a bit too long..
-MESSAGE(STATUS "LLVM_LIBS: ${LLVM_LIBS}")
 MESSAGE(STATUS "LLVM_SYSLIBS: ${LLVM_SYSLIBS}")
-MESSAGE(STATUS "LLVM_ALL_LIBS: ${LLVM_ALL_LIBS}")
-#MESSAGE(STATUS "LLVM_LIBFILES: ${LLVM_LIBFILES}")
+# these are a bit too long..
+MESSAGE(STATUS "----------- CLANG_SHARED_LIBS --------")
+MESSAGE(STATUS "${CLANG_SHARED_LIBS}")
+MESSAGE(STATUS "----------- CLANG_STATIC_LIBS --------")
+MESSAGE(STATUS "${CLANG_STATIC_LIBS}")
+MESSAGE(STATUS "----------- LLVM_LIBS (LLVM SHARED LIBS) --------")
+MESSAGE(STATUS "${LLVM_LIBS}")
+MESSAGE(STATUS "----------- LLVM_LIBFILES (LLVM STATIC LIBS) --------")
+MESSAGE(STATUS "${LLVM_LIBFILES}")
+MESSAGE(STATUS "----------- -------------------------------- --------")
 MESSAGE(STATUS "LLVM_ALL_TARGETS: ${LLVM_ALL_TARGETS}")
 MESSAGE(STATUS "LLVM_HOST_TARGET: ${LLVM_HOST_TARGET}")
 MESSAGE(STATUS "LLC_TRIPLE: ${LLC_TRIPLE}")

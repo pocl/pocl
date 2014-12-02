@@ -30,7 +30,7 @@
 
 SUBDIRS = example1 example1-spir32 example1-spir64 example2 example2a trig \
 	scalarwave standalone opencl-book-samples VexCL ViennaCL Rodinia Parboil \
-	AMD AMDSDK2.9 EinsteinToolkit piglit
+	AMD AMDSDK2.9 EinsteinToolkit piglit Halide
 
 BASIC_EXAMPLES = example1 example1-spir32 example1-spir64 example2 example2a trig \
 	scalarwave standalone opencl-book-samples EinsteinToolkit
@@ -59,6 +59,9 @@ EXAMPLES_TO_PREPARE += "AMDSDK2.9 "
 endif
 if TEST_SUITE_PIGLIT
 EXAMPLES_TO_PREPARE += "piglit "
+endif
+if TEST_SUITE_HALIDE
+EXAMPLES_TO_PREPARE += "Halide "
 endif
 
 prepare-examples:

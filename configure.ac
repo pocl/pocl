@@ -168,7 +168,7 @@ AC_ARG_ENABLE([region-allocator],
 # Option to choose external testsuites
 AC_ARG_ENABLE([testsuites],
 	      [AS_HELP_STRING([--enable-testsuites=suite1,suite2,...],
-          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,amdsdk2_9,VexCL,Piglit])],
+          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,amdsdk2_9,VexCL,Piglit,Halide])],
 	      [],[enable_testsuites=check])
 
 enable_testsuite_opencl_book_samples=no
@@ -179,6 +179,7 @@ enable_testsuite_amd=no
 enable_testsuite_amdsdk2_9=no
 enable_testsuite_vexcl=no
 enable_testsuite_piglit=no
+enable_testsuite_halide=no
 if test x"$enable_testsuites" = xcheck ; then
   if test -d "$srcdir/examples/opencl-book-samples/checkout" ; then
     enable_testsuite_opencl_book_samples=yes
@@ -205,6 +206,9 @@ if test x"$enable_testsuites" = xcheck ; then
   fi
   if test -f "$srcdir/examples/piglit/piglit/piglit-run.py" ; then
     enable_testsuite_piglit=yes
+  fi  
+  if test -f "$srcdir/examples/Halide/Halide/Makefile" ; then
+    enable_testsuite_halide=yes
   fi  
 fi
 AS_CASE([,"$enable_testsuites",],
@@ -239,6 +243,10 @@ AS_CASE([,"$enable_testsuites",],
 AS_CASE([,"$enable_testsuites",],
   [*,piglit,*|*,Piglit,*], [
     enable_testsuite_piglit=yes
+  ])
+AS_CASE([,"$enable_testsuites",],
+  [*,halide,*|*,Halide,*], [
+    enable_testsuite_halide=yes
   ])
 
 if test "$enable_testsuite_opencl_book_samples" = "yes"; then
@@ -334,6 +342,7 @@ AM_CONDITIONAL([TEST_SUITE_AMD], [test "$enable_testsuite_amd" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_AMDSDK2_9], [test "$enable_testsuite_amdsdk2_9" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_VEXCL], [test "$enable_testsuite_vexcl" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_PIGLIT], [test "$enable_testsuite_piglit" = "yes"])
+AM_CONDITIONAL([TEST_SUITE_HALIDE], [test "$enable_testsuite_halide" = "yes"])
 
 # Some information for the user
 AC_MSG_NOTICE([internal tests are enabled])
@@ -386,7 +395,12 @@ if test "$enable_testsuite_piglit" = "yes"; then
 else
   AC_MSG_NOTICE([tests from piglit are disabled])
 fi
-
+if test "$enable_testsuite_halide" = "yes"; then
+  AC_MSG_NOTICE([tests from Halide are enabled])
+  POAT_TESTSUITES="$POAT_TESTSUITES Halide"
+else
+  AC_MSG_NOTICE([tests from Halide are disabled])
+fi
 
 AC_SUBST([POAT_TESTSUITES])
 
@@ -587,11 +601,8 @@ AC_COMPILE_IFELSE(
   [AC_MSG_RESULT(no)]
 )
 
-AC_ARG_ENABLE([debug_messages],
-AS_HELP_STRING([--enable-debug-messages], [should pocl output debug messages (useful mainly for OpenCL developers)]),
-AC_DEFINE([POCL_DEBUG_MESSAGES], [1], "should pocl output debug messages"),
-[])
-
+# Enable debug message output when the env POCL_DEBUG=1 is set.
+AC_DEFINE([POCL_DEBUG_MESSAGES], [1], [Printout debug messages in case POCL_DEBUG env is set])
 
 be_pedantic="no"
 AC_ARG_ENABLE([pedantic],
@@ -1379,6 +1390,7 @@ AC_CONFIG_FILES([Makefile
                  examples/EinsteinToolkit/Makefile
                  examples/VexCL/Makefile
                  examples/piglit/Makefile
+                 examples/Halide/Makefile
                  scripts/Makefile
                  tests/Makefile
                  tests/kernel/Makefile

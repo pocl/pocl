@@ -21,8 +21,16 @@
    THE SOFTWARE.
 */
 
+#ifdef _MSC_VER
+#  define PUSH_VISIBILITY_HIDDEN
+#  define POP_VISIBILITY_HIDDEN
+#else
+#  define PUSH_VISIBILITY_HIDDEN _Pragma ("GCC visibility push(hidden)")
+#  define POP_VISIBILITY_HIDDEN _Pragma ("GCC visibility pop")
+#endif
+
 #define GEN_PROTOTYPES(__DRV__)                                         \
-  _Pragma ("GCC visibility push(hidden)")                               \
+  PUSH_VISIBILITY_HIDDEN                               \
   void pocl_##__DRV__##_init_device_infos(struct _cl_device_id* dev);  \
   void pocl_##__DRV__##_init_device_ops(struct pocl_device_ops* ops);  \
   void pocl_##__DRV__##_uninit (cl_device_id device);                   \
@@ -73,14 +81,15 @@
   void pocl_##__DRV__##_compile_submitted_kernels (_cl_command_node *node);  \
   void pocl_##__DRV__##_run (void *data, _cl_command_node* cmd);        \
   void pocl_##__DRV__##_run_native (void *data, _cl_command_node* cmd); \
-  void* pocl_##__DRV__##_map_mem (void *data, void *buf_ptr,                      \
+  void* pocl_##__DRV__##_map_mem (void *data, void *buf_ptr,         \
                         size_t offset, size_t size, void *host_ptr); \
   void* pocl_##__DRV__##_unmap_mem (void *data, void *host_ptr, \
                                     void *device_start_ptr, size_t size); \
   cl_ulong pocl_##__DRV__##_get_timer_value(void *data); \
   char* pocl_##__DRV__##_init_build (void *data, \
                                          const char *dev_tmpdir); \
+  void pocl_##__DRV__##_build_hash (void *data, SHA1_CTX *build_hash); \
   cl_int pocl_##__DRV__##_get_supported_image_formats (cl_mem_flags flags,\
                                          const cl_image_format **image_formats,\
                                          cl_int *num_image_formats);\
-_Pragma ("GCC visibility pop")
+POP_VISIBILITY_HIDDEN

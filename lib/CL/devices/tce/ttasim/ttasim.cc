@@ -30,9 +30,14 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <pthread.h>
 #include <string>
+
+#ifndef _MSC_VER
+#  include <unistd.h>
+#else
+#  include "vccompat.hpp"
+#endif
 
 /* Supress some warnings because of including tce_config.h after pocl's config.h. */
 #undef PACKAGE
@@ -87,6 +92,7 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
   ops->run = pocl_tce_run;
   ops->get_timer_value = pocl_ttasim_get_timer_value;
   ops->init_build = pocl_tce_init_build;
+  ops->build_hash = pocl_tce_build_hash;
 }
 
 

@@ -22,9 +22,14 @@
    THE SOFTWARE.
 */
 
-#include <unistd.h>
 #include <string.h>
 #include <ctype.h>
+
+#ifndef _MSC_VER
+#  include <unistd.h>
+#else
+#  include "vccompat.hpp"
+#endif
 
 #include "devices.h"
 #include "common.h"
@@ -203,7 +208,7 @@ pocl_init_devices()
     }
 
   assert(pocl_num_devices > 0);
-  pocl_devices = calloc(pocl_num_devices, sizeof(struct _cl_device_id));
+  pocl_devices = (struct _cl_device_id*) calloc(pocl_num_devices, sizeof(struct _cl_device_id));
   if (pocl_devices == NULL)
     POCL_ABORT("Can not allocate memory for devices\n");
 

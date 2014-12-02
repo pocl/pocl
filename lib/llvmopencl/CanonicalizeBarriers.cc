@@ -31,7 +31,7 @@
 
 #include "VariableUniformityAnalysis.h"
 
-#if (defined LLVM_3_1 or defined LLVM_3_2)
+#if (defined LLVM_3_1 || defined LLVM_3_2)
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #else
@@ -39,7 +39,7 @@
 #include "llvm/IR/Module.h"
 #endif
 
-#if not (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if ! (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
 #include "llvm/IR/Dominators.h"
 #endif
 
@@ -57,7 +57,7 @@ char CanonicalizeBarriers::ID = 0;
 void
 CanonicalizeBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 {
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   AU.addRequired<DominatorTree>();
 #else
   AU.addRequired<DominatorTreeWrapperPass>();
@@ -89,9 +89,9 @@ CanonicalizeBarriers::runOnFunction(Function &F)
       (t->getNumSuccessors() == 0) && (!isa<BarrierBlock>(b));
 
     // The function exits should have barriers.
-    if (isExitNode) {
+    if (isExitNode && !Barrier::hasOnlyBarrier(b)) {
       /* In case the bb is already terminated with a barrier,
-         split before the barrier so we dot create an empty
+         split before the barrier so we don't create an empty
          parallel region.
          
          This is because the assumptions of the other passes in the 
@@ -109,7 +109,7 @@ CanonicalizeBarriers::runOnFunction(Function &F)
     }
   }
 
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   DT = getAnalysisIfAvailable<DominatorTree>();
 #else
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
@@ -118,7 +118,7 @@ CanonicalizeBarriers::runOnFunction(Function &F)
 
   bool changed = ProcessFunction(F);
 
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   if (DT)
     DT->verifyAnalysis();
 #else

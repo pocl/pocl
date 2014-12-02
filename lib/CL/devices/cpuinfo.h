@@ -30,6 +30,8 @@
 #ifndef POCL_CPUINFO_H
 #define POCL_CPUINFO_H
 
+#include "pocl_cl.h"
+
 void pocl_cpuinfo_detect_device_info(cl_device_id device);
 
 #endif /* POCL_TOPOLOGY_H */

@@ -1,0 +1,54 @@
+# Compiling pocl on Windows
+
+## Dependencies:
+
+- Visual Studio Express 2013
+- Git and Git bash http://git-scm.com/downloads
+- CMake 2.8 http://www.cmake.org/download/
+- Pthreads-win32 binary distribution https://www.sourceware.org/pthreads-win32/
+- Hwloc for Windows x64 binary distribution http://www.open-mpi.org/software/hwloc/v1.10/ 
+- LLVM + Clang 3.5 sources
+
+## Support:
+
+- Only 64bit compiling for now
+- No ICD compiling
+- No VML (no stdcxxlib finding done for windows)
+- Static compilation
+
+## Install and compile LLVM and Clang somewhere in path without spaces in directory name
+
+In git bash
+
+    mkdir /c/opt/
+    cd /c/opt
+    git clone llvm
+    cd tools
+    git clone clang
+    mkdir /c/opt/build-llvm
+    cd /c/opt/build-llvm
+    cmake -G "Visual Studio 12 Win64" ../llvm -DPREFIX
+
+## Unpack library dependencies
+
+    cd /c/opt/
+    curl ...
+    curl ...
+    unzip hwloc
+    unzip pthreads-win32
+
+## Get pocl sources and compile
+
+    cd /c/opt
+    git clone pocl
+    mkdir /c/opt/build-pocl
+    cd /c/opt/build-pocl
+    export PATH=$PATH:/c/opt/llvm-build/MinSizeRel/bin
+    Hwloc_ROOT=../hwloc-win64-build-1.9/ Pthreads_ROOT=../pthreads-win32/ cmake —DSTATIC_LLVM=ON -DDEFAULT_ENABLE_ICD=OFF -DCMAKE_INSTALL_PREFIX:PATH=$PWD/../install-pocl -G "Visual Studio 12 Win64" ../pocl/
+    # open generated solution file in Visual Studio or build from command line
+
+## Run test suite
+
+   cd /c/opt/build-pocl
+   ctest -j8
+

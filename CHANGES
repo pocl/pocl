@@ -8,6 +8,13 @@ Highlights
 - Kernel compiler cache.
 - Android support.
 
+Kernel compiler
+---------------
+- Do not add implicit barriers to kernels without WG barriers
+  to avoid WI context data overheads.
+- Setting the POCL_VECTORIZER_REMARKS env to 1 prints out LLVM vectorizer 
+  remarks during kernel compilation.
+
 Bugfixes
 --------
 - Fix falsely detecting operations with side-effects (especially atomic

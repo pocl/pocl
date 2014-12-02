@@ -109,7 +109,7 @@ main(void)
             kernel, 
             cl::NullRange, 
             cl::NDRange(8),
-            cl::NullRange,
+            cl::NDRange(8),
             NULL, &enqEvent);
 	queue.finish();
  

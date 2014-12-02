@@ -28,7 +28,7 @@
 set(_CL_HPP "${CMAKE_CURRENT_SOURCE_DIR}/cl.hpp")
 # TODO apple
 add_custom_command(OUTPUT "${_CL_HPP}"
-    COMMAND patch -i "${CMAKE_SOURCE_DIR}/tools/patches/khronos_cl.hpp.patch"
+    COMMAND ${PATCH_EXEC} -i "${CMAKE_SOURCE_DIR}/tools/patches/khronos_cl.hpp.patch"
      -o "${_CL_HPP}"
      "${CMAKE_CURRENT_SOURCE_DIR}/cl.hpp.in" )
 

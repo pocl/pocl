@@ -274,7 +274,7 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
     if (i->first->getNumUses() > 0) {
       for (Value::use_iterator ui = i->first->use_begin(), 
              ue = i->first->use_end(); ui != ue; ++ui) {
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
         User* user = *ui;
 #else
         User* user = (*ui).getUser();

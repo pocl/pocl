@@ -26,8 +26,13 @@
 #include "config.h"
 #include "install-paths.h"
 #include "pocl_runtime_config.h"
+#include "pocl_hash.h"
 
-#include <unistd.h>
+#ifndef _MSC_VER
+#  include <unistd.h>
+#else
+#  include "vccompat.hpp"
+#endif
 
 /* Supress some warnings because of including tce_config.h after pocl's config.h. */
 #undef PACKAGE
@@ -635,6 +640,33 @@ pocl_tce_init_build(void *data, const char *dev_tmpdir)
   char *include_switch = strdup(includeSwitch.c_str());
 
   return include_switch;
+}
+
+void 
+pocl_tce_build_hash (void *data, SHA1_CTX *build_hash)
+{
+  TCEDevice *tce_dev = (TCEDevice*)data;
+  FILE* adf_file = fopen (tce_dev->machine_file.c_str(), "r");
+  size_t size, n;
+  uint8_t* adf_data = 0;
+  const char *extra_flags = NULL;
+  size_t ef_size;
+
+  fseek (adf_file, 0 , SEEK_END);
+  size = ftell (adf_file);
+  fseek (adf_file, 0, SEEK_SET);
+  adf_data = (uint8_t*)malloc (size);
+  fread (adf_data, 1, size, adf_file);
+  
+  //TCEString machine_hash = tce->dev->hash();
+  pocl_SHA1_Update (build_hash, adf_data, size);
+
+  if (pocl_is_option_set("POCL_TCECC_EXTRA_FLAGS"))
+    {
+      extra_flags = pocl_get_string_option("POCL_TCECC_EXTRA_FLAGS", "");
+      ef_size = strlen (extra_flags);
+      pocl_SHA1_Update (build_hash, (uint8_t*)extra_flags, ef_size);
+    }
 }
 
 void

@@ -27,7 +27,7 @@
 #include "Workgroup.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
-#if (defined LLVM_3_1 or defined LLVM_3_2)
+#if (defined LLVM_3_1 || defined LLVM_3_2)
 #include "llvm/InstrTypes.h"
 #include "llvm/Instructions.h"
 #else
@@ -58,7 +58,7 @@ char BarrierTailReplication::ID = 0;
 void
 BarrierTailReplication::getAnalysisUsage(AnalysisUsage &AU) const
 {
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   AU.addRequired<DominatorTree>();
   AU.addPreserved<DominatorTree>();
 #else
@@ -81,7 +81,7 @@ BarrierTailReplication::runOnFunction(Function &F)
   std::cerr << "### BTR on " << F.getName().str() << std::endl;
 #endif
 
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   DT = &getAnalysis<DominatorTree>();
 #else
   DTP = &getAnalysis<DominatorTreeWrapperPass>();
@@ -91,7 +91,7 @@ BarrierTailReplication::runOnFunction(Function &F)
 
   bool changed = ProcessFunction(F);
 
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   DT->verifyAnalysis();
 #else
   DT->verifyDomTree();
@@ -221,7 +221,7 @@ BarrierTailReplication::ReplicateJoinedSubgraphs(BasicBlock *dominator,
       {
         // We have modified the function. Possibly created new loops.
         // Update analysis passes.
-        #if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+        #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
         DT->runOnFunction(*f);
         #else
         DTP->runOnFunction(*f);

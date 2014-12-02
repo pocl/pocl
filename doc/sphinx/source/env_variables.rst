@@ -6,6 +6,20 @@ below.
  If set, the pocl helper scripts, kernel library and headers are 
  searched first from the pocl build directory.
 
+* POCL_CACHE_DIR
+
+ If this is set to an existing directory, pocl uses it as the cache
+ directory for all compilation results. This allows reusing compilation
+ results between pocl invocations. If this env is not set, then the
+ default cache directory will be used
+
+* POCL_DEBUG
+
+ Enables debug messages to stderr. This will be mostly messages from error
+ condition checks in OpenCL API calls. Useful to e.g. distinguish between various
+ reasons a call can return CL_INVALID_VALUE. If clock_gettime is available,
+ messages will include a timestamp.
+
 * POCL_DEVICES and POCL_x_PARAMETERS
 
  POCL_DEVICES is a space separated list of the device instances to be enabled.
@@ -36,35 +50,21 @@ below.
  POCL_TTASIM0_PARAMETERS will be passed to the first ttasim driver instantiated
  and POCL_TTASIM1_PARAMETERS to the second one.
 
-* POCL_DEBUG
-
- Enables debug messages to stderr. This will be mostly messages from error
- condition checks in OpenCL API calls. Useful to e.g. distinguish between various
- reasons a call can return CL_INVALID_VALUE. If clock_gettime is available,
- messages will include a timestamp.
-
 * POCL_IMPLICIT_FINISH
 
  Add an implicit call to clFinish afer every clEnqueue* call. Useful mostly for
  pocl internal development, and is enabled only if pocl is configured with
  '--enable-debug'.
 
-* POCL_KERNEL_COMPILER_OPT_SWITCH
-
- Override the default "-O3" that is passed to the LLVM opt as a final
- optimization switch.
-
 * POCL_KERNEL_CACHE
 
  If this is set to 0 at runtime, kernel-cache will be forcefully disabled even if
  its enabled in configure step
 
-* POCL_CACHE_DIR
+* POCL_KERNEL_COMPILER_OPT_SWITCH
 
- If this is set to an existing directory, pocl uses it as the cache
- directory for all compilation results. This allows reusing compilation
- results between pocl invocations. If this env is not set, then the
- default cache directory will be used
+ Override the default "-O3" that is passed to the LLVM opt as a final
+ optimization switch.
 
 * POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES
 
@@ -83,15 +83,15 @@ below.
  Forces the maximum WG size returned by the device or kernel work group queries
  to be at most this number.
 
-* POCL_USE_PCH
+* POCL_VECTORIZER_REMARKS
 
- Use precompiled headers for the OpenCL C built-ins when compiling kernels.
- This is an experimental feature which is known to break on some platforms.
+ When set to 1, prints out remarks produced by the loop vectorizer of LLVM
+ during kernel compilation.
 
 * POCL_VERBOSE
 
-If set to 1, output the LLVM commands as they are executed to compile
-and run kernels.
+ If set to 1, output the LLVM commands as they are executed to compile
+ and run kernels.
 
 * POCL_WORK_GROUP_METHOD
 
@@ -99,7 +99,7 @@ and run kernels.
  multiple work items. Legal values:
 
     auto   -- Choose the best available method depending on the
-              kernel and the work group size (default). Use
+              kernel and the work group size. Use
               POCL_FULL_REPLICATION_THRESHOLD=N to set the
               maximum local size for a work group to be
               replicated fully with 'repl'. Otherwise,
@@ -117,9 +117,10 @@ and run kernels.
     loopvec -- Create work-item for-loops (see 'loops') and execute
                the LLVM LoopVectorizer. The loops are not unrolled
                but the unrolling decision is left to the generic
-               LLVM passes.
+               LLVM passes (the default).
 
     repl   -- Replicate and chain all work items. This results
-              in more easily scalarizable private variables.
+              in more easily scalarizable private variables, thus
+              might avoid storing work-item context to memory.
               However, the code bloat is increased with larger
-              local sizes.
+              WG sizes.

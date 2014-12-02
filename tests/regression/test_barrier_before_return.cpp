@@ -113,8 +113,7 @@ main(void)
             kernel, 
             cl::NullRange, 
             cl::NDRange(WORK_ITEMS),
-            cl::NullRange);
- 
+            cl::NDRange(WORK_ITEMS));
 
         // Map cBuffer to host pointer. This enforces a sync with 
         // the host backing space, remember we choose GPU device.

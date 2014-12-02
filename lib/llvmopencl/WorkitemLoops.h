@@ -23,7 +23,7 @@
 #ifndef _POCL_WORKITEM_LOOPS_H
 #define _POCL_WORKITEM_LOOPS_H
 
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
 #include "llvm/Analysis/Dominators.h"
 #endif
 
@@ -62,7 +62,7 @@ namespace pocl {
     llvm::DominatorTree *DT;
     llvm::LoopInfo *LI;
     llvm::PostDominatorTree *PDT;
-#if not (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if ! (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
     llvm::DominatorTreeWrapperPass *DTP;
 #endif
 

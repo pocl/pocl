@@ -26,7 +26,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+
+#ifndef _MSC_VER
+#  include <unistd.h>
+#else
+#  include "vccompat.hpp"
+#endif
+
 #include "config.h"
 
 #include "pocl_image_util.h"
@@ -58,8 +64,9 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
   char bytecode[POCL_FILENAME_LENGTH];
   char objfile[POCL_FILENAME_LENGTH];
 
-  char* module = malloc(min(POCL_FILENAME_LENGTH, 
+  char* module = (char*) malloc(min(POCL_FILENAME_LENGTH, 
 	   strlen(tmpdir) + strlen(kernel->function_name) + 5)); // strlen of / .so 4+1
+
   int error;
   cl_program program = kernel->program;
 

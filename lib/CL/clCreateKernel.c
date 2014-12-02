@@ -25,8 +25,12 @@
 #include "pocl_cl.h"
 #include "pocl_llvm.h"
 #include <string.h>
-#include <unistd.h>
 #include <sys/stat.h>
+#ifndef _MSC_VER
+#  include <unistd.h>
+#else
+#  include "vccompat.hpp"
+#endif
 
 #define COMMAND_LENGTH 1024
 

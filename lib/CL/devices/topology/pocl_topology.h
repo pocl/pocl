@@ -31,6 +31,8 @@
 #ifndef POCL_TOPOLOGY_H
 #define POCL_TOPOLOGY_H
 
+#include "pocl_cl.h"
+
 #define MIN_MAX_MEM_ALLOC_SIZE (128*1024*1024)
 
 #pragma GCC visibility push(hidden)

@@ -106,6 +106,14 @@ run_llvm_config(LLVM_HOST_TARGET --host-target)
 # more reasonable and reliable than llvm's own host flags
 string(REPLACE "arm-" "${CMAKE_HOST_SYSTEM_PROCESSOR}-" LLVM_HOST_TARGET "${LLVM_HOST_TARGET}")
 
+# In windows llvm-config reports --target=x86_64-pc-windows-msvc
+# however this causes clang to use MicrosoftCXXMangler, which does not
+# yet support mangling for extended vector types (with llvm 3.5)
+# so for now hardcode LLVM_HOST_TARGET to be x86_64-pc with windows
+if(WIN32)
+  set(LLVM_HOST_TARGET "x86_64-pc")
+endif(WIN32)
+
 # required for sources..
 if(LLVM_VERSION MATCHES "3[.]([0-9]+)")
   string(STRIP "${CMAKE_MATCH_1}" LLVM_MINOR)
@@ -147,7 +155,6 @@ set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -fno-rtti")
 
 if(NOT LLVM_VERSION VERSION_LESS "3.5")
   run_llvm_config(LLVM_SYSLIBS --system-libs)
-  set(LLVM_LDFLAGS "${LLVM_LDFLAGS} ${LLVM_SYSLIBS}")
 endif()
 
 # Llvm-config may be installed or it might be used from build directory, in which case
@@ -158,10 +165,46 @@ list(APPEND LLVM_INCLUDE_DIRS
   "${LLVM_OBJ_ROOT}/include" 
   "${LLVM_OBJ_ROOT}/tools/clang/include")
 
-# Llvm-config --libs contain only llvm internal libraries, 
-# LLVM_ALL_LIBS has also list of clang libraries and required
-# system libs like, -lcurses etc.
-set(LLVM_ALL_LIBS "${LLVM_LIBS} ${LLVM_SYSLIBS}")
+# Convert LLVM_LIBFILES and LLVM_LIBS from string -> list format to make handling 
+# them easier (here we could also fix some parsing problems caused by spaces in path 
+# names in Windows)
+
+separate_arguments(LLVM_LIBFILES)
+separate_arguments(LLVM_LIBS)
+# Llvm-config does not include clang libs
+
+list(APPEND CLANG_LIB_NAMES 
+  clangFrontend 
+  clangDriver 
+  clangParse 
+  clangSema 
+  clangEdit 
+  clangLex 
+  clangSerialization 
+  clangBasic 
+  clangFrontendTool 
+  clangRewriteFrontend 
+  clangStaticAnalyzerFrontend 
+  clangStaticAnalyzerCore 
+  clangAnalysis 
+  clangCodeGen 
+  clangAST)
+
+# Strip -l from LLVM libnames to use list e.g. for windows build
+foreach(LIBFLAG ${LLVM_LIBS})
+  STRING(REGEX REPLACE "^-l(.*)$" "\\1" LIB_NAME ${LIBFLAG})
+  list(APPEND LLVM_LIB_NAMES "${LIB_NAME}")
+endforeach()
+
+# With Visual Studio llvm-config gives invalid list of static libs (libXXXX.a instead of XXXX.lib)
+if (MSVC)
+  SET(LLVM_MSVC_STATIC_LIB_LIST "")
+  foreach(LIBFILE ${LLVM_LIBFILES})
+    STRING(REGEX REPLACE "^(.*/)lib(.*)\\.a$" "\\1\\2.lib" STATIC_LIB_NAME ${LIBFILE})
+    list(APPEND LLVM_MSVC_STATIC_LIB_LIST "${STATIC_LIB_NAME}")
+  endforeach()
+  set(LLVM_LIBFILES ${LLVM_MSVC_STATIC_LIB_LIST})
+endif(MSVC)
 
 ####################################################################
 
@@ -451,7 +494,7 @@ if(NOT LLVM_CXXFLAGS MATCHES "-DNDEBUG")
   TRY_COMPILE(_TRY_SUCCESS ${CMAKE_BINARY_DIR} "${_TEST_SOURCE}"
     CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_INCLUDE_DIRS}"
     CMAKE_FLAGS "-DLINK_DIRECTORIES:STRING=${LLVM_LIBDIR}"
-    LINK_LIBRARIES ${LLVM_ALL_LIBS}
+    LINK_LIBRARIES "${LLVM_LIBS} ${LLVM_SYSLIBS}"
     COMPILE_DEFINITIONS ${TRY_COMPILE_CXX_FLAGS}
     OUTPUT_VARIABLE _TRY_COMPILE_OUTPUT
   )

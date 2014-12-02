@@ -104,7 +104,7 @@ CL_API_SUFFIX__VERSION_1_0
       /* In this case it should use the given host_ptr + offset as
          the mapping area in the host memory. */   
       assert (image->mem_host_ptr != NULL);
-      map = image->mem_host_ptr + offset;
+      map = (char*)image->mem_host_ptr + offset;
       device->ops->read_rect (device->data, map, 
                               image->device_ptrs[device->dev_id].mem_ptr,
                               origin, origin, region, 

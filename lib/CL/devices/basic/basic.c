@@ -32,9 +32,14 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <dev_image.h>
-#include <sys/time.h>
+
+#ifndef _MSC_VER
+#  include <sys/time.h>
+#  include <unistd.h>
+#else
+#  include "vccompat.hpp"
+#endif
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
@@ -216,10 +221,17 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->vendor_id = 0;
   dev->max_compute_units = 0;
   dev->max_work_item_dimensions = 3;
-  dev->max_work_item_sizes[0] = CL_INT_MAX;
-  dev->max_work_item_sizes[1] = CL_INT_MAX;
-  dev->max_work_item_sizes[2] = CL_INT_MAX;
-  dev->max_work_group_size = 1024;
+  dev->max_work_item_sizes[0] = SIZE_MAX;
+  dev->max_work_item_sizes[1] = SIZE_MAX;
+  dev->max_work_item_sizes[2] = SIZE_MAX;
+  /*
+    The hard restriction will be the context data which is
+    stored in stack that can be as small as 8K in Linux.
+    Thus, there should be enough work-items alive to fill up
+    the SIMD lanes times the vector units, but not more than
+    that to avoid stack overflow and cache trashing.
+  */
+  dev->max_work_group_size = 1024*4;
   dev->preferred_wg_size_multiple = 8;
   dev->preferred_vector_width_char = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR;
   dev->preferred_vector_width_short = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_SHORT;
@@ -461,7 +473,9 @@ pocl_basic_run
 
   d->current_kernel = kernel;
 
-  void *arguments[kernel->num_args + kernel->num_locals];
+  void **arguments = (void**)malloc(
+      sizeof(void*) * (kernel->num_args + kernel->num_locals)
+    );
 
   /* Process the kernel arguments. Convert the opaque buffer
      pointers to real device pointers, allocate dynamic local 
@@ -561,6 +575,7 @@ pocl_basic_run
       pocl_basic_free(data, 0, *(void **)(arguments[i]));
       POCL_MEM_FREE(arguments[i]);
     }
+  free(arguments);
 }
 
 void
@@ -705,7 +720,7 @@ pocl_basic_map_mem (void *data, void *buf_ptr,
   /* All global pointers of the pthread/CPU device are in 
      the host address space already, and up to date. */
   if (host_ptr != NULL) return host_ptr;
-  return buf_ptr + offset;
+  return (char*)buf_ptr + offset;
 }
 
 void
@@ -719,9 +734,21 @@ pocl_basic_uninit (cl_device_id device)
 cl_ulong
 pocl_basic_get_timer_value (void *data) 
 {
+#ifndef _MSC_VER
   struct timeval current;
   gettimeofday(&current, NULL);  
   return (current.tv_sec * 1000000 + current.tv_usec)*1000;
+#else
+  FILETIME ft;
+  cl_ulong tmpres = 0;
+  GetSystemTimeAsFileTime(&ft);
+  tmpres |= ft.dwHighDateTime;
+  tmpres <<= 32;
+  tmpres |= ft.dwLowDateTime;
+  tmpres -= 11644473600000000Ui64;
+  tmpres /= 10;
+  return tmpres;
+#endif
 }
 
 cl_int 
@@ -771,7 +798,7 @@ void check_compiler_cache (_cl_command_node *cmd)
           return;
         }
     }
-  ci = malloc (sizeof (compiler_cache_item));
+  ci = (compiler_cache_item*) malloc (sizeof (compiler_cache_item));
   ci->next = NULL;
   ci->tmp_dir = strdup(cmd->command.run.tmp_dir);
   ci->function_name = strdup (cmd->command.run.kernel->function_name);

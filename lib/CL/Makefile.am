@@ -146,6 +146,10 @@ endif
 libpocl_la_LIBADD = devices/libpocl-devices.la
 libpocl_la_LIBADD += ${LTDL_LIBS}
 
+# The POCL_DEBUG output requires the clock_gettime and older glibs
+# have it in a separate lib.
+libpocl_la_LIBADD += -lrt
+
 if BUILD_SPU
 libpocl_la_LIBADD += -lspe2
 endif
@@ -167,9 +171,9 @@ libpocl_la_LDFLAGS += -L${top_builddir}/lib/CL/ @ICD_LD_FLAGS@
 libpocl_la_LIBADD += libpoclllvm.la
 libpocl_la_LIBADD += ${top_builddir}/lib/llvmopencl/libllvmpasses.la
 libpocl_la_LIBADD += -lclangFrontend -lclangDriver -lclangParse -lclangSema -lclangEdit -lclangLex -lclangSerialization
-libpocl_la_LIBADD += -lclangBasic -lclangFrontendTool -lclangRewriteFrontend 
+libpocl_la_LIBADD += -lclangAST -lclangBasic -lclangFrontendTool -lclangRewriteFrontend 
 libpocl_la_LIBADD += -lclangStaticAnalyzerFrontend -lclangStaticAnalyzerCore
-libpocl_la_LIBADD += -lclangAnalysis -lclangCodeGen -lclangAST 
+libpocl_la_LIBADD += -lclangAnalysis -lclangCodeGen -lclangAST
 libpocl_la_LIBADD += -lstdc++ -lm @LLVM_LIBS@
 
 if ! BUILD_ICD

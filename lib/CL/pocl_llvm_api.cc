@@ -34,7 +34,7 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
 #include "llvm/Linker.h"
 #else
 #include "llvm/Linker/Linker.h"
@@ -77,7 +77,10 @@
 #include <vector>
 #include <sstream>
 #include <string>
-#include <unistd.h>
+
+#ifndef _MSC_VER
+#  include <unistd.h>
+#endif
 
 // Note - LLVM/Clang uses symbols defined in Khronos' headers in macros, 
 // causing compilation error if they are included before the LLVM headers.
@@ -176,8 +179,8 @@ load_source(FrontendOptions &fe,
 
 // Compatibility function: this function existed up to LLVM 3.5
 // With 3.6 its name & signature changed
-#if !(defined LLVM_3_2 or defined LLVM_3_3 or\
-      defined LLVM_3_4 or defined LLVM_3_5)
+#if !(defined LLVM_3_2 || defined LLVM_3_3 || \
+      defined LLVM_3_4 || defined LLVM_3_5)
 static llvm::Module*
 ParseIRFile(const char* fname, SMDiagnostic &Err, llvm::LLVMContext &ctx)
 {
@@ -254,7 +257,6 @@ int pocl_llvm_build_program(cl_program program,
       have fma instructions. These ruin the performance. Better to have
       the mul+add separated in the IR. */
   ss << "-fno-builtin -ffp-contract=off ";
-
   // This is required otherwise the initialization fails with
   // unknown triplet ''
   ss << "-triple=" << device->llvm_target_triplet << " ";
@@ -299,7 +301,7 @@ int pocl_llvm_build_program(cl_program program,
           ss_build_log << "warning: " << (*i).second << std::endl;
         }
       pocl_create_or_append_file(build_log_filename.str().c_str(),
-                                      ss_build_log.str().c_str());
+                                 ss_build_log.str().c_str());
       std::cerr << ss_build_log.str();
       return CL_INVALID_BUILD_OPTIONS;
     }
@@ -352,8 +354,6 @@ int pocl_llvm_build_program(cl_program program,
 
   // printf("### Triple: %s, CPU: %s\n", ta.Triple.c_str(), ta.CPU.c_str());
 
-  // FIXME: print out any diagnostics to stdout for now. These should go to a buffer for the user
-  // to dig out. (and probably to stdout too, overridable with environment variables) 
 #ifdef LLVM_3_2
   CI.createDiagnostics(0, NULL, diagsBuffer, false);
 #else
@@ -369,6 +369,9 @@ int pocl_llvm_build_program(cl_program program,
   CodeGenOptions &cg = pocl_build.getCodeGenOpts();
   cg.EmitOpenCLArgMetadata = true;
   cg.StackRealignment = true;
+  // Let the vectorizer or another optimization pass unroll the loops,
+  // in case it sees beneficial.
+  cg.UnrollLoops = false;
 
   // TODO: use pch: it is possible to disable the strict checking for
   // the compilation flags used to compile it and the current translation
@@ -600,7 +603,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   }
 
   DataLayout *TD = 0;
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   const std::string &ModuleDataLayout = input->getDataLayout();
 #else
   const std::string &ModuleDataLayout = input->getDataLayout()->getStringRepresentation();
@@ -917,7 +920,7 @@ static PassManager& kernel_compiler_passes
 #endif
 
   if (module_data_layout != "") {
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
     Passes->add(new DataLayout(module_data_layout));
 #elif (defined LLVM_3_5)
     Passes->add(new DataLayoutPass(DataLayout(module_data_layout)));
@@ -986,14 +989,8 @@ static PassManager& kernel_compiler_passes
   passes.push_back("simplifycfg");
   //passes.push_back("print-module");
 
-  /* This is a beginning of the handling of the fine-tuning parameters.
-   * TODO: POCL_KERNEL_COMPILER_OPT_SWITCH
-   * TODO: POCL_VECTORIZE_WORK_GROUPS
-   * TODO: POCL_VECTORIZE_VECTOR_WIDTH
-   * TODO: POCl_VECTORIZE_NO_FP
-   */
   const std::string wg_method = 
-    pocl_get_string_option("POCL_WORK_GROUP_METHOD", "auto");
+    pocl_get_string_option("POCL_WORK_GROUP_METHOD", "loopvec");
 
 #ifndef LLVM_3_2
   if (wg_method == "loopvec")
@@ -1010,7 +1007,10 @@ static PassManager& kernel_compiler_passes
           // Set the options only once. TODO: fix it so that each
           // device can reset their own options. Now one cannot compile
           // with different options to different devices at one run.
-   
+
+          // LLVM inner loop vectorizer does not check whether the loop inside 
+          // another loop, in which case even a small trip count loops might be 
+          // worthwhile to vectorize.
           llvm::cl::Option *O = opts["vectorizer-min-trip-count"];
           assert(O && "could not find LLVM option 'vectorizer-min-trip-count'");
           O->addOccurrence(1, StringRef("vectorizer-min-trip-count"), StringRef("2"), false); 
@@ -1028,15 +1028,36 @@ static PassManager& kernel_compiler_passes
           O = opts["debug-only"];
           assert(O && "could not find LLVM option 'debug'");
           O->addOccurrence(1, StringRef("debug-only"), StringRef("loop-vectorize"), false); 
+#endif
 
+#if !(defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
+          if (pocl_get_bool_option("POCL_VECTORIZER_REMARKS", 0) == 1) {
+            // Enable diagnostics from the loop vectorizer.
+            O = opts["pass-remarks-missed"];
+            assert(O && "could not find LLVM option 'pass-remarks-missed'");
+            O->addOccurrence(1, StringRef("pass-remarks-missed"), StringRef("loop-vectorize"), 
+                             false); 
+
+            O = opts["pass-remarks-analysis"];
+            assert(O && "could not find LLVM option 'pass-remarks-analysis'");
+            O->addOccurrence(1, StringRef("pass-remarks-analysis"), StringRef("loop-vectorize"), 
+                             false); 
+
+            O = opts["pass-remarks"];
+            assert(O && "could not find LLVM option 'pass-remarks'");
+            O->addOccurrence(1, StringRef("pass-remarks"), StringRef("loop-vectorize"), 
+                             false); 
+          }
 #endif
         }
-      passes.push_back("mem2reg");
-      passes.push_back("loop-vectorize");
-      passes.push_back("slp-vectorizer");
+
+      llvm::cl::Option *O = opts["unroll-threshold"];
+      assert(O && "could not find LLVM option 'unroll-threshold'");
+      O->addOccurrence(1, StringRef("unroll-threshold"), StringRef("1"), false); 
     } 
 #endif
 
+  passes.push_back("instcombine");
   passes.push_back("STANDARD_OPTS");
   passes.push_back("instcombine");
 
@@ -1050,6 +1071,16 @@ static PassManager& kernel_compiler_passes
           PassManagerBuilder Builder;
           Builder.OptLevel = 3;
           Builder.SizeLevel = 0;
+
+#if !(defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
+          // These need to be setup in addition to invoking the passes
+          // to get the vectorizers initialized properly.
+          if (wg_method == "loopvec") {
+            Builder.LoopVectorize = true;
+            Builder.SLPVectorize = true;
+            Builder.BBVectorize = true;
+          }
+#endif
 
 #if defined(LLVM_3_2) || defined(LLVM_3_3)
           // SimplifyLibCalls has been removed in LLVM 3.4.
@@ -1201,7 +1232,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
   pocl::LocalSize.addValue(local_z);
   KernelName = kernel->name;
 
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   kernel_compiler_passes(device, input->getDataLayout()).run(*input);
 #else
   kernel_compiler_passes(device,
@@ -1314,10 +1345,10 @@ pocl_llvm_codegen(cl_kernel kernel,
                   const char *outfilename)
 {
     SMDiagnostic Err;
-#if defined LLVM_3_2 or defined LLVM_3_3
+#if defined LLVM_3_2 || defined LLVM_3_3
     std::string error;
     tool_output_file outfile(outfilename, error, 0);
-#elif defined LLVM_3_4 or defined LLVM_3_5
+#elif defined LLVM_3_4 || defined LLVM_3_5
     std::string error;
     tool_output_file outfile(outfilename, error, F_Binary);
 #else

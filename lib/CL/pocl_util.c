@@ -25,12 +25,18 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <dirent.h>
-#include <utime.h>
 #include <time.h>
+
+#ifndef _MSC_VER
+#  include <dirent.h>
+#  include <unistd.h>
+#  include <utime.h>
+#else
+#  include "vccompat.hpp"
+#endif
 
 #include "pocl_util.h"
 #include "utlist.h"

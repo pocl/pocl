@@ -5,6 +5,10 @@
 #include <CL/opencl.h>
 #include "poclu.h"
 
+#ifdef _MSC_VER
+#  include "vccompat.hpp"
+#endif
+
 int main(int argc, char **argv)
 {
   /* test name */

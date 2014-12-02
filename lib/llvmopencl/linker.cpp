@@ -245,7 +245,7 @@ link(llvm::Module *krn, const llvm::Module *lib)
          ai++) {
         DB_PRINT(" %s\n", ai->getName().data());
         GlobalAlias *GA=
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
             new GlobalAlias(ai->getType(), ai->getLinkage(),
                             ai->getName(), NULL, krn);
 #else

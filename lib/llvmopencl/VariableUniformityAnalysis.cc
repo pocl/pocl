@@ -72,7 +72,7 @@ VariableUniformityAnalysis::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
   AU.addRequired<LoopInfo>();
   AU.addPreserved<LoopInfo>();
   // required by LoopInfo:
-#if (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   AU.addRequired<DominatorTree>();
   AU.addPreserved<DominatorTree>();
 #else
@@ -83,7 +83,7 @@ VariableUniformityAnalysis::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 #ifdef LLVM_3_1
   AU.addRequired<TargetData>();
   AU.addPreserved<TargetData>();
-#elif (defined LLVM_3_2 or defined LLVM_3_3 or defined LLVM_3_4)
+#elif (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   AU.addRequired<DataLayout>();
   AU.addPreserved<DataLayout>();
 #else
