@@ -100,12 +100,11 @@ chunk_slack (chunk_info_t* chunk, size_t size, size_t* last_chunk_size)
   memory_address_t aligned_start_addr = 
     (chunk->start_address + chunk->parent_region->alignment - 1) &
     ~(chunk->parent_region->alignment - 1);
-  size_t endChunk = chunk->start_address + chunk->size;
-  size_t endAddr = aligned_start_addr + size;
-  if(last_chunk_size){
-	  *last_chunk_size = endChunk - endAddr;
-  }
-  return endChunk > endAddr;
+  size_t end_chunk = chunk->start_address + chunk->size;
+  size_t end_addr = aligned_start_addr + size;
+  if(last_chunk_size)
+    *last_chunk_size = end_chunk - end_addr;
+  return end_chunk > end_addr;
 }
 
 /**
