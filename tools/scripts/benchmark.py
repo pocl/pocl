@@ -601,7 +601,7 @@ amd_benchmarks_lowmem = \
 
 halide_benchmarks = \
   [HalideBenchmarkCase("Bilateral Grid", "bilateral_grid", 
-                       "./filter ../imagesgray.png out.png 0.1"),
+                       "./filter ../images/gray.png out.png 0.1"),
    HalideBenchmarkCase("Interpolate", "interpolate", 
                        "./interpolate ../images/rgba.png out.png"),
    HalideBenchmarkCase("Local Laplacian", "local_laplacian", 
