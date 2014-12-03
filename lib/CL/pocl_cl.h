@@ -476,6 +476,7 @@ struct _cl_device_id {
   size_t printf_buffer_size;
   char *short_name;
   char *long_name;
+  char *cache_dir_name;
 
   char *vendor;
   char *driver_version;
@@ -592,8 +593,8 @@ struct _cl_program {
      sequential bitcode produced from the kernel sources.*/
   size_t *binary_sizes; 
   unsigned char **binaries; 
-  /* Temp directory (relative to CWD) where the kernel files reside. */
-  char *temp_dir;
+  /* Cache directory where program files will reside. */
+  char *cache_dir;
   /* implementation */
   cl_kernel kernels;
   /* program hash after build */

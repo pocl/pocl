@@ -118,7 +118,7 @@ POname(clBuildProgram)(cl_program program,
                        void *user_data) 
 CL_API_SUFFIX__VERSION_1_0
 {
-  char device_tmpdir[POCL_FILENAME_LENGTH];
+  char device_cachedir[POCL_FILENAME_LENGTH];
   char binary_file_name[POCL_FILENAME_LENGTH];
   char filename_str[POCL_FILENAME_LENGTH];
   FILE *binary_file;
@@ -252,7 +252,7 @@ CL_API_SUFFIX__VERSION_1_0
     }
 
   build_program_compute_hash(program);
-  program->temp_dir = pocl_create_progam_cache_dir(program);
+  program->cache_dir = pocl_create_progam_cache_dir(program);
 
   if (program->source)
     {
@@ -281,18 +281,18 @@ CL_API_SUFFIX__VERSION_1_0
   for (device_i = 0; device_i < real_num_devices; ++device_i)
     {
       cl_device_id device = real_device_list[device_i];
-      snprintf(device_tmpdir, POCL_FILENAME_LENGTH, "%s/%s",
-               program->temp_dir, device->short_name);
+      snprintf(device_cachedir, POCL_FILENAME_LENGTH, "%s/%s",
+               program->cache_dir, device->cache_dir_name);
 
-      if (access (device_tmpdir, F_OK) != 0)
-        mkdir(device_tmpdir, S_IRWXU);
+      if (access (device_cachedir, F_OK) != 0)
+        mkdir(device_cachedir, S_IRWXU);
 
-      pocl_check_and_invalidate_cache(program, device_i, device_tmpdir);
+      pocl_check_and_invalidate_cache(program, device_i, device_cachedir);
 
       snprintf(binary_file_name, POCL_FILENAME_LENGTH, "%s/%s",
-               device_tmpdir, POCL_PROGRAM_BC_FILENAME);
+               device_cachedir, POCL_PROGRAM_BC_FILENAME);
       snprintf(filename_str, POCL_FILENAME_LENGTH, "%s/%s",
-               program->temp_dir, POCL_BUILDLOG_FILENAME);
+               program->cache_dir, POCL_BUILDLOG_FILENAME);
 
       /* First call to clBuildProgram. Cache not filled yet */
       if (access(binary_file_name, F_OK) != 0)
@@ -300,7 +300,7 @@ CL_API_SUFFIX__VERSION_1_0
           if (program->source)
             {
               error = pocl_llvm_build_program(program, device, device_i,
-                        program->temp_dir, binary_file_name, device_tmpdir, user_options);
+                        program->cache_dir, binary_file_name, device_cachedir, user_options);
 
               if (error != 0)
                 {
@@ -355,7 +355,7 @@ CL_API_SUFFIX__VERSION_1_0
    * cache directory. Will be useful for cache pruning script
    * that flushes old directories based on LRU */
   snprintf(filename_str, POCL_FILENAME_LENGTH, "%s/%s",
-           program->temp_dir, POCL_LAST_ACCESSED_FILENAME);
+           program->cache_dir, POCL_LAST_ACCESSED_FILENAME);
   pocl_touch_file(filename_str);
 
   program->build_status = CL_BUILD_SUCCESS;

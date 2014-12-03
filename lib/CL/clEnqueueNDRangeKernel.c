@@ -56,7 +56,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   size_t offset_x, offset_y, offset_z;
   size_t global_x, global_y, global_z;
   size_t local_x, local_y, local_z;
-  char tmpdir[POCL_FILENAME_LENGTH];
+  char cachedir[POCL_FILENAME_LENGTH];
   char kernel_filename[POCL_FILENAME_LENGTH];
   char parallel_filename[POCL_FILENAME_LENGTH];
   char so_filename[POCL_FILENAME_LENGTH];
@@ -232,30 +232,30 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
     CL_INVALID_EVENT_WAIT_LIST);
 
 
-  snprintf (tmpdir, POCL_FILENAME_LENGTH, "%s/%s/%s/%zu-%zu-%zu", 
-            kernel->program->temp_dir, command_queue->device->short_name, 
-            kernel->name, 
+  snprintf (cachedir, POCL_FILENAME_LENGTH, "%s/%s/%s/%zu-%zu-%zu",
+            kernel->program->cache_dir, command_queue->device->cache_dir_name,
+            kernel->name,
             local_x, local_y, local_z);
 
-  if (access (tmpdir, F_OK) != 0)
-    mkdir (tmpdir, S_IRWXU);
+  if (access (cachedir, F_OK) != 0)
+    mkdir (cachedir, S_IRWXU);
   
   error = snprintf
           (parallel_filename, POCL_FILENAME_LENGTH,
-          "%s/%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
+          "%s/%s", cachedir, POCL_PARALLEL_BC_FILENAME);
   if (error < 0)
     return CL_OUT_OF_HOST_MEMORY;
 
   error = snprintf
           (so_filename, POCL_FILENAME_LENGTH,
-          "%s/%s.so", tmpdir, kernel->name);
+          "%s/%s.so", cachedir, kernel->name);
   if (error < 0)
     return CL_OUT_OF_HOST_MEMORY;
 
   error = snprintf
           (kernel_filename, POCL_FILENAME_LENGTH,
-           "%s/%s/%s", kernel->program->temp_dir,
-           command_queue->device->short_name, POCL_PROGRAM_BC_FILENAME);
+           "%s/%s/%s", kernel->program->cache_dir,
+           command_queue->device->cache_dir_name, POCL_PROGRAM_BC_FILENAME);
   if (error < 0)
     return CL_OUT_OF_HOST_MEMORY;
 
@@ -286,7 +286,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
 
   command_node->type = CL_COMMAND_NDRANGE_KERNEL;
   command_node->command.run.data = command_queue->device->data;
-  command_node->command.run.tmp_dir = strdup(tmpdir);
+  command_node->command.run.tmp_dir = strdup(cachedir);
   command_node->command.run.kernel = kernel;
   command_node->command.run.pc = pc;
   command_node->command.run.local_x = local_x;

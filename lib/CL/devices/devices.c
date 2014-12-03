@@ -169,6 +169,20 @@ str_toupper(char *out, const char *in)
   out[i] = '\0';
 }
 
+static inline void
+pocl_string_to_dirname(char *str)
+{
+  char *s_ptr;
+  if (!str) return;
+
+  // Replace special characters with '_'
+  for (s_ptr = str; (*s_ptr); s_ptr++)
+    {
+      if (!isalnum(*s_ptr))
+        *s_ptr = '_';
+    }
+}
+
 void 
 pocl_init_devices()
 {
@@ -241,6 +255,9 @@ pocl_init_devices()
 
           if (dev_index == 0)
             pocl_devices[dev_index].type |= CL_DEVICE_TYPE_DEFAULT;
+
+          pocl_devices[dev_index].cache_dir_name = strdup(pocl_devices[dev_index].long_name);
+          pocl_string_to_dirname(pocl_devices[dev_index].cache_dir_name);
           
           ++dev_index;
         }
