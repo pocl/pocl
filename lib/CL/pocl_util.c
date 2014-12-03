@@ -121,7 +121,7 @@ pocl_read_text_file (const char* file_name, char** content_dptr)
 }
 
 char*
-pocl_create_progam_cache_dir(cl_program program)
+pocl_create_program_cache_dir(cl_program program)
 {
   char *tmp_path = NULL, *cache_path = NULL;
   char hash_str[SHA1_DIGEST_SIZE * 2 + 1];

@@ -252,7 +252,7 @@ CL_API_SUFFIX__VERSION_1_0
     }
 
   build_program_compute_hash(program);
-  program->cache_dir = pocl_create_progam_cache_dir(program);
+  program->cache_dir = pocl_create_program_cache_dir(program);
 
   if (program->source)
     {
