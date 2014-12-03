@@ -157,10 +157,12 @@ See the INSTALL file for more information.])
 fi
 
 AC_ARG_ENABLE([region-allocator],
-[AS_HELP_STRING([--disable-region-allocator], 
- [Do not use a custom OpenCL optimized region-based memory allocator but allocate buffers with malloc directly (experimental with known issues!).])],
-[],
-[AC_DEFINE([CUSTOM_BUFFER_ALLOCATOR], [], "Use a custom buffer allocator")])
+[AS_HELP_STRING([--enable-region-allocator], 
+ [Use a custom OpenCL optimized region-based memory allocator for the CPU devices instead of allocating buffers directly with malloc (experimental with known issues!).])],
+[
+AC_DEFINE([CUSTOM_BUFFER_ALLOCATOR], [], "Use a custom buffer allocator")
+],
+[])
 
 ####################################################################
 # Manage optional testsuites
