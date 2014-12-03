@@ -34,6 +34,7 @@
 #include "pocl_llvm.h"
 #include "pocl_hash.h"
 #include "pocl_util.h"
+#include "config.h"
 #include "pocl_runtime_config.h"
 
 /* supported compiler parameters which should pass to the frontend directly
@@ -83,15 +84,19 @@ build_program_compute_hash(cl_program program)
     }
 
   if (program->compiler_options)
-    pocl_SHA1_Update(&hash_ctx, (uint8_t*) program->compiler_options, strlen(program->compiler_options));
+    pocl_SHA1_Update(&hash_ctx, (uint8_t*) program->compiler_options, 
+                     strlen(program->compiler_options));
 
   /* The kernel compiler work-group function method affects the
      produced binary heavily. */
   const char *wg_method = 
     pocl_get_string_option ("POCL_WORK_GROUP_METHOD", "");
 
-  pocl_SHA1_Update(&hash_ctx, (uint8_t*) wg_method, strlen (wg_method));
-
+  pocl_SHA1_Update (&hash_ctx, (uint8_t*) wg_method, strlen (wg_method));
+  pocl_SHA1_Update (&hash_ctx, (uint8_t*) PACKAGE_VERSION, 
+                    strlen (PACKAGE_VERSION));
+  pocl_SHA1_Update (&hash_ctx, (uint8_t*) POCL_BUILD_TIMESTAMP, 
+                    strlen (POCL_BUILD_TIMESTAMP));
   /*devices may include their own information to hash */
   for (i = 0; i < program->num_devices; ++i)
     {
