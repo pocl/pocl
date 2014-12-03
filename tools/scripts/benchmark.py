@@ -601,7 +601,7 @@ amd_benchmarks_lowmem = \
 
 halide_benchmarks = \
   [HalideBenchmarkCase("Bilateral Grid", "bilateral_grid", 
-                       "./filter ../images/gray.png out.png 0.1"),
+                       "./filter ../imagesgray.png out.png 0.1"),
    HalideBenchmarkCase("Interpolate", "interpolate", 
                        "./interpolate ../images/rgba.png out.png"),
    HalideBenchmarkCase("Local Laplacian", "local_laplacian", 
@@ -609,11 +609,11 @@ halide_benchmarks = \
 
 halide_benchmarks_4k = \
   [HalideBenchmarkCase("Bilateral Grid", "bilateral_grid", 
-                       "./filter ../images/big_sur_4k.png out.png 0.1"),
+                       "./filter ../../../buhd4k.png out.png 0.1"),
    HalideBenchmarkCase("Interpolate", "interpolate", 
-                       "./interpolate ../images/big_sur_4k.png out.png"),
+                       "./interpolate ../../../buhd4k.png out.png"),
    HalideBenchmarkCase("Local Laplacian", "local_laplacian", 
-                       "./process ../images/big_sur_4k.png 8 1 1 out.png")]
+                       "./process ../../../buhd4k.png 8 1 1 out.png")]
 
 benchmark_sets = (("amdlowmem", amd_benchmarks_lowmem), 
                   ("amd", amd_benchmarks),
