@@ -51,7 +51,7 @@ TESTSUITE = $(srcdir)/testsuite
 EXTRA_DIST = testsuite.at testsuite-samples.at testsuite-viennacl.at testsuite-regression.at \
 	testsuite-rodinia.at testsuite-tce.at testsuite-runtime.at \
 	testsuite-workgroup.at testsuite-parboil.at testsuite-amd.at \
-	testsuite-vexcl.at testsuite-piglit.at testsuite-halide.at 
+	testsuite-vexcl.at testsuite-piglit.at testsuite-halide.at \
 	$(srcdir)/package.m4 $(TESTSUITE) atlocal.in testsuite-amdsdk2_9.at
 DISTCLEANFILES = atconfig
 
