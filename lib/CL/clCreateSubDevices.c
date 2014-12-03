@@ -39,39 +39,43 @@ POname(clCreateSubDevices)(cl_device_id in_device,
                            cl_uint *num_devices_ret) CL_API_SUFFIX__VERSION_1_2
 {
    int errcode;
+   int refcount;
 
    POCL_GOTO_ERROR_COND((in_device == NULL), CL_INVALID_DEVICE);
-
+   
    cl_device_id sub1 = in_device;
    if (sub1 == NULL)
    {
       errcode = CL_OUT_OF_HOST_MEMORY;
       goto ERROR;
    }
+   POCL_INIT_OBJECT(sub1);
+   sub1->parent_device = in_device;
+
    cl_device_id sub2 = in_device;
    if (sub2 == NULL)
    {
       errcode = CL_OUT_OF_HOST_MEMORY;
       goto ERROR;
    }
-   POCL_INIT_OBJECT(sub1);
    POCL_INIT_OBJECT(sub2);
-
-   sub1->parent_device = in_device;
-   out_devices[0] = sub1;
-   in_device->device_reference_count = in_device->device_reference_count + 1;
-   
    sub2->parent_device = in_device;
+   
+   out_devices[0] = sub1;
    out_devices[1] = sub2;
-   in_device->device_reference_count = in_device->device_reference_count + 1;
+
+   POCL_RETAIN_OBJECT(in_device);
+   in_device->device_reference_count = in_device->device_reference_count + 2;
+   POCL_RELEASE_OBJECT(in_device, refcount);
+   
    return CL_SUCCESS;
     
 ERROR: 
-   if (in_device != sub1 && in_device != sub2 && sub1 == sub2) 
+   if (&sub1 == &sub2) 
    {
       POCL_MEM_FREE(sub1);
    } 
-   else if (in_device != sub1 && in_device != sub2) 
+   else 
    {
       POCL_MEM_FREE(sub1);
       POCL_MEM_FREE(sub2);
