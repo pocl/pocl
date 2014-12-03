@@ -475,7 +475,7 @@ pocl_pthread_free (void *device_data, cl_mem_flags flags, void *ptr)
 void
 pocl_pthread_free (void *data, cl_mem_flags flags, void *ptr)
 {
-  if (flags & CL_MEM_COPY_HOST_PTR)
+  if (flags & CL_MEM_USE_HOST_PTR)
     return;
   
   POCL_MEM_FREE(ptr);
