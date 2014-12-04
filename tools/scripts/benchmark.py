@@ -655,7 +655,7 @@ benchmark_sets = (("amdlowmem", amd_benchmarks_lowmem),
                   ("cloverleaf", cloverleaf_benchmarks),
                   ("halide", halide_benchmarks), 
                   ("halide4k", halide_benchmarks_4k), 
-                  ("tlp", cloverleaf_benchmarks + halide_benchmarks))
+                  ("tlp", cloverleaf_benchmarks + halide_benchmarks_4k))
 
 
 def print_environment_info():
