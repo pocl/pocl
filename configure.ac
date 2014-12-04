@@ -170,7 +170,7 @@ AC_DEFINE([CUSTOM_BUFFER_ALLOCATOR], [], "Use a custom buffer allocator")
 # Option to choose external testsuites
 AC_ARG_ENABLE([testsuites],
 	      [AS_HELP_STRING([--enable-testsuites=suite1,suite2,...],
-          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,amdsdk2_9,VexCL,Piglit,Halide])],
+          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,amdsdk2_9,VexCL,Piglit,Halide,CloverLeaf])],
 	      [],[enable_testsuites=check])
 
 enable_testsuite_opencl_book_samples=no
@@ -212,9 +212,12 @@ if test x"$enable_testsuites" = xcheck ; then
   if test -f "$srcdir/examples/Halide/Halide/Makefile" ; then
     enable_testsuite_halide=yes
   fi  
+  if test -f "$srcdir/examples/CloverLeaf/CloverLeaf_OpenCL/Makefile" ; then
+    enable_testsuite_cloverleaf=yes
+  fi  
 fi
 AS_CASE([,"$enable_testsuites",],
-  [*,all,*|*,yes,*], [enable_testsuites="opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,amdsdk2_9,VexCL,piglit"],
+  [*,all,*|*,yes,*], [enable_testsuites="opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,amdsdk2_9,VexCL,piglit,Halide,CloverLeaf"],
   [*,no,*], [enable_testsuites=""]
 )
 AS_CASE([,"$enable_testsuites",],
@@ -249,6 +252,10 @@ AS_CASE([,"$enable_testsuites",],
 AS_CASE([,"$enable_testsuites",],
   [*,halide,*|*,Halide,*], [
     enable_testsuite_halide=yes
+  ])
+AS_CASE([,"$enable_testsuites",],
+  [*,cloverleaf,*|*,CloverLeaf,*], [
+    enable_testsuite_cloverleaf=yes
   ])
 
 if test "$enable_testsuite_opencl_book_samples" = "yes"; then
@@ -345,6 +352,7 @@ AM_CONDITIONAL([TEST_SUITE_AMDSDK2_9], [test "$enable_testsuite_amdsdk2_9" = "ye
 AM_CONDITIONAL([TEST_SUITE_VEXCL], [test "$enable_testsuite_vexcl" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_PIGLIT], [test "$enable_testsuite_piglit" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_HALIDE], [test "$enable_testsuite_halide" = "yes"])
+AM_CONDITIONAL([TEST_SUITE_CLOVERLEAF], [test "$enable_testsuite_cloverleaf" = "yes"])
 
 # Some information for the user
 AC_MSG_NOTICE([internal tests are enabled])
@@ -403,6 +411,13 @@ if test "$enable_testsuite_halide" = "yes"; then
 else
   AC_MSG_NOTICE([tests from Halide are disabled])
 fi
+if test "$enable_testsuite_cloverleaf" = "yes"; then
+  AC_MSG_NOTICE([tests from CloverLeaf are enabled])
+  POAT_TESTSUITES="$POAT_TESTSUITES CloverLeaf"
+else
+  AC_MSG_NOTICE([tests from CloverLeaf are disabled])
+fi
+
 
 AC_SUBST([POAT_TESTSUITES])
 
@@ -1393,6 +1408,7 @@ AC_CONFIG_FILES([Makefile
                  examples/VexCL/Makefile
                  examples/piglit/Makefile
                  examples/Halide/Makefile
+                 examples/CloverLeaf/Makefile
                  scripts/Makefile
                  tests/Makefile
                  tests/kernel/Makefile

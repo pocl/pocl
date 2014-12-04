@@ -45,6 +45,8 @@ import time
 import datetime
 import platform
 import optparse
+import re
+
 from optparse import OptionParser
 
 from subprocess import Popen, PIPE
@@ -60,8 +62,8 @@ REPEAT_COUNT = 5
 POCL_SRC_ROOT_PATH = os.getcwd()
 
 AMD_TEST_ROOT_DIR = "examples/AMD/AMD-APP-SDK-v2.8-RC-lnx64/samples/opencl/cl/app"
-
 HALIDE_TEST_ROOT_DIR = "examples/Halide/Halide/"
+CLOVERLEAF_TEST_ROOT_DIR = "examples/CloverLeaf/CloverLeaf_OpenCL/"
 
 AMD_BIN_DIR = "/build/debug/x86_64/"
 
@@ -233,6 +235,33 @@ class HalideBenchmarkCase(BenchmarkCase):
         result = BenchmarkResult(time_spent)
         return result
 
+class CloverLeafBenchmarkCase(BenchmarkCase):
+    def __init__(self, name, command="./clover_leaf"):
+        super(CloverLeafBenchmarkCase, self).__init__(name)
+        self.stdout = ""
+        self.command = command    
+
+    def run(self):
+        directory = os.path.join(POCL_SRC_ROOT_PATH, CLOVERLEAF_TEST_ROOT_DIR)
+        os.chdir(directory)
+
+        timeout, self.stdout, self.stderr, rc = run_cmd(self.command)
+        if timeout or rc != 0 or 'Wall clock' not in self.stderr:
+            sys.stderr.write("\nFAIL (cmd: %s in dir: %s rc: %d).\n" % \
+                             ( self.command, directory, rc) )
+            sys.stderr.write("stderr:")
+            sys.stderr.write(self.stderr)
+            sys.stderr.write("\nstdout:")
+            sys.stderr.write(self.stdout)
+            sys.stderr.write("\n")
+            sys.exit(1)
+
+        final_wall_clock = self.stderr.splitlines()[-2]
+        time_spent = float(re.search(r'Wall\sclock\s+(\d\.\d+)', final_wall_clock).group(1))
+
+        result = BenchmarkResult(time_spent)
+        return result
+
 
 class KernelGrindBenchmarkCase(BenchmarkCase):
     def __init__(self, name, command, root_dir=AMD_TEST_ROOT_DIR, 
@@ -382,6 +411,8 @@ class AMDBenchmarkCase(BenchmarkCase):
         
         result = BenchmarkResult(self.get_kernel_runtime(self.stdout))
         return result
+
+
 
 class AMDBenchmarkCaseTransferOverlap(AMDBenchmarkCase):
     def __init__(self, name, command, root_dir, bin_dir, wg_method="auto"):
@@ -615,11 +646,15 @@ halide_benchmarks_4k = \
    HalideBenchmarkCase("Local Laplacian", "local_laplacian", 
                        "./process ../../../buhd4k.png 8 1 1 out.png")]
 
+cloverleaf_benchmarks = \
+    [CloverLeafBenchmarkCase("CloverLeaf")]
+
 benchmark_sets = (("amdlowmem", amd_benchmarks_lowmem), 
                   ("amd", amd_benchmarks),
+                  ("cloverleaf", cloverleaf_benchmarks),
                   ("halide", halide_benchmarks), 
                   ("halide4k", halide_benchmarks_4k), 
-                  ("tlp", halide_benchmarks))
+                  ("tlp", cloverleaf_benchmarks + halide_benchmarks))
 
 
 def print_environment_info():

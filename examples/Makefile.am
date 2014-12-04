@@ -3,6 +3,7 @@
 # Makefile.am for pocl/examples.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
+#               2011-2014 Pekka Jääskeläinen / Tampere University of Tech.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -62,6 +63,9 @@ EXAMPLES_TO_PREPARE += "piglit "
 endif
 if TEST_SUITE_HALIDE
 EXAMPLES_TO_PREPARE += "Halide "
+endif
+if TEST_SUITE_CLOVERLEAF
+EXAMPLES_TO_PREPARE += "CloverLeaf "
 endif
 
 prepare-examples:

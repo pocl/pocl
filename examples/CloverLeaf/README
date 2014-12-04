@@ -1,0 +1,5 @@
+Get the Bristol's CloverLeaf OpenCL branch:
+git clone https://github.com/UK-MAC/CloverLeaf_OpenCL.git -b Bristol
+
+You need to have openmpi-bin and gfortran installed to build it.
+
