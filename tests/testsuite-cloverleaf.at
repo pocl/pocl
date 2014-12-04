@@ -8,7 +8,7 @@ m4_define([POAT_CLOVERLEAF_SETUP],[
 
 AT_BANNER([CloverLeaf])
 
-POAT_HALIDE_SETUP([cloverleaf])
+POAT_CLOVERLEAF_SETUP([cloverleaf])
 AT_CHECK_UNQUOTED([cd $abs_top_builddir/examples/CloverLeaf/CloverLeaf_OpenCL ;
 ./clover_leaf 2>&1 |grep First | cut -c-6 
 ], 0,

@@ -215,6 +215,7 @@ class HalideBenchmarkCase(BenchmarkCase):
 
         halide_lib_dir = os.path.join(POCL_SRC_ROOT_PATH, HALIDE_TEST_ROOT_DIR, "bin")
 
+        os.environ['HL_TARGET'] = 'opencl'
         if halide_lib_dir not in os.environ['LD_LIBRARY_PATH']:
             os.environ['LD_LIBRARY_PATH'] = halide_lib_dir + ":" + \
                                             os.environ['LD_LIBRARY_PATH']
