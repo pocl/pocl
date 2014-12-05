@@ -27,7 +27,6 @@ if TEST_SUITE_CLOVERLEAF
 .PHONY: build
 
 prepare-examples:
-	cp -f clover.in CloverLeaf_OpenCL
 	$(MAKE) -sC CloverLeaf_OpenCL COMPILER=GNU C_OPTIONS="-g -I${abs_top_srcdir}/include"   
 
 clean-examples:
