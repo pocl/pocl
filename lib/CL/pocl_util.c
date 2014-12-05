@@ -451,19 +451,19 @@ pocl_check_and_invalidate_cache (cl_program program,
    */
   if (!pocl_get_bool_option("POCL_KERNEL_CACHE_IGNORE_INCLUDES", 0) &&
       program->source)
-      {
-        for (s_ptr = program->source; (*s_ptr); s_ptr++)
-          {
-            if ((*s_ptr) == '#')
-              {
-                /* Skip all the white-spaces between # & include */
-                for (ss_ptr = s_ptr+1; (*ss_ptr == ' '); ss_ptr++) ;
-
-                if (strncmp(ss_ptr, "include", 7) == 0)
-                  cache_dirty = 1;
-              }
-          }
-      }
+    {
+      for (s_ptr = program->source; (*s_ptr); s_ptr++)
+        {
+          if ((*s_ptr) == '#')
+            {
+              /* Skip all the white-spaces between # & include */
+              for (ss_ptr = s_ptr+1; (*ss_ptr == ' '); ss_ptr++) ;
+              
+              if (strncmp(ss_ptr, "include", 7) == 0)
+                cache_dirty = 1;
+            }
+        }
+    }
 
   bottom:
   if (cache_dirty)
