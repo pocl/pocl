@@ -65,8 +65,7 @@ POname(clCreateSubDevices)(cl_device_id in_device,
    out_devices[1] = sub2;
 
    POCL_RETAIN_OBJECT(in_device);
-   in_device->device_reference_count = in_device->device_reference_count + 2;
-   POCL_RELEASE_OBJECT(in_device, refcount);
+   POCL_RETAIN_OBJECT(in_device);
    
    return CL_SUCCESS;
     
