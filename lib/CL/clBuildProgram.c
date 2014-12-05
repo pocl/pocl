@@ -276,6 +276,9 @@ CL_API_SUFFIX__VERSION_1_0
       memset(program->llvm_irs, 0, length);
     }
 
+  POCL_MSG_PRINT_INFO("building program with options %s\n",
+                      options != NULL ? options : "");
+
   /* Build the fully linked non-parallel bitcode for all
          devices. */
   for (device_i = 0; device_i < real_num_devices; ++device_i)
