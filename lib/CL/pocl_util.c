@@ -449,7 +449,8 @@ pocl_check_and_invalidate_cache (cl_program program,
      Yes, this is a very dirty way to find "# include"
      but we can live with this for now
    */
-    if (program->source)
+  if (!pocl_get_bool_option("POCL_KERNEL_CACHE_IGNORE_INCLUDES", 0) &&
+      program->source)
       {
         for (s_ptr = program->source; (*s_ptr); s_ptr++)
           {
