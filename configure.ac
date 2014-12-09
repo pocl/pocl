@@ -571,6 +571,12 @@ fi
 
 AM_CONDITIONAL(INSTALL_OPENCL_HEADERS, test "$ioh" = "yes")
 
+if test x"$ioh" = "yes"; then
+# In case we install pocl's headers, ensure we build against them
+# by adding the pocl's include as the first include path.
+   CPPFLAGS="-Iinclude $CPPFLAGS"
+fi
+
 # Check for OpenGL.h headers as they are required to compile
 # test cases that use cl.hpp (which requires it).
 AC_CHECK_HEADERS([GL/gl.h OpenGL/OpenGL.h], [opengl_found="ok"; break])
