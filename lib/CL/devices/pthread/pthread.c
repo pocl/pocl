@@ -176,7 +176,7 @@ pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
   ops->read = pocl_pthread_read;
   ops->write = pocl_pthread_write;
   ops->copy = pocl_pthread_copy;
-  ops->copy_rect = pocl_pthread_copy_rect;
+  ops->copy_rect = pocl_basic_copy_rect;
   ops->run = pocl_pthread_run;
   ops->compile_submitted_kernels = pocl_basic_compile_submitted_kernels;
 
@@ -500,7 +500,6 @@ pocl_pthread_write (void *data, const void *host_ptr, void *device_ptr, size_t c
   memcpy (device_ptr, host_ptr, cb);
 }
 
-
 void
 pocl_pthread_copy (void *data, const void *src_ptr, void *__restrict__ dst_ptr, size_t cb)
 {
@@ -508,36 +507,6 @@ pocl_pthread_copy (void *data, const void *src_ptr, void *__restrict__ dst_ptr, 
     return;
   
   memcpy (dst_ptr, src_ptr, cb);
-}
-
-void
-pocl_pthread_copy_rect (void *data,
-                        const void *__restrict const src_ptr,
-                        void *__restrict__ const dst_ptr,
-                        const size_t *__restrict__ const src_origin,
-                        const size_t *__restrict__ const dst_origin, 
-                        const size_t *__restrict__ const region,
-                        size_t const src_row_pitch,
-                        size_t const src_slice_pitch,
-                        size_t const dst_row_pitch,
-                        size_t const dst_slice_pitch)
-{
-  char const *__restrict const adjusted_src_ptr = 
-    (char const*)src_ptr +
-    src_origin[0] + src_row_pitch * (src_origin[1] + src_slice_pitch * src_origin[2]);
-  char *__restrict__ const adjusted_dst_ptr = 
-    (char*)dst_ptr +
-    dst_origin[0] + dst_row_pitch * (dst_origin[1] + dst_slice_pitch * dst_origin[2]);
-  
-  size_t j, k;
-
-  /* TODO: handle overlaping regions */
-  
-  for (k = 0; k < region[2]; ++k)
-    for (j = 0; j < region[1]; ++j)
-      memcpy (adjusted_dst_ptr + dst_row_pitch * j + dst_slice_pitch * k,
-              adjusted_src_ptr + src_row_pitch * j + src_slice_pitch * k,
-              region[0]);
 }
 
 #define FALLBACK_MAX_THREAD_COUNT 8
