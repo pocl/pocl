@@ -151,8 +151,6 @@ AT_CHECK_UNQUOTED([make test_DCT -sC $abs_top_builddir/examples/AMDSDK2.9 | grep
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([devicefission])
-# Error: clGetDeviceInfo failed. (maxSubDevices) Error code : CL_INVALID_VALUE
-AT_XFAIL_IF(true)
 AT_CHECK_UNQUOTED([make test_DeviceFission -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])

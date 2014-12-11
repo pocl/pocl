@@ -238,7 +238,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_PARENT_DEVICE                     :
     POCL_RETURN_GETINFO(cl_device_id, NULL);
   case CL_DEVICE_PARTITION_MAX_SUB_DEVICES         :
-    POCL_RETURN_GETINFO(cl_uint, 1);
+    POCL_RETURN_GETINFO(cl_uint, 2);
   case CL_DEVICE_PARTITION_PROPERTIES              :
   case CL_DEVICE_PARTITION_TYPE                    :
     {

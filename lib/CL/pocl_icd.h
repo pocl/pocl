@@ -142,7 +142,7 @@ struct _cl_icd_dispatch {
   &POclRetainDevice, /* &POclRetainDeviceEXT,         */ \
   &POclReleaseDevice, /* &POclReleaseDeviceEXT,        */ \
   NULL, /* &clUnknown92 */      \
-  NULL, /* &POclCreateSubDevices,        */ \
+  &POclCreateSubDevices,        \
   &POclRetainDevice,                      \
   &POclReleaseDevice,                     \
   &POclCreateImage,                               \

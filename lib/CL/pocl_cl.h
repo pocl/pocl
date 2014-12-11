@@ -477,6 +477,7 @@ struct _cl_device_id {
   char *short_name;
   char *long_name;
   char *cache_dir_name;
+  cl_device_id parent_device;
 
   char *vendor;
   char *driver_version;
