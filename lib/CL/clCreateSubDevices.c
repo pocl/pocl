@@ -81,7 +81,7 @@ ERROR:
         POCL_MEM_FREE(sub1);
         POCL_MEM_FREE(sub2);
      }
-   return NULL;
+   return CL_SUCCESS;
 
 }
 POsym(clCreateSubDevices)
