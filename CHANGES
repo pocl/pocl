@@ -15,6 +15,10 @@ Kernel compiler
 - Setting the POCL_VECTORIZER_REMARKS env to 1 prints out LLVM vectorizer 
   remarks during kernel compilation.
 
+OpenCL Runtime/Platform API support
+-----------------------------------
+- Minimal initial implementation for clCreateSubDevices()
+
 Bugfixes
 --------
 - Fix falsely detecting operations with side-effects (especially atomic
