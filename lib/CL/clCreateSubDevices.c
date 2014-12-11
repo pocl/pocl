@@ -45,19 +45,21 @@ POname(clCreateSubDevices)(cl_device_id in_device,
    
    cl_device_id sub1 = in_device;
    if (sub1 == NULL)
-   {
-      errcode = CL_OUT_OF_HOST_MEMORY;
-      goto ERROR;
-   }
+     {
+        errcode = CL_OUT_OF_HOST_MEMORY;
+        goto ERROR;
+     }
+
    POCL_INIT_OBJECT(sub1);
    sub1->parent_device = in_device;
 
    cl_device_id sub2 = in_device;
    if (sub2 == NULL)
-   {
-      errcode = CL_OUT_OF_HOST_MEMORY;
-      goto ERROR;
-   }
+     {
+        errcode = CL_OUT_OF_HOST_MEMORY;
+        goto ERROR;
+     }
+   
    POCL_INIT_OBJECT(sub2);
    sub2->parent_device = in_device;
    
@@ -71,14 +73,14 @@ POname(clCreateSubDevices)(cl_device_id in_device,
     
 ERROR: 
    if (&sub1 == &sub2) 
-   {
-      POCL_MEM_FREE(sub1);
-   } 
+     {
+        POCL_MEM_FREE(sub1);
+     } 
    else 
-   {
-      POCL_MEM_FREE(sub1);
-      POCL_MEM_FREE(sub2);
-   }
+     {
+        POCL_MEM_FREE(sub1);
+        POCL_MEM_FREE(sub2);
+     }
    return NULL;
 
 }
