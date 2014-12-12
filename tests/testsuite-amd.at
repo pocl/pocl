@@ -183,11 +183,9 @@ AT_CHECK_UNQUOTED([make test_MatrixMultiplication -sC $abs_top_builddir/examples
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([matrixmulimage])
-# pocl error: encountered unimplemented part of the OpenCL specs in clCreateImage2D.c:119
-AT_XFAIL_IF(true)
 AT_CHECK_UNQUOTED([make test_MatrixMulImage -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
-])
+], ignore)
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([matrixtranspose])
