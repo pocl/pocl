@@ -635,7 +635,14 @@ Workgroup::isKernelToProcess(const Function &F)
   for (unsigned i = 0, e = kernels->getNumOperands(); i != e; ++i) {
     if (kernels->getOperand(i)->getOperand(0) == NULL)
       continue; // globaldce might have removed uncalled kernels
+#ifdef LLVM_OLDER_THAN_3_6
     Function *k = cast<Function>(kernels->getOperand(i)->getOperand(0));
+#else
+    Function *k = 
+      cast<Function>(
+        dyn_cast<ValueAsMetadata>(kernels->getOperand(i)->getOperand(0))
+          ->getValue());
+#endif
     if (&F == k)
       return true;
   }

@@ -440,7 +440,13 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
   for (unsigned i = 0, e = opencl_kernels->getNumOperands(); i != e; ++i) {
     llvm::MDNode *kernel_iter = opencl_kernels->getOperand(i);
 
+#ifdef LLVM_OLDER_THAN_3_6
     llvm::Function *kernel_prototype = llvm::cast<llvm::Function>(kernel_iter->getOperand(0));
+#else
+    llvm::Function *kernel_prototype = 
+      llvm::cast<llvm::Function>(
+        dyn_cast<llvm::ValueAsMetadata>(kernel_iter->getOperand(0))->getValue());
+#endif
     std::string name = kernel_prototype->getName().str();
     if (name == kernel_name) {
       kernel_metadata = kernel_iter;
@@ -467,17 +473,28 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
     std::string meta_name = meta_name_node->getString().str();
 
     for (unsigned j = 1; j != arg_num; ++j) {
+#ifdef LLVM_OLDER_THAN_3_6
       llvm::Value *meta_arg_value = meta_node->getOperand(j);
+#else
+      llvm::Value *meta_arg_value = NULL;
+      if (isa<ValueAsMetadata>(meta_node->getOperand(j)))
+        meta_arg_value = 
+          dyn_cast<ValueAsMetadata>(meta_node->getOperand(j))->getValue();      
+      else if (isa<ConstantAsMetadata>(meta_node->getOperand(j)))
+        meta_arg_value = 
+          dyn_cast<ConstantAsMetadata>(meta_node->getOperand(j))->getValue(); 
+#endif
       struct pocl_argument_info* current_arg = &kernel->arg_info[j-1];
 
-      if (isa<ConstantInt>(meta_arg_value) && meta_name=="kernel_arg_addr_space") {
+      if (meta_arg_value != NULL && isa<ConstantInt>(meta_arg_value) && 
+          meta_name == "kernel_arg_addr_space") {
         assert(has_meta_for_every_arg && "kernel_arg_addr_space meta incomplete");
         kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER;
         //std::cout << "is ConstantInt /  kernel_arg_addr_space" << std::endl;
         llvm::ConstantInt *m = llvm::cast<ConstantInt>(meta_arg_value);
         uint64_t val = m->getLimitedValue(UINT_MAX);
         //std::cout << "with value: " << val << std::endl;
-        if(bitcode_is_spir) {
+        if (bitcode_is_spir) {
           switch(val) {
             case 0:
               current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
@@ -501,9 +518,9 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
           }
         }
       }
-      else if (isa<MDString>(meta_arg_value)) {
+      else if (isa<MDString>(meta_node->getOperand(j))) {
         //std::cout << "is MDString" << std::endl;
-        llvm::MDString *m = llvm::cast<MDString>(meta_arg_value);
+        llvm::MDString *m = llvm::cast<MDString>(meta_node->getOperand(j));
         std::string val = m->getString().str();
         //std::cout << "with value: " << val << std::endl;
         if (meta_name == "kernel_arg_access_qual") {
@@ -707,14 +724,27 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   if (size_info) {
     for (unsigned i = 0, e = size_info->getNumOperands(); i != e; ++i) {
       llvm::MDNode *KernelSizeInfo = size_info->getOperand(i);
-      if (KernelSizeInfo->getOperand(0) == kernel_function) {
-        reqdx = (llvm::cast<ConstantInt>
-                 (KernelSizeInfo->getOperand(1)))->getLimitedValue();
-        reqdy = (llvm::cast<ConstantInt>
-                 (KernelSizeInfo->getOperand(2)))->getLimitedValue();
-        reqdz = (llvm::cast<ConstantInt>
-                 (KernelSizeInfo->getOperand(3)))->getLimitedValue();
-      }
+#ifdef LLVM_OLDER_THAN_3_6
+      if (KernelSizeInfo->getOperand(0) != kernel_function) 
+        continue;
+      reqdx = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(1)))->getLimitedValue();
+      reqdy = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(2)))->getLimitedValue();
+      reqdz = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(3)))->getLimitedValue();
+#else
+      if (dyn_cast<ValueAsMetadata>(
+        KernelSizeInfo->getOperand(0).get())->getValue() != kernel_function) 
+        continue;
+      reqdx = (llvm::cast<ConstantInt>(
+                 llvm::dyn_cast<ConstantAsMetadata>(
+                   KernelSizeInfo->getOperand(1))->getValue()))->getLimitedValue();
+      reqdy = (llvm::cast<ConstantInt>(
+                 llvm::dyn_cast<ConstantAsMetadata>(
+                   KernelSizeInfo->getOperand(2))->getValue()))->getLimitedValue();
+      reqdz = (llvm::cast<ConstantInt>(
+                 llvm::dyn_cast<ConstantAsMetadata>(
+                   KernelSizeInfo->getOperand(3))->getValue()))->getLimitedValue();
+#endif
+      break;
     }
   }
   kernel->reqd_wg_size[0] = reqdx;
@@ -1328,8 +1358,14 @@ pocl_llvm_get_kernel_names( cl_program program, const char **knames, unsigned ma
   unsigned i;
   for (i=0; i<md->getNumOperands(); i++) {
     assert( md->getOperand(i)->getOperand(0) != NULL);
+#ifdef LLVM_OLDER_THAN_3_6
     llvm::Function *k = cast<Function>(md->getOperand(i)->getOperand(0));
-    if (i<max_num_krn)
+#else
+    llvm::Function *k = 
+      cast<Function>(
+        dyn_cast<llvm::ValueAsMetadata>(md->getOperand(i)->getOperand(0))->getValue());
+#endif
+    if (i < max_num_krn)
       knames[i]= k->getName().data();
   }
   return i;

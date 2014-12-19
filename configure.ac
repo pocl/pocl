@@ -109,16 +109,19 @@ case "$LLVM_VERSION" in
    ;;
      3.6*)
      AC_DEFINE([LLVM_3_6], [], "Using LLVM svn, upcoming 3.6")
+     LLVM_3_6=true
      LLVM_LDFLAGS="$LLVM_LDFLAGS `$LLVM_CONFIG --system-libs`"
    ;;
      *)
    AC_MSG_ERROR(
    [
-Unsupported LLVM version. Please use LLVM version 3.2, 3.3, 3.4 or 3.5.
+Unsupported LLVM version. Please use LLVM version 3.2, 3.3, 3.4, 3.5 or 3.6.
    ])
    LLVM_VERSION=
    ;;
 esac
+
+AM_CONDITIONAL([LLVM_3_6], [test "x$LLVM_3_6" = "xyes"])
 
 AC_SUBST([LLVM_LDFLAGS], [$LLVM_LDFLAGS], [llvm-config returned ldflags])
 AM_CONDITIONAL([NEW_PRINTF_WORKS], $NEW_PRINTF_WORKS)

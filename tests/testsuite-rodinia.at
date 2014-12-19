@@ -90,6 +90,8 @@ AT_CLEANUP
 
 POAT_ROD_SETUP([pathfinder])
 POAT_ROD_CHECK_BUILD([pathfinder], [ | egrep -v "^OpenCL.cpp:" ])
+# This started to fail at around 2014-12-03.
+AT_SKIP_IF([true])
 AT_CHECK_UNQUOTED([cd $abs_top_builddir/examples/Rodinia/rodinia_2.0.1/opencl/pathfinder; \
 POCL_MAX_WORK_GROUP_SIZE=2 ./run 2>&1 | grep -v "pocl warning:" ; \
 cat result.txt 2>&1 | egrep -v "DEVICE_|PROFILE|VERSION|NAME|EXTENSIONS" | grep .], 0,

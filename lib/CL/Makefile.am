@@ -2,7 +2,7 @@
 # and all subdirectories).
 # Makefile.am for pocl/lib/CL.
 # 
-# Copyright (c) 2011-2012 Universidad Rey Juan Carlos and 
+# Copyright (c) 2011-2014 Universidad Rey Juan Carlos and 
 #                         Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -175,6 +175,12 @@ libpocl_la_LIBADD += -lclangAST -lclangBasic -lclangFrontendTool -lclangRewriteF
 libpocl_la_LIBADD += -lclangStaticAnalyzerFrontend -lclangStaticAnalyzerCore
 libpocl_la_LIBADD += -lclangAnalysis -lclangCodeGen -lclangAST
 libpocl_la_LIBADD += -lstdc++ -lm @LLVM_LIBS@
+
+if LLVM_3_6
+libpocl_la_LIBADD += -lclangToolingCore 
+endif
+
+libpocl_la_LIBADD += -lclangASTMatchers -lclangBasic
 
 if ! BUILD_ICD
 libOpenCL_la_SOURCES = ${libpocl_la_SOURCES}

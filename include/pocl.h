@@ -36,6 +36,7 @@
 #include <CL/opencl.h>
 
 #include "pocl_device.h"
+#include "config.h"
 
 /*
  * During pocl kernel compiler transformations we use the fixed address 
@@ -189,5 +190,14 @@ typedef struct _cl_command_node_struct
   cl_int num_events_in_wait_list;
   cl_device_id device;
 } _cl_command_node;
+
+/* Additional LLVM version macros to simplify ifdefs */
+
+#if defined(LLVM_3_2) || defined(LLVM_3_3) || defined(LLVM_3_4) || \
+    defined(LLVM_3_5)
+
+# define LLVM_OLDER_THAN_3_6 1
+
+#endif
 
 #endif /* POCL_H */

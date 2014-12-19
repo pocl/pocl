@@ -28,6 +28,8 @@
 #include "Barrier.h"
 #include "Kernel.h"
 #include "config.h"
+#include "pocl.h"
+
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CommandLine.h"
@@ -307,7 +309,11 @@ WorkitemLoops::CreateLoopAround
 
   /* This creation of the identifier metadata is copied from
      LLVM's MDBuilder::createAnonymousTBAARoot(). */
+#ifdef LLVM_OLDER_THAN_3_6
   MDNode *Dummy = MDNode::getTemporary(C, ArrayRef<Value*>());
+#else
+  MDNode *Dummy = MDNode::getTemporary(C, ArrayRef<Metadata*>());
+#endif
   MDNode *Root = MDNode::get(C, Dummy);
   // At this point we have
   //   !0 = metadata !{}            <- dummy
