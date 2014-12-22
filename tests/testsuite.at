@@ -222,6 +222,8 @@ AT_XFAIL_IF([grep OCL_KERNEL_TARGET_CPU $abs_top_builddir/config.h | cut -d\" -f
              grep -q "#define LLVM_3_5" $abs_top_builddir/config.h])
 AT_XFAIL_IF([grep OCL_KERNEL_TARGET_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q penryn &&
              grep -q "#define LLVM_3_5" $abs_top_builddir/config.h])
+AT_XFAIL_IF([grep OCL_KERNEL_TARGET_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q penryn &&
+             grep -q "#define LLVM_3_6" $abs_top_builddir/config.h])
 AT_XFAIL_IF([grep OCL_KERNEL_TARGET_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q core-avx-i &&
              grep -q "#define LLVM_3_6" $abs_top_builddir/config.h])
 AT_DATA([expout],
