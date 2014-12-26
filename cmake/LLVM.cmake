@@ -104,7 +104,9 @@ run_llvm_config(LLVM_HOST_TARGET --host-target)
 # Here we replace the "arm" string with whatever's in CMAKE_HOST_SYSTEM_PROCESSOR
 # which should be "armv6l" on rasp pi, or "armv7l" on my cubieboard, hopefully its
 # more reasonable and reliable than llvm's own host flags
-string(REPLACE "arm-" "${CMAKE_HOST_SYSTEM_PROCESSOR}-" LLVM_HOST_TARGET "${LLVM_HOST_TARGET}")
+if(NOT CMAKE_CROSSCOMPILING)
+  string(REPLACE "arm-" "${CMAKE_HOST_SYSTEM_PROCESSOR}-" LLVM_HOST_TARGET "${LLVM_HOST_TARGET}")
+endif()
 
 # In windows llvm-config reports --target=x86_64-pc-windows-msvc
 # however this causes clang to use MicrosoftCXXMangler, which does not
@@ -555,7 +557,7 @@ set_cache_var(LLC_TRIPLE "LLC_TRIPLE")
 
 setup_cache_var_name(LLC_HOST_CPU "LLC_HOST_CPU-${LLVM_HOST_TARGET}-${LLC}")
 
-if(NOT DEFINED ${CACHE_VAR_NAME})
+if(NOT DEFINED ${CACHE_VAR_NAME} AND NOT CMAKE_CROSSCOMPILING)
   message(STATUS "Find out LLC host CPU with ${LLC}")
   execute_process(COMMAND ${LLC} "--version" RESULT_VARIABLE RES_VAR OUTPUT_VARIABLE OUTPUT_VAR)
   # WTF, ^^ has return value 1

@@ -58,7 +58,7 @@ set(POCL_INSTALL_PUBLIC_LIBDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
 set(POCL_INSTALL_PRIVATE_LIBDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/pocl" CACHE PATH "POCL private libdir")
 
 # for pocl.icd
-if (UNIX)
+if (UNIX AND NOT CMAKE_CROSSCOMPILING)
   set(POCL_INSTALL_ICD_VENDORDIR "/etc/OpenCL/vendors" CACHE PATH "POCL ICD file destination")
 else()
   set(POCL_INSTALL_ICD_VENDORDIR "${CMAKE_INSTALL_PREFIX}/etc/OpenCL/vendors" CACHE PATH "POCL ICD file destination")
@@ -108,6 +108,14 @@ enable_testing()
 if (UNIX)
   find_package(PkgConfig MODULE REQUIRED)
 endif()
+
+######################################################################################
+set(ANDROID_COMPILER 0)
+if (CMAKE_C_COMPILER MATCHES "android")
+  set(ANDROID_COMPILER 1)
+  add_definitions(-DPOCL_ANDROID)
+  add_definitions(-DPOCL_ANDROID_PREFIX="/data/data/org.pocl.libs/files")
+endif ()
 
 ######################################################################################
 
@@ -257,6 +265,8 @@ if(UNIX)
     # ld: warning: -macosx_version_min not specificed, assuming 10.7
     # suppress them with -w.
     set(DEFAULT_HOST_LD_FLAGS "-Wl,-dylib -lm")
+  elseif(ANDROID_COMPILER)
+    set(DEFAULT_HOST_LD_FLAGS "-L/system/lib/ -shared -ldl -lc -lm /system/lib/crtbegin_so.o /system/lib/crtend_so.o")
   else()
     set(DEFAULT_HOST_LD_FLAGS "-shared -lm")
   endif()
@@ -773,9 +783,14 @@ set(SRCDIR "${CMAKE_SOURCE_DIR}")
 include(CheckSymbolExists)
 CHECK_SYMBOL_EXISTS("posix_memalign" "stdlib.h" HAVE_POSIX_MEMALIGN)
 
-#AC_C_BIGENDIAN
-include(TestBigEndian)
-TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
+if(NOT CMAKE_CROSSCOMPILING)
+  # AC_C_BIGENDIAN
+  include(TestBigEndian)
+  TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
+else()
+  # Set default as little-endian
+  set(WORDS_BIGENDIAN 0)
+endif()
 
 ##########################################################
 
