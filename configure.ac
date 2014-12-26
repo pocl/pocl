@@ -913,7 +913,7 @@ case $host_cpu in
          HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=soft -I"$SYSROOTDIR"/usr/include "
          HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=soft"
          HOST_AS_FLAGS="$HOST_AS_FLAGS -mcpu=$llc_host_cpu -mfloat-abi=soft"
-         HOST_LD_FLAGS="$HOST_LD_FLAGS -L/system/lib/ -shared ";;
+         HOST_LD_FLAGS="$HOST_LD_FLAGS -L/system/lib/ -shared -ldl -lc -lm /system/lib/crtbegin_so.o /system/lib/crtend_so.o";;
       armv7l*gnueabihf)
          llc_triple="armv7-unknown-linux-gnueabihf"
          HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=hard"
@@ -1173,13 +1173,13 @@ AC_COMPILE_IFELSE(
 
 if test "$ANDROID_PRESENT" == ok;
 then
-AC_DEFINE([ANDROID], [1], [Defined to 1 if compiling for Android])
-AC_DEFINE([ANDROID_POCL_PREFIX],
+AC_DEFINE([POCL_ANDROID], [1], [Defined to 1 if compiling for Android])
+AC_DEFINE([POCL_ANDROID_PREFIX],
                    ["/data/data/org.pocl.libs/files"],
                    [Directory  where pocl files are installed in android])
 
 fi
-AM_CONDITIONAL([ANDROID], [test "$ANDROID_PRESENT" = ok])
+AM_CONDITIONAL([POCL_ANDROID], [test "$ANDROID_PRESENT" = ok])
 
 # Check if CellSPU support is found
 # The libspe version requirement is not strict. This is the only one tested.

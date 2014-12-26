@@ -24,7 +24,7 @@
 
 SUBDIRS = include lib
 
-if !ANDROID
+if !POCL_ANDROID
 SUBDIRS += scripts examples tests
 endif
 

@@ -139,7 +139,7 @@ pocl_create_program_cache_dir(cl_program program)
     }
   else
     {
-#ifdef ANDROID
+#ifdef POCL_ANDROID
       snprintf(cache_path, CACHE_DIR_PATH_CHARS,
                   "/data/data/%s/cache/", pocl_get_process_name());
 

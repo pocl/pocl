@@ -751,7 +751,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   kernel->reqd_wg_size[1] = reqdy;
   kernel->reqd_wg_size[2] = reqdz;
   
-#ifndef ANDROID
+#ifndef POCL_ANDROID
   // Generate the kernel_obj.c file. This should be optional
   // and generated only for the heterogeneous devices which need
   // these definitions to accompany the kernels, for the launcher
