@@ -176,7 +176,6 @@ AT_CLEANUP
 POAT_VCL_SETUP([vector_double-test-opencl])
 #fails with "Could not find a dominating alternative variable"
 #Note: uncomment a few other tests if fixing this
-AT_XFAIL_IF([true])
 POAT_VCL_CHECK_RUN(tests/vector_double-test-opencl)
 AT_CLEANUP
 

@@ -165,8 +165,6 @@ AT_CHECK_UNQUOTED([make test_DeviceFission11Ext -sC $abs_top_builddir/examples/A
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([dwthaar1d])
-# Failed (verification error). 
-AT_XFAIL_IF(true)
 AT_CHECK_UNQUOTED([make test_DwtHaar1D -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])
