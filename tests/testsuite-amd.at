@@ -97,6 +97,9 @@ AT_CHECK_UNQUOTED([make test_DeviceFission -sC $abs_top_builddir/examples/AMD | 
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([dwthaar1d])
+# 3.5 introduced the noduplicate attribute which, when
+# used with barrier(), fixes this.
+AT_XFAIL_IF([egrep -q "#define LLVM_3_4" $abs_top_builddir/config.h])
 AT_CHECK_UNQUOTED([make test_DwtHaar1D -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
