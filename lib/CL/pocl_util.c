@@ -151,9 +151,9 @@ pocl_create_program_cache_dir(cl_program program)
       tmp_path = getenv("HOME");
 
       if (tmp_path)
-        snprintf(cache_path, CACHE_DIR_PATH_CHARS, "%s/.pocl/%s", tmp_path, hash_str);
+        snprintf(cache_path, CACHE_DIR_PATH_CHARS, "%s/.pocl/kcache/%s", tmp_path, hash_str);
       else
-        snprintf(cache_path, CACHE_DIR_PATH_CHARS, "/tmp/pocl/%s", hash_str);
+        snprintf(cache_path, CACHE_DIR_PATH_CHARS, "/tmp/pocl/kcache/%s", hash_str);
 #endif
     }
 
