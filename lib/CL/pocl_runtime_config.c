@@ -40,7 +40,7 @@ struct env_data
 };
 
 static env_data *volatile env_cache = 0;
-static pocl_lock_t lock = PTHREAD_MUTEX_INITIALIZER;
+static pocl_lock_t lock = POCL_LOCK_INITIALIZER;
 
 env_data* find_env (env_data* cache, const char* key)
 {

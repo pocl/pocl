@@ -426,7 +426,7 @@ char* pocl_get_process_name ()
 }
 
 static int cache_lock_initialized = 0;
-static pocl_lock_t cache_lock = PTHREAD_MUTEX_INITIALIZER;
+static pocl_lock_t cache_lock = POCL_LOCK_INITIALIZER;
 
 void
 pocl_check_and_invalidate_cache (cl_program program,
