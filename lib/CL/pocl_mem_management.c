@@ -60,7 +60,7 @@ cl_event pocl_mem_manager_new_event ()
 {
   cl_event ev = NULL;
   POCL_LOCK (mm->event_lock);
-  if (ev = mm->event_list)
+  if ((ev = mm->event_list))
     {
       LL_DELETE (mm->event_list, ev);
       POCL_UNLOCK (mm->event_lock);
@@ -87,7 +87,7 @@ _cl_command_node* pocl_mem_manager_new_command ()
 {
   _cl_command_node *cmd = NULL;
   POCL_LOCK (mm->cmd_lock);
-  if (cmd = mm->cmd_list)
+  if ((cmd = mm->cmd_list))
     LL_DELETE (mm->cmd_list, cmd);
   POCL_UNLOCK (mm->cmd_lock);
   

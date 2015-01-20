@@ -56,7 +56,7 @@ env_data* find_env (env_data* cache, const char* key)
           return ed;
         }
     }
-  if (value = getenv(key))
+  if ((value = getenv(key)))
     {
       ed = (env_data*) malloc (sizeof (env_data));
       ed->env = strdup (key);
@@ -88,7 +88,7 @@ int pocl_get_int_option(const char *key, int default_value)
 int pocl_get_bool_option(const char *key, int default_value) 
 {
   env_data *ed;
-  if (ed = find_env(env_cache, key)) 
+  if ((ed = find_env(env_cache, key))) 
     return (strncmp(ed->value, "1", 1) == 0);
   return default_value;
 }

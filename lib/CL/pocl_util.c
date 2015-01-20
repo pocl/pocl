@@ -457,7 +457,7 @@ pocl_check_and_invalidate_cache (cl_program program,
           if ((*s_ptr) == '#')
             {
               /* Skip all the white-spaces between # & include */
-              for (ss_ptr = s_ptr+1; (*ss_ptr == ' '); ss_ptr++) ;
+              for (ss_ptr = s_ptr+1; *ss_ptr == ' '; ss_ptr++) ;
               
               if (strncmp(ss_ptr, "include", 7) == 0)
                 cache_dirty = 1;

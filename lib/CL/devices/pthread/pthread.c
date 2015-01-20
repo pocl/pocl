@@ -141,7 +141,7 @@ static thread_arguments* new_thread_arguments ()
 {
   thread_arguments *ta = NULL;
   POCL_LOCK (ta_pool_lock);
-  if (ta = thread_argument_pool)
+  if ((ta = thread_argument_pool))
     {
       LL_DELETE (thread_argument_pool, ta);
       POCL_UNLOCK (ta_pool_lock);
