@@ -24,18 +24,18 @@ A checklist and hints for testing and making a release successfully:
 * Set the correct version number without -pre or -rc in the release branch 
   (configure.ac). Increment the version in the master branch. Do not include
   an -rcX in the revision number in the source base so it is possible to 
-  release the approved release candidate tar ball by just renaming the tar 
+  release an approved release candidate tar ball by just renaming the tar 
   ball file name.
-* Update the new dynamic library version in the master branch. Also done in 
-  configure.ac.
+* Update the new dynamic library version in the *master* branch. This 
+  can be done in configure.ac.
   Search for "4:0:3" to see the place where it's set. It includes more info
   in comments.
-* Check that CHANGES has the most important updates done during the release 
+* Check that CHANGES has the most interesting updates done during the release 
   cycle. Add missing notable changes from git log.
 * Disallow support for the unreleased LLVM version from the release branch 
-  because it will most likely stop working before the new LLVM is released.
-  That is, modify configure.ac in the release branch to not allow the 
-  currently unreleased development version of LLVM.
+  because it will most likely stop working before the new LLVM is released
+  because LLVM API lives.  That is, modify configure.ac in the release branch to not 
+  allow the currently unreleased development version of LLVM.
 * Update the release notes in *doc/notes-VERNUM.txt*.
 * Create and test the tar ball package with 'make distcheck'. It
   creates a package with pocl-versionstring.tar.gz by default. For
@@ -46,7 +46,8 @@ A checklist and hints for testing and making a release successfully:
 * Request for testers in Twitter and/or mailing list. Point the testers to
   send their test reports to you privately or by adding them to the wiki.
   A good way is to create a wiki page for the release schedule and a test
-  log. 
+  log. See https://github.com/pocl/pocl/wiki/pocl-0.10-release-testing for 
+  an example.
 * To publish a release, after testing it thoroughly, rename the latest RC
   tar ball to omit the rcX tag, e.g.,
   pocl-0.10.tar.gz. Upload the tar ball to the sourceforge download page and 
@@ -54,13 +55,13 @@ A checklist and hints for testing and making a release successfully:
 * Update the CHANGES and ANNOUNCEMENT text files in these directories. 
   ANNOUNCEMENT is a copy of the latest release notes. A direct link to it can 
   be easily circulated in IRC, for example.
-* Update the web page with the release information.
-* Announce everywhere you can. At least in Twitter and the mailing list.
+* Update the http://portablecl.org web page with the release information.
+* Advertise everywhere you can. At least in Twitter and the mailing list.
 
 In case of any problems, ask any previous release manager for help.
 Previous releases were managed by the following pocl developers:
 
+* 0.10: Pekka Jääskeläinen
 * 0.9: Kalle Raiskila
 * 0.8: Erik Schnetter
 * 0.6 and 0.7: Pekka Jääskeläinen
-
