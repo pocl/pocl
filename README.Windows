@@ -2,12 +2,13 @@
 
 ## Dependencies:
 
-- Visual Studio Express 2013
+- Visual Studio 2013
 - Git and Git bash http://git-scm.com/downloads
-- CMake 2.8 http://www.cmake.org/download/
+- CMake 2.8 or newer http://www.cmake.org/download/
+- Python 2.7 for LLVM
 - Pthreads-win32 binary distribution https://www.sourceware.org/pthreads-win32/
 - Hwloc for Windows x64 binary distribution http://www.open-mpi.org/software/hwloc/v1.10/ 
-- LLVM + Clang 3.5 sources
+- LLVM + Clang latest release sources
 
 ## Support:
 
@@ -16,39 +17,20 @@
 - No VML (no stdcxxlib finding done for windows)
 - Static compilation
 
-## Install and compile LLVM and Clang somewhere in path without spaces in directory name
+## Building
 
-In git bash
+There is shell script in `pocl/windows/setup_and_build_win64.sh`
 
-    mkdir /c/opt/
-    cd /c/opt
-    git clone llvm
-    cd tools
-    git clone clang
-    mkdir /c/opt/build-llvm
-    cd /c/opt/build-llvm
-    cmake -G "Visual Studio 12 Win64" ../llvm -DPREFIX
+Shell script may be ran in `Git Bash` and it downloads and installs pocl and all the
+library dependencies and builds them to `/c/pocl-playground`.
 
-## Unpack library dependencies
+To download and build everything without first fetching pocl repository one can do simply:
 
-    cd /c/opt/
-    curl ...
-    curl ...
-    unzip hwloc
-    unzip pthreads-win32
+    curl https://raw.githubusercontent.com/pocl/master/windows/setup_and_build_win64.sh | sh
 
-## Get pocl sources and compile
+Script requires following software installed on Windows 7 or later (64bit only):
 
-    cd /c/opt
-    git clone pocl
-    mkdir /c/opt/build-pocl
-    cd /c/opt/build-pocl
-    export PATH=$PATH:/c/opt/llvm-build/MinSizeRel/bin
-    Hwloc_ROOT=../hwloc-win64-build-1.9/ Pthreads_ROOT=../pthreads-win32/ cmake —DSTATIC_LLVM=ON -DDEFAULT_ENABLE_ICD=OFF -DCMAKE_INSTALL_PREFIX:PATH=$PWD/../install-pocl -G "Visual Studio 12 Win64" ../pocl/
-    # open generated solution file in Visual Studio or build from command line
-
-## Run test suite
-
-   cd /c/opt/build-pocl
-   ctest -j8
-
+- Visual Studio 2013 (e.g. community edition)
+- Cmake 2.8 or later (must be added to PATH)
+- Git + Git Bash
+- Python 2.7 for compiling LLVM
