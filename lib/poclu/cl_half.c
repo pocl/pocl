@@ -2,6 +2,7 @@
 
    Copyright (c) 2013 Pekka Jääskeläinen / Tampere University of Technology
                       Timo Viitanen / Tampere University of Technology
+   Copyright (c) 2015 Matias Koskela / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -35,7 +36,7 @@ typedef union
 } FloatConvUnion;
 
 cl_half
-poclu_float_to_cl_half(float value) 
+poclu_float_to_cl_half_fast(float value) 
 {
   FloatConvUnion u;
   u.f = value;
@@ -43,7 +44,112 @@ poclu_float_to_cl_half(float value)
   half |=(u.i & 0x07800000) >> 13;
   half |=(u.i & 0x40000000) >> 16;
   half |=(u.i & 0x80000000) >> 16;
-  // TODO saturate overflows to inf
+  return half;
+}
+
+// The idea behind these float to half functions is from:
+// http://gamedev.stackexchange.com/a/17410
+cl_half 
+poclu_float_to_cl_half(float value) 
+{
+  FloatConvUnion u;
+  u.f = value;
+  cl_half half = (u.i >> 16) & 0x8000; // sign
+  cl_half fraction = (u.i >> 12) & 0x007ff; // fraction with extra bit for rounding
+  cl_half exponent = (u.i >> 23)  & 0xff; // exponent
+  
+  if(exponent < 0x0067) // Return signed zero if zero or value is too small for denormal half
+    return half;
+
+  if(exponent > 0x008e){// value was NaN or Inf
+    half |= 0x7c00u; // Make into inf
+    half |= exponent == 255 && (u.i & 0x007fffffu); // If value was NaN make this into NaN
+    return half;
+  }
+
+  if(exponent < 0x0071){// Denormal
+    fraction |= 0x0800u;
+
+    // rounding
+    half |= (fraction >> (0x0072 - exponent)) + ((fraction >> (0x0071 - exponent)) & 1);
+    return half;
+  }
+
+  half |= ((exponent - 0x0070) << 10) | (fraction >> 1);
+  half += fraction & 1;// rounding
+  return half;
+}
+
+cl_half
+poclu_float_to_cl_half_ceil(float value) 
+{
+  FloatConvUnion u;
+  u.f = value;
+  cl_half half = (u.i >> 16) & 0x8000; // sign
+  int negative = half;
+  cl_half fraction = (u.i >> 13) & 0x003ff;
+  int32_t fractionLeftOver =  u.i & 0x00001fff;
+  cl_half exponent = (u.i >> 23)  & 0xff; // exponent
+  
+  if(exponent < 0x0067) // Return signed zero if zero or too small denormal for half
+    return half;
+
+  if(exponent > 0x008e){// value was NaN or Inf
+    half |= 0x7c00u; // Make into inf
+    half |= exponent == 255 && (u.i & 0x007fffffu); // If value was NaN make this into NaN
+    return half;
+  }
+
+  if(exponent < 0x0071){// Denormal
+    fraction |= 0x0400u;
+    fraction >>= 0x0071 - exponent;
+    if(!negative && fractionLeftOver)
+      fraction += 1; // Round up
+
+    half |=fraction;
+    return half;
+  }
+
+  half |= ((exponent - 0x0070) << 10) | fraction;
+  if(!negative && fractionLeftOver)
+    half += 1; // Round up
+
+  return half;
+}
+
+cl_half
+poclu_float_to_cl_half_floor(float value) 
+{
+  FloatConvUnion u;
+  u.f = value;
+  cl_half half = (u.i >> 16) & 0x8000; // sign
+  int negative = half;
+  cl_half fraction = (u.i >> 13) & 0x003ff;
+  int32_t fractionLeftOver =  u.i & 0x00001fff;
+  cl_half exponent = (u.i >> 23)  & 0xff; // exponent
+  
+  if(exponent < 0x0067) // Return signed zero if zero or too small denormal for half
+    return half;
+
+  if(exponent > 0x008e){// value was NaN or Inf
+    half |= 0x7c00u; // Make into inf
+    half |= exponent == 255 && (u.i & 0x007fffffu); // If value was NaN make this into NaN
+    return half;
+  }
+
+  if(exponent < 0x0071){// Denormal
+    fraction |= 0x0400u;
+    fraction >>= 0x0071 - exponent;
+    if(negative && fractionLeftOver)
+      fraction += 1; // Round up
+    half |=fraction;
+    return half;
+  }
+
+  half |= ((exponent - 0x0070) << 10) | fraction;
+  if(negative && fractionLeftOver)
+    half += 1; // Round up
+
   return half;
 }
 
