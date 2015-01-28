@@ -44,18 +44,7 @@ endif ()
 
 #AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_builddir)/include -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL -DSRCDIR='"$(abs_srcdir)"'
 add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
-
-if (!MSVC)
-  include_directories("${CMAKE_SOURCE_DIR}/fix-include")
-endif ()
-
-include_directories(
-  "${CMAKE_SOURCE_DIR}/include" 
-  "${CMAKE_SOURCE_DIR}/lib/CL" 
-)
-
-#TODO some quirk required ?
-#AM_DEFAULT_SOURCE_EXT = .cpp
+include_directories("${CMAKE_SOURCE_DIR}/lib/CL")
 
 foreach(PROG ${PROGRAMS_TO_BUILD})
   add_executable("${PROG}" "${PROG}.cpp")
