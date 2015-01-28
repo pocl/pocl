@@ -45,17 +45,13 @@
 
 
 
-#cmakedefine HAVE_OCL_ICD
-
 #cmakedefine HAVE_CLOCK_GETTIME
 
-
-
+#cmakedefine HAVE_OCL_ICD
 
 /* Defined if posix_memalign is available. */
 #cmakedefine HAVE_POSIX_MEMALIGN
 
-#cmakedefine HAVE_CLOCK_GETTIME
 
 
 
@@ -85,9 +81,11 @@
 /* "Using LLVM 3.4" */
 #cmakedefine LLVM_3_4
 
-/* "Using upcoming LLVM 3.5" */
+/* "Using LLVM 3.5" */
 #cmakedefine LLVM_3_5
 
+/* "Using LLVM 3.6" */
+#cmakedefine LLVM_3_6
 
 
 /* Defined to greatest expected alignment for extended types, in bytes. */
