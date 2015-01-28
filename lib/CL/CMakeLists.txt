@@ -136,12 +136,12 @@ add_library("libpocl_unlinked_objs" OBJECT ${POCL_LIB_SOURCES})
 #################################################################
 
 if (MSVC)
-  set(POCL_PUBLIC_LINK_LIST ${Hwloc_LIBRARIES} ${Pthreads_LIBRARIES} ${POCL_DEVICES_LINK_LIST})
+  set(POCL_PUBLIC_LINK_LIST ${Pthreads_LIBRARIES} ${POCL_DEVICES_LINK_LIST} ${LLVM_SYSLIBS})
 else()
-  set(POCL_PUBLIC_LINK_LIST ${Hwloc_LIBRARIES} ${GETTIME_LIBRARIES} "${LTDL_LIB}" ${CMAKE_THREAD_LIBS_INIT} ${POCL_DEVICES_LINK_LIST})
+  set(POCL_PUBLIC_LINK_LIST ${GETTIME_LIBRARIES} "${LTDL_LIB}" ${CMAKE_THREAD_LIBS_INIT} ${POCL_DEVICES_LINK_LIST} ${LLVM_SYSLIBS})
 endif()
 
-set(POCL_PRIVATE_LINK_LIST ${CLANG_LIB_NAMES} ${POCL_LLVM_LIBS} ${LLVM_SYSLIBS})
+set(POCL_PRIVATE_LINK_LIST ${CLANG_LIB_NAMES} ${POCL_LLVM_LIBS})
 
 #################################################################
 

@@ -26,6 +26,7 @@
 add_subdirectory("pthread")
 add_subdirectory("basic")
 add_subdirectory("topology")
+set(POCL_DEVICES_LINK_LIST ${Hwloc_LIBRARIES})
 
 set(POCL_DEVICES_OBJS "$<TARGET_OBJECTS:pocl-devices>"
       "$<TARGET_OBJECTS:pocl-devices-pthread>"
