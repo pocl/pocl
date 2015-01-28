@@ -516,7 +516,9 @@ if(NOT LLVM_CXXFLAGS MATCHES "-DNDEBUG")
     "Test -NDEBUG flag: ${_TRY_COMPILE_OUTPUT}\n")
 
   if(_TRY_SUCCESS)
-    message(STATUS "no assertions... adding -DNDEBUG")
+    message(STATUS "assertions present")
+  else()
+    message(STATUS "no assertions.. adding -DNDEBUG")
     set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -DNDEBUG")
   endif()
 
