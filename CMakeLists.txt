@@ -230,6 +230,10 @@ int main() {
   return 0;
 }
 " HAVE_CLOCK_GETTIME)
+# -lrt is required for glibc < 2.17
+if(HAVE_CLOCK_GETTIME)
+  set(GETTIME_LIBRARIES "rt")
+endif()
 
 ######################################################################################
 
