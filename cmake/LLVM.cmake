@@ -36,10 +36,11 @@ else()
   # search for any version
   find_program(LLVM_CONFIG
     NAMES "llvm-config"
+      "llvm-config-mp-3.2" "llvm-config-3.2" "llvm-config32"
       "llvm-config-mp-3.3" "llvm-config-3.3" "llvm-config33"
       "llvm-config-mp-3.4" "llvm-config-3.4" "llvm-config34"
       "llvm-config-mp-3.5" "llvm-config-3.5" "llvm-config35"
-      "llvm-config-mp-3.2" "llvm-config-3.2" "llvm-config32"
+      "llvm-config-mp-3.6" "llvm-config-3.6" "llvm-config36"
     DOC "llvm-config executable")
 endif()
 
@@ -120,9 +121,7 @@ endif(WIN32)
 if(LLVM_VERSION MATCHES "3[.]([0-9]+)")
   string(STRIP "${CMAKE_MATCH_1}" LLVM_MINOR)
   message(STATUS "Minor llvm version: ${LLVM_MINOR}")
-  if(LLVM_MINOR STREQUAL "1")
-    set(LLVM_3_1 1)
-  elseif(LLVM_MINOR STREQUAL "2")
+  if(LLVM_MINOR STREQUAL "2")
     set(LLVM_3_2 1)
   elseif(LLVM_MINOR STREQUAL "3")
     set(LLVM_3_3 1)
@@ -130,9 +129,13 @@ if(LLVM_VERSION MATCHES "3[.]([0-9]+)")
     set(LLVM_3_4 1)
   elseif(LLVM_MINOR STREQUAL "5")
     set(LLVM_3_5 1)
+  elseif(LLVM_MINOR STREQUAL "6")
+    set(LLVM_3_6 1)
   else()
-    message(WARNING "Unknown minor llvm version.")
+    message(FATAL_ERROR "Unknown/unsupported minor llvm version: ${LLVM_MINOR}")
   endif()
+else()
+  message(FATAL_ERROR "LLVM version 3.x required, found: ${LLVM_VERSION}")
 endif()
 
 ####################################################################
@@ -189,8 +192,16 @@ list(APPEND CLANG_LIB_NAMES
   clangStaticAnalyzerFrontend 
   clangStaticAnalyzerCore 
   clangAnalysis 
-  clangCodeGen 
+  clangCodeGen
   clangAST)
+
+if(LLVM_3_6)
+  list(APPEND CLANG_LIB_NAMES clangToolingCore)
+endif()
+
+list(APPEND CLANG_LIB_NAMES
+  clangASTMatchers
+  clangBasic)
 
 # Strip -l from LLVM libnames to use list e.g. for windows build
 foreach(LIBFLAG ${LLVM_LIBS})
