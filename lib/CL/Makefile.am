@@ -148,7 +148,11 @@ libpocl_la_LIBADD += ${LTDL_LIBS}
 
 # The POCL_DEBUG output requires the clock_gettime and older glibs
 # have it in a separate lib.
+# Mac doesnt have lrt, or clock_gettime
+
+if HAVE_CLOCK_GETTIME
 libpocl_la_LIBADD += -lrt
+endif
 
 if BUILD_SPU
 libpocl_la_LIBADD += -lspe2

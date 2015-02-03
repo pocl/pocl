@@ -624,8 +624,10 @@ AC_COMPILE_IFELSE(
     [ struct timespec pocl_debug_timespec; clock_gettime(CLOCK_REALTIME, &pocl_debug_timespec); ]
   )],
   [AC_MSG_RESULT(yes)
-   AC_DEFINE([HAVE_CLOCK_GETTIME], [1], [Have clock_gettime])],
-  [AC_MSG_RESULT(no)]
+   AC_DEFINE([HAVE_CLOCK_GETTIME], [1], [Have clock_gettime])
+   AM_CONDITIONAL([HAVE_CLOCK_GETTIME], true)],
+  [AC_MSG_RESULT(no)
+   AM_CONDITIONAL([HAVE_CLOCK_GETTIME], false)]
 )
 
 # Enable debug message output when the env POCL_DEBUG=1 is set.
