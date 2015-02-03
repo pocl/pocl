@@ -130,8 +130,7 @@ if(WIN32)
     set(Hwloc_CFLAGS "${Hwloc_CFLAGS} /I${arg}")
   endforeach()
 
-  GET_FILENAME_COMPONENT(Hwloc_LIBRARY_DIRS ${Hwloc_LIBRARY} PATH)
-  set(Hwloc_LDFLAGS "/L${Hwloc_LIBRARY_DIRS}")
+  set(Hwloc_LDFLAGS "${Hwloc_LIBRARY}")
 
 else()
 
