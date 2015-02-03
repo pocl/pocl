@@ -138,10 +138,15 @@ add_library("libpocl_unlinked_objs" OBJECT ${POCL_LIB_SOURCES})
 if (MSVC)
   set(POCL_PUBLIC_LINK_LIST ${Pthreads_LIBRARIES} ${POCL_DEVICES_LINK_LIST} ${LLVM_SYSLIBS})
 else()
-  set(POCL_PUBLIC_LINK_LIST ${GETTIME_LIBRARIES} "${LTDL_LIB}" ${CMAKE_THREAD_LIBS_INIT} ${POCL_DEVICES_LINK_LIST} ${LLVM_SYSLIBS})
+  set(POCL_PUBLIC_LINK_LIST "${LTDL_LIB}" ${CMAKE_THREAD_LIBS_INIT} ${POCL_DEVICES_LINK_LIST} ${LLVM_SYSLIBS})
 endif()
 
 set(POCL_PRIVATE_LINK_LIST ${CLANG_LIB_NAMES} ${POCL_LLVM_LIBS})
+
+# -lrt is required for glibc < 2.17
+if(HAVE_CLOCK_GETTIME)
+  list(APPEND POCL_PUBLIC_LINK_LIST "rt")
+endif()
 
 #################################################################
 
