@@ -425,18 +425,18 @@ if(CLANGXX)
   if(NOT DEFINED ${CACHE_VAR_NAME})
     set(CLANGXX_WORKS 0)
 
-    custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL)
+    custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream> \n  #include <type_traits>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL)
 
     if(NOT _STATUS_FAIL)
       set(CLANGXX_STDLIB "")
       set(CLANGXX_WORKS 1)
     else()
-      custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL "-stdlib=libstdc++")
+      custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream> \n  #include <type_traits>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL "-stdlib=libstdc++")
       if (NOT _STATUS_FAIL)
         set(CLANGXX_STDLIB "-stdlib=libstdc++")
         set(CLANGXX_WORKS 1)
       else()
-        custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL "-stdlib=libc++")
+        custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream> \n  #include <type_traits>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL "-stdlib=libc++")
         if(NOT _STATUS_FAIL)
           set(CLANGXX_STDLIB "-stdlib=libc++")
           set(CLANGXX_WORKS 1)
@@ -451,6 +451,11 @@ else()
 
   set(CLANGXX_WORKS 0)
 
+endif()
+
+if(CLANGXX_STDLIB AND (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
+  set(LLVM_CXXFLAGS "${CLANGXX_STDLIB} ${LLVM_CXXFLAGS}")
+  set(LLVM_LDFLAGS "${CLANGXX_STDLIB} ${LLVM_LDFLAGS}")
 endif()
 
 ####################################################################
