@@ -71,7 +71,7 @@ add_library("llvmopencl" MODULE "$<TARGET_OBJECTS:llvmpasses>")
 # not sure where other platforms get their library linkage list, probably there is
 # way to make this more consistent on different platforms
 if(MSVC)
-  target_link_libraries("llvmopencl" "${POCL_LLVM_LIBS}")
+  target_link_libraries("llvmopencl" ${POCL_LLVM_LIBS})
 endif(MSVC)
 
 #target_link_libraries("llvmopencl" "${LLVM_SYSLIBS}")

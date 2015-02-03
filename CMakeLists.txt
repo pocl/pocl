@@ -302,24 +302,18 @@ option(STATIC_LLVM "Link LLVM statically. Default is dynamic." OFF)
 
 if(STATIC_LLVM)
   message(STATUS "Linking LLVM statically")
-  # Using LLVM_LIB_NAMES should work on every platform, but for now used only on MSVC to avoid 
-  # possibility of regression
-  if (MSVC)
-    set(POCL_LLVM_LIBS "${LLVM_LIB_NAMES}")
-  else()
-    set(POCL_LLVM_LIBS "${LLVM_LIBFILES}")
-  endif()
+  set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
 else()
   message(STATUS "Trying to link LLVM dynamically")
   set(POCL_LLVM_LIBS "-lLLVM-${LLVM_VERSION}")
-  # in
-  find_library(LLVM_SHARED_LIB_FILE "LLVM-${LLVM_VERSION}" PATHS "${LLVM_LIBDIR}" NO_DEFAULT_PATH)
+  find_library(LLVM_SHARED_LIB_FILE "LLVM-${LLVM_VERSION}" HINTS "${LLVM_LIBDIR}")
   if(LLVM_SHARED_LIB_FILE AND EXISTS "${LLVM_SHARED_LIB_FILE}")
     message(STATUS "..using ${LLVM_SHARED_LIB_FILE}")
+    set(POCL_LLVM_LIBS "${LLVM_SHARED_LIB_FILE}")
   else()
-    set(POCL_LLVM_LIBS "${LLVM_LIBS}")
     message(STATUS "LLVM-${LLVM_VERSION} library not found (Probably because LLVM is built with cmake).
-    Linking libpocl (possibly statically) to LLVM_LIBS")
+    Linking libpocl (possibly statically) to LLVM_LIBFILES")
+    set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
   endif()
 endif()
 
