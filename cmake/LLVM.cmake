@@ -94,7 +94,8 @@ run_llvm_config(LLVM_BINDIR --bindir)
 run_llvm_config(LLVM_LIBDIR --libdir)
 run_llvm_config(LLVM_INCLUDEDIR --includedir)
 run_llvm_config(LLVM_LIBS --libs)
-run_llvm_config(LLVM_LIBFILES --libfiles)
+# Convert LLVM_LIBS from string -> list format to make handling them easier
+separate_arguments(LLVM_LIBS)
 run_llvm_config(LLVM_SRC_ROOT --src-root)
 run_llvm_config(LLVM_OBJ_ROOT --obj-root)
 run_llvm_config(LLVM_ALL_TARGETS --targets-built)
@@ -170,12 +171,6 @@ list(APPEND LLVM_INCLUDE_DIRS
   "${LLVM_OBJ_ROOT}/include" 
   "${LLVM_OBJ_ROOT}/tools/clang/include")
 
-# Convert LLVM_LIBFILES and LLVM_LIBS from string -> list format to make handling 
-# them easier (here we could also fix some parsing problems caused by spaces in path 
-# names in Windows)
-
-separate_arguments(LLVM_LIBFILES)
-separate_arguments(LLVM_LIBS)
 # Llvm-config does not include clang libs
 set(CLANG_LIBNAMES clangFrontendTool clangFrontend clangDriver clangSerialization clangCodeGen clangParse clangSema)
 if(LLVM_MINOR GREATER 4)
@@ -183,25 +178,23 @@ if(LLVM_MINOR GREATER 4)
 endif()
 list(APPEND CLANG_LIBNAMES clangRewriteFrontend clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers clangStaticAnalyzerCore clangARCMigrate clangAnalysis clangEdit clangAST clangLex clangBasic)
 
-list(APPEND CLANG_LIB_NAMES
-  clangASTMatchers
-  clangBasic)
-
-# Strip -l from LLVM libnames to use list e.g. for windows build
-foreach(LIBFLAG ${LLVM_LIBS})
-  STRING(REGEX REPLACE "^-l(.*)$" "\\1" LIB_NAME ${LIBFLAG})
-  list(APPEND LLVM_LIB_NAMES "${LIB_NAME}")
+foreach(LIBNAME ${CLANG_LIBNAMES})
+  find_library(C_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
+  list(APPEND CLANG_LIBFILES "${C_LIBFILE_${LIBNAME}}")
 endforeach()
 
 # With Visual Studio llvm-config gives invalid list of static libs (libXXXX.a instead of XXXX.lib)
-if (MSVC)
-  SET(LLVM_MSVC_STATIC_LIB_LIST "")
-  foreach(LIBFILE ${LLVM_LIBFILES})
-    STRING(REGEX REPLACE "^(.*/)lib(.*)\\.a$" "\\1\\2.lib" STATIC_LIB_NAME ${LIBFILE})
-    list(APPEND LLVM_MSVC_STATIC_LIB_LIST "${STATIC_LIB_NAME}")
-  endforeach()
-  set(LLVM_LIBFILES ${LLVM_MSVC_STATIC_LIB_LIST})
-endif(MSVC)
+# we extract the pure names (LLVMLTO, LLVMMipsDesc etc) and let find_library do its job
+foreach(LIBFLAG ${LLVM_LIBS})
+  STRING(REGEX REPLACE "^-l(.*)$" "\\1" LIB_NAME ${LIBFLAG})
+  list(APPEND LLVM_LIBNAMES "${LIB_NAME}")
+endforeach()
+
+foreach(LIBNAME ${LLVM_LIBNAMES})
+  find_library(L_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
+  list(APPEND LLVM_LIBFILES "${L_LIBFILE_${LIBNAME}}")
+endforeach()
+
 
 ####################################################################
 
