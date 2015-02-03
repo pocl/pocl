@@ -669,11 +669,11 @@ pocl_basic_read_rect (void *data,
 {
   char const *__restrict const adjusted_device_ptr = 
     (char const*)device_ptr +
-      buffer_origin[2] * buffer_slice_pitch + buffer_origin[1] * buffer_row_pitch + buffer_origin[0];
+    buffer_origin[2] * buffer_slice_pitch + buffer_origin[1] * buffer_row_pitch + buffer_origin[0];
   char *__restrict__ const adjusted_host_ptr = 
     (char*)host_ptr +
-      host_origin[2] * host_slice_pitch + host_origin[1] * host_row_pitch + host_origin[0];
-
+    host_origin[2] * host_slice_pitch + host_origin[1] * host_row_pitch + host_origin[0];
+  
   size_t j, k;
   
   /* TODO: handle overlaping regions */
