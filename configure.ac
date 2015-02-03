@@ -88,6 +88,7 @@ LLVM_LIBDIR=`$LLVM_CONFIG --libdir`
 LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
 # Whether we can use our own printf implementation
 NEW_PRINTF_WORKS=true
+LLVM_3_6=false
 
 AC_SUBST([LLVM_VERSION], [$LLVM_VERSION])
 
@@ -121,7 +122,7 @@ Unsupported LLVM version. Please use LLVM version 3.2, 3.3, 3.4, 3.5 or 3.6.
    ;;
 esac
 
-AM_CONDITIONAL([LLVM_3_6], [test "x$LLVM_3_6" = "xyes"])
+AM_CONDITIONAL([LLVM_3_6], [test "x$LLVM_3_6" = "xtrue"])
 
 AC_SUBST([LLVM_LDFLAGS], [$LLVM_LDFLAGS], [llvm-config returned ldflags])
 AM_CONDITIONAL([NEW_PRINTF_WORKS], $NEW_PRINTF_WORKS)
