@@ -170,10 +170,6 @@ if("${LLVM_VERSION}" VERSION_LESS "3.2")
   message(FATAL_ERROR "POCL requires LLVM version >= 3.2 !")
 endif()
 
-include_directories("${LLVM_INCLUDE_DIRS}")
-link_directories(${LLVM_LIBDIR})
-
-
 ######################################################################################
 
 # if variable FEATURE_X isnt defined, sets it to DEFAULT_FEATURE_X;
