@@ -177,27 +177,11 @@ list(APPEND LLVM_INCLUDE_DIRS
 separate_arguments(LLVM_LIBFILES)
 separate_arguments(LLVM_LIBS)
 # Llvm-config does not include clang libs
-
-list(APPEND CLANG_LIB_NAMES 
-  clangFrontend 
-  clangDriver 
-  clangParse 
-  clangSema 
-  clangEdit 
-  clangLex 
-  clangSerialization 
-  clangBasic 
-  clangFrontendTool 
-  clangRewriteFrontend 
-  clangStaticAnalyzerFrontend 
-  clangStaticAnalyzerCore 
-  clangAnalysis 
-  clangCodeGen
-  clangAST)
-
-if(LLVM_3_6)
-  list(APPEND CLANG_LIB_NAMES clangToolingCore)
+set(CLANG_LIBNAMES clangFrontendTool clangFrontend clangDriver clangSerialization clangCodeGen clangParse clangSema)
+if(LLVM_MINOR GREATER 4)
+  list(APPEND CLANG_LIBNAMES clangRewrite)
 endif()
+list(APPEND CLANG_LIBNAMES clangRewriteFrontend clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers clangStaticAnalyzerCore clangARCMigrate clangAnalysis clangEdit clangAST clangLex clangBasic)
 
 list(APPEND CLANG_LIB_NAMES
   clangASTMatchers
