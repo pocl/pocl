@@ -141,14 +141,17 @@ message(STATUS "Hwloc_CFLAGS ${Hwloc_CFLAGS}")
 
 find_program (PATCH_EXEC 
   NAMES patch patch.exe
+  HINTS ENV PATH
 )
 
 find_program (XARGS_EXEC 
   NAMES xargs xargs.exe
+  HINTS ENV PATH
 )
 
 find_program (CAT_EXEC 
   NAMES cat cat.exe
+  HINTS ENV PATH
 )
 
 if (!PATCH_EXEC)
