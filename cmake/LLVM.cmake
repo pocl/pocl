@@ -75,7 +75,7 @@ macro(run_llvm_config VARIABLE_NAME)
   if(LLVM_CONFIG_RETVAL)
     message(SEND_ERROR "Error running llvm-config with arguments: ${ARGN}")
   else()
-    message(STATUS "${VARIABLE_NAME} is ${${VARIABLE_NAME}}")
+    message(STATUS "llvm-config's ${VARIABLE_NAME} is: ${${VARIABLE_NAME}}")
   endif()
 endmacro(run_llvm_config)
 
@@ -157,7 +157,9 @@ string(REPLACE " -pedantic" "" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
 
 # - '-fno-rtti' is a work-around for llvm bug 14200
 #LLVM_CXX_FLAGS="$LLVM_CXX_FLAGS -fno-rtti"
-set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -fno-rtti")
+if(NOT MSVC)
+  set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -fno-rtti")
+endif()
 
 if(NOT LLVM_VERSION VERSION_LESS "3.5")
   run_llvm_config(LLVM_SYSLIBS --system-libs)
@@ -416,7 +418,8 @@ endmacro()
 # clangxx works check 
 #
 
-if(CLANGXX)
+# TODO clang + vecmathlib doesn't work on Windows yet...
+if(CLANGXX AND (NOT WIN32))
 
   message(STATUS "Checking if clang++ works (required by vecmathlib)")
 
