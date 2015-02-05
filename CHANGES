@@ -7,6 +7,8 @@ Highlights
 ----------
 - Kernel compiler cache.
 - Android support.
+- Experimental Windows support.
+- Initial support for MIPS architecture.
 
 Kernel compiler
 ---------------
