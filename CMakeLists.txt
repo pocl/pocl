@@ -28,7 +28,7 @@ cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 project(pocl)
 set(MAJOR_VERSION 0)
 set(MINOR_VERSION 11)
-set(VERSION_SUFFIX "-pre")
+set(VERSION_SUFFIX "")
 set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION}${VERSION_SUFFIX})
 set(POCL_VERSION ${VERSION_STRING})
 
@@ -862,7 +862,7 @@ endif()
 # 2:0:1 == 0.8 (currently backwards compatible with 0.7, thus age = 1).
 # 3:0:2 == 0.9 (currently backwards compatible with 0.7, thus age = 2).
 # 4:0:3 == 0.10 (currently backwards compatible with 0.7, thus age = 3).
-
+# 5:0:4 == 0.11 (currently backwards compatible with 0.7, thus age = 4).
 
 set(LIB_CURRENT_VERSION 5)
 set(LIB_REVISION_VERSION 0)
