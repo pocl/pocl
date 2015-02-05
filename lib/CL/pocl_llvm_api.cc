@@ -77,9 +77,13 @@
 #include <vector>
 #include <sstream>
 #include <string>
+#include <cstdio>
 
 #ifndef _MSC_VER
 #  include <unistd.h>
+#  include <sys/types.h>
+#  include <sys/stat.h>
+#  include <fcntl.h>
 #endif
 
 // Note - LLVM/Clang uses symbols defined in Khronos' headers in macros, 
@@ -762,9 +766,11 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   std::string kobj_s = descriptor_filename; 
   kobj_s += ".kernel_obj.c";
 
-  if(access(kobj_s.c_str(), F_OK) != 0)
+  int fd;
+  if ((fd = open(kobj_s.c_str(), (O_CREAT | O_EXCL | O_WRONLY),
+      (S_IRUSR | S_IWUSR))) >= 0)
     {
-      FILE *kobj_c = fopen( kobj_s.c_str(), "wc");
+      FILE *kobj_c = fdopen(fd, "w");
 
       fprintf(kobj_c, "\n #include <pocl_device.h>\n");
 
