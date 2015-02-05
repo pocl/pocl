@@ -41,7 +41,7 @@ CL_API_SUFFIX__VERSION_1_2
   _cl_command_node *cmd = NULL;
   cl_image_format *supported_image_formats = NULL;
   void *fill_pixel = NULL;
-  size_t tuned_origin[3];
+/*  size_t tuned_origin[3]; */
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
@@ -103,11 +103,11 @@ CL_API_SUFFIX__VERSION_1_2
 
   /* POCL uses top-left corner as origin for images and AMD SDK ImageOverlap 
      test uses bottom-left corner as origin. Because of this we need to modify 
-     y-coordinate so the fill goes in the right place. */
+     y-coordinate so the fill goes in the right place.
   tuned_origin[0] = origin[0];
   tuned_origin[1] = image->image_height - region[1] - origin[1];
   tuned_origin[2] = origin[2];
-
+  */
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_FILL_IMAGE, 
                                  event, num_events_in_wait_list, 
                                  event_wait_list);

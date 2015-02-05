@@ -212,8 +212,6 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
 #ifdef CUSTOM_BUFFER_ALLOCATOR  
   static mem_regions_management* mrm = NULL;
 #endif
-  static int global_mem_id;
-  int i;
 
   // TODO: this checks if the device was already initialized previously.
   // Should we instead have a separate bool field in device, or do the
@@ -533,16 +531,12 @@ pocl_pthread_run
 (void *data, 
  _cl_command_node* cmd)
 {
-  struct data *d;
   int error;
-  char workgroup_string[WORKGROUP_STRING_LENGTH];
   unsigned i;
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
   struct thread_arguments *arguments;
   static int max_threads = 0; /* this needs to be asked only once */
-
-  d = (struct data *) data;
 
   int num_groups_x = pc->num_groups[0];
   /* TODO: distributing the work groups in the x dimension is not always the

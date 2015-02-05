@@ -101,12 +101,9 @@ int pocl_device_get_env_count(const char *dev_type)
   return dev_count;
 }
 
-static unsigned int __total_dev_count = 0;
-
 unsigned int
 pocl_get_devices(cl_device_type device_type, struct _cl_device_id **devices, unsigned int num_devices)
 {
-  struct _cl_device_id *device;
   unsigned int i, dev_added = 0;
 
   for (i = 0; i < pocl_num_devices; ++i)

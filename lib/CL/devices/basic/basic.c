@@ -395,7 +395,6 @@ cl_int
 pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
 {
   void *b = NULL;
-  struct data* d = (struct data*)device->data;
   cl_int flags = mem_obj->flags;
 
   /* if memory for this global memory is not yet allocated -> do it */
@@ -460,8 +459,6 @@ pocl_basic_run
  _cl_command_node* cmd)
 {
   struct data *d;
-  const char *module_fn;
-  char workgroup_string[WORKGROUP_STRING_LENGTH];
   struct pocl_argument *al;
   size_t x, y, z;
   unsigned i;

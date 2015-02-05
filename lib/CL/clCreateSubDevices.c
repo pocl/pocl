@@ -39,27 +39,14 @@ POname(clCreateSubDevices)(cl_device_id in_device,
                            cl_uint *num_devices_ret) CL_API_SUFFIX__VERSION_1_2
 {
    int errcode;
-   int refcount;
+   cl_device_id sub1 = in_device;
+   cl_device_id sub2 = in_device;
 
    POCL_GOTO_ERROR_COND((in_device == NULL), CL_INVALID_DEVICE);
-   
-   cl_device_id sub1 = in_device;
-   if (sub1 == NULL)
-     {
-        errcode = CL_OUT_OF_HOST_MEMORY;
-        goto ERROR;
-     }
 
    POCL_INIT_OBJECT(sub1);
    sub1->parent_device = in_device;
 
-   cl_device_id sub2 = in_device;
-   if (sub2 == NULL)
-     {
-        errcode = CL_OUT_OF_HOST_MEMORY;
-        goto ERROR;
-     }
-   
    POCL_INIT_OBJECT(sub2);
    sub2->parent_device = in_device;
    
@@ -81,7 +68,7 @@ ERROR:
         POCL_MEM_FREE(sub1);
         POCL_MEM_FREE(sub2);
      }
-   return CL_SUCCESS;
+   return errcode;
 
 }
 POsym(clCreateSubDevices)

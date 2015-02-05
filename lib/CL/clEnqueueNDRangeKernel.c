@@ -122,8 +122,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
       */
 
       size_t preferred_wg_multiple;
-      cl_int retval = 
-        POname(clGetKernelWorkGroupInfo)
+      POname(clGetKernelWorkGroupInfo)
         (kernel, command_queue->device, 
          CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, 
          sizeof (size_t), &preferred_wg_multiple, NULL);
