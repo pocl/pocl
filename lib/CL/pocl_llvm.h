@@ -38,7 +38,8 @@ int pocl_llvm_build_program
  const char* cache_dir,
  const char* binary_filename,
  const char* device_tmpdir,
- const char* user_options);
+ const char* user_options,
+ int fd);
 
 
 /* Retrieve metadata of the given kernel in the program to populate the
