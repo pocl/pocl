@@ -1,14 +1,11 @@
-0.11 unreleased
-===============
-
-[git log last checked on 2014-08-22]
+0.11 Februrary 2015
+===================
 
 Highlights
 ----------
+- Support for LLVM/Clang 3.6
 - Kernel compiler cache.
 - Android support.
-- Experimental Windows support.
-- Initial support for MIPS architecture.
 
 Kernel compiler
 ---------------
@@ -16,6 +13,9 @@ Kernel compiler
   to avoid WI context data overheads.
 - Setting the POCL_VECTORIZER_REMARKS env to 1 prints out LLVM vectorizer 
   remarks during kernel compilation.
+- Implicit work-group vectorizer improvements.
+- POCL_VECTORIZER_REMARKS: When set to 1, prints out remarks produced by 
+  the loop vectorizer of LLVM during kernel compilation.
 
 OpenCL Runtime/Platform API support
 -----------------------------------
@@ -28,12 +28,24 @@ Bugfixes
   illegal implicit barrier injection.
 - Fix several reference counting issues.
 - Memory leak fixes.
+- ARM/openSUSE build fixes.
+- Plenty of CMake fixes.
+
+New test/example cases
+----------------------
+- Several Halide examples using its OpenCL backend added.
+- CloverLeaf
 
 Misc.
 -----
 - The old BBVectorizer forked WIVectorizer removed due to bit rot and 
   the general hackiness of it.
-  
+- Experimental Windows/Visual Studio support (in progress).
+- Initial support for MIPS architecture (with known issues).
+- Runtime debug printouts that can be enabled via POCL_DEBUG=1.
+- Streamlined the buffer allocation and fixed several issues with it.
+
+ 
 0.10 September 2014
 ===================
 
