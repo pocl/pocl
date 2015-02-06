@@ -186,7 +186,7 @@ AT_CLEANUP
 AT_SETUP([sizeof(uint)])
 AT_KEYWORDS([sizeof])
 AT_CHECK_UNQUOTED([$abs_top_builddir/tests/kernel/kernel test_sizeof], 0,
-[$(cat $abs_top_builddir/tests/kernel/test_sizeof_expout.txt)
+[$(cat $abs_top_srcdir/tests/kernel/test_sizeof_expout.txt)
 ])
 AT_CLEANUP
 
@@ -194,7 +194,7 @@ AT_SETUP([block])
 AT_KEYWORDS([block])
 AT_SKIP_IF([! grep "#define HAVE_OPENCL_HPP" $abs_top_builddir/config.h])
 AT_CHECK_UNQUOTED([$abs_top_builddir/tests/kernel/kernel test_block], 0,
-[$(cat $abs_top_builddir/tests/kernel/test_block_expout.txt)
+[$(cat $abs_top_srcdir/tests/kernel/test_block_expout.txt)
 ])
 # LLVM 3.4's crashes with an illegal const expr cast. Unresolved.
 AT_XFAIL_IF([grep -q "#define LLVM_3_4" $abs_top_builddir/config.h])
