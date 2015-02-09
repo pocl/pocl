@@ -77,9 +77,13 @@
 #include <vector>
 #include <sstream>
 #include <string>
+#include <cstdio>
 
 #ifndef _MSC_VER
 #  include <unistd.h>
+#  include <sys/types.h>
+#  include <sys/stat.h>
+#  include <fcntl.h>
 #endif
 
 // Note - LLVM/Clang uses symbols defined in Khronos' headers in macros, 
@@ -138,8 +142,10 @@ static void InitializeLLVM();
 // to file on disk, if user has requested with environment
 // variable
 // TODO: what to do on errors?
+
+// this version simply rewrites the file
 static inline void
-write_temporary_file( const llvm::Module *mod,
+update_temporary_file( const llvm::Module *mod,
                       const char *filename )
 {
   tool_output_file *Out;
@@ -154,6 +160,25 @@ write_temporary_file( const llvm::Module *mod,
   Out->keep();
   delete Out;
 }
+
+// this version works on already open filedescriptor
+static inline void
+write_temporary_file_fd( const llvm::Module *mod,
+                      const char *filename, int fd)
+{
+  tool_output_file *Out;
+  #if LLVM_VERSION_MAJOR==3 && LLVM_VERSION_MINOR<6
+  std::string ErrorInfo;
+  Out = new tool_output_file(filename, fd);
+  #else
+  std::error_code ErrorInfo;
+  Out = new tool_output_file(filename, fd);
+  #endif
+  WriteBitcodeToFile(mod, Out->os());
+  Out->keep();
+  delete Out;
+}
+
 
 // Read input source to clang::FrontendOptions.
 // The source is contained in the program->source array,
@@ -194,7 +219,8 @@ int pocl_llvm_build_program(cl_program program,
                             const char* cache_dir,
                             const char* binary_file_name,
                             const char* device_tmpdir,
-                            const char* user_options)
+                            const char* user_options,
+                            int fd)
 
 {
   llvm::MutexGuard lockHolder(kernelCompilerLock);
@@ -416,7 +442,7 @@ int pocl_llvm_build_program(cl_program program,
     return CL_BUILD_PROGRAM_FAILURE;
 
   /* Always retain program.bc. Its required in clBuildProgram */
-  write_temporary_file(*mod, binary_file_name);
+  if(fd >= 0) write_temporary_file_fd(*mod, binary_file_name, fd);
 
   // FIXME: cannot delete action as it contains something the llvm::Module
   // refers to. We should create it globally, at compiler initialization time.
@@ -762,9 +788,11 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   std::string kobj_s = descriptor_filename; 
   kobj_s += ".kernel_obj.c";
 
-  if(access(kobj_s.c_str(), F_OK) != 0)
+  int fd;
+  if ((fd = open(kobj_s.c_str(), (O_CREAT | O_EXCL | O_WRONLY),
+      (S_IRUSR | S_IWUSR))) >= 0)
     {
-      FILE *kobj_c = fopen( kobj_s.c_str(), "wc");
+      FILE *kobj_c = fdopen(fd, "w");
 
       fprintf(kobj_c, "\n #include <pocl_device.h>\n");
 
@@ -1271,7 +1299,10 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
 #endif
 
   // TODO: don't write this once LLC is called via API, not system()
-  write_temporary_file(input, parallel_filename);
+  int fd;
+  if ((fd = open(parallel_filename, (O_CREAT | O_EXCL | O_WRONLY),
+      (S_IRUSR | S_IWUSR))) >= 0)
+    write_temporary_file_fd(input, parallel_filename, fd);
 
 #ifndef LLVM_3_2
   // In LLVM 3.2 the Linker object deletes the associated Modules.
@@ -1313,7 +1344,7 @@ void pocl_llvm_update_binaries (cl_program program) {
         program->devices[i]->cache_dir_name + "/" +
         POCL_PROGRAM_BC_FILENAME;
 
-      write_temporary_file((llvm::Module*)program->llvm_irs[i],
+      update_temporary_file((llvm::Module*)program->llvm_irs[i],
                            binary_filename.c_str()); 
 
       FILE *binary_file = fopen(binary_filename.c_str(), "r");

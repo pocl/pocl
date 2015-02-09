@@ -1,61 +1,55 @@
 
 /* The normal alignment of `double16', in bytes. */
-#cmakedefine ALIGNOF_DOUBLE16 @ALIGNOF_DOUBLE16@
+#define ALIGNOF_DOUBLE16 @ALIGNOF_DOUBLE16@
 
 /* The normal alignment of `float16', in bytes. */
-#cmakedefine ALIGNOF_FLOAT16 @ALIGNOF_FLOAT16@
+#define ALIGNOF_FLOAT16 @ALIGNOF_FLOAT16@
 
 
 #cmakedefine BUILD_SPU
 
-#cmakedefine BUILDDIR "@BUILDDIR@"
+#define BUILDDIR "@BUILDDIR@"
 
 /* "Build with ICD" */
 #cmakedefine BUILD_ICD
 
 
 
-#cmakedefine CLANG "@CLANG@"
+#define CLANG "@CLANG@"
 
 /* clang++ executable */
-#cmakedefine CLANGXX "@CLANGXX@"
+#define CLANGXX "@CLANGXX@"
 
 /* clang++ compiler flags */
 /* TODO in sources */
-#cmakedefine KERNEL_CLANGXX_FLAGS "@KERNEL_CLANGXX_FLAGS@"
+#define KERNEL_CLANGXX_FLAGS "@KERNEL_CLANGXX_FLAGS@"
 
 /* "Using a SPIR generator Clang from Khronos." */
 #cmakedefine CLANG_SPIR
 
 
 /* TODO in sources */
-#cmakedefine KERNEL_CL_FLAGS  "@KERNEL_CL_FLAGS@"
+#define KERNEL_CL_FLAGS  "@KERNEL_CL_FLAGS@"
 
 
 /* "Use a custom buffer allocator" */
 #cmakedefine CUSTOM_BUFFER_ALLOCATOR
 
 
-
 #cmakedefine DIRECT_LINKAGE
 
 
-
-#cmakedefine FORCED_CLFLAGS  "@FORCED_CLFLAGS@"
-
+#define FORCED_CLFLAGS  "@FORCED_CLFLAGS@"
 
 
-#cmakedefine HAVE_OCL_ICD
 
 #cmakedefine HAVE_CLOCK_GETTIME
 
-
-
+#cmakedefine HAVE_OCL_ICD
 
 /* Defined if posix_memalign is available. */
 #cmakedefine HAVE_POSIX_MEMALIGN
 
-#cmakedefine HAVE_CLOCK_GETTIME
 
 
 
@@ -73,7 +67,9 @@
 
 #cmakedefine HOST_FLOAT_SOFT_ABI
 
-#cmakedefine LLC "@LLC@"
+
+
+#define LLC "@LLC@"
 
 
 /* "Using LLVM 3.2" */
@@ -85,45 +81,47 @@
 /* "Using LLVM 3.4" */
 #cmakedefine LLVM_3_4
 
-/* "Using upcoming LLVM 3.5" */
+/* "Using LLVM 3.5" */
 #cmakedefine LLVM_3_5
 
+/* "Using LLVM 3.6" */
+#cmakedefine LLVM_3_6
 
 
 /* Defined to greatest expected alignment for extended types, in bytes. */
-#cmakedefine MAX_EXTENDED_ALIGNMENT @MAX_EXTENDED_ALIGNMENT@
+#define MAX_EXTENDED_ALIGNMENT @MAX_EXTENDED_ALIGNMENT@
 
 
 
 /* used in lib/CL/devices/basic */
-#cmakedefine OCL_KERNEL_TARGET  "@OCL_KERNEL_TARGET@"
-#cmakedefine OCL_KERNEL_TARGET_CPU  "@OCL_KERNEL_TARGET_CPU@"
+#define OCL_KERNEL_TARGET  "@OCL_KERNEL_TARGET@"
+#define OCL_KERNEL_TARGET_CPU  "@OCL_KERNEL_TARGET_CPU@"
 
 
-#cmakedefine PACKAGE_VERSION "@PACKAGE_VERSION@"
+#define PACKAGE_VERSION "@PACKAGE_VERSION@"
 
 
-#cmakedefine POCL_BUILD_KERNEL_CACHE @POCL_BUILD_KERNEL_CACHE@
+#define POCL_BUILD_KERNEL_CACHE @POCL_BUILD_KERNEL_CACHE@
 
-#cmakedefine POCL_BUILD_TIMESTAMP "@POCL_BUILD_TIMESTAMP@"
+#define POCL_BUILD_TIMESTAMP "@POCL_BUILD_TIMESTAMP@"
 
-#cmakedefine POCL_DEVICE_ADDRESS_BITS @POCL_DEVICE_ADDRESS_BITS@
+#define POCL_DEVICE_ADDRESS_BITS @POCL_DEVICE_ADDRESS_BITS@
 
 #cmakedefine POCL_DEBUG_MESSAGES
 
-#cmakedefine POCL_INSTALL_PRIVATE_HEADER_DIR "@POCL_INSTALL_PRIVATE_HEADER_DIR@"
+#define POCL_INSTALL_PRIVATE_HEADER_DIR "@POCL_INSTALL_PRIVATE_HEADER_DIR@"
 
-#cmakedefine POCL_INSTALL_PRIVATE_DATADIR "@POCL_INSTALL_PRIVATE_DATADIR@"
+#define POCL_INSTALL_PRIVATE_DATADIR "@POCL_INSTALL_PRIVATE_DATADIR@"
 
 /* these are *host* values */
 
 /* The size of `__fp16', as computed by sizeof. */
-#cmakedefine SIZEOF___FP16  @SIZEOF___FP16@
+#define SIZEOF___FP16  @SIZEOF___FP16@
 
 
 
 /* used in tce_common.c & pocl_llvm_api.cc  */
-#cmakedefine SRCDIR  "@SRCDIR@"
+#define SRCDIR  "@SRCDIR@"
 
 
 

@@ -25,7 +25,9 @@
 #include "pocl_cl.h"
 #include <assert.h>
 #include <string.h>
+#include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #ifndef _MSC_VER
 #  include <unistd.h>
 #else
@@ -122,6 +124,7 @@ CL_API_SUFFIX__VERSION_1_0
   char binary_file_name[POCL_FILENAME_LENGTH];
   char filename_str[POCL_FILENAME_LENGTH];
   FILE *binary_file;
+  int fd;
   size_t n;
   int errcode;
   int i;
@@ -298,30 +301,24 @@ CL_API_SUFFIX__VERSION_1_0
                program->cache_dir, POCL_BUILDLOG_FILENAME);
 
       /* First call to clBuildProgram. Cache not filled yet */
-      if (access(binary_file_name, F_OK) != 0)
+      if ((fd = open(binary_file_name, (O_CREAT | O_EXCL | O_WRONLY),
+          (S_IRUSR | S_IWUSR))) >= 0)
         {
           if (program->source)
             {
               error = pocl_llvm_build_program(program, device, device_i,
-                        program->cache_dir, binary_file_name, device_cachedir, user_options);
-
+                        program->cache_dir, binary_file_name, device_cachedir, user_options, fd);
               if (error != 0)
                 {
+                  unlink(binary_file_name);
                   errcode = CL_BUILD_PROGRAM_FAILURE;
                   goto ERROR_CLEAN_BINARIES;
                 }
             }
-
-          if (program->binaries[device_i])
-            {
-              binary_file = fopen(binary_file_name, "w");
-              MEM_ASSERT(binary_file == NULL, ERROR_CLEAN_PROGRAM);
-
-              fwrite(program->binaries[device_i], 1,
-                     program->binary_sizes[device_i], binary_file);
-
-              fclose (binary_file);
-            }
+          else if (program->binaries[device_i])
+            write(fd, program->binaries[device_i],
+                  program->binary_sizes[device_i]);
+          close(fd);
         }
       else if (pocl_read_text_file(filename_str, &str))
         {

@@ -123,6 +123,8 @@ set(LIBPOCL_OBJS "$<TARGET_OBJECTS:llvmpasses>;$<TARGET_OBJECTS:libpocl_unlinked
 
 add_compile_options(${OCL_ICD_CFLAGS})
 
+include_directories(${LLVM_INCLUDE_DIRS})
+
 # set llvm C++ flags on pocl_llvm_api.cc
 set_source_files_properties("pocl_llvm_api.cc" PROPERTIES COMPILE_FLAGS "${LLVM_CXXFLAGS} -I\"${CMAKE_CURRENT_SOURCE_DIR}/../llvmopencl\"")
 
@@ -136,12 +138,17 @@ add_library("libpocl_unlinked_objs" OBJECT ${POCL_LIB_SOURCES})
 #################################################################
 
 if (MSVC)
-  set(POCL_PUBLIC_LINK_LIST ${Hwloc_LIBRARIES} ${Pthreads_LIBRARIES} ${POCL_DEVICES_LINK_LIST})
+  set(POCL_PUBLIC_LINK_LIST ${Pthreads_LIBRARIES} ${POCL_DEVICES_LINK_LIST})
 else()
-  set(POCL_PUBLIC_LINK_LIST ${Hwloc_LIBRARIES} "${LTDL_LIB}" ${CMAKE_THREAD_LIBS_INIT} ${POCL_DEVICES_LINK_LIST})
+  set(POCL_PUBLIC_LINK_LIST "${LTDL_LIB}" ${CMAKE_THREAD_LIBS_INIT} ${POCL_DEVICES_LINK_LIST})
 endif()
 
-set(POCL_PRIVATE_LINK_LIST ${CLANG_LIB_NAMES} ${POCL_LLVM_LIBS} ${LLVM_SYSLIBS})
+set(POCL_PRIVATE_LINK_LIST ${CLANG_LIBFILES} ${POCL_LLVM_LIBS} ${LLVM_SYSLIBS})
+
+# -lrt is required for glibc < 2.17
+if(HAVE_CLOCK_GETTIME)
+  list(APPEND POCL_PUBLIC_LINK_LIST "rt")
+endif()
 
 #################################################################
 

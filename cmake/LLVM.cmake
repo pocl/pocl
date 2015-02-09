@@ -36,9 +36,10 @@ else()
   # search for any version
   find_program(LLVM_CONFIG
     NAMES "llvm-config"
-      "llvm-config-mp-3.3" "llvm-config-3.3" "llvm-config33"
-      "llvm-config-mp-3.4" "llvm-config-3.4" "llvm-config34"
+      "llvm-config-mp-3.6" "llvm-config-3.6" "llvm-config36"
       "llvm-config-mp-3.5" "llvm-config-3.5" "llvm-config35"
+      "llvm-config-mp-3.4" "llvm-config-3.4" "llvm-config34"
+      "llvm-config-mp-3.3" "llvm-config-3.3" "llvm-config33"
       "llvm-config-mp-3.2" "llvm-config-3.2" "llvm-config32"
     DOC "llvm-config executable")
 endif()
@@ -74,7 +75,7 @@ macro(run_llvm_config VARIABLE_NAME)
   if(LLVM_CONFIG_RETVAL)
     message(SEND_ERROR "Error running llvm-config with arguments: ${ARGN}")
   else()
-    message(STATUS "${VARIABLE_NAME} is ${${VARIABLE_NAME}}")
+    message(STATUS "llvm-config's ${VARIABLE_NAME} is: ${${VARIABLE_NAME}}")
   endif()
 endmacro(run_llvm_config)
 
@@ -93,7 +94,8 @@ run_llvm_config(LLVM_BINDIR --bindir)
 run_llvm_config(LLVM_LIBDIR --libdir)
 run_llvm_config(LLVM_INCLUDEDIR --includedir)
 run_llvm_config(LLVM_LIBS --libs)
-run_llvm_config(LLVM_LIBFILES --libfiles)
+# Convert LLVM_LIBS from string -> list format to make handling them easier
+separate_arguments(LLVM_LIBS)
 run_llvm_config(LLVM_SRC_ROOT --src-root)
 run_llvm_config(LLVM_OBJ_ROOT --obj-root)
 run_llvm_config(LLVM_ALL_TARGETS --targets-built)
@@ -120,9 +122,7 @@ endif(WIN32)
 if(LLVM_VERSION MATCHES "3[.]([0-9]+)")
   string(STRIP "${CMAKE_MATCH_1}" LLVM_MINOR)
   message(STATUS "Minor llvm version: ${LLVM_MINOR}")
-  if(LLVM_MINOR STREQUAL "1")
-    set(LLVM_3_1 1)
-  elseif(LLVM_MINOR STREQUAL "2")
+  if(LLVM_MINOR STREQUAL "2")
     set(LLVM_3_2 1)
   elseif(LLVM_MINOR STREQUAL "3")
     set(LLVM_3_3 1)
@@ -130,9 +130,13 @@ if(LLVM_VERSION MATCHES "3[.]([0-9]+)")
     set(LLVM_3_4 1)
   elseif(LLVM_MINOR STREQUAL "5")
     set(LLVM_3_5 1)
+  elseif(LLVM_MINOR STREQUAL "6")
+    set(LLVM_3_6 1)
   else()
-    message(WARNING "Unknown minor llvm version.")
+    message(FATAL_ERROR "Unknown/unsupported minor llvm version: ${LLVM_MINOR}")
   endif()
+else()
+  message(FATAL_ERROR "LLVM version 3.x required, found: ${LLVM_VERSION}")
 endif()
 
 ####################################################################
@@ -144,6 +148,13 @@ if("${LLVM_CXXFLAGS}" MATCHES "-fno-rtti")
        See the INSTALL file for more information.")
 endif()
 
+# Ubuntu's LLVM 3.5 is broken
+message(STATUS "Testing for Ubuntu's broken LLVM 3.5+")
+if((LLVM_MINOR GREATER 4) AND (CMAKE_SYSTEM_NAME MATCHES "Linux"))
+  if(NOT EXISTS "${LLVM_INCLUDEDIR}/llvm/IR/CFG.h")
+    message(FATAL_ERROR "Your llvm installation is broken. This is known to be the case on Ubuntu and clones with llvm 3.5; official llvm 3.5 downloads should work though.")
+  endif()
+endif()
 
 # A few work-arounds for llvm-config issues
 
@@ -153,7 +164,9 @@ string(REPLACE " -pedantic" "" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
 
 # - '-fno-rtti' is a work-around for llvm bug 14200
 #LLVM_CXX_FLAGS="$LLVM_CXX_FLAGS -fno-rtti"
-set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -fno-rtti")
+if(NOT MSVC)
+  set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -fno-rtti")
+endif()
 
 if(NOT LLVM_VERSION VERSION_LESS "3.5")
   run_llvm_config(LLVM_SYSLIBS --system-libs)
@@ -167,46 +180,30 @@ list(APPEND LLVM_INCLUDE_DIRS
   "${LLVM_OBJ_ROOT}/include" 
   "${LLVM_OBJ_ROOT}/tools/clang/include")
 
-# Convert LLVM_LIBFILES and LLVM_LIBS from string -> list format to make handling 
-# them easier (here we could also fix some parsing problems caused by spaces in path 
-# names in Windows)
-
-separate_arguments(LLVM_LIBFILES)
-separate_arguments(LLVM_LIBS)
 # Llvm-config does not include clang libs
+set(CLANG_LIBNAMES clangFrontendTool clangFrontend clangDriver clangSerialization clangCodeGen clangParse clangSema)
+if(LLVM_MINOR GREATER 4)
+  list(APPEND CLANG_LIBNAMES clangRewrite)
+endif()
+list(APPEND CLANG_LIBNAMES clangRewriteFrontend clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers clangStaticAnalyzerCore clangARCMigrate clangAnalysis clangEdit clangAST clangLex clangBasic)
 
-list(APPEND CLANG_LIB_NAMES 
-  clangFrontend 
-  clangDriver 
-  clangParse 
-  clangSema 
-  clangEdit 
-  clangLex 
-  clangSerialization 
-  clangBasic 
-  clangFrontendTool 
-  clangRewriteFrontend 
-  clangStaticAnalyzerFrontend 
-  clangStaticAnalyzerCore 
-  clangAnalysis 
-  clangCodeGen 
-  clangAST)
-
-# Strip -l from LLVM libnames to use list e.g. for windows build
-foreach(LIBFLAG ${LLVM_LIBS})
-  STRING(REGEX REPLACE "^-l(.*)$" "\\1" LIB_NAME ${LIBFLAG})
-  list(APPEND LLVM_LIB_NAMES "${LIB_NAME}")
+foreach(LIBNAME ${CLANG_LIBNAMES})
+  find_library(C_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
+  list(APPEND CLANG_LIBFILES "${C_LIBFILE_${LIBNAME}}")
 endforeach()
 
 # With Visual Studio llvm-config gives invalid list of static libs (libXXXX.a instead of XXXX.lib)
-if (MSVC)
-  SET(LLVM_MSVC_STATIC_LIB_LIST "")
-  foreach(LIBFILE ${LLVM_LIBFILES})
-    STRING(REGEX REPLACE "^(.*/)lib(.*)\\.a$" "\\1\\2.lib" STATIC_LIB_NAME ${LIBFILE})
-    list(APPEND LLVM_MSVC_STATIC_LIB_LIST "${STATIC_LIB_NAME}")
-  endforeach()
-  set(LLVM_LIBFILES ${LLVM_MSVC_STATIC_LIB_LIST})
-endif(MSVC)
+# we extract the pure names (LLVMLTO, LLVMMipsDesc etc) and let find_library do its job
+foreach(LIBFLAG ${LLVM_LIBS})
+  STRING(REGEX REPLACE "^-l(.*)$" "\\1" LIB_NAME ${LIBFLAG})
+  list(APPEND LLVM_LIBNAMES "${LIB_NAME}")
+endforeach()
+
+foreach(LIBNAME ${LLVM_LIBNAMES})
+  find_library(L_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
+  list(APPEND LLVM_LIBFILES "${L_LIBFILE_${LIBNAME}}")
+endforeach()
+
 
 ####################################################################
 
@@ -428,7 +425,8 @@ endmacro()
 # clangxx works check 
 #
 
-if(CLANGXX)
+# TODO clang + vecmathlib doesn't work on Windows yet...
+if(CLANGXX AND (NOT WIN32))
 
   message(STATUS "Checking if clang++ works (required by vecmathlib)")
 
@@ -437,18 +435,18 @@ if(CLANGXX)
   if(NOT DEFINED ${CACHE_VAR_NAME})
     set(CLANGXX_WORKS 0)
 
-    custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL)
+    custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream> \n  #include <type_traits>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL "-std=c++11")
 
     if(NOT _STATUS_FAIL)
       set(CLANGXX_STDLIB "")
       set(CLANGXX_WORKS 1)
     else()
-      custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL "-stdlib=libstdc++")
+      custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream> \n  #include <type_traits>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL "-stdlib=libstdc++" "-std=c++11")
       if (NOT _STATUS_FAIL)
         set(CLANGXX_STDLIB "-stdlib=libstdc++")
         set(CLANGXX_WORKS 1)
       else()
-        custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL "-stdlib=libc++")
+        custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream> \n  #include <type_traits>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL "-stdlib=libc++" "-std=c++11")
         if(NOT _STATUS_FAIL)
           set(CLANGXX_STDLIB "-stdlib=libc++")
           set(CLANGXX_WORKS 1)
@@ -463,6 +461,11 @@ else()
 
   set(CLANGXX_WORKS 0)
 
+endif()
+
+if(CLANGXX_STDLIB AND (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
+  set(LLVM_CXXFLAGS "${CLANGXX_STDLIB} ${LLVM_CXXFLAGS}")
+  set(LLVM_LDFLAGS "${CLANGXX_STDLIB} ${LLVM_LDFLAGS}")
 endif()
 
 ####################################################################
@@ -496,7 +499,7 @@ if(NOT LLVM_CXXFLAGS MATCHES "-DNDEBUG")
   TRY_COMPILE(_TRY_SUCCESS ${CMAKE_BINARY_DIR} "${_TEST_SOURCE}"
     CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_INCLUDE_DIRS}"
     CMAKE_FLAGS "-DLINK_DIRECTORIES:STRING=${LLVM_LIBDIR}"
-    LINK_LIBRARIES "${LLVM_LIBS} ${LLVM_SYSLIBS}"
+    LINK_LIBRARIES "${LLVM_LIBS} ${LLVM_SYSLIBS} ${LLVM_LDFLAGS}"
     COMPILE_DEFINITIONS ${TRY_COMPILE_CXX_FLAGS}
     OUTPUT_VARIABLE _TRY_COMPILE_OUTPUT
   )
@@ -505,7 +508,9 @@ if(NOT LLVM_CXXFLAGS MATCHES "-DNDEBUG")
     "Test -NDEBUG flag: ${_TRY_COMPILE_OUTPUT}\n")
 
   if(_TRY_SUCCESS)
-    message(STATUS "no assertions... adding -DNDEBUG")
+    message(STATUS "assertions present")
+  else()
+    message(STATUS "no assertions.. adding -DNDEBUG")
     set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -DNDEBUG")
   endif()
 

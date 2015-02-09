@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 
 AC_PREREQ([2.64])
-AC_INIT([pocl], [0.11-pre], [pocl-devel@lists.sourceforge.net])
+AC_INIT([pocl], [0.11], [pocl-devel@lists.sourceforge.net])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_AUX_DIR([config])
@@ -88,6 +88,7 @@ LLVM_LIBDIR=`$LLVM_CONFIG --libdir`
 LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
 # Whether we can use our own printf implementation
 NEW_PRINTF_WORKS=true
+LLVM_3_6=false
 
 AC_SUBST([LLVM_VERSION], [$LLVM_VERSION])
 
@@ -121,7 +122,7 @@ Unsupported LLVM version. Please use LLVM version 3.2, 3.3, 3.4, 3.5 or 3.6.
    ;;
 esac
 
-AM_CONDITIONAL([LLVM_3_6], [test "x$LLVM_3_6" = "xyes"])
+AM_CONDITIONAL([LLVM_3_6], [test "x$LLVM_3_6" = "xtrue"])
 
 AC_SUBST([LLVM_LDFLAGS], [$LLVM_LDFLAGS], [llvm-config returned ldflags])
 AM_CONDITIONAL([NEW_PRINTF_WORKS], $NEW_PRINTF_WORKS)
@@ -623,8 +624,10 @@ AC_COMPILE_IFELSE(
     [ struct timespec pocl_debug_timespec; clock_gettime(CLOCK_REALTIME, &pocl_debug_timespec); ]
   )],
   [AC_MSG_RESULT(yes)
-   AC_DEFINE([HAVE_CLOCK_GETTIME], [1], [Have clock_gettime])],
-  [AC_MSG_RESULT(no)]
+   AC_DEFINE([HAVE_CLOCK_GETTIME], [1], [Have clock_gettime])
+   AM_CONDITIONAL([HAVE_CLOCK_GETTIME], true)],
+  [AC_MSG_RESULT(no)
+   AM_CONDITIONAL([HAVE_CLOCK_GETTIME], false)]
 )
 
 # Enable debug message output when the env POCL_DEBUG=1 is set.

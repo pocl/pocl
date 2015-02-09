@@ -135,6 +135,15 @@ extern int pocl_debug_messages;
 
   #else
 
+  #define POCL_MSG_PRINT_INFO(...)                                            \
+    do {                                                                      \
+    if (pocl_debug_messages) {                                                \
+      fprintf(stderr, "** POCL ** : in function %s"                           \
+      " at line %u:", __func__, __LINE__);                                    \
+      fprintf(stderr, __VA_ARGS__);                                           \
+    }                                                                         \
+  } while(0)
+
   #define POCL_MSG_PRINT(TYPE, ERRCODE, ...)                                  \
     do {                                                                      \
     if (pocl_debug_messages) {                                                \

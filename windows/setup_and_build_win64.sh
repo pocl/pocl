@@ -1,7 +1,7 @@
 #/bin/bash
 
 # This script requires following software preinstalled:
-# * Git + git bash (default installer settings are fine)
+# * Git + git bash (default installer settings are fine, make sure its in your PATH)
 # * Python 2.7
 # * Cmake 2.8 or later (make sure it will be added to PATH during installation)
 # * Visual Studio Community edition 2013

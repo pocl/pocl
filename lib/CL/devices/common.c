@@ -68,7 +68,6 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
 	   strlen(tmpdir) + strlen(kernel->function_name) + 5)); // strlen of / .so 4+1
 
   int error;
-  cl_program program = kernel->program;
 
   error = snprintf 
     (module, POCL_FILENAME_LENGTH,

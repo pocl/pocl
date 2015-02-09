@@ -28,7 +28,7 @@ cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 project(pocl)
 set(MAJOR_VERSION 0)
 set(MINOR_VERSION 11)
-set(VERSION_SUFFIX "-pre")
+set(VERSION_SUFFIX "")
 set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION}${VERSION_SUFFIX})
 set(POCL_VERSION ${VERSION_STRING})
 
@@ -131,10 +131,8 @@ if("${Hwloc_VERSION}" VERSION_LESS "1.0")
 endif()
 
 message(STATUS "Hwloc_VERSION ${Hwloc_VERSION}")
-message(STATUS "Hwloc_LIBRARIES ${Hwloc_LIBRARIES}")
-message(STATUS "Hwloc_INCLUDE_DIRS ${Hwloc_INCLUDE_DIRS}")
-
-include_directories(${Hwloc_INCLUDE_DIRS})
+message(STATUS "Hwloc_LDFLAGS ${Hwloc_LDFLAGS}")
+message(STATUS "Hwloc_CFLAGS ${Hwloc_CFLAGS}")
 
 ######################################################################################
 #
@@ -143,14 +141,17 @@ include_directories(${Hwloc_INCLUDE_DIRS})
 
 find_program (PATCH_EXEC 
   NAMES patch patch.exe
+  HINTS ENV PATH
 )
 
 find_program (XARGS_EXEC 
   NAMES xargs xargs.exe
+  HINTS ENV PATH
 )
 
 find_program (CAT_EXEC 
   NAMES cat cat.exe
+  HINTS ENV PATH
 )
 
 if (!PATCH_EXEC)
@@ -168,10 +169,6 @@ endif()
 if("${LLVM_VERSION}" VERSION_LESS "3.2")
   message(FATAL_ERROR "POCL requires LLVM version >= 3.2 !")
 endif()
-
-include_directories("${LLVM_INCLUDE_DIRS}")
-link_directories(${LLVM_LIBDIR})
-
 
 ######################################################################################
 
@@ -305,24 +302,18 @@ option(STATIC_LLVM "Link LLVM statically. Default is dynamic." OFF)
 
 if(STATIC_LLVM)
   message(STATUS "Linking LLVM statically")
-  # Using LLVM_LIB_NAMES should work on every platform, but for now used only on MSVC to avoid 
-  # possibility of regression
-  if (MSVC)
-    set(POCL_LLVM_LIBS "${LLVM_LIB_NAMES}")
-  else()
-    set(POCL_LLVM_LIBS "${LLVM_LIBFILES}")
-  endif()
+  set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
 else()
   message(STATUS "Trying to link LLVM dynamically")
   set(POCL_LLVM_LIBS "-lLLVM-${LLVM_VERSION}")
-  # in
-  find_library(LLVM_SHARED_LIB_FILE "LLVM-${LLVM_VERSION}" PATHS "${LLVM_LIBDIR}" NO_DEFAULT_PATH)
+  find_library(LLVM_SHARED_LIB_FILE "LLVM-${LLVM_VERSION}" HINTS "${LLVM_LIBDIR}")
   if(LLVM_SHARED_LIB_FILE AND EXISTS "${LLVM_SHARED_LIB_FILE}")
     message(STATUS "..using ${LLVM_SHARED_LIB_FILE}")
+    set(POCL_LLVM_LIBS "${LLVM_SHARED_LIB_FILE}")
   else()
-    set(POCL_LLVM_LIBS "${LLVM_LIBS}")
     message(STATUS "LLVM-${LLVM_VERSION} library not found (Probably because LLVM is built with cmake).
-    Linking libpocl (possibly statically) to LLVM_LIBS")
+    Linking libpocl (possibly statically) to LLVM_LIBFILES")
+    set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
   endif()
 endif()
 
@@ -871,7 +862,7 @@ endif()
 # 2:0:1 == 0.8 (currently backwards compatible with 0.7, thus age = 1).
 # 3:0:2 == 0.9 (currently backwards compatible with 0.7, thus age = 2).
 # 4:0:3 == 0.10 (currently backwards compatible with 0.7, thus age = 3).
-
+# 5:0:4 == 0.11 (currently backwards compatible with 0.7, thus age = 4).
 
 set(LIB_CURRENT_VERSION 5)
 set(LIB_REVISION_VERSION 0)
@@ -1072,15 +1063,16 @@ MESSAGE(STATUS "LLVM_SRC_ROOT: ${LLVM_SRC_ROOT}")
 MESSAGE(STATUS "LLVM_OBJ_ROOT: ${LLVM_OBJ_ROOT}")
 MESSAGE(STATUS "LLVM_INCLUDE_DIRS: ${LLVM_INCLUDE_DIRS}")
 MESSAGE(STATUS "LLVM_SYSLIBS: ${LLVM_SYSLIBS}")
-# these are a bit too long..
-MESSAGE(STATUS "----------- CLANG_SHARED_LIBS --------")
-MESSAGE(STATUS "${CLANG_SHARED_LIBS}")
-MESSAGE(STATUS "----------- CLANG_STATIC_LIBS --------")
-MESSAGE(STATUS "${CLANG_STATIC_LIBS}")
 MESSAGE(STATUS "----------- LLVM_LIBS (LLVM SHARED LIBS) --------")
-MESSAGE(STATUS "${LLVM_LIBS}")
+MESSAGE(STATUS "${LLVM_LIBNAMES}")
 MESSAGE(STATUS "----------- LLVM_LIBFILES (LLVM STATIC LIBS) --------")
 MESSAGE(STATUS "${LLVM_LIBFILES}")
+MESSAGE(STATUS "----------- CLANG_LIBS (LLVM SHARED LIBS) --------")
+MESSAGE(STATUS "${CLANG_LIBNAMES}")
+MESSAGE(STATUS "----------- CLANG_LIBFILES (LLVM STATIC LIBS) --------")
+MESSAGE(STATUS "${CLANG_LIBFILES}")
+MESSAGE(STATUS "----------- -------------------------------- --------")
+MESSAGE(STATUS "POCL_LLVM_LIBS: ${POCL_LLVM_LIBS}")
 MESSAGE(STATUS "----------- -------------------------------- --------")
 MESSAGE(STATUS "LLVM_ALL_TARGETS: ${LLVM_ALL_TARGETS}")
 MESSAGE(STATUS "LLVM_HOST_TARGET: ${LLVM_HOST_TARGET}")
@@ -1090,7 +1082,6 @@ MESSAGE(STATUS "MAX_EXTENDED_ALIGNMENT: ${MAX_EXTENDED_ALIGNMENT}")
 MESSAGE(STATUS "OCL_KERNEL_TARGET: ${OCL_KERNEL_TARGET}")
 MESSAGE(STATUS "OCL_KERNEL_TARGET_CPU: ${OCL_KERNEL_TARGET_CPU}")
 MESSAGE(STATUS "POCL_DEVICE_ADDRESS_BITS: ${POCL_DEVICE_ADDRESS_BITS}")
-MESSAGE(STATUS "POCL_LLVM_LIBS: ${POCL_LLVM_LIBS}")
 MESSAGE(STATUS "TCE_TARGET_CLANG_FLAGS: ${TCE_TARGET_CLANG_FLAGS}")
 MESSAGE(STATUS "TCE_TARGET_LLC_FLAGS: ${TCE_TARGET_LLC_FLAGS}")
 
