@@ -24,8 +24,8 @@
 
 AC_PREREQ([2.64])
 AC_INIT([pocl], [0.11], [pocl-devel@lists.sourceforge.net])
-AC_CONFIG_SRCDIR([config.h.in])
-AC_CONFIG_HEADER([config.h])
+AC_CONFIG_SRCDIR([pocl_config.h.in])
+AC_CONFIG_HEADER([pocl_config.h])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_TESTDIR([tests])

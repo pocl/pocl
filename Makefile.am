@@ -33,6 +33,8 @@ ACLOCAL_AMFLAGS = -I m4
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = pocl.pc
 
+include_HEADERS = pocl_config.h
+
 CLEANFILES = install-paths.h
 PHONIES = install-paths.h
 
