@@ -726,22 +726,35 @@ pocl_tce_write_rect (void */*data*/,
                      size_t const host_row_pitch,
                      size_t const host_slice_pitch)
 {
+  /*
   char *__restrict const adjusted_device_ptr = 
     (char*)device_ptr +
     buffer_origin[0] + buffer_row_pitch * buffer_origin[1] + buffer_slice_pitch * buffer_origin[2];
+  */
   char const *__restrict__ const adjusted_host_ptr = 
     (char const*)host_ptr +
     host_origin[0] + host_row_pitch * host_origin[1] + host_slice_pitch * host_origin[2];
   
   size_t j, k;
-
+  size_t base_offset = buffer_origin[0] + buffer_row_pitch * buffer_origin[1] 
+    + buffer_slice_pitch * buffer_origin[2];
   /* TODO: handle overlaping regions */
     
   for (k = 0; k < region[2]; ++k)
     for (j = 0; j < region[1]; ++j)
-      memcpy (adjusted_device_ptr + buffer_row_pitch * j + buffer_slice_pitch * k,
+      {
+        char const *__restrict h_ptr = adjusted_host_ptr + host_row_pitch * j 
+          + host_slice_pitch * k;       
+        size_t offset = base_offset + buffer_row_pitch * j 
+          + buffer_slice_pitch * k;
+        pocl_tce_write (NULL, h_ptr, device_ptr, offset, region[0]);
+  
+      }
+  /*
+    memcpy (adjusted_device_ptr + buffer_row_pitch * j + buffer_slice_pitch * k,
               adjusted_host_ptr + host_row_pitch * j + host_slice_pitch * k,
               region[0]);
+  */
 }
 
 void
@@ -756,20 +769,32 @@ pocl_tce_read_rect (void */*data*/,
                     size_t const host_row_pitch,
                     size_t const host_slice_pitch)
 {
+  /*
   char const *__restrict const adjusted_device_ptr = 
     (char const*)device_ptr +
     buffer_origin[0] + buffer_row_pitch * buffer_origin[1] + buffer_slice_pitch * buffer_origin[2];
+  */
   char *__restrict__ const adjusted_host_ptr = 
     (char*)host_ptr +
     host_origin[0] + host_row_pitch * host_origin[1] + host_slice_pitch * host_origin[2];
   
   size_t j, k;
-
+  size_t base_offset = buffer_origin[0] + buffer_row_pitch * buffer_origin[1] 
+    + buffer_slice_pitch * buffer_origin[2];
   /* TODO: handle overlaping regions */ 
   
   for (k = 0; k < region[2]; ++k)
     for (j = 0; j < region[1]; ++j)
+      {
+        char const *__restrict h_ptr = adjusted_host_ptr + host_row_pitch * j 
+          + host_slice_pitch * k;       
+        size_t offset = base_offset + buffer_row_pitch * j 
+          + buffer_slice_pitch * k;
+        pocl_tce_write (NULL, h_ptr, device_ptr, offset, region[0]);
+      }
+  /*
       memcpy (adjusted_host_ptr + host_row_pitch * j + host_slice_pitch * k,
               adjusted_device_ptr + buffer_row_pitch * j + buffer_slice_pitch * k,
               region[0]);
+  */
 }
