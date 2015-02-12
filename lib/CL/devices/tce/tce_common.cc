@@ -335,7 +335,8 @@ pocl_tce_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
 }
 
 void
-pocl_tce_write (void *data, const void *host_ptr, void *device_ptr, size_t cb)
+pocl_tce_write (void *data, const void *host_ptr, void *device_ptr, 
+                size_t offset, size_t cb)
 {
   TCEDevice* d = (TCEDevice*)data;
   chunk_info_t *chunk = (chunk_info_t*)device_ptr;
@@ -346,7 +347,8 @@ pocl_tce_write (void *data, const void *host_ptr, void *device_ptr, size_t cb)
 }
 
 void
-pocl_tce_read (void *data, void *host_ptr, const void *device_ptr, size_t cb)
+pocl_tce_read (void *data, void *host_ptr, const void *device_ptr, 
+               size_t offset, size_t cb)
 {
   TCEDevice* d = (TCEDevice*)data;
   chunk_info_t *chunk = (chunk_info_t*)device_ptr;
@@ -603,7 +605,7 @@ pocl_tce_map_mem (void *data, void *buf_ptr,
     }
 
   /* Synch the device global region to the host memory. */
-  pocl_tce_read (data, target, chunk, size);
+  pocl_tce_read (data, target, chunk, 0, size);
   return target;
 }
 
@@ -670,7 +672,8 @@ pocl_tce_build_hash (void *data, SHA1_CTX *build_hash)
 }
 
 void
-pocl_tce_copy (void */*data*/, const void *src_ptr, void *__restrict__ dst_ptr, size_t cb)
+pocl_tce_copy (void */*data*/, const void *src_ptr, size_t src_offset, 
+               void *__restrict__ dst_ptr, size_t dst_offset, size_t cb)
 {
   POCL_ABORT_UNIMPLEMENTED("Copy not yet supported in TCE driver.");
   if (src_ptr == dst_ptr)

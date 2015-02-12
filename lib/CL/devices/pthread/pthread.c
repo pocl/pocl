@@ -483,7 +483,8 @@ pocl_pthread_free (void *data, cl_mem_flags flags, void *ptr)
 #endif
 
 void
-pocl_pthread_read (void *data, void *host_ptr, const void *device_ptr, size_t cb)
+pocl_pthread_read (void *data, void *host_ptr, const void *device_ptr, 
+                   size_t offset, size_t cb)
 {
   if (host_ptr == device_ptr)
     return;
@@ -492,7 +493,8 @@ pocl_pthread_read (void *data, void *host_ptr, const void *device_ptr, size_t cb
 }
 
 void
-pocl_pthread_write (void *data, const void *host_ptr, void *device_ptr, size_t cb)
+pocl_pthread_write (void *data, const void *host_ptr, void *device_ptr, 
+                    size_t offset, size_t cb)
 {
   if (host_ptr == device_ptr)
     return;
@@ -501,12 +503,13 @@ pocl_pthread_write (void *data, const void *host_ptr, void *device_ptr, size_t c
 }
 
 void
-pocl_pthread_copy (void *data, const void *src_ptr, void *__restrict__ dst_ptr, size_t cb)
+pocl_pthread_copy (void *data, const void *src_ptr, size_t src_offset, 
+                   void *__restrict__ dst_ptr, size_t dst_offset, size_t cb)
 {
   if (src_ptr == dst_ptr)
     return;
   
-  memcpy (dst_ptr, src_ptr, cb);
+  memcpy (dst_ptr + dst_offset, src_ptr + src_offset, cb);
 }
 
 #define FALLBACK_MAX_THREAD_COUNT 8
@@ -662,7 +665,7 @@ workgroup_thread (void *p)
           void* devptr = pocl_pthread_malloc(ta->data, 0, sizeof(dev_image_t), NULL);
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = devptr;       
-          pocl_pthread_write (ta->data, &di, devptr, sizeof(dev_image_t));
+          pocl_pthread_write (ta->data, &di, devptr, 0, sizeof(dev_image_t));
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
@@ -671,7 +674,7 @@ workgroup_thread (void *p)
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = pocl_pthread_malloc 
             (ta->data, 0, sizeof(dev_sampler_t), NULL);
-          pocl_pthread_write (ta->data, &ds, *(void**)arguments[i], 
+          pocl_pthread_write (ta->data, &ds, *(void**)arguments[i], 0, 
                               sizeof(dev_sampler_t));
         }
       else

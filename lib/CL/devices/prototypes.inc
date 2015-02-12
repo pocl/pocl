@@ -41,8 +41,9 @@
                                             size_t origin, size_t size); \
   void pocl_##__DRV__##_free (void *data, cl_mem_flags flags, void *ptr);   \
   void pocl_##__DRV__##_read (void *data, void *host_ptr,                   \
-                          const void *device_ptr, size_t cb);           \
-  void pocl_##__DRV__##_read_rect (void *data, void *host_ptr, void *device_ptr, \
+                          const void *device_ptr, size_t offset, size_t cb); \
+  void pocl_##__DRV__##_read_rect (void *data, void *host_ptr,          \
+                               void *device_ptr,                        \
                                const size_t *buffer_origin,             \
                                const size_t *host_origin,               \
                                const size_t *region,                    \
@@ -50,8 +51,10 @@
                                size_t buffer_slice_pitch,               \
                                size_t host_row_pitch,                   \
                                size_t host_slice_pitch);                \
-  void pocl_##__DRV__##_write (void *data, const void *host_ptr, void *device_ptr, size_t cb); \
-  void pocl_##__DRV__##_write_rect (void *data, const void *host_ptr, void *device_ptr, \
+  void pocl_##__DRV__##_write (void *data, const void *host_ptr,        \
+                               void *device_ptr, size_t offset, size_t cb); \
+  void pocl_##__DRV__##_write_rect (void *data, const void *host_ptr,  \
+                                void *device_ptr,                       \
                                 const size_t *buffer_origin,            \
                                 const size_t *host_origin,              \
                                 const size_t *region,                   \
@@ -59,8 +62,9 @@
                                 size_t buffer_slice_pitch,              \
                                 size_t host_row_pitch,                  \
                                 size_t host_slice_pitch);               \
-  void pocl_##__DRV__##_copy (void *data, const void *src_ptr,              \
-                          void *__restrict__ dst_ptr, size_t cb);       \
+  void pocl_##__DRV__##_copy (void *data, const void *src_ptr, \
+                             size_t src_offset, void *__restrict__ dst_ptr, \
+                             size_t dst_offset, size_t cb);       \
   void pocl_##__DRV__##_copy_rect (void *data, const void *src_ptr,         \
                                void *dst_ptr,                           \
                                const size_t *src_origin,                \
