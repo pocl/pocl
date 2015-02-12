@@ -715,7 +715,7 @@ pocl_tce_copy_rect (void */*data*/,
 }
 
 void
-pocl_tce_write_rect (void */*data*/,
+pocl_tce_write_rect (void *data,
                      const void *__restrict__ const host_ptr,
                      void *__restrict__ const device_ptr,
                      const size_t *__restrict__ const buffer_origin,
@@ -747,7 +747,7 @@ pocl_tce_write_rect (void */*data*/,
           + host_slice_pitch * k;       
         size_t offset = base_offset + buffer_row_pitch * j 
           + buffer_slice_pitch * k;
-        pocl_tce_write (NULL, h_ptr, device_ptr, offset, region[0]);
+        pocl_tce_write (data, h_ptr, device_ptr, offset, region[0]);
   
       }
   /*
@@ -758,7 +758,7 @@ pocl_tce_write_rect (void */*data*/,
 }
 
 void
-pocl_tce_read_rect (void */*data*/,
+pocl_tce_read_rect (void *data,
                     void *__restrict__ const host_ptr,
                     void *__restrict__ const device_ptr,
                     const size_t *__restrict__ const buffer_origin,
@@ -790,7 +790,7 @@ pocl_tce_read_rect (void */*data*/,
           + host_slice_pitch * k;       
         size_t offset = base_offset + buffer_row_pitch * j 
           + buffer_slice_pitch * k;
-        pocl_tce_write (NULL, h_ptr, device_ptr, offset, region[0]);
+        pocl_tce_write (data, h_ptr, device_ptr, offset, region[0]);
       }
   /*
       memcpy (adjusted_host_ptr + host_row_pitch * j + host_slice_pitch * k,
