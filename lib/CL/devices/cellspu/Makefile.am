@@ -28,3 +28,5 @@ libpocl_devices_cellspu_la_SOURCES = cellspu.h cellspu.c
 
 libpocl_devices_cellspu_la_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices -I$(top_srcdir)/lib/CL $(OCL_ICD_CFLAGS)
 libpocl_devices_cellspu_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
+
+EXTRA_DIST = CMakeLists.txt

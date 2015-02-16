@@ -32,3 +32,4 @@ libpocl_devices_tce_ttasim_la_CPPFLAGS = `@TCE_CONFIG@ --includes` -I$(top_srcdi
 -I$(top_srcdir)/lib/CL $(OCL_ICD_CFLAGS)
 libpocl_devices_tce_ttasim_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
 
+EXTRA_DIST = CMakeLists.txt

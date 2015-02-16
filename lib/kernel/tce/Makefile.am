@@ -42,4 +42,5 @@ LKERNEL_SRCS_EXCLUDE = printf.c
 LKERNEL_SRCS_EXTRA = printf_constant.c
 endif
 
+EXTRA_DIST = CMakeLists.txt
 

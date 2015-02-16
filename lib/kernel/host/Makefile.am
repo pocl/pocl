@@ -34,3 +34,5 @@ include ../sources.mk
 if USE_VECMATHLIB
 include ../sources-vml.mk
 endif
+
+EXTRA_DIST = CMakeLists.txt

@@ -194,3 +194,5 @@ libOpenCL_la_LIBADD = ${libpocl_la_LIBADD}
 endif
 
 CLEANFILES = libOpenCL.la
+
+EXTRA_DIST = CMakeLists.txt
