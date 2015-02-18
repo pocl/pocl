@@ -97,9 +97,12 @@ CL_API_SUFFIX__VERSION_1_0
   /* TODO: call device->buf_offset() or similar as device_ptrs might not be
      actual buffer pointers but pointers to a book keeping structure. */
   cmd->command.copy.src_ptr = 
-    (char*)src_buffer->device_ptrs[device_id->dev_id].mem_ptr + src_offset;
+    (char*)src_buffer->device_ptrs[device_id->dev_id].mem_ptr;
+  cmd->command.copy.src_offset = src_offset;
+
   cmd->command.copy.dst_ptr = 
-    (char*)dst_buffer->device_ptrs[device_id->dev_id].mem_ptr + dst_offset;
+    (char*)dst_buffer->device_ptrs[device_id->dev_id].mem_ptr;
+  cmd->command.copy.dst_offset = dst_offset;
   cmd->command.copy.cb = size;
 
   pocl_command_enqueue(command_queue, cmd);

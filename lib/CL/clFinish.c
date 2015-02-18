@@ -119,7 +119,8 @@ static void exec_commands (_cl_command_node *node_list)
           node->device->ops->read
             (node->device->data, 
              node->command.read.host_ptr, 
-             node->command.read.device_ptr, 
+             node->command.read.device_ptr,
+             node->command.read.offset,
              node->command.read.cb); 
           POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
           POname(clReleaseMemObject) (node->command.read.buffer);
@@ -129,7 +130,8 @@ static void exec_commands (_cl_command_node *node_list)
           node->device->ops->write
             (node->device->data, 
              node->command.write.host_ptr, 
-             node->command.write.device_ptr, 
+             node->command.write.device_ptr,
+             node->command.write.offset,
              node->command.write.cb);
           POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
           POname(clReleaseMemObject) (node->command.write.buffer);
@@ -138,8 +140,10 @@ static void exec_commands (_cl_command_node *node_list)
           POCL_UPDATE_EVENT_RUNNING(event, command_queue);
           node->device->ops->copy
             (node->command.copy.data, 
-             node->command.copy.src_ptr, 
+             node->command.copy.src_ptr,
+             node->command.copy.src_offset,
              node->command.copy.dst_ptr,
+             node->command.copy.dst_offset,
              node->command.copy.cb);
           POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
           POname(clReleaseMemObject) (node->command.copy.src_buffer);

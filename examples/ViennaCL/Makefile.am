@@ -48,7 +48,7 @@ $(viennacl_local_src_dir):
 build:
 	if [ ! -d $(viennacl_local_src_dir) ]; then cp -aL $(testsuite_src_dir) . ; fi
 	cd $(viennacl_local_src_dir)/build; \
-	cmake \
+	cmake -DBoost_NO_BOOST_CMAKE=TRUE \
 		-D BUILD_TESTING:BOOL=ON \
 		-D BUILD_DOXYGEN_DOCS:BOOL=OFF \
 		-D BUILD_MANUAL:BOOL=OFF \
