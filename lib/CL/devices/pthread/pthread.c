@@ -487,7 +487,7 @@ pocl_pthread_read (void *data, void *host_ptr, const void *device_ptr,
   if (host_ptr == device_ptr)
     return;
 
-  memcpy (host_ptr, device_ptr, cb);
+  memcpy (host_ptr, device_ptr + offset, cb);
 }
 
 void
@@ -497,7 +497,7 @@ pocl_pthread_write (void *data, const void *host_ptr, void *device_ptr,
   if (host_ptr == device_ptr)
     return;
   
-  memcpy (device_ptr, host_ptr, cb);
+  memcpy (device_ptr + offset, host_ptr, cb);
 }
 
 void
