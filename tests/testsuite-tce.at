@@ -35,8 +35,6 @@ AT_CHECK([POCL_WORK_GROUP_METHOD=repl make -s -C $abs_top_builddir/tests/tce/fp1
 AT_CLEANUP
 
 AT_SETUP([Half-precision floats on ttasim (loopvec)])
-# Codegen issue with loop vectorization? To investigate.
-AT_XFAIL_IF([true])
 AT_KEYWORDS([tce tta ttasim half])
 AT_SKIP_IF([! grep -c "define TCE_AVAILABLE" $abs_top_builddir/config.h])
 AT_CHECK([make -s -C $abs_top_builddir/tests/tce/fp16 run | egrep -v "^make"], 0, 
