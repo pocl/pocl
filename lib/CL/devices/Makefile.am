@@ -50,3 +50,4 @@ SUBDIRS += cellspu
 libpocl_devices_la_LIBADD += cellspu/libpocl-devices-cellspu.la
 endif
 
+EXTRA_DIST = CMakeLists.txt

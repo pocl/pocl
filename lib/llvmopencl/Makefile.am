@@ -69,3 +69,5 @@ libllvmpasses_la_SOURCES = ${PASSES_SOURCES} linker.cpp
 # The offline compiler script (pocl-standalone) calls the kernel compiler passes 
 # from the command line, those require libllvmopencl.so.
 llvmopencl_la_SOURCES = ${PASSES_SOURCES}
+
+EXTRA_DIST = CMakeLists.txt

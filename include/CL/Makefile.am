@@ -40,4 +40,4 @@ library_include_HEADERS = cl.h cl_ext.h			\
 nodist_library_include_HEADERS = cl.hpp
 endif
 
-EXTRA_DIST = cl.hpp.in $(top_srcdir)/tools/patches/khronos_cl.hpp.patch
+EXTRA_DIST = cl.hpp.in $(top_srcdir)/tools/patches/khronos_cl.hpp.patch CMakeLists.txt

@@ -44,3 +44,5 @@ AM_DEFAULT_SOURCE_EXT = .cpp
 AM_LDFLAGS = ../../lib/poclu/libpoclu.la @OPENCL_LIBS@
 AM_CXXFLAGS = @OPENCL_CFLAGS@ -Wno-deprecated -Wno-deprecated-declarations
 AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_builddir)/include -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL -DSRCDIR='"$(abs_srcdir)"'
+
+EXTRA_DIST = CMakeLists.txt

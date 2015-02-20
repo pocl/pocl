@@ -35,3 +35,4 @@ libpocl_devices_tce_la_CPPFLAGS = `@TCE_CONFIG@ --includes` -I$(top_srcdir)/fix-
 
 dist_pkgdata_DATA = tta_device_main.c
 
+EXTRA_DIST = CMakeLists.txt

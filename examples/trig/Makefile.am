@@ -29,3 +29,5 @@ trig_LDADD = @OPENCL_LIBS@ -lm ../../lib/poclu/libpoclu.la
 trig_CFLAGS = @OPENCL_CFLAGS@
 
 AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'
+
+EXTRA_DIST = CMakeLists.txt

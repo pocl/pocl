@@ -26,7 +26,7 @@ bin_SCRIPTS = pocl-standalone
 pkgdataincludedir = $(pkgdatadir)/include
 
 CLEANFILES = pocl-standalone
-EXTRA_DIST = pocl-standalone.in
+EXTRA_DIST = pocl-standalone.in CMakeLists.txt
 
 do_subst = sed -e 's|[@]abs_top_srcdir[@]|$(abs_top_srcdir)|g'		\
                -e 's|[@]abs_top_builddir[@]|$(abs_top_builddir)|g'	\
