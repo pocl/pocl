@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 # 
 # Copyright (c) 2011-2013 Universidad Rey Juan Carlos and
-#               2011-2014 Pekka Jääskeläinen / Tampere University of Technology
+#               2011-2015 Pekka Jääskeläinen / Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,8 @@
 
 AC_PREREQ([2.64])
 AC_INIT([pocl], [0.12-pre], [pocl-devel@lists.sourceforge.net])
-AC_CONFIG_SRCDIR([config.h.in])
-AC_CONFIG_HEADER([config.h])
+AC_CONFIG_SRCDIR([pocl_config.h.in])
+AC_CONFIG_HEADER([pocl_config.h])
 AC_CONFIG_AUX_DIR([config])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CONFIG_TESTDIR([tests])

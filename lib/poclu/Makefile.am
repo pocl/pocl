@@ -30,3 +30,5 @@ libpoclu_la_SOURCES = bswap.c misc.c cl_half.c
 libpoclu_la_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include 
 libpoclu_la_LDFLAGS = -lm -version-info ${LIB_VERSION}
 libpoclu_la_LIBADD = @OPENCL_LIBS@
+
+EXTRA_DIST = CMakeLists.txt

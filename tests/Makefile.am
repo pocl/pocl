@@ -53,7 +53,8 @@ EXTRA_DIST = testsuite.at testsuite-samples.at testsuite-viennacl.at testsuite-r
 	testsuite-workgroup.at testsuite-parboil.at testsuite-amd.at \
 	testsuite-vexcl.at testsuite-piglit.at testsuite-halide.at testsuite-cloverleaf.at \
 	$(srcdir)/package.m4 $(TESTSUITE) atlocal.in testsuite-amdsdk2_9.at \
-        example_expout.txt scalarwave_expout.txt test_printf_expout.txt
+	example_expout.txt scalarwave_expout.txt test_printf_expout.txt CMakeLists.txt
+
 
 DISTCLEANFILES = atconfig
 

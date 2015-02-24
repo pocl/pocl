@@ -30,7 +30,7 @@ noinst_PROGRAMS= test_clFinish test_clGetDeviceInfo test_clGetEventInfo \
 
 EXTRA_DIST= \
 	test_kernel_src_in_pwd.h test_clSetEventCallback_expout.txt \
-	test_clCreateKernelsInProgram.cl \
+	test_clCreateKernelsInProgram.cl CMakeLists.txt \
 	test_data/test_kernel_src_in_another_dir.h \
 	clGetKernelArgInfo.spir32_meta clGetKernelArgInfo.spir32_nometa \
 	clGetKernelArgInfo.spir64_meta clGetKernelArgInfo.spir64_nometa

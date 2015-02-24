@@ -25,7 +25,7 @@
 #ifndef POCL_CL_H
 #define POCL_CL_H
 
-#include "config.h"
+#include "pocl_config.h"
 #include <assert.h>
 #include <stdio.h>
 #ifndef _MSC_VER

@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-EXTRA_DIST = standalone.cl
+EXTRA_DIST = standalone.cl CMakeLists.txt
 
 noinst_DATA = $(EXTRA_DIST:.cl=.bc)
 

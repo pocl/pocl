@@ -33,6 +33,8 @@ ACLOCAL_AMFLAGS = -I m4
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = pocl.pc
 
+include_HEADERS = pocl_config.h
+
 CLEANFILES = install-paths.h
 PHONIES = install-paths.h
 
@@ -62,6 +64,12 @@ EXTRA_DIST = config/xclang tools/data/test_machine.adf tools/data/test_machine_f
   doc/build-envs.txt CHANGES fix-include pocl.icd.in README README.ARM README.Cell \
   README.Windows README.mips README.OSX README.powerpc README.packaging CREDITS LICENSE \
   tools/uncrustify_cxx.cfg windows/setup_and_build_win64.sh
+
+# CMake
+EXTRA_DIST += CMakeLists.txt cmake/FindHwloc.cmake cmake/FindPthreadsWin32.cmake \
+  cmake/LLVM.cmake cmake/Sphinx.cmake cmake/bitcode_rules.cmake cmake/run_test.cmake \
+	android/androideabi.cmake config.h.in.cmake pocl.icd.in.cmake pocl.pc.in.cmake \
+	scripts/pocl-standalone.in.cmake
 
 # Sphinx dist:
 EXTRA_DIST += doc/sphinx/source/conf.py doc/sphinx/source/design.rst doc/sphinx/source/development.rst doc/sphinx/source/env_variables.rst doc/sphinx/source/faq.rst doc/sphinx/source/features.rst doc/sphinx/source/host_library.rst doc/sphinx/source/index.rst doc/sphinx/source/kernel_compiler.rst doc/sphinx/source/memory_management.rst doc/sphinx/source/releasing.rst doc/sphinx/source/using.rst doc/sphinx/Makefile
