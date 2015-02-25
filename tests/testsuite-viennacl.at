@@ -91,7 +91,7 @@ AT_CLEANUP
 #
 POAT_VCL_SETUP([global_variables-test-opencl])
 #This spinns on LLVM 3.6
-AT_SKIP_IF([egrep -q "#define LLVM_3_6" $abs_top_builddir/pocl_config.h])
+AT_SKIP_IF([egrep -q "#define LLVM_3_6" $abs_top_builddir/config.h])
 POAT_VCL_CHECK_RUN(tests/global_variables-test-opencl)
 AT_CLEANUP
 
@@ -117,7 +117,7 @@ AT_CLEANUP
 #(to be unnamed) reference platform errored out
 POAT_VCL_SETUP([matrix_col_int-test-opencl])
 #uninvestigated
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/pocl_config.h | cut -d\" -f2 | grep -q armv])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 POAT_VCL_CHECK_RUN(tests/matrix_col_int-test-opencl)
 AT_CLEANUP
 
@@ -137,7 +137,7 @@ AT_CLEANUP
 #(to be unnamed) reference platform errored out
 POAT_VCL_SETUP([matrix_row_int-test-opencl])
 #uninvestigated
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/pocl_config.h | cut -d\" -f2 | grep -q armv])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 POAT_VCL_CHECK_RUN(tests/matrix_row_int-test-opencl)
 AT_CLEANUP
 
@@ -145,7 +145,7 @@ AT_CLEANUP
 #(to be unnamed) reference platform errored out
 POAT_VCL_SETUP([matrix_vector_int-test-opencl])
 #uninvestigated
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/pocl_config.h | cut -d\" -f2 | grep -q armv])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q armv])
 POAT_VCL_CHECK_RUN(tests/matrix_vector_int-test-opencl)
 AT_CLEANUP
 
@@ -178,7 +178,7 @@ AT_CLEANUP
 POAT_VCL_SETUP([vector_double-test-opencl])
 #fails with "Could not find a dominating alternative variable"
 #Note: uncomment a few other tests if fixing this
-AT_XFAIL_IF([egrep -q "#define LLVM_3_4" $abs_top_builddir/pocl_config.h])
+AT_XFAIL_IF([egrep -q "#define LLVM_3_4" $abs_top_builddir/config.h])
 POAT_VCL_CHECK_RUN(tests/vector_double-test-opencl)
 AT_CLEANUP
 

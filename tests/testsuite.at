@@ -43,7 +43,7 @@ AT_CLEANUP
 AT_SETUP([example1: dot product (SPIR64)])
 # This SPIR example works because it does not use local memory nor
 # call builtins that are mangled with address spaces.
-AT_SKIP_IF([! grep "#define POCL_DEVICE_ADDRESS_BITS 64" $abs_top_builddir/pocl_config.h])
+AT_SKIP_IF([! grep "#define POCL_DEVICE_ADDRESS_BITS 64" $abs_top_builddir/config.h])
 AT_KEYWORDS([spir])
 AT_CHECK_UNQUOTED([$abs_top_builddir/examples/example1-spir64/example1-spir], 0,
 [$(cat $abs_top_srcdir/tests/example_expout.txt)
@@ -53,7 +53,7 @@ AT_CLEANUP
 AT_SETUP([example1: dot product (SPIR32)])
 # This SPIR example works because it does not use local memory nor
 # call builtins that are mangled with address spaces.
-AT_SKIP_IF([! grep "#define POCL_DEVICE_ADDRESS_BITS 32" $abs_top_builddir/pocl_config.h])
+AT_SKIP_IF([! grep "#define POCL_DEVICE_ADDRESS_BITS 32" $abs_top_builddir/config.h])
 AT_KEYWORDS([spir])
 AT_CHECK_UNQUOTED([$abs_top_builddir/examples/example1-spir32/example1-spir32], 0,
 [$(cat $abs_top_srcdir/tests/example_expout.txt)
@@ -75,8 +75,8 @@ AT_CLEANUP
 AT_BANNER([Kernel runtime library])
 
 AT_SETUP([Kernel functions convert_char*])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/pocl_config.h | cut -d\" -f2 | grep -q powerpc && 
-             grep -q "#define LLVM_3_2" $abs_top_builddir/pocl_config.h])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc && 
+             grep -q "#define LLVM_3_2" $abs_top_builddir/config.h])
 AT_KEYWORDS([short16])
 AT_DATA([expout],
 [Running test test_short16...
@@ -87,8 +87,8 @@ AT_CLEANUP
 
 AT_SETUP([Kernel functions printf])
 # On 32-bit x86, accessing int4 via va_arg segfaults (wrong alignment?)
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/pocl_config.h | cut -d\" -f2 | grep -q i686])
-AT_XFAIL_IF([egrep -q "#define LLVM_3_2|#define LLVM_3_3" $abs_top_builddir/pocl_config.h])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q i686])
+AT_XFAIL_IF([egrep -q "#define LLVM_3_2|#define LLVM_3_3" $abs_top_builddir/config.h])
 AT_KEYWORDS([printf])
 AT_CHECK_UNQUOTED([$abs_top_builddir/tests/kernel/kernel test_printf], 0,
 [$(cat $abs_top_srcdir/tests/test_printf_expout.txt)
@@ -96,7 +96,7 @@ AT_CHECK_UNQUOTED([$abs_top_builddir/tests/kernel/kernel test_printf], 0,
 AT_CLEANUP
 
 AT_SETUP([Kernel functions as_type])
-AT_SKIP_IF([grep HOST_CPU $abs_top_builddir/pocl_config.h | cut -d\" -f2 | grep -q powerpc])
+AT_SKIP_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
 AT_KEYWORDS([conversion])
 AT_DATA([expout],
 [Running test test_as_type...
@@ -107,8 +107,8 @@ AT_CLEANUP
 
 AT_SETUP([Kernel functions convert_type - scalars])
 # ppc codegen issue, see bug #26
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/pocl_config.h | cut -d\" -f2 | grep -q powerpc64])
-AT_XFAIL_IF([grep -q "#define LLVM_3_6" $abs_top_builddir/pocl_config.h])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc64])
+AT_XFAIL_IF([grep -q "#define LLVM_3_6" $abs_top_builddir/config.h])
 AT_KEYWORDS([conversion])
 AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_convert_type_1], 0,
 [Running test test_convert_type_1...
@@ -117,8 +117,8 @@ OK
 AT_CLEANUP
 AT_SETUP([Kernel functions convert_type - vector of 2])
 # ppc codegen issue, see bug #26
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/pocl_config.h | cut -d\" -f2 | grep -q powerpc64])
-AT_XFAIL_IF([grep -q "#define LLVM_3_6" $abs_top_builddir/pocl_config.h])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc64])
+AT_XFAIL_IF([grep -q "#define LLVM_3_6" $abs_top_builddir/config.h])
 AT_KEYWORDS([conversion])
 AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_convert_type_2], 0,
 [Running test test_convert_type_2...
@@ -127,8 +127,8 @@ OK
 AT_CLEANUP
 AT_SETUP([Kernel functions convert_type - vector of 4])
 # ppc codegen issue, see bug #26
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/pocl_config.h | cut -d\" -f2 | grep -q powerpc64])
-AT_XFAIL_IF([grep -q "#define LLVM_3_6" $abs_top_builddir/pocl_config.h])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc64])
+AT_XFAIL_IF([grep -q "#define LLVM_3_6" $abs_top_builddir/config.h])
 AT_KEYWORDS([conversion])
 AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_convert_type_4], 0,
 [Running test test_convert_type_4...
@@ -137,8 +137,8 @@ OK
 AT_CLEANUP
 AT_SETUP([Kernel functions convert_type - vector of 8])
 # ppc codegen issue, see bug #26
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/pocl_config.h | cut -d\" -f2 | grep -q powerpc64])
-AT_XFAIL_IF([grep -q "#define LLVM_3_6" $abs_top_builddir/pocl_config.h])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc64])
+AT_XFAIL_IF([grep -q "#define LLVM_3_6" $abs_top_builddir/config.h])
 AT_KEYWORDS([conversion])
 AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_convert_type_8], 0,
 [Running test test_convert_type_8...
@@ -147,8 +147,8 @@ OK
 AT_CLEANUP
 AT_SETUP([Kernel functions convert_type - vector of 16])
 # ppc codegen issue, see bug #26
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/pocl_config.h | cut -d\" -f2 | grep -q powerpc64])
-AT_XFAIL_IF([grep -q "#define LLVM_3_6" $abs_top_builddir/pocl_config.h])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc64])
+AT_XFAIL_IF([grep -q "#define LLVM_3_6" $abs_top_builddir/config.h])
 AT_KEYWORDS([conversion])
 AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_convert_type_16], 0,
 [Running test test_convert_type_16...
@@ -170,7 +170,7 @@ AT_CLEANUP
 
 AT_SETUP([Kernel functions fmin, fmax, fma])
 AT_KEYWORDS([fmin_fmax_fma])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/pocl_config.h | cut -d\" -f2 | grep -q powerpc ])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc ])
 AT_DATA([expout],
 [Running test test_fmin_fmax_fma...
 OK
@@ -192,7 +192,7 @@ AT_CLEANUP
 AT_SETUP([Kernel functions abs bitselect clz max min popcount])
 #Fails on tce due to bug #1160383
 #AT_KEYWORDS([tce])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/pocl_config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
 AT_DATA([expout],
 [Running test test_bitselect...
 OK
@@ -202,9 +202,9 @@ AT_CLEANUP
 
 AT_SETUP([Kernel functions fabs signbit isfinite isinf isnan isnormal copysign ilogb ldexp])
 #Fails with what looks like rounding with vecmathlib on ppc32. ppc64 uninvestigated
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/pocl_config.h | cut -d\" -f2 | grep -q powerpc64])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/pocl_config.h | cut -d\" -f2 | grep -q powerpc && 
-             grep -q "#define LLVM_3_2" $abs_top_builddir/pocl_config.h])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc64])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc && 
+             grep -q "#define LLVM_3_2" $abs_top_builddir/config.h])
 AT_KEYWORDS([])
 AT_DATA([expout],
 [Running test test_fabs...
@@ -216,10 +216,10 @@ AT_CLEANUP
 AT_SETUP([Kernel functions abs abs_diff add_sat hadd mad_hi mad_sat mul_hi rhadd sub_sat])
 # 3-element vector cases fail when vectorizer is enabled,
 # at least with Intel Core i5 and AMD FX8. Assume it fails on all others too.
-AT_XFAIL_IF([grep OCL_KERNEL_TARGET $abs_top_builddir/pocl_config.h | cut -d\" -f2 | grep -q x86_64 &&
-             grep -q "#define LLVM_3_5" $abs_top_builddir/pocl_config.h])
-AT_XFAIL_IF([grep OCL_KERNEL_TARGET $abs_top_builddir/pocl_config.h | cut -d\" -f2 | grep -q x86_64 &&
-             grep -q "#define LLVM_3_6" $abs_top_builddir/pocl_config.h])
+AT_XFAIL_IF([grep OCL_KERNEL_TARGET $abs_top_builddir/config.h | cut -d\" -f2 | grep -q x86_64 &&
+             grep -q "#define LLVM_3_5" $abs_top_builddir/config.h])
+AT_XFAIL_IF([grep OCL_KERNEL_TARGET $abs_top_builddir/config.h | cut -d\" -f2 | grep -q x86_64 &&
+             grep -q "#define LLVM_3_6" $abs_top_builddir/config.h])
 AT_DATA([expout],
 [Running test test_hadd...
 OK
@@ -228,7 +228,7 @@ AT_CHECK([POCL_WORK_GROUP_METHOD=loopvec $abs_top_builddir/tests/kernel/kernel t
 AT_CLEANUP
 
 AT_SETUP([Kernel functions abs abs_diff add_sat hadd mad_hi mad_sat mul_hi rhadd sub_sat])
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/pocl_config.h | cut -d\" -f2 | grep -q powerpc])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
 AT_DATA([expout],
 [Running test test_hadd...
 OK
@@ -240,12 +240,12 @@ AT_SETUP([Kernel functions << >> rotate])
 # Fails because of bugs in rotate. 
 # At least in Debian 6.0/x86_64/LLVM 3.2 and
 # Ubuntu 12.04/x86/LLVM 3.2
-AT_XFAIL_IF([grep -q "#define LLVM_3_2" $abs_top_builddir/pocl_config.h])
+AT_XFAIL_IF([grep -q "#define LLVM_3_2" $abs_top_builddir/config.h])
 # tce fails currently this test so removed it from the keywords.
 # https://bugs.launchpad.net/tce/+bug/1180309
 #LLVM 3.3 regression on ppc - looks like an optimization+ppc codegen bug
-AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/pocl_config.h | cut -d\" -f2 | grep -q powerpc && 
-             grep -q "#define LLVM_3_3" $abs_top_builddir/pocl_config.h])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc && 
+             grep -q "#define LLVM_3_3" $abs_top_builddir/config.h])
 AT_KEYWORDS([rotate])
 AT_DATA([expout],
 [Running test test_rotate...
@@ -307,8 +307,8 @@ AT_DATA([expout],
 OK
 ])
 AT_SKIP_IF(true)
-AT_XFAIL_IF([grep -q "#define LLVM_3_3" $abs_top_builddir/pocl_config.h ||
-             grep -q "#define LLVM_3_4" $abs_top_builddir/pocl_config.h ])
+AT_XFAIL_IF([grep -q "#define LLVM_3_3" $abs_top_builddir/config.h ||
+             grep -q "#define LLVM_3_4" $abs_top_builddir/config.h ])
 AT_CHECK([$abs_top_builddir/tests/kernel/test_shuffle half], 0, expout)
 AT_CLEANUP
 
