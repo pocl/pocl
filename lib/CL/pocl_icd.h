@@ -1,4 +1,4 @@
-#include "pocl_config.h"
+#include "config.h"
 
 /* Installable Client Driver-realated things. */
 #ifndef POCL_ICD_H

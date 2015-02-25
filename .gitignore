@@ -8,8 +8,8 @@ Makefile
 Makefile.in
 aclocal.m4
 autom4te.cache
-pocl_config.h
-pocl_config.h.in
+config.h
+config.h.in
 config.log
 config.status
 config/ar-lib
