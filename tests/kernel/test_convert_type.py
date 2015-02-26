@@ -194,8 +194,8 @@ for (src, dst, size) in generate_conversions(int_types, int_types):
     print("\n#ifdef cl_khr_int64")
   print("""
   for (size_t i = 0; i < {S}_values_length; ++i) {{
-    const {S} min_expected = ({DMIN} > {SMIN}) ? ({S}){DMIN} : {SMIN};
-    const {S} max_expected = ({DMAX} < {SMAX}) ? ({S}){DMAX} : {SMAX};
+    const {S} min_expected = ({S})({DMIN} > {SMIN}) ? ({S}){DMIN} : {SMIN};
+    const {S} max_expected = ({S})({DMAX} < {SMAX}) ? ({S}){DMAX} : {SMAX};
     union {{ {D}{N} value; {D} raw[{M}]; }} expected, actual;
     expected.value = (({D}{N})(({D}){S}_values[i]));
     actual.value = convert_{D}{N}(({S}{N}){S}_values[i]);
@@ -228,8 +228,10 @@ for (src, dst, size) in generate_conversions(float_types, int_types):
   print("""
   for (size_t i = 0; i < {S}_values_length; ++i) {{
     const {S} sat_input = ({S}_values[i] + {S}_sat_offsets[i]);
-    const {S} min_expected = ({DMIN} > {SMIN}) ? ({S}){DMIN} : {SMIN};
-    const {S} max_expected = ({DMAX} < {SMAX}) ? ({S}){DMAX} : {SMAX};
+    // use the destination (integer) type always to avoid rounding errors when
+    // comparing floats to int
+    const {D} min_expected = ({D})({DMIN} > {SMIN}) ? {DMIN} : ({D}){SMIN};
+    const {D} max_expected = ({D})({DMAX} < {SMAX}) ? {DMAX} : ({D}){SMAX};
     union {{ {D}{N} value; {D} raw[{M}]; }} expected, actual;"""
       .format(
         S=src, SMIN=limit_min[src], SMAX=limit_max[src],
