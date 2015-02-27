@@ -16,7 +16,7 @@ AT_BANNER([Parboil tests])
 
 POAT_PB_SETUP([spmv])
 #This fails when pocl has ICD enabled. 
-AT_XFAIL_IF([grep -q "#define HAVE_OCL_ICD 1" $abs_top_builddir/pocl_config.h])
+AT_XFAIL_IF([grep -q "#define HAVE_OCL_ICD 1" $abs_top_builddir/config.h])
 POAT_PB_CHECK_BUILD([spmv])
 AT_CHECK_UNQUOTED([make run-spmv -sC $abs_top_builddir/examples/Parboil | grep Pass], 0, 
 [Pass
@@ -77,8 +77,8 @@ AT_CHECK_UNQUOTED([make run-bfs -sC $abs_top_builddir/examples/Parboil 2>&1 | gr
 # LLVM 3.4's SROA crashes with this. Reported in http://llvm.org/bugs/show_bug.cgi?id=15907
 # However, this is fixed with a TCE-patched version of 3.4, so let's just
 # skip it for 3.4 for now.
-AT_SKIP_IF([grep -q "#define LLVM_3_4" $abs_top_builddir/pocl_config.h])
-#AT_XFAIL_IF([grep -q "#define LLVM_3_4" $abs_top_builddir/pocl_config.h])
+AT_SKIP_IF([grep -q "#define LLVM_3_4" $abs_top_builddir/config.h])
+#AT_XFAIL_IF([grep -q "#define LLVM_3_4" $abs_top_builddir/config.h])
 AT_CLEANUP
 
 POAT_PB_SETUP([histo])

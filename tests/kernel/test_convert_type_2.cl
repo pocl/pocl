@@ -1408,8 +1408,8 @@ void compare_double_elements_double(string name, size_t sample, constant double*
 kernel void test_convert_type_2()
 {
   for (size_t i = 0; i < char_values_length; ++i) {
-    const char min_expected = (CHAR_MIN > CHAR_MIN) ? (char)CHAR_MIN : CHAR_MIN;
-    const char max_expected = (CHAR_MAX < CHAR_MAX) ? (char)CHAR_MAX : CHAR_MAX;
+    const char min_expected = (char)(CHAR_MIN > CHAR_MIN) ? (char)CHAR_MIN : CHAR_MIN;
+    const char max_expected = (char)(CHAR_MAX < CHAR_MAX) ? (char)CHAR_MAX : CHAR_MAX;
     union { char2 value; char raw[2]; } expected, actual;
     expected.value = ((char2)((char)char_values[i]));
     actual.value = convert_char2((char2)char_values[i]);
@@ -1425,8 +1425,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
-    const char min_expected = (0 > CHAR_MIN) ? (char)0 : CHAR_MIN;
-    const char max_expected = (UCHAR_MAX < CHAR_MAX) ? (char)UCHAR_MAX : CHAR_MAX;
+    const char min_expected = (char)(0 > CHAR_MIN) ? (char)0 : CHAR_MIN;
+    const char max_expected = (char)(UCHAR_MAX < CHAR_MAX) ? (char)UCHAR_MAX : CHAR_MAX;
     union { uchar2 value; uchar raw[2]; } expected, actual;
     expected.value = ((uchar2)((uchar)char_values[i]));
     actual.value = convert_uchar2((char2)char_values[i]);
@@ -1442,8 +1442,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
-    const char min_expected = (SHRT_MIN > CHAR_MIN) ? (char)SHRT_MIN : CHAR_MIN;
-    const char max_expected = (SHRT_MAX < CHAR_MAX) ? (char)SHRT_MAX : CHAR_MAX;
+    const char min_expected = (char)(SHRT_MIN > CHAR_MIN) ? (char)SHRT_MIN : CHAR_MIN;
+    const char max_expected = (char)(SHRT_MAX < CHAR_MAX) ? (char)SHRT_MAX : CHAR_MAX;
     union { short2 value; short raw[2]; } expected, actual;
     expected.value = ((short2)((short)char_values[i]));
     actual.value = convert_short2((char2)char_values[i]);
@@ -1459,8 +1459,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
-    const char min_expected = (0 > CHAR_MIN) ? (char)0 : CHAR_MIN;
-    const char max_expected = (USHRT_MAX < CHAR_MAX) ? (char)USHRT_MAX : CHAR_MAX;
+    const char min_expected = (char)(0 > CHAR_MIN) ? (char)0 : CHAR_MIN;
+    const char max_expected = (char)(USHRT_MAX < CHAR_MAX) ? (char)USHRT_MAX : CHAR_MAX;
     union { ushort2 value; ushort raw[2]; } expected, actual;
     expected.value = ((ushort2)((ushort)char_values[i]));
     actual.value = convert_ushort2((char2)char_values[i]);
@@ -1476,8 +1476,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
-    const char min_expected = (INT_MIN > CHAR_MIN) ? (char)INT_MIN : CHAR_MIN;
-    const char max_expected = (INT_MAX < CHAR_MAX) ? (char)INT_MAX : CHAR_MAX;
+    const char min_expected = (char)(INT_MIN > CHAR_MIN) ? (char)INT_MIN : CHAR_MIN;
+    const char max_expected = (char)(INT_MAX < CHAR_MAX) ? (char)INT_MAX : CHAR_MAX;
     union { int2 value; int raw[2]; } expected, actual;
     expected.value = ((int2)((int)char_values[i]));
     actual.value = convert_int2((char2)char_values[i]);
@@ -1493,8 +1493,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < char_values_length; ++i) {
-    const char min_expected = (0 > CHAR_MIN) ? (char)0 : CHAR_MIN;
-    const char max_expected = (UINT_MAX < CHAR_MAX) ? (char)UINT_MAX : CHAR_MAX;
+    const char min_expected = (char)(0 > CHAR_MIN) ? (char)0 : CHAR_MIN;
+    const char max_expected = (char)(UINT_MAX < CHAR_MAX) ? (char)UINT_MAX : CHAR_MAX;
     union { uint2 value; uint raw[2]; } expected, actual;
     expected.value = ((uint2)((uint)char_values[i]));
     actual.value = convert_uint2((char2)char_values[i]);
@@ -1512,8 +1512,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < char_values_length; ++i) {
-    const char min_expected = (LONG_MIN > CHAR_MIN) ? (char)LONG_MIN : CHAR_MIN;
-    const char max_expected = (LONG_MAX < CHAR_MAX) ? (char)LONG_MAX : CHAR_MAX;
+    const char min_expected = (char)(LONG_MIN > CHAR_MIN) ? (char)LONG_MIN : CHAR_MIN;
+    const char max_expected = (char)(LONG_MAX < CHAR_MAX) ? (char)LONG_MAX : CHAR_MAX;
     union { long2 value; long raw[2]; } expected, actual;
     expected.value = ((long2)((long)char_values[i]));
     actual.value = convert_long2((char2)char_values[i]);
@@ -1533,8 +1533,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < char_values_length; ++i) {
-    const char min_expected = (0 > CHAR_MIN) ? (char)0 : CHAR_MIN;
-    const char max_expected = (ULONG_MAX < CHAR_MAX) ? (char)ULONG_MAX : CHAR_MAX;
+    const char min_expected = (char)(0 > CHAR_MIN) ? (char)0 : CHAR_MIN;
+    const char max_expected = (char)(ULONG_MAX < CHAR_MAX) ? (char)ULONG_MAX : CHAR_MAX;
     union { ulong2 value; ulong raw[2]; } expected, actual;
     expected.value = ((ulong2)((ulong)char_values[i]));
     actual.value = convert_ulong2((char2)char_values[i]);
@@ -1552,8 +1552,8 @@ kernel void test_convert_type_2()
 #endif
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
-    const uchar min_expected = (CHAR_MIN > 0) ? (uchar)CHAR_MIN : 0;
-    const uchar max_expected = (CHAR_MAX < UCHAR_MAX) ? (uchar)CHAR_MAX : UCHAR_MAX;
+    const uchar min_expected = (uchar)(CHAR_MIN > 0) ? (uchar)CHAR_MIN : 0;
+    const uchar max_expected = (uchar)(CHAR_MAX < UCHAR_MAX) ? (uchar)CHAR_MAX : UCHAR_MAX;
     union { char2 value; char raw[2]; } expected, actual;
     expected.value = ((char2)((char)uchar_values[i]));
     actual.value = convert_char2((uchar2)uchar_values[i]);
@@ -1569,8 +1569,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
-    const uchar min_expected = (0 > 0) ? (uchar)0 : 0;
-    const uchar max_expected = (UCHAR_MAX < UCHAR_MAX) ? (uchar)UCHAR_MAX : UCHAR_MAX;
+    const uchar min_expected = (uchar)(0 > 0) ? (uchar)0 : 0;
+    const uchar max_expected = (uchar)(UCHAR_MAX < UCHAR_MAX) ? (uchar)UCHAR_MAX : UCHAR_MAX;
     union { uchar2 value; uchar raw[2]; } expected, actual;
     expected.value = ((uchar2)((uchar)uchar_values[i]));
     actual.value = convert_uchar2((uchar2)uchar_values[i]);
@@ -1586,8 +1586,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
-    const uchar min_expected = (SHRT_MIN > 0) ? (uchar)SHRT_MIN : 0;
-    const uchar max_expected = (SHRT_MAX < UCHAR_MAX) ? (uchar)SHRT_MAX : UCHAR_MAX;
+    const uchar min_expected = (uchar)(SHRT_MIN > 0) ? (uchar)SHRT_MIN : 0;
+    const uchar max_expected = (uchar)(SHRT_MAX < UCHAR_MAX) ? (uchar)SHRT_MAX : UCHAR_MAX;
     union { short2 value; short raw[2]; } expected, actual;
     expected.value = ((short2)((short)uchar_values[i]));
     actual.value = convert_short2((uchar2)uchar_values[i]);
@@ -1603,8 +1603,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
-    const uchar min_expected = (0 > 0) ? (uchar)0 : 0;
-    const uchar max_expected = (USHRT_MAX < UCHAR_MAX) ? (uchar)USHRT_MAX : UCHAR_MAX;
+    const uchar min_expected = (uchar)(0 > 0) ? (uchar)0 : 0;
+    const uchar max_expected = (uchar)(USHRT_MAX < UCHAR_MAX) ? (uchar)USHRT_MAX : UCHAR_MAX;
     union { ushort2 value; ushort raw[2]; } expected, actual;
     expected.value = ((ushort2)((ushort)uchar_values[i]));
     actual.value = convert_ushort2((uchar2)uchar_values[i]);
@@ -1620,8 +1620,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
-    const uchar min_expected = (INT_MIN > 0) ? (uchar)INT_MIN : 0;
-    const uchar max_expected = (INT_MAX < UCHAR_MAX) ? (uchar)INT_MAX : UCHAR_MAX;
+    const uchar min_expected = (uchar)(INT_MIN > 0) ? (uchar)INT_MIN : 0;
+    const uchar max_expected = (uchar)(INT_MAX < UCHAR_MAX) ? (uchar)INT_MAX : UCHAR_MAX;
     union { int2 value; int raw[2]; } expected, actual;
     expected.value = ((int2)((int)uchar_values[i]));
     actual.value = convert_int2((uchar2)uchar_values[i]);
@@ -1637,8 +1637,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
-    const uchar min_expected = (0 > 0) ? (uchar)0 : 0;
-    const uchar max_expected = (UINT_MAX < UCHAR_MAX) ? (uchar)UINT_MAX : UCHAR_MAX;
+    const uchar min_expected = (uchar)(0 > 0) ? (uchar)0 : 0;
+    const uchar max_expected = (uchar)(UINT_MAX < UCHAR_MAX) ? (uchar)UINT_MAX : UCHAR_MAX;
     union { uint2 value; uint raw[2]; } expected, actual;
     expected.value = ((uint2)((uint)uchar_values[i]));
     actual.value = convert_uint2((uchar2)uchar_values[i]);
@@ -1656,8 +1656,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
-    const uchar min_expected = (LONG_MIN > 0) ? (uchar)LONG_MIN : 0;
-    const uchar max_expected = (LONG_MAX < UCHAR_MAX) ? (uchar)LONG_MAX : UCHAR_MAX;
+    const uchar min_expected = (uchar)(LONG_MIN > 0) ? (uchar)LONG_MIN : 0;
+    const uchar max_expected = (uchar)(LONG_MAX < UCHAR_MAX) ? (uchar)LONG_MAX : UCHAR_MAX;
     union { long2 value; long raw[2]; } expected, actual;
     expected.value = ((long2)((long)uchar_values[i]));
     actual.value = convert_long2((uchar2)uchar_values[i]);
@@ -1677,8 +1677,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < uchar_values_length; ++i) {
-    const uchar min_expected = (0 > 0) ? (uchar)0 : 0;
-    const uchar max_expected = (ULONG_MAX < UCHAR_MAX) ? (uchar)ULONG_MAX : UCHAR_MAX;
+    const uchar min_expected = (uchar)(0 > 0) ? (uchar)0 : 0;
+    const uchar max_expected = (uchar)(ULONG_MAX < UCHAR_MAX) ? (uchar)ULONG_MAX : UCHAR_MAX;
     union { ulong2 value; ulong raw[2]; } expected, actual;
     expected.value = ((ulong2)((ulong)uchar_values[i]));
     actual.value = convert_ulong2((uchar2)uchar_values[i]);
@@ -1696,8 +1696,8 @@ kernel void test_convert_type_2()
 #endif
 
   for (size_t i = 0; i < short_values_length; ++i) {
-    const short min_expected = (CHAR_MIN > SHRT_MIN) ? (short)CHAR_MIN : SHRT_MIN;
-    const short max_expected = (CHAR_MAX < SHRT_MAX) ? (short)CHAR_MAX : SHRT_MAX;
+    const short min_expected = (short)(CHAR_MIN > SHRT_MIN) ? (short)CHAR_MIN : SHRT_MIN;
+    const short max_expected = (short)(CHAR_MAX < SHRT_MAX) ? (short)CHAR_MAX : SHRT_MAX;
     union { char2 value; char raw[2]; } expected, actual;
     expected.value = ((char2)((char)short_values[i]));
     actual.value = convert_char2((short2)short_values[i]);
@@ -1713,8 +1713,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
-    const short min_expected = (0 > SHRT_MIN) ? (short)0 : SHRT_MIN;
-    const short max_expected = (UCHAR_MAX < SHRT_MAX) ? (short)UCHAR_MAX : SHRT_MAX;
+    const short min_expected = (short)(0 > SHRT_MIN) ? (short)0 : SHRT_MIN;
+    const short max_expected = (short)(UCHAR_MAX < SHRT_MAX) ? (short)UCHAR_MAX : SHRT_MAX;
     union { uchar2 value; uchar raw[2]; } expected, actual;
     expected.value = ((uchar2)((uchar)short_values[i]));
     actual.value = convert_uchar2((short2)short_values[i]);
@@ -1730,8 +1730,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
-    const short min_expected = (SHRT_MIN > SHRT_MIN) ? (short)SHRT_MIN : SHRT_MIN;
-    const short max_expected = (SHRT_MAX < SHRT_MAX) ? (short)SHRT_MAX : SHRT_MAX;
+    const short min_expected = (short)(SHRT_MIN > SHRT_MIN) ? (short)SHRT_MIN : SHRT_MIN;
+    const short max_expected = (short)(SHRT_MAX < SHRT_MAX) ? (short)SHRT_MAX : SHRT_MAX;
     union { short2 value; short raw[2]; } expected, actual;
     expected.value = ((short2)((short)short_values[i]));
     actual.value = convert_short2((short2)short_values[i]);
@@ -1747,8 +1747,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
-    const short min_expected = (0 > SHRT_MIN) ? (short)0 : SHRT_MIN;
-    const short max_expected = (USHRT_MAX < SHRT_MAX) ? (short)USHRT_MAX : SHRT_MAX;
+    const short min_expected = (short)(0 > SHRT_MIN) ? (short)0 : SHRT_MIN;
+    const short max_expected = (short)(USHRT_MAX < SHRT_MAX) ? (short)USHRT_MAX : SHRT_MAX;
     union { ushort2 value; ushort raw[2]; } expected, actual;
     expected.value = ((ushort2)((ushort)short_values[i]));
     actual.value = convert_ushort2((short2)short_values[i]);
@@ -1764,8 +1764,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
-    const short min_expected = (INT_MIN > SHRT_MIN) ? (short)INT_MIN : SHRT_MIN;
-    const short max_expected = (INT_MAX < SHRT_MAX) ? (short)INT_MAX : SHRT_MAX;
+    const short min_expected = (short)(INT_MIN > SHRT_MIN) ? (short)INT_MIN : SHRT_MIN;
+    const short max_expected = (short)(INT_MAX < SHRT_MAX) ? (short)INT_MAX : SHRT_MAX;
     union { int2 value; int raw[2]; } expected, actual;
     expected.value = ((int2)((int)short_values[i]));
     actual.value = convert_int2((short2)short_values[i]);
@@ -1781,8 +1781,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < short_values_length; ++i) {
-    const short min_expected = (0 > SHRT_MIN) ? (short)0 : SHRT_MIN;
-    const short max_expected = (UINT_MAX < SHRT_MAX) ? (short)UINT_MAX : SHRT_MAX;
+    const short min_expected = (short)(0 > SHRT_MIN) ? (short)0 : SHRT_MIN;
+    const short max_expected = (short)(UINT_MAX < SHRT_MAX) ? (short)UINT_MAX : SHRT_MAX;
     union { uint2 value; uint raw[2]; } expected, actual;
     expected.value = ((uint2)((uint)short_values[i]));
     actual.value = convert_uint2((short2)short_values[i]);
@@ -1800,8 +1800,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < short_values_length; ++i) {
-    const short min_expected = (LONG_MIN > SHRT_MIN) ? (short)LONG_MIN : SHRT_MIN;
-    const short max_expected = (LONG_MAX < SHRT_MAX) ? (short)LONG_MAX : SHRT_MAX;
+    const short min_expected = (short)(LONG_MIN > SHRT_MIN) ? (short)LONG_MIN : SHRT_MIN;
+    const short max_expected = (short)(LONG_MAX < SHRT_MAX) ? (short)LONG_MAX : SHRT_MAX;
     union { long2 value; long raw[2]; } expected, actual;
     expected.value = ((long2)((long)short_values[i]));
     actual.value = convert_long2((short2)short_values[i]);
@@ -1821,8 +1821,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < short_values_length; ++i) {
-    const short min_expected = (0 > SHRT_MIN) ? (short)0 : SHRT_MIN;
-    const short max_expected = (ULONG_MAX < SHRT_MAX) ? (short)ULONG_MAX : SHRT_MAX;
+    const short min_expected = (short)(0 > SHRT_MIN) ? (short)0 : SHRT_MIN;
+    const short max_expected = (short)(ULONG_MAX < SHRT_MAX) ? (short)ULONG_MAX : SHRT_MAX;
     union { ulong2 value; ulong raw[2]; } expected, actual;
     expected.value = ((ulong2)((ulong)short_values[i]));
     actual.value = convert_ulong2((short2)short_values[i]);
@@ -1840,8 +1840,8 @@ kernel void test_convert_type_2()
 #endif
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
-    const ushort min_expected = (CHAR_MIN > 0) ? (ushort)CHAR_MIN : 0;
-    const ushort max_expected = (CHAR_MAX < USHRT_MAX) ? (ushort)CHAR_MAX : USHRT_MAX;
+    const ushort min_expected = (ushort)(CHAR_MIN > 0) ? (ushort)CHAR_MIN : 0;
+    const ushort max_expected = (ushort)(CHAR_MAX < USHRT_MAX) ? (ushort)CHAR_MAX : USHRT_MAX;
     union { char2 value; char raw[2]; } expected, actual;
     expected.value = ((char2)((char)ushort_values[i]));
     actual.value = convert_char2((ushort2)ushort_values[i]);
@@ -1857,8 +1857,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
-    const ushort min_expected = (0 > 0) ? (ushort)0 : 0;
-    const ushort max_expected = (UCHAR_MAX < USHRT_MAX) ? (ushort)UCHAR_MAX : USHRT_MAX;
+    const ushort min_expected = (ushort)(0 > 0) ? (ushort)0 : 0;
+    const ushort max_expected = (ushort)(UCHAR_MAX < USHRT_MAX) ? (ushort)UCHAR_MAX : USHRT_MAX;
     union { uchar2 value; uchar raw[2]; } expected, actual;
     expected.value = ((uchar2)((uchar)ushort_values[i]));
     actual.value = convert_uchar2((ushort2)ushort_values[i]);
@@ -1874,8 +1874,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
-    const ushort min_expected = (SHRT_MIN > 0) ? (ushort)SHRT_MIN : 0;
-    const ushort max_expected = (SHRT_MAX < USHRT_MAX) ? (ushort)SHRT_MAX : USHRT_MAX;
+    const ushort min_expected = (ushort)(SHRT_MIN > 0) ? (ushort)SHRT_MIN : 0;
+    const ushort max_expected = (ushort)(SHRT_MAX < USHRT_MAX) ? (ushort)SHRT_MAX : USHRT_MAX;
     union { short2 value; short raw[2]; } expected, actual;
     expected.value = ((short2)((short)ushort_values[i]));
     actual.value = convert_short2((ushort2)ushort_values[i]);
@@ -1891,8 +1891,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
-    const ushort min_expected = (0 > 0) ? (ushort)0 : 0;
-    const ushort max_expected = (USHRT_MAX < USHRT_MAX) ? (ushort)USHRT_MAX : USHRT_MAX;
+    const ushort min_expected = (ushort)(0 > 0) ? (ushort)0 : 0;
+    const ushort max_expected = (ushort)(USHRT_MAX < USHRT_MAX) ? (ushort)USHRT_MAX : USHRT_MAX;
     union { ushort2 value; ushort raw[2]; } expected, actual;
     expected.value = ((ushort2)((ushort)ushort_values[i]));
     actual.value = convert_ushort2((ushort2)ushort_values[i]);
@@ -1908,8 +1908,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
-    const ushort min_expected = (INT_MIN > 0) ? (ushort)INT_MIN : 0;
-    const ushort max_expected = (INT_MAX < USHRT_MAX) ? (ushort)INT_MAX : USHRT_MAX;
+    const ushort min_expected = (ushort)(INT_MIN > 0) ? (ushort)INT_MIN : 0;
+    const ushort max_expected = (ushort)(INT_MAX < USHRT_MAX) ? (ushort)INT_MAX : USHRT_MAX;
     union { int2 value; int raw[2]; } expected, actual;
     expected.value = ((int2)((int)ushort_values[i]));
     actual.value = convert_int2((ushort2)ushort_values[i]);
@@ -1925,8 +1925,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
-    const ushort min_expected = (0 > 0) ? (ushort)0 : 0;
-    const ushort max_expected = (UINT_MAX < USHRT_MAX) ? (ushort)UINT_MAX : USHRT_MAX;
+    const ushort min_expected = (ushort)(0 > 0) ? (ushort)0 : 0;
+    const ushort max_expected = (ushort)(UINT_MAX < USHRT_MAX) ? (ushort)UINT_MAX : USHRT_MAX;
     union { uint2 value; uint raw[2]; } expected, actual;
     expected.value = ((uint2)((uint)ushort_values[i]));
     actual.value = convert_uint2((ushort2)ushort_values[i]);
@@ -1944,8 +1944,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
-    const ushort min_expected = (LONG_MIN > 0) ? (ushort)LONG_MIN : 0;
-    const ushort max_expected = (LONG_MAX < USHRT_MAX) ? (ushort)LONG_MAX : USHRT_MAX;
+    const ushort min_expected = (ushort)(LONG_MIN > 0) ? (ushort)LONG_MIN : 0;
+    const ushort max_expected = (ushort)(LONG_MAX < USHRT_MAX) ? (ushort)LONG_MAX : USHRT_MAX;
     union { long2 value; long raw[2]; } expected, actual;
     expected.value = ((long2)((long)ushort_values[i]));
     actual.value = convert_long2((ushort2)ushort_values[i]);
@@ -1965,8 +1965,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < ushort_values_length; ++i) {
-    const ushort min_expected = (0 > 0) ? (ushort)0 : 0;
-    const ushort max_expected = (ULONG_MAX < USHRT_MAX) ? (ushort)ULONG_MAX : USHRT_MAX;
+    const ushort min_expected = (ushort)(0 > 0) ? (ushort)0 : 0;
+    const ushort max_expected = (ushort)(ULONG_MAX < USHRT_MAX) ? (ushort)ULONG_MAX : USHRT_MAX;
     union { ulong2 value; ulong raw[2]; } expected, actual;
     expected.value = ((ulong2)((ulong)ushort_values[i]));
     actual.value = convert_ulong2((ushort2)ushort_values[i]);
@@ -1984,8 +1984,8 @@ kernel void test_convert_type_2()
 #endif
 
   for (size_t i = 0; i < int_values_length; ++i) {
-    const int min_expected = (CHAR_MIN > INT_MIN) ? (int)CHAR_MIN : INT_MIN;
-    const int max_expected = (CHAR_MAX < INT_MAX) ? (int)CHAR_MAX : INT_MAX;
+    const int min_expected = (int)(CHAR_MIN > INT_MIN) ? (int)CHAR_MIN : INT_MIN;
+    const int max_expected = (int)(CHAR_MAX < INT_MAX) ? (int)CHAR_MAX : INT_MAX;
     union { char2 value; char raw[2]; } expected, actual;
     expected.value = ((char2)((char)int_values[i]));
     actual.value = convert_char2((int2)int_values[i]);
@@ -2001,8 +2001,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
-    const int min_expected = (0 > INT_MIN) ? (int)0 : INT_MIN;
-    const int max_expected = (UCHAR_MAX < INT_MAX) ? (int)UCHAR_MAX : INT_MAX;
+    const int min_expected = (int)(0 > INT_MIN) ? (int)0 : INT_MIN;
+    const int max_expected = (int)(UCHAR_MAX < INT_MAX) ? (int)UCHAR_MAX : INT_MAX;
     union { uchar2 value; uchar raw[2]; } expected, actual;
     expected.value = ((uchar2)((uchar)int_values[i]));
     actual.value = convert_uchar2((int2)int_values[i]);
@@ -2018,8 +2018,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
-    const int min_expected = (SHRT_MIN > INT_MIN) ? (int)SHRT_MIN : INT_MIN;
-    const int max_expected = (SHRT_MAX < INT_MAX) ? (int)SHRT_MAX : INT_MAX;
+    const int min_expected = (int)(SHRT_MIN > INT_MIN) ? (int)SHRT_MIN : INT_MIN;
+    const int max_expected = (int)(SHRT_MAX < INT_MAX) ? (int)SHRT_MAX : INT_MAX;
     union { short2 value; short raw[2]; } expected, actual;
     expected.value = ((short2)((short)int_values[i]));
     actual.value = convert_short2((int2)int_values[i]);
@@ -2035,8 +2035,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
-    const int min_expected = (0 > INT_MIN) ? (int)0 : INT_MIN;
-    const int max_expected = (USHRT_MAX < INT_MAX) ? (int)USHRT_MAX : INT_MAX;
+    const int min_expected = (int)(0 > INT_MIN) ? (int)0 : INT_MIN;
+    const int max_expected = (int)(USHRT_MAX < INT_MAX) ? (int)USHRT_MAX : INT_MAX;
     union { ushort2 value; ushort raw[2]; } expected, actual;
     expected.value = ((ushort2)((ushort)int_values[i]));
     actual.value = convert_ushort2((int2)int_values[i]);
@@ -2052,8 +2052,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
-    const int min_expected = (INT_MIN > INT_MIN) ? (int)INT_MIN : INT_MIN;
-    const int max_expected = (INT_MAX < INT_MAX) ? (int)INT_MAX : INT_MAX;
+    const int min_expected = (int)(INT_MIN > INT_MIN) ? (int)INT_MIN : INT_MIN;
+    const int max_expected = (int)(INT_MAX < INT_MAX) ? (int)INT_MAX : INT_MAX;
     union { int2 value; int raw[2]; } expected, actual;
     expected.value = ((int2)((int)int_values[i]));
     actual.value = convert_int2((int2)int_values[i]);
@@ -2069,8 +2069,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < int_values_length; ++i) {
-    const int min_expected = (0 > INT_MIN) ? (int)0 : INT_MIN;
-    const int max_expected = (UINT_MAX < INT_MAX) ? (int)UINT_MAX : INT_MAX;
+    const int min_expected = (int)(0 > INT_MIN) ? (int)0 : INT_MIN;
+    const int max_expected = (int)(UINT_MAX < INT_MAX) ? (int)UINT_MAX : INT_MAX;
     union { uint2 value; uint raw[2]; } expected, actual;
     expected.value = ((uint2)((uint)int_values[i]));
     actual.value = convert_uint2((int2)int_values[i]);
@@ -2088,8 +2088,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < int_values_length; ++i) {
-    const int min_expected = (LONG_MIN > INT_MIN) ? (int)LONG_MIN : INT_MIN;
-    const int max_expected = (LONG_MAX < INT_MAX) ? (int)LONG_MAX : INT_MAX;
+    const int min_expected = (int)(LONG_MIN > INT_MIN) ? (int)LONG_MIN : INT_MIN;
+    const int max_expected = (int)(LONG_MAX < INT_MAX) ? (int)LONG_MAX : INT_MAX;
     union { long2 value; long raw[2]; } expected, actual;
     expected.value = ((long2)((long)int_values[i]));
     actual.value = convert_long2((int2)int_values[i]);
@@ -2109,8 +2109,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < int_values_length; ++i) {
-    const int min_expected = (0 > INT_MIN) ? (int)0 : INT_MIN;
-    const int max_expected = (ULONG_MAX < INT_MAX) ? (int)ULONG_MAX : INT_MAX;
+    const int min_expected = (int)(0 > INT_MIN) ? (int)0 : INT_MIN;
+    const int max_expected = (int)(ULONG_MAX < INT_MAX) ? (int)ULONG_MAX : INT_MAX;
     union { ulong2 value; ulong raw[2]; } expected, actual;
     expected.value = ((ulong2)((ulong)int_values[i]));
     actual.value = convert_ulong2((int2)int_values[i]);
@@ -2128,8 +2128,8 @@ kernel void test_convert_type_2()
 #endif
 
   for (size_t i = 0; i < uint_values_length; ++i) {
-    const uint min_expected = (CHAR_MIN > 0) ? (uint)CHAR_MIN : 0;
-    const uint max_expected = (CHAR_MAX < UINT_MAX) ? (uint)CHAR_MAX : UINT_MAX;
+    const uint min_expected = (uint)(CHAR_MIN > 0) ? (uint)CHAR_MIN : 0;
+    const uint max_expected = (uint)(CHAR_MAX < UINT_MAX) ? (uint)CHAR_MAX : UINT_MAX;
     union { char2 value; char raw[2]; } expected, actual;
     expected.value = ((char2)((char)uint_values[i]));
     actual.value = convert_char2((uint2)uint_values[i]);
@@ -2145,8 +2145,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
-    const uint min_expected = (0 > 0) ? (uint)0 : 0;
-    const uint max_expected = (UCHAR_MAX < UINT_MAX) ? (uint)UCHAR_MAX : UINT_MAX;
+    const uint min_expected = (uint)(0 > 0) ? (uint)0 : 0;
+    const uint max_expected = (uint)(UCHAR_MAX < UINT_MAX) ? (uint)UCHAR_MAX : UINT_MAX;
     union { uchar2 value; uchar raw[2]; } expected, actual;
     expected.value = ((uchar2)((uchar)uint_values[i]));
     actual.value = convert_uchar2((uint2)uint_values[i]);
@@ -2162,8 +2162,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
-    const uint min_expected = (SHRT_MIN > 0) ? (uint)SHRT_MIN : 0;
-    const uint max_expected = (SHRT_MAX < UINT_MAX) ? (uint)SHRT_MAX : UINT_MAX;
+    const uint min_expected = (uint)(SHRT_MIN > 0) ? (uint)SHRT_MIN : 0;
+    const uint max_expected = (uint)(SHRT_MAX < UINT_MAX) ? (uint)SHRT_MAX : UINT_MAX;
     union { short2 value; short raw[2]; } expected, actual;
     expected.value = ((short2)((short)uint_values[i]));
     actual.value = convert_short2((uint2)uint_values[i]);
@@ -2179,8 +2179,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
-    const uint min_expected = (0 > 0) ? (uint)0 : 0;
-    const uint max_expected = (USHRT_MAX < UINT_MAX) ? (uint)USHRT_MAX : UINT_MAX;
+    const uint min_expected = (uint)(0 > 0) ? (uint)0 : 0;
+    const uint max_expected = (uint)(USHRT_MAX < UINT_MAX) ? (uint)USHRT_MAX : UINT_MAX;
     union { ushort2 value; ushort raw[2]; } expected, actual;
     expected.value = ((ushort2)((ushort)uint_values[i]));
     actual.value = convert_ushort2((uint2)uint_values[i]);
@@ -2196,8 +2196,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
-    const uint min_expected = (INT_MIN > 0) ? (uint)INT_MIN : 0;
-    const uint max_expected = (INT_MAX < UINT_MAX) ? (uint)INT_MAX : UINT_MAX;
+    const uint min_expected = (uint)(INT_MIN > 0) ? (uint)INT_MIN : 0;
+    const uint max_expected = (uint)(INT_MAX < UINT_MAX) ? (uint)INT_MAX : UINT_MAX;
     union { int2 value; int raw[2]; } expected, actual;
     expected.value = ((int2)((int)uint_values[i]));
     actual.value = convert_int2((uint2)uint_values[i]);
@@ -2213,8 +2213,8 @@ kernel void test_convert_type_2()
   }
 
   for (size_t i = 0; i < uint_values_length; ++i) {
-    const uint min_expected = (0 > 0) ? (uint)0 : 0;
-    const uint max_expected = (UINT_MAX < UINT_MAX) ? (uint)UINT_MAX : UINT_MAX;
+    const uint min_expected = (uint)(0 > 0) ? (uint)0 : 0;
+    const uint max_expected = (uint)(UINT_MAX < UINT_MAX) ? (uint)UINT_MAX : UINT_MAX;
     union { uint2 value; uint raw[2]; } expected, actual;
     expected.value = ((uint2)((uint)uint_values[i]));
     actual.value = convert_uint2((uint2)uint_values[i]);
@@ -2232,8 +2232,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < uint_values_length; ++i) {
-    const uint min_expected = (LONG_MIN > 0) ? (uint)LONG_MIN : 0;
-    const uint max_expected = (LONG_MAX < UINT_MAX) ? (uint)LONG_MAX : UINT_MAX;
+    const uint min_expected = (uint)(LONG_MIN > 0) ? (uint)LONG_MIN : 0;
+    const uint max_expected = (uint)(LONG_MAX < UINT_MAX) ? (uint)LONG_MAX : UINT_MAX;
     union { long2 value; long raw[2]; } expected, actual;
     expected.value = ((long2)((long)uint_values[i]));
     actual.value = convert_long2((uint2)uint_values[i]);
@@ -2253,8 +2253,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < uint_values_length; ++i) {
-    const uint min_expected = (0 > 0) ? (uint)0 : 0;
-    const uint max_expected = (ULONG_MAX < UINT_MAX) ? (uint)ULONG_MAX : UINT_MAX;
+    const uint min_expected = (uint)(0 > 0) ? (uint)0 : 0;
+    const uint max_expected = (uint)(ULONG_MAX < UINT_MAX) ? (uint)ULONG_MAX : UINT_MAX;
     union { ulong2 value; ulong raw[2]; } expected, actual;
     expected.value = ((ulong2)((ulong)uint_values[i]));
     actual.value = convert_ulong2((uint2)uint_values[i]);
@@ -2274,8 +2274,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
-    const long min_expected = (CHAR_MIN > LONG_MIN) ? (long)CHAR_MIN : LONG_MIN;
-    const long max_expected = (CHAR_MAX < LONG_MAX) ? (long)CHAR_MAX : LONG_MAX;
+    const long min_expected = (long)(CHAR_MIN > LONG_MIN) ? (long)CHAR_MIN : LONG_MIN;
+    const long max_expected = (long)(CHAR_MAX < LONG_MAX) ? (long)CHAR_MAX : LONG_MAX;
     union { char2 value; char raw[2]; } expected, actual;
     expected.value = ((char2)((char)long_values[i]));
     actual.value = convert_char2((long2)long_values[i]);
@@ -2295,8 +2295,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
-    const long min_expected = (0 > LONG_MIN) ? (long)0 : LONG_MIN;
-    const long max_expected = (UCHAR_MAX < LONG_MAX) ? (long)UCHAR_MAX : LONG_MAX;
+    const long min_expected = (long)(0 > LONG_MIN) ? (long)0 : LONG_MIN;
+    const long max_expected = (long)(UCHAR_MAX < LONG_MAX) ? (long)UCHAR_MAX : LONG_MAX;
     union { uchar2 value; uchar raw[2]; } expected, actual;
     expected.value = ((uchar2)((uchar)long_values[i]));
     actual.value = convert_uchar2((long2)long_values[i]);
@@ -2316,8 +2316,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
-    const long min_expected = (SHRT_MIN > LONG_MIN) ? (long)SHRT_MIN : LONG_MIN;
-    const long max_expected = (SHRT_MAX < LONG_MAX) ? (long)SHRT_MAX : LONG_MAX;
+    const long min_expected = (long)(SHRT_MIN > LONG_MIN) ? (long)SHRT_MIN : LONG_MIN;
+    const long max_expected = (long)(SHRT_MAX < LONG_MAX) ? (long)SHRT_MAX : LONG_MAX;
     union { short2 value; short raw[2]; } expected, actual;
     expected.value = ((short2)((short)long_values[i]));
     actual.value = convert_short2((long2)long_values[i]);
@@ -2337,8 +2337,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
-    const long min_expected = (0 > LONG_MIN) ? (long)0 : LONG_MIN;
-    const long max_expected = (USHRT_MAX < LONG_MAX) ? (long)USHRT_MAX : LONG_MAX;
+    const long min_expected = (long)(0 > LONG_MIN) ? (long)0 : LONG_MIN;
+    const long max_expected = (long)(USHRT_MAX < LONG_MAX) ? (long)USHRT_MAX : LONG_MAX;
     union { ushort2 value; ushort raw[2]; } expected, actual;
     expected.value = ((ushort2)((ushort)long_values[i]));
     actual.value = convert_ushort2((long2)long_values[i]);
@@ -2358,8 +2358,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
-    const long min_expected = (INT_MIN > LONG_MIN) ? (long)INT_MIN : LONG_MIN;
-    const long max_expected = (INT_MAX < LONG_MAX) ? (long)INT_MAX : LONG_MAX;
+    const long min_expected = (long)(INT_MIN > LONG_MIN) ? (long)INT_MIN : LONG_MIN;
+    const long max_expected = (long)(INT_MAX < LONG_MAX) ? (long)INT_MAX : LONG_MAX;
     union { int2 value; int raw[2]; } expected, actual;
     expected.value = ((int2)((int)long_values[i]));
     actual.value = convert_int2((long2)long_values[i]);
@@ -2379,8 +2379,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
-    const long min_expected = (0 > LONG_MIN) ? (long)0 : LONG_MIN;
-    const long max_expected = (UINT_MAX < LONG_MAX) ? (long)UINT_MAX : LONG_MAX;
+    const long min_expected = (long)(0 > LONG_MIN) ? (long)0 : LONG_MIN;
+    const long max_expected = (long)(UINT_MAX < LONG_MAX) ? (long)UINT_MAX : LONG_MAX;
     union { uint2 value; uint raw[2]; } expected, actual;
     expected.value = ((uint2)((uint)long_values[i]));
     actual.value = convert_uint2((long2)long_values[i]);
@@ -2400,8 +2400,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
-    const long min_expected = (LONG_MIN > LONG_MIN) ? (long)LONG_MIN : LONG_MIN;
-    const long max_expected = (LONG_MAX < LONG_MAX) ? (long)LONG_MAX : LONG_MAX;
+    const long min_expected = (long)(LONG_MIN > LONG_MIN) ? (long)LONG_MIN : LONG_MIN;
+    const long max_expected = (long)(LONG_MAX < LONG_MAX) ? (long)LONG_MAX : LONG_MAX;
     union { long2 value; long raw[2]; } expected, actual;
     expected.value = ((long2)((long)long_values[i]));
     actual.value = convert_long2((long2)long_values[i]);
@@ -2421,8 +2421,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < long_values_length; ++i) {
-    const long min_expected = (0 > LONG_MIN) ? (long)0 : LONG_MIN;
-    const long max_expected = (ULONG_MAX < LONG_MAX) ? (long)ULONG_MAX : LONG_MAX;
+    const long min_expected = (long)(0 > LONG_MIN) ? (long)0 : LONG_MIN;
+    const long max_expected = (long)(ULONG_MAX < LONG_MAX) ? (long)ULONG_MAX : LONG_MAX;
     union { ulong2 value; ulong raw[2]; } expected, actual;
     expected.value = ((ulong2)((ulong)long_values[i]));
     actual.value = convert_ulong2((long2)long_values[i]);
@@ -2442,8 +2442,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
-    const ulong min_expected = (CHAR_MIN > 0) ? (ulong)CHAR_MIN : 0;
-    const ulong max_expected = (CHAR_MAX < ULONG_MAX) ? (ulong)CHAR_MAX : ULONG_MAX;
+    const ulong min_expected = (ulong)(CHAR_MIN > 0) ? (ulong)CHAR_MIN : 0;
+    const ulong max_expected = (ulong)(CHAR_MAX < ULONG_MAX) ? (ulong)CHAR_MAX : ULONG_MAX;
     union { char2 value; char raw[2]; } expected, actual;
     expected.value = ((char2)((char)ulong_values[i]));
     actual.value = convert_char2((ulong2)ulong_values[i]);
@@ -2463,8 +2463,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
-    const ulong min_expected = (0 > 0) ? (ulong)0 : 0;
-    const ulong max_expected = (UCHAR_MAX < ULONG_MAX) ? (ulong)UCHAR_MAX : ULONG_MAX;
+    const ulong min_expected = (ulong)(0 > 0) ? (ulong)0 : 0;
+    const ulong max_expected = (ulong)(UCHAR_MAX < ULONG_MAX) ? (ulong)UCHAR_MAX : ULONG_MAX;
     union { uchar2 value; uchar raw[2]; } expected, actual;
     expected.value = ((uchar2)((uchar)ulong_values[i]));
     actual.value = convert_uchar2((ulong2)ulong_values[i]);
@@ -2484,8 +2484,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
-    const ulong min_expected = (SHRT_MIN > 0) ? (ulong)SHRT_MIN : 0;
-    const ulong max_expected = (SHRT_MAX < ULONG_MAX) ? (ulong)SHRT_MAX : ULONG_MAX;
+    const ulong min_expected = (ulong)(SHRT_MIN > 0) ? (ulong)SHRT_MIN : 0;
+    const ulong max_expected = (ulong)(SHRT_MAX < ULONG_MAX) ? (ulong)SHRT_MAX : ULONG_MAX;
     union { short2 value; short raw[2]; } expected, actual;
     expected.value = ((short2)((short)ulong_values[i]));
     actual.value = convert_short2((ulong2)ulong_values[i]);
@@ -2505,8 +2505,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
-    const ulong min_expected = (0 > 0) ? (ulong)0 : 0;
-    const ulong max_expected = (USHRT_MAX < ULONG_MAX) ? (ulong)USHRT_MAX : ULONG_MAX;
+    const ulong min_expected = (ulong)(0 > 0) ? (ulong)0 : 0;
+    const ulong max_expected = (ulong)(USHRT_MAX < ULONG_MAX) ? (ulong)USHRT_MAX : ULONG_MAX;
     union { ushort2 value; ushort raw[2]; } expected, actual;
     expected.value = ((ushort2)((ushort)ulong_values[i]));
     actual.value = convert_ushort2((ulong2)ulong_values[i]);
@@ -2526,8 +2526,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
-    const ulong min_expected = (INT_MIN > 0) ? (ulong)INT_MIN : 0;
-    const ulong max_expected = (INT_MAX < ULONG_MAX) ? (ulong)INT_MAX : ULONG_MAX;
+    const ulong min_expected = (ulong)(INT_MIN > 0) ? (ulong)INT_MIN : 0;
+    const ulong max_expected = (ulong)(INT_MAX < ULONG_MAX) ? (ulong)INT_MAX : ULONG_MAX;
     union { int2 value; int raw[2]; } expected, actual;
     expected.value = ((int2)((int)ulong_values[i]));
     actual.value = convert_int2((ulong2)ulong_values[i]);
@@ -2547,8 +2547,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
-    const ulong min_expected = (0 > 0) ? (ulong)0 : 0;
-    const ulong max_expected = (UINT_MAX < ULONG_MAX) ? (ulong)UINT_MAX : ULONG_MAX;
+    const ulong min_expected = (ulong)(0 > 0) ? (ulong)0 : 0;
+    const ulong max_expected = (ulong)(UINT_MAX < ULONG_MAX) ? (ulong)UINT_MAX : ULONG_MAX;
     union { uint2 value; uint raw[2]; } expected, actual;
     expected.value = ((uint2)((uint)ulong_values[i]));
     actual.value = convert_uint2((ulong2)ulong_values[i]);
@@ -2568,8 +2568,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
-    const ulong min_expected = (LONG_MIN > 0) ? (ulong)LONG_MIN : 0;
-    const ulong max_expected = (LONG_MAX < ULONG_MAX) ? (ulong)LONG_MAX : ULONG_MAX;
+    const ulong min_expected = (ulong)(LONG_MIN > 0) ? (ulong)LONG_MIN : 0;
+    const ulong max_expected = (ulong)(LONG_MAX < ULONG_MAX) ? (ulong)LONG_MAX : ULONG_MAX;
     union { long2 value; long raw[2]; } expected, actual;
     expected.value = ((long2)((long)ulong_values[i]));
     actual.value = convert_long2((ulong2)ulong_values[i]);
@@ -2589,8 +2589,8 @@ kernel void test_convert_type_2()
 #ifdef cl_khr_int64
 
   for (size_t i = 0; i < ulong_values_length; ++i) {
-    const ulong min_expected = (0 > 0) ? (ulong)0 : 0;
-    const ulong max_expected = (ULONG_MAX < ULONG_MAX) ? (ulong)ULONG_MAX : ULONG_MAX;
+    const ulong min_expected = (ulong)(0 > 0) ? (ulong)0 : 0;
+    const ulong max_expected = (ulong)(ULONG_MAX < ULONG_MAX) ? (ulong)ULONG_MAX : ULONG_MAX;
     union { ulong2 value; ulong raw[2]; } expected, actual;
     expected.value = ((ulong2)((ulong)ulong_values[i]));
     actual.value = convert_ulong2((ulong2)ulong_values[i]);
@@ -2609,8 +2609,10 @@ kernel void test_convert_type_2()
 
   for (size_t i = 0; i < float_values_length; ++i) {
     const float sat_input = (float_values[i] + float_sat_offsets[i]);
-    const float min_expected = (CHAR_MIN > -FLT_MAX) ? (float)CHAR_MIN : -FLT_MAX;
-    const float max_expected = (CHAR_MAX < FLT_MAX) ? (float)CHAR_MAX : FLT_MAX;
+    // use the destination (integer) type always to avoid rounding errors when
+    // comparing floats to int
+    const char min_expected = (char)(CHAR_MIN > -FLT_MAX) ? CHAR_MIN : (char)-FLT_MAX;
+    const char max_expected = (char)(CHAR_MAX < FLT_MAX) ? CHAR_MAX : (char)FLT_MAX;
     union { char2 value; char raw[2]; } expected, actual;
     expected.value = ((char2)((char)float_rounded_values[i]));
     actual.value = convert_char2((float2)float_values[i]);
@@ -2721,8 +2723,10 @@ kernel void test_convert_type_2()
 
   for (size_t i = 0; i < float_values_length; ++i) {
     const float sat_input = (float_values[i] + float_sat_offsets[i]);
-    const float min_expected = (0 > -FLT_MAX) ? (float)0 : -FLT_MAX;
-    const float max_expected = (UCHAR_MAX < FLT_MAX) ? (float)UCHAR_MAX : FLT_MAX;
+    // use the destination (integer) type always to avoid rounding errors when
+    // comparing floats to int
+    const uchar min_expected = (uchar)(0 > -FLT_MAX) ? 0 : (uchar)-FLT_MAX;
+    const uchar max_expected = (uchar)(UCHAR_MAX < FLT_MAX) ? UCHAR_MAX : (uchar)FLT_MAX;
     union { uchar2 value; uchar raw[2]; } expected, actual;
     expected.value = ((uchar2)((uchar)float_rounded_values[i]));
     actual.value = convert_uchar2((float2)float_values[i]);
@@ -2833,8 +2837,10 @@ kernel void test_convert_type_2()
 
   for (size_t i = 0; i < float_values_length; ++i) {
     const float sat_input = (float_values[i] + float_sat_offsets[i]);
-    const float min_expected = (SHRT_MIN > -FLT_MAX) ? (float)SHRT_MIN : -FLT_MAX;
-    const float max_expected = (SHRT_MAX < FLT_MAX) ? (float)SHRT_MAX : FLT_MAX;
+    // use the destination (integer) type always to avoid rounding errors when
+    // comparing floats to int
+    const short min_expected = (short)(SHRT_MIN > -FLT_MAX) ? SHRT_MIN : (short)-FLT_MAX;
+    const short max_expected = (short)(SHRT_MAX < FLT_MAX) ? SHRT_MAX : (short)FLT_MAX;
     union { short2 value; short raw[2]; } expected, actual;
     expected.value = ((short2)((short)float_rounded_values[i]));
     actual.value = convert_short2((float2)float_values[i]);
@@ -2945,8 +2951,10 @@ kernel void test_convert_type_2()
 
   for (size_t i = 0; i < float_values_length; ++i) {
     const float sat_input = (float_values[i] + float_sat_offsets[i]);
-    const float min_expected = (0 > -FLT_MAX) ? (float)0 : -FLT_MAX;
-    const float max_expected = (USHRT_MAX < FLT_MAX) ? (float)USHRT_MAX : FLT_MAX;
+    // use the destination (integer) type always to avoid rounding errors when
+    // comparing floats to int
+    const ushort min_expected = (ushort)(0 > -FLT_MAX) ? 0 : (ushort)-FLT_MAX;
+    const ushort max_expected = (ushort)(USHRT_MAX < FLT_MAX) ? USHRT_MAX : (ushort)FLT_MAX;
     union { ushort2 value; ushort raw[2]; } expected, actual;
     expected.value = ((ushort2)((ushort)float_rounded_values[i]));
     actual.value = convert_ushort2((float2)float_values[i]);
@@ -3057,8 +3065,10 @@ kernel void test_convert_type_2()
 
   for (size_t i = 0; i < float_values_length; ++i) {
     const float sat_input = (float_values[i] + float_sat_offsets[i]);
-    const float min_expected = (INT_MIN > -FLT_MAX) ? (float)INT_MIN : -FLT_MAX;
-    const float max_expected = (INT_MAX < FLT_MAX) ? (float)INT_MAX : FLT_MAX;
+    // use the destination (integer) type always to avoid rounding errors when
+    // comparing floats to int
+    const int min_expected = (int)(INT_MIN > -FLT_MAX) ? INT_MIN : (int)-FLT_MAX;
+    const int max_expected = (int)(INT_MAX < FLT_MAX) ? INT_MAX : (int)FLT_MAX;
     union { int2 value; int raw[2]; } expected, actual;
     expected.value = ((int2)((int)float_rounded_values[i]));
     actual.value = convert_int2((float2)float_values[i]);
@@ -3169,8 +3179,10 @@ kernel void test_convert_type_2()
 
   for (size_t i = 0; i < float_values_length; ++i) {
     const float sat_input = (float_values[i] + float_sat_offsets[i]);
-    const float min_expected = (0 > -FLT_MAX) ? (float)0 : -FLT_MAX;
-    const float max_expected = (UINT_MAX < FLT_MAX) ? (float)UINT_MAX : FLT_MAX;
+    // use the destination (integer) type always to avoid rounding errors when
+    // comparing floats to int
+    const uint min_expected = (uint)(0 > -FLT_MAX) ? 0 : (uint)-FLT_MAX;
+    const uint max_expected = (uint)(UINT_MAX < FLT_MAX) ? UINT_MAX : (uint)FLT_MAX;
     union { uint2 value; uint raw[2]; } expected, actual;
     expected.value = ((uint2)((uint)float_rounded_values[i]));
     actual.value = convert_uint2((float2)float_values[i]);
@@ -3283,8 +3295,10 @@ kernel void test_convert_type_2()
 
   for (size_t i = 0; i < float_values_length; ++i) {
     const float sat_input = (float_values[i] + float_sat_offsets[i]);
-    const float min_expected = (LONG_MIN > -FLT_MAX) ? (float)LONG_MIN : -FLT_MAX;
-    const float max_expected = (LONG_MAX < FLT_MAX) ? (float)LONG_MAX : FLT_MAX;
+    // use the destination (integer) type always to avoid rounding errors when
+    // comparing floats to int
+    const long min_expected = (long)(LONG_MIN > -FLT_MAX) ? LONG_MIN : (long)-FLT_MAX;
+    const long max_expected = (long)(LONG_MAX < FLT_MAX) ? LONG_MAX : (long)FLT_MAX;
     union { long2 value; long raw[2]; } expected, actual;
     expected.value = ((long2)((long)float_rounded_values[i]));
     actual.value = convert_long2((float2)float_values[i]);
@@ -3399,8 +3413,10 @@ kernel void test_convert_type_2()
 
   for (size_t i = 0; i < float_values_length; ++i) {
     const float sat_input = (float_values[i] + float_sat_offsets[i]);
-    const float min_expected = (0 > -FLT_MAX) ? (float)0 : -FLT_MAX;
-    const float max_expected = (ULONG_MAX < FLT_MAX) ? (float)ULONG_MAX : FLT_MAX;
+    // use the destination (integer) type always to avoid rounding errors when
+    // comparing floats to int
+    const ulong min_expected = (ulong)(0 > -FLT_MAX) ? 0 : (ulong)-FLT_MAX;
+    const ulong max_expected = (ulong)(ULONG_MAX < FLT_MAX) ? ULONG_MAX : (ulong)FLT_MAX;
     union { ulong2 value; ulong raw[2]; } expected, actual;
     expected.value = ((ulong2)((ulong)float_rounded_values[i]));
     actual.value = convert_ulong2((float2)float_values[i]);
@@ -3515,8 +3531,10 @@ kernel void test_convert_type_2()
 
   for (size_t i = 0; i < double_values_length; ++i) {
     const double sat_input = (double_values[i] + double_sat_offsets[i]);
-    const double min_expected = (CHAR_MIN > -DBL_MAX) ? (double)CHAR_MIN : -DBL_MAX;
-    const double max_expected = (CHAR_MAX < DBL_MAX) ? (double)CHAR_MAX : DBL_MAX;
+    // use the destination (integer) type always to avoid rounding errors when
+    // comparing floats to int
+    const char min_expected = (char)(CHAR_MIN > -DBL_MAX) ? CHAR_MIN : (char)-DBL_MAX;
+    const char max_expected = (char)(CHAR_MAX < DBL_MAX) ? CHAR_MAX : (char)DBL_MAX;
     union { char2 value; char raw[2]; } expected, actual;
     expected.value = ((char2)((char)double_rounded_values[i]));
     actual.value = convert_char2((double2)double_values[i]);
@@ -3631,8 +3649,10 @@ kernel void test_convert_type_2()
 
   for (size_t i = 0; i < double_values_length; ++i) {
     const double sat_input = (double_values[i] + double_sat_offsets[i]);
-    const double min_expected = (0 > -DBL_MAX) ? (double)0 : -DBL_MAX;
-    const double max_expected = (UCHAR_MAX < DBL_MAX) ? (double)UCHAR_MAX : DBL_MAX;
+    // use the destination (integer) type always to avoid rounding errors when
+    // comparing floats to int
+    const uchar min_expected = (uchar)(0 > -DBL_MAX) ? 0 : (uchar)-DBL_MAX;
+    const uchar max_expected = (uchar)(UCHAR_MAX < DBL_MAX) ? UCHAR_MAX : (uchar)DBL_MAX;
     union { uchar2 value; uchar raw[2]; } expected, actual;
     expected.value = ((uchar2)((uchar)double_rounded_values[i]));
     actual.value = convert_uchar2((double2)double_values[i]);
@@ -3747,8 +3767,10 @@ kernel void test_convert_type_2()
 
   for (size_t i = 0; i < double_values_length; ++i) {
     const double sat_input = (double_values[i] + double_sat_offsets[i]);
-    const double min_expected = (SHRT_MIN > -DBL_MAX) ? (double)SHRT_MIN : -DBL_MAX;
-    const double max_expected = (SHRT_MAX < DBL_MAX) ? (double)SHRT_MAX : DBL_MAX;
+    // use the destination (integer) type always to avoid rounding errors when
+    // comparing floats to int
+    const short min_expected = (short)(SHRT_MIN > -DBL_MAX) ? SHRT_MIN : (short)-DBL_MAX;
+    const short max_expected = (short)(SHRT_MAX < DBL_MAX) ? SHRT_MAX : (short)DBL_MAX;
     union { short2 value; short raw[2]; } expected, actual;
     expected.value = ((short2)((short)double_rounded_values[i]));
     actual.value = convert_short2((double2)double_values[i]);
@@ -3863,8 +3885,10 @@ kernel void test_convert_type_2()
 
   for (size_t i = 0; i < double_values_length; ++i) {
     const double sat_input = (double_values[i] + double_sat_offsets[i]);
-    const double min_expected = (0 > -DBL_MAX) ? (double)0 : -DBL_MAX;
-    const double max_expected = (USHRT_MAX < DBL_MAX) ? (double)USHRT_MAX : DBL_MAX;
+    // use the destination (integer) type always to avoid rounding errors when
+    // comparing floats to int
+    const ushort min_expected = (ushort)(0 > -DBL_MAX) ? 0 : (ushort)-DBL_MAX;
+    const ushort max_expected = (ushort)(USHRT_MAX < DBL_MAX) ? USHRT_MAX : (ushort)DBL_MAX;
     union { ushort2 value; ushort raw[2]; } expected, actual;
     expected.value = ((ushort2)((ushort)double_rounded_values[i]));
     actual.value = convert_ushort2((double2)double_values[i]);
@@ -3979,8 +4003,10 @@ kernel void test_convert_type_2()
 
   for (size_t i = 0; i < double_values_length; ++i) {
     const double sat_input = (double_values[i] + double_sat_offsets[i]);
-    const double min_expected = (INT_MIN > -DBL_MAX) ? (double)INT_MIN : -DBL_MAX;
-    const double max_expected = (INT_MAX < DBL_MAX) ? (double)INT_MAX : DBL_MAX;
+    // use the destination (integer) type always to avoid rounding errors when
+    // comparing floats to int
+    const int min_expected = (int)(INT_MIN > -DBL_MAX) ? INT_MIN : (int)-DBL_MAX;
+    const int max_expected = (int)(INT_MAX < DBL_MAX) ? INT_MAX : (int)DBL_MAX;
     union { int2 value; int raw[2]; } expected, actual;
     expected.value = ((int2)((int)double_rounded_values[i]));
     actual.value = convert_int2((double2)double_values[i]);
@@ -4095,8 +4121,10 @@ kernel void test_convert_type_2()
 
   for (size_t i = 0; i < double_values_length; ++i) {
     const double sat_input = (double_values[i] + double_sat_offsets[i]);
-    const double min_expected = (0 > -DBL_MAX) ? (double)0 : -DBL_MAX;
-    const double max_expected = (UINT_MAX < DBL_MAX) ? (double)UINT_MAX : DBL_MAX;
+    // use the destination (integer) type always to avoid rounding errors when
+    // comparing floats to int
+    const uint min_expected = (uint)(0 > -DBL_MAX) ? 0 : (uint)-DBL_MAX;
+    const uint max_expected = (uint)(UINT_MAX < DBL_MAX) ? UINT_MAX : (uint)DBL_MAX;
     union { uint2 value; uint raw[2]; } expected, actual;
     expected.value = ((uint2)((uint)double_rounded_values[i]));
     actual.value = convert_uint2((double2)double_values[i]);
@@ -4213,8 +4241,10 @@ kernel void test_convert_type_2()
 
   for (size_t i = 0; i < double_values_length; ++i) {
     const double sat_input = (double_values[i] + double_sat_offsets[i]);
-    const double min_expected = (LONG_MIN > -DBL_MAX) ? (double)LONG_MIN : -DBL_MAX;
-    const double max_expected = (LONG_MAX < DBL_MAX) ? (double)LONG_MAX : DBL_MAX;
+    // use the destination (integer) type always to avoid rounding errors when
+    // comparing floats to int
+    const long min_expected = (long)(LONG_MIN > -DBL_MAX) ? LONG_MIN : (long)-DBL_MAX;
+    const long max_expected = (long)(LONG_MAX < DBL_MAX) ? LONG_MAX : (long)DBL_MAX;
     union { long2 value; long raw[2]; } expected, actual;
     expected.value = ((long2)((long)double_rounded_values[i]));
     actual.value = convert_long2((double2)double_values[i]);
@@ -4333,8 +4363,10 @@ kernel void test_convert_type_2()
 
   for (size_t i = 0; i < double_values_length; ++i) {
     const double sat_input = (double_values[i] + double_sat_offsets[i]);
-    const double min_expected = (0 > -DBL_MAX) ? (double)0 : -DBL_MAX;
-    const double max_expected = (ULONG_MAX < DBL_MAX) ? (double)ULONG_MAX : DBL_MAX;
+    // use the destination (integer) type always to avoid rounding errors when
+    // comparing floats to int
+    const ulong min_expected = (ulong)(0 > -DBL_MAX) ? 0 : (ulong)-DBL_MAX;
+    const ulong max_expected = (ulong)(ULONG_MAX < DBL_MAX) ? ULONG_MAX : (ulong)DBL_MAX;
     union { ulong2 value; ulong raw[2]; } expected, actual;
     expected.value = ((ulong2)((ulong)double_rounded_values[i]));
     actual.value = convert_ulong2((double2)double_values[i]);
