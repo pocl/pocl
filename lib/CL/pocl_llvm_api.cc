@@ -1451,7 +1451,7 @@ pocl_llvm_codegen(cl_kernel kernel,
     // TODO: better error check
     formatted_raw_ostream FOS(outfile.os());
     llvm::MCContext *mcc;
-    if(target->addPassesToEmitMC(PM, mcc, FOS, llvm::TargetMachine::CGFT_ObjectFile))
+    if(target->addPassesToEmitMC(PM, mcc, FOS))
         return 1;
 
     PM.run(*input);
