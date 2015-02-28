@@ -185,7 +185,7 @@ set(CLANG_LIBNAMES clangFrontendTool clangFrontend clangDriver clangSerializatio
 if(LLVM_MINOR GREATER 4)
   list(APPEND CLANG_LIBNAMES clangRewrite)
 endif()
-list(APPEND CLANG_LIBNAMES clangRewriteFrontend clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers clangStaticAnalyzerCore clangARCMigrate clangAnalysis clangEdit clangAST clangLex clangBasic)
+list(APPEND CLANG_LIBNAMES clangRewriteFrontend clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers clangStaticAnalyzerCore clangAnalysis clangEdit clangAST clangLex clangBasic)
 
 foreach(LIBNAME ${CLANG_LIBNAMES})
   find_library(C_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
