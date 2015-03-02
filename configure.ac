@@ -91,6 +91,7 @@ NEW_PRINTF_WORKS=true
 LLVM_3_6=false
 
 AC_SUBST([LLVM_VERSION], [$LLVM_VERSION])
+AC_DEFINE_UNQUOTED([LLVM_VERSION], ["$LLVM_VERSION"], "LLVM version as a string.")
 
 case "$LLVM_VERSION" in
      3.2*)
