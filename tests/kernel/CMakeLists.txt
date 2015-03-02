@@ -113,7 +113,7 @@ if(X86_64 AND (LLVM_3_5 OR LLVM_3_6))
     PROPERTIES WILL_FAIL 1)
 endif()
 
-if(POWERPC OR LLVM_3_6)
+if(POWERPC)
   set_tests_properties(
   "kernel/test_convert_type_1" "kernel/test_convert_type_2" "kernel/test_convert_type_4"
   "kernel/test_convert_type_8" "kernel/test_convert_type_16"
