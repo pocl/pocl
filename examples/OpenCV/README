@@ -1,0 +1,14 @@
+To enable the OpenCV tests:
+
+1) run 'make opencv-3.0.0-beta.zip' to download OpenCV
+
+2) configure pocl, it should now detect the OpenCV benchmark and
+   enable it. You need cmake to get it built.
+
+3) call 'make prepare-examples' once to get the examples built
+
+4) call 'make check TESTSUITEFLAGS="-k opencv"', it should build 
+   the OpenCV cases and run the pocl test suite for the OpenCV.
+
+After this you can run tools/scripts/benchmark.py to produce
+performance numbers.

@@ -52,7 +52,7 @@ EXTRA_DIST = testsuite.at testsuite-samples.at testsuite-viennacl.at testsuite-r
 	testsuite-rodinia.at testsuite-tce.at testsuite-runtime.at \
 	testsuite-workgroup.at testsuite-parboil.at testsuite-amd.at \
 	testsuite-vexcl.at testsuite-piglit.at testsuite-halide.at 
-	$(srcdir)/package.m4 $(TESTSUITE) atlocal.in testsuite-amdsdk2_9.at
+	$(srcdir)/package.m4 $(TESTSUITE) atlocal.in testsuite-amdsdk2_9.at testsuite-opencv.at
 DISTCLEANFILES = atconfig
 
 check-local: atconfig atlocal $(TESTSUITE)
@@ -74,6 +74,7 @@ $(TESTSUITE): $(srcdir)/testsuite.at $(srcdir)/testsuite-samples.at $(srcdir)/te
 	$(srcdir)/testsuite-amd.at \
 	$(srcdir)/testsuite-runtime.at $(srcdir)/testsuite-workgroup.at \
 	$(srcdir)/testsuite-vexcl.at $(srcdir)/testsuite-piglit.at \
-	$(srcdir)/testsuite-halide.at $(srcdir)/package.m4 
+	$(srcdir)/testsuite-halide.at $(srcdir)/package.m4 \
+	$(srcdir)/testsuite-opencv.at
 	$(AUTOTEST) -I '$(srcdir)' -o $@.tmp $@.at
 	mv $@.tmp $@
