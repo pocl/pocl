@@ -35,10 +35,11 @@ int pocl_llvm_build_program
 (cl_program program,
  cl_device_id device,
  int device_i,     
- const char* temp_dir,
+ const char* cache_dir,
  const char* binary_filename,
  const char* device_tmpdir,
- const char* user_options);
+ const char* user_options,
+ int fd);
 
 
 /* Retrieve metadata of the given kernel in the program to populate the

@@ -22,6 +22,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+EXTRA_DIST = CMakeLists.txt
+
 noinst_PROGRAMS = scalarwave
 
 scalarwave_SOURCES = scalarwave.c scalarwave.cl

@@ -31,6 +31,7 @@ prepare-examples:
 	HL_TARGET=opencl make USE_LLVM_SHARED_LIB=1 -sC Halide/apps/local_laplacian
 	HL_TARGET=opencl make USE_LLVM_SHARED_LIB=1 -sC Halide/apps/bilateral_grid
 	HL_TARGET=opencl make USE_LLVM_SHARED_LIB=1 -sC Halide/apps/interpolate
+	if test ! -e buhd4k.png; then wget http://www.cs.tut.fi/~pjaaskel/buhd4k.png -O buhd4k.png; fi
 
 clean-examples:
 	make -C Halide clean

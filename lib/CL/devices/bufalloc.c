@@ -95,13 +95,16 @@ print_chunks (chunk_info_t *first)
 }
 
 static int
-chunk_slack (chunk_info_t* chunk, size_t size)
+chunk_slack (chunk_info_t* chunk, size_t size, size_t* last_chunk_size)
 {
   memory_address_t aligned_start_addr = 
     (chunk->start_address + chunk->parent_region->alignment - 1) &
     ~(chunk->parent_region->alignment - 1);
-
-  return chunk->start_address + chunk->size - (aligned_start_addr + size);
+  size_t end_chunk = chunk->start_address + chunk->size;
+  size_t end_addr = aligned_start_addr + size;
+  if(last_chunk_size)
+    *last_chunk_size = end_chunk - end_addr;
+  return end_chunk > end_addr;
 }
 
 /**
@@ -123,7 +126,7 @@ append_new_chunk (memory_region_t *region,
   assert (!region->last_chunk->is_allocated);
   /* if the last_chunk is too small we cannot append
      a new chunk before it */
-  if (chunk_slack (region->last_chunk, size) < 0)
+  if (!chunk_slack (region->last_chunk, size, NULL))
     {
       BA_UNLOCK (region->lock);
       return NULL;
@@ -153,7 +156,7 @@ append_new_chunk (memory_region_t *region,
   new_chunk->is_allocated = 1;
   new_chunk->children = NULL;
 
-  region->last_chunk->size = chunk_slack (region->last_chunk, size);
+  chunk_slack (region->last_chunk, size, (size_t*)&region->last_chunk->size);
   region->last_chunk->start_address = 
     new_chunk->start_address + new_chunk->size;
 
@@ -199,7 +202,7 @@ alloc_buffer_from_region (memory_region_t *region, size_t size)
     {
       if (cursor == region->last_chunk ||
           cursor->is_allocated || 
-          chunk_slack (cursor, size) < 0)
+          !chunk_slack (cursor, size, NULL))
         continue; /* doesn't fit */
       /* found one */
       chunk = cursor;

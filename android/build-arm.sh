@@ -34,31 +34,31 @@ ANDROID_TOOLCHAIN=/tmp/android-toolchain/
 echo "NDK standalone toolchain setup..."
 if [ ! -e $ANDROID_NDK/build/tools/make-standalone-toolchain.sh ]; then
     echo "Install Android NDK and set environment variable ANDROID_NDK to its root"
-    exit
+    return
 fi
 $ANDROID_NDK/build/tools/make-standalone-toolchain.sh \
-				--toolchain=arm-linux-androideabi-4.8 \
-				--llvm-version=3.4 \
+				--toolchain=arm-linux-androideabi-4.9 \
 				--arch=arm \
-				--platform=android-14 \
+				--platform=android-16 \
 				--install-dir=$ANDROID_TOOLCHAIN
 
 INSTALL_PREFIX=/data/data/org.pocl.libs/files/
 # Create directories for PREFIX, target location in android
 if [ ! -e $INSTALL_PREFIX ]; then
     sudo mkdir -p $INSTALL_PREFIX
+    sudo mkdir -p $INSTALL_PREFIX/lib/pkgconfig/
     sudo chown -R $I_AM:$MY_GROUP $INSTALL_PREFIX
     sudo chmod 755 -R $INSTALL_PREFIX
 fi
 
 # Prebuilt llvm that runson(android) -> target(android)
 LLVM_HOST_ANDROID_TARGET_ANDROID=$PWD/pocl-android-prebuilts/arm/llvm/android
-if [ ! -e $LLVM_HOST_ANDROID_TARGET_ANDROID/lib/libclang.a ]; then
+if [ ! -e $LLVM_HOST_ANDROID_TARGET_ANDROID/lib/libclangFrontend.a  ]; then
     echo "Build and place llvm(android) at " $LLVM_HOST_ANDROID_TARGET_ANDROID
-    exit
+    return
 fi
 
-if [ ! -e $ANDROID_TOOLCHAIN/sysroot/usr/lib/libclang.a ]; then
+if [ ! -e $ANDROID_TOOLCHAIN/sysroot/usr/lib/libclangFrontend.a  ]; then
 echo "Copying llvm libs(android) to sysroot..."
 cp -rf $LLVM_HOST_ANDROID_TARGET_ANDROID/* $ANDROID_TOOLCHAIN/sysroot/usr/
 fi
@@ -67,7 +67,7 @@ fi
 LLVM_HOST_x64_TARGET_ANDROID=$PWD/pocl-android-prebuilts/arm/llvm/cross_compiler_for_android
 if [ ! -e $LLVM_HOST_x64_TARGET_ANDROID/bin/clang ]; then
     echo "Build and place llvm runson(x64) -> target(android) at " $LLVM_HOST_x64_TARGET_ANDROID
-    exit
+    return
 fi
 
 if [ ! -e $ANDROID_TOOLCHAIN/sysroot/usr/bin/clang ]; then
@@ -78,16 +78,17 @@ fi
 PREBUILT_NCURSES=$PWD/pocl-android-prebuilts/arm/ncurses
 if [ ! -e $PREBUILT_NCURSES/lib/libncurses.a ]; then
     echo "Build and place ncurses for android at " $PREBUILT_NCURSES
-    exit
+    return
 fi
 echo "copying ncurses to sysroot...."
 cp -rf $PREBUILT_NCURSES/* $ANDROID_TOOLCHAIN/sysroot/usr/
 ln -sf $ANDROID_TOOLCHAIN/sysroot/usr/lib/libncurses.a $ANDROID_TOOLCHAIN/sysroot/usr/lib/libcurses.a
 
+
 PREBUILT_LTDL=$PWD/pocl-android-prebuilts/arm/libtool
 if [ ! -e $PREBUILT_LTDL/lib/libltdl.a ]; then
     echo "Build and place libltdl for android at " $PREBUILT_LTDL
-    exit
+    return
 fi
 echo "copying ltdl to sysroot...."
 cp -rf $PREBUILT_LTDL/* $ANDROID_TOOLCHAIN/sysroot/usr/
@@ -95,7 +96,7 @@ cp -rf $PREBUILT_LTDL/* $ANDROID_TOOLCHAIN/sysroot/usr/
 PREBUILT_HWLOC=$PWD/pocl-android-prebuilts/arm/hwloc
 if [ ! -e $PREBUILT_HWLOC/lib/libhwloc.a ]; then
     echo "Build and place libhwloc for android at " $PREBUILT_HWLOC
-    exit
+    return
 fi
 echo "copying hwloc to sysroot...."
 cp -rf $PREBUILT_HWLOC/* $ANDROID_TOOLCHAIN/sysroot/usr/
@@ -103,12 +104,13 @@ cp -rf $PREBUILT_HWLOC/* $ANDROID_TOOLCHAIN/sysroot/usr/
 PREBUILT_BINUTILS=$PWD/pocl-android-prebuilts/arm/binutils
 if [ ! -e $PREBUILT_BINUTILS/bin/ld ]; then
     echo "Build and place binutils for android at " $PREBUILT_BINUTILS
-    exit
+    return
 fi
 echo "copying ld to "$INSTALL_PREFIX
 cp -rf $PREBUILT_BINUTILS/* $INSTALL_PREFIX/
 
 ln -sf $ANDROID_TOOLCHAIN/sysroot/usr/lib/libc.so $ANDROID_TOOLCHAIN/sysroot/usr/lib/libpthread.so
+ln -sf $ANDROID_TOOLCHAIN/sysroot/usr/lib/libc.so $ANDROID_TOOLCHAIN/sysroot/usr/lib/librt.so
 ln -sf $ANDROID_TOOLCHAIN/sysroot/usr/include/GLES $ANDROID_TOOLCHAIN/sysroot/usr/include/GL
 rm $ANDROID_TOOLCHAIN/sysroot/usr/lib/libstdc++.*
 
@@ -116,6 +118,8 @@ export PATH=$ANDROID_TOOLCHAIN/bin:$ANDROID_TOOLCHAIN/sysroot/usr/bin/:$PATH
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$ANDROID_TOOLCHAIN/sysroot/usr/lib/
 export HOST=arm-linux-androideabi
 export PREFIX=$INSTALL_PREFIX
+export SYSROOT=$ANDROID_TOOLCHAIN/sysroot/usr/
+export TARGET_CPU="cortex-a9"
 
 # flto option in gcc 4.8 eats all memory & eventually /tmp. Better to place tmp file in disk
 export TMPDIR=$HOME/tmp/junk/
@@ -123,9 +127,10 @@ if [ ! -e $TMPDIR ]; then
     mkdir -p $TMPDIR
 fi
 
-if [ ! -e $PWD/../configure ]; then
-    cd ..; ./autogen.sh; cd -
-fi
+
+#if [ ! -e $PWD/../configure ]; then
+#    cd ..; ./autogen.sh; cd -
+#fi
 
 DEBUG_BUILD=1
 if [ $# -gt 0 ]  && [ $1 = "release" ] ; then
@@ -133,11 +138,15 @@ if [ $# -gt 0 ]  && [ $1 = "release" ] ; then
 fi
 
 if [ $DEBUG_BUILD == 1 ] ; then
-LLC_HOST_CPU="cortex-a9" HWLOC_CFLAGS="-I"$ANDROID_TOOLCHAIN"/sysroot/usr/include" HWLOC_LIBS="-L"$ANDROID_TOOLCHAIN"/sysroot/usr/lib -lhwloc" CFLAGS=" -ffunction-sections -fdata-sections -Os " CPPFLAGS=" -ffunction-sections -fdata-sections -Os " LDFLAGS=" -Wl,--gc-sections " SYSROOTDIR=$ANDROID_TOOLCHAIN/sysroot/ ../configure --prefix=$PREFIX --host=$HOST --disable-icd --with-sysroot=$ANDROID_TOOLCHAIN/sysroot/ --enable-debug
+#CC="arm-linux-androideabi-gcc  -static-libstdc++ " CXX="arm-linux-androideabi-g++  -static-libstdc++ "  ac_cv_c_bigendian=no LLC_HOST_CPU=$TARGET_CPU HWLOC_CFLAGS="-I"$ANDROID_TOOLCHAIN"/sysroot/usr/include" HWLOC_LIBS="-L"$ANDROID_TOOLCHAIN"/sysroot/usr/lib -lhwloc" CFLAGS=" -Os " CPPFLAGS=" -Os " LDFLAGS=" "  SYSROOTDIR=$ANDROID_TOOLCHAIN/sysroot/ ../configure --prefix=$PREFIX --host=$HOST --disable-icd --with-sysroot=$ANDROID_TOOLCHAIN/sysroot/ --enable-debug --verbose
+
+cmake -DCMAKE_TOOLCHAIN_FILE=androideabi.cmake -DCMAKE_BUILD_TYPE:STRING=Debug -DCMAKE_AR:FILEPATH=$HOST-gcc-ar -DCMAKE_RANLIB:FILEPATH=$HOST-gcc-ranlib -DCMAKE_CXX_FLAGS:STRING="-Os -ffunction-sections -fdata-sections -fno-lto" -DCMAKE_C_FLAGS:STRING="-Os -ffunction-sections -fdata-sections -fno-lto" -DCMAKE_EXE_LINKER_FLAGS:STRING='-fno-lto -fuse-linker-plugin -Wl,--gc-sections' -DCMAKE_MODULE_LINKER_FLAGS:STRING='-fno-lto -fuse-linker-plugin -Wl,--gc-sections'  -DCMAKE_SHARED_LINKER_FLAGS:STRING='-fno-lto -fuse-linker-plugin -Wl,--gc-sections' -DCMAKE_INSTALL_PREFIX:PATH=$PREFIX -DLLC_HOST_CPU=$TARGET_CPU ..
 make -j4
 
 else
-LLC_HOST_CPU="cortex-a9" HWLOC_CFLAGS="-I"$ANDROID_TOOLCHAIN"/sysroot/usr/include" HWLOC_LIBS="-L"$ANDROID_TOOLCHAIN"/sysroot/usr/lib -lhwloc" CFLAGS=" -ffunction-sections -fdata-sections -Os -flto " CPPFLAGS=" -ffunction-sections -fdata-sections -Os -flto " LDFLAGS=" -Wl,--gc-sections -flto " SYSROOTDIR=$ANDROID_TOOLCHAIN/sysroot/ ../configure --prefix=$PREFIX --host=$HOST --disable-icd --with-sysroot=$ANDROID_TOOLCHAIN/sysroot/
+#ac_cv_c_bigendian=no LLC_HOST_CPU=$TARGET_CPU HWLOC_CFLAGS="-I"$ANDROID_TOOLCHAIN"/sysroot/usr/include" HWLOC_LIBS="-L"$ANDROID_TOOLCHAIN"/sysroot/usr/lib -lhwloc" CFLAGS=" -ffunction-sections -fdata-sections -Os -flto " CPPFLAGS=" -ffunction-sections -fdata-sections -Os -flto " LDFLAGS=" -Wl,--gc-sections -flto " SYSROOTDIR=$ANDROID_TOOLCHAIN/sysroot/ ../configure --prefix=$PREFIX --host=$HOST --disable-icd --with-sysroot=$ANDROID_TOOLCHAIN/sysroot/
+
+cmake -DCMAKE_TOOLCHAIN_FILE=androideabi.cmake -DCMAKE_BUILD_TYPE:STRING=Release -DCMAKE_AR:FILEPATH=$HOST-gcc-ar -DCMAKE_RANLIB:FILEPATH=$HOST-gcc-ranlib -DCMAKE_CXX_FLAGS:STRING="-Os -ffunction-sections -fdata-sections -flto" -DCMAKE_C_FLAGS:STRING="-Os -ffunction-sections -fdata-sections -flto" -DCMAKE_EXE_LINKER_FLAGS:STRING='-flto -fuse-linker-plugin -Wl,--gc-sections' -DCMAKE_MODULE_LINKER_FLAGS:STRING='-flto -fuse-linker-plugin -Wl,--gc-sections'  -DCMAKE_SHARED_LINKER_FLAGS:STRING='-flto -fuse-linker-plugin -Wl,--gc-sections' -DCMAKE_INSTALL_PREFIX:PATH=$PREFIX -DLLC_HOST_CPU=$TARGET_CPU ..
 make
 
 fi

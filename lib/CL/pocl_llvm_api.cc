@@ -77,9 +77,13 @@
 #include <vector>
 #include <sstream>
 #include <string>
+#include <cstdio>
 
 #ifndef _MSC_VER
 #  include <unistd.h>
+#  include <sys/types.h>
+#  include <sys/stat.h>
+#  include <fcntl.h>
 #endif
 
 // Note - LLVM/Clang uses symbols defined in Khronos' headers in macros, 
@@ -138,8 +142,10 @@ static void InitializeLLVM();
 // to file on disk, if user has requested with environment
 // variable
 // TODO: what to do on errors?
+
+// this version simply rewrites the file
 static inline void
-write_temporary_file( const llvm::Module *mod,
+update_temporary_file( const llvm::Module *mod,
                       const char *filename )
 {
   tool_output_file *Out;
@@ -155,6 +161,25 @@ write_temporary_file( const llvm::Module *mod,
   delete Out;
 }
 
+// this version works on already open filedescriptor
+static inline void
+write_temporary_file_fd( const llvm::Module *mod,
+                      const char *filename, int fd)
+{
+  tool_output_file *Out;
+  #if LLVM_VERSION_MAJOR==3 && LLVM_VERSION_MINOR<6
+  std::string ErrorInfo;
+  Out = new tool_output_file(filename, fd);
+  #else
+  std::error_code ErrorInfo;
+  Out = new tool_output_file(filename, fd);
+  #endif
+  WriteBitcodeToFile(mod, Out->os());
+  Out->keep();
+  delete Out;
+}
+
+
 // Read input source to clang::FrontendOptions.
 // The source is contained in the program->source array,
 // but if debugging option is enabled in the kernel compiler
@@ -162,10 +187,10 @@ write_temporary_file( const llvm::Module *mod,
 // to find it.
 static inline int
 load_source(FrontendOptions &fe,
-            const char* temp_dir,
+            const char* cache_dir,
             cl_program program)
 {
-  std::string kernel_file(temp_dir);
+  std::string kernel_file(cache_dir);
   kernel_file += "/" POCL_PROGRAM_CL_FILENAME;
   std::ofstream ofs(kernel_file.c_str());
   ofs << program->source;
@@ -191,10 +216,11 @@ ParseIRFile(const char* fname, SMDiagnostic &Err, llvm::LLVMContext &ctx)
 int pocl_llvm_build_program(cl_program program, 
                             cl_device_id device, 
                             int device_i,     
-                            const char* temp_dir,
+                            const char* cache_dir,
                             const char* binary_file_name,
                             const char* device_tmpdir,
-                            const char* user_options)
+                            const char* user_options,
+                            int fd)
 
 {
   llvm::MutexGuard lockHolder(kernelCompilerLock);
@@ -220,7 +246,7 @@ int pocl_llvm_build_program(cl_program program,
   std::stringstream ss_build_log;
 
   std::stringstream build_log_filename;
-  build_log_filename << temp_dir << "/" << POCL_BUILDLOG_FILENAME;
+  build_log_filename << cache_dir << "/" << POCL_BUILDLOG_FILENAME;
   /* Overwrite build log */
   std::ofstream fp(build_log_filename.str().c_str(), std::ofstream::trunc);
   fp.close();
@@ -363,7 +389,7 @@ int pocl_llvm_build_program(cl_program program,
   FrontendOptions &fe = pocl_build.getFrontendOpts();
   // The CreateFromArgs created an stdin input which we should remove first.
   fe.Inputs.clear(); 
-  if (load_source(fe, temp_dir, program)!=0)
+  if (load_source(fe, cache_dir, program)!=0)
     return CL_OUT_OF_HOST_MEMORY;
 
   CodeGenOptions &cg = pocl_build.getCodeGenOpts();
@@ -416,7 +442,7 @@ int pocl_llvm_build_program(cl_program program,
     return CL_BUILD_PROGRAM_FAILURE;
 
   /* Always retain program.bc. Its required in clBuildProgram */
-  write_temporary_file(*mod, binary_file_name);
+  if(fd >= 0) write_temporary_file_fd(*mod, binary_file_name, fd);
 
   // FIXME: cannot delete action as it contains something the llvm::Module
   // refers to. We should create it globally, at compiler initialization time.
@@ -440,7 +466,13 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
   for (unsigned i = 0, e = opencl_kernels->getNumOperands(); i != e; ++i) {
     llvm::MDNode *kernel_iter = opencl_kernels->getOperand(i);
 
+#ifdef LLVM_OLDER_THAN_3_6
     llvm::Function *kernel_prototype = llvm::cast<llvm::Function>(kernel_iter->getOperand(0));
+#else
+    llvm::Function *kernel_prototype = 
+      llvm::cast<llvm::Function>(
+        dyn_cast<llvm::ValueAsMetadata>(kernel_iter->getOperand(0))->getValue());
+#endif
     std::string name = kernel_prototype->getName().str();
     if (name == kernel_name) {
       kernel_metadata = kernel_iter;
@@ -467,17 +499,28 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
     std::string meta_name = meta_name_node->getString().str();
 
     for (unsigned j = 1; j != arg_num; ++j) {
+#ifdef LLVM_OLDER_THAN_3_6
       llvm::Value *meta_arg_value = meta_node->getOperand(j);
+#else
+      llvm::Value *meta_arg_value = NULL;
+      if (isa<ValueAsMetadata>(meta_node->getOperand(j)))
+        meta_arg_value = 
+          dyn_cast<ValueAsMetadata>(meta_node->getOperand(j))->getValue();      
+      else if (isa<ConstantAsMetadata>(meta_node->getOperand(j)))
+        meta_arg_value = 
+          dyn_cast<ConstantAsMetadata>(meta_node->getOperand(j))->getValue(); 
+#endif
       struct pocl_argument_info* current_arg = &kernel->arg_info[j-1];
 
-      if (isa<ConstantInt>(meta_arg_value) && meta_name=="kernel_arg_addr_space") {
+      if (meta_arg_value != NULL && isa<ConstantInt>(meta_arg_value) && 
+          meta_name == "kernel_arg_addr_space") {
         assert(has_meta_for_every_arg && "kernel_arg_addr_space meta incomplete");
         kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER;
         //std::cout << "is ConstantInt /  kernel_arg_addr_space" << std::endl;
         llvm::ConstantInt *m = llvm::cast<ConstantInt>(meta_arg_value);
         uint64_t val = m->getLimitedValue(UINT_MAX);
         //std::cout << "with value: " << val << std::endl;
-        if(bitcode_is_spir) {
+        if (bitcode_is_spir) {
           switch(val) {
             case 0:
               current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
@@ -501,9 +544,9 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
           }
         }
       }
-      else if (isa<MDString>(meta_arg_value)) {
+      else if (isa<MDString>(meta_node->getOperand(j))) {
         //std::cout << "is MDString" << std::endl;
-        llvm::MDString *m = llvm::cast<MDString>(meta_arg_value);
+        llvm::MDString *m = llvm::cast<MDString>(meta_node->getOperand(j));
         std::string val = m->getString().str();
         //std::cout << "with value: " << val << std::endl;
         if (meta_name == "kernel_arg_access_qual") {
@@ -707,21 +750,34 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   if (size_info) {
     for (unsigned i = 0, e = size_info->getNumOperands(); i != e; ++i) {
       llvm::MDNode *KernelSizeInfo = size_info->getOperand(i);
-      if (KernelSizeInfo->getOperand(0) == kernel_function) {
-        reqdx = (llvm::cast<ConstantInt>
-                 (KernelSizeInfo->getOperand(1)))->getLimitedValue();
-        reqdy = (llvm::cast<ConstantInt>
-                 (KernelSizeInfo->getOperand(2)))->getLimitedValue();
-        reqdz = (llvm::cast<ConstantInt>
-                 (KernelSizeInfo->getOperand(3)))->getLimitedValue();
-      }
+#ifdef LLVM_OLDER_THAN_3_6
+      if (KernelSizeInfo->getOperand(0) != kernel_function) 
+        continue;
+      reqdx = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(1)))->getLimitedValue();
+      reqdy = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(2)))->getLimitedValue();
+      reqdz = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(3)))->getLimitedValue();
+#else
+      if (dyn_cast<ValueAsMetadata>(
+        KernelSizeInfo->getOperand(0).get())->getValue() != kernel_function) 
+        continue;
+      reqdx = (llvm::cast<ConstantInt>(
+                 llvm::dyn_cast<ConstantAsMetadata>(
+                   KernelSizeInfo->getOperand(1))->getValue()))->getLimitedValue();
+      reqdy = (llvm::cast<ConstantInt>(
+                 llvm::dyn_cast<ConstantAsMetadata>(
+                   KernelSizeInfo->getOperand(2))->getValue()))->getLimitedValue();
+      reqdz = (llvm::cast<ConstantInt>(
+                 llvm::dyn_cast<ConstantAsMetadata>(
+                   KernelSizeInfo->getOperand(3))->getValue()))->getLimitedValue();
+#endif
+      break;
     }
   }
   kernel->reqd_wg_size[0] = reqdx;
   kernel->reqd_wg_size[1] = reqdy;
   kernel->reqd_wg_size[2] = reqdz;
   
-#ifndef ANDROID
+#ifndef POCL_ANDROID
   // Generate the kernel_obj.c file. This should be optional
   // and generated only for the heterogeneous devices which need
   // these definitions to accompany the kernels, for the launcher
@@ -732,9 +788,11 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   std::string kobj_s = descriptor_filename; 
   kobj_s += ".kernel_obj.c";
 
-  if(access(kobj_s.c_str(), F_OK) != 0)
+  int fd;
+  if ((fd = open(kobj_s.c_str(), (O_CREAT | O_EXCL | O_WRONLY),
+      (S_IRUSR | S_IWUSR))) >= 0)
     {
-      FILE *kobj_c = fopen( kobj_s.c_str(), "wc");
+      FILE *kobj_c = fdopen(fd, "w");
 
       fprintf(kobj_c, "\n #include <pocl_device.h>\n");
 
@@ -1241,7 +1299,10 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
 #endif
 
   // TODO: don't write this once LLC is called via API, not system()
-  write_temporary_file(input, parallel_filename);
+  int fd;
+  if ((fd = open(parallel_filename, (O_CREAT | O_EXCL | O_WRONLY),
+      (S_IRUSR | S_IWUSR))) >= 0)
+    write_temporary_file_fd(input, parallel_filename, fd);
 
 #ifndef LLVM_3_2
   // In LLVM 3.2 the Linker object deletes the associated Modules.
@@ -1279,11 +1340,11 @@ void pocl_llvm_update_binaries (cl_program program) {
       assert (program->llvm_irs[i] != NULL);
 
       std::string binary_filename =
-        std::string(program->temp_dir) + "/" + 
-        program->devices[i]->short_name + "/" +
+        std::string(program->cache_dir) + "/" +
+        program->devices[i]->cache_dir_name + "/" +
         POCL_PROGRAM_BC_FILENAME;
 
-      write_temporary_file((llvm::Module*)program->llvm_irs[i],
+      update_temporary_file((llvm::Module*)program->llvm_irs[i],
                            binary_filename.c_str()); 
 
       FILE *binary_file = fopen(binary_filename.c_str(), "r");
@@ -1328,8 +1389,14 @@ pocl_llvm_get_kernel_names( cl_program program, const char **knames, unsigned ma
   unsigned i;
   for (i=0; i<md->getNumOperands(); i++) {
     assert( md->getOperand(i)->getOperand(0) != NULL);
+#ifdef LLVM_OLDER_THAN_3_6
     llvm::Function *k = cast<Function>(md->getOperand(i)->getOperand(0));
-    if (i<max_num_krn)
+#else
+    llvm::Function *k = 
+      cast<Function>(
+        dyn_cast<llvm::ValueAsMetadata>(md->getOperand(i)->getOperand(0))->getValue());
+#endif
+    if (i < max_num_krn)
       knames[i]= k->getName().data();
   }
   return i;
@@ -1384,7 +1451,7 @@ pocl_llvm_codegen(cl_kernel kernel,
     // TODO: better error check
     formatted_raw_ostream FOS(outfile.os());
     llvm::MCContext *mcc;
-    if(target->addPassesToEmitMC(PM, mcc, FOS, llvm::TargetMachine::CGFT_ObjectFile))
+    if(target->addPassesToEmitMC(PM, mcc, FOS))
         return 1;
 
     PM.run(*input);

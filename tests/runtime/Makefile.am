@@ -29,11 +29,11 @@ noinst_PROGRAMS= test_clFinish test_clGetDeviceInfo test_clGetEventInfo \
 	test_clGetKernelArgInfo
 
 EXTRA_DIST= \
-	test_kernel_src_in_pwd.h \
-	test_clCreateKernelsInProgram.cl \
+	test_kernel_src_in_pwd.h test_clSetEventCallback_expout.txt \
+	test_clCreateKernelsInProgram.cl CMakeLists.txt \
 	test_data/test_kernel_src_in_another_dir.h \
 	clGetKernelArgInfo.spir32_meta clGetKernelArgInfo.spir32_nometa \
-	clGetKernelArgInfo.spir64_meta clGetKernelArgInfo.spir64_nometa 
+	clGetKernelArgInfo.spir64_meta clGetKernelArgInfo.spir64_nometa
 
 AM_LDFLAGS = @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
 AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include @OPENCL_CFLAGS@

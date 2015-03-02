@@ -2,6 +2,7 @@
 
    Copyright (c) 2013 Ville Korhonen
    Copyright (c) 2014 Felix Bytow
+   Copyright (c) 2015 Matias Koskela
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -113,23 +114,53 @@ void __pocl_read_pixel (void* color, ADDRESS_SPACE dev_image_t* dev_image, int4 
 
   if (elem_size == 1)
     {
-      while (i--)
+      if(dev_image->order == CL_BGRA)
         {
-          (*color_ptr)[i] = ((uchar*)(dev_image->data))[base_index + i];
+          (*color_ptr)[0] = ((uchar*)(dev_image->data))[base_index + 2];
+          (*color_ptr)[1] = ((uchar*)(dev_image->data))[base_index + 1];
+          (*color_ptr)[2] = ((uchar*)(dev_image->data))[base_index + 0];
+          (*color_ptr)[3] = ((uchar*)(dev_image->data))[base_index + 3]; 
+        }
+      else
+        {
+          while (i--)
+            {
+              (*color_ptr)[i] = ((uchar*)(dev_image->data))[base_index + i];
+            }
         }
     }
   else if (elem_size == 2)
     {
-      while (i--)
+      if(dev_image->order == CL_BGRA)
         {
-          (*color_ptr)[i] = ((ushort*)(dev_image->data))[base_index + i];
+          (*color_ptr)[0] = ((ushort*)(dev_image->data))[base_index + 2];
+          (*color_ptr)[1] = ((ushort*)(dev_image->data))[base_index + 1];
+          (*color_ptr)[2] = ((ushort*)(dev_image->data))[base_index + 0];
+          (*color_ptr)[3] = ((ushort*)(dev_image->data))[base_index + 3]; 
         }
+      else
+        {
+          while (i--)
+            {
+              (*color_ptr)[i] = ((ushort*)(dev_image->data))[base_index + i];
+            }
+      }
     }
   else if (elem_size == 4)
     {
-      while (i--)
+      if(dev_image->order == CL_BGRA)
         {
-          (*color_ptr)[i] = ((uint*)(dev_image->data))[base_index + i];
+          (*color_ptr)[0] = ((uint*)(dev_image->data))[base_index + 2];
+          (*color_ptr)[1] = ((uint*)(dev_image->data))[base_index + 1];
+          (*color_ptr)[2] = ((uint*)(dev_image->data))[base_index + 0];
+          (*color_ptr)[3] = ((uint*)(dev_image->data))[base_index + 3]; 
+        }
+      else
+        {
+          while (i--)
+            {
+              (*color_ptr)[i] = ((uint*)(dev_image->data))[base_index + i];
+            }
         }
     }
 }

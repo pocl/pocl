@@ -39,3 +39,5 @@ image_query_funcs_CFLAGS = -std=c99 @OPENCL_CFLAGS@
 
 AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'
 AM_LDFLAGS = @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la -lm
+
+EXTRA_DIST = test_block_expout.txt test_halfs.cl test_sizeof_expout.txt CMakeLists.txt

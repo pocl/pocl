@@ -101,12 +101,9 @@ int pocl_device_get_env_count(const char *dev_type)
   return dev_count;
 }
 
-static unsigned int __total_dev_count = 0;
-
 unsigned int
 pocl_get_devices(cl_device_type device_type, struct _cl_device_id **devices, unsigned int num_devices)
 {
-  struct _cl_device_id *device;
   unsigned int i, dev_added = 0;
 
   for (i = 0; i < pocl_num_devices; ++i)
@@ -167,6 +164,20 @@ str_toupper(char *out, const char *in)
   for (i = 0; in[i] != '\0'; i++)
     out[i] = toupper(in[i]);
   out[i] = '\0';
+}
+
+static inline void
+pocl_string_to_dirname(char *str)
+{
+  char *s_ptr;
+  if (!str) return;
+
+  // Replace special characters with '_'
+  for (s_ptr = str; (*s_ptr); s_ptr++)
+    {
+      if (!isalnum(*s_ptr))
+        *s_ptr = '_';
+    }
 }
 
 void 
@@ -241,6 +252,9 @@ pocl_init_devices()
 
           if (dev_index == 0)
             pocl_devices[dev_index].type |= CL_DEVICE_TYPE_DEFAULT;
+
+          pocl_devices[dev_index].cache_dir_name = strdup(pocl_devices[dev_index].long_name);
+          pocl_string_to_dirname(pocl_devices[dev_index].cache_dir_name);
           
           ++dev_index;
         }

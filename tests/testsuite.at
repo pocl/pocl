@@ -108,7 +108,6 @@ AT_CLEANUP
 AT_SETUP([Kernel functions convert_type - scalars])
 # ppc codegen issue, see bug #26
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc64])
-AT_XFAIL_IF([grep -q "#define LLVM_3_6" $abs_top_builddir/config.h])
 AT_KEYWORDS([conversion])
 AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_convert_type_1], 0,
 [Running test test_convert_type_1...
@@ -118,7 +117,6 @@ AT_CLEANUP
 AT_SETUP([Kernel functions convert_type - vector of 2])
 # ppc codegen issue, see bug #26
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc64])
-AT_XFAIL_IF([grep -q "#define LLVM_3_6" $abs_top_builddir/config.h])
 AT_KEYWORDS([conversion])
 AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_convert_type_2], 0,
 [Running test test_convert_type_2...
@@ -128,7 +126,6 @@ AT_CLEANUP
 AT_SETUP([Kernel functions convert_type - vector of 4])
 # ppc codegen issue, see bug #26
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc64])
-AT_XFAIL_IF([grep -q "#define LLVM_3_6" $abs_top_builddir/config.h])
 AT_KEYWORDS([conversion])
 AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_convert_type_4], 0,
 [Running test test_convert_type_4...
@@ -138,7 +135,6 @@ AT_CLEANUP
 AT_SETUP([Kernel functions convert_type - vector of 8])
 # ppc codegen issue, see bug #26
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc64])
-AT_XFAIL_IF([grep -q "#define LLVM_3_6" $abs_top_builddir/config.h])
 AT_KEYWORDS([conversion])
 AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_convert_type_8], 0,
 [Running test test_convert_type_8...
@@ -148,7 +144,6 @@ AT_CLEANUP
 AT_SETUP([Kernel functions convert_type - vector of 16])
 # ppc codegen issue, see bug #26
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc64])
-AT_XFAIL_IF([grep -q "#define LLVM_3_6" $abs_top_builddir/config.h])
 AT_KEYWORDS([conversion])
 AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_convert_type_16], 0,
 [Running test test_convert_type_16...
@@ -215,12 +210,10 @@ AT_CLEANUP
 
 AT_SETUP([Kernel functions abs abs_diff add_sat hadd mad_hi mad_sat mul_hi rhadd sub_sat])
 # 3-element vector cases fail when vectorizer is enabled,
-# at least with Intel Core i5.
-AT_XFAIL_IF([grep OCL_KERNEL_TARGET_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q core-avx-i &&
+# at least with Intel Core i5 and AMD FX8. Assume it fails on all others too.
+AT_XFAIL_IF([grep OCL_KERNEL_TARGET $abs_top_builddir/config.h | cut -d\" -f2 | grep -q x86_64 &&
              grep -q "#define LLVM_3_5" $abs_top_builddir/config.h])
-AT_XFAIL_IF([grep OCL_KERNEL_TARGET_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q penryn &&
-             grep -q "#define LLVM_3_5" $abs_top_builddir/config.h])
-AT_XFAIL_IF([grep OCL_KERNEL_TARGET_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q core-avx-i &&
+AT_XFAIL_IF([grep OCL_KERNEL_TARGET $abs_top_builddir/config.h | cut -d\" -f2 | grep -q x86_64 &&
              grep -q "#define LLVM_3_6" $abs_top_builddir/config.h])
 AT_DATA([expout],
 [Running test test_hadd...
@@ -386,5 +379,6 @@ m4_include(testsuite-amd.at)
 m4_include(testsuite-amdsdk2_9.at)
 m4_include(testsuite-vexcl.at)
 m4_include(testsuite-halide.at)
+m4_include(testsuite-cloverleaf.at)
 m4_include(testsuite-piglit.at)
 m4_include(testsuite-opencv.at)

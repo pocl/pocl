@@ -1,8 +1,8 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for pocl/include/CL.
+# Makefile.am for pocl/examples/CloverLeaf
 # 
-# Copyright (c) 2011 Universidad Rey Juan Carlos
+# Copyright (c) 2014 Pekka Jääskeläinen / Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,22 +22,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-#force the patching of cl.hpp.in - 
-BUILT_SOURCES = cl.hpp
-CLEANFILES = ${BUILT_SOURCES}
-#note - this gets run on every build, so don't fail if patch detects a
-#previously applied patch. The copy is a workaround for OSX's 'patch'
-cl.hpp: $(top_srcdir)/include/CL/cl.hpp.in $(top_srcdir)/tools/patches/khronos_cl.hpp.patch
-	cp $< __tmp_header && \
-	(patch -sNp2 __tmp_header $(top_srcdir)/tools/patches/khronos_cl.hpp.patch -o cl.hpp || true) && \
-	rm -f __tmp_header
+if TEST_SUITE_CLOVERLEAF
 
-if INSTALL_OPENCL_HEADERS
-library_includedir = $(includedir)/CL
-library_include_HEADERS = cl.h cl_ext.h			\
-                          cl_gl.h cl_gl_ext.h		\
-                          cl_platform.h opencl.h
-nodist_library_include_HEADERS = cl.hpp
+.PHONY: build
+
+prepare-examples:
+	$(MAKE) -sC CloverLeaf_OpenCL COMPILER=GNU C_OPTIONS="-g -I${abs_top_srcdir}/include"   
+
+clean-examples:
+	$(MAKE) -sC CloverLeaf_OpenCL clean
+
 endif
-
-EXTRA_DIST = cl.hpp.in $(top_srcdir)/tools/patches/khronos_cl.hpp.patch CMakeLists.txt

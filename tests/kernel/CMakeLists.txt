@@ -55,18 +55,25 @@ add_test("kernel/test_convert_type_16" "kernel" "test_convert_type_16")
 
 add_test("kernel/test_bitselect" "kernel" "test_bitselect")
 
-add_test("kernel/test_hadd" "kernel" "test_hadd")
+add_test("kernel/test_hadd_loopvec" "kernel" "test_hadd")
+
+add_test("kernel/test_hadd_loops" "kernel" "test_hadd")
 
 set_tests_properties( "kernel/test_as_type" "kernel/test_bitselect"
   "kernel/test_convert_type_1" "kernel/test_convert_type_2" "kernel/test_convert_type_4"
-  "kernel/test_convert_type_8" "kernel/test_convert_type_16" "kernel/test_hadd"
+  "kernel/test_convert_type_8" "kernel/test_convert_type_16"
+  "kernel/test_hadd_loops" "kernel/test_hadd_loopvec"
   PROPERTIES
     COST 40.0
     PASS_REGULAR_EXPRESSION "\nOK\n"
     PROCESSORS 1
     DEPENDS "pocl_version_check")
 
+set_tests_properties("kernel/test_hadd_loops"
+  PROPERTIES ENVIRONMENT "POCL_WORK_GROUP_METHOD=loops")
 
+set_tests_properties("kernel/test_hadd_loopvec"
+  PROPERTIES ENVIRONMENT "POCL_WORK_GROUP_METHOD=loopvec")
 
 add_test("kernel/test_min_max" "kernel" "test_min_max")
 
@@ -99,12 +106,24 @@ if(LLVM_3_2 OR (LLVM_3_3 AND POWERPC))
     PROPERTIES WILL_FAIL 1)
 endif()
 
+# 3-element vector cases fail when vectorizer is enabled,
+# at least with Intel Core i5 and AMD FX8. Assume it fails on all others too.
+if(X86_64 AND (LLVM_3_5 OR LLVM_3_6))
+  set_tests_properties("kernel/test_hadd_loopvec"
+    PROPERTIES WILL_FAIL 1)
+endif()
+
+if(POWERPC OR LLVM_3_6)
+  set_tests_properties(
+  "kernel/test_convert_type_1" "kernel/test_convert_type_2" "kernel/test_convert_type_4"
+  "kernel/test_convert_type_8" "kernel/test_convert_type_16"
+    PROPERTIES WILL_FAIL 1)
+endif()
+
 if(POWERPC)
   set_tests_properties("kernel/test_as_type" "kernel/test_fmin_fmax_fma"
-  "kernel/test_convert_type_1" "kernel/test_convert_type_2" "kernel/test_convert_type_4"
-  "kernel/test_convert_type_8" "kernel/test_convert_type_16" "kernel/test_bitselect"
-  "kernel/test_fabs" "test_hadd"
-  PROPERTIES WILL_FAIL 1)
+  "kernel/test_bitselect" "kernel/test_fabs" "test_hadd"
+    PROPERTIES WILL_FAIL 1)
 endif()
 
 

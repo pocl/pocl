@@ -417,7 +417,12 @@ size_t _CL_OVERLOADABLE get_num_groups(uint);
 size_t _CL_OVERLOADABLE get_group_id(uint);
 size_t _CL_OVERLOADABLE get_global_offset(uint);
 
+#if __has_attribute(__noduplicate__)
+void _CL_OVERLOADABLE __attribute__ ((__noduplicate__))
+barrier (cl_mem_fence_flags flags);
+#else
 void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
+#endif
 
 
 /* Math Constants */

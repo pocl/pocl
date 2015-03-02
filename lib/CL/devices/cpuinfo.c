@@ -283,7 +283,7 @@ pocl_cpuinfo_append_cpu_name(cl_device_id device)
 void
 pocl_cpuinfo_detect_device_info(cl_device_id device) 
 {
-#ifdef ANDROID
+#ifdef POCL_ANDROID
   /* sysfs node seems more suitable for android kernels
      override the value provided by hwloc
    */

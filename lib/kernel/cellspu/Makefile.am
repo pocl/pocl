@@ -31,3 +31,5 @@ LD_FLAGS    = @TARGET_LD_FLAGS@
 
 include ../rules.mk
 include ../sources.mk
+
+EXTRA_DIST = CMakeLists.txt

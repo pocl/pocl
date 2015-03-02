@@ -101,6 +101,8 @@ AT_CLEANUP
 
 #note: the reference check for this one is from pocl, as 
 #(to be unnamed) reference platform errored out
+# 3.5 introduced the noduplicate attribute which, when
+# used with barrier(), fixes this.
 POAT_VCL_SETUP([matrix_col_double-test-opencl long])
 POAT_VCL_CHECK_RUN(tests/matrix_col_double-test-opencl)
 AT_CLEANUP
@@ -176,7 +178,7 @@ AT_CLEANUP
 POAT_VCL_SETUP([vector_double-test-opencl])
 #fails with "Could not find a dominating alternative variable"
 #Note: uncomment a few other tests if fixing this
-AT_XFAIL_IF([true])
+AT_XFAIL_IF([egrep -q "#define LLVM_3_4" $abs_top_builddir/config.h])
 POAT_VCL_CHECK_RUN(tests/vector_double-test-opencl)
 AT_CLEANUP
 

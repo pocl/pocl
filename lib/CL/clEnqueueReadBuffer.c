@@ -72,7 +72,8 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
   
   cmd->command.read.host_ptr = ptr;
   cmd->command.read.device_ptr = (char*)
-    buffer->device_ptrs[device->dev_id].mem_ptr+offset;
+    buffer->device_ptrs[device->dev_id].mem_ptr;
+  cmd->command.read.offset = offset;
   cmd->command.read.cb = cb;
   cmd->command.read.buffer = buffer;
   POname(clRetainMemObject) (buffer);

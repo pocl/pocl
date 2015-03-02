@@ -97,8 +97,9 @@ AT_CHECK_UNQUOTED([make test_DeviceFission -sC $abs_top_builddir/examples/AMD | 
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([dwthaar1d])
-# Failed (verification error). 
-AT_XFAIL_IF(true)
+# 3.5 introduced the noduplicate attribute which, when
+# used with barrier(), fixes this.
+AT_XFAIL_IF([egrep -q "#define LLVM_3_4" $abs_top_builddir/config.h])
 AT_CHECK_UNQUOTED([make test_DwtHaar1D -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
@@ -210,7 +211,9 @@ POAT_AMDSDK_SETUP([montecarloasian])
 # kernel compilation fails due to 
 # error: can't convert between vector values of different size ('float4' and 'int')
 # It should be a legal implicit conversion according to 6.3 Operators. Works also with Intel OCL
-AT_XFAIL_IF(true)
+# Seems this is a regression in LLVM 3.5
+AT_XFAIL_IF([grep -q "#define LLVM_3_5" $abs_top_builddir/config.h])
+AT_XFAIL_IF([grep -q "#define LLVM_3_6" $abs_top_builddir/config.h])
 AT_CHECK_UNQUOTED([make test_MonteCarloAsian -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])

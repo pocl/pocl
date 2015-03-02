@@ -41,7 +41,8 @@ EXTRA_DIST = $(srcdir)/*.c $(srcdir)/*.cl $(srcdir)/*.h $(srcdir)/*.ll			\
 	$(srcdir)/vecmathlib-pocl/*.h			\
 	$(srcdir)/vecmathlib-pocl/*.py  \
 	$(srcdir)/cellspu/* \
-	$(srcdir)/tce/*
+	$(srcdir)/tce/* \
+	CMakeLists.txt
 
 
 # Distclean the dirs regardless if the target was enabled or not

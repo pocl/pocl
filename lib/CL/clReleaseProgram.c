@@ -71,13 +71,13 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
 
       if ((!pocl_get_bool_option("POCL_KERNEL_CACHE", POCL_BUILD_KERNEL_CACHE)) &&
             (!pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0)) &&
-            program->temp_dir)
+            program->cache_dir)
         {
-          pocl_remove_directory (program->temp_dir);
+          pocl_remove_directory (program->cache_dir);
         }
 
       POCL_MEM_FREE(program->llvm_irs);
-      POCL_MEM_FREE(program->temp_dir);
+      POCL_MEM_FREE(program->cache_dir);
       POCL_MEM_FREE(program);
     }
 

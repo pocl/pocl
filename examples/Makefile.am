@@ -3,6 +3,7 @@
 # Makefile.am for pocl/examples.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
+#               2011-2014 Pekka Jääskeläinen / Tampere University of Tech.
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -30,10 +31,12 @@
 
 SUBDIRS = example1 example1-spir32 example1-spir64 example2 example2a trig \
 	scalarwave standalone opencl-book-samples VexCL ViennaCL Rodinia Parboil \
-	AMD AMDSDK2.9 EinsteinToolkit piglit Halide OpenCV
+	AMD AMDSDK2.9 EinsteinToolkit piglit Halide OpenCV CloverLeaf
 
 BASIC_EXAMPLES = example1 example1-spir32 example1-spir64 example2 example2a trig \
 	scalarwave standalone opencl-book-samples EinsteinToolkit
+
+EXTRA_DIST = CMakeLists.txt
 
 # The external examples which should be prepared only
 # once by calling "make prepare-examples".
@@ -62,6 +65,9 @@ EXAMPLES_TO_PREPARE += "piglit "
 endif
 if TEST_SUITE_HALIDE
 EXAMPLES_TO_PREPARE += "Halide "
+endif
+if TEST_SUITE_CLOVERLEAF
+EXAMPLES_TO_PREPARE += "CloverLeaf "
 endif
 
 if TEST_SUITE_OPENCV

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # 
-# Copyright (c) 2012-2013 Pekka Jääskeläinen
+# Copyright (c) 2012-2014 Pekka Jääskeläinen
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to
@@ -45,6 +45,8 @@ import time
 import datetime
 import platform
 import optparse
+import re
+
 from optparse import OptionParser
 
 from subprocess import Popen, PIPE
@@ -59,6 +61,18 @@ POCL_EXCLUDE_COMPILATION_TIME = True
 REPEAT_COUNT = 5
 POCL_SRC_ROOT_PATH = os.getcwd()
 
+AMD_TEST_ROOT_DIR = "examples/AMD/AMD-APP-SDK-v2.8-RC-lnx64/samples/opencl/cl/app"
+HALIDE_TEST_ROOT_DIR = "examples/Halide/Halide/"
+CLOVERLEAF_TEST_ROOT_DIR = "examples/CloverLeaf/CloverLeaf_OpenCL/"
+
+AMD_BIN_DIR = "/build/debug/x86_64/"
+
+AMD2_9_CL_TEST_ROOT_DIR = "examples/AMDSDK2.9/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cl"
+
+AMD2_9_CPP_CL_TEST_ROOT_DIR = "examples/AMDSDK2.9/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cpp_cl"
+
+AMD2_9_BIN_DIR = "/bin/x86_64/Release/"
+
 def run_cmd(command, inputStream = ""):
     """
     Runs the given process until it exits or a given time out is reached.
@@ -72,7 +86,8 @@ def run_cmd(command, inputStream = ""):
     stderrFD, errFile = tempfile.mkstemp()
     stdoutFD, outFile = tempfile.mkstemp()
 
-    process =  Popen(command, shell=True, stdin=PIPE, stdout=stdoutFD, stderr=stderrFD, close_fds=False)
+    process =  Popen(command, shell=True, stdin=PIPE, stdout=stdoutFD, 
+                     stderr=stderrFD, close_fds=False)
 
     if process == None:
         print "Could not create process"
@@ -101,7 +116,6 @@ def run_cmd(command, inputStream = ""):
                 os.remove(outFile)
                 os.close(stderrFD)
                 os.remove(errFile)
-
                 return (False, stdoutContents, stderrContents, process.returncode)
 
             if timePassed < timeoutSecs:
@@ -152,9 +166,9 @@ def run_cmd(command, inputStream = ""):
 
 
 class BenchmarkCase(object):
-    def __init__(self, name, wg_method="auto"):
+    def __init__(self, name, wg_method=None):
         self.name = name
-        self.wg_method = "auto"
+        self.wg_method = None
 
     # Returns the execution time in seconds.
     def execution_time(self):
@@ -169,7 +183,8 @@ class BenchmarkCase(object):
             os.environ['POCL_LEAVE_TEMP_DIRS'] = '1'
             os.environ['POCL_TEMP_DIR'] = temp_dir
 
-        os.environ['POCL_WORK_GROUP_METHOD'] = self.wg_method
+        if self.wg_method is not None:
+            os.environ['POCL_WORK_GROUP_METHOD'] = self.wg_method
 
         for t in range(times):
             result = self.run()
@@ -185,12 +200,125 @@ class BenchmarkResult(object):
     def __init__(self, kernel_run_time):
         self.kernel_run_time = kernel_run_time
 
+
+class HalideBenchmarkCase(BenchmarkCase):
+    def __init__(self, name, app_dir, command):
+        super(HalideBenchmarkCase, self).__init__(name)
+        self.stdout = ""
+        self.test_app_dir = app_dir
+        self.command = command    
+
+    def run(self):
+        directory = os.path.join(POCL_SRC_ROOT_PATH, HALIDE_TEST_ROOT_DIR, 
+                                 "apps", self.test_app_dir)
+        os.chdir(directory)
+
+        halide_lib_dir = os.path.join(POCL_SRC_ROOT_PATH, HALIDE_TEST_ROOT_DIR, "bin")
+
+        os.environ['HL_TARGET'] = 'opencl'
+        os.environ['POCL_KERNEL_CACHE_IGNORE_INCLUDES'] = '1'
+        if halide_lib_dir not in os.environ['LD_LIBRARY_PATH']:
+            os.environ['LD_LIBRARY_PATH'] = halide_lib_dir + ":" + \
+                                            os.environ['LD_LIBRARY_PATH']
+
+        start_time = time.clock()
+        timeout, self.stdout, self.stderr, rc = run_cmd(self.command)
+        if timeout or rc != 0:
+            sys.stderr.write("\nFAIL (cmd: %s in dir: %s rc: %d).\n" % \
+                             ( self.command, directory, rc) )
+            sys.stderr.write("stderr:")
+            sys.stderr.write(self.stderr)
+            sys.stderr.write("\nstdout:")
+            sys.stderr.write(self.stdout)
+            sys.stderr.write("\n")
+            sys.exit(1)
+        time_spent = time.clock() - start_time
+        
+        result = BenchmarkResult(time_spent)
+        return result
+
+class CloverLeafBenchmarkCase(BenchmarkCase):
+    def __init__(self, name, command="./clover_leaf"):
+        super(CloverLeafBenchmarkCase, self).__init__(name)
+        self.stdout = ""
+        self.command = command    
+
+    def run(self):
+        directory = os.path.join(POCL_SRC_ROOT_PATH, CLOVERLEAF_TEST_ROOT_DIR)
+        os.chdir(directory)
+
+        os.environ['POCL_KERNEL_CACHE_IGNORE_INCLUDES'] = '1'
+
+        timeout, self.stdout, self.stderr, rc = run_cmd(self.command)
+        if timeout or rc != 0 or 'Wall clock' not in self.stderr:
+            sys.stderr.write("\nFAIL (cmd: %s in dir: %s rc: %d).\n" % \
+                             ( self.command, directory, rc) )
+            sys.stderr.write("stderr:")
+            sys.stderr.write(self.stderr)
+            sys.stderr.write("\nstdout:")
+            sys.stderr.write(self.stdout)
+            sys.stderr.write("\n")
+            sys.exit(1)
+
+        final_wall_clock = self.stderr.splitlines()[-2]
+        time_spent = float(re.search(r'Wall\sclock\s+(\d\.\d+)', final_wall_clock).group(1))
+
+        result = BenchmarkResult(time_spent)
+        return result
+
+
+class KernelGrindBenchmarkCase(BenchmarkCase):
+    def __init__(self, name, command, root_dir=AMD_TEST_ROOT_DIR, 
+                 bin_dir=AMD_BIN_DIR, wg_method="auto"):
+        super(KernelGrindBenchmarkCase, self).__init__(name, wg_method)
+        self.stdout = ""
+        self.test_root_dir = root_dir
+        self.test_bin_dir = bin_dir
+        self.command = command    
+
+    def get_kernel_runtime(self, stdout):
+        lines = stdout.split("\n")
+        s = 0
+        for line in lines:
+            if "Execution time" in line:
+                s = (line.split(':')[1])
+                break
+
+#        print lines[i]
+#        print lines[i].split()
+
+        return float(s)
+
+    def run(self):
+        directory = POCL_SRC_ROOT_PATH + "/" + self.test_root_dir
+        os.chdir(directory)
+        # Iterate 10 times to amortize the kernel compilation time.
+        # In a real application, the kernel compilation overheads can be excluded 
+        # (to some extent, at least) by using the binary API of OpenCL, so it 
+        # should be realistic to exclude it.
+        cmd = "." + self.test_bin_dir + self.command 
+        timeout, self.stdout, self.stderr, rc = run_cmd(cmd)
+        if timeout or rc != 0:
+            sys.stderr.write("\nFAIL (cmd: %s in dir: %s rc: %d).\n" % \
+                             ( cmd, directory, rc) )
+            sys.stderr.write("stderr:")
+            sys.stderr.write(self.stderr)
+            sys.stderr.write("\nstdout:")
+            sys.stderr.write(self.stdout)
+            sys.stderr.write("\n")
+            sys.exit(1)
+        
+        result = BenchmarkResult(self.get_kernel_runtime(self.stdout))
+        return result
+
 class AMDBenchmarkCase(BenchmarkCase):
-    def __init__(self, name, command, wg_method="auto"):
+    def __init__(self, name, command, root_dir=AMD_TEST_ROOT_DIR, 
+                 bin_dir=AMD_BIN_DIR, wg_method="auto"):
         super(AMDBenchmarkCase, self).__init__(name, wg_method)
         self.stdout = ""
-        self.test_root_dir = "examples/AMD/AMD-APP-SDK-v2.8-RC-lnx64/samples/opencl/cl/app"
-        self.command = command        
+        self.test_root_dir = root_dir
+        self.test_bin_dir = bin_dir
+        self.command = command    
 
     def get_kernel_runtime(self, stdout):
         lines = stdout.split("\n")
@@ -214,13 +342,13 @@ class AMDBenchmarkCase(BenchmarkCase):
         return float(lines[i].split()[time_column])
 
     def run(self):
-        directory = POCL_SRC_ROOT_PATH + "/" + self.test_root_dir
+        directory = POCL_SRC_ROOT_PATH + "/" + self.test_root_dir + "/" +self.name
         os.chdir(directory)
         # Iterate 10 times to amortize the kernel compilation time.
         # In a real application, the kernel compilation overheads can be excluded 
         # (to some extent, at least) by using the binary API of OpenCL, so it 
         # should be realistic to exclude it.
-        cmd = self.name + "/build/debug/x86_64/" + self.command + " -i 10"
+        cmd = "." + self.test_bin_dir + self.command + " -i 10"
         timeout, self.stdout, self.stderr, rc = run_cmd(cmd)
         if timeout or rc != 0:
             sys.stderr.write("\nFAIL (cmd: %s in dir: %s rc: %d).\n" % \
@@ -234,6 +362,172 @@ class AMDBenchmarkCase(BenchmarkCase):
         
         result = BenchmarkResult(self.get_kernel_runtime(self.stdout))
         return result
+
+
+class AMDBenchmarkCase(BenchmarkCase):
+    def __init__(self, name, command, root_dir=AMD_TEST_ROOT_DIR, 
+                 bin_dir=AMD_BIN_DIR, wg_method="auto"):
+        super(AMDBenchmarkCase, self).__init__(name, wg_method)
+        self.stdout = ""
+        self.test_root_dir = root_dir
+        self.test_bin_dir = bin_dir
+        self.command = command    
+
+    def get_kernel_runtime(self, stdout):
+        lines = stdout.split("\n")
+        i = 0
+        time_column = 1
+        for line in lines:
+            i += 1
+            if "Time" in line:
+
+                columns = line.split()
+                time_column = 0
+                for col in columns:
+                    if "Time" in col:
+                        break
+                    time_column += 1
+                break
+
+#        print lines[i]
+#        print lines[i].split()
+
+        return float(lines[i].split()[time_column])
+
+    def run(self):
+        directory = POCL_SRC_ROOT_PATH + "/" + self.test_root_dir + "/" +self.name
+        os.chdir(directory)
+        # Iterate 10 times to amortize the kernel compilation time.
+        # In a real application, the kernel compilation overheads can be excluded 
+        # (to some extent, at least) by using the binary API of OpenCL, so it 
+        # should be realistic to exclude it.
+        cmd = "." + self.test_bin_dir + self.command + " -i 10"
+        timeout, self.stdout, self.stderr, rc = run_cmd(cmd)
+        if timeout or rc != 0:
+            sys.stderr.write("\nFAIL (cmd: %s in dir: %s rc: %d).\n" % \
+                             ( cmd, directory, rc) )
+            sys.stderr.write("stderr:")
+            sys.stderr.write(self.stderr)
+            sys.stderr.write("\nstdout:")
+            sys.stderr.write(self.stdout)
+            sys.stderr.write("\n")
+            sys.exit(1)
+        
+        result = BenchmarkResult(self.get_kernel_runtime(self.stdout))
+        return result
+
+
+
+class AMDBenchmarkCaseTransferOverlap(AMDBenchmarkCase):
+    def __init__(self, name, command, root_dir, bin_dir, wg_method="auto"):
+        super(AMDBenchmarkCaseTransferOverlap, self).__init__(name, command, root_dir, bin_dir, wg_method)
+        
+    def get_kernel_runtime(self, stdout):
+        lines = stdout.split("\n")
+        s = 0
+        for line in lines:
+            if "Complete test time" in line:
+                s = (line.split(':')[1]).split()[0]
+                break
+
+        return float(s)
+
+class AMDBenchmarkCaseConcurrentKernel(AMDBenchmarkCase):
+    def __init__(self, name, command, root_dir, bin_dir, wg_method="auto"):
+        super(AMDBenchmarkCaseConcurrentKernel, self).__init__(name, command, root_dir, bin_dir, wg_method)
+
+    def get_kernel_runtime(self, stdout):
+        lines = stdout.split("\n")
+        i = 0
+        s = 0
+        for line in lines:
+            if "Size(Bytes)" in line:
+                if self.name == "ConcurrentKernel_Con":
+                    s = lines[i+2].split("|")[4]
+                if self.name == "ConcurrentKernel_Seq":
+                    s = lines[i+2].split("|")[3]
+                break
+            i += 1
+
+        return float(s)
+
+    def run(self):
+        directory = POCL_SRC_ROOT_PATH + "/" + self.test_root_dir + "/" + "ConcurrentKernel"
+        os.chdir(directory)
+        # Iterate 10 times to amortize the kernel compilation time.
+        # In a real application, the kernel compilation overheads can be excluded 
+        # (to some extent, at least) by using the binary API of OpenCL, so it 
+        # should be realistic to exclude it.
+        cmd = "." + self.test_bin_dir + self.command + " -i 10"
+        timeout, self.stdout, self.stderr, rc = run_cmd(cmd)
+        if timeout or rc != 0:
+            sys.stderr.write("\nFAIL (cmd: %s in dir: %s rc: %d).\n" % \
+                             ( cmd, directory, rc) )
+            sys.stderr.write("stderr:")
+            sys.stderr.write(self.stderr)
+            sys.stderr.write("\nstdout:")
+            sys.stderr.write(self.stdout)
+            sys.stderr.write("\n")
+            sys.exit(1)
+        
+        result = BenchmarkResult(self.get_kernel_runtime(self.stdout))
+        return result
+
+class AMDBenchmarkCaseAsyncDataTransfer(AMDBenchmarkCase):
+    def __init__(self, name, command, root_dir, bin_dir, wg_method="auto"):
+        super(AMDBenchmarkCaseAsyncDataTransfer, self).__init__(name, command, root_dir, bin_dir, wg_method)
+
+    def get_kernel_runtime(self, stdout):
+        lines = stdout.split("\n")
+        i = 0
+        s = 0
+        for line in lines:
+            if "Size(Bytes)" in line:
+                if self.name == "AsyncDataTransfer_Sync":
+                    s = lines[i+2].split("|")[3]
+                if self.name == "AsyncDataTransfer_Async":
+                    s = lines[i+2].split("|")[4]
+                break
+            i += 1
+
+        return float(s)
+
+    def run(self):
+        directory = POCL_SRC_ROOT_PATH + "/" + self.test_root_dir + "/" + "AsyncDataTransfer"
+        os.chdir(directory)
+        # Iterate 10 times to amortize the kernel compilation time.
+        # In a real application, the kernel compilation overheads can be excluded 
+        # (to some extent, at least) by using the binary API of OpenCL, so it 
+        # should be realistic to exclude it.
+        cmd = "." + self.test_bin_dir + self.command + " -i 10"
+        timeout, self.stdout, self.stderr, rc = run_cmd(cmd)
+        if timeout or rc != 0:
+            sys.stderr.write("\nFAIL (cmd: %s in dir: %s rc: %d).\n" % \
+                             ( cmd, directory, rc) )
+            sys.stderr.write("stderr:")
+            sys.stderr.write(self.stderr)
+            sys.stderr.write("\nstdout:")
+            sys.stderr.write(self.stdout)
+            sys.stderr.write("\n")
+            sys.exit(1)
+        
+        result = BenchmarkResult(self.get_kernel_runtime(self.stdout))
+        return result
+
+
+class AMDBenchmarkCaseKernelLauch(AMDBenchmarkCase):
+    def __init__(self, name, command, root_dir, bin_dir, wg_method="auto"):
+        super(AMDBenchmarkCaseKernelLauch, self).__init__(name, command, root_dir, bin_dir, wg_method)
+        
+    def get_kernel_runtime(self, stdout):
+        lines = stdout.split("\n")
+        s = 0
+        for line in lines:
+            if "clEnqueueNDRangeKernel()" in line:
+                s = (line.split(':')[1]).split()[0]
+                break
+        #scale up to get reasonable result
+        return float(s) * 100000
 
 class EinsteinToolkitCase(BenchmarkCase):
     def __init__(self, name):
@@ -280,8 +574,44 @@ amd_benchmarks = \
      AMDBenchmarkCase("QuasiRandomSequence", "QuasiRandomSequence -q -t -y 10200 -x 10000"),
      AMDBenchmarkCase("RadixSort", "RadixSort -q -t -x 65536"),
      AMDBenchmarkCase("Reduction", "Reduction -q -t -x 400000000"),
-     AMDBenchmarkCase("SimpleConvolution", "SimpleConvolution -q -t -x 512000")]
+     AMDBenchmarkCase("SimpleConvolution", "SimpleConvolution -q -t -x 512000"),
+     #AMD SDK 2.9 benchmarks
+     AMDBenchmarkCaseAsyncDataTransfer("AsyncDataTransfer_Sync", 
+                                       "POCL_WORK_GROUP_METHOD=loopvec AsyncDataTransfer -t", 
+                                       AMD2_9_CPP_CL_TEST_ROOT_DIR, 
+                                       AMD2_9_BIN_DIR),
+     AMDBenchmarkCaseAsyncDataTransfer("AsyncDataTransfer_Async", 
+                                       "POCL_WORK_GROUP_METHOD=loopvec AsyncDataTransfer -t", 
+                                       AMD2_9_CPP_CL_TEST_ROOT_DIR, 
+                                       AMD2_9_BIN_DIR),
+     AMDBenchmarkCaseKernelLauch("KernelLaunch", "KernelLaunch", 
+                      AMD2_9_CL_TEST_ROOT_DIR, 
+                      AMD2_9_BIN_DIR),
+     AMDBenchmarkCaseTransferOverlap("TransferOverlap", "TransferOverlap -t", 
+                      AMD2_9_CL_TEST_ROOT_DIR, AMD2_9_BIN_DIR),
+     AMDBenchmarkCaseConcurrentKernel("ConcurrentKernel_Con", 
+                                      "ConcurrentKernel -t",
+                                      AMD2_9_CPP_CL_TEST_ROOT_DIR, 
+                                      AMD2_9_BIN_DIR),
+     AMDBenchmarkCaseConcurrentKernel("ConcurrentKernel_Seq", 
+                                      "ConcurrentKernel -t",
+                                      AMD2_9_CPP_CL_TEST_ROOT_DIR, 
+                                      AMD2_9_BIN_DIR),
+     KernelGrindBenchmarkCase("kernel_grind", 
+                              "kernel_grind -wi 1 -wig 1 -i 20000 -dual", 
+                              "/tests/benchmarks", "/"),
+     KernelGrindBenchmarkCase("kernel_grind_in_order",
+                              "kernel_grind_in_order -wi 1 -wig 1 -i 20000 -dual",
+                              "/tests/benchmarks", "/"),
+     KernelGrindBenchmarkCase("kernel_grind_no_deps",
+                              "kernel_grind_no_dependencies -wi 1 -wig 1 -i 20000 -dual",
+                              "/tests/benchmarks", "/"),
 
+     KernelGrindBenchmarkCase("kernel_grind_r_only_buf",
+                              "kernel_grind_r_only_buffer -wi 1 -wig 1 -i 20000",
+                              "/tests/benchmarks", "/")]
+
+    
 # Benchmarks tuned for low memory targers. E.g., smaller input sets.
 amd_benchmarks_lowmem = \
     [AMDBenchmarkCase("AESEncryptDecrypt", "AESEncryptDecrypt -t -q"),
@@ -303,7 +633,34 @@ amd_benchmarks_lowmem = \
      #AMDBenchmarkCase("RadixSort", "RadixSort -q -t -x 65536"),
      AMDBenchmarkCase("Reduction", "Reduction -q -t -x 5000000"),
      AMDBenchmarkCase("SimpleConvolution", "SimpleConvolution -q -t -x 128000")]
-    
+
+halide_benchmarks = \
+  [HalideBenchmarkCase("Bilateral Grid", "bilateral_grid", 
+                       "./filter ../images/gray.png out.png 0.1"),
+   HalideBenchmarkCase("Interpolate", "interpolate", 
+                       "./interpolate ../images/rgba.png out.png"),
+   HalideBenchmarkCase("Local Laplacian", "local_laplacian", 
+                       "./process ../images/rgb.png 8 1 1 out.png")]
+
+halide_benchmarks_4k = \
+  [HalideBenchmarkCase("Bilateral Grid", "bilateral_grid", 
+                       "./filter ../../../buhd4k.png out.png 0.1"),
+   HalideBenchmarkCase("Interpolate", "interpolate", 
+                       "./interpolate ../../../buhd4k.png out.png"),
+   HalideBenchmarkCase("Local Laplacian", "local_laplacian", 
+                       "./process ../../../buhd4k.png 8 1 1 out.png")]
+
+cloverleaf_benchmarks = \
+    [CloverLeafBenchmarkCase("CloverLeaf")]
+
+benchmark_sets = (("amdlowmem", amd_benchmarks_lowmem), 
+                  ("amd", amd_benchmarks),
+                  ("cloverleaf", cloverleaf_benchmarks),
+                  ("halide", halide_benchmarks), 
+                  ("halide4k", halide_benchmarks_4k), 
+                  ("tlp", cloverleaf_benchmarks + halide_benchmarks_4k))
+
+
 def print_environment_info():
     timeout, llvm_version, stderr, rc = run_cmd("llvm-config --version")
 
@@ -335,8 +692,9 @@ if __name__ == "__main__":
                         help='Directory that contains comparison OCL .icd file')
     parser.add_option('-o', type="string", metavar='log file', dest='logfile', default="",
                         help='Write log to this file, instead of stdout')
-    parser.add_option('--lightweight', action="store_true", dest='lightweight', default=False,
-                      help='Use a lightweight test suite for platforms with low memory.')
+    parser.add_option('--set', action="append", dest='benchmarks', 
+                      choices=[x[0] for x in benchmark_sets],
+                      help='Select the benchmark sets to run.')
     parser.add_option('--filter', type="string", dest="filter", default="",
                       help="Include only tests with the given string in the name.")
 
@@ -362,10 +720,11 @@ if __name__ == "__main__":
     sys.stdout.write("\n")
     sys.stdout.flush()
 
-    if args.lightweight:
-        benchmarks = amd_benchmarks_lowmem
-    else:
-        benchmarks = amd_benchmarks + [EinsteinToolkitCase("EinsteinToolkit")]
+    benchmarks = []
+    for benchmark_set in benchmark_sets:
+        name, benchmark_list = benchmark_set
+        if name in args.benchmarks:
+            benchmarks += benchmark_list 
 
     if args.filter != "":
         new_benchmarks = [x for x in benchmarks if args.filter in x.name]

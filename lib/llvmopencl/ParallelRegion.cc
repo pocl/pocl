@@ -26,6 +26,7 @@
 #include "Barrier.h"
 #include "Kernel.h"
 #include "config.h"
+#include "pocl.h"
 #ifdef LLVM_3_1
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/ValueSymbolTable.h"
@@ -460,7 +461,8 @@ ParallelRegion::Verify()
  */
 void
 ParallelRegion::AddParallelLoopMetadata(llvm::MDNode *identifier) {
- 
+
+#ifdef LLVM_OLDER_THAN_3_6
   for (iterator i = begin(), e = end(); i != e; ++i) {
     BasicBlock* bb = *i;      
     for (BasicBlock::iterator ii = bb->begin(), ee = bb->end();
@@ -473,12 +475,27 @@ ParallelRegion::AddParallelLoopMetadata(llvm::MDNode *identifier) {
             loopIds.push_back(oldIds->getOperand(i));
           }
         }
-        loopIds.push_back(identifier);
         ii->setMetadata("llvm.mem.parallel_loop_access", 
                         MDNode::get(bb->getContext(), loopIds));
       }
     }
   }
+#else
+  for (iterator i = begin(), e = end(); i != e; ++i) {
+    BasicBlock* bb = *i;      
+    for (BasicBlock::iterator ii = bb->begin(), ee = bb->end();
+         ii != ee; ii++) {
+      if (ii->mayReadOrWriteMemory()) {
+        MDNode *newMD = MDNode::get(bb->getContext(), identifier);
+        MDNode *oldMD = ii->getMetadata("llvm.mem.parallel_loop_access");
+        if (oldMD != NULL) {
+          newMD = llvm::MDNode::concatenate(oldMD, newMD);
+        }
+        ii->setMetadata("llvm.mem.parallel_loop_access", newMD);
+      }
+    }
+  }
+#endif
 }
 
 void
@@ -487,7 +504,7 @@ ParallelRegion::AddIDMetadata(
     std::size_t x, 
     std::size_t y, 
     std::size_t z) {
-  
+#ifdef LLVM_OLDER_THAN_3_6 
     int counter = 1;
     Value *v1[] = {
         MDString::get(context, "WI_region"),      
@@ -518,6 +535,44 @@ ParallelRegion::AddIDMetadata(
         ii->setMetadata("wi_counter", mdCounter);
       }
     }
+#else
+    int counter = 1;
+    Metadata *v1[] = {
+        MDString::get(context, "WI_region"),      
+        llvm::ConstantAsMetadata::get(
+          ConstantInt::get(Type::getInt32Ty(context), pRegionId))
+    };
+    MDNode* mdRegion = MDNode::get(context, v1);  
+    Metadata *v2[] = {
+        MDString::get(context, "WI_xyz"),      
+        llvm::ConstantAsMetadata::get(
+          ConstantInt::get(Type::getInt32Ty(context), x)),
+        llvm::ConstantAsMetadata::get(
+          ConstantInt::get(Type::getInt32Ty(context), y)),      
+        llvm::ConstantAsMetadata::get(
+          ConstantInt::get(Type::getInt32Ty(context), z))};
+    MDNode* mdXYZ = MDNode::get(context, v2);  
+    Metadata *v[] = {
+        MDString::get(context, "WI_data"),      
+        mdRegion,
+        mdXYZ};
+    MDNode* md = MDNode::get(context, v);              
+    
+    for (iterator i = begin(), e = end(); i != e; ++i) {
+      BasicBlock* bb = *i;
+      for (BasicBlock::iterator ii = bb->begin();
+            ii != bb->end(); ii++) {
+        Metadata *v3[] = {
+            MDString::get(context, "WI_counter"),      
+            llvm::ConstantAsMetadata::get(
+              ConstantInt::get(Type::getInt32Ty(context), counter))};
+        MDNode* mdCounter = MDNode::get(context, v3);  
+        counter++;
+        ii->setMetadata("wi", md);
+        ii->setMetadata("wi_counter", mdCounter);
+      }
+    }
+#endif
 }
 
 

@@ -24,3 +24,4 @@
 
 SUBDIRS = llvmopencl CL kernel poclu
 
+EXTRA_DIST = CMakeLists.txt

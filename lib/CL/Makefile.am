@@ -2,7 +2,7 @@
 # and all subdirectories).
 # Makefile.am for pocl/lib/CL.
 # 
-# Copyright (c) 2011-2012 Universidad Rey Juan Carlos and 
+# Copyright (c) 2011-2014 Universidad Rey Juan Carlos and 
 #                         Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -148,7 +148,11 @@ libpocl_la_LIBADD += ${LTDL_LIBS}
 
 # The POCL_DEBUG output requires the clock_gettime and older glibs
 # have it in a separate lib.
+# Mac doesnt have lrt, or clock_gettime
+
+if HAVE_CLOCK_GETTIME
 libpocl_la_LIBADD += -lrt
+endif
 
 if BUILD_SPU
 libpocl_la_LIBADD += -lspe2
@@ -176,6 +180,12 @@ libpocl_la_LIBADD += -lclangStaticAnalyzerFrontend -lclangStaticAnalyzerCore
 libpocl_la_LIBADD += -lclangAnalysis -lclangCodeGen -lclangAST
 libpocl_la_LIBADD += -lstdc++ -lm @LLVM_LIBS@
 
+if LLVM_3_6
+libpocl_la_LIBADD += -lclangToolingCore 
+endif
+
+libpocl_la_LIBADD += -lclangASTMatchers -lclangBasic
+
 if ! BUILD_ICD
 libOpenCL_la_SOURCES = ${libpocl_la_SOURCES}
 libOpenCL_la_CPPFLAGS = ${libpocl_la_CPPFLAGS}
@@ -184,3 +194,5 @@ libOpenCL_la_LIBADD = ${libpocl_la_LIBADD}
 endif
 
 CLEANFILES = libOpenCL.la
+
+EXTRA_DIST = CMakeLists.txt

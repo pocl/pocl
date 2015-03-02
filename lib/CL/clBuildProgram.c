@@ -25,7 +25,9 @@
 #include "pocl_cl.h"
 #include <assert.h>
 #include <string.h>
+#include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #ifndef _MSC_VER
 #  include <unistd.h>
 #else
@@ -34,6 +36,7 @@
 #include "pocl_llvm.h"
 #include "pocl_hash.h"
 #include "pocl_util.h"
+#include "config.h"
 #include "pocl_runtime_config.h"
 
 /* supported compiler parameters which should pass to the frontend directly
@@ -83,15 +86,19 @@ build_program_compute_hash(cl_program program)
     }
 
   if (program->compiler_options)
-    pocl_SHA1_Update(&hash_ctx, (uint8_t*) program->compiler_options, strlen(program->compiler_options));
+    pocl_SHA1_Update(&hash_ctx, (uint8_t*) program->compiler_options, 
+                     strlen(program->compiler_options));
 
   /* The kernel compiler work-group function method affects the
      produced binary heavily. */
   const char *wg_method = 
     pocl_get_string_option ("POCL_WORK_GROUP_METHOD", "");
 
-  pocl_SHA1_Update(&hash_ctx, (uint8_t*) wg_method, strlen (wg_method));
-
+  pocl_SHA1_Update (&hash_ctx, (uint8_t*) wg_method, strlen (wg_method));
+  pocl_SHA1_Update (&hash_ctx, (uint8_t*) PACKAGE_VERSION, 
+                    strlen (PACKAGE_VERSION));
+  pocl_SHA1_Update (&hash_ctx, (uint8_t*) POCL_BUILD_TIMESTAMP, 
+                    strlen (POCL_BUILD_TIMESTAMP));
   /*devices may include their own information to hash */
   for (i = 0; i < program->num_devices; ++i)
     {
@@ -113,10 +120,11 @@ POname(clBuildProgram)(cl_program program,
                        void *user_data) 
 CL_API_SUFFIX__VERSION_1_0
 {
-  char device_tmpdir[POCL_FILENAME_LENGTH];
+  char device_cachedir[POCL_FILENAME_LENGTH];
   char binary_file_name[POCL_FILENAME_LENGTH];
   char filename_str[POCL_FILENAME_LENGTH];
   FILE *binary_file;
+  int fd;
   size_t n;
   int errcode;
   int i;
@@ -247,7 +255,7 @@ CL_API_SUFFIX__VERSION_1_0
     }
 
   build_program_compute_hash(program);
-  program->temp_dir = pocl_create_progam_cache_dir(program);
+  program->cache_dir = pocl_create_program_cache_dir(program);
 
   if (program->source)
     {
@@ -271,49 +279,46 @@ CL_API_SUFFIX__VERSION_1_0
       memset(program->llvm_irs, 0, length);
     }
 
+  POCL_MSG_PRINT_INFO("building program with options %s\n",
+                      options != NULL ? options : "");
+
   /* Build the fully linked non-parallel bitcode for all
          devices. */
   for (device_i = 0; device_i < real_num_devices; ++device_i)
     {
       cl_device_id device = real_device_list[device_i];
-      snprintf(device_tmpdir, POCL_FILENAME_LENGTH, "%s/%s",
-               program->temp_dir, device->short_name);
+      snprintf(device_cachedir, POCL_FILENAME_LENGTH, "%s/%s",
+               program->cache_dir, device->cache_dir_name);
 
-      if (access (device_tmpdir, F_OK) != 0)
-        mkdir(device_tmpdir, S_IRWXU);
+      if (access (device_cachedir, F_OK) != 0)
+        mkdir(device_cachedir, S_IRWXU);
 
-      pocl_check_and_invalidate_cache(program, device_i, device_tmpdir);
+      pocl_check_and_invalidate_cache(program, device_i, device_cachedir);
 
       snprintf(binary_file_name, POCL_FILENAME_LENGTH, "%s/%s",
-               device_tmpdir, POCL_PROGRAM_BC_FILENAME);
+               device_cachedir, POCL_PROGRAM_BC_FILENAME);
       snprintf(filename_str, POCL_FILENAME_LENGTH, "%s/%s",
-               program->temp_dir, POCL_BUILDLOG_FILENAME);
+               program->cache_dir, POCL_BUILDLOG_FILENAME);
 
       /* First call to clBuildProgram. Cache not filled yet */
-      if (access(binary_file_name, F_OK) != 0)
+      if ((fd = open(binary_file_name, (O_CREAT | O_EXCL | O_WRONLY),
+          (S_IRUSR | S_IWUSR))) >= 0)
         {
           if (program->source)
             {
               error = pocl_llvm_build_program(program, device, device_i,
-                        program->temp_dir, binary_file_name, device_tmpdir, user_options);
-
+                        program->cache_dir, binary_file_name, device_cachedir, user_options, fd);
               if (error != 0)
                 {
+                  unlink(binary_file_name);
                   errcode = CL_BUILD_PROGRAM_FAILURE;
                   goto ERROR_CLEAN_BINARIES;
                 }
             }
-
-          if (program->binaries[device_i])
-            {
-              binary_file = fopen(binary_file_name, "w");
-              MEM_ASSERT(binary_file == NULL, ERROR_CLEAN_PROGRAM);
-
-              fwrite(program->binaries[device_i], 1,
-                     program->binary_sizes[device_i], binary_file);
-
-              fclose (binary_file);
-            }
+          else if (program->binaries[device_i])
+            write(fd, program->binaries[device_i],
+                  program->binary_sizes[device_i]);
+          close(fd);
         }
       else if (pocl_read_text_file(filename_str, &str))
         {
@@ -350,7 +355,7 @@ CL_API_SUFFIX__VERSION_1_0
    * cache directory. Will be useful for cache pruning script
    * that flushes old directories based on LRU */
   snprintf(filename_str, POCL_FILENAME_LENGTH, "%s/%s",
-           program->temp_dir, POCL_LAST_ACCESSED_FILENAME);
+           program->cache_dir, POCL_LAST_ACCESSED_FILENAME);
   pocl_touch_file(filename_str);
 
   program->build_status = CL_BUILD_SUCCESS;

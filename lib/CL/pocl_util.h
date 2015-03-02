@@ -45,7 +45,7 @@ void pocl_make_directory (const char *path_name);
  *
  * \return a string allocated on the heap
  */
-char* pocl_create_progam_cache_dir(cl_program program);
+char* pocl_create_program_cache_dir(cl_program program);
 
 uint32_t byteswap_uint32_t (uint32_t word, char should_swap);
 float byteswap_float (float word, char should_swap);

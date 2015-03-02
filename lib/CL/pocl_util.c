@@ -121,7 +121,7 @@ pocl_read_text_file (const char* file_name, char** content_dptr)
 }
 
 char*
-pocl_create_progam_cache_dir(cl_program program)
+pocl_create_program_cache_dir(cl_program program)
 {
   char *tmp_path = NULL, *cache_path = NULL;
   char hash_str[SHA1_DIGEST_SIZE * 2 + 1];
@@ -139,7 +139,7 @@ pocl_create_progam_cache_dir(cl_program program)
     }
   else
     {
-#ifdef ANDROID
+#ifdef POCL_ANDROID
       snprintf(cache_path, CACHE_DIR_PATH_CHARS,
                   "/data/data/%s/cache/", pocl_get_process_name());
 
@@ -151,9 +151,9 @@ pocl_create_progam_cache_dir(cl_program program)
       tmp_path = getenv("HOME");
 
       if (tmp_path)
-        snprintf(cache_path, CACHE_DIR_PATH_CHARS, "%s/.pocl/%s", tmp_path, hash_str);
+        snprintf(cache_path, CACHE_DIR_PATH_CHARS, "%s/.pocl/kcache/%s", tmp_path, hash_str);
       else
-        snprintf(cache_path, CACHE_DIR_PATH_CHARS, "/tmp/pocl/%s", hash_str);
+        snprintf(cache_path, CACHE_DIR_PATH_CHARS, "/tmp/pocl/kcache/%s", hash_str);
 #endif
     }
 
@@ -426,24 +426,15 @@ char* pocl_get_process_name ()
 }
 
 static int cache_lock_initialized = 0;
-static pocl_lock_t cache_lock;
+static pocl_lock_t cache_lock = POCL_LOCK_INITIALIZER;
 
 void
 pocl_check_and_invalidate_cache (cl_program program,
                   int device_i, const char* device_tmpdir)
 {
   int cache_dirty = 0;
-  char version_file[CACHE_DIR_PATH_CHARS];
   char *content = NULL, *s_ptr, *ss_ptr;
   int read = 0;
-
-  if (!cache_lock_initialized)
-    {
-      cache_lock_initialized = 1;
-      POCL_INIT_LOCK(cache_lock);
-    }
-
-  sprintf(version_file, "%s/pocl_build_id", device_tmpdir);
 
   POCL_LOCK(cache_lock);
 
@@ -453,49 +444,32 @@ pocl_check_and_invalidate_cache (cl_program program,
       goto bottom;
     }
 
-  /* Check for driver version match */
-  if (access (version_file, F_OK) == 0)
-    {
-      read = pocl_read_text_file(version_file, &content);
-      if(read && (strcmp(content, POCL_BUILD_TIMESTAMP) != 0))
-        {
-          cache_dirty = 1;
-        }
-      POCL_MEM_FREE(content);
-    }
-  else
-    {
-      pocl_create_or_append_file(version_file, POCL_BUILD_TIMESTAMP);
-    }
-    if (cache_dirty)  goto bottom;
-
   /* If program contains "#include", disable caching
      Included headers might get modified, force recompilation in all the cases
      Yes, this is a very dirty way to find "# include"
      but we can live with this for now
    */
-    if (program->source)
-      {
-        for (s_ptr = program->source; (*s_ptr); s_ptr++)
-          {
-            if ((*s_ptr) == '#')
-              {
-                /* Skip all the white-spaces between # & include */
-                for (ss_ptr = s_ptr+1; (*ss_ptr == ' '); ss_ptr++) ;
-
-                if (strncmp(ss_ptr, "include", 7) == 0)
-                  cache_dirty = 1;
-              }
-          }
-      }
+  if (!pocl_get_bool_option("POCL_KERNEL_CACHE_IGNORE_INCLUDES", 0) &&
+      program->source)
+    {
+      for (s_ptr = program->source; (*s_ptr); s_ptr++)
+        {
+          if ((*s_ptr) == '#')
+            {
+              /* Skip all the white-spaces between # & include */
+              for (ss_ptr = s_ptr+1; *ss_ptr == ' '; ss_ptr++) ;
+              
+              if (strncmp(ss_ptr, "include", 7) == 0)
+                cache_dirty = 1;
+            }
+        }
+    }
 
   bottom:
   if (cache_dirty)
     {
       pocl_remove_directory(device_tmpdir);
       mkdir(device_tmpdir, S_IRWXU);
-
-      pocl_create_or_append_file(version_file, POCL_BUILD_TIMESTAMP);
     }
 
   POCL_UNLOCK(cache_lock);

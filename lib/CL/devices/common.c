@@ -68,7 +68,6 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
 	   strlen(tmpdir) + strlen(kernel->function_name) + 5)); // strlen of / .so 4+1
 
   int error;
-  cl_program program = kernel->program;
 
   error = snprintf 
     (module, POCL_FILENAME_LENGTH,
@@ -93,11 +92,10 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
 
       // clang is used as the linker driver in LINK_CMD
       error = snprintf (command, COMMAND_LENGTH,
-#ifndef ANDROID
+#ifndef POCL_ANDROID
             LINK_CMD " " HOST_CLANG_FLAGS " " HOST_LD_FLAGS " -o %s %s",
 #else
-            ANDROID_POCL_PREFIX"/bin/ld " HOST_LD_FLAGS " -o %s %s "
-            " /system/lib/crtend_so.o /system/lib/crtbegin_so.o -ldl -lc ",
+            POCL_ANDROID_PREFIX"/bin/ld " HOST_LD_FLAGS " -o %s %s ",
 #endif
             module, objfile);
       assert (error >= 0);
@@ -146,7 +144,7 @@ pocl_memalign_alloc(size_t align_width, size_t size)
   void *ptr;
   int status;
 
-#ifndef ANDROID
+#ifndef POCL_ANDROID
   status = posix_memalign(&ptr, align_width, size);
   return ((status == 0)? ptr: (void*)NULL);
 #else

@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 # 
 # Copyright (c) 2011-2013 Universidad Rey Juan Carlos and
-#               2011-2014 Pekka Jääskeläinen / Tampere University of Technology
+#               2011-2015 Pekka Jääskeläinen / Tampere University of Technology
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 
 AC_PREREQ([2.64])
-AC_INIT([pocl], [0.11-pre], [pocl-devel@lists.sourceforge.net])
+AC_INIT([pocl], [0.11], [pocl-devel@lists.sourceforge.net])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_AUX_DIR([config])
@@ -88,6 +88,7 @@ LLVM_LIBDIR=`$LLVM_CONFIG --libdir`
 LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
 # Whether we can use our own printf implementation
 NEW_PRINTF_WORKS=true
+LLVM_3_6=false
 
 AC_SUBST([LLVM_VERSION], [$LLVM_VERSION])
 
@@ -109,16 +110,19 @@ case "$LLVM_VERSION" in
    ;;
      3.6*)
      AC_DEFINE([LLVM_3_6], [], "Using LLVM svn, upcoming 3.6")
+     LLVM_3_6=true
      LLVM_LDFLAGS="$LLVM_LDFLAGS `$LLVM_CONFIG --system-libs`"
    ;;
      *)
    AC_MSG_ERROR(
    [
-Unsupported LLVM version. Please use LLVM version 3.2, 3.3, 3.4 or 3.5.
+Unsupported LLVM version. Please use LLVM version 3.2, 3.3, 3.4, 3.5 or 3.6.
    ])
    LLVM_VERSION=
    ;;
 esac
+
+AM_CONDITIONAL([LLVM_3_6], [test "x$LLVM_3_6" = "xtrue"])
 
 AC_SUBST([LLVM_LDFLAGS], [$LLVM_LDFLAGS], [llvm-config returned ldflags])
 AM_CONDITIONAL([NEW_PRINTF_WORKS], $NEW_PRINTF_WORKS)
@@ -157,10 +161,12 @@ See the INSTALL file for more information.])
 fi
 
 AC_ARG_ENABLE([region-allocator],
-[AS_HELP_STRING([--disable-region-allocator], 
- [Do not use a custom OpenCL optimized region-based memory allocator but allocate buffers with malloc directly (experimental with known issues!).])],
-[],
-[AC_DEFINE([CUSTOM_BUFFER_ALLOCATOR], [], "Use a custom buffer allocator")])
+[AS_HELP_STRING([--enable-region-allocator], 
+ [Use a custom OpenCL optimized region-based memory allocator for the CPU devices instead of allocating buffers directly with malloc (experimental with known issues!).])],
+[
+AC_DEFINE([CUSTOM_BUFFER_ALLOCATOR], [], "Use a custom buffer allocator")
+],
+[])
 
 ####################################################################
 # Manage optional testsuites
@@ -168,7 +174,7 @@ AC_ARG_ENABLE([region-allocator],
 # Option to choose external testsuites
 AC_ARG_ENABLE([testsuites],
 	      [AS_HELP_STRING([--enable-testsuites=suite1,suite2,...],
-          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,amdsdk2_9,VexCL,Piglit,Halide,OpenCV])],
+          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,amdsdk2_9,VexCL,Piglit,Halide,OpenCV,CloverLeaf])],
 	      [],[enable_testsuites=check])
 
 enable_testsuite_opencl_book_samples=no
@@ -214,9 +220,12 @@ if test x"$enable_testsuites" = xcheck ; then
   if test -f "$srcdir/examples/OpenCV/opencv-3.0.0-beta.zip" ; then
     enable_testsuite_opencv=yes
   fi  
+  if test -f "$srcdir/examples/CloverLeaf/CloverLeaf_OpenCL/Makefile" ; then
+    enable_testsuite_cloverleaf=yes
+  fi  
 fi
 AS_CASE([,"$enable_testsuites",],
-  [*,all,*|*,yes,*], [enable_testsuites="opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,amdsdk2_9,VexCL,piglit,Halide,OpenCV"],
+  [*,all,*|*,yes,*], [enable_testsuites="opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,amdsdk2_9,VexCL,piglit,Halide,OpenCV,CloverLeaf"],
   [*,no,*], [enable_testsuites=""]
 )
 AS_CASE([,"$enable_testsuites",],
@@ -255,6 +264,10 @@ AS_CASE([,"$enable_testsuites",],
 AS_CASE([,"$enable_testsuites",],
   [*,opencv,*|*,OpenCV,*], [
     enable_testsuite_opencv=yes
+  ])
+AS_CASE([,"$enable_testsuites",],
+  [*,cloverleaf,*|*,CloverLeaf,*], [
+    enable_testsuite_cloverleaf=yes
   ])
 
 if test "$enable_testsuite_opencl_book_samples" = "yes"; then
@@ -359,6 +372,7 @@ AM_CONDITIONAL([TEST_SUITE_VEXCL], [test "$enable_testsuite_vexcl" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_PIGLIT], [test "$enable_testsuite_piglit" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_HALIDE], [test "$enable_testsuite_halide" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_OPENCV], [test "$enable_testsuite_opencv" = "yes"])
+AM_CONDITIONAL([TEST_SUITE_CLOVERLEAF], [test "$enable_testsuite_cloverleaf" = "yes"])
 
 # Some information for the user
 AC_MSG_NOTICE([internal tests are enabled])
@@ -422,6 +436,12 @@ if test "$enable_testsuite_opencv" = "yes"; then
   POAT_TESTSUITES="$POAT_TESTSUITES OpenCV"
 else
   AC_MSG_NOTICE([tests from OpenCV are disabled])
+fi
+if test "$enable_testsuite_cloverleaf" = "yes"; then
+  AC_MSG_NOTICE([tests from CloverLeaf are enabled])
+  POAT_TESTSUITES="$POAT_TESTSUITES CloverLeaf"
+else
+  AC_MSG_NOTICE([tests from CloverLeaf are disabled])
 fi
 
 AC_SUBST([POAT_TESTSUITES])
@@ -576,6 +596,12 @@ fi
 
 AM_CONDITIONAL(INSTALL_OPENCL_HEADERS, test "$ioh" = "yes")
 
+if test x"$ioh" = "yes"; then
+# In case we install pocl's headers, ensure we build against them
+# by adding the pocl's include as the first include path.
+   CPPFLAGS="-Iinclude $CPPFLAGS"
+fi
+
 # Check for OpenGL.h headers as they are required to compile
 # test cases that use cl.hpp (which requires it).
 AC_CHECK_HEADERS([GL/gl.h OpenGL/OpenGL.h], [opengl_found="ok"; break])
@@ -619,8 +645,10 @@ AC_COMPILE_IFELSE(
     [ struct timespec pocl_debug_timespec; clock_gettime(CLOCK_REALTIME, &pocl_debug_timespec); ]
   )],
   [AC_MSG_RESULT(yes)
-   AC_DEFINE([HAVE_CLOCK_GETTIME], [1], [Have clock_gettime])],
-  [AC_MSG_RESULT(no)]
+   AC_DEFINE([HAVE_CLOCK_GETTIME], [1], [Have clock_gettime])
+   AM_CONDITIONAL([HAVE_CLOCK_GETTIME], true)],
+  [AC_MSG_RESULT(no)
+   AM_CONDITIONAL([HAVE_CLOCK_GETTIME], false)]
 )
 
 # Enable debug message output when the env POCL_DEBUG=1 is set.
@@ -909,7 +937,7 @@ case $host_cpu in
          HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=soft -I"$SYSROOTDIR"/usr/include "
          HOST_LLC_FLAGS="$HOST_LLC_FLAGS -float-abi=soft"
          HOST_AS_FLAGS="$HOST_AS_FLAGS -mcpu=$llc_host_cpu -mfloat-abi=soft"
-         HOST_LD_FLAGS="$HOST_LD_FLAGS -L/system/lib/ -shared ";;
+         HOST_LD_FLAGS="$HOST_LD_FLAGS -L/system/lib/ -shared -ldl -lc -lm /system/lib/crtbegin_so.o /system/lib/crtend_so.o";;
       armv7l*gnueabihf)
          llc_triple="armv7-unknown-linux-gnueabihf"
          HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -mfloat-abi=hard"
@@ -1169,13 +1197,13 @@ AC_COMPILE_IFELSE(
 
 if test "$ANDROID_PRESENT" == ok;
 then
-AC_DEFINE([ANDROID], [1], [Defined to 1 if compiling for Android])
-AC_DEFINE([ANDROID_POCL_PREFIX],
+AC_DEFINE([POCL_ANDROID], [1], [Defined to 1 if compiling for Android])
+AC_DEFINE([POCL_ANDROID_PREFIX],
                    ["/data/data/org.pocl.libs/files"],
                    [Directory  where pocl files are installed in android])
 
 fi
-AM_CONDITIONAL([ANDROID], [test "$ANDROID_PRESENT" = ok])
+AM_CONDITIONAL([POCL_ANDROID], [test "$ANDROID_PRESENT" = ok])
 
 # Check if CellSPU support is found
 # The libspe version requirement is not strict. This is the only one tested.
@@ -1351,9 +1379,10 @@ AC_C_BIGENDIAN
 # 3:0:2 == 0.9 (currently backwards compatible with 0.7, thus age = 2).
 # 4:0:3 == 0.10 (currently backwards compatible with 0.7, thus age = 3).
 # 5:0:4 == 0.11 (currently backwards compatible with 0.7, thus age = 4).
-LIB_CURRENT_VERSION=5
+# 6:0:5 == 0.12 (currently backwards compatible with 0.7, thus age = 5).
+LIB_CURRENT_VERSION=6
 LIB_REVISION_VERSION=0
-LIB_AGE_VERSION=4
+LIB_AGE_VERSION=5
 LIB_FIRST_VERSION=$(($LIB_CURRENT_VERSION - $LIB_AGE_VERSION))
 BUILD_TIMESTAMP=""
 AC_SUBST([LIB_VERSION], ["$LIB_CURRENT_VERSION:$LIB_REVISION_VERSION:$LIB_AGE_VERSION"])
@@ -1414,6 +1443,7 @@ AC_CONFIG_FILES([Makefile
                  examples/piglit/Makefile
                  examples/Halide/Makefile
 		 examples/OpenCV/Makefile
+                 examples/CloverLeaf/Makefile
                  scripts/Makefile
                  tests/Makefile
                  tests/kernel/Makefile

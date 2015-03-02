@@ -1,7 +1,7 @@
 All you need is to clone the master branch from the 
-pocl/Halide github repo here to this directory:
+Halide github repo here to this directory:
 
-   git clone git@github.com:pocl/Halide.git
+   git clone git@github.com:Halide/Halide.git
 
 After this the configure of pocl should detect Halide.
 Don't forget to run 'make prepare-examples' once to
