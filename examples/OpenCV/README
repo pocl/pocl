@@ -1,12 +1,24 @@
 To enable the OpenCV tests:
 
-1) run 'make opencv-3.0.0-beta.zip' to download OpenCV
+1) run 
+   'wget https://github.com/Itseez/opencv/archive/3.0.0-beta.zip -O opencv-3.0.0-beta.zip' 
+   to download OpenCV
 
 2) configure pocl, it should now detect the OpenCV benchmark and
    enable it. You need cmake to get it built.
+
+   Also you might need to install the following libraries:
+   VTK (libvtk6-dev)
 
 3) call 'make prepare-examples' once to get the examples built
 
 4) call 'make check TESTSUITEFLAGS="-k opencv"', it should build 
    the OpenCV cases and run the pocl test suite for the OpenCV.
+
+Known issues:
+
+The CMake of OpenCV doesn't like ccache, so if you have CXX='ccache g++-4.7'
+you might need to prepare the example without the ccache in front. E.g.:
+
+  make prepare-examples CXX=g++-4.7 CC=g++-4.7
 
