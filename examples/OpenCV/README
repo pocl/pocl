@@ -10,5 +10,3 @@ To enable the OpenCV tests:
 4) call 'make check TESTSUITEFLAGS="-k opencv"', it should build 
    the OpenCV cases and run the pocl test suite for the OpenCV.
 
-After this you can run tools/scripts/benchmark.py to produce
-performance numbers.
