@@ -167,11 +167,10 @@ write_temporary_file_fd( const llvm::Module *mod,
                       const char *filename, int fd)
 {
   tool_output_file *Out;
-  #if LLVM_VERSION_MAJOR==3 && LLVM_VERSION_MINOR<6
+  #if LLVM_VERSION_MAJOR==3 && LLVM_VERSION_MINOR<4
   std::string ErrorInfo;
-  Out = new tool_output_file(filename, fd);
+  Out = new tool_output_file(filename, ErrorInfo);
   #else
-  std::error_code ErrorInfo;
   Out = new tool_output_file(filename, fd);
   #endif
   WriteBitcodeToFile(mod, Out->os());
@@ -1304,12 +1303,6 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
       (S_IRUSR | S_IWUSR))) >= 0)
     write_temporary_file_fd(input, parallel_filename, fd);
 
-#ifndef LLVM_3_2
-  // In LLVM 3.2 the Linker object deletes the associated Modules.
-  // If we delete here, it will crash.
-  /* OPTIMIZE: store the fully linked work-group function llvm::Module 
-     and pass it to code generation without writing to disk. */
-#endif
 
   return 0;
 }
