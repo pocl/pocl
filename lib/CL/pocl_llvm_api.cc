@@ -149,36 +149,39 @@ update_temporary_file( const llvm::Module *mod,
                       const char *filename )
 {
   tool_output_file *Out;
-  #if LLVM_VERSION_MAJOR==3 && LLVM_VERSION_MINOR<6
+#if LLVM_VERSION_MAJOR==3 && LLVM_VERSION_MINOR<6
   std::string ErrorInfo;
   Out = new tool_output_file(filename, ErrorInfo, F_Binary);
-  #else
+#else
   std::error_code ErrorInfo;
   Out = new tool_output_file(filename, ErrorInfo, F_Binary);
-  #endif
+#endif
   WriteBitcodeToFile(mod, Out->os());
   Out->keep();
   delete Out;
 }
 
+#if LLVM_VERSION_MAJOR==3 && LLVM_VERSION_MINOR<4
+#define write_temporary_file_fd(A,B,C) update_temporary_file(A,B)
+#else
 // this version works on already open filedescriptor
 static inline void
 write_temporary_file_fd( const llvm::Module *mod,
                       const char *filename, int fd)
 {
   tool_output_file *Out;
-  #if LLVM_VERSION_MAJOR==3 && LLVM_VERSION_MINOR<6
+#if LLVM_VERSION_MAJOR==3 && LLVM_VERSION_MINOR<6
   std::string ErrorInfo;
   Out = new tool_output_file(filename, fd);
-  #else
+#else
   std::error_code ErrorInfo;
   Out = new tool_output_file(filename, fd);
-  #endif
+#endif
   WriteBitcodeToFile(mod, Out->os());
   Out->keep();
   delete Out;
 }
-
+#endif
 
 // Read input source to clang::FrontendOptions.
 // The source is contained in the program->source array,
