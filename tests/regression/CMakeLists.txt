@@ -176,20 +176,21 @@ add_test("\"regression/passing a constant array as an arg\"" "test_constant_arra
 
 add_test("\"regression/case with multiple variable length loops and a barrier in one\"" "test_fors_with_var_iteration_counts")
 
-add_test("\"regression/struct kernel arguments\"" "test_structs_as_args")
+#add_test("\"regression/struct kernel arguments\"" "test_structs_as_args")
 
-add_test("\"regression/vector kernel arguments\"" "test_vectors_as_args")
+#add_test("\"regression/vector kernel arguments\"" "test_vectors_as_args")
 
 set_tests_properties("\"regression/setting a buffer argument to NULL causes a segfault\""
   "\"regression/clSetKernelArg overwriting the previous kernel's args\""
   "\"regression/passing a constant array as an arg\""
   "\"regression/case with multiple variable length loops and a barrier in one\""
-  "\"regression/struct kernel arguments\""
-  "\"regression/vector kernel arguments\""
   PROPERTIES
     COST 1.5
     PROCESSORS 1
     DEPENDS "pocl_version_check")
+
+#  "\"regression/struct kernel arguments\""
+#  "\"regression/vector kernel arguments\""
 
 ###################################################################
 
@@ -202,15 +203,18 @@ if(POWERPC)
   endif()
 endif()
 
-if((LLVM_CXXFLAGS MATCHES "_DEBUG") OR (NOT LLVM_CXXFLAGS MATCHES "DNDEBUG"))
-  set_tests_properties("\"regression/vector kernel arguments\""
-    PROPERTIES  WILL_FAIL 1)
-endif()
+# The vector/struct kernel arguments are known to be flaky and
+# work by luck sometimes. Disable them for now.
+#
+#if((LLVM_CXXFLAGS MATCHES "_DEBUG") OR (NOT LLVM_CXXFLAGS MATCHES "DNDEBUG"))
+#  set_tests_properties("\"regression/vector kernel arguments\""
+#    PROPERTIES  WILL_FAIL 1)
+#endif()
 
 # TODO infinite loop test: AT_SKIP_IF([ env | grep -q POCL_IMPLICIT_FINISH])
 
-set_tests_properties("\"regression/struct kernel arguments\""
-  PROPERTIES  WILL_FAIL 1)
+#set_tests_properties("\"regression/struct kernel arguments\""
+#  PROPERTIES  WILL_FAIL 1)
 
 set_tests_properties(
   "\"regression/assigning a loop iterator variable to a private makes it local 2 (repl)\""

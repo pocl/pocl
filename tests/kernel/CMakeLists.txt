@@ -65,6 +65,7 @@ set_tests_properties( "kernel/test_as_type" "kernel/test_bitselect"
   "kernel/test_hadd_loops" "kernel/test_hadd_loopvec"
   PROPERTIES
     COST 40.0
+    FAIL_REGULAR_EXPRESSION "FAIL"
     PASS_REGULAR_EXPRESSION "\nOK\n"
     PROCESSORS 1
     DEPENDS "pocl_version_check")
@@ -92,6 +93,7 @@ set_tests_properties("kernel/test_min_max" "kernel/test_fmin_fmax_fma"
   "kernel/test_rotate" "kernel/test_short16"
   PROPERTIES
     COST 4.0
+    FAIL_REGULAR_EXPRESSION "FAIL"
     PASS_REGULAR_EXPRESSION "\nOK\n"
     PROCESSORS 1
     DEPENDS "pocl_version_check")
