@@ -23,9 +23,9 @@
 #
 #=============================================================================
 
-add_compile_options(${TCE_INCLUDES})
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TCE_INCLUDES}")
 
-if(ENABLE_TCEMC)
+if(ENABLE_TCE)
   add_subdirectory("ttasim")
   set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS};$<TARGET_OBJECTS:pocl-devices-tce-ttasim>" PARENT_SCOPE)
 endif()
