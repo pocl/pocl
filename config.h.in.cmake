@@ -13,7 +13,7 @@
 /* "Build with ICD" */
 #cmakedefine BUILD_ICD
 
-
+#define LLVM_VERSION "@LLVM_VERSION@"
 
 #define CLANG "@CLANG@"
 
