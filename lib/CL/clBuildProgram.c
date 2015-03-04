@@ -97,6 +97,8 @@ build_program_compute_hash(cl_program program)
   pocl_SHA1_Update (&hash_ctx, (uint8_t*) wg_method, strlen (wg_method));
   pocl_SHA1_Update (&hash_ctx, (uint8_t*) PACKAGE_VERSION, 
                     strlen (PACKAGE_VERSION));
+  pocl_SHA1_Update (&hash_ctx, (uint8_t*) LLVM_VERSION, 
+                    strlen (LLVM_VERSION));
   pocl_SHA1_Update (&hash_ctx, (uint8_t*) POCL_BUILD_TIMESTAMP, 
                     strlen (POCL_BUILD_TIMESTAMP));
   /*devices may include their own information to hash */

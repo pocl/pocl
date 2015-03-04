@@ -36,10 +36,12 @@
    the stdio.h header. Work around this by hiding the __TCE_V1__ macro. */
 #undef __TCE_V1__
 
-/* The newlib headers of TCE expect to see valid long (which in 32bit 
-   TCE is defined to be 32bit). */
+/* The newlib headers of TCE expect to see valid long and double (which in 32bit 
+   TCE are defined to be 32bit). */
 #undef long
 #define long long
+#undef double
+#define double double
 
 #endif
 
