@@ -30,4 +30,5 @@ noinst_DATA = $(EXTRA_DIST:.cl=.bc)
 	../../scripts/pocl-standalone -h $(@:.bc=.h) -o $@ $<
 
 clean-local:
-	rm -f $(EXTRA_DIST:.cl=.bc) $(EXTRA_DIST:.cl=.h)
+	rm -f standalone.bc standalone.h
+

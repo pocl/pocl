@@ -13,7 +13,7 @@
 /* "Build with ICD" */
 #cmakedefine BUILD_ICD
 
-
+#define LLVM_VERSION "@LLVM_VERSION@"
 
 #define CLANG "@CLANG@"
 
@@ -137,7 +137,7 @@
 
 
 /* Defined on big endian systems */
-#cmakedefine WORDS_BIGENDIAN
+#define WORDS_BIGENDIAN @WORDS_BIGENDIAN@
 
 /* Disable cl_khr_int64 when a clang bug is present */
 #cmakedefine _CL_DISABLE_LONG

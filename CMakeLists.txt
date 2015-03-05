@@ -669,34 +669,20 @@ if(NOT DEFINED DEFAULT_ENABLE_TCE)
   if(TCE_CONFIG)
 
     find_program(TCECC NAMES "tcecc")
-    #... TODO check tce usability
-    execute_process(COMMAND "${TCE_CONFIG}" --libs --cxxflags --includes OUTPUT_VARIABLE TCE_FLAGS RESULT_VARIABLE RESV)
-    if(RESV)
-      message(WARNING "running tce-config produced an error")
-    else()
-      set(TCE_FLAGS "${TCE_FLAGS}" CACHE INTERNAL "tce flags")
-      execute_process(COMMAND "${TCE_CONFIG}" --prefix OUTPUT_VARIABLE TCE_PREFIX RESULT_VARIABLE RESV)
-      set(TCE_PREFIX "${TCE_PREFIX}" CACHE INTERNAL "tce prefix")
-
-      separate_arguments(FLAGS UNIX_COMMAND "${TCE_FLAGS}")
-      custom_try_compile_c_cxx("${TCECC}" "cc" "#include <Application.hh>" "Application::initialize()" COMPILE_RESULT ${FLAGS})
-      if(COMPILE_RESULT)
-        message(WARNING "running tcecc with a sample program produced an error - disabling TCE")
-      else()
-        set(TCE_USABLE 1)
-      endif()
-    endif()
+    set(TCE_USABLE 1)
 
   endif()
 
   if(TCE_CONFIG AND TCECC AND TCE_USABLE)
 
     execute_process(COMMAND "${TCE_CONFIG}" --libs OUTPUT_VARIABLE TCE_LIBS RESULT_VARIABLE RESV)
+    string(STRIP "${TCE_LIBS}" TCE_LIBS)
     set(TCE_LIBS "${TCE_LIBS}" CACHE INTERNAL "tce-config --libs")
     # TODO
     set(LD_FLAGS_BIN ${LD_FLAGS_BIN} ${TCE_LIBS})
 
     execute_process(COMMAND "${TCE_CONFIG}" --includes OUTPUT_VARIABLE TCE_INCLUDES RESULT_VARIABLE RESV)
+    string(STRIP "${TCE_INCLUDES}" TCE_INCLUDES)
     set(TCE_INCLUDES "${TCE_INCLUDES}" CACHE INTERNAL "tce-config --includes")
 
     execute_process(COMMAND "${TCE_CONFIG}" --version OUTPUT_VARIABLE TCE_VERSION RESULT_VARIABLE RESV)
@@ -863,11 +849,10 @@ endif()
 # 3:0:2 == 0.9 (currently backwards compatible with 0.7, thus age = 2).
 # 4:0:3 == 0.10 (currently backwards compatible with 0.7, thus age = 3).
 # 5:0:4 == 0.11 (currently backwards compatible with 0.7, thus age = 4).
-# 6:0:5 == 0.12 (currently backwards compatible with 0.7, thus age = 5).
 
-set(LIB_CURRENT_VERSION 6)
+set(LIB_CURRENT_VERSION 5)
 set(LIB_REVISION_VERSION 0)
-set(LIB_AGE_VERSION 5)
+set(LIB_AGE_VERSION 4)
 
 # LIB_FIRST_VERSION=$(($LIB_CURRENT_VERSION - $LIB_AGE_VERSION))
 math(EXPR LIB_FIRST_VERSION "${LIB_CURRENT_VERSION} - ${LIB_AGE_VERSION}")
