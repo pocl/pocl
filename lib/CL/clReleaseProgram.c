@@ -56,11 +56,11 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
           k->program = NULL;
         }
 
-      POCL_RELEASE_OBJECT (program->context, new_refcount);
-      POCL_MEM_FREE(program->source);
-
       if(program->devices != program->context->devices)
         POCL_MEM_FREE(program->devices);
+
+      POCL_RELEASE_OBJECT (program->context, new_refcount);
+      POCL_MEM_FREE(program->source);
       
       if (program->binaries != NULL)
         {
