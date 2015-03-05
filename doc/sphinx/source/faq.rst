@@ -55,8 +55,9 @@ hwloc "plugins" package installed (with the opencl plugin). What happens is:
 The solution is either to use ``--enable-icd --disable-direct-linkage``, or
 to uninstall the hwloc "plugins" package.
 
-Why pocl is slow?
+Why is pocl slow?
 ^^^^^^^^^^^^^^^^^
+
 If pocl's kernel build seems really slow, it is very possible you have
 built your LLVM with Debug+Asserts on (not configure --enable-optimized).
 This should result in up to 10x kernel compiler slow downs. You can
