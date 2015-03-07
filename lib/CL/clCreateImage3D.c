@@ -36,7 +36,7 @@ CL_API_SUFFIX__VERSION_1_0
 {
   
   cl_image_desc img_desc;
-  img_desc.image_type = CL_MEM_OBJECT_IMAGE2D;
+  img_desc.image_type = CL_MEM_OBJECT_IMAGE3D;
   img_desc.image_width = image_width;
   img_desc.image_height = image_height; 
   img_desc.image_depth = image_depth;
