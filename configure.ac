@@ -1341,7 +1341,11 @@ CPPFLAGS="$old_CPPFLAGS"
 CFLAGS="$old_CFLAGS"
 LDFLAGS="$old_LDFLAGS"
 
-AC_C_BIGENDIAN
+AC_C_BIGENDIAN(
+  [ AC_DEFINE([WORDS_BIGENDIAN], [1], [Endianness]) ],
+  [ AC_DEFINE([WORDS_BIGENDIAN], [0], [Endianness]) ]
+)
+
 
 # The libtool library version string to use (passed to -version-info).
 # See: http://www.nondot.org/sabre/Mirrored/libtool-2.1a/libtool_6.html
