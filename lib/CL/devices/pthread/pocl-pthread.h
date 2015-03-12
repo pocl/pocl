@@ -28,10 +28,6 @@
 #include "pocl_icd.h"
 #include "config.h"
 
-#ifndef WORDS_BIGENDIAN
-#define WORDS_BIGENDIAN 0
-#endif
-
 #include "prototypes.inc"
 GEN_PROTOTYPES (pthread)
 

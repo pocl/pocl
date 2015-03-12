@@ -1362,7 +1362,11 @@ CPPFLAGS="$old_CPPFLAGS"
 CFLAGS="$old_CFLAGS"
 LDFLAGS="$old_LDFLAGS"
 
-AC_C_BIGENDIAN
+AC_C_BIGENDIAN(
+  [ AC_DEFINE([WORDS_BIGENDIAN], [1], [Endianness]) ],
+  [ AC_DEFINE([WORDS_BIGENDIAN], [0], [Endianness]) ]
+)
+
 
 # The libtool library version string to use (passed to -version-info).
 # See: http://www.nondot.org/sabre/Mirrored/libtool-2.1a/libtool_6.html
@@ -1380,10 +1384,9 @@ AC_C_BIGENDIAN
 # 3:0:2 == 0.9 (currently backwards compatible with 0.7, thus age = 2).
 # 4:0:3 == 0.10 (currently backwards compatible with 0.7, thus age = 3).
 # 5:0:4 == 0.11 (currently backwards compatible with 0.7, thus age = 4).
-# 6:0:5 == 0.12 (currently backwards compatible with 0.7, thus age = 5).
-LIB_CURRENT_VERSION=6
+LIB_CURRENT_VERSION=5
 LIB_REVISION_VERSION=0
-LIB_AGE_VERSION=5
+LIB_AGE_VERSION=4
 LIB_FIRST_VERSION=$(($LIB_CURRENT_VERSION - $LIB_AGE_VERSION))
 BUILD_TIMESTAMP=""
 AC_SUBST([LIB_VERSION], ["$LIB_CURRENT_VERSION:$LIB_REVISION_VERSION:$LIB_AGE_VERSION"])
