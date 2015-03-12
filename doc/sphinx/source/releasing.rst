@@ -61,6 +61,7 @@ A checklist and hints for testing and making a release successfully:
 In case of any problems, ask any previous release manager for help.
 Previous releases were managed by the following pocl developers:
 
+* 0.11: Michal Babej
 * 0.10: Pekka Jääskeläinen
 * 0.9: Kalle Raiskila
 * 0.8: Erik Schnetter
