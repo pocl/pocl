@@ -1,19 +1,5 @@
-0.12 unreleased
-
-Highlights
-----------
-
-Kernel compiler
----------------
-
-OpenCL Runtime/Platform API support
------------------------------------
--Transferred buffer read/write/copy offset calculation to device driver side.
- - these driver api functions have changed; got offset as a new argument.
-
-0.11 unreleased
+0.11 March 2015
 ===============
-
 
 Highlights
 ----------
