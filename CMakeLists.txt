@@ -850,9 +850,9 @@ endif()
 # 4:0:3 == 0.10 (currently backwards compatible with 0.7, thus age = 3).
 # 5:0:4 == 0.11 (currently backwards compatible with 0.7, thus age = 4).
 
-set(LIB_CURRENT_VERSION 5)
+set(LIB_CURRENT_VERSION 6)
 set(LIB_REVISION_VERSION 0)
-set(LIB_AGE_VERSION 4)
+set(LIB_AGE_VERSION 5)
 
 # LIB_FIRST_VERSION=$(($LIB_CURRENT_VERSION - $LIB_AGE_VERSION))
 math(EXPR LIB_FIRST_VERSION "${LIB_CURRENT_VERSION} - ${LIB_AGE_VERSION}")
