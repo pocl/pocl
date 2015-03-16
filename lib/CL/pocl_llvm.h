@@ -119,6 +119,17 @@ int pocl_exists(const char* path);
 
 int pocl_filesize(const char* path, uint64_t* res);
 
+/* Writes or appends data to a file */
+int pocl_write_file(const char* path, const char* content_dptr,
+                    size_t count, int append, int dont_rewrite);
+
+/* Allocates memory and places file contents in it. Returns number of chars read */
+int pocl_read_file(const char* path, char* content_dptr, uint64_t read_bytes);
+
+/* Touch file to change last modified time. For portability, this
+ * removes & creates the file. Thus its not atomic. */
+int pocl_touch_file(const char* path);
+
 
 #ifdef __cplusplus
 }

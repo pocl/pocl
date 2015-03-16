@@ -351,8 +351,10 @@ int pocl_llvm_build_program(cl_program program,
         {
           ss_build_log << "warning: " << (*i).second << std::endl;
         }
-      pocl_create_or_append_file(build_log_filename.str().c_str(),
-                                 ss_build_log.str().c_str());
+
+      pocl_write_file(build_log_filename.str().c_str(),
+          ss_build_log.str().c_str(), ss_build_log.str().size(), 1, 0);
+
       std::cerr << ss_build_log.str();
       return CL_INVALID_BUILD_OPTIONS;
     }
@@ -446,8 +448,9 @@ int pocl_llvm_build_program(cl_program program,
       ss_build_log << "warning: " << (*i).first.printToString(source_manager)
                    << ": " << (*i).second << std::endl;
     }
-  pocl_create_or_append_file(build_log_filename.str().c_str(),
-                                ss_build_log.str().c_str());
+
+  pocl_write_file(build_log_filename.str().c_str(),
+          ss_build_log.str().c_str(), ss_build_log.str().size(), 1, 0);
   std::cerr << ss_build_log.str();
 
   // FIXME: memleak, see FIXME below
@@ -1595,4 +1598,90 @@ pocl_filesize(const char* path, uint64_t* res) {
   Twine p(path);
   std::error_code ec = sys::fs::file_size(p, *res);
   return ec.default_error_condition().value();
+}
+
+
+int
+pocl_read_file(const char* path, char* content_dptr, uint64_t read_bytes) {
+
+  int fd,retval=0;
+  std::error_code ec;
+  Twine p(path);
+
+  ec = sys::fs::openFileForRead(p, fd);
+  if (ec)
+    goto ERROR;
+
+  if (read(fd, content_dptr, read_bytes) < read_bytes) {
+    retval = -errno || -1;
+    goto RETURN;
+  }
+
+  if (close(fd)) {
+    retval = -errno;
+    goto RETURN;
+  }
+
+ERROR:
+  retval = ec.default_error_condition().value();
+RETURN:
+  return retval;
+}
+
+
+int
+pocl_write_file(const char* path, const char* content_dptr, size_t count, int append, int dont_rewrite) {
+
+  int fd,retval=0;
+  std::error_code ec;
+  Twine p(path);
+
+  if (append)
+    ec = sys::fs::openFileForWrite(p, fd, sys::fs::F_Append);
+  else {
+    sys::fs::OpenFlags flags = sys::fs::F_RW;
+    if (dont_rewrite) flags |= sys::fs::F_Excl;
+    ec = sys::fs::openFileForWrite(p, fd, flags);
+  }
+  if (ec)
+    goto ERROR;
+
+  if (write(fd, content_dptr, count) < count) {
+    retval = -errno;
+    goto RETURN;
+  }
+
+  if (close(fd))
+    retval = -errno;
+  goto RETURN;
+
+ERROR:
+  retval = ec.default_error_condition().value();
+RETURN:
+  return retval;
+}
+
+
+int pocl_touch_file(const char* path) {
+  Twine p(path);
+  std::error_code ec = sys::fs::remove(p, true);
+  int retval = 0;
+
+  if (ec)
+    goto ERROR;
+
+  int fd;
+  ec = sys::fs::openFileForWrite(p, fd, sys::fs::F_RW | sys::fs::F_Excl);
+  if (ec)
+    goto ERROR;
+
+  if (close(fd))
+    retval = -errno;
+  goto RETURN;
+
+ERROR:
+  retval = ec.default_error_condition().value();
+RETURN:
+  return retval;
+
 }

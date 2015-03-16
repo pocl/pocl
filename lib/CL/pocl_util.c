@@ -57,40 +57,20 @@ typedef struct list_item
 } list_item;
 
 
-void
-pocl_create_or_append_file (const char *file_name, const char *content)
-{
-  FILE *fp = fopen(file_name, "a");
-  if ((fp == NULL) || (content == NULL))
-    return;
+size_t pocl_read_text_file (const char* path, char** content_dptr) {
+  uint64_t bytes = 0, fsize = 0;
 
-  fprintf(fp, "%s", content);
-
-  fclose(fp);
-}
-
-int
-pocl_read_text_file (const char* file_name, char** content_dptr)
-{
-  FILE *fp;
-  struct stat st;
-  int file_size;
-
-  stat(file_name, &st);
-  file_size = (int)st.st_size;
-
-  fp = fopen(file_name, "r");
-  if (fp == NULL)
+  if (pocl_filesize(path, &fsize))
     return 0;
 
-  *content_dptr = (char*) malloc((file_size + 1) * sizeof(char));
-  if (!(*content_dptr)) return 0;
+  *content_dptr = (char*)malloc(fsize);
 
-  int read = fread(*content_dptr, sizeof(char), file_size, fp);
-  (*content_dptr)[file_size] = '\0';
-
-  return read;
+  if (pocl_read_file(path, *content_dptr, bytes) == 0)
+    return bytes;
+  else
+    return 0;
 }
+
 
 char*
 pocl_create_program_cache_dir(cl_program program)
@@ -445,24 +425,6 @@ pocl_check_and_invalidate_cache (cl_program program,
     }
 
   POCL_UNLOCK(cache_lock);
-}
-
-void pocl_touch_file(const char* file_name)
-{
-  struct stat file_stat;
-  struct utimbuf new_time;
-
-  if (access(file_name, F_OK) != 0)
-    {
-      FILE *fp = fopen(file_name, "w");
-      fclose(fp);
-    }
-
-  stat(file_name, &file_stat);
-
-  new_time.actime = file_stat.st_atime;
-  new_time.modtime = time(NULL);        /* set mtime to current time */
-  utime(file_name, &new_time);
 }
 
 

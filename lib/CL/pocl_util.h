@@ -84,16 +84,10 @@ void pocl_command_enqueue (cl_command_queue command_queue,
 /* Function to get current process name */
 char* pocl_get_process_name ();
 
-/* File utility functions */
-void pocl_create_or_append_file (const char* file_name, const char* content);
-
 /* Allocates memory and places file contents in it. Returns number of chars read */
-int pocl_read_text_file (const char* file_name, char** content_dptr);
+size_t pocl_read_text_file (const char* path, char** content_dptr);
 
 void pocl_check_and_invalidate_cache (cl_program program, int device_i, const char* device_tmpdir);
-
-/* Touch file to change last modified time */
-void pocl_touch_file(const char* file_name);
 
 /* does several sanity checks on buffer & given memory region */
 int pocl_buffer_boundcheck(cl_mem buffer, size_t offset, size_t size);
