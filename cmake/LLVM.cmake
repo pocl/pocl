@@ -485,8 +485,8 @@ if(NOT LLVM_CXXFLAGS MATCHES "-DNDEBUG")
   message(STATUS "Checking if LLVM is built with assertions")
   separate_arguments(_FLAGS UNIX_COMMAND "${LLVM_CXXFLAGS}")
 
-  SET (_TEST_SOURCE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/llvmbuiltwithassertions.cc")
-  FILE (WRITE "${_TEST_SOURCE}"
+  set(_TEST_SOURCE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/llvmbuiltwithassertions.cc")
+  file(WRITE "${_TEST_SOURCE}"
     "
       #include <llvm/Support/Debug.h>
       int main(int argc, char** argv) {
@@ -496,7 +496,7 @@ if(NOT LLVM_CXXFLAGS MATCHES "-DNDEBUG")
 
   set(TRY_COMPILE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS} -UNDEBUG")
 
-  TRY_COMPILE(_TRY_SUCCESS ${CMAKE_BINARY_DIR} "${_TEST_SOURCE}"
+  try_compile(_TRY_SUCCESS ${CMAKE_BINARY_DIR} "${_TEST_SOURCE}"
     CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_INCLUDE_DIRS}"
     CMAKE_FLAGS "-DLINK_DIRECTORIES:STRING=${LLVM_LIBDIR}"
     LINK_LIBRARIES "${LLVM_LIBS} ${LLVM_SYSLIBS} ${LLVM_LDFLAGS}"
@@ -504,7 +504,7 @@ if(NOT LLVM_CXXFLAGS MATCHES "-DNDEBUG")
     OUTPUT_VARIABLE _TRY_COMPILE_OUTPUT
   )
 
-  FILE(APPEND "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeOutput.log"
+  file(APPEND "${CMAKE_BINARY_DIR}/CMakeFiles/CMakeOutput.log"
     "Test -NDEBUG flag: ${_TRY_COMPILE_OUTPUT}\n")
 
   if(_TRY_SUCCESS)
@@ -538,8 +538,8 @@ setup_cache_var_name(LLC_TRIPLE "LLC_TRIPLE-${LLVM_HOST_TARGET}-${CLANG}")
 
 if(NOT DEFINED ${CACHE_VAR_NAME})
   message(STATUS "Find out LLC target triple (for host ${LLVM_HOST_TARGET})")
-  SET (_EMPTY_C_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/tripletfind.c")
-  FILE (WRITE "${_EMPTY_C_FILE}" "")
+  set(_EMPTY_C_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/tripletfind.c")
+  file(WRITE "${_EMPTY_C_FILE}" "")
 
   execute_process(COMMAND ${CLANG} "${CLANG_TARGET_OPTION}${LLVM_HOST_TARGET}" -x c ${_EMPTY_C_FILE} -S -emit-llvm -o - RESULT_VARIABLE RES_VAR OUTPUT_VARIABLE OUTPUT_VAR)
   if(RES_VAR)
