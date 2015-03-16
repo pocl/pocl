@@ -141,7 +141,7 @@ CL_API_SUFFIX__VERSION_1_0
   char *temp_options;
   char *modded_options = NULL;
   char *token;
-  char *saveptr;
+  char *saveptr = NULL;
   char *str = NULL;
 
   POCL_GOTO_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);

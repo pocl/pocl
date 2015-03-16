@@ -83,7 +83,7 @@ static struct pocl_device_ops pocl_device_ops[POCL_NUM_DEVICE_TYPES] = {0};
 int pocl_device_get_env_count(const char *dev_type)
 {
   const char *dev_env = getenv(POCL_DEVICES_ENV);
-  char *ptr, *saveptr, *tofree, *token;
+  char *ptr, *saveptr = NULL, *tofree, *token;
   unsigned int dev_count = 0;
   if (dev_env == NULL) 
     {
