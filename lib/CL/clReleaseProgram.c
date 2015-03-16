@@ -73,7 +73,7 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
             (!pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0)) &&
             program->cache_dir)
         {
-          pocl_remove_directory (program->cache_dir);
+          pocl_rm_rf (program->cache_dir);
         }
 
       POCL_MEM_FREE(program->llvm_irs);

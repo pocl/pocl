@@ -39,6 +39,7 @@
 #endif
 
 #include "pocl_util.h"
+#include "pocl_llvm.h"
 #include "utlist.h"
 #include "common.h"
 #include "pocl_mem_management.h"
@@ -55,35 +56,6 @@ typedef struct list_item
   struct list_item *next;
 } list_item;
 
-void 
-pocl_remove_directory (const char *path_name)
-{
-  int str_size = 10 + strlen(path_name) + 1;
-  char *cmd = (char*)malloc(str_size);
-  snprintf(cmd, str_size, "rm -fr '%s'", path_name);
-  system(cmd);
-  POCL_MEM_FREE(cmd);
-}
-
-void
-pocl_remove_file (const char *file_path)
-{
-  int str_size = 10 + strlen(file_path) + 1;
-  char *cmd = (char*)malloc(str_size);
-  snprintf(cmd, str_size, "rm -f '%s'", file_path);
-  system(cmd);
-  POCL_MEM_FREE(cmd);
-}
-
-void
-pocl_make_directory (const char *path_name)
-{
-  int str_size = 12 + strlen(path_name) + 1;
-  char *cmd = (char*)malloc(str_size);
-  snprintf(cmd, str_size, "mkdir -p '%s'", path_name);
-  system(cmd);
-  POCL_MEM_FREE(cmd);
-}
 
 void
 pocl_create_or_append_file (const char *file_name, const char *content)
@@ -158,7 +130,7 @@ pocl_create_program_cache_dir(cl_program program)
     }
 
   if (access(cache_path, F_OK) != 0)
-    pocl_make_directory(cache_path);
+    pocl_mkdir_p(cache_path);
 
     return cache_path;
 }
@@ -468,7 +440,7 @@ pocl_check_and_invalidate_cache (cl_program program,
   bottom:
   if (cache_dirty)
     {
-      pocl_remove_directory(device_tmpdir);
+      pocl_rm_rf(device_tmpdir);
       mkdir(device_tmpdir, S_IRWXU);
     }
 

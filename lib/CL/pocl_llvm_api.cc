@@ -73,6 +73,8 @@ using llvm::legacy::PassManager;
 #include "llvm/IRReader/IRReader.h"
 #endif
 
+#include <llvm/Support/LockFileManager.h>
+#include <llvm/Support/Errc.h>
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Host.h"
@@ -96,11 +98,13 @@ using llvm::legacy::PassManager;
 #include <string>
 #include <cstdio>
 
-#ifndef _MSC_VER
-#  include <unistd.h>
-#  include <sys/types.h>
-#  include <sys/stat.h>
-#  include <fcntl.h>
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+# include <fcntl.h>
+#else
+#include <io.h>
 #endif
 
 // Note - LLVM/Clang uses symbols defined in Khronos' headers in macros, 
@@ -1504,3 +1508,91 @@ pocl_llvm_codegen(cl_kernel kernel,
 }
 /* vim: set ts=4 expandtab: */
 
+
+
+
+
+
+
+
+/*****************************************************************************/
+
+
+
+
+static bool pathCompare(const std::string& first, const std::string& second) {
+  return sys::path::parent_path(first).size() >
+         sys::path::parent_path(second).size();
+}
+
+int
+pocl_rm_rf(const char* path) {
+
+  std::error_code ec;
+  SmallString<128> DirNative;
+
+  sys::path::native(Twine(path), DirNative);
+
+  std::vector<std::string> FileSet, DirSet;
+
+  for (sys::fs::recursive_directory_iterator Dir(DirNative.str(), ec), DirEnd;
+        Dir != DirEnd && !ec; Dir.increment(ec)) {
+
+    Twine p = Dir->path();
+    std::string s = p.str();
+    if (sys::fs::is_directory(p)) {
+      DirSet.push_back(s);
+    } else
+      FileSet.push_back(s);
+  }
+  if (ec)
+    return ec.default_error_condition().value();
+
+  std::sort(DirSet.begin(), DirSet.end(), pathCompare);
+  std::vector<std::string>::iterator it;
+
+  for (it = FileSet.begin(); it != FileSet.end(); ++it) {
+    ec = sys::fs::remove(*it);
+    if (ec)
+      return ec.default_error_condition().value();
+  }
+
+  for (it = DirSet.begin(); it != DirSet.end(); ++it) {
+    ec = sys::fs::remove(*it);
+    if (ec)
+      return ec.default_error_condition().value();
+  }
+
+  return 0;
+}
+
+
+int
+pocl_mkdir_p(const char* path) {
+  Twine p(path);
+  std::error_code ec = sys::fs::create_directories(p, true);
+  return ec.default_error_condition().value();
+}
+
+int
+pocl_remove(const char* path) {
+  Twine p(path);
+  std::error_code ec = sys::fs::remove(p, true);
+  return ec.default_error_condition().value();
+}
+
+int
+pocl_exists(const char* path) {
+  Twine p(path);
+  if (sys::fs::exists(p))
+    return 1;
+  else
+    return 0;
+}
+
+int
+pocl_filesize(const char* path, uint64_t* res) {
+  Twine p(path);
+  std::error_code ec = sys::fs::file_size(p, *res);
+  return ec.default_error_condition().value();
+}

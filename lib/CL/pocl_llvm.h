@@ -105,7 +105,21 @@ void
 pocl_update_program_llvm_irs(cl_program program,
                        cl_device_id device, const char* program_filename);
 
+
+/* Remove a directory, recursively */
+int pocl_rm_rf(const char* path);
+
+/* Make a directory, including all directories along path */
+int pocl_mkdir_p(const char* path);
+
+/* Remove a file or empty directory */
+int pocl_remove(const char* path);
+
+int pocl_exists(const char* path);
+
+int pocl_filesize(const char* path, uint64_t* res);
+
+
 #ifdef __cplusplus
 }
 #endif
-

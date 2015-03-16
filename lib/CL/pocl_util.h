@@ -37,10 +37,6 @@
 extern "C" {
 #endif
 
-void pocl_remove_directory (const char *path_name);
-void pocl_remove_file (const char *file_path);
-void pocl_make_directory (const char *path_name);
-
 /**
  * Assign a directory for program based on already computed SHA
  * Create the directory if not present
