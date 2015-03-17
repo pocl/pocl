@@ -105,6 +105,13 @@ void
 pocl_update_program_llvm_irs(cl_program program,
                        cl_device_id device, const char* program_filename);
 
+#define LOCK_ACQUIRE_FAIL 3210
+
+void* acquire_lock_unless_file_exists(const char* path, int* file_exists);
+
+void* acquire_exclusive_lock_with_retry(const char* path);
+
+void release_lock(void* lock);
 
 /* Remove a directory, recursively */
 int pocl_rm_rf(const char* path);
@@ -119,15 +126,16 @@ int pocl_exists(const char* path);
 
 int pocl_filesize(const char* path, uint64_t* res);
 
-/* Writes or appends data to a file */
+/* Writes or appends data to a file. Locks the file (atomic operation) */
 int pocl_write_file(const char* path, const char* content_dptr,
                     size_t count, int append, int dont_rewrite);
 
-/* Allocates memory and places file contents in it. Returns number of chars read */
+/* Allocates memory and places file contents in it. Returns number of chars read.
+ * Locks the file (atomic operation) */
 int pocl_read_file(const char* path, char* content_dptr, uint64_t read_bytes);
 
 /* Touch file to change last modified time. For portability, this
- * removes & creates the file. Thus its not atomic. */
+ * removes & creates the file. It uses a lock, so its atomic. */
 int pocl_touch_file(const char* path);
 
 

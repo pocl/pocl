@@ -102,7 +102,7 @@ using llvm::legacy::PassManager;
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-# include <fcntl.h>
+#include <fcntl.h>
 #else
 #include <io.h>
 #endif
@@ -1520,6 +1520,85 @@ pocl_llvm_codegen(cl_kernel kernel,
 
 /*****************************************************************************/
 
+/*
+ * returns either
+ * 1) NULL on error
+ * 2) owned lock
+ * 3) NULL on shared lock, after successful wait ( -> you may retry the call )
+ */
+static LockFileManager*
+create_lockfile_or_wait_single_try(StringRef filename) {
+  LockFileManager* lfm = new LockFileManager(filename);
+  //LockFileManager::WaitForUnlockResult res;
+
+  switch(lfm->getState()) {
+
+    case LockFileManager::LockFileState::LFS_Owned:
+      return lfm;
+
+    case LockFileManager::LockFileState::LFS_Shared:
+      //res =
+      lfm->waitForUnlock();
+      goto ERROR_OR_RETRY;
+
+    case LockFileManager::LockFileState::LFS_Error:
+      goto ERROR_OR_RETRY;
+  }
+
+ERROR_OR_RETRY:
+  delete lfm;
+  return NULL;
+}
+
+/* Acquires a lock on a file. If its taken, it waits for it to be released,
+ * and tries again.
+ * The lock always ends up in either Error or Owner state, never in Shared
+ */
+void*
+acquire_exclusive_lock_with_retry(const char* path) {
+  if (!path) return NULL;
+  StringRef filename(path);
+
+  // 2 tries only - if the first time it's locked,
+  // create_lockfile_or_wait_single_try() will wait for unlock
+  LockFileManager* lfm = create_lockfile_or_wait_single_try(filename);
+  if (lfm == NULL) lfm = create_lockfile_or_wait_single_try(filename);
+
+  return (void*)lfm;
+}
+
+
+/*
+ * Possible return states:
+ * 1) NULL and file_exists == 0, means couldn't acquire lock
+ * 2) not NULL and file_exists == 1, means file exists & is finished writing by other processes
+ * 3) not NULL and file_exists == 0, means we got the lock & we're the first to write
+ */
+void*
+acquire_lock_unless_file_exists(const char* path, int* file_exists) {
+
+  LockFileManager* lfm = (LockFileManager*)acquire_exclusive_lock_with_retry(path);
+
+  *file_exists = 0;
+
+  if (lfm)
+  {
+    Twine p(path);
+    *file_exists = sys::fs::exists(p);
+  }
+
+  return lfm;
+
+}
+
+
+/* Releases a lock (pointer to LockFileManager object)
+ */
+void release_lock(void* lock) {
+  LockFileManager* lfm = (LockFileManager*)lock;
+  if (lfm != NULL)
+    delete lfm;
+}
 
 
 
@@ -1604,6 +1683,11 @@ pocl_filesize(const char* path, uint64_t* res) {
 int
 pocl_read_file(const char* path, char* content_dptr, uint64_t read_bytes) {
 
+  void* lock = acquire_exclusive_lock_with_retry(path);
+
+  if (lock == NULL)
+    return LOCK_ACQUIRE_FAIL;
+
   int fd,retval=0;
   std::error_code ec;
   Twine p(path);
@@ -1625,12 +1709,18 @@ pocl_read_file(const char* path, char* content_dptr, uint64_t read_bytes) {
 ERROR:
   retval = ec.default_error_condition().value();
 RETURN:
+  release_lock(lock);
   return retval;
 }
 
 
 int
 pocl_write_file(const char* path, const char* content_dptr, size_t count, int append, int dont_rewrite) {
+
+  void* lock = acquire_exclusive_lock_with_retry(path);
+
+  if (lock == NULL)
+    return LOCK_ACQUIRE_FAIL;
 
   int fd,retval=0;
   std::error_code ec;
@@ -1658,11 +1748,17 @@ pocl_write_file(const char* path, const char* content_dptr, size_t count, int ap
 ERROR:
   retval = ec.default_error_condition().value();
 RETURN:
+  release_lock(lock);
   return retval;
 }
 
 
 int pocl_touch_file(const char* path) {
+  void* lock = acquire_exclusive_lock_with_retry(path);
+
+  if (lock == NULL)
+    return LOCK_ACQUIRE_FAIL;
+
   Twine p(path);
   std::error_code ec = sys::fs::remove(p, true);
   int retval = 0;
@@ -1682,6 +1778,7 @@ int pocl_touch_file(const char* path) {
 ERROR:
   retval = ec.default_error_condition().value();
 RETURN:
+  release_lock(lock);
   return retval;
 
 }
