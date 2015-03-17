@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include <string.h>
 #include "pocl_llvm.h"
 #include "pocl_util.h"
 
@@ -97,7 +98,7 @@ POname(clGetProgramInfo)(cl_program program,
     }
   case CL_PROGRAM_KERNEL_NAMES:
     {
-      char *kernel_names[32];
+      const char *kernel_names[32];
       char *c_ptr;
       int num_kernels = 0;
       size_t size = 0;
