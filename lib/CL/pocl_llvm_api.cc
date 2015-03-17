@@ -161,49 +161,12 @@ static void InitializeLLVM();
 #include <cassert>
 #endif
 
-// Write a kernel compilation intermediate result
-// to file on disk, if user has requested with environment
-// variable
-// TODO: what to do on errors?
 
-// this version simply rewrites the file
-static inline void
-update_temporary_file( const llvm::Module *mod,
-                      const char *filename )
-{
-  tool_output_file *Out;
-#if LLVM_VERSION_MAJOR==3 && LLVM_VERSION_MINOR<6
-  std::string ErrorInfo;
-  Out = new tool_output_file(filename, ErrorInfo, F_Binary);
-#else
-  std::error_code ErrorInfo;
-  Out = new tool_output_file(filename, ErrorInfo, F_Binary);
-#endif
-  WriteBitcodeToFile(mod, Out->os());
-  Out->keep();
-  delete Out;
+static int
+pocl_write_file_cpp(const std::string &path, const std::string &content, int append, int dont_rewrite) {
+  return pocl_write_file(path.c_str(), content.c_str(), content.size(), append, dont_rewrite);
 }
 
-#if LLVM_VERSION_MAJOR==3 && LLVM_VERSION_MINOR<4
-#define write_temporary_file_fd(A,B,C) update_temporary_file(A,B)
-#else
-// this version works on already open filedescriptor
-static inline void
-write_temporary_file_fd( const llvm::Module *mod,
-                      const char *filename, int fd)
-{
-  tool_output_file *Out;
-#if LLVM_VERSION_MAJOR==3 && LLVM_VERSION_MINOR<4
-  std::string ErrorInfo;
-  Out = new tool_output_file(filename, ErrorInfo);
-#else
-  Out = new tool_output_file(filename, fd);
-#endif
-  WriteBitcodeToFile(mod, Out->os());
-  Out->keep();
-  delete Out;
-}
-#endif
 
 // Read input source to clang::FrontendOptions.
 // The source is contained in the program->source array,
@@ -272,9 +235,6 @@ int pocl_llvm_build_program(cl_program program,
 
   std::stringstream build_log_filename;
   build_log_filename << cache_dir << "/" << POCL_BUILDLOG_FILENAME;
-  /* Overwrite build log */
-  std::ofstream fp(build_log_filename.str().c_str(), std::ofstream::trunc);
-  fp.close();
 
   if (device->ops->init_build != NULL) 
     {
@@ -352,8 +312,7 @@ int pocl_llvm_build_program(cl_program program,
           ss_build_log << "warning: " << (*i).second << std::endl;
         }
 
-      pocl_write_file(build_log_filename.str().c_str(),
-          ss_build_log.str().c_str(), ss_build_log.str().size(), 1, 0);
+      pocl_write_file_cpp(build_log_filename.str(), ss_build_log.str(), 0, 0);
 
       std::cerr << ss_build_log.str();
       return CL_INVALID_BUILD_OPTIONS;
@@ -449,8 +408,7 @@ int pocl_llvm_build_program(cl_program program,
                    << ": " << (*i).second << std::endl;
     }
 
-  pocl_write_file(build_log_filename.str().c_str(),
-          ss_build_log.str().c_str(), ss_build_log.str().size(), 1, 0);
+  pocl_write_file_cpp(build_log_filename.str(), ss_build_log.str(), 0, 0);
   std::cerr << ss_build_log.str();
 
   // FIXME: memleak, see FIXME below
@@ -818,44 +776,19 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   std::string kobj_s = descriptor_filename; 
   kobj_s += ".kernel_obj.c";
 
-  int fd;
-  if ((fd = open(kobj_s.c_str(), (O_CREAT | O_EXCL | O_WRONLY),
-      (S_IRUSR | S_IWUSR))) >= 0)
-    {
-      FILE *kobj_c = fdopen(fd, "w");
+  std::stringstream content;
 
-      fprintf(kobj_c, "\n #include <pocl_device.h>\n");
+  content <<  "\n #include <pocl_device.h>\n";
+  content << "void _" << kernel_name << "_workgroup(void** args, struct pocl_context*);\n";
+  content << "void _" << kernel_name << "_workgroup_fast(void** args, struct pocl_context*);\n";
+  content << "__attribute__((address_space(3))) __kernel_metadata _" << kernel_name << "_md = {\n";
+  content << "     \"" << kernel_name << "\", /* name */ \n";
+  content << "     " << kernel->num_args << ", /* num_args */\n";
+  content << "     " << kernel->num_locals << ", /* num_locals */\n";
+  content << "     _" << kernel_name << "_workgroup_fast\n";
+  content << " };\n";
 
-      fprintf(kobj_c,
-        "void _%s_workgroup(void** args, struct pocl_context*);\n", kernel_name);
-      fprintf(kobj_c,
-        "void _%s_workgroup_fast(void** args, struct pocl_context*);\n", kernel_name);
-
-      fprintf(kobj_c,
-        "__attribute__((address_space(3))) __kernel_metadata _%s_md = {\n", kernel_name);
-      fprintf(kobj_c,
-        "     \"%s\", /* name */ \n", kernel_name );
-      fprintf(kobj_c,"     %d, /* num_args */\n", kernel->num_args);
-      fprintf(kobj_c,"     %d, /* num_locals */\n", kernel->num_locals);
-#if 0
-      // These are not used anymore. The launcher knows the arguments
-      // and sets them up, the device just obeys and launches with
-      // whatever arguments it gets. Remove if none of the private
-      // branches need them neither.
-      fprintf( kobj_c," #if _%s_NUM_LOCALS != 0\n",   kernel_name  );
-      fprintf( kobj_c,"     _%s_LOCAL_SIZE,\n",       kernel_name  );
-      fprintf( kobj_c," #else\n"    );
-      fprintf( kobj_c,"     {0}, \n"    );
-      fprintf( kobj_c," #endif\n"    );
-      fprintf( kobj_c,"     _%s_ARG_IS_LOCAL,\n",    kernel_name  );
-      fprintf( kobj_c,"     _%s_ARG_IS_POINTER,\n",  kernel_name  );
-      fprintf( kobj_c,"     _%s_ARG_IS_IMAGE,\n",    kernel_name  );
-      fprintf( kobj_c,"     _%s_ARG_IS_SAMPLER,\n",  kernel_name  );
-#endif
-      fprintf( kobj_c,"     _%s_workgroup_fast\n",   kernel_name  );
-      fprintf( kobj_c," };\n");
-      fclose(kobj_c);
-   }
+  pocl_write_file_cpp(kobj_s, content.str(), 0, 0);
 #endif
 
   pocl_llvm_get_kernel_arg_metadata(kernel_name, input, kernel);
