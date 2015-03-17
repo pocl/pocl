@@ -428,7 +428,7 @@ int pocl_llvm_build_program(cl_program program,
     return CL_BUILD_PROGRAM_FAILURE;
 
   /* Always retain program.bc. Its required in clBuildProgram */
-  if(fd >= 0) write_temporary_file_fd(*mod, binary_file_name, fd);
+  pocl_write_module(binary_file_name.c_str(), *mod, 0);
 
   // FIXME: cannot delete action as it contains something the llvm::Module
   // refers to. We should create it globally, at compiler initialization time.
@@ -1283,10 +1283,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
 #endif
 
   // TODO: don't write this once LLC is called via API, not system()
-  int fd;
-  if ((fd = open(parallel_filename, (O_CREAT | O_EXCL | O_WRONLY),
-      (S_IRUSR | S_IWUSR))) >= 0)
-    write_temporary_file_fd(input, parallel_filename, fd);
+  pocl_write_module(parallel_filename, input, 0);
 
 
   return 0;
@@ -1322,28 +1319,18 @@ void pocl_llvm_update_binaries (cl_program program) {
         program->devices[i]->cache_dir_name + "/" +
         POCL_PROGRAM_BC_FILENAME;
 
-      update_temporary_file((llvm::Module*)program->llvm_irs[i],
-                           binary_filename.c_str()); 
+      pocl_write_module((llvm::Module*)program->llvm_irs[i],
+                           binary_filename);
 
-      FILE *binary_file = fopen(binary_filename.c_str(), "r");
-      if (binary_file == NULL)        
-        POCL_ABORT("Failed opening the binary file.");
+      std::stringstream sbuffer;
+      WriteBitcodeToFile((llvm::Module*)program->llvm_irs[i], sbuffer);
+      std::string content = sbuffer.str();
 
-      fseek(binary_file, 0, SEEK_END);
-      
-      program->binary_sizes[i] = ftell(binary_file);
-      fseek(binary_file, 0, SEEK_SET);
-
-      unsigned char *binary = (unsigned char *) malloc(program->binary_sizes[i]);
-      if (binary == NULL)
-        POCL_ABORT("Failed allocating memory for the binary.");
-
-      size_t n = fread(binary, 1, program->binary_sizes[i], binary_file);
+      size_t n = content.size();
       if (n < program->binary_sizes[i])
-        POCL_ABORT("Failed reading the binary from disk to memory.");
-      program->binaries[i] = binary;
-
-      fclose (binary_file);
+        POCL_ABORT("binary size doesn't match the expected value");
+      program->binaries[i] = (unsigned char *) malloc(n);
+      std::memcpy(program->binaries[i], content.c_str(), n);
 
 #ifdef DEBUG_POCL_LLVM_API        
       printf("### binary for device %zi was of size %zu\n", i, program->binary_sizes[i]);
@@ -1714,4 +1701,43 @@ RETURN:
   release_lock(lock);
   return retval;
 
+}
+
+static
+int pocl_write_module(const char *path, llvm::Module* mod, int dont_rewrite) {
+
+  void* lock = acquire_exclusive_lock_with_retry(path);
+
+  if (lock == NULL)
+    return LOCK_ACQUIRE_FAIL;
+
+  Twine t(path);
+  std::error_code ec;
+  int retval = 0;
+
+  if (sys::fs::exists(t)) {
+    if (rewrite) {
+      ec = sys::fs::remove(t);
+      if (ec)
+        goto ERROR;
+    } else {
+      goto RETURN;
+    }
+  }
+
+  raw_fd_ostream os(path, ec, sys::fs::F_RW | sys::fs::F_Excl);
+  if (ec)
+    goto ERROR;
+
+  WriteBitcodeToFile(mod, os);
+  os.close();
+  if (os.fail())
+    retval = 1;
+  goto RETURN;
+
+ERROR:
+  retval = ec.default_error_condition().value();
+RETURN:
+  release_lock(lock);
+  return retval;
 }
