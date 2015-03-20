@@ -2,6 +2,7 @@
 // per-workgroup variables) into the kernel.
 // 
 // Copyright (c) 2011 Universidad Rey Juan Carlos
+//               2012-2015 Pekka Jääskeläinen
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,6 +22,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
 #include "config.h"
 #include <iostream>
 #include <string>
@@ -33,6 +37,8 @@
 #else
 #include "llvm/IR/Module.h"
 #endif
+
+POP_COMPILER_DIAGS
 
 using namespace llvm;
 

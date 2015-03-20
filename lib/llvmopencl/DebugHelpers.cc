@@ -20,6 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -28,6 +31,8 @@
 #include "DebugHelpers.h"
 
 #include "config.h"
+#include "pocl.h"
+
 #include "Barrier.h"
 #include "BarrierBlock.h"
 #include "Workgroup.h"
@@ -43,6 +48,8 @@
 #endif
 
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+
+POP_COMPILER_DIAGS
 
 using namespace llvm;
 
@@ -204,7 +211,11 @@ bool chopBBs(llvm::Function &F, llvm::Pass &P) {
               ++splitPoint;
               ++count;
             }
+#ifdef LLVM_OLDER_THAN_3_7
           SplitBlock(b, splitPoint, &P);
+#else
+          SplitBlock(b, splitPoint);
+#endif
           fchanged = true;
           break;
         }

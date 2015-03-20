@@ -20,6 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
 #include "config.h"
 #include "pocl.h"
 #include "Workgroup.h"
@@ -55,6 +58,8 @@
 
 #include "LLVMUtils.h"
 
+POP_COMPILER_DIAGS
+
 using namespace std;
 using namespace llvm;
 using namespace pocl;
@@ -79,13 +84,12 @@ static RegisterPass<AutomaticLocals> X("automatic-locals",
 				      "Processes automatic locals");
 
 void
-AutomaticLocals::getAnalysisUsage(AnalysisUsage &AU) const
-{
-  #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
+AutomaticLocals::getAnalysisUsage(AnalysisUsage &AU) const {
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   AU.addRequired<DataLayout>();
-  #else
+#elif (LLVM_OLDER_THAN_3_7)
   AU.addRequired<DataLayoutPass>();
-  #endif
+#endif
 }
 
 bool

@@ -23,14 +23,30 @@
    THE SOFTWARE.
 */
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
+
 #include "config.h"
 
 #include "clang/CodeGen/CodeGenAction.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
+
+// For some reason including pocl.h before including CodeGenAction.h
+// causes an error. Some kind of macro definition issue. To investigate.
+#include "pocl.h"
+
 #include "llvm/LinkAllPasses.h"
+#ifdef LLVM_OLDER_THAN_3_7
 #include "llvm/PassManager.h"
+#include "llvm/Target/TargetLibraryInfo.h"
+#else
+#include "llvm/Analysis/TargetLibraryInfo.h"
+#include "llvm/IR/LegacyPassManager.h"
+using llvm::legacy::PassManager;
+#endif
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 
@@ -66,7 +82,6 @@
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/ToolOutputFile.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetLibraryInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
@@ -108,6 +123,8 @@ using llvm::sys::fs::F_Binary;
 #define F_Binary llvm::sys::fs::F_None
 #endif
 
+
+POP_COMPILER_DIAGS
 
 /**
  * Use one global LLVMContext across all LLVM bitcodes. This is because
@@ -650,8 +667,10 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   DataLayout *TD = 0;
 #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   const std::string &ModuleDataLayout = input->getDataLayout();
-#else
+#elif (defined LLVM_OLDER_THAN_3_7)
   const std::string &ModuleDataLayout = input->getDataLayout()->getStringRepresentation();
+#else
+  const std::string &ModuleDataLayout = input->getDataLayout().getStringRepresentation();
 #endif
   if (!ModuleDataLayout.empty())
     TD = new DataLayout(ModuleDataLayout);
@@ -965,18 +984,25 @@ static PassManager& kernel_compiler_passes
 #endif
 
 #ifndef LLVM_3_2
+# ifdef LLVM_OLDER_THAN_3_7
   StringMap<llvm::cl::Option*> opts;
   llvm::cl::getRegisteredOptions(opts);
+# else
+  StringMap<llvm::cl::Option *>& opts = llvm::cl::getRegisteredOptions();
+# endif
 #endif
 
   PassManager *Passes = new PassManager();
 
+#if (!defined LLVM_3_2 && defined LLVM_OLDER_THAN_3_7)
   // Need to setup the target info for target specific passes. */
   TargetMachine *Machine = GetTargetMachine(device);
+
   // Add internal analysis passes from the target machine.
-#ifndef LLVM_3_2
   if (Machine != NULL)
     Machine->addAnalysisPasses(*Passes);
+#else
+# warning "TODO: Figure out how to add target machine passes in LLVM 3.7"
 #endif
 
   if (module_data_layout != "") {
@@ -984,7 +1010,7 @@ static PassManager& kernel_compiler_passes
     Passes->add(new DataLayout(module_data_layout));
 #elif (defined LLVM_3_5)
     Passes->add(new DataLayoutPass(DataLayout(module_data_layout)));
-#else
+#elif (defined LLVM_OLDER_THAN_3_7)
     Passes->add(new DataLayoutPass());
 #endif
   }
@@ -994,9 +1020,13 @@ static PassManager& kernel_compiler_passes
      Also the libcalls might be harmful for WG autovectorization where we 
      want to try to vectorize the code it converts to e.g. a memset or 
      a memcpy */
+#ifdef LLVM_OLDER_THAN_3_7
   TargetLibraryInfo *TLI = new TargetLibraryInfo(triple);
   TLI->disableAllFunctions();
   Passes->add(TLI);
+#else
+# warning "TODO: Figure out how to disable libcall generation in LLVM 3.7"
+#endif
 
   /* The kernel compiler passes to run, in order.
 
@@ -1294,9 +1324,13 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
 
 #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   kernel_compiler_passes(device, input->getDataLayout()).run(*input);
-#else
+#elif (defined LLVM_OLDER_THAN_3_7)
   kernel_compiler_passes(device,
                          input->getDataLayout()->getStringRepresentation())
+                        .run(*input);
+#else
+  kernel_compiler_passes(device,
+                         input->getDataLayout().getStringRepresentation())
                         .run(*input);
 #endif
 
@@ -1422,14 +1456,19 @@ pocl_llvm_codegen(cl_kernel kernel,
     llvm::TargetMachine *target = GetTargetMachine(device);
     llvm::Module *input = ParseIRFile(infilename, Err, *GlobalContext());
 
-    llvm::PassManager PM;
+    PassManager PM;
+#ifdef LLVM_OLDER_THAN_3_7
     llvm::TargetLibraryInfo *TLI = new TargetLibraryInfo(triple);
     PM.add(TLI);
+#else
+    llvm::TargetLibraryInfoWrapperPass *TLIPass = new TargetLibraryInfoWrapperPass(triple);
+    PM.add(TLIPass);
+#endif
     if (target != NULL) {
 #if defined LLVM_3_2
       PM.add(new TargetTransformInfo(target->getScalarTargetTransformInfo(),
                                      target->getVectorTargetTransformInfo()));
-#else
+#elif (defined LLVM_OLDER_THAN_3_7)
       target->addAnalysisPasses(PM);
 #endif
     }

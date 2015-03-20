@@ -2,7 +2,7 @@
 // each kernel should run in parallel.
 // 
 // Copyright (c) 2011 Universidad Rey Juan Carlos and
-//               2012-2014 Pekka Jääskeläinen / TUT
+//               2012-2015 Pekka Jääskeläinen / TUT
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -296,9 +296,13 @@ ParallelRegion::insertLocalIdInit(llvm::BasicBlock* entry,
   int size_t_width = 32;
 #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   if (M->getPointerSize() == llvm::Module::Pointer64)
-#else
-  // FIXME 0 here is the address space: this breaks (?) if _local_size_x is not stored in AS0
+#elif (defined LLVM_3_5 || defined LLVM_3_6) 
+  // This breaks (?) if _local_size_x is not stored in AS0,
+  // but it always will be as it's just a pseudo variable that
+  // will be scalarized.
   if (M->getDataLayout()->getPointerSize(0) == 8)
+#else
+  if (M->getDataLayout().getPointerSize(0) == 8)
 #endif
     size_t_width = 64;
 

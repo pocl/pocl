@@ -18,6 +18,9 @@
 
 #define DEBUG_TYPE "break-constgeps"
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
 #include "config.h"
 #if (defined LLVM_3_1 || defined LLVM_3_2)
 #include "llvm/Constants.h"
@@ -52,6 +55,8 @@ char BreakConstantGEPs::ID = 0;
 // Statistics
 STATISTIC (GEPChanges,   "Number of Converted GEP Constant Expressions");
 STATISTIC (TotalChanges, "Number of Converted Constant Expressions");
+
+POP_COMPILER_DIAGS
 
 // Register the pass
 static RegisterPass<BreakConstantGEPs> P ("break-constgeps",

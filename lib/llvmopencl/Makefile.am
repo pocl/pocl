@@ -3,7 +3,7 @@
 # Makefile.am for pocl/lib/llvmopencl.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
-#               2011-2014 Pekka Jääskeläinen 
+#               2011-2015 Pekka Jääskeläinen 
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -61,7 +61,7 @@ PASSES_SOURCES = Barrier.h						\
 						AutomaticLocals.cc ImplicitConditionalBarriers.cc \
 						ImplicitConditionalBarriers.h \
 						DebugHelpers.h DebugHelpers.cc \
-						linker.h
+						linker.h CompilerWarnings.hh
 
 #add compiler driver sources
 libllvmpasses_la_SOURCES = ${PASSES_SOURCES} linker.cpp

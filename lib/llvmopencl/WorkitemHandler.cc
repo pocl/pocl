@@ -2,7 +2,7 @@
 // in a work group.
 // 
 // Copyright (c) 2011-2012 Carlos Sánchez de La Lama / URJC and
-//               2012-2014 Pekka Jääskeläinen / TUT
+//               2012-2015 Pekka Jääskeläinen / TUT
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -21,6 +21,9 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "config.h"
 #include <sstream>
@@ -45,6 +48,8 @@
 #include "DebugHelpers.h"
 #include "pocl.h"
 
+POP_COMPILER_DIAGS
+
 //#define DEBUG_REFERENCE_FIXING
 
 namespace pocl {
@@ -65,7 +70,7 @@ WorkitemHandler::WorkitemHandler(char& ID) : FunctionPass(ID) {
 }
 
 bool
-WorkitemHandler::runOnFunction(Function &F) {
+WorkitemHandler::runOnFunction(Function &) {
   return false;
 }
 
@@ -116,10 +121,17 @@ WorkitemHandler::Initialize(Kernel *K) {
     size_t_width = 32;
   else
     assert (false && "Only 32 and 64 bit size_t widths supported.");
-#else
+#elif (defined LLVM_OLDER_THAN_3_7)
   if (M->getDataLayout()->getPointerSize(0) == 8)
     size_t_width = 64;
   else if (M->getDataLayout()->getPointerSize(0) == 4)
+    size_t_width = 32;
+  else
+    assert (false && "Only 32 and 64 bit size_t widths supported.");
+#else
+  if (M->getDataLayout().getPointerSize(0) == 8)
+    size_t_width = 64;
+  else if (M->getDataLayout().getPointerSize(0) == 4)
     size_t_width = 32;
   else
     assert (false && "Only 32 and 64 bit size_t widths supported.");

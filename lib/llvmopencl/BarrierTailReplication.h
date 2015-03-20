@@ -1,6 +1,7 @@
 // Header for BarrierTailReplication.cc function pass.
 // 
 // Copyright (c) 2011 Universidad Rey Juan Carlos
+//               2012-2015 Pekka Jääskeläinen
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +25,8 @@
 #define POCL_BARRIER_TAIL_REPLICATION
 
 #include "config.h"
+#include "pocl.h"
+
 #if (defined LLVM_3_1 || defined LLVM_3_2)
 #include "llvm/Function.h"
 #else
@@ -64,7 +67,12 @@ namespace pocl {
 #if ! (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
     llvm::DominatorTreeWrapperPass *DTP;
 #endif
+
+#ifdef LLVM_OLDER_THAN_3_7
     llvm::LoopInfo *LI;
+#else
+    llvm::LoopInfoWrapperPass *LI;
+#endif
 
     bool ProcessFunction(llvm::Function &F);
     bool FindBarriersDFS(llvm::BasicBlock *bb,

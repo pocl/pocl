@@ -2,7 +2,7 @@
 // in a work group.
 // 
 // Copyright (c) 2011-2012 Carlos Sánchez de La Lama / URJC and
-//               2011-2014 Pekka Jääskeläinen / TUT
+//               2011-2015 Pekka Jääskeläinen / TUT
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,9 @@
 
 #define DEBUG_TYPE "workitem"
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
 #include "WorkitemReplication.h"
 #include "Workgroup.h"
 #include "Barrier.h"
@@ -32,6 +35,8 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "config.h"
+#include "pocl.h"
+
 #ifdef LLVM_3_1
 #include "llvm/Support/IRBuilder.h"
 #include "llvm/Target/TargetData.h"
@@ -69,6 +74,8 @@
 #include "llvm/Analysis/CFGPrinter.h"
 #endif
 
+POP_COMPILER_DIAGS
+
 using namespace llvm;
 using namespace pocl;
 
@@ -91,12 +98,16 @@ WorkitemReplication::getAnalysisUsage(AnalysisUsage &AU) const
   AU.addRequired<DominatorTreeWrapperPass>();
 #endif
 
+#ifdef LLVM_OLDER_THAN_3_7
   AU.addRequired<LoopInfo>();
+#else
+  AU.addRequired<LoopInfoWrapperPass>();
+#endif
 #ifdef LLVM_3_1
   AU.addRequired<TargetData>();
 #elif (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   AU.addRequired<DataLayout>();
-#else
+#elif (defined LLVM_OLDER_THAN_3_7)
   AU.addRequired<DataLayoutPass>();
 #endif
   AU.addRequired<pocl::WorkitemHandlerChooser>();
@@ -120,7 +131,11 @@ WorkitemReplication::runOnFunction(Function &F)
   DT = &DTP->getDomTree();
   #endif
 
+#ifdef LLVM_OLDER_THAN_3_7
   LI = &getAnalysis<LoopInfo>();
+#else
+  LI = &getAnalysis<LoopInfoWrapperPass>();
+#endif
 
   bool changed = ProcessFunction(F);
 #ifdef DUMP_RESULT_CFG
@@ -156,8 +171,13 @@ WorkitemReplication::ProcessFunction(Function &F)
         original_bbs.push_back(i);
   }
 
+#ifdef LLVM_OLDER_THAN_3_7
   ParallelRegion::ParallelRegionVector* original_parallel_regions =
     K->getParallelRegions(LI);
+#else
+  ParallelRegion::ParallelRegionVector* original_parallel_regions =
+    K->getParallelRegions(&LI->getLoopInfo());
+#endif
 
   std::vector<ParallelRegion::ParallelRegionVector> parallel_regions(
       workitem_count);
@@ -184,8 +204,10 @@ WorkitemReplication::ProcessFunction(Function &F)
   TargetData &TD = getAnalysis<TargetData>();
 #elif (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   DataLayout &TD = getAnalysis<DataLayout>();
-#else
+#elif (defined LLVM_OLDER_THAN_3_7)
   const DataLayout &TD = getAnalysis<DataLayoutPass>().getDataLayout();
+#else
+  const DataLayout &TD = F.getParent()->getDataLayout();
 #endif
 
   for (SmallVector<ParallelRegion *, 8>::iterator

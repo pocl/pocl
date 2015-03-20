@@ -2,6 +2,7 @@
 // and parallelized kernel for an OpenCL workgroup.
 // 
 // Copyright (c) 2011 Universidad Rey Juan Carlos
+//               2012-2015 Pekka Jääskeläinen
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,6 +21,9 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
+
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "Barrier.h"
 #include "Workgroup.h"
@@ -70,6 +74,8 @@
 #endif
 
 #define STRING_LENGTH 32
+
+POP_COMPILER_DIAGS
 
 using namespace std;
 using namespace llvm;
@@ -171,13 +177,25 @@ Workgroup::runOnModule(Module &M)
     {
       assert (false && "Target has an unsupported pointer width.");
     }  
-#else
-// FIXME 0 here is the address space - this breaks (?) if _local_size_x is not stored in AS0
+#elif (defined LLVM_3_5 || defined LLVM_3_6)
   if (M.getDataLayout()->getPointerSize(0) == 8)
     {
       TypeBuilder<PoclContext, true>::setSizeTWidth(64);
     }
   else if (M.getDataLayout()->getPointerSize(0) == 4)
+    {
+      TypeBuilder<PoclContext, true>::setSizeTWidth(32);
+    }
+  else 
+    {
+      assert (false && "Target has an unsupported pointer width.");
+    }
+#else
+  if (M.getDataLayout().getPointerSize(0) == 8)
+    {
+      TypeBuilder<PoclContext, true>::setSizeTWidth(64);
+    }
+  else if (M.getDataLayout().getPointerSize(0) == 4)
     {
       TypeBuilder<PoclContext, true>::setSizeTWidth(32);
     }
@@ -269,9 +287,10 @@ createLauncher(Module &M, Function *F)
   int size_t_width = 32;
 #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   if (M.getPointerSize() == llvm::Module::Pointer64)
-#else
-  //FIXME 0 here is the address space: this breaks (?) if _local_size_x is not stored in AS0
+#elif (defined LLVM_OLDER_THAN_3_7)
   if (M.getDataLayout()->getPointerSize(0) == 8)
+#else
+  if (M.getDataLayout().getPointerSize(0) == 8)
 #endif
     size_t_width = 64;
 

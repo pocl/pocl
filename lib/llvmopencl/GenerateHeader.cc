@@ -20,6 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
 #include "config.h"
 #include "pocl.h"
 #include "Workgroup.h"
@@ -56,6 +59,8 @@
 #endif
 
 #include "LLVMUtils.h"
+
+POP_COMPILER_DIAGS
 
 using namespace std;
 using namespace llvm;
@@ -96,8 +101,11 @@ GenerateHeader::getAnalysisUsage(AnalysisUsage &AU) const
 {
 #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   AU.addRequired<DataLayout>();
-#else
+#elif (defined LLVM_OLDER_THAN_3_7)
   AU.addRequired<DataLayoutPass>();
+#else
+  // In LLVM 3.7, DataLayout is not a pass anymore, it can be created from 
+  // a llvm::Module
 #endif
 }
 
@@ -303,8 +311,11 @@ GenerateHeader::ProcessAutomaticLocals(Function *F,
 #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   DataLayout &TDr = getAnalysis<DataLayout>();
   DataLayout *TD=&TDr;
-#else
+#elif (defined LLVM_OLDER_THAN_3_7)
   const DataLayout *TD = &getAnalysis<DataLayoutPass>().getDataLayout();
+#else
+  const DataLayout DLayout(F->getParent());
+  const DataLayout *TD = &DLayout;
 #endif
   
   SmallVector<GlobalVariable *, 8> locals;

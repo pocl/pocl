@@ -43,7 +43,6 @@
 #elif defined LLVM_3_2
 #include "llvm/IRBuilder.h"
 #include "llvm/TypeBuilder.h"
-#include "llvm/DataLayout.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/ValueSymbolTable.h"
@@ -91,16 +90,18 @@ WorkitemLoops::getAnalysisUsage(AnalysisUsage &AU) const
 {
 
   AU.addRequired<PostDominatorTree>();
+#ifdef LLVM_OLDER_THAN_3_7
   AU.addRequired<LoopInfo>();
+#else
+  AU.addRequired<LoopInfoWrapperPass>();
+#endif
 #ifdef LLVM_3_1
   AU.addRequired<TargetData>();
 #endif
 #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   AU.addRequired<DominatorTree>();
-  AU.addRequired<DataLayout>();
 #else
   AU.addRequired<DominatorTreeWrapperPass>();
-  AU.addRequired<DataLayoutPass>();
 #endif
 
   AU.addRequired<VariableUniformityAnalysis>();
@@ -127,7 +128,11 @@ WorkitemLoops::runOnFunction(Function &F)
   DTP = &getAnalysis<DominatorTreeWrapperPass>();
   DT = &DTP->getDomTree();
   #endif
+#ifdef LLVM_OLDER_THAN_3_7
   LI = &getAnalysis<LoopInfo>();
+#else
+  LI = &getAnalysis<LoopInfoWrapperPass>();
+#endif
   PDT = &getAnalysis<PostDominatorTree>();
 
   tempInstructionIndex = 0;
@@ -307,13 +312,17 @@ WorkitemLoops::CreateLoopAround
      refer to a loop-unique dummy metadata that is not merged
      automatically. */
 
+#ifdef LLVM_3_7
+# warning "Parallel loop metadata not added, LLVM 3.7 version TBD"
+#else
   /* This creation of the identifier metadata is copied from
      LLVM's MDBuilder::createAnonymousTBAARoot(). */
 #ifdef LLVM_OLDER_THAN_3_6
   MDNode *Dummy = MDNode::getTemporary(C, ArrayRef<Value*>());
-#else
+#elif LLVM_OLDER_THAN_3_7
   MDNode *Dummy = MDNode::getTemporary(C, ArrayRef<Metadata*>());
 #endif
+
   MDNode *Root = MDNode::get(C, Dummy);
   // At this point we have
   //   !0 = metadata !{}            <- dummy
@@ -330,6 +339,8 @@ WorkitemLoops::CreateLoopAround
   loopBranch->setMetadata("llvm.loop", Root);
 #endif
   region.AddParallelLoopMetadata(Root);
+
+#endif
 
   builder.SetInsertPoint(loopEndBB);
   builder.CreateBr(oldExit);
@@ -365,8 +376,11 @@ WorkitemLoops::ProcessFunction(Function &F)
       return true;
     }
 
-  original_parallel_regions =
-    K->getParallelRegions(LI);
+#ifdef LLVM_OLDER_THAN_3_7
+  original_parallel_regions = K->getParallelRegions(LI);
+#else
+  original_parallel_regions = K->getParallelRegions(&LI->getLoopInfo());
+#endif
 
 #ifdef DUMP_CFGS
   F.dump();

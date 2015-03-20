@@ -23,6 +23,8 @@
 #ifndef _POCL_WORKITEM_LOOPS_H
 #define _POCL_WORKITEM_LOOPS_H
 
+#include "pocl.h"
+
 #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
 #include "llvm/Analysis/Dominators.h"
 #endif
@@ -60,7 +62,11 @@ namespace pocl {
     typedef std::map<std::string, llvm::Instruction*> StrInstructionMap;
 
     llvm::DominatorTree *DT;
+#ifdef LLVM_OLDER_THAN_3_7
     llvm::LoopInfo *LI;
+#else
+    llvm::LoopInfoWrapperPass *LI;
+#endif
     llvm::PostDominatorTree *PDT;
 #if ! (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
     llvm::DominatorTreeWrapperPass *DTP;

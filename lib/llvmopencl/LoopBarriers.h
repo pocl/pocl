@@ -23,8 +23,13 @@
 #ifndef POCL_LOOP_BARRIERS_H
 #define POCL_LOOP_BARRIERS_H
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
 #include "llvm/Analysis/LoopPass.h"
 #include <set>
+
+POP_COMPILER_DIAGS
 
 namespace pocl {
   class LoopBarriers : public llvm::LoopPass {

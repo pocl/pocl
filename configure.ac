@@ -121,7 +121,7 @@ case "$LLVM_VERSION" in
      *)
    AC_MSG_ERROR(
    [
-Unsupported LLVM version. Please use LLVM version 3.2, 3.3, 3.4, 3.5 or 3.6.
+Unsupported LLVM version. Please use LLVM version 3.2, 3.3, 3.4, 3.5, 3.6, 3.7.
    ])
    LLVM_VERSION=
    ;;

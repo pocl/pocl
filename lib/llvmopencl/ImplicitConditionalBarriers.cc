@@ -21,6 +21,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
 #include "config.h"
 #include "ImplicitConditionalBarriers.h"
 #include "Barrier.h"
@@ -40,6 +43,8 @@
 #include <iostream>
 
 #include "VariableUniformityAnalysis.h"
+
+POP_COMPILER_DIAGS
 
 //#define DEBUG_COND_BARRIERS
 

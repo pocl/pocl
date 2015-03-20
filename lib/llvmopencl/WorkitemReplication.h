@@ -1,7 +1,7 @@
 // Header for WorkitemReplication function pass.
 // 
 // Copyright (c) 2011 Universidad Rey Juan Carlos and
-//               2012 Pekka Jääskeläinen / TUT
+//               2012-2015 Pekka Jääskeläinen / TUT
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,8 @@
 #define _POCL_WORKITEM_REPLICATION_H
 
 #include "config.h"
+#include "pocl.h"
+
 #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
 #include "llvm/Analysis/Dominators.h"
 #else
@@ -54,10 +56,15 @@ namespace pocl {
   private:
 
     llvm::DominatorTree *DT;
-    #if ! (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
+#if ! (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
     llvm::DominatorTreeWrapperPass *DTP;
-    #endif
+#endif
+
+#ifdef LLVM_OLDER_THAN_3_7
     llvm::LoopInfo *LI;
+#else
+    llvm::LoopInfoWrapperPass *LI;
+#endif
 
     typedef std::set<llvm::BasicBlock *> BasicBlockSet;
     typedef std::vector<llvm::BasicBlock *> BasicBlockVector;

@@ -26,6 +26,10 @@
  *
  * @author Vladimír Guzma 2012
  */
+
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
 #include "config.h"
 #include "pocl.h"
 #include <iostream>
@@ -39,7 +43,11 @@
 #else
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Module.h"
 #endif
+
+POP_COMPILER_DIAGS
 
 using namespace llvm;
 
@@ -47,10 +55,10 @@ namespace {
 /// WorkItemAliasAnalysis - This is a simple alias analysis
 /// implementation that uses pocl metadata to make sure memory accesses from
 /// different work items are not aliasing.
-class WorkItemAliasAnalysis : public ImmutablePass, public AliasAnalysis {
+class WorkItemAliasAnalysis : public FunctionPass, public AliasAnalysis {
 public:
     static char ID; 
-    WorkItemAliasAnalysis() : ImmutablePass(ID) {}
+    WorkItemAliasAnalysis() : FunctionPass(ID) {}
 
     /// getAdjustedAnalysisPointer - This method is used when a pass implements
     /// an analysis interface through multiple inheritance.  If needed, it
@@ -61,9 +69,21 @@ public:
             return (AliasAnalysis*)this;
         return this;
     }
+
+
+#ifdef LLVM_OLDER_THAN_3_7
     virtual void initializePass() {
         InitializeAliasAnalysis(this);
     }
+    virtual bool runOnFunction(llvm::Function &) override {
+      return false;
+    }
+#else
+    virtual bool runOnFunction(llvm::Function &F) override {
+      InitializeAliasAnalysis(this, &F.getParent()->getDataLayout());
+      return false;
+    }
+#endif
     
     private:
         virtual void getAnalysisUsage(AnalysisUsage &AU) const;
@@ -79,12 +99,12 @@ RegisterPass<WorkItemAliasAnalysis>
 // Register it also to pass group
 RegisterAnalysisGroup<AliasAnalysis> Y(X);  
 
-ImmutablePass *createWorkItemAliasAnalysisPass() {
+FunctionPass *createWorkItemAliasAnalysisPass() {
     return new WorkItemAliasAnalysis();
 }
 
 extern "C" {                                
-    ImmutablePass*
+    FunctionPass*
     create_workitem_aa_plugin() {
         return new WorkItemAliasAnalysis();
     }

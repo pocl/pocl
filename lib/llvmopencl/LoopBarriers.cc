@@ -21,7 +21,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
 #include "config.h"
+#include "pocl.h"
+
 #if (defined LLVM_3_1 || defined LLVM_3_2)
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
@@ -42,6 +47,8 @@
 #include "LoopBarriers.h"
 #include "Barrier.h"
 #include "Workgroup.h"
+
+POP_COMPILER_DIAGS
 
 //#define DEBUG_LOOP_BARRIERS
 
@@ -97,7 +104,7 @@ LoopBarriers::runOnLoop(Loop *L, LPPassManager &LPM)
 
 
 bool
-LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
+LoopBarriers::ProcessLoop(Loop *L, LPPassManager &)
 {
   bool isBLoop = false;
   bool changed = false;
@@ -204,12 +211,15 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &LPM)
   Instruction *prev = NULL;
   if (&preheader->front() != t)
     prev = t->getPrevNode();
-  if (prev && isa<Barrier>(prev))
-    {
+  if (prev && isa<Barrier>(prev)) {
+#ifdef LLVM_OLDER_THAN_3_7
       BasicBlock *new_b = SplitBlock(preheader, t, this);
+#else
+      BasicBlock *new_b = SplitBlock(preheader, t);
+#endif
       new_b->setName(preheader->getName() + ".postbarrier_dummy");
       return true;
-    }
+  }
 
   return changed;
 }

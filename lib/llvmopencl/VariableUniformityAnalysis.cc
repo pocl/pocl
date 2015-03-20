@@ -20,7 +20,12 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
 #include "config.h"
+#include "pocl.h"
+
 #include <sstream>
 #include <iostream>
 
@@ -47,6 +52,8 @@
 #include "VariableUniformityAnalysis.h"
 #include "Barrier.h"
 
+POP_COMPILER_DIAGS
+
 //#define DEBUG_UNIFORMITY_ANALYSIS
 
 namespace pocl {
@@ -69,8 +76,13 @@ void
 VariableUniformityAnalysis::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
   AU.addRequired<PostDominatorTree>();
   AU.addPreserved<PostDominatorTree>();
+#ifdef LLVM_OLDER_THAN_3_7
   AU.addRequired<LoopInfo>();
   AU.addPreserved<LoopInfo>();
+#else
+  AU.addRequired<LoopInfoWrapperPass>();
+  AU.addPreserved<LoopInfoWrapperPass>();
+#endif
   // required by LoopInfo:
 #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   AU.addRequired<DominatorTree>();
@@ -86,7 +98,7 @@ VariableUniformityAnalysis::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 #elif (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   AU.addRequired<DataLayout>();
   AU.addPreserved<DataLayout>();
-#else
+#elif (defined OLDER_THAN_LLVM_3_7)
   AU.addRequired<DataLayoutPass>();
   AU.addPreserved<DataLayoutPass>();
 #endif
@@ -107,7 +119,11 @@ VariableUniformityAnalysis::runOnFunction(Function &F) {
      If there's a canonical induction variable in loops, the variable
      update for each iteration should be uniform. Note: this does not yet imply
      all the work-items execute the loop same number of times! */
+#ifdef LLVM_OLDER_THAN_3_7
   llvm::LoopInfo &LI = getAnalysis<LoopInfo>();
+#else
+  llvm::LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
+#endif
   for (llvm::LoopInfo::iterator i = LI.begin(), e = LI.end(); i != e; ++i) {
     llvm::Loop *L = *i;
     if (llvm::PHINode *inductionVar = L->getCanonicalInductionVariable()) {

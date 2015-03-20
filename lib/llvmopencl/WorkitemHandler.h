@@ -24,6 +24,9 @@
 #ifndef _POCL_WORKITEM_HANDLER_H
 #define _POCL_WORKITEM_HANDLER_H
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
 #include "config.h"
 #if (defined LLVM_3_1 || defined LLVM_3_2)
 #include "llvm/Function.h"
@@ -37,6 +40,8 @@
 
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
+
+POP_COMPILER_DIAGS
 
 namespace llvm {
   class DominatorTree;

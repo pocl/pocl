@@ -21,6 +21,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
 #include "config.h"
 #include "BarrierTailReplication.h"
 #include "Barrier.h"
@@ -39,6 +42,8 @@
 
 #include <iostream>
 #include <algorithm>
+
+POP_COMPILER_DIAGS
 
 using namespace llvm;
 using namespace pocl;
@@ -65,8 +70,13 @@ BarrierTailReplication::getAnalysisUsage(AnalysisUsage &AU) const
   AU.addRequired<DominatorTreeWrapperPass>();
   AU.addPreserved<DominatorTreeWrapperPass>();
 #endif
+#ifdef LLVM_OLDER_THAN_3_7
   AU.addRequired<LoopInfo>();
   AU.addPreserved<LoopInfo>();
+#else
+  AU.addRequired<LoopInfoWrapperPass>();
+  AU.addPreserved<LoopInfoWrapperPass>();
+#endif
 
   AU.addPreserved<VariableUniformityAnalysis>();
 }
@@ -87,7 +97,12 @@ BarrierTailReplication::runOnFunction(Function &F)
   DTP = &getAnalysis<DominatorTreeWrapperPass>();
   DT = &DTP->getDomTree();
 #endif
+
+#ifdef LLVM_OLDER_THAN_3_7
   LI = &getAnalysis<LoopInfo>();
+#else
+  LI = &getAnalysis<LoopInfoWrapperPass>();
+#endif
 
   bool changed = ProcessFunction(F);
 
@@ -96,8 +111,8 @@ BarrierTailReplication::runOnFunction(Function &F)
 #else
   DT->verifyDomTree();
 #endif
-  LI->verifyAnalysis();
 
+  LI->verifyAnalysis();
   /* The created tails might contain PHI nodes with operands 
      referring to the non-predecessor (split point) BB. 
      These must be cleaned to avoid breakage later on.
@@ -221,17 +236,17 @@ BarrierTailReplication::ReplicateJoinedSubgraphs(BasicBlock *dominator,
       {
         // We have modified the function. Possibly created new loops.
         // Update analysis passes.
-        #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
+#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
         DT->runOnFunction(*f);
-        #else
+#else
         DTP->runOnFunction(*f);
-        #endif
+#endif
 
-        #ifdef LLVM_3_1
+#ifdef LLVM_3_1
         LI->getBase().Calculate(DT->getBase());
-        #else
+#else
         LI->runOnFunction(*f);
-        #endif
+#endif
       }
   }
   processed_bbs.insert(subgraph_entry);

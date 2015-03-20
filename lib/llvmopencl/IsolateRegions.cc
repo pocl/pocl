@@ -1,6 +1,6 @@
 // Header for IsolateRegions RegionPass.
 // 
-// Copyright (c) 2012 Pekka Jääskeläinen / TUT
+// Copyright (c) 2012-2015 Pekka Jääskeläinen / TUT
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -20,15 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
 #include "IsolateRegions.h"
 #include "Barrier.h"
 #include "Workgroup.h"
 #include "llvm/Analysis/RegionInfo.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "config.h"
+#include "pocl.h"
 
 #include <iostream>
 #include "VariableUniformityAnalysis.h"
+
+POP_COMPILER_DIAGS
 
 //#define DEBUG_ISOLATE_REGIONS
 using namespace llvm;
@@ -134,8 +140,13 @@ void IsolateRegions::addDummyAfter(llvm::Region *R, llvm::BasicBlock *bb) {
     if (R->contains(succ))
       regionSuccs.push_back(succ);
   }
+#ifdef LLVM_OLDER_THAN_3_7
   llvm::BasicBlock* newEntry = 
     SplitBlock(bb, bb->getTerminator(), this);
+#else
+  llvm::BasicBlock* newEntry = 
+    SplitBlock(bb, bb->getTerminator());
+#endif
   newEntry->setName(bb->getName() + ".r_entry");
   R->replaceEntry(newEntry);
 
@@ -162,9 +173,12 @@ IsolateRegions::addDummyBefore(llvm::Region *R, llvm::BasicBlock *bb) {
   llvm::BasicBlock* newExit = 
     SplitBlockPredecessors
     (bb, &regionPreds[0], regionPreds.size(), ".r_exit", this);
-#else
+#elif (defined LLVM_OLDER_THAN_3_7)
   llvm::BasicBlock* newExit = 
     SplitBlockPredecessors(bb, regionPreds, ".r_exit", this);
+#else
+  llvm::BasicBlock* newExit = 
+    SplitBlockPredecessors(bb, regionPreds, ".r_exit");
 #endif
   R->replaceExit(newExit);
 }
