@@ -75,11 +75,11 @@ public:
     virtual void initializePass() {
         InitializeAliasAnalysis(this);
     }
-    virtual bool runOnFunction(llvm::Function &) override {
+    virtual bool runOnFunction(llvm::Function &) {
       return false;
     }
 #else
-    virtual bool runOnFunction(llvm::Function &F) override {
+    virtual bool runOnFunction(llvm::Function &F) {
       InitializeAliasAnalysis(this, &F.getParent()->getDataLayout());
       return false;
     }
