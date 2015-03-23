@@ -115,7 +115,7 @@ extern int pocl_debug_messages;
     do {                                                                      \
     if (pocl_debug_messages) {                                                \
       clock_gettime(CLOCK_REALTIME, &pocl_debug_timespec);                    \
-      fprintf(stderr, "[%li.%li] POCL: in function %s"                  \
+      fprintf(stderr, "[%li.%09li] POCL: in function %s"                  \
       " at line %u:", (long)pocl_debug_timespec.tv_sec, (long)pocl_debug_timespec.tv_nsec, \
         __func__, __LINE__);                                                  \
       fprintf(stderr, __VA_ARGS__);                                           \
@@ -126,7 +126,7 @@ extern int pocl_debug_messages;
     do {                                                                      \
     if (pocl_debug_messages) {                                                \
       clock_gettime(CLOCK_REALTIME, &pocl_debug_timespec);                    \
-      fprintf(stderr, "[%li.%li] POCL: " TYPE ERRCODE " in function %s"       \
+      fprintf(stderr, "[%li.%09li] POCL: " TYPE ERRCODE " in function %s"       \
       " at line %u: \n", (long)pocl_debug_timespec.tv_sec, (long)pocl_debug_timespec.tv_nsec, \
         __func__, __LINE__);                                                  \
       fprintf(stderr, __VA_ARGS__);                                           \
