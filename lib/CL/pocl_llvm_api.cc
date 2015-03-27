@@ -104,7 +104,9 @@ using llvm::legacy::PassManager;
 #include "install-paths.h"
 #include "LLVMUtils.h"
 #include "linker.h"
-#include "pocl_util.h"
+#include "pocl_file_util.h"
+#include "pocl_cache.h"
+#include "PoclLockFileManager.h"
 
 using namespace clang;
 using namespace llvm;
@@ -149,17 +151,15 @@ static void InitializeLLVM();
 // to find it.
 static inline int
 load_source(FrontendOptions &fe,
-            const char* cache_dir,
             cl_program program)
 {
-  std::string kernel_file(cache_dir);
-  kernel_file += "/" POCL_PROGRAM_CL_FILENAME;
-  std::ofstream ofs(kernel_file.c_str());
-  ofs << program->source;
-  if (!ofs.good())
-    return CL_OUT_OF_HOST_MEMORY;
+  char source_file[POCL_FILENAME_LENGTH];
+  POCL_RETURN_ERROR_ON(pocl_cache_write_program_source(source_file, program),
+                       CL_OUT_OF_HOST_MEMORY,
+                       "Could not write program source")
+
   fe.Inputs.push_back
-    (FrontendInputFile(kernel_file, clang::IK_OpenCL));
+    (FrontendInputFile(source_file, clang::IK_OpenCL));
 
   return 0;
 }
@@ -176,15 +176,26 @@ ParseIRFile(const char* fname, SMDiagnostic &Err, llvm::LLVMContext &ctx)
 #endif
 
 int pocl_llvm_build_program(cl_program program, 
-                            cl_device_id device, 
-                            int device_i,     
-                            const char* cache_dir,
-                            const char* binary_file_name,
-                            const char* device_tmpdir,
-                            const char* user_options,
-                            int fd)
+                            cl_device_id device,
+                            int device_i,
+                            const char* user_options)
 
 {
+  char program_bc_path[POCL_FILENAME_LENGTH];
+  pocl_cache_program_bc_path(program_bc_path, program, device);
+
+  PoclLockFileManager lfm(program_bc_path);
+
+  if (!lfm)
+    return CL_OUT_OF_RESOURCES;
+
+  if (lfm.file_exists() && !pocl_cache_requires_refresh(program))
+    return CL_SUCCESS;
+
+
+
+
+
   llvm::MutexGuard lockHolder(kernelCompilerLock);
   InitializeLLVM();
 
@@ -203,22 +214,14 @@ int pocl_llvm_build_program(cl_program program,
   CompilerInstance CI;
   CompilerInvocation &pocl_build = CI.getInvocation();
 
-  // add device specific switches, if any
   std::stringstream ss;
   std::stringstream ss_build_log;
 
-  std::stringstream build_log_filename;
-  build_log_filename << cache_dir << "/" << POCL_BUILDLOG_FILENAME;
-
-  if (device->ops->init_build != NULL) 
+  // add device specific switches, if any
+  char* device_switches = pocl_cache_device_switches(program, device);
+  if (device_switches)
     {
-      assert (device_tmpdir != NULL);
-      char *device_switches = 
-        device->ops->init_build (device->data, device_tmpdir);
-      if (device_switches != NULL) 
-        {
-          ss << device_switches << " ";
-        }
+      ss << device_switches << " ";
       POCL_MEM_FREE(device_switches);
     }
 
@@ -286,7 +289,8 @@ int pocl_llvm_build_program(cl_program program,
           ss_build_log << "warning: " << (*i).second << std::endl;
         }
 
-      pocl_write_file_cpp(build_log_filename.str(), ss_build_log.str(), 0, 0);
+      pocl_cache_append_to_buildlog(program, ss_build_log.str().c_str(),
+                                    ss_build_log.str().size());
 
       std::cerr << ss_build_log.str();
       return CL_INVALID_BUILD_OPTIONS;
@@ -349,7 +353,7 @@ int pocl_llvm_build_program(cl_program program,
   FrontendOptions &fe = pocl_build.getFrontendOpts();
   // The CreateFromArgs created an stdin input which we should remove first.
   fe.Inputs.clear(); 
-  if (load_source(fe, cache_dir, program)!=0)
+  if (load_source(fe, program)!=0)
     return CL_OUT_OF_HOST_MEMORY;
 
   CodeGenOptions &cg = pocl_build.getCodeGenOpts();
@@ -368,6 +372,9 @@ int pocl_llvm_build_program(cl_program program,
   action = new clang::EmitLLVMOnlyAction(GlobalContext());
   success |= CI.ExecuteAction(*action);
 
+  ss_build_log.str("");
+  ss_build_log.clear();
+
   SourceManager &source_manager = CI.getSourceManager();
   for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->err_begin(),
        e = diagsBuffer->err_end(); i != e; ++i)
@@ -382,7 +389,8 @@ int pocl_llvm_build_program(cl_program program,
                    << ": " << (*i).second << std::endl;
     }
 
-  pocl_write_file_cpp(build_log_filename.str(), ss_build_log.str(), 0, 0);
+  pocl_cache_append_to_buildlog(program, ss_build_log.str().c_str(),
+                                ss_build_log.str().size());
   std::cerr << ss_build_log.str();
 
   // FIXME: memleak, see FIXME below
@@ -402,7 +410,7 @@ int pocl_llvm_build_program(cl_program program,
     return CL_BUILD_PROGRAM_FAILURE;
 
   /* Always retain program.bc. Its required in clBuildProgram */
-  pocl_write_module(binary_file_name.c_str(), *mod, 0);
+  lfm.write_module(*mod, 1);
 
   // FIXME: cannot delete action as it contains something the llvm::Module
   // refers to. We should create it globally, at compiler initialization time.
