@@ -1272,20 +1272,26 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
   return 0;
 }
 
-void
+int
 pocl_update_program_llvm_irs(cl_program program,
-                             cl_device_id device, const char* program_filename)
+                             cl_device_id device, const char* program_bc_path)
 {
   SMDiagnostic Err;
 
+  PoclLockFileManager lfm(program_bc_path);
+  if (!lfm)
+    return -1;
+
   program->llvm_irs[device->dev_id] =
-              ParseIRFile(program_filename, Err, *GlobalContext());
+              ParseIRFile(program_bc_path, Err, *GlobalContext());
+  return 0;
 }
 
 void pocl_llvm_update_binaries (cl_program program) {
 
   llvm::MutexGuard lockHolder(kernelCompilerLock);
   InitializeLLVM();
+  char program_bc_path[POCL_FILENAME_LENGTH];
 
   // Dump the LLVM IR Modules to memory buffers. 
   assert (program->llvm_irs != NULL);
@@ -1297,17 +1303,13 @@ void pocl_llvm_update_binaries (cl_program program) {
     {
       assert (program->llvm_irs[i] != NULL);
 
-      std::string binary_filename =
-        std::string(program->cache_dir) + "/" +
-        program->devices[i]->cache_dir_name + "/" +
-        POCL_PROGRAM_BC_FILENAME;
+      pocl_cache_program_bc_path(program_bc_path, program, program->devices[i]);
+      pocl_write_module((llvm::Module*)program->llvm_irs[i], program_bc_path, 0);
 
-      pocl_write_module((llvm::Module*)program->llvm_irs[i],
-                           binary_filename);
-
-      std::stringstream sbuffer;
-      WriteBitcodeToFile((llvm::Module*)program->llvm_irs[i], sbuffer);
-      std::string content = sbuffer.str();
+      std::string content;
+      llvm::raw_string_ostream sos(content);
+      WriteBitcodeToFile((llvm::Module*)program->llvm_irs[i], sos);
+      sos.str(); // flush
 
       size_t n = content.size();
       if (n < program->binary_sizes[i])
@@ -1360,16 +1362,13 @@ pocl_llvm_codegen(cl_kernel kernel,
                   const char *outfilename)
 {
     SMDiagnostic Err;
-#if defined LLVM_3_2 || defined LLVM_3_3
-    std::string error;
-    tool_output_file outfile(outfilename, error, 0);
-#elif defined LLVM_3_4 || defined LLVM_3_5
-    std::string error;
-    tool_output_file outfile(outfilename, error, F_Binary);
-#else
-    std::error_code error;
-    tool_output_file outfile(outfilename, error, F_Binary);
-#endif
+
+    PoclLockFileManager lfm(outfilename);
+    if (!lfm)
+      return -1;
+    if (lfm.file_exists())
+      return 0;
+
     llvm::Triple triple(device->llvm_target_triplet);
     llvm::TargetMachine *target = GetTargetMachine(device);
     llvm::Module *input = ParseIRFile(infilename, Err, *GlobalContext());
@@ -1402,14 +1401,14 @@ pocl_llvm_codegen(cl_kernel kernel,
         PM.add(new DataLayout(input));
 #endif
     // TODO: better error check
-    formatted_raw_ostream FOS(outfile.os());
+    std::string data;
+    llvm::raw_string_ostream sos(data);
     llvm::MCContext *mcc;
-    if(target->addPassesToEmitMC(PM, mcc, FOS))
-        return 1;
+    if(target->addPassesToEmitMC(PM, mcc, sos))
+      return 1;
 
     PM.run(*input);
-    outfile.keep();
+    return lfm.write_file(sos.str(), 0, 0);
 
-    return 0;
 }
 /* vim: set ts=4 expandtab: */
