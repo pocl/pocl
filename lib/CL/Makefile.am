@@ -130,7 +130,7 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    pocl_llvm.h \
                    pocl_runtime_config.c pocl_runtime_config.h \
                    pocl_mem_management.c pocl_mem_management.h \
-                   pocl_hash.c pocl_hash.h \
+                   pocl_hash.c pocl_hash.h pocl_cache.c \
                    pocl_debug.c pocl_debug.h
 
 

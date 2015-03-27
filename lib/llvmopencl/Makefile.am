@@ -56,11 +56,12 @@ PASSES_SOURCES = Barrier.h						\
 						WorkitemHandlerChooser.h WorkitemHandlerChooser.cc \
 						AllocasToEntry.h AllocasToEntry.cc \
 						TargetAddressSpaces.h TargetAddressSpaces.cc \
-						LLVMUtils.cc LLVMUtils.h \
+						LLVMUtils.cc LLVMUtils.h LLVMFileUtils.cc \
 						VariableUniformityAnalysis.h VariableUniformityAnalysis.cc \
 						AutomaticLocals.cc ImplicitConditionalBarriers.cc \
 						ImplicitConditionalBarriers.h \
 						DebugHelpers.h DebugHelpers.cc \
+						PoclLockFileManager.cc PoclLockFileManager.h \
 						linker.h CompilerWarnings.hh
 
 #add compiler driver sources
