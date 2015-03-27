@@ -62,11 +62,9 @@ int pocl_llvm_get_kernel_metadata
  * at a time or control the options through thread safe methods.
  */
 int pocl_llvm_generate_workgroup_function
-(cl_device_id device,
- cl_kernel kernel,
- size_t local_x, size_t local_y, size_t local_z,
- const char* parallel_filename,
- const char* kernel_filename);
+(cl_device_id device, cl_kernel kernel,
+ size_t local_x, size_t local_y, size_t local_z
+);
 
 /**
  * Update the program->binaries[] representation of the kernels

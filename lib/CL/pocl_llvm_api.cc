@@ -1187,12 +1187,22 @@ kernel_library
 /* This is used to control the kernel we want to process in the kernel compilation. */
 extern cl::opt<std::string> KernelName;
 
-int pocl_llvm_generate_workgroup_function(cl_device_id device,
-                                          cl_kernel kernel,
-                                          size_t local_x, size_t local_y, size_t local_z,
-                                          const char* parallel_filename,
-                                          const char* kernel_filename)
+int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
+                                          size_t local_x, size_t local_y, size_t local_z)
 {
+  cl_program program = kernel->program;
+  char kernel_so_path[POCL_FILENAME_LENGTH];
+  pocl_cache_kernel_so_path(kernel_so_path, program, device, kernel, local_x, local_y, local_z);
+
+  PoclLockFileManager lfm(kernel_so_path);
+
+  if (!lfm)
+    return CL_OUT_OF_RESOURCES;
+
+  if (lfm.file_exists())
+    return CL_SUCCESS;
+
+
   llvm::MutexGuard lockHolder(kernelCompilerLock);
   InitializeLLVM();
 
@@ -1224,7 +1234,9 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
 #ifdef DEBUG_POCL_LLVM_API        
       printf("### loading the kernel bitcode from disk\n");
 #endif
-      input = ParseIRFile(kernel_filename, Err, *GlobalContext());
+      char program_bc_path[POCL_FILENAME_LENGTH];
+      pocl_cache_program_bc_path(program_bc_path, program, device);
+      input = ParseIRFile(program_bc_path, Err, *GlobalContext());
     }
 
   // Later this should be replaced with indexed linking of source code
@@ -1254,8 +1266,8 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
 #endif
 
   // TODO: don't write this once LLC is called via API, not system()
-  pocl_write_module(parallel_filename, input, 0);
-
+  pocl_cache_write_kernel_parallel_bc(input, program, device, kernel,
+                                  local_x, local_y, local_z);
 
   return 0;
 }
