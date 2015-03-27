@@ -72,17 +72,13 @@ POname(clBuildProgram)(cl_program program,
                        void *user_data) 
 CL_API_SUFFIX__VERSION_1_0
 {
-  char device_cachedir[POCL_FILENAME_LENGTH];
-  char binary_file_name[POCL_FILENAME_LENGTH];
-  char filename_str[POCL_FILENAME_LENGTH];
-  FILE *binary_file;
-  int fd;
-  size_t n;
+  char program_bc_path[POCL_FILENAME_LENGTH];
   int errcode;
   size_t i;
   int error;
   size_t length;
-  unsigned char *binary;
+  uint64_t fsize;
+  char *binary = NULL;
   unsigned real_num_devices;
   const cl_device_id *real_device_list;
   /* The default build script for .cl files. */
@@ -92,7 +88,6 @@ CL_API_SUFFIX__VERSION_1_0
   char *modded_options = NULL;
   char *token;
   char *saveptr = NULL;
-  char *str = NULL;
 
   POCL_GOTO_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
 
@@ -206,8 +201,7 @@ CL_API_SUFFIX__VERSION_1_0
       real_device_list = device_list;
     }
 
-  build_program_compute_hash(program);
-  program->cache_dir = pocl_create_program_cache_dir(program);
+  pocl_cache_create_program_cachedir(program);
 
   if (program->source)
     {
@@ -239,76 +233,49 @@ CL_API_SUFFIX__VERSION_1_0
   for (device_i = 0; device_i < real_num_devices; ++device_i)
     {
       cl_device_id device = real_device_list[device_i];
-      snprintf(device_cachedir, POCL_FILENAME_LENGTH, "%s/%s",
-               program->cache_dir, device->cache_dir_name);
 
-      if (access (device_cachedir, F_OK) != 0)
-        mkdir(device_cachedir, S_IRWXU);
+      pocl_cache_make_device_cachedir(program, device);
 
-      pocl_check_and_invalidate_cache(program, device_i, device_cachedir);
+      pocl_cache_program_bc_path(program_bc_path, program, device);
 
-      snprintf(binary_file_name, POCL_FILENAME_LENGTH, "%s/%s",
-               device_cachedir, POCL_PROGRAM_BC_FILENAME);
-      snprintf(filename_str, POCL_FILENAME_LENGTH, "%s/%s",
-               program->cache_dir, POCL_BUILDLOG_FILENAME);
-
-      /* First call to clBuildProgram. Cache not filled yet */
-      if ((fd = open(binary_file_name, (O_CREAT | O_EXCL | O_WRONLY),
-          (S_IRUSR | S_IWUSR))) >= 0)
+      // clCreateProgramWithSource
+      if (program->source)
         {
-          if (program->source)
+          error = pocl_llvm_build_program(program, device, device_i, user_options);
+          if (error != 0)
             {
-              error = pocl_llvm_build_program(program, device, device_i,
-                        program->cache_dir, binary_file_name, device_cachedir, user_options, fd);
-              if (error != 0)
-                {
-                  unlink(binary_file_name);
-                  errcode = CL_BUILD_PROGRAM_FAILURE;
-                  goto ERROR_CLEAN_BINARIES;
-                }
+              errcode = CL_BUILD_PROGRAM_FAILURE;
+              goto ERROR_CLEAN_BINARIES;
             }
-          else if (program->binaries[device_i])
-            write(fd, program->binaries[device_i],
-                  program->binary_sizes[device_i]);
-          close(fd);
         }
-      else if (pocl_read_text_file(filename_str, &str))
-        {
-          fputs(str, stderr);
-          POCL_MEM_FREE(str);
+      else
+        if (program->binaries[device_i]) {
+            errcode = pocl_write_file(program_bc_path, program->binaries[device_i],
+                          (uint64_t)program->binary_sizes[device_i], 0, 0);
+            POCL_GOTO_ERROR_ON(errcode, CL_BUILD_ERROR, "Failed to write binaries to program.bc\n");
         }
 
       /* Read binaries from program.bc to memory */
       if (program->binaries[device_i] == NULL)
         {
-          binary_file = fopen(binary_file_name, "r");
-          MEM_ASSERT(binary_file == NULL, ERROR_CLEAN_PROGRAM);
+          errcode = pocl_read_file(program_bc_path, &binary, &fsize);
+          POCL_GOTO_ERROR_ON(errcode, CL_BUILD_ERROR, "Failed to read binaries from program.bc to memory: %s\n", program_bc_path);
 
-          fseek(binary_file, 0, SEEK_END);
-          program->binary_sizes[device_i] = ftell(binary_file);
-          fseek(binary_file, 0, SEEK_SET);
-
-          binary = (unsigned char *) malloc(program->binary_sizes[device_i]);
-          MEM_ASSERT(binary == NULL, ERROR_CLEAN_PROGRAM);
-
-          n = fread(binary, 1, program->binary_sizes[device_i], binary_file);
-          MEM_ASSERT((n < program->binary_sizes[device_i]), ERROR_CLEAN_PROGRAM);
+          program->binary_sizes[device_i] = (size_t)fsize;
           program->binaries[device_i] = binary;
         }
 
-      if (program->llvm_irs[device->dev_id] == NULL)
+      if (program->llvm_irs[device_i] == NULL)
         {
           pocl_update_program_llvm_irs(program,
-                                       device, binary_file_name);
+                                       device, program_bc_path);
         }
     }
 
   /* Maintain a 'last_accessed' file in every program's
    * cache directory. Will be useful for cache pruning script
    * that flushes old directories based on LRU */
-  snprintf(filename_str, POCL_FILENAME_LENGTH, "%s/%s",
-           program->cache_dir, POCL_LAST_ACCESSED_FILENAME);
-  pocl_touch_file(filename_str);
+  pocl_cache_update_program_last_access(program);
 
   program->build_status = CL_BUILD_SUCCESS;
   POCL_UNLOCK_OBJ(program);
