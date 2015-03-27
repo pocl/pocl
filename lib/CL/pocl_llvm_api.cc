@@ -567,14 +567,11 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
                                   cl_kernel kernel,
                                   int device_i,     
                                   const char* kernel_name,
-                                  const char* device_tmpdir, 
-                                  char* descriptor_filename,
                                   int * errcode)
 {
 
   int i;
   llvm::Module *input = NULL;
-  char tmpdir[POCL_FILENAME_LENGTH];
 
   assert(program->devices[device_i]->llvm_target_triplet && 
          "Device has no target triple set"); 
@@ -593,14 +590,6 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
       return 1;
     }
 
-  (void) snprintf(descriptor_filename, POCL_FILENAME_LENGTH,
-                    "%s/%s/descriptor.so", device_tmpdir, kernel_name);
-
-  snprintf(tmpdir, POCL_FILENAME_LENGTH, "%s/%s",
-            device_tmpdir, kernel_name);
-
-  if (access(tmpdir, F_OK) != 0)
-    mkdir(tmpdir, S_IRWXU);
 
 #ifdef DEBUG_POCL_LLVM_API        
   printf("### fetching kernel metadata for kernel %s program %p input llvm::Module %p\n",
@@ -755,8 +744,6 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   // TODO: the scripts use a generated kernel.h header file that
   // gets added to this file. No checks seem to fail if that file
   // is missing though, so it is left out from there for now
-  std::string kobj_s = descriptor_filename; 
-  kobj_s += ".kernel_obj.c";
 
   std::stringstream content;
 
@@ -770,7 +757,9 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   content << "     _" << kernel_name << "_workgroup_fast\n";
   content << " };\n";
 
-  pocl_write_file_cpp(kobj_s, content.str(), 0, 0);
+  pocl_cache_write_descriptor(program, program->devices[device_i],
+                              kernel_name, content.str().c_str(),
+                              content.str().size());
 #endif
 
   pocl_llvm_get_kernel_arg_metadata(kernel_name, input, kernel);

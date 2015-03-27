@@ -47,8 +47,6 @@ int pocl_llvm_get_kernel_metadata
  cl_kernel kernel,
  int device_i,     
  const char* kernel_name,
- const char* device_tmpdir, 
- char* descriptor_filename,
  int *errcode);
 
 /* This function links the input kernel LLVM bitcode and the
