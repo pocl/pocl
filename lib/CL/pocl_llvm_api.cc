@@ -89,7 +89,6 @@ using llvm::legacy::PassManager;
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
-#include <sys/stat.h>
 
 #include <iostream>
 #include <fstream>
@@ -97,15 +96,6 @@ using llvm::legacy::PassManager;
 #include <sstream>
 #include <string>
 #include <cstdio>
-
-#if !defined(_MSC_VER) && !defined(__MINGW32__)
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#else
-#include <io.h>
-#endif
 
 // Note - LLVM/Clang uses symbols defined in Khronos' headers in macros, 
 // causing compilation error if they are included before the LLVM headers.
