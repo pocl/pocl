@@ -23,6 +23,8 @@
 
 #include "pocl_cl.h"
 #include "pocl_util.h"
+#include "pocl_file_util.h"
+#include "pocl_cache.h"
 #include <string.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
@@ -62,19 +64,15 @@ POname(clGetProgramBuildInfo)(cl_program            program,
     
   case CL_PROGRAM_BUILD_LOG:
     {
-      char *build_log = NULL;
-      char buildlog_file_name[POCL_FILENAME_LENGTH];
-      snprintf(buildlog_file_name, POCL_FILENAME_LENGTH, "%s/%s",
-               program->cache_dir, POCL_BUILDLOG_FILENAME);
+      char* build_log = pocl_cache_read_buildlog(program);
 
-      str = (pocl_read_text_file(buildlog_file_name, &build_log))?
-                        build_log: empty_str;
+      POCL_RETURN_ERROR_ON((build_log==NULL), CL_OUT_OF_HOST_MEMORY, "failed to read build log");
 
-      size_t const value_size = strlen(str) + 1;
+      size_t const value_size = strlen(build_log) + 1;
       if (param_value)
       {
         if (param_value_size < value_size) return CL_INVALID_VALUE;
-        memcpy(param_value, str, value_size);
+        memcpy(param_value, build_log, value_size);
       }
       POCL_MEM_FREE(build_log);
       if (param_value_size_ret)
