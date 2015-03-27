@@ -26,6 +26,7 @@
 #include "pocl_cl.h"
 #include "pocl_llvm.h"
 #include "pocl_util.h"
+#include "pocl_cache.h"
 #include "utlist.h"
 #ifndef _MSC_VER
 #  include <unistd.h>
@@ -56,10 +57,6 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   size_t offset_x, offset_y, offset_z;
   size_t global_x, global_y, global_z;
   size_t local_x, local_y, local_z;
-  char cachedir[POCL_FILENAME_LENGTH];
-  char kernel_filename[POCL_FILENAME_LENGTH];
-  char parallel_filename[POCL_FILENAME_LENGTH];
-  char so_filename[POCL_FILENAME_LENGTH];
   unsigned i, count;
   int error;
   struct pocl_context pc;
@@ -230,43 +227,14 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
     CL_INVALID_EVENT_WAIT_LIST);
 
+  char cachedir[POCL_FILENAME_LENGTH];
+  pocl_cache_make_kernel_cachedir_path(cachedir, kernel->program,
+                                  command_queue->device, kernel,
+                                  local_x, local_y, local_z);
 
-  snprintf (cachedir, POCL_FILENAME_LENGTH, "%s/%s/%s/%zu-%zu-%zu",
-            kernel->program->cache_dir, command_queue->device->cache_dir_name,
-            kernel->name,
-            local_x, local_y, local_z);
-
-  if (access (cachedir, F_OK) != 0)
-    mkdir (cachedir, S_IRWXU);
-  
-  error = snprintf
-          (parallel_filename, POCL_FILENAME_LENGTH,
-          "%s/%s", cachedir, POCL_PARALLEL_BC_FILENAME);
-  if (error < 0)
-    return CL_OUT_OF_HOST_MEMORY;
-
-  error = snprintf
-          (so_filename, POCL_FILENAME_LENGTH,
-          "%s/%s.so", cachedir, kernel->name);
-  if (error < 0)
-    return CL_OUT_OF_HOST_MEMORY;
-
-  error = snprintf
-          (kernel_filename, POCL_FILENAME_LENGTH,
-           "%s/%s/%s", kernel->program->cache_dir,
-           command_queue->device->cache_dir_name, POCL_PROGRAM_BC_FILENAME);
-  if (error < 0)
-    return CL_OUT_OF_HOST_MEMORY;
-
-  if (access(so_filename, F_OK) != 0)
-    {
-      error = pocl_llvm_generate_workgroup_function
-          (command_queue->device,
-           kernel, local_x, local_y, local_z,
-           parallel_filename, kernel_filename);
-
-      if (error)  return error;
-    }
+  error = pocl_llvm_generate_workgroup_function(command_queue->device,
+                                kernel, local_x, local_y, local_z);
+  if (error)  return error;
 
   error = pocl_create_command (&command_node, command_queue,
                                CL_COMMAND_NDRANGE_KERNEL,
