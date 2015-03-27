@@ -34,8 +34,8 @@
 #  include "vccompat.hpp"
 #endif
 #include "pocl_llvm.h"
-#include "pocl_hash.h"
-#include "pocl_util.h"
+#include "pocl_file_util.h"
+#include "pocl_cache.h"
 #include "config.h"
 #include "pocl_runtime_config.h"
 
@@ -61,56 +61,6 @@ static char cl_parameters_not_yet_supported_by_clang[] =
   "-cl-no-signed-zeros ";
 
 #define MEM_ASSERT(x, err_jmp) do{ if (x){errcode = CL_OUT_OF_HOST_MEMORY;goto err_jmp;}} while(0)
-#define COMMAND_LENGTH 4096
-
-static inline void
-build_program_compute_hash(cl_program program)
-{
-  SHA1_CTX hash_ctx;
-  unsigned total_binary_size, i;
-
-  pocl_SHA1_Init(&hash_ctx);
-
-  if (program->source)
-    {
-      pocl_SHA1_Update(&hash_ctx, (uint8_t*) program->source, strlen(program->source));
-    }
-  else  /* Program was created with clCreateProgramWithBinary() */
-    {
-      total_binary_size = 0;
-      for (i = 0; i < program->num_devices; ++i)
-        total_binary_size += program->binary_sizes[i];
-
-      /* Binaries are stored in continuous chunk of memory starting from binaries[0] */
-      pocl_SHA1_Update(&hash_ctx, (uint8_t*) program->binaries[0], total_binary_size);
-    }
-
-  if (program->compiler_options)
-    pocl_SHA1_Update(&hash_ctx, (uint8_t*) program->compiler_options, 
-                     strlen(program->compiler_options));
-
-  /* The kernel compiler work-group function method affects the
-     produced binary heavily. */
-  const char *wg_method = 
-    pocl_get_string_option ("POCL_WORK_GROUP_METHOD", "");
-
-  pocl_SHA1_Update (&hash_ctx, (uint8_t*) wg_method, strlen (wg_method));
-  pocl_SHA1_Update (&hash_ctx, (uint8_t*) PACKAGE_VERSION, 
-                    strlen (PACKAGE_VERSION));
-  pocl_SHA1_Update (&hash_ctx, (uint8_t*) LLVM_VERSION, 
-                    strlen (LLVM_VERSION));
-  pocl_SHA1_Update (&hash_ctx, (uint8_t*) POCL_BUILD_TIMESTAMP, 
-                    strlen (POCL_BUILD_TIMESTAMP));
-  /*devices may include their own information to hash */
-  for (i = 0; i < program->num_devices; ++i)
-    {
-      if (program->devices[i]->ops->build_hash)
-        program->devices[i]->ops->build_hash (program->devices[i]->data, 
-                                              &hash_ctx);
-    }
-  
-  pocl_SHA1_Final(&hash_ctx, program->build_hash);
-}
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clBuildProgram)(cl_program program,

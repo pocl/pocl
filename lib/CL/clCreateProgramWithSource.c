@@ -103,6 +103,7 @@ POname(clCreateProgramWithSource)(cl_context context,
   program->kernels = NULL;
   program->llvm_irs = NULL;
   program->cache_dir = NULL;
+  program->cachedir_lock = NULL;
   program->build_status = CL_BUILD_NONE;
 
   POCL_RETAIN_OBJECT(context);

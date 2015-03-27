@@ -95,6 +95,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
   program->compiler_options = NULL;
   program->llvm_irs = NULL;
   program->cache_dir = NULL;
+  program->cachedir_lock = NULL;
 
   /* Allocate a continuous chunk of memory for all the binaries. */
   if ((program->binary_sizes =

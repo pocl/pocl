@@ -45,9 +45,6 @@
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
 
-
-#define CACHE_DIR_PATH_CHARS 512
-
 struct list_item;
 
 typedef struct list_item
@@ -56,64 +53,6 @@ typedef struct list_item
   struct list_item *next;
 } list_item;
 
-
-size_t pocl_read_text_file (const char* path, char** content_dptr) {
-  uint64_t bytes = 0, fsize = 0;
-
-  if (pocl_filesize(path, &fsize))
-    return 0;
-
-  *content_dptr = (char*)malloc(fsize);
-
-  if (pocl_read_file(path, *content_dptr, bytes) == 0)
-    return bytes;
-  else
-    return 0;
-}
-
-
-char*
-pocl_create_program_cache_dir(cl_program program)
-{
-  char *tmp_path = NULL, *cache_path = NULL;
-  char hash_str[SHA1_DIGEST_SIZE * 2 + 1];
-  int i;
-
-  for (i = 0; i < SHA1_DIGEST_SIZE; i++)
-    sprintf(&hash_str[i*2], "%02x", (unsigned int) program->build_hash[i]);
-
-  cache_path = (char*)malloc(CACHE_DIR_PATH_CHARS);
-
-  tmp_path = getenv("POCL_CACHE_DIR");
-  if (tmp_path && (access(tmp_path, W_OK) == 0))
-    {
-      snprintf(cache_path, CACHE_DIR_PATH_CHARS, "%s/%s", tmp_path, hash_str);
-    }
-  else
-    {
-#ifdef POCL_ANDROID
-      snprintf(cache_path, CACHE_DIR_PATH_CHARS,
-                  "/data/data/%s/cache/", pocl_get_process_name());
-
-      if (access(cache_path, W_OK) == 0)
-        strcat(cache_path, hash_str);
-      else
-        snprintf(cache_path, CACHE_DIR_PATH_CHARS, "/sdcard/pocl/kcache/%s", hash_str);
-#else
-      tmp_path = getenv("HOME");
-
-      if (tmp_path)
-        snprintf(cache_path, CACHE_DIR_PATH_CHARS, "%s/.pocl/kcache/%s", tmp_path, hash_str);
-      else
-        snprintf(cache_path, CACHE_DIR_PATH_CHARS, "/tmp/pocl/kcache/%s", hash_str);
-#endif
-    }
-
-  if (access(cache_path, F_OK) != 0)
-    pocl_mkdir_p(cache_path);
-
-    return cache_path;
-}
 
 uint32_t
 byteswap_uint32_t (uint32_t word, char should_swap) 
@@ -347,85 +286,7 @@ void pocl_command_enqueue (cl_command_queue command_queue,
 
 }
 
-char* pocl_get_process_name ()
-{
-  char tmpStr[64], cmdline[512], *processName = NULL;
-  FILE *statusFile;
-  int len, i, begin;
 
-  snprintf(tmpStr, 64, "/proc/%d/cmdline", getpid());
-  statusFile = fopen(tmpStr, "r");
-  if (statusFile == NULL)
-    return NULL;
-
-  if (fgets(cmdline, 511, statusFile) != NULL)
-    {
-      len = strlen(cmdline);
-      begin = 0;
-      for (i=len-1; i>=0; i--)     /* Extract program-name after last '/' */
-        {
-          if (cmdline[i] == '/')
-            {
-              begin = i + 1;
-              break;
-            }
-        }
-      processName = strdup(cmdline + begin);
-    }
-
-  fclose(statusFile);
-  return processName;
-}
-
-static int cache_lock_initialized = 0;
-static pocl_lock_t cache_lock = POCL_LOCK_INITIALIZER;
-
-void
-pocl_check_and_invalidate_cache (cl_program program,
-                  int device_i, const char* device_tmpdir)
-{
-  int cache_dirty = 0;
-  char *content = NULL, *s_ptr, *ss_ptr;
-  int read = 0;
-
-  POCL_LOCK(cache_lock);
-
-  if (!pocl_get_bool_option("POCL_KERNEL_CACHE", POCL_BUILD_KERNEL_CACHE))
-    {
-      cache_dirty = 1;
-      goto bottom;
-    }
-
-  /* If program contains "#include", disable caching
-     Included headers might get modified, force recompilation in all the cases
-     Yes, this is a very dirty way to find "# include"
-     but we can live with this for now
-   */
-  if (!pocl_get_bool_option("POCL_KERNEL_CACHE_IGNORE_INCLUDES", 0) &&
-      program->source)
-    {
-      for (s_ptr = program->source; (*s_ptr); s_ptr++)
-        {
-          if ((*s_ptr) == '#')
-            {
-              /* Skip all the white-spaces between # & include */
-              for (ss_ptr = s_ptr+1; *ss_ptr == ' '; ss_ptr++) ;
-              
-              if (strncmp(ss_ptr, "include", 7) == 0)
-                cache_dirty = 1;
-            }
-        }
-    }
-
-  bottom:
-  if (cache_dirty)
-    {
-      pocl_rm_rf(device_tmpdir);
-      mkdir(device_tmpdir, S_IRWXU);
-    }
-
-  POCL_UNLOCK(cache_lock);
-}
 
 
 int pocl_buffer_boundcheck(cl_mem buffer, size_t offset, size_t size) {

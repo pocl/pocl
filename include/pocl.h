@@ -50,6 +50,8 @@
 #define POCL_ADDRESS_SPACE_LOCAL 2
 #define POCL_ADDRESS_SPACE_CONSTANT 3
 
+#define POCL_FILENAME_LENGTH 1024
+
 typedef struct _mem_mapping mem_mapping_t;
 /* represents a single buffer to host memory mapping */
 struct _mem_mapping {

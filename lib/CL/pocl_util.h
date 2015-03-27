@@ -37,15 +37,6 @@
 extern "C" {
 #endif
 
-/**
- * Assign a directory for program based on already computed SHA
- * Create the directory if not present
- * \param program the program for which a path is needed
- *
- * \return a string allocated on the heap
- */
-char* pocl_create_program_cache_dir(cl_program program);
-
 uint32_t byteswap_uint32_t (uint32_t word, char should_swap);
 float byteswap_float (float word, char should_swap);
 
@@ -81,13 +72,6 @@ cl_int pocl_create_command (_cl_command_node **cmd,
 void pocl_command_enqueue (cl_command_queue command_queue,
                           _cl_command_node *node);
 
-/* Function to get current process name */
-char* pocl_get_process_name ();
-
-/* Allocates memory and places file contents in it. Returns number of chars read */
-size_t pocl_read_text_file (const char* path, char** content_dptr);
-
-void pocl_check_and_invalidate_cache (cl_program program, int device_i, const char* device_tmpdir);
 
 /* does several sanity checks on buffer & given memory region */
 int pocl_buffer_boundcheck(cl_mem buffer, size_t offset, size_t size);

@@ -46,21 +46,10 @@
 #include "pocl_debug.h"
 #include "pocl_hash.h"
 
-#define POCL_FILENAME_LENGTH 1024
 
-#define POCL_BUILD "pocl-build"
-#define POCL_KERNEL "pocl-kernel"
-#define POCL_WORKGROUP "pocl-workgroup"
-
-/* The filename in which the program source is stored in the program's temp dir. */
-#define POCL_PROGRAM_CL_FILENAME "program.cl"
-/* The filename in which the program LLVM bc is stored in the program's temp dir. */
-#define POCL_PROGRAM_BC_FILENAME "program.bc"
 /* The filename in which the work group (parallelizable) kernel LLVM bc is stored in 
    the kernel's temp dir. */
 #define POCL_PARALLEL_BC_FILENAME   "parallel.bc"
-#define POCL_BUILDLOG_FILENAME      "build.log"
-#define POCL_LAST_ACCESSED_FILENAME "last_accessed"
 
 #if __STDC_VERSION__ < 199901L
 # if __GNUC__ >= 2
@@ -489,6 +478,8 @@ struct _cl_program {
   cl_kernel kernels;
   /* program hash after build */
   uint8_t build_hash[SHA1_DIGEST_SIZE];
+  /* this lock is !NULL if we "own" the program's cache directory*/
+  void* cachedir_lock;
   /* Used to store the llvm IR of the build to save disk I/O. */
   void **llvm_irs;
   /* Use to store build status */

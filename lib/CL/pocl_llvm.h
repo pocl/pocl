@@ -101,42 +101,11 @@ int pocl_llvm_codegen ( cl_kernel kernel,
                         const char *outfile);
 
 /* Parse program file and populate program's llvm_irs */
-void
+int
 pocl_update_program_llvm_irs(cl_program program,
-                       cl_device_id device, const char* program_filename);
+                       cl_device_id device, const char* program_bc_path);
 
-#define LOCK_ACQUIRE_FAIL 3210
 
-void* acquire_lock_unless_file_exists(const char* path, int* file_exists);
-
-void* acquire_exclusive_lock_with_retry(const char* path);
-
-void release_lock(void* lock);
-
-/* Remove a directory, recursively */
-int pocl_rm_rf(const char* path);
-
-/* Make a directory, including all directories along path */
-int pocl_mkdir_p(const char* path);
-
-/* Remove a file or empty directory */
-int pocl_remove(const char* path);
-
-int pocl_exists(const char* path);
-
-int pocl_filesize(const char* path, uint64_t* res);
-
-/* Writes or appends data to a file. Locks the file (atomic operation) */
-int pocl_write_file(const char* path, const char* content_dptr,
-                    size_t count, int append, int dont_rewrite);
-
-/* Allocates memory and places file contents in it. Returns number of chars read.
- * Locks the file (atomic operation) */
-int pocl_read_file(const char* path, char* content_dptr, uint64_t read_bytes);
-
-/* Touch file to change last modified time. For portability, this
- * removes & creates the file. It uses a lock, so its atomic. */
-int pocl_touch_file(const char* path);
 
 
 #ifdef __cplusplus
