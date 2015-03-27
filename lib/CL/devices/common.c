@@ -36,7 +36,8 @@
 #include "config.h"
 
 #include "pocl_image_util.h"
-#include "pocl_util.h"
+#include "pocl_file_util.h"
+#include "pocl_cache.h"
 #include "devices.h"
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
@@ -80,9 +81,14 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
      "%s/%s.so.o", tmpdir, kernel->function_name);
   assert (error >= 0);
 
+  int file_exists = 0;
+  void* lock = acquire_lock_check_file_exists(module, &file_exists);
+  if (!lock)
+    return NULL;
 
-  if (access (module, F_OK) != 0)
-    {
+  if (file_exists)
+    goto FINISHED;
+
       error = snprintf (bytecode, POCL_FILENAME_LENGTH,
                         "%s/%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
       assert (error >= 0);
@@ -110,10 +116,12 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
       /* Save space in kernel cache */
       if (!pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
         {
-          pocl_remove(objfile);
-          pocl_remove(bytecode);
+          pocl_remove_locked(objfile);
+          pocl_remove_locked(bytecode);
         }
-    }
+
+FINISHED:
+  release_lock(lock, 1);
   return module;
 }
 
