@@ -441,7 +441,7 @@ pocl_basic_read (void *data, void *host_ptr, const void *device_ptr,
   if (host_ptr == device_ptr)
     return;
 
-  memcpy (host_ptr, device_ptr + offset, cb);
+  memcpy (host_ptr, (char*)device_ptr + offset, cb);
 }
 
 void
@@ -451,7 +451,7 @@ pocl_basic_write (void *data, const void *host_ptr, void *device_ptr,
   if (host_ptr == device_ptr)
     return;
 
-  memcpy (device_ptr + offset, host_ptr, cb);
+  memcpy ((char*)device_ptr + offset, host_ptr, cb);
 }
 
 
@@ -593,7 +593,7 @@ pocl_basic_copy (void *data, const void *src_ptr, size_t src_offset,
   if (src_ptr == dst_ptr)
     return;
   
-  memcpy (dst_ptr + dst_offset, src_ptr + src_offset, cb);
+  memcpy ((char*)dst_ptr + dst_offset, (char*)src_ptr + src_offset, cb);
 }
 
 void
