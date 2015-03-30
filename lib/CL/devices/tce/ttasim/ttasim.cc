@@ -66,8 +66,6 @@
 
 using namespace TTAMachine;
 
-size_t pocl_ttasim_max_work_item_sizes[] = {CL_INT_MAX, CL_INT_MAX, CL_INT_MAX};
-
 static void *pocl_ttasim_thread (void *p);
 
 void
@@ -102,10 +100,8 @@ pocl_ttasim_init_device_infos(struct _cl_device_id* dev)
   dev->type = CL_DEVICE_TYPE_GPU;
   dev->max_compute_units = 1;
   dev->max_work_item_dimensions = 3;
-  dev->max_work_item_sizes[0] = CL_INT_MAX;
-  dev->max_work_item_sizes[1] = CL_INT_MAX;
-  dev->max_work_item_sizes[2] = CL_INT_MAX;
-  dev->max_work_group_size = 8192;
+  dev->max_work_item_sizes[0] = dev->max_work_item_sizes[1] =
+	  dev->max_work_item_sizes[2] = dev->max_work_group_size = 8192;
   dev->preferred_wg_size_multiple = 8;
   dev->preferred_vector_width_char = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR;
   dev->preferred_vector_width_short = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_SHORT;

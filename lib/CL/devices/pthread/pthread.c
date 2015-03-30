@@ -199,9 +199,8 @@ pocl_pthread_init_device_infos(struct _cl_device_id* dev)
   pocl_basic_init_device_infos(dev);
 
   dev->type = CL_DEVICE_TYPE_CPU;
-  dev->max_work_item_sizes[0] = SIZE_MAX;
-  dev->max_work_item_sizes[1] = SIZE_MAX;
-  dev->max_work_item_sizes[2] = SIZE_MAX;
+  dev->max_work_item_sizes[0] = dev->max_work_item_sizes[1] =
+	  dev->max_work_item_sizes[2] = dev->max_work_group_size;
 
 }
 
