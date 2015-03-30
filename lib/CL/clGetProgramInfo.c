@@ -99,7 +99,6 @@ POname(clGetProgramInfo)(cl_program program,
   case CL_PROGRAM_KERNEL_NAMES:
     {
       const char *kernel_names[32];
-      char *c_ptr;
       int num_kernels = 0;
       size_t size = 0;
       num_kernels = pocl_llvm_get_kernel_names(program, kernel_names, 32);
