@@ -317,6 +317,11 @@ else()
   endif()
 endif()
 
+if (MSVC)
+  string(REPLACE "-L${LLVM_LIBDIR}" "" LLVM_LDFLAGS "${LLVM_LDFLAGS}")
+  string(STRIP "${LLVM_LDFLAGS}" LLVM_LDFLAGS)
+endif()
+
 ######################################################################################
 
 option(CUSTOM_BUFFER_ALLOCATOR "Use a custom OpenCL optimized region-based memory allocator instead of allocating buffers with malloc directly" ON)
