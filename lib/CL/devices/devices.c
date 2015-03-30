@@ -36,6 +36,7 @@
 #include "pocl_runtime_config.h"
 #include "basic/basic.h"
 #include "pthread/pocl-pthread.h"
+#include "pocl_debug.h"
 
 #if defined(BUILD_SPU)
 #include "cellspu/cellspu.h"
@@ -51,12 +52,6 @@
 static struct _cl_device_id* pocl_devices = NULL;
 unsigned int pocl_num_devices = 0;
 
-#ifdef POCL_DEBUG_MESSAGES
-int pocl_debug_messages;
-#ifdef HAVE_CLOCK_GETTIME
-struct timespec pocl_debug_timespec;
-#endif
-#endif
 
 /* Init function prototype */
 typedef void (*init_device_ops)(struct pocl_device_ops*);
@@ -151,6 +146,9 @@ pocl_device_common_init(struct _cl_device_id* dev)
   if(dev->version == NULL)
     dev->version = "OpenCL 1.2 pocl";
 
+#if defined(POCL_DEBUG_MESSAGES) &&  defined(HAVE_CLOCK_GETTIME)
+	pocl_debug_init_time();
+#endif
   dev->short_name = strdup(dev->ops->device_name);
   if(dev->long_name == NULL)
     dev->long_name = dev->short_name;

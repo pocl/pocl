@@ -1,3 +1,15 @@
+#ifndef POCL_DEBUG_H
+#define POCL_DEBUG_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+#ifdef __GNUC__
+#pragma GCC visibility push(hidden)
+#endif
+
 /* Debugging macros. Also macros for marking unimplemented parts of specs or
    untested parts of the implementation. */
 
@@ -38,72 +50,55 @@
 
 
 
+#include "config.h"
 
 #ifdef POCL_DEBUG_MESSAGES
 
-extern int pocl_debug_messages;
+    extern int pocl_debug_messages;
 
-  #ifdef HAVE_CLOCK_GETTIME
+    #if __GNUC__ >= 2
+    #define __func__ __PRETTY_FUNCTION__
+    #else
+    #define __func__ __FUNCTION__
+    #endif
 
-extern struct timespec pocl_debug_timespec;
-  #define POCL_MSG_PRINT_INFO(...)                                            \
-    do {                                                                      \
-        if (pocl_debug_messages) {                                            \
-            clock_gettime(CLOCK_REALTIME, &pocl_debug_timespec);              \
-            fprintf(stderr,                                                   \
-                    "[%li.%09li] POCL: in function %s at line %u:",           \
-                    (long)pocl_debug_timespec.tv_sec,                         \
-                    (long)pocl_debug_timespec.tv_nsec,                        \
-                    __func__, __LINE__);                                      \
-            fprintf(stderr, __VA_ARGS__);                                     \
-        }                                                                     \
-    } while (0)
-
-  #define POCL_MSG_PRINT(TYPE, ERRCODE, ...)                                  \
-    do {                                                                      \
-        if (pocl_debug_messages) {                                            \
-            clock_gettime(CLOCK_REALTIME, &pocl_debug_timespec);              \
-            fprintf(stderr, "[%li.%09li] POCL: " TYPE ERRCODE                 \
-                    " in function %s at line %u: \n",                         \
-                    (long)pocl_debug_timespec.tv_sec,                         \
-                    (long)pocl_debug_timespec.tv_nsec,                        \
-                    __func__, __LINE__);                                      \
-            fprintf(stderr, __VA_ARGS__);                                     \
-        }                                                                     \
-    } while (0)
-
-  #else
-
-  #define POCL_MSG_PRINT_INFO(...)                                            \
-    do {                                                                      \
-        if (pocl_debug_messages) {                                            \
-            fprintf(stderr, "** POCL ** : in function %s"                     \
-                    " at line %u:", __func__, __LINE__);                      \
-            fprintf(stderr, __VA_ARGS__);                                     \
-        }                                                                     \
-    } while (0)
-
-  #define POCL_MSG_PRINT(TYPE, ERRCODE, ...)                                  \
-    do {                                                                      \
-        if (pocl_debug_messages) {                                            \
-            fprintf(stderr, "** POCL ** : " TYPE ERRCODE " in function %s"    \
-                    " at line %u: \n",  __func__, __LINE__);                  \
-            fprintf(stderr, __VA_ARGS__);                                     \
-        }                                                                     \
-    } while (0)
-
-  #endif
+    #ifdef HAVE_CLOCK_GETTIME
+        #define POCL_DEBUG_HEADER pocl_debug_print_header(__func__, __LINE__);
+        extern void pocl_debug_print_header(const char * func, unsigned line);
+        extern void pocl_debug_init_time();
+    #else
+        #define POCL_DEBUG_HEADER                                           \
+            fprintf(stderr, "** POCL ** : in function %s"                   \
+            " at line %u:", __func__, __LINE__);
+    #endif
 
 
-#define POCL_MSG_WARN(...)    POCL_MSG_PRINT("WARNING", "", __VA_ARGS__)
-#define POCL_MSG_ERR(...)     POCL_MSG_PRINT("ERROR", "", __VA_ARGS__)
+    #define POCL_MSG_PRINT_INFO(...)                                        \
+        do {                                                                \
+            if (pocl_debug_messages) {                                      \
+                POCL_DEBUG_HEADER                                           \
+                fprintf(stderr, __VA_ARGS__);                               \
+            }                                                               \
+        } while (0)
+
+    #define POCL_MSG_PRINT(TYPE, ERRCODE, ...)                              \
+        do {                                                                \
+            if (pocl_debug_messages) {                                      \
+                POCL_DEBUG_HEADER                                           \
+                fprintf(stderr, __VA_ARGS__);                               \
+            }                                                               \
+        } while (0)
+
+
+    #define POCL_MSG_WARN(...)    POCL_MSG_PRINT("WARNING", "", __VA_ARGS__)
+    #define POCL_MSG_ERR(...)     POCL_MSG_PRINT("ERROR", "", __VA_ARGS__)
 
 #else
 
-#define POCL_MSG_WARN(...)
-#define POCL_MSG_ERR(...)
-#define POCL_MSG_PRINT(...)
-#define POCL_MSG_PRINT_INFO(...)
+    #define POCL_MSG_WARN(...)
+    #define POCL_MSG_ERR(...)
+    #define POCL_MSG_PRINT(...)
+    #define POCL_MSG_PRINT_INFO(...)
 
 #endif
 
@@ -137,3 +132,15 @@ extern struct timespec pocl_debug_timespec;
         errcode = err_code;                                                 \
         goto ERROR;                                                         \
     }                                                                       \
+
+
+
+#ifdef __GNUC__
+#pragma GCC visibility pop
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif
