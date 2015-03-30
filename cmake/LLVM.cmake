@@ -161,9 +161,10 @@ if("${LLVM_CXXFLAGS}" MATCHES "-fno-rtti")
        See the INSTALL file for more information.")
 endif()
 
-# Ubuntu's LLVM 3.5 is broken
-message(STATUS "Testing for Ubuntu's broken LLVM 3.5+")
+# Ubuntu's LLVM 3.5 is broken (is really 3.4svn with
+# some patches, neither 3.4 nor 3.5 in the end..
 if((LLVM_MINOR GREATER 4) AND (CMAKE_SYSTEM_NAME MATCHES "Linux"))
+  message(STATUS "Testing for Ubuntu's broken LLVM 3.5+")
   if(NOT EXISTS "${LLVM_INCLUDEDIR}/llvm/IR/CFG.h")
     message(FATAL_ERROR "Your llvm installation is broken. This is known to be the case on Ubuntu and clones with llvm 3.5; official llvm 3.5 downloads should work though.")
   endif()
@@ -183,6 +184,7 @@ endif()
 
 if(NOT LLVM_VERSION VERSION_LESS "3.5")
   run_llvm_config(LLVM_SYSLIBS --system-libs)
+  string(STRIP "${LLVM_SYSLIBS}" LLVM_SYSLIBS)
 endif()
 
 # Llvm-config may be installed or it might be used from build directory, in which case
