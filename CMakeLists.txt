@@ -526,11 +526,13 @@ if (MSVC)
   message(STATUS "libGLEW not found. A few tests will not work")
 else()
   pkg_check_modules(GLEW glew)
-  if(NOT GLEW_FOUND)
-    message(WARNING "libGLEW not found. A few tests will not work")
-  else()
-    set(HAVE_GLEW 1)
-  endif()
+endif()
+
+if(NOT GLEW_FOUND)
+  set(HAVE_GLEW 0)
+  message(WARNING "libGLEW not found. A few tests will not work")
+else()
+  set(HAVE_GLEW 1)
 endif()
 
 ######################################################################################
