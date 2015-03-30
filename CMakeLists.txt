@@ -217,15 +217,24 @@ setup_cached_var(ENABLE_DOCS "Documentation building"
 
 ######################################################################################
 
-include(CheckCSourceCompiles)
-CHECK_C_SOURCE_COMPILES("
+if(UNIX)
+  include(CheckCSourceCompiles)
+  CHECK_C_SOURCE_COMPILES("
 #include <time.h>
 int main() {
   struct timespec pocl_debug_timespec;
   clock_gettime(CLOCK_REALTIME, &pocl_debug_timespec);
   return 0;
 }
-" HAVE_CLOCK_GETTIME)
+  " HAVE_CLOCK_GETTIME)
+else()
+  if(WIN32)
+    message(STATUS "Using GetSystemTime...() on Win32")
+    set(HAVE_CLOCK_GETTIME 1)
+  else()
+    set(HAVE_CLOCK_GETTIME 0)
+  endif()
+endif()
 
 ######################################################################################
 

@@ -146,7 +146,7 @@ endif()
 set(POCL_PRIVATE_LINK_LIST ${CLANG_LIBFILES} ${POCL_LLVM_LIBS} ${LLVM_SYSLIBS})
 
 # -lrt is required for glibc < 2.17
-if(HAVE_CLOCK_GETTIME)
+if(HAVE_CLOCK_GETTIME AND (NOT WIN32))
   list(APPEND POCL_PUBLIC_LINK_LIST "rt")
 endif()
 
