@@ -267,7 +267,9 @@ if(UNIX)
   else()
     set(DEFAULT_HOST_LD_FLAGS "-shared -lm")
   endif()
-  # TODO win..
+  set(LIBMATH "-lm")
+elseif(WIN32)
+  set(LIBMATH)
 endif()
 
 ######################################################################################
@@ -930,7 +932,7 @@ message(STATUS "OPENCL_LIBS: ${OPENCL_LIBS}")
 message(STATUS "OPENCL_CFLAGS: ${OPENCL_CFLAGS}")
 
 # for tests / examples
-set(POCLU_LINK_OPTIONS "-lm" ${OPENCL_LIBS} "poclu")
+set(POCLU_LINK_OPTIONS ${LIBMATH} ${OPENCL_LIBS} "poclu")
 message(STATUS "POCLU LINK OPTS: ${POCLU_LINK_OPTIONS}")
 
 # DONE - just pocl-standalone script
