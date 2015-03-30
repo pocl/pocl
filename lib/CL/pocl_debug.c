@@ -20,8 +20,9 @@ int pocl_debug_messages;
         gmtime_r(&timespec.tv_sec, &t);
         fprintf(stderr,
             "[%04i-%02i-%02i %02i:%02i:%02i.%09li] POCL: "
-            "in fn %s at line %u:", t.tm_year, t.tm_mon, t.tm_mday,
-            t.tm_hour, t.tm_min, t.tm_sec, tm_nanosec,  func, line);
+            "in fn %s at line %u:\n", (t.tm_year + 1900),
+            t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min,
+            t.tm_sec, tm_nanosec,  func, line);
     }
 
     void pocl_debug_init_time() {
@@ -42,7 +43,7 @@ int pocl_debug_messages;
 
         fprintf(stderr,
             "[%04u-%02u-%02u %02u:%02u:%02u.%09lu] POCL: "
-            "in fn %s at line %u:",
+            "in fn %s at line %u:\n",
             (unsigned int)st.wYear, (unsigned int)st.wMonth,
             (unsigned int)st.wDay, (unsigned int)st.wHour,
             (unsigned int)st.wMinute, (unsigned int)st.wSecond,

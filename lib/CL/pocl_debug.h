@@ -69,29 +69,22 @@ extern "C" {
     #else
         #define POCL_DEBUG_HEADER                                           \
             fprintf(stderr, "** POCL ** : in function %s"                   \
-            " at line %u:", __func__, __LINE__);
+            " at line %u:\n", __func__, __LINE__);
     #endif
-
-
-    #define POCL_MSG_PRINT_INFO(...)                                        \
-        do {                                                                \
-            if (pocl_debug_messages) {                                      \
-                POCL_DEBUG_HEADER                                           \
-                fprintf(stderr, __VA_ARGS__);                               \
-            }                                                               \
-        } while (0)
 
     #define POCL_MSG_PRINT(TYPE, ERRCODE, ...)                              \
         do {                                                                \
             if (pocl_debug_messages) {                                      \
                 POCL_DEBUG_HEADER                                           \
+                fprintf(stderr, TYPE  ERRCODE " " );                        \
                 fprintf(stderr, __VA_ARGS__);                               \
             }                                                               \
         } while (0)
 
 
-    #define POCL_MSG_WARN(...)    POCL_MSG_PRINT("WARNING", "", __VA_ARGS__)
-    #define POCL_MSG_ERR(...)     POCL_MSG_PRINT("ERROR", "", __VA_ARGS__)
+    #define POCL_MSG_WARN(...)    POCL_MSG_PRINT(" *** WARNING *** ", "", __VA_ARGS__)
+    #define POCL_MSG_ERR(...)     POCL_MSG_PRINT(" *** ERROR *** ", "", __VA_ARGS__)
+    #define POCL_MSG_PRINT_INFO(...) POCL_MSG_PRINT(" *** INFO *** ", "", __VA_ARGS__)
 
 #else
 
@@ -106,7 +99,7 @@ extern "C" {
 #define POCL_GOTO_ERROR_ON(cond, err_code, ...)                             \
     if (cond)                                                               \
     {                                                                       \
-        POCL_MSG_PRINT("ERROR : ", # err_code, __VA_ARGS__);                \
+        POCL_MSG_PRINT(" *** ERROR *** ", # err_code, __VA_ARGS__);         \
         errcode = err_code;                                                 \
         goto ERROR;                                                         \
     }                                                                       \
@@ -114,21 +107,21 @@ extern "C" {
 #define POCL_RETURN_ERROR_ON(cond, err_code, ...)                           \
     if (cond)                                                               \
     {                                                                       \
-        POCL_MSG_PRINT("ERROR : ", # err_code, __VA_ARGS__);                \
+        POCL_MSG_PRINT(" *** ERROR *** ", # err_code, __VA_ARGS__);         \
         return err_code;                                                    \
     }                                                                       \
 
 #define POCL_RETURN_ERROR_COND(cond, err_code)                              \
     if (cond)                                                               \
     {                                                                       \
-        POCL_MSG_PRINT("ERROR : ", # err_code, "%s\n", # cond);             \
+        POCL_MSG_PRINT(" *** ERROR *** ", #err_code, "%s\n", #cond);        \
         return err_code;                                                    \
     }                                                                       \
 
 #define POCL_GOTO_ERROR_COND(cond, err_code)                                \
     if (cond)                                                               \
     {                                                                       \
-        POCL_MSG_PRINT("ERROR : ", # err_code, "%s\n", # cond);             \
+        POCL_MSG_PRINT(" *** ERROR *** ", #err_code, "%s\n", #cond);        \
         errcode = err_code;                                                 \
         goto ERROR;                                                         \
     }                                                                       \
