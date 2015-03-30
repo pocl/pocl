@@ -31,7 +31,7 @@ int context_set_properties(cl_context                    context,
                            const cl_context_properties * properties,
                            cl_int *                      errcode)
 {
-  int i;
+  unsigned i;
   int num_properties = 0;
   
   context->properties = NULL;
@@ -122,7 +122,7 @@ POname(clCreateContext)(const cl_context_properties * properties,
                 void *                        user_data,
                 cl_int *                      errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
-  int i, j;
+  unsigned i, j;
   cl_device_id device_ptr;
   int errcode = 0;
   cl_context context = NULL;

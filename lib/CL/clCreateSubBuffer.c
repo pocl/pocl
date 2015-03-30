@@ -35,7 +35,7 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
   cl_device_id device;
   cl_mem mem = NULL;
   int errcode;
-  int i;
+  unsigned i;
 
   POCL_GOTO_ERROR_COND((buffer == NULL), CL_INVALID_MEM_OBJECT);
 

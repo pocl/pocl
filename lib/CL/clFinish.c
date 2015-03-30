@@ -33,7 +33,7 @@ static void exec_commands (_cl_command_node *node_list);
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 {
-  int i;
+  unsigned i;
   _cl_command_node *node;
   cl_command_queue queue_at_hand;
   _cl_command_node *ready_list = NULL;
@@ -96,7 +96,7 @@ POsym(clFinish)
 
 static void exec_commands (_cl_command_node *node_list)
 {
-  int i;
+  unsigned i;
   cl_event *event = NULL;
   _cl_command_node *node;
   cl_command_queue command_queue = NULL;

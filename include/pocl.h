@@ -71,7 +71,7 @@ typedef struct
   /* A list of argument buffers to free after the command has 
      been executed. */
   cl_mem *arg_buffers;
-  int arg_buffer_count;
+  unsigned arg_buffer_count;
   size_t local_x;
   size_t local_y;
   size_t local_z;
@@ -87,7 +87,7 @@ typedef struct
   size_t cb_args;
   void (*user_func)(void *);
   cl_mem *mem_list;
-  int num_mem_objects;
+  unsigned num_mem_objects;
 } _cl_command_native;
 
 // clEnqueueReadBuffer
@@ -191,7 +191,7 @@ typedef struct _cl_command_node_struct
   struct _cl_command_node_struct *next; // for linked-list storage
   cl_event event;
   const cl_event *event_wait_list;
-  cl_int num_events_in_wait_list;
+  cl_uint num_events_in_wait_list;
   cl_device_id device;
 } _cl_command_node;
 

@@ -21,7 +21,7 @@ POname(clGetKernelWorkGroupInfo)
   /* check that kernel is associated with device, or that there is no risk of confusion */
   if (device != NULL)
     {
-      int i;
+      unsigned i;
       int found_it = 0;
       for (i = 0; i < kernel->context->num_devices; i++)
         if (device == kernel->context->devices[i])

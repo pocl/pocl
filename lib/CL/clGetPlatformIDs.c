@@ -43,8 +43,8 @@ POname(clGetPlatformIDs)(cl_uint           num_entries,
                  cl_platform_id *  platforms,
                  cl_uint *         num_platforms) CL_API_SUFFIX__VERSION_1_0
 {	
-  int const num = 1;
-  int i;
+  const unsigned num = 1;
+  unsigned i;
   
   if (platforms != NULL) {
     if (num_entries < num)

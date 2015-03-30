@@ -36,7 +36,7 @@ POname(clGetProgramBuildInfo)(cl_program            program,
   const char *empty_str = "";      /* dummy return value */
   const char *str;
 
-  int i;
+  unsigned i;
   cl_bool found;
 
   POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);

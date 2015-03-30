@@ -75,11 +75,11 @@ int main(int argc, char **argv) {
   h_b = (double *) malloc(bytes);
   h_c = (double *) malloc(bytes);
  
-  int i;
+  size_t i;
   for( i = 0; i < n; i++ )
   {
-    h_a[i] = i;
-    h_b[i] = i;
+    h_a[i] = (double)i;
+    h_b[i] = (double)i;
   }
 
   cl_int err;

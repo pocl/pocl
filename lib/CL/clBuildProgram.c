@@ -67,7 +67,7 @@ static inline void
 build_program_compute_hash(cl_program program)
 {
   SHA1_CTX hash_ctx;
-  int total_binary_size, i;
+  unsigned total_binary_size, i;
 
   pocl_SHA1_Init(&hash_ctx);
 
@@ -129,14 +129,14 @@ CL_API_SUFFIX__VERSION_1_0
   int fd;
   size_t n;
   int errcode;
-  int i;
+  size_t i;
   int error;
   size_t length;
   unsigned char *binary;
   unsigned real_num_devices;
   const cl_device_id *real_device_list;
   /* The default build script for .cl files. */
-  int device_i = 0;
+  unsigned device_i = 0;
   const char *user_options = "";
   char *temp_options;
   char *modded_options = NULL;
@@ -154,8 +154,8 @@ CL_API_SUFFIX__VERSION_1_0
   
   if (options != NULL)
     {
-      int size = 512; 
-      int i = 1; /* terminating char */
+      size_t size = 512;
+      size_t i = 1; /* terminating char */
       char *swap_tmp;
       modded_options = (char*) calloc (size, 1);
       temp_options = strdup (options);

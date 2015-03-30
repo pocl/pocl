@@ -62,8 +62,8 @@ public:
     mask2=new M[nsize];
     
     for(unsigned i=0; i<m; i++) {
-      in1[i]=i;
-      in2[i]=i+m;
+      in1[i]=(D)i;
+      in2[i]=(D)(i+m);
     }
     for(unsigned i=0; i<n; i++) {
       mask1[i] = stimuli[i];

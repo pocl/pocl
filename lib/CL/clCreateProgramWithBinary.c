@@ -39,8 +39,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
   cl_program program;
   unsigned total_binary_size;
   unsigned char *pos;
-  int i;
-  int j;
+  unsigned i,j;
   int errcode;
 
   POCL_GOTO_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);

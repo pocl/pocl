@@ -95,5 +95,5 @@
   void pocl_##__DRV__##_build_hash (void *data, SHA1_CTX *build_hash); \
   cl_int pocl_##__DRV__##_get_supported_image_formats (cl_mem_flags flags,\
                                          const cl_image_format **image_formats,\
-                                         cl_int *num_image_formats);\
+                                         cl_uint *num_image_formats);\
 POP_VISIBILITY_HIDDEN

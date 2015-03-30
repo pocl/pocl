@@ -30,7 +30,7 @@ POname(clCreateCommandQueue)(cl_context context,
                      cl_command_queue_properties properties,
                      cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
-  int i;
+  unsigned i;
   int errcode;
   cl_bool found = CL_FALSE;
 

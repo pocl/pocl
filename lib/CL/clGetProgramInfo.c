@@ -32,7 +32,7 @@ POname(clGetProgramInfo)(cl_program program,
                  void *param_value,
                  size_t *param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
-  int i;
+  unsigned i;
 
   POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
 
@@ -99,7 +99,7 @@ POname(clGetProgramInfo)(cl_program program,
   case CL_PROGRAM_KERNEL_NAMES:
     {
       const char *kernel_names[32];
-      int num_kernels = 0;
+      unsigned num_kernels = 0;
       size_t size = 0;
       num_kernels = pocl_llvm_get_kernel_names(program, kernel_names, 32);
       for (i = 0; i < num_kernels; ++i)

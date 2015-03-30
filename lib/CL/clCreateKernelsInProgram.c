@@ -15,8 +15,8 @@ POname(clCreateKernelsInProgram)(cl_program      program ,
                          cl_kernel *     kernels ,
                          cl_uint *       num_kernels_ret ) CL_API_SUFFIX__VERSION_1_0
 {
-  int idx;
-  int num_kern_found;
+  unsigned idx;
+  unsigned num_kern_found;
   
   /* Get list of kernel names in program */
   const char** knames = (const char**)malloc( num_kernels*sizeof(const char *) ); 

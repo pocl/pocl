@@ -32,7 +32,7 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
                   size_t *         param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
   const char *ret;
-  int retlen;
+  size_t retlen;
   cl_platform_id tmp_platform;
 
   // TODO: if we don't have ICD in use, platform==NULL should be valid & point to pocl

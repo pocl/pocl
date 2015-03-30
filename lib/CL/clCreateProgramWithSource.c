@@ -34,7 +34,7 @@ POname(clCreateProgramWithSource)(cl_context context,
                           cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
   cl_program program = NULL;
-  unsigned size;
+  size_t size;
   char *source;
   unsigned i;
   int errcode;

@@ -132,7 +132,7 @@ struct memory_region
   memory_region_t *next;
   memory_region_t *prev;
   enum allocation_strategy strategy; 
-  short alignment; /* alignment of the returned chunks in a 2's exponent byte count */
+  unsigned short alignment; /* alignment of the returned chunks in a 2's exponent byte count */
   ba_lock_t lock;
 };
 
