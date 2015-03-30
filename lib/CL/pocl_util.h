@@ -29,7 +29,10 @@
 #include <string.h>
 #include "pocl_cl.h"
 
+#ifdef __GNUC__
 #pragma GCC visibility push(hidden)
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -118,7 +121,10 @@ check_copy_overlap(const size_t src_offset[3],
 #ifdef __cplusplus
 }
 #endif
+
+#ifdef __GNUC__
 #pragma GCC visibility pop
+#endif
 
 /* Common macro for cleaning up "*GetInfo" API call implementations.
  * All the *GetInfo functions have been specified to look alike, 

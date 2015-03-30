@@ -25,14 +25,20 @@
 #include <string.h>
 #include "pocl_cl.h"
 
+#ifdef __GNUC__
 #pragma GCC visibility push(hidden)
+#endif
+
 #ifdef BUILD_ICD
 struct _cl_icd_dispatch pocl_dispatch = POCL_ICD_DISPATCH;
 struct _cl_platform_id _platforms[1]  = {{&pocl_dispatch}};
 #else
 struct _cl_platform_id _platforms[1]  = {};
 #endif
+
+#ifdef __GNUC__
 #pragma GCC visibility pop
+#endif
 
 /*
  * Get the number of supported platforms on this system. 

@@ -27,7 +27,9 @@
 
 #include "../pocl_cl.h"
 
+#ifdef __GNUC__
 #pragma GCC visibility push(hidden)
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,7 +71,9 @@ unsigned int pocl_get_devices(cl_device_type device_type, struct _cl_device_id *
  */
 int pocl_device_get_env_count(const char *dev_type);
 
+#ifdef __GNUC__
 #pragma GCC visibility pop
+#endif
 
 /* the environment variable that lists the enabled devices */
 #define POCL_DEVICES_ENV "POCL_DEVICES"
