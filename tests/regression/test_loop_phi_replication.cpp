@@ -57,7 +57,7 @@ int
 main(void)
 {
     for (int i = 0; i < BUFFER_SIZE; i++) {
-        A[i] = i;
+        A[i] = (float)i;
     }
 
     for (int i = 0; i < WORK_ITEMS; i++) {

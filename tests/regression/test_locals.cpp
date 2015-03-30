@@ -83,7 +83,7 @@ main(void)
         int scalar = poclu_bswap_cl_int (dev_id, 4);
 
         for (int i = 0; i < BUFFER_SIZE; ++i)
-            A[i] = poclu_bswap_cl_float(dev_id, i);
+            A[i] = poclu_bswap_cl_float(dev_id, (cl_float)i);
 
         // Build program
         program.build(devices);

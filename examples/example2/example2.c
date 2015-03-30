@@ -82,7 +82,7 @@ main (void)
   for (i = 0; i < HEIGHT; ++i)
     {
       for (j = 0; j < WIDTH; ++j)
-	input[i * WIDTH + j] = drand48();
+      input[i * WIDTH + j] = (cl_float)drand48();
     }
   
   context = poclu_create_any_context();

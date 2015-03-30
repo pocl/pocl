@@ -74,14 +74,14 @@ main (void)
 
   for (i = 0; i < N; ++i)
     {
-      srcA[i].s[0] = i;
-      srcA[i].s[1] = i;
-      srcA[i].s[2] = i;
-      srcA[i].s[3] = i;
-      srcB[i].s[0] = i;
-      srcB[i].s[1] = i;
-      srcB[i].s[2] = i;
-      srcB[i].s[3] = i;
+      srcA[i].s[0] = (cl_float)i;
+      srcA[i].s[1] = (cl_float)i;
+      srcA[i].s[2] = (cl_float)i;
+      srcA[i].s[3] = (cl_float)i;
+      srcB[i].s[0] = (cl_float)i;
+      srcB[i].s[1] = (cl_float)i;
+      srcB[i].s[2] = (cl_float)i;
+      srcB[i].s[3] = (cl_float)i;
     }
 
   ierr = exec_dot_product_kernel (source, source_size, N, srcA, srcB, dst);
