@@ -27,6 +27,13 @@ AT_KEYWORDS([runtime])
 AT_CHECK([cd $abs_top_srcdir/tests/runtime/; $abs_top_builddir/tests/runtime/test_clBuildProgram], 0, ignore, ignore)
 AT_CLEANUP
 
+AT_SETUP([clBuildProgram link error])
+AT_XFAIL_IF(true)
+AT_KEYWORDS([runtime])
+AT_CHECK([$abs_top_builddir/tests/runtime/test_link_error])
+AT_CLEANUP
+
+
 AT_SETUP([clFinish])
 AT_KEYWORDS([runtime])
 AT_CHECK_UNQUOTED([$abs_top_builddir/tests/runtime/test_clFinish | grep "ABABC"], 0, [ABABC
