@@ -250,7 +250,8 @@ static inline void
 build_program_compute_hash(cl_program program)
 {
     SHA1_CTX hash_ctx;
-    int total_binary_size, i;
+    unsigned i;
+    size_t total_binary_size;
 
     pocl_SHA1_Init(&hash_ctx);
 
@@ -300,7 +301,7 @@ char* pocl_get_process_name()
 {
     char tmpStr[64], cmdline[512], *processName=NULL;
     FILE *statusFile;
-    int len, i, begin;
+    size_t len, i, begin;
 
     snprintf(tmpStr, 64, "/proc/%d/cmdline", getpid());
     statusFile=fopen(tmpStr, "r");

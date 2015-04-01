@@ -37,7 +37,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
   CL_API_SUFFIX__VERSION_1_0
 {
   cl_program program;
-  unsigned total_binary_size;
+  size_t total_binary_size;
   unsigned char *pos;
   unsigned i,j;
   int errcode;
