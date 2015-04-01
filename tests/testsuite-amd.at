@@ -214,6 +214,7 @@ POAT_AMDSDK_SETUP([montecarloasian])
 # Seems this is a regression in LLVM 3.5
 AT_XFAIL_IF([grep -q "#define LLVM_3_5" $abs_top_builddir/config.h])
 AT_XFAIL_IF([grep -q "#define LLVM_3_6" $abs_top_builddir/config.h])
+AT_XFAIL_IF([grep -q "#define LLVM_3_7" $abs_top_builddir/config.h])
 AT_CHECK_UNQUOTED([make test_MonteCarloAsian -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
