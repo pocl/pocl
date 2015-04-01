@@ -25,9 +25,6 @@ int pocl_debug_messages;
             t.tm_sec, tm_nanosec,  func, line);
     }
 
-    void pocl_debug_init_time() {
-    }
-
   #else
 
     #include <windows.h>
@@ -50,8 +47,6 @@ int pocl_debug_messages;
             (unsigned long)st_nanosec, func, line);
     }
 
-    void pocl_debug_init_time() {
-    }
 
   #endif
 
