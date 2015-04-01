@@ -40,14 +40,13 @@ if(UNIX)
   include(GNUInstallDirs)
 else()
   if (WIN32)
-    set(CMAKE_INSTALL_PREFIX ${CMAKE_BINARY_DIR}/install)
     set(${CMAKE_INSTALL_LIBDIR} "lib")
     set(${CMAKE_INSTALL_DATADIR} "share")
     set(${CMAKE_INSTALL_INCLUDEDIR} "include")
     set(${CMAKE_INSTALL_BINDIR} "bin")
     message(STATUS "Setting installation destination on Windows to: ${CMAKE_INSTALL_PREFIX}")
   else()
-    message(FATAL_ERROR "not implemented yet")    
+    message(FATAL_ERROR "System not UNIX nor WIN32 - not implemented yet")
   endif()
 endif()
 
@@ -218,15 +217,24 @@ setup_cached_var(ENABLE_DOCS "Documentation building"
 
 ######################################################################################
 
-include(CheckCSourceCompiles)
-CHECK_C_SOURCE_COMPILES("
+if(UNIX)
+  include(CheckCSourceCompiles)
+  CHECK_C_SOURCE_COMPILES("
 #include <time.h>
 int main() {
   struct timespec pocl_debug_timespec;
   clock_gettime(CLOCK_REALTIME, &pocl_debug_timespec);
   return 0;
 }
-" HAVE_CLOCK_GETTIME)
+  " HAVE_CLOCK_GETTIME)
+else()
+  if(WIN32)
+    message(STATUS "Using GetSystemTime...() on Win32")
+    set(HAVE_CLOCK_GETTIME 1)
+  else()
+    set(HAVE_CLOCK_GETTIME 0)
+  endif()
+endif()
 
 ######################################################################################
 
@@ -267,7 +275,9 @@ if(UNIX)
   else()
     set(DEFAULT_HOST_LD_FLAGS "-shared -lm")
   endif()
-  # TODO win..
+  set(LIBMATH "-lm")
+elseif(WIN32)
+  set(LIBMATH)
 endif()
 
 ######################################################################################
@@ -314,6 +324,11 @@ else()
     Linking libpocl (possibly statically) to LLVM_LIBFILES")
     set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
   endif()
+endif()
+
+if (MSVC)
+  string(REPLACE "-L${LLVM_LIBDIR}" "" LLVM_LDFLAGS "${LLVM_LDFLAGS}")
+  string(STRIP "${LLVM_LDFLAGS}" LLVM_LDFLAGS)
 endif()
 
 ######################################################################################
@@ -930,7 +945,7 @@ message(STATUS "OPENCL_LIBS: ${OPENCL_LIBS}")
 message(STATUS "OPENCL_CFLAGS: ${OPENCL_CFLAGS}")
 
 # for tests / examples
-set(POCLU_LINK_OPTIONS "-lm" ${OPENCL_LIBS} "poclu")
+set(POCLU_LINK_OPTIONS ${LIBMATH} ${OPENCL_LIBS} "poclu")
 message(STATUS "POCLU LINK OPTS: ${POCLU_LINK_OPTIONS}")
 
 # DONE - just pocl-standalone script

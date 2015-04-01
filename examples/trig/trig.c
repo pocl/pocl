@@ -67,10 +67,10 @@ main (void)
 
   for (i = 0; i < N; ++i)
     {
-      srcA[i].s[0] = i;
-      srcA[i].s[1] = i;
-      srcA[i].s[2] = i;
-      srcA[i].s[3] = i;
+      srcA[i].s[0] = (cl_float)i;
+      srcA[i].s[1] = (cl_float)i;
+      srcA[i].s[2] = (cl_float)i;
+      srcA[i].s[3] = (cl_float)i;
       switch (i % 5) {
       case 0: dstS[i] = cosf((float)i); break;
       case 1: dstS[i] = fabsf((float)i) + 7.3f; break;

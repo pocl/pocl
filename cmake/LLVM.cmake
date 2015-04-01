@@ -49,6 +49,7 @@ set(WITH_LLVM_CONFIG "${WITH_LLVM_CONFIG}" CACHE PATH "Path to preferred llvm-co
 if(NOT LLVM_CONFIG)
   message(FATAL_ERROR "llvm-config not found !")
 else()
+  file(TO_CMAKE_PATH "${LLVM_CONFIG}" LLVM_CONFIG)
   message(STATUS "Using llvm-config: ${LLVM_CONFIG}")
   if(LLVM_CONFIG MATCHES "llvm-config${CMAKE_EXECUTABLE_SUFFIX}$")
     set(LLVM_BINARY_SUFFIX "")
@@ -80,24 +81,36 @@ macro(run_llvm_config VARIABLE_NAME)
 endmacro(run_llvm_config)
 
 run_llvm_config(LLVM_PREFIX --prefix)
-set(LLVM_PREFIX_BIN "${LLVM_PREFIX}/bin")
+# on windows, llvm-config returs "C:\llvm_prefix/bin" mixed style paths,
+# and cmake doesn't like the "\" - thinks its an escape char..
+file(TO_CMAKE_PATH "${LLVM_PREFIX}" LLVM_PREFIX_CMAKE)
+
+set(LLVM_PREFIX_BIN "${LLVM_PREFIX_CMAKE}/bin")
 run_llvm_config(LLVM_VERSION_FULL --version)
 # sigh, sanitize version... `llvm --version` on debian might return 3.4.1 but llvm command names are still <command>-3.4
 string(REGEX REPLACE "([0-9]+)\\.([0-9]+).*" "\\1.\\2" LLVM_VERSION "${LLVM_VERSION_FULL}")
 message(STATUS "LLVM_VERSION: ${LLVM_VERSION}")
 
 run_llvm_config(LLVM_CFLAGS --cflags)
+string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_CFLAGS "${LLVM_CFLAGS}")
 run_llvm_config(LLVM_CXXFLAGS --cxxflags)
+string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
 run_llvm_config(LLVM_CPPFLAGS --cppflags)
+string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_CPPFLAGS "${LLVM_CPPFLAGS}")
 run_llvm_config(LLVM_LDFLAGS --ldflags)
+string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_LDFLAGS "${LLVM_LDFLAGS}")
 run_llvm_config(LLVM_BINDIR --bindir)
+string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_BINDIR "${LLVM_BINDIR}")
 run_llvm_config(LLVM_LIBDIR --libdir)
+string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_LIBDIR "${LLVM_LIBDIR}")
 run_llvm_config(LLVM_INCLUDEDIR --includedir)
+string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_INCLUDEDIR "${LLVM_INCLUDEDIR}")
 run_llvm_config(LLVM_LIBS --libs)
 # Convert LLVM_LIBS from string -> list format to make handling them easier
 separate_arguments(LLVM_LIBS)
 run_llvm_config(LLVM_SRC_ROOT --src-root)
 run_llvm_config(LLVM_OBJ_ROOT --obj-root)
+string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_OBJ_ROOT "${LLVM_OBJ_ROOT}")
 run_llvm_config(LLVM_ALL_TARGETS --targets-built)
 run_llvm_config(LLVM_HOST_TARGET --host-target)
 # Ubuntu's llvm reports "arm-unknown-linux-gnueabihf" triple, then if one tries
@@ -148,9 +161,10 @@ if("${LLVM_CXXFLAGS}" MATCHES "-fno-rtti")
        See the INSTALL file for more information.")
 endif()
 
-# Ubuntu's LLVM 3.5 is broken
-message(STATUS "Testing for Ubuntu's broken LLVM 3.5+")
+# Ubuntu's LLVM 3.5 is broken (is really 3.4svn with
+# some patches, neither 3.4 nor 3.5 in the end..
 if((LLVM_MINOR GREATER 4) AND (CMAKE_SYSTEM_NAME MATCHES "Linux"))
+  message(STATUS "Testing for Ubuntu's broken LLVM 3.5+")
   if(NOT EXISTS "${LLVM_INCLUDEDIR}/llvm/IR/CFG.h")
     message(FATAL_ERROR "Your llvm installation is broken. This is known to be the case on Ubuntu and clones with llvm 3.5; official llvm 3.5 downloads should work though.")
   endif()
@@ -170,6 +184,7 @@ endif()
 
 if(NOT LLVM_VERSION VERSION_LESS "3.5")
   run_llvm_config(LLVM_SYSLIBS --system-libs)
+  string(STRIP "${LLVM_SYSLIBS}" LLVM_SYSLIBS)
 endif()
 
 # Llvm-config may be installed or it might be used from build directory, in which case

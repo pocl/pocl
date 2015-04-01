@@ -26,7 +26,9 @@
 
 #include "pocl_cl.h"
 
+#ifdef __GNUC__
 #pragma GCC visibility push(hidden)
+#endif
 
 extern cl_int 
 pocl_check_image_origin_region (const cl_mem image, 
@@ -61,7 +63,8 @@ pocl_read_image(cl_mem               image,
                 size_t               host_slice_pitch, 
                 void *               ptr);
 
-
+#ifdef __GNUC__
 #pragma GCC visibility pop
+#endif
                    
 #endif
