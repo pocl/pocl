@@ -996,14 +996,15 @@ static PassManager& kernel_compiler_passes
 
   PassManager *Passes = new PassManager();
 
-#if (!defined LLVM_3_2 && defined LLVM_OLDER_THAN_3_7)
+#if defined LLVM_3_2
+#elif defined LLVM_OLDER_THAN_3_7
   // Need to setup the target info for target specific passes. */
   TargetMachine *Machine = GetTargetMachine(device);
 
   // Add internal analysis passes from the target machine.
   if (Machine != NULL)
     Machine->addAnalysisPasses(*Passes);
-#else
+#else 
   TargetMachine *Machine = GetTargetMachine(device);
   if (Machine != NULL)
     Passes->add(createTargetTransformInfoWrapperPass(Machine->getTargetIRAnalysis()));
