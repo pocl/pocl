@@ -96,7 +96,6 @@ AT_CHECK_UNQUOTED([$abs_top_builddir/tests/kernel/kernel test_printf], 0,
 AT_CLEANUP
 
 AT_SETUP([Kernel functions as_type])
-AT_XFAIL_IF([grep -q "#define LLVM_3_7" $abs_top_builddir/config.h])
 AT_SKIP_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
 AT_KEYWORDS([conversion])
 AT_DATA([expout],
