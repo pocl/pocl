@@ -53,9 +53,16 @@ POname(clCreateKernel)(cl_program program,
   POCL_GOTO_ERROR_ON((program->num_devices == 0),
     CL_INVALID_PROGRAM, "Invalid program (has no devices assigned)\n");
 
-  POCL_GOTO_ERROR_ON((program->binaries == NULL || program->binary_sizes == NULL),
-    CL_INVALID_PROGRAM_EXECUTABLE, "No binaries in program (perhaps you forgot "
-    "to call clBuildProgram first ?\n");
+  POCL_GOTO_ERROR_ON((program->build_status == CL_BUILD_NONE),
+    CL_INVALID_PROGRAM_EXECUTABLE, "You must call clBuildProgram first!"
+      " (even for programs created with binaries)\n");
+
+  POCL_GOTO_ERROR_ON((program->build_status != CL_BUILD_SUCCESS),
+    CL_INVALID_PROGRAM_EXECUTABLE, "Last BuildProgram() was not successful\n")
+
+  POCL_GOTO_ERROR_ON((program->llvm_irs == NULL),
+    CL_INVALID_PROGRAM_EXECUTABLE, "No built binaries in program "
+    "(this shouldn't happen...)\n");
 
   kernel = (cl_kernel) malloc(sizeof(struct _cl_kernel));
   if (kernel == NULL)
