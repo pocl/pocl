@@ -96,8 +96,8 @@ cat >> ${output_file}.kernel_obj.c <<EOF
 
 #include <pocl_device.h>
 
-void _${kernel}_workgroup(void** args, struct pocl_context*);
-void _${kernel}_workgroup_fast(void** args, struct pocl_context*);
+void _pocl_launcher_${kernel}_workgroup(void** args, struct pocl_context*);
+void _pocl_launcher_${kernel}_workgroup_fast(void** args, struct pocl_context*);
 
 __attribute__((address_space(3))) __kernel_metadata _${kernel}_md = {
     "${kernel}", /* name */
