@@ -96,6 +96,7 @@ AT_CHECK_UNQUOTED([$abs_top_builddir/tests/kernel/kernel test_printf], 0,
 AT_CLEANUP
 
 AT_SETUP([Kernel functions as_type])
+AT_XFAIL_IF([grep -q "#define LLVM_3_7" $abs_top_builddir/config.h])
 AT_SKIP_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc])
 AT_KEYWORDS([conversion])
 AT_DATA([expout],
@@ -308,6 +309,7 @@ AT_CHECK([$abs_top_builddir/tests/kernel/test_shuffle half], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions: shuffle intN])
+AT_XFAIL_IF([grep -q "#define LLVM_3_7" $abs_top_builddir/config.h])
 AT_KEYWORDS([shuffle long])
 AT_DATA([expout],
 OK
@@ -316,6 +318,7 @@ AT_CHECK([$abs_top_builddir/tests/kernel/test_shuffle int], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions: shuffle uintN])
+AT_XFAIL_IF([grep -q "#define LLVM_3_7" $abs_top_builddir/config.h])
 AT_KEYWORDS([shuffle long])
 AT_DATA([expout],
 OK
@@ -324,6 +327,7 @@ AT_CHECK([$abs_top_builddir/tests/kernel/test_shuffle uint], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions: shuffle floatN])
+AT_XFAIL_IF([grep -q "#define LLVM_3_7" $abs_top_builddir/config.h])
 AT_KEYWORDS([shuffle long])
 AT_DATA([expout],
 OK
@@ -332,6 +336,7 @@ AT_CHECK([$abs_top_builddir/tests/kernel/test_shuffle float], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions: shuffle longN])
+AT_XFAIL_IF([grep -q "#define LLVM_3_7" $abs_top_builddir/config.h])
 AT_KEYWORDS([shuffle long])
 AT_DATA([expout],
 OK
@@ -340,6 +345,7 @@ AT_CHECK([$abs_top_builddir/tests/kernel/test_shuffle long], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions: shuffle ulongN])
+AT_XFAIL_IF([grep -q "#define LLVM_3_7" $abs_top_builddir/config.h])
 AT_KEYWORDS([shuffle long])
 AT_DATA([expout],
 OK
@@ -348,6 +354,7 @@ AT_CHECK([$abs_top_builddir/tests/kernel/test_shuffle ulong], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions: shuffle doubleN])
+AT_XFAIL_IF([grep -q "#define LLVM_3_7" $abs_top_builddir/config.h])
 AT_KEYWORDS([shuffle long])
 AT_DATA([expout],
 OK

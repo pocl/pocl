@@ -312,12 +312,11 @@ WorkitemLoops::CreateLoopAround
      refer to a loop-unique dummy metadata that is not merged
      automatically. */
 
-#ifdef LLVM_3_7
-# warning "Parallel loop metadata not added, LLVM 3.7 version TBD"
-#else
   /* This creation of the identifier metadata is copied from
      LLVM's MDBuilder::createAnonymousTBAARoot(). */
-#ifdef LLVM_OLDER_THAN_3_6
+#ifdef LLVM_3_7
+  MDNode *Dummy = MDNode::getTemporary(C, ArrayRef<Metadata*>()).release();
+#elif LLVM_OLDER_THAN_3_6
   MDNode *Dummy = MDNode::getTemporary(C, ArrayRef<Value*>());
 #elif LLVM_OLDER_THAN_3_7
   MDNode *Dummy = MDNode::getTemporary(C, ArrayRef<Metadata*>());
@@ -340,7 +339,6 @@ WorkitemLoops::CreateLoopAround
 #endif
   region.AddParallelLoopMetadata(Root);
 
-#endif
 
   builder.SetInsertPoint(loopEndBB);
   builder.CreateBr(oldExit);

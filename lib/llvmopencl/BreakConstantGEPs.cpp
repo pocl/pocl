@@ -126,10 +126,21 @@ convertGEP (ConstantExpr * CE, Instruction * InsertPt) {
   //
   // Make the new GEP instruction.
   //
+  #ifdef LLVM_OLDER_THAN_3_7
   return (GetElementPtrInst::Create (CE->getOperand(0),
                                      Indices,
                                      CE->getName(),
                                      InsertPt));
+  #else
+  /* The first NULL is the Type. It is not used at all, just asserted 
+   * against. And it asserts, no matter what is passed. Except NULL. 
+   * Seems this API is still "fluctuation in progress"*/
+  return (GetElementPtrInst::Create (NULL,
+                                     CE->getOperand(0),
+                                     Indices,
+                                     CE->getName(),
+                                     InsertPt));
+  #endif
 }
 
 //

@@ -44,9 +44,11 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include "llvm/Target/TargetLibraryInfo.h"
 #else
 #include "llvm/Analysis/TargetLibraryInfo.h"
+#include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/LegacyPassManager.h"
 using llvm::legacy::PassManager;
 #endif
+
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 
@@ -1002,8 +1004,11 @@ static PassManager& kernel_compiler_passes
   if (Machine != NULL)
     Machine->addAnalysisPasses(*Passes);
 #else
-# warning "TODO: Figure out how to add target machine passes in LLVM 3.7"
+  TargetMachine *Machine = GetTargetMachine(device);
+  if (Machine != NULL)
+    Passes->add(createTargetTransformInfoWrapperPass(Machine->getTargetIRAnalysis()));
 #endif
+
 
   if (module_data_layout != "") {
 #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
@@ -1025,7 +1030,9 @@ static PassManager& kernel_compiler_passes
   TLI->disableAllFunctions();
   Passes->add(TLI);
 #else
-# warning "TODO: Figure out how to disable libcall generation in LLVM 3.7"
+  TargetLibraryInfoImpl TLII(triple);
+  TLII.disableAllFunctions();
+  Passes->add(new TargetLibraryInfoWrapperPass(TLII));
 #endif
 
   /* The kernel compiler passes to run, in order.
