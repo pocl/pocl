@@ -22,6 +22,7 @@
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "config.h"
+#include "pocl.h"
 #if (defined LLVM_3_1 || defined LLVM_3_2)
 #include "llvm/Constants.h"
 #include "llvm/InstrTypes.h"
