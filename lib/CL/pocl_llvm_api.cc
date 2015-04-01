@@ -410,7 +410,22 @@ int pocl_llvm_build_program(cl_program program,
     return CL_BUILD_PROGRAM_FAILURE;
 
   /* Always retain program.bc. Its required in clBuildProgram */
-  lfm.write_module(*mod, 1);
+  lfm.write_module(*mod, 0);
+
+  // To avoid writing & reading the same back,
+  // just write the BC to a stringstream
+  std::string content;
+  llvm::raw_string_ostream sos(content);
+  WriteBitcodeToFile(*mod, sos);
+  sos.str(); // flush
+
+  if (program->binaries[device_i])
+    POCL_MEM_FREE(program->binaries[device_i]);
+
+  size_t n = content.size();
+  program->binary_sizes[device_i] = n;
+  program->binaries[device_i] = (unsigned char *) malloc(n);
+  std::memcpy(program->binaries[device_i], content.c_str(), n);
 
   // FIXME: cannot delete action as it contains something the llvm::Module
   // refers to. We should create it globally, at compiler initialization time.
