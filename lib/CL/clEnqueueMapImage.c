@@ -44,7 +44,7 @@ POname(clEnqueueMapImage)(cl_command_queue   command_queue,
 CL_API_SUFFIX__VERSION_1_0
 {
   cl_int errcode;
-  int offset;
+  size_t offset;
   void *map = NULL;
   cl_device_id device;
   _cl_command_node *cmd = NULL;

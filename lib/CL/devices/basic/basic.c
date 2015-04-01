@@ -395,7 +395,7 @@ cl_int
 pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
 {
   void *b = NULL;
-  cl_int flags = mem_obj->flags;
+  cl_mem_flags flags = mem_obj->flags;
 
   /* if memory for this global memory is not yet allocated -> do it */
   if (mem_obj->device_ptrs[device->global_mem_id].mem_ptr == NULL)
@@ -755,7 +755,7 @@ pocl_basic_get_timer_value (void *data)
 cl_int 
 pocl_basic_get_supported_image_formats (cl_mem_flags flags,
                                         const cl_image_format **image_formats,
-                                        cl_int *num_img_formats)
+                                        cl_uint *num_img_formats)
 {
     if (num_img_formats == NULL || image_formats == NULL)
       return CL_INVALID_VALUE;

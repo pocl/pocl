@@ -29,7 +29,7 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
 {
   int new_refcount;
   cl_kernel *pk;
-  int i;
+  unsigned i;
 
   POCL_RETURN_ERROR_COND((kernel == NULL), CL_INVALID_KERNEL);
 

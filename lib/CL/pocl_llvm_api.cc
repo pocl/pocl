@@ -1411,7 +1411,7 @@ void pocl_llvm_update_binaries (cl_program program) {
     }
 }
 
-int
+unsigned
 pocl_llvm_get_kernel_names( cl_program program, const char **knames, unsigned max_num_krn )
 {
   llvm::MutexGuard lockHolder(kernelCompilerLock);

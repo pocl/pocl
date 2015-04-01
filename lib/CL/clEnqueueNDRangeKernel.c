@@ -60,7 +60,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   char kernel_filename[POCL_FILENAME_LENGTH];
   char parallel_filename[POCL_FILENAME_LENGTH];
   char so_filename[POCL_FILENAME_LENGTH];
-  int i, count;
+  unsigned i, count;
   int error;
   struct pocl_context pc;
   _cl_command_node *command_node;

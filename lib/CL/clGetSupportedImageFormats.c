@@ -35,15 +35,15 @@ POname(clGetSupportedImageFormats) (cl_context           context,
                                     cl_uint *            num_image_formats) 
 CL_API_SUFFIX__VERSION_1_0
 {
-  int i, j;
+  unsigned i, j;
   cl_device_id device_id;
   const cl_image_format **dev_image_formats = 0;
-  int *dev_num_image_formats = 0;
+  unsigned *dev_num_image_formats = 0;
   int errcode = 0;
   
   cl_image_format reff;
   int reff_found;
-  int formatCount = 0;
+  unsigned formatCount = 0;
   
   POCL_RETURN_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
 
@@ -52,7 +52,7 @@ CL_API_SUFFIX__VERSION_1_0
   POCL_RETURN_ERROR_COND((num_entries == 0 && image_formats != NULL), CL_INVALID_VALUE);
   
   dev_image_formats = (const cl_image_format**) calloc (context->num_devices, sizeof(cl_image_format*));
-  dev_num_image_formats = (int*) calloc (context->num_devices, sizeof(int));
+  dev_num_image_formats = (unsigned*) calloc (context->num_devices, sizeof(unsigned));
   
   if (dev_image_formats == NULL || dev_num_image_formats == NULL)
     return CL_OUT_OF_HOST_MEMORY;
@@ -62,7 +62,7 @@ CL_API_SUFFIX__VERSION_1_0
     {    
       device_id = context->devices[i];
       errcode = device_id->ops->get_supported_image_formats 
-        (flags, dev_image_formats+i, dev_num_image_formats + i);
+        (flags, dev_image_formats+i, (cl_uint*)(dev_num_image_formats + i));
       
       if (errcode != CL_SUCCESS)
         goto CLEAN_MEM_AND_RETURN;

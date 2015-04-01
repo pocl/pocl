@@ -186,7 +186,7 @@ pocl_init_devices()
   static unsigned int init_done = 0;
   static pocl_lock_t pocl_init_lock = POCL_LOCK_INITIALIZER;
 
-  int i, j, dev_index;
+  unsigned i, j, dev_index;
   char env_name[1024];
   char dev_name[MAX_DEV_NAME_LEN] = {0};
   unsigned int device_count[POCL_NUM_DEVICE_TYPES];

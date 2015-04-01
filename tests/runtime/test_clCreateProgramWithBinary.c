@@ -16,7 +16,7 @@ main(void){
   cl_device_id devices[MAX_DEVICES + 1]; // + 1 for duplicate test
   cl_device_id device_id0;
   cl_uint num_devices;
-  cl_uint i;
+  size_t i;
   size_t num_binaries;
   const unsigned char **binaries = NULL;
   size_t *binary_sizes = NULL;
@@ -73,7 +73,7 @@ main(void){
   if (err != CL_SUCCESS)
       goto FREE_AND_EXIT;
   
-  cl_int num = num_binaries < num_devices ? num_binaries : num_devices;
+  cl_uint num = num_binaries < num_devices ? num_binaries : num_devices;
   if (num == 0)
     {
       err = !CL_SUCCESS;

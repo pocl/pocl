@@ -36,10 +36,10 @@ CL_API_SUFFIX__VERSION_1_2
     unsigned i;
     cl_uint num_entries = 0;
     cl_image_format *supported_image_formats;
-    int size;
+    size_t size;
     int errcode;
-    int row_pitch;
-    int slice_pitch;
+    size_t row_pitch;
+    size_t slice_pitch;
     int elem_size;
     int channels;
 

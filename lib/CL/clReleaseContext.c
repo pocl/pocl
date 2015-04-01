@@ -37,7 +37,7 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
          references and let the objects to get freed. */
       /* TODO: call the corresponding clRelease* functions
          for all the referred objects. */
-      int i;
+      unsigned i;
       for (i = 0; i < context->num_devices; ++i) 
         {
           POname(clReleaseDevice) (context->devices[i]);

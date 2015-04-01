@@ -22,6 +22,8 @@
 #ifndef POCL_HASH_H
 #define POCL_HASH_H
 
+#pragma GCC visibility push(hidden)
+
 /* public api for steve reid's public domain SHA-1 implementation */
 /* this file is in the public domain */
 
@@ -38,5 +40,7 @@ typedef struct {
 void pocl_SHA1_Init(SHA1_CTX* context);
 void pocl_SHA1_Update(SHA1_CTX* context, const uint8_t* data, const size_t len);
 void pocl_SHA1_Final(SHA1_CTX* context, uint8_t digest[SHA1_DIGEST_SIZE]);
+
+#pragma GCC visibility pop
 
 #endif /* POCL_HASH_H */

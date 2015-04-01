@@ -219,6 +219,7 @@ pocl_cpuinfo_detect_compute_unit_count()
   return -1;  
 }
 
+#ifdef POCL_ANDROID
 
 #define SYSFS_CPU_NUM_CORES_NODE    "/sys/devices/system/cpu/possible"
 
@@ -246,7 +247,7 @@ pocl_sysfs_detect_compute_unit_count()
 
   return cores;
 }
-
+#endif
 
 void
 pocl_cpuinfo_append_cpu_name(cl_device_id device)
@@ -283,20 +284,21 @@ pocl_cpuinfo_append_cpu_name(cl_device_id device)
 void
 pocl_cpuinfo_detect_device_info(cl_device_id device) 
 {
+  int res;
 #ifdef POCL_ANDROID
   /* sysfs node seems more suitable for android kernels
      override the value provided by hwloc
    */
   device->max_compute_units = pocl_sysfs_detect_compute_unit_count();
+#else
+  if (device->max_compute_units == 0) {
+    res = pocl_cpuinfo_detect_compute_unit_count();
+    device->max_compute_units = (res > 0) ? (cl_uint)res : 0;
+  }
 #endif
 
-  if (device->max_compute_units == 0) {
-    if ((device->max_compute_units = pocl_cpuinfo_detect_compute_unit_count()) == -1)
-      device->max_compute_units = 0;
-  }
-
-  if ((device->max_clock_frequency = pocl_cpuinfo_detect_max_clock_frequency()) == -1)
-    device->max_clock_frequency = 0;
+  res = pocl_cpuinfo_detect_max_clock_frequency();
+  device->max_clock_frequency = (res > 0) ? (cl_uint)res : 0;
 
   pocl_cpuinfo_append_cpu_name(device);
 }

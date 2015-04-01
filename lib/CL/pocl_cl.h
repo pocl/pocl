@@ -419,7 +419,7 @@ void (*fill_rect) (void *data,
     /* return supported image formats */
   cl_int (*get_supported_image_formats) (cl_mem_flags flags,
                                          const cl_image_format **image_formats,
-                                         cl_int *num_image_formats);
+                                         cl_uint *num_image_formats);
 };
 
 struct _cl_device_id {

@@ -93,7 +93,7 @@ struct thread_arguments
   cl_kernel kernel;
   cl_device_id device;
   struct pocl_context pc;
-  int last_gid_x; 
+  unsigned last_gid_x;
   pocl_workgroup workgroup;
   struct pocl_argument *kernel_args;
   thread_arguments *volatile next;
@@ -125,7 +125,7 @@ struct data {
 static thread_arguments *volatile thread_argument_pool = 0;
 static int argument_pool_initialized = 0;
 pocl_lock_t ta_pool_lock;
-static int get_max_thread_count();
+static size_t get_max_thread_count();
 static void * workgroup_thread (void *p);
 
 static void pocl_init_thread_argument_manager (void)
@@ -344,7 +344,7 @@ allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t
         }
 
       init_mem_region (new_mem_region, (memory_address_t)space, region_size);
-      new_mem_region->alignment = alignment;
+      new_mem_region->alignment = (unsigned short)(alignment);
       DL_APPEND (d->mem_regions->mem_regions, new_mem_region);
       chunk = alloc_buffer_from_region (new_mem_region, size);
 
@@ -408,7 +408,7 @@ pocl_pthread_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
 {
   void *b = NULL;
   struct data* d = (struct data*)device->data;
-  cl_int flags = mem_obj->flags;
+  cl_mem_flags flags = mem_obj->flags;
 
   /* if memory for this global memory is not yet allocated -> do it */
   if (mem_obj->device_ptrs[device->global_mem_id].mem_ptr == NULL)
@@ -517,7 +517,7 @@ pocl_pthread_copy (void *data, const void *src_ptr, size_t src_offset,
  * the maximum parallelism without extra threading overheads.
  */
 static
-int 
+size_t
 get_max_thread_count(cl_device_id device) 
 {
   /* if return THREAD_COUNT_ENV if set, 
@@ -538,19 +538,19 @@ pocl_pthread_run
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
   struct thread_arguments *arguments;
-  static int max_threads = 0; /* this needs to be asked only once */
+  static size_t max_threads = 0; /* this needs to be asked only once */
 
-  int num_groups_x = pc->num_groups[0];
+  size_t num_groups_x = pc->num_groups[0];
   /* TODO: distributing the work groups in the x dimension is not always the
      best option. This assumes x dimension has enough work groups to utilize
      all the threads. */
   if (max_threads == 0)
     max_threads = get_max_thread_count(cmd->device);
 
-  int num_threads = min(max_threads, num_groups_x);
+  unsigned num_threads = min(max_threads, num_groups_x);
   pthread_t *threads = (pthread_t*) malloc (sizeof (pthread_t)*num_threads);
   
-  int wgs_per_thread = num_groups_x / num_threads;
+  unsigned wgs_per_thread = num_groups_x / num_threads;
   /* In case the work group count is not divisible by the
      number of threads, we have to execute the remaining
      workgroups in one of the threads. */
@@ -563,8 +563,8 @@ pocl_pthread_run
   printf("### wgs per thread==%d leftover wgs==%d\n", wgs_per_thread, leftover_wgs);
 #endif
   
-  int first_gid_x = 0;
-  int last_gid_x = wgs_per_thread - 1;
+  unsigned first_gid_x = 0;
+  unsigned last_gid_x = wgs_per_thread - 1;
   for (i = 0; i < num_threads; 
        ++i, first_gid_x += wgs_per_thread, last_gid_x += wgs_per_thread) {
 
@@ -686,7 +686,7 @@ workgroup_thread (void *p)
                                                       NULL);
     }
 
-  int first_gid_x = ta->pc.group_id[0];
+  size_t first_gid_x = ta->pc.group_id[0];
   unsigned gid_z, gid_y, gid_x;
   for (gid_z = 0; gid_z < ta->pc.num_groups[2]; ++gid_z)
     {

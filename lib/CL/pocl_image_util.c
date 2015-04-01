@@ -219,12 +219,12 @@ pocl_read_image(cl_mem               image,
   if ((ptr == NULL) || (region == NULL) || origin == NULL)
     return CL_INVALID_VALUE;
     
-  int width = image->image_width;
-  int height = image->image_height;
+  size_t width = image->image_width;
+  size_t height = image->image_height;
 
   /* dev imagetype = host imagetype, in current implementation */
-  int dev_elem_size = image->image_elem_size;
-  int dev_channels = image->image_channels;
+  size_t dev_elem_size = image->image_elem_size;
+  size_t dev_channels = image->image_channels;
 
   size_t tuned_origin[3] = {origin[0]*dev_elem_size*dev_channels, origin[1], 
                             origin[2]};

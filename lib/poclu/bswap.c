@@ -27,7 +27,7 @@
 
 #define GENERIC_BYTESWAP(__DTYPE, __WORD)                         \
   do {                                                            \
-    int __i;                                                      \
+    unsigned __i;                                                 \
     union _word_union                                             \
     {                                                             \
       __DTYPE full_word;                                          \

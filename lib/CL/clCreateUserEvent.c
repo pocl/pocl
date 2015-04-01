@@ -1,4 +1,5 @@
 #include "pocl_cl.h"
+#include "pocl_util.h"
 
 
 CL_API_ENTRY cl_event CL_API_CALL
