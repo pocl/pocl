@@ -37,13 +37,11 @@ extern "C" {
 
 #define LOCK_ACQUIRE_FAIL 3210
 
-void* acquire_lock_check_file_exists(const char* path, int* file_exists);
+void* acquire_lock(const char* path, int shared);
 
-void* acquire_lock(const char* path);
+int lock_is_owned(void* lock);
 
-void* acquire_lock_immediate(const char* path);
-
-void release_lock(void* lock, int mark_as_done);
+void release_lock(void* lock);
 
 
 

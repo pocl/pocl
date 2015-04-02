@@ -43,6 +43,10 @@ int pocl_cache_cleanup_cachedir(cl_program program);
 
 int pocl_cache_requires_refresh(cl_program program);
 
+void* pocl_cache_acquire_writer_lock(cl_program program);
+
+void pocl_cache_release_lock(cl_program program, void* lock);
+
 
 int pocl_cache_write_program_source(char *program_cl_path, cl_program program);
 

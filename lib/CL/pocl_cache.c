@@ -71,6 +71,26 @@ void pocl_cache_kernel_so_path(char* kernel_so_path, cl_program program,
 
 /******************************************************************************/
 
+static void* acquire_program_lock(cl_program program, int shared) {
+    assert(program->cache_dir);
+    char lock_path[POCL_FILENAME_LENGTH];
+    int bytes_written = snprintf(lock_path, POCL_FILENAME_LENGTH,
+                               "%s_rw", program->cache_dir);
+    assert(bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
+    return acquire_lock(lock_path, shared);
+}
+
+void* pocl_cache_acquire_writer_lock(cl_program program) {
+    return acquire_program_lock(program, 0);
+}
+
+void pocl_cache_release_lock(cl_program program, void* lock) {
+    return release_lock(lock);
+}
+
+
+/******************************************************************************/
+
 int pocl_cache_write_program_source(char *     program_cl_path,
                                     cl_program program) {
     assert(program->cache_dir);

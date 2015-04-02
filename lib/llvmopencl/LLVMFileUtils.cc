@@ -1,3 +1,14 @@
+#if !defined(_MSC_VER) && !defined(__MINGW32__)
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#else
+#include <io.h>
+#endif
+
+#include <assert.h>
+
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -5,10 +16,8 @@
 #include <string>
 #include <cstdio>
 
-
 #include "pocl.h"
 #include "pocl_file_util.h"
-#include "pocl_cache.h"
 
 #include <llvm/Support/LockFileManager.h>
 #include <llvm/Support/Errc.h>
@@ -18,8 +27,6 @@
 #include "llvm/Support/raw_os_ostream.h"
 
 #include "llvm/Bitcode/ReaderWriter.h"
-
-#include "PoclLockFileManager.h"
 
 #define RETURN_IF_EC if (ec) return ec.default_error_condition().value()
 
@@ -142,36 +149,50 @@ int pocl_remove_locked(const char* path) {
 
 /****************************************************************************/
 
-static void* acquire_lock_internal(const char* path, int immediate) {
-    PoclLockFileManager* lfm = new PoclLockFileManager(path, immediate);
-    if (!lfm) {
-        delete lfm;
-        return NULL;
-    } else
+static void* acquire_lock_internal(const char* path, int shared) {
+    assert(path);
+    LockFileManager *lfm = new LockFileManager(path);
+
+    switch (lfm->getState()) {
+    case LockFileManager::LockFileState::LFS_Owned:
         return (void*)lfm;
-}
 
-void* acquire_lock(const char *path) {
-    return acquire_lock_internal(path, 0);
-}
+    case LockFileManager::LockFileState::LFS_Shared:
+        if (shared)
+            return (void*)lfm;
+        lfm->waitForUnlock();
+        delete lfm;
+        lfm = new LockFileManager(path);
+        if (lfm->getState() == LockFileManager::LockFileState::LFS_Owned)
+            return (void*)lfm;
+        else
+          {
+            delete lfm;
+            return NULL;
+          }
 
-void* acquire_lock_immediate(const char *path) {
-    return acquire_lock_internal(path, 1);
-}
-
-void* acquire_lock_check_file_exists(const char* path, int* file_exists) {
-    void* ret = acquire_lock(path);
-    if (!ret)
+    case LockFileManager::LockFileState::LFS_Error:
         return NULL;
-    *file_exists = ((PoclLockFileManager*)ret)->file_exists();
-    return ret;
+    }
+    return NULL;
 }
 
-void release_lock(void* lock, int mark_as_done) {
+
+void* acquire_lock(const char *path, int shared) {
+    return acquire_lock_internal(path, shared);
+}
+
+
+int lock_is_owned(void* lock) {
+    assert(lock);
+    return ((LockFileManager *)lock)->getState() ==
+            LockFileManager::LockFileState::LFS_Owned;
+}
+
+
+void release_lock(void* lock) {
     if (!lock)
         return;
-    PoclLockFileManager *l = (PoclLockFileManager*)lock;
-    if (mark_as_done)
-        l->done();
+    LockFileManager *l = (LockFileManager*)lock;
     delete l;
 }
