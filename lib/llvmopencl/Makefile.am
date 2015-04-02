@@ -61,7 +61,6 @@ PASSES_SOURCES = Barrier.h						\
 						AutomaticLocals.cc ImplicitConditionalBarriers.cc \
 						ImplicitConditionalBarriers.h \
 						DebugHelpers.h DebugHelpers.cc \
-						PoclLockFileManager.cc PoclLockFileManager.h \
 						linker.h CompilerWarnings.hh
 
 #add compiler driver sources
