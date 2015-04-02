@@ -1,0 +1,13 @@
+diff --git a/opencv-3.0.0-beta/cmake/OpenCVDetectOpenCL.cmake b/opencv-3.0.0-beta/cmake/OpenCVDetectOpenCL.cmake
+
+--- a/opencv-3.0.0-beta/cmake/OpenCVDetectOpenCL.cmake
++++ b/opencv-3.0.0-beta/cmake/OpenCVDetectOpenCL.cmake
+@@ -7,7 +7,7 @@
+ else(APPLE)
+   set(OPENCL_FOUND YES)
+   set(HAVE_OPENCL_STATIC OFF)
+-  set(OPENCL_INCLUDE_DIR "${OpenCV_SOURCE_DIR}/3rdparty/include/opencl/1.2")
++  set(OPENCL_INCLUDE_DIR "${OpenCV_SOURCE_DIR}/../../../include/")
+ endif(APPLE)
+ 
+ if(OPENCL_FOUND)
