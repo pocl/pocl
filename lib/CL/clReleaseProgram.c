@@ -33,12 +33,14 @@
 #include "pocl_cl.h"
 #include "pocl_util.h"
 #include "pocl_cache.h"
+#include "devices.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
 {
   int new_refcount;
   cl_kernel k;
+  unsigned i;
 
   POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
 
@@ -64,7 +66,8 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
 
       if (program->binaries != NULL)
         {
-          POCL_MEM_FREE(program->binaries[0]);
+          for (i = 0; i < program->num_devices; ++i)
+                POCL_MEM_FREE(program->binaries[i]);
           POCL_MEM_FREE(program->binaries);
         }
       POCL_MEM_FREE(program->binary_sizes);

@@ -23,7 +23,6 @@
 
 #include "pocl_cl.h"
 #include "pocl_util.h"
-#include "devices.h"
 #include <string.h>
 
 CL_API_ENTRY cl_program CL_API_CALL
@@ -37,8 +36,6 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
   CL_API_SUFFIX__VERSION_1_0
 {
   cl_program program;
-  size_t total_binary_size;
-  unsigned char *pos;
   unsigned i,j;
   int errcode;
 
@@ -50,12 +47,10 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
 
   POCL_GOTO_ERROR_COND((lengths == NULL), CL_INVALID_VALUE);
 
-  total_binary_size = 0;
   for (i = 0; i < num_devices; ++i)
     {
       POCL_GOTO_ERROR_ON((lengths[i] == 0 || binaries[i] == NULL), CL_INVALID_VALUE,
         "%i-th binary is NULL or its length==0\n", i);
-      total_binary_size += lengths[i];
     }
 
   // check for invalid devices in device_list[].
@@ -99,13 +94,11 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
 
   /* Allocate a continuous chunk of memory for all the binaries. */
   if ((program->binary_sizes =
-       (size_t*) malloc (sizeof (size_t) * num_devices)) == NULL ||
+       (size_t*) calloc (num_devices, sizeof(size_t))) == NULL ||
       (program->binaries = (unsigned char**)
-       malloc (sizeof (unsigned char*) * num_devices)) == NULL ||
-      (program->binaries[0] = (unsigned char*)
-       malloc (sizeof (unsigned char) * total_binary_size)) == NULL ||
+       calloc (num_devices, sizeof(unsigned char*))) == NULL ||
       ((program->llvm_irs =
-        (void**) calloc (pocl_num_devices, sizeof (void*))) == NULL))
+        (void**) calloc (num_devices, sizeof(void*))) == NULL))
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
       goto ERROR_CLEAN_PROGRAM_AND_BINARIES;
@@ -113,20 +106,17 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
 
   program->context = context;
   program->num_devices = num_devices;
-  program->devices = (cl_device_id*) malloc (sizeof(cl_device_id) * num_devices);
+  program->devices = (cl_device_id*) calloc (num_devices, sizeof(cl_device_id));
   program->source = NULL;
   program->kernels = NULL;
   program->build_status = CL_BUILD_NONE;
 
-  pos = program->binaries[0];
   for (i = 0; i < num_devices; ++i)
     {
       program->devices[i] = device_list[i];
       program->binary_sizes[i] = lengths[i];
-      program->llvm_irs[i] = NULL;
-      memcpy (pos, binaries[i], lengths[i]);
-      program->binaries[i] = pos;
-      pos += lengths[i];
+      program->binaries[i] = (unsigned char*) malloc (lengths[i]);
+      memcpy (program->binaries[i], binaries[i], lengths[i]);
       if (binary_status != NULL) /* TODO: validate the binary */
         binary_status[i] = CL_SUCCESS;
     }
@@ -142,7 +132,8 @@ ERROR_CLEAN_PROGRAM_BINARIES_AND_DEVICES:
   POCL_MEM_FREE(program->devices);
 #endif
 ERROR_CLEAN_PROGRAM_AND_BINARIES:
-  POCL_MEM_FREE(program->binaries[0]);
+  for (i = 0; i < num_devices; ++i)
+      POCL_MEM_FREE(program->binaries[i]);
   POCL_MEM_FREE(program->binaries);
   POCL_MEM_FREE(program->binary_sizes);
 /*ERROR_CLEAN_PROGRAM:*/
