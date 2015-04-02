@@ -34,7 +34,7 @@ extern "C" {
 int pocl_llvm_build_program
 (cl_program program,
  cl_device_id device,
- int device_i,     
+ unsigned device_i,
  const char* user_options
 );
 
@@ -95,8 +95,8 @@ int pocl_llvm_codegen ( cl_kernel kernel,
 
 /* Parse program file and populate program's llvm_irs */
 int
-pocl_update_program_llvm_irs(cl_program program,
-                       cl_device_id device, const char* program_bc_path);
+pocl_update_program_llvm_irs(cl_program program, unsigned device_i,
+                             cl_device_id device);
 
 
 

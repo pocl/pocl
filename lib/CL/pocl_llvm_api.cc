@@ -176,7 +176,7 @@ ParseIRFile(const char* fname, SMDiagnostic &Err, llvm::LLVMContext &ctx)
 
 int pocl_llvm_build_program(cl_program program, 
                             cl_device_id device,
-                            int device_i,
+                            unsigned device_i,
                             const char* user_options)
 
 {
