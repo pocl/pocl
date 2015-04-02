@@ -422,23 +422,16 @@ pocl_cache_create_program_cachedir(cl_program program)
     assert(cache_path);
     pocl_mkdir_p(cache_path);
 
-    program->cache_dir=cache_path;
+    program->cache_dir = cache_path;
 
-    program->cachedir_lock=acquire_lock_immediate(cache_path);
+    program->cachedir_lock = acquire_lock(cache_path, 1);
 
     return 0;
 }
 
 int pocl_cache_cleanup_cachedir(cl_program program) {
-    /* we only rm -rf if we actually own the program's cache directory. */
     if (program->cachedir_lock) {
-        if ((!pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES",
-                                   0)) &&
-            program->cache_dir) {
-            pocl_rm_rf(program->cache_dir);
-            POCL_MEM_FREE(program->cache_dir);
-        }
-        release_lock(program->cachedir_lock, 0);
+        release_lock(program->cachedir_lock);
         program->cachedir_lock=NULL;
     }
     return 0;
