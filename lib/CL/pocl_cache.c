@@ -191,8 +191,14 @@ int pocl_cache_write_descriptor(cl_program   program,
 
     char descriptor[POCL_FILENAME_LENGTH];
     int bytes_written = snprintf(descriptor, POCL_FILENAME_LENGTH,
-                               "%s/%s/descriptor.so.kernel_obj.c",
-                               devdir, kernel_name);
+                                 "%s/%s", devdir, kernel_name);
+    assert(bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
+    if (pocl_mkdir_p(descriptor))
+        return 1;
+
+    bytes_written = snprintf(descriptor, POCL_FILENAME_LENGTH,
+                                 "%s/%s/descriptor.so.kernel_obj.c",
+                                 devdir, kernel_name);
     assert(bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
 
     return pocl_write_file(descriptor, content, size, 0, 1);
