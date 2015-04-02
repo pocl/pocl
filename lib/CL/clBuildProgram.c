@@ -216,7 +216,7 @@ CL_API_SUFFIX__VERSION_1_0
 
       pocl_cache_program_bc_path(program_bc_path, program, device);
 
-      // clCreateProgramWithSource
+      /* clCreateProgramWithSource */
       if (program->source)
         {
           error = pocl_llvm_build_program(program, device, device_i, user_options);
@@ -226,12 +226,18 @@ CL_API_SUFFIX__VERSION_1_0
               goto ERROR_CLEAN_BINARIES;
             }
         }
-      else
-        if (program->binaries[device_i]) {
+      /* clCreateProgramWithBinaries */
+      else if (program->binaries[device_i]) {
             errcode = pocl_write_file(program_bc_path, program->binaries[device_i],
                           (uint64_t)program->binary_sizes[device_i], 0, 0);
-            POCL_GOTO_ERROR_ON(errcode, CL_BUILD_ERROR, "Failed to write binaries to program.bc\n");
+            POCL_GOTO_ERROR_ON(errcode, CL_BUILD_PROGRAM_FAILURE,
+                               "Failed to write binaries to program.bc\n");
         }
+      /* fail */
+      else
+        POCL_GOTO_ERROR_ON(1, CL_INVALID_BINARY, "Don't have sources and also no "
+                           "binaries for device %s - can't build the program\n",
+                           device->short_name);
 
       /* Read binaries from program.bc to memory */
       if (program->binaries[device_i] == NULL)
@@ -244,10 +250,7 @@ CL_API_SUFFIX__VERSION_1_0
         }
 
       if (program->llvm_irs[device_i] == NULL)
-        {
-          pocl_update_program_llvm_irs(program,
-                                       device, program_bc_path);
-        }
+          pocl_update_program_llvm_irs(program, device_i, device);
     }
 
   POCL_GOTO_ERROR_ON((actually_built < num_devices), CL_BUILD_PROGRAM_FAILURE,
@@ -271,7 +274,6 @@ ERROR_CLEAN_BINARIES:
   {
     POCL_MEM_FREE(program->binaries[i]);
   }
-ERROR_CLEAN_PROGRAM:
   POCL_MEM_FREE(program->binaries);
   POCL_MEM_FREE(program->binary_sizes);
 ERROR_CLEAN_OPTIONS:
