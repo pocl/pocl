@@ -1310,9 +1310,11 @@ void pocl_llvm_update_binaries (cl_program program) {
    for (size_t i = 0; i < program->num_devices; ++i)
     {
       assert (program->llvm_irs[i] != NULL);
+      if (program->binaries[i])
+          continue;
 
       pocl_cache_program_bc_path(program_bc_path, program, program->devices[i]);
-      pocl_write_module((llvm::Module*)program->llvm_irs[i], program_bc_path, 0);
+      pocl_write_module((llvm::Module*)program->llvm_irs[i], program_bc_path, 1);
 
       std::string content;
       llvm::raw_string_ostream sos(content);
@@ -1322,6 +1324,8 @@ void pocl_llvm_update_binaries (cl_program program) {
       size_t n = content.size();
       if (n < program->binary_sizes[i])
         POCL_ABORT("binary size doesn't match the expected value");
+      if (program->binaries[i])
+          POCL_MEM_FREE(program->binaries[i]);
       program->binaries[i] = (unsigned char *) malloc(n);
       std::memcpy(program->binaries[i], content.c_str(), n);
 
