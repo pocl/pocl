@@ -80,7 +80,7 @@
 #endif
 
 #define COMMAND_LENGTH 2048
-#define WORKGROUP_STRING_LENGTH 256
+#define WORKGROUP_STRING_LENGTH 1024
 
 /* The name of the environment variable used to force a certain max thread count
    for the thread execution. */

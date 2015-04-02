@@ -820,9 +820,9 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
       fprintf(kobj_c, "\n #include <pocl_device.h>\n");
 
       fprintf(kobj_c,
-        "void _%s_workgroup(void** args, struct pocl_context*);\n", kernel_name);
+        "void _pocl_launcher_%s_workgroup(void** args, struct pocl_context*);\n", kernel_name);
       fprintf(kobj_c,
-        "void _%s_workgroup_fast(void** args, struct pocl_context*);\n", kernel_name);
+        "void _pocl_launcher_%s_workgroup_fast(void** args, struct pocl_context*);\n", kernel_name);
 
       fprintf(kobj_c,
         "__attribute__((address_space(3))) __kernel_metadata _%s_md = {\n", kernel_name);
@@ -845,7 +845,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
       fprintf( kobj_c,"     _%s_ARG_IS_IMAGE,\n",    kernel_name  );
       fprintf( kobj_c,"     _%s_ARG_IS_SAMPLER,\n",  kernel_name  );
 #endif
-      fprintf( kobj_c,"     _%s_workgroup_fast\n",   kernel_name  );
+      fprintf( kobj_c,"     _pocl_launcher_%s_workgroup_fast\n",   kernel_name  );
       fprintf( kobj_c," };\n");
       fclose(kobj_c);
    }

@@ -42,6 +42,10 @@ char kernel[] =
 char invalid_kernel[] =
   "kernel void test_kernel(constant int a, j) { return 3; }\n";
 
+/* kernel can have any name, except main() starting from OpenCL 2.0 */
+char valid_kernel[] =
+  "kernel void init(global int *arg) { return; }\n";
+
 int
 main(void){
   cl_int err;
@@ -89,6 +93,42 @@ main(void){
 
   err = clBuildProgram(program, num_devices, devices, NULL, NULL, NULL);
   TEST_ASSERT(err == CL_BUILD_PROGRAM_FAILURE);
+
+  /* Test the possibility to call a kernel 'init'.
+   * Due to the delayed linking in current pocl, this will succeed even if it
+   * would fail at link time. Force linking by issuing the kernel once.
+   */
+
+  kernel_size = strlen(valid_kernel);
+  kernel_buffer = valid_kernel;
+
+  program = clCreateProgramWithSource(context, 1, (const char**)&kernel_buffer,
+				      &kernel_size, &err);
+  CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
+
+  err = clBuildProgram(program, num_devices, devices, NULL, NULL, NULL);
+  TEST_ASSERT(err == CL_SUCCESS);
+
+  /* TODO FIXME: from here to the clFinish() should be removed once
+   * delayed linking is disabled/removed in pocl, probably
+   */
+  cl_command_queue q = clCreateCommandQueue(context, devices[0], 0, err);
+  CHECK_OPENCL_ERROR_IN("clCreateCommandQueue");
+  cl_kernel k = clCreateKernel(program, "init", &err);
+  CHECK_OPENCL_ERROR_IN("clCreateKernel");
+
+  err = clSetKernelArg(k, 0, sizeof(cl_mem), NULL);
+  CHECK_OPENCL_ERROR_IN("clSetKernelArg");
+  size_t gws[] = {1};
+  err = clEnqueueNDRangeKernel(q, k, 1, NULL, gws, NULL, 0, NULL, NULL);
+  CHECK_OPENCL_ERROR_IN("clEnqueueNDRangeKernel");
+  err = clFinish(q);
+  TEST_ASSERT(err == CL_SUCCESS);
+
+  err  = clReleaseCommandQueue(q);
+  err |= clReleaseKernel(k);
+  err |= clReleaseProgram(program);
+  CHECK_OPENCL_ERROR_IN("'init' kernel name test clean-up");
 
   return EXIT_SUCCESS;
 }
