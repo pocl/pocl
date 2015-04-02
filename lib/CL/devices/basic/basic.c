@@ -41,6 +41,8 @@
 #  include "vccompat.hpp"
 #endif
 
+#include "pocl_cache.h"
+
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
 #define COMMAND_LENGTH 2048
@@ -799,6 +801,11 @@ void check_compiler_cache (_cl_command_node *cmd)
           return;
         }
     }
+  cl_program program = cmd->command.run.kernel->program;
+
+  void* cache_lock = pocl_cache_acquire_writer_lock(program);
+  assert(cache_lock);
+
   ci = (compiler_cache_item*) malloc (sizeof (compiler_cache_item));
   ci->next = NULL;
   ci->tmp_dir = strdup(cmd->command.run.tmp_dir);
@@ -820,6 +827,7 @@ void check_compiler_cache (_cl_command_node *cmd)
   cmd->command.run.wg = ci->wg = 
     (pocl_workgroup) lt_dlsym (dlhandle, workgroup_string);
 
+  pocl_cache_release_lock(program, cache_lock);
   LL_APPEND (compiler_cache, ci);
   POCL_UNLOCK (compiler_cache_lock);
 

@@ -106,7 +106,6 @@ using llvm::legacy::PassManager;
 #include "linker.h"
 #include "pocl_file_util.h"
 #include "pocl_cache.h"
-#include "PoclLockFileManager.h"
 
 using namespace clang;
 using namespace llvm;
@@ -184,12 +183,7 @@ int pocl_llvm_build_program(cl_program program,
   char program_bc_path[POCL_FILENAME_LENGTH];
   pocl_cache_program_bc_path(program_bc_path, program, device);
 
-  PoclLockFileManager lfm(program_bc_path);
-
-  if (!lfm)
-    return CL_OUT_OF_RESOURCES;
-
-  if (lfm.file_exists() && !pocl_cache_requires_refresh(program))
+  if (pocl_exists(program_bc_path) && !pocl_cache_requires_refresh(program))
     return CL_SUCCESS;
 
 
@@ -410,10 +404,12 @@ int pocl_llvm_build_program(cl_program program,
     return CL_BUILD_PROGRAM_FAILURE;
 
   /* Always retain program.bc. Its required in clBuildProgram */
-  lfm.write_module(*mod, 0);
+  pocl_write_module(*mod, program_bc_path, 0);
 
-  // To avoid writing & reading the same back,
-  // just write the BC to a stringstream
+  /* To avoid writing & reading the same back,
+   * save program->binaries[i]
+   */
+
   std::string content;
   llvm::raw_string_ostream sos(content);
   WriteBitcodeToFile(*mod, sos);
@@ -1209,14 +1205,8 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
   char kernel_so_path[POCL_FILENAME_LENGTH];
   pocl_cache_kernel_so_path(kernel_so_path, program, device, kernel, local_x, local_y, local_z);
 
-  PoclLockFileManager lfm(kernel_so_path);
-
-  if (!lfm)
-    return CL_OUT_OF_RESOURCES;
-
-  if (lfm.file_exists())
+  if (pocl_exists(kernel_so_path))
     return CL_SUCCESS;
-
 
   llvm::MutexGuard lockHolder(kernelCompilerLock);
   InitializeLLVM();
@@ -1289,15 +1279,18 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
 
 int
 pocl_update_program_llvm_irs(cl_program program,
-                             cl_device_id device, const char* program_bc_path)
+                             unsigned device_i,
+                             cl_device_id device)
 {
   SMDiagnostic Err;
 
-  PoclLockFileManager lfm(program_bc_path);
-  if (!lfm)
+  char program_bc_path[POCL_FILENAME_LENGTH];
+  pocl_cache_program_bc_path(program_bc_path, program, device);
+
+  if (!pocl_exists(program_bc_path))
     return -1;
 
-  program->llvm_irs[device->dev_id] =
+  program->llvm_irs[device_i] =
               ParseIRFile(program_bc_path, Err, *GlobalContext());
   return 0;
 }
@@ -1378,10 +1371,7 @@ pocl_llvm_codegen(cl_kernel kernel,
 {
     SMDiagnostic Err;
 
-    PoclLockFileManager lfm(outfilename);
-    if (!lfm)
-      return -1;
-    if (lfm.file_exists())
+    if (pocl_exists(outfilename))
       return 0;
 
     llvm::Triple triple(device->llvm_target_triplet);
@@ -1423,7 +1413,8 @@ pocl_llvm_codegen(cl_kernel kernel,
       return 1;
 
     PM.run(*input);
-    return lfm.write_file(sos.str(), 0, 0);
+    std::string o = sos.str(); // flush
+    return pocl_write_file(outfilename, o.c_str(), o.size(), 0, 0);
 
 }
 /* vim: set ts=4 expandtab: */

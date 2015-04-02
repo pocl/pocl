@@ -45,6 +45,7 @@ POname(clCreateKernel)(cl_program program,
   int errcode;
   int error;
   unsigned device_i;
+  void* cache_lock = NULL;
 
   POCL_GOTO_ERROR_COND((kernel_name == NULL), CL_INVALID_VALUE);
 
@@ -72,6 +73,9 @@ POname(clCreateKernel)(cl_program program,
   }
 
   POCL_INIT_OBJECT (kernel);
+
+  cache_lock = pocl_cache_acquire_writer_lock(program);
+  assert(cache_lock);
 
   for (device_i = 0; device_i < program->num_devices; ++device_i)
     {
@@ -113,16 +117,19 @@ POname(clCreateKernel)(cl_program program,
 
   POCL_RETAIN_OBJECT(program);
 
-  if (errcode_ret != NULL)
-    *errcode_ret = CL_SUCCESS;
-  return kernel;
+  errcode = CL_SUCCESS;
+  goto SUCCESS;
 
 ERROR:
   POCL_MEM_FREE(kernel);
+  kernel = NULL;
+
+SUCCESS:
   if(errcode_ret != NULL)
   {
     *errcode_ret = errcode;
   }
-  return NULL;
+  pocl_cache_release_lock(program, cache_lock);
+  return kernel;
 }
 POsym(clCreateKernel)

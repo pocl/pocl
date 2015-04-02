@@ -24,6 +24,7 @@
 #include <string.h>
 #include "pocl_llvm.h"
 #include "pocl_util.h"
+#include "pocl_cache.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clGetProgramInfo)(cl_program program,
@@ -54,9 +55,14 @@ POname(clGetProgramInfo)(cl_program program,
     
   case CL_PROGRAM_BINARY_SIZES:
     {
+      void* cache_lock = pocl_cache_acquire_writer_lock(program);
+      assert(cache_lock);
+
       size_t const value_size = sizeof(size_t) * program->num_devices;
       if (param_value)
         pocl_llvm_update_binaries (program);
+
+      pocl_cache_release_lock(program, cache_lock);
       POCL_RETURN_GETINFO_SIZE(value_size, program->binary_sizes);
     }
 

@@ -84,6 +84,7 @@ CL_API_SUFFIX__VERSION_1_0
   char *modded_options = NULL;
   char *token;
   char *saveptr = NULL;
+  void* cache_lock = NULL;
 
   POCL_GOTO_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
 
@@ -195,6 +196,9 @@ CL_API_SUFFIX__VERSION_1_0
 
   pocl_cache_create_program_cachedir(program);
 
+  cache_lock = pocl_cache_acquire_writer_lock(program);
+  assert(cache_lock);
+
   POCL_MSG_PRINT_INFO("building program with options %s\n",
                       options != NULL ? options : "");
 
@@ -228,7 +232,7 @@ CL_API_SUFFIX__VERSION_1_0
         }
       /* clCreateProgramWithBinaries */
       else if (program->binaries[device_i]) {
-            errcode = pocl_write_file(program_bc_path, program->binaries[device_i],
+            errcode = pocl_write_file(program_bc_path, (char*)program->binaries[device_i],
                           (uint64_t)program->binary_sizes[device_i], 0, 0);
             POCL_GOTO_ERROR_ON(errcode, CL_BUILD_PROGRAM_FAILURE,
                                "Failed to write binaries to program.bc\n");
@@ -263,6 +267,7 @@ CL_API_SUFFIX__VERSION_1_0
   pocl_cache_update_program_last_access(program);
 
   program->build_status = CL_BUILD_SUCCESS;
+  pocl_cache_release_lock(program, cache_lock);
   POCL_UNLOCK_OBJ(program);
   return CL_SUCCESS;
 
@@ -280,6 +285,7 @@ ERROR_CLEAN_OPTIONS:
   POCL_MEM_FREE(modded_options);
 ERROR:
   program->build_status = CL_BUILD_ERROR;
+  pocl_cache_release_lock(program, cache_lock);
   POCL_UNLOCK_OBJ(program);
   return errcode;
 }

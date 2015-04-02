@@ -61,6 +61,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   int error;
   struct pocl_context pc;
   _cl_command_node *command_node;
+  void* cache_lock;
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
   
@@ -227,6 +228,9 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
     CL_INVALID_EVENT_WAIT_LIST);
 
+  cache_lock = pocl_cache_acquire_writer_lock(kernel->program);
+  assert(cache_lock);
+
   char cachedir[POCL_FILENAME_LENGTH];
   pocl_cache_make_kernel_cachedir_path(cachedir, kernel->program,
                                   command_queue->device, kernel,
@@ -234,14 +238,14 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
 
   error = pocl_llvm_generate_workgroup_function(command_queue->device,
                                 kernel, local_x, local_y, local_z);
-  if (error)  return error;
+  if (error) goto ERROR;
 
   error = pocl_create_command (&command_node, command_queue,
                                CL_COMMAND_NDRANGE_KERNEL,
                                event, num_events_in_wait_list,
                                event_wait_list);
   if (error != CL_SUCCESS)
-    return error;
+    goto ERROR;
 
   pc.work_dim = work_dim;
   pc.num_groups[0] = global_x / local_x;
@@ -329,7 +333,11 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   }
 
   pocl_command_enqueue (command_queue, command_node);
+  error = CL_SUCCESS;
 
-  return CL_SUCCESS;
+ERROR:
+  pocl_cache_release_lock(kernel->program, cache_lock);
+  return error;
+
 }
 POsym(clEnqueueNDRangeKernel)
