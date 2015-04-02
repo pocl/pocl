@@ -45,6 +45,8 @@
 void pocl_cache_program_bc_path(char*        program_bc_path,
                                 cl_program   program,
                                 cl_device_id device) {
+    assert(program->cache_dir);
+    assert(device->cache_dir_name);
     int bytes_written=snprintf(program_bc_path, POCL_FILENAME_LENGTH,
                                "%s/%s/%s", program->cache_dir,
                                device->cache_dir_name, POCL_PROGRAM_BC_FILENAME);
@@ -56,6 +58,10 @@ void pocl_cache_kernel_so_path(char* kernel_so_path, cl_program program,
                                cl_device_id device, cl_kernel kernel,
                                size_t local_x, size_t local_y,
                                size_t local_z) {
+    assert(program->cache_dir);
+    assert(kernel_so_path);
+    assert(device->cache_dir_name);
+    assert(kernel->name);
     int bytes_written=snprintf(kernel_so_path, POCL_FILENAME_LENGTH,
                                "%s/%s/%s/%zu-%zu-%zu/%s.so", program->cache_dir,
                                device->cache_dir_name, kernel->name, local_x,
@@ -67,6 +73,7 @@ void pocl_cache_kernel_so_path(char* kernel_so_path, cl_program program,
 
 int pocl_cache_write_program_source(char *     program_cl_path,
                                     cl_program program) {
+    assert(program->cache_dir);
     int bytes_written=snprintf(program_cl_path, POCL_FILENAME_LENGTH, "%s/%s",
                                program->cache_dir, POCL_PROGRAM_CL_FILENAME);
     assert(bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
@@ -105,6 +112,7 @@ int pocl_cache_requires_refresh(cl_program program)
 int pocl_cache_update_program_last_access(cl_program program) {
     char last_accessed_path[POCL_FILENAME_LENGTH];
 
+    assert(program->cache_dir);
     int bytes_written=snprintf(last_accessed_path, POCL_FILENAME_LENGTH, "%s/%s",
                                program->cache_dir, POCL_LAST_ACCESSED_FILENAME);
     assert(bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
@@ -117,6 +125,8 @@ int pocl_cache_update_program_last_access(cl_program program) {
 static void pocl_cache_device_cachedir_path(char*        device_cachedir,
                                             cl_program   program,
                                             cl_device_id device) {
+    assert(program->cache_dir);
+    assert(device->cache_dir_name);
     int bytes_written=snprintf(device_cachedir, POCL_FILENAME_LENGTH, "%s/%s",
                                program->cache_dir, device->cache_dir_name);
     assert(bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
@@ -171,6 +181,7 @@ int pocl_cache_write_descriptor(cl_program   program,
 /******************************************************************************/
 
 static void pocl_cache_buildlog_path(char* buildlog_path, cl_program program) {
+    assert(program->cache_dir);
     int bytes_written=snprintf(buildlog_path, POCL_FILENAME_LENGTH, "%s/%s",
                                program->cache_dir, POCL_BUILDLOG_FILENAME);
     assert(bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
@@ -211,6 +222,10 @@ int pocl_cache_write_kernel_parallel_bc(void*        bc,
                                         size_t       local_z) {
     char kernel_parallel_path[POCL_FILENAME_LENGTH];
 
+    assert(program->cache_dir);
+    assert(bc);
+    assert(device->cache_dir_name);
+    assert(kernel->name);
     int bytes_written = snprintf(kernel_parallel_path, POCL_FILENAME_LENGTH,
                                "%s/%s/%s/%zu-%zu-%zu/%s", program->cache_dir,
                                device->cache_dir_name, kernel->name, local_x,
@@ -228,6 +243,10 @@ int pocl_cache_make_kernel_cachedir_path(char*        kernel_cachedir_path,
                                          size_t       local_x,
                                          size_t       local_y,
                                          size_t       local_z) {
+    assert(program->cache_dir);
+    assert(kernel_cachedir_path);
+    assert(device->cache_dir_name);
+    assert(kernel->name);
     int bytes_written = snprintf(kernel_cachedir_path, POCL_FILENAME_LENGTH,
                                "%s/%s/%s/%zu-%zu-%zu", program->cache_dir,
                                device->cache_dir_name, kernel->name,
@@ -374,6 +393,7 @@ pocl_cache_create_program_cachedir(cl_program program)
 #endif
     }
 
+    assert(cache_path);
     pocl_mkdir_p(cache_path);
 
     program->cache_dir=cache_path;
