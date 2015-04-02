@@ -31,7 +31,9 @@
 extern "C" {
 #endif
 
+#ifdef __GNUC__
 #pragma GCC visibility push(hidden)
+#endif
 
 #define LOCK_ACQUIRE_FAIL 3210
 
@@ -74,8 +76,9 @@ int pocl_write_module(void *module, const char* path, int dont_rewrite);
 
 int pocl_remove_locked(const char* path);
 
+#ifdef __GNUC__
 #pragma GCC visibility pop
-
+#endif
 
 #ifdef __cplusplus
 }

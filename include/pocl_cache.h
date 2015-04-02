@@ -32,8 +32,9 @@ extern "C" {
 #define CL_USE_DEPRECATED_OPENCL_1_1_APIS
 #include <CL/cl.h>
 
-
+#ifdef __GNUC__
 #pragma GCC visibility push(hidden)
+#endif
 
 int
 pocl_cache_create_program_cachedir(cl_program program);
@@ -101,8 +102,9 @@ void pocl_cache_kernel_so_path(char* kernel_so_path, cl_program program,
                               cl_device_id device, cl_kernel kernel,
                               size_t local_x, size_t local_y, size_t local_z);
 
+#ifdef __GNUC__
 #pragma GCC visibility pop
-
+#endif
 
 
 #ifdef __cplusplus
