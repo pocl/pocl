@@ -98,10 +98,10 @@ POname(clCreateProgramWithSource)(cl_context context,
   program->context = context;
   program->num_devices = context->num_devices;
   program->devices = context->devices;
-  program->binary_sizes = NULL;
-  program->binaries = NULL;
+  program->binary_sizes = (size_t*) calloc (context->num_devices, sizeof(size_t));
+  program->binaries = (unsigned char**) calloc (context->num_devices, sizeof(unsigned char*));
   program->kernels = NULL;
-  program->llvm_irs = NULL;
+  program->llvm_irs = (void**) calloc(context->num_devices, sizeof(void*));
   program->cache_dir = NULL;
   program->cachedir_lock = NULL;
   program->build_status = CL_BUILD_NONE;

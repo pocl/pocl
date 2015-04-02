@@ -76,13 +76,9 @@ CL_API_SUFFIX__VERSION_1_0
   int errcode;
   size_t i;
   int error;
-  size_t length;
   uint64_t fsize;
   char *binary = NULL;
-  unsigned real_num_devices;
-  const cl_device_id *real_device_list;
-  /* The default build script for .cl files. */
-  unsigned device_i = 0;
+  unsigned device_i = 0, actually_built = 0;
   const char *user_options = "";
   char *temp_options;
   char *modded_options = NULL;
@@ -193,46 +189,28 @@ CL_API_SUFFIX__VERSION_1_0
       
   if (num_devices == 0)
     {
-      real_num_devices = program->num_devices;
-      real_device_list = program->devices;
-    } else
-    {
-      real_num_devices = num_devices;
-      real_device_list = device_list;
+      num_devices = program->num_devices;
+      device_list = program->devices;
     }
 
   pocl_cache_create_program_cachedir(program);
-
-  if (program->source)
-    {
-      /* Realloc for every clBuildProgram call
-       * since clBuildProgram can be called multiple times
-       * with different options and device count
-       */
-      length = sizeof(size_t) * real_num_devices;
-      program->binary_sizes = (size_t *) realloc(program->binary_sizes, length);
-      MEM_ASSERT(program->binary_sizes == NULL, ERROR_CLEAN_PROGRAM);
-      memset(program->binary_sizes, 0, length);
-
-      length = sizeof(unsigned char*) * real_num_devices;
-      program->binaries = (unsigned char**) realloc(program->binaries, length);
-      MEM_ASSERT(program->binaries == NULL, ERROR_CLEAN_PROGRAM);
-      memset(program->binaries, 0, length);
-
-      length = sizeof(void*) * real_num_devices;
-      program->llvm_irs = (void**) realloc (program->llvm_irs, length);
-      MEM_ASSERT(program->llvm_irs == NULL, ERROR_CLEAN_PROGRAM);
-      memset(program->llvm_irs, 0, length);
-    }
 
   POCL_MSG_PRINT_INFO("building program with options %s\n",
                       options != NULL ? options : "");
 
   /* Build the fully linked non-parallel bitcode for all
          devices. */
-  for (device_i = 0; device_i < real_num_devices; ++device_i)
+  for (device_i = 0; device_i < program->num_devices; ++device_i)
     {
-      cl_device_id device = real_device_list[device_i];
+      cl_device_id device = program->devices[device_i];
+
+      /* find the device in the supplied devices-to-build-for list */
+      int found = 0;
+      for (i = 0; i < num_devices; ++i)
+          if (device_list[i] == device) found = 1;
+      if (!found) continue;
+
+      actually_built++;
 
       pocl_cache_make_device_cachedir(program, device);
 
@@ -271,6 +249,10 @@ CL_API_SUFFIX__VERSION_1_0
                                        device, program_bc_path);
         }
     }
+
+  POCL_GOTO_ERROR_ON((actually_built < num_devices), CL_BUILD_PROGRAM_FAILURE,
+                     "Some of the devices on the argument-supplied list are"
+                     "not available for the program, or do not exist\n")
 
   /* Maintain a 'last_accessed' file in every program's
    * cache directory. Will be useful for cache pruning script
