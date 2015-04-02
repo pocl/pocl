@@ -101,51 +101,120 @@ pocl_filesize(const char* path, uint64_t* res) {
     return ec.default_error_condition().value();
 }
 
+int pocl_touch_file(const char* path) {
+    Twine p(path);
+    std::error_code ec = sys::fs::remove(p, true);
 
+    RETURN_IF_EC;
+
+    int fd;
+    ec = sys::fs::openFileForWrite(p, fd, sys::fs::F_RW | sys::fs::F_Excl);
+    RETURN_IF_EC;
+
+    return (close(fd) ? (-errno) : 0);
+
+}
 /****************************************************************************/
 
 int
 pocl_read_file(const char* path, char** content, uint64_t *filesize) {
-    PoclLockFileManager lfm(path);
+    assert(content);
+    assert(path);
+    assert(filesize);
+
     *content = NULL;
 
     int errcode = pocl_filesize(path, filesize);
+    ssize_t fsize = (ssize_t)(*filesize);
     if (!errcode) {
         // +1 so we can later simply turn it into a C string, if needed
-        *content = (char*)malloc(*filesize+1);
-        errcode = lfm.read_file(*content, *filesize);
+        *content = (char*)malloc(fsize+1);
+
+        int fd;
+        std::error_code ec;
+        Twine p(path);
+
+        ec = sys::fs::openFileForRead(p, fd);
+        RETURN_IF_EC;
+
+        if (read(fd, *content, fsize) < fsize)
+            return (-errno || -1);
+
+        return (close(fd) ? (-errno) : 0);
+
     }
     return errcode;
 }
 
 
-int
-pocl_write_file(const char* path,
-                const char* content,
-                uint64_t    count,
-                int         append,
-                int         dont_rewrite) {
-    PoclLockFileManager lfm(path);
-    return lfm.write_file(content, count, append, dont_rewrite);
+
+int pocl_write_file(const char *path, const char* content,
+                                    uint64_t    count,
+                                    int         append,
+                                    int         dont_rewrite) {
+    int fd;
+    std::error_code ec;
+    Twine p(path);
+
+    assert(path);
+    assert(content);
+
+    if (pocl_exists(path)) {
+        if (dont_rewrite) {
+            if (!append)
+                return 0;
+        } else {
+            int res = pocl_remove(path);
+            if (res)
+                return res;
+        }
+    }
+
+    if (append)
+        ec = sys::fs::openFileForWrite(p, fd, sys::fs::F_RW | sys::fs::F_Append);
+    else
+        ec = sys::fs::openFileForWrite(p, fd, sys::fs::F_RW | sys::fs::F_Excl);
+
+    RETURN_IF_EC;
+
+    if (write(fd, content, (ssize_t)count) < (ssize_t)count)
+        return (-errno || -1);
+
+    return (close(fd) ? (-errno) : 0);
 }
 
 
-int pocl_touch_file(const char* path) {
-    PoclLockFileManager lfm(path);
-    return lfm.touch_file();
-}
+
 
 
 int pocl_write_module(void *module, const char* path, int dont_rewrite) {
-    PoclLockFileManager lfm(path);
-    return lfm.write_module((llvm::Module*)module, dont_rewrite);
+
+    assert(module);
+    assert(path);
+
+    Twine p(path);
+    std::error_code ec;
+
+    if (pocl_exists(path)) {
+        if (dont_rewrite)
+            return 0;
+        else {
+            int res = pocl_remove(path);
+            if (res)
+                return res;
+        }
+    }
+
+    raw_fd_ostream os(path, ec, sys::fs::F_RW | sys::fs::F_Excl);
+    RETURN_IF_EC;
+
+    WriteBitcodeToFile((llvm::Module*)module, os);
+    os.close();
+    return (os.has_error() ? 1 : 0);
+
 }
 
 
-int pocl_remove_locked(const char* path) {
-    PoclLockFileManager lfm(path);
-    return lfm.remove_file();
-}
 
 /****************************************************************************/
 
