@@ -112,7 +112,7 @@ main(void){
   /* TODO FIXME: from here to the clFinish() should be removed once
    * delayed linking is disabled/removed in pocl, probably
    */
-  cl_command_queue q = clCreateCommandQueue(context, devices[0], 0, err);
+  cl_command_queue q = clCreateCommandQueue(context, devices[0], 0, &err);
   CHECK_OPENCL_ERROR_IN("clCreateCommandQueue");
   cl_kernel k = clCreateKernel(program, "init", &err);
   CHECK_OPENCL_ERROR_IN("clCreateKernel");
