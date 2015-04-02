@@ -57,9 +57,7 @@
 const char*
 llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
 
-  const char* pocl_verbose_ptr = 
-    pocl_get_string_option("POCL_VERBOSE", (char*)NULL);
-  int pocl_verbose = pocl_verbose_ptr && *pocl_verbose_ptr;
+  int pocl_verbose = pocl_get_bool_option("POCL_VERBOSE", 0);
 
   char command[COMMAND_LENGTH];
   char bytecode[POCL_FILENAME_LENGTH];
