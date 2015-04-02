@@ -58,17 +58,18 @@ int pocl_exists(const char* path);
 
 int pocl_filesize(const char* path, uint64_t* res);
 
-/* Writes or appends data to a file. Locks the file (atomic operation) */
+/* Touch file to change last modified time. For portability, this
+ * removes & creates the file. */
+int pocl_touch_file(const char* path);
+
+/* Writes or appends data to a file.  */
 int pocl_write_file(const char* path, const char* content,
                     uint64_t count, int append, int dont_rewrite);
 
-/* Allocates memory and places file contents in it. Returns number of chars read.
- * Locks the file (atomic operation) */
+/* Allocates memory and places file contents in it.
+ * Returns number of chars read. */
 int pocl_read_file(const char* path, char** content, uint64_t *filesize);
 
-/* Touch file to change last modified time. For portability, this
- * removes & creates the file. It uses a lock, so its atomic. */
-int pocl_touch_file(const char* path);
 
 int pocl_write_module(void *module, const char* path, int dont_rewrite);
 
