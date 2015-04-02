@@ -66,9 +66,9 @@ POname(clGetProgramInfo)(cl_program program,
       if (param_value)
       {
         if (param_value_size < value_size) return CL_INVALID_VALUE;
+        unsigned char **target = (unsigned char**) param_value;
         for (i = 0; i < program->num_devices; ++i)
           {
-            unsigned char **target = (unsigned char**) param_value;
             if (target[i] == NULL) continue;
             memcpy (target[i], program->binaries[i], program->binary_sizes[i]);
           }
@@ -86,11 +86,7 @@ POname(clGetProgramInfo)(cl_program program,
       if (param_value)
       {
         if (param_value_size < value_size) return CL_INVALID_VALUE;
-        for (i = 0; i < program->num_devices; ++i)
-          {           
-            cl_device_id *devices = (cl_device_id*) param_value;
-            devices[i] = program->context->devices[i];
-          }
+        memcpy(param_value, (void*)program->devices, value_size);
       }
       if (param_value_size_ret)
         *param_value_size_ret = value_size;
