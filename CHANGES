@@ -19,7 +19,6 @@ OpenCL C Builtin Function Implementations
 0.11 March 2015
 ===============
 
-
 Highlights
 ----------
 - Support for LLVM/Clang 3.6
