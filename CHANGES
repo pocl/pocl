@@ -1,4 +1,5 @@
 0.12 unreleased
+===============
 
 Highlights
 ----------
@@ -15,7 +16,7 @@ OpenCL C Builtin Function Implementations
 -----------------------------------------
 - Implemented get_image_dim()
 
-0.11 unreleased
+0.11 March 2015
 ===============
 
 
