@@ -11,6 +11,10 @@ OpenCL Runtime/Platform API support
 -Transferred buffer read/write/copy offset calculation to device driver side.
  - these driver api functions have changed; got offset as a new argument.
 
+OpenCL C Builtin Function Implementations
+-----------------------------------------
+- Implemented get_image_dim()
+
 0.11 unreleased
 ===============
 

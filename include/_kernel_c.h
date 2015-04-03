@@ -159,12 +159,20 @@ typedef ulong ulong16 __attribute__((__ext_vector_type__(16)));
    by the frontend. */
 #if !defined(_CL_HAS_IMAGE_ACCESS)
 typedef int sampler_t;
-typedef struct dev_image_t* image2d_t;
-typedef struct dev_image_t* image3d_t;
-typedef struct dev_image_t* image1d_t;
-typedef struct dev_image_t* image1d_buffer_t;
-typedef struct dev_image_t* image2d_array_t;
-typedef struct dev_image_t* image1d_array_t;
+
+/* Since some built-ins have different return types
+ * (e.g. get_image_dim returns an int2 for 2D images and arrays,
+ *  but an int4 for 3D images) we want each image type to
+ * point to a different type which is actually always the same.
+ * We do this by making it pointer to an anonymous struct
+ * whose only element is a dev_image_t
+ */
+typedef struct { dev_image_t base; }* image2d_t;
+typedef struct { dev_image_t base; }* image3d_t;
+typedef struct { dev_image_t base; }* image1d_t;
+typedef struct { dev_image_t base; }* image1d_buffer_t;
+typedef struct { dev_image_t base; }* image2d_array_t;
+typedef struct { dev_image_t base; }* image1d_array_t;
 #endif
 
 
@@ -298,4 +306,9 @@ int _CL_OVERLOADABLE get_image_height (image3d_t image);
 int _CL_OVERLOADABLE get_image_depth (image1d_t image);
 int _CL_OVERLOADABLE get_image_depth (image2d_t image);
 int _CL_OVERLOADABLE get_image_depth (image3d_t image);
+
+int2 _CL_OVERLOADABLE get_image_dim (image2d_t image);
+int2 _CL_OVERLOADABLE get_image_dim (image2d_array_t image);
+int4 _CL_OVERLOADABLE get_image_dim (image3d_t image);
+
 #endif
