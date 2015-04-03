@@ -61,7 +61,7 @@ PASSES_SOURCES = Barrier.h						\
 						AutomaticLocals.cc ImplicitConditionalBarriers.cc \
 						ImplicitConditionalBarriers.h \
 						DebugHelpers.h DebugHelpers.cc \
-						linker.h CompilerWarnings.hh
+						linker.h CompilerWarnings.h
 
 #add compiler driver sources
 libllvmpasses_la_SOURCES = ${PASSES_SOURCES} linker.cpp
