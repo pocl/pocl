@@ -193,6 +193,7 @@ get_group_id.c
 get_image_depth.cl
 get_image_height.cl
 get_image_width.cl
+get_image_dim.cl
 get_local_id.c
 get_local_size.c
 get_num_groups.c
