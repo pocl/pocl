@@ -19,7 +19,6 @@ AMD_test_pkg='AMD-APP-SDK-v2.8-RC-lnx64.tgz'
 ViennaCL_test_pkg='ViennaCL-1.5.1.tar.gz'
 
 
-
 def createPoclFactory(	environ={},
 			repository='https://github.com/pocl/pocl.git',
 			branch='master',
@@ -73,6 +72,11 @@ def createPoclFactory(	environ={},
 		myenviron['POCL_BUILD_KERNEL_CACHE']='1'
 	else:
 		myenviron['POCL_BUILD_KERNEL_CACHE']='0'
+
+	if cmake:
+		logfile="Testing/Temporary/LastTest.log"
+	else:
+		logfile="tests/testsuite.log"
 
 
 	if f==None:
@@ -171,7 +175,7 @@ def createPoclFactory(	environ={},
 				env=myenviron,
 				description="testing",
 				descriptionDone="tests",
-				logfiles={"test.log": "tests/testsuite.log"},
+				logfiles={"test.log": logfile},
 				timeout=60*60))
 	else:
 		f.addStep(ShellCommand(command=["make", "check"],
@@ -180,7 +184,7 @@ def createPoclFactory(	environ={},
 				env=myenviron,
 				description="testing",
 				descriptionDone="tests",
-				logfiles={"test.log": "tests/testsuite.log"},
+				logfiles={"test.log": logfile},
 				#blas3 alone takes 15-20 min.
 				timeout=60*60))
 		#run the test once more, now from the kernel cache dir, if used
@@ -191,8 +195,8 @@ def createPoclFactory(	environ={},
 				env=myenviron,
 				description="testing kcache",
 				descriptionDone="tested kcache",
-				logfiles={"test.log": "tests/testsuite.log"},
-				timeout=5))			
+				logfiles={"test.log": logfile},
+				timeout=5))
 	return f
 
 #######
