@@ -124,11 +124,18 @@ char*
 pocl_create_program_cache_dir(cl_program program)
 {
   char *tmp_path = NULL, *cache_path = NULL;
-  char hash_str[SHA1_DIGEST_SIZE * 2 + 1];
+  /* Two digits per byte, plus a / after the first two digits,
+   * plus the null byte terminator */
+  char hash_str[SHA1_DIGEST_SIZE * 2 + 2];
   int i;
 
-  for (i = 0; i < SHA1_DIGEST_SIZE; i++)
-    sprintf(&hash_str[i*2], "%02x", (unsigned int) program->build_hash[i]);
+  /* To avoid having too many directories under the cache dir,
+   * we group hashes into subdirectories by the first two digits,
+   * following an idea stolen from git
+   */
+  sprintf(hash_str, "%02x/", (unsigned int) program->build_hash[0]);
+  for (i = 1; i < SHA1_DIGEST_SIZE; i++)
+    sprintf(&hash_str[i*2+1], "%02x", (unsigned int) program->build_hash[i]);
 
   cache_path = (char*)malloc(CACHE_DIR_PATH_CHARS);
 
