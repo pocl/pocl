@@ -3,7 +3,7 @@ from buildbot.schedulers.basic  import SingleBranchScheduler
 from buildbot.changes import filter
 from buildbot.config import BuilderConfig
 from buildbot.schedulers.forcesched import *
-from poclfactory import createPoclFactory
+from poclfactory import createPoclFactory, shouldBuildTrigger
 
 #overrride the 'sample_slave' with a descriptive function name
 def sample_slave( c ):
@@ -19,6 +19,7 @@ def sample_slave( c ):
 		 SingleBranchScheduler(name="master",
 			change_filter=filter.ChangeFilter(branch='master'),
 			treeStableTimer=60,
+			fileIsImportant=shouldBuildTrigger,
 			builderNames=[
 				"sample_builder_name"] ))
 	# Allow authenticated (to the buildmaster) users to force a build

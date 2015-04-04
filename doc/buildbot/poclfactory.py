@@ -241,29 +241,30 @@ def createLLVMFactory(srcdir, builddir, installdir, test_install_dir):
 			command=['make', '-j', '4'],
 			workdir=builddir,
 			haltOnFailure=True,
-			name = "compile",
-			descriptionDone = 'compile',
-			description='compiling'))
+			name = "compile LLVM",
+			descriptionDone = 'compiled LLVM',
+			description='compiling LLVM'))
 	f.addStep(
 		ShellCommand(
 			command=['make', 'check'],
 			workdir=builddir,
-			name='check',
-			descriptionDone='check',
+			name='LLVM check',
+			descriptionDone='checked LLVM',
 			haltOnFailure=True,
-			description='checking'))
+			description='checking LLVM'))
 	f.addStep(
 		ShellCommand(
 			command=['make', 'install'],
 			env={'DESTDIR':test_install_dir},
 			workdir=builddir,
 			haltOnFailure=True,
-			name = 'install',
+			name = 'install for test',
 			descriptionDone='install',
 			description='installing'))
 
 	f=createPoclFactory(
 		llvm_dir=test_install_dir+installdir, 
+		pedantic=False,
 		f=f)
 
 	f.addStep(
@@ -271,10 +272,19 @@ def createLLVMFactory(srcdir, builddir, installdir, test_install_dir):
 			command=['make', 'install'],
 			workdir=builddir,
 			haltOnFailure=True,
-			name = 'install',
+			name = 'install final',
 			descriptionDone='install',
 			description='installing'))
 
 	return f
+
+
+#Use this in schedulers to trigger out documentations to not trigger builds.
+def shouldBuildTrigger(change):
+	for fname in change.files:
+		if os.path.split(fname)[0] != 'doc':
+			return True
+	return False
+
 
 # vim: set noexpandtab:
