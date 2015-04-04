@@ -741,7 +741,7 @@ ParallelRegion::InjectPrintF
   assert (isa<Constant>(stringArg));
   Constant* const_ptr_8 = 
     ConstantExpr::getGetElementPtr
-    (cast<Constant>(stringArg), const_ptr_8_indices);
+    (PointerType::getUnqual(Type::getInt8Ty(getGlobalContext())), cast<Constant>(stringArg), const_ptr_8_indices);
 
   std::vector<Value*> args;
   args.push_back(const_ptr_8);
