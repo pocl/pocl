@@ -70,6 +70,7 @@ def createPoclFactory(	environ={},
 
 	if cache_dir:
 		myenviron['POCL_BUILD_KERNEL_CACHE']='1'
+		myenviron['POCL_CACHE_DIR']=cache_dir
 	else:
 		myenviron['POCL_BUILD_KERNEL_CACHE']='0'
 
@@ -148,6 +149,8 @@ def createPoclFactory(	environ={},
 			configOpts = configOpts + ['--enable-pedantic']
 		if buildICD==False:
 			configOpts = configOpts + ['--disable-icd']
+		if cache_dir=None:
+			configOpts = configOpts + ['--disable-kernel-cache']
 
 		f.addStep(ShellCommand(
 				command=["./configure"] + configOpts,
