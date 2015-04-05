@@ -322,6 +322,17 @@ cl_int pocl_create_command (_cl_command_node **cmd,
   int i;
   int err;
   cl_event *event = NULL;
+  /* the provided waiting list will be cloned, because the calling program
+   * might recycle the array for a different command.
+   */
+  cl_event *event_wl = NULL;
+  /* Additionally, if the command queue is non-empty and in-order, we want to
+   * add the previous command to the waiting list: double-bang to ensure that
+   * add_prev_command will be 1 in this case, and 0 otherwise
+   */
+  cl_int add_prev_command = !!(
+    !(command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
+    && command_queue->root != NULL);
 
   if ((wait_list == NULL && num_events != 0) ||
       (wait_list != NULL && num_events == 0))
@@ -338,6 +349,10 @@ cl_int pocl_create_command (_cl_command_node **cmd,
   if (*cmd == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 
+  event_wl = (cl_event*)malloc((num_events + add_prev_command)*sizeof(cl_event));
+  if (event_wl == NULL)
+    return CL_OUT_OF_HOST_MEMORY;
+
   /* if user does not provide event pointer, create event anyway */
   event = &((*cmd)->event);
   err = pocl_create_event(event, command_queue, command_type);
@@ -351,33 +366,27 @@ cl_int pocl_create_command (_cl_command_node **cmd,
   else
     (*event)->implicit_event = 1;
 
-  /* if in-order command queue and queue is not empty, add event from
-     previous command to new commands event_waitlist */
-  if (!(command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
-      && command_queue->root != NULL)
+  /* clone the event list */
+  for (i = 0; i < num_events; ++i)
     {
+      event_wl[i] = wait_list[i];
+    }
+
+  if (add_prev_command)
+    {
+      // find the previous command
       _cl_command_node *prev_command;
       for (prev_command = command_queue->root; prev_command->next != NULL;
            prev_command = prev_command->next){}
       //printf("create_command: prev_com=%d prev_com->event = %d \n",prev_command, prev_command->event);
-      cl_event *new_wl = (cl_event*)malloc ((num_events +1)*sizeof (cl_event));
-      for (i = 0; i < num_events; ++i)
-        {
-          new_wl[i] = wait_list[i];
-        }
-      new_wl[i] = prev_command->event;
-      (*cmd)->event_wait_list = new_wl;
-      (*cmd)->num_events_in_wait_list = num_events + 1;
-      for (i = 0; i < num_events + 1; ++i)
-        {
-          //printf("create-command: new_wl[%i]=%d\n", i, new_wl[i]);
-        }
+      event_wl[i] = prev_command->event;
     }
-  else
+  for (i = 0; i < num_events + add_prev_command; ++i)
     {
-      (*cmd)->event_wait_list = wait_list;
-      (*cmd)->num_events_in_wait_list = num_events;
+      //printf("create-command: event_wl[%i]=%d\n", i, event_wl[i]);
     }
+  (*cmd)->event_wait_list = event_wl;
+  (*cmd)->num_events_in_wait_list = num_events + add_prev_command;
   (*cmd)->type = command_type;
   (*cmd)->next = NULL;
   (*cmd)->device = command_queue->device;
