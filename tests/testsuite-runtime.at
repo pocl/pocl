@@ -16,6 +16,11 @@ AT_KEYWORDS([runtime])
 AT_CHECK([$abs_top_builddir/tests/runtime/test_clGetEventInfo])
 AT_CLEANUP
 
+AT_SETUP([read/copy/write buffer])
+AT_KEYWORDS([runtime])
+AT_CHECK([$abs_top_builddir/tests/runtime/test_read-copy-write-buffer])
+AT_CLEANUP
+
 AT_SETUP([clCreateProgramWithBinary])
 AT_KEYWORDS([runtime])
 AT_CHECK([$abs_top_builddir/tests/runtime/test_clCreateProgramWithBinary])
