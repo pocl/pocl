@@ -1,17 +1,17 @@
 /* OpenCL runtime library: pocl_util utility functions
 
    Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
-   
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights
    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
    copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -55,7 +55,7 @@ typedef struct list_item
   struct list_item *next;
 } list_item;
 
-void 
+void
 pocl_remove_directory (const char *path_name)
 {
   int str_size = 10 + strlen(path_name) + 1;
@@ -171,9 +171,9 @@ pocl_create_program_cache_dir(cl_program program)
 }
 
 uint32_t
-byteswap_uint32_t (uint32_t word, char should_swap) 
+byteswap_uint32_t (uint32_t word, char should_swap)
 {
-    union word_union 
+    union word_union
     {
         uint32_t full_word;
         unsigned char bytes[4];
@@ -189,9 +189,9 @@ byteswap_uint32_t (uint32_t word, char should_swap)
 }
 
 float
-byteswap_float (float word, char should_swap) 
+byteswap_float (float word, char should_swap)
 {
-    union word_union 
+    union word_union
     {
         float full_word;
         unsigned char bytes[4];
@@ -230,7 +230,7 @@ void *
 pocl_aligned_malloc (size_t alignment, size_t size)
 {
 # ifdef HAVE_POSIX_MEMALIGN
-  
+
   /* make sure that size is a multiple of alignment, as posix_memalign
    * does not perform this test, whereas aligned_alloc does */
   if ((size & (alignment - 1)) != 0)
@@ -244,7 +244,7 @@ pocl_aligned_malloc (size_t alignment, size_t size)
     alignment = sizeof(void* );
 
   void* result;
-  
+
   result = pocl_memalign_alloc(alignment, size);
   if (result == NULL)
     {
@@ -255,7 +255,7 @@ pocl_aligned_malloc (size_t alignment, size_t size)
   return result;
 
 # else
-  
+
   /* allow zero-sized allocations, force alignment to 1 */
   if (!size)
     alignment = 1;
@@ -275,7 +275,7 @@ pocl_aligned_malloc (size_t alignment, size_t size)
     return NULL;
 
   /* align the address, and store original pointer for future use
-   * with free in the preceeding bytes */
+   * with free in the preceding bytes */
   uintptr_t aligned_address = (address + mask + sizeof(void *)) & ~mask;
   void** address_ptr = (void **)(aligned_address - sizeof(void *));
   *address_ptr = (void *)address;
@@ -295,7 +295,7 @@ pocl_aligned_free (void *ptr)
 }
 #endif
 
-cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue, 
+cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
                           cl_command_type command_type)
 {
   if (event != NULL)
@@ -303,7 +303,7 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
       *event = pocl_mem_manager_new_event ();
       if (event == NULL)
         return CL_OUT_OF_HOST_MEMORY;
-      
+
       (*event)->queue = command_queue;
       POname(clRetainCommandQueue) (command_queue);
       (*event)->command_type = command_type;
@@ -315,8 +315,8 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
 }
 
 cl_int pocl_create_command (_cl_command_node **cmd,
-                            cl_command_queue command_queue, 
-                            cl_command_type command_type, cl_event *event_p, 
+                            cl_command_queue command_queue,
+                            cl_command_type command_type, cl_event *event_p,
                             cl_int num_events, const cl_event *wait_list)
 {
   int i;
@@ -326,18 +326,18 @@ cl_int pocl_create_command (_cl_command_node **cmd,
   if ((wait_list == NULL && num_events != 0) ||
       (wait_list != NULL && num_events == 0))
     return CL_INVALID_EVENT_WAIT_LIST;
-  
+
   for (i = 0; i < num_events; ++i)
     {
       if (wait_list[i] == NULL)
         return CL_INVALID_EVENT_WAIT_LIST;
     }
-  
+
   *cmd = pocl_mem_manager_new_command ();
 
   if (*cmd == NULL)
     return CL_OUT_OF_HOST_MEMORY;
-  
+
   /* if user does not provide event pointer, create event anyway */
   event = &((*cmd)->event);
   err = pocl_create_event(event, command_queue, command_type);
@@ -350,10 +350,10 @@ cl_int pocl_create_command (_cl_command_node **cmd,
     *event_p = *event;
   else
     (*event)->implicit_event = 1;
-  
-  /* if in-order command queue and queue is not empty, add event from 
+
+  /* if in-order command queue and queue is not empty, add event from
      previous command to new commands event_waitlist */
-  if (!(command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) 
+  if (!(command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
       && command_queue->root != NULL)
     {
       _cl_command_node *prev_command;
@@ -375,7 +375,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
     }
   else
     {
-      (*cmd)->event_wait_list = wait_list;  
+      (*cmd)->event_wait_list = wait_list;
       (*cmd)->num_events_in_wait_list = num_events;
     }
   (*cmd)->type = command_type;
@@ -383,7 +383,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
   (*cmd)->device = command_queue->device;
 
   //printf("create_command (end): event=%d new_event=%d cmd->event=%d cmd=%d\n", event, new_event, (*cmd)->event, *cmd);
-  
+
 
   return CL_SUCCESS;
 }
@@ -465,7 +465,7 @@ pocl_check_and_invalidate_cache (cl_program program,
             {
               /* Skip all the white-spaces between # & include */
               for (ss_ptr = s_ptr+1; *ss_ptr == ' '; ss_ptr++) ;
-              
+
               if (strncmp(ss_ptr, "include", 7) == 0)
                 cache_dirty = 1;
             }
