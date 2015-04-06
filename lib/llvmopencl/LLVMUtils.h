@@ -65,8 +65,8 @@ is_image_type(const llvm::Type& t)
 {
   if (t.isPointerTy() && t.getPointerElementType()->isStructTy()) {
     llvm::StringRef name = t.getPointerElementType()->getStructName().str();
-    if (name.startswith("opencl.image2d_t") || name.startswith("opencl.image3d_t") || 
-        name.startswith("opencl.image1d_t") || name.startswith("struct.dev_image_t"))
+    if (name.startswith("opencl.image2d_t") || name.startswith("opencl.image3d_t") ||
+        name.startswith("opencl.image1d_t") || name.startswith("struct._pocl_image"))
       return true;
   }
   return false;
