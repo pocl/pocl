@@ -25,6 +25,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "config.h"
+#include "kernellib_hash.h"
+
 #include "pocl_hash.h"
 #include "pocl_cache.h"
 #include "pocl_file_util.h"

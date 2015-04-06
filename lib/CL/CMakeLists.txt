@@ -136,6 +136,8 @@ endif(MSVC)
 # this is so that we don't compile twice when building both libpocl and libOpenCL
 add_library("libpocl_unlinked_objs" OBJECT ${POCL_LIB_SOURCES})
 
+# pocl_cache.c depends on a SHA1 hash of the built kernel-<machine>.bc
+add_dependencies("libpocl_unlinked_objs" "kernel_host")
 #################################################################
 
 if (MSVC)

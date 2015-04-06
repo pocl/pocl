@@ -51,7 +51,8 @@ make_kernel_bc(KERNEL_BC "${OCL_KERNEL_TARGET}" ${KERNEL_SOURCES})
 message(STATUS "Host Kernel BC: ${KERNEL_BC}")
 
 # a target is needed...
-add_custom_target("kernel_host" ALL DEPENDS ${KERNEL_BC})
+add_custom_target("kernel_host" ALL
+    DEPENDS ${KERNEL_BC} "${CMAKE_BINARY_DIR}/kernellib_hash.h")
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${KERNEL_BC}"
         DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}")

@@ -122,7 +122,7 @@ endmacro()
 
 
 function(make_kernel_bc OUTPUT_VAR NAME)
-  set(KERNEL_BC "kernel-${NAME}.bc")
+  set(KERNEL_BC "${CMAKE_CURRENT_BINARY_DIR}/kernel-${NAME}.bc")
   set(${OUTPUT_VAR} "${KERNEL_BC}" PARENT_SCOPE)
 
   compile_to_bc(BC_LIST ${ARGN})
@@ -144,6 +144,18 @@ function(make_kernel_bc OUTPUT_VAR NAME)
         COMMAND "${LLVM_OPT}" ${LLC_FLAGS} "-O3" "-fp-contract=off" "-o" "${KERNEL_BC}" "kernel-${NAME}-unoptimized.bc"
         COMMENT "Linking Kernel bitcode ${KERNEL_BC}" 
         VERBATIM)
+
+  add_custom_command( OUTPUT "${CMAKE_BINARY_DIR}/kernellib_hash.h"
+    COMMAND "${CMAKE_COMMAND}" -DKERNELBC='${KERNEL_BC}'
+        -DINCLUDEDIR='${CMAKE_SOURCE_DIR}/include'
+        -DOUTPUT='${CMAKE_BINARY_DIR}/kernellib_hash.h'
+        -P "${CMAKE_SOURCE_DIR}/cmake/kernellib_hash.cmake"
+    DEPENDS "${KERNEL_BC}" "${CMAKE_SOURCE_DIR}/include/_kernel.h"
+        "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
+        "${CMAKE_SOURCE_DIR}/include/pocl_types.h"
+        "${CMAKE_SOURCE_DIR}/include/pocl_features.h"
+    COMMENT "Generating SHA1 of kernel lib..."
+    VERBATIM)
 
 endfunction()
 
