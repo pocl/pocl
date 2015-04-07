@@ -194,11 +194,6 @@ CL_API_SUFFIX__VERSION_1_0
       device_list = program->devices;
     }
 
-  pocl_cache_create_program_cachedir(program);
-
-  cache_lock = pocl_cache_acquire_writer_lock(program);
-  assert(cache_lock);
-
   POCL_MSG_PRINT_INFO("building program with options %s\n",
                       options != NULL ? options : "");
 
@@ -216,22 +211,23 @@ CL_API_SUFFIX__VERSION_1_0
 
       actually_built++;
 
-      pocl_cache_make_device_cachedir(program, device);
-
-      pocl_cache_program_bc_path(program_bc_path, program, device);
-
       /* clCreateProgramWithSource */
       if (program->source)
         {
-          error = pocl_llvm_build_program(program, device, device_i, user_options);
+          error = pocl_llvm_build_program(program, device_i, user_options,
+                                          &cache_lock, program_bc_path);
           if (error != 0)
             {
               errcode = CL_BUILD_PROGRAM_FAILURE;
               goto ERROR_CLEAN_BINARIES;
             }
+          assert(cache_lock);
         }
       /* clCreateProgramWithBinaries */
       else if (program->binaries[device_i]) {
+            pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
+                                               program_bc_path, &cache_lock);
+            assert(cache_lock);
             errcode = pocl_write_file(program_bc_path, (char*)program->binaries[device_i],
                           (uint64_t)program->binary_sizes[device_i], 0, 0);
             POCL_GOTO_ERROR_ON(errcode, CL_BUILD_PROGRAM_FAILURE,
@@ -250,11 +246,16 @@ CL_API_SUFFIX__VERSION_1_0
           POCL_GOTO_ERROR_ON(errcode, CL_BUILD_ERROR, "Failed to read binaries from program.bc to memory: %s\n", program_bc_path);
 
           program->binary_sizes[device_i] = (size_t)fsize;
-          program->binaries[device_i] = binary;
+          program->binaries[device_i] = (unsigned char *)binary;
         }
 
       if (program->llvm_irs[device_i] == NULL)
           pocl_update_program_llvm_irs(program, device_i, device);
+
+      pocl_cache_update_program_last_access(program, device_i);
+
+      pocl_cache_release_lock(cache_lock);
+      cache_lock = NULL;
     }
 
   POCL_GOTO_ERROR_ON((actually_built < num_devices), CL_BUILD_PROGRAM_FAILURE,
@@ -264,10 +265,8 @@ CL_API_SUFFIX__VERSION_1_0
   /* Maintain a 'last_accessed' file in every program's
    * cache directory. Will be useful for cache pruning script
    * that flushes old directories based on LRU */
-  pocl_cache_update_program_last_access(program);
 
   program->build_status = CL_BUILD_SUCCESS;
-  pocl_cache_release_lock(program, cache_lock);
   POCL_UNLOCK_OBJ(program);
   return CL_SUCCESS;
 
@@ -285,7 +284,7 @@ ERROR_CLEAN_OPTIONS:
   POCL_MEM_FREE(modded_options);
 ERROR:
   program->build_status = CL_BUILD_ERROR;
-  pocl_cache_release_lock(program, cache_lock);
+  pocl_cache_release_lock(cache_lock);
   POCL_UNLOCK_OBJ(program);
   return errcode;
 }
