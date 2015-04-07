@@ -37,41 +37,43 @@ extern "C" {
 #endif
 
 int
-pocl_cache_create_program_cachedir(cl_program program);
+pocl_cache_create_program_cachedir(cl_program program, unsigned device_i,
+                                   char* preprocessed_source, size_t source_len,
+                                   char *program_bc_path, void **cache_lock);
 
-int pocl_cache_cleanup_cachedir(cl_program program);
+void pocl_cache_cleanup_cachedir(cl_program program);
 
-int pocl_cache_requires_refresh(cl_program program);
+void* pocl_cache_acquire_writer_lock_i(cl_program program, unsigned device_i);
 
-void* pocl_cache_acquire_writer_lock(cl_program program);
+void* pocl_cache_acquire_writer_lock(cl_program program, cl_device_id device);
 
-void pocl_cache_release_lock(cl_program program, void* lock);
+void pocl_cache_release_lock(void* lock);
+
+int pocl_cl_device_to_index(cl_program   program,
+                                  cl_device_id device);
+
+int pocl_cache_write_program_source(char *program_cl_path,
+                                    cl_program program,
+                                    unsigned device_i);
+
+int pocl_cache_update_program_last_access(cl_program program,
+                                          unsigned device_i);
 
 
-int pocl_cache_write_program_source(char *program_cl_path, cl_program program);
 
-int pocl_cache_update_program_last_access(cl_program program);
-
-
-
-char* pocl_cache_read_buildlog(cl_program program);
+char* pocl_cache_read_buildlog(cl_program program, unsigned device_i);
 
 int pocl_cache_append_to_buildlog(cl_program  program,
+                                  unsigned    device_i,
                                   const char *content,
                                   size_t      size);
 
 
-int pocl_cache_make_device_cachedir(cl_program   program,
-                                    cl_device_id device);
-
 int pocl_cache_device_cachedir_exists(cl_program   program,
-                                      cl_device_id device);
-
-char* pocl_cache_device_switches(cl_program program, cl_device_id device);
-
+                                      unsigned device_i);
 
 int pocl_cache_write_descriptor(cl_program   program,
-                                cl_device_id device,
+                                unsigned     device_i,
                                 const char*  kernel_name,
                                 const char*  content,
                                 size_t       size);
@@ -88,7 +90,7 @@ int pocl_cache_make_kernel_cachedir_path(char*        kernel_cachedir_path,
 
 int pocl_cache_write_kernel_parallel_bc(void*        bc,
                                         cl_program   program,
-                                        cl_device_id device,
+                                        unsigned     device_i,
                                         cl_kernel    kernel,
                                         size_t       local_x,
                                         size_t       local_y,
@@ -98,12 +100,12 @@ int pocl_cache_write_kernel_parallel_bc(void*        bc,
 
 // these two required by llvm API
 
-void pocl_cache_program_bc_path(char*        program_bc_path,
+void pocl_cache_program_bc_path(char*       program_bc_path,
                                cl_program   program,
-                               cl_device_id device);
+                               unsigned     device_i);
 
 void pocl_cache_kernel_so_path(char* kernel_so_path, cl_program program,
-                              cl_device_id device, cl_kernel kernel,
+                              unsigned device_i, cl_kernel kernel,
                               size_t local_x, size_t local_y, size_t local_z);
 
 #ifdef __GNUC__
