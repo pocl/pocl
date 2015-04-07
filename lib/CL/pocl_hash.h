@@ -22,6 +22,10 @@
 #ifndef POCL_HASH_H
 #define POCL_HASH_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)
 #endif
@@ -45,6 +49,10 @@ void pocl_SHA1_Final(SHA1_CTX* context, uint8_t digest[SHA1_DIGEST_SIZE]);
 
 #ifdef __GNUC__
 #pragma GCC visibility pop
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* POCL_HASH_H */
