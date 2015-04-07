@@ -32,6 +32,7 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include "clang/CodeGen/CodeGenAction.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/CompilerInvocation.h"
+#include "clang/Frontend/FrontendActions.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
 
 // For some reason including pocl.h before including CodeGenAction.h
@@ -150,10 +151,11 @@ static void InitializeLLVM();
 // to find it.
 static inline int
 load_source(FrontendOptions &fe,
-            cl_program program)
+            cl_program program, unsigned device_i)
 {
   char source_file[POCL_FILENAME_LENGTH];
-  POCL_RETURN_ERROR_ON(pocl_cache_write_program_source(source_file, program),
+  POCL_RETURN_ERROR_ON(pocl_cache_write_program_source(source_file,
+                                                       program, device_i),
                        CL_OUT_OF_HOST_MEMORY,
                        "Could not write program source")
 
@@ -174,22 +176,14 @@ ParseIRFile(const char* fname, SMDiagnostic &Err, llvm::LLVMContext &ctx)
 }
 #endif
 
+
 int pocl_llvm_build_program(cl_program program, 
-                            cl_device_id device,
                             unsigned device_i,
-                            const char* user_options)
+                            const char* user_options,
+                            void** cache_lock,
+                            char* program_bc_path)
 
 {
-  char program_bc_path[POCL_FILENAME_LENGTH];
-  pocl_cache_program_bc_path(program_bc_path, program, device);
-
-  if (pocl_exists(program_bc_path) && !pocl_cache_requires_refresh(program))
-    return CL_SUCCESS;
-
-
-
-
-
   llvm::MutexGuard lockHolder(kernelCompilerLock);
   InitializeLLVM();
 
@@ -212,10 +206,16 @@ int pocl_llvm_build_program(cl_program program,
   std::stringstream ss_build_log;
 
   // add device specific switches, if any
-  char* device_switches = pocl_cache_device_switches(program, device);
-  if (device_switches)
+  // TODO this currently passes NULL as device tmpdir
+  cl_device_id device = program->devices[device_i];
+  if (device->ops->init_build != NULL)
     {
-      ss << device_switches << " ";
+      char *device_switches =
+        device->ops->init_build (device->data, NULL);
+      if (device_switches != NULL)
+        {
+          ss << device_switches << " ";
+        }
       POCL_MEM_FREE(device_switches);
     }
 
@@ -268,6 +268,9 @@ int pocl_llvm_build_program(cl_program program,
             << "user_options: " << user_options << std::endl;
 #endif
 
+  if (program->build_log[device_i])
+    POCL_MEM_FREE(program->build_log[device_i]);
+
   if (!CompilerInvocation::CreateFromArgs
       (pocl_build, itemcstrs.data(), itemcstrs.data() + itemcstrs.size(), 
        diags)) 
@@ -282,11 +285,11 @@ int pocl_llvm_build_program(cl_program program,
         {
           ss_build_log << "warning: " << (*i).second << std::endl;
         }
+      std::string log = ss_build_log.str();
+      program->build_log[device_i] = (char*) malloc(log.size()+1);
+      std::strncpy(program->build_log[device_i], log.c_str(), log.size()+1);
 
-      pocl_cache_append_to_buildlog(program, ss_build_log.str().c_str(),
-                                    ss_build_log.str().size());
-
-      std::cerr << ss_build_log.str();
+      std::cerr << log;
       return CL_INVALID_BUILD_OPTIONS;
     }
   
@@ -347,7 +350,7 @@ int pocl_llvm_build_program(cl_program program,
   FrontendOptions &fe = pocl_build.getFrontendOpts();
   // The CreateFromArgs created an stdin input which we should remove first.
   fe.Inputs.clear(); 
-  if (load_source(fe, program)!=0)
+  if (load_source(fe, program, device_i)!=0)
     return CL_OUT_OF_HOST_MEMORY;
 
   CodeGenOptions &cg = pocl_build.getCodeGenOpts();
@@ -357,17 +360,74 @@ int pocl_llvm_build_program(cl_program program,
   // in case it sees beneficial.
   cg.UnrollLoops = false;
 
+  PreprocessorOutputOptions &poo = pocl_build.getPreprocessorOutputOpts();
+  //PreprocessorOutputOptions prep = CI.getPreprocessorOutputOpts();
+  poo.ShowCPP = 1;
+  poo.ShowComments = 0;
+  poo.ShowLineMarkers = 0;
+  //poo.UseLineDirectives = 0;   // probably LLVM 3.7 thing
+  poo.ShowMacroComments = 0;
+  poo.ShowMacros = 1;
+  poo.RewriteIncludes = 0;
+
+  std::string saved_output(fe.OutputFile);
+
+  char tempfile[POCL_FILENAME_LENGTH];
+  /* It would be nice to use a safer alternative, but unfortunately it's
+  not possible to avoid, since we have to pass the filename to LLVM. */
+  assert(tmpnam(tempfile));
+
+  fe.OutputFile = tempfile;
+
+  bool success = true;
+  clang::FrontendAction *action2 = NULL;
+  action2 = new clang::PrintPreprocessedAction();
+  success |= CI.ExecuteAction(*action2);
+  if(!success)
+    return CL_BUILD_PROGRAM_FAILURE;
+
+  char *preprocessed_out;
+  uint64_t size;
+  pocl_read_file(tempfile, &preprocessed_out, &size);
+  assert(preprocessed_out);
+
+  std::string old_build_hash((char*)program->build_hash[device_i],
+                             sizeof(SHA1_digest_t));
+
+  pocl_cache_create_program_cachedir(program, device_i, preprocessed_out,
+                                     size, program_bc_path, cache_lock);
+  POCL_MEM_FREE(preprocessed_out);
+  pocl_remove(tempfile);
+
+  /* if the old hash is nonzero and different, we must free the built binaries
+     before returning, so that they get loaded from the new location */
+  if (old_build_hash[0] && old_build_hash.compare(0, std::string::npos,
+                           (char*)program->build_hash[device_i],
+                           sizeof(SHA1_digest_t))) {
+    if (program->binaries[device_i]) {
+        POCL_MEM_FREE(program->binaries[device_i]);
+        program->binary_sizes[device_i] = 0;
+    }
+    if (program->llvm_irs[device_i]) {
+        llvm::Module *mod = (llvm::Module *)program->llvm_irs[device_i];
+        delete mod;
+        program->llvm_irs[device_i] = NULL;
+    }
+
+  }
+
+  if (pocl_exists(program_bc_path))
+    return CL_SUCCESS;
+
+  fe.OutputFile = saved_output;
+
   // TODO: use pch: it is possible to disable the strict checking for
   // the compilation flags used to compile it and the current translation
   // unit via the preprocessor options directly.
 
-  bool success = true;
   clang::CodeGenAction *action = NULL;
   action = new clang::EmitLLVMOnlyAction(GlobalContext());
   success |= CI.ExecuteAction(*action);
-
-  ss_build_log.str("");
-  ss_build_log.clear();
 
   SourceManager &source_manager = CI.getSourceManager();
   for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->err_begin(),
@@ -383,7 +443,8 @@ int pocl_llvm_build_program(cl_program program,
                    << ": " << (*i).second << std::endl;
     }
 
-  pocl_cache_append_to_buildlog(program, ss_build_log.str().c_str(),
+  pocl_cache_append_to_buildlog(program, device_i,
+                                ss_build_log.str().c_str(),
                                 ss_build_log.str().size());
   std::cerr << ss_build_log.str();
 
@@ -768,7 +829,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   content << "     _" << kernel_name << "_workgroup_fast\n";
   content << " };\n";
 
-  pocl_cache_write_descriptor(program, program->devices[device_i],
+  pocl_cache_write_descriptor(program, device_i,
                               kernel_name, content.str().c_str(),
                               content.str().size());
 #endif
@@ -1202,8 +1263,11 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
                                           size_t local_x, size_t local_y, size_t local_z)
 {
   cl_program program = kernel->program;
+  int device_i = pocl_cl_device_to_index(program, device);
+  assert(device_i >= 0);
+
   char kernel_so_path[POCL_FILENAME_LENGTH];
-  pocl_cache_kernel_so_path(kernel_so_path, program, device, kernel, local_x, local_y, local_z);
+  pocl_cache_kernel_so_path(kernel_so_path, program, device_i, kernel, local_x, local_y, local_z);
 
   if (pocl_exists(kernel_so_path))
     return CL_SUCCESS;
@@ -1225,14 +1289,14 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
   // Link the kernel and runtime library
   llvm::Module *input = NULL;
   if (kernel->program->llvm_irs != NULL && 
-      kernel->program->llvm_irs[device->dev_id] != NULL) 
+      kernel->program->llvm_irs[device_i] != NULL)
     {
 #ifdef DEBUG_POCL_LLVM_API        
       printf("### cloning the preloaded LLVM IR\n");
 #endif
       input = 
         llvm::CloneModule
-        ((llvm::Module*)kernel->program->llvm_irs[device->dev_id]);
+        ((llvm::Module*)kernel->program->llvm_irs[device_i]);
     }
   else
     {
@@ -1240,7 +1304,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
       printf("### loading the kernel bitcode from disk\n");
 #endif
       char program_bc_path[POCL_FILENAME_LENGTH];
-      pocl_cache_program_bc_path(program_bc_path, program, device);
+      pocl_cache_program_bc_path(program_bc_path, program, device_i);
       input = ParseIRFile(program_bc_path, Err, *GlobalContext());
     }
 
@@ -1271,7 +1335,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
 #endif
 
   // TODO: don't write this once LLC is called via API, not system()
-  pocl_cache_write_kernel_parallel_bc(input, program, device, kernel,
+  pocl_cache_write_kernel_parallel_bc(input, program, device_i, kernel,
                                   local_x, local_y, local_z);
 
   return 0;
@@ -1285,7 +1349,7 @@ pocl_update_program_llvm_irs(cl_program program,
   SMDiagnostic Err;
 
   char program_bc_path[POCL_FILENAME_LENGTH];
-  pocl_cache_program_bc_path(program_bc_path, program, device);
+  pocl_cache_program_bc_path(program_bc_path, program, device_i);
 
   if (!pocl_exists(program_bc_path))
     return -1;
@@ -1300,6 +1364,7 @@ void pocl_llvm_update_binaries (cl_program program) {
   llvm::MutexGuard lockHolder(kernelCompilerLock);
   InitializeLLVM();
   char program_bc_path[POCL_FILENAME_LENGTH];
+  void* cache_lock = NULL;
 
   // Dump the LLVM IR Modules to memory buffers. 
   assert (program->llvm_irs != NULL);
@@ -1313,7 +1378,9 @@ void pocl_llvm_update_binaries (cl_program program) {
       if (program->binaries[i])
           continue;
 
-      pocl_cache_program_bc_path(program_bc_path, program, program->devices[i]);
+      cache_lock = pocl_cache_acquire_writer_lock_i(program, i);
+
+      pocl_cache_program_bc_path(program_bc_path, program, i);
       pocl_write_module((llvm::Module*)program->llvm_irs[i], program_bc_path, 1);
 
       std::string content;
@@ -1329,6 +1396,7 @@ void pocl_llvm_update_binaries (cl_program program) {
       program->binaries[i] = (unsigned char *) malloc(n);
       std::memcpy(program->binaries[i], content.c_str(), n);
 
+      pocl_cache_release_lock(cache_lock);
 #ifdef DEBUG_POCL_LLVM_API        
       printf("### binary for device %zi was of size %zu\n", i, program->binary_sizes[i]);
 #endif
