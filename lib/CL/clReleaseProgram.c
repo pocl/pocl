@@ -64,16 +64,18 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
       POCL_RELEASE_OBJECT (program->context, new_refcount);
       POCL_MEM_FREE(program->source);
 
-      if (program->binaries != NULL)
-        {
-          for (i = 0; i < program->num_devices; ++i)
-                POCL_MEM_FREE(program->binaries[i]);
-          POCL_MEM_FREE(program->binaries);
-        }
       POCL_MEM_FREE(program->binary_sizes);
+      for (i = 0; i < program->num_devices; ++i)
+          POCL_MEM_FREE(program->binaries[i]);
+      POCL_MEM_FREE(program->binaries);
 
       pocl_cache_cleanup_cachedir(program);
 
+      for (i = 0; i < program->num_devices; ++i)
+          POCL_MEM_FREE(program->build_log[i]);
+      POCL_MEM_FREE(program->build_log);
+
+      POCL_MEM_FREE(program->build_hash);
       POCL_MEM_FREE(program->llvm_irs);
       POCL_MEM_FREE(program);
     }

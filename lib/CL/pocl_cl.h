@@ -457,6 +457,8 @@ struct _cl_mem {
   cl_mem                  buffer;
 };
 
+typedef uint8_t SHA1_digest_t[SHA1_DIGEST_SIZE * 2 + 1];
+
 struct _cl_program {
   POCL_ICD_OBJECT
   POCL_OBJECT;
@@ -472,14 +474,12 @@ struct _cl_program {
      sequential bitcode produced from the kernel sources.*/
   size_t *binary_sizes; 
   unsigned char **binaries; 
-  /* Cache directory where program files will reside. */
-  char *cache_dir;
   /* implementation */
   cl_kernel kernels;
-  /* program hash after build */
-  uint8_t build_hash[SHA1_DIGEST_SIZE];
-  /* this lock is !NULL if we "own" the program's cache directory*/
-  void* cachedir_lock;
+  /* Per-device program hash after build */
+  SHA1_digest_t* build_hash;
+  /* Per-device build logs, for the case when we don't yet have the program's cachedir */
+  char** build_log;
   /* Used to store the llvm IR of the build to save disk I/O. */
   void **llvm_irs;
   /* Use to store build status */

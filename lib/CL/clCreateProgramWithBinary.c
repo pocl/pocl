@@ -89,16 +89,17 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
   program->binaries = NULL;
   program->compiler_options = NULL;
   program->llvm_irs = NULL;
-  program->cache_dir = NULL;
-  program->cachedir_lock = NULL;
 
-  /* Allocate a continuous chunk of memory for all the binaries. */
   if ((program->binary_sizes =
        (size_t*) calloc (num_devices, sizeof(size_t))) == NULL ||
       (program->binaries = (unsigned char**)
        calloc (num_devices, sizeof(unsigned char*))) == NULL ||
+      (program->build_log = (char**)
+       calloc (num_devices, sizeof(char*))) == NULL ||
       ((program->llvm_irs =
-        (void**) calloc (num_devices, sizeof(void*))) == NULL))
+        (void**) calloc (num_devices, sizeof(void*))) == NULL) ||
+      ((program->build_hash = (SHA1_digest_t*)
+        calloc (num_devices, sizeof(SHA1_digest_t))) == NULL))
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
       goto ERROR_CLEAN_PROGRAM_AND_BINARIES;
