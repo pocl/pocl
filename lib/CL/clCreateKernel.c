@@ -74,9 +74,6 @@ POname(clCreateKernel)(cl_program program,
 
   POCL_INIT_OBJECT (kernel);
 
-  cache_lock = pocl_cache_acquire_writer_lock(program);
-  assert(cache_lock);
-
   for (device_i = 0; device_i < program->num_devices; ++device_i)
     {
       if (device_i > 0)
@@ -85,11 +82,16 @@ POname(clCreateKernel)(cl_program program,
       /* If there is no device dir for this device, the program was
          not built for that device in clBuildProgram. This seems to
          be OK by the standard. */
-      if (!pocl_cache_device_cachedir_exists(program, program->devices[device_i]))
+      if (!pocl_cache_device_cachedir_exists(program, device_i))
           continue;
+
+      cache_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
+      assert(cache_lock);
 
       error = pocl_llvm_get_kernel_metadata(program,
                       kernel, device_i, kernel_name, &errcode);
+
+      pocl_cache_release_lock(cache_lock);
 
       if (error)
         {
@@ -129,7 +131,6 @@ SUCCESS:
   {
     *errcode_ret = errcode;
   }
-  pocl_cache_release_lock(program, cache_lock);
   return kernel;
 }
 POsym(clCreateKernel)

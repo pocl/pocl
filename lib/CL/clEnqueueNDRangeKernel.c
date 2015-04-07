@@ -228,7 +228,8 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
     CL_INVALID_EVENT_WAIT_LIST);
 
-  cache_lock = pocl_cache_acquire_writer_lock(kernel->program);
+  cache_lock = pocl_cache_acquire_writer_lock(kernel->program,
+                                              command_queue->device);
   assert(cache_lock);
 
   char cachedir[POCL_FILENAME_LENGTH];
@@ -336,7 +337,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   error = CL_SUCCESS;
 
 ERROR:
-  pocl_cache_release_lock(kernel->program, cache_lock);
+  pocl_cache_release_lock(cache_lock);
   return error;
 
 }

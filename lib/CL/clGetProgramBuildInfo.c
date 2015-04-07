@@ -38,16 +38,10 @@ POname(clGetProgramBuildInfo)(cl_program            program,
   const char *empty_str = "";      /* dummy return value */
   const char *str;
 
-  unsigned i;
-  cl_bool found;
-
   POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
 
-  found = CL_FALSE;
-  for (i = 0; i < program->num_devices; i++)
-    if (device == program->devices[i]) found = CL_TRUE;
-
-  POCL_RETURN_ERROR_ON((found == CL_FALSE), CL_INVALID_DEVICE, "Program was not "
+  int device_i = pocl_cl_device_to_index(program, device);
+  POCL_RETURN_ERROR_ON((device_i < 0), CL_INVALID_DEVICE, "Program was not "
     "built for this device\n")
 
   switch (param_name) {
@@ -64,8 +58,11 @@ POname(clGetProgramBuildInfo)(cl_program            program,
     
   case CL_PROGRAM_BUILD_LOG:
     {
-      char* build_log = pocl_cache_read_buildlog(program);
-
+      char *build_log;
+      if (program->build_log[device_i])
+          build_log = strdup(program->build_log[device_i]);
+      else
+          build_log = pocl_cache_read_buildlog(program, device_i);
       POCL_RETURN_ERROR_ON((build_log==NULL), CL_OUT_OF_HOST_MEMORY, "failed to read build log");
 
       size_t const value_size = strlen(build_log) + 1;

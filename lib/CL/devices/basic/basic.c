@@ -803,7 +803,7 @@ void check_compiler_cache (_cl_command_node *cmd)
     }
   cl_program program = cmd->command.run.kernel->program;
 
-  void* cache_lock = pocl_cache_acquire_writer_lock(program);
+  void* cache_lock = pocl_cache_acquire_writer_lock(program, cmd->device);
   assert(cache_lock);
 
   ci = (compiler_cache_item*) malloc (sizeof (compiler_cache_item));
@@ -827,7 +827,7 @@ void check_compiler_cache (_cl_command_node *cmd)
   cmd->command.run.wg = ci->wg = 
     (pocl_workgroup) lt_dlsym (dlhandle, workgroup_string);
 
-  pocl_cache_release_lock(program, cache_lock);
+  pocl_cache_release_lock(cache_lock);
   LL_APPEND (compiler_cache, ci);
   POCL_UNLOCK (compiler_cache_lock);
 
