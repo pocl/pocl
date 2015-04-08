@@ -334,6 +334,8 @@ build_program_compute_hash(cl_program program,
         }
     *hashstr = 0;
 
+    program->build_hash[device_i][2] = '/';
+
 }
 
 #ifdef ANDROID
