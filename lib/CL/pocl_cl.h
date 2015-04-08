@@ -223,7 +223,7 @@ struct pocl_argument_info {
 };
 
 struct pocl_device_ops {
-  char *device_name;
+  const char *device_name;
   void (*init_device_infos) (struct _cl_device_id*);
   /* implementation */
   void (*uninit) (cl_device_id device);
@@ -366,11 +366,11 @@ struct _cl_device_id {
   char *cache_dir_name;
   cl_device_id parent_device;
 
-  char *vendor;
-  char *driver_version;
-  char *profile;
-  char *version;
-  char *extensions;
+  const char *vendor;
+  const char *driver_version;
+  const char *profile;
+  const char *version;
+  const char *extensions;
  
   void *data;
   const char* llvm_target_triplet; /* the llvm target triplet to use */

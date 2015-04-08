@@ -265,7 +265,7 @@ public:
        the original one. */
 
     /* Create the global buffers along with their initialization data. */
-    for (int i = 0; i < run_cmd->kernel->num_args; ++i)
+    for (size_t i = 0; i < run_cmd->kernel->num_args; ++i)
       {
         struct pocl_argument *al = &(run_cmd->arguments[i]);
         if (run_cmd->kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
@@ -340,7 +340,7 @@ public:
     out << "void initialize_kernel_launch() {" << std::endl;
 
     out << "\tkernel_command.kernel = (uint32_t)&" << kernelMdSymbolName << ";" << std::endl;
-    int a = 0;
+    size_t a = 0;
     for (; a < run_cmd->kernel->num_args + run_cmd->kernel->num_locals; ++a)
       {
         struct pocl_argument *al = &(run_cmd->arguments[a]);
