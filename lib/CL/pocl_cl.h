@@ -287,9 +287,7 @@ void (*fill_rect) (void *data,
   /* Perform initialization steps and can return additional
      build options that are required for the device. The caller
      owns the returned string. */
-  char* (*init_build) 
-  (void *data, 
-   const char *dev_tmpdir);
+  char* (*init_build) (void *data);
 
   void (*build_hash) (void *data, SHA1_CTX *build_hash);
 

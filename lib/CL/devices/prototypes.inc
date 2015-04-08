@@ -90,8 +90,7 @@
   void* pocl_##__DRV__##_unmap_mem (void *data, void *host_ptr, \
                                     void *device_start_ptr, size_t size); \
   cl_ulong pocl_##__DRV__##_get_timer_value(void *data); \
-  char* pocl_##__DRV__##_init_build (void *data, \
-                                         const char *dev_tmpdir); \
+  char* pocl_##__DRV__##_init_build (void *data); \
   void pocl_##__DRV__##_build_hash (void *data, SHA1_CTX *build_hash); \
   cl_int pocl_##__DRV__##_get_supported_image_formats (cl_mem_flags flags,\
                                          const cl_image_format **image_formats,\
