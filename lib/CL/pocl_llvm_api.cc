@@ -1201,7 +1201,7 @@ extern llvm::cl::list<int> LocalSize;
  */
 static llvm::Module*
 kernel_library
-(cl_device_id device, llvm::Module* root)
+(cl_device_id device)
 {
   llvm::MutexGuard lockHolder(kernelCompilerLock);
   InitializeLLVM();
@@ -1310,7 +1310,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
 
   // Later this should be replaced with indexed linking of source code
   // and/or bitcode for each kernel.
-  llvm::Module *libmodule = kernel_library(device, input);
+  llvm::Module *libmodule = kernel_library(device);
   assert (libmodule != NULL);
   link(input, libmodule);
 
