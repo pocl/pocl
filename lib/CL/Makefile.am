@@ -194,6 +194,16 @@ libOpenCL_la_LDFLAGS = ${libpocl_la_LDFLAGS}
 libOpenCL_la_LIBADD = ${libpocl_la_LIBADD}
 endif
 
-CLEANFILES = libOpenCL.la
+CLEANFILES = libOpenCL.la kernellib_hash.h
 
 EXTRA_DIST = CMakeLists.txt
+
+BUILT_SOURCES = kernellib_hash.h
+
+FORCE:
+
+kernellib_hash.h: FORCE
+	echo -n "#define POCL_KERNELLIB_SHA1 \"" > kernellib_hash.new
+	echo -n `sha1sum ../../include/_kernel.h ../../include/_kernel_c.h ../../include/pocl_types.h ../../include/pocl_features.h ../kernel/*.cl ../kernel/*.c ../kernel/vecmathlib-pocl/*.cl ../kernel/vecmathlib-pocl/*.cc | sha1sum -` >>kernellib_hash.new
+	echo "\"" >> kernellib_hash.new
+	cmp kernellib_hash.new kernellib_hash.h || mv kernellib_hash.new kernellib_hash.h
