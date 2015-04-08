@@ -46,7 +46,7 @@
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
 #define COMMAND_LENGTH 2048
-#define WORKGROUP_STRING_LENGTH 128
+#define WORKGROUP_STRING_LENGTH 1024
 
 struct data {
   /* Currently loaded kernel. */
@@ -823,7 +823,7 @@ void check_compiler_cache (_cl_command_node *cmd)
       abort();
     }
   snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
-            "_%s_workgroup", cmd->command.run.kernel->function_name);
+            "_pocl_launcher_%s_workgroup", cmd->command.run.kernel->function_name);
   cmd->command.run.wg = ci->wg = 
     (pocl_workgroup) lt_dlsym (dlhandle, workgroup_string);
 

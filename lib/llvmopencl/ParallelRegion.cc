@@ -739,9 +739,15 @@ ParallelRegion::InjectPrintF
   const_ptr_8_indices.push_back(const_int64_9);
   const_ptr_8_indices.push_back(const_int64_9);
   assert (isa<Constant>(stringArg));
-  Constant* const_ptr_8 = 
+  #ifdef LLVM_OLDER_THAN_3_7
+  Constant* const_ptr_8 =
     ConstantExpr::getGetElementPtr
     (cast<Constant>(stringArg), const_ptr_8_indices);
+  #else
+  Constant* const_ptr_8 =
+    ConstantExpr::getGetElementPtr
+    (PointerType::getUnqual(Type::getInt8Ty(getGlobalContext())), cast<Constant>(stringArg), const_ptr_8_indices);
+  #endif
 
   std::vector<Value*> args;
   args.push_back(const_ptr_8);

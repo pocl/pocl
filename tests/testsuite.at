@@ -308,7 +308,8 @@ AT_CHECK([$abs_top_builddir/tests/kernel/test_shuffle half], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions: shuffle intN])
-AT_XFAIL_IF([grep -q "#define LLVM_3_7" $abs_top_builddir/config.h])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -v -q arm &&
+             grep -q "#define LLVM_3_7" $abs_top_builddir/config.h])
 AT_KEYWORDS([shuffle long])
 AT_DATA([expout],
 OK
@@ -317,7 +318,8 @@ AT_CHECK([$abs_top_builddir/tests/kernel/test_shuffle int], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions: shuffle uintN])
-AT_XFAIL_IF([grep -q "#define LLVM_3_7" $abs_top_builddir/config.h])
+AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -v -q arm &&
+             grep -q "#define LLVM_3_7" $abs_top_builddir/config.h])
 AT_KEYWORDS([shuffle long])
 AT_DATA([expout],
 OK

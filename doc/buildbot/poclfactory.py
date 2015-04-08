@@ -19,7 +19,6 @@ AMD_test_pkg='AMD-APP-SDK-v2.8-RC-lnx64.tgz'
 ViennaCL_test_pkg='ViennaCL-1.5.1.tar.gz'
 
 
-
 def createPoclFactory(	environ={},
 			repository='https://github.com/pocl/pocl.git',
 			branch='master',
@@ -71,8 +70,14 @@ def createPoclFactory(	environ={},
 
 	if cache_dir:
 		myenviron['POCL_BUILD_KERNEL_CACHE']='1'
+		myenviron['POCL_CACHE_DIR']=cache_dir
 	else:
 		myenviron['POCL_BUILD_KERNEL_CACHE']='0'
+
+	if cmake:
+		logfile="Testing/Temporary/LastTest.log"
+	else:
+		logfile="tests/testsuite.log"
 
 
 	if f==None:
@@ -144,6 +149,8 @@ def createPoclFactory(	environ={},
 			configOpts = configOpts + ['--enable-pedantic']
 		if buildICD==False:
 			configOpts = configOpts + ['--disable-icd']
+		if cache_dir=None:
+			configOpts = configOpts + ['--disable-kernel-cache']
 
 		f.addStep(ShellCommand(
 				command=["./configure"] + configOpts,
@@ -171,7 +178,7 @@ def createPoclFactory(	environ={},
 				env=myenviron,
 				description="testing",
 				descriptionDone="tests",
-				logfiles={"test.log": "tests/testsuite.log"},
+				logfiles={"test.log": logfile},
 				timeout=60*60))
 	else:
 		f.addStep(ShellCommand(command=["make", "check"],
@@ -180,7 +187,7 @@ def createPoclFactory(	environ={},
 				env=myenviron,
 				description="testing",
 				descriptionDone="tests",
-				logfiles={"test.log": "tests/testsuite.log"},
+				logfiles={"test.log": logfile},
 				#blas3 alone takes 15-20 min.
 				timeout=60*60))
 		#run the test once more, now from the kernel cache dir, if used
@@ -191,8 +198,8 @@ def createPoclFactory(	environ={},
 				env=myenviron,
 				description="testing kcache",
 				descriptionDone="tested kcache",
-				logfiles={"test.log": "tests/testsuite.log"},
-				timeout=5))			
+				logfiles={"test.log": logfile},
+				timeout=5))
 	return f
 
 #######
@@ -237,29 +244,30 @@ def createLLVMFactory(srcdir, builddir, installdir, test_install_dir):
 			command=['make', '-j', '4'],
 			workdir=builddir,
 			haltOnFailure=True,
-			name = "compile",
-			descriptionDone = 'compile',
-			description='compiling'))
+			name = "compile LLVM",
+			descriptionDone = 'compiled LLVM',
+			description='compiling LLVM'))
 	f.addStep(
 		ShellCommand(
 			command=['make', 'check'],
 			workdir=builddir,
-			name='check',
-			descriptionDone='check',
+			name='LLVM check',
+			descriptionDone='checked LLVM',
 			haltOnFailure=True,
-			description='checking'))
+			description='checking LLVM'))
 	f.addStep(
 		ShellCommand(
 			command=['make', 'install'],
 			env={'DESTDIR':test_install_dir},
 			workdir=builddir,
 			haltOnFailure=True,
-			name = 'install',
+			name = 'install for test',
 			descriptionDone='install',
 			description='installing'))
 
 	f=createPoclFactory(
 		llvm_dir=test_install_dir+installdir, 
+		pedantic=False,
 		f=f)
 
 	f.addStep(
@@ -267,10 +275,19 @@ def createLLVMFactory(srcdir, builddir, installdir, test_install_dir):
 			command=['make', 'install'],
 			workdir=builddir,
 			haltOnFailure=True,
-			name = 'install',
+			name = 'install final',
 			descriptionDone='install',
 			description='installing'))
 
 	return f
+
+
+#Use this in schedulers to trigger out documentations to not trigger builds.
+def shouldBuildTrigger(change):
+	for fname in change.files:
+		if os.path.split(fname)[0] != 'doc':
+			return True
+	return False
+
 
 # vim: set noexpandtab:

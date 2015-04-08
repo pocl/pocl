@@ -53,7 +53,7 @@
 using namespace TTAMachine;
 
 #define COMMAND_LENGTH 256
-#define WORKGROUP_STRING_LENGTH 128
+#define WORKGROUP_STRING_LENGTH 1024
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
 #define ALIGNMENT (max(ALIGNOF_FLOAT16, ALIGNOF_DOUBLE16))

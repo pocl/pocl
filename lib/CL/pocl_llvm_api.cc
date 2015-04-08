@@ -820,8 +820,8 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   std::stringstream content;
 
   content <<  "\n #include <pocl_device.h>\n";
-  content << "void _" << kernel_name << "_workgroup(void** args, struct pocl_context*);\n";
-  content << "void _" << kernel_name << "_workgroup_fast(void** args, struct pocl_context*);\n";
+  content << "void _pocl_launcher_" << kernel_name << "_workgroup(void** args, struct pocl_context*);\n";
+  content << "void _pocl_launcher_" << kernel_name << "_workgroup_fast(void** args, struct pocl_context*);\n";
   content << "__attribute__((address_space(3))) __kernel_metadata _" << kernel_name << "_md = {\n";
   content << "     \"" << kernel_name << "\", /* name */ \n";
   content << "     " << kernel->num_args << ", /* num_args */\n";

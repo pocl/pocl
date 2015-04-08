@@ -37,7 +37,7 @@
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
 #define COMMAND_LENGTH 2048
-#define WORKGROUP_STRING_LENGTH 128
+#define WORKGROUP_STRING_LENGTH 1024
 
 //#define DEBUG_CELLSPU_DRIVER
 
@@ -268,7 +268,7 @@ pocl_cellspu_run
   // SPU image.
   // TODO: figure out which function to call given what conditions
   snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
-            "_%s_workgroup_fast", kernel->function_name);
+            "_pocl_launcher_%s_workgroup_fast", kernel->function_name);
 
 
   if ( access (module, F_OK) != 0)

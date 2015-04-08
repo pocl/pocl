@@ -31,16 +31,23 @@ int main(int argc, char **argv)
   /* image parameters */
   cl_uchar4 *imageData;
   cl_image_format image_format;
-  cl_image_desc image_desc;
+  cl_image_desc image2_desc, image3_desc;
 
   
 
   printf("Running test %s...\n", name);
-  memset(&image_desc, 0, sizeof(cl_image_desc));
-  image_desc.image_type = CL_MEM_OBJECT_IMAGE3D;
-  image_desc.image_width = 2;
-  image_desc.image_height = 4;
-  image_desc.image_depth = 8;
+
+  memset(&image2_desc, 0, sizeof(cl_image_desc));
+  image2_desc.image_type = CL_MEM_OBJECT_IMAGE2D;
+  image2_desc.image_width = 2;
+  image2_desc.image_height = 4;
+
+  memset(&image3_desc, 0, sizeof(cl_image_desc));
+  image3_desc.image_type = CL_MEM_OBJECT_IMAGE3D;
+  image3_desc.image_width = 2;
+  image3_desc.image_height = 4;
+  image3_desc.image_depth = 8;
+
   image_format.image_channel_order = CL_RGBA;
   image_format.image_channel_data_type = CL_UNSIGNED_INT8;
   imageData = (cl_uchar4*)malloc (4 * 4 * sizeof(cl_uchar4));
@@ -120,11 +127,19 @@ int main(int argc, char **argv)
 
   /* Create image */
 
-  cl_mem image = clCreateImage (context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                &image_format, &image_desc, imageData, &result);
+  cl_mem image2 = clCreateImage (context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                                &image_format, &image2_desc, imageData, &result);
   if (result != CL_SUCCESS)
     {
-      puts("image creation failed\n");
+      puts("image2 creation failed\n");
+      goto error;
+    }
+
+  cl_mem image3 = clCreateImage (context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                                &image_format, &image3_desc, imageData, &result);
+  if (result != CL_SUCCESS)
+    {
+      puts("image3 creation failed\n");
       goto error;
     }
 
@@ -153,10 +168,17 @@ int main(int argc, char **argv)
       goto error;
     }
 
-   result = clSetKernelArg( kernel, 0, sizeof(cl_mem), &image);
+   result = clSetKernelArg( kernel, 0, sizeof(cl_mem), &image2);
    if (result)
      {
-       puts("clSetKernelArg failed\n");
+       puts("clSetKernelArg 0 failed\n");
+       goto error;
+     }
+
+   result = clSetKernelArg( kernel, 1, sizeof(cl_mem), &image3);
+   if (result)
+     {
+       puts("clSetKernelArg 1 failed\n");
        goto error;
      }
 

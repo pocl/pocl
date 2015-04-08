@@ -243,27 +243,22 @@ GenerateHeader::ProcessPointers(Function *F,
       is_pointer[i] = false;
       is_local[i] = false;
     }
-    
+
     if (t->isPointerTy()) {
-      if (t->getPointerElementType()->isStructTy()) {
-        string name = t->getPointerElementType()->getStructName().str();
-        if (name == "opencl.image2d_t" || name == "opencl.image3d_t" || 
-            name == "opencl.image1d_t" || name == "struct.dev_image_t") {
-          is_image[i] = true;
-          is_pointer[i] = false;
-          is_local[i] = false;
-        }
-        if (name == "opencl.sampler_t_") {
-          is_sampler[i] = true;
-          is_pointer[i] = false;
-          is_local[i] = false;
-        }
+      if (is_image_type(*t)) {
+        is_image[i] = true;
+        is_pointer[i] = false;
+        is_local[i] = false;
+      } else if (is_sampler_type(*t)) {
+        is_sampler[i] = true;
+        is_pointer[i] = false;
+        is_local[i] = false;
       }
     }
-    
+
     ++i;
   }
-    
+
   out << "#define _" << F->getName() << "_ARG_IS_POINTER {";
   if (num_args != 0) {
     out << is_pointer[0];

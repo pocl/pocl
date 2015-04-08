@@ -255,7 +255,7 @@ createLauncher(Module &M, Function *F)
 
   Function *L = Function::Create(ft,
 				 Function::ExternalLinkage,
-				 "_" + funcName,
+				 "_pocl_launcher_" + funcName,
 				 &M);
 
   SmallVector<Value *, 8> arguments;
