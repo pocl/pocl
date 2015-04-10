@@ -24,6 +24,9 @@
 #ifndef POCL_CACHE_H
 #define POCL_CACHE_H
 
+/* The filename in which the work group (parallelizable) kernel LLVM bc is stored in
+   the kernel's temp dir. */
+#define POCL_PARALLEL_BC_FILENAME   "/parallel.bc"
 
 #ifdef __cplusplus
 extern "C" {

@@ -83,7 +83,7 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
     return module;
 
       error = snprintf (bytecode, POCL_FILENAME_LENGTH,
-                        "%s/%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
+                        "%s%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
       assert (error >= 0);
       
       error = pocl_llvm_codegen( kernel, device, bytecode, objfile);

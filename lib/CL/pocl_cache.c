@@ -250,7 +250,7 @@ int pocl_cache_write_kernel_parallel_bc(void*        bc,
 
     assert( strlen(kernel_parallel_path) <
             (POCL_FILENAME_LENGTH - strlen(POCL_PARALLEL_BC_FILENAME)));
-    strcat(kernel_parallel_path, "/" POCL_PARALLEL_BC_FILENAME);
+    strcat(kernel_parallel_path, POCL_PARALLEL_BC_FILENAME);
     return pocl_write_module(bc, kernel_parallel_path, 0);
 }
 

@@ -47,10 +47,6 @@
 #include "pocl_hash.h"
 
 
-/* The filename in which the work group (parallelizable) kernel LLVM bc is stored in 
-   the kernel's temp dir. */
-#define POCL_PARALLEL_BC_FILENAME   "parallel.bc"
-
 #if __STDC_VERSION__ < 199901L
 # if __GNUC__ >= 2
 #  define __func__ __PRETTY_FUNCTION__
