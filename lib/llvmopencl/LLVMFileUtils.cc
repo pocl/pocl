@@ -252,13 +252,6 @@ void* acquire_lock(const char *path, int shared) {
 }
 
 
-int lock_is_owned(void* lock) {
-    assert(lock);
-    return ((LockFileManager *)lock)->getState() ==
-            LockFileManager::LockFileState::LFS_Owned;
-}
-
-
 void release_lock(void* lock) {
     if (!lock)
         return;

@@ -39,8 +39,6 @@ extern "C" {
 
 void* acquire_lock(const char* path, int shared);
 
-int lock_is_owned(void* lock);
-
 void release_lock(void* lock);
 
 
