@@ -211,7 +211,7 @@ int pocl_llvm_build_program(cl_program program,
   if (device->ops->init_build != NULL)
     {
       char *device_switches =
-        device->ops->init_build (device->data, NULL);
+        device->ops->init_build (device->data);
       if (device_switches != NULL)
         {
           ss << device_switches << " ";

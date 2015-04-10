@@ -49,6 +49,7 @@
 #include <DataLabel.hh>
 #include <AddressSpace.hh>
 #include <GlobalScope.hh>
+#include <Environment.hh>
 
 using namespace TTAMachine;
 
@@ -610,25 +611,31 @@ pocl_tce_map_mem (void *data, void *buf_ptr,
 }
 
 char* 
-pocl_tce_init_build(void *data, const char *dev_tmpdir) 
+pocl_tce_init_build(void *data)
 {
   TCEDevice *tce_dev = (TCEDevice*)data;
+  TCEString mach_tmpdir =
+      Environment::llvmtceCachePath();
+
+  TCEString mach_header_base =
+      mach_tmpdir + "/" + tce_dev->machine_->hash();
 
   int error = 0;
+
+  std::string devextHeaderFn =
+    std::string(mach_header_base) + std::string("_opencl_devext.h");
+
   /* Generate the vendor extensions header to provide explicit
      access to the (custom) hardware operations. */
-  std::string tceopgenCmd = 
-    std::string("tceopgen > ") + std::string(dev_tmpdir) + "/tceops.h";
-  
+  std::string tceopgenCmd =
+      std::string("tceopgen > ") + devextHeaderFn;
+
   error = system (tceopgenCmd.c_str());
   if (error == -1) return NULL;
 
-  std::string devextHeaderFn =
-    std::string(dev_tmpdir) + std::string("/_devext.h");
-
   std::string extgenCmd = 
     std::string("tceoclextgen ") + tce_dev->machine_file + 
-    std::string(" > ") + devextHeaderFn;
+      std::string(" >> ") + devextHeaderFn;
 
   error = system (extgenCmd.c_str());
   if (error == -1) return NULL;
