@@ -58,8 +58,12 @@ below.
 
 * POCL_KERNEL_CACHE
 
- If this is set to 0 at runtime, kernel-cache will be forcefully disabled even if
- its enabled in configure step
+ If this is set to 0 at runtime, kernel compilation files will be deleted at
+ clReleaseProgram(). Note that it's currently not possible for pocl to avoid
+ interacting with LLVM via on-disk files, so pocl requires some disk space at
+ least temporarily (at runtime). Also, the locking mechanism on cache files
+ does not work with LLVM < 3.5, so you might get errors if you try to run
+ multiple processes running the same CL code via pocl.
 
 * POCL_KERNEL_CACHE_IGNORE_INCLUDES
 
