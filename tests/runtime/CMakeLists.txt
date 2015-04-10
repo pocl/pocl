@@ -28,7 +28,8 @@ set(PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_clCreateProgramWithBinary test_clGetSupportedImageFormats
   test_clSetEventCallback test_clEnqueueNativeKernel test_clBuildProgram
   test_clCreateKernelsInProgram test_clCreateKernel test_clGetKernelArgInfo
-  test_version test_kernel_cache_includes)
+  test_version test_kernel_cache_includes test_event_cycle test_link_error
+  test_read-copy-write-buffer)
 
 #EXTRA_DIST= \
 # test_kernel_src_in_pwd.h \
@@ -70,10 +71,16 @@ add_test(NAME "runtime/test_kernel_cache_includes"
 
 add_test("runtime/clFinish" "test_clFinish")
 
+add_test("runtime/test_event_cycle" "test_event_cycle")
+
+# currently fails, see commit 13e5bc89a6b7675efbc
+#add_test("runtime/test_link_error" "test_link_error")
+
+add_test("runtime/test_read-copy-write-buffer" "test_read-copy-write-buffer")
+
 add_test("runtime/clCreateKernel" "test_clCreateKernel")
 
 add_test("runtime/clGetKernelArgInfo" "test_clGetKernelArgInfo")
-
 
 add_test_custom("${CMAKE_CURRENT_BINARY_DIR}/test_clSetEventCallback"
                 "runtime/clSetEventCallback" "test_clSetEventCallback_expout.txt" )
@@ -87,10 +94,14 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/clBuildProgram" "runtime/clFinish" "runtime/clSetEventCallback"
   "runtime/clGetSupportedImageFormats" "runtime/clCreateKernelsInProgram"
   "runtime/clCreateKernel" "runtime/clGetKernelArgInfo"
+  "runtime/test_kernel_cache_includes" "runtime/test_event_cycle"
+  "runtime/test_read-copy-write-buffer" #"runtime/test_link_error"
   PROPERTIES
     COST 2.0
     PROCESSORS 1
     DEPENDS "pocl_version_check")
+
+
 
 set_tests_properties("runtime/clGetSupportedImageFormats"
   PROPERTIES
