@@ -176,6 +176,29 @@ ParseIRFile(const char* fname, SMDiagnostic &Err, llvm::LLVMContext &ctx)
 }
 #endif
 
+static void get_build_log(cl_program program,
+                         unsigned device_i,
+                         std::stringstream &ss_build_log,
+                         clang::TextDiagnosticBuffer *diagsBuffer) {
+
+    for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->err_begin(),
+         e = diagsBuffer->err_end(); i != e; ++i)
+      {
+        ss_build_log << "error: " << (*i).second << std::endl;
+      }
+    for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->warn_begin(),
+         e = diagsBuffer->warn_end(); i != e; ++i)
+      {
+        ss_build_log << "warning: " << (*i).second << std::endl;
+      }
+    std::string log = ss_build_log.str();
+    program->build_log[device_i] = (char*) malloc(log.size()+1);
+    std::strncpy(program->build_log[device_i], log.c_str(), log.size()+1);
+
+    std::cerr << log;
+
+}
+
 
 int pocl_llvm_build_program(cl_program program, 
                             unsigned device_i,
@@ -273,23 +296,9 @@ int pocl_llvm_build_program(cl_program program,
 
   if (!CompilerInvocation::CreateFromArgs
       (pocl_build, itemcstrs.data(), itemcstrs.data() + itemcstrs.size(), 
-       diags)) 
+       diags))
     {
-      for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->err_begin(), 
-             e = diagsBuffer->err_end(); i != e; ++i) 
-        {
-          ss_build_log << "error: " << (*i).second << std::endl;
-        }
-      for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->warn_begin(), 
-             e = diagsBuffer->warn_end(); i != e; ++i) 
-        {
-          ss_build_log << "warning: " << (*i).second << std::endl;
-        }
-      std::string log = ss_build_log.str();
-      program->build_log[device_i] = (char*) malloc(log.size()+1);
-      std::strncpy(program->build_log[device_i], log.c_str(), log.size()+1);
-
-      std::cerr << log;
+      get_build_log(program, device_i, ss_build_log, diagsBuffer);
       return CL_INVALID_BUILD_OPTIONS;
     }
   
@@ -389,7 +398,12 @@ int pocl_llvm_build_program(cl_program program,
   char *preprocessed_out;
   uint64_t size;
   pocl_read_file(tempfile, &preprocessed_out, &size);
-  assert(preprocessed_out);
+  if (!preprocessed_out)
+    {
+      get_build_log(program, device_i, ss_build_log, diagsBuffer);
+      return CL_BUILD_PROGRAM_FAILURE;
+    }
+
 
   std::string old_build_hash((char*)program->build_hash[device_i],
                              sizeof(SHA1_digest_t));
