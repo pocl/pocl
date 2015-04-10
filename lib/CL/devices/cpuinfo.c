@@ -45,16 +45,25 @@ const char* cpufreq_file="/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq"
 #if   defined  __powerpc__
  #define FREQSTRING "clock"
  #define MODELSTRING "cpu\t"
+ #define DEFAULTVENDOR "AIM" // Apple-IBM-Motorola
+ #define VENDORSTRING "vendor"
 #elif defined __arm__
  #define FREQSTRING " "
  #define MODELSTRING "Processor"
+ #define DEFAULTVENDOR "ARM"
+ #define VENDORSTRING "CPU implementer"
 #elif defined __mips
  #define FREQSTRING "BogoMIPS\t"
  #define MODELSTRING "cpu model\t"
+ #define DEFAULTVENDOR "MIPS"
 #else
  #define FREQSTRING "cpu MHz"
  #define MODELSTRING "model name"
+ #define DEFAULTVENDOR "Unknown x86"
+ #define VENDORSTRING "vendor_id"
 #endif
+
+static const char *cpuvendor_default = DEFAULTVENDOR;
 
 /** 
  * Read the CPU maximum frequency from the Linux cpufreq interface.
@@ -250,11 +259,14 @@ pocl_sysfs_detect_compute_unit_count()
 #endif
 
 void
-pocl_cpuinfo_append_cpu_name(cl_device_id device)
+pocl_cpuinfo_get_cpu_name_and_vendor(cl_device_id device)
 {
   /* If something fails here, have this as backup solution.
    * short_name is in the .data anyways.*/
   device->long_name = device->short_name;
+
+  /* default vendor, in case it cannot be found in cpuinfo */
+  device->vendor = cpuvendor_default;
   
   /* read contents of /proc/cpuinfo */
   if (access (cpuinfo, R_OK) != 0) 
@@ -265,15 +277,35 @@ pocl_cpuinfo_append_cpu_name(cl_device_id device)
   fclose(f);
   contents[num_read]='\0';
 
+  char *start, *end;
+  /* find the vendor_id string an put */
+#ifdef VENDORSTRING
+  do {
+    start = strstr(contents, VENDORSTRING"\t: ");
+    if (!start)
+      break;
+    start += strlen(VENDORSTRING"\t: ");
+    end = strchr(start, '\n');
+    if (!end)
+      break;
+    char *_vendor = malloc(end-start + 1);
+    if (!_vendor)
+      break;
+    memcpy(_vendor, start, end-start);
+    _vendor[end-start] = '\0';
+    device->vendor = _vendor;
+  } while (0);
+#endif
+
   /* find the cpu description */
-  char *start=strstr (contents, MODELSTRING"\t: ");
-  if (start == NULL) 
+  start=strstr (contents, MODELSTRING"\t: ");
+  if (start == NULL)
     return;
   start += strlen (MODELSTRING"\t: ");
-  char *end = strchr (start, '\n'); 
-  if (end == NULL) 
+  end = strchr (start, '\n');
+  if (end == NULL)
     return;
-  
+
   /* create the descriptive long_name for device */
   int len = strlen (device->short_name) + (end-start) + 2;
   char *new_name = (char*)malloc (len);
@@ -301,5 +333,5 @@ pocl_cpuinfo_detect_device_info(cl_device_id device)
   res = pocl_cpuinfo_detect_max_clock_frequency();
   device->max_clock_frequency = (res > 0) ? (cl_uint)res : 0;
 
-  pocl_cpuinfo_append_cpu_name(device);
+  pocl_cpuinfo_get_cpu_name_and_vendor(device);
 }
