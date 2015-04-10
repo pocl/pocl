@@ -65,14 +65,6 @@ below.
  does not work with LLVM < 3.5, so you might get errors if you try to run
  multiple processes running the same CL code via pocl.
 
-* POCL_KERNEL_CACHE_IGNORE_INCLUDES
-
- By default, the kernel compiler cache does not cache kernels that 
- have #include clauses. Setting this to 1 changes this so that the
- includes are ignored and not scanned for changes. Use this to
- improve the kernel compiler hit ratio in case you know that the 
- included files are not modified across runs.
-
 * POCL_KERNEL_COMPILER_OPT_SWITCH
 
  Override the default "-O3" that is passed to the LLVM opt as a final

@@ -216,7 +216,6 @@ class HalideBenchmarkCase(BenchmarkCase):
         halide_lib_dir = os.path.join(POCL_SRC_ROOT_PATH, HALIDE_TEST_ROOT_DIR, "bin")
 
         os.environ['HL_TARGET'] = 'opencl'
-        os.environ['POCL_KERNEL_CACHE_IGNORE_INCLUDES'] = '1'
         if halide_lib_dir not in os.environ['LD_LIBRARY_PATH']:
             os.environ['LD_LIBRARY_PATH'] = halide_lib_dir + ":" + \
                                             os.environ['LD_LIBRARY_PATH']
@@ -246,8 +245,6 @@ class CloverLeafBenchmarkCase(BenchmarkCase):
     def run(self):
         directory = os.path.join(POCL_SRC_ROOT_PATH, CLOVERLEAF_TEST_ROOT_DIR)
         os.chdir(directory)
-
-        os.environ['POCL_KERNEL_CACHE_IGNORE_INCLUDES'] = '1'
 
         timeout, self.stdout, self.stderr, rc = run_cmd(self.command)
         if timeout or rc != 0 or 'Wall clock' not in self.stderr:
