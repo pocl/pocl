@@ -1267,7 +1267,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
   assert(device_i >= 0);
 
   char kernel_so_path[POCL_FILENAME_LENGTH];
-  pocl_cache_kernel_so_path(kernel_so_path, program, device_i, kernel, local_x, local_y, local_z);
+  pocl_cache_work_group_function_so_path(kernel_so_path, program, device_i, kernel, local_x, local_y, local_z);
 
   if (pocl_exists(kernel_so_path))
     return CL_SUCCESS;
