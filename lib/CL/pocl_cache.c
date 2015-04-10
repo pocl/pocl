@@ -375,7 +375,7 @@ static void pocl_cache_init_topdir() {
 
     char *tmp_path=NULL;
 
-    tmp_path = getenv("POCL_CACHE_DIR");
+    tmp_path = pocl_get_string_option("POCL_CACHE_DIR", NULL);
 
     if (tmp_path && (pocl_exists(tmp_path))) {
         snprintf(cache_topdir, POCL_FILENAME_LENGTH, "%s", tmp_path);
