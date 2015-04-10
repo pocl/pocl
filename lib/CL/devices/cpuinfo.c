@@ -262,6 +262,7 @@ pocl_cpuinfo_append_cpu_name(cl_device_id device)
   FILE *f = fopen (cpuinfo, "r");
   char contents[MAX_CPUINFO_SIZE];
   int num_read = fread (contents, 1, MAX_CPUINFO_SIZE - 1, f);            
+  fclose(f);
   contents[num_read]='\0';
 
   /* find the cpu description */
