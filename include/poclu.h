@@ -99,6 +99,10 @@ poclu_cl_half_to_float(cl_half value);
 POCLU_API char * POCLU_CALL
 poclu_read_file(char* filemane);
 
+POCLU_API int POCLU_CALL
+poclu_write_file(char* filemane, char* content, size_t size);
+
+
 /* In case cl_err != CL_SUCCESS, prints out the error + function : line to stderr,
  * and returns 1, otherwise returns 0
  */

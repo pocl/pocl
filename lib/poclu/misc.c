@@ -111,6 +111,24 @@ poclu_read_file(char *filename)
   return src;
 }
 
+int
+poclu_write_file(char* filemane, char* content, size_t size)
+{
+  FILE *file;
+
+  file = fopen(filemane, "w");
+  if (file == NULL)
+    return -1;
+
+  if (fwrite(content, sizeof(char), size, file) < size)
+    return -1;
+
+  if (fclose(file))
+    return -1;
+
+  return 0;
+}
+
 #define OPENCL_ERROR_CASE(ERR) \
   case ERR: \
     { fprintf(stderr, "" #ERR " in %s on line %i\n", func_name, line); return 1; }
