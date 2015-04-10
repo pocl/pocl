@@ -1,0 +1,4 @@
+A printf from inside a function 1
+This is printf from the first include
+A printf from inside a function 2
+This is printf from the second include

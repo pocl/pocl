@@ -26,7 +26,7 @@ noinst_PROGRAMS= test_clFinish test_clGetDeviceInfo test_clGetEventInfo \
 	test_read-copy-write-buffer test_event_cycle \
 	test_clCreateProgramWithBinary test_clGetSupportedImageFormats \
 	test_clSetEventCallback test_clEnqueueNativeKernel test_clBuildProgram \
-	test_link_error \
+	test_link_error test_kernel_cache_includes \
 	test_clCreateKernelsInProgram test_clCreateKernel test_version \
 	test_clGetKernelArgInfo
 
@@ -34,6 +34,7 @@ EXTRA_DIST= \
 	test_kernel_src_in_pwd.h test_clSetEventCallback_expout.txt \
 	test_clCreateKernelsInProgram.cl CMakeLists.txt \
 	test_data/test_kernel_src_in_another_dir.h \
+        test_kernel_cache_includes.cl test_kernel_cache_includes_expout.txt \
 	clGetKernelArgInfo.spir32_meta clGetKernelArgInfo.spir32_nometa \
 	clGetKernelArgInfo.spir64_meta clGetKernelArgInfo.spir64_nometa
 

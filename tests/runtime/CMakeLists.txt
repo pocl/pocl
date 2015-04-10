@@ -28,7 +28,7 @@ set(PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_clCreateProgramWithBinary test_clGetSupportedImageFormats
   test_clSetEventCallback test_clEnqueueNativeKernel test_clBuildProgram
   test_clCreateKernelsInProgram test_clCreateKernel test_clGetKernelArgInfo
-  test_version)
+  test_version test_kernel_cache_includes)
 
 #EXTRA_DIST= \
 # test_kernel_src_in_pwd.h \
@@ -64,11 +64,16 @@ add_test(NAME "runtime/clBuildProgram"
          WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
          COMMAND "${CMAKE_CURRENT_BINARY_DIR}/test_clBuildProgram")
 
+add_test(NAME "runtime/test_kernel_cache_includes"
+         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+         COMMAND "${CMAKE_CURRENT_BINARY_DIR}/test_kernel_cache_includes")
+
 add_test("runtime/clFinish" "test_clFinish")
 
 add_test("runtime/clCreateKernel" "test_clCreateKernel")
 
 add_test("runtime/clGetKernelArgInfo" "test_clGetKernelArgInfo")
+
 
 add_test_custom("${CMAKE_CURRENT_BINARY_DIR}/test_clSetEventCallback"
                 "runtime/clSetEventCallback" "test_clSetEventCallback_expout.txt" )
@@ -105,4 +110,8 @@ endif()
 set_tests_properties("runtime/clFinish"
   PROPERTIES
     PASS_REGULAR_EXPRESSION "ABABC")
+
+set_tests_properties("runtime/test_kernel_cache_includes"
+  PROPERTIES PASS_REGULAR_EXPRESSION
+  "function 1.*first include.*function 2.*second include")
 
