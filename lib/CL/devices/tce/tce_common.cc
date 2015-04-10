@@ -51,6 +51,8 @@
 #include <GlobalScope.hh>
 #include <Environment.hh>
 
+#include "pocl_cache.h"
+
 using namespace TTAMachine;
 
 #define COMMAND_LENGTH 256
@@ -412,7 +414,7 @@ pocl_tce_run
     if (access (assemblyFileName.c_str(), F_OK) != 0)
       {
         error = snprintf (bytecode, POCL_FILENAME_LENGTH,
-                          "%s/%s", cmd->command.run.tmp_dir, POCL_PARALLEL_BC_FILENAME);
+                          "%s%s", cmd->command.run.tmp_dir, POCL_PARALLEL_BC_FILENAME);
         TCEString buildCmd = 
           d->tceccCommandLine(&cmd->command.run, bytecode, assemblyFileName);
         
