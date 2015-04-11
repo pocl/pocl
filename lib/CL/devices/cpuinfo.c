@@ -46,20 +46,24 @@ const char* cpufreq_file="/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq"
  #define FREQSTRING "clock"
  #define MODELSTRING "cpu\t"
  #define DEFAULTVENDOR "AIM" // Apple-IBM-Motorola
+ #define DEFAULTVENDORID 0x1014 // IBM
  #define VENDORSTRING "vendor"
 #elif defined __arm__
  #define FREQSTRING " "
  #define MODELSTRING "Processor"
  #define DEFAULTVENDOR "ARM"
+ #define DEFAULTVENDORID 0x13b5 // ARM
  #define VENDORSTRING "CPU implementer"
 #elif defined __mips
  #define FREQSTRING "BogoMIPS\t"
  #define MODELSTRING "cpu model\t"
+ #define DEFAULTVENDORID 0x153f // MIPS
  #define DEFAULTVENDOR "MIPS"
 #else
  #define FREQSTRING "cpu MHz"
  #define MODELSTRING "model name"
  #define DEFAULTVENDOR "Unknown x86"
+ #define DEFAULTVENDORID 0x0
  #define VENDORSTRING "vendor_id"
 #endif
 
@@ -265,11 +269,13 @@ pocl_cpuinfo_get_cpu_name_and_vendor(cl_device_id device)
    * short_name is in the .data anyways.*/
   device->long_name = device->short_name;
 
-  /* default vendor, in case it cannot be found in cpuinfo */
+  /* default vendor and vendor_id, in case it cannot be found by other means */
   device->vendor = cpuvendor_default;
-  
+  if (device->vendor_id == 0)
+    device->vendor_id = DEFAULTVENDORID;
+
   /* read contents of /proc/cpuinfo */
-  if (access (cpuinfo, R_OK) != 0) 
+  if (access (cpuinfo, R_OK) != 0)
     return;
   FILE *f = fopen (cpuinfo, "r");
   char contents[MAX_CPUINFO_SIZE];
