@@ -74,8 +74,6 @@ using llvm::legacy::PassManager;
 #include "llvm/IRReader/IRReader.h"
 #endif
 
-#include <llvm/Support/LockFileManager.h>
-#include <llvm/Support/Errc.h>
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/Host.h"

@@ -66,7 +66,7 @@ static bool existed;
 /* no openFile* functions in sys::fs before llvm 3.4, so fallback to open */
 #if defined(LLVM_3_2) || defined(LLVM_3_3)
     #define OPEN_FOR_READ fd = open(path, O_RDONLY)
-    #define OPEN_CREATE fd = open(path, O_CREAT | O_EXCL, S_IRUSR | S_IWUSR)
+    #define OPEN_CREATE fd = open(path, O_RDWR | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR)
     #define OPEN_FOR_APPEND fd = open(path, O_WRONLY | O_APPEND)
     #define RETURN_IF_ERRNO if (fd < 0) return errno;
 #else
