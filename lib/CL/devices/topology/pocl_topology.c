@@ -23,7 +23,6 @@
 
 #include <pocl_cl.h>
 #include <hwloc.h>
-#include <sys/resource.h>
 
 #include "pocl_topology.h"
 
@@ -45,53 +44,6 @@ pocl_topology_detect_device_info(cl_device_id device)
     POCL_ABORT("Cannot load the topology.\n");
 
   device->global_mem_size = hwloc_get_root_obj(pocl_topology)->memory.total_memory;
-
-  /* Maximum allocation size: we don't have hardware limits, so we
-   * can potentially allocate the whole memory for a single buffer, unless
-   * of course there are limits set at the operating system level */
-  struct rlimit limits;
-  getrlimit(RLIMIT_DATA, &limits);
-  size_t alloc_limit = limits.rlim_cur;
-  if (alloc_limit > device->global_mem_size)
-    alloc_limit = device->global_mem_size;
-
-  device->local_mem_size = device->max_constant_buffer_size =
-    device->max_mem_alloc_size = alloc_limit;
-
-  /* We don't have hardware limitations on the buffer-backed image sizes,
-   * so we set the maximum size in terms of the maximum amount of pixels
-   * that fix in max_mem_alloc_size. A single pixel can take up to 4 32-bit channels,
-   * i.e. 16 bytes.
-   */
-  size_t max_pixels = device->max_mem_alloc_size/16;
-  if (max_pixels > device->image_max_buffer_size)
-    device->image_max_buffer_size = max_pixels;
-
-  /* Similarly, we can take the 2D image size limit to be the largest power of 2
-   * whose square fits in image_max_buffer_size; since the 2D image size limit
-   * starts at a power of 2, it's a simple matter of doubling.
-   * This is actually completely arbitrary, another equally valid option
-   * would be to have each maximum dimension match the image_max_buffer_size.
-   */
-  max_pixels = device->image2d_max_width;
-  // keep doubing until we go over
-  while (max_pixels <= device->image_max_buffer_size/max_pixels)
-    max_pixels *= 2;
-  // halve before assignment
-  max_pixels /= 2;
-  if (max_pixels > device->image2d_max_width)
-    device->image2d_max_width = device->image2d_max_height = max_pixels;
-
-  /* Same thing for 3D images, of course with cubes. Again, totally arbitrary. */
-  max_pixels = device->image3d_max_width;
-  // keep doubing until we go over
-  while (max_pixels*max_pixels <= device->image_max_buffer_size/max_pixels)
-    max_pixels *= 2;
-  // halve before assignment
-  max_pixels /= 2;
-  if (max_pixels > device->image3d_max_width)
-  device->image3d_max_width = device->image3d_max_height =
-    device->image3d_max_depth = max_pixels;
 
   // Try to get the number of CPU cores from topology
   int depth = hwloc_get_type_depth(pocl_topology, HWLOC_OBJ_PU);

@@ -33,8 +33,6 @@
 
 #include "pocl_cl.h"
 
-#define MIN_MAX_MEM_ALLOC_SIZE (128*1024*1024)
-
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)
 #endif
