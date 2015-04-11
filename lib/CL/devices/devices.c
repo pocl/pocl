@@ -37,6 +37,7 @@
 #include "basic/basic.h"
 #include "pthread/pocl-pthread.h"
 #include "pocl_debug.h"
+#include "pocl_cache.h"
 
 #if defined(BUILD_SPU)
 #include "cellspu/cellspu.h"
@@ -200,6 +201,8 @@ pocl_init_devices()
 #ifdef POCL_DEBUG_MESSAGES
   pocl_debug_messages = pocl_get_bool_option("POCL_DEBUG", 0);
 #endif
+
+  pocl_cache_init_topdir();
 
   /* Init operations */
   for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)

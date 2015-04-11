@@ -371,11 +371,12 @@ char* pocl_get_process_name()
 
 /******************************************************************************/
 
-static void pocl_cache_init_topdir() {
+void pocl_cache_init_topdir() {
 
-    char *tmp_path=NULL;
+    if (cache_topdir_initialized)
+        return;
 
-    tmp_path = pocl_get_string_option("POCL_CACHE_DIR", NULL);
+    const char *tmp_path = pocl_get_string_option("POCL_CACHE_DIR", NULL);
 
     if (tmp_path && (pocl_exists(tmp_path))) {
         snprintf(cache_topdir, POCL_FILENAME_LENGTH, "%s", tmp_path);
@@ -426,8 +427,7 @@ pocl_cache_create_program_cachedir(cl_program program,
                                    char* program_bc_path,
                                    void** cache_lock)
 {
-    if (!cache_topdir_initialized)
-        pocl_cache_init_topdir();
+    assert(cache_topdir_initialized);
 
     if (program->source && preprocessed_source==NULL)
         return 1;
