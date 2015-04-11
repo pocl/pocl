@@ -287,7 +287,10 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->queue_properties = CL_QUEUE_PROFILING_ENABLE;
   dev->platform = 0;
   dev->device_partition_properties[0] = 0;
-  dev->printf_buffer_size = 0;
+  /* printf buffer size is meaningless for pocl, so just set it to
+   * the minimum value required by the spec
+   */
+  dev->printf_buffer_size = 1024*1024 ;
   dev->vendor = "pocl";
   dev->profile = "FULL_PROFILE";
   /* Note: The specification describes identifiers being delimited by
