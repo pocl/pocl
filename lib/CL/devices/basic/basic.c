@@ -36,6 +36,7 @@
 
 #ifndef _MSC_VER
 #  include <sys/time.h>
+#  include <sys/resource.h>
 #  include <unistd.h>
 #else
 #  include "vccompat.hpp"
@@ -253,20 +254,22 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->max_clock_frequency = 0;
   dev->address_bits = POCL_DEVICE_ADDRESS_BITS;
 
+  dev->image_support = CL_TRUE;
   /* Use the minimum values until we get a more sensible
      upper limit from somewhere. */
   dev->max_read_image_args = dev->max_write_image_args = 128;
   dev->image2d_max_width = dev->image2d_max_height = 8192;
   dev->image3d_max_width = dev->image3d_max_height = dev->image3d_max_depth = 2048;
+  dev->image_max_buffer_size = 65536;
+  dev->image_max_array_size = 2048;
   dev->max_samplers = 16;
   dev->max_constant_args = 8;
 
   dev->max_mem_alloc_size = 0;
-  dev->image_support = CL_TRUE;
-  dev->image_max_buffer_size = 0;
-  dev->image_max_array_size = 0;
+
   dev->max_parameter_size = 1024;
-  dev->min_data_type_align_size = dev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT;
+  dev->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT; // this is in bytes
+  dev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT*8; // this is in bits
   dev->half_fp_config = 0;
   dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
   dev->double_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
@@ -287,7 +290,10 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->queue_properties = CL_QUEUE_PROFILING_ENABLE;
   dev->platform = 0;
   dev->device_partition_properties[0] = 0;
-  dev->printf_buffer_size = 0;
+  /* printf buffer size is meaningless for pocl, so just set it to
+   * the minimum value required by the spec
+   */
+  dev->printf_buffer_size = 1024*1024 ;
   dev->vendor = "pocl";
   dev->profile = "FULL_PROFILE";
   /* Note: The specification describes identifiers being delimited by
@@ -327,6 +333,72 @@ pocl_basic_probe(struct pocl_device_ops *ops)
   return env_count;
 }
 
+#define MIN_MAX_MEM_ALLOC_SIZE (128*1024*1024)
+
+/* set maximum allocation sizes for buffers and images */
+void
+pocl_basic_set_buffer_image_limits(cl_device_id device)
+{
+  /* Maximum allocation size: we don't have hardware limits, so we
+   * can potentially allocate the whole memory for a single buffer, unless
+   * of course there are limits set at the operating system level. Of course
+   * we still have to respect the OpenCL-commanded minimum */
+  size_t alloc_limit = SIZE_MAX;
+
+#ifndef _MSC_VER
+  // TODO getrlimit equivalent under Windows
+  struct rlimit limits;
+  int ret = getrlimit(RLIMIT_DATA, &limits);
+  if (ret == 0)
+    alloc_limit = limits.rlim_cur;
+#endif
+  if (alloc_limit > device->global_mem_size)
+    alloc_limit = device->global_mem_size;
+  else if (alloc_limit < MIN_MAX_MEM_ALLOC_SIZE)
+    alloc_limit = MIN_MAX_MEM_ALLOC_SIZE;
+  // TODO in theory now if alloc_limit was > rlim_cur and < rlim_max
+  // we should try and setrlimit to alloc_limit, or allocations might fail
+
+  device->local_mem_size = device->max_constant_buffer_size =
+    device->max_mem_alloc_size = alloc_limit;
+
+  /* We don't have hardware limitations on the buffer-backed image sizes,
+   * so we set the maximum size in terms of the maximum amount of pixels
+   * that fix in max_mem_alloc_size. A single pixel can take up to 4 32-bit channels,
+   * i.e. 16 bytes.
+   */
+  size_t max_pixels = device->max_mem_alloc_size/16;
+  if (max_pixels > device->image_max_buffer_size)
+    device->image_max_buffer_size = max_pixels;
+
+  /* Similarly, we can take the 2D image size limit to be the largest power of 2
+   * whose square fits in image_max_buffer_size; since the 2D image size limit
+   * starts at a power of 2, it's a simple matter of doubling.
+   * This is actually completely arbitrary, another equally valid option
+   * would be to have each maximum dimension match the image_max_buffer_size.
+   */
+  max_pixels = device->image2d_max_width;
+  // keep doubing until we go over
+  while (max_pixels <= device->image_max_buffer_size/max_pixels)
+    max_pixels *= 2;
+  // halve before assignment
+  max_pixels /= 2;
+  if (max_pixels > device->image2d_max_width)
+    device->image2d_max_width = device->image2d_max_height = max_pixels;
+
+  /* Same thing for 3D images, of course with cubes. Again, totally arbitrary. */
+  max_pixels = device->image3d_max_width;
+  // keep doubing until we go over
+  while (max_pixels*max_pixels <= device->image_max_buffer_size/max_pixels)
+    max_pixels *= 2;
+  // halve before assignment
+  max_pixels /= 2;
+  if (max_pixels > device->image3d_max_width)
+  device->image3d_max_width = device->image3d_max_height =
+    device->image3d_max_depth = max_pixels;
+
+}
+
 void
 pocl_basic_init (cl_device_id device, const char* parameters)
 {
@@ -348,6 +420,7 @@ pocl_basic_init (cl_device_id device, const char* parameters)
   device->data = d;
   pocl_topology_detect_device_info(device);
   pocl_cpuinfo_detect_device_info(device);
+  pocl_basic_set_buffer_image_limits(device);
 
   /* The basic driver represents only one "compute unit" as
      it doesn't exploit multiple hardware threads. Multiple
