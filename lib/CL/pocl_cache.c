@@ -127,9 +127,8 @@ void* pocl_cache_acquire_writer_lock(cl_program program,
 
 /******************************************************************************/
 
-int pocl_cache_write_program_source(char *     program_cl_path,
-                                    cl_program program,
-                                    unsigned   device_i) {
+int pocl_cache_write_program_source(char *program_cl_path,
+                                    cl_program program) {
     assert(tmpnam(program_cl_path));
 
     return pocl_write_file(program_cl_path, program->source,

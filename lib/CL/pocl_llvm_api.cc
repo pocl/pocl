@@ -151,13 +151,11 @@ static void InitializeLLVM();
 // to find it.
 static inline int
 load_source(FrontendOptions &fe,
-            cl_program program, unsigned device_i)
+            cl_program program)
 {
   char source_file[POCL_FILENAME_LENGTH];
-  POCL_RETURN_ERROR_ON(pocl_cache_write_program_source(source_file,
-                                                       program, device_i),
-                       CL_OUT_OF_HOST_MEMORY,
-                       "Could not write program source")
+  POCL_RETURN_ERROR_ON(pocl_cache_write_program_source(source_file, program),
+                       CL_OUT_OF_HOST_MEMORY, "Could not write program source");
 
   fe.Inputs.push_back
     (FrontendInputFile(source_file, clang::IK_OpenCL));
@@ -359,7 +357,7 @@ int pocl_llvm_build_program(cl_program program,
   FrontendOptions &fe = pocl_build.getFrontendOpts();
   // The CreateFromArgs created an stdin input which we should remove first.
   fe.Inputs.clear(); 
-  if (load_source(fe, program, device_i)!=0)
+  if (load_source(fe, program)!=0)
     return CL_OUT_OF_HOST_MEMORY;
 
   CodeGenOptions &cg = pocl_build.getCodeGenOpts();

@@ -58,8 +58,7 @@ int pocl_cl_device_to_index(cl_program   program,
                                   cl_device_id device);
 
 int pocl_cache_write_program_source(char *program_cl_path,
-                                    cl_program program,
-                                    unsigned device_i);
+                                    cl_program program);
 
 int pocl_cache_update_program_last_access(cl_program program,
                                           unsigned device_i);
