@@ -23,6 +23,7 @@
 
 #include <pocl_cl.h>
 #include <hwloc.h>
+#include <sys/resource.h>
 
 #include "pocl_topology.h"
 
@@ -45,12 +46,17 @@ pocl_topology_detect_device_info(cl_device_id device)
 
   device->global_mem_size = hwloc_get_root_obj(pocl_topology)->memory.total_memory;
 
-  if (device->global_mem_size/4 > MIN_MAX_MEM_ALLOC_SIZE)
-    device->max_mem_alloc_size = device->global_mem_size/4;
-  else
-    device->max_mem_alloc_size = MIN_MAX_MEM_ALLOC_SIZE;
+  /* Maximum allocation size: we don't have hardware limits, so we
+   * can potentially allocate the whole memory for a single buffer, unless
+   * of course there are limits set at the operating system level */
+  struct rlimit limits;
+  getrlimit(RLIMIT_DATA, &limits);
+  size_t alloc_limit = limits.rlim_cur;
+  if (alloc_limit > device->global_mem_size)
+    alloc_limit = device->global_mem_size;
 
-  device->local_mem_size = device->max_constant_buffer_size = device->max_mem_alloc_size;
+  device->local_mem_size = device->max_constant_buffer_size =
+    device->max_mem_alloc_size = alloc_limit;
 
   /* We don't have hardware limitations on the buffer-backed image sizes,
    * so we set the maximum size in terms of the maximum amount of pixels
