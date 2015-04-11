@@ -241,10 +241,11 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
   device->max_read_image_args = device->max_write_image_args = 128;
   device->image2d_max_width = device->image2d_max_height = 8192;
   device->image3d_max_width = device->image3d_max_height = device->image3d_max_depth = 2048;
-  device->max_samplers = 16;  
+  device->max_samplers = 16;
   device->max_constant_args = 8;
 
-  device->min_data_type_align_size = device->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT;
+  device->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT; // this is in bytes
+  device->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT*8; // this is in bits
 
   /* Note: The specification describes identifiers being delimited by
      only a single space character. Some programs that check the device's
