@@ -55,7 +55,9 @@ void* pocl_cache_acquire_writer_lock(cl_program program, cl_device_id device);
 void pocl_cache_release_lock(void* lock);
 
 int pocl_cl_device_to_index(cl_program   program,
-                                  cl_device_id device);
+                            cl_device_id device);
+
+void pocl_cache_mk_temp_name(char* path);
 
 int pocl_cache_write_program_source(char *program_cl_path,
                                     cl_program program);

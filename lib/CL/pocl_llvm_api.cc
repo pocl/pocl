@@ -380,9 +380,7 @@ int pocl_llvm_build_program(cl_program program,
   std::string saved_output(fe.OutputFile);
 
   char tempfile[POCL_FILENAME_LENGTH];
-  /* It would be nice to use a safer alternative, but unfortunately it's
-  not possible to avoid, since we have to pass the filename to LLVM. */
-  assert(tmpnam(tempfile));
+  pocl_cache_mk_temp_name(tempfile);
 
   fe.OutputFile = tempfile;
 
