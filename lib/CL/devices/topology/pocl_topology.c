@@ -70,6 +70,23 @@ pocl_topology_detect_device_info(cl_device_id device)
     }
   } while (0);
 
+  /* Find information about global memory cache by looking at the first
+   * cache covering the first PU */
+  do {
+    hwloc_obj_t pu = hwloc_get_next_obj_by_type(pocl_topology, HWLOC_OBJ_PU, NULL);
+    if (!pu)
+      break;
+    hwloc_obj_t cache = hwloc_get_cache_covering_cpuset(pocl_topology, pu->cpuset);
+    if (!cache)
+      break;
+    union hwloc_obj_attr_u *attr = cache->attr;
+    if (!attr)
+      break;
+    device->global_mem_cache_type = 0x2; // CL_READ_WRITE_CACHE, without including all of CL/cl.h
+    device->global_mem_cacheline_size = attr->cache.linesize;
+    device->global_mem_cache_size = attr->cache.size;
+  } while (0);
+
   // Destroy topology object and return
   hwloc_topology_destroy(pocl_topology);
 
