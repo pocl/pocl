@@ -834,7 +834,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   content << "     \"" << kernel_name << "\", /* name */ \n";
   content << "     " << kernel->num_args << ", /* num_args */\n";
   content << "     " << kernel->num_locals << ", /* num_locals */\n";
-  content << "     _" << kernel_name << "_workgroup_fast\n";
+  content << "     _pocl_launcher_" << kernel_name << "_workgroup_fast\n";
   content << " };\n";
 
   pocl_cache_write_descriptor(program, device_i,
