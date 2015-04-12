@@ -78,7 +78,7 @@ CL_API_SUFFIX__VERSION_1_0
   int error;
   uint64_t fsize;
   char *binary = NULL;
-  unsigned device_i = 0, actually_built = 0;
+  unsigned device_i = 0, real_num_devices = 0, actually_built = 0;
   const char *user_options = "";
   char *temp_options;
   char *modded_options = NULL;
@@ -187,11 +187,26 @@ CL_API_SUFFIX__VERSION_1_0
 
   POCL_GOTO_ERROR_COND((num_devices > 0 && device_list == NULL), CL_INVALID_VALUE);
   POCL_GOTO_ERROR_COND((num_devices == 0 && device_list != NULL), CL_INVALID_VALUE);
-      
+
   if (num_devices == 0)
     {
-      num_devices = program->num_devices;
+      real_num_devices = num_devices = program->num_devices;
       device_list = program->devices;
+    }
+  else
+    {
+      real_num_devices = num_devices;
+      /* TODO: this needs rewrite, once subDevices are implemented properly
+       * count the duplicates from the given list (for subdevices,
+       * their cl_device_id == the parent's cl_device_id), and we only
+       * need to build once for a device and all its subdevices */
+      for (i=1; i < num_devices; ++i)
+          for (device_i=0; device_i < i; ++device_i)
+              if (device_list[device_i] == device_list[i])
+                {
+                  --real_num_devices;
+                  break;
+                }
     }
 
   POCL_MSG_PRINT_INFO("building program with options %s\n",
@@ -258,7 +273,7 @@ CL_API_SUFFIX__VERSION_1_0
       cache_lock = NULL;
     }
 
-  POCL_GOTO_ERROR_ON((actually_built < num_devices), CL_BUILD_PROGRAM_FAILURE,
+  POCL_GOTO_ERROR_ON((actually_built < real_num_devices), CL_BUILD_PROGRAM_FAILURE,
                      "Some of the devices on the argument-supplied list are"
                      "not available for the program, or do not exist\n")
 
