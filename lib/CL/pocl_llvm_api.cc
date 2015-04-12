@@ -1515,7 +1515,7 @@ pocl_llvm_codegen(cl_kernel kernel,
     std::string data;
     llvm::raw_string_ostream sos(data);
     llvm::MCContext *mcc;
-    if(target->addPassesToEmitMC(PM, mcc, sos))
+    if(target && target->addPassesToEmitMC(PM, mcc, sos))
       return 1;
 
     PM.run(*input);
