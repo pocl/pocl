@@ -128,7 +128,7 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
     }
 
   mem->device_ptrs = (pocl_mem_identifier*)
-    malloc(pocl_num_devices * sizeof(pocl_mem_identifier *));
+    malloc(pocl_num_devices * sizeof(pocl_mem_identifier));
   if (mem->device_ptrs == NULL)
     {
         errcode = CL_OUT_OF_HOST_MEMORY;
