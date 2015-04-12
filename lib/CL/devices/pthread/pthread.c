@@ -417,17 +417,23 @@ pocl_pthread_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
   /* if memory for this global memory is not yet allocated -> do it */
   if (mem_obj->device_ptrs[device->global_mem_id].mem_ptr == NULL)
     {
-      if (flags & CL_MEM_USE_HOST_PTR && mem_obj->mem_host_ptr != NULL)
+      if (flags & CL_MEM_USE_HOST_PTR)
         {
+          // mem_host_ptr must be non-NULL
+          assert(mem_obj->mem_host_ptr != NULL);
           b = mem_obj->mem_host_ptr;
         }
-      else if (allocate_aligned_buffer (d, &b, MAX_EXTENDED_ALIGNMENT, 
+      else if (allocate_aligned_buffer (d, &b, MAX_EXTENDED_ALIGNMENT,
                                         mem_obj->size) != 0)
         return CL_MEM_OBJECT_ALLOCATION_FAILURE;
 
       if (flags & CL_MEM_COPY_HOST_PTR)
-        memcpy (b, mem_obj->mem_host_ptr, mem_obj->size);
-    
+        {
+          // mem_host_ptr must be non-NULL
+          assert(mem_obj->mem_host_ptr != NULL);
+          memcpy (b, mem_obj->mem_host_ptr, mem_obj->size);
+        }
+
       mem_obj->device_ptrs[device->global_mem_id].mem_ptr = b;
       mem_obj->device_ptrs[device->global_mem_id].global_mem_id = 
         device->global_mem_id;
