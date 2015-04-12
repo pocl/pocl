@@ -123,6 +123,16 @@ pocl_cellspu_init_device_infos(struct _cl_device_id* dev)
   dev->extensions = "";
   dev->llvm_target_triplet = "cellspu-v0";
   dev->llvm_cpu = "cellspu";
+
+  dev->parent_device = NULL;
+  // cellspu does not support partitioning
+  dev->max_sub_devices = 1;
+  dev->num_partition_properties = 1;
+  dev->partition_properties = calloc(dev->num_partition_properties,
+    sizeof(cl_device_partition_property));
+  dev->num_partition_types = 0;
+  dev->partition_type = NULL;
+
 }
 
 void

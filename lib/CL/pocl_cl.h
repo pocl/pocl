@@ -344,7 +344,11 @@ struct _cl_device_id {
   cl_device_exec_capabilities execution_capabilities;
   cl_command_queue_properties queue_properties;
   cl_platform_id platform;
-  cl_device_partition_property device_partition_properties[1];
+  cl_uint max_sub_devices;
+  size_t num_partition_properties;
+  cl_device_partition_property *partition_properties;
+  size_t num_partition_types;
+  cl_device_partition_property *partition_type;
   size_t printf_buffer_size;
   char *short_name;
   char *long_name;

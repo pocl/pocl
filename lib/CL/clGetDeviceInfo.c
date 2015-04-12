@@ -236,18 +236,15 @@ POname(clGetDeviceInfo)(cl_device_id   device,
    * the values returned only serve the purpose of indicating
    * that it is not actually supported */
   case CL_DEVICE_PARENT_DEVICE                     :
-    POCL_RETURN_GETINFO(cl_device_id, NULL);
+    POCL_RETURN_GETINFO(cl_device_id, device->parent_device);
   case CL_DEVICE_PARTITION_MAX_SUB_DEVICES         :
-    POCL_RETURN_GETINFO(cl_uint, 2);
+    POCL_RETURN_GETINFO(cl_uint, device->max_sub_devices);
   case CL_DEVICE_PARTITION_PROPERTIES              :
+    POCL_RETURN_GETINFO_ARRAY(cl_device_partition_property,
+      device->num_partition_properties, device->partition_properties);
   case CL_DEVICE_PARTITION_TYPE                    :
-    {
-      /* since we don't support sub-devices, querying the partition type
-       * presently returns the same thing as querying the available partition
-       * properties, i.e. { 0} */
-      typedef struct { cl_device_partition_property prop[1]; } dev_pp_1;
-      POCL_RETURN_GETINFO(dev_pp_1, *(const dev_pp_1*)device->device_partition_properties);
-    }
+    POCL_RETURN_GETINFO_ARRAY(cl_device_partition_property,
+      device->num_partition_types, device->partition_type);
   case CL_DEVICE_PARTITION_AFFINITY_DOMAIN         :
     POCL_RETURN_GETINFO(cl_device_affinity_domain, 0);
 

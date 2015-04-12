@@ -289,7 +289,16 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->execution_capabilities = CL_EXEC_KERNEL | CL_EXEC_NATIVE_KERNEL;
   dev->queue_properties = CL_QUEUE_PROFILING_ENABLE;
   dev->platform = 0;
-  dev->device_partition_properties[0] = 0;
+
+  dev->parent_device = NULL;
+  // basic does not support partitioning
+  dev->max_sub_devices = 1;
+  dev->num_partition_properties = 1;
+  dev->partition_properties = calloc(dev->num_partition_properties,
+    sizeof(cl_device_partition_property));
+  dev->num_partition_types = 0;
+  dev->partition_type = NULL;
+
   /* printf buffer size is meaningless for pocl, so just set it to
    * the minimum value required by the spec
    */

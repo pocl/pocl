@@ -135,4 +135,11 @@ check_copy_overlap(const size_t src_offset[3],
                 *(__TYPE__*)param_value=__VALUE__)                      \
   }
 
+#define POCL_RETURN_GETINFO_ARRAY(__TYPE__, __NUM__, __VALUE__)         \
+  {                                                                     \
+    size_t const value_size = __NUM__*sizeof(__TYPE__);                 \
+    POCL_RETURN_GETINFO_INNER(value_size,                               \
+                memcpy(param_value, __VALUE__, value_size))             \
+  }
+
 #endif

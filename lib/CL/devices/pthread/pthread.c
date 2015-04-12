@@ -263,6 +263,16 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
   pocl_cpuinfo_detect_device_info(device);
   pocl_basic_set_buffer_image_limits(device);
 
+  // pthread has elementary partitioning support
+  device->max_sub_devices = device->max_compute_units;
+  device->num_partition_properties = 2;
+  device->partition_properties = calloc(device->num_partition_properties,
+    sizeof(cl_device_partition_property));
+  device->partition_properties[0] = CL_DEVICE_PARTITION_EQUALLY;
+  device->partition_properties[1] = CL_DEVICE_PARTITION_BY_COUNTS;
+  device->num_partition_types = 0;
+  device->partition_type = NULL;
+
   if(!strcmp(device->llvm_cpu, "(unknown)"))
     device->llvm_cpu = NULL;
 
