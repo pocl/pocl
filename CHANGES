@@ -3,18 +3,28 @@
 
 Highlights
 ----------
+- New and improved kernel cache system, with #include support.
 
 Kernel compiler
 ---------------
 
 OpenCL Runtime/Platform API support
 -----------------------------------
--Transferred buffer read/write/copy offset calculation to device driver side.
- - these driver api functions have changed; got offset as a new argument.
+- Transferred buffer read/write/copy offset calculation to device driver side.
+  - these driver api functions have changed; got offset as a new argument.
+- Maximum allocation is not limited to 1/4th of total memory size.
+- Maximum image dimensions grow to fit maximum allocation.
+- clGetDeviceInfo() reports better information about CPU vendor and cache.
 
 OpenCL C Builtin Function Implementations
 -----------------------------------------
-- Implemented get_image_dim()
+- Implemented get_image_dim().
+
+Bugfixes
+--------
+- Avoid infinite loops when users recycle an event waiting list.
+- Correctly report the base address alignment.
+
 
 0.11 March 2015
 ===============
