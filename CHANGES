@@ -15,6 +15,7 @@ OpenCL Runtime/Platform API support
 - Maximum allocation is not limited to 1/4th of total memory size.
 - Maximum image dimensions grow to fit maximum allocation.
 - clGetDeviceInfo() reports better information about CPU vendor and cache.
+- experimental clCreateSubDevices() for pthread CPU device.
 
 OpenCL C Builtin Function Implementations
 -----------------------------------------
