@@ -6,12 +6,13 @@
 #include "config.h"
 #include "pocl_tests.h"
 
+static const char *empty_src = "\n";
 
 int main(int argc, char **argv)
 {
   cl_int err;
   const char *krn_src;
-  cl_program program;
+  cl_program empty, program;
   cl_context ctx;
   cl_device_id did;
   cl_command_queue queue;
@@ -23,6 +24,16 @@ int main(int argc, char **argv)
   TEST_ASSERT( did );
   TEST_ASSERT( queue );
 
+  /* Test creating a program from an empty source */
+  empty = clCreateProgramWithSource(ctx, 1, &empty_src, NULL, &err);
+  CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
+  err = clBuildProgram(empty, 0, NULL, NULL, NULL, NULL);
+  CHECK_OPENCL_ERROR_IN("clBuildProgram");
+
+  err = clCreateKernelsInProgram(empty, 0, NULL, &num_krn);
+  CHECK_OPENCL_ERROR_IN("clCreateKernelsInProgram");
+  TEST_ASSERT(num_krn == 0);
+
   krn_src = poclu_read_file(SRCDIR "/tests/runtime/test_clCreateKernelsInProgram.cl");
   TEST_ASSERT(krn_src);
 
@@ -30,7 +41,7 @@ int main(int argc, char **argv)
   CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
   err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
   CHECK_OPENCL_ERROR_IN("clBuildProgram");
-  
+
   err = clCreateKernelsInProgram(program, 0, NULL, &num_krn);
   CHECK_OPENCL_ERROR_IN("clCreateKernelsInProgram");
   // test_clCreateKernelsInProgram.cl has two kernel functions.
@@ -38,7 +49,7 @@ int main(int argc, char **argv)
 
   err = clCreateKernelsInProgram(program, 2, kernels, NULL);
   CHECK_OPENCL_ERROR_IN("clCreateKernelsInProgram");
-  
+
   // make sure the kernels were actually created 
   // Note: nothing in the specification says which kernel function
   // is kernels[0], which is kernels[1]. For now assume pocl/LLVM
