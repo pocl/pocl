@@ -1,10 +1,10 @@
-pass: api@clbuildprogram
 pass: api@clcreatebuffer
 pass: api@clcreatecommandqueue
 pass: api@clcreatecontext
 pass: api@clcreatecontextfromtype
 pass: api@clcreateimage
 pass: api@clcreatekernel
+pass: api@clcreatekernelsinprogram
 pass: api@clcreateprogramwithsource
 pass: api@clcreatesampler
 pass: api@clenqueuecopybuffer
@@ -30,8 +30,6 @@ pass: custom@r600 create release buffer bug
 pass: custom@run simple kernel
 pass: program@build@define-gentype
 pass: program@build@disable-warnings
-pass: program@build@fail@add-different-size-vector
-pass: program@build@fail@increment-float
 pass: program@build@fail@invalid-version-declaration
 pass: program@build@fail@warnings-as-errors
 pass: program@build@include-directories
@@ -97,6 +95,7 @@ pass: program@execute@builtin@builtin-char-upsample-1.0.generated
 pass: program@execute@builtin@builtin-float-acos-1.0.generated
 pass: program@execute@builtin@builtin-float-acospi-1.0.generated
 pass: program@execute@builtin@builtin-float-asin-1.0.generated
+pass: program@execute@builtin@builtin-float-asinh-1.0.generated
 pass: program@execute@builtin@builtin-float-asinpi-1.0.generated
 pass: program@execute@builtin@builtin-float-atan-1.0.generated
 pass: program@execute@builtin@builtin-float-atan2-1.0.generated
