@@ -29,7 +29,7 @@ set(PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_clSetEventCallback test_clEnqueueNativeKernel test_clBuildProgram
   test_clCreateKernelsInProgram test_clCreateKernel test_clGetKernelArgInfo
   test_version test_kernel_cache_includes test_event_cycle test_link_error
-  test_read-copy-write-buffer)
+  test_read-copy-write-buffer test_clCreateSubDevices)
 
 #EXTRA_DIST= \
 # test_kernel_src_in_pwd.h \

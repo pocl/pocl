@@ -27,6 +27,7 @@ noinst_PROGRAMS= test_clFinish test_clGetDeviceInfo test_clGetEventInfo \
 	test_clCreateProgramWithBinary test_clGetSupportedImageFormats \
 	test_clSetEventCallback test_clEnqueueNativeKernel test_clBuildProgram \
 	test_link_error test_kernel_cache_includes \
+	test_clCreateSubDevices \
 	test_clCreateKernelsInProgram test_clCreateKernel test_version \
 	test_clGetKernelArgInfo
 
