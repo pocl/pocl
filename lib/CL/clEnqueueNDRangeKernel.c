@@ -312,7 +312,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   
   /* Copy the argument buffers just so we can free them after execution. */
   command_node->command.run.arg_buffers = 
-    (cl_mem *) malloc (sizeof (struct _cl_mem) * command_node->command.run.arg_buffer_count);
+    (cl_mem *) malloc (sizeof (cl_mem) * command_node->command.run.arg_buffer_count);
   count = 0;
   for (i = 0; i < kernel->num_args; ++i)
   {
