@@ -73,6 +73,13 @@ int pocl_llvm_generate_workgroup_function
 void pocl_llvm_update_binaries (cl_program program);
 
 /**
+ * Count the number of "__kernel" functions in 'program'.
+ *
+ * Results are valid as long as program binary is not modified.
+ */
+unsigned pocl_llvm_get_kernel_count(cl_program program);
+
+/**
  * Find the "__kernel" function names in 'program',
  * filling the callee-allocated array with pointer to the program binary.
  * No more than 'max_num_krn' are written.

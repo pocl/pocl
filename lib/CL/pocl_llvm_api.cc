@@ -509,7 +509,7 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
   llvm::MDNode *kernel_metadata = NULL;
 
   // Not sure what to do in this case
-  if (!opencl_kernels) return -1;
+  if (!opencl_kernels || opencl_kernels->getNumOperands() == 0) return -1;
 
   for (unsigned i = 0, e = opencl_kernels->getNumOperands(); i != e; ++i) {
     llvm::MDNode *kernel_iter = opencl_kernels->getOperand(i);
@@ -842,8 +842,12 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
                               content.str().size());
 #endif
 
-  pocl_llvm_get_kernel_arg_metadata(kernel_name, input, kernel);
+  if (pocl_llvm_get_kernel_arg_metadata(kernel_name, input, kernel)) {
+    *errcode = CL_INVALID_KERNEL;
+    return 1;
+  };
 
+  *errcode = CL_SUCCESS;
   return 0;
 }
 
@@ -1412,8 +1416,11 @@ void pocl_llvm_update_binaries (cl_program program) {
     }
 }
 
+/* This is the implementation of the public pocl_llvm_get_kernel_count(),
+ * and is used internally also by pocl_llvm_get_kernel_names to
+ */
 unsigned
-pocl_llvm_get_kernel_names( cl_program program, const char **knames, unsigned max_num_krn )
+pocl_llvm_get_kernel_count(cl_program program, llvm::NamedMDNode **md_ret)
 {
   llvm::MutexGuard lockHolder(kernelCompilerLock);
   InitializeLLVM();
@@ -1422,10 +1429,29 @@ pocl_llvm_get_kernel_names( cl_program program, const char **knames, unsigned ma
   // has the same set of programs & kernels?
   llvm::Module *mod = (llvm::Module *) program->llvm_irs[0];
   llvm::NamedMDNode *md = mod->getNamedMetadata("opencl.kernels");
-  assert(md);
 
-  unsigned i;
-  for (i=0; i<md->getNumOperands(); i++) {
+  if (md_ret)
+    *md_ret = md;
+
+  if (md == NULL)
+    return 0;
+
+  return md->getNumOperands();
+}
+
+unsigned
+pocl_llvm_get_kernel_count(cl_program program)
+{
+  return pocl_llvm_get_kernel_count(program, NULL);
+}
+
+unsigned
+pocl_llvm_get_kernel_names( cl_program program, const char **knames, unsigned max_num_krn )
+{
+  llvm::NamedMDNode *md;
+  unsigned i, n = pocl_llvm_get_kernel_count(program, &md);
+
+  for (i=0; i<n; i++) {
     assert( md->getOperand(i)->getOperand(0) != NULL);
 #ifdef LLVM_OLDER_THAN_3_6
     llvm::Function *k = cast<Function>(md->getOperand(i)->getOperand(0));
