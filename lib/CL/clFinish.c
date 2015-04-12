@@ -268,7 +268,7 @@ static void exec_commands (_cl_command_node *node_list)
           break;
         }
 
-        if (event)
+        if (*event)
           {
             /* event callback handling
                just call functions in the same order they were added */
