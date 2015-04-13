@@ -133,7 +133,8 @@ ERROR_CLEAN_PROGRAM_BINARIES_AND_DEVICES:
   POCL_MEM_FREE(program->devices);
 #endif
 ERROR_CLEAN_PROGRAM_AND_BINARIES:
-  for (i = 0; i < num_devices; ++i)
+  if (program->binaries)
+    for (i = 0; i < num_devices; ++i)
       POCL_MEM_FREE(program->binaries[i]);
   POCL_MEM_FREE(program->binaries);
   POCL_MEM_FREE(program->binary_sizes);
