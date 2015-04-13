@@ -88,12 +88,19 @@ CL_API_SUFFIX__VERSION_1_0
 
   POCL_GOTO_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
 
+  POCL_GOTO_ERROR_COND((num_devices > 0 && device_list == NULL), CL_INVALID_VALUE);
+  POCL_GOTO_ERROR_COND((num_devices == 0 && device_list != NULL), CL_INVALID_VALUE);
+
   POCL_GOTO_ERROR_COND((pfn_notify == NULL && user_data != NULL), CL_INVALID_VALUE);
 
   POCL_LOCK_OBJ(program);
 
   POCL_GOTO_ERROR_ON(program->kernels, CL_INVALID_OPERATION, "Program already has kernels\n");
-  
+
+  POCL_GOTO_ERROR_ON((program->source == NULL && program->binaries == NULL),
+    CL_INVALID_PROGRAM, "Program doesn't have sources or binaries! You need "
+                        "to call clCreateProgramWith{Binary|Source} first\n");
+
   if (options != NULL)
     {
       size_t size = 512;
@@ -179,14 +186,7 @@ CL_API_SUFFIX__VERSION_1_0
   else
     {
       POCL_MEM_FREE(program->compiler_options);
-    }  
-
-  POCL_GOTO_ERROR_ON((program->source == NULL && program->binaries == NULL),
-    CL_INVALID_PROGRAM, "Program doesn't have sources or binaries! You need "
-                        "to call clCreateProgramWith{Binary|Source} first\n");
-
-  POCL_GOTO_ERROR_COND((num_devices > 0 && device_list == NULL), CL_INVALID_VALUE);
-  POCL_GOTO_ERROR_COND((num_devices == 0 && device_list != NULL), CL_INVALID_VALUE);
+    }
 
   if (num_devices == 0)
     {
