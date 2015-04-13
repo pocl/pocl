@@ -127,7 +127,6 @@ POname(clCreateSubDevices)(cl_device_id in_device,
        new_devs[i]->num_partition_types = num_props;
 
        new_devs[i]->parent_device = in_device;
-       POCL_RETAIN_OBJECT(in_device);
        new_devs[i]->max_sub_devices = new_devs[i]->max_compute_units =
          (properties[0] == CL_DEVICE_PARTITION_EQUALLY ? properties[1] :
           properties[i+1]);

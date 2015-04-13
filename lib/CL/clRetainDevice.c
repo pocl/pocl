@@ -25,6 +25,9 @@
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clRetainDevice)(cl_device_id device) CL_API_SUFFIX__VERSION_1_2
 {
+  if (device->parent_device == NULL)
+    return CL_SUCCESS;
+
   POCL_RETAIN_OBJECT (device);
   return CL_SUCCESS;
 }

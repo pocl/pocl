@@ -26,15 +26,14 @@
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseDevice)(cl_device_id device) CL_API_SUFFIX__VERSION_1_2 
 {
+  if (device->parent_device == NULL)
+    return CL_SUCCESS;
+
   int new_refcount;
   POCL_RELEASE_OBJECT (device, new_refcount);
-  (void)new_refcount;
 
-  /* Cannot free() the device driver objects because they
-     can be in use in other contexts and might be needed
-     later on. The device driver table initialized in devices.c
-     is reused across many contexts.
-  */
+  if (new_refcount == 0)
+    POCL_MEM_FREE(device);
 
   return CL_SUCCESS;
 }
