@@ -192,8 +192,22 @@ diff -uNr a/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/cpp_cl/HistogramAtomics/His
          retValue = deviceInfo.setDeviceInfo(Devices[i]);
          CHECK_ERROR(retValue, 0, "SDKDeviceInfo::setDeviceInfo() failed");
 -        if (deviceInfo.dType == CL_DEVICE_TYPE_CPU)
-+        if (deviceInfo.dType & CL_DEVICE_TYPE_CPU == CL_DEVICE_TYPE_CPU)
++        if (deviceInfo.dType & CL_DEVICE_TYPE_CPU)
          {
              cpuDevice = Devices[i];
          }
-
+@@ -137,6 +137,14 @@
+                                 NULL);
+     CHECK_OPENCL_ERROR( status, "clCreateSubDevices failed.");
+ 
++    // recreate the context with the subdevices
++    status = clReleaseContext(rContext);
++    CHECK_OPENCL_ERROR( status, "clReleaseContext failed.");
++
++    rContext = clCreateContext(platform ? cps : NULL,
++	    numSubDevices, subDevices, NULL, NULL, &status);
++    CHECK_OPENCL_ERROR( status, "clCreateContext failed.");
++
+     return SDK_SUCCESS;
+ }
+ 
