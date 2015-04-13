@@ -53,10 +53,15 @@ CL_API_SUFFIX__VERSION_1_0
   
   dev_image_formats = (const cl_image_format**) calloc (context->num_devices, sizeof(cl_image_format*));
   dev_num_image_formats = (unsigned*) calloc (context->num_devices, sizeof(unsigned));
-  
+
   if (dev_image_formats == NULL || dev_num_image_formats == NULL)
-    return CL_OUT_OF_HOST_MEMORY;
-  
+    {
+      /* one might have been allocated, but the other not */
+      free(dev_image_formats);
+      free(dev_num_image_formats);
+      return CL_OUT_OF_HOST_MEMORY;
+    }
+
   /* get supported image formats from devices */
   for (i = 0; i < context->num_devices; ++i)
     {    
