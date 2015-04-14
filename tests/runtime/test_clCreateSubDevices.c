@@ -29,19 +29,30 @@
 #include "config.h"
 #include "pocl_tests.h"
 
-static const char *prog_src = "kernel void\n"
+/* Two different kernel sources, to ensure that the test for all devices
+ * and the test with only sub-devices do not interphere with each other
+ * (cache-wise)
+ */
+static const char *prog_src_all = "kernel void\n"
 "setidx(global int *buf, int idx) {\n"
 "buf[idx] = idx;\n"
 "}\n";
 
-int test_context(cl_context ctx, int ndevs, cl_device_id *devs) {
+static const char *prog_src_two = "kernel void\n"
+"setidx(global int *buf, int idx) {\n"
+"buf[idx] = -idx;\n"
+"}\n";
+
+
+int test_context(cl_context ctx, const char *prog_src, int mul,
+  int ndevs, cl_device_id *devs) {
   cl_int err;
   cl_command_queue queue[ndevs];
   cl_program prog;
   cl_kernel krn;
   cl_mem buf;
   cl_event evt[ndevs];
-  cl_uint i;
+  cl_int i;
 
   prog = clCreateProgramWithSource(ctx, 1, &prog_src, NULL, &err);
   CHECK_OPENCL_ERROR_IN("create program");
@@ -78,7 +89,7 @@ int test_context(cl_context ctx, int ndevs, cl_device_id *devs) {
 
   int mismatch = 0;
   for (i = 0; i < ndevs; ++i) {
-    mismatch += !!(buf_host[i] != i);
+    mismatch += !!(buf_host[i] != i*mul);
   }
   TEST_ASSERT(mismatch == 0);
 
@@ -346,10 +357,11 @@ int main(int argc, char **argv)
 
   ctx = clCreateContext(NULL, NUMDEVS, alldevs, NULL, NULL, &err);
   CHECK_OPENCL_ERROR_IN("clCreateContext");
-  TEST_ASSERT( test_context(ctx, NUMDEVS, alldevs) == CL_SUCCESS );
+  TEST_ASSERT( test_context(ctx, prog_src_all, 1, NUMDEVS, alldevs) == CL_SUCCESS );
 
   ctx = clCreateContext(NULL, NUMDEVS - 1, alldevs + 1, NULL, NULL, &err);
   CHECK_OPENCL_ERROR_IN("clCreateContext");
-  TEST_ASSERT( test_context(ctx, NUMDEVS - 1, alldevs + 1) == CL_SUCCESS );
+  TEST_ASSERT( test_context(ctx, prog_src_two, -1, NUMDEVS - 1, alldevs + 1)
+    == CL_SUCCESS );
 }
 
