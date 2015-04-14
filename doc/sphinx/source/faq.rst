@@ -74,3 +74,21 @@ when comparing against the Intel and AMD OpenCL SDKs. We hope to improve
 the performance in each release, so if you encounter performance 
 regressions (an older pocl/LLVM version used to run an app faster), 
 please report a bug.
+
+pocl source code
+----------------
+
+Why C99 in host library?
+^^^^^^^^^^^^^^^^^^^^^^^^
+
+The kernel compiler passes are in C++11 and it's much faster to implement
+things in C++11. Why use C99 in the host library?
+
+pocl is meant to be very portable to various type of devices, also
+to those with very little resources (no operating systems at all, simple
+runtime libraries). C has better portability to low end CPUs.
+
+Thus, in order for a CPU to act as an OpenCL host without online kernel
+compilation support, now only C99 support is required from the target,
+no C++ compiler or C++ runtime is needed. Also, C programs are said to produce
+more "lightweight" binaries, but that is debatable.
