@@ -13,6 +13,36 @@ Medium priority:
     * device supporting AMD GPU cards.
     * Check all the function pointers in the ICD dispatch struct.
 
+Known ambiguous OpenCL 1.2 features
+-----------------------------------
+
+The OpenCL 1.2 and later standards are very ambiguous when it
+comes to sub-devices. On the one hand, they claim that sub-devices
+can be used wherever their parent devices can be used, on the
+other hand various parts of the standard hint that they should be
+treated independently.
+
+In particular, it's not clear whether sub-devices can be used
+within a context that only holds their parent device, or not. This
+might even depend on whether the context was created "from type"
+or not.
+
+The experimental implementation in pocl currently assumes that
+sub-devices are to be treated independently from their parent
+device. This means, for example, that sub-devices cannot be used
+in a context that does not contain them (but contains their parent
+device). Note that this is different from the AMD behavior (which
+is tested in the DeviceFission AMD APP SDK example), but follows
+e.g. Intel's behavior. Clarification from the standard body is
+needed on which behavior is correct.
+
+There is room for optimizations in the current implementation,
+particularly for what concerns the program build system, since
+sub-devices share the bitcode with their parent device and
+building could be done only once. Such an optimization will
+actually become necessary if the other behavior (sub-devices as
+slaves of their parent device) is ever implemented in the future.
+
 Known missing OpenCL 1.2 features
 ---------------------------------
 
