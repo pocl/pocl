@@ -102,15 +102,15 @@ POname(clCreateProgramWithSource)(cl_context context,
   program->build_status = CL_BUILD_NONE;
 
   if ((program->binary_sizes =
-       (size_t*) calloc (context->num_devices, sizeof(size_t))) == NULL ||
+       (size_t*) calloc (program->num_devices, sizeof(size_t))) == NULL ||
       (program->binaries = (unsigned char**)
-       calloc (context->num_devices, sizeof(unsigned char*))) == NULL ||
+       calloc (program->num_devices, sizeof(unsigned char*))) == NULL ||
       (program->build_log = (char**)
-       calloc (context->num_devices, sizeof(char*))) == NULL ||
+       calloc (program->num_devices, sizeof(char*))) == NULL ||
       ((program->llvm_irs =
-        (void**) calloc (context->num_devices, sizeof(void*))) == NULL) ||
+        (void**) calloc (program->num_devices, sizeof(void*))) == NULL) ||
       ((program->build_hash = (SHA1_digest_t*)
-        calloc (context->num_devices, sizeof(SHA1_digest_t))) == NULL))
+        calloc (program->num_devices, sizeof(SHA1_digest_t))) == NULL))
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
       goto ERROR;
