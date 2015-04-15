@@ -124,6 +124,7 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clRetainDevice.c \
                    pocl_cl.h \
                    pocl_util.c pocl_util.h \
+                   pocl_queue_util.c pocl_queue_util.h \
                    pocl_image_util.c pocl_image_util.h \
                    pocl_icd.h \
                    pocl_intfn.h \

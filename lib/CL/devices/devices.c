@@ -38,6 +38,7 @@
 #include "pthread/pocl-pthread.h"
 #include "pocl_debug.h"
 #include "pocl_cache.h"
+#include "pocl_queue_util.h"
 
 #if defined(BUILD_SPU)
 #include "cellspu/cellspu.h"
@@ -203,6 +204,8 @@ pocl_init_devices()
 #endif
 
   pocl_cache_init_topdir();
+
+  pocl_init_queue_list();
 
   /* Init operations */
   for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)

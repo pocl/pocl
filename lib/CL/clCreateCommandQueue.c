@@ -23,6 +23,7 @@
 
 #include "pocl_cl.h"
 #include "pocl_util.h"
+#include "pocl_queue_util.h"
 
 CL_API_ENTRY cl_command_queue CL_API_CALL
 POname(clCreateCommandQueue)(cl_context context, 
@@ -67,6 +68,8 @@ POname(clCreateCommandQueue)(cl_context context,
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;
+
+  pocl_queue_list_insert(command_queue);
   return command_queue;
 
 ERROR:

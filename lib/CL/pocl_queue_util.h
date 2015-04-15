@@ -1,6 +1,6 @@
-/* OpenCL runtime library: clReleaseCommandQueue()
+/* Command queue management functions
 
-   Copyright (c) 2011-2012 Universidad Rey Juan Carlos and Pekka Jääskeläinen
+   Copyright (c) 2015 Giuseppe Bilotta
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -21,24 +21,36 @@
    THE SOFTWARE.
 */
 
+/* We keep a global list of all 'live' command queues in order to be able
+ * to force a clFinish on all of them before this is triggered by the destructors
+ * at program end, which happen in unspecified order and might cause all sorts
+ * of issues. This header defines the signatures of the available functions
+ */
+
+#ifndef POCL_QUEUE_H
+#define POCL_QUEUE_H
+
 #include "pocl_cl.h"
-#include "pocl_util.h"
-#include "pocl_queue_util.h"
 
-CL_API_ENTRY cl_int CL_API_CALL
-POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
-{
-  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+#ifdef __GNUC__
+#pragma GCC visibility push(hidden)
+#endif
 
-  int new_refcount;
-  POname(clFlush)(command_queue);
-  POCL_RELEASE_OBJECT(command_queue, new_refcount);
-  if (new_refcount == 0)
-    {
-      pocl_queue_list_delete(command_queue);
-      POCL_MEM_FREE(command_queue);
-      /* TODO: should clReleaseContext()? */
-    }
-  return CL_SUCCESS;
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void pocl_init_queue_list();
+void pocl_queue_list_insert(cl_command_queue );
+void pocl_queue_list_delete(cl_command_queue );
+
+#ifdef __cplusplus
 }
-POsym(clReleaseCommandQueue)
+#endif
+
+#ifdef __GNUC__
+#pragma GCC visibility pop
+#endif
+
+
+#endif
