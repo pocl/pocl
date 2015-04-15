@@ -399,8 +399,8 @@ static inline cl_int errHandler (cl_int err, const char * errStr = NULL)
 #define __ENQUEUE_READ_BUFFER_RECT_ERR      __ERR_STR(clEnqueueReadBufferRect)
 #define __ENQUEUE_WRITE_BUFFER_ERR          __ERR_STR(clEnqueueWriteBuffer)
 #define __ENQUEUE_WRITE_BUFFER_RECT_ERR     __ERR_STR(clEnqueueWriteBufferRect)
-#define __ENQEUE_COPY_BUFFER_ERR            __ERR_STR(clEnqueueCopyBuffer)
-#define __ENQEUE_COPY_BUFFER_RECT_ERR       __ERR_STR(clEnqueueCopyBufferRect)
+#define __ENQUEUE_COPY_BUFFER_ERR            __ERR_STR(clEnqueueCopyBuffer)
+#define __ENQUEUE_COPY_BUFFER_RECT_ERR       __ERR_STR(clEnqueueCopyBufferRect)
 #define __ENQUEUE_FILL_BUFFER_ERR           __ERR_STR(clEnqueueFillBuffer)
 #define __ENQUEUE_READ_IMAGE_ERR            __ERR_STR(clEnqueueReadImage)
 #define __ENQUEUE_WRITE_IMAGE_ERR           __ERR_STR(clEnqueueWriteImage)
@@ -5336,7 +5336,7 @@ public:
                 (events != NULL) ? (cl_uint) events->size() : 0,
                 (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
                 (event != NULL) ? &tmp : NULL),
-            __ENQEUE_COPY_BUFFER_ERR);
+            __ENQUEUE_COPY_BUFFER_ERR);
 
         if (event != NULL && err == CL_SUCCESS)
             *event = tmp;
@@ -5451,7 +5451,7 @@ public:
                 (events != NULL) ? (cl_uint) events->size() : 0,
                 (events != NULL && events->size() > 0) ? (cl_event*) &events->front() : NULL,
                 (event != NULL) ? &tmp : NULL),
-            __ENQEUE_COPY_BUFFER_RECT_ERR);
+            __ENQUEUE_COPY_BUFFER_RECT_ERR);
 
         if (event != NULL && err == CL_SUCCESS)
             *event = tmp;
@@ -12405,8 +12405,8 @@ public:
 #undef __ENQUEUE_WRITE_BUFFER_ERR
 #undef __ENQUEUE_READ_BUFFER_RECT_ERR
 #undef __ENQUEUE_WRITE_BUFFER_RECT_ERR
-#undef __ENQEUE_COPY_BUFFER_ERR
-#undef __ENQEUE_COPY_BUFFER_RECT_ERR
+#undef __ENQUEUE_COPY_BUFFER_ERR
+#undef __ENQUEUE_COPY_BUFFER_RECT_ERR
 #undef __ENQUEUE_READ_IMAGE_ERR
 #undef __ENQUEUE_WRITE_IMAGE_ERR
 #undef __ENQUEUE_COPY_IMAGE_ERR

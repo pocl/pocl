@@ -196,7 +196,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
              command_queue->device->max_work_group_size);
     }
 
-  POCL_MSG_PRINT_INFO("Qeueing kernel %s with local size %u x %u x %u group "
+  POCL_MSG_PRINT_INFO("Queueing kernel %s with local size %u x %u x %u group "
                       "sizes %u x %u x %u...\n",
                       kernel->function_name, 
                       (unsigned)local_x, (unsigned)local_y, (unsigned)local_z,
