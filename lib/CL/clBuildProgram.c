@@ -62,6 +62,25 @@ static char cl_parameters_not_yet_supported_by_clang[] =
 
 #define MEM_ASSERT(x, err_jmp) do{ if (x){errcode = CL_OUT_OF_HOST_MEMORY;goto err_jmp;}} while(0)
 
+// append token, growing modded_options, if necessary, by max(strlen(token)+1, 256)
+#define APPEND_TOKEN() do { \
+  size_t needed = strlen(token) + 1; \
+  if (size <= (i + needed)) { \
+    size_t grow_by = needed > 256 ? needed : 256; \
+    char *grown_ptr = (char *)realloc(modded_options, size + grow_by); \
+    if (grown_ptr == NULL) { \
+      /* realloc failed, free modded_options and return */ \
+      errcode = CL_OUT_OF_HOST_MEMORY; \
+      goto ERROR_CLEAN_OPTIONS; \
+    } \
+    modded_options = grown_ptr; \
+    size += grow_by; \
+  } \
+  i += needed; \
+  strcat (modded_options, token); \
+  strcat (modded_options, " "); \
+} while (0)
+
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clBuildProgram)(cl_program program,
                        cl_uint num_devices,
@@ -80,9 +99,9 @@ CL_API_SUFFIX__VERSION_1_0
   char *binary = NULL;
   unsigned device_i = 0, real_num_devices = 0, actually_built = 0;
   const char *user_options = "";
-  char *temp_options;
+  char *temp_options = NULL;
   char *modded_options = NULL;
-  char *token;
+  char *token = NULL;
   char *saveptr = NULL;
   void* cache_lock = NULL;
 
@@ -105,7 +124,6 @@ CL_API_SUFFIX__VERSION_1_0
     {
       size_t size = 512;
       size_t i = 1; /* terminating char */
-      char *swap_tmp;
       modded_options = (char*) calloc (size, 1);
       temp_options = strdup (options);
       token = strtok_r (temp_options, " ", &saveptr);
@@ -135,19 +153,7 @@ CL_API_SUFFIX__VERSION_1_0
             }
           else if (memcmp (token, "-D", 2) == 0 || memcmp (token, "-I", 2) == 0)
             {
-              if (size <= (i + strlen (token) + 1))
-                {
-                  swap_tmp = modded_options;
-                  modded_options = (char*) malloc (size + 256);
-                  if (modded_options == NULL)
-                    return CL_OUT_OF_HOST_MEMORY;
-                  memcpy (modded_options, swap_tmp, size);
-                  POCL_MEM_FREE(swap_tmp);
-                  size += 256;
-                }
-              i += strlen (token) + 1;
-              strcat (modded_options, token);
-              strcat (modded_options, " ");
+              APPEND_TOKEN();
               /* if there is a space in between, then next token is part 
                  of the option */
               if (strlen (token) == 2)
@@ -164,20 +170,8 @@ CL_API_SUFFIX__VERSION_1_0
               errcode = CL_INVALID_BUILD_OPTIONS;
               goto ERROR_CLEAN_OPTIONS;
             }
-          if (size <= (i + strlen (token) + 1))
-            {
-              swap_tmp = modded_options;
-              modded_options = (char*) malloc (size + 256);
-              if (modded_options == NULL)
-                return CL_OUT_OF_HOST_MEMORY;
-              memcpy (modded_options, swap_tmp, size); 
-              POCL_MEM_FREE(swap_tmp);
-              size += 256;
-            }
-          i += strlen (token) + 1;
-          strcat (modded_options, token);
-          strcat (modded_options, " ");
-          token = strtok_r (NULL, " ", &saveptr);  
+          APPEND_TOKEN();
+          token = strtok_r (NULL, " ", &saveptr);
         }
       POCL_MEM_FREE(temp_options);
       user_options = modded_options;
