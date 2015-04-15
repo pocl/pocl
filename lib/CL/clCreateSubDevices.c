@@ -98,7 +98,7 @@ POname(clCreateSubDevices)(cl_device_id in_device,
      // partition type, but this function was not updated accordingly
 
      char what[1024];
-     snprintf(what, 1024, "Device-reported partition type 0x%x", properties[0]);
+     snprintf(what, 1024, "Device-reported partition type 0x%x", (unsigned int)properties[0]);
      POCL_ABORT_UNIMPLEMENTED(what);
    }
 
