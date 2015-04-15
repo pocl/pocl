@@ -213,23 +213,20 @@ GenerateHeader::ProcessPointers(Function *F,
                                 raw_fd_ostream &out)
 {
   int num_args = F->getFunctionType()->getNumParams();
-    
+
   out << "#define _" << F->getName() << "_NUM_ARGS " << num_args << '\n';
 
-  bool *is_pointer = (bool*) malloc(sizeof(bool) * num_args);
-  bool *is_local = (bool*)malloc(sizeof(bool)* num_args);
-  bool *is_image = (bool*)malloc(sizeof(bool)* num_args);
-  bool *is_sampler = (bool*)malloc(sizeof(bool)* num_args);
+  bool *is_pointer = (bool*)calloc(num_args, sizeof(bool));
+  bool *is_local = (bool*)calloc(num_args, sizeof(bool));
+  bool *is_image = (bool*)calloc(num_args, sizeof(bool));
+  bool *is_sampler = (bool*)calloc(num_args, sizeof(bool));
 
   int i = 0;
   for (Function::const_arg_iterator ii = F->arg_begin(),
          ee = F->arg_end();
        ii != ee; ++ii) {
     Type *t = ii->getType();
-  
-    is_image[i] = false;
-    is_sampler[i] = false;
- 
+
     const PointerType *p = dyn_cast<PointerType>(t);
     if (p && !ii->hasByValAttr()) {
       is_pointer[i] = true;
