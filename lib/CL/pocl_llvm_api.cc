@@ -944,7 +944,7 @@ static void InitializeLLVM() {
  * should be optimized using it.
  */
 static PassManager& kernel_compiler_passes
-(cl_device_id device, std::string module_data_layout)
+(cl_device_id device, const std::string& module_data_layout)
 {
   static std::map<cl_device_id, PassManager*> kernel_compiler_passes;
 

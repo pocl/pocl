@@ -96,7 +96,7 @@ class Kernel;
     void InjectVariablePrintouts();
 
     void InjectPrintF
-        (llvm::Instruction *before, std::string formatStr, 
+        (llvm::Instruction *before, const std::string& formatStr,
          std::vector<llvm::Value*>& params);
 
     static ParallelRegion *

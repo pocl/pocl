@@ -674,7 +674,7 @@ ParallelRegion::LocalIDXLoad()
 
 void
 ParallelRegion::InjectPrintF
-(llvm::Instruction *before, std::string formatStr, 
+(llvm::Instruction *before, const std::string& formatStr,
  std::vector<Value*>& params)
 {
   IRBuilder<> builder(before);
