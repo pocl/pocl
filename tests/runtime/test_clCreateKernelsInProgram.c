@@ -57,6 +57,9 @@ int main(int argc, char **argv)
   err = clEnqueueTask(queue, kernels[0], 0, NULL, NULL); 
   CHECK_OPENCL_ERROR_IN("clEnqueueTask");
 
+  err = clFinish(queue);
+  CHECK_OPENCL_ERROR_IN("clFinish");
+
   err = clEnqueueTask(queue, kernels[1], 0, NULL, NULL);
   CHECK_OPENCL_ERROR_IN("clEnqueueTask");
 
