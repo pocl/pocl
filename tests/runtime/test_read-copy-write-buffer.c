@@ -51,6 +51,10 @@ main(void)
     if (err != CL_SUCCESS)
       return EXIT_FAILURE;
 
+    /* Only test the devices we actually have room for */
+    if (ndevices > MAX_DEVICES)
+      ndevices = MAX_DEVICES;
+
     for (j = 0; j < ndevices; j++)
     {
       cl_context context = clCreateContext(NULL, 1, &devices[j], NULL, NULL, &err);
