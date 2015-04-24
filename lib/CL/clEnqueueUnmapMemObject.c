@@ -38,7 +38,7 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
   cl_device_id device_id;
   unsigned i;
   mem_mapping_t *mapping = NULL;
-  _cl_command_node *cmd;
+  _cl_command_node *cmd = NULL;
 
   POCL_RETURN_ERROR_COND((memobj == NULL), CL_INVALID_MEM_OBJECT);
 
@@ -73,13 +73,13 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
 
   assert(i < command_queue->context->num_devices);
 
-  errcode = pocl_create_command (&cmd, command_queue, 
-                                 CL_COMMAND_UNMAP_MEM_OBJECT, 
-                                 event, num_events_in_wait_list, 
+  errcode = pocl_create_command (&cmd, command_queue,
+                                 CL_COMMAND_UNMAP_MEM_OBJECT,
+                                 event, num_events_in_wait_list,
                                  event_wait_list);
   if (errcode != CL_SUCCESS)
     goto ERROR;
-  
+
   cmd->command.unmap.data = command_queue->device->data;
   cmd->command.unmap.memobj = memobj;
   cmd->command.unmap.mapping = mapping;
@@ -87,8 +87,7 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
 
   return CL_SUCCESS;
 
- ERROR:
-  POCL_MEM_FREE(*event);
+ERROR:
   POCL_MEM_FREE(cmd);
   return errcode;
 }

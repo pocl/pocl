@@ -44,6 +44,8 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   mem_mapping_t *mapping_info = NULL;
   int errcode;
   _cl_command_node *cmd = NULL;
+  /* need to release the memobject before returning? */
+  int must_release = 0;
 
   POCL_GOTO_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
@@ -79,6 +81,7 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
  
   /* Ensure the parent buffer is not freed prematurely. */
   POname(clRetainMemObject) (buffer);
+  must_release = 1;
 
   mapping_info = (mem_mapping_t*) calloc (1, sizeof (mem_mapping_t));
   if (mapping_info == NULL)
@@ -109,21 +112,20 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
 
   if (host_ptr == NULL)
     {
-      POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
       errcode = CL_MAP_FAILURE;
       goto ERROR;
     }
 
-  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MAP_BUFFER, 
-                                 event, num_events_in_wait_list, 
+  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MAP_BUFFER,
+                                 event, num_events_in_wait_list,
                                  event_wait_list);
-  
+
   if (errcode != CL_SUCCESS)
       goto ERROR;
-  
+
   cmd->command.map.buffer = buffer;
   cmd->command.map.mapping = mapping_info;
-    
+
   mapping_info->host_ptr = host_ptr;
   mapping_info->offset = offset;
   mapping_info->size = size;
@@ -142,16 +144,14 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
 
   if (errcode_ret)
     *errcode_ret = errcode;
-  
 
   POCL_SUCCESS ();
   return host_ptr;
 
- ERROR:
-  if (event)
-    POCL_MEM_FREE(*event);
+ERROR:
+  if (must_release)
+    POname(clReleaseMemObject)(buffer);
   POCL_MEM_FREE(cmd);
-  POCL_MEM_FREE(event);
   POCL_MEM_FREE(mapping_info);
   if (errcode_ret)
     *errcode_ret = errcode;
