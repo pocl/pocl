@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 
 noinst_PROGRAMS= test_clFinish test_clGetDeviceInfo test_clGetEventInfo \
-	test_read-copy-write-buffer test_event_cycle \
+	test_read-copy-write-buffer test_event_cycle test_event_free \
 	test_clCreateProgramWithBinary test_clGetSupportedImageFormats \
 	test_clSetEventCallback test_clEnqueueNativeKernel test_clBuildProgram \
 	test_link_error test_kernel_cache_includes \

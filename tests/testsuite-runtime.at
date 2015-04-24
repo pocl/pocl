@@ -26,6 +26,11 @@ AT_KEYWORDS([runtime])
 AT_CHECK([$abs_top_builddir/tests/runtime/test_event_cycle])
 AT_CLEANUP
 
+AT_SETUP([event freeing])
+AT_KEYWORDS([runtime])
+AT_CHECK([$abs_top_builddir/tests/runtime/test_event_free])
+AT_CLEANUP
+
 AT_SETUP([clCreateProgramWithBinary])
 AT_KEYWORDS([runtime])
 AT_CHECK([$abs_top_builddir/tests/runtime/test_clCreateProgramWithBinary])
