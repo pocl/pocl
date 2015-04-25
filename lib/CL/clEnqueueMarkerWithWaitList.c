@@ -34,10 +34,10 @@ POname(clEnqueueMarkerWithWaitList) (cl_command_queue   command_queue,
 CL_API_SUFFIX__VERSION_1_2
 {
   int errcode;
-  _cl_command_node *cmd;
-  
+  _cl_command_node *cmd = NULL;
+
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
-  
+
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MARKER, 
                                  event, num_events_in_wait_list, 
                                  event_wait_list);
@@ -46,11 +46,10 @@ CL_API_SUFFIX__VERSION_1_2
 
   cmd->command.marker.data = command_queue->device->data;
   pocl_command_enqueue (command_queue, cmd);
-  
+
   return CL_SUCCESS;
 
  ERROR:
-  POCL_MEM_FREE(event);
   POCL_MEM_FREE(cmd);
   return errcode;
 
