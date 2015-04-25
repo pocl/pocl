@@ -196,6 +196,16 @@ int main(int argc, char **argv)
 
   }
 
+  err = clEnqueueMarkerWithWaitList(queue, 1, &no_event, NULL);
+  TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
+  for (i = 0; i < 2; ++i) {
+    cl_event initial_value = initial_values[i];
+    map_event = initial_value;
+    err = clEnqueueMarkerWithWaitList(queue, 1, &no_event, &map_event);
+    TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
+    TEST_ASSERT(map_event == initial_value);
+  }
+
   return EXIT_SUCCESS;
 
 }
