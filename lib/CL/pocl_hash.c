@@ -155,6 +155,7 @@ static void SHA1_Transform(uint32_t state[5], const uint8_t buffer[64])
 
     /* Wipe variables */
     a = b = c = d = e = 0;
+    (void)a; /* avoid dead store */
 }
 
 
@@ -215,6 +216,7 @@ void pocl_SHA1_Final(SHA1_CTX* context, uint8_t digest[SHA1_DIGEST_SIZE])
 
     /* Wipe variables */
     i = 0;
+    (void)i; /* avoid dead store */
     memset(context->buffer, 0, 64);
     memset(context->state, 0, 20);
     memset(context->count, 0, 8);
