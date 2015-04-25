@@ -39,14 +39,16 @@ POname(clEnqueueMapImage)(cl_command_queue   command_queue,
                           size_t *           image_slice_pitch,
                           cl_uint            num_events_in_wait_list,
                           const cl_event *   event_wait_list,
-                          cl_event *         event,
-                          cl_int *           errcode_ret ) 
+                          cl_event *         event_ret,
+                          cl_int *           errcode_ret )
 CL_API_SUFFIX__VERSION_1_0
 {
   cl_int errcode;
   size_t offset;
   void *map = NULL;
+  int using_host_buffer = 0;
   cl_device_id device;
+  cl_event event = NULL;
   _cl_command_node *cmd = NULL;
   mem_mapping_t *mapping_info = NULL;
 
@@ -99,18 +101,24 @@ CL_API_SUFFIX__VERSION_1_0
       goto ERROR;
     }
 
+  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MAP_IMAGE,
+                                 &event, num_events_in_wait_list,
+                                 event_wait_list);
+  if (errcode != CL_SUCCESS)
+    goto ERROR;
+
   if (image->flags & CL_MEM_USE_HOST_PTR)
     {
       /* In this case it should use the given host_ptr + offset as
-         the mapping area in the host memory. */   
+         the mapping area in the host memory. */
       assert (image->mem_host_ptr != NULL);
       map = (char*)image->mem_host_ptr + offset;
-      device->ops->read_rect (device->data, map, 
+      device->ops->read_rect (device->data, map,
                               image->device_ptrs[device->dev_id].mem_ptr,
-                              origin, origin, region, 
-                              image->image_row_pitch, image->image_slice_pitch, 
+                              origin, origin, region,
+                              image->image_row_pitch, image->image_slice_pitch,
                               image->image_row_pitch, image->image_slice_pitch);
-      POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
+      POCL_UPDATE_EVENT_COMPLETE(&event, command_queue);
     }
   else
     {
@@ -127,7 +135,6 @@ CL_API_SUFFIX__VERSION_1_0
 
   if (map == NULL)
     {
-      POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
       errcode = CL_MAP_FAILURE;
       goto ERROR;
     }
@@ -139,40 +146,34 @@ CL_API_SUFFIX__VERSION_1_0
   DL_APPEND (image->mappings, mapping_info);
   POCL_UNLOCK_OBJ (image);
 
-  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MAP_IMAGE, 
-                                 event, num_events_in_wait_list, 
-                                 event_wait_list);
-  if (errcode != CL_SUCCESS)
-    goto ERROR;
-      
-  
   cmd->command.map.buffer = image;
   cmd->command.map.mapping = mapping_info;
   pocl_command_enqueue(command_queue, cmd);
-  
-  if (blocking_map)
-    {
-      POname(clFinish) (command_queue);
-    }
-  
+
   *image_row_pitch = image->image_row_pitch;
   if (image_slice_pitch)
     *image_slice_pitch = image->image_slice_pitch;
 
+  if (blocking_map)
+    {
+      POname(clFinish) (command_queue);
+    }
+
+  if (event_ret)
+    *event_ret = event;
   if (errcode_ret != NULL)
     (*errcode_ret) = CL_SUCCESS;
 
   return map;
- 
- ERROR:
-  POCL_MEM_FREE(map);
+
+ERROR:
+  POCL_MEM_FREE(event);
+  assert(map == NULL);
   POCL_MEM_FREE(cmd);
   POCL_MEM_FREE(mapping_info);
-  if (event != NULL)
-    POCL_MEM_FREE(*event);
   if(errcode_ret != NULL)
     (*errcode_ret) = errcode;
-      
+
   return NULL;
 }
 POsym(clEnqueueMapImage)

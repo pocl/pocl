@@ -41,7 +41,7 @@ POname(clEnqueueReadImage)(cl_command_queue     command_queue,
 CL_API_SUFFIX__VERSION_1_0 
 {
   cl_int errcode;
-  _cl_command_node *cmd;
+  _cl_command_node *cmd = NULL;
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
@@ -76,8 +76,8 @@ CL_API_SUFFIX__VERSION_1_0
                                 event_wait_list);
   if (errcode != CL_SUCCESS)
     {
-      if (event)
-        POCL_MEM_FREE(*event);
+      POCL_MEM_FREE(cmd);
+      return errcode;
     }
 
   cmd->command.rw_image.device_ptr = 

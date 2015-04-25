@@ -49,8 +49,6 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
                                 event_wait_list);
   if (errcode != CL_SUCCESS)
     {
-      if (event)
-        POCL_MEM_FREE(*event);
       return errcode;
     }  
 
