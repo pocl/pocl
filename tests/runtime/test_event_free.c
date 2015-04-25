@@ -84,12 +84,14 @@ int main(int argc, char **argv)
   host_ptr = clEnqueueMapBuffer(queue, buf, CL_TRUE, CL_MAP_READ, 0, buf_size,
     1, &no_event, NULL, &err);
   TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
+  TEST_ASSERT(host_ptr == NULL);
 
   /* Test with map_event = NULL */
   cl_event map_event = NULL;
   host_ptr = clEnqueueMapBuffer(queue, buf, CL_TRUE, CL_MAP_READ, 0, buf_size,
     1, &no_event, &map_event, &err);
   TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
+  TEST_ASSERT(host_ptr == NULL);
   TEST_ASSERT(map_event == NULL); /* should not have been touched */
 
   /* Now do an actual mapping to test the unmapping */
@@ -113,6 +115,7 @@ int main(int argc, char **argv)
   host_ptr = clEnqueueMapBuffer(queue, buf, CL_TRUE, CL_MAP_READ, 0, buf_size,
     1, &no_event, &map_event, &err);
   TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
+  TEST_ASSERT(host_ptr == NULL);
   TEST_ASSERT(map_event == (cl_event)1); /* should not have been touched */
 
   host_ptr = clEnqueueMapBuffer(queue, buf, CL_TRUE, CL_MAP_READ, 0, buf_size,

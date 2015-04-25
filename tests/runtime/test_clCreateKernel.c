@@ -34,9 +34,11 @@ int main(int argc, char **argv)
 
   kernel = clCreateKernel(program, NULL, &err);
   TEST_ASSERT(err == CL_INVALID_VALUE);
+  TEST_ASSERT(kernel == NULL);
 
   kernel = clCreateKernel(program, "nonexistent_kernel", &err);
   TEST_ASSERT(err == CL_INVALID_KERNEL_NAME);
+  TEST_ASSERT(kernel == NULL);
 
   printf("OK\n");
 
