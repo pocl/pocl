@@ -50,19 +50,29 @@ int main(int argc, char **argv)
 
   cl_int *host_ptr = NULL;
 
-  /* Test with map_event = NULL */
   cl_event no_event = NULL, map_event = NULL;
+  host_ptr = clEnqueueMapBuffer(queue, buf, CL_TRUE, CL_MAP_READ, 0, buf_size,
+    1, &no_event, NULL, &err);
+  TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
+
+  /* Test with map_event = NULL */
   host_ptr = clEnqueueMapBuffer(queue, buf, CL_TRUE, CL_MAP_READ, 0, buf_size,
     1, &no_event, &map_event, &err);
   TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
   TEST_ASSERT(map_event == NULL); /* should not have been touched */
 
+  /* Now do an actual mapping to test the unmapping */
   host_ptr = clEnqueueMapBuffer(queue, buf, CL_TRUE, CL_MAP_READ, 0, buf_size,
     0, NULL, NULL, &err);
   CHECK_OPENCL_ERROR_IN("map buffer");
+
+  err = clEnqueueUnmapMemObject(queue, buf, host_ptr, 1, &no_event, NULL);
+  TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
   err = clEnqueueUnmapMemObject(queue, buf, host_ptr, 1, &no_event, &map_event);
   TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
   TEST_ASSERT(map_event == NULL); /* should not have been touched */
+
+  /* Actually unmap */
   err = clEnqueueUnmapMemObject(queue, buf, host_ptr, 0, NULL, NULL);
   CHECK_OPENCL_ERROR_IN("unmap buffer");
   host_ptr = NULL;
@@ -77,9 +87,11 @@ int main(int argc, char **argv)
   host_ptr = clEnqueueMapBuffer(queue, buf, CL_TRUE, CL_MAP_READ, 0, buf_size,
     0, NULL, NULL, &err);
   CHECK_OPENCL_ERROR_IN("map buffer");
+
   err = clEnqueueUnmapMemObject(queue, buf, host_ptr, 1, &no_event, &map_event);
   TEST_ASSERT(err == CL_INVALID_EVENT_WAIT_LIST);
   TEST_ASSERT(map_event == (cl_event)1); /* should not have been touched */
+
   err = clEnqueueUnmapMemObject(queue, buf, host_ptr, 0, NULL, NULL);
   CHECK_OPENCL_ERROR_IN("unmap buffer");
   host_ptr = NULL;
