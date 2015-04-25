@@ -197,12 +197,16 @@ error:
     {
       free(source);
     }
-  if (filename) 
+  if (filename)
     {
       free(filename);
     }
+  if (imageData)
+    {
+      free(imageData);
+    }
 
-  
+
   if (retval) 
     {
       printf("FAIL\n");
