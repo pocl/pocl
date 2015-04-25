@@ -142,7 +142,7 @@ main(void)
 
         bool ok = true;
         for (int i = 0; i < WORK_ITEMS; i++) {
-            int correct = i;
+            int correct;
             if (i == 1)
                 correct = 43;
             else 
@@ -154,20 +154,21 @@ main(void)
                 ok = false;
             }
         }
-        if (ok) 
-            return EXIT_SUCCESS;
-        else
-            return EXIT_FAILURE;
 
         // Finally release our hold on accessing the memory
         queue.enqueueUnmapMemObject(
             cBuffer,
             (void *) output);
- 
+
         // There is no need to perform a finish on the final unmap
         // or release any objects as this all happens implicitly with
         // the C++ Wrapper API.
-    } 
+
+        if (ok)
+            return EXIT_SUCCESS;
+        else
+            return EXIT_FAILURE;
+    }
     catch (cl::Error err) {
          std::cerr
              << "ERROR: "
