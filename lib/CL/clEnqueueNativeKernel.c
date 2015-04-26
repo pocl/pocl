@@ -20,10 +20,10 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
                       cl_event *         event ) CL_API_SUFFIX__VERSION_1_0
 {
   cl_uint i = 0;
-  _cl_command_node *command_node;
-  cl_mem *mem_list_copy;
-  void *args_copy;
-  int error;
+  _cl_command_node *command_node = NULL;
+  cl_mem *mem_list_copy = NULL;
+  void *args_copy = NULL;
+  cl_int error;
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
@@ -63,23 +63,29 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
 
   /* Specification specifies that args passed to user_func is a copy of the
    * one passed to this function */
-  args_copy = malloc (cb_args);
-  if (args_copy == NULL)
+  if (cb_args)
     {
-      POCL_MEM_FREE(command_node);
-      return CL_OUT_OF_HOST_MEMORY;
+      args_copy = malloc (cb_args);
+      if (args_copy == NULL)
+      {
+        POCL_MEM_FREE(command_node);
+        return CL_OUT_OF_HOST_MEMORY;
+      }
+      memcpy (args_copy, args, cb_args);
     }
-  memcpy (args_copy, args, cb_args);
 
   /* recopy the cl_mem object list to free them easily after run */
-  mem_list_copy = (cl_mem*) malloc(num_mem_objects * sizeof(cl_mem));
-  if (mem_list_copy == NULL)
+  if (num_mem_objects)
     {
-      POCL_MEM_FREE(args_copy);
-      POCL_MEM_FREE(command_node);
-      return CL_OUT_OF_HOST_MEMORY;
+      mem_list_copy = (cl_mem*) malloc(num_mem_objects * sizeof(cl_mem));
+      if (mem_list_copy == NULL)
+      {
+        POCL_MEM_FREE(args_copy);
+        POCL_MEM_FREE(command_node);
+        return CL_OUT_OF_HOST_MEMORY;
+      }
+      memcpy (mem_list_copy, mem_list, num_mem_objects * sizeof(cl_mem));
     }
-  memcpy (mem_list_copy, mem_list, num_mem_objects * sizeof(cl_mem));
   command_node->command.native.mem_list = mem_list_copy;
 
   for (i = 0; i < num_mem_objects; i++)
