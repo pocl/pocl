@@ -44,6 +44,8 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
   int i;
   cl_device_id device_ptr;
 
+  POCL_GOTO_ERROR_COND((pfn_notify == NULL && user_data != NULL), CL_INVALID_VALUE);
+
   /* initialize libtool here, LT will be needed when loading the kernels */     
   lt_dlinit();
   pocl_init_devices();
@@ -54,8 +56,6 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
     errcode = CL_OUT_OF_HOST_MEMORY;
     goto ERROR;
   }
-
-  POCL_GOTO_ERROR_COND((pfn_notify == NULL && user_data != NULL), CL_INVALID_VALUE);
 
   POCL_INIT_OBJECT(context);
   context->valid = 0;
