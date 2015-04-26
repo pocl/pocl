@@ -71,7 +71,7 @@ CL_API_SUFFIX__VERSION_1_0
                                       region, 0, 0, temp+src_offset);
     
   POCL_MEM_FREE(temp);
-  POCL_UPDATE_EVENT_COMPLETE(event, command_queue);
+  POCL_UPDATE_EVENT_COMPLETE(event);
   return ret_code;
 }
 POsym(clEnqueueCopyBufferToImage) 

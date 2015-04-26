@@ -118,7 +118,7 @@ CL_API_SUFFIX__VERSION_1_0
                               origin, origin, region,
                               image->image_row_pitch, image->image_slice_pitch,
                               image->image_row_pitch, image->image_slice_pitch);
-      POCL_UPDATE_EVENT_COMPLETE(&event, command_queue);
+      POCL_UPDATE_EVENT_COMPLETE(&event);
     }
   else
     {

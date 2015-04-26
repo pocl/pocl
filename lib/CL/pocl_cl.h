@@ -547,50 +547,54 @@ struct _cl_sampler {
   cl_filter_mode      filter_mode;
 };
 
-#define POCL_UPDATE_EVENT_QUEUED(__event, __cq)                         \
+#define POCL_UPDATE_EVENT_QUEUED(__event)                               \
   do {                                                                  \
     if ((__event) != NULL && (*(__event)) != NULL)                      \
       {                                                                 \
+        cl_command_queue __cq = (*(__event))->queue;                    \
         (*(__event))->status = CL_QUEUED;                               \
-        if ((__cq)->properties & CL_QUEUE_PROFILING_ENABLE)             \
+        if (__cq && __cq->properties & CL_QUEUE_PROFILING_ENABLE)       \
           (*(__event))->time_queue =                                    \
-            (__cq)->device->ops->get_timer_value((__cq)->device->data);      \
+            __cq->device->ops->get_timer_value(__cq->device->data);     \
       }                                                                 \
   } while (0)                                                           \
 
-#define POCL_UPDATE_EVENT_SUBMITTED(__event, __cq)                      \
+#define POCL_UPDATE_EVENT_SUBMITTED(__event)                            \
   do {                                                                  \
     if ((__event) != NULL && (*(__event)) != NULL)                      \
       {                                                                 \
         assert((*(__event))->status == CL_QUEUED);                      \
         (*(__event))->status = CL_SUBMITTED;                            \
-        if ((__cq)->properties & CL_QUEUE_PROFILING_ENABLE)             \
+        cl_command_queue __cq = (*(__event))->queue;                    \
+        if (__cq && __cq->properties & CL_QUEUE_PROFILING_ENABLE)       \
           (*(__event))->time_submit =                                   \
-            (__cq)->device->ops->get_timer_value((__cq)->device->data);      \
+            __cq->device->ops->get_timer_value(__cq->device->data);     \
       }                                                                 \
   } while (0)                                                           \
 
-#define POCL_UPDATE_EVENT_RUNNING(__event, __cq)                        \
+#define POCL_UPDATE_EVENT_RUNNING(__event)                              \
   do {                                                                  \
     if (__event != NULL && (*(__event)) != NULL)                        \
       {                                                                 \
         assert((*(__event))->status == CL_SUBMITTED);                   \
         (*(__event))->status = CL_RUNNING;                              \
-        if ((__cq)->properties & CL_QUEUE_PROFILING_ENABLE)             \
+        cl_command_queue __cq = (*(__event))->queue;                    \
+        if (__cq && __cq->properties & CL_QUEUE_PROFILING_ENABLE)       \
           (*(__event))->time_start =                                    \
-            (__cq)->device->ops->get_timer_value((__cq)->device->data);      \
+            __cq->device->ops->get_timer_value(__cq->device->data);     \
       }                                                                 \
   } while (0)                                                           \
 
-#define POCL_UPDATE_EVENT_COMPLETE(__event, __cq)                       \
+#define POCL_UPDATE_EVENT_COMPLETE(__event)                             \
   do {                                                                  \
     if ((__event) != NULL && (*(__event)) != NULL)                      \
       {                                                                 \
         assert((*(__event))->status == CL_RUNNING);                     \
         (*(__event))->status = CL_COMPLETE;                             \
-        if ((__cq)->properties & CL_QUEUE_PROFILING_ENABLE)             \
+        cl_command_queue __cq = (*(__event))->queue;                    \
+        if (__cq && __cq->properties & CL_QUEUE_PROFILING_ENABLE)       \
           (*(__event))->time_end =                                      \
-            (__cq)->device->ops->get_timer_value((__cq)->device->data);      \
+            __cq->device->ops->get_timer_value(__cq->device->data);     \
       }                                                                 \
   } while (0)                                                           \
 
