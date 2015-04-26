@@ -518,6 +518,7 @@ typedef struct _cl_event _cl_event;
 struct _cl_event {
   POCL_ICD_OBJECT
   POCL_OBJECT;
+  cl_context context;
   cl_command_queue queue;
   cl_command_type command_type;
 

@@ -9,7 +9,7 @@ POname(clCreateUserEvent)(cl_context     context ,
   int error;
   cl_event event = NULL;
 
-  error = pocl_create_event (&event, NULL, CL_COMMAND_USER);
+  error = pocl_create_event (&event, context, NULL, CL_COMMAND_USER);
 
   if (error != CL_SUCCESS)
     {

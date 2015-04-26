@@ -21,7 +21,7 @@ CL_API_SUFFIX__VERSION_1_0
     case CL_EVENT_REFERENCE_COUNT:
       POCL_RETURN_GETINFO(cl_uint, event->pocl_refcount);
     case CL_EVENT_CONTEXT:
-      POCL_RETURN_GETINFO(cl_context, event->queue->context);
+      POCL_RETURN_GETINFO(cl_context, event->context);
     default:
       break;
     }

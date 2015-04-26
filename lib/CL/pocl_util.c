@@ -178,17 +178,24 @@ pocl_aligned_free (void *ptr)
 }
 #endif
 
-cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
+cl_int pocl_create_event (cl_event *event, cl_context context,
+                          cl_command_queue command_queue,
                           cl_command_type command_type)
 {
+  if (context == NULL || !(context->valid))
+    return CL_INVALID_CONTEXT;
   if (event != NULL)
     {
       *event = pocl_mem_manager_new_event ();
       if (event == NULL)
         return CL_OUT_OF_HOST_MEMORY;
 
+      (*event)->context = context;
+      POname(clRetainContext) (context);
       (*event)->queue = command_queue;
-      POname(clRetainCommandQueue) (command_queue);
+      /* user events have a NULL command queue, don't retain it */
+      if (command_queue)
+        POname(clRetainCommandQueue) (command_queue);
       (*event)->command_type = command_type;
       (*event)->callback_list = NULL;
       (*event)->implicit_event = 0;
@@ -238,7 +245,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
 
   /* if user does not provide event pointer, create event anyway */
   event = &((*cmd)->event);
-  err = pocl_create_event(event, command_queue, command_type);
+  err = pocl_create_event(event, command_queue->context, command_queue, command_type);
   if (err != CL_SUCCESS)
     {
       POCL_MEM_FREE(*cmd);
