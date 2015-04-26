@@ -239,15 +239,19 @@ cl_int pocl_create_command (_cl_command_node **cmd,
   if (*cmd == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 
-  event_wl = (cl_event*)malloc((num_events + add_prev_command)*sizeof(cl_event));
-  if (event_wl == NULL)
-    return CL_OUT_OF_HOST_MEMORY;
+  if (num_events || add_prev_command)
+    {
+      event_wl = (cl_event*)malloc((num_events + add_prev_command)*sizeof(cl_event));
+      if (event_wl == NULL)
+        return CL_OUT_OF_HOST_MEMORY;
+    }
 
   /* if user does not provide event pointer, create event anyway */
   event = &((*cmd)->event);
   err = pocl_create_event(event, command_queue->context, command_queue, command_type);
   if (err != CL_SUCCESS)
     {
+      POCL_MEM_FREE(event_wl);
       POCL_MEM_FREE(*cmd);
       return err;
     }
@@ -271,10 +275,12 @@ cl_int pocl_create_command (_cl_command_node **cmd,
       //printf("create_command: prev_com=%d prev_com->event = %d \n",prev_command, prev_command->event);
       event_wl[i] = prev_command->event;
     }
+#if 0
   for (i = 0; i < num_events + add_prev_command; ++i)
     {
-      //printf("create-command: event_wl[%i]=%d\n", i, event_wl[i]);
+      printf("create-command: event_wl[%i]=%p\n", i, event_wl[i]);
     }
+#endif
   (*cmd)->event_wait_list = event_wl;
   (*cmd)->num_events_in_wait_list = num_events + add_prev_command;
   (*cmd)->type = command_type;
