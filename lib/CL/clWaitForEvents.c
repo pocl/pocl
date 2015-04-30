@@ -28,6 +28,18 @@ POname(clWaitForEvents)(cl_uint              num_events ,
                   const cl_event *     event_list ) CL_API_SUFFIX__VERSION_1_0
 {
   unsigned event_i;
+
+  POCL_RETURN_ERROR_COND((num_events == 0 || event_list == NULL), CL_INVALID_VALUE);
+
+  for (event_i = 0; event_i < num_events; ++event_i)
+    {
+      POCL_RETURN_ERROR_COND((event_list[event_i] == NULL), CL_INVALID_EVENT);
+      if (event_i > 0)
+        {
+          POCL_RETURN_ERROR_COND((event_list[event_i]->context != event_list[event_i - 1]->context), CL_INVALID_CONTEXT);
+        }
+    }
+
   // dummy implementation, waits until *all* events have completed.
   for (event_i = 0; event_i < num_events; ++event_i)
     {
