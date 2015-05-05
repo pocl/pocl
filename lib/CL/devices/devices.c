@@ -181,12 +181,23 @@ void
 pocl_init_devices()
 {
   static unsigned int init_done = 0;
+  static unsigned int init_in_progress = 0;
   static pocl_lock_t pocl_init_lock = POCL_LOCK_INITIALIZER;
 
   unsigned i, j, dev_index;
   char env_name[1024];
   char dev_name[MAX_DEV_NAME_LEN] = {0};
   unsigned int device_count[POCL_NUM_DEVICE_TYPES];
+
+  /* This is a workaround to a nasty problem with libhwloc: When
+     initializing basic, it calls libhwloc to query device info.
+     In case libhwloc has the OpenCL plugin installed, it initializes
+     it and it leads to initializing pocl again which leads to an
+     infinite loop. */
+
+  if (init_in_progress)
+      return;
+  init_in_progress = 1;
 
   if (init_done == 0)
     POCL_INIT_LOCK(pocl_init_lock);
