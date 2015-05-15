@@ -79,6 +79,8 @@ typedef struct
   size_t local_z;
   struct pocl_context pc;
   struct pocl_argument *arguments;
+  /* Can be used to store/cache device-specific data. */
+  void **device_data;
 } _cl_command_run;
 
 // clEnqueueNativeKernel
