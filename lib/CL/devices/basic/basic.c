@@ -286,6 +286,7 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->endian_little = !(WORDS_BIGENDIAN);
   dev->available = CL_TRUE;
   dev->compiler_available = CL_TRUE;
+  dev->spmd = CL_FALSE;
   dev->execution_capabilities = CL_EXEC_KERNEL | CL_EXEC_NATIVE_KERNEL;
   dev->queue_properties = CL_QUEUE_PROFILING_ENABLE;
   dev->platform = 0;
