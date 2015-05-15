@@ -1,7 +1,7 @@
 /* Definition of available OpenCL devices.
 
    Copyright (c) 2011 Universidad Rey Juan Carlos and
-                 2012 Pekka Jääskeläinen / Tampere University of Technology
+                 2012-2015 Pekka Jääskeläinen / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -48,6 +48,8 @@
 #include "tce/ttasim/ttasim.h"
 #endif
 
+#include "hsa/pocl-hsa.h"
+
 #define MAX_DEV_NAME_LEN 64
 
 /* the enabled devices */
@@ -68,6 +70,7 @@ static init_device_ops pocl_devices_init_ops[] = {
 #if defined(TCE_AVAILABLE)
   pocl_ttasim_init_device_ops,
 #endif
+  pocl_hsa_init_device_ops,
 };
 
 #define POCL_NUM_DEVICE_TYPES (sizeof(pocl_devices_init_ops) / sizeof((pocl_devices_init_ops)[0]))
@@ -236,7 +239,7 @@ pocl_init_devices()
     POCL_ABORT("Can not allocate memory for devices\n");
 
   dev_index = 0;
-  /* Init infos for each probbed devices */
+  /* Init infos for each probed devices */
   for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
     {
       assert(pocl_device_ops[i].init);

@@ -1,7 +1,7 @@
 // TargetAddressSpaces.cc - map the fixed "logical" address-space ids to
 //                          the target-specific ones, if needed
 // 
-// Copyright (c) 2013 Pekka Jääskeläinen / TUT
+// Copyright (c) 2013-2015 Pekka Jääskeläinen / TUT
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -91,7 +91,7 @@ bool
 TargetAddressSpaces::runOnModule(llvm::Module &M) {
 
   llvm::StringRef arch(M.getTargetTriple());
- 
+
   std::map<unsigned, unsigned> addrSpaceMap;
 
   if (arch.startswith("x86_64")) {
@@ -142,6 +142,10 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
     addrSpaceMap[POCL_ADDRESS_SPACE_GLOBAL] =
         addrSpaceMap[POCL_ADDRESS_SPACE_LOCAL] =
         addrSpaceMap[POCL_ADDRESS_SPACE_CONSTANT] = 0;
+  } else if (arch.startswith("amdgcn")) {
+    addrSpaceMap[POCL_ADDRESS_SPACE_GLOBAL] = 1;
+    addrSpaceMap[POCL_ADDRESS_SPACE_LOCAL] = 3;
+    addrSpaceMap[POCL_ADDRESS_SPACE_CONSTANT] = 2;
   } else {
     /* Assume the fake address space map works directly in case not
        overridden here.  */

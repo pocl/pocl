@@ -1233,6 +1233,61 @@ PKG_CHECK_MODULES([LIBSPE], [libspe2 >= 2.2.80],
 fi
 AM_CONDITIONAL([BUILD_SPU],[echo $OCL_DRIVERS | grep spu])
 
+AC_ARG_WITH(hsa-runtime-headers,
+[AS_HELP_STRING([--with-hsa-runtime-headers],[absolute path where HSA runtime include files are found])],
+[
+  hsa_cpp_flags="-I${withval}"
+  AC_SUBST([HSA_INCLUDES], ["$hsa_cpp_flags"] )
+],
+[
+]
+)
+
+AC_ARG_ENABLE([hsa-amdgcn],
+              [AS_HELP_STRING([--enable-hsa-amdgcn],
+              [Enable the HSA device driver for AMD GCN devices.])],
+              [enable_hsa_amdgcn="yes"])
+
+if test "$enable_hsa_amdgcn" = "yes"; then
+
+  # test that Clang supports the amdgcn--amdhsa target
+
+  AC_LANG([C])
+  AC_LANG_CONFTEST(
+  [AC_LANG_PROGRAM(
+        [])
+        ])
+
+  LLVM_AMDGCN_TARGET=no
+
+  AC_MSG_CHECKING([if the amdgcn--amdhsa target is supported in Clang/LLVM])
+  if $LLVM_BINDIR/clang conftest.c -target amdgcn--amdhsa -emit-llvm -S -c -o - 2>/dev/null | grep -cq 'target triple = "amdgcn--amdhsa"';
+  then
+    AC_MSG_RESULT([yes])
+    LLVM_AMDGCN_TARGET=yes
+  else
+    AC_MSG_ERROR([amdgcn--amdhsa target in LLVM required])
+  fi
+
+  tempCPPFLAGS=$CPPFLAGS
+  CPPFLAGS="$CPPFLAGS $hsa_cpp_flags"
+  AC_MSG_CHECKING([for HSA runtime headers])
+    AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM(
+    [[ #include <hsa.h> ]]
+  )],
+  [AC_MSG_RESULT(yes)],
+  [AC_MSG_ERROR([HSA runtime headers not found, use --with-hsa-runtime-headers])])
+  CPPFLAGS=$tempCPPFLAGS
+
+  OCL_DRIVERS="$OCL_DRIVERS hsa"
+  OCL_TARGETS="$OCL_TARGETS amdgcn"
+  AC_DEFINE([AMDGCN_ENABLED], [], [Defined in case AMDGCN device support enabled.])
+fi
+
+AM_CONDITIONAL([BUILD_AMDGCN],[echo $OCL_TARGETS | grep amdgcn])
+AM_CONDITIONAL([BUILD_HSA],[echo $OCL_DRIVERS | grep hsa])
+
 AC_MSG_NOTICE([Building the following device drivers: $OCL_DRIVERS])
 
 AC_SUBST([OCL_TARGETS])
@@ -1426,11 +1481,13 @@ AC_CONFIG_FILES([Makefile
                  lib/CL/devices/tce/ttasim/Makefile
                  lib/CL/devices/topology/Makefile
                  lib/CL/devices/cellspu/Makefile
+                 lib/CL/devices/hsa/Makefile
                  lib/llvmopencl/Makefile
                  lib/kernel/Makefile
                  lib/kernel/cellspu/Makefile
                  lib/kernel/host/Makefile
                  lib/kernel/tce/Makefile
+                 lib/kernel/amdgcn/Makefile
                  lib/poclu/Makefile
                  examples/Makefile
                  examples/example1/Makefile
@@ -1451,7 +1508,7 @@ AC_CONFIG_FILES([Makefile
                  examples/VexCL/Makefile
                  examples/piglit/Makefile
                  examples/Halide/Makefile
-		 examples/OpenCV/Makefile
+                 examples/OpenCV/Makefile
                  examples/CloverLeaf/Makefile
                  scripts/Makefile
                  tests/Makefile

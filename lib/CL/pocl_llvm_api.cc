@@ -1249,6 +1249,11 @@ kernel_library
           kernellib += "cellspu";
         }
 #endif
+#ifdef AMDGCN_ENABLED
+      else if (triple.getArch() == Triple::amdgcn) {
+          kernellib += "amdgcn";
+      }
+#endif
       else 
         {
           kernellib += "host";
@@ -1264,6 +1269,8 @@ kernel_library
       kernellib += device->llvm_target_triplet;
       kernellib += ".bc";
     }
+
+  POCL_MSG_PRINT_INFO("using %s as the built-in lib.\n", kernellib.c_str());
 
   SMDiagnostic Err;
   llvm::Module *lib = ParseIRFile(kernellib.c_str(), Err, *GlobalContext());
@@ -1342,15 +1349,15 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
 #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   kernel_compiler_passes(device, input->getDataLayout()).run(*input);
 #elif (defined LLVM_OLDER_THAN_3_7)
-  kernel_compiler_passes(device,
-                         input->getDataLayout()->getStringRepresentation())
-                        .run(*input);
+  kernel_compiler_passes(
+      device,
+      input->getDataLayout()->getStringRepresentation()).run(*input);
 #else
-  kernel_compiler_passes(device,
-                         input->getDataLayout().getStringRepresentation())
-                        .run(*input);
+  kernel_compiler_passes(
+      device,
+      input->getDataLayout().getStringRepresentation())
+      .run(*input);
 #endif
-
   // TODO: don't write this once LLC is called via API, not system()
   pocl_cache_write_kernel_parallel_bc(input, program, device_i, kernel,
                                   local_x, local_y, local_z);

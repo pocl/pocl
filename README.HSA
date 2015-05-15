@@ -1,0 +1,27 @@
+The experimental HSA driver works only with an AMD Kaveri at the moment.
+You need to install the HSA runtime library via
+
+  git clone git@github.com:HSAFoundation/HSA-Runtime-Reference-Source.git
+
+Then install its libhsa-runtime64.so so it's found by the pocl build.
+
+The clang must be configured with the AMD backends. It can be done by
+adding '--enable-experimental-targets=R600' to the LLVM configure command.
+
+After that, configure pocl with a command line similar to this:
+
+  ./configure --enable-hsa-amdgcn --with-hsa-runtime-headers=$HOME/src/HSA-Runtime-Reference-Source/inc
+
+Then, you can smoke test the HSA driver by executing the example1 using HSA:
+
+  . tools/scripts/devel-envs.sh
+  cd examples/example1
+  POCL_DEVICES=hsa ./example1
+(0.000000, 0.000000, 0.000000, 0.000000) . (0.000000, 0.000000, 0.000000, 0.000000) = 0.000000
+(1.000000, 1.000000, 1.000000, 1.000000) . (1.000000, 1.000000, 1.000000, 1.000000) = 4.000000
+(2.000000, 2.000000, 2.000000, 2.000000) . (2.000000, 2.000000, 2.000000, 2.000000) = 16.000000
+(3.000000, 3.000000, 3.000000, 3.000000) . (3.000000, 3.000000, 3.000000, 3.000000) = 36.000000
+OK
+
+The support is _very_ experimental (pretty much untested apart from the example1), so
+beware.
