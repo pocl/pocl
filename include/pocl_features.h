@@ -21,7 +21,9 @@
 
 // Is double supported?
 #if defined cl_khr_int64 && __SIZEOF_DOUBLE__ == 8
-#  define cl_khr_fp64
+#  if !defined(cl_khr_fp64)
+#    define cl_khr_fp64
+#  endif
 #else
 #  undef cl_khr_fp64
 #endif
