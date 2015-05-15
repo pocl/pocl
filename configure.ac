@@ -1283,6 +1283,7 @@ if test "$enable_hsa_amdgcn" = "yes"; then
   OCL_DRIVERS="$OCL_DRIVERS hsa"
   OCL_TARGETS="$OCL_TARGETS amdgcn"
   AC_DEFINE([AMDGCN_ENABLED], [], [Defined in case AMDGCN device support enabled.])
+  AC_DEFINE([BUILD_HSA], [1], [Defined to 1 if TCE libraries and tools are available])
 fi
 
 AM_CONDITIONAL([BUILD_AMDGCN],[echo $OCL_TARGETS | grep amdgcn])

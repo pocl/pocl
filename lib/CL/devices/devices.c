@@ -70,7 +70,9 @@ static init_device_ops pocl_devices_init_ops[] = {
 #if defined(TCE_AVAILABLE)
   pocl_ttasim_init_device_ops,
 #endif
+#if defined(BUILD_HSA)
   pocl_hsa_init_device_ops,
+#endif
 };
 
 #define POCL_NUM_DEVICE_TYPES (sizeof(pocl_devices_init_ops) / sizeof((pocl_devices_init_ops)[0]))
