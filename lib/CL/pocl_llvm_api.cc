@@ -2,7 +2,7 @@
    the different kernel compilation phases.
 
    Copyright (c) 2013 Kalle Raiskila 
-                 2013-2014 Pekka Jääskeläinen
+                 2013-2015 Pekka Jääskeläinen
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -955,6 +955,9 @@ static PassManager& kernel_compiler_passes
     }
 
   Triple triple(device->llvm_target_triplet);
+
+  bool SPMDDevice = device->spmd;
+
   PassRegistry &Registry = *PassRegistry::getPassRegistry();
 
   const bool first_initialization_call = kernel_compiler_passes.size() == 0;
@@ -1058,23 +1061,25 @@ static PassManager& kernel_compiler_passes
   passes.push_back("flatten");
   passes.push_back("always-inline");
   passes.push_back("globaldce");
-  passes.push_back("simplifycfg");
-  passes.push_back("loop-simplify");
-  passes.push_back("uniformity");
-  passes.push_back("phistoallocas");
-  passes.push_back("isolate-regions");
-  passes.push_back("implicit-loop-barriers");
-  passes.push_back("implicit-cond-barriers");
-  passes.push_back("loop-barriers");
-  passes.push_back("barriertails");
-  passes.push_back("barriers");
-  passes.push_back("isolate-regions");
-  passes.push_back("wi-aa");
-  passes.push_back("workitemrepl");
-  //passes.push_back("print-module");
-  passes.push_back("workitemloops");
+  if (!SPMDDevice) {
+      passes.push_back("simplifycfg");
+      passes.push_back("loop-simplify");
+      passes.push_back("uniformity");
+      passes.push_back("phistoallocas");
+      passes.push_back("isolate-regions");
+      passes.push_back("implicit-loop-barriers");
+      passes.push_back("implicit-cond-barriers");
+      passes.push_back("loop-barriers");
+      passes.push_back("barriertails");
+      passes.push_back("barriers");
+      passes.push_back("isolate-regions");
+      passes.push_back("wi-aa");
+      passes.push_back("workitemrepl");
+      //passes.push_back("print-module");
+      passes.push_back("workitemloops");
+      passes.push_back("workgroup");
+  }
   passes.push_back("allocastoentry");
-  passes.push_back("workgroup");
   passes.push_back("target-address-spaces");
   // Later passes might get confused (and expose possible bugs in them) due to
   // UNREACHABLE blocks left by repl. So let's clean up the CFG before running the
