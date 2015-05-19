@@ -1,9 +1,16 @@
-The experimental HSA driver works only with an AMD Kaveri at the moment.
+The experimental HSA driver works only with an AMD Kaveri using LLVM's R600
+backend at the moment.
+
 You need to install the HSA runtime library via
 
-  git clone git@github.com:HSAFoundation/HSA-Runtime-Reference-Source.git
+  git clone http://www.cs.tut.fi/~pjaaskel/HSA-Runtime-Reference-Source-legacy.git
 
-Then install its libhsa-runtime64.so so it's found by the pocl build.
+Then install its libhsa-runtime64.so so it's found by the pocl configure.
+
+NOTE: At the time of this writing the upstream HSA Runtime Reference Source
+uses a new version of the binary format which is not yet supported by the
+R600 LLVM backend (situation with LLVM 3.6, 2015-05-19). Until this situation
+is solved, you need to use the older version from the above link.
 
 The clang must be configured with the AMD backends. It can be done by
 adding '--enable-experimental-targets=R600' to the LLVM configure command.
