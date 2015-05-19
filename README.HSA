@@ -17,7 +17,7 @@ adding '--enable-experimental-targets=R600' to the LLVM configure command.
 
 After that, configure pocl with a command line similar to this:
 
-  ./configure --enable-hsa-amdgcn --with-hsa-runtime-headers=$HOME/src/HSA-Runtime-Reference-Source/inc
+  ./configure --enable-hsa-amdgcn --with-hsa-runtime-headers=$HOME/src/HSA-Runtime-Reference-Source-legacy/inc
 
 Then, you can smoke test the HSA driver by executing the example1 using HSA:
 
