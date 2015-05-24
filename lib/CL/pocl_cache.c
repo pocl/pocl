@@ -210,6 +210,9 @@ char* pocl_cache_read_buildlog(cl_program program,
     program_device_dir(buildlog_path, program,
                        device_i, POCL_BUILDLOG_FILENAME);
 
+    if (!pocl_exists(buildlog_path))
+      return "";
+
     char* res=NULL;
     uint64_t filesize;
     if (pocl_read_file(buildlog_path, &res, &filesize))
