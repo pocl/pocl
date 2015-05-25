@@ -211,7 +211,7 @@ char* pocl_cache_read_buildlog(cl_program program,
                        device_i, POCL_BUILDLOG_FILENAME);
 
     if (!pocl_exists(buildlog_path))
-      return "";
+      return strdup("");
 
     char* res=NULL;
     uint64_t filesize;
