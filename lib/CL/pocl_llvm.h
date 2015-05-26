@@ -66,6 +66,11 @@ int pocl_llvm_generate_workgroup_function
 );
 
 /**
+ * Free the LLVM IR of a program for a given device
+ */
+void pocl_free_llvm_irs(cl_program program, int device_i);
+
+/**
  * Update the program->binaries[] representation of the kernels
  * from the program->llvm_irs[] representation.
  * Also updates the 'program.bc' file in the POCL_TEMP_DIR cache.

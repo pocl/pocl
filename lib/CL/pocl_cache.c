@@ -301,7 +301,7 @@ int pocl_cache_make_kernel_cachedir_path(char*        kernel_cachedir_path,
 static inline void
 build_program_compute_hash(cl_program program,
                            unsigned   device_i,
-                           char*      preprocessed_source,
+                           const char*      preprocessed_source,
                            size_t     source_len)
 {
     SHA1_CTX hash_ctx;
@@ -441,20 +441,52 @@ void pocl_cache_init_topdir() {
 
 }
 
+/* Create the new program cachedir, invalidating the old program
+ * binaries and IRs if the new computed hash is different from the old
+ * one. The source hash is computed from the preprocessed source
+ * if present, from the original source otherwise: this is to ensure
+ * that cache-related functions (which include log retrieval) still
+ * work correctly even if preprocessing fails
+ */
+
 int
 pocl_cache_create_program_cachedir(cl_program program,
                                    unsigned device_i,
-                                   char* preprocessed_source,
+                                   const char* preprocessed_source,
                                    size_t source_len,
                                    char* program_bc_path,
                                    void** cache_lock)
 {
+    const char *hash_source = NULL;
+    uint8_t old_build_hash[SHA1_DIGEST_SIZE] = {0};
+    size_t hs_len = 0;
+
     assert(cache_topdir_initialized);
 
-    if (program->source && preprocessed_source==NULL)
-        return 1;
+    if (program->source && preprocessed_source==NULL) {
+        hash_source = program->source;
+        hs_len = strlen(program->source);
+    } else {
+        hash_source = preprocessed_source;
+        hs_len = source_len;
+    }
 
-    build_program_compute_hash(program, device_i, preprocessed_source, source_len);
+    if (program->build_hash[device_i])
+        memcpy(old_build_hash, program->build_hash[device_i], SHA1_DIGEST_SIZE);
+
+    build_program_compute_hash(program, device_i, hash_source, hs_len);
+
+    /* if the old hash is nonzero and different, we must free the built binaries
+       before returning, so that they get loaded from the new location */
+    if (old_build_hash[0] && memcmp(old_build_hash, program->build_hash[device_i],
+            SHA1_DIGEST_SIZE))
+    {
+        if (program->binaries[device_i]) {
+            POCL_MEM_FREE(program->binaries[device_i]);
+            program->binary_sizes[device_i] = 0;
+        }
+        pocl_free_llvm_irs(program, device_i);
+    }
 
     program_device_dir(program_bc_path, program, device_i, "");
 

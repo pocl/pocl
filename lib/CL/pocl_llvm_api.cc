@@ -398,31 +398,11 @@ int pocl_llvm_build_program(cl_program program,
       return CL_BUILD_PROGRAM_FAILURE;
     }
 
-
-  std::string old_build_hash((char*)program->build_hash[device_i],
-                             sizeof(SHA1_digest_t));
-
   pocl_cache_create_program_cachedir(program, device_i, preprocessed_out,
                                      size, program_bc_path, cache_lock);
+
   POCL_MEM_FREE(preprocessed_out);
   pocl_remove(tempfile);
-
-  /* if the old hash is nonzero and different, we must free the built binaries
-     before returning, so that they get loaded from the new location */
-  if (old_build_hash[0] && old_build_hash.compare(0, std::string::npos,
-                           (char*)program->build_hash[device_i],
-                           sizeof(SHA1_digest_t))) {
-    if (program->binaries[device_i]) {
-        POCL_MEM_FREE(program->binaries[device_i]);
-        program->binary_sizes[device_i] = 0;
-    }
-    if (program->llvm_irs[device_i]) {
-        llvm::Module *mod = (llvm::Module *)program->llvm_irs[device_i];
-        delete mod;
-        program->llvm_irs[device_i] = NULL;
-    }
-
-  }
 
   if (pocl_exists(program_bc_path))
     return CL_SUCCESS;
@@ -1381,6 +1361,15 @@ pocl_update_program_llvm_irs(cl_program program,
   program->llvm_irs[device_i] =
               ParseIRFile(program_bc_path, Err, *GlobalContext());
   return 0;
+}
+
+void pocl_free_llvm_irs(cl_program program, int device_i)
+{
+    if (program->llvm_irs[device_i]) {
+        llvm::Module *mod = (llvm::Module *)program->llvm_irs[device_i];
+        delete mod;
+        program->llvm_irs[device_i] = NULL;
+    }
 }
 
 void pocl_llvm_update_binaries (cl_program program) {

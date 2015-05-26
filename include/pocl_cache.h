@@ -43,7 +43,7 @@ void pocl_cache_init_topdir();
 
 int
 pocl_cache_create_program_cachedir(cl_program program, unsigned device_i,
-                                   char* preprocessed_source, size_t source_len,
+                                   const char* preprocessed_source, size_t source_len,
                                    char *program_bc_path, void **cache_lock);
 
 void pocl_cache_cleanup_cachedir(cl_program program);
