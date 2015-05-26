@@ -217,8 +217,6 @@ char* pocl_cache_read_buildlog(cl_program program,
     uint64_t filesize;
     if (pocl_read_file(buildlog_path, &res, &filesize))
         return NULL;
-
-    res[filesize]='0';
     return res;
 }
 

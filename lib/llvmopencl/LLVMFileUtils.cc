@@ -180,9 +180,6 @@ pocl_read_file(const char* path, char** content, uint64_t *filesize) {
     int errcode = pocl_filesize(path, filesize);
     ssize_t fsize = (ssize_t)(*filesize);
     if (!errcode) {
-        // +1 so we can later simply turn it into a C string, if needed
-        *content = (char*)malloc(fsize+1);
-
         int fd;
         STD_ERROR_CODE ec;
         Twine p(path);
@@ -190,11 +187,18 @@ pocl_read_file(const char* path, char** content, uint64_t *filesize) {
         OPEN_FOR_READ;
         RETURN_IF_ERRNO;
 
-        if (read(fd, *content, fsize) < fsize)
-            return (-errno || -1);
+        // +1 so we can later simply turn it into a C string, if needed
+        *content = (char*)malloc(fsize+1);
 
-        return (close(fd) ? (-errno) : 0);
-
+        size_t rsize = read(fd, *content, fsize);
+        (*content)[rsize] = '\0';
+        if (rsize < fsize) {
+            errcode = errno ? -errno : -1;
+            close(fd);
+        } else {
+            if (close(fd))
+                errcode = errno ? -errno : -1;
+        }
     }
     return errcode;
 }
