@@ -115,6 +115,19 @@ main(void){
   err = clBuildProgram(program, num_devices, devices, NULL, NULL, NULL);
   TEST_ASSERT(err == CL_BUILD_PROGRAM_FAILURE);
 
+  for (i = 0; i < num_devices; ++i) {
+	  size_t log_size = 0;
+	  err = clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
+		  0, NULL, &log_size);
+	  CHECK_OPENCL_ERROR_IN("get build log size");
+	  char *log = malloc(log_size);
+	  err = clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
+		  log_size, log, NULL);
+	  CHECK_OPENCL_ERROR_IN("get build log");
+	  log[log_size] = '\0';
+	  fprintf(stderr, "preprocess failure log[%u]: %s\n", i, log);
+  }
+
   err = clReleaseProgram(program);
   CHECK_OPENCL_ERROR_IN("clReleaseProgram");
 
