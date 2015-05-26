@@ -176,7 +176,10 @@ static void get_build_log(cl_program program,
                          unsigned device_i,
                          std::stringstream &ss_build_log,
                          clang::TextDiagnosticBuffer *diagsBuffer,
-                         const SourceManager &sm) {
+                         const SourceManager &sm)
+{
+    static const bool show_log = pocl_get_bool_option("POCL_VERBOSE", 0) ||
+      pocl_get_bool_option("POCL_DEBUG", 0);
 
     for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->err_begin(),
          e = diagsBuffer->err_end(); i != e; ++i)
@@ -195,7 +198,8 @@ static void get_build_log(cl_program program,
                                   ss_build_log.str().c_str(),
                                   ss_build_log.str().size());
 
-    std::cerr << ss_build_log.str();
+    if (show_log)
+      std::cerr << ss_build_log.str();
 
 }
 
