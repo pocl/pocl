@@ -65,13 +65,15 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
       POCL_MEM_FREE(program->source);
 
       POCL_MEM_FREE(program->binary_sizes);
-      for (i = 0; i < program->num_devices; ++i)
+      if (program->binaries)
+        for (i = 0; i < program->num_devices; ++i)
           POCL_MEM_FREE(program->binaries[i]);
       POCL_MEM_FREE(program->binaries);
 
       pocl_cache_cleanup_cachedir(program);
 
-      for (i = 0; i < program->num_devices; ++i)
+      if (program->build_log)
+        for (i = 0; i < program->num_devices; ++i)
           POCL_MEM_FREE(program->build_log[i]);
       POCL_MEM_FREE(program->build_log);
 
