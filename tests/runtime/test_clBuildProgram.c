@@ -35,15 +35,15 @@
 
 /* A dummy kernel that just includes another kernel. To test the #include and
    -I */
-char kernel[] = 
+static const char kernel[] =
   "#include \"test_kernel_src_in_another_dir.h\"\n"
   "#include \"test_kernel_src_in_pwd.h\"\n";
 
-char invalid_kernel[] =
+static const char invalid_kernel[] =
   "kernel void test_kernel(constant int a, j) { return 3; }\n";
 
 /* kernel can have any name, except main() starting from OpenCL 2.0 */
-char valid_kernel[] =
+static const char valid_kernel[] =
   "kernel void init(global int *arg) { return; }\n";
 
 int
@@ -69,7 +69,7 @@ main(void){
   CHECK_OPENCL_ERROR_IN("clCreateContext");
 
   size_t kernel_size = strlen(kernel);
-  char* kernel_buffer = kernel;
+  const char* kernel_buffer = kernel;
 
   program = clCreateProgramWithSource(context, 1, (const char**)&kernel_buffer, 
                                      &kernel_size, &err);
