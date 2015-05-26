@@ -34,14 +34,14 @@ POname(clCreateProgramWithSource)(cl_context context,
                           cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
   cl_program program = NULL;
-  size_t size;
-  char *source;
+  size_t size = 0;
+  char *source = NULL;
   unsigned i;
   int errcode;
 
   POCL_GOTO_ERROR_COND((count == 0), CL_INVALID_VALUE);
 
-  program = (cl_program) malloc(sizeof(struct _cl_program));
+  program = (cl_program) calloc(1, sizeof(struct _cl_program));
   if (program == NULL)
   {
     errcode = CL_OUT_OF_HOST_MEMORY;
@@ -50,7 +50,6 @@ POname(clCreateProgramWithSource)(cl_context context,
 
   POCL_INIT_OBJECT(program);
 
-  size = 0;
   for (i = 0; i < count; ++i)
     {
       POCL_GOTO_ERROR_ON((strings[i] == NULL), CL_INVALID_VALUE,
@@ -63,7 +62,7 @@ POname(clCreateProgramWithSource)(cl_context context,
       else
         size += lengths[i];
     }
-  
+
   source = (char *) malloc(size + 1);
   if (source == NULL)
   {
@@ -124,6 +123,14 @@ POname(clCreateProgramWithSource)(cl_context context,
   return program;
 
 ERROR:
+  if (program) {
+    POCL_MEM_FREE(program->build_hash);
+    POCL_MEM_FREE(program->llvm_irs);
+    POCL_MEM_FREE(program->build_log);
+    POCL_MEM_FREE(program->binaries);
+    POCL_MEM_FREE(program->binary_sizes);
+    POCL_MEM_FREE(program->source);
+  }
   POCL_MEM_FREE(program);
   if(errcode_ret)
   {
