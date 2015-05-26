@@ -68,7 +68,11 @@ POname(clGetProgramBuildInfo)(cl_program            program,
       size_t const value_size = strlen(build_log) + 1;
       if (param_value)
       {
-        if (param_value_size < value_size) return CL_INVALID_VALUE;
+        if (param_value_size < value_size)
+        {
+            POCL_MEM_FREE(build_log);
+            return CL_INVALID_VALUE;
+        }
         memcpy(param_value, build_log, value_size);
       }
       POCL_MEM_FREE(build_log);
