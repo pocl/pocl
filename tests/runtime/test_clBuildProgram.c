@@ -39,8 +39,15 @@ static const char kernel[] =
   "#include \"test_kernel_src_in_another_dir.h\"\n"
   "#include \"test_kernel_src_in_pwd.h\"\n";
 
+/* A program that fails at preprocess time due to missing endquote
+ * in an #include directive
+ */
+static const char preprocess_fail[] =
+  "#include \"missing_endquote.h\n";
+
 static const char invalid_kernel[] =
   "kernel void test_kernel(constant int a, j) { return 3; }\n";
+
 
 /* kernel can have any name, except main() starting from OpenCL 2.0 */
 static const char valid_kernel[] =
@@ -93,6 +100,23 @@ main(void){
 
   err = clBuildProgram(program, num_devices, devices, NULL, NULL, NULL);
   TEST_ASSERT(err == CL_BUILD_PROGRAM_FAILURE);
+
+  err = clReleaseProgram(program);
+  CHECK_OPENCL_ERROR_IN("clReleaseProgram");
+
+  kernel_size = strlen(preprocess_fail);
+  kernel_buffer = preprocess_fail;
+
+  program = clCreateProgramWithSource(context, 1, (const char**)&kernel_buffer,
+				      &kernel_size, &err);
+  //clCreateProgramWithSource for invalid kernel failed
+  CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
+
+  err = clBuildProgram(program, num_devices, devices, NULL, NULL, NULL);
+  TEST_ASSERT(err == CL_BUILD_PROGRAM_FAILURE);
+
+  err = clReleaseProgram(program);
+  CHECK_OPENCL_ERROR_IN("clReleaseProgram");
 
   /* Test the possibility to call a kernel 'init'.
    * Due to the delayed linking in current pocl, this will succeed even if it
