@@ -385,7 +385,7 @@ int pocl_llvm_build_program(cl_program program,
   bool success = true;
   clang::FrontendAction *action2 = NULL;
   action2 = new clang::PrintPreprocessedAction();
-  success |= CI.ExecuteAction(*action2);
+  success = CI.ExecuteAction(*action2);
   if(!success)
     return CL_BUILD_PROGRAM_FAILURE;
 
@@ -435,7 +435,7 @@ int pocl_llvm_build_program(cl_program program,
 
   clang::CodeGenAction *action = NULL;
   action = new clang::EmitLLVMOnlyAction(GlobalContext());
-  success |= CI.ExecuteAction(*action);
+  success = CI.ExecuteAction(*action);
 
   SourceManager &source_manager = CI.getSourceManager();
   for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->err_begin(),
