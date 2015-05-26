@@ -175,22 +175,28 @@ ParseIRFile(const char* fname, SMDiagnostic &Err, llvm::LLVMContext &ctx)
 static void get_build_log(cl_program program,
                          unsigned device_i,
                          std::stringstream &ss_build_log,
-                         clang::TextDiagnosticBuffer *diagsBuffer) {
+                         clang::TextDiagnosticBuffer *diagsBuffer,
+                         const SourceManager &sm) {
 
     for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->err_begin(),
          e = diagsBuffer->err_end(); i != e; ++i)
       {
-        ss_build_log << "error: " << (*i).second << std::endl;
+        ss_build_log << "error: " << i->first.printToString(sm)
+                     << ": " << i->second << std::endl;
       }
     for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->warn_begin(),
          e = diagsBuffer->warn_end(); i != e; ++i)
       {
-        ss_build_log << "warning: " << (*i).second << std::endl;
+        ss_build_log << "warning: " << i->first.printToString(sm)
+                     << ": " << i->second << std::endl;
       }
 
     pocl_cache_append_to_buildlog(program, device_i,
                                   ss_build_log.str().c_str(),
                                   ss_build_log.str().size());
+
+    std::cerr << ss_build_log.str();
+
 }
 
 
@@ -294,7 +300,7 @@ int pocl_llvm_build_program(cl_program program,
     {
       pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
         program_bc_path, cache_lock);
-      get_build_log(program, device_i, ss_build_log, diagsBuffer);
+      get_build_log(program, device_i, ss_build_log, diagsBuffer, CI.getSourceManager());
       return CL_INVALID_BUILD_OPTIONS;
     }
   
@@ -351,7 +357,7 @@ int pocl_llvm_build_program(cl_program program,
 #else
   CI.createDiagnostics(diagsBuffer, false);
 #endif 
- 
+
   FrontendOptions &fe = pocl_build.getFrontendOpts();
   // The CreateFromArgs created an stdin input which we should remove first.
   fe.Inputs.clear(); 
@@ -390,7 +396,7 @@ int pocl_llvm_build_program(cl_program program,
     {
       pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
         program_bc_path, cache_lock);
-      get_build_log(program, device_i, ss_build_log, diagsBuffer);
+      get_build_log(program, device_i, ss_build_log, diagsBuffer, CI.getSourceManager());
       return CL_BUILD_PROGRAM_FAILURE;
     }
 
@@ -401,7 +407,7 @@ int pocl_llvm_build_program(cl_program program,
     {
       pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
         program_bc_path, cache_lock);
-      get_build_log(program, device_i, ss_build_log, diagsBuffer);
+      get_build_log(program, device_i, ss_build_log, diagsBuffer, CI.getSourceManager());
       return CL_BUILD_PROGRAM_FAILURE;
     }
 
@@ -424,24 +430,7 @@ int pocl_llvm_build_program(cl_program program,
   action = new clang::EmitLLVMOnlyAction(GlobalContext());
   success = CI.ExecuteAction(*action);
 
-  SourceManager &source_manager = CI.getSourceManager();
-  for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->err_begin(),
-       e = diagsBuffer->err_end(); i != e; ++i)
-    {
-      ss_build_log << "error: " << (*i).first.printToString(source_manager)
-                   << ": " << (*i).second << std::endl;
-    }
-  for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->warn_begin(),
-       e = diagsBuffer->warn_end(); i != e; ++i)
-    {
-      ss_build_log << "warning: " << (*i).first.printToString(source_manager)
-                   << ": " << (*i).second << std::endl;
-    }
-
-  pocl_cache_append_to_buildlog(program, device_i,
-                                ss_build_log.str().c_str(),
-                                ss_build_log.str().size());
-  std::cerr << ss_build_log.str();
+  get_build_log(program, device_i, ss_build_log, diagsBuffer, CI.getSourceManager());
 
   // FIXME: memleak, see FIXME below
   if (!success) return CL_BUILD_PROGRAM_FAILURE;
