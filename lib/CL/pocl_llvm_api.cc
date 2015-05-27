@@ -161,6 +161,23 @@ load_source(FrontendOptions &fe,
   return 0;
 }
 
+// Unlink input sources
+static inline int
+unlink_source(FrontendOptions &fe)
+{
+  // don't unlink in debug mode
+  if (pocl_get_bool_option("POCL_DEBUG", 0))
+    return 0;
+
+  FrontendInputFile const& file = fe.Inputs.front();
+  if (file.isFile() && !file.isSystem()) {
+    return pocl_remove(file.getFile().str().c_str());
+  } else {
+    return 0; // nothing to do
+  }
+
+}
+
 // Compatibility function: this function existed up to LLVM 3.5
 // With 3.6 its name & signature changed
 #if !(defined LLVM_3_2 || defined LLVM_3_3 || \
@@ -421,8 +438,10 @@ int pocl_llvm_build_program(cl_program program,
   POCL_MEM_FREE(preprocessed_out);
   pocl_remove(tempfile);
 
-  if (pocl_exists(program_bc_path))
+  if (pocl_exists(program_bc_path)) {
+    unlink_source(fe);
     return CL_SUCCESS;
+  }
 
   fe.OutputFile = saved_output;
 
@@ -471,6 +490,8 @@ int pocl_llvm_build_program(cl_program program,
   program->binary_sizes[device_i] = n;
   program->binaries[device_i] = (unsigned char *) malloc(n);
   std::memcpy(program->binaries[device_i], content.c_str(), n);
+
+  unlink_source(fe);
 
   // FIXME: cannot delete action as it contains something the llvm::Module
   // refers to. We should create it globally, at compiler initialization time.
