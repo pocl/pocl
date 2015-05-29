@@ -192,7 +192,7 @@ pocl_read_file(const char* path, char** content, uint64_t *filesize) {
 
         size_t rsize = read(fd, *content, fsize);
         (*content)[rsize] = '\0';
-        if (rsize < fsize) {
+        if (rsize < (size_t)fsize) {
             errcode = errno ? -errno : -1;
             close(fd);
         } else {
