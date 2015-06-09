@@ -83,21 +83,13 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->probe = pocl_hsa_probe;
   ops->uninit = pocl_hsa_uninit;
   ops->init = pocl_hsa_init;
+  ops->free = pocl_hsa_free;
+  ops->read = pocl_hsa_read;
+  ops->write = pocl_hsa_write;
+  ops->copy = pocl_hsa_copy;
+  ops->copy_rect = pocl_hsa_copy_rect;
   ops->compile_submitted_kernels = pocl_hsa_compile_submitted_kernels;
   ops->run = pocl_hsa_run;
-}
-
-void
-pocl_hsa_init_device_infos(struct _cl_device_id* dev)
-{
-  pocl_basic_init_device_infos (dev);
-  dev->type = CL_DEVICE_TYPE_GPU;
-  dev->spmd = CL_TRUE;
-  dev->llvm_target_triplet = "amdgcn--amdhsa";
-  dev->llvm_cpu = "kaveri";
-  dev->has_64bit_long = 1;
-  /* TODO: probe from HSA */
-  dev->max_mem_alloc_size = 512*1024*2014;
 }
 
 #define MAX_HSA_AGENTS 16
@@ -116,6 +108,43 @@ pocl_hsa_get_agents(hsa_agent_t agent, void *data)
   hsa_agents[found_hsa_agents] = agent;
   ++found_hsa_agents;
   return HSA_STATUS_SUCCESS;
+}
+
+void
+pocl_hsa_init_device_infos(struct _cl_device_id* dev)
+{
+  pocl_basic_init_device_infos (dev);
+  //dev->type = CL_DEVICE_TYPE_GPU;
+  dev->spmd = CL_TRUE;
+  dev->llvm_target_triplet = "amdgcn--amdhsa";
+  dev->llvm_cpu = "kaveri";
+  dev->has_64bit_long = 1;
+  /* TODO: probe from HSA */
+  //dev->max_mem_alloc_size = 512*1024*2014;
+  //FIXME: I use global agent to get hsa info?
+  // Is it better to use it by input argument?
+  hsa_agent_t agent = hsa_agents[found_hsa_agents - 1];
+  hsa_dim3_t grid_size;
+  hsa_status_t stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_GRID_MAX_DIM, grid_size);
+  dev->max_work_item_sizes[0] = grid_size.x;
+  dev->max_work_item_sizes[1] = grid_size.y;
+  dev->max_work_item_sizes[2] = grid_size.z;
+  stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_WORKGROUP_MAX_SIZE, dev->max_work_group_size);
+  /*Image features*/
+  hsa_dim3_t image_size;
+  stat = hsa_agent_get_info(agent, HSA_EXT_AGENT_INFO_IMAGE1D_MAX_DIM, image_size);
+  dev->image_max_buffer_size = image_size.x;
+  stat = hsa_agent_get_info(agent, HSA_EXT_AGENT_INFO_IMAGE2D_MAX_DIM, image_size);
+  dev->image2d_max_height = image_size.x;
+  dev->image2d_max_width = image_size.y;
+  stat = hsa_agent_get_info(agent, HSA_EXT_AGENT_INFO_IMAGE3D_MAX_DIM, image_size);
+  dev->image3d_max_height = image_size.x;
+  dev->image3d_max_width = image_size.y;
+  dev->image3d_max_depth = image_size.z;
+  stat = hsa_agent_get_info(agent, HSA_EXT_AGENT_INFO_IMAGE_ARRAY_MAX_SIZE, dev->image_max_array_size);
+  stat = hsa_agent_get_info(agent, HSA_EXT_AGENT_INFO_IMAGE_RD_MAX, dev->max_read_image_args);
+  stat = hsa_agent_get_info(agent, HSA_EXT_AGENT_INFO_IMAGE_RDWR_MAX, dev->max_write_image_args);
+  stat = hsa_agent_get_info(agent, HSA_EXT_AGENT_INFO_SAMPLER_MAX, dev->max_samplers);
 }
 
 unsigned int
@@ -182,8 +211,28 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
   pocl_topology_detect_device_info(device);
   pocl_cpuinfo_detect_device_info(device);
 #endif
+  //Needed Information :
+  //global_mem_size           => Get from clinfo for AMD GPU Spectre
+  //vendor_id			      => Get from clinfo for AMD GPU Spectre
+  //global_mem_cache_type	  => Get from clinfo for AMD GPU Spectre
+  //global_mem_cacheline_size => Get from clinfo for AMD GPU Spectre
+  //global_mem_cache_size     => HSA_AGENT_INFO_CACHE_SIZE
+  //max_compute_units         => Get from clinfo for AMD GPU Spectre
+  //max_clock_frequency       => Get from clinfo for AMD GPU Spectre
+  //long_name, short_name     => HSA_AGENT_INFO_NAME
+  //vendor					  => HSA_AGENT_INFO_VENDOR_NAME
   /* TODO: detect with HSA calls: */
-  device->max_compute_units = 1;
+  hsa_agent_t agent = d->agent;
+  device->global_mem_size = 2068840448;
+  device->vendor_id = 0x1002;
+  device->global_mem_cache_type = 0x2;
+  device->global_mem_cacheline_size = 64;
+  hsa_status_t stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_CACHE_SIZE, &(device->global_mem_cache_size));
+  device->max_compute_units = 8;
+  device->max_clock_frequency = 720;
+  stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_NAME, &(device->long_name));
+  device->short_name = device->long_name;
+  stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_VENDOR_NAME, &(device->vendor));
 }
 
 void *
@@ -198,6 +247,7 @@ pocl_hsa_malloc (void *device_data, cl_mem_flags flags,
       if (b != NULL)
         {
           memcpy(b, host_ptr, size);
+          hsa_memory_register(host_ptr, size);
           return b;
         }
       return NULL;
@@ -205,12 +255,25 @@ pocl_hsa_malloc (void *device_data, cl_mem_flags flags,
 
   if (flags & CL_MEM_USE_HOST_PTR && host_ptr != NULL)
     {
+	  hsa_memory_register(host_ptr, size);
       return host_ptr;
     }
   b = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, size);
   if (b != NULL)
     return b;
   return NULL;
+}
+//TODO: Should it using hsa_memory_deregister?
+//      If So, need size.
+void
+pocl_hsa_free (void *data, cl_mem_flags flags, void *ptr)
+{
+  if (flags & CL_MEM_USE_HOST_PTR){
+	  //hsa_memory_register(ptr, size);
+	  return;
+  }
+  //hsa_memory_register(ptr, size);
+  POCL_MEM_FREE(ptr);
 }
 
 #define MAX_KERNEL_ARG_WORDS 64
