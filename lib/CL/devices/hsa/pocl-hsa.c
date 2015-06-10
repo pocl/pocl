@@ -121,11 +121,13 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
   dev->has_64bit_long = 1;
   /* TODO: probe from HSA */
   dev->max_mem_alloc_size = 512*1024*2014;
-  //TODO:Fill in local_mem_size
-  //dev->local_mem_size =
+
 
   //FIXME: I use global agent to get hsa info?
   // Is it better to use it by input argument?
+  //By CCChen
+  //TODO:Fill in local_mem_size
+  //dev->local_mem_size =
   hsa_agent_t agent = hsa_agents[found_hsa_agents - 1];
   hsa_dim3_t grid_size;
   hsa_status_t stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_GRID_MAX_DIM, &grid_size);
@@ -214,6 +216,7 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
   pocl_topology_detect_device_info(device);
   pocl_cpuinfo_detect_device_info(device);
 #endif
+  //by CCChen
   //Needed Information :
   //global_mem_size           => Get from clinfo for AMD GPU Spectre
   //vendor_id			      => Get from clinfo for AMD GPU Spectre
