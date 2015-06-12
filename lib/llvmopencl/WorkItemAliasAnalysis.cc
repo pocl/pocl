@@ -76,6 +76,7 @@ public:
         InitializeAliasAnalysis(this);
     }
     virtual bool runOnFunction(llvm::Function &) {
+      InitializeAliasAnalysis(this);
       return false;
     }
 #else
