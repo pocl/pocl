@@ -40,7 +40,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #endif
 POP_COMPILER_DIAGS
 
-//#define DEBUG_PR_CREATION
+#include "DebugHelpers.h"
 
 using namespace llvm;
 using namespace pocl;
@@ -146,11 +146,6 @@ add_predecessors(SmallVectorImpl<BasicBlock *> &v, BasicBlock *b)
 {
   for (pred_iterator i = pred_begin(b), e = pred_end(b);
        i != e; ++i) {
-    if ((isa<BarrierBlock> (*i)) && isa<BarrierBlock> (b)) {
-      // Ignore barrier-to-barrier edges * Why? --Pekka
-      add_predecessors(v, *i);
-      continue;
-    }
     v.push_back(*i);
   }
 }
@@ -268,6 +263,10 @@ Kernel::getParallelRegions(llvm::LoopInfo *LI) {
       assert ((exit != NULL) && "Parallel region without entry barrier!");
     }
   }
+
+#ifdef DEBUG_PR_CREATION
+  pocl::dumpCFG(*this, this->getName().str() + ".pregions.dot", parallel_regions);
+#endif
   return parallel_regions;
 
 }

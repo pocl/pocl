@@ -45,6 +45,8 @@ namespace {
       "phistoallocas", "Convert all PHI nodes to allocas");
 }
 
+#include <iostream>
+
 namespace pocl {
 
 char PHIsToAllocas::ID = 0;
@@ -144,10 +146,21 @@ PHIsToAllocas::BreakPHIToAllocas(PHINode* phi) {
 
   llvm::Instruction *loadedValue = builder.CreateLoad(alloca);
   phi->replaceAllUsesWith(loadedValue);
-  phi->eraseFromParent();
 
-  if (OriginalPHIWasUniform)
+  if (OriginalPHIWasUniform) {
+#ifdef DEBUG_PHIS_TO_ALLOCAS
+      std::cout << "PHIsToAllocas: Original PHI was uniform" << std::endl
+                << "original:";
+      phi->dump();
+      std::cout << "alloca:";
+      alloca->dump();
+      std::cout << "loadedValue:";
+      loadedValue->dump();
+#endif
+      VUA.setUniform(function, alloca);
       VUA.setUniform(function, loadedValue);
+  }
+  phi->eraseFromParent();
 
   return loadedValue;
 }
