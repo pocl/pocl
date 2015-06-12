@@ -52,4 +52,13 @@ namespace pocl {
   bool chopBBs(llvm::Function& F, llvm::Pass &P);
 };
 
+// Controls the debug output from Kernel.cc parallel region generation:
+//#define DEBUG_PR_CREATION
+
+// Controls the debug output from ImplicitConditionalBarriers.cc:
+//#define DEBUG_COND_BARRIERS
+
+// Controls the debug output from PHIsToAllocas.cc
+//#define DEBUG_PHIS_TO_ALLOCAS
+
 #endif
