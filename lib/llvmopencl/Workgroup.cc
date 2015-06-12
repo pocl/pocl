@@ -612,6 +612,12 @@ createWorkgroupFast(Module &M, Function *F)
     dyn_cast<Function>(M.getOrInsertFunction(funcName + "_workgroup_fast", ft));
   assert(workgroup != NULL);
 
+#if defined LLVM_3_2
+  workgroup->addFnAttr(Attributes::NoInline);
+#else
+  workgroup->addFnAttr(Attribute::NoInline);
+#endif
+
   builder.SetInsertPoint(BasicBlock::Create(M.getContext(), "", workgroup));
 
   Function::arg_iterator ai = workgroup->arg_begin();
@@ -643,15 +649,24 @@ createWorkgroupFast(Module &M, Function *F)
 
     /* If it's a pass by value pointer argument, we just pass the pointer
      * as is to the function, no need to load from it first. */
+    Value *value;
 #if defined(LLVM_3_2) || defined(LLVM_3_3)
-    Value *value = builder.CreateBitCast
-      (pointer, t->getPointerTo(POCL_ADDRESS_SPACE_GLOBAL));
+    if (!ii->hasByValAttr() || ((PointerType*)t)->getAddressSpace() == 1)
+      value = builder.CreateBitCast
+        (pointer, t->getPointerTo(POCL_ADDRESS_SPACE_GLOBAL));
+    else
+      value = builder.CreateBitCast(pointer, t->getPointerTo());
 #else
-    Value *value = builder.CreatePointerCast
-      (pointer, t->getPointerTo(POCL_ADDRESS_SPACE_GLOBAL));
+
+    if (!ii->hasByValAttr() || ((PointerType*)t)->getAddressSpace() == 1)
+      value = builder.CreatePointerCast
+        (pointer, t->getPointerTo(POCL_ADDRESS_SPACE_GLOBAL));
+    else
+      value = builder.CreatePointerCast(pointer, t->getPointerTo());
+
 #endif
     if (!ii->hasByValAttr()) {
-        value = builder.CreateLoad(value);
+      value = builder.CreateLoad(value);
     }
     
     arguments.push_back(value);
