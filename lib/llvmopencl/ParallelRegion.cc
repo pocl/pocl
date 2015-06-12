@@ -45,6 +45,8 @@
 #include <map>
 #include <algorithm>
 
+#include "DebugHelpers.h"
+
 using namespace std;
 using namespace llvm;
 using namespace pocl;
@@ -407,9 +409,14 @@ ParallelRegion::Verify()
           std::cerr << "suspicious block: " << (*i)->getName().str() << std::endl;
           std::cerr << "the entry is: " << entryBB()->getName().str() << std::endl;
 
-#if 0
-          (*i)->getParent()->viewCFG();
-#endif
+          ParallelRegion::ParallelRegionVector prvec;
+          prvec.push_back(this);
+          std::set<llvm::BasicBlock*> highlights;
+          highlights.insert(entryBB());
+          highlights.insert(*i);
+          pocl::dumpCFG(
+            *(*i)->getParent(), (*i)->getParent()->getName().str() + ".dot",
+            &prvec, &highlights);
           assert(0 && "Incoming edges to non-entry block!");
           return false;
         } else if (!Barrier::hasBarrier(*ii)) {
@@ -425,8 +432,17 @@ ParallelRegion::Verify()
     //   assert(0 && "Parallel regions must be single entry!");
     //   return false;
     // }
-
     if (exitBB()->getTerminator()->getNumSuccessors() != 1) {
+      ParallelRegion::ParallelRegionVector regions;
+      regions.push_back(this);
+
+      std::set<llvm::BasicBlock*> highlights;
+      highlights.insert((*i));
+      highlights.insert(exitBB());
+      exitBB()->dump();
+      dumpNames();
+      dumpCFG(*(*i)->getParent(), "broken.dot", &regions, &highlights);
+
       assert(0 && "Multiple outgoing edges from exit block!");
       return false;
     }
@@ -674,7 +690,7 @@ ParallelRegion::LocalIDXLoad()
 
 void
 ParallelRegion::InjectPrintF
-(llvm::Instruction *before, const std::string& formatStr,
+(llvm::Instruction *before, std::string formatStr,
  std::vector<Value*>& params)
 {
   IRBuilder<> builder(before);
