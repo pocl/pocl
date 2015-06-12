@@ -29,6 +29,8 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/ValueSymbolTable.h"
+#include "llvm/IR/GlobalValue.h"
 #endif
 
 #include "llvm/Support/Casting.h"
@@ -65,6 +67,7 @@ namespace pocl {
         (M->getOrInsertFunction(BARRIER_FUNCTION_NAME,
                                 llvm::Type::getVoidTy(M->getContext()),
                                 NULL));
+      F->setLinkage(llvm::GlobalValue::LinkOnceAnyLinkage);
       return llvm::cast<pocl::Barrier>
         (llvm::CallInst::Create(F, "", InsertBefore));
     }
