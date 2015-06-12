@@ -208,13 +208,6 @@ AT_CHECK_UNQUOTED([POCL_WORK_GROUP_METHOD=loops make test_MemoryModel -sC $abs_t
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([montecarloasian])
-# kernel compilation fails due to 
-# error: can't convert between vector values of different size ('float4' and 'int')
-# It should be a legal implicit conversion according to 6.3 Operators. Works also with Intel OCL
-# Seems this is a regression in LLVM 3.5
-AT_XFAIL_IF([grep -q "#define LLVM_3_5" $abs_top_builddir/config.h])
-AT_XFAIL_IF([grep -q "#define LLVM_3_6" $abs_top_builddir/config.h])
-AT_XFAIL_IF([grep -q "#define LLVM_3_7" $abs_top_builddir/config.h])
 AT_CHECK_UNQUOTED([make test_MonteCarloAsian -sC $abs_top_builddir/examples/AMD | grep Passed], 0, 
 [Passed!
 ])
