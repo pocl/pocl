@@ -114,7 +114,6 @@ void
 pocl_hsa_init_device_infos(struct _cl_device_id* dev)
 {
   pocl_basic_init_device_infos (dev);
-  dev->type = CL_DEVICE_TYPE_GPU;
   dev->spmd = CL_TRUE;
   dev->llvm_target_triplet = "amdgcn--amdhsa";
   dev->llvm_cpu = "kaveri";
@@ -122,15 +121,30 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
   /* TODO: probe from HSA */
   dev->max_mem_alloc_size = 512*1024*2014;
 
-
   //FIXME: I use global agent to get hsa info?
   // Is it better to use it by input argument?
-  //By CCChen
-  //TODO:Fill in local_mem_size
-  //dev->local_mem_size =
+  //FIXME: Just Fix Local Memory Size from clinfo
   hsa_agent_t agent = hsa_agents[found_hsa_agents - 1];
+  hsa_device_type_t dev_type;
+  hsa_status_t stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_DEVICE, &dev_type);
+  switch(dev_type)
+  {
+  case HSA_DEVICE_TYPE_GPU:
+	  dev->type = CL_DEVICE_TYPE_GPU;
+	  break;
+  case HSA_DEVICE_TYPE_CPU:
+	  dev->type = CL_DEVICE_TYPE_CPU;
+	  break;
+  //TODO: Is it appropriate?
+  case HSA_DEVICE_TYPE_DSP:
+	  dev->type = CL_DEVICE_TYPE_CUSTOM;
+	  break;
+  default:
+	  POCL_ABORT("Unsupported hsa device type!\n");
+  }
+  dev->local_mem_size = 32768; //by clinfo
   hsa_dim3_t grid_size;
-  hsa_status_t stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_GRID_MAX_DIM, &grid_size);
+  stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_GRID_MAX_DIM, &grid_size);
   dev->max_work_item_sizes[0] = grid_size.x;
   dev->max_work_item_sizes[1] = grid_size.y;
   dev->max_work_item_sizes[2] = grid_size.z;
