@@ -26,8 +26,7 @@
 
 #include "pocl_cl.h"
 
-//Definition of the image datatype used on basic and pthread (and probably tce?)
-
+//Definition of the image and sampler datatype used on basic and pthread (and probably tce?)
 typedef cl_int dev_sampler_t;
 
 typedef struct dev_image_t {

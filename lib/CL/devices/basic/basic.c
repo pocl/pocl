@@ -32,7 +32,6 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include <dev_image.h>
 
 #ifndef _MSC_VER
 #  include <sys/time.h>
@@ -605,6 +604,7 @@ pocl_basic_run
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
           dev_sampler_t ds;
+          fill_dev_sampler_t(&ds, al);
           
           void* devptr = pocl_basic_malloc (data, 0, sizeof(dev_sampler_t), NULL);
           arguments[i] = malloc (sizeof (void *));

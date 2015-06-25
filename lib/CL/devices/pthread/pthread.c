@@ -48,7 +48,6 @@
 #ifdef CUSTOM_BUFFER_ALLOCATOR
 
 #include "bufalloc.h"
-#include <dev_image.h>
 
 /* Instead of mallocing a buffer size for a region, try to allocate 
    this many times the buffer size to hopefully avoid mallocs for 
@@ -676,6 +675,7 @@ workgroup_thread (void *p)
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
           dev_sampler_t ds;
+          fill_dev_sampler_t(&ds, al);
           
           void* devptr = pocl_pthread_malloc(ta->data, 0, sizeof(dev_sampler_t), NULL);
           arguments[i] = malloc (sizeof (void *));
