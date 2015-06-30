@@ -94,6 +94,11 @@ POname(clGetProgramInfo)(cl_program program,
         *param_value_size_ret = value_size;
       return CL_SUCCESS;
     }
+  case CL_PROGRAM_NUM_KERNELS:
+    {
+      size_t num_kernels = pocl_llvm_get_kernel_count(program);
+      POCL_RETURN_GETINFO(size_t, num_kernels);
+    }
   case CL_PROGRAM_KERNEL_NAMES:
     {
       const char *kernel_names[32];
