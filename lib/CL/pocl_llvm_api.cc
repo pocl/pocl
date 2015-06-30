@@ -391,6 +391,10 @@ int pocl_llvm_build_program(cl_program program,
   // Let the vectorizer or another optimization pass unroll the loops,
   // in case it sees beneficial.
   cg.UnrollLoops = false;
+  // This workarounds a Frontend codegen issues with an illegal address
+  // space cast which is later flattened (and thus implicitly fixed) in
+  // the TargetAddressSpaces. See:  https://github.com/pocl/pocl/issues/195
+  cg.VerifyModule = false;
 
   PreprocessorOutputOptions &poo = pocl_build.getPreprocessorOutputOpts();
   //PreprocessorOutputOptions prep = CI.getPreprocessorOutputOpts();
