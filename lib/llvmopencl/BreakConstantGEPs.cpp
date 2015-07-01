@@ -81,9 +81,9 @@ static RegisterPass<BreakConstantGEPs> P ("break-constgeps",
 static ConstantExpr *
 hasConstantGEP (Value * V) {
   if (ConstantExpr * CE = dyn_cast<ConstantExpr>(V)) {
-      if (CE->getOpcode() == Instruction::GetElementPtr ||
-          CE->getOpcode() == Instruction::BitCast) 
-      {
+    if (CE->getOpcode() == Instruction::GetElementPtr ||
+        CE->getOpcode() == Instruction::BitCast ||
+        CE->getOpcode() == Instruction::AddrSpaceCast) {
       return CE;
     } else {
       for (unsigned index = 0; index < CE->getNumOperands(); ++index) {
@@ -199,6 +199,7 @@ convertExpression (ConstantExpr * CE, Instruction * InsertPt) {
     case Instruction::FPExt:
     case Instruction::PtrToInt:
     case Instruction::IntToPtr:
+    case Instruction::AddrSpaceCast:
     case Instruction::BitCast: {
       Instruction::CastOps Op = (Instruction::CastOps)(CE->getOpcode());
       NewInst = CastInst::Create (Op,
