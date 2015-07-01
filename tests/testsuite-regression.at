@@ -250,5 +250,7 @@ AT_CHECK_UNQUOTED([$abs_top_builddir/tests/kernel/kernel test_local_struct_array
 [Running test test_local_struct_array...
 OK
 ])
-AT_XFAIL_IF([grep -q "#define LLVM_BUILT_WITH_ASSERTS" $abs_top_builddir/config.h])
+AT_XFAIL_IF([grep -q "#define LLVM_BUILT_WITH_ASSERTS" $abs_top_builddir/config.h && \
+! grep -q "#define LLVM_3_2" $abs_top_builddir/config.h && \
+! grep -q "#define LLVM_3_3" $abs_top_builddir/config.h])
 AT_CLEANUP
