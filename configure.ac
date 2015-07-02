@@ -157,6 +157,11 @@ fi
 
 AC_SUBST([LLVM_LIBS])
 
+if `$LLVM_CONFIG --build-mode | grep -q Asserts`;
+then
+AC_DEFINE([LLVM_BUILT_WITH_ASSERTS], [], "LLVM was built with Assertions on.")
+fi
+
 LLVM_RTTI_CHECK=$($LLVM_CONFIG --cxxflags | grep -i "\-fno-rtti")
 
 if test x"$LLVM_RTTI_CHECK" != x; then

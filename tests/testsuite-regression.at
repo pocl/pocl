@@ -241,3 +241,16 @@ value is changed at global_id: 6, local_id 2, group_id 1, to: 3
 ])
 AT_CHECK([POCL_WORK_GROUP_METHOD=loops $abs_top_builddir/tests/regression/test_assign_loop_variable_to_privvar_makes_it_local_2], 0, expout)
 AT_CLEANUP
+
+# See: https://github.com/pocl/pocl/issues/195
+# Possibly still fails with multi-AS targets.
+AT_SETUP([local struct arrays produce illegal AS casts])
+AT_KEYWORDS([local_struct_array])
+AT_CHECK_UNQUOTED([$abs_top_builddir/tests/kernel/kernel test_local_struct_array], 0,
+[Running test test_local_struct_array...
+OK
+])
+AT_XFAIL_IF([grep -q "#define LLVM_BUILT_WITH_ASSERTS" $abs_top_builddir/config.h && \
+! grep -q "#define LLVM_3_2" $abs_top_builddir/config.h && \
+! grep -q "#define LLVM_3_3" $abs_top_builddir/config.h])
+AT_CLEANUP
