@@ -182,6 +182,7 @@ modf(1.5f): 0.5 1.000000
 OK
 ])
 AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_frexp_modf], 0, expout)
+AT_XFAIL_IF([grep -q "#undef USE_VECMATHLIB" $abs_top_builddir/config.h])
 AT_CLEANUP
 
 # This was a an LLVM 3.3 code gen bug.
