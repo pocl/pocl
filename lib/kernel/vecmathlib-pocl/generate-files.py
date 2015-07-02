@@ -149,7 +149,7 @@ directfuncs = [
       vector_t m = ldexp(x0, -ilogb(x0));
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
-      *x0 = e;
+      *x1 = e;
       m
     })
 """),
