@@ -150,7 +150,7 @@ directfuncs = [
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 """),
     ("ilogb"         , [VF         ], VK, """

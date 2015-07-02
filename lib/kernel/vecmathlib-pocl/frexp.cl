@@ -56,7 +56,7 @@ half _cl_frexp(half x0, global int* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -95,7 +95,7 @@ half _cl_frexp(half x0, local int* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -134,7 +134,7 @@ half _cl_frexp(half x0, private int* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -173,7 +173,7 @@ half2 _cl_frexp(half2 x0, global int2* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -212,7 +212,7 @@ half2 _cl_frexp(half2 x0, local int2* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -251,7 +251,7 @@ half2 _cl_frexp(half2 x0, private int2* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -290,7 +290,7 @@ half3 _cl_frexp(half3 x0, global int3* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -329,7 +329,7 @@ half3 _cl_frexp(half3 x0, local int3* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -368,7 +368,7 @@ half3 _cl_frexp(half3 x0, private int3* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -407,7 +407,7 @@ half4 _cl_frexp(half4 x0, global int4* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -446,7 +446,7 @@ half4 _cl_frexp(half4 x0, local int4* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -485,7 +485,7 @@ half4 _cl_frexp(half4 x0, private int4* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -524,7 +524,7 @@ half8 _cl_frexp(half8 x0, global int8* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -563,7 +563,7 @@ half8 _cl_frexp(half8 x0, local int8* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -602,7 +602,7 @@ half8 _cl_frexp(half8 x0, private int8* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -641,7 +641,7 @@ half16 _cl_frexp(half16 x0, global int16* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -680,7 +680,7 @@ half16 _cl_frexp(half16 x0, local int16* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -719,7 +719,7 @@ half16 _cl_frexp(half16 x0, private int16* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -760,7 +760,7 @@ float _cl_frexp(float x0, global int* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -799,7 +799,7 @@ float _cl_frexp(float x0, local int* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -838,7 +838,7 @@ float _cl_frexp(float x0, private int* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -877,7 +877,7 @@ float2 _cl_frexp(float2 x0, global int2* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -916,7 +916,7 @@ float2 _cl_frexp(float2 x0, local int2* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -955,7 +955,7 @@ float2 _cl_frexp(float2 x0, private int2* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -994,7 +994,7 @@ float3 _cl_frexp(float3 x0, global int3* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1033,7 +1033,7 @@ float3 _cl_frexp(float3 x0, local int3* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1072,7 +1072,7 @@ float3 _cl_frexp(float3 x0, private int3* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1111,7 +1111,7 @@ float4 _cl_frexp(float4 x0, global int4* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1150,7 +1150,7 @@ float4 _cl_frexp(float4 x0, local int4* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1189,7 +1189,7 @@ float4 _cl_frexp(float4 x0, private int4* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1228,7 +1228,7 @@ float8 _cl_frexp(float8 x0, global int8* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1267,7 +1267,7 @@ float8 _cl_frexp(float8 x0, local int8* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1306,7 +1306,7 @@ float8 _cl_frexp(float8 x0, private int8* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1345,7 +1345,7 @@ float16 _cl_frexp(float16 x0, global int16* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1384,7 +1384,7 @@ float16 _cl_frexp(float16 x0, local int16* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1423,7 +1423,7 @@ float16 _cl_frexp(float16 x0, private int16* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1464,7 +1464,7 @@ double _cl_frexp(double x0, global int* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1503,7 +1503,7 @@ double _cl_frexp(double x0, local int* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1542,7 +1542,7 @@ double _cl_frexp(double x0, private int* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1581,7 +1581,7 @@ double2 _cl_frexp(double2 x0, global int2* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1620,7 +1620,7 @@ double2 _cl_frexp(double2 x0, local int2* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1659,7 +1659,7 @@ double2 _cl_frexp(double2 x0, private int2* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1698,7 +1698,7 @@ double3 _cl_frexp(double3 x0, global int3* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1737,7 +1737,7 @@ double3 _cl_frexp(double3 x0, local int3* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1776,7 +1776,7 @@ double3 _cl_frexp(double3 x0, private int3* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1815,7 +1815,7 @@ double4 _cl_frexp(double4 x0, global int4* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1854,7 +1854,7 @@ double4 _cl_frexp(double4 x0, local int4* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1893,7 +1893,7 @@ double4 _cl_frexp(double4 x0, private int4* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1932,7 +1932,7 @@ double8 _cl_frexp(double8 x0, global int8* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -1971,7 +1971,7 @@ double8 _cl_frexp(double8 x0, local int8* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -2010,7 +2010,7 @@ double8 _cl_frexp(double8 x0, private int8* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -2049,7 +2049,7 @@ double16 _cl_frexp(double16 x0, global int16* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -2088,7 +2088,7 @@ double16 _cl_frexp(double16 x0, local int16* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
@@ -2127,7 +2127,7 @@ double16 _cl_frexp(double16 x0, private int16* x1)
       e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
       m = e==INT_MIN || e==INT_MAX ? x0 : m;
       *x1 = e;
-      m
+      m;
     })
 ;
 #undef convert_ivector_t
