@@ -173,6 +173,17 @@ OK
 AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_fmin_fmax_fma], 0, expout)
 AT_CLEANUP
 
+AT_SETUP([Kernel functions frexp modf])
+AT_KEYWORDS([frexp_modf])
+AT_DATA([expout],
+[Running test test_frexp_modf...
+frexp(8e2f): 1.6 9
+modf(1.5f): 0.5 1.000000
+OK
+])
+AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_frexp_modf], 0, expout)
+AT_CLEANUP
+
 # This was a an LLVM 3.3 code gen bug.
 AT_SETUP([A saturating conversion from long to uint])
 AT_KEYWORDS([convert_sat_regression])
