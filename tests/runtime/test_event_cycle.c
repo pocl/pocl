@@ -23,13 +23,13 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <malloc.h>
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
 #include <CL/cl.h>
 
 #include "pocl_tests.h"
+#include "poclu.h"
 
 #define MAX_PLATFORMS 32
 #define MAX_DEVICES   32
