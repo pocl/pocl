@@ -235,7 +235,7 @@ int pocl_write_file(const char *path, const char* content,
     RETURN_IF_ERRNO;
 
     if (write(fd, content, (ssize_t)count) < (ssize_t)count)
-        return (-errno || -1);
+        return errno ? -errno : -1;
 
     return (close(fd) ? (-errno) : 0);
 }
