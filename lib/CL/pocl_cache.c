@@ -24,6 +24,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "config.h"
 #include "kernellib_hash.h"
@@ -31,6 +32,7 @@
 #include "pocl_hash.h"
 #include "pocl_cache.h"
 #include "pocl_file_util.h"
+#include "pocl_llvm.h"
 
 #include "pocl_cl.h"
 #include "pocl_runtime_config.h"
