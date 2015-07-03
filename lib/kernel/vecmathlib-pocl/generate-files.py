@@ -145,12 +145,10 @@ directfuncs = [
 """),
     ("frexp"         , [VF, PVK    ], VF, """
     ({
-      kvector_t e = ilogb(x0);
-      vector_t m = ldexp(x0, -ilogb(x0));
-      e = e==INT_MIN || e==INT_MAX ? (kvector_t)0 : e;
-      m = e==INT_MIN || e==INT_MAX ? x0 : m;
-      *x1 = e;
-      m;
+      kvector_t e0 = ilogb(x0);
+      kvector_t e = e0==INT_MIN || e0==INT_MAX ? (kvector_t)0 : e0+1;
+      *x0 = e;
+      e0==INT_MIN || e0==INT_MAX ? x0 : ldexp(x0, -e);
     })
 """),
     ("ilogb"         , [VF         ], VK, """
