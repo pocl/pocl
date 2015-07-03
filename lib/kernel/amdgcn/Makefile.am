@@ -34,9 +34,9 @@ include ../rules.mk
 include ../sources.mk
 
 LKERNEL_SRCS_EXCLUDE = printf.c get_local_id.c get_local_size.c get_group_id.c get_global_size.c \
-	get_num_groups.c get_work_dim.c get_global_id.c
+	get_num_groups.c get_work_dim.c get_global_id.c barrier.ll
 LKERNEL_SRCS_EXTRA = $(addprefix amdgcn/, get_local_id.ll get_local_size.ll \
-	get_group_id.ll get_global_size.ll \
+	get_group_id.ll get_global_size.ll barrier.ll \
 	get_num_groups.ll get_work_dim.ll get_global_id.c)
 
 EXTRA_DIST = CMakeLists.txt

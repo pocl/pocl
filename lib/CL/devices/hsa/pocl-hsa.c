@@ -120,7 +120,7 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
   dev->has_64bit_long = 1;
   /* TODO: probe from HSA */
   dev->max_mem_alloc_size = 512*1024*2014;
-
+  dev->global_mem_size = 16*1024*1024*1024;
   //FIXME: I use global agent to get hsa info?
   // Is it better to use it by input argument?
   //FIXME: Just Fix Local Memory Size from clinfo
@@ -141,7 +141,13 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
 	  break;
   default:
 	  POCL_ABORT("Unsupported hsa device type!\n");
+	  break;
   }
+
+#if 0
+  printf("Device Type : %d\n", dev->type);
+#endif
+
   dev->local_mem_size = 32768; //by clinfo
   hsa_dim3_t grid_size;
   stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_GRID_MAX_DIM, &grid_size);
@@ -242,7 +248,7 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
   //long_name, short_name     => HSA_AGENT_INFO_NAME
   //vendor					  => HSA_AGENT_INFO_VENDOR_NAME
   /* TODO: detect with HSA calls: */
-  hsa_agent_t agent = d->agent;
+  hsa_agent_t agent = *d->agent;
   device->global_mem_size = 2068840448;
   device->vendor_id = 0x1002;
   device->global_mem_cache_type = 0x2;
@@ -250,9 +256,23 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
   hsa_status_t stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_CACHE_SIZE, &(device->global_mem_cache_size));
   device->max_compute_units = 8;
   device->max_clock_frequency = 720;
-  stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_NAME, &(device->long_name));
+  char dev_name[64] = {0};
+  stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_NAME, dev_name);
+  device->long_name = (char*)malloc(64*sizeof(char));
+  memcpy(device->long_name, &dev_name[0], strlen(dev_name));
   device->short_name = device->long_name;
-  stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_VENDOR_NAME, &(device->vendor));
+
+  //FIXME: API Can Get Vendor, but vendor cannot show on clinfo
+
+#if 0
+  device->vendor = "Unknown X86";
+  char vendor_name[64] = {0};
+  stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_VENDOR_NAME, vendor_name);
+  device->vendor = vendor_name;
+
+  printf("vendor_name : %s\n",vendor_name);
+  printf("device->vendor : %s\n",device->vendor);
+#endif
 }
 
 void *
@@ -416,21 +436,29 @@ pocl_hsa_run
 #endif
 
   kernel_packet.kernarg_address = (uint64_t)args;
+
   if (hsa_ext_code_unit_get_info
         (*(hsa_amd_code_unit_t*)cmd->command.run.device_data[0],
-		HSA_EXT_CODE_UNIT_INFO_CODE_ENTITY_GROUP_SEGMENT_SIZE, 0,
+		HSA_EXT_CODE_UNIT_INFO_CODE_ENTITY_GROUP_SEGMENT_SIZE, 1,
 		&(kernel_packet.group_segment_size)) != HSA_STATUS_SUCCESS)
       {
         POCL_ABORT ("pocl-hsa: unable to get group segment size.");
       }
   if (hsa_ext_code_unit_get_info
           (*(hsa_amd_code_unit_t*)cmd->command.run.device_data[0],
-		  HSA_EXT_CODE_UNIT_INFO_CODE_ENTITY_PRIVATE_SEGMENT_SIZE, 0,
+		  HSA_EXT_CODE_UNIT_INFO_CODE_ENTITY_PRIVATE_SEGMENT_SIZE, 1,
   		&(kernel_packet.private_segment_size)) != HSA_STATUS_SUCCESS)
         {
           POCL_ABORT ("pocl-hsa: unable to get private segment size.");
         }
 
+  /*
+  kernel_packet.group_segment_size
+  	  = (*(hsa_amd_kernel_code_t*)cmd->command.run.device_data[1]).workgroup_group_segment_byte_size;
+  kernel_packet.private_segment_size
+  	  = (*(hsa_amd_kernel_code_t*)cmd->command.run.device_data[1]).workitem_private_segment_byte_size;
+*/
+  printf("Static Local Array: %d\n",kernel_packet.group_segment_size);
   /* Process the kernel arguments. Convert the opaque buffer
      pointers to real device pointers, allocate dynamic local
      memory buffers, etc. */
@@ -443,12 +471,14 @@ pocl_hsa_run
 //          POCL_ABORT_UNIMPLEMENTED("pocl-hsa: local buffers not implemented.");
     	  //For further info,
     	  //Please refer to https://github.com/HSAFoundation/HSA-Runtime-AMD/issues/8
+    	  /*
     	  if(args_offset%8 !=0 )
 			  args_offset = (args_offset+8)/8;
+			  */
     	  memcpy(args->kernel_args + args_offset, &dynamic_local_address, sizeof(uint64_t));
     	  kernel_packet.group_segment_size += al->size;
     	  args_offset += sizeof(uint64_t);
-    	  dynamic_local_address += al->size;
+    	  dynamic_local_address += sizeof(uint64_t);
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
         {
@@ -457,8 +487,8 @@ pocl_hsa_run
           /* Assuming the pointers are 64b (or actually the same as in
              host) due to HSA. TODO: the 32b profile. */
           //Alignment Check
-          if(args_offset%8 !=0 )
-        	  args_offset = (args_offset+8)/8;
+//          if(args_offset%8 !=0 )
+//        	  args_offset = (args_offset+8)/8;
           if (al->value == NULL)
             {
               uint64_t temp = 0;

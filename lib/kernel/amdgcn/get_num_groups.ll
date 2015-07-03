@@ -7,7 +7,7 @@ declare i32 @llvm.r600.read.ngroups.x() nounwind readnone
 declare i32 @llvm.r600.read.ngroups.y() nounwind readnone
 declare i32 @llvm.r600.read.ngroups.z() nounwind readnone
 
-define i32 @_Z13get_num_groupsj(i32 %dim) nounwind readnone alwaysinline {
+define i32 @_Z14get_num_groupsj(i32 %dim) nounwind readnone alwaysinline {
   switch i32 %dim, label %default [i32 0, label %x_dim i32 1, label %y_dim i32 2, label %z_dim]
 x_dim:
   %x = call i32 @llvm.r600.read.ngroups.x() nounwind readnone
