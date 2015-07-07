@@ -148,7 +148,7 @@ directfuncs = [
       kvector_t e0 = ilogb(x0);
       kvector_t e = e0==INT_MIN || e0==INT_MAX ? (kvector_t)0 : e0+1;
       *x1 = e;
-      e0==INT_MIN || e0==INT_MAX ? x0 : ldexp(x0, -e);
+      convert_ivector(e0==INT_MIN || e0==INT_MAX) ? x0 : ldexp(x0, -e);
     })
 """),
     ("ilogb"         , [VF         ], VK, """
