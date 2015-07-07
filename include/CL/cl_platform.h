@@ -213,16 +213,16 @@ typedef double                  cl_double;
 /* scalar types  */
 typedef int8_t          cl_char;
 typedef uint8_t         cl_uchar;
-typedef int16_t         cl_short    __attribute__((aligned(2)));
-typedef uint16_t        cl_ushort   __attribute__((aligned(2)));
-typedef int32_t         cl_int      __attribute__((aligned(4)));
-typedef uint32_t        cl_uint     __attribute__((aligned(4)));
-typedef int64_t         cl_long     __attribute__((aligned(8)));
-typedef uint64_t        cl_ulong    __attribute__((aligned(8)));
+typedef int16_t         cl_short    __attribute__((__aligned__(2)));
+typedef uint16_t        cl_ushort   __attribute__((__aligned__(2)));
+typedef int32_t         cl_int      __attribute__((__aligned__(4)));
+typedef uint32_t        cl_uint     __attribute__((__aligned__(4)));
+typedef int64_t         cl_long     __attribute__((__aligned__(8)));
+typedef uint64_t        cl_ulong    __attribute__((__aligned__(8)));
 
-typedef uint16_t        cl_half     __attribute__((aligned(2)));
-typedef float           cl_float    __attribute__((aligned(4)));
-typedef double          cl_double   __attribute__((aligned(8)));
+typedef uint16_t        cl_half     __attribute__((__aligned__(2)));
+typedef float           cl_float    __attribute__((__aligned__(4)));
+typedef double          cl_double   __attribute__((__aligned__(8)));
 
 /* Macro names and corresponding values defined by OpenCL */
 #define CL_CHAR_BIT         8
@@ -453,7 +453,7 @@ typedef unsigned int cl_GLenum;
 
 /* Define alignment keys */
 #if defined( __GNUC__ )
-    #define CL_ALIGNED(_x)          __attribute__ ((aligned(_x)))
+    #define CL_ALIGNED(_x)          __attribute__ ((__aligned__(_x)))
 #elif defined( _WIN32) && (_MSC_VER)
     /* Alignment keys neutered on windows because MSVC can't swallow function arguments with alignment requirements     */
     /* http://msdn.microsoft.com/en-us/library/373ak2y1%28VS.71%29.aspx                                                 */

@@ -128,6 +128,10 @@ pocl_lock_t ta_pool_lock;
 static size_t get_max_thread_count();
 static void * workgroup_thread (void *p);
 
+/* TODO: Declare this in a header file */
+void
+pocl_basic_set_buffer_image_limits(cl_device_id device);
+
 static void pocl_init_thread_argument_manager (void)
 {
   if (!argument_pool_initialized)

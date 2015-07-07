@@ -29,7 +29,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <malloc.h>
 #include "pocl_debug.h"
 #include "pocl_queue_util.h"
 
