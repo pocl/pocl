@@ -420,17 +420,22 @@ void pocl_cache_init_topdir() {
         assert(tmp_path);
         snprintf(cache_topdir, POCL_FILENAME_LENGTH, "%s\\pocl", tmp_path);
 #else
-        tmp_path = getenv("HOME");
+        // "If $XDG_CACHE_HOME is either not set or empty, a default equal to
+        // $HOME/.cache should be used."
+        // http://standards.freedesktop.org/basedir-spec/latest/
+        tmp_path = getenv("XDG_CACHE_HOME");
 
-        if (tmp_path)
-            snprintf(cache_topdir,
-                     POCL_FILENAME_LENGTH,
-                     "%s/.pocl/kcache",
-                     tmp_path);
-        else
-            snprintf(cache_topdir,
-                     POCL_FILENAME_LENGTH,
-                     "/tmp/pocl/kcache");
+        if (tmp_path && tmp_path[0] != '\0') {
+            snprintf(cache_topdir, POCL_FILENAME_LENGTH,
+                     "%s/pocl/kcache", tmp_path);
+        }
+        else if ((tmp_path = getenv("HOME")) != NULL) {
+            snprintf(cache_topdir, POCL_FILENAME_LENGTH,
+                     "%s/.cache/pocl/kcache", tmp_path);
+        }
+        else {
+            snprintf(cache_topdir, POCL_FILENAME_LENGTH, "/tmp/pocl/kcache");
+        }
 #endif
     }
 
