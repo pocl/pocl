@@ -399,26 +399,28 @@ void pocl_cache_init_topdir() {
         return;
 
     const char *tmp_path = pocl_get_string_option("POCL_CACHE_DIR", NULL);
+    int needed;
 
     if (tmp_path && (pocl_exists(tmp_path))) {
-        snprintf(cache_topdir, POCL_FILENAME_LENGTH, "%s", tmp_path);
+        needed = snprintf(cache_topdir, POCL_FILENAME_LENGTH, "%s", tmp_path);
     } else     {
 #ifdef POCL_ANDROID
         char* process_name = pocl_get_process_name();
-        snprintf(cache_topdir, POCL_FILENAME_LENGTH,
-                 "/data/data/%s/cache/", process_name);
+        needed = snprintf(cache_topdir, POCL_FILENAME_LENGTH,
+                          "/data/data/%s/cache/", process_name);
         free(process_name);
 
         if (!pocl_exists(cache_topdir))
-            snprintf(cache_topdir,
-                     POCL_FILENAME_LENGTH,
-                     "/sdcard/pocl/kcache");
+            needed = snprintf(cache_topdir,
+                              POCL_FILENAME_LENGTH,
+                              "/sdcard/pocl/kcache");
 #elif defined(_MSC_VER) || defined(__MINGW32__)
         tmp_path = getenv("LOCALAPPDATA");
         if (!tmp_path)
             tmp_path = getenv("TEMP");
         assert(tmp_path);
-        snprintf(cache_topdir, POCL_FILENAME_LENGTH, "%s\\pocl", tmp_path);
+        needed = snprintf(cache_topdir, POCL_FILENAME_LENGTH,
+                          "%s\\pocl", tmp_path);
 #else
         // "If $XDG_CACHE_HOME is either not set or empty, a default equal to
         // $HOME/.cache should be used."
@@ -426,17 +428,22 @@ void pocl_cache_init_topdir() {
         tmp_path = getenv("XDG_CACHE_HOME");
 
         if (tmp_path && tmp_path[0] != '\0') {
-            snprintf(cache_topdir, POCL_FILENAME_LENGTH,
-                     "%s/pocl/kcache", tmp_path);
+            needed = snprintf(cache_topdir, POCL_FILENAME_LENGTH,
+                              "%s/pocl/kcache", tmp_path);
         }
         else if ((tmp_path = getenv("HOME")) != NULL) {
-            snprintf(cache_topdir, POCL_FILENAME_LENGTH,
-                     "%s/.cache/pocl/kcache", tmp_path);
+            needed = snprintf(cache_topdir, POCL_FILENAME_LENGTH,
+                              "%s/.cache/pocl/kcache", tmp_path);
         }
         else {
-            snprintf(cache_topdir, POCL_FILENAME_LENGTH, "/tmp/pocl/kcache");
+            needed = snprintf(cache_topdir, POCL_FILENAME_LENGTH,
+                              "/tmp/pocl/kcache");
         }
 #endif
+    }
+
+    if (needed >= POCL_FILENAME_LENGTH) {
+        POCL_ABORT("pocl: cache path longer than maximum filename length");
     }
 
     assert(strlen(cache_topdir) > 0);
