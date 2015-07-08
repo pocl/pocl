@@ -559,11 +559,11 @@ pocl_basic_run
   struct pocl_context *pc = &cmd->command.run.pc;
 
   assert (data != NULL);
-  d = (struct data *) data;
+  d = data;
 
   d->current_kernel = kernel;
 
-  void **arguments = (void**)malloc(
+  void **arguments = malloc(
       sizeof(void*) * (kernel->num_args + kernel->num_locals)
     );
 
@@ -895,7 +895,7 @@ void check_compiler_cache (_cl_command_node *cmd)
   void* cache_lock = pocl_cache_acquire_writer_lock(program, cmd->device);
   assert(cache_lock);
 
-  ci = (compiler_cache_item*) malloc (sizeof (compiler_cache_item));
+  ci = malloc (sizeof (compiler_cache_item));
   ci->next = NULL;
   ci->tmp_dir = strdup(cmd->command.run.tmp_dir);
   ci->function_name = strdup (cmd->command.run.kernel->name);

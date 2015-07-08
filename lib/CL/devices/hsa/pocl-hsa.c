@@ -289,7 +289,7 @@ pocl_hsa_run
   int args_offset = 0;
 
   assert (data != NULL);
-  d = (struct data *) data;
+  d = data;
 
   d->current_kernel = kernel;
 
@@ -308,7 +308,7 @@ pocl_hsa_run
       assert (0 && "hsa_memory_allocate() failed.");
     }
 #else
-  args = (amdgpu_args_t*)malloc(sizeof(amdgpu_args_t));
+  args = malloc(sizeof(amdgpu_args_t));
 #endif
 
   kernel_packet.kernarg_address = (uint64_t)args;
@@ -533,12 +533,12 @@ static void compile (_cl_command_node *cmd)
   file = fopen (objfile, "rb");
   assert (file != NULL);
 
-  cmd->command.run.device_data = (void**)malloc (sizeof(void*)*2);
+  cmd->command.run.device_data = malloc (sizeof(void*)*2);
   cmd->command.run.device_data[0] = malloc (sizeof(hsa_amd_code_unit_t));
   cmd->command.run.device_data[1] = malloc (sizeof(hsa_amd_code_t));
 
   file_size = pocl_file_size (file);
-  elf_blob = (char*)malloc (file_size);
+  elf_blob = malloc (file_size);
   got_size = fread (elf_blob, 1, file_size, file);
 
   if (file_size != got_size)
