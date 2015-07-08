@@ -492,7 +492,6 @@ struct _cl_kernel {
   POCL_ICD_OBJECT
   POCL_OBJECT;
   /* queries */
-  char *function_name;
   char *name;
   cl_uint num_args;
   cl_context context;
