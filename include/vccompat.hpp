@@ -98,6 +98,7 @@ static inline void lt_dlinit(void) {
  * TODO: test these implementations...
  */
 
+/* Commented out: unused, and actually incorrect/unsafe.
 static inline void gen_random(char *s, const int len) {
   static const char alphanum[] =
     "0123456789"
@@ -115,6 +116,7 @@ static inline void mkdtemp(char *temp) {
   gen_random(&temp[rnd_start], 6);
   mkdir(temp);
 }
+*/
 
 /**
  * Memory allocation functions
