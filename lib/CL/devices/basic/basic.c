@@ -56,7 +56,7 @@ struct data {
   lt_dlhandle current_dlhandle;
 };
 
-const cl_image_format supported_image_formats[] = {
+static const cl_image_format supported_image_formats[] = {
     { CL_R, CL_SNORM_INT8 },
     { CL_R, CL_SNORM_INT16 },
     { CL_R, CL_UNORM_INT8 },
@@ -447,7 +447,7 @@ pocl_basic_init (cl_device_id device, const char* parameters)
   #endif
 }
 
-void *
+static void *
 pocl_basic_malloc (void *device_data, cl_mem_flags flags,
 		    size_t size, void *host_ptr)
 {

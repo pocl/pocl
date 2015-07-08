@@ -41,7 +41,7 @@
 
 /* supported compiler parameters which should pass to the frontend directly
    by using -Xclang */
-static char cl_parameters[] = 
+static const char cl_parameters[] =
   "-cl-single-precision-constant "
   "-cl-fp32-correctly-rounded-divide-sqrt "
   "-cl-opt-disable "
@@ -55,7 +55,7 @@ static char cl_parameters[] =
   "-w "
   "-g ";
 
-static char cl_parameters_not_yet_supported_by_clang[] = 
+static const char cl_parameters_not_yet_supported_by_clang[] =
   "-cl-strict-aliasing "
   "-cl-denorms-are-zero "
   "-cl-no-signed-zeros ";
