@@ -63,20 +63,18 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
   char bytecode[POCL_FILENAME_LENGTH];
   char objfile[POCL_FILENAME_LENGTH];
 
-  char* module = (char*) malloc(min(POCL_FILENAME_LENGTH, 
-	   strlen(tmpdir) + strlen(kernel->function_name) + 5)); // strlen of / .so 4+1
+  char* module = malloc(strlen(tmpdir) + strlen(kernel->name) +
+                        strlen("/.so") + 1);
 
   int error;
 
-  error = snprintf 
-    (module, POCL_FILENAME_LENGTH,
-     "%s/%s.so", tmpdir, kernel->function_name);
+  error = snprintf(module, POCL_FILENAME_LENGTH,
+                   "%s/%s.so", tmpdir, kernel->name);
 
   assert (error >= 0);
 
-  error = snprintf
-    (objfile, POCL_FILENAME_LENGTH,
-     "%s/%s.so.o", tmpdir, kernel->function_name);
+  error = snprintf(objfile, POCL_FILENAME_LENGTH,
+                   "%s/%s.so.o", tmpdir, kernel->name);
   assert (error >= 0);
 
   if (pocl_exists(module))

@@ -198,7 +198,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
 
   POCL_MSG_PRINT_INFO("Queueing kernel %s with local size %u x %u x %u group "
                       "sizes %u x %u x %u...\n",
-                      kernel->function_name, 
+                      kernel->name,
                       (unsigned)local_x, (unsigned)local_y, (unsigned)local_z,
                       (unsigned)(global_x / local_x), 
                       (unsigned)(global_y / local_y), 
