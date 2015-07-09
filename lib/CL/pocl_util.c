@@ -161,8 +161,8 @@ pocl_aligned_malloc (size_t alignment, size_t size)
    * with free in the preceding bytes */
   uintptr_t aligned_address = (address + mask + sizeof(void *)) & ~mask;
   void** address_ptr = (void **)(aligned_address - sizeof(void *));
-  *address_ptr = address;
-  return aligned_address;
+  *address_ptr = (void *)address;
+  return (void *)aligned_address;
 
 #endif
 }
