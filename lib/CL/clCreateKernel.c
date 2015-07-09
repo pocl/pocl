@@ -65,7 +65,7 @@ POname(clCreateKernel)(cl_program program,
     CL_INVALID_PROGRAM_EXECUTABLE, "No built binaries in program "
     "(this shouldn't happen...)\n");
 
-  kernel = (cl_kernel) malloc(sizeof(struct _cl_kernel));
+  kernel = malloc(sizeof(struct _cl_kernel));
   if (kernel == NULL)
   {
     errcode = CL_OUT_OF_HOST_MEMORY;
@@ -103,9 +103,9 @@ POname(clCreateKernel)(cl_program program,
 
     }
 
-  /* TODO: one of these two could be eliminated?  */
-  kernel->function_name = strdup(kernel_name);
   kernel->name = strdup(kernel_name);
+  POCL_GOTO_ERROR_ON((kernel->name == NULL), CL_OUT_OF_HOST_MEMORY,
+                     "clCreateKernel couldn't allocate memory");
 
   kernel->context = program->context;
   kernel->program = program;

@@ -161,8 +161,8 @@ pocl_aligned_malloc (size_t alignment, size_t size)
    * with free in the preceding bytes */
   uintptr_t aligned_address = (address + mask + sizeof(void *)) & ~mask;
   void** address_ptr = (void **)(aligned_address - sizeof(void *));
-  *address_ptr = (void *)address;
-  return (void *)aligned_address;
+  *address_ptr = address;
+  return aligned_address;
 
 #endif
 }
@@ -241,7 +241,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
 
   if (num_events || add_prev_command)
     {
-      event_wl = (cl_event*)malloc((num_events + add_prev_command)*sizeof(cl_event));
+      event_wl = malloc((num_events + add_prev_command)*sizeof(cl_event));
       if (event_wl == NULL)
         return CL_OUT_OF_HOST_MEMORY;
     }
