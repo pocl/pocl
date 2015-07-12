@@ -209,6 +209,8 @@ int pocl_cache_write_descriptor(cl_program   program,
 char* pocl_cache_read_buildlog(cl_program program,
                                unsigned device_i) {
     char buildlog_path[POCL_FILENAME_LENGTH];
+    if (program->build_hash[device_i][0] == 0)
+        return NULL;
     program_device_dir(buildlog_path, program,
                        device_i, POCL_BUILDLOG_FILENAME);
 
