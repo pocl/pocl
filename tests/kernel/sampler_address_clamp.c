@@ -33,8 +33,6 @@ int main(int argc, char **argv)
   cl_image_format image_format;
   cl_image_desc image_desc;
 
-  
-
   printf("Running test %s...\n", name);
   memset(&image_desc, 0, sizeof(cl_image_desc));
   image_desc.image_type = CL_MEM_OBJECT_IMAGE2D;
@@ -42,7 +40,7 @@ int main(int argc, char **argv)
   image_desc.image_height = 4;
   image_format.image_channel_order = CL_RGBA;
   image_format.image_channel_data_type = CL_UNSIGNED_INT8;
-  imageData = (cl_uchar4*)malloc (4 * 4 * sizeof(cl_uchar4));
+  imageData = malloc (4 * 4 * sizeof(cl_uchar4));
   
   if (imageData == NULL)
     {
@@ -55,7 +53,7 @@ int main(int argc, char **argv)
   srcdir_length = strlen(SRCDIR);
   name_length = strlen(name);
   filename_size = srcdir_length + name_length + 16;
-  filename = (char *)malloc(filename_size + 1);
+  filename = malloc(filename_size + 1);
   if (!filename) 
     {
       puts("out of memory");
@@ -76,7 +74,7 @@ int main(int argc, char **argv)
   source_size = ftell(source_file);
   fseek(source_file, 0, SEEK_SET);
   
-  source = (char *)malloc(source_size + 1);
+  source = malloc(source_size + 1);
   if (!source) 
     {
       puts("out of memory\n");

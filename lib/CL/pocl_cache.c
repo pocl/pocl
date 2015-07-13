@@ -24,6 +24,7 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "config.h"
 #include "kernellib_hash.h"
@@ -31,6 +32,7 @@
 #include "pocl_hash.h"
 #include "pocl_cache.h"
 #include "pocl_file_util.h"
+#include "pocl_llvm.h"
 
 #include "pocl_cl.h"
 #include "pocl_runtime_config.h"
@@ -207,6 +209,8 @@ int pocl_cache_write_descriptor(cl_program   program,
 char* pocl_cache_read_buildlog(cl_program program,
                                unsigned device_i) {
     char buildlog_path[POCL_FILENAME_LENGTH];
+    if (program->build_hash[device_i][0] == 0)
+        return NULL;
     program_device_dir(buildlog_path, program,
                        device_i, POCL_BUILDLOG_FILENAME);
 
@@ -397,39 +401,51 @@ void pocl_cache_init_topdir() {
         return;
 
     const char *tmp_path = pocl_get_string_option("POCL_CACHE_DIR", NULL);
+    int needed;
 
     if (tmp_path && (pocl_exists(tmp_path))) {
-        snprintf(cache_topdir, POCL_FILENAME_LENGTH, "%s", tmp_path);
+        needed = snprintf(cache_topdir, POCL_FILENAME_LENGTH, "%s", tmp_path);
     } else     {
 #ifdef POCL_ANDROID
         char* process_name = pocl_get_process_name();
-        snprintf(cache_topdir, POCL_FILENAME_LENGTH,
-                 "/data/data/%s/cache/", process_name);
+        needed = snprintf(cache_topdir, POCL_FILENAME_LENGTH,
+                          "/data/data/%s/cache/", process_name);
         free(process_name);
 
         if (!pocl_exists(cache_topdir))
-            snprintf(cache_topdir,
-                     POCL_FILENAME_LENGTH,
-                     "/sdcard/pocl/kcache");
+            needed = snprintf(cache_topdir,
+                              POCL_FILENAME_LENGTH,
+                              "/sdcard/pocl/kcache");
 #elif defined(_MSC_VER) || defined(__MINGW32__)
         tmp_path = getenv("LOCALAPPDATA");
         if (!tmp_path)
             tmp_path = getenv("TEMP");
         assert(tmp_path);
-        snprintf(cache_topdir, POCL_FILENAME_LENGTH, "%s\\pocl", tmp_path);
+        needed = snprintf(cache_topdir, POCL_FILENAME_LENGTH,
+                          "%s\\pocl", tmp_path);
 #else
-        tmp_path = getenv("HOME");
+        // "If $XDG_CACHE_HOME is either not set or empty, a default equal to
+        // $HOME/.cache should be used."
+        // http://standards.freedesktop.org/basedir-spec/latest/
+        tmp_path = getenv("XDG_CACHE_HOME");
 
-        if (tmp_path)
-            snprintf(cache_topdir,
-                     POCL_FILENAME_LENGTH,
-                     "%s/.pocl/kcache",
-                     tmp_path);
-        else
-            snprintf(cache_topdir,
-                     POCL_FILENAME_LENGTH,
-                     "/tmp/pocl/kcache");
+        if (tmp_path && tmp_path[0] != '\0') {
+            needed = snprintf(cache_topdir, POCL_FILENAME_LENGTH,
+                              "%s/pocl/kcache", tmp_path);
+        }
+        else if ((tmp_path = getenv("HOME")) != NULL) {
+            needed = snprintf(cache_topdir, POCL_FILENAME_LENGTH,
+                              "%s/.cache/pocl/kcache", tmp_path);
+        }
+        else {
+            needed = snprintf(cache_topdir, POCL_FILENAME_LENGTH,
+                              "/tmp/pocl/kcache");
+        }
 #endif
+    }
+
+    if (needed >= POCL_FILENAME_LENGTH) {
+        POCL_ABORT("pocl: cache path longer than maximum filename length");
     }
 
     assert(strlen(cache_topdir) > 0);

@@ -56,7 +56,7 @@ struct data {
   lt_dlhandle current_dlhandle;
 };
 
-const cl_image_format supported_image_formats[] = {
+static const cl_image_format supported_image_formats[] = {
     { CL_R, CL_SNORM_INT8 },
     { CL_R, CL_SNORM_INT16 },
     { CL_R, CL_UNORM_INT8 },
@@ -447,7 +447,7 @@ pocl_basic_init (cl_device_id device, const char* parameters)
   #endif
 }
 
-void *
+static void *
 pocl_basic_malloc (void *device_data, cl_mem_flags flags,
 		    size_t size, void *host_ptr)
 {
@@ -559,11 +559,11 @@ pocl_basic_run
   struct pocl_context *pc = &cmd->command.run.pc;
 
   assert (data != NULL);
-  d = (struct data *) data;
+  d = data;
 
   d->current_kernel = kernel;
 
-  void **arguments = (void**)malloc(
+  void **arguments = malloc(
       sizeof(void*) * (kernel->num_args + kernel->num_locals)
     );
 
@@ -883,7 +883,7 @@ void check_compiler_cache (_cl_command_node *cmd)
     {
       if (strcmp (ci->tmp_dir, cmd->command.run.tmp_dir) == 0 &&
           strcmp (ci->function_name, 
-                  cmd->command.run.kernel->function_name) == 0)
+                  cmd->command.run.kernel->name) == 0)
         {
           POCL_UNLOCK (compiler_cache_lock);
           cmd->command.run.wg = ci->wg;
@@ -895,10 +895,10 @@ void check_compiler_cache (_cl_command_node *cmd)
   void* cache_lock = pocl_cache_acquire_writer_lock(program, cmd->device);
   assert(cache_lock);
 
-  ci = (compiler_cache_item*) malloc (sizeof (compiler_cache_item));
+  ci = malloc (sizeof (compiler_cache_item));
   ci->next = NULL;
   ci->tmp_dir = strdup(cmd->command.run.tmp_dir);
-  ci->function_name = strdup (cmd->command.run.kernel->function_name);
+  ci->function_name = strdup (cmd->command.run.kernel->name);
   const char* module_fn = llvm_codegen (cmd->command.run.tmp_dir,
                                         cmd->command.run.kernel,
                                         cmd->device);
@@ -912,7 +912,7 @@ void check_compiler_cache (_cl_command_node *cmd)
       abort();
     }
   snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
-            "_pocl_launcher_%s_workgroup", cmd->command.run.kernel->function_name);
+            "_pocl_launcher_%s_workgroup", cmd->command.run.kernel->name);
   cmd->command.run.wg = ci->wg = 
     (pocl_workgroup) lt_dlsym (dlhandle, workgroup_string);
 

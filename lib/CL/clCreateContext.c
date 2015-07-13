@@ -89,7 +89,7 @@ int context_set_properties(cl_context                    context,
           num_properties++;
         }
 
-      context->properties = (cl_context_properties *) malloc
+      context->properties = malloc
         ((num_properties * 2 + 1) * sizeof(cl_context_properties));
       if (context->properties == NULL)
         {
@@ -135,7 +135,7 @@ POname(clCreateContext)(const cl_context_properties * properties,
   lt_dlinit();
   pocl_init_devices();
 
-  context = (cl_context) malloc(sizeof(struct _cl_context));
+  context = malloc(sizeof(struct _cl_context));
   if (context == NULL)
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
@@ -151,7 +151,7 @@ POname(clCreateContext)(const cl_context_properties * properties,
     }
   
   context->num_devices = num_devices;
-  context->devices = (cl_device_id *) malloc(num_devices * sizeof(cl_device_id));
+  context->devices = malloc(num_devices * sizeof(cl_device_id));
   if (context->devices == NULL)
     {
       errcode = CL_OUT_OF_HOST_MEMORY;

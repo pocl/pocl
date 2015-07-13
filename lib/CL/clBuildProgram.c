@@ -41,7 +41,7 @@
 
 /* supported compiler parameters which should pass to the frontend directly
    by using -Xclang */
-static char cl_parameters[] = 
+static const char cl_parameters[] =
   "-cl-single-precision-constant "
   "-cl-fp32-correctly-rounded-divide-sqrt "
   "-cl-opt-disable "
@@ -55,7 +55,7 @@ static char cl_parameters[] =
   "-w "
   "-g ";
 
-static char cl_parameters_not_yet_supported_by_clang[] = 
+static const char cl_parameters_not_yet_supported_by_clang[] =
   "-cl-strict-aliasing "
   "-cl-denorms-are-zero "
   "-cl-no-signed-zeros ";
@@ -67,7 +67,7 @@ static char cl_parameters_not_yet_supported_by_clang[] =
   size_t needed = strlen(token) + 1; \
   if (size <= (i + needed)) { \
     size_t grow_by = needed > 256 ? needed : 256; \
-    char *grown_ptr = (char *)realloc(modded_options, size + grow_by); \
+    char *grown_ptr = realloc(modded_options, size + grow_by); \
     if (grown_ptr == NULL) { \
       /* realloc failed, free modded_options and return */ \
       errcode = CL_OUT_OF_HOST_MEMORY; \
