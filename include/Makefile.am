@@ -27,7 +27,7 @@ pkgdataincludedir = $(pkgdatadir)/include
 pkgdatainclude_HEADERS = _kernel.h _kernel_c.h pocl_types.h pocl_features.h pocl_device.h pocl.h pocl_tests.h
 
 # Public - and default - includes dir
-include_HEADERS = poclu.h utlist.h
+include_HEADERS = poclu.h
 
 EXTRA_DIST = vccompat.hpp CMakeLists.txt
 

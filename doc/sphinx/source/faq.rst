@@ -64,9 +64,7 @@ This should result in up to 10x kernel compiler slow downs. You can
 really feel it when running 'make check', for example.
 
 The kernel compiler cache often removes that overhead when you
-run your OpenCL app the next time. It might not always, though. 
-For example, currently it doesn't cache kernels which have #include 
-clauses in them.
+run your OpenCL app the next time.
 
 If pocl is otherwise slower than other OpenCL implementations, it's normal. 
 pocl is known to run certain benchmarks faster, certain ones slower, 

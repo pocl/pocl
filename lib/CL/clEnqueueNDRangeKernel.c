@@ -198,7 +198,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
 
   POCL_MSG_PRINT_INFO("Queueing kernel %s with local size %u x %u x %u group "
                       "sizes %u x %u x %u...\n",
-                      kernel->function_name, 
+                      kernel->name,
                       (unsigned)local_x, (unsigned)local_y, (unsigned)local_z,
                       (unsigned)(global_x / local_x), 
                       (unsigned)(global_y / local_y), 
@@ -267,9 +267,9 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
 
   /* Copy the currently set kernel arguments because the same kernel 
      object can be reused for new launches with different arguments. */
-  command_node->command.run.arguments = 
-    (struct pocl_argument *) malloc ((kernel->num_args + kernel->num_locals) *
-                                     sizeof (struct pocl_argument));
+  command_node->command.run.arguments =
+    malloc ((kernel->num_args + kernel->num_locals) *
+            sizeof (struct pocl_argument));
 
   for (i = 0; i < kernel->num_args + kernel->num_locals; ++i)
     {
@@ -311,8 +311,8 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   }
   
   /* Copy the argument buffers just so we can free them after execution. */
-  command_node->command.run.arg_buffers = 
-    (cl_mem *) malloc (sizeof (cl_mem) * command_node->command.run.arg_buffer_count);
+  command_node->command.run.arg_buffers =
+    malloc (sizeof (cl_mem) * command_node->command.run.arg_buffer_count);
   count = 0;
   for (i = 0; i < kernel->num_args; ++i)
   {
