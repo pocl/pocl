@@ -71,6 +71,22 @@ struct data {
   hsa_queue_t *queue;
 };
 
+struct hsa_device_features_t
+{
+	char*                     dev_name;
+	const char*               llvm_cpu;
+	cl_ulong                  max_mem_alloc_size;
+	cl_ulong                  global_mem_size;
+	cl_uint                   vendor_id;
+	cl_device_mem_cache_type  global_mem_cache_type;
+	cl_uint                   global_mem_cacheline_size;
+	cl_uint                   max_compute_units;
+	cl_uint                   max_clock_frequency;
+	cl_ulong                  max_conastant_buffer_size;
+	cl_ulong                  local_mem_size;
+};
+typedef struct hsa_device_features_t hsa_device_features;
+
 void
 pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
 {
@@ -110,23 +126,67 @@ pocl_hsa_get_agents(hsa_agent_t agent, void *data)
   return HSA_STATUS_SUCCESS;
 }
 
+//Get hsa-unsupported device features from hsa device list.
+int num_hsa_device = 1;
+hsa_device_features hsa_device_lists[MAX_HSA_AGENTS];
+void init_hsa_device_list()
+{
+	hsa_device_lists[0].dev_name = "Spectre";
+	hsa_device_lists[0].llvm_cpu = "kaveri";
+	//FIXME: I am not sure if it is related to main memory.
+	hsa_device_lists[0].max_mem_alloc_size = 592969728;
+	hsa_device_lists[0].global_mem_size = 2371878912;
+	hsa_device_lists[0].vendor_id = 0x1002;
+	hsa_device_lists[0].global_mem_cache_type = 0x2;
+	hsa_device_lists[0].global_mem_cacheline_size = 64;
+	hsa_device_lists[0].max_compute_units = 8;
+	hsa_device_lists[0].max_clock_frequency = 720;
+	hsa_device_lists[0].max_conastant_buffer_size = 65536;
+	hsa_device_lists[0].local_mem_size = 32768;
+}
+
+void get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
+{
+	int i;
+	for(i=0; i<num_hsa_device; i++){
+		if(strcmp(dev_name, hsa_device_lists[i].dev_name) == 0){
+			dev->llvm_cpu = hsa_device_lists[i].llvm_cpu;
+			dev->max_mem_alloc_size = hsa_device_lists[i].max_mem_alloc_size;
+			dev->global_mem_size = hsa_device_lists[i].global_mem_size;
+			dev->vendor_id = hsa_device_lists[i].vendor_id;
+			dev->global_mem_cache_type = hsa_device_lists[i].global_mem_cache_type;
+			dev->global_mem_cacheline_size = hsa_device_lists[i].global_mem_cacheline_size;
+			dev->max_compute_units = hsa_device_lists[i].max_compute_units;
+			dev->max_clock_frequency = hsa_device_lists[i].max_clock_frequency;
+			dev->max_constant_buffer_size = hsa_device_lists[i].max_conastant_buffer_size;
+			dev->local_mem_size = hsa_device_lists[i].local_mem_size;
+			break;
+		}
+	}
+
+}
+
 void
 pocl_hsa_init_device_infos(struct _cl_device_id* dev)
 {
   pocl_basic_init_device_infos (dev);
   dev->spmd = CL_TRUE;
   dev->llvm_target_triplet = "amdgcn--amdhsa";
-  dev->llvm_cpu = "kaveri";
   dev->has_64bit_long = 1;
-  /* TODO: probe from HSA */
-  dev->max_mem_alloc_size = 512*1024*2014;
-  dev->global_mem_size = 16*1024*1024*1024;
-  //FIXME: I use global agent to get hsa info?
-  // Is it better to use it by input argument?
-  //FIXME: Just Fix Local Memory Size from clinfo
   hsa_agent_t agent = hsa_agents[found_hsa_agents - 1];
+
+  hsa_status_t stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_CACHE_SIZE, &(dev->global_mem_cache_size));
+  char dev_name[64] = {0};
+  stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_NAME, dev_name);
+  dev->long_name = (char*)malloc(64*sizeof(char));
+  memcpy(dev->long_name, &dev_name[0], strlen(dev_name));
+  dev->short_name = dev->long_name;
+
+  init_hsa_device_list();
+  get_hsa_device_features(dev->long_name, dev);
+
   hsa_device_type_t dev_type;
-  hsa_status_t stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_DEVICE, &dev_type);
+  stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_DEVICE, &dev_type);
   switch(dev_type)
   {
   case HSA_DEVICE_TYPE_GPU:
@@ -148,7 +208,7 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
   printf("Device Type : %d\n", dev->type);
 #endif
 
-  dev->local_mem_size = 32768; //by clinfo
+  //dev->local_mem_size = 32768; //by clinfo
   hsa_dim3_t grid_size;
   stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_GRID_MAX_DIM, &grid_size);
   dev->max_work_item_sizes[0] = grid_size.x;
@@ -231,39 +291,7 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
       POCL_ABORT("pocl-hsa: could not create the queue.");
     }
 
-  /* TODO: replace with HSA calls: */
-#if 0
-  pocl_topology_detect_device_info(device);
-  pocl_cpuinfo_detect_device_info(device);
-#endif
-  //by CCChen
-  //Needed Information :
-  //global_mem_size           => Get from clinfo for AMD GPU Spectre
-  //vendor_id			      => Get from clinfo for AMD GPU Spectre
-  //global_mem_cache_type	  => Get from clinfo for AMD GPU Spectre
-  //global_mem_cacheline_size => Get from clinfo for AMD GPU Spectre
-  //global_mem_cache_size     => HSA_AGENT_INFO_CACHE_SIZE
-  //max_compute_units         => Get from clinfo for AMD GPU Spectre
-  //max_clock_frequency       => Get from clinfo for AMD GPU Spectre
-  //long_name, short_name     => HSA_AGENT_INFO_NAME
-  //vendor					  => HSA_AGENT_INFO_VENDOR_NAME
-  /* TODO: detect with HSA calls: */
-  hsa_agent_t agent = *d->agent;
-  device->global_mem_size = 2068840448;
-  device->vendor_id = 0x1002;
-  device->global_mem_cache_type = 0x2;
-  device->global_mem_cacheline_size = 64;
-  hsa_status_t stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_CACHE_SIZE, &(device->global_mem_cache_size));
-  device->max_compute_units = 8;
-  device->max_clock_frequency = 720;
-  char dev_name[64] = {0};
-  stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_NAME, dev_name);
-  device->long_name = (char*)malloc(64*sizeof(char));
-  memcpy(device->long_name, &dev_name[0], strlen(dev_name));
-  device->short_name = device->long_name;
-
   //FIXME: API Can Get Vendor, but vendor cannot show on clinfo
-
 #if 0
   device->vendor = "Unknown X86";
   char vendor_name[64] = {0};
@@ -451,18 +479,15 @@ pocl_hsa_run
         {
           POCL_ABORT ("pocl-hsa: unable to get private segment size.");
         }
-
-  /*
-  kernel_packet.group_segment_size
-  	  = (*(hsa_amd_kernel_code_t*)cmd->command.run.device_data[1]).workgroup_group_segment_byte_size;
-  kernel_packet.private_segment_size
-  	  = (*(hsa_amd_kernel_code_t*)cmd->command.run.device_data[1]).workitem_private_segment_byte_size;
-*/
+#if 0
   printf("Static Local Array: %d\n",kernel_packet.group_segment_size);
+#endif
   /* Process the kernel arguments. Convert the opaque buffer
      pointers to real device pointers, allocate dynamic local
      memory buffers, etc. */
   uint64_t dynamic_local_address = kernel_packet.group_segment_size;
+  //Change argument initialization method from array to memory copy method
+  //This method is from CLOC sample from HSA Foundation github
   for (i = 0; i < kernel->num_args; ++i)
     {
       al = &(cmd->command.run.arguments[i]);
@@ -474,7 +499,7 @@ pocl_hsa_run
     	  /*
     	  if(args_offset%8 !=0 )
 			  args_offset = (args_offset+8)/8;
-			  */
+		  */
     	  memcpy(args->kernel_args + args_offset, &dynamic_local_address, sizeof(uint64_t));
     	  kernel_packet.group_segment_size += al->size;
     	  args_offset += sizeof(uint64_t);
@@ -486,6 +511,7 @@ pocl_hsa_run
             POCL_ABORT("pocl-hsa: too many kernel arguments!");
           /* Assuming the pointers are 64b (or actually the same as in
              host) due to HSA. TODO: the 32b profile. */
+
           //Alignment Check
 //          if(args_offset%8 !=0 )
 //        	  args_offset = (args_offset+8)/8;
@@ -493,17 +519,12 @@ pocl_hsa_run
             {
               uint64_t temp = 0;
         	  memcpy(args->kernel_args + args_offset, &temp, sizeof(uint64_t));
-        	  //args->kernel_args[args_offset] = 0;
-              //args->kernel_args[args_offset + 1] = 0;
             }
           else
             {
         	  uint64_t temp = (uint64_t)(*(cl_mem *)
 				  (al->value))->device_ptrs[cmd->device->dev_id].mem_ptr;
         	  memcpy(args->kernel_args + args_offset, &temp, sizeof(uint64_t));
-        	  //*(uint64_t*)&args->kernel_args[args_offset] =
-              //  (uint64_t)(*(cl_mem *) (al->value))->
-              //  device_ptrs[cmd->device->dev_id].mem_ptr;
             }
           args_offset += sizeof(uint64_t);
           //args_offset += 2;
