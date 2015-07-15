@@ -4,8 +4,6 @@ target triple = "amdgcn--amdhsa"
 
 ; Borrowed from libclc.
 
-;declare i32 @__clc_clk_local_mem_fence() nounwind alwaysinline
-;declare i32 @__clc_clk_global_mem_fence() nounwind alwaysinline
 declare void @llvm.AMDGPU.barrier.local() nounwind noduplicate
 declare void @llvm.AMDGPU.barrier.global() nounwind noduplicate
 
