@@ -241,19 +241,21 @@ link(llvm::Module *krn, const llvm::Module *lib)
 
     // copy any aliases to krn
     DB_PRINT("cloning the aliases:\n");
-    llvm::Module::const_alias_iterator ai,ae;
-    for (ai=lib->alias_begin(), ae=lib->alias_end();
+    llvm::Module::const_alias_iterator ai, ae;
+    for (ai = lib->alias_begin(), ae = lib->alias_end();
          ai != ae;
          ai++) {
         DB_PRINT(" %s\n", ai->getName().data());
-        GlobalAlias *GA=
+        GlobalAlias *GA =
 #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
             new GlobalAlias(ai->getType(), ai->getLinkage(),
                             ai->getName(), NULL, krn);
-#else
-
+#elif (defined LLVM_OLDER_THAN_3_7)
             GlobalAlias::create(ai->getType(),
                                 ai->getType()->getAddressSpace(),
+                                ai->getLinkage(), ai->getName(), NULL, krn);
+#else
+            GlobalAlias::create(ai->getType(),
                                 ai->getLinkage(), ai->getName(), NULL, krn);
 #endif
 
