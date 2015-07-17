@@ -365,11 +365,11 @@ WorkitemLoops::ProcessFunction(Function &F)
 {
   Kernel *K = cast<Kernel> (&F);
   Initialize(K);
-  unsigned workItemCount = LocalSizeX*LocalSizeY*LocalSizeZ;
+  unsigned workItemCount = WGLocalSizeX*WGLocalSizeY*WGLocalSizeZ;
 
   if (workItemCount == 1)
     {
-      K->addLocalSizeInitCode(LocalSizeX, LocalSizeY, LocalSizeZ);
+      K->addLocalSizeInitCode(WGLocalSizeX, WGLocalSizeY, WGLocalSizeZ);
       ParallelRegion::insertLocalIdInit(&F.getEntryBlock(), 0, 0, 0);
       return true;
     }
@@ -504,8 +504,8 @@ WorkitemLoops::ProcessFunction(Function &F)
         /* Find a two's exponent unroll count, if available. */
         while (unrollCount >= 1)
           {
-            if (LocalSizeX % unrollCount == 0 &&
-                unrollCount <= LocalSizeX)
+            if (WGLocalSizeX % unrollCount == 0 &&
+                unrollCount <= WGLocalSizeX)
               {
                 break;
               }
@@ -539,14 +539,20 @@ WorkitemLoops::ProcessFunction(Function &F)
         }
       }
 
-    if (LocalSizeX > 1)
-      l = CreateLoopAround(*original, l.first, l.second, peelFirst, localIdX, LocalSizeX, !unrolled);
+    if (WGLocalSizeX > 1)
+      l = CreateLoopAround(
+        *original, l.first, l.second, peelFirst, 
+        localIdX, WGLocalSizeX, !unrolled);
 
-    if (LocalSizeY > 1)
-      l = CreateLoopAround(*original, l.first, l.second, false, localIdY, LocalSizeY);
+    if (WGLocalSizeY > 1)
+      l = CreateLoopAround(
+        *original, l.first, l.second, 
+        false, localIdY, WGLocalSizeY);
 
-    if (LocalSizeZ > 1)
-      l = CreateLoopAround(*original, l.first, l.second, false, localIdZ, LocalSizeZ);
+    if (WGLocalSizeZ > 1)
+      l = CreateLoopAround(
+          *original, l.first, l.second, 
+          false, localIdZ, WGLocalSizeZ);
 
     /* Loop edges coming from another region mean B-loops which means 
        we have to fix the loop edge to jump to the beginning of the wi-loop 
@@ -583,7 +589,7 @@ WorkitemLoops::ProcessFunction(Function &F)
        localIdXFirstVar);       
   }
 
-  K->addLocalSizeInitCode(LocalSizeX, LocalSizeY, LocalSizeZ);
+  K->addLocalSizeInitCode(WGLocalSizeX, WGLocalSizeY, WGLocalSizeZ);
   ParallelRegion::insertLocalIdInit(&F.getEntryBlock(), 0, 0, 0);
 
 #if 0
@@ -821,8 +827,8 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
     ArrayType::get(
         ArrayType::get(
             ArrayType::get(
-                elementType, LocalSizeX), 
-            LocalSizeY), LocalSizeZ);
+                elementType, WGLocalSizeX), 
+            WGLocalSizeY), WGLocalSizeZ);
 
   /* Allocate the context data array for the variable. */
   llvm::AllocaInst *alloca = 

@@ -87,7 +87,6 @@ static void createWorkgroup(Module &M, Function *F);
 static void createWorkgroupFast(Module &M, Function *F);
 
 // extern cl::opt<string> Header;
-// extern cl::list<int> LocalSize;
 
 /* The kernel to process in this kernel compiler launch. */
 cl::opt<string>

@@ -1211,10 +1211,11 @@ static PassManager& kernel_compiler_passes
   return *Passes;
 }
 
-/* This is used to communicate the work-group dimensions command-line parameter to the 
-   workitem loop. */
+// Defined in llvmopencl/WorkitemHandler.cc
 namespace pocl {
-extern llvm::cl::list<int> LocalSize;
+    extern size_t WGLocalSizeX;
+    extern size_t WGLocalSizeY;
+    extern size_t WGLocalSizeZ;
 } 
 
 /**
@@ -1345,10 +1346,9 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
 
   /* Now finally run the set of passes assembled above */
   // TODO pass these as parameters instead, this is not thread safe!
-  pocl::LocalSize.clear();
-  pocl::LocalSize.addValue(local_x);
-  pocl::LocalSize.addValue(local_y);
-  pocl::LocalSize.addValue(local_z);
+  pocl::WGLocalSizeX = local_x;
+  pocl::WGLocalSizeY = local_y;
+  pocl::WGLocalSizeZ = local_z;
   KernelName = kernel->name;
 
 #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
