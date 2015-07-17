@@ -1181,7 +1181,14 @@ static PassManager& kernel_compiler_passes
           if (wg_method == "loopvec") {
             Builder.LoopVectorize = true;
             Builder.SLPVectorize = true;
+#ifdef LLVM_OLDER_THAN_3_7
             Builder.BBVectorize = true;
+#else
+            // In LLVM 3.7 the BB vectorizer crashes with some of the
+            // the shuffle tests. Perhaps the pass is obsoleted due to
+            // SLPVectorize and not maintained?            
+            Builder.BBVectorize = false;
+#endif
           }
 #endif
 
