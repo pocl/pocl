@@ -163,7 +163,9 @@ WorkitemReplication::ProcessFunction(Function &F)
 
   // Allocate space for workitem reference maps. Workitem 0 does
   // not need it.
-  unsigned workitem_count = LocalSizeZ * LocalSizeY * LocalSizeX;
+  unsigned workitem_count = WGLocalSizeZ * WGLocalSizeY * WGLocalSizeX;
+
+  assert (workitem_count > 0);
 
   BasicBlockVector original_bbs;
   for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
@@ -244,13 +246,14 @@ WorkitemReplication::ProcessFunction(Function &F)
   }
 
   // Then replicate the ParallelRegions.  
-  ValueToValueMapTy *const reference_map = new ValueToValueMapTy[workitem_count - 1];
-  for (int z = 0; z < LocalSizeZ; ++z) {
-    for (int y = 0; y < LocalSizeY; ++y) {
-      for (int x = 0; x < LocalSizeX ; ++x) {
+  ValueToValueMapTy *const reference_map = 
+    new ValueToValueMapTy[workitem_count - 1];
+  for (int z = 0; z < WGLocalSizeZ; ++z) {
+    for (int y = 0; y < WGLocalSizeY; ++y) {
+      for (int x = 0; x < WGLocalSizeX ; ++x) {
               
         int index = 
-          (LocalSizeY * LocalSizeX * z + LocalSizeX * y + x);
+          (WGLocalSizeY * WGLocalSizeX * z + WGLocalSizeX * y + x);
 	  
         if (index == 0)
           continue;
@@ -285,12 +288,12 @@ WorkitemReplication::ProcessFunction(Function &F)
     }
   }  
   
-  for (int z = 0; z < LocalSizeZ; ++z) {
-    for (int y = 0; y < LocalSizeY; ++y) {
-      for (int x = 0; x < LocalSizeX ; ++x) {
+  for (int z = 0; z < WGLocalSizeZ; ++z) {
+    for (int y = 0; y < WGLocalSizeY; ++y) {
+      for (int x = 0; x < WGLocalSizeX ; ++x) {
 	  
         int index = 
-          (LocalSizeY * LocalSizeX * z + LocalSizeX * y + x);
+          (WGLocalSizeY * WGLocalSizeX * z + WGLocalSizeX * y + x);
         
         for (unsigned i = 0, e = parallel_regions[index].size(); i != e; ++i) {
           ParallelRegion *region = parallel_regions[index][i];
@@ -316,12 +319,12 @@ WorkitemReplication::ProcessFunction(Function &F)
   // region copys to the entry BB of the first copy to retain
   // their semantics for branches from outside the parallel
   // region to the beginning of the region copy chain.
-  for (int z = LocalSizeZ - 1; z >= 0; --z) {
-    for (int y = LocalSizeY - 1; y >= 0; --y) {
-      for (int x = LocalSizeX - 1; x >= 0; --x) {
+  for (int z = WGLocalSizeZ - 1; z >= 0; --z) {
+    for (int y = WGLocalSizeY - 1; y >= 0; --y) {
+      for (int x = WGLocalSizeX - 1; x >= 0; --x) {
           
         int index = 
-          (LocalSizeY * LocalSizeX * z + LocalSizeX * y + x);
+          (WGLocalSizeY * WGLocalSizeX * z + WGLocalSizeX * y + x);
 
         if (index == 0)
           continue;
@@ -352,7 +355,7 @@ WorkitemReplication::ProcessFunction(Function &F)
 
   // Initialize local size variables (done at the end to avoid unnecessary
   // replication).
-  K->addLocalSizeInitCode(LocalSizeX, LocalSizeY, LocalSizeZ);
+  K->addLocalSizeInitCode(WGLocalSizeX, WGLocalSizeY, WGLocalSizeZ);
 
   delete [] reference_map;
 

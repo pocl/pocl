@@ -1181,7 +1181,14 @@ static PassManager& kernel_compiler_passes
           if (wg_method == "loopvec") {
             Builder.LoopVectorize = true;
             Builder.SLPVectorize = true;
+#ifdef LLVM_OLDER_THAN_3_7
             Builder.BBVectorize = true;
+#else
+            // In LLVM 3.7 the BB vectorizer crashes with some of the
+            // the shuffle tests. Perhaps the pass is obsoleted due to
+            // SLPVectorize and not maintained?            
+            Builder.BBVectorize = false;
+#endif
           }
 #endif
 
@@ -1211,10 +1218,11 @@ static PassManager& kernel_compiler_passes
   return *Passes;
 }
 
-/* This is used to communicate the work-group dimensions command-line parameter to the 
-   workitem loop. */
+// Defined in llvmopencl/WorkitemHandler.cc
 namespace pocl {
-extern llvm::cl::list<int> LocalSize;
+    extern size_t WGLocalSizeX;
+    extern size_t WGLocalSizeY;
+    extern size_t WGLocalSizeZ;
 } 
 
 /**
@@ -1345,10 +1353,9 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
 
   /* Now finally run the set of passes assembled above */
   // TODO pass these as parameters instead, this is not thread safe!
-  pocl::LocalSize.clear();
-  pocl::LocalSize.addValue(local_x);
-  pocl::LocalSize.addValue(local_y);
-  pocl::LocalSize.addValue(local_z);
+  pocl::WGLocalSizeX = local_x;
+  pocl::WGLocalSizeY = local_y;
+  pocl::WGLocalSizeZ = local_z;
   KernelName = kernel->name;
 
 #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
@@ -1538,10 +1545,15 @@ pocl_llvm_codegen(cl_kernel kernel,
         PM.add(new DataLayout(input));
 #endif
     // TODO: better error check
+#ifdef LLVM_OLDER_THAN_3_7
     std::string data;
     llvm::raw_string_ostream sos(data);
+#else
+    SmallVector<char, 4096> data;
+    llvm::raw_svector_ostream sos(data);
+#endif
     llvm::MCContext *mcc;
-    if(target && target->addPassesToEmitMC(PM, mcc, sos))
+    if (target && target->addPassesToEmitMC(PM, mcc, sos))
       return 1;
 
     PM.run(*input);

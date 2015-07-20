@@ -32,7 +32,6 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include <dev_image.h>
 
 #ifndef _MSC_VER
 #  include <sys/time.h>
@@ -605,12 +604,12 @@ pocl_basic_run
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
           dev_sampler_t ds;
+          fill_dev_sampler_t(&ds, al);
           
+          void* devptr = pocl_basic_malloc (data, 0, sizeof(dev_sampler_t), NULL);
           arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = pocl_basic_malloc 
-            (data, 0, sizeof(dev_sampler_t), NULL);
-          pocl_basic_write (data, &ds, *(void**)arguments[i], 0, 
-                            sizeof(dev_sampler_t));
+          *(void **)(arguments[i]) = devptr;
+          pocl_basic_write (data, &ds, devptr, 0, sizeof(dev_sampler_t));
         }
       else
         {
@@ -648,13 +647,13 @@ pocl_basic_run
           pocl_basic_free (data, 0, *(void **)(arguments[i]));
           POCL_MEM_FREE(arguments[i]);
         }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE ||
+                kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
           pocl_basic_free (data, 0, *(void **)(arguments[i]));
           POCL_MEM_FREE(arguments[i]);
         }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER || 
-               (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && *(void**)arguments[i] == NULL))
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && *(void**)arguments[i] == NULL)
         {
           POCL_MEM_FREE(arguments[i]);
         }

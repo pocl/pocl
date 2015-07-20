@@ -80,6 +80,8 @@ const char* llvm_codegen (const char* tmpdir,
 void fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg, 
                        cl_device_id device);
 
+void fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg);
+
 void* pocl_memalign_alloc(size_t align_width, size_t size);
 
 #endif

@@ -49,9 +49,18 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 POP_COMPILER_DIAGS
 
+
 using namespace llvm;
 
 namespace {
+
+#ifdef LLVM_OLDER_THAN_3_7
+typedef AliasAnalysis::AliasResult AliasResult;
+#else
+typedef llvm::MemoryLocation Location;
+typedef llvm::AliasResult AliasResult;
+#endif
+
 /// WorkItemAliasAnalysis - This is a simple alias analysis
 /// implementation that uses pocl metadata to make sure memory accesses from
 /// different work items are not aliasing.
@@ -89,7 +98,6 @@ public:
     private:
         virtual void getAnalysisUsage(AnalysisUsage &AU) const;
         virtual AliasResult alias(const Location &LocA, const Location &LocB);
-
     };
 }
 
@@ -122,9 +130,9 @@ WorkItemAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
  * Test if memory locations are from different work items from same region.
  * Then they can not alias.
  */
-AliasAnalysis::AliasResult
+AliasResult
 WorkItemAliasAnalysis::alias(const Location &LocA,
-                                    const Location &LocB) {
+                             const Location &LocB) {
     // If either of the memory references is empty, it doesn't matter what the
     // pointer values are. This allows the code below to ignore this special
     // case.
