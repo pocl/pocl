@@ -72,8 +72,6 @@ namespace pocl {
     bool dominatesUse(llvm::DominatorTreeWrapperPass *DT, llvm::Instruction &I, unsigned i);
     #endif
 
-    int LocalSizeX, LocalSizeY, LocalSizeZ;
-
     unsigned size_t_width;
 
     /* The global variables that store the current local id. */
@@ -83,6 +81,10 @@ namespace pocl {
 
   extern llvm::cl::opt<bool> AddWIMetadata;
   extern llvm::cl::opt<int> LockStepSIMDWidth;
+
+  extern size_t WGLocalSizeX;
+  extern size_t WGLocalSizeY;
+  extern size_t WGLocalSizeZ;
 }
 
 #endif

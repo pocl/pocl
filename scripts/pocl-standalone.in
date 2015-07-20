@@ -73,7 +73,6 @@ case $target in
               LD_FLAGS="@TARGET_LD_FLAGS@";;
 esac
 CLANG_FLAGS="$CLANG_FLAGS -fasm -fsigned-char -Xclang -ffake-address-space-map"
-echo $target
 # With fp-contract we get calls to fma with processors which do not
 # have fma instructions. These ruin the performance. Better to have
 # the mul+add separated in the IR.
@@ -127,7 +126,7 @@ EXTRA_OPTS=""
     -load=${pocl_kernel_compiler_lib} -domtree -workitem-handler-chooser -break-constgeps -generate-header -flatten -always-inline \
     -globaldce -simplifycfg -loop-simplify -uniformity -phistoallocas -isolate-regions -implicit-loop-barriers -implicit-cond-barriers \
     -loop-barriers -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops \
-    -allocastoentry -workgroup -kernel=${kernel} -local-size=1 1 1 -disable-simplify-libcalls \
+    -allocastoentry -workgroup -kernel=${kernel} -disable-simplify-libcalls \
     -target-address-spaces \
     ${EXTRA_OPTS} ${OPT_SWITCH} -instcombine -header=/dev/null ${FP_CONTRACT} -o ${output_file} ${linked_bc}
 

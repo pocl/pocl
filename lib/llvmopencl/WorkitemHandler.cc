@@ -56,10 +56,13 @@ namespace pocl {
 
 using namespace llvm;
 
-llvm::cl::list<int>
-LocalSize("local-size",
-          llvm::cl::desc("Local size (x y z)"),
-          llvm::cl::multi_val(3));
+/* This is used to communicate the work-group dimensions of the currently
+   compiled kernel command to the workitem loop. 
+
+   TODO: Something cleaner than a global value. */
+size_t WGLocalSizeX = 1;
+size_t WGLocalSizeY = 1;
+size_t WGLocalSizeZ = 1;
 
 cl::opt<bool>
 AddWIMetadata("add-wi-metadata", cl::init(false), cl::Hidden,
@@ -79,11 +82,13 @@ WorkitemHandler::Initialize(Kernel *K) {
 
   llvm::Module *M = K->getParent();
   
-  LocalSizeX = LocalSize[0];
-  LocalSizeY = LocalSize[1];
-  LocalSizeZ = LocalSize[2];
-  
-  llvm::NamedMDNode *size_info = M->getNamedMetadata("opencl.kernel_wg_size_info");
+  // Check that the dynamically set local size and a possible
+  // required WG size match.
+  size_t LocalSizeX = WGLocalSizeX, LocalSizeY = WGLocalSizeY, 
+      LocalSizeZ = WGLocalSizeZ;
+ 
+  llvm::NamedMDNode *size_info = 
+    M->getNamedMetadata("opencl.kernel_wg_size_info");
   if (size_info) {
     for (unsigned i = 0, e = size_info->getNumOperands(); i != e; ++i) {
       llvm::MDNode *KernelSizeInfo = size_info->getOperand(i);
@@ -111,6 +116,9 @@ WorkitemHandler::Initialize(Kernel *K) {
       break;
     }
   }
+
+  assert (LocalSizeX == WGLocalSizeX && LocalSizeY == WGLocalSizeY && 
+          LocalSizeZ == WGLocalSizeZ);
 
   llvm::Type *localIdType; 
   size_t_width = 0;

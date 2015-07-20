@@ -355,7 +355,7 @@ VariableUniformityAnalysis::isUniform(llvm::Function *f, llvm::Value* v) {
           isUniformAlloca = false;
           break;
         }
-      } else if (dyn_cast<llvm::LoadInst>(user) != NULL) {
+      } else if (isa<llvm::LoadInst>(user) || isa<llvm::BitCastInst>(user)) {
       } else {
 #ifdef DEBUG_UNIFORMITY_ANALYSIS
         std::cerr << "### alloca has a suspicious user" << std::endl;

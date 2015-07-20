@@ -43,6 +43,8 @@
 #include "pocl_runtime_config.h"
 #include "pocl_llvm.h"
 
+#include "_kernel_constants.h"
+
 #define COMMAND_LENGTH 2048
 
 /**
@@ -133,6 +135,39 @@ void fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg,
   pocl_get_image_information (mem->image_channel_order,
                               mem->image_channel_data_type, &(di->num_channels),
                               &(di->elem_size));
+}
+
+/**
+ * Populates the device specific sampler data structure used by kernel
+ * from given kernel sampler argument
+ */
+void fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg)
+{
+  cl_sampler_t sampler = *(cl_sampler_t *)parg->value;
+
+  *ds = 0;
+  *ds |= sampler.normalized_coords == CL_TRUE ? CLK_NORMALIZED_COORDS_TRUE :
+      CLK_NORMALIZED_COORDS_FALSE;
+
+  switch (sampler.addressing_mode) {
+    case CL_ADDRESS_NONE:
+      *ds |= CLK_ADDRESS_NONE; break;
+    case CL_ADDRESS_CLAMP_TO_EDGE:
+      *ds |= CLK_ADDRESS_CLAMP_TO_EDGE; break;
+    case CL_ADDRESS_CLAMP:
+      *ds |= CLK_ADDRESS_CLAMP; break;
+    case CL_ADDRESS_REPEAT:
+      *ds |= CLK_ADDRESS_REPEAT; break;
+    case CL_ADDRESS_MIRRORED_REPEAT:
+      *ds |= CLK_ADDRESS_MIRRORED_REPEAT; break;
+  }
+
+  switch (sampler.filter_mode) {
+    case CL_FILTER_NEAREST:
+      *ds |= CLK_FILTER_NEAREST; break;
+    case CL_FILTER_LINEAR :
+      *ds |= CLK_FILTER_LINEAR; break;
+  }
 }
 
 void*

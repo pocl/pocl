@@ -133,18 +133,7 @@ CanonicalizeBarriers::runOnFunction(Function &F)
 #else
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 #endif
-
-  bool changed = ProcessFunction(F);
-
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  if (DT)
-    DT->verifyAnalysis();
-#else
-  if (DT)
-    DT->verifyDomTree();
-#endif
-
-  return changed;
+  return ProcessFunction(F);
 }
 
 

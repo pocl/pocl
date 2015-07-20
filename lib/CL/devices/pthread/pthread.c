@@ -48,7 +48,6 @@
 #ifdef CUSTOM_BUFFER_ALLOCATOR
 
 #include "bufalloc.h"
-#include <dev_image.h>
 
 /* Instead of mallocing a buffer size for a region, try to allocate 
    this many times the buffer size to hopefully avoid mallocs for 
@@ -676,12 +675,12 @@ workgroup_thread (void *p)
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
           dev_sampler_t ds;
+          fill_dev_sampler_t(&ds, al);
           
+          void* devptr = pocl_pthread_malloc(ta->data, 0, sizeof(dev_sampler_t), NULL);
           arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = pocl_pthread_malloc 
-            (ta->data, 0, sizeof(dev_sampler_t), NULL);
-          pocl_pthread_write (ta->data, &ds, *(void**)arguments[i], 0, 
-                              sizeof(dev_sampler_t));
+          *(void **)(arguments[i]) = devptr;
+          pocl_pthread_write (ta->data, &ds, devptr, 0, sizeof(dev_sampler_t));
         }
       else
         arguments[i] = al->value;
@@ -722,13 +721,13 @@ workgroup_thread (void *p)
           pocl_pthread_free (ta->data, 0, *(void **)(arguments[i]));
           POCL_MEM_FREE(arguments[i]);
         }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE ||
+                kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
           pocl_pthread_free (ta->data, 0, *(void **)(arguments[i]));
           POCL_MEM_FREE(arguments[i]);
         }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER || 
-               (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && *(void**)arguments[i] == NULL))
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && *(void**)arguments[i] == NULL)
         {
           POCL_MEM_FREE(arguments[i]);
         }
