@@ -590,7 +590,7 @@ def output_directfunc_direct(func, vectype):
         groups())
     size = 1 if sizename=="" else int(sizename)
     funcargstr = ", ".join(map(lambda (n, arg):
-                                   "%s x%d" % (mktype(arg, vectype), n),
+                               "%s x%d" % (mktype(arg, vectype), n),
                                zip(range(0, 100), args)))
     funcretstr = mktype(ret, vectype)
     decl("%s %s(%s)" % (funcretstr, prefixed(name), funcargstr))
@@ -648,9 +648,11 @@ def output_vmlfunc(func):
     out("// %s: %s -> %s" % (name, args, ret))
     for basetype in ["half", "float", "double"]:
         if basetype=="half":
+            decl("#ifdef cl_khr_fp16")
             out("")
             out("#ifdef cl_khr_fp16")
-        if basetype=="double":
+        elif basetype=="double":
+            decl("#ifdef cl_khr_fp64")
             out("")
             out("#ifdef cl_khr_fp64")
         for size in [1, 2, 3, 4, 8, 16]:
@@ -692,9 +694,11 @@ def output_vmlfunc(func):
                 output_vmlfunc_split(func, vectype)
             out("#endif")
         if basetype=="half":
+            decl("#endif // #ifdef cl_khr_fp16")
             out("")
             out("#endif // #ifdef cl_khr_fp16")
-        if basetype=="double":
+        elif basetype=="double":
+            decl("#endif // #ifdef cl_khr_fp64")
             out("")
             out("#endif // #ifdef cl_khr_fp64")
     out_close()
@@ -748,9 +752,11 @@ def output_directfunc(func):
             basetype!="float"):
             continue
         if basetype=="half":
+            decl("#ifdef cl_khr_fp16")
             out("")
             out("#ifdef cl_khr_fp16")
-        if basetype=="double":
+        elif basetype=="double":
+            decl("#ifdef cl_khr_fp64")
             out("")
             out("#ifdef cl_khr_fp64")
         for size in [1, 2, 3, 4, 8, 16]:
@@ -766,9 +772,11 @@ def output_directfunc(func):
                 out("// %s: VF=%s" % (name, vectype))
                 output_directfunc_direct(func, vectype)
         if basetype=="half":
+            decl("#endif // #ifdef cl_khr_fp16")
             out("")
             out("#endif // #ifdef cl_khr_fp16")
-        if basetype=="double":
+        elif basetype=="double":
+            decl("#endif // #ifdef cl_khr_fp64")
             out("")
             out("#endif // #ifdef cl_khr_fp64")
     out_close()
