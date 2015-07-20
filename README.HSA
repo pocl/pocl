@@ -19,16 +19,10 @@ After that, configure pocl with a command line similar to this:
 
   ./configure --enable-hsa-amdgcn --with-hsa-runtime-headers=$HOME/src/HSA-Runtime-Reference-Source-legacy/inc
 
-Then, you can smoke test the HSA driver by executing the example1 using HSA:
+Then, you can smoke test the HSA driver by executing the HSA tests of the
+pocl testsuite:
 
-  . tools/scripts/devel-envs.sh
-  cd examples/example1
-  POCL_DEVICES=hsa ./example1
-(0.000000, 0.000000, 0.000000, 0.000000) . (0.000000, 0.000000, 0.000000, 0.000000) = 0.000000
-(1.000000, 1.000000, 1.000000, 1.000000) . (1.000000, 1.000000, 1.000000, 1.000000) = 4.000000
-(2.000000, 2.000000, 2.000000, 2.000000) . (2.000000, 2.000000, 2.000000, 2.000000) = 16.000000
-(3.000000, 3.000000, 3.000000, 3.000000) . (3.000000, 3.000000, 3.000000, 3.000000) = 36.000000
-OK
+  make check TESTSUITEFLAGS="-k hsa"
 
 The support is _very_ experimental (pretty much untested apart from the example1), so
 beware.

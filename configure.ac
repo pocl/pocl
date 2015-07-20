@@ -184,7 +184,7 @@ AC_DEFINE([CUSTOM_BUFFER_ALLOCATOR], [], "Use a custom buffer allocator")
 # Option to choose external testsuites
 AC_ARG_ENABLE([testsuites],
 	      [AS_HELP_STRING([--enable-testsuites=suite1,suite2,...],
-          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,amdsdk2_9,VexCL,Piglit,Halide,OpenCV,CloverLeaf])],
+          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,amdsdk2_9,VexCL,Piglit,Halide,OpenCV,CloverLeaf,hsa])],
 	      [],[enable_testsuites=check])
 
 enable_testsuite_opencl_book_samples=no
@@ -197,6 +197,7 @@ enable_testsuite_vexcl=no
 enable_testsuite_piglit=no
 enable_testsuite_halide=no
 enable_testsuite_opencv=no
+enable_testsuite_hsa=no
 if test x"$enable_testsuites" = xcheck ; then
   if test -d "$srcdir/examples/opencl-book-samples/checkout" ; then
     enable_testsuite_opencl_book_samples=yes
@@ -453,8 +454,6 @@ if test "$enable_testsuite_cloverleaf" = "yes"; then
 else
   AC_MSG_NOTICE([tests from CloverLeaf are disabled])
 fi
-
-AC_SUBST([POAT_TESTSUITES])
 
 
 ####################################################################
@@ -1289,7 +1288,13 @@ if test "$enable_hsa_amdgcn" = "yes"; then
   OCL_TARGETS="$OCL_TARGETS amdgcn"
   AC_DEFINE([AMDGCN_ENABLED], [], [Defined in case AMDGCN device support enabled.])
   AC_DEFINE([BUILD_HSA], [1], [Defined to 1 if TCE libraries and tools are available])
+  enable_testsuite_hsa=yes
+  POAT_TESTSUITES="$POAT_TESTSUITES hsa"
 fi
+
+# Enable the HSA test suite in case HSA support enabled.
+AM_CONDITIONAL([TEST_SUITE_HSA], [test "$enable_testsuite_hsa" = "yes"])
+AC_SUBST([POAT_TESTSUITES])
 
 AM_CONDITIONAL([BUILD_AMDGCN],[echo $OCL_TARGETS | grep amdgcn])
 AM_CONDITIONAL([BUILD_HSA],[echo $OCL_DRIVERS | grep hsa])
