@@ -1,0 +1,13 @@
+m4_define([POAT_HSA_SETUP],[
+  AT_SETUP([$1])
+  AT_KEYWORDS([hsa $1 $2])
+  AT_SKIP_IF([AS_CASE([" $POAT_TESTSUITES "],[*" hsa "*],[false],[:])])
+])
+
+AT_BANNER([HSA kernel agent driver tests])
+
+POAT_HSA_SETUP([hsa-example1])
+AT_CHECK_UNQUOTED([POCL_DEVICES=hsa $abs_top_builddir/examples/example1/example1], 0,
+[$(cat $abs_top_srcdir/tests/example_expout.txt)
+])
+AT_CLEANUP
