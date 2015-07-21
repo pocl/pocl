@@ -373,8 +373,8 @@ struct _cl_device_id {
   int dev_id;
   int global_mem_id; /* identifier for device global memory */
   int has_64bit_long;  /* Does the device have 64bit longs */
-  /*To make HSA APIs functional. False for HSA device, true by default */
-  int autolocals_to_args; /*Does "automatic-locals" pass enable" */
+  /* Convert automatic local variables to kernel arguments? */
+  int autolocals_to_args;
 
   struct pocl_device_ops *ops; /* Device operations, shared amongst same devices */
 };
