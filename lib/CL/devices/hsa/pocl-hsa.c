@@ -132,45 +132,50 @@ pocl_hsa_get_agents(hsa_agent_t agent, void *data)
 
 //Get hsa-unsupported device features from hsa device list.
 static int num_hsa_device = 1;
-static hsa_supported_device_properties hsa_device_lists[MAX_HSA_AGENTS];
-void init_hsa_device_list()
+
+static hsa_supported_device_properties hsa_device_lists[MAX_HSA_AGENTS]=
 {
-  hsa_device_lists[0].dev_name = "Spectre";
-  hsa_device_lists[0].llvm_cpu = "kaveri";
-  hsa_device_lists[0].llvm_target_triplet = "amdgcn--amdhsa";
-  hsa_device_lists[0].has_64bit_long = 1;
-  //FIXME: I am not sure if it is related to main memory.
-  hsa_device_lists[0].max_mem_alloc_size = 592969728;
-  hsa_device_lists[0].global_mem_size = 2371878912;
-  hsa_device_lists[0].vendor_id = 0x1002;
-  hsa_device_lists[0].global_mem_cache_type = 0x2;
-  hsa_device_lists[0].global_mem_cacheline_size = 64;
-  hsa_device_lists[0].max_compute_units = 8;
-  hsa_device_lists[0].max_clock_frequency = 720;
-  hsa_device_lists[0].max_conastant_buffer_size = 65536;
-  hsa_device_lists[0].local_mem_size = 32768;
-}
+  [0]=
+  {
+    .dev_name = "Spectre",
+    .llvm_cpu = "kaveri",
+    .llvm_target_triplet = "amdgcn--amdhsa",
+	.has_64bit_long = 1,
+	//FIXME: I am not sure if it is related to main memory.
+	.max_mem_alloc_size = 592969728,
+	.global_mem_size = 2371878912,
+	.vendor_id = 0x1002,
+	.global_mem_cache_type = 0x2,
+	.global_mem_cacheline_size = 64,
+	.max_compute_units = 8,
+	.max_clock_frequency = 720,
+	.max_conastant_buffer_size = 65536,
+	.local_mem_size = 32768
+  },
+};
 
 void get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
 {
   int i;
-  for(i=0; i<num_hsa_device; i++){
-	  if(strcmp(dev_name, hsa_device_lists[i].dev_name) == 0){
-        dev->llvm_cpu = hsa_device_lists[i].llvm_cpu;
-        dev->llvm_target_triplet = hsa_device_lists[i].llvm_target_triplet;
-        dev->has_64bit_long = hsa_device_lists[i].has_64bit_long;
-        dev->max_mem_alloc_size = hsa_device_lists[i].max_mem_alloc_size;
-        dev->global_mem_size = hsa_device_lists[i].global_mem_size;
-        dev->vendor_id = hsa_device_lists[i].vendor_id;
-        dev->global_mem_cache_type = hsa_device_lists[i].global_mem_cache_type;
-        dev->global_mem_cacheline_size = hsa_device_lists[i].global_mem_cacheline_size;
-        dev->max_compute_units = hsa_device_lists[i].max_compute_units;
-        dev->max_clock_frequency = hsa_device_lists[i].max_clock_frequency;
-        dev->max_constant_buffer_size = hsa_device_lists[i].max_conastant_buffer_size;
-        dev->local_mem_size = hsa_device_lists[i].local_mem_size;
-        break;
+  for(i=0; i<num_hsa_device; i++)
+    {
+      if(strcmp(dev_name, hsa_device_lists[i].dev_name) == 0)
+        {
+	      dev->llvm_cpu = hsa_device_lists[i].llvm_cpu;
+	      dev->llvm_target_triplet = hsa_device_lists[i].llvm_target_triplet;
+	      dev->has_64bit_long = hsa_device_lists[i].has_64bit_long;
+	      dev->max_mem_alloc_size = hsa_device_lists[i].max_mem_alloc_size;
+	      dev->global_mem_size = hsa_device_lists[i].global_mem_size;
+	      dev->vendor_id = hsa_device_lists[i].vendor_id;
+	      dev->global_mem_cache_type = hsa_device_lists[i].global_mem_cache_type;
+	      dev->global_mem_cacheline_size = hsa_device_lists[i].global_mem_cacheline_size;
+	      dev->max_compute_units = hsa_device_lists[i].max_compute_units;
+	      dev->max_clock_frequency = hsa_device_lists[i].max_clock_frequency;
+	      dev->max_constant_buffer_size = hsa_device_lists[i].max_conastant_buffer_size;
+	      dev->local_mem_size = hsa_device_lists[i].local_mem_size;
+	      break;
+        }
     }
-  }
 }
 
 void
@@ -186,34 +191,31 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
   dev->long_name = (char*)malloc(64*sizeof(char));
   memcpy(dev->long_name, &dev_name[0], strlen(dev_name));
   dev->short_name = dev->long_name;
-
-  init_hsa_device_list();
   get_hsa_device_features(dev->long_name, dev);
 
   hsa_device_type_t dev_type;
   stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_DEVICE, &dev_type);
   switch(dev_type)
   {
-  case HSA_DEVICE_TYPE_GPU:
-    dev->type = CL_DEVICE_TYPE_GPU;
-    break;
-  case HSA_DEVICE_TYPE_CPU:
-	dev->type = CL_DEVICE_TYPE_CPU;
-	break;
-  //TODO: Is it appropriate?
-  case HSA_DEVICE_TYPE_DSP:
-	dev->type = CL_DEVICE_TYPE_CUSTOM;
-	break;
-  default:
-	POCL_ABORT("Unsupported hsa device type!\n");
-	break;
+    case HSA_DEVICE_TYPE_GPU:
+      dev->type = CL_DEVICE_TYPE_GPU;
+      break;
+    case HSA_DEVICE_TYPE_CPU:
+	  dev->type = CL_DEVICE_TYPE_CPU;
+	  break;
+    //TODO: Is it appropriate?
+    case HSA_DEVICE_TYPE_DSP:
+	  dev->type = CL_DEVICE_TYPE_CUSTOM;
+	  break;
+    default:
+	  POCL_ABORT("Unsupported hsa device type!\n");
+	  break;
   }
 
 #if 0
   printf("Device Type : %d\n", dev->type);
 #endif
 
-  //dev->local_mem_size = 32768; //by clinfo
   hsa_dim3_t grid_size;
   stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_GRID_MAX_DIM, &grid_size);
   dev->max_work_item_sizes[0] = grid_size.x;
@@ -318,17 +320,17 @@ pocl_hsa_malloc (void *device_data, cl_mem_flags flags,
     {
       b = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, size);
       if (b != NULL)
-        {
-          memcpy(b, host_ptr, size);
-          hsa_memory_register(host_ptr, size);
-          return b;
-        }
+	    {
+	      memcpy(b, host_ptr, size);
+	      hsa_memory_register(host_ptr, size);
+	      return b;
+	    }
       return NULL;
     }
 
   if (flags & CL_MEM_USE_HOST_PTR && host_ptr != NULL)
     {
-	  hsa_memory_register(host_ptr, size);
+      hsa_memory_register(host_ptr, size);
       return host_ptr;
     }
   b = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, size);
@@ -341,7 +343,8 @@ pocl_hsa_malloc (void *device_data, cl_mem_flags flags,
 void
 pocl_hsa_free (void *data, cl_mem_flags flags, void *ptr)
 {
-  if (flags & CL_MEM_USE_HOST_PTR){
+  if (flags & CL_MEM_USE_HOST_PTR)
+  {
     //hsa_memory_register(ptr, size);
     return;
   }
@@ -472,7 +475,7 @@ pocl_hsa_run
      memory buffers, etc. */
   uint64_t dynamic_local_address = kernel_packet.group_segment_size;
   //Change argument initialization method from array to memory copy method
-  //This method is from CLOC sample from HSA Foundation github
+  //This method is inspired from CLOC sample from HSA Foundation github.
   for (i = 0; i < kernel->num_args; ++i)
     {
       al = &(cmd->command.run.arguments[i]);
@@ -493,7 +496,7 @@ pocl_hsa_run
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
         {
           if (args_offset + 1 >= MAX_KERNEL_ARG_WORDS)
-            POCL_ABORT("pocl-hsa: too many kernel arguments!");
+            POCL_ABORT("pocl-hsa: too many kernel arguments!\n");
           /* Assuming the pointers are 64b (or actually the same as in
              host) due to HSA. TODO: the 32b profile. */
 
@@ -512,7 +515,6 @@ pocl_hsa_run
         	  memcpy(args->kernel_args + args_offset, &temp, sizeof(uint64_t));
             }
           args_offset += sizeof(uint64_t);
-          //args_offset += 2;
 
 #if 0
           /* It's legal to pass a NULL pointer to clSetKernelArguments. In
@@ -531,7 +533,7 @@ pocl_hsa_run
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
         {
-          POCL_ABORT_UNIMPLEMENTED("hsa: image arguments not implemented.");
+          POCL_ABORT_UNIMPLEMENTED("hsa: image arguments not implemented.\n");
 #if 0
           dev_image_t di;
           fill_dev_image_t (&di, al, cmd->device);
@@ -544,7 +546,7 @@ pocl_hsa_run
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
-          POCL_ABORT_UNIMPLEMENTED("hsa: sampler arguments not implemented.");
+          POCL_ABORT_UNIMPLEMENTED("hsa: sampler arguments not implemented.\n");
 #if 0
           dev_sampler_t ds;
           arguments[i] = malloc (sizeof (void *));
@@ -557,13 +559,9 @@ pocl_hsa_run
       else
         {
           if (args_offset >= MAX_KERNEL_ARG_WORDS)
-            POCL_ABORT("pocl-hsa: too many kernel arguments!");
+            POCL_ABORT("pocl-hsa: too many kernel arguments!\n");
           memcpy(args->kernel_args + args_offset, al->value, al->size);
           args_offset += al->size;
-          /* Assuming the scalar fits to a 32b slot. TODO! */
-          //assert (al->size <= 4);
-          //args->kernel_args[args_offset] = *(uint32_t*)al->value;
-          //++args_offset;
 
         }
     }
@@ -714,14 +712,14 @@ static void compile (_cl_command_node *cmd)
   got_size = fread (elf_blob, 1, file_size, file);
 
   if (file_size != got_size)
-    POCL_ABORT ("pocl-hsa: could not read the AMD ELF.");
+    POCL_ABORT ("pocl-hsa: could not read the AMD ELF.\n");
 
   caller.caller = 0;
   if (hsa_ext_code_unit_load
       (caller, NULL, 0, elf_blob, file_size, NULL, NULL,
        (hsa_amd_code_unit_t*)cmd->command.run.device_data[0]) != HSA_STATUS_SUCCESS)
     {
-      POCL_ABORT ("pocl-hsa: error while loading the built AMDGPU ELF binary.");
+      POCL_ABORT ("pocl-hsa: error while loading the built AMDGPU ELF binary.\n");
     }
 
   if (hsa_ext_code_unit_get_info
@@ -729,7 +727,7 @@ static void compile (_cl_command_node *cmd)
        HSA_EXT_CODE_UNIT_INFO_CODE_ENTITY_CODE, 0,
        (hsa_amd_code_t*)cmd->command.run.device_data[1]) != HSA_STATUS_SUCCESS)
     {
-      POCL_ABORT ("pocl-hsa: unable to get the code handle to the kernel.");
+      POCL_ABORT ("pocl-hsa: unable to get the code handle to the kernel.\n");
     }
   free (elf_blob);
   fclose (file);
