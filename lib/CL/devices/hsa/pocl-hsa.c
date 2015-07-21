@@ -663,16 +663,6 @@ pocl_hsa_run
   free(args);
 }
 
-void
-pocl_hsa_copy (void *data, const void *src_ptr, size_t src_offset,
-                 void *__restrict__ dst_ptr, size_t dst_offset, size_t cb)
-{
-  if (src_ptr == dst_ptr)
-    return;
-
-  memcpy ((char*)dst_ptr + dst_offset, (char*)src_ptr + src_offset, cb);
-}
-
 /* TODO: there's not much to do here, just build the kernel for HSA.
    Perhaps share the same function for all WG sizes in case it's an
    SPMD target. */
