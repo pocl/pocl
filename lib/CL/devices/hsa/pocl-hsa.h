@@ -36,4 +36,7 @@
 #include "prototypes.inc"
 GEN_PROTOTYPES (hsa)
 
+#include "prototypes.inc"
+GEN_PROTOTYPES (basic)
+
 #endif /* POCL_BASIC_H */

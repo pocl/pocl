@@ -71,21 +71,23 @@ struct data {
   hsa_queue_t *queue;
 };
 
-struct hsa_device_features_t
+struct hsa_supported_device_properties_t
 {
-	char*                     dev_name;
-	const char*               llvm_cpu;
-	cl_ulong                  max_mem_alloc_size;
-	cl_ulong                  global_mem_size;
-	cl_uint                   vendor_id;
-	cl_device_mem_cache_type  global_mem_cache_type;
-	cl_uint                   global_mem_cacheline_size;
-	cl_uint                   max_compute_units;
-	cl_uint                   max_clock_frequency;
-	cl_ulong                  max_conastant_buffer_size;
-	cl_ulong                  local_mem_size;
+  char*                     dev_name;
+  const char*               llvm_cpu;
+  const char*               llvm_target_triplet;
+  int                       has_64bit_long;
+  cl_ulong                  max_mem_alloc_size;
+  cl_ulong                  global_mem_size;
+  cl_uint                   vendor_id;
+  cl_device_mem_cache_type  global_mem_cache_type;
+  cl_uint                   global_mem_cacheline_size;
+  cl_uint                   max_compute_units;
+  cl_uint                   max_clock_frequency;
+  cl_ulong                  max_conastant_buffer_size;
+  cl_ulong                  local_mem_size;
 };
-typedef struct hsa_device_features_t hsa_device_features;
+typedef struct hsa_supported_device_properties_t hsa_supported_device_properties;
 
 void
 pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
@@ -94,18 +96,20 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
 
   /* TODO: more descriptive name from HSA probing the device */
   ops->device_name = "hsa";
-
   ops->init_device_infos = pocl_hsa_init_device_infos;
   ops->probe = pocl_hsa_probe;
   ops->uninit = pocl_hsa_uninit;
   ops->init = pocl_hsa_init;
   ops->free = pocl_hsa_free;
-  ops->read = pocl_hsa_read;
-  ops->write = pocl_hsa_write;
-  ops->copy = pocl_hsa_copy;
-  ops->copy_rect = pocl_hsa_copy_rect;
   ops->compile_submitted_kernels = pocl_hsa_compile_submitted_kernels;
   ops->run = pocl_hsa_run;
+  ops->read = pocl_basic_read;
+  ops->read_rect = pocl_basic_read_rect;
+  ops->write = pocl_basic_write;
+  ops->write_rect = pocl_basic_write_rect;
+  ops->copy = pocl_basic_copy;
+  ops->copy_rect = pocl_basic_copy_rect;
+  ops->get_timer_value = pocl_basic_get_timer_value;
 }
 
 #define MAX_HSA_AGENTS 16
@@ -127,43 +131,46 @@ pocl_hsa_get_agents(hsa_agent_t agent, void *data)
 }
 
 //Get hsa-unsupported device features from hsa device list.
-int num_hsa_device = 1;
-hsa_device_features hsa_device_lists[MAX_HSA_AGENTS];
+static int num_hsa_device = 1;
+static hsa_supported_device_properties hsa_device_lists[MAX_HSA_AGENTS];
 void init_hsa_device_list()
 {
-	hsa_device_lists[0].dev_name = "Spectre";
-	hsa_device_lists[0].llvm_cpu = "kaveri";
-	//FIXME: I am not sure if it is related to main memory.
-	hsa_device_lists[0].max_mem_alloc_size = 592969728;
-	hsa_device_lists[0].global_mem_size = 2371878912;
-	hsa_device_lists[0].vendor_id = 0x1002;
-	hsa_device_lists[0].global_mem_cache_type = 0x2;
-	hsa_device_lists[0].global_mem_cacheline_size = 64;
-	hsa_device_lists[0].max_compute_units = 8;
-	hsa_device_lists[0].max_clock_frequency = 720;
-	hsa_device_lists[0].max_conastant_buffer_size = 65536;
-	hsa_device_lists[0].local_mem_size = 32768;
+  hsa_device_lists[0].dev_name = "Spectre";
+  hsa_device_lists[0].llvm_cpu = "kaveri";
+  hsa_device_lists[0].llvm_target_triplet = "amdgcn--amdhsa";
+  hsa_device_lists[0].has_64bit_long = 1;
+  //FIXME: I am not sure if it is related to main memory.
+  hsa_device_lists[0].max_mem_alloc_size = 592969728;
+  hsa_device_lists[0].global_mem_size = 2371878912;
+  hsa_device_lists[0].vendor_id = 0x1002;
+  hsa_device_lists[0].global_mem_cache_type = 0x2;
+  hsa_device_lists[0].global_mem_cacheline_size = 64;
+  hsa_device_lists[0].max_compute_units = 8;
+  hsa_device_lists[0].max_clock_frequency = 720;
+  hsa_device_lists[0].max_conastant_buffer_size = 65536;
+  hsa_device_lists[0].local_mem_size = 32768;
 }
 
 void get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
 {
-	int i;
-	for(i=0; i<num_hsa_device; i++){
-		if(strcmp(dev_name, hsa_device_lists[i].dev_name) == 0){
-			dev->llvm_cpu = hsa_device_lists[i].llvm_cpu;
-			dev->max_mem_alloc_size = hsa_device_lists[i].max_mem_alloc_size;
-			dev->global_mem_size = hsa_device_lists[i].global_mem_size;
-			dev->vendor_id = hsa_device_lists[i].vendor_id;
-			dev->global_mem_cache_type = hsa_device_lists[i].global_mem_cache_type;
-			dev->global_mem_cacheline_size = hsa_device_lists[i].global_mem_cacheline_size;
-			dev->max_compute_units = hsa_device_lists[i].max_compute_units;
-			dev->max_clock_frequency = hsa_device_lists[i].max_clock_frequency;
-			dev->max_constant_buffer_size = hsa_device_lists[i].max_conastant_buffer_size;
-			dev->local_mem_size = hsa_device_lists[i].local_mem_size;
-			break;
-		}
-	}
-
+  int i;
+  for(i=0; i<num_hsa_device; i++){
+	  if(strcmp(dev_name, hsa_device_lists[i].dev_name) == 0){
+        dev->llvm_cpu = hsa_device_lists[i].llvm_cpu;
+        dev->llvm_target_triplet = hsa_device_lists[i].llvm_target_triplet;
+        dev->has_64bit_long = hsa_device_lists[i].has_64bit_long;
+        dev->max_mem_alloc_size = hsa_device_lists[i].max_mem_alloc_size;
+        dev->global_mem_size = hsa_device_lists[i].global_mem_size;
+        dev->vendor_id = hsa_device_lists[i].vendor_id;
+        dev->global_mem_cache_type = hsa_device_lists[i].global_mem_cache_type;
+        dev->global_mem_cacheline_size = hsa_device_lists[i].global_mem_cacheline_size;
+        dev->max_compute_units = hsa_device_lists[i].max_compute_units;
+        dev->max_clock_frequency = hsa_device_lists[i].max_clock_frequency;
+        dev->max_constant_buffer_size = hsa_device_lists[i].max_conastant_buffer_size;
+        dev->local_mem_size = hsa_device_lists[i].local_mem_size;
+        break;
+    }
+  }
 }
 
 void
@@ -171,10 +178,8 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
 {
   pocl_basic_init_device_infos (dev);
   dev->spmd = CL_TRUE;
-  dev->llvm_target_triplet = "amdgcn--amdhsa";
-  dev->has_64bit_long = 1;
+  dev->autolocals_to_args = 0;
   hsa_agent_t agent = hsa_agents[found_hsa_agents - 1];
-
   hsa_status_t stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_CACHE_SIZE, &(dev->global_mem_cache_size));
   char dev_name[64] = {0};
   stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_NAME, dev_name);
@@ -190,18 +195,18 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
   switch(dev_type)
   {
   case HSA_DEVICE_TYPE_GPU:
-	  dev->type = CL_DEVICE_TYPE_GPU;
-	  break;
+    dev->type = CL_DEVICE_TYPE_GPU;
+    break;
   case HSA_DEVICE_TYPE_CPU:
-	  dev->type = CL_DEVICE_TYPE_CPU;
-	  break;
+	dev->type = CL_DEVICE_TYPE_CPU;
+	break;
   //TODO: Is it appropriate?
   case HSA_DEVICE_TYPE_DSP:
-	  dev->type = CL_DEVICE_TYPE_CUSTOM;
-	  break;
+	dev->type = CL_DEVICE_TYPE_CUSTOM;
+	break;
   default:
-	  POCL_ABORT("Unsupported hsa device type!\n");
-	  break;
+	POCL_ABORT("Unsupported hsa device type!\n");
+	break;
   }
 
 #if 0
@@ -337,31 +342,11 @@ void
 pocl_hsa_free (void *data, cl_mem_flags flags, void *ptr)
 {
   if (flags & CL_MEM_USE_HOST_PTR){
-	  //hsa_memory_register(ptr, size);
-	  return;
+    //hsa_memory_register(ptr, size);
+    return;
   }
   //hsa_memory_register(ptr, size);
   POCL_MEM_FREE(ptr);
-}
-
-void
-pocl_hsa_read (void *data, void *host_ptr, const void *device_ptr,
-                 size_t offset, size_t cb)
-{
-  if (host_ptr == device_ptr)
-    return;
-
-  memcpy (host_ptr, (char*)device_ptr + offset, cb);
-}
-
-void
-pocl_hsa_write (void *data, const void *host_ptr, void *device_ptr,
-                  size_t offset, size_t cb)
-{
-  if (host_ptr == device_ptr)
-    return;
-
-  memcpy ((char*)device_ptr + offset, host_ptr, cb);
 }
 
 #define MAX_KERNEL_ARG_WORDS 512
@@ -467,17 +452,17 @@ pocl_hsa_run
 
   if (hsa_ext_code_unit_get_info
         (*(hsa_amd_code_unit_t*)cmd->command.run.device_data[0],
-		HSA_EXT_CODE_UNIT_INFO_CODE_ENTITY_GROUP_SEGMENT_SIZE, 1,
+		HSA_EXT_CODE_UNIT_INFO_CODE_ENTITY_GROUP_SEGMENT_SIZE, 0,
 		&(kernel_packet.group_segment_size)) != HSA_STATUS_SUCCESS)
       {
-        POCL_ABORT ("pocl-hsa: unable to get group segment size.");
+        POCL_ABORT ("pocl-hsa: unable to get group segment size.\n");
       }
   if (hsa_ext_code_unit_get_info
           (*(hsa_amd_code_unit_t*)cmd->command.run.device_data[0],
-		  HSA_EXT_CODE_UNIT_INFO_CODE_ENTITY_PRIVATE_SEGMENT_SIZE, 1,
+		  HSA_EXT_CODE_UNIT_INFO_CODE_ENTITY_PRIVATE_SEGMENT_SIZE, 0,
   		&(kernel_packet.private_segment_size)) != HSA_STATUS_SUCCESS)
         {
-          POCL_ABORT ("pocl-hsa: unable to get private segment size.");
+          POCL_ABORT ("pocl-hsa: unable to get private segment size.\n");
         }
 #if 0
   printf("Static Local Array: %d\n",kernel_packet.group_segment_size);
@@ -690,163 +675,6 @@ pocl_hsa_copy (void *data, const void *src_ptr, size_t src_offset,
   memcpy ((char*)dst_ptr + dst_offset, (char*)src_ptr + src_offset, cb);
 }
 
-void
-pocl_hsa_copy_rect (void *data,
-                      const void *__restrict const src_ptr,
-                      void *__restrict__ const dst_ptr,
-                      const size_t *__restrict__ const src_origin,
-                      const size_t *__restrict__ const dst_origin,
-                      const size_t *__restrict__ const region,
-                      size_t const src_row_pitch,
-                      size_t const src_slice_pitch,
-                      size_t const dst_row_pitch,
-                      size_t const dst_slice_pitch)
-{
-  char const *__restrict const adjusted_src_ptr =
-    (char const*)src_ptr +
-    src_origin[0] + src_row_pitch * src_origin[1] + src_slice_pitch * src_origin[2];
-  char *__restrict__ const adjusted_dst_ptr =
-    (char*)dst_ptr +
-    dst_origin[0] + dst_row_pitch * dst_origin[1] + dst_slice_pitch * dst_origin[2];
-
-  size_t j, k;
-
-  /* TODO: handle overlaping regions */
-
-  for (k = 0; k < region[2]; ++k)
-    for (j = 0; j < region[1]; ++j)
-      memcpy (adjusted_dst_ptr + dst_row_pitch * j + dst_slice_pitch * k,
-              adjusted_src_ptr + src_row_pitch * j + src_slice_pitch * k,
-              region[0]);
-}
-
-void
-pocl_hsa_write_rect (void *data,
-                       const void *__restrict__ const host_ptr,
-                       void *__restrict__ const device_ptr,
-                       const size_t *__restrict__ const buffer_origin,
-                       const size_t *__restrict__ const host_origin,
-                       const size_t *__restrict__ const region,
-                       size_t const buffer_row_pitch,
-                       size_t const buffer_slice_pitch,
-                       size_t const host_row_pitch,
-                       size_t const host_slice_pitch)
-{
-  char *__restrict const adjusted_device_ptr =
-    (char*)device_ptr +
-    buffer_origin[0] + buffer_row_pitch * buffer_origin[1] + buffer_slice_pitch * buffer_origin[2];
-  char const *__restrict__ const adjusted_host_ptr =
-    (char const*)host_ptr +
-    host_origin[0] + host_row_pitch * host_origin[1] + host_slice_pitch * host_origin[2];
-
-  size_t j, k;
-
-  /* TODO: handle overlaping regions */
-
-  for (k = 0; k < region[2]; ++k)
-    for (j = 0; j < region[1]; ++j)
-      memcpy (adjusted_device_ptr + buffer_row_pitch * j + buffer_slice_pitch * k,
-              adjusted_host_ptr + host_row_pitch * j + host_slice_pitch * k,
-              region[0]);
-}
-
-void
-pocl_hsa_read_rect (void *data,
-                      void *__restrict__ const host_ptr,
-                      void *__restrict__ const device_ptr,
-                      const size_t *__restrict__ const buffer_origin,
-                      const size_t *__restrict__ const host_origin,
-                      const size_t *__restrict__ const region,
-                      size_t const buffer_row_pitch,
-                      size_t const buffer_slice_pitch,
-                      size_t const host_row_pitch,
-                      size_t const host_slice_pitch)
-{
-  char const *__restrict const adjusted_device_ptr =
-    (char const*)device_ptr +
-    buffer_origin[2] * buffer_slice_pitch + buffer_origin[1] * buffer_row_pitch + buffer_origin[0];
-  char *__restrict__ const adjusted_host_ptr =
-    (char*)host_ptr +
-    host_origin[2] * host_slice_pitch + host_origin[1] * host_row_pitch + host_origin[0];
-
-  size_t j, k;
-
-  /* TODO: handle overlaping regions */
-
-  for (k = 0; k < region[2]; ++k)
-    for (j = 0; j < region[1]; ++j)
-      memcpy (adjusted_host_ptr + host_row_pitch * j + host_slice_pitch * k,
-              adjusted_device_ptr + buffer_row_pitch * j + buffer_slice_pitch * k,
-              region[0]);
-}
-
-/* origin and region must be in original shape unlike in copy/read/write_rect()
- */
-void
-pocl_hsa_fill_rect (void *data,
-                      void *__restrict__ const device_ptr,
-                      const size_t *__restrict__ const buffer_origin,
-                      const size_t *__restrict__ const region,
-                      size_t const buffer_row_pitch,
-                      size_t const buffer_slice_pitch,
-                      void *fill_pixel,
-                      size_t pixel_size)
-{
-  char *__restrict const adjusted_device_ptr = (char*)device_ptr
-    + buffer_origin[0] * pixel_size
-    + buffer_row_pitch * buffer_origin[1]
-    + buffer_slice_pitch * buffer_origin[2];
-
-  size_t i, j, k;
-
-  for (k = 0; k < region[2]; ++k)
-    for (j = 0; j < region[1]; ++j)
-      for (i = 0; i < region[0]; ++i)
-        memcpy (adjusted_device_ptr + pixel_size * i
-                + buffer_row_pitch * j
-                + buffer_slice_pitch * k, fill_pixel, pixel_size);
-}
-
-void *
-pocl_hsa_map_mem (void *data, void *buf_ptr,
-                      size_t offset, size_t size,
-                      void *host_ptr)
-{
-  /* All global pointers of the pthread/CPU device are in
-     the host address space already, and up to date. */
-  if (host_ptr != NULL) return host_ptr;
-  return (char*)buf_ptr + offset;
-}
-
-
-void
-pocl_hsa_uninit (cl_device_id device)
-{
-  struct data *d = (struct data*)device->data;
-  POCL_MEM_FREE(d);
-  device->data = NULL;
-}
-
-cl_ulong
-pocl_hsa_get_timer_value (void *data)
-{
-#ifndef _MSC_VER
-  struct timeval current;
-  gettimeofday(&current, NULL);
-  return (current.tv_sec * 1000000 + current.tv_usec)*1000;
-#else
-  FILETIME ft;
-  cl_ulong tmpres = 0;
-  GetSystemTimeAsFileTime(&ft);
-  tmpres |= ft.dwHighDateTime;
-  tmpres <<= 32;
-  tmpres |= ft.dwLowDateTime;
-  tmpres -= 11644473600000000Ui64;
-  tmpres /= 10;
-  return tmpres;
-#endif
-}
-
 /* TODO: there's not much to do here, just build the kernel for HSA.
    Perhaps share the same function for all WG sizes in case it's an
    SPMD target. */
@@ -905,6 +733,14 @@ static void compile (_cl_command_node *cmd)
     }
   free (elf_blob);
   fclose (file);
+}
+
+void
+pocl_hsa_uninit (cl_device_id device)
+{
+  struct data *d = (struct data*)device->data;
+  POCL_MEM_FREE(d);
+  device->data = NULL;
 }
 
 void

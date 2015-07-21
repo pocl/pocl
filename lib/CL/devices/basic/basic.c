@@ -328,6 +328,7 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->llvm_target_triplet = OCL_KERNEL_TARGET;
   dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
   dev->has_64bit_long = 1;
+  dev->autolocals_to_args = 1;
 }
 
 unsigned int
