@@ -1,7 +1,14 @@
-The experimental HSA driver works only with an AMD Kaveri using LLVM's R600
-backend at the moment.
+NOTE: The support is _very_ experimental and preliminary (pretty much untested
+apart from the example1), so beware. You should check it out only if you are willing
+to help in the development.
 
-You need to install the HSA runtime library via
+NOTE: Until things stabilize a bit, the 'hsa' branch contains new development
+over pocl-hsa: https://github.com/pocl/pocl/tree/hsa
+
+The experimental HSA driver works only with an AMD Kaveri using LLVM's R600
+backend and LLVM 3.6 at the moment.
+
+You need to install the HSA preliminary runtime library via
 
   git clone http://www.cs.tut.fi/~pjaaskel/HSA-Runtime-Reference-Source-legacy.git
 
@@ -23,6 +30,3 @@ Then, you can smoke test the HSA driver by executing the HSA tests of the
 pocl testsuite:
 
   make check TESTSUITEFLAGS="-k hsa"
-
-The support is _very_ experimental (pretty much untested apart from the example1), so
-beware.
