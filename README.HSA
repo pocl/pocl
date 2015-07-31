@@ -1,28 +1,20 @@
 The experimental HSA driver works only with an AMD Kaveri using LLVM's R600
 backend at the moment.
 
-You need to install the HSA runtime library via
+You need to install the HSA AMD runtime library via
 
-  git clone http://www.cs.tut.fi/~pjaaskel/HSA-Runtime-Reference-Source-legacy.git
+  https://github.com/HSAFoundation/HSA-Runtime-AMD
 
-Then install its libhsa-runtime64.so so it's found by the pocl configure.
+The Clang must be configured with the AMDGPU support on. It should
+be enabled by default now.
 
-NOTE: At the time of this writing the upstream HSA Runtime Reference Source
-uses a new version of the binary format which is not yet supported by the
-R600 LLVM backend (situation with LLVM 3.6, 2015-05-19). Until this situation
-is solved, you need to use the older version from the above link.
+After that, pocl should detect HSA and enable it by default. You can
+force disable it by using --disable-hsa-amdgcn configure switch.
 
-The clang must be configured with the AMD backends. It can be done by
-adding '--enable-experimental-targets=R600' to the LLVM configure command.
-
-After that, configure pocl with a command line similar to this:
-
-  ./configure --enable-hsa-amdgcn --with-hsa-runtime-headers=$HOME/src/HSA-Runtime-Reference-Source-legacy/inc
-
-Then, you can smoke test the HSA driver by executing the HSA tests of the
-pocl testsuite:
+After building you can smoke test the HSA driver by executing the HSA
+tests of the pocl testsuite:
 
   make check TESTSUITEFLAGS="-k hsa"
 
-The support is _very_ experimental (pretty much untested apart from the example1), so
-beware.
+NOTE: The support is _very_ experimental and in early stages (pretty much
+untested apart from the example1), so beware.

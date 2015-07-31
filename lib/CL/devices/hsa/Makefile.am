@@ -31,6 +31,6 @@ libpocl_devices_hsa_la_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/in
 	-I$(top_srcdir)/lib/CL $(OCL_ICD_CFLAGS) @HSA_INCLUDES@
 #  -I$(HOME)/src/HSA-Runtime-Reference-Source/inc
 
-libpocl_devices_hsa_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
+libpocl_devices_hsa_la_LDFLAGS = ${HSA_LIBS} -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
 
 EXTRA_DIST = CMakeLists.txt

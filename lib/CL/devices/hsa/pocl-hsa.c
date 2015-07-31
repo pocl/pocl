@@ -1,6 +1,7 @@
-/* pocl-hsa.c - driver for HSA supporteddevices
+/* pocl-hsa.c - driver for HSA supported devices. Currently only AMDGCN.
 
    Copyright (c) 2015 Pekka Jääskeläinen / Tampere University of Technology
+                      Charles Chen <0charleschen0@gmail.com>
 
    Short snippets borrowed from the MatrixMultiplication example in
    the HSA runtime library sources (c) 2014 HSA Foundation Inc.
@@ -27,6 +28,7 @@
 #include "hsa.h"
 #include "hsa_ext_finalize.h"
 #include "hsa_ext_amd.h"
+#include "hsa_ext_image.h"
 
 #include "pocl-hsa.h"
 #include "common.h"
@@ -84,7 +86,7 @@ struct hsa_supported_device_properties_t
   cl_uint                   global_mem_cacheline_size;
   cl_uint                   max_compute_units;
   cl_uint                   max_clock_frequency;
-  cl_ulong                  max_conastant_buffer_size;
+  cl_ulong                  max_constant_buffer_size;
   cl_ulong                  local_mem_size;
 };
 typedef struct hsa_supported_device_properties_t hsa_supported_device_properties;
@@ -123,7 +125,9 @@ pocl_hsa_get_agents(hsa_agent_t agent, void *data)
   hsa_device_type_t type;
   hsa_status_t stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_DEVICE, &type);
   if (type != HSA_DEVICE_TYPE_GPU)
-    return HSA_STATUS_SUCCESS;
+    {
+      return HSA_STATUS_SUCCESS;
+    }
 
   hsa_agents[found_hsa_agents] = agent;
   ++found_hsa_agents;
@@ -135,7 +139,7 @@ static int num_hsa_device = 1;
 
 static hsa_supported_device_properties hsa_device_lists[MAX_HSA_AGENTS]=
 {
-  [0]=
+  [0] =
   {
     .dev_name = "Spectre",
     .llvm_cpu = "kaveri",
@@ -149,7 +153,7 @@ static hsa_supported_device_properties hsa_device_lists[MAX_HSA_AGENTS]=
 	.global_mem_cacheline_size = 64,
 	.max_compute_units = 8,
 	.max_clock_frequency = 720,
-	.max_conastant_buffer_size = 65536,
+	.max_constant_buffer_size = 65536,
 	.local_mem_size = 32768
   },
 };
@@ -171,7 +175,7 @@ void get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
 	      dev->global_mem_cacheline_size = hsa_device_lists[i].global_mem_cacheline_size;
 	      dev->max_compute_units = hsa_device_lists[i].max_compute_units;
 	      dev->max_clock_frequency = hsa_device_lists[i].max_clock_frequency;
-	      dev->max_constant_buffer_size = hsa_device_lists[i].max_conastant_buffer_size;
+	      dev->max_constant_buffer_size = hsa_device_lists[i].max_constant_buffer_size;
 	      dev->local_mem_size = hsa_device_lists[i].local_mem_size;
 	      break;
         }
@@ -224,19 +228,20 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
   stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_WORKGROUP_MAX_SIZE, &dev->max_work_group_size);
   /*Image features*/
   hsa_dim3_t image_size;
-  stat = hsa_agent_get_info(agent, HSA_EXT_AGENT_INFO_IMAGE1D_MAX_DIM, &image_size);
+  stat = hsa_agent_get_info(agent, HSA_EXT_AGENT_INFO_IMAGE_1D_MAX_ELEMENTS, &image_size);
   dev->image_max_buffer_size = image_size.x;
-  stat = hsa_agent_get_info(agent, HSA_EXT_AGENT_INFO_IMAGE2D_MAX_DIM, &image_size);
+  stat = hsa_agent_get_info(agent, HSA_EXT_AGENT_INFO_IMAGE_2D_MAX_ELEMENTS, &image_size);
   dev->image2d_max_height = image_size.x;
   dev->image2d_max_width = image_size.y;
-  stat = hsa_agent_get_info(agent, HSA_EXT_AGENT_INFO_IMAGE3D_MAX_DIM, &image_size);
+  stat = hsa_agent_get_info(agent, HSA_EXT_AGENT_INFO_IMAGE_3D_MAX_ELEMENTS, &image_size);
   dev->image3d_max_height = image_size.x;
   dev->image3d_max_width = image_size.y;
   dev->image3d_max_depth = image_size.z;
-  stat = hsa_agent_get_info(agent, HSA_EXT_AGENT_INFO_IMAGE_ARRAY_MAX_SIZE, &dev->image_max_array_size);
-  stat = hsa_agent_get_info(agent, HSA_EXT_AGENT_INFO_IMAGE_RD_MAX, &dev->max_read_image_args);
-  stat = hsa_agent_get_info(agent, HSA_EXT_AGENT_INFO_IMAGE_RDWR_MAX, &dev->max_write_image_args);
-  stat = hsa_agent_get_info(agent, HSA_EXT_AGENT_INFO_SAMPLER_MAX, &dev->max_samplers);
+  // is this directly the product of the dimensions?
+  //stat = hsa_agent_get_info(agent, ??, &dev->image_max_array_size);
+  stat = hsa_agent_get_info(agent, HSA_EXT_AGENT_INFO_MAX_IMAGE_RD_HANDLES, &dev->max_read_image_args);
+  stat = hsa_agent_get_info(agent, HSA_EXT_AGENT_INFO_MAX_IMAGE_RORW_HANDLES, &dev->max_write_image_args);
+  stat = hsa_agent_get_info(agent, HSA_EXT_AGENT_INFO_MAX_SAMPLER_HANDLERS, &dev->max_samplers);
 }
 
 unsigned int
@@ -292,8 +297,10 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
      Now all pocl devices control the same one. */
   d->agent = &hsa_agents[0];
 
+  // TODO: figure out proper private_segment_size and
+  // group_segment_size
   if (hsa_queue_create(*d->agent, 1, HSA_QUEUE_TYPE_MULTI, NULL, NULL,
-                       &d->queue) != HSA_STATUS_SUCCESS)
+                       4096, 4096, &d->queue) != HSA_STATUS_SUCCESS)
     {
       POCL_ABORT("pocl-hsa: could not create the queue.");
     }
@@ -402,6 +409,22 @@ pocl_hsa_get_kernarg(hsa_region_t region, void* data)
 }
 #endif
 
+static hsa_status_t
+symbol_printer
+(hsa_executable_t exe, hsa_executable_symbol_t symbol, void *data)
+{
+  size_t length;
+  hsa_symbol_get_info (symbol, HSA_CODE_SYMBOL_INFO_NAME_LENGTH, &length);
+
+  char *name = malloc(length);
+  hsa_symbol_get_info (symbol, HSA_CODE_SYMBOL_INFO_NAME, name);
+
+  POCL_MSG_PRINT_INFO("pocl-hsa: symbol name=%s\n", name);
+  free (name);
+
+  return HSA_STATUS_SUCCESS;
+}
+
 void
 pocl_hsa_run
 (void *data,
@@ -413,13 +436,9 @@ pocl_hsa_run
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
   hsa_signal_value_t initial_value = 1;
-#if 0
   /* Not yet supported by the reference library. */
   hsa_kernel_dispatch_packet_t kernel_packet;
-#else
-  hsa_dispatch_packet_t kernel_packet;
-#endif
-  hsa_signal_t kernel_completion_signal = 0;
+  hsa_signal_t kernel_completion_signal;
   hsa_region_t region;
   int error;
   amdgpu_args_t *args;
@@ -433,7 +452,7 @@ pocl_hsa_run
 
   d->current_kernel = kernel;
 
-  memset (&kernel_packet, 0, sizeof (hsa_dispatch_packet_t));
+  memset (&kernel_packet, 0, sizeof (hsa_kernel_dispatch_packet_t));
 
 #if 0
   /* TODO: not yet supported by the open source runtime implementation.
@@ -451,8 +470,9 @@ pocl_hsa_run
   args = malloc(sizeof(amdgpu_args_t));
 #endif
 
-  kernel_packet.kernarg_address = (uint64_t)args;
+  kernel_packet.kernarg_address = args;
 
+#if 0
   if (hsa_ext_code_unit_get_info
         (*(hsa_amd_code_unit_t*)cmd->command.run.device_data[0],
 		HSA_EXT_CODE_UNIT_INFO_CODE_ENTITY_GROUP_SEGMENT_SIZE, 0,
@@ -467,13 +487,19 @@ pocl_hsa_run
         {
           POCL_ABORT ("pocl-hsa: unable to get private segment size.\n");
         }
+#endif
 #if 0
   printf("Static Local Array: %d\n",kernel_packet.group_segment_size);
 #endif
   /* Process the kernel arguments. Convert the opaque buffer
      pointers to real device pointers, allocate dynamic local
      memory buffers, etc. */
+#if 0
   uint64_t dynamic_local_address = kernel_packet.group_segment_size;
+#else
+  // TODO
+  uint64_t dynamic_local_address = 2048;
+#endif
   //Change argument initialization method from array to memory copy method
   //This method is inspired from CLOC sample from HSA Foundation github.
   for (i = 0; i < kernel->num_args; ++i)
@@ -583,6 +609,7 @@ pocl_hsa_run
   args->workgroup_size_y = kernel_packet.workgroup_size_y = cmd->command.run.local_y;
   args->workgroup_size_z = kernel_packet.workgroup_size_z = cmd->command.run.local_z;
 
+  kernel_packet.grid_size_x = kernel_packet.grid_size_y = kernel_packet.grid_size_z = 1;
   kernel_packet.grid_size_x = pc->num_groups[0] * cmd->command.run.local_x;
   kernel_packet.grid_size_y = pc->num_groups[1] * cmd->command.run.local_y;
   kernel_packet.grid_size_z = pc->num_groups[2] * cmd->command.run.local_z;
@@ -593,17 +620,47 @@ pocl_hsa_run
   args->wgs_y = pc->num_groups[1];
   args->wgs_z = pc->num_groups[2];
 
-  kernel_packet.dimensions = 1;
-  if (cmd->command.run.local_y > 1) kernel_packet.dimensions = 2;
-  if (cmd->command.run.local_z > 1) kernel_packet.dimensions = 3;
+//  kernel_packet.header.type = HSA_PACKET_TYPE_DISPATCH;
+//  kernel_packet.header.acquire_fence_scope = HSA_FENCE_SCOPE_SYSTEM;
+//  kernel_packet.header.release_fence_scope = HSA_FENCE_SCOPE_SYSTEM;
+//  kernel_packet.header.barrier = 1;
 
-  kernel_packet.header.type = HSA_PACKET_TYPE_DISPATCH;
-  kernel_packet.header.acquire_fence_scope = HSA_FENCE_SCOPE_SYSTEM;
-  kernel_packet.header.release_fence_scope = HSA_FENCE_SCOPE_SYSTEM;
-  kernel_packet.header.barrier = 1;
 
-  kernel_packet.kernel_object_address =
-    *(hsa_amd_code_t*)cmd->command.run.device_data[1];
+  hsa_executable_t *exe = (hsa_executable_t *)cmd->command.run.device_data[0];
+  hsa_code_object_t *code_obj = (hsa_code_object_t *)cmd->command.run.device_data[1];
+
+  error = hsa_executable_load_code_object (*exe, *d->agent, *code_obj, NULL);
+  if (error != HSA_STATUS_SUCCESS)
+    POCL_ABORT ("pocl-hsa: error while loading the code object.\n");
+
+  error = hsa_executable_freeze (*exe, NULL);
+  if (error != HSA_STATUS_SUCCESS)
+    POCL_ABORT ("pocl-hsa: error while loading the code object.\n");
+
+  hsa_executable_symbol_t kernel_symbol;
+
+  // This prints nothing:
+  hsa_executable_iterate_symbols (*exe, symbol_printer, NULL);
+
+  POCL_MSG_PRINT_INFO("pocl-hsa: getting function symbol %s.\n", kernel->name);
+
+  // TODO: perhaps need to prepend '&' to the function name,
+  // even if not loading from HSAIL?
+  error = hsa_executable_get_symbol
+    (*exe, NULL, kernel->name, *d->agent, 0, &kernel_symbol);
+
+  if (error != HSA_STATUS_SUCCESS)
+    {
+      POCL_ABORT ("pocl-hsa: unable to get the kernel function symbol\n");
+    }
+
+  uint64_t code_handle;
+  error = hsa_executable_symbol_get_info
+    (kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_OBJECT, &code_handle);
+  if (error != HSA_STATUS_SUCCESS)
+    POCL_ABORT ("pocl-hsa: unable to get the code handle for the kernel function.\n");
+
+  kernel_packet.kernel_object = code_handle;
 
   error =  hsa_signal_create(initial_value, 0, NULL, &kernel_completion_signal);
   assert (error == HSA_STATUS_SUCCESS);
@@ -617,13 +674,14 @@ pocl_hsa_run
     const uint32_t queue_mask = d->queue->size - 1;
     uint64_t queue_index = hsa_queue_load_write_index_relaxed(d->queue);
     hsa_signal_value_t sigval;
-    ((hsa_dispatch_packet_t*)(d->queue->base_address))[queue_index & queue_mask] =
+    ((hsa_kernel_dispatch_packet_t*)(d->queue->base_address))[queue_index & queue_mask] =
       kernel_packet;
     hsa_queue_store_write_index_relaxed(d->queue, queue_index + 1);
     hsa_signal_store_relaxed(d->queue->doorbell_signal, queue_index);
 
-    sigval = hsa_signal_wait_acquire(kernel_completion_signal, HSA_EQ, 0,
-                                     (uint64_t)(-1), HSA_WAIT_EXPECTANCY_UNKNOWN);
+    sigval = hsa_signal_wait_acquire
+      (kernel_completion_signal, HSA_SIGNAL_CONDITION_LT, 1,
+       (uint64_t)(-1), HSA_WAIT_STATE_ACTIVE);
   }
 
   for (i = 0; i < kernel->num_args; ++i)
@@ -672,9 +730,8 @@ static void compile (_cl_command_node *cmd)
   char bytecode[POCL_FILENAME_LENGTH];
   char objfile[POCL_FILENAME_LENGTH];
   FILE *file;
-  char *elf_blob;
+  char *blob;
   size_t file_size, got_size;
-  hsa_runtime_caller_t caller;
 
   error = snprintf (bytecode, POCL_FILENAME_LENGTH,
                     "%s/%s", cmd->command.run.tmp_dir,
@@ -690,36 +747,35 @@ static void compile (_cl_command_node *cmd)
   assert (error == 0);
 
   /* Load the built AMDGPU ELF file. */
+  POCL_MSG_PRINT_INFO("pocl-hsa: loading native binary from file %s.\n", objfile);
   file = fopen (objfile, "rb");
   assert (file != NULL);
 
   cmd->command.run.device_data = malloc (sizeof(void*)*2);
-  cmd->command.run.device_data[0] = malloc (sizeof(hsa_amd_code_unit_t));
-  cmd->command.run.device_data[1] = malloc (sizeof(hsa_amd_code_t));
+  cmd->command.run.device_data[0] = malloc (sizeof(hsa_executable_t));
+  cmd->command.run.device_data[0] = malloc (sizeof(hsa_code_object_t));
 
   file_size = pocl_file_size (file);
-  elf_blob = malloc (file_size);
-  got_size = fread (elf_blob, 1, file_size, file);
+  blob = malloc (file_size);
+  got_size = fread (blob, 1, file_size, file);
 
   if (file_size != got_size)
     POCL_ABORT ("pocl-hsa: could not read the AMD ELF.\n");
 
-  caller.caller = 0;
-  if (hsa_ext_code_unit_load
-      (caller, NULL, 0, elf_blob, file_size, NULL, NULL,
-       (hsa_amd_code_unit_t*)cmd->command.run.device_data[0]) != HSA_STATUS_SUCCESS)
-    {
-      POCL_ABORT ("pocl-hsa: error while loading the built AMDGPU ELF binary.\n");
-    }
+  hsa_code_object_t *code_obj = malloc (sizeof(hsa_code_object_t));
+  hsa_status_t status = hsa_code_object_deserialize (blob, file_size, NULL, code_obj);
+  if (status != HSA_STATUS_SUCCESS || code_obj->handle == 0)
+    POCL_ABORT ("pocl-hsa: error while loading the built AMDGPU native binary.\n");
+  cmd->command.run.device_data[1] = code_obj;
 
-  if (hsa_ext_code_unit_get_info
-      (*(hsa_amd_code_unit_t*)cmd->command.run.device_data[0],
-       HSA_EXT_CODE_UNIT_INFO_CODE_ENTITY_CODE, 0,
-       (hsa_amd_code_t*)cmd->command.run.device_data[1]) != HSA_STATUS_SUCCESS)
-    {
-      POCL_ABORT ("pocl-hsa: unable to get the code handle to the kernel.\n");
-    }
-  free (elf_blob);
+  hsa_executable_t *exe = malloc(sizeof(hsa_executable_t));
+  status = hsa_executable_create (HSA_PROFILE_FULL, HSA_EXECUTABLE_STATE_UNFROZEN, NULL, exe);
+  if (status != HSA_STATUS_SUCCESS)
+    POCL_ABORT ("pocl-hsa: error while creating an executable.\n");
+
+  cmd->command.run.device_data[0] = exe;
+
+  free (blob);
   fclose (file);
 }
 
