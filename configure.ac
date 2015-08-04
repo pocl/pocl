@@ -1309,7 +1309,7 @@ CPPFLAGS=$tempCPPFLAGS
 if test "$enable_hsa" = "yes";
 then
   OCL_DRIVERS="$OCL_DRIVERS hsa"
-  OCL_TARGETS="$OCL_TARGETS amdgcn"
+  OCL_TARGETS="$OCL_TARGETS amdgcn hsail64"
   AC_DEFINE([AMDGCN_ENABLED], [1], [Defined in case AMDGCN device support enabled.])
   AC_DEFINE([BUILD_HSA], [1], [Defined to 1 in case the HSA driver should be built.])
   enable_testsuite_hsa=yes
@@ -1523,6 +1523,7 @@ AC_CONFIG_FILES([Makefile
                  lib/kernel/host/Makefile
                  lib/kernel/tce/Makefile
                  lib/kernel/amdgcn/Makefile
+                 lib/kernel/hsail64/Makefile
                  lib/poclu/Makefile
                  examples/Makefile
                  examples/example1/Makefile
