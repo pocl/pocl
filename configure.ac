@@ -147,12 +147,20 @@ if test "$link_llvm_static" = "yes"; then
   LLVM_LIBS=$($LLVM_CONFIG --libfiles)
 else
   LLVM_LIBS=-lLLVM-$LLVM_VERSION
-if test ! -e $LLVM_SHARED_LIB_FILE;
-then
-  LLVM_LIBS=$($LLVM_CONFIG --libs)
-  AC_MSG_NOTICE([
-$LLVM_SHARED_LIB_FILE not found. LLVM is built with cmake.])
-fi
+  if test ! -e $LLVM_SHARED_LIB_FILE;
+  then
+    # Cmake's -DLLVM_BUILD_LLVM_DYLIB=on builds a dynlib
+    # named libLLVM.so.VERSION. Let's see if we can find it.
+    LLVM_SHARED_LIB_FILE=$LLVM_LIBDIR/libLLVM$LIBRARY_SUFFIX.$LLVM_VERSION
+    if test ! -e $LLVM_SHARED_LIB_FILE;
+    then
+      LLVM_LIBS=$($LLVM_CONFIG --libs)
+      AC_MSG_NOTICE([LLVM shared library $LLVM_SHARED_LIB_FILE not found.])
+    else
+      LLVM_LIBS=-lLLVM
+      AC_MSG_NOTICE([LLVM shared library $LLVM_SHARED_LIB_FILE built with cmake found.])
+    fi
+  fi
 fi
 
 AC_SUBST([LLVM_LIBS])
