@@ -113,6 +113,13 @@ run_llvm_config(LLVM_OBJ_ROOT --obj-root)
 string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_OBJ_ROOT "${LLVM_OBJ_ROOT}")
 run_llvm_config(LLVM_ALL_TARGETS --targets-built)
 run_llvm_config(LLVM_HOST_TARGET --host-target)
+# TODO can be changed to --assertion-mode once we drop LLVM < 3.5 support
+run_llvm_config(LLVM_BUILD_MODE --build-mode)
+if(LLVM_BUILD_MODE MATCHES "Asserts")
+  set(LLVM_ASSERTS_BUILD 1)
+else()
+  set(LLVM_ASSERTS_BUILD 0)
+endif()
 # Ubuntu's llvm reports "arm-unknown-linux-gnueabihf" triple, then if one tries
 # `clang --target=arm-unknown-linux-gnueabihf ...` it will produce armv6 code,
 # even if one's running armv7;

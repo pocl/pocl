@@ -113,6 +113,11 @@ if(LLVM_3_2 OR (LLVM_3_3 AND POWERPC))
     PROPERTIES WILL_FAIL 1)
 endif()
 
+if(LLVM_ASSERTS_BUILD)
+  set_tests_properties("kernel/test_local_struct_array"
+    PROPERTIES WILL_FAIL 1)
+endif()
+
 # 3-element vector cases fail when vectorizer is enabled,
 # at least with Intel Core i5 and AMD FX8. Assume it fails on all others too.
 if(X86_64 AND (LLVM_3_5 OR LLVM_3_6))
