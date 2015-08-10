@@ -99,12 +99,12 @@ case "$LLVM_VERSION" in
      NEW_PRINTF_WORKS=false
    ;;
      3.3*)
-     AC_DEFINE([LLVM_3_3], [], "Using LLVM 3.3")     
+     AC_DEFINE([LLVM_3_3], [], "Using LLVM 3.3")
      NEW_PRINTF_WORKS=false
-   ;; 
+   ;;
      3.4*)
-     AC_DEFINE([LLVM_3_4], [], "Using LLVM 3.4")     
-   ;;   
+     AC_DEFINE([LLVM_3_4], [], "Using LLVM 3.4")
+   ;;
      3.5*)
      AC_DEFINE([LLVM_3_5], [], "Using LLVM 3.5")
      LLVM_LDFLAGS="$LLVM_LDFLAGS `$LLVM_CONFIG --system-libs`"
@@ -1322,7 +1322,13 @@ then
   AC_DEFINE([BUILD_HSA], [1], [Defined to 1 in case the HSA driver should be built.])
   enable_testsuite_hsa=yes
   POAT_TESTSUITES="$POAT_TESTSUITES hsa"
+
+  # -lhsail is missing from llvm-config --system-libs
+  # -lHSAILUtil is missing from llvm-config --libfiles
+  LLVM_LIBS="$LLVM_LIBS -lLLVMHSAILUtil -lhsail"
 fi
+
+# TODO: move above
 
 # Enable the HSA test suite in case HSA support enabled.
 AM_CONDITIONAL([TEST_SUITE_HSA], [test "$enable_testsuite_hsa" = "yes"])

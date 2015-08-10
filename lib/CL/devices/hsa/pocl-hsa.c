@@ -143,7 +143,7 @@ static hsa_supported_device_properties hsa_device_lists[MAX_HSA_AGENTS]=
   {
     .dev_name = "Spectre",
     .llvm_cpu = "kaveri",
-    .llvm_target_triplet = "amdgcn--amdhsa",
+    .llvm_target_triplet = "hsail64", // amdgcn--amdhsa
 	.has_64bit_long = 1,
 	//FIXME: I am not sure if it is related to main memory.
 	.max_mem_alloc_size = 592969728,
