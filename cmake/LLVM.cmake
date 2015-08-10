@@ -506,10 +506,10 @@ endif()
 
 if(NOT LLVM_CXXFLAGS MATCHES "-DNDEBUG")
 
-  message(STATUS "Checking if LLVM is built with assertions")
+  message(STATUS "Checking if LLVM is a DEBUG build")
   separate_arguments(_FLAGS UNIX_COMMAND "${LLVM_CXXFLAGS}")
 
-  set(_TEST_SOURCE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/llvmbuiltwithassertions.cc")
+  set(_TEST_SOURCE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/llvmNDEBUG.cc")
   file(WRITE "${_TEST_SOURCE}"
     "
       #include <llvm/Support/Debug.h>
@@ -532,9 +532,9 @@ if(NOT LLVM_CXXFLAGS MATCHES "-DNDEBUG")
     "Test -NDEBUG flag: ${_TRY_COMPILE_OUTPUT}\n")
 
   if(_TRY_SUCCESS)
-    message(STATUS "assertions present")
+    message(STATUS "DEBUG build")
   else()
-    message(STATUS "no assertions.. adding -DNDEBUG")
+    message(STATUS "Not a DEBUG build, adding -DNDEBUG explicitly")
     set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -DNDEBUG")
   endif()
 
