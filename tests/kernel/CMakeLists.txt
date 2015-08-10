@@ -90,12 +90,14 @@ add_test("kernel/test_fabs" "kernel" "test_fabs")
 
 add_test("kernel/test_short16" "kernel" "test_short16")
 
+add_test("kernel/test_frexp_modf" "kernel" "test_frexp_modf")
+
 add_test("kernel/test_local_struct_array" "kernel" "test_local_struct_array")
 
 set_tests_properties("kernel/test_min_max" "kernel/test_length_distance"
   "kernel/test_fmin_fmax_fma" "kernel/test_local_struct_array"
   "kernel/test_convert_sat_regression"   "kernel/test_fabs"
-  "kernel/test_rotate" "kernel/test_short16"
+  "kernel/test_rotate" "kernel/test_short16" "kernel/test_frexp_modf"
   PROPERTIES
     COST 4.0
     FAIL_REGULAR_EXPRESSION "FAIL"
