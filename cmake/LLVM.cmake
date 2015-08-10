@@ -657,3 +657,26 @@ if(NOT DEFINED ${CL_DISABLE_HALF})
 endif()
 
 set(CL_DISABLE_HALF "${CL_DISABLE_HALF}" CACHE BOOL "Disable cl_khr_fp16 because fp16 is not supported")
+
+####################################################################
+
+if(ENABLE_HSA)
+
+  message(STATUS "Trying HSA support")
+  # test that Clang supports the amdgcn--amdhsa target
+  custom_try_compile_clangxx("" "return 0;" RESULT "-target" "amdgcn--amdhsa" "-emit-llvm" "-S")
+  if(RESULT)
+    message(FATAL_ERROR "LLVM support for amdgcn--amdhsa target is required")
+  endif()
+
+  # try the headers
+  if(NOT DEFINED WITH_HSA_HEADERS)
+    find_path(WITH_HSA_HEADERS "hsa.h")
+    if(NOT WITH_HSA_HEADERS)
+      message(FATAL_ERROR "HSA runtime headers not found, use -DWITH_HSA_HEADERS")
+    endif()
+  endif()
+
+endif()
+
+#####################################################################

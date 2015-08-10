@@ -99,6 +99,14 @@ option(
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 ######################################################################################
+
+# AMD HSA
+option(ENABLE_HSA "Enable the HSA device driver for AMD GCN devices" OFF)
+if(ENABLE_HSA)
+  message(FATAL_ERROR "Sorry, HSA support in CMake is unfinished and unusable ATM")
+endif()
+
+######################################################################################
 # AC_CONFIG_TESTDIR([tests])
 enable_testing()
 
@@ -750,6 +758,15 @@ endif()
 
 ##########################################################
 
+if(ENABLE_HSA)
+  set(OCL_DRIVERS "${OCL_DRIVERS} hsa")
+  set(OCL_TARGETS "${OCL_TARGETS} amdgcn")
+  # WIP, this is for config.h
+  set(BUILD_HSA 1)
+endif()
+
+##########################################################
+
 message(STATUS "Building the following device drivers: ${OCL_DRIVERS}")
 
 set(BUILDDIR "${CMAKE_BINARY_DIR}")
@@ -957,7 +974,7 @@ endif()
 add_subdirectory("tests")
 
 # TODO In progress
-set(ALL_TESTSUITES "AMD;AMDSDK2.9;opencl-book-samples;Parboil;piglit;Rodinia;VexCL;ViennaCL")
+set(ALL_TESTSUITES "AMD;AMDSDK2.9;opencl-book-samples;Parboil;Piglit;Rodinia;VexCL;ViennaCL;Halide;OpenCV;CloverLeaf;hsa")
 add_subdirectory("examples")
 
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND})
@@ -993,6 +1010,7 @@ MESSAGE(STATUS "ENABLE_ICD: ${ENABLE_ICD}")
 MESSAGE(STATUS "ENABLE_SPU (Cell SPU enabled): ${ENABLE_SPU}")
 MESSAGE(STATUS "ENABLE_TCE: ${ENABLE_TCE}")
 MESSAGE(STATUS "ENABLE_TCEMC: ${ENABLE_TCEMC}")
+MESSAGE(STATUS "ENABLE_HSA: ${ENABLE_HSA}")
 MESSAGE(STATUS "HAVE_CLOCK_GETTIME: ${HAVE_CLOCK_GETTIME}")
 MESSAGE(STATUS "HAVE_GLEW: ${HAVE_GLEW}")
 MESSAGE(STATUS "HAVE_OPENCL_HPP: ${HAVE_OPENCL_HPP}")
