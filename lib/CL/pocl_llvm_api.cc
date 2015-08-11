@@ -1559,9 +1559,14 @@ pocl_llvm_codegen(cl_kernel kernel,
     llvm::raw_svector_ostream sos(data);
 #endif
     llvm::MCContext *mcc;
+#ifdef LLVM_OLDER_THAN_3_7
+    if (target && target->addPassesToEmitMC(PM, mcc, sos))
+      return 1;
+#else
     if (target && target->addPassesToEmitFile(
         PM, sos, TargetMachine::CGFT_ObjectFile))
       return 1;
+#endif
 
     PM.run(*input);
     std::string o = sos.str(); // flush
