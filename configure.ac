@@ -1290,11 +1290,24 @@ AC_LANG([C])
 
 LLVM_AMDGCN_TARGET=no
 
-AC_MSG_CHECKING([if the amdgcn--amdhsa target is supported in Clang/LLVM])
-if $LLVM_BINDIR/clang conftest.c -target amdgcn--amdhsa -emit-llvm -S -c -o - 2>/dev/null | grep -cq 'target triple = "amdgcn--amdhsa"';
+# TODO The native compilation for AMDGCN via the HSA driver.
+#AC_MSG_CHECKING([if the amdgcn--amdhsa target is supported in Clang/LLVM])
+#if $LLVM_BINDIR/clang conftest.c -target amdgcn--amdhsa -emit-llvm -S -c -o - 2>/dev/null | grep -cq 'target triple = "amdgcn--amdhsa"';
+#then
+#   AC_MSG_RESULT([yes])
+#   LLVM_AMDGCN_TARGET=yes
+#   AC_DEFINE([AMDGCN_ENABLED], [1], [Defined in case AMDGCN device support enabled.])
+#
+#else
+#   AC_MSG_RESULT([no])
+#   enable_hsa=no
+#fi
+
+AC_MSG_CHECKING([if the hsail64 target is supported in Clang/LLVM])
+if $LLVM_BINDIR/clang conftest.c -target hsail64 -emit-llvm -S -c -o - 2>/dev/null | grep -cq 'target triple = "hsail64"';
 then
    AC_MSG_RESULT([yes])
-   LLVM_AMDGCN_TARGET=yes
+   LLVM_HSAIL64_TARGET=yes
 else
    AC_MSG_RESULT([no])
    enable_hsa=no
@@ -1319,8 +1332,7 @@ CPPFLAGS=$tempCPPFLAGS
 if test "$enable_hsa" = "yes";
 then
   OCL_DRIVERS="$OCL_DRIVERS hsa"
-  OCL_TARGETS="$OCL_TARGETS amdgcn hsail64"
-  AC_DEFINE([AMDGCN_ENABLED], [1], [Defined in case AMDGCN device support enabled.])
+  OCL_TARGETS="$OCL_TARGETS hsail64"
   AC_DEFINE([BUILD_HSA], [1], [Defined to 1 in case the HSA driver should be built.])
   enable_testsuite_hsa=yes
   POAT_TESTSUITES="$POAT_TESTSUITES hsa"
