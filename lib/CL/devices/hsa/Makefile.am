@@ -26,6 +26,8 @@ noinst_LTLIBRARIES = libpocl-devices-hsa.la
 
 libpocl_devices_hsa_la_SOURCES = pocl-hsa.h pocl-hsa.c
 
+libpocl_devices_hsa_la_CFLAGS = -std=c99
+
 # TODO: find out the HSA include dir at configure time.
 libpocl_devices_hsa_la_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices \
 	-I$(top_srcdir)/lib/CL $(OCL_ICD_CFLAGS) @HSA_INCLUDES@

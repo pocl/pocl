@@ -1263,6 +1263,11 @@ kernel_library
           kernellib += "cellspu";
         }
 #endif
+#ifdef BUILD_HSA
+      else if (triple.getArch() == Triple::hsail64) {
+          kernellib += "hsail64";
+      }
+#endif
 #ifdef AMDGCN_ENABLED
       else if (triple.getArch() == Triple::amdgcn) {
           kernellib += "amdgcn";
@@ -1554,7 +1559,8 @@ pocl_llvm_codegen(cl_kernel kernel,
     llvm::raw_svector_ostream sos(data);
 #endif
     llvm::MCContext *mcc;
-    if (target && target->addPassesToEmitMC(PM, mcc, sos))
+    if (target && target->addPassesToEmitFile(
+        PM, sos, TargetMachine::CGFT_ObjectFile))
       return 1;
 
     PM.run(*input);
