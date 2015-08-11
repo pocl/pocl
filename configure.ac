@@ -99,12 +99,12 @@ case "$LLVM_VERSION" in
      NEW_PRINTF_WORKS=false
    ;;
      3.3*)
-     AC_DEFINE([LLVM_3_3], [], "Using LLVM 3.3")     
+     AC_DEFINE([LLVM_3_3], [], "Using LLVM 3.3")
      NEW_PRINTF_WORKS=false
-   ;; 
+   ;;
      3.4*)
-     AC_DEFINE([LLVM_3_4], [], "Using LLVM 3.4")     
-   ;;   
+     AC_DEFINE([LLVM_3_4], [], "Using LLVM 3.4")
+   ;;
      3.5*)
      AC_DEFINE([LLVM_3_5], [], "Using LLVM 3.5")
      LLVM_LDFLAGS="$LLVM_LDFLAGS `$LLVM_CONFIG --system-libs`"
@@ -147,12 +147,20 @@ if test "$link_llvm_static" = "yes"; then
   LLVM_LIBS=$($LLVM_CONFIG --libfiles)
 else
   LLVM_LIBS=-lLLVM-$LLVM_VERSION
-if test ! -e $LLVM_SHARED_LIB_FILE;
-then
-  LLVM_LIBS=$($LLVM_CONFIG --libs)
-  AC_MSG_NOTICE([
-$LLVM_SHARED_LIB_FILE not found. LLVM is built with cmake.])
-fi
+  if test ! -e $LLVM_SHARED_LIB_FILE;
+  then
+    # Cmake's -DLLVM_BUILD_LLVM_DYLIB=on builds a dynlib
+    # named libLLVM.so.VERSION. Let's see if we can find it.
+    LLVM_SHARED_LIB_FILE=$LLVM_LIBDIR/libLLVM$LIBRARY_SUFFIX.$LLVM_VERSION
+    if test ! -e $LLVM_SHARED_LIB_FILE;
+    then
+      LLVM_LIBS=$($LLVM_CONFIG --libs)
+      AC_MSG_NOTICE([LLVM shared library $LLVM_SHARED_LIB_FILE not found.])
+    else
+      LLVM_LIBS=-lLLVM
+      AC_MSG_NOTICE([LLVM shared library $LLVM_SHARED_LIB_FILE built with cmake found.])
+    fi
+  fi
 fi
 
 AC_SUBST([LLVM_LIBS])
@@ -1237,6 +1245,12 @@ PKG_CHECK_MODULES([LIBSPE], [libspe2 >= 2.2.80],
 fi
 AM_CONDITIONAL([BUILD_SPU],[echo $OCL_DRIVERS | grep spu])
 
+# Enable HSA by default in case the dependencies are met.
+AC_ARG_ENABLE([hsa-amdgcn],
+              [AS_HELP_STRING([--disable-hsa-amdgcn],
+              [Disable the HSA device driver for AMD GCN devices.])],
+              [enable_hsa="$enableval"], [enable_hsa="yes"])
+
 AC_ARG_WITH(hsa-runtime-headers,
 [AS_HELP_STRING([--with-hsa-runtime-headers],[absolute path where HSA runtime include files are found])],
 [
@@ -1244,53 +1258,77 @@ AC_ARG_WITH(hsa-runtime-headers,
   AC_SUBST([HSA_INCLUDES], ["$hsa_cpp_flags"] )
 ],
 [
+  hsa_cpp_flags="-I/opt/hsa/include"
+  AC_SUBST([HSA_INCLUDES], ["$hsa_cpp_flags"] )
 ]
 )
 
-AC_ARG_ENABLE([hsa-amdgcn],
-              [AS_HELP_STRING([--enable-hsa-amdgcn],
-              [Enable the HSA device driver for AMD GCN devices.])],
-              [enable_hsa_amdgcn="yes"])
+# Search for the HSA runtime lib.
+AC_MSG_CHECKING([for HSA runtime])
+old_LIBS="$LIBS"
+old_LDFLAGS="$LDFLAGS"
+LDFLAGS="$LDFLAGS -L/opt/hsa/lib"
+LIBS=""
+AC_SEARCH_LIBS([hsa_executable_get_symbol], [hsa-runtime64], [
+HSA_LIBS="$LIBS"
+AC_SUBST([HSA_LIBS])
+],
+[
+enable_hsa=no
+LDFLAGS="$old_LDFLAGS"
+])
+LIBS=$old_LIBS
 
-if test "$enable_hsa_amdgcn" = "yes"; then
+# test that Clang supports the amdgcn--amdhsa target
+AC_LANG([C])
+ AC_LANG_CONFTEST(
+ [AC_LANG_PROGRAM(
+       [])
+       ])
 
-  # test that Clang supports the amdgcn--amdhsa target
+LLVM_AMDGCN_TARGET=no
 
-  AC_LANG([C])
-  AC_LANG_CONFTEST(
-  [AC_LANG_PROGRAM(
-        [])
-        ])
+AC_MSG_CHECKING([if the amdgcn--amdhsa target is supported in Clang/LLVM])
+if $LLVM_BINDIR/clang conftest.c -target amdgcn--amdhsa -emit-llvm -S -c -o - 2>/dev/null | grep -cq 'target triple = "amdgcn--amdhsa"';
+then
+   AC_MSG_RESULT([yes])
+   LLVM_AMDGCN_TARGET=yes
+else
+   AC_MSG_RESULT([no])
+   enable_hsa=no
+fi
 
-  LLVM_AMDGCN_TARGET=no
+tempCPPFLAGS=$CPPFLAGS
+CPPFLAGS="$CPPFLAGS -I/opt/hsa/include"
 
-  AC_MSG_CHECKING([if the amdgcn--amdhsa target is supported in Clang/LLVM])
-  if $LLVM_BINDIR/clang conftest.c -target amdgcn--amdhsa -emit-llvm -S -c -o - 2>/dev/null | grep -cq 'target triple = "amdgcn--amdhsa"';
-  then
-    AC_MSG_RESULT([yes])
-    LLVM_AMDGCN_TARGET=yes
-  else
-    AC_MSG_ERROR([amdgcn--amdhsa target in LLVM required])
-  fi
-
-  tempCPPFLAGS=$CPPFLAGS
-  CPPFLAGS="$CPPFLAGS $hsa_cpp_flags"
-  AC_MSG_CHECKING([for HSA runtime headers])
-    AC_COMPILE_IFELSE(
+AC_MSG_CHECKING([for HSA runtime headers])
+AC_COMPILE_IFELSE(
   [AC_LANG_PROGRAM(
     [[ #include <hsa.h> ]]
   )],
-  [AC_MSG_RESULT(yes)],
-  [AC_MSG_ERROR([HSA runtime headers not found, use --with-hsa-runtime-headers])])
-  CPPFLAGS=$tempCPPFLAGS
+[AC_MSG_RESULT(yes)],
+[AC_MSG_RESULT(no)
+enable_hsa="no"
+])
 
+CPPFLAGS=$tempCPPFLAGS
+
+
+if test "$enable_hsa" = "yes";
+then
   OCL_DRIVERS="$OCL_DRIVERS hsa"
-  OCL_TARGETS="$OCL_TARGETS amdgcn"
-  AC_DEFINE([AMDGCN_ENABLED], [], [Defined in case AMDGCN device support enabled.])
-  AC_DEFINE([BUILD_HSA], [1], [Defined to 1 if TCE libraries and tools are available])
+  OCL_TARGETS="$OCL_TARGETS amdgcn hsail64"
+  AC_DEFINE([AMDGCN_ENABLED], [1], [Defined in case AMDGCN device support enabled.])
+  AC_DEFINE([BUILD_HSA], [1], [Defined to 1 in case the HSA driver should be built.])
   enable_testsuite_hsa=yes
   POAT_TESTSUITES="$POAT_TESTSUITES hsa"
+
+  # -lhsail is missing from llvm-config --system-libs
+  # -lHSAILUtil is missing from llvm-config --libfiles
+  LLVM_LIBS="$LLVM_LIBS -lLLVMHSAILUtil -lhsail"
 fi
+
+# TODO: move above
 
 # Enable the HSA test suite in case HSA support enabled.
 AM_CONDITIONAL([TEST_SUITE_HSA], [test "$enable_testsuite_hsa" = "yes"])
@@ -1499,6 +1537,7 @@ AC_CONFIG_FILES([Makefile
                  lib/kernel/host/Makefile
                  lib/kernel/tce/Makefile
                  lib/kernel/amdgcn/Makefile
+                 lib/kernel/hsail64/Makefile
                  lib/poclu/Makefile
                  examples/Makefile
                  examples/example1/Makefile

@@ -1,8 +1,6 @@
-# Process this file with automake to produce Makefile.in (in this,
-# and all subdirectories).
-# Makefile.am for pocl/lib/CL/devices/hsa.
+# Process this file with automake to produce Makefile.in
 #
-# Copyright (c) 2015 Pekka Jääskeläinen / Tampere University of Technology
+# Copyright (c) 2015 Pekka Jääskeläinen
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,17 +20,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-noinst_LTLIBRARIES = libpocl-devices-hsa.la
+KERNEL_TARGET = hsail64
 
-libpocl_devices_hsa_la_SOURCES = pocl-hsa.h pocl-hsa.c
+# Use TARGET flags:
+CLANG_FLAGS = @TARGET_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -target ${KERNEL_TARGET}
+LLC_FLAGS   = @TARGET_LLC_FLAGS@
+LD_FLAGS    = @TARGET_LD_FLAGS@
 
-libpocl_devices_hsa_la_CFLAGS = -std=c99
+include ../rules.mk
+include ../sources.mk
 
-# TODO: find out the HSA include dir at configure time.
-libpocl_devices_hsa_la_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices \
-	-I$(top_srcdir)/lib/CL $(OCL_ICD_CFLAGS) @HSA_INCLUDES@
-#  -I$(HOME)/src/HSA-Runtime-Reference-Source/inc
-
-libpocl_devices_hsa_la_LDFLAGS = ${HSA_LIBS} -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
+# TODO: a global memory ring buffer stdout based printf
+LKERNEL_SRCS_EXCLUDE = printf.c barrier.ll
+LKERNEL_SRCS_EXTRA = barrier.c
 
 EXTRA_DIST = CMakeLists.txt

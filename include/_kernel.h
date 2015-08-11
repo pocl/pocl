@@ -74,9 +74,6 @@
 #  define _CL_STATIC_ASSERT(_t, _x) typedef int __cl_ai##_t[(x) ? 1 : -1];
 #endif
 
-#define CLK_LOCAL_MEM_FENCE 0x1
-#define CLK_GLOBAL_MEM_FENCE 0x2
-
 typedef uint cl_mem_fence_flags;
 
 

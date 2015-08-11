@@ -81,4 +81,8 @@
 #define CLK_FILTER_NEAREST                          0x00
 #define CLK_FILTER_LINEAR                           0x10
 
+/* barrier() flags */
+#define CLK_LOCAL_MEM_FENCE                         0x01
+#define CLK_GLOBAL_MEM_FENCE                        0x02
+
 #endif

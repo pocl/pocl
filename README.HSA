@@ -1,32 +1,48 @@
-NOTE: The support is _very_ experimental and preliminary (pretty much untested
-apart from the example1), so beware. You should check it out only if you are willing
-to help in the development.
+NOTE: The experimental HSA driver is truly the first steps
+towards HSA support. Pretty much nothing works. So, you might
+not want to bother trying it out unless you plan to help in
+the development!
 
-NOTE: Until things stabilize a bit, the 'hsa' branch contains new development
-over pocl-hsa: https://github.com/pocl/pocl/tree/hsa
+The experimental HSA driver works only with an AMD Kaveri
+using the HSAIL-supported LLVM and Clang.
 
-The experimental HSA driver works only with an AMD Kaveri using LLVM's R600
-backend and LLVM 3.6 at the moment.
+The HSAIL-based HSA support needs libHSAIL and HLC-HSAIL-Development-LLVM
+along with a Clang that is patched with the HSAIL target. As of 2015-08-06
+you can install the prerequisities as follows:
 
-You need to install the HSA preliminary runtime library via
+1) install the HSA AMD runtime library via
 
-  git clone http://www.cs.tut.fi/~pjaaskel/HSA-Runtime-Reference-Source-legacy.git
+  https://github.com/HSAFoundation/HSA-Runtime-AMD
 
-Then install its libhsa-runtime64.so so it's found by the pocl configure.
+2) install libHSAIL from https://github.com/HSAFoundation/HSAIL-Tools
 
-NOTE: At the time of this writing the upstream HSA Runtime Reference Source
-uses a new version of the binary format which is not yet supported by the
-R600 LLVM backend (situation with LLVM 3.6, 2015-05-19). Until this situation
-is solved, you need to use the older version from the above link.
+3) install the LLVM with HSAIL support from
 
-The clang must be configured with the AMD backends. It can be done by
-adding '--enable-experimental-targets=R600' to the LLVM configure command.
+  https://github.com/HSAFoundation/HLC-HSAIL-Development-LLVM/tree/hsail-stable-3.7
 
-After that, configure pocl with a command line similar to this:
+Build it with a Clang 3.7 patched with
 
-  ./configure --enable-hsa-amdgcn --with-hsa-runtime-headers=$HOME/src/HSA-Runtime-Reference-Source-legacy/inc
+  http://reviews.llvm.org/file/data/qt4rt7x5y6rmuhf5hpkq/PHID-FILE-yiytwnvizsckrw6rzuqp/D10586.diff
 
-Then, you can smoke test the HSA driver by executing the HSA tests of the
-pocl testsuite:
+to get the HSAIL Clang support.
+
+Also apply the patch in tools/patches/llvm-3.7-hsail-branch.patch for the LLVM.
+
+An LLVM cmake configuration command like this worked for me:
+
+  cmake .. -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=HSAIL -DBUILD_SHARED_LIBS=off \
+-DCMAKE_INSTALL_PREFIX=INSTALL_DIR -DLLVM_ENABLE_RTTI=on -DLLVM_BUILD_LLVM_DYLIB=on \
+-DLIBHSAIL_INCLUDE_DIR=$HOME/local/include -DLIBHSAIL_LIBRARIES=$HOME/local/lib/libhsail.a
+
+Make sure the libHSAIL is detected by the cmake by searching CMakeCache.txt
+for HSAIL_USE_LIBHSAIL (ensure it is 'ON').
+
+4) Build pocl.
+
+Ensure the libraries are found in LD path etc. Now pocl's configure should detect HSA and
+you should see a mention of it printed at the end of the script's execution.
+
+After building pocl, you can smoke test the HSA driver by executing the HSA
+tests of the pocl testsuite:
 
   make check TESTSUITEFLAGS="-k hsa"

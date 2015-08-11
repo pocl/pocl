@@ -59,8 +59,6 @@
 const char*
 llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
 
-  int pocl_verbose = pocl_get_bool_option("POCL_VERBOSE", 0);
-
   char command[COMMAND_LENGTH];
   char bytecode[POCL_FILENAME_LENGTH];
   char objfile[POCL_FILENAME_LENGTH];
@@ -99,10 +97,7 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
             module, objfile);
       assert (error >= 0);
 
-      if (pocl_verbose) {
-        fprintf(stderr, "[pocl] executing [%s]\n", command);
-        fflush(stderr);
-      }
+      POCL_MSG_PRINT_INFO ("executing [%s]\n", command);
       error = system (command);
       assert (error == 0);
 
