@@ -157,8 +157,10 @@ else
       LLVM_LIBS=$($LLVM_CONFIG --libs)
       AC_MSG_NOTICE([LLVM shared library $LLVM_SHARED_LIB_FILE not found.])
     else
-      LLVM_LIBS=-lLLVM
-      AC_MSG_NOTICE([LLVM shared library $LLVM_SHARED_LIB_FILE built with cmake found.])
+      # The Cmake built libLLVM.so seems to be missing a lot of symbols
+      # to the point of being useless. Fall back to the static lib.
+      LLVM_LIBS=$($LLVM_CONFIG --libs)
+      AC_MSG_NOTICE([LLVM shared library $LLVM_SHARED_LIB_FILE built with cmake found, using the static lib instead.])
     fi
   fi
 fi
