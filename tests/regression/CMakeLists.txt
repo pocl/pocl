@@ -38,7 +38,7 @@ set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
 if (MSVC)
   add_compile_options(${OPENCL_CFLAGS})
 else ()
-  add_compile_options("-Wno-deprecated" "-Wno-deprecated-declarations" ${OPENCL_CFLAGS})
+  add_compile_options("-std=c++11" "-Wno-deprecated" "-Wno-deprecated-declarations" ${OPENCL_CFLAGS})
 endif ()
  
 
