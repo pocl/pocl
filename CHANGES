@@ -26,6 +26,10 @@ Bugfixes
 - Avoid infinite loops when users recycle an event waiting list.
 - Correctly report the base address alignment.
 
+Misc
+----
+- Tests now using new cl2.hpp, removing dependency on OpenGL headers
+
 
 0.11 March 2015
 ===============
