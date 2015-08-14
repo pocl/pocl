@@ -164,6 +164,16 @@ OK
 AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_min_max], 0, expout)
 AT_CLEANUP
 
+AT_SETUP([Kernel functions length, distance, and normalize])
+# This tests in particular for unintended overflow
+AT_KEYWORDS([length_distance])
+AT_DATA([expout],
+[Running test test_length_distance...
+OK
+])
+AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_length_distance], 0, expout)
+AT_CLEANUP
+
 AT_SETUP([Kernel functions fmin, fmax, fma])
 AT_KEYWORDS([fmin_fmax_fma])
 AT_XFAIL_IF([grep HOST_CPU $abs_top_builddir/config.h | cut -d\" -f2 | grep -q powerpc ])
