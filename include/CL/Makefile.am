@@ -36,7 +36,8 @@ if INSTALL_OPENCL_HEADERS
 library_includedir = $(includedir)/CL
 library_include_HEADERS = cl.h cl_ext.h			\
                           cl_gl.h cl_gl_ext.h		\
-                          cl_platform.h opencl.h
+                          cl_platform.h opencl.h \
+                          cl2.hpp
 nodist_library_include_HEADERS = cl.hpp
 endif
 
