@@ -621,11 +621,7 @@ if test x"$ioh" = "yes"; then
    CPPFLAGS="-Iinclude $CPPFLAGS"
 fi
 
-# Check for OpenGL.h headers as they are required to compile
-# test cases that use cl.hpp (which requires it).
-AC_CHECK_HEADERS([GL/gl.h OpenGL/OpenGL.h], [opengl_found="ok"; break])
-test -z "$opengl_found" && \
-AC_MSG_FAILURE([Please install an OpenGL implementation with gl.h or OpenGL.h. It is required by the C++ bindings.])
+# Using cl2.hpp shipped with pocl
 AM_CONDITIONAL([HAVE_OPENCL_HPP], true)
 AC_DEFINE([HAVE_OPENCL_HPP], [] ,[Defined if system cl.hpp found to be working])
 
