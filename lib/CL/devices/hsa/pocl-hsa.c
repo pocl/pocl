@@ -77,12 +77,14 @@
      works with HSA Base profile agents (assuming all memory is coherent
      requires the Full profile) -- or perhaps a separate hsabase driver
      for the simpler agents.
-   - autoprobe for HSA devices
    - check what is needed to be done only once per agent in the *run(),
      now there's _lots_ of boilerplate per kernel launch
    - local memory support
    - Share the same kernel binary function for all WG sizes as HSA is an
      SPMD target. Now it builds a new one for all WGs due to the tempdir.
+   - Do not use the BRIG output of the LLVM-HSAIL branch as it's not going
+     to get merged upstream. Use HSAIL text output + libHSAIL's assembler
+     instead.
    - clinfo of Ubuntu crashes
    - etc. etc.
 */
@@ -421,7 +423,7 @@ setup_kernel_args (struct pocl_hsa_device_data *d,
                    size_t max_args_size)
 {
   char *write_pos = arg_space;
-  const char *last_pos = arg_space + max_args_size - 1;
+  const char *last_pos = arg_space + max_args_size;
 
 #define CHECK_SPACE(DSIZE)                                   \
   do {                                                       \
@@ -605,8 +607,8 @@ pocl_hsa_run(void *data, _cl_command_node* cmd)
   /*
    * Allocate the kernel argument buffer from the correct region.
    */
-  uint32_t args_segment_size,
-  error = hsa_executable_symbol_get_info
+  uint32_t args_segment_size;
+  status = hsa_executable_symbol_get_info
     (kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_KERNARG_SEGMENT_SIZE,
      &args_segment_size);
 
@@ -616,8 +618,8 @@ pocl_hsa_run(void *data, _cl_command_node* cmd)
 
   void *args;
 
-  error = hsa_memory_allocate(kernarg_region, args_segment_size, &args);
-  if (error != HSA_STATUS_SUCCESS)
+  status = hsa_memory_allocate(kernarg_region, args_segment_size, &args);
+  if (status != HSA_STATUS_SUCCESS)
     POCL_ABORT ("pocl-hsa: unable to allocate argument memory.\n");
 
   setup_kernel_args (d, cmd, (char*)args, args_segment_size);
@@ -634,12 +636,7 @@ pocl_hsa_run(void *data, _cl_command_node* cmd)
     * Increment the write index and ring the doorbell to dispatch the kernel.
     */
    hsa_queue_store_write_index_relaxed (d->queue, queue_index + 1);
-   if (status != HSA_STATUS_SUCCESS)
-     POCL_ABORT ("pocl-hsa: unable to dispatch the kernel.\n");
-
    hsa_signal_store_relaxed (d->queue->doorbell_signal, queue_index);
-   if (status != HSA_STATUS_SUCCESS)
-     POCL_ABORT ("pocl-hsa: unable to dispatch the kernel.\n");
 
   /* Launch the kernel by allocating a slot in the queue, writing the
      command to it, signaling the update with a door bell and finally,
