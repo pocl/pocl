@@ -95,14 +95,14 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
   std::map<unsigned, unsigned> addrSpaceMap;
 
   if (arch.startswith("x86_64")) {
-#if defined LLVM_3_1 || defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4
+#ifndef LLVM_OLDER_THAN_3_7
     /* For x86_64 the default isel seems to work with the
-       fake address spaces. Skip the processing as it causes 
+       fake address spaces. Skip the processing as it causes
        an overhead and is not fully implemented.
     */
     return false;
 #else
-    /* LLVM 3.5 exposes an issue with pocl's printf or another LLVM pass:
+    /* At least LLVM 3.5 exposes an issue with pocl's printf or another LLVM pass:
        After the code emission optimizations there appears a
        PHI node where the two alternative pointer assignments have different
        address spaces:
