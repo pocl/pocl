@@ -575,11 +575,7 @@ endif()
 
 set_cache_var(LLC_TRIPLE "LLC_TRIPLE")
 
-
-
-setup_cache_var_name(LLC_HOST_CPU "LLC_HOST_CPU-${LLVM_HOST_TARGET}-${LLC}")
-
-if(NOT DEFINED ${CACHE_VAR_NAME} AND NOT CMAKE_CROSSCOMPILING)
+if(NOT DEFINED LLC_HOST_CPU AND NOT CMAKE_CROSSCOMPILING)
   message(STATUS "Find out LLC host CPU with ${LLC}")
   execute_process(COMMAND ${LLC} "--version" RESULT_VARIABLE RES_VAR OUTPUT_VARIABLE OUTPUT_VAR)
   # WTF, ^^ has return value 1
@@ -598,10 +594,9 @@ if(NOT DEFINED ${CACHE_VAR_NAME} AND NOT CMAKE_CROSSCOMPILING)
   if(CMAKE_LIBRARY_ARCHITECTURE MATCHES "gnueabihf" AND LLC_HOST_CPU MATCHES "arm1176jz-s")
     set(LLC_HOST_CPU "arm1176jzf-s")
   endif()
-
 endif()
 
-set_cache_var(LLC_HOST_CPU "LLC_HOST_CPU")
+set(LLC_HOST_CPU "${LLC_HOST_CPU}" CACHE STRING "The Host CPU to use with llc")
 
 ####################################################################
 #X86 has -march and -mcpu reversed, for clang
