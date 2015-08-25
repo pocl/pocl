@@ -53,7 +53,8 @@ static const char cl_parameters[] =
   "-cl-std=CL1.1 "
   "-cl-kernel-arg-info "
   "-w "
-  "-g ";
+  "-g "
+  "-Werror ";
 
 static const char cl_parameters_not_yet_supported_by_clang[] =
   "-cl-strict-aliasing "
@@ -131,7 +132,7 @@ CL_API_SUFFIX__VERSION_1_0
         {
           /* check if parameter is supported compiler parameter */
           if (memcmp (token, "-cl", 3) == 0 || memcmp (token, "-w", 2) == 0 
-              || memcmp(token, "-g", 2) == 0)
+              || memcmp(token, "-g", 2) == 0 || memcmp(token, "-Werror", 7) == 0)
             {
               if (strstr (cl_parameters, token))
                 {
