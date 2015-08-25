@@ -650,9 +650,7 @@ set_cache_var(CL_DISABLE_LONG "Disable cl_khr_int64 because of buggy llvm")
 
 ####################################################################
 
-setup_cache_var_name(CL_DISABLE_HALF "CL_DISABLE_HALF-${LLVM_HOST_TARGET}-${CLANG}")
-
-if(NOT DEFINED ${CACHE_VAR_NAME})
+if(NOT DEFINED ${CL_DISABLE_HALF})
   set(CL_DISABLE_HALF 0)
   # TODO -march=CPU flags !
   custom_try_compile_c_cxx("${CLANG}" "c" "__fp16 callfp16(__fp16 a) { return a * (__fp16)1.8; };" "__fp16 x=callfp16((__fp16)argc);" RESV -c ${CLANG_TARGET_OPTION}${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${LLC_HOST_CPU})
@@ -661,4 +659,4 @@ if(NOT DEFINED ${CACHE_VAR_NAME})
   endif()
 endif()
 
-set_cache_var(CL_DISABLE_HALF "Disable cl_khr_fp16 because fp16 is not supported")
+set(CL_DISABLE_HALF "${CL_DISABLE_HALF}" CACHE BOOL "Disable cl_khr_fp16 because fp16 is not supported")
