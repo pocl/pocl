@@ -262,6 +262,12 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
 
   device->extensions = DOUBLE_EXT HALF_EXT "cl_khr_byte_addressable_store";
 
+  /* hwloc probes OpenCL device info at its initialization in case
+     the OpenCL extension is enabled. This causes to printout 
+     an unimplemented property error because hwloc is used to
+     initialize global_mem_size which it is not yet. Just put 
+     a nonzero there for now. */
+  device->global_mem_size = 1;
   pocl_topology_detect_device_info(device);
   pocl_cpuinfo_detect_device_info(device);
   pocl_basic_set_buffer_image_limits(device);
