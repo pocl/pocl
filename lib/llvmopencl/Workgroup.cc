@@ -318,7 +318,7 @@ createLauncher(Module &M, Function *F)
 #ifdef LLVM_OLDER_THAN_3_7
           v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, i));
 #else
-          v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr->getType(), ptr, 0, i));
+          v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr->getType()->getPointerElementType(), ptr, 0, i));
 #endif
         }
       builder.CreateStore(v, gv);
@@ -345,7 +345,7 @@ createLauncher(Module &M, Function *F)
 #ifdef LLVM_OLDER_THAN_3_7
           v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, i));
 #else
-          v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr->getType(), ptr, 0, i));
+          v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr->getType()->getPointerElementType(), ptr, 0, i));
 #endif
         }
       builder.CreateStore(v, gv);
@@ -372,7 +372,7 @@ createLauncher(Module &M, Function *F)
 #ifdef LLVM_OLDER_THAN_3_7
           v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, i));
 #else
-          v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr->getType(), ptr, 0, i));
+          v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr->getType()->getPointerElementType(), ptr, 0, i));
 #endif
         }
       builder.CreateStore(v, gv);
