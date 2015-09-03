@@ -115,7 +115,7 @@ fi
     -load=${pocl_kernel_compiler_lib} -domtree -workitem-handler-chooser -break-constgeps -generate-header -flatten -always-inline \
     -globaldce -simplifycfg -loop-simplify -uniformity -phistoallocas -isolate-regions -implicit-loop-barriers -implicit-cond-barriers \
     -loop-barriers -barriertails -barriers -isolate-regions -add-wi-metadata -wi-aa -workitemrepl -workitemloops \
-    -allocastoentry -workgroup -kernel=${kernel} -local-size=1 1 1 -disable-simplify-libcalls \
+    -allocastoentry -workgroup -kernel=${kernel} -disable-simplify-libcalls \
     -target-address-spaces \
     ${EXTRA_OPTS} ${OPT_SWITCH} -instcombine -header=/dev/null ${FP_CONTRACT} -o ${output_file} ${linked_bc}
 
