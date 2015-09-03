@@ -241,7 +241,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
 
   if (num_events || add_prev_command)
     {
-      event_wl = malloc((num_events + add_prev_command)*sizeof(cl_event));
+      event_wl = (cl_event*)malloc((num_events + add_prev_command)*sizeof(cl_event));
       if (event_wl == NULL)
         return CL_OUT_OF_HOST_MEMORY;
     }

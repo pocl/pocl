@@ -77,7 +77,7 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
   /* recopy the cl_mem object list to free them easily after run */
   if (num_mem_objects)
     {
-      mem_list_copy = malloc(num_mem_objects * sizeof(cl_mem));
+      mem_list_copy = (cl_mem*) malloc(num_mem_objects * sizeof(cl_mem));
       if (mem_list_copy == NULL)
       {
         POCL_MEM_FREE(args_copy);

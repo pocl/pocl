@@ -68,7 +68,7 @@ static const char cl_parameters_not_yet_supported_by_clang[] =
   size_t needed = strlen(token) + 1; \
   if (size <= (i + needed)) { \
     size_t grow_by = needed > 256 ? needed : 256; \
-    char *grown_ptr = realloc(modded_options, size + grow_by); \
+    char *grown_ptr = (char *)realloc(modded_options, size + grow_by); \
     if (grown_ptr == NULL) { \
       /* realloc failed, free modded_options and return */ \
       errcode = CL_OUT_OF_HOST_MEMORY; \

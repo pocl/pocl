@@ -56,7 +56,7 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
   POCL_GOTO_ERROR_ON((info->size + info->origin > buffer->size), CL_INVALID_VALUE,
     "buffer_create_info->size+origin > buffer size\n");
 
-  mem = malloc(sizeof(struct _cl_mem));
+  mem = (cl_mem) malloc(sizeof(struct _cl_mem));
   if (mem == NULL)
   {
     errcode = CL_OUT_OF_HOST_MEMORY;
@@ -127,7 +127,8 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
       mem->mem_host_ptr = (char*)buffer->mem_host_ptr + info->origin;
     }
 
-  mem->device_ptrs = malloc(pocl_num_devices * sizeof(pocl_mem_identifier));
+  mem->device_ptrs = (pocl_mem_identifier*)
+    malloc(pocl_num_devices * sizeof(pocl_mem_identifier));
   if (mem->device_ptrs == NULL)
     {
         errcode = CL_OUT_OF_HOST_MEMORY;

@@ -53,7 +53,7 @@ main (void)
   source_size = ftell (source_file);
   fseek (source_file, 0, SEEK_SET);
 
-  source = malloc (source_size + 1);
+  source = (char *) malloc (source_size + 1);
   assert (source != NULL);
 
   fread (source, source_size, 1, source_file);
@@ -61,9 +61,9 @@ main (void)
 
   fclose (source_file);
 
-  srcA = malloc (N * sizeof (cl_float4));
-  dst =  malloc (N * sizeof (cl_float4));
-  dstS = malloc (N * sizeof (cl_float));
+  srcA = (cl_float4 *) malloc (N * sizeof (cl_float4));
+  dst = (cl_float4 *) malloc (N * sizeof (cl_float4));
+  dstS = (cl_float *) malloc (N * sizeof (cl_float));
 
   for (i = 0; i < N; ++i)
     {

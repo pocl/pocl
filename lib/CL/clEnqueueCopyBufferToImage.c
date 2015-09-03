@@ -57,7 +57,7 @@ CL_API_SUFFIX__VERSION_1_0
                               image->image_channel_data_type,
                               &host_channels, &host_elem_size);
     
-  char* temp = malloc (image->size);
+  char* temp = (char*) malloc (image->size);
     
   cl_device_id device_id = command_queue->device;
 

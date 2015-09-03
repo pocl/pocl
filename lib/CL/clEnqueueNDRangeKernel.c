@@ -268,8 +268,8 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   /* Copy the currently set kernel arguments because the same kernel 
      object can be reused for new launches with different arguments. */
   command_node->command.run.arguments =
-    malloc ((kernel->num_args + kernel->num_locals) *
-            sizeof (struct pocl_argument));
+    (struct pocl_argument *) malloc ((kernel->num_args + kernel->num_locals) *
+                                     sizeof (struct pocl_argument));
 
   for (i = 0; i < kernel->num_args + kernel->num_locals; ++i)
     {
@@ -312,7 +312,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   
   /* Copy the argument buffers just so we can free them after execution. */
   command_node->command.run.arg_buffers =
-    malloc (sizeof (cl_mem) * command_node->command.run.arg_buffer_count);
+    (cl_mem *) malloc (sizeof (cl_mem) * command_node->command.run.arg_buffer_count);
   count = 0;
   for (i = 0; i < kernel->num_args; ++i)
   {

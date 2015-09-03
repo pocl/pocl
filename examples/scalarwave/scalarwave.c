@@ -49,7 +49,7 @@ exec_scalarwave_kernel(char      const *const program_source,
     size_t ndevices;
     clGetContextInfo(context, CL_CONTEXT_DEVICES, 0, NULL, &ndevices);
     ndevices /= sizeof(cl_device_id);
-    cl_device_id *devices = malloc(ndevices * sizeof(cl_device_id));
+    cl_device_id *devices = (cl_device_id*)malloc(ndevices * sizeof(cl_device_id));
     clGetContextInfo(context, CL_CONTEXT_DEVICES,
                      ndevices*sizeof(cl_device_id), devices, NULL);
     
@@ -158,11 +158,13 @@ main(void)
   size_t const source_size = ftell(source_file);
   fseek(source_file, 0, SEEK_SET);
   
-  char *source = malloc(source_size + 1);
+  char *source = (char*)malloc(source_size + 1);
   fread(source, source_size, 1, source_file);
   source[source_size] = '\0';
   
   fclose(source_file);
+
+
 
   grid_t grid;
   grid.dt = ALPHA/(NX-1);
@@ -170,11 +172,11 @@ main(void)
   grid.ai = grid.aj = grid.ak = roundup(NX);
   grid.ni = grid.nj = grid.nk = NX;
   
-  cl_double *restrict phi     =
+  cl_double *restrict phi     = (cl_double*)
     malloc (grid.ai*grid.aj*grid.ak * sizeof *phi    );
-  cl_double *restrict phi_p   =
+  cl_double *restrict phi_p   = (cl_double*)
     malloc (grid.ai*grid.aj*grid.ak * sizeof *phi_p  );
-  cl_double *restrict phi_p_p =
+  cl_double *restrict phi_p_p = (cl_double*)
     malloc (grid.ai*grid.aj*grid.ak * sizeof *phi_p_p);
   
   // Set up initial data (TODO: do this on the device instead)

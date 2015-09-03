@@ -63,7 +63,7 @@ POname(clCreateProgramWithSource)(cl_context context,
         size += lengths[i];
     }
 
-  source = malloc(size + 1);
+  source = (char *) malloc(size + 1);
   if (source == NULL)
   {
     errcode = CL_OUT_OF_HOST_MEMORY;

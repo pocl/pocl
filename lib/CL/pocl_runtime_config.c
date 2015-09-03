@@ -58,7 +58,7 @@ env_data* find_env (env_data* cache, const char* key)
     }
   if ((value = getenv(key)))
     {
-      ed = malloc (sizeof (env_data));
+      ed = (env_data*) malloc (sizeof (env_data));
       ed->env = strdup (key);
       ed->value = strdup (value);
       ed->next = NULL;

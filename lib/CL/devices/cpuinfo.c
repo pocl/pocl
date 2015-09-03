@@ -314,7 +314,7 @@ pocl_cpuinfo_get_cpu_name_and_vendor(cl_device_id device)
 
   /* create the descriptive long_name for device */
   int len = strlen (device->short_name) + (end-start) + 2;
-  char *new_name = malloc (len);
+  char *new_name = (char*)malloc (len);
   snprintf (new_name, len, "%s-%s", device->short_name, start);
   device->long_name = new_name;
 

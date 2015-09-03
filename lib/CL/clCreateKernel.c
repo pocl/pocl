@@ -65,7 +65,7 @@ POname(clCreateKernel)(cl_program program,
     CL_INVALID_PROGRAM_EXECUTABLE, "No built binaries in program "
     "(this shouldn't happen...)\n");
 
-  kernel = malloc(sizeof(struct _cl_kernel));
+  kernel = (cl_kernel) malloc(sizeof(struct _cl_kernel));
   if (kernel == NULL)
   {
     errcode = CL_OUT_OF_HOST_MEMORY;

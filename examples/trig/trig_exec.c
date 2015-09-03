@@ -34,7 +34,7 @@ exec_trig_kernel(const char *program_source,
  
   // get the list of GPU devices associated with context 
   clGetContextInfo(context, CL_CONTEXT_DEVICES, 0, NULL, &cb); 
-  devices = malloc(cb);
+  devices = (cl_device_id *) malloc(cb);
   clGetContextInfo(context, CL_CONTEXT_DEVICES, cb, devices, NULL); 
  
   // create a command-queue 

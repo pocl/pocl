@@ -37,7 +37,7 @@ main(void)
   clGetSupportedImageFormats (context, 0, CL_MEM_OBJECT_IMAGE2D, 0, 
                               NULL, &num_entries);
   
-  img_formats = malloc (sizeof(cl_image_format)*num_entries);
+  img_formats = (cl_image_format*)malloc (sizeof(cl_image_format)*num_entries);
 
   clGetSupportedImageFormats (context, 0, CL_MEM_OBJECT_IMAGE2D, 
                                       num_entries, img_formats, NULL);
