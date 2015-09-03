@@ -284,6 +284,7 @@ namespace vecmathlib {
                   "vector size is wrong");
     
     typedef boolvec<real_t, size> boolvec_t;
+    typedef intvec<real_t, size> fintvec_t;
     typedef intvec<real_t, size> intvec_t;
     typedef realvec realvec_t;
     

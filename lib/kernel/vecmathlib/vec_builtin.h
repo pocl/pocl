@@ -465,7 +465,7 @@ namespace vecmathlib {
     {
       VML_ASSERT(intptr_t(p) % alignment == 0);
 #if __has_builtin(__builtin_assume_aligned)
-      p = __builtin_assume_aligned(p, sizeof(realvec_t));
+      p = (real_t*)__builtin_assume_aligned(p, sizeof(realvec_t));
 #endif
       *(vector_t*)p = v;
     }

@@ -188,7 +188,7 @@ namespace vecmathlib {
     boolvec_t convert_bool() const
     {
       // Result: convert_bool(0)=false, convert_bool(else)=true
-      // There is no intrinsic to compare with zero. Instead, we check
+      // There is no intrinsic to compare to zero. Instead, we check
       // whether x is positive and x-1 is negative.
       intvec_t x = *this;
       // We know that boolvec_t values depend only on the sign bit

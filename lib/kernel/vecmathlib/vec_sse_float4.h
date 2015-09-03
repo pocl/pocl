@@ -743,7 +743,7 @@ namespace vecmathlib {
 #ifdef __SSE4_1__
       return _mm_max_epi32(v, x.v);
 #else
-      return MF::vml_max(*this, v);
+      return MF::vml_max(*this, x);
 #endif
   }
   
@@ -752,7 +752,7 @@ namespace vecmathlib {
 #ifdef __SSE4_1__
       return _mm_min_epi32(v, x.v);
 #else
-      return MF::vml_min(*this, v);
+      return MF::vml_min(*this, x);
 #endif
   }
   

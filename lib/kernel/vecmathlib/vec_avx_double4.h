@@ -118,6 +118,250 @@ namespace vecmathlib {
   
   
   
+//   template<>
+//   struct fintvec<double,4>: floatprops<double>
+//   {
+//     static int const size = 4;
+//     typedef int_t scalar_t;
+//     typedef __m256d fvector_t;
+//     static int const alignment = sizeof(fvector_t);
+//     
+//     static_assert(size * sizeof(real_t) == sizeof(fvector_t),
+//                   "vector size is wrong");
+//     
+//     typedef boolvec<real_t, size> boolvec_t;
+//     typedef fintvec fintvec_t;
+//     typedef intvec intvec_t;
+//     typedef realvec<real_t, size> realvec_t;
+//     
+//     // Short names for type casts
+//     typedef real_t R;
+//     typedef int_t I;
+//     typedef uint_t U;
+//     typedef realvec_t RV;
+//     typedef fintvec_t FV;
+//     typedef intvec_t IV;
+//     typedef boolvec_t BV;
+//     typedef floatprops<real_t> FP;
+//     typedef mathfuncs<realvec_t> MF;
+//     
+//     
+//     
+//     fvector_t v;
+//     
+//     fintvec() {}
+//     // Can't have a non-trivial copy constructor; if so, objects won't
+//     // be passed in registers
+//     // fintvec(intvec const& x): v(x.v) {}
+//     // fintvec& operator=(intvec const& x) { return v=x.v, *this; }
+//     fintvec(fvector_t x): v(x) {}
+//     fintvec(int_t a): v(_mm256_set1_pd(FP::convert_float(a))) {}
+//     fintvec(int_t const* as): v(_mm256_set_pd(FP::convert_float(as[3]),
+//                                               FP::convert_float(as[2]),
+//                                               FP::convert_float(as[1]),
+//                                               FP::convert_float(as[0]))) {}
+//     static fintvec_t iota() { return _mm256_set_pd(3.0, 2.0, 1.0, 0.0); }
+//     
+//     operator fvector_t() const { return v; }
+//     int_t operator[](int n) const
+//     {
+//       return FP::convert_int(vecmathlib::get_elt<FV,fvector_t,int_t>(v, n));
+//     }
+//     fintvec_t& set_elt(int n, int_t a)
+//     {
+//       return (vecmathlib::set_elt<FV,fvector_t,int_t>
+//               (v, n, FP::convert_float(a))), *this;
+//     }
+//     
+//     
+//     
+//     boolvec_t as_bool() const { return v; }
+//     boolvec_t convert_bool() const { return *this != RV(0.0); }
+//     realvec_t as_float() const { return v; }
+//     realvec_t convert_float() const { return v; }
+//     
+//     
+//     
+//     // Note: not all arithmetic operations are supported!
+//     
+// #error "continue here"
+//     intvec_t operator+() const { return *this; }
+//     intvec_t operator-() const { return IV(I(0)) - *this; }
+//     
+//     intvec_t operator+(intvec_t x) const
+//     {
+//       __m128i vlo = _mm256_castsi256_si128(v);
+//       __m128i vhi = _mm256_extractf128_si256(v, 1);
+//       __m128i xvlo = _mm256_castsi256_si128(x.v);
+//       __m128i xvhi = _mm256_extractf128_si256(x.v, 1);
+//       vlo = _mm_add_epi64(vlo, xvlo);
+//       vhi = _mm_add_epi64(vhi, xvhi);
+//       return _mm256_insertf128_si256(_mm256_castsi128_si256(vlo), vhi, 1);
+//     }
+//     intvec_t operator-(intvec_t x) const
+//     {
+//       __m128i vlo = _mm256_castsi256_si128(v);
+//       __m128i vhi = _mm256_extractf128_si256(v, 1);
+//       __m128i xvlo = _mm256_castsi256_si128(x.v);
+//       __m128i xvhi = _mm256_extractf128_si256(x.v, 1);
+//       vlo = _mm_sub_epi64(vlo, xvlo);
+//       vhi = _mm_sub_epi64(vhi, xvhi);
+//       return _mm256_insertf128_si256(_mm256_castsi128_si256(vlo), vhi, 1);
+//     }
+//     
+//     intvec_t& operator+=(intvec_t const& x) { return *this=*this+x; }
+//     intvec_t& operator-=(intvec_t const& x) { return *this=*this-x; }
+//     
+//     
+//     
+//     intvec_t operator~() const { return IV(~U(0)) ^ *this; }
+//     
+//     intvec_t operator&(intvec_t x) const
+//     {
+//       return _mm256_castpd_si256(_mm256_and_pd(_mm256_castsi256_pd(v),
+//                                                _mm256_castsi256_pd(x.v)));
+//     }
+//     intvec_t operator|(intvec_t x) const
+//     {
+//       return _mm256_castpd_si256(_mm256_or_pd(_mm256_castsi256_pd(v),
+//                                               _mm256_castsi256_pd(x.v)));
+//     }
+//     intvec_t operator^(intvec_t x) const
+//     {
+//       return _mm256_castpd_si256(_mm256_xor_pd(_mm256_castsi256_pd(v),
+//                                                _mm256_castsi256_pd(x.v)));
+//     }
+//     
+//     intvec_t& operator&=(intvec_t const& x) { return *this=*this&x; }
+//     intvec_t& operator|=(intvec_t const& x) { return *this=*this|x; }
+//     intvec_t& operator^=(intvec_t const& x) { return *this=*this^x; }
+//     
+//     intvec_t bitifthen(intvec_t x, intvec_t y) const;
+//     
+//     
+//     
+//     intvec_t lsr(int_t n) const
+//     {
+//       __m128i vlo = _mm256_castsi256_si128(v);
+//       __m128i vhi = _mm256_extractf128_si256(v, 1);
+//       vlo = _mm_srli_epi64(vlo, n);
+//       vhi = _mm_srli_epi64(vhi, n);
+//       return _mm256_insertf128_si256(_mm256_castsi128_si256(vlo), vhi, 1);
+//     }
+//     intvec_t rotate(int_t n) const;
+//     intvec_t operator>>(int_t n) const
+//     {
+//       __m128i vlo = _mm256_castsi256_si128(v);
+//       __m128i vhi = _mm256_extractf128_si256(v, 1);
+//       // There is no _mm_srai_epi64. To emulate it, add 0x80000000
+//       // before shifting, and subtract the shifted 0x80000000 after
+//       // shifting
+// #if 0
+//       __m128i signmask01 = _mm_sub_epi64(_mm_set1_epi64x(0),
+//                                          _mm_srli_epi64(vlo, 63));
+//       __m128i signmask23 = _mm_sub_epi64(_mm_set1_epi64x(0),
+//                                          _mm_srli_epi64(vhi, 63));
+//       vlo = _mm_xor_si128(signmask01, vlo);
+//       vhi = _mm_xor_si128(signmask23, vhi);
+//       vlo = _mm_srli_epi64(vlo, n);
+//       vhi = _mm_srli_epi64(vhi, n);
+//       vlo = _mm_xor_si128(signmask01, vlo);
+//       vhi = _mm_xor_si128(signmask23, vhi);
+// #else
+//       // Convert signed to unsiged
+//       vlo = _mm_add_epi64(vlo, _mm_set1_epi64x(U(1) << (bits-1)));
+//       vhi = _mm_add_epi64(vhi, _mm_set1_epi64x(U(1) << (bits-1)));
+//       // Shift
+//       vlo = _mm_srli_epi64(vlo, n);
+//       vhi = _mm_srli_epi64(vhi, n);
+//       // Undo conversion
+//       vlo = _mm_sub_epi64(vlo, _mm_set1_epi64x(U(1) << (bits-1-n)));
+//       vhi = _mm_sub_epi64(vhi, _mm_set1_epi64x(U(1) << (bits-1-n)));
+// #endif
+//       return _mm256_insertf128_si256(_mm256_castsi128_si256(vlo), vhi, 1);
+//     }
+//     intvec_t operator<<(int_t n) const
+//     {
+//       __m128i vlo = _mm256_castsi256_si128(v);
+//       __m128i vhi = _mm256_extractf128_si256(v, 1);
+//       vlo = _mm_slli_epi64(vlo, n);
+//       vhi = _mm_slli_epi64(vhi, n);
+//       return _mm256_insertf128_si256(_mm256_castsi128_si256(vlo), vhi, 1);
+//     }
+//     intvec_t& operator>>=(int_t n) { return *this=*this>>n; }
+//     intvec_t& operator<<=(int_t n) { return *this=*this<<n; }
+//     
+//     intvec_t lsr(intvec_t n) const
+//     {
+//       intvec_t r;
+//       for (int i=0; i<size; ++i) {
+//         r.set_elt(i, U((*this)[i]) >> U(n[i]));
+//       }
+//       return r;
+//     }
+//     intvec_t rotate(intvec_t n) const;
+//     intvec_t operator>>(intvec_t n) const
+//     {
+//       intvec_t r;
+//       for (int i=0; i<size; ++i) {
+//         r.set_elt(i, (*this)[i] >> n[i]);
+//       }
+//       return r;
+//     }
+//     intvec_t operator<<(intvec_t n) const
+//     {
+//       intvec_t r;
+//       for (int i=0; i<size; ++i) {
+//         r.set_elt(i, (*this)[i] << n[i]);
+//       }
+//       return r;
+//     }
+//     intvec_t& operator>>=(intvec_t n) { return *this=*this>>n; }
+//     intvec_t& operator<<=(intvec_t n) { return *this=*this<<n; }
+//     
+//     intvec_t clz() const;
+//     intvec_t popcount() const;
+//     
+//     
+//     
+//     boolvec_t operator==(intvec_t const& x) const
+//     {
+//       return ! (*this != x);
+//     }
+//     boolvec_t operator!=(intvec_t const& x) const
+//     {
+//       return (*this ^ x).convert_bool();
+//     }
+//     boolvec_t operator<(intvec_t const& x) const
+//     {
+//       // return (*this - x).as_bool();
+//       boolvec_t r;
+//       for (int i=0; i<size; ++i) {
+//         r.set_elt(i, (*this)[i] < x[i]);
+//       }
+//       return r;
+//     }
+//     boolvec_t operator<=(intvec_t const& x) const
+//     {
+//       return ! (*this > x);
+//     }
+//     boolvec_t operator>(intvec_t const& x) const
+//     {
+//       return x < *this;
+//     }
+//     boolvec_t operator>=(intvec_t const& x) const
+//     {
+//       return ! (*this < x);
+//     }
+//     
+//     intvec_t abs() const;
+//     boolvec_t isignbit() const { return as_bool(); }
+//     intvec_t max(intvec_t x) const;
+//     intvec_t min(intvec_t x) const;
+//   };
+  
+  
+  
   template<>
   struct intvec<double,4>: floatprops<double>
   {
@@ -173,13 +417,17 @@ namespace vecmathlib {
     boolvec_t convert_bool() const
     {
       // Result: convert_bool(0)=false, convert_bool(else)=true
-      // There is no intrinsic to compare with zero. Instead, we check
+#ifdef __AVX2__
+      return _mm256_castsi256_pd(_mm256_cmpeq_epi64(v, _mm256_setzero_si256()));
+#else
+      // There is no intrinsic to compare to zero. Instead, we check
       // whether x is positive and x-1 is negative.
       intvec_t x = *this;
       // We know that boolvec_t values depend only on the sign bit
       // return (~(x-1) | x).as_bool();
       // return x.as_bool() || !(x-1).as_bool();
       return x.as_bool() || (x + (FP::signbit_mask - 1)).as_bool();
+#endif
     }
     realvec_t as_float() const;      // defined after realvec
     realvec_t convert_float() const; // defined after realvec
@@ -193,6 +441,9 @@ namespace vecmathlib {
     
     intvec_t operator+(intvec_t x) const
     {
+#ifdef __AVX2__
+      return _mm256_add_epi64(v, x.v);
+#else
       __m128i vlo = _mm256_castsi256_si128(v);
       __m128i vhi = _mm256_extractf128_si256(v, 1);
       __m128i xvlo = _mm256_castsi256_si128(x.v);
@@ -200,9 +451,13 @@ namespace vecmathlib {
       vlo = _mm_add_epi64(vlo, xvlo);
       vhi = _mm_add_epi64(vhi, xvhi);
       return _mm256_insertf128_si256(_mm256_castsi128_si256(vlo), vhi, 1);
+#endif
     }
     intvec_t operator-(intvec_t x) const
     {
+#ifdef __AVX2__
+      return _mm256_sub_epi64(v, x.v);
+#else
       __m128i vlo = _mm256_castsi256_si128(v);
       __m128i vhi = _mm256_extractf128_si256(v, 1);
       __m128i xvlo = _mm256_castsi256_si128(x.v);
@@ -210,6 +465,7 @@ namespace vecmathlib {
       vlo = _mm_sub_epi64(vlo, xvlo);
       vhi = _mm_sub_epi64(vhi, xvhi);
       return _mm256_insertf128_si256(_mm256_castsi128_si256(vlo), vhi, 1);
+#endif
     }
     
     intvec_t& operator+=(intvec_t const& x) { return *this=*this+x; }
@@ -221,18 +477,30 @@ namespace vecmathlib {
     
     intvec_t operator&(intvec_t x) const
     {
+#ifdef __AVX2__
+      return _mm256_and_si256(v, x.v);
+#else
       return _mm256_castpd_si256(_mm256_and_pd(_mm256_castsi256_pd(v),
                                                _mm256_castsi256_pd(x.v)));
+#endif
     }
     intvec_t operator|(intvec_t x) const
     {
+#ifdef __AVX2__
+      return _mm256_or_si256(v, x.v);
+#else
       return _mm256_castpd_si256(_mm256_or_pd(_mm256_castsi256_pd(v),
                                               _mm256_castsi256_pd(x.v)));
+#endif
     }
     intvec_t operator^(intvec_t x) const
     {
+#ifdef __AVX2__
+      return _mm256_xor_si256(v, x.v);
+#else
       return _mm256_castpd_si256(_mm256_xor_pd(_mm256_castsi256_pd(v),
                                                _mm256_castsi256_pd(x.v)));
+#endif
     }
     
     intvec_t& operator&=(intvec_t const& x) { return *this=*this&x; }
@@ -245,15 +513,26 @@ namespace vecmathlib {
     
     intvec_t lsr(int_t n) const
     {
+#ifdef __AVX2__
+      return _mm256_srli_epi64(v, n);
+#else
       __m128i vlo = _mm256_castsi256_si128(v);
       __m128i vhi = _mm256_extractf128_si256(v, 1);
       vlo = _mm_srli_epi64(vlo, n);
       vhi = _mm_srli_epi64(vhi, n);
       return _mm256_insertf128_si256(_mm256_castsi128_si256(vlo), vhi, 1);
+#endif
     }
     intvec_t rotate(int_t n) const;
     intvec_t operator>>(int_t n) const
     {
+#ifdef __AVX2__
+      // There is no _mm256_srai_epi64. To emulate it, add 0x80000000
+      // before shifting, and subtract the shifted 0x80000000 after
+      // shifting
+      intvec_t offset = U(1) << (bits-1);
+      return (*this + offset).lsr(n) - offset.lsr(n);
+#else
       __m128i vlo = _mm256_castsi256_si128(v);
       __m128i vhi = _mm256_extractf128_si256(v, 1);
       // There is no _mm_srai_epi64. To emulate it, add 0x80000000
@@ -282,42 +561,61 @@ namespace vecmathlib {
       vhi = _mm_sub_epi64(vhi, _mm_set1_epi64x(U(1) << (bits-1-n)));
 #endif
       return _mm256_insertf128_si256(_mm256_castsi128_si256(vlo), vhi, 1);
+#endif
     }
     intvec_t operator<<(int_t n) const
     {
+#ifdef __AVX2__
+      return _mm256_slli_epi64(v, n);
+#else
       __m128i vlo = _mm256_castsi256_si128(v);
       __m128i vhi = _mm256_extractf128_si256(v, 1);
       vlo = _mm_slli_epi64(vlo, n);
       vhi = _mm_slli_epi64(vhi, n);
       return _mm256_insertf128_si256(_mm256_castsi128_si256(vlo), vhi, 1);
+#endif
     }
     intvec_t& operator>>=(int_t n) { return *this=*this>>n; }
     intvec_t& operator<<=(int_t n) { return *this=*this<<n; }
     
     intvec_t lsr(intvec_t n) const
     {
+#ifdef __AVX2__
+      return _mm256_srlv_epi64(v, n.v);
+#else
       intvec_t r;
       for (int i=0; i<size; ++i) {
         r.set_elt(i, U((*this)[i]) >> U(n[i]));
       }
       return r;
+#endif
     }
     intvec_t rotate(intvec_t n) const;
     intvec_t operator>>(intvec_t n) const
     {
+#ifdef __AVX2__
+      // See operator>> above
+      intvec_t offset = U(1) << (bits-1);
+      return (*this + offset).lsr(n) - offset.lsr(n);
+#else
       intvec_t r;
       for (int i=0; i<size; ++i) {
         r.set_elt(i, (*this)[i] >> n[i]);
       }
       return r;
+#endif
     }
     intvec_t operator<<(intvec_t n) const
     {
+#ifdef __AVX2__
+      return _mm256_sllv_epi64(v, n.v);
+#else
       intvec_t r;
       for (int i=0; i<size; ++i) {
         r.set_elt(i, (*this)[i] << n[i]);
       }
       return r;
+#endif
     }
     intvec_t& operator>>=(intvec_t n) { return *this=*this>>n; }
     intvec_t& operator<<=(intvec_t n) { return *this=*this<<n; }
@@ -329,20 +627,32 @@ namespace vecmathlib {
     
     boolvec_t operator==(intvec_t const& x) const
     {
+#ifdef __AVX2__
+      return _mm256_castsi256_pd(_mm256_cmpeq_epi64(v, x.v));
+#else
       return ! (*this != x);
+#endif
     }
     boolvec_t operator!=(intvec_t const& x) const
     {
+#ifdef __AVX2__
+      return ! (*this == x);
+#else
       return (*this ^ x).convert_bool();
+#endif
     }
     boolvec_t operator<(intvec_t const& x) const
     {
+#ifdef __AVX2__
+      return _mm256_castsi256_pd(_mm256_cmpgt_epi64(x.v, v));
+#else
       // return (*this - x).as_bool();
       boolvec_t r;
       for (int i=0; i<size; ++i) {
         r.set_elt(i, (*this)[i] < x[i]);
       }
       return r;
+#endif
     }
     boolvec_t operator<=(intvec_t const& x) const
     {
@@ -358,7 +668,7 @@ namespace vecmathlib {
     }
     
     intvec_t abs() const;
-    boolvec_t isignbit() const;
+    boolvec_t isignbit() const { return as_bool(); }
     intvec_t max(intvec_t x) const;
     intvec_t min(intvec_t x) const;
   };
@@ -373,7 +683,13 @@ namespace vecmathlib {
     typedef __m256d vector_t;
     static int const alignment = sizeof(vector_t);
     
-    static char const* name() { return "<AVX:4*double>"; }
+    static char const* name() {
+#ifdef __AVX2__
+      return "<AVX2:4*double>";
+#else
+      return "<AVX:4*double>";
+#endif
+    }
     void barrier() { __asm__("": "+x"(v)); }
     
     static_assert(size * sizeof(real_t) == sizeof(vector_t),
@@ -733,11 +1049,6 @@ namespace vecmathlib {
       r.set_elt(d, floatprops::convert_float((*this)[d]));
     }
     return r;
-  }
-  
-  inline boolvec<double,4> intvec<double,4>::isignbit() const
-  {
-    return MF::vml_isignbit(*this);
   }
   
   inline intvec<double,4> intvec<double,4>::max(intvec_t x) const

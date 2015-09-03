@@ -76,7 +76,7 @@ namespace vecmathlib {
   template realvec<double,4> set_elt<realvec<double,4>,3>(realvec<double,4> x, realvec<double,4>::real_t a);
   template intvec<double,4> popcount(intvec<double,4>);
 #endif
-  
+
 }
 
 
@@ -110,9 +110,9 @@ const int vecsize = realV::size;
 
 
 
-#ifdef __clang__
-#  define __builtin_assume_aligned(exp, align) (exp)
-#endif
+// #ifdef __clang__
+// #  define __builtin_assume_aligned(exp, align) (exp)
+// #endif
 
 
 

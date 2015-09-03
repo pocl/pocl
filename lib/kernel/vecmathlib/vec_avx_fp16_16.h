@@ -218,7 +218,7 @@ namespace vecmathlib {
     boolvec_t convert_bool() const
     {
       // Result: convert_bool(0)=false, convert_bool(else)=true
-      // There is no intrinsic to compare with zero. Instead, we check
+      // There is no intrinsic to compare to zero. Instead, we check
       // whether x is positive and x-1 is negative.
       intvec x = *this;
       // We know that boolvec values depend only on the sign bit
@@ -238,6 +238,9 @@ namespace vecmathlib {
     
     intvec operator+(intvec x) const
     {
+#ifdef __AVX2__
+      return _mm256_add_epi16(v, x.v);
+#else
       __m128i vlo = _mm256_castsi256_si128(v);
       __m128i vhi = _mm256_extractf128_si256(v, 1);
       __m128i xvlo = _mm256_castsi256_si128(x.v);
@@ -245,9 +248,13 @@ namespace vecmathlib {
       vlo = _mm_add_epi16(vlo, xvlo);
       vhi = _mm_add_epi16(vhi, xvhi);
       return _mm256_insertf128_si256(_mm256_castsi128_si256(vlo), vhi, 1);
+#endif
     }
     intvec operator-(intvec x) const
     {
+#ifdef __AVX2__
+      return _mm256_sub_epi16(v, x.v);
+#else
       __m128i vlo = _mm256_castsi256_si128(v);
       __m128i vhi = _mm256_extractf128_si256(v, 1);
       __m128i xvlo = _mm256_castsi256_si128(x.v);
@@ -255,6 +262,7 @@ namespace vecmathlib {
       vlo = _mm_sub_epi16(vlo, xvlo);
       vhi = _mm_sub_epi16(vhi, xvhi);
       return _mm256_insertf128_si256(_mm256_castsi128_si256(vlo), vhi, 1);
+#endif
     }
     
     intvec& operator+=(intvec const& x) { return *this=*this+x; }
@@ -266,18 +274,30 @@ namespace vecmathlib {
     
     intvec operator&(intvec x) const
     {
+#ifdef __AVX2__
+      return _mm256_and_si256(v, x.v);
+#else
       return _mm256_castps_si256(_mm256_and_ps(_mm256_castsi256_ps(v),
                                                _mm256_castsi256_ps(x.v)));
+#endif
     }
     intvec operator|(intvec x) const
     {
+#ifdef __AVX2__
+      return _mm256_or_si256(v, x.v);
+#else
       return _mm256_castps_si256(_mm256_or_ps(_mm256_castsi256_ps(v),
                                               _mm256_castsi256_ps(x.v)));
+#endif
     }
     intvec operator^(intvec x) const
     {
+#ifdef __AVX2__
+      return _mm256_xor_si256(v, x.v);
+#else
       return _mm256_castps_si256(_mm256_xor_ps(_mm256_castsi256_ps(v),
                                                _mm256_castsi256_ps(x.v)));
+#endif
     }
     
     intvec& operator&=(intvec const& x) { return *this=*this&x; }
@@ -288,27 +308,39 @@ namespace vecmathlib {
     
     intvec lsr(int_t n) const
     {
+#ifdef __AVX2__
+      return _mm256_srli_epi16(v, n);
+#else
       __m128i vlo = _mm256_castsi256_si128(v);
       __m128i vhi = _mm256_extractf128_si256(v, 1);
       vlo = _mm_srli_epi16(vlo, n);
       vhi = _mm_srli_epi16(vhi, n);
       return _mm256_insertf128_si256(_mm256_castsi128_si256(vlo), vhi, 1);
+#endif
     }
     intvec operator>>(int_t n) const
     {
+#ifdef __AVX2__
+      return _mm256_srai_epi16(v, n);
+#else
       __m128i vlo = _mm256_castsi256_si128(v);
       __m128i vhi = _mm256_extractf128_si256(v, 1);
       vlo = _mm_srai_epi16(vlo, n);
       vhi = _mm_srai_epi16(vhi, n);
       return _mm256_insertf128_si256(_mm256_castsi128_si256(vlo), vhi, 1);
+#endif
     }
     intvec operator<<(int_t n) const
     {
+#ifdef __AVX2__
+      return _mm256_slli_epi16(v, n);
+#else
       __m128i vlo = _mm256_castsi256_si128(v);
       __m128i vhi = _mm256_extractf128_si256(v, 1);
       vlo = _mm_slli_epi16(vlo, n);
       vhi = _mm_slli_epi16(vhi, n);
       return _mm256_insertf128_si256(_mm256_castsi128_si256(vlo), vhi, 1);
+#endif
     }
     intvec& operator>>=(int_t n) { return *this=*this>>n; }
     intvec& operator<<=(int_t n) { return *this=*this<<n; }
@@ -344,18 +376,51 @@ namespace vecmathlib {
     
     boolvec_t operator==(intvec const& x) const
     {
+#ifdef __AVX2__
+      return _mm256_cmpeq_epi16(v, x.v);
+#else
       return ! (*this != x);
+#endif
     }
     boolvec_t operator!=(intvec const& x) const
     {
+#ifdef __AVX2__
+      return ! (*this == x);
+#else
       return (*this ^ x).convert_bool();
+#endif
     }
-    // TODO: First compare sign; then if equal, compare sign of difference
-    // TODO: Also look for intrinsics
-    boolvec_t operator<(intvec const& x) const { __builtin_unreachable(); }
-    boolvec_t operator<=(intvec const& x) const { __builtin_unreachable(); }
-    boolvec_t operator>(intvec const& x) const { __builtin_unreachable(); }
-    boolvec_t operator>=(intvec const& x) const { __builtin_unreachable(); }
+    boolvec_t operator<(intvec const& x) const
+    {
+#ifdef __AVX2__
+      return _mm256_cmpgt_epi16(x.v, v);
+#else
+      // TODO: First compare sign; then if equal, compare sign of difference
+      // TODO: Also look for intrinsics
+      boolvec_t r;
+      for (int i=0; i<size; ++i) {
+        r.set_elt(i, (*this)[i] < x[i]);
+      }
+      return r;
+#endif
+    }
+    boolvec_t operator<=(intvec_t const& x) const
+    {
+      return ! (*this > x);
+    }
+    boolvec_t operator>(intvec_t const& x) const
+    {
+      return x < *this;
+    }
+    boolvec_t operator>=(intvec_t const& x) const
+    {
+      return ! (*this < x);
+    }
+    
+    intvec_t abs() const;
+    boolvec_t isignbit() const { return as_bool(); }
+    intvec_t max(intvec_t x) const;
+    intvec_t min(intvec_t x) const;
   };
   
   
@@ -368,7 +433,13 @@ namespace vecmathlib {
     typedef __m256i vector_t;
     static int const alignment = sizeof(vector_t);
     
-    static char const* name() { return "<AVX:16*fp16>"; }
+    static char const* name() {
+#ifdef __AVX2__
+      return "<AVX2:16*fp16>";
+#else
+      return "<AVX:16*fp16>";
+#endif
+    }
     void barrier() { __asm__("": "+x"(v)); }
     
     static_assert(size * sizeof(real_t) == sizeof(vector_t),
@@ -581,19 +652,27 @@ namespace vecmathlib {
   
   inline intvec<fp16,16> boolvec<fp16,16>::ifthen(intvec_t x, intvec_t y) const
   {
-    return ifthen(x.as_float(), y.as_float()).as_int();
+    return (( -convert_int() & x) | (~-convert_int() & y));
   }
   
   inline
   realvec<fp16,16> boolvec<fp16,16>::ifthen(realvec_t x, realvec_t y) const
   {
-    return (( -convert_int() & x.as_int()) |
-            (~-convert_int() & y.as_int())).as_float();
+    return ifthen(x.as_int(), y.as_int()).as_float();
   }
 
   
   
   // intvec definitions
+  
+  inline intvec<fp16,16> intvec<fp16,16>::abs() const
+  {
+#ifdef __AVX2__
+    return _mm256_abs_epi16(v);
+#else
+    return MF::vml_abs(*this);
+#endif
+  }
   
   inline realvec<fp16,16> intvec<fp16,16>::as_float() const
   {
@@ -603,6 +682,16 @@ namespace vecmathlib {
   inline realvec<fp16,16> intvec<fp16,16>::convert_float() const
   {
     __builtin_unreachable();
+  }
+  
+  inline intvec<fp16,16> intvec<fp16,16>::max(intvec_t x) const
+  {
+    return MF::vml_max(*this, x);
+  }
+  
+  inline intvec<fp16,16> intvec<fp16,16>::min(intvec_t x) const
+  {
+    return MF::vml_min(*this, x);
   }
   
 } // namespace vecmathlib

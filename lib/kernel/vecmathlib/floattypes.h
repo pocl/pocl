@@ -213,14 +213,14 @@ namespace vml_std {
 namespace vecmathlib {
   
   struct fp8 {
-    // 1 bit sign, 4 bits exponent, 3 bits mantissa
+    // 1 bit sign, 4 bits exponent, 3 bits mantissa, exponent offset 7 (?)
     vml_std::uint8_t val;
     fp8() {}
     fp8(double x) { __builtin_unreachable(); }
   };
   
   struct fp16 {
-    // 1 bit sign, 5 bits exponent, 10 bits mantissa
+    // 1 bit sign, 5 bits exponent, 10 bits mantissa, exponent offset 15 (?)
     vml_std::uint16_t val;
     fp16() {}
     fp16(double x) { __builtin_unreachable(); }
