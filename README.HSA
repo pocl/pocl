@@ -22,7 +22,7 @@ you can install the prerequisities as follows:
 
 Build it with a Clang 3.7 patched with
 
-  http://reviews.llvm.org/file/data/qt4rt7x5y6rmuhf5hpkq/PHID-FILE-yiytwnvizsckrw6rzuqp/D10586.diff
+http://www.cs.tut.fi/~pjaaskel/hlc-hsail-3.7-clang.patch
 
 to get the HSAIL Clang support.
 
@@ -32,7 +32,9 @@ An LLVM cmake configuration command like this worked for me:
 
   cmake .. -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=HSAIL -DBUILD_SHARED_LIBS=off \
 -DCMAKE_INSTALL_PREFIX=INSTALL_DIR -DLLVM_ENABLE_RTTI=on -DLLVM_BUILD_LLVM_DYLIB=on \
--DLIBHSAIL_INCLUDE_DIR=$HOME/local/include -DLIBHSAIL_LIBRARIES=$HOME/local/lib/libhsail.a
+-DLIBHSAIL_INCLUDE_DIR=$HOME/local/include -DLIBHSAIL_LIBRARIES=$HOME/local/lib/libhsail.a \
+-DLLVM_ENABLE_EH=ON
+
 
 Make sure the libHSAIL is detected by the cmake by searching CMakeCache.txt
 for HSAIL_USE_LIBHSAIL (ensure it is 'ON').
