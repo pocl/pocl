@@ -1251,23 +1251,27 @@ AC_ARG_ENABLE([hsa-amdgcn],
               [Disable the HSA device driver for AMD GCN devices.])],
               [enable_hsa="$enableval"], [enable_hsa="yes"])
 
-AC_ARG_WITH(hsa-runtime-headers,
-[AS_HELP_STRING([--with-hsa-runtime-headers],[absolute path where HSA runtime include files are found])],
+HSA_RUNTIME_DIR=""
+AC_ARG_WITH(hsa-runtime-dir,
+[AS_HELP_STRING([--with-hsa-runtime-dir],[absolute path where HSA runtime files (include,libs) are found, defaults to /opt/hsa])],
 [
-  hsa_cpp_flags="-I${withval}"
+  HSA_RUNTIME_DIR="${withval}"
+  hsa_cpp_flags="-I${withval}/include"
   AC_SUBST([HSA_INCLUDES], ["$hsa_cpp_flags"] )
 ],
 [
+  HSA_RUNTIME_DIR="/opt/hsa"
   hsa_cpp_flags="-I/opt/hsa/include"
   AC_SUBST([HSA_INCLUDES], ["$hsa_cpp_flags"] )
 ]
 )
 
+AC_MSG_NOTICE([HSA RUNTIME: ${HSA_RUNTIME_DIR}])
 # Search for the HSA runtime lib.
 AC_MSG_CHECKING([for HSA runtime])
 old_LIBS="$LIBS"
 old_LDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS -L/opt/hsa/lib"
+LDFLAGS="$LDFLAGS -L${HSA_RUNTIME_DIR}/lib"
 LIBS=""
 AC_SEARCH_LIBS([hsa_executable_get_symbol], [hsa-runtime64], [
 HSA_LIBS="$LIBS"
@@ -1299,7 +1303,7 @@ else
 fi
 
 tempCPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS -I/opt/hsa/include"
+CPPFLAGS="$CPPFLAGS -I${HSA_RUNTIME_DIR}/include"
 
 AC_MSG_CHECKING([for HSA runtime headers])
 AC_COMPILE_IFELSE(
