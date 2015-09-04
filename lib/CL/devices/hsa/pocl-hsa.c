@@ -437,7 +437,8 @@ static void
 setup_kernel_args (struct pocl_hsa_device_data *d,
                    _cl_command_node *cmd,
                    char *arg_space,
-                   size_t max_args_size)
+                   size_t max_args_size,
+                   uint32_t *dynamic_group_size)
 {
   char *write_pos = arg_space;
   const char *last_pos = arg_space + max_args_size - 1;
@@ -614,6 +615,14 @@ pocl_hsa_run(void *data, _cl_command_node* cmd)
   if(symtype != HSA_SYMBOL_KIND_KERNEL)
     POCL_ABORT ("pocl-hsa: the kernel function symbol resolves to something else than a function\n");
 
+  uint32_t private_size, static_group_size, dynamic_group_size;
+  status = hsa_executable_symbol_get_info
+    (kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_GROUP_SEGMENT_SIZE, &static_group_size);
+  kernel_packet->group_segment_size = static_group_size; // dynamic is added later
+  status = hsa_executable_symbol_get_info
+    (kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_PRIVATE_SEGMENT_SIZE, &private_size);
+  kernel_packet->private_segment_size = private_size;
+
   uint64_t code_handle;
   status = hsa_executable_symbol_get_info
     (kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_OBJECT, &code_handle);
@@ -641,7 +650,8 @@ pocl_hsa_run(void *data, _cl_command_node* cmd)
   if (error != HSA_STATUS_SUCCESS)
     POCL_ABORT ("pocl-hsa: unable to allocate argument memory.\n");
 
-  setup_kernel_args (d, cmd, (char*)args, args_segment_size);
+  setup_kernel_args (d, cmd, (char*)args, args_segment_size, &dynamic_group_size);
+  kernel_packet->group_segment_size += dynamic_group_size;
 
   kernel_packet->kernarg_address = args;
 
