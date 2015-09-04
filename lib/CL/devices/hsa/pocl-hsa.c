@@ -261,14 +261,15 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
   dev->data = (void*)(hsa_agents + last_assigned_agent);
   hsa_agent_t agent = hsa_agents[last_assigned_agent++];
 
+  uint32_t cache_sizes[4];
   hsa_status_t stat =
     hsa_agent_get_info (agent, HSA_AGENT_INFO_CACHE_SIZE,
-                        &(dev->global_mem_cache_size));
-  char dev_name[64] = {0};
-  stat = hsa_agent_get_info (agent, HSA_AGENT_INFO_NAME, dev_name);
-  dev->long_name = (char*)malloc (64*sizeof(char));
-  memcpy(dev->long_name, &dev_name[0], strlen(dev_name));
-  dev->short_name = dev->long_name;
+                        &cache_sizes);
+  // The only nonzero value on Kaveri is the first (L1)
+  dev->global_mem_cache_size = cache_sizes[0];
+
+  dev->short_name = dev->long_name = (char*)malloc (64*sizeof(char));
+  stat = hsa_agent_get_info (agent, HSA_AGENT_INFO_NAME, dev->long_name);
   get_hsa_device_features (dev->long_name, dev);
 
   hsa_device_type_t dev_type;
