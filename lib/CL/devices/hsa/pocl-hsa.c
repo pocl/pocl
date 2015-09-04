@@ -92,6 +92,8 @@ struct pocl_hsa_device_data {
   cl_kernel current_kernel;
   /* The HSA kernel agent controlled by the device driver instance. */
   hsa_agent_t *agent;
+  /* mem regions */
+  hsa_region_t global_region, kernarg_region, group_region;
   /* Queue for pushing work to the agent. */
   hsa_queue_t *queue;
 };
@@ -163,21 +165,25 @@ pocl_hsa_get_agents(hsa_agent_t agent, void *data)
  */
 static
 hsa_status_t
-get_kernarg_memory_region(hsa_region_t region, void* data)
+setup_agent_memory_regions(hsa_region_t region, void* data)
 {
-  hsa_region_segment_t segment;
-  hsa_region_get_info(region, HSA_REGION_INFO_SEGMENT, &segment);
-  if (HSA_REGION_SEGMENT_GLOBAL != segment) {
-    return HSA_STATUS_SUCCESS;
-  }
+  pocl_hsa_device_data* d = (pocl_hsa_device_data*)data;
 
+  hsa_region_segment_t segment;
   hsa_region_global_flag_t flags;
-  hsa_region_get_info(region, HSA_REGION_INFO_GLOBAL_FLAGS, &flags);
-  if (flags & HSA_REGION_GLOBAL_FLAG_KERNARG) {
-    hsa_region_t* ret = (hsa_region_t*) data;
-    *ret = region;
-    return HSA_STATUS_INFO_BREAK;
-  }
+  hsa_region_get_info(region, HSA_REGION_INFO_SEGMENT, &segment);
+
+  if (segment == HSA_REGION_SEGMENT_GLOBAL)
+    {
+      d->global_region = region;
+      hsa_region_get_info(region, HSA_REGION_INFO_GLOBAL_FLAGS, &flags);
+      if (flags & HSA_REGION_GLOBAL_FLAG_KERNARG)
+        d->kernarg_region = region;
+    }
+
+  if (segment = HSA_REGION_SEGMENT_GROUP)
+    d->group_region = region;
+
   return HSA_STATUS_SUCCESS;
 }
 
@@ -252,6 +258,7 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
 
   assert(found_hsa_agents > 0);
   assert(last_assigned_agent < (hsa_agents + found_hsa_agents));
+  dev->data = (void*)(hsa_agents + last_assigned_agent);
   hsa_agent_t agent = hsa_agents[last_assigned_agent++];
 
   hsa_status_t stat =
@@ -356,13 +363,11 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
 
   d = (struct pocl_hsa_device_data *) malloc (sizeof (struct pocl_hsa_device_data));
   d->current_kernel = NULL;
+
+  d->agent = (hsa_agent_t*)device->data;
   device->data = d;
 
-  assert (found_hsa_agents > 0);
-
-  /* TODO: support controlling multiple agents.
-     Now all pocl devices control the same one. */
-  d->agent = &hsa_agents[0];
+  hsa_agent_iterate_regions (*d->agent, setup_agent_memory_regions, d);
 
   // TODO: figure out proper private_segment_size and
   // group_segment_size
@@ -625,13 +630,9 @@ pocl_hsa_run(void *data, _cl_command_node* cmd)
     (kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_KERNARG_SEGMENT_SIZE,
      &args_segment_size);
 
-  hsa_region_t kernarg_region;
-  kernarg_region.handle = (uint64_t)-1;
-  hsa_agent_iterate_regions (*d->agent, get_kernarg_memory_region, &kernarg_region);
-
   void *args;
 
-  error = hsa_memory_allocate(kernarg_region, args_segment_size, &args);
+  error = hsa_memory_allocate(d->kernarg_region, args_segment_size, &args);
   if (error != HSA_STATUS_SUCCESS)
     POCL_ABORT ("pocl-hsa: unable to allocate argument memory.\n");
 
