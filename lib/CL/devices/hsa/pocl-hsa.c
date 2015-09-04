@@ -438,7 +438,7 @@ setup_kernel_args (struct pocl_hsa_device_data *d,
                    _cl_command_node *cmd,
                    char *arg_space,
                    size_t max_args_size,
-                   uint32_t *dynamic_group_size)
+                   uint32_t *total_group_size)
 {
   char *write_pos = arg_space;
   const char *last_pos = arg_space + max_args_size - 1;
@@ -454,19 +454,12 @@ setup_kernel_args (struct pocl_hsa_device_data *d,
       struct pocl_argument *al = &(cmd->command.run.arguments[i]);
       if (cmd->command.run.kernel->arg_info[i].is_local)
         {
-          POCL_ABORT_UNIMPLEMENTED("pocl-hsa: local buffers not implemented.");
-#if 0
-    	  //For further info,
-    	  //Please refer to https://github.com/HSAFoundation/HSA-Runtime-AMD/issues/8
-    	  /*
-    	  if(args_offset%8 !=0 )
-			  args_offset = (args_offset+8)/8;
-		  */
-          memcpy(write_pos, &dynamic_local_address, sizeof(uint64_t));
-    	  kernel_packet.group_segment_size += al->size;
+          //For further info,
+          //Please refer to https://github.com/HSAFoundation/HSA-Runtime-AMD/issues/8
+          uint64_t temp = *total_group_size;
+          memcpy(write_pos, temp, sizeof(uint64_t));
+          *total_group_size += al->size;
           write_pos += sizeof(uint64_t);
-    	  dynamic_local_address += sizeof(uint64_t);
-#endif
         }
       else if (cmd->command.run.kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
         {
@@ -518,17 +511,17 @@ setup_kernel_args (struct pocl_hsa_device_data *d,
         }
     }
 
+#if 0
   for (size_t i = cmd->command.run.kernel->num_args;
        i < cmd->command.run.kernel->num_args + cmd->command.run.kernel->num_locals;
        ++i)
     {
       POCL_ABORT_UNIMPLEMENTED("hsa: automatic local buffers not implemented.");
-#if 0
       al = &(cmd->command.run.arguments[i]);
       arguments[i] = malloc (sizeof (void *));
       *(void **)(arguments[i]) = pocl_hsa_malloc (data, 0, al->size, NULL);
-#endif
     }
+#endif
 }
 
 void
@@ -559,12 +552,6 @@ pocl_hsa_run(void *data, _cl_command_node* cmd)
   /* Process the kernel arguments. Convert the opaque buffer
      pointers to real device pointers, allocate dynamic local
      memory buffers, etc. */
-#if 0
-  uint64_t dynamic_local_address = kernel_packet.group_segment_size;
-#else
-  // TODO
-  uint64_t dynamic_local_address = 2048;
-#endif
 
   kernel_packet->workgroup_size_x = cmd->command.run.local_x;
   kernel_packet->workgroup_size_y = cmd->command.run.local_y;
@@ -615,10 +602,10 @@ pocl_hsa_run(void *data, _cl_command_node* cmd)
   if(symtype != HSA_SYMBOL_KIND_KERNEL)
     POCL_ABORT ("pocl-hsa: the kernel function symbol resolves to something else than a function\n");
 
-  uint32_t private_size, static_group_size, dynamic_group_size;
+  uint32_t private_size, static_group_size, total_group_size;
   status = hsa_executable_symbol_get_info
     (kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_GROUP_SEGMENT_SIZE, &static_group_size);
-  kernel_packet->group_segment_size = static_group_size; // dynamic is added later
+  total_group_size = static_group_size; // dynamic is added later
   status = hsa_executable_symbol_get_info
     (kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_PRIVATE_SEGMENT_SIZE, &private_size);
   kernel_packet->private_segment_size = private_size;
@@ -650,8 +637,10 @@ pocl_hsa_run(void *data, _cl_command_node* cmd)
   if (error != HSA_STATUS_SUCCESS)
     POCL_ABORT ("pocl-hsa: unable to allocate argument memory.\n");
 
-  setup_kernel_args (d, cmd, (char*)args, args_segment_size, &dynamic_group_size);
-  kernel_packet->group_segment_size += dynamic_group_size;
+  setup_kernel_args (d, cmd, (char*)args, args_segment_size, &total_group_size);
+  kernel_packet->group_segment_size = total_group_size;
+  if (total_group_size > cmd->device->local_mem_size)
+    POCL_ABORT ("pocl-hsa: required local memory > device local memory")
 
   kernel_packet->kernarg_address = args;
 
