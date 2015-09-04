@@ -370,10 +370,8 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
 
   hsa_agent_iterate_regions (*d->agent, setup_agent_memory_regions, d);
 
-  // TODO: figure out proper private_segment_size and
-  // group_segment_size
   if (hsa_queue_create(*d->agent, 1, HSA_QUEUE_TYPE_MULTI, NULL, NULL,
-                       4096, 4096, &d->queue) != HSA_STATUS_SUCCESS)
+                       UINT32_MAX, UINT32_MAX, &d->queue) != HSA_STATUS_SUCCESS)
     {
       POCL_ABORT("pocl-hsa: could not create the queue.");
     }
