@@ -675,6 +675,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
       return 1;
     }
 
+  input->setTargetTriple(program->devices[device_i]->llvm_target_triplet);
 
 #ifdef DEBUG_POCL_LLVM_API        
   printf("### fetching kernel metadata for kernel %s program %p input llvm::Module %p\n",
