@@ -211,7 +211,7 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
 {
 
 #define COPY_ATTR(ATTR) dev->ATTR = supported_hsa_devices[i].ATTR
-
+  int found = 0;
   int i;
   for(i = 0; i < num_hsa_device; i++)
     {
@@ -229,9 +229,17 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
           COPY_ATTR (max_clock_frequency);
           COPY_ATTR (max_constant_buffer_size);
           COPY_ATTR (local_mem_size);
-	      break;
+          found = 1;
+          break;
         }
     }
+  if (!found)
+    POCL_ABORT_UNIMPLEMENTED("We found a device for which we don't have device"
+                             "OpenCL attribute information (compute unit count,"
+                             "constant buffer size etc), and there's no way to get"
+                             "the required stuff from HSA API. Please create a "
+                             "new entry with the information in supported_hsa_devices,"
+                             "and send a note/patch to pocl developers. Thanks!");
 }
 
 void
