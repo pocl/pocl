@@ -167,7 +167,7 @@ static
 hsa_status_t
 setup_agent_memory_regions(hsa_region_t region, void* data)
 {
-  pocl_hsa_device_data* d = (pocl_hsa_device_data*)data;
+  struct pocl_hsa_device_data* d = (struct pocl_hsa_device_data*)data;
 
   hsa_region_segment_t segment;
   hsa_region_global_flag_t flags;
@@ -258,8 +258,8 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
 
   assert(found_hsa_agents > 0);
   assert(last_assigned_agent < (hsa_agents + found_hsa_agents));
-  dev->data = (void*)(hsa_agents + last_assigned_agent);
-  hsa_agent_t agent = hsa_agents[last_assigned_agent++];
+  dev->data = (void*)last_assigned_agent;
+  hsa_agent_t agent = *last_assigned_agent++;
 
   uint32_t cache_sizes[4];
   hsa_status_t stat =
@@ -370,8 +370,8 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
 
   hsa_agent_iterate_regions (*d->agent, setup_agent_memory_regions, d);
 
-  if (hsa_queue_create(*d->agent, 1, HSA_QUEUE_TYPE_MULTI, NULL, NULL,
-                       UINT32_MAX, UINT32_MAX, &d->queue) != HSA_STATUS_SUCCESS)
+  if (hsa_queue_create(*d->agent, 4, HSA_QUEUE_TYPE_MULTI, NULL, NULL,
+                       -1, -1, &d->queue) != HSA_STATUS_SUCCESS)
     {
       POCL_ABORT("pocl-hsa: could not create the queue.");
     }
@@ -457,7 +457,7 @@ setup_kernel_args (struct pocl_hsa_device_data *d,
           //For further info,
           //Please refer to https://github.com/HSAFoundation/HSA-Runtime-AMD/issues/8
           uint64_t temp = *total_group_size;
-          memcpy(write_pos, temp, sizeof(uint64_t));
+          memcpy(write_pos, &temp, sizeof(uint64_t));
           *total_group_size += al->size;
           write_pos += sizeof(uint64_t);
         }
@@ -640,7 +640,7 @@ pocl_hsa_run(void *data, _cl_command_node* cmd)
   setup_kernel_args (d, cmd, (char*)args, args_segment_size, &total_group_size);
   kernel_packet->group_segment_size = total_group_size;
   if (total_group_size > cmd->device->local_mem_size)
-    POCL_ABORT ("pocl-hsa: required local memory > device local memory")
+    POCL_ABORT ("pocl-hsa: required local memory > device local memory");
 
   kernel_packet->kernarg_address = args;
 
