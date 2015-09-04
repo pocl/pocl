@@ -608,6 +608,12 @@ pocl_hsa_run(void *data, _cl_command_node* cmd)
   if (status != HSA_STATUS_SUCCESS)
     POCL_ABORT ("pocl-hsa: unable to get the kernel function symbol\n");
 
+  hsa_symbol_kind_t symtype;
+  status = hsa_executable_symbol_get_info
+    (kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_TYPE, &symtype);
+  if(symtype != HSA_SYMBOL_KIND_KERNEL)
+    POCL_ABORT ("pocl-hsa: the kernel function symbol resolves to something else than a function\n");
+
   uint64_t code_handle;
   status = hsa_executable_symbol_get_info
     (kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_OBJECT, &code_handle);
