@@ -139,6 +139,7 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
 #define MAX_HSA_AGENTS 16
 
 static hsa_agent_t hsa_agents[MAX_HSA_AGENTS];
+static hsa_agent_t* last_assigned_agent;
 static int found_hsa_agents = 0;
 
 static hsa_status_t
@@ -248,7 +249,11 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
   pocl_basic_init_device_infos (dev);
   dev->spmd = CL_TRUE;
   dev->autolocals_to_args = 0;
-  hsa_agent_t agent = hsa_agents[found_hsa_agents - 1];
+
+  assert(found_hsa_agents > 0);
+  assert(last_assigned_agent < (hsa_agents + found_hsa_agents));
+  hsa_agent_t agent = hsa_agents[last_assigned_agent++];
+
   hsa_status_t stat =
     hsa_agent_get_info (agent, HSA_AGENT_INFO_CACHE_SIZE,
                         &(dev->global_mem_cache_size));
@@ -328,6 +333,8 @@ pocl_hsa_probe(struct pocl_device_ops *ops)
       assert (0 && "pocl-hsa: could not get agents.");
     }
   POCL_MSG_PRINT_INFO("pocl-hsa: found %d agents.\n", found_hsa_agents);
+  last_assigned_agent = hsa_agents;
+
   return found_hsa_agents;
 }
 
