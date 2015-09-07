@@ -102,9 +102,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # AMD HSA
 option(ENABLE_HSA "Enable the HSA device driver for AMD GCN devices" OFF)
-if(ENABLE_HSA)
-  message(FATAL_ERROR "Sorry, HSA support in CMake is unfinished and unusable ATM")
-endif()
 
 ######################################################################################
 # AC_CONFIG_TESTDIR([tests])
@@ -761,7 +758,8 @@ endif()
 if(ENABLE_HSA)
   set(OCL_DRIVERS "${OCL_DRIVERS} hsa")
   set(OCL_TARGETS "${OCL_TARGETS} amdgcn")
-  # WIP, this is for config.h
+  # this is for config.h
+  # TODO unify with autotools
   set(BUILD_HSA 1)
 endif()
 

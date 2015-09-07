@@ -27,26 +27,22 @@ include("bitcode_rules")
 
 set(KERNEL_SOURCES ${SOURCES_WITHOUT_VML})
 
-foreach(FILE printf.c get_local_id.c get_local_size.c get_group_id.c get_global_size.c
-    get_num_groups.c get_work_dim.c get_global_id.c barrier.ll)
+foreach(FILE printf.c barrier.ll)
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
 endforeach()
 
-foreach(FILE get_local_id.ll get_local_size.ll get_group_id.ll get_global_size.ll
-  barrier.ll get_num_groups.ll get_work_dim.ll get_global_id.c)
-  list(APPEND KERNEL_SOURCES "amdgcn/${FILE}")
-endforeach()
+list(APPEND KERNEL_SOURCES "hsail64/barrier.c")
 
-set(CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-emit-llvm" "-target" "amdgcn--amdhsa" "-mcpu=kaveri")
+set(CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-emit-llvm" "-target" "hsail64")
 set(LLC_FLAGS "")
 
-make_kernel_bc(KERNEL_BC "amdgcn--amdhsa" ${KERNEL_SOURCES})
+make_kernel_bc(KERNEL_BC "hsail64" ${KERNEL_SOURCES})
 
 # just debug
-message(STATUS "AMDGCN Kernel BC: ${KERNEL_BC}")
+message(STATUS "HSAIL64 Kernel BC: ${KERNEL_BC}")
 
 # a target is needed...
-add_custom_target("kernel_amdgcn" ALL
+add_custom_target("kernel_hsail64" ALL
     DEPENDS ${KERNEL_BC} "${CMAKE_BINARY_DIR}/kernellib_hash.h")
 
 install(FILES "${KERNEL_BC}"

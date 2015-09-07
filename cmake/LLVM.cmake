@@ -669,21 +669,45 @@ set(CL_DISABLE_HALF "${CL_DISABLE_HALF}" CACHE BOOL "Disable cl_khr_fp16 because
 
 if(ENABLE_HSA)
 
-  message(STATUS "Trying HSA support")
+  message(STATUS "Trying HSA support in LLVM")
   # test that Clang supports the amdgcn--amdhsa target
   custom_try_compile_clangxx("" "return 0;" RESULT "-target" "amdgcn--amdhsa" "-emit-llvm" "-S")
   if(RESULT)
     message(FATAL_ERROR "LLVM support for amdgcn--amdhsa target is required")
   endif()
 
-  # try the headers
-  if(NOT DEFINED WITH_HSA_HEADERS)
-    find_path(WITH_HSA_HEADERS "hsa.h")
-    if(NOT WITH_HSA_HEADERS)
-      message(FATAL_ERROR "HSA runtime headers not found, use -DWITH_HSA_HEADERS")
-    endif()
+  # find the headers & the library
+  if(DEFINED WITH_HSA_RUNTIME_DIR AND WITH_HSA_RUNTIME_DIR)
+    set(HSA_RUNTIME_DIR "${WITH_HSA_RUNTIME_DIR}")
+  else()
+    message(STATUS "WITH_HSA_RUNTIME_DIR not given, trying default path")
+    set(HSA_RUNTIME_DIR "/opt/hsa")
   endif()
 
+  if((IS_ABSOLUTE "${WITH_HSA_RUNTIME_DIR}") AND (EXISTS "${WITH_HSA_RUNTIME_DIR}"))
+    set(HSA_INCLUDEDIR "${HSA_RUNTIME_DIR}/include")
+    set(HSA_LIBDIR "${HSA_RUNTIME_DIR}/lib")
+  else()
+    message(WARNING "${HSA_RUNTIME_DIR} is not a directory")
+    set(HSA_INCLUDEDIR "")
+    set(HSA_LIBDIR "")
+  endif()
+
+  find_path(HSA_INCLUDES "hsa.h" PATHS "${HSA_INCLUDEDIR}")
+  if(NOT HSA_INCLUDES)
+    message(FATAL_ERROR "hsa.h header not found")
+  else()
+    message(STATUS "HSA_INCLUDES: ${HSA_INCLUDES}")
+  endif()
+
+  find_library(HSALIB NAMES "hsa-runtime64" "hsa-runtime" PATHS "${HSA_LIBDIR}")
+  if(NOT HSALIB)
+    message(FATAL_ERROR "libhsa-runtime not found")
+  else()
+    message(STATUS "HSALIB: ${HSALIB}")
+  endif()
+
+  message(STATUS "OK, building HSA")
 endif()
 
 #####################################################################
