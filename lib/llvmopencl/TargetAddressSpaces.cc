@@ -142,7 +142,7 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
     addrSpaceMap[POCL_ADDRESS_SPACE_GLOBAL] =
         addrSpaceMap[POCL_ADDRESS_SPACE_LOCAL] =
         addrSpaceMap[POCL_ADDRESS_SPACE_CONSTANT] = 0;
-  } else if (arch.startswith("amdgcn")) {
+  } else if (arch.startswith("amdgcn") || arch.startswith("hsail")) {
     addrSpaceMap[POCL_ADDRESS_SPACE_GLOBAL] = 1;
     addrSpaceMap[POCL_ADDRESS_SPACE_LOCAL] = 3;
     addrSpaceMap[POCL_ADDRESS_SPACE_CONSTANT] = 2;
