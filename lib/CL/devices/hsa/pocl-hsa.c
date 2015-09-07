@@ -440,7 +440,7 @@ setup_kernel_args (struct pocl_hsa_device_data *d,
                    uint32_t *total_group_size)
 {
   char *write_pos = arg_space;
-  const char *last_pos = arg_space + max_args_size - 1;
+  const char *last_pos = arg_space + max_args_size;
 
 #define CHECK_SPACE(DSIZE)                                   \
   do {                                                       \
@@ -453,11 +453,12 @@ setup_kernel_args (struct pocl_hsa_device_data *d,
       struct pocl_argument *al = &(cmd->command.run.arguments[i]);
       if (cmd->command.run.kernel->arg_info[i].is_local)
         {
+          CHECK_SPACE (sizeof (uint64_t));
           //For further info,
           //Please refer to https://github.com/HSAFoundation/HSA-Runtime-AMD/issues/8
           uint64_t temp = *total_group_size;
           memcpy(write_pos, &temp, sizeof(uint64_t));
-          *total_group_size += al->size;
+          *total_group_size += (uint32_t)al->size;
           write_pos += sizeof(uint64_t);
         }
       else if (cmd->command.run.kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
