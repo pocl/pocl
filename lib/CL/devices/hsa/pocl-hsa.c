@@ -154,8 +154,7 @@ pocl_hsa_get_agents(hsa_agent_t agent, void *data)
       return HSA_STATUS_SUCCESS;
     }
 
-  hsa_agents[found_hsa_agents] = agent;
-  ++found_hsa_agents;
+  hsa_agents[found_hsa_agents++] = agent;
   return HSA_STATUS_SUCCESS;
 }
 
@@ -241,12 +240,12 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
         }
     }
   if (!found)
-    POCL_ABORT_UNIMPLEMENTED("We found a device for which we don't have device"
-                             "OpenCL attribute information (compute unit count,"
-                             "constant buffer size etc), and there's no way to get"
-                             "the required stuff from HSA API. Please create a "
-                             "new entry with the information in supported_hsa_devices,"
-                             "and send a note/patch to pocl developers. Thanks!");
+    POCL_ABORT("We found a device for which we don't have device"
+               "OpenCL attribute information (compute unit count,"
+               "constant buffer size etc), and there's no way to get"
+               "the required stuff from HSA API. Please create a "
+               "new entry with the information in supported_hsa_devices,"
+               "and send a note/patch to pocl developers. Thanks!");
 }
 
 void
@@ -373,7 +372,7 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
   if (hsa_queue_create(*d->agent, 4, HSA_QUEUE_TYPE_MULTI, NULL, NULL,
                        -1, -1, &d->queue) != HSA_STATUS_SUCCESS)
     {
-      POCL_ABORT("pocl-hsa: could not create the queue.");
+      POCL_ABORT("pocl-hsa: could not create the HSA queue.\n");
     }
 }
 
@@ -635,12 +634,12 @@ pocl_hsa_run(void *data, _cl_command_node* cmd)
 
   error = hsa_memory_allocate(d->kernarg_region, args_segment_size, &args);
   if (error != HSA_STATUS_SUCCESS)
-    POCL_ABORT ("pocl-hsa: unable to allocate argument memory.\n");
+    POCL_ABORT ("pocl-hsa: unable to allocate memory for kernel args.\n");
 
   setup_kernel_args (d, cmd, (char*)args, args_segment_size, &total_group_size);
   kernel_packet->group_segment_size = total_group_size;
   if (total_group_size > cmd->device->local_mem_size)
-    POCL_ABORT ("pocl-hsa: required local memory > device local memory");
+    POCL_ABORT ("pocl-hsa: required local memory > device local memory!\n");
 
   kernel_packet->kernarg_address = args;
 
