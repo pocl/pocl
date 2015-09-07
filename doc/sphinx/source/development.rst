@@ -160,7 +160,9 @@ POCL_BUILDING setups the OCL_ICD_VENDORS path to point to the pocl in
 the build tree. This removes the need to install pocl to test the 
 built version. It should be executed in the source root::
 
-  . tools/scripts/devel-envs.sh
+  . tools/scripts/devel-envs.sh [cmake]
+
+The ``cmake`` argument is required when pocl is built with cmake.
 
 To test as much as possible link options, it is recommended to
 configure pocl two times and run "make check" with both. One should be

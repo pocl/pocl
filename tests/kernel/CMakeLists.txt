@@ -38,7 +38,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 ${OPENCL_CFLAGS}")
 # -> POCLU_LINK_OPTIONS in toplevel cmake
 
 ######################################################################
-add_executable("kernel" "kernel.c") # test_as_type.cl test_bitselect.cl test_convert_sat_regression.cl test_convert_type_*.cl test_fabs.cl test_fmin_fmax_fma.cl test_hadd.cl test_min_max.cl test_rotate.cl test_short16.cl test_sizeof.cl test_block.cl test_printf.cl
+add_executable("kernel" "kernel.c") # test_as_type.cl test_bitselect.cl test_convert_sat_regression.cl test_convert_type_*.cl test_fabs.cl test_fmin_fmax_fma.cl test_hadd.cl test_min_max.cl test_length_distance.cl test_rotate.cl test_short16.cl test_sizeof.cl test_block.cl test_printf.cl
 target_link_libraries("kernel" ${POCLU_LINK_OPTIONS})
 
 add_test("kernel/test_as_type" "kernel" "test_as_type")
@@ -78,6 +78,8 @@ set_tests_properties("kernel/test_hadd_loopvec"
 
 add_test("kernel/test_min_max" "kernel" "test_min_max")
 
+add_test("kernel/test_length_distance" "kernel" "test_length_distance")
+
 add_test("kernel/test_fmin_fmax_fma" "kernel" "test_fmin_fmax_fma")
 
 add_test("kernel/test_convert_sat_regression" "kernel" "test_convert_sat_regression")
@@ -88,9 +90,14 @@ add_test("kernel/test_fabs" "kernel" "test_fabs")
 
 add_test("kernel/test_short16" "kernel" "test_short16")
 
-set_tests_properties("kernel/test_min_max" "kernel/test_fmin_fmax_fma"
+add_test("kernel/test_frexp_modf" "kernel" "test_frexp_modf")
+
+add_test("kernel/test_local_struct_array" "kernel" "test_local_struct_array")
+
+set_tests_properties("kernel/test_min_max" "kernel/test_length_distance"
+  "kernel/test_fmin_fmax_fma" "kernel/test_local_struct_array"
   "kernel/test_convert_sat_regression"   "kernel/test_fabs"
-  "kernel/test_rotate" "kernel/test_short16"
+  "kernel/test_rotate" "kernel/test_short16" "kernel/test_frexp_modf"
   PROPERTIES
     COST 4.0
     FAIL_REGULAR_EXPRESSION "FAIL"
@@ -105,6 +112,11 @@ endif()
 
 if(LLVM_3_2 OR (LLVM_3_3 AND POWERPC))
   set_tests_properties("kernel/test_rotate"
+    PROPERTIES WILL_FAIL 1)
+endif()
+
+if(LLVM_ASSERTS_BUILD)
+  set_tests_properties("kernel/test_local_struct_array"
     PROPERTIES WILL_FAIL 1)
 endif()
 

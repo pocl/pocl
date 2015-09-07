@@ -5,8 +5,9 @@
 /* The normal alignment of `float16', in bytes. */
 #define ALIGNOF_FLOAT16 @ALIGNOF_FLOAT16@
 
-
 #cmakedefine BUILD_SPU
+
+#cmakedefine BUILD_HSA
 
 #define BUILDDIR "@BUILDDIR@"
 
@@ -86,6 +87,9 @@
 
 /* "Using LLVM 3.6" */
 #cmakedefine LLVM_3_6
+
+/* "Using LLVM 3.7" */
+#cmakedefine LLVM_3_7
 
 
 /* Defined to greatest expected alignment for extended types, in bytes. */

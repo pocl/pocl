@@ -140,7 +140,7 @@ pocl_cellspu_init (cl_device_id device, const char* parameters)
 {
   struct data *d;
 
-  d = malloc (sizeof (struct data));
+  d = (struct data *) malloc (sizeof (struct data));
   device->data = d;
   
   d->current_kernel = NULL;
@@ -166,7 +166,7 @@ cellspu_malloc_local (void *device_data, size_t size)
 {
   struct data* d = (struct data*)device_data;
   chunk_info_t *chunk = alloc_buffer (&spe_local_mem, size);
-  return chunk;
+  return (void*) chunk;
 
 }
 void *

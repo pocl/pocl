@@ -95,7 +95,7 @@ pocl_check_device_supports_image(const cl_mem image,
         "This device does not support these images "
         "(clGetSupportedImageFormats returned 0 entries)");
 
-  supported_image_formats = malloc (num_entries * sizeof(cl_image_format));
+  supported_image_formats = (cl_image_format*) malloc (num_entries * sizeof(cl_image_format));
   if (supported_image_formats == NULL)
       return CL_OUT_OF_HOST_MEMORY;
 

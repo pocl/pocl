@@ -157,8 +157,10 @@ else
       LLVM_LIBS=$($LLVM_CONFIG --libs)
       AC_MSG_NOTICE([LLVM shared library $LLVM_SHARED_LIB_FILE not found.])
     else
-      LLVM_LIBS=-lLLVM
-      AC_MSG_NOTICE([LLVM shared library $LLVM_SHARED_LIB_FILE built with cmake found.])
+      # The Cmake built libLLVM.so seems to be missing a lot of symbols
+      # to the point of being useless. Fall back to the static lib.
+      LLVM_LIBS=$($LLVM_CONFIG --libs)
+      AC_MSG_NOTICE([LLVM shared library $LLVM_SHARED_LIB_FILE built with cmake found, using the static lib instead.])
     fi
   fi
 fi
@@ -619,11 +621,7 @@ if test x"$ioh" = "yes"; then
    CPPFLAGS="-Iinclude $CPPFLAGS"
 fi
 
-# Check for OpenGL.h headers as they are required to compile
-# test cases that use cl.hpp (which requires it).
-AC_CHECK_HEADERS([GL/gl.h OpenGL/OpenGL.h], [opengl_found="ok"; break])
-test -z "$opengl_found" && \
-AC_MSG_FAILURE([Please install an OpenGL implementation with gl.h or OpenGL.h. It is required by the C++ bindings.])
+# Using cl2.hpp shipped with pocl
 AM_CONDITIONAL([HAVE_OPENCL_HPP], true)
 AC_DEFINE([HAVE_OPENCL_HPP], [] ,[Defined if system cl.hpp found to be working])
 
@@ -1292,11 +1290,24 @@ AC_LANG([C])
 
 LLVM_AMDGCN_TARGET=no
 
-AC_MSG_CHECKING([if the amdgcn--amdhsa target is supported in Clang/LLVM])
-if $LLVM_BINDIR/clang conftest.c -target amdgcn--amdhsa -emit-llvm -S -c -o - 2>/dev/null | grep -cq 'target triple = "amdgcn--amdhsa"';
+# TODO The native compilation for AMDGCN via the HSA driver.
+#AC_MSG_CHECKING([if the amdgcn--amdhsa target is supported in Clang/LLVM])
+#if $LLVM_BINDIR/clang conftest.c -target amdgcn--amdhsa -emit-llvm -S -c -o - 2>/dev/null | grep -cq 'target triple = "amdgcn--amdhsa"';
+#then
+#   AC_MSG_RESULT([yes])
+#   LLVM_AMDGCN_TARGET=yes
+#   AC_DEFINE([AMDGCN_ENABLED], [1], [Defined in case AMDGCN device support enabled.])
+#
+#else
+#   AC_MSG_RESULT([no])
+#   enable_hsa=no
+#fi
+
+AC_MSG_CHECKING([if the hsail64 target is supported in Clang/LLVM])
+if $LLVM_BINDIR/clang conftest.c -target hsail64 -emit-llvm -S -c -o - 2>/dev/null | grep -cq 'target triple = "hsail64"';
 then
    AC_MSG_RESULT([yes])
-   LLVM_AMDGCN_TARGET=yes
+   LLVM_HSAIL64_TARGET=yes
 else
    AC_MSG_RESULT([no])
    enable_hsa=no
@@ -1321,8 +1332,7 @@ CPPFLAGS=$tempCPPFLAGS
 if test "$enable_hsa" = "yes";
 then
   OCL_DRIVERS="$OCL_DRIVERS hsa"
-  OCL_TARGETS="$OCL_TARGETS amdgcn hsail64"
-  AC_DEFINE([AMDGCN_ENABLED], [1], [Defined in case AMDGCN device support enabled.])
+  OCL_TARGETS="$OCL_TARGETS hsail64"
   AC_DEFINE([BUILD_HSA], [1], [Defined to 1 in case the HSA driver should be built.])
   enable_testsuite_hsa=yes
   POAT_TESTSUITES="$POAT_TESTSUITES hsa"

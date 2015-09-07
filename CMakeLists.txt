@@ -99,6 +99,14 @@ option(
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 ######################################################################################
+
+# AMD HSA
+option(ENABLE_HSA "Enable the HSA device driver for AMD GCN devices" OFF)
+if(ENABLE_HSA)
+  message(FATAL_ERROR "Sorry, HSA support in CMake is unfinished and unusable ATM")
+endif()
+
+######################################################################################
 # AC_CONFIG_TESTDIR([tests])
 enable_testing()
 
@@ -505,24 +513,10 @@ endif()
 # TODO Check cl.hpp usability. It is broken on a few platforms.
 
 if(DEFINED HAVE_OPENCL_HPP)
-  message(STATUS "OpenCL.hpp + OpenGL (cached): ${HAVE_OPENCL_HPP}")
+  message(STATUS "cl2.hpp (cached): ${HAVE_OPENCL_HPP}")
 else()
-  find_file(OPENCL_HPP cl.hpp PATH_SUFFIXES CL OpenCL)
-  find_package(OpenGL MODULE)
-  set(_OPENCL_HPP 0)
-  if(OPENGL_FOUND)
-    set(_OPENCL_HPP 1)
-    if(OPENCL_HPP)
-      message(STATUS "cl.hpp found, OpenGL too, enabling OPENCL_HPP")
-    else()
-      message(STATUS "cl.hpp not found, OpenGL found, tests will use pocl's own cl.hpp")
-    endif()
-  else()
-    message(WARNING "OpenGL NOT found")
-    message(WARNING "Please install an OpenGL implementation with gl.h or OpenGL.h. It is required by the C++ bindings")
-    message(WARNING "Disabling OPENCL_HPP, a few tests will be skipped")
-  endif()
-  set(HAVE_OPENCL_HPP ${_OPENCL_HPP} CACHE INTERNAL "Opencl.hpp found & usable")
+  message(STATUS "tests will use pocl's own cl2.hpp")
+  set(HAVE_OPENCL_HPP ${_OPENCL_HPP} CACHE INTERNAL "cl2.hpp found & usable")
 endif()
 
 ######################################################################################
@@ -764,6 +758,15 @@ endif()
 
 ##########################################################
 
+if(ENABLE_HSA)
+  set(OCL_DRIVERS "${OCL_DRIVERS} hsa")
+  set(OCL_TARGETS "${OCL_TARGETS} amdgcn")
+  # WIP, this is for config.h
+  set(BUILD_HSA 1)
+endif()
+
+##########################################################
+
 message(STATUS "Building the following device drivers: ${OCL_DRIVERS}")
 
 set(BUILDDIR "${CMAKE_BINARY_DIR}")
@@ -971,7 +974,7 @@ endif()
 add_subdirectory("tests")
 
 # TODO In progress
-set(ALL_TESTSUITES "AMD;AMDSDK2.9;opencl-book-samples;Parboil;piglit;Rodinia;VexCL;ViennaCL")
+set(ALL_TESTSUITES "AMD;AMDSDK2.9;opencl-book-samples;Parboil;Piglit;Rodinia;VexCL;ViennaCL;Halide;OpenCV;CloverLeaf;hsa")
 add_subdirectory("examples")
 
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND})
@@ -1007,6 +1010,7 @@ MESSAGE(STATUS "ENABLE_ICD: ${ENABLE_ICD}")
 MESSAGE(STATUS "ENABLE_SPU (Cell SPU enabled): ${ENABLE_SPU}")
 MESSAGE(STATUS "ENABLE_TCE: ${ENABLE_TCE}")
 MESSAGE(STATUS "ENABLE_TCEMC: ${ENABLE_TCEMC}")
+MESSAGE(STATUS "ENABLE_HSA: ${ENABLE_HSA}")
 MESSAGE(STATUS "HAVE_CLOCK_GETTIME: ${HAVE_CLOCK_GETTIME}")
 MESSAGE(STATUS "HAVE_GLEW: ${HAVE_GLEW}")
 MESSAGE(STATUS "HAVE_OPENCL_HPP: ${HAVE_OPENCL_HPP}")
@@ -1055,6 +1059,7 @@ MESSAGE(STATUS "LD_FLAGS_BIN: ${LD_FLAGS_BIN}")
 MESSAGE(STATUS "LIB_API_VERSION: ${LIB_API_VERSION}")
 MESSAGE(STATUS "LIB_BUILD_VERSION: ${LIB_BUILD_VERSION}")
 MESSAGE(STATUS "LLVM_VERSION: ${LLVM_VERSION}")
+MESSAGE(STATUS "LLVM_ASSERTS_BUILD ${LLVM_ASSERTS_BUILD}")
 MESSAGE(STATUS "LLVM_CFLAGS: ${LLVM_CFLAGS}")
 MESSAGE(STATUS "LLVM_CXXFLAGS: ${LLVM_CXXFLAGS}")
 MESSAGE(STATUS "LLVM_CPPFLAGS: ${LLVM_CPPFLAGS}")

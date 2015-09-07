@@ -32,7 +32,7 @@ cl_context
 poclu_create_any_context() 
 {
   cl_uint i;
-  cl_platform_id* platforms = malloc(sizeof(cl_platform_id));
+  cl_platform_id* platforms = (cl_platform_id*)malloc(sizeof(cl_platform_id));
 
   clGetPlatformIDs(1, platforms, &i);
   if (i == 0)
@@ -96,7 +96,7 @@ poclu_read_file(char *filename)
   
   fseek( file, 0, SEEK_END);
   size = ftell(file);
-  src = malloc(size + 1);
+  src = (char*)malloc(size+1);
   if (src == NULL) 
     {
       fclose(file);

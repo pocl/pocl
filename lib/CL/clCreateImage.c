@@ -60,7 +60,7 @@ CL_API_SUFFIX__VERSION_1_2
     POCL_GOTO_ERROR_ON((errcode != CL_SUCCESS || num_entries == 0),
       CL_INVALID_VALUE, "Couldn't find any supported image formats\n");
 
-    supported_image_formats = malloc (num_entries * sizeof(cl_image_format));
+    supported_image_formats = (cl_image_format*) malloc (num_entries * sizeof(cl_image_format));
     if (supported_image_formats == NULL)
       {
         errcode = CL_OUT_OF_HOST_MEMORY;

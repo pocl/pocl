@@ -94,7 +94,7 @@ CL_API_SUFFIX__VERSION_1_0
   
   offset = image->image_channels * image->image_elem_size * origin[0];
   
-  mapping_info = malloc (sizeof (mem_mapping_t));
+  mapping_info = (mem_mapping_t*) malloc (sizeof (mem_mapping_t));
   if (mapping_info == NULL)
     {
       errcode = CL_OUT_OF_HOST_MEMORY;

@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014 pocl developers
+#   Copyright (c) 2015 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -23,44 +23,8 @@
 #
 #=============================================================================
 
-add_subdirectory("pthread")
-add_subdirectory("basic")
-add_subdirectory("topology")
-set(POCL_DEVICES_LINK_LIST ${Hwloc_LDFLAGS})
-
-set(POCL_DEVICES_OBJS "$<TARGET_OBJECTS:pocl-devices>"
-      "$<TARGET_OBJECTS:pocl-devices-pthread>"
-      "$<TARGET_OBJECTS:pocl-devices-basic>"
-      "$<TARGET_OBJECTS:pocl-devices-topology>")
-
-if(ENABLE_TCE)
-  add_subdirectory("tce")
-  include_directories(AFTER "tce")
-  list(APPEND POCL_DEVICES_LINK_LIST ${TCE_LIBS})
-  list(APPEND POCL_DEVICES_OBJS "$<TARGET_OBJECTS:pocl-devices-tce-ttasim>")
-endif()
-
-if(ENABLE_SPU)
-  add_subdirectory("cellspu")
-  list(APPEND POCL_DEVICES_LINK_LIST "spe2")
-endif()
-
-if(ENABLE_HSA)
-  add_subdirectory("hsa")
-  include_directories(AFTER "${WITH_HSA_HEADERS}")
-  list(APPEND POCL_DEVICES_OBJS "$<TARGET_OBJECTS:pocl-devices-hsa>")
-endif()
-
-set(POCL_DEVICES_SOURCES 
-  devices.h  devices.c
-  bufalloc.c  dev_image.h
-  common.h common.c
-  bufalloc.h  cpuinfo.c cpuinfo.h)
-
 if(MSVC)
-  set_source_files_properties( ${POCL_DEVICES_SOURCES} PROPERTIES LANGUAGE CXX )
+  set_source_files_properties( pocl-hsa.c pocl-hsa.h PROPERTIES LANGUAGE CXX )
 endif(MSVC)
-add_library("pocl-devices" OBJECT ${POCL_DEVICES_SOURCES})
-
-set(POCL_DEVICES_LINK_LIST ${POCL_DEVICES_LINK_LIST} PARENT_SCOPE)
-set(POCL_DEVICES_OBJS ${POCL_DEVICES_OBJS} PARENT_SCOPE)
+add_library("pocl-devices-hsa" OBJECT pocl-hsa.c pocl-hsa.h)
+set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS};$<TARGET_OBJECTS:pocl-devices-hsa>" PARENT_SCOPE)

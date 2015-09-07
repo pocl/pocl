@@ -41,7 +41,7 @@ POname(clCreateBuffer)(cl_context context,
 
   POCL_GOTO_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
   
-  mem = malloc(sizeof(struct _cl_mem));
+  mem = (cl_mem) malloc(sizeof(struct _cl_mem));
   if (mem == NULL)
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
@@ -115,7 +115,8 @@ POname(clCreateBuffer)(cl_context context,
   /* Store the per device buffer pointers always to a known
      location in the buffer (dev_id), even though the context
      might not contain all the devices. */
-  mem->device_ptrs = malloc(pocl_num_devices * sizeof(pocl_mem_identifier));
+  mem->device_ptrs =
+    (pocl_mem_identifier*) malloc(pocl_num_devices * sizeof(pocl_mem_identifier));
   if (mem->device_ptrs == NULL)
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
