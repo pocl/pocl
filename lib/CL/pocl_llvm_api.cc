@@ -1321,7 +1321,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
 #ifdef DEBUG_POCL_LLVM_API        
   printf("### calling the kernel compiler for kernel %s local_x %zu "
          "local_y %zu local_z %zu parallel_filename: %s\n",
-         kernel->name, local_x, local_y, local_z, parallel_filename);
+         kernel->name, local_x, local_y, local_z, kernel_so_path);
 #endif
 
   Triple triple(device->llvm_target_triplet);
