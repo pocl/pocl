@@ -31,15 +31,15 @@ if(UNIX)
   set(ADD_INCLUDE "-I${CMAKE_BINARY_DIR}")
   set(FULL_TARGET_DIR "${CMAKE_BINARY_DIR}/lib/kernel/\${target_dir}")
   configure_file("${CMAKE_SOURCE_DIR}/scripts/pocl-standalone.in.cmake" "${CMAKE_BINARY_DIR}/scripts/pocl-standalone.in" ESCAPE_QUOTES @ONLY)
-  file(GENERATE OUTPUT "scripts/pocl-standalone" INPUT "scripts/pocl-standalone.in")
+  file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/scripts/pocl-standalone" INPUT "${CMAKE_SOURCE_DIR}/scripts/pocl-standalone.in")
 
   # install script
   set(LLVMOPENCL_LOCATION "${POCL_INSTALL_PRIVATE_LIBDIR}/$<TARGET_FILE_NAME:llvmopencl>")
   set(KERNEL_INCLUDE_DIR "${POCL_INSTALL_PRIVATE_HEADER_DIR}")
   set(ADD_INCLUDE "")
   set(FULL_TARGET_DIR "${POCL_INSTALL_PRIVATE_DATADIR}")
-  configure_file("pocl-standalone.in.cmake" "pocl-standalone.install.in" ESCAPE_QUOTES @ONLY)
-  file(GENERATE OUTPUT "scripts/pocl-standalone.install" INPUT "scripts/pocl-standalone.install.in")
+  configure_file("${CMAKE_SOURCE_DIR}/scripts/pocl-standalone.in.cmake" "${CMAKE_BINARY_DIR}/scripts/pocl-standalone.install.in" ESCAPE_QUOTES @ONLY)
+  file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/scripts/pocl-standalone.install" INPUT "${CMAKE_BINARY_DIR}/scripts/pocl-standalone.install.in")
 
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}/pocl-standalone.install" RENAME "pocl-standalone"
         DESTINATION ${POCL_INSTALL_PUBLIC_BINDIR})
