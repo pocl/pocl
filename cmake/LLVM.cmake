@@ -696,16 +696,18 @@ if(ENABLE_HSA)
   find_path(HSA_INCLUDES "hsa.h" PATHS "${HSA_INCLUDEDIR}")
   if(NOT HSA_INCLUDES)
     message(FATAL_ERROR "hsa.h header not found")
-  else()
-    message(STATUS "HSA_INCLUDES: ${HSA_INCLUDES}")
   endif()
 
   find_library(HSALIB NAMES "hsa-runtime64" "hsa-runtime" PATHS "${HSA_LIBDIR}")
   if(NOT HSALIB)
     message(FATAL_ERROR "libhsa-runtime not found")
-  else()
-    message(STATUS "HSALIB: ${HSALIB}")
   endif()
+
+  find_program(HSAIL_ASM "HSAILasm${CMAKE_EXECUTABLE_SUFFIX}" PATHS "${HSA_RUNTIME_DIR}/bin")
+  if(NOT HSAIL_ASM)
+    message(FATAL_ERROR "HSAILasm executable not found")
+  endif()
+
 
   message(STATUS "OK, building HSA")
 endif()

@@ -21,6 +21,8 @@
 /* clang++ executable */
 #define CLANGXX "@CLANGXX@"
 
+#define HSAIL_ASM "@HSAIL_ASM@"
+
 /* clang++ compiler flags */
 /* TODO in sources */
 #define KERNEL_CLANGXX_FLAGS "@KERNEL_CLANGXX_FLAGS@"
