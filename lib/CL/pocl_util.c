@@ -309,15 +309,6 @@ void pocl_command_enqueue (cl_command_queue command_queue,
 
 
 
-size_t pocl_file_size(FILE* file) {
-    size_t size;
-    fseek(file, 0, SEEK_END);
-    size = (size_t)ftell(file);
-    fseek(file, 0, SEEK_SET);
-    return size;
-}
-
-
 int pocl_buffer_boundcheck(cl_mem buffer, size_t offset, size_t size) {
   POCL_RETURN_ERROR_ON((offset > buffer->size), CL_INVALID_VALUE,
             "offset(%zu) > buffer->size(%zu)", offset, buffer->size)

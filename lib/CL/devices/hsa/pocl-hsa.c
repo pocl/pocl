@@ -55,6 +55,7 @@
 #include "pocl-hsa.h"
 #include "common.h"
 #include "devices.h"
+#include "pocl_file_util.h"
 #include "pocl_cache.h"
 #include "pocl_llvm.h"
 #include "pocl_util.h"
@@ -719,10 +720,10 @@ compile (_cl_command_node *cmd)
 {
   int error, status;
   char bytecode[POCL_FILENAME_LENGTH];
-  char objfile[POCL_FILENAME_LENGTH];
-  FILE *file;
+  char brigfile[POCL_FILENAME_LENGTH];
+  char asmfile[POCL_FILENAME_LENGTH];
+  char command[4096];
   char *blob;
-  size_t file_size, got_size;
 
   struct pocl_hsa_device_data *d =
     (struct pocl_hsa_device_data*)cmd->device->data;
@@ -732,30 +733,57 @@ compile (_cl_command_node *cmd)
                     POCL_PARALLEL_BC_FILENAME);
   assert (error >= 0);
 
-  error = snprintf (objfile, POCL_FILENAME_LENGTH,
+  POCL_MSG_PRINT_INFO("pocl-hsa: compiling parallel.bc %s", bytecode);
+
+  error = snprintf (brigfile, POCL_FILENAME_LENGTH,
                     "%s/%s.o", cmd->command.run.tmp_dir,
                     POCL_PARALLEL_BC_FILENAME);
   assert (error >= 0);
+  POCL_MSG_PRINT_INFO("pocl-hsa: to brig file %s", brigfile);
 
-  error = pocl_llvm_codegen (cmd->command.run.kernel, cmd->device, bytecode, objfile);
-  assert (error == 0);
+  if (!pocl_exists(brigfile))
+    {
+      // TODO call llvm via c++ interface like pocl_llvm_codegen()
+      POCL_MSG_PRINT_INFO("pocl-hsa: BRIG file not found, recompiling");
+      error = snprintf (asmfile, POCL_FILENAME_LENGTH,
+                    "%s/%s.s", cmd->command.run.tmp_dir,
+                    POCL_PARALLEL_BC_FILENAME);
+      assert (error >= 0);
 
-  POCL_MSG_PRINT_INFO("pocl-hsa: loading binary from file %s.\n", objfile);
-  file = fopen (objfile, "rb");
-  assert (file != NULL);
+      error = snprintf (command, 4096, LLC " -O2 -march=hsail64 -filetype=asm -o %s %s", asmfile, bytecode);
+      assert (error >= 0);
+      error = system(command);
+      if (error != 0)
+        {
+          POCL_MSG_PRINT_INFO("pocl-hsa: llc exit status %i", WEXITSTATUS(error));
+          POCL_ABORT("pocl-hsa: llc exited with nonzero status");
+        }
+
+      error = snprintf (command, 4096, HSAIL_ASM " -o %s %s", brigfile, asmfile);
+      assert (error >= 0);
+      error = system(command);
+      if (error != 0)
+        {
+          POCL_MSG_PRINT_INFO("pocl-hsa: HSAILasm exit status %i", WEXITSTATUS(error));
+          POCL_ABORT("pocl-hsa: HSAILasm exited with nonzero status");
+        }
+
+
+
+    }
+
+  POCL_MSG_PRINT_INFO("pocl-hsa: loading binary from file %s.\n", brigfile);
+  uint64_t filesize = 0;
+  int read = pocl_read_file(brigfile, &blob, &filesize);
+
+  if (read != 0)
+    POCL_ABORT("pocl-hsa: could not read the binary.\n");
+
+  POCL_MSG_PRINT_INFO("pocl-hsa: binary size: %lu.\n", filesize);
 
   cmd->command.run.device_data = malloc (sizeof(void*)*2);
 
-  file_size = pocl_file_size (file);
-  blob = malloc (file_size);
-  got_size = fread (blob, 1, file_size, file);
-
-  if (file_size != got_size)
-    POCL_ABORT ("pocl-hsa: could not read the binary.\n");
-
   hsa_ext_module_t module = (hsa_ext_module_t)blob;
-
-  cmd->command.run.device_data[1] = blob;
 
   hsa_ext_program_t program;
   memset (&program, 0, sizeof (hsa_ext_program_t));
@@ -798,7 +826,6 @@ compile (_cl_command_node *cmd)
 
   cmd->command.run.device_data[0] = exe;
   cmd->command.run.device_data[1] = code_object;
-  fclose (file);
 }
 
 void
