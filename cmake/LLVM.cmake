@@ -108,6 +108,11 @@ string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_INCLUDEDIR "${LLVM_I
 run_llvm_config(LLVM_LIBS --libs)
 # Convert LLVM_LIBS from string -> list format to make handling them easier
 separate_arguments(LLVM_LIBS)
+# workaround for a bug in current HSAIL LLVM
+# it forgets to report one HSAIL library in llvm-config
+if(ENABLE_HSA)
+  list(APPEND LLVM_LIBS "-lLLVMHSAILUtil")
+endif()
 run_llvm_config(LLVM_SRC_ROOT --src-root)
 run_llvm_config(LLVM_OBJ_ROOT --obj-root)
 string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_OBJ_ROOT "${LLVM_OBJ_ROOT}")
