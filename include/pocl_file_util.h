@@ -65,7 +65,7 @@ int pocl_write_file(const char* path, const char* content,
                     uint64_t count, int append, int dont_rewrite);
 
 /* Allocates memory and places file contents in it.
- * Returns number of chars read. */
+ * Returns negative errno on error, zero otherwise. */
 int pocl_read_file(const char* path, char** content, uint64_t *filesize);
 
 
