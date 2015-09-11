@@ -31,7 +31,10 @@ foreach(FILE printf.c barrier.ll)
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
 endforeach()
 
-list(APPEND KERNEL_SOURCES "hsail64/barrier.c")
+foreach(FILE barrier.c get_global_id.c get_group_id.c get_local_id.c get_local_size.c)
+  list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
+  list(APPEND KERNEL_SOURCES "hsail64/${FILE}")
+endforeach()
 
 set(CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-emit-llvm" "-target" "hsail64")
 set(LLC_FLAGS "")
