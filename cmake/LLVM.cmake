@@ -191,8 +191,8 @@ endif()
 string(REPLACE " -pedantic" "" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
 
 # - '-fno-rtti' is a work-around for llvm bug 14200
-#LLVM_CXX_FLAGS="$LLVM_CXX_FLAGS -fno-rtti"
-if(NOT MSVC)
+# Which according to bug report has been fixed in llvm 3.7
+if ((LLVM_MINOR LESS 7) AND (NOT MSVC))
   set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -fno-rtti")
 endif()
 

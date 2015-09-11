@@ -787,12 +787,17 @@ AC_COMPILE_IFELSE(
 
 #
 # A few work-arounds for llvm-config issues
-# - '-fno-rtti' is a work-around for llvm bug 14200
+# - '-fno-rtti' is a work-around for llvm bug 14200 - this should be fixed in 3.7
 # - '-DNDEBUG' is a work-around for llvm bug 18253
 # - pocl doesn't compile with '-pedantic'
 
 LLVM_CXX_FLAGS=$($LLVM_CONFIG --cxxflags | sed -e 's/ -pedantic / /g')
-LLVM_CXX_FLAGS="$LLVM_CXX_FLAGS -fno-rtti"
+LLVM_MINOR=$(echo $LLVM_VERSION | cut -d '.' -f 2)
+if test $LLVM_MINOR -lt 7; then
+  LLVM_CXX_FLAGS="$LLVM_CXX_FLAGS -fno-rtti"
+else
+  AC_MSG_NOTICE([Detected LLVM 3.7+, not adding -fno-rtti to LLVM CXXFLAGS])
+fi
 
 # llvm-config does not always report the "-DNDEBUG" flag correctly
 # (see LLVM bug 18253). If LLVM and the pocl passes are built with 
@@ -1329,10 +1334,7 @@ CPPFLAGS=$tempCPPFLAGS
 
 AC_PATH_PROG([HSAILASM], [HSAILasm], [], ["${HSA_RUNTIME_DIR}/bin"])
 if test ! -z "$HSAILASM"; then
-  AC_MSG_RESULT(found)
   AC_DEFINE_UNQUOTED([HSAIL_ASM], ["$HSAILASM"], [Path to HSAILasm executable])
-else
-  AC_MSG_RESULT(not found)
 fi
 
 if test "$enable_hsa" = "yes";
