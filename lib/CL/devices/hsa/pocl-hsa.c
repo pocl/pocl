@@ -65,6 +65,7 @@
 #include <stdlib.h>
 
 #ifndef _MSC_VER
+#  include <sys/wait.h>
 #  include <sys/time.h>
 #  include <unistd.h>
 #else
