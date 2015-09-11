@@ -1254,17 +1254,16 @@ AC_ARG_WITH(hsa-runtime-dir,
 [AS_HELP_STRING([--with-hsa-runtime-dir],[absolute path where HSA runtime files (include,libs) are found, defaults to /opt/hsa])],
 [
   HSA_RUNTIME_DIR="${withval}"
-  hsa_cpp_flags="-I${withval}/include"
-  AC_SUBST([HSA_INCLUDES], ["$hsa_cpp_flags"] )
+  AC_MSG_NOTICE([Using provided HSA runtime location: ${HSA_RUNTIME_DIR}])
 ],
 [
   HSA_RUNTIME_DIR="/opt/hsa"
-  hsa_cpp_flags="-I/opt/hsa/include"
-  AC_SUBST([HSA_INCLUDES], ["$hsa_cpp_flags"] )
+  AC_MSG_NOTICE([Using default HSA runtime location: ${HSA_RUNTIME_DIR}])
 ]
 )
 
-AC_MSG_NOTICE([HSA RUNTIME: ${HSA_RUNTIME_DIR}])
+AC_SUBST([HSA_INCLUDES], ["-I${HSA_RUNTIME_DIR}/include"] )
+
 # Search for the HSA runtime lib.
 AC_MSG_CHECKING([for HSA runtime])
 old_LIBS="$LIBS"
@@ -1328,6 +1327,13 @@ enable_hsa="no"
 
 CPPFLAGS=$tempCPPFLAGS
 
+AC_PATH_PROG([HSAILASM], [HSAILasm], [], ["${HSA_RUNTIME_DIR}/bin"])
+if test ! -z "$HSAILASM"; then
+  AC_MSG_RESULT(found)
+  AC_DEFINE_UNQUOTED([HSAIL_ASM], ["$HSAILASM"], [Path to HSAILasm executable])
+else
+  AC_MSG_RESULT(not found)
+fi
 
 if test "$enable_hsa" = "yes";
 then
