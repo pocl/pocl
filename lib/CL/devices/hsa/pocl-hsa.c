@@ -348,6 +348,12 @@ pocl_hsa_probe(struct pocl_device_ops *ops)
   return found_hsa_agents;
 }
 
+static void hsa_queue_callback(hsa_status_t status, hsa_queue_t *q, void* data) {
+  const char * sstr;
+  hsa_status_string(status, &sstr);
+  POCL_MSG_PRINT_INFO("HSA Device %s encountered an error in the HSA Queue: %s", (const char*)data, sstr);
+}
+
 void
 pocl_hsa_init (cl_device_id device, const char* parameters)
 {
@@ -372,7 +378,7 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
 
   hsa_agent_iterate_regions (*d->agent, setup_agent_memory_regions_callback, d);
 
-  if (hsa_queue_create(*d->agent, 4, HSA_QUEUE_TYPE_MULTI, NULL, NULL,
+  if (hsa_queue_create(*d->agent, 4, HSA_QUEUE_TYPE_MULTI, hsa_queue_callback, device->short_name,
                        -1, -1, &d->queue) != HSA_STATUS_SUCCESS)
     {
       POCL_ABORT("pocl-hsa: could not create the HSA queue.\n");
