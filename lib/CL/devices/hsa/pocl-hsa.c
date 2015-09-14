@@ -230,15 +230,12 @@ supported_hsa_devices[MAX_HSA_AGENTS] =
     .llvm_cpu = NULL,                 // native: "kaveri",
     .llvm_target_triplet = "hsail64", // native: "amdgcn--amdhsa"
 	.has_64bit_long = 1,
-	.max_mem_alloc_size =  592969728,
-	.global_mem_size = 2371878912,
 	.vendor_id = 0x1002,
 	.global_mem_cache_type = 0x2,
 	.global_mem_cacheline_size = 64,
 	.max_compute_units = 8,
 	.max_clock_frequency = 720,
-	.max_constant_buffer_size = 65536,
-	.local_mem_size = 32768
+	.max_constant_buffer_size = 65536
   },
 };
 
@@ -258,15 +255,12 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
           COPY_ATTR (llvm_cpu);
           COPY_ATTR (llvm_target_triplet);
           COPY_ATTR (has_64bit_long);
-          COPY_ATTR (max_mem_alloc_size);
-          COPY_ATTR (global_mem_size);
           COPY_ATTR (vendor_id);
           COPY_ATTR (global_mem_cache_type);
           COPY_ATTR (global_mem_cacheline_size);
           COPY_ATTR (max_compute_units);
           COPY_ATTR (max_clock_frequency);
           COPY_ATTR (max_constant_buffer_size);
-          COPY_ATTR (local_mem_size);
           found = 1;
           break;
         }
@@ -406,6 +400,30 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
   device->data = d;
 
   hsa_agent_iterate_regions (*d->agent, setup_agent_memory_regions_callback, d);
+
+  uint32_t boolarg;
+  status = hsa_region_get_info(d->global_region, HSA_REGION_INFO_RUNTIME_ALLOC_ALLOWED, &boolarg);
+  assert(status == HSA_STATUS_SUCCESS);
+  assert(boolarg != 0);
+
+  size_t sizearg;
+  status = hsa_region_get_info(d->global_region, HSA_REGION_INFO_ALLOC_MAX_SIZE, &sizearg);
+  assert(status == HSA_STATUS_SUCCESS);
+  device->max_mem_alloc_size = sizearg;
+
+  /* For some reason, the global region size returned is 128 Terabytes...
+   * for now, use the max alloc size, it seems to be a much more reasonable value.
+  status = hsa_region_get_info(d->global_region, HSA_REGION_INFO_SIZE, &sizearg);
+  assert(status == HSA_STATUS_SUCCESS);
+  */
+  device->global_mem_size = sizearg;
+
+  status = hsa_region_get_info(d->group_region, HSA_REGION_INFO_SIZE, &sizearg);
+  device->local_mem_size = sizearg;
+  assert(status == HSA_STATUS_SUCCESS);
+
+  status = hsa_region_get_info(d->global_region, HSA_REGION_INFO_RUNTIME_ALLOC_ALIGNMENT, &sizearg);
+  device->mem_base_addr_align = sizearg * 8;
 
   if (hsa_queue_create(*d->agent, 4, HSA_QUEUE_TYPE_MULTI, hsa_queue_callback, device->short_name,
                        -1, -1, &d->queue) != HSA_STATUS_SUCCESS)
