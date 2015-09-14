@@ -183,7 +183,7 @@ setup_agent_memory_regions_callback(hsa_region_t region, void* data)
         d->kernarg_region = region;
     }
 
-  if (segment = HSA_REGION_SEGMENT_GROUP)
+  if (segment == HSA_REGION_SEGMENT_GROUP)
     d->group_region = region;
 
   return HSA_STATUS_SUCCESS;
