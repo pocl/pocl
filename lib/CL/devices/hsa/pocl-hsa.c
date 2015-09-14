@@ -472,22 +472,6 @@ pocl_hsa_free (void *data, cl_mem_flags flags, void *ptr)
   POCL_MEM_FREE(ptr);
 }
 
-static hsa_status_t
-symbol_printer
-(hsa_executable_t exe, hsa_executable_symbol_t symbol, void *data)
-{
-  size_t length;
-  hsa_executable_symbol_get_info (symbol, HSA_CODE_SYMBOL_INFO_NAME_LENGTH, &length);
-
-  char *name = malloc(length);
-  hsa_executable_symbol_get_info (symbol, HSA_CODE_SYMBOL_INFO_NAME, name);
-
-  POCL_MSG_PRINT_INFO("pocl-hsa: symbol name=%s\n", name);
-  free (name);
-
-  return HSA_STATUS_SUCCESS;
-}
-
 static void
 setup_kernel_args (struct pocl_hsa_device_data *d,
                    _cl_command_node *cmd,
