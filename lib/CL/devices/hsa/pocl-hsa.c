@@ -820,13 +820,12 @@ static int compile_parallel_bc_to_brig(const char* tmpdir, char* brigfile) {
   assert (error >= 0);
 
   if (pocl_exists(brigfile))
-    POCL_MSG_PRINT_INFO("pocl-hsa: using existing brig file", brigfile);
+    POCL_MSG_PRINT_INFO("pocl-hsa: using existing BRIG file: \n%s\n", brigfile);
   else
     {
-      POCL_MSG_PRINT_INFO("pocl-hsa: compiling parallel.bc %s\n to brig file", bytecode);
+      POCL_MSG_PRINT_INFO("pocl-hsa: BRIG file not found, compiling parallel.bc to brig file: \n%s\n", bytecode);
 
       // TODO call llvm via c++ interface like pocl_llvm_codegen()
-      POCL_MSG_PRINT_INFO("pocl-hsa: BRIG file not found, recompiling\n");
       error = snprintf (hsailfile, POCL_FILENAME_LENGTH,
                     "%s%s.hsail", tmpdir, POCL_PARALLEL_BC_FILENAME);
       assert (error >= 0);
@@ -870,7 +869,7 @@ pocl_hsa_compile_submitted_kernels (_cl_command_node *cmd)
     (struct pocl_hsa_device_data*)cmd->device->data;
 
   hsa_code_object_t *out = malloc(sizeof(hsa_code_object_t));
-  cmd->command.run.device_data = out;
+  cmd->command.run.device_data = (void**)out;
 
   for (unsigned i = 0; i<HSA_KERNEL_CACHE_SIZE; i++)
     if (d->program_cache[i].program == program)
@@ -949,7 +948,7 @@ pocl_hsa_uninit (cl_device_id device)
       if (d->program_cache[j].program)
         {
           hsa_program_cache_t *cache = &d->program_cache[j];
-          for (unsigned i; i < HSA_KERNEL_CACHE_SIZE; i++)
+          for (unsigned i = 0; i < HSA_KERNEL_CACHE_SIZE; i++)
             if (cache->kernel_cache[i].kernel)
               {
                 hsa_executable_destroy(cache->kernel_cache[i].hsa_exe);
