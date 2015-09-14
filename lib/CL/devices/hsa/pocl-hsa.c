@@ -149,7 +149,7 @@ static hsa_agent_t* last_assigned_agent;
 static int found_hsa_agents = 0;
 
 static hsa_status_t
-pocl_hsa_get_agents(hsa_agent_t agent, void *data)
+pocl_hsa_get_agents_callback(hsa_agent_t agent, void *data)
 {
   hsa_device_type_t type;
   hsa_status_t stat = hsa_agent_get_info (agent, HSA_AGENT_INFO_DEVICE, &type);
@@ -163,12 +163,11 @@ pocl_hsa_get_agents(hsa_agent_t agent, void *data)
 }
 
 /*
- * Determines if a memory region can be used for kernarg
- * allocations.
+ * Sets up the memory regions in pocl_hsa_device_data for a device
  */
 static
 hsa_status_t
-setup_agent_memory_regions(hsa_region_t region, void* data)
+setup_agent_memory_regions_callback(hsa_region_t region, void* data)
 {
   struct pocl_hsa_device_data* d = (struct pocl_hsa_device_data*)data;
 
@@ -338,7 +337,7 @@ pocl_hsa_probe(struct pocl_device_ops *ops)
       POCL_ABORT("pocl-hsa: hsa_init() failed.");
     }
 
-  if (hsa_iterate_agents(pocl_hsa_get_agents, NULL) !=
+  if (hsa_iterate_agents(pocl_hsa_get_agents_callback, NULL) !=
       HSA_STATUS_SUCCESS)
     {
       assert (0 && "pocl-hsa: could not get agents.");
@@ -371,7 +370,7 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
   d->agent = (hsa_agent_t*)device->data;
   device->data = d;
 
-  hsa_agent_iterate_regions (*d->agent, setup_agent_memory_regions, d);
+  hsa_agent_iterate_regions (*d->agent, setup_agent_memory_regions_callback, d);
 
   if (hsa_queue_create(*d->agent, 4, HSA_QUEUE_TYPE_MULTI, NULL, NULL,
                        -1, -1, &d->queue) != HSA_STATUS_SUCCESS)

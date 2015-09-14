@@ -1,4 +1,4 @@
-/* basic.h - a minimalistic pocl device driver layer implementation
+/* pocl-hsa.h - HSA device declarations
 
    Copyright (c) 2015 Pekka Jääskeläinen / Tampere University of Technology
 
@@ -20,11 +20,6 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 */
-/**
- * @file pocl-hsa.h
- *
- * Control HSA-supported devices via HSA runtime.
- */
 
 #ifndef POCL_HSA_H
 #define POCL_HSA_H
