@@ -1,4 +1,4 @@
-// TargetAddressSpaces.cc - map the fixed "logical" address-space ids to
+// TargetAddressSpaces.cc - map the fixed "logical" address-space ids to,
 //                          the target-specific ones, if needed
 // 
 // Copyright (c) 2013-2015 Pekka Jääskeläinen / TUT
@@ -95,14 +95,10 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
   std::map<unsigned, unsigned> addrSpaceMap;
 
   if (arch.startswith("x86_64")) {
-#ifndef LLVM_OLDER_THAN_3_7
-    /* For x86_64 the default isel seems to work with the
-       fake address spaces. Skip the processing as it causes
-       an overhead and is not fully implemented.
-    */
-    return false;
-#else
-    /* At least LLVM 3.5 exposes an issue with pocl's printf or another LLVM pass:
+    /* x86_64 supports flattening the address spaces at the backend, but
+       we still flatten them in pocl due to a couple of reasons.
+
+       At least LLVM 3.5 exposes an issue with pocl's printf or another LLVM pass:
        After the code emission optimizations there appears a
        PHI node where the two alternative pointer assignments have different
        address spaces:
@@ -114,8 +110,11 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
        while it won't be such due to the address space difference (I assume).
        Workaround this by flattening the address spaces to 0 here also for
        x86_64 until the real culprit is found.
+
+       Another reason is that LoopVectorizer of LLVM 3.7 crashes when it
+       tries to create a masked store intrinsics with the fake address space
+       ids, so we need to flatten them out before vectorizing.
     */
-#endif
     addrSpaceMap[POCL_ADDRESS_SPACE_GLOBAL] =
         addrSpaceMap[POCL_ADDRESS_SPACE_LOCAL] =
         addrSpaceMap[POCL_ADDRESS_SPACE_CONSTANT] = 0;
