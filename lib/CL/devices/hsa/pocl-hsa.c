@@ -871,7 +871,7 @@ pocl_hsa_compile_submitted_kernels (_cl_command_node *cmd)
   hsa_code_object_t *out = malloc(sizeof(hsa_code_object_t));
   cmd->command.run.device_data = (void**)out;
 
-  for (unsigned i = 0; i<HSA_KERNEL_CACHE_SIZE; i++)
+  for (unsigned i = 0; i<HSA_PROGRAM_CACHE_SIZE; i++)
     if (d->program_cache[i].program == program)
       {
         *out = d->program_cache[i].code_object;
