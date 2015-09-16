@@ -902,7 +902,16 @@ set(_CL_DISABLE_LONG ${CL_DISABLE_LONG})
 set(_CL_DISABLE_HALF ${CL_DISABLE_HALF})
 set(PACKAGE_VERSION "${POCL_VERSION}")
 
-configure_file("config.h.in.cmake" "config.h" ESCAPE_QUOTES)
+configure_file("config.h.in.cmake" "config.h.new" ESCAPE_QUOTES)
+if(EXISTS "${CMAKE_BINARY_DIR}/config.h")
+  file(MD5 "${CMAKE_BINARY_DIR}/config.h" OLD_MD5)
+  file(MD5 "${CMAKE_BINARY_DIR}/config.h.new" NEW_MD5)
+  if(NOT OLD_MD5 STREQUAL NEW_MD5)
+    file(RENAME "${CMAKE_BINARY_DIR}/config.h.new" "${CMAKE_BINARY_DIR}/config.h")
+  endif()
+else()
+  file(RENAME "${CMAKE_BINARY_DIR}/config.h.new" "${CMAKE_BINARY_DIR}/config.h")
+endif()
 include_directories("${CMAKE_BINARY_DIR}")
 
 # autotools compat
