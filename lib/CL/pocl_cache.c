@@ -27,6 +27,9 @@
 #include <unistd.h>
 
 #include "config.h"
+#ifdef POCL_BUILT_WITH_CMAKE
+#include "pocl_build_timestamp.h"
+#endif
 #include "kernellib_hash.h"
 
 #include "pocl_hash.h"
