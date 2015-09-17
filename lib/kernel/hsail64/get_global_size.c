@@ -26,9 +26,15 @@ get_global_size(unsigned int dimindx)
 {
   switch(dimindx)
     {
+/*
+ * TODO This should be the actual code used, but currently it crashes llvm
       case 0: return __builtin_hsail_gridsize(0);
       case 1: return __builtin_hsail_gridsize(1);
       case 2: return __builtin_hsail_gridsize(2);
+*/
+      case 0: return __builtin_hsail_gridgroups(0) * __builtin_hsail_workgroupsize(0);
+      case 1: return __builtin_hsail_gridgroups(1) * __builtin_hsail_workgroupsize(1);
+      case 2: return __builtin_hsail_gridgroups(2) * __builtin_hsail_workgroupsize(2);
       default: return 0;
     }
 }

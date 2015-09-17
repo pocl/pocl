@@ -21,10 +21,6 @@
    THE SOFTWARE.
 */
 
-extern size_t _local_size_x;
-extern size_t _local_size_y;
-extern size_t _local_size_z;
-
 size_t _CL_OVERLOADABLE
 get_local_size(unsigned int dimindx)
 {
