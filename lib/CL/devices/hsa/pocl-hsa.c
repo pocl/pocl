@@ -79,14 +79,14 @@
      works with HSA Base profile agents (assuming all memory is coherent
      requires the Full profile) -- or perhaps a separate hsabase driver
      for the simpler agents.
-   - check what is needed to be done only once per agent in the *run(),
-     now there's _lots_ of boilerplate per kernel launch
-   - local memory support
-   - Share the same kernel binary function for all WG sizes as HSA is an
-     SPMD target. Now it builds a new one for all WGs due to the tempdir.
-   - Do not use the BRIG output of the LLVM-HSAIL branch as it's not going
-     to get merged upstream. Use HSAIL text output + libHSAIL's assembler
-     instead.
+   - AMD SDK samples. Requires work mainly in these areas:
+      - atomics support
+      - image support
+      - CL C++
+   - OpenCL printf() support
+   - get_global_offset() and global_work_offset param of clEnqueNDRker -
+     HSA kernel dispatch packet has no offset fields -
+     we must take care of it somewhere
    - clinfo of Ubuntu crashes
    - etc. etc.
 */
