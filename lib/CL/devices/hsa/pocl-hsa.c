@@ -122,6 +122,7 @@ typedef struct pocl_hsa_device_data {
   cl_kernel current_kernel;
   /* The HSA kernel agent controlled by the device driver instance. */
   hsa_agent_t *agent;
+  hsa_profile_t agent_profile;
   /* mem regions */
   hsa_region_t global_region, kernarg_region, group_region;
   /* Queue for pushing work to the agent. */
@@ -417,6 +418,9 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
 
   status = hsa_region_get_info(d->global_region, HSA_REGION_INFO_RUNTIME_ALLOC_ALIGNMENT, &sizearg);
   device->mem_base_addr_align = sizearg * 8;
+
+  status = hsa_agent_get_info(*d->agent, HSA_AGENT_INFO_PROFILE, &d->agent_profile);
+  device->profile = ((d->agent_profile == HSA_PROFILE_FULL) ? "FULL_PROFILE" : "EMBEDDED_PROFILE");
 
   if (hsa_queue_create(*d->agent, 4, HSA_QUEUE_TYPE_MULTI, hsa_queue_callback, device->short_name,
                        -1, -1, &d->queue) != HSA_STATUS_SUCCESS)
