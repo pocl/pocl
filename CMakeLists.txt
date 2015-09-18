@@ -893,6 +893,17 @@ set(KERNEL_COMPILER_LIB_VERSION "${LIB_CURRENT_VERSION}.0.0")
 
 ##########################################################
 
+function(rename_if_different SRC DST)
+  if(EXISTS "${DST}")
+    file(MD5 "${SRC}" OLD_MD5)
+    file(MD5 "${DST}" NEW_MD5)
+    if(NOT OLD_MD5 STREQUAL NEW_MD5)
+      file(RENAME "${SRC}" "${DST}")
+    endif()
+  else()
+    file(RENAME "${SRC}" "${DST}")
+  endif()
+endfunction()
 
 #TODO
 # these vars are copies b/c tons of sources use BUILD_ICD etc
@@ -905,19 +916,12 @@ set(_CL_DISABLE_HALF ${CL_DISABLE_HALF})
 set(PACKAGE_VERSION "${POCL_VERSION}")
 
 configure_file("config.h.in.cmake" "config.h.new" ESCAPE_QUOTES)
-if(EXISTS "${CMAKE_BINARY_DIR}/config.h")
-  file(MD5 "${CMAKE_BINARY_DIR}/config.h" OLD_MD5)
-  file(MD5 "${CMAKE_BINARY_DIR}/config.h.new" NEW_MD5)
-  if(NOT OLD_MD5 STREQUAL NEW_MD5)
-    file(RENAME "${CMAKE_BINARY_DIR}/config.h.new" "${CMAKE_BINARY_DIR}/config.h")
-  endif()
-else()
-  file(RENAME "${CMAKE_BINARY_DIR}/config.h.new" "${CMAKE_BINARY_DIR}/config.h")
-endif()
+rename_if_different("${CMAKE_BINARY_DIR}/config.h.new" "${CMAKE_BINARY_DIR}/config.h")
 include_directories("${CMAKE_BINARY_DIR}")
 
 # autotools compat
-file(WRITE "${CMAKE_BINARY_DIR}/install-paths.h" "#define PKGDATADIR \"${POCL_INSTALL_PRIVATE_DATADIR}\"")
+file(WRITE "${CMAKE_BINARY_DIR}/install-paths.h.new" "#define PKGDATADIR \"${POCL_INSTALL_PRIVATE_DATADIR}\"")
+rename_if_different("${CMAKE_BINARY_DIR}/install-paths.h.new" "${CMAKE_BINARY_DIR}/install-paths.h")
 
 ##########################################################
 
