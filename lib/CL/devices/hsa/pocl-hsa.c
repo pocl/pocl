@@ -832,7 +832,7 @@ static int compile_parallel_bc_to_brig(const char* tmpdir, char* brigfile) {
       error = system(command);
       if (error != 0)
         {
-          POCL_MSG_PRINT_INFO("pocl-hsa: llc exit status %i", WEXITSTATUS(error));
+          POCL_MSG_PRINT_INFO("pocl-hsa: llc exit status %i\n", WEXITSTATUS(error));
           return error;
         }
 
@@ -841,7 +841,7 @@ static int compile_parallel_bc_to_brig(const char* tmpdir, char* brigfile) {
       error = system(command);
       if (error != 0)
         {
-          POCL_MSG_PRINT_INFO("pocl-hsa: HSAILasm exit status %i", WEXITSTATUS(error));
+          POCL_MSG_PRINT_INFO("pocl-hsa: HSAILasm exit status %i\n", WEXITSTATUS(error));
           return error;
         }
     }
@@ -876,7 +876,7 @@ pocl_hsa_compile_submitted_kernels (_cl_command_node *cmd)
       }
 
   if (compile_parallel_bc_to_brig(cmd->command.run.tmp_dir, brigfile))
-    POCL_ABORT("Compiling LLVM IR -> HSAIL -> BRIG failed.");
+    POCL_ABORT("Compiling LLVM IR -> HSAIL -> BRIG failed.\n");
 
   POCL_MSG_PRINT_INFO("pocl-hsa: loading binary from file %s.\n", brigfile);
   uint64_t filesize = 0;
@@ -955,6 +955,7 @@ pocl_hsa_uninit (cl_device_id device)
         }
     }
 
+  hsa_queue_destroy(d->queue);
   POCL_MEM_FREE(d);
   device->data = NULL;
 }
