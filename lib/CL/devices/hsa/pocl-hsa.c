@@ -187,6 +187,14 @@ pocl_hsa_get_agents_callback(hsa_agent_t agent, void *data)
       return HSA_STATUS_SUCCESS;
     }
 
+  hsa_agent_feature_t features;
+  stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_FEATURE, &features);
+  if (type != HSA_AGENT_FEATURE_KERNEL_DISPATCH)
+    {
+      return HSA_STATUS_SUCCESS;
+    }
+
+
   hsa_agents[found_hsa_agents++] = agent;
   return HSA_STATUS_SUCCESS;
 }
@@ -297,23 +305,7 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
   stat = hsa_agent_get_info (agent, HSA_AGENT_INFO_NAME, dev->long_name);
   get_hsa_device_features (dev->long_name, dev);
 
-  hsa_device_type_t dev_type;
-  stat = hsa_agent_get_info (agent, HSA_AGENT_INFO_DEVICE, &dev_type);
-  switch(dev_type)
-    {
-    case HSA_DEVICE_TYPE_GPU:
-      dev->type = CL_DEVICE_TYPE_GPU;
-      break;
-    case HSA_DEVICE_TYPE_CPU:
-	  dev->type = CL_DEVICE_TYPE_CPU;
-	  break;
-    case HSA_DEVICE_TYPE_DSP:
-	  dev->type = CL_DEVICE_TYPE_CUSTOM;
-	  break;
-    default:
-	  POCL_ABORT("Unsupported hsa device type!\n");
-	  break;
-  }
+  dev->type = CL_DEVICE_TYPE_GPU;
 
   hsa_dim3_t grid_size;
   stat = hsa_agent_get_info (agent, HSA_AGENT_INFO_GRID_MAX_DIM, &grid_size);
