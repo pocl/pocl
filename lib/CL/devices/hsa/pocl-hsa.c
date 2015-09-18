@@ -307,11 +307,12 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
 
   dev->type = CL_DEVICE_TYPE_GPU;
 
-  hsa_dim3_t grid_size;
-  stat = hsa_agent_get_info (agent, HSA_AGENT_INFO_GRID_MAX_DIM, &grid_size);
-  dev->max_work_item_sizes[0] = grid_size.x;
-  dev->max_work_item_sizes[1] = grid_size.y;
-  dev->max_work_item_sizes[2] = grid_size.z;
+  uint16_t wg_sizes[3];
+  stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_WORKGROUP_MAX_DIM, &wg_sizes);
+  dev->max_work_item_sizes[0] = wg_sizes[0];
+  dev->max_work_item_sizes[1] = wg_sizes[1];
+  dev->max_work_item_sizes[2] = wg_sizes[2];
+
   stat = hsa_agent_get_info
     (agent, HSA_AGENT_INFO_WORKGROUP_MAX_SIZE, &dev->max_work_group_size);
   /*Image features*/
