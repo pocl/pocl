@@ -238,13 +238,28 @@ supported_hsa_devices[MAX_HSA_AGENTS] =
     .long_name = "Spectre",
     .llvm_cpu = NULL,                 // native: "kaveri",
     .llvm_target_triplet = "hsail64", // native: "amdgcn--amdhsa"
-	.has_64bit_long = 1,
-	.vendor_id = 0x1002,
-	.global_mem_cache_type = 0x2,
+        .has_64bit_long = 1,
+        .vendor_id = 0x1002,
+        .global_mem_cache_type = CL_READ_WRITE_CACHE,
 	.global_mem_cacheline_size = 64,
 	.max_compute_units = 8,
 	.max_clock_frequency = 720,
-	.max_constant_buffer_size = 65536
+	.max_constant_buffer_size = 65536,
+    .local_mem_type = CL_LOCAL,
+    .endian_little = CL_TRUE,
+    .preferred_wg_size_multiple = 64, // wavefront size on Kaveri
+    .preferred_vector_width_char = 4,
+    .preferred_vector_width_short = 2,
+    .preferred_vector_width_int = 1,
+    .preferred_vector_width_long = 1,
+    .preferred_vector_width_float = 1,
+    .preferred_vector_width_double = 1,
+    .native_vector_width_char = 4,
+    .native_vector_width_short = 2,
+    .native_vector_width_int = 1,
+    .native_vector_width_long = 1,
+    .native_vector_width_float = 1,
+    .native_vector_width_double = 1
   },
 };
 
@@ -255,6 +270,9 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
 {
 
 #define COPY_ATTR(ATTR) dev->ATTR = supported_hsa_devices[i].ATTR
+#define COPY_VECWIDTH(ATTR) \
+     dev->preferred_vector_width_ ## ATTR = supported_hsa_devices[i].preferred_vector_width_ ## ATTR; \
+     dev->native_vector_width_ ## ATTR = supported_hsa_devices[i].native_vector_width_ ## ATTR;
   int found = 0;
   int i;
   for(i = 0; i < num_hsa_device; i++)
@@ -270,6 +288,15 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
           COPY_ATTR (max_compute_units);
           COPY_ATTR (max_clock_frequency);
           COPY_ATTR (max_constant_buffer_size);
+          COPY_ATTR (local_mem_type);
+          COPY_ATTR (endian_little);
+          COPY_ATTR (preferred_wg_size_multiple);
+          COPY_VECWIDTH (char);
+          COPY_VECWIDTH (short);
+          COPY_VECWIDTH (int);
+          COPY_VECWIDTH (long);
+          COPY_VECWIDTH (float);
+          COPY_VECWIDTH (double);
           found = 1;
           break;
         }
@@ -307,6 +334,15 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
   get_hsa_device_features (dev->long_name, dev);
 
   dev->type = CL_DEVICE_TYPE_GPU;
+
+  dev->image_support = CL_FALSE;   // until it's actually implemented
+
+  dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO | CL_FP_ROUND_TO_INF | CL_FP_FMA | CL_FP_INF_NAN;
+  dev->double_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO | CL_FP_ROUND_TO_INF | CL_FP_FMA | CL_FP_INF_NAN;
+
+  hsa_machine_model_t model;
+  stat = hsa_agent_get_info (agent, HSA_AGENT_INFO_MACHINE_MODEL, &model);
+  dev->address_bits = (model == HSA_MACHINE_MODEL_LARGE) ? 64 : 32;
 
   uint16_t wg_sizes[3];
   stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_WORKGROUP_MAX_DIM, &wg_sizes);
