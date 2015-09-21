@@ -1,4 +1,4 @@
-/* OpenCL built-in library: get_global_id() for AMD R600
+/* OpenCL built-in library: get_global_id() for HSAIL64
 
    Copyright (c) 2015 Pekka Jääskeläinen
 

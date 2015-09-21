@@ -1,4 +1,4 @@
-/* OpenCL built-in library: get_global_size() for AMD R600
+/* OpenCL built-in library: get_global_size() for HSAIL64
 
    Copyright (c) 2015 Michal Babej
 

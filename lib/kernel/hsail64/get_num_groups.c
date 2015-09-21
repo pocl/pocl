@@ -1,4 +1,4 @@
-/* OpenCL built-in library: get_num_groups() for AMD R600
+/* OpenCL built-in library: get_num_groups() for HSAIL64
 
    Copyright (c) 2015 Michal Babej
 

@@ -1,4 +1,4 @@
-/* OpenCL built-in library: get_local_size() for HSAIL
+/* OpenCL built-in library: get_local_size() for HSAIL64
 
    Copyright (c) 2015 Pekka Jääskeläinen of TUT
 

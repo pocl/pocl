@@ -1,4 +1,4 @@
-/* OpenCL built-in library: get_work_dim()
+/* OpenCL built-in library: get_work_dim() for HSAIL64
 
    Copyright (c) 2015 Michal Babej
 
