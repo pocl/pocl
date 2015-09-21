@@ -271,8 +271,11 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
 
 #define COPY_ATTR(ATTR) dev->ATTR = supported_hsa_devices[i].ATTR
 #define COPY_VECWIDTH(ATTR) \
-     dev->preferred_vector_width_ ## ATTR = supported_hsa_devices[i].preferred_vector_width_ ## ATTR; \
-     dev->native_vector_width_ ## ATTR = supported_hsa_devices[i].native_vector_width_ ## ATTR;
+     dev->preferred_vector_width_ ## ATTR = \
+         supported_hsa_devices[i].preferred_vector_width_ ## ATTR; \
+     dev->native_vector_width_ ## ATTR = \
+         supported_hsa_devices[i].native_vector_width_ ## ATTR;
+
   int found = 0;
   int i;
   for(i = 0; i < num_hsa_device; i++)
@@ -337,8 +340,10 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
 
   dev->image_support = CL_FALSE;   // until it's actually implemented
 
-  dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO | CL_FP_ROUND_TO_INF | CL_FP_FMA | CL_FP_INF_NAN;
-  dev->double_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO | CL_FP_ROUND_TO_INF | CL_FP_FMA | CL_FP_INF_NAN;
+  dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO
+      | CL_FP_ROUND_TO_INF | CL_FP_FMA | CL_FP_INF_NAN;
+  dev->double_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO
+      | CL_FP_ROUND_TO_INF | CL_FP_FMA | CL_FP_INF_NAN;
 
   hsa_machine_model_t model;
   stat = hsa_agent_get_info (agent, HSA_AGENT_INFO_MACHINE_MODEL, &model);
@@ -404,7 +409,8 @@ pocl_hsa_probe(struct pocl_device_ops *ops)
 static void hsa_queue_callback(hsa_status_t status, hsa_queue_t *q, void* data) {
   const char * sstr;
   hsa_status_string(status, &sstr);
-  POCL_MSG_PRINT_INFO("HSA Device %s encountered an error in the HSA Queue: %s", (const char*)data, sstr);
+  POCL_MSG_PRINT_INFO("HSA Device %s encountered an error " \
+                      "in the HSA Queue: %s", (const char*)data, sstr);
 }
 
 void
@@ -432,12 +438,14 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
   hsa_agent_iterate_regions (*d->agent, setup_agent_memory_regions_callback, d);
 
   uint32_t boolarg;
-  status = hsa_region_get_info(d->global_region, HSA_REGION_INFO_RUNTIME_ALLOC_ALLOWED, &boolarg);
+  status = hsa_region_get_info(d->global_region,
+                               HSA_REGION_INFO_RUNTIME_ALLOC_ALLOWED, &boolarg);
   assert(status == HSA_STATUS_SUCCESS);
   assert(boolarg != 0);
 
   size_t sizearg;
-  status = hsa_region_get_info(d->global_region, HSA_REGION_INFO_ALLOC_MAX_SIZE, &sizearg);
+  status = hsa_region_get_info(d->global_region,
+                               HSA_REGION_INFO_ALLOC_MAX_SIZE, &sizearg);
   assert(status == HSA_STATUS_SUCCESS);
   device->max_mem_alloc_size = sizearg;
 
@@ -452,13 +460,16 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
   device->local_mem_size = sizearg;
   assert(status == HSA_STATUS_SUCCESS);
 
-  status = hsa_region_get_info(d->global_region, HSA_REGION_INFO_RUNTIME_ALLOC_ALIGNMENT, &sizearg);
+  status = hsa_region_get_info(d->global_region,
+                               HSA_REGION_INFO_RUNTIME_ALLOC_ALIGNMENT, &sizearg);
   device->mem_base_addr_align = sizearg * 8;
 
   status = hsa_agent_get_info(*d->agent, HSA_AGENT_INFO_PROFILE, &d->agent_profile);
-  device->profile = ((d->agent_profile == HSA_PROFILE_FULL) ? "FULL_PROFILE" : "EMBEDDED_PROFILE");
+  device->profile = (
+      (d->agent_profile == HSA_PROFILE_FULL) ? "FULL_PROFILE" : "EMBEDDED_PROFILE");
 
-  if (hsa_queue_create(*d->agent, 4, HSA_QUEUE_TYPE_MULTI, hsa_queue_callback, device->short_name,
+  if (hsa_queue_create(*d->agent, 4, HSA_QUEUE_TYPE_MULTI,
+                       hsa_queue_callback, device->short_name,
                        -1, -1, &d->queue) != HSA_STATUS_SUCCESS)
     {
       POCL_ABORT("pocl-hsa: could not create the HSA queue.\n");
@@ -527,8 +538,6 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
       if (cmd->command.run.kernel->arg_info[i].is_local)
         {
           CHECK_SPACE (sizeof (uint64_t));
-          //For further info,
-          //Please refer to https://github.com/HSAFoundation/HSA-Runtime-AMD/issues/8
           uint64_t temp = *total_group_size;
           memcpy(write_pos, &temp, sizeof(uint64_t));
           *total_group_size += (uint32_t)al->size;
@@ -670,7 +679,8 @@ static pocl_hsa_kernel_cache_t* cache_kernel_dispatch_data(cl_kernel kernel,
   status = hsa_executable_symbol_get_info
     (kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_TYPE, &symtype);
   if(symtype != HSA_SYMBOL_KIND_KERNEL)
-    POCL_ABORT ("pocl-hsa: the kernel function symbol resolves to something else than a function\n");
+    POCL_ABORT ("pocl-hsa: the kernel function symbol resolves "
+                "to something else than a function\n");
 
   uint64_t code_handle;
   status = hsa_executable_symbol_get_info
@@ -680,8 +690,8 @@ static pocl_hsa_kernel_cache_t* cache_kernel_dispatch_data(cl_kernel kernel,
 
   out->code_handle = code_handle;
 
-  status = hsa_executable_symbol_get_info
-    (kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_GROUP_SEGMENT_SIZE, &out->static_group_size);
+  status = hsa_executable_symbol_get_info(kernel_symbol,
+       HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_GROUP_SEGMENT_SIZE, &out->static_group_size);
   if (status != HSA_STATUS_SUCCESS)
     POCL_ABORT ("pocl-hsa: unable to get the group segment size for the kernel function.\n");
 
@@ -739,7 +749,8 @@ pocl_hsa_run(void *dptr, _cl_command_node* cmd)
   kernel_packet =
     &(((hsa_kernel_dispatch_packet_t*)(d->queue->base_address))[queue_index & queueMask]);
 
-  kernel_packet->setup |= (uint16_t)cmd->command.run.pc.work_dim << HSA_KERNEL_DISPATCH_PACKET_SETUP_DIMENSIONS;
+  kernel_packet->setup =
+      (uint16_t)cmd->command.run.pc.work_dim << HSA_KERNEL_DISPATCH_PACKET_SETUP_DIMENSIONS;
 
   /* Process the kernel arguments. Convert the opaque buffer
      pointers to real device pointers, allocate dynamic local
@@ -763,7 +774,8 @@ pocl_hsa_run(void *dptr, _cl_command_node* cmd)
   hsa_signal_store_relaxed(cached_data->kernel_completion_signal, initial_value);
   kernel_packet->completion_signal = cached_data->kernel_completion_signal;
 
-  setup_kernel_args (d, cmd, (char*)cached_data->kernargs, cached_data->args_segment_size, &total_group_size);
+  setup_kernel_args (d, cmd, (char*)cached_data->kernargs,
+                     cached_data->args_segment_size, &total_group_size);
 
   kernel_packet->group_segment_size = total_group_size;
 
@@ -856,14 +868,16 @@ static int compile_parallel_bc_to_brig(const char* tmpdir, char* brigfile) {
     POCL_MSG_PRINT_INFO("pocl-hsa: using existing BRIG file: \n%s\n", brigfile);
   else
     {
-      POCL_MSG_PRINT_INFO("pocl-hsa: BRIG file not found, compiling parallel.bc to brig file: \n%s\n", bytecode);
+      POCL_MSG_PRINT_INFO("pocl-hsa: BRIG file not found, compiling parallel.bc "
+                          "to brig file: \n%s\n", bytecode);
 
       // TODO call llvm via c++ interface like pocl_llvm_codegen()
       error = snprintf (hsailfile, POCL_FILENAME_LENGTH,
                     "%s%s.hsail", tmpdir, POCL_PARALLEL_BC_FILENAME);
       assert (error >= 0);
 
-      error = snprintf (command, 4096, LLC " -O2 -march=hsail64 -filetype=asm -o %s %s", hsailfile, bytecode);
+      error = snprintf (command, 4096, LLC " -O2 -march=hsail64 -filetype=asm "
+                        "-o %s %s", hsailfile, bytecode);
       assert (error >= 0);
       error = system(command);
       if (error != 0)
@@ -929,7 +943,8 @@ pocl_hsa_compile_submitted_kernels (_cl_command_node *cmd)
   memset (&hsa_program, 0, sizeof (hsa_ext_program_t));
 
   status = hsa_ext_program_create
-    (HSA_MACHINE_MODEL_LARGE, HSA_PROFILE_FULL, HSA_DEFAULT_FLOAT_ROUNDING_MODE_DEFAULT, NULL,
+    (HSA_MACHINE_MODEL_LARGE, HSA_PROFILE_FULL,
+     HSA_DEFAULT_FLOAT_ROUNDING_MODE_DEFAULT, NULL,
      &hsa_program);
 
   if (status != HSA_STATUS_SUCCESS)
