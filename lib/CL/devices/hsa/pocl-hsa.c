@@ -190,7 +190,7 @@ pocl_hsa_get_agents_callback(hsa_agent_t agent, void *data)
 
   hsa_agent_feature_t features;
   stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_FEATURE, &features);
-  if (type != HSA_AGENT_FEATURE_KERNEL_DISPATCH)
+  if (features != HSA_AGENT_FEATURE_KERNEL_DISPATCH)
     {
       return HSA_STATUS_SUCCESS;
     }
