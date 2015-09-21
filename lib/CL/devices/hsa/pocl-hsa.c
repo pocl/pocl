@@ -75,10 +75,8 @@
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
 /* TODO:
-   - allocate buffers with hsa_memory_allocate() to ensure the driver
-     works with HSA Base profile agents (assuming all memory is coherent
-     requires the Full profile) -- or perhaps a separate hsabase driver
-     for the simpler agents.
+   - track hsa_memory_register() calls and deregister the memory
+     at free() calls
    - AMD SDK samples. Requires work mainly in these areas:
       - atomics support
       - image support
@@ -160,6 +158,7 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->probe = pocl_hsa_probe;
   ops->uninit = pocl_hsa_uninit;
   ops->init = pocl_hsa_init;
+  ops->alloc_mem_obj = pocl_hsa_alloc_mem_obj;
   ops->free = pocl_hsa_free;
   ops->compile_submitted_kernels = pocl_hsa_compile_submitted_kernels;
   ops->run = pocl_hsa_run;
@@ -333,6 +332,7 @@ void
 pocl_hsa_init_device_infos(struct _cl_device_id* dev)
 {
   pocl_basic_init_device_infos (dev);
+
   dev->spmd = CL_TRUE;
   dev->autolocals_to_args = 0;
 
@@ -474,44 +474,66 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
                        -1, -1, &d->queue));
 }
 
-void *
-pocl_hsa_malloc (void *device_data, cl_mem_flags flags,
-		    size_t size, void *host_ptr)
+static void *
+pocl_hsa_malloc (pocl_hsa_device_data_t* d, cl_mem_flags flags, size_t size, void *host_ptr)
 {
   void *b;
 
   if (flags & CL_MEM_COPY_HOST_PTR)
     {
-      b = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, size);
-      if (b != NULL)
-	    {
-	      memcpy(b, host_ptr, size);
-	      hsa_memory_register(host_ptr, size);
-	      return b;
-	    }
-      return NULL;
+      assert(host_ptr != NULL);
+      if (hsa_memory_allocate(d->global_region, size, &b) != HSA_STATUS_SUCCESS)
+          return NULL;
+      hsa_memory_copy(b, host_ptr, size);
+      return b;
     }
 
-  if (flags & CL_MEM_USE_HOST_PTR && host_ptr != NULL)
+  if (flags & CL_MEM_USE_HOST_PTR)
     {
+      assert(host_ptr != NULL);
+      // TODO bookkeeping of mem registrations
       hsa_memory_register(host_ptr, size);
       return host_ptr;
     }
-  b = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, size);
-  if (b != NULL)
-    return b;
-  return NULL;
+
+  assert(host_ptr == NULL);
+  if (hsa_memory_allocate(d->global_region, size, &b) != HSA_STATUS_SUCCESS)
+      return NULL;
+  return b;
 }
 
 void
 pocl_hsa_free (void *data, cl_mem_flags flags, void *ptr)
 {
   if (flags & CL_MEM_USE_HOST_PTR)
-  {
-    return;
-  }
-  // TODO: hsa_memory_deregister() (needs size)
-  POCL_MEM_FREE(ptr);
+    return; // TODO: hsa_memory_deregister() (needs size)
+
+  hsa_memory_free(ptr);
+}
+
+cl_int pocl_hsa_alloc_mem_obj(cl_device_id device, cl_mem mem_obj)
+{
+  void *b = NULL;
+  cl_mem_flags flags = mem_obj->flags;
+
+  /* if memory for this global memory is not yet allocated -> do it */
+  if (mem_obj->device_ptrs[device->global_mem_id].mem_ptr == NULL)
+    {
+      b = pocl_hsa_malloc(device->data, flags, mem_obj->size, mem_obj->mem_host_ptr);
+      if (b == NULL)
+        return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+
+      mem_obj->device_ptrs[device->global_mem_id].mem_ptr = b;
+      mem_obj->device_ptrs[device->global_mem_id].global_mem_id =
+        device->global_mem_id;
+    }
+
+  /* copy already allocated global mem info to devices own slot */
+  mem_obj->device_ptrs[device->dev_id] =
+    mem_obj->device_ptrs[device->global_mem_id];
+
+  return CL_SUCCESS;
+
 }
 
 static void
