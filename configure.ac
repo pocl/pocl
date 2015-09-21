@@ -1332,9 +1332,12 @@ enable_hsa="no"
 
 CPPFLAGS=$tempCPPFLAGS
 
-AC_PATH_PROG([HSAILASM], [HSAILasm], [], ["${HSA_RUNTIME_DIR}/bin"])
+AC_ARG_VAR([HSAILASM], [Path to HSAILasm executable])
+AC_PATH_PROGS([HSAILASM], [HSAILasm])
 if test ! -z "$HSAILASM"; then
   AC_DEFINE_UNQUOTED([HSAIL_ASM], ["$HSAILASM"], [Path to HSAILasm executable])
+else
+  AC_MSG_ERROR("Could not find HSAILasm executable")
 fi
 
 if test "$enable_hsa" = "yes";
