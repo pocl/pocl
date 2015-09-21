@@ -95,7 +95,7 @@
 #define HSA_KERNEL_CACHE_SIZE 64
 
 /* for caching kernel dispatch data */
-typedef struct hsa_kernel_cache_t {
+typedef struct pocl_hsa_kernel_cache_s {
   cl_kernel kernel;
   hsa_executable_t hsa_exe;
   uint64_t code_handle;
@@ -104,20 +104,20 @@ typedef struct hsa_kernel_cache_t {
   hsa_signal_t kernel_completion_signal;
   void* kernargs;
   uint32_t args_segment_size;
-} hsa_kernel_cache_t;
+} pocl_hsa_kernel_cache_t;
 
 /* Simple statically-sized program/kernel data cache */
-typedef struct hsa_program_cache_t {
+typedef struct pocl_hsa_program_cache_s {
   cl_program program;
   hsa_code_object_t code_object;
   /* Per-kernel data cache for dispatching. Must be inside program cache,
    * since we must destroy all kernels (hsa_executable_t) before
    * destroying a program */
-  hsa_kernel_cache_t kernel_cache[HSA_KERNEL_CACHE_SIZE];
+  pocl_hsa_kernel_cache_t kernel_cache[HSA_KERNEL_CACHE_SIZE];
   unsigned kernel_cache_lastptr;
-} hsa_program_cache_t;
+} pocl_hsa_program_cache_t;
 
-typedef struct pocl_hsa_device_data {
+typedef struct pocl_hsa_device_data_s {
   /* Currently loaded kernel. */
   cl_kernel current_kernel;
   /* The HSA kernel agent controlled by the device driver instance. */
@@ -128,9 +128,9 @@ typedef struct pocl_hsa_device_data {
   /* Queue for pushing work to the agent. */
   hsa_queue_t *queue;
   /* Per-program data cache to simplify program compiling stage */
-  hsa_program_cache_t program_cache[HSA_PROGRAM_CACHE_SIZE];
+  pocl_hsa_program_cache_t program_cache[HSA_PROGRAM_CACHE_SIZE];
   unsigned program_cache_lastptr;
-} pocl_hsa_device_data;
+} pocl_hsa_device_data_t;
 
 struct pocl_supported_hsa_device_properties
 {
@@ -207,7 +207,7 @@ static
 hsa_status_t
 setup_agent_memory_regions_callback(hsa_region_t region, void* data)
 {
-  struct pocl_hsa_device_data* d = (struct pocl_hsa_device_data*)data;
+  pocl_hsa_device_data_t* d = (pocl_hsa_device_data_t*)data;
 
   hsa_region_segment_t segment;
   hsa_region_global_flag_t flags;
@@ -410,7 +410,7 @@ static void hsa_queue_callback(hsa_status_t status, hsa_queue_t *q, void* data) 
 void
 pocl_hsa_init (cl_device_id device, const char* parameters)
 {
-  struct pocl_hsa_device_data *d;
+  pocl_hsa_device_data_t *d;
   static int global_mem_id;
   static int first_hsa_init = 1;
   hsa_device_type_t dev_type;
@@ -423,8 +423,8 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
     }
   device->global_mem_id = global_mem_id;
 
-  d = (struct pocl_hsa_device_data *) malloc (sizeof (struct pocl_hsa_device_data));
-  memset(d, 0, sizeof(struct pocl_hsa_device_data));
+  d = (pocl_hsa_device_data_t *) malloc (sizeof(pocl_hsa_device_data_t));
+  memset(d, 0, sizeof(pocl_hsa_device_data_t));
 
   d->agent = (hsa_agent_t*)device->data;
   device->data = d;
@@ -506,7 +506,7 @@ pocl_hsa_free (void *data, cl_mem_flags flags, void *ptr)
 }
 
 static void
-setup_kernel_args (struct pocl_hsa_device_data *d,
+setup_kernel_args (pocl_hsa_device_data_t *d,
                    _cl_command_node *cmd,
                    char *arg_space,
                    size_t max_args_size,
@@ -603,12 +603,12 @@ setup_kernel_args (struct pocl_hsa_device_data *d,
  * puts things there;
  * otherwise puts things into 'stack_cache' argument;
  * returns a pointer to the actually used storage */
-static hsa_kernel_cache_t* cache_kernel_dispatch_data(cl_kernel kernel,
-                                pocl_hsa_device_data* d,
+static pocl_hsa_kernel_cache_t* cache_kernel_dispatch_data(cl_kernel kernel,
+                                pocl_hsa_device_data_t* d,
                                 hsa_code_object_t* code_object,
-                                hsa_kernel_cache_t *stack_cache) {
-  hsa_program_cache_t* p = NULL;
-  hsa_kernel_cache_t* out = NULL;
+                                pocl_hsa_kernel_cache_t *stack_cache) {
+  pocl_hsa_program_cache_t* p = NULL;
+  pocl_hsa_kernel_cache_t* out = NULL;
 
   assert(code_object != NULL);
   assert(stack_cache != NULL);
@@ -712,14 +712,14 @@ static hsa_kernel_cache_t* cache_kernel_dispatch_data(cl_kernel kernel,
 void
 pocl_hsa_run(void *dptr, _cl_command_node* cmd)
 {
-  struct pocl_hsa_device_data *d;
+  pocl_hsa_device_data_t *d;
   unsigned i;
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
   hsa_kernel_dispatch_packet_t *kernel_packet;
   hsa_signal_t kernel_completion_signal;
   hsa_region_t region;
-  hsa_kernel_cache_t stack_cache, *cached_data;
+  pocl_hsa_kernel_cache_t stack_cache, *cached_data;
   int status;
 
   assert (dptr != NULL);
@@ -898,8 +898,8 @@ pocl_hsa_compile_submitted_kernels (_cl_command_node *cmd)
 
   cl_program program = cmd->command.run.kernel->program;
 
-  struct pocl_hsa_device_data *d =
-    (struct pocl_hsa_device_data*)cmd->device->data;
+  pocl_hsa_device_data_t *d =
+    (pocl_hsa_device_data_t*)cmd->device->data;
 
   hsa_code_object_t *out = malloc(sizeof(hsa_code_object_t));
   cmd->command.run.device_data = (void**)out;
@@ -974,13 +974,13 @@ pocl_hsa_compile_submitted_kernels (_cl_command_node *cmd)
 void
 pocl_hsa_uninit (cl_device_id device)
 {
-  struct pocl_hsa_device_data *d = (struct pocl_hsa_device_data*)device->data;
+  pocl_hsa_device_data_t *d = (pocl_hsa_device_data_t*)device->data;
 
   for (unsigned j = 0; j < HSA_PROGRAM_CACHE_SIZE; j++)
     {
       if (d->program_cache[j].program)
         {
-          hsa_program_cache_t *cache = &d->program_cache[j];
+          pocl_hsa_program_cache_t *cache = &d->program_cache[j];
           for (unsigned i = 0; i < HSA_KERNEL_CACHE_SIZE; i++)
             if (cache->kernel_cache[i].kernel)
               {
