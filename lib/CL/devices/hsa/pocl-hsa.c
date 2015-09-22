@@ -262,6 +262,9 @@ supported_hsa_devices[MAX_HSA_AGENTS] =
 	.max_constant_buffer_size = 65536,
     .local_mem_type = CL_LOCAL,
     .endian_little = CL_TRUE,
+    .extensions = "cl_khr_fp64 cl_khr_byte_addressable_store"
+      " cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics"
+      " cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics",
     .preferred_wg_size_multiple = 64, // wavefront size on Kaveri
     .preferred_vector_width_char = 4,
     .preferred_vector_width_short = 2,
@@ -309,6 +312,7 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
           COPY_ATTR (local_mem_type);
           COPY_ATTR (endian_little);
           COPY_ATTR (preferred_wg_size_multiple);
+          COPY_ATTR (extensions);
           COPY_VECWIDTH (char);
           COPY_VECWIDTH (short);
           COPY_VECWIDTH (int);
