@@ -1337,7 +1337,8 @@ AC_PATH_PROGS([HSAILASM], [HSAILasm])
 if test ! -z "$HSAILASM"; then
   AC_DEFINE_UNQUOTED([HSAIL_ASM], ["$HSAILASM"], [Path to HSAILasm executable])
 else
-  AC_MSG_ERROR("Could not find HSAILasm executable")
+  AC_MSG_NOTICE([Could not find HSAILasm executable, disabling HSA support])
+  enable_hsa="no"
 fi
 
 if test "$enable_hsa" = "yes";
