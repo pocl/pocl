@@ -31,7 +31,10 @@ foreach(FILE printf.c barrier.ll)
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
 endforeach()
 
-foreach(FILE barrier.c get_global_id.c get_global_size.c get_group_id.c get_local_id.c get_local_size.c get_num_groups.c get_work_dim.c)
+foreach(FILE barrier.c get_global_id.c get_global_size.c get_group_id.c
+        get_local_id.c get_local_size.c get_num_groups.c get_work_dim.c
+        native_cos.cl  native_exp2.cl  native_log2.cl  native_recip.cl
+        native_rsqrt.cl  native_sin.cl  native_sqrt.cl)
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
   list(APPEND KERNEL_SOURCES "hsail64/${FILE}")
 endforeach()
