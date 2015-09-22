@@ -27,6 +27,9 @@
 #include <unistd.h>
 
 #include "config.h"
+#ifdef POCL_BUILT_WITH_CMAKE
+#include "pocl_build_timestamp.h"
+#endif
 #include "kernellib_hash.h"
 
 #include "pocl_hash.h"
@@ -242,15 +245,26 @@ static int make_kernel_cachedir_path(char*        kernel_cachedir_path,
                                      cl_program   program,
                                      unsigned     device_i,
                                      cl_kernel    kernel,
+                                     unsigned     spmd,
                                      size_t       local_x,
                                      size_t       local_y,
                                      size_t       local_z) {
     assert(kernel->name);
     char tempstring[POCL_FILENAME_LENGTH];
+    int bytes_written;
 
-    int bytes_written = snprintf(tempstring, POCL_FILENAME_LENGTH,
+    if (spmd)
+      {
+        bytes_written = snprintf(tempstring, POCL_FILENAME_LENGTH,
+                                 "/%s/SPMD", kernel->name);
+      }
+    else
+      {
+        bytes_written = snprintf(tempstring, POCL_FILENAME_LENGTH,
                                  "/%s/%zu-%zu-%zu", kernel->name,
                                  local_x, local_y, local_z);
+      }
+
     assert(bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
 
     program_device_dir(kernel_cachedir_path, program, device_i, tempstring);
@@ -270,7 +284,8 @@ int pocl_cache_write_kernel_parallel_bc(void*        bc,
 
     char kernel_parallel_path[POCL_FILENAME_LENGTH];
     make_kernel_cachedir_path(kernel_parallel_path, program, device_i,
-                              kernel, local_x, local_y, local_z);
+                              kernel, program->devices[device_i]->spmd,
+                              local_x, local_y, local_z);
 
     assert( strlen(kernel_parallel_path) <
             (POCL_FILENAME_LENGTH - strlen(POCL_PARALLEL_BC_FILENAME)));
@@ -288,7 +303,7 @@ int pocl_cache_make_kernel_cachedir_path(char*        kernel_cachedir_path,
     int index = pocl_cl_device_to_index(program, device);
     assert(index >= 0);
     return make_kernel_cachedir_path(kernel_cachedir_path, program, index,
-                                     kernel, local_x, local_y, local_z);
+                                     kernel, device->spmd, local_x, local_y, local_z);
 }
 
 

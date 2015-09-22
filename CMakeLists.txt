@@ -102,9 +102,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # AMD HSA
 option(ENABLE_HSA "Enable the HSA device driver for AMD GCN devices" OFF)
-if(ENABLE_HSA)
-  message(FATAL_ERROR "Sorry, HSA support in CMake is unfinished and unusable ATM")
-endif()
 
 ######################################################################################
 # AC_CONFIG_TESTDIR([tests])
@@ -323,7 +320,7 @@ if(STATIC_LLVM)
   set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
 else()
   message(STATUS "Trying to link LLVM dynamically")
-  find_library(LLVM_SHARED_LIB_FILE "LLVM-${LLVM_VERSION}" PATHS "${LLVM_LIBDIR}" NO_DEFAULT_PATH)
+  find_library(LLVM_SHARED_LIB_FILE NAMES "LLVM-${LLVM_VERSION}" "LLVM" PATHS "${LLVM_LIBDIR}" NO_DEFAULT_PATH)
   if(LLVM_SHARED_LIB_FILE AND EXISTS "${LLVM_SHARED_LIB_FILE}")
     message(STATUS "..using ${LLVM_SHARED_LIB_FILE}")
     set(POCL_LLVM_LIBS "${LLVM_SHARED_LIB_FILE}")
@@ -553,7 +550,9 @@ if(KERNEL_CACHE)
 else()
   set(POCL_BUILD_KERNEL_CACHE 0)
 endif()
+
 string(TIMESTAMP POCL_BUILD_TIMESTAMP "%d%m%Y%H%M%S")
+file(WRITE "${CMAKE_BINARY_DIR}/pocl_build_timestamp.h" "#define POCL_BUILD_TIMESTAMP \"${POCL_BUILD_TIMESTAMP}\"")
 
 ######################################################################################
 # DONE
@@ -761,7 +760,8 @@ endif()
 if(ENABLE_HSA)
   set(OCL_DRIVERS "${OCL_DRIVERS} hsa")
   set(OCL_TARGETS "${OCL_TARGETS} amdgcn")
-  # WIP, this is for config.h
+  # this is for config.h
+  # TODO unify with autotools
   set(BUILD_HSA 1)
 endif()
 
@@ -893,6 +893,17 @@ set(KERNEL_COMPILER_LIB_VERSION "${LIB_CURRENT_VERSION}.0.0")
 
 ##########################################################
 
+function(rename_if_different SRC DST)
+  if(EXISTS "${DST}")
+    file(MD5 "${SRC}" OLD_MD5)
+    file(MD5 "${DST}" NEW_MD5)
+    if(NOT OLD_MD5 STREQUAL NEW_MD5)
+      file(RENAME "${SRC}" "${DST}")
+    endif()
+  else()
+    file(RENAME "${SRC}" "${DST}")
+  endif()
+endfunction()
 
 #TODO
 # these vars are copies b/c tons of sources use BUILD_ICD etc
@@ -904,11 +915,13 @@ set(_CL_DISABLE_LONG ${CL_DISABLE_LONG})
 set(_CL_DISABLE_HALF ${CL_DISABLE_HALF})
 set(PACKAGE_VERSION "${POCL_VERSION}")
 
-configure_file("config.h.in.cmake" "config.h" ESCAPE_QUOTES)
+configure_file("config.h.in.cmake" "config.h.new" ESCAPE_QUOTES)
+rename_if_different("${CMAKE_BINARY_DIR}/config.h.new" "${CMAKE_BINARY_DIR}/config.h")
 include_directories("${CMAKE_BINARY_DIR}")
 
 # autotools compat
-file(WRITE "${CMAKE_BINARY_DIR}/install-paths.h" "#define PKGDATADIR \"${POCL_INSTALL_PRIVATE_DATADIR}\"")
+file(WRITE "${CMAKE_BINARY_DIR}/install-paths.h.new" "#define PKGDATADIR \"${POCL_INSTALL_PRIVATE_DATADIR}\"")
+rename_if_different("${CMAKE_BINARY_DIR}/install-paths.h.new" "${CMAKE_BINARY_DIR}/install-paths.h")
 
 ##########################################################
 
@@ -1052,6 +1065,9 @@ MESSAGE(STATUS "HOST_AS_FLAGS: ${HOST_AS_FLAGS}")
 MESSAGE(STATUS "HOST_CLANG_FLAGS: ${HOST_CLANG_FLAGS}")
 MESSAGE(STATUS "HOST_LD_FLAGS: ${HOST_LD_FLAGS}")
 MESSAGE(STATUS "HOST_LLC_FLAGS: ${HOST_LLC_FLAGS}")
+MESSAGE(STATUS "HSA_INCLUDES: ${HSA_INCLUDES}")
+MESSAGE(STATUS "HSALIB: ${HSALIB}")
+MESSAGE(STATUS "HSAIL_ASM: ${HSAIL_ASM}")
 MESSAGE(STATUS "ICD_LD_FLAGS: ${ICD_LD_FLAGS}")
 MESSAGE(STATUS "KERNEL_CLANGXX_FLAGS: ${KERNEL_CLANGXX_FLAGS}")
 MESSAGE(STATUS "KERNEL_CL_FLAGS: ${KERNEL_CL_FLAGS}")

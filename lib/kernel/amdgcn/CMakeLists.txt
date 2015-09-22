@@ -25,11 +25,7 @@
 
 include("bitcode_rules")
 
-if(USE_VECMATHLIB)
-  set(KERNEL_SOURCES ${SOURCES_WITH_VML})
-else()
-  set(KERNEL_SOURCES ${SOURCES_WITHOUT_VML})
-endif()
+set(KERNEL_SOURCES ${SOURCES_WITHOUT_VML})
 
 foreach(FILE printf.c get_local_id.c get_local_size.c get_group_id.c get_global_size.c
     get_num_groups.c get_work_dim.c get_global_id.c barrier.ll)
@@ -41,26 +37,13 @@ foreach(FILE get_local_id.ll get_local_size.ll get_group_id.ll get_global_size.l
   list(APPEND KERNEL_SOURCES "amdgcn/${FILE}")
 endforeach()
 
-# TODO
-set(AMDGCN_KERNEL_TARGET "amdgcn--amdhsa")
+set(CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-emit-llvm" "-target" "amdgcn--amdhsa" "-mcpu=kaveri")
+set(LLC_FLAGS "")
 
-separate_arguments(HOST_CLANG_FLAGS)
-# TODO "-ffp-contract=off" like in HOST ?
-# TODO "-target" "amdgcn--amdhsa" "-mcpu=${MCPU}
-set(CLANG_FLAGS ${HOST_CLANG_FLAGS} "-Xclang" "-ffake-address-space-map" "-emit-llvm")
-
-# TODO
-separate_arguments(HOST_LLC_FLAGS)
-set(LLC_FLAGS ${HOST_LLC_FLAGS})
-
-# TODO LLC_flags is used by kernel.bc target, but ld is unused
-#LD_FLAGS    = @HOST_LD_FLAGS@
-
-# KERNEL_TARGET = @OCL_KERNEL_TARGET@
-make_kernel_bc(KERNEL_BC "${AMDGCN_KERNEL_TARGET}" ${KERNEL_SOURCES})
+make_kernel_bc(KERNEL_BC "amdgcn--amdhsa" ${KERNEL_SOURCES})
 
 # just debug
-message(STATUS "Host Kernel BC: ${KERNEL_BC}")
+message(STATUS "AMDGCN Kernel BC: ${KERNEL_BC}")
 
 # a target is needed...
 add_custom_target("kernel_amdgcn" ALL

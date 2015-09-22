@@ -1,6 +1,6 @@
-/* pocl-hsa.h - HSA device declarations
+/* OpenCL built-in library: get_global_size() for HSAIL64
 
-   Copyright (c) 2015 Pekka Jääskeläinen / Tampere University of Technology
+   Copyright (c) 2015 Michal Babej
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -21,17 +21,20 @@
    THE SOFTWARE.
 */
 
-#ifndef POCL_HSA_H
-#define POCL_HSA_H
-
-#include "pocl_cl.h"
-#include "pocl_icd.h"
-#include "config.h"
-
-#include "prototypes.inc"
-GEN_PROTOTYPES (hsa)
-
-#include "prototypes.inc"
-GEN_PROTOTYPES (basic)
-
-#endif /* POCL_BASIC_H */
+size_t _CL_OVERLOADABLE
+get_global_size(unsigned int dimindx)
+{
+  switch(dimindx)
+    {
+/*
+ * TODO This should be the actual code used, but currently it crashes llvm
+      case 0: return __builtin_hsail_gridsize(0);
+      case 1: return __builtin_hsail_gridsize(1);
+      case 2: return __builtin_hsail_gridsize(2);
+*/
+      case 0: return __builtin_hsail_gridgroups(0) * __builtin_hsail_workgroupsize(0);
+      case 1: return __builtin_hsail_gridgroups(1) * __builtin_hsail_workgroupsize(1);
+      case 2: return __builtin_hsail_gridgroups(2) * __builtin_hsail_workgroupsize(2);
+      default: return 0;
+    }
+}

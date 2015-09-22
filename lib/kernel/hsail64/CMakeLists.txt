@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014 pocl developers
+#   Copyright (c) 2015 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -23,25 +23,30 @@
 #
 #=============================================================================
 
-if(UNIX)
+include("bitcode_rules")
 
-  # build-dir script
-  set(LLVMOPENCL_LOCATION "$<TARGET_FILE:llvmopencl>")
-  set(KERNEL_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include")
-  set(ADD_INCLUDE "-I${CMAKE_BINARY_DIR}")
-  set(FULL_TARGET_DIR "${CMAKE_BINARY_DIR}/lib/kernel/\${target_dir}")
-  configure_file("${CMAKE_SOURCE_DIR}/scripts/pocl-standalone.in.cmake" "${CMAKE_BINARY_DIR}/scripts/pocl-standalone.in" ESCAPE_QUOTES @ONLY)
-  file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/scripts/pocl-standalone" INPUT "${CMAKE_BINARY_DIR}/scripts/pocl-standalone.in")
+set(KERNEL_SOURCES ${SOURCES_WITHOUT_VML})
 
-  # install script
-  set(LLVMOPENCL_LOCATION "${POCL_INSTALL_PRIVATE_LIBDIR}/$<TARGET_FILE_NAME:llvmopencl>")
-  set(KERNEL_INCLUDE_DIR "${POCL_INSTALL_PRIVATE_HEADER_DIR}")
-  set(ADD_INCLUDE "")
-  set(FULL_TARGET_DIR "${POCL_INSTALL_PRIVATE_DATADIR}")
-  configure_file("${CMAKE_SOURCE_DIR}/scripts/pocl-standalone.in.cmake" "${CMAKE_BINARY_DIR}/scripts/pocl-standalone.install.in" ESCAPE_QUOTES @ONLY)
-  file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/scripts/pocl-standalone.install" INPUT "${CMAKE_BINARY_DIR}/scripts/pocl-standalone.install.in")
+foreach(FILE printf.c barrier.ll)
+  list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
+endforeach()
 
-  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/pocl-standalone.install" RENAME "pocl-standalone"
-        DESTINATION ${POCL_INSTALL_PUBLIC_BINDIR})
+foreach(FILE barrier.c get_global_id.c get_global_size.c get_group_id.c get_local_id.c get_local_size.c get_num_groups.c get_work_dim.c)
+  list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
+  list(APPEND KERNEL_SOURCES "hsail64/${FILE}")
+endforeach()
 
-endif()
+set(CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-emit-llvm" "-target" "hsail64")
+set(LLC_FLAGS "")
+
+make_kernel_bc(KERNEL_BC "hsail64" ${KERNEL_SOURCES})
+
+# just debug
+message(STATUS "HSAIL64 Kernel BC: ${KERNEL_BC}")
+
+# a target is needed...
+add_custom_target("kernel_hsail64" ALL
+    DEPENDS ${KERNEL_BC} "${CMAKE_BINARY_DIR}/kernellib_hash.h")
+
+install(FILES "${KERNEL_BC}"
+        DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}")

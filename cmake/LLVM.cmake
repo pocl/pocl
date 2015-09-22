@@ -108,6 +108,11 @@ string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_INCLUDEDIR "${LLVM_I
 run_llvm_config(LLVM_LIBS --libs)
 # Convert LLVM_LIBS from string -> list format to make handling them easier
 separate_arguments(LLVM_LIBS)
+# workaround for a bug in current HSAIL LLVM
+# it forgets to report one HSAIL library in llvm-config
+if(ENABLE_HSA)
+  list(APPEND LLVM_LIBS "-lLLVMHSAILUtil")
+endif()
 run_llvm_config(LLVM_SRC_ROOT --src-root)
 run_llvm_config(LLVM_OBJ_ROOT --obj-root)
 string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_OBJ_ROOT "${LLVM_OBJ_ROOT}")
@@ -186,8 +191,8 @@ endif()
 string(REPLACE " -pedantic" "" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
 
 # - '-fno-rtti' is a work-around for llvm bug 14200
-#LLVM_CXX_FLAGS="$LLVM_CXX_FLAGS -fno-rtti"
-if(NOT MSVC)
+# Which according to bug report has been fixed in llvm 3.7
+if ((LLVM_MINOR LESS 7) AND (NOT MSVC))
   set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -fno-rtti")
 endif()
 
@@ -669,21 +674,53 @@ set(CL_DISABLE_HALF "${CL_DISABLE_HALF}" CACHE BOOL "Disable cl_khr_fp16 because
 
 if(ENABLE_HSA)
 
-  message(STATUS "Trying HSA support")
+  message(STATUS "Trying HSA support in LLVM")
   # test that Clang supports the amdgcn--amdhsa target
   custom_try_compile_clangxx("" "return 0;" RESULT "-target" "amdgcn--amdhsa" "-emit-llvm" "-S")
   if(RESULT)
     message(FATAL_ERROR "LLVM support for amdgcn--amdhsa target is required")
   endif()
 
-  # try the headers
-  if(NOT DEFINED WITH_HSA_HEADERS)
-    find_path(WITH_HSA_HEADERS "hsa.h")
-    if(NOT WITH_HSA_HEADERS)
-      message(FATAL_ERROR "HSA runtime headers not found, use -DWITH_HSA_HEADERS")
-    endif()
+  # find the headers & the library
+  if(DEFINED WITH_HSA_RUNTIME_DIR AND WITH_HSA_RUNTIME_DIR)
+    set(HSA_RUNTIME_DIR "${WITH_HSA_RUNTIME_DIR}")
+  else()
+    message(STATUS "WITH_HSA_RUNTIME_DIR not given, trying default path")
+    set(HSA_RUNTIME_DIR "/opt/hsa")
   endif()
 
+  if((IS_ABSOLUTE "${WITH_HSA_RUNTIME_DIR}") AND (EXISTS "${WITH_HSA_RUNTIME_DIR}"))
+    set(HSA_INCLUDEDIR "${HSA_RUNTIME_DIR}/include")
+    set(HSA_LIBDIR "${HSA_RUNTIME_DIR}/lib")
+  else()
+    message(WARNING "${HSA_RUNTIME_DIR} is not a directory (using default system paths for search)")
+    set(HSA_INCLUDEDIR "")
+    set(HSA_LIBDIR "")
+  endif()
+
+  find_path(HSA_INCLUDES "hsa.h" PATHS "${HSA_INCLUDEDIR}")
+  if(NOT HSA_INCLUDES)
+    message(FATAL_ERROR "hsa.h header not found (use -DHSA_RUNTIME_DIR=... to specify path to HSA runtime)")
+  endif()
+
+  find_library(HSALIB NAMES "hsa-runtime64" "hsa-runtime" PATHS "${HSA_LIBDIR}")
+  if(NOT HSALIB)
+    message(FATAL_ERROR "libhsa-runtime not found (use -DHSA_RUNTIME_DIR=... to specify path to HSA runtime)")
+  endif()
+
+  if(DEFINED WITH_HSAILASM_PATH)
+    set(HSAILASM_SEARCH_PATH "${WITH_HSAILASM_PATH}")
+  else()
+    set(HSAILASM_SEARCH_PATH "${HSA_RUNTIME_DIR}/bin")
+  endif()
+
+  find_program(HSAIL_ASM "HSAILasm${CMAKE_EXECUTABLE_SUFFIX}" PATHS "${HSAILASM_SEARCH_PATH}")
+  if(NOT HSAIL_ASM)
+    message(FATAL_ERROR "HSAILasm executable not found (use -DWITH_HSAILASM_PATH=... to specify)")
+  endif()
+
+
+  message(STATUS "OK, building HSA")
 endif()
 
 #####################################################################

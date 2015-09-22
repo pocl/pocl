@@ -411,5 +411,11 @@ if(OCL_TARGETS MATCHES "tce")
 endif()
 #*********************************************************************
 
+if(OCL_TARGETS MATCHES "amdgcn")
+  add_subdirectory("amdgcn")
+  add_subdirectory("hsail64")
+endif()
+#*********************************************************************
+
 # TODO extra_dist in lib/kernel/Makefile.am:
 # EXTRA_DIST = *.c *.cl *.h *.ll      \

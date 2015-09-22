@@ -9,6 +9,8 @@
 
 #cmakedefine BUILD_HSA
 
+#define POCL_BUILT_WITH_CMAKE
+
 #define BUILDDIR "@BUILDDIR@"
 
 /* "Build with ICD" */
@@ -20,6 +22,8 @@
 
 /* clang++ executable */
 #define CLANGXX "@CLANGXX@"
+
+#define HSAIL_ASM "@HSAIL_ASM@"
 
 /* clang++ compiler flags */
 /* TODO in sources */
@@ -106,8 +110,6 @@
 
 
 #define POCL_BUILD_KERNEL_CACHE @POCL_BUILD_KERNEL_CACHE@
-
-#define POCL_BUILD_TIMESTAMP "@POCL_BUILD_TIMESTAMP@"
 
 #define POCL_DEVICE_ADDRESS_BITS @POCL_DEVICE_ADDRESS_BITS@
 

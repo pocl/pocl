@@ -1,6 +1,7 @@
 /* scalarwave - Scalar wave evolution */
 
 #define _BSD_SOURCE             // define M_PI
+#define _DEFAULT_SOURCE
 
 #include <assert.h>
 
