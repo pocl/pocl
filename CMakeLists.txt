@@ -950,7 +950,7 @@ endif()
 
 #############################################################
 
-include_directories("fix-includes" "include")
+include_directories("fix-include" "include")
 
 add_subdirectory("include")
 
