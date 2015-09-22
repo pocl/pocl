@@ -88,8 +88,19 @@ LKERNEL_SRCS_EXCLUDE =				\
 	minmag.cl				\
 	mix.cl					\
 	nan.cl					\
-	native_cos.cl				\
-	native_log2.cl				\
+        native_cos.cl                           \
+        native_divide.cl                        \
+        native_exp.cl                           \
+        native_exp10.cl                         \
+        native_exp2.cl                          \
+        native_log.cl                           \
+        native_log10.cl                         \
+        native_log2.cl                          \
+        native_powr.cl                          \
+        native_recip.cl                         \
+        native_rsqrt.cl                         \
+        native_sin.cl                           \
+        native_tan.cl                           \
 	normalize.cl				\
 	pow.cl					\
 	pown.cl					\

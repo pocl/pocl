@@ -27,4 +27,3 @@
 DEFINE_EXPR_V_V(rsqrt, (stype)1/sqrt(a))
 
 DEFINE_EXPR_F_F(half_rsqrt, rsqrt(a))
-DEFINE_EXPR_F_F(native_rsqrt, rsqrt(a))
