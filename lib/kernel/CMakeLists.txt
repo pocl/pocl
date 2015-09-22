@@ -413,8 +413,12 @@ endif()
 
 if(OCL_TARGETS MATCHES "amdgcn")
   add_subdirectory("amdgcn")
+endif()
+
+if(OCL_TARGETS MATCHES "hsail64")
   add_subdirectory("hsail64")
 endif()
+
 #*********************************************************************
 
 # TODO extra_dist in lib/kernel/Makefile.am:
