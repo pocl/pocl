@@ -1,5 +1,5 @@
 #!/bin/bash
-# run_tta_tests - Runs tests against the tta device drivers.
+# run_hsa_tests - Runs tests against HSA devices.
 #
 # Copyright (c) 2012 Pekka Jääskeläinen / Tampere Univ. of Technology
 #
