@@ -22,6 +22,7 @@
    THE SOFTWARE.
 */
 
+/* TODO possibly prefix with HSAIL to not conflict with ../templates.h */
 
 #define IMPLEMENT_BUILTIN_V_V(NAME, VTYPE, LO, HI)      \
   VTYPE __attribute__ ((overloadable))                  \
@@ -30,8 +31,7 @@
     return (VTYPE)(NAME(a.LO), NAME(a.HI));             \
   }
 
-
-#define DEFINE_BUILTIN_V_V_32(NAME, BUILTIN)            \
+#define DEFINE_BUILTIN_V_V_FP32(NAME, BUILTIN)          \
   __attribute__((overloadable))  float NAME(float f) __asm("llvm.hsail." #BUILTIN ".f32");   \
   IMPLEMENT_BUILTIN_V_V(NAME, float2  , lo, hi)         \
   IMPLEMENT_BUILTIN_V_V(NAME, float4  , lo, hi)         \
@@ -40,8 +40,7 @@
   IMPLEMENT_BUILTIN_V_V(NAME, float16 , lo, hi)         \
 
 
-#define DEFINE_BUILTIN_V_V(NAME, BUILTIN)               \
-  DEFINE_BUILTIN_V_V_32(NAME, BUILTIN)                  \
+#define DEFINE_BUILTIN_V_V_FP64(NAME, BUILTIN)          \
   __IF_FP64(                                            \
   __attribute__((overloadable))  double NAME(double f) __asm("llvm.hsail." #BUILTIN ".f64");   \
   IMPLEMENT_BUILTIN_V_V(NAME, double2 , lo, hi)         \
@@ -49,3 +48,39 @@
   IMPLEMENT_BUILTIN_V_V(NAME, double4 , lo, hi)         \
   IMPLEMENT_BUILTIN_V_V(NAME, double8 , lo, hi)         \
   IMPLEMENT_BUILTIN_V_V(NAME, double16, lo, hi))
+
+
+#define IMPLEMENT_EXPR_V_V(NAME, EXPR, VTYPE, STYPE, JTYPE, SJTYPE)     \
+  VTYPE __attribute__ ((overloadable))                                  \
+  NAME(VTYPE a)                                                         \
+  {                                                                     \
+    typedef VTYPE vtype;                                                \
+    typedef STYPE stype;                                                \
+    typedef JTYPE jtype;                                                \
+    typedef SJTYPE sjtype;                                              \
+    return EXPR;                                                        \
+  }
+
+#define DEFINE_EXPR_V_V_FP16_FP64(NAME, EXPR)                           \
+  __IF_FP16(                                                            \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, half    , half  , short  , short)      \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, half2   , half  , short2 , short)      \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, half3   , half  , short3 , short)      \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, half4   , half  , short4 , short)      \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, half8   , half  , short8 , short)      \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, half16  , half  , short16, short))     \
+  __IF_FP64(                                                            \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, double  , double, long   , long )      \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, double2 , double, long2  , long )      \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, double3 , double, long3  , long )      \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, double4 , double, long4  , long )      \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, double8 , double, long8  , long )      \
+  IMPLEMENT_EXPR_V_V(NAME, EXPR, double16, double, long16 , long ))
+
+#define DEFINE_BUILTIN_V_V_FP32_FP64(NAME, BUILTIN)                  \
+  DEFINE_BUILTIN_V_V_FP32(NAME, BUILTIN)                                  \
+  DEFINE_BUILTIN_V_V_FP64(NAME, BUILTIN)
+
+#define DEFINE_BUILTIN_V_V_ONLY_FP32(NAME, BUILTIN, EXPR)          \
+  DEFINE_BUILTIN_V_V_FP32(NAME, BUILTIN)                                  \
+  DEFINE_EXPR_V_V_FP16_FP64(NAME, EXPR)

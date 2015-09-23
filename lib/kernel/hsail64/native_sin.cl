@@ -23,4 +23,4 @@
 
 #include "hsail_templates.h"
 
-DEFINE_BUILTIN_V_V_32(native_sin, nsin)
+DEFINE_BUILTIN_V_V_ONLY_FP32(native_sin, nsin, sin(a))

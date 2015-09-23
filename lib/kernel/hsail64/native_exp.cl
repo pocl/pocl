@@ -23,4 +23,4 @@
 
 #include "hsail_templates.h"
 
-DEFINE_EXPR_V_V(native_exp native_exp2(a*TYPED_CONST(stype, M_LOG2E_H, M_LOG2E_F, M_LOG2E)) )
+DEFINE_EXPR_V_V(native_exp native_exp2(a*TYPED_CONST(stype, M_LOG2E_H, M_LOG2E_F, M_LOG2E)))
