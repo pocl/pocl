@@ -21,10 +21,10 @@
    THE SOFTWARE.
 */
 
-#include "hsail_templates.h"
+#include "../templates.h"
 
 #define M_LOG2E_H_R ((half)(1.0 / M_LOG2E))
 #define M_LOG2E_F_R (1.0f / M_LOG2E_F)
 #define M_LOG2E_R (1.0 / M_LOG2E)
 
-DEFINE_EXPR_V_V(native_log native_log2(a*TYPED_CONST(stype, M_LOG2E_H, M_LOG2E_F, M_LOG2E)) )
+DEFINE_EXPR_V_V(native_log, native_log2(a*TYPED_CONST(stype, M_LOG2E_H, M_LOG2E_F, M_LOG2E)) )
