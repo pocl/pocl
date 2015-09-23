@@ -1,6 +1,5 @@
 /* OpenCL built-in library: native_sin()
 
-   Copyright (c) 2011-2013 Erik Erik Schnetter
    Copyright (c) 2015 Michal Babej
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -22,14 +21,6 @@
    THE SOFTWARE.
 */
 
-// Map the llvm ncos intrinsic to an OpenCL function.
-#define __CLC_FUNCTION __clc_llvm_intr_nsin
-#define __CLC_INTRINSIC "llvm.hsail.nsin"
-#include "unary_intrin.inc"
-#undef __CLC_FUNCTION
-#undef __CLC_INTRINSIC
+#include "hsail_templates.h"
 
-
-#include "../templates.h"
-
-DEFINE_EXPR_F_F(native_sin, __clc_llvm_intr_nsin(a))
+DEFINE_BUILTIN_V_V_32(native_sin, nsin)

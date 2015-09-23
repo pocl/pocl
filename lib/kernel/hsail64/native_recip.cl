@@ -1,6 +1,5 @@
 /* OpenCL built-in library: native_recip()
 
-   Copyright (c) 2011-2013 Erik Schnetter
    Copyright (c) 2015 Michal Babej
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -21,15 +20,6 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 */
+#include "hsail_templates.h"
 
-// Map the llvm ncos intrinsic to an OpenCL function.
-#define __CLC_FUNCTION __clc_llvm_intr_nrcp
-#define __CLC_INTRINSIC "llvm.hsail.nrcp"
-#include "unary_intrin.inc"
-#undef __CLC_FUNCTION
-#undef __CLC_INTRINSIC
-
-
-#include "../templates.h"
-
-DEFINE_EXPR_F_F(native_recip, __clc_llvm_intr_nrcp(a))
+DEFINE_BUILTIN_V_V(native_recip, nrcp)
