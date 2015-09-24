@@ -1,6 +1,6 @@
 /* OpenCL built-in library: native_exp()
 
-   Copyright (c) 2015 Michal Babej
+   Copyright (c) 2015 Michal Babej / Tampere University of Technology
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal

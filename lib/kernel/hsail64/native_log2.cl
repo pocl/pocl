@@ -1,6 +1,6 @@
 /* OpenCL built-in library: native_log2()
 
-   Copyright (c) 2015 Michal Babej
+   Copyright (c) 2015 Michal Babej / Tampere University of Technology
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -23,4 +23,4 @@
 
 #include "hsail_templates.h"
 
-DEFINE_BUILTIN_V_V_ONLY_FP32(native_log2, nlog2, log2(a))
+DEFINE_BUILTIN_V_V_ONLY_FP32(native_log2, hsail.nlog2, log2(a))
