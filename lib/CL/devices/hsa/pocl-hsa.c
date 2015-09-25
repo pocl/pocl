@@ -561,11 +561,10 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
       struct pocl_argument *al = &(cmd->command.run.arguments[i]);
       if (cmd->command.run.kernel->arg_info[i].is_local)
         {
-          CHECK_SPACE (sizeof (uint64_t));
-          uint64_t temp = *total_group_size;
-          memcpy(write_pos, &temp, sizeof(uint64_t));
+          CHECK_SPACE (sizeof (uint32_t));
+          memcpy(write_pos, total_group_size, sizeof(uint32_t));
           *total_group_size += (uint32_t)al->size;
-          write_pos += sizeof(uint64_t);
+          write_pos += sizeof(uint32_t);
         }
       else if (cmd->command.run.kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
         {
