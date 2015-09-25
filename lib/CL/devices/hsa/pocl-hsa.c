@@ -77,6 +77,8 @@
 /* TODO:
    - track hsa_memory_register() calls and deregister the memory
      at free() calls
+   - fix pocl_llvm_generate_workgroup_function() to
+     generate the entire linked program.bc for HSA, not just a single kernel.
    - AMD SDK samples. Requires work mainly in these areas:
       - atomics support
       - image support
@@ -89,10 +91,10 @@
    - etc. etc.
 */
 
-#define HSA_PROGRAM_CACHE_SIZE 32
 #define HSA_KERNEL_CACHE_SIZE 64
 
-/* for caching kernel dispatch data */
+/* Simple statically-sized kernel data cache */
+/* for caching kernel dispatch data, binaries etc */
 typedef struct pocl_hsa_kernel_cache_s {
   cl_kernel kernel;
   hsa_executable_t hsa_exe;
@@ -103,17 +105,6 @@ typedef struct pocl_hsa_kernel_cache_s {
   void* kernargs;
   uint32_t args_segment_size;
 } pocl_hsa_kernel_cache_t;
-
-/* Simple statically-sized program/kernel data cache */
-typedef struct pocl_hsa_program_cache_s {
-  cl_program program;
-  hsa_code_object_t code_object;
-  /* Per-kernel data cache for dispatching. Must be inside program cache,
-   * since we must destroy all kernels (hsa_executable_t) before
-   * destroying a program */
-  pocl_hsa_kernel_cache_t kernel_cache[HSA_KERNEL_CACHE_SIZE];
-  unsigned kernel_cache_lastptr;
-} pocl_hsa_program_cache_t;
 
 typedef struct pocl_hsa_device_data_s {
   /* Currently loaded kernel. */
@@ -126,8 +117,8 @@ typedef struct pocl_hsa_device_data_s {
   /* Queue for pushing work to the agent. */
   hsa_queue_t *queue;
   /* Per-program data cache to simplify program compiling stage */
-  pocl_hsa_program_cache_t program_cache[HSA_PROGRAM_CACHE_SIZE];
-  unsigned program_cache_lastptr;
+  pocl_hsa_kernel_cache_t kernel_cache[HSA_KERNEL_CACHE_SIZE];
+  unsigned kernel_cache_lastptr;
 } pocl_hsa_device_data_t;
 
 struct pocl_supported_hsa_device_properties
@@ -637,44 +628,26 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
  * returns a pointer to the actually used storage */
 static pocl_hsa_kernel_cache_t* cache_kernel_dispatch_data(cl_kernel kernel,
                                 pocl_hsa_device_data_t* d,
-                                hsa_code_object_t* code_object,
+                                hsa_executable_t *exe_ptr,
                                 pocl_hsa_kernel_cache_t *stack_cache) {
-  pocl_hsa_program_cache_t* p = NULL;
   pocl_hsa_kernel_cache_t* out = NULL;
 
-  assert(code_object != NULL);
+  assert(exe_ptr != NULL);
   assert(stack_cache != NULL);
   assert(d != NULL);
 
-  for (unsigned i = 0; i<HSA_PROGRAM_CACHE_SIZE; i++)
+  for (unsigned i = 0; i<HSA_KERNEL_CACHE_SIZE; i++)
     {
-      if (memcmp(&d->program_cache[i].code_object, code_object,
-                 sizeof(hsa_code_object_t)) == 0)
-        {
-          p = &d->program_cache[i];
-          for (unsigned j = 0; j<HSA_KERNEL_CACHE_SIZE; j++)
-            {
-              if (p->kernel_cache[j].kernel == kernel)
-                return &p->kernel_cache[j];
-            }
-          if (p->kernel_cache_lastptr < HSA_KERNEL_CACHE_SIZE)
-            out = &p->kernel_cache[p->kernel_cache_lastptr++];
-          else
-            out = stack_cache;
-        }
+      if (d->kernel_cache[i].kernel == kernel)
+        return &d->kernel_cache[i];
     }
 
-  if (!p)
+  if (d->kernel_cache_lastptr < HSA_KERNEL_CACHE_SIZE)
+    out = &d->kernel_cache[d->kernel_cache_lastptr++];
+  else
     out = stack_cache;
 
-  HSA_CHECK(hsa_executable_create (HSA_PROFILE_FULL,
-                                  HSA_EXECUTABLE_STATE_UNFROZEN,
-                                  "", &out->hsa_exe));
-
-  HSA_CHECK(hsa_executable_load_code_object (out->hsa_exe, *d->agent,
-                                            *code_object, ""));
-
-  HSA_CHECK(hsa_executable_freeze (out->hsa_exe, NULL));
+  out->hsa_exe = *exe_ptr;
 
   hsa_executable_symbol_t kernel_symbol;
 
@@ -738,11 +711,13 @@ pocl_hsa_run(void *dptr, _cl_command_node* cmd)
   d = dptr;
   d->current_kernel = kernel;
 
-  hsa_code_object_t *co = (hsa_code_object_t*)cmd->command.run.device_data;
+  hsa_executable_t *exe_ptr = (hsa_executable_t*)cmd->command.run.device_data;
 
-  cached_data = cache_kernel_dispatch_data(kernel, d, co, &stack_cache);
+  cached_data = cache_kernel_dispatch_data(kernel, d, exe_ptr, &stack_cache);
 
-  free(co);
+  /* does NOT free the hsa_executable_t, rather the malloc'ed mem
+   * from compile_submitted_kernels() */
+  free(exe_ptr);
 
   const uint32_t queueMask = d->queue->size - 1;
 
@@ -911,18 +886,17 @@ pocl_hsa_compile_submitted_kernels (_cl_command_node *cmd)
   char brigfile[POCL_FILENAME_LENGTH];
   char *brig_blob;
 
-  cl_program program = cmd->command.run.kernel->program;
-
   pocl_hsa_device_data_t *d =
     (pocl_hsa_device_data_t*)cmd->device->data;
 
-  hsa_code_object_t *out = malloc(sizeof(hsa_code_object_t));
+  hsa_executable_t *out = malloc(sizeof(hsa_executable_t));
   cmd->command.run.device_data = (void**)out;
 
-  for (unsigned i = 0; i<HSA_PROGRAM_CACHE_SIZE; i++)
-    if (d->program_cache[i].program == program)
+  for (unsigned i = 0; i<HSA_KERNEL_CACHE_SIZE; i++)
+    if (d->kernel_cache[i].kernel == cmd->command.run.kernel)
       {
-        *out = d->program_cache[i].code_object;
+        *out = d->kernel_cache[i].hsa_exe;
+        POCL_MSG_PRINT_INFO("kernel.hsa_exe found in kernel cache, returning\n");
         return;
       }
 
@@ -961,16 +935,28 @@ pocl_hsa_compile_submitted_kernels (_cl_command_node *cmd)
     (hsa_program, isa, 0, control_directives, "",
      HSA_CODE_OBJECT_TYPE_PROGRAM, &code_object));
 
-  HSA_CHECK(hsa_ext_program_destroy (hsa_program));
+  HSA_CHECK(hsa_executable_create (d->agent_profile,
+                                  HSA_EXECUTABLE_STATE_UNFROZEN,
+                                  "", out));
+
+  HSA_CHECK(hsa_executable_load_code_object (*out, *d->agent,
+                                            code_object, ""));
+
+  HSA_CHECK(hsa_executable_freeze (*out, NULL));
+
+  HSA_CHECK(hsa_code_object_destroy(code_object));
+
+  HSA_CHECK(hsa_ext_program_destroy(hsa_program));
 
   free(brig_blob);
-  *out = code_object;
 
-  if (d->program_cache_lastptr < HSA_PROGRAM_CACHE_SIZE)
+/*
+  if (d->kernel_cache_lastptr < HSA_KERNEL_CACHE_SIZE)
     {
-      d->program_cache[d->program_cache_lastptr].code_object = code_object;
-      d->program_cache[d->program_cache_lastptr++].program = program;
+      d->kernel_cache[d->kernel_cache_lastptr].kernel = cmd->command.run.kernel;
+      d->kernel_cache[d->kernel_cache_lastptr++].hsa_exe = *out;
     }
+*/
 
 }
 
@@ -979,20 +965,12 @@ pocl_hsa_uninit (cl_device_id device)
 {
   pocl_hsa_device_data_t *d = (pocl_hsa_device_data_t*)device->data;
 
-  for (unsigned j = 0; j < HSA_PROGRAM_CACHE_SIZE; j++)
-    {
-      if (d->program_cache[j].program)
-        {
-          pocl_hsa_program_cache_t *cache = &d->program_cache[j];
-          for (unsigned i = 0; i < HSA_KERNEL_CACHE_SIZE; i++)
-            if (cache->kernel_cache[i].kernel)
-              {
-                HSA_CHECK(hsa_executable_destroy(cache->kernel_cache[i].hsa_exe));
-                HSA_CHECK(hsa_signal_destroy(cache->kernel_cache[i].kernel_completion_signal));
-              }
-          HSA_CHECK(hsa_code_object_destroy(cache->code_object));
-        }
-    }
+  for (unsigned i = 0; i < HSA_KERNEL_CACHE_SIZE; i++)
+    if (d->kernel_cache[i].kernel)
+      {
+        HSA_CHECK(hsa_executable_destroy(d->kernel_cache[i].hsa_exe));
+        HSA_CHECK(hsa_signal_destroy(d->kernel_cache[i].kernel_completion_signal));
+      }
 
   HSA_CHECK(hsa_queue_destroy(d->queue));
   POCL_MEM_FREE(d);
