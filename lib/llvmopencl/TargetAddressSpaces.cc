@@ -24,14 +24,18 @@
 #include "config.h"
 #include <iostream>
 #include <string>
+#include <set>
 
 #ifdef LLVM_3_2
 # include <llvm/Instructions.h>
+# include <llvm/IntrinsicInst.h>
 #else
 # include <llvm/IR/Instructions.h>
 # include <llvm/IR/Module.h>
-
+# include <llvm/IR/IntrinsicInst.h>
 #endif
+
+#include <llvm/IR/IRBuilder.h>
 #include <llvm/Transforms/Utils/ValueMapper.h>
 #include <llvm/Transforms/Utils/Cloning.h>
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
@@ -86,6 +90,56 @@ UpdateAddressSpace(llvm::Value& val, std::map<unsigned, unsigned> &addrSpaceMap)
   return true;
 }
 
+/**
+ * After converting the pointer address spaces, there
+ * might be llvm.memcpy.* or llvm.memset.* calls to wrong
+ * intrinsics with wrong address spaces which this function
+ * fixes.
+ */
+static void
+FixMemIntrinsics(llvm::Function& F) {
+
+  // Collect the intrinsics first to avoid breaking the
+  // iterators.
+  std::vector<llvm::MemIntrinsic*> intrinsics;
+  for (llvm::Function::iterator bbi = F.begin(), bbe = F.end(); bbi != bbe;
+       ++bbi) {
+    llvm::BasicBlock* bb = bbi;
+    for (llvm::BasicBlock::iterator ii = bb->begin(), ie = bb->end();
+         ii != ie; ++ii) {
+      llvm::Instruction *instr = ii;
+      if (!isa<llvm::MemIntrinsic>(instr)) continue;
+      intrinsics.push_back(dyn_cast<llvm::MemIntrinsic>(instr));
+    }
+  }
+
+  for (llvm::MemIntrinsic* i : intrinsics) {
+
+    llvm::IRBuilder<> Builder(i);
+    // The pointer arguments to the intrinsics are already converted
+    // to the correct address spaces. All we need to do here is to
+    // "refresh" the intrinsics so it gets correct address spaces
+    // in the name (e.g. llvm.memcpy.p0i8.p0i8).
+    if (llvm::MemCpyInst* old = dyn_cast<llvm::MemCpyInst>(i)) {
+      Builder.CreateMemCpy(
+        old->getRawDest(), old->getRawSource(), old->getLength(),
+        old->getAlignment(), old->isVolatile());
+      old->eraseFromParent();
+    } else if (llvm::MemSetInst* old = dyn_cast<llvm::MemSetInst>(i)) {
+      Builder.CreateMemSet(
+        old->getRawDest(), old->getValue(), old->getLength(),
+        old->getAlignment(), old->isVolatile());
+      old->eraseFromParent();
+    } else if (llvm::MemMoveInst* old = dyn_cast<llvm::MemMoveInst>(i)) {
+      Builder.CreateMemMove(
+        old->getRawDest(), old->getRawSource(), old->getLength(),
+        old->getAlignment(), old->isVolatile());
+      old->eraseFromParent();
+    } else {
+        assert (false && "Unknown MemIntrinsic.");
+    }
+  }
+}
 
 bool
 TargetAddressSpaces::runOnModule(llvm::Module &M) {
@@ -218,6 +272,7 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
     } asvtm(addrSpaceMap);
 
     CloneFunctionInto(newFunc, &F, vv, true, ri, "", NULL, &asvtm);
+    FixMemIntrinsics(*newFunc);
     funcReplacements[&F] = newFunc;
   }
   
@@ -256,6 +311,7 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
 #endif
         
         if (!isa<CallInst>(instr)) continue;
+
         llvm::CallInst *call = dyn_cast<CallInst>(instr);
         llvm::Function *calledF = call->getCalledFunction();
         if (funcReplacements.find(calledF) == funcReplacements.end()) continue;
@@ -283,10 +339,8 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
         User* user = (*ui).getUser();
 #endif
         user->dump();
-                   
       }
-      
-      assert ("All users of the function were not fixed?" && 
+      assert ("All users of the function were not fixed?" &&
               i->first->getNumUses() == 0);
       break;
     }
