@@ -24,4 +24,4 @@
 #include "hsail_templates.h"
 
 #undef fabs
-DEFINE_BUILTIN_V_V_FP32_FP64(_cl_fabs, fabs)
+IMPLEMENT_EXPR_ALL(_cl_fabs, V_V, __builtin_fabsf(a), __builtin_fabs(a))

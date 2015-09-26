@@ -24,4 +24,4 @@
 #include "hsail_templates.h"
 
 #undef floor
-DEFINE_BUILTIN_V_V_FP32_FP64(_cl_floor, floor)
+IMPLEMENT_EXPR_ALL(_cl_floor, V_V, __builtin_floorf(a), __builtin_floor(a))
