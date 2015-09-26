@@ -68,25 +68,30 @@
   IMPLEMENT_BUILTIN_ ## TYPE(NAME, STYPE ## 8, ITYPE, ITYPE ## 8, lo, hi)          \
   IMPLEMENT_BUILTIN_ ## TYPE(NAME, STYPE ## 16, ITYPE, ITYPE ## 16, lo, hi)
 
-#define  IMPL_V_ALL(NAME, STYPE, BUILTIN, SUFFIX) \
+/**********************************************************************/
+
+// ASM for scalar, DnC for vectors
+#define  IMPL_V_V_ALL(NAME, STYPE, BUILTIN, SUFFIX) \
   STYPE NAME ## _internal_v_ ## STYPE(STYPE a)  __asm("llvm."#BUILTIN#SUFFIX);  \
   __attribute__((overloadable)) STYPE NAME(STYPE a) { return NAME ## _internal_v_ ## STYPE(a); } \
   IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, V_V, STYPE, STYPE)
 
-#define  IMPL_VV_ALL(NAME, STYPE, BUILTIN, SUFFIX) \
+#define  IMPL_V_VV_ALL(NAME, STYPE, BUILTIN, SUFFIX) \
   STYPE NAME ## _internal_vv_ ## STYPE(STYPE a, STYPE b)  __asm("llvm."#BUILTIN#SUFFIX);  \
   __attribute__((overloadable)) STYPE NAME(STYPE a, STYPE b) { return NAME ## _internal_vv_ ## STYPE(a, b); } \
   IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, V_VV, STYPE, STYPE)
 
-#define  IMPL_VVV_ALL(NAME, STYPE, BUILTIN, SUFFIX) \
+#define  IMPL_V_VVV_ALL(NAME, STYPE, BUILTIN, SUFFIX) \
   STYPE NAME ## _internal_vvv_ ## STYPE(STYPE a, STYPE b,STYPE c)  __asm("llvm."#BUILTIN#SUFFIX);  \
   __attribute__((overloadable)) STYPE NAME(STYPE a, STYPE b,STYPE c) { return NAME ## _internal_vvv_ ## STYPE(a, b, c); } \
   IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, V_VVV, STYPE, STYPE)
 
-#define  IMPL_VI_ALL(NAME, STYPE, ITYPE, BUILTIN, SUFFIX) \
+#define  IMPL_V_VI_ALL(NAME, STYPE, ITYPE, BUILTIN, SUFFIX) \
   STYPE NAME ## _internal_vi_ ## STYPE(STYPE a, ITYPE b) __asm("llvm."#BUILTIN#SUFFIX);   \
   __attribute__((overloadable)) STYPE NAME(STYPE a, ITYPE b) { return NAME ## _internal_vi_ ## STYPE(a, b); } \
   IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, V_VI, STYPE, ITYPE)
+
+/**********************************************************************/
 
 // Implement a builtin using an Expression
 
@@ -173,159 +178,47 @@
 
 /**********************************************************************/
 
-#define DEFINE_BUILTIN_V_V_FP32(NAME, BUILTIN)          \
-  IMPL_V_ALL(NAME, float, BUILTIN, .f32)
-
-#define DEFINE_BUILTIN_V_V_FP64(NAME, BUILTIN)          \
-  __IF_FP64(                                            \
-  IMPL_V_ALL(NAME, double, BUILTIN, .f64))
-
-#define DEFINE_BUILTIN_V_VV_FP32(NAME, BUILTIN)         \
-  IMPL_VV_ALL(NAME, float, BUILTIN, .f32)
-
-#define DEFINE_BUILTIN_V_VV_FP64(NAME, BUILTIN)         \
-  __IF_FP64(                                            \
-  IMPL_VV_ALL(NAME, double, BUILTIN, .f64))
+/**********************************************************************/
 
 /**********************************************************************/
 
-#define DEFINE_EXPR_V_V_FP16_FP64(NAME, EXPR)                           \
+#define DEFINE_LLVM_INTRIN_FP32_FP64(NAME, ARGTYPE, BUILTIN, EXPR16)       \
+  IMPL_ ## ARGTYPE ## _ALL(NAME, float, BUILTIN, .f32)                     \
+  __IF_FP64(                                                               \
+    IMPL_ ## ARGTYPE ## _ALL(NAME, double, BUILTIN, .f64))                 \
+  __IF_FP16(                                                               \
+    IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, ARGTYPE, EXPR_, half, short, EXPR16))
+
+#define DEFINE_LLVM_INTRIN_ONLY_FP32(NAME, ARGTYPE, BUILTIN, EXPR64, EXPR16)   \
+  IMPL_ ## ARGTYPE ## _ALL(NAME, float, BUILTIN, .f32)                         \
+  __IF_FP64(                                                                   \
+    IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, ARGTYPE, EXPR_, double, long, EXPR64)) \
+  __IF_FP16(                                                                   \
+    IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, ARGTYPE, EXPR_, half, short, EXPR))    \
+
+/**********************************************************************/
+
+// ldexp, doesnt work yet
+
+#define DEFINE_LLVM_INTRIN_V_VI_FP32_FP64(NAME, BUILTIN)                \
+  IMPL_V_VI_ALL(NAME, float, int, BUILTIN, .f32)                          \
   __IF_FP16(                                                            \
-  IMPLEMENT_EXPR_TYPE_ALL_VECS(NAME, V_V, EXPR_, half, short, EXPR))    \
+    IMPL_V_VI_ALL(NAME, half, int, BUILTIN, .f32))                        \
   __IF_FP64(                                                            \
-  IMPLEMENT_EXPR_TYPE_ALL_VECS(NAME, V_V, EXPR_, double, long, EXPR))
+    IMPL_V_VI_ALL(NAME, double, int, BUILTIN, .f64))                      \
 
 /**********************************************************************/
 
-#define DEFINE_BUILTIN_V_V_FP32_FP64(NAME, BUILTIN)                  \
-  DEFINE_BUILTIN_V_V_FP32(NAME, BUILTIN)                                  \
-  DEFINE_BUILTIN_V_V_FP64(NAME, BUILTIN)
-
-#define DEFINE_BUILTIN_V_V_ONLY_FP32(NAME, BUILTIN, EXPR)          \
-  DEFINE_BUILTIN_V_V_FP32(NAME, BUILTIN)                                  \
-  DEFINE_EXPR_V_V_FP16_FP64(NAME, EXPR)
-
-/**********************************************************************/
-
-#define DEFINE_BUILTIN_V_VV_FP32_FP64(NAME, BUILTIN)                  \
-  DEFINE_BUILTIN_V_VV_FP32(NAME, BUILTIN)                             \
-  DEFINE_BUILTIN_V_VV_FP64(NAME, BUILTIN)
-
-/*
-#define DEFINE_BUILTIN_V_V_ONLY_FP32(NAME, BUILTIN, EXPR)             \
-  DEFINE_BUILTIN_V_V_FP32(NAME, BUILTIN)                              \
-  DEFINE_EXPR_V_V_FP16_FP64(NAME, EXPR)
-*/
-
-/**********************************************************************/
-
-#define DEFINE_BUILTIN_V_VVV_FP32(NAME, BUILTIN)                      \
-  IMPL_VVV_ALL(NAME, float, BUILTIN, .f32)
-
-
-#define DEFINE_BUILTIN_V_VVV_FP64(NAME, BUILTIN)                      \
-  __IF_FP64(                                                          \
-  IMPL_VVV_ALL(NAME, double, BUILTIN, .f64))
-
-/**********************************************************************/
-
-#define DEFINE_BUILTIN_V_VVV_FP32_FP64(NAME, BUILTIN)                  \
-  DEFINE_BUILTIN_V_VVV_FP32(NAME, BUILTIN)                             \
-  DEFINE_BUILTIN_V_VVV_FP64(NAME, BUILTIN)
-
-/**********************************************************************/
-
-#define ASM_IMP(BUILTIN, SUFFIX, TYPE)
-
-#define DEFINE_BUILTIN_V_VVV_S32(NAME, BUILTIN)                      \
-  IMPL_VVV_ALL(NAME, int, BUILTIN, .s32)
-
-#define DEFINE_BUILTIN_V_VVV_U32(NAME, BUILTIN)                      \
-  IMPL_VVV_ALL(NAME, uint, BUILTIN, .u32)
-
-#define DEFINE_BUILTIN_V_VVV_S64(NAME, BUILTIN)                      \
-  IMPL_VVV_ALL(NAME, long, BUILTIN, .s64)
-
-#define DEFINE_BUILTIN_V_VVV_U64(NAME, BUILTIN)                      \
-  IMPL_VVV_ALL(NAME, ulong, BUILTIN, .u64)
-
-#define DEFINE_BUILTIN_V_VVV_IS32(NAME, BUILTIN)                      \
-  IMPL_VVV_ALL(NAME, int, BUILTIN, .i32)
-
-#define DEFINE_BUILTIN_V_VVV_IU32(NAME, BUILTIN)                      \
-  IMPL_VVV_ALL(NAME, uint, BUILTIN, .i32)
-
-/**********************************************************************/
-
-#define DEFINE_BUILTIN_V_VV_S32(NAME, BUILTIN)                      \
-  IMPL_VV_ALL(NAME, int, BUILTIN, .s32)
-
-#define DEFINE_BUILTIN_V_VV_U32(NAME, BUILTIN)                      \
-  IMPL_VV_ALL(NAME, uint, BUILTIN, .u32)
-
-#define DEFINE_BUILTIN_V_VV_S64(NAME, BUILTIN)                      \
-  IMPL_VV_ALL(NAME, long, BUILTIN, .s64)
-
-#define DEFINE_BUILTIN_V_VV_U64(NAME, BUILTIN)                      \
-  IMPL_VV_ALL(NAME, ulong, BUILTIN, .u64)
-
-#define DEFINE_BUILTIN_V_VV_IS32(NAME, BUILTIN)                      \
-  IMPL_VV_ALL(NAME, int, BUILTIN, .i32)
-
-#define DEFINE_BUILTIN_V_VV_IU32(NAME, BUILTIN)                      \
-  IMPL_VV_ALL(NAME, uint, BUILTIN, .i32)
-
-#define DEFINE_BUILTIN_V_VV_I64(NAME, BUILTIN)                      \
-  IMPL_VV_ALL(NAME, long, BUILTIN, .i64)
-
-/**********************************************************************/
-
-#define DEFINE_BUILTIN_V_VV_SU_INT32_ONLY(NAME, SIGNED_BUILTIN, UNSIGNED_BUILTIN)   \
-  DEFINE_BUILTIN_V_VV_IS32(NAME, SIGNED_BUILTIN)               \
-  DEFINE_BUILTIN_V_VV_IU32(NAME, UNSIGNED_BUILTIN)
-
-#define DEFINE_BUILTIN_V_VV_INT32_ONLY(NAME, BUILTIN)  \
-  DEFINE_BUILTIN_V_VV_SU_INT32_ONLY(NAME, BUILTIN, BUILTIN)
-
-#define DEFINE_BUILTIN_V_VVV_SU_INT32_ONLY(NAME, SIGNED_BUILTIN, UNSIGNED_BUILTIN)   \
-  DEFINE_BUILTIN_V_VVV_IS32(NAME, SIGNED_BUILTIN)               \
-  DEFINE_BUILTIN_V_VVV_IU32(NAME, UNSIGNED_BUILTIN)
-
-#define DEFINE_BUILTIN_V_VVV_INT32_ONLY(NAME, BUILTIN)  \
-  DEFINE_BUILTIN_V_VVV_SU_INT32_ONLY(NAME, BUILTIN, BUILTIN)
-
-/**********************************************************************/
-
-#define DEFINE_BUILTIN_V_VV_SU_ALL_INTS(NAME, SIGNED_BUILTIN, UNSIGNED_BUILTIN) \
-  DEFINE_BUILTIN_V_VV_S32(NAME, SIGNED_BUILTIN)               \
-  DEFINE_BUILTIN_V_VV_U32(NAME, UNSIGNED_BUILTIN)               \
-  DEFINE_BUILTIN_V_VV_S64(NAME, SIGNED_BUILTIN)               \
-  DEFINE_BUILTIN_V_VV_U64(NAME, UNSIGNED_BUILTIN)               \
-  EXPR_VV_ALL_SMALLINTS(NAME)
-
-#define DEFINE_BUILTIN_V_VV_II_ALL_INTS(NAME, SIGNED_BUILTIN, UNSIGNED_BUILTIN) \
-  DEFINE_BUILTIN_V_VV_IS32(NAME, SIGNED_BUILTIN)               \
-  DEFINE_BUILTIN_V_VV_I64(NAME, SIGNED_BUILTIN)               \
-  EXPR_VV_ALL_SMALLINTS(NAME)
-
-#define DEFINE_BUILTIN_V_VV_ALL_INTS(NAME, BUILTIN)    \
-  DEFINE_BUILTIN_V_VV_SU_ALL_INTS(NAME, BUILTIN, BUILTIN)
-
-#define DEFINE_BUILTIN_V_VVV_ALL_INTS(NAME, BUILTIN)   \
-  DEFINE_BUILTIN_V_VVV_S32(NAME, BUILTIN)              \
-  DEFINE_BUILTIN_V_VVV_U32(NAME, BUILTIN)              \
-  DEFINE_BUILTIN_V_VVV_S64(NAME, BUILTIN)              \
-  DEFINE_BUILTIN_V_VVV_U64(NAME, BUILTIN)              \
-  EXPR_VVV_ALL_SMALLINTS(NAME)
-
-#define DEFINE_EXPR_V_VVV_ALL_INTS(NAME, EXPR)         \
-  IMPLEMENT_EXPR_TYPE_ALL_VECS(NAME, V_VVV, EXPR_, int, int, EXPR)      \
-  IMPLEMENT_EXPR_TYPE_ALL_VECS(NAME, V_VVV, EXPR_, uint, uint, EXPR)    \
-  IMPLEMENT_EXPR_TYPE_ALL_VECS(NAME, V_VVV, EXPR_, long, long, EXPR)    \
-  IMPLEMENT_EXPR_TYPE_ALL_VECS(NAME, V_VVV, EXPR_, ulong, ulong, EXPR)  \
-  EXPR_VVV_ALL_SMALLINTS(NAME)
-
-/**********************************************************************/
+#define DEFINE_LLVM_INTRIN_SU_INT32_ONLY(NAME, ARGTYPE, SIGNED_BUILTIN, UNSIGNED_BUILTIN)   \
+  IMPL_ ## ARGTYPE ## _ALL(NAME, int, SIGNED_BUILTIN, .i32)                         \
+  IMPL_ ## ARGTYPE ## _ALL(NAME, uint, UNSIGNED_BUILTIN, .i32)                       \
+  IMPL_ ## ARGTYPE ## _ALL(NAME, long, SIGNED_BUILTIN, .i64)                         \
+  IMPL_ ## ARGTYPE ## _ALL(NAME, ulong, UNSIGNED_BUILTIN, .i64)                       \
+  IMPL_ ## ARGTYPE ## _ALL(NAME, short, SIGNED_BUILTIN, .i16)                         \
+  IMPL_ ## ARGTYPE ## _ALL(NAME, ushort, UNSIGNED_BUILTIN, .i16)                       \
+  IMPL_ ## ARGTYPE ## _ALL(NAME, char, SIGNED_BUILTIN, .i8)                         \
+  IMPL_ ## ARGTYPE ## _ALL(NAME, uchar, UNSIGNED_BUILTIN, .i8)
+/*  EXPR_VV_ALL_SMALLINTS(NAME) */
 
 #define DEFINE_EXPR_V_VVV_ALL_INTS(NAME, EXPR)         \
   IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, EXPR_, int, int, EXPR)      \
@@ -339,7 +232,3 @@
   IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, EXPR_, long, long, EXPR)    \
   IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, EXPR_, ulong, ulong, EXPR)  \
 */
-
-#define DEFINE_EXPR_V_VPV_FP32_FP64(NAME, EXPR)       \
-  IMPLEMENT_EXPR_TYPE_ALL_VECS(NAME, V_VPV, EXPR_, float, float, EXPR)   \
-  IMPLEMENT_EXPR_TYPE_ALL_VECS(NAME, V_VPV, EXPR_, double, double, EXPR) \
