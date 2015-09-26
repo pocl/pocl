@@ -162,6 +162,14 @@
 
 /**********************************************************************/
 
+// EXPR for scalar, DnC for vectors, useful for GCC builtins
+#define IMPLEMENT_EXPR_ALL(NAME, ARGTYPE, EXPR32, EXPR64)                      \
+  IMPLEMENT_EXPR_ ## ARGTYPE(NAME, EXPR32, float, float, float, float)         \
+  IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, ARGTYPE, float, int)                   \
+  IMPLEMENT_EXPR_ ## ARGTYPE(NAME, EXPR64, double, double, double, double)     \
+  IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, ARGTYPE, double, long)
+
+/**********************************************************************/
 // Convert from char/shorts to ints
 
 #define EXPR_VV_ALL_SMALLINTS(NAME) \
