@@ -99,36 +99,6 @@
   NAME(VTYPE a, STYPE b)                                                \
   IMPL_BODY(VTYPE, STYPE, VTYPE2, STYPE2, EXPR)
 
-#define IMPLEMENT_EXPR_V_VPV(NAME, EXPR, VTYPE, STYPE, VTYPE2, STYPE2)  \
-  VTYPE __attribute__ ((overloadable))                                  \
-  NAME(VTYPE a, __global VTYPE *b)                                      \
-  {                                                                     \
-    typedef VTYPE vtype;                                                \
-    typedef STYPE stype;                                                \
-    typedef VTYPE2 vtype2;                                              \
-    typedef STYPE2 stype2;                                              \
-    EXPR;                                                               \
-  }                                                                     \
-  VTYPE __attribute__ ((overloadable))                                  \
-  NAME(VTYPE a, __local VTYPE *b)                                       \
-  {                                                                     \
-    typedef VTYPE vtype;                                                \
-    typedef STYPE stype;                                                \
-    typedef VTYPE2 vtype2;                                              \
-    typedef STYPE2 stype2;                                              \
-    EXPR;                                                               \
-  }                                                                     \
-  VTYPE __attribute__ ((overloadable))                                  \
-  NAME(VTYPE a, __private VTYPE *b)                                     \
-  {                                                                     \
-    typedef VTYPE vtype;                                                \
-    typedef STYPE stype;                                                \
-    typedef VTYPE2 vtype2;                                              \
-    typedef STYPE2 stype2;                                              \
-    EXPR;                                                               \
-  }                                                                     \
-
-
 /**********************************************************************/
 
 #define IMPLEMENT_CONV_V_V(NAME, EXPR, VTYPE, STYPE, VTYPE2, STYPE2)    \
