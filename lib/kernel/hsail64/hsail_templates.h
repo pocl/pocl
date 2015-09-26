@@ -142,16 +142,18 @@
     return convert_ ## VTYPE(NAME(convert_ ## VTYPE2(a), convert_ ## VTYPE2(b),    \
                        convert_ ## VTYPE2(c)));                           \
   }
-
 /**********************************************************************/
 
-#define   IMPLEMENT_EXPR_TYPE_ALL_VECS(NAME, TYPE, IMPTYPE, STYPE, SSTYPE, EXPR)    \
+#define IMPLEMENT_EXPR_VECS_ONLY(NAME, ARGTYPE, IMPTYPE, STYPE, SSTYPE, EXPR)    \
+  IMPLEMENT_ ## IMPTYPE ## ARGTYPE(NAME, EXPR, STYPE ## 2, STYPE, SSTYPE ## 2, SSTYPE)          \
+  IMPLEMENT_ ## IMPTYPE ## ARGTYPE(NAME, EXPR, STYPE ## 3, STYPE, SSTYPE ## 3, SSTYPE)          \
+  IMPLEMENT_ ## IMPTYPE ## ARGTYPE(NAME, EXPR, STYPE ## 4, STYPE, SSTYPE ## 4, SSTYPE)          \
+  IMPLEMENT_ ## IMPTYPE ## ARGTYPE(NAME, EXPR, STYPE ## 8, STYPE, SSTYPE ## 8, SSTYPE)          \
+  IMPLEMENT_ ## IMPTYPE ## ARGTYPE(NAME, EXPR, STYPE ## 16, STYPE, SSTYPE ## 16, SSTYPE)
+
+#define IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, TYPE, IMPTYPE, STYPE, SSTYPE, EXPR)    \
   IMPLEMENT_ ## IMPTYPE ## TYPE(NAME, EXPR, STYPE, STYPE, SSTYPE, SSTYPE)          \
-  IMPLEMENT_ ## IMPTYPE ## TYPE(NAME, EXPR, STYPE ## 2, STYPE, SSTYPE ## 2, SSTYPE)          \
-  IMPLEMENT_ ## IMPTYPE ## TYPE(NAME, EXPR, STYPE ## 3, STYPE, SSTYPE ## 3, SSTYPE)          \
-  IMPLEMENT_ ## IMPTYPE ## TYPE(NAME, EXPR, STYPE ## 4, STYPE, SSTYPE ## 4, SSTYPE)          \
-  IMPLEMENT_ ## IMPTYPE ## TYPE(NAME, EXPR, STYPE ## 8, STYPE, SSTYPE ## 8, SSTYPE)          \
-  IMPLEMENT_ ## IMPTYPE ## TYPE(NAME, EXPR, STYPE ## 16, STYPE, SSTYPE ## 16, SSTYPE)
+  IMPLEMENT_EXPR_VECS_ONLY(NAME, TYPE, IMPTYPE, STYPE, SSTYPE, EXPR)
 
 /**********************************************************************/
 #define EXPR_VV_ALL_SMALLINTS(NAME) \
