@@ -156,17 +156,20 @@
   IMPLEMENT_EXPR_VECS_ONLY(NAME, TYPE, IMPTYPE, STYPE, SSTYPE, EXPR)
 
 /**********************************************************************/
+
+// Convert from char/shorts to ints
+
 #define EXPR_VV_ALL_SMALLINTS(NAME) \
-  IMPLEMENT_EXPR_TYPE_ALL_VECS(NAME, V_VV, CONV_, char, int, "")          \
-  IMPLEMENT_EXPR_TYPE_ALL_VECS(NAME, V_VV, CONV_, uchar, uint, "")        \
-  IMPLEMENT_EXPR_TYPE_ALL_VECS(NAME, V_VV, CONV_, short, int, "")         \
-  IMPLEMENT_EXPR_TYPE_ALL_VECS(NAME, V_VV, CONV_, ushort, uint, "")
+  IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VV, CONV_, char, int, "")          \
+  IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VV, CONV_, uchar, uint, "")        \
+  IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VV, CONV_, short, int, "")         \
+  IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VV, CONV_, ushort, uint, "")
 
 #define EXPR_VVV_ALL_SMALLINTS(NAME)          \
-  IMPLEMENT_EXPR_TYPE_ALL_VECS(NAME, V_VVV, CONV_, char, int, "")          \
-  IMPLEMENT_EXPR_TYPE_ALL_VECS(NAME, V_VVV, CONV_, uchar, uint, "")        \
-  IMPLEMENT_EXPR_TYPE_ALL_VECS(NAME, V_VVV, CONV_, short, int, "")         \
-  IMPLEMENT_EXPR_TYPE_ALL_VECS(NAME, V_VVV, CONV_, ushort, uint, "")
+  IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, CONV_, char, int, "")          \
+  IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, CONV_, uchar, uint, "")        \
+  IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, CONV_, short, int, "")         \
+  IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, CONV_, ushort, uint, "")
 
 /**********************************************************************/
 
@@ -324,9 +327,18 @@
 
 /**********************************************************************/
 
-#define DEFINE_EXPR_V_VS_FP32_FP64(NAME, EXPR)           \
-  IMPLEMENT_EXPR_TYPE_ALL_VECS(NAME, V_VS, EXPR_, float, float, EXPR)   \
-  IMPLEMENT_EXPR_TYPE_ALL_VECS(NAME, V_VS, EXPR_, double, double, EXPR) \
+#define DEFINE_EXPR_V_VVV_ALL_INTS(NAME, EXPR)         \
+  IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, EXPR_, int, int, EXPR)      \
+  IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, EXPR_, uint, uint, EXPR)    \
+  IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, EXPR_, long, long, EXPR)    \
+  IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, EXPR_, ulong, ulong, EXPR)  \
+    EXPR_VVV_ALL_SMALLINTS(NAME)
+/*
+  IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, EXPR_, long, long, EXPR)    \
+  IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, EXPR_, ulong, ulong, EXPR)  \
+  IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, EXPR_, long, long, EXPR)    \
+  IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, EXPR_, ulong, ulong, EXPR)  \
+*/
 
 #define DEFINE_EXPR_V_VPV_FP32_FP64(NAME, EXPR)       \
   IMPLEMENT_EXPR_TYPE_ALL_VECS(NAME, V_VPV, EXPR_, float, float, EXPR)   \
