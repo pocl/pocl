@@ -204,8 +204,8 @@
   IMPL_ ## ARGTYPE ## _ALL(NAME, float, BUILTIN, .f32)                         \
   __IF_FP64(                                                                   \
     IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, ARGTYPE, EXPR_, double, long, EXPR64)) \
-  __IF_FP16(                                                                   \
-    IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, ARGTYPE, EXPR_, half, short, EXPR))    \
+  __IF_FP16(                                                                    \
+    IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, ARGTYPE, EXPR_, half, short, EXPR16))  \
 
 /**********************************************************************/
 
