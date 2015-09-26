@@ -23,4 +23,5 @@
 
 #include "hsail_templates.h"
 
-DEFINE_BUILTIN_V_VV_SU_INT32_ONLY(mul_hi, hsail.smulhi, hsail.umulhi)
+#undef mul_hi
+DEFINE_LLVM_INTRIN_SU_INT32_ONLY(_cl_mul_hi, V_VV, hsail.smulhi, hsail.umulhi)
