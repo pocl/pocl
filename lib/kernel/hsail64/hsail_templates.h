@@ -170,15 +170,16 @@
   IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, ARGTYPE, double, long)
 
 /**********************************************************************/
+
 // Convert from char/shorts to ints
 
-#define EXPR_VV_ALL_SMALLINTS(NAME) \
+#define EXPR_V_VV_ALL_SMALLINTS(NAME) \
   IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VV, CONV_, char, int, "")          \
   IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VV, CONV_, uchar, uint, "")        \
   IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VV, CONV_, short, int, "")         \
   IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VV, CONV_, ushort, uint, "")
 
-#define EXPR_VVV_ALL_SMALLINTS(NAME)          \
+#define EXPR_V_VVV_ALL_SMALLINTS(NAME)          \
   IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, CONV_, char, int, "")          \
   IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, CONV_, uchar, uint, "")        \
   IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, CONV_, short, int, "")         \
@@ -222,18 +223,21 @@
   IMPL_ ## ARGTYPE ## _ALL(NAME, uint, UNSIGNED_BUILTIN, .i32)                       \
   IMPL_ ## ARGTYPE ## _ALL(NAME, long, SIGNED_BUILTIN, .i64)                         \
   IMPL_ ## ARGTYPE ## _ALL(NAME, ulong, UNSIGNED_BUILTIN, .i64)                       \
+  EXPR_ ## ARGTYPE ## _ALL_SMALLINTS(NAME)
+/*
   IMPL_ ## ARGTYPE ## _ALL(NAME, short, SIGNED_BUILTIN, .i16)                         \
   IMPL_ ## ARGTYPE ## _ALL(NAME, ushort, UNSIGNED_BUILTIN, .i16)                       \
   IMPL_ ## ARGTYPE ## _ALL(NAME, char, SIGNED_BUILTIN, .i8)                         \
   IMPL_ ## ARGTYPE ## _ALL(NAME, uchar, UNSIGNED_BUILTIN, .i8)
-/*  EXPR_VV_ALL_SMALLINTS(NAME) */
+*/
+
 
 #define DEFINE_EXPR_V_VVV_ALL_INTS(NAME, EXPR)         \
   IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, EXPR_, int, int, EXPR)      \
   IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, EXPR_, uint, uint, EXPR)    \
   IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, EXPR_, long, long, EXPR)    \
   IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, EXPR_, ulong, ulong, EXPR)  \
-    EXPR_VVV_ALL_SMALLINTS(NAME)
+  EXPR_V_VVV_ALL_SMALLINTS(NAME)
 /*
   IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, EXPR_, long, long, EXPR)    \
   IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, EXPR_, ulong, ulong, EXPR)  \
