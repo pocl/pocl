@@ -26,35 +26,47 @@
 
 /**********************************************************************/
 
-#define IMPLEMENT_BUILTIN_V_V(NAME, VTYPE, LO, HI)      \
+#define IMPLEMENT_BUILTIN_V_V(NAME, VTYPE, ITYPE, IVTYPE, LO, HI)      \
   VTYPE __attribute__ ((overloadable))                  \
   NAME(VTYPE a)                                         \
   {                                                     \
     return (VTYPE)(NAME(a.LO), NAME(a.HI));             \
   }
 
-#define IMPLEMENT_BUILTIN_V_VV(NAME, VTYPE, LO, HI)     \
+#define IMPLEMENT_BUILTIN_V_VV(NAME, VTYPE, ITYPE, IVTYPE, LO, HI)     \
   VTYPE __attribute__ ((overloadable))                  \
   NAME(VTYPE a, VTYPE b)                                \
   {                                                     \
     return (VTYPE)(NAME(a.LO, b.LO), NAME(a.HI, b.HI)); \
   }
 
-#define IMPLEMENT_BUILTIN_V_VVV(NAME, VTYPE, LO, HI)                    \
+#define IMPLEMENT_BUILTIN_V_VVV(NAME, VTYPE, ITYPE, IVTYPE, LO, HI)                    \
   VTYPE __attribute__ ((overloadable))                                  \
   NAME(VTYPE a, VTYPE b, VTYPE c)                                       \
   {                                                                     \
     return (VTYPE)(NAME(a.LO, b.LO, c.LO), NAME(a.HI, b.HI, c.HI));     \
   }
 
+#define IMPLEMENT_BUILTIN_V_VI(NAME, VTYPE, ITYPE, IVTYPE, LO, HI)     \
+  VTYPE __attribute__ ((overloadable))                  \
+  NAME(VTYPE a, IVTYPE b)                               \
+  {                                                     \
+    return (VTYPE)(NAME(a.LO, b.LO), NAME(a.HI, b.HI)); \
+  }                                                     \
+  VTYPE __attribute__ ((overloadable))                  \
+  NAME(VTYPE a, ITYPE b)                                \
+  {                                                     \
+    return (VTYPE)(NAME(a.LO, b), NAME(a.HI, b)); \
+  }
+
 /**********************************************************************/
 
-#define  IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, TYPE, STYPE)    \
-  IMPLEMENT_BUILTIN_ ## TYPE(NAME, STYPE ## 2, lo, hi)          \
-  IMPLEMENT_BUILTIN_ ## TYPE(NAME, STYPE ## 3, lo, s2)          \
-  IMPLEMENT_BUILTIN_ ## TYPE(NAME, STYPE ## 4, lo, hi)          \
-  IMPLEMENT_BUILTIN_ ## TYPE(NAME, STYPE ## 8, lo, hi)          \
-  IMPLEMENT_BUILTIN_ ## TYPE(NAME, STYPE ## 16, lo, hi)
+#define  IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, TYPE, STYPE, ITYPE)    \
+  IMPLEMENT_BUILTIN_ ## TYPE(NAME, STYPE ## 2, ITYPE, ITYPE ## 2, lo, hi)          \
+  IMPLEMENT_BUILTIN_ ## TYPE(NAME, STYPE ## 3, ITYPE, ITYPE ## 3, lo, s2)          \
+  IMPLEMENT_BUILTIN_ ## TYPE(NAME, STYPE ## 4, ITYPE, ITYPE ## 4, lo, hi)          \
+  IMPLEMENT_BUILTIN_ ## TYPE(NAME, STYPE ## 8, ITYPE, ITYPE ## 8, lo, hi)          \
+  IMPLEMENT_BUILTIN_ ## TYPE(NAME, STYPE ## 16, ITYPE, ITYPE ## 16, lo, hi)
 
 #define  IMPL_V_ALL(NAME, STYPE, BUILTIN, SUFFIX) \
   __attribute__((overloadable)) STYPE NAME(STYPE a) __asm("llvm."#BUILTIN#SUFFIX);   \
