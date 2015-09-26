@@ -24,5 +24,5 @@
 #include "hsail_templates.h"
 
 #undef mul24
-IMPL_VV_ALL(_cl_mul24, int, hsail.smul24, )
-IMPL_VV_ALL(_cl_mul24, uint, hsail.umul24, )
+IMPL_V_VV_ALL(_cl_mul24, int, hsail.smul24, )
+IMPL_V_VV_ALL(_cl_mul24, uint, hsail.umul24, )

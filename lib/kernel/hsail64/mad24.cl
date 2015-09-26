@@ -24,5 +24,5 @@
 #include "hsail_templates.h"
 
 #undef mad24
-IMPL_VVV_ALL(_cl_mad24, int, hsail.smad24, )
-IMPL_VVV_ALL(_cl_mad24, uint, hsail.umad24, )
+IMPL_V_VVV_ALL(_cl_mad24, int, hsail.smad24, )
+IMPL_V_VVV_ALL(_cl_mad24, uint, hsail.umad24, )
