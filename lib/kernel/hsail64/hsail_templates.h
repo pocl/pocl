@@ -26,6 +26,8 @@
 
 /**********************************************************************/
 
+// Make vectorized versions of a scalar builtin using Divide-n-Conquer
+
 #define IMPLEMENT_BUILTIN_V_V(NAME, VTYPE, ITYPE, IVTYPE, LO, HI)      \
   VTYPE __attribute__ ((overloadable))                  \
   NAME(VTYPE a)                                         \
@@ -126,6 +128,8 @@
 
 /**********************************************************************/
 
+// Converts, useful for when you only have builtin for uint32 & uint64,
+// but need opencl for all the integers
 #define IMPLEMENT_CONV_V_V(NAME, EXPR, VTYPE, STYPE, VTYPE2, STYPE2)    \
   VTYPE __attribute__ ((overloadable))                                  \
   NAME(VTYPE a)                                                         \
@@ -187,9 +191,7 @@
 
 /**********************************************************************/
 
-/**********************************************************************/
-
-/**********************************************************************/
+// Define OpenCL runtime func via LLVM intrinsics (IMPL_*_ALL)
 
 #define DEFINE_LLVM_INTRIN_FP32_FP64(NAME, ARGTYPE, BUILTIN, EXPR16)       \
   IMPL_ ## ARGTYPE ## _ALL(NAME, float, BUILTIN, .f32)                     \
@@ -218,6 +220,7 @@
 
 /**********************************************************************/
 
+// For mul_hi  /* - has hsail.smulhi.i32 & hsail.umulhi.i32 */
 #define DEFINE_LLVM_INTRIN_SU_INT32_ONLY(NAME, ARGTYPE, SIGNED_BUILTIN, UNSIGNED_BUILTIN)   \
   IMPL_ ## ARGTYPE ## _ALL(NAME, int, SIGNED_BUILTIN, .i32)                         \
   IMPL_ ## ARGTYPE ## _ALL(NAME, uint, UNSIGNED_BUILTIN, .i32)                       \
@@ -232,6 +235,7 @@
 */
 
 
+// For mad_hi, defined as mul_hi(a,b)+c
 #define DEFINE_EXPR_V_VVV_ALL_INTS(NAME, EXPR)         \
   IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, EXPR_, int, int, EXPR)      \
   IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, EXPR_, uint, uint, EXPR)    \
