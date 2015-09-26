@@ -74,9 +74,6 @@ void pocl_command_enqueue (cl_command_queue command_queue,
                           _cl_command_node *node);
 
 
-/* Return the size of the (open) file. */
-size_t pocl_file_size(FILE* file);
-
 /* does several sanity checks on buffer & given memory region */
 int pocl_buffer_boundcheck(cl_mem buffer, size_t offset, size_t size);
 /* same as above just 2 buffers */

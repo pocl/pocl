@@ -1,4 +1,4 @@
-/* OpenCL built-in library: get_global_id() for AMD R600
+/* OpenCL built-in library: get_global_id() for HSAIL64
 
    Copyright (c) 2015 Pekka Jääskeläinen
 
@@ -21,19 +21,15 @@
    THE SOFTWARE.
 */
 
-size_t _CL_OVERLOADABLE get_local_size(uint);
-size_t _CL_OVERLOADABLE get_group_id(uint);
-size_t _CL_OVERLOADABLE get_local_id(uint);
-
 size_t _CL_OVERLOADABLE
 get_global_id(unsigned int dimindx)
 {
   switch(dimindx)
     {
-        /* TODO: add get_global_offset(X) to these! */
-    case 0: return get_local_size(0) * get_group_id(0) + get_local_id(0);
-    case 1: return get_local_size(1) * get_group_id(1) + get_local_id(1);
-    case 2: return get_local_size(2) * get_group_id(2) + get_local_id(2);
-    default: return 0;
+      /* TODO: add get_global_offset(X) to these! */
+      case 0: return __builtin_hsail_workitemabsid(0);
+      case 1: return __builtin_hsail_workitemabsid(1);
+      case 2: return __builtin_hsail_workitemabsid(2);
+      default: return 0;
     }
 }

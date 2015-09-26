@@ -18,7 +18,7 @@ POname(clSetEventCallback) (cl_event     event ,
        command_exec_callback_type != CL_COMPLETE), CL_INVALID_VALUE,
        "callback type must be CL_SUBMITTED, CL_RUNNING or CL_COMPLETE");
 
-  cb_ptr = malloc (sizeof (event_callback_item));
+  cb_ptr = (event_callback_item*) malloc (sizeof (event_callback_item));
   if (cb_ptr == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 

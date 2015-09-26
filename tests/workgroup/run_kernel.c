@@ -71,7 +71,7 @@ main (int argc, char **argv)
   source_size = ftell (source_file);
   fseek (source_file, 0, SEEK_SET);
 
-  source = malloc (source_size + 1);
+  source = (char *) malloc (source_size + 1);
   assert (source != NULL);
 
   fread (source, source_size, 1, source_file);
@@ -92,7 +92,7 @@ main (int argc, char **argv)
     return -1; 
 
   clGetContextInfo(context, CL_CONTEXT_DEVICES, 0, NULL, &cb); 
-  devices = malloc(cb);
+  devices = (cl_device_id *) malloc(cb);
   clGetContextInfo(context, CL_CONTEXT_DEVICES, cb, devices, NULL); 
  
   cmd_queue = clCreateCommandQueue(context, devices[0], 0, NULL); 

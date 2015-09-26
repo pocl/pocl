@@ -1321,7 +1321,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
 #ifdef DEBUG_POCL_LLVM_API        
   printf("### calling the kernel compiler for kernel %s local_x %zu "
          "local_y %zu local_z %zu parallel_filename: %s\n",
-         kernel->name, local_x, local_y, local_z, parallel_filename);
+         kernel->name, local_x, local_y, local_z, kernel_so_path);
 #endif
 
   Triple triple(device->llvm_target_triplet);
@@ -1559,9 +1559,14 @@ pocl_llvm_codegen(cl_kernel kernel,
     llvm::raw_svector_ostream sos(data);
 #endif
     llvm::MCContext *mcc;
+#ifdef LLVM_OLDER_THAN_3_7
+    if (target && target->addPassesToEmitMC(PM, mcc, sos))
+      return 1;
+#else
     if (target && target->addPassesToEmitFile(
         PM, sos, TargetMachine::CGFT_ObjectFile))
       return 1;
+#endif
 
     PM.run(*input);
     std::string o = sos.str(); // flush

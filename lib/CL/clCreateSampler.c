@@ -13,7 +13,7 @@ CL_API_SUFFIX__VERSION_1_0
 
   POCL_GOTO_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
   
-  sampler = malloc(sizeof(struct _cl_sampler));
+  sampler = (cl_sampler) malloc(sizeof(struct _cl_sampler));
   if (sampler == NULL)
   {
     errcode = CL_OUT_OF_HOST_MEMORY;

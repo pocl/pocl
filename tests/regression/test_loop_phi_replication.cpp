@@ -22,8 +22,10 @@
 */
 
 // Enable OpenCL C++ exceptions
-#define __CL_ENABLE_EXCEPTIONS
-#include <CL/cl.hpp>
+#define CL_HPP_ENABLE_EXCEPTIONS
+#define CL_HPP_MINIMUM_OPENCL_VERSION 120
+#define CL_HPP_TARGET_OPENCL_VERSION 120
+#include <CL/cl2.hpp>
 
 #include <cstdio>
 #include <cstdlib>
@@ -79,7 +81,7 @@ main(void)
         std::vector<cl::Device> devices = context.getInfo<CL_CONTEXT_DEVICES>();
 
         // Create and program from source
-        cl::Program::Sources sources(1, std::make_pair(kernelSourceCode, 0));
+        cl::Program::Sources sources({kernelSourceCode});
         cl::Program program(context, sources);
 
         // Build program

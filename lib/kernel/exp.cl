@@ -27,4 +27,3 @@
 DEFINE_BUILTIN_V_V(exp)
 
 DEFINE_EXPR_F_F(half_exp, exp(a))
-DEFINE_EXPR_F_F(native_exp, exp(a))

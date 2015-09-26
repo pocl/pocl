@@ -31,8 +31,8 @@ separate_arguments(KERNEL_CLANGXX_FLAGS)
 #/usr/bin/clang --target=x86_64-pc-linux-gnu -march=bdver1 -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off -D__OPENCL_VERSION__=120 -DPOCL_VECMATHLIB_BUILTIN -D__CBUILD__ -o get_local_id.bc -c ${CMAKE_SOURCE_DIR}/lib/kernel/get_local_id.c -include ${CMAKE_SOURCE_DIR}/include/_kernel_c.h
 #	  @CLANG@ ${CLANG_FLAGS} ${KERNEL_CL_FLAGS} -D__CBUILD__ -c -o $@ -include ${abs_top_srcdir}/include/_kernel_c.h $< 
 function(compile_c_to_bc FILENAME BC_FILE_LIST)
-    set(BC_FILE "${FILENAME}.bc")
-    string(REPLACE "vecmathlib-pocl/" "" BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${BC_FILE}")
+    get_filename_component(FNAME "${FILENAME}" NAME)
+    set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${FNAME}.bc")
     set(${BC_FILE_LIST} ${${BC_FILE_LIST}} ${BC_FILE} PARENT_SCOPE)
     set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
 
@@ -50,8 +50,8 @@ endfunction()
 # /usr/bin/clang++ --target=x86_64-pc-linux-gnu -march=bdver1 -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off -DVML_NO_IOSTREAM -DPOCL_VECMATHLIB_BUILTIN -o trunc.bc -c ${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib-pocl/trunc.cc -include ${CMAKE_SOURCE_DIR}/include/pocl_features.h
 # 	@CLANGXX@ ${CLANG_FLAGS} ${KERNEL_CLANGXX_FLAGS} -c -o $@ $< -include ${abs_top_srcdir}/include/pocl_features.h
 function(compile_cc_to_bc FILENAME BC_FILE_LIST)
-    set(BC_FILE "${FILENAME}.bc")
-    string(REPLACE "vecmathlib-pocl/" "" BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${BC_FILE}")
+    get_filename_component(FNAME "${FILENAME}" NAME)
+    set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${FNAME}.bc")
     set(${BC_FILE_LIST} ${${BC_FILE_LIST}} ${BC_FILE} PARENT_SCOPE)
     set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
 
@@ -68,8 +68,8 @@ endfunction()
 
 # /usr/bin/clang --target=x86_64-pc-linux-gnu -march=bdver1 -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off -x cl -D__OPENCL_VERSION__=120 -DPOCL_VECMATHLIB_BUILTIN -fsigned-char -o atan2pi.bc -c ${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib-pocl/atan2pi.cl -include ${CMAKE_SOURCE_DIR}/include/_kernel.h
 function(compile_cl_to_bc FILENAME BC_FILE_LIST)
-    set(BC_FILE "${FILENAME}.bc")
-    string(REPLACE "vecmathlib-pocl/" "" BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${BC_FILE}")
+    get_filename_component(FNAME "${FILENAME}" NAME)
+    set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${FNAME}.bc")
     set(${BC_FILE_LIST} ${${BC_FILE_LIST}} ${BC_FILE} PARENT_SCOPE)
     set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
 
@@ -89,8 +89,8 @@ endfunction()
 
 
 function(compile_ll_to_bc FILENAME BC_FILE_LIST)
-    set(BC_FILE "${FILENAME}.bc")
-    string(REPLACE "vecmathlib-pocl/" "" BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${BC_FILE}")
+    get_filename_component(FNAME "${FILENAME}" NAME)
+    set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${FNAME}.bc")
     set(${BC_FILE_LIST} ${${BC_FILE_LIST}} ${BC_FILE} PARENT_SCOPE)
     set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
 
@@ -133,7 +133,7 @@ function(make_kernel_bc OUTPUT_VAR NAME)
     # straight parsing semicolon separated list with xargs -d didn't work on windows.. no such switch available
     SET(BC_LIST_FILE_TXT "${BC_LIST_FILE_TXT} \"${FILENAME}\"")
   endforeach()
-  SET (BC_LIST_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/kernel_linklist.txt")
+  SET (BC_LIST_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/kernel_${NAME}_linklist.txt")
   FILE (WRITE "${BC_LIST_FILE}" "${BC_LIST_FILE_TXT}")
 
   add_custom_command( OUTPUT "${KERNEL_BC}"

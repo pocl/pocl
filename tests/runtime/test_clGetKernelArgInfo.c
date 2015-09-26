@@ -292,7 +292,7 @@ int spir_program(const char * filename, cl_context ctx, cl_device_id did, cl_pro
   TEST_ASSERT(program_size > 2000);
   printf("program size: %zi\n", program_size);
 
-  program_buffer = malloc (program_size +1 );
+  program_buffer = (char *) malloc (program_size +1 );
   TEST_ASSERT(program_buffer);
 
   TEST_ASSERT(fread(program_buffer, program_size, 1, spir_bitcode) == 1);

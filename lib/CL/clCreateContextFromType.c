@@ -50,7 +50,7 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
   lt_dlinit();
   pocl_init_devices();
 
-  cl_context context = malloc(sizeof(struct _cl_context));
+  cl_context context = (cl_context) malloc(sizeof(struct _cl_context));
   if (context == NULL)
   {
     errcode = CL_OUT_OF_HOST_MEMORY;

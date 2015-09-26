@@ -52,7 +52,7 @@ POname(clCreateCommandQueue)(cl_context context,
   POCL_GOTO_ERROR_ON((found == CL_FALSE), CL_INVALID_DEVICE,
                                 "Could not find device i2An the context\n");
 
-  cl_command_queue command_queue = malloc(sizeof(struct _cl_command_queue));
+  cl_command_queue command_queue = (cl_command_queue) malloc(sizeof(struct _cl_command_queue));
   if (command_queue == NULL)
   {
     errcode = CL_OUT_OF_HOST_MEMORY;

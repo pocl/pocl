@@ -78,7 +78,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
         "device %s specified multiple times\n", context->devices[i]->long_name);
     }
   
-  if ((program = malloc (sizeof (struct _cl_program))) == NULL)
+  if ((program = (cl_program) malloc (sizeof (struct _cl_program))) == NULL)
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
       goto ERROR;
@@ -116,7 +116,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
     {
       program->devices[i] = device_list[i];
       program->binary_sizes[i] = lengths[i];
-      program->binaries[i] = malloc (lengths[i]);
+      program->binaries[i] = (unsigned char*) malloc (lengths[i]);
       memcpy (program->binaries[i], binaries[i], lengths[i]);
       if (binary_status != NULL) /* TODO: validate the binary */
         binary_status[i] = CL_SUCCESS;

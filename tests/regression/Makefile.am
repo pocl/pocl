@@ -31,7 +31,7 @@ noinst_PROGRAMS += test_barrier_between_for_loops test_early_return \
 	test_simple_for_with_a_barrier test_structs_as_args test_vectors_as_args \
 	test_barrier_before_return test_infinite_loop test_constant_array \
 	test_undominated_variable test_setargs test_null_arg \
-	test_fors_with_var_iteration_counts
+	test_fors_with_var_iteration_counts test_issue_231
 endif
 
 test_assign_loop_variable_to_privvar_makes_it_local_SOURCES = \
@@ -42,7 +42,7 @@ test_assign_loop_variable_to_privvar_makes_it_local_2_SOURCES = \
 AM_DEFAULT_SOURCE_EXT = .cpp
 
 AM_LDFLAGS = ../../lib/poclu/libpoclu.la @OPENCL_LIBS@
-AM_CXXFLAGS = @OPENCL_CFLAGS@ -Wno-deprecated -Wno-deprecated-declarations
+AM_CXXFLAGS = @OPENCL_CFLAGS@ -std=c++11 -Wno-deprecated -Wno-deprecated-declarations
 AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_builddir)/include -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL -DSRCDIR='"$(abs_srcdir)"'
 
 EXTRA_DIST = CMakeLists.txt

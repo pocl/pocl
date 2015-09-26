@@ -71,9 +71,9 @@ int main(int argc, char **argv) {
  
   size_t bytes = n * sizeof(double);
  
-  h_a = malloc(bytes);
-  h_b = malloc(bytes);
-  h_c = malloc(bytes);
+  h_a = (double *) malloc(bytes);
+  h_b = (double *) malloc(bytes);
+  h_c = (double *) malloc(bytes);
  
   size_t i;
   for( i = 0; i < n; i++ )

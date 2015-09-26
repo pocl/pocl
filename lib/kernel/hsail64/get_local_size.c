@@ -1,4 +1,4 @@
-/* OpenCL built-in library: get_local_size() for HSAIL
+/* OpenCL built-in library: get_local_size() for HSAIL64
 
    Copyright (c) 2015 Pekka Jääskeläinen of TUT
 
@@ -20,10 +20,6 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 */
-
-extern size_t _local_size_x;
-extern size_t _local_size_y;
-extern size_t _local_size_z;
 
 size_t _CL_OVERLOADABLE
 get_local_size(unsigned int dimindx)

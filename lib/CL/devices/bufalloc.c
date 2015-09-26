@@ -259,7 +259,7 @@ alloc_buffer (memory_region_t *regions, size_t size)
 chunk_info_t *
 create_sub_chunk (chunk_info_t *parent, size_t offset, size_t size)
 {    
-  chunk_info_t *subchunk = malloc(sizeof(struct chunk_info));
+  chunk_info_t *subchunk = (chunk_info_t*)malloc(sizeof(struct chunk_info));
   subchunk->start_address = parent->start_address + offset;
   subchunk->size = size;
   subchunk->parent = parent;

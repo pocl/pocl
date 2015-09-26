@@ -241,7 +241,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
 
   if (num_events || add_prev_command)
     {
-      event_wl = malloc((num_events + add_prev_command)*sizeof(cl_event));
+      event_wl = (cl_event*)malloc((num_events + add_prev_command)*sizeof(cl_event));
       if (event_wl == NULL)
         return CL_OUT_OF_HOST_MEMORY;
     }
@@ -307,15 +307,6 @@ void pocl_command_enqueue (cl_command_queue command_queue,
 
 }
 
-
-
-size_t pocl_file_size(FILE* file) {
-    size_t size;
-    fseek(file, 0, SEEK_END);
-    size = (size_t)ftell(file);
-    fseek(file, 0, SEEK_SET);
-    return size;
-}
 
 
 int pocl_buffer_boundcheck(cl_mem buffer, size_t offset, size_t size) {

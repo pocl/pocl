@@ -48,4 +48,3 @@ After building pocl, you can smoke test the HSA driver by executing the HSA
 tests of the pocl testsuite:
 
   make check TESTSUITEFLAGS="-k hsa"
-

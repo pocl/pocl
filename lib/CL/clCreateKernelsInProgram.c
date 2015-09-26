@@ -43,7 +43,7 @@ POname(clCreateKernelsInProgram)(cl_program      program ,
   if (num_kern_found > 0 && kernels != NULL)
     {
       /* Get list of kernel names in program */
-      const char** knames = calloc( num_kernels, sizeof(const char *) );
+      const char** knames = (const char**)calloc( num_kernels, sizeof(const char *) );
       if (knames == NULL)
         return CL_OUT_OF_HOST_MEMORY;
       pocl_llvm_get_kernel_names (program, knames, num_kernels);

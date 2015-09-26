@@ -34,8 +34,8 @@ set(POCL_DEVICES_OBJS "$<TARGET_OBJECTS:pocl-devices>"
       "$<TARGET_OBJECTS:pocl-devices-topology>")
 
 if(ENABLE_TCE)
-  add_subdirectory("tce")
   include_directories(AFTER "tce")
+  add_subdirectory("tce")
   list(APPEND POCL_DEVICES_LINK_LIST ${TCE_LIBS})
   list(APPEND POCL_DEVICES_OBJS "$<TARGET_OBJECTS:pocl-devices-tce-ttasim>")
 endif()
@@ -43,6 +43,13 @@ endif()
 if(ENABLE_SPU)
   add_subdirectory("cellspu")
   list(APPEND POCL_DEVICES_LINK_LIST "spe2")
+endif()
+
+if(ENABLE_HSA)
+  include_directories(AFTER "${HSA_INCLUDES}")
+  add_subdirectory("hsa")
+  list(APPEND POCL_DEVICES_LINK_LIST ${HSALIB})
+  list(APPEND POCL_DEVICES_OBJS "$<TARGET_OBJECTS:pocl-devices-hsa>")
 endif()
 
 set(POCL_DEVICES_SOURCES 

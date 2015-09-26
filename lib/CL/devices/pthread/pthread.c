@@ -152,7 +152,7 @@ static thread_arguments* new_thread_arguments ()
     }
   POCL_UNLOCK (ta_pool_lock);
 
-  return calloc (1, sizeof (thread_arguments));
+  return (thread_arguments*)calloc (1, sizeof (thread_arguments));
 }
 
 static void free_thread_arguments (thread_arguments *ta)
@@ -221,7 +221,7 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
   if (device->data!=NULL)
     return;  
 
-  d = malloc (sizeof (struct data));
+  d = (struct data *) malloc (sizeof (struct data));
   
   d->current_kernel = NULL;
   d->current_dlhandle = 0;
@@ -230,7 +230,7 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
 #ifdef CUSTOM_BUFFER_ALLOCATOR  
   if (mrm == NULL)
     {
-      mrm = malloc (sizeof (mem_regions_management));
+      mrm = (mem_regions_management*)malloc (sizeof (mem_regions_management));
       BA_INIT_LOCK (mrm->mem_regions_lock);
       mrm->mem_regions = NULL;
     }
@@ -262,6 +262,12 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
 
   device->extensions = DOUBLE_EXT HALF_EXT "cl_khr_byte_addressable_store";
 
+  /* hwloc probes OpenCL device info at its initialization in case
+     the OpenCL extension is enabled. This causes to printout 
+     an unimplemented property error because hwloc is used to
+     initialize global_mem_size which it is not yet. Just put 
+     a nonzero there for now. */
+  device->global_mem_size = 1;
   pocl_topology_detect_device_info(device);
   pocl_cpuinfo_detect_device_info(device);
   pocl_basic_set_buffer_image_limits(device);
@@ -316,7 +322,8 @@ allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t
   chunk_info_t *chunk = alloc_buffer (d->mem_regions->mem_regions, size);
   if (chunk == NULL)
     {
-      memory_region_t *new_mem_region = malloc (sizeof (memory_region_t));
+      memory_region_t *new_mem_region =
+        (memory_region_t*)malloc (sizeof (memory_region_t));
 
       if (new_mem_region == NULL) 
         {
@@ -385,7 +392,7 @@ void *
 pocl_pthread_malloc (void *device_data, cl_mem_flags flags, size_t size, void *host_ptr)
 {
   void *b;
-  struct data* d = device_data;
+  struct data* d = (struct data*)device_data;
 
   if (flags & CL_MEM_COPY_HOST_PTR)
     {
@@ -413,7 +420,7 @@ cl_int
 pocl_pthread_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
 {
   void *b = NULL;
-  struct data* d = device->data;
+  struct data* d = (struct data*)device->data;
   cl_mem_flags flags = mem_obj->flags;
 
   /* if memory for this global memory is not yet allocated -> do it */
@@ -451,7 +458,7 @@ pocl_pthread_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
 void
 pocl_pthread_free (void *device_data, cl_mem_flags flags, void *ptr)
 {
-  struct data* d = device_data;
+  struct data* d = (struct data*) device_data;
   memory_region_t *region = NULL;
 
   if (flags & CL_MEM_USE_HOST_PTR)
@@ -560,7 +567,7 @@ pocl_pthread_run
     max_threads = get_max_thread_count(cmd->device);
 
   unsigned num_threads = min(max_threads, num_groups_x);
-  pthread_t *threads = malloc (sizeof (pthread_t)*num_threads);
+  pthread_t *threads = (pthread_t*) malloc (sizeof (pthread_t)*num_threads);
   
   unsigned wgs_per_thread = num_groups_x / num_threads;
   /* In case the work group count is not divisible by the

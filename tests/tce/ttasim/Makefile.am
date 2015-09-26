@@ -25,7 +25,7 @@ noinst_PROGRAMS = host
 
 host_SOURCES = host.cpp 
 host_LDADD = @OPENCL_LIBS@ ../../../lib/poclu/libpoclu.la @LD_FLAGS_BIN@
-host_CXXFLAGS = @PTHREAD_CFLAGS@ -Wno-deprecated -Wno-deprecated-declarations
+host_CXXFLAGS = @PTHREAD_CFLAGS@ -std=c++11 -Wno-deprecated -Wno-deprecated-declarations
 
 AM_CPPFLAGS = -I$(top_builddir)/include -I$(top_srcdir)/include  -I$(top_srcdir)/lib/CL \
 	-DSRCDIR='"$(abs_srcdir)"'

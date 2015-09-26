@@ -128,7 +128,18 @@ mul24.cl
 mul_hi.cl
 nan.cl
 native_cos.cl
+native_divide.cl
+native_exp.cl
+native_exp10.cl
+native_exp2.cl
+native_log.cl
+native_log10.cl
 native_log2.cl
+native_powr.cl
+native_recip.cl
+native_rsqrt.cl
+native_sin.cl
+native_tan.cl
 nextafter.cl
 normalize.cl
 popcount.cl
@@ -409,6 +420,16 @@ endif()
 if(OCL_TARGETS MATCHES "tce")
   add_subdirectory("tce")
 endif()
+#*********************************************************************
+
+if(OCL_TARGETS MATCHES "amdgcn")
+  add_subdirectory("amdgcn")
+endif()
+
+if(OCL_TARGETS MATCHES "hsail64")
+  add_subdirectory("hsail64")
+endif()
+
 #*********************************************************************
 
 # TODO extra_dist in lib/kernel/Makefile.am:

@@ -1,4 +1,4 @@
-/* OpenCL built-in library: get_group_id() for HSAIL
+/* OpenCL built-in library: get_group_id() for HSAIL64
 
    Copyright (c) 2015 Pekka Jääskeläinen of TUT
 
