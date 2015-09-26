@@ -69,18 +69,26 @@
   IMPLEMENT_BUILTIN_ ## TYPE(NAME, STYPE ## 16, ITYPE, ITYPE ## 16, lo, hi)
 
 #define  IMPL_V_ALL(NAME, STYPE, BUILTIN, SUFFIX) \
-  __attribute__((overloadable)) STYPE NAME(STYPE a) __asm("llvm."#BUILTIN#SUFFIX);   \
-  IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, V_V, STYPE)
+  STYPE NAME ## _internal_v_ ## STYPE(STYPE a)  __asm("llvm."#BUILTIN#SUFFIX);  \
+  __attribute__((overloadable)) STYPE NAME(STYPE a) { return NAME ## _internal_v_ ## STYPE(a); } \
+  IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, V_V, STYPE, STYPE)
 
 #define  IMPL_VV_ALL(NAME, STYPE, BUILTIN, SUFFIX) \
-    __attribute__((overloadable)) STYPE NAME(STYPE a,STYPE b) __asm("llvm."#BUILTIN#SUFFIX);   \
-  IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, V_VV, STYPE)
+  STYPE NAME ## _internal_vv_ ## STYPE(STYPE a, STYPE b)  __asm("llvm."#BUILTIN#SUFFIX);  \
+  __attribute__((overloadable)) STYPE NAME(STYPE a, STYPE b) { return NAME ## _internal_vv_ ## STYPE(a, b); } \
+  IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, V_VV, STYPE, STYPE)
 
 #define  IMPL_VVV_ALL(NAME, STYPE, BUILTIN, SUFFIX) \
-    __attribute__((overloadable)) STYPE NAME(STYPE a, STYPE b,STYPE c) __asm("llvm."#BUILTIN#SUFFIX);   \
-  IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, V_VVV, STYPE)
+  STYPE NAME ## _internal_vvv_ ## STYPE(STYPE a, STYPE b,STYPE c)  __asm("llvm."#BUILTIN#SUFFIX);  \
+  __attribute__((overloadable)) STYPE NAME(STYPE a, STYPE b,STYPE c) { return NAME ## _internal_vvv_ ## STYPE(a, b, c); } \
+  IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, V_VVV, STYPE, STYPE)
 
-/**********************************************************************/
+#define  IMPL_VI_ALL(NAME, STYPE, ITYPE, BUILTIN, SUFFIX) \
+  STYPE NAME ## _internal_vi_ ## STYPE(STYPE a, ITYPE b) __asm("llvm."#BUILTIN#SUFFIX);   \
+  __attribute__((overloadable)) STYPE NAME(STYPE a, ITYPE b) { return NAME ## _internal_vi_ ## STYPE(a, b); } \
+  IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, V_VI, STYPE, ITYPE)
+
+// Implement a builtin using an Expression
 
 #define IMPL_BODY(VTYPE, STYPE, VTYPE2, STYPE2, EXPR) \
   {                                                                     \
