@@ -24,4 +24,4 @@
 #include "hsail_templates.h"
 
 #undef fma
-DEFINE_BUILTIN_V_VVV_FP32_FP64(_cl_fma, fma)
+DEFINE_LLVM_INTRIN_FP32_FP64(_cl_fma, V_VVV, fma, 0.0)

@@ -23,4 +23,4 @@
 
 #include "hsail_templates.h"
 
-DEFINE_BUILTIN_V_VVV_FP32_FP64(mad, hsail.nfma)
+DEFINE_LLVM_INTRIN_FP32_FP64(mad, V_VVV, hsail.nfma, 0.0)
