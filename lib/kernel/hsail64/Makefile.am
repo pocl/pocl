@@ -32,6 +32,6 @@ include ../sources.mk
 
 # TODO: a global memory ring buffer stdout based printf
 LKERNEL_SRCS_EXCLUDE = printf.c barrier.ll
-LKERNEL_SRCS_EXTRA = barrier.c
+LKERNEL_SRCS_EXTRA = barrier.c sqrt_default.ll
 
 EXTRA_DIST = CMakeLists.txt
