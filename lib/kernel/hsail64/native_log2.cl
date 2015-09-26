@@ -23,4 +23,4 @@
 
 #include "hsail_templates.h"
 
-DEFINE_BUILTIN_V_V_ONLY_FP32(native_log2, hsail.nlog2, log2(a))
+DEFINE_LLVM_INTRIN_ONLY_FP32(native_log2, V_V, hsail.nlog2, log2(a), log2(a))

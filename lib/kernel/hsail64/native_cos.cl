@@ -23,4 +23,4 @@
 
 #include "hsail_templates.h"
 
-DEFINE_BUILTIN_V_V_ONLY_FP32(native_cos, hsail.ncos, cos(a))
+DEFINE_LLVM_INTRIN_ONLY_FP32(native_cos, V_V, hsail.ncos, cos(a), cos(a))

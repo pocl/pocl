@@ -23,4 +23,4 @@
 
 #include "hsail_templates.h"
 
-DEFINE_BUILTIN_V_V_FP32_FP64(native_sqrt, hsail.nsqrt)
+DEFINE_LLVM_INTRIN_FP32_FP64(native_sqrt, V_V, hsail.nsqrt, sqrt(a))
