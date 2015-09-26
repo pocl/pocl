@@ -29,33 +29,33 @@
 // Make vectorized versions of a scalar builtin using Divide-n-Conquer
 
 #define IMPLEMENT_BUILTIN_V_V(NAME, VTYPE, ITYPE, IVTYPE, LO, HI)      \
-  VTYPE __attribute__ ((overloadable))                  \
+  VTYPE _CL_OVERLOADABLE                  \
   NAME(VTYPE a)                                         \
   {                                                     \
     return (VTYPE)(NAME(a.LO), NAME(a.HI));             \
   }
 
 #define IMPLEMENT_BUILTIN_V_VV(NAME, VTYPE, ITYPE, IVTYPE, LO, HI)     \
-  VTYPE __attribute__ ((overloadable))                  \
+  VTYPE _CL_OVERLOADABLE                  \
   NAME(VTYPE a, VTYPE b)                                \
   {                                                     \
     return (VTYPE)(NAME(a.LO, b.LO), NAME(a.HI, b.HI)); \
   }
 
 #define IMPLEMENT_BUILTIN_V_VVV(NAME, VTYPE, ITYPE, IVTYPE, LO, HI)                    \
-  VTYPE __attribute__ ((overloadable))                                  \
+  VTYPE _CL_OVERLOADABLE                                  \
   NAME(VTYPE a, VTYPE b, VTYPE c)                                       \
   {                                                                     \
     return (VTYPE)(NAME(a.LO, b.LO, c.LO), NAME(a.HI, b.HI, c.HI));     \
   }
 
 #define IMPLEMENT_BUILTIN_V_VI(NAME, VTYPE, ITYPE, IVTYPE, LO, HI)     \
-  VTYPE __attribute__ ((overloadable))                  \
+  VTYPE _CL_OVERLOADABLE                  \
   NAME(VTYPE a, IVTYPE b)                               \
   {                                                     \
     return (VTYPE)(NAME(a.LO, b.LO), NAME(a.HI, b.HI)); \
   }                                                     \
-  VTYPE __attribute__ ((overloadable))                  \
+  VTYPE _CL_OVERLOADABLE                  \
   NAME(VTYPE a, ITYPE b)                                \
   {                                                     \
     return (VTYPE)(NAME(a.LO, b), NAME(a.HI, b)); \
@@ -75,22 +75,22 @@
 // ASM for scalar, DnC for vectors
 #define  IMPL_V_V_ALL(NAME, STYPE, BUILTIN, SUFFIX) \
   STYPE NAME ## _internal_v_ ## STYPE(STYPE a)  __asm("llvm."#BUILTIN#SUFFIX);  \
-  __attribute__((overloadable)) STYPE NAME(STYPE a) { return NAME ## _internal_v_ ## STYPE(a); } \
+  _CL_OVERLOADABLE STYPE NAME(STYPE a) { return NAME ## _internal_v_ ## STYPE(a); } \
   IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, V_V, STYPE, STYPE)
 
 #define  IMPL_V_VV_ALL(NAME, STYPE, BUILTIN, SUFFIX) \
   STYPE NAME ## _internal_vv_ ## STYPE(STYPE a, STYPE b)  __asm("llvm."#BUILTIN#SUFFIX);  \
-  __attribute__((overloadable)) STYPE NAME(STYPE a, STYPE b) { return NAME ## _internal_vv_ ## STYPE(a, b); } \
+  _CL_OVERLOADABLE STYPE NAME(STYPE a, STYPE b) { return NAME ## _internal_vv_ ## STYPE(a, b); } \
   IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, V_VV, STYPE, STYPE)
 
 #define  IMPL_V_VVV_ALL(NAME, STYPE, BUILTIN, SUFFIX) \
   STYPE NAME ## _internal_vvv_ ## STYPE(STYPE a, STYPE b,STYPE c)  __asm("llvm."#BUILTIN#SUFFIX);  \
-  __attribute__((overloadable)) STYPE NAME(STYPE a, STYPE b,STYPE c) { return NAME ## _internal_vvv_ ## STYPE(a, b, c); } \
+  _CL_OVERLOADABLE STYPE NAME(STYPE a, STYPE b,STYPE c) { return NAME ## _internal_vvv_ ## STYPE(a, b, c); } \
   IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, V_VVV, STYPE, STYPE)
 
 #define  IMPL_V_VI_ALL(NAME, STYPE, ITYPE, BUILTIN, SUFFIX) \
   STYPE NAME ## _internal_vi_ ## STYPE(STYPE a, ITYPE b) __asm("llvm."#BUILTIN#SUFFIX);   \
-  __attribute__((overloadable)) STYPE NAME(STYPE a, ITYPE b) { return NAME ## _internal_vi_ ## STYPE(a, b); } \
+  _CL_OVERLOADABLE STYPE NAME(STYPE a, ITYPE b) { return NAME ## _internal_vi_ ## STYPE(a, b); } \
   IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, V_VI, STYPE, ITYPE)
 
 /**********************************************************************/
@@ -107,22 +107,22 @@
   }
 
 #define IMPLEMENT_EXPR_V_V(NAME, EXPR, VTYPE, STYPE, VTYPE2, STYPE2)    \
-  VTYPE __attribute__ ((overloadable))                                  \
+  VTYPE _CL_OVERLOADABLE                                  \
   NAME(VTYPE a)                                                         \
   IMPL_BODY(VTYPE, STYPE, VTYPE2, STYPE2, EXPR)
 
 #define IMPLEMENT_EXPR_V_VV(NAME, EXPR, VTYPE, STYPE, VTYPE2, STYPE2)   \
-  VTYPE __attribute__ ((overloadable))                                  \
+  VTYPE _CL_OVERLOADABLE                                  \
   NAME(VTYPE a, VTYPE b)                                                \
   IMPL_BODY(VTYPE, STYPE, VTYPE2, STYPE2, EXPR)
 
 #define IMPLEMENT_EXPR_V_VVV(NAME, EXPR, VTYPE, STYPE, VTYPE2, STYPE2)  \
-  VTYPE __attribute__ ((overloadable))                                  \
+  VTYPE _CL_OVERLOADABLE                                  \
   NAME(VTYPE a, VTYPE b, VTYPE c)                                       \
   IMPL_BODY(VTYPE, STYPE, VTYPE2, STYPE2, EXPR)
 
 #define IMPLEMENT_EXPR_V_VS(NAME, EXPR, VTYPE, STYPE, VTYPE2, STYPE2)   \
-  VTYPE __attribute__ ((overloadable))                                  \
+  VTYPE _CL_OVERLOADABLE                                  \
   NAME(VTYPE a, STYPE b)                                                \
   IMPL_BODY(VTYPE, STYPE, VTYPE2, STYPE2, EXPR)
 
@@ -131,21 +131,21 @@
 // Converts, useful for when you only have builtin for uint32 & uint64,
 // but need opencl for all the integers
 #define IMPLEMENT_CONV_V_V(NAME, EXPR, VTYPE, STYPE, VTYPE2, STYPE2)    \
-  VTYPE __attribute__ ((overloadable))                                  \
+  VTYPE _CL_OVERLOADABLE                                  \
   NAME(VTYPE a)                                                         \
   {                                                                     \
     return convert_ ## VTYPE(NAME(convert_ ## VTYPE2(a)));                   \
   }
 
 #define IMPLEMENT_CONV_V_VV(NAME, EXPR, VTYPE, STYPE, VTYPE2, STYPE2)    \
-  VTYPE __attribute__ ((overloadable))                                  \
+  VTYPE _CL_OVERLOADABLE                                  \
   NAME(VTYPE a, VTYPE b)                                                \
   {                                                                     \
     return convert_ ## VTYPE(NAME(convert_ ## VTYPE2(a), convert_ ## VTYPE2(b))); \
   }
 
 #define IMPLEMENT_CONV_V_VVV(NAME, EXPR, VTYPE, STYPE, VTYPE2, STYPE2)   \
-  VTYPE __attribute__ ((overloadable))                                  \
+  VTYPE _CL_OVERLOADABLE                                  \
   NAME(VTYPE a, VTYPE b, VTYPE c)                                       \
   {                                                                     \
     return convert_ ## VTYPE(NAME(convert_ ## VTYPE2(a), convert_ ## VTYPE2(b),    \
