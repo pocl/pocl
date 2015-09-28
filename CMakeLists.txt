@@ -759,7 +759,7 @@ endif()
 
 if(ENABLE_HSA)
   set(OCL_DRIVERS "${OCL_DRIVERS} hsa")
-  set(OCL_TARGETS "${OCL_TARGETS} amdgcn")
+  set(OCL_TARGETS "${OCL_TARGETS} hsail64")
   # this is for config.h
   # TODO unify with autotools
   set(BUILD_HSA 1)
@@ -950,7 +950,7 @@ endif()
 
 #############################################################
 
-include_directories("fix-includes" "include")
+include_directories("fix-include" "include")
 
 add_subdirectory("include")
 

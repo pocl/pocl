@@ -75,10 +75,10 @@
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
 /* TODO:
-   - allocate buffers with hsa_memory_allocate() to ensure the driver
-     works with HSA Base profile agents (assuming all memory is coherent
-     requires the Full profile) -- or perhaps a separate hsabase driver
-     for the simpler agents.
+   - track hsa_memory_register() calls and deregister the memory
+     at free() calls
+   - fix pocl_llvm_generate_workgroup_function() to
+     generate the entire linked program.bc for HSA, not just a single kernel.
    - AMD SDK samples. Requires work mainly in these areas:
       - atomics support
       - image support
@@ -91,10 +91,10 @@
    - etc. etc.
 */
 
-#define HSA_PROGRAM_CACHE_SIZE 32
 #define HSA_KERNEL_CACHE_SIZE 64
 
-/* for caching kernel dispatch data */
+/* Simple statically-sized kernel data cache */
+/* for caching kernel dispatch data, binaries etc */
 typedef struct pocl_hsa_kernel_cache_s {
   cl_kernel kernel;
   hsa_executable_t hsa_exe;
@@ -105,17 +105,6 @@ typedef struct pocl_hsa_kernel_cache_s {
   void* kernargs;
   uint32_t args_segment_size;
 } pocl_hsa_kernel_cache_t;
-
-/* Simple statically-sized program/kernel data cache */
-typedef struct pocl_hsa_program_cache_s {
-  cl_program program;
-  hsa_code_object_t code_object;
-  /* Per-kernel data cache for dispatching. Must be inside program cache,
-   * since we must destroy all kernels (hsa_executable_t) before
-   * destroying a program */
-  pocl_hsa_kernel_cache_t kernel_cache[HSA_KERNEL_CACHE_SIZE];
-  unsigned kernel_cache_lastptr;
-} pocl_hsa_program_cache_t;
 
 typedef struct pocl_hsa_device_data_s {
   /* Currently loaded kernel. */
@@ -128,8 +117,8 @@ typedef struct pocl_hsa_device_data_s {
   /* Queue for pushing work to the agent. */
   hsa_queue_t *queue;
   /* Per-program data cache to simplify program compiling stage */
-  pocl_hsa_program_cache_t program_cache[HSA_PROGRAM_CACHE_SIZE];
-  unsigned program_cache_lastptr;
+  pocl_hsa_kernel_cache_t kernel_cache[HSA_KERNEL_CACHE_SIZE];
+  unsigned kernel_cache_lastptr;
 } pocl_hsa_device_data_t;
 
 struct pocl_supported_hsa_device_properties
@@ -160,6 +149,7 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->probe = pocl_hsa_probe;
   ops->uninit = pocl_hsa_uninit;
   ops->init = pocl_hsa_init;
+  ops->alloc_mem_obj = pocl_hsa_alloc_mem_obj;
   ops->free = pocl_hsa_free;
   ops->compile_submitted_kernels = pocl_hsa_compile_submitted_kernels;
   ops->run = pocl_hsa_run;
@@ -174,6 +164,23 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
 
 #define MAX_HSA_AGENTS 16
 
+static void pocl_hsa_abort_on_error(hsa_status_t status,
+                                    unsigned line,
+                                    const char* func,
+                                    const char* code)
+{
+  const char* str;
+  if (status != HSA_STATUS_SUCCESS)
+    {
+      hsa_status_string(status, &str);
+      POCL_MSG_PRINT2(func, line, "Error from HSA Runtime call:\n");
+      POCL_ABORT(str);
+    }
+}
+
+
+#define HSA_CHECK(code) pocl_hsa_abort_on_error(code, __LINE__, __FUNCTION__, #code);
+
 static hsa_agent_t hsa_agents[MAX_HSA_AGENTS];
 static hsa_agent_t* last_assigned_agent;
 static int found_hsa_agents = 0;
@@ -182,19 +189,18 @@ static hsa_status_t
 pocl_hsa_get_agents_callback(hsa_agent_t agent, void *data)
 {
   hsa_device_type_t type;
-  hsa_status_t stat = hsa_agent_get_info (agent, HSA_AGENT_INFO_DEVICE, &type);
+  HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_DEVICE, &type));
   if (type != HSA_DEVICE_TYPE_GPU)
     {
       return HSA_STATUS_SUCCESS;
     }
 
   hsa_agent_feature_t features;
-  stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_FEATURE, &features);
+  HSA_CHECK(hsa_agent_get_info(agent, HSA_AGENT_INFO_FEATURE, &features));
   if (features != HSA_AGENT_FEATURE_KERNEL_DISPATCH)
     {
       return HSA_STATUS_SUCCESS;
     }
-
 
   hsa_agents[found_hsa_agents++] = agent;
   return HSA_STATUS_SUCCESS;
@@ -211,12 +217,12 @@ setup_agent_memory_regions_callback(hsa_region_t region, void* data)
 
   hsa_region_segment_t segment;
   hsa_region_global_flag_t flags;
-  hsa_region_get_info(region, HSA_REGION_INFO_SEGMENT, &segment);
+  HSA_CHECK(hsa_region_get_info(region, HSA_REGION_INFO_SEGMENT, &segment));
 
   if (segment == HSA_REGION_SEGMENT_GLOBAL)
     {
       d->global_region = region;
-      hsa_region_get_info(region, HSA_REGION_INFO_GLOBAL_FLAGS, &flags);
+      HSA_CHECK(hsa_region_get_info(region, HSA_REGION_INFO_GLOBAL_FLAGS, &flags));
       if (flags & HSA_REGION_GLOBAL_FLAG_KERNARG)
         d->kernarg_region = region;
     }
@@ -247,6 +253,9 @@ supported_hsa_devices[MAX_HSA_AGENTS] =
 	.max_constant_buffer_size = 65536,
     .local_mem_type = CL_LOCAL,
     .endian_little = CL_TRUE,
+    .extensions = "cl_khr_fp64 cl_khr_byte_addressable_store"
+      " cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics"
+      " cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics",
     .preferred_wg_size_multiple = 64, // wavefront size on Kaveri
     .preferred_vector_width_char = 4,
     .preferred_vector_width_short = 2,
@@ -294,6 +303,7 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
           COPY_ATTR (local_mem_type);
           COPY_ATTR (endian_little);
           COPY_ATTR (preferred_wg_size_multiple);
+          COPY_ATTR (extensions);
           COPY_VECWIDTH (char);
           COPY_VECWIDTH (short);
           COPY_VECWIDTH (int);
@@ -317,6 +327,7 @@ void
 pocl_hsa_init_device_infos(struct _cl_device_id* dev)
 {
   pocl_basic_init_device_infos (dev);
+
   dev->spmd = CL_TRUE;
   dev->autolocals_to_args = 0;
 
@@ -326,14 +337,13 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
   hsa_agent_t agent = *last_assigned_agent++;
 
   uint32_t cache_sizes[4];
-  hsa_status_t stat =
-    hsa_agent_get_info (agent, HSA_AGENT_INFO_CACHE_SIZE,
-                        &cache_sizes);
+  HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_CACHE_SIZE,
+                        &cache_sizes));
   // The only nonzero value on Kaveri is the first (L1)
   dev->global_mem_cache_size = cache_sizes[0];
 
   dev->short_name = dev->long_name = (char*)malloc (64*sizeof(char));
-  stat = hsa_agent_get_info (agent, HSA_AGENT_INFO_NAME, dev->long_name);
+  HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_NAME, dev->long_name));
   get_hsa_device_features (dev->long_name, dev);
 
   dev->type = CL_DEVICE_TYPE_GPU;
@@ -346,36 +356,36 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
       | CL_FP_ROUND_TO_INF | CL_FP_FMA | CL_FP_INF_NAN;
 
   hsa_machine_model_t model;
-  stat = hsa_agent_get_info (agent, HSA_AGENT_INFO_MACHINE_MODEL, &model);
+  HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_MACHINE_MODEL, &model));
   dev->address_bits = (model == HSA_MACHINE_MODEL_LARGE) ? 64 : 32;
 
   uint16_t wg_sizes[3];
-  stat = hsa_agent_get_info(agent, HSA_AGENT_INFO_WORKGROUP_MAX_DIM, &wg_sizes);
+  HSA_CHECK(hsa_agent_get_info(agent, HSA_AGENT_INFO_WORKGROUP_MAX_DIM, &wg_sizes));
   dev->max_work_item_sizes[0] = wg_sizes[0];
   dev->max_work_item_sizes[1] = wg_sizes[1];
   dev->max_work_item_sizes[2] = wg_sizes[2];
 
-  stat = hsa_agent_get_info
-    (agent, HSA_AGENT_INFO_WORKGROUP_MAX_SIZE, &dev->max_work_group_size);
+  HSA_CHECK(hsa_agent_get_info
+    (agent, HSA_AGENT_INFO_WORKGROUP_MAX_SIZE, &dev->max_work_group_size));
   /*Image features*/
   hsa_dim3_t image_size;
-  stat = hsa_agent_get_info (agent, HSA_EXT_AGENT_INFO_IMAGE_1D_MAX_ELEMENTS, &image_size);
+  HSA_CHECK(hsa_agent_get_info (agent, HSA_EXT_AGENT_INFO_IMAGE_1D_MAX_ELEMENTS, &image_size));
   dev->image_max_buffer_size = image_size.x;
-  stat = hsa_agent_get_info (agent, HSA_EXT_AGENT_INFO_IMAGE_2D_MAX_ELEMENTS, &image_size);
+  HSA_CHECK(hsa_agent_get_info (agent, HSA_EXT_AGENT_INFO_IMAGE_2D_MAX_ELEMENTS, &image_size));
   dev->image2d_max_height = image_size.x;
   dev->image2d_max_width = image_size.y;
-  stat = hsa_agent_get_info (agent, HSA_EXT_AGENT_INFO_IMAGE_3D_MAX_ELEMENTS, &image_size);
+  HSA_CHECK(hsa_agent_get_info (agent, HSA_EXT_AGENT_INFO_IMAGE_3D_MAX_ELEMENTS, &image_size));
   dev->image3d_max_height = image_size.x;
   dev->image3d_max_width = image_size.y;
   dev->image3d_max_depth = image_size.z;
   // is this directly the product of the dimensions?
   //stat = hsa_agent_get_info(agent, ??, &dev->image_max_array_size);
-  stat = hsa_agent_get_info
-    (agent, HSA_EXT_AGENT_INFO_MAX_IMAGE_RD_HANDLES, &dev->max_read_image_args);
-  stat = hsa_agent_get_info
-    (agent, HSA_EXT_AGENT_INFO_MAX_IMAGE_RORW_HANDLES, &dev->max_write_image_args);
-  stat = hsa_agent_get_info
-    (agent, HSA_EXT_AGENT_INFO_MAX_SAMPLER_HANDLERS, &dev->max_samplers);
+  HSA_CHECK(hsa_agent_get_info
+    (agent, HSA_EXT_AGENT_INFO_MAX_IMAGE_RD_HANDLES, &dev->max_read_image_args));
+  HSA_CHECK(hsa_agent_get_info
+    (agent, HSA_EXT_AGENT_INFO_MAX_IMAGE_RORW_HANDLES, &dev->max_write_image_args));
+  HSA_CHECK(hsa_agent_get_info
+    (agent, HSA_EXT_AGENT_INFO_MAX_SAMPLER_HANDLERS, &dev->max_samplers));
 }
 
 unsigned int
@@ -390,16 +400,10 @@ pocl_hsa_probe(struct pocl_device_ops *ops)
   if (env_count <= 0)
     return 0;
 
-  if (hsa_init() != HSA_STATUS_SUCCESS)
-    {
-      POCL_ABORT("pocl-hsa: hsa_init() failed.");
-    }
+  HSA_CHECK(hsa_init());
 
-  if (hsa_iterate_agents(pocl_hsa_get_agents_callback, NULL) !=
-      HSA_STATUS_SUCCESS)
-    {
-      assert (0 && "pocl-hsa: could not get agents.");
-    }
+  HSA_CHECK(hsa_iterate_agents(pocl_hsa_get_agents_callback, NULL));
+
   POCL_MSG_PRINT_INFO("pocl-hsa: found %d agents.\n", found_hsa_agents);
   last_assigned_agent = hsa_agents;
 
@@ -407,10 +411,7 @@ pocl_hsa_probe(struct pocl_device_ops *ops)
 }
 
 static void hsa_queue_callback(hsa_status_t status, hsa_queue_t *q, void* data) {
-  const char * sstr;
-  hsa_status_string(status, &sstr);
-  POCL_MSG_PRINT_INFO("HSA Device %s encountered an error " \
-                      "in the HSA Queue: %s", (const char*)data, sstr);
+  HSA_CHECK(status);
 }
 
 void
@@ -420,7 +421,6 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
   static int global_mem_id;
   static int first_hsa_init = 1;
   hsa_device_type_t dev_type;
-  hsa_status_t status;
 
   if (first_hsa_init)
     {
@@ -435,85 +435,100 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
   d->agent = (hsa_agent_t*)device->data;
   device->data = d;
 
-  hsa_agent_iterate_regions (*d->agent, setup_agent_memory_regions_callback, d);
+  HSA_CHECK(hsa_agent_iterate_regions (*d->agent, setup_agent_memory_regions_callback, d));
 
   uint32_t boolarg;
-  status = hsa_region_get_info(d->global_region,
-                               HSA_REGION_INFO_RUNTIME_ALLOC_ALLOWED, &boolarg);
-  assert(status == HSA_STATUS_SUCCESS);
+  HSA_CHECK(hsa_region_get_info(d->global_region,
+                               HSA_REGION_INFO_RUNTIME_ALLOC_ALLOWED, &boolarg));
   assert(boolarg != 0);
 
   size_t sizearg;
-  status = hsa_region_get_info(d->global_region,
-                               HSA_REGION_INFO_ALLOC_MAX_SIZE, &sizearg);
-  assert(status == HSA_STATUS_SUCCESS);
+  HSA_CHECK(hsa_region_get_info(d->global_region,
+                               HSA_REGION_INFO_ALLOC_MAX_SIZE, &sizearg));
   device->max_mem_alloc_size = sizearg;
 
   /* For some reason, the global region size returned is 128 Terabytes...
    * for now, use the max alloc size, it seems to be a much more reasonable value.
-  status = hsa_region_get_info(d->global_region, HSA_REGION_INFO_SIZE, &sizearg);
-  assert(status == HSA_STATUS_SUCCESS);
+  HSA_CHECK(hsa_region_get_info(d->global_region, HSA_REGION_INFO_SIZE, &sizearg));
   */
   device->global_mem_size = sizearg;
 
-  status = hsa_region_get_info(d->group_region, HSA_REGION_INFO_SIZE, &sizearg);
+  HSA_CHECK(hsa_region_get_info(d->group_region, HSA_REGION_INFO_SIZE, &sizearg));
   device->local_mem_size = sizearg;
-  assert(status == HSA_STATUS_SUCCESS);
 
-  status = hsa_region_get_info(d->global_region,
-                               HSA_REGION_INFO_RUNTIME_ALLOC_ALIGNMENT, &sizearg);
+  HSA_CHECK(hsa_region_get_info(d->global_region,
+                               HSA_REGION_INFO_RUNTIME_ALLOC_ALIGNMENT, &sizearg));
   device->mem_base_addr_align = sizearg * 8;
 
-  status = hsa_agent_get_info(*d->agent, HSA_AGENT_INFO_PROFILE, &d->agent_profile);
+  HSA_CHECK(hsa_agent_get_info(*d->agent, HSA_AGENT_INFO_PROFILE, &d->agent_profile));
   device->profile = (
       (d->agent_profile == HSA_PROFILE_FULL) ? "FULL_PROFILE" : "EMBEDDED_PROFILE");
 
-  if (hsa_queue_create(*d->agent, 4, HSA_QUEUE_TYPE_MULTI,
+  HSA_CHECK(hsa_queue_create(*d->agent, 4, HSA_QUEUE_TYPE_MULTI,
                        hsa_queue_callback, device->short_name,
-                       -1, -1, &d->queue) != HSA_STATUS_SUCCESS)
-    {
-      POCL_ABORT("pocl-hsa: could not create the HSA queue.\n");
-    }
+                       -1, -1, &d->queue));
 }
 
-void *
-pocl_hsa_malloc (void *device_data, cl_mem_flags flags,
-		    size_t size, void *host_ptr)
+static void *
+pocl_hsa_malloc (pocl_hsa_device_data_t* d, cl_mem_flags flags, size_t size, void *host_ptr)
 {
   void *b;
 
   if (flags & CL_MEM_COPY_HOST_PTR)
     {
-      b = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, size);
-      if (b != NULL)
-	    {
-	      memcpy(b, host_ptr, size);
-	      hsa_memory_register(host_ptr, size);
-	      return b;
-	    }
-      return NULL;
+      assert(host_ptr != NULL);
+      if (hsa_memory_allocate(d->global_region, size, &b) != HSA_STATUS_SUCCESS)
+          return NULL;
+      hsa_memory_copy(b, host_ptr, size);
+      return b;
     }
 
-  if (flags & CL_MEM_USE_HOST_PTR && host_ptr != NULL)
+  if (flags & CL_MEM_USE_HOST_PTR)
     {
+      assert(host_ptr != NULL);
+      // TODO bookkeeping of mem registrations
       hsa_memory_register(host_ptr, size);
       return host_ptr;
     }
-  b = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, size);
-  if (b != NULL)
-    return b;
-  return NULL;
+
+  assert(host_ptr == NULL);
+  if (hsa_memory_allocate(d->global_region, size, &b) != HSA_STATUS_SUCCESS)
+      return NULL;
+  return b;
 }
 
 void
 pocl_hsa_free (void *data, cl_mem_flags flags, void *ptr)
 {
   if (flags & CL_MEM_USE_HOST_PTR)
-  {
-    return;
-  }
-  // TODO: hsa_memory_deregister() (needs size)
-  POCL_MEM_FREE(ptr);
+    return; // TODO: hsa_memory_deregister() (needs size)
+
+  hsa_memory_free(ptr);
+}
+
+cl_int pocl_hsa_alloc_mem_obj(cl_device_id device, cl_mem mem_obj)
+{
+  void *b = NULL;
+  cl_mem_flags flags = mem_obj->flags;
+
+  /* if memory for this global memory is not yet allocated -> do it */
+  if (mem_obj->device_ptrs[device->global_mem_id].mem_ptr == NULL)
+    {
+      b = pocl_hsa_malloc(device->data, flags, mem_obj->size, mem_obj->mem_host_ptr);
+      if (b == NULL)
+        return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+
+      mem_obj->device_ptrs[device->global_mem_id].mem_ptr = b;
+      mem_obj->device_ptrs[device->global_mem_id].global_mem_id =
+        device->global_mem_id;
+    }
+
+  /* copy already allocated global mem info to devices own slot */
+  mem_obj->device_ptrs[device->dev_id] =
+    mem_obj->device_ptrs[device->global_mem_id];
+
+  return CL_SUCCESS;
+
 }
 
 static void
@@ -537,11 +552,10 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
       struct pocl_argument *al = &(cmd->command.run.arguments[i]);
       if (cmd->command.run.kernel->arg_info[i].is_local)
         {
-          CHECK_SPACE (sizeof (uint64_t));
-          uint64_t temp = *total_group_size;
-          memcpy(write_pos, &temp, sizeof(uint64_t));
+          CHECK_SPACE (sizeof (uint32_t));
+          memcpy(write_pos, total_group_size, sizeof(uint32_t));
           *total_group_size += (uint32_t)al->size;
-          write_pos += sizeof(uint64_t);
+          write_pos += sizeof(uint32_t);
         }
       else if (cmd->command.run.kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
         {
@@ -614,50 +628,26 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
  * returns a pointer to the actually used storage */
 static pocl_hsa_kernel_cache_t* cache_kernel_dispatch_data(cl_kernel kernel,
                                 pocl_hsa_device_data_t* d,
-                                hsa_code_object_t* code_object,
+                                hsa_executable_t *exe_ptr,
                                 pocl_hsa_kernel_cache_t *stack_cache) {
-  pocl_hsa_program_cache_t* p = NULL;
   pocl_hsa_kernel_cache_t* out = NULL;
 
-  assert(code_object != NULL);
+  assert(exe_ptr != NULL);
   assert(stack_cache != NULL);
   assert(d != NULL);
 
-  for (unsigned i = 0; i<HSA_PROGRAM_CACHE_SIZE; i++)
+  for (unsigned i = 0; i<HSA_KERNEL_CACHE_SIZE; i++)
     {
-      if (memcmp(&d->program_cache[i].code_object, code_object,
-                 sizeof(hsa_code_object_t)) == 0)
-        {
-          p = &d->program_cache[i];
-          for (unsigned j = 0; j<HSA_KERNEL_CACHE_SIZE; j++)
-            {
-              if (p->kernel_cache[j].kernel == kernel)
-                return &p->kernel_cache[j];
-            }
-          if (p->kernel_cache_lastptr < HSA_KERNEL_CACHE_SIZE)
-            out = &p->kernel_cache[p->kernel_cache_lastptr++];
-          else
-            out = stack_cache;
-        }
+      if (d->kernel_cache[i].kernel == kernel)
+        return &d->kernel_cache[i];
     }
 
-  if (!p)
+  if (d->kernel_cache_lastptr < HSA_KERNEL_CACHE_SIZE)
+    out = &d->kernel_cache[d->kernel_cache_lastptr++];
+  else
     out = stack_cache;
 
-  hsa_status_t status = hsa_executable_create (HSA_PROFILE_FULL,
-                                  HSA_EXECUTABLE_STATE_UNFROZEN,
-                                  "", &out->hsa_exe);
-  if (status != HSA_STATUS_SUCCESS)
-    POCL_ABORT ("pocl-hsa: error while creating an executable.\n");
-
-  status = hsa_executable_load_code_object (out->hsa_exe, *d->agent,
-                                            *code_object, "");
-  if (status != HSA_STATUS_SUCCESS)
-    POCL_ABORT ("pocl-hsa: error while loading the code object into executable.\n");
-
-  status = hsa_executable_freeze (out->hsa_exe, NULL);
-  if (status != HSA_STATUS_SUCCESS)
-    POCL_ABORT ("pocl-hsa: error while freezing the executable.\n");
+  out->hsa_exe = *exe_ptr;
 
   hsa_executable_symbol_t kernel_symbol;
 
@@ -670,50 +660,36 @@ static pocl_hsa_kernel_cache_t* cache_kernel_dispatch_data(cl_kernel kernel,
 
   POCL_MSG_PRINT_INFO("pocl-hsa: getting kernel symbol %s.\n", symbol);
 
-  status = hsa_executable_get_symbol
-    (out->hsa_exe, NULL, symbol, *d->agent, 0, &kernel_symbol);
-  if (status != HSA_STATUS_SUCCESS)
-    POCL_ABORT ("pocl-hsa: unable to get the kernel function symbol\n");
+  HSA_CHECK(hsa_executable_get_symbol
+    (out->hsa_exe, NULL, symbol, *d->agent, 0, &kernel_symbol));
 
   hsa_symbol_kind_t symtype;
-  status = hsa_executable_symbol_get_info
-    (kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_TYPE, &symtype);
+  HSA_CHECK(hsa_executable_symbol_get_info
+    (kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_TYPE, &symtype));
   if(symtype != HSA_SYMBOL_KIND_KERNEL)
     POCL_ABORT ("pocl-hsa: the kernel function symbol resolves "
                 "to something else than a function\n");
 
   uint64_t code_handle;
-  status = hsa_executable_symbol_get_info
-    (kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_OBJECT, &code_handle);
-  if (status != HSA_STATUS_SUCCESS)
-    POCL_ABORT ("pocl-hsa: unable to get the code handle for the kernel function.\n");
+  HSA_CHECK(hsa_executable_symbol_get_info
+    (kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_OBJECT, &code_handle));
 
   out->code_handle = code_handle;
 
-  status = hsa_executable_symbol_get_info(kernel_symbol,
-       HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_GROUP_SEGMENT_SIZE, &out->static_group_size);
-  if (status != HSA_STATUS_SUCCESS)
-    POCL_ABORT ("pocl-hsa: unable to get the group segment size for the kernel function.\n");
+  HSA_CHECK(hsa_executable_symbol_get_info(kernel_symbol,
+       HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_GROUP_SEGMENT_SIZE, &out->static_group_size));
 
-  status = hsa_executable_symbol_get_info
-    (kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_PRIVATE_SEGMENT_SIZE, &out->private_size);
-  if (status != HSA_STATUS_SUCCESS)
-    POCL_ABORT ("pocl-hsa: unable to get the private segment size for the kernel function.\n");
+  HSA_CHECK(hsa_executable_symbol_get_info
+    (kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_PRIVATE_SEGMENT_SIZE, &out->private_size));
 
   hsa_signal_value_t initial_value = 1;
-  status = hsa_signal_create(initial_value, 0, NULL, &out->kernel_completion_signal);
-  if (status != HSA_STATUS_SUCCESS)
-    POCL_ABORT ("pocl-hsa: unable to create a signal.\n");
+  HSA_CHECK(hsa_signal_create(initial_value, 0, NULL, &out->kernel_completion_signal));
 
-  status = hsa_executable_symbol_get_info
+  HSA_CHECK(hsa_executable_symbol_get_info
     (kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_KERNARG_SEGMENT_SIZE,
-     &out->args_segment_size);
-  if (status != HSA_STATUS_SUCCESS)
-    POCL_ABORT ("pocl-hsa: unable to get required memory size for kernel args.\n");
+     &out->args_segment_size));
 
-  status = hsa_memory_allocate(d->kernarg_region, out->args_segment_size, &out->kernargs);
-  if (status != HSA_STATUS_SUCCESS)
-    POCL_ABORT ("pocl-hsa: unable to allocate memory for kernel args.\n");
+  HSA_CHECK(hsa_memory_allocate(d->kernarg_region, out->args_segment_size, &out->kernargs));
 
   out->kernel = (cl_kernel)kernel;
   return out;
@@ -730,17 +706,18 @@ pocl_hsa_run(void *dptr, _cl_command_node* cmd)
   hsa_signal_t kernel_completion_signal;
   hsa_region_t region;
   pocl_hsa_kernel_cache_t stack_cache, *cached_data;
-  int status;
 
   assert (dptr != NULL);
   d = dptr;
   d->current_kernel = kernel;
 
-  hsa_code_object_t *co = (hsa_code_object_t*)cmd->command.run.device_data;
+  hsa_executable_t *exe_ptr = (hsa_executable_t*)cmd->command.run.device_data;
 
-  cached_data = cache_kernel_dispatch_data(kernel, d, co, &stack_cache);
+  cached_data = cache_kernel_dispatch_data(kernel, d, exe_ptr, &stack_cache);
 
-  free(co);
+  /* does NOT free the hsa_executable_t, rather the malloc'ed mem
+   * from compile_submitted_kernels() */
+  free(exe_ptr);
 
   const uint32_t queueMask = d->queue->size - 1;
 
@@ -906,22 +883,20 @@ pocl_hsa_compile_submitted_kernels (_cl_command_node *cmd)
     return;
 
   int error;
-  hsa_status_t status;
   char brigfile[POCL_FILENAME_LENGTH];
   char *brig_blob;
-
-  cl_program program = cmd->command.run.kernel->program;
 
   pocl_hsa_device_data_t *d =
     (pocl_hsa_device_data_t*)cmd->device->data;
 
-  hsa_code_object_t *out = malloc(sizeof(hsa_code_object_t));
+  hsa_executable_t *out = malloc(sizeof(hsa_executable_t));
   cmd->command.run.device_data = (void**)out;
 
-  for (unsigned i = 0; i<HSA_PROGRAM_CACHE_SIZE; i++)
-    if (d->program_cache[i].program == program)
+  for (unsigned i = 0; i<HSA_KERNEL_CACHE_SIZE; i++)
+    if (d->kernel_cache[i].kernel == cmd->command.run.kernel)
       {
-        *out = d->program_cache[i].code_object;
+        *out = d->kernel_cache[i].hsa_exe;
+        POCL_MSG_PRINT_INFO("kernel.hsa_exe found in kernel cache, returning\n");
         return;
       }
 
@@ -942,47 +917,46 @@ pocl_hsa_compile_submitted_kernels (_cl_command_node *cmd)
   hsa_ext_program_t hsa_program;
   memset (&hsa_program, 0, sizeof (hsa_ext_program_t));
 
-  status = hsa_ext_program_create
+  HSA_CHECK(hsa_ext_program_create
     (HSA_MACHINE_MODEL_LARGE, HSA_PROFILE_FULL,
      HSA_DEFAULT_FLOAT_ROUNDING_MODE_DEFAULT, NULL,
-     &hsa_program);
+     &hsa_program));
 
-  if (status != HSA_STATUS_SUCCESS)
-    POCL_ABORT ("pocl-hsa: error while building the HSA program.\n");
-
-  status = hsa_ext_program_add_module (hsa_program, hsa_module);
-  if (status != HSA_STATUS_SUCCESS)
-    POCL_ABORT ("pocl-hsa: error while adding the BRIG module to the HSA program.\n");
+  HSA_CHECK(hsa_ext_program_add_module (hsa_program, hsa_module));
 
   hsa_isa_t isa;
-  status = hsa_agent_get_info (*d->agent, HSA_AGENT_INFO_ISA, &isa);
-
-  if (status != HSA_STATUS_SUCCESS)
-    POCL_ABORT ("pocl-hsa: error while getting the ISA info for the HSA AGENT.\n");
+  HSA_CHECK(hsa_agent_get_info (*d->agent, HSA_AGENT_INFO_ISA, &isa));
 
   hsa_ext_control_directives_t control_directives;
   memset (&control_directives, 0, sizeof (hsa_ext_control_directives_t));
 
   hsa_code_object_t code_object;
-  status = hsa_ext_program_finalize
+  HSA_CHECK(hsa_ext_program_finalize
     (hsa_program, isa, 0, control_directives, "",
-     HSA_CODE_OBJECT_TYPE_PROGRAM, &code_object);
+     HSA_CODE_OBJECT_TYPE_PROGRAM, &code_object));
 
-  if (status != HSA_STATUS_SUCCESS)
-    POCL_ABORT ("pocl-hsa: error finalizing the program.\n");
+  HSA_CHECK(hsa_executable_create (d->agent_profile,
+                                  HSA_EXECUTABLE_STATE_UNFROZEN,
+                                  "", out));
 
-  status = hsa_ext_program_destroy (hsa_program);
-  if (status != HSA_STATUS_SUCCESS)
-    POCL_ABORT ("pocl-hsa: error destroying the program.\n");
+  HSA_CHECK(hsa_executable_load_code_object (*out, *d->agent,
+                                            code_object, ""));
+
+  HSA_CHECK(hsa_executable_freeze (*out, NULL));
+
+  HSA_CHECK(hsa_code_object_destroy(code_object));
+
+  HSA_CHECK(hsa_ext_program_destroy(hsa_program));
 
   free(brig_blob);
-  *out = code_object;
 
-  if (d->program_cache_lastptr < HSA_PROGRAM_CACHE_SIZE)
+/*
+  if (d->kernel_cache_lastptr < HSA_KERNEL_CACHE_SIZE)
     {
-      d->program_cache[d->program_cache_lastptr].code_object = code_object;
-      d->program_cache[d->program_cache_lastptr++].program = program;
+      d->kernel_cache[d->kernel_cache_lastptr].kernel = cmd->command.run.kernel;
+      d->kernel_cache[d->kernel_cache_lastptr++].hsa_exe = *out;
     }
+*/
 
 }
 
@@ -991,22 +965,14 @@ pocl_hsa_uninit (cl_device_id device)
 {
   pocl_hsa_device_data_t *d = (pocl_hsa_device_data_t*)device->data;
 
-  for (unsigned j = 0; j < HSA_PROGRAM_CACHE_SIZE; j++)
-    {
-      if (d->program_cache[j].program)
-        {
-          pocl_hsa_program_cache_t *cache = &d->program_cache[j];
-          for (unsigned i = 0; i < HSA_KERNEL_CACHE_SIZE; i++)
-            if (cache->kernel_cache[i].kernel)
-              {
-                hsa_executable_destroy(cache->kernel_cache[i].hsa_exe);
-                hsa_signal_destroy(cache->kernel_cache[i].kernel_completion_signal);
-              }
-          hsa_code_object_destroy(cache->code_object);
-        }
-    }
+  for (unsigned i = 0; i < HSA_KERNEL_CACHE_SIZE; i++)
+    if (d->kernel_cache[i].kernel)
+      {
+        HSA_CHECK(hsa_executable_destroy(d->kernel_cache[i].hsa_exe));
+        HSA_CHECK(hsa_signal_destroy(d->kernel_cache[i].kernel_completion_signal));
+      }
 
-  hsa_queue_destroy(d->queue);
+  HSA_CHECK(hsa_queue_destroy(d->queue));
   POCL_MEM_FREE(d);
   device->data = NULL;
 }

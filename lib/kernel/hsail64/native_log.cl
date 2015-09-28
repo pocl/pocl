@@ -1,18 +1,17 @@
-/* OpenCL built-in library: exp()
+/* OpenCL built-in library: native_log()
 
-   Copyright (c) 2011 Erik Schnetter <eschnetter@perimeterinstitute.ca>
-                      Perimeter Institute for Theoretical Physics
-   
+   Copyright (c) 2015 Michal Babej / Tampere University of Technology
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights
    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
    copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -22,8 +21,13 @@
    THE SOFTWARE.
 */
 
-#include "templates.h"
+#include "../templates.h"
 
-DEFINE_BUILTIN_V_V(exp)
 
-DEFINE_EXPR_F_F(half_exp, exp(a))
+#define M_LOG2E_H_R ((half)(1.0 / M_LOG2E))
+#define M_LOG2E_F_R ((float)(1.0f / M_LOG2E_F))
+#define M_LOG2E_R (1.0 / M_LOG2E)
+
+
+DEFINE_EXPR_V_V(native_log, native_log2(a) * \
+    (TYPED_CONST(stype, M_LOG2E_H_R, M_LOG2E_F_R, M_LOG2E_R)) )

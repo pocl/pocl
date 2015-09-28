@@ -323,7 +323,10 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
 #define HALF_EXT
 #endif
 
-  dev->extensions = DOUBLE_EXT HALF_EXT "cl_khr_byte_addressable_store";
+  dev->extensions = DOUBLE_EXT HALF_EXT "cl_khr_byte_addressable_store"
+      "cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics"
+      "cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics"
+      "cl_khr_int64_base_atomics cl_khr_int64_extended_atomics";
 
   dev->llvm_target_triplet = OCL_KERNEL_TARGET;
   dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
