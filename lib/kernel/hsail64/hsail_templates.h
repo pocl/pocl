@@ -28,28 +28,28 @@
 
 // Make vectorized versions of a scalar builtin using Divide-n-Conquer
 
-#define IMPLEMENT_BUILTIN_V_V(NAME, VTYPE, ITYPE, IVTYPE, LO, HI)      \
+#define IMPLEMENT_VECWITHSCALARS_V_V(NAME, VTYPE, ITYPE, IVTYPE, LO, HI)      \
   VTYPE _CL_OVERLOADABLE                  \
   NAME(VTYPE a)                                         \
   {                                                     \
     return (VTYPE)(NAME(a.LO), NAME(a.HI));             \
   }
 
-#define IMPLEMENT_BUILTIN_V_VV(NAME, VTYPE, ITYPE, IVTYPE, LO, HI)     \
+#define IMPLEMENT_VECWITHSCALARS_V_VV(NAME, VTYPE, ITYPE, IVTYPE, LO, HI)     \
   VTYPE _CL_OVERLOADABLE                  \
   NAME(VTYPE a, VTYPE b)                                \
   {                                                     \
     return (VTYPE)(NAME(a.LO, b.LO), NAME(a.HI, b.HI)); \
   }
 
-#define IMPLEMENT_BUILTIN_V_VVV(NAME, VTYPE, ITYPE, IVTYPE, LO, HI)                    \
+#define IMPLEMENT_VECWITHSCALARS_V_VVV(NAME, VTYPE, ITYPE, IVTYPE, LO, HI)    \
   VTYPE _CL_OVERLOADABLE                                  \
   NAME(VTYPE a, VTYPE b, VTYPE c)                                       \
   {                                                                     \
     return (VTYPE)(NAME(a.LO, b.LO, c.LO), NAME(a.HI, b.HI, c.HI));     \
   }
 
-#define IMPLEMENT_BUILTIN_V_VI(NAME, VTYPE, ITYPE, IVTYPE, LO, HI)     \
+#define IMPLEMENT_VECWITHSCALARS_V_VI(NAME, VTYPE, ITYPE, IVTYPE, LO, HI)     \
   VTYPE _CL_OVERLOADABLE                  \
   NAME(VTYPE a, IVTYPE b)                               \
   {                                                     \
@@ -61,14 +61,21 @@
     return (VTYPE)(NAME(a.LO, b), NAME(a.HI, b)); \
   }
 
+#define IMPLEMENT_VECWITHSCALARS_I_V(NAME, VTYPE, ITYPE, IVTYPE, LO, HI)     \
+  IVTYPE _CL_OVERLOADABLE                  \
+  NAME(VTYPE a)                               \
+  {                                                     \
+    return (IVTYPE)(NAME(a.LO), NAME(a.HI)); \
+  }
+
 /**********************************************************************/
 
-#define  IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, TYPE, STYPE, ITYPE)    \
-  IMPLEMENT_BUILTIN_ ## TYPE(NAME, STYPE ## 2, ITYPE, ITYPE ## 2, lo, hi)          \
-  IMPLEMENT_BUILTIN_ ## TYPE(NAME, STYPE ## 3, ITYPE, ITYPE ## 3, lo, s2)          \
-  IMPLEMENT_BUILTIN_ ## TYPE(NAME, STYPE ## 4, ITYPE, ITYPE ## 4, lo, hi)          \
-  IMPLEMENT_BUILTIN_ ## TYPE(NAME, STYPE ## 8, ITYPE, ITYPE ## 8, lo, hi)          \
-  IMPLEMENT_BUILTIN_ ## TYPE(NAME, STYPE ## 16, ITYPE, ITYPE ## 16, lo, hi)
+#define  IMPLEMENT_VECWITHSCALARS(NAME, TYPE, STYPE, ITYPE)    \
+  IMPLEMENT_VECWITHSCALARS_ ## TYPE(NAME, STYPE ## 2, ITYPE, ITYPE ## 2, lo, hi)          \
+  IMPLEMENT_VECWITHSCALARS_ ## TYPE(NAME, STYPE ## 3, ITYPE, ITYPE ## 3, lo, s2)          \
+  IMPLEMENT_VECWITHSCALARS_ ## TYPE(NAME, STYPE ## 4, ITYPE, ITYPE ## 4, lo, hi)          \
+  IMPLEMENT_VECWITHSCALARS_ ## TYPE(NAME, STYPE ## 8, ITYPE, ITYPE ## 8, lo, hi)          \
+  IMPLEMENT_VECWITHSCALARS_ ## TYPE(NAME, STYPE ## 16, ITYPE, ITYPE ## 16, lo, hi)
 
 /**********************************************************************/
 
@@ -76,22 +83,22 @@
 #define  IMPL_V_V_ALL(NAME, STYPE, BUILTIN, SUFFIX) \
   STYPE NAME ## _internal_v_ ## STYPE(STYPE a)  __asm("llvm."#BUILTIN#SUFFIX);  \
   _CL_OVERLOADABLE STYPE NAME(STYPE a) { return NAME ## _internal_v_ ## STYPE(a); } \
-  IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, V_V, STYPE, STYPE)
+  IMPLEMENT_VECWITHSCALARS(NAME, V_V, STYPE, STYPE)
 
 #define  IMPL_V_VV_ALL(NAME, STYPE, BUILTIN, SUFFIX) \
   STYPE NAME ## _internal_vv_ ## STYPE(STYPE a, STYPE b)  __asm("llvm."#BUILTIN#SUFFIX);  \
   _CL_OVERLOADABLE STYPE NAME(STYPE a, STYPE b) { return NAME ## _internal_vv_ ## STYPE(a, b); } \
-  IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, V_VV, STYPE, STYPE)
+  IMPLEMENT_VECWITHSCALARS(NAME, V_VV, STYPE, STYPE)
 
 #define  IMPL_V_VVV_ALL(NAME, STYPE, BUILTIN, SUFFIX) \
   STYPE NAME ## _internal_vvv_ ## STYPE(STYPE a, STYPE b,STYPE c)  __asm("llvm."#BUILTIN#SUFFIX);  \
   _CL_OVERLOADABLE STYPE NAME(STYPE a, STYPE b,STYPE c) { return NAME ## _internal_vvv_ ## STYPE(a, b, c); } \
-  IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, V_VVV, STYPE, STYPE)
+  IMPLEMENT_VECWITHSCALARS(NAME, V_VVV, STYPE, STYPE)
 
 #define  IMPL_V_VI_ALL(NAME, STYPE, ITYPE, BUILTIN, SUFFIX) \
   STYPE NAME ## _internal_vi_ ## STYPE(STYPE a, ITYPE b) __asm("llvm."#BUILTIN#SUFFIX);   \
   _CL_OVERLOADABLE STYPE NAME(STYPE a, ITYPE b) { return NAME ## _internal_vi_ ## STYPE(a, b); } \
-  IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, V_VI, STYPE, ITYPE)
+  IMPLEMENT_VECWITHSCALARS(NAME, V_VI, STYPE, ITYPE)
 
 /**********************************************************************/
 
@@ -169,9 +176,9 @@
 // EXPR for scalar, DnC for vectors, useful for GCC builtins
 #define IMPLEMENT_EXPR_ALL(NAME, ARGTYPE, EXPR32, EXPR64)                      \
   IMPLEMENT_EXPR_ ## ARGTYPE(NAME, EXPR32, float, float, float, float)         \
-  IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, ARGTYPE, float, int)                   \
+  IMPLEMENT_VECWITHSCALARS(NAME, ARGTYPE, float, int)                   \
   IMPLEMENT_EXPR_ ## ARGTYPE(NAME, EXPR64, double, double, double, double)     \
-  IMPLEMENT_BUILTIN_TYPE_ALL_VECS(NAME, ARGTYPE, double, long)
+  IMPLEMENT_VECWITHSCALARS(NAME, ARGTYPE, double, long)
 
 /**********************************************************************/
 
