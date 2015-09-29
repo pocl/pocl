@@ -80,22 +80,22 @@
 /**********************************************************************/
 
 // ASM for scalar, DnC for vectors
-#define  IMPL_V_V_ALL(NAME, STYPE, BUILTIN, SUFFIX) \
+#define  IMPLEMENT_LLVM_INTRIN_V_V_ALL(NAME, STYPE, BUILTIN, SUFFIX) \
   STYPE NAME ## _internal_v_ ## STYPE(STYPE a)  __asm("llvm."#BUILTIN#SUFFIX);  \
   _CL_OVERLOADABLE STYPE NAME(STYPE a) { return NAME ## _internal_v_ ## STYPE(a); } \
   IMPLEMENT_VECWITHSCALARS(NAME, V_V, STYPE, STYPE)
 
-#define  IMPL_V_VV_ALL(NAME, STYPE, BUILTIN, SUFFIX) \
+#define  IMPLEMENT_LLVM_INTRIN_V_VV_ALL(NAME, STYPE, BUILTIN, SUFFIX) \
   STYPE NAME ## _internal_vv_ ## STYPE(STYPE a, STYPE b)  __asm("llvm."#BUILTIN#SUFFIX);  \
   _CL_OVERLOADABLE STYPE NAME(STYPE a, STYPE b) { return NAME ## _internal_vv_ ## STYPE(a, b); } \
   IMPLEMENT_VECWITHSCALARS(NAME, V_VV, STYPE, STYPE)
 
-#define  IMPL_V_VVV_ALL(NAME, STYPE, BUILTIN, SUFFIX) \
+#define  IMPLEMENT_LLVM_INTRIN_V_VVV_ALL(NAME, STYPE, BUILTIN, SUFFIX) \
   STYPE NAME ## _internal_vvv_ ## STYPE(STYPE a, STYPE b,STYPE c)  __asm("llvm."#BUILTIN#SUFFIX);  \
   _CL_OVERLOADABLE STYPE NAME(STYPE a, STYPE b,STYPE c) { return NAME ## _internal_vvv_ ## STYPE(a, b, c); } \
   IMPLEMENT_VECWITHSCALARS(NAME, V_VVV, STYPE, STYPE)
 
-#define  IMPL_V_VI_ALL(NAME, STYPE, ITYPE, BUILTIN, SUFFIX) \
+#define  IMPLEMENT_LLVM_INTRIN_V_VI_ALL(NAME, STYPE, ITYPE, BUILTIN, SUFFIX) \
   STYPE NAME ## _internal_vi_ ## STYPE(STYPE a, ITYPE b) __asm("llvm."#BUILTIN#SUFFIX);   \
   _CL_OVERLOADABLE STYPE NAME(STYPE a, ITYPE b) { return NAME ## _internal_vi_ ## STYPE(a, b); } \
   IMPLEMENT_VECWITHSCALARS(NAME, V_VI, STYPE, ITYPE)
@@ -201,15 +201,15 @@
 // Define OpenCL runtime func via LLVM intrinsics (IMPL_*_ALL)
 
 #define DEFINE_LLVM_INTRIN_FP32_FP64(NAME, ARGTYPE, BUILTIN, EXPR16)       \
-  IMPL_ ## ARGTYPE ## _ALL(NAME, float, BUILTIN, .f32)                     \
+  IMPLEMENT_LLVM_INTRIN_ ## ARGTYPE ## _ALL(NAME, float, BUILTIN, .f32)                     \
   __IF_FP64(                                                               \
-    IMPL_ ## ARGTYPE ## _ALL(NAME, double, BUILTIN, .f64))                 \
+    IMPLEMENT_LLVM_INTRIN_ ## ARGTYPE ## _ALL(NAME, double, BUILTIN, .f64))                 \
   __IF_FP16(                                                               \
     IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, ARGTYPE, EXPR_, half, short, EXPR16))
 
-#define DEFINE_LLVM_INTRIN_ONLY_FP32(NAME, ARGTYPE, BUILTIN, EXPR64, EXPR16)   \
-  IMPL_ ## ARGTYPE ## _ALL(NAME, float, BUILTIN, .f32)                         \
-  __IF_FP64(                                                                   \
+#define DEFINE_LLVM_INTRIN_ONLY_FP32(NAME, ARGTYPE, BUILTIN, EXPR64, EXPR16)    \
+  IMPLEMENT_LLVM_INTRIN_ ## ARGTYPE ## _ALL(NAME, float, BUILTIN, .f32)                          \
+  __IF_FP64(                                                                    \
     IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, ARGTYPE, EXPR_, double, long, EXPR64)) \
   __IF_FP16(                                                                    \
     IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, ARGTYPE, EXPR_, half, short, EXPR16))  \
@@ -219,26 +219,26 @@
 // ldexp, doesnt work yet
 
 #define DEFINE_LLVM_INTRIN_V_VI_FP32_FP64(NAME, BUILTIN)                \
-  IMPL_V_VI_ALL(NAME, float, int, BUILTIN, .f32)                          \
+  IMPLEMENT_LLVM_INTRIN_V_VI_ALL(NAME, float, int, BUILTIN, .f32)                          \
   __IF_FP16(                                                            \
-    IMPL_V_VI_ALL(NAME, half, int, BUILTIN, .f32))                        \
+    IMPLEMENT_LLVM_INTRIN_V_VI_ALL(NAME, half, int, BUILTIN, .f32))                        \
   __IF_FP64(                                                            \
-    IMPL_V_VI_ALL(NAME, double, int, BUILTIN, .f64))                      \
+    IMPLEMENT_LLVM_INTRIN_V_VI_ALL(NAME, double, int, BUILTIN, .f64))                      \
 
 /**********************************************************************/
 
 // For mul_hi  /* - has hsail.smulhi.i32 & hsail.umulhi.i32 */
 #define DEFINE_LLVM_INTRIN_SU_INT32_ONLY(NAME, ARGTYPE, SIGNED_BUILTIN, UNSIGNED_BUILTIN)   \
-  IMPL_ ## ARGTYPE ## _ALL(NAME, int, SIGNED_BUILTIN, .i32)                         \
-  IMPL_ ## ARGTYPE ## _ALL(NAME, uint, UNSIGNED_BUILTIN, .i32)                       \
-  IMPL_ ## ARGTYPE ## _ALL(NAME, long, SIGNED_BUILTIN, .i64)                         \
-  IMPL_ ## ARGTYPE ## _ALL(NAME, ulong, UNSIGNED_BUILTIN, .i64)                       \
+  IMPLEMENT_LLVM_INTRIN_ ## ARGTYPE ## _ALL(NAME, int, SIGNED_BUILTIN, .i32)                         \
+  IMPLEMENT_LLVM_INTRIN_ ## ARGTYPE ## _ALL(NAME, uint, UNSIGNED_BUILTIN, .i32)                       \
+  IMPLEMENT_LLVM_INTRIN_ ## ARGTYPE ## _ALL(NAME, long, SIGNED_BUILTIN, .i64)                         \
+  IMPLEMENT_LLVM_INTRIN_ ## ARGTYPE ## _ALL(NAME, ulong, UNSIGNED_BUILTIN, .i64)                       \
   EXPR_ ## ARGTYPE ## _ALL_SMALLINTS(NAME)
 /*
-  IMPL_ ## ARGTYPE ## _ALL(NAME, short, SIGNED_BUILTIN, .i16)                         \
-  IMPL_ ## ARGTYPE ## _ALL(NAME, ushort, UNSIGNED_BUILTIN, .i16)                       \
-  IMPL_ ## ARGTYPE ## _ALL(NAME, char, SIGNED_BUILTIN, .i8)                         \
-  IMPL_ ## ARGTYPE ## _ALL(NAME, uchar, UNSIGNED_BUILTIN, .i8)
+  IMPLEMENT_LLVM_INTRIN_ ## ARGTYPE ## _ALL(NAME, short, SIGNED_BUILTIN, .i16)                         \
+  IMPLEMENT_LLVM_INTRIN_ ## ARGTYPE ## _ALL(NAME, ushort, UNSIGNED_BUILTIN, .i16)                       \
+  IMPLEMENT_LLVM_INTRIN_ ## ARGTYPE ## _ALL(NAME, char, SIGNED_BUILTIN, .i8)                         \
+  IMPLEMENT_LLVM_INTRIN_ ## ARGTYPE ## _ALL(NAME, uchar, UNSIGNED_BUILTIN, .i8)
 */
 
 
