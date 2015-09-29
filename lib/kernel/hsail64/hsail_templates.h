@@ -58,7 +58,7 @@
   VTYPE _CL_OVERLOADABLE                  \
   NAME(VTYPE a, ITYPE b)                                \
   {                                                     \
-    return (VTYPE)(NAME(a.LO, b), NAME(a.HI, b)); \
+    return (VTYPE)(NAME(a, (IVTYPE)b)); \
   }
 
 #define IMPLEMENT_VECWITHSCALARS_I_V(NAME, VTYPE, ITYPE, IVTYPE, LO, HI)     \
