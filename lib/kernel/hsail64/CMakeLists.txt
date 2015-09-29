@@ -40,6 +40,7 @@ foreach(FILE barrier.c get_global_id.c get_global_size.c get_group_id.c
         mad_hi.cl mul_hi.cl mul24.cl mad24.cl
         sqrt.cl sqrt_default.ll copysign.cl
         exp.cl exp2.cl exp10.cl expm1.cl
+        log.cl log2.cl log10.cl log1p.cl
         ilogb.cl ldexp.cl)
 
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
