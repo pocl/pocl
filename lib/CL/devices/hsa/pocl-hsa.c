@@ -790,6 +790,7 @@ pocl_hsa_run(void *dptr, _cl_command_node* cmd)
     {
       hsa_executable_destroy(cached_data->hsa_exe);
       hsa_signal_destroy(cached_data->kernel_completion_signal);
+      hsa_memory_free(cached_data->kernargs);
     }
 
   /* TODO this */
