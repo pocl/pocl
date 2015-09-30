@@ -23,7 +23,7 @@
 KERNEL_TARGET = hsail64
 
 # Use TARGET flags:
-CLANG_FLAGS = @TARGET_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -target ${KERNEL_TARGET}
+CLANG_FLAGS = @TARGET_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -D_CL_DISABLE_HALF -target ${KERNEL_TARGET} -I${abs_top_srcdir}/lib/kernel/hsail64
 LLC_FLAGS   = @TARGET_LLC_FLAGS@
 LD_FLAGS    = @TARGET_LD_FLAGS@
 

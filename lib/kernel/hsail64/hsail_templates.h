@@ -49,6 +49,7 @@
     return (VTYPE)(NAME(a.LO, b.LO, c.LO), NAME(a.HI, b.HI, c.HI));     \
   }
 
+// ldexp
 #define IMPLEMENT_VECWITHSCALARS_V_VI(NAME, VTYPE, ITYPE, IVTYPE, LO, HI)     \
   VTYPE _CL_OVERLOADABLE                  \
   NAME(VTYPE a, IVTYPE b)                               \
@@ -61,6 +62,7 @@
     return (VTYPE)(NAME(a, (IVTYPE)b)); \
   }
 
+// ilogb
 #define IMPLEMENT_VECWITHSCALARS_I_V(NAME, VTYPE, ITYPE, IVTYPE, LO, HI)     \
   IVTYPE _CL_OVERLOADABLE                  \
   NAME(VTYPE a)                               \
@@ -180,6 +182,12 @@
   IMPLEMENT_EXPR_ ## ARGTYPE(NAME, EXPR64, double, double, double, double)     \
   IMPLEMENT_VECWITHSCALARS(NAME, ARGTYPE, double, long)
 
+#define IMPLEMENT_EXPR_ALL_SINGLE(NAME, ARGTYPE, EXPR)                       \
+  IMPLEMENT_EXPR_ ## ARGTYPE(NAME, EXPR, float, float, float, float)         \
+  IMPLEMENT_VECWITHSCALARS(NAME, ARGTYPE, float, int)                 \
+  IMPLEMENT_EXPR_ ## ARGTYPE(NAME, EXPR, double, double, double, double)     \
+  IMPLEMENT_VECWITHSCALARS(NAME, ARGTYPE, double, long)
+
 /**********************************************************************/
 
 // Convert from char/shorts to ints
@@ -255,3 +263,42 @@
   IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, EXPR_, long, long, EXPR)    \
   IMPLEMENT_EXPR_VECS_AND_SCALAR(NAME, V_VVV, EXPR_, ulong, ulong, EXPR)  \
 */
+
+/**********************************************************************/
+
+// Vector - Pointer to Vector, for frexp() / fract()
+
+#define VPV_BODY(N, NAME, VTYPE, STYPE, PTYPE, ADDRSP)            \
+{                                                                     \
+  typedef VTYPE vtype;                                                \
+  typedef STYPE stype;                                                \
+  typedef PTYPE ptype;                                                \
+  ADDRSP ptype* temp = (ADDRSP ptype*)b;                              \
+  typedef union {                                                             \
+    stype s[N];                                   \
+    vtype v;                                       \
+  } E;                                             \
+  E e; e.v = a;                                     \
+  E out;                                                          \
+  for (unsigned i=0; i<N; i++)                                        \
+    out.s[i] = NAME(e.s[i], temp+i);                               \
+  return out.v;                                                         \
+}                                                                     \
+
+#define IMPLEMENT_EXPR_V_VP_N(NAME, N, STYPE, PTYPE)  \
+  STYPE ## N _CL_OVERLOADABLE                                  \
+  NAME(STYPE ## N a, __global PTYPE ## N *b)                                      \
+  VPV_BODY(N, NAME, STYPE ## N, STYPE, PTYPE, __global)                              \
+  STYPE ## N _CL_OVERLOADABLE                                  \
+  NAME(STYPE ## N a, __local PTYPE ## N *b)                                       \
+  VPV_BODY(N, NAME, STYPE ## N, STYPE, PTYPE, __local)                               \
+  STYPE ## N _CL_OVERLOADABLE                                  \
+  NAME(STYPE ## N a, __private PTYPE ## N *b)                                     \
+  VPV_BODY(N, NAME, STYPE ## N, STYPE, PTYPE, __private)                             \
+
+#define IMPLEMENT_EXPR_V_VP_ALL(NAME, STYPE, PTYPE)                \
+  IMPLEMENT_EXPR_V_VP_N(NAME, 2, STYPE, PTYPE)                     \
+  IMPLEMENT_EXPR_V_VP_N(NAME, 3, STYPE, PTYPE)                     \
+  IMPLEMENT_EXPR_V_VP_N(NAME, 4, STYPE, PTYPE)                     \
+  IMPLEMENT_EXPR_V_VP_N(NAME, 8, STYPE, PTYPE)                     \
+  IMPLEMENT_EXPR_V_VP_N(NAME, 16, STYPE, PTYPE)
