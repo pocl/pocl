@@ -1,4 +1,4 @@
-/* OpenCL built-in library: mad24()
+/* OpenCL built-in library: fract()
 
    Copyright (c) 2015 Michal Babej / Tampere University of Technology
 
@@ -23,6 +23,45 @@
 
 #include "hsail_templates.h"
 
-#undef mad24
-IMPLEMENT_LLVM_INTRIN_V_VVV_ALL(_cl_mad24, int, hsail.smad24, )
-IMPLEMENT_LLVM_INTRIN_V_VVV_ALL(_cl_mad24, uint, hsail.umad24, )
+
+float _CL_OVERLOADABLE fract(float a, __global float *b)
+{
+  *b = floor(a);
+  return fmin(a - floor(a), 0x1.fffffep-1f);
+}
+
+double _CL_OVERLOADABLE fract(double a, __global double *b)
+{
+  *b = floor(a);
+  return fmin(a - floor(a), 0x1.fffffffffffffp-1);
+}
+
+
+float _CL_OVERLOADABLE fract(float a, __local float *b)
+{
+  *b = floor(a);
+  return fmin(a - floor(a), 0x1.fffffep-1f);
+}
+
+double _CL_OVERLOADABLE fract(double a, __local double *b)
+{
+  *b = floor(a);
+  return fmin(a - floor(a), 0x1.fffffffffffffp-1);
+}
+
+
+float _CL_OVERLOADABLE fract(float a, __private float *b)
+{
+  *b = floor(a);
+  return fmin(a - floor(a), 0x1.fffffep-1f);
+}
+
+double _CL_OVERLOADABLE fract(double a, __private double *b)
+{
+  *b = floor(a);
+  return fmin(a - floor(a), 0x1.fffffffffffffp-1);
+}
+
+IMPLEMENT_EXPR_V_VP_ALL(fract, float, float)
+
+IMPLEMENT_EXPR_V_VP_ALL(fract, double, double)

@@ -1,4 +1,4 @@
-/* OpenCL built-in library: mad24()
+/* OpenCL built-in library: exp10()
 
    Copyright (c) 2015 Michal Babej / Tampere University of Technology
 
@@ -21,8 +21,8 @@
    THE SOFTWARE.
 */
 
-#include "hsail_templates.h"
+#include "../templates.h"
 
-#undef mad24
-IMPLEMENT_LLVM_INTRIN_V_VVV_ALL(_cl_mad24, int, hsail.smad24, )
-IMPLEMENT_LLVM_INTRIN_V_VVV_ALL(_cl_mad24, uint, hsail.umad24, )
+DEFINE_EXPR_V_V(exp10, exp2(TYPED_CONST(stype, \
+                             (M_LOG2E_H * M_LN10_H), (M_LOG2E_F * M_LN10_F), \
+                             (M_LOG2E * M_LN10)) * a))

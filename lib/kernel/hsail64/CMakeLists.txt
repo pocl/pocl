@@ -36,14 +36,20 @@ foreach(FILE barrier.c get_global_id.c get_global_size.c get_group_id.c
         native_cos.cl native_exp.cl native_exp10.cl native_exp2.cl
         native_log.cl native_log10.cl native_log2.cl native_recip.cl
         native_rsqrt.cl  native_sin.cl  native_sqrt.cl
-        fabs.cl floor.cl fma.cl mad.cl
+        fabs.cl floor.cl rint.cl trunc.cl fma.cl mad.cl
         mad_hi.cl mul_hi.cl mul24.cl mad24.cl
-        sqrt.cl sqrt_default.ll exp.cl)
+        sqrt.cl sqrt_default.ll cbrt.cl hypot.cl copysign.cl
+        exp.cl exp2.cl exp10.cl expm1.cl
+        log.cl log2.cl log10.cl log1p.cl
+        sin.cl tan.cl cos.cl sinh.cl tanh.cl cosh.cl
+        asin.cl acos.cl atan.cl asinh.cl acosh.cl atanh.cl
+        ilogb.cl ldexp.cl fract.cl frexp.cl atan2.cl pow.cl)
+
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
   list(APPEND KERNEL_SOURCES "hsail64/${FILE}")
 endforeach()
 
-set(CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-emit-llvm" "-target" "hsail64")
+set(CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-emit-llvm" "-target" "hsail64" "-D_CL_DISABLE_HALF")
 set(LLC_FLAGS "")
 
 make_kernel_bc(KERNEL_BC "hsail64" ${KERNEL_SOURCES})

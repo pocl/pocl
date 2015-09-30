@@ -44,10 +44,10 @@
 
 #undef sqrt
 
-float __attribute__ ((overloadable)) _sqrt_default_f32(float a);
-IMPLEMENT_BUILTIN_TYPE_ALL_VECS(_sqrt_default_f32, V_V, float, float)
-double __attribute__ ((overloadable)) _sqrt_default_f64(double a);
-IMPLEMENT_BUILTIN_TYPE_ALL_VECS(_sqrt_default_f64, V_V, double, double)
+float _CL_OVERLOADABLE _sqrt_default_f32(float a);
+IMPLEMENT_VECWITHSCALARS(_sqrt_default_f32, V_V, float, float)
+double _CL_OVERLOADABLE _sqrt_default_f64(double a);
+IMPLEMENT_VECWITHSCALARS(_sqrt_default_f64, V_V, double, double)
 
 IMPLEMENT_EXPR_VECS_AND_SCALAR(_cl_sqrt, V_V, EXPR_, float, int,_sqrt_default_f32(a) )
 IMPLEMENT_EXPR_VECS_AND_SCALAR(_cl_sqrt, V_V, EXPR_, double, long, _sqrt_default_f64(a) )

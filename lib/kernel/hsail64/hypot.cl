@@ -1,6 +1,7 @@
-/* OpenCL built-in library: mad24()
+/* OpenCL built-in library: hypot()
 
-   Copyright (c) 2015 Michal Babej / Tampere University of Technology
+   Copyright (c) 2011 Erik Schnetter <eschnetter@perimeterinstitute.ca>
+                      Perimeter Institute for Theoretical Physics
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -21,8 +22,6 @@
    THE SOFTWARE.
 */
 
-#include "hsail_templates.h"
+#include "../templates.h"
 
-#undef mad24
-IMPLEMENT_LLVM_INTRIN_V_VVV_ALL(_cl_mad24, int, hsail.smad24, )
-IMPLEMENT_LLVM_INTRIN_V_VVV_ALL(_cl_mad24, uint, hsail.umad24, )
+DEFINE_EXPR_V_VV(hypot, sqrt(a*a + b*b))

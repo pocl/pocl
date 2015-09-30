@@ -1,4 +1,4 @@
-/* OpenCL built-in library: mad24()
+/* OpenCL built-in library: log()
 
    Copyright (c) 2015 Michal Babej / Tampere University of Technology
 
@@ -21,8 +21,11 @@
    THE SOFTWARE.
 */
 
-#include "hsail_templates.h"
+#include "../templates.h"
 
-#undef mad24
-IMPLEMENT_LLVM_INTRIN_V_VVV_ALL(_cl_mad24, int, hsail.smad24, )
-IMPLEMENT_LLVM_INTRIN_V_VVV_ALL(_cl_mad24, uint, hsail.umad24, )
+#define M_LOG2E_H_R ((half)(1.0 / M_LOG2E))
+#define M_LOG2E_F_R ((float)(1.0f / M_LOG2E_F))
+#define M_LOG2E_R (1.0 / M_LOG2E)
+
+
+DEFINE_EXPR_V_V(log, log2(a) * (TYPED_CONST(stype, M_LOG2E_H_R, M_LOG2E_F_R, M_LOG2E_R)) )

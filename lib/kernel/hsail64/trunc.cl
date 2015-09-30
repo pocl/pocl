@@ -1,4 +1,4 @@
-/* OpenCL built-in library: mad24()
+/* OpenCL built-in library: trunc()
 
    Copyright (c) 2015 Michal Babej / Tampere University of Technology
 
@@ -23,6 +23,5 @@
 
 #include "hsail_templates.h"
 
-#undef mad24
-IMPLEMENT_LLVM_INTRIN_V_VVV_ALL(_cl_mad24, int, hsail.smad24, )
-IMPLEMENT_LLVM_INTRIN_V_VVV_ALL(_cl_mad24, uint, hsail.umad24, )
+#undef trunc
+DEFINE_LLVM_INTRIN_FP32_FP64(_cl_trunc, V_V, trunc, 0.0)

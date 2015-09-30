@@ -1,4 +1,4 @@
-/* OpenCL built-in library: mad24()
+/* OpenCL built-in library: acos()
 
    Copyright (c) 2015 Michal Babej / Tampere University of Technology
 
@@ -23,6 +23,16 @@
 
 #include "hsail_templates.h"
 
-#undef mad24
-IMPLEMENT_LLVM_INTRIN_V_VVV_ALL(_cl_mad24, int, hsail.smad24, )
-IMPLEMENT_LLVM_INTRIN_V_VVV_ALL(_cl_mad24, uint, hsail.umad24, )
+#include "vml_constants.h"
+
+double _CL_OVERLOADABLE _cl_atan2k(double y, double x);
+
+float _CL_OVERLOADABLE _cl_atan2k(float y, float x);
+
+MULSIGN(float, uint, PROPS_FLOAT_SIGNBIT_MASK)
+
+MULSIGN(double, ulong, PROPS_DOUBLE_SIGNBIT_MASK)
+
+IMPLEMENT_EXPR_ALL_SINGLE(acos, V_V, \
+  mulsign(_cl_atan2k(sqrt(((vtype)(1.0)+a)*((vtype)(1.0)-a)), fabs(a)), a) \
+     + ((a < (vtype)(0.0)) ? (vtype)(M_PI) : (vtype)(0.0)))

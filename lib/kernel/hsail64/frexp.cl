@@ -1,4 +1,4 @@
-/* OpenCL built-in library: mad24()
+/* OpenCL built-in library: frexp()
 
    Copyright (c) 2015 Michal Babej / Tampere University of Technology
 
@@ -23,6 +23,20 @@
 
 #include "hsail_templates.h"
 
-#undef mad24
-IMPLEMENT_LLVM_INTRIN_V_VVV_ALL(_cl_mad24, int, hsail.smad24, )
-IMPLEMENT_LLVM_INTRIN_V_VVV_ALL(_cl_mad24, uint, hsail.umad24, )
+#include "vml_constants.h"
+
+#define ADDRSPACE __local
+#include "frexp.inc"
+#undef ADDRSPACE
+
+#define ADDRSPACE __global
+#include "frexp.inc"
+#undef ADDRSPACE
+
+#define ADDRSPACE __private
+#include "frexp.inc"
+#undef ADDRSPACE
+
+IMPLEMENT_EXPR_V_VP_ALL(frexp, float, int)
+
+IMPLEMENT_EXPR_V_VP_ALL(frexp, double, int)

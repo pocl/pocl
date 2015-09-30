@@ -541,10 +541,12 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
   char *write_pos = arg_space;
   const char *last_pos = arg_space + max_args_size;
 
-#define CHECK_SPACE(DSIZE)                                   \
+#define CHECK_AND_ALIGN_SPACE(DSIZE)                         \
   do {                                                       \
     if (write_pos + (DSIZE) > last_pos)                      \
       POCL_ABORT("pocl-hsa: too many kernel arguments!\n");  \
+    unsigned unaligned = (intptr_t)write_pos % DSIZE;        \
+    if (unaligned > 0) write_pos += (DSIZE - unaligned);     \
   } while (0)
 
   for (size_t i = 0; i < cmd->command.run.kernel->num_args; ++i)
@@ -552,14 +554,14 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
       struct pocl_argument *al = &(cmd->command.run.arguments[i]);
       if (cmd->command.run.kernel->arg_info[i].is_local)
         {
-          CHECK_SPACE (sizeof (uint32_t));
+          CHECK_AND_ALIGN_SPACE(sizeof (uint32_t));
           memcpy(write_pos, total_group_size, sizeof(uint32_t));
           *total_group_size += (uint32_t)al->size;
           write_pos += sizeof(uint32_t);
         }
       else if (cmd->command.run.kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
         {
-          CHECK_SPACE (sizeof (uint64_t));
+          CHECK_AND_ALIGN_SPACE(sizeof (uint64_t));
           /* Assuming the pointers are 64b (or actually the same as in
              host) due to HSA. TODO: the 32b profile. */
 
@@ -601,7 +603,7 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
       else
         {
           // Scalars.
-          CHECK_SPACE (al->size);
+          CHECK_AND_ALIGN_SPACE(al->size);
           memcpy (write_pos, al->value, al->size);
           write_pos += al->size;
         }
@@ -788,6 +790,7 @@ pocl_hsa_run(void *dptr, _cl_command_node* cmd)
     {
       hsa_executable_destroy(cached_data->hsa_exe);
       hsa_signal_destroy(cached_data->kernel_completion_signal);
+      hsa_memory_free(cached_data->kernargs);
     }
 
   /* TODO this */

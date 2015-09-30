@@ -45,11 +45,8 @@
 
 */
 
-#include "hsail_templates.h"
-
 /*
- * TODO implementation for double requires a working ldexp()
-*/
+#include "hsail_templates.h"
 
 #define MATH_DIVIDE(X, Y) ((X) / (Y))
 
@@ -94,4 +91,12 @@ __attribute__ ((overloadable)) float _cl_exp(float x) {
     return isnan(x) ? x : r;
 }
 
-IMPLEMENT_BUILTIN_TYPE_ALL_VECS(_cl_exp, V_V, float, float)
+IMPLEMENT_VECWITHSCALARS(_cl_exp, V_V, float, float)
+
+IMPLEMENT_VECWITHSCALARS(_cl_exp, V_V, double, double)
+
+*/
+
+#include "../templates.h"
+
+DEFINE_EXPR_V_V(exp, exp2(TYPED_CONST(stype, M_LOG2E_H, M_LOG2E_F, M_LOG2E) * a))

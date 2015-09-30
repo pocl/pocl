@@ -1,4 +1,4 @@
-/* OpenCL built-in library: mad24()
+/* OpenCL built-in library: asinh.cl()
 
    Copyright (c) 2015 Michal Babej / Tampere University of Technology
 
@@ -21,8 +21,23 @@
    THE SOFTWARE.
 */
 
+
+
 #include "hsail_templates.h"
 
-#undef mad24
-IMPLEMENT_LLVM_INTRIN_V_VVV_ALL(_cl_mad24, int, hsail.smad24, )
-IMPLEMENT_LLVM_INTRIN_V_VVV_ALL(_cl_mad24, uint, hsail.umad24, )
+#define ASINH(FTYPE)                                                      \
+  FTYPE _CL_OVERLOADABLE asinh(FTYPE x)                                   \
+  {                                                                       \
+    FTYPE r = fabs(x);                                                    \
+    r = log(r + sqrt(r*r + (FTYPE)1.0));                                  \
+    r = copysign(r, x);                                                   \
+    return r;                                                             \
+  }
+
+ASINH(float)
+
+ASINH(double)
+
+IMPLEMENT_VECWITHSCALARS(asinh, V_V, float, int)
+
+IMPLEMENT_VECWITHSCALARS(asinh, V_V, double, long)
