@@ -49,7 +49,7 @@ foreach(FILE barrier.c get_global_id.c get_global_size.c get_group_id.c
   list(APPEND KERNEL_SOURCES "hsail64/${FILE}")
 endforeach()
 
-set(CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-emit-llvm" "-target" "hsail64")
+set(CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-emit-llvm" "-target" "hsail64" "-D_CL_DISABLE_HALF")
 set(LLC_FLAGS "")
 
 make_kernel_bc(KERNEL_BC "hsail64" ${KERNEL_SOURCES})
