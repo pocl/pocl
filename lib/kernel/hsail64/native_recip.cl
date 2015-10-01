@@ -22,4 +22,4 @@
 */
 #include "hsail_templates.h"
 
-DEFINE_LLVM_INTRIN_FP32_FP64(native_recip, V_V, hsail.nrcp, recip(a))
+DEFINE_LLVM_INTRIN_FP32_FP64(native_recip, V_V, hsail.nrcp, ((vtype)(1.0) / a))
