@@ -32,7 +32,9 @@ foreach(FILE printf.c barrier.ll get_image_depth.cl get_image_dim.cl
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
 endforeach()
 
-foreach(FILE barrier.c get_global_id.c get_global_size.c get_group_id.c
+
+foreach(FILE atomics.cl atomic_impl.ll barrier.c
+        get_global_id.c get_global_size.c get_group_id.c
         get_local_id.c get_local_size.c get_num_groups.c get_work_dim.c
         native_cos.cl native_exp.cl native_exp10.cl native_exp2.cl
         native_log.cl native_log10.cl native_log2.cl native_recip.cl
