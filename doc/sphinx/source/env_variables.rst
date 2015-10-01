@@ -1,3 +1,7 @@
+=======================================
+Pocl control via environment variables
+=======================================
+
 The behavior of pocl can be controlled with multiple environment variables listed
 below.
 
