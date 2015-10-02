@@ -105,6 +105,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
       goto ERROR_CLEAN_PROGRAM_AND_BINARIES;
     }
 
+  program->main_build_log[0] = 0;
   program->context = context;
   program->num_devices = num_devices;
   program->devices = (cl_device_id*) calloc (num_devices, sizeof(cl_device_id));

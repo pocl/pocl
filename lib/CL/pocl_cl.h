@@ -484,6 +484,8 @@ struct _cl_program {
   SHA1_digest_t* build_hash;
   /* Per-device build logs, for the case when we don't yet have the program's cachedir */
   char** build_log;
+  /* Per-program build log, for the case when we aren't yet building for devices */
+  char main_build_log[640];
   /* Used to store the llvm IR of the build to save disk I/O. */
   void **llvm_irs;
   /* Use to store build status */
