@@ -82,6 +82,13 @@ static const char cl_parameters_not_yet_supported_by_clang[] =
   strcat (modded_options, " "); \
 } while (0)
 
+#define APPEND_TO_MAIN_BUILD_LOG(...)  \
+  POCL_MSG_ERR(__VA_ARGS__);   \
+  {                            \
+    size_t l = strlen(program->main_build_log); \
+    snprintf(program->main_build_log + l, (640 - l), __VA_ARGS__); \
+  }
+
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clBuildProgram)(cl_program program,
                        cl_uint num_devices,
@@ -106,7 +113,7 @@ CL_API_SUFFIX__VERSION_1_0
   char *saveptr = NULL;
   void* cache_lock = NULL;
 
-  POCL_GOTO_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
+  POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
 
   POCL_GOTO_ERROR_COND((num_devices > 0 && device_list == NULL), CL_INVALID_VALUE);
   POCL_GOTO_ERROR_COND((num_devices == 0 && device_list != NULL), CL_INVALID_VALUE);
@@ -120,6 +127,8 @@ CL_API_SUFFIX__VERSION_1_0
   POCL_GOTO_ERROR_ON((program->source == NULL && program->binaries == NULL),
     CL_INVALID_PROGRAM, "Program doesn't have sources or binaries! You need "
                         "to call clCreateProgramWith{Binary|Source} first\n");
+
+  program->main_build_log[0] = 0;
 
   if (options != NULL)
     {
@@ -141,13 +150,13 @@ CL_API_SUFFIX__VERSION_1_0
                 }
               else if (strstr (cl_parameters_not_yet_supported_by_clang, token))
                 {
-                  POCL_MSG_ERR("Build option isnt yet supported by clang: %s\n", token);
+                  APPEND_TO_MAIN_BUILD_LOG("Build option isnt yet supported by clang: %s\n", token);
                   token = strtok_r (NULL, " ", &saveptr);  
                   continue;
                 }
               else
                 {
-                  POCL_MSG_ERR("Invalid build option: %s\n", token);
+                  APPEND_TO_MAIN_BUILD_LOG("Invalid build option: %s\n", token);
                   errcode = CL_INVALID_BUILD_OPTIONS;
                   goto ERROR_CLEAN_OPTIONS;
                 }
@@ -167,7 +176,7 @@ CL_API_SUFFIX__VERSION_1_0
             }
           else
             {
-              POCL_MSG_ERR("Invalid build option: %s\n", token);
+              APPEND_TO_MAIN_BUILD_LOG("Invalid build option: %s\n", token);
               errcode = CL_INVALID_BUILD_OPTIONS;
               goto ERROR_CLEAN_OPTIONS;
             }
