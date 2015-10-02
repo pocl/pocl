@@ -802,7 +802,7 @@ fi
 # llvm-config does not always report the "-DNDEBUG" flag correctly
 # (see LLVM bug 18253). If LLVM and the pocl passes are built with 
 # different NDEBUG settings, problems arise 
-AC_MSG_CHECKING([if LLVM is built with assertions])
+AC_MSG_CHECKING([if llvm-config reports -DNDEBUG properly])
 CXXFLAGS="$CXXFLAGS $($LLVM_CONFIG --cxxflags) -UNDEBUG"
 LIBS="$LIBS $($LLVM_CONFIG --libs)"
 LDFLAGS="$LDFLAGS $LLVM_LDFLAGS"
