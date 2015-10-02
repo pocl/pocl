@@ -3,7 +3,12 @@
 
 Highlights
 ----------
-- New and improved kernel cache system, with #include support.
+- Support for HSA-compliant devices (kernel agents). The GPU of AMD Kaveri
+  now works through pocl with a bunch of test cases in the AMD SDK 2.9 example
+  suite.
+- New and improved kernel cache system that enables caching
+  kernels with #includes.
+- Support for LLVM/Clang 3.7.
 
 Kernel compiler
 ---------------
@@ -25,6 +30,7 @@ Bugfixes
 --------
 - Avoid infinite loops when users recycle an event waiting list.
 - Correctly report the base address alignment.
+- Lots of others.
 
 Misc
 ----
