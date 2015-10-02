@@ -82,3 +82,23 @@ Installing prerequisite software
   tests of the pocl testsuite:
 
   `make check TESTSUITEFLAGS="-k hsa"`
+
+
+HSA Support notes
+------------------
+Note that the support is still experimental and very much unfinished. You're
+welcome to try it out and report any issues, though.
+
+What's implemented:
+ * global/local/private memory
+ * atomics, barriers
+ * most of the OpenCL kernel library builtins
+
+What's missing
+ * printf() is not implemented
+ * several builtins are not implemented yet (erf(c), lgamma, tgamma,
+   logb, remainder, nextafter) and some are suboptimal or may give incorrect
+   results with under/overflows (e.g. hypot, length, distance). We're working on
+   this, if you find any problem  please let us know)
+ * image support is not implemented
+ * OpenCL 2.0 features (SVM) are unimplemented
