@@ -59,10 +59,14 @@ POname(clGetProgramBuildInfo)(cl_program            program,
   case CL_PROGRAM_BUILD_LOG:
     {
       char *build_log;
-      if (program->build_log[device_i])
+      if (program->main_build_log[0])
+          build_log = strdup(program->main_build_log);
+      else if (program->build_log[device_i])
           build_log = strdup(program->build_log[device_i]);
       else
           build_log = pocl_cache_read_buildlog(program, device_i);
+      if (program->build_status == CL_BUILD_NONE)
+          build_log = empty_str;
       POCL_RETURN_ERROR_ON((build_log==NULL), CL_OUT_OF_HOST_MEMORY, "failed to read build log");
 
       size_t const value_size = strlen(build_log) + 1;

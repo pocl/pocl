@@ -1,6 +1,7 @@
-/* OpenCL built-in library: native_recip()
+/* OpenCL built-in library: remainder()
 
-   Copyright (c) 2015 Michal Babej / Tampere University of Technology
+   Copyright (c) 2011 Erik Schnetter <eschnetter@perimeterinstitute.ca>
+                      Perimeter Institute for Theoretical Physics
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -20,6 +21,9 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 */
+
 #include "hsail_templates.h"
 
-DEFINE_LLVM_INTRIN_FP32_FP64(native_recip, V_V, hsail.nrcp, ((vtype)(1.0) / a))
+// TODO currently this produces the exact same code as fmod().
+
+IMPLEMENT_EXPR_ALL(remainder, V_VV, __builtin_fmodf(a,b), __builtin_fmod(a,b))

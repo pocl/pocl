@@ -13,10 +13,12 @@ Contents:
 
    using
    faq
+   env_variables
    development
    releasing
    design
    features
+   hsa
 
 Back to `pocl home page <http://pocl.sourceforge.net>`_.
 

@@ -94,6 +94,7 @@ POname(clCreateProgramWithSource)(cl_context context,
 
   *source = '\0';
 
+  program->main_build_log[0] = 0;
   program->context = context;
   program->num_devices = context->num_devices;
   program->devices = context->devices;

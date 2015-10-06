@@ -53,6 +53,9 @@ static const char invalid_kernel[] =
 static const char valid_kernel[] =
   "kernel void init(global int *arg) { return; }\n";
 
+static const char invalid_build_option[] =
+  "-fnothing-to-see-here";
+
 int
 main(void){
   cl_int err;
@@ -111,6 +114,22 @@ main(void){
 				      &kernel_size, &err);
   //clCreateProgramWithSource for invalid kernel failed
   CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
+
+  err = clBuildProgram(program, num_devices, devices, invalid_build_option, NULL, NULL);
+  TEST_ASSERT(err == CL_INVALID_BUILD_OPTIONS);
+
+  for (i = 0; i < num_devices; ++i) {
+          size_t log_size = 0;
+          err = clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
+                  0, NULL, &log_size);
+          CHECK_OPENCL_ERROR_IN("get build log size");
+          char *log = malloc(log_size);
+          err = clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
+                  log_size, log, NULL);
+          CHECK_OPENCL_ERROR_IN("get build log");
+          log[log_size] = '\0';
+          fprintf(stderr, "preprocess failure log[%u]: %s\n", i, log);
+  }
 
   err = clBuildProgram(program, num_devices, devices, NULL, NULL, NULL);
   TEST_ASSERT(err == CL_BUILD_PROGRAM_FAILURE);

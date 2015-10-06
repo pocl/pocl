@@ -255,7 +255,8 @@ supported_hsa_devices[MAX_HSA_AGENTS] =
     .endian_little = CL_TRUE,
     .extensions = "cl_khr_fp64 cl_khr_byte_addressable_store"
       " cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics"
-      " cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics",
+      " cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics"
+      " cl_khr_int64_base_atomics cl_khr_int64_extended_atomics",
     .preferred_wg_size_multiple = 64, // wavefront size on Kaveri
     .preferred_vector_width_char = 4,
     .preferred_vector_width_short = 2,
