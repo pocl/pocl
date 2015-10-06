@@ -1349,9 +1349,8 @@ then
   enable_testsuite_hsa=yes
   POAT_TESTSUITES="$POAT_TESTSUITES hsa"
 
-  # -lhsail is missing from llvm-config --system-libs
   # -lHSAILUtil is missing from llvm-config --libfiles
-  LLVM_LIBS="$LLVM_LIBS -lLLVMHSAILUtil -lhsail"
+  LLVM_LIBS="$LLVM_LIBS -lLLVMHSAILUtil"
 fi
 
 # TODO: move above
