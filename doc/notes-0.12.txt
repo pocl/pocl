@@ -13,8 +13,9 @@ optimizations, reducing the need for target-dependent manual
 optimizations.
 
 Release highlights:
+
  * support for HSA-compliant devices (tested with AMD Kaveri's GPU)
- * kernel compiler support for LLVM/Clang 3.7,
+ * kernel compiler support for LLVM/Clang 3.7
  * improved caching of compiled OpenCL kernels
 
 We consider pocl ready for wider scale testing, although the OpenCL
@@ -24,6 +25,11 @@ examples, Rodinia 2.0.1 benchmarks, Parboil benchmarks, OpenCL
 Programming Guide book samples, VexCL test cases, Luxmark v2.0,
 most of the AMD APP SDK v2.9 OpenCL samples and piglit OpenCL tests
 among others.
+
+Note: 0.12 is the last version that builds with older LLVM versions.
+We plan prune code needed to support for the old versions in the next
+release and focus on the current stable version and possibly the
+previous one for easier transition.
 
 Acknowledgements
 ----------------
