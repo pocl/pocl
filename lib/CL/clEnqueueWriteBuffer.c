@@ -63,6 +63,8 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
     POCL_RETURN_ERROR_COND((event_wait_list[i] == NULL), CL_INVALID_EVENT_WAIT_LIST);
 
   device = command_queue->device;
+  if (device->parent_device)
+    device = device->parent_device;
 
   for (i = 0; i < command_queue->context->num_devices; ++i)
     {

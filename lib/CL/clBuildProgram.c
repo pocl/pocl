@@ -99,6 +99,7 @@ POname(clBuildProgram)(cl_program program,
                        void *user_data) 
 CL_API_SUFFIX__VERSION_1_0
 {
+  cl_device_id *devlist = NULL;
   char program_bc_path[POCL_FILENAME_LENGTH];
   int errcode;
   size_t i;
@@ -200,17 +201,30 @@ CL_API_SUFFIX__VERSION_1_0
   else
     {
       real_num_devices = num_devices;
-      /* TODO: this needs rewrite, once subDevices are implemented properly
-       * count the duplicates from the given list (for subdevices,
-       * their cl_device_id == the parent's cl_device_id), and we only
-       * need to build once for a device and all its subdevices */
-      for (i=1; i < num_devices; ++i)
-          for (device_i=0; device_i < i; ++device_i)
-              if (device_list[device_i] == device_list[i])
+      /* If any device on the list is a subdevice, replace with its parent;
+       * then remove duplicates from the list */
+      devlist = calloc(num_devices, sizeof(cl_device_id));
+      for (i=0; i < num_devices; ++i)
+        devlist[i] = (device_list[i]->parent_device ?
+                      device_list[i]->parent_device : device_list[i]);
+
+      i=1;
+      while (i < real_num_devices)
+        {
+          device_i=0;
+          while (device_i < i)
+            {
+              if (devlist[device_i] == devlist[i])
                 {
-                  --real_num_devices;
-                  break;
+                  devlist[device_i] = devlist[--real_num_devices];
+                  devlist[real_num_devices] = NULL;
                 }
+              else
+                device_i++;
+            }
+          i++;
+        }
+      device_list = devlist;
     }
 
   POCL_MSG_PRINT_INFO("building program with options %s\n",
@@ -304,6 +318,7 @@ ERROR_CLEAN_OPTIONS:
 ERROR:
   program->build_status = CL_BUILD_ERROR;
   pocl_cache_release_lock(cache_lock);
+  POCL_MEM_FREE(devlist);
   POCL_UNLOCK_OBJ(program);
   return errcode;
 }
