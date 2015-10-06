@@ -56,7 +56,8 @@ int pocl_cl_device_to_index(cl_program   program,
     unsigned i;
     assert(program);
     for (i = 0; i < program->num_devices; i++)
-        if (program->devices[i] == device)
+        if (program->devices[i] == device ||
+            program->devices[i] == device->parent_device)
             return i;
     return -1;
 }
