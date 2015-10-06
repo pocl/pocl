@@ -242,26 +242,6 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
   device->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT; // this is in bytes
   device->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT*8; // this is in bits
 
-  /* Note: The specification describes identifiers being delimited by
-     only a single space character. Some programs that check the device's
-     extension  string assume this rule. Future extension additions should
-     ensure that there is no more than a single space between
-     identifiers. */
-
-#ifndef _CL_DISABLE_LONG
-#define DOUBLE_EXT "cl_khr_fp64 "
-#else
-#define DOUBLE_EXT
-#endif
-
-#ifndef _CL_DISABLE_HALF
-#define HALF_EXT "cl_khr_fp16 "
-#else
-#define HALF_EXT
-#endif
-
-  device->extensions = DOUBLE_EXT HALF_EXT "cl_khr_byte_addressable_store";
-
   /* hwloc probes OpenCL device info at its initialization in case
      the OpenCL extension is enabled. This causes to printout 
      an unimplemented property error because hwloc is used to
