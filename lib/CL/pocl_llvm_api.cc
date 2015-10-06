@@ -1311,10 +1311,10 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
   int device_i = pocl_cl_device_to_index(program, device);
   assert(device_i >= 0);
 
-  char kernel_so_path[POCL_FILENAME_LENGTH];
-  pocl_cache_work_group_function_so_path(kernel_so_path, program, device_i, kernel, local_x, local_y, local_z);
+  char parallel_bc_path[POCL_FILENAME_LENGTH];
+  pocl_cache_work_group_function_path(parallel_bc_path, program, device_i, kernel, local_x, local_y, local_z);
 
-  if (pocl_exists(kernel_so_path))
+  if (pocl_exists(parallel_bc_path))
     return CL_SUCCESS;
 
   llvm::MutexGuard lockHolder(kernelCompilerLock);
@@ -1323,7 +1323,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
 #ifdef DEBUG_POCL_LLVM_API        
   printf("### calling the kernel compiler for kernel %s local_x %zu "
          "local_y %zu local_z %zu parallel_filename: %s\n",
-         kernel->name, local_x, local_y, local_z, kernel_so_path);
+         kernel->name, local_x, local_y, local_z, parallel_bc_path);
 #endif
 
   Triple triple(device->llvm_target_triplet);
