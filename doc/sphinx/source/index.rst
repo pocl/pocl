@@ -12,6 +12,7 @@ Contents:
    :maxdepth: 2
 
    using
+   env_variables
    faq
    development
    releasing

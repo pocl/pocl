@@ -104,15 +104,10 @@ distributed with pocl for convenience in the directory
 To use VML, you need to have a functional clang++ installed.
 Currently, VML is enabled only for x86_64.
 
-Tuning pocl behavior
---------------------
-
-.. include:: env_variables.rst
-
 Wiki
 ----
 
-`Wiki <http://sourceforge.net/apps/mediawiki/pocl/index.php?title=Main_Page>`_
+`Wiki <https://github.com/pocl/pocl/wiki>`_
 contains some further information and serves as a "scratch pad".
 
 

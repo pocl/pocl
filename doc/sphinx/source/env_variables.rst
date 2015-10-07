@@ -1,10 +1,21 @@
-The behavior of pocl can be controlled with multiple environment variables listed
-below.
+Tuning pocl behavior
+--------------------
+
+The behavior of pocl can be controlled with multiple environment variables
+listed below. The variables are helpful both when using and when developing
+pocl.
 
 * POCL_BUILDING
 
- If set, the pocl helper scripts, kernel library and headers are 
+ If  set, the pocl helper scripts, kernel library and headers are 
  searched first from the pocl build directory.
+
+* POCL_BBVECTORIZE
+
+ If set to 1, makes the pocl kernel compiler execute the LLVM BBVectorizer in
+ addition to the SLP vectorizer and the inner loop vectorizer. BBVectorizer
+ has known stability issues, therefore it's disabled by default, but it can
+ provide performance improvements. See: https://github.com/pocl/pocl/issues/251
 
 * POCL_CACHE_DIR
 
@@ -35,6 +46,9 @@ below.
  *         ttasim       Device that simulates a TTA device using the
                         TCE's ttasim library. Enabled only if TCE libraries
                         installed.
+
+ *         hsa          Uses HSA Runtime API to control HSA-compliant
+                        kernel agents that support HSAIL finalization.
 
  If POCL_DEVICES is not set, one pthread device will be used.
  To specify parameters for drivers, the POCL_<drivername><instance>_PARAMETERS
