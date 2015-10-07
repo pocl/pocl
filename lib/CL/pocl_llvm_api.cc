@@ -1,7 +1,7 @@
 /* pocl_llvm_api.cc: C wrappers for calling the LLVM/Clang C++ APIs to invoke
    the different kernel compilation phases.
 
-   Copyright (c) 2013 Kalle Raiskila 
+   Copyright (c) 2013 Kalle Raiskila
                  2013-2015 Pekka Jääskeläinen
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -1183,12 +1183,14 @@ static PassManager& kernel_compiler_passes
             Builder.LoopVectorize = true;
             Builder.SLPVectorize = true;
 #ifdef LLVM_OLDER_THAN_3_7
-            Builder.BBVectorize = true;
+            Builder.BBVectorize = pocl_get_bool_option ("POCL_BBVECTORIZE", 1);
 #else
             // In LLVM 3.7 the BB vectorizer crashes with some of the
-            // the shuffle tests. Perhaps the pass is obsoleted due to
-            // SLPVectorize and not maintained?            
-            Builder.BBVectorize = false;
+            // the shuffle tests, but gives performance improvements in
+            // some (see https://github.com/pocl/pocl/issues/251).
+            // Disable by default because of
+            // https://llvm.org/bugs/show_bug.cgi?id=25077
+            Builder.BBVectorize = pocl_get_bool_option ("POCL_BBVECTORIZE", 0);
 #endif
           }
 #endif
