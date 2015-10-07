@@ -23,6 +23,7 @@
 
 #include "devices/devices.h"
 #include "pocl_cl.h"
+#include "pocl_util.h"
 #include "pocl_mem_management.h"
 #include <stdlib.h>
 #include <string.h>
@@ -122,7 +123,7 @@ POname(clCreateContext)(const cl_context_properties * properties,
                 void *                        user_data,
                 cl_int *                      errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
-  unsigned i, j;
+  unsigned i;
   cl_device_id device_ptr;
   int errcode = 0;
   cl_context context = NULL;
@@ -149,19 +150,19 @@ POname(clCreateContext)(const cl_context_properties * properties,
     {
       goto ERROR;
     }
-  
-  context->num_devices = num_devices;
-  context->devices = (cl_device_id *) malloc(num_devices * sizeof(cl_device_id));
+
+  context->devices = pocl_unique_device_list(devices, num_devices,
+                                             &context->num_devices);
   if (context->devices == NULL)
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
       goto ERROR;
     }
   
-  j = 0;
-  for (i = 0; i < num_devices; ++i)
+  i = 0;
+  while (i < context->num_devices)
     {
-      device_ptr = devices[i];
+      device_ptr = context->devices[i++];
       if (device_ptr == NULL)
         {
           POCL_MSG_ERR("one of the devices in device list is NULL\n");
@@ -169,14 +170,20 @@ POname(clCreateContext)(const cl_context_properties * properties,
           goto ERROR_CLEAN_CONTEXT_AND_DEVICES;
         }
       
-      if (device_ptr->available == CL_TRUE) 
+      if (device_ptr->available != CL_TRUE)
         {
-          context->devices[j] = device_ptr;
-          ++j;
+          POCL_MSG_WARN("Dropping unavailable device: %s\n", device_ptr->long_name);
+          context->devices[i] = context->devices[--context->num_devices];
         }
       else
-        POCL_MSG_WARN("device not available: %s\n", device_ptr->long_name);
-      POname(clRetainDevice)(device_ptr);
+        POname(clRetainDevice)(device_ptr);
+    }
+
+  if (context->num_devices == 0)
+    {
+      POCL_MSG_PRINT_INFO("Zero devices after dropping the unavailable ones\n");
+      errcode = CL_INVALID_DEVICE;
+      goto ERROR_CLEAN_CONTEXT_AND_DEVICES;
     }
 
   pocl_init_mem_manager ();

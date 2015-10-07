@@ -45,9 +45,7 @@ POname(clCreateCommandQueue)(cl_context context,
 
   for (i=0; i<context->num_devices; i++)
     {
-      if (context->devices[i] == device)
-        found = CL_TRUE;
-      if (context->devices[i] == device->parent_device)
+      if (context->devices[i] == POCL_REAL_DEV(device))
         found = CL_TRUE;
     }
 
