@@ -81,7 +81,7 @@ POname(clEnqueueWriteBufferRect)(cl_command_queue command_queue,
 
 
 
-  device = command_queue->device;
+  device = POCL_REAL_DEV(command_queue->device);
 
   for (i = 0; i < command_queue->context->num_devices; ++i)
     {

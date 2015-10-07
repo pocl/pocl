@@ -24,7 +24,7 @@ POname(clGetKernelWorkGroupInfo)
       unsigned i;
       int found_it = 0;
       for (i = 0; i < kernel->context->num_devices; i++)
-        if (device == kernel->context->devices[i])
+        if (POCL_REAL_DEV(device) == kernel->context->devices[i])
         {
           found_it = 1;
           break;
