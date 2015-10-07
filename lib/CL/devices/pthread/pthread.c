@@ -524,7 +524,7 @@ get_max_thread_count(cl_device_id device)
   if (device->max_compute_units == 0)
     return pocl_get_int_option (THREAD_COUNT_ENV, FALLBACK_MAX_THREAD_COUNT);
   else
-    return pocl_get_int_option(THREAD_COUNT_ENV, device->max_compute_units);
+    return pocl_get_int_option(THREAD_COUNT_ENV, POCL_REAL_DEV(device)->max_compute_units);
 }
 
 void
@@ -533,18 +533,23 @@ pocl_pthread_run
  _cl_command_node* cmd)
 {
   int error;
-  unsigned i;
+  unsigned i, max_threads;
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
   struct thread_arguments *arguments;
-  static size_t max_threads = 0; /* this needs to be asked only once */
+  static unsigned default_max_threads = 0; /* this needs to be asked only once */
 
   size_t num_groups_x = pc->num_groups[0];
   /* TODO: distributing the work groups in the x dimension is not always the
      best option. This assumes x dimension has enough work groups to utilize
      all the threads. */
-  if (max_threads == 0)
-    max_threads = get_max_thread_count(cmd->device);
+  if (default_max_threads == 0)
+    default_max_threads = get_max_thread_count(cmd->device);
+
+  if (cmd->device->parent_device)
+    max_threads = cmd->device->max_compute_units;
+  else
+    max_threads = default_max_threads;
 
   unsigned num_threads = min(max_threads, num_groups_x);
   pthread_t *threads = (pthread_t*) malloc (sizeof (pthread_t)*num_threads);
