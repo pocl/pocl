@@ -124,7 +124,7 @@ struct data {
 static thread_arguments *volatile thread_argument_pool = 0;
 static int argument_pool_initialized = 0;
 pocl_lock_t ta_pool_lock;
-static size_t get_max_thread_count();
+static size_t get_max_thread_count(cl_device_id device);
 static void * workgroup_thread (void *p);
 
 /* TODO: Declare this in a header file */
