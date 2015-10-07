@@ -34,6 +34,7 @@
 #  include "vccompat.hpp"
 #endif
 #include "pocl_llvm.h"
+#include "pocl_util.h"
 #include "pocl_file_util.h"
 #include "pocl_cache.h"
 #include "config.h"
@@ -99,14 +100,14 @@ POname(clBuildProgram)(cl_program program,
                        void *user_data) 
 CL_API_SUFFIX__VERSION_1_0
 {
-  cl_device_id *devlist = NULL;
   char program_bc_path[POCL_FILENAME_LENGTH];
   int errcode;
   size_t i;
   int error;
   uint64_t fsize;
+  cl_device_id * unique_devlist = NULL;
   char *binary = NULL;
-  unsigned device_i = 0, real_num_devices = 0, actually_built = 0;
+  unsigned device_i = 0, actually_built = 0;
   const char *user_options = "";
   char *temp_options = NULL;
   char *modded_options = NULL;
@@ -195,36 +196,16 @@ CL_API_SUFFIX__VERSION_1_0
 
   if (num_devices == 0)
     {
-      real_num_devices = num_devices = program->num_devices;
+      num_devices = program->num_devices;
       device_list = program->devices;
     }
   else
     {
-      real_num_devices = num_devices;
-      /* If any device on the list is a subdevice, replace with its parent;
-       * then remove duplicates from the list */
-      devlist = calloc(num_devices, sizeof(cl_device_id));
-      for (i=0; i < num_devices; ++i)
-        devlist[i] = (device_list[i]->parent_device ?
-                      device_list[i]->parent_device : device_list[i]);
-
-      i=1;
-      while (i < real_num_devices)
-        {
-          device_i=0;
-          while (device_i < i)
-            {
-              if (devlist[device_i] == devlist[i])
-                {
-                  devlist[device_i] = devlist[--real_num_devices];
-                  devlist[real_num_devices] = NULL;
-                }
-              else
-                device_i++;
-            }
-          i++;
-        }
-      device_list = devlist;
+      // convert subdevices to devices and remove duplicates
+      cl_uint real_num_devices = 0;
+      unique_devlist = pocl_unique_device_list(device_list, num_devices, &real_num_devices);
+      num_devices = real_num_devices;
+      device_list = unique_devlist;
     }
 
   POCL_MSG_PRINT_INFO("building program with options %s\n",
@@ -291,7 +272,7 @@ CL_API_SUFFIX__VERSION_1_0
       cache_lock = NULL;
     }
 
-  POCL_GOTO_ERROR_ON((actually_built < real_num_devices), CL_BUILD_PROGRAM_FAILURE,
+  POCL_GOTO_ERROR_ON((actually_built < num_devices), CL_BUILD_PROGRAM_FAILURE,
                      "Some of the devices on the argument-supplied list are"
                      "not available for the program, or do not exist\n")
 
@@ -301,6 +282,7 @@ CL_API_SUFFIX__VERSION_1_0
 
   program->build_status = CL_BUILD_SUCCESS;
   POCL_UNLOCK_OBJ(program);
+  POCL_MEM_FREE(unique_devlist);
   return CL_SUCCESS;
 
   /* Set pointers to NULL during cleanup so that clProgramRelease won't
@@ -316,9 +298,9 @@ ERROR_CLEAN_BINARIES:
 ERROR_CLEAN_OPTIONS:
   POCL_MEM_FREE(modded_options);
 ERROR:
+  POCL_MEM_FREE(unique_devlist);
   program->build_status = CL_BUILD_ERROR;
   pocl_cache_release_lock(cache_lock);
-  POCL_MEM_FREE(devlist);
   POCL_UNLOCK_OBJ(program);
   return errcode;
 }
