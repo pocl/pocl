@@ -24,31 +24,34 @@ Installing prerequisite software
 2) Build HSAIL-Tools
 ~~~~~~~~~~~~~~~~~~~~~
 
-   `git clone` https://github.com/HSAFoundation/HSAIL-Tools
+   `git clone https://github.com/HSAFoundation/HSAIL-Tools`
 
-   In particular, **libHSAIL.a** will be required by LLVM, and **HSAILasm** will be
-   required by pocl.
+   In particular **HSAILasm** executable will be required by pocl.
 
 3) Build & install the LLVM with HSAIL support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-  `git clone` https://github.com/HSAFoundation/HLC-HSAIL-Development-LLVM/
+
+  `git clone https://github.com/HSAFoundation/HLC-HSAIL-Development-LLVM/`
 
   Use the branch hsail-stable-3.7; before build, patch it with
 
-      `pocl/tools/patches/llvm-3.7-hsail-branch.patch`
+  `pocl/tools/patches/llvm-3.7-hsail-branch.patch`
 
-  Build it with a Clang 3.7 (branch release_37) patched with
+  Build it with a Clang 3.7 (branch release_37)
 
-      `pocl/tools/patches/clang-3.7-hsail-branch.patch`
+  `cd tools; svn co http://llvm.org/svn/llvm-project/cfe/branches/release_37 clang`
+
+  patched with
+
+  `pocl/tools/patches/clang-3.7-hsail-branch.patch`
 
   to get the HSAIL Clang support.
 
   An LLVM cmake configuration command like this worked for me:
 
-  `cmake .. -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=HSAIL -DBUILD_SHARED_LIBS=off
-  -DCMAKE_INSTALL_PREFIX=INSTALL_DIR -DLLVM_ENABLE_RTTI=on -DLLVM_BUILD_LLVM_DYLIB=on
-  -DLIBHSAIL_INCLUDE_DIR=$HOME/local/include -DLIBHSAIL_LIBRARIES=\<path/to/libhsail.a\>
-  -DLLVM_ENABLE_EH=ON`
+  `mkdir build; cd build; cmake .. -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=HSAIL
+  -DBUILD_SHARED_LIBS=off -DCMAKE_INSTALL_PREFIX=INSTALL_DIR -DLLVM_ENABLE_RTTI=on
+  -DLLVM_BUILD_LLVM_DYLIB=on -DLLVM_ENABLE_EH=ON`
 
   Note that these are **required** :
 
@@ -57,8 +60,6 @@ Installing prerequisite software
 
   Also, if you don't want to build all the default targets, you'll need AMDGPU.
 
-  Make sure the libHSAIL is detected by llvm's cmake by searching CMakeCache.txt
-  for HSAIL_USE_LIBHSAIL (ensure it is 'ON').
 
 4) Build pocl.
 ~~~~~~~~~~~~~~~

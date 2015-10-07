@@ -16,7 +16,7 @@ Release highlights:
 
  * support for HSA-compliant devices (tested with AMD Kaveri's GPU)
    - for installation steps & current status, please see the HSA section
-     in Pocl documentation
+     in Pocl documentation: http://www.portablecl.org/docs/html/hsa.html
  * kernel compiler support for LLVM/Clang 3.7
  * improved caching of compiled OpenCL kernels
 
