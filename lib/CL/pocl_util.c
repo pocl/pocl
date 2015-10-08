@@ -531,7 +531,7 @@ cl_device_id * pocl_unique_device_list(const cl_device_id * in, cl_uint num, cl_
     out[i] = (in[i] ? POCL_REAL_DEV(in[i]) : NULL);
 
   i=1;
-  int device_i=0;
+  unsigned device_i=0;
   while (i < real_num)
     {
       device_i=0;

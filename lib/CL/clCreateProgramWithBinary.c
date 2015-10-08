@@ -115,7 +115,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
   program->main_build_log[0] = 0;
   program->context = context;
   program->num_devices = num_devices;
-  program->devices = device_list;
+  program->devices = unique_devlist;
   program->source = NULL;
   program->kernels = NULL;
   program->build_status = CL_BUILD_NONE;

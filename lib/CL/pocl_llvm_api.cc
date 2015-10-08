@@ -1556,15 +1556,11 @@ pocl_llvm_codegen(cl_kernel kernel,
 #ifdef LLVM_OLDER_THAN_3_7
     std::string data;
     llvm::raw_string_ostream sos(data);
-#else
-    SmallVector<char, 4096> data;
-    llvm::raw_svector_ostream sos(data);
-#endif
-    llvm::MCContext *mcc;
-#ifdef LLVM_OLDER_THAN_3_7
     if (target && target->addPassesToEmitMC(PM, mcc, sos))
       return 1;
 #else
+    SmallVector<char, 4096> data;
+    llvm::raw_svector_ostream sos(data);
     if (target && target->addPassesToEmitFile(
         PM, sos, TargetMachine::CGFT_ObjectFile))
       return 1;

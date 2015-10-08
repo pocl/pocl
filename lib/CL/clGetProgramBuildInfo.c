@@ -35,7 +35,6 @@ POname(clGetProgramBuildInfo)(cl_program            program,
                       void *                param_value,
                       size_t *              param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
-  const char *empty_str = "";      /* dummy return value */
   const char *str;
 
   POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
@@ -52,7 +51,7 @@ POname(clGetProgramBuildInfo)(cl_program            program,
     
   case CL_PROGRAM_BUILD_OPTIONS:
     {
-      str = (program->compiler_options)? program->compiler_options: empty_str;
+      str = (program->compiler_options)? program->compiler_options: "";
       POCL_RETURN_GETINFO_STR(str);
     }
     
@@ -66,7 +65,7 @@ POname(clGetProgramBuildInfo)(cl_program            program,
       else
           build_log = pocl_cache_read_buildlog(program, device_i);
       if (program->build_status == CL_BUILD_NONE)
-          build_log = empty_str;
+          build_log = "";
       POCL_RETURN_ERROR_ON((build_log==NULL), CL_OUT_OF_HOST_MEMORY, "failed to read build log");
 
       size_t const value_size = strlen(build_log) + 1;
