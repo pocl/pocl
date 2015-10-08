@@ -40,7 +40,8 @@ We'd like to thank Finnish Funding Agency for Technology and Innovation
 (project "Parallel Acceleration 2", funding decision 40115/13), Academy of
 Finland (funding decision 253087) and ARTEMIS joint undertaking under grant
 agreement no 641439 (ALMARVI) for funding the development of
-this release.
+this release. Special thanks to HSAFoundation who sponsors the work on
+HSA support.
 
 A pocl developer E. Schnetter acknowledges support from the Perimeter
 Institute, as well as funding from NSERC (Canada) via a Discovery Grant and
