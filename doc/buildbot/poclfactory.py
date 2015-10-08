@@ -32,7 +32,8 @@ def createPoclFactory(	environ={},
 			f=None,
 			cmake=False,
 			cmake_opts='',
-			cache_dir=None
+			cache_dir=None,
+			make='make'
 			):
 	"""
 	Create a buildbot factory object that builds pocl.
@@ -53,6 +54,7 @@ def createPoclFactory(	environ={},
 	cmake		Bool:	use CMake instead of autotools to build pocl
 	cmake_opts      List:   extra options to pass to cmake
 	cache_dir	String: Set the pocl kernel cache to this dir. If not set, the kcache is disabled.
+	make            String: The make command to use.
 	"""
 
 	myenviron = environ.copy()
@@ -165,7 +167,7 @@ def createPoclFactory(	environ={},
 	f.addStep(Compile(env=myenviron ))
 
 	if tests_dir!=None and not cmake:
-		f.addStep(ShellCommand(command=["make", "prepare-examples"],
+		f.addStep(ShellCommand(command=[make, "prepare-examples"],
 				haltOnFailure=True,
 				name="prepare examples",
 				env=myenviron,
@@ -183,7 +185,7 @@ def createPoclFactory(	environ={},
 				logfiles={"test.log": logfile},
 				timeout=60*60))
 	else:
-		f.addStep(ShellCommand(command=["make", "check"],
+		f.addStep(ShellCommand(command=[make, "check"],
 				haltOnFailure=True,
 				name="checks",
 				env=myenviron,
@@ -194,7 +196,7 @@ def createPoclFactory(	environ={},
 				timeout=60*60))
 		#run the test once more, now from the kernel cache dir, if used
 		if cache_dir:
-			f.addStep(ShellCommand(command=["make", "check"],
+			f.addStep(ShellCommand(command=[make, "check"],
 				haltOnFailure=True,
 				name="kcache checks",
 				env=myenviron,
