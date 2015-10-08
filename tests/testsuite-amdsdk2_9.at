@@ -96,7 +96,7 @@ AT_CHECK_UNQUOTED([make test_BlackScholesDP -sC $abs_top_builddir/examples/AMDSD
 ], ignore)
 AT_CLEANUP
 
-POAT_AMDSDK_HSA_SETUP([boxfilter])
+POAT_AMDSDK_SETUP([boxfilter])
 AT_CHECK_UNQUOTED([make test_BoxFilter -sC $abs_top_builddir/examples/AMDSDK2.9 | egrep "Passed|failed"], 0, 
 [Passed!
 Verifying results...Passed!
@@ -469,7 +469,7 @@ AT_CHECK_UNQUOTED([make test_QuasiRandomSequence -sC $abs_top_builddir/examples/
 ])
 AT_CLEANUP
 
-POAT_AMDSDK_HSA_SETUP([radixsort])
+POAT_AMDSDK_SETUP([radixsort])
 AT_CHECK_UNQUOTED([make test_RadixSort -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ], ignore)     
@@ -487,7 +487,7 @@ AT_CHECK_UNQUOTED([make test_Reduction -sC $abs_top_builddir/examples/AMDSDK2.9 
 ])
 AT_CLEANUP
 
-POAT_AMDSDK_HSA_SETUP([scanlargearrays])
+POAT_AMDSDK_SETUP([scanlargearrays])
 # Fails with vectorization. With wiloops and no unrolling, the vectorization won't apply.
 AT_CHECK_UNQUOTED([make test_ScanLargeArrays -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
@@ -538,7 +538,7 @@ AT_CHECK_UNQUOTED([make test_SobelFilterImage -sC $abs_top_builddir/examples/AMD
 ])     
 AT_CLEANUP
 
-POAT_AMDSDK_HSA_SETUP([stringsearch])
+POAT_AMDSDK_SETUP([stringsearch])
 AT_CHECK_UNQUOTED([make test_StringSearch -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 Passed!
