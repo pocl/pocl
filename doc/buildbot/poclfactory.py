@@ -31,6 +31,7 @@ def createPoclFactory(	environ={},
 			tcedir='',
 			f=None,
 			cmake=False,
+			cmake_opts='',
 			cache_dir=None
 			):
 	"""
@@ -50,6 +51,7 @@ def createPoclFactory(	environ={},
 				NOTE: currently only a placeholder - not tested on the public buildbot
 	config_opts	String: extra options to pass to ./configure
 	cmake		Bool:	use CMake instead of autotools to build pocl
+	cmake_opts      List:   extra options to pass to cmake
 	cache_dir	String: Set the pocl kernel cache to this dir. If not set, the kcache is disabled.
 	"""
 
@@ -137,7 +139,7 @@ def createPoclFactory(	environ={},
 	if cmake:
 		f.addStep(
 			ShellCommand(
-				command=["cmake", "."],
+				command=["cmake", "."] + cmake_opts,
 				env=myenviron,
 				haltOnFailure=True,
 				name="CMake",
