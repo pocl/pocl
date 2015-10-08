@@ -34,4 +34,4 @@ include ../sources.mk
 LKERNEL_SRCS_EXCLUDE = printf.c barrier.ll
 LKERNEL_SRCS_EXTRA = barrier.c sqrt_default.ll
 
-EXTRA_DIST = CMakeLists.txt
+EXTRA_DIST = CMakeLists.txt $(srcdir)/*.c $(srcdir)/*.cl $(srcdir)/*.h $(srcdir)/*.ll frexp.inc

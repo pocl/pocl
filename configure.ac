@@ -1561,7 +1561,6 @@ AC_CONFIG_FILES([Makefile
                  lib/kernel/cellspu/Makefile
                  lib/kernel/host/Makefile
                  lib/kernel/tce/Makefile
-                 lib/kernel/amdgcn/Makefile
                  lib/kernel/hsail64/Makefile
                  lib/poclu/Makefile
                  examples/Makefile
