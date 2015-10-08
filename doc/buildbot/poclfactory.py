@@ -31,7 +31,7 @@ def createPoclFactory(	environ={},
 			tcedir='',
 			f=None,
 			cmake=False,
-			cmake_opts='',
+			cmake_opts=[],
 			cache_dir=None,
 			make='make'
 			):
