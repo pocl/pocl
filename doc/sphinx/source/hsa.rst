@@ -103,3 +103,4 @@ What's missing
    this, if you find any problem  please let us know)
  * image support is not implemented
  * OpenCL 2.0 features (SVM) are unimplemented
+ * Performance is suboptimal in many cases
