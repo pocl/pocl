@@ -61,7 +61,7 @@ endif
 EXTRA_DIST = config/xclang tools/data/test_machine.adf tools/data/test_machine_fp16.adf \
   doc/build-envs.txt CHANGES fix-include pocl.icd.in README README.ARM README.Cell \
   README.Windows README.mips README.OSX README.powerpc README.packaging CREDITS LICENSE \
-  tools/uncrustify_cxx.cfg windows/setup_and_build_win64.sh
+  tools/uncrustify_cxx.cfg windows/setup_and_build_win64.sh README.mipsel
 
 # CMake
 EXTRA_DIST += CMakeLists.txt cmake/FindHwloc.cmake cmake/FindPthreadsWin32.cmake \
@@ -70,7 +70,11 @@ EXTRA_DIST += CMakeLists.txt cmake/FindHwloc.cmake cmake/FindPthreadsWin32.cmake
 	scripts/pocl-standalone.in.cmake cmake/kernellib_hash.cmake
 
 # Sphinx dist:
-EXTRA_DIST += doc/sphinx/source/conf.py doc/sphinx/source/design.rst doc/sphinx/source/development.rst doc/sphinx/source/env_variables.rst doc/sphinx/source/faq.rst doc/sphinx/source/features.rst doc/sphinx/source/host_library.rst doc/sphinx/source/index.rst doc/sphinx/source/kernel_compiler.rst doc/sphinx/source/memory_management.rst doc/sphinx/source/releasing.rst doc/sphinx/source/using.rst doc/sphinx/Makefile
+EXTRA_DIST += doc/sphinx/source/conf.py doc/sphinx/source/design.rst doc/sphinx/source/development.rst doc/sphinx/source/env_variables.rst doc/sphinx/source/faq.rst doc/sphinx/source/features.rst doc/sphinx/source/host_library.rst doc/sphinx/source/hsa.rst doc/sphinx/source/index.rst doc/sphinx/source/kernel_compiler.rst doc/sphinx/source/memory_management.rst doc/sphinx/source/releasing.rst doc/sphinx/source/using.rst doc/sphinx/Makefile
+
+# Tools, patches etc
+EXTRA_DIST += tools/patches/khronos-icd-loader.patch tools/patches/clang-3.7-hsail-branch.patch tools/patches/llvm-3.7-hsail-branch.patch tools/scripts/devel-envs.sh tools/scripts/run_hsa_tests
+
 
 BUILT_SOURCES = install-paths.h
 

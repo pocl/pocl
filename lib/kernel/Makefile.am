@@ -31,11 +31,12 @@ SUBDIRS = @OCL_TARGETS@
 EXTRA_DIST = $(srcdir)/*.c $(srcdir)/*.cl $(srcdir)/*.h $(srcdir)/*.ll			\
 	$(srcdir)/vecmathlib/LICENCE			\
 	$(srcdir)/vecmathlib/README			\
-	$(srcdir)/vecmathlib/*.h				\
+	$(srcdir)/vecmathlib/*.h			\
+	$(srcdir)/vecmathlib/vecmathlib.rst		\
 	$(srcdir)/vecmathlib-pocl/*.cc			\
 	$(srcdir)/vecmathlib-pocl/*.cl			\
 	$(srcdir)/vecmathlib-pocl/*.h			\
-	$(srcdir)/vecmathlib-pocl/*.py  \
+	$(srcdir)/vecmathlib-pocl/*.py			\
 	$(srcdir)/cellspu/* \
 	$(srcdir)/tce/* \
 	CMakeLists.txt
