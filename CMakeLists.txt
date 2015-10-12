@@ -36,6 +36,14 @@ set(POCL_VERSION ${VERSION_STRING})
 
 ######################################################################################
 
+# Recent versions of CMake can make use of Ninja's console pool to avoid
+# buffering the output of particular commands.
+if(CMAKE_VERSION VERSION_LESS 3.2.0)
+  set(COMMAND_USES_TERMINAL)
+else()
+  set(COMMAND_USES_TERMINAL USES_TERMINAL)
+endif()
+
 if(UNIX)
   include(GNUInstallDirs)
 else()
@@ -990,7 +998,7 @@ add_subdirectory("tests")
 set(ALL_TESTSUITES "AMD;AMDSDK2.9;opencl-book-samples;Parboil;Piglit;Rodinia;VexCL;ViennaCL;Halide;OpenCV;CloverLeaf;hsa")
 add_subdirectory("examples")
 
-add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND})
+add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} ${COMMAND_USES_TERMINAL})
 
 ##########################################################
 
