@@ -1,6 +1,6 @@
 /* pocl_topology.c - retrieving the topology of OpenCL devices
 
-   Copyright (c) 2012 Cyril Roelandt and Pekka Jääskeläinen
+   Copyright (c) 2012,2015 Cyril Roelandt and Pekka Jääskeläinen
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -35,15 +35,18 @@ pocl_topology_detect_device_info(cl_device_id device)
   if (ret == -1)
     POCL_ABORT("Cannot initialize the topology.\n");
 
-  /* we also want to get the IO bridge, to extract the device vendor id,
-   * if possible
+  /*
+   * Let's not set HWLOC_TOPOLOGY_FLAG_WHOLE_IO or *IO_DEVICES because
+   * they enable the hwloc's OpenCL backend which causes problems at
+   * initialization stage because it reloads libpocl.so via the ICD loader.
    */
-  hwloc_topology_set_flags(pocl_topology, HWLOC_TOPOLOGY_FLAG_WHOLE_IO);
+  hwloc_topology_set_flags(pocl_topology, HWLOC_TOPOLOGY_FLAG_ICACHES);
   ret = hwloc_topology_load(pocl_topology);
   if (ret == -1)
     POCL_ABORT("Cannot load the topology.\n");
 
-  device->global_mem_size = hwloc_get_root_obj(pocl_topology)->memory.total_memory;
+  device->global_mem_size =
+      hwloc_get_root_obj(pocl_topology)->memory.total_memory;
 
   // Try to get the number of CPU cores from topology
   int depth = hwloc_get_type_depth(pocl_topology, HWLOC_OBJ_PU);
