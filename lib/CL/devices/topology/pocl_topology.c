@@ -23,6 +23,7 @@
 
 #include <pocl_cl.h>
 #include <hwloc.h>
+#include <stdlib.h>
 
 #include "pocl_topology.h"
 
@@ -31,16 +32,24 @@ pocl_topology_detect_device_info(cl_device_id device)
 {
   hwloc_topology_t pocl_topology;
 
+  /*
+   * hwloc's OpenCL backend causes problems at the initialization stage
+   * because it reloads libpocl.so via the ICD loader.
+   *
+   * See: https://github.com/pocl/pocl/issues/261
+   *
+   * The only trick to stop hwloc from initializing the OpenCL plugin
+   * I could find is to point the plugin search path to a place where there
+   * are no plugins to be found.
+   */
+  setenv ("HWLOC_PLUGINS_PATH", "/dev/null", 1);
+
   int ret = hwloc_topology_init(&pocl_topology);
   if (ret == -1)
     POCL_ABORT("Cannot initialize the topology.\n");
 
-  /*
-   * Let's not set HWLOC_TOPOLOGY_FLAG_WHOLE_IO or *IO_DEVICES because
-   * they enable the hwloc's OpenCL backend which causes problems at
-   * initialization stage because it reloads libpocl.so via the ICD loader.
-   */
-  hwloc_topology_set_flags(pocl_topology, HWLOC_TOPOLOGY_FLAG_ICACHES);
+  hwloc_topology_set_flags(pocl_topology, HWLOC_TOPOLOGY_FLAG_WHOLE_IO);
+
   ret = hwloc_topology_load(pocl_topology);
   if (ret == -1)
     POCL_ABORT("Cannot load the topology.\n");
