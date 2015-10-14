@@ -27,6 +27,7 @@
 #include <string.h>
 #include <CL/cl.h>
 #include <poclu.h>
+#include "config.h"
 #include "pocl_tests.h"
 
 #define MAX_PLATFORMS 32
@@ -65,7 +66,6 @@ main(void){
   cl_uint num_devices;
   cl_uint i;
   cl_program program = NULL;
-  cl_program program_with_binary = NULL;
   err = clGetPlatformIDs(MAX_PLATFORMS, platforms, &nplatforms);
   CHECK_OPENCL_ERROR_IN("clGetPlatformIDs");
   if (!nplatforms)
@@ -185,6 +185,19 @@ main(void){
   err |= clReleaseKernel(k);
   err |= clReleaseProgram(program);
   CHECK_OPENCL_ERROR_IN("'init' kernel name test clean-up");
+
+  // macro test
+  char* macro_kernel = poclu_read_file(SRCDIR "/tests/runtime/test_clBuildProgram_macros.cl" );
+  size_t s = strlen(macro_kernel);
+  program = clCreateProgramWithSource(context, 1, (const char**)&macro_kernel,
+                                      &s, &err);
+  CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
+
+  err = clBuildProgram(program, num_devices, devices, NULL, NULL, NULL);
+  TEST_ASSERT(err == CL_SUCCESS);
+
+  err = clReleaseProgram(program);
+  CHECK_OPENCL_ERROR_IN("clReleaseProgram");
 
   return EXIT_SUCCESS;
 }

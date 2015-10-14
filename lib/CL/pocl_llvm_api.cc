@@ -263,6 +263,19 @@ int pocl_llvm_build_program(cl_program program,
       POCL_MEM_FREE(device_switches);
     }
 
+  llvm::StringRef extensions(device->extensions);
+
+  size_t e_start = 0, e_end = 0;
+  while (e_end < std::string::npos) {
+    e_end = extensions.find(' ', e_start);
+    llvm::StringRef tok = extensions.slice(e_start, e_end);
+    e_start = e_end + 1;
+    // These two are defined in _kernel(_c).h via pocl_features.h
+    if (tok.startswith("cl_khr_fp64") || tok.startswith("cl_khr_fp16"))
+      continue;
+    ss << "-D" << tok.str() << " ";
+  }
+
   // This can cause illegal optimizations when unaware
   // of the barrier semantics. -O2 is the default opt level in
   // Clang for OpenCL C and seems to affect the performance
