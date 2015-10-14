@@ -210,6 +210,7 @@ pocl_pthread_init_device_infos(struct _cl_device_id* dev)
 void
 pocl_pthread_init (cl_device_id device, const char* parameters)
 {
+  static int device_number = 0;
   struct data *d; 
 #ifdef CUSTOM_BUFFER_ALLOCATOR  
   static mem_regions_management* mrm = NULL;
@@ -251,6 +252,16 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
   pocl_topology_detect_device_info(device);
   pocl_cpuinfo_detect_device_info(device);
   pocl_basic_set_buffer_image_limits(device);
+
+  /* in case hwloc doesn't provide a PCI ID, let's generate
+     a vendor id that hopefully is unique across vendors. */
+  const char *magic = "pocl";
+  if (device->vendor_id == 0)
+    device->vendor_id =
+      magic[0] | magic[1] << 8 | magic[2] << 16 | magic[3] << 24;
+
+  device->vendor_id += device_number;
+  device_number++;
 
   // pthread has elementary partitioning support
   device->max_sub_devices = device->max_compute_units;

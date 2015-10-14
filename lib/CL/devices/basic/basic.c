@@ -418,6 +418,7 @@ pocl_basic_init (cl_device_id device, const char* parameters)
   struct data *d;
   static int global_mem_id;
   static int first_basic_init = 1;
+  static int device_number = 0;
   
   if (first_basic_init)
     {
@@ -440,6 +441,16 @@ pocl_basic_init (cl_device_id device, const char* parameters)
   pocl_topology_detect_device_info(device);
   pocl_cpuinfo_detect_device_info(device);
   pocl_basic_set_buffer_image_limits(device);
+
+  /* in case hwloc doesn't provide a PCI ID, let's generate
+     a vendor id that hopefully is unique across vendors. */
+  const char *magic = "pocl";
+  if (device->vendor_id == 0)
+    device->vendor_id =
+      magic[0] | magic[1] << 8 | magic[2] << 16 | magic[3] << 24;
+
+  device->vendor_id += device_number;
+  device_number++;
 
   /* The basic driver represents only one "compute unit" as
      it doesn't exploit multiple hardware threads. Multiple
