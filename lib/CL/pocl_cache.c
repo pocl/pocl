@@ -122,7 +122,6 @@ void pocl_cache_work_group_function_path(char* parallel_bc_path, cl_program prog
                                size_t local_z) {
     assert(kernel->name);
 
-    char tempstring[POCL_FILENAME_LENGTH];
     pocl_cache_kernel_cachedir_path(parallel_bc_path, program,
                          device_i, kernel, POCL_PARALLEL_BC_FILENAME,
                          local_x, local_y, local_z);
