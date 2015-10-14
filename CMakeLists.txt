@@ -927,13 +927,15 @@ rename_if_different("${CMAKE_BINARY_DIR}/install-paths.h.new" "${CMAKE_BINARY_DI
 
 ##########################################################
 
-file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/pocl.icd" CONTENT "${POCL_INSTALL_PUBLIC_LIBDIR}/$<TARGET_FILE_NAME:pocl>" CONDITION 1)
-install(FILES "${CMAKE_BINARY_DIR}/pocl.icd"
+if(ENABLE_ICD)
+  file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/pocl.icd" CONTENT "${POCL_INSTALL_PUBLIC_LIBDIR}/$<TARGET_FILE_NAME:pocl>" CONDITION 1)
+  install(FILES "${CMAKE_BINARY_DIR}/pocl.icd"
          DESTINATION "${POCL_INSTALL_ICD_VENDORDIR}")
 
-# write icd file for pocl testing
-file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/ocl-vendors")
-file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/ocl-vendors/pocl-tests.icd" CONTENT "$<TARGET_FILE:pocl>" CONDITION 1)
+  # write icd file for pocl testing
+  file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/ocl-vendors")
+  file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/ocl-vendors/pocl-tests.icd" CONTENT "$<TARGET_FILE:pocl>" CONDITION 1)
+endif()
 
 file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/CTestCustom.cmake" CONTENT "
   set(ENV{POCL_BUILDING} \"1\")

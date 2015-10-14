@@ -363,5 +363,7 @@ int main(int argc, char **argv)
   CHECK_OPENCL_ERROR_IN("clCreateContext");
   TEST_ASSERT( test_context(ctx, prog_src_two, -1, NUMDEVS - 1, alldevs + 1)
     == CL_SUCCESS );
+
+  return 0;
 }
 
