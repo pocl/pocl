@@ -35,7 +35,6 @@ namespace pocl {
     virtual bool runOnLoop(llvm::Loop *L, llvm::LPPassManager &LPM);
 
   private:
-    llvm::DominatorTree *DT;
 
     bool ProcessLoop(llvm::Loop *L, llvm::LPPassManager &LPM);
     bool AddInnerLoopBarrier(llvm::Loop *L, llvm::LPPassManager &LPM);

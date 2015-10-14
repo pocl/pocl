@@ -15,7 +15,6 @@ int main(int argc, char **argv)
   cl_context ctx;
   cl_command_queue queue;
   cl_device_id did;
-  cl_uint num_krn;
   cl_kernel kernel;
 
   poclu_get_any_device(&ctx, &did, &queue);

@@ -65,7 +65,6 @@ main(void){
   cl_uint num_devices;
   cl_uint i;
   cl_program program = NULL;
-  cl_program program_with_binary = NULL;
   err = clGetPlatformIDs(MAX_PLATFORMS, platforms, &nplatforms);
   CHECK_OPENCL_ERROR_IN("clGetPlatformIDs");
   if (!nplatforms)
