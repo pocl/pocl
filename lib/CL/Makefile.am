@@ -199,7 +199,7 @@ libOpenCL_la_LDFLAGS = ${libpocl_la_LDFLAGS}
 libOpenCL_la_LIBADD = ${libpocl_la_LIBADD}
 endif
 
-CLEANFILES = libOpenCL.la kernellib_hash.h
+CLEANFILES = libpocl.la libOpenCL.la kernellib_hash.h
 
 EXTRA_DIST = CMakeLists.txt
 
