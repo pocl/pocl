@@ -84,4 +84,7 @@ void fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg);
 
 void* pocl_memalign_alloc(size_t align_width, size_t size);
 
+
+void pocl_set_buffer_image_limits(cl_device_id device);
+
 #endif

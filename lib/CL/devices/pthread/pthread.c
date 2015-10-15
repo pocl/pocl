@@ -127,10 +127,6 @@ pocl_lock_t ta_pool_lock;
 static size_t get_max_thread_count(cl_device_id device);
 static void * workgroup_thread (void *p);
 
-/* TODO: Declare this in a header file */
-void
-pocl_basic_set_buffer_image_limits(cl_device_id device);
-
 static void pocl_init_thread_argument_manager (void)
 {
   if (!argument_pool_initialized)
@@ -251,7 +247,7 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
   device->global_mem_size = 1;
   pocl_topology_detect_device_info(device);
   pocl_cpuinfo_detect_device_info(device);
-  pocl_basic_set_buffer_image_limits(device);
+  pocl_set_buffer_image_limits(device);
 
   /* in case hwloc doesn't provide a PCI ID, let's generate
      a vendor id that hopefully is unique across vendors. */
