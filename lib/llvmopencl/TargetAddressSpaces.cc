@@ -206,13 +206,6 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
   }
 
   bool changed = false;
-  /* Handle global variables. */
-  llvm::Module::global_iterator globalI = M.global_begin();
-  llvm::Module::global_iterator globalE = M.global_end();
-  for (; globalI != globalE; ++globalI) {
-    llvm::Value &global = *globalI;
-    changed |= UpdateAddressSpace(global, addrSpaceMap);
-  }
 
   FunctionMapping funcReplacements;
   std::vector<llvm::Function*> unhandledFuncs;
@@ -274,6 +267,20 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
     CloneFunctionInto(newFunc, &F, vv, true, ri, "", NULL, &asvtm);
     FixMemIntrinsics(*newFunc);
     funcReplacements[&F] = newFunc;
+  }
+
+  /* Handle global variables. These should be fixed *after*
+     fixing the instruction referring to them.  If we fix
+     the address spaces before, there might be possible
+     illegal bitcasts casting the LLVM's global pointer to
+     another one, causing the CloneFunctionInto to crash when
+     it encounters such.
+   */
+  llvm::Module::global_iterator globalI = M.global_begin();
+  llvm::Module::global_iterator globalE = M.global_end();
+  for (; globalI != globalE; ++globalI) {
+    llvm::Value &global = *globalI;
+    changed |= UpdateAddressSpace(global, addrSpaceMap);
   }
   
   /* Replace all references to the old function to the new one.
