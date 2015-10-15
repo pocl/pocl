@@ -282,6 +282,12 @@ void (*fill_rect) (void *data,
                                          cl_uint *num_image_formats);
 };
 
+typedef struct pocl_global_mem_t {
+  size_t max_ever_allocated;
+  size_t currently_allocated;
+  size_t total_alloc_limit;
+} pocl_global_mem_t;
+
 struct _cl_device_id {
   POCL_ICD_OBJECT
   POCL_OBJECT;
@@ -372,6 +378,8 @@ struct _cl_device_id {
      indexing  arrays in data structures with device specific entries. */
   int dev_id;
   int global_mem_id; /* identifier for device global memory */
+  /* pointer to an accounting struct for global memory */
+  pocl_global_mem_t *global_memory;
   int has_64bit_long;  /* Does the device have 64bit longs */
   /* Convert automatic local variables to kernel arguments? */
   int autolocals_to_args;

@@ -182,12 +182,36 @@ pocl_memalign_alloc(size_t align_width, size_t size)
 #endif
 }
 
-#define MIN_MAX_MEM_ALLOC_SIZE (128*1024*1024)
+/* accounting object for the main memory */
+static pocl_global_mem_t system_memory;
 
-/* set maximum allocation sizes for buffers and images */
-void
-pocl_set_buffer_image_limits(cl_device_id device)
+void pocl_setup_device_for_system_memory(cl_device_id device)
 {
+  /* set up system memory limits, if required */
+  if (system_memory.total_alloc_limit == 0)
+  {
+      /* global_mem_size contains the entire memory size,
+       * and we need to leave some available for OS & other programs
+       * this sets it to 3/4 for systems with <=7gig mem,
+       * for >7 it sets to (total-2gigs)
+       */
+      size_t alloc_limit = device->global_mem_size;
+      if ((alloc_limit) > (7 << 30))
+        system_memory.total_alloc_limit = alloc_limit - (1 << 31);
+      else
+        {
+          size_t temp = (alloc_limit >> 2);
+          system_memory.total_alloc_limit = alloc_limit - temp;
+        }
+
+      system_memory.max_ever_allocated =
+          system_memory.currently_allocated = 0;
+  }
+
+  device->global_mem_size = system_memory.total_alloc_limit;
+  if (device->global_mem_size < MIN_MAX_MEM_ALLOC_SIZE)
+    POCL_ABORT("Not enough memory to run on this device.\n");
+
   /* Maximum allocation size: we don't have hardware limits, so we
    * can potentially allocate the whole memory for a single buffer, unless
    * of course there are limits set at the operating system level. Of course
@@ -200,16 +224,34 @@ pocl_set_buffer_image_limits(cl_device_id device)
   int ret = getrlimit(RLIMIT_DATA, &limits);
   if (ret == 0)
     alloc_limit = limits.rlim_cur;
+  else
 #endif
+    alloc_limit = MIN_MAX_MEM_ALLOC_SIZE;
+
   if (alloc_limit > device->global_mem_size)
     alloc_limit = device->global_mem_size;
-  else if (alloc_limit < MIN_MAX_MEM_ALLOC_SIZE)
-    alloc_limit = MIN_MAX_MEM_ALLOC_SIZE;
-  // TODO in theory now if alloc_limit was > rlim_cur and < rlim_max
-  // we should try and setrlimit to alloc_limit, or allocations might fail
 
+  if (alloc_limit < MIN_MAX_MEM_ALLOC_SIZE)
+    alloc_limit = MIN_MAX_MEM_ALLOC_SIZE;
+
+  // set up device properties..
+  device->global_memory = mem;
   device->local_mem_size = device->max_constant_buffer_size =
     device->max_mem_alloc_size = alloc_limit;
+
+  // TODO in theory now if alloc_limit was > rlim_cur and < rlim_max
+  // we should try and setrlimit to alloc_limit, or allocations might fail
+}
+
+
+
+#define MIN_MAX_MEM_ALLOC_SIZE (128*1024*1024)
+
+/* set maximum allocation sizes for buffers and images */
+void
+pocl_set_buffer_image_limits(cl_device_id device)
+{
+  pocl_setup_device_for_system_memory(device);
 
   /* We don't have hardware limitations on the buffer-backed image sizes,
    * so we set the maximum size in terms of the maximum amount of pixels
@@ -234,6 +276,7 @@ pocl_set_buffer_image_limits(cl_device_id device)
   max_pixels /= 2;
   if (max_pixels > device->image2d_max_width)
     device->image2d_max_width = device->image2d_max_height = max_pixels;
+
   /* Same thing for 3D images, of course with cubes. Again, totally arbitrary. */
   max_pixels = device->image3d_max_width;
   // keep doubing until we go over
@@ -245,4 +288,32 @@ pocl_set_buffer_image_limits(cl_device_id device)
   device->image3d_max_width = device->image3d_max_height =
     device->image3d_max_depth = max_pixels;
 
+}
+
+void* pocl_memalign_alloc_global_mem(cl_device_id device, size_t align, size_t size)
+{
+  pocl_global_mem_t *mem = device->global_memory;
+  if ((mem->total_alloc_limit - mem->currently_allocated) > size)
+    return NULL;
+
+  void* ptr = pocl_memalign_alloc(align, size);
+  if (!ptr)
+    return NULL;
+
+  mem->currently_allocated += size;
+  if (mem->max_ever_allocated < mem->currently_allocated)
+    mem->max_ever_allocated = mem->currently_allocated;
+
+  assert(mem->currently_allocated <= mem->total_alloc_limit);
+  return ptr;
+}
+
+int pocl_free_global_mem(cl_device_id device, ptr, size_t size)
+{
+  pocl_global_mem_t *mem = device->global_memory;
+
+  assert(mem->currently_allocated >= size);
+  mem->currently_allocated -= size;
+
+  POCL_MEM_FREE(ptr);
 }

@@ -278,7 +278,6 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
   #endif
 
   pocl_init_thread_argument_manager();
-  
 }
 
 void
