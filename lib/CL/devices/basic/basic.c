@@ -537,11 +537,14 @@ pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
 }
 
 void
-pocl_basic_free (void *data, cl_mem_flags flags, void *ptr)
+pocl_basic_free (cl_device_id device, cl_mem mem_obj)
 {
+  cl_mem_flags flags = memobj->flags;
+
   if (flags & CL_MEM_USE_HOST_PTR)
     return;
-  
+
+  void* ptr = memobj->device_ptrs[device->dev_id].mem_ptr;
   POCL_MEM_FREE(ptr);
 }
 

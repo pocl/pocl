@@ -447,9 +447,12 @@ pocl_pthread_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
 
 #ifdef CUSTOM_BUFFER_ALLOCATOR
 void
-pocl_pthread_free (void *device_data, cl_mem_flags flags, void *ptr)
+pocl_pthread_free (cl_device_id device, cl_mem mem_obj)
 {
-  struct data* d = (struct data*) device_data;
+  cl_mem_flags flags = memobj->flags;
+  void* ptr = memobj->device_ptrs[device->dev_id].mem_ptr;
+
+  struct data* d = (struct data*) device->data;
   memory_region_t *region = NULL;
 
   if (flags & CL_MEM_USE_HOST_PTR)
@@ -480,11 +483,14 @@ pocl_pthread_free (void *device_data, cl_mem_flags flags, void *ptr)
 #else
 
 void
-pocl_pthread_free (void *data, cl_mem_flags flags, void *ptr)
+pocl_pthread_free (cl_device_id device, cl_mem mem_obj)
 {
+  cl_mem_flags flags = memobj->flags;
+
   if (flags & CL_MEM_USE_HOST_PTR)
     return;
-  
+
+  void* ptr = memobj->device_ptrs[device->dev_id].mem_ptr;
   POCL_MEM_FREE(ptr);
 }
 #endif

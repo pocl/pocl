@@ -499,11 +499,14 @@ pocl_hsa_malloc (pocl_hsa_device_data_t* d, cl_mem_flags flags, size_t size, voi
 }
 
 void
-pocl_hsa_free (void *data, cl_mem_flags flags, void *ptr)
+pocl_hsa_free (cl_device_id device, cl_mem mem_obj)
 {
+  cl_mem_flags flags = memobj->flags;
+
   if (flags & CL_MEM_USE_HOST_PTR)
     return; // TODO: hsa_memory_deregister() (needs size)
 
+  void* ptr = memobj->device_ptrs[device->dev_id].mem_ptr;
   hsa_memory_free(ptr);
 }
 
