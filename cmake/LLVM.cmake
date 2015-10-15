@@ -38,10 +38,6 @@ else()
     NAMES "llvm-config"
       "llvm-config-mp-3.7" "llvm-config-3.7" "llvm-config37"
       "llvm-config-mp-3.6" "llvm-config-3.6" "llvm-config36"
-      "llvm-config-mp-3.5" "llvm-config-3.5" "llvm-config35"
-      "llvm-config-mp-3.4" "llvm-config-3.4" "llvm-config34"
-      "llvm-config-mp-3.3" "llvm-config-3.3" "llvm-config33"
-      "llvm-config-mp-3.2" "llvm-config-3.2" "llvm-config32"
     DOC "llvm-config executable")
 endif()
 
@@ -119,13 +115,10 @@ run_llvm_config(LLVM_OBJ_ROOT --obj-root)
 string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_OBJ_ROOT "${LLVM_OBJ_ROOT}")
 run_llvm_config(LLVM_ALL_TARGETS --targets-built)
 run_llvm_config(LLVM_HOST_TARGET --host-target)
-# TODO can be changed to --assertion-mode once we drop LLVM < 3.5 support
-run_llvm_config(LLVM_BUILD_MODE --build-mode)
-if(LLVM_BUILD_MODE MATCHES "Asserts")
-  set(LLVM_ASSERTS_BUILD 1)
-else()
-  set(LLVM_ASSERTS_BUILD 0)
-endif()
+run_llvm_config(LLVM_ASSERTS_BUILD --assertion-mode)
+run_llvm_config(LLVM_SYSLIBS --system-libs)
+string(STRIP "${LLVM_SYSLIBS}" LLVM_SYSLIBS)
+
 # Ubuntu's llvm reports "arm-unknown-linux-gnueabihf" triple, then if one tries
 # `clang --target=arm-unknown-linux-gnueabihf ...` it will produce armv6 code,
 # even if one's running armv7;
@@ -148,15 +141,7 @@ endif(WIN32)
 if(LLVM_VERSION MATCHES "3[.]([0-9]+)")
   string(STRIP "${CMAKE_MATCH_1}" LLVM_MINOR)
   message(STATUS "Minor llvm version: ${LLVM_MINOR}")
-  if(LLVM_MINOR STREQUAL "2")
-    set(LLVM_3_2 1)
-  elseif(LLVM_MINOR STREQUAL "3")
-    set(LLVM_3_3 1)
-  elseif(LLVM_MINOR STREQUAL "4")
-    set(LLVM_3_4 1)
-  elseif(LLVM_MINOR STREQUAL "5")
-    set(LLVM_3_5 1)
-  elseif(LLVM_MINOR STREQUAL "6")
+  if(LLVM_MINOR STREQUAL "6")
     set(LLVM_3_6 1)
   elseif(LLVM_MINOR STREQUAL "7")
     set(LLVM_3_7 1)
@@ -176,15 +161,6 @@ if("${LLVM_CXXFLAGS}" MATCHES "-fno-rtti")
        See the INSTALL file for more information.")
 endif()
 
-# Ubuntu's LLVM 3.5 is broken (is really 3.4svn with
-# some patches, neither 3.4 nor 3.5 in the end..
-if((LLVM_MINOR GREATER 4) AND (CMAKE_SYSTEM_NAME MATCHES "Linux"))
-  message(STATUS "Testing for Ubuntu's broken LLVM 3.5+")
-  if(NOT EXISTS "${LLVM_INCLUDEDIR}/llvm/IR/CFG.h")
-    message(FATAL_ERROR "Your llvm installation is broken. This is known to be the case on Ubuntu and clones with llvm 3.5; official llvm 3.5 downloads should work though.")
-  endif()
-endif()
-
 # A few work-arounds for llvm-config issues
 
 # - pocl doesn't compile with '-pedantic'
@@ -198,10 +174,6 @@ if (NOT MSVC)
   set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -fno-rtti")
 endif()
 
-if(NOT LLVM_VERSION VERSION_LESS "3.5")
-  run_llvm_config(LLVM_SYSLIBS --system-libs)
-  string(STRIP "${LLVM_SYSLIBS}" LLVM_SYSLIBS)
-endif()
 
 # Llvm-config may be installed or it might be used from build directory, in which case
 # we need to add few extra include paths to find clang includes and compiled includes
@@ -636,27 +608,6 @@ endif()
   #~ message(STATUS "using the x86_64 optimized kernel lib for the native device")
 #~
 #~ endif()
-
-
-####################################################################
-
-# Work-around a clang bug in LLVM 3.3: On 32-bit platforms, the size
-# of Open CL C long is not 8 bytes
-
-#  set(_CL_DISABLE_LONG ${BUG_PRESENT} CACHE INTERNAL "bug in LLVM 3.3: On 32-bit platforms, the size of Open CL C long is not 8 bytes")
-
-setup_cache_var_name(CL_DISABLE_LONG "CL_DISABLE_LONG-${LLVM_HOST_TARGET}-${CLANG}")
-
-if(NOT DEFINED ${CACHE_VAR_NAME})
-  set(CL_DISABLE_LONG 0)
-  # TODO -march=CPU flags !
-  custom_try_compile_any("${CLANG}" "cl" "constant int test[sizeof(long)==8?1:-1]={1};" RESV  -x cl -S ${CLANG_TARGET_OPTION}${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${LLC_HOST_CPU})
-  if(RESV)
-    set(CL_DISABLE_LONG 1)
-  endif()
-endif()
-
-set_cache_var(CL_DISABLE_LONG "Disable cl_khr_int64 because of buggy llvm")
 
 
 ####################################################################

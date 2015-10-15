@@ -178,8 +178,8 @@ if(NOT RES)
   message(FATAL_ERROR "Could not load LLVM.cmake")
 endif()
 
-if("${LLVM_VERSION}" VERSION_LESS "3.2")
-  message(FATAL_ERROR "POCL requires LLVM version >= 3.2 !")
+if("${LLVM_VERSION}" VERSION_LESS "3.6")
+  message(FATAL_ERROR "POCL requires LLVM version >= 3.6 !")
 endif()
 
 ######################################################################################
@@ -247,17 +247,6 @@ else()
   else()
     set(HAVE_CLOCK_GETTIME 0)
   endif()
-endif()
-
-######################################################################################
-
-set(NEW_PRINTF_WORKS 1)
-
-if("${LLVM_VERSION}" VERSION_LESS "3.4")
-  message(STATUS "Turning off new printf()")
-  set(NEW_PRINTF_WORKS 0)
-else()
-  message(STATUS "Enabling new printf()")
 endif()
 
 ######################################################################################
@@ -1006,7 +995,6 @@ MESSAGE(STATUS "HAVE_CLOCK_GETTIME: ${HAVE_CLOCK_GETTIME}")
 MESSAGE(STATUS "HAVE_GLEW: ${HAVE_GLEW}")
 MESSAGE(STATUS "HAVE_OPENCL_HPP: ${HAVE_OPENCL_HPP}")
 MESSAGE(STATUS "INSTALL_OPENCL_HEADERS (Install our headers): ${INSTALL_OPENCL_HEADERS}")
-MESSAGE(STATUS "NEW_PRINTF_WORKS: ${NEW_PRINTF_WORKS}")
 MESSAGE(STATUS "OCL_DRIVERS (Drivers built): ${OCL_DRIVERS}")
 MESSAGE(STATUS "OCL_TARGETS (Targets built): ${OCL_TARGETS}")
 MESSAGE(STATUS "STATIC_LLVM: ${STATIC_LLVM}")

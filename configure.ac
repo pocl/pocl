@@ -79,7 +79,7 @@ LD_FLAGS_BIN=""
 # LLVM configuration
 #
 AC_ARG_VAR([LLVM_CONFIG], [Program used to retrieve LLVM options and binaries])
-AC_PATH_PROGS([LLVM_CONFIG], [llvm-config llvm-config-mp-3.3 llvm-config-3.3 llvm-config33 llvm-config-mp-3.4 llvm-config-3.4 llvm-config34 llvm-config-mp-3.2 llvm-config-3.2 llvm-config32 ])
+AC_PATH_PROGS([LLVM_CONFIG], [llvm-config llvm-config-mp-3.7 llvm-config-3.7 llvm-config37 llvm-config-mp-3.6 llvm-config-3.6 llvm-config36])
 test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
 
 LLVM_VERSION=`$LLVM_CONFIG --version`
@@ -87,7 +87,6 @@ LLVM_BINDIR=`$LLVM_CONFIG --bindir`
 LLVM_LIBDIR=`$LLVM_CONFIG --libdir`
 LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
 # Whether we can use our own printf implementation
-NEW_PRINTF_WORKS=true
 LLVM_3_6=false
 
 AC_SUBST([LLVM_VERSION], [$LLVM_VERSION])
@@ -115,7 +114,6 @@ esac
 AM_CONDITIONAL([LLVM_3_6], [test "x$LLVM_3_6" = "xtrue"])
 
 AC_SUBST([LLVM_LDFLAGS], [$LLVM_LDFLAGS], [llvm-config returned ldflags])
-AM_CONDITIONAL([NEW_PRINTF_WORKS], $NEW_PRINTF_WORKS)
 
 # When building with API linking, clang is always linked statically, so user might want to link llvm static to libpocl too
 # or risk causing version mismatches. Also useful when other platform libraries use LLVM too, see issue #46.
@@ -152,7 +150,7 @@ fi
 
 AC_SUBST([LLVM_LIBS])
 
-if `$LLVM_CONFIG --build-mode | grep -q Asserts`;
+if `$LLVM_CONFIG --assertion-mode | grep -q ON`;
 then
 AC_DEFINE([LLVM_BUILT_WITH_ASSERTS], [], "LLVM was built with Assertions on.")
 fi
@@ -1048,18 +1046,6 @@ then
   HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mcpu=$llc_host_cpu"
 fi
 
-# Work-around a clang bug in LLVM 3.3: On 32-bit platforms, the size
-# of Open CL C long is not 8 bytes 
-if [echo "constant int test[sizeof(long)==8?1:-1]={1};" | $CLANG $HOST_CLANG_FLAGS -S -x cl - ]
-then
-    : # OpenCL C long is supported
-else
-    # AC_DEFINE needed for host code, HOST_CLANG_FLGAS for kernel code.
-    AC_DEFINE_UNQUOTED([_CL_DISABLE_LONG],[],[Disable cl_khr_int64 on host based devices.])
-    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -D_CL_DISABLE_LONG"
-fi
-rm -f ./-.s
-	
 AC_DEFINE_UNQUOTED([KERNEL_DIR], "$kernel_dir", [Use the libkernel from lib/kernel/$KERNEL_DIR/])
 
 AC_SUBST([TARGET], [$target])

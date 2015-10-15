@@ -146,6 +146,7 @@ popcount.cl
 pow.cl
 pown.cl
 powr.cl
+printf.c
 radians.cl
 read_image.cl
 recip.cl
@@ -222,6 +223,7 @@ mul24.cl
 mul_hi.cl
 nextafter.cl
 popcount.cl
+printf.c
 read_image.cl
 rhadd.cl
 rotate.cl
@@ -356,11 +358,6 @@ vecmathlib-pocl/tan.cc
 vecmathlib-pocl/tanh.cc
 vecmathlib-pocl/tanpi.cl
 vecmathlib-pocl/trunc.cc)
-
-if(NEW_PRINTF_WORKS)
-  list(APPEND SOURCES_WITH_VML printf.c)
-  list(APPEND SOURCES_WITHOUT_VML printf.c)
-endif()
 
 #LKERNEL_HDRS_EXTRA - headers that should be dependencies
 set(KERNEL_DEPEND_HEADERS

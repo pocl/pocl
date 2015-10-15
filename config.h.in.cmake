@@ -75,18 +75,6 @@
 #define LLC "@LLC@"
 
 
-/* "Using LLVM 3.2" */
-#cmakedefine LLVM_3_2
-
-/* "Using LLVM 3.3" */
-#cmakedefine LLVM_3_3
-
-/* "Using LLVM 3.4" */
-#cmakedefine LLVM_3_4
-
-/* "Using LLVM 3.5" */
-#cmakedefine LLVM_3_5
-
 /* "Using LLVM 3.6" */
 #cmakedefine LLVM_3_6
 
