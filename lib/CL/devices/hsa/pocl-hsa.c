@@ -729,9 +729,6 @@ pocl_hsa_run(void *dptr, _cl_command_node* cmd)
   kernel_packet =
     &(((hsa_kernel_dispatch_packet_t*)(d->queue->base_address))[queue_index & queueMask]);
 
-  kernel_packet->setup =
-      (uint16_t)cmd->command.run.pc.work_dim << HSA_KERNEL_DISPATCH_PACKET_SETUP_DIMENSIONS;
-
   /* Process the kernel arguments. Convert the opaque buffer
      pointers to real device pointers, allocate dynamic local
      memory buffers, etc. */
@@ -765,11 +762,20 @@ pocl_hsa_run(void *dptr, _cl_command_node* cmd)
 
   kernel_packet->kernarg_address = cached_data->kernargs;
 
-  uint64_t header = 0;
-  header |= HSA_FENCE_SCOPE_SYSTEM << HSA_PACKET_HEADER_ACQUIRE_FENCE_SCOPE;
-  header |= HSA_FENCE_SCOPE_SYSTEM << HSA_PACKET_HEADER_RELEASE_FENCE_SCOPE;
-  header |= HSA_PACKET_TYPE_KERNEL_DISPATCH << HSA_PACKET_HEADER_TYPE;
-   __atomic_store_n((uint16_t*)(&kernel_packet->header), header, __ATOMIC_RELEASE);
+  typedef union {
+    uint32_t header_setup;
+    struct {
+      uint16_t header;
+      uint16_t setup;
+    } a;
+  } hsa_header_union_t;
+
+  hsa_header_union_t h;
+  h.a.setup = (uint16_t)cmd->command.run.pc.work_dim << HSA_KERNEL_DISPATCH_PACKET_SETUP_DIMENSIONS;
+  h.a.header |= HSA_FENCE_SCOPE_SYSTEM << HSA_PACKET_HEADER_ACQUIRE_FENCE_SCOPE;
+  h.a.header |= HSA_FENCE_SCOPE_SYSTEM << HSA_PACKET_HEADER_RELEASE_FENCE_SCOPE;
+  h.a.header |= HSA_PACKET_TYPE_KERNEL_DISPATCH << HSA_PACKET_HEADER_TYPE;
+  __atomic_store_n((uint32_t*)(&kernel_packet->header), h.header_setup, __ATOMIC_RELEASE);
 
    /*
     * Increment the write index and ring the doorbell to dispatch the kernel.
