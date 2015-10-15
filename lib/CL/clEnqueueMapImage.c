@@ -46,7 +46,6 @@ CL_API_SUFFIX__VERSION_1_0
   cl_int errcode;
   size_t offset;
   void *map = NULL;
-  int using_host_buffer = 0;
   cl_device_id device;
   cl_event event = NULL;
   _cl_command_node *cmd = NULL;

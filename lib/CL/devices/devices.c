@@ -77,7 +77,7 @@ static init_device_ops pocl_devices_init_ops[] = {
 
 #define POCL_NUM_DEVICE_TYPES (sizeof(pocl_devices_init_ops) / sizeof((pocl_devices_init_ops)[0]))
 
-static struct pocl_device_ops pocl_device_ops[POCL_NUM_DEVICE_TYPES] = {0};
+static struct pocl_device_ops pocl_device_ops[POCL_NUM_DEVICE_TYPES];
 
 /**
  * Get the number of specified devices from environnement

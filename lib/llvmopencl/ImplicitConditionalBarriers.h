@@ -78,7 +78,6 @@ namespace pocl {
     llvm::BasicBlock* firstNonBackedgePredecessor(llvm::BasicBlock *bb);
 
     llvm::PostDominatorTree *PDT;
-    llvm::PostDominatorTree *DT;
 
   };
 }
