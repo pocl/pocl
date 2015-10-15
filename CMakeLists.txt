@@ -647,14 +647,12 @@ set(OCL_TARGETS "host")
 
 # THESE are only used in makefile.am & scripts/pocl*
 set(TCE_TARGET_CLANG_FLAGS "" CACHE STRING "Extra parameters to Clang for TCE compilation.")
-set(CELL_TARGET_CLANG_FLAGS "" CACHE STRING "Extra parameters to Clang for CELL compilation.")
 # TODO HOST_CLANG_FLAGS -> CPU_TARGET_CLANG_FLAGS
 #set(HOST_CLANG_FLAGS "" CACHE STRING "Extra parameters to Clang for cpu target compilation.")
 #AC_ARG_VAR([TARGET_CLANG_FLAGS],
 #           [Parameters to for target compilation.])
 
 set(TCE_TARGET_LLC_FLAGS "" CACHE STRING "Extra parameters to LLVM's llc for TCE compilation.")
-set(CELL_TARGET_LLC_FLAGS "" CACHE STRING "Extra parameters to LLVM's llc for CELL compilation.")
 # TODO HOST_LLC_FLAGS -> CPU_TARGET_LLC_FLAGS
 #set(HOST_LLC_FLAGS "" CACHE STRING "Extra parameters to LLVM's llc for cpu target compilation.")
 #AC_DEFINE_UNQUOTED([TARGET_LLC_FLAGS],
@@ -731,36 +729,6 @@ if(ENABLE_TCE)
   endif()
 else()
   set(ENABLE_TCEMC 0)
-endif()
-
-##########################################################
-
-# Check if CellSPU support is found
-
-# The libspe version requirement is not strict. This is the only one tested.
-# SPU backend was removed in LLVM 3.3 (and we don't accept LLVM 3.1 anymore in pocl)
-# so compile the spu backend only when LLVM 3.2 is found
-
-if(NOT DEFINED DEFAULT_ENABLE_SPU)
-  set(_SPU 0)
-  if(LLVM_VERSION MATCHES "3.2")
-    pkg_check_modules(LIBSPE "libspe2>=2.2.80")
-    if(LIBSPE_FOUND)
-      set(_SPU 1)
-    endif()
-  else()
-    message(STATUS "Skipping cellspu target, needs llvm 3.2")
-  endif()
-  set(DEFAULT_ENABLE_SPU ${_SPU} CACHE INTERNAL "Build cell SPU")
-endif()
-
-setup_cached_var(ENABLE_SPU "Cell SPU"
-  "Requested enabling Cell SPU, but no usable libspe found !"
-  "Cell SPU available, but requested disabling it")
-
-if(ENABLE_SPU)
-  set(OCL_DRIVERS "${OCL_DRIVERS} spu")
-  set(OCL_TARGETS "${OCL_TARGETS} cellspu")
 endif()
 
 ##########################################################
@@ -918,7 +886,6 @@ endfunction()
 #TODO
 # these vars are copies b/c tons of sources use BUILD_ICD etc
 set(BUILD_ICD ${ENABLE_ICD})
-set(BUILD_SPU ${ENABLE_SPU})
 set(TCE_AVAILABLE ${ENABLE_TCE})
 set(TCEMC_AVAILABLE ${ENABLE_TCEMC})
 set(_CL_DISABLE_LONG ${CL_DISABLE_LONG})
@@ -1032,7 +999,6 @@ MESSAGE(STATUS "CL_DISABLE_LONG (Disable cl_khr_int64): ${CL_DISABLE_LONG}")
 MESSAGE(STATUS "DIRECT_LINKAGE: ${DIRECT_LINKAGE}")
 MESSAGE(STATUS "ENABLE_DOCS: ${ENABLE_DOCS}")
 MESSAGE(STATUS "ENABLE_ICD: ${ENABLE_ICD}")
-MESSAGE(STATUS "ENABLE_SPU (Cell SPU enabled): ${ENABLE_SPU}")
 MESSAGE(STATUS "ENABLE_TCE: ${ENABLE_TCE}")
 MESSAGE(STATUS "ENABLE_TCEMC: ${ENABLE_TCEMC}")
 MESSAGE(STATUS "ENABLE_HSA: ${ENABLE_HSA}")
@@ -1067,8 +1033,6 @@ MESSAGE(STATUS " ")
 MESSAGE(STATUS "******* Various Flags:")
 MESSAGE(STATUS " ")
 
-MESSAGE(STATUS "CELL_TARGET_CLANG_FLAGS: ${CELL_TARGET_CLANG_FLAGS}")
-MESSAGE(STATUS "CELL_TARGET_LLC_FLAGS: ${CELL_TARGET_LLC_FLAGS}")
 MESSAGE(STATUS "CLANG_MARCH_FLAG: ${CLANG_MARCH_FLAG}")
 MESSAGE(STATUS "CLANG_TARGET_OPTION: ${CLANG_TARGET_OPTION}")
 MESSAGE(STATUS "CL_DISABLE_HALF: ${CL_DISABLE_HALF}")

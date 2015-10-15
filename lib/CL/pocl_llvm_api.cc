@@ -1267,17 +1267,11 @@ kernel_library
     {
       kernellib = BUILDDIR;
       kernellib += "/lib/kernel/";
-      // TODO: get this from the target triplet: TCE, cellspu
+      // TODO: get this from the TCE target triplet
       if (triple.getArch() == Triple::tce) 
         {
           kernellib += "tce";
         }
-#ifdef LLVM_3_2 
-      else if (triple.getArch() == Triple::cellspu) 
-        {
-          kernellib += "cellspu";
-        }
-#endif
 #ifdef BUILD_HSA
       else if (triple.getArch() == Triple::hsail64) {
           kernellib += "hsail64";

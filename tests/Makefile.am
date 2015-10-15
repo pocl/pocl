@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-DIST_SUBDIRS = kernel regression runtime workgroup tce cell
+DIST_SUBDIRS = kernel regression runtime workgroup tce
 SUBDIRS = kernel regression runtime workgroup
 if TCE_AVAILABLE
 SUBDIRS += tce

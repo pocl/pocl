@@ -411,15 +411,10 @@ endif()
 
 #*********************************************************************
 
-if(OCL_TARGETS MATCHES "cellspu")
-  add_subdirectory("cellspu")
-endif()
-
-#*********************************************************************
-
 if(OCL_TARGETS MATCHES "tce")
   add_subdirectory("tce")
 endif()
+
 #*********************************************************************
 
 if(OCL_TARGETS MATCHES "amdgcn")

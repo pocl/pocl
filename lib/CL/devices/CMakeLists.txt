@@ -40,11 +40,6 @@ if(ENABLE_TCE)
   list(APPEND POCL_DEVICES_OBJS "$<TARGET_OBJECTS:pocl-devices-tce-ttasim>")
 endif()
 
-if(ENABLE_SPU)
-  add_subdirectory("cellspu")
-  list(APPEND POCL_DEVICES_LINK_LIST "spe2")
-endif()
-
 if(ENABLE_HSA)
   include_directories(AFTER "${HSA_INCLUDES}")
   add_subdirectory("hsa")

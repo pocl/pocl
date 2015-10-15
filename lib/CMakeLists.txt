@@ -32,7 +32,7 @@ add_subdirectory("CL")
 
 #############################################################
 
-# must be after cell / tce b/c of LD_FLAGS_BIN
+# must be after tce b/c of LD_FLAGS_BIN
 # and after adding lib/CL subdir b/c of libpocl location,
 # but before poclu & examples & tests (they need these variables)
 

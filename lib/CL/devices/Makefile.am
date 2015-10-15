@@ -45,11 +45,6 @@ SUBDIRS += tce
 libpocl_devices_la_LIBADD += tce/libpocl-devices-tce.la
 endif
 
-if BUILD_SPU
-SUBDIRS += cellspu
-libpocl_devices_la_LIBADD += cellspu/libpocl-devices-cellspu.la
-endif
-
 if BUILD_HSA
 SUBDIRS += hsa
 libpocl_devices_la_LIBADD += hsa/libpocl-devices-hsa.la

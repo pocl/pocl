@@ -1210,29 +1210,6 @@ AC_DEFINE([POCL_ANDROID_PREFIX],
 fi
 AM_CONDITIONAL([POCL_ANDROID], [test "$ANDROID_PRESENT" = ok])
 
-# Check if CellSPU support is found
-# The libspe version requirement is not strict. This is the only one tested.
-# SPU backend was removed in LLVM 3.3 (and we don't accept LLVM 3.1 anymore in pocl)
-# so compile the spu backend only when LLVM 3.2 is found
-if test "$LLVM_VERSION" == 3.2 -o "$LLVM_VERSION" == 3.2svn
-then
-PKG_CHECK_MODULES([LIBSPE], [libspe2 >= 2.2.80],
-  [
-    AC_MSG_NOTICE([libspe2 found.])
-    LIBSPE_AVAILABLE=yes
-    OCL_DRIVERS="$OCL_DRIVERS spu"
-    OCL_TARGETS="$OCL_TARGETS cellspu"
-    AC_DEFINE([BUILD_SPU], [], [Defined when CellSPU tools are found])
-    BUILD_SPU=1
-  ],
-  [
-    AC_MSG_NOTICE([libspe2 not found (by pkg-config). Spu driver not built.])
-    LIBSPE_AVAILABLE=no
-    BUILD_SPU=0
-  ])
-fi
-AM_CONDITIONAL([BUILD_SPU],[echo $OCL_DRIVERS | grep spu])
-
 # Enable HSA by default in case the dependencies are met.
 AC_ARG_ENABLE([hsa-amdgcn],
               [AS_HELP_STRING([--disable-hsa-amdgcn],
@@ -1541,11 +1518,9 @@ AC_CONFIG_FILES([Makefile
                  lib/CL/devices/tce/Makefile
                  lib/CL/devices/tce/ttasim/Makefile
                  lib/CL/devices/topology/Makefile
-                 lib/CL/devices/cellspu/Makefile
                  lib/CL/devices/hsa/Makefile
                  lib/llvmopencl/Makefile
                  lib/kernel/Makefile
-                 lib/kernel/cellspu/Makefile
                  lib/kernel/host/Makefile
                  lib/kernel/tce/Makefile
                  lib/kernel/hsail64/Makefile
@@ -1581,8 +1556,6 @@ AC_CONFIG_FILES([Makefile
                  tests/tce/ttasim/Makefile
                  tests/tce/tcemc/Makefile
                  tests/tce/fp16/Makefile
-                 tests/cell/Makefile
-                 tests/cell/hello/Makefile
                  ])
 
 AC_OUTPUT

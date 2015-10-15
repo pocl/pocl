@@ -5,8 +5,6 @@
 /* The normal alignment of `float16', in bytes. */
 #define ALIGNOF_FLOAT16 @ALIGNOF_FLOAT16@
 
-#cmakedefine BUILD_SPU
-
 #cmakedefine BUILD_HSA
 
 #define POCL_BUILT_WITH_CMAKE

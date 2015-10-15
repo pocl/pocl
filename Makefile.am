@@ -59,8 +59,8 @@ endif
 .PHONY: ${PHONIES} prepare-examples clean-examples
 
 EXTRA_DIST = config/xclang tools/data/test_machine.adf tools/data/test_machine_fp16.adf \
-  doc/build-envs.txt CHANGES fix-include pocl.icd.in README README.ARM README.Cell \
-  README.Windows README.mips README.OSX README.powerpc README.packaging CREDITS LICENSE \
+  doc/build-envs.txt CHANGES fix-include pocl.icd.in README README.ARM README.mips \
+  README.Windows README.OSX README.powerpc README.packaging CREDITS LICENSE \
   tools/uncrustify_cxx.cfg windows/setup_and_build_win64.sh README.mipsel
 
 # CMake

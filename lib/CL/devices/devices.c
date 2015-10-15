@@ -40,10 +40,6 @@
 #include "pocl_cache.h"
 #include "pocl_queue_util.h"
 
-#if defined(BUILD_SPU)
-#include "cellspu/cellspu.h"
-#endif
-
 #if defined(TCE_AVAILABLE)
 #include "tce/ttasim/ttasim.h"
 #endif
@@ -64,9 +60,6 @@ typedef void (*init_device_ops)(struct pocl_device_ops*);
 static init_device_ops pocl_devices_init_ops[] = {
   pocl_pthread_init_device_ops,
   pocl_basic_init_device_ops,
-#if defined(BUILD_SPU)
-  pocl_cellspu_init_device_ops,
-#endif
 #if defined(TCE_AVAILABLE)
   pocl_ttasim_init_device_ops,
 #endif
