@@ -2,8 +2,11 @@
 // Used to cause an LLVM crash with Haswell/Broadwell.
 // See https://github.com/pocl/pocl/issues/231
 
-#define __CL_ENABLE_EXCEPTIONS
-#include <CL/cl.hpp>
+#define CL_HPP_ENABLE_EXCEPTIONS
+#define CL_HPP_MINIMUM_OPENCL_VERSION 120
+#define CL_HPP_TARGET_OPENCL_VERSION 120
+#define CL_HPP_CL_1_2_DEFAULT_BUILD
+#include <CL/cl2.hpp>
 #include <iostream>
 
 using namespace std;
@@ -80,7 +83,7 @@ int main(int argc, char *argv[])
   cl::CommandQueue queue = cl::CommandQueue::getDefault();
   cl::Program program(SOURCE, true);
 
-  auto kernel = cl::make_kernel<cl::Buffer, cl::Buffer, cl::Buffer, cl_int, cl_int, cl::Buffer>(program, "scan_scan_intervals_lev1");
+  auto kernel = cl::KernelFunctor<cl::Buffer, cl::Buffer, cl::Buffer, cl_int, cl_int, cl::Buffer>(program, "scan_scan_intervals_lev1");
 
   cl_int i;
   cl::Buffer buffer;
