@@ -230,47 +230,10 @@ pocl_pthread_uninit (cl_device_id device)
 }
 
 
-static int
-allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t size) 
-{
-  *memptr = pocl_memalign_alloc(alignment, size);
-  return (((*memptr) == NULL)? -1: 0);
-}
-
-
-void *
-pocl_pthread_malloc (void *device_data, cl_mem_flags flags, size_t size, void *host_ptr)
-{
-  void *b;
-  struct data* d = (struct data*)device_data;
-
-  if (flags & CL_MEM_COPY_HOST_PTR)
-    {
-      if (allocate_aligned_buffer (d, &b, MAX_EXTENDED_ALIGNMENT, size) == 0)
-        {
-          memcpy (b, host_ptr, size);
-          return b;
-        }
-      
-      return NULL;
-    }
-  
-  if (flags & CL_MEM_USE_HOST_PTR && host_ptr != NULL)
-    {
-      return host_ptr;
-    }
-
-  if (allocate_aligned_buffer (d, &b, MAX_EXTENDED_ALIGNMENT, size) == 0)
-    return b;
-  
-  return NULL;
-}
-
 cl_int
 pocl_pthread_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
 {
   void *b = NULL;
-  struct data* d = (struct data*)device->data;
   cl_mem_flags flags = mem_obj->flags;
 
   /* if memory for this global memory is not yet allocated -> do it */
@@ -282,8 +245,9 @@ pocl_pthread_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
           assert(mem_obj->mem_host_ptr != NULL);
           b = mem_obj->mem_host_ptr;
         }
-      else if (allocate_aligned_buffer (d, &b, MAX_EXTENDED_ALIGNMENT,
+      else if (pocl_memalign_alloc_global_mem( device, MAX_EXTENDED_ALIGNMENT,
                                         mem_obj->size) != 0)
+
         return CL_MEM_OBJECT_ALLOCATION_FAILURE;
 
       if (flags & CL_MEM_COPY_HOST_PTR)
@@ -306,7 +270,7 @@ pocl_pthread_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
 
 
 void
-pocl_pthread_free (cl_device_id device, cl_mem mem_obj)
+pocl_pthread_free (cl_device_id device, cl_mem memobj)
 {
   cl_mem_flags flags = memobj->flags;
 
@@ -314,7 +278,9 @@ pocl_pthread_free (cl_device_id device, cl_mem mem_obj)
     return;
 
   void* ptr = memobj->device_ptrs[device->dev_id].mem_ptr;
-  POCL_MEM_FREE(ptr);
+  size_t size = memobj->size;
+
+  pocl_free_global_mem(device, ptr, size);
 }
 
 
@@ -476,7 +442,7 @@ workgroup_thread (void *p)
       if (kernel->arg_info[i].is_local)
         {
           arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = pocl_pthread_malloc(ta->data, 0, al->size, NULL);
+          *(void **)(arguments[i]) = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, al->size);
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
       {
@@ -499,7 +465,7 @@ workgroup_thread (void *p)
         {
           dev_image_t di;
           fill_dev_image_t(&di, al, ta->device);
-          void* devptr = pocl_pthread_malloc(ta->data, 0, sizeof(dev_image_t), NULL);
+          void* devptr = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, sizeof(dev_image_t));
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = devptr;       
           pocl_pthread_write (ta->data, &di, devptr, 0, sizeof(dev_image_t));
@@ -509,7 +475,7 @@ workgroup_thread (void *p)
           dev_sampler_t ds;
           fill_dev_sampler_t(&ds, al);
           
-          void* devptr = pocl_pthread_malloc(ta->data, 0, sizeof(dev_sampler_t), NULL);
+          void* devptr = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, sizeof(dev_sampler_t));
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = devptr;
           pocl_pthread_write (ta->data, &ds, devptr, 0, sizeof(dev_sampler_t));
@@ -526,8 +492,7 @@ workgroup_thread (void *p)
     {
       al = &(ta->kernel_args[i]);
       arguments[i] = malloc (sizeof (void *));
-      *(void **)(arguments[i]) = pocl_pthread_malloc (ta->data, 0, al->size, 
-                                                      NULL);
+      *(void **)(arguments[i]) = pocl_memalign_alloc (MAX_EXTENDED_ALIGNMENT, al->size);
     }
 
   size_t first_gid_x = ta->pc.group_id[0];
@@ -550,13 +515,13 @@ workgroup_thread (void *p)
     {
       if (kernel->arg_info[i].is_local )
         {
-          pocl_pthread_free (ta->data, 0, *(void **)(arguments[i]));
+          POCL_MEM_FREE(*(void **)(arguments[i]));
           POCL_MEM_FREE(arguments[i]);
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE ||
                 kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
-          pocl_pthread_free (ta->data, 0, *(void **)(arguments[i]));
+          POCL_MEM_FREE(*(void **)(arguments[i]));
           POCL_MEM_FREE(arguments[i]);
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && *(void**)arguments[i] == NULL)
@@ -568,7 +533,7 @@ workgroup_thread (void *p)
        i < kernel->num_args + kernel->num_locals;
        ++i)
     {
-      pocl_pthread_free (ta->data, 0, *(void **)(arguments[i]));
+      POCL_MEM_FREE(*(void **)(arguments[i]));
       POCL_MEM_FREE(arguments[i]);
     }
   free_thread_arguments (ta);

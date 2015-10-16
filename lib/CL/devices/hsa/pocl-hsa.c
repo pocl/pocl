@@ -450,9 +450,11 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
 
   /* For some reason, the global region size returned is 128 Terabytes...
    * for now, use the max alloc size, it seems to be a much more reasonable value.
-  HSA_CHECK(hsa_region_get_info(d->global_region, HSA_REGION_INFO_SIZE, &sizearg));
-  */
+   * HSA_CHECK(hsa_region_get_info(d->global_region, HSA_REGION_INFO_SIZE, &sizearg));
+   */
   device->global_mem_size = sizearg;
+
+  pocl_setup_device_for_system_memory(device);
 
   HSA_CHECK(hsa_region_get_info(d->group_region, HSA_REGION_INFO_SIZE, &sizearg));
   device->local_mem_size = sizearg;

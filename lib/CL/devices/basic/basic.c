@@ -403,35 +403,6 @@ pocl_basic_init (cl_device_id device, const char* parameters)
   #endif
 }
 
-static void *
-pocl_basic_malloc (void *device_data, cl_mem_flags flags,
-		    size_t size, void *host_ptr)
-{
-  void *b;
-
-  if (flags & CL_MEM_COPY_HOST_PTR)
-    {
-      b = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, size);
-      if (b != NULL)
-        {
-          memcpy(b, host_ptr, size);
-          return b;
-        }
-      
-      return NULL;
-    }
-  
-  if (flags & CL_MEM_USE_HOST_PTR && host_ptr != NULL)
-    {
-      return host_ptr;
-    }
-  b = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, size);
-  if (b != NULL)
-    return b;
-  
-  return NULL;
-}
-
 cl_int
 pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
 {
@@ -449,7 +420,7 @@ pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
         }
       else
         {
-          b = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, mem_obj->size);
+          b = pocl_memalign_alloc_global_mem(device, MAX_EXTENDED_ALIGNMENT, mem_obj->size);
           if (b == NULL)
             return CL_MEM_OBJECT_ALLOCATION_FAILURE;
         }
@@ -473,7 +444,7 @@ pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
 }
 
 void
-pocl_basic_free (cl_device_id device, cl_mem mem_obj)
+pocl_basic_free (cl_device_id device, cl_mem memobj)
 {
   cl_mem_flags flags = memobj->flags;
 
@@ -481,7 +452,9 @@ pocl_basic_free (cl_device_id device, cl_mem mem_obj)
     return;
 
   void* ptr = memobj->device_ptrs[device->dev_id].mem_ptr;
-  POCL_MEM_FREE(ptr);
+  size_t size = memobj->size;
+
+  pocl_free_global_mem(device, ptr, size);
 }
 
 void
@@ -535,7 +508,7 @@ pocl_basic_run
       if (kernel->arg_info[i].is_local)
         {
           arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = pocl_basic_malloc(data, 0, al->size, NULL);
+          *(void **)(arguments[i]) = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, al->size);
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
         {
@@ -556,7 +529,7 @@ pocl_basic_run
           dev_image_t di;
           fill_dev_image_t (&di, al, cmd->device);
 
-          void* devptr = pocl_basic_malloc (data, 0, sizeof(dev_image_t), NULL);
+          void* devptr = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT,  sizeof(dev_image_t));
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = devptr; 
           pocl_basic_write (data, &di, devptr, 0, sizeof(dev_image_t));
@@ -566,7 +539,7 @@ pocl_basic_run
           dev_sampler_t ds;
           fill_dev_sampler_t(&ds, al);
           
-          void* devptr = pocl_basic_malloc (data, 0, sizeof(dev_sampler_t), NULL);
+          void* devptr = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, sizeof(dev_sampler_t));
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = devptr;
           pocl_basic_write (data, &ds, devptr, 0, sizeof(dev_sampler_t));
@@ -582,7 +555,7 @@ pocl_basic_run
     {
       al = &(cmd->command.run.arguments[i]);
       arguments[i] = malloc (sizeof (void *));
-      *(void **)(arguments[i]) = pocl_basic_malloc (data, 0, al->size, NULL);
+      *(void **)(arguments[i]) = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, al->size);
     }
 
   for (z = 0; z < pc->num_groups[2]; ++z)
@@ -604,13 +577,13 @@ pocl_basic_run
     {
       if (kernel->arg_info[i].is_local)
         {
-          pocl_basic_free (data, 0, *(void **)(arguments[i]));
+          POCL_MEM_FREE(*(void **)(arguments[i]));
           POCL_MEM_FREE(arguments[i]);
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE ||
                 kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
-          pocl_basic_free (data, 0, *(void **)(arguments[i]));
+          POCL_MEM_FREE(*(void **)(arguments[i]));
           POCL_MEM_FREE(arguments[i]);
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && *(void**)arguments[i] == NULL)
@@ -622,7 +595,7 @@ pocl_basic_run
        i < kernel->num_args + kernel->num_locals;
        ++i)
     {
-      pocl_basic_free(data, 0, *(void **)(arguments[i]));
+      POCL_MEM_FREE(*(void **)(arguments[i]));
       POCL_MEM_FREE(arguments[i]);
     }
   free(arguments);
