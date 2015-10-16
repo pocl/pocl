@@ -1,7 +1,9 @@
 /* pocl-hsa.c - driver for HSA supported devices. Currently only AMDGCN.
 
-   Copyright (c) 2015 Pekka Jääskeläinen / Tampere University of Technology
-                 2015 Charles Chen <0charleschen0@gmail.com>
+   Copyright (c) 2015 Pekka Jääskeläinen <pekka.jaaskelainen@tut.fi>
+                 2015 Charles Chen <ccchen@pllab.cs.nthu.edu.tw>
+                      Shao-chung Wang <scwang@pllab.cs.nthu.edu.tw>
+                 2015 Michal Babej <michal.babej@tut.fi>
 
    Short snippets borrowed from the MatrixMultiplication example in
    the HSA runtime library sources (c) 2014 HSA Foundation Inc.
