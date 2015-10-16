@@ -44,6 +44,6 @@ EXTRA_DIST = $(srcdir)/*.c $(srcdir)/*.cl $(srcdir)/*.h $(srcdir)/*.ll			\
 # Distclean the dirs regardless if the target was enabled or not
 # to cleanup the Makefiles.
 distclean-local:
-        for dir in amdgcn host hsail tce; do \
+	for dir in amdgcn host hsail tce; do \
 		make -C $$dir distclean;\
 	done;
