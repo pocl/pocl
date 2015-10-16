@@ -198,8 +198,8 @@ void pocl_setup_device_for_system_memory(cl_device_id device)
        * this sets it to 3/4 for systems with <=7gig mem,
        * for >7 it sets to (total-2gigs)
        */
-      size_t alloc_limit = device->global_mem_size;
-      if ((alloc_limit) > (size_t)(7 << 30))
+      uint64_t alloc_limit = device->global_mem_size;
+      if ((alloc_limit) > (uint64_t)(7 << 30))
         system_memory.total_alloc_limit = alloc_limit - (size_t)(1 << 31);
       else
         {
