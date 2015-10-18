@@ -245,10 +245,13 @@ pocl_pthread_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
           assert(mem_obj->mem_host_ptr != NULL);
           b = mem_obj->mem_host_ptr;
         }
-      else if (pocl_memalign_alloc_global_mem( device, MAX_EXTENDED_ALIGNMENT,
-                                        mem_obj->size) != 0)
-
-        return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+      else
+        {
+          b = pocl_memalign_alloc_global_mem( device, MAX_EXTENDED_ALIGNMENT,
+                                        mem_obj->size);
+          if (b==NULL)
+            return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+        }
 
       if (flags & CL_MEM_COPY_HOST_PTR)
         {
