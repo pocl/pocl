@@ -296,7 +296,7 @@ pocl_set_buffer_image_limits(cl_device_id device)
 void* pocl_memalign_alloc_global_mem(cl_device_id device, size_t align, size_t size)
 {
   pocl_global_mem_t *mem = device->global_memory;
-  if ((mem->total_alloc_limit - mem->currently_allocated) > size)
+  if ((mem->total_alloc_limit - mem->currently_allocated) < size)
     return NULL;
 
   void* ptr = pocl_memalign_alloc(align, size);
