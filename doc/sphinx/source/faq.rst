@@ -7,6 +7,29 @@ are listed here.
 Using pocl
 ----------
 
+Supported compilers and compiler combinations
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Note that pocl usually uses two different compilers (though may be built
+using only one). One is used to compile C and C++ files - this is usually
+the "system compiler". It's specified by CC and CXX vars to configure
+script, or CMAKE_C{,XX}_COMPILER variables to cmake, but usually just
+left to default. The second compiler is used to build OpenCL files - this
+is always clang+llvm. It's specified by LLVM_CONFIG=<path> to configure,
+or -DWITH_LLVM_CONFIG=<path> to cmake.
+
+You may use clang as both "system" and OpenCL compiler for pocl.
+Note however that pocl uses the CXX_FLAGS *which the 2nd compiler (clang)
+was built with*, to build parts of pocl that link with that compiler. This
+may cause some issues, if you try to build pocl with a different compiler
+as the one used to build the 2nd compiler - because gcc and clang are not
+100% compatible with each other in flags. So far though we've only seen
+warnings about unknown flags, not actual bugs.
+
+Anyway, the most trouble-free solution is to use the same "system" compiler
+to build pocl, as the one that was used to build the 2nd compiler. Note that
+while most Linux distributions use gcc to build their clang/llvm,
+the official downloads from llvm.org are built using clang.
+
 Deadlocks (freezes) on FreeBSD
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
