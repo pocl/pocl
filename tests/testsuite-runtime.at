@@ -45,7 +45,7 @@ AT_CLEANUP
 #test_kernel_cache_includes tests include paths so it must be executed in the directory
 AT_SETUP([test_kernel_cache_includes])
 AT_KEYWORDS([runtime])
-AT_CHECK_UNQUOTED([cd $abs_top_srcdir/tests/runtime/; $abs_top_builddir/tests/runtime/test_kernel_cache_includes], 0,
+AT_CHECK_UNQUOTED([cd $abs_top_builddir/tests/runtime/; $abs_top_builddir/tests/runtime/test_kernel_cache_includes], 0,
 [$(cat $abs_top_srcdir/tests/runtime/test_kernel_cache_includes_expout.txt)
 ])
 AT_CLEANUP
