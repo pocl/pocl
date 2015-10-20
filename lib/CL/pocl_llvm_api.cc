@@ -1324,6 +1324,12 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
   if (pocl_exists(parallel_bc_path))
     return CL_SUCCESS;
 
+  char final_binary_path[POCL_FILENAME_LENGTH];
+  pocl_cache_final_binary_path(final_binary_path, program, device_i, kernel, local_x, local_y, local_z);
+
+  if (pocl_exists(final_binary_path))
+    return CL_SUCCESS;
+
   llvm::MutexGuard lockHolder(kernelCompilerLock);
   InitializeLLVM();
 
