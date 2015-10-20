@@ -114,6 +114,11 @@ void pocl_cache_work_group_function_path(char* parallel_bc_path, cl_program prog
                               unsigned device_i, cl_kernel kernel,
                               size_t local_x, size_t local_y, size_t local_z);
 
+void pocl_cache_final_binary_path(char* final_binary_path, cl_program program,
+                               unsigned device_i, cl_kernel kernel,
+                               size_t local_x, size_t local_y,
+                               size_t local_z);
+
 #ifdef __GNUC__
 #pragma GCC visibility pop
 #endif

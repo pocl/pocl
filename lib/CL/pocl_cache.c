@@ -127,6 +127,34 @@ void pocl_cache_work_group_function_path(char* parallel_bc_path, cl_program prog
                          local_x, local_y, local_z);
 }
 
+void pocl_cache_final_binary_path(char* final_binary_path, cl_program program,
+                               unsigned device_i, cl_kernel kernel,
+                               size_t local_x, size_t local_y,
+                               size_t local_z) {
+    assert(kernel->name);
+
+
+    /* TODO this should be probably refactored to either
+     * get the binary name from the device itself, or
+     * let the device ops call pocl_llvm_generate_workgroup_function() on their own */
+
+    int bytes_written;
+    char final_binary_name[POCL_FILENAME_LENGTH];
+
+    if (program->devices[device_i]->spmd)
+        bytes_written = snprintf(final_binary_name, POCL_FILENAME_LENGTH,
+                                 "%s.brig", POCL_PARALLEL_BC_FILENAME);
+    else
+        bytes_written = snprintf(final_binary_name, POCL_FILENAME_LENGTH,
+                                 "/%s.so", kernel->name);
+
+    assert(bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
+
+    pocl_cache_kernel_cachedir_path(final_binary_path, program,
+                         device_i, kernel, final_binary_name,
+                         local_x, local_y, local_z);
+}
+
 /******************************************************************************/
 
 static void* acquire_program_lock(cl_program program,
