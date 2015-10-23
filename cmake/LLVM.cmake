@@ -119,6 +119,11 @@ run_llvm_config(LLVM_ASSERTS_BUILD --assertion-mode)
 run_llvm_config(LLVM_SYSLIBS --system-libs)
 string(STRIP "${LLVM_SYSLIBS}" LLVM_SYSLIBS)
 
+if (MSVC)
+  string(REPLACE "-L${LLVM_LIBDIR}" "" LLVM_LDFLAGS "${LLVM_LDFLAGS}")
+  string(STRIP "${LLVM_LDFLAGS}" LLVM_LDFLAGS)
+endif()
+
 # Ubuntu's llvm reports "arm-unknown-linux-gnueabihf" triple, then if one tries
 # `clang --target=arm-unknown-linux-gnueabihf ...` it will produce armv6 code,
 # even if one's running armv7;
@@ -387,19 +392,6 @@ set_cache_var(CLANG_TARGET_OPTION "Clang option used to specify the target" )
 
 ####################################################################
 
-macro(CHECK_SIZEOF TYPE RES_VAR TRIPLE)
-  setup_cache_var_name(SIZEOF "${TYPE}-${TRIPLE}-${CLANG}")
-
-  if(NOT DEFINED ${CACHE_VAR_NAME})
-    custom_try_run_lli("" "return sizeof(${TYPE});" SIZEOF_STDOUT ${RES_VAR} "${CLANG_TARGET_OPTION}${TRIPLE}")
-    if(NOT ${RES_VAR})
-      message(SEND_ERROR "Could not determine sizeof(${TYPE})")
-    endif()
-  endif()
-
-  set_cache_var(${RES_VAR} "Size of ${TYPE}")
-endmacro()
-
 macro(CHECK_ALIGNOF TYPE TYPEDEF RES_VAR TRIPLE)
   setup_cache_var_name(ALIGNOF "${TYPE}-${TYPEDEF}-${TRIPLE}-${CLANG}")
 
@@ -478,10 +470,6 @@ endif()
 # llvm-config does not always report the "-DNDEBUG" flag correctly
 # (see LLVM bug 18253). If LLVM and the pocl passes are built with
 # different NDEBUG settings, problems arise
-#
-# TODO: How this test should actually recognize, if llvm
-#       is built without assertions? On OSX this always
-#       passed and thinks there is no assertions...
 
 if(NOT LLVM_CXXFLAGS MATCHES "-DNDEBUG")
 
@@ -520,8 +508,6 @@ if(NOT LLVM_CXXFLAGS MATCHES "-DNDEBUG")
 endif()
 
 ####################################################################
-
-# DONE
 
 # TODO: We need to set both target-triple and cpu-type when
 # building, since the ABI depends on both. We can either add flags
@@ -592,23 +578,6 @@ if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "(powerpc|armv7)")
 else()
   set(CLANG_MARCH_FLAG "-march=")
 endif()
-
-####################################################################
-# line 823 in configure.ac:
-# case $host_cpu in
-
-#~
-#~ if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "armv6l")
-    #~ MESSAGE(STATUS "Using the ARM optimized kernel lib for the native device")
-    #~ # TODO better...
-    #~ ;;
-#~
-#~
-#~ elseif(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "(x86_64|AMD64)")
-  #~ message(STATUS "using the x86_64 optimized kernel lib for the native device")
-#~
-#~ endif()
-
 
 ####################################################################
 

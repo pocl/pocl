@@ -560,7 +560,7 @@ void pocl_cache_cleanup_cachedir(cl_program program) {
 
     unsigned i;
 
-    if (!pocl_get_bool_option("POCL_KERNEL_CACHE", POCL_BUILD_KERNEL_CACHE)) {
+    if (!pocl_get_bool_option("POCL_KERNEL_CACHE", POCL_KERNEL_CACHE_DEFAULT)) {
 
         for (i=0; i< program->num_devices; i++) {
             if (program->build_hash[i][0] == 0)

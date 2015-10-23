@@ -163,14 +163,6 @@ You should rebuild LLVM with 'make REQUIRES_RTTI=1'.
 See the INSTALL file for more information.])
 fi
 
-AC_ARG_ENABLE([region-allocator],
-[AS_HELP_STRING([--enable-region-allocator], 
- [Use a custom OpenCL optimized region-based memory allocator for the CPU devices instead of allocating buffers directly with malloc (experimental with known issues!).])],
-[
-AC_DEFINE([CUSTOM_BUFFER_ALLOCATOR], [], "Use a custom buffer allocator")
-],
-[])
-
 ####################################################################
 # Manage optional testsuites
 
@@ -668,9 +660,9 @@ AC_ARG_ENABLE([kernel-cache],
               [cache_kernel="no"])
 if test "$cache_kernel" = "yes"
 then
-  AC_DEFINE([POCL_BUILD_KERNEL_CACHE], [1], "Enabled kernel cache feature")
+  AC_DEFINE([POCL_KERNEL_CACHE_DEFAULT], [1], "Enabled kernel cache feature")
 else
-  AC_DEFINE([POCL_BUILD_KERNEL_CACHE], [0], "Disabled kernel cache feature")
+  AC_DEFINE([POCL_KERNEL_CACHE_DEFAULT], [0], "Disabled kernel cache feature")
 fi
 
 

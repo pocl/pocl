@@ -36,8 +36,7 @@ add_subdirectory("CL")
 # and after adding lib/CL subdir b/c of libpocl location,
 # but before poclu & examples & tests (they need these variables)
 
-# TODO possibly required
-set(OPENCL_CFLAGS "") #'$(PTHREAD_CFLAGS)'
+set(OPENCL_CFLAGS "${PTHREAD_CFLAGS}")
 
 if(TESTS_USE_ICD)
 
@@ -45,8 +44,10 @@ if(TESTS_USE_ICD)
     set(OPENCL_LIBS ${OPENCL_LIBRARIES})
   else()
     message(WARNING "Tests-use-ICD requested, but cannot find an OpenCL library; adding -lOpenCL to LDFLAGS")
-    set(OPENCL_LIBS "-lOpenCL")
+    set(OPENCL_LIBS "OpenCL")
   endif()
+
+  set(OPENCL_LIBS "${PTHREAD_LDFLAGS};${OPENCL_LIBS}")
 
   set(OPENCL_EXTLIBS ${OPENCL_LIBS})
   set(OPENCL_CMAKE_OPTIONS "")

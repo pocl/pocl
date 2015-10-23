@@ -32,7 +32,27 @@ set(VERSION_SUFFIX "-pre")
 set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION}${VERSION_SUFFIX})
 set(POCL_VERSION ${VERSION_STRING})
 
+######################################################################################
 
+macro(set_expr VAR)
+  if(${ARGN})
+    set(${VAR} 1)
+  else()
+    set(${VAR} 0)
+  endif()
+endmacro()
+
+function(rename_if_different SRC DST)
+  if(EXISTS "${DST}")
+    file(MD5 "${SRC}" OLD_MD5)
+    file(MD5 "${DST}" NEW_MD5)
+    if(NOT OLD_MD5 STREQUAL NEW_MD5)
+      file(RENAME "${SRC}" "${DST}")
+    endif()
+  else()
+    file(RENAME "${SRC}" "${DST}")
+  endif()
+endfunction()
 
 ######################################################################################
 
@@ -65,7 +85,7 @@ set(POCL_INSTALL_PUBLIC_LIBDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}"
 set(POCL_INSTALL_PRIVATE_LIBDIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}/pocl" CACHE PATH "POCL private libdir")
 
 # for pocl.icd
-if (UNIX AND NOT CMAKE_CROSSCOMPILING)
+if(UNIX AND NOT CMAKE_CROSSCOMPILING)
   set(POCL_INSTALL_ICD_VENDORDIR "/etc/OpenCL/vendors" CACHE PATH "POCL ICD file destination")
 else()
   set(POCL_INSTALL_ICD_VENDORDIR "${CMAKE_INSTALL_PREFIX}/etc/OpenCL/vendors" CACHE PATH "POCL ICD file destination")
@@ -90,6 +110,7 @@ set(POCL_INSTALL_CMAKE_CONFIG_DIR "${POCL_INSTALL_PRIVATE_LIBDIR}" CACHE PATH   
 set(POCL_INSTALL_PKGCONFIG_DIR "${POCL_INSTALL_PUBLIC_LIBDIR}/pkgconfig" CACHE PATH "Destination for pocl.pc")
 
 if(APPLE)
+  set(CMAKE_MACOSX_RPATH ON)
   set(POCL_INSTALL_OPENCL_HEADER_DIR "${POCL_INSTALL_PUBLIC_HEADER_DIR}/OpenCL" CACHE PATH "POCL header dir for OpenCL headers")
 else()
   set(POCL_INSTALL_OPENCL_HEADER_DIR "${POCL_INSTALL_PUBLIC_HEADER_DIR}/CL" CACHE PATH "POCL header dir for OpenCL headers")
@@ -97,7 +118,6 @@ endif()
 
 option(BUILD_SHARED_LIBS "ON=Build shared libs, OFF=static libs" ON)
 
-# TODO measure slowdown with compiled but disabled debug, see if it can default to always compile in
 option(
   POCL_DEBUG_MESSAGES
   "Enable debug messages from pocl (useful for OpenCL developers), must be enabled at runtime, with env var POCL_DEBUG"
@@ -112,22 +132,23 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 option(ENABLE_HSA "Enable the HSA device driver for AMD GCN devices" OFF)
 
 ######################################################################################
-# AC_CONFIG_TESTDIR([tests])
+
 enable_testing()
 
 ######################################################################################
 
-if (UNIX)
+if(UNIX)
   find_package(PkgConfig MODULE REQUIRED)
 endif()
 
 ######################################################################################
+
 set(ANDROID_COMPILER 0)
-if (CMAKE_C_COMPILER MATCHES "android")
+if(CMAKE_C_COMPILER MATCHES "android")
   set(ANDROID_COMPILER 1)
   add_definitions(-DPOCL_ANDROID)
   add_definitions(-DPOCL_ANDROID_PREFIX="/data/data/org.pocl.libs/files")
-endif ()
+endif()
 
 ######################################################################################
 
@@ -151,22 +172,22 @@ message(STATUS "Hwloc_CFLAGS ${Hwloc_CFLAGS}")
 # Find executables to few tools required during build 
 #
 
-find_program (PATCH_EXEC 
-  NAMES patch patch.exe
+find_program(PATCH_EXEC
+  NAMES patch${CMAKE_EXECUTABLE_SUFFIX}
   HINTS ENV PATH
 )
 
-find_program (XARGS_EXEC 
-  NAMES xargs xargs.exe
+find_program(XARGS_EXEC
+  NAMES xargs${CMAKE_EXECUTABLE_SUFFIX}
   HINTS ENV PATH
 )
 
-find_program (CAT_EXEC 
-  NAMES cat cat.exe
+find_program(CAT_EXEC
+  NAMES cat${CMAKE_EXECUTABLE_SUFFIX}
   HINTS ENV PATH
 )
 
-if (!PATCH_EXEC)
+if(NOT PATCH_EXEC)
   message(FATAL_ERROR "Could not find patch command.")
 endif()
 
@@ -241,18 +262,12 @@ int main() {
 }
   " HAVE_CLOCK_GETTIME)
 else()
-  if(WIN32)
-    message(STATUS "Using GetSystemTime...() on Win32")
-    set(HAVE_CLOCK_GETTIME 1)
-  else()
-    set(HAVE_CLOCK_GETTIME 0)
-  endif()
+  set(HAVE_CLOCK_GETTIME 0)
 endif()
 
 ######################################################################################
 
 if(NOT DEFINED DEFAULT_USE_VECMATHLIB)
-  # vecmathlib
   if(CLANGXX_WORKS AND EXISTS "${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vecmathlib.h")
     set(DEFAULT_USE_VECMATHLIB 1 CACHE INTERNAL "vecmathlib availability")
   else()
@@ -286,22 +301,20 @@ endif()
 
 option(USE_VECMATHLIB_BUILTINS_ONLY "Use only __builtin_* functions in the kernel library." OFF)
 
+set(DEFAULT_KERNEL_CL_FLAGS "-D__OPENCL_VERSION__=120")
 if(USE_VECMATHLIB)
   set(DEFAULT_KERNEL_CLANGXX_FLAGS "-DVML_NO_IOSTREAM ${CLANGXX_STDLIB}")
-endif()
-set(DEFAULT_KERNEL_CL_FLAGS "-D__OPENCL_VERSION__=120")
-
-if(USE_VECMATHLIB_BUILTINS_ONLY AND USE_VECMATHLIB)
-  set(DEFAULT_KERNEL_CL_FLAGS "${DEFAULT_KERNEL_CL_FLAGS} -DPOCL_VECMATHLIB_BUILTIN")
-  set(DEFAULT_KERNEL_CLANGXX_FLAGS "${DEFAULT_KERNEL_CLANGXX_FLAGS} -DPOCL_VECMATHLIB_BUILTIN")
+  if(USE_VECMATHLIB_BUILTINS_ONLY)
+    set(DEFAULT_KERNEL_CL_FLAGS "${DEFAULT_KERNEL_CL_FLAGS} -DPOCL_VECMATHLIB_BUILTIN")
+    set(DEFAULT_KERNEL_CLANGXX_FLAGS "${DEFAULT_KERNEL_CLANGXX_FLAGS} -DPOCL_VECMATHLIB_BUILTIN")
+  endif()
 endif()
 
-if(NOT DEFINED KERNEL_CLANGXX_FLAGS)
-  set(KERNEL_CLANGXX_FLAGS "${DEFAULT_KERNEL_CLANGXX_FLAGS}")
-endif()
-if(NOT DEFINED KERNEL_CL_FLAGS)
-  set(KERNEL_CL_FLAGS "${DEFAULT_KERNEL_CL_FLAGS}")
-endif()
+set(EXTRA_KERNEL_CL_FLAGS "" CACHE STRING "Extra arguments to kernel CL compiler (defaults to empty)")
+set(EXTRA_KERNEL_CXX_FLAGS "" CACHE STRING "Extra arguments to kernel CXX compiler (defaults to empty)")
+
+set(KERNEL_CLANGXX_FLAGS "${DEFAULT_KERNEL_CLANGXX_FLAGS} ${EXTRA_KERNEL_CXX_FLAGS}")
+set(KERNEL_CL_FLAGS "${DEFAULT_KERNEL_CL_FLAGS} ${EXTRA_KERNEL_CL_FLAGS}")
 
 message(STATUS "Clang++ flags for compiling kernel library: ${KERNEL_CLANGXX_FLAGS}")
 message(STATUS "OpenCL flags for compiling kernel library: ${KERNEL_CL_FLAGS}")
@@ -309,7 +322,6 @@ message(STATUS "OpenCL flags for compiling kernel library: ${KERNEL_CL_FLAGS}")
 
 ######################################################################################
 
-# DONE
 option(STATIC_LLVM "Link LLVM statically. Default is dynamic." OFF)
 
 if(STATIC_LLVM)
@@ -328,18 +340,6 @@ else()
   endif()
 endif()
 
-if (MSVC)
-  string(REPLACE "-L${LLVM_LIBDIR}" "" LLVM_LDFLAGS "${LLVM_LDFLAGS}")
-  string(STRIP "${LLVM_LDFLAGS}" LLVM_LDFLAGS)
-endif()
-
-######################################################################################
-
-option(CUSTOM_BUFFER_ALLOCATOR "Use a custom OpenCL optimized region-based memory allocator instead of allocating buffers with malloc directly" ON)
-
-######################################################################################
-
-# examples are in their own cmakelists.txt
 
 ######################################################################################
 
@@ -365,8 +365,7 @@ endif()
 
 ######################################################################################
 
-if (MSVC)
-  set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+if(MSVC)
   find_package( PthreadsWin32 )
   if(NOT Pthreads_FOUND)
     message(FATAL_ERROR "Could not find pthreads-win32 libs!")
@@ -375,7 +374,8 @@ if (MSVC)
 else()
   include(FindThreads)
   if(Threads_FOUND)
-    set(LD_FLAGS_BIN ${CMAKE_THREAD_LIBS_INIT})
+    set(PTHREAD_LDFLAGS ${CMAKE_THREAD_LIBS_INIT})
+    set(PTHREAD_CFLAGS "")
   else()
     message(FATAL_ERROR "Could not find threading library for this system")
   endif()
@@ -483,9 +483,6 @@ endif()
 
 
 ######################################################################################
-# DONE
-
-# OpenCL headers
 
 if(DEFINED INSTALL_OPENCL_HEADERS)
   message(STATUS "Install POCL's OpenCL headers: ${INSTALL_OPENCL_HEADERS}")
@@ -501,17 +498,6 @@ else() # Undefined = auto -> check
   set(INSTALL_OPENCL_HEADERS ${IOH} CACHE BOOL "Install POCL's OpenCL headers. (Ones from Kronos should be installed instead)")
 endif()
 
-######################################################################################
-# DONE
-
-# TODO Check cl.hpp usability. It is broken on a few platforms.
-
-if(DEFINED HAVE_OPENCL_HPP)
-  message(STATUS "cl2.hpp (cached): ${HAVE_OPENCL_HPP}")
-else()
-  message(STATUS "tests will use pocl's own cl2.hpp")
-  set(HAVE_OPENCL_HPP ${_OPENCL_HPP} CACHE INTERNAL "cl2.hpp found & usable")
-endif()
 
 ######################################################################################
 # TODO check if this works!
@@ -522,9 +508,8 @@ if(PEDANTIC)
 endif()
 
 ######################################################################################
-# DONE
 
-if (MSVC)
+if(MSVC)
   message(STATUS "Finding libGLEW binary distribution (http://glew.sourceforge.net/index.html) for Widows not implemented. Consider writing FindGlew.cmake macro.")
   message(STATUS "libGLEW not found. A few tests will not work")
 else()
@@ -539,20 +524,18 @@ else()
 endif()
 
 ######################################################################################
-# DONE
 
-option(KERNEL_CACHE "Enable the kernel compile cache." ON)
-if(KERNEL_CACHE)
-  set(POCL_BUILD_KERNEL_CACHE 1)
+option(KERNEL_CACHE_DEFAULT "Default value for the kernel compile cache. If disabled, pocl will still use the kernel cache, but will delete cachefiles on exit. You can still enable keeping the files it at runtime with an env var." ON)
+if(KERNEL_CACHE_DEFAULT)
+  set(POCL_KERNEL_CACHE_DEFAULT 1)
 else()
-  set(POCL_BUILD_KERNEL_CACHE 0)
+  set(POCL_KERNEL_CACHE_DEFAULT 0)
 endif()
 
 string(TIMESTAMP POCL_BUILD_TIMESTAMP "%d%m%Y%H%M%S")
 file(WRITE "${CMAKE_BINARY_DIR}/pocl_build_timestamp.h" "#define POCL_BUILD_TIMESTAMP \"${POCL_BUILD_TIMESTAMP}\"")
 
 ######################################################################################
-# DONE
 
 if("${LLVM_CLANG_VERSION}" MATCHES "SPIR")
   set(CLANG_SPIR 1)
@@ -589,10 +572,9 @@ endif()
 
 # TODO some more work required here
 
-set(DEFAULT_HOST_LLC_FLAGS "-relocation-model=pic")
-# TODO host clang flags / llc flags - properly add_compile_options etc
-set(DEFAULT_HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} ${CLANG_TARGET_OPTION}${LLC_TRIPLE}")
-set(DEFAULT_HOST_LLC_FLAGS "${DEFAULT_HOST_LLC_FLAGS} -mtriple=${LLC_TRIPLE}")
+set(DEFAULT_HOST_CLANG_FLAGS "${CLANG_TARGET_OPTION}${LLC_TRIPLE}")
+set(DEFAULT_HOST_LLC_FLAGS "-relocation-model=pic -mtriple=${LLC_TRIPLE}")
+
 if(NOT LLC_HOST_CPU MATCHES "unknown")
   set(DEFAULT_HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} ${CLANG_MARCH_FLAG}${LLC_HOST_CPU}")
   set(DEFAULT_HOST_LLC_FLAGS "${DEFAULT_HOST_LLC_FLAGS} -mcpu=${LLC_HOST_CPU}")
@@ -622,30 +604,20 @@ endif()
 
 ####################################################################
 
-set(HOST_AS_FLAGS "${DEFAULT_HOST_AS_FLAGS}" CACHE STRING "Parameters to as for code generation in the host.")
-set(HOST_LD_FLAGS "${DEFAULT_HOST_LD_FLAGS}" CACHE STRING "Parameter to compiler to generate loadable module.")
-set(HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS}" CACHE STRING "Parameters to clang for host compilation.")
-set(HOST_LLC_FLAGS "${DEFAULT_HOST_LLC_FLAGS}" CACHE STRING "Parameters to llc for code generation in the host.")
+set(EXTRA_HOST_AS_FLAGS "" CACHE STRING "Extra parameters to as for code generation in the host. (default: empty)")
+set(EXTRA_HOST_LD_FLAGS "" CACHE STRING "Extra parameter to compiler to generate loadable module. (default: empty)")
+set(EXTRA_HOST_CLANG_FLAGS "" CACHE STRING "Extra parameters to clang for host compilation. (default: empty)")
+set(EXTRA_HOST_LLC_FLAGS "" CACHE STRING "Extra parameters to llc for code generation in the host. (default: empty)")
 
 ####################################################################
 
-#line 760
+set(HOST_AS_FLAGS "${DEFAULT_HOST_AS_FLAGS} ${EXTRA_HOST_AS_FLAGS}")
+set(HOST_LD_FLAGS "${DEFAULT_HOST_LD_FLAGS} ${EXTRA_HOST_LD_FLAGS}" )
+set(HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} ${EXTRA_HOST_CLANG_FLAGS}")
+set(HOST_LLC_FLAGS "${DEFAULT_HOST_LLC_FLAGS} ${EXTRA_HOST_LLC_FLAGS}")
 
 set(OCL_TARGETS "host")
-
-
-# THESE are only used in makefile.am & scripts/pocl*
-set(TCE_TARGET_CLANG_FLAGS "" CACHE STRING "Extra parameters to Clang for TCE compilation.")
-# TODO HOST_CLANG_FLAGS -> CPU_TARGET_CLANG_FLAGS
-#set(HOST_CLANG_FLAGS "" CACHE STRING "Extra parameters to Clang for cpu target compilation.")
-#AC_ARG_VAR([TARGET_CLANG_FLAGS],
-#           [Parameters to for target compilation.])
-
-set(TCE_TARGET_LLC_FLAGS "" CACHE STRING "Extra parameters to LLVM's llc for TCE compilation.")
-# TODO HOST_LLC_FLAGS -> CPU_TARGET_LLC_FLAGS
-#set(HOST_LLC_FLAGS "" CACHE STRING "Extra parameters to LLVM's llc for cpu target compilation.")
-#AC_DEFINE_UNQUOTED([TARGET_LLC_FLAGS],
-#                   [Parameters to llc for code generation in the target.])
+set(OCL_DRIVERS "basic pthreads")
 
 # TODO OCL_KERNEL_TARGET -> CPU_TARGET_TRIPLE
 # TODO OCL_KERNEL_TARGET_CPU -> OCL_KERNEL_TARGET_CPU
@@ -655,19 +627,16 @@ set(TCE_TARGET_LLC_FLAGS "" CACHE STRING "Extra parameters to LLVM's llc for TCE
 set(OCL_KERNEL_TARGET "${LLC_TRIPLE}") #The kernel target triplet.
 set(OCL_KERNEL_TARGET_CPU "${LLC_HOST_CPU}") #The kernel target CPU variant.
 
-# TODO this is required
-# mostly used in tests to skip based on cpu
-#AC_SUBST([HOST_CPU], [$host_cpu])
-#AC_DEFINE_UNQUOTED([HOST_CPU], ["$host_cpu"], [The host CPU type.])
-
-
 ####################################################################
 
 # Determine which device drivers to build.
 
-set(OCL_DRIVERS "basic pthreads")
-
 if(NOT DEFINED DEFAULT_ENABLE_TCE)
+
+  # THESE are only used in makefile.am & scripts/pocl*
+  set(TCE_TARGET_CLANG_FLAGS "" CACHE STRING "Extra parameters to Clang for TCE compilation.")
+
+  set(TCE_TARGET_LLC_FLAGS "" CACHE STRING "Extra parameters to LLVM's llc for TCE compilation.")
 
   find_program(TCE_CONFIG NAMES "tce-config")
   if(TCE_CONFIG)
@@ -755,22 +724,6 @@ endif()
 
 ##########################################################
 
-# TODO
-
-#AC_MSG_NOTICE([Checking host compiler characteristics])
-#message(STATUS "Checking host compiler characteristics")
-
-#CFLAGS="-h $host"
-# -> TRIPLE = LLC_TRIPLE
-
-# HOST_SIZEOF_* is actually unused; some code still uses SIZEOF_* though.
-
-#AC_CHECK_SIZEOF([long])
-#AC_SUBST([HOST_SIZEOF_LONG], )
-CHECK_SIZEOF("__fp16" SIZEOF___FP16 ${LLC_TRIPLE})
-CHECK_SIZEOF("void*" SIZEOF_VOID_P ${LLC_TRIPLE})
-
-
 CHECK_ALIGNOF("float16" "typedef float float16  __attribute__((__ext_vector_type__(16)));" ALIGNOF_FLOAT16 ${LLC_TRIPLE})
 
 CHECK_ALIGNOF("double16" "typedef double double16  __attribute__((__ext_vector_type__(16)));" ALIGNOF_DOUBLE16 ${LLC_TRIPLE})
@@ -784,10 +737,10 @@ endif()
 ##########################################################
 
 # POCL_DEVICE_ADDRESS_BITS
-# Value based on host processor, for basic and pthreads devices
-if("${SIZEOF_VOID_P}" STREQUAL "8")
+# TODO rename to HOST addess bits
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
   set(POCL_DEVICE_ADDRESS_BITS 64)
-elseif("${SIZEOF_VOID_P}" STREQUAL "4")
+elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
   set(POCL_DEVICE_ADDRESS_BITS 32)
 else()
   message(FATAL_ERROR "Cannot figure out POCL_DEVICE_ADDRESS_BITS")
@@ -840,7 +793,6 @@ set(LIB_CURRENT_VERSION 7)
 set(LIB_REVISION_VERSION 0)
 set(LIB_AGE_VERSION 6)
 
-# LIB_FIRST_VERSION=$(($LIB_CURRENT_VERSION - $LIB_AGE_VERSION))
 math(EXPR LIB_FIRST_VERSION "${LIB_CURRENT_VERSION} - ${LIB_AGE_VERSION}")
 
 # libtool takes "c:r:a" arguments, but the result is "<lib>.so.(c-a).a.r"
@@ -854,23 +806,9 @@ set(LIB_API_VERSION "${LIB_FIRST_VERSION}")
 # drastically. Let's try to follow the similar 'current' numbering as
 # the pocl host API library and perhaps tune the 'revision' and 'age' later.
 
-# DONE - lib/llvmopencl..
-# AC_SUBST([KERNEL_COMPILER_LIB_VERSION], ["3:0:0"])
 set(KERNEL_COMPILER_LIB_VERSION "${LIB_CURRENT_VERSION}.0.0")
 
 ##########################################################
-
-function(rename_if_different SRC DST)
-  if(EXISTS "${DST}")
-    file(MD5 "${SRC}" OLD_MD5)
-    file(MD5 "${DST}" NEW_MD5)
-    if(NOT OLD_MD5 STREQUAL NEW_MD5)
-      file(RENAME "${SRC}" "${DST}")
-    endif()
-  else()
-    file(RENAME "${SRC}" "${DST}")
-  endif()
-endfunction()
 
 #TODO
 # these vars are copies b/c tons of sources use BUILD_ICD etc
@@ -984,16 +922,12 @@ MESSAGE(STATUS "******* Enabled features:")
 MESSAGE(STATUS " ")
 
 MESSAGE(STATUS "CLANG_SPIR: ${CLANG_SPIR}")
-MESSAGE(STATUS "CL_DISABLE_LONG (Disable cl_khr_int64): ${CL_DISABLE_LONG}")
 MESSAGE(STATUS "DIRECT_LINKAGE: ${DIRECT_LINKAGE}")
 MESSAGE(STATUS "ENABLE_DOCS: ${ENABLE_DOCS}")
 MESSAGE(STATUS "ENABLE_ICD: ${ENABLE_ICD}")
 MESSAGE(STATUS "ENABLE_TCE: ${ENABLE_TCE}")
 MESSAGE(STATUS "ENABLE_TCEMC: ${ENABLE_TCEMC}")
 MESSAGE(STATUS "ENABLE_HSA: ${ENABLE_HSA}")
-MESSAGE(STATUS "HAVE_CLOCK_GETTIME: ${HAVE_CLOCK_GETTIME}")
-MESSAGE(STATUS "HAVE_GLEW: ${HAVE_GLEW}")
-MESSAGE(STATUS "HAVE_OPENCL_HPP: ${HAVE_OPENCL_HPP}")
 MESSAGE(STATUS "INSTALL_OPENCL_HEADERS (Install our headers): ${INSTALL_OPENCL_HEADERS}")
 MESSAGE(STATUS "OCL_DRIVERS (Drivers built): ${OCL_DRIVERS}")
 MESSAGE(STATUS "OCL_TARGETS (Targets built): ${OCL_TARGETS}")
@@ -1002,7 +936,7 @@ MESSAGE(STATUS "TESTS_USE_ICD: ${TESTS_USE_ICD}")
 MESSAGE(STATUS "USE_VECMATHLIB: ${USE_VECMATHLIB}")
 MESSAGE(STATUS "Available testsuites: ${ALL_TESTSUITES}")
 MESSAGE(STATUS "Enabled testsuites: ${ENABLED_TESTSUITES}")
-MESSAGE(STATUS "Kernel caching: ${KERNEL_CACHE}")
+MESSAGE(STATUS "Kernel caching: ${KERNEL_CACHE_DEFAULT}")
 
 MESSAGE(STATUS " ")
 MESSAGE(STATUS "******* Programs:")
@@ -1025,6 +959,8 @@ MESSAGE(STATUS "CLANG_MARCH_FLAG: ${CLANG_MARCH_FLAG}")
 MESSAGE(STATUS "CLANG_TARGET_OPTION: ${CLANG_TARGET_OPTION}")
 MESSAGE(STATUS "CL_DISABLE_HALF: ${CL_DISABLE_HALF}")
 MESSAGE(STATUS "CL_DISABLE_LONG: ${CL_DISABLE_LONG}")
+MESSAGE(STATUS "HAVE_CLOCK_GETTIME: ${HAVE_CLOCK_GETTIME}")
+MESSAGE(STATUS "HAVE_GLEW: ${HAVE_GLEW}")
 MESSAGE(STATUS "HOST_AS_FLAGS: ${HOST_AS_FLAGS}")
 MESSAGE(STATUS "HOST_CLANG_FLAGS: ${HOST_CLANG_FLAGS}")
 MESSAGE(STATUS "HOST_LD_FLAGS: ${HOST_LD_FLAGS}")
@@ -1035,7 +971,8 @@ MESSAGE(STATUS "HSAIL_ASM: ${HSAIL_ASM}")
 MESSAGE(STATUS "ICD_LD_FLAGS: ${ICD_LD_FLAGS}")
 MESSAGE(STATUS "KERNEL_CLANGXX_FLAGS: ${KERNEL_CLANGXX_FLAGS}")
 MESSAGE(STATUS "KERNEL_CL_FLAGS: ${KERNEL_CL_FLAGS}")
-MESSAGE(STATUS "LD_FLAGS_BIN: ${LD_FLAGS_BIN}")
+MESSAGE(STATUS "PTHREAD_LDFLAGS: ${PTHREAD_LDFLAGS}")
+MESSAGE(STATUS "PTHREAD_CFLAGS: ${PTHREAD_CFLAGS}")
 MESSAGE(STATUS "LIB_API_VERSION: ${LIB_API_VERSION}")
 MESSAGE(STATUS "LIB_BUILD_VERSION: ${LIB_BUILD_VERSION}")
 MESSAGE(STATUS "LLVM_VERSION: ${LLVM_VERSION}")
@@ -1049,18 +986,6 @@ MESSAGE(STATUS "LLVM_INCLUDEDIR: ${LLVM_INCLUDEDIR}")
 MESSAGE(STATUS "LLVM_SRC_ROOT: ${LLVM_SRC_ROOT}")
 MESSAGE(STATUS "LLVM_OBJ_ROOT: ${LLVM_OBJ_ROOT}")
 MESSAGE(STATUS "LLVM_INCLUDE_DIRS: ${LLVM_INCLUDE_DIRS}")
-MESSAGE(STATUS "LLVM_SYSLIBS: ${LLVM_SYSLIBS}")
-MESSAGE(STATUS "----------- LLVM_LIBS (LLVM SHARED LIBS) --------")
-MESSAGE(STATUS "${LLVM_LIBNAMES}")
-MESSAGE(STATUS "----------- LLVM_LIBFILES (LLVM STATIC LIBS) --------")
-MESSAGE(STATUS "${LLVM_LIBFILES}")
-MESSAGE(STATUS "----------- CLANG_LIBS (LLVM SHARED LIBS) --------")
-MESSAGE(STATUS "${CLANG_LIBNAMES}")
-MESSAGE(STATUS "----------- CLANG_LIBFILES (LLVM STATIC LIBS) --------")
-MESSAGE(STATUS "${CLANG_LIBFILES}")
-MESSAGE(STATUS "----------- -------------------------------- --------")
-MESSAGE(STATUS "POCL_LLVM_LIBS: ${POCL_LLVM_LIBS}")
-MESSAGE(STATUS "----------- -------------------------------- --------")
 MESSAGE(STATUS "LLVM_ALL_TARGETS: ${LLVM_ALL_TARGETS}")
 MESSAGE(STATUS "LLVM_HOST_TARGET: ${LLVM_HOST_TARGET}")
 MESSAGE(STATUS "LLC_TRIPLE: ${LLC_TRIPLE}")
@@ -1071,6 +996,14 @@ MESSAGE(STATUS "OCL_KERNEL_TARGET_CPU: ${OCL_KERNEL_TARGET_CPU}")
 MESSAGE(STATUS "POCL_DEVICE_ADDRESS_BITS: ${POCL_DEVICE_ADDRESS_BITS}")
 MESSAGE(STATUS "TCE_TARGET_CLANG_FLAGS: ${TCE_TARGET_CLANG_FLAGS}")
 MESSAGE(STATUS "TCE_TARGET_LLC_FLAGS: ${TCE_TARGET_LLC_FLAGS}")
-
-
-MESSAGE(STATUS " ")
+MESSAGE(STATUS "")
+MESSAGE(STATUS "----------- -------------------------------- --------")
+MESSAGE(STATUS "llvm libs libpocl will be linked to (POCL_LLVM_LIBS):")
+MESSAGE(STATUS "${POCL_LLVM_LIBS}")
+MESSAGE(STATUS "----------- -------------------------------- --------")
+MESSAGE(STATUS "clang libs libpocl will be linked to (CLANG_LIBFILES):")
+MESSAGE(STATUS "${CLANG_LIBFILES}")
+MESSAGE(STATUS "----------- -------------------------------- --------")
+MESSAGE(STATUS "system libs libpocl will be linked to (LLVM_SYSLIBS):")
+MESSAGE(STATUS "${LLVM_SYSLIBS}")
+MESSAGE(STATUS "----------- -------------------------------- --------")

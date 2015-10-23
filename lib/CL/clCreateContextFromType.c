@@ -77,7 +77,7 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
       /* Return a dummy context so icd call to clReleaseContext() still
          works. This fixes AMD SDK OpenCL samples to work (as of 2012-12-05). */
       POCL_MSG_WARN("Couldn't find any device of type %lu; returning "
-                          "a dummy context with 0 devices\n", (unsigned long)device_type);
+                    "a dummy context with 0 devices\n", (unsigned long)device_type);
       return context;
     }
 
