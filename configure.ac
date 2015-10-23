@@ -855,7 +855,7 @@ LLVM_PROG([LLVM_LINK], [llvm-link], [LLVM IR linker])
 export CLANG
 export LLC
 
-AC_DEFINE_UNQUOTED([LLC], ["$LLC"], [LLVM compiler executable.])
+AC_DEFINE_UNQUOTED([LLVM_LLC], ["$LLC"], [LLVM compiler executable.])
 
 AC_MSG_CHECKING([Linker option to build a shared library])
 if echo $host | grep -q darwin; then

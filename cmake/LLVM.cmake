@@ -229,7 +229,7 @@ if(CLANGXX_RES OR CLANG_RES)
 endif()
 
 find_program_or_die(LLVM_OPT "opt" "LLVM optimizer")
-find_program_or_die(LLC "llc" "LLVM static compiler") # TODO rename to LLVM_LLC
+find_program_or_die(LLVM_LLC "llc" "LLVM static compiler")
 find_program_or_die(LLVM_AS "llvm-as" "LLVM assembler")
 find_program_or_die(LLVM_LINK "llvm-link" "LLVM IR linker")
 find_program_or_die(LLVM_LLI "lli" "LLVM interpreter")
@@ -562,8 +562,8 @@ endif()
 set_cache_var(LLC_TRIPLE "LLC_TRIPLE")
 
 if(NOT DEFINED LLC_HOST_CPU AND NOT CMAKE_CROSSCOMPILING)
-  message(STATUS "Find out LLC host CPU with ${LLC}")
-  execute_process(COMMAND ${LLC} "--version" RESULT_VARIABLE RES_VAR OUTPUT_VARIABLE OUTPUT_VAR)
+  message(STATUS "Find out LLC host CPU with ${LLVM_LLC}")
+  execute_process(COMMAND ${LLVM_LLC} "--version" RESULT_VARIABLE RES_VAR OUTPUT_VARIABLE OUTPUT_VAR)
   # WTF, ^^ has return value 1
   #if(RES_VAR)
   #  message(FATAL_ERROR "Error ${RES_VAR} while determining LLC host CPU")

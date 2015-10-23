@@ -870,7 +870,7 @@ static int compile_parallel_bc_to_brig(const char* tmpdir, char* brigfile) {
                     "%s%s.hsail", tmpdir, POCL_PARALLEL_BC_FILENAME);
       assert (error >= 0);
 
-      error = snprintf (command, 4096, LLC " -O2 -march=hsail64 -filetype=asm "
+      error = snprintf (command, 4096, LLVM_LLC " -O2 -march=hsail64 -filetype=asm "
                         "-o %s %s", hsailfile, bytecode);
       assert (error >= 0);
       error = system(command);

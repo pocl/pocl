@@ -72,7 +72,7 @@
 
 
 
-#define LLC "@LLC@"
+#define LLVM_LLC "@LLVM_LLC@"
 
 
 /* "Using LLVM 3.6" */
