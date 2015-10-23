@@ -38,6 +38,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
   cl_program program;
   unsigned i,j;
   int errcode;
+  cl_device_id * unique_devlist = NULL;
 
   POCL_GOTO_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
 
@@ -53,18 +54,6 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
         "%i-th binary is NULL or its length==0\n", i);
     }
 
-  // check for invalid devices in device_list[].
-  for (i = 0; i < num_devices; i++)
-    {
-      int found = 0;
-      for (j = 0; j < context->num_devices; j++)
-        {
-          found |= context->devices[j] == device_list[i];
-        }
-      POCL_GOTO_ERROR_ON((!found), CL_INVALID_DEVICE,
-        "device not found in the device list of the context\n");
-    }
-  
   // check for duplicates in device_list[].
   for (i = 0; i < context->num_devices; i++)
     {
@@ -76,6 +65,24 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
       // duplicate devices
       POCL_GOTO_ERROR_ON((count > 1), CL_INVALID_DEVICE,
         "device %s specified multiple times\n", context->devices[i]->long_name);
+    }
+
+  // convert subdevices to devices and remove duplicates
+  cl_uint real_num_devices = 0;
+  unique_devlist = pocl_unique_device_list(device_list, num_devices, &real_num_devices);
+  num_devices = real_num_devices;
+  device_list = unique_devlist;
+
+  // check for invalid devices in device_list[].
+  for (i = 0; i < num_devices; i++)
+    {
+      int found = 0;
+      for (j = 0; j < context->num_devices; j++)
+        {
+          found |= context->devices[j] == device_list[i];
+        }
+      POCL_GOTO_ERROR_ON((!found), CL_INVALID_DEVICE,
+        "device not found in the device list of the context\n");
     }
   
   if ((program = (cl_program) malloc (sizeof (struct _cl_program))) == NULL)
@@ -105,16 +112,16 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
       goto ERROR_CLEAN_PROGRAM_AND_BINARIES;
     }
 
+  program->main_build_log[0] = 0;
   program->context = context;
   program->num_devices = num_devices;
-  program->devices = (cl_device_id*) calloc (num_devices, sizeof(cl_device_id));
+  program->devices = unique_devlist;
   program->source = NULL;
   program->kernels = NULL;
   program->build_status = CL_BUILD_NONE;
 
   for (i = 0; i < num_devices; ++i)
     {
-      program->devices[i] = device_list[i];
       program->binary_sizes[i] = lengths[i];
       program->binaries[i] = (unsigned char*) malloc (lengths[i]);
       memcpy (program->binaries[i], binaries[i], lengths[i]);
@@ -141,6 +148,7 @@ ERROR_CLEAN_PROGRAM_AND_BINARIES:
 /*ERROR_CLEAN_PROGRAM:*/
   POCL_MEM_FREE(program);
 ERROR:
+  POCL_MEM_FREE(unique_devlist);
     if(errcode_ret != NULL)
       {
         *errcode_ret = errcode;

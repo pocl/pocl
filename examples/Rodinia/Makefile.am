@@ -125,3 +125,5 @@ clean-examples:
 	$(RM) -r $(testsuite_src_dir)
 
 endif
+
+EXTRA_DIST = Rodinia.patch

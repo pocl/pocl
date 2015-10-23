@@ -29,6 +29,6 @@ pkgdatainclude_HEADERS = _kernel.h _kernel_c.h pocl_types.h pocl_features.h pocl
 # Public - and default - includes dir
 include_HEADERS = poclu.h
 
-EXTRA_DIST = vccompat.hpp CMakeLists.txt
+EXTRA_DIST = vccompat.hpp CMakeLists.txt pocl_cache.h pocl_file_util.h utlist.h
 
 SUBDIRS = CL OpenCL

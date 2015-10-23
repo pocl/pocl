@@ -34,7 +34,7 @@ $(srcdir)/$(opencv_zip):
 	cd $(srcdir) && \
 	wget https://github.com/Itseez/opencv/archive/$(opencv_zip)
 
-EXTRA_DIST = $(srcdir)/*.patch
+EXTRA_DIST = opencv.patch
 
 $(opencv_local_src_dir):
 	$(MAKE) $(srcdir)/$(opencv_zip) 

@@ -35,7 +35,7 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
                         cl_event *       event) CL_API_SUFFIX__VERSION_1_0
 {
   int errcode;
-  cl_device_id device_id;
+  cl_device_id device;
   unsigned i;
   mem_mapping_t *mapping = NULL;
   _cl_command_node *cmd = NULL;
@@ -64,14 +64,7 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
       "Could not find mapping of this memobj\n");
 
   /* find the index of the device's ptr in the buffer */
-  device_id = command_queue->device;
-  for (i = 0; i < command_queue->context->num_devices; ++i)
-    {
-      if (command_queue->context->devices[i] == device_id)
-        break;
-    }
-
-  assert(i < command_queue->context->num_devices);
+  POCL_CHECK_DEV_IN_CMDQ
 
   errcode = pocl_create_command (&cmd, command_queue,
                                  CL_COMMAND_UNMAP_MEM_OBJECT,

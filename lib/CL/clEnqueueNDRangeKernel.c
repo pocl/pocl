@@ -59,6 +59,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   size_t local_x, local_y, local_z;
   unsigned i, count;
   int error;
+  cl_device_id realdev = NULL;
   struct pocl_context pc;
   _cl_command_node *command_node;
   void* cache_lock;
@@ -75,6 +76,8 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
     CL_INVALID_WORK_DIMENSION, "work_dim exceeds devices' max workitem dimensions\n");
 
   assert(command_queue->device->max_work_item_dimensions <= 3);
+
+  realdev = POCL_REAL_DEV(command_queue->device);
 
   if (global_work_offset != NULL)
     {
@@ -229,15 +232,15 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
     CL_INVALID_EVENT_WAIT_LIST);
 
   cache_lock = pocl_cache_acquire_writer_lock(kernel->program,
-                                              command_queue->device);
+                                              realdev);
   assert(cache_lock);
 
   char cachedir[POCL_FILENAME_LENGTH];
   pocl_cache_make_kernel_cachedir_path(cachedir, kernel->program,
-                                  command_queue->device, kernel,
+                                  realdev, kernel,
                                   local_x, local_y, local_z);
 
-  error = pocl_llvm_generate_workgroup_function(command_queue->device,
+  error = pocl_llvm_generate_workgroup_function(realdev,
                                 kernel, local_x, local_y, local_z);
   if (error) goto ERROR;
 

@@ -248,9 +248,9 @@ WorkitemReplication::ProcessFunction(Function &F)
   // Then replicate the ParallelRegions.  
   ValueToValueMapTy *const reference_map = 
     new ValueToValueMapTy[workitem_count - 1];
-  for (int z = 0; z < WGLocalSizeZ; ++z) {
-    for (int y = 0; y < WGLocalSizeY; ++y) {
-      for (int x = 0; x < WGLocalSizeX ; ++x) {
+  for (unsigned z = 0; z < WGLocalSizeZ; ++z) {
+    for (unsigned y = 0; y < WGLocalSizeY; ++y) {
+      for (unsigned x = 0; x < WGLocalSizeX ; ++x) {
               
         int index = 
           (WGLocalSizeY * WGLocalSizeX * z + WGLocalSizeX * y + x);
@@ -288,9 +288,9 @@ WorkitemReplication::ProcessFunction(Function &F)
     }
   }  
   
-  for (int z = 0; z < WGLocalSizeZ; ++z) {
-    for (int y = 0; y < WGLocalSizeY; ++y) {
-      for (int x = 0; x < WGLocalSizeX ; ++x) {
+  for (unsigned z = 0; z < WGLocalSizeZ; ++z) {
+    for (unsigned y = 0; y < WGLocalSizeY; ++y) {
+      for (unsigned x = 0; x < WGLocalSizeX ; ++x) {
 	  
         int index = 
           (WGLocalSizeY * WGLocalSizeX * z + WGLocalSizeX * y + x);

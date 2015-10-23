@@ -27,7 +27,7 @@ cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 
 project(pocl)
 set(MAJOR_VERSION 0)
-set(MINOR_VERSION 12)
+set(MINOR_VERSION 13)
 set(VERSION_SUFFIX "-pre")
 set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION}${VERSION_SUFFIX})
 set(POCL_VERSION ${VERSION_STRING})
@@ -35,6 +35,14 @@ set(POCL_VERSION ${VERSION_STRING})
 
 
 ######################################################################################
+
+# Recent versions of CMake can make use of Ninja's console pool to avoid
+# buffering the output of particular commands.
+if(CMAKE_VERSION VERSION_LESS 3.2.0)
+  set(COMMAND_USES_TERMINAL)
+else()
+  set(COMMAND_USES_TERMINAL USES_TERMINAL)
+endif()
 
 if(UNIX)
   include(GNUInstallDirs)
@@ -102,9 +110,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
 # AMD HSA
 option(ENABLE_HSA "Enable the HSA device driver for AMD GCN devices" OFF)
-if(ENABLE_HSA)
-  message(FATAL_ERROR "Sorry, HSA support in CMake is unfinished and unusable ATM")
-endif()
 
 ######################################################################################
 # AC_CONFIG_TESTDIR([tests])
@@ -173,8 +178,8 @@ if(NOT RES)
   message(FATAL_ERROR "Could not load LLVM.cmake")
 endif()
 
-if("${LLVM_VERSION}" VERSION_LESS "3.2")
-  message(FATAL_ERROR "POCL requires LLVM version >= 3.2 !")
+if("${LLVM_VERSION}" VERSION_LESS "3.6")
+  message(FATAL_ERROR "POCL requires LLVM version >= 3.6 !")
 endif()
 
 ######################################################################################
@@ -246,17 +251,6 @@ endif()
 
 ######################################################################################
 
-set(NEW_PRINTF_WORKS 1)
-
-if("${LLVM_VERSION}" VERSION_LESS "3.4")
-  message(STATUS "Turning off new printf()")
-  set(NEW_PRINTF_WORKS 0)
-else()
-  message(STATUS "Enabling new printf()")
-endif()
-
-######################################################################################
-
 if(NOT DEFINED DEFAULT_USE_VECMATHLIB)
   # vecmathlib
   if(CLANGXX_WORKS AND EXISTS "${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vecmathlib.h")
@@ -323,7 +317,7 @@ if(STATIC_LLVM)
   set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
 else()
   message(STATUS "Trying to link LLVM dynamically")
-  find_library(LLVM_SHARED_LIB_FILE "LLVM-${LLVM_VERSION}" PATHS "${LLVM_LIBDIR}" NO_DEFAULT_PATH)
+  find_library(LLVM_SHARED_LIB_FILE NAMES "LLVM-${LLVM_VERSION}" "LLVM" PATHS "${LLVM_LIBDIR}" NO_DEFAULT_PATH)
   if(LLVM_SHARED_LIB_FILE AND EXISTS "${LLVM_SHARED_LIB_FILE}")
     message(STATUS "..using ${LLVM_SHARED_LIB_FILE}")
     set(POCL_LLVM_LIBS "${LLVM_SHARED_LIB_FILE}")
@@ -553,7 +547,9 @@ if(KERNEL_CACHE)
 else()
   set(POCL_BUILD_KERNEL_CACHE 0)
 endif()
+
 string(TIMESTAMP POCL_BUILD_TIMESTAMP "%d%m%Y%H%M%S")
+file(WRITE "${CMAKE_BINARY_DIR}/pocl_build_timestamp.h" "#define POCL_BUILD_TIMESTAMP \"${POCL_BUILD_TIMESTAMP}\"")
 
 ######################################################################################
 # DONE
@@ -640,14 +636,12 @@ set(OCL_TARGETS "host")
 
 # THESE are only used in makefile.am & scripts/pocl*
 set(TCE_TARGET_CLANG_FLAGS "" CACHE STRING "Extra parameters to Clang for TCE compilation.")
-set(CELL_TARGET_CLANG_FLAGS "" CACHE STRING "Extra parameters to Clang for CELL compilation.")
 # TODO HOST_CLANG_FLAGS -> CPU_TARGET_CLANG_FLAGS
 #set(HOST_CLANG_FLAGS "" CACHE STRING "Extra parameters to Clang for cpu target compilation.")
 #AC_ARG_VAR([TARGET_CLANG_FLAGS],
 #           [Parameters to for target compilation.])
 
 set(TCE_TARGET_LLC_FLAGS "" CACHE STRING "Extra parameters to LLVM's llc for TCE compilation.")
-set(CELL_TARGET_LLC_FLAGS "" CACHE STRING "Extra parameters to LLVM's llc for CELL compilation.")
 # TODO HOST_LLC_FLAGS -> CPU_TARGET_LLC_FLAGS
 #set(HOST_LLC_FLAGS "" CACHE STRING "Extra parameters to LLVM's llc for cpu target compilation.")
 #AC_DEFINE_UNQUOTED([TARGET_LLC_FLAGS],
@@ -728,40 +722,11 @@ endif()
 
 ##########################################################
 
-# Check if CellSPU support is found
-
-# The libspe version requirement is not strict. This is the only one tested.
-# SPU backend was removed in LLVM 3.3 (and we don't accept LLVM 3.1 anymore in pocl)
-# so compile the spu backend only when LLVM 3.2 is found
-
-if(NOT DEFINED DEFAULT_ENABLE_SPU)
-  set(_SPU 0)
-  if(LLVM_VERSION MATCHES "3.2")
-    pkg_check_modules(LIBSPE "libspe2>=2.2.80")
-    if(LIBSPE_FOUND)
-      set(_SPU 1)
-    endif()
-  else()
-    message(STATUS "Skipping cellspu target, needs llvm 3.2")
-  endif()
-  set(DEFAULT_ENABLE_SPU ${_SPU} CACHE INTERNAL "Build cell SPU")
-endif()
-
-setup_cached_var(ENABLE_SPU "Cell SPU"
-  "Requested enabling Cell SPU, but no usable libspe found !"
-  "Cell SPU available, but requested disabling it")
-
-if(ENABLE_SPU)
-  set(OCL_DRIVERS "${OCL_DRIVERS} spu")
-  set(OCL_TARGETS "${OCL_TARGETS} cellspu")
-endif()
-
-##########################################################
-
 if(ENABLE_HSA)
   set(OCL_DRIVERS "${OCL_DRIVERS} hsa")
-  set(OCL_TARGETS "${OCL_TARGETS} amdgcn")
-  # WIP, this is for config.h
+  set(OCL_TARGETS "${OCL_TARGETS} hsail64")
+  # this is for config.h
+  # TODO unify with autotools
   set(BUILD_HSA 1)
 endif()
 
@@ -868,10 +833,12 @@ endif()
 # 3:0:2 == 0.9 (currently backwards compatible with 0.7, thus age = 2).
 # 4:0:3 == 0.10 (currently backwards compatible with 0.7, thus age = 3).
 # 5:0:4 == 0.11 (currently backwards compatible with 0.7, thus age = 4).
+# 6:0:5 == 0.12 (currently backwards compatible with 0.7, thus age = 5).
+# 7:0:6 == 0.13 (currently backwards compatible with 0.7, thus age = 6).
 
-set(LIB_CURRENT_VERSION 6)
+set(LIB_CURRENT_VERSION 7)
 set(LIB_REVISION_VERSION 0)
-set(LIB_AGE_VERSION 5)
+set(LIB_AGE_VERSION 6)
 
 # LIB_FIRST_VERSION=$(($LIB_CURRENT_VERSION - $LIB_AGE_VERSION))
 math(EXPR LIB_FIRST_VERSION "${LIB_CURRENT_VERSION} - ${LIB_AGE_VERSION}")
@@ -893,32 +860,46 @@ set(KERNEL_COMPILER_LIB_VERSION "${LIB_CURRENT_VERSION}.0.0")
 
 ##########################################################
 
+function(rename_if_different SRC DST)
+  if(EXISTS "${DST}")
+    file(MD5 "${SRC}" OLD_MD5)
+    file(MD5 "${DST}" NEW_MD5)
+    if(NOT OLD_MD5 STREQUAL NEW_MD5)
+      file(RENAME "${SRC}" "${DST}")
+    endif()
+  else()
+    file(RENAME "${SRC}" "${DST}")
+  endif()
+endfunction()
 
 #TODO
 # these vars are copies b/c tons of sources use BUILD_ICD etc
 set(BUILD_ICD ${ENABLE_ICD})
-set(BUILD_SPU ${ENABLE_SPU})
 set(TCE_AVAILABLE ${ENABLE_TCE})
 set(TCEMC_AVAILABLE ${ENABLE_TCEMC})
 set(_CL_DISABLE_LONG ${CL_DISABLE_LONG})
 set(_CL_DISABLE_HALF ${CL_DISABLE_HALF})
 set(PACKAGE_VERSION "${POCL_VERSION}")
 
-configure_file("config.h.in.cmake" "config.h" ESCAPE_QUOTES)
+configure_file("config.h.in.cmake" "config.h.new" ESCAPE_QUOTES)
+rename_if_different("${CMAKE_BINARY_DIR}/config.h.new" "${CMAKE_BINARY_DIR}/config.h")
 include_directories("${CMAKE_BINARY_DIR}")
 
 # autotools compat
-file(WRITE "${CMAKE_BINARY_DIR}/install-paths.h" "#define PKGDATADIR \"${POCL_INSTALL_PRIVATE_DATADIR}\"")
+file(WRITE "${CMAKE_BINARY_DIR}/install-paths.h.new" "#define PKGDATADIR \"${POCL_INSTALL_PRIVATE_DATADIR}\"")
+rename_if_different("${CMAKE_BINARY_DIR}/install-paths.h.new" "${CMAKE_BINARY_DIR}/install-paths.h")
 
 ##########################################################
 
-file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/pocl.icd" CONTENT "${POCL_INSTALL_PUBLIC_LIBDIR}/$<TARGET_FILE_NAME:pocl>" CONDITION 1)
-install(FILES "${CMAKE_BINARY_DIR}/pocl.icd"
+if(ENABLE_ICD)
+  file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/pocl.icd" CONTENT "${POCL_INSTALL_PUBLIC_LIBDIR}/$<TARGET_FILE_NAME:pocl>" CONDITION 1)
+  install(FILES "${CMAKE_BINARY_DIR}/pocl.icd"
          DESTINATION "${POCL_INSTALL_ICD_VENDORDIR}")
 
-# write icd file for pocl testing
-file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/ocl-vendors")
-file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/ocl-vendors/pocl-tests.icd" CONTENT "$<TARGET_FILE:pocl>" CONDITION 1)
+  # write icd file for pocl testing
+  file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/ocl-vendors")
+  file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/ocl-vendors/pocl-tests.icd" CONTENT "$<TARGET_FILE:pocl>" CONDITION 1)
+endif()
 
 file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/CTestCustom.cmake" CONTENT "
   set(ENV{POCL_BUILDING} \"1\")
@@ -937,7 +918,7 @@ endif()
 
 #############################################################
 
-include_directories("fix-includes" "include")
+include_directories("fix-include" "include")
 
 add_subdirectory("include")
 
@@ -977,7 +958,7 @@ add_subdirectory("tests")
 set(ALL_TESTSUITES "AMD;AMDSDK2.9;opencl-book-samples;Parboil;Piglit;Rodinia;VexCL;ViennaCL;Halide;OpenCV;CloverLeaf;hsa")
 add_subdirectory("examples")
 
-add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND})
+add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} ${COMMAND_USES_TERMINAL})
 
 ##########################################################
 
@@ -1007,7 +988,6 @@ MESSAGE(STATUS "CL_DISABLE_LONG (Disable cl_khr_int64): ${CL_DISABLE_LONG}")
 MESSAGE(STATUS "DIRECT_LINKAGE: ${DIRECT_LINKAGE}")
 MESSAGE(STATUS "ENABLE_DOCS: ${ENABLE_DOCS}")
 MESSAGE(STATUS "ENABLE_ICD: ${ENABLE_ICD}")
-MESSAGE(STATUS "ENABLE_SPU (Cell SPU enabled): ${ENABLE_SPU}")
 MESSAGE(STATUS "ENABLE_TCE: ${ENABLE_TCE}")
 MESSAGE(STATUS "ENABLE_TCEMC: ${ENABLE_TCEMC}")
 MESSAGE(STATUS "ENABLE_HSA: ${ENABLE_HSA}")
@@ -1015,7 +995,6 @@ MESSAGE(STATUS "HAVE_CLOCK_GETTIME: ${HAVE_CLOCK_GETTIME}")
 MESSAGE(STATUS "HAVE_GLEW: ${HAVE_GLEW}")
 MESSAGE(STATUS "HAVE_OPENCL_HPP: ${HAVE_OPENCL_HPP}")
 MESSAGE(STATUS "INSTALL_OPENCL_HEADERS (Install our headers): ${INSTALL_OPENCL_HEADERS}")
-MESSAGE(STATUS "NEW_PRINTF_WORKS: ${NEW_PRINTF_WORKS}")
 MESSAGE(STATUS "OCL_DRIVERS (Drivers built): ${OCL_DRIVERS}")
 MESSAGE(STATUS "OCL_TARGETS (Targets built): ${OCL_TARGETS}")
 MESSAGE(STATUS "STATIC_LLVM: ${STATIC_LLVM}")
@@ -1042,8 +1021,6 @@ MESSAGE(STATUS " ")
 MESSAGE(STATUS "******* Various Flags:")
 MESSAGE(STATUS " ")
 
-MESSAGE(STATUS "CELL_TARGET_CLANG_FLAGS: ${CELL_TARGET_CLANG_FLAGS}")
-MESSAGE(STATUS "CELL_TARGET_LLC_FLAGS: ${CELL_TARGET_LLC_FLAGS}")
 MESSAGE(STATUS "CLANG_MARCH_FLAG: ${CLANG_MARCH_FLAG}")
 MESSAGE(STATUS "CLANG_TARGET_OPTION: ${CLANG_TARGET_OPTION}")
 MESSAGE(STATUS "CL_DISABLE_HALF: ${CL_DISABLE_HALF}")
@@ -1052,6 +1029,9 @@ MESSAGE(STATUS "HOST_AS_FLAGS: ${HOST_AS_FLAGS}")
 MESSAGE(STATUS "HOST_CLANG_FLAGS: ${HOST_CLANG_FLAGS}")
 MESSAGE(STATUS "HOST_LD_FLAGS: ${HOST_LD_FLAGS}")
 MESSAGE(STATUS "HOST_LLC_FLAGS: ${HOST_LLC_FLAGS}")
+MESSAGE(STATUS "HSA_INCLUDES: ${HSA_INCLUDES}")
+MESSAGE(STATUS "HSALIB: ${HSALIB}")
+MESSAGE(STATUS "HSAIL_ASM: ${HSAIL_ASM}")
 MESSAGE(STATUS "ICD_LD_FLAGS: ${ICD_LD_FLAGS}")
 MESSAGE(STATUS "KERNEL_CLANGXX_FLAGS: ${KERNEL_CLANGXX_FLAGS}")
 MESSAGE(STATUS "KERNEL_CL_FLAGS: ${KERNEL_CL_FLAGS}")

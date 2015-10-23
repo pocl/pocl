@@ -54,7 +54,6 @@ then
 fi
 
 case $target in
-    cellspu-*) target_dir="cellspu";;
     tce*)     target_dir="tce"
                target="tce-tut-llvm"
                ;;

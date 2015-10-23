@@ -115,3 +115,7 @@ distclean-local: clean-local
 	$(RM) -r $(book_samples_dir)
 	$(RM) $(book_samples_base_dir)/stamp-patched
 endif
+
+
+EXTRA_DIST = HelloBinaryWorld.stdout OpenCLConvolutionChap3.stdout ImageFilter2D.cl \
+             VectorAdd.stdout HelloWorld.stdout SimpleBufferSubBuffer.stdout

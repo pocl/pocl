@@ -80,16 +80,7 @@ POname(clEnqueueReadBufferRect)(cl_command_queue command_queue,
       &host_slice_pitch, "") != CL_SUCCESS) return CL_INVALID_VALUE;
 
 
-
-
-  device = command_queue->device;
-
-  for (i = 0; i < command_queue->context->num_devices; ++i)
-    {
-        if (command_queue->context->devices[i] == device)
-            break;
-    }
-  assert(i < command_queue->context->num_devices);
+  POCL_CHECK_DEV_IN_CMDQ
 
   /* execute directly */
   /* TODO: enqueue the read_rect if this is a non-blocking read (see

@@ -45,39 +45,6 @@
 #include "pocl_util.h"
 #include "pocl_mem_management.h"
 
-#ifdef CUSTOM_BUFFER_ALLOCATOR
-
-#include "bufalloc.h"
-
-/* Instead of mallocing a buffer size for a region, try to allocate 
-   this many times the buffer size to hopefully avoid mallocs for 
-   the next buffer allocations.
-   
-   Falls back to single multiple allocation if fails to allocate a
-   larger region. */
-#define ALLOCATION_MULTIPLE 32
-
-/* To avoid memory hogging in case of larger buffers, limit the
-   extra allocation margin to this number of megabytes.
-
-   The extra allocation should be done to avoid repetitive calls and
-   memory fragmentation for smaller buffers only. 
- */
-#define ADDITIONAL_ALLOCATION_MAX_MB 100
-
-/* Always create regions with at least this size to avoid allocating
-   small regions when there are lots of small buffers, which would counter 
-   a purpose of having own buffer management. It would end up having a lot of
-   small regions with linear searches over them.  */
-#define NEW_REGION_MIN_MB 10
-
-/* Whether to immediately free a region in case the last chunk was
-   deallocated. If 0, it can reuse the same region over multiple kernels. */
-#define FREE_EMPTY_REGIONS 0
-
-/* CUSTOM_BUFFER_ALLOCATOR */
-#endif
-
 #define COMMAND_LENGTH 2048
 #define WORKGROUP_STRING_LENGTH 1024
 
@@ -99,37 +66,19 @@ struct thread_arguments
 };
 
 
-#ifdef CUSTOM_BUFFER_ALLOCATOR
-typedef struct _mem_regions_management{
-  ba_lock_t mem_regions_lock;
-  struct memory_region *mem_regions;
-} mem_regions_management;
-#endif
-
 struct data {
   /* Currently loaded kernel. */
   cl_kernel current_kernel;
   /* Loaded kernel dynamic library handle. */
   lt_dlhandle current_dlhandle;
-
-#ifdef CUSTOM_BUFFER_ALLOCATOR
-  /* Lock for protecting the mem_regions linked list. Held when new mem_regions
-     are created or old ones freed. */
-  mem_regions_management* mem_regions;
-#endif
-
 };
 
 
 static thread_arguments *volatile thread_argument_pool = 0;
 static int argument_pool_initialized = 0;
 pocl_lock_t ta_pool_lock;
-static size_t get_max_thread_count();
+static size_t get_max_thread_count(cl_device_id device);
 static void * workgroup_thread (void *p);
-
-/* TODO: Declare this in a header file */
-void
-pocl_basic_set_buffer_image_limits(cl_device_id device);
 
 static void pocl_init_thread_argument_manager (void)
 {
@@ -210,10 +159,8 @@ pocl_pthread_init_device_infos(struct _cl_device_id* dev)
 void
 pocl_pthread_init (cl_device_id device, const char* parameters)
 {
+  static int device_number = 0;
   struct data *d; 
-#ifdef CUSTOM_BUFFER_ALLOCATOR  
-  static mem_regions_management* mrm = NULL;
-#endif
 
   // TODO: this checks if the device was already initialized previously.
   // Should we instead have a separate bool field in device, or do the
@@ -227,40 +174,11 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
   d->current_dlhandle = 0;
 
   device->data = d;
-#ifdef CUSTOM_BUFFER_ALLOCATOR  
-  if (mrm == NULL)
-    {
-      mrm = (mem_regions_management*)malloc (sizeof (mem_regions_management));
-      BA_INIT_LOCK (mrm->mem_regions_lock);
-      mrm->mem_regions = NULL;
-    }
-  d->mem_regions = mrm;
-#endif  
 
   device->address_bits = sizeof(void*) * 8;
 
   device->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT; // this is in bytes
   device->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT*8; // this is in bits
-
-  /* Note: The specification describes identifiers being delimited by
-     only a single space character. Some programs that check the device's
-     extension  string assume this rule. Future extension additions should
-     ensure that there is no more than a single space between
-     identifiers. */
-
-#ifndef _CL_DISABLE_LONG
-#define DOUBLE_EXT "cl_khr_fp64 "
-#else
-#define DOUBLE_EXT
-#endif
-
-#ifndef _CL_DISABLE_HALF
-#define HALF_EXT "cl_khr_fp16 "
-#else
-#define HALF_EXT
-#endif
-
-  device->extensions = DOUBLE_EXT HALF_EXT "cl_khr_byte_addressable_store";
 
   /* hwloc probes OpenCL device info at its initialization in case
      the OpenCL extension is enabled. This causes to printout 
@@ -270,7 +188,17 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
   device->global_mem_size = 1;
   pocl_topology_detect_device_info(device);
   pocl_cpuinfo_detect_device_info(device);
-  pocl_basic_set_buffer_image_limits(device);
+  pocl_set_buffer_image_limits(device);
+
+  /* in case hwloc doesn't provide a PCI ID, let's generate
+     a vendor id that hopefully is unique across vendors. */
+  const char *magic = "pocl";
+  if (device->vendor_id == 0)
+    device->vendor_id =
+      magic[0] | magic[1] << 8 | magic[2] << 16 | magic[3] << 24;
+
+  device->vendor_id += device_number;
+  device_number++;
 
   // pthread has elementary partitioning support
   device->max_sub_devices = device->max_compute_units;
@@ -291,136 +219,21 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
   #endif
 
   pocl_init_thread_argument_manager();
-  
 }
 
 void
 pocl_pthread_uninit (cl_device_id device)
 {
   struct data *d = (struct data*)device->data;
-#ifdef CUSTOM_BUFFER_ALLOCATOR
-  memory_region_t *region, *temp;
-  DL_FOREACH_SAFE(d->mem_regions->mem_regions, region, temp)
-    {
-      DL_DELETE(d->mem_regions->mem_regions, region);
-      free((void*)region->chunks->start_address);
-      region->chunks->start_address = 0;
-      POCL_MEM_FREE(region);
-    }
-  d->mem_regions->mem_regions = NULL;
-#endif  
   POCL_MEM_FREE(d);
   device->data = NULL;
 }
 
 
-#ifdef CUSTOM_BUFFER_ALLOCATOR
-static int
-allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t size) 
-{
-  BA_LOCK(d->mem_regions->mem_regions_lock);
-  chunk_info_t *chunk = alloc_buffer (d->mem_regions->mem_regions, size);
-  if (chunk == NULL)
-    {
-      memory_region_t *new_mem_region =
-        (memory_region_t*)malloc (sizeof (memory_region_t));
-
-      if (new_mem_region == NULL) 
-        {
-          BA_UNLOCK (d->mem_regions->mem_regions_lock);
-          return ENOMEM;
-        }
-
-      /* Fallback to the minimum size in case of overflow. 
-         Allocate a larger chunk to avoid allocation overheads
-         later on. */
-      size_t region_size = 
-          max(max(min(size + ADDITIONAL_ALLOCATION_MAX_MB * 1024 * 1024, 
-                      size * ALLOCATION_MULTIPLE), size),
-              NEW_REGION_MIN_MB * 1024 * 1024);
-
-      assert (region_size >= size);
-
-      void* space = NULL;
-      space = pocl_memalign_alloc(alignment, region_size);
-      if (space == NULL)
-        {
-          /* Failed to allocate a large region. Fall back to allocating 
-             the smallest possible region for the buffer. */
-	        space = pocl_memalign_alloc(alignment, size);
-          if (space == NULL) 
-            {
-              BA_UNLOCK (d->mem_regions->mem_regions_lock);
-              return ENOMEM;
-            }
-          region_size = size;
-        }
-
-      init_mem_region (new_mem_region, (memory_address_t)space, region_size);
-      new_mem_region->alignment = (unsigned short)(alignment);
-      DL_APPEND (d->mem_regions->mem_regions, new_mem_region);
-      chunk = alloc_buffer_from_region (new_mem_region, size);
-
-      if (chunk == NULL)
-      {
-        printf("pocl error: could not allocate a buffer of size %zu from the newly created region of size %zu.\n",
-               size, region_size);
-        print_chunks(new_mem_region->chunks);
-        /* In case the malloc didn't fail it should have been able to allocate 
-           the buffer to a newly created Region. */
-        assert (chunk != NULL);
-      }
-    }
-  BA_UNLOCK (d->mem_regions->mem_regions_lock);
-  
-  *memptr = (void*) chunk->start_address;
-  return 0;
-}
-
-#else
-
-static int
-allocate_aligned_buffer (struct data* d, void **memptr, size_t alignment, size_t size) 
-{
-  *memptr = pocl_memalign_alloc(alignment, size);
-  return (((*memptr) == NULL)? -1: 0);
-}
-
-#endif
-
-void *
-pocl_pthread_malloc (void *device_data, cl_mem_flags flags, size_t size, void *host_ptr)
-{
-  void *b;
-  struct data* d = (struct data*)device_data;
-
-  if (flags & CL_MEM_COPY_HOST_PTR)
-    {
-      if (allocate_aligned_buffer (d, &b, MAX_EXTENDED_ALIGNMENT, size) == 0)
-        {
-          memcpy (b, host_ptr, size);
-          return b;
-        }
-      
-      return NULL;
-    }
-  
-  if (flags & CL_MEM_USE_HOST_PTR && host_ptr != NULL)
-    {
-      return host_ptr;
-    }
-
-  if (allocate_aligned_buffer (d, &b, MAX_EXTENDED_ALIGNMENT, size) == 0)
-    return b;
-  
-  return NULL;
-}
-
 cl_int
 pocl_pthread_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
 {
   void *b = NULL;
-  struct data* d = (struct data*)device->data;
   cl_mem_flags flags = mem_obj->flags;
 
   /* if memory for this global memory is not yet allocated -> do it */
@@ -432,9 +245,13 @@ pocl_pthread_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
           assert(mem_obj->mem_host_ptr != NULL);
           b = mem_obj->mem_host_ptr;
         }
-      else if (allocate_aligned_buffer (d, &b, MAX_EXTENDED_ALIGNMENT,
-                                        mem_obj->size) != 0)
-        return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+      else
+        {
+          b = pocl_memalign_alloc_global_mem( device, MAX_EXTENDED_ALIGNMENT,
+                                        mem_obj->size);
+          if (b==NULL)
+            return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+        }
 
       if (flags & CL_MEM_COPY_HOST_PTR)
         {
@@ -454,49 +271,21 @@ pocl_pthread_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
   return CL_SUCCESS;
 }
 
-#ifdef CUSTOM_BUFFER_ALLOCATOR
-void
-pocl_pthread_free (void *device_data, cl_mem_flags flags, void *ptr)
-{
-  struct data* d = (struct data*) device_data;
-  memory_region_t *region = NULL;
-
-  if (flags & CL_MEM_USE_HOST_PTR)
-      return; /* The host code should free the host ptr. */
-
-  region = free_buffer (d->mem_regions->mem_regions, (memory_address_t)ptr);
-
-  assert(region != NULL && "Unable to find the region for chunk.");
-
-#if FREE_EMPTY_REGIONS == 1
-  BA_LOCK(d->mem_regions->mem_regions_lock);
-  BA_LOCK(region->lock);
-  if (region->last_chunk == region->chunks && 
-      !region->chunks->is_allocated) 
-    {
-      /* All chunks have been deallocated. free() the whole 
-         memory region at once. */
-      DL_DELETE(d->mem_regions->mem_regions, region);
-      free((void*)region->last_chunk->start_address);
-      region->last_chunk->start_address = 0;
-      POCL_MEM_FREE(region);
-    }  
-  BA_UNLOCK(region->lock);
-  BA_UNLOCK(d->mem_regions->mem_regions_lock);
-#endif
-}
-
-#else
 
 void
-pocl_pthread_free (void *data, cl_mem_flags flags, void *ptr)
+pocl_pthread_free (cl_device_id device, cl_mem memobj)
 {
+  cl_mem_flags flags = memobj->flags;
+
   if (flags & CL_MEM_USE_HOST_PTR)
     return;
-  
-  POCL_MEM_FREE(ptr);
+
+  void* ptr = memobj->device_ptrs[device->dev_id].mem_ptr;
+  size_t size = memobj->size;
+
+  pocl_free_global_mem(device, ptr, size);
 }
-#endif
+
 
 void
 pocl_pthread_read (void *data, void *host_ptr, const void *device_ptr, 
@@ -544,7 +333,7 @@ get_max_thread_count(cl_device_id device)
   if (device->max_compute_units == 0)
     return pocl_get_int_option (THREAD_COUNT_ENV, FALLBACK_MAX_THREAD_COUNT);
   else
-    return pocl_get_int_option(THREAD_COUNT_ENV, device->max_compute_units);
+    return pocl_get_int_option(THREAD_COUNT_ENV, POCL_REAL_DEV(device)->max_compute_units);
 }
 
 void
@@ -553,18 +342,23 @@ pocl_pthread_run
  _cl_command_node* cmd)
 {
   int error;
-  unsigned i;
+  unsigned i, max_threads;
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
   struct thread_arguments *arguments;
-  static size_t max_threads = 0; /* this needs to be asked only once */
+  static unsigned default_max_threads = 0; /* this needs to be asked only once */
 
   size_t num_groups_x = pc->num_groups[0];
   /* TODO: distributing the work groups in the x dimension is not always the
      best option. This assumes x dimension has enough work groups to utilize
      all the threads. */
-  if (max_threads == 0)
-    max_threads = get_max_thread_count(cmd->device);
+  if (default_max_threads == 0)
+    default_max_threads = get_max_thread_count(cmd->device);
+
+  if (cmd->device->parent_device)
+    max_threads = cmd->device->max_compute_units;
+  else
+    max_threads = default_max_threads;
 
   unsigned num_threads = min(max_threads, num_groups_x);
   pthread_t *threads = (pthread_t*) malloc (sizeof (pthread_t)*num_threads);
@@ -651,7 +445,7 @@ workgroup_thread (void *p)
       if (kernel->arg_info[i].is_local)
         {
           arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = pocl_pthread_malloc(ta->data, 0, al->size, NULL);
+          *(void **)(arguments[i]) = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, al->size);
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
       {
@@ -674,7 +468,7 @@ workgroup_thread (void *p)
         {
           dev_image_t di;
           fill_dev_image_t(&di, al, ta->device);
-          void* devptr = pocl_pthread_malloc(ta->data, 0, sizeof(dev_image_t), NULL);
+          void* devptr = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, sizeof(dev_image_t));
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = devptr;       
           pocl_pthread_write (ta->data, &di, devptr, 0, sizeof(dev_image_t));
@@ -684,7 +478,7 @@ workgroup_thread (void *p)
           dev_sampler_t ds;
           fill_dev_sampler_t(&ds, al);
           
-          void* devptr = pocl_pthread_malloc(ta->data, 0, sizeof(dev_sampler_t), NULL);
+          void* devptr = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, sizeof(dev_sampler_t));
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = devptr;
           pocl_pthread_write (ta->data, &ds, devptr, 0, sizeof(dev_sampler_t));
@@ -701,8 +495,7 @@ workgroup_thread (void *p)
     {
       al = &(ta->kernel_args[i]);
       arguments[i] = malloc (sizeof (void *));
-      *(void **)(arguments[i]) = pocl_pthread_malloc (ta->data, 0, al->size, 
-                                                      NULL);
+      *(void **)(arguments[i]) = pocl_memalign_alloc (MAX_EXTENDED_ALIGNMENT, al->size);
     }
 
   size_t first_gid_x = ta->pc.group_id[0];
@@ -725,13 +518,13 @@ workgroup_thread (void *p)
     {
       if (kernel->arg_info[i].is_local )
         {
-          pocl_pthread_free (ta->data, 0, *(void **)(arguments[i]));
+          POCL_MEM_FREE(*(void **)(arguments[i]));
           POCL_MEM_FREE(arguments[i]);
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE ||
                 kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
-          pocl_pthread_free (ta->data, 0, *(void **)(arguments[i]));
+          POCL_MEM_FREE(*(void **)(arguments[i]));
           POCL_MEM_FREE(arguments[i]);
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && *(void**)arguments[i] == NULL)
@@ -743,7 +536,7 @@ workgroup_thread (void *p)
        i < kernel->num_args + kernel->num_locals;
        ++i)
     {
-      pocl_pthread_free (ta->data, 0, *(void **)(arguments[i]));
+      POCL_MEM_FREE(*(void **)(arguments[i]));
       POCL_MEM_FREE(arguments[i]);
     }
   free_thread_arguments (ta);

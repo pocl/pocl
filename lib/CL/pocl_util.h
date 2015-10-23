@@ -74,9 +74,6 @@ void pocl_command_enqueue (cl_command_queue command_queue,
                           _cl_command_node *node);
 
 
-/* Return the size of the (open) file. */
-size_t pocl_file_size(FILE* file);
-
 /* does several sanity checks on buffer & given memory region */
 int pocl_buffer_boundcheck(cl_mem buffer, size_t offset, size_t size);
 /* same as above just 2 buffers */
@@ -95,6 +92,22 @@ check_copy_overlap(const size_t src_offset[3],
                    const size_t dst_offset[3],
                    const size_t region[3],
                    const size_t row_pitch, const size_t slice_pitch);
+
+/* Helpers for dealing with devices / subdevices */
+
+#define POCL_REAL_DEV(dev) (dev->parent_device ? dev->parent_device : dev)
+
+cl_device_id * pocl_unique_device_list(const cl_device_id * in, cl_uint num, cl_uint *real);
+
+#define POCL_CHECK_DEV_IN_CMDQ                                               \
+  device = command_queue->device;                                            \
+  for (i = 0; i < command_queue->context->num_devices; ++i)                  \
+    {                                                                        \
+      if (command_queue->context->devices[i] == POCL_REAL_DEV(device))       \
+        break;                                                               \
+    }                                                                        \
+  assert(i < command_queue->context->num_devices);
+
 
 #ifdef __cplusplus
 }

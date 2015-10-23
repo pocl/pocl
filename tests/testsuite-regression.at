@@ -245,7 +245,10 @@ AT_CLEANUP
 # See: https://github.com/pocl/pocl/issues/195
 # Possibly still fails with multi-AS targets.
 AT_SETUP([local struct arrays produce illegal AS casts])
-AT_KEYWORDS([local_struct_array])
+AT_KEYWORDS([regression local_struct_array])
+# The HSA branch of LLVM 3.7 is probably outdated in comparison
+# to the upstream trunk and makes this case fail.
+AT_SKIP_IF([grep -q "#define BUILD_HSA" $abs_top_builddir/config.h])
 AT_CHECK_UNQUOTED([$abs_top_builddir/tests/kernel/kernel test_local_struct_array], 0,
 [Running test test_local_struct_array...
 OK
@@ -253,4 +256,11 @@ OK
 AT_XFAIL_IF([grep -q "#define LLVM_BUILT_WITH_ASSERTS" $abs_top_builddir/config.h && \
 ! grep -q "#define LLVM_3_2" $abs_top_builddir/config.h && \
 ! grep -q "#define LLVM_3_3" $abs_top_builddir/config.h])
+AT_CLEANUP
+
+
+# https://github.com/pocl/pocl/issues/231
+AT_SETUP([LoopVectorizer crash with Haswell and Broadwell - issue 231])
+AT_KEYWORDS([regression issue_231])
+AT_CHECK([$abs_top_builddir/tests/regression/test_issue_231], 0)
 AT_CLEANUP

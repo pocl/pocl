@@ -1,7 +1,7 @@
 /* pocl_llvm_api.cc: C wrappers for calling the LLVM/Clang C++ APIs to invoke
    the different kernel compilation phases.
 
-   Copyright (c) 2013 Kalle Raiskila 
+   Copyright (c) 2013 Kalle Raiskila
                  2013-2015 Pekka Jääskeläinen
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -262,6 +262,19 @@ int pocl_llvm_build_program(cl_program program,
         }
       POCL_MEM_FREE(device_switches);
     }
+
+  llvm::StringRef extensions(device->extensions);
+
+  size_t e_start = 0, e_end = 0;
+  while (e_end < std::string::npos) {
+    e_end = extensions.find(' ', e_start);
+    llvm::StringRef tok = extensions.slice(e_start, e_end);
+    e_start = e_end + 1;
+    // These two are defined in _kernel(_c).h via pocl_features.h
+    if (tok.startswith("cl_khr_fp64") || tok.startswith("cl_khr_fp16"))
+      continue;
+    ss << "-D" << tok.str() << " ";
+  }
 
   // This can cause illegal optimizations when unaware
   // of the barrier semantics. -O2 is the default opt level in
@@ -1183,12 +1196,14 @@ static PassManager& kernel_compiler_passes
             Builder.LoopVectorize = true;
             Builder.SLPVectorize = true;
 #ifdef LLVM_OLDER_THAN_3_7
-            Builder.BBVectorize = true;
+            Builder.BBVectorize = pocl_get_bool_option ("POCL_BBVECTORIZE", 1);
 #else
             // In LLVM 3.7 the BB vectorizer crashes with some of the
-            // the shuffle tests. Perhaps the pass is obsoleted due to
-            // SLPVectorize and not maintained?            
-            Builder.BBVectorize = false;
+            // the shuffle tests, but gives performance improvements in
+            // some (see https://github.com/pocl/pocl/issues/251).
+            // Disable by default because of
+            // https://llvm.org/bugs/show_bug.cgi?id=25077
+            Builder.BBVectorize = pocl_get_bool_option ("POCL_BBVECTORIZE", 0);
 #endif
           }
 #endif
@@ -1252,17 +1267,11 @@ kernel_library
     {
       kernellib = BUILDDIR;
       kernellib += "/lib/kernel/";
-      // TODO: get this from the target triplet: TCE, cellspu
+      // TODO: get this from the TCE target triplet
       if (triple.getArch() == Triple::tce) 
         {
           kernellib += "tce";
         }
-#ifdef LLVM_3_2 
-      else if (triple.getArch() == Triple::cellspu) 
-        {
-          kernellib += "cellspu";
-        }
-#endif
 #ifdef BUILD_HSA
       else if (triple.getArch() == Triple::hsail64) {
           kernellib += "hsail64";
@@ -1309,10 +1318,16 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
   int device_i = pocl_cl_device_to_index(program, device);
   assert(device_i >= 0);
 
-  char kernel_so_path[POCL_FILENAME_LENGTH];
-  pocl_cache_work_group_function_so_path(kernel_so_path, program, device_i, kernel, local_x, local_y, local_z);
+  char parallel_bc_path[POCL_FILENAME_LENGTH];
+  pocl_cache_work_group_function_path(parallel_bc_path, program, device_i, kernel, local_x, local_y, local_z);
 
-  if (pocl_exists(kernel_so_path))
+  if (pocl_exists(parallel_bc_path))
+    return CL_SUCCESS;
+
+  char final_binary_path[POCL_FILENAME_LENGTH];
+  pocl_cache_final_binary_path(final_binary_path, program, device_i, kernel, local_x, local_y, local_z);
+
+  if (pocl_exists(final_binary_path))
     return CL_SUCCESS;
 
   llvm::MutexGuard lockHolder(kernelCompilerLock);
@@ -1321,7 +1336,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
 #ifdef DEBUG_POCL_LLVM_API        
   printf("### calling the kernel compiler for kernel %s local_x %zu "
          "local_y %zu local_z %zu parallel_filename: %s\n",
-         kernel->name, local_x, local_y, local_z, parallel_filename);
+         kernel->name, local_x, local_y, local_z, parallel_bc_path);
 #endif
 
   Triple triple(device->llvm_target_triplet);
@@ -1554,15 +1569,12 @@ pocl_llvm_codegen(cl_kernel kernel,
 #ifdef LLVM_OLDER_THAN_3_7
     std::string data;
     llvm::raw_string_ostream sos(data);
-#else
-    SmallVector<char, 4096> data;
-    llvm::raw_svector_ostream sos(data);
-#endif
     llvm::MCContext *mcc;
-#ifdef LLVM_OLDER_THAN_3_7
     if (target && target->addPassesToEmitMC(PM, mcc, sos))
       return 1;
 #else
+    SmallVector<char, 4096> data;
+    llvm::raw_svector_ostream sos(data);
     if (target && target->addPassesToEmitFile(
         PM, sos, TargetMachine::CGFT_ObjectFile))
       return 1;

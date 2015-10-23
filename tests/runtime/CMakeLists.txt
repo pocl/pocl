@@ -66,7 +66,7 @@ add_test(NAME "runtime/clBuildProgram"
          COMMAND "${CMAKE_CURRENT_BINARY_DIR}/test_clBuildProgram")
 
 add_test(NAME "runtime/test_kernel_cache_includes"
-         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
          COMMAND "${CMAKE_CURRENT_BINARY_DIR}/test_kernel_cache_includes")
 
 add_test("runtime/clFinish" "test_clFinish")

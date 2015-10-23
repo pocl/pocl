@@ -140,6 +140,12 @@ int main(int argc, char **argv)
   err = clGetDeviceInfo(rootdev, CL_DEVICE_MAX_COMPUTE_UNITS,
     sizeof(max_cus), &max_cus, NULL);
   CHECK_OPENCL_ERROR_IN("CL_DEVICE_MAX_COMPUTE_UNITS");
+  if (max_cus < 2)
+    {
+      printf("This test requires a cl device with at least 2 compute units "
+             " (a dual-core or better CPU)\n");
+      return 1;
+    }
 
   err = clGetDeviceInfo(rootdev, CL_DEVICE_PARTITION_MAX_SUB_DEVICES,
     sizeof(max_subs), &max_subs, NULL);
@@ -306,9 +312,9 @@ int main(int argc, char **argv)
       sizeof(sub_cus), &sub_cus, NULL);
     CHECK_OPENCL_ERROR_IN("sub CU");
     if (sub_cus == count_splitter[1])
-      found_cus[0] += 1;
-    if (sub_cus == count_splitter[2])
-      found_cus[1] += 1;
+        found_cus[0] += 1;
+    else if (sub_cus == count_splitter[2])
+        found_cus[1] += 1;
 
     err = clGetDeviceInfo(countdev[i], CL_DEVICE_PARENT_DEVICE,
       sizeof(parent), &parent, NULL);
@@ -336,7 +342,13 @@ int main(int argc, char **argv)
     free(ptype) ; ptype = NULL;
   }
 
-  TEST_ASSERT(found_cus[0] == 1 && found_cus[1] == 1);
+  /* the previous loop finds 1+1 subdevices only on >dual core systems;
+   * on dual cores, the count_splitter is [1, 1] and the above
+   * "(sub_cus == count_splitter[x])" results in 2+0 subdevices found */
+  if (max_cus > 2)
+    TEST_ASSERT(found_cus[0] == 1 && found_cus[1] == 1);
+  else
+    TEST_ASSERT((found_cus[0] + found_cus[1]) == 2);
 
   /* So far, so good. Let's now try and use these devices,
    * by building a program for all of them and launching kernels on them.
@@ -363,5 +375,7 @@ int main(int argc, char **argv)
   CHECK_OPENCL_ERROR_IN("clCreateContext");
   TEST_ASSERT( test_context(ctx, prog_src_two, -1, NUMDEVS - 1, alldevs + 1)
     == CL_SUCCESS );
+
+  return 0;
 }
 

@@ -55,7 +55,4 @@ add_subdirectory("workgroup")
 if(ENABLE_TCE)
   #add_subdirectory("tce")
 endif()
-if(ENABLE_SPU)
-  #add_subdirectory("cell")
-endif()
 

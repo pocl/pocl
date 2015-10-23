@@ -216,7 +216,7 @@ struct pocl_device_ops {
   void (*init) (cl_device_id device, const char *parameters);
   cl_int (*alloc_mem_obj) (cl_device_id device, cl_mem mem_obj);
   void *(*create_sub_buffer) (void *data, void* buffer, size_t origin, size_t size);
-  void (*free) (void *data, cl_mem_flags flags, void *ptr);
+  void (*free) (cl_device_id device, cl_mem mem_obj);
   void (*read) (void *data, void *host_ptr, const void *device_ptr, 
                 size_t offset, size_t cb);
   void (*read_rect) (void *data, void *host_ptr, void *device_ptr,
@@ -281,6 +281,12 @@ void (*fill_rect) (void *data,
                                          const cl_image_format **image_formats,
                                          cl_uint *num_image_formats);
 };
+
+typedef struct pocl_global_mem_t {
+  size_t max_ever_allocated;
+  size_t currently_allocated;
+  size_t total_alloc_limit;
+} pocl_global_mem_t;
 
 struct _cl_device_id {
   POCL_ICD_OBJECT
@@ -372,6 +378,8 @@ struct _cl_device_id {
      indexing  arrays in data structures with device specific entries. */
   int dev_id;
   int global_mem_id; /* identifier for device global memory */
+  /* pointer to an accounting struct for global memory */
+  pocl_global_mem_t *global_memory;
   int has_64bit_long;  /* Does the device have 64bit longs */
   /* Convert automatic local variables to kernel arguments? */
   int autolocals_to_args;
@@ -484,6 +492,8 @@ struct _cl_program {
   SHA1_digest_t* build_hash;
   /* Per-device build logs, for the case when we don't yet have the program's cachedir */
   char** build_log;
+  /* Per-program build log, for the case when we aren't yet building for devices */
+  char main_build_log[640];
   /* Used to store the llvm IR of the build to save disk I/O. */
   void **llvm_irs;
   /* Use to store build status */

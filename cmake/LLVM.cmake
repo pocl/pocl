@@ -36,11 +36,8 @@ else()
   # search for any version
   find_program(LLVM_CONFIG
     NAMES "llvm-config"
+      "llvm-config-mp-3.7" "llvm-config-3.7" "llvm-config37"
       "llvm-config-mp-3.6" "llvm-config-3.6" "llvm-config36"
-      "llvm-config-mp-3.5" "llvm-config-3.5" "llvm-config35"
-      "llvm-config-mp-3.4" "llvm-config-3.4" "llvm-config34"
-      "llvm-config-mp-3.3" "llvm-config-3.3" "llvm-config33"
-      "llvm-config-mp-3.2" "llvm-config-3.2" "llvm-config32"
     DOC "llvm-config executable")
 endif()
 
@@ -108,18 +105,20 @@ string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_INCLUDEDIR "${LLVM_I
 run_llvm_config(LLVM_LIBS --libs)
 # Convert LLVM_LIBS from string -> list format to make handling them easier
 separate_arguments(LLVM_LIBS)
+# workaround for a bug in current HSAIL LLVM
+# it forgets to report one HSAIL library in llvm-config
+if(ENABLE_HSA)
+  list(APPEND LLVM_LIBS "-lLLVMHSAILUtil")
+endif()
 run_llvm_config(LLVM_SRC_ROOT --src-root)
 run_llvm_config(LLVM_OBJ_ROOT --obj-root)
 string(REPLACE "${LLVM_PREFIX}" "${LLVM_PREFIX_CMAKE}" LLVM_OBJ_ROOT "${LLVM_OBJ_ROOT}")
 run_llvm_config(LLVM_ALL_TARGETS --targets-built)
 run_llvm_config(LLVM_HOST_TARGET --host-target)
-# TODO can be changed to --assertion-mode once we drop LLVM < 3.5 support
-run_llvm_config(LLVM_BUILD_MODE --build-mode)
-if(LLVM_BUILD_MODE MATCHES "Asserts")
-  set(LLVM_ASSERTS_BUILD 1)
-else()
-  set(LLVM_ASSERTS_BUILD 0)
-endif()
+run_llvm_config(LLVM_ASSERTS_BUILD --assertion-mode)
+run_llvm_config(LLVM_SYSLIBS --system-libs)
+string(STRIP "${LLVM_SYSLIBS}" LLVM_SYSLIBS)
+
 # Ubuntu's llvm reports "arm-unknown-linux-gnueabihf" triple, then if one tries
 # `clang --target=arm-unknown-linux-gnueabihf ...` it will produce armv6 code,
 # even if one's running armv7;
@@ -142,15 +141,7 @@ endif(WIN32)
 if(LLVM_VERSION MATCHES "3[.]([0-9]+)")
   string(STRIP "${CMAKE_MATCH_1}" LLVM_MINOR)
   message(STATUS "Minor llvm version: ${LLVM_MINOR}")
-  if(LLVM_MINOR STREQUAL "2")
-    set(LLVM_3_2 1)
-  elseif(LLVM_MINOR STREQUAL "3")
-    set(LLVM_3_3 1)
-  elseif(LLVM_MINOR STREQUAL "4")
-    set(LLVM_3_4 1)
-  elseif(LLVM_MINOR STREQUAL "5")
-    set(LLVM_3_5 1)
-  elseif(LLVM_MINOR STREQUAL "6")
+  if(LLVM_MINOR STREQUAL "6")
     set(LLVM_3_6 1)
   elseif(LLVM_MINOR STREQUAL "7")
     set(LLVM_3_7 1)
@@ -170,15 +161,6 @@ if("${LLVM_CXXFLAGS}" MATCHES "-fno-rtti")
        See the INSTALL file for more information.")
 endif()
 
-# Ubuntu's LLVM 3.5 is broken (is really 3.4svn with
-# some patches, neither 3.4 nor 3.5 in the end..
-if((LLVM_MINOR GREATER 4) AND (CMAKE_SYSTEM_NAME MATCHES "Linux"))
-  message(STATUS "Testing for Ubuntu's broken LLVM 3.5+")
-  if(NOT EXISTS "${LLVM_INCLUDEDIR}/llvm/IR/CFG.h")
-    message(FATAL_ERROR "Your llvm installation is broken. This is known to be the case on Ubuntu and clones with llvm 3.5; official llvm 3.5 downloads should work though.")
-  endif()
-endif()
-
 # A few work-arounds for llvm-config issues
 
 # - pocl doesn't compile with '-pedantic'
@@ -186,15 +168,12 @@ endif()
 string(REPLACE " -pedantic" "" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
 
 # - '-fno-rtti' is a work-around for llvm bug 14200
-#LLVM_CXX_FLAGS="$LLVM_CXX_FLAGS -fno-rtti"
-if(NOT MSVC)
+# Which according to bug report has been fixed in llvm 3.7
+# sadly, that bugreport is mistaken, it's not fixed in 3.7
+if (NOT MSVC)
   set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -fno-rtti")
 endif()
 
-if(NOT LLVM_VERSION VERSION_LESS "3.5")
-  run_llvm_config(LLVM_SYSLIBS --system-libs)
-  string(STRIP "${LLVM_SYSLIBS}" LLVM_SYSLIBS)
-endif()
 
 # Llvm-config may be installed or it might be used from build directory, in which case
 # we need to add few extra include paths to find clang includes and compiled includes
@@ -633,27 +612,6 @@ endif()
 
 ####################################################################
 
-# Work-around a clang bug in LLVM 3.3: On 32-bit platforms, the size
-# of Open CL C long is not 8 bytes
-
-#  set(_CL_DISABLE_LONG ${BUG_PRESENT} CACHE INTERNAL "bug in LLVM 3.3: On 32-bit platforms, the size of Open CL C long is not 8 bytes")
-
-setup_cache_var_name(CL_DISABLE_LONG "CL_DISABLE_LONG-${LLVM_HOST_TARGET}-${CLANG}")
-
-if(NOT DEFINED ${CACHE_VAR_NAME})
-  set(CL_DISABLE_LONG 0)
-  # TODO -march=CPU flags !
-  custom_try_compile_any("${CLANG}" "cl" "constant int test[sizeof(long)==8?1:-1]={1};" RESV  -x cl -S ${CLANG_TARGET_OPTION}${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${LLC_HOST_CPU})
-  if(RESV)
-    set(CL_DISABLE_LONG 1)
-  endif()
-endif()
-
-set_cache_var(CL_DISABLE_LONG "Disable cl_khr_int64 because of buggy llvm")
-
-
-####################################################################
-
 if(NOT DEFINED ${CL_DISABLE_HALF})
   set(CL_DISABLE_HALF 0)
   # TODO -march=CPU flags !
@@ -669,21 +627,53 @@ set(CL_DISABLE_HALF "${CL_DISABLE_HALF}" CACHE BOOL "Disable cl_khr_fp16 because
 
 if(ENABLE_HSA)
 
-  message(STATUS "Trying HSA support")
+  message(STATUS "Trying HSA support in LLVM")
   # test that Clang supports the amdgcn--amdhsa target
   custom_try_compile_clangxx("" "return 0;" RESULT "-target" "amdgcn--amdhsa" "-emit-llvm" "-S")
   if(RESULT)
     message(FATAL_ERROR "LLVM support for amdgcn--amdhsa target is required")
   endif()
 
-  # try the headers
-  if(NOT DEFINED WITH_HSA_HEADERS)
-    find_path(WITH_HSA_HEADERS "hsa.h")
-    if(NOT WITH_HSA_HEADERS)
-      message(FATAL_ERROR "HSA runtime headers not found, use -DWITH_HSA_HEADERS")
-    endif()
+  # find the headers & the library
+  if(DEFINED WITH_HSA_RUNTIME_DIR AND WITH_HSA_RUNTIME_DIR)
+    set(HSA_RUNTIME_DIR "${WITH_HSA_RUNTIME_DIR}")
+  else()
+    message(STATUS "WITH_HSA_RUNTIME_DIR not given, trying default path")
+    set(HSA_RUNTIME_DIR "/opt/hsa")
   endif()
 
+  if((IS_ABSOLUTE "${WITH_HSA_RUNTIME_DIR}") AND (EXISTS "${WITH_HSA_RUNTIME_DIR}"))
+    set(HSA_INCLUDEDIR "${HSA_RUNTIME_DIR}/include")
+    set(HSA_LIBDIR "${HSA_RUNTIME_DIR}/lib")
+  else()
+    message(WARNING "${HSA_RUNTIME_DIR} is not a directory (using default system paths for search)")
+    set(HSA_INCLUDEDIR "")
+    set(HSA_LIBDIR "")
+  endif()
+
+  find_path(HSA_INCLUDES "hsa.h" PATHS "${HSA_INCLUDEDIR}")
+  if(NOT HSA_INCLUDES)
+    message(FATAL_ERROR "hsa.h header not found (use -DHSA_RUNTIME_DIR=... to specify path to HSA runtime)")
+  endif()
+
+  find_library(HSALIB NAMES "hsa-runtime64" "hsa-runtime" PATHS "${HSA_LIBDIR}")
+  if(NOT HSALIB)
+    message(FATAL_ERROR "libhsa-runtime not found (use -DHSA_RUNTIME_DIR=... to specify path to HSA runtime)")
+  endif()
+
+  if(DEFINED WITH_HSAILASM_PATH)
+    set(HSAILASM_SEARCH_PATH "${WITH_HSAILASM_PATH}")
+  else()
+    set(HSAILASM_SEARCH_PATH "${HSA_RUNTIME_DIR}/bin")
+  endif()
+
+  find_program(HSAIL_ASM "HSAILasm${CMAKE_EXECUTABLE_SUFFIX}" PATHS "${HSAILASM_SEARCH_PATH}")
+  if(NOT HSAIL_ASM)
+    message(FATAL_ERROR "HSAILasm executable not found (use -DWITH_HSAILASM_PATH=... to specify)")
+  endif()
+
+
+  message(STATUS "OK, building HSA")
 endif()
 
 #####################################################################

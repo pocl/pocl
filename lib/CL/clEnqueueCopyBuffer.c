@@ -38,7 +38,7 @@ POname(clEnqueueCopyBuffer)(cl_command_queue command_queue,
                             cl_event *event) 
 CL_API_SUFFIX__VERSION_1_0
 {
-  cl_device_id device_id;
+  cl_device_id device;
   unsigned i;
   _cl_command_node *cmd = NULL;
   int errcode;
@@ -72,14 +72,7 @@ CL_API_SUFFIX__VERSION_1_0
   if (pocl_buffers_overlap(src_buffer, dst_buffer, src_offset,
         dst_offset, size) != CL_SUCCESS) return CL_MEM_COPY_OVERLAP;
 
-  device_id = command_queue->device;
-
-  for (i = 0; i < command_queue->context->num_devices; ++i)
-    {
-      if (command_queue->context->devices[i] == device_id)
-        break;
-    }
-  assert(i < command_queue->context->num_devices);
+  POCL_CHECK_DEV_IN_CMDQ
 
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_COPY_BUFFER, 
                                  event, num_events_in_wait_list, 
@@ -93,15 +86,15 @@ CL_API_SUFFIX__VERSION_1_0
   POname(clRetainMemObject)(src_buffer);
   POname(clRetainMemObject)(dst_buffer);
 
-  cmd->command.copy.data = device_id->data;
+  cmd->command.copy.data = device->data;
   /* TODO: call device->buf_offset() or similar as device_ptrs might not be
      actual buffer pointers but pointers to a book keeping structure. */
   cmd->command.copy.src_ptr = 
-    (char*)src_buffer->device_ptrs[device_id->dev_id].mem_ptr;
+    (char*)src_buffer->device_ptrs[device->dev_id].mem_ptr;
   cmd->command.copy.src_offset = src_offset;
 
   cmd->command.copy.dst_ptr = 
-    (char*)dst_buffer->device_ptrs[device_id->dev_id].mem_ptr;
+    (char*)dst_buffer->device_ptrs[device->dev_id].mem_ptr;
   cmd->command.copy.dst_offset = dst_offset;
   cmd->command.copy.cb = size;
 

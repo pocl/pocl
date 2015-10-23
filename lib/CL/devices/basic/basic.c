@@ -323,7 +323,10 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
 #define HALF_EXT
 #endif
 
-  dev->extensions = DOUBLE_EXT HALF_EXT "cl_khr_byte_addressable_store";
+  dev->extensions = DOUBLE_EXT HALF_EXT "cl_khr_byte_addressable_store "
+      "cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics "
+      "cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics "
+      "cl_khr_int64_base_atomics cl_khr_int64_extended_atomics";
 
   dev->llvm_target_triplet = OCL_KERNEL_TARGET;
   dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
@@ -343,71 +346,7 @@ pocl_basic_probe(struct pocl_device_ops *ops)
   return env_count;
 }
 
-#define MIN_MAX_MEM_ALLOC_SIZE (128*1024*1024)
 
-/* set maximum allocation sizes for buffers and images */
-void
-pocl_basic_set_buffer_image_limits(cl_device_id device)
-{
-  /* Maximum allocation size: we don't have hardware limits, so we
-   * can potentially allocate the whole memory for a single buffer, unless
-   * of course there are limits set at the operating system level. Of course
-   * we still have to respect the OpenCL-commanded minimum */
-  size_t alloc_limit = SIZE_MAX;
-
-#ifndef _MSC_VER
-  // TODO getrlimit equivalent under Windows
-  struct rlimit limits;
-  int ret = getrlimit(RLIMIT_DATA, &limits);
-  if (ret == 0)
-    alloc_limit = limits.rlim_cur;
-#endif
-  if (alloc_limit > device->global_mem_size)
-    alloc_limit = device->global_mem_size;
-  else if (alloc_limit < MIN_MAX_MEM_ALLOC_SIZE)
-    alloc_limit = MIN_MAX_MEM_ALLOC_SIZE;
-  // TODO in theory now if alloc_limit was > rlim_cur and < rlim_max
-  // we should try and setrlimit to alloc_limit, or allocations might fail
-
-  device->local_mem_size = device->max_constant_buffer_size =
-    device->max_mem_alloc_size = alloc_limit;
-
-  /* We don't have hardware limitations on the buffer-backed image sizes,
-   * so we set the maximum size in terms of the maximum amount of pixels
-   * that fix in max_mem_alloc_size. A single pixel can take up to 4 32-bit channels,
-   * i.e. 16 bytes.
-   */
-  size_t max_pixels = device->max_mem_alloc_size/16;
-  if (max_pixels > device->image_max_buffer_size)
-    device->image_max_buffer_size = max_pixels;
-
-  /* Similarly, we can take the 2D image size limit to be the largest power of 2
-   * whose square fits in image_max_buffer_size; since the 2D image size limit
-   * starts at a power of 2, it's a simple matter of doubling.
-   * This is actually completely arbitrary, another equally valid option
-   * would be to have each maximum dimension match the image_max_buffer_size.
-   */
-  max_pixels = device->image2d_max_width;
-  // keep doubing until we go over
-  while (max_pixels <= device->image_max_buffer_size/max_pixels)
-    max_pixels *= 2;
-  // halve before assignment
-  max_pixels /= 2;
-  if (max_pixels > device->image2d_max_width)
-    device->image2d_max_width = device->image2d_max_height = max_pixels;
-
-  /* Same thing for 3D images, of course with cubes. Again, totally arbitrary. */
-  max_pixels = device->image3d_max_width;
-  // keep doubing until we go over
-  while (max_pixels*max_pixels <= device->image_max_buffer_size/max_pixels)
-    max_pixels *= 2;
-  // halve before assignment
-  max_pixels /= 2;
-  if (max_pixels > device->image3d_max_width)
-  device->image3d_max_width = device->image3d_max_height =
-    device->image3d_max_depth = max_pixels;
-
-}
 
 void
 pocl_basic_init (cl_device_id device, const char* parameters)
@@ -415,6 +354,7 @@ pocl_basic_init (cl_device_id device, const char* parameters)
   struct data *d;
   static int global_mem_id;
   static int first_basic_init = 1;
+  static int device_number = 0;
   
   if (first_basic_init)
     {
@@ -436,7 +376,17 @@ pocl_basic_init (cl_device_id device, const char* parameters)
   device->global_mem_size = 1;
   pocl_topology_detect_device_info(device);
   pocl_cpuinfo_detect_device_info(device);
-  pocl_basic_set_buffer_image_limits(device);
+  pocl_set_buffer_image_limits(device);
+
+  /* in case hwloc doesn't provide a PCI ID, let's generate
+     a vendor id that hopefully is unique across vendors. */
+  const char *magic = "pocl";
+  if (device->vendor_id == 0)
+    device->vendor_id =
+      magic[0] | magic[1] << 8 | magic[2] << 16 | magic[3] << 24;
+
+  device->vendor_id += device_number;
+  device_number++;
 
   /* The basic driver represents only one "compute unit" as
      it doesn't exploit multiple hardware threads. Multiple
@@ -451,35 +401,6 @@ pocl_basic_init (cl_device_id device, const char* parameters)
   #ifdef _CL_DISABLE_LONG
   device->has_64bit_long=0;
   #endif
-}
-
-static void *
-pocl_basic_malloc (void *device_data, cl_mem_flags flags,
-		    size_t size, void *host_ptr)
-{
-  void *b;
-
-  if (flags & CL_MEM_COPY_HOST_PTR)
-    {
-      b = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, size);
-      if (b != NULL)
-        {
-          memcpy(b, host_ptr, size);
-          return b;
-        }
-      
-      return NULL;
-    }
-  
-  if (flags & CL_MEM_USE_HOST_PTR && host_ptr != NULL)
-    {
-      return host_ptr;
-    }
-  b = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, size);
-  if (b != NULL)
-    return b;
-  
-  return NULL;
 }
 
 cl_int
@@ -499,7 +420,7 @@ pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
         }
       else
         {
-          b = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, mem_obj->size);
+          b = pocl_memalign_alloc_global_mem(device, MAX_EXTENDED_ALIGNMENT, mem_obj->size);
           if (b == NULL)
             return CL_MEM_OBJECT_ALLOCATION_FAILURE;
         }
@@ -523,12 +444,17 @@ pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
 }
 
 void
-pocl_basic_free (void *data, cl_mem_flags flags, void *ptr)
+pocl_basic_free (cl_device_id device, cl_mem memobj)
 {
+  cl_mem_flags flags = memobj->flags;
+
   if (flags & CL_MEM_USE_HOST_PTR)
     return;
-  
-  POCL_MEM_FREE(ptr);
+
+  void* ptr = memobj->device_ptrs[device->dev_id].mem_ptr;
+  size_t size = memobj->size;
+
+  pocl_free_global_mem(device, ptr, size);
 }
 
 void
@@ -582,7 +508,7 @@ pocl_basic_run
       if (kernel->arg_info[i].is_local)
         {
           arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = pocl_basic_malloc(data, 0, al->size, NULL);
+          *(void **)(arguments[i]) = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, al->size);
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
         {
@@ -603,7 +529,7 @@ pocl_basic_run
           dev_image_t di;
           fill_dev_image_t (&di, al, cmd->device);
 
-          void* devptr = pocl_basic_malloc (data, 0, sizeof(dev_image_t), NULL);
+          void* devptr = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT,  sizeof(dev_image_t));
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = devptr; 
           pocl_basic_write (data, &di, devptr, 0, sizeof(dev_image_t));
@@ -613,7 +539,7 @@ pocl_basic_run
           dev_sampler_t ds;
           fill_dev_sampler_t(&ds, al);
           
-          void* devptr = pocl_basic_malloc (data, 0, sizeof(dev_sampler_t), NULL);
+          void* devptr = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, sizeof(dev_sampler_t));
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = devptr;
           pocl_basic_write (data, &ds, devptr, 0, sizeof(dev_sampler_t));
@@ -629,7 +555,7 @@ pocl_basic_run
     {
       al = &(cmd->command.run.arguments[i]);
       arguments[i] = malloc (sizeof (void *));
-      *(void **)(arguments[i]) = pocl_basic_malloc (data, 0, al->size, NULL);
+      *(void **)(arguments[i]) = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, al->size);
     }
 
   for (z = 0; z < pc->num_groups[2]; ++z)
@@ -651,13 +577,13 @@ pocl_basic_run
     {
       if (kernel->arg_info[i].is_local)
         {
-          pocl_basic_free (data, 0, *(void **)(arguments[i]));
+          POCL_MEM_FREE(*(void **)(arguments[i]));
           POCL_MEM_FREE(arguments[i]);
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE ||
                 kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
-          pocl_basic_free (data, 0, *(void **)(arguments[i]));
+          POCL_MEM_FREE(*(void **)(arguments[i]));
           POCL_MEM_FREE(arguments[i]);
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && *(void**)arguments[i] == NULL)
@@ -669,7 +595,7 @@ pocl_basic_run
        i < kernel->num_args + kernel->num_locals;
        ++i)
     {
-      pocl_basic_free(data, 0, *(void **)(arguments[i]));
+      POCL_MEM_FREE(*(void **)(arguments[i]));
       POCL_MEM_FREE(arguments[i]);
     }
   free(arguments);

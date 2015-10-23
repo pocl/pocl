@@ -27,6 +27,9 @@
 #include <unistd.h>
 
 #include "config.h"
+#ifdef POCL_BUILT_WITH_CMAKE
+#include "pocl_build_timestamp.h"
+#endif
 #include "kernellib_hash.h"
 
 #include "pocl_hash.h"
@@ -53,7 +56,8 @@ int pocl_cl_device_to_index(cl_program   program,
     unsigned i;
     assert(program);
     for (i = 0; i < program->num_devices; i++)
-        if (program->devices[i] == device)
+        if (program->devices[i] == device ||
+            program->devices[i] == device->parent_device)
             return i;
     return -1;
 }
@@ -84,19 +88,71 @@ void pocl_cache_program_bc_path(char*        program_bc_path,
                        device_i, POCL_PROGRAM_BC_FILENAME);
 }
 
+static void pocl_cache_kernel_cachedir_path(char* kernel_cachedir_path, cl_program   program,
+                                 unsigned device_i, cl_kernel kernel, char* append_str,
+                                 size_t local_x, size_t local_y, size_t local_z)
+{
+  int bytes_written;
+  char tempstring[POCL_FILENAME_LENGTH];
+
+  if (program->devices[device_i]->spmd)
+    {
+      bytes_written = snprintf(tempstring, POCL_FILENAME_LENGTH,
+                               "/%s/SPMD%s", kernel->name, append_str);
+    }
+  else
+    {
+      bytes_written = snprintf(tempstring, POCL_FILENAME_LENGTH,
+                               "/%s/%zu-%zu-%zu%s", kernel->name,
+                               local_x, local_y, local_z, append_str);
+    }
+
+  assert(bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
+
+  program_device_dir(kernel_cachedir_path, program, device_i, tempstring);
+
+}
+
+
+
 // required in llvm API
-void pocl_cache_work_group_function_so_path(char* kernel_so_path, cl_program program,
+void pocl_cache_work_group_function_path(char* parallel_bc_path, cl_program program,
                                unsigned device_i, cl_kernel kernel,
                                size_t local_x, size_t local_y,
                                size_t local_z) {
     assert(kernel->name);
 
-    char tempstring[POCL_FILENAME_LENGTH];
-    int bytes_written = snprintf (tempstring, POCL_FILENAME_LENGTH,
-                                  "/%s/%zu-%zu-%zu/%s.so", kernel->name,
-                                  local_x, local_y, local_z, kernel->name);
+    pocl_cache_kernel_cachedir_path(parallel_bc_path, program,
+                         device_i, kernel, POCL_PARALLEL_BC_FILENAME,
+                         local_x, local_y, local_z);
+}
+
+void pocl_cache_final_binary_path(char* final_binary_path, cl_program program,
+                               unsigned device_i, cl_kernel kernel,
+                               size_t local_x, size_t local_y,
+                               size_t local_z) {
+    assert(kernel->name);
+
+
+    /* TODO this should be probably refactored to either
+     * get the binary name from the device itself, or
+     * let the device ops call pocl_llvm_generate_workgroup_function() on their own */
+
+    int bytes_written;
+    char final_binary_name[POCL_FILENAME_LENGTH];
+
+    if (program->devices[device_i]->spmd)
+        bytes_written = snprintf(final_binary_name, POCL_FILENAME_LENGTH,
+                                 "%s.brig", POCL_PARALLEL_BC_FILENAME);
+    else
+        bytes_written = snprintf(final_binary_name, POCL_FILENAME_LENGTH,
+                                 "/%s.so", kernel->name);
+
     assert(bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
-    program_device_dir(kernel_so_path, program, device_i, tempstring);
+
+    pocl_cache_kernel_cachedir_path(final_binary_path, program,
+                         device_i, kernel, final_binary_name,
+                         local_x, local_y, local_z);
 }
 
 /******************************************************************************/
@@ -238,26 +294,6 @@ int pocl_cache_append_to_buildlog(cl_program  program,
 
 /******************************************************************************/
 
-static int make_kernel_cachedir_path(char*        kernel_cachedir_path,
-                                     cl_program   program,
-                                     unsigned     device_i,
-                                     cl_kernel    kernel,
-                                     size_t       local_x,
-                                     size_t       local_y,
-                                     size_t       local_z) {
-    assert(kernel->name);
-    char tempstring[POCL_FILENAME_LENGTH];
-
-    int bytes_written = snprintf(tempstring, POCL_FILENAME_LENGTH,
-                                 "/%s/%zu-%zu-%zu", kernel->name,
-                                 local_x, local_y, local_z);
-    assert(bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
-
-    program_device_dir(kernel_cachedir_path, program, device_i, tempstring);
-
-    return pocl_mkdir_p(kernel_cachedir_path);
-}
-
 
 int pocl_cache_write_kernel_parallel_bc(void*        bc,
                                         cl_program   program,
@@ -269,8 +305,11 @@ int pocl_cache_write_kernel_parallel_bc(void*        bc,
     assert(bc);
 
     char kernel_parallel_path[POCL_FILENAME_LENGTH];
-    make_kernel_cachedir_path(kernel_parallel_path, program, device_i,
-                              kernel, local_x, local_y, local_z);
+    pocl_cache_kernel_cachedir_path(kernel_parallel_path, program, device_i,
+                                    kernel, "", local_x, local_y, local_z);
+    int err = pocl_mkdir_p(kernel_parallel_path);
+    if (err)
+      return err;
 
     assert( strlen(kernel_parallel_path) <
             (POCL_FILENAME_LENGTH - strlen(POCL_PARALLEL_BC_FILENAME)));
@@ -287,8 +326,11 @@ int pocl_cache_make_kernel_cachedir_path(char*        kernel_cachedir_path,
                                          size_t       local_z) {
     int index = pocl_cl_device_to_index(program, device);
     assert(index >= 0);
-    return make_kernel_cachedir_path(kernel_cachedir_path, program, index,
-                                     kernel, local_x, local_y, local_z);
+
+    pocl_cache_kernel_cachedir_path(kernel_cachedir_path, program, index,
+                                     kernel, "", local_x, local_y, local_z);
+
+    return pocl_mkdir_p(kernel_cachedir_path);
 }
 
 

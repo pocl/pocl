@@ -160,9 +160,6 @@ if HAVE_CLOCK_GETTIME
 libpocl_la_LIBADD += -lrt
 endif
 
-if BUILD_SPU
-libpocl_la_LIBADD += -lspe2
-endif
 
 #Kludge: compile pocl_llvm_api.cc into a library of its own.
 #The source file is necessarely a C++ file, and having a C++ file
@@ -199,7 +196,7 @@ libOpenCL_la_LDFLAGS = ${libpocl_la_LDFLAGS}
 libOpenCL_la_LIBADD = ${libpocl_la_LIBADD}
 endif
 
-CLEANFILES = libOpenCL.la kernellib_hash.h
+CLEANFILES = libpocl.la libOpenCL.la kernellib_hash.h
 
 EXTRA_DIST = CMakeLists.txt
 

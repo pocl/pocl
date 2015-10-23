@@ -496,7 +496,7 @@ WorkitemLoops::ProcessFunction(Function &F)
             preds.push_back(bb);
           }
 
-        int unrollCount;
+        unsigned unrollCount;
         if (getenv("POCL_WILOOPS_MAX_UNROLL_COUNT") != NULL)
             unrollCount = atoi(getenv("POCL_WILOOPS_MAX_UNROLL_COUNT"));
         else
@@ -522,7 +522,7 @@ WorkitemLoops::ProcessFunction(Function &F)
             if (AddWIMetadata)
                 original->AddIDMetadata(F.getContext(), 0);
 
-            for (int c = 1; c < unrollCount; ++c) 
+            for (unsigned c = 1; c < unrollCount; ++c) 
             {
                 ParallelRegion *unrolled = 
                     original->replicate(reference_map, ".unrolled_wi");

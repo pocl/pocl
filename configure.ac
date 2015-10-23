@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 
 AC_PREREQ([2.64])
-AC_INIT([pocl], [0.12-pre], [pocl-devel@lists.sourceforge.net])
+AC_INIT([pocl], [0.13-pre], [pocl-devel@lists.sourceforge.net])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_AUX_DIR([config])
@@ -79,7 +79,7 @@ LD_FLAGS_BIN=""
 # LLVM configuration
 #
 AC_ARG_VAR([LLVM_CONFIG], [Program used to retrieve LLVM options and binaries])
-AC_PATH_PROGS([LLVM_CONFIG], [llvm-config llvm-config-mp-3.3 llvm-config-3.3 llvm-config33 llvm-config-mp-3.4 llvm-config-3.4 llvm-config34 llvm-config-mp-3.2 llvm-config-3.2 llvm-config32 ])
+AC_PATH_PROGS([LLVM_CONFIG], [llvm-config llvm-config-mp-3.7 llvm-config-3.7 llvm-config37 llvm-config-mp-3.6 llvm-config-3.6 llvm-config36])
 test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
 
 LLVM_VERSION=`$LLVM_CONFIG --version`
@@ -87,28 +87,12 @@ LLVM_BINDIR=`$LLVM_CONFIG --bindir`
 LLVM_LIBDIR=`$LLVM_CONFIG --libdir`
 LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
 # Whether we can use our own printf implementation
-NEW_PRINTF_WORKS=true
 LLVM_3_6=false
 
 AC_SUBST([LLVM_VERSION], [$LLVM_VERSION])
 AC_DEFINE_UNQUOTED([LLVM_VERSION], ["$LLVM_VERSION"], "LLVM version as a string.")
 
 case "$LLVM_VERSION" in
-     3.2*)
-     AC_DEFINE([LLVM_3_2], [], "Using LLVM 3.2")
-     NEW_PRINTF_WORKS=false
-   ;;
-     3.3*)
-     AC_DEFINE([LLVM_3_3], [], "Using LLVM 3.3")
-     NEW_PRINTF_WORKS=false
-   ;;
-     3.4*)
-     AC_DEFINE([LLVM_3_4], [], "Using LLVM 3.4")
-   ;;
-     3.5*)
-     AC_DEFINE([LLVM_3_5], [], "Using LLVM 3.5")
-     LLVM_LDFLAGS="$LLVM_LDFLAGS `$LLVM_CONFIG --system-libs`"
-   ;;
      3.6*)
      AC_DEFINE([LLVM_3_6], [], "Using LLVM 3.6")
      LLVM_3_6=true
@@ -121,7 +105,7 @@ case "$LLVM_VERSION" in
      *)
    AC_MSG_ERROR(
    [
-Unsupported LLVM version. Please use LLVM version 3.2, 3.3, 3.4, 3.5, 3.6, 3.7.
+Unsupported LLVM version. Please use LLVM version 3.6 or 3.7.
    ])
    LLVM_VERSION=
    ;;
@@ -130,7 +114,6 @@ esac
 AM_CONDITIONAL([LLVM_3_6], [test "x$LLVM_3_6" = "xtrue"])
 
 AC_SUBST([LLVM_LDFLAGS], [$LLVM_LDFLAGS], [llvm-config returned ldflags])
-AM_CONDITIONAL([NEW_PRINTF_WORKS], $NEW_PRINTF_WORKS)
 
 # When building with API linking, clang is always linked statically, so user might want to link llvm static to libpocl too
 # or risk causing version mismatches. Also useful when other platform libraries use LLVM too, see issue #46.
@@ -167,7 +150,7 @@ fi
 
 AC_SUBST([LLVM_LIBS])
 
-if `$LLVM_CONFIG --build-mode | grep -q Asserts`;
+if `$LLVM_CONFIG --assertion-mode | grep -q ON`;
 then
 AC_DEFINE([LLVM_BUILT_WITH_ASSERTS], [], "LLVM was built with Assertions on.")
 fi
@@ -787,17 +770,22 @@ AC_COMPILE_IFELSE(
 
 #
 # A few work-arounds for llvm-config issues
-# - '-fno-rtti' is a work-around for llvm bug 14200
+# - '-fno-rtti' is a work-around for llvm bug 14200 - this should be fixed in 3.7
 # - '-DNDEBUG' is a work-around for llvm bug 18253
 # - pocl doesn't compile with '-pedantic'
 
 LLVM_CXX_FLAGS=$($LLVM_CONFIG --cxxflags | sed -e 's/ -pedantic / /g')
-LLVM_CXX_FLAGS="$LLVM_CXX_FLAGS -fno-rtti"
+LLVM_MINOR=$(echo $LLVM_VERSION | cut -d '.' -f 2)
+if test $LLVM_MINOR -lt 7; then
+  LLVM_CXX_FLAGS="$LLVM_CXX_FLAGS -fno-rtti"
+else
+  AC_MSG_NOTICE([Detected LLVM 3.7+, not adding -fno-rtti to LLVM CXXFLAGS])
+fi
 
 # llvm-config does not always report the "-DNDEBUG" flag correctly
 # (see LLVM bug 18253). If LLVM and the pocl passes are built with 
 # different NDEBUG settings, problems arise 
-AC_MSG_CHECKING([if LLVM is built with assertions])
+AC_MSG_CHECKING([if llvm-config reports -DNDEBUG properly])
 CXXFLAGS="$CXXFLAGS $($LLVM_CONFIG --cxxflags) -UNDEBUG"
 LIBS="$LIBS $($LLVM_CONFIG --libs)"
 LDFLAGS="$LDFLAGS $LLVM_LDFLAGS"
@@ -1058,18 +1046,6 @@ then
   HOST_LLC_FLAGS="$HOST_LLC_FLAGS -mcpu=$llc_host_cpu"
 fi
 
-# Work-around a clang bug in LLVM 3.3: On 32-bit platforms, the size
-# of Open CL C long is not 8 bytes 
-if [echo "constant int test[sizeof(long)==8?1:-1]={1};" | $CLANG $HOST_CLANG_FLAGS -S -x cl - ]
-then
-    : # OpenCL C long is supported
-else
-    # AC_DEFINE needed for host code, HOST_CLANG_FLGAS for kernel code.
-    AC_DEFINE_UNQUOTED([_CL_DISABLE_LONG],[],[Disable cl_khr_int64 on host based devices.])
-    HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -D_CL_DISABLE_LONG"
-fi
-rm -f ./-.s
-	
 AC_DEFINE_UNQUOTED([KERNEL_DIR], "$kernel_dir", [Use the libkernel from lib/kernel/$KERNEL_DIR/])
 
 AC_SUBST([TARGET], [$target])
@@ -1220,52 +1196,32 @@ AC_DEFINE([POCL_ANDROID_PREFIX],
 fi
 AM_CONDITIONAL([POCL_ANDROID], [test "$ANDROID_PRESENT" = ok])
 
-# Check if CellSPU support is found
-# The libspe version requirement is not strict. This is the only one tested.
-# SPU backend was removed in LLVM 3.3 (and we don't accept LLVM 3.1 anymore in pocl)
-# so compile the spu backend only when LLVM 3.2 is found
-if test "$LLVM_VERSION" == 3.2 -o "$LLVM_VERSION" == 3.2svn
-then
-PKG_CHECK_MODULES([LIBSPE], [libspe2 >= 2.2.80],
-  [
-    AC_MSG_NOTICE([libspe2 found.])
-    LIBSPE_AVAILABLE=yes
-    OCL_DRIVERS="$OCL_DRIVERS spu"
-    OCL_TARGETS="$OCL_TARGETS cellspu"
-    AC_DEFINE([BUILD_SPU], [], [Defined when CellSPU tools are found])
-    BUILD_SPU=1
-  ],
-  [
-    AC_MSG_NOTICE([libspe2 not found (by pkg-config). Spu driver not built.])
-    LIBSPE_AVAILABLE=no
-    BUILD_SPU=0
-  ])
-fi
-AM_CONDITIONAL([BUILD_SPU],[echo $OCL_DRIVERS | grep spu])
-
 # Enable HSA by default in case the dependencies are met.
 AC_ARG_ENABLE([hsa-amdgcn],
               [AS_HELP_STRING([--disable-hsa-amdgcn],
               [Disable the HSA device driver for AMD GCN devices.])],
               [enable_hsa="$enableval"], [enable_hsa="yes"])
 
-AC_ARG_WITH(hsa-runtime-headers,
-[AS_HELP_STRING([--with-hsa-runtime-headers],[absolute path where HSA runtime include files are found])],
+HSA_RUNTIME_DIR=""
+AC_ARG_WITH(hsa-runtime-dir,
+[AS_HELP_STRING([--with-hsa-runtime-dir],[absolute path where HSA runtime files (include,libs) are found, defaults to /opt/hsa])],
 [
-  hsa_cpp_flags="-I${withval}"
-  AC_SUBST([HSA_INCLUDES], ["$hsa_cpp_flags"] )
+  HSA_RUNTIME_DIR="${withval}"
+  AC_MSG_NOTICE([Using provided HSA runtime location: ${HSA_RUNTIME_DIR}])
 ],
 [
-  hsa_cpp_flags="-I/opt/hsa/include"
-  AC_SUBST([HSA_INCLUDES], ["$hsa_cpp_flags"] )
+  HSA_RUNTIME_DIR="/opt/hsa"
+  AC_MSG_NOTICE([Using default HSA runtime location: ${HSA_RUNTIME_DIR}])
 ]
 )
+
+AC_SUBST([HSA_INCLUDES], ["-I${HSA_RUNTIME_DIR}/include"] )
 
 # Search for the HSA runtime lib.
 AC_MSG_CHECKING([for HSA runtime])
 old_LIBS="$LIBS"
 old_LDFLAGS="$LDFLAGS"
-LDFLAGS="$LDFLAGS -L/opt/hsa/lib"
+LDFLAGS="$LDFLAGS -L${HSA_RUNTIME_DIR}/lib"
 LIBS=""
 AC_SEARCH_LIBS([hsa_executable_get_symbol], [hsa-runtime64], [
 HSA_LIBS="$LIBS"
@@ -1310,7 +1266,7 @@ else
 fi
 
 tempCPPFLAGS=$CPPFLAGS
-CPPFLAGS="$CPPFLAGS -I/opt/hsa/include"
+CPPFLAGS="$CPPFLAGS -I${HSA_RUNTIME_DIR}/include"
 
 AC_MSG_CHECKING([for HSA runtime headers])
 AC_COMPILE_IFELSE(
@@ -1324,6 +1280,14 @@ enable_hsa="no"
 
 CPPFLAGS=$tempCPPFLAGS
 
+AC_ARG_VAR([HSAILASM], [Path to HSAILasm executable])
+AC_PATH_PROGS([HSAILASM], [HSAILasm])
+if test ! -z "$HSAILASM"; then
+  AC_DEFINE_UNQUOTED([HSAIL_ASM], ["$HSAILASM"], [Path to HSAILasm executable])
+else
+  AC_MSG_NOTICE([Could not find HSAILasm executable, disabling HSA support])
+  enable_hsa="no"
+fi
 
 if test "$enable_hsa" = "yes";
 then
@@ -1333,9 +1297,8 @@ then
   enable_testsuite_hsa=yes
   POAT_TESTSUITES="$POAT_TESTSUITES hsa"
 
-  # -lhsail is missing from llvm-config --system-libs
   # -lHSAILUtil is missing from llvm-config --libfiles
-  LLVM_LIBS="$LLVM_LIBS -lLLVMHSAILUtil -lhsail"
+  LLVM_LIBS="$LLVM_LIBS -lLLVMHSAILUtil"
 fi
 
 # TODO: move above
@@ -1503,9 +1466,11 @@ AC_C_BIGENDIAN(
 # 4:0:3 == 0.10 (currently backwards compatible with 0.7, thus age = 3).
 # 5:0:4 == 0.11 (currently backwards compatible with 0.7, thus age = 4).
 # 6:0:5 == 0.12 (currently backwards compatible with 0.7, thus age = 5).
-LIB_CURRENT_VERSION=6
+# 7:0:6 == 0.13 (currently backwards compatible with 0.7, thus age = 6).
+
+LIB_CURRENT_VERSION=7
 LIB_REVISION_VERSION=0
-LIB_AGE_VERSION=5
+LIB_AGE_VERSION=6
 LIB_FIRST_VERSION=$(($LIB_CURRENT_VERSION - $LIB_AGE_VERSION))
 BUILD_TIMESTAMP=""
 AC_SUBST([LIB_VERSION], ["$LIB_CURRENT_VERSION:$LIB_REVISION_VERSION:$LIB_AGE_VERSION"])
@@ -1539,14 +1504,11 @@ AC_CONFIG_FILES([Makefile
                  lib/CL/devices/tce/Makefile
                  lib/CL/devices/tce/ttasim/Makefile
                  lib/CL/devices/topology/Makefile
-                 lib/CL/devices/cellspu/Makefile
                  lib/CL/devices/hsa/Makefile
                  lib/llvmopencl/Makefile
                  lib/kernel/Makefile
-                 lib/kernel/cellspu/Makefile
                  lib/kernel/host/Makefile
                  lib/kernel/tce/Makefile
-                 lib/kernel/amdgcn/Makefile
                  lib/kernel/hsail64/Makefile
                  lib/poclu/Makefile
                  examples/Makefile
@@ -1580,8 +1542,6 @@ AC_CONFIG_FILES([Makefile
                  tests/tce/ttasim/Makefile
                  tests/tce/tcemc/Makefile
                  tests/tce/fp16/Makefile
-                 tests/cell/Makefile
-                 tests/cell/hello/Makefile
                  ])
 
 AC_OUTPUT

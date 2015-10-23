@@ -128,13 +128,25 @@ mul24.cl
 mul_hi.cl
 nan.cl
 native_cos.cl
+native_divide.cl
+native_exp.cl
+native_exp10.cl
+native_exp2.cl
+native_log.cl
+native_log10.cl
 native_log2.cl
+native_powr.cl
+native_recip.cl
+native_rsqrt.cl
+native_sin.cl
+native_tan.cl
 nextafter.cl
 normalize.cl
 popcount.cl
 pow.cl
 pown.cl
 powr.cl
+printf.c
 radians.cl
 read_image.cl
 recip.cl
@@ -211,6 +223,7 @@ mul24.cl
 mul_hi.cl
 nextafter.cl
 popcount.cl
+printf.c
 read_image.cl
 rhadd.cl
 rotate.cl
@@ -346,11 +359,6 @@ vecmathlib-pocl/tanh.cc
 vecmathlib-pocl/tanpi.cl
 vecmathlib-pocl/trunc.cc)
 
-if(NEW_PRINTF_WORKS)
-  list(APPEND SOURCES_WITH_VML printf.c)
-  list(APPEND SOURCES_WITHOUT_VML printf.c)
-endif()
-
 #LKERNEL_HDRS_EXTRA - headers that should be dependencies
 set(KERNEL_DEPEND_HEADERS
 "${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vec_test.h"
@@ -400,15 +408,20 @@ endif()
 
 #*********************************************************************
 
-if(OCL_TARGETS MATCHES "cellspu")
-  add_subdirectory("cellspu")
+if(OCL_TARGETS MATCHES "tce")
+  add_subdirectory("tce")
 endif()
 
 #*********************************************************************
 
-if(OCL_TARGETS MATCHES "tce")
-  add_subdirectory("tce")
+if(OCL_TARGETS MATCHES "amdgcn")
+  add_subdirectory("amdgcn")
 endif()
+
+if(OCL_TARGETS MATCHES "hsail64")
+  add_subdirectory("hsail64")
+endif()
+
 #*********************************************************************
 
 # TODO extra_dist in lib/kernel/Makefile.am:

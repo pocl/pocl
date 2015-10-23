@@ -62,7 +62,7 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
   for(i=0; i<num_events_in_wait_list; i++)
     POCL_RETURN_ERROR_COND((event_wait_list[i] == NULL), CL_INVALID_EVENT_WAIT_LIST);
 
-  device = command_queue->device;
+  device = POCL_REAL_DEV(command_queue->device);
 
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_BUFFER, 
                                  event, num_events_in_wait_list, 

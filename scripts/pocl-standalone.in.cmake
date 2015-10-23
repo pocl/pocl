@@ -54,7 +54,6 @@ then
 fi
 
 case $target in
-    cellspu-*) target_dir="cellspu";;
     tce*)     target_dir="tce"
                target="tce-tut-llvm"
                ;;
@@ -64,9 +63,6 @@ esac
 case $target in
     tce*)     CLANG_FLAGS="@TCE_TARGET_CLANG_FLAGS@"
               LLC_FLAGS="@TCE_TARGET_LLC_FLAGS@"
-              LD_FLAGS="@@";;
-    cell*)    CLANG_FLAGS="@CELL_TARGET_CLANG_FLAGS@"
-              LLC_FLAGS="@CELL_TARGET_LLC_FLAGS@"
               LD_FLAGS="@@";;
     *)        CLANG_FLAGS="@HOST_CLANG_FLAGS@"
               LLC_FLAGS="@HOST_LLC_FLAGS@"

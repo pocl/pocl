@@ -27,6 +27,7 @@
 #include <string.h>
 #include <CL/cl.h>
 #include <poclu.h>
+#include "config.h"
 #include "pocl_tests.h"
 
 #define MAX_PLATFORMS 32
@@ -53,6 +54,9 @@ static const char invalid_kernel[] =
 static const char valid_kernel[] =
   "kernel void init(global int *arg) { return; }\n";
 
+static const char invalid_build_option[] =
+  "-fnothing-to-see-here";
+
 int
 main(void){
   cl_int err;
@@ -62,7 +66,6 @@ main(void){
   cl_uint num_devices;
   cl_uint i;
   cl_program program = NULL;
-  cl_program program_with_binary = NULL;
   err = clGetPlatformIDs(MAX_PLATFORMS, platforms, &nplatforms);
   CHECK_OPENCL_ERROR_IN("clGetPlatformIDs");
   if (!nplatforms)
@@ -111,6 +114,22 @@ main(void){
 				      &kernel_size, &err);
   //clCreateProgramWithSource for invalid kernel failed
   CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
+
+  err = clBuildProgram(program, num_devices, devices, invalid_build_option, NULL, NULL);
+  TEST_ASSERT(err == CL_INVALID_BUILD_OPTIONS);
+
+  for (i = 0; i < num_devices; ++i) {
+          size_t log_size = 0;
+          err = clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
+                  0, NULL, &log_size);
+          CHECK_OPENCL_ERROR_IN("get build log size");
+          char *log = malloc(log_size);
+          err = clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
+                  log_size, log, NULL);
+          CHECK_OPENCL_ERROR_IN("get build log");
+          log[log_size] = '\0';
+          fprintf(stderr, "preprocess failure log[%u]: %s\n", i, log);
+  }
 
   err = clBuildProgram(program, num_devices, devices, NULL, NULL, NULL);
   TEST_ASSERT(err == CL_BUILD_PROGRAM_FAILURE);
@@ -166,6 +185,19 @@ main(void){
   err |= clReleaseKernel(k);
   err |= clReleaseProgram(program);
   CHECK_OPENCL_ERROR_IN("'init' kernel name test clean-up");
+
+  // macro test
+  char* macro_kernel = poclu_read_file(SRCDIR "/tests/runtime/test_clBuildProgram_macros.cl" );
+  size_t s = strlen(macro_kernel);
+  program = clCreateProgramWithSource(context, 1, (const char**)&macro_kernel,
+                                      &s, &err);
+  CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
+
+  err = clBuildProgram(program, num_devices, devices, NULL, NULL, NULL);
+  TEST_ASSERT(err == CL_SUCCESS);
+
+  err = clReleaseProgram(program);
+  CHECK_OPENCL_ERROR_IN("clReleaseProgram");
 
   return EXIT_SUCCESS;
 }

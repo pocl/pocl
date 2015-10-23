@@ -44,3 +44,5 @@ clean-examples:
 	cd piglit; make clean
 
 endif
+
+EXTRA_DIST = produce_results.sh

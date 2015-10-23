@@ -42,7 +42,7 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   cl_device_id device;
   void *host_ptr = NULL;
   mem_mapping_t *mapping_info = NULL;
-  int errcode;
+  int errcode; unsigned i;
   _cl_command_node *cmd = NULL;
   /* need to release the memobject before returning? */
   int must_release = 0;
@@ -77,7 +77,7 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
       "buffer has been created with CL_MEM_HOST_READ_ONL or CL_MEM_HOST_NO_ACCESS "
       "and CL_MAP_WRITE or CL_MAP_WRITE_INVALIDATE_REGION is set in map_flags\n")
 
-  device = command_queue->device;
+  POCL_CHECK_DEV_IN_CMDQ
  
   /* Ensure the parent buffer is not freed prematurely. */
   POname(clRetainMemObject) (buffer);

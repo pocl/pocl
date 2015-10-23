@@ -6,6 +6,15 @@ m4_define([POAT_AMDSDK_SETUP],[
   AT_SKIP_IF([! grep -q "#define BUILD_ICD" $abs_top_builddir/config.h])
 ])
 
+m4_define([POAT_AMDSDK_HSA_SETUP],[
+  AT_SETUP([$1])
+  AT_KEYWORDS([hsa amdsdk2.9 amdsdk long $1 $2])
+  AT_SKIP_IF([AS_CASE([" $POAT_TESTSUITES "],[*" amdsdk2_9 "*],[false],[:])])
+  # AMD APP SDK tests require ICD loader with
+  AT_SKIP_IF([! grep -q "#define BUILD_ICD" $abs_top_builddir/config.h])
+])
+
+
 AT_BANNER([AMD APP SDK 2.9 tests])
 
 POAT_AMDSDK_SETUP([asyncdatatransfer])
@@ -37,7 +46,7 @@ AT_CHECK_UNQUOTED([make test_BasicDebug -sC $abs_top_builddir/examples/AMDSDK2.9
 ], ignore)
 AT_CLEANUP
 
-POAT_AMDSDK_SETUP([binarysearch])
+POAT_AMDSDK_HSA_SETUP([binarysearch])
 AT_CHECK_UNQUOTED([make test_BinarySearch -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])
@@ -51,7 +60,7 @@ AT_CHECK_UNQUOTED([POCL_WORK_GROUP_METHOD=repl make test_BinomialOption -sC $abs
 ])
 AT_CLEANUP
 
-POAT_AMDSDK_SETUP([binomialoption-loops])
+POAT_AMDSDK_HSA_SETUP([binomialoption-loops])
 AT_CHECK_UNQUOTED([POCL_WORK_GROUP_METHOD=loops make test_BinomialOption -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])
@@ -64,13 +73,13 @@ AT_CHECK_UNQUOTED([make test_BinomialOptionMultiGPU -sC $abs_top_builddir/exampl
 ])
 AT_CLEANUP
 
-POAT_AMDSDK_SETUP([bitonicsort])
+POAT_AMDSDK_HSA_SETUP([bitonicsort])
 AT_CHECK_UNQUOTED([make test_BitonicSort -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])
 AT_CLEANUP
 
-POAT_AMDSDK_SETUP([blackscholes])
+POAT_AMDSDK_HSA_SETUP([blackscholes])
 AT_CHECK_UNQUOTED([make test_BlackScholes -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])
@@ -144,7 +153,7 @@ AT_CHECK_UNQUOTED([make test_CplusplusWrapper -sC $abs_top_builddir/examples/AMD
 ])
 AT_CLEANUP
 
-POAT_AMDSDK_SETUP([dct])
+POAT_AMDSDK_HSA_SETUP([dct])
 AT_CHECK_UNQUOTED([make test_DCT -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])
@@ -189,13 +198,13 @@ AT_CHECK_UNQUOTED([make test_EigenValue -sC $abs_top_builddir/examples/AMDSDK2.9
 ])
 AT_CLEANUP
 
-POAT_AMDSDK_SETUP([fastwalshtransform])
+POAT_AMDSDK_HSA_SETUP([fastwalshtransform])
 AT_CHECK_UNQUOTED([make test_FastWalshTransform -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])
 AT_CLEANUP
 
-POAT_AMDSDK_SETUP([floydwarshall])
+POAT_AMDSDK_HSA_SETUP([floydwarshall])
 AT_CHECK_UNQUOTED([make test_FloydWarshall -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])
@@ -247,7 +256,7 @@ AT_CHECK_UNQUOTED([make test_HDRToneMapping -sC $abs_top_builddir/examples/AMDSD
 ], ignore)
 AT_CLEANUP
 
-POAT_AMDSDK_SETUP([helloworld])
+POAT_AMDSDK_HSA_SETUP([helloworld])
 AT_CHECK_UNQUOTED([make test_HelloWorld -sC $abs_top_builddir/examples/AMDSDK2.9 | egrep "GdkknVnqkc|HelloWorld"], 0, 
 [GdkknVnqkc
 HelloWorld
@@ -260,7 +269,7 @@ AT_CHECK_UNQUOTED([POCL_WORK_GROUP_METHOD=repl make test_Histogram -sC $abs_top_
 ])     
 AT_CLEANUP
 
-POAT_AMDSDK_SETUP([histogram-loops])
+POAT_AMDSDK_HSA_SETUP([histogram-loops])
 AT_CHECK_UNQUOTED([POCL_WORK_GROUP_METHOD=loops make test_Histogram -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])     
@@ -350,7 +359,7 @@ AT_CHECK_UNQUOTED([make test_MatrixMulImage -sC $abs_top_builddir/examples/AMDSD
 ], ignore)
 AT_CLEANUP
 
-POAT_AMDSDK_SETUP([matrixmultiplication])
+POAT_AMDSDK_HSA_SETUP([matrixmultiplication])
 # pocl error: encountered unimplemented part of the OpenCL specs in clCreateImage2D.c:119
 #AT_XFAIL_IF(true)
 AT_CHECK_UNQUOTED([make test_MatrixMultiplication -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
@@ -358,7 +367,7 @@ AT_CHECK_UNQUOTED([make test_MatrixMultiplication -sC $abs_top_builddir/examples
 ])
 AT_CLEANUP
 
-POAT_AMDSDK_SETUP([matrixtranspose])
+POAT_AMDSDK_HSA_SETUP([matrixtranspose])
 AT_CHECK_UNQUOTED([make test_MatrixTranspose -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])
@@ -448,13 +457,13 @@ AT_CHECK_UNQUOTED([make test_NBody -sC $abs_top_builddir/examples/AMDSDK2.9 | gr
 ])
 AT_CLEANUP
 
-POAT_AMDSDK_SETUP([prefixsum])
+POAT_AMDSDK_HSA_SETUP([prefixsum])
 AT_CHECK_UNQUOTED([make test_PrefixSum -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])
 AT_CLEANUP
 
-POAT_AMDSDK_SETUP([quasirandomsequence])
+POAT_AMDSDK_HSA_SETUP([quasirandomsequence])
 AT_CHECK_UNQUOTED([make test_QuasiRandomSequence -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])
@@ -478,14 +487,14 @@ AT_CHECK_UNQUOTED([make test_Reduction -sC $abs_top_builddir/examples/AMDSDK2.9 
 ])
 AT_CLEANUP
 
-POAT_AMDSDK_SETUP([scanlargearrays])
+POAT_AMDSDK_HSA_SETUP([scanlargearrays])
 # Fails with vectorization. With wiloops and no unrolling, the vectorization won't apply.
 AT_CHECK_UNQUOTED([make test_ScanLargeArrays -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])
 AT_CLEANUP
 
-POAT_AMDSDK_SETUP([simpleconvolution])
+POAT_AMDSDK_HSA_SETUP([simpleconvolution])
 AT_CHECK_UNQUOTED([make test_SimpleConvolution -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])
@@ -515,7 +524,7 @@ AT_CHECK_UNQUOTED([make test_SoAversusAoS -sC $abs_top_builddir/examples/AMDSDK2
 ])     
 AT_CLEANUP
 
-POAT_AMDSDK_SETUP([sobelfilter])
+POAT_AMDSDK_HSA_SETUP([sobelfilter])
 AT_CHECK_UNQUOTED([make test_SobelFilter -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])     
@@ -564,7 +573,7 @@ AT_CHECK_UNQUOTED([make test_UnsharpMask -sC $abs_top_builddir/examples/AMDSDK2.
 ])     
 AT_CLEANUP
 
-POAT_AMDSDK_SETUP([urng])
+POAT_AMDSDK_HSA_SETUP([urng])
 AT_CHECK_UNQUOTED([make test_URNG -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed | cut -c -7], 0, 
 [Passed! 
 ])     

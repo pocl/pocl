@@ -1,3 +1,9 @@
+#
+# Template for adding a new buildslave to the 
+# central pocl buildbot master.
+# Please replace *every* instance of "sample" with 
+# something that reflects your machine!
+
 from buildbot.buildslave import BuildSlave
 from buildbot.schedulers.basic  import SingleBranchScheduler
 from buildbot.changes import filter
@@ -6,7 +12,7 @@ from buildbot.schedulers.forcesched import *
 from poclfactory import createPoclFactory, shouldBuildTrigger
 
 #overrride the 'sample_slave' with a descriptive function name
-def sample_slave( c ):
+def sample_slave( c, common_branch):
         
 	#create a new slave in the master's database
 	c['slaves'].append(
@@ -16,8 +22,8 @@ def sample_slave( c ):
 
 	# build the tree whenever the change poller notices a change
 	c['schedulers'].append(
-		 SingleBranchScheduler(name="master",
-			change_filter=filter.ChangeFilter(branch='master'),
+		 SingleBranchScheduler(name="sample_gitpoller",
+			change_filter=filter.ChangeFilter(branch=common_branch),
 			treeStableTimer=60,
 			fileIsImportant=shouldBuildTrigger,
 			builderNames=[

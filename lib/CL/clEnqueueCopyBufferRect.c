@@ -40,7 +40,7 @@ POname(clEnqueueCopyBufferRect)(cl_command_queue command_queue,
                                 const cl_event *event_wait_list,
                                 cl_event *event) CL_API_SUFFIX__VERSION_1_1
 {
-  cl_device_id device_id;
+  cl_device_id device;
   unsigned i;
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
@@ -95,14 +95,7 @@ POname(clEnqueueCopyBufferRect)(cl_command_queue command_queue,
 
   }
 
-  device_id = command_queue->device;
-
-  for (i = 0; i < command_queue->context->num_devices; ++i)
-    {
-      if (command_queue->context->devices[i] == device_id)
-        break;
-    }
-  assert(i < command_queue->context->num_devices);
+  POCL_CHECK_DEV_IN_CMDQ
 
   /* execute directly */
   /* TODO: enqueue the read_rect if this is a non-blocking read (see
@@ -126,9 +119,9 @@ POname(clEnqueueCopyBufferRect)(cl_command_queue command_queue,
 
   /* TODO: offset computation doesn't work in case the ptr is not 
      a direct pointer */
-  device_id->ops->copy_rect(device_id->data,
-                       src_buffer->device_ptrs[device_id->dev_id].mem_ptr, 
-                       dst_buffer->device_ptrs[device_id->dev_id].mem_ptr,
+  device->ops->copy_rect(device->data,
+                       src_buffer->device_ptrs[device->dev_id].mem_ptr,
+                       dst_buffer->device_ptrs[device->dev_id].mem_ptr,
                        src_origin, dst_origin, region,
                        src_row_pitch, src_slice_pitch,
                        dst_row_pitch, dst_slice_pitch);

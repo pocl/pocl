@@ -155,8 +155,7 @@ ERROR_CLEAN_MEM_AND_DEVICE:
   for (j = 0; j < i; ++j)
     {
       device = context->devices[j];
-      device->ops->free(device->data, flags, 
-                        mem->device_ptrs[device->dev_id].mem_ptr);
+      device->ops->free(device, mem);
     }
 ERROR:
   POCL_MEM_FREE(mem);

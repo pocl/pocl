@@ -5,9 +5,9 @@
 /* The normal alignment of `float16', in bytes. */
 #define ALIGNOF_FLOAT16 @ALIGNOF_FLOAT16@
 
-#cmakedefine BUILD_SPU
-
 #cmakedefine BUILD_HSA
+
+#define POCL_BUILT_WITH_CMAKE
 
 #define BUILDDIR "@BUILDDIR@"
 
@@ -20,6 +20,8 @@
 
 /* clang++ executable */
 #define CLANGXX "@CLANGXX@"
+
+#define HSAIL_ASM "@HSAIL_ASM@"
 
 /* clang++ compiler flags */
 /* TODO in sources */
@@ -73,18 +75,6 @@
 #define LLC "@LLC@"
 
 
-/* "Using LLVM 3.2" */
-#cmakedefine LLVM_3_2
-
-/* "Using LLVM 3.3" */
-#cmakedefine LLVM_3_3
-
-/* "Using LLVM 3.4" */
-#cmakedefine LLVM_3_4
-
-/* "Using LLVM 3.5" */
-#cmakedefine LLVM_3_5
-
 /* "Using LLVM 3.6" */
 #cmakedefine LLVM_3_6
 
@@ -106,8 +96,6 @@
 
 
 #define POCL_BUILD_KERNEL_CACHE @POCL_BUILD_KERNEL_CACHE@
-
-#define POCL_BUILD_TIMESTAMP "@POCL_BUILD_TIMESTAMP@"
 
 #define POCL_DEVICE_ADDRESS_BITS @POCL_DEVICE_ADDRESS_BITS@
 

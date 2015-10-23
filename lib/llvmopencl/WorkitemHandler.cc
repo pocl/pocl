@@ -117,8 +117,14 @@ WorkitemHandler::Initialize(Kernel *K) {
     }
   }
 
-  assert (LocalSizeX == WGLocalSizeX && LocalSizeY == WGLocalSizeY && 
-          LocalSizeZ == WGLocalSizeZ);
+  // This funny looking check is to silence a compiler warning that we 
+  // do not ignore the LocalSize* variables. Even in a NDEBUG build.
+  // TODO: how to handle the case in a NDEBUG build when they don't match?
+  if( !(LocalSizeX == WGLocalSizeX && LocalSizeY == WGLocalSizeY && 
+          LocalSizeZ == WGLocalSizeZ) ){
+     assert(false && "Local sizes don't match");
+     return;
+  }
 
   llvm::Type *localIdType; 
   size_t_width = 0;

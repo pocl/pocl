@@ -22,7 +22,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-DIST_SUBDIRS = kernel regression runtime workgroup tce cell
+DIST_SUBDIRS = kernel regression runtime workgroup tce
 SUBDIRS = kernel regression runtime workgroup
 if TCE_AVAILABLE
 SUBDIRS += tce
@@ -52,7 +52,8 @@ EXTRA_DIST = testsuite.at testsuite-samples.at testsuite-viennacl.at testsuite-r
 	testsuite-rodinia.at testsuite-tce.at testsuite-runtime.at \
 	testsuite-workgroup.at testsuite-parboil.at testsuite-amd.at \
 	testsuite-vexcl.at testsuite-piglit.at testsuite-halide.at testsuite-cloverleaf.at \
-	$(srcdir)/package.m4 $(TESTSUITE) atlocal.in testsuite-amdsdk2_9.at testsuite-opencv.at
+	$(srcdir)/package.m4 $(TESTSUITE) atlocal.in testsuite-amdsdk2_9.at testsuite-opencv.at \
+        example_expout.txt test_printf_expout.txt scalarwave_expout.txt CMakeLists.txt
 
 DISTCLEANFILES = atconfig
 

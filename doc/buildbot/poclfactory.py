@@ -31,7 +31,10 @@ def createPoclFactory(	environ={},
 			tcedir='',
 			f=None,
 			cmake=False,
-			cache_dir=None
+			cmake_opts=[],
+			cache_dir=None,
+                        cache_timeout=5,
+			make='make'
 			):
 	"""
 	Create a buildbot factory object that builds pocl.
@@ -50,7 +53,10 @@ def createPoclFactory(	environ={},
 				NOTE: currently only a placeholder - not tested on the public buildbot
 	config_opts	String: extra options to pass to ./configure
 	cmake		Bool:	use CMake instead of autotools to build pocl
+	cmake_opts      List:   extra options to pass to cmake
 	cache_dir	String: Set the pocl kernel cache to this dir. If not set, the kcache is disabled.
+        cache_timeout   integer: the maximum time any one test can take, when run from kcache.
+	make            String: The make command to use.
 	"""
 
 	myenviron = environ.copy()
@@ -69,10 +75,10 @@ def createPoclFactory(	environ={},
 		myenviron['LD_LIBRARY_PATH'] = tcedir+"/lib/:"+myenviron['LD_LIBRARY_PATH']
 
 	if cache_dir:
-		myenviron['POCL_BUILD_KERNEL_CACHE']='1'
+		myenviron['POCL_KERNEL_CACHE']='1'
 		myenviron['POCL_CACHE_DIR']=cache_dir
 	else:
-		myenviron['POCL_BUILD_KERNEL_CACHE']='0'
+		myenviron['POCL_KERNEL_CACHE']='0'
 
 	if cmake:
 		logfile="Testing/Temporary/LastTest.log"
@@ -102,6 +108,14 @@ def createPoclFactory(	environ={},
 				name='clean kcache',
 				description='cleaning kcache',
 				descriptionDone='cleaned kcache'
+			))
+		f.addStep(
+			ShellCommand(
+				command=['mkdir', cache_dir],
+				haltOnFailure=True,
+				name='create kcache dir',
+				description='making kcache dir',
+				descriptionDone='made kcache dir'
 			))
 
 	if not cmake:
@@ -137,7 +151,7 @@ def createPoclFactory(	environ={},
 	if cmake:
 		f.addStep(
 			ShellCommand(
-				command=["cmake", "."],
+				command=["cmake", "."] + cmake_opts,
 				env=myenviron,
 				haltOnFailure=True,
 				name="CMake",
@@ -149,8 +163,6 @@ def createPoclFactory(	environ={},
 			configOpts = configOpts + ['--enable-pedantic']
 		if buildICD==False:
 			configOpts = configOpts + ['--disable-icd']
-		if cache_dir=None:
-			configOpts = configOpts + ['--disable-kernel-cache']
 
 		f.addStep(ShellCommand(
 				command=["./configure"] + configOpts,
@@ -160,10 +172,14 @@ def createPoclFactory(	environ={},
 				description="configureing",
 				descriptionDone="configure"))
 	
-	f.addStep(Compile(env=myenviron ))
+	f.addStep(
+		ShellCommand(
+			command=[make, 'all'],
+			haltOnFailure=True,
+			env=myenviron ))
 
 	if tests_dir!=None and not cmake:
-		f.addStep(ShellCommand(command=["make", "prepare-examples"],
+		f.addStep(ShellCommand(command=[make, "prepare-examples"],
 				haltOnFailure=True,
 				name="prepare examples",
 				env=myenviron,
@@ -181,7 +197,7 @@ def createPoclFactory(	environ={},
 				logfiles={"test.log": logfile},
 				timeout=60*60))
 	else:
-		f.addStep(ShellCommand(command=["make", "check"],
+		f.addStep(ShellCommand(command=[make, "check"],
 				haltOnFailure=True,
 				name="checks",
 				env=myenviron,
@@ -192,14 +208,14 @@ def createPoclFactory(	environ={},
 				timeout=60*60))
 		#run the test once more, now from the kernel cache dir, if used
 		if cache_dir:
-			f.addStep(ShellCommand(command=["make", "check"],
+			f.addStep(ShellCommand(command=[make, "check"],
 				haltOnFailure=True,
 				name="kcache checks",
 				env=myenviron,
 				description="testing kcache",
 				descriptionDone="tested kcache",
 				logfiles={"test.log": logfile},
-				timeout=5))
+				timeout=cache_timeout))
 	return f
 
 #######

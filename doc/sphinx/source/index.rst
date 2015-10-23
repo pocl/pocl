@@ -12,11 +12,14 @@ Contents:
    :maxdepth: 2
 
    using
+   env_variables
    faq
+   env_variables
    development
    releasing
    design
    features
+   hsa
 
 Back to `pocl home page <http://pocl.sourceforge.net>`_.
 

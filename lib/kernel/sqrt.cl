@@ -150,4 +150,3 @@ double16 _CL_OVERLOADABLE sqrt(double16 a)
 #endif
 
 DEFINE_EXPR_F_F(half_sqrt, sqrt(a))
-DEFINE_EXPR_F_F(native_sqrt, sqrt(a))

@@ -65,7 +65,6 @@ extern "C" {
     #ifdef HAVE_CLOCK_GETTIME
         #define POCL_DEBUG_HEADER pocl_debug_print_header(__func__, __LINE__);
         extern void pocl_debug_print_header(const char * func, unsigned line);
-        extern void pocl_debug_init_time();
     #else
         #define POCL_DEBUG_HEADER                                           \
             fprintf(stderr, "** POCL ** : in function %s"                   \
@@ -76,11 +75,18 @@ extern "C" {
         do {                                                                \
             if (pocl_debug_messages) {                                      \
                 POCL_DEBUG_HEADER                                           \
-                fprintf(stderr, TYPE  ERRCODE " " );                        \
+                fprintf(stderr, TYPE  ERRCODE " ");                         \
                 fprintf(stderr, __VA_ARGS__);                               \
             }                                                               \
         } while (0)
 
+    #define POCL_MSG_PRINT2(func, line, ...)                                \
+        do {                                                                \
+            if (pocl_debug_messages) {                                      \
+                pocl_debug_print_header(func, line);                        \
+                fprintf(stderr, __VA_ARGS__);                               \
+            }                                                               \
+        } while (0)
 
     #define POCL_MSG_WARN(...)    POCL_MSG_PRINT(" *** WARNING *** ", "", __VA_ARGS__)
     #define POCL_MSG_ERR(...)     POCL_MSG_PRINT(" *** ERROR *** ", "", __VA_ARGS__)
@@ -91,6 +97,7 @@ extern "C" {
     #define POCL_MSG_WARN(...)
     #define POCL_MSG_ERR(...)
     #define POCL_MSG_PRINT(...)
+    #define POCL_MSG_PRINT2(...)
     #define POCL_MSG_PRINT_INFO(...)
 
 #endif

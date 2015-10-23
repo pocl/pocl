@@ -31,12 +31,12 @@ SUBDIRS = @OCL_TARGETS@
 EXTRA_DIST = $(srcdir)/*.c $(srcdir)/*.cl $(srcdir)/*.h $(srcdir)/*.ll			\
 	$(srcdir)/vecmathlib/LICENCE			\
 	$(srcdir)/vecmathlib/README			\
-	$(srcdir)/vecmathlib/*.h				\
+	$(srcdir)/vecmathlib/*.h			\
+	$(srcdir)/vecmathlib/vecmathlib.rst		\
 	$(srcdir)/vecmathlib-pocl/*.cc			\
 	$(srcdir)/vecmathlib-pocl/*.cl			\
 	$(srcdir)/vecmathlib-pocl/*.h			\
-	$(srcdir)/vecmathlib-pocl/*.py  \
-	$(srcdir)/cellspu/* \
+	$(srcdir)/vecmathlib-pocl/*.py			\
 	$(srcdir)/tce/* \
 	CMakeLists.txt
 
@@ -44,6 +44,6 @@ EXTRA_DIST = $(srcdir)/*.c $(srcdir)/*.cl $(srcdir)/*.h $(srcdir)/*.ll			\
 # Distclean the dirs regardless if the target was enabled or not
 # to cleanup the Makefiles.
 distclean-local:
-	for dir in host tce cellspu; do \
+	for dir in amdgcn host hsail tce; do \
 		make -C $$dir distclean;\
 	done;

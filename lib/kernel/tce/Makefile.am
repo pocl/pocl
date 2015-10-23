@@ -36,11 +36,8 @@ include ../sources.mk
 # fails in TCE code gen:
 # SplitVectorResult #0: 0x24c5ae0: v8i16,ch = vaarg 0x20628e8, 0x2423ed0, 0x24c59e0, 0x24c4fe0 [ORD=223] [ID=0]
 # LLVM ERROR: Do not know how to split the result of this operator!
-
-if NEW_PRINTF_WORKS
 LKERNEL_SRCS_EXCLUDE = printf.c 
 LKERNEL_SRCS_EXTRA = printf_constant.c
-endif
 
 EXTRA_DIST = CMakeLists.txt
 

@@ -129,13 +129,25 @@ LKERNEL_SRCS_DEFAULT =				\
 	mul_hi.cl				\
 	nan.cl					\
 	native_cos.cl				\
+	native_exp.cl				\
+	native_exp10.cl				\
+	native_exp2.cl				\
+	native_log.cl				\
+	native_log10.cl				\
 	native_log2.cl				\
+	native_powr.cl				\
+	native_recip.cl				\
+	native_rsqrt.cl				\
+	native_sin.cl				\
+	native_sqrt.cl				\
+	native_tan.cl				\
 	nextafter.cl				\
 	normalize.cl				\
 	popcount.cl				\
 	pow.cl					\
 	pown.cl					\
 	powr.cl					\
+	printf.c                                \
 	radians.cl				\
 	read_image.cl				\
 	recip.cl				\
@@ -170,9 +182,5 @@ LKERNEL_SRCS_DEFAULT =				\
 	vstore_half.cl				\
 	wait_group_events.cl			\
 	write_image.cl
-
-if NEW_PRINTF_WORKS
-LKERNEL_SRCS_DEFAULT += printf.c
-endif
 
 # vim: set noexpandtab ts=8:

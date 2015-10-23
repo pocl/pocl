@@ -309,15 +309,6 @@ void pocl_command_enqueue (cl_command_queue command_queue,
 
 
 
-size_t pocl_file_size(FILE* file) {
-    size_t size;
-    fseek(file, 0, SEEK_END);
-    size = (size_t)ftell(file);
-    fseek(file, 0, SEEK_SET);
-    return size;
-}
-
-
 int pocl_buffer_boundcheck(cl_mem buffer, size_t offset, size_t size) {
   POCL_RETURN_ERROR_ON((offset > buffer->size), CL_INVALID_VALUE,
             "offset(%zu) > buffer->size(%zu)", offset, buffer->size)
@@ -523,4 +514,40 @@ check_copy_overlap(const size_t src_offset[3],
   }
 
   return overlap;
+}
+
+
+/* Make a list of unique devices. If any device is a subdevice,
+ * replace with parent, then remove duplicate parents. */
+cl_device_id * pocl_unique_device_list(const cl_device_id * in, cl_uint num, cl_uint *real)
+{
+  cl_uint real_num = num;
+  cl_device_id * out = calloc(num, sizeof(cl_device_id));
+  if (!out)
+    return NULL;
+
+  unsigned i;
+  for (i=0; i < num; ++i)
+    out[i] = (in[i] ? POCL_REAL_DEV(in[i]) : NULL);
+
+  i=1;
+  unsigned device_i=0;
+  while (i < real_num)
+    {
+      device_i=0;
+      while (device_i < i)
+        {
+          if (out[device_i] == out[i])
+            {
+              out[device_i] = out[--real_num];
+              out[real_num] = NULL;
+            }
+          else
+            device_i++;
+        }
+      i++;
+    }
+
+  *real = real_num;
+  return out;
 }

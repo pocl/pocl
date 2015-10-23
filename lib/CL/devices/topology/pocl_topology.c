@@ -1,6 +1,6 @@
 /* pocl_topology.c - retrieving the topology of OpenCL devices
 
-   Copyright (c) 2012 Cyril Roelandt and Pekka Jääskeläinen
+   Copyright (c) 2012,2015 Cyril Roelandt and Pekka Jääskeläinen
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -23,6 +23,7 @@
 
 #include <pocl_cl.h>
 #include <hwloc.h>
+#include <stdlib.h>
 
 #include "pocl_topology.h"
 
@@ -31,19 +32,30 @@ pocl_topology_detect_device_info(cl_device_id device)
 {
   hwloc_topology_t pocl_topology;
 
+  /*
+   * hwloc's OpenCL backend causes problems at the initialization stage
+   * because it reloads libpocl.so via the ICD loader.
+   *
+   * See: https://github.com/pocl/pocl/issues/261
+   *
+   * The only trick to stop hwloc from initializing the OpenCL plugin
+   * I could find is to point the plugin search path to a place where there
+   * are no plugins to be found.
+   */
+  setenv ("HWLOC_PLUGINS_PATH", "/dev/null", 1);
+
   int ret = hwloc_topology_init(&pocl_topology);
   if (ret == -1)
     POCL_ABORT("Cannot initialize the topology.\n");
 
-  /* we also want to get the IO bridge, to extract the device vendor id,
-   * if possible
-   */
   hwloc_topology_set_flags(pocl_topology, HWLOC_TOPOLOGY_FLAG_WHOLE_IO);
+
   ret = hwloc_topology_load(pocl_topology);
   if (ret == -1)
     POCL_ABORT("Cannot load the topology.\n");
 
-  device->global_mem_size = hwloc_get_root_obj(pocl_topology)->memory.total_memory;
+  device->global_mem_size =
+      hwloc_get_root_obj(pocl_topology)->memory.total_memory;
 
   // Try to get the number of CPU cores from topology
   int depth = hwloc_get_type_depth(pocl_topology, HWLOC_OBJ_PU);

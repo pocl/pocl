@@ -299,8 +299,6 @@ AT_CHECK_UNQUOTED([make test_TemplateC -sC $abs_top_builddir/examples/AMD | grep
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([transferoverlap])
-# Expected Error: Device does not support cl_khr_local_int32_base_atomics extension!
-AT_XFAIL_IF(true)
 AT_CHECK_UNQUOTED([make test_TransferOverlap -sC $abs_top_builddir/examples/AMD | grep "Passed"], 0, 
 [Passed!
 ])

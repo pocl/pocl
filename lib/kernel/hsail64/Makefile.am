@@ -23,7 +23,7 @@
 KERNEL_TARGET = hsail64
 
 # Use TARGET flags:
-CLANG_FLAGS = @TARGET_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -target ${KERNEL_TARGET}
+CLANG_FLAGS = @TARGET_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -D_CL_DISABLE_HALF -target ${KERNEL_TARGET} -I${abs_top_srcdir}/lib/kernel/hsail64
 LLC_FLAGS   = @TARGET_LLC_FLAGS@
 LD_FLAGS    = @TARGET_LD_FLAGS@
 
@@ -32,6 +32,6 @@ include ../sources.mk
 
 # TODO: a global memory ring buffer stdout based printf
 LKERNEL_SRCS_EXCLUDE = printf.c barrier.ll
-LKERNEL_SRCS_EXTRA = barrier.c
+LKERNEL_SRCS_EXTRA = barrier.c sqrt_default.ll
 
-EXTRA_DIST = CMakeLists.txt
+EXTRA_DIST = CMakeLists.txt $(srcdir)/*.c $(srcdir)/*.cl $(srcdir)/*.h $(srcdir)/*.ll frexp.inc
