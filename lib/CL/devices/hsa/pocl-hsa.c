@@ -503,7 +503,7 @@ pocl_hsa_malloc (pocl_hsa_device_data_t* d, cl_mem_flags flags, size_t size, voi
 }
 
 void
-pocl_hsa_free (cl_device_id device, cl_mem mem_obj)
+pocl_hsa_free (cl_device_id device, cl_mem memobj)
 {
   cl_mem_flags flags = memobj->flags;
 
