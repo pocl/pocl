@@ -19,4 +19,4 @@
 #include "mathfuncs_sinh.h"
 #include "mathfuncs_sqrt.h"
 
-#endif  // #ifndef MATHFUNCS_H
+#endif // #ifndef MATHFUNCS_H
