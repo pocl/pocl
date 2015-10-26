@@ -17,6 +17,11 @@ the version control system:</p>
 
 <ul>
 
+<li><b>Version 0.12:</b> Supports LLVM 3.7.
+            <a href="/downloads/pocl-0.12.tar.gz">pocl-0.12.tar.gz (1.7M)</a>,
+            <a href="/downloads/CHANGES">change log</a>,
+            <a href="pocl-0.12.html">release notes</a></li>
+
 <li><b>Version 0.11:</b> Supports LLVM 3.6.
             <a href="/downloads/pocl-0.11.tar.gz">pocl-0.11.tar.gz (1.5M)</a>, 
             <a href="/downloads/CHANGES">change log</a>,

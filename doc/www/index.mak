@@ -49,7 +49,7 @@ uncertainties (was: Portable OpenCL). It's still pronounced "pogle"! :)</p>
 
 <p>The source package, the change log, and the release annoucement are <a href="/downloads">here</a>.</p> 
 
-<h1>Current status (updated: 2013-11-10)</h1>
+<h1>Current status</h1>
 
 <p>A lot of OpenCL programs, projects and test suites work out of the box, but there are still
 unimplemented OpenCL APIs. These will be added gradually as needed by new tested applications.</p>
@@ -75,6 +75,7 @@ unimplemented OpenCL APIs. These will be added gradually as needed by new tested
   <li>X86_64/Linux (host&amp;device)</li>
   <li>MIPS32/Linux (host&amp;device)</li>
   <li>ARM v7/Linux (host&amp;device)</li>
+  <li>AMD HSA APUs/Linux (host&amp;device)</li>
   <li>Multiple VLIW-style TTA processors designed using <a href="http://tce.cs.tut.fi">TCE</a> in heterogeneous host-device setups.</li>
 </ul>
   
