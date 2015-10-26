@@ -18,6 +18,9 @@ in parallel programming on heterogeneous platforms.</p>
 
 <h1>News</h1>
 
+<h2>2015-10-26: <a href="pocl-0.12.html">Portable Computing Language
+(pocl) v0.12 released</a></h2>
+
 <h2>2015-03-12: <a href="pocl-0.11.html">Portable Computing Language
 (pocl) v0.11 released</a></h2>
 
@@ -46,7 +49,7 @@ uncertainties (was: Portable OpenCL). It's still pronounced "pogle"! :)</p>
 
 <p>The source package, the change log, and the release annoucement are <a href="/downloads">here</a>.</p> 
 
-<h1>Current status (updated: 2013-11-10)</h1>
+<h1>Current status</h1>
 
 <p>A lot of OpenCL programs, projects and test suites work out of the box, but there are still
 unimplemented OpenCL APIs. These will be added gradually as needed by new tested applications.</p>
@@ -60,7 +63,7 @@ unimplemented OpenCL APIs. These will be added gradually as needed by new tested
   <li><a href="http://lava.cs.virginia.edu/Rodinia/download_links.htm">Rodinia</a> 2.0.1</li>
   <li><a href="http://impact.crhc.illinois.edu/parboil.aspx">Parboil</a> Benchmarks (most of them)</a>
   <li><a href="https://code.google.com/p/opencl-book-samples/">OpenCL Programming Guide</a> book samples (most of them)</a>
-  <li><a href="http://developer.amd.com/tools/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/">AMD APP SDK v2.8</a> 
+  <li><a href="http://developer.amd.com/tools/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/">AMD APP SDK v2.9</a>
   OpenCL samples (most of them)</a>
   <li><a href="http://www.luxrender.net/wiki/LuxMark">Luxmark v2.0</a>
   <li><a href="http://piglit.freedesktop.org/">piglit (97%+ of the tests pass)</a>
@@ -70,18 +73,20 @@ unimplemented OpenCL APIs. These will be added gradually as needed by new tested
 
 <ul>
   <li>X86_64/Linux (host&amp;device)</li>
-  <li>PowerPC64/Linux (host&amp;device)</li>
-  <li>PowerPC32/Linux (host&amp;device)</li>
+  <li>MIPS32/Linux (host&amp;device)</li>
   <li>ARM v7/Linux (host&amp;device)</li>
+  <li>AMD HSA APUs/Linux (host&amp;device)</li>
   <li>Multiple VLIW-style TTA processors designed using <a href="http://tce.cs.tut.fi">TCE</a> in heterogeneous host-device setups.</li>
 </ul>
   
-<h1>Feature highlights (updated: 2013-11-10)</h1>
+<h1>Feature highlights</h1>
 <ul>
   <li>portable kernel compiler with horizontal autovectorization of work-groups (experimental)</li>
   <li>efficient math built-in libraries</li>
   <li>core APIs implemented in C for improved portability to bare bone machines</li>
   <li>ICD support</li>
+  <li>HSA device support (experimental)</li>
+  <li>experimental Android support</li>
 </ul>
 
 <br />
