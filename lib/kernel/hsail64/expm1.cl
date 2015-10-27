@@ -21,6 +21,30 @@
    THE SOFTWARE.
 */
 
-#include "../templates.h"
+#include "hsail_templates.h"
 
-DEFINE_EXPR_V_V(expm1, (exp(a) - (vtype)1.0))
+// public domain code from http://www.johndcook.com/blog/cpp_expm1/
+
+float _cl_builtin_expm1f(float x)
+{
+  if (fabs(x) < 1e-4f)
+    {
+      float xx = x*x;
+      return fma(0.5f, xx, x);
+    }
+  else
+    return exp(x) - 1.0f;
+}
+
+double _cl_builtin_expm1(double x)
+{
+  if (fabs(x) < 1e-10)  // TODO find the proper value to compare against
+    {
+      double xx = x*x;
+      return fma(0.5, xx, x);
+    }
+  else
+    return exp(x) - 1.0;
+}
+
+IMPLEMENT_EXPR_ALL(expm1, V_V, _cl_builtin_expm1f(a), _cl_builtin_expm1(a))

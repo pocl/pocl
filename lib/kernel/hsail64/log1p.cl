@@ -21,6 +21,37 @@
    THE SOFTWARE.
 */
 
-#include "../templates.h"
+#include "hsail_templates.h"
 
-DEFINE_EXPR_V_V(log1p, (log((vtype)(1.0) + a)))
+// DEFINE_EXPR_V_V(log1p, (log((vtype)(1.0) + a)))
+
+// public domain from http://www.johndcook.com/blog/cpp_log_one_plus_x/
+
+float _cl_builtin_log1pf(float x) {
+  if (x < -1.0f)
+    return NAN;
+
+  if (fabs(x) > 1e-4f)  // TODO find the proper value here
+    return log(1.0f + x);
+  else
+    {
+      float xx = x*x;
+      return fma(-0.5f, xx, x);
+    }
+}
+
+double _cl_builtin_log1p(double x) {
+  if (x < -1.0)
+    return NAN;
+
+  if (fabs(x) > 1e-8) // TODO find the proper value here
+    return log(1.0 + x);
+  else
+    {
+      double xx = x*x;
+      return fma(-0.5, xx, x);
+    }
+}
+
+
+IMPLEMENT_EXPR_ALL(log1p, V_V, _cl_builtin_log1pf(a), _cl_builtin_log1p(a))
