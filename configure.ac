@@ -1270,6 +1270,16 @@ AC_COMPILE_IFELSE(
 enable_hsa="no"
 ])
 
+AC_MSG_CHECKING([for AMD-specific HSA runtime headers])
+AC_COMPILE_IFELSE(
+  [AC_LANG_PROGRAM(
+    [[ #include <hsa_ext_amd.h> ]]
+  )],
+[AC_MSG_RESULT(yes)
+AC_DEFINE([HAVE_HSA_EXT_AMD_H], [], [Have AMD-specific HSA headers])
+],
+[AC_MSG_RESULT(no)])
+
 CPPFLAGS=$tempCPPFLAGS
 
 AC_ARG_VAR([HSAILASM], [Path to HSAILasm executable])

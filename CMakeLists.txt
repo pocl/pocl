@@ -697,6 +697,8 @@ if(ENABLE_HSA)
   # this is for config.h
   # TODO unify with autotools
   set(BUILD_HSA 1)
+
+  find_path(HAVE_HSA_EXT_AMD_H "hsa_ext_amd.h" HINTS "${HSA_INCLUDEDIR}" ENV PATH)
 endif()
 
 ##########################################################

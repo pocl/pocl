@@ -51,8 +51,13 @@
 
 #include "hsa.h"
 #include "hsa_ext_finalize.h"
-#include "hsa_ext_amd.h"
 #include "hsa_ext_image.h"
+
+#include "config.h"
+
+#ifdef HAVE_HSA_EXT_AMD_H
+#include "hsa_ext_amd.h"
+#endif
 
 #include "pocl-hsa.h"
 #include "common.h"
@@ -249,10 +254,7 @@ supported_hsa_devices[MAX_HSA_AGENTS] =
         .has_64bit_long = 1,
         .vendor_id = 0x1002,
         .global_mem_cache_type = CL_READ_WRITE_CACHE,
-	.global_mem_cacheline_size = 64,
-	.max_compute_units = 8,
-	.max_clock_frequency = 720,
-	.max_constant_buffer_size = 65536,
+        .max_constant_buffer_size = 65536,
     .local_mem_type = CL_LOCAL,
     .endian_little = CL_TRUE,
     .extensions = "cl_khr_fp64 cl_khr_byte_addressable_store"
@@ -299,9 +301,6 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
           COPY_ATTR (has_64bit_long);
           COPY_ATTR (vendor_id);
           COPY_ATTR (global_mem_cache_type);
-          COPY_ATTR (global_mem_cacheline_size);
-          COPY_ATTR (max_compute_units);
-          COPY_ATTR (max_clock_frequency);
           COPY_ATTR (max_constant_buffer_size);
           COPY_ATTR (local_mem_type);
           COPY_ATTR (endian_little);
@@ -367,6 +366,24 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
   dev->max_work_item_sizes[0] = wg_sizes[0];
   dev->max_work_item_sizes[1] = wg_sizes[1];
   dev->max_work_item_sizes[2] = wg_sizes[2];
+
+#ifdef HAVE_HSA_EXT_AMD_H
+  uint32_t temp;
+  HSA_CHECK(hsa_agent_get_info(agent, HSA_AMD_AGENT_INFO_CACHELINE_SIZE, &temp));
+  dev->global_mem_cacheline_size = temp;
+
+  HSA_CHECK(hsa_agent_get_info(agent, HSA_AMD_AGENT_INFO_COMPUTE_UNIT_COUNT, &temp));
+  dev->max_compute_units = temp;
+
+  HSA_CHECK(hsa_agent_get_info(agent, HSA_AMD_AGENT_INFO_MAX_CLOCK_FREQUENCY, &temp));
+  dev->max_clock_frequency = temp;
+#else
+#warning "Could not use AMD headers to find out CU/frequency of your device. Using some default values which are probably wrong..."
+  dev->global_mem_cacheline_size = 64;
+  dev->max_compute_units = 4;
+  dev->max_clock_frequency = 700;
+#endif
+
 
   HSA_CHECK(hsa_agent_get_info
     (agent, HSA_AGENT_INFO_WORKGROUP_MAX_SIZE, &dev->max_work_group_size));
