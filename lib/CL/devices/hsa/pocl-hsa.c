@@ -795,10 +795,10 @@ pocl_hsa_run(void *dptr, _cl_command_node* cmd)
   } hsa_header_union_t;
 
   hsa_header_union_t h;
+  h.a.header = (uint16_t)HSA_FENCE_SCOPE_SYSTEM << HSA_PACKET_HEADER_ACQUIRE_FENCE_SCOPE;
+  h.a.header |= (uint16_t)HSA_FENCE_SCOPE_SYSTEM << HSA_PACKET_HEADER_RELEASE_FENCE_SCOPE;
+  h.a.header |= (uint16_t)HSA_PACKET_TYPE_KERNEL_DISPATCH << HSA_PACKET_HEADER_TYPE;
   h.a.setup = (uint16_t)cmd->command.run.pc.work_dim << HSA_KERNEL_DISPATCH_PACKET_SETUP_DIMENSIONS;
-  h.a.header |= HSA_FENCE_SCOPE_SYSTEM << HSA_PACKET_HEADER_ACQUIRE_FENCE_SCOPE;
-  h.a.header |= HSA_FENCE_SCOPE_SYSTEM << HSA_PACKET_HEADER_RELEASE_FENCE_SCOPE;
-  h.a.header |= HSA_PACKET_TYPE_KERNEL_DISPATCH << HSA_PACKET_HEADER_TYPE;
   __atomic_store_n((uint32_t*)(&kernel_packet->header), h.header_setup, __ATOMIC_RELEASE);
 
    /*
