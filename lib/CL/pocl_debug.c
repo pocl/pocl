@@ -25,7 +25,36 @@ int pocl_debug_messages;
             t.tm_sec, tm_nanosec,  func, line);
     }
 
+    void pocl_debug_measure_start(void *start) {
+      if (!pocl_debug_messages)
+        return;
+      clock_gettime(CLOCK_MONOTONIC_RAW, ((struct timespec *)start));
+    }
+
+    void pocl_debug_measure_finish(void *start, void *finish,
+                                   const char* msg,
+                                   const char* func,
+                                   unsigned line) {
+      if (!pocl_debug_messages)
+        return;
+      clock_gettime(CLOCK_MONOTONIC_RAW, ((struct timespec *)finish));
+      long nsec =  ( ((struct timespec *)finish)->tv_nsec
+                     - ((struct timespec *)start)->tv_nsec);
+      long sec = 0;
+      if (nsec < 0)
+        {
+          sec--;
+          nsec += 1000000000;
+        }
+      sec += ( ((struct timespec *)finish)->tv_sec
+               - ((struct timespec *)start)->tv_sec);
+      POCL_MSG_PRINT2(func, line, "      >>>   %02li.%09li s     %s\n", sec, nsec, msg);
+    }
+
   #else
+
+/* Doesn't work, haven't been able to get it working.
+ * Needs someone with experience in Win programming. */
 
     #include <windows.h>
     #include <stdio.h>

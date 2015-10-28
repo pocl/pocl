@@ -65,10 +65,26 @@ extern "C" {
     #ifdef HAVE_CLOCK_GETTIME
         #define POCL_DEBUG_HEADER pocl_debug_print_header(__func__, __LINE__);
         extern void pocl_debug_print_header(const char * func, unsigned line);
+        extern void pocl_debug_measure_start(void* start);
+        extern void pocl_debug_measure_finish(void* start, void* finish,
+                                              const char* msg,
+                                              const char *func,
+                                              unsigned line);
+
+        #define POCL_MEASURE_START(SUFFIX) \
+          struct timespec pocl_time_start_ ## SUFFIX, pocl_time_finish_ ## SUFFIX; \
+          pocl_debug_measure_start(&pocl_time_start_ ## SUFFIX);
+
+        #define POCL_MEASURE_FINISH(SUFFIX) \
+          pocl_debug_measure_finish(&pocl_time_start_ ## SUFFIX, \
+                         &pocl_time_finish_ ## SUFFIX, #SUFFIX, \
+                         __func__, __LINE__);
     #else
         #define POCL_DEBUG_HEADER                                           \
             fprintf(stderr, "** POCL ** : in function %s"                   \
             " at line %u:\n", __func__, __LINE__);
+        #define POCL_MEASURE_START(SUFFIX)
+        #define POCL_MEASURE_FINISH(SUFFIX)
     #endif
 
     #define POCL_MSG_PRINT(TYPE, ERRCODE, ...)                              \
