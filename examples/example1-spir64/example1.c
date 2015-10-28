@@ -84,8 +84,11 @@ main (void)
       srcB[i].s[3] = (cl_float)i;
     }
 
-  ierr = exec_dot_product_kernel (source, source_size, N, srcA, srcB, dst);
-  if (ierr) printf ("ERROR\n");
+  if (exec_dot_product_kernel (source, source_size, N, srcA, srcB, dst))
+    {
+      printf ("Error running the tests\n");
+      return -1;
+    }
 
   for (i = 0; i < 4; ++i)
     {

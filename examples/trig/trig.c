@@ -80,7 +80,11 @@ main (void)
       }
     }
 
-  assert(exec_trig_kernel (source, N, srcA, dst) != -1);
+  if (exec_trig_kernel (source, N, srcA, dst) < 0)
+    {
+      printf("Failed to run the kernel.\n");
+      return -1;
+    }
 
   for (i = 0; i < N; ++i)
     {
