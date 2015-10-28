@@ -22,6 +22,27 @@
    THE SOFTWARE.
 */
 
-#include "../templates.h"
+#include "hsail_templates.h"
 
-DEFINE_EXPR_V_VV(hypot, sqrt(a*a + b*b))
+
+float _cl_builtin_hypotf(float x, float y)
+{
+    float a = fabs(x);
+    float b = fabs(y);
+    float n = fmin(a, b);
+    float m = fmax(a, b);
+    float d = n / m;
+    return m * sqrt(1.0f + d*d);
+}
+
+double _cl_builtin_hypot(double x, double y)
+{
+    double a = fabs(x);
+    double b = fabs(y);
+    double n = fmin(a, b);
+    double m = fmax(a, b);
+    double d = n / m;
+    return m * sqrt(1.0 + d*d);
+}
+
+IMPLEMENT_EXPR_ALL(hypot, V_VV, _cl_builtin_hypotf(a, b), _cl_builtin_hypot(a, b))
