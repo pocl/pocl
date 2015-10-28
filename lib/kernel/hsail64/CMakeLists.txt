@@ -46,7 +46,8 @@ foreach(FILE atomics.cl atomic_impl.ll barrier.c
         log.cl log2.cl log10.cl log1p.cl
         sin.cl tan.cl cos.cl sinh.cl tanh.cl cosh.cl
         asin.cl acos.cl atan.cl asinh.cl acosh.cl atanh.cl
-        ilogb.cl ldexp.cl fract.cl frexp.cl atan2.cl pow.cl)
+        ilogb.cl ldexp.cl fract.cl frexp.cl atan2.cl pow.cl
+        lgamma.cl tgamma.cl)
 
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
   list(APPEND KERNEL_SOURCES "hsail64/${FILE}")
