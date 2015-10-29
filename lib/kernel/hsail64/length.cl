@@ -1,7 +1,6 @@
-/* OpenCL built-in library: hypot()
+/* OpenCL built-in library: length()
 
-   Copyright (c) 2011 Erik Schnetter <eschnetter@perimeterinstitute.ca>
-                      Perimeter Institute for Theoretical Physics
+   Copyright (c) 2015 Michal Babej / Tampere University of Technology
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -22,31 +21,42 @@
    THE SOFTWARE.
 */
 
-#include "hsail_templates.h"
-
-
-float _cl_builtin_hypotf(float x, float y)
+float _CL_OVERLOADABLE length(float x)
 {
-    float a = fabs(x);
-    float b = fabs(y);
-    float n = fmin(a, b);
-    float m = fmax(a, b);
-    if (m == 0.0f)
-        return 0.0f;
-    float d = n / m;
-    return m * sqrt(fma(d, d, 1.0f));
+  return x;
 }
 
-double _cl_builtin_hypot(double x, double y)
+float _CL_OVERLOADABLE length(float2 v)
 {
-    double a = fabs(x);
-    double b = fabs(y);
-    double n = fmin(a, b);
-    double m = fmax(a, b);
-    if (m == 0.0)
-        return 0.0;
-    double d = n / m;
-    return m * sqrt(fma(d, d, 1.0));
+  return hypot(v.x, v.y);
 }
 
-IMPLEMENT_EXPR_ALL(hypot, V_VV, _cl_builtin_hypotf(a, b), _cl_builtin_hypot(a, b))
+float _CL_OVERLOADABLE length(float3 v)
+{
+  return hypot(hypot(v.x, v.y), v.z);
+}
+
+float _CL_OVERLOADABLE length(float4 v)
+{
+  return hypot(hypot(hypot(v.x, v.y), v.z), v.w);
+}
+
+double _CL_OVERLOADABLE length(double x)
+{
+  return x;
+}
+
+double _CL_OVERLOADABLE length(double2 v)
+{
+  return hypot(v.x, v.y);
+}
+
+double _CL_OVERLOADABLE length(double3 v)
+{
+  return hypot(hypot(v.x, v.y), v.z);
+}
+
+double _CL_OVERLOADABLE length(double4 v)
+{
+  return hypot(hypot(hypot(v.x, v.y), v.z), v.w);
+}
