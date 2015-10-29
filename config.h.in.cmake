@@ -49,7 +49,7 @@
 /* Defined if posix_memalign is available. */
 #cmakedefine HAVE_POSIX_MEMALIGN
 
-
+#cmakedefine HAVE_HSA_EXT_AMD_H
 
 
 #define HOST  "@HOST@"

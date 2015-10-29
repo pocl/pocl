@@ -1,3 +1,19 @@
+0.13 unreleased
+================
+
+Highlights
+-----------
+
+Bugfixes
+---------
+
+Other
+------
+- removed custom buffer alloc from pthread device
+- removed Cell support
+- removed support for older LLVM versions (before 3.6)
+
+
 0.12 October 2015
 ===============
 
