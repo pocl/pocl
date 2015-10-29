@@ -282,13 +282,13 @@ template <> struct intvec<fp16, 16> : floatprops<fp16> {
   intvec lsr(intvec n) const {
 #ifdef __AVX2__
     // TODO: Use permute instead of shift/mask?
-    __mm256i mlo = _mm256_set1_epi32(U(0x0000ffff));
-    __mm256i vlo = _mm256_and_si256(mlo, v);
-    __mm256i vhi = v;
-    __mm256i clo = _mm256_and_si256(mlo, n);
-    __mm256i chi = _mm256_and_si256(mlo, _mm256_srli_epi32(n, 16));
-    __mm256i rlo = _mm256_srlv_epi32(vlo, clo);
-    __mm256i rhi = _mm256_andnot_si256(mlo, _mm256_srlv_epi32(vhi, chi));
+    __m256i mlo = _mm256_set1_epi32(U(0x0000ffff));
+    __m256i vlo = _mm256_and_si256(mlo, v);
+    __m256i vhi = v;
+    __m256i clo = _mm256_and_si256(mlo, n);
+    __m256i chi = _mm256_and_si256(mlo, _mm256_srli_epi32(n, 16));
+    __m256i rlo = _mm256_srlv_epi32(vlo, clo);
+    __m256i rhi = _mm256_andnot_si256(mlo, _mm256_srlv_epi32(vhi, chi));
     return _mm256_or_si256(rhi, rlo);
 #else
     intvec r;
@@ -313,13 +313,13 @@ template <> struct intvec<fp16, 16> : floatprops<fp16> {
   intvec operator<<(intvec n) const {
 #ifdef __AVX2__
     // TODO: Use permute instead of shift/mask?
-    __mm256i mlo = _mm256_set1_epi32(U(0x0000ffff));
-    __mm256i vlo = v;
-    __mm256i vhi = _mm256_andnot_si256(mlo, v;
-    __mm256i clo = _mm256_and_si256(mlo, n);
-    __mm256i chi = _mm256_and_si256(mlo, _mm256_srli_epi32(n, 16));
-    __mm256i rlo = _mm256_and_si256(mlo, _mm256_sllv_epi32(vlo, clo));
-    __mm256i rhi = _mm256_sllv_epi32(vhi, chi);
+    __m256i mlo = _mm256_set1_epi32(U(0x0000ffff));
+    __m256i vlo = v;
+    __m256i vhi = _mm256_andnot_si256(mlo, v;
+    __m256i clo = _mm256_and_si256(mlo, n);
+    __m256i chi = _mm256_and_si256(mlo, _mm256_srli_epi32(n, 16));
+    __m256i rlo = _mm256_and_si256(mlo, _mm256_sllv_epi32(vlo, clo));
+    __m256i rhi = _mm256_sllv_epi32(vhi, chi);
     return _mm256_or_si256(rhi, rlo);
 #else
     intvec r;
