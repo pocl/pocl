@@ -315,7 +315,7 @@ template <> struct intvec<fp16, 16> : floatprops<fp16> {
     // TODO: Use permute instead of shift/mask?
     __m256i mlo = _mm256_set1_epi32(U(0x0000ffff));
     __m256i vlo = v;
-    __m256i vhi = _mm256_andnot_si256(mlo, v;
+    __m256i vhi = _mm256_andnot_si256(mlo, v);
     __m256i clo = _mm256_and_si256(mlo, n);
     __m256i chi = _mm256_and_si256(mlo, _mm256_srli_epi32(n, 16));
     __m256i rlo = _mm256_and_si256(mlo, _mm256_sllv_epi32(vlo, clo));
