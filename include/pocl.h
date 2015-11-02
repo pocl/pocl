@@ -199,7 +199,7 @@ typedef struct
 {
   void* svm_ptr;
   size_t size;
-  void* pattern;
+  const void* pattern;
   size_t pattern_size;
 } _cl_command_svm_fill;
 

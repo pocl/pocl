@@ -384,6 +384,16 @@ struct _cl_device_id {
   /* Convert automatic local variables to kernel arguments? */
   int autolocals_to_args;
 
+  /* OpenCL 2.0 properties */
+  cl_device_svm_capabilities svm_caps;
+  cl_uint max_events;
+  cl_uint max_queues;
+  cl_uint max_pipe_args;
+  cl_uint max_pipe_active_res;
+  cl_uint max_pipe_packet_size;
+  cl_uint dev_queue_pref_size;
+  cl_uint dev_queue_max_size;
+
   struct pocl_device_ops *ops; /* Device operations, shared amongst same devices */
 };
 
@@ -467,6 +477,9 @@ struct _cl_mem {
   cl_uint                 num_mip_levels;
   cl_uint                 num_samples;
   cl_mem                  buffer;
+  /* Pipe specific */
+  cl_uint packet_size;
+  cl_uint max_packets;
 };
 
 typedef uint8_t SHA1_digest_t[SHA1_DIGEST_SIZE * 2 + 1];

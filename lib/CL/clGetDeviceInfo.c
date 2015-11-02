@@ -255,6 +255,30 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_REFERENCE_COUNT:
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, 
                                             (cl_uint)device->pocl_refcount)
+
+
+
+
+  case CL_DEVICE_SVM_CAPABILITIES:
+    POCL_RETURN_GETINFO(cl_device_svm_capabilities, device->svm_caps);
+  case CL_DEVICE_MAX_ON_DEVICE_EVENTS:
+    POCL_RETURN_GETINFO(cl_uint, device->max_events);
+  case CL_DEVICE_MAX_ON_DEVICE_QUEUES:
+    POCL_RETURN_GETINFO(cl_uint, device->max_queues);
+  case CL_DEVICE_MAX_PIPE_ARGS:
+    POCL_RETURN_GETINFO(cl_uint, device->max_pipe_args);
+  case CL_DEVICE_PIPE_MAX_ACTIVE_RESERVATIONS:
+    POCL_RETURN_GETINFO(cl_uint, device->max_pipe_active_res);
+  case CL_DEVICE_PIPE_MAX_PACKET_SIZE:
+    POCL_RETURN_GETINFO(cl_uint, device->max_pipe_packet_size);
+  case CL_DEVICE_QUEUE_ON_DEVICE_PREFERRED_SIZE:
+    POCL_RETURN_GETINFO(cl_uint, device->dev_queue_pref_size);
+  case CL_DEVICE_QUEUE_ON_DEVICE_MAX_SIZE:
+    POCL_RETURN_GETINFO(cl_uint, device->dev_queue_max_size);
+  case CL_DEVICE_SPIR_VERSIONS:
+    POCL_RETURN_GETINFO_STR("1.2");
+
+
   }
   return CL_INVALID_VALUE;
 }
