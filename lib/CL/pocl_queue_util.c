@@ -31,6 +31,7 @@
 #include <string.h>
 #include "pocl_debug.h"
 #include "pocl_queue_util.h"
+#include "common.h"
 
 static pocl_lock_t queue_lock = POCL_LOCK_INITIALIZER;
 static size_t queue_size = 0;
@@ -46,6 +47,7 @@ void pocl_finish_all_queues()
     if (queue_list[i])
       POname(clFinish)(queue_list[i]);
   }
+  pocl_print_system_memory_stats();
 }
 
 void pocl_init_queue_list()
