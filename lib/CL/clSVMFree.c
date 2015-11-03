@@ -22,7 +22,7 @@
 */
 
 #include "pocl_cl.h"
-#include "pocl_debug.h"
+#include "devices.h"
 
 CL_API_ENTRY void CL_API_CALL
 POname(clSVMFree)(cl_context context,
@@ -32,11 +32,34 @@ POname(clSVMFree)(cl_context context,
   POCL_MSG_PRINT_INFO("This pocl was not built with HSA\n");
   return;
 #else
-  //context is not a valid context.
+
   POCL_RETURN_ERROR_COND((context == NULL), NULL);
 
   if (svm_pointer == NULL)
     return;
+
+  /* Find a suitable device (with SVM support) */
+  cl_device_id host = NULL, svmdev = NULL, allocdev = NULL;
+  for (unsigned i=0; i < context->num_devices; i++)
+    {
+      if (context->devices[i]->is_svm)
+        svmdev = context->devices[i];
+      if (!context->devices[i]->is_svm && !host)
+        host = context->devices[i];
+    }
+
+  allocdev = svmdev ? svmdev : host;
+  assert(allocdev);
+
+  cl_mem mem = alloca(sizeof(struct _cl_mem));
+  mem->flags = CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE;
+  mem->mem_host_ptr = NULL;
+  pocl_mem_identifier device_ptrs[pocl_num_devices];
+  device_ptrs[allocdev->dev_id].mem_ptr = svm_pointer;
+  mem->device_ptrs = device_ptrs;
+
+  allocdev->ops->free(allocdev, mem);
+
 
 #endif
 }
