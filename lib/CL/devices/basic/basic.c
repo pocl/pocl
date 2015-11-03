@@ -208,6 +208,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->copy = pocl_basic_copy;
   ops->copy_rect = pocl_basic_copy_rect;
   ops->fill_rect = pocl_basic_fill_rect;
+  ops->memfill = pocl_basic_memfill;
   ops->map_mem = pocl_basic_map_mem;
   ops->compile_submitted_kernels = pocl_basic_compile_submitted_kernels;
   ops->run = pocl_basic_run;
@@ -734,6 +735,69 @@ pocl_basic_fill_rect (void *data,
         memcpy (adjusted_device_ptr + pixel_size * i 
                 + buffer_row_pitch * j 
                 + buffer_slice_pitch * k, fill_pixel, pixel_size);
+}
+
+void pocl_basic_memfill(void *ptr,
+                        size_t size,
+                        size_t offset,
+                        const void* pattern,
+                        size_t pattern_size)
+{
+  switch (pattern_size)
+    {
+    case 1:
+      {
+      uint8_t * p = (uint8_t*)ptr + offset;
+      for (size_t i = 0; i < size; i++)
+        p[i] = *(uint8_t*)pattern;
+      }
+    case 2:
+      {
+      uint16_t * p = (uint16_t*)ptr + offset;
+      for (size_t i = 0; i < size; i++)
+        p[i] = *(uint16_t*)pattern;
+      }
+    case 4:
+      {
+      uint32_t * p = (uint32_t*)ptr + offset;
+      for (size_t i = 0; i < size; i++)
+        p[i] = *(uint32_t*)pattern;
+      }
+    case 8:
+      {
+      uint64_t * p = (uint64_t*)ptr + offset;
+      for (size_t i = 0; i < size; i++)
+        p[i] = *(uint64_t*)pattern;
+      }
+    case 16:
+      {
+      uint64_t * p = (uint64_t*)ptr + offset;
+      for (size_t i = 0; i < size; i++)
+        for (unsigned j=0; j<2; j++)
+          p[i<<1 + j] = *((uint64_t*)pattern + j);
+      }
+    case 32:
+      {
+      uint64_t * p = (uint64_t*)ptr + offset;
+      for (size_t i = 0; i < size; i++)
+        for (unsigned j=0; j<4; j++)
+          p[i<<2 + j] = *((uint64_t*)pattern + j);
+      }
+    case 64:
+      {
+      uint64_t * p = (uint64_t*)ptr + offset;
+      for (size_t i = 0; i < size; i++)
+        for (unsigned j=0; j<8; j++)
+          p[i<<3 + j] = *((uint64_t*)pattern + j);
+      }
+    case 128:
+      {
+      uint64_t * p = (uint64_t*)ptr + offset;
+      for (size_t i = 0; i < size; i++)
+        for (unsigned j=0; j<16; j++)
+          p[i<<4 + j] = *((uint64_t*)pattern + j);
+      }
+    }
 }
 
 void *

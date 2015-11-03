@@ -257,6 +257,12 @@ void (*fill_rect) (void *data,
                    void *fill_pixel,
                    size_t pixel_size);
 
+void (*memfill) (void *ptr,
+                 size_t size,
+                 size_t offset,
+                 const void* pattern,
+                 size_t pattern_size);
+
   /* Maps 'size' bytes of device global memory at buf_ptr + offset to 
      host-accessible memory. This might or might not involve copying 
      the block from the device. */

@@ -257,6 +257,17 @@ static void exec_commands (_cl_command_node *node_list)
           POCL_MEM_FREE(node->command.fill_image.fill_pixel);
           POCL_UPDATE_EVENT_COMPLETE(event);
           break;
+        case CL_COMMAND_FILL_BUFFER:
+          POCL_UPDATE_EVENT_RUNNING(event);
+          node->device->ops->memfill
+            (node->command.memfill.ptr,
+             node->command.memfill.size,
+             node->command.memfill.offset,
+             node->command.memfill.pattern,
+             node->command.memfill.pattern_size);
+          POCL_MEM_FREE(node->command.memfill.pattern);
+          POCL_UPDATE_EVENT_COMPLETE(event);
+          break;
         case CL_COMMAND_MARKER:
           POCL_UPDATE_EVENT_RUNNING(event);
           POCL_UPDATE_EVENT_COMPLETE(event);
