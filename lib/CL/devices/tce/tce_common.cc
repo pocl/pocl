@@ -382,7 +382,7 @@ pocl_tce_malloc_local (void *device_data, size_t size)
 void
 pocl_tce_free (cl_device_id device, cl_mem mem_obj)
 {
-  void* ptr = memobj->device_ptrs[device->dev_id].mem_ptr;
+  void* ptr = mem_obj->device_ptrs[device->dev_id].mem_ptr;
   free_chunk ((chunk_info_t*) ptr);
 }
 
