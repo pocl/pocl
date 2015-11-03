@@ -164,7 +164,7 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->read_rect = pocl_basic_read_rect;
   ops->write = pocl_basic_write;
   ops->write_rect = pocl_basic_write_rect;
-  ops->copy = pocl_basic_copy;
+  ops->copy = pocl_hsa_copy;
   ops->copy_rect = pocl_basic_copy_rect;
   ops->get_timer_value = pocl_basic_get_timer_value;
 }
@@ -529,6 +529,14 @@ pocl_hsa_free (cl_device_id device, cl_mem memobj)
 
   void* ptr = memobj->device_ptrs[device->dev_id].mem_ptr;
   hsa_memory_free(ptr);
+}
+
+void pocl_hsa_copy (void *data, const void *src_ptr, size_t src_offset,
+               void *__restrict__ dst_ptr, size_t dst_offset, size_t cb)
+{
+  assert(src_offset == 0);
+  assert(dst_offset == 0);
+  HSA_CHECK(hsa_memory_copy(dst_ptr, src_ptr, cb));
 }
 
 cl_int pocl_hsa_alloc_mem_obj(cl_device_id device, cl_mem mem_obj)
