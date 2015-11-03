@@ -275,6 +275,12 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_GETINFO(cl_uint, device->dev_queue_pref_size);
   case CL_DEVICE_QUEUE_ON_DEVICE_MAX_SIZE:
     POCL_RETURN_GETINFO(cl_uint, device->dev_queue_max_size);
+  case CL_DEVICE_PREFERRED_GLOBAL_ATOMIC_ALIGNMENT:
+    POCL_RETURN_GETINFO(cl_uint, 0);
+  case CL_DEVICE_PREFERRED_LOCAL_ATOMIC_ALIGNMENT:
+    POCL_RETURN_GETINFO(cl_uint, 0);
+  case CL_DEVICE_PREFERRED_PLATFORM_ATOMIC_ALIGNMENT:
+    POCL_RETURN_GETINFO(cl_uint, 0);
   case CL_DEVICE_SPIR_VERSIONS:
     POCL_RETURN_GETINFO_STR("1.2");
 
