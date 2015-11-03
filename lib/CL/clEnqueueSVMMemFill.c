@@ -79,11 +79,13 @@ clEnqueueSVMMemFill (cl_command_queue command_queue,
       return errcode;
     }
 
-  cmd->command.svm_memfill.svm_ptr = svm_ptr;
-  cmd->command.svm_memfill.size = size;
-  cmd->command.svm_memfill.pattern = pattern;
-  cmd->command.svm_memfill.pattern_size = pattern_size;
-
+  cmd->command.memfill.ptr = svm_ptr;
+  cmd->command.memfill.offset = 0;
+  cmd->command.memfill.size = size;
+  void *p = pocl_aligned_malloc(pattern_size, pattern_size);
+  memcpy(p, pattern, pattern_size);
+  cmd->command.memfill.pattern = p;
+  cmd->command.memfill.pattern_size = pattern_size;
   pocl_command_enqueue(command_queue, cmd);
 
   return CL_SUCCESS;
