@@ -289,7 +289,6 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->compiler_available = CL_TRUE;
   dev->spmd = CL_FALSE;
   dev->execution_capabilities = CL_EXEC_KERNEL | CL_EXEC_NATIVE_KERNEL;
-  dev->queue_properties = CL_QUEUE_PROFILING_ENABLE;
   dev->platform = 0;
 
   dev->parent_device = NULL;
@@ -312,6 +311,22 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
      extension  string assume this rule. Future extension additions should
      ensure that there is no more than a single space between
      identifiers. */
+
+  dev->is_svm = 0;
+  /* OpenCL 2.0 properties */
+  dev->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
+  /* TODO these are minimums, figure out whats a reasonable value */
+  dev->max_events = 1024;
+  dev->max_queues = 1;
+  dev->max_pipe_args = 16;
+  dev->max_pipe_active_res = 1;
+  dev->max_pipe_packet_size = 1024;
+  dev->dev_queue_pref_size = 16 * 1024;
+  dev->dev_queue_max_size = 256 * 1024;
+  dev->on_dev_queue_props = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE
+                               | CL_QUEUE_PROFILING_ENABLE;
+  dev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
+
 
 #ifndef _CL_DISABLE_LONG
 #define DOUBLE_EXT "cl_khr_fp64 "

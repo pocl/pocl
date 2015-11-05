@@ -180,8 +180,6 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_GETINFO(cl_bool, device->compiler_available);
   case CL_DEVICE_EXECUTION_CAPABILITIES            :
     POCL_RETURN_GETINFO(cl_device_exec_capabilities, device->execution_capabilities);
-  case CL_DEVICE_QUEUE_PROPERTIES                  :
-    POCL_RETURN_GETINFO(cl_command_queue_properties, device->queue_properties);
    
   case CL_DEVICE_NAME:
     POCL_RETURN_GETINFO_STR(device->long_name);
@@ -283,7 +281,10 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_GETINFO(cl_uint, 0);
   case CL_DEVICE_SPIR_VERSIONS:
     POCL_RETURN_GETINFO_STR("1.2");
-
+  case CL_DEVICE_QUEUE_ON_DEVICE_PROPERTIES:
+    POCL_RETURN_GETINFO(cl_command_queue_properties, device->on_dev_queue_props);
+  case CL_DEVICE_QUEUE_ON_HOST_PROPERTIES:
+    POCL_RETURN_GETINFO(cl_command_queue_properties, device->on_host_queue_props);
 
   }
   return CL_INVALID_VALUE;
