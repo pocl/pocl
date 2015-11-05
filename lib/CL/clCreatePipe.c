@@ -31,17 +31,23 @@ POname(clCreatePipe)(cl_context context,
                      const cl_pipe_properties * properties,
                      cl_int *errcode_ret) CL_API_SUFFIX__VERSION_2_0
 {
-  int errcode;
 #ifndef BUILD_HSA
   POCL_MSG_PRINT_INFO("This pocl was not built with HSA\n");
   errcode = CL_INVALID_CONTEXT;
 #else
+
+  int errcode;
+  unsigned i;
 
   POCL_GOTO_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
 
   POCL_GOTO_ERROR_COND((properties != NULL), CL_INVALID_VALUE);
 
   //CL_INVALID_VALUE if values specified in flags are not as defined above.
+  if (!flags)
+    flags = (CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS);
+  POCL_GOTO_ERROR_COND((flags != (CL_MEM_READ_WRITE | CL_MEM_HOST_NO_ACCESS)),
+                       CL_INVALID_VALUE);
 
   //CL_INVALID_PIPE_SIZE if pipe_packet_size is 0
   //or if pipe_max_packets is 0.
@@ -50,11 +56,26 @@ POname(clCreatePipe)(cl_context context,
 
   // or the pipe_packet_size exceeds CL_DEVICE_PIPE_MAX_PACKET_SIZE value specified in table 4.3
   // (see clGetDeviceInfo) for all devices in context
-  for (unsigned i = 0; i < context->num_devices; i++)
+  for (i = 0; i < context->num_devices; i++)
     POCL_GOTO_ERROR_COND(context->devices[i]->max_pipe_packet_size < pipe_packet_size,
                          CL_INVALID_PIPE_SIZE)
 
+
+  // TODO do not actually allocate the mem for every device, just once
+  cl_mem mem = POname(clCreateBuffer) (context, flags,
+                                       ((size_t)pipe_packet_size * pipe_max_packets),
+                                       NULL, &errcode);
+
   //CL_MEM_OBJECT_ALLOCATION_FAILURE if there is a failure to allocate memory for the pipe object.
+  POCL_GOTO_ERROR_ON((mem == NULL), CL_MEM_OBJECT_ALLOCATION_FAILURE,
+    "clCreateBuffer (for backing the Pipe) failed\n");
+
+
+  POCL_INIT_OBJECT(mem);
+  mem->type = CL_MEM_OBJECT_PIPE;
+  mem->context = context;
+  mem->packet_size = pipe_packet_size;
+  mem->max_packets = pipe_max_packets;
 
   *errcode_ret = CL_SUCCESS;
   return NULL;
