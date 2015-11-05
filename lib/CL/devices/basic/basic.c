@@ -201,6 +201,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->init = pocl_basic_init;
   ops->alloc_mem_obj = pocl_basic_alloc_mem_obj;
   ops->free = pocl_basic_free;
+  ops->free_ptr = pocl_basic_free_ptr;
   ops->read = pocl_basic_read;
   ops->read_rect = pocl_basic_read_rect;
   ops->write = pocl_basic_write;
@@ -456,6 +457,13 @@ pocl_basic_free (cl_device_id device, cl_mem memobj)
   size_t size = memobj->size;
 
   pocl_free_global_mem(device, ptr, size);
+}
+
+void pocl_basic_free_ptr (cl_device_id device, void* mem_ptr)
+{
+  /* TODO we should somehow figure out the size argument
+   * and call pocl_free_global_mem */
+  POCL_MEM_FREE(mem_ptr);
 }
 
 void

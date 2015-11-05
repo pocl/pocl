@@ -74,6 +74,7 @@ clEnqueueSVMFree (cl_command_queue command_queue,
 
   cmd->command.svm_free.num_svm_pointers = num_svm_pointers;
   cmd->command.svm_free.svm_pointers = svm_pointers;
+  cmd->command.svm_free.queue = command_queue;
   cmd->command.svm_free.data = user_data;
   cmd->command.svm_free.pfn_free_func = pfn_free_func;
 

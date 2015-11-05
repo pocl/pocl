@@ -23,6 +23,7 @@
 
 #include "pocl_cl.h"
 #include "pocl_util.h"
+#include "pocl_debug.h"
 #include "pocl_image_util.h"
 #include "utlist.h"
 #include "clEnqueueMapBuffer.h"
@@ -272,6 +273,66 @@ static void exec_commands (_cl_command_node *node_list)
           POCL_UPDATE_EVENT_RUNNING(event);
           POCL_UPDATE_EVENT_COMPLETE(event);
           break;
+        case CL_COMMAND_SVM_FREE:
+          POCL_UPDATE_EVENT_RUNNING(event);
+          if (node->command.svm_free.pfn_free_func)
+            node->command.svm_free.pfn_free_func(
+                node->command.svm_free.queue,
+                node->command.svm_free.num_svm_pointers,
+                node->command.svm_free.svm_pointers,
+                node->command.svm_free.data);
+          else
+            for (unsigned i=0; i < node->command.svm_free.num_svm_pointers; i++)
+              node->device->ops->free_ptr(node->device,
+                  node->command.svm_free.svm_pointers[i]);
+          POCL_UPDATE_EVENT_COMPLETE(event);
+          break;
+        case CL_COMMAND_SVM_MAP:
+          POCL_UPDATE_EVENT_RUNNING(event);
+          if (DEVICE_SVM_ATOM(node->device) && DEVICE_SVM_FINEGR(node->device))
+            ; // no-op
+          else
+            POCL_ABORT_UNIMPLEMENTED("SVMMap on this device is not implemented");
+            // TODO this
+            /*
+            void* out;
+            device->ops->map_mem
+              (device->data, node->command.svm_map.svm_ptr,
+               0, node->command.svm_map.size, &out);
+            return out;
+            */
+          POCL_UPDATE_EVENT_COMPLETE(event);
+          break;
+        case CL_COMMAND_SVM_UNMAP:
+          POCL_UPDATE_EVENT_RUNNING(event);
+          if (DEVICE_SVM_ATOM(node->device) && DEVICE_SVM_FINEGR(node->device))
+            ; // no-op
+          else
+            POCL_ABORT_UNIMPLEMENTED("SVMUnmap on this device is not implemented");
+            /* TODO
+            node->device->ops->unmap_mem
+                 (NULL, NULL, node->command.svm_unmap.svm_ptr, 0);
+            */
+          break;
+          POCL_UPDATE_EVENT_COMPLETE(event);
+        case CL_COMMAND_SVM_MEMCPY:
+          POCL_UPDATE_EVENT_RUNNING(event);
+          node->device->ops->copy(NULL,
+             node->command.svm_memcpy.src, 0,
+             node->command.svm_memcpy.dst, 0,
+             node->command.svm_memcpy.size);
+          POCL_UPDATE_EVENT_COMPLETE(event);
+          break;
+        case CL_COMMAND_SVM_MEMFILL:
+          POCL_UPDATE_EVENT_RUNNING(event);
+          node->device->ops->memfill(
+             node->command.memfill.ptr,
+             node->command.memfill.size, 0,
+             node->command.memfill.pattern,
+             node->command.memfill.pattern_size);
+          POCL_UPDATE_EVENT_COMPLETE(event);
+          break;
+
         default:
           POCL_ABORT_UNIMPLEMENTED("clFinish: Unknown command");
           break;

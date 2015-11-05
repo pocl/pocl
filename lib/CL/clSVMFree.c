@@ -51,14 +51,7 @@ POname(clSVMFree)(cl_context context,
   allocdev = svmdev ? svmdev : host;
   assert(allocdev);
 
-  cl_mem mem = alloca(sizeof(struct _cl_mem));
-  mem->flags = CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE;
-  mem->mem_host_ptr = NULL;
-  pocl_mem_identifier device_ptrs[pocl_num_devices];
-  device_ptrs[allocdev->dev_id].mem_ptr = svm_pointer;
-  mem->device_ptrs = device_ptrs;
-
-  allocdev->ops->free(allocdev, mem);
+  allocdev->ops->free_ptr(allocdev, svm_pointer);
 
 
 #endif

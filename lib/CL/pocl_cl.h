@@ -217,7 +217,8 @@ struct pocl_device_ops {
   cl_int (*alloc_mem_obj) (cl_device_id device, cl_mem mem_obj);
   void *(*create_sub_buffer) (void *data, void* buffer, size_t origin, size_t size);
   void (*free) (cl_device_id device, cl_mem mem_obj);
-  void (*read) (void *data, void *host_ptr, const void *device_ptr, 
+  void (*free_ptr) (cl_device_id device, void* mem_ptr);
+  void (*read) (void *data, void *host_ptr, const void *device_ptr,
                 size_t offset, size_t cb);
   void (*read_rect) (void *data, void *host_ptr, void *device_ptr,
                      const size_t *buffer_origin,
@@ -390,6 +391,9 @@ struct _cl_device_id {
   /* Convert automatic local variables to kernel arguments? */
   int autolocals_to_args;
 
+  // True if the device supports SVM and is not the host CPU
+  // (requires special memory allocation etc)
+  cl_bool is_svm;
   /* OpenCL 2.0 properties */
   cl_device_svm_capabilities svm_caps;
   cl_uint max_events;
@@ -402,6 +406,10 @@ struct _cl_device_id {
 
   struct pocl_device_ops *ops; /* Device operations, shared amongst same devices */
 };
+
+#define DEVICE_SVM_FINEGR(dev) (dev->svm_caps & (CL_DEVICE_SVM_FINE_GRAIN_BUFFER \
+                                              | CL_DEVICE_SVM_FINE_GRAIN_SYSTEM))
+#define DEVICE_SVM_ATOM(dev) (dev->svm_caps & CL_DEVICE_SVM_ATOMICS)
 
 struct _cl_platform_id {
   POCL_ICD_OBJECT
