@@ -25,7 +25,7 @@
 #include "pocl_util.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-clEnqueueSVMMemcpy (cl_command_queue command_queue,
+POname(clEnqueueSVMMemcpy) (cl_command_queue command_queue,
                     cl_bool blocking_copy,
                     void *dst_ptr,
                     const void *src_ptr,

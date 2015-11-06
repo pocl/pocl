@@ -25,7 +25,7 @@
 #include "pocl_util.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-clEnqueueSVMUnmap (cl_command_queue command_queue,
+POname(clEnqueueSVMUnmap) (cl_command_queue command_queue,
                    void *svm_ptr,
                    cl_uint num_events_in_wait_list,
                    const cl_event *event_wait_list,

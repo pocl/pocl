@@ -25,7 +25,7 @@
 #include "pocl_util.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-clEnqueueSVMMap (cl_command_queue command_queue,
+POname(clEnqueueSVMMap) (cl_command_queue command_queue,
                  cl_bool blocking_map,
                  cl_map_flags map_flags,
                  void *svm_ptr,

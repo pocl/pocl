@@ -158,6 +158,33 @@ struct _cl_icd_dispatch {
   NULL, /* &POclEnqueueBarrierWithWaitList, */ \
   NULL, /* &POclGetExtensionFunctionAddressForPlatform, */ \
   NULL, /* &POclCreateFromGLTexture,     */ \
+  NULL, /* &clUnknown109 */      \
+  NULL, /* &clUnknown110 */      \
+  NULL, /* &clUnknown111 */      \
+  NULL, /* &clUnknown112 */      \
+  NULL, /* &clUnknown113 */      \
+  NULL, /* &clUnknown114 */      \
+  NULL, /* &clUnknown115 */      \
+  NULL, /* &clUnknown116 */      \
+  NULL, /* &clUnknown117 */      \
+  NULL, /* &clUnknown118 */      \
+  NULL, /* &clUnknown119 */      \
+  NULL, /* &clUnknown120 */      \
+  NULL, /* &clUnknown121 */      \
+  NULL, /* &clUnknown122 */      \
+  NULL, /*&POclCreateCommandQueueWithProperties, /* &clUnknown109 */      \
+  &POclCreatePipe, \
+  &POclGetPipeInfo, \
+  &POclSVMAlloc, \
+  &POclSVMFree, \
+  &POclEnqueueSVMFree, \
+  &POclEnqueueSVMMemcpy, \
+  &POclEnqueueSVMMemFill, \
+  &POclEnqueueSVMMap, \
+  &POclEnqueueSVMUnmap, \
+  NULL, /* clCreateSamplerWithProperties */   \
+  &POclSetKernelArgSVMPointer, \
+  &POclSetKernelExecInfo, \
 }
 
 #endif

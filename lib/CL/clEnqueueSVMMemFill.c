@@ -25,7 +25,7 @@
 #include "pocl_util.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-clEnqueueSVMMemFill (cl_command_queue command_queue,
+POname(clEnqueueSVMMemFill) (cl_command_queue command_queue,
                      void *svm_ptr,
                      const void *pattern,
                      size_t pattern_size,

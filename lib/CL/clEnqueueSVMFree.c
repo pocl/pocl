@@ -25,7 +25,7 @@
 #include "pocl_util.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-clEnqueueSVMFree (cl_command_queue command_queue,
+POname(clEnqueueSVMFree) (cl_command_queue command_queue,
                   cl_uint  num_svm_pointers,
                   void  *svm_pointers[],
                   void (CL_CALLBACK  *pfn_free_func) ( cl_command_queue queue,
