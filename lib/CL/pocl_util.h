@@ -93,6 +93,10 @@ check_copy_overlap(const size_t src_offset[3],
                    const size_t region[3],
                    const size_t row_pitch, const size_t slice_pitch);
 
+/* Finds a device which should allocate the SVM memory. */
+cl_device_id find_svm_device(cl_context context);
+
+
 /* Helpers for dealing with devices / subdevices */
 
 #define POCL_REAL_DEV(dev) (dev->parent_device ? dev->parent_device : dev)

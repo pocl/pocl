@@ -551,3 +551,22 @@ cl_device_id * pocl_unique_device_list(const cl_device_id * in, cl_uint num, cl_
   *real = real_num;
   return out;
 }
+
+
+/* Find a device which we should ask to allocate SVM memory
+ * this should be a HSA (GPU) device if present, otherwise host CPU */
+cl_device_id find_svm_device(cl_context context)
+{
+  cl_device_id host = NULL, svmdev = NULL, res = NULL;
+  for (unsigned i=0; i < context->num_devices; i++)
+    {
+      if (context->devices[i]->is_svm)
+        svmdev = context->devices[i];
+      if (!context->devices[i]->is_svm && !host)
+        host = context->devices[i];
+    }
+
+  res = svmdev ? svmdev : host;
+  assert(res);
+  return res;
+}
