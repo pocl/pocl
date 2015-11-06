@@ -21,7 +21,7 @@
    THE SOFTWARE.
 */
 
-#include "pocl_cl.h"
+#include "pocl_util.h"
 #include "devices.h"
 
 CL_API_ENTRY void* CL_API_CALL
@@ -74,27 +74,19 @@ POname(clSVMAlloc)(cl_context context,
                            "One of the devices in the context doesn't support "
                            "SVM atomics buffers, and it's in flags\n");
 
+  cl_device_id allocdev = find_svm_device(context);
+  if (alignment == 0)
+    alignment = allocdev->min_data_type_align_size;
+
   /* alignment is not a power of two or the OpenCL implementation cannot support
    * the specified alignment for at least one device in context. */
   p = __builtin_popcount(alignment);
   POCL_RETURN_ERROR_ON((p > 1), NULL, "aligment argument must be a power of 2\n");
+
   for (i=0; i < context->num_devices; i++)
-    POCL_RETURN_ERROR_ON(((context->devices[i]->mem_base_addr_align % alignment) > 0),
+    POCL_RETURN_ERROR_ON((context->devices[i]->min_data_type_align_size < alignment),
                          NULL, "All devices must support the requested memory "
                          "aligment (%u) \n", alignment);
-
-  /* Find a suitable device (with SVM support) */
-  cl_device_id host = NULL, svmdev = NULL, allocdev = NULL;
-  for (i=0; i < context->num_devices; i++)
-    {
-      if (context->devices[i]->is_svm)
-        svmdev = context->devices[i];
-      if (!context->devices[i]->is_svm && !host)
-        host = context->devices[i];
-    }
-
-  allocdev = svmdev ? svmdev : host;
-  assert(allocdev);
 
   /* create a fake (temporary) cl_mem */
   cl_mem mem = alloca(sizeof(struct _cl_mem));

@@ -21,8 +21,7 @@
    THE SOFTWARE.
 */
 
-#include "pocl_cl.h"
-#include "devices.h"
+#include "pocl_util.h"
 
 CL_API_ENTRY void CL_API_CALL
 POname(clSVMFree)(cl_context context,
@@ -38,18 +37,7 @@ POname(clSVMFree)(cl_context context,
   if (svm_pointer == NULL)
     return;
 
-  /* Find a suitable device (with SVM support) */
-  cl_device_id host = NULL, svmdev = NULL, allocdev = NULL;
-  for (unsigned i=0; i < context->num_devices; i++)
-    {
-      if (context->devices[i]->is_svm)
-        svmdev = context->devices[i];
-      if (!context->devices[i]->is_svm && !host)
-        host = context->devices[i];
-    }
-
-  allocdev = svmdev ? svmdev : host;
-  assert(allocdev);
+  cl_device_id allocdev = find_svm_device(context);
 
   allocdev->ops->free_ptr(allocdev, svm_pointer);
 
