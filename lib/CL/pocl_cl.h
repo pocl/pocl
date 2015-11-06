@@ -411,6 +411,8 @@ struct _cl_device_id {
                                               | CL_DEVICE_SVM_FINE_GRAIN_SYSTEM))
 #define DEVICE_SVM_ATOM(dev) (dev->svm_caps & CL_DEVICE_SVM_ATOMICS)
 
+#define DEVICE_MMAP_IS_NOP(dev) (DEVICE_SVM_FINEGR(dev) && DEVICE_SVM_ATOM(dev))
+
 struct _cl_platform_id {
   POCL_ICD_OBJECT
 }; 

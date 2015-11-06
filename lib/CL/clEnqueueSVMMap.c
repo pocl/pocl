@@ -41,6 +41,9 @@ POname(clEnqueueSVMMap) (cl_command_queue command_queue,
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
+  if (DEVICE_MMAP_IS_NOP(command_queue->device))
+    return CL_SUCCESS;
+
   POCL_RETURN_ERROR_COND((svm_ptr == NULL), CL_INVALID_VALUE);
 
   POCL_RETURN_ERROR_COND((size == 0), CL_INVALID_VALUE);

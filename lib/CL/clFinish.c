@@ -289,7 +289,7 @@ static void exec_commands (_cl_command_node *node_list)
           break;
         case CL_COMMAND_SVM_MAP:
           POCL_UPDATE_EVENT_RUNNING(event);
-          if (DEVICE_SVM_ATOM(node->device) && DEVICE_SVM_FINEGR(node->device))
+          if (DEVICE_MMAP_IS_NOP(node->device))
             ; // no-op
           else
             POCL_ABORT_UNIMPLEMENTED("SVMMap on this device is not implemented");
@@ -305,7 +305,7 @@ static void exec_commands (_cl_command_node *node_list)
           break;
         case CL_COMMAND_SVM_UNMAP:
           POCL_UPDATE_EVENT_RUNNING(event);
-          if (DEVICE_SVM_ATOM(node->device) && DEVICE_SVM_FINEGR(node->device))
+          if (DEVICE_MMAP_IS_NOP(node->device))
             ; // no-op
           else
             POCL_ABORT_UNIMPLEMENTED("SVMUnmap on this device is not implemented");
