@@ -21,6 +21,10 @@
    THE SOFTWARE.
 */
 
+#define CL_USE_DEPRECATED_OPENCL_1_0_APIS
+#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
+#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
+
 #ifdef _MSC_VER
 #  include <CL/cl_platform.h>
 #else
