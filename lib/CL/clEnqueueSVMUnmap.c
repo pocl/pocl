@@ -38,7 +38,9 @@ POname(clEnqueueSVMUnmap) (cl_command_queue command_queue,
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
-  if (DEVICE_MMAP_IS_NOP(command_queue->device))
+  if (DEVICE_MMAP_IS_NOP(command_queue->device)
+      && (num_events_in_wait_list == 0)
+      && (event == NULL))
     return CL_SUCCESS;
 
   POCL_RETURN_ERROR_COND((svm_ptr == NULL), CL_INVALID_VALUE);

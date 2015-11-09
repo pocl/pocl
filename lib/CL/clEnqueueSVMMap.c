@@ -41,8 +41,15 @@ POname(clEnqueueSVMMap) (cl_command_queue command_queue,
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
-  if (DEVICE_MMAP_IS_NOP(command_queue->device))
-    return CL_SUCCESS;
+  if (DEVICE_MMAP_IS_NOP(command_queue->device)
+      && (num_events_in_wait_list == 0)
+      && (event == NULL))
+    {
+      if (blocking_map == CL_TRUE)
+        return POname(clFinish)(command_queue);
+      else
+        return CL_SUCCESS;
+    }
 
   POCL_RETURN_ERROR_COND((svm_ptr == NULL), CL_INVALID_VALUE);
 
@@ -58,9 +65,6 @@ POname(clEnqueueSVMMap) (cl_command_queue command_queue,
     POCL_RETURN_ERROR_COND((event_wait_list[i] == NULL), CL_INVALID_EVENT_WAIT_LIST);
 
   _cl_command_node *cmd = NULL;
-
-  if (blocking_map)
-    POCL_ABORT_UNIMPLEMENTED("Blocking map");
 
   int errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_SVM_MAP,
                                      event, num_events_in_wait_list,
@@ -78,7 +82,10 @@ POname(clEnqueueSVMMap) (cl_command_queue command_queue,
 
   pocl_command_enqueue(command_queue, cmd);
 
-  return CL_SUCCESS;
+  if (blocking_map == CL_TRUE)
+    return POname(clFinish)(command_queue);
+  else
+    return CL_SUCCESS;
 
 #endif
 }
