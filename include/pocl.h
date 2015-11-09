@@ -171,7 +171,7 @@ typedef struct
 {
   void* ptr;
   size_t size, offset;
-  const void* pattern;
+  void* pattern;
   size_t pattern_size;
 } _cl_command_fill;
 
@@ -183,6 +183,7 @@ typedef struct
 typedef struct
 {
   void* data;
+  void* queue;
   unsigned  num_svm_pointers;
   void  **svm_pointers;
   void (CL_CALLBACK  *pfn_free_func) ( cl_command_queue queue,
