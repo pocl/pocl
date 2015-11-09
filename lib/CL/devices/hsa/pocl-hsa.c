@@ -623,8 +623,12 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
             }
           else
             {
-        	  uint64_t temp = (uint64_t)(*(cl_mem *)
-				  (al->value))->device_ptrs[cmd->device->dev_id].mem_ptr;
+              cl_mem m = *(cl_mem *)al->value;
+              uint64_t temp = 0;
+              if (m->device_ptrs)
+                temp = (uint64_t)m->device_ptrs[cmd->device->dev_id].mem_ptr;
+              else
+                temp = (uint64_t)m->mem_host_ptr;
               memcpy (write_pos, &temp, sizeof(uint64_t));
             }
           write_pos += sizeof(uint64_t);
