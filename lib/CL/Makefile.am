@@ -49,6 +49,7 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clCreateBuffer.c		\
                    clCreateSubBuffer.c		\
                    clEnqueueFillImage.c	\
+                   clEnqueueFillBuffer.c	\
                    clEnqueueReadBuffer.c	\
                    clEnqueueReadBufferRect.c	\
                    clEnqueueMapBuffer.c	\
