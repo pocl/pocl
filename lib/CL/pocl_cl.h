@@ -403,6 +403,8 @@ struct _cl_device_id {
   cl_uint max_pipe_packet_size;
   cl_uint dev_queue_pref_size;
   cl_uint dev_queue_max_size;
+  cl_command_queue_properties on_dev_queue_props;
+  cl_command_queue_properties on_host_queue_props;
 
   struct pocl_device_ops *ops; /* Device operations, shared amongst same devices */
 };
