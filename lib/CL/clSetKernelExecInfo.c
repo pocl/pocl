@@ -52,4 +52,4 @@ POname(clSetKernelExecInfo)(cl_kernel  kernel ,
   return CL_SUCCESS;
 #endif
 }
-POsym(clGetProgramBuildInfo)
+POsym(clSetKernelExecInfo)

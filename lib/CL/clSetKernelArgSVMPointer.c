@@ -56,4 +56,4 @@ POname(clSetKernelArgSVMPointer)(cl_kernel kernel,
 
 #endif
 }
-POsym(clSetKernelArg)
+POsym(clSetKernelArgSVMPointer)
