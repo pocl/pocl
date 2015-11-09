@@ -41,6 +41,8 @@ POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
   cl_bool command_ready;
   cl_event *event;
 
+  POCL_MEASURE_START(clFinish);
+
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
   if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
@@ -93,6 +95,7 @@ POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 
   exec_commands(ready_list);
 
+  POCL_MEASURE_FINISH(clFinish);
   return CL_SUCCESS;
 }
 POsym(clFinish)
