@@ -110,13 +110,16 @@ POname(clGetProgramInfo)(cl_program program,
           if (size + strlen (kernel_names[i]) + 1 >= param_value_size)
             break;
           size += strlen (kernel_names[i]) + 1;
-          
-          if (i == 0)
-            memcpy (param_value, kernel_names[i], strlen(kernel_names[i])+1);
-          else
-            strcat((char*)param_value, kernel_names[i]);
-          if (i != num_kernels - 1)
-            strcat ((char*)param_value, ";");
+
+          if (param_value)
+            {
+              if (i == 0)
+                memcpy (param_value, kernel_names[i], strlen(kernel_names[i])+1);
+              else
+                strcat((char*)param_value, kernel_names[i]);
+              if (i != num_kernels - 1)
+                strcat ((char*)param_value, ";");
+            }
         }
 
       if (param_value_size_ret)
