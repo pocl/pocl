@@ -32,6 +32,9 @@
 #define __restrict__ __restrict
 #define restrict __restrict
 
+#include <intrin.h>
+#define __builtin_popcount __popcnt
+
 // ERROR is used as label for goto in some OCL API functions
 #undef ERROR
 

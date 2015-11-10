@@ -24,12 +24,6 @@
 #include "pocl_util.h"
 #include <string.h>
 
-#ifdef __MSC_VER
-#  include <intrin.h>
-#  define __builtin_popcount __popcnt
-#endif
-
-
 extern CL_API_ENTRY cl_int CL_API_CALL
 POname(clEnqueueFillBuffer)(cl_command_queue  command_queue,
                            cl_mem            buffer,
