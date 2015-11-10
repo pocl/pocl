@@ -52,7 +52,7 @@ POname(clCreateKernelsInProgram)(cl_program      program ,
       for (idx = 0; idx < num_kern_found; idx++)
         {
           cl_int error_ret;
-          kernels[idx] = clCreateKernel (program, knames[idx], &error_ret);
+          kernels[idx] = POname(clCreateKernel) (program, knames[idx], &error_ret);
 
           /* Check for errors, clean up & bail.
            * If we happened to pass a invalid kernel name after all
@@ -64,7 +64,7 @@ POname(clCreateKernelsInProgram)(cl_program      program ,
             {
               for (; idx>0; idx--)
                 {
-                  clReleaseKernel (kernels[idx-1]);
+                  POname(clReleaseKernel) (kernels[idx-1]);
                 }
               POCL_MEM_FREE(knames);
               /* If error_ret is INVALID_KERNEL_DEFINITION, returning it here
