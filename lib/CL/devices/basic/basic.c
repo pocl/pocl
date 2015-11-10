@@ -766,58 +766,61 @@ void pocl_basic_memfill(void *ptr,
                         const void* pattern,
                         size_t pattern_size)
 {
+  size_t i;
+  unsigned j;
+
   switch (pattern_size)
     {
     case 1:
       {
       uint8_t * p = (uint8_t*)ptr + offset;
-      for (size_t i = 0; i < size; i++)
+      for (i = 0; i < size; i++)
         p[i] = *(uint8_t*)pattern;
       }
     case 2:
       {
       uint16_t * p = (uint16_t*)ptr + offset;
-      for (size_t i = 0; i < size; i++)
+      for (i = 0; i < size; i++)
         p[i] = *(uint16_t*)pattern;
       }
     case 4:
       {
       uint32_t * p = (uint32_t*)ptr + offset;
-      for (size_t i = 0; i < size; i++)
+      for (i = 0; i < size; i++)
         p[i] = *(uint32_t*)pattern;
       }
     case 8:
       {
       uint64_t * p = (uint64_t*)ptr + offset;
-      for (size_t i = 0; i < size; i++)
+      for (i = 0; i < size; i++)
         p[i] = *(uint64_t*)pattern;
       }
     case 16:
       {
       uint64_t * p = (uint64_t*)ptr + offset;
-      for (size_t i = 0; i < size; i++)
-        for (unsigned j=0; j<2; j++)
+      for (i = 0; i < size; i++)
+        for (j = 0; j < 2; j++)
           p[(i<<1) + j] = *((uint64_t*)pattern + j);
       }
     case 32:
       {
       uint64_t * p = (uint64_t*)ptr + offset;
-      for (size_t i = 0; i < size; i++)
-        for (unsigned j=0; j<4; j++)
+      for (i = 0; i < size; i++)
+        for (j = 0; j < 4; j++)
           p[(i<<2) + j] = *((uint64_t*)pattern + j);
       }
     case 64:
       {
       uint64_t * p = (uint64_t*)ptr + offset;
-      for (size_t i = 0; i < size; i++)
-        for (unsigned j=0; j<8; j++)
+      for (i = 0; i < size; i++)
+        for (j = 0; j < 8; j++)
           p[(i<<3) + j] = *((uint64_t*)pattern + j);
       }
     case 128:
       {
       uint64_t * p = (uint64_t*)ptr + offset;
-      for (size_t i = 0; i < size; i++)
-        for (unsigned j=0; j<16; j++)
+      for (i = 0; i < size; i++)
+        for (j = 0; j < 16; j++)
           p[(i<<4) + j] = *((uint64_t*)pattern + j);
       }
     }
