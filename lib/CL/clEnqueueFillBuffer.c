@@ -75,14 +75,14 @@ CL_API_SUFFIX__VERSION_1_2
   POCL_RETURN_ERROR_COND((pattern_size > 128), CL_INVALID_VALUE);
 
   POCL_RETURN_ERROR_ON((__builtin_popcount(pattern_size) > 1), CL_INVALID_VALUE,
-                       "pattern_size(%u) must be a power-of-two value", pattern_size);
+                       "pattern_size(%zu) must be a power-of-two value", pattern_size);
 
   /* CL_INVALID_VALUE if offset and size are not a multiple of pattern_size.  */
   POCL_RETURN_ERROR_ON((offset % pattern_size), CL_INVALID_VALUE,
-                       "offset(%u) must be a multiple of pattern_size(%u)\n",
+                       "offset(%zu) must be a multiple of pattern_size(%zu)\n",
                        offset, pattern_size);
   POCL_RETURN_ERROR_ON((size % pattern_size), CL_INVALID_VALUE,
-                       "size(%u) must be a multiple of pattern_size(%u)\n",
+                       "size(%zu) must be a multiple of pattern_size(%zu)\n",
                        size, pattern_size);
 
   /* ############# TODO #############
