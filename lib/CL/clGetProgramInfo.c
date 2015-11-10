@@ -156,9 +156,9 @@ POname(clGetProgramInfo)(cl_program program,
           for (i = 0; i < num_kernels; ++i)
             {
               if (i == 0)
-                strcpy(param_value, kernel_names[i]); /* copy including NULL */
+                strcpy (param_value, kernel_names[i]); /* copy including NULL */
               else
-                strcat((char*)param_value, kernel_names[i]);
+                strcat ((char*)param_value, kernel_names[i]);
               if (i != num_kernels - 1)
                 strcat ((char*)param_value, ";");
             }
