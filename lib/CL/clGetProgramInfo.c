@@ -107,7 +107,8 @@ POname(clGetProgramInfo)(cl_program program,
          > param_value_size_ret returns the actual size in bytes of data
          > being *queried* by param_value.
 
-         while in GetProgramInfo and APIs defined later in the documentation, it is:
+         while in GetProgramInfo and APIs defined later in the
+         documentation, it is:
 
          > param_value_size_ret returns the actual size in bytes of data
          > *copied* to param_value.
@@ -124,9 +125,10 @@ POname(clGetProgramInfo)(cl_program program,
          return the size of entire concatenated string, not the size of
          bytes copied (partially).
 
-         Also note the specification of GetPlatformInfo + CL_PLATFORM_EXTENSIONS.
-         it refers to "param_value_size_ret" as the actual size in bytes of data being *queried*,
-         and its description of param_value_size is the same.
+         Also note the specification of GetPlatformInfo +
+         CL_PLATFORM_EXTENSIONS.  it refers to "param_value_size_ret" as
+         the actual size in bytes of data being *queried*, and its
+         description of param_value_size is the same.
 
          --- guicho271828
       */
@@ -151,8 +153,8 @@ POname(clGetProgramInfo)(cl_program program,
           /* only when param_value is non-NULL */
           if (size > param_value_size)
             return CL_INVALID_VALUE;
-          /* should not break from the switch clause because of POCL_ABORT_UNIMPLEMENTED */
-
+          /* should not break from the switch clause
+             because of POCL_ABORT_UNIMPLEMENTED */
           for (i = 0; i < num_kernels; ++i)
             {
               if (i == 0)
