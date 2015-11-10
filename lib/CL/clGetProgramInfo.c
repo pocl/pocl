@@ -101,29 +101,69 @@ POname(clGetProgramInfo)(cl_program program,
     }
   case CL_PROGRAM_KERNEL_NAMES:
     {
+      /* Note: In the specification (2.0) of the other XXXInfo
+         functions, param_value_size_ret is described as follows:
+
+         > param_value_size_ret returns the actual size in bytes of data
+         > being *queried* by param_value.
+
+         while in GetProgramInfo and APIs defined later in the documentation, it is:
+
+         > param_value_size_ret returns the actual size in bytes of data
+         > *copied* to param_value.
+
+         it reads as if the spec allows the implementation to stop copying
+         the string at an arbitrary point where the limit
+         (param_value_size) is reached, but that's not the case. When it
+         happens, it should instead raise an error CL_INVALID_VALUE.
+
+         Also note the specification of the param_value_size_ret to param_name
+         CL_PROGRAM_SOURCE.  It says "The actual number of characters that
+         represents[sic] the program source code including the null terminator
+         is returned in param_value_size_ret." By an analogy, it is sane to
+         return the size of entire concatenated string, not the size of
+         bytes copied (partially).
+
+         Also note the specification of GetPlatformInfo + CL_PLATFORM_EXTENSIONS.
+         it refers to "param_value_size_ret" as the actual size in bytes of data being *queried*,
+         and its description of param_value_size is the same.
+
+         --- guicho271828
+      */
+
       const char *kernel_names[32];
       unsigned num_kernels = 0;
       size_t size = 0;
       num_kernels = pocl_llvm_get_kernel_names(program, kernel_names, 32);
+
+      /* optimized for clarity */
       for (i = 0; i < num_kernels; ++i)
         {
-          if (size + strlen (kernel_names[i]) + 1 >= param_value_size)
-            break;
-          size += strlen (kernel_names[i]) + 1;
+          size += strlen (kernel_names[i]) ;
+          if (i != num_kernels - 1)
+            size += 1;          /* a semicolon */
+        }
+      size += 1;                /* a NULL */
+      
+      if (param_value_size_ret)
+        *param_value_size_ret = size;
 
-          if (param_value)
+      if ( size > param_value_size )
+        break;                  /* go to the error case CL_INVALID_VALUE */
+      
+      if (param_value)
+        {
+          for (i = 0; i < num_kernels; ++i)
             {
               if (i == 0)
-                memcpy (param_value, kernel_names[i], strlen(kernel_names[i])+1);
+                strcpy(param_value, kernel_names[i]); /* copy including NULL */
               else
                 strcat((char*)param_value, kernel_names[i]);
               if (i != num_kernels - 1)
                 strcat ((char*)param_value, ";");
             }
         }
-
-      if (param_value_size_ret)
-        *param_value_size_ret = size;      
+      
       return CL_SUCCESS;
     }
   default:
