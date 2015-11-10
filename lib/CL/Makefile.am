@@ -123,8 +123,6 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clCreateSubDevices.c \
                    clReleaseDevice.c \
                    clRetainDevice.c \
-                   clCreatePipe.c \
-                   clGetPipeInfo.c \
                    clSVMAlloc.c \
                    clSVMFree.c \
                    clEnqueueSVMFree.c \

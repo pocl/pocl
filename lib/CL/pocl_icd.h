@@ -172,9 +172,9 @@ struct _cl_icd_dispatch {
   NULL, /* &clUnknown120 */      \
   NULL, /* &clUnknown121 */      \
   NULL, /* &clUnknown122 */      \
-  NULL, /*&POclCreateCommandQueueWithProperties, /* &clUnknown109 */      \
-  &POclCreatePipe, \
-  &POclGetPipeInfo, \
+  NULL, /*&POclCreateCommandQueueWithProperties,*/    \
+  NULL, /* &POclCreatePipe,*/ \
+  NULL, /* &POclGetPipeInfo,*/ \
   &POclSVMAlloc, \
   &POclSVMFree, \
   &POclEnqueueSVMFree, \
