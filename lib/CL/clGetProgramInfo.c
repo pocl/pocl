@@ -86,10 +86,10 @@ POname(clGetProgramInfo)(cl_program program,
     {
       size_t const value_size = sizeof(cl_device_id) * program->num_devices;
       if (param_value)
-      {
-        if (param_value_size < value_size) return CL_INVALID_VALUE;
-        memcpy(param_value, (void*)program->devices, value_size);
-      }
+        {
+          if (param_value_size < value_size) return CL_INVALID_VALUE;
+          memcpy(param_value, (void*)program->devices, value_size);
+        }
       if (param_value_size_ret)
         *param_value_size_ret = value_size;
       return CL_SUCCESS;
