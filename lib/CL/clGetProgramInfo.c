@@ -144,14 +144,12 @@ POname(clGetProgramInfo)(cl_program program,
             size += 1;          /* a semicolon */
         }
       size += 1;                /* a NULL */
-      
       if (param_value_size_ret)
         *param_value_size_ret = size;
-
       if (param_value)
         {
           /* only when param_value is non-NULL */
-          if ( size > param_value_size )
+          if (size > param_value_size)
             return CL_INVALID_VALUE;
           /* should not break from the switch clause because of POCL_ABORT_UNIMPLEMENTED */
 
@@ -165,7 +163,6 @@ POname(clGetProgramInfo)(cl_program program,
                 strcat ((char*)param_value, ";");
             }
         }
-      
       return CL_SUCCESS;
     }
   default:
