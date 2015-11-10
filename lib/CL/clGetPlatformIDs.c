@@ -29,8 +29,154 @@
 #pragma GCC visibility push(hidden)
 #endif
 
+/* The "implementation" of the _cl_device_id struct.
+* Instantiated in clGetPlatformIDs.c
+*
+* TODO: the NULL entries are functions that lack implementation
+* (or even stubs) in pocl
+*/
 #ifdef BUILD_ICD
-struct _cl_icd_dispatch pocl_dispatch = POCL_ICD_DISPATCH;
+struct _cl_icd_dispatch pocl_dispatch = {
+  &POclGetPlatformIDs,
+  &POclGetPlatformInfo,
+  &POclGetDeviceIDs,
+  &POclGetDeviceInfo,
+  &POclCreateContext,
+  &POclCreateContextFromType,
+  &POclRetainContext,
+  &POclReleaseContext,
+  &POclGetContextInfo,
+  &POclCreateCommandQueue,
+  &POclRetainCommandQueue, /* 10 */
+  &POclReleaseCommandQueue,
+  &POclGetCommandQueueInfo,
+  NULL /*clSetCommandQueueProperty*/,
+  &POclCreateBuffer,
+  &POclCreateImage2D,
+  &POclCreateImage3D,
+  &POclRetainMemObject,
+  &POclReleaseMemObject,
+  &POclGetSupportedImageFormats,
+  &POclGetMemObjectInfo, /* 20 */
+  &POclGetImageInfo,
+  &POclCreateSampler,
+  &POclRetainSampler,
+  &POclReleaseSampler,
+  &POclGetSamplerInfo,
+  &POclCreateProgramWithSource,
+  &POclCreateProgramWithBinary,
+  &POclRetainProgram,
+  &POclReleaseProgram,
+  &POclBuildProgram, /* 30 */
+  &POclUnloadCompiler,
+  &POclGetProgramInfo,
+  &POclGetProgramBuildInfo,
+  &POclCreateKernel,
+  &POclCreateKernelsInProgram,
+  &POclRetainKernel,
+  &POclReleaseKernel,
+  &POclSetKernelArg,
+  &POclGetKernelInfo,
+  &POclGetKernelWorkGroupInfo, /* 40 */
+  &POclWaitForEvents,
+  &POclGetEventInfo,
+  &POclRetainEvent,
+  &POclReleaseEvent,
+  &POclGetEventProfilingInfo,
+  &POclFlush,
+  &POclFinish,
+  &POclEnqueueReadBuffer,
+  &POclEnqueueWriteBuffer,
+  &POclEnqueueCopyBuffer, /* 50 */
+  &POclEnqueueReadImage,
+  &POclEnqueueWriteImage,
+  &POclEnqueueCopyImage,
+  &POclEnqueueCopyImageToBuffer,
+  &POclEnqueueCopyBufferToImage,
+  &POclEnqueueMapBuffer,
+  &POclEnqueueMapImage,
+  &POclEnqueueUnmapMemObject,
+  &POclEnqueueNDRangeKernel,
+  &POclEnqueueTask, /* 60 */
+  &POclEnqueueNativeKernel,
+  &POclEnqueueMarker,
+  &POclEnqueueWaitForEvents,
+  &POclEnqueueBarrier,
+  &POclGetExtensionFunctionAddress,
+  NULL, /* &POclCreateFromGLBuffer,      */
+  &POclCreateFromGLTexture2D,
+  &POclCreateFromGLTexture3D,
+  NULL, /* &POclCreateFromGLRenderbuffer, */
+  NULL, /* &POclGetGLObjectInfo,  70       */
+  NULL, /* &POclGetGLTextureInfo,        */
+  NULL, /* &POclEnqueueAcquireGLObjects, */
+  NULL, /* &POclEnqueueReleaseGLObjects, */
+  NULL, /* &POclGetGLContextInfoKHR,     */
+  NULL, /* &clUnknown75 */
+  NULL, /* &clUnknown76 */
+  NULL, /* &clUnknown77 */
+  NULL, /* &clUnknown78 */
+  NULL, /* &clUnknown79 */
+  NULL, /* &clUnknown80 */
+  &POclSetEventCallback,
+  &POclCreateSubBuffer,
+  &POclSetMemObjectDestructorCallback,
+  &POclCreateUserEvent,
+  &POclSetUserEventStatus,
+  &POclEnqueueReadBufferRect,
+  &POclEnqueueWriteBufferRect,
+  &POclEnqueueCopyBufferRect,
+  NULL, /* &POclCreateSubDevicesEXT,     */
+  &POclRetainDevice, /* &POclRetainDeviceEXT,         */
+  &POclReleaseDevice, /* &POclReleaseDeviceEXT,        */
+  NULL, /* &clUnknown92 */
+  &POclCreateSubDevices,
+  &POclRetainDevice,
+  &POclReleaseDevice,
+  &POclCreateImage,
+  NULL, /* &POclCreateProgramWithBuiltInKernels, */
+  NULL, /* &POclCompileProgram,          */
+  NULL, /* &POclLinkProgram,             */
+  NULL, /* &POclUnloadPlatformCompiler,  */
+  &POclGetKernelArgInfo,
+  &POclEnqueueFillBuffer,
+  &POclEnqueueFillImage,
+  NULL, /* &POclEnqueueMigrateMemObjects, */
+  &POclEnqueueMarkerWithWaitList,
+  NULL, /* &POclEnqueueBarrierWithWaitList, */
+  NULL, /* &POclGetExtensionFunctionAddressForPlatform, */
+  NULL, /* &POclCreateFromGLTexture,     */
+  NULL, /* &clUnknown109 */
+  NULL, /* &clUnknown110 */
+  NULL, /* &clUnknown111 */
+  NULL, /* &clUnknown112 */
+  NULL, /* &clUnknown113 */
+  NULL, /* &clUnknown114 */
+  NULL, /* &clUnknown115 */
+  NULL, /* &clUnknown116 */
+  NULL, /* &clUnknown117 */
+  NULL, /* &clUnknown118 */
+  NULL, /* &clUnknown119 */
+  NULL, /* &clUnknown120 */
+  NULL, /* &clUnknown121 */
+  NULL, /* &clUnknown122 */
+#if (OCL_ICD_IDENTIFIED_FUNCTIONS > 110)
+  NULL, /*&POclCreateCommandQueueWithProperties,*/
+  NULL, /* &POclCreatePipe,*/
+  NULL, /* &POclGetPipeInfo,*/
+  &POclSVMAlloc,
+  &POclSVMFree,
+  &POclEnqueueSVMFree,
+  &POclEnqueueSVMMemcpy,
+  &POclEnqueueSVMMemFill,
+  &POclEnqueueSVMMap,
+  &POclEnqueueSVMUnmap,
+  NULL, /* clCreateSamplerWithProperties */
+  &POclSetKernelArgSVMPointer,
+  &POclSetKernelExecInfo,
+#endif
+};
+
 struct _cl_platform_id _platforms[1]  = {{&pocl_dispatch}};
 #else
 struct _cl_platform_id _platforms[1]  = {};
