@@ -30,18 +30,18 @@ POname(clSVMAlloc)(cl_context context,
                    size_t size,
                    unsigned int alignment) CL_API_SUFFIX__VERSION_2_0
 {
-#ifndef BUILD_HSA
-  POCL_MSG_PRINT_INFO("This pocl was not built with HSA\n");
-  return NULL;
-#else
   unsigned i, p;
 
   POCL_RETURN_ERROR_COND((context == NULL), NULL);
 
-  /* size > CL_DEVICE_MAX_MEM_ALLOC_SIZE value for any device in context. */
+  POCL_RETURN_ERROR_ON((!context->svm_allocdev), NULL,
+                       "None of the devices in this context is SVM-capable\n");
+
   POCL_RETURN_ERROR_COND((size == 0), NULL);
-  for (i=0; i < context->num_devices; i++)
-    POCL_RETURN_ERROR_COND((size > context->devices[i]->max_mem_alloc_size), NULL);
+
+  POCL_RETURN_ERROR_ON((size > context->min_max_mem_alloc_size), NULL,
+                       "size(%zu) > CL_DEVICE_MAX_MEM_ALLOC_SIZE value "
+                       "for some device in context\n", size);
 
   /* flags does not contain CL_MEM_SVM_FINE_GRAIN_BUFFER
    * but does contain CL_MEM_SVM_ATOMICS. */
@@ -54,7 +54,7 @@ POname(clSVMAlloc)(cl_context context,
   POCL_RETURN_ERROR_ON((p > 1), NULL, "flags may contain only one of "
                    "CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY | CL_MEM_READ_ONLY\n");
 
-  cl_svm_mem_flags valid_flags = (CL_MEM_SVM_ATOMICS | CL_MEM_SVM_FINE_GRAIN_BUFFER
+  const cl_svm_mem_flags valid_flags = (CL_MEM_SVM_ATOMICS | CL_MEM_SVM_FINE_GRAIN_BUFFER
                                   | CL_MEM_READ_WRITE | CL_MEM_WRITE_ONLY
                                   | CL_MEM_READ_ONLY);
   POCL_RETURN_ERROR_ON((flags & (!valid_flags)), NULL, "flags argument "
@@ -74,9 +74,10 @@ POname(clSVMAlloc)(cl_context context,
                            "One of the devices in the context doesn't support "
                            "SVM atomics buffers, and it's in flags\n");
 
-  cl_device_id allocdev = find_svm_device(context);
+#define dev context->svm_allocdev
+
   if (alignment == 0)
-    alignment = allocdev->min_data_type_align_size;
+    alignment = dev->min_data_type_align_size;
 
   /* alignment is not a power of two or the OpenCL implementation cannot support
    * the specified alignment for at least one device in context. */
@@ -94,14 +95,14 @@ POname(clSVMAlloc)(cl_context context,
   mem->mem_host_ptr = NULL;
   mem->size = size;
   pocl_mem_identifier device_ptrs[pocl_num_devices];
-  device_ptrs[allocdev->global_mem_id].mem_ptr = NULL;
+  device_ptrs[dev->global_mem_id].mem_ptr = NULL;
   mem->device_ptrs = device_ptrs;
 
-  cl_int errcode = allocdev->ops->alloc_mem_obj(allocdev, mem);
+  cl_int errcode = dev->ops->alloc_mem_obj(dev, mem);
   /* There was a failure to allocate resources */
   POCL_RETURN_ERROR_ON((errcode != CL_SUCCESS), NULL,
                        "Failed to allocate the memory: %u\n", errcode);
 
-  return device_ptrs[allocdev->global_mem_id].mem_ptr;
-#endif
+  return device_ptrs[dev->global_mem_id].mem_ptr;
+
 }

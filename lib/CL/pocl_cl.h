@@ -391,9 +391,9 @@ struct _cl_device_id {
   /* Convert automatic local variables to kernel arguments? */
   int autolocals_to_args;
 
-  // True if the device supports SVM and is not the host CPU
-  // (requires special memory allocation etc)
-  cl_bool is_svm;
+  // True if the device supports SVM has priority
+  // at allocating Shared Virtual Memory
+  cl_bool should_allocate_svm;
   /* OpenCL 2.0 properties */
   cl_device_svm_capabilities svm_caps;
   cl_uint max_events;
@@ -412,6 +412,8 @@ struct _cl_device_id {
 #define DEVICE_SVM_FINEGR(dev) (dev->svm_caps & (CL_DEVICE_SVM_FINE_GRAIN_BUFFER \
                                               | CL_DEVICE_SVM_FINE_GRAIN_SYSTEM))
 #define DEVICE_SVM_ATOM(dev) (dev->svm_caps & CL_DEVICE_SVM_ATOMICS)
+
+#define DEVICE_IS_SVM_CAPABLE(dev) (dev->svm_caps & CL_DEVICE_SVM_COARSE_GRAIN_BUFFER)
 
 #define DEVICE_MMAP_IS_NOP(dev) (DEVICE_SVM_FINEGR(dev) && DEVICE_SVM_ATOM(dev))
 
@@ -433,6 +435,13 @@ struct _cl_context {
      clReleaseContext for the result regardless if it failed or not. 
      Returns a valid = 0 context in that case.  */
   char valid;
+
+  /* The minimal value of max_mem_alloc_size of all devices in context */
+  size_t min_max_mem_alloc_size;
+  /* The device that should allocate SVM (might be == host)
+   * NULL if none of devices in the context is SVM capable */
+  cl_device_id svm_allocdev;
+
 };
 
 struct _cl_command_queue {

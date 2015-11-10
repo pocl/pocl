@@ -407,7 +407,7 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
   HSA_CHECK(hsa_agent_get_info
     (agent, HSA_EXT_AGENT_INFO_MAX_SAMPLER_HANDLERS, &dev->max_samplers));
 
-  dev->is_svm = 1;
+  dev->should_allocate_svm = 1;
   /* OpenCL 2.0 properties */
   dev->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER
                   | CL_DEVICE_SVM_FINE_GRAIN_BUFFER

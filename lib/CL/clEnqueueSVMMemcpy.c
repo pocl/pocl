@@ -34,12 +34,10 @@ POname(clEnqueueSVMMemcpy) (cl_command_queue command_queue,
                     const cl_event *event_wait_list,
                     cl_event *event) CL_API_SUFFIX__VERSION_2_0
 {
-#ifndef BUILD_HSA
-  POCL_MSG_PRINT_INFO("This pocl was not built with HSA\n");
-  return CL_INVALID_CONTEXT;
-#else
-
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+
+  POCL_RETURN_ERROR_ON((command_queue->context->svm_allocdev == NULL),
+      CL_INVALID_CONTEXT, "None of the devices in this context is SVM-capable\n");
 
   POCL_RETURN_ERROR_COND((src_ptr == NULL), CL_INVALID_VALUE);
 
@@ -79,5 +77,4 @@ POname(clEnqueueSVMMemcpy) (cl_command_queue command_queue,
 
   return CL_SUCCESS;
 
-#endif
 }

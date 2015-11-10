@@ -552,21 +552,25 @@ cl_device_id * pocl_unique_device_list(const cl_device_id * in, cl_uint num, cl_
   return out;
 }
 
-
-/* Find a device which we should ask to allocate SVM memory
- * this should be a HSA (GPU) device if present, otherwise host CPU */
-cl_device_id find_svm_device(cl_context context)
+/* Setup certain info about context that comes up later in API calls */
+void pocl_setup_context(cl_context context)
 {
-  cl_device_id host = NULL, svmdev = NULL, res = NULL;
-  for (unsigned i=0; i < context->num_devices; i++)
+  unsigned i;
+  context->min_max_mem_alloc_size = SIZE_MAX;
+  context->svm_allocdev = NULL;
+  for(i=0; i<context->num_devices; i++)
     {
-      if (context->devices[i]->is_svm)
-        svmdev = context->devices[i];
-      if (!context->devices[i]->is_svm && !host)
-        host = context->devices[i];
+      if (context->devices[i]->should_allocate_svm)
+        context->svm_allocdev = context->devices[i];
+      if (context->devices[i]->max_mem_alloc_size < context->min_max_mem_alloc_size)
+        context->min_max_mem_alloc_size =
+            context->devices[i]->max_mem_alloc_size;
     }
-
-  res = svmdev ? svmdev : host;
-  assert(res);
-  return res;
+  if (context->svm_allocdev == NULL)
+    for(i=0; i<context->num_devices; i++)
+      if (DEVICE_IS_SVM_CAPABLE(context->devices[i]))
+        {
+          context->svm_allocdev = context->devices[i];
+          break;
+        }
 }

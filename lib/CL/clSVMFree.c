@@ -27,20 +27,14 @@ CL_API_ENTRY void CL_API_CALL
 POname(clSVMFree)(cl_context context,
                   void *svm_pointer) CL_API_SUFFIX__VERSION_2_0
 {
-#ifndef BUILD_HSA
-  POCL_MSG_PRINT_INFO("This pocl was not built with HSA\n");
-  return;
-#else
-
   POCL_RETURN_ERROR_COND((context == NULL), NULL);
+
+  POCL_RETURN_ERROR_ON((!context->svm_allocdev), NULL,
+                       "None of the devices in this context is SVM-capable\n");
 
   if (svm_pointer == NULL)
     return;
 
-  cl_device_id allocdev = find_svm_device(context);
+  context->svm_allocdev->ops->free_ptr(context->svm_allocdev, svm_pointer);
 
-  allocdev->ops->free_ptr(allocdev, svm_pointer);
-
-
-#endif
 }

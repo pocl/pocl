@@ -312,7 +312,7 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
      ensure that there is no more than a single space between
      identifiers. */
 
-  dev->is_svm = 0;
+  dev->should_allocate_svm = 0;
   /* OpenCL 2.0 properties */
   dev->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
   /* TODO these are minimums, figure out whats a reasonable value */
