@@ -1118,7 +1118,7 @@ AC_LANG([C++])
 old_CXXFLAGS=$CXXFLAGS
 CXXFLAGS=`$TCE_CONFIG --libs --cxxflags --includes`
 
-AC_MSG_CHECKING([for TCE])
+AC_MSG_CHECKING([compiling against a TCE header])
 AC_COMPILE_IFELSE(
   [AC_LANG_PROGRAM(
     [[ #include <Application.hh> ]],
@@ -1128,15 +1128,25 @@ AC_COMPILE_IFELSE(
   [TCE_LIBRARY=ok]],
   [AC_MSG_RESULT(no)])
 
+AC_MSG_CHECKING([running a TCE binary])
+if ttasim --help > /dev/null;
+then
+AC_MSG_RESULT(yes)
+TCE_EXEC=ok
+else
+AC_MSG_RESULT(no)
+fi
+
 CXXFLAGS=$old_CXXFLAGS
 
 fi
 
 if test -z "$TCECC" || \
    test -z "$TCE_CONFIG" || \
-   test -z "$TCE_LIBRARY"; then
+   test -z "$TCE_LIBRARY" || \
+   test -z "$TCE_EXEC"; then
 
-AC_MSG_NOTICE([TCE installation not found. The ttasim device will not be built.])
+AC_MSG_NOTICE([TCE installation not found or doesn't work. The ttasim device will not be built.])
 
 else
 
