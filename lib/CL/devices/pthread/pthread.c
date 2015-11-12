@@ -460,8 +460,11 @@ workgroup_thread (void *p)
           }
         else
           {
-            arguments[i] = 
-              &((*(cl_mem *)(al->value))->device_ptrs[ta->device->dev_id].mem_ptr);
+            cl_mem m = *(cl_mem *)al->value;
+            if (m->device_ptrs)
+              arguments[i] = &(m->device_ptrs[ta->device->dev_id].mem_ptr);
+            else
+              arguments[i] = &(m->mem_host_ptr);
           }
       }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE)

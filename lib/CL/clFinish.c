@@ -295,15 +295,9 @@ static void exec_commands (_cl_command_node *node_list)
           if (DEVICE_MMAP_IS_NOP(node->device))
             ; // no-op
           else
-            POCL_ABORT_UNIMPLEMENTED("SVMMap on this device is not implemented");
-            // TODO this
-            /*
-            void* out;
-            device->ops->map_mem
-              (device->data, node->command.svm_map.svm_ptr,
-               0, node->command.svm_map.size, &out);
-            return out;
-            */
+            node->device->ops->map_mem
+              (node->device->data, node->command.svm_map.svm_ptr,
+               0, node->command.svm_map.size, NULL);
           POCL_UPDATE_EVENT_COMPLETE(event);
           break;
         case CL_COMMAND_SVM_UNMAP:
@@ -311,11 +305,9 @@ static void exec_commands (_cl_command_node *node_list)
           if (DEVICE_MMAP_IS_NOP(node->device))
             ; // no-op
           else
-            POCL_ABORT_UNIMPLEMENTED("SVMUnmap on this device is not implemented");
-            /* TODO
             node->device->ops->unmap_mem
-                 (NULL, NULL, node->command.svm_unmap.svm_ptr, 0);
-            */
+                 (node->device->data, NULL,
+                  node->command.svm_unmap.svm_ptr, 0);
           break;
           POCL_UPDATE_EVENT_COMPLETE(event);
         case CL_COMMAND_SVM_MEMCPY:

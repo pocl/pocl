@@ -211,6 +211,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->fill_rect = pocl_basic_fill_rect;
   ops->memfill = pocl_basic_memfill;
   ops->map_mem = pocl_basic_map_mem;
+  ops->unmap_mem = pocl_basic_unmap_mem;
   ops->compile_submitted_kernels = pocl_basic_compile_submitted_kernels;
   ops->run = pocl_basic_run;
   ops->run_native = pocl_basic_run_native;
@@ -836,6 +837,14 @@ pocl_basic_map_mem (void *data, void *buf_ptr,
   if (host_ptr != NULL) return host_ptr;
   return (char*)buf_ptr + offset;
 }
+
+void* pocl_basic_unmap_mem(void *data, void *host_ptr,
+                           void *device_start_ptr,
+                           size_t size)
+{
+  return host_ptr;
+}
+
 
 void
 pocl_basic_uninit (cl_device_id device)

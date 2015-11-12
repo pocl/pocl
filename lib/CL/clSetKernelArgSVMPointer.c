@@ -31,10 +31,11 @@ POname(clSetKernelArgSVMPointer)(cl_kernel kernel,
                                  cl_uint arg_index,
                                  const void *arg_value) CL_API_SUFFIX__VERSION_2_0
 {
-#ifndef BUILD_HSA
-  POCL_MSG_PRINT_INFO("This pocl was not built with HSA\n");
-  return CL_INVALID_CONTEXT;
-#else
+  POCL_RETURN_ERROR_COND((kernel == NULL), CL_INVALID_VALUE);
+
+  POCL_RETURN_ERROR_ON((!kernel->context->svm_allocdev), CL_INVALID_CONTEXT,
+                       "None of the devices in this context is SVM-capable\n");
+
   cl_mem mem = malloc(sizeof(struct _cl_mem));
   POCL_INIT_OBJECT(mem);
   mem->mem_host_ptr = (void*)arg_value;
@@ -54,6 +55,5 @@ POname(clSetKernelArgSVMPointer)(cl_kernel kernel,
 
   return POname(clSetKernelArg)(kernel, arg_index, sizeof(cl_mem), &mem);
 
-#endif
 }
 POsym(clSetKernelArgSVMPointer)
