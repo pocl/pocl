@@ -46,7 +46,7 @@ POname(clEnqueueSVMMemFill) (cl_command_queue command_queue,
   POCL_RETURN_ERROR_COND((pattern_size > 128), CL_INVALID_VALUE);
 
   POCL_RETURN_ERROR_ON((__builtin_popcount(pattern_size) > 1), CL_INVALID_VALUE,
-                       "pattern_size (%z) must be a power-of-2 value\n", pattern_size);
+                       "pattern_size (%zu) must be a power-of-2 value\n", pattern_size);
 
   POCL_RETURN_ERROR_COND((size == 0), CL_INVALID_VALUE);
 

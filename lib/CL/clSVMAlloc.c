@@ -46,7 +46,7 @@ POname(clSVMAlloc)(cl_context context,
   /* flags does not contain CL_MEM_SVM_FINE_GRAIN_BUFFER
    * but does contain CL_MEM_SVM_ATOMICS. */
   POCL_RETURN_ERROR_COND((flags & CL_MEM_SVM_ATOMICS) &&
-                         (flags & CL_MEM_SVM_FINE_GRAIN_BUFFER == 0), NULL);
+                         ((flags & CL_MEM_SVM_FINE_GRAIN_BUFFER) == 0), NULL);
 
   /* Flags  */
   p = __builtin_popcount(flags & (CL_MEM_READ_WRITE
