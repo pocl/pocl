@@ -174,6 +174,36 @@ struct _cl_icd_dispatch pocl_dispatch = {
   NULL, /* clCreateSamplerWithProperties */
   &POclSetKernelArgSVMPointer,
   &POclSetKernelExecInfo,
+  NULL, /* &clUnknown136 */
+  NULL, /* &clUnknown137 */
+  NULL, /* &clUnknown138 */
+  NULL, /* &clUnknown139 */
+  NULL, /* &clUnknown140 */
+  NULL, /* &clUnknown141 */
+  NULL, /* &clUnknown142 */
+  NULL, /* &clUnknown143 */
+  NULL, /* &clUnknown144 */
+  NULL, /* &clUnknown145 */
+  NULL, /* &clUnknown146 */
+  NULL, /* &clUnknown147 */
+  NULL, /* &clUnknown148 */
+  NULL, /* &clUnknown149 */
+  NULL, /* &clUnknown150 */
+  NULL, /* &clUnknown151 */
+  NULL, /* &clUnknown152 */
+  NULL, /* &clUnknown153 */
+  NULL, /* &clUnknown154 */
+  NULL, /* &clUnknown155 */
+  NULL, /* &clUnknown156 */
+  NULL, /* &clUnknown157 */
+  NULL, /* &clUnknown158 */
+  NULL, /* &clUnknown159 */
+  NULL, /* &clUnknown160 */
+  NULL, /* &clUnknown161 */
+  NULL, /* &clUnknown162 */
+  NULL, /* &clUnknown163 */
+  NULL, /* &clUnknown164 */
+  NULL, /* &clUnknown165 */
 #endif
 };
 

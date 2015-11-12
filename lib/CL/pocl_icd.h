@@ -38,8 +38,9 @@ extern struct _cl_icd_dispatch pocl_dispatch;  //from clGetPlatformIDs.c
 #ifdef HAVE_OCL_ICD 
 #include <ocl_icd.h>
 #else
+#define OCL_ICD_IDENTIFIED_FUNCTIONS 116
 struct _cl_icd_dispatch {
-	void *funcptr[122];
+        void *funcptr[165];
 };
 #endif
 
