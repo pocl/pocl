@@ -224,10 +224,15 @@ static void get_build_log(cl_program program,
 int pocl_llvm_build_program(cl_program program, 
                             unsigned device_i,
                             const char* user_options,
-                            void** cache_lock,
                             char* program_bc_path)
 
 {
+  void* write_lock = NULL;
+  char tempfile[POCL_FILENAME_LENGTH];
+  tempfile[0] = 0;
+  llvm::Module **mod = NULL;
+  clang::CodeGenAction *action = NULL;
+
   llvm::MutexGuard lockHolder(kernelCompilerLock);
   InitializeLLVM();
 
@@ -335,7 +340,7 @@ int pocl_llvm_build_program(cl_program program,
        diags))
     {
       pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
-        program_bc_path, cache_lock);
+        program_bc_path);
       get_build_log(program, device_i, ss_build_log, diagsBuffer, CI.getSourceManager());
       return CL_INVALID_BUILD_OPTIONS;
     }
@@ -423,7 +428,6 @@ int pocl_llvm_build_program(cl_program program,
 
   std::string saved_output(fe.OutputFile);
 
-  char tempfile[POCL_FILENAME_LENGTH];
   pocl_cache_mk_temp_name(tempfile);
 
   fe.OutputFile = tempfile;
@@ -433,32 +437,26 @@ int pocl_llvm_build_program(cl_program program,
   action2 = new clang::PrintPreprocessedAction();
   success = CI.ExecuteAction(*action2);
   if (!success)
-    {
-      pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
-        program_bc_path, cache_lock);
-      get_build_log(program, device_i, ss_build_log, diagsBuffer, CI.getSourceManager());
-      return CL_BUILD_PROGRAM_FAILURE;
-    }
+    goto ERROR_BUILDLOG;
 
   char *preprocessed_out;
   uint64_t size;
   pocl_read_file(tempfile, &preprocessed_out, &size);
   if (!preprocessed_out)
-    {
-      pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
-        program_bc_path, cache_lock);
-      get_build_log(program, device_i, ss_build_log, diagsBuffer, CI.getSourceManager());
-      return CL_BUILD_PROGRAM_FAILURE;
-    }
+    goto ERROR_BUILDLOG;
 
   pocl_cache_create_program_cachedir(program, device_i, preprocessed_out,
-                                     size, program_bc_path, cache_lock);
+                                     size, program_bc_path);
+  write_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
+  assert(write_lock);
 
   POCL_MEM_FREE(preprocessed_out);
   pocl_remove(tempfile);
+  tempfile[0] = 0;
 
   if (pocl_exists(program_bc_path)) {
     unlink_source(fe);
+    pocl_cache_release_lock(write_lock);
     return CL_SUCCESS;
   }
 
@@ -468,16 +466,16 @@ int pocl_llvm_build_program(cl_program program,
   // the compilation flags used to compile it and the current translation
   // unit via the preprocessor options directly.
 
-  clang::CodeGenAction *action = NULL;
   action = new clang::EmitLLVMOnlyAction(GlobalContext());
   success = CI.ExecuteAction(*action);
 
   get_build_log(program, device_i, ss_build_log, diagsBuffer, CI.getSourceManager());
 
   // FIXME: memleak, see FIXME below
-  if (!success) return CL_BUILD_PROGRAM_FAILURE;
+  if (!success)
+    goto ERROR_UNLOCK;
 
-  llvm::Module **mod = (llvm::Module **)&program->llvm_irs[device_i];
+  mod = (llvm::Module **)&program->llvm_irs[device_i];
   if (*mod != NULL)
     delete (llvm::Module*)*mod;
 
@@ -488,7 +486,16 @@ int pocl_llvm_build_program(cl_program program,
 #endif
 
   if (*mod == NULL)
-    return CL_BUILD_PROGRAM_FAILURE;
+    goto ERROR_UNLOCK;
+  else
+    goto OK;
+ERROR_BUILDLOG:
+  pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
+    program_bc_path);
+  get_build_log(program, device_i, ss_build_log, diagsBuffer, CI.getSourceManager());
+ERROR_UNLOCK:
+  pocl_cache_release_lock(write_lock);
+  return CL_BUILD_PROGRAM_FAILURE;
 
   /* Always retain program.bc. Its required in clBuildProgram */
   pocl_write_module(*mod, program_bc_path, 0);
@@ -496,7 +503,7 @@ int pocl_llvm_build_program(cl_program program,
   /* To avoid writing & reading the same back,
    * save program->binaries[i]
    */
-
+OK:
   std::string content;
   llvm::raw_string_ostream sos(content);
   WriteBitcodeToFile(*mod, sos);
@@ -515,8 +522,12 @@ int pocl_llvm_build_program(cl_program program,
   // FIXME: cannot delete action as it contains something the llvm::Module
   // refers to. We should create it globally, at compiler initialization time.
   //delete action;
+  if (tempfile[0])
+    pocl_remove(tempfile);
+  pocl_cache_release_lock(write_lock);
 
   return CL_SUCCESS;
+
 }
 
 int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,

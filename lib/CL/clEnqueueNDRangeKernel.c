@@ -62,7 +62,6 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   cl_device_id realdev = NULL;
   struct pocl_context pc;
   _cl_command_node *command_node;
-  void* cache_lock;
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
   
@@ -231,10 +230,6 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
     CL_INVALID_EVENT_WAIT_LIST);
 
-  cache_lock = pocl_cache_acquire_writer_lock(kernel->program,
-                                              realdev);
-  assert(cache_lock);
-
   char cachedir[POCL_FILENAME_LENGTH];
   pocl_cache_make_kernel_cachedir_path(cachedir, kernel->program,
                                   realdev, kernel,
@@ -340,7 +335,6 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   error = CL_SUCCESS;
 
 ERROR:
-  pocl_cache_release_lock(cache_lock);
   return error;
 
 }

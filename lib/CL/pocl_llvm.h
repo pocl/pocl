@@ -34,8 +34,7 @@ extern "C" {
 int pocl_llvm_build_program
 (cl_program program,
  unsigned device_i,
- const char* user_options,
- void **cache_lock, char *program_bc_path);
+ const char* user_options, char *program_bc_path);
 
 
 /* Retrieve metadata of the given kernel in the program to populate the

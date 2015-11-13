@@ -113,7 +113,7 @@ CL_API_SUFFIX__VERSION_1_0
   char *modded_options = NULL;
   char *token = NULL;
   char *saveptr = NULL;
-  void* cache_lock = NULL;
+  void* write_cache_lock = NULL;
 
   POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
 
@@ -228,20 +228,19 @@ CL_API_SUFFIX__VERSION_1_0
       /* clCreateProgramWithSource */
       if (program->source)
         {
-          error = pocl_llvm_build_program(program, device_i, user_options,
-                                          &cache_lock, program_bc_path);
-          if (error != 0)
-            {
-              errcode = CL_BUILD_PROGRAM_FAILURE;
-              goto ERROR_CLEAN_BINARIES;
-            }
-          assert(cache_lock);
+          error = pocl_llvm_build_program(program, device_i,
+                                          user_options, program_bc_path);
+          POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
+                             "pocl_llvm_build_program() failed\n");
         }
       /* clCreateProgramWithBinaries */
       else if (program->binaries[device_i]) {
-            pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
-                                               program_bc_path, &cache_lock);
-            assert(cache_lock);
+            error = pocl_cache_create_program_cachedir(program, device_i,
+                                               NULL, 0, program_bc_path);
+            POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
+                               "Could not create program cachedir");
+            write_cache_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
+            assert(write_cache_lock);
             errcode = pocl_write_file(program_bc_path, (char*)program->binaries[device_i],
                           (uint64_t)program->binary_sizes[device_i], 0, 0);
             POCL_GOTO_ERROR_ON(errcode, CL_BUILD_PROGRAM_FAILURE,
@@ -256,6 +255,9 @@ CL_API_SUFFIX__VERSION_1_0
       /* Read binaries from program.bc to memory */
       if (program->binaries[device_i] == NULL)
         {
+          if (!write_cache_lock)
+            write_cache_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
+          assert(write_cache_lock);
           errcode = pocl_read_file(program_bc_path, &binary, &fsize);
           POCL_GOTO_ERROR_ON(errcode, CL_BUILD_ERROR, "Failed to read binaries from program.bc to memory: %s\n", program_bc_path);
 
@@ -264,21 +266,30 @@ CL_API_SUFFIX__VERSION_1_0
         }
 
       if (program->llvm_irs[device_i] == NULL)
+        {
+          if (!write_cache_lock)
+            write_cache_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
+          assert(write_cache_lock);
           pocl_update_program_llvm_irs(program, device_i, device);
+        }
 
+      /* Maintain a 'last_accessed' file in every program's
+       * cache directory. Will be useful for cache pruning script
+       * that flushes old directories based on LRU */
       pocl_cache_update_program_last_access(program, device_i);
 
-      pocl_cache_release_lock(cache_lock);
-      cache_lock = NULL;
+      if (write_cache_lock)
+        {
+          pocl_cache_release_lock(write_cache_lock);
+          write_cache_lock = NULL;
+        }
+
     }
+
 
   POCL_GOTO_ERROR_ON((actually_built < num_devices), CL_BUILD_PROGRAM_FAILURE,
                      "Some of the devices on the argument-supplied list are"
                      "not available for the program, or do not exist\n");
-
-  /* Maintain a 'last_accessed' file in every program's
-   * cache directory. Will be useful for cache pruning script
-   * that flushes old directories based on LRU */
 
   program->build_status = CL_BUILD_SUCCESS;
   POCL_UNLOCK_OBJ(program);
@@ -288,19 +299,20 @@ CL_API_SUFFIX__VERSION_1_0
   /* Set pointers to NULL during cleanup so that clProgramRelease won't
    * cause a double free. */
 
-ERROR_CLEAN_BINARIES:
-  for(i = 0; i < device_i; i++)
+ERROR:
+  for(i = 0; i < num_devices; i++)
   {
     POCL_MEM_FREE(program->binaries[i]);
+    pocl_cache_release_lock(program->read_locks[i]);
   }
   POCL_MEM_FREE(program->binaries);
   POCL_MEM_FREE(program->binary_sizes);
+  POCL_MEM_FREE(unique_devlist);
+  pocl_cache_release_lock(write_cache_lock);
 ERROR_CLEAN_OPTIONS:
   POCL_MEM_FREE(modded_options);
-ERROR:
-  POCL_MEM_FREE(unique_devlist);
   program->build_status = CL_BUILD_ERROR;
-  pocl_cache_release_lock(cache_lock);
+
   POCL_UNLOCK_OBJ(program);
   return errcode;
 }

@@ -65,7 +65,7 @@ int pocl_cl_device_to_index(cl_program   program,
 static void program_device_dir(char*        path,
                               cl_program   program,
                               unsigned     device_i,
-                              char*        append_path) {
+                              const char*        append_path) {
     assert(path);
     assert(program);
     assert(device_i < program->num_devices);
@@ -159,16 +159,24 @@ void pocl_cache_final_binary_path(char* final_binary_path, cl_program program,
 
 static void* acquire_program_lock(cl_program program,
                                   unsigned device_i,
+                                  const char* lock_type,
                                   int shared) {
     char lock_path[POCL_FILENAME_LENGTH];
-    program_device_dir(lock_path, program, device_i, "_rw");
+    program_device_dir(lock_path, program, device_i, lock_type);
 
     return acquire_lock(lock_path, shared);
 }
 
+// EXCLUSIVE writer lock
 void* pocl_cache_acquire_writer_lock_i(cl_program program,
                                        unsigned device_i) {
-    return acquire_program_lock(program, device_i, 0);
+    return acquire_program_lock(program, device_i, "_write", 0);
+}
+
+// SHARED reader lock (on clReleaseProgram, request EXCLUSIVE reader..)
+void* pocl_cache_acquire_reader_lock_i(cl_program program,
+                                       unsigned device_i) {
+    return acquire_program_lock(program, device_i, "_read", 1);
 }
 
 void pocl_cache_release_lock(void* lock) {
@@ -182,6 +190,12 @@ void* pocl_cache_acquire_writer_lock(cl_program program,
     return pocl_cache_acquire_writer_lock_i(program, (unsigned)index);
 }
 
+void* pocl_cache_acquire_reader_lock(cl_program program,
+                                     cl_device_id device) {
+    int index = pocl_cl_device_to_index(program, device);
+    assert(index >= 0);
+    return pocl_cache_acquire_reader_lock_i(program, (unsigned)index);
+}
 
 /******************************************************************************/
 
@@ -510,8 +524,7 @@ pocl_cache_create_program_cachedir(cl_program program,
                                    unsigned device_i,
                                    const char* preprocessed_source,
                                    size_t source_len,
-                                   char* program_bc_path,
-                                   void** cache_lock)
+                                   char* program_bc_path)
 {
     const char *hash_source = NULL;
     uint8_t old_build_hash[SHA1_DIGEST_SIZE] = {0};
@@ -542,6 +555,8 @@ pocl_cache_create_program_cachedir(cl_program program,
             program->binary_sizes[device_i] = 0;
         }
         pocl_free_llvm_irs(program, device_i);
+        pocl_cache_release_lock(program->read_locks[device_i]);
+        program->read_locks[device_i] = NULL;
     }
 
     program_device_dir(program_bc_path, program, device_i, "");
@@ -551,7 +566,8 @@ pocl_cache_create_program_cachedir(cl_program program,
 
     pocl_cache_program_bc_path(program_bc_path, program, device_i);
 
-    *cache_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
+    program->read_locks[device_i] = pocl_cache_acquire_reader_lock_i(program, device_i);
+    assert(program->read_locks[device_i]);
 
     return 0;
 }
@@ -560,15 +576,23 @@ void pocl_cache_cleanup_cachedir(cl_program program) {
 
     unsigned i;
 
+    for (i = 0; i < program->num_devices; ++i)
+      pocl_cache_release_lock(program->read_locks[i]);
+    POCL_MEM_FREE(program->read_locks);
+
     if (!pocl_get_bool_option("POCL_KERNEL_CACHE", POCL_KERNEL_CACHE_DEFAULT)) {
 
         for (i=0; i< program->num_devices; i++) {
             if (program->build_hash[i][0] == 0)
                 continue;
 
-            void* lock = acquire_program_lock(program, i, 0);
+            void* lock = acquire_program_lock(program, i, "_read", 0);
             if (!lock)
-                return;
+              {
+                POCL_MSG_PRINT(" *** WARNING *** ", "",
+                "Could not get an exclusive lock to remove program cachedir");
+                continue;
+              }
             char cachedir[POCL_FILENAME_LENGTH];
             program_device_dir(cachedir, program, i, "");
             pocl_rm_rf(cachedir);
