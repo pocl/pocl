@@ -315,7 +315,9 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
 
   dev->should_allocate_svm = 0;
   /* OpenCL 2.0 properties */
-  dev->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER;
+  dev->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER
+                  | CL_DEVICE_SVM_FINE_GRAIN_BUFFER
+                  | CL_DEVICE_SVM_ATOMICS;
   /* TODO these are minimums, figure out whats a reasonable value */
   dev->max_events = 1024;
   dev->max_queues = 1;
