@@ -20,12 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-# Download:
-# Page:
-#     https://software.intel.com/en-us/articles/opencl-20-shared-virtual-memory-code-sample
-# link:
-#     https://software.intel.com/sites/default/files/managed/e6/7a/intel_ocl_svm_basic_win.zip
-
 if TEST_SUITE_INTELSVM
 testsuite_pocl_dir=${abs_top_srcdir}/examples/IntelSVM
 testsuite_src_dir=${testsuite_pocl_dir}/source

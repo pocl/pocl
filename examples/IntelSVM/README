@@ -1,0 +1,10 @@
+1) Download intel_ocl_svm_basic_win.zip from:
+     https://software.intel.com/en-us/articles/opencl-20-shared-virtual-memory-code-sample
+   to this folder
+
+3) reconfigure pocl ( ./configure ) with --enable-testsuites=check
+   or --enable-testsuites=IntelSVM
+
+5) call 'make prepare-examples' once to get the examples built
+
+6) run tests: make check
