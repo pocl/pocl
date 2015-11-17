@@ -47,13 +47,13 @@ common/oclobject.o:
 
 coarse: common
 	cd $(testsuite_src_dir) && $(CXX) $(CFLAGS) -std=c++11 -Icommon -o SVMBasicCoarseGrained/svmbasic.o -c SVMBasicCoarseGrained/svmbasic.cpp
-	cd $(testsuite_src_dir) && $(CXX) $(LDFLAGS) -lOpenCL -o SVMBasicCoarseGrained/svmbasic SVMBasicCoarseGrained/svmbasic.o \
-	common/basic.o  common/cmdparser.o  common/oclobject.o
+	cd $(testsuite_src_dir) && $(CXX) $(LDFLAGS) -o SVMBasicCoarseGrained/svmbasic SVMBasicCoarseGrained/svmbasic.o \
+	common/basic.o  common/cmdparser.o  common/oclobject.o -lOpenCL
 
 fine: common
 	cd $(testsuite_src_dir) && $(CXX) $(CFLAGS) -std=c++11 -Icommon -o SVMBasicFineGrained/svmbasic.o -c SVMBasicFineGrained/svmbasic.cpp
-	cd $(testsuite_src_dir) && $(CXX) $(LDFLAGS) -lOpenCL -o SVMBasicFineGrained/svmbasic SVMBasicFineGrained/svmbasic.o \
-	common/basic.o  common/cmdparser.o  common/oclobject.o
+	cd $(testsuite_src_dir) && $(CXX) $(LDFLAGS) -o SVMBasicFineGrained/svmbasic SVMBasicFineGrained/svmbasic.o \
+	common/basic.o  common/cmdparser.o  common/oclobject.o -lOpenCL
 
 
 test_CoarseGrained:
