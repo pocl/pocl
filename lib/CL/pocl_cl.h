@@ -217,7 +217,8 @@ struct pocl_device_ops {
   cl_int (*alloc_mem_obj) (cl_device_id device, cl_mem mem_obj);
   void *(*create_sub_buffer) (void *data, void* buffer, size_t origin, size_t size);
   void (*free) (cl_device_id device, cl_mem mem_obj);
-  void (*read) (void *data, void *host_ptr, const void *device_ptr, 
+  void (*free_ptr) (cl_device_id device, void* mem_ptr);
+  void (*read) (void *data, void *host_ptr, const void *device_ptr,
                 size_t offset, size_t cb);
   void (*read_rect) (void *data, void *host_ptr, void *device_ptr,
                      const size_t *buffer_origin,
@@ -256,6 +257,12 @@ void (*fill_rect) (void *data,
                    size_t const buffer_slice_pitch,
                    void *fill_pixel,
                    size_t pixel_size);
+
+void (*memfill) (void *ptr,
+                 size_t size,
+                 size_t offset,
+                 const void* pattern,
+                 size_t pattern_size);
 
   /* Maps 'size' bytes of device global memory at buf_ptr + offset to 
      host-accessible memory. This might or might not involve copying 
@@ -384,8 +391,31 @@ struct _cl_device_id {
   /* Convert automatic local variables to kernel arguments? */
   int autolocals_to_args;
 
+  // True if the device supports SVM has priority
+  // at allocating Shared Virtual Memory
+  cl_bool should_allocate_svm;
+  /* OpenCL 2.0 properties */
+  cl_device_svm_capabilities svm_caps;
+  cl_uint max_events;
+  cl_uint max_queues;
+  cl_uint max_pipe_args;
+  cl_uint max_pipe_active_res;
+  cl_uint max_pipe_packet_size;
+  cl_uint dev_queue_pref_size;
+  cl_uint dev_queue_max_size;
+  cl_command_queue_properties on_dev_queue_props;
+  cl_command_queue_properties on_host_queue_props;
+
   struct pocl_device_ops *ops; /* Device operations, shared amongst same devices */
 };
+
+#define DEVICE_SVM_FINEGR(dev) (dev->svm_caps & (CL_DEVICE_SVM_FINE_GRAIN_BUFFER \
+                                              | CL_DEVICE_SVM_FINE_GRAIN_SYSTEM))
+#define DEVICE_SVM_ATOM(dev) (dev->svm_caps & CL_DEVICE_SVM_ATOMICS)
+
+#define DEVICE_IS_SVM_CAPABLE(dev) (dev->svm_caps & CL_DEVICE_SVM_COARSE_GRAIN_BUFFER)
+
+#define DEVICE_MMAP_IS_NOP(dev) (DEVICE_SVM_FINEGR(dev) && DEVICE_SVM_ATOM(dev))
 
 struct _cl_platform_id {
   POCL_ICD_OBJECT
@@ -405,6 +435,13 @@ struct _cl_context {
      clReleaseContext for the result regardless if it failed or not. 
      Returns a valid = 0 context in that case.  */
   char valid;
+
+  /* The minimal value of max_mem_alloc_size of all devices in context */
+  size_t min_max_mem_alloc_size;
+  /* The device that should allocate SVM (might be == host)
+   * NULL if none of devices in the context is SVM capable */
+  cl_device_id svm_allocdev;
+
 };
 
 struct _cl_command_queue {
@@ -467,6 +504,9 @@ struct _cl_mem {
   cl_uint                 num_mip_levels;
   cl_uint                 num_samples;
   cl_mem                  buffer;
+  /* Pipe specific */
+  cl_uint packet_size;
+  cl_uint max_packets;
 };
 
 typedef uint8_t SHA1_digest_t[SHA1_DIGEST_SIZE * 2 + 1];

@@ -169,7 +169,7 @@ fi
 # Option to choose external testsuites
 AC_ARG_ENABLE([testsuites],
 	      [AS_HELP_STRING([--enable-testsuites=suite1,suite2,...],
-          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,amdsdk2_9,VexCL,Piglit,Halide,OpenCV,CloverLeaf,hsa])],
+          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,amdsdk2_9,VexCL,Piglit,Halide,OpenCV,CloverLeaf,hsa,IntelSVM])],
 	      [],[enable_testsuites=check])
 
 enable_testsuite_opencl_book_samples=no
@@ -183,6 +183,7 @@ enable_testsuite_piglit=no
 enable_testsuite_halide=no
 enable_testsuite_opencv=no
 enable_testsuite_hsa=no
+enable_testsuite_intel_svm=no
 if test x"$enable_testsuites" = xcheck ; then
   if test -d "$srcdir/examples/opencl-book-samples/checkout" ; then
     enable_testsuite_opencl_book_samples=yes
@@ -219,6 +220,9 @@ if test x"$enable_testsuites" = xcheck ; then
   if test -f "$srcdir/examples/CloverLeaf/CloverLeaf_OpenCL/Makefile" ; then
     enable_testsuite_cloverleaf=yes
   fi  
+  if test -f "$srcdir/examples/IntelSVM/intel_ocl_svm_basic_win.zip"; then
+    enable_testsuite_intel_svm=yes
+  fi
 fi
 AS_CASE([,"$enable_testsuites",],
   [*,all,*|*,yes,*], [enable_testsuites="opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,amdsdk2_9,VexCL,piglit,Halide,OpenCV,CloverLeaf"],
@@ -252,6 +256,10 @@ AS_CASE([,"$enable_testsuites",],
 AS_CASE([,"$enable_testsuites",],
   [*,piglit,*|*,Piglit,*], [
     enable_testsuite_piglit=yes
+  ])
+AS_CASE([,"$enable_testsuites",],
+  [*,intelsvm,*|*,IntelSVM,*], [
+    enable_testsuite_intel_svm=yes
   ])
 AS_CASE([,"$enable_testsuites",],
   [*,halide,*|*,Halide,*], [
@@ -307,6 +315,13 @@ if test "$enable_testsuite_amd" = "yes" ; then
     [ AC_MSG_WARN([pkg-config could not find libSDL, AMD APP SDK testsuite is not used ]) 
       enable_testsuite_amd=no
     ])
+fi
+
+if test "$enable_testsuite_intel_svm" = "yes" ; then
+  if ! test -f "$srcdir/examples/IntelSVM/intel_ocl_svm_basic_win.zip"; then
+    AC_MSG_WARN([Disabling Intel SVM tests, could not find intel_ocl_svm_basic_win.zip])
+    enable_testsuite_intel_svm=no
+  fi
 fi
 
 if test "$enable_testsuite_amdsdk2_9" = "yes" ; then
@@ -369,6 +384,7 @@ AM_CONDITIONAL([TEST_SUITE_PIGLIT], [test "$enable_testsuite_piglit" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_HALIDE], [test "$enable_testsuite_halide" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_OPENCV], [test "$enable_testsuite_opencv" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_CLOVERLEAF], [test "$enable_testsuite_cloverleaf" = "yes"])
+AM_CONDITIONAL([TEST_SUITE_INTELSVM], [test "$enable_testsuite_intel_svm" = "yes"])
 
 # Some information for the user
 AC_MSG_NOTICE([internal tests are enabled])
@@ -439,7 +455,12 @@ if test "$enable_testsuite_cloverleaf" = "yes"; then
 else
   AC_MSG_NOTICE([tests from CloverLeaf are disabled])
 fi
-
+if test "$enable_testsuite_intel_svm" = "yes" ; then
+  AC_MSG_NOTICE([tests from Intel SVM samples are enabled])
+  #POAT_TESTSUITES="$POAT_TESTSUITES IntelSVM"
+else
+  AC_MSG_NOTICE([tests from Intel SVM samples are disabled])
+fi
 
 ####################################################################
 # Pthread Library
@@ -1308,7 +1329,6 @@ then
   AC_DEFINE([BUILD_HSA], [1], [Defined to 1 in case the HSA driver should be built.])
   enable_testsuite_hsa=yes
   POAT_TESTSUITES="$POAT_TESTSUITES hsa"
-
   # -lHSAILUtil is missing from llvm-config --libfiles
   LLVM_LIBS="$LLVM_LIBS -lLLVMHSAILUtil"
 fi
@@ -1536,6 +1556,7 @@ AC_CONFIG_FILES([Makefile
                  examples/Rodinia/Makefile
                  examples/Parboil/Makefile
                  examples/ViennaCL/Makefile
+                 examples/IntelSVM/Makefile
                  examples/AMD/Makefile
                  examples/AMDSDK2.9/Makefile
                  examples/EinsteinToolkit/Makefile

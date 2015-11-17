@@ -524,7 +524,7 @@ AT_CHECK_UNQUOTED([make test_SoAversusAoS -sC $abs_top_builddir/examples/AMDSDK2
 ])     
 AT_CLEANUP
 
-POAT_AMDSDK_HSA_SETUP([sobelfilter])
+POAT_AMDSDK_SETUP([sobelfilter])
 AT_CHECK_UNQUOTED([make test_SobelFilter -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])     

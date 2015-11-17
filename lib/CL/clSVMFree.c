@@ -1,7 +1,6 @@
-/* OpenCL built-in library: hypot()
+/* OpenCL runtime library: clSVMFree()
 
-   Copyright (c) 2011 Erik Schnetter <eschnetter@perimeterinstitute.ca>
-                      Perimeter Institute for Theoretical Physics
+   Copyright (c) 2015 Michal Babej / Tampere University of Technology
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -22,31 +21,20 @@
    THE SOFTWARE.
 */
 
-#include "hsail_templates.h"
+#include "pocl_util.h"
 
-
-float _cl_builtin_hypotf(float x, float y)
+CL_API_ENTRY void CL_API_CALL
+POname(clSVMFree)(cl_context context,
+                  void *svm_pointer) CL_API_SUFFIX__VERSION_2_0
 {
-    float a = fabs(x);
-    float b = fabs(y);
-    float n = fmin(a, b);
-    float m = fmax(a, b);
-    if (m == 0.0f)
-        return 0.0f;
-    float d = n / m;
-    return m * sqrt(fma(d, d, 1.0f));
-}
+  POCL_RETURN_ERROR_COND((context == NULL), NULL);
 
-double _cl_builtin_hypot(double x, double y)
-{
-    double a = fabs(x);
-    double b = fabs(y);
-    double n = fmin(a, b);
-    double m = fmax(a, b);
-    if (m == 0.0)
-        return 0.0;
-    double d = n / m;
-    return m * sqrt(fma(d, d, 1.0));
-}
+  POCL_RETURN_ERROR_ON((!context->svm_allocdev), NULL,
+                       "None of the devices in this context is SVM-capable\n");
 
-IMPLEMENT_EXPR_ALL(hypot, V_VV, _cl_builtin_hypotf(a, b), _cl_builtin_hypot(a, b))
+  if (svm_pointer == NULL)
+    return;
+
+  context->svm_allocdev->ops->free_ptr(context->svm_allocdev, svm_pointer);
+
+}

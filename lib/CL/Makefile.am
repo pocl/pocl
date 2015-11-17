@@ -49,6 +49,7 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clCreateBuffer.c		\
                    clCreateSubBuffer.c		\
                    clEnqueueFillImage.c	\
+                   clEnqueueFillBuffer.c	\
                    clEnqueueReadBuffer.c	\
                    clEnqueueReadBufferRect.c	\
                    clEnqueueMapBuffer.c	\
@@ -122,6 +123,15 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clCreateSubDevices.c \
                    clReleaseDevice.c \
                    clRetainDevice.c \
+                   clSVMAlloc.c \
+                   clSVMFree.c \
+                   clEnqueueSVMFree.c \
+                   clEnqueueSVMMap.c \
+                   clEnqueueSVMUnmap.c \
+                   clEnqueueSVMMemcpy.c \
+                   clEnqueueSVMMemFill.c \
+                   clSetKernelArgSVMPointer.c \
+                   clSetKernelExecInfo.c \
                    pocl_cl.h \
                    pocl_util.c pocl_util.h \
                    pocl_queue_util.c pocl_queue_util.h \

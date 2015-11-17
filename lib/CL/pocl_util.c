@@ -551,3 +551,26 @@ cl_device_id * pocl_unique_device_list(const cl_device_id * in, cl_uint num, cl_
   *real = real_num;
   return out;
 }
+
+/* Setup certain info about context that comes up later in API calls */
+void pocl_setup_context(cl_context context)
+{
+  unsigned i;
+  context->min_max_mem_alloc_size = SIZE_MAX;
+  context->svm_allocdev = NULL;
+  for(i=0; i<context->num_devices; i++)
+    {
+      if (context->devices[i]->should_allocate_svm)
+        context->svm_allocdev = context->devices[i];
+      if (context->devices[i]->max_mem_alloc_size < context->min_max_mem_alloc_size)
+        context->min_max_mem_alloc_size =
+            context->devices[i]->max_mem_alloc_size;
+    }
+  if (context->svm_allocdev == NULL)
+    for(i=0; i<context->num_devices; i++)
+      if (DEVICE_IS_SVM_CAPABLE(context->devices[i]))
+        {
+          context->svm_allocdev = context->devices[i];
+          break;
+        }
+}

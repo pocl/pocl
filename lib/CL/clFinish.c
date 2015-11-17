@@ -23,6 +23,7 @@
 
 #include "pocl_cl.h"
 #include "pocl_util.h"
+#include "pocl_debug.h"
 #include "pocl_image_util.h"
 #include "utlist.h"
 #include "clEnqueueMapBuffer.h"
@@ -39,6 +40,8 @@ POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
   _cl_command_node *ready_list = NULL;
   cl_bool command_ready;
   cl_event *event;
+
+  POCL_MEASURE_START(clFinish);
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
@@ -92,6 +95,7 @@ POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 
   exec_commands(ready_list);
 
+  POCL_MEASURE_FINISH(clFinish);
   return CL_SUCCESS;
 }
 POsym(clFinish)
@@ -257,10 +261,73 @@ static void exec_commands (_cl_command_node *node_list)
           POCL_MEM_FREE(node->command.fill_image.fill_pixel);
           POCL_UPDATE_EVENT_COMPLETE(event);
           break;
+        case CL_COMMAND_FILL_BUFFER:
+          POCL_UPDATE_EVENT_RUNNING(event);
+          node->device->ops->memfill
+            (node->command.memfill.ptr,
+             node->command.memfill.size,
+             node->command.memfill.offset,
+             node->command.memfill.pattern,
+             node->command.memfill.pattern_size);
+          POCL_MEM_FREE(node->command.memfill.pattern);
+          POCL_UPDATE_EVENT_COMPLETE(event);
+          break;
         case CL_COMMAND_MARKER:
           POCL_UPDATE_EVENT_RUNNING(event);
           POCL_UPDATE_EVENT_COMPLETE(event);
           break;
+        case CL_COMMAND_SVM_FREE:
+          POCL_UPDATE_EVENT_RUNNING(event);
+          if (node->command.svm_free.pfn_free_func)
+            node->command.svm_free.pfn_free_func(
+                node->command.svm_free.queue,
+                node->command.svm_free.num_svm_pointers,
+                node->command.svm_free.svm_pointers,
+                node->command.svm_free.data);
+          else
+            for (unsigned i=0; i < node->command.svm_free.num_svm_pointers; i++)
+              node->device->ops->free_ptr(node->device,
+                  node->command.svm_free.svm_pointers[i]);
+          POCL_UPDATE_EVENT_COMPLETE(event);
+          break;
+        case CL_COMMAND_SVM_MAP:
+          POCL_UPDATE_EVENT_RUNNING(event);
+          if (DEVICE_MMAP_IS_NOP(node->device))
+            ; // no-op
+          else
+            node->device->ops->map_mem
+              (node->device->data, node->command.svm_map.svm_ptr,
+               0, node->command.svm_map.size, NULL);
+          POCL_UPDATE_EVENT_COMPLETE(event);
+          break;
+        case CL_COMMAND_SVM_UNMAP:
+          POCL_UPDATE_EVENT_RUNNING(event);
+          if (DEVICE_MMAP_IS_NOP(node->device))
+            ; // no-op
+          else
+            node->device->ops->unmap_mem
+                 (node->device->data, NULL,
+                  node->command.svm_unmap.svm_ptr, 0);
+          break;
+          POCL_UPDATE_EVENT_COMPLETE(event);
+        case CL_COMMAND_SVM_MEMCPY:
+          POCL_UPDATE_EVENT_RUNNING(event);
+          node->device->ops->copy(NULL,
+             node->command.svm_memcpy.src, 0,
+             node->command.svm_memcpy.dst, 0,
+             node->command.svm_memcpy.size);
+          POCL_UPDATE_EVENT_COMPLETE(event);
+          break;
+        case CL_COMMAND_SVM_MEMFILL:
+          POCL_UPDATE_EVENT_RUNNING(event);
+          node->device->ops->memfill(
+             node->command.memfill.ptr,
+             node->command.memfill.size, 0,
+             node->command.memfill.pattern,
+             node->command.memfill.pattern_size);
+          POCL_UPDATE_EVENT_COMPLETE(event);
+          break;
+
         default:
           POCL_ABORT_UNIMPLEMENTED("clFinish: Unknown command");
           break;

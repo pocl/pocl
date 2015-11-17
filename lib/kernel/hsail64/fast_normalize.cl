@@ -1,7 +1,6 @@
-/* OpenCL built-in library: hypot()
+/* OpenCL built-in library: fast_normalize()
 
-   Copyright (c) 2011 Erik Schnetter <eschnetter@perimeterinstitute.ca>
-                      Perimeter Institute for Theoretical Physics
+   Copyright (c) 2015 Michal Babej / Tampere University of Technology
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -24,29 +23,12 @@
 
 #include "hsail_templates.h"
 
+#define FAST_NORMALIZE ( (fast_length(a) == (stype)0.0) ? ((vtype)0.0) : (a / (vtype)fast_length(a)) )
 
-float _cl_builtin_hypotf(float x, float y)
-{
-    float a = fabs(x);
-    float b = fabs(y);
-    float n = fmin(a, b);
-    float m = fmax(a, b);
-    if (m == 0.0f)
-        return 0.0f;
-    float d = n / m;
-    return m * sqrt(fma(d, d, 1.0f));
-}
+IMPLEMENT_EXPR_V_V(fast_normalize, FAST_NORMALIZE, float2, float, int2, int)
+IMPLEMENT_EXPR_V_V(fast_normalize, FAST_NORMALIZE, float3, float, int3, int)
+IMPLEMENT_EXPR_V_V(fast_normalize, FAST_NORMALIZE, float4, float, int4, int)
 
-double _cl_builtin_hypot(double x, double y)
-{
-    double a = fabs(x);
-    double b = fabs(y);
-    double n = fmin(a, b);
-    double m = fmax(a, b);
-    if (m == 0.0)
-        return 0.0;
-    double d = n / m;
-    return m * sqrt(fma(d, d, 1.0));
-}
-
-IMPLEMENT_EXPR_ALL(hypot, V_VV, _cl_builtin_hypotf(a, b), _cl_builtin_hypot(a, b))
+IMPLEMENT_EXPR_V_V(fast_normalize, FAST_NORMALIZE, double2, double, int2, int)
+IMPLEMENT_EXPR_V_V(fast_normalize, FAST_NORMALIZE, double3, double, int3, int)
+IMPLEMENT_EXPR_V_V(fast_normalize, FAST_NORMALIZE, double4, double, int4, int)

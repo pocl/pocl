@@ -44,6 +44,7 @@
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
 #include "pocl_llvm.h"
+#include "pocl_debug.h"
 
 #include "_kernel_constants.h"
 
@@ -319,4 +320,15 @@ void pocl_free_global_mem(cl_device_id device, void* ptr, size_t size)
   mem->currently_allocated -= size;
 
   POCL_MEM_FREE(ptr);
+}
+
+void pocl_print_system_memory_stats()
+{
+  POCL_MSG_PRINT("MEM STATS:\n", "",
+  "____ Total available system memory  : %10zu KB\n"
+  " ____ Currently used system memory   : %10zu KB\n"
+  " ____ Max used system memory         : %10zu KB\n",
+  system_memory.total_alloc_limit >> 10,
+  system_memory.currently_allocated >> 10,
+  system_memory.max_ever_allocated >> 10);
 }

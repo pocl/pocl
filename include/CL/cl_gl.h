@@ -1,5 +1,5 @@
 /**********************************************************************************
- * Copyright (c) 2008 - 2012 The Khronos Group Inc.
+ * Copyright (c) 2008 - 2013 The Khronos Group Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and/or associated documentation files (the
@@ -104,7 +104,7 @@ clEnqueueReleaseGLObjects(cl_command_queue      /* command_queue */,
                           cl_event *            /* event */) CL_API_SUFFIX__VERSION_1_0;
 
 
-// Deprecated OpenCL 1.1 APIs
+/* Deprecated OpenCL 1.1 APIs */
 extern CL_API_ENTRY CL_EXT_PREFIX__VERSION_1_1_DEPRECATED cl_mem CL_API_CALL
 clCreateFromGLTexture2D(cl_context      /* context */,
                         cl_mem_flags    /* flags */,

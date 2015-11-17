@@ -201,6 +201,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->init = pocl_basic_init;
   ops->alloc_mem_obj = pocl_basic_alloc_mem_obj;
   ops->free = pocl_basic_free;
+  ops->free_ptr = pocl_basic_free_ptr;
   ops->read = pocl_basic_read;
   ops->read_rect = pocl_basic_read_rect;
   ops->write = pocl_basic_write;
@@ -208,7 +209,9 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->copy = pocl_basic_copy;
   ops->copy_rect = pocl_basic_copy_rect;
   ops->fill_rect = pocl_basic_fill_rect;
+  ops->memfill = pocl_basic_memfill;
   ops->map_mem = pocl_basic_map_mem;
+  ops->unmap_mem = pocl_basic_unmap_mem;
   ops->compile_submitted_kernels = pocl_basic_compile_submitted_kernels;
   ops->run = pocl_basic_run;
   ops->run_native = pocl_basic_run_native;
@@ -287,7 +290,6 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->compiler_available = CL_TRUE;
   dev->spmd = CL_FALSE;
   dev->execution_capabilities = CL_EXEC_KERNEL | CL_EXEC_NATIVE_KERNEL;
-  dev->queue_properties = CL_QUEUE_PROFILING_ENABLE;
   dev->platform = 0;
 
   dev->parent_device = NULL;
@@ -310,6 +312,24 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
      extension  string assume this rule. Future extension additions should
      ensure that there is no more than a single space between
      identifiers. */
+
+  dev->should_allocate_svm = 0;
+  /* OpenCL 2.0 properties */
+  dev->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER
+                  | CL_DEVICE_SVM_FINE_GRAIN_BUFFER
+                  | CL_DEVICE_SVM_ATOMICS;
+  /* TODO these are minimums, figure out whats a reasonable value */
+  dev->max_events = 1024;
+  dev->max_queues = 1;
+  dev->max_pipe_args = 16;
+  dev->max_pipe_active_res = 1;
+  dev->max_pipe_packet_size = 1024;
+  dev->dev_queue_pref_size = 16 * 1024;
+  dev->dev_queue_max_size = 256 * 1024;
+  dev->on_dev_queue_props = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE
+                               | CL_QUEUE_PROFILING_ENABLE;
+  dev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
+
 
 #ifndef _CL_DISABLE_LONG
 #define DOUBLE_EXT "cl_khr_fp64 "
@@ -455,6 +475,13 @@ pocl_basic_free (cl_device_id device, cl_mem memobj)
   size_t size = memobj->size;
 
   pocl_free_global_mem(device, ptr, size);
+}
+
+void pocl_basic_free_ptr (cl_device_id device, void* mem_ptr)
+{
+  /* TODO we should somehow figure out the size argument
+   * and call pocl_free_global_mem */
+  POCL_MEM_FREE(mem_ptr);
 }
 
 void
@@ -736,6 +763,72 @@ pocl_basic_fill_rect (void *data,
                 + buffer_slice_pitch * k, fill_pixel, pixel_size);
 }
 
+void pocl_basic_memfill(void *ptr,
+                        size_t size,
+                        size_t offset,
+                        const void* pattern,
+                        size_t pattern_size)
+{
+  size_t i;
+  unsigned j;
+
+  switch (pattern_size)
+    {
+    case 1:
+      {
+      uint8_t * p = (uint8_t*)ptr + offset;
+      for (i = 0; i < size; i++)
+        p[i] = *(uint8_t*)pattern;
+      }
+    case 2:
+      {
+      uint16_t * p = (uint16_t*)ptr + offset;
+      for (i = 0; i < size; i++)
+        p[i] = *(uint16_t*)pattern;
+      }
+    case 4:
+      {
+      uint32_t * p = (uint32_t*)ptr + offset;
+      for (i = 0; i < size; i++)
+        p[i] = *(uint32_t*)pattern;
+      }
+    case 8:
+      {
+      uint64_t * p = (uint64_t*)ptr + offset;
+      for (i = 0; i < size; i++)
+        p[i] = *(uint64_t*)pattern;
+      }
+    case 16:
+      {
+      uint64_t * p = (uint64_t*)ptr + offset;
+      for (i = 0; i < size; i++)
+        for (j = 0; j < 2; j++)
+          p[(i<<1) + j] = *((uint64_t*)pattern + j);
+      }
+    case 32:
+      {
+      uint64_t * p = (uint64_t*)ptr + offset;
+      for (i = 0; i < size; i++)
+        for (j = 0; j < 4; j++)
+          p[(i<<2) + j] = *((uint64_t*)pattern + j);
+      }
+    case 64:
+      {
+      uint64_t * p = (uint64_t*)ptr + offset;
+      for (i = 0; i < size; i++)
+        for (j = 0; j < 8; j++)
+          p[(i<<3) + j] = *((uint64_t*)pattern + j);
+      }
+    case 128:
+      {
+      uint64_t * p = (uint64_t*)ptr + offset;
+      for (i = 0; i < size; i++)
+        for (j = 0; j < 16; j++)
+          p[(i<<4) + j] = *((uint64_t*)pattern + j);
+      }
+    }
+}
+
 void *
 pocl_basic_map_mem (void *data, void *buf_ptr, 
                       size_t offset, size_t size,
@@ -746,6 +839,14 @@ pocl_basic_map_mem (void *data, void *buf_ptr,
   if (host_ptr != NULL) return host_ptr;
   return (char*)buf_ptr + offset;
 }
+
+void* pocl_basic_unmap_mem(void *data, void *host_ptr,
+                           void *device_start_ptr,
+                           size_t size)
+{
+  return host_ptr;
+}
+
 
 void
 pocl_basic_uninit (cl_device_id device)

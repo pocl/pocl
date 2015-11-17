@@ -1,5 +1,5 @@
 /*******************************************************************************
- * Copyright (c) 2008 - 2012 The Khronos Group Inc.
+ * Copyright (c) 2008-2013 The Khronos Group Inc.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and/or associated documentation files (the
@@ -34,10 +34,10 @@ extern "C" {
 #endif
 
 #ifdef __APPLE__
-	#include <OpenCL/cl.h>
+        #include <OpenCL/cl.h>
     #include <AvailabilityMacros.h>
 #else
-	#include <CL/cl.h>
+        #include <CL/cl.h>
 #endif
 
 /* cl_khr_fp16 extension - no extension #define since it has no functions  */
@@ -61,7 +61,7 @@ extern "C" {
  * before using.
  */
 #define cl_APPLE_SetMemObjectDestructor 1
-cl_int	CL_API_ENTRY clSetMemObjectDestructorAPPLE(  cl_mem /* memobj */, 
+cl_int CL_API_ENTRY clSetMemObjectDestructorAPPLE(  cl_mem /* memobj */,
                                         void (* /*pfn_notify*/)( cl_mem /* memobj */, void* /*user_data*/), 
                                         void * /*user_data */ )             CL_EXT_SUFFIX__VERSION_1_0;  
 
@@ -134,15 +134,15 @@ typedef CL_API_ENTRY cl_int (CL_API_CALL *clIcdGetPlatformIDsKHR_fn)(
  * cl_khr_initalize_memory extension *
  *************************************/
     
-#define CL_CONTEXT_MEMORY_INITIALIZE_KHR            0x200E
+#define CL_CONTEXT_MEMORY_INITIALIZE_KHR            0x2030
     
     
 /**************************************
  * cl_khr_terminate_context extension *
  **************************************/
     
-#define CL_DEVICE_TERMINATE_CAPABILITY_KHR          0x200F
-#define CL_CONTEXT_TERMINATE_KHR                    0x2010
+#define CL_DEVICE_TERMINATE_CAPABILITY_KHR          0x2031
+#define CL_CONTEXT_TERMINATE_KHR                    0x2032
 
 #define cl_khr_terminate_context 1
 extern CL_API_ENTRY cl_int CL_API_CALL clTerminateContextKHR(cl_context /* context */) CL_EXT_SUFFIX__VERSION_1_2;
@@ -157,6 +157,10 @@ typedef CL_API_ENTRY cl_int (CL_API_CALL *clTerminateContextKHR_fn)(cl_context /
  * Standard Portable Intermediate Representation (SPIR) instance
  */
 
+#define CL_DEVICE_SPIR_VERSIONS                     0x40E0
+#define CL_PROGRAM_BINARY_TYPE_INTERMEDIATE         0x40E1
+
+
 /******************************************
 * cl_nv_device_attribute_query extension *
 ******************************************/
@@ -169,11 +173,16 @@ typedef CL_API_ENTRY cl_int (CL_API_CALL *clTerminateContextKHR_fn)(cl_context /
 #define CL_DEVICE_KERNEL_EXEC_TIMEOUT_NV            0x4005
 #define CL_DEVICE_INTEGRATED_MEMORY_NV              0x4006
 
-
 /*********************************
 * cl_amd_device_attribute_query *
 *********************************/
 #define CL_DEVICE_PROFILING_TIMER_OFFSET_AMD        0x4036
+
+/*********************************
+* cl_arm_printf extension
+*********************************/
+#define CL_PRINTF_CALLBACK_ARM                      0x40B0
+#define CL_PRINTF_BUFFERSIZE_ARM                    0x40B1
 
 #ifdef CL_VERSION_1_1
    /***********************************
@@ -239,9 +248,99 @@ typedef CL_API_ENTRY cl_int (CL_API_CALL *clTerminateContextKHR_fn)(cl_context /
     #define CL_PARTITION_BY_COUNTS_LIST_END_EXT         ((cl_device_partition_property_ext) 0)
     #define CL_PARTITION_BY_NAMES_LIST_END_EXT          ((cl_device_partition_property_ext) 0 - 1)
 
+/*********************************
+* cl_qcom_ext_host_ptr extension
+*********************************/
 
+#define CL_MEM_EXT_HOST_PTR_QCOM                  (1 << 29)
+
+#define CL_DEVICE_EXT_MEM_PADDING_IN_BYTES_QCOM   0x40A0
+#define CL_DEVICE_PAGE_SIZE_QCOM                  0x40A1
+#define CL_IMAGE_ROW_ALIGNMENT_QCOM               0x40A2
+#define CL_IMAGE_SLICE_ALIGNMENT_QCOM             0x40A3
+#define CL_MEM_HOST_UNCACHED_QCOM                 0x40A4
+#define CL_MEM_HOST_WRITEBACK_QCOM                0x40A5
+#define CL_MEM_HOST_WRITETHROUGH_QCOM             0x40A6
+#define CL_MEM_HOST_WRITE_COMBINING_QCOM          0x40A7
+
+typedef cl_uint                                   cl_image_pitch_info_qcom;
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clGetDeviceImageInfoQCOM(cl_device_id             device,
+                         size_t                   image_width,
+                         size_t                   image_height,
+                         const cl_image_format   *image_format,
+                         cl_image_pitch_info_qcom param_name,
+                         size_t                   param_value_size,
+                         void                    *param_value,
+                         size_t                  *param_value_size_ret);
+
+typedef struct _cl_mem_ext_host_ptr
+{
+    /* Type of external memory allocation. */
+    /* Legal values will be defined in layered extensions. */
+    cl_uint  allocation_type;
+
+    /* Host cache policy for this external memory allocation. */
+    cl_uint  host_cache_policy;
+
+} cl_mem_ext_host_ptr;
+
+/*********************************
+* cl_qcom_ion_host_ptr extension
+*********************************/
+
+#define CL_MEM_ION_HOST_PTR_QCOM                  0x40A8
+
+typedef struct _cl_mem_ion_host_ptr
+{
+    /* Type of external memory allocation. */
+    /* Must be CL_MEM_ION_HOST_PTR_QCOM for ION allocations. */
+    cl_mem_ext_host_ptr  ext_host_ptr;
+
+    /* ION file descriptor */
+    int                  ion_filedesc;
+
+    /* Host pointer to the ION allocated memory */
+    void*                ion_hostptr;
+
+} cl_mem_ion_host_ptr;
 
 #endif /* CL_VERSION_1_1 */
+
+
+#ifdef CL_VERSION_2_0
+/*********************************
+* cl_khr_sub_groups extension
+*********************************/
+#define cl_khr_sub_groups 1
+
+typedef cl_uint  cl_kernel_sub_group_info;
+
+/* cl_khr_sub_group_info */
+#define CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE_KHR	0x2033
+#define CL_KERNEL_SUB_GROUP_COUNT_FOR_NDRANGE_KHR		0x2034
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clGetKernelSubGroupInfoKHR(cl_kernel /* in_kernel */,
+						   cl_device_id /*in_device*/,
+						   cl_kernel_sub_group_info /* param_name */,
+						   size_t /*input_value_size*/,
+						   const void * /*input_value*/,
+						   size_t /*param_value_size*/,
+						   void* /*param_value*/,
+						   size_t* /*param_value_size_ret*/ ) CL_EXT_SUFFIX__VERSION_2_0;
+
+typedef CL_API_ENTRY cl_int
+     ( CL_API_CALL * clGetKernelSubGroupInfoKHR_fn)(cl_kernel /* in_kernel */,
+						      cl_device_id /*in_device*/,
+						      cl_kernel_sub_group_info /* param_name */,
+						      size_t /*input_value_size*/,
+						      const void * /*input_value*/,
+						      size_t * /*param_value_size*/,
+						      void* /*param_value*/,
+						      size_t* /*param_value_size_ret*/ ) CL_EXT_SUFFIX__VERSION_2_0;
+#endif /* CL_VERSION_2_0 */
 
 #ifdef __cplusplus
 }

@@ -23,6 +23,7 @@
 
 #include "devices/devices.h"
 #include "pocl_cl.h"
+#include "pocl_util.h"
 #include "pocl_mem_management.h"
 #include <stdlib.h>
 #include <string.h>
@@ -101,6 +102,8 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
       
       POname(clRetainDevice)(device_ptr);
     } 
+
+  pocl_setup_context(context);
 
   pocl_init_mem_manager ();
 

@@ -186,6 +186,8 @@ POname(clCreateContext)(const cl_context_properties * properties,
       goto ERROR_CLEAN_CONTEXT_AND_DEVICES;
     }
 
+  pocl_setup_context(context);
+
   pocl_init_mem_manager ();
   
   if (errcode_ret)

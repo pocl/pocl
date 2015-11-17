@@ -41,13 +41,13 @@ foreach(FILE atomics.cl atomic_impl.ll barrier.c
         native_rsqrt.cl  native_sin.cl  native_sqrt.cl
         fabs.cl floor.cl rint.cl trunc.cl remainder.cl
         fma.cl mad.cl mad_hi.cl mul_hi.cl mul24.cl mad24.cl
-        sqrt.cl sqrt_default.ll cbrt.cl hypot.cl copysign.cl
+        sqrt.cl sqrt_default.ll cbrt.cl hypot.cl length.cl copysign.cl
         exp.cl exp2.cl exp10.cl expm1.cl
         log.cl log2.cl log10.cl log1p.cl
         sin.cl tan.cl cos.cl sinh.cl tanh.cl cosh.cl
         asin.cl acos.cl atan.cl asinh.cl acosh.cl atanh.cl
         ilogb.cl ldexp.cl fract.cl frexp.cl atan2.cl pow.cl
-        lgamma.cl tgamma.cl)
+        lgamma.cl tgamma.cl erf.cl erfc.cl fast_normalize.cl fast_length.cl)
 
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
   list(APPEND KERNEL_SOURCES "hsail64/${FILE}")

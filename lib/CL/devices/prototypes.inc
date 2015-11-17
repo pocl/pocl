@@ -40,6 +40,7 @@
   void *pocl_##__DRV__##_create_sub_buffer (void *device_data, void* buffer, \
                                             size_t origin, size_t size); \
   void pocl_##__DRV__##_free (cl_device_id device, cl_mem mem_obj);   \
+  void pocl_##__DRV__##_free_ptr (cl_device_id device, void* mem_ptr);   \
   void pocl_##__DRV__##_read (void *data, void *host_ptr,                   \
                           const void *device_ptr, size_t offset, size_t cb); \
   void pocl_##__DRV__##_read_rect (void *data, void *host_ptr,          \
@@ -82,6 +83,11 @@
                            size_t const buffer_slice_pitch,    \
                            void *fill_pixel,    \
                            size_t pixel_size);  \
+  void pocl_##__DRV__##_memfill (void *ptr,           \
+                            size_t size,              \
+                            size_t offset,            \
+                            const void* pattern,      \
+                            size_t pattern_size);     \
   void pocl_##__DRV__##_compile_submitted_kernels (_cl_command_node *node);  \
   void pocl_##__DRV__##_run (void *data, _cl_command_node* cmd);        \
   void pocl_##__DRV__##_run_native (void *data, _cl_command_node* cmd); \

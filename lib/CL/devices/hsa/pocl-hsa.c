@@ -164,7 +164,7 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->read_rect = pocl_basic_read_rect;
   ops->write = pocl_basic_write;
   ops->write_rect = pocl_basic_write_rect;
-  ops->copy = pocl_basic_copy;
+  ops->copy = pocl_hsa_copy;
   ops->copy_rect = pocl_basic_copy_rect;
   ops->get_timer_value = pocl_basic_get_timer_value;
 }
@@ -406,6 +406,24 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
     (agent, HSA_EXT_AGENT_INFO_MAX_IMAGE_RORW_HANDLES, &dev->max_write_image_args));
   HSA_CHECK(hsa_agent_get_info
     (agent, HSA_EXT_AGENT_INFO_MAX_SAMPLER_HANDLERS, &dev->max_samplers));
+
+  dev->should_allocate_svm = 1;
+  /* OpenCL 2.0 properties */
+  dev->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER
+                  | CL_DEVICE_SVM_FINE_GRAIN_BUFFER
+                  | CL_DEVICE_SVM_ATOMICS;
+  /* This is from clinfo output ran on AMD Catalyst drivers */
+  dev->max_events = 1024;
+  dev->max_queues = 1;
+  dev->max_pipe_args = 16;
+  dev->max_pipe_active_res = 16;
+  dev->max_pipe_packet_size = 1024 * 1024;
+  dev->dev_queue_pref_size = 256 * 1024;
+  dev->dev_queue_max_size = 512 * 1024;
+  dev->on_dev_queue_props = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE
+                               | CL_QUEUE_PROFILING_ENABLE;
+  dev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
+
 }
 
 unsigned int
@@ -531,6 +549,14 @@ pocl_hsa_free (cl_device_id device, cl_mem memobj)
   hsa_memory_free(ptr);
 }
 
+void pocl_hsa_copy (void *data, const void *src_ptr, size_t src_offset,
+               void *__restrict__ dst_ptr, size_t dst_offset, size_t cb)
+{
+  assert(src_offset == 0);
+  assert(dst_offset == 0);
+  HSA_CHECK(hsa_memory_copy(dst_ptr, src_ptr, cb));
+}
+
 cl_int pocl_hsa_alloc_mem_obj(cl_device_id device, cl_mem mem_obj)
 {
   void *b = NULL;
@@ -597,8 +623,12 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
             }
           else
             {
-        	  uint64_t temp = (uint64_t)(*(cl_mem *)
-				  (al->value))->device_ptrs[cmd->device->dev_id].mem_ptr;
+              cl_mem m = *(cl_mem *)al->value;
+              uint64_t temp = 0;
+              if (m->device_ptrs)
+                temp = (uint64_t)m->device_ptrs[cmd->device->dev_id].mem_ptr;
+              else
+                temp = (uint64_t)m->mem_host_ptr;
               memcpy (write_pos, &temp, sizeof(uint64_t));
             }
           write_pos += sizeof(uint64_t);

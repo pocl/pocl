@@ -134,7 +134,6 @@ typedef struct
   mem_mapping_t *mapping;
 } _cl_command_map;
 
-
 /* clEnqueue(Write/Read)Image */
 typedef struct
 {
@@ -170,8 +169,47 @@ typedef struct
 
 typedef struct
 {
+  void* ptr;
+  size_t size, offset;
+  void* pattern;
+  size_t pattern_size;
+} _cl_command_fill;
+
+typedef struct
+{
   void *data;
 } _cl_command_marker;
+
+typedef struct
+{
+  void* data;
+  void* queue;
+  unsigned  num_svm_pointers;
+  void  **svm_pointers;
+  void (CL_CALLBACK  *pfn_free_func) ( cl_command_queue queue,
+                                       unsigned num_svm_pointers,
+                                       void *svm_pointers[],
+                                       void  *user_data);
+} _cl_command_svm_free;
+
+typedef struct
+{
+  void* svm_ptr;
+  size_t size;
+  cl_map_flags flags;
+} _cl_command_svm_map;
+
+typedef struct
+{
+  void* svm_ptr;
+} _cl_command_svm_unmap;
+
+typedef struct
+{
+  const void* src;
+  void* dst;
+  size_t size;
+} _cl_command_svm_cpy;
 
 typedef union
 {
@@ -185,6 +223,12 @@ typedef union
   _cl_command_rw_image rw_image;
   _cl_command_marker marker;
   _cl_command_unmap unmap;
+  _cl_command_fill memfill;
+
+  _cl_command_svm_free svm_free;
+  _cl_command_svm_map svm_map;
+  _cl_command_svm_unmap svm_unmap;
+  _cl_command_svm_cpy svm_memcpy;
 } _cl_command_t;
 
 // one item in the command queue
