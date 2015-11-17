@@ -390,13 +390,13 @@ AT_CHECK_UNQUOTED([$abs_top_builddir/examples/scalarwave/scalarwave], 0,
 AT_CLEANUP
 
 AT_SETUP([Intel SVM Coarse-grained])
-AT_KEYWORDS([intel])
+AT_KEYWORDS([intel] svm)
 AT_SKIP_IF([test ! -f $abs_top_srcdir/examples/IntelSVM/source/SVMBasicCoarseGrained/svmbasic])
 AT_CHECK([make test_CoarseGrained -sC $abs_top_builddir/examples/IntelSVM | grep -q PASSED], 0)
 AT_CLEANUP
 
 AT_SETUP([Intel SVM Fine-grained])
-AT_KEYWORDS([intel])
+AT_KEYWORDS([intel svm])
 AT_SKIP_IF([test ! -f $abs_top_srcdir/examples/IntelSVM/source/SVMBasicFineGrained/svmbasic])
 AT_CHECK([make test_FineGrained -sC $abs_top_builddir/examples/IntelSVM | grep -q PASSED], 0)
 AT_CLEANUP
