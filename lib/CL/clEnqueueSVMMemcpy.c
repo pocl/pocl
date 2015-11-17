@@ -34,6 +34,7 @@ POname(clEnqueueSVMMemcpy) (cl_command_queue command_queue,
                     const cl_event *event_wait_list,
                     cl_event *event) CL_API_SUFFIX__VERSION_2_0
 {
+  int i;
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
   POCL_RETURN_ERROR_ON((command_queue->context->svm_allocdev == NULL),
@@ -51,7 +52,7 @@ POname(clEnqueueSVMMemcpy) (cl_command_queue command_queue,
   POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
                          CL_INVALID_EVENT_WAIT_LIST);
 
-  for(unsigned i=0; i<num_events_in_wait_list; i++)
+  for(i=0; i<num_events_in_wait_list; i++)
     POCL_RETURN_ERROR_COND((event_wait_list[i] == NULL), CL_INVALID_EVENT_WAIT_LIST);
 
   _cl_command_node *cmd = NULL;

@@ -285,7 +285,7 @@ static void exec_commands (_cl_command_node *node_list)
                 node->command.svm_free.svm_pointers,
                 node->command.svm_free.data);
           else
-            for (unsigned i=0; i < node->command.svm_free.num_svm_pointers; i++)
+            for (i=0; i < node->command.svm_free.num_svm_pointers; i++)
               node->device->ops->free_ptr(node->device,
                   node->command.svm_free.svm_pointers[i]);
           POCL_UPDATE_EVENT_COMPLETE(event);
