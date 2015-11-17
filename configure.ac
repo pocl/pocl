@@ -457,7 +457,7 @@ else
 fi
 if test "$enable_testsuite_intel_svm" = "yes" ; then
   AC_MSG_NOTICE([tests from Intel SVM samples are enabled])
-  #POAT_TESTSUITES="$POAT_TESTSUITES IntelSVM"
+  POAT_TESTSUITES="$POAT_TESTSUITES IntelSVM"
 else
   AC_MSG_NOTICE([tests from Intel SVM samples are disabled])
 fi
