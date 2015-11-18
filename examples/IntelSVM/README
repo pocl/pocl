@@ -6,5 +6,13 @@
    or --enable-testsuites=IntelSVM
 
 5) call 'make prepare-examples' once to get the examples built
+   Note: you need OpenCL 2.0 headers installed in your system for this
+   step to succeed.
+   
+   You can install them from pocl via
+   
+     ./configure --enable-install-opencl-headers
+     make -C include/CL install
 
 6) run tests: make check
+
