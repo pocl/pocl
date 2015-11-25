@@ -32,6 +32,30 @@
 #endif
 #include "_kernel_c.h"
 
+/* If the -cl-std build option is not specified, the highest OpenCL C 1.x
+ * language version supported by each device is used as the version of
+ * OpenCL C when compiling the program for each device.
+ */
+#ifndef __OPENCL_C_VERSION__
+#define __OPENCL_C_VERSION__ 120
+#endif
+
+#if (__OPENCL_C_VERSION__ > 99)
+#define CL_VERSION_1_0 100
+#endif
+
+#if (__OPENCL_C_VERSION__ > 109)
+#define CL_VERSION_1_1 110
+#endif
+
+#if (__OPENCL_C_VERSION__ > 119)
+#define CL_VERSION_1_2 120
+#endif
+
+#if (__OPENCL_C_VERSION__ > 199)
+#define CL_VERSION_2_0 200
+#endif
+
 /* Enable double precision. This should really only be done when
    building the run-time library; when building application code, we
    should instead check a macro to see whether the application has
@@ -75,8 +99,6 @@
 #endif
 
 typedef uint cl_mem_fence_flags;
-
-
 
 /* Ensure the data types have the right sizes */
 _CL_STATIC_ASSERT(char  , sizeof(char  ) == 1);
@@ -402,7 +424,7 @@ _CL_DECLARE_CONVERT_TYPE_SRC_DST_SIZE(_rte)
 _CL_DECLARE_CONVERT_TYPE_SRC_DST_SIZE(_rtp)
 _CL_DECLARE_CONVERT_TYPE_SRC_DST_SIZE(_rtn)
 
-
+
 /* Work-Item Functions */
 
 uint _CL_OVERLOADABLE get_work_dim(void);
@@ -421,7 +443,7 @@ barrier (cl_mem_fence_flags flags);
 void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
 #endif
 
-
+
 /* Math Constants */
 
 /* half */
@@ -1338,7 +1360,7 @@ _CL_DECLARE_FUNC_V_V(_cl_native_tan)
 #define ULONG_MAX 0xffffffffffffffffUL
 #endif
 
-
+
 /* Integer Functions */
 #define _CL_DECLARE_FUNC_G_G(NAME)              \
   char     _CL_OVERLOADABLE NAME(char    );     \
@@ -1846,7 +1868,7 @@ _CL_DECLARE_FUNC_G_G(popcount)
 _CL_DECLARE_FUNC_J_JJJ(mad24)
 _CL_DECLARE_FUNC_J_JJ(mul24)
 
-
+
 /* Common Functions */
 
 _CL_DECLARE_FUNC_V_VVV(clamp)
@@ -1865,7 +1887,7 @@ _CL_DECLARE_FUNC_V_VVV(smoothstep)
 _CL_DECLARE_FUNC_V_SSV(smoothstep)
 _CL_DECLARE_FUNC_V_V(sign)
 
-
+
 /* Geometric Functions */
 
 __IF_FP16(    
@@ -1911,7 +1933,7 @@ _CL_DECLARE_FUNC_G_GGUG(select)
 _CL_DECLARE_FUNC_V_VVJ(select)
 _CL_DECLARE_FUNC_V_VVU(select)
 
-
+
 /* Vector Functions */
 
 #define _CL_DECLARE_VLOAD(TYPE, MOD)                                    \
@@ -2085,7 +2107,7 @@ _CL_DECLARE_VSTORE_HALF(__private , _rtn)
 
 #endif
 
-
+
 /* Atomic operations */
 
 #define _CL_DECLARE_ATOMICS(MOD, TYPE)                                  \
@@ -2162,7 +2184,7 @@ _CL_DECLARE_SHUFFLE_MN(ulong , ulong ))
 __IF_FP64(
 _CL_DECLARE_SHUFFLE_MN(double, ulong ))
 
-
+
 #if __clang_major__ < 3 || (__clang_major__ == 3 && __clang_minor__ < 4)
 
 // If Clang is too old, we just wrap the libc printf
@@ -2187,7 +2209,7 @@ int _cl_printf(constant char* restrict format, ...);
 
 #endif
 
-
+
 /* Async Copies from Global to Local Memory, Local to
    Global Memory, and Prefetch */
 
