@@ -276,9 +276,6 @@ int pocl_llvm_build_program(cl_program program,
       e_end = extensions.find(' ', e_start);
       llvm::StringRef tok = extensions.slice(e_start, e_end);
       e_start = e_end + 1;
-      // These two are defined in _kernel(_c).h via pocl_features.h
-      if (tok.startswith("cl_khr_fp64") || tok.startswith("cl_khr_fp16"))
-	continue;
       ss << "-D" << tok.str() << " ";
     }
   }

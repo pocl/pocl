@@ -68,13 +68,13 @@ _kernel.h.pch: @top_builddir@/include/${TARGET_DIR}/types.h @top_srcdir@/include
 
 # Rules to compile the different kernel library source file types into
 # LLVM bitcode
-%.c.bc: %.c ${abs_top_srcdir}/include/pocl_types.h ${abs_top_srcdir}/include/pocl_features.h ${abs_top_srcdir}/include/_kernel_c.h ${LKERNEL_HDRS_EXTRA}
+%.c.bc: %.c ${abs_top_srcdir}/include/pocl_types.h ${abs_top_srcdir}/include/_kernel_c.h ${LKERNEL_HDRS_EXTRA}
 	mkdir -p ${dir $@}
-	@CLANG@ ${CLANG_FLAGS} ${CLFLAGS} -D__CBUILD__ -c -o $@ -include ${abs_top_srcdir}/include/_kernel_c.h $< 
-%.cc.bc: %.cc ${abs_top_srcdir}/include/pocl_features.h ${LKERNEL_HDRS_EXTRA}
+	@CLANG@ ${CLANG_FLAGS} ${CLFLAGS} -D__CBUILD__ -c -o $@ -include ${abs_top_srcdir}/include/_kernel_c.h $<
+%.cc.bc: %.cc  ${LKERNEL_HDRS_EXTRA}
 	mkdir -p ${dir $@}
-	@CLANGXX@ ${CLANG_FLAGS} ${CLANGXX_FLAGS} -c -o $@ $< -include ${abs_top_srcdir}/include/pocl_features.h
-%.cl.bc: %.cl ${abs_top_srcdir}/include/_kernel.h ${abs_top_srcdir}/include/_kernel_c.h ${abs_top_srcdir}/include/pocl_types.h ${abs_top_srcdir}/include/pocl_features.h ${LKERNEL_HDRS_EXTRA}
+	@CLANGXX@ ${CLANG_FLAGS} ${CLANGXX_FLAGS} -c -o $@ $<
+%.cl.bc: %.cl ${abs_top_srcdir}/include/_kernel.h ${abs_top_srcdir}/include/_kernel_c.h ${abs_top_srcdir}/include/pocl_types.h ${LKERNEL_HDRS_EXTRA}
 	mkdir -p ${dir $@}
 	@CLANG@ ${CLANG_FLAGS} -x cl ${CLFLAGS} -fsigned-char -c -o $@ $< -include ${abs_top_srcdir}/include/_kernel.h
 %.ll.bc: %.ll

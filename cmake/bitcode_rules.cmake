@@ -39,7 +39,6 @@ function(compile_c_to_bc FILENAME BC_FILE_LIST)
     add_custom_command( OUTPUT "${BC_FILE}"
         DEPENDS "${FULL_F_PATH}"
         "${CMAKE_SOURCE_DIR}/include/pocl_types.h"
-        "${CMAKE_SOURCE_DIR}/include/pocl_features.h"
         "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
         ${KERNEL_DEPEND_HEADERS}
         COMMAND "${CLANG}" ${CLANG_FLAGS} ${KERNEL_CL_FLAGS} "-D__CBUILD__" "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}" "-include" "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
@@ -47,8 +46,8 @@ function(compile_c_to_bc FILENAME BC_FILE_LIST)
         VERBATIM)
 endfunction()
 
-# /usr/bin/clang++ --target=x86_64-pc-linux-gnu -march=bdver1 -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off -DVML_NO_IOSTREAM -DPOCL_VECMATHLIB_BUILTIN -o trunc.bc -c ${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib-pocl/trunc.cc -include ${CMAKE_SOURCE_DIR}/include/pocl_features.h
-# 	@CLANGXX@ ${CLANG_FLAGS} ${KERNEL_CLANGXX_FLAGS} -c -o $@ $< -include ${abs_top_srcdir}/include/pocl_features.h
+# /usr/bin/clang++ --target=x86_64-pc-linux-gnu -march=bdver1 -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off -DVML_NO_IOSTREAM -DPOCL_VECMATHLIB_BUILTIN -o trunc.bc -c ${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib-pocl/trunc.cc
+# 	@CLANGXX@ ${CLANG_FLAGS} ${KERNEL_CLANGXX_FLAGS} -c -o $@ $<
 function(compile_cc_to_bc FILENAME BC_FILE_LIST)
     get_filename_component(FNAME "${FILENAME}" NAME)
     set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${FNAME}.bc")
@@ -59,9 +58,8 @@ function(compile_cc_to_bc FILENAME BC_FILE_LIST)
 
     add_custom_command(OUTPUT "${BC_FILE}"
         DEPENDS "${FULL_F_PATH}"
-          "${CMAKE_SOURCE_DIR}/include/pocl_features.h"
           ${KERNEL_DEPEND_HEADERS}
-        COMMAND  "${CLANGXX}" ${CLANG_FLAGS} ${KERNEL_CLANGXX_FLAGS} "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}" "-include" "${CMAKE_SOURCE_DIR}/include/pocl_features.h"
+        COMMAND  "${CLANGXX}" ${CLANG_FLAGS} ${KERNEL_CLANGXX_FLAGS} "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
         COMMENT "Building C++ to LLVM bitcode ${BC_FILE}" 
         VERBATIM)
 endfunction()
@@ -80,7 +78,6 @@ function(compile_cl_to_bc FILENAME BC_FILE_LIST)
           "${CMAKE_SOURCE_DIR}/include/_kernel.h"
           "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
           "${CMAKE_SOURCE_DIR}/include/pocl_types.h" 
-          "${CMAKE_SOURCE_DIR}/include/pocl_features.h"
           ${KERNEL_DEPEND_HEADERS}
         COMMAND "${CLANG}" ${CLANG_FLAGS} "-x" "cl" ${KERNEL_CL_FLAGS}  "-fsigned-char"  "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}" "-include" "${CMAKE_SOURCE_DIR}/include/_kernel.h"
         COMMENT "Building CL to LLVM bitcode ${BC_FILE}" 
@@ -153,7 +150,6 @@ function(make_kernel_bc OUTPUT_VAR NAME)
     DEPENDS "${KERNEL_BC}" "${CMAKE_SOURCE_DIR}/include/_kernel.h"
         "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
         "${CMAKE_SOURCE_DIR}/include/pocl_types.h"
-        "${CMAKE_SOURCE_DIR}/include/pocl_features.h"
     COMMENT "Generating SHA1 of kernel lib..."
     VERBATIM)
 

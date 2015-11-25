@@ -216,5 +216,5 @@ BUILT_SOURCES = kernellib_hash.h
 FORCE:
 
 kernellib_hash.h: FORCE
-	echo '#define POCL_KERNELLIB_SHA1 "'`sha1sum ../../include/_kernel.h ../../include/_kernel_c.h ../../include/pocl_types.h ../../include/pocl_features.h ../kernel/*.cl ../kernel/*.c ../kernel/vecmathlib-pocl/*.cl ../kernel/vecmathlib-pocl/*.cc | sha1sum -`'"' > kernellib_hash.new
+	echo '#define POCL_KERNELLIB_SHA1 "'`sha1sum ../../include/_kernel.h ../../include/_kernel_c.h ../../include/pocl_types.h ../kernel/*.cl ../kernel/*.c ../kernel/vecmathlib-pocl/*.cl ../kernel/vecmathlib-pocl/*.cc | sha1sum -`'"' > kernellib_hash.new
 	cmp kernellib_hash.new kernellib_hash.h || mv kernellib_hash.new kernellib_hash.h
