@@ -125,6 +125,7 @@ static void exec_commands (_cl_command_node *node_list)
              node->command.read.offset,
              node->command.read.cb);
           POCL_UPDATE_EVENT_COMPLETE(event);
+          POCL_DEBUG_EVENT_TIME(event, "Read Buffer           ");
           POname(clReleaseMemObject) (node->command.read.buffer);
           break;
         case CL_COMMAND_WRITE_BUFFER:
@@ -136,6 +137,7 @@ static void exec_commands (_cl_command_node *node_list)
              node->command.write.offset,
              node->command.write.cb);
           POCL_UPDATE_EVENT_COMPLETE(event);
+          POCL_DEBUG_EVENT_TIME(event, "Write Buffer          ");
           POname(clReleaseMemObject) (node->command.write.buffer);
           break;
         case CL_COMMAND_COPY_BUFFER:
@@ -148,6 +150,7 @@ static void exec_commands (_cl_command_node *node_list)
              node->command.copy.dst_offset,
              node->command.copy.cb);
           POCL_UPDATE_EVENT_COMPLETE(event);
+          POCL_DEBUG_EVENT_TIME(event, "Copy Buffer           ");
           POname(clReleaseMemObject) (node->command.copy.src_buffer);
           POname(clReleaseMemObject) (node->command.copy.dst_buffer);
           break;
@@ -157,6 +160,7 @@ static void exec_commands (_cl_command_node *node_list)
           pocl_map_mem_cmd (node->device, node->command.map.buffer,
                             node->command.map.mapping);
           POCL_UPDATE_EVENT_COMPLETE(event);
+          POCL_DEBUG_EVENT_TIME(event, "Map Image/Buffer      ");
           break;
         case CL_COMMAND_WRITE_IMAGE:
           POCL_UPDATE_EVENT_RUNNING(event);
@@ -169,6 +173,7 @@ static void exec_commands (_cl_command_node *node_list)
              node->command.rw_image.rowpitch,
              node->command.rw_image.slicepitch);
           POCL_UPDATE_EVENT_COMPLETE(event);
+          POCL_DEBUG_EVENT_TIME(event, "Write Image           ");
           break;
         case CL_COMMAND_READ_IMAGE:
           POCL_UPDATE_EVENT_RUNNING(event);
@@ -181,6 +186,7 @@ static void exec_commands (_cl_command_node *node_list)
              node->command.rw_image.rowpitch,
              node->command.rw_image.slicepitch);
           POCL_UPDATE_EVENT_COMPLETE(event);
+          POCL_DEBUG_EVENT_TIME(event, "Read Image            ");
           break;
         case CL_COMMAND_UNMAP_MEM_OBJECT:
           POCL_UPDATE_EVENT_RUNNING(event);
@@ -208,12 +214,14 @@ static void exec_commands (_cl_command_node *node_list)
                     node->command.unmap.mapping);
           (node->command.unmap.memobj)->map_count--;
           POCL_UPDATE_EVENT_COMPLETE(event);
+          POCL_DEBUG_EVENT_TIME(event, "Unmap Mem obj         ");
           break;
         case CL_COMMAND_NDRANGE_KERNEL:
           assert (*event == node->event);
           POCL_UPDATE_EVENT_RUNNING(event);
           node->device->ops->run(node->command.run.data, node);
           POCL_UPDATE_EVENT_COMPLETE(event);
+          POCL_DEBUG_EVENT_TIME(event, "Enqueue NDRange       ");
           for (i = 0; i < node->command.run.arg_buffer_count; ++i)
             {
               cl_mem buf = node->command.run.arg_buffers[i];
@@ -238,6 +246,7 @@ static void exec_commands (_cl_command_node *node_list)
           POCL_UPDATE_EVENT_RUNNING(event);
           node->device->ops->run_native(node->command.native.data, node);
           POCL_UPDATE_EVENT_COMPLETE(event);
+          POCL_DEBUG_EVENT_TIME(event, "Enqueue Native        ");
           for (i = 0; i < node->command.native.num_mem_objects; ++i)
             {
               cl_mem buf = node->command.native.mem_list[i];
@@ -260,6 +269,7 @@ static void exec_commands (_cl_command_node *node_list)
              node->command.fill_image.pixel_size);
           POCL_MEM_FREE(node->command.fill_image.fill_pixel);
           POCL_UPDATE_EVENT_COMPLETE(event);
+          POCL_DEBUG_EVENT_TIME(event, "Fill Image            ");
           break;
         case CL_COMMAND_FILL_BUFFER:
           POCL_UPDATE_EVENT_RUNNING(event);
@@ -271,6 +281,7 @@ static void exec_commands (_cl_command_node *node_list)
              node->command.memfill.pattern_size);
           POCL_MEM_FREE(node->command.memfill.pattern);
           POCL_UPDATE_EVENT_COMPLETE(event);
+          POCL_DEBUG_EVENT_TIME(event, "Fill Buffer           ");
           break;
         case CL_COMMAND_MARKER:
           POCL_UPDATE_EVENT_RUNNING(event);
@@ -289,6 +300,7 @@ static void exec_commands (_cl_command_node *node_list)
               node->device->ops->free_ptr(node->device,
                   node->command.svm_free.svm_pointers[i]);
           POCL_UPDATE_EVENT_COMPLETE(event);
+          POCL_DEBUG_EVENT_TIME(event, "SVM Free              ");
           break;
         case CL_COMMAND_SVM_MAP:
           POCL_UPDATE_EVENT_RUNNING(event);
@@ -299,6 +311,7 @@ static void exec_commands (_cl_command_node *node_list)
               (node->device->data, node->command.svm_map.svm_ptr,
                0, node->command.svm_map.size, NULL);
           POCL_UPDATE_EVENT_COMPLETE(event);
+          POCL_DEBUG_EVENT_TIME(event, "SVM Map              ");
           break;
         case CL_COMMAND_SVM_UNMAP:
           POCL_UPDATE_EVENT_RUNNING(event);
@@ -310,6 +323,7 @@ static void exec_commands (_cl_command_node *node_list)
                   node->command.svm_unmap.svm_ptr, 0);
           break;
           POCL_UPDATE_EVENT_COMPLETE(event);
+          POCL_DEBUG_EVENT_TIME(event, "SVM Unmap             ");
         case CL_COMMAND_SVM_MEMCPY:
           POCL_UPDATE_EVENT_RUNNING(event);
           node->device->ops->copy(NULL,
@@ -317,6 +331,7 @@ static void exec_commands (_cl_command_node *node_list)
              node->command.svm_memcpy.dst, 0,
              node->command.svm_memcpy.size);
           POCL_UPDATE_EVENT_COMPLETE(event);
+          POCL_DEBUG_EVENT_TIME(event, "SVM Memcpy            ");
           break;
         case CL_COMMAND_SVM_MEMFILL:
           POCL_UPDATE_EVENT_RUNNING(event);
@@ -326,6 +341,7 @@ static void exec_commands (_cl_command_node *node_list)
              node->command.memfill.pattern,
              node->command.memfill.pattern_size);
           POCL_UPDATE_EVENT_COMPLETE(event);
+          POCL_DEBUG_EVENT_TIME(event, "SVM MemFill           ");
           break;
 
         default:
