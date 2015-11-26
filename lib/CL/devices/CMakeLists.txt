@@ -37,14 +37,12 @@ if(ENABLE_TCE)
   include_directories(AFTER "tce")
   add_subdirectory("tce")
   list(APPEND POCL_DEVICES_LINK_LIST ${TCE_LIBS})
-  list(APPEND POCL_DEVICES_OBJS "$<TARGET_OBJECTS:pocl-devices-tce-ttasim>")
 endif()
 
 if(ENABLE_HSA)
   include_directories(AFTER "${HSA_INCLUDES}")
   add_subdirectory("hsa")
   list(APPEND POCL_DEVICES_LINK_LIST ${HSALIB})
-  list(APPEND POCL_DEVICES_OBJS "$<TARGET_OBJECTS:pocl-devices-hsa>")
 endif()
 
 set(POCL_DEVICES_SOURCES 
