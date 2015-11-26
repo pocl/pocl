@@ -22,6 +22,7 @@
 */
 
 #include "pocl_util.h"
+#include "pocl_debug.h"
 
 CL_API_ENTRY void CL_API_CALL
 POname(clSVMFree)(cl_context context,
