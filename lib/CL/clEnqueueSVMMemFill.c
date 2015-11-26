@@ -34,7 +34,7 @@ POname(clEnqueueSVMMemFill) (cl_command_queue command_queue,
                      const cl_event *event_wait_list,
                      cl_event *event) CL_API_SUFFIX__VERSION_2_0
 {
-  int i;
+  unsigned i;
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
   POCL_RETURN_ERROR_ON((command_queue->context->svm_allocdev == NULL),
