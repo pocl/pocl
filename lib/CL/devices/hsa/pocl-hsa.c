@@ -181,7 +181,7 @@ static void pocl_hsa_abort_on_error(hsa_status_t status,
     {
       hsa_status_string(status, &str);
       POCL_MSG_PRINT2(func, line, "Error from HSA Runtime call:\n");
-      POCL_ABORT(str);
+      POCL_ABORT("%s", str);
     }
 }
 
@@ -597,7 +597,8 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
     if (unaligned > 0) write_pos += (DSIZE - unaligned);     \
   } while (0)
 
-  for (size_t i = 0; i < cmd->command.run.kernel->num_args; ++i)
+  size_t i;
+  for (i = 0; i < cmd->command.run.kernel->num_args; ++i)
     {
       struct pocl_argument *al = &(cmd->command.run.arguments[i]);
       if (cmd->command.run.kernel->arg_info[i].is_local)
@@ -690,7 +691,8 @@ static pocl_hsa_kernel_cache_t* cache_kernel_dispatch_data(cl_kernel kernel,
   assert(stack_cache != NULL);
   assert(d != NULL);
 
-  for (unsigned i = 0; i<HSA_KERNEL_CACHE_SIZE; i++)
+  unsigned i;
+  for (i = 0; i<HSA_KERNEL_CACHE_SIZE; i++)
     {
       if (d->kernel_cache[i].kernel == kernel)
         return &d->kernel_cache[i];
@@ -953,7 +955,8 @@ pocl_hsa_compile_submitted_kernels (_cl_command_node *cmd)
   hsa_executable_t *out = malloc(sizeof(hsa_executable_t));
   cmd->command.run.device_data = (void**)out;
 
-  for (unsigned i = 0; i<HSA_KERNEL_CACHE_SIZE; i++)
+  unsigned i;
+  for (i = 0; i<HSA_KERNEL_CACHE_SIZE; i++)
     if (d->kernel_cache[i].kernel == cmd->command.run.kernel)
       {
         *out = d->kernel_cache[i].hsa_exe;
@@ -1026,7 +1029,8 @@ pocl_hsa_uninit (cl_device_id device)
 {
   pocl_hsa_device_data_t *d = (pocl_hsa_device_data_t*)device->data;
 
-  for (unsigned i = 0; i < HSA_KERNEL_CACHE_SIZE; i++)
+  unsigned i;
+  for (i = 0; i < HSA_KERNEL_CACHE_SIZE; i++)
     if (d->kernel_cache[i].kernel)
       {
         HSA_CHECK(hsa_executable_destroy(d->kernel_cache[i].hsa_exe));
