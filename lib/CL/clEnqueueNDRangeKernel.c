@@ -109,7 +109,9 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
       local_x = local_work_size[0];
       local_y = work_dim > 1 ? local_work_size[1] : 1;
       local_z = work_dim > 2 ? local_work_size[2] : 1;
-    } 
+      if (local_x > global_x || local_y > global_y || local_z > global_z)
+        goto DETERMINE_LOCAL_SIZE;
+    }
   else 
     {
       /* Embarrassingly parallel kernel with a free work-group
@@ -120,8 +122,8 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
          trying to respect the preferred WG size multiple (for better 
          SIMD instruction utilization).          
       */
-
       size_t preferred_wg_multiple;
+DETERMINE_LOCAL_SIZE:
       POname(clGetKernelWorkGroupInfo)
         (kernel, command_queue->device, 
          CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, 
