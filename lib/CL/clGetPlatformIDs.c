@@ -161,7 +161,7 @@ struct _cl_icd_dispatch pocl_dispatch = {
   NULL, /* &clUnknown121 */
   NULL, /* &clUnknown122 */
 #if (OCL_ICD_IDENTIFIED_FUNCTIONS > 110)
-  NULL, /*&POclCreateCommandQueueWithProperties,*/
+  &POclCreateCommandQueueWithProperties,
   NULL, /* &POclCreatePipe,*/
   NULL, /* &POclGetPipeInfo,*/
   &POclSVMAlloc,

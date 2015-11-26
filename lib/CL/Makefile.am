@@ -43,6 +43,7 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clRetainContext.c		\
                    clGetContextInfo.c		\
                    clCreateCommandQueue.c	\
+                   clCreateCommandQueueWithProperties.c	\
                    clReleaseCommandQueue.c	\
                    clRetainCommandQueue.c	\
                    clGetCommandQueueInfo.c	\
