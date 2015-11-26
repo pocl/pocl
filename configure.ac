@@ -826,7 +826,7 @@ AC_SUBST(LLVM_CXX_FLAGS)
 # Define the OpenCL version when compiling OpenCL C code. This also
 # serves as indicator for the OpenCL C language, similar to
 # __cplusplus for C++.
-CLFLAGS="$CLFLAGS -D__OPENCL_VERSION__=120"
+CLFLAGS="$CLFLAGS -Xclang -cl-std=CL2.0 -D__OPENCL_C_VERSION__=200"
 
 AM_CONDITIONAL([CLANGXX_AVAILABLE], test ! -z $CLANGXX)
 
