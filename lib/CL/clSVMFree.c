@@ -27,10 +27,17 @@ CL_API_ENTRY void CL_API_CALL
 POname(clSVMFree)(cl_context context,
                   void *svm_pointer) CL_API_SUFFIX__VERSION_2_0
 {
-  POCL_RETURN_ERROR_COND((context == NULL), NULL);
+  if (context == NULL)
+  {
+    POCL_MSG_WARNING("Bad cl_context");
+    return;
+  }
 
-  POCL_RETURN_ERROR_ON((!context->svm_allocdev), NULL,
-                       "None of the devices in this context is SVM-capable\n");
+  if (context->svm_allocdev==NULL)
+  {
+    POCL_MSG_WARNING("None of the devices in this context is SVM-capable");
+    return;
+  }
 
   if (svm_pointer == NULL)
     return;
