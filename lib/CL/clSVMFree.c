@@ -29,13 +29,13 @@ POname(clSVMFree)(cl_context context,
 {
   if (context == NULL)
   {
-    POCL_MSG_WARNING("Bad cl_context");
+    POCL_MSG_WARN("Bad cl_context");
     return;
   }
 
   if (context->svm_allocdev==NULL)
   {
-    POCL_MSG_WARNING("None of the devices in this context is SVM-capable");
+    POCL_MSG_WARN("None of the devices in this context is SVM-capable");
     return;
   }
 
