@@ -217,7 +217,7 @@ CL_API_SUFFIX__VERSION_1_0
     }
 
   POCL_MSG_PRINT_INFO("building program with options %s\n",
-                      options != NULL ? options : "");
+                      user_options != NULL ? user_options : "");
 
   /* Build the fully linked non-parallel bitcode for all
          devices. */
@@ -312,6 +312,7 @@ ERROR:
   {
     POCL_MEM_FREE(program->binaries[i]);
     pocl_cache_release_lock(program->read_locks[i]);
+    program->read_locks[i] = NULL;
   }
   POCL_MEM_FREE(program->binaries);
   POCL_MEM_FREE(program->binary_sizes);
