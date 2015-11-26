@@ -226,7 +226,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF          : 
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->native_vector_width_half);
   case CL_DEVICE_OPENCL_C_VERSION                  :
-    POCL_RETURN_GETINFO_STR("OpenCL C 1.2");
+    POCL_RETURN_GETINFO_STR("OpenCL C 2.0");
   case CL_DEVICE_BUILT_IN_KERNELS                  :
     POCL_RETURN_GETINFO_STR("");
 
