@@ -331,22 +331,7 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
 
 
-#ifndef _CL_DISABLE_LONG
-#define DOUBLE_EXT "cl_khr_fp64 "
-#else
-#define DOUBLE_EXT 
-#endif
-
-#ifndef _CL_DISABLE_HALF
-#define HALF_EXT "cl_khr_fp16 "
-#else
-#define HALF_EXT
-#endif
-
-  dev->extensions = DOUBLE_EXT HALF_EXT "cl_khr_byte_addressable_store "
-      "cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics "
-      "cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics "
-      "cl_khr_int64_base_atomics cl_khr_int64_extended_atomics";
+  dev->extensions = HOST_DEVICE_EXTENSIONS;
 
   dev->llvm_target_triplet = OCL_KERNEL_TARGET;
   dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;

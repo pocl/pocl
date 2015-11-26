@@ -44,6 +44,9 @@ set(LLC_FLAGS ${HOST_LLC_FLAGS})
 # TODO LLC_flags is used by kernel.bc target, but ld is unused
 #LD_FLAGS    = @HOST_LD_FLAGS@
 
+set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=200 ${HOST_DEVICE_EXTENSION_DEFINES}")
+separate_arguments(DEVICE_CL_FLAGS)
+
 # KERNEL_TARGET = @OCL_KERNEL_TARGET@
 make_kernel_bc(KERNEL_BC "${OCL_KERNEL_TARGET}" ${KERNEL_SOURCES})
 

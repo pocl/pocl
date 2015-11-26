@@ -65,6 +65,7 @@ case $target in
               LLC_FLAGS=""
               LD_FLAGS="";;
     @OCL_KERNEL_TARGET@)   CLANG_FLAGS="@HOST_CLANG_FLAGS@"
+              DEVICE_CL_FLAGS="@HOST_DEVICE_EXTENSION_DEFINES@"
               LLC_FLAGS="@HOST_LLC_FLAGS@"
               LD_FLAGS="@HOST_LD_FLAGS@";;
     @TARGET@) CLANG_FLAGS="@TARGET_CLANG_FLAGS@"
@@ -84,13 +85,13 @@ kernel_bc="${tempdir}/kernel.bc"
 
 # BEGIN REMOVE ONCE INSTALLED
 pocl_kernel_compiler_lib=@abs_top_builddir@/lib/llvmopencl/.libs/llvmopencl.so
-@CLANG@ ${CLANG_FLAGS} $EXTRA_CLANG_FLAGS -c -emit-llvm -I@abs_top_builddir@ -include @abs_top_srcdir@/include/_kernel.h -o ${kernel_bc} -x cl $1
+@CLANG@ ${CLANG_FLAGS} ${DEVICE_CL_FLAGS} $EXTRA_CLANG_FLAGS -c -emit-llvm -I@abs_top_builddir@ -include @abs_top_srcdir@/include/_kernel.h -o ${kernel_bc} -x cl $1
 rm -f ${header}
 @OPT@ ${LLC_FLAGS} -load=$pocl_kernel_compiler_lib -generate-header -disable-output -header=${header} ${kernel_bc}
 if false ; then
 # END REMOVE ONCE INSTALLED
 pocl_kernel_compiler_lib=@pkglibdir@/llvmopencl.so
-@CLANG@ ${CLANG_FLAGS} $EXTRA_CLANG_FLAGS -c -emit-llvm -include @pkgdataincludedir@/_kernel.h -o ${kernel_bc} -x cl $1
+@CLANG@ ${CLANG_FLAGS} ${DEVICE_CL_FLAGS} $EXTRA_CLANG_FLAGS -c -emit-llvm -include @pkgdataincludedir@/_kernel.h -o ${kernel_bc} -x cl $1
 rm -f ${header}
 @OPT@ ${LLC_FLAGS} -load=$pocl_kernel_compiler_lib -generate-header -disable-output -header=${header} ${kernel_bc}
 # BEGIN REMOVE ONCE INSTALLED

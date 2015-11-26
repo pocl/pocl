@@ -65,6 +65,7 @@ case $target in
               LLC_FLAGS="@TCE_TARGET_LLC_FLAGS@"
               LD_FLAGS="@@";;
     *)        CLANG_FLAGS="@HOST_CLANG_FLAGS@"
+              DEVICE_CL_FLAGS="@HOST_DEVICE_EXTENSION_DEFINES@"
               LLC_FLAGS="@HOST_LLC_FLAGS@"
               LD_FLAGS="@HOST_LD_FLAGS@";;
 # TODO
@@ -85,7 +86,7 @@ mkdir ${tempdir}
 kernel_bc="${tempdir}/kernel.bc"
 
 pocl_kernel_compiler_lib=@LLVMOPENCL_LOCATION@
-@CLANG@ ${CLANG_FLAGS} $EXTRA_CLANG_FLAGS -c -emit-llvm @ADD_INCLUDE@ -include @KERNEL_INCLUDE_DIR@/_kernel.h -o ${kernel_bc} -x cl $1
+@CLANG@ ${CLANG_FLAGS} ${DEVICE_CL_FLAGS} $EXTRA_CLANG_FLAGS -c -emit-llvm @ADD_INCLUDE@ -include @KERNEL_INCLUDE_DIR@/_kernel.h -o ${kernel_bc} -x cl $1
 rm -f ${header}
 @LLVM_OPT@ ${LLC_FLAGS} -load=$pocl_kernel_compiler_lib -generate-header -disable-output -header=${header} ${kernel_bc}
 

@@ -1322,8 +1322,12 @@ else
   enable_hsa="no"
 fi
 
+HSA_DEVICE_EXTENSIONS=""
+HSA_DEVICE_EXTENSION_DEFINES=""
 if test "$enable_hsa" = "yes";
 then
+  HSA_DEVICE_EXTENSIONS="cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64 cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics"
+  HSA_DEVICE_EXTENSION_DEFINES=$(echo "$HSA_DEVICE_EXTENSIONS" | sed 's/cl_khr/-Dcl_khr/g')
   OCL_DRIVERS="$OCL_DRIVERS hsa"
   OCL_TARGETS="$OCL_TARGETS hsail64"
   AC_DEFINE([BUILD_HSA], [1], [Defined to 1 in case the HSA driver should be built.])
@@ -1332,6 +1336,8 @@ then
   # -lHSAILUtil is missing from llvm-config --libfiles
   LLVM_LIBS="$LLVM_LIBS -lLLVMHSAILUtil"
 fi
+AC_DEFINE_UNQUOTED([HSA_DEVICE_EXTENSIONS], ["$HSA_DEVICE_EXTENSIONS"], [aoeuaoe])
+AC_SUBST([HSA_DEVICE_EXTENSION_DEFINES])
 
 # TODO: move above
 
@@ -1455,6 +1461,17 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[__fp16 callfp16(__fp16 a) { return a * (__f
                     HOST_CLANG_FLAGS="$HOST_CLANG_FLAGS -D_CL_DISABLE_HALF"
                   ]
                  )
+
+HOST_DEVICE_EXTENSIONS="cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics"
+if test "$HAVE_WORKING_HALF" == "1"; then
+  HOST_DEVICE_EXTENSIONS="$HOST_DEVICE_EXTENSIONS cl_khr_fp16"
+fi
+if test -z "$CL_DISABLE_LONG"; then
+  HOST_DEVICE_EXTENSIONS="$HOST_DEVICE_EXTENSIONS cl_khr_int64 cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics"
+fi
+HOST_DEVICE_EXTENSION_DEFINES=`echo $HOST_DEVICE_EXTENSIONS | sed s/cl_khr/-Dcl_khr/g`
+AC_DEFINE_UNQUOTED([HOST_DEVICE_EXTENSIONS], ["$HOST_DEVICE_EXTENSIONS"], [aoeuaoe])
+AC_SUBST([HOST_DEVICE_EXTENSION_DEFINES])
 
 # Seems to be unused
 #AC_MSG_CHECKING([whether __fp16 can be converted to float])

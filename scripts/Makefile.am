@@ -50,7 +50,8 @@ do_subst = sed -e 's|[@]abs_top_srcdir[@]|$(abs_top_srcdir)|g'		\
                -e 's|[@]OPT[@]|$(OPT)|g'				\
                -e 's|[@]LLVM_LINK[@]|$(LLVM_LINK)|g'			\
                -e 's|[@]LLC[@]|$(LLC)|g' 				\
-               -e 's|[@]LLVM_VERSION[@]|$(LLVM_VERSION)|g' 
+               -e 's|[@]LLVM_VERSION[@]|$(LLVM_VERSION)|g'              \
+               -e 's|[@]HOST_DEVICE_EXTENSION_DEFINES[@]|$(HOST_DEVICE_EXTENSION_DEFINES)|g'
 
 pocl-standalone: %: %.in Makefile ../install-paths.h
 	$(do_subst) < $< > $@
