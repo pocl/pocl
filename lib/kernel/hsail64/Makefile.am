@@ -32,7 +32,7 @@ include ../rules.mk
 include ../sources.mk
 
 # TODO: a global memory ring buffer stdout based printf
-LKERNEL_SRCS_EXCLUDE = printf.c barrier.ll
-LKERNEL_SRCS_EXTRA = barrier.c sqrt_default.ll
+LKERNEL_SRCS_EXCLUDE = printf.c barrier.ll svm_atomics_host.cl
+LKERNEL_SRCS_EXTRA = barrier.c sqrt_default.ll svm_atomics_hsail.cl.ll
 
 EXTRA_DIST = CMakeLists.txt $(srcdir)/*.c $(srcdir)/*.cl $(srcdir)/*.h $(srcdir)/*.ll frexp.inc
