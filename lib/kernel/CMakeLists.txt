@@ -168,6 +168,8 @@ sinpi.cl
 smoothstep.cl
 sqrt.cl
 step.cl
+svm_atomics.cl
+svm_atomics_host.cl
 sub_sat.cl
 tan.cl
 tanh.cl
@@ -231,6 +233,8 @@ select.cl
 shuffle.cl
 sqrt.cl
 sub_sat.cl
+svm_atomics.cl
+svm_atomics_host.cl
 tgamma.cl
 upsample.cl
 vload.cl

@@ -170,6 +170,8 @@ LKERNEL_SRCS_DEFAULT =				\
 	sqrt.cl					\
 	step.cl					\
 	sub_sat.cl				\
+	svm_atomics.cl				\
+	svm_atomics_host.cl			\
 	tan.cl					\
 	tanh.cl					\
 	tanpi.cl				\
