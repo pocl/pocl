@@ -344,14 +344,14 @@ int pocl_llvm_build_program(cl_program program,
   
   LangOptions *la = pocl_build.getLangOpts();
   pocl_build.setLangDefaults
-    (*la, clang::IK_OpenCL, clang::LangStandard::lang_opencl12);
+    (*la, clang::IK_OpenCL, clang::LangStandard::lang_opencl20);
   
   // LLVM 3.3 and older do not set that char is signed which is
   // defined by the OpenCL C specs (but not by C specs).
   la->CharIsSigned = true;
 
   // the per-file types don't seem to override this 
-  la->OpenCLVersion = 120;
+  la->OpenCLVersion = 200;
   la->FakeAddressSpaceMap = true;
   la->Blocks = true; //-fblocks
   la->MathErrno = false; // -fno-math-errno
@@ -366,7 +366,7 @@ int pocl_llvm_build_program(cl_program program,
   if (device->has_64bit_long == 0)
     po.addMacroDef("_CL_DISABLE_LONG");
 
-  po.addMacroDef("__OPENCL_VERSION__=120"); // -D__OPENCL_VERSION_=120
+  po.addMacroDef("__OPENCL_VERSION__=200"); // TODO this should be per-device
 
   std::string kernelh;
   if (pocl_get_bool_option("POCL_BUILDING", 0))
