@@ -103,13 +103,17 @@ void pocl_setup_context(cl_context context);
 cl_device_id * pocl_unique_device_list(const cl_device_id * in, cl_uint num, cl_uint *real);
 
 #define POCL_CHECK_DEV_IN_CMDQ                                               \
-  device = command_queue->device;                                            \
-  for (i = 0; i < command_queue->context->num_devices; ++i)                  \
+  do                                                                         \
     {                                                                        \
-      if (command_queue->context->devices[i] == POCL_REAL_DEV(device))       \
-        break;                                                               \
+      device = command_queue->device;                                        \
+      for (i = 0; i < command_queue->context->num_devices; ++i)              \
+        {                                                                    \
+          if (command_queue->context->devices[i] == POCL_REAL_DEV(device))   \
+            break;                                                           \
+        }                                                                    \
+      assert(i < command_queue->context->num_devices);                       \
     }                                                                        \
-  assert(i < command_queue->context->num_devices);
+  while (0)
 
 
 #ifdef __cplusplus
@@ -127,39 +131,48 @@ cl_device_id * pocl_unique_device_list(const cl_device_id * in, cl_uint num, cl_
  */
 
 #define POCL_RETURN_GETINFO_INNER(__SIZE__, MEMASSIGN)                  \
-    if (param_value) {                                                  \
-      if (param_value_size < __SIZE__) return CL_INVALID_VALUE;         \
-      MEMASSIGN;                                                        \
+  do                                                                    \
+    {                                                                   \
+      if (param_value)                                                  \
+        {                                                               \
+          if (param_value_size < __SIZE__) return CL_INVALID_VALUE;     \
+          MEMASSIGN;                                                    \
+        }                                                               \
+      if (param_value_size_ret)                                         \
+        *param_value_size_ret = __SIZE__;                               \
+      return CL_SUCCESS;                                                \
     }                                                                   \
-    if (param_value_size_ret)                                           \
-      *param_value_size_ret = __SIZE__;                                 \
-    return CL_SUCCESS;                                                  \
+  while (0)
 
 #define POCL_RETURN_GETINFO_SIZE(__SIZE__, __POINTER__)                 \
-  {                                                                     \
-    POCL_RETURN_GETINFO_INNER(__SIZE__,                                 \
-                memcpy(param_value, __POINTER__, __SIZE__))             \
-  }
+  POCL_RETURN_GETINFO_INNER(__SIZE__,                                   \
+    memcpy(param_value, __POINTER__, __SIZE__))
 
 #define POCL_RETURN_GETINFO_STR(__STR__)                                \
-  {                                                                     \
-    size_t const value_size = strlen(__STR__) + 1;                      \
-    POCL_RETURN_GETINFO_INNER(value_size,                               \
-                memcpy(param_value, __STR__, value_size))               \
-  }
+  do                                                                    \
+    {                                                                   \
+      size_t const value_size = strlen(__STR__) + 1;                    \
+      POCL_RETURN_GETINFO_INNER(value_size,                             \
+                  memcpy(param_value, __STR__, value_size));            \
+    }                                                                   \
+  while (0)
 
 #define POCL_RETURN_GETINFO(__TYPE__, __VALUE__)                        \
-  {                                                                     \
-    size_t const value_size = sizeof(__TYPE__);                         \
-    POCL_RETURN_GETINFO_INNER(value_size,                               \
-                *(__TYPE__*)param_value=__VALUE__)                      \
-  }
+  do                                                                    \
+    {                                                                   \
+      size_t const value_size = sizeof(__TYPE__);                       \
+      POCL_RETURN_GETINFO_INNER(value_size,                             \
+                  *(__TYPE__*)param_value=__VALUE__);                   \
+    }                                                                   \
+  while (0)
 
 #define POCL_RETURN_GETINFO_ARRAY(__TYPE__, __NUM__, __VALUE__)         \
-  {                                                                     \
-    size_t const value_size = __NUM__*sizeof(__TYPE__);                 \
-    POCL_RETURN_GETINFO_INNER(value_size,                               \
-                memcpy(param_value, __VALUE__, value_size))             \
-  }
+  do                                                                    \
+    {                                                                   \
+      size_t const value_size = __NUM__*sizeof(__TYPE__);               \
+      POCL_RETURN_GETINFO_INNER(value_size,                             \
+                  memcpy(param_value, __VALUE__, value_size));          \
+    }                                                                   \
+  while (0)
 
 #endif

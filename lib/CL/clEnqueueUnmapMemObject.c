@@ -64,7 +64,7 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
       "Could not find mapping of this memobj\n");
 
   /* find the index of the device's ptr in the buffer */
-  POCL_CHECK_DEV_IN_CMDQ
+  POCL_CHECK_DEV_IN_CMDQ;
 
   errcode = pocl_create_command (&cmd, command_queue,
                                  CL_COMMAND_UNMAP_MEM_OBJECT,

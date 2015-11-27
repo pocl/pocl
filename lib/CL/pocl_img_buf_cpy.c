@@ -177,7 +177,7 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
 
     }
 
-  POCL_CHECK_DEV_IN_CMDQ
+  POCL_CHECK_DEV_IN_CMDQ;
 
   /* execute directly */
   /* TODO: enqueue the read_rect if this is a non-blocking read (see

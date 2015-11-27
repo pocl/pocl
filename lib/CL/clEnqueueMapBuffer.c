@@ -77,8 +77,8 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
       "buffer has been created with CL_MEM_HOST_READ_ONL or CL_MEM_HOST_NO_ACCESS "
       "and CL_MAP_WRITE or CL_MAP_WRITE_INVALIDATE_REGION is set in map_flags\n")
 
-  POCL_CHECK_DEV_IN_CMDQ
- 
+  POCL_CHECK_DEV_IN_CMDQ;
+
   /* Ensure the parent buffer is not freed prematurely. */
   POname(clRetainMemObject) (buffer);
   must_release = 1;
