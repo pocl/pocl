@@ -59,7 +59,7 @@ POname(clCreateKernel)(cl_program program,
       " (even for programs created with binaries)\n");
 
   POCL_GOTO_ERROR_ON((program->build_status != CL_BUILD_SUCCESS),
-    CL_INVALID_PROGRAM_EXECUTABLE, "Last BuildProgram() was not successful\n")
+    CL_INVALID_PROGRAM_EXECUTABLE, "Last BuildProgram() was not successful\n");
 
   POCL_GOTO_ERROR_ON((program->llvm_irs == NULL),
     CL_INVALID_PROGRAM_EXECUTABLE, "No built binaries in program "

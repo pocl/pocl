@@ -76,7 +76,7 @@ CL_API_SUFFIX__VERSION_1_0
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
-  POCL_GOTO_ERROR_COND((image_row_pitch == NULL), CL_INVALID_VALUE)
+  POCL_GOTO_ERROR_COND((image_row_pitch == NULL), CL_INVALID_VALUE);
 
   errcode = pocl_check_image_origin_region(image, origin, region);
   if (errcode != CL_SUCCESS)

@@ -274,7 +274,7 @@ CL_API_SUFFIX__VERSION_1_0
 
   POCL_GOTO_ERROR_ON((actually_built < num_devices), CL_BUILD_PROGRAM_FAILURE,
                      "Some of the devices on the argument-supplied list are"
-                     "not available for the program, or do not exist\n")
+                     "not available for the program, or do not exist\n");
 
   /* Maintain a 'last_accessed' file in every program's
    * cache directory. Will be useful for cache pruning script

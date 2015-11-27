@@ -311,11 +311,11 @@ void pocl_command_enqueue (cl_command_queue command_queue,
 
 int pocl_buffer_boundcheck(cl_mem buffer, size_t offset, size_t size) {
   POCL_RETURN_ERROR_ON((offset > buffer->size), CL_INVALID_VALUE,
-            "offset(%zu) > buffer->size(%zu)", offset, buffer->size)
+            "offset(%zu) > buffer->size(%zu)", offset, buffer->size);
   POCL_RETURN_ERROR_ON((size > buffer->size), CL_INVALID_VALUE,
-            "size(%zu) > buffer->size(%zu)", size, buffer->size)
+            "size(%zu) > buffer->size(%zu)", size, buffer->size);
   POCL_RETURN_ERROR_ON((offset + size > buffer->size), CL_INVALID_VALUE,
-            "offset + size (%zu) > buffer->size(%zu)", (offset+size), buffer->size)
+            "offset + size (%zu) > buffer->size(%zu)", (offset+size), buffer->size);
   return CL_SUCCESS;
 }
 
@@ -374,18 +374,18 @@ int pocl_buffers_boundcheck(cl_mem src_buffer,
                             size_t dst_offset,
                             size_t size) {
   POCL_RETURN_ERROR_ON((src_offset > src_buffer->size), CL_INVALID_VALUE,
-            "src_offset(%zu) > src_buffer->size(%zu)", src_offset, src_buffer->size)
+            "src_offset(%zu) > src_buffer->size(%zu)", src_offset, src_buffer->size);
   POCL_RETURN_ERROR_ON((size > src_buffer->size), CL_INVALID_VALUE,
-            "size(%zu) > src_buffer->size(%zu)", size, src_buffer->size)
+            "size(%zu) > src_buffer->size(%zu)", size, src_buffer->size);
   POCL_RETURN_ERROR_ON((src_offset + size > src_buffer->size), CL_INVALID_VALUE,
-            "src_offset + size (%zu) > src_buffer->size(%zu)", (src_offset+size), src_buffer->size)
+            "src_offset + size (%zu) > src_buffer->size(%zu)", (src_offset+size), src_buffer->size);
 
   POCL_RETURN_ERROR_ON((dst_offset > dst_buffer->size), CL_INVALID_VALUE,
-            "dst_offset(%zu) > dst_buffer->size(%zu)", dst_offset, dst_buffer->size)
+            "dst_offset(%zu) > dst_buffer->size(%zu)", dst_offset, dst_buffer->size);
   POCL_RETURN_ERROR_ON((size > dst_buffer->size), CL_INVALID_VALUE,
-            "size(%zu) > dst_buffer->size(%zu)", size, dst_buffer->size)
+            "size(%zu) > dst_buffer->size(%zu)", size, dst_buffer->size);
   POCL_RETURN_ERROR_ON((dst_offset + size > dst_buffer->size), CL_INVALID_VALUE,
-            "dst_offset + size (%zu) > dst_buffer->size(%zu)", (dst_offset+size), dst_buffer->size)
+            "dst_offset + size (%zu) > dst_buffer->size(%zu)", (dst_offset+size), dst_buffer->size);
   return CL_SUCCESS;
 }
 
@@ -400,10 +400,10 @@ int pocl_buffers_overlap(cl_mem src_buffer,
   if (src_buffer == dst_buffer) {
     POCL_RETURN_ERROR_ON(((src_offset <= dst_offset) && (dst_offset <=
       (src_offset + size - 1))), CL_MEM_COPY_OVERLAP, "dst_offset lies inside \
-      the src region and the src_buffer == dst_buffer")
+      the src region and the src_buffer == dst_buffer");
     POCL_RETURN_ERROR_ON(((dst_offset <= src_offset) && (src_offset <=
       (dst_offset + size - 1))), CL_MEM_COPY_OVERLAP, "src_offset lies inside \
-      the dst region and the src_buffer == dst_buffer")
+      the dst region and the src_buffer == dst_buffer");
   }
 
   /* sub buffers overlap check  */
@@ -416,10 +416,10 @@ int pocl_buffers_overlap(cl_mem src_buffer,
 
     POCL_RETURN_ERROR_ON(((src_offset <= dst_offset) && (dst_offset <=
       (src_offset + size - 1))), CL_MEM_COPY_OVERLAP, "dst_offset lies inside \
-      the src region and src_buffer + dst_buffer are subbuffers of the same buffer")
+      the src region and src_buffer + dst_buffer are subbuffers of the same buffer");
     POCL_RETURN_ERROR_ON(((dst_offset <= src_offset) && (src_offset <=
       (dst_offset + size - 1))), CL_MEM_COPY_OVERLAP, "src_offset lies inside \
-      the dst region and src_buffer + dst_buffer are subbuffers of the same buffer")
+      the dst region and src_buffer + dst_buffer are subbuffers of the same buffer");
 
   }
 
