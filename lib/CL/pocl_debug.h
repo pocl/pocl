@@ -120,34 +120,50 @@ extern "C" {
 
 
 #define POCL_GOTO_ERROR_ON(cond, err_code, ...)                             \
-    if (cond)                                                               \
+  do                                                                        \
     {                                                                       \
-        POCL_MSG_PRINT(" *** ERROR *** ", # err_code, __VA_ARGS__);         \
-        errcode = err_code;                                                 \
-        goto ERROR;                                                         \
+      if (cond)                                                             \
+        {                                                                   \
+            POCL_MSG_PRINT(" *** ERROR *** ", # err_code, __VA_ARGS__);     \
+            errcode = err_code;                                             \
+            goto ERROR;                                                     \
+        }                                                                   \
     }                                                                       \
+  while (0)
 
 #define POCL_RETURN_ERROR_ON(cond, err_code, ...)                           \
-    if (cond)                                                               \
+  do                                                                        \
     {                                                                       \
-        POCL_MSG_PRINT(" *** ERROR *** ", # err_code, __VA_ARGS__);         \
-        return err_code;                                                    \
+      if (cond)                                                             \
+        {                                                                   \
+            POCL_MSG_PRINT(" *** ERROR *** ", # err_code, __VA_ARGS__);     \
+            return err_code;                                                \
+        }                                                                   \
     }                                                                       \
+  while (0)
 
 #define POCL_RETURN_ERROR_COND(cond, err_code)                              \
-    if (cond)                                                               \
+  do                                                                        \
     {                                                                       \
-        POCL_MSG_PRINT(" *** ERROR *** ", #err_code, "%s\n", #cond);        \
-        return err_code;                                                    \
+      if (cond)                                                             \
+        {                                                                   \
+          POCL_MSG_PRINT(" *** ERROR *** ", #err_code, "%s\n", #cond);      \
+          return err_code;                                                  \
+        }                                                                   \
     }                                                                       \
+  while (0)
 
 #define POCL_GOTO_ERROR_COND(cond, err_code)                                \
-    if (cond)                                                               \
+  do                                                                        \
     {                                                                       \
-        POCL_MSG_PRINT(" *** ERROR *** ", #err_code, "%s\n", #cond);        \
-        errcode = err_code;                                                 \
-        goto ERROR;                                                         \
+      if (cond)                                                             \
+        {                                                                   \
+          POCL_MSG_PRINT(" *** ERROR *** ", #err_code, "%s\n", #cond);      \
+          errcode = err_code;                                               \
+          goto ERROR;                                                       \
+        }                                                                   \
     }                                                                       \
+  while (0)
 
 
 

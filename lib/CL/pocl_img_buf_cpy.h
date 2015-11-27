@@ -1,6 +1,7 @@
-/* OpenCL runtime library: clEnqueueCopyBufferRect()
+/* pocl_img_buf_cpy.h: common parts of image and buffer copying
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
+   Copyright (c) 2015 Giuseppe Bilotta
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -24,30 +25,19 @@
 #include "pocl_cl.h"
 #include <assert.h>
 #include "pocl_util.h"
-#include "pocl_img_buf_cpy.h"
 
-CL_API_ENTRY cl_int CL_API_CALL
-POname(clEnqueueCopyBufferRect)(cl_command_queue command_queue,
-                                cl_mem src_buffer,
-                                cl_mem dst_buffer,
-                                const size_t *src_origin,
-                                const size_t *dst_origin, 
-                                const size_t *region,
-                                size_t src_row_pitch,
-                                size_t src_slice_pitch,
-                                size_t dst_row_pitch,
-                                size_t dst_slice_pitch,
-                                cl_uint num_events_in_wait_list,
-                                const cl_event *event_wait_list,
-                                cl_event *event) CL_API_SUFFIX__VERSION_1_1
-{
-  return pocl_rect_copy(command_queue,
-    src_buffer, CL_FALSE,
-    dst_buffer, CL_FALSE,
-    src_origin, dst_origin, region,
-    src_row_pitch, src_slice_pitch,
-    dst_row_pitch, dst_slice_pitch,
-    num_events_in_wait_list, event_wait_list,
-    event);
-}
-POsym(clEnqueueCopyBufferRect)
+cl_int pocl_rect_copy(cl_command_queue command_queue,
+                      cl_mem src,
+                      cl_int src_is_image,
+                      cl_mem dst,
+                      cl_int dst_is_image,
+                      const size_t *src_origin,
+                      const size_t *dst_origin,
+                      const size_t *region,
+                      size_t src_row_pitch,
+                      size_t src_slice_pitch,
+                      size_t dst_row_pitch,
+                      size_t dst_slice_pitch,
+                      cl_uint num_events_in_wait_list,
+                      const cl_event *event_wait_list,
+                      cl_event *event);

@@ -72,7 +72,7 @@ CL_API_SUFFIX__VERSION_1_0
   if (pocl_buffers_overlap(src_buffer, dst_buffer, src_offset,
         dst_offset, size) != CL_SUCCESS) return CL_MEM_COPY_OVERLAP;
 
-  POCL_CHECK_DEV_IN_CMDQ
+  POCL_CHECK_DEV_IN_CMDQ;
 
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_COPY_BUFFER, 
                                  event, num_events_in_wait_list, 

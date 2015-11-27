@@ -102,7 +102,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   for (i = 0; i < kernel->num_args; i++)
     {
       POCL_RETURN_ERROR_ON((!kernel->arg_info[i].is_set), CL_INVALID_KERNEL_ARGS,
-        "The %i-th kernel argument is not set!\n", i)
+        "The %i-th kernel argument is not set!\n", i);
     }
 
   if (local_work_size != NULL) 

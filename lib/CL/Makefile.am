@@ -136,6 +136,7 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    pocl_util.c pocl_util.h \
                    pocl_queue_util.c pocl_queue_util.h \
                    pocl_image_util.c pocl_image_util.h \
+                   pocl_img_buf_cpy.h pocl_img_buf_cpy.c \
                    pocl_icd.h \
                    pocl_intfn.h \
                    pocl_llvm.h \

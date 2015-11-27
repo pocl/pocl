@@ -80,7 +80,7 @@ POname(clEnqueueReadBufferRect)(cl_command_queue command_queue,
       &host_slice_pitch, "") != CL_SUCCESS) return CL_INVALID_VALUE;
 
 
-  POCL_CHECK_DEV_IN_CMDQ
+  POCL_CHECK_DEV_IN_CMDQ;
 
   /* execute directly */
   /* TODO: enqueue the read_rect if this is a non-blocking read (see
