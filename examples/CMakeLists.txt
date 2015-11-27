@@ -56,3 +56,7 @@ add_subdirectory("standalone")
 add_subdirectory("scalarwave")
 add_subdirectory("trig")
 
+if(MIPS)
+  set_tests_properties("examle1-spir32"
+   PROPERTIES WILL_FAIL 1)
+endif()
