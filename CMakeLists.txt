@@ -618,6 +618,8 @@ foreach(EXT ${TEMP_EXT})
   set(HOST_DEVICE_EXTENSION_DEFINES "${HOST_DEVICE_EXTENSION_DEFINES} -D${EXT}")
 endforeach()
 
+set(HOST_DEVICE_CL_VERSION "200")
+
 ####################################################################
 
 set(EXTRA_HOST_AS_FLAGS "" CACHE STRING "Extra parameters to as for code generation in the host. (default: empty)")
@@ -715,6 +717,7 @@ if(ENABLE_HSA)
   set(BUILD_HSA 1)
 
   set(HSA_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64" "cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
+  set(HSA_DEVICE_CL_VERSION "200")
   find_path(HAVE_HSA_EXT_AMD_H "hsa_ext_amd.h" HINTS "${HSA_INCLUDEDIR}" ENV PATH)
 endif()
 

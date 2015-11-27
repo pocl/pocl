@@ -148,13 +148,6 @@ CL_API_SUFFIX__VERSION_1_0
             {
               if (strstr (cl_parameters, token))
                 {
-                  if (strstr (token, "cl-std=CL2.0"))
-                    {
-                      char* saved_token = token;
-                      token = "-D__OPENCL_C_VERSION__=200";
-                      APPEND_TOKEN();
-                      token = saved_token;
-                    }
                   /* the LLVM API call pushes the parameters directly to the 
                      frontend without using -Xclang */
                 }

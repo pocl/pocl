@@ -56,7 +56,7 @@ endforeach()
 
 set(CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-emit-llvm" "-target" "hsail64" "-D_CL_DISABLE_HALF")
 set(LLC_FLAGS "")
-set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=200")
+set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=${HSA_DEVICE_CL_VERSION}")
 separate_arguments(HSA_DEVICE_EXTENSIONS)
 foreach(EXT ${HSA_DEVICE_EXTENSIONS})
   set(DEVICE_CL_FLAGS "${DEVICE_CL_FLAGS} -D${EXT}")

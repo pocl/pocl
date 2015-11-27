@@ -286,6 +286,10 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_QUEUE_ON_HOST_PROPERTIES:
     POCL_RETURN_GETINFO(cl_command_queue_properties, device->on_host_queue_props);
 
+  case CL_DEVICE_GLOBAL_VARIABLE_PREFERRED_TOTAL_SIZE:
+    POCL_RETURN_GETINFO(size_t, device->global_var_pref_size);
+  case CL_DEVICE_MAX_GLOBAL_VARIABLE_SIZE:
+    POCL_RETURN_GETINFO(size_t, device->global_var_max_size);
   }
   return CL_INVALID_VALUE;
 }

@@ -135,3 +135,10 @@
 
 /* Disable cl_khr_fp16 because fp16 is not supported */
 #cmakedefine _CL_DISABLE_HALF
+
+
+#define HSA_DEVICE_CL_VERSION_MAJOR 2
+#define HSA_DEVICE_CL_VERSION_MINOR 0
+
+#define HOST_DEVICE_CL_VERSION_MAJOR 2
+#define HOST_DEVICE_CL_VERSION_MINOR 0

@@ -1335,6 +1335,8 @@ then
   POAT_TESTSUITES="$POAT_TESTSUITES hsa"
   # -lHSAILUtil is missing from llvm-config --libfiles
   LLVM_LIBS="$LLVM_LIBS -lLLVMHSAILUtil"
+  AC_DEFINE([HSA_DEVICE_CL_VERSION_MAJOR], [2], [OpenCL major version supported by HSA device])
+  AC_DEFINE([HSA_DEVICE_CL_VERSION_MINOR], [0], [OpenCL major version supported by HSA device])
 fi
 AC_DEFINE_UNQUOTED([HSA_DEVICE_EXTENSIONS], ["$HSA_DEVICE_EXTENSIONS"], [aoeuaoe])
 AC_SUBST([HSA_DEVICE_EXTENSION_DEFINES])
@@ -1472,6 +1474,10 @@ fi
 HOST_DEVICE_EXTENSION_DEFINES=`echo $HOST_DEVICE_EXTENSIONS | sed s/cl_khr/-Dcl_khr/g`
 AC_DEFINE_UNQUOTED([HOST_DEVICE_EXTENSIONS], ["$HOST_DEVICE_EXTENSIONS"], [aoeuaoe])
 AC_SUBST([HOST_DEVICE_EXTENSION_DEFINES])
+AC_DEFINE([HOST_DEVICE_CL_VERSION_MAJOR], [2], [OpenCL major version supported by host device])
+AC_DEFINE([HOST_DEVICE_CL_VERSION_MINOR], [0], [OpenCL minor version supported by host device])
+
+
 
 # Seems to be unused
 #AC_MSG_CHECKING([whether __fp16 can be converted to float])

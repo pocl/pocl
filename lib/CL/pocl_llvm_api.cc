@@ -223,7 +223,7 @@ static void get_build_log(cl_program program,
 
 int pocl_llvm_build_program(cl_program program, 
                             unsigned device_i,
-                            const char* user_options,
+                            const char* user_options_cstr,
                             char* program_bc_path)
 
 {
@@ -232,6 +232,7 @@ int pocl_llvm_build_program(cl_program program,
   tempfile[0] = 0;
   llvm::Module **mod = NULL;
   clang::CodeGenAction *action = NULL;
+  std::string user_options(user_options_cstr ? user_options_cstr : "");
 
   llvm::MutexGuard lockHolder(kernelCompilerLock);
   InitializeLLVM();
@@ -296,7 +297,32 @@ int pocl_llvm_build_program(cl_program program,
   // The current directory is a standard search path.
   ss << "-I. ";
 
-   /* With fp-contract we get calls to fma with processors which do not
+  if (device->endian_little)
+    ss << "-D__ENDIAN_LITTLE__=1 ";
+
+  if (device->image_support)
+    ss << "-D__IMAGE_SUPPORT__=1 ";
+
+  ss << "-DCL_DEVICE_MAX_GLOBAL_VARIABLE_SIZE=" << device->global_var_max_size << " ";
+
+  if (user_options.find("cl-fast-relaxed-math") != std::string::npos)
+    ss << "-D__FAST_RELAXED_MATH__=1 ";
+
+  ss << "-D__OPENCL_VERSION__=" << device->cl_version_int << " ";
+
+  if (user_options.find("-cl-std=") == std::string::npos)
+    ss << "-cl-std=" << device->cl_version_std << " ";
+
+  std::string temp(ss.str());
+  size_t pos = temp.find("-cl-std=CL");
+  pos += 10;
+  int cl_std_major = temp.c_str()[pos] - '0';
+  int cl_std_minor = temp.c_str()[pos+2] - '0';
+  int cl_std_i = cl_std_major * 100 + cl_std_minor * 10;
+  // if (cl_std_i != 10) && (cl_std != 11) && (cl_std != 12) (cl_std != 20)
+  ss << "-D__OPENCL_C_VERSION__=" << cl_std_i << " ";
+
+  /* With fp-contract we get calls to fma with processors which do not
       have fma instructions. These ruin the performance. Better to have
       the mul+add separated in the IR. */
   ss << "-fno-builtin -ffp-contract=off ";
@@ -306,6 +332,11 @@ int pocl_llvm_build_program(cl_program program,
   if (device->llvm_cpu != NULL)
     ss << "-target-cpu " << device->llvm_cpu << " ";
   ss << user_options << " ";
+
+#ifdef DEBUG_POCL_LLVM_API
+  std::cout << "pocl_llvm_build_program: Final options: " << ss.str() << std::endl;
+#endif
+
   std::istream_iterator<std::string> begin(ss);
   std::istream_iterator<std::string> end;
   std::istream_iterator<std::string> i = begin;
@@ -344,14 +375,14 @@ int pocl_llvm_build_program(cl_program program,
   
   LangOptions *la = pocl_build.getLangOpts();
   pocl_build.setLangDefaults
-    (*la, clang::IK_OpenCL, clang::LangStandard::lang_opencl20);
+    (*la, clang::IK_OpenCL, clang::LangStandard::lang_opencl12);
   
   // LLVM 3.3 and older do not set that char is signed which is
   // defined by the OpenCL C specs (but not by C specs).
   la->CharIsSigned = true;
 
   // the per-file types don't seem to override this 
-  la->OpenCLVersion = 200;
+  la->OpenCLVersion = cl_std_i;
   la->FakeAddressSpaceMap = true;
   la->Blocks = true; //-fblocks
   la->MathErrno = false; // -fno-math-errno
@@ -361,12 +392,6 @@ int pocl_llvm_build_program(cl_program program,
 #endif
 
   PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
-  /* configure.ac sets a a few host specific flags for pthreads and
-     basic devices. */
-  if (device->has_64bit_long == 0)
-    po.addMacroDef("_CL_DISABLE_LONG");
-
-  po.addMacroDef("__OPENCL_VERSION__=200"); // TODO this should be per-device
 
   std::string kernelh;
   if (pocl_get_bool_option("POCL_BUILDING", 0))

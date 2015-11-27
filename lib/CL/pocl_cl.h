@@ -344,6 +344,8 @@ struct _cl_device_id {
   cl_uint global_mem_cacheline_size;
   cl_ulong global_mem_cache_size;
   cl_ulong global_mem_size;
+  size_t global_var_pref_size;
+  size_t global_var_max_size;
   cl_ulong max_constant_buffer_size;
   cl_uint max_constant_args;
   cl_device_local_mem_type local_mem_type;
@@ -377,6 +379,10 @@ struct _cl_device_id {
   const char *profile;
   const char *version;
   const char *extensions;
+  cl_uint cl_version_major;    // 2
+  cl_uint cl_version_minor;    // 0
+  const char *cl_version_std;  // "CL2.0"
+  cl_uint cl_version_int;      // 200
  
   void *data;
   const char* llvm_target_triplet; /* the llvm target triplet to use */
