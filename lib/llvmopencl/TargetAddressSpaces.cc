@@ -70,24 +70,11 @@ ConvertedType(llvm::Type *type, std::map<unsigned, unsigned> &addrSpaceMap) {
     unsigned AS = type->getPointerAddressSpace();
     unsigned newAS = addrSpaceMap[AS];
     return PointerType::get(ConvertedType(type->getPointerElementType(), addrSpaceMap), newAS);
-
   } else if (type->isArrayTy()) {
     return ArrayType::get
       (ConvertedType(type->getArrayElementType(), addrSpaceMap), type->getArrayNumElements());
-
-  } else if (type->isStructTy()) { /* TODO: pointers inside structs */
-    llvm::StructType* t = dyn_cast<llvm::StructType>(type);
-    std::vector<llvm::Type*> newtypes;
-    for (llvm::StructType::element_iterator i = t->element_begin(),
-         e = t->element_end(); i < e; ++i)
-      {
-        newtypes.push_back(ConvertedType(*i, addrSpaceMap));
-      }
-    ArrayRef<Type*> a(newtypes);
-    llvm::StructType* tn = StructType::get(t->getContext(), a, t->isPacked());
-    return tn;
-  } else {
-      return type;
+  } else { /* TODO: pointers inside structs */
+    return type;
   }
 }
 
