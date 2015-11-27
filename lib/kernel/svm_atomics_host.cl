@@ -4,6 +4,11 @@
 
    This relies on Clang's C11 atomic builtins.
 
+   Note: for some architectures, the host-specific llvm bitcode is used instead
+   of this file (since Clang doesn't have proper builtins for 64bit min/max atomics,
+   yet LLVM's atomicrmw can do them; using this file gives only limited min/max
+   atomics).
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights

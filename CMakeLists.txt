@@ -875,6 +875,21 @@ endif()
 
 #############################################################
 
+# for tests & examples
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc")
+  set(POWERPC 1)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv7")
+  set(ARMV7 1)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv6")
+  set(ARMV6 1)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "(i386|AMD64|x86_64)")
+  if(POCL_DEVICE_ADDRESS_BITS MATCHES "32")
+    set(I386 1)
+  else()
+    set(X86_64 1)
+  endif()
+endif()
+
 include_directories("fix-include" "include")
 
 add_subdirectory("include")
@@ -891,22 +906,6 @@ message(STATUS "POCLU LINK OPTS: ${POCLU_LINK_OPTIONS}")
 
 # DONE - just pocl-standalone script
 add_subdirectory("scripts")
-
-# for tests & examples
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc")
-  set(POWERPC 1)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv7")
-  set(ARMV7 1)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv6")
-  set(ARMV6 1)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "(i386|AMD64|x86_64)")
-  if(POCL_DEVICE_ADDRESS_BITS MATCHES "32")
-    set(I386 1)
-  else()
-    set(X86_64 1)
-  endif()
-endif()
-
 
 # TODO In progress
 add_subdirectory("tests")

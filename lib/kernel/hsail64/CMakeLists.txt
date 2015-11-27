@@ -28,8 +28,7 @@ include("bitcode_rules")
 set(KERNEL_SOURCES ${SOURCES_WITHOUT_VML})
 
 foreach(FILE printf.c barrier.ll get_image_depth.cl get_image_dim.cl
-  get_image_height.cl get_image_width.cl read_image.cl write_image.cl
-  svm_atomics_host.cl)
+  get_image_height.cl get_image_width.cl read_image.cl write_image.cl)
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
 endforeach()
 
