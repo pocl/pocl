@@ -59,18 +59,18 @@
 
 #elif !defined(ATOMIC_TYPE)
 
-bool _CL_OVERLOADABLE QUAL(pocl_atomic_flag_test_and_set) ( volatile Q atomic_flag  *object ,
+bool _CL_OVERLOADABLE QUAL(pocl_atomic_flag_test_and_set) ( volatile Q atomic_int  *object ,
   memory_order order,
   memory_scope scope)
 {
-  return __atomic_test_and_set(object, CONV_ORDER(order));
+  return __c11_atomic_exchange(object, 1, CONV_ORDER(order));
 }
 
-void _CL_OVERLOADABLE QUAL(pocl_atomic_flag_clear) ( volatile Q atomic_flag  *object ,
+void _CL_OVERLOADABLE QUAL(pocl_atomic_flag_clear) ( volatile Q atomic_int  *object ,
   memory_order order,
   memory_scope scope)
 {
-  __atomic_clear(object, CONV_ORDER(order));
+  __c11_atomic_store(object, 0, CONV_ORDER(order));
 }
 
 #  define ATOMIC_TYPE atomic_int

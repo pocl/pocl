@@ -4,64 +4,62 @@ target triple = "x86_64-unknown-linux-gnu"
 
 ; Function Attrs: nounwind uwtable
 define zeroext i1 @_Z37pocl_atomic_flag_test_and_set__globalPVU8CLglobalU7_Atomici12memory_order12memory_scope(i32 addrspace(1)* %object, i32 %order, i32 %scope) #0 {
-  %1 = bitcast i32 addrspace(1)* %object to i8 addrspace(1)*
-  switch i32 %order, label %10 [
+  switch i32 %order, label %6 [
     i32 0, label %.thread
     i32 1, label %.thread1
     i32 2, label %.thread2
-    i32 3, label %8
+    i32 3, label %4
   ]
 
-; <label>:2                                       ; preds = %10, %8, %.thread2, %.thread1, %.thread
-  %3 = phi i8 [ %5, %.thread ], [ %6, %.thread1 ], [ %7, %.thread2 ], [ %9, %8 ], [ %11, %10 ]
-  %4 = icmp ne i8 %3, 0
-  ret i1 %4
-
 .thread:                                          ; preds = %0
-  %5 = atomicrmw volatile xchg i8 addrspace(1)* %1, i8 1 monotonic
-  br label %2
+  %1 = atomicrmw volatile xchg i32 addrspace(1)* %object, i32 1 monotonic
+  br label %8
 
 .thread1:                                         ; preds = %0
-  %6 = atomicrmw volatile xchg i8 addrspace(1)* %1, i8 1 acquire
-  br label %2
+  %2 = atomicrmw volatile xchg i32 addrspace(1)* %object, i32 1 acquire
+  br label %8
 
 .thread2:                                         ; preds = %0
-  %7 = atomicrmw volatile xchg i8 addrspace(1)* %1, i8 1 release
-  br label %2
+  %3 = atomicrmw volatile xchg i32 addrspace(1)* %object, i32 1 release
+  br label %8
 
-; <label>:8                                       ; preds = %0
-  %9 = atomicrmw volatile xchg i8 addrspace(1)* %1, i8 1 acq_rel
-  br label %2
+; <label>:4                                       ; preds = %0
+  %5 = atomicrmw volatile xchg i32 addrspace(1)* %object, i32 1 acq_rel
+  br label %8
 
-; <label>:10                                      ; preds = %0
-  %11 = atomicrmw volatile xchg i8 addrspace(1)* %1, i8 1 seq_cst
-  br label %2
+; <label>:6                                       ; preds = %0
+  %7 = atomicrmw volatile xchg i32 addrspace(1)* %object, i32 1 seq_cst
+  br label %8
+
+; <label>:8                                       ; preds = %6, %4, %.thread2, %.thread1, %.thread
+  %.0 = phi i32 [ %1, %.thread ], [ %7, %6 ], [ %5, %4 ], [ %3, %.thread2 ], [ %2, %.thread1 ]
+  %9 = icmp ne i32 %.0, 0
+  ret i1 %9
 }
 
 ; Function Attrs: nounwind uwtable
 define void @_Z30pocl_atomic_flag_clear__globalPVU8CLglobalU7_Atomici12memory_order12memory_scope(i32 addrspace(1)* nocapture %object, i32 %order, i32 %scope) #0 {
-  %1 = bitcast i32 addrspace(1)* %object to i8 addrspace(1)*
-  switch i32 %order, label %3 [
+  switch i32 %order, label %1 [
     i32 0, label %.thread
     i32 1, label %.thread
     i32 2, label %.thread1
     i32 3, label %.thread
   ]
 
-; <label>:2                                       ; preds = %3, %.thread1, %.thread
-  ret void
-
 .thread:                                          ; preds = %0, %0, %0
-  store atomic volatile i8 0, i8 addrspace(1)* %1 monotonic, align 1
+  store atomic volatile i32 0, i32 addrspace(1)* %object monotonic, align 4
   br label %2
 
 .thread1:                                         ; preds = %0
-  store atomic volatile i8 0, i8 addrspace(1)* %1 release, align 1
+  store atomic volatile i32 0, i32 addrspace(1)* %object release, align 4
   br label %2
 
-; <label>:3                                       ; preds = %0
-  store atomic volatile i8 0, i8 addrspace(1)* %1 seq_cst, align 1
+; <label>:1                                       ; preds = %0
+  store atomic volatile i32 0, i32 addrspace(1)* %object seq_cst, align 4
   br label %2
+
+; <label>:2                                       ; preds = %1, %.thread1, %.thread
+  ret void
 }
 
 ; Function Attrs: nounwind uwtable
@@ -4038,64 +4036,62 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; Function Attrs: nounwind uwtable
 define zeroext i1 @_Z36pocl_atomic_flag_test_and_set__localPVU7CLlocalU7_Atomici12memory_order12memory_scope(i32 addrspace(2)* %object, i32 %order, i32 %scope) #0 {
-  %1 = bitcast i32 addrspace(2)* %object to i8 addrspace(2)*
-  switch i32 %order, label %10 [
+  switch i32 %order, label %6 [
     i32 0, label %.thread
     i32 1, label %.thread1
     i32 2, label %.thread2
-    i32 3, label %8
+    i32 3, label %4
   ]
 
-; <label>:2                                       ; preds = %10, %8, %.thread2, %.thread1, %.thread
-  %3 = phi i8 [ %5, %.thread ], [ %6, %.thread1 ], [ %7, %.thread2 ], [ %9, %8 ], [ %11, %10 ]
-  %4 = icmp ne i8 %3, 0
-  ret i1 %4
-
 .thread:                                          ; preds = %0
-  %5 = atomicrmw volatile xchg i8 addrspace(2)* %1, i8 1 monotonic
-  br label %2
+  %1 = atomicrmw volatile xchg i32 addrspace(2)* %object, i32 1 monotonic
+  br label %8
 
 .thread1:                                         ; preds = %0
-  %6 = atomicrmw volatile xchg i8 addrspace(2)* %1, i8 1 acquire
-  br label %2
+  %2 = atomicrmw volatile xchg i32 addrspace(2)* %object, i32 1 acquire
+  br label %8
 
 .thread2:                                         ; preds = %0
-  %7 = atomicrmw volatile xchg i8 addrspace(2)* %1, i8 1 release
-  br label %2
+  %3 = atomicrmw volatile xchg i32 addrspace(2)* %object, i32 1 release
+  br label %8
 
-; <label>:8                                       ; preds = %0
-  %9 = atomicrmw volatile xchg i8 addrspace(2)* %1, i8 1 acq_rel
-  br label %2
+; <label>:4                                       ; preds = %0
+  %5 = atomicrmw volatile xchg i32 addrspace(2)* %object, i32 1 acq_rel
+  br label %8
 
-; <label>:10                                      ; preds = %0
-  %11 = atomicrmw volatile xchg i8 addrspace(2)* %1, i8 1 seq_cst
-  br label %2
+; <label>:6                                       ; preds = %0
+  %7 = atomicrmw volatile xchg i32 addrspace(2)* %object, i32 1 seq_cst
+  br label %8
+
+; <label>:8                                       ; preds = %6, %4, %.thread2, %.thread1, %.thread
+  %.0 = phi i32 [ %1, %.thread ], [ %7, %6 ], [ %5, %4 ], [ %3, %.thread2 ], [ %2, %.thread1 ]
+  %9 = icmp ne i32 %.0, 0
+  ret i1 %9
 }
 
 ; Function Attrs: nounwind uwtable
 define void @_Z29pocl_atomic_flag_clear__localPVU7CLlocalU7_Atomici12memory_order12memory_scope(i32 addrspace(2)* nocapture %object, i32 %order, i32 %scope) #0 {
-  %1 = bitcast i32 addrspace(2)* %object to i8 addrspace(2)*
-  switch i32 %order, label %3 [
+  switch i32 %order, label %1 [
     i32 0, label %.thread
     i32 1, label %.thread
     i32 2, label %.thread1
     i32 3, label %.thread
   ]
 
-; <label>:2                                       ; preds = %3, %.thread1, %.thread
-  ret void
-
 .thread:                                          ; preds = %0, %0, %0
-  store atomic volatile i8 0, i8 addrspace(2)* %1 monotonic, align 1
+  store atomic volatile i32 0, i32 addrspace(2)* %object monotonic, align 4
   br label %2
 
 .thread1:                                         ; preds = %0
-  store atomic volatile i8 0, i8 addrspace(2)* %1 release, align 1
+  store atomic volatile i32 0, i32 addrspace(2)* %object release, align 4
   br label %2
 
-; <label>:3                                       ; preds = %0
-  store atomic volatile i8 0, i8 addrspace(2)* %1 seq_cst, align 1
+; <label>:1                                       ; preds = %0
+  store atomic volatile i32 0, i32 addrspace(2)* %object seq_cst, align 4
   br label %2
+
+; <label>:2                                       ; preds = %1, %.thread1, %.thread
+  ret void
 }
 
 ; Function Attrs: nounwind uwtable
