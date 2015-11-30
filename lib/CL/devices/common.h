@@ -28,6 +28,16 @@
 #include "pocl_cl.h"
 #include "dev_image.h"
 
+#define XSETUP_DEVICE_CL_VERSION(A, B)             \
+  dev->cl_version_major = A;                      \
+  dev->cl_version_minor = B;                      \
+  dev->cl_version_int = (A * 100) + (B * 10);     \
+  dev->cl_version_std = "CL" # A "." # B;         \
+  dev->version = "OpenCL " # A "." # B " pocl";
+
+#define SETUP_DEVICE_CL_VERSION(a, b) XSETUP_DEVICE_CL_VERSION(a, b)
+
+
 /* Determine preferred vector sizes */
 #if defined(__AVX__)
 #  define POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR   16

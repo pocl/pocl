@@ -327,6 +327,8 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
 {
   pocl_basic_init_device_infos (dev);
 
+  SETUP_DEVICE_CL_VERSION(HSA_DEVICE_CL_VERSION_MAJOR, HSA_DEVICE_CL_VERSION_MINOR)
+
   dev->spmd = CL_TRUE;
   dev->autolocals_to_args = 0;
 

@@ -22,6 +22,7 @@
    THE SOFTWARE.
 */
 
+#include "config.h"
 #include "basic.h"
 #include "cpuinfo.h"
 #include "topology/pocl_topology.h"
@@ -227,6 +228,7 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->max_compute_units = 0;
   dev->max_work_item_dimensions = 3;
 
+  SETUP_DEVICE_CL_VERSION(HOST_DEVICE_CL_VERSION_MAJOR, HOST_DEVICE_CL_VERSION_MINOR)
   /*
     The hard restriction will be the context data which is
     stored in stack that can be as small as 8K in Linux.
