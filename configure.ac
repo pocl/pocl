@@ -1192,6 +1192,9 @@ then
  TCE_AVAILABLE=1
 fi
 
+# List of extension supported by the TCE device
+AC_SUBST([TCE_DEVICE_EXTENSION_DEFINES], ["-Dcl_khr_byte_addressable_store -Dcl_khr_global_int32_base_atomics -Dcl_khr_global_int32_extended_atomics -Dcl_khr_local_int32_base_atomics -Dcl_khr_local_int32_extended_atomics -Dcl_khr_int64 -Dcl_khr_int64_base_atomics -Dcl_khr_int64_extended_atomics"])
+
 OCL_TARGETS="$OCL_TARGETS tce"
 fi
 
