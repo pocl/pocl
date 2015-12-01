@@ -878,6 +878,8 @@ add_subdirectory("scripts")
 # for tests & examples
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc")
   set(POWERPC 1)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "mips")
+  set(MIPS 1)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv7")
   set(ARMV7 1)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv6")

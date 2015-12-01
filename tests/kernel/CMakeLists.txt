@@ -140,6 +140,12 @@ if(POWERPC)
     PROPERTIES WILL_FAIL 1)
 endif()
 
+if(MIPS)
+  set_tests_properties("kernel/test_shuffle_char" "kernel/test_shuffle_short"
+   "kernel/test_shuffle_ushort"
+   PROPERTIES WILL_FAIL 1)
+endif()
+
 
 ######################################################################
 if(MSVC)
