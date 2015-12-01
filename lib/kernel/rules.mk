@@ -45,10 +45,10 @@ LKERNEL_SRCS =								\
 
 OBJ = $(LKERNEL_SRCS:%=%.bc)
 
-vpath %.c  @top_srcdir@/lib/kernel
-vpath %.cc @top_srcdir@/lib/kernel
-vpath %.cl @top_srcdir@/lib/kernel
-vpath %.ll @top_srcdir@/lib/kernel
+vpath %.c @srcdir@ @top_srcdir@/lib/kernel
+vpath %.cc @srcdir@ @top_srcdir@/lib/kernel
+vpath %.cl @srcdir@ @top_srcdir@/lib/kernel
+vpath %.ll @srcdir@ @top_srcdir@/lib/kernel
 
 
 
