@@ -1193,7 +1193,14 @@ then
 fi
 
 # List of extension supported by the TCE device
-AC_SUBST([TCE_DEVICE_EXTENSION_DEFINES], ["-Dcl_khr_byte_addressable_store -Dcl_khr_global_int32_base_atomics -Dcl_khr_global_int32_extended_atomics -Dcl_khr_local_int32_base_atomics -Dcl_khr_local_int32_extended_atomics -Dcl_khr_int64 -Dcl_khr_int64_base_atomics -Dcl_khr_int64_extended_atomics"])
+TCE_DEVICE_EXTENSIONS="cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics cl_khr_fp16"
+TCE_DEVICE_EXTENSION_DEFINES=`echo $TCE_DEVICE_EXTENSIONS | sed s/cl_khr/-Dcl_khr/g`
+AC_DEFINE_UNQUOTED([TCE_DEVICE_EXTENSIONS], ["$TCE_DEVICE_EXTENSIONS"], [TCE device supported extension list])
+AC_SUBST([TCE_DEVICE_EXTENSION_DEFINES])
+AC_DEFINE_UNQUOTED([TCE_DEVICE_EXTENSION_DEFINES], ["$TCE_DEVICE_EXTENSION_DEFINES"], [TCE device supported extension list])
+AC_DEFINE([TCE_DEVICE_CL_VERSION_MAJOR], [2], [OpenCL major version supported by TCE device])
+AC_DEFINE([TCE_DEVICE_CL_VERSION_MINOR], [0], [OpenCL minor version supported by TCE device])
+
 
 OCL_TARGETS="$OCL_TARGETS tce"
 fi
