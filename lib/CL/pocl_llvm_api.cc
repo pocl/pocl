@@ -297,6 +297,8 @@ int pocl_llvm_build_program(cl_program program,
   // The current directory is a standard search path.
   ss << "-I. ";
 
+  ss << user_options << " ";
+
   if (device->endian_little)
     ss << "-D__ENDIAN_LITTLE__=1 ";
 
@@ -331,7 +333,6 @@ int pocl_llvm_build_program(cl_program program,
   ss << "-triple=" << device->llvm_target_triplet << " ";
   if (device->llvm_cpu != NULL)
     ss << "-target-cpu " << device->llvm_cpu << " ";
-  ss << user_options << " ";
 
 #ifdef DEBUG_POCL_LLVM_API
   std::cout << "pocl_llvm_build_program: Final options: " << ss.str() << std::endl;
