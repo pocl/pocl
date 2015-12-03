@@ -1499,7 +1499,7 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[__fp16 callfp16(__fp16 a) { return a * (__f
                   ]
                  )
 
-HOST_DEVICE_EXTENSIONS="cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics"
+HOST_DEVICE_EXTENSIONS="cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_spir"
 if test "$HAVE_WORKING_HALF" == "1"; then
   HOST_DEVICE_EXTENSIONS="$HOST_DEVICE_EXTENSIONS cl_khr_fp16"
 fi
