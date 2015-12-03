@@ -362,9 +362,9 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
 
   uint16_t wg_sizes[3];
   HSA_CHECK(hsa_agent_get_info(agent, HSA_AGENT_INFO_WORKGROUP_MAX_DIM, &wg_sizes));
-  dev->max_work_item_sizes[0] = 64; //wg_sizes[0];
-  dev->max_work_item_sizes[1] = 64; //wg_sizes[1];
-  dev->max_work_item_sizes[2] = 64; //wg_sizes[2];
+  dev->max_work_item_sizes[0] = wg_sizes[0];
+  dev->max_work_item_sizes[1] = wg_sizes[1];
+  dev->max_work_item_sizes[2] = wg_sizes[2];
 
 #ifdef HAVE_HSA_EXT_AMD_H
   uint32_t temp;
@@ -383,11 +383,8 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
   dev->max_clock_frequency = 700;
 #endif
 
-/*
   HSA_CHECK(hsa_agent_get_info
     (agent, HSA_AGENT_INFO_WORKGROUP_MAX_SIZE, &dev->max_work_group_size));
-*/
-  dev->max_work_group_size = 64;
 
   /*Image features*/
   hsa_dim3_t image_size;
