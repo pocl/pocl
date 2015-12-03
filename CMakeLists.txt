@@ -716,7 +716,7 @@ if(ENABLE_HSA)
   # TODO unify with autotools
   set(BUILD_HSA 1)
 
-  set(HSA_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64" "cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
+  set(HSA_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64 cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
   set(HSA_DEVICE_CL_VERSION "200")
   find_path(HAVE_HSA_EXT_AMD_H "hsa_ext_amd.h" HINTS "${HSA_INCLUDEDIR}" ENV PATH)
 endif()
