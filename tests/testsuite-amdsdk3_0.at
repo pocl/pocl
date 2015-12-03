@@ -141,6 +141,8 @@ AT_CHECK_UNQUOTED([make test_BuiltInScan -sC $abs_top_builddir/examples/AMDSDK3.
 AT_CLEANUP
 
 POAT_AMDSDK_HSA_SETUP([calcpie])
+# currently causes gpu lockup with HSA
+AT_SKIP_IF([echo $POCL_DEVICES | grep -q hsa])
 AT_CHECK_UNQUOTED([make test_CalcPie -sC $abs_top_builddir/examples/AMDSDK3.0 | egrep "Passed|failed"], 0,
 [Passed!
 ])
@@ -247,7 +249,7 @@ AT_CHECK_UNQUOTED([make test_FFT -sC $abs_top_builddir/examples/AMDSDK3.0 | grep
 AT_CLEANUP
 
 POAT_AMDSDK_SETUP([finegrainsvm])
-# freezes
+# freezes with every device
 AT_SKIP_IF(true)
 AT_CHECK_UNQUOTED([make test_FineGrainSVM -sC $abs_top_builddir/examples/AMDSDK3.0 | grep Passed], 0,
 [Passed!
@@ -255,6 +257,8 @@ AT_CHECK_UNQUOTED([make test_FineGrainSVM -sC $abs_top_builddir/examples/AMDSDK3
 AT_CLEANUP
 
 POAT_AMDSDK_HSA_SETUP([finegrainsvmcas])
+# freezes the machine with HSA
+AT_SKIP_IF([echo $POCL_DEVICES | grep -q hsa])
 AT_CHECK_UNQUOTED([make test_FineGrainSVMCAS -sC $abs_top_builddir/examples/AMDSDK3.0 | grep Passed], 0,
 ignore, ignore)
 AT_CLEANUP
