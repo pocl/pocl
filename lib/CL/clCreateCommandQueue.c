@@ -43,6 +43,9 @@ POname(clCreateCommandQueue)(cl_context context,
   POCL_GOTO_ERROR_ON((properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE),
       CL_INVALID_QUEUE_PROPERTIES, "Pocl doesn't have out-of-order queues yet\n");
 
+  if (pocl_debug_messages)
+    properties |= CL_QUEUE_PROFILING_ENABLE;
+
   for (i=0; i<context->num_devices; i++)
     {
       if (context->devices[i] == POCL_REAL_DEV(device))

@@ -301,7 +301,7 @@ endif()
 
 option(USE_VECMATHLIB_BUILTINS_ONLY "Use only __builtin_* functions in the kernel library." OFF)
 
-set(DEFAULT_KERNEL_CL_FLAGS "-D__OPENCL_VERSION__=120")
+set(DEFAULT_KERNEL_CL_FLAGS "-Xclang -cl-std=CL2.0 -D__OPENCL_C_VERSION__=200")
 if(USE_VECMATHLIB)
   set(DEFAULT_KERNEL_CLANGXX_FLAGS "-DVML_NO_IOSTREAM ${CLANGXX_STDLIB}")
   if(USE_VECMATHLIB_BUILTINS_ONLY)
@@ -602,6 +602,24 @@ if(CL_DISABLE_HALF)
   set(DEFAULT_HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} -D_CL_DISABLE_HALF")
 endif()
 
+# define it here, b/c we'll need these both at runtime and buildtime
+set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_spir")
+if(NOT CL_DISABLE_HALF)
+  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp16")
+endif()
+if(NOT CL_DISABLE_LONG)
+  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_int64 cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
+endif()
+
+set(TEMP_EXT "${HOST_DEVICE_EXTENSIONS}")
+set(HOST_DEVICE_EXTENSION_DEFINES "")
+separate_arguments(TEMP_EXT)
+foreach(EXT ${TEMP_EXT})
+  set(HOST_DEVICE_EXTENSION_DEFINES "${HOST_DEVICE_EXTENSION_DEFINES} -D${EXT}")
+endforeach()
+
+set(HOST_DEVICE_CL_VERSION "200")
+
 ####################################################################
 
 set(EXTRA_HOST_AS_FLAGS "" CACHE STRING "Extra parameters to as for code generation in the host. (default: empty)")
@@ -698,6 +716,8 @@ if(ENABLE_HSA)
   # TODO unify with autotools
   set(BUILD_HSA 1)
 
+  set(HSA_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64 cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
+  set(HSA_DEVICE_CL_VERSION "200")
   find_path(HAVE_HSA_EXT_AMD_H "hsa_ext_amd.h" HINTS "${HSA_INCLUDEDIR}" ENV PATH)
 endif()
 
@@ -858,6 +878,21 @@ endif()
 
 #############################################################
 
+# for tests & examples
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc")
+  set(POWERPC 1)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv7")
+  set(ARMV7 1)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv6")
+  set(ARMV6 1)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "(i386|AMD64|x86_64)")
+  if(POCL_DEVICE_ADDRESS_BITS MATCHES "32")
+    set(I386 1)
+  else()
+    set(X86_64 1)
+  endif()
+endif()
+
 include_directories("fix-include" "include")
 
 add_subdirectory("include")
@@ -874,22 +909,6 @@ message(STATUS "POCLU LINK OPTS: ${POCLU_LINK_OPTIONS}")
 
 # DONE - just pocl-standalone script
 add_subdirectory("scripts")
-
-# for tests & examples
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc")
-  set(POWERPC 1)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv7")
-  set(ARMV7 1)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv6")
-  set(ARMV6 1)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "(i386|AMD64|x86_64)")
-  if(POCL_DEVICE_ADDRESS_BITS MATCHES "32")
-    set(I386 1)
-  else()
-    set(X86_64 1)
-  endif()
-endif()
-
 
 # TODO In progress
 add_subdirectory("tests")

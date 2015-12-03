@@ -134,9 +134,11 @@ pocl_ttasim_init_device_infos(struct _cl_device_id* dev)
   dev->queue_properties = CL_QUEUE_PROFILING_ENABLE;
   dev->vendor = "TTA-Based Co-design Environment";
   dev->profile = "EMBEDDED_PROFILE";
-  dev->extensions = "";
+  dev->extensions = TCE_DEVICE_EXTENSIONS;
   dev->llvm_target_triplet = "tce-tut-llvm";
   dev->has_64bit_long = 1;
+
+  SETUP_DEVICE_CL_VERSION(TCE_DEVICE_CL_VERSION_MAJOR, TCE_DEVICE_CL_VERSION_MINOR);
 
   dev->parent_device = NULL;
   // ttasim does not support partitioning

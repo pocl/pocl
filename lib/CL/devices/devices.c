@@ -144,7 +144,7 @@ pocl_device_common_init(struct _cl_device_id* dev)
   POCL_INIT_OBJECT(dev);
   dev->driver_version = PACKAGE_VERSION;
   if(dev->version == NULL)
-    dev->version = "OpenCL 1.2 pocl";
+    dev->version = "OpenCL 2.0 pocl";
 
   dev->short_name = strdup(dev->ops->device_name);
   if(dev->long_name == NULL)

@@ -31,6 +31,11 @@ else()
   set(KERNEL_SOURCES ${SOURCES_WITHOUT_VML})
 endif()
 
+if(X86_64)
+  list(APPEND KERNEL_SOURCES svm_atomics_x86_64.ll)
+else()
+  list(APPEND KERNEL_SOURCES svm_atomics_host.cl)
+endif()
 
 # Use HOST flags:
 #~ CLANG_FLAGS = @HOST_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off
@@ -43,6 +48,9 @@ set(LLC_FLAGS ${HOST_LLC_FLAGS})
 
 # TODO LLC_flags is used by kernel.bc target, but ld is unused
 #LD_FLAGS    = @HOST_LD_FLAGS@
+
+set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=${HOST_DEVICE_CL_VERSION} ${HOST_DEVICE_EXTENSION_DEFINES}")
+separate_arguments(DEVICE_CL_FLAGS)
 
 # KERNEL_TARGET = @OCL_KERNEL_TARGET@
 make_kernel_bc(KERNEL_BC "${OCL_KERNEL_TARGET}" ${KERNEL_SOURCES})

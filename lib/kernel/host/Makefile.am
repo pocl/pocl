@@ -28,6 +28,7 @@ KERNEL_TARGET = @OCL_KERNEL_TARGET@
 CLANG_FLAGS = @HOST_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off
 LLC_FLAGS   = @HOST_LLC_FLAGS@
 LD_FLAGS    = @HOST_LD_FLAGS@
+DEVICE_CL_FLAGS = -D__OPENCL_VERSION__=200 @HOST_DEVICE_EXTENSION_DEFINES@
 
 include ../rules.mk
 include ../sources.mk

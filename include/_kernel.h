@@ -32,6 +32,30 @@
 #endif
 #include "_kernel_c.h"
 
+/* If the -cl-std build option is not specified, the highest OpenCL C 1.x
+ * language version supported by each device is used as the version of
+ * OpenCL C when compiling the program for each device.
+ */
+#ifndef __OPENCL_C_VERSION__
+#define __OPENCL_C_VERSION__ 120
+#endif
+
+#if (__OPENCL_C_VERSION__ > 99)
+#define CL_VERSION_1_0 100
+#endif
+
+#if (__OPENCL_C_VERSION__ > 109)
+#define CL_VERSION_1_1 110
+#endif
+
+#if (__OPENCL_C_VERSION__ > 119)
+#define CL_VERSION_1_2 120
+#endif
+
+#if (__OPENCL_C_VERSION__ > 199)
+#define CL_VERSION_2_0 200
+#endif
+
 /* Enable double precision. This should really only be done when
    building the run-time library; when building application code, we
    should instead check a macro to see whether the application has
@@ -66,6 +90,19 @@
 #  define __IF_FP64(x)
 #endif
 
+#ifdef cl_khr_int64_base_atomics
+#define __IF_BA64(x) x
+#pragma OPENCL EXTENSION cl_khr_int64_base_atomics : enable
+#else
+#define __IF_BA64(x)
+#endif
+
+#ifdef cl_khr_int64_extended_atomics
+#define __IF_EA64(x) x
+#pragma OPENCL EXTENSION cl_khr_int64_extended_atomics : enable
+#else
+#define __IF_EA64(x)
+#endif
 
 /* A static assert statement to catch inconsistencies at build time */
 #if __has_extension(__c_static_assert__)
@@ -75,8 +112,6 @@
 #endif
 
 typedef uint cl_mem_fence_flags;
-
-
 
 /* Ensure the data types have the right sizes */
 _CL_STATIC_ASSERT(char  , sizeof(char  ) == 1);
@@ -402,7 +437,7 @@ _CL_DECLARE_CONVERT_TYPE_SRC_DST_SIZE(_rte)
 _CL_DECLARE_CONVERT_TYPE_SRC_DST_SIZE(_rtp)
 _CL_DECLARE_CONVERT_TYPE_SRC_DST_SIZE(_rtn)
 
-
+
 /* Work-Item Functions */
 
 uint _CL_OVERLOADABLE get_work_dim(void);
@@ -421,7 +456,7 @@ barrier (cl_mem_fence_flags flags);
 void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
 #endif
 
-
+
 /* Math Constants */
 
 /* half */
@@ -1338,7 +1373,7 @@ _CL_DECLARE_FUNC_V_V(_cl_native_tan)
 #define ULONG_MAX 0xffffffffffffffffUL
 #endif
 
-
+
 /* Integer Functions */
 #define _CL_DECLARE_FUNC_G_G(NAME)              \
   char     _CL_OVERLOADABLE NAME(char    );     \
@@ -1846,7 +1881,7 @@ _CL_DECLARE_FUNC_G_G(popcount)
 _CL_DECLARE_FUNC_J_JJJ(mad24)
 _CL_DECLARE_FUNC_J_JJ(mul24)
 
-
+
 /* Common Functions */
 
 _CL_DECLARE_FUNC_V_VVV(clamp)
@@ -1865,7 +1900,7 @@ _CL_DECLARE_FUNC_V_VVV(smoothstep)
 _CL_DECLARE_FUNC_V_SSV(smoothstep)
 _CL_DECLARE_FUNC_V_V(sign)
 
-
+
 /* Geometric Functions */
 
 __IF_FP16(    
@@ -1911,7 +1946,7 @@ _CL_DECLARE_FUNC_G_GGUG(select)
 _CL_DECLARE_FUNC_V_VVJ(select)
 _CL_DECLARE_FUNC_V_VVU(select)
 
-
+
 /* Vector Functions */
 
 #define _CL_DECLARE_VLOAD(TYPE, MOD)                                    \
@@ -2085,7 +2120,7 @@ _CL_DECLARE_VSTORE_HALF(__private , _rtn)
 
 #endif
 
-
+
 /* Atomic operations */
 
 #define _CL_DECLARE_ATOMICS(MOD, TYPE)                                  \
@@ -2100,18 +2135,33 @@ _CL_DECLARE_VSTORE_HALF(__private , _rtn)
   _CL_OVERLOADABLE TYPE atomic_and    (volatile MOD TYPE *p, TYPE val); \
   _CL_OVERLOADABLE TYPE atomic_or     (volatile MOD TYPE *p, TYPE val); \
   _CL_OVERLOADABLE TYPE atomic_xor    (volatile MOD TYPE *p, TYPE val);
+
 _CL_DECLARE_ATOMICS(__global, int  )
 _CL_DECLARE_ATOMICS(__global, uint )
 _CL_DECLARE_ATOMICS(__local , int  )
 _CL_DECLARE_ATOMICS(__local , uint )
-
-_CL_DECLARE_ATOMICS(__global, long )
-_CL_DECLARE_ATOMICS(__global, ulong)
-_CL_DECLARE_ATOMICS(__local , long )
-_CL_DECLARE_ATOMICS(__local , ulong)
-
 _CL_OVERLOADABLE float atomic_xchg(volatile __global float *p, float val);
 _CL_OVERLOADABLE float atomic_xchg(volatile __local  float *p, float val);
+
+#define _CL_DECLARE_ATOMICS64(MOD, TYPE)                                \
+  __IF_BA64(                                                            \
+  _CL_OVERLOADABLE TYPE atomic_add    (volatile MOD TYPE *p, TYPE val); \
+  _CL_OVERLOADABLE TYPE atomic_sub    (volatile MOD TYPE *p, TYPE val); \
+  _CL_OVERLOADABLE TYPE atomic_xchg   (volatile MOD TYPE *p, TYPE val); \
+  _CL_OVERLOADABLE TYPE atomic_inc    (volatile MOD TYPE *p);           \
+  _CL_OVERLOADABLE TYPE atomic_dec    (volatile MOD TYPE *p);           \
+  _CL_OVERLOADABLE TYPE atomic_cmpxchg(volatile MOD TYPE *p, TYPE cmp, TYPE val);) \
+  __IF_EA64(                                                            \
+  _CL_OVERLOADABLE TYPE atomic_min    (volatile MOD TYPE *p, TYPE val); \
+  _CL_OVERLOADABLE TYPE atomic_max    (volatile MOD TYPE *p, TYPE val); \
+  _CL_OVERLOADABLE TYPE atomic_and    (volatile MOD TYPE *p, TYPE val); \
+  _CL_OVERLOADABLE TYPE atomic_or     (volatile MOD TYPE *p, TYPE val); \
+  _CL_OVERLOADABLE TYPE atomic_xor    (volatile MOD TYPE *p, TYPE val);)
+
+_CL_DECLARE_ATOMICS64(__global, long )
+_CL_DECLARE_ATOMICS64(__global, ulong)
+_CL_DECLARE_ATOMICS64(__local , long )
+_CL_DECLARE_ATOMICS64(__local , ulong)
 
 #define atom_add     atomic_add
 #define atom_sub     atomic_sub
@@ -2125,7 +2175,96 @@ _CL_OVERLOADABLE float atomic_xchg(volatile __local  float *p, float val);
 #define atom_or      atomic_or
 #define atom_xor     atomic_xor
 
-
+
+/* OpenCL 2.0 Atomics */
+
+#if (__OPENCL_C_VERSION__ > 199) && (__OPENCL_VERSION__ > 199)
+
+#define ATOMIC_VAR_INIT(value) (value)
+
+typedef enum memory_order {
+  memory_order_relaxed,
+  memory_order_acquire,
+  memory_order_release,
+  memory_order_acq_rel,
+  memory_order_seq_cst,
+} memory_order;
+
+typedef enum memory_scope {
+  memory_scope_work_item,
+  memory_scope_work_group,
+  memory_scope_device,
+  memory_scope_all_svm_devices,
+  memory_scope_sub_group,
+} memory_scope;
+
+
+void atomic_work_item_fence(cl_mem_fence_flags flags,
+                            memory_order order,
+                            memory_scope scope);
+
+#define _CL_DECL_ATOMICS_EXPL1(RET, NAME, MOD, A)           \
+  RET _CL_OVERLOADABLE NAME(volatile MOD A *object);        \
+  RET _CL_OVERLOADABLE NAME ## _explicit(volatile MOD       \
+            A *object, memory_order order);                 \
+  RET _CL_OVERLOADABLE NAME ## _explicit(volatile MOD       \
+            A *object, memory_order order, memory_scope scope);
+
+#define _CL_DECL_ATOMICS_EXPL2(RET, NAME, MOD, A, C) \
+  RET _CL_OVERLOADABLE NAME(volatile MOD A *object, C value);           \
+  RET _CL_OVERLOADABLE NAME ## _explicit (volatile MOD A *object,       \
+                                          C value, memory_order order); \
+  RET _CL_OVERLOADABLE NAME ## _explicit (volatile MOD A *object,       \
+                                          C value, memory_order order,  \
+                                          memory_scope scope);
+
+#define _CL_DECL_ATOMICS_EXPL_CMPXCH(TYPE, MOD, A, C)                   \
+  _CL_OVERLOADABLE bool atomic_compare_exchange_##TYPE(                 \
+                      volatile MOD A *object, C *expected, C desired);  \
+  _CL_OVERLOADABLE bool atomic_compare_exchange_##TYPE##_explicit(      \
+                      volatile MOD A *object, C *expected, C desired,   \
+                      memory_order success, memory_order failure);      \
+  _CL_OVERLOADABLE bool atomic_compare_exchange_##TYPE##_explicit(      \
+                      volatile MOD A *object, C *expected, C desired,   \
+                      memory_order success, memory_order failure,       \
+                      memory_scope scope);
+
+#define _CL_DECLARE_ATOMICS_DECL(MOD, A, C)                                 \
+  _CL_DECL_ATOMICS_EXPL2(void, atomic_store, MOD, A, C)                     \
+  _CL_OVERLOADABLE void atomic_init (volatile MOD A *object, C value);      \
+  _CL_DECL_ATOMICS_EXPL1(C, atomic_load, MOD, A)                            \
+  _CL_DECL_ATOMICS_EXPL2(C, atomic_exchange, MOD, A, C)                     \
+  _CL_DECL_ATOMICS_EXPL_CMPXCH(strong, MOD, A, C)                           \
+  _CL_DECL_ATOMICS_EXPL_CMPXCH(weak, MOD, A, C)                             \
+  _CL_DECL_ATOMICS_EXPL2(C, atomic_fetch_add, MOD, A, C)                    \
+  _CL_DECL_ATOMICS_EXPL2(C, atomic_fetch_sub, MOD, A, C)                    \
+  _CL_DECL_ATOMICS_EXPL2(C, atomic_fetch_or, MOD, A, C)                     \
+  _CL_DECL_ATOMICS_EXPL2(C, atomic_fetch_xor, MOD, A, C)                    \
+  _CL_DECL_ATOMICS_EXPL2(C, atomic_fetch_and, MOD, A, C)                    \
+  _CL_DECL_ATOMICS_EXPL2(C, atomic_fetch_min, MOD, A, C)                    \
+  _CL_DECL_ATOMICS_EXPL2(C, atomic_fetch_max, MOD, A, C)
+
+#define _CL_DECLARE_ATOMICS2(MOD)                                           \
+  _CL_DECL_ATOMICS_EXPL1(bool, atomic_flag_test_and_set, MOD, atomic_flag)  \
+  _CL_DECL_ATOMICS_EXPL1(void, atomic_flag_clear, MOD, atomic_flag)         \
+  _CL_DECLARE_ATOMICS_DECL(MOD, atomic_int, int)                            \
+  _CL_DECLARE_ATOMICS_DECL(MOD, atomic_uint, uint)                          \
+  _CL_DECLARE_ATOMICS_DECL(MOD, atomic_float, float)                        \
+  __IF_EA64(_CL_DECLARE_ATOMICS_DECL(MOD, atomic_long, long))               \
+  __IF_EA64(_CL_DECLARE_ATOMICS_DECL(MOD, atomic_ulong, ulong))             \
+  __IF_FP64(_CL_DECLARE_ATOMICS_DECL(MOD, atomic_double, double))           \
+  _CL_DECLARE_ATOMICS_DECL(MOD, atomic_intptr_t, intptr_t)                  \
+  _CL_DECLARE_ATOMICS_DECL(MOD, atomic_uintptr_t, uintptr_t)                \
+  _CL_DECLARE_ATOMICS_DECL(MOD, atomic_ptrdiff_t, ptrdiff_t)                \
+  _CL_DECLARE_ATOMICS_DECL(MOD, atomic_size_t, size_t)
+
+_CL_DECLARE_ATOMICS2(global)
+
+_CL_DECLARE_ATOMICS2(local)
+
+#endif
+
+
 /* Miscellaneous Vector Functions */
 
 
@@ -2162,7 +2301,7 @@ _CL_DECLARE_SHUFFLE_MN(ulong , ulong ))
 __IF_FP64(
 _CL_DECLARE_SHUFFLE_MN(double, ulong ))
 
-
+
 #if __clang_major__ < 3 || (__clang_major__ == 3 && __clang_minor__ < 4)
 
 // If Clang is too old, we just wrap the libc printf
@@ -2187,7 +2326,7 @@ int _cl_printf(constant char* restrict format, ...);
 
 #endif
 
-
+
 /* Async Copies from Global to Local Memory, Local to
    Global Memory, and Prefetch */
 

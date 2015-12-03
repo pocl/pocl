@@ -26,12 +26,13 @@ KERNEL_TARGET = hsail64
 CLANG_FLAGS = @TARGET_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -D_CL_DISABLE_HALF -target ${KERNEL_TARGET} -I${abs_top_srcdir}/lib/kernel/hsail64
 LLC_FLAGS   = @TARGET_LLC_FLAGS@
 LD_FLAGS    = @TARGET_LD_FLAGS@
+DEVICE_CL_FLAGS = -D__OPENCL_VERSION__=200 @HSA_DEVICE_EXTENSION_DEFINES@
 
 include ../rules.mk
 include ../sources.mk
 
 # TODO: a global memory ring buffer stdout based printf
-LKERNEL_SRCS_EXCLUDE = printf.c barrier.ll
-LKERNEL_SRCS_EXTRA = barrier.c sqrt_default.ll
+LKERNEL_SRCS_EXCLUDE = printf.c barrier.ll svm_atomics_host.cl
+LKERNEL_SRCS_EXTRA = barrier.c sqrt_default.ll svm_atomics_hsail.cl.ll
 
 EXTRA_DIST = CMakeLists.txt $(srcdir)/*.c $(srcdir)/*.cl $(srcdir)/*.h $(srcdir)/*.ll frexp.inc

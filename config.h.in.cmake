@@ -58,6 +58,8 @@
 
 #define HOST_CLANG_FLAGS  "@HOST_CLANG_FLAGS@"
 
+#define HOST_DEVICE_EXTENSIONS "@HOST_DEVICE_EXTENSIONS@"
+
 #define HOST_CPU  "@HOST_CPU@"
 
 #define HOST_LD_FLAGS  "@HOST_LD_FLAGS@"
@@ -66,6 +68,7 @@
 
 #cmakedefine HOST_FLOAT_SOFT_ABI
 
+#define HSA_DEVICE_EXTENSIONS "@HSA_DEVICE_EXTENSIONS@"
 
 
 #define LLVM_LLC "@LLVM_LLC@"
@@ -132,3 +135,10 @@
 
 /* Disable cl_khr_fp16 because fp16 is not supported */
 #cmakedefine _CL_DISABLE_HALF
+
+
+#define HSA_DEVICE_CL_VERSION_MAJOR 2
+#define HSA_DEVICE_CL_VERSION_MINOR 0
+
+#define HOST_DEVICE_CL_VERSION_MAJOR 2
+#define HOST_DEVICE_CL_VERSION_MINOR 0

@@ -44,13 +44,17 @@ void pocl_cache_init_topdir();
 int
 pocl_cache_create_program_cachedir(cl_program program, unsigned device_i,
                                    const char* preprocessed_source, size_t source_len,
-                                   char *program_bc_path, void **cache_lock);
+                                   char *program_bc_path);
 
 void pocl_cache_cleanup_cachedir(cl_program program);
 
 void* pocl_cache_acquire_writer_lock_i(cl_program program, unsigned device_i);
 
 void* pocl_cache_acquire_writer_lock(cl_program program, cl_device_id device);
+
+void* pocl_cache_acquire_reader_lock_i(cl_program program, unsigned device_i);
+
+void* pocl_cache_acquire_reader_lock(cl_program program, cl_device_id device);
 
 void pocl_cache_release_lock(void* lock);
 

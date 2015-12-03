@@ -169,7 +169,7 @@ fi
 # Option to choose external testsuites
 AC_ARG_ENABLE([testsuites],
 	      [AS_HELP_STRING([--enable-testsuites=suite1,suite2,...],
-          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,amdsdk2_9,VexCL,Piglit,Halide,OpenCV,CloverLeaf,hsa,IntelSVM])],
+          [choose enabled external project testsuites (all,opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,amdsdk2_9,amdsdk3_0,VexCL,Piglit,Halide,OpenCV,CloverLeaf,hsa,IntelSVM])],
 	      [],[enable_testsuites=check])
 
 enable_testsuite_opencl_book_samples=no
@@ -178,6 +178,7 @@ enable_testsuite_rodinia=no
 enable_testsuite_parboil=no
 enable_testsuite_amd=no
 enable_testsuite_amdsdk2_9=no
+enable_testsuite_amdsdk3_0=no
 enable_testsuite_vexcl=no
 enable_testsuite_piglit=no
 enable_testsuite_halide=no
@@ -205,6 +206,9 @@ if test x"$enable_testsuites" = xcheck ; then
   if test -f "$srcdir/examples/AMDSDK2.9/AMD-APP-SDK-v2.9-RC-lnx64.tgz" ; then
      enable_testsuite_amdsdk2_9=yes
   fi
+  if test -f "$srcdir/examples/AMDSDK3.0/AMD-APP-SDKInstaller-v3.0.130.135-GA-linux64.tar.bz2" ; then
+     enable_testsuite_amdsdk3_0=yes
+  fi
   if test -f "$srcdir/examples/VexCL/vexcl/README.md" ; then
     enable_testsuite_vexcl=yes
   fi
@@ -225,7 +229,7 @@ if test x"$enable_testsuites" = xcheck ; then
   fi
 fi
 AS_CASE([,"$enable_testsuites",],
-  [*,all,*|*,yes,*], [enable_testsuites="opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,amdsdk2_9,VexCL,piglit,Halide,OpenCV,CloverLeaf"],
+  [*,all,*|*,yes,*], [enable_testsuites="opencl-book-samples,ViennaCL,Rodinia,Parboil,amd,amdsdk2_9,amdsdk3_0,VexCL,piglit,Halide,OpenCV,CloverLeaf"],
   [*,no,*], [enable_testsuites=""]
 )
 AS_CASE([,"$enable_testsuites",],
@@ -248,6 +252,7 @@ AS_CASE([,"$enable_testsuites",],
   [*,AMD,*|*,amd,*], [
     enable_testsuite_amd=yes
     enable_testsuite_amdsdk2_9=yes
+    enable_testsuite_amdsdk3_0=yes
   ])
 AS_CASE([,"$enable_testsuites",],
   [*,VexCL,*|*,vexcl,*], [
@@ -336,6 +341,19 @@ if test "$enable_testsuite_amdsdk2_9" = "yes" ; then
     ])
 fi
 
+if test "$enable_testsuite_amdsdk3_0" = "yes" ; then
+   # Check for software and sources for AMD APP SDK
+  if ! test -f "$srcdir/examples/AMDSDK3.0/AMD-APP-SDKInstaller-v3.0.130.135-GA-linux64.tar.bz2"; then
+    AC_MSG_WARN([disabling AMD APP SDK testsuite as the 3.0 installer package not in '$srcdir/examples/AMDSDK3.0'.])
+    enable_testsuite_amdsdk3_0=no
+  fi
+  PKG_CHECK_MODULES([SDL], [sdl >= 1.2], [:],
+    [ AC_MSG_WARN([pkg-config could not find libSDL, AMD APP SDK 3.0 testsuite is not used ])
+      enable_testsuite_amdsdk3_0=no
+    ])
+fi
+
+
 if test "$enable_testsuite_vexcl" = "yes" ; then
   # Check for software and sources for VexCL
   if ! test -f "$srcdir/examples/VexCL/vexcl/README.md"; then
@@ -379,6 +397,7 @@ AM_CONDITIONAL([TEST_SUITE_RODINIA], [test "$enable_testsuite_rodinia" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_PARBOIL], [test "$enable_testsuite_parboil" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_AMD], [test "$enable_testsuite_amd" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_AMDSDK2_9], [test "$enable_testsuite_amdsdk2_9" = "yes"])
+AM_CONDITIONAL([TEST_SUITE_AMDSDK3_0], [test "$enable_testsuite_amdsdk3_0" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_VEXCL], [test "$enable_testsuite_vexcl" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_PIGLIT], [test "$enable_testsuite_piglit" = "yes"])
 AM_CONDITIONAL([TEST_SUITE_HALIDE], [test "$enable_testsuite_halide" = "yes"])
@@ -424,6 +443,12 @@ if test "$enable_testsuite_amdsdk2_9" = "yes"; then
   POAT_TESTSUITES="$POAT_TESTSUITES amdsdk2_9"
 else
   AC_MSG_NOTICE([tests from AMD APP SDK 2.9 are disabled])
+fi
+if test "$enable_testsuite_amdsdk3_0" = "yes"; then
+  AC_MSG_NOTICE([tests from AMD APP SDK 3.0 are enabled])
+  POAT_TESTSUITES="$POAT_TESTSUITES amdsdk3_0"
+else
+  AC_MSG_NOTICE([tests from AMD APP SDK 3.0 are disabled])
 fi
 if test "$enable_testsuite_vexcl" = "yes"; then
   AC_MSG_NOTICE([tests from VexCL are enabled])
@@ -826,7 +851,7 @@ AC_SUBST(LLVM_CXX_FLAGS)
 # Define the OpenCL version when compiling OpenCL C code. This also
 # serves as indicator for the OpenCL C language, similar to
 # __cplusplus for C++.
-CLFLAGS="$CLFLAGS -D__OPENCL_VERSION__=120"
+CLFLAGS="$CLFLAGS -Xclang -cl-std=CL2.0 -D__OPENCL_C_VERSION__=200"
 
 AM_CONDITIONAL([CLANGXX_AVAILABLE], test ! -z $CLANGXX)
 
@@ -1192,6 +1217,16 @@ then
  TCE_AVAILABLE=1
 fi
 
+# List of extension supported by the TCE device
+TCE_DEVICE_EXTENSIONS="cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics cl_khr_fp16"
+TCE_DEVICE_EXTENSION_DEFINES=`echo $TCE_DEVICE_EXTENSIONS | sed s/cl_khr/-Dcl_khr/g`
+AC_DEFINE_UNQUOTED([TCE_DEVICE_EXTENSIONS], ["$TCE_DEVICE_EXTENSIONS"], [TCE device supported extension list])
+AC_SUBST([TCE_DEVICE_EXTENSION_DEFINES])
+AC_DEFINE_UNQUOTED([TCE_DEVICE_EXTENSION_DEFINES], ["$TCE_DEVICE_EXTENSION_DEFINES"], [TCE device supported extension list])
+AC_DEFINE([TCE_DEVICE_CL_VERSION_MAJOR], [2], [OpenCL major version supported by TCE device])
+AC_DEFINE([TCE_DEVICE_CL_VERSION_MINOR], [0], [OpenCL minor version supported by TCE device])
+
+
 OCL_TARGETS="$OCL_TARGETS tce"
 fi
 
@@ -1322,8 +1357,12 @@ else
   enable_hsa="no"
 fi
 
+HSA_DEVICE_EXTENSIONS=""
+HSA_DEVICE_EXTENSION_DEFINES=""
 if test "$enable_hsa" = "yes";
 then
+  HSA_DEVICE_EXTENSIONS="cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64 cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics"
+  HSA_DEVICE_EXTENSION_DEFINES=$(echo "$HSA_DEVICE_EXTENSIONS" | sed 's/cl_khr/-Dcl_khr/g')
   OCL_DRIVERS="$OCL_DRIVERS hsa"
   OCL_TARGETS="$OCL_TARGETS hsail64"
   AC_DEFINE([BUILD_HSA], [1], [Defined to 1 in case the HSA driver should be built.])
@@ -1331,7 +1370,11 @@ then
   POAT_TESTSUITES="$POAT_TESTSUITES hsa"
   # -lHSAILUtil is missing from llvm-config --libfiles
   LLVM_LIBS="$LLVM_LIBS -lLLVMHSAILUtil"
+  AC_DEFINE([HSA_DEVICE_CL_VERSION_MAJOR], [2], [OpenCL major version supported by HSA device])
+  AC_DEFINE([HSA_DEVICE_CL_VERSION_MINOR], [0], [OpenCL major version supported by HSA device])
 fi
+AC_DEFINE_UNQUOTED([HSA_DEVICE_EXTENSIONS], ["$HSA_DEVICE_EXTENSIONS"], [aoeuaoe])
+AC_SUBST([HSA_DEVICE_EXTENSION_DEFINES])
 
 # TODO: move above
 
@@ -1456,6 +1499,21 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[__fp16 callfp16(__fp16 a) { return a * (__f
                   ]
                  )
 
+HOST_DEVICE_EXTENSIONS="cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_spir"
+if test "$HAVE_WORKING_HALF" == "1"; then
+  HOST_DEVICE_EXTENSIONS="$HOST_DEVICE_EXTENSIONS cl_khr_fp16"
+fi
+if test -z "$CL_DISABLE_LONG"; then
+  HOST_DEVICE_EXTENSIONS="$HOST_DEVICE_EXTENSIONS cl_khr_int64 cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics"
+fi
+HOST_DEVICE_EXTENSION_DEFINES=`echo $HOST_DEVICE_EXTENSIONS | sed s/cl_khr/-Dcl_khr/g`
+AC_DEFINE_UNQUOTED([HOST_DEVICE_EXTENSIONS], ["$HOST_DEVICE_EXTENSIONS"], [aoeuaoe])
+AC_SUBST([HOST_DEVICE_EXTENSION_DEFINES])
+AC_DEFINE([HOST_DEVICE_CL_VERSION_MAJOR], [2], [OpenCL major version supported by host device])
+AC_DEFINE([HOST_DEVICE_CL_VERSION_MINOR], [0], [OpenCL minor version supported by host device])
+
+
+
 # Seems to be unused
 #AC_MSG_CHECKING([whether __fp16 can be converted to float])
 #AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[__fp16 x; float y;]],
@@ -1559,6 +1617,7 @@ AC_CONFIG_FILES([Makefile
                  examples/IntelSVM/Makefile
                  examples/AMD/Makefile
                  examples/AMDSDK2.9/Makefile
+                 examples/AMDSDK3.0/Makefile
                  examples/EinsteinToolkit/Makefile
                  examples/VexCL/Makefile
                  examples/piglit/Makefile

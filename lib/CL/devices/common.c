@@ -83,6 +83,9 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
   if (pocl_exists(module))
     return module;
 
+  void* write_lock = pocl_cache_acquire_writer_lock(kernel->program, device);
+  assert(write_lock);
+
       error = snprintf (bytecode, POCL_FILENAME_LENGTH,
                         "%s%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
       assert (error >= 0);
@@ -110,6 +113,8 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
           pocl_remove(objfile);
           pocl_remove(bytecode);
         }
+
+  pocl_cache_release_lock(write_lock);
 
   return module;
 }

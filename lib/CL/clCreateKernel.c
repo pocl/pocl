@@ -45,7 +45,6 @@ POname(clCreateKernel)(cl_program program,
   int errcode;
   int error;
   unsigned device_i;
-  void* cache_lock = NULL;
 
   POCL_GOTO_ERROR_COND((kernel_name == NULL), CL_INVALID_VALUE);
 
@@ -85,13 +84,8 @@ POname(clCreateKernel)(cl_program program,
       if (!pocl_cache_device_cachedir_exists(program, device_i))
           continue;
 
-      cache_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
-      assert(cache_lock);
-
       error = pocl_llvm_get_kernel_metadata(program,
                       kernel, device_i, kernel_name, &errcode);
-
-      pocl_cache_release_lock(cache_lock);
 
       if (error)
         {

@@ -181,7 +181,7 @@ static void pocl_hsa_abort_on_error(hsa_status_t status,
     {
       hsa_status_string(status, &str);
       POCL_MSG_PRINT2(func, line, "Error from HSA Runtime call:\n");
-      POCL_ABORT(str);
+      POCL_ABORT("%s", str);
     }
 }
 
@@ -257,10 +257,7 @@ supported_hsa_devices[MAX_HSA_AGENTS] =
         .max_constant_buffer_size = 65536,
     .local_mem_type = CL_LOCAL,
     .endian_little = CL_TRUE,
-    .extensions = "cl_khr_fp64 cl_khr_byte_addressable_store"
-      " cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics"
-      " cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics"
-      " cl_khr_int64_base_atomics cl_khr_int64_extended_atomics",
+    .extensions = HSA_DEVICE_EXTENSIONS,
     .preferred_wg_size_multiple = 64, // wavefront size on Kaveri
     .preferred_vector_width_char = 4,
     .preferred_vector_width_short = 2,
@@ -330,6 +327,8 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
 {
   pocl_basic_init_device_infos (dev);
 
+  SETUP_DEVICE_CL_VERSION(HSA_DEVICE_CL_VERSION_MAJOR, HSA_DEVICE_CL_VERSION_MINOR)
+
   dev->spmd = CL_TRUE;
   dev->autolocals_to_args = 0;
 
@@ -384,9 +383,9 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
   dev->max_clock_frequency = 700;
 #endif
 
-
   HSA_CHECK(hsa_agent_get_info
     (agent, HSA_AGENT_INFO_WORKGROUP_MAX_SIZE, &dev->max_work_group_size));
+
   /*Image features*/
   hsa_dim3_t image_size;
   HSA_CHECK(hsa_agent_get_info (agent, HSA_EXT_AGENT_INFO_IMAGE_1D_MAX_ELEMENTS, &image_size));
@@ -600,7 +599,8 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
     if (unaligned > 0) write_pos += (DSIZE - unaligned);     \
   } while (0)
 
-  for (size_t i = 0; i < cmd->command.run.kernel->num_args; ++i)
+  size_t i;
+  for (i = 0; i < cmd->command.run.kernel->num_args; ++i)
     {
       struct pocl_argument *al = &(cmd->command.run.arguments[i]);
       if (cmd->command.run.kernel->arg_info[i].is_local)
@@ -693,7 +693,8 @@ static pocl_hsa_kernel_cache_t* cache_kernel_dispatch_data(cl_kernel kernel,
   assert(stack_cache != NULL);
   assert(d != NULL);
 
-  for (unsigned i = 0; i<HSA_KERNEL_CACHE_SIZE; i++)
+  unsigned i;
+  for (i = 0; i<HSA_KERNEL_CACHE_SIZE; i++)
     {
       if (d->kernel_cache[i].kernel == kernel)
         return &d->kernel_cache[i];
@@ -956,7 +957,8 @@ pocl_hsa_compile_submitted_kernels (_cl_command_node *cmd)
   hsa_executable_t *out = malloc(sizeof(hsa_executable_t));
   cmd->command.run.device_data = (void**)out;
 
-  for (unsigned i = 0; i<HSA_KERNEL_CACHE_SIZE; i++)
+  unsigned i;
+  for (i = 0; i<HSA_KERNEL_CACHE_SIZE; i++)
     if (d->kernel_cache[i].kernel == cmd->command.run.kernel)
       {
         *out = d->kernel_cache[i].hsa_exe;
@@ -1029,7 +1031,8 @@ pocl_hsa_uninit (cl_device_id device)
 {
   pocl_hsa_device_data_t *d = (pocl_hsa_device_data_t*)device->data;
 
-  for (unsigned i = 0; i < HSA_KERNEL_CACHE_SIZE; i++)
+  unsigned i;
+  for (i = 0; i < HSA_KERNEL_CACHE_SIZE; i++)
     if (d->kernel_cache[i].kernel)
       {
         HSA_CHECK(hsa_executable_destroy(d->kernel_cache[i].hsa_exe));

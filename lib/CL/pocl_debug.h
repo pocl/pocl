@@ -34,9 +34,9 @@ extern "C" {
             " in %s:%d\n", __FILE__, __LINE__);                         \
     } while (0)
 
-#define POCL_ABORT(__MSG__)                                             \
+#define POCL_ABORT(...)                                                 \
     do {                                                                \
-        fprintf(stderr, __MSG__);                                       \
+        fprintf(stderr, __VA_ARGS__);                                  \
         exit(2);                                                        \
     } while (0)
 
@@ -118,6 +118,8 @@ extern "C" {
 
 #endif
 
+#define POCL_DEBUG_EVENT_TIME(eventp, msg) \
+        POCL_MSG_PRINT_INFO(msg " took: %lu ns\n", ((*eventp)->time_end - (*eventp)->time_start))
 
 #define POCL_GOTO_ERROR_ON(cond, err_code, ...)                             \
   do                                                                        \
