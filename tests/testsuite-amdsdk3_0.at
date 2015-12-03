@@ -378,7 +378,7 @@ AT_CLEANUP
 
 POAT_AMDSDK_SETUP([kmeansautoclustering])
 # doesn't find opencl library for some reason
-AT_XFAIL_IF(true)
+AT_SKIP_IF(true)
 AT_CHECK_UNQUOTED([make test_KmeansAutoclustering -sC $abs_top_builddir/examples/AMDSDK3.0 | grep Passed], 0,
 [Passed!
 ])
