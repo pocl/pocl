@@ -1,6 +1,25 @@
 #ifndef POCL_DEBUG_H
 #define POCL_DEBUG_H
 
+#ifdef _WIN32
+#  include <stdint.h>
+#  include <stddef.h> // size_t
+#  define PRIu64 "I64u"
+#  define PRIX64 "I64x"
+#  define PRIXPTR "p"
+#  define PRIuS "Iu"
+#else
+# ifndef __STDC_FORMAT_MACROS
+# define __STDC_FORMAT_MACROS
+# endif
+# include <inttypes.h>
+#endif
+
+// size_t print spec
+#ifndef PRIuS
+# define PRIuS "zu"
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -119,7 +138,7 @@ extern "C" {
 #endif
 
 #define POCL_DEBUG_EVENT_TIME(eventp, msg) \
-        POCL_MSG_PRINT_INFO(msg " took: %lu ns\n", ((*eventp)->time_end - (*eventp)->time_start))
+        POCL_MSG_PRINT_INFO(msg " took: %" PRIu64 " ns\n", (cl_ulong)((*eventp)->time_end - (*eventp)->time_start))
 
 #define POCL_GOTO_ERROR_ON(cond, err_code, ...)                             \
   do                                                                        \
