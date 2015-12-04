@@ -1,10 +1,16 @@
+Hosseinabady, M., Nunez-Yanez, J.L.
+Optimised OpenCL workgroup synthesis for hybrid ARM-FPGA devices
+http://dx.doi.org/10.1109/FPL.2015.7294016
+25th International Conference on Field Programmable Logic and Applications (FPL), 2015
+
+Van der Wijst, H. (master's thesis)
+An Accelerator based on the &rho;-VEX Processor: an Exploration using OpenCL
+http://resolver.tudelft.nl/uuid:3f184afb-241d-4d54-827d-75fcd59211a5
+Faculty of Electrical Engineering, Mathematics and Computer Science, Delft University of Technology, November, 2015
+
 Jianbin Fang, Henk Sips, Pekka J&auml;&auml;skel&auml;inen, Ana Lucia Varbanescu
 Grover: Looking for Performance Improvement by Disabling Local Memory Usage in OpenCL Kernels
 http://www.pds.ewi.tudelft.nl/fileadmin/pds/homepages/fang/papers/icpp2k14a214.pdf
 The 43rd International Conference on Parallel Processing (ICPP-2014), Minneapolis, USA, September 9-12, 2014.
 
-Van der Wijst, H. (master's thesis)
-An Accelerator based on the &rho;-VEX Processor: an Exploration using OpenCL
-http://resolver.tudelft.nl/uuid:3f184afb-241d-4d54-827d-75fcd59211a5
-Faculty of Electrical Engineering, Mathematics and Computer Science, Delft University of Technology
 

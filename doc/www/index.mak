@@ -19,9 +19,11 @@ in parallel programming on heterogeneous platforms.</p>
 <h1>News</h1>
 
 <h2>2015-12-04:
-  <a href="publications.html">Added a master's thesis from Delft</a>
+  <a href="publications.html">Added a master's thesis from Delft and a publication from Bristol</a>
 </h2>
-<p>The master's thesis from TUDelft uses pocl for OpenCL support on a research platform.</p>
+<p>The master's thesis from TUDelft uses pocl for OpenCL support on a research platform.
+The Bristol's publication uses pocl in context of an OpenCL to FPGA flow.
+</p>
 <p>If any of you have more publications or thesis about using or enhancing pocl somehow, please let 
 <a href="discussion.html">us know</a>.</p>
 
