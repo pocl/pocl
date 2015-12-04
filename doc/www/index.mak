@@ -18,6 +18,13 @@ in parallel programming on heterogeneous platforms.</p>
 
 <h1>News</h1>
 
+<h2>2015-12-04:
+  <a href="publications.html">Added a master's thesis from Delft</a>
+</h2>
+<p>The master's thesis from TUDelft uses uses pocl for OpenCL support on a research platform.</p>
+<p>If any of you have more publications or thesis about using or enhancing pocl somehow, please let 
+<a href="discussion.html">us know</a>.</p>
+
 <h2>2015-10-26: <a href="pocl-0.12.html">Portable Computing Language
 (pocl) v0.12 released</a></h2>
 

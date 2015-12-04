@@ -18,7 +18,7 @@
                       url = next(i).strip()
                       place = next(i).strip()
                       if place.endswith("."): place = place[0:-1]
-                      empty = next(i) 
+                      empty = next(i)
                       papers.append((authors.strip(), title.strip(), url, place))
         except:
                 pass
