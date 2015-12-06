@@ -42,7 +42,7 @@ all: ${KERNEL_BC}
 # and LKERNEL_SRCS_EXTRA, which adds extra files to the source list.
 LKERNEL_SRCS =								\
 	$(filter-out ${LKERNEL_SRCS_EXCLUDE}, ${LKERNEL_SRCS_DEFAULT})	\
-	${LKERNEL_SRCS_EXTRA}
+	${LKERNEL_SRCS_EXTRA} ${LKERNEL_SRCS_EXTRA2}
 
 OBJ = $(LKERNEL_SRCS:%=%.bc)
 
