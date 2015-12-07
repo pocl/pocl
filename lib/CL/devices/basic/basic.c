@@ -34,15 +34,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifndef _MSC_VER
-#  include <sys/time.h>
-#  include <sys/resource.h>
-#  include <unistd.h>
-#else
-#  include "vccompat.hpp"
-#endif
-
 #include "pocl_cache.h"
+#include "pocl_timing.h"
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
@@ -286,7 +279,9 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->local_mem_size = 0;
   dev->error_correction_support = CL_FALSE;
   dev->host_unified_memory = CL_TRUE;
-  dev->profiling_timer_resolution = 0;
+
+  dev->profiling_timer_resolution = pocl_timer_resolution;
+
   dev->endian_little = !(WORDS_BIGENDIAN);
   dev->available = CL_TRUE;
   dev->compiler_available = CL_TRUE;
@@ -846,21 +841,7 @@ pocl_basic_uninit (cl_device_id device)
 cl_ulong
 pocl_basic_get_timer_value (void *data) 
 {
-#ifndef _MSC_VER
-  struct timeval current;
-  gettimeofday(&current, NULL);  
-  return (current.tv_sec * 1000000 + current.tv_usec)*1000;
-#else
-  FILETIME ft;
-  cl_ulong tmpres = 0;
-  GetSystemTimeAsFileTime(&ft);
-  tmpres |= ft.dwHighDateTime;
-  tmpres <<= 32;
-  tmpres |= ft.dwLowDateTime;
-  tmpres -= 11644473600000000Ui64;
-  tmpres /= 10;
-  return tmpres;
-#endif
+  return pocl_gettime_ns();
 }
 
 cl_int 

@@ -103,15 +103,15 @@ extern "C" {
     #ifdef HAVE_CLOCK_GETTIME
         #define POCL_DEBUG_HEADER pocl_debug_print_header(__func__, __LINE__);
         extern void pocl_debug_print_header(const char * func, unsigned line);
-        extern void pocl_debug_measure_start(void* start);
-        extern void pocl_debug_measure_finish(void* start, void* finish,
+        extern void pocl_debug_measure_start(uint64_t* start);
+        extern void pocl_debug_measure_finish(uint64_t* start, uint64_t* finish,
                                               const char* msg,
                                               const char *func,
                                               unsigned line);
         extern void pocl_debug_print_duration(const char* func, unsigned line,
                                               const char* msg, uint64_t nanosecs);
         #define POCL_MEASURE_START(SUFFIX) \
-          struct timespec pocl_time_start_ ## SUFFIX, pocl_time_finish_ ## SUFFIX; \
+          uint64_t pocl_time_start_ ## SUFFIX, pocl_time_finish_ ## SUFFIX; \
           pocl_debug_measure_start(&pocl_time_start_ ## SUFFIX);
 
         #define POCL_MEASURE_FINISH(SUFFIX) \

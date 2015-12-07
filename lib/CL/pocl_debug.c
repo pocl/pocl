@@ -1,4 +1,5 @@
 #include "pocl_debug.h"
+#include "pocl_timing.h"
 
 #ifdef POCL_DEBUG_MESSAGES
 int pocl_debug_messages;
@@ -32,10 +33,10 @@ int stderr_is_a_tty;
             t.tm_sec, tm_nanosec,  func, line);
     }
 
-    void pocl_debug_measure_start(void *start) {
+    void pocl_debug_measure_start(uint64_t *start) {
       if (!pocl_debug_messages)
         return;
-      clock_gettime(CLOCK_MONOTONIC_RAW, ((struct timespec *)start));
+      *start = pocl_gettime_ns();
     }
 
     void pocl_debug_print_duration(const char* func, unsigned line,
@@ -81,18 +82,14 @@ int stderr_is_a_tty;
 
     }
 
-    void pocl_debug_measure_finish(void *start, void *finish,
+    void pocl_debug_measure_finish(uint64_t *start, uint64_t *finish,
                                    const char* msg,
                                    const char* func,
                                    unsigned line) {
       if (!pocl_debug_messages)
         return;
-      clock_gettime(CLOCK_MONOTONIC_RAW, ((struct timespec *)finish));
-      uint64_t nsec =  ( ((struct timespec *)finish)->tv_nsec
-                     - ((struct timespec *)start)->tv_nsec);
-      uint64_t sec = ( ((struct timespec *)finish)->tv_sec
-               - ((struct timespec *)start)->tv_sec);
-      pocl_debug_print_duration(func, line, msg, (nsec + (sec * 1000000000)) );
+      *finish = pocl_gettime_ns();
+      pocl_debug_print_duration(func, line, msg, (*finish - *start) );
     }
 
   #else
