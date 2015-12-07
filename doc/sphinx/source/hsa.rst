@@ -21,48 +21,65 @@ Installing prerequisite software
   lists some common issues (like /dev/kfd permissions) and run sample/vector_copy
   to verify you have a working runtime.
 
-2) Build HSAIL-Tools
+2) Build & install the LLVM with HSAIL support
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+  Fetch the HSAIL branch of LLVM 3.7:
+
+  `git clone https://github.com/HSAFoundation/HLC-HSAIL-Development-LLVM/ -b hsail-stable-3.7`
+
+  Patch it a bit with:
+
+  `patch -p1 PATHTO/pocl/tools/patches/llvm-3.7-hsail-branch.patch`
+
+  Fetch the upstream Clang's 3.7 branch:
+
+  `cd tools; svn co http://llvm.org/svn/llvm-project/cfe/branches/release_37 clang`
+
+  Patch it also:
+
+  `cd clang; patch -p0 pocl/tools/patches/clang-3.7-hsail-branch.patch`
+
+  An LLVM cmake configuration command like this worked for me:
+
+  `cd ../../ ; mkdir build; cd build; cmake .. -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=HSAIL \
+  -DBUILD_SHARED_LIBS=off -DCMAKE_INSTALL_PREFIX=INSTALL_DIR -DLLVM_ENABLE_RTTI=on \
+  -DLLVM_BUILD_LLVM_DYLIB=on -DLLVM_ENABLE_EH=ON`
+
+  Change INSTALL_DIR to your target prefix of choice. Note that these are **required** :
+
+  `-DLLVM_ENABLE_RTTI=ON -DLLVM_ENABLE_EH=ON -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=HSAIL`
+
+  Also, if you don't want to build all the default targets, you'll need AMDGPU.
+
+  Then build and install the Clang/LLVM:
+
+  `make -j4 && make install`
+
+
+3) Build HSAIL-Tools
 ~~~~~~~~~~~~~~~~~~~~~
 
    `git clone https://github.com/HSAFoundation/HSAIL-Tools`
 
+   Build it (check CMAKE_INSTALL_PREFIX):
+
+   `mkdir -p build/lnx64
+    cd build/lnx64
+    cmake ../.. -DCMAKE_INSTALL_PREFIX=$HOME/bin
+    make -j`
+
+   You might need to add
+
+   `-DCMAKE_CXX_FLAGS=-I$HOME/llvm-3.7-hsa/include` or similar to the cmake command line
+   if it doesn't find your LLVM headers.
+
    In particular **HSAILasm** executable will be required by pocl.
-
-3) Build & install the LLVM with HSAIL support
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-  `git clone https://github.com/HSAFoundation/HLC-HSAIL-Development-LLVM/`
-
-  Use the branch hsail-stable-3.7; before build, patch it with
-
-  `pocl/tools/patches/llvm-3.7-hsail-branch.patch`
-
-  Build it with a Clang 3.7 (branch release_37)
-
-  `cd tools; svn co http://llvm.org/svn/llvm-project/cfe/branches/release_37 clang`
-
-  patched with
-
-  `pocl/tools/patches/clang-3.7-hsail-branch.patch`
-
-  to get the HSAIL Clang support.
-
-  An LLVM cmake configuration command like this worked for me:
-
-  `mkdir build; cd build; cmake .. -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=HSAIL
-  -DBUILD_SHARED_LIBS=off -DCMAKE_INSTALL_PREFIX=INSTALL_DIR -DLLVM_ENABLE_RTTI=on
-  -DLLVM_BUILD_LLVM_DYLIB=on -DLLVM_ENABLE_EH=ON`
-
-  Note that these are **required** :
-
-  `-DLLVM_ENABLE_RTTI=ON -DLLVM_ENABLE_EH=ON
-  -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=HSAIL`
-
-  Also, if you don't want to build all the default targets, you'll need AMDGPU.
 
 
 4) Build pocl.
 ~~~~~~~~~~~~~~~
+
   Using autotools:
 
     `./configure --with-hsa-runtime-dir=\</opt/hsa\>
@@ -87,6 +104,7 @@ Installing prerequisite software
 
 HSA Support notes
 ------------------
+
 Note that the support is still experimental and very much unfinished. You're
 welcome to try it out and report any issues, though.
 
