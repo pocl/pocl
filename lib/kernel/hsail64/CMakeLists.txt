@@ -32,6 +32,7 @@ foreach(FILE printf.c barrier.ll get_image_depth.cl get_image_dim.cl
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
 endforeach()
 
+list(APPEND KERNEL_SOURCES svm_atomics.cl)
 
 foreach(FILE atomics.cl atomic_impl.ll barrier.c
         get_global_id.c get_global_size.c get_group_id.c

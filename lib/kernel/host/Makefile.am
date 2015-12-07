@@ -36,4 +36,15 @@ if USE_VECMATHLIB
 include ../sources-vml.mk
 endif
 
+if ! LLVM_3_6
+
+if HOST_CPU_IS_X86_64
+  LKERNEL_SRCS_EXTRA2 = svm_atomics_x86_64.ll svm_atomics.cl
+else
+  LKERNEL_SRCS_EXTRA2 = svm_atomics_host.cl svm_atomics.cl
+endif
+
+endif
+
+
 EXTRA_DIST = CMakeLists.txt
