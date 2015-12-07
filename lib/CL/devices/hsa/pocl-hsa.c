@@ -479,6 +479,13 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
                                HSA_REGION_INFO_RUNTIME_ALLOC_ALLOWED, &boolarg));
   assert(boolarg != 0);
 
+#ifdef HAVE_HSA_EXT_AMD_H
+  char booltest = 0;
+  HSA_CHECK(hsa_region_get_info(d->global_region,
+                               HSA_AMD_REGION_INFO_HOST_ACCESSIBLE, &booltest));
+  assert(booltest != 0);
+#endif
+
   size_t sizearg;
   HSA_CHECK(hsa_region_get_info(d->global_region,
                                HSA_REGION_INFO_ALLOC_MAX_SIZE, &sizearg));
