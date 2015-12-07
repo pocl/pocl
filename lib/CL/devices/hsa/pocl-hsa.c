@@ -126,6 +126,10 @@ typedef struct pocl_hsa_device_data_s {
   /* Per-program data cache to simplify program compiling stage */
   pocl_hsa_kernel_cache_t kernel_cache[HSA_KERNEL_CACHE_SIZE];
   unsigned kernel_cache_lastptr;
+  /* kernel signal wait timeout hint, in HSA runtime units */
+  uint64_t timeout;
+  /* length of a timestamp unit expressed in nanoseconds */
+  double timestamp_unit;
 } pocl_hsa_device_data_t;
 
 struct pocl_supported_hsa_device_properties
@@ -166,7 +170,7 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->write_rect = pocl_basic_write_rect;
   ops->copy = pocl_hsa_copy;
   ops->copy_rect = pocl_basic_copy_rect;
-  ops->get_timer_value = pocl_basic_get_timer_value;
+  ops->get_timer_value = pocl_hsa_get_timer_value;
 }
 
 #define MAX_HSA_AGENTS 16
@@ -510,6 +514,16 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
   device->profile = (
       (d->agent_profile == HSA_PROFILE_FULL) ? "FULL_PROFILE" : "EMBEDDED_PROFILE");
 
+  double hsa_freq;
+  HSA_CHECK(hsa_system_get_info(HSA_SYSTEM_INFO_TIMESTAMP_FREQUENCY, &hsa_freq));
+  d->timeout = (uint64_t)(hsa_freq * 0.008);
+  d->timestamp_unit = (1000000000.0 / (double)hsa_freq);
+  POCL_MSG_PRINT_INFO("HSA timestamp frequency: %g\n", hsa_freq);
+  POCL_MSG_PRINT_INFO("HSA timeout: %" PRIu64 "\n", d->timeout);
+  POCL_MSG_PRINT_INFO("HSA timestamp unit: %g\n", d->timestamp_unit);
+
+  device->profiling_timer_resolution = (size_t)(d->timestamp_unit) || 1;
+
   HSA_CHECK(hsa_queue_create(*d->agent, 4, HSA_QUEUE_TYPE_MULTI,
                        hsa_queue_callback, device->short_name,
                        -1, -1, &d->queue));
@@ -786,6 +800,9 @@ pocl_hsa_run(void *dptr, _cl_command_node* cmd)
 
   const uint32_t queueMask = d->queue->size - 1;
 
+  /* Launch the kernel by allocating a slot in the queue, writing the
+     command to it, signaling the update with a door bell and finally,
+     block waiting until finish signalled with the completion_signal. */
   uint64_t queue_index =
     hsa_queue_load_write_index_relaxed (d->queue);
   kernel_packet =
@@ -839,20 +856,25 @@ pocl_hsa_run(void *dptr, _cl_command_node* cmd)
   h.a.setup = (uint16_t)cmd->command.run.pc.work_dim << HSA_KERNEL_DISPATCH_PACKET_SETUP_DIMENSIONS;
   __atomic_store_n((uint32_t*)(&kernel_packet->header), h.header_setup, __ATOMIC_RELEASE);
 
-   /*
-    * Increment the write index and ring the doorbell to dispatch the kernel.
-    */
-   hsa_queue_store_write_index_relaxed (d->queue, queue_index + 1);
-   hsa_signal_store_relaxed (d->queue->doorbell_signal, queue_index);
+  /*
+   * Increment the write index and ring the doorbell to dispatch the kernel.
+   */
+  hsa_queue_store_write_index_relaxed (d->queue, queue_index + 1);
+  hsa_signal_store_relaxed (d->queue->doorbell_signal, queue_index);
 
-  /* Launch the kernel by allocating a slot in the queue, writing the
-     command to it, signaling the update with a door bell and finally,
-     block waiting until finish signalled with the completion_signal. */
-
+  /* Wait the first interval actively (should improve latency a bit for small jobs);
+   * if a longer wait is required, use a blocking wait */
   hsa_signal_value_t sigval =
     hsa_signal_wait_acquire
     (cached_data->kernel_completion_signal, HSA_SIGNAL_CONDITION_LT, 1,
-     (uint64_t)(-1), HSA_WAIT_STATE_ACTIVE);
+     d->timeout, HSA_WAIT_STATE_ACTIVE);
+
+  while (sigval > 0)
+    {
+      sigval = hsa_signal_wait_acquire
+        (cached_data->kernel_completion_signal, HSA_SIGNAL_CONDITION_LT, 1,
+         d->timeout, HSA_WAIT_STATE_BLOCKED);
+    }
 
   /* if the cache is full, release stuff */
   if (cached_data == &stack_cache)
@@ -1049,4 +1071,14 @@ pocl_hsa_uninit (cl_device_id device)
   HSA_CHECK(hsa_queue_destroy(d->queue));
   POCL_MEM_FREE(d);
   device->data = NULL;
+}
+
+
+cl_ulong pocl_hsa_get_timer_value(void *data)
+{
+  uint64_t hsa_ts;
+  HSA_CHECK(hsa_system_get_info(HSA_SYSTEM_INFO_TIMESTAMP, &hsa_ts));
+  cl_ulong res = (cl_ulong)(hsa_ts *
+                            ((pocl_hsa_device_data_t*)data)->timestamp_unit);
+  return res;
 }
