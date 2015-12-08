@@ -1,6 +1,6 @@
 /* ttasim.cc - a pocl device driver for simulating TTA devices using TCE's ttasim
 
-   Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
+   Copyright (c) 2012-2015 Pekka Jääskeläinen / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -172,7 +172,7 @@ public:
     char dev_name[256];
 
     const char *adf = strrchr(adfName, '/');
-    if (adf != NULL && *adf != NULL) adf++;
+    if (adf != NULL) adf++;
     if (snprintf (dev_name, 256, "ttasim-%s", adf) < 0)
       POCL_ABORT("Unable to generate the device name string.");
     dev->long_name = strdup(dev_name);  

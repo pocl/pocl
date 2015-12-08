@@ -316,7 +316,6 @@ cl_int
 pocl_tce_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
 {
   void *b = NULL;
-  TCEDevice *d = (TCEDevice*)device->data;
   cl_int flags = mem_obj->flags;
 
   /* if memory for this global memory is not yet allocated -> do it */
@@ -339,9 +338,9 @@ pocl_tce_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
 
 void
 pocl_tce_write (void *data, const void *host_ptr, void *device_ptr, 
-                size_t offset, size_t cb)
+                size_t /*offset*/, size_t cb)
 {
-  TCEDevice* d = (TCEDevice*)data;
+  TCEDevice *d = (TCEDevice*)data;
   chunk_info_t *chunk = (chunk_info_t*)device_ptr;
 #ifdef DEBUG_TTA_DRIVER
   printf("host: write %x %x %u\n", host_ptr, chunk->start_address, cb);
@@ -351,7 +350,7 @@ pocl_tce_write (void *data, const void *host_ptr, void *device_ptr,
 
 void
 pocl_tce_read (void *data, void *host_ptr, const void *device_ptr, 
-               size_t offset, size_t cb)
+               size_t /*offset*/, size_t cb)
 {
   TCEDevice* d = (TCEDevice*)data;
   chunk_info_t *chunk = (chunk_info_t*)device_ptr;
@@ -394,7 +393,6 @@ pocl_tce_run
   TCEDevice *d = (TCEDevice*)data;
   int error;
   char bytecode[POCL_FILENAME_LENGTH];
-  char command[COMMAND_LENGTH];
   uint32_t kernelAddr;
   unsigned i;
 
@@ -605,7 +603,10 @@ pocl_tce_map_mem (void *data, void *buf_ptr,
     } 
   else
     {
-      posix_memalign (&target, ALIGNMENT, size);
+        if (posix_memalign (&target, ALIGNMENT, size) != 0)
+        {
+            POCL_ABORT ("Could not allocate memory.");
+        }
     }
 
   /* Synch the device global region to the host memory. */
@@ -659,7 +660,7 @@ pocl_tce_build_hash (void *data, SHA1_CTX *build_hash)
 {
   TCEDevice *tce_dev = (TCEDevice*)data;
   FILE* adf_file = fopen (tce_dev->machine_file.c_str(), "r");
-  size_t size, n;
+  size_t size;
   uint8_t* adf_data = 0;
   const char *extra_flags = NULL;
   size_t ef_size;
@@ -668,7 +669,8 @@ pocl_tce_build_hash (void *data, SHA1_CTX *build_hash)
   size = ftell (adf_file);
   fseek (adf_file, 0, SEEK_SET);
   adf_data = (uint8_t*)malloc (size);
-  fread (adf_data, 1, size, adf_file);
+  if (fread (adf_data, 1, size, adf_file) == 0)
+      POCL_ABORT ("Could not read ADF.");
   
   //TCEString machine_hash = tce->dev->hash();
   pocl_SHA1_Update (build_hash, adf_data, size);
@@ -682,13 +684,13 @@ pocl_tce_build_hash (void *data, SHA1_CTX *build_hash)
 }
 
 void
-pocl_tce_copy (void */*data*/, const void *src_ptr, size_t src_offset, 
-               void *__restrict__ dst_ptr, size_t dst_offset, size_t cb)
+pocl_tce_copy (void */*data*/, const void *src_ptr, size_t /*src_offset*/,
+               void *__restrict__ dst_ptr, size_t /*dst_offset*/, size_t cb)
 {
   POCL_ABORT_UNIMPLEMENTED("Copy not yet supported in TCE driver.");
   if (src_ptr == dst_ptr)
     return;
-  
+
   memcpy (dst_ptr, src_ptr, cb);
 }
 
