@@ -14,13 +14,13 @@ AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regressio
 AT_CLEANUP
 
 AT_SETUP([issues with local pointers (repl) - lp:918801])
-AT_KEYWORDS([regression locals tce])
+AT_KEYWORDS([regression locals])
 AT_SKIP_IF([! grep "#define HAVE_OPENCL_HPP" $abs_top_builddir/config.h])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/regression/test_locals], 0)
 AT_CLEANUP
 
 AT_SETUP([issues with local pointers (loops) - lp:918801])
-AT_KEYWORDS([regression locals tce])
+AT_KEYWORDS([regression locals])
 AT_SKIP_IF([! grep "#define HAVE_OPENCL_HPP" $abs_top_builddir/config.h])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regression/test_locals], 0)
 AT_CLEANUP
