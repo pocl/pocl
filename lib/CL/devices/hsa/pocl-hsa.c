@@ -527,24 +527,50 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
   HSA_CHECK(hsa_queue_create(*d->agent, 4, HSA_QUEUE_TYPE_MULTI,
                        hsa_queue_callback, device->short_name,
                        -1, -1, &d->queue));
+
+}
+
+static void* pocl_hsa_malloc_account(pocl_global_mem_t *mem, size_t size, hsa_region_t r)
+{
+  void *b = NULL;
+  if ((mem->total_alloc_limit - mem->currently_allocated) < size)
+    return NULL;
+
+  if (hsa_memory_allocate(r, size, &b) != HSA_STATUS_SUCCESS)
+    return NULL;
+
+  mem->currently_allocated += size;
+  if (mem->max_ever_allocated < mem->currently_allocated)
+    mem->max_ever_allocated = mem->currently_allocated;
+  assert(mem->currently_allocated <= mem->total_alloc_limit);
+
+  if (b)
+    POCL_MSG_PRINT_INFO("HSA malloc'ed : size %" PRIuS "\n", size);
+
+  return b;
 }
 
 static void *
-pocl_hsa_malloc (pocl_hsa_device_data_t* d, cl_mem_flags flags, size_t size, void *host_ptr)
+pocl_hsa_malloc (cl_device_id device, cl_mem_flags flags, size_t size, void *host_ptr)
 {
-  void *b;
+  pocl_hsa_device_data_t* d = device->data;
+  void *b = NULL;
+  pocl_global_mem_t *mem = device->global_memory;
 
   if (flags & CL_MEM_COPY_HOST_PTR)
     {
+      POCL_MSG_PRINT_INFO("HSA: hsa_memory_allocate + hsa_memory_copy (CL_MEM_COPY_HOST_PTR)\n");
       assert(host_ptr != NULL);
-      if (hsa_memory_allocate(d->global_region, size, &b) != HSA_STATUS_SUCCESS)
-          return NULL;
-      hsa_memory_copy(b, host_ptr, size);
+
+      b = pocl_hsa_malloc_account(mem, size, d->global_region);
+      if (b)
+        hsa_memory_copy(b, host_ptr, size);
       return b;
     }
 
   if (flags & CL_MEM_USE_HOST_PTR)
     {
+      POCL_MSG_PRINT_INFO("HSA: hsa_memory_register (CL_MEM_USE_HOST_PTR)\n");
       assert(host_ptr != NULL);
       // TODO bookkeeping of mem registrations
       hsa_memory_register(host_ptr, size);
@@ -552,21 +578,26 @@ pocl_hsa_malloc (pocl_hsa_device_data_t* d, cl_mem_flags flags, size_t size, voi
     }
 
   assert(host_ptr == NULL);
-  if (hsa_memory_allocate(d->global_region, size, &b) != HSA_STATUS_SUCCESS)
-      return NULL;
-  return b;
+  //POCL_MSG_PRINT_INFO("HSA: hsa_memory_allocate (ALLOC_HOST_PTR)\n");
+  return pocl_hsa_malloc_account(mem, size, d->global_region);
 }
 
 void
 pocl_hsa_free (cl_device_id device, cl_mem memobj)
 {
   cl_mem_flags flags = memobj->flags;
+  void* ptr = memobj->device_ptrs[device->dev_id].mem_ptr;
+  size_t size = memobj->size;
 
   if (flags & CL_MEM_USE_HOST_PTR)
-    return; // TODO: hsa_memory_deregister() (needs size)
-
-  void* ptr = memobj->device_ptrs[device->dev_id].mem_ptr;
-  hsa_memory_free(ptr);
+    hsa_memory_deregister(ptr, size);
+  else
+    {
+      pocl_global_mem_t *mem = device->global_memory;
+      assert(mem->currently_allocated >= size);
+      mem->currently_allocated -= size;
+      hsa_memory_free(ptr);
+    }
 }
 
 void pocl_hsa_copy (void *data, const void *src_ptr, size_t src_offset,
@@ -585,7 +616,7 @@ cl_int pocl_hsa_alloc_mem_obj(cl_device_id device, cl_mem mem_obj)
   /* if memory for this global memory is not yet allocated -> do it */
   if (mem_obj->device_ptrs[device->global_mem_id].mem_ptr == NULL)
     {
-      b = pocl_hsa_malloc(device->data, flags, mem_obj->size, mem_obj->mem_host_ptr);
+      b = pocl_hsa_malloc(device, flags, mem_obj->size, mem_obj->mem_host_ptr);
       if (b == NULL)
         return CL_MEM_OBJECT_ALLOCATION_FAILURE;
 
