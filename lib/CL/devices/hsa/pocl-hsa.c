@@ -461,7 +461,6 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
   pocl_hsa_device_data_t *d;
   static int global_mem_id;
   static int first_hsa_init = 1;
-  hsa_device_type_t dev_type;
 
   if (first_hsa_init)
     {
@@ -813,8 +812,6 @@ pocl_hsa_run(void *dptr, _cl_command_node* cmd)
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
   hsa_kernel_dispatch_packet_t *kernel_packet;
-  hsa_signal_t kernel_completion_signal;
-  hsa_region_t region;
   pocl_hsa_kernel_cache_t stack_cache, *cached_data;
 
   assert (dptr != NULL);
@@ -1007,7 +1004,6 @@ pocl_hsa_compile_submitted_kernels (_cl_command_node *cmd)
   if (cmd->type != CL_COMMAND_NDRANGE_KERNEL)
     return;
 
-  int error;
   char brigfile[POCL_FILENAME_LENGTH];
   char *brig_blob;
 
