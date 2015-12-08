@@ -520,13 +520,13 @@ ERROR_UNLOCK:
   pocl_cache_release_lock(write_lock);
   return CL_BUILD_PROGRAM_FAILURE;
 
+OK:
   /* Always retain program.bc. Its required in clBuildProgram */
   pocl_write_module(*mod, program_bc_path, 0);
 
   /* To avoid writing & reading the same back,
    * save program->binaries[i]
    */
-OK:
   std::string content;
   llvm::raw_string_ostream sos(content);
   WriteBitcodeToFile(*mod, sos);
