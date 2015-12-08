@@ -514,11 +514,11 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
   device->profile = (
       (d->agent_profile == HSA_PROFILE_FULL) ? "FULL_PROFILE" : "EMBEDDED_PROFILE");
 
-  double hsa_freq;
+  uint64_t hsa_freq;
   HSA_CHECK(hsa_system_get_info(HSA_SYSTEM_INFO_TIMESTAMP_FREQUENCY, &hsa_freq));
-  d->timeout = (uint64_t)(hsa_freq * 0.008);
+  d->timeout = (uint64_t)((double)hsa_freq * 0.008);
   d->timestamp_unit = (1000000000.0 / (double)hsa_freq);
-  POCL_MSG_PRINT_INFO("HSA timestamp frequency: %g\n", hsa_freq);
+  POCL_MSG_PRINT_INFO("HSA timestamp frequency: %" PRIu64 "\n", hsa_freq);
   POCL_MSG_PRINT_INFO("HSA timeout: %" PRIu64 "\n", d->timeout);
   POCL_MSG_PRINT_INFO("HSA timestamp unit: %g\n", d->timestamp_unit);
 
