@@ -231,7 +231,7 @@ int pocl_llvm_build_program(cl_program program,
   char tempfile[POCL_FILENAME_LENGTH];
   tempfile[0] = 0;
   llvm::Module **mod = NULL;
-  clang::CodeGenAction *action = NULL;
+  //clang::CodeGenAction *action = NULL;
   std::string user_options(user_options_cstr ? user_options_cstr : "");
 
   llvm::MutexGuard lockHolder(kernelCompilerLock);
@@ -456,9 +456,9 @@ int pocl_llvm_build_program(cl_program program,
   fe.OutputFile = tempfile;
 
   bool success = true;
-  clang::FrontendAction *action2 = NULL;
-  action2 = new clang::PrintPreprocessedAction();
-  success = CI.ExecuteAction(*action2);
+  clang::PrintPreprocessedAction action2;
+  clang::EmitLLVMOnlyAction action(GlobalContext());
+  success = CI.ExecuteAction(action2);
   if (!success)
     goto ERROR_BUILDLOG;
 
@@ -470,8 +470,6 @@ int pocl_llvm_build_program(cl_program program,
 
   pocl_cache_create_program_cachedir(program, device_i, preprocessed_out,
                                      size, program_bc_path);
-  write_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
-  assert(write_lock);
 
   POCL_MEM_FREE(preprocessed_out);
   pocl_remove(tempfile);
@@ -479,18 +477,20 @@ int pocl_llvm_build_program(cl_program program,
 
   if (pocl_exists(program_bc_path)) {
     unlink_source(fe);
-    pocl_cache_release_lock(write_lock);
     return CL_SUCCESS;
   }
 
   fe.OutputFile = saved_output;
 
+  write_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
+  assert(write_lock);
+
   // TODO: use pch: it is possible to disable the strict checking for
   // the compilation flags used to compile it and the current translation
   // unit via the preprocessor options directly.
 
-  action = new clang::EmitLLVMOnlyAction(GlobalContext());
-  success = CI.ExecuteAction(*action);
+  //action = new clang::EmitLLVMOnlyAction(GlobalContext());
+  success = CI.ExecuteAction(action);
 
   get_build_log(program, device_i, ss_build_log, diagsBuffer, CI.getSourceManager());
 
@@ -503,9 +503,9 @@ int pocl_llvm_build_program(cl_program program,
     delete (llvm::Module*)*mod;
 
 #if LLVM_VERSION_MAJOR==3 && LLVM_VERSION_MINOR<6
-  *mod = action->takeModule();
+  *mod = action.takeModule();
 #else
-  *mod = action->takeModule().release();
+  *mod = action.takeModule().release();
 #endif
 
   if (*mod == NULL)
@@ -544,7 +544,6 @@ OK:
 
   // FIXME: cannot delete action as it contains something the llvm::Module
   // refers to. We should create it globally, at compiler initialization time.
-  //delete action;
   if (tempfile[0])
     pocl_remove(tempfile);
   pocl_cache_release_lock(write_lock);
