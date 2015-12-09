@@ -166,6 +166,12 @@ unlink_source(FrontendOptions &fe)
 
 }
 
+static llvm::Module*
+ParseIRFile(const char* fname, SMDiagnostic &Err, llvm::LLVMContext &ctx)
+{
+    return parseIRFile(fname, Err, ctx).release();
+}
+
 static void get_build_log(cl_program program,
                          unsigned device_i,
                          std::stringstream &ss_build_log,
@@ -209,6 +215,9 @@ int pocl_llvm_build_program(cl_program program,
   tempfile[0] = 0;
   llvm::Module **mod = NULL;
   std::string user_options(user_options_cstr ? user_options_cstr : "");
+  std::string content;
+  llvm::raw_string_ostream sos(content);
+  size_t n = 0;
 
   llvm::MutexGuard lockHolder(kernelCompilerLock);
   InitializeLLVM();
@@ -409,7 +418,6 @@ int pocl_llvm_build_program(cl_program program,
   cg.VerifyModule = false;
 
   PreprocessorOutputOptions &poo = pocl_build.getPreprocessorOutputOpts();
-  //PreprocessorOutputOptions prep = CI.getPreprocessorOutputOpts();
   poo.ShowCPP = 1;
   poo.ShowComments = 0;
   poo.ShowLineMarkers = 0;
@@ -452,16 +460,14 @@ int pocl_llvm_build_program(cl_program program,
   // the compilation flags used to compile it and the current translation
   // unit via the preprocessor options directly.
 
-  //action = new clang::EmitLLVMOnlyAction(GlobalContext());
   success = CI.ExecuteAction(action);
 
   unlink_source(fe);
 
   get_build_log(program, device_i, ss_build_log, diagsBuffer, CI.getSourceManager());
 
-  // FIXME: memleak, see FIXME below
   if (!success)
-    goto ERROR_UNLOCK;
+    return CL_BUILD_PROGRAM_FAILURE;
 
   mod = (llvm::Module **)&program->llvm_irs[device_i];
   if (*mod != NULL)
@@ -481,15 +487,13 @@ int pocl_llvm_build_program(cl_program program,
   /* To avoid writing & reading the same back,
    * save program->binaries[i]
    */
-  std::string content;
-  llvm::raw_string_ostream sos(content);
   WriteBitcodeToFile(*mod, sos);
   sos.str(); // flush
 
   if (program->binaries[device_i])
     POCL_MEM_FREE(program->binaries[device_i]);
 
-  size_t n = content.size();
+  n = content.size();
   program->binary_sizes[device_i] = n;
   program->binaries[device_i] = (unsigned char *) malloc(n);
   std::memcpy(program->binaries[device_i], content.c_str(), n);
