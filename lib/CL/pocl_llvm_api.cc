@@ -53,26 +53,14 @@ using llvm::legacy::PassManager;
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-#include "llvm/Linker.h"
-#else
 #include "llvm/Linker/Linker.h"
 #include "llvm/PassAnalysisSupport.h"
-#endif
 
-#ifdef LLVM_3_2
-#include "llvm/Function.h"
-#include "llvm/LLVMContext.h"
-#include "llvm/Module.h"
-#include "llvm/Support/IRReader.h"
-#include "llvm/DataLayout.h"
-#else
 #include "llvm/IR/Function.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IRReader/IRReader.h"
-#endif
 
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/FormattedStream.h"
@@ -178,17 +166,6 @@ unlink_source(FrontendOptions &fe)
 
 }
 
-// Compatibility function: this function existed up to LLVM 3.5
-// With 3.6 its name & signature changed
-#if !(defined LLVM_3_2 || defined LLVM_3_3 || \
-      defined LLVM_3_4 || defined LLVM_3_5)
-static llvm::Module*
-ParseIRFile(const char* fname, SMDiagnostic &Err, llvm::LLVMContext &ctx)
-{
-    return parseIRFile(fname, Err, ctx).release();
-}
-#endif
-
 static void get_build_log(cl_program program,
                          unsigned device_i,
                          std::stringstream &ss_build_log,
@@ -231,7 +208,6 @@ int pocl_llvm_build_program(cl_program program,
   char tempfile[POCL_FILENAME_LENGTH];
   tempfile[0] = 0;
   llvm::Module **mod = NULL;
-  //clang::CodeGenAction *action = NULL;
   std::string user_options(user_options_cstr ? user_options_cstr : "");
 
   llvm::MutexGuard lockHolder(kernelCompilerLock);
@@ -388,9 +364,7 @@ int pocl_llvm_build_program(cl_program program,
   la->Blocks = true; //-fblocks
   la->MathErrno = false; // -fno-math-errno
   la->NoBuiltin = true;  // -fno-builtin
-#ifndef LLVM_3_2
   la->AsmBlocks = true;  // -fasm (?)
-#endif
 
   PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
 
@@ -412,13 +386,10 @@ int pocl_llvm_build_program(cl_program program,
   if (device->llvm_cpu != NULL)
     ta.CPU = device->llvm_cpu;
 
-  // printf("### Triple: %s, CPU: %s\n", ta.Triple.c_str(), ta.CPU.c_str());
-
-#ifdef LLVM_3_2
-  CI.createDiagnostics(0, NULL, diagsBuffer, false);
-#else
+#ifdef DEBUG_POCL_LLVM_API
+  std::cout << "### Triple: " << ta.Triple.c_str() <<  ", CPU: " << ta.CPU.c_str();
+#endif
   CI.createDiagnostics(diagsBuffer, false);
-#endif 
 
   FrontendOptions &fe = pocl_build.getFrontendOpts();
   // The CreateFromArgs created an stdin input which we should remove first.
@@ -496,11 +467,7 @@ int pocl_llvm_build_program(cl_program program,
   if (*mod != NULL)
     delete (llvm::Module*)*mod;
 
-#if LLVM_VERSION_MAJOR==3 && LLVM_VERSION_MINOR<6
-  *mod = action.takeModule();
-#else
   *mod = action.takeModule().release();
-#endif
 
   if (*mod == NULL)
     return CL_BUILD_PROGRAM_FAILURE;
@@ -554,13 +521,9 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
   for (unsigned i = 0, e = opencl_kernels->getNumOperands(); i != e; ++i) {
     llvm::MDNode *kernel_iter = opencl_kernels->getOperand(i);
 
-#ifdef LLVM_OLDER_THAN_3_6
-    llvm::Function *kernel_prototype = llvm::cast<llvm::Function>(kernel_iter->getOperand(0));
-#else
     llvm::Function *kernel_prototype = 
       llvm::cast<llvm::Function>(
         dyn_cast<llvm::ValueAsMetadata>(kernel_iter->getOperand(0))->getValue());
-#endif
     std::string name = kernel_prototype->getName().str();
     if (name == kernel_name) {
       kernel_metadata = kernel_iter;
@@ -587,9 +550,6 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
     std::string meta_name = meta_name_node->getString().str();
 
     for (unsigned j = 1; j != arg_num; ++j) {
-#ifdef LLVM_OLDER_THAN_3_6
-      llvm::Value *meta_arg_value = meta_node->getOperand(j);
-#else
       llvm::Value *meta_arg_value = NULL;
       if (isa<ValueAsMetadata>(meta_node->getOperand(j)))
         meta_arg_value = 
@@ -597,7 +557,6 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
       else if (isa<ConstantAsMetadata>(meta_node->getOperand(j)))
         meta_arg_value = 
           dyn_cast<ConstantAsMetadata>(meta_node->getOperand(j))->getValue(); 
-#endif
       struct pocl_argument_info* current_arg = &kernel->arg_info[j-1];
 
       if (meta_arg_value != NULL && isa<ConstantInt>(meta_arg_value) && 
@@ -723,9 +682,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   }
 
   DataLayout *TD = 0;
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  const std::string &ModuleDataLayout = input->getDataLayout();
-#elif (defined LLVM_OLDER_THAN_3_7)
+#ifdef LLVM_OLDER_THAN_3_7
   const std::string &ModuleDataLayout = input->getDataLayout()->getStringRepresentation();
 #else
   const std::string &ModuleDataLayout = input->getDataLayout().getStringRepresentation();
@@ -829,13 +786,6 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   if (size_info) {
     for (unsigned i = 0, e = size_info->getNumOperands(); i != e; ++i) {
       llvm::MDNode *KernelSizeInfo = size_info->getOperand(i);
-#ifdef LLVM_OLDER_THAN_3_6
-      if (KernelSizeInfo->getOperand(0) != kernel_function) 
-        continue;
-      reqdx = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(1)))->getLimitedValue();
-      reqdy = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(2)))->getLimitedValue();
-      reqdz = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(3)))->getLimitedValue();
-#else
       if (dyn_cast<ValueAsMetadata>(
         KernelSizeInfo->getOperand(0).get())->getValue() != kernel_function) 
         continue;
@@ -848,7 +798,6 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
       reqdz = (llvm::cast<ConstantInt>(
                  llvm::dyn_cast<ConstantAsMetadata>(
                    KernelSizeInfo->getOperand(3))->getValue()))->getLimitedValue();
-#endif
       break;
     }
   }
@@ -1016,26 +965,19 @@ static PassManager& kernel_compiler_passes
     initializeTarget(Registry);
   }
 
-#if !(defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
   // Scalarizer is in LLVM upstream since 3.4.
   const bool SCALARIZE = pocl_is_option_set("POCL_SCALARIZE_KERNELS");
-#else
-  const bool SCALARIZE = false;
-#endif
 
-#ifndef LLVM_3_2
 # ifdef LLVM_OLDER_THAN_3_7
   StringMap<llvm::cl::Option*> opts;
   llvm::cl::getRegisteredOptions(opts);
 # else
   StringMap<llvm::cl::Option *>& opts = llvm::cl::getRegisteredOptions();
 # endif
-#endif
 
   PassManager *Passes = new PassManager();
 
-#if defined LLVM_3_2
-#elif defined LLVM_OLDER_THAN_3_7
+#ifdef LLVM_OLDER_THAN_3_7
   // Need to setup the target info for target specific passes. */
   TargetMachine *Machine = GetTargetMachine(device);
 
@@ -1050,11 +992,7 @@ static PassManager& kernel_compiler_passes
 
 
   if (module_data_layout != "") {
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-    Passes->add(new DataLayout(module_data_layout));
-#elif (defined LLVM_3_5)
-    Passes->add(new DataLayoutPass(DataLayout(module_data_layout)));
-#elif (defined LLVM_OLDER_THAN_3_7)
+#if (defined LLVM_OLDER_THAN_3_7)
     Passes->add(new DataLayoutPass());
 #endif
   }
@@ -1131,7 +1069,6 @@ static PassManager& kernel_compiler_passes
   const std::string wg_method = 
     pocl_get_string_option("POCL_WORK_GROUP_METHOD", "loopvec");
 
-#ifndef LLVM_3_2
   if (wg_method == "loopvec")
     {
 
@@ -1169,7 +1106,6 @@ static PassManager& kernel_compiler_passes
           O->addOccurrence(1, StringRef("debug-only"), StringRef("loop-vectorize"), false); 
 #endif
 
-#if !(defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
           if (pocl_get_bool_option("POCL_VECTORIZER_REMARKS", 0) == 1) {
             // Enable diagnostics from the loop vectorizer.
             O = opts["pass-remarks-missed"];
@@ -1187,14 +1123,12 @@ static PassManager& kernel_compiler_passes
             O->addOccurrence(1, StringRef("pass-remarks"), StringRef("loop-vectorize"), 
                              false); 
           }
-#endif
 
           O = opts["unroll-threshold"];
           assert(O && "could not find LLVM option 'unroll-threshold'");
           O->addOccurrence(1, StringRef("unroll-threshold"), StringRef("1"), false); 
         }
     } 
-#endif
 
   passes.push_back("instcombine");
   passes.push_back("STANDARD_OPTS");
@@ -1211,7 +1145,6 @@ static PassManager& kernel_compiler_passes
           Builder.OptLevel = 3;
           Builder.SizeLevel = 0;
 
-#if !(defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
           // These need to be setup in addition to invoking the passes
           // to get the vectorizers initialized properly.
           if (wg_method == "loopvec") {
@@ -1228,12 +1161,7 @@ static PassManager& kernel_compiler_passes
             Builder.BBVectorize = pocl_get_bool_option ("POCL_BBVECTORIZE", 0);
 #endif
           }
-#endif
 
-#if defined(LLVM_3_2) || defined(LLVM_3_3)
-          // SimplifyLibCalls has been removed in LLVM 3.4.
-          Builder.DisableSimplifyLibCalls = true;
-#endif
           Builder.populateModulePassManager(*Passes);
      
           continue;
@@ -1401,9 +1329,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
   pocl::WGLocalSizeZ = local_z;
   KernelName = kernel->name;
 
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  kernel_compiler_passes(device, input->getDataLayout()).run(*input);
-#elif (defined LLVM_OLDER_THAN_3_7)
+#ifdef LLVM_OLDER_THAN_3_7
   kernel_compiler_passes(
       device,
       input->getDataLayout()->getStringRepresentation()).run(*input);
@@ -1529,13 +1455,9 @@ pocl_llvm_get_kernel_names( cl_program program, const char **knames, unsigned ma
 
   for (i=0; i<n; i++) {
     assert( md->getOperand(i)->getOperand(0) != NULL);
-#ifdef LLVM_OLDER_THAN_3_6
-    llvm::Function *k = cast<Function>(md->getOperand(i)->getOperand(0));
-#else
     llvm::Function *k = 
       cast<Function>(
         dyn_cast<llvm::ValueAsMetadata>(md->getOperand(i)->getOperand(0))->getValue());
-#endif
     if (i < max_num_krn)
       knames[i]= k->getName().data();
   }
@@ -1569,24 +1491,12 @@ pocl_llvm_codegen(cl_kernel kernel,
     PM.add(TLIPass);
 #endif
     if (target != NULL) {
-#if defined LLVM_3_2
-      PM.add(new TargetTransformInfo(target->getScalarTargetTransformInfo(),
-                                     target->getVectorTargetTransformInfo()));
-#elif (defined LLVM_OLDER_THAN_3_7)
+#ifdef LLVM_OLDER_THAN_3_7
       target->addAnalysisPasses(PM);
 #endif
     }
 
     // TODO: get DataLayout from the 'device'
-#if defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4
-    const DataLayout *TD = NULL;
-    if (target != NULL)
-      TD = target->getDataLayout();
-    if (TD != NULL)
-        PM.add(new DataLayout(*TD));
-    else
-        PM.add(new DataLayout(input));
-#endif
     // TODO: better error check
 #ifdef LLVM_OLDER_THAN_3_7
     std::string data;
