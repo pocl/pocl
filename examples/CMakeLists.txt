@@ -23,30 +23,6 @@
 #
 #=============================================================================
 
-if(NOT DEFINED ENABLED_TESTSUITES)
-  message(STATUS "Disabling all testsuites")
-else()
-
-  include(ExternalProject)
-
-  if("${ENABLED_TESTSUITES}" STREQUAL "all")
-    message(STATUS "Enabling all testsuites")
-    set(ENABLED_TESTSUITES ${ALL_TESTSUITES})
-  endif()
-
-  foreach(TESTSUITE IN LISTS ENABLED_TESTSUITES)
-    if(ALL_TESTSUITES MATCHES ${TESTSUITE})
-      message(STATUS "Enabling testsuite ${TESTSUITE}")
-      add_subdirectory("${TESTSUITE}")
-    else()
-      message(WARNING "Unknown testsuite ${TESTSUITE} requested")
-    endif()
-  endforeach()
-
-endif()
-set(ENABLED_TESTSUITES ${ENABLED_TESTSUITES} PARENT_SCOPE)
-
-
 add_subdirectory("example1")
 add_subdirectory("example1-spir32")
 add_subdirectory("example1-spir64")
@@ -55,4 +31,54 @@ add_subdirectory("example2a")
 add_subdirectory("standalone")
 add_subdirectory("scalarwave")
 add_subdirectory("trig")
+
+set(ALL_TESTSUITES "AMD;AMDSDK2.9;AMDSDK3.0;opencl-book-samples;Parboil;Piglit;Rodinia;VexCL;ViennaCL;Halide;OpenCV;CloverLeaf;hsa")
+
+if("${ENABLE_TESTSUITES}" STREQUAL "all")
+  set(ENABLE_TESTSUITES ${ALL_TESTSUITES})
+endif()
+
+message(STATUS "Trying to enable testsuites: ${ENABLE_TESTSUITES}")
+
+include(ExternalProject)
+
+set(ACTUALLY_ENABLED_TESTSUITES "")
+
+if(ENABLE_TESTSUITES)
+
+  if(NOT DEFINED TESTSUITE_BASEDIR)
+    # TODO maybe current src dir ?
+    set(TESTSUITE_BASEDIR "${CMAKE_CURRENT_BINARY_DIR}")
+  endif()
+  if(NOT IS_DIRECTORY "${TESTSUITE_BASEDIR}")
+    message(FATAL_ERROR "TESTSUITE_BASEDIR (${TESTSUITE_BASEDIR}) is not a directory.")
+  endif()
+
+  if(NOT DEFINED TESTSUITE_SOURCE_BASEDIR)
+    set(TESTSUITE_SOURCE_BASEDIR "${CMAKE_CURRENT_SOURCE_DIR}")
+  endif()
+  if(NOT IS_DIRECTORY "${TESTSUITE_SOURCE_BASEDIR}")
+    message(FATAL_ERROR "TESTSUITE_SOURCE_BASEDIR (${TESTSUITE_SOURCE_BASEDIR}) is not a directory.")
+  endif()
+
+  message(STATUS "Testsuite base dirs: ")
+  message(STATUS "    binary: ${TESTSUITE_BASEDIR}")
+  message(STATUS "    source: ${TESTSUITE_SOURCE_BASEDIR}")
+
+  foreach(TESTSUITE IN LISTS ENABLE_TESTSUITES)
+    if(ALL_TESTSUITES MATCHES ${TESTSUITE})
+      if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${TESTSUITE}")
+        add_subdirectory("${TESTSUITE}")
+        list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TESTSUITE}")
+      else()
+        message(FATAL_ERROR "Cannot find source dir for testsuite: ${TESTSUITE}")
+      endif()
+    else()
+      message(WARNING "Unknown testsuite ${TESTSUITE} requested")
+    endif()
+  endforeach()
+endif()
+
+set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
+set(ALL_TESTSUITES ${ALL_TESTSUITES} PARENT_SCOPE)
 

@@ -916,7 +916,6 @@ add_subdirectory("scripts")
 add_subdirectory("tests")
 
 # TODO In progress
-set(ALL_TESTSUITES "AMD;AMDSDK2.9;opencl-book-samples;Parboil;Piglit;Rodinia;VexCL;ViennaCL;Halide;OpenCV;CloverLeaf;hsa")
 add_subdirectory("examples")
 
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} ${COMMAND_USES_TERMINAL})
@@ -958,7 +957,7 @@ MESSAGE(STATUS "STATIC_LLVM: ${STATIC_LLVM}")
 MESSAGE(STATUS "TESTS_USE_ICD: ${TESTS_USE_ICD}")
 MESSAGE(STATUS "USE_VECMATHLIB: ${USE_VECMATHLIB}")
 MESSAGE(STATUS "Available testsuites: ${ALL_TESTSUITES}")
-MESSAGE(STATUS "Enabled testsuites: ${ENABLED_TESTSUITES}")
+MESSAGE(STATUS "Enabled testsuites: ${ACTUALLY_ENABLED_TESTSUITES}")
 MESSAGE(STATUS "Kernel caching: ${KERNEL_CACHE_DEFAULT}")
 
 MESSAGE(STATUS " ")
