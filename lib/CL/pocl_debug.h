@@ -147,19 +147,19 @@ extern "C" {
             }                                                               \
         } while (0)
 
-    #define POCL_MSG_WARN2(errcode, ...)   if (stderr_is_a_tty) \
+    #define POCL_MSG_WARN2(errcode, ...)   do { if (stderr_is_a_tty) \
           POCL_MSG_PRINT(YELLOW " *** WARNING *** ", errcode, __VA_ARGS__); \
-          else POCL_MSG_PRINT(" *** WARNING *** ", errcode, __VA_ARGS__)
+          else POCL_MSG_PRINT(" *** WARNING *** ", errcode, __VA_ARGS__); } while(0)
     #define POCL_MSG_WARN(...)  POCL_MSG_WARN2("", __VA_ARGS__)
 
-    #define POCL_MSG_ERR2(errcode, ...)    if (stderr_is_a_tty) \
+    #define POCL_MSG_ERR2(errcode, ...)    do { if (stderr_is_a_tty) \
           POCL_MSG_PRINT(RED " *** ERROR *** ", errcode, __VA_ARGS__); \
-          else POCL_MSG_PRINT(" *** ERROR *** ", errcode, __VA_ARGS__)
+          else POCL_MSG_PRINT(" *** ERROR *** ", errcode, __VA_ARGS__); } while (0)
     #define POCL_MSG_ERR(...)  POCL_MSG_ERR2("", __VA_ARGS__)
 
-    #define POCL_MSG_PRINT_INFO2(errcode, ...) if (stderr_is_a_tty) \
+    #define POCL_MSG_PRINT_INFO2(errcode, ...) do { if (stderr_is_a_tty) \
           POCL_MSG_PRINT(GREEN " *** INFO *** ", errcode, __VA_ARGS__); \
-          else POCL_MSG_PRINT(" *** INFO *** ", errcode, __VA_ARGS__)
+          else POCL_MSG_PRINT(" *** INFO *** ", errcode, __VA_ARGS__); } while (0)
     #define POCL_MSG_PRINT_INFO(...) POCL_MSG_PRINT_INFO2("", __VA_ARGS__)
 
 #else
