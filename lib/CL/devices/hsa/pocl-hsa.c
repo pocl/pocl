@@ -949,11 +949,32 @@ pocl_hsa_run(void *dptr, _cl_command_node* cmd)
     }
 }
 
+static int run_command(char* args[])
+{
+  POCL_MSG_PRINT_INFO("Launching: %s", args[0]);
+  pid_t p = vfork();
+  if (p == 0)
+    {
+      return execv(args[0], args);
+    }
+  else
+    {
+      if (p < 0)
+        return -1;
+      int status;
+      if (waitpid(p, &status, 0) < 0)
+        POCL_ABORT("pocl-hsa: waitpid() itself failed.\n");
+      if (WIFEXITED(status))
+        return WEXITSTATUS(status);
+      else
+        return -2;
+    }
+}
+
 static int compile_parallel_bc_to_brig(const char* tmpdir, char* brigfile) {
   int error;
   char hsailfile[POCL_FILENAME_LENGTH];
   char bytecode[POCL_FILENAME_LENGTH];
-  char command[4096];
 
   error = snprintf (bytecode, POCL_FILENAME_LENGTH,
                     "%s%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
@@ -967,30 +988,26 @@ static int compile_parallel_bc_to_brig(const char* tmpdir, char* brigfile) {
     POCL_MSG_PRINT_INFO("pocl-hsa: using existing BRIG file: \n%s\n", brigfile);
   else
     {
+      // TODO call llvm via c++ interface like pocl_llvm_codegen()
       POCL_MSG_PRINT_INFO("pocl-hsa: BRIG file not found, compiling parallel.bc "
                           "to brig file: \n%s\n", bytecode);
 
-      // TODO call llvm via c++ interface like pocl_llvm_codegen()
       error = snprintf (hsailfile, POCL_FILENAME_LENGTH,
                     "%s%s.hsail", tmpdir, POCL_PARALLEL_BC_FILENAME);
       assert (error >= 0);
 
-      error = snprintf (command, 4096, LLVM_LLC " -O2 -march=hsail64 -filetype=asm "
-                        "-o %s %s", hsailfile, bytecode);
-      assert (error >= 0);
-      error = system(command);
-      if (error != 0)
+      char* args1[] = { LLVM_LLC, "-O2", "-march=hsail64", "-filetype=asm", "-o",
+                        hsailfile, bytecode, NULL };
+      if ((error = run_command(args1)))
         {
-          POCL_MSG_PRINT_INFO("pocl-hsa: llc exit status %i\n", WEXITSTATUS(error));
+          POCL_MSG_PRINT_INFO("pocl-hsa: llc exit status %i\n", error);
           return error;
         }
 
-      error = snprintf (command, 4096, HSAIL_ASM " -o %s %s", brigfile, hsailfile);
-      assert (error >= 0);
-      error = system(command);
-      if (error != 0)
+      char* args2[] = { HSAIL_ASM, "-o", brigfile, hsailfile, NULL };
+      if ((error = run_command(args2)))
         {
-          POCL_MSG_PRINT_INFO("pocl-hsa: HSAILasm exit status %i\n", WEXITSTATUS(error));
+          POCL_MSG_PRINT_INFO("pocl-hsa: HSAILasm exit status %i\n", error);
           return error;
         }
     }
