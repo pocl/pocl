@@ -959,6 +959,12 @@ pocl_hsa_run(void *dptr, _cl_command_node* cmd)
     }
 }
 
+/*
+ * This replaces a simple system(), because system() was causing issues
+ * (gpu lockups) when compiling code (via compile_parallel_bc_to_brig)
+ * with OpenCL 2.0 atomics (like CalcPie from AMD SDK).
+ * The reason of lockups is unknown (yet).
+ */
 static int run_command(char* args[])
 {
   POCL_MSG_PRINT_INFO("Launching: %s", args[0]);
