@@ -74,6 +74,7 @@ ConvertedType(llvm::Type *type, std::map<unsigned, unsigned> &addrSpaceMap,
   } else if (type->isArrayTy()) {
     return ArrayType::get
       (ConvertedType(type->getArrayElementType(), addrSpaceMap, converted_struct_cache), type->getArrayNumElements());
+#ifndef TCE_AVAILABLE
   } else if (type->isStructTy()) {
     if (converted_struct_cache[type])
       return converted_struct_cache[type];
@@ -103,7 +104,7 @@ ConvertedType(llvm::Type *type, std::map<unsigned, unsigned> &addrSpaceMap,
       tn->setBody(a, t->isPacked());
 
     return tn;
-
+#endif
   } else {
       return type;
   }
