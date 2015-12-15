@@ -265,6 +265,10 @@ else()
   set(HAVE_CLOCK_GETTIME 0)
 endif()
 
+include(CheckFunctionExists)
+check_function_exists(fork HAVE_FORK)
+check_function_exists(vfork HAVE_VFORK)
+
 ######################################################################################
 
 if(NOT DEFINED DEFAULT_USE_VECMATHLIB)

@@ -49,6 +49,15 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
  */
 
+#ifndef _BSD_SOURCE
+#define _BSD_SOURCE
+#endif
+
+#ifndef _DEFAULT_SOURCE
+#define _DEFAULT_SOURCE
+#endif
+
+
 #include "hsa.h"
 #include "hsa_ext_finalize.h"
 #include "hsa_ext_image.h"
@@ -74,6 +83,7 @@
 #ifndef _MSC_VER
 #  include <sys/wait.h>
 #  include <sys/time.h>
+#  include <sys/types.h>
 #  include <unistd.h>
 #else
 #  include "vccompat.hpp"
@@ -952,7 +962,13 @@ pocl_hsa_run(void *dptr, _cl_command_node* cmd)
 static int run_command(char* args[])
 {
   POCL_MSG_PRINT_INFO("Launching: %s", args[0]);
+#ifdef HAVE_VFORK
   pid_t p = vfork();
+#elif defined(HAVE_FORK)
+  pid_t p = fork();
+#else
+#error Must have fork() or vfork() system calls for HSA
+#endif
   if (p == 0)
     {
       return execv(args[0], args);
