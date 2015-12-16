@@ -31,6 +31,7 @@ add_subdirectory("example2a")
 add_subdirectory("standalone")
 add_subdirectory("scalarwave")
 add_subdirectory("trig")
+add_subdirectory("EinsteinToolkit")
 
 set(ALL_TESTSUITES "AMD;AMDSDK2.9;AMDSDK3.0;opencl-book-samples;Parboil;Piglit;Rodinia;VexCL;ViennaCL;Halide;OpenCV;CloverLeaf;hsa")
 
