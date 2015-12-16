@@ -1,6 +1,6 @@
-/* OpenCL runtime library: clEnqueueBarrier()
+/* OpenCL runtime library: clEnqueueBarrierWithWaitList()
 
-   Copyright (c) 2011 Erik Schnetter
+   Copyright (c) 2015 Ville Korhonen, TUT
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -21,28 +21,42 @@
    THE SOFTWARE.
 */
 
+#include "pocl_cl.h"
 #include "pocl_util.h"
 
 CL_API_ENTRY 
 cl_int CL_API_CALL
-POname(clEnqueueBarrier)(cl_command_queue command_queue) 
-CL_API_SUFFIX__VERSION_1_0
+POname(clEnqueueBarrierWithWaitList)(cl_command_queue command_queue,
+                                     cl_uint          num_events_in_wait_list,
+                                     const cl_event   *event_wait_list,
+                                     cl_event         *event) 
+CL_API_SUFFIX__VERSION_1_2
 {
   _cl_command_node *cmd;
+  int i = 0;
 
-  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+  if (num_events_in_wait_list > 0 && event_wait_list == NULL)
+    return CL_INVALID_EVENT_WAIT_LIST;
 
-  POCL_RETURN_ERROR_COND((command_queue->device == NULL), CL_INVALID_COMMAND_QUEUE);
+  if (num_events_in_wait_list == 0 && event_wait_list != NULL)
+    return CL_INVALID_EVENT_WAIT_LIST;
 
-  POCL_RETURN_ERROR_COND((command_queue->context == NULL), CL_INVALID_COMMAND_QUEUE);
+  for (i = 0; i < num_events_in_wait_list; i++)
+    if (event_wait_list[i] == NULL)
+      return CL_INVALID_EVENT_WAIT_LIST;
+
+  if (command_queue == NULL || command_queue->device == NULL ||
+      command_queue->context == NULL)
+    return CL_INVALID_COMMAND_QUEUE;
 
   /* Even if we do not need to create a full command, the runtime requires it */
   pocl_create_command (&cmd, command_queue, 
                        CL_COMMAND_BARRIER, NULL, 
-                       0, NULL, 0, NULL);
+                       num_events_in_wait_list, event_wait_list, 0, NULL);
 
+  cmd->command.barrier.has_wait_list = num_events_in_wait_list;
   pocl_command_enqueue(command_queue, cmd);
 
   return CL_SUCCESS;
 }
-POsym(clEnqueueBarrier)
+POsym(clEnqueueBarrierWithWaitList)

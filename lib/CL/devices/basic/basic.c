@@ -29,7 +29,10 @@
 #include "common.h"
 #include "utlist.h"
 #include "devices.h"
+#include "pocl_util.h"
 
+#include <pthread.h>
+#include <utlist.h>
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
@@ -54,6 +57,12 @@ struct data {
   cl_kernel current_kernel;
   /* Loaded kernel dynamic library handle. */
   lt_dlhandle current_dlhandle;
+  
+  /* List of commands ready to be executed */
+  _cl_command_node * volatile ready_list;
+  /* List of commands not yet ready to be executed */
+  _cl_command_node * volatile command_list;
+  pocl_lock_t cq_lock;      /* Lock for command list related operations */
 };
 
 static const cl_image_format supported_image_formats[] = {
@@ -212,12 +221,17 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->fill_rect = pocl_basic_fill_rect;
   ops->memfill = pocl_basic_memfill;
   ops->map_mem = pocl_basic_map_mem;
+  ops->compile_kernel = pocl_basic_compile_kernel;
   ops->unmap_mem = pocl_basic_unmap_mem;
-  ops->compile_submitted_kernels = pocl_basic_compile_submitted_kernels;
   ops->run = pocl_basic_run;
   ops->run_native = pocl_basic_run_native;
   ops->get_timer_value = pocl_basic_get_timer_value;
   ops->get_supported_image_formats = pocl_basic_get_supported_image_formats;
+  ops->join = pocl_basic_join;
+  ops->submit = pocl_basic_submit;
+  ops->broadcast = pocl_basic_broadcast;
+  ops->notify = pocl_basic_notify;
+  ops->flush = pocl_basic_flush;
 }
 
 void
@@ -270,7 +284,17 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->max_constant_args = 8;
 
   dev->max_mem_alloc_size = 0;
-
+  dev->image_support = CL_TRUE;
+  dev->max_read_image_args = 128;
+  dev->max_write_image_args = 128;
+  dev->image2d_max_width = 8192;
+  dev->image2d_max_height = 8192;
+  dev->image3d_max_width = 2048;
+  dev->image3d_max_height = 2048;
+  dev->image3d_max_depth = 2048;
+  dev->image_max_buffer_size = 0;
+  dev->image_max_array_size = 0;
+  dev->max_samplers = 16;
   dev->max_parameter_size = 1024;
   dev->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT; // this is in bytes
   dev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT*8; // this is in bits
@@ -282,6 +306,7 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->global_mem_cache_size = 0;
   dev->global_mem_size = 0;
   dev->max_constant_buffer_size = 0;
+  dev->max_constant_args = 8;
   dev->local_mem_type = CL_GLOBAL;
   dev->local_mem_size = 0;
   dev->error_correction_support = CL_FALSE;
@@ -365,6 +390,7 @@ pocl_basic_init (cl_device_id device, const char* parameters)
   
   if (first_basic_init)
     {
+      pocl_init_dlhandle_cache();
       first_basic_init = 0;
       global_mem_id = device->dev_id;
     }
@@ -382,6 +408,7 @@ pocl_basic_init (cl_device_id device, const char* parameters)
      a nonzero there for now. */
   device->global_mem_size = 1;
   pocl_topology_detect_device_info(device);
+  POCL_INIT_LOCK (d->cq_lock);
   pocl_cpuinfo_detect_device_info(device);
   pocl_set_buffer_image_limits(device);
 
@@ -408,6 +435,7 @@ pocl_basic_init (cl_device_id device, const char* parameters)
   #ifdef _CL_DISABLE_LONG
   device->has_64bit_long=0;
   #endif
+
 }
 
 cl_int
@@ -877,71 +905,107 @@ pocl_basic_get_supported_image_formats (cl_mem_flags flags,
     return CL_SUCCESS; 
 }
 
-typedef struct compiler_cache_item compiler_cache_item;
-struct compiler_cache_item
+static void basic_command_scheduler (struct data *d) 
 {
-  char *tmp_dir;
-  char *function_name;
-  pocl_workgroup wg;
-  compiler_cache_item *next;
-};
-
-static compiler_cache_item *compiler_cache;
-static pocl_lock_t compiler_cache_lock;
-
-void check_compiler_cache (_cl_command_node *cmd)
-{
-  char workgroup_string[WORKGROUP_STRING_LENGTH];
-  lt_dlhandle dlhandle;
-  compiler_cache_item *ci = NULL;
+  _cl_command_node *node;
   
-  if (compiler_cache == NULL)
-    POCL_INIT_LOCK (compiler_cache_lock);
-
-  POCL_LOCK (compiler_cache_lock);
-  LL_FOREACH (compiler_cache, ci)
+  /* execute commands from ready list */
+  while ((node = d->ready_list))
     {
-      if (strcmp (ci->tmp_dir, cmd->command.run.tmp_dir) == 0 &&
-          strcmp (ci->function_name, 
-                  cmd->command.run.kernel->name) == 0)
-        {
-          POCL_UNLOCK (compiler_cache_lock);
-          cmd->command.run.wg = ci->wg;
-          return;
-        }
-    }
-  cl_program program = cmd->command.run.kernel->program;
+      assert (pocl_command_is_ready(node->event));
+      CDL_DELETE (d->ready_list, node);
 
-  ci = (compiler_cache_item*) malloc (sizeof (compiler_cache_item));
-  ci->next = NULL;
-  ci->tmp_dir = strdup(cmd->command.run.tmp_dir);
-  ci->function_name = strdup (cmd->command.run.kernel->name);
-  const char* module_fn = llvm_codegen (cmd->command.run.tmp_dir,
-                                        cmd->command.run.kernel,
-                                        cmd->device);
-  dlhandle = lt_dlopen (module_fn);
-  if (dlhandle == NULL)
-    {
-      printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", 
-              module_fn, lt_dlerror());
-      printf ("note: missing symbols in the kernel binary might be" 
-              "reported as 'file not found' errors.\n");
-      abort();
+      
+      pthread_mutex_unlock (&d->cq_lock);
+      assert (node->event->status == CL_SUBMITTED);
+      pocl_exec_command(node);
+      pthread_mutex_lock (&d->cq_lock);
     }
-  snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
-            "_pocl_launcher_%s_workgroup", cmd->command.run.kernel->name);
-  cmd->command.run.wg = ci->wg = 
-    (pocl_workgroup) lt_dlsym (dlhandle, workgroup_string);
+    
+  return;
+}
 
-  LL_APPEND (compiler_cache, ci);
-  POCL_UNLOCK (compiler_cache_lock);
+void
+pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
+{
+  struct data *d = node->device->data;
+  cl_event *event = &(node->event);
+  
+  node->device->ops->compile_kernel (node);
+  POCL_LOCK (d->cq_lock);
+  POCL_UPDATE_EVENT_SUBMITTED(event);
+  pocl_command_push(node, &d->ready_list, &d->command_list);
+  
+  basic_command_scheduler (d);
+
+  POCL_UNLOCK (d->cq_lock);
+
+  return;
+}
+
+void pocl_basic_flush (cl_device_id device, cl_command_queue cq)
+{
+  struct data *d = (struct data*)device->data;
+
+  POCL_LOCK (d->cq_lock);
+  basic_command_scheduler (d);
+  POCL_UNLOCK (d->cq_lock);
+}
+
+void
+pocl_basic_push_command (_cl_command_node *node)
+{
+  struct data *d = (struct data*)node->device->data;
+
+  pocl_command_push(node, &d->ready_list, &d->command_list);
 
 }
 
 void
-pocl_basic_compile_submitted_kernels (_cl_command_node *cmd)
+pocl_basic_join(cl_device_id device, cl_command_queue cq)
+{
+  struct data *d = (struct data*)device->data;
+
+  POCL_LOCK (d->cq_lock);
+  basic_command_scheduler (d);
+  POCL_UNLOCK (d->cq_lock);
+
+  return;
+}
+
+void
+pocl_basic_notify (cl_device_id device, cl_event event)
+{
+  struct data *d = (struct data*)device->data;
+  _cl_command_node * volatile node = event->command;
+  
+  POCL_LOCK_OBJ (event);
+  if (!(node->ready) && pocl_command_is_ready(node->event))
+    {
+      node->ready = 1;
+      POCL_UNLOCK_OBJ (event);
+      if (node->event->status == CL_SUBMITTED)
+        {
+          POCL_LOCK (d->cq_lock);
+          CDL_DELETE (d->command_list, node);
+          CDL_PREPEND (d->ready_list, node);
+          basic_command_scheduler (d);
+          POCL_UNLOCK (d->cq_lock);
+        }
+      return;
+    }
+  POCL_UNLOCK_OBJ (event);
+}
+
+void
+pocl_basic_broadcast (cl_event event)
+{
+  pocl_broadcast (event);
+}
+
+void
+pocl_basic_compile_kernel (_cl_command_node *cmd)
 {
   if (cmd->type == CL_COMMAND_NDRANGE_KERNEL)
-    check_compiler_cache (cmd);
-
+    pocl_check_dlhandle_cache (cmd);
 }

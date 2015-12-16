@@ -1,7 +1,7 @@
-/* OpenCL built-in library: get_image_width()
+/* pocl-pthread_scheduler.h - kernel/workgroup scheduler for native 
+   pthreaded device.
 
-   Copyright (c) 2013-2014 Ville Korhonen, Pekka Jääskeläinen
-                           Tampere University of Technology
+   Copyright (c) 2015 Ville Korhonen, Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -22,23 +22,29 @@
    THE SOFTWARE.
 */
 
-#include "templates.h"
+#ifndef POCL_PTHREAD_SCHEDULER_H
+#define POCL_PTHREAD_SCHEDULER_H
+#include "pocl-pthread_utils.h"
+#include "pocl_cl.h"
 
-#if (__clang_major__ == 3) && (__clang_minor__ >= 5)
-// Clang 3.5 crashes in case trying to cast to the private pointer,
-// adding the global qualifier fixes it. Clang 3.4 crashes if it's
-// there. The issue is in SROA.
-#define ADDRESS_SPACE global
-#else
-#define ADDRESS_SPACE
+typedef struct pool_thread_data thread_data;
+
+/* Initializes scheduler. Must be called before any kernel enqueue */
+void pthread_scheduler_init (size_t num_worker_threads);
+
+void pthread_scheduler_uinit ();
+
+/* Gives ready-to-execute command for scheduler */
+void pthread_scheduler_push_command (_cl_command_node *cmd);
+
+
+void pthread_scheduler_push_kernel (kernel_run_command *run_cmd);
+
+/* blocks until given command queue is empty == finished */
+void pthread_scheduler_wait_cq (cl_command_queue cq);
+
+void pthread_scheduler_release_host ();
+
+int pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr);
+
 #endif
-
-#define IMPLEMENT_GET_IMAGE_WIDTH(__IMGTYPE__)               \
-  int _CL_OVERLOADABLE get_image_width(__IMGTYPE__ image){   \
-    return (*(ADDRESS_SPACE dev_image_t**)&image)->_width;   \
-  }                                                          \
-
-IMPLEMENT_GET_IMAGE_WIDTH(image1d_t)
-IMPLEMENT_GET_IMAGE_WIDTH(image2d_t)
-IMPLEMENT_GET_IMAGE_WIDTH(image3d_t)
-

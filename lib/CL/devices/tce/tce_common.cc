@@ -22,6 +22,8 @@
 */
 #include "tce_common.h"
 #include "pocl_util.h"
+#include "utlist.h"
+#include "common.h"
 
 #include "config.h"
 #include "install-paths.h"
@@ -65,8 +67,10 @@ using namespace TTAMachine;
 
 TCEDevice::TCEDevice(cl_device_id dev, const char* adfName) :
   local_as(NULL), global_as(NULL), private_as(NULL), machine_file(adfName), parent(dev),
-  currentProgram(NULL), curKernelAddr(0), curKernel(NULL), globalCycleCount(0) {
+  currentProgram(NULL), curKernelAddr(0), curKernel(NULL), globalCycleCount(0),
+  ready_list(NULL), command_list(NULL) {
   parent->data = this;
+  pthread_mutex_init (&cq_lock, NULL);
 #if defined(WORDS_BIGENDIAN) && WORDS_BIGENDIAN == 1
   needsByteSwap = false;
 #else
@@ -791,4 +795,101 @@ pocl_tce_read_rect (void *data,
           + buffer_slice_pitch * k;
         pocl_tce_write (data, h_ptr, device_ptr, offset, region[0]);
       }
+}
+
+static void tce_command_scheduler (TCEDevice *d) 
+{
+  _cl_command_node *node;
+  
+  /* execute commands from ready list */
+  while ((node = d->ready_list))
+    {
+      assert (pocl_command_is_ready(node->event));
+      CDL_DELETE (d->ready_list, node);
+
+      
+      pthread_mutex_unlock (&d->cq_lock);
+      assert (node->event->status == CL_SUBMITTED);
+      pocl_exec_command(node);
+      pthread_mutex_lock (&d->cq_lock);
+    }
+    
+  return;
+}
+
+void
+pocl_tce_submit (_cl_command_node *node, cl_command_queue /*cq*/)
+{
+  TCEDevice *d = (TCEDevice*)node->device->data;
+  cl_event *event = &(node->event);
+
+  POCL_LOCK (d->cq_lock);
+  POCL_UPDATE_EVENT_SUBMITTED(event);
+  pocl_command_push(node, &d->ready_list, &d->command_list);
+
+  tce_command_scheduler (d);
+
+  POCL_UNLOCK (d->cq_lock);
+
+  return;
+}
+
+void pocl_tce_flush (cl_device_id device, cl_command_queue /*cq*/)
+{
+  TCEDevice *d = (TCEDevice*)device->data;
+
+  POCL_LOCK (d->cq_lock);
+  tce_command_scheduler (d);
+  POCL_UNLOCK (d->cq_lock);
+}
+
+void
+pocl_tce_push_command (_cl_command_node *node)
+{
+  TCEDevice *d = (TCEDevice*)node->device->data;
+
+  pocl_command_push(node, &d->ready_list, &d->command_list);
+
+}
+
+void
+pocl_tce_join(cl_device_id device, cl_command_queue /*cq*/)
+{
+  TCEDevice *d = (TCEDevice*)device->data;
+
+  POCL_LOCK (d->cq_lock);
+  tce_command_scheduler (d);
+  POCL_UNLOCK (d->cq_lock);
+
+  return;
+}
+
+void
+pocl_tce_notify (cl_device_id device, cl_event event)
+{
+  TCEDevice *d = (TCEDevice*)device->data;
+  _cl_command_node * volatile node = event->command;
+  
+  POCL_LOCK_OBJ (event);
+  if (!(node->ready) && pocl_command_is_ready(node->event))
+    {
+      node->ready = 1;
+      POCL_UNLOCK_OBJ (event);
+      if (node->event->status == CL_SUBMITTED)
+        {
+          POCL_LOCK (d->cq_lock);
+          CDL_DELETE (d->command_list, node);
+          CDL_PREPEND (d->ready_list, node);
+          tce_command_scheduler (d);
+          POCL_UNLOCK (d->cq_lock);
+        }
+      return;
+    }
+  POCL_UNLOCK_OBJ (event);
+}
+
+void
+pocl_tce_broadcast (cl_event event)
+{
+  pocl_broadcast (event);
 }

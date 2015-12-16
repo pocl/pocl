@@ -111,8 +111,11 @@ POname(clCreateBuffer)(cl_context context,
   mem->type = CL_MEM_OBJECT_BUFFER;
   mem->flags = flags;
   mem->is_image = CL_FALSE;
-  mem->packet_size = 0;
-  mem->max_packets = 0;
+  mem->latest_event = NULL;
+  mem->owning_device = NULL;
+  mem->is_pipe = 0;
+  mem->pipe_packet_size = 0;
+  mem->pipe_max_packets = 0;
 
   /* Store the per device buffer pointers always to a known
      location in the buffer (dev_id), even though the context

@@ -66,7 +66,7 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
 
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_BUFFER, 
                                  event, num_events_in_wait_list, 
-                                 event_wait_list);
+                                 event_wait_list, 1, &buffer);
   if (errcode != CL_SUCCESS)
     return errcode;
   
@@ -77,6 +77,7 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
   cmd->command.read.cb = cb;
   cmd->command.read.buffer = buffer;
   POname(clRetainMemObject) (buffer);
+  buffer->owning_device = command_queue->device;
   pocl_command_enqueue(command_queue, cmd);
 
   if (blocking_read)

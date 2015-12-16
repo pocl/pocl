@@ -86,7 +86,7 @@ CL_API_SUFFIX__VERSION_1_2
 
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_FILL_BUFFER,
                                  event, num_events_in_wait_list,
-                                 event_wait_list);
+                                 event_wait_list, 1, &buffer);
   if (errcode != CL_SUCCESS)
     return errcode;
 
@@ -98,6 +98,8 @@ CL_API_SUFFIX__VERSION_1_2
   memcpy(p, pattern, pattern_size);
   cmd->command.memfill.pattern = p;
   cmd->command.memfill.pattern_size = pattern_size;
+
+  buffer->owning_device = command_queue->device;
 
   pocl_command_enqueue(command_queue, cmd);
 

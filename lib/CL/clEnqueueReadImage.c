@@ -73,23 +73,25 @@ CL_API_SUFFIX__VERSION_1_0
   
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_IMAGE,
                                 event, num_events_in_wait_list, 
-                                event_wait_list);
+                                event_wait_list, 1, &image);
   if (errcode != CL_SUCCESS)
     {
       POCL_MEM_FREE(cmd);
       return errcode;
     }
 
-  cmd->command.rw_image.device_ptr = 
+  cmd->command.r_image.device_ptr = 
     image->device_ptrs[command_queue->device->dev_id].mem_ptr;
-  cmd->command.rw_image.host_ptr = ptr;
-  memcpy ((cmd->command.rw_image.origin), tuned_origin, 3*sizeof (size_t));
-  memcpy ((cmd->command.rw_image.region), tuned_region, 3*sizeof (size_t));
-  cmd->command.rw_image.rowpitch = image->image_row_pitch;
-  cmd->command.rw_image.slicepitch = image->image_slice_pitch;
-  cmd->command.rw_image.buffer = image;
-  pocl_command_enqueue (command_queue, cmd);
+  cmd->command.r_image.host_ptr = ptr;
+  memcpy ((cmd->command.r_image.origin), tuned_origin, 3*sizeof (size_t));
+  memcpy ((cmd->command.r_image.region), tuned_region, 3*sizeof (size_t));
+  cmd->command.r_image.b_rowpitch = image->image_row_pitch;
+  cmd->command.r_image.b_slicepitch = image->image_slice_pitch;
+  cmd->command.r_image.buffer = image;
+
   POname(clRetainMemObject) (image);  
+  image->owning_device = command_queue->device;
+  pocl_command_enqueue(command_queue, cmd);
 
   if (blocking_read)
     POname(clFinish) (command_queue);

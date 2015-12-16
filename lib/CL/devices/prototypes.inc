@@ -31,6 +31,14 @@
 
 #define GEN_PROTOTYPES(__DRV__)                                         \
   PUSH_VISIBILITY_HIDDEN                               \
+  void pocl_##__DRV__##_submit (_cl_command_node *node, cl_command_queue cq); \
+  void pocl_##__DRV__##_join (cl_device_id device, cl_command_queue cq); \
+  void pocl_##__DRV__##_flush (cl_device_id device, cl_command_queue cq); \
+  void pocl_##__DRV__##_notify (cl_device_id device, cl_event event);  \
+  void pocl_##__DRV__##_broadcast (cl_event event);                    \
+  void pocl_##__DRV__##_wait_event (cl_device_id device, cl_event event); \
+  void pocl_##__DRV__##_update_event (cl_device_id device, cl_event event, cl_int status); \
+  void pocl_##__DRV__##_free_event_data (cl_event event); \
   void pocl_##__DRV__##_init_device_infos(struct _cl_device_id* dev);  \
   void pocl_##__DRV__##_init_device_ops(struct pocl_device_ops* ops);  \
   void pocl_##__DRV__##_uninit (cl_device_id device);                   \
@@ -83,6 +91,7 @@
                            size_t const buffer_slice_pitch,    \
                            void *fill_pixel,    \
                            size_t pixel_size);  \
+  void pocl_##__DRV__##_compile_kernel (_cl_command_node *node);         \
   void pocl_##__DRV__##_memfill (void *ptr,           \
                             size_t size,              \
                             size_t offset,            \
@@ -97,6 +106,7 @@
                                     void *device_start_ptr, size_t size); \
   cl_ulong pocl_##__DRV__##_get_timer_value(void *data); \
   char* pocl_##__DRV__##_init_build (void *data); \
+  void pocl_##__DRV__##_init_target_machine (void *data, void* target_machine);\
   void pocl_##__DRV__##_build_hash (void *data, SHA1_CTX *build_hash); \
   cl_int pocl_##__DRV__##_get_supported_image_formats (cl_mem_flags flags,\
                                          const cl_image_format **image_formats,\

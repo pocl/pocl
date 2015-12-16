@@ -2,17 +2,17 @@
 
    Copyright (c) 2011 Universidad Rey Juan Carlos and
                  2012-2013 Pekka Jääskeläinen / Tampere University of Technology
-   
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights
    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
    copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -57,14 +57,17 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   size_t offset_x, offset_y, offset_z;
   size_t global_x, global_y, global_z;
   size_t local_x, local_y, local_z;
-  unsigned i, count;
+  int m_count, b_count, buffer_migrate_count, buffer_count;
+  unsigned i;
   int error;
   cl_device_id realdev = NULL;
   struct pocl_context pc;
   _cl_command_node *command_node;
+  cl_mem *mem_list;
+  cl_event *new_event_wait_list;
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
-  
+
   POCL_RETURN_ERROR_COND((kernel == NULL), CL_INVALID_KERNEL);
 
   POCL_RETURN_ERROR_ON((command_queue->context != kernel->context),
@@ -90,7 +93,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
       offset_y = 0;
       offset_z = 0;
     }
-    
+
   global_x = global_work_size[0];
   global_y = work_dim > 1 ? global_work_size[1] : 1;
   global_z = work_dim > 2 ? global_work_size[2] : 1;
@@ -104,7 +107,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
         "The %i-th kernel argument is not set!\n", i);
     }
 
-  if (local_work_size != NULL) 
+  if (local_work_size != NULL)
     {
       local_x = local_work_size[0];
       local_y = work_dim > 1 ? local_work_size[1] : 1;
@@ -112,24 +115,24 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
       if (local_x > global_x || local_y > global_y || local_z > global_z)
         goto DETERMINE_LOCAL_SIZE;
     }
-  else 
+  else
     {
       /* Embarrassingly parallel kernel with a free work-group
          size. Try to figure out one which utilizes all the
          resources efficiently. Assume work-groups are scheduled
-         to compute units, so try to split it to a number of 
-         work groups at the equal to the number of CUs, while still 
-         trying to respect the preferred WG size multiple (for better 
-         SIMD instruction utilization).          
+         to compute units, so try to split it to a number of
+         work groups at the equal to the number of CUs, while still
+         trying to respect the preferred WG size multiple (for better
+         SIMD instruction utilization).
       */
       size_t preferred_wg_multiple;
 DETERMINE_LOCAL_SIZE:
       POname(clGetKernelWorkGroupInfo)
-        (kernel, command_queue->device, 
-         CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, 
+        (kernel, command_queue->device,
+         CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
          sizeof (size_t), &preferred_wg_multiple, NULL);
 
-      POCL_MSG_PRINT_INFO("Preferred WG size multiple %zu\n", 
+      POCL_MSG_PRINT_INFO("Preferred WG size multiple %zu\n",
                           preferred_wg_multiple);
 
       local_x = global_x;
@@ -141,7 +144,7 @@ DETERMINE_LOCAL_SIZE:
       do {
         /* Split the dimension, but avoid ending up with a dimension that
            is not multiple of the wanted size. */
-        if (local_x > 1 && local_x % 2 == 0 && 
+        if (local_x > 1 && local_x % 2 == 0 &&
             (local_x / 2) % preferred_wg_multiple == 0)
           {
             local_x /= 2;
@@ -154,7 +157,7 @@ DETERMINE_LOCAL_SIZE:
             continue;
           }
         else if (local_z > 1 && local_z % 2 == 0 &&
-                 (local_z / 2) % preferred_wg_multiple == 0)         
+                 (local_z / 2) % preferred_wg_multiple == 0)
           {
             local_z /= 2;
             continue;
@@ -162,35 +165,35 @@ DETERMINE_LOCAL_SIZE:
 
         /* Next find out a dimension that is not a multiple anyways,
            so one cannot nicely vectorize over it, and set it to one. */
-        if (local_z > 1 && local_z % preferred_wg_multiple != 0) 
+        if (local_z > 1 && local_z % preferred_wg_multiple != 0)
           {
             local_z = 1;
             continue;
           }
-        else if (local_y > 1 && local_y % preferred_wg_multiple != 0) 
+        else if (local_y > 1 && local_y % preferred_wg_multiple != 0)
           {
             local_y = 1;
             continue;
           }
-        else if (local_z > 1 && local_z % preferred_wg_multiple != 0) 
+        else if (local_z > 1 && local_z % preferred_wg_multiple != 0)
           {
             local_z = 1;
             continue;
           }
 
-        /* Finally, start setting them to zero starting from the Z 
+        /* Finally, start setting them to zero starting from the Z
            dimension. */
-        if (local_z > 1) 
+        if (local_z > 1)
           {
             local_z = 1;
             continue;
           }
-        else if (local_y > 1) 
+        else if (local_y > 1)
           {
             local_y = 1;
             continue;
           }
-        else if (local_x > 1) 
+        else if (local_x > 1)
           {
             local_x = 1;
             continue;
@@ -204,8 +207,8 @@ DETERMINE_LOCAL_SIZE:
                       "sizes %u x %u x %u...\n",
                       kernel->name,
                       (unsigned)local_x, (unsigned)local_y, (unsigned)local_z,
-                      (unsigned)(global_x / local_x), 
-                      (unsigned)(global_y / local_y), 
+                      (unsigned)(global_x / local_x),
+                      (unsigned)(global_y / local_y),
                       (unsigned)(global_z / local_z));
 
   POCL_RETURN_ERROR_ON((local_x * local_y * local_z > command_queue->device->max_work_group_size),
@@ -241,10 +244,85 @@ DETERMINE_LOCAL_SIZE:
                                 kernel, local_x, local_y, local_z);
   if (error) goto ERROR;
 
+  buffer_migrate_count = 0;
+  buffer_count = 0;
+  /* count mem objects and number of mem migrations needed */
+  for (i = 0; i < kernel->num_args; ++i)
+    {
+      struct pocl_argument *al = &(kernel->dyn_arguments[i]);
+      if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE ||
+           !kernel->arg_info[i].is_local
+          && kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER
+          && al->value != NULL)
+        {
+          cl_mem buf = *(cl_mem *) (al->value);
+          ++buffer_count;
+          if (buf->owning_device != NULL &&
+              buf->owning_device->global_mem_id !=
+              command_queue->device->global_mem_id)
+            {
+#if DEBUG_NDRANGE
+              printf("ownig device = %d, queue_device = %d\n",
+                     buf->owning_device->global_mem_id,
+                     command_queue->device->global_mem_id);
+#endif
+              ++buffer_migrate_count;
+            }
+        }
+    }
+  mem_list = calloc (buffer_count, sizeof(cl_mem));
+
+  if (buffer_migrate_count)
+    {
+      new_event_wait_list = malloc
+        (sizeof (cl_event) * (num_events_in_wait_list + buffer_migrate_count));
+      m_count = 0;
+    }
+
+  /* Create implicit mem migrate commands */
+  b_count = 0;
+  for (i = 0; i < kernel->num_args; ++i)
+    {
+      struct pocl_argument *al = &(kernel->dyn_arguments[i]);
+      if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE ||
+          !kernel->arg_info[i].is_local
+          && kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER
+          && al->value != NULL)
+        {
+          cl_mem buf = *(cl_mem *) (al->value);
+          POname(clRetainMemObject) (buf);
+          mem_list[b_count] = buf;
+          ++b_count;
+
+          if (buf->owning_device != NULL &&
+              buf->owning_device->global_mem_id !=
+              command_queue->device->global_mem_id)
+            {
+              cl_event mem_event = buf->latest_event;
+              POname(clEnqueueMigrateMemObjects)
+                (command_queue, 1, &buf, 0, (mem_event ? 1 : 0),
+                 (mem_event ? &mem_event : NULL),
+                 &new_event_wait_list[m_count]);
+              ++m_count;
+            }
+        }
+    }
+  if (buffer_migrate_count)
+    memcpy (&new_event_wait_list[m_count], event_wait_list,
+            num_events_in_wait_list * sizeof (cl_event));
+  else
+    {
+      new_event_wait_list = malloc (sizeof(cl_event) * num_events_in_wait_list);
+      memcpy (new_event_wait_list, event_wait_list,
+              sizeof(cl_event) * num_events_in_wait_list);
+    }
+
   error = pocl_create_command (&command_node, command_queue,
-                               CL_COMMAND_NDRANGE_KERNEL,
-                               event, num_events_in_wait_list,
-                               event_wait_list);
+                               CL_COMMAND_NDRANGE_KERNEL, event,
+                               num_events_in_wait_list + buffer_migrate_count,
+                               (num_events_in_wait_list + buffer_migrate_count)?
+                               new_event_wait_list : NULL,
+                               buffer_count, mem_list);
   if (error != CL_SUCCESS)
     goto ERROR;
 
@@ -265,7 +343,7 @@ DETERMINE_LOCAL_SIZE:
   command_node->command.run.local_y = local_y;
   command_node->command.run.local_z = local_z;
 
-  /* Copy the currently set kernel arguments because the same kernel 
+  /* Copy the currently set kernel arguments because the same kernel
      object can be reused for new launches with different arguments. */
   command_node->command.run.arguments =
     (struct pocl_argument *) malloc ((kernel->num_args + kernel->num_locals) *
@@ -291,47 +369,21 @@ DETERMINE_LOCAL_SIZE:
             arg_alignment = MAX_EXTENDED_ALIGNMENT;
           if (arg_alloc_size < arg_alignment)
             arg_alloc_size = arg_alignment;
-         
+
           arg->value = pocl_aligned_malloc (arg_alignment, arg_alloc_size);
           memcpy (arg->value, kernel->dyn_arguments[i].value, arg->size);
         }
     }
 
-  command_node->next = NULL; 
-  
-  
+  command_node->next = NULL;
+
+
   POname(clRetainKernel) (kernel);
 
-  command_node->command.run.arg_buffer_count = 0;
-  for (i = 0; i < kernel->num_args; ++i)
-  {
-    struct pocl_argument *al = &(kernel->dyn_arguments[i]);
-    if (!kernel->arg_info[i].is_local && kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && al->value != NULL)
-      ++command_node->command.run.arg_buffer_count;
-  }
-  
+  command_node->command.run.arg_buffer_count = buffer_count;
+
   /* Copy the argument buffers just so we can free them after execution. */
-  command_node->command.run.arg_buffers =
-    (cl_mem *) malloc (sizeof (cl_mem) * command_node->command.run.arg_buffer_count);
-  count = 0;
-  for (i = 0; i < kernel->num_args; ++i)
-  {
-    struct pocl_argument *al = &(kernel->dyn_arguments[i]);
-    if (!kernel->arg_info[i].is_local && kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && al->value != NULL)
-      {
-        cl_mem buf;
-#if 0
-        printf ("### retaining arg %d - the buffer %x of kernel %s\n", i, buf, kernel->function_name);
-#endif
-        buf = *(cl_mem *) (al->value);
-        /* Retain all memobjects so they won't get freed before the
-           queued kernel has been executed. */
-        if (buf != NULL)
-          POname(clRetainMemObject) (buf);
-        command_node->command.run.arg_buffers[count] = buf;
-        ++count;
-      }
-  }
+  command_node->command.run.arg_buffers = mem_list;
 
   pocl_command_enqueue (command_queue, command_node);
   error = CL_SUCCESS;

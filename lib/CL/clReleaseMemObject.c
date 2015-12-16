@@ -46,6 +46,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
 
   if (new_refcount == 0) 
     {
+      POCL_MSG_PRINT_INFO ("free mem obj %p\n", memobj);
       if (memobj->parent == NULL) 
         {
           for (i = 0; i < memobj->context->num_devices; ++i)

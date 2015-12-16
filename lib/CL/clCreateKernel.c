@@ -108,8 +108,9 @@ POname(clCreateKernel)(cl_program program,
   POCL_LOCK_OBJ (program);
   cl_kernel k = program->kernels;
   program->kernels = kernel;
-  POCL_UNLOCK_OBJ (program);
   kernel->next = k;
+  POCL_UNLOCK_OBJ (program);
+
 
   POCL_RETAIN_OBJECT(program);
 

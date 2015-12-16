@@ -27,13 +27,13 @@ SUBDIRS = ttasim
 noinst_LTLIBRARIES = libpocl-devices-tce.la
 libpocl_devices_tce_la_SOURCES = tce_common.h tce_common.cc
 libpocl_devices_tce_la_LIBADD = ttasim/libpocl-devices-tce-ttasim.la
-libpocl_devices_tce_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION}
+libpocl_devices_tce_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ --version-info ${LIB_VERSION} $(LDFLAGS)
 
-libpocl_devices_tce_la_CPPFLAGS = `@TCE_CONFIG@ --includes` -I$(top_srcdir)/fix-include -I$(top_srcdir)/include \
+libpocl_devices_tce_la_CPPFLAGS =  -I$(top_srcdir)/fix-include -I$(top_srcdir)/include \
 -I$(top_srcdir)/lib/CL/devices -I$(top_srcdir)/lib/CL/devices/tce \
--I$(top_srcdir)/lib/CL $(OCL_ICD_CFLAGS)
+-I$(top_srcdir)/lib/CL $(OCL_ICD_CFLAGS) `@TCE_CONFIG@ --includes` $(CPPFLAGS)
 
-libpocl_devices_tce_la_CXXFLAGS = `@TCE_CONFIG@ --cxxflags`
+libpocl_devices_tce_la_CXXFLAGS = `@TCE_CONFIG@ --cxxflags` $(CXXFLAGS)
 
 dist_pkgdata_DATA = tta_device_main.c
 

@@ -22,7 +22,13 @@
    THE SOFTWARE.
 */
 
+#define _GNU_SOURCE
+#define __USE_GNU
+#include <sched.h>
+
 #include "pocl-pthread.h"
+#include "pocl-pthread_utils.h"
+#include "pocl-pthread_scheduler.h"
 #include <assert.h>
 #include <pthread.h>
 #include <string.h>
@@ -45,6 +51,41 @@
 #include "pocl_util.h"
 #include "pocl_mem_management.h"
 
+//#define DEBUG_MT
+
+#ifdef CUSTOM_BUFFER_ALLOCATOR
+
+#include "bufalloc.h"
+
+/* Instead of mallocing a buffer size for a region, try to allocate 
+   this many times the buffer size to hopefully avoid mallocs for 
+   the next buffer allocations.
+   
+   Falls back to single multiple allocation if fails to allocate a
+   larger region. */
+#define ALLOCATION_MULTIPLE 32
+
+/* To avoid memory hogging in case of larger buffers, limit the
+   extra allocation margin to this number of megabytes.
+   
+   The extra allocation should be done to avoid repetitive calls and
+   memory fragmentation for smaller buffers only. 
+*/
+#define ADDITIONAL_ALLOCATION_MAX_MB 100
+
+/* Always create regions with at least this size to avoid allocating
+   small regions when there are lots of small buffers, which would counter 
+   a purpose of having own buffer management. It would end up having a lot of
+   small regions with linear searches over them.  */
+#define NEW_REGION_MIN_MB 10
+
+/* Whether to immediately free a region in case the last chunk was
+   deallocated. If 0, it can reuse the same region over multiple kernels. */
+#define FREE_EMPTY_REGIONS 0
+
+/* CUSTOM_BUFFER_ALLOCATOR */
+#endif
+
 #define COMMAND_LENGTH 2048
 #define WORKGROUP_STRING_LENGTH 1024
 
@@ -52,64 +93,33 @@
    for the thread execution. */
 #define THREAD_COUNT_ENV "POCL_MAX_PTHREAD_COUNT"
 
-typedef struct thread_arguments thread_arguments;
-struct thread_arguments 
-{
-  void *data;
-  cl_kernel kernel;
-  cl_device_id device;
-  struct pocl_context pc;
-  unsigned last_gid_x;
-  pocl_workgroup workgroup;
-  struct pocl_argument *kernel_args;
-  thread_arguments *volatile next;
+/**
+ * Per event data.
+ */
+struct event_data {
+  pthread_cond_t event_cond;
 };
-
 
 struct data {
   /* Currently loaded kernel. */
   cl_kernel current_kernel;
   /* Loaded kernel dynamic library handle. */
   lt_dlhandle current_dlhandle;
+
+  /* List of commands waiting to be enqueued */
+  _cl_command_node * volatile command_list;
+  pthread_mutex_t cq_lock;      /* Lock for command list related operations */
+  volatile uint64_t total_cmd_exec_time;
+
+#ifdef CUSTOM_BUFFER_ALLOCATOR
+  /* Lock for protecting the mem_regions linked list. Held when new mem_regions
+     are created or old ones freed. */
+  mem_regions_management* mem_regions;
+#endif
+
 };
 
-
-static thread_arguments *volatile thread_argument_pool = 0;
-static int argument_pool_initialized = 0;
-pocl_lock_t ta_pool_lock;
-static size_t get_max_thread_count(cl_device_id device);
-static void * workgroup_thread (void *p);
-
-static void pocl_init_thread_argument_manager (void)
-{
-  if (!argument_pool_initialized)
-    {
-      argument_pool_initialized = 1;
-      POCL_INIT_LOCK (ta_pool_lock);
-    }
-}
-
-static thread_arguments* new_thread_arguments ()
-{
-  thread_arguments *ta = NULL;
-  POCL_LOCK (ta_pool_lock);
-  if ((ta = thread_argument_pool))
-    {
-      LL_DELETE (thread_argument_pool, ta);
-      POCL_UNLOCK (ta_pool_lock);
-      return ta;
-    }
-  POCL_UNLOCK (ta_pool_lock);
-
-  return (thread_arguments*)calloc (1, sizeof (thread_arguments));
-}
-
-static void free_thread_arguments (thread_arguments *ta)
-{
-  POCL_LOCK (ta_pool_lock);
-  LL_PREPEND (thread_argument_pool, ta);
-  POCL_UNLOCK (ta_pool_lock);
-}
+static size_t get_max_thread_count();
 
 void
 pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
@@ -130,7 +140,15 @@ pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
   ops->copy = pocl_pthread_copy;
   ops->copy_rect = pocl_basic_copy_rect;
   ops->run = pocl_pthread_run;
-  ops->compile_submitted_kernels = pocl_basic_compile_submitted_kernels;
+  ops->join = pocl_pthread_join;
+  ops->submit = pocl_pthread_submit;
+  ops->compile_kernel = pocl_basic_compile_kernel;
+  ops->notify = pocl_pthread_notify;
+  ops->broadcast = pocl_broadcast;
+  ops->flush = pocl_pthread_flush;
+  ops->wait_event = pocl_pthread_wait_event;
+  ops->update_event = pocl_pthread_update_event;
+  ops->free_event_data = pocl_pthread_free_event_data;
 
 }
 
@@ -156,24 +174,40 @@ pocl_pthread_init_device_infos(struct _cl_device_id* dev)
 
 }
 
+
 void
 pocl_pthread_init (cl_device_id device, const char* parameters)
 {
   static int device_number = 0;
-  struct data *d; 
+  struct data *d;
+  static char scheduler_initialized = 0;
+#ifdef CUSTOM_BUFFER_ALLOCATOR
+  static mem_regions_management* mrm = NULL;
+#endif
+  static int global_mem_id;
+  int num_worker_threads;
 
   // TODO: this checks if the device was already initialized previously.
   // Should we instead have a separate bool field in device, or do the
   // initialization at library startup time with __attribute__((constructor))?
   if (device->data!=NULL)
-    return;  
+    return;
 
-  d = (struct data *) malloc (sizeof (struct data));
-  
+  d = (struct data *) calloc (1, sizeof (struct data));
+
   d->current_kernel = NULL;
   d->current_dlhandle = 0;
-
   device->data = d;
+
+#ifdef CUSTOM_BUFFER_ALLOCATOR
+  if (mrm == NULL)
+    {
+      mrm = malloc (sizeof (mem_regions_management));
+      BA_INIT_LOCK (mrm->mem_regions_lock);
+      mrm->mem_regions = NULL;
+    }
+  d->mem_regions = mrm;
+#endif
 
   device->address_bits = sizeof(void*) * 8;
 
@@ -187,6 +221,9 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
      a nonzero there for now. */
   device->global_mem_size = 1;
   pocl_topology_detect_device_info(device);
+  num_worker_threads = max (get_max_thread_count (device), 
+                            pocl_get_int_option("POCL_PTHREAD_MIN_THREADS", 1));
+  
   pocl_cpuinfo_detect_device_info(device);
   pocl_set_buffer_image_limits(device);
 
@@ -218,13 +255,39 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
   device->has_64bit_long=0;
   #endif
 
-  pocl_init_thread_argument_manager();
+  pthread_mutex_init (&d->cq_lock, NULL);
+  if (!scheduler_initialized)
+    {
+      scheduler_initialized = 1;
+      pocl_init_dlhandle_cache();
+      global_mem_id = device->dev_id;
+
+      pocl_init_kernel_run_command_manager();
+
+      pthread_scheduler_init (num_worker_threads);
+    }
+  device->global_mem_id = global_mem_id;
 }
 
 void
 pocl_pthread_uninit (cl_device_id device)
 {
   struct data *d = (struct data*)device->data;
+#ifdef CUSTOM_BUFFER_ALLOCATOR
+  memory_region_t *region, *temp;
+  DL_FOREACH_SAFE(d->mem_regions->mem_regions, region, temp)
+    {
+      DL_DELETE(d->mem_regions->mem_regions, region);
+      free((void*)region->chunks->start_address);
+      region->chunks->start_address = 0;
+      POCL_MEM_FREE(region);
+    }
+  d->mem_regions->mem_regions = NULL;
+#endif  
+
+  pthread_scheduler_uinit ();
+
+  device->ops->shared_data = NULL;
   POCL_MEM_FREE(d);
   device->data = NULL;
 }
@@ -341,78 +404,7 @@ pocl_pthread_run
 (void *data, 
  _cl_command_node* cmd)
 {
-  int error;
-  unsigned i, max_threads;
-  cl_kernel kernel = cmd->command.run.kernel;
-  struct pocl_context *pc = &cmd->command.run.pc;
-  struct thread_arguments *arguments;
-  static unsigned default_max_threads = 0; /* this needs to be asked only once */
-
-  size_t num_groups_x = pc->num_groups[0];
-  /* TODO: distributing the work groups in the x dimension is not always the
-     best option. This assumes x dimension has enough work groups to utilize
-     all the threads. */
-  if (default_max_threads == 0)
-    default_max_threads = get_max_thread_count(cmd->device);
-
-  if (cmd->device->parent_device)
-    max_threads = cmd->device->max_compute_units;
-  else
-    max_threads = default_max_threads;
-
-  unsigned num_threads = min(max_threads, num_groups_x);
-  pthread_t *threads = (pthread_t*) malloc (sizeof (pthread_t)*num_threads);
-  
-  unsigned wgs_per_thread = num_groups_x / num_threads;
-  /* In case the work group count is not divisible by the
-     number of threads, we have to execute the remaining
-     workgroups in one of the threads. */
-  /* TODO: This is inefficient; it is better to round up when
-     calculating wgs_per_thread */
-  int leftover_wgs = num_groups_x - (num_threads*wgs_per_thread);
-
-#ifdef DEBUG_MT    
-  printf("### creating %d work group threads\n", num_threads);
-  printf("### wgs per thread==%d leftover wgs==%d\n", wgs_per_thread, leftover_wgs);
-#endif
-  
-  unsigned first_gid_x = 0;
-  unsigned last_gid_x = wgs_per_thread - 1;
-  for (i = 0; i < num_threads; 
-       ++i, first_gid_x += wgs_per_thread, last_gid_x += wgs_per_thread) {
-
-    if (i + 1 == num_threads) last_gid_x += leftover_wgs;
-
-#ifdef DEBUG_MT       
-    printf("### creating wg thread: first_gid_x==%d, last_gid_x==%d\n",
-           first_gid_x, last_gid_x);
-#endif
-    arguments = new_thread_arguments();
-    arguments->data = data;
-    arguments->kernel = kernel;
-    arguments->device = cmd->device;
-    arguments->pc = *pc;
-    arguments->pc.group_id[0] = first_gid_x;
-    arguments->workgroup = cmd->command.run.wg;
-    arguments->last_gid_x = last_gid_x;
-    arguments->kernel_args = cmd->command.run.arguments;
-
-    /* TODO: pool of worker threads to avoid syscalls here */
-    error = pthread_create (&threads[i],
-                            NULL,
-                            workgroup_thread,
-                            arguments);
-    assert(!error);
-  }
-
-  for (i = 0; i < num_threads; ++i) {
-    pthread_join(threads[i], NULL);
-#ifdef DEBUG_MT       
-    printf("### thread %u finished\n", (unsigned)threads[i]);
-#endif
-  }
-
-  POCL_MEM_FREE(threads);
+  /* not used: this device will not be told when or what to run */
 }
 
 void *
@@ -424,125 +416,148 @@ pocl_pthread_map_mem (void *data, void *buf_ptr,
   return (char*)buf_ptr + offset;
 }
 
-void *
-workgroup_thread (void *p)
+void
+pocl_pthread_submit (_cl_command_node *node, cl_command_queue cq)
 {
-  struct thread_arguments *ta = (struct thread_arguments *) p;
-  void **arguments = (void**)alloca((ta->kernel->num_args + ta->kernel->num_locals)*sizeof(void*));
-  struct pocl_argument *al;  
-  unsigned i = 0;
+  cl_device_id device = node->device;
+  struct data *d = device->data;
 
-  /* TODO: refactor this to share code with basic.c 
-
-     To function 
-     void setup_kernel_arg_array(void **arguments, cl_kernel kernel)
-     or similar
-  */
-  cl_kernel kernel = ta->kernel;
-  for (i = 0; i < kernel->num_args; ++i)
+  POCL_LOCK_OBJ (node->event);
+  POCL_UPDATE_EVENT_SUBMITTED(&node->event);
+  /* this "ready" consept to ensure that command is pushed only once */
+  if (!(node->ready) && pocl_command_is_ready(node->event))
     {
-      al = &(ta->kernel_args[i]);
-      if (kernel->arg_info[i].is_local)
-        {
-          arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, al->size);
-        }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
-      {
-        /* It's legal to pass a NULL pointer to clSetKernelArguments. In 
-           that case we must pass the same NULL forward to the kernel.
-           Otherwise, the user must have created a buffer with per device
-           pointers stored in the cl_mem. */
-        if (al->value == NULL) 
-          {
-            arguments[i] = malloc (sizeof (void *));
-            *(void **)arguments[i] = NULL;
-          }
-        else
-          {
-            cl_mem m = *(cl_mem *)al->value;
-            if (m->device_ptrs)
-              arguments[i] = &(m->device_ptrs[ta->device->dev_id].mem_ptr);
-            else
-              arguments[i] = &(m->mem_host_ptr);
-          }
-      }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
-        {
-          dev_image_t di;
-          fill_dev_image_t(&di, al, ta->device);
-          void* devptr = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, sizeof(dev_image_t));
-          arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = devptr;       
-          pocl_pthread_write (ta->data, &di, devptr, 0, sizeof(dev_image_t));
-        }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
-        {
-          dev_sampler_t ds;
-          fill_dev_sampler_t(&ds, al);
-          
-          void* devptr = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, sizeof(dev_sampler_t));
-          arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = devptr;
-          pocl_pthread_write (ta->data, &ds, devptr, 0, sizeof(dev_sampler_t));
-        }
-      else
-        arguments[i] = al->value;
+      node->ready = 1;
+      pthread_scheduler_push_command (node);
     }
-
-  /* Allocate the automatic local buffers which are implemented as implicit
-     extra arguments at the end of the kernel argument list. */
-  for (i = kernel->num_args;
-       i < kernel->num_args + kernel->num_locals;
-       ++i)
+  else
     {
-      al = &(ta->kernel_args[i]);
-      arguments[i] = malloc (sizeof (void *));
-      *(void **)(arguments[i]) = pocl_memalign_alloc (MAX_EXTENDED_ALIGNMENT, al->size);
+      PTHREAD_LOCK (&d->cq_lock, NULL);
+      DL_PREPEND (d->command_list, node);
+      PTHREAD_UNLOCK (&d->cq_lock);
     }
-
-  size_t first_gid_x = ta->pc.group_id[0];
-  unsigned gid_z, gid_y, gid_x;
-  for (gid_z = 0; gid_z < ta->pc.num_groups[2]; ++gid_z)
-    {
-      for (gid_y = 0; gid_y < ta->pc.num_groups[1]; ++gid_y)
-        {
-          for (gid_x = first_gid_x; gid_x <= ta->last_gid_x; ++gid_x)
-            {
-              ta->pc.group_id[0] = gid_x;
-              ta->pc.group_id[1] = gid_y;
-              ta->pc.group_id[2] = gid_z;
-              ta->workgroup (arguments, &(ta->pc));              
-            }
-        }
-    }
-
-  for (i = 0; i < kernel->num_args; ++i)
-    {
-      if (kernel->arg_info[i].is_local )
-        {
-          POCL_MEM_FREE(*(void **)(arguments[i]));
-          POCL_MEM_FREE(arguments[i]);
-        }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE ||
-                kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
-        {
-          POCL_MEM_FREE(*(void **)(arguments[i]));
-          POCL_MEM_FREE(arguments[i]);
-        }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && *(void**)arguments[i] == NULL)
-        {
-          POCL_MEM_FREE(arguments[i]);
-        }
-    }
-  for (i = kernel->num_args;
-       i < kernel->num_args + kernel->num_locals;
-       ++i)
-    {
-      POCL_MEM_FREE(*(void **)(arguments[i]));
-      POCL_MEM_FREE(arguments[i]);
-    }
-  free_thread_arguments (ta);
-
-  return NULL;
+  POCL_UNLOCK_OBJ (node->event);
+  return;
 }
+
+void
+pocl_pthread_flush(cl_device_id device, cl_command_queue cq)
+{
+
+}
+
+void
+pocl_pthread_join(cl_device_id device, cl_command_queue cq)
+{
+  pthread_scheduler_wait_cq (cq);
+  return;
+}
+
+void
+pocl_pthread_notify (cl_device_id device, cl_event event)
+{
+  struct data *d = (struct data*)device->data;
+   int wake_thread = 0;
+  _cl_command_node * volatile node = event->command;
+
+  POCL_LOCK_OBJ (event);
+  /* this "ready" consept to ensure that command is pushed only once */
+  if (!(node->ready) && pocl_command_is_ready(node->event))
+    {
+      node->ready = 1;
+      if (event->status == CL_SUBMITTED)
+        {
+          PTHREAD_LOCK (&d->cq_lock, NULL);
+          assert (d->command_list != NULL);
+          DL_DELETE (d->command_list, node);
+          PTHREAD_UNLOCK (&d->cq_lock);
+          wake_thread = 1;
+        }
+    }
+  POCL_UNLOCK_OBJ (event);
+
+  if (wake_thread)
+    {
+      pthread_scheduler_push_command (node);
+    }
+  return;
+}
+
+void pocl_pthread_update_event (cl_device_id device, cl_event event, cl_int status)
+{
+  struct event_data *e_d = NULL;
+  int cq_ready = 0;
+
+  if(event->data == NULL && status == CL_QUEUED)
+    {
+      e_d = malloc(sizeof(struct event_data));
+      assert(e_d);
+
+      pthread_cond_init(&e_d->event_cond, NULL);
+      event->data = (void *) e_d;
+    }
+  else
+    {
+      e_d = event->data;
+    }
+  switch (status)
+    {
+    case CL_QUEUED:
+      event->status = status;
+      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+        event->time_queue = device->ops->get_timer_value(device->data);
+      break;
+    case CL_SUBMITTED:
+      event->status = status;
+      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+        event->time_submit = device->ops->get_timer_value(device->data);
+      break;
+    case CL_RUNNING:
+      event->status = status;
+      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+        event->time_start = device->ops->get_timer_value(device->data);
+      break;
+    case CL_COMPLETE:
+      POCL_MSG_PRINT_INFO("PTHREAD: Command complete, event %d\n", event->id);
+      pocl_mem_objs_cleanup (event);
+      cq_ready = pocl_update_command_queue (event);
+
+      POCL_LOCK_OBJ (event);
+      event->status = CL_COMPLETE;
+
+      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+        event->time_end = device->ops->get_timer_value(device->data);
+
+      pthread_cond_signal(&e_d->event_cond);
+      if (cq_ready)
+        pthread_scheduler_release_host ();
+
+      device->ops->broadcast (event);
+      POCL_UNLOCK_OBJ (event);
+      break;
+    default:
+      assert("Invalid event status\n");
+      break;
+    }
+}
+
+void pocl_pthread_wait_event (cl_device_id device, cl_event event)
+{
+  struct event_data *e_d = event->data;
+
+  POCL_LOCK_OBJ (event);
+  while (event->status != CL_COMPLETE)
+    {
+      pthread_cond_wait(&e_d->event_cond, &event->pocl_lock);
+    }
+  POCL_UNLOCK_OBJ (event);
+}
+
+
+void pocl_pthread_free_event_data (cl_event event)
+{
+  assert(event->data != NULL);
+  free(event->data);
+  event->data = NULL;
+}
+

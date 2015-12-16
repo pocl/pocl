@@ -23,9 +23,13 @@
    THE SOFTWARE.
 */
 #include "common.h"
+#include "clEnqueueMapBuffer.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <utlist.h>
+#include <assert.h>
 
 #ifndef _MSC_VER
 #  include <sys/time.h>
@@ -36,9 +40,9 @@
 #endif
 
 #include "config.h"
-
 #include "pocl_image_util.h"
 #include "pocl_file_util.h"
+#include "pocl_util.h"
 #include "pocl_cache.h"
 #include "devices.h"
 #include "pocl_mem_management.h"
@@ -59,6 +63,7 @@
  * @param tmpdir The directory of the work-group function bitcode.
  * @param return the generated binary filename.
  */
+
 const char*
 llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
 
@@ -66,8 +71,8 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
   char bytecode[POCL_FILENAME_LENGTH];
   char objfile[POCL_FILENAME_LENGTH];
 
-  char* module = malloc(strlen(tmpdir) + strlen(kernel->name) +
-                        strlen("/.so") + 1);
+  char* module = (char*) malloc(min(POCL_FILENAME_LENGTH, 
+                                    strlen(tmpdir) + strlen(kernel->name) + 5)); /* strlen of / .so 4+1 */
 
   int error;
 
@@ -89,11 +94,11 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
       error = snprintf (bytecode, POCL_FILENAME_LENGTH,
                         "%s%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
       assert (error >= 0);
-      
+
       error = pocl_llvm_codegen( kernel, device, bytecode, objfile);
       assert (error == 0);
 
-      // clang is used as the linker driver in LINK_CMD
+      /* clang is used as the linker driver in LINK_CMD */
       error = snprintf (command, COMMAND_LENGTH,
 #ifndef POCL_ANDROID
             LINK_CMD " " HOST_CLANG_FLAGS " " HOST_LD_FLAGS " -o %s %s",
@@ -138,6 +143,382 @@ void fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg,
   pocl_get_image_information (mem->image_channel_order,
                               mem->image_channel_data_type, &(di->num_channels),
                               &(di->elem_size));
+}
+
+void pocl_copy_mem_object (cl_device_id dest_dev, cl_mem dest, 
+                           size_t dest_offset,
+                           cl_device_id source_dev, cl_mem source,
+                           size_t source_offset, size_t cb)
+{
+  /* if source_dev is NULL -> src and dest dev must be the same */
+  cl_device_id src_dev = (source_dev) ? source_dev : dest_dev;
+
+  /* if source and destination are on the same global mem  */
+  if (src_dev->global_mem_id == dest_dev->global_mem_id)
+    {
+      src_dev->ops->copy 
+        (dest_dev->data, 
+         source->device_ptrs[src_dev->dev_id].mem_ptr, source_offset,
+         dest->device_ptrs[dest_dev->dev_id].mem_ptr, dest_offset, 
+         cb);
+    }
+  else
+    {
+      void* tofree = NULL;
+      void* tmp = NULL;
+      if (source->flags & CL_MEM_USE_HOST_PTR)
+        tmp = source->mem_host_ptr;
+      else if (dest->flags & CL_MEM_USE_HOST_PTR)
+        tmp = dest->mem_host_ptr;
+      else
+        {
+          tmp = malloc (dest->size);
+          tofree = tmp;
+        }
+      
+      src_dev->ops->read 
+        (src_dev->data, tmp, 
+         source->device_ptrs[src_dev->dev_id].mem_ptr, source_offset, 
+         cb);
+      dest_dev->ops->write 
+        (dest_dev->data, tmp, 
+         dest->device_ptrs[dest_dev->dev_id].mem_ptr, dest_offset,
+         cb);
+      free (tofree);
+    }
+  return;
+}
+
+void pocl_migrate_mem_objects (_cl_command_node * volatile node)
+{
+  int i;
+  cl_mem *mem_objects = node->command.migrate.mem_objects;
+  
+  for (i = 0; i < node->command.migrate.num_mem_objects; ++i)
+    {
+      pocl_copy_mem_object (node->device,
+                            mem_objects[i], 0,
+                            node->command.migrate.source_devices[i], 
+                            mem_objects[i], 0, mem_objects[i]->size);
+      
+      return;
+    }
+}
+
+void pocl_ndrange_node_cleanup(_cl_command_node *node)
+{
+  int i;
+  free (node->command.run.arg_buffers);
+  free (node->command.run.tmp_dir);
+  for (i = 0; i < node->command.run.kernel->num_args + 
+       node->command.run.kernel->num_locals; ++i)
+    {
+      pocl_aligned_free (node->command.run.arguments[i].value);
+    }
+  free (node->command.run.arguments);
+
+  POname(clReleaseKernel)(node->command.run.kernel);
+}
+
+void pocl_native_kernel_cleanup(_cl_command_node *node)
+{
+  free (node->command.native.mem_list);
+  free (node->command.native.args);
+}
+
+void pocl_mem_objs_cleanup (cl_event event)
+{
+  int i;
+  for (i = 0; i < event->num_buffers; ++i)
+    {
+      assert(event->mem_objs[i] != NULL);
+      POCL_LOCK_OBJ (event->mem_objs[i]);
+      if (event->mem_objs[i]->latest_event == event)
+        event->mem_objs[i]->latest_event = NULL;
+      POCL_UNLOCK_OBJ (event->mem_objs[i]);
+      POname(clReleaseMemObject) (event->mem_objs[i]);
+    }
+}
+
+/**
+ * executes given command.
+ */
+void pocl_exec_command (_cl_command_node * volatile node)
+{
+  int i;
+  /* because of POCL_UPDATE_EVENT_ */
+  cl_event *event = &(node->event);
+  switch (node->type)
+    {
+    case CL_COMMAND_READ_BUFFER:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      node->device->ops->read
+        (node->device->data, 
+         node->command.read.host_ptr, 
+         node->command.read.device_ptr,
+         node->command.read.offset,
+         node->command.read.cb); 
+      POCL_UPDATE_EVENT_COMPLETE(event);
+      POCL_DEBUG_EVENT_TIME(event, "Read Buffer           ");
+      break;
+    case CL_COMMAND_WRITE_BUFFER:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      node->device->ops->write
+        (node->device->data, 
+         node->command.write.host_ptr, 
+         node->command.write.device_ptr,
+         node->command.write.offset, 
+         node->command.write.cb);
+      POCL_UPDATE_EVENT_COMPLETE(event);
+      POCL_DEBUG_EVENT_TIME(event, "Write Buffer          ");
+      break;
+    case CL_COMMAND_COPY_BUFFER:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      pocl_copy_mem_object (node->command.copy.dst_dev, 
+                            node->command.copy.dst_buffer,
+                            node->command.copy.dst_offset,
+                            node->command.copy.src_dev,
+                            node->command.copy.src_buffer,
+                            node->command.copy.src_offset, 
+                            node->command.copy.cb);
+      POCL_UPDATE_EVENT_COMPLETE(event);
+      POCL_DEBUG_EVENT_TIME(event, "Copy Buffer           ");
+      break;
+    case CL_COMMAND_MIGRATE_MEM_OBJECTS:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      pocl_migrate_mem_objects (node);
+      POCL_UPDATE_EVENT_COMPLETE(event);
+      POCL_DEBUG_EVENT_TIME(event, "Migrate Buffer        ");
+      break;
+    case CL_COMMAND_MAP_IMAGE:
+    case CL_COMMAND_MAP_BUFFER: 
+      POCL_UPDATE_EVENT_RUNNING(event);
+      pocl_map_mem_cmd (node->device, node->command.map.buffer, 
+                        node->command.map.mapping);
+      POCL_UPDATE_EVENT_COMPLETE(event);
+      POCL_DEBUG_EVENT_TIME(event, "Map Image/Buffer      ");
+      break;
+    case CL_COMMAND_WRITE_IMAGE:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      node->device->ops->write_rect 
+        (node->device->data, node->command.w_image.host_ptr,
+         node->command.w_image.device_ptr, node->command.w_image.origin,
+         node->command.w_image.origin, node->command.w_image.region, 
+         node->command.w_image.b_rowpitch, 
+         node->command.w_image.b_slicepitch,
+         node->command.w_image.b_rowpitch,
+         node->command.w_image.b_slicepitch);
+      POCL_UPDATE_EVENT_COMPLETE(event);
+      break;
+    case CL_COMMAND_WRITE_BUFFER_RECT:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      node->device->ops->write_rect 
+        (node->device->data, node->command.w_image.host_ptr,
+         node->command.w_image.device_ptr, node->command.w_image.origin,
+         node->command.w_image.h_origin, node->command.w_image.region, 
+         node->command.w_image.b_rowpitch, 
+         node->command.w_image.b_slicepitch,
+         node->command.w_image.h_rowpitch,
+         node->command.w_image.h_slicepitch);
+      POCL_UPDATE_EVENT_COMPLETE(event);
+      POCL_DEBUG_EVENT_TIME(event, "Write Image           ");
+      break;
+    case CL_COMMAND_READ_IMAGE:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      node->device->ops->read_rect 
+        (node->device->data, node->command.r_image.host_ptr,
+         node->command.r_image.device_ptr, node->command.r_image.origin,
+         node->command.r_image.origin, node->command.r_image.region, 
+         node->command.r_image.b_rowpitch, 
+         node->command.r_image.b_slicepitch,
+         node->command.r_image.b_rowpitch,
+         node->command.r_image.b_slicepitch);
+      POCL_UPDATE_EVENT_COMPLETE(event);
+      POCL_DEBUG_EVENT_TIME(event, "Read Image            ");
+      break;
+    case CL_COMMAND_READ_BUFFER_RECT:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      node->device->ops->read_rect 
+        (node->device->data, node->command.r_image.host_ptr,
+         node->command.r_image.device_ptr, node->command.r_image.origin,
+         node->command.r_image.h_origin, node->command.r_image.region, 
+         node->command.r_image.b_rowpitch, 
+         node->command.r_image.b_slicepitch,
+         node->command.r_image.h_rowpitch,
+         node->command.r_image.h_slicepitch);
+      POCL_UPDATE_EVENT_COMPLETE(event);
+      POCL_DEBUG_EVENT_TIME(event, "Read Buffer Rect      ");
+      break;
+    case CL_COMMAND_UNMAP_MEM_OBJECT:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      if ((node->command.unmap.memobj)->flags & 
+          (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR))
+        {
+          /* TODO: should we ensure the device global region is updated from
+             the host memory? How does the specs define it,
+             can the host_ptr be assumed to point to the host and the
+             device accessible memory or just point there until the
+             kernel(s) get executed or similar? */
+          /* Assume the region is automatically up to date. */
+        } else 
+        {
+          /* TODO: fixme. The offset computation must be done at the device 
+             driver. */
+          if (node->device->ops->unmap_mem != NULL)        
+            node->device->ops->unmap_mem
+              (node->device->data, 
+               (node->command.unmap.mapping)->host_ptr, 
+               (node->command.unmap.memobj)->device_ptrs[node->device->dev_id].mem_ptr, 
+               (node->command.unmap.mapping)->size);
+        }
+      DL_DELETE((node->command.unmap.memobj)->mappings, 
+                node->command.unmap.mapping);
+      (node->command.unmap.memobj)->map_count--;
+      POCL_UPDATE_EVENT_COMPLETE(event);
+      POCL_DEBUG_EVENT_TIME(event, "Unmap Mem obj         ");
+      break;
+    case CL_COMMAND_NDRANGE_KERNEL:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      assert (*event == node->event);
+      node->device->ops->run(node->command.run.data, node);
+      POCL_UPDATE_EVENT_COMPLETE(event);
+      POCL_DEBUG_EVENT_TIME(event, "Enqueue NDRange       ");
+      pocl_ndrange_node_cleanup(node);
+      break;
+    case CL_COMMAND_NATIVE_KERNEL:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      node->device->ops->run_native(node->command.native.data, node);
+      pocl_native_kernel_cleanup(node);
+      POCL_UPDATE_EVENT_COMPLETE(event);
+      POCL_DEBUG_EVENT_TIME(event, "Native Kernel         ");
+      break;
+    case CL_COMMAND_FILL_IMAGE:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      node->device->ops->fill_rect 
+        (node->command.fill_image.data, 
+         node->command.fill_image.device_ptr,
+         node->command.fill_image.buffer_origin,
+         node->command.fill_image.region,
+         node->command.fill_image.rowpitch, 
+         node->command.fill_image.slicepitch,
+         node->command.fill_image.fill_pixel,
+         node->command.fill_image.pixel_size);
+      POCL_UPDATE_EVENT_COMPLETE(event);
+      POCL_DEBUG_EVENT_TIME(event, "Fill Image            ");
+      free(node->command.fill_image.fill_pixel);
+      break;
+    case CL_COMMAND_FILL_BUFFER:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      node->device->ops->memfill
+        (node->command.memfill.ptr,
+         node->command.memfill.size,
+         node->command.memfill.offset,
+         node->command.memfill.pattern,
+         node->command.memfill.pattern_size);
+      POCL_MEM_FREE(node->command.memfill.pattern);
+      POCL_UPDATE_EVENT_COMPLETE(event);
+      POCL_DEBUG_EVENT_TIME(event, "Fill Buffer           ");
+    case CL_COMMAND_MARKER:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      POCL_UPDATE_EVENT_COMPLETE(event);
+      break;
+    case CL_COMMAND_BARRIER:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      POCL_UPDATE_EVENT_COMPLETE(event);
+      break;
+    case CL_COMMAND_SVM_FREE:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      if (node->command.svm_free.pfn_free_func)
+        node->command.svm_free.pfn_free_func(
+           node->command.svm_free.queue,
+           node->command.svm_free.num_svm_pointers,
+           node->command.svm_free.svm_pointers,
+           node->command.svm_free.data);
+      else
+        for (i=0; i < node->command.svm_free.num_svm_pointers; i++)
+          node->device->ops->free_ptr(node->device,
+                                      node->command.svm_free.svm_pointers[i]);
+      POCL_UPDATE_EVENT_COMPLETE(event);
+      POCL_DEBUG_EVENT_TIME(event, "SVM Free              ");
+      break;
+    case CL_COMMAND_SVM_MAP:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      if (DEVICE_MMAP_IS_NOP(node->device))
+        ; // no-op
+      else
+        node->device->ops->map_mem
+          (node->device->data, node->command.svm_map.svm_ptr,
+           0, node->command.svm_map.size, NULL);
+      POCL_UPDATE_EVENT_COMPLETE(event);
+      POCL_DEBUG_EVENT_TIME(event, "SVM Map              ");
+      break;
+    case CL_COMMAND_SVM_UNMAP:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      if (DEVICE_MMAP_IS_NOP(node->device))
+        ; // no-op
+      else
+        node->device->ops->unmap_mem
+          (node->device->data, NULL,
+           node->command.svm_unmap.svm_ptr, 0);
+      break;
+      POCL_UPDATE_EVENT_COMPLETE(event);
+      POCL_DEBUG_EVENT_TIME(event, "SVM Unmap             ");
+    case CL_COMMAND_SVM_MEMCPY:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      node->device->ops->copy(NULL,
+                              node->command.svm_memcpy.src, 0,
+                              node->command.svm_memcpy.dst, 0,
+                              node->command.svm_memcpy.size);
+      POCL_UPDATE_EVENT_COMPLETE(event);
+      POCL_DEBUG_EVENT_TIME(event, "SVM Memcpy            ");
+      break;
+    case CL_COMMAND_SVM_MEMFILL:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      node->device->ops->memfill(
+                                 node->command.memfill.ptr,
+                                 node->command.memfill.size, 0,
+                                 node->command.memfill.pattern,
+                                 node->command.memfill.pattern_size);
+      POCL_UPDATE_EVENT_COMPLETE(event);
+      POCL_DEBUG_EVENT_TIME(event, "SVM MemFill           ");
+      break;
+    default:
+      POCL_ABORT_UNIMPLEMENTED("");
+      break;
+    }   
+  pocl_mem_manager_free_command (node);
+}
+
+void
+pocl_broadcast (cl_event brc_event)
+{
+  event_node *target;
+  event_node *tmp;
+  while ((target = brc_event->notify_list))
+    {
+      POCL_LOCK_OBJ (target->event);
+      /* remove event from wait list */
+      LL_FOREACH (target->event->wait_list, tmp)
+        {
+          if (tmp->event == brc_event)
+            {
+              LL_DELETE (target->event->wait_list, tmp);
+              pocl_mem_manager_free_event_node (tmp);
+              break;
+            }
+        }
+      if (target->event->status == CL_SUBMITTED)
+        {
+          POCL_UNLOCK_OBJ (target->event);
+          target->event->command->device->ops->notify 
+            (target->event->command->device, target->event);
+        }
+      else 
+        POCL_UNLOCK_OBJ (target->event);
+      
+      LL_DELETE (brc_event->notify_list, target);
+      pocl_mem_manager_free_event_node (target);
+    }
 }
 
 /**
@@ -188,6 +569,139 @@ pocl_memalign_alloc(size_t align_width, size_t size)
 #endif
 }
 
+/* CPU driver stuff */
+typedef struct pocl_dlhandle_cache_item pocl_dlhandle_cache_item;
+struct pocl_dlhandle_cache_item
+{
+  char *tmp_dir;
+  char *function_name;
+  pocl_workgroup wg;
+  lt_dlhandle dlhandle;
+  pocl_dlhandle_cache_item *next;
+  pocl_dlhandle_cache_item *prev;
+  volatile int ref_count;
+};
+
+static pocl_dlhandle_cache_item *pocl_dlhandle_cache;
+static pocl_lock_t pocl_dlhandle_cache_lock;
+static pocl_lock_t pocl_llvm_codegen_lock;
+static pocl_lock_t pocl_dlhandle_lock;
+static int pocl_dlhandle_cache_initialized;
+
+/* only to be called in basic/pthread/<other cpu driver> init */
+void pocl_init_dlhandle_cache ()
+{
+  if (!pocl_dlhandle_cache_initialized)
+    {
+      POCL_INIT_LOCK (pocl_dlhandle_cache_lock);
+      POCL_INIT_LOCK (pocl_llvm_codegen_lock);
+      POCL_INIT_LOCK (pocl_dlhandle_lock);
+      pocl_dlhandle_cache_initialized = 1;
+   }
+}
+
+static int handle_count = 0;
+void pocl_check_dlhandle_cache (_cl_command_node *cmd)
+{
+  char workgroup_string[256];
+  pocl_dlhandle_cache_item *ci = NULL;
+  
+  POCL_LOCK (pocl_dlhandle_cache_lock);
+  DL_FOREACH (pocl_dlhandle_cache, ci)
+    {
+      if (strcmp (ci->tmp_dir, cmd->command.run.tmp_dir) == 0 &&
+          strcmp (ci->function_name, 
+                  cmd->command.run.kernel->name) == 0)
+        {
+          /* move to the front of the line */
+          DL_DELETE (pocl_dlhandle_cache, ci);
+          DL_PREPEND (pocl_dlhandle_cache, ci);
+          ++ci->ref_count;
+          POCL_UNLOCK (pocl_dlhandle_cache_lock);
+          cmd->command.run.wg = ci->wg;
+          return;
+        }
+    }
+  if (handle_count == 128)
+    {
+      ci = pocl_dlhandle_cache->prev;
+      //assert (ci->ref_count == 0);
+      DL_DELETE (pocl_dlhandle_cache, ci);
+      free (ci->tmp_dir);
+      free (ci->function_name);
+      assert(!lt_dlclose (ci->dlhandle));
+    }
+  else
+    {
+      ++handle_count;
+      ci = (pocl_dlhandle_cache_item*) malloc (sizeof (pocl_dlhandle_cache_item));
+    }
+  POCL_UNLOCK (pocl_dlhandle_cache_lock);
+  ci->next = NULL;
+  ci->tmp_dir = strdup (cmd->command.run.tmp_dir);
+  ci->function_name = strdup (cmd->command.run.kernel->name);
+  ci->ref_count = 1;
+
+  POCL_LOCK (pocl_llvm_codegen_lock);  
+  const char* module_fn = llvm_codegen (cmd->command.run.tmp_dir,
+                                        cmd->command.run.kernel,
+                                        cmd->device);
+  POCL_UNLOCK (pocl_llvm_codegen_lock);
+  
+  POCL_LOCK (pocl_dlhandle_lock);  
+  ci->dlhandle = lt_dlopen (module_fn);
+  POCL_UNLOCK (pocl_dlhandle_lock);  
+
+  if (ci->dlhandle == NULL)
+    {
+      printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", 
+              module_fn, lt_dlerror());
+      printf ("note: missing symbols in the kernel binary might be" 
+              " reported as 'file not found' errors.\n");
+      abort();
+    }
+  snprintf (workgroup_string, 256, "_pocl_launcher_%s_workgroup", 
+            cmd->command.run.kernel->name);
+
+  POCL_LOCK (pocl_dlhandle_lock);
+  cmd->command.run.wg = ci->wg = 
+    (pocl_workgroup) lt_dlsym (ci->dlhandle, workgroup_string);
+  POCL_UNLOCK (pocl_dlhandle_lock);
+
+  assert (cmd->command.run.wg != NULL);
+
+  POCL_LOCK (pocl_dlhandle_cache_lock);
+  assert (handle_count <= 128);
+  DL_PREPEND (pocl_dlhandle_cache, ci);
+  POCL_UNLOCK (pocl_dlhandle_cache_lock);
+}
+
+void pocl_free_dlhandle (_cl_command_node *cmd)
+{
+  pocl_dlhandle_cache_item *ci = NULL;
+  POCL_LOCK (pocl_dlhandle_cache_lock);
+  DL_FOREACH (pocl_dlhandle_cache, ci)
+    {
+      if (strcmp (ci->tmp_dir, cmd->command.run.tmp_dir) == 0 &&
+          strcmp (ci->function_name, 
+                  cmd->command.run.kernel->name) == 0)
+        {
+          if ((--ci->ref_count))
+            break;
+          --handle_count;
+          DL_DELETE (pocl_dlhandle_cache, ci);
+          POCL_UNLOCK (pocl_dlhandle_cache_lock);
+          free (ci->tmp_dir);
+          free (ci->function_name);
+          POCL_LOCK (pocl_llvm_codegen_lock);
+          assert(!lt_dlclose (ci->dlhandle));
+          POCL_UNLOCK (pocl_llvm_codegen_lock);
+          free (ci);
+          return;
+        }
+    }
+  POCL_UNLOCK (pocl_dlhandle_cache_lock);
+}
 
 #define MIN_MAX_MEM_ALLOC_SIZE (128*1024*1024)
 

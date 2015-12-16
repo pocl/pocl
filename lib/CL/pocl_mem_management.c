@@ -24,13 +24,17 @@
 #include "pocl_mem_management.h"
 #include "pocl.h"
 #include "utlist.h"
+#include <string.h>
 
 typedef struct _mem_manager
 {
   pocl_lock_t event_lock;
   pocl_lock_t cmd_lock;
+  pocl_lock_t event_node_lock;
+
   cl_event event_list;
   _cl_command_node *volatile cmd_list;
+  event_node *event_node_list;
 } pocl_mem_manager;
 
 
@@ -52,6 +56,7 @@ void pocl_init_mem_manager (void)
       mm = (pocl_mem_manager*) calloc (1, sizeof (pocl_mem_manager));
       POCL_INIT_LOCK (mm->event_lock);
       POCL_INIT_LOCK (mm->cmd_lock);
+      POCL_INIT_LOCK (mm->event_node_lock);
     }
   POCL_UNLOCK(pocl_init_lock);
 }
@@ -64,8 +69,6 @@ cl_event pocl_mem_manager_new_event ()
     {
       LL_DELETE (mm->event_list, ev);
       POCL_UNLOCK (mm->event_lock);
-      POCL_INIT_LOCK (ev->pocl_lock);
-      ev->pocl_refcount = 1; /* no need to lock because event is not in use */
       return ev;
     }
   POCL_UNLOCK (mm->event_lock);
@@ -78,6 +81,7 @@ cl_event pocl_mem_manager_new_event ()
 
 void pocl_mem_manager_free_event (cl_event event)
 {
+  assert (event->status == CL_COMPLETE);
   POCL_LOCK (mm->event_lock);
   LL_PREPEND (mm->event_list, event);
   POCL_UNLOCK(mm->event_lock);
@@ -92,14 +96,40 @@ _cl_command_node* pocl_mem_manager_new_command ()
   POCL_UNLOCK (mm->cmd_lock);
   
   if (cmd)
-    return cmd;
-  
+    {
+      memset (cmd, 0, sizeof (struct _cl_command_node));
+      return cmd;
+    }
   return (_cl_command_node*) calloc (1, sizeof (_cl_command_node));
 }
 
-void pocl_mem_manager_free_command ( _cl_command_node *cmd_ptr)
+void pocl_mem_manager_free_command (_cl_command_node *cmd_ptr)
 {
   POCL_LOCK (mm->cmd_lock);
   LL_PREPEND (mm->cmd_list, cmd_ptr);
   POCL_UNLOCK(mm->cmd_lock);
+}
+
+event_node* pocl_mem_manager_new_event_node ()
+{
+  event_node *ed = NULL;
+  POCL_LOCK(mm->event_node_lock);
+  if ((ed = mm->event_node_list))
+    LL_DELETE (mm->event_node_list, ed);
+  POCL_UNLOCK (mm->event_node_lock);
+  
+  if (ed)
+    {
+      memset (ed, 0, sizeof(event_node));
+      return ed;
+    }
+
+  return calloc (1, sizeof (event_node));
+}
+
+void pocl_mem_manager_free_event_node (event_node *ed)
+{
+  POCL_LOCK (mm->event_node_lock);
+  LL_PREPEND (mm->event_node_list, ed);
+  POCL_UNLOCK (mm->event_node_lock);
 }

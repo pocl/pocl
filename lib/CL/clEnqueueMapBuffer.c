@@ -116,10 +116,10 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
       goto ERROR;
     }
 
-  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MAP_BUFFER,
-                                 event, num_events_in_wait_list,
-                                 event_wait_list);
-
+  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MAP_BUFFER, 
+                                 event, num_events_in_wait_list, 
+                                 event_wait_list, 1, &buffer);
+  
   if (errcode != CL_SUCCESS)
       goto ERROR;
 
@@ -132,6 +132,9 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   POCL_LOCK_OBJ (buffer);
   DL_APPEND (buffer->mappings, mapping_info);  
   POCL_UNLOCK_OBJ (buffer);
+
+  POname(clRetainMemObject) (buffer);
+  buffer->owning_device = command_queue->device;
   pocl_command_enqueue(command_queue, cmd);
 
   if (blocking_map != CL_TRUE)

@@ -41,6 +41,7 @@ POname(clEnqueueCopyBufferRect)(cl_command_queue command_queue,
                                 const cl_event *event_wait_list,
                                 cl_event *event) CL_API_SUFFIX__VERSION_1_1
 {
+  dst_buffer->owning_device = command_queue->device;
   return pocl_rect_copy(command_queue,
     src_buffer, CL_FALSE,
     dst_buffer, CL_FALSE,

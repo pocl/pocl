@@ -37,17 +37,17 @@
 int2 _CL_OVERLOADABLE get_image_dim(image2d_t image)
 {
   ADDRESS_SPACE dev_image_t* img = *(ADDRESS_SPACE dev_image_t**)&image;
-  return (int2)(img->width, img->height);
+  return (int2)(img->_width, img->_height);
 }
 
 int2 _CL_OVERLOADABLE get_image_dim(image2d_array_t image)
 {
   ADDRESS_SPACE dev_image_t* img = *(ADDRESS_SPACE dev_image_t**)&image;
-  return (int2)(img->width, img->height);
+  return (int2)(img->_width, img->_height);
 }
 
 int4 _CL_OVERLOADABLE get_image_dim(image3d_t image)
 {
   ADDRESS_SPACE dev_image_t* img = *(ADDRESS_SPACE dev_image_t**)&image;
-  return (int4)(img->width, img->height, img->depth, 0);
+  return (int4)(img->_width, img->_height, img->_depth, 0);
 }

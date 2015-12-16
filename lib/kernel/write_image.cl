@@ -39,20 +39,20 @@ void pocl_write_pixel (void* color_, void* image, int4 coord)
   ADDRESS_SPACE dev_image_t* dev_image = *((ADDRESS_SPACE dev_image_t**)image);
   uint4 *color = (uint4*)color_;
   int i, idx;
-  int width = dev_image->width;
-  int height = dev_image->height;
-  int num_channels = dev_image->num_channels;
-  int elem_size = dev_image->elem_size;
+  int width = dev_image->_width;
+  int height = dev_image->_height;
+  int num_channels = dev_image->_num_channels;
+  int elem_size = dev_image->_elem_size;
 
-  if (dev_image->order == CL_A)
+  if (dev_image->_order == CL_A)
     {
       idx = (coord.x + coord.y*width + coord.z*height*width) * num_channels;
       if (elem_size == 1)
-        ((uchar*)(dev_image->data))[idx] = (*color)[3];
-      if (elem_size == 2)
-        ((ushort*)(dev_image->data))[idx] = (*color)[3];
-      if (elem_size == 4)
-        ((uint*)(dev_image->data))[idx] = (*color)[3];
+        ((uchar*)(dev_image->_data))[idx] = (*color)[3];
+      else if (elem_size == 2)
+        ((ushort*)(dev_image->_data))[idx] = (*color)[3];
+      else if (elem_size == 4)
+        ((uint*)(dev_image->_data))[idx] = (*color)[3];
       return;
     }
 
@@ -61,15 +61,15 @@ void pocl_write_pixel (void* color_, void* image, int4 coord)
       idx = i + (coord.x + coord.y*width + coord.z*height*width)*num_channels;
       if (elem_size == 1)
         {
-          ((uchar*)dev_image->data)[idx] = (*color)[i];          
+          ((uchar*)dev_image->_data)[idx] = (*color)[i];          
         }
-      if (elem_size == 2)
+      else if (elem_size == 2)
         {
-          ((ushort*)dev_image->data)[idx] = (*color)[i];
+          ((ushort*)dev_image->_data)[idx] = (*color)[i];
         }
-      if (elem_size == 4)
+      else if (elem_size == 4)
         {
-          ((uint*)dev_image->data)[idx] = (*color)[i];
+          ((uint*)dev_image->_data)[idx] = (*color)[i];
         }
     }
 }

@@ -257,7 +257,7 @@ pocl_init_devices()
              POCL_DEVICEn_PARAMETERS env. */
           if (snprintf (env_name, 1024, "POCL_%s%d_PARAMETERS", dev_name, j) < 0)
             POCL_ABORT("Unable to generate the env string.");
-
+          pocl_devices[dev_index].dev_id = dev_index;
           pocl_devices[dev_index].ops->init(&pocl_devices[dev_index], getenv(env_name));
 
           if (dev_index == 0)

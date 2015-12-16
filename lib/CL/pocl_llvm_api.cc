@@ -434,6 +434,10 @@ int pocl_llvm_build_program(cl_program program,
   // Let the vectorizer or another optimization pass unroll the loops,
   // in case it sees beneficial.
   cg.UnrollLoops = false;
+  // Lets leave vectorization to later compilation phase
+  cg.VectorizeLoop = false;
+  cg.VectorizeSLP = false;
+  cg.VectorizeBB = false;
   // This workarounds a Frontend codegen issues with an illegal address
   // space cast which is later flattened (and thus implicitly fixed) in
   // the TargetAddressSpaces. See:  https://github.com/pocl/pocl/issues/195
@@ -706,7 +710,6 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 
   int i;
   llvm::Module *input = NULL;
-
   assert(program->devices[device_i]->llvm_target_triplet && 
          "Device has no target triple set"); 
 
@@ -798,7 +801,6 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   {
     llvm::Type *t = ii->getType();
     kernel->arg_info[i].type = POCL_ARG_TYPE_NONE;
-
     const llvm::PointerType *p = dyn_cast<llvm::PointerType>(t);
     if (p && !ii->hasByValAttr()) {
       kernel->arg_info[i].type = POCL_ARG_TYPE_POINTER;
@@ -821,7 +823,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
     } else {
       kernel->arg_info[i].is_local = false;
     }
-
+        
     if (pocl::is_image_type(*t))
       {
         kernel->arg_info[i].type = POCL_ARG_TYPE_IMAGE;
@@ -832,7 +834,6 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
       }
     i++;  
   }
-  
   // fill 'kernel->reqd_wg_size'
   kernel->reqd_wg_size = (int*)malloc(3*sizeof(int));
 
@@ -960,6 +961,7 @@ static TargetMachine* GetTargetMachine(cl_device_id device,
   if (!TheTarget || TheTarget->getName() == std::string("cpp")) {
     return 0;
   }
+  
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;
   if (MAttrs.size()) {
@@ -969,10 +971,17 @@ static TargetMachine* GetTargetMachine(cl_device_id device,
     FeaturesStr = Features.getString();
   }
 
-  return TheTarget->createTargetMachine(TheTriple.getTriple(),
-                                        MCPU, FeaturesStr, GetTargetOptions(),
-                                        Reloc::PIC_, CodeModel::Default,
-                                        CodeGenOpt::Aggressive);
+  TargetMachine* TM = TheTarget->createTargetMachine(TheTriple.getTriple(),
+                                                     MCPU, FeaturesStr, 
+                                                     GetTargetOptions(),
+                                                     Reloc::PIC_, 
+                                                     CodeModel::Default,
+                                                     CodeGenOpt::Aggressive);
+  assert (TM != NULL && "llvm target has no targetMachine constructor"); 
+  if (device->ops->init_target_machine)
+    device->ops->init_target_machine(device->data, TM);
+
+  return TM;
 }
 /* helpers copied from LLVM opt END */
 
@@ -1308,6 +1317,10 @@ kernel_library
         {
           kernellib += "tce";
         }
+      else if (triple.getArch() == Triple::tcele)
+        {
+          kernellib += "tcele";
+        }
 #ifdef BUILD_HSA
       else if (triple.getArch() == Triple::hsail64) {
           kernellib += "hsail64";
@@ -1440,8 +1453,8 @@ pocl_update_program_llvm_irs(cl_program program,
                              cl_device_id device)
 {
   SMDiagnostic Err;
-
   char program_bc_path[POCL_FILENAME_LENGTH];
+  llvm::MutexGuard lockHolder(kernelCompilerLock);
   pocl_cache_program_bc_path(program_bc_path, program, device_i);
 
   if (!pocl_exists(program_bc_path))
@@ -1565,6 +1578,8 @@ pocl_llvm_codegen(cl_kernel kernel,
                   const char *infilename,
                   const char *outfilename)
 {
+    llvm::MutexGuard lockHolder(kernelCompilerLock);
+
     SMDiagnostic Err;
 
     if (pocl_exists(outfilename))

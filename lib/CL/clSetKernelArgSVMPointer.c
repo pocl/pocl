@@ -46,8 +46,8 @@ POname(clSetKernelArgSVMPointer)(cl_kernel kernel,
   mem->flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE;
   mem->device_ptrs = NULL;
   mem->is_image = CL_FALSE;
-  mem->packet_size = 0;
-  mem->max_packets = 0;
+  mem->pipe_packet_size = 0;
+  mem->pipe_max_packets = 0;
   //mem->size = size;  TODO
   mem->context = kernel->context;
 

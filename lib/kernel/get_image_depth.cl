@@ -35,7 +35,7 @@
 
 #define IMPLEMENT_GET_IMAGE_DEPTH(__IMGTYPE__)              \
   int _CL_OVERLOADABLE get_image_depth(__IMGTYPE__ image){  \
-    return (*(ADDRESS_SPACE dev_image_t**)&image)->depth;   \
+    return (*(ADDRESS_SPACE dev_image_t**)&image)->_depth;  \
   }                                                         \
 
 IMPLEMENT_GET_IMAGE_DEPTH(image1d_t)

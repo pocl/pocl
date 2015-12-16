@@ -123,6 +123,8 @@ typedef struct
   void *dst_ptr;
   size_t dst_offset;
   size_t cb;
+  cl_device_id src_dev;
+  cl_device_id dst_dev;
   cl_mem src_buffer;
   cl_mem dst_buffer;
 } _cl_command_copy;
@@ -140,11 +142,28 @@ typedef struct
   void *device_ptr;
   void *host_ptr;
   size_t origin[3];
+  size_t h_origin[3];
   size_t region[3];
-  size_t rowpitch;
-  size_t slicepitch;
+  size_t h_rowpitch;
+  size_t h_slicepitch;
+  size_t b_rowpitch;
+  size_t b_slicepitch;
   cl_mem buffer;
-} _cl_command_rw_image;
+} _cl_command_r_image;
+
+typedef struct
+{
+  void *device_ptr;
+  const void *host_ptr;
+  size_t origin[3];
+  size_t h_origin[3];
+  size_t region[3];
+  size_t h_rowpitch;
+  size_t h_slicepitch;
+  size_t b_rowpitch;
+  size_t b_slicepitch;
+  cl_mem buffer;
+} _cl_command_w_image;
 
 /* clEnqueueUnMapMemObject */
 typedef struct
@@ -165,8 +184,10 @@ typedef struct
   size_t slicepitch;
   void *fill_pixel;
   size_t pixel_size;
+  cl_mem buffer;
 } _cl_command_fill_image;
 
+/* clEnqueueMarkerWithWaitlist */
 typedef struct
 {
   void* ptr;
@@ -178,7 +199,20 @@ typedef struct
 typedef struct
 {
   void *data;
+  int has_wait_list;
 } _cl_command_marker;
+
+/* clEnqueueBarrierWithWaitlist */
+typedef _cl_command_marker _cl_command_barrier;
+
+/* clEnqueueMigrateMemObjects */
+typedef struct
+{
+  void *data;
+  size_t num_mem_objects;
+  cl_mem *mem_objects;
+  cl_device_id *source_devices; 
+} _cl_command_migrate;
 
 typedef struct
 {
@@ -220,9 +254,12 @@ typedef union
   _cl_command_copy copy;
   _cl_command_map map;
   _cl_command_fill_image fill_image;
-  _cl_command_rw_image rw_image;
+  _cl_command_r_image r_image;
+  _cl_command_w_image w_image;
   _cl_command_marker marker;
+  _cl_command_barrier barrier;
   _cl_command_unmap unmap;
+  _cl_command_migrate migrate;
   _cl_command_fill memfill;
 
   _cl_command_svm_free svm_free;
@@ -232,16 +269,18 @@ typedef union
 } _cl_command_t;
 
 // one item in the command queue
-typedef struct _cl_command_node_struct
+typedef struct _cl_command_node _cl_command_node;
+struct _cl_command_node
 {
   _cl_command_t command;
   cl_command_type type;
-  struct _cl_command_node_struct *next; // for linked-list storage
+  _cl_command_node * volatile next; // for linked-list storage
+  _cl_command_node * volatile prev;
   cl_event event;
-  const cl_event *event_wait_list;
-  cl_uint num_events_in_wait_list;
+  const cl_event *volatile event_wait_list;
   cl_device_id device;
-} _cl_command_node;
+  volatile cl_int ready;
+};
 
 /* Additional LLVM version macros to simplify ifdefs */
 

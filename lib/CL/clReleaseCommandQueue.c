@@ -35,6 +35,7 @@ POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VER
   POCL_RELEASE_OBJECT(command_queue, new_refcount);
   if (new_refcount == 0)
     {
+      POname(clFinish)(command_queue);
       pocl_queue_list_delete(command_queue);
       POCL_MEM_FREE(command_queue);
       /* TODO: should clReleaseContext()? */

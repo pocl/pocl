@@ -70,6 +70,8 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
   mem->type = CL_MEM_OBJECT_BUFFER;
   mem->size = info->size;
   mem->context = buffer->context;
+  mem->owning_device = buffer->owning_device;
+  mem->is_pipe = CL_FALSE;
 
   POCL_GOTO_ERROR_ON((buffer->flags & CL_MEM_WRITE_ONLY &&
        flags & (CL_MEM_READ_WRITE | CL_MEM_READ_ONLY)), CL_INVALID_VALUE,
