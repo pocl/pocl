@@ -33,7 +33,7 @@ add_subdirectory("scalarwave")
 add_subdirectory("trig")
 add_subdirectory("EinsteinToolkit")
 
-set(ALL_TESTSUITES "AMD;AMDSDK2.9;AMDSDK3.0;opencl-book-samples;Parboil;Piglit;Rodinia;VexCL;ViennaCL;Halide;OpenCV;CloverLeaf;hsa")
+set(ALL_TESTSUITES "AMD;AMDSDK2.9;AMDSDK3.0;opencl-book-samples;Parboil;piglit;Rodinia;VexCL;ViennaCL;Halide;IntelSVM;OpenCV;CloverLeaf;hsa")
 
 if("${ENABLE_TESTSUITES}" STREQUAL "all")
   set(ENABLE_TESTSUITES ${ALL_TESTSUITES})
