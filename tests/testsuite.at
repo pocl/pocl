@@ -391,14 +391,14 @@ AT_CLEANUP
 
 AT_SETUP([Intel SVM Coarse-grained])
 AT_KEYWORDS([intel_svm])
-AT_SKIP_IF([echo $POCL_DEVICES | grep -q tta])
+AT_SKIP_IF([grep "define TCE_AVAILABLE" $abs_top_builddir/config.h])
 AT_SKIP_IF([test ! -f $abs_top_srcdir/examples/IntelSVM/source/SVMBasicCoarseGrained/svmbasic])
 AT_CHECK([make test_CoarseGrained -sC $abs_top_builddir/examples/IntelSVM | grep -q PASSED], 0)
 AT_CLEANUP
 
 AT_SETUP([Intel SVM Fine-grained])
 AT_KEYWORDS([intel_svm])
-AT_SKIP_IF([echo $POCL_DEVICES | grep -q tta])
+AT_SKIP_IF([grep "define TCE_AVAILABLE" $abs_top_builddir/config.h])
 AT_SKIP_IF([test ! -f $abs_top_srcdir/examples/IntelSVM/source/SVMBasicFineGrained/svmbasic])
 AT_CHECK([make test_FineGrained -sC $abs_top_builddir/examples/IntelSVM | grep -q PASSED], 0)
 AT_CLEANUP
