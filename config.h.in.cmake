@@ -126,6 +126,7 @@
 
 #cmakedefine TCE_AVAILABLE
 
+#define TCE_DEVICE_EXTENSIONS "@TCE_DEVICE_EXTENSIONS@"
 
 /* "Use vecmathlib if available for the target." */
 #cmakedefine USE_VECMATHLIB
@@ -146,3 +147,6 @@
 
 #define HOST_DEVICE_CL_VERSION_MAJOR 2
 #define HOST_DEVICE_CL_VERSION_MINOR 0
+
+#define TCE_DEVICE_CL_VERSION_MAJOR 1
+#define TCE_DEVICE_CL_VERSION_MINOR 2

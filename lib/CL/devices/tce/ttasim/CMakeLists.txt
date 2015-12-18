@@ -28,5 +28,6 @@ include_directories(BEFORE "..")
 if(MSVC)
   set_source_files_properties( ttasim.h ttasim.cc PROPERTIES LANGUAGE CXX )
 endif(MSVC)
-add_library("pocl-devices-tce-ttasim" OBJECT ttasim.h ttasim.cc ../tce_common.h)
+add_library("pocl-devices-tce-ttasim" OBJECT ttasim.h ttasim.cc)
+set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS};$<TARGET_OBJECTS:pocl-devices-tce-ttasim>" PARENT_SCOPE)
 
