@@ -64,26 +64,60 @@ TargetAddressSpaces::TargetAddressSpaces() : ModulePass(ID) {
 }
 
 static Type *
-ConvertedType(llvm::Type *type, std::map<unsigned, unsigned> &addrSpaceMap) {
+ConvertedType(llvm::Type *type, std::map<unsigned, unsigned> &addrSpaceMap,
+              std::map<llvm::Type*, llvm::StructType*> &convertedStructsCache) {
 
   if (type->isPointerTy()) {
     unsigned AS = type->getPointerAddressSpace();
     unsigned newAS = addrSpaceMap[AS];
-    return PointerType::get(ConvertedType(type->getPointerElementType(), addrSpaceMap), newAS);
+    return PointerType::get(
+          ConvertedType(type->getPointerElementType(),
+                        addrSpaceMap, convertedStructsCache),
+          newAS);
   } else if (type->isArrayTy()) {
-    return ArrayType::get
-      (ConvertedType(type->getArrayElementType(), addrSpaceMap), type->getArrayNumElements());
-  } else { /* TODO: pointers inside structs */
+    return ArrayType::get(
+          ConvertedType(type->getArrayElementType(),
+                        addrSpaceMap, convertedStructsCache),
+          type->getArrayNumElements());
+#ifndef TCE_AVAILABLE
+  } else if (type->isStructTy()) {
+    if (convertedStructsCache[type])
+      return convertedStructsCache[type];
+
+    llvm::StructType* t = dyn_cast<llvm::StructType>(type);
+    llvm::StructType* tn;
+    if (!t->isLiteral()) {
+      std::string s = t->getName().str();
+      s += "_tas_struct";
+      tn = StructType::create(t->getContext(), s);
+      convertedStructsCache[type] = tn;
+    }
+    std::vector<llvm::Type*> newtypes;
+    for (llvm::StructType::element_iterator i = t->element_begin(),
+         e = t->element_end(); i < e; ++i) {
+      newtypes.push_back(ConvertedType(*i, addrSpaceMap, convertedStructsCache));
+    }
+    ArrayRef<Type*> a(newtypes);
+    if (t->isLiteral()) {
+      tn = StructType::get(t->getContext(), a, t->isPacked());
+      convertedStructsCache[type] = tn;
+    } else {
+      tn->setBody(a, t->isPacked());
+    }
+    return tn;
+#endif
+  } else {
     return type;
   }
 }
 
 static bool
-UpdateAddressSpace(llvm::Value& val, std::map<unsigned, unsigned> &addrSpaceMap) {
+UpdateAddressSpace(llvm::Value& val, std::map<unsigned, unsigned> &addrSpaceMap,
+                   std::map<llvm::Type*, llvm::StructType*> &convertedStructsCache) {
   Type *type = val.getType();
   if (!type->isPointerTy()) return false;
 
-  Type *newType = ConvertedType(type, addrSpaceMap);
+  Type *newType = ConvertedType(type, addrSpaceMap, convertedStructsCache);
   if (newType == type) return false;
 
   val.mutateType(newType);
@@ -145,6 +179,8 @@ bool
 TargetAddressSpaces::runOnModule(llvm::Module &M) {
 
   llvm::StringRef arch(M.getTargetTriple());
+
+  std::map<llvm::Type*, llvm::StructType*> convertedStructsCache;
 
   std::map<unsigned, unsigned> addrSpaceMap;
 
@@ -230,10 +266,11 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
     for (Function::const_arg_iterator i = F.arg_begin(),
            e = F.arg_end();
          i != e; ++i)
-      parameters.push_back(ConvertedType(i->getType(), addrSpaceMap));
+      parameters.push_back(
+            ConvertedType(i->getType(), addrSpaceMap, convertedStructsCache));
 
     llvm::FunctionType *ft = FunctionType::get
-      (ConvertedType(F.getReturnType(), addrSpaceMap),
+      (ConvertedType(F.getReturnType(), addrSpaceMap, convertedStructsCache),
        parameters, F.isVarArg());
 
     llvm::Function *newFunc = Function::Create(ft, F.getLinkage(), "", &M);
@@ -253,16 +290,19 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
 
     class AddressSpaceReMapper : public ValueMapTypeRemapper {
     public:
-      AddressSpaceReMapper(std::map<unsigned, unsigned> &addrSpaceMap) :
-        addrSpaceMap_(addrSpaceMap) {}      
+      AddressSpaceReMapper(std::map<unsigned, unsigned> &addrSpaceMap,
+                           std::map<llvm::Type*, llvm::StructType*> *c) :
+        cStructCache_(c), addrSpaceMap_(addrSpaceMap) {}
+
       Type* remapType(Type *type) {
-        Type *newType = ConvertedType(type, addrSpaceMap_);
+        Type *newType = ConvertedType(type, addrSpaceMap_, *cStructCache_);
         if (newType == type) return type;
         return newType;
       }
     private:
+      std::map<llvm::Type*, llvm::StructType*> *cStructCache_;
       std::map<unsigned, unsigned>& addrSpaceMap_;
-    } asvtm(addrSpaceMap);
+    } asvtm(addrSpaceMap, &convertedStructsCache);
 
     CloneFunctionInto(newFunc, &F, vv, true, ri, "", NULL, &asvtm);
     FixMemIntrinsics(*newFunc);
@@ -280,7 +320,7 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
   llvm::Module::global_iterator globalE = M.global_end();
   for (; globalI != globalE; ++globalI) {
     llvm::Value &global = *globalI;
-    changed |= UpdateAddressSpace(global, addrSpaceMap);
+    changed |= UpdateAddressSpace(global, addrSpaceMap, convertedStructsCache);
   }
   
   /* Replace all references to the old function to the new one.

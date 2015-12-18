@@ -687,6 +687,8 @@ AC_COMPILE_IFELSE(
    AM_CONDITIONAL([HAVE_CLOCK_GETTIME], false)]
 )
 
+AC_CHECK_FUNCS_ONCE([vfork fork])
+
 # Enable debug message output when the env POCL_DEBUG=1 is set.
 AC_DEFINE([POCL_DEBUG_MESSAGES], [1], [Printout debug messages in case POCL_DEBUG env is set])
 

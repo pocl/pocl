@@ -210,6 +210,7 @@ pocl_init_devices()
    * everytime we use the debug macros */
 #ifdef POCL_DEBUG_MESSAGES
   pocl_debug_messages = pocl_get_bool_option("POCL_DEBUG", 0);
+  stderr_is_a_tty = isatty(fileno(stderr));
 #endif
 
   pocl_cache_init_topdir();

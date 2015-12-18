@@ -40,7 +40,9 @@
 
 #define FORCED_CLFLAGS  "@FORCED_CLFLAGS@"
 
+#cmakedefine HAVE_FORK
 
+#cmakedefine HAVE_VFORK
 
 #cmakedefine HAVE_CLOCK_GETTIME
 

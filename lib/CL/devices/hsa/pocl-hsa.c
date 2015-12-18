@@ -49,6 +49,15 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
  */
 
+#ifndef _BSD_SOURCE
+#define _BSD_SOURCE
+#endif
+
+#ifndef _DEFAULT_SOURCE
+#define _DEFAULT_SOURCE
+#endif
+
+
 #include "hsa.h"
 #include "hsa_ext_finalize.h"
 #include "hsa_ext_image.h"
@@ -74,6 +83,7 @@
 #ifndef _MSC_VER
 #  include <sys/wait.h>
 #  include <sys/time.h>
+#  include <sys/types.h>
 #  include <unistd.h>
 #else
 #  include "vccompat.hpp"
@@ -126,6 +136,10 @@ typedef struct pocl_hsa_device_data_s {
   /* Per-program data cache to simplify program compiling stage */
   pocl_hsa_kernel_cache_t kernel_cache[HSA_KERNEL_CACHE_SIZE];
   unsigned kernel_cache_lastptr;
+  /* kernel signal wait timeout hint, in HSA runtime units */
+  uint64_t timeout;
+  /* length of a timestamp unit expressed in nanoseconds */
+  double timestamp_unit;
 } pocl_hsa_device_data_t;
 
 struct pocl_supported_hsa_device_properties
@@ -166,7 +180,7 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->write_rect = pocl_basic_write_rect;
   ops->copy = pocl_hsa_copy;
   ops->copy_rect = pocl_basic_copy_rect;
-  ops->get_timer_value = pocl_basic_get_timer_value;
+  ops->get_timer_value = pocl_hsa_get_timer_value;
 }
 
 #define MAX_HSA_AGENTS 16
@@ -457,7 +471,6 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
   pocl_hsa_device_data_t *d;
   static int global_mem_id;
   static int first_hsa_init = 1;
-  hsa_device_type_t dev_type;
 
   if (first_hsa_init)
     {
@@ -478,6 +491,13 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
   HSA_CHECK(hsa_region_get_info(d->global_region,
                                HSA_REGION_INFO_RUNTIME_ALLOC_ALLOWED, &boolarg));
   assert(boolarg != 0);
+
+#ifdef HAVE_HSA_EXT_AMD_H
+  char booltest = 0;
+  HSA_CHECK(hsa_region_get_info(d->global_region,
+                               HSA_AMD_REGION_INFO_HOST_ACCESSIBLE, &booltest));
+  assert(booltest != 0);
+#endif
 
   size_t sizearg;
   HSA_CHECK(hsa_region_get_info(d->global_region,
@@ -503,27 +523,63 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
   device->profile = (
       (d->agent_profile == HSA_PROFILE_FULL) ? "FULL_PROFILE" : "EMBEDDED_PROFILE");
 
+  uint64_t hsa_freq;
+  HSA_CHECK(hsa_system_get_info(HSA_SYSTEM_INFO_TIMESTAMP_FREQUENCY, &hsa_freq));
+  d->timeout = (uint64_t)((double)hsa_freq * 0.008);
+  d->timestamp_unit = (1000000000.0 / (double)hsa_freq);
+  POCL_MSG_PRINT_INFO("HSA timestamp frequency: %" PRIu64 "\n", hsa_freq);
+  POCL_MSG_PRINT_INFO("HSA timeout: %" PRIu64 "\n", d->timeout);
+  POCL_MSG_PRINT_INFO("HSA timestamp unit: %g\n", d->timestamp_unit);
+
+  device->profiling_timer_resolution = (size_t)(d->timestamp_unit) || 1;
+
   HSA_CHECK(hsa_queue_create(*d->agent, 4, HSA_QUEUE_TYPE_MULTI,
                        hsa_queue_callback, device->short_name,
                        -1, -1, &d->queue));
+
+}
+
+static void* pocl_hsa_malloc_account(pocl_global_mem_t *mem, size_t size, hsa_region_t r)
+{
+  void *b = NULL;
+  if ((mem->total_alloc_limit - mem->currently_allocated) < size)
+    return NULL;
+
+  if (hsa_memory_allocate(r, size, &b) != HSA_STATUS_SUCCESS)
+    return NULL;
+
+  mem->currently_allocated += size;
+  if (mem->max_ever_allocated < mem->currently_allocated)
+    mem->max_ever_allocated = mem->currently_allocated;
+  assert(mem->currently_allocated <= mem->total_alloc_limit);
+
+  if (b)
+    POCL_MSG_PRINT_INFO("HSA malloc'ed : size %" PRIuS "\n", size);
+
+  return b;
 }
 
 static void *
-pocl_hsa_malloc (pocl_hsa_device_data_t* d, cl_mem_flags flags, size_t size, void *host_ptr)
+pocl_hsa_malloc (cl_device_id device, cl_mem_flags flags, size_t size, void *host_ptr)
 {
-  void *b;
+  pocl_hsa_device_data_t* d = device->data;
+  void *b = NULL;
+  pocl_global_mem_t *mem = device->global_memory;
 
   if (flags & CL_MEM_COPY_HOST_PTR)
     {
+      POCL_MSG_PRINT_INFO("HSA: hsa_memory_allocate + hsa_memory_copy (CL_MEM_COPY_HOST_PTR)\n");
       assert(host_ptr != NULL);
-      if (hsa_memory_allocate(d->global_region, size, &b) != HSA_STATUS_SUCCESS)
-          return NULL;
-      hsa_memory_copy(b, host_ptr, size);
+
+      b = pocl_hsa_malloc_account(mem, size, d->global_region);
+      if (b)
+        hsa_memory_copy(b, host_ptr, size);
       return b;
     }
 
   if (flags & CL_MEM_USE_HOST_PTR)
     {
+      POCL_MSG_PRINT_INFO("HSA: hsa_memory_register (CL_MEM_USE_HOST_PTR)\n");
       assert(host_ptr != NULL);
       // TODO bookkeeping of mem registrations
       hsa_memory_register(host_ptr, size);
@@ -531,21 +587,26 @@ pocl_hsa_malloc (pocl_hsa_device_data_t* d, cl_mem_flags flags, size_t size, voi
     }
 
   assert(host_ptr == NULL);
-  if (hsa_memory_allocate(d->global_region, size, &b) != HSA_STATUS_SUCCESS)
-      return NULL;
-  return b;
+  //POCL_MSG_PRINT_INFO("HSA: hsa_memory_allocate (ALLOC_HOST_PTR)\n");
+  return pocl_hsa_malloc_account(mem, size, d->global_region);
 }
 
 void
 pocl_hsa_free (cl_device_id device, cl_mem memobj)
 {
   cl_mem_flags flags = memobj->flags;
+  void* ptr = memobj->device_ptrs[device->dev_id].mem_ptr;
+  size_t size = memobj->size;
 
   if (flags & CL_MEM_USE_HOST_PTR)
-    return; // TODO: hsa_memory_deregister() (needs size)
-
-  void* ptr = memobj->device_ptrs[device->dev_id].mem_ptr;
-  hsa_memory_free(ptr);
+    hsa_memory_deregister(ptr, size);
+  else
+    {
+      pocl_global_mem_t *mem = device->global_memory;
+      assert(mem->currently_allocated >= size);
+      mem->currently_allocated -= size;
+      hsa_memory_free(ptr);
+    }
 }
 
 void pocl_hsa_copy (void *data, const void *src_ptr, size_t src_offset,
@@ -564,7 +625,7 @@ cl_int pocl_hsa_alloc_mem_obj(cl_device_id device, cl_mem mem_obj)
   /* if memory for this global memory is not yet allocated -> do it */
   if (mem_obj->device_ptrs[device->global_mem_id].mem_ptr == NULL)
     {
-      b = pocl_hsa_malloc(device->data, flags, mem_obj->size, mem_obj->mem_host_ptr);
+      b = pocl_hsa_malloc(device, flags, mem_obj->size, mem_obj->mem_host_ptr);
       if (b == NULL)
         return CL_MEM_OBJECT_ALLOCATION_FAILURE;
 
@@ -761,8 +822,6 @@ pocl_hsa_run(void *dptr, _cl_command_node* cmd)
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
   hsa_kernel_dispatch_packet_t *kernel_packet;
-  hsa_signal_t kernel_completion_signal;
-  hsa_region_t region;
   pocl_hsa_kernel_cache_t stack_cache, *cached_data;
 
   assert (dptr != NULL);
@@ -779,6 +838,9 @@ pocl_hsa_run(void *dptr, _cl_command_node* cmd)
 
   const uint32_t queueMask = d->queue->size - 1;
 
+  /* Launch the kernel by allocating a slot in the queue, writing the
+     command to it, signaling the update with a door bell and finally,
+     block waiting until finish signalled with the completion_signal. */
   uint64_t queue_index =
     hsa_queue_load_write_index_relaxed (d->queue);
   kernel_packet =
@@ -832,20 +894,25 @@ pocl_hsa_run(void *dptr, _cl_command_node* cmd)
   h.a.setup = (uint16_t)cmd->command.run.pc.work_dim << HSA_KERNEL_DISPATCH_PACKET_SETUP_DIMENSIONS;
   __atomic_store_n((uint32_t*)(&kernel_packet->header), h.header_setup, __ATOMIC_RELEASE);
 
-   /*
-    * Increment the write index and ring the doorbell to dispatch the kernel.
-    */
-   hsa_queue_store_write_index_relaxed (d->queue, queue_index + 1);
-   hsa_signal_store_relaxed (d->queue->doorbell_signal, queue_index);
+  /*
+   * Increment the write index and ring the doorbell to dispatch the kernel.
+   */
+  hsa_queue_store_write_index_relaxed (d->queue, queue_index + 1);
+  hsa_signal_store_relaxed (d->queue->doorbell_signal, queue_index);
 
-  /* Launch the kernel by allocating a slot in the queue, writing the
-     command to it, signaling the update with a door bell and finally,
-     block waiting until finish signalled with the completion_signal. */
-
+  /* Wait the first interval actively (should improve latency a bit for small jobs);
+   * if a longer wait is required, use a blocking wait */
   hsa_signal_value_t sigval =
     hsa_signal_wait_acquire
     (cached_data->kernel_completion_signal, HSA_SIGNAL_CONDITION_LT, 1,
-     (uint64_t)(-1), HSA_WAIT_STATE_ACTIVE);
+     d->timeout, HSA_WAIT_STATE_ACTIVE);
+
+  while (sigval > 0)
+    {
+      sigval = hsa_signal_wait_acquire
+        (cached_data->kernel_completion_signal, HSA_SIGNAL_CONDITION_LT, 1,
+         d->timeout, HSA_WAIT_STATE_BLOCKED);
+    }
 
   /* if the cache is full, release stuff */
   if (cached_data == &stack_cache)
@@ -892,11 +959,44 @@ pocl_hsa_run(void *dptr, _cl_command_node* cmd)
     }
 }
 
+/*
+ * This replaces a simple system(), because system() was causing issues
+ * (gpu lockups) when compiling code (via compile_parallel_bc_to_brig)
+ * with OpenCL 2.0 atomics (like CalcPie from AMD SDK).
+ * The reason of lockups is unknown (yet).
+ */
+static int run_command(char* args[])
+{
+  POCL_MSG_PRINT_INFO("Launching: %s", args[0]);
+#ifdef HAVE_VFORK
+  pid_t p = vfork();
+#elif defined(HAVE_FORK)
+  pid_t p = fork();
+#else
+#error Must have fork() or vfork() system calls for HSA
+#endif
+  if (p == 0)
+    {
+      return execv(args[0], args);
+    }
+  else
+    {
+      if (p < 0)
+        return -1;
+      int status;
+      if (waitpid(p, &status, 0) < 0)
+        POCL_ABORT("pocl-hsa: waitpid() itself failed.\n");
+      if (WIFEXITED(status))
+        return WEXITSTATUS(status);
+      else
+        return -2;
+    }
+}
+
 static int compile_parallel_bc_to_brig(const char* tmpdir, char* brigfile) {
   int error;
   char hsailfile[POCL_FILENAME_LENGTH];
   char bytecode[POCL_FILENAME_LENGTH];
-  char command[4096];
 
   error = snprintf (bytecode, POCL_FILENAME_LENGTH,
                     "%s%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
@@ -910,30 +1010,26 @@ static int compile_parallel_bc_to_brig(const char* tmpdir, char* brigfile) {
     POCL_MSG_PRINT_INFO("pocl-hsa: using existing BRIG file: \n%s\n", brigfile);
   else
     {
+      // TODO call llvm via c++ interface like pocl_llvm_codegen()
       POCL_MSG_PRINT_INFO("pocl-hsa: BRIG file not found, compiling parallel.bc "
                           "to brig file: \n%s\n", bytecode);
 
-      // TODO call llvm via c++ interface like pocl_llvm_codegen()
       error = snprintf (hsailfile, POCL_FILENAME_LENGTH,
                     "%s%s.hsail", tmpdir, POCL_PARALLEL_BC_FILENAME);
       assert (error >= 0);
 
-      error = snprintf (command, 4096, LLVM_LLC " -O2 -march=hsail64 -filetype=asm "
-                        "-o %s %s", hsailfile, bytecode);
-      assert (error >= 0);
-      error = system(command);
-      if (error != 0)
+      char* args1[] = { LLVM_LLC, "-O2", "-march=hsail64", "-filetype=asm", "-o",
+                        hsailfile, bytecode, NULL };
+      if ((error = run_command(args1)))
         {
-          POCL_MSG_PRINT_INFO("pocl-hsa: llc exit status %i\n", WEXITSTATUS(error));
+          POCL_MSG_PRINT_INFO("pocl-hsa: llc exit status %i\n", error);
           return error;
         }
 
-      error = snprintf (command, 4096, HSAIL_ASM " -o %s %s", brigfile, hsailfile);
-      assert (error >= 0);
-      error = system(command);
-      if (error != 0)
+      char* args2[] = { HSAIL_ASM, "-o", brigfile, hsailfile, NULL };
+      if ((error = run_command(args2)))
         {
-          POCL_MSG_PRINT_INFO("pocl-hsa: HSAILasm exit status %i\n", WEXITSTATUS(error));
+          POCL_MSG_PRINT_INFO("pocl-hsa: HSAILasm exit status %i\n", error);
           return error;
         }
     }
@@ -947,7 +1043,6 @@ pocl_hsa_compile_submitted_kernels (_cl_command_node *cmd)
   if (cmd->type != CL_COMMAND_NDRANGE_KERNEL)
     return;
 
-  int error;
   char brigfile[POCL_FILENAME_LENGTH];
   char *brig_blob;
 
@@ -1042,4 +1137,14 @@ pocl_hsa_uninit (cl_device_id device)
   HSA_CHECK(hsa_queue_destroy(d->queue));
   POCL_MEM_FREE(d);
   device->data = NULL;
+}
+
+
+cl_ulong pocl_hsa_get_timer_value(void *data)
+{
+  uint64_t hsa_ts;
+  HSA_CHECK(hsa_system_get_info(HSA_SYSTEM_INFO_TIMESTAMP, &hsa_ts));
+  cl_ulong res = (cl_ulong)(hsa_ts *
+                            ((pocl_hsa_device_data_t*)data)->timestamp_unit);
+  return res;
 }

@@ -140,8 +140,8 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    pocl_queue_util.c pocl_queue_util.h \
                    pocl_image_util.c pocl_image_util.h \
                    pocl_img_buf_cpy.h pocl_img_buf_cpy.c \
-                   pocl_icd.h \
-                   pocl_intfn.h \
+                   pocl_timing.c pocl_timing.h \
+                   pocl_intfn.h pocl_icd.h \
                    pocl_llvm.h \
                    pocl_runtime_config.c pocl_runtime_config.h \
                    pocl_mem_management.c pocl_mem_management.h \
