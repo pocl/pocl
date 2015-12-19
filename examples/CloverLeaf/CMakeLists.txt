@@ -29,7 +29,8 @@ set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}")
 set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
 
 message(STATUS "Enabling testsuite ${TS_NAME}")
-set(ENABLED_TESTSUITES "${ENABLED_TESTSUITES};${TS_NAME}" PARENT_SCOPE)
+list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
+set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
 
 if(UNIX)
   pkg_check_modules(OPENMPI ompi)
@@ -63,6 +64,9 @@ if (MPI_F90 AND MPI_CC AND MPI_CXX AND MPI_LIB)
       "MPICXX_LIB=${MPI_LIB}"
     INSTALL_COMMAND "/bin/true"
   )
+
+  set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+  add_dependencies(prepare_examples ${TS_NAME})
 
   add_test(NAME CloverLeaf
            COMMAND "${TS_BUILDDIR}/clover_leaf")

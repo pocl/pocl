@@ -31,7 +31,8 @@ set(INTEL_ZIP "${TS_SRCDIR}/intel_ocl_svm_basic_win.zip")
 
 if (EXISTS "${INTEL_ZIP}")
   message(STATUS "Enabling testsuite ${TS_NAME}")
-  set(ENABLED_TESTSUITES "${ENABLED_TESTSUITES};${TS_NAME}" PARENT_SCOPE)
+  list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
+  set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
 
   ExternalProject_Add(
     ${TS_NAME}
@@ -46,6 +47,9 @@ if (EXISTS "${INTEL_ZIP}")
       -DOPENCL_LIBRARIES:STRING=OpenCL
     INSTALL_COMMAND "/bin/true"
   )
+
+  set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+  add_dependencies(prepare_examples ${TS_NAME})
 
   add_test(NAME intel_svm_coarse
     COMMAND "${TS_BUILDDIR}/coarse")

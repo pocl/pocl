@@ -47,7 +47,8 @@ if (EXISTS "${PB_DRIVER}" AND
   #file(APPEND "${PB_MAKE}" "OPENCL_LIB_PATH=/usr/lib\n")
 
   message(STATUS "Enabling testsuite ${TS_NAME}")
-  set(ENABLED_TESTSUITES "${ENABLED_TESTSUITES};${TS_NAME}" PARENT_SCOPE)
+  list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
+  set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
 
   ExternalProject_Add(
     ${TS_NAME}
@@ -76,6 +77,9 @@ if (EXISTS "${PB_DRIVER}" AND
 
     INSTALL_COMMAND /bin/true
   )
+
+  set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+  add_dependencies(prepare_examples ${TS_NAME})
 
   add_test(NAME parboil_spmv
            COMMAND "${PYTHON_EXECUTABLE}" ./parboil run

@@ -29,7 +29,8 @@ set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build")
 set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
 
 message(STATUS "Enabling testsuite ${TS_NAME}")
-set(ENABLED_TESTSUITES "${ENABLED_TESTSUITES};${TS_NAME}" PARENT_SCOPE)
+list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
+set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
 
 ExternalProject_Add(
   ${TS_NAME}
@@ -40,6 +41,9 @@ ExternalProject_Add(
     -DVEXCL_BACKEND=OpenCL
   INSTALL_COMMAND /bin/true
 )
+
+set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+add_dependencies(prepare_examples ${TS_NAME})
 
 add_test(NAME vexcl_boost_version
          COMMAND "${TS_BUILDDIR}/tests/boost_version")

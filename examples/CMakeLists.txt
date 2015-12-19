@@ -45,6 +45,9 @@ include(ExternalProject)
 
 set(ACTUALLY_ENABLED_TESTSUITES "")
 
+# invoke this to build all examples
+add_custom_target(prepare_examples)
+
 if(ENABLE_TESTSUITES)
 
   if(NOT DEFINED TESTSUITE_BASEDIR)
@@ -70,7 +73,6 @@ if(ENABLE_TESTSUITES)
     if(ALL_TESTSUITES MATCHES ${TESTSUITE})
       if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${TESTSUITE}")
         add_subdirectory("${TESTSUITE}")
-        list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TESTSUITE}")
       else()
         message(FATAL_ERROR "Cannot find source dir for testsuite: ${TESTSUITE}")
       endif()

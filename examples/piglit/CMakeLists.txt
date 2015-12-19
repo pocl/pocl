@@ -29,7 +29,8 @@ set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build")
 set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
 
 message(STATUS "Enabling testsuite ${TS_NAME}")
-set(ENABLED_TESTSUITES "${ENABLED_TESTSUITES};${TS_NAME}" PARENT_SCOPE)
+list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
+set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
 
 #-- Found PythonInterp: /usr/bin/python2.7 (found suitable version "2.7.11", minimum required is "2.7")
 #-- Found PythonNumpy: success (found suitable version "1.10.2", minimum required is "1.6.2")
@@ -56,6 +57,8 @@ ExternalProject_Add(
   INSTALL_COMMAND /bin/true
 )
 
+set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+add_dependencies(prepare_examples ${TS_NAME})
 
 add_test(NAME piglit_cl_api_build_program
          COMMAND "${TS_BUILDDIR}/bin/cl-api-build-program")

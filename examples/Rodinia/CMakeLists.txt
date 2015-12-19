@@ -32,7 +32,8 @@ set(RODINIA_TGZ "${TS_SRCDIR}/rodinia_3.1.tar.bz2")
 if (EXISTS "${RODINIA_TGZ}")
 
   message(STATUS "Enabling testsuite ${TS_NAME}")
-  set(ENABLED_TESTSUITES "${ENABLED_TESTSUITES};${TS_NAME}" PARENT_SCOPE)
+  list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
+  set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
 
   ExternalProject_Add(
     ${TS_NAME}
@@ -48,7 +49,8 @@ if (EXISTS "${RODINIA_TGZ}")
     INSTALL_COMMAND /bin/true
   )
 
-  set(TS_BINDIR "${TS_BUILDDIR}/bin/linux/opencl/")
+  set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+  add_dependencies(prepare_examples ${TS_NAME})
 
   add_test(NAME rodinia_backprop                          COMMAND ./run
            WORKING_DIRECTORY "${TS_BUILDDIR}/opencl/backprop")
