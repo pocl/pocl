@@ -54,7 +54,7 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
          retain the parent program (and release when the kernel
          is released). */
       for (k=program->kernels; k!=NULL; k=k->next)
-        {          
+        {
           k->program = NULL;
         }
 
