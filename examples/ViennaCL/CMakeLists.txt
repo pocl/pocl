@@ -56,119 +56,173 @@ if(EXISTS "${ViennaCL_TGZ}")
   add_dependencies(prepare_examples ${TS_NAME})
 
   add_test(NAME viennacl_examples_amg
-          COMMAND "${TS_BUILDDIR}/examples/tutorial/amg")
-  add_test(NAME viennacl_examples_bandwidth_reduction
-          COMMAND "${TS_BUILDDIR}/examples/tutorial/bandwidth-reduction")
+          COMMAND "${TS_BUILDDIR}/examples/tutorial/amg"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
+#  add_test(NAME viennacl_examples_bandwidth_reduction
+#          COMMAND "${TS_BUILDDIR}/examples/tutorial/bandwidth-reduction"
+#          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_examples_custom_kernels
-          COMMAND "${TS_BUILDDIR}/examples/tutorial/custom-kernels")
+          COMMAND "${TS_BUILDDIR}/examples/tutorial/custom-kernels"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_examples_blas1
-          COMMAND "${TS_BUILDDIR}/examples/tutorial/blas1")
+          COMMAND "${TS_BUILDDIR}/examples/tutorial/blas1"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_examples_custom_context
-          COMMAND "${TS_BUILDDIR}/examples/tutorial/custom-context")
+          COMMAND "${TS_BUILDDIR}/examples/tutorial/custom-context"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_examples_bisect
-          COMMAND "${TS_BUILDDIR}/examples/tutorial/bisect")
+          COMMAND "${TS_BUILDDIR}/examples/tutorial/bisect"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_examples_fft
-          COMMAND "${TS_BUILDDIR}/examples/tutorial/fft")
+          COMMAND "${TS_BUILDDIR}/examples/tutorial/fft"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_examples_iterative_custom
-          COMMAND "${TS_BUILDDIR}/examples/tutorial/iterative-custom")
+          COMMAND "${TS_BUILDDIR}/examples/tutorial/iterative-custom"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_examples_matrix_free
-          COMMAND "${TS_BUILDDIR}/examples/tutorial/matrix-free")
+          COMMAND "${TS_BUILDDIR}/examples/tutorial/matrix-free"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_examples_nmf
-          COMMAND "${TS_BUILDDIR}/examples/tutorial/nmf")
+          COMMAND "${TS_BUILDDIR}/examples/tutorial/nmf"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_examples_viennacl_info
-          COMMAND "${TS_BUILDDIR}/examples/tutorial/viennacl-info")
+          COMMAND "${TS_BUILDDIR}/examples/tutorial/viennacl-info"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_examples_wrap_host_buffer
-          COMMAND "${TS_BUILDDIR}/examples/tutorial/wrap-host-buffer")
+          COMMAND "${TS_BUILDDIR}/examples/tutorial/wrap-host-buffer"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_examples_scheduler
-          COMMAND "${TS_BUILDDIR}/examples/tutorial/scheduler")
+          COMMAND "${TS_BUILDDIR}/examples/tutorial/scheduler"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_examples_libviennacl_tutorial
-          COMMAND "${TS_BUILDDIR}/examples/tutorial/libviennacl-tutorial")
+          COMMAND "${TS_BUILDDIR}/examples/tutorial/libviennacl-tutorial"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
 
   add_test(NAME viennacl_benchmarks_opencl_bench_opencl
-          COMMAND "${TS_BUILDDIR}/examples/benchmarks/opencl-bench-opencl")
+          COMMAND "${TS_BUILDDIR}/examples/benchmarks/opencl-bench-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_benchmarks_dense_blas_bench_opencl
-          COMMAND "${TS_BUILDDIR}/examples/benchmarks/dense_blas-bench-opencl")
+          COMMAND "${TS_BUILDDIR}/examples/benchmarks/dense_blas-bench-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
 
   add_test(NAME viennacl_tests_bisect_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/bisect-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/bisect-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_fft_1d_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/fft_1d-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/fft_1d-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_external_linkage_opencl
-          COMMAND "${TS_BUILDDIR}/tests/external_linkage-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/external_linkage-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_blas3_solve_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/blas3_solve-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/blas3_solve-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_fft_2d_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/fft_2d-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/fft_2d-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_libviennacl_blas1_test
-          COMMAND "${TS_BUILDDIR}/tests/libviennacl_blas1-test")
+          COMMAND "${TS_BUILDDIR}/tests/libviennacl_blas1-test"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_iterators_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/iterators-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/iterators-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_global_variables_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/global_variables-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/global_variables-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_libviennacl_blas2_test
-          COMMAND "${TS_BUILDDIR}/tests/libviennacl_blas2-test")
+          COMMAND "${TS_BUILDDIR}/tests/libviennacl_blas2-test"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_libviennacl_blas3_test
-          COMMAND "${TS_BUILDDIR}/tests/libviennacl_blas3-test")
+          COMMAND "${TS_BUILDDIR}/tests/libviennacl_blas3-test"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_matrix_col_double_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/matrix_col_double-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/matrix_col_double-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_matrix_col_float_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/matrix_col_float-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/matrix_col_float-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_matrix_col_int_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/matrix_col_int-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/matrix_col_int-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_matrix_product_double_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/matrix_product_double-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/matrix_product_double-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_matrix_convert_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/matrix_convert-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/matrix_convert-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_matrix_product_float_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/matrix_product_float-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/matrix_product_float-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_matrix_row_double_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/matrix_row_double-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/matrix_row_double-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_matrix_row_float_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/matrix_row_float-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/matrix_row_float-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_matrix_row_int_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/matrix_row_int-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/matrix_row_int-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_matrix_vector_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/matrix_vector-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/matrix_vector-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_nmf_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/nmf-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/nmf-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_scalar_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/scalar-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/scalar-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_matrix_vector_int_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/matrix_vector_int-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/matrix_vector_int-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_qr_method_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/qr_method-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/qr_method-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_qr_method_func_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/qr_method_func-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/qr_method_func-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_scan_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/scan-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/scan-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_self_assign_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/self_assign-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/self_assign-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_sparse_prod_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/sparse_prod-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/sparse_prod-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_sparse_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/sparse-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/sparse-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_structured_matrices_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/structured-matrices-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/structured-matrices-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_spmdm_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/spmdm-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/spmdm-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_svd_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/svd-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/svd-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_tql_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/tql-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/tql-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_vector_convert_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/vector_convert-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/vector_convert-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_vector_float_double_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/vector_float_double-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/vector_float_double-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_vector_multi_inner_prod_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/vector_multi_inner_prod-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/vector_multi_inner_prod-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_vector_int_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/vector_int-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/vector_int-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_vector_uint_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/vector_uint-test-opencl")
+          COMMAND "${TS_BUILDDIR}/tests/vector_uint-test-opencl"
+          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
 
+#  viennacl_examples_bandwidth_reduction
   set_tests_properties(
   viennacl_examples_amg
-  viennacl_examples_bandwidth_reduction
   viennacl_examples_custom_kernels
   viennacl_examples_blas1
   viennacl_examples_custom_context
