@@ -48,6 +48,7 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
 
   if (new_refcount == 0)
     {
+      cl_context context = program->context;
 
       /* Mark all kernels as having no program.
          FIXME: this should not be needed if the kernels
@@ -61,7 +62,6 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
       if(program->devices != program->context->devices)
         POCL_MEM_FREE(program->devices);
 
-      POCL_RELEASE_OBJECT (program->context, new_refcount);
       POCL_MEM_FREE(program->source);
 
       POCL_MEM_FREE(program->binary_sizes);
@@ -80,6 +80,8 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
       POCL_MEM_FREE(program->build_hash);
       POCL_MEM_FREE(program->llvm_irs);
       POCL_MEM_FREE(program);
+
+      POname(clReleaseContext)(context);
     }
 
   return CL_SUCCESS;
