@@ -29,7 +29,7 @@ set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build")
 set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
 
 set(OPENCV "opencv-3.0.0-beta")
-set(OPENCV_ZIP "${TS_BASEDIR}/src/${OPENCV}.zip")
+set(OPENCV_ZIP "${TS_SRCDIR}/${OPENCV}.zip")
 
 if(EXISTS "${OPENCV_ZIP}")
 
