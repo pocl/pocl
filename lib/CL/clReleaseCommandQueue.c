@@ -31,13 +31,18 @@ POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VER
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
   int new_refcount;
+  cl_context context = command_queue->context;
+  cl_device_id device = command_queue->device;
+
   POname(clFlush)(command_queue);
   POCL_RELEASE_OBJECT(command_queue, new_refcount);
   if (new_refcount == 0)
     {
       pocl_queue_list_delete(command_queue);
       POCL_MEM_FREE(command_queue);
-      /* TODO: should clReleaseContext()? */
+
+      POname(clReleaseContext)(context);
+      POname(clReleaseDevice)(device);
     }
   return CL_SUCCESS;
 }

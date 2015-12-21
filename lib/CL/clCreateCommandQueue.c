@@ -61,13 +61,16 @@ POname(clCreateCommandQueue)(cl_context context,
     errcode = CL_OUT_OF_HOST_MEMORY;
     goto ERROR;
   }
-  
+
   POCL_INIT_OBJECT(command_queue);
 
   command_queue->context = context;
   command_queue->device = device;
   command_queue->properties = properties;
   command_queue->root = NULL;
+
+  POCL_RETAIN_OBJECT(context);
+  POCL_RETAIN_OBJECT(device);
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;
