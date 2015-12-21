@@ -27,7 +27,8 @@ set(TS_NAME "Rodinia")
 set(TS_BASEDIR "${TESTSUITE_BASEDIR}/${TS_NAME}")
 set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}")
 set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
-set(RODINIA_TGZ "${TS_SRCDIR}/rodinia_3.1.tar.bz2")
+set(RODINIA "rodinia_3.1")
+set(RODINIA_TGZ "${TS_SRCDIR}/${RODINIA}.tar.bz2")
 
 if (EXISTS "${RODINIA_TGZ}")
 
@@ -40,7 +41,7 @@ if (EXISTS "${RODINIA_TGZ}")
     PREFIX "${TS_BASEDIR}"
     DOWNLOAD_COMMAND pwd && tar xjf "${RODINIA_TGZ}"
       && patch -p1 -i "${CMAKE_CURRENT_SOURCE_DIR}/Rodinia.patch"
-      && rmdir Rodinia && mv rodinia_3.1 Rodinia
+      && rmdir Rodinia && mv ${RODINIA} Rodinia
     CONFIGURE_COMMAND /bin/true
     BUILD_IN_SOURCE 1
     BUILD_COMMAND pwd && make OPENCL
@@ -57,7 +58,7 @@ if (EXISTS "${RODINIA_TGZ}")
   add_test(NAME rodinia_bfs                               COMMAND ./run
            WORKING_DIRECTORY "${TS_BUILDDIR}/opencl/bfs")
   add_test(NAME rodinia_euler3d                           COMMAND ./run
-           WORKING_DIRECTORY "${TS_BUILDDIR}/opencl/euler3d")
+           WORKING_DIRECTORY "${TS_BUILDDIR}/opencl/cfd")
   add_test(NAME rodinia_gaussian                          COMMAND ./run
            WORKING_DIRECTORY "${TS_BUILDDIR}/opencl/gaussian")
   add_test(NAME rodinia_heartwall                         COMMAND ./run
@@ -69,19 +70,15 @@ if (EXISTS "${RODINIA_TGZ}")
   add_test(NAME rodinia_lavaMD                            COMMAND ./run
            WORKING_DIRECTORY "${TS_BUILDDIR}/opencl/lavaMD")
   add_test(NAME rodinia_leukocyte                         COMMAND ./run
-           WORKING_DIRECTORY "${TS_BUILDDIR}/opencl/leukocyte")
+           WORKING_DIRECTORY "${TS_BUILDDIR}/opencl/leukocyte/OpenCL")
   add_test(NAME rodinia_lud                               COMMAND ./run
-           WORKING_DIRECTORY "${TS_BUILDDIR}/opencl/lud")
+           WORKING_DIRECTORY "${TS_BUILDDIR}/opencl/lud/ocl")
   add_test(NAME rodinia_nn                                COMMAND ./run
            WORKING_DIRECTORY "${TS_BUILDDIR}/opencl/nn")
   add_test(NAME rodinia_nw                                COMMAND ./run
            WORKING_DIRECTORY "${TS_BUILDDIR}/opencl/nw")
-  add_test(NAME rodinia_OCL_particlefilter_double         COMMAND ./run
-           WORKING_DIRECTORY "${TS_BUILDDIR}/opencl/OCL_particlefilter_double")
-  add_test(NAME rodinia_OCL_particlefilter_naive          COMMAND ./run
-           WORKING_DIRECTORY "${TS_BUILDDIR}/opencl/OCL_particlefilter_naive")
-  add_test(NAME rodinia_OCL_particlefilter_single         COMMAND ./run
-           WORKING_DIRECTORY "${TS_BUILDDIR}/opencl/OCL_particlefilter_single")
+  add_test(NAME rodinia_particlefilter                    COMMAND ./run
+           WORKING_DIRECTORY "${TS_BUILDDIR}/opencl/particlefilter")
   add_test(NAME rodinia_pathfinder                        COMMAND ./run
            WORKING_DIRECTORY "${TS_BUILDDIR}/opencl/pathfinder")
   add_test(NAME rodinia_srad                              COMMAND ./run
@@ -102,9 +99,7 @@ if (EXISTS "${RODINIA_TGZ}")
     rodinia_lud
     rodinia_nn
     rodinia_nw
-    rodinia_OCL_particlefilter_double
-    rodinia_OCL_particlefilter_naive
-    rodinia_OCL_particlefilter_single
+    rodinia_particlefilter
     rodinia_pathfinder
     rodinia_srad
     rodinia_streamcluster
