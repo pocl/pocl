@@ -44,9 +44,9 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
      with memobj are deleted.
   */
 
-  if (new_refcount == 0) 
+  if (new_refcount == 0)
     {
-      if (memobj->parent == NULL) 
+      if (memobj->parent == NULL)
         {
           for (i = 0; i < memobj->context->num_devices; ++i)
             {
@@ -54,10 +54,10 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
               device_id->ops->free(device_id, memobj);
               memobj->device_ptrs[device_id->dev_id].mem_ptr = NULL;
             }
-        } else 
+        } else
         {
           /* a sub buffer object does not free the memory from
-             the device */          
+             the device */
           POCL_RELEASE_OBJECT(memobj->parent, new_refcount);
         }
       POCL_RELEASE_OBJECT(memobj->context, new_refcount);
@@ -66,7 +66,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
           POCL_MEM_FREE(mapping);
         }
       memobj->mappings = NULL;
-      
+
       POCL_MEM_FREE(memobj->device_ptrs);
       POCL_MEM_FREE(memobj);
     }
