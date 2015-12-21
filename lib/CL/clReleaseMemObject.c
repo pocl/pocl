@@ -29,6 +29,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
 {
   int new_refcount;
   cl_device_id device_id;
+  cl_context context;
   unsigned i;
   mem_mapping_t *mapping, *temp;
 
@@ -60,15 +61,16 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
              the device */
           POCL_RELEASE_OBJECT(memobj->parent, new_refcount);
         }
-      POCL_RELEASE_OBJECT(memobj->context, new_refcount);
       DL_FOREACH_SAFE(memobj->mappings, mapping, temp)
         {
           POCL_MEM_FREE(mapping);
         }
       memobj->mappings = NULL;
+      context = memobj->context;
 
       POCL_MEM_FREE(memobj->device_ptrs);
       POCL_MEM_FREE(memobj);
+      POname(clReleaseContext)(context);
     }
   return CL_SUCCESS;
 }
