@@ -25,23 +25,23 @@ extern "C" {
 #endif
 
 // should use some terminfo library, but..
-#define RESET   "\033[0m"
-#define BLACK   "\033[30m"      /* Black */
-#define RED     "\033[31m"      /* Red */
-#define GREEN   "\033[32m"      /* Green */
-#define YELLOW  "\033[33m"      /* Yellow */
-#define BLUE    "\033[34m"      /* Blue */
-#define MAGENTA "\033[35m"      /* Magenta */
-#define CYAN    "\033[36m"      /* Cyan */
-#define WHITE   "\033[37m"      /* White */
-#define BOLDBLACK   "\033[1m\033[30m"      /* Bold Black */
-#define BOLDRED     "\033[1m\033[31m"      /* Bold Red */
-#define BOLDGREEN   "\033[1m\033[32m"      /* Bold Green */
-#define BOLDYELLOW  "\033[1m\033[33m"      /* Bold Yellow */
-#define BOLDBLUE    "\033[1m\033[34m"      /* Bold Blue */
-#define BOLDMAGENTA "\033[1m\033[35m"      /* Bold Magenta */
-#define BOLDCYAN    "\033[1m\033[36m"      /* Bold Cyan */
-#define BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
+#define POCL_COLOR_RESET   "\033[0m"
+#define POCL_COLOR_BLACK   "\033[30m"      /* Black */
+#define POCL_COLOR_RED     "\033[31m"      /* Red */
+#define POCL_COLOR_GREEN   "\033[32m"      /* Green */
+#define POCL_COLOR_POCL_COLOR_YELLOW  "\033[33m"      /* Yellow */
+#define POCL_COLOR_BLUE    "\033[34m"      /* Blue */
+#define POCL_COLOR_MAGENTA "\033[35m"      /* Magenta */
+#define POCL_COLOR_CYAN    "\033[36m"      /* Cyan */
+#define POCL_COLOR_WHITE   "\033[37m"      /* White */
+#define POCL_COLOR_BOLDBLACK   "\033[1m\033[30m"      /* Bold Black */
+#define POCL_COLOR_BOLDRED     "\033[1m\033[31m"      /* Bold Red */
+#define POCL_COLOR_BOLDGREEN   "\033[1m\033[32m"      /* Bold Green */
+#define POCL_COLOR_BOLDPOCL_COLOR_YELLOW  "\033[1m\033[33m"      /* Bold Yellow */
+#define POCL_COLOR_BOLDBLUE    "\033[1m\033[34m"      /* Bold Blue */
+#define POCL_COLOR_BOLDMAGENTA "\033[1m\033[35m"      /* Bold Magenta */
+#define POCL_COLOR_BOLDCYAN    "\033[1m\033[36m"      /* Bold Cyan */
+#define POCL_COLOR_BOLDWHITE   "\033[1m\033[37m"      /* Bold White */
 
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)
@@ -135,7 +135,7 @@ extern int pocl_aborting;
             if (pocl_debug_messages) {                                      \
                 POCL_DEBUG_HEADER                                           \
                 if (stderr_is_a_tty)                                        \
-                  fprintf(stderr, TYPE CYAN ERRCODE " "  RESET);            \
+                  fprintf(stderr, TYPE POCL_COLOR_CYAN ERRCODE " "  POCL_COLOR_RESET);            \
                 else                                                        \
                   fprintf(stderr, TYPE ERRCODE " ");                        \
                 fprintf(stderr, __VA_ARGS__);                               \
@@ -151,17 +151,17 @@ extern int pocl_aborting;
         } while (0)
 
     #define POCL_MSG_WARN2(errcode, ...)   do { if (stderr_is_a_tty) \
-          POCL_MSG_PRINT(YELLOW " *** WARNING *** ", errcode, __VA_ARGS__); \
+          POCL_MSG_PRINT(POCL_COLOR_YELLOW " *** WARNING *** ", errcode, __VA_ARGS__); \
           else POCL_MSG_PRINT(" *** WARNING *** ", errcode, __VA_ARGS__); } while(0)
     #define POCL_MSG_WARN(...)  POCL_MSG_WARN2("", __VA_ARGS__)
 
     #define POCL_MSG_ERR2(errcode, ...)    do { if (stderr_is_a_tty) \
-          POCL_MSG_PRINT(RED " *** ERROR *** ", errcode, __VA_ARGS__); \
+          POCL_MSG_PRINT(POCL_COLOR_RED " *** ERROR *** ", errcode, __VA_ARGS__); \
           else POCL_MSG_PRINT(" *** ERROR *** ", errcode, __VA_ARGS__); } while (0)
     #define POCL_MSG_ERR(...)  POCL_MSG_ERR2("", __VA_ARGS__)
 
     #define POCL_MSG_PRINT_INFO2(errcode, ...) do { if (stderr_is_a_tty) \
-          POCL_MSG_PRINT(GREEN " *** INFO *** ", errcode, __VA_ARGS__); \
+          POCL_MSG_PRINT(POCL_COLOR_GREEN " *** INFO *** ", errcode, __VA_ARGS__); \
           else POCL_MSG_PRINT(" *** INFO *** ", errcode, __VA_ARGS__); } while (0)
     #define POCL_MSG_PRINT_INFO(...) POCL_MSG_PRINT_INFO2("", __VA_ARGS__)
 
