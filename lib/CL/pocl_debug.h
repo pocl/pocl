@@ -29,7 +29,7 @@ extern "C" {
 #define POCL_COLOR_BLACK   "\033[30m"      /* Black */
 #define POCL_COLOR_RED     "\033[31m"      /* Red */
 #define POCL_COLOR_GREEN   "\033[32m"      /* Green */
-#define POCL_COLOR_POCL_COLOR_YELLOW  "\033[33m"      /* Yellow */
+#define POCL_COLOR_YELLOW  "\033[33m"      /* Yellow */
 #define POCL_COLOR_BLUE    "\033[34m"      /* Blue */
 #define POCL_COLOR_MAGENTA "\033[35m"      /* Magenta */
 #define POCL_COLOR_CYAN    "\033[36m"      /* Cyan */
@@ -37,7 +37,7 @@ extern "C" {
 #define POCL_COLOR_BOLDBLACK   "\033[1m\033[30m"      /* Bold Black */
 #define POCL_COLOR_BOLDRED     "\033[1m\033[31m"      /* Bold Red */
 #define POCL_COLOR_BOLDGREEN   "\033[1m\033[32m"      /* Bold Green */
-#define POCL_COLOR_BOLDPOCL_COLOR_YELLOW  "\033[1m\033[33m"      /* Bold Yellow */
+#define POCL_COLOR_BOLDYELLOW  "\033[1m\033[33m"      /* Bold Yellow */
 #define POCL_COLOR_BOLDBLUE    "\033[1m\033[34m"      /* Bold Blue */
 #define POCL_COLOR_BOLDMAGENTA "\033[1m\033[35m"      /* Bold Magenta */
 #define POCL_COLOR_BOLDCYAN    "\033[1m\033[36m"      /* Bold Cyan */
