@@ -23,19 +23,20 @@
 #
 #=============================================================================
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TCE_INCLUDES}")
+add_compile_options(${TCE_INCLUDES})
+add_compile_options(${TCE_CXXFLAGS})
 
 if(ENABLE_TCE)
   add_subdirectory("ttasim")
-  set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS};$<TARGET_OBJECTS:pocl-devices-tce-ttasim>" PARENT_SCOPE)
 endif()
 
 if(MSVC)
   set_source_files_properties( tce_common.h tce_common.cc PROPERTIES LANGUAGE CXX )
 endif(MSVC)
+
 add_library("pocl-devices-tce" OBJECT tce_common.h tce_common.cc)
 set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS};$<TARGET_OBJECTS:pocl-devices-tce>" PARENT_SCOPE)
 
 # dist_pkgdata_DATA = tta_device_main.c
-install(FILES "tta_device_main.c" "tta_device_main_dthread.c"
+install(FILES "tta_device_main.c"
         DESTINATION ${POCL_INSTALL_PRIVATE_HEADER_DIR})

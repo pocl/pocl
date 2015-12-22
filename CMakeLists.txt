@@ -655,41 +655,61 @@ set(OCL_KERNEL_TARGET_CPU "${LLC_HOST_CPU}") #The kernel target CPU variant.
 
 if(NOT DEFINED DEFAULT_ENABLE_TCE)
 
-  # THESE are only used in makefile.am & scripts/pocl*
-  set(TCE_TARGET_CLANG_FLAGS "" CACHE STRING "Extra parameters to Clang for TCE compilation.")
-
-  set(TCE_TARGET_LLC_FLAGS "" CACHE STRING "Extra parameters to LLVM's llc for TCE compilation.")
-
-  find_program(TCE_CONFIG NAMES "tce-config")
-  if(TCE_CONFIG)
-
-    find_program(TCECC NAMES "tcecc")
-    set(TCE_USABLE 1)
-
+  if (NOT WITH_TCE)
+    set(WITH_TCE ENV PATH)
   endif()
 
-  if(TCE_CONFIG AND TCECC AND TCE_USABLE)
+  # THESE are only used in makefile.am & scripts/pocl*
+  set(TCE_TARGET_CLANG_FLAGS "" CACHE STRING "Extra parameters to Clang for TCE compilation.")
+  set(TCE_TARGET_LLC_FLAGS "" CACHE STRING "Extra parameters to LLVM's llc for TCE compilation.")
 
-    execute_process(COMMAND "${TCE_CONFIG}" --libs OUTPUT_VARIABLE TCE_LIBS RESULT_VARIABLE RESV)
+  find_program(TCE_CONFIG NAMES "tce-config" HINTS ${WITH_TCE})
+  find_program(TCECC NAMES "tcecc" HINTS ${WITH_TCE})
+  find_program(TTASIM NAMES "ttasim" HINTS ${WITH_TCE})
+
+  if(TCE_CONFIG AND TCECC AND TTASIM)
+
+    message(STATUS "Found tcecc + tce-config + ttasim, testing setup")
+
+    execute_process(COMMAND "${TCE_CONFIG}" --libs OUTPUT_VARIABLE TCE_LIBS RESULT_VARIABLE RESV1)
+    execute_process(COMMAND "${TCE_CONFIG}" --includes OUTPUT_VARIABLE TCE_INCLUDES RESULT_VARIABLE RESV2)
+    execute_process(COMMAND "${TCE_CONFIG}" --version OUTPUT_VARIABLE TCE_VERSION RESULT_VARIABLE RESV3)
+    execute_process(COMMAND "${TCE_CONFIG}" --cxxflags OUTPUT_VARIABLE TCE_CXXFLAGS RESULT_VARIABLE RESV4)
+    execute_process(COMMAND "${TCE_CONFIG}" --prefix OUTPUT_VARIABLE TCE_PREFIX RESULT_VARIABLE RESV5)
+    execute_process(COMMAND "${TTASIM}" --help OUTPUT_VARIABLE TTASIM_HELP RESULT_VARIABLE RESV9)
+
+    if (RESV1 OR RESV2 OR RESV3 OR RESV4 OR RESV5)
+      message(FATAL_ERROR "tce-config: Nonzero exit status")
+    endif()
+    if (RESV9)
+      message(FATAL_ERROR "ttasim: Nonzero exit status")
+    endif()
+
     string(STRIP "${TCE_LIBS}" TCE_LIBS)
+    separate_arguments(TCE_LIBS)
+    string(STRIP "${TCE_INCLUDES}" TCE_INCLUDES)
+    separate_arguments(TCE_INCLUDES)
+    string(STRIP "${TCE_CXXFLAGS}" TCE_CXXFLAGS)
+    separate_arguments(TCE_CXXFLAGS)
+    string(STRIP "${TCE_VERSION}" TCE_VERSION)
+    string(STRIP "${TCE_PREFIX}" TCE_PREFIX)
+
     set(TCE_LIBS "${TCE_LIBS}" CACHE INTERNAL "tce-config --libs")
+    set(TCE_INCLUDES "${TCE_INCLUDES}" CACHE INTERNAL "tce-config --includes")
+    set(TCE_VERSION "${TCE_VERSION}" CACHE INTERNAL "tce-config --version")
+    set(TCE_CXXFLAGS "${TCE_CXXFLAGS}" CACHE INTERNAL "tce-config --cxxflags")
+    set(TCE_PREFIX "${TCE_PREFIX}" CACHE INTERNAL "tce-config --prefix")
+
     # TODO
     set(LD_FLAGS_BIN ${LD_FLAGS_BIN} ${TCE_LIBS})
 
-    execute_process(COMMAND "${TCE_CONFIG}" --includes OUTPUT_VARIABLE TCE_INCLUDES RESULT_VARIABLE RESV)
-    string(STRIP "${TCE_INCLUDES}" TCE_INCLUDES)
-    set(TCE_INCLUDES "${TCE_INCLUDES}" CACHE INTERNAL "tce-config --includes")
-
-    execute_process(COMMAND "${TCE_CONFIG}" --version OUTPUT_VARIABLE TCE_VERSION RESULT_VARIABLE RESV)
-    set(TCE_VERSION "${TCE_VERSION}" CACHE INTERNAL "tce-config --version")
-
     set(DEFAULT_ENABLE_TCE 1 CACHE INTERNAL "TCE available")
-
     if(TCE_VERSION MATCHES "trunk")
       set(DEFAULT_ENABLE_TCEMC 1 CACHE INTERNAL "TCEMC available")
     endif()
 
   else()
+    message(STATUS "Failed to find tcecc or tce-config, disabling TCE")
     set(DEFAULT_ENABLE_TCE 0 CACHE INTERNAL "TCE available")
     set(DEFAULT_ENABLE_TCEMC 0 CACHE INTERNAL "TCEMC available")
   endif()
@@ -707,6 +727,16 @@ if(ENABLE_TCE)
     set(ENABLE_TCEMC 1)
     set(OCL_DRIVERS "${OCL_DRIVERS} tcemc") # TCEMC is a "superset" of TCE (lp:tce) features.
   endif()
+  set(TCE_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics cl_khr_fp16")
+  set(TEMP_EXT "${TCE_DEVICE_EXTENSIONS}")
+  set(TCE_DEVICE_EXTENSION_DEFINES "")
+  separate_arguments(TEMP_EXT)
+  foreach(EXT ${TEMP_EXT})
+    set(TCE_DEVICE_EXTENSION_DEFINES "${TCE_DEVICE_EXTENSION_DEFINES} -D${EXT}")
+  endforeach()
+
+  set(TCE_DEVICE_CL_VERSION "120")
+
 else()
   set(ENABLE_TCEMC 0)
 endif()
@@ -1022,6 +1052,11 @@ MESSAGE(STATUS "OCL_KERNEL_TARGET_CPU: ${OCL_KERNEL_TARGET_CPU}")
 MESSAGE(STATUS "POCL_DEVICE_ADDRESS_BITS: ${POCL_DEVICE_ADDRESS_BITS}")
 MESSAGE(STATUS "TCE_TARGET_CLANG_FLAGS: ${TCE_TARGET_CLANG_FLAGS}")
 MESSAGE(STATUS "TCE_TARGET_LLC_FLAGS: ${TCE_TARGET_LLC_FLAGS}")
+MESSAGE(STATUS "TCE_CXXFLAGS: ${TCE_CXXFLAGS}")
+MESSAGE(STATUS "TCE_INCLUDES: ${TCE_INCLUDES}")
+MESSAGE(STATUS "TCE_LIBS: ${TCE_LIBS}")
+MESSAGE(STATUS "TCE_VERSION: ${TCE_VERSION}")
+MESSAGE(STATUS "TCE_PREFIX: ${TCE_PREFIX}")
 MESSAGE(STATUS "")
 MESSAGE(STATUS "----------- -------------------------------- --------")
 MESSAGE(STATUS "llvm libs libpocl will be linked to (POCL_LLVM_LIBS):")

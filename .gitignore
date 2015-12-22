@@ -22,10 +22,6 @@ config/ltmain.sh
 config/missing
 configure
 examples/EinsteinToolkit/EinsteinToolkit
-examples/ViennaCL
-examples/AMD
-examples/AMDSDK2.9
-examples/piglit
 examples/example1/example1
 examples/example1-spir32/example1-spir32
 examples/example1-spir64/example1-spir

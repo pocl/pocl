@@ -1,7 +1,7 @@
 Installation:
 
 $ git clone --recursive git://github.com/inducer/pyopencl
-$ apt-get install python-pip python-virtualenv
+$ apt-get install python-pip python-virtualenv python-numpy python-mako
 
   (or equivalent, for example:
   curl -O https://raw.github.com/pypa/pip/master/contrib/get-pip.py

@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014 pocl developers
+#   Copyright (c) 2015 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -23,11 +23,24 @@
 #
 #=============================================================================
 
-include_directories(BEFORE "..")
+#AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'
+add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
-if(MSVC)
-  set_source_files_properties( ttasim.h ttasim.cc PROPERTIES LANGUAGE CXX )
+# EinsteinToolkit_CFLAGS = @OPENCL_CFLAGS@
+#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 ${OPENCL_CFLAGS}")
+add_compile_options(${OPENCL_CFLAGS} -std=c99)
+
+if (MSVC)
+  set_source_files_properties( EinsteinToolkit.c PROPERTIES LANGUAGE CXX )
 endif(MSVC)
-add_library("pocl-devices-tce-ttasim" OBJECT ttasim.h ttasim.cc)
-set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS};$<TARGET_OBJECTS:pocl-devices-tce-ttasim>" PARENT_SCOPE)
+add_executable("EinsteinToolkit" EinsteinToolkit.c ML_BSSN_CL_RHS1.cl ML_BSSN_CL_RHS2.cl)
 
+# EinsteinToolkit_LDADD = @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
+target_link_libraries("EinsteinToolkit" ${POCLU_LINK_OPTIONS})
+
+add_test(NAME "EinsteinToolkit" COMMAND "EinsteinToolkit")
+
+set_tests_properties( "EinsteinToolkit"
+  PROPERTIES
+    LABELS "Einstein"
+    DEPENDS "pocl_version_check")

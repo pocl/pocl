@@ -22,8 +22,11 @@ int stderr_is_a_tty;
         gmtime_r(&timespec.tv_sec, &t);
         const char* formatstring;
         if (stderr_is_a_tty)
-          formatstring = BLUE "[%04i-%02i-%02i %02i:%02i:%02i.%09li] "
-              RESET "POCL: in fn" CYAN " %s " RESET "at line %u:\n";
+          formatstring = POCL_COLOR_BLUE
+              "[%04i-%02i-%02i %02i:%02i:%02i.%09li] "
+              POCL_COLOR_RESET "POCL: in fn"
+              POCL_COLOR_CYAN " %s "
+              POCL_COLOR_RESET "at line %u:\n";
         else
           formatstring = "[%04i-%02i-%02i %02i:%02i:%02i.%09li] "
               "POCL: in fn %s at line %u:\n";
@@ -46,8 +49,8 @@ int stderr_is_a_tty;
         return;
       const char* formatstring;
       if (stderr_is_a_tty)
-        formatstring = "      >>>  " MAGENTA "     %3" PRIu64
-                       ".%03" PRIu64 " " RESET " %s    %s\n";
+        formatstring = "      >>>  " POCL_COLOR_MAGENTA "     %3" PRIu64
+                       ".%03" PRIu64 " " POCL_COLOR_RESET " %s    %s\n";
       else
         formatstring = "      >>>       %3" PRIu64 ".%03"
                        PRIu64 "  %s    %s\n";
@@ -60,7 +63,8 @@ int stderr_is_a_tty;
         {
           b = nsec % 1000;
           if (stderr_is_a_tty)
-            formatstring = "      >>>      " MAGENTA "     %3" PRIu64 " " RESET " ns    %s\n";
+            formatstring = "      >>>      " POCL_COLOR_MAGENTA
+                    "     %3" PRIu64 " " POCL_COLOR_RESET " ns    %s\n";
           else
             formatstring = "      >>>           %3" PRIu64 "  ns    %s\n";
           POCL_MSG_PRINT2(func, line, formatstring, b, msg);

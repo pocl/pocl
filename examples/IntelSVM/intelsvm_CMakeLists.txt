@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014 pocl developers
+#   Copyright (c) 2015 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -23,11 +23,22 @@
 #
 #=============================================================================
 
-include_directories(BEFORE "..")
+cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 
-if(MSVC)
-  set_source_files_properties( ttasim.h ttasim.cc PROPERTIES LANGUAGE CXX )
-endif(MSVC)
-add_library("pocl-devices-tce-ttasim" OBJECT ttasim.h ttasim.cc)
-set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS};$<TARGET_OBJECTS:pocl-devices-tce-ttasim>" PARENT_SCOPE)
+project(intelsvm)
 
+add_compile_options("-std=c++11")
+
+include_directories("common")
+
+add_executable(fine SVMBasicFineGrained/svmbasic.cpp
+    common/basic.cpp  common/basic.hpp
+    common/cmdparser.cpp  common/cmdparser.hpp
+    common/oclobject.cpp  common/oclobject.hpp)
+target_link_libraries(fine "${OPENCL_LIBRARIES}")
+
+add_executable(coarse SVMBasicCoarseGrained/svmbasic.cpp
+    common/basic.cpp  common/basic.hpp
+    common/cmdparser.cpp  common/cmdparser.hpp
+    common/oclobject.cpp  common/oclobject.hpp)
+target_link_libraries(coarse "${OPENCL_LIBRARIES}")

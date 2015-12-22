@@ -34,7 +34,8 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
   if(EXISTS "${AMD_APP_SDK_TGZ}")
 
     message(STATUS "Enabling testsuite ${TS_NAME}")
-    set(ENABLED_TESTSUITES "${ENABLED_TESTSUITES};${TS_NAME}" PARENT_SCOPE)
+    list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
+    set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
 
     ExternalProject_Add(
       ${TS_NAME}
@@ -47,6 +48,9 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
       BUILD_COMMAND "/bin/true"
       INSTALL_COMMAND "/bin/true"
     )
+
+    set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+    add_dependencies(prepare_examples ${TS_NAME})
 
     set(AMD_SAMPLES
     AdvancedConvolution

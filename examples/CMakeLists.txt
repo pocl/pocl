@@ -31,8 +31,14 @@ add_subdirectory("example2a")
 add_subdirectory("standalone")
 add_subdirectory("scalarwave")
 add_subdirectory("trig")
+add_subdirectory("EinsteinToolkit")
 
-set(ALL_TESTSUITES "AMD;AMDSDK2.9;AMDSDK3.0;opencl-book-samples;Parboil;Piglit;Rodinia;VexCL;ViennaCL;Halide;OpenCV;CloverLeaf;hsa")
+# TODO:   opencl-book-samples  PyOpenCL
+set(ALL_TESTSUITES
+    AMD AMDSDK2.9 AMDSDK3.0 ASL
+    CloverLeaf Halide IntelSVM OpenCV
+    Parboil piglit PyOpenCL
+    Rodinia VexCL ViennaCL)
 
 if("${ENABLE_TESTSUITES}" STREQUAL "all")
   set(ENABLE_TESTSUITES ${ALL_TESTSUITES})
@@ -43,6 +49,9 @@ message(STATUS "Trying to enable testsuites: ${ENABLE_TESTSUITES}")
 include(ExternalProject)
 
 set(ACTUALLY_ENABLED_TESTSUITES "")
+
+# invoke this to build all examples
+add_custom_target(prepare_examples)
 
 if(ENABLE_TESTSUITES)
 
@@ -69,7 +78,6 @@ if(ENABLE_TESTSUITES)
     if(ALL_TESTSUITES MATCHES ${TESTSUITE})
       if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${TESTSUITE}")
         add_subdirectory("${TESTSUITE}")
-        list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TESTSUITE}")
       else()
         message(FATAL_ERROR "Cannot find source dir for testsuite: ${TESTSUITE}")
       endif()

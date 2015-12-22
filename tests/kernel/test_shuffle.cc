@@ -298,7 +298,6 @@ public:
     unsigned errors = 0;
     for(unsigned n_loop=0; n_loop<5; n_loop++) {
           for(unsigned m_loop=0; m_loop<5; m_loop++) {
-              unsigned n = vecelts[n_loop];
               unsigned m = vecelts[m_loop];
               for(unsigned i=0; i<m; i++) {
                 in2[i]=(D)(i+m);

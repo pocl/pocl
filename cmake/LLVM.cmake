@@ -144,6 +144,7 @@ endif(WIN32)
 
 # required for sources..
 if(LLVM_VERSION MATCHES "3[.]([0-9]+)")
+  set(LLVM_MAJOR 3)
   string(STRIP "${CMAKE_MATCH_1}" LLVM_MINOR)
   message(STATUS "Minor llvm version: ${LLVM_MINOR}")
   if(LLVM_MINOR STREQUAL "6")
