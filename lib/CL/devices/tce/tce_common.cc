@@ -80,7 +80,7 @@ TCEDevice::~TCEDevice() {
 
 bool
 TCEDevice::isMultiCoreMachine() const {
-#if defined(TCEMC_AVAILABLE) && TCEMC_AVAILABLE == 1
+#ifdef TCEMC_AVAILABLE
   assert (machine_ != NULL);
   return machine_->coreCount() > 1;
 #else
