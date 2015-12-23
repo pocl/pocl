@@ -34,36 +34,31 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
                                     const cl_event *event_wait_list,
                                     cl_event *event)CL_API_SUFFIX__VERSION_1_0
 {
-  int i;
+  unsigned i;
   int errcode;
   _cl_command_node *cmd = NULL;
 
-  if (command_queue == NULL)
-    return CL_INVALID_COMMAND_QUEUE;
+  POCL_RETURN_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
+    CL_INVALID_EVENT_WAIT_LIST);
 
-  if (num_mem_objects == 0 || mem_objects == NULL)
-    return CL_INVALID_VALUE;
+  POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
+    CL_INVALID_EVENT_WAIT_LIST);
+
+  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+
+  POCL_RETURN_ERROR_COND((num_mem_objects == 0), CL_INVALID_VALUE);
+  POCL_RETURN_ERROR_COND((mem_objects == NULL), CL_INVALID_VALUE);
 
   for (i = 0; i < num_mem_objects; ++i)
     {
-      if (mem_objects[i] == NULL)
-        return CL_INVALID_MEM_OBJECT;
+      POCL_RETURN_ERROR_COND((mem_objects[i] == NULL), CL_INVALID_MEM_OBJECT);
 
-      if (mem_objects[i]->context != command_queue->context)
-        return CL_INVALID_CONTEXT;
+      POCL_RETURN_ERROR_COND((mem_objects[i]->context != command_queue->context),
+        CL_INVALID_CONTEXT);
     }
 
-  if (num_events_in_wait_list > 0 && event_wait_list == NULL)
-    return CL_INVALID_EVENT_WAIT_LIST;
-
-  if (num_events_in_wait_list == 0 && event_wait_list != NULL)
-    return CL_INVALID_EVENT_WAIT_LIST;
-
-  for(i=0; i<num_events_in_wait_list; i++)
-    {
-      if (event_wait_list[i] == NULL)
-        return CL_INVALID_EVENT_WAIT_LIST;
-    }
+  for (i = 0; i < num_events_in_wait_list; i++)
+    POCL_RETURN_ERROR_COND((event_wait_list[i] == NULL), CL_INVALID_EVENT_WAIT_LIST);
 
   errcode = pocl_create_command (&cmd, command_queue,
                                  CL_COMMAND_MIGRATE_MEM_OBJECTS,

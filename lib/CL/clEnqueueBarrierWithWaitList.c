@@ -33,21 +33,20 @@ POname(clEnqueueBarrierWithWaitList)(cl_command_queue command_queue,
 CL_API_SUFFIX__VERSION_1_2
 {
   _cl_command_node *cmd;
-  int i = 0;
+  unsigned i;
 
-  if (num_events_in_wait_list > 0 && event_wait_list == NULL)
-    return CL_INVALID_EVENT_WAIT_LIST;
+  POCL_RETURN_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
+    CL_INVALID_EVENT_WAIT_LIST);
 
-  if (num_events_in_wait_list == 0 && event_wait_list != NULL)
-    return CL_INVALID_EVENT_WAIT_LIST;
+  POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
+    CL_INVALID_EVENT_WAIT_LIST);
 
   for (i = 0; i < num_events_in_wait_list; i++)
-    if (event_wait_list[i] == NULL)
-      return CL_INVALID_EVENT_WAIT_LIST;
+    POCL_RETURN_ERROR_COND((event_wait_list[i] == NULL), CL_INVALID_EVENT_WAIT_LIST);
 
-  if (command_queue == NULL || command_queue->device == NULL ||
-      command_queue->context == NULL)
-    return CL_INVALID_COMMAND_QUEUE;
+  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+  POCL_RETURN_ERROR_COND((command_queue->device == NULL), CL_INVALID_COMMAND_QUEUE);
+  POCL_RETURN_ERROR_COND((command_queue->context == NULL), CL_INVALID_COMMAND_QUEUE);
 
   /* Even if we do not need to create a full command, the runtime requires it */
   pocl_create_command (&cmd, command_queue, 
