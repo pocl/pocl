@@ -1,6 +1,6 @@
 #include "pocl_cl.h"
 #include "pocl_util.h"
-#include <sys/time.h>
+#include "pocl_timing.h"
 
 CL_API_ENTRY cl_event CL_API_CALL
 POname(clCreateUserEvent)(cl_context     context ,
@@ -23,21 +23,7 @@ POname(clCreateUserEvent)(cl_context     context ,
       event->status = CL_SUBMITTED;
     }
 
-#ifndef _MSC_VER
-  struct timeval current;
-  gettimeofday(&current, NULL);
-  event->time_queue = (current.tv_sec * 1000000 + current.tv_usec)*1000;
-#else
-  FILETIME ft;
-  cl_ulong tmpres = 0;
-  GetSystemTimeAsFileTime(&ft);
-  tmpres |= ft.dwHighDateTime;
-  tmpres <<= 32;
-  tmpres |= ft.dwLowDateTime;
-  tmpres -= 11644473600000000Ui64;
-  tmpres /= 10;
-  event->time_queue = tmpres;
-#endif
+  event->time_queue = pocl_gettime_ns();
     
   if (errcode_ret)
     *errcode_ret = error;
