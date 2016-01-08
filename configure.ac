@@ -1510,11 +1510,15 @@ if test -z "$CL_DISABLE_LONG"; then
   HOST_DEVICE_EXTENSIONS="$HOST_DEVICE_EXTENSIONS cl_khr_int64 cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics"
 fi
 HOST_DEVICE_EXTENSION_DEFINES=`echo $HOST_DEVICE_EXTENSIONS | sed s/cl_khr/-Dcl_khr/g`
-AC_DEFINE_UNQUOTED([HOST_DEVICE_EXTENSIONS], ["$HOST_DEVICE_EXTENSIONS"], [aoeuaoe])
+AC_DEFINE_UNQUOTED([HOST_DEVICE_EXTENSIONS], ["$HOST_DEVICE_EXTENSIONS"],
+                   [OpenCL device extensions implemented by the host devices basic and pthreads])
 AC_SUBST([HOST_DEVICE_EXTENSION_DEFINES])
+#NB: OCL version is a property of the clPlatform, not the device. But the "host devices"
+#(basic and pthread) are probably always the ones cathing the new OCL spec versions first.
 AC_DEFINE([HOST_DEVICE_CL_VERSION_MAJOR], [2], [OpenCL major version supported by host device])
 AC_DEFINE([HOST_DEVICE_CL_VERSION_MINOR], [0], [OpenCL minor version supported by host device])
-
+AC_DEFINE_UNQUOTED([POCL_CL_VERSION], ["2.0"],
+                   [OpenCL version string as reported by clGetPlatformInfo])
 
 
 # Seems to be unused

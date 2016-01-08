@@ -31,7 +31,8 @@ int main(void)
 	if( rv != CL_SUCCESS )
 		return 1;
 	result[rvs]=0;	// spec doesn't say it is null-terminated.
-	if( strcmp( result, "OpenCL 1.2 pocl " PACKAGE_VERSION) != 0 ) {
+	if( strcmp( result, 
+	            "OpenCL " POCL_CL_VERSION " pocl " PACKAGE_VERSION ", LLVM " LLVM_VERSION) != 0 ) {
 		printf("Error: platform is: %s\n", result);
 		return 2;
 	}
