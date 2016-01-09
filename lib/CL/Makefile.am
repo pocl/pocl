@@ -158,7 +158,7 @@ libpocl_la_LDFLAGS += -lstdc++ `@TCE_CONFIG@ --libs`
 endif
 
 if BUILD_HSA
-libpocl_la_LDFLAGS += -lhsa-runtime64
+libpocl_la_LDFLAGS += ${HSA_LIBS}
 endif
 
 libpocl_la_LIBADD = devices/libpocl-devices.la
