@@ -31,7 +31,6 @@ POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VER
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
   int new_refcount;
-  POname(clFlush)(command_queue);
   POCL_RELEASE_OBJECT(command_queue, new_refcount);
   if (new_refcount == 0)
     {
