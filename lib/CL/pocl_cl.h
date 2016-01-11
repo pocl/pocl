@@ -769,11 +769,11 @@ struct _cl_sampler {
           POCL_LOCK_OBJ (*(__event));                                   \
           pocl_mem_objs_cleanup ((*__event));                           \
           (*(__event))->status = CL_COMPLETE;                           \
-          (__cq)->device->ops->broadcast(*(__event));                   \
           if ((__cq)->properties & CL_QUEUE_PROFILING_ENABLE){          \
             (*(__event))->time_end =                                    \
-              (__cq)->device->ops->get_timer_value((__cq)->device->data); \
+            (__cq)->device->ops->get_timer_value((__cq)->device->data); \
           }                                                             \
+          (__cq)->device->ops->broadcast(*(__event));                   \
           pocl_update_command_queue(*(__event));                        \
           POCL_UNLOCK_OBJ (*(__event));                                 \
         }                                                               \
