@@ -611,7 +611,7 @@ if(ENABLE_HSA)
     set(HSA_RUNTIME_DIR "/opt/hsa")
   endif()
 
-  if((IS_ABSOLUTE "${WITH_HSA_RUNTIME_DIR}") AND (EXISTS "${WITH_HSA_RUNTIME_DIR}"))
+  if((IS_ABSOLUTE "${HSA_RUNTIME_DIR}") AND (EXISTS "${HSA_RUNTIME_DIR}"))
     set(HSA_INCLUDEDIR "${HSA_RUNTIME_DIR}/include")
     set(HSA_LIBDIR "${HSA_RUNTIME_DIR}/lib")
   else()
