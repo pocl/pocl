@@ -50,6 +50,8 @@ extern "C" {
 /* Debugging macros. Also macros for marking unimplemented parts of specs or
    untested parts of the implementation. */
 
+extern int pocl_aborting;
+
 #define POCL_ABORT_UNIMPLEMENTED(MSG)                                   \
     do {                                                                \
         fprintf(stderr,"%s is unimplemented (%s:%d)\n",                 \
@@ -73,8 +75,9 @@ extern "C" {
 
 #define POCL_ABORT(...)                                                 \
     do {                                                                \
-        fprintf(stderr, __VA_ARGS__);                                  \
-        exit(2);                                                        \
+        pocl_aborting = 1;                                              \
+        fprintf(stderr, __VA_ARGS__);                                   \
+        abort();                                                        \
     } while (0)
 
 #define POCL_ERROR(x) do { if (errcode_ret != NULL) {                   \

@@ -213,6 +213,8 @@ pocl_init_devices()
   stderr_is_a_tty = isatty(fileno(stderr));
 #endif
 
+  pocl_aborting = 0;
+
   pocl_cache_init_topdir();
 
   pocl_init_queue_list();
