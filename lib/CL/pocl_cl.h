@@ -325,7 +325,7 @@ struct pocl_device_ops {
   void* (*map_mem) (void *data, void *buf_ptr, size_t offset, size_t size, void *host_ptr);
   void* (*unmap_mem) (void *data, void *host_ptr, void *device_start_ptr, size_t size);
 
-  void (*compile_kernel) (_cl_command_node* cmd);
+  void (*compile_kernel) (_cl_command_node* cmd, cl_kernel kernel, cl_device_id device);
   void (*run) (void *data, _cl_command_node* cmd);
   void (*run_native) (void *data, _cl_command_node* cmd);
 

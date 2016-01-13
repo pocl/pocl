@@ -73,11 +73,19 @@ POname(clCreateKernel)(cl_program program,
 
   POCL_INIT_OBJECT (kernel);
 
+  kernel->name = strdup(kernel_name);
+  POCL_GOTO_ERROR_ON((kernel->name == NULL), CL_OUT_OF_HOST_MEMORY,
+                     "clCreateKernel couldn't allocate memory");
+  kernel->context = program->context;
+  kernel->program = program;
+  kernel->next = NULL;
+
   for (device_i = 0; device_i < program->num_devices; ++device_i)
     {
       if (device_i > 0)
         POname(clRetainKernel) (kernel);
 
+      cl_device_id device = program->devices[device_i];
       /* If there is no device dir for this device, the program was
          not built for that device in clBuildProgram. This seems to
          be OK by the standard. */
@@ -91,19 +99,19 @@ POname(clCreateKernel)(cl_program program,
         {
           POCL_MSG_ERR("Failed to get kernel metadata "
             "for kernel %s on device %s\n", kernel_name,
-              program->devices[device_i]->short_name);
+              device->short_name);
           goto ERROR;
-        } 
+        }
 
+      if (device->spmd)
+        {
+          error = pocl_llvm_generate_workgroup_function(device,
+                                          kernel, 0, 0, 0);
+          POCL_GOTO_ERROR_ON((error != CL_SUCCESS), error,
+                            "Failed to create parallel.bc\n");
+          device->ops->compile_kernel(NULL, kernel, device);
+        }
     }
-
-  kernel->name = strdup(kernel_name);
-  POCL_GOTO_ERROR_ON((kernel->name == NULL), CL_OUT_OF_HOST_MEMORY,
-                     "clCreateKernel couldn't allocate memory");
-
-  kernel->context = program->context;
-  kernel->program = program;
-  kernel->next = NULL;
 
   POCL_LOCK_OBJ (program);
   cl_kernel k = program->kernels;
@@ -111,15 +119,14 @@ POname(clCreateKernel)(cl_program program,
   kernel->next = k;
   POCL_UNLOCK_OBJ (program);
 
-
   POCL_RETAIN_OBJECT(program);
 
   errcode = CL_SUCCESS;
   goto SUCCESS;
 
 ERROR:
+  POCL_MEM_FREE(kernel->name);
   POCL_MEM_FREE(kernel);
-  kernel = NULL;
 
 SUCCESS:
   if(errcode_ret != NULL)

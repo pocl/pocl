@@ -290,7 +290,7 @@ pocl_pthread_prepare_kernel
   struct pocl_context *pc = &cmd->command.run.pc;
   cl_device_id device;
 
-  cmd->device->ops->compile_kernel (cmd);
+  cmd->device->ops->compile_kernel (cmd, NULL, NULL);
 
   /* Find which device number within the context correspond
      to current device.  */

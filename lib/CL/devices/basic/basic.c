@@ -912,7 +912,7 @@ pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
   struct data *d = node->device->data;
   cl_event *event = &(node->event);
   
-  node->device->ops->compile_kernel (node);
+  node->device->ops->compile_kernel (node, NULL, NULL);
   POCL_LOCK (d->cq_lock);
   POCL_UPDATE_EVENT_SUBMITTED(event);
   pocl_command_push(node, &d->ready_list, &d->command_list);
@@ -985,7 +985,7 @@ pocl_basic_broadcast (cl_event event)
 }
 
 void
-pocl_basic_compile_kernel (_cl_command_node *cmd)
+pocl_basic_compile_kernel (_cl_command_node *cmd, cl_kernel kernel, cl_device_id device)
 {
   if (cmd->type == CL_COMMAND_NDRANGE_KERNEL)
     pocl_check_dlhandle_cache (cmd);

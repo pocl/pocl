@@ -91,13 +91,14 @@
                            size_t const buffer_slice_pitch,    \
                            void *fill_pixel,    \
                            size_t pixel_size);  \
-  void pocl_##__DRV__##_compile_kernel (_cl_command_node *node);         \
+  void pocl_##__DRV__##_compile_kernel (_cl_command_node *node, \
+                                        cl_kernel kernel, \
+                                        cl_device_id device);  \
   void pocl_##__DRV__##_memfill (void *ptr,           \
                             size_t size,              \
                             size_t offset,            \
                             const void* pattern,      \
                             size_t pattern_size);     \
-  void pocl_##__DRV__##_compile_submitted_kernels (_cl_command_node *node);  \
   void pocl_##__DRV__##_run (void *data, _cl_command_node* cmd);        \
   void pocl_##__DRV__##_run_native (void *data, _cl_command_node* cmd); \
   void* pocl_##__DRV__##_map_mem (void *data, void *buf_ptr,         \

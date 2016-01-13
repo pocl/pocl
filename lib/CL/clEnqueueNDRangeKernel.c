@@ -239,10 +239,12 @@ DETERMINE_LOCAL_SIZE:
   pocl_cache_make_kernel_cachedir_path(cachedir, kernel->program,
                                   realdev, kernel,
                                   local_x, local_y, local_z);
-
-  error = pocl_llvm_generate_workgroup_function(realdev,
+  if (!realdev->spmd)
+    {
+      error = pocl_llvm_generate_workgroup_function(realdev,
                                 kernel, local_x, local_y, local_z);
-  if (error) goto ERROR;
+      if (error) goto ERROR;
+    }
 
   buffer_migrate_count = 0;
   buffer_count = 0;
