@@ -781,8 +781,8 @@ struct _cl_sampler {
           pthread_cond_broadcast(&((*__event)->complete_notify_signal));\
           pthread_mutex_unlock(&((*__event)->complete_notify_signal_mutex));  \
           (__cq)->device->ops->broadcast(*(__event));                   \
-          pocl_update_command_queue(*(__event));                        \
           POCL_UNLOCK_OBJ (*(__event));                                 \
+          pocl_update_command_queue(*(__event));                        \
         }                                                               \
         for (cb_ptr = (*__event)->callback_list ; cb_ptr;               \
              cb_ptr = cb_ptr->next)                                     \
