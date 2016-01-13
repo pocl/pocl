@@ -695,6 +695,10 @@ struct _cl_event {
 
   void *data; /* Device specific data */  
 
+  /* for any thread waiting on status change of this event */
+  pthread_mutex_t complete_notify_signal_mutex;
+  pthread_cond_t complete_notify_signal;
+
   /* impicit event = an event for pocl's internal use, not visible to user */
   int implicit_event;
   _cl_event * volatile next;
@@ -773,6 +777,9 @@ struct _cl_sampler {
             (*(__event))->time_end =                                    \
             (__cq)->device->ops->get_timer_value((__cq)->device->data); \
           }                                                             \
+          pthread_mutex_lock(&((*__event)->complete_notify_signal_mutex));  \
+          pthread_cond_broadcast(&((*__event)->complete_notify_signal));\
+          pthread_mutex_unlock(&((*__event)->complete_notify_signal_mutex));  \
           (__cq)->device->ops->broadcast(*(__event));                   \
           pocl_update_command_queue(*(__event));                        \
           POCL_UNLOCK_OBJ (*(__event));                                 \
