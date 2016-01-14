@@ -891,7 +891,6 @@ void check_compiler_cache (_cl_command_node *cmd)
           return;
         }
     }
-  cl_program program = cmd->command.run.kernel->program;
 
   ci = (compiler_cache_item*) malloc (sizeof (compiler_cache_item));
   ci->next = NULL;
