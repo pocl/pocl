@@ -21,11 +21,8 @@
 // THE SOFTWARE.
 
 #include "config.h"
-#if (defined LLVM_3_1 || defined LLVM_3_2)
-#include "llvm/BasicBlock.h"
-#else
+
 #include "llvm/IR/BasicBlock.h"
-#endif
 
 #ifndef _POCL_BARRIER_BLOCK_H
 #define _POCL_BARRIER_BLOCK_H

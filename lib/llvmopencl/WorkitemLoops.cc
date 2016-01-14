@@ -23,46 +23,30 @@
 
 #define DEBUG_TYPE "workitem-loops"
 
-#include "WorkitemLoops.h"
-#include "Workgroup.h"
-#include "Barrier.h"
-#include "Kernel.h"
-#include "config.h"
+#include <iostream>
+#include <map>
+#include <sstream>
+#include <vector>
+
 #include "pocl.h"
 
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CommandLine.h"
-#ifdef LLVM_3_1
-#include "llvm/Support/IRBuilder.h"
-#include "llvm/Support/TypeBuilder.h"
-#include "llvm/Target/TargetData.h"
-#include "llvm/Instructions.h"
-#include "llvm/Module.h"
-#include "llvm/ValueSymbolTable.h"
-#elif defined LLVM_3_2
-#include "llvm/IRBuilder.h"
-#include "llvm/TypeBuilder.h"
-#include "llvm/Instructions.h"
-#include "llvm/Module.h"
-#include "llvm/ValueSymbolTable.h"
-#else
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/TypeBuilder.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ValueSymbolTable.h"
-#endif
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
+#include "WorkitemLoops.h"
+#include "Workgroup.h"
+#include "Barrier.h"
+#include "Kernel.h"
 #include "WorkitemHandlerChooser.h"
-
-#include <iostream>
-#include <map>
-#include <sstream>
-#include <vector>
 
 //#define DUMP_CFGS
 
@@ -95,14 +79,7 @@ WorkitemLoops::getAnalysisUsage(AnalysisUsage &AU) const
 #else
   AU.addRequired<LoopInfoWrapperPass>();
 #endif
-#ifdef LLVM_3_1
-  AU.addRequired<TargetData>();
-#endif
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  AU.addRequired<DominatorTree>();
-#else
   AU.addRequired<DominatorTreeWrapperPass>();
-#endif
 
   AU.addRequired<VariableUniformityAnalysis>();
   AU.addPreserved<pocl::VariableUniformityAnalysis>();
@@ -122,12 +99,8 @@ WorkitemLoops::runOnFunction(Function &F)
       pocl::WorkitemHandlerChooser::POCL_WIH_LOOPS)
     return false;
 
-  #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  DT = &getAnalysis<DominatorTree>();
-  #else
   DTP = &getAnalysis<DominatorTreeWrapperPass>();
   DT = &DTP->getDomTree();
-  #endif
 #ifdef LLVM_OLDER_THAN_3_7
   LI = &getAnalysis<LoopInfo>();
 #else
@@ -151,11 +124,7 @@ WorkitemLoops::runOnFunction(Function &F)
   F.viewCFG();
 #endif
 
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  changed |= fixUndominatedVariableUses(DT, F);
-#else
   changed |= fixUndominatedVariableUses(DTP, F);
-#endif
 
 #if 0
   /* Split large BBs so we can print the Dot without it crashing. */
@@ -243,11 +212,7 @@ WorkitemLoops::CreateLoopAround
     BasicBlock::Create(C, "pregion_for_cond", F, exitBB);
 
 
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  DT->runOnFunction(*F);
-#else
   DTP->runOnFunction(*F);
-#endif
 
   //  F->viewCFG();
   /* Fix the old edges jumping to the region to jump to the basic block
@@ -316,9 +281,7 @@ WorkitemLoops::CreateLoopAround
      LLVM's MDBuilder::createAnonymousTBAARoot(). */
 #ifdef LLVM_3_7
   MDNode *Dummy = MDNode::getTemporary(C, ArrayRef<Metadata*>()).release();
-#elif LLVM_OLDER_THAN_3_6
-  MDNode *Dummy = MDNode::getTemporary(C, ArrayRef<Value*>());
-#elif LLVM_OLDER_THAN_3_7
+#else
   MDNode *Dummy = MDNode::getTemporary(C, ArrayRef<Metadata*>());
 #endif
 
@@ -332,11 +295,7 @@ WorkitemLoops::CreateLoopAround
   // We now have
   //   !1 = metadata !{metadata !1} <- self-referential root
 
-#ifdef LLVM_3_3
-  loopBranch->setMetadata("llvm.loop.parallel", Root);
-#else
   loopBranch->setMetadata("llvm.loop", Root);
-#endif
   region.AddParallelLoopMetadata(Root);
 
 
@@ -645,11 +604,7 @@ WorkitemLoops::FixMultiRegionVariables(ParallelRegion *region)
                  ue = instruction->use_end();
                ui != ue; ++ui) 
             {
-#if defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4
-              llvm::Instruction *user = dyn_cast<Instruction>(*ui);
-#else
               llvm::Instruction *user = dyn_cast<Instruction>(ui->getUser());
-#endif
 
               if (user == NULL) continue;
               // If the instruction is used outside this region inside another
@@ -887,11 +842,7 @@ WorkitemLoops::AddContextSaveRestore
          ue = instruction->use_end();
        ui != ue; ++ui) 
     {
-#if defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4
-      llvm::Instruction *user = cast<Instruction>(*ui);
-#else
       llvm::Instruction *user = cast<Instruction>(ui->getUser());
-#endif
       if (user == NULL) continue;
       if (user == theStore) continue;
       uses.push_back(user);

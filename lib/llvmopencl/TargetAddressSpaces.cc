@@ -21,20 +21,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "config.h"
 #include <iostream>
 #include <string>
 #include <set>
 
-#ifdef LLVM_3_2
-# include <llvm/Instructions.h>
-# include <llvm/IntrinsicInst.h>
-#else
+#include "pocl.h"
+
 # include <llvm/IR/Instructions.h>
 # include <llvm/IR/Module.h>
 # include <llvm/IR/IntrinsicInst.h>
-#endif
-
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/Transforms/Utils/ValueMapper.h>
 #include <llvm/Transforms/Utils/Cloning.h>
@@ -43,7 +38,6 @@
 #include "TargetAddressSpaces.h"
 #include "Workgroup.h"
 #include "LLVMUtils.h"
-#include "pocl.h"
 
 #define DEBUG_TARGET_ADDRESS_SPACES
 
@@ -211,15 +205,10 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
 
   } else if (arch.startswith("arm")) {
     /* Same thing happens here as with x86_64 above.
-     * NB: LLVM 3.5 on ARM did not need this yet, for some reason
      */
-#if defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4 || defined_LLVM_3_5
-    return false;
-#else
     addrSpaceMap[POCL_ADDRESS_SPACE_GLOBAL] =
         addrSpaceMap[POCL_ADDRESS_SPACE_LOCAL] =
         addrSpaceMap[POCL_ADDRESS_SPACE_CONSTANT] = 0;
-#endif
   } else if (arch.startswith("tce")) {
     /* TCE requires the remapping. */
     addrSpaceMap[POCL_ADDRESS_SPACE_GLOBAL] = 3;
@@ -336,7 +325,6 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
            ++ii) {
         llvm::Instruction *instr = ii;
 
-#if !(defined(LLVM_3_2) || defined(LLVM_3_3))
         if (isa<AddrSpaceCastInst>(instr)) {
           // Convert (now illegal) addresspacecasts to bitcasts.
 
@@ -355,7 +343,6 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
           ii = bbi->begin();
           continue;
         }
-#endif
         
         if (!isa<CallInst>(instr)) continue;
 
@@ -380,11 +367,7 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
     if (i->first->getNumUses() > 0) {
       for (Value::use_iterator ui = i->first->use_begin(), 
              ue = i->first->use_end(); ui != ue; ++ui) {
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-        User* user = *ui;
-#else
         User* user = (*ui).getUser();
-#endif
         user->dump();
       }
       assert ("All users of the function were not fixed?" &&

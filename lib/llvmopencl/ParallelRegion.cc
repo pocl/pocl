@@ -22,29 +22,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "ParallelRegion.h"
-#include "Barrier.h"
-#include "Kernel.h"
-#include "config.h"
-#include "pocl.h"
-#ifdef LLVM_3_1
-#include "llvm/Support/IRBuilder.h"
-#include "llvm/ValueSymbolTable.h"
-#elif defined LLVM_3_2
-#include "llvm/IRBuilder.h"
-#include "llvm/ValueSymbolTable.h"
-#else
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/ValueSymbolTable.h"
-#endif
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/Transforms/Utils/Cloning.h"
-
 #include <set>
 #include <sstream>
 #include <map>
 #include <algorithm>
 
+#include "pocl.h"
+
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/ValueSymbolTable.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/Cloning.h"
+
+#include "ParallelRegion.h"
+#include "Barrier.h"
+#include "Kernel.h"
 #include "DebugHelpers.h"
 
 using namespace std;
@@ -296,9 +288,7 @@ ParallelRegion::insertLocalIdInit(llvm::BasicBlock* entry,
   Module *M = entry->getParent()->getParent();
 
   int size_t_width = 32;
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  if (M->getPointerSize() == llvm::Module::Pointer64)
-#elif (defined LLVM_3_5 || defined LLVM_3_6) 
+#ifdef LLVM_OLDER_THAN_3_7
   // This breaks (?) if _local_size_x is not stored in AS0,
   // but it always will be as it's just a pseudo variable that
   // will be scalarized.
@@ -482,25 +472,6 @@ ParallelRegion::Verify()
 void
 ParallelRegion::AddParallelLoopMetadata(llvm::MDNode *identifier) {
 
-#ifdef LLVM_OLDER_THAN_3_6
-  for (iterator i = begin(), e = end(); i != e; ++i) {
-    BasicBlock* bb = *i;      
-    for (BasicBlock::iterator ii = bb->begin(), ee = bb->end();
-         ii != ee; ii++) {
-      if (ii->mayReadOrWriteMemory()) {
-        std::vector<Value*> loopIds;
-        MDNode *oldIds = ii->getMetadata("llvm.mem.parallel_loop_access");
-        if (oldIds != NULL) {
-          for (unsigned i = 0; i < oldIds->getNumOperands(); ++i) {
-            loopIds.push_back(oldIds->getOperand(i));
-          }
-        }
-        ii->setMetadata("llvm.mem.parallel_loop_access", 
-                        MDNode::get(bb->getContext(), loopIds));
-      }
-    }
-  }
-#else
   for (iterator i = begin(), e = end(); i != e; ++i) {
     BasicBlock* bb = *i;      
     for (BasicBlock::iterator ii = bb->begin(), ee = bb->end();
@@ -515,7 +486,6 @@ ParallelRegion::AddParallelLoopMetadata(llvm::MDNode *identifier) {
       }
     }
   }
-#endif
 }
 
 void
@@ -524,38 +494,6 @@ ParallelRegion::AddIDMetadata(
     std::size_t x, 
     std::size_t y, 
     std::size_t z) {
-#ifdef LLVM_OLDER_THAN_3_6 
-    int counter = 1;
-    Value *v1[] = {
-        MDString::get(context, "WI_region"),      
-        ConstantInt::get(Type::getInt32Ty(context), pRegionId)};      
-    MDNode* mdRegion = MDNode::get(context, v1);  
-    Value *v2[] = {
-        MDString::get(context, "WI_xyz"),      
-        ConstantInt::get(Type::getInt32Ty(context), x),
-        ConstantInt::get(Type::getInt32Ty(context), y),      
-        ConstantInt::get(Type::getInt32Ty(context), z)};      
-    MDNode* mdXYZ = MDNode::get(context, v2);  
-    Value *v[] = {
-        MDString::get(context, "WI_data"),      
-        mdRegion,
-        mdXYZ};
-    MDNode* md = MDNode::get(context, v);              
-    
-    for (iterator i = begin(), e = end(); i != e; ++i) {
-      BasicBlock* bb = *i;      
-      for (BasicBlock::iterator ii = bb->begin();
-            ii != bb->end(); ii++) {
-        Value *v3[] = {
-            MDString::get(context, "WI_counter"),      
-            ConstantInt::get(Type::getInt32Ty(context), counter)};      
-        MDNode* mdCounter = MDNode::get(context, v3);  
-        counter++;
-        ii->setMetadata("wi", md);
-        ii->setMetadata("wi_counter", mdCounter);
-      }
-    }
-#else
     int counter = 1;
     Metadata *v1[] = {
         MDString::get(context, "WI_region"),      
@@ -592,7 +530,6 @@ ParallelRegion::AddIDMetadata(
         ii->setMetadata("wi_counter", mdCounter);
       }
     }
-#endif
 }
 
 
@@ -720,31 +657,10 @@ ParallelRegion::InjectPrintF
        /*Name=*/"printf", M); 
     printfFunc->setCallingConv(CallingConv::C);
 
-#if (defined LLVM_3_1 || defined LLVM_3_2)
-    AttrListPtr func_printf_PAL;
-#else
     AttributeSet func_printf_PAL;
-#endif
     {
-#ifdef LLVM_3_1
-      SmallVector<AttributeWithIndex, 4> Attrs;
-      AttributeWithIndex PAWI;
-      PAWI.Index = 1U; 
-      PAWI.Attrs = Attribute::NoCapture;
-      Attrs.push_back(PAWI);
-      PAWI.Index = 4294967295U; 
-      PAWI.Attrs = Attribute::NoUnwind;
-      Attrs.push_back(PAWI);
-      func_printf_PAL = AttrListPtr::get(Attrs.begin(), Attrs.end());
-#elif defined LLVM_3_2
-      SmallVector<AttributeWithIndex, 4> Attrs;
-      Attrs.push_back(AttributeWithIndex::get(M->getContext(), 1U, Attributes::NoCapture));
-      Attrs.push_back(AttributeWithIndex::get(M->getContext(), 4294967295U, Attributes::NoUnwind));
-      func_printf_PAL = AttrListPtr::get(M->getContext(), Attrs);
-#else
       func_printf_PAL.addAttribute( M->getContext(), 1U, Attribute::NoCapture);
       func_printf_PAL.addAttribute( M->getContext(), 4294967295U, Attribute::NoUnwind);
-#endif
     }
     printfFunc->setAttributes(func_printf_PAL);
   }

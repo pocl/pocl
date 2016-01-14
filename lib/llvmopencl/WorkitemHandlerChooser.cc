@@ -23,17 +23,17 @@
 
 #define DEBUG_TYPE "workitem-loops"
 
+#include <iostream>
+
+#include "llvm/Analysis/PostDominators.h"
+#include "llvm/Analysis/LoopInfo.h"
+
 #include "WorkitemHandlerChooser.h"
 #include "WorkitemLoops.h"
 #include "WorkitemReplication.h"
 #include "Workgroup.h"
 #include "CanonicalizeBarriers.h"
 #include "Kernel.h"
-
-#include "llvm/Analysis/PostDominators.h"
-#include "llvm/Analysis/LoopInfo.h"
-
-#include <iostream>
 
 using namespace llvm;
 using namespace pocl;
@@ -44,7 +44,6 @@ namespace {
       "workitem-handler-chooser", 
       "Finds the best way to handle work-items to produce a multi-WG function.",
       false, false);
-  
 }
 
 namespace pocl {

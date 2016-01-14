@@ -245,19 +245,13 @@ typedef struct _cl_command_node_struct
 
 /* Additional LLVM version macros to simplify ifdefs */
 
-#if defined(LLVM_3_2) || defined(LLVM_3_3) || defined(LLVM_3_4)
-#define LLVM_OLDER_THAN_3_5 1
+#if (defined LLVM_3_6)
+# define LLVM_OLDER_THAN_3_7 1
+# define LLVM_OLDER_THAN_3_8 1
 #endif
 
-#if defined(LLVM_3_2) || defined(LLVM_3_3) || defined(LLVM_3_4) || \
-    defined(LLVM_3_5)
-
-# define LLVM_OLDER_THAN_3_6 1
-# define LLVM_OLDER_THAN_3_7 1
-#elif (defined LLVM_3_6)
-
-# define LLVM_OLDER_THAN_3_7 1
-
+#if (defined LLVM_3_7)
+# define LLVM_OLDER_THAN_3_8 1
 #endif
 
 #endif /* POCL_H */

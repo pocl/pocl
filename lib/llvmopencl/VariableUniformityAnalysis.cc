@@ -20,30 +20,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "CompilerWarnings.h"
-IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
-#include "config.h"
-#include "pocl.h"
-
 #include <sstream>
 #include <iostream>
 
-#ifdef LLVM_3_2
-#include "llvm/Metadata.h"
-#include "llvm/Constants.h"
-#include "llvm/Module.h"
-#include "llvm/Instructions.h"
-#include "llvm/ValueSymbolTable.h"
-#include "llvm/DataLayout.h"
-#else
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
+#include "pocl.h"
+
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/IR/DataLayout.h"
-#endif
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Analysis/PostDominators.h"
 
@@ -84,21 +74,10 @@ VariableUniformityAnalysis::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
   AU.addPreserved<LoopInfoWrapperPass>();
 #endif
   // required by LoopInfo:
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  AU.addRequired<DominatorTree>();
-  AU.addPreserved<DominatorTree>();
-#else
   AU.addRequired<DominatorTreeWrapperPass>();
   AU.addPreserved<DominatorTreeWrapperPass>();
-#endif
 
-#ifdef LLVM_3_1
-  AU.addRequired<TargetData>();
-  AU.addPreserved<TargetData>();
-#elif (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  AU.addRequired<DataLayout>();
-  AU.addPreserved<DataLayout>();
-#elif (defined OLDER_THAN_LLVM_3_7)
+#ifdef LLVM_OLDER_THAN_3_7
   AU.addRequired<DataLayoutPass>();
   AU.addPreserved<DataLayoutPass>();
 #endif
@@ -330,11 +309,7 @@ VariableUniformityAnalysis::isUniform(llvm::Function *f, llvm::Value* v) {
     for (Instruction::use_iterator ui = instruction->use_begin(),
            ue = instruction->use_end();
          ui != ue; ++ui) {
-#if defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4
-      llvm::Instruction *user = cast<Instruction>(*ui);
-#else
       llvm::Instruction *user = cast<Instruction>(ui->getUser());
-#endif
       if (user == NULL) continue;
       
       llvm::StoreInst *store = dyn_cast<llvm::StoreInst>(user);
@@ -425,23 +400,11 @@ VariableUniformityAnalysis::isUniform(llvm::Function *f, llvm::Value* v) {
   // Atomic operations might look like uniform if only considering the operands
   // (access a global memory location of which ordering by default is not
   // constrained), but their semantics have ordering: Each work-item should get
-  // their own value from that memory location. isAtomic() check was introduced
-  // only in LLVM 3.6 so we have to use a more general mayWriteToMemory check
-  // with earlier versions. 
-#if defined(LLVM_3_2) || defined(LLVM_3_3) || defined(LLVM_3_4) || defined(LLVM_3_5)
-  // Volatile loads are set to mayWriteToMemory (perhaps because they might read
-  // an I/O register which might update at read) which are treated as a special case 
-  // here as we know this is not the case in OpenCL C memory accesses.
-  if (instr->mayWriteToMemory() && !isa<llvm::LoadInst>(instr)) {
-      setUniform(f, v, false);
-      return false;
-  }
-#else
+  // their own value from that memory location.
   if (instr->isAtomic()) {
       setUniform(f, v, false);
       return false;
   }
-#endif
 
   // not computed previously, scan all operands of the instruction
   // and figure out their uniformity recursively

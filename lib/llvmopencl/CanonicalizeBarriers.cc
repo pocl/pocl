@@ -21,31 +21,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include <iostream>
+
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "pocl.h"
-#include "config.h"
+
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Module.h"
+#include "llvm/IR/Dominators.h"
+
 #include "CanonicalizeBarriers.h"
 #include "BarrierBlock.h"
 #include "Barrier.h"
 #include "Workgroup.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include <iostream>
-
 #include "VariableUniformityAnalysis.h"
 
-#if (defined LLVM_3_1 || defined LLVM_3_2)
-#include "llvm/Instructions.h"
-#include "llvm/Module.h"
-#else
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/Module.h"
-#endif
-
-#if ! (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-#include "llvm/IR/Dominators.h"
-#endif
 POP_COMPILER_DIAGS
 
 using namespace llvm;
@@ -62,11 +55,7 @@ char CanonicalizeBarriers::ID = 0;
 void
 CanonicalizeBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 {
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  AU.addRequired<DominatorTree>();
-#else
   AU.addRequired<DominatorTreeWrapperPass>();
-#endif
   AU.addPreserved<VariableUniformityAnalysis>();    
 }
 
@@ -128,11 +117,7 @@ CanonicalizeBarriers::runOnFunction(Function &F)
     }
   }
 
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  DT = getAnalysisIfAvailable<DominatorTree>();
-#else
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-#endif
   return ProcessFunction(F);
 }
 

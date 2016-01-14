@@ -28,16 +28,9 @@
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "config.h"
-#if (defined LLVM_3_1 || defined LLVM_3_2)
-#include "llvm/Function.h"
-#else
+
 #include "llvm/IR/Function.h"
-#endif
-
-#if ! (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
 #include "llvm/IR/Dominators.h"
-#endif
-
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 
@@ -64,13 +57,8 @@ namespace pocl {
   protected:
     
     void movePhiNodes(llvm::BasicBlock* src, llvm::BasicBlock* dst);
-    #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-    bool fixUndominatedVariableUses(llvm::DominatorTree *DT, llvm::Function &F);
-    bool dominatesUse(llvm::DominatorTree *DT, llvm::Instruction &I, unsigned i);
-    #else
     bool fixUndominatedVariableUses(llvm::DominatorTreeWrapperPass *DT, llvm::Function &F);
     bool dominatesUse(llvm::DominatorTreeWrapperPass *DT, llvm::Instruction &I, unsigned i);
-    #endif
 
     unsigned size_t_width;
 

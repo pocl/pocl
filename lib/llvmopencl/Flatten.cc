@@ -22,21 +22,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include <iostream>
+#include <string>
+
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "config.h"
-#include <iostream>
-#include <string>
-#include "Workgroup.h"
+
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Pass.h"
-#if (defined LLVM_3_1 || defined LLVM_3_2)
-#include "llvm/Module.h"
-#else
 #include "llvm/IR/Module.h"
-#endif
+
+#include "Workgroup.h"
 
 POP_COMPILER_DIAGS
 
@@ -76,16 +75,6 @@ Flatten::runOnModule(Module &M)
       if (KernelName == f->getName() || 
           (KernelName == "" && pocl::Workgroup::isKernelToProcess(*f)))
         {
-#ifdef LLVM_3_1
-          f->removeFnAttr(Attribute::AlwaysInline);
-          f->addFnAttr(Attribute::NoInline);
-#elif defined LLVM_3_2
-          AttrBuilder b;
-          f->removeFnAttr
-            (Attributes::get(M.getContext(), 
-                             b.addAttribute(Attributes::AlwaysInline)));
-          f->addFnAttr(Attributes::NoInline);
-#else
           AttributeSet attrs;
           f->removeAttributes(
               AttributeSet::FunctionIndex, 
@@ -94,7 +83,6 @@ Flatten::runOnModule(Module &M)
                AttributeSet::FunctionIndex, Attribute::AlwaysInline));
 
           f->addFnAttr(Attribute::NoInline);
-#endif
 
           f->setLinkage(llvm::GlobalValue::ExternalLinkage);
           changed = true;
@@ -104,16 +92,6 @@ Flatten::runOnModule(Module &M)
         } 
       else
         {
-#ifdef LLVM_3_1
-          f->removeFnAttr(Attribute::NoInline);
-          f->addFnAttr(Attribute::AlwaysInline);
-#elif defined LLVM_3_2
-          AttrBuilder b;
-          f->removeFnAttr(Attributes::get
-                          (M.getContext(), 
-                           b.addAttribute(Attributes::NoInline)));
-          f->addFnAttr(Attributes::AlwaysInline);
-#else
           AttributeSet attrs;
           f->removeAttributes(
               AttributeSet::FunctionIndex, 
@@ -121,7 +99,6 @@ Flatten::runOnModule(Module &M)
                                  AttributeSet::FunctionIndex, 
                                  Attribute::NoInline));
           f->addFnAttr(Attribute::AlwaysInline);
-#endif
 
           f->setLinkage(llvm::GlobalValue::InternalLinkage);
           changed = true;
@@ -166,11 +143,7 @@ Flatten::runOnModule(Module &M)
 
     for (Value::use_iterator i = v->use_begin(), e = v->use_end();
 	 i != e; ++i) {
-#if defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4
-      llvm::User *user = *i;
-#else
       llvm::User *user = i->getUser();
-#endif
       if (Instruction *ci = dyn_cast<Instruction>(user) {
         // Prevent infinite looping on recursive functions
         // (though OpenCL does not allow this?)

@@ -21,29 +21,19 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include <map>
+#include <set>
+
 #ifndef POCL_BARRIER_TAIL_REPLICATION
 #define POCL_BARRIER_TAIL_REPLICATION
 
-#include "config.h"
 #include "pocl.h"
 
-#if (defined LLVM_3_1 || defined LLVM_3_2)
-#include "llvm/Function.h"
-#else
 #include "llvm/IR/Function.h"
-#endif
-
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-#include "llvm/Analysis/Dominators.h"
-#else
 #include "llvm/IR/Dominators.h"
-#endif
-
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Pass.h"
 #include "llvm/Transforms/Utils/Cloning.h"
-#include <map>
-#include <set>
 
 namespace pocl {
   class Workgroup;
@@ -64,9 +54,7 @@ namespace pocl {
     typedef std::map<llvm::Value *, llvm::Value *> ValueValueMap;
 
     llvm::DominatorTree *DT;
-#if ! (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
     llvm::DominatorTreeWrapperPass *DTP;
-#endif
 
 #ifdef LLVM_OLDER_THAN_3_7
     llvm::LoopInfo *LI;
