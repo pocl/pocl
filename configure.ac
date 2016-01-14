@@ -99,13 +99,17 @@ case "$LLVM_VERSION" in
      LLVM_LDFLAGS="$LLVM_LDFLAGS `$LLVM_CONFIG --system-libs`"
    ;;
      3.7*)
-     AC_DEFINE([LLVM_3_7], [], "Using LLVM svn, upcoming 3.7")
+     AC_DEFINE([LLVM_3_7], [], "Using LLVM 3.7")
+     LLVM_LDFLAGS="$LLVM_LDFLAGS `$LLVM_CONFIG --system-libs`"
+   ;;
+     3.8*)
+     AC_DEFINE([LLVM_3_8], [], "Using LLVM 3.8")
      LLVM_LDFLAGS="$LLVM_LDFLAGS `$LLVM_CONFIG --system-libs`"
    ;;
      *)
    AC_MSG_ERROR(
    [
-Unsupported LLVM version. Please use LLVM version 3.6 or 3.7.
+Unsupported LLVM version. Please use LLVM version 3.6 or 3.7 or 3.8.
    ])
    LLVM_VERSION=
    ;;

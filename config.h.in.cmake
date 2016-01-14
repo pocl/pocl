@@ -84,6 +84,9 @@
 /* "Using LLVM 3.7" */
 #cmakedefine LLVM_3_7
 
+/* "Using LLVM 3.8" */
+#cmakedefine LLVM_3_8
+
 
 /* Defined to greatest expected alignment for extended types, in bytes. */
 #define MAX_EXTENDED_ALIGNMENT @MAX_EXTENDED_ALIGNMENT@
