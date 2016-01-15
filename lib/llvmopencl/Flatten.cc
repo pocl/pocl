@@ -70,7 +70,7 @@ Flatten::runOnModule(Module &M)
   bool changed = false;
   for (llvm::Module::iterator i = M.begin(), e = M.end(); i != e; ++i)
     {
-      llvm::Function *f = i;
+      llvm::Function *f = &*i;
       if (f->isDeclaration()) continue;
       if (KernelName == f->getName() || 
           (KernelName == "" && pocl::Workgroup::isKernelToProcess(*f)))

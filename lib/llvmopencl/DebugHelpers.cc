@@ -168,14 +168,14 @@ void dumpCFG(
   }
 
   for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
-    BasicBlock *b = i;
+    BasicBlock *b = &*i;
     if (regionBBs.find(b) != regionBBs.end()) continue;
     printBasicBlock
       (b, s, highlights != NULL && highlights->find(b) != highlights->end());
   }
 
   for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
-    BasicBlock *b = i;
+    BasicBlock *b = &*i;
     printBranches
       (b, s, highlights != NULL && highlights->find(b) != highlights->end());
   }
@@ -191,7 +191,7 @@ bool chopBBs(llvm::Function &F, llvm::Pass &P) {
   do {
     fchanged = false;
     for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
-      BasicBlock *b = i;
+      BasicBlock *b = &*i;
       
       if (b->size() > MAX_INSTRUCTIONS_PER_BB + 1)
         {
@@ -205,7 +205,7 @@ bool chopBBs(llvm::Function &F, llvm::Pass &P) {
 #ifdef LLVM_OLDER_THAN_3_7
           SplitBlock(b, splitPoint, &P);
 #else
-          SplitBlock(b, splitPoint);
+          SplitBlock(b, &*splitPoint);
 #endif
           fchanged = true;
           break;

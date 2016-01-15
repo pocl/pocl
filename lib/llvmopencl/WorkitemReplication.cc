@@ -139,8 +139,8 @@ WorkitemReplication::ProcessFunction(Function &F)
 
   BasicBlockVector original_bbs;
   for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
-      if (!Barrier::hasBarrier(i))
-        original_bbs.push_back(i);
+      if (!Barrier::hasBarrier(&*i))
+        original_bbs.push_back(&*i);
   }
 
 #ifdef LLVM_OLDER_THAN_3_7

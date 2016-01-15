@@ -70,7 +70,7 @@ ParallelRegion::GenerateTempNames(llvm::BasicBlock *bb)
 {
   for (llvm::BasicBlock::iterator i = bb->begin(), e = bb->end(); i != e; ++i)
     {
-      llvm::Instruction *instr = i;
+      llvm::Instruction *instr = &*i;
       if (instr->hasName() || !instr->isUsedOutsideOfBlock(bb)) continue;
       int tempCounter = 0;
       std::string tempName = "";
@@ -160,7 +160,7 @@ ParallelRegion::remap(ValueToValueMapTy &map)
 
     for (BasicBlock::iterator ii = (*i)->begin(), ee = (*i)->end();
          ii != ee; ++ii)
-      RemapInstruction(ii, map,
+      RemapInstruction(&*ii, map,
                        RF_IgnoreMissingEntries | RF_NoModuleLevelChanges);
 
 #ifdef DEBUG_REMAP
@@ -204,8 +204,12 @@ ParallelRegion::chainAfter(ParallelRegion *region)
     successor->getParent()->getBasicBlockList();
   
   for (iterator i = begin(), e = end(); i != e; ++i)
+
+#ifdef LLVM_OLDER_THAN_3_8
     bb_list.insertAfter(tail, *i);
-  
+#else
+    bb_list.insertAfter(tail->getIterator(), *i);
+#endif
   t->setSuccessor(0, entryBB());
 
   t = exitBB()->getTerminator();
@@ -360,10 +364,10 @@ ParallelRegion::Create(const SmallPtrSet<BasicBlock *, 8>& bbs, BasicBlock *entr
   // is the same as original function order.
   Function *F = entry->getParent();
   for (Function::iterator i = F->begin(), e = F->end(); i != e; ++i) {
-    BasicBlock *b = i;
+    BasicBlock *b = &*i;
     for (SmallPtrSetIterator<BasicBlock *> j = bbs.begin(); j != bbs.end(); ++j) {
       if (*j == b) {
-        new_region->push_back(i);
+        new_region->push_back(&*i);
         if (entry == *j)
             new_region->setEntryBBIndex(new_region->size() - 1);
         else if (exit == *j)
@@ -591,7 +595,7 @@ llvm::Instruction*
 ParallelRegion::LocalIDZLoad()
 {
   if (LocalIDZLoadInstr != NULL) return LocalIDZLoadInstr;
-  IRBuilder<> builder(entryBB()->getFirstInsertionPt());
+  IRBuilder<> builder(&*(entryBB()->getFirstInsertionPt()));
   return LocalIDZLoadInstr = 
     builder.CreateLoad
     (entryBB()->getParent()->getParent()->getGlobalVariable(POCL_LOCAL_ID_Z_GLOBAL));
@@ -605,7 +609,7 @@ llvm::Instruction*
 ParallelRegion::LocalIDYLoad()
 {
   if (LocalIDYLoadInstr != NULL) return LocalIDYLoadInstr;
-  IRBuilder<> builder(entryBB()->getFirstInsertionPt());
+  IRBuilder<> builder(&*(entryBB()->getFirstInsertionPt()));
   return LocalIDYLoadInstr = 
     builder.CreateLoad
     (entryBB()->getParent()->getParent()->getGlobalVariable(POCL_LOCAL_ID_Y_GLOBAL));
@@ -619,7 +623,7 @@ llvm::Instruction*
 ParallelRegion::LocalIDXLoad()
 {
   if (LocalIDXLoadInstr != NULL) return LocalIDXLoadInstr;
-  IRBuilder<> builder(entryBB()->getFirstInsertionPt());
+  IRBuilder<> builder(&*(entryBB()->getFirstInsertionPt()));
   return LocalIDXLoadInstr = 
     builder.CreateLoad
     (entryBB()->getParent()->getParent()->getGlobalVariable(POCL_LOCAL_ID_X_GLOBAL));
@@ -751,7 +755,7 @@ ParallelRegion::InjectVariablePrintouts()
       for (llvm::BasicBlock::iterator instr = bb->begin();
            instr != bb->end(); ++instr) 
         {
-          llvm::Instruction *instruction = instr;
+          llvm::Instruction *instruction = &*instr;
           if (isa<PointerType>(instruction->getType()) ||
               !instruction->hasName()) continue;
           std::string name = instruction->getName().str();
@@ -800,7 +804,7 @@ ParallelRegion::LocalizeIDLoads()
       for (llvm::BasicBlock::iterator instrI = bb->begin();
            instrI != bb->end(); ++instrI) 
         {
-	  llvm::Instruction *instr = instrI;
+          llvm::Instruction *instr = &*instrI;
 	  if (instr == LocalIDXLoadInstr ||
 	      instr == LocalIDYLoadInstr ||
 	      instr == LocalIDZLoadInstr) continue;

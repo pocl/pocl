@@ -345,7 +345,7 @@ WorkitemLoops::ProcessFunction(Function &F)
           original_parallel_regions);
 #endif
 
-  IRBuilder<> builder(F.getEntryBlock().getFirstInsertionPt());
+  IRBuilder<> builder(&*(F.getEntryBlock().getFirstInsertionPt()));
   localIdXFirstVar = 
     builder.CreateAlloca
     (IntegerType::get(F.getContext(), size_t_width), 0, ".pocl.local_id_x_init");
@@ -542,7 +542,7 @@ WorkitemLoops::ProcessFunction(Function &F)
 
     if (!peeledRegion[pr]) continue;
     pr->insertPrologue(0, 0, 0);
-    builder.SetInsertPoint(pr->entryBB()->getFirstInsertionPt());
+    builder.SetInsertPoint(&*(pr->entryBB()->getFirstInsertionPt()));
     builder.CreateStore
       (ConstantInt::get(IntegerType::get(F.getContext(), size_t_width), 1), 
        localIdXFirstVar);       
@@ -582,7 +582,7 @@ WorkitemLoops::FixMultiRegionVariables(ParallelRegion *region)
       for (llvm::BasicBlock::iterator instr = bb->begin();
            instr != bb->end(); ++instr) 
         {
-          llvm::Instruction *instruction = instr;
+          llvm::Instruction *instruction = &*instr;
           instructionsInRegion.insert(instruction);
         }
     }
@@ -596,9 +596,9 @@ WorkitemLoops::FixMultiRegionVariables(ParallelRegion *region)
       for (llvm::BasicBlock::iterator instr = bb->begin();
            instr != bb->end(); ++instr) 
         {
-          llvm::Instruction *instruction = instr;
+          llvm::Instruction *instruction = &*instr;
 
-          if (ShouldNotBeContextSaved(instr)) continue;
+          if (ShouldNotBeContextSaved(&*instr)) continue;
 
           for (Instruction::use_iterator ui = instruction->use_begin(),
                  ue = instruction->use_end();
@@ -651,12 +651,15 @@ WorkitemLoops::AddContextSave
     }
 
   /* Save the produced variable to the array. */
-  BasicBlock::iterator definition = dyn_cast<Instruction>(instruction);
-
+#ifdef LLVM_OLDER_THAN_3_8
+  BasicBlock::iterator definition = (dyn_cast<Instruction>(instruction));
+#else
+  BasicBlock::iterator definition = (dyn_cast<Instruction>(instruction))->getIterator();
+#endif
   ++definition;
   while (isa<PHINode>(definition)) ++definition;
 
-  IRBuilder<> builder(definition); 
+  IRBuilder<> builder(&*definition);
   std::vector<llvm::Value *> gepArgs;
   gepArgs.push_back(ConstantInt::get(IntegerType::get(instruction->getContext(), size_t_width), 0));
 
@@ -756,7 +759,8 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
   if (contextArrays.find(varName) != contextArrays.end())
     return contextArrays[varName];
 
-  IRBuilder<> builder(instruction->getParent()->getParent()->getEntryBlock().getFirstInsertionPt());
+  BasicBlock &bb = instruction->getParent()->getParent()->getEntryBlock();
+  IRBuilder<> builder(&*(bb.getFirstInsertionPt()));
 
   llvm::Type *elementType;
   if (isa<AllocaInst>(instruction))

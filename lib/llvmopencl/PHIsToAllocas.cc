@@ -73,7 +73,7 @@ PHIsToAllocas::runOnFunction(Function &F) {
   for (Function::iterator bb = F.begin(); bb != F.end(); ++bb) {
     for (BasicBlock::iterator p = bb->begin(); 
          p != bb->end(); ++p) {
-        Instruction* instr = p;
+        Instruction* instr = &*p;
         if (isa<PHINode>(instr)) {
             PHIs.push_back(instr);
         }
@@ -120,7 +120,7 @@ PHIsToAllocas::BreakPHIToAllocas(PHINode* phi) {
 
   const bool OriginalPHIWasUniform = VUA.isUniform(function, phi);
 
-  IRBuilder<> builder(function->getEntryBlock().getFirstInsertionPt());
+  IRBuilder<> builder(&*(function->getEntryBlock().getFirstInsertionPt()));
 
   llvm::Instruction *alloca = 
     builder.CreateAlloca(phi->getType(), 0, allocaName);

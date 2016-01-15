@@ -90,7 +90,7 @@ AutomaticLocals::runOnModule(Module &M)
     if (!Workgroup::isKernelToProcess(*mi))
       continue;
   
-    Function *F = mi;
+    Function *F = &*mi;
 
     Function *new_kernel = ProcessAutomaticLocals(F);
     if (new_kernel != F)
@@ -134,7 +134,7 @@ AutomaticLocals::ProcessAutomaticLocals(Function *F)
     std::string funcName = "";
     funcName = F->getName().str();
     if (is_automatic_local(funcName, *i)) {
-      locals.push_back(i);
+      locals.push_back(&*i);
       // Add the parameters to the end of the function parameter list.
       parameters.push_back(i->getType());
     }
@@ -161,13 +161,13 @@ AutomaticLocals::ProcessAutomaticLocals(Function *F)
          e = F->arg_end();
        i != e; ++i) {
     j->setName(i->getName());
-    vv[i] = j;
+    vv[&*i] = &*j;
     ++j;
   }
   
   for (int i = 0; j != new_kernel->arg_end(); ++i, ++j) {
     j->setName("_local" + Twine(i));
-    vv[locals[i]] = j;
+    vv[locals[i]] = &*j;
   }
                                  
   SmallVector<ReturnInst *, 1> ri;

@@ -181,7 +181,7 @@ Workgroup::runOnModule(Module &M)
 
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     if (!isKernelToProcess(*i)) continue;
-    Function *L = createLauncher(M, i);
+    Function *L = createLauncher(M, &*i);
       
     L->addFnAttr(Attribute::NoInline);
 
@@ -226,7 +226,7 @@ createLauncher(Module &M, Function *F)
   SmallVector<Value *, 8> arguments;
   Function::arg_iterator ai = L->arg_begin();
   for (unsigned i = 0, e = F->getArgumentList().size(); i != e; ++i)  {
-    arguments.push_back(ai);
+    arguments.push_back(&*ai);
     ++ai;
   }  
 
@@ -244,7 +244,7 @@ createLauncher(Module &M, Function *F)
   ptr = builder.CreateStructGEP(ai,
 				TypeBuilder<PoclContext, true>::WORK_DIM);
 #else
-  ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), ai,
+  ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), &*ai,
                                 TypeBuilder<PoclContext, true>::WORK_DIM);
 #endif
   gv = M.getGlobalVariable("_work_dim");
@@ -266,7 +266,7 @@ createLauncher(Module &M, Function *F)
   ptr = builder.CreateStructGEP(ai,
 				TypeBuilder<PoclContext, true>::GROUP_ID);
 #else
-  ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), ai,
+  ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), &*ai,
                                 TypeBuilder<PoclContext, true>::GROUP_ID);
 #endif
   for (int i = 0; i < 3; ++i) {
@@ -293,7 +293,7 @@ createLauncher(Module &M, Function *F)
   ptr = builder.CreateStructGEP(ai,
 				TypeBuilder<PoclContext, true>::NUM_GROUPS);
 #else
-  ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), ai,
+  ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), &*ai,
                                 TypeBuilder<PoclContext, true>::NUM_GROUPS);
 #endif
   for (int i = 0; i < 3; ++i) {
@@ -320,7 +320,7 @@ createLauncher(Module &M, Function *F)
   ptr = builder.CreateStructGEP(ai,
 				TypeBuilder<PoclContext, true>::GLOBAL_OFFSET);
 #else
-  ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), ai,
+  ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), &*ai,
                                 TypeBuilder<PoclContext, true>::GLOBAL_OFFSET);
 #endif
   for (int i = 0; i < 3; ++i) {
@@ -515,7 +515,7 @@ createWorkgroup(Module &M, Function *F)
        ii != ee; ++ii) {
     Type *t = ii->getType();
 
-    Value *gep = builder.CreateGEP(ai,
+    Value *gep = builder.CreateGEP(&*ai,
             ConstantInt::get(IntegerType::get(M.getContext(), 32), i));
     Value *pointer = builder.CreateLoad(gep);
 
@@ -533,7 +533,7 @@ createWorkgroup(Module &M, Function *F)
     ++i;
   }
 
-  arguments.back() = ++ai;
+  arguments.back() = &*(++ai);
   
   builder.CreateCall(F, ArrayRef<Value*>(arguments));
   builder.CreateRetVoid();
@@ -578,7 +578,7 @@ createWorkgroupFast(Module &M, Function *F)
   for (Function::const_arg_iterator ii = F->arg_begin(), ee = F->arg_end();
        ii != ee; ++i, ++ii) {
     Type *t = ii->getType();
-    Value *gep = builder.CreateGEP(ai, 
+    Value *gep = builder.CreateGEP(&*ai,
             ConstantInt::get(IntegerType::get(M.getContext(), 32), i));
     Value *pointer = builder.CreateLoad(gep);
      
@@ -611,7 +611,7 @@ createWorkgroupFast(Module &M, Function *F)
     arguments.push_back(value);
   }
 
-  arguments.back() = ++ai;
+  arguments.back() = &*(++ai);
   
   builder.CreateCall(F, ArrayRef<Value*>(arguments));
   builder.CreateRetVoid();
@@ -660,7 +660,7 @@ Workgroup::hasWorkgroupBarriers(const Function &F)
 {
   for (llvm::Function::const_iterator i = F.begin(), e = F.end();
        i != e; ++i) {
-    const llvm::BasicBlock* bb = i;
+    const llvm::BasicBlock* bb = &*i;
     if (Barrier::hasBarrier(bb)) {
 
       // Ignore the implicit entry and exit barriers.

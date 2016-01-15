@@ -206,7 +206,7 @@ WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTreeWrapperPass *DT,
 
   for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) 
     {
-      llvm::BasicBlock *bb = i;
+      llvm::BasicBlock *bb = &*i;
       for (llvm::BasicBlock::iterator ins = bb->begin(), inse = bb->end();
            ins != inse; ++ins)
         {

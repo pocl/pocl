@@ -96,7 +96,7 @@ ImplicitConditionalBarriers::runOnFunction(Function &F) {
   typedef std::vector<BasicBlock*> BarrierBlockIndex;
   BarrierBlockIndex conditionalBarriers;
   for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
-    BasicBlock *b = i;
+    BasicBlock *b = &*i;
     if (!Barrier::hasBarrier(b)) continue;
 
     // Unconditional barrier postdominates the entry node.

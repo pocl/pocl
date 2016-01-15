@@ -54,7 +54,7 @@ AllocasToEntry::runOnFunction(Function &F)
   // This solves problem with dynamic stack objects that are 
   // not supported by some targets (TCE).
   Function::iterator I = F.begin();
-  Instruction *firstInsertionPt = (I++)->getFirstInsertionPt();
+  Instruction *firstInsertionPt = &*(I++)->getFirstInsertionPt();
     
   bool changed = false;
   for (Function::iterator E = F.end(); I != E; ++I) {

@@ -103,7 +103,7 @@ BarrierTailReplication::runOnFunction(Function &F)
   for (Function::iterator i = F.begin(), e = F.end();
        i != e; ++i)
     {
-      llvm::BasicBlock *bb = i;
+      llvm::BasicBlock *bb = &*i;
       changed |= CleanupPHIs(bb);
     }      
 
@@ -356,7 +356,7 @@ BarrierTailReplication::ReplicateBasicBlocks(BasicBlockVector &new_graph,
     for (BasicBlock::iterator i2 = b->begin(), e2 = b->end();
 	 i2 != e2; ++i2) {
       Instruction *i = i2->clone();
-      reference_map.insert(std::make_pair(i2, i));
+      reference_map.insert(std::make_pair(&*i2, i));
       new_b->getInstList().push_back(i);
     }
 
@@ -412,7 +412,7 @@ BarrierTailReplication::UpdateReferences(const BasicBlockVector &graph,
     BasicBlock *b = *i;
     for (BasicBlock::iterator i2 = b->begin(), e2 = b->end();
          i2 != e2; ++i2) {
-      Instruction *i = i2;
+      Instruction *i = &*i2;
       RemapInstruction(i, reference_map,
                        RF_IgnoreMissingEntries | RF_NoModuleLevelChanges);
     }

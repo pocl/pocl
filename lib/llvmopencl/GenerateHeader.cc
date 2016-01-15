@@ -111,7 +111,7 @@ GenerateHeader::runOnModule(Module &M)
     if (!Workgroup::isKernelToProcess(*mi))
       continue;
   
-    Function *F = mi;
+    Function *F = &*mi;
 
     ProcessPointers(F, out);    
     ProcessReqdWGSize(F, out);
@@ -289,7 +289,7 @@ GenerateHeader::ProcessAutomaticLocals(Function *F,
       // Additional checks might be needed here. For now
       // we assume any global starting with kernel name
       // is declaring a local variable.
-      locals.push_back(i);
+      locals.push_back(&*i);
       // Add the parameters to the end of the function parameter list.
       parameters.push_back(i->getType());
     }

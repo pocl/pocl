@@ -132,10 +132,10 @@ FixMemIntrinsics(llvm::Function& F) {
   std::vector<llvm::MemIntrinsic*> intrinsics;
   for (llvm::Function::iterator bbi = F.begin(), bbe = F.end(); bbi != bbe;
        ++bbi) {
-    llvm::BasicBlock* bb = bbi;
+    llvm::BasicBlock* bb = &*bbi;
     for (llvm::BasicBlock::iterator ii = bb->begin(), ie = bb->end();
          ii != ie; ++ii) {
-      llvm::Instruction *instr = ii;
+      llvm::Instruction *instr = &*ii;
       if (!isa<llvm::MemIntrinsic>(instr)) continue;
       intrinsics.push_back(dyn_cast<llvm::MemIntrinsic>(instr));
     }
@@ -242,7 +242,7 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
        functionI != functionE; ++functionI) {
     if (functionI->empty() || functionI->getName().startswith("_GLOBAL")) 
       continue;
-    unhandledFuncs.push_back(functionI);
+    unhandledFuncs.push_back(&*functionI);
   }
 
   for (std::vector<llvm::Function*>::iterator i = unhandledFuncs.begin(), 
@@ -271,7 +271,7 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
            e = F.arg_end();
          i != e; ++i) {
       j->setName(i->getName());
-      vv[i] = j;
+      vv[&*i] = &*j;
       ++j;
     }
 
@@ -323,7 +323,7 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
          ++bbi) 
       for (llvm::BasicBlock::iterator ii = bbi->begin(), ie = bbi->end(); ii != ie;
            ++ii) {
-        llvm::Instruction *instr = ii;
+        llvm::Instruction *instr = &*ii;
 
         if (isa<AddrSpaceCastInst>(instr)) {
           // Convert (now illegal) addresspacecasts to bitcasts.

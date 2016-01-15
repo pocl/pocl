@@ -82,7 +82,7 @@ CanonicalizeBarriers::runOnFunction(Function &F)
   }
 
   for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
-    BasicBlock *b = i;
+    BasicBlock *b = &*i;
     TerminatorInst *t = b->getTerminator();
 
     const bool isExitNode = 
@@ -135,11 +135,11 @@ CanonicalizeBarriers::ProcessFunction(Function &F) {
 
   for (Function::iterator i = F.begin(), e = F.end();
        i != e; ++i) {
-    BasicBlock *b = i;
+    BasicBlock *b = &*i;
     for (BasicBlock::iterator i = b->begin(), e = b->end();
          i != e; ++i) {
       if (isa<Barrier>(i)) {
-        Barriers.insert(i);
+        Barriers.insert(&*i);
       }
     }
   }
@@ -209,7 +209,7 @@ CanonicalizeBarriers::ProcessFunction(Function &F) {
     emptyRegionDeleted = false;
     for (Function::iterator i = F.begin(), e = F.end();
          i != e; ++i) {
-        BasicBlock *b = i;
+        BasicBlock *b = &*i;
         llvm::TerminatorInst *t = b->getTerminator();
         if (!Barrier::endsWithBarrier(b) || t->getNumSuccessors() != 1) 
           continue;
