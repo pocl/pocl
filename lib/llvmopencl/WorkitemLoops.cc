@@ -279,10 +279,10 @@ WorkitemLoops::CreateLoopAround
 
   /* This creation of the identifier metadata is copied from
      LLVM's MDBuilder::createAnonymousTBAARoot(). */
-#ifdef LLVM_3_7
-  MDNode *Dummy = MDNode::getTemporary(C, ArrayRef<Metadata*>()).release();
-#else
+#ifdef LLVM_OLDER_THAN_3_7
   MDNode *Dummy = MDNode::getTemporary(C, ArrayRef<Metadata*>());
+#else
+  MDNode *Dummy = MDNode::getTemporary(C, ArrayRef<Metadata*>()).release();
 #endif
 
   MDNode *Root = MDNode::get(C, Dummy);
