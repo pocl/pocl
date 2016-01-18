@@ -241,7 +241,7 @@ link(llvm::Module *krn, const llvm::Module *lib)
          ai++) {
         DB_PRINT(" %s\n", ai->getName().data());
         GlobalAlias *GA =
-#ifdef LLVM_OLDER_THAN_3_7
+#ifndef LLVM_3_7
             GlobalAlias::create(ai->getType(),
                                 ai->getType()->getAddressSpace(),
                                 ai->getLinkage(), ai->getName(), NULL, krn);
