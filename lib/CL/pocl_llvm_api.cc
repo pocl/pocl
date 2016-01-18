@@ -962,7 +962,9 @@ static PassManager& kernel_compiler_passes
     initializeVectorization(Registry);
     initializeIPO(Registry);
     initializeAnalysis(Registry);
+#ifdef LLVM_OLDER_THAN_3_8
     initializeIPA(Registry);
+#endif
     initializeTransformUtils(Registry);
     initializeInstCombine(Registry);
     initializeInstrumentation(Registry);
