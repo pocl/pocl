@@ -118,7 +118,7 @@ CopyFunc( const llvm::StringRef Name,
          e=SrcFunc->arg_end();
          i != e; ++i) {
         j->setName(i->getName());
-        VVMap[i]=j;
+        VVMap[&*i] = &*j;
         ++j;
     }
     if (!SrcFunc->isDeclaration()) {
@@ -198,7 +198,7 @@ link(llvm::Module *krn, const llvm::Module *lib)
 
         // Find all functions the kernel source calls
         // TODO: is there no direct way?
-        find_called_functions(fi, declared);
+        find_called_functions(&*fi, declared);
     }
     declared.sort(stringref_cmp);
     declared.unique(stringref_equal);
@@ -220,8 +220,8 @@ link(llvm::Module *krn, const llvm::Module *lib)
                                               (GlobalVariable*) 0,
                                               gi->getThreadLocalMode(),
                                               gi->getType()->getAddressSpace());
-        GV->copyAttributesFrom(gi);
-        vvm[gi]=GV;
+        GV->copyAttributesFrom(&*gi);
+        vvm[&*gi]=GV;
     }
 
     // For each undefined function in krn, clone it from the lib to the krn module,
@@ -250,15 +250,15 @@ link(llvm::Module *krn, const llvm::Module *lib)
                                 ai->getLinkage(), ai->getName(), NULL, krn);
 #endif
 
-        GA->copyAttributesFrom(ai);
-        vvm[ai]=GA;
+        GA->copyAttributesFrom(&*ai);
+        vvm[&*ai]=GA;
     }
 
     // initialize the globals that were copied
     for (gi=lib->global_begin(), ge=lib->global_end();
          gi != ge;
          gi++) {
-        GlobalVariable *GV=cast<GlobalVariable>(vvm[gi]);
+        GlobalVariable *GV=cast<GlobalVariable>(vvm[&*gi]);
         if (gi->hasInitializer())
             GV->setInitializer(MapValue(gi->getInitializer(), vvm));
     }

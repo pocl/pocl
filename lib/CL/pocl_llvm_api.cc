@@ -706,7 +706,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
     funcName = kernel_function->getName().str();
     if (pocl::is_automatic_local(funcName, *i))
       {
-        locals.push_back(i);
+        locals.push_back(&*i);
       }
   }
 

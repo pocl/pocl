@@ -268,7 +268,7 @@ BreakConstantGEPs::runOnFunction (Function & F) {
       // Scan through the operands of this instruction.  If it is a constant
       // expression GEP, insert an instruction GEP before the instruction.
       //
-      Instruction * I = i;
+      Instruction * I = &*i;
       for (unsigned index = 0; index < I->getNumOperands(); ++index) {
         if (hasConstantGEP (I->getOperand(index))) {
           Worklist.push_back (I);
