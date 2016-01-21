@@ -2222,12 +2222,12 @@ void atomic_work_item_fence(cl_mem_fence_flags flags,
 
 #define _CL_DECL_ATOMICS_EXPL_CMPXCH(TYPE, MOD, A, C)                   \
   _CL_OVERLOADABLE bool atomic_compare_exchange_##TYPE(                 \
-                      volatile MOD A *object, C *expected, C desired);  \
+                      volatile MOD A *object, MOD C *expected, C desired);  \
   _CL_OVERLOADABLE bool atomic_compare_exchange_##TYPE##_explicit(      \
-                      volatile MOD A *object, C *expected, C desired,   \
+                      volatile MOD A *object, MOD C *expected, C desired,   \
                       memory_order success, memory_order failure);      \
   _CL_OVERLOADABLE bool atomic_compare_exchange_##TYPE##_explicit(      \
-                      volatile MOD A *object, C *expected, C desired,   \
+                      volatile MOD A *object, MOD C *expected, C desired,   \
                       memory_order success, memory_order failure,       \
                       memory_scope scope);
 
