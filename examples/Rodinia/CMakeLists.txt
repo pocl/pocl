@@ -41,7 +41,7 @@ if (EXISTS "${RODINIA_TGZ}")
     PREFIX "${TS_BASEDIR}"
     DOWNLOAD_COMMAND test -d ${RODINIA} || (pwd && echo "extracting rodinia tgz"
       && tar xjf "${RODINIA_TGZ}"
-      && patch -p1 -i "${CMAKE_CURRENT_SOURCE_DIR}/Rodinia.patch"
+      && patch -p1 -i -r- -N "${CMAKE_CURRENT_SOURCE_DIR}/Rodinia.patch"
       && rmdir Rodinia && mv ${RODINIA} Rodinia)
     CONFIGURE_COMMAND /bin/true
     BUILD_IN_SOURCE 1
