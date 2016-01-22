@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2012 Tampere University of Technology.
+    Copyright (c) 2012-2015 Tampere University of Technology.
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -35,6 +35,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "pocl.h"
 
 #include "llvm/Analysis/AliasAnalysis.h"
+#include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Pass.h"
 #include "llvm/IR/Metadata.h"
@@ -44,10 +45,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 POP_COMPILER_DIAGS
 
-
 using namespace llvm;
-
-namespace {
 
 #ifdef LLVM_OLDER_THAN_3_7
 typedef AliasAnalysis::AliasResult AliasResult;
@@ -59,6 +57,8 @@ typedef llvm::AliasResult AliasResult;
 /// WorkItemAliasAnalysis - This is a simple alias analysis
 /// implementation that uses pocl metadata to make sure memory accesses from
 /// different work items are not aliasing.
+///
+#ifdef LLVM_OLDER_THAN_3_8
 class WorkItemAliasAnalysis : public FunctionPass, public AliasAnalysis {
 public:
     static char ID; 
@@ -74,34 +74,106 @@ public:
         return this;
     }
 
-
 #ifdef LLVM_OLDER_THAN_3_7
     virtual void initializePass() {
         InitializeAliasAnalysis(this);
     }
     virtual bool runOnFunction(llvm::Function &) {
-      InitializeAliasAnalysis(this);
-      return false;
+        InitializeAliasAnalysis(this);
+        return false;
     }
 #else
     virtual bool runOnFunction(llvm::Function &F) {
-      InitializeAliasAnalysis(this, &F.getParent()->getDataLayout());
-      return false;
+        InitializeAliasAnalysis(this, &F.getParent()->getDataLayout());
+        return false;
     }
 #endif
     
     private:
         virtual void getAnalysisUsage(AnalysisUsage &AU) const;
         virtual AliasResult alias(const Location &LocA, const Location &LocB);
-    };
+};
+
+#else
+
+// LLVM 3.8+
+
+class WorkItemAAResult : public AAResultBase<WorkItemAAResult> {
+    friend AAResultBase<WorkItemAAResult>;
+
+public:
+    static char ID;
+
+    WorkItemAAResult(const TargetLibraryInfo &TLI)
+        : AAResultBase(TLI) {}
+    WorkItemAAResult(const WorkItemAAResult &Arg)
+        : AAResultBase(Arg.TLI) {}
+    WorkItemAAResult(WorkItemAAResult &&Arg)
+        : AAResultBase(Arg.TLI) {}
+
+    AliasResult alias(const MemoryLocation &LocA, const MemoryLocation &LocB);
+};
+
+class WorkItemAA {
+public:
+    typedef WorkItemAAResult Result;
+
+    /// \brief Opaque, unique identifier for this analysis pass.
+    static void *ID() { return (void *)&PassID; }
+
+    WorkItemAAResult run(Function &F, AnalysisManager<Function> *AM);
+
+    /// \brief Provide access to a name for this pass for debugging purposes.
+    static StringRef name() { return "WorkItemAliasAnalysis"; }
+
+private:
+    static char PassID;
+};
+
+/// Legacy wrapper pass to provide the (WorkItemAAWrapperPass) object.
+class WorkItemAliasAnalysis : public FunctionPass {
+    std::unique_ptr<WorkItemAAResult> Result;
+
+    virtual void anchor();
+
+public:
+    static char ID;
+
+    WorkItemAliasAnalysis() : FunctionPass(ID) {};
+
+    WorkItemAAResult &getResult() { return *Result; }
+    const WorkItemAAResult &getResult() const { return *Result; }
+
+    bool runOnFunction(Function &F) override;
+    void getAnalysisUsage(AnalysisUsage &AU) const override;
+};
+
+char WorkItemAA::PassID;
+char WorkItemAAResult::ID = 0;
+void WorkItemAliasAnalysis::anchor() {}
+
+WorkItemAAResult WorkItemAA::run(Function &F, AnalysisManager<Function> *AM) {
+    return WorkItemAAResult( AM->getResult<WorkItemAA>(F) );
 }
+
+bool WorkItemAliasAnalysis::runOnFunction(llvm::Function &F) {
+    auto &TLIWP = getAnalysis<TargetLibraryInfoWrapperPass>();
+    Result.reset(new WorkItemAAResult(TLIWP.getTLI()));
+    return false;
+}
+
+#endif // LLVM 3.8+
 
 // Register this pass...
 char WorkItemAliasAnalysis::ID = 0;
 RegisterPass<WorkItemAliasAnalysis>
     X("wi-aa", "Work item alias analysis.", false, false);
 // Register it also to pass group
-RegisterAnalysisGroup<AliasAnalysis> Y(X);  
+#ifdef LLVM_OLDER_THAN_3_8
+RegisterAnalysisGroup<AliasAnalysis> Y(X);
+#else
+RegisterAnalysisGroup<WorkItemAAResult> Y(X);
+#endif
 
 FunctionPass *createWorkItemAliasAnalysisPass() {
     return new WorkItemAliasAnalysis();
@@ -117,17 +189,24 @@ extern "C" {
 void
 WorkItemAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
+#ifdef LLVM_OLDER_THAN_3_8
     AliasAnalysis::getAnalysisUsage(AU);
+#else
+    AU.addRequired<TargetLibraryInfoWrapperPass>();
+#endif
 }
-
 
 /**
  * Test if memory locations are from different work items from same region.
  * Then they can not alias.
  */
+
 AliasResult
-WorkItemAliasAnalysis::alias(const Location &LocA,
-                             const Location &LocB) {
+#ifdef LLVM_OLDER_THAN_3_8
+WorkItemAliasAnalysis::alias(const Location &LocA, const Location &LocB) {
+#else
+WorkItemAAResult::alias(const Location &LocA, const Location &LocB) {
+#endif
     // If either of the memory references is empty, it doesn't matter what the
     // pointer values are. This allows the code below to ignore this special
     // case.
@@ -200,6 +279,10 @@ WorkItemAliasAnalysis::alias(const Location &LocA,
         }
     }
   
+#ifdef LLVM_OLDER_THAN_3_8
     // Forward the query to the next analysis.
     return AliasAnalysis::alias(LocA, LocB);
+#else
+    return WorkItemAAResult::alias(LocA, LocB);
+#endif
 }
