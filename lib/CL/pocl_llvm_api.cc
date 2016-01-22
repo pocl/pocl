@@ -166,6 +166,10 @@ unlink_source(FrontendOptions &fe)
 
 }
 
+#ifndef LLVM_OLDER_THAN_3_8
+#define PassManager legacy::PassManager
+#endif
+
 static llvm::Module*
 ParseIRFile(const char* fname, SMDiagnostic &Err, llvm::LLVMContext &ctx)
 {
@@ -1308,9 +1312,12 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
 #ifdef DEBUG_POCL_LLVM_API        
       printf("### cloning the preloaded LLVM IR\n");
 #endif
-      input = 
-        llvm::CloneModule
-        ((llvm::Module*)kernel->program->llvm_irs[device_i]);
+      llvm::Module* p = (llvm::Module*)kernel->program->llvm_irs[device_i];
+#ifdef LLVM_OLDER_THAN_3_8
+      input = llvm::CloneModule(p);
+#else
+      input = (llvm::CloneModule(p)).release();
+#endif
     }
   else
     {

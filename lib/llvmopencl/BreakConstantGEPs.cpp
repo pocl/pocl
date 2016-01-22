@@ -205,7 +205,7 @@ convertExpression (ConstantExpr * CE, Instruction * InsertPt) {
     case Instruction:: ICmp: {
       Instruction::OtherOps Op = (Instruction::OtherOps)(CE->getOpcode());
       NewInst = CmpInst::Create (Op,
-                                 CE->getPredicate(),
+                                 (llvm::CmpInst::Predicate)CE->getPredicate(),
                                  CE->getOperand(0),
                                  CE->getOperand(1),
                                  CE->getName(),
