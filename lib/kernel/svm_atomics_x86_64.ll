@@ -148,7 +148,9 @@ define i32 @_Z28pocl_atomic_exchange__globalPVU8CLglobalU7_Atomicii12memory_orde
 }
 
 ; Function Attrs: nounwind uwtable
-define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7_AtomiciPii12memory_orderS3_12memory_scope(i32 addrspace(1)* %object, i32* nocapture %expected, i32 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+; define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7_AtomiciPii12memory_orderS3_12memory_scope(i32 addrspace(1)* %object, i32* nocapture %expected, i32 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7_AtomiciPU8CLglobalii12memory_orderS4_12memory_scope(i32 addrspace(1)* %object, i32 addrspace(1)* nocapture %expected, i32 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+
   %1 = icmp eq i32 %success, 0
   br i1 %1, label %9, label %2
 
@@ -196,13 +198,13 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 ; <label>:21                                      ; preds = %19, %19
   %.off = add nsw i32 %20, -1
   %switch = icmp ult i32 %.off, 2
-  %22 = load i32, i32* %expected, align 4
+  %22 = load i32, i32 addrspace(1)* %expected, align 4
   br i1 %switch, label %39, label %36
 
 ; <label>:23                                      ; preds = %19
   %.off1 = add nsw i32 %20, -1
   %switch2 = icmp ult i32 %.off1, 2
-  %24 = load i32, i32* %expected, align 4
+  %24 = load i32, i32 addrspace(1)* %expected, align 4
   br i1 %switch2, label %61, label %58
 
 ; <label>:25                                      ; preds = %19
@@ -218,14 +220,14 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
   ret i1 %27
 
 ; <label>:28                                      ; preds = %19
-  %29 = load i32, i32* %expected, align 4
+  %29 = load i32, i32 addrspace(1)* %expected, align 4
   %30 = cmpxchg volatile i32 addrspace(1)* %object, i32 %29, i32 %desired monotonic monotonic
   %31 = extractvalue { i32, i1 } %30, 1
   br i1 %31, label %34, label %32
 
 ; <label>:32                                      ; preds = %28
   %33 = extractvalue { i32, i1 } %30, 0
-  store i32 %33, i32* %expected, align 4
+  store i32 %33, i32 addrspace(1)* %expected, align 4
   br label %34
 
 ; <label>:34                                      ; preds = %32, %28
@@ -244,7 +246,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:42                                      ; preds = %36
   %43 = extractvalue { i32, i1 } %37, 0
-  store i32 %43, i32* %expected, align 4
+  store i32 %43, i32 addrspace(1)* %expected, align 4
   br label %44
 
 ; <label>:44                                      ; preds = %42, %36
@@ -253,7 +255,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:46                                      ; preds = %39
   %47 = extractvalue { i32, i1 } %40, 0
-  store i32 %47, i32* %expected, align 4
+  store i32 %47, i32 addrspace(1)* %expected, align 4
   br label %48
 
 ; <label>:48                                      ; preds = %46, %39
@@ -261,14 +263,14 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
   br label %26
 
 ; <label>:50                                      ; preds = %19
-  %51 = load i32, i32* %expected, align 4
+  %51 = load i32, i32 addrspace(1)* %expected, align 4
   %52 = cmpxchg volatile i32 addrspace(1)* %object, i32 %51, i32 %desired release monotonic
   %53 = extractvalue { i32, i1 } %52, 1
   br i1 %53, label %56, label %54
 
 ; <label>:54                                      ; preds = %50
   %55 = extractvalue { i32, i1 } %52, 0
-  store i32 %55, i32* %expected, align 4
+  store i32 %55, i32 addrspace(1)* %expected, align 4
   br label %56
 
 ; <label>:56                                      ; preds = %54, %50
@@ -287,7 +289,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:64                                      ; preds = %58
   %65 = extractvalue { i32, i1 } %59, 0
-  store i32 %65, i32* %expected, align 4
+  store i32 %65, i32 addrspace(1)* %expected, align 4
   br label %66
 
 ; <label>:66                                      ; preds = %64, %58
@@ -296,7 +298,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:68                                      ; preds = %61
   %69 = extractvalue { i32, i1 } %62, 0
-  store i32 %69, i32* %expected, align 4
+  store i32 %69, i32 addrspace(1)* %expected, align 4
   br label %70
 
 ; <label>:70                                      ; preds = %68, %61
@@ -304,26 +306,26 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
   br label %26
 
 ; <label>:72                                      ; preds = %25
-  %73 = load i32, i32* %expected, align 4
+  %73 = load i32, i32 addrspace(1)* %expected, align 4
   %74 = cmpxchg volatile i32 addrspace(1)* %object, i32 %73, i32 %desired seq_cst monotonic
   %75 = extractvalue { i32, i1 } %74, 1
   br i1 %75, label %86, label %84
 
 ; <label>:76                                      ; preds = %25, %25
-  %77 = load i32, i32* %expected, align 4
+  %77 = load i32, i32 addrspace(1)* %expected, align 4
   %78 = cmpxchg volatile i32 addrspace(1)* %object, i32 %77, i32 %desired seq_cst acquire
   %79 = extractvalue { i32, i1 } %78, 1
   br i1 %79, label %90, label %88
 
 ; <label>:80                                      ; preds = %25
-  %81 = load i32, i32* %expected, align 4
+  %81 = load i32, i32 addrspace(1)* %expected, align 4
   %82 = cmpxchg volatile i32 addrspace(1)* %object, i32 %81, i32 %desired seq_cst seq_cst
   %83 = extractvalue { i32, i1 } %82, 1
   br i1 %83, label %94, label %92
 
 ; <label>:84                                      ; preds = %72
   %85 = extractvalue { i32, i1 } %74, 0
-  store i32 %85, i32* %expected, align 4
+  store i32 %85, i32 addrspace(1)* %expected, align 4
   br label %86
 
 ; <label>:86                                      ; preds = %84, %72
@@ -332,7 +334,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:88                                      ; preds = %76
   %89 = extractvalue { i32, i1 } %78, 0
-  store i32 %89, i32* %expected, align 4
+  store i32 %89, i32 addrspace(1)* %expected, align 4
   br label %90
 
 ; <label>:90                                      ; preds = %88, %76
@@ -341,7 +343,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:92                                      ; preds = %80
   %93 = extractvalue { i32, i1 } %82, 0
-  store i32 %93, i32* %expected, align 4
+  store i32 %93, i32 addrspace(1)* %expected, align 4
   br label %94
 
 ; <label>:94                                      ; preds = %92, %80
@@ -350,7 +352,9 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 }
 
 ; Function Attrs: nounwind uwtable
-define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_AtomiciPii12memory_orderS3_12memory_scope(i32 addrspace(1)* %object, i32* nocapture %expected, i32 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+;define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_AtomiciPii12memory_orderS3_12memory_scope(i32 addrspace(1)* %object, i32* nocapture %expected, i32 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_AtomiciPU8CLglobalii12memory_orderS4_12memory_scope(i32 addrspace(1)* %object, i32 addrspace(1)* nocapture %expected, i32 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+
   %1 = icmp eq i32 %success, 0
   br i1 %1, label %9, label %2
 
@@ -398,13 +402,13 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 ; <label>:21                                      ; preds = %19, %19
   %.off = add nsw i32 %20, -1
   %switch = icmp ult i32 %.off, 2
-  %22 = load i32, i32* %expected, align 4
+  %22 = load i32, i32 addrspace(1)* %expected, align 4
   br i1 %switch, label %39, label %36
 
 ; <label>:23                                      ; preds = %19
   %.off1 = add nsw i32 %20, -1
   %switch2 = icmp ult i32 %.off1, 2
-  %24 = load i32, i32* %expected, align 4
+  %24 = load i32, i32 addrspace(1)* %expected, align 4
   br i1 %switch2, label %61, label %58
 
 ; <label>:25                                      ; preds = %19
@@ -420,14 +424,14 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
   ret i1 %27
 
 ; <label>:28                                      ; preds = %19
-  %29 = load i32, i32* %expected, align 4
+  %29 = load i32, i32 addrspace(1)* %expected, align 4
   %30 = cmpxchg weak volatile i32 addrspace(1)* %object, i32 %29, i32 %desired monotonic monotonic
   %31 = extractvalue { i32, i1 } %30, 1
   br i1 %31, label %34, label %32
 
 ; <label>:32                                      ; preds = %28
   %33 = extractvalue { i32, i1 } %30, 0
-  store i32 %33, i32* %expected, align 4
+  store i32 %33, i32 addrspace(1)* %expected, align 4
   br label %34
 
 ; <label>:34                                      ; preds = %32, %28
@@ -446,7 +450,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:42                                      ; preds = %36
   %43 = extractvalue { i32, i1 } %37, 0
-  store i32 %43, i32* %expected, align 4
+  store i32 %43, i32 addrspace(1)* %expected, align 4
   br label %44
 
 ; <label>:44                                      ; preds = %42, %36
@@ -455,7 +459,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:46                                      ; preds = %39
   %47 = extractvalue { i32, i1 } %40, 0
-  store i32 %47, i32* %expected, align 4
+  store i32 %47, i32 addrspace(1)* %expected, align 4
   br label %48
 
 ; <label>:48                                      ; preds = %46, %39
@@ -463,14 +467,14 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
   br label %26
 
 ; <label>:50                                      ; preds = %19
-  %51 = load i32, i32* %expected, align 4
+  %51 = load i32, i32 addrspace(1)* %expected, align 4
   %52 = cmpxchg weak volatile i32 addrspace(1)* %object, i32 %51, i32 %desired release monotonic
   %53 = extractvalue { i32, i1 } %52, 1
   br i1 %53, label %56, label %54
 
 ; <label>:54                                      ; preds = %50
   %55 = extractvalue { i32, i1 } %52, 0
-  store i32 %55, i32* %expected, align 4
+  store i32 %55, i32 addrspace(1)* %expected, align 4
   br label %56
 
 ; <label>:56                                      ; preds = %54, %50
@@ -489,7 +493,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:64                                      ; preds = %58
   %65 = extractvalue { i32, i1 } %59, 0
-  store i32 %65, i32* %expected, align 4
+  store i32 %65, i32 addrspace(1)* %expected, align 4
   br label %66
 
 ; <label>:66                                      ; preds = %64, %58
@@ -498,7 +502,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:68                                      ; preds = %61
   %69 = extractvalue { i32, i1 } %62, 0
-  store i32 %69, i32* %expected, align 4
+  store i32 %69, i32 addrspace(1)* %expected, align 4
   br label %70
 
 ; <label>:70                                      ; preds = %68, %61
@@ -506,26 +510,26 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
   br label %26
 
 ; <label>:72                                      ; preds = %25
-  %73 = load i32, i32* %expected, align 4
+  %73 = load i32, i32 addrspace(1)* %expected, align 4
   %74 = cmpxchg weak volatile i32 addrspace(1)* %object, i32 %73, i32 %desired seq_cst monotonic
   %75 = extractvalue { i32, i1 } %74, 1
   br i1 %75, label %86, label %84
 
 ; <label>:76                                      ; preds = %25, %25
-  %77 = load i32, i32* %expected, align 4
+  %77 = load i32, i32 addrspace(1)* %expected, align 4
   %78 = cmpxchg weak volatile i32 addrspace(1)* %object, i32 %77, i32 %desired seq_cst acquire
   %79 = extractvalue { i32, i1 } %78, 1
   br i1 %79, label %90, label %88
 
 ; <label>:80                                      ; preds = %25
-  %81 = load i32, i32* %expected, align 4
+  %81 = load i32, i32 addrspace(1)* %expected, align 4
   %82 = cmpxchg weak volatile i32 addrspace(1)* %object, i32 %81, i32 %desired seq_cst seq_cst
   %83 = extractvalue { i32, i1 } %82, 1
   br i1 %83, label %94, label %92
 
 ; <label>:84                                      ; preds = %72
   %85 = extractvalue { i32, i1 } %74, 0
-  store i32 %85, i32* %expected, align 4
+  store i32 %85, i32 addrspace(1)* %expected, align 4
   br label %86
 
 ; <label>:86                                      ; preds = %84, %72
@@ -534,7 +538,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:88                                      ; preds = %76
   %89 = extractvalue { i32, i1 } %78, 0
-  store i32 %89, i32* %expected, align 4
+  store i32 %89, i32 addrspace(1)* %expected, align 4
   br label %90
 
 ; <label>:90                                      ; preds = %88, %76
@@ -543,7 +547,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:92                                      ; preds = %80
   %93 = extractvalue { i32, i1 } %82, 0
-  store i32 %93, i32* %expected, align 4
+  store i32 %93, i32 addrspace(1)* %expected, align 4
   br label %94
 
 ; <label>:94                                      ; preds = %92, %80
@@ -875,7 +879,9 @@ define i32 @_Z28pocl_atomic_exchange__globalPVU8CLglobalU7_Atomicjj12memory_orde
 }
 
 ; Function Attrs: nounwind uwtable
-define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7_AtomicjPjj12memory_orderS3_12memory_scope(i32 addrspace(1)* %object, i32* nocapture %expected, i32 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+;define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7_AtomicjPjj12memory_orderS3_12memory_scope(i32 addrspace(1)* %object, i32* nocapture %expected, i32 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7_AtomicjPU8CLglobaljj12memory_orderS4_12memory_scope(i32 addrspace(1)* %object, i32 addrspace(1)* nocapture %expected, i32 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+
   %1 = icmp eq i32 %success, 0
   br i1 %1, label %9, label %2
 
@@ -923,13 +929,13 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 ; <label>:21                                      ; preds = %19, %19
   %.off = add nsw i32 %20, -1
   %switch = icmp ult i32 %.off, 2
-  %22 = load i32, i32* %expected, align 4
+  %22 = load i32, i32 addrspace(1)* %expected, align 4
   br i1 %switch, label %39, label %36
 
 ; <label>:23                                      ; preds = %19
   %.off1 = add nsw i32 %20, -1
   %switch2 = icmp ult i32 %.off1, 2
-  %24 = load i32, i32* %expected, align 4
+  %24 = load i32, i32 addrspace(1)* %expected, align 4
   br i1 %switch2, label %61, label %58
 
 ; <label>:25                                      ; preds = %19
@@ -945,14 +951,14 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
   ret i1 %27
 
 ; <label>:28                                      ; preds = %19
-  %29 = load i32, i32* %expected, align 4
+  %29 = load i32, i32 addrspace(1)* %expected, align 4
   %30 = cmpxchg volatile i32 addrspace(1)* %object, i32 %29, i32 %desired monotonic monotonic
   %31 = extractvalue { i32, i1 } %30, 1
   br i1 %31, label %34, label %32
 
 ; <label>:32                                      ; preds = %28
   %33 = extractvalue { i32, i1 } %30, 0
-  store i32 %33, i32* %expected, align 4
+  store i32 %33, i32 addrspace(1)* %expected, align 4
   br label %34
 
 ; <label>:34                                      ; preds = %32, %28
@@ -971,7 +977,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:42                                      ; preds = %36
   %43 = extractvalue { i32, i1 } %37, 0
-  store i32 %43, i32* %expected, align 4
+  store i32 %43, i32 addrspace(1)* %expected, align 4
   br label %44
 
 ; <label>:44                                      ; preds = %42, %36
@@ -980,7 +986,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:46                                      ; preds = %39
   %47 = extractvalue { i32, i1 } %40, 0
-  store i32 %47, i32* %expected, align 4
+  store i32 %47, i32 addrspace(1)* %expected, align 4
   br label %48
 
 ; <label>:48                                      ; preds = %46, %39
@@ -988,14 +994,14 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
   br label %26
 
 ; <label>:50                                      ; preds = %19
-  %51 = load i32, i32* %expected, align 4
+  %51 = load i32, i32 addrspace(1)* %expected, align 4
   %52 = cmpxchg volatile i32 addrspace(1)* %object, i32 %51, i32 %desired release monotonic
   %53 = extractvalue { i32, i1 } %52, 1
   br i1 %53, label %56, label %54
 
 ; <label>:54                                      ; preds = %50
   %55 = extractvalue { i32, i1 } %52, 0
-  store i32 %55, i32* %expected, align 4
+  store i32 %55, i32 addrspace(1)* %expected, align 4
   br label %56
 
 ; <label>:56                                      ; preds = %54, %50
@@ -1014,7 +1020,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:64                                      ; preds = %58
   %65 = extractvalue { i32, i1 } %59, 0
-  store i32 %65, i32* %expected, align 4
+  store i32 %65, i32 addrspace(1)* %expected, align 4
   br label %66
 
 ; <label>:66                                      ; preds = %64, %58
@@ -1023,7 +1029,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:68                                      ; preds = %61
   %69 = extractvalue { i32, i1 } %62, 0
-  store i32 %69, i32* %expected, align 4
+  store i32 %69, i32 addrspace(1)* %expected, align 4
   br label %70
 
 ; <label>:70                                      ; preds = %68, %61
@@ -1031,26 +1037,26 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
   br label %26
 
 ; <label>:72                                      ; preds = %25
-  %73 = load i32, i32* %expected, align 4
+  %73 = load i32, i32 addrspace(1)* %expected, align 4
   %74 = cmpxchg volatile i32 addrspace(1)* %object, i32 %73, i32 %desired seq_cst monotonic
   %75 = extractvalue { i32, i1 } %74, 1
   br i1 %75, label %86, label %84
 
 ; <label>:76                                      ; preds = %25, %25
-  %77 = load i32, i32* %expected, align 4
+  %77 = load i32, i32 addrspace(1)* %expected, align 4
   %78 = cmpxchg volatile i32 addrspace(1)* %object, i32 %77, i32 %desired seq_cst acquire
   %79 = extractvalue { i32, i1 } %78, 1
   br i1 %79, label %90, label %88
 
 ; <label>:80                                      ; preds = %25
-  %81 = load i32, i32* %expected, align 4
+  %81 = load i32, i32 addrspace(1)* %expected, align 4
   %82 = cmpxchg volatile i32 addrspace(1)* %object, i32 %81, i32 %desired seq_cst seq_cst
   %83 = extractvalue { i32, i1 } %82, 1
   br i1 %83, label %94, label %92
 
 ; <label>:84                                      ; preds = %72
   %85 = extractvalue { i32, i1 } %74, 0
-  store i32 %85, i32* %expected, align 4
+  store i32 %85, i32 addrspace(1)* %expected, align 4
   br label %86
 
 ; <label>:86                                      ; preds = %84, %72
@@ -1059,7 +1065,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:88                                      ; preds = %76
   %89 = extractvalue { i32, i1 } %78, 0
-  store i32 %89, i32* %expected, align 4
+  store i32 %89, i32 addrspace(1)* %expected, align 4
   br label %90
 
 ; <label>:90                                      ; preds = %88, %76
@@ -1068,7 +1074,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:92                                      ; preds = %80
   %93 = extractvalue { i32, i1 } %82, 0
-  store i32 %93, i32* %expected, align 4
+  store i32 %93, i32 addrspace(1)* %expected, align 4
   br label %94
 
 ; <label>:94                                      ; preds = %92, %80
@@ -1077,7 +1083,9 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 }
 
 ; Function Attrs: nounwind uwtable
-define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_AtomicjPjj12memory_orderS3_12memory_scope(i32 addrspace(1)* %object, i32* nocapture %expected, i32 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+;define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_AtomicjPjj12memory_orderS3_12memory_scope(i32 addrspace(1)* %object, i32* nocapture %expected, i32 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_AtomicjPU8CLglobaljj12memory_orderS4_12memory_scope(i32 addrspace(1)* %object, i32 addrspace(1)* nocapture %expected, i32 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+
   %1 = icmp eq i32 %success, 0
   br i1 %1, label %9, label %2
 
@@ -1125,13 +1133,13 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 ; <label>:21                                      ; preds = %19, %19
   %.off = add nsw i32 %20, -1
   %switch = icmp ult i32 %.off, 2
-  %22 = load i32, i32* %expected, align 4
+  %22 = load i32, i32 addrspace(1)* %expected, align 4
   br i1 %switch, label %39, label %36
 
 ; <label>:23                                      ; preds = %19
   %.off1 = add nsw i32 %20, -1
   %switch2 = icmp ult i32 %.off1, 2
-  %24 = load i32, i32* %expected, align 4
+  %24 = load i32, i32 addrspace(1)* %expected, align 4
   br i1 %switch2, label %61, label %58
 
 ; <label>:25                                      ; preds = %19
@@ -1147,14 +1155,14 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
   ret i1 %27
 
 ; <label>:28                                      ; preds = %19
-  %29 = load i32, i32* %expected, align 4
+  %29 = load i32, i32 addrspace(1)* %expected, align 4
   %30 = cmpxchg weak volatile i32 addrspace(1)* %object, i32 %29, i32 %desired monotonic monotonic
   %31 = extractvalue { i32, i1 } %30, 1
   br i1 %31, label %34, label %32
 
 ; <label>:32                                      ; preds = %28
   %33 = extractvalue { i32, i1 } %30, 0
-  store i32 %33, i32* %expected, align 4
+  store i32 %33, i32 addrspace(1)* %expected, align 4
   br label %34
 
 ; <label>:34                                      ; preds = %32, %28
@@ -1173,7 +1181,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:42                                      ; preds = %36
   %43 = extractvalue { i32, i1 } %37, 0
-  store i32 %43, i32* %expected, align 4
+  store i32 %43, i32 addrspace(1)* %expected, align 4
   br label %44
 
 ; <label>:44                                      ; preds = %42, %36
@@ -1182,7 +1190,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:46                                      ; preds = %39
   %47 = extractvalue { i32, i1 } %40, 0
-  store i32 %47, i32* %expected, align 4
+  store i32 %47, i32 addrspace(1)* %expected, align 4
   br label %48
 
 ; <label>:48                                      ; preds = %46, %39
@@ -1190,14 +1198,14 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
   br label %26
 
 ; <label>:50                                      ; preds = %19
-  %51 = load i32, i32* %expected, align 4
+  %51 = load i32, i32 addrspace(1)* %expected, align 4
   %52 = cmpxchg weak volatile i32 addrspace(1)* %object, i32 %51, i32 %desired release monotonic
   %53 = extractvalue { i32, i1 } %52, 1
   br i1 %53, label %56, label %54
 
 ; <label>:54                                      ; preds = %50
   %55 = extractvalue { i32, i1 } %52, 0
-  store i32 %55, i32* %expected, align 4
+  store i32 %55, i32 addrspace(1)* %expected, align 4
   br label %56
 
 ; <label>:56                                      ; preds = %54, %50
@@ -1216,7 +1224,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:64                                      ; preds = %58
   %65 = extractvalue { i32, i1 } %59, 0
-  store i32 %65, i32* %expected, align 4
+  store i32 %65, i32 addrspace(1)* %expected, align 4
   br label %66
 
 ; <label>:66                                      ; preds = %64, %58
@@ -1225,7 +1233,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:68                                      ; preds = %61
   %69 = extractvalue { i32, i1 } %62, 0
-  store i32 %69, i32* %expected, align 4
+  store i32 %69, i32 addrspace(1)* %expected, align 4
   br label %70
 
 ; <label>:70                                      ; preds = %68, %61
@@ -1233,26 +1241,26 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
   br label %26
 
 ; <label>:72                                      ; preds = %25
-  %73 = load i32, i32* %expected, align 4
+  %73 = load i32, i32 addrspace(1)* %expected, align 4
   %74 = cmpxchg weak volatile i32 addrspace(1)* %object, i32 %73, i32 %desired seq_cst monotonic
   %75 = extractvalue { i32, i1 } %74, 1
   br i1 %75, label %86, label %84
 
 ; <label>:76                                      ; preds = %25, %25
-  %77 = load i32, i32* %expected, align 4
+  %77 = load i32, i32 addrspace(1)* %expected, align 4
   %78 = cmpxchg weak volatile i32 addrspace(1)* %object, i32 %77, i32 %desired seq_cst acquire
   %79 = extractvalue { i32, i1 } %78, 1
   br i1 %79, label %90, label %88
 
 ; <label>:80                                      ; preds = %25
-  %81 = load i32, i32* %expected, align 4
+  %81 = load i32, i32 addrspace(1)* %expected, align 4
   %82 = cmpxchg weak volatile i32 addrspace(1)* %object, i32 %81, i32 %desired seq_cst seq_cst
   %83 = extractvalue { i32, i1 } %82, 1
   br i1 %83, label %94, label %92
 
 ; <label>:84                                      ; preds = %72
   %85 = extractvalue { i32, i1 } %74, 0
-  store i32 %85, i32* %expected, align 4
+  store i32 %85, i32 addrspace(1)* %expected, align 4
   br label %86
 
 ; <label>:86                                      ; preds = %84, %72
@@ -1261,7 +1269,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:88                                      ; preds = %76
   %89 = extractvalue { i32, i1 } %78, 0
-  store i32 %89, i32* %expected, align 4
+  store i32 %89, i32 addrspace(1)* %expected, align 4
   br label %90
 
 ; <label>:90                                      ; preds = %88, %76
@@ -1270,7 +1278,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:92                                      ; preds = %80
   %93 = extractvalue { i32, i1 } %82, 0
-  store i32 %93, i32* %expected, align 4
+  store i32 %93, i32 addrspace(1)* %expected, align 4
   br label %94
 
 ; <label>:94                                      ; preds = %92, %80
@@ -1639,7 +1647,9 @@ define float @_Z28pocl_atomic_exchange__globalPVU8CLglobalU7_Atomicff12memory_or
 }
 
 ; Function Attrs: nounwind uwtable
-define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7_AtomicfPff12memory_orderS3_12memory_scope(float addrspace(1)* %object, float* nocapture %expected, float %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+;define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7_AtomicfPff12memory_orderS3_12memory_scope(float addrspace(1)* %object, float* nocapture %expected, float %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7_AtomicfPU8CLglobalff12memory_orderS4_12memory_scope(float addrspace(1)* %object, float addrspace(1)* nocapture %expected, float %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+
   %1 = icmp eq i32 %success, 0
   br i1 %1, label %9, label %2
 
@@ -1678,7 +1688,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 ; <label>:20                                      ; preds = %13, %15, %17, %9
   %21 = phi i32 [ 0, %9 ], [ 2, %13 ], [ %19, %17 ], [ 3, %15 ]
   %22 = bitcast float addrspace(1)* %object to i32 addrspace(1)*
-  %23 = bitcast float* %expected to i32*
+  %23 = bitcast float addrspace(1)* %expected to i32 addrspace(1)*
   switch i32 %10, label %31 [
     i32 1, label %24
     i32 2, label %24
@@ -1690,13 +1700,13 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 ; <label>:24                                      ; preds = %20, %20
   %.off = add nsw i32 %21, -1
   %switch = icmp ult i32 %.off, 2
-  %25 = load i32, i32* %23, align 4
+  %25 = load i32, i32 addrspace(1)* %23, align 4
   br i1 %switch, label %42, label %39
 
 ; <label>:26                                      ; preds = %20
   %.off1 = add nsw i32 %21, -1
   %switch2 = icmp ult i32 %.off1, 2
-  %27 = load i32, i32* %23, align 4
+  %27 = load i32, i32 addrspace(1)* %23, align 4
   br i1 %switch2, label %64, label %61
 
 ; <label>:28                                      ; preds = %20
@@ -1712,14 +1722,14 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
   ret i1 %30
 
 ; <label>:31                                      ; preds = %20
-  %32 = load i32, i32* %23, align 4
+  %32 = load i32, i32 addrspace(1)* %23, align 4
   %33 = cmpxchg volatile i32 addrspace(1)* %22, i32 %32, i32 %11 monotonic monotonic
   %34 = extractvalue { i32, i1 } %33, 1
   br i1 %34, label %37, label %35
 
 ; <label>:35                                      ; preds = %31
   %36 = extractvalue { i32, i1 } %33, 0
-  store i32 %36, i32* %23, align 4
+  store i32 %36, i32 addrspace(1)* %23, align 4
   br label %37
 
 ; <label>:37                                      ; preds = %35, %31
@@ -1738,7 +1748,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:45                                      ; preds = %39
   %46 = extractvalue { i32, i1 } %40, 0
-  store i32 %46, i32* %23, align 4
+  store i32 %46, i32 addrspace(1)* %23, align 4
   br label %47
 
 ; <label>:47                                      ; preds = %45, %39
@@ -1747,7 +1757,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:49                                      ; preds = %42
   %50 = extractvalue { i32, i1 } %43, 0
-  store i32 %50, i32* %23, align 4
+  store i32 %50, i32 addrspace(1)* %23, align 4
   br label %51
 
 ; <label>:51                                      ; preds = %49, %42
@@ -1755,14 +1765,14 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
   br label %29
 
 ; <label>:53                                      ; preds = %20
-  %54 = load i32, i32* %23, align 4
+  %54 = load i32, i32 addrspace(1)* %23, align 4
   %55 = cmpxchg volatile i32 addrspace(1)* %22, i32 %54, i32 %11 release monotonic
   %56 = extractvalue { i32, i1 } %55, 1
   br i1 %56, label %59, label %57
 
 ; <label>:57                                      ; preds = %53
   %58 = extractvalue { i32, i1 } %55, 0
-  store i32 %58, i32* %23, align 4
+  store i32 %58, i32 addrspace(1)* %23, align 4
   br label %59
 
 ; <label>:59                                      ; preds = %57, %53
@@ -1781,7 +1791,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:67                                      ; preds = %61
   %68 = extractvalue { i32, i1 } %62, 0
-  store i32 %68, i32* %23, align 4
+  store i32 %68, i32 addrspace(1)* %23, align 4
   br label %69
 
 ; <label>:69                                      ; preds = %67, %61
@@ -1790,7 +1800,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:71                                      ; preds = %64
   %72 = extractvalue { i32, i1 } %65, 0
-  store i32 %72, i32* %23, align 4
+  store i32 %72, i32 addrspace(1)* %23, align 4
   br label %73
 
 ; <label>:73                                      ; preds = %71, %64
@@ -1798,26 +1808,26 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
   br label %29
 
 ; <label>:75                                      ; preds = %28
-  %76 = load i32, i32* %23, align 4
+  %76 = load i32, i32 addrspace(1)* %23, align 4
   %77 = cmpxchg volatile i32 addrspace(1)* %22, i32 %76, i32 %11 seq_cst monotonic
   %78 = extractvalue { i32, i1 } %77, 1
   br i1 %78, label %89, label %87
 
 ; <label>:79                                      ; preds = %28, %28
-  %80 = load i32, i32* %23, align 4
+  %80 = load i32, i32 addrspace(1)* %23, align 4
   %81 = cmpxchg volatile i32 addrspace(1)* %22, i32 %80, i32 %11 seq_cst acquire
   %82 = extractvalue { i32, i1 } %81, 1
   br i1 %82, label %93, label %91
 
 ; <label>:83                                      ; preds = %28
-  %84 = load i32, i32* %23, align 4
+  %84 = load i32, i32 addrspace(1)* %23, align 4
   %85 = cmpxchg volatile i32 addrspace(1)* %22, i32 %84, i32 %11 seq_cst seq_cst
   %86 = extractvalue { i32, i1 } %85, 1
   br i1 %86, label %97, label %95
 
 ; <label>:87                                      ; preds = %75
   %88 = extractvalue { i32, i1 } %77, 0
-  store i32 %88, i32* %23, align 4
+  store i32 %88, i32 addrspace(1)* %23, align 4
   br label %89
 
 ; <label>:89                                      ; preds = %87, %75
@@ -1826,7 +1836,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:91                                      ; preds = %79
   %92 = extractvalue { i32, i1 } %81, 0
-  store i32 %92, i32* %23, align 4
+  store i32 %92, i32 addrspace(1)* %23, align 4
   br label %93
 
 ; <label>:93                                      ; preds = %91, %79
@@ -1835,7 +1845,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:95                                      ; preds = %83
   %96 = extractvalue { i32, i1 } %85, 0
-  store i32 %96, i32* %23, align 4
+  store i32 %96, i32 addrspace(1)* %23, align 4
   br label %97
 
 ; <label>:97                                      ; preds = %95, %83
@@ -1844,7 +1854,9 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 }
 
 ; Function Attrs: nounwind uwtable
-define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_AtomicfPff12memory_orderS3_12memory_scope(float addrspace(1)* %object, float* nocapture %expected, float %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+;define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_AtomicfPff12memory_orderS3_12memory_scope(float addrspace(1)* %object, float* nocapture %expected, float %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_AtomicfPU8CLglobalff12memory_orderS4_12memory_scope(float addrspace(1)* %object, float addrspace(1)* nocapture %expected, float %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+
   %1 = icmp eq i32 %success, 0
   br i1 %1, label %9, label %2
 
@@ -1883,7 +1895,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 ; <label>:20                                      ; preds = %13, %15, %17, %9
   %21 = phi i32 [ 0, %9 ], [ 2, %13 ], [ %19, %17 ], [ 3, %15 ]
   %22 = bitcast float addrspace(1)* %object to i32 addrspace(1)*
-  %23 = bitcast float* %expected to i32*
+  %23 = bitcast float addrspace(1)* %expected to i32 addrspace(1)*
   switch i32 %10, label %31 [
     i32 1, label %24
     i32 2, label %24
@@ -1895,13 +1907,13 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 ; <label>:24                                      ; preds = %20, %20
   %.off = add nsw i32 %21, -1
   %switch = icmp ult i32 %.off, 2
-  %25 = load i32, i32* %23, align 4
+  %25 = load i32, i32 addrspace(1)* %23, align 4
   br i1 %switch, label %42, label %39
 
 ; <label>:26                                      ; preds = %20
   %.off1 = add nsw i32 %21, -1
   %switch2 = icmp ult i32 %.off1, 2
-  %27 = load i32, i32* %23, align 4
+  %27 = load i32, i32 addrspace(1)* %23, align 4
   br i1 %switch2, label %64, label %61
 
 ; <label>:28                                      ; preds = %20
@@ -1917,14 +1929,14 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
   ret i1 %30
 
 ; <label>:31                                      ; preds = %20
-  %32 = load i32, i32* %23, align 4
+  %32 = load i32, i32 addrspace(1)* %23, align 4
   %33 = cmpxchg weak volatile i32 addrspace(1)* %22, i32 %32, i32 %11 monotonic monotonic
   %34 = extractvalue { i32, i1 } %33, 1
   br i1 %34, label %37, label %35
 
 ; <label>:35                                      ; preds = %31
   %36 = extractvalue { i32, i1 } %33, 0
-  store i32 %36, i32* %23, align 4
+  store i32 %36, i32 addrspace(1)* %23, align 4
   br label %37
 
 ; <label>:37                                      ; preds = %35, %31
@@ -1943,7 +1955,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:45                                      ; preds = %39
   %46 = extractvalue { i32, i1 } %40, 0
-  store i32 %46, i32* %23, align 4
+  store i32 %46, i32 addrspace(1)* %23, align 4
   br label %47
 
 ; <label>:47                                      ; preds = %45, %39
@@ -1952,7 +1964,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:49                                      ; preds = %42
   %50 = extractvalue { i32, i1 } %43, 0
-  store i32 %50, i32* %23, align 4
+  store i32 %50, i32 addrspace(1)* %23, align 4
   br label %51
 
 ; <label>:51                                      ; preds = %49, %42
@@ -1960,14 +1972,14 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
   br label %29
 
 ; <label>:53                                      ; preds = %20
-  %54 = load i32, i32* %23, align 4
+  %54 = load i32, i32 addrspace(1)* %23, align 4
   %55 = cmpxchg weak volatile i32 addrspace(1)* %22, i32 %54, i32 %11 release monotonic
   %56 = extractvalue { i32, i1 } %55, 1
   br i1 %56, label %59, label %57
 
 ; <label>:57                                      ; preds = %53
   %58 = extractvalue { i32, i1 } %55, 0
-  store i32 %58, i32* %23, align 4
+  store i32 %58, i32 addrspace(1)* %23, align 4
   br label %59
 
 ; <label>:59                                      ; preds = %57, %53
@@ -1986,7 +1998,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:67                                      ; preds = %61
   %68 = extractvalue { i32, i1 } %62, 0
-  store i32 %68, i32* %23, align 4
+  store i32 %68, i32 addrspace(1)* %23, align 4
   br label %69
 
 ; <label>:69                                      ; preds = %67, %61
@@ -1995,7 +2007,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:71                                      ; preds = %64
   %72 = extractvalue { i32, i1 } %65, 0
-  store i32 %72, i32* %23, align 4
+  store i32 %72, i32 addrspace(1)* %23, align 4
   br label %73
 
 ; <label>:73                                      ; preds = %71, %64
@@ -2003,26 +2015,26 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
   br label %29
 
 ; <label>:75                                      ; preds = %28
-  %76 = load i32, i32* %23, align 4
+  %76 = load i32, i32 addrspace(1)* %23, align 4
   %77 = cmpxchg weak volatile i32 addrspace(1)* %22, i32 %76, i32 %11 seq_cst monotonic
   %78 = extractvalue { i32, i1 } %77, 1
   br i1 %78, label %89, label %87
 
 ; <label>:79                                      ; preds = %28, %28
-  %80 = load i32, i32* %23, align 4
+  %80 = load i32, i32 addrspace(1)* %23, align 4
   %81 = cmpxchg weak volatile i32 addrspace(1)* %22, i32 %80, i32 %11 seq_cst acquire
   %82 = extractvalue { i32, i1 } %81, 1
   br i1 %82, label %93, label %91
 
 ; <label>:83                                      ; preds = %28
-  %84 = load i32, i32* %23, align 4
+  %84 = load i32, i32 addrspace(1)* %23, align 4
   %85 = cmpxchg weak volatile i32 addrspace(1)* %22, i32 %84, i32 %11 seq_cst seq_cst
   %86 = extractvalue { i32, i1 } %85, 1
   br i1 %86, label %97, label %95
 
 ; <label>:87                                      ; preds = %75
   %88 = extractvalue { i32, i1 } %77, 0
-  store i32 %88, i32* %23, align 4
+  store i32 %88, i32 addrspace(1)* %23, align 4
   br label %89
 
 ; <label>:89                                      ; preds = %87, %75
@@ -2031,7 +2043,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:91                                      ; preds = %79
   %92 = extractvalue { i32, i1 } %81, 0
-  store i32 %92, i32* %23, align 4
+  store i32 %92, i32 addrspace(1)* %23, align 4
   br label %93
 
 ; <label>:93                                      ; preds = %91, %79
@@ -2040,7 +2052,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:95                                      ; preds = %83
   %96 = extractvalue { i32, i1 } %85, 0
-  store i32 %96, i32* %23, align 4
+  store i32 %96, i32 addrspace(1)* %23, align 4
   br label %97
 
 ; <label>:97                                      ; preds = %95, %83
@@ -2134,7 +2146,9 @@ define i64 @_Z28pocl_atomic_exchange__globalPVU8CLglobalU7_Atomicll12memory_orde
 }
 
 ; Function Attrs: nounwind uwtable
-define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7_AtomiclPll12memory_orderS3_12memory_scope(i64 addrspace(1)* %object, i64* nocapture %expected, i64 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+;define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7_AtomiclPll12memory_orderS3_12memory_scope(i64 addrspace(1)* %object, i64* nocapture %expected, i64 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7_AtomiclPU8CLgloballl12memory_orderS4_12memory_scope(i64 addrspace(1)* %object, i64 addrspace(1)* nocapture %expected, i64 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+
   %1 = icmp eq i32 %success, 0
   br i1 %1, label %9, label %2
 
@@ -2182,13 +2196,13 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 ; <label>:21                                      ; preds = %19, %19
   %.off = add nsw i32 %20, -1
   %switch = icmp ult i32 %.off, 2
-  %22 = load i64, i64* %expected, align 8
+  %22 = load i64, i64 addrspace(1)* %expected, align 8
   br i1 %switch, label %39, label %36
 
 ; <label>:23                                      ; preds = %19
   %.off1 = add nsw i32 %20, -1
   %switch2 = icmp ult i32 %.off1, 2
-  %24 = load i64, i64* %expected, align 8
+  %24 = load i64, i64 addrspace(1)* %expected, align 8
   br i1 %switch2, label %61, label %58
 
 ; <label>:25                                      ; preds = %19
@@ -2204,14 +2218,14 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
   ret i1 %27
 
 ; <label>:28                                      ; preds = %19
-  %29 = load i64, i64* %expected, align 8
+  %29 = load i64, i64 addrspace(1)* %expected, align 8
   %30 = cmpxchg volatile i64 addrspace(1)* %object, i64 %29, i64 %desired monotonic monotonic
   %31 = extractvalue { i64, i1 } %30, 1
   br i1 %31, label %34, label %32
 
 ; <label>:32                                      ; preds = %28
   %33 = extractvalue { i64, i1 } %30, 0
-  store i64 %33, i64* %expected, align 8
+  store i64 %33, i64 addrspace(1)* %expected, align 8
   br label %34
 
 ; <label>:34                                      ; preds = %32, %28
@@ -2230,7 +2244,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:42                                      ; preds = %36
   %43 = extractvalue { i64, i1 } %37, 0
-  store i64 %43, i64* %expected, align 8
+  store i64 %43, i64 addrspace(1)* %expected, align 8
   br label %44
 
 ; <label>:44                                      ; preds = %42, %36
@@ -2239,7 +2253,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:46                                      ; preds = %39
   %47 = extractvalue { i64, i1 } %40, 0
-  store i64 %47, i64* %expected, align 8
+  store i64 %47, i64 addrspace(1)* %expected, align 8
   br label %48
 
 ; <label>:48                                      ; preds = %46, %39
@@ -2247,14 +2261,14 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
   br label %26
 
 ; <label>:50                                      ; preds = %19
-  %51 = load i64, i64* %expected, align 8
+  %51 = load i64, i64 addrspace(1)* %expected, align 8
   %52 = cmpxchg volatile i64 addrspace(1)* %object, i64 %51, i64 %desired release monotonic
   %53 = extractvalue { i64, i1 } %52, 1
   br i1 %53, label %56, label %54
 
 ; <label>:54                                      ; preds = %50
   %55 = extractvalue { i64, i1 } %52, 0
-  store i64 %55, i64* %expected, align 8
+  store i64 %55, i64 addrspace(1)* %expected, align 8
   br label %56
 
 ; <label>:56                                      ; preds = %54, %50
@@ -2273,7 +2287,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:64                                      ; preds = %58
   %65 = extractvalue { i64, i1 } %59, 0
-  store i64 %65, i64* %expected, align 8
+  store i64 %65, i64 addrspace(1)* %expected, align 8
   br label %66
 
 ; <label>:66                                      ; preds = %64, %58
@@ -2282,7 +2296,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:68                                      ; preds = %61
   %69 = extractvalue { i64, i1 } %62, 0
-  store i64 %69, i64* %expected, align 8
+  store i64 %69, i64 addrspace(1)* %expected, align 8
   br label %70
 
 ; <label>:70                                      ; preds = %68, %61
@@ -2290,26 +2304,26 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
   br label %26
 
 ; <label>:72                                      ; preds = %25
-  %73 = load i64, i64* %expected, align 8
+  %73 = load i64, i64 addrspace(1)* %expected, align 8
   %74 = cmpxchg volatile i64 addrspace(1)* %object, i64 %73, i64 %desired seq_cst monotonic
   %75 = extractvalue { i64, i1 } %74, 1
   br i1 %75, label %86, label %84
 
 ; <label>:76                                      ; preds = %25, %25
-  %77 = load i64, i64* %expected, align 8
+  %77 = load i64, i64 addrspace(1)* %expected, align 8
   %78 = cmpxchg volatile i64 addrspace(1)* %object, i64 %77, i64 %desired seq_cst acquire
   %79 = extractvalue { i64, i1 } %78, 1
   br i1 %79, label %90, label %88
 
 ; <label>:80                                      ; preds = %25
-  %81 = load i64, i64* %expected, align 8
+  %81 = load i64, i64 addrspace(1)* %expected, align 8
   %82 = cmpxchg volatile i64 addrspace(1)* %object, i64 %81, i64 %desired seq_cst seq_cst
   %83 = extractvalue { i64, i1 } %82, 1
   br i1 %83, label %94, label %92
 
 ; <label>:84                                      ; preds = %72
   %85 = extractvalue { i64, i1 } %74, 0
-  store i64 %85, i64* %expected, align 8
+  store i64 %85, i64 addrspace(1)* %expected, align 8
   br label %86
 
 ; <label>:86                                      ; preds = %84, %72
@@ -2318,7 +2332,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:88                                      ; preds = %76
   %89 = extractvalue { i64, i1 } %78, 0
-  store i64 %89, i64* %expected, align 8
+  store i64 %89, i64 addrspace(1)* %expected, align 8
   br label %90
 
 ; <label>:90                                      ; preds = %88, %76
@@ -2327,7 +2341,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:92                                      ; preds = %80
   %93 = extractvalue { i64, i1 } %82, 0
-  store i64 %93, i64* %expected, align 8
+  store i64 %93, i64 addrspace(1)* %expected, align 8
   br label %94
 
 ; <label>:94                                      ; preds = %92, %80
@@ -2336,7 +2350,9 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 }
 
 ; Function Attrs: nounwind uwtable
-define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_AtomiclPll12memory_orderS3_12memory_scope(i64 addrspace(1)* %object, i64* nocapture %expected, i64 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+;define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_AtomiclPll12memory_orderS3_12memory_scope(i64 addrspace(1)* %object, i64* nocapture %expected, i64 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_AtomiclPU8CLgloballl12memory_orderS4_12memory_scope(i64 addrspace(1)* %object, i64 addrspace(1)* nocapture %expected, i64 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+
   %1 = icmp eq i32 %success, 0
   br i1 %1, label %9, label %2
 
@@ -2384,13 +2400,13 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 ; <label>:21                                      ; preds = %19, %19
   %.off = add nsw i32 %20, -1
   %switch = icmp ult i32 %.off, 2
-  %22 = load i64, i64* %expected, align 8
+  %22 = load i64, i64 addrspace(1)* %expected, align 8
   br i1 %switch, label %39, label %36
 
 ; <label>:23                                      ; preds = %19
   %.off1 = add nsw i32 %20, -1
   %switch2 = icmp ult i32 %.off1, 2
-  %24 = load i64, i64* %expected, align 8
+  %24 = load i64, i64 addrspace(1)* %expected, align 8
   br i1 %switch2, label %61, label %58
 
 ; <label>:25                                      ; preds = %19
@@ -2406,14 +2422,14 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
   ret i1 %27
 
 ; <label>:28                                      ; preds = %19
-  %29 = load i64, i64* %expected, align 8
+  %29 = load i64, i64 addrspace(1)* %expected, align 8
   %30 = cmpxchg weak volatile i64 addrspace(1)* %object, i64 %29, i64 %desired monotonic monotonic
   %31 = extractvalue { i64, i1 } %30, 1
   br i1 %31, label %34, label %32
 
 ; <label>:32                                      ; preds = %28
   %33 = extractvalue { i64, i1 } %30, 0
-  store i64 %33, i64* %expected, align 8
+  store i64 %33, i64 addrspace(1)* %expected, align 8
   br label %34
 
 ; <label>:34                                      ; preds = %32, %28
@@ -2432,7 +2448,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:42                                      ; preds = %36
   %43 = extractvalue { i64, i1 } %37, 0
-  store i64 %43, i64* %expected, align 8
+  store i64 %43, i64 addrspace(1)* %expected, align 8
   br label %44
 
 ; <label>:44                                      ; preds = %42, %36
@@ -2441,7 +2457,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:46                                      ; preds = %39
   %47 = extractvalue { i64, i1 } %40, 0
-  store i64 %47, i64* %expected, align 8
+  store i64 %47, i64 addrspace(1)* %expected, align 8
   br label %48
 
 ; <label>:48                                      ; preds = %46, %39
@@ -2449,14 +2465,14 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
   br label %26
 
 ; <label>:50                                      ; preds = %19
-  %51 = load i64, i64* %expected, align 8
+  %51 = load i64, i64 addrspace(1)* %expected, align 8
   %52 = cmpxchg weak volatile i64 addrspace(1)* %object, i64 %51, i64 %desired release monotonic
   %53 = extractvalue { i64, i1 } %52, 1
   br i1 %53, label %56, label %54
 
 ; <label>:54                                      ; preds = %50
   %55 = extractvalue { i64, i1 } %52, 0
-  store i64 %55, i64* %expected, align 8
+  store i64 %55, i64 addrspace(1)* %expected, align 8
   br label %56
 
 ; <label>:56                                      ; preds = %54, %50
@@ -2475,7 +2491,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:64                                      ; preds = %58
   %65 = extractvalue { i64, i1 } %59, 0
-  store i64 %65, i64* %expected, align 8
+  store i64 %65, i64 addrspace(1)* %expected, align 8
   br label %66
 
 ; <label>:66                                      ; preds = %64, %58
@@ -2484,7 +2500,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:68                                      ; preds = %61
   %69 = extractvalue { i64, i1 } %62, 0
-  store i64 %69, i64* %expected, align 8
+  store i64 %69, i64 addrspace(1)* %expected, align 8
   br label %70
 
 ; <label>:70                                      ; preds = %68, %61
@@ -2492,26 +2508,26 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
   br label %26
 
 ; <label>:72                                      ; preds = %25
-  %73 = load i64, i64* %expected, align 8
+  %73 = load i64, i64 addrspace(1)* %expected, align 8
   %74 = cmpxchg weak volatile i64 addrspace(1)* %object, i64 %73, i64 %desired seq_cst monotonic
   %75 = extractvalue { i64, i1 } %74, 1
   br i1 %75, label %86, label %84
 
 ; <label>:76                                      ; preds = %25, %25
-  %77 = load i64, i64* %expected, align 8
+  %77 = load i64, i64 addrspace(1)* %expected, align 8
   %78 = cmpxchg weak volatile i64 addrspace(1)* %object, i64 %77, i64 %desired seq_cst acquire
   %79 = extractvalue { i64, i1 } %78, 1
   br i1 %79, label %90, label %88
 
 ; <label>:80                                      ; preds = %25
-  %81 = load i64, i64* %expected, align 8
+  %81 = load i64, i64 addrspace(1)* %expected, align 8
   %82 = cmpxchg weak volatile i64 addrspace(1)* %object, i64 %81, i64 %desired seq_cst seq_cst
   %83 = extractvalue { i64, i1 } %82, 1
   br i1 %83, label %94, label %92
 
 ; <label>:84                                      ; preds = %72
   %85 = extractvalue { i64, i1 } %74, 0
-  store i64 %85, i64* %expected, align 8
+  store i64 %85, i64 addrspace(1)* %expected, align 8
   br label %86
 
 ; <label>:86                                      ; preds = %84, %72
@@ -2520,7 +2536,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:88                                      ; preds = %76
   %89 = extractvalue { i64, i1 } %78, 0
-  store i64 %89, i64* %expected, align 8
+  store i64 %89, i64 addrspace(1)* %expected, align 8
   br label %90
 
 ; <label>:90                                      ; preds = %88, %76
@@ -2529,7 +2545,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:92                                      ; preds = %80
   %93 = extractvalue { i64, i1 } %82, 0
-  store i64 %93, i64* %expected, align 8
+  store i64 %93, i64 addrspace(1)* %expected, align 8
   br label %94
 
 ; <label>:94                                      ; preds = %92, %80
@@ -2861,7 +2877,9 @@ define i64 @_Z28pocl_atomic_exchange__globalPVU8CLglobalU7_Atomicmm12memory_orde
 }
 
 ; Function Attrs: nounwind uwtable
-define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7_AtomicmPmm12memory_orderS3_12memory_scope(i64 addrspace(1)* %object, i64* nocapture %expected, i64 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+;define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7_AtomicmPmm12memory_orderS3_12memory_scope(i64 addrspace(1)* %object, i64* nocapture %expected, i64 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7_AtomicmPU8CLglobalmm12memory_orderS4_12memory_scope(i64 addrspace(1)* %object, i64 addrspace(1)* nocapture %expected, i64 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+
   %1 = icmp eq i32 %success, 0
   br i1 %1, label %9, label %2
 
@@ -2909,13 +2927,13 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 ; <label>:21                                      ; preds = %19, %19
   %.off = add nsw i32 %20, -1
   %switch = icmp ult i32 %.off, 2
-  %22 = load i64, i64* %expected, align 8
+  %22 = load i64, i64 addrspace(1)* %expected, align 8
   br i1 %switch, label %39, label %36
 
 ; <label>:23                                      ; preds = %19
   %.off1 = add nsw i32 %20, -1
   %switch2 = icmp ult i32 %.off1, 2
-  %24 = load i64, i64* %expected, align 8
+  %24 = load i64, i64 addrspace(1)* %expected, align 8
   br i1 %switch2, label %61, label %58
 
 ; <label>:25                                      ; preds = %19
@@ -2931,14 +2949,14 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
   ret i1 %27
 
 ; <label>:28                                      ; preds = %19
-  %29 = load i64, i64* %expected, align 8
+  %29 = load i64, i64 addrspace(1)* %expected, align 8
   %30 = cmpxchg volatile i64 addrspace(1)* %object, i64 %29, i64 %desired monotonic monotonic
   %31 = extractvalue { i64, i1 } %30, 1
   br i1 %31, label %34, label %32
 
 ; <label>:32                                      ; preds = %28
   %33 = extractvalue { i64, i1 } %30, 0
-  store i64 %33, i64* %expected, align 8
+  store i64 %33, i64 addrspace(1)* %expected, align 8
   br label %34
 
 ; <label>:34                                      ; preds = %32, %28
@@ -2957,7 +2975,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:42                                      ; preds = %36
   %43 = extractvalue { i64, i1 } %37, 0
-  store i64 %43, i64* %expected, align 8
+  store i64 %43, i64 addrspace(1)* %expected, align 8
   br label %44
 
 ; <label>:44                                      ; preds = %42, %36
@@ -2966,7 +2984,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:46                                      ; preds = %39
   %47 = extractvalue { i64, i1 } %40, 0
-  store i64 %47, i64* %expected, align 8
+  store i64 %47, i64 addrspace(1)* %expected, align 8
   br label %48
 
 ; <label>:48                                      ; preds = %46, %39
@@ -2974,14 +2992,14 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
   br label %26
 
 ; <label>:50                                      ; preds = %19
-  %51 = load i64, i64* %expected, align 8
+  %51 = load i64, i64 addrspace(1)* %expected, align 8
   %52 = cmpxchg volatile i64 addrspace(1)* %object, i64 %51, i64 %desired release monotonic
   %53 = extractvalue { i64, i1 } %52, 1
   br i1 %53, label %56, label %54
 
 ; <label>:54                                      ; preds = %50
   %55 = extractvalue { i64, i1 } %52, 0
-  store i64 %55, i64* %expected, align 8
+  store i64 %55, i64 addrspace(1)* %expected, align 8
   br label %56
 
 ; <label>:56                                      ; preds = %54, %50
@@ -3000,7 +3018,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:64                                      ; preds = %58
   %65 = extractvalue { i64, i1 } %59, 0
-  store i64 %65, i64* %expected, align 8
+  store i64 %65, i64 addrspace(1)* %expected, align 8
   br label %66
 
 ; <label>:66                                      ; preds = %64, %58
@@ -3009,7 +3027,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:68                                      ; preds = %61
   %69 = extractvalue { i64, i1 } %62, 0
-  store i64 %69, i64* %expected, align 8
+  store i64 %69, i64 addrspace(1)* %expected, align 8
   br label %70
 
 ; <label>:70                                      ; preds = %68, %61
@@ -3017,26 +3035,26 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
   br label %26
 
 ; <label>:72                                      ; preds = %25
-  %73 = load i64, i64* %expected, align 8
+  %73 = load i64, i64 addrspace(1)* %expected, align 8
   %74 = cmpxchg volatile i64 addrspace(1)* %object, i64 %73, i64 %desired seq_cst monotonic
   %75 = extractvalue { i64, i1 } %74, 1
   br i1 %75, label %86, label %84
 
 ; <label>:76                                      ; preds = %25, %25
-  %77 = load i64, i64* %expected, align 8
+  %77 = load i64, i64 addrspace(1)* %expected, align 8
   %78 = cmpxchg volatile i64 addrspace(1)* %object, i64 %77, i64 %desired seq_cst acquire
   %79 = extractvalue { i64, i1 } %78, 1
   br i1 %79, label %90, label %88
 
 ; <label>:80                                      ; preds = %25
-  %81 = load i64, i64* %expected, align 8
+  %81 = load i64, i64 addrspace(1)* %expected, align 8
   %82 = cmpxchg volatile i64 addrspace(1)* %object, i64 %81, i64 %desired seq_cst seq_cst
   %83 = extractvalue { i64, i1 } %82, 1
   br i1 %83, label %94, label %92
 
 ; <label>:84                                      ; preds = %72
   %85 = extractvalue { i64, i1 } %74, 0
-  store i64 %85, i64* %expected, align 8
+  store i64 %85, i64 addrspace(1)* %expected, align 8
   br label %86
 
 ; <label>:86                                      ; preds = %84, %72
@@ -3045,7 +3063,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:88                                      ; preds = %76
   %89 = extractvalue { i64, i1 } %78, 0
-  store i64 %89, i64* %expected, align 8
+  store i64 %89, i64 addrspace(1)* %expected, align 8
   br label %90
 
 ; <label>:90                                      ; preds = %88, %76
@@ -3054,7 +3072,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:92                                      ; preds = %80
   %93 = extractvalue { i64, i1 } %82, 0
-  store i64 %93, i64* %expected, align 8
+  store i64 %93, i64 addrspace(1)* %expected, align 8
   br label %94
 
 ; <label>:94                                      ; preds = %92, %80
@@ -3063,7 +3081,9 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 }
 
 ; Function Attrs: nounwind uwtable
-define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_AtomicmPmm12memory_orderS3_12memory_scope(i64 addrspace(1)* %object, i64* nocapture %expected, i64 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+;define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_AtomicmPmm12memory_orderS3_12memory_scope(i64 addrspace(1)* %object, i64* nocapture %expected, i64 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_AtomicmPU8CLglobalmm12memory_orderS4_12memory_scope(i64 addrspace(1)* %object, i64 addrspace(1)* nocapture %expected, i64 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+
   %1 = icmp eq i32 %success, 0
   br i1 %1, label %9, label %2
 
@@ -3111,13 +3131,13 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 ; <label>:21                                      ; preds = %19, %19
   %.off = add nsw i32 %20, -1
   %switch = icmp ult i32 %.off, 2
-  %22 = load i64, i64* %expected, align 8
+  %22 = load i64, i64 addrspace(1)* %expected, align 8
   br i1 %switch, label %39, label %36
 
 ; <label>:23                                      ; preds = %19
   %.off1 = add nsw i32 %20, -1
   %switch2 = icmp ult i32 %.off1, 2
-  %24 = load i64, i64* %expected, align 8
+  %24 = load i64, i64 addrspace(1)* %expected, align 8
   br i1 %switch2, label %61, label %58
 
 ; <label>:25                                      ; preds = %19
@@ -3133,14 +3153,14 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
   ret i1 %27
 
 ; <label>:28                                      ; preds = %19
-  %29 = load i64, i64* %expected, align 8
+  %29 = load i64, i64 addrspace(1)* %expected, align 8
   %30 = cmpxchg weak volatile i64 addrspace(1)* %object, i64 %29, i64 %desired monotonic monotonic
   %31 = extractvalue { i64, i1 } %30, 1
   br i1 %31, label %34, label %32
 
 ; <label>:32                                      ; preds = %28
   %33 = extractvalue { i64, i1 } %30, 0
-  store i64 %33, i64* %expected, align 8
+  store i64 %33, i64 addrspace(1)* %expected, align 8
   br label %34
 
 ; <label>:34                                      ; preds = %32, %28
@@ -3159,7 +3179,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:42                                      ; preds = %36
   %43 = extractvalue { i64, i1 } %37, 0
-  store i64 %43, i64* %expected, align 8
+  store i64 %43, i64 addrspace(1)* %expected, align 8
   br label %44
 
 ; <label>:44                                      ; preds = %42, %36
@@ -3168,7 +3188,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:46                                      ; preds = %39
   %47 = extractvalue { i64, i1 } %40, 0
-  store i64 %47, i64* %expected, align 8
+  store i64 %47, i64 addrspace(1)* %expected, align 8
   br label %48
 
 ; <label>:48                                      ; preds = %46, %39
@@ -3176,14 +3196,14 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
   br label %26
 
 ; <label>:50                                      ; preds = %19
-  %51 = load i64, i64* %expected, align 8
+  %51 = load i64, i64 addrspace(1)* %expected, align 8
   %52 = cmpxchg weak volatile i64 addrspace(1)* %object, i64 %51, i64 %desired release monotonic
   %53 = extractvalue { i64, i1 } %52, 1
   br i1 %53, label %56, label %54
 
 ; <label>:54                                      ; preds = %50
   %55 = extractvalue { i64, i1 } %52, 0
-  store i64 %55, i64* %expected, align 8
+  store i64 %55, i64 addrspace(1)* %expected, align 8
   br label %56
 
 ; <label>:56                                      ; preds = %54, %50
@@ -3202,7 +3222,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:64                                      ; preds = %58
   %65 = extractvalue { i64, i1 } %59, 0
-  store i64 %65, i64* %expected, align 8
+  store i64 %65, i64 addrspace(1)* %expected, align 8
   br label %66
 
 ; <label>:66                                      ; preds = %64, %58
@@ -3211,7 +3231,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:68                                      ; preds = %61
   %69 = extractvalue { i64, i1 } %62, 0
-  store i64 %69, i64* %expected, align 8
+  store i64 %69, i64 addrspace(1)* %expected, align 8
   br label %70
 
 ; <label>:70                                      ; preds = %68, %61
@@ -3219,26 +3239,26 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
   br label %26
 
 ; <label>:72                                      ; preds = %25
-  %73 = load i64, i64* %expected, align 8
+  %73 = load i64, i64 addrspace(1)* %expected, align 8
   %74 = cmpxchg weak volatile i64 addrspace(1)* %object, i64 %73, i64 %desired seq_cst monotonic
   %75 = extractvalue { i64, i1 } %74, 1
   br i1 %75, label %86, label %84
 
 ; <label>:76                                      ; preds = %25, %25
-  %77 = load i64, i64* %expected, align 8
+  %77 = load i64, i64 addrspace(1)* %expected, align 8
   %78 = cmpxchg weak volatile i64 addrspace(1)* %object, i64 %77, i64 %desired seq_cst acquire
   %79 = extractvalue { i64, i1 } %78, 1
   br i1 %79, label %90, label %88
 
 ; <label>:80                                      ; preds = %25
-  %81 = load i64, i64* %expected, align 8
+  %81 = load i64, i64 addrspace(1)* %expected, align 8
   %82 = cmpxchg weak volatile i64 addrspace(1)* %object, i64 %81, i64 %desired seq_cst seq_cst
   %83 = extractvalue { i64, i1 } %82, 1
   br i1 %83, label %94, label %92
 
 ; <label>:84                                      ; preds = %72
   %85 = extractvalue { i64, i1 } %74, 0
-  store i64 %85, i64* %expected, align 8
+  store i64 %85, i64 addrspace(1)* %expected, align 8
   br label %86
 
 ; <label>:86                                      ; preds = %84, %72
@@ -3247,7 +3267,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:88                                      ; preds = %76
   %89 = extractvalue { i64, i1 } %78, 0
-  store i64 %89, i64* %expected, align 8
+  store i64 %89, i64 addrspace(1)* %expected, align 8
   br label %90
 
 ; <label>:90                                      ; preds = %88, %76
@@ -3256,7 +3276,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:92                                      ; preds = %80
   %93 = extractvalue { i64, i1 } %82, 0
-  store i64 %93, i64* %expected, align 8
+  store i64 %93, i64 addrspace(1)* %expected, align 8
   br label %94
 
 ; <label>:94                                      ; preds = %92, %80
@@ -3625,7 +3645,9 @@ define double @_Z28pocl_atomic_exchange__globalPVU8CLglobalU7_Atomicdd12memory_o
 }
 
 ; Function Attrs: nounwind uwtable
-define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7_AtomicdPdd12memory_orderS3_12memory_scope(double addrspace(1)* %object, double* nocapture %expected, double %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+;define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7_AtomicdPdd12memory_orderS3_12memory_scope(double addrspace(1)* %object, double* nocapture %expected, double %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7_AtomicdPU8CLglobaldd12memory_orderS4_12memory_scope(double addrspace(1)* %object, double addrspace(1)* nocapture %expected, double %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+
   %1 = icmp eq i32 %success, 0
   br i1 %1, label %9, label %2
 
@@ -3664,7 +3686,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 ; <label>:20                                      ; preds = %13, %15, %17, %9
   %21 = phi i32 [ 0, %9 ], [ 2, %13 ], [ %19, %17 ], [ 3, %15 ]
   %22 = bitcast double addrspace(1)* %object to i64 addrspace(1)*
-  %23 = bitcast double* %expected to i64*
+  %23 = bitcast double addrspace(1)* %expected to i64 addrspace(1)*
   switch i32 %10, label %31 [
     i32 1, label %24
     i32 2, label %24
@@ -3676,13 +3698,13 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 ; <label>:24                                      ; preds = %20, %20
   %.off = add nsw i32 %21, -1
   %switch = icmp ult i32 %.off, 2
-  %25 = load i64, i64* %23, align 8
+  %25 = load i64, i64 addrspace(1)* %23, align 8
   br i1 %switch, label %42, label %39
 
 ; <label>:26                                      ; preds = %20
   %.off1 = add nsw i32 %21, -1
   %switch2 = icmp ult i32 %.off1, 2
-  %27 = load i64, i64* %23, align 8
+  %27 = load i64, i64 addrspace(1)* %23, align 8
   br i1 %switch2, label %64, label %61
 
 ; <label>:28                                      ; preds = %20
@@ -3698,14 +3720,14 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
   ret i1 %30
 
 ; <label>:31                                      ; preds = %20
-  %32 = load i64, i64* %23, align 8
+  %32 = load i64, i64 addrspace(1)* %23, align 8
   %33 = cmpxchg volatile i64 addrspace(1)* %22, i64 %32, i64 %11 monotonic monotonic
   %34 = extractvalue { i64, i1 } %33, 1
   br i1 %34, label %37, label %35
 
 ; <label>:35                                      ; preds = %31
   %36 = extractvalue { i64, i1 } %33, 0
-  store i64 %36, i64* %23, align 8
+  store i64 %36, i64 addrspace(1)* %23, align 8
   br label %37
 
 ; <label>:37                                      ; preds = %35, %31
@@ -3724,7 +3746,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:45                                      ; preds = %39
   %46 = extractvalue { i64, i1 } %40, 0
-  store i64 %46, i64* %23, align 8
+  store i64 %46, i64 addrspace(1)* %23, align 8
   br label %47
 
 ; <label>:47                                      ; preds = %45, %39
@@ -3733,7 +3755,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:49                                      ; preds = %42
   %50 = extractvalue { i64, i1 } %43, 0
-  store i64 %50, i64* %23, align 8
+  store i64 %50, i64 addrspace(1)* %23, align 8
   br label %51
 
 ; <label>:51                                      ; preds = %49, %42
@@ -3741,14 +3763,14 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
   br label %29
 
 ; <label>:53                                      ; preds = %20
-  %54 = load i64, i64* %23, align 8
+  %54 = load i64, i64 addrspace(1)* %23, align 8
   %55 = cmpxchg volatile i64 addrspace(1)* %22, i64 %54, i64 %11 release monotonic
   %56 = extractvalue { i64, i1 } %55, 1
   br i1 %56, label %59, label %57
 
 ; <label>:57                                      ; preds = %53
   %58 = extractvalue { i64, i1 } %55, 0
-  store i64 %58, i64* %23, align 8
+  store i64 %58, i64 addrspace(1)* %23, align 8
   br label %59
 
 ; <label>:59                                      ; preds = %57, %53
@@ -3767,7 +3789,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:67                                      ; preds = %61
   %68 = extractvalue { i64, i1 } %62, 0
-  store i64 %68, i64* %23, align 8
+  store i64 %68, i64 addrspace(1)* %23, align 8
   br label %69
 
 ; <label>:69                                      ; preds = %67, %61
@@ -3776,7 +3798,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:71                                      ; preds = %64
   %72 = extractvalue { i64, i1 } %65, 0
-  store i64 %72, i64* %23, align 8
+  store i64 %72, i64 addrspace(1)* %23, align 8
   br label %73
 
 ; <label>:73                                      ; preds = %71, %64
@@ -3784,26 +3806,26 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
   br label %29
 
 ; <label>:75                                      ; preds = %28
-  %76 = load i64, i64* %23, align 8
+  %76 = load i64, i64 addrspace(1)* %23, align 8
   %77 = cmpxchg volatile i64 addrspace(1)* %22, i64 %76, i64 %11 seq_cst monotonic
   %78 = extractvalue { i64, i1 } %77, 1
   br i1 %78, label %89, label %87
 
 ; <label>:79                                      ; preds = %28, %28
-  %80 = load i64, i64* %23, align 8
+  %80 = load i64, i64 addrspace(1)* %23, align 8
   %81 = cmpxchg volatile i64 addrspace(1)* %22, i64 %80, i64 %11 seq_cst acquire
   %82 = extractvalue { i64, i1 } %81, 1
   br i1 %82, label %93, label %91
 
 ; <label>:83                                      ; preds = %28
-  %84 = load i64, i64* %23, align 8
+  %84 = load i64, i64 addrspace(1)* %23, align 8
   %85 = cmpxchg volatile i64 addrspace(1)* %22, i64 %84, i64 %11 seq_cst seq_cst
   %86 = extractvalue { i64, i1 } %85, 1
   br i1 %86, label %97, label %95
 
 ; <label>:87                                      ; preds = %75
   %88 = extractvalue { i64, i1 } %77, 0
-  store i64 %88, i64* %23, align 8
+  store i64 %88, i64 addrspace(1)* %23, align 8
   br label %89
 
 ; <label>:89                                      ; preds = %87, %75
@@ -3812,7 +3834,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:91                                      ; preds = %79
   %92 = extractvalue { i64, i1 } %81, 0
-  store i64 %92, i64* %23, align 8
+  store i64 %92, i64 addrspace(1)* %23, align 8
   br label %93
 
 ; <label>:93                                      ; preds = %91, %79
@@ -3821,7 +3843,7 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 
 ; <label>:95                                      ; preds = %83
   %96 = extractvalue { i64, i1 } %85, 0
-  store i64 %96, i64* %23, align 8
+  store i64 %96, i64 addrspace(1)* %23, align 8
   br label %97
 
 ; <label>:97                                      ; preds = %95, %83
@@ -3830,7 +3852,9 @@ define zeroext i1 @_Z43pocl_atomic_compare_exchange_strong__globalPVU8CLglobalU7
 }
 
 ; Function Attrs: nounwind uwtable
-define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_AtomicdPdd12memory_orderS3_12memory_scope(double addrspace(1)* %object, double* nocapture %expected, double %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+;define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_AtomicdPdd12memory_orderS3_12memory_scope(double addrspace(1)* %object, double* nocapture %expected, double %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_AtomicdPU8CLglobaldd12memory_orderS4_12memory_scope(double addrspace(1)* %object, double addrspace(1)* nocapture %expected, double %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+
   %1 = icmp eq i32 %success, 0
   br i1 %1, label %9, label %2
 
@@ -3869,7 +3893,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 ; <label>:20                                      ; preds = %13, %15, %17, %9
   %21 = phi i32 [ 0, %9 ], [ 2, %13 ], [ %19, %17 ], [ 3, %15 ]
   %22 = bitcast double addrspace(1)* %object to i64 addrspace(1)*
-  %23 = bitcast double* %expected to i64*
+  %23 = bitcast double addrspace(1)* %expected to i64 addrspace(1)*
   switch i32 %10, label %31 [
     i32 1, label %24
     i32 2, label %24
@@ -3881,13 +3905,13 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 ; <label>:24                                      ; preds = %20, %20
   %.off = add nsw i32 %21, -1
   %switch = icmp ult i32 %.off, 2
-  %25 = load i64, i64* %23, align 8
+  %25 = load i64, i64 addrspace(1)* %23, align 8
   br i1 %switch, label %42, label %39
 
 ; <label>:26                                      ; preds = %20
   %.off1 = add nsw i32 %21, -1
   %switch2 = icmp ult i32 %.off1, 2
-  %27 = load i64, i64* %23, align 8
+  %27 = load i64, i64 addrspace(1)* %23, align 8
   br i1 %switch2, label %64, label %61
 
 ; <label>:28                                      ; preds = %20
@@ -3903,14 +3927,14 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
   ret i1 %30
 
 ; <label>:31                                      ; preds = %20
-  %32 = load i64, i64* %23, align 8
+  %32 = load i64, i64 addrspace(1)* %23, align 8
   %33 = cmpxchg weak volatile i64 addrspace(1)* %22, i64 %32, i64 %11 monotonic monotonic
   %34 = extractvalue { i64, i1 } %33, 1
   br i1 %34, label %37, label %35
 
 ; <label>:35                                      ; preds = %31
   %36 = extractvalue { i64, i1 } %33, 0
-  store i64 %36, i64* %23, align 8
+  store i64 %36, i64 addrspace(1)* %23, align 8
   br label %37
 
 ; <label>:37                                      ; preds = %35, %31
@@ -3929,7 +3953,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:45                                      ; preds = %39
   %46 = extractvalue { i64, i1 } %40, 0
-  store i64 %46, i64* %23, align 8
+  store i64 %46, i64 addrspace(1)* %23, align 8
   br label %47
 
 ; <label>:47                                      ; preds = %45, %39
@@ -3938,7 +3962,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:49                                      ; preds = %42
   %50 = extractvalue { i64, i1 } %43, 0
-  store i64 %50, i64* %23, align 8
+  store i64 %50, i64 addrspace(1)* %23, align 8
   br label %51
 
 ; <label>:51                                      ; preds = %49, %42
@@ -3946,14 +3970,14 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
   br label %29
 
 ; <label>:53                                      ; preds = %20
-  %54 = load i64, i64* %23, align 8
+  %54 = load i64, i64 addrspace(1)* %23, align 8
   %55 = cmpxchg weak volatile i64 addrspace(1)* %22, i64 %54, i64 %11 release monotonic
   %56 = extractvalue { i64, i1 } %55, 1
   br i1 %56, label %59, label %57
 
 ; <label>:57                                      ; preds = %53
   %58 = extractvalue { i64, i1 } %55, 0
-  store i64 %58, i64* %23, align 8
+  store i64 %58, i64 addrspace(1)* %23, align 8
   br label %59
 
 ; <label>:59                                      ; preds = %57, %53
@@ -3972,7 +3996,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:67                                      ; preds = %61
   %68 = extractvalue { i64, i1 } %62, 0
-  store i64 %68, i64* %23, align 8
+  store i64 %68, i64 addrspace(1)* %23, align 8
   br label %69
 
 ; <label>:69                                      ; preds = %67, %61
@@ -3981,7 +4005,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:71                                      ; preds = %64
   %72 = extractvalue { i64, i1 } %65, 0
-  store i64 %72, i64* %23, align 8
+  store i64 %72, i64 addrspace(1)* %23, align 8
   br label %73
 
 ; <label>:73                                      ; preds = %71, %64
@@ -3989,26 +4013,26 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
   br label %29
 
 ; <label>:75                                      ; preds = %28
-  %76 = load i64, i64* %23, align 8
+  %76 = load i64, i64 addrspace(1)* %23, align 8
   %77 = cmpxchg weak volatile i64 addrspace(1)* %22, i64 %76, i64 %11 seq_cst monotonic
   %78 = extractvalue { i64, i1 } %77, 1
   br i1 %78, label %89, label %87
 
 ; <label>:79                                      ; preds = %28, %28
-  %80 = load i64, i64* %23, align 8
+  %80 = load i64, i64 addrspace(1)* %23, align 8
   %81 = cmpxchg weak volatile i64 addrspace(1)* %22, i64 %80, i64 %11 seq_cst acquire
   %82 = extractvalue { i64, i1 } %81, 1
   br i1 %82, label %93, label %91
 
 ; <label>:83                                      ; preds = %28
-  %84 = load i64, i64* %23, align 8
+  %84 = load i64, i64 addrspace(1)* %23, align 8
   %85 = cmpxchg weak volatile i64 addrspace(1)* %22, i64 %84, i64 %11 seq_cst seq_cst
   %86 = extractvalue { i64, i1 } %85, 1
   br i1 %86, label %97, label %95
 
 ; <label>:87                                      ; preds = %75
   %88 = extractvalue { i64, i1 } %77, 0
-  store i64 %88, i64* %23, align 8
+  store i64 %88, i64 addrspace(1)* %23, align 8
   br label %89
 
 ; <label>:89                                      ; preds = %87, %75
@@ -4017,7 +4041,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:91                                      ; preds = %79
   %92 = extractvalue { i64, i1 } %81, 0
-  store i64 %92, i64* %23, align 8
+  store i64 %92, i64 addrspace(1)* %23, align 8
   br label %93
 
 ; <label>:93                                      ; preds = %91, %79
@@ -4026,7 +4050,7 @@ define zeroext i1 @_Z41pocl_atomic_compare_exchange_weak__globalPVU8CLglobalU7_A
 
 ; <label>:95                                      ; preds = %83
   %96 = extractvalue { i64, i1 } %85, 0
-  store i64 %96, i64* %23, align 8
+  store i64 %96, i64 addrspace(1)* %23, align 8
   br label %97
 
 ; <label>:97                                      ; preds = %95, %83
@@ -4180,7 +4204,9 @@ define i32 @_Z27pocl_atomic_exchange__localPVU7CLlocalU7_Atomicii12memory_order1
 }
 
 ; Function Attrs: nounwind uwtable
-define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_AtomiciPii12memory_orderS3_12memory_scope(i32 addrspace(2)* %object, i32* nocapture %expected, i32 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+;define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_AtomiciPii12memory_orderS3_12memory_scope(i32 addrspace(2)* %object, i32* nocapture %expected, i32 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_AtomiciPU7CLlocalii12memory_orderS4_12memory_scope(i32 addrspace(2)* %object, i32 addrspace(2)* nocapture %expected, i32 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+
   %1 = icmp eq i32 %success, 0
   br i1 %1, label %9, label %2
 
@@ -4228,13 +4254,13 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 ; <label>:21                                      ; preds = %19, %19
   %.off = add nsw i32 %20, -1
   %switch = icmp ult i32 %.off, 2
-  %22 = load i32, i32* %expected, align 4
+  %22 = load i32, i32 addrspace(2)* %expected, align 4
   br i1 %switch, label %39, label %36
 
 ; <label>:23                                      ; preds = %19
   %.off1 = add nsw i32 %20, -1
   %switch2 = icmp ult i32 %.off1, 2
-  %24 = load i32, i32* %expected, align 4
+  %24 = load i32, i32 addrspace(2)* %expected, align 4
   br i1 %switch2, label %61, label %58
 
 ; <label>:25                                      ; preds = %19
@@ -4250,14 +4276,14 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
   ret i1 %27
 
 ; <label>:28                                      ; preds = %19
-  %29 = load i32, i32* %expected, align 4
+  %29 = load i32, i32 addrspace(2)* %expected, align 4
   %30 = cmpxchg volatile i32 addrspace(2)* %object, i32 %29, i32 %desired monotonic monotonic
   %31 = extractvalue { i32, i1 } %30, 1
   br i1 %31, label %34, label %32
 
 ; <label>:32                                      ; preds = %28
   %33 = extractvalue { i32, i1 } %30, 0
-  store i32 %33, i32* %expected, align 4
+  store i32 %33, i32 addrspace(2)* %expected, align 4
   br label %34
 
 ; <label>:34                                      ; preds = %32, %28
@@ -4276,7 +4302,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:42                                      ; preds = %36
   %43 = extractvalue { i32, i1 } %37, 0
-  store i32 %43, i32* %expected, align 4
+  store i32 %43, i32 addrspace(2)* %expected, align 4
   br label %44
 
 ; <label>:44                                      ; preds = %42, %36
@@ -4285,7 +4311,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:46                                      ; preds = %39
   %47 = extractvalue { i32, i1 } %40, 0
-  store i32 %47, i32* %expected, align 4
+  store i32 %47, i32 addrspace(2)* %expected, align 4
   br label %48
 
 ; <label>:48                                      ; preds = %46, %39
@@ -4293,14 +4319,14 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
   br label %26
 
 ; <label>:50                                      ; preds = %19
-  %51 = load i32, i32* %expected, align 4
+  %51 = load i32, i32 addrspace(2)* %expected, align 4
   %52 = cmpxchg volatile i32 addrspace(2)* %object, i32 %51, i32 %desired release monotonic
   %53 = extractvalue { i32, i1 } %52, 1
   br i1 %53, label %56, label %54
 
 ; <label>:54                                      ; preds = %50
   %55 = extractvalue { i32, i1 } %52, 0
-  store i32 %55, i32* %expected, align 4
+  store i32 %55, i32 addrspace(2)* %expected, align 4
   br label %56
 
 ; <label>:56                                      ; preds = %54, %50
@@ -4319,7 +4345,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:64                                      ; preds = %58
   %65 = extractvalue { i32, i1 } %59, 0
-  store i32 %65, i32* %expected, align 4
+  store i32 %65, i32 addrspace(2)* %expected, align 4
   br label %66
 
 ; <label>:66                                      ; preds = %64, %58
@@ -4328,7 +4354,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:68                                      ; preds = %61
   %69 = extractvalue { i32, i1 } %62, 0
-  store i32 %69, i32* %expected, align 4
+  store i32 %69, i32 addrspace(2)* %expected, align 4
   br label %70
 
 ; <label>:70                                      ; preds = %68, %61
@@ -4336,26 +4362,26 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
   br label %26
 
 ; <label>:72                                      ; preds = %25
-  %73 = load i32, i32* %expected, align 4
+  %73 = load i32, i32 addrspace(2)* %expected, align 4
   %74 = cmpxchg volatile i32 addrspace(2)* %object, i32 %73, i32 %desired seq_cst monotonic
   %75 = extractvalue { i32, i1 } %74, 1
   br i1 %75, label %86, label %84
 
 ; <label>:76                                      ; preds = %25, %25
-  %77 = load i32, i32* %expected, align 4
+  %77 = load i32, i32 addrspace(2)* %expected, align 4
   %78 = cmpxchg volatile i32 addrspace(2)* %object, i32 %77, i32 %desired seq_cst acquire
   %79 = extractvalue { i32, i1 } %78, 1
   br i1 %79, label %90, label %88
 
 ; <label>:80                                      ; preds = %25
-  %81 = load i32, i32* %expected, align 4
+  %81 = load i32, i32 addrspace(2)* %expected, align 4
   %82 = cmpxchg volatile i32 addrspace(2)* %object, i32 %81, i32 %desired seq_cst seq_cst
   %83 = extractvalue { i32, i1 } %82, 1
   br i1 %83, label %94, label %92
 
 ; <label>:84                                      ; preds = %72
   %85 = extractvalue { i32, i1 } %74, 0
-  store i32 %85, i32* %expected, align 4
+  store i32 %85, i32 addrspace(2)* %expected, align 4
   br label %86
 
 ; <label>:86                                      ; preds = %84, %72
@@ -4364,7 +4390,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:88                                      ; preds = %76
   %89 = extractvalue { i32, i1 } %78, 0
-  store i32 %89, i32* %expected, align 4
+  store i32 %89, i32 addrspace(2)* %expected, align 4
   br label %90
 
 ; <label>:90                                      ; preds = %88, %76
@@ -4373,7 +4399,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:92                                      ; preds = %80
   %93 = extractvalue { i32, i1 } %82, 0
-  store i32 %93, i32* %expected, align 4
+  store i32 %93, i32 addrspace(2)* %expected, align 4
   br label %94
 
 ; <label>:94                                      ; preds = %92, %80
@@ -4382,7 +4408,9 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 }
 
 ; Function Attrs: nounwind uwtable
-define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_AtomiciPii12memory_orderS3_12memory_scope(i32 addrspace(2)* %object, i32* nocapture %expected, i32 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+;define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_AtomiciPii12memory_orderS3_12memory_scope(i32 addrspace(2)* %object, i32* nocapture %expected, i32 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_AtomiciPU7CLlocalii12memory_orderS4_12memory_scope(i32 addrspace(2)* %object, i32 addrspace(2)* nocapture %expected, i32 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+
   %1 = icmp eq i32 %success, 0
   br i1 %1, label %9, label %2
 
@@ -4430,13 +4458,13 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 ; <label>:21                                      ; preds = %19, %19
   %.off = add nsw i32 %20, -1
   %switch = icmp ult i32 %.off, 2
-  %22 = load i32, i32* %expected, align 4
+  %22 = load i32, i32 addrspace(2)* %expected, align 4
   br i1 %switch, label %39, label %36
 
 ; <label>:23                                      ; preds = %19
   %.off1 = add nsw i32 %20, -1
   %switch2 = icmp ult i32 %.off1, 2
-  %24 = load i32, i32* %expected, align 4
+  %24 = load i32, i32 addrspace(2)* %expected, align 4
   br i1 %switch2, label %61, label %58
 
 ; <label>:25                                      ; preds = %19
@@ -4452,14 +4480,14 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
   ret i1 %27
 
 ; <label>:28                                      ; preds = %19
-  %29 = load i32, i32* %expected, align 4
+  %29 = load i32, i32 addrspace(2)* %expected, align 4
   %30 = cmpxchg weak volatile i32 addrspace(2)* %object, i32 %29, i32 %desired monotonic monotonic
   %31 = extractvalue { i32, i1 } %30, 1
   br i1 %31, label %34, label %32
 
 ; <label>:32                                      ; preds = %28
   %33 = extractvalue { i32, i1 } %30, 0
-  store i32 %33, i32* %expected, align 4
+  store i32 %33, i32 addrspace(2)* %expected, align 4
   br label %34
 
 ; <label>:34                                      ; preds = %32, %28
@@ -4478,7 +4506,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:42                                      ; preds = %36
   %43 = extractvalue { i32, i1 } %37, 0
-  store i32 %43, i32* %expected, align 4
+  store i32 %43, i32 addrspace(2)* %expected, align 4
   br label %44
 
 ; <label>:44                                      ; preds = %42, %36
@@ -4487,7 +4515,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:46                                      ; preds = %39
   %47 = extractvalue { i32, i1 } %40, 0
-  store i32 %47, i32* %expected, align 4
+  store i32 %47, i32 addrspace(2)* %expected, align 4
   br label %48
 
 ; <label>:48                                      ; preds = %46, %39
@@ -4495,14 +4523,14 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
   br label %26
 
 ; <label>:50                                      ; preds = %19
-  %51 = load i32, i32* %expected, align 4
+  %51 = load i32, i32 addrspace(2)* %expected, align 4
   %52 = cmpxchg weak volatile i32 addrspace(2)* %object, i32 %51, i32 %desired release monotonic
   %53 = extractvalue { i32, i1 } %52, 1
   br i1 %53, label %56, label %54
 
 ; <label>:54                                      ; preds = %50
   %55 = extractvalue { i32, i1 } %52, 0
-  store i32 %55, i32* %expected, align 4
+  store i32 %55, i32 addrspace(2)* %expected, align 4
   br label %56
 
 ; <label>:56                                      ; preds = %54, %50
@@ -4521,7 +4549,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:64                                      ; preds = %58
   %65 = extractvalue { i32, i1 } %59, 0
-  store i32 %65, i32* %expected, align 4
+  store i32 %65, i32 addrspace(2)* %expected, align 4
   br label %66
 
 ; <label>:66                                      ; preds = %64, %58
@@ -4530,7 +4558,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:68                                      ; preds = %61
   %69 = extractvalue { i32, i1 } %62, 0
-  store i32 %69, i32* %expected, align 4
+  store i32 %69, i32 addrspace(2)* %expected, align 4
   br label %70
 
 ; <label>:70                                      ; preds = %68, %61
@@ -4538,26 +4566,26 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
   br label %26
 
 ; <label>:72                                      ; preds = %25
-  %73 = load i32, i32* %expected, align 4
+  %73 = load i32, i32 addrspace(2)* %expected, align 4
   %74 = cmpxchg weak volatile i32 addrspace(2)* %object, i32 %73, i32 %desired seq_cst monotonic
   %75 = extractvalue { i32, i1 } %74, 1
   br i1 %75, label %86, label %84
 
 ; <label>:76                                      ; preds = %25, %25
-  %77 = load i32, i32* %expected, align 4
+  %77 = load i32, i32 addrspace(2)* %expected, align 4
   %78 = cmpxchg weak volatile i32 addrspace(2)* %object, i32 %77, i32 %desired seq_cst acquire
   %79 = extractvalue { i32, i1 } %78, 1
   br i1 %79, label %90, label %88
 
 ; <label>:80                                      ; preds = %25
-  %81 = load i32, i32* %expected, align 4
+  %81 = load i32, i32 addrspace(2)* %expected, align 4
   %82 = cmpxchg weak volatile i32 addrspace(2)* %object, i32 %81, i32 %desired seq_cst seq_cst
   %83 = extractvalue { i32, i1 } %82, 1
   br i1 %83, label %94, label %92
 
 ; <label>:84                                      ; preds = %72
   %85 = extractvalue { i32, i1 } %74, 0
-  store i32 %85, i32* %expected, align 4
+  store i32 %85, i32 addrspace(2)* %expected, align 4
   br label %86
 
 ; <label>:86                                      ; preds = %84, %72
@@ -4566,7 +4594,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:88                                      ; preds = %76
   %89 = extractvalue { i32, i1 } %78, 0
-  store i32 %89, i32* %expected, align 4
+  store i32 %89, i32 addrspace(2)* %expected, align 4
   br label %90
 
 ; <label>:90                                      ; preds = %88, %76
@@ -4575,7 +4603,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:92                                      ; preds = %80
   %93 = extractvalue { i32, i1 } %82, 0
-  store i32 %93, i32* %expected, align 4
+  store i32 %93, i32 addrspace(2)* %expected, align 4
   br label %94
 
 ; <label>:94                                      ; preds = %92, %80
@@ -4907,7 +4935,9 @@ define i32 @_Z27pocl_atomic_exchange__localPVU7CLlocalU7_Atomicjj12memory_order1
 }
 
 ; Function Attrs: nounwind uwtable
-define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_AtomicjPjj12memory_orderS3_12memory_scope(i32 addrspace(2)* %object, i32* nocapture %expected, i32 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+;define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_AtomicjPjj12memory_orderS3_12memory_scope(i32 addrspace(2)* %object, i32* nocapture %expected, i32 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_AtomicjPU7CLlocaljj12memory_orderS4_12memory_scope(i32 addrspace(2)* %object, i32 addrspace(2)* nocapture %expected, i32 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+
   %1 = icmp eq i32 %success, 0
   br i1 %1, label %9, label %2
 
@@ -4955,13 +4985,13 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 ; <label>:21                                      ; preds = %19, %19
   %.off = add nsw i32 %20, -1
   %switch = icmp ult i32 %.off, 2
-  %22 = load i32, i32* %expected, align 4
+  %22 = load i32, i32 addrspace(2)* %expected, align 4
   br i1 %switch, label %39, label %36
 
 ; <label>:23                                      ; preds = %19
   %.off1 = add nsw i32 %20, -1
   %switch2 = icmp ult i32 %.off1, 2
-  %24 = load i32, i32* %expected, align 4
+  %24 = load i32, i32 addrspace(2)* %expected, align 4
   br i1 %switch2, label %61, label %58
 
 ; <label>:25                                      ; preds = %19
@@ -4977,14 +5007,14 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
   ret i1 %27
 
 ; <label>:28                                      ; preds = %19
-  %29 = load i32, i32* %expected, align 4
+  %29 = load i32, i32 addrspace(2)* %expected, align 4
   %30 = cmpxchg volatile i32 addrspace(2)* %object, i32 %29, i32 %desired monotonic monotonic
   %31 = extractvalue { i32, i1 } %30, 1
   br i1 %31, label %34, label %32
 
 ; <label>:32                                      ; preds = %28
   %33 = extractvalue { i32, i1 } %30, 0
-  store i32 %33, i32* %expected, align 4
+  store i32 %33, i32 addrspace(2)* %expected, align 4
   br label %34
 
 ; <label>:34                                      ; preds = %32, %28
@@ -5003,7 +5033,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:42                                      ; preds = %36
   %43 = extractvalue { i32, i1 } %37, 0
-  store i32 %43, i32* %expected, align 4
+  store i32 %43, i32 addrspace(2)* %expected, align 4
   br label %44
 
 ; <label>:44                                      ; preds = %42, %36
@@ -5012,7 +5042,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:46                                      ; preds = %39
   %47 = extractvalue { i32, i1 } %40, 0
-  store i32 %47, i32* %expected, align 4
+  store i32 %47, i32 addrspace(2)* %expected, align 4
   br label %48
 
 ; <label>:48                                      ; preds = %46, %39
@@ -5020,14 +5050,14 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
   br label %26
 
 ; <label>:50                                      ; preds = %19
-  %51 = load i32, i32* %expected, align 4
+  %51 = load i32, i32 addrspace(2)* %expected, align 4
   %52 = cmpxchg volatile i32 addrspace(2)* %object, i32 %51, i32 %desired release monotonic
   %53 = extractvalue { i32, i1 } %52, 1
   br i1 %53, label %56, label %54
 
 ; <label>:54                                      ; preds = %50
   %55 = extractvalue { i32, i1 } %52, 0
-  store i32 %55, i32* %expected, align 4
+  store i32 %55, i32 addrspace(2)* %expected, align 4
   br label %56
 
 ; <label>:56                                      ; preds = %54, %50
@@ -5046,7 +5076,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:64                                      ; preds = %58
   %65 = extractvalue { i32, i1 } %59, 0
-  store i32 %65, i32* %expected, align 4
+  store i32 %65, i32 addrspace(2)* %expected, align 4
   br label %66
 
 ; <label>:66                                      ; preds = %64, %58
@@ -5055,7 +5085,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:68                                      ; preds = %61
   %69 = extractvalue { i32, i1 } %62, 0
-  store i32 %69, i32* %expected, align 4
+  store i32 %69, i32 addrspace(2)* %expected, align 4
   br label %70
 
 ; <label>:70                                      ; preds = %68, %61
@@ -5063,26 +5093,26 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
   br label %26
 
 ; <label>:72                                      ; preds = %25
-  %73 = load i32, i32* %expected, align 4
+  %73 = load i32, i32 addrspace(2)* %expected, align 4
   %74 = cmpxchg volatile i32 addrspace(2)* %object, i32 %73, i32 %desired seq_cst monotonic
   %75 = extractvalue { i32, i1 } %74, 1
   br i1 %75, label %86, label %84
 
 ; <label>:76                                      ; preds = %25, %25
-  %77 = load i32, i32* %expected, align 4
+  %77 = load i32, i32 addrspace(2)* %expected, align 4
   %78 = cmpxchg volatile i32 addrspace(2)* %object, i32 %77, i32 %desired seq_cst acquire
   %79 = extractvalue { i32, i1 } %78, 1
   br i1 %79, label %90, label %88
 
 ; <label>:80                                      ; preds = %25
-  %81 = load i32, i32* %expected, align 4
+  %81 = load i32, i32 addrspace(2)* %expected, align 4
   %82 = cmpxchg volatile i32 addrspace(2)* %object, i32 %81, i32 %desired seq_cst seq_cst
   %83 = extractvalue { i32, i1 } %82, 1
   br i1 %83, label %94, label %92
 
 ; <label>:84                                      ; preds = %72
   %85 = extractvalue { i32, i1 } %74, 0
-  store i32 %85, i32* %expected, align 4
+  store i32 %85, i32 addrspace(2)* %expected, align 4
   br label %86
 
 ; <label>:86                                      ; preds = %84, %72
@@ -5091,7 +5121,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:88                                      ; preds = %76
   %89 = extractvalue { i32, i1 } %78, 0
-  store i32 %89, i32* %expected, align 4
+  store i32 %89, i32 addrspace(2)* %expected, align 4
   br label %90
 
 ; <label>:90                                      ; preds = %88, %76
@@ -5100,7 +5130,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:92                                      ; preds = %80
   %93 = extractvalue { i32, i1 } %82, 0
-  store i32 %93, i32* %expected, align 4
+  store i32 %93, i32 addrspace(2)* %expected, align 4
   br label %94
 
 ; <label>:94                                      ; preds = %92, %80
@@ -5109,7 +5139,9 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 }
 
 ; Function Attrs: nounwind uwtable
-define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_AtomicjPjj12memory_orderS3_12memory_scope(i32 addrspace(2)* %object, i32* nocapture %expected, i32 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+;define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_AtomicjPjj12memory_orderS3_12memory_scope(i32 addrspace(2)* %object, i32* nocapture %expected, i32 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_AtomicjPU7CLlocaljj12memory_orderS4_12memory_scope(i32 addrspace(2)* %object, i32 addrspace(2)* nocapture %expected, i32 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+
   %1 = icmp eq i32 %success, 0
   br i1 %1, label %9, label %2
 
@@ -5157,13 +5189,13 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 ; <label>:21                                      ; preds = %19, %19
   %.off = add nsw i32 %20, -1
   %switch = icmp ult i32 %.off, 2
-  %22 = load i32, i32* %expected, align 4
+  %22 = load i32, i32 addrspace(2)* %expected, align 4
   br i1 %switch, label %39, label %36
 
 ; <label>:23                                      ; preds = %19
   %.off1 = add nsw i32 %20, -1
   %switch2 = icmp ult i32 %.off1, 2
-  %24 = load i32, i32* %expected, align 4
+  %24 = load i32, i32 addrspace(2)* %expected, align 4
   br i1 %switch2, label %61, label %58
 
 ; <label>:25                                      ; preds = %19
@@ -5179,14 +5211,14 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
   ret i1 %27
 
 ; <label>:28                                      ; preds = %19
-  %29 = load i32, i32* %expected, align 4
+  %29 = load i32, i32 addrspace(2)* %expected, align 4
   %30 = cmpxchg weak volatile i32 addrspace(2)* %object, i32 %29, i32 %desired monotonic monotonic
   %31 = extractvalue { i32, i1 } %30, 1
   br i1 %31, label %34, label %32
 
 ; <label>:32                                      ; preds = %28
   %33 = extractvalue { i32, i1 } %30, 0
-  store i32 %33, i32* %expected, align 4
+  store i32 %33, i32 addrspace(2)* %expected, align 4
   br label %34
 
 ; <label>:34                                      ; preds = %32, %28
@@ -5205,7 +5237,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:42                                      ; preds = %36
   %43 = extractvalue { i32, i1 } %37, 0
-  store i32 %43, i32* %expected, align 4
+  store i32 %43, i32 addrspace(2)* %expected, align 4
   br label %44
 
 ; <label>:44                                      ; preds = %42, %36
@@ -5214,7 +5246,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:46                                      ; preds = %39
   %47 = extractvalue { i32, i1 } %40, 0
-  store i32 %47, i32* %expected, align 4
+  store i32 %47, i32 addrspace(2)* %expected, align 4
   br label %48
 
 ; <label>:48                                      ; preds = %46, %39
@@ -5222,14 +5254,14 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
   br label %26
 
 ; <label>:50                                      ; preds = %19
-  %51 = load i32, i32* %expected, align 4
+  %51 = load i32, i32 addrspace(2)* %expected, align 4
   %52 = cmpxchg weak volatile i32 addrspace(2)* %object, i32 %51, i32 %desired release monotonic
   %53 = extractvalue { i32, i1 } %52, 1
   br i1 %53, label %56, label %54
 
 ; <label>:54                                      ; preds = %50
   %55 = extractvalue { i32, i1 } %52, 0
-  store i32 %55, i32* %expected, align 4
+  store i32 %55, i32 addrspace(2)* %expected, align 4
   br label %56
 
 ; <label>:56                                      ; preds = %54, %50
@@ -5248,7 +5280,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:64                                      ; preds = %58
   %65 = extractvalue { i32, i1 } %59, 0
-  store i32 %65, i32* %expected, align 4
+  store i32 %65, i32 addrspace(2)* %expected, align 4
   br label %66
 
 ; <label>:66                                      ; preds = %64, %58
@@ -5257,7 +5289,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:68                                      ; preds = %61
   %69 = extractvalue { i32, i1 } %62, 0
-  store i32 %69, i32* %expected, align 4
+  store i32 %69, i32 addrspace(2)* %expected, align 4
   br label %70
 
 ; <label>:70                                      ; preds = %68, %61
@@ -5265,26 +5297,26 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
   br label %26
 
 ; <label>:72                                      ; preds = %25
-  %73 = load i32, i32* %expected, align 4
+  %73 = load i32, i32 addrspace(2)* %expected, align 4
   %74 = cmpxchg weak volatile i32 addrspace(2)* %object, i32 %73, i32 %desired seq_cst monotonic
   %75 = extractvalue { i32, i1 } %74, 1
   br i1 %75, label %86, label %84
 
 ; <label>:76                                      ; preds = %25, %25
-  %77 = load i32, i32* %expected, align 4
+  %77 = load i32, i32 addrspace(2)* %expected, align 4
   %78 = cmpxchg weak volatile i32 addrspace(2)* %object, i32 %77, i32 %desired seq_cst acquire
   %79 = extractvalue { i32, i1 } %78, 1
   br i1 %79, label %90, label %88
 
 ; <label>:80                                      ; preds = %25
-  %81 = load i32, i32* %expected, align 4
+  %81 = load i32, i32 addrspace(2)* %expected, align 4
   %82 = cmpxchg weak volatile i32 addrspace(2)* %object, i32 %81, i32 %desired seq_cst seq_cst
   %83 = extractvalue { i32, i1 } %82, 1
   br i1 %83, label %94, label %92
 
 ; <label>:84                                      ; preds = %72
   %85 = extractvalue { i32, i1 } %74, 0
-  store i32 %85, i32* %expected, align 4
+  store i32 %85, i32 addrspace(2)* %expected, align 4
   br label %86
 
 ; <label>:86                                      ; preds = %84, %72
@@ -5293,7 +5325,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:88                                      ; preds = %76
   %89 = extractvalue { i32, i1 } %78, 0
-  store i32 %89, i32* %expected, align 4
+  store i32 %89, i32 addrspace(2)* %expected, align 4
   br label %90
 
 ; <label>:90                                      ; preds = %88, %76
@@ -5302,7 +5334,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:92                                      ; preds = %80
   %93 = extractvalue { i32, i1 } %82, 0
-  store i32 %93, i32* %expected, align 4
+  store i32 %93, i32 addrspace(2)* %expected, align 4
   br label %94
 
 ; <label>:94                                      ; preds = %92, %80
@@ -5671,7 +5703,9 @@ define float @_Z27pocl_atomic_exchange__localPVU7CLlocalU7_Atomicff12memory_orde
 }
 
 ; Function Attrs: nounwind uwtable
-define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_AtomicfPff12memory_orderS3_12memory_scope(float addrspace(2)* %object, float* nocapture %expected, float %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+;define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_AtomicfPff12memory_orderS3_12memory_scope(float addrspace(2)* %object, float* nocapture %expected, float %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_AtomicfPU7CLlocalff12memory_orderS4_12memory_scope(float addrspace(2)*  %object, float addrspace(2)* nocapture %expected, float %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+
   %1 = icmp eq i32 %success, 0
   br i1 %1, label %9, label %2
 
@@ -5710,7 +5744,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 ; <label>:20                                      ; preds = %13, %15, %17, %9
   %21 = phi i32 [ 0, %9 ], [ 2, %13 ], [ %19, %17 ], [ 3, %15 ]
   %22 = bitcast float addrspace(2)* %object to i32 addrspace(2)*
-  %23 = bitcast float* %expected to i32*
+  %23 = bitcast float addrspace(2)* %expected to i32 addrspace(2)*
   switch i32 %10, label %31 [
     i32 1, label %24
     i32 2, label %24
@@ -5722,13 +5756,13 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 ; <label>:24                                      ; preds = %20, %20
   %.off = add nsw i32 %21, -1
   %switch = icmp ult i32 %.off, 2
-  %25 = load i32, i32* %23, align 4
+  %25 = load i32, i32 addrspace(2)* %23, align 4
   br i1 %switch, label %42, label %39
 
 ; <label>:26                                      ; preds = %20
   %.off1 = add nsw i32 %21, -1
   %switch2 = icmp ult i32 %.off1, 2
-  %27 = load i32, i32* %23, align 4
+  %27 = load i32, i32 addrspace(2)* %23, align 4
   br i1 %switch2, label %64, label %61
 
 ; <label>:28                                      ; preds = %20
@@ -5744,14 +5778,14 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
   ret i1 %30
 
 ; <label>:31                                      ; preds = %20
-  %32 = load i32, i32* %23, align 4
+  %32 = load i32, i32 addrspace(2)* %23, align 4
   %33 = cmpxchg volatile i32 addrspace(2)* %22, i32 %32, i32 %11 monotonic monotonic
   %34 = extractvalue { i32, i1 } %33, 1
   br i1 %34, label %37, label %35
 
 ; <label>:35                                      ; preds = %31
   %36 = extractvalue { i32, i1 } %33, 0
-  store i32 %36, i32* %23, align 4
+  store i32 %36, i32 addrspace(2)* %23, align 4
   br label %37
 
 ; <label>:37                                      ; preds = %35, %31
@@ -5770,7 +5804,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:45                                      ; preds = %39
   %46 = extractvalue { i32, i1 } %40, 0
-  store i32 %46, i32* %23, align 4
+  store i32 %46, i32 addrspace(2)* %23, align 4
   br label %47
 
 ; <label>:47                                      ; preds = %45, %39
@@ -5779,7 +5813,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:49                                      ; preds = %42
   %50 = extractvalue { i32, i1 } %43, 0
-  store i32 %50, i32* %23, align 4
+  store i32 %50, i32 addrspace(2)* %23, align 4
   br label %51
 
 ; <label>:51                                      ; preds = %49, %42
@@ -5787,14 +5821,14 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
   br label %29
 
 ; <label>:53                                      ; preds = %20
-  %54 = load i32, i32* %23, align 4
+  %54 = load i32, i32 addrspace(2)* %23, align 4
   %55 = cmpxchg volatile i32 addrspace(2)* %22, i32 %54, i32 %11 release monotonic
   %56 = extractvalue { i32, i1 } %55, 1
   br i1 %56, label %59, label %57
 
 ; <label>:57                                      ; preds = %53
   %58 = extractvalue { i32, i1 } %55, 0
-  store i32 %58, i32* %23, align 4
+  store i32 %58, i32 addrspace(2)* %23, align 4
   br label %59
 
 ; <label>:59                                      ; preds = %57, %53
@@ -5813,7 +5847,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:67                                      ; preds = %61
   %68 = extractvalue { i32, i1 } %62, 0
-  store i32 %68, i32* %23, align 4
+  store i32 %68, i32 addrspace(2)* %23, align 4
   br label %69
 
 ; <label>:69                                      ; preds = %67, %61
@@ -5822,7 +5856,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:71                                      ; preds = %64
   %72 = extractvalue { i32, i1 } %65, 0
-  store i32 %72, i32* %23, align 4
+  store i32 %72, i32 addrspace(2)* %23, align 4
   br label %73
 
 ; <label>:73                                      ; preds = %71, %64
@@ -5830,26 +5864,26 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
   br label %29
 
 ; <label>:75                                      ; preds = %28
-  %76 = load i32, i32* %23, align 4
+  %76 = load i32, i32 addrspace(2)* %23, align 4
   %77 = cmpxchg volatile i32 addrspace(2)* %22, i32 %76, i32 %11 seq_cst monotonic
   %78 = extractvalue { i32, i1 } %77, 1
   br i1 %78, label %89, label %87
 
 ; <label>:79                                      ; preds = %28, %28
-  %80 = load i32, i32* %23, align 4
+  %80 = load i32, i32 addrspace(2)* %23, align 4
   %81 = cmpxchg volatile i32 addrspace(2)* %22, i32 %80, i32 %11 seq_cst acquire
   %82 = extractvalue { i32, i1 } %81, 1
   br i1 %82, label %93, label %91
 
 ; <label>:83                                      ; preds = %28
-  %84 = load i32, i32* %23, align 4
+  %84 = load i32, i32 addrspace(2)* %23, align 4
   %85 = cmpxchg volatile i32 addrspace(2)* %22, i32 %84, i32 %11 seq_cst seq_cst
   %86 = extractvalue { i32, i1 } %85, 1
   br i1 %86, label %97, label %95
 
 ; <label>:87                                      ; preds = %75
   %88 = extractvalue { i32, i1 } %77, 0
-  store i32 %88, i32* %23, align 4
+  store i32 %88, i32 addrspace(2)* %23, align 4
   br label %89
 
 ; <label>:89                                      ; preds = %87, %75
@@ -5858,7 +5892,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:91                                      ; preds = %79
   %92 = extractvalue { i32, i1 } %81, 0
-  store i32 %92, i32* %23, align 4
+  store i32 %92, i32 addrspace(2)* %23, align 4
   br label %93
 
 ; <label>:93                                      ; preds = %91, %79
@@ -5867,7 +5901,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:95                                      ; preds = %83
   %96 = extractvalue { i32, i1 } %85, 0
-  store i32 %96, i32* %23, align 4
+  store i32 %96, i32 addrspace(2)* %23, align 4
   br label %97
 
 ; <label>:97                                      ; preds = %95, %83
@@ -5876,7 +5910,9 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 }
 
 ; Function Attrs: nounwind uwtable
-define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_AtomicfPff12memory_orderS3_12memory_scope(float addrspace(2)* %object, float* nocapture %expected, float %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+;define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_AtomicfPff12memory_orderS3_12memory_scope(float addrspace(2)* %object, float* nocapture %expected, float %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_AtomicfPU7CLlocalff12memory_orderS4_12memory_scope(float addrspace(2)* %object, float addrspace(2)* nocapture %expected, float %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+
   %1 = icmp eq i32 %success, 0
   br i1 %1, label %9, label %2
 
@@ -5915,7 +5951,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 ; <label>:20                                      ; preds = %13, %15, %17, %9
   %21 = phi i32 [ 0, %9 ], [ 2, %13 ], [ %19, %17 ], [ 3, %15 ]
   %22 = bitcast float addrspace(2)* %object to i32 addrspace(2)*
-  %23 = bitcast float* %expected to i32*
+  %23 = bitcast float addrspace(2)* %expected to i32 addrspace(2)*
   switch i32 %10, label %31 [
     i32 1, label %24
     i32 2, label %24
@@ -5927,13 +5963,13 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 ; <label>:24                                      ; preds = %20, %20
   %.off = add nsw i32 %21, -1
   %switch = icmp ult i32 %.off, 2
-  %25 = load i32, i32* %23, align 4
+  %25 = load i32, i32 addrspace(2)* %23, align 4
   br i1 %switch, label %42, label %39
 
 ; <label>:26                                      ; preds = %20
   %.off1 = add nsw i32 %21, -1
   %switch2 = icmp ult i32 %.off1, 2
-  %27 = load i32, i32* %23, align 4
+  %27 = load i32, i32 addrspace(2)* %23, align 4
   br i1 %switch2, label %64, label %61
 
 ; <label>:28                                      ; preds = %20
@@ -5949,14 +5985,14 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
   ret i1 %30
 
 ; <label>:31                                      ; preds = %20
-  %32 = load i32, i32* %23, align 4
+  %32 = load i32, i32 addrspace(2)* %23, align 4
   %33 = cmpxchg weak volatile i32 addrspace(2)* %22, i32 %32, i32 %11 monotonic monotonic
   %34 = extractvalue { i32, i1 } %33, 1
   br i1 %34, label %37, label %35
 
 ; <label>:35                                      ; preds = %31
   %36 = extractvalue { i32, i1 } %33, 0
-  store i32 %36, i32* %23, align 4
+  store i32 %36, i32 addrspace(2)* %23, align 4
   br label %37
 
 ; <label>:37                                      ; preds = %35, %31
@@ -5975,7 +6011,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:45                                      ; preds = %39
   %46 = extractvalue { i32, i1 } %40, 0
-  store i32 %46, i32* %23, align 4
+  store i32 %46, i32 addrspace(2)* %23, align 4
   br label %47
 
 ; <label>:47                                      ; preds = %45, %39
@@ -5984,7 +6020,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:49                                      ; preds = %42
   %50 = extractvalue { i32, i1 } %43, 0
-  store i32 %50, i32* %23, align 4
+  store i32 %50, i32 addrspace(2)* %23, align 4
   br label %51
 
 ; <label>:51                                      ; preds = %49, %42
@@ -5992,14 +6028,14 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
   br label %29
 
 ; <label>:53                                      ; preds = %20
-  %54 = load i32, i32* %23, align 4
+  %54 = load i32, i32 addrspace(2)* %23, align 4
   %55 = cmpxchg weak volatile i32 addrspace(2)* %22, i32 %54, i32 %11 release monotonic
   %56 = extractvalue { i32, i1 } %55, 1
   br i1 %56, label %59, label %57
 
 ; <label>:57                                      ; preds = %53
   %58 = extractvalue { i32, i1 } %55, 0
-  store i32 %58, i32* %23, align 4
+  store i32 %58, i32 addrspace(2)* %23, align 4
   br label %59
 
 ; <label>:59                                      ; preds = %57, %53
@@ -6018,7 +6054,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:67                                      ; preds = %61
   %68 = extractvalue { i32, i1 } %62, 0
-  store i32 %68, i32* %23, align 4
+  store i32 %68, i32 addrspace(2)* %23, align 4
   br label %69
 
 ; <label>:69                                      ; preds = %67, %61
@@ -6027,7 +6063,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:71                                      ; preds = %64
   %72 = extractvalue { i32, i1 } %65, 0
-  store i32 %72, i32* %23, align 4
+  store i32 %72, i32 addrspace(2)* %23, align 4
   br label %73
 
 ; <label>:73                                      ; preds = %71, %64
@@ -6035,26 +6071,26 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
   br label %29
 
 ; <label>:75                                      ; preds = %28
-  %76 = load i32, i32* %23, align 4
+  %76 = load i32, i32 addrspace(2)* %23, align 4
   %77 = cmpxchg weak volatile i32 addrspace(2)* %22, i32 %76, i32 %11 seq_cst monotonic
   %78 = extractvalue { i32, i1 } %77, 1
   br i1 %78, label %89, label %87
 
 ; <label>:79                                      ; preds = %28, %28
-  %80 = load i32, i32* %23, align 4
+  %80 = load i32, i32 addrspace(2)* %23, align 4
   %81 = cmpxchg weak volatile i32 addrspace(2)* %22, i32 %80, i32 %11 seq_cst acquire
   %82 = extractvalue { i32, i1 } %81, 1
   br i1 %82, label %93, label %91
 
 ; <label>:83                                      ; preds = %28
-  %84 = load i32, i32* %23, align 4
+  %84 = load i32, i32 addrspace(2)* %23, align 4
   %85 = cmpxchg weak volatile i32 addrspace(2)* %22, i32 %84, i32 %11 seq_cst seq_cst
   %86 = extractvalue { i32, i1 } %85, 1
   br i1 %86, label %97, label %95
 
 ; <label>:87                                      ; preds = %75
   %88 = extractvalue { i32, i1 } %77, 0
-  store i32 %88, i32* %23, align 4
+  store i32 %88, i32 addrspace(2)* %23, align 4
   br label %89
 
 ; <label>:89                                      ; preds = %87, %75
@@ -6063,7 +6099,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:91                                      ; preds = %79
   %92 = extractvalue { i32, i1 } %81, 0
-  store i32 %92, i32* %23, align 4
+  store i32 %92, i32 addrspace(2)* %23, align 4
   br label %93
 
 ; <label>:93                                      ; preds = %91, %79
@@ -6072,7 +6108,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:95                                      ; preds = %83
   %96 = extractvalue { i32, i1 } %85, 0
-  store i32 %96, i32* %23, align 4
+  store i32 %96, i32 addrspace(2)* %23, align 4
   br label %97
 
 ; <label>:97                                      ; preds = %95, %83
@@ -6166,7 +6202,9 @@ define i64 @_Z27pocl_atomic_exchange__localPVU7CLlocalU7_Atomicll12memory_order1
 }
 
 ; Function Attrs: nounwind uwtable
-define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_AtomiclPll12memory_orderS3_12memory_scope(i64 addrspace(2)* %object, i64* nocapture %expected, i64 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+;define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_AtomiclPll12memory_orderS3_12memory_scope(i64 addrspace(2)* %object, i64* nocapture %expected, i64 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_AtomiclPU7CLlocalll12memory_orderS4_12memory_scope(i64 addrspace(2)* %object, i64 addrspace(2)* nocapture %expected, i64 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+
   %1 = icmp eq i32 %success, 0
   br i1 %1, label %9, label %2
 
@@ -6214,13 +6252,13 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 ; <label>:21                                      ; preds = %19, %19
   %.off = add nsw i32 %20, -1
   %switch = icmp ult i32 %.off, 2
-  %22 = load i64, i64* %expected, align 8
+  %22 = load i64, i64 addrspace(2)* %expected, align 8
   br i1 %switch, label %39, label %36
 
 ; <label>:23                                      ; preds = %19
   %.off1 = add nsw i32 %20, -1
   %switch2 = icmp ult i32 %.off1, 2
-  %24 = load i64, i64* %expected, align 8
+  %24 = load i64, i64 addrspace(2)* %expected, align 8
   br i1 %switch2, label %61, label %58
 
 ; <label>:25                                      ; preds = %19
@@ -6236,14 +6274,14 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
   ret i1 %27
 
 ; <label>:28                                      ; preds = %19
-  %29 = load i64, i64* %expected, align 8
+  %29 = load i64, i64 addrspace(2)* %expected, align 8
   %30 = cmpxchg volatile i64 addrspace(2)* %object, i64 %29, i64 %desired monotonic monotonic
   %31 = extractvalue { i64, i1 } %30, 1
   br i1 %31, label %34, label %32
 
 ; <label>:32                                      ; preds = %28
   %33 = extractvalue { i64, i1 } %30, 0
-  store i64 %33, i64* %expected, align 8
+  store i64 %33, i64 addrspace(2)* %expected, align 8
   br label %34
 
 ; <label>:34                                      ; preds = %32, %28
@@ -6262,7 +6300,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:42                                      ; preds = %36
   %43 = extractvalue { i64, i1 } %37, 0
-  store i64 %43, i64* %expected, align 8
+  store i64 %43, i64 addrspace(2)* %expected, align 8
   br label %44
 
 ; <label>:44                                      ; preds = %42, %36
@@ -6271,7 +6309,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:46                                      ; preds = %39
   %47 = extractvalue { i64, i1 } %40, 0
-  store i64 %47, i64* %expected, align 8
+  store i64 %47, i64 addrspace(2)* %expected, align 8
   br label %48
 
 ; <label>:48                                      ; preds = %46, %39
@@ -6279,14 +6317,14 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
   br label %26
 
 ; <label>:50                                      ; preds = %19
-  %51 = load i64, i64* %expected, align 8
+  %51 = load i64, i64 addrspace(2)* %expected, align 8
   %52 = cmpxchg volatile i64 addrspace(2)* %object, i64 %51, i64 %desired release monotonic
   %53 = extractvalue { i64, i1 } %52, 1
   br i1 %53, label %56, label %54
 
 ; <label>:54                                      ; preds = %50
   %55 = extractvalue { i64, i1 } %52, 0
-  store i64 %55, i64* %expected, align 8
+  store i64 %55, i64 addrspace(2)* %expected, align 8
   br label %56
 
 ; <label>:56                                      ; preds = %54, %50
@@ -6305,7 +6343,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:64                                      ; preds = %58
   %65 = extractvalue { i64, i1 } %59, 0
-  store i64 %65, i64* %expected, align 8
+  store i64 %65, i64 addrspace(2)* %expected, align 8
   br label %66
 
 ; <label>:66                                      ; preds = %64, %58
@@ -6314,7 +6352,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:68                                      ; preds = %61
   %69 = extractvalue { i64, i1 } %62, 0
-  store i64 %69, i64* %expected, align 8
+  store i64 %69, i64 addrspace(2)* %expected, align 8
   br label %70
 
 ; <label>:70                                      ; preds = %68, %61
@@ -6322,26 +6360,26 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
   br label %26
 
 ; <label>:72                                      ; preds = %25
-  %73 = load i64, i64* %expected, align 8
+  %73 = load i64, i64 addrspace(2)* %expected, align 8
   %74 = cmpxchg volatile i64 addrspace(2)* %object, i64 %73, i64 %desired seq_cst monotonic
   %75 = extractvalue { i64, i1 } %74, 1
   br i1 %75, label %86, label %84
 
 ; <label>:76                                      ; preds = %25, %25
-  %77 = load i64, i64* %expected, align 8
+  %77 = load i64, i64 addrspace(2)* %expected, align 8
   %78 = cmpxchg volatile i64 addrspace(2)* %object, i64 %77, i64 %desired seq_cst acquire
   %79 = extractvalue { i64, i1 } %78, 1
   br i1 %79, label %90, label %88
 
 ; <label>:80                                      ; preds = %25
-  %81 = load i64, i64* %expected, align 8
+  %81 = load i64, i64 addrspace(2)* %expected, align 8
   %82 = cmpxchg volatile i64 addrspace(2)* %object, i64 %81, i64 %desired seq_cst seq_cst
   %83 = extractvalue { i64, i1 } %82, 1
   br i1 %83, label %94, label %92
 
 ; <label>:84                                      ; preds = %72
   %85 = extractvalue { i64, i1 } %74, 0
-  store i64 %85, i64* %expected, align 8
+  store i64 %85, i64 addrspace(2)* %expected, align 8
   br label %86
 
 ; <label>:86                                      ; preds = %84, %72
@@ -6350,7 +6388,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:88                                      ; preds = %76
   %89 = extractvalue { i64, i1 } %78, 0
-  store i64 %89, i64* %expected, align 8
+  store i64 %89, i64 addrspace(2)* %expected, align 8
   br label %90
 
 ; <label>:90                                      ; preds = %88, %76
@@ -6359,7 +6397,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:92                                      ; preds = %80
   %93 = extractvalue { i64, i1 } %82, 0
-  store i64 %93, i64* %expected, align 8
+  store i64 %93, i64 addrspace(2)* %expected, align 8
   br label %94
 
 ; <label>:94                                      ; preds = %92, %80
@@ -6368,7 +6406,9 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 }
 
 ; Function Attrs: nounwind uwtable
-define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_AtomiclPll12memory_orderS3_12memory_scope(i64 addrspace(2)* %object, i64* nocapture %expected, i64 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+;define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_AtomiclPll12memory_orderS3_12memory_scope(i64 addrspace(2)* %object, i64* nocapture %expected, i64 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_AtomiclPU7CLlocalll12memory_orderS4_12memory_scope(i64 addrspace(2)* %object, i64 addrspace(2)* nocapture %expected, i64 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+
   %1 = icmp eq i32 %success, 0
   br i1 %1, label %9, label %2
 
@@ -6416,13 +6456,13 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 ; <label>:21                                      ; preds = %19, %19
   %.off = add nsw i32 %20, -1
   %switch = icmp ult i32 %.off, 2
-  %22 = load i64, i64* %expected, align 8
+  %22 = load i64, i64 addrspace(2)* %expected, align 8
   br i1 %switch, label %39, label %36
 
 ; <label>:23                                      ; preds = %19
   %.off1 = add nsw i32 %20, -1
   %switch2 = icmp ult i32 %.off1, 2
-  %24 = load i64, i64* %expected, align 8
+  %24 = load i64, i64 addrspace(2)* %expected, align 8
   br i1 %switch2, label %61, label %58
 
 ; <label>:25                                      ; preds = %19
@@ -6438,14 +6478,14 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
   ret i1 %27
 
 ; <label>:28                                      ; preds = %19
-  %29 = load i64, i64* %expected, align 8
+  %29 = load i64, i64 addrspace(2)* %expected, align 8
   %30 = cmpxchg weak volatile i64 addrspace(2)* %object, i64 %29, i64 %desired monotonic monotonic
   %31 = extractvalue { i64, i1 } %30, 1
   br i1 %31, label %34, label %32
 
 ; <label>:32                                      ; preds = %28
   %33 = extractvalue { i64, i1 } %30, 0
-  store i64 %33, i64* %expected, align 8
+  store i64 %33, i64 addrspace(2)* %expected, align 8
   br label %34
 
 ; <label>:34                                      ; preds = %32, %28
@@ -6464,7 +6504,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:42                                      ; preds = %36
   %43 = extractvalue { i64, i1 } %37, 0
-  store i64 %43, i64* %expected, align 8
+  store i64 %43, i64 addrspace(2)* %expected, align 8
   br label %44
 
 ; <label>:44                                      ; preds = %42, %36
@@ -6473,7 +6513,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:46                                      ; preds = %39
   %47 = extractvalue { i64, i1 } %40, 0
-  store i64 %47, i64* %expected, align 8
+  store i64 %47, i64 addrspace(2)* %expected, align 8
   br label %48
 
 ; <label>:48                                      ; preds = %46, %39
@@ -6481,14 +6521,14 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
   br label %26
 
 ; <label>:50                                      ; preds = %19
-  %51 = load i64, i64* %expected, align 8
+  %51 = load i64, i64 addrspace(2)* %expected, align 8
   %52 = cmpxchg weak volatile i64 addrspace(2)* %object, i64 %51, i64 %desired release monotonic
   %53 = extractvalue { i64, i1 } %52, 1
   br i1 %53, label %56, label %54
 
 ; <label>:54                                      ; preds = %50
   %55 = extractvalue { i64, i1 } %52, 0
-  store i64 %55, i64* %expected, align 8
+  store i64 %55, i64 addrspace(2)* %expected, align 8
   br label %56
 
 ; <label>:56                                      ; preds = %54, %50
@@ -6507,7 +6547,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:64                                      ; preds = %58
   %65 = extractvalue { i64, i1 } %59, 0
-  store i64 %65, i64* %expected, align 8
+  store i64 %65, i64 addrspace(2)* %expected, align 8
   br label %66
 
 ; <label>:66                                      ; preds = %64, %58
@@ -6516,7 +6556,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:68                                      ; preds = %61
   %69 = extractvalue { i64, i1 } %62, 0
-  store i64 %69, i64* %expected, align 8
+  store i64 %69, i64 addrspace(2)* %expected, align 8
   br label %70
 
 ; <label>:70                                      ; preds = %68, %61
@@ -6524,26 +6564,26 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
   br label %26
 
 ; <label>:72                                      ; preds = %25
-  %73 = load i64, i64* %expected, align 8
+  %73 = load i64, i64 addrspace(2)* %expected, align 8
   %74 = cmpxchg weak volatile i64 addrspace(2)* %object, i64 %73, i64 %desired seq_cst monotonic
   %75 = extractvalue { i64, i1 } %74, 1
   br i1 %75, label %86, label %84
 
 ; <label>:76                                      ; preds = %25, %25
-  %77 = load i64, i64* %expected, align 8
+  %77 = load i64, i64 addrspace(2)* %expected, align 8
   %78 = cmpxchg weak volatile i64 addrspace(2)* %object, i64 %77, i64 %desired seq_cst acquire
   %79 = extractvalue { i64, i1 } %78, 1
   br i1 %79, label %90, label %88
 
 ; <label>:80                                      ; preds = %25
-  %81 = load i64, i64* %expected, align 8
+  %81 = load i64, i64 addrspace(2)* %expected, align 8
   %82 = cmpxchg weak volatile i64 addrspace(2)* %object, i64 %81, i64 %desired seq_cst seq_cst
   %83 = extractvalue { i64, i1 } %82, 1
   br i1 %83, label %94, label %92
 
 ; <label>:84                                      ; preds = %72
   %85 = extractvalue { i64, i1 } %74, 0
-  store i64 %85, i64* %expected, align 8
+  store i64 %85, i64 addrspace(2)* %expected, align 8
   br label %86
 
 ; <label>:86                                      ; preds = %84, %72
@@ -6552,7 +6592,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:88                                      ; preds = %76
   %89 = extractvalue { i64, i1 } %78, 0
-  store i64 %89, i64* %expected, align 8
+  store i64 %89, i64 addrspace(2)* %expected, align 8
   br label %90
 
 ; <label>:90                                      ; preds = %88, %76
@@ -6561,7 +6601,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:92                                      ; preds = %80
   %93 = extractvalue { i64, i1 } %82, 0
-  store i64 %93, i64* %expected, align 8
+  store i64 %93, i64 addrspace(2)* %expected, align 8
   br label %94
 
 ; <label>:94                                      ; preds = %92, %80
@@ -6893,7 +6933,9 @@ define i64 @_Z27pocl_atomic_exchange__localPVU7CLlocalU7_Atomicmm12memory_order1
 }
 
 ; Function Attrs: nounwind uwtable
-define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_AtomicmPmm12memory_orderS3_12memory_scope(i64 addrspace(2)* %object, i64* nocapture %expected, i64 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+;define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_AtomicmPmm12memory_orderS3_12memory_scope(i64 addrspace(2)* %object, i64* nocapture %expected, i64 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_AtomicmPU7CLlocalmm12memory_orderS4_12memory_scope(i64 addrspace(2)* %object, i64 addrspace(2)* nocapture %expected, i64 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+
   %1 = icmp eq i32 %success, 0
   br i1 %1, label %9, label %2
 
@@ -6941,13 +6983,13 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 ; <label>:21                                      ; preds = %19, %19
   %.off = add nsw i32 %20, -1
   %switch = icmp ult i32 %.off, 2
-  %22 = load i64, i64* %expected, align 8
+  %22 = load i64, i64 addrspace(2)* %expected, align 8
   br i1 %switch, label %39, label %36
 
 ; <label>:23                                      ; preds = %19
   %.off1 = add nsw i32 %20, -1
   %switch2 = icmp ult i32 %.off1, 2
-  %24 = load i64, i64* %expected, align 8
+  %24 = load i64, i64 addrspace(2)* %expected, align 8
   br i1 %switch2, label %61, label %58
 
 ; <label>:25                                      ; preds = %19
@@ -6963,14 +7005,14 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
   ret i1 %27
 
 ; <label>:28                                      ; preds = %19
-  %29 = load i64, i64* %expected, align 8
+  %29 = load i64, i64 addrspace(2)* %expected, align 8
   %30 = cmpxchg volatile i64 addrspace(2)* %object, i64 %29, i64 %desired monotonic monotonic
   %31 = extractvalue { i64, i1 } %30, 1
   br i1 %31, label %34, label %32
 
 ; <label>:32                                      ; preds = %28
   %33 = extractvalue { i64, i1 } %30, 0
-  store i64 %33, i64* %expected, align 8
+  store i64 %33, i64 addrspace(2)* %expected, align 8
   br label %34
 
 ; <label>:34                                      ; preds = %32, %28
@@ -6989,7 +7031,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:42                                      ; preds = %36
   %43 = extractvalue { i64, i1 } %37, 0
-  store i64 %43, i64* %expected, align 8
+  store i64 %43, i64 addrspace(2)* %expected, align 8
   br label %44
 
 ; <label>:44                                      ; preds = %42, %36
@@ -6998,7 +7040,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:46                                      ; preds = %39
   %47 = extractvalue { i64, i1 } %40, 0
-  store i64 %47, i64* %expected, align 8
+  store i64 %47, i64 addrspace(2)* %expected, align 8
   br label %48
 
 ; <label>:48                                      ; preds = %46, %39
@@ -7006,14 +7048,14 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
   br label %26
 
 ; <label>:50                                      ; preds = %19
-  %51 = load i64, i64* %expected, align 8
+  %51 = load i64, i64 addrspace(2)* %expected, align 8
   %52 = cmpxchg volatile i64 addrspace(2)* %object, i64 %51, i64 %desired release monotonic
   %53 = extractvalue { i64, i1 } %52, 1
   br i1 %53, label %56, label %54
 
 ; <label>:54                                      ; preds = %50
   %55 = extractvalue { i64, i1 } %52, 0
-  store i64 %55, i64* %expected, align 8
+  store i64 %55, i64 addrspace(2)* %expected, align 8
   br label %56
 
 ; <label>:56                                      ; preds = %54, %50
@@ -7032,7 +7074,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:64                                      ; preds = %58
   %65 = extractvalue { i64, i1 } %59, 0
-  store i64 %65, i64* %expected, align 8
+  store i64 %65, i64 addrspace(2)* %expected, align 8
   br label %66
 
 ; <label>:66                                      ; preds = %64, %58
@@ -7041,7 +7083,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:68                                      ; preds = %61
   %69 = extractvalue { i64, i1 } %62, 0
-  store i64 %69, i64* %expected, align 8
+  store i64 %69, i64 addrspace(2)* %expected, align 8
   br label %70
 
 ; <label>:70                                      ; preds = %68, %61
@@ -7049,26 +7091,26 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
   br label %26
 
 ; <label>:72                                      ; preds = %25
-  %73 = load i64, i64* %expected, align 8
+  %73 = load i64, i64 addrspace(2)* %expected, align 8
   %74 = cmpxchg volatile i64 addrspace(2)* %object, i64 %73, i64 %desired seq_cst monotonic
   %75 = extractvalue { i64, i1 } %74, 1
   br i1 %75, label %86, label %84
 
 ; <label>:76                                      ; preds = %25, %25
-  %77 = load i64, i64* %expected, align 8
+  %77 = load i64, i64 addrspace(2)* %expected, align 8
   %78 = cmpxchg volatile i64 addrspace(2)* %object, i64 %77, i64 %desired seq_cst acquire
   %79 = extractvalue { i64, i1 } %78, 1
   br i1 %79, label %90, label %88
 
 ; <label>:80                                      ; preds = %25
-  %81 = load i64, i64* %expected, align 8
+  %81 = load i64, i64 addrspace(2)* %expected, align 8
   %82 = cmpxchg volatile i64 addrspace(2)* %object, i64 %81, i64 %desired seq_cst seq_cst
   %83 = extractvalue { i64, i1 } %82, 1
   br i1 %83, label %94, label %92
 
 ; <label>:84                                      ; preds = %72
   %85 = extractvalue { i64, i1 } %74, 0
-  store i64 %85, i64* %expected, align 8
+  store i64 %85, i64 addrspace(2)* %expected, align 8
   br label %86
 
 ; <label>:86                                      ; preds = %84, %72
@@ -7077,7 +7119,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:88                                      ; preds = %76
   %89 = extractvalue { i64, i1 } %78, 0
-  store i64 %89, i64* %expected, align 8
+  store i64 %89, i64 addrspace(2)* %expected, align 8
   br label %90
 
 ; <label>:90                                      ; preds = %88, %76
@@ -7086,7 +7128,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:92                                      ; preds = %80
   %93 = extractvalue { i64, i1 } %82, 0
-  store i64 %93, i64* %expected, align 8
+  store i64 %93, i64 addrspace(2)* %expected, align 8
   br label %94
 
 ; <label>:94                                      ; preds = %92, %80
@@ -7095,7 +7137,9 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 }
 
 ; Function Attrs: nounwind uwtable
-define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_AtomicmPmm12memory_orderS3_12memory_scope(i64 addrspace(2)* %object, i64* nocapture %expected, i64 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+;define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_AtomicmPmm12memory_orderS3_12memory_scope(i64 addrspace(2)* %object, i64* nocapture %expected, i64 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_AtomicmPU7CLlocalmm12memory_orderS4_12memory_scope(i64 addrspace(2)* %object, i64 addrspace(2)* nocapture %expected, i64 %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+
   %1 = icmp eq i32 %success, 0
   br i1 %1, label %9, label %2
 
@@ -7143,13 +7187,13 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 ; <label>:21                                      ; preds = %19, %19
   %.off = add nsw i32 %20, -1
   %switch = icmp ult i32 %.off, 2
-  %22 = load i64, i64* %expected, align 8
+  %22 = load i64, i64 addrspace(2)* %expected, align 8
   br i1 %switch, label %39, label %36
 
 ; <label>:23                                      ; preds = %19
   %.off1 = add nsw i32 %20, -1
   %switch2 = icmp ult i32 %.off1, 2
-  %24 = load i64, i64* %expected, align 8
+  %24 = load i64, i64 addrspace(2)* %expected, align 8
   br i1 %switch2, label %61, label %58
 
 ; <label>:25                                      ; preds = %19
@@ -7165,14 +7209,14 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
   ret i1 %27
 
 ; <label>:28                                      ; preds = %19
-  %29 = load i64, i64* %expected, align 8
+  %29 = load i64, i64 addrspace(2)* %expected, align 8
   %30 = cmpxchg weak volatile i64 addrspace(2)* %object, i64 %29, i64 %desired monotonic monotonic
   %31 = extractvalue { i64, i1 } %30, 1
   br i1 %31, label %34, label %32
 
 ; <label>:32                                      ; preds = %28
   %33 = extractvalue { i64, i1 } %30, 0
-  store i64 %33, i64* %expected, align 8
+  store i64 %33, i64 addrspace(2)* %expected, align 8
   br label %34
 
 ; <label>:34                                      ; preds = %32, %28
@@ -7191,7 +7235,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:42                                      ; preds = %36
   %43 = extractvalue { i64, i1 } %37, 0
-  store i64 %43, i64* %expected, align 8
+  store i64 %43, i64 addrspace(2)* %expected, align 8
   br label %44
 
 ; <label>:44                                      ; preds = %42, %36
@@ -7200,7 +7244,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:46                                      ; preds = %39
   %47 = extractvalue { i64, i1 } %40, 0
-  store i64 %47, i64* %expected, align 8
+  store i64 %47, i64 addrspace(2)* %expected, align 8
   br label %48
 
 ; <label>:48                                      ; preds = %46, %39
@@ -7208,14 +7252,14 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
   br label %26
 
 ; <label>:50                                      ; preds = %19
-  %51 = load i64, i64* %expected, align 8
+  %51 = load i64, i64 addrspace(2)* %expected, align 8
   %52 = cmpxchg weak volatile i64 addrspace(2)* %object, i64 %51, i64 %desired release monotonic
   %53 = extractvalue { i64, i1 } %52, 1
   br i1 %53, label %56, label %54
 
 ; <label>:54                                      ; preds = %50
   %55 = extractvalue { i64, i1 } %52, 0
-  store i64 %55, i64* %expected, align 8
+  store i64 %55, i64 addrspace(2)* %expected, align 8
   br label %56
 
 ; <label>:56                                      ; preds = %54, %50
@@ -7234,7 +7278,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:64                                      ; preds = %58
   %65 = extractvalue { i64, i1 } %59, 0
-  store i64 %65, i64* %expected, align 8
+  store i64 %65, i64 addrspace(2)* %expected, align 8
   br label %66
 
 ; <label>:66                                      ; preds = %64, %58
@@ -7243,7 +7287,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:68                                      ; preds = %61
   %69 = extractvalue { i64, i1 } %62, 0
-  store i64 %69, i64* %expected, align 8
+  store i64 %69, i64 addrspace(2)* %expected, align 8
   br label %70
 
 ; <label>:70                                      ; preds = %68, %61
@@ -7251,26 +7295,26 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
   br label %26
 
 ; <label>:72                                      ; preds = %25
-  %73 = load i64, i64* %expected, align 8
+  %73 = load i64, i64 addrspace(2)* %expected, align 8
   %74 = cmpxchg weak volatile i64 addrspace(2)* %object, i64 %73, i64 %desired seq_cst monotonic
   %75 = extractvalue { i64, i1 } %74, 1
   br i1 %75, label %86, label %84
 
 ; <label>:76                                      ; preds = %25, %25
-  %77 = load i64, i64* %expected, align 8
+  %77 = load i64, i64 addrspace(2)* %expected, align 8
   %78 = cmpxchg weak volatile i64 addrspace(2)* %object, i64 %77, i64 %desired seq_cst acquire
   %79 = extractvalue { i64, i1 } %78, 1
   br i1 %79, label %90, label %88
 
 ; <label>:80                                      ; preds = %25
-  %81 = load i64, i64* %expected, align 8
+  %81 = load i64, i64 addrspace(2)* %expected, align 8
   %82 = cmpxchg weak volatile i64 addrspace(2)* %object, i64 %81, i64 %desired seq_cst seq_cst
   %83 = extractvalue { i64, i1 } %82, 1
   br i1 %83, label %94, label %92
 
 ; <label>:84                                      ; preds = %72
   %85 = extractvalue { i64, i1 } %74, 0
-  store i64 %85, i64* %expected, align 8
+  store i64 %85, i64 addrspace(2)* %expected, align 8
   br label %86
 
 ; <label>:86                                      ; preds = %84, %72
@@ -7279,7 +7323,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:88                                      ; preds = %76
   %89 = extractvalue { i64, i1 } %78, 0
-  store i64 %89, i64* %expected, align 8
+  store i64 %89, i64 addrspace(2)* %expected, align 8
   br label %90
 
 ; <label>:90                                      ; preds = %88, %76
@@ -7288,7 +7332,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:92                                      ; preds = %80
   %93 = extractvalue { i64, i1 } %82, 0
-  store i64 %93, i64* %expected, align 8
+  store i64 %93, i64 addrspace(2)* %expected, align 8
   br label %94
 
 ; <label>:94                                      ; preds = %92, %80
@@ -7657,7 +7701,9 @@ define double @_Z27pocl_atomic_exchange__localPVU7CLlocalU7_Atomicdd12memory_ord
 }
 
 ; Function Attrs: nounwind uwtable
-define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_AtomicdPdd12memory_orderS3_12memory_scope(double addrspace(2)* %object, double* nocapture %expected, double %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+;define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_AtomicdPdd12memory_orderS3_12memory_scope(double addrspace(2)* %object, double* nocapture %expected, double %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_AtomicdPU7CLlocaldd12memory_orderS4_12memory_scope(double addrspace(2)* %object, double addrspace(2)* nocapture %expected, double %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+
   %1 = icmp eq i32 %success, 0
   br i1 %1, label %9, label %2
 
@@ -7696,7 +7742,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 ; <label>:20                                      ; preds = %13, %15, %17, %9
   %21 = phi i32 [ 0, %9 ], [ 2, %13 ], [ %19, %17 ], [ 3, %15 ]
   %22 = bitcast double addrspace(2)* %object to i64 addrspace(2)*
-  %23 = bitcast double* %expected to i64*
+  %23 = bitcast double addrspace(2)* %expected to i64 addrspace(2)*
   switch i32 %10, label %31 [
     i32 1, label %24
     i32 2, label %24
@@ -7708,13 +7754,13 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 ; <label>:24                                      ; preds = %20, %20
   %.off = add nsw i32 %21, -1
   %switch = icmp ult i32 %.off, 2
-  %25 = load i64, i64* %23, align 8
+  %25 = load i64, i64 addrspace(2)* %23, align 8
   br i1 %switch, label %42, label %39
 
 ; <label>:26                                      ; preds = %20
   %.off1 = add nsw i32 %21, -1
   %switch2 = icmp ult i32 %.off1, 2
-  %27 = load i64, i64* %23, align 8
+  %27 = load i64, i64 addrspace(2)* %23, align 8
   br i1 %switch2, label %64, label %61
 
 ; <label>:28                                      ; preds = %20
@@ -7730,14 +7776,14 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
   ret i1 %30
 
 ; <label>:31                                      ; preds = %20
-  %32 = load i64, i64* %23, align 8
+  %32 = load i64, i64 addrspace(2)* %23, align 8
   %33 = cmpxchg volatile i64 addrspace(2)* %22, i64 %32, i64 %11 monotonic monotonic
   %34 = extractvalue { i64, i1 } %33, 1
   br i1 %34, label %37, label %35
 
 ; <label>:35                                      ; preds = %31
   %36 = extractvalue { i64, i1 } %33, 0
-  store i64 %36, i64* %23, align 8
+  store i64 %36, i64 addrspace(2)* %23, align 8
   br label %37
 
 ; <label>:37                                      ; preds = %35, %31
@@ -7756,7 +7802,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:45                                      ; preds = %39
   %46 = extractvalue { i64, i1 } %40, 0
-  store i64 %46, i64* %23, align 8
+  store i64 %46, i64 addrspace(2)* %23, align 8
   br label %47
 
 ; <label>:47                                      ; preds = %45, %39
@@ -7765,7 +7811,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:49                                      ; preds = %42
   %50 = extractvalue { i64, i1 } %43, 0
-  store i64 %50, i64* %23, align 8
+  store i64 %50, i64 addrspace(2)* %23, align 8
   br label %51
 
 ; <label>:51                                      ; preds = %49, %42
@@ -7773,14 +7819,14 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
   br label %29
 
 ; <label>:53                                      ; preds = %20
-  %54 = load i64, i64* %23, align 8
+  %54 = load i64, i64 addrspace(2)* %23, align 8
   %55 = cmpxchg volatile i64 addrspace(2)* %22, i64 %54, i64 %11 release monotonic
   %56 = extractvalue { i64, i1 } %55, 1
   br i1 %56, label %59, label %57
 
 ; <label>:57                                      ; preds = %53
   %58 = extractvalue { i64, i1 } %55, 0
-  store i64 %58, i64* %23, align 8
+  store i64 %58, i64 addrspace(2)* %23, align 8
   br label %59
 
 ; <label>:59                                      ; preds = %57, %53
@@ -7799,7 +7845,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:67                                      ; preds = %61
   %68 = extractvalue { i64, i1 } %62, 0
-  store i64 %68, i64* %23, align 8
+  store i64 %68, i64 addrspace(2)* %23, align 8
   br label %69
 
 ; <label>:69                                      ; preds = %67, %61
@@ -7808,7 +7854,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:71                                      ; preds = %64
   %72 = extractvalue { i64, i1 } %65, 0
-  store i64 %72, i64* %23, align 8
+  store i64 %72, i64 addrspace(2)* %23, align 8
   br label %73
 
 ; <label>:73                                      ; preds = %71, %64
@@ -7816,26 +7862,26 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
   br label %29
 
 ; <label>:75                                      ; preds = %28
-  %76 = load i64, i64* %23, align 8
+  %76 = load i64, i64 addrspace(2)* %23, align 8
   %77 = cmpxchg volatile i64 addrspace(2)* %22, i64 %76, i64 %11 seq_cst monotonic
   %78 = extractvalue { i64, i1 } %77, 1
   br i1 %78, label %89, label %87
 
 ; <label>:79                                      ; preds = %28, %28
-  %80 = load i64, i64* %23, align 8
+  %80 = load i64, i64 addrspace(2)* %23, align 8
   %81 = cmpxchg volatile i64 addrspace(2)* %22, i64 %80, i64 %11 seq_cst acquire
   %82 = extractvalue { i64, i1 } %81, 1
   br i1 %82, label %93, label %91
 
 ; <label>:83                                      ; preds = %28
-  %84 = load i64, i64* %23, align 8
+  %84 = load i64, i64 addrspace(2)* %23, align 8
   %85 = cmpxchg volatile i64 addrspace(2)* %22, i64 %84, i64 %11 seq_cst seq_cst
   %86 = extractvalue { i64, i1 } %85, 1
   br i1 %86, label %97, label %95
 
 ; <label>:87                                      ; preds = %75
   %88 = extractvalue { i64, i1 } %77, 0
-  store i64 %88, i64* %23, align 8
+  store i64 %88, i64 addrspace(2)* %23, align 8
   br label %89
 
 ; <label>:89                                      ; preds = %87, %75
@@ -7844,7 +7890,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:91                                      ; preds = %79
   %92 = extractvalue { i64, i1 } %81, 0
-  store i64 %92, i64* %23, align 8
+  store i64 %92, i64 addrspace(2)* %23, align 8
   br label %93
 
 ; <label>:93                                      ; preds = %91, %79
@@ -7853,7 +7899,7 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 
 ; <label>:95                                      ; preds = %83
   %96 = extractvalue { i64, i1 } %85, 0
-  store i64 %96, i64* %23, align 8
+  store i64 %96, i64 addrspace(2)* %23, align 8
   br label %97
 
 ; <label>:97                                      ; preds = %95, %83
@@ -7862,7 +7908,9 @@ define zeroext i1 @_Z42pocl_atomic_compare_exchange_strong__localPVU7CLlocalU7_A
 }
 
 ; Function Attrs: nounwind uwtable
-define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_AtomicdPdd12memory_orderS3_12memory_scope(double addrspace(2)* %object, double* nocapture %expected, double %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+;define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_AtomicdPdd12memory_orderS3_12memory_scope(double addrspace(2)* %object, double* nocapture %expected, double %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_AtomicdPU7CLlocaldd12memory_orderS4_12memory_scope(double addrspace(2)* %object, double addrspace(2)* nocapture %expected, double %desired, i32 %success, i32 %failure, i32 %scope) #0 {
+
   %1 = icmp eq i32 %success, 0
   br i1 %1, label %9, label %2
 
@@ -7901,7 +7949,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 ; <label>:20                                      ; preds = %13, %15, %17, %9
   %21 = phi i32 [ 0, %9 ], [ 2, %13 ], [ %19, %17 ], [ 3, %15 ]
   %22 = bitcast double addrspace(2)* %object to i64 addrspace(2)*
-  %23 = bitcast double* %expected to i64*
+  %23 = bitcast double addrspace(2)* %expected to i64 addrspace(2)*
   switch i32 %10, label %31 [
     i32 1, label %24
     i32 2, label %24
@@ -7913,13 +7961,13 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 ; <label>:24                                      ; preds = %20, %20
   %.off = add nsw i32 %21, -1
   %switch = icmp ult i32 %.off, 2
-  %25 = load i64, i64* %23, align 8
+  %25 = load i64, i64 addrspace(2)* %23, align 8
   br i1 %switch, label %42, label %39
 
 ; <label>:26                                      ; preds = %20
   %.off1 = add nsw i32 %21, -1
   %switch2 = icmp ult i32 %.off1, 2
-  %27 = load i64, i64* %23, align 8
+  %27 = load i64, i64 addrspace(2)* %23, align 8
   br i1 %switch2, label %64, label %61
 
 ; <label>:28                                      ; preds = %20
@@ -7935,14 +7983,14 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
   ret i1 %30
 
 ; <label>:31                                      ; preds = %20
-  %32 = load i64, i64* %23, align 8
+  %32 = load i64, i64 addrspace(2)* %23, align 8
   %33 = cmpxchg weak volatile i64 addrspace(2)* %22, i64 %32, i64 %11 monotonic monotonic
   %34 = extractvalue { i64, i1 } %33, 1
   br i1 %34, label %37, label %35
 
 ; <label>:35                                      ; preds = %31
   %36 = extractvalue { i64, i1 } %33, 0
-  store i64 %36, i64* %23, align 8
+  store i64 %36, i64 addrspace(2)* %23, align 8
   br label %37
 
 ; <label>:37                                      ; preds = %35, %31
@@ -7961,7 +8009,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:45                                      ; preds = %39
   %46 = extractvalue { i64, i1 } %40, 0
-  store i64 %46, i64* %23, align 8
+  store i64 %46, i64 addrspace(2)* %23, align 8
   br label %47
 
 ; <label>:47                                      ; preds = %45, %39
@@ -7970,7 +8018,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:49                                      ; preds = %42
   %50 = extractvalue { i64, i1 } %43, 0
-  store i64 %50, i64* %23, align 8
+  store i64 %50, i64 addrspace(2)* %23, align 8
   br label %51
 
 ; <label>:51                                      ; preds = %49, %42
@@ -7978,14 +8026,14 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
   br label %29
 
 ; <label>:53                                      ; preds = %20
-  %54 = load i64, i64* %23, align 8
+  %54 = load i64, i64 addrspace(2)* %23, align 8
   %55 = cmpxchg weak volatile i64 addrspace(2)* %22, i64 %54, i64 %11 release monotonic
   %56 = extractvalue { i64, i1 } %55, 1
   br i1 %56, label %59, label %57
 
 ; <label>:57                                      ; preds = %53
   %58 = extractvalue { i64, i1 } %55, 0
-  store i64 %58, i64* %23, align 8
+  store i64 %58, i64 addrspace(2)* %23, align 8
   br label %59
 
 ; <label>:59                                      ; preds = %57, %53
@@ -8004,7 +8052,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:67                                      ; preds = %61
   %68 = extractvalue { i64, i1 } %62, 0
-  store i64 %68, i64* %23, align 8
+  store i64 %68, i64 addrspace(2)* %23, align 8
   br label %69
 
 ; <label>:69                                      ; preds = %67, %61
@@ -8013,7 +8061,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:71                                      ; preds = %64
   %72 = extractvalue { i64, i1 } %65, 0
-  store i64 %72, i64* %23, align 8
+  store i64 %72, i64 addrspace(2)* %23, align 8
   br label %73
 
 ; <label>:73                                      ; preds = %71, %64
@@ -8021,26 +8069,26 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
   br label %29
 
 ; <label>:75                                      ; preds = %28
-  %76 = load i64, i64* %23, align 8
+  %76 = load i64, i64 addrspace(2)* %23, align 8
   %77 = cmpxchg weak volatile i64 addrspace(2)* %22, i64 %76, i64 %11 seq_cst monotonic
   %78 = extractvalue { i64, i1 } %77, 1
   br i1 %78, label %89, label %87
 
 ; <label>:79                                      ; preds = %28, %28
-  %80 = load i64, i64* %23, align 8
+  %80 = load i64, i64 addrspace(2)* %23, align 8
   %81 = cmpxchg weak volatile i64 addrspace(2)* %22, i64 %80, i64 %11 seq_cst acquire
   %82 = extractvalue { i64, i1 } %81, 1
   br i1 %82, label %93, label %91
 
 ; <label>:83                                      ; preds = %28
-  %84 = load i64, i64* %23, align 8
+  %84 = load i64, i64 addrspace(2)* %23, align 8
   %85 = cmpxchg weak volatile i64 addrspace(2)* %22, i64 %84, i64 %11 seq_cst seq_cst
   %86 = extractvalue { i64, i1 } %85, 1
   br i1 %86, label %97, label %95
 
 ; <label>:87                                      ; preds = %75
   %88 = extractvalue { i64, i1 } %77, 0
-  store i64 %88, i64* %23, align 8
+  store i64 %88, i64 addrspace(2)* %23, align 8
   br label %89
 
 ; <label>:89                                      ; preds = %87, %75
@@ -8049,7 +8097,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:91                                      ; preds = %79
   %92 = extractvalue { i64, i1 } %81, 0
-  store i64 %92, i64* %23, align 8
+  store i64 %92, i64 addrspace(2)* %23, align 8
   br label %93
 
 ; <label>:93                                      ; preds = %91, %79
@@ -8058,7 +8106,7 @@ define zeroext i1 @_Z40pocl_atomic_compare_exchange_weak__localPVU7CLlocalU7_Ato
 
 ; <label>:95                                      ; preds = %83
   %96 = extractvalue { i64, i1 } %85, 0
-  store i64 %96, i64* %23, align 8
+  store i64 %96, i64 addrspace(2)* %23, align 8
   br label %97
 
 ; <label>:97                                      ; preds = %95, %83
