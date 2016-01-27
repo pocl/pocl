@@ -200,10 +200,6 @@ set_tests_properties("\"regression/setting a buffer argument to NULL causes a se
 if(POWERPC)
   set_tests_properties("\"regression/for-loop with a variable iteration count (loops)\""
     PROPERTIES  WILL_FAIL 1)
-  if(LLVM_3_2)
-    set_tests_properties("\"regression/vector kernel arguments\""
-      PROPERTIES  WILL_FAIL 1)
-  endif()
 endif()
 
 # The vector/struct kernel arguments are known to be flaky and
