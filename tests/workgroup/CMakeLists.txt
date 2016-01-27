@@ -96,7 +96,8 @@ set_tests_properties( "\"workgroup/unconditional barriers (full replication)\""
     PROCESSORS 1
     LABELS "workgroup"
     ENVIRONMENT "POCL_DEVICES=basic;POCL_WORK_GROUP_METHOD=workitemrepl"
-    DEPENDS "pocl_version_check")
+    DEPENDS "pocl_version_check"
+    LABELS "internal;workgroup")
 
 # loops
 add_test_workgroup("\"workgroup/different implicit barrier injection scenarios (loops)\"" "implicit_barriers_1_2_1_1.stdout" "implicit_barriers.cl" 1 2 1 1)
@@ -134,4 +135,5 @@ set_tests_properties( "\"workgroup/unconditional barriers (loops)\""
     PROCESSORS 1
     LABELS "workgroup"
     ENVIRONMENT "POCL_DEVICES=basic;POCL_WORK_GROUP_METHOD=workitemloops"
-    DEPENDS "pocl_version_check")
+    DEPENDS "pocl_version_check"
+    LABELS "internal;workgroup")

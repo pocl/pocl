@@ -39,12 +39,12 @@ add_executable("example2" example2.c example2.cl)
 # example1_LDADD = @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
 target_link_libraries("example2" ${POCLU_LINK_OPTIONS})
 
-add_test("spec_tests/example2_matrix_transpose" "example2")
+add_test("examples/example2_matrix_transpose" "example2")
 
-set_tests_properties( "spec_tests/example2_matrix_transpose"
+set_tests_properties( "examples/example2_matrix_transpose"
   PROPERTIES
     COST 3.0
     PASS_REGULAR_EXPRESSION "OK\n"
     PROCESSORS 1
-    LABELS "OpenCL_Spec"
+    LABELS "internal;hsa;tce"
     DEPENDS "pocl_version_check")

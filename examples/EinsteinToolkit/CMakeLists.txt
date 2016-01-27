@@ -42,5 +42,5 @@ add_test(NAME "EinsteinToolkit" COMMAND "EinsteinToolkit")
 
 set_tests_properties( "EinsteinToolkit"
   PROPERTIES
-    LABELS "Einstein"
+    LABELS "internal;Einstein"
     DEPENDS "pocl_version_check")

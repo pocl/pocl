@@ -99,8 +99,8 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   PROPERTIES
     COST 2.0
     PROCESSORS 1
-    DEPENDS "pocl_version_check")
-
+    DEPENDS "pocl_version_check"
+    LABELS "internal;runtime")
 
 
 set_tests_properties("runtime/clGetSupportedImageFormats"

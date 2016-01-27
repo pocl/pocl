@@ -57,7 +57,7 @@ if (EXISTS "${INTEL_ZIP}")
     COMMAND "${TS_BUILDDIR}/fine")
 
   set_tests_properties( intel_svm_coarse intel_svm_fine
-    PROPERTIES  LABELS "IntelSVM")
+    PROPERTIES  LABELS "IntelSVM;hsa")
 
 else()
 

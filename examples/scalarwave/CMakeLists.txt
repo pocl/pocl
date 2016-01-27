@@ -71,12 +71,12 @@ add_executable("scalarwave" scalarwave.c scalarwave.cl)
 #scalarwave_LDADD = -lm @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
 target_link_libraries("scalarwave" ${POCLU_LINK_OPTIONS})
 
-add_test("full_applications/scalarwave" "scalarwave")
+add_test("examples/scalarwave" "scalarwave")
 
-set_tests_properties( "full_applications/scalarwave"
+set_tests_properties( "examples/scalarwave"
   PROPERTIES
     COST 3.0
     PASS_REGULAR_EXPRESSION "Done.\n"
     PROCESSORS 1
-    LABELS "FullApplications"
+    LABELS "internal"
     DEPENDS "pocl_version_check")

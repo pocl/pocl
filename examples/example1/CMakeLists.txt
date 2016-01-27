@@ -38,9 +38,9 @@ add_executable("example1" example1.c example1_exec.c example1.cl)
 # example1_LDADD = @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
 target_link_libraries("example1" ${POCLU_LINK_OPTIONS})
 
-add_test("spec_tests/example1_dot_product" "example1")
+add_test("examples/example1_dot_product" "example1")
 
-set_tests_properties( "spec_tests/example1_dot_product"
+set_tests_properties( "examples/example1_dot_product"
   PROPERTIES
     COST 40.0
     PASS_REGULAR_EXPRESSION "[(]0[.]000000, 0[.]000000, 0[.]000000, 0[.]000000[)] [.] [(]0[.]000000, 0[.]000000, 0[.]000000, 0[.]000000[)] = 0[.]000000
@@ -49,5 +49,5 @@ set_tests_properties( "spec_tests/example1_dot_product"
 [(]3[.]000000, 3[.]000000, 3[.]000000, 3[.]000000[)] [.] [(]3[.]000000, 3[.]000000, 3[.]000000, 3[.]000000[)] = 36[.]000000
 OK"
     PROCESSORS 1
-    LABELS "OpenCL_Spec"
+    LABELS "internal;hsa;tce"
     DEPENDS "pocl_version_check")

@@ -113,7 +113,8 @@ set_tests_properties("\"regression/phi nodes not replicated (repl)\""
     ENVIRONMENT "POCL_WORK_GROUP_METHOD=workitemrepl"
     COST 1.5
     PROCESSORS 1
-    DEPENDS "pocl_version_check")
+    DEPENDS "pocl_version_check"
+    LABELS "internal;regression")
 
 
 # loops
@@ -163,7 +164,8 @@ set_tests_properties("\"regression/phi nodes not replicated (loops)\""
     ENVIRONMENT "POCL_WORK_GROUP_METHOD=workitemloops"
     COST 1.5
     PROCESSORS 1
-    DEPENDS "pocl_version_check")
+    DEPENDS "pocl_version_check"
+    LABELS "internal;regression")
 
 
 # other
@@ -187,7 +189,8 @@ set_tests_properties("\"regression/setting a buffer argument to NULL causes a se
   PROPERTIES
     COST 1.5
     PROCESSORS 1
-    DEPENDS "pocl_version_check")
+    DEPENDS "pocl_version_check"
+    LABELS "internal;regression")
 
 #  "\"regression/struct kernel arguments\""
 #  "\"regression/vector kernel arguments\""
