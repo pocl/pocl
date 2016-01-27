@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014 pocl developers
+#   Copyright (c) 2016 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -23,37 +23,12 @@
 #
 #=============================================================================
 
-function(add_test_custom RUN_CMD TEST_NAME RESULT_FILE)
-  foreach(LOOPVAR ${ARGN})
-    set(RUN_CMD "${RUN_CMD}####${LOOPVAR}")
-  endforeach()
+add_compile_options(${TCE_INCLUDES})
+add_compile_options(${TCE_CXXFLAGS})
 
-  add_test( "${TEST_NAME}"
-    "${CMAKE_COMMAND}"
-    -Dtest_cmd=${RUN_CMD}
-    -Doutput_blessed=${CMAKE_CURRENT_SOURCE_DIR}/${RESULT_FILE}
-    -P "${CMAKE_SOURCE_DIR}/cmake/run_test.cmake"
-  )
-endfunction()
+add_subdirectory("ttasim")
+add_subdirectory("fp16")
 
-add_test("pocl_version_check" "runtime/test_version")
-set_tests_properties("pocl_version_check"
-  PROPERTIES
-  ENVIRONMENT "POCL_DEVICES=basic"
-  PASS_REGULAR_EXPRESSION "basic"
-  LABELS "internal")
-
-#######################################################################
-
-add_subdirectory("kernel")
-if(HAVE_OPENCL_HPP)
-  add_subdirectory("regression")
-else()
-  message(STATUS "cl.hpp unavailable, skipping regression tests")
+if(ENABLE_TCEMC)
+  add_subdirectory("tcemc")
 endif()
-add_subdirectory("runtime")
-add_subdirectory("workgroup")
-if(ENABLE_TCE)
-  add_subdirectory("tce")
-endif()
-
