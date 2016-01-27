@@ -671,7 +671,11 @@ if(NOT DEFINED DEFAULT_ENABLE_TCE)
 
     message(STATUS "Found tcecc + tce-config + ttasim, testing setup")
 
-    execute_process(COMMAND "${TCE_CONFIG}" --libs OUTPUT_VARIABLE TCE_LIBS RESULT_VARIABLE RESV1)
+    get_filename_component(TCE_BASEDIR "${TCE_CONFIG}" DIRECTORY)
+    find_library(TCE_LIBS "tce" HINTS "${TCE_BASEDIR}/../lib" ENV PATH)
+    if(NOT TCE_LIBS)
+      execute_process(COMMAND "${TCE_CONFIG}" --libs OUTPUT_VARIABLE TCE_LIBS RESULT_VARIABLE RESV1)
+    endif()
     execute_process(COMMAND "${TCE_CONFIG}" --includes OUTPUT_VARIABLE TCE_INCLUDES RESULT_VARIABLE RESV2)
     execute_process(COMMAND "${TCE_CONFIG}" --version OUTPUT_VARIABLE TCE_VERSION RESULT_VARIABLE RESV3)
     execute_process(COMMAND "${TCE_CONFIG}" --cxxflags OUTPUT_VARIABLE TCE_CXXFLAGS RESULT_VARIABLE RESV4)
