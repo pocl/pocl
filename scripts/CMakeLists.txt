@@ -45,3 +45,5 @@ if(UNIX)
         DESTINATION ${POCL_INSTALL_PUBLIC_BINDIR})
 
 endif()
+
+add_subdirectory("poclcc")

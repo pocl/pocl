@@ -1632,6 +1632,7 @@ AC_CONFIG_FILES([Makefile
                  examples/OpenCV/Makefile
                  examples/CloverLeaf/Makefile
                  scripts/Makefile
+                 scripts/poclcc/Makefile
                  tests/Makefile
                  tests/kernel/Makefile
                  tests/regression/Makefile
