@@ -1,11 +1,5 @@
 // TESTING: as_TYPEn
 
-#if __clang_major__ == 3 && __clang_minor__ < 4
-typedef const char* string;     /* for backward compatibility */
-#else
-typedef constant char* string;
-#endif
-
 
 _CL_NOINLINE
 void clear_bytes(uchar* p, uchar c, size_t n)
@@ -17,7 +11,7 @@ void clear_bytes(uchar* p, uchar c, size_t n)
 
 _CL_NOINLINE
 void compare_bytes(
-    string name,
+    constant char* name,
     const uchar* dst, size_t dst_size, size_t dst_elsize,
     const uchar* src, size_t src_size, size_t src_elsize)
 {
@@ -64,7 +58,7 @@ kernel void test_as_type()
     union { DST value; uchar raw[sizeof(DST)]; } dst;           \
     clear_bytes(src.raw, 0x44, sizeof(SRC));                    \
     clear_bytes(dst.raw, 0x99, sizeof(DST));                    \
-    src.value = *((SRC*)data);                                  \
+    src.value = *((private SRC*)data);                          \
     dst.value = as_##DST(src.value);                            \
     compare_bytes("as_" #DST "((" #SRC "))",                    \
         dst.raw, sizeof(DST), N, src.raw, sizeof(SRC), M);      \
