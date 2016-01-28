@@ -167,7 +167,9 @@ int main(int argc, char **argv) {
     fprintf(fp, "poclbin\n"); //Magic string identifier
     fprintf(fp, "1\n"); //Format version identifier
     for (i=0; i<num_devices; i++){
-        fprintf(fp, "%i %s\n", binary_sizes[i], binaries[i]); //Binary size and content
+        fprintf(fp, "%i ", binary_sizes[i], binaries[i]); //Binary size
+        fwrite(binaries[i], sizeof(char), binary_sizes[i], fp); //Binary content
+        fprintf(fp, "\n");
     }
     fclose(fp);
 
