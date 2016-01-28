@@ -11,10 +11,10 @@ Contents:
 .. toctree::
    :maxdepth: 2
 
+   install
    using
    env_variables
    faq
-   env_variables
    development
    releasing
    design

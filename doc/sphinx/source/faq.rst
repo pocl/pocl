@@ -7,9 +7,12 @@ are listed here.
 Using pocl
 ----------
 
+.. _supported-compilers:
+
 Supported compilers and compiler combinations
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Note that pocl usually uses two different compilers (though may be built
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Pocl usually uses two different compilers (though may be built
 using only one). One is used to compile C and C++ files - this is usually
 the "system compiler". It's specified by CC and CXX vars to configure
 script, or CMAKE_C{,XX}_COMPILER variables to cmake, but usually just
