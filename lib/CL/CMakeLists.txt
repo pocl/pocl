@@ -126,7 +126,8 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "clSVMAlloc.c" "clSVMFree.c" "clEnqueueSVMFree.c"
                    "clEnqueueSVMMap.c" "clEnqueueSVMUnmap.c"
                    "clEnqueueSVMMemcpy.c" "clEnqueueSVMMemFill.c"
-                   "clSetKernelArgSVMPointer.c" "clSetKernelExecInfo.c")
+                   "clSetKernelArgSVMPointer.c" "clSetKernelExecInfo.c"
+                   "clExportBinaryFormat")
 
 set(LIBPOCL_OBJS "$<TARGET_OBJECTS:llvmpasses>;$<TARGET_OBJECTS:libpocl_unlinked_objs>;${POCL_DEVICES_OBJS}")
 

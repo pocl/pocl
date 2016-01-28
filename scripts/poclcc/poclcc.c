@@ -131,6 +131,8 @@ int main(int argc, char **argv) {
     cl_context context;
     cl_program program;
     cl_int err;
+    void * buff;
+    cl_uint size;
 
     err = clGetPlatformIDs(1, &cpPlatform, NULL);
     err = clGetDeviceIDs(cpPlatform, openclDevice, 1, &device_id, NULL);
@@ -144,33 +146,12 @@ int main(int argc, char **argv) {
 
     clBuildProgram(program, 0, NULL, NULL, NULL, NULL);  
 
+    err = clExportBinaryFormat(program, &buff, &size);
+    assert(!err);
+
 //GENERATE FILE
-    cl_int num_devices;
-    size_t size_ret;
-    int i;
-    
-    err = clGetProgramInfo(program, CL_PROGRAM_NUM_DEVICES, sizeof(cl_int), &num_devices, &size_ret);
-    assert(!err);
-
-    size_t *binary_sizes = malloc(num_devices*sizeof(size_t));
-    err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, num_devices*sizeof(size_t), binary_sizes, &size_ret);
-    assert(!err);
-    
-    unsigned char **binaries = malloc(num_devices*sizeof(unsigned char*));
-    for (i=0; i<num_devices; i++)
-        binaries[i] = malloc(binary_sizes[i]*sizeof(unsigned char));
-        
-    err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, num_devices*sizeof(unsigned char*), binaries, &size_ret);
-    assert(!err);
-
     FILE *fp=fopen(outputFile, "w"); 
-    fprintf(fp, "poclbin\n"); //Magic string identifier
-    fprintf(fp, "1\n"); //Format version identifier
-    for (i=0; i<num_devices; i++){
-        fprintf(fp, "%i ", binary_sizes[i], binaries[i]); //Binary size
-        fwrite(binaries[i], sizeof(char), binary_sizes[i], fp); //Binary content
-        fprintf(fp, "\n");
-    }
+    fwrite(buff, 1, size, fp);
     fclose(fp);
 
 //RELEASE OPENCL STUFF

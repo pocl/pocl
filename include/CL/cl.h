@@ -1375,6 +1375,12 @@ clEnqueueTask(cl_command_queue  /* command_queue */,
               const cl_event *  /* event_wait_list */,
               cl_event *        /* event */) CL_EXT_SUFFIX__VERSION_1_2_DEPRECATED;
 
+
+extern CL_API_ENTRY cl_int CL_API_CALL
+clExportBinaryFormat(cl_program /* program */,
+                   void **     /* binary_format */,
+                   cl_uint *  /* binary_size */);
+
 #ifdef __cplusplus
 }
 #endif

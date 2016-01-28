@@ -133,6 +133,7 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clEnqueueSVMMemFill.c \
                    clSetKernelArgSVMPointer.c \
                    clSetKernelExecInfo.c \
+                   clExportBinaryFormat.c \
                    pocl_cl.h \
                    pocl_util.c pocl_util.h \
                    pocl_queue_util.c pocl_queue_util.h \
