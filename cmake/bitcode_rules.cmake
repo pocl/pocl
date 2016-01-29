@@ -128,13 +128,13 @@ function(make_kernel_bc OUTPUT_VAR NAME)
   compile_to_bc(BC_LIST ${ARGN})
 
   # fix too long commandline with cat and xargs
-  SET(BC_LIST_FILE_TXT "")
+  set(BC_LIST_FILE_TXT "")
   foreach(FILENAME ${BC_LIST})
     # straight parsing semicolon separated list with xargs -d didn't work on windows.. no such switch available
-    SET(BC_LIST_FILE_TXT "${BC_LIST_FILE_TXT} \"${FILENAME}\"")
+    set(BC_LIST_FILE_TXT "${BC_LIST_FILE_TXT} \"${FILENAME}\"")
   endforeach()
-  SET (BC_LIST_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/kernel_${NAME}_linklist.txt")
-  FILE (WRITE "${BC_LIST_FILE}" "${BC_LIST_FILE_TXT}")
+  set(BC_LIST_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/kernel_${NAME}_linklist.txt")
+  file(WRITE "${BC_LIST_FILE}" "${BC_LIST_FILE_TXT}")
 
   add_custom_command( OUTPUT "${KERNEL_BC}"
 # ${KERNEL_BC}: ${OBJ}
