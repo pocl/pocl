@@ -45,9 +45,11 @@ make_kernel_bc(KERNEL_BC "amdgcn--amdhsa" ${KERNEL_SOURCES})
 # just debug
 message(STATUS "AMDGCN Kernel BC: ${KERNEL_BC}")
 
+list(APPEND KERNEL_BC_LIST "${KERNEL_BC}")
+set(KERNEL_BC_LIST "${KERNEL_BC_LIST}" PARENT_SCOPE)
+
 # a target is needed...
-add_custom_target("kernel_amdgcn" ALL
-    DEPENDS ${KERNEL_BC} "${CMAKE_BINARY_DIR}/kernellib_hash.h")
+add_custom_target("kernel_amdgcn" DEPENDS ${KERNEL_BC})
 
 install(FILES "${KERNEL_BC}"
         DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}")

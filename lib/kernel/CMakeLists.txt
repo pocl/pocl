@@ -400,29 +400,60 @@ set(KERNEL_DEPEND_HEADERS
 "${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vec_sse_float4.h"
 )
 
+set(KERNEL_BC_LIST "")
+set(KERNEL_BC_TARGETS "")
+
 #*********************************************************************
 
 if(OCL_TARGETS MATCHES "host")
   add_subdirectory("host")
+  list(APPEND KERNEL_BC_TARGETS "kernel_host")
 endif()
 
 #*********************************************************************
 
 if(OCL_TARGETS MATCHES "tce")
   add_subdirectory("tce")
+  list(APPEND KERNEL_BC_TARGETS "kernel_tce")
 endif()
 
 #*********************************************************************
 
 if(OCL_TARGETS MATCHES "amdgcn")
   add_subdirectory("amdgcn")
+  list(APPEND KERNEL_BC_TARGETS "kernel_amdgcn")
 endif()
 
 if(OCL_TARGETS MATCHES "hsail64")
   add_subdirectory("hsail64")
+  list(APPEND KERNEL_BC_TARGETS "kernel_hsail64")
 endif()
 
 #*********************************************************************
+
+string(REPLACE ";" "****" KERNEL_BC_LIST_ESCAPED "${KERNEL_BC_LIST}")
+
+message(STATUS "kernel bc list: ${KERNEL_BC_LIST}")
+
+add_custom_command( OUTPUT "${CMAKE_BINARY_DIR}/kernellib_hash.h"
+  COMMAND "${CMAKE_COMMAND}"
+      -DKERNEL_BC_LIST_ESCAPED='${KERNEL_BC_LIST_ESCAPED}'
+      -DINCLUDEDIR='${CMAKE_SOURCE_DIR}/include'
+      -DOUTPUT='${CMAKE_BINARY_DIR}/kernellib_hash.h'
+      -P "${CMAKE_SOURCE_DIR}/cmake/kernellib_hash.cmake"
+  DEPENDS ${KERNEL_BC_LIST}
+      "${CMAKE_SOURCE_DIR}/include/_kernel.h"
+      "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
+      "${CMAKE_SOURCE_DIR}/include/pocl_types.h"
+  COMMENT "Generating SHA1 of all kernel libs..."
+  VERBATIM)
+
+
+add_custom_target("kernellib_hash" ALL
+    DEPENDS "${CMAKE_BINARY_DIR}/kernellib_hash.h")
+foreach(DEP IN LISTS KERNEL_BC_TARGETS)
+  add_dependencies("kernellib_hash" ${DEP})
+endforeach()
 
 # TODO extra_dist in lib/kernel/Makefile.am:
 # EXTRA_DIST = *.c *.cl *.h *.ll      \

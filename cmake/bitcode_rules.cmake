@@ -145,16 +145,5 @@ function(make_kernel_bc OUTPUT_VAR NAME)
         COMMENT "Linking Kernel bitcode ${KERNEL_BC}" 
         VERBATIM)
 
-  add_custom_command( OUTPUT "${CMAKE_BINARY_DIR}/kernellib_hash.h"
-    COMMAND "${CMAKE_COMMAND}" -DKERNELBC='${KERNEL_BC}'
-        -DINCLUDEDIR='${CMAKE_SOURCE_DIR}/include'
-        -DOUTPUT='${CMAKE_BINARY_DIR}/kernellib_hash.h'
-        -P "${CMAKE_SOURCE_DIR}/cmake/kernellib_hash.cmake"
-    DEPENDS "${KERNEL_BC}" "${CMAKE_SOURCE_DIR}/include/_kernel.h"
-        "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
-        "${CMAKE_SOURCE_DIR}/include/pocl_types.h"
-    COMMENT "Generating SHA1 of kernel lib..."
-    VERBATIM)
-
 endfunction()
 

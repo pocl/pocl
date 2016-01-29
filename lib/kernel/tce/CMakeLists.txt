@@ -53,8 +53,11 @@ make_kernel_bc(KERNEL_BC "tce-tut-llvm" ${SOURCES_WITHOUT_VML})
 # just debug
 message(STATUS "TCE Kernel BC: ${KERNEL_BC}")
 
+list(APPEND KERNEL_BC_LIST "${KERNEL_BC}")
+set(KERNEL_BC_LIST "${KERNEL_BC_LIST}" PARENT_SCOPE)
+
 # a target is needed...
-add_custom_target("kernel_tce" ALL DEPENDS ${KERNEL_BC})
+add_custom_target("kernel_tce" DEPENDS ${KERNEL_BC})
 
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/${KERNEL_BC}"
         DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}")

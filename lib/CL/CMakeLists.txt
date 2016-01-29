@@ -118,7 +118,7 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "pocl_queue_util.h" "pocl_queue_util.c"
                    "pocl_image_util.c" "pocl_image_util.h"
                    "pocl_img_buf_cpy.h" "pocl_img_buf_cpy.c"
-                   "pocl_icd.h" "pocl_llvm.h" "pocl_cache.c"
+                   "pocl_icd.h" "pocl_llvm.h"
                    "pocl_runtime_config.c" "pocl_runtime_config.h"
                    "pocl_mem_management.c"  "pocl_mem_management.h"
                    "pocl_llvm_api.cc" "pocl_hash.c"
@@ -128,7 +128,10 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "clEnqueueSVMMemcpy.c" "clEnqueueSVMMemFill.c"
                    "clSetKernelArgSVMPointer.c" "clSetKernelExecInfo.c")
 
-set(LIBPOCL_OBJS "$<TARGET_OBJECTS:llvmpasses>;$<TARGET_OBJECTS:libpocl_unlinked_objs>;${POCL_DEVICES_OBJS}")
+set(LIBPOCL_OBJS "$<TARGET_OBJECTS:llvmpasses>"
+                 "$<TARGET_OBJECTS:libpocl_unlinked_objs>"
+                 "$<TARGET_OBJECTS:pocl_cache>"
+                 ${POCL_DEVICES_OBJS})
 
 add_compile_options(${OCL_ICD_CFLAGS})
 
@@ -144,8 +147,11 @@ endif(MSVC)
 # this is so that we don't compile twice when building both libpocl and libOpenCL
 add_library("libpocl_unlinked_objs" OBJECT ${POCL_LIB_SOURCES})
 
-# pocl_cache.c depends on a SHA1 hash of the built kernel-<machine>.bc
-add_dependencies("libpocl_unlinked_objs" "kernel_host")
+add_library("pocl_cache" OBJECT "pocl_cache.c")
+
+# pocl_cache.c depends on a SHA1 hash of all built kernel-<target>.bc
+add_dependencies("pocl_cache" "kernellib_hash")
+
 #################################################################
 
 if (MSVC)
