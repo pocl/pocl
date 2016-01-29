@@ -596,6 +596,8 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
               current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_LOCAL; break;
             case POCL_ADDRESS_SPACE_CONSTANT:
               current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_CONSTANT; break;
+            case POCL_ADDRESS_SPACE_GENERIC:
+              current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
           }
         }
       }
