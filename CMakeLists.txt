@@ -579,11 +579,6 @@ endif()
 set(DEFAULT_HOST_CLANG_FLAGS "${CLANG_TARGET_OPTION}${LLC_TRIPLE}")
 set(DEFAULT_HOST_LLC_FLAGS "-relocation-model=pic -mtriple=${LLC_TRIPLE}")
 
-if(NOT LLC_HOST_CPU MATCHES "unknown")
-  set(DEFAULT_HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} ${CLANG_MARCH_FLAG}${LLC_HOST_CPU}")
-  set(DEFAULT_HOST_LLC_FLAGS "${DEFAULT_HOST_LLC_FLAGS} -mcpu=${LLC_HOST_CPU}")
-endif()
-
 if(LLC_TRIPLE MATCHES "^arm")
   if(LLC_TRIPLE MATCHES "gnueabihf")
     # hardfloat
@@ -623,6 +618,11 @@ foreach(EXT ${TEMP_EXT})
 endforeach()
 
 set(HOST_DEVICE_CL_VERSION "200")
+
+if(NOT DEFINED KERNELLIB_HOST_CPU_VARIANTS)
+  set(KERNELLIB_HOST_CPU_VARIANTS "native")
+# else TODO test cpu list for unknown values
+endif()
 
 ####################################################################
 

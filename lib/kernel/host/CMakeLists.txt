@@ -44,32 +44,42 @@ else()
   endif()
 endif()
 
-# Use HOST flags:
-#~ CLANG_FLAGS = @HOST_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off
 separate_arguments(HOST_CLANG_FLAGS)
-set(CLANG_FLAGS ${HOST_CLANG_FLAGS} "-Xclang" "-ffake-address-space-map" "-emit-llvm" "-ffp-contract=off")
-
-# LLC_FLAGS   = @HOST_LLC_FLAGS@
 separate_arguments(HOST_LLC_FLAGS)
-set(LLC_FLAGS ${HOST_LLC_FLAGS})
-
-# TODO LLC_flags is used by kernel.bc target, but ld is unused
-#LD_FLAGS    = @HOST_LD_FLAGS@
-
 set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=${HOST_DEVICE_CL_VERSION} ${HOST_DEVICE_EXTENSION_DEFINES}")
 separate_arguments(DEVICE_CL_FLAGS)
 
+foreach(CPU_VARIANT IN LISTS KERNELLIB_HOST_CPU_VARIANTS)
+
+if(CPU_VARIANT MATCHES "native")
+  set(VARIANT "${LLC_HOST_CPU}")
+else()
+  set(VARIANT "${CPU_VARIANT}")
+endif()
+
+set(CLANG_CPUFLAG "${CLANG_MARCH_FLAG}${VARIANT}")
+set(LLC_CPUFLAG "-mcpu=${VARIANT}")
+
+set(CLANG_FLAGS ${HOST_CLANG_FLAGS} ${CLANG_CPUFLAG} "-Xclang" "-ffake-address-space-map" "-emit-llvm" "-ffp-contract=off")
+
+set(LLC_FLAGS ${HOST_LLC_FLAGS} ${LLC_CPUFLAG})
+
 # KERNEL_TARGET = @OCL_KERNEL_TARGET@
-make_kernel_bc(KERNEL_BC "${OCL_KERNEL_TARGET}" ${KERNEL_SOURCES})
+make_kernel_bc(KERNEL_BC "${OCL_KERNEL_TARGET}-${VARIANT}" "${VARIANT}" ${KERNEL_SOURCES})
 
 # just debug
-message(STATUS "Host Kernel BC: ${KERNEL_BC}")
+message(STATUS "Host Kernel BC for \"${VARIANT}\": ${KERNEL_BC}")
 
 list(APPEND KERNEL_BC_LIST "${KERNEL_BC}")
 set(KERNEL_BC_LIST "${KERNEL_BC_LIST}" PARENT_SCOPE)
 
 # a target is needed...
-add_custom_target("kernel_host" DEPENDS ${KERNEL_BC})
+add_custom_target("kernel_host_${VARIANT}" DEPENDS ${KERNEL_BC})
+
+list(APPEND KERNEL_TARGET_LIST "kernel_host_${VARIANT}")
+set(KERNEL_TARGET_LIST "${KERNEL_TARGET_LIST}" PARENT_SCOPE)
 
 install(FILES "${KERNEL_BC}"
         DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}")
+
+endforeach()

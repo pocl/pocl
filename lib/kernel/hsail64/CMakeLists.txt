@@ -75,5 +75,8 @@ set(KERNEL_BC_LIST "${KERNEL_BC_LIST}" PARENT_SCOPE)
 # a target is needed...
 add_custom_target("kernel_hsail64" DEPENDS ${KERNEL_BC})
 
+list(APPEND KERNEL_TARGET_LIST "kernel_hsail64")
+set(KERNEL_TARGET_LIST "${KERNEL_TARGET_LIST}" PARENT_SCOPE)
+
 install(FILES "${KERNEL_BC}"
         DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}")

@@ -401,32 +401,28 @@ set(KERNEL_DEPEND_HEADERS
 )
 
 set(KERNEL_BC_LIST "")
-set(KERNEL_BC_TARGETS "")
+set(KERNEL_TARGET_LIST "")
 
 #*********************************************************************
 
 if(OCL_TARGETS MATCHES "host")
   add_subdirectory("host")
-  list(APPEND KERNEL_BC_TARGETS "kernel_host")
 endif()
 
 #*********************************************************************
 
 if(OCL_TARGETS MATCHES "tce")
   add_subdirectory("tce")
-  list(APPEND KERNEL_BC_TARGETS "kernel_tce")
 endif()
 
 #*********************************************************************
 
 if(OCL_TARGETS MATCHES "amdgcn")
   add_subdirectory("amdgcn")
-  list(APPEND KERNEL_BC_TARGETS "kernel_amdgcn")
 endif()
 
 if(OCL_TARGETS MATCHES "hsail64")
   add_subdirectory("hsail64")
-  list(APPEND KERNEL_BC_TARGETS "kernel_hsail64")
 endif()
 
 #*********************************************************************
@@ -451,7 +447,7 @@ add_custom_command( OUTPUT "${CMAKE_BINARY_DIR}/kernellib_hash.h"
 
 add_custom_target("kernellib_hash" ALL
     DEPENDS "${CMAKE_BINARY_DIR}/kernellib_hash.h")
-foreach(DEP IN LISTS KERNEL_BC_TARGETS)
+foreach(DEP IN LISTS KERNEL_TARGET_LIST)
   add_dependencies("kernellib_hash" ${DEP})
 endforeach()
 

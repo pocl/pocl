@@ -1219,46 +1219,66 @@ kernel_library
   Triple triple(device->llvm_target_triplet);
 
   if (libs.find(device) != libs.end())
-    {
-      return libs[device];
-    }
+    return libs[device];
 
   // TODO sync with Nat Ferrus' indexed linking
   std::string kernellib;
-  if (pocl_get_bool_option("POCL_BUILDING", 0))
-    {
-      kernellib = BUILDDIR;
-      kernellib += "/lib/kernel/";
-      // TODO: get this from the TCE target triplet
-      if (triple.getArch() == Triple::tce) 
-        {
-          kernellib += "tce";
-        }
+  bool is_host = false;
+  if (pocl_get_bool_option("POCL_BUILDING", 0)) {
+    kernellib = BUILDDIR;
+    kernellib += "/lib/kernel/";
+    // TODO: get this from the TCE target triplet
+    if (0)
+      ;
+#ifdef ENABLE_TCE
+    else if (triple.getArch() == Triple::tce) {
+      kernellib += "tce";
+    }
+#endif
 #ifdef BUILD_HSA
-      else if (triple.getArch() == Triple::hsail64) {
-          kernellib += "hsail64";
-      }
+    else if (triple.getArch() == Triple::hsail64) {
+      kernellib += "hsail64";
+    }
 #endif
 #ifdef AMDGCN_ENABLED
-      else if (triple.getArch() == Triple::amdgcn) {
-          kernellib += "amdgcn";
-      }
+    else if (triple.getArch == Triple::amdgcn) {
+      kernellib += "amdgcn";
+    }
 #endif
-      else 
-        {
-          kernellib += "host";
-        }
-      kernellib += "/kernel-"; 
-      kernellib += device->llvm_target_triplet;
-      kernellib +=".bc";   
+    else {
+      is_host = true;
+      kernellib += "host";
     }
-  else
-    {
-      kernellib = PKGDATADIR;
-      kernellib += "/kernel-";
-      kernellib += device->llvm_target_triplet;
-      kernellib += ".bc";
+    kernellib += "/kernel-";
+    kernellib += device->llvm_target_triplet;
+    if (is_host) {
+      kernellib += '-';
+      kernellib += device->llvm_cpu;
     }
+    kernellib += ".bc";
+  } else { // POCL_BUILDING == 0, use install dir
+    kernellib = PKGDATADIR;
+    kernellib += "/kernel-";
+    kernellib += device->llvm_target_triplet;
+    is_host = true;
+#ifdef ENABLE_TCE
+    if (triple.getArch() == Triple::tce)
+      is_host = false;
+#endif
+#ifdef BUILD_HSA
+    if (triple.getArch() == Triple::hsail64)
+      is_host = false;
+#endif
+#ifdef AMDGCN_ENABLED
+    if (triple.getArch == Triple::amdgcn)
+      is_host = false;
+#endif
+    if (is_host) {
+      kernellib += '-';
+      kernellib += device->llvm_cpu;
+    }
+    kernellib += ".bc";
+  }
 
   POCL_MSG_PRINT_INFO("using %s as the built-in lib.\n", kernellib.c_str());
 
