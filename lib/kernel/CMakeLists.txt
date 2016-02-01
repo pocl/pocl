@@ -427,9 +427,8 @@ endif()
 
 #*********************************************************************
 
+# "Escape" a list before passing to an external command
 string(REPLACE ";" "****" KERNEL_BC_LIST_ESCAPED "${KERNEL_BC_LIST}")
-
-message(STATUS "kernel bc list: ${KERNEL_BC_LIST}")
 
 add_custom_command( OUTPUT "${CMAKE_BINARY_DIR}/kernellib_hash.h"
   COMMAND "${CMAKE_COMMAND}"

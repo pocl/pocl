@@ -642,6 +642,16 @@ if(NOT DEFINED KERNELLIB_HOST_CPU_VARIANTS)
 # else TODO test cpu list for unknown values
 endif()
 
+set(KERNELLIB_HOST_DISTRO_VARIANTS 0)
+if(KERNELLIB_HOST_CPU_VARIANTS STREQUAL "distro")
+  if(X86_64 OR I386)
+    set(KERNELLIB_HOST_CPU_VARIANTS sse2 ssse3 sse41 avx avx_fma4 avx2 avx512)
+  else()
+    message(FATAL_ERROR "Don't know what CPU variants to use for kernel library on this platform.")
+  endif()
+  set(KERNELLIB_HOST_DISTRO_VARIANTS 1)
+endif()
+
 ####################################################################
 
 set(EXTRA_HOST_AS_FLAGS "" CACHE STRING "Extra parameters to as for code generation in the host. (default: empty)")
@@ -998,6 +1008,8 @@ MESSAGE(STATUS "USE_VECMATHLIB: ${USE_VECMATHLIB}")
 MESSAGE(STATUS "Available testsuites: ${ALL_TESTSUITES}")
 MESSAGE(STATUS "Enabled testsuites: ${ACTUALLY_ENABLED_TESTSUITES}")
 MESSAGE(STATUS "Kernel caching: ${KERNEL_CACHE_DEFAULT}")
+MESSAGE(STATUS "Kernel library CPU variants: ${KERNELLIB_HOST_CPU_VARIANTS}")
+MESSAGE(STATUS "Kernel library distro build: ${KERNELLIB_HOST_DISTRO_VARIANTS}")
 
 MESSAGE(STATUS " ")
 MESSAGE(STATUS "******* Programs:")

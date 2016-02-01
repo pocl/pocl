@@ -897,24 +897,50 @@ static llvm::TargetOptions GetTargetOptions() {
 #endif
   return Options;
 }
+
+/* for "distro" style kernel libs, return which kernellib to use, at runtime */
+const char* getX86KernelLibName() {
+  StringMap<bool> Features;
+  llvm::sys::getHostCPUFeatures(Features);
+  const char *res = NULL;
+
+  if (Features["sse2"])
+    res = "sse2";
+  else
+    POCL_ABORT("Pocl on x86_64 requires at least SSE2");
+  if (Features["ssse3"] && Features["cx16"])
+    res = "ssse3";
+  if (Features["sse4.1"] && Features["cx16"])
+    res = "sse41";
+  if (Features["avx"] && Features["cx16"] && Features["popcnt"])
+    res = "avx";
+  if (Features["avx"] && Features["cx16"] && Features["popcnt"]
+      && Features["xop"] && Features["fma4"])
+    res = "avx_fma4";
+  if (Features["avx"] && Features["avx2"] && Features["cx16"]
+      && Features["popcnt"] && Features["lzcnt"] && Features["f16c"]
+      && Features["fma"] && Features["bmi"] && Features["bmi2"])
+    res = "avx2";
+  if (Features["avx512f"] )
+    res = "avx512";
+
+  return res;
+}
+
+
 // Returns the TargetMachine instance or zero if no triple is provided.
 static TargetMachine* GetTargetMachine(cl_device_id device,
  const std::vector<std::string>& MAttrs=std::vector<std::string>()) {
 
   std::string Error;
   Triple TheTriple(device->llvm_target_triplet);
+
   std::string MCPU =  device->llvm_cpu ? device->llvm_cpu : "";
+
   const Target *TheTarget = 
     TargetRegistry::lookupTarget("", TheTriple, Error);
   
-  // In LLVM 3.4 and earlier, the target registry falls back to 
-  // the cpp backend in case a proper match was not found. In 
-  // that case simply do not use target info in the compilation 
-  // because it can be an off-tree target not registered at
-  // this point (read: TCE).
-  if (!TheTarget || TheTarget->getName() == std::string("cpp")) {
-    return 0;
-  }
+  assert(TheTarget->getName() != std::string("cpp"));
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;
   if (MAttrs.size()) {
@@ -1233,7 +1259,6 @@ kernel_library
 
   // TODO sync with Nat Ferrus' indexed linking
   std::string kernellib;
-  bool is_host = false;
   if (pocl_get_bool_option("POCL_BUILDING", 0)) {
     kernellib = BUILDDIR;
     kernellib += "/lib/kernel/";
@@ -1256,39 +1281,32 @@ kernel_library
     }
 #endif
     else {
-      is_host = true;
       kernellib += "host";
     }
     kernellib += "/kernel-";
     kernellib += device->llvm_target_triplet;
-    if (is_host) {
-      kernellib += '-';
+    kernellib += '-';
+#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
+    if (triple.getArch() == Triple::x86_64 ||
+        triple.getArch() == Triple::x86)
+      kernellib += getX86KernelLibName();
+    else
+#endif
       kernellib += device->llvm_cpu;
-    }
-    kernellib += ".bc";
   } else { // POCL_BUILDING == 0, use install dir
     kernellib = PKGDATADIR;
     kernellib += "/kernel-";
     kernellib += device->llvm_target_triplet;
-    is_host = true;
-#ifdef ENABLE_TCE
-    if (triple.getArch() == Triple::tce)
-      is_host = false;
+    kernellib += '-';
+#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
+    if (triple.getArch() == Triple::x86_64 ||
+        triple.getArch() == Triple::x86)
+      kernellib += getX86KernelLibName();
+    else
 #endif
-#ifdef BUILD_HSA
-    if (triple.getArch() == Triple::hsail64)
-      is_host = false;
-#endif
-#ifdef AMDGCN_ENABLED
-    if (triple.getArch == Triple::amdgcn)
-      is_host = false;
-#endif
-    if (is_host) {
-      kernellib += '-';
       kernellib += device->llvm_cpu;
-    }
-    kernellib += ".bc";
   }
+  kernellib += ".bc";
 
   POCL_MSG_PRINT_INFO("using %s as the built-in lib.\n", kernellib.c_str());
 
