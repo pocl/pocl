@@ -32,6 +32,24 @@ set(VERSION_SUFFIX "-pre")
 set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION}${VERSION_SUFFIX})
 set(POCL_VERSION ${VERSION_STRING})
 
+##################################################################################
+
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc")
+  set(POWERPC 1)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "mips")
+  set(MIPS 1)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv7")
+  set(ARMV7 1)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv6")
+  set(ARMV6 1)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "(i386|AMD64|x86_64)")
+  if(POCL_DEVICE_ADDRESS_BITS MATCHES "32")
+    set(I386 1)
+  else()
+    set(X86_64 1)
+  endif()
+endif()
+
 ######################################################################################
 
 macro(set_expr VAR)
@@ -915,23 +933,6 @@ if(UNIX)
 endif()
 
 #############################################################
-
-# for tests & examples
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc")
-  set(POWERPC 1)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "mips")
-  set(MIPS 1)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv7")
-  set(ARMV7 1)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv6")
-  set(ARMV6 1)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "(i386|AMD64|x86_64)")
-  if(POCL_DEVICE_ADDRESS_BITS MATCHES "32")
-    set(I386 1)
-  else()
-    set(X86_64 1)
-  endif()
-endif()
 
 include_directories("fix-include" "include")
 
