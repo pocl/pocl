@@ -193,11 +193,10 @@ list(APPEND LLVM_INCLUDE_DIRS
   "${LLVM_OBJ_ROOT}/tools/clang/include")
 
 # Llvm-config does not include clang libs
-set(CLANG_LIBNAMES clangFrontendTool clangFrontend clangDriver clangSerialization clangCodeGen clangParse clangSema)
-if(LLVM_MINOR GREATER 4)
-  list(APPEND CLANG_LIBNAMES clangRewrite)
-endif()
-list(APPEND CLANG_LIBNAMES clangRewriteFrontend clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers clangStaticAnalyzerCore clangAnalysis clangEdit clangAST clangLex clangBasic)
+set(CLANG_LIBNAMES clangFrontendTool clangFrontend clangDriver clangSerialization
+    clangCodeGen clangParse clangSema clangRewrite clangRewriteFrontend
+    clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers
+    clangStaticAnalyzerCore clangAnalysis clangEdit clangAST clangLex clangBasic)
 
 foreach(LIBNAME ${CLANG_LIBNAMES})
   find_library(C_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
