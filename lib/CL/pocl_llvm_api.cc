@@ -76,6 +76,7 @@ using llvm::legacy::PassManager;
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
+#include "llvm/Support/Host.h"
 
 #include <iostream>
 #include <fstream>
@@ -848,6 +849,15 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 
   *errcode = CL_SUCCESS;
   return 0;
+}
+
+char* get_cpu_name() {
+  StringRef r = llvm::sys::getHostCPUName();
+  assert(r.size() > 0);
+  char* cpu_name = (char*) malloc (r.size()+1);
+  strncpy(cpu_name, r.data(), r.size());
+  cpu_name[r.size()] = 0;
+  return cpu_name;
 }
 
 /* helpers copied from LLVM opt START */
