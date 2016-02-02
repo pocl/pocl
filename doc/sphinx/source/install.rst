@@ -78,6 +78,8 @@ it will produce a summary.
 CMake: important options & features
 -------------------------------------
 
+For multiple-item options, use ";" as separator (you'll have to escape it for bash).
+
 - ``-DWITH_LLVM_CONFIG=<path-to-llvm-config>``
   **IMPORTANT** Path to a llvm-config binary.
   This determines the LLVM installation used by pocl.
@@ -94,6 +96,28 @@ CMake: important options & features
 - ``-DPOCL_INSTALL_<something>_DIR`` The equivalent of ``--bindir``,
   ``--sbindir`` etc fine-tuning of paths for autotools. See the beginning
   of toplevel CMakeLists.txt for all the variables.
+- ``-DKERNELLIB_HOST_CPU_VARIANTS`` You can control which CPUs the
+  kernel library will be built for. Defaults to "native" which will be
+  converted to the build machine's CPU at buildtime. Available CPUs are
+  listed by ``llc -mcpu=help``; you can specify multiple CPUs, and pocl will
+  look for a kernel library for the runtime-detected CPU.
+
+  For x86(64) there is another possibility, ``distro``, which builds a few
+  preselected sse/avx variants covering 99.99% of x86 processors, and pocl
+  will use the most appropriate one at runtime, based on detected CPU features.
+  With ``distro``, the minimum requirement on CPU is SSE2.
+
+- ``-DENABLE_TESTSUITES`` Which external (source outside pocl) testsuites to enable.
+  For the list of testsuites, see examples/CMakeLists.txt or the ``examples``
+  directory. Set to ``all`` and pocl will try to autodetect & enable everything
+  it can.
+
+  Note that you may build testsuites outside pocl's build tree, and test
+  multiple pocl builds with a single testsuite directory. To use this,
+  run cmake with ``-DTESTSUITE_BASEDIR=<tests-builddir>`` and ``-DTESTSUITE_SOURCE_BASEDIR=<tests-sourcedir>``.
+  The directory structure mirrors that of ``pocl/examples``. So to build e.g. AMD SDK 2.9
+  with ``-DTESTSUITE_BASEDIR=/home/pocltest-build -DTESTSUITE_SOURCE_BASEDIR=/home/pocltest-src``,
+  place the ``AMD-APP-SDK-v2.9-RC-lnx64.tgz`` file into ``/home/pocltest-src/AMDSDK2.9`` directory.
 
 
 Known build-time issues
