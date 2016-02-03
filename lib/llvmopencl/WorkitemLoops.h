@@ -92,7 +92,7 @@ namespace pocl {
     CreateLoopAround
         (ParallelRegion &region, llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB, 
          bool peeledFirst, llvm::Value *localIdVar, size_t LocalSizeForDim,
-         bool addIncBlock=true);
+         bool addIncBlock=true, llvm::Value *DynamicLocalSize=NULL);
 
     llvm::BasicBlock *
       AppendIncBlock

@@ -173,7 +173,7 @@ WorkitemLoops::CreateLoopAround
 (ParallelRegion &region,
  llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB, 
  bool peeledFirst, llvm::Value *localIdVar, size_t LocalSizeForDim,
- bool addIncBlock) 
+ bool addIncBlock, llvm::Value *DynamicLocalSize) 
 {
   assert (localIdVar != NULL);
 
@@ -298,12 +298,17 @@ WorkitemLoops::CreateLoopAround
     }
 
   builder.SetInsertPoint(forCondBB);
+  // llvm::Value *cmpResult = 
+  //   builder.CreateICmpULT
+  //   (builder.CreateLoad(localIdVar),
+  //    (ConstantInt::get
+  //     (IntegerType::get(C, size_t_width), 
+  //      LocalSizeForDim)));
+
   llvm::Value *cmpResult = 
     builder.CreateICmpULT
     (builder.CreateLoad(localIdVar),
-     (ConstantInt::get
-      (IntegerType::get(C, size_t_width), 
-       LocalSizeForDim)));
+     builder.CreateLoad(DynamicLocalSize));
       
   Instruction *loopBranch =
       builder.CreateCondBr(cmpResult, loopBodyEntryBB, loopEndBB);
@@ -364,15 +369,18 @@ bool
 WorkitemLoops::ProcessFunction(Function &F)
 {
   Kernel *K = cast<Kernel> (&F);
-  Initialize(K);
-  unsigned workItemCount = WGLocalSizeX*WGLocalSizeY*WGLocalSizeZ;
+  
+  llvm::Module *M = K->getParent();
 
-  if (workItemCount == 1)
-    {
-      K->addLocalSizeInitCode(WGLocalSizeX, WGLocalSizeY, WGLocalSizeZ);
-      ParallelRegion::insertLocalIdInit(&F.getEntryBlock(), 0, 0, 0);
-      return true;
-    }
+  Initialize(K);
+  // unsigned workItemCount = WGLocalSizeX*WGLocalSizeY*WGLocalSizeZ;
+
+  // if (workItemCount == 1)
+  //   {
+  //     K->addLocalSizeInitCode(WGLocalSizeX, WGLocalSizeY, WGLocalSizeZ);
+  //     ParallelRegion::insertLocalIdInit(&F.getEntryBlock(), 0, 0, 0);
+  //     return true;
+  //   }
 
 #ifdef LLVM_OLDER_THAN_3_7
   original_parallel_regions = K->getParallelRegions(LI);
@@ -539,20 +547,37 @@ WorkitemLoops::ProcessFunction(Function &F)
         }
       }
 
-    if (WGLocalSizeX > 1)
-      l = CreateLoopAround(
-        *original, l.first, l.second, peelFirst, 
-        localIdX, WGLocalSizeX, !unrolled);
+    GlobalVariable *gv;
+    gv = M->getGlobalVariable("_local_size_x");
+    auto *Int32Ty = Type::getInt32Ty(M->getContext());
+    if (gv == NULL) {
+      gv = new GlobalVariable(*M, Int32Ty, true, GlobalValue::CommonLinkage, NULL, "_local_size_x", NULL, llvm::GlobalValue::ThreadLocalMode::NotThreadLocal, 0, true);
+      std::cout << "local x created\n";
+    }
 
-    if (WGLocalSizeY > 1)
-      l = CreateLoopAround(
-        *original, l.first, l.second, 
-        false, localIdY, WGLocalSizeY);
+    l = CreateLoopAround(
+      *original, l.first, l.second, peelFirst, 
+      localIdX, WGLocalSizeX, !unrolled, gv);
 
-    if (WGLocalSizeZ > 1)
-      l = CreateLoopAround(
-          *original, l.first, l.second, 
-          false, localIdZ, WGLocalSizeZ);
+    gv = M->getGlobalVariable("_local_size_y");
+    if (gv == NULL) {
+      gv = new GlobalVariable(*M, Int32Ty, false, GlobalValue::CommonLinkage, NULL, "_local_size_y");
+      std::cout << "local y created\n";
+    }
+
+    l = CreateLoopAround(
+      *original, l.first, l.second, 
+      false, localIdY, WGLocalSizeY, !unrolled, gv);
+    
+    gv = M->getGlobalVariable("_local_size_z");
+    if (gv == NULL) {
+      gv = new GlobalVariable(*M, Int32Ty, true, GlobalValue::CommonLinkage, NULL, "_local_size_z", NULL, llvm::GlobalValue::ThreadLocalMode::NotThreadLocal, 0, true);
+      std::cout << "local z created\n";
+    }
+
+    l = CreateLoopAround(
+      *original, l.first, l.second, 
+      false, localIdZ, WGLocalSizeZ, !unrolled, gv);
 
     /* Loop edges coming from another region mean B-loops which means 
        we have to fix the loop edge to jump to the beginning of the wi-loop 
@@ -589,7 +614,7 @@ WorkitemLoops::ProcessFunction(Function &F)
        localIdXFirstVar);       
   }
 
-  K->addLocalSizeInitCode(WGLocalSizeX, WGLocalSizeY, WGLocalSizeZ);
+  // K->addLocalSizeInitCode(WGLocalSizeX, WGLocalSizeY, WGLocalSizeZ);
   ParallelRegion::insertLocalIdInit(&F.getEntryBlock(), 0, 0, 0);
 
 #if 0
