@@ -1381,6 +1381,12 @@ clExportBinaryFormat(cl_program /* program */,
                    void **     /* binary_format */,
                    cl_uint *  /* binary_size */);
 
+extern CL_API_ENTRY cl_int CL_API_CALL
+clExtractBinaryFormat(void *     /* input_buffer */,
+                      cl_uint    /* input_buffer_size */,
+                      size_t *                 /* lengths */,
+                      unsigned char **         /* binaries */);
+
 #ifdef __cplusplus
 }
 #endif

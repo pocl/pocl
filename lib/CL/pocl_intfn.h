@@ -122,6 +122,5 @@ POdeclsym(clSVMAlloc)
 POdeclsym(clSetKernelArgSVMPointer)
 POdeclsym(clSetKernelExecInfo)
 POdeclsym(clCreateCommandQueueWithProperties)
-POdeclsym(clExportBinaryFormat)
 
 #endif

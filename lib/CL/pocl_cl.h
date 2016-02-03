@@ -532,6 +532,10 @@ struct _cl_program {
      sequential bitcode produced from the kernel sources.*/
   size_t *binary_sizes; 
   unsigned char **binaries; 
+  /* Pocl binary format*/
+  char isBinaryFormat;
+  size_t *BF_sizes;
+  unsigned char **BF;
   /* implementation */
   cl_kernel kernels;
   /* Per-device program hash after build */
