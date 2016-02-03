@@ -14,7 +14,8 @@ int print_help(){
     printf("\n");
     printf("OPTIONS:\n");
     printf("\t-d <device_type>\n");
-    printf("\t\tSelect <device_type> as the device_type for clGetDeviceIDs. Default: CL_DEVICE_TYPE_DEFAULT\n");
+    printf("\t\tSelect <device_type> as the device_type for clGetDeviceIDs." 
+           "Default: CL_DEVICE_TYPE_DEFAULT\n");
     printf("\t-o <file>\n");
     printf("\t\tWrite output to <file>\n");
     return -1;

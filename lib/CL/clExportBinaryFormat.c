@@ -1,12 +1,11 @@
 #include "pocl_util.h"
 
-const char *poclcc_string_id = POCLCC_STRING_ID;
-const cl_uint poclcc_version = POCLCC_VERSION;
-
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clExportBinaryFormat)(cl_program program,
                              void **binary_format,
                              cl_uint *binary_size){
+  const char *poclcc_string_id = POCLCC_STRING_ID;
+  const cl_uint poclcc_version = POCLCC_VERSION;
   cl_int num_devices;
   size_t size_ret;
   int i,
@@ -18,12 +17,17 @@ POname(clExportBinaryFormat)(cl_program program,
 
   POCL_RETURN_ERROR_COND(program == NULL, CL_INVALID_PROGRAM);
 
-  errcode = clGetProgramInfo(program, CL_PROGRAM_NUM_DEVICES, sizeof(cl_int), &num_devices, &size_ret);
+  errcode = clGetProgramInfo(program, CL_PROGRAM_NUM_DEVICES, 
+                             sizeof(cl_int), &num_devices, &size_ret);
   POCL_RETURN_ERROR_COND(errcode != 0, errcode);
 
-  POCL_RETURN_ERROR_COND((binaries_sizes = malloc(num_devices*sizeof(size_t))) == NULL, CL_OUT_OF_HOST_MEMORY);
+  POCL_RETURN_ERROR_COND((binaries_sizes = malloc(num_devices*sizeof(size_t)))
+                         == NULL, 
+                         CL_OUT_OF_HOST_MEMORY);
 
-  errcode = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, num_devices*sizeof(size_t), binaries_sizes, &size_ret);
+  errcode = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, 
+                             num_devices*sizeof(size_t), 
+                             binaries_sizes, &size_ret);
   if (errcode != 0) goto ERROR_CLEAN_BINARIES_SIZES;
 
   if ((binaries = malloc(num_devices*sizeof(unsigned char*))) == NULL){
@@ -32,17 +36,23 @@ POname(clExportBinaryFormat)(cl_program program,
   }
   
   for (i=0; i<num_devices; i++){
-    if ((binaries[i] = malloc(binaries_sizes[i]*sizeof(unsigned char))) == NULL){
+    if ( (binaries[i] = malloc(binaries_sizes[i]*sizeof(unsigned char))) 
+        == NULL ){
       errcode = CL_OUT_OF_HOST_MEMORY;
       goto ERROR;
     }
     sizeof_binaries += binaries_sizes[i];
   }
 
-  errcode = clGetProgramInfo(program, CL_PROGRAM_BINARIES, num_devices*sizeof(unsigned char*), binaries, &size_ret);
+  errcode = clGetProgramInfo(program, CL_PROGRAM_BINARIES, 
+                             num_devices*sizeof(unsigned char*), 
+                             binaries, &size_ret);
   if (errcode != 0) goto ERROR;
 
-  *binary_size = sizeof_string_id + sizeof(cl_uint) + num_devices*sizeof(size_t) + sizeof_binaries;
+  *binary_size = sizeof_string_id 
+    + sizeof(cl_uint) 
+    + num_devices*sizeof(size_t) 
+    + sizeof_binaries;
   if ((*binary_format = malloc(*binary_size)) == NULL){
     errcode = CL_OUT_OF_HOST_MEMORY;
     goto ERROR;
