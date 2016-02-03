@@ -237,9 +237,13 @@ DETERMINE_LOCAL_SIZE:
                                   realdev, kernel,
                                   local_x, local_y, local_z);
 
-  error = pocl_llvm_generate_workgroup_function(realdev,
-                                kernel, local_x, local_y, local_z);
-  if (error) goto ERROR;
+
+  if (!kernel->program->isBinaryFormat) {
+    error = pocl_llvm_generate_workgroup_function(realdev,
+                                                  kernel, 
+                                                  local_x, local_y, local_z);
+    if (error) goto ERROR;
+  }
 
   error = pocl_create_command (&command_node, command_queue,
                                CL_COMMAND_NDRANGE_KERNEL,

@@ -123,14 +123,53 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
   program->kernels = NULL;
   program->build_status = CL_BUILD_NONE;
 
+  /* We do no want a binary with different kind of binary in it
+   * So we can alias the pointers for the IR binary and the pocl binary  
+   */
+  unsigned isIRBinary = !strncmp(binaries[0], "BC", 2);
+  program->BF = program->binaries;
+  program->BF_sizes = program->binary_sizes;
+
   for (i = 0; i < num_devices; ++i)
     {
       program->binary_sizes[i] = lengths[i];
       program->binaries[i] = (unsigned char*) malloc (lengths[i]);
-      memcpy (program->binaries[i], binaries[i], lengths[i]);
-      if (binary_status != NULL) /* TODO: validate the binary */
-        binary_status[i] = CL_SUCCESS;
+      
+      /* IR binary (it always start with those 2 char)
+       * It would be better if LLVM had a external function to check 
+       * the header of IR files
+       */
+      if ( isIRBinary && strncmp(binaries[i], "BC", 2) )
+      {
+        memcpy (program->binaries[i], 
+                binaries[i], 
+                lengths[i]);
+        if (binary_status != NULL)
+          binary_status[i] = CL_SUCCESS;
+
+        /* Machin specific binary
+         * the first 4 bytes avec a magic string to identify pocl binary
+         * the next 4 bytes are the vendor_id of the device
+         */
+      } else if ((!strncmp(binaries[i], POCLCC_STRING_ID, strlen(POCLCC_STRING_ID)) 
+                  && *((cl_uint*)(&binaries[i][sizeof(cl_uint)/sizeof(char)])) 
+                  == device_list[i]->vendor_id)) {
+        memcpy (program->BF[i], 
+                &binaries[i][2*sizeof(cl_uint)/sizeof(unsigned char)], 
+                lengths[i]);
+        if (binary_status != NULL)
+          binary_status[i] = CL_SUCCESS;
+
+      // Unknown binary
+      } else {
+        if (binary_status != NULL) 
+          binary_status[i] = CL_INVALID_BINARY;
+        errcode = CL_INVALID_BINARY;
+        goto ERROR_CLEAN_PROGRAM_AND_BINARIES;
+      }
     }
+  
+  program->isBinaryFormat = !isIRBinary;
 
   POCL_RETAIN_OBJECT(context);
 
