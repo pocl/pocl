@@ -332,7 +332,11 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->extensions = HOST_DEVICE_EXTENSIONS;
 
   dev->llvm_target_triplet = OCL_KERNEL_TARGET;
+#ifdef POCL_BUILT_WITH_CMAKE
   dev->llvm_cpu = get_cpu_name();
+#else
+  dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
+#endif
   dev->has_64bit_long = 1;
   dev->autolocals_to_args = 1;
 }

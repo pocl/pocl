@@ -1285,6 +1285,7 @@ kernel_library
     }
     kernellib += "/kernel-";
     kernellib += device->llvm_target_triplet;
+#ifdef POCL_BUILT_WITH_CMAKE
     kernellib += '-';
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
     if (triple.getArch() == Triple::x86_64 ||
@@ -1293,10 +1294,12 @@ kernel_library
     else
 #endif
       kernellib += device->llvm_cpu;
+#endif
   } else { // POCL_BUILDING == 0, use install dir
     kernellib = PKGDATADIR;
     kernellib += "/kernel-";
     kernellib += device->llvm_target_triplet;
+#ifdef POCL_BUILT_WITH_CMAKE
     kernellib += '-';
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
     if (triple.getArch() == Triple::x86_64 ||
@@ -1305,6 +1308,7 @@ kernel_library
     else
 #endif
       kernellib += device->llvm_cpu;
+#endif
   }
   kernellib += ".bc";
 
