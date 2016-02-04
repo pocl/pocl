@@ -1418,6 +1418,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
   pocl_cache_write_kernel_parallel_bc(input, program, device_i, kernel,
                                   local_x, local_y, local_z);
 
+  delete input;
   return 0;
 }
 
