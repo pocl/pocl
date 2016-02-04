@@ -131,7 +131,7 @@ pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
   ops->copy_rect = pocl_basic_copy_rect;
   ops->run = pocl_pthread_run;
   ops->compile_submitted_kernels = pocl_basic_compile_submitted_kernels;
-
+  ops->load_binary = pocl_basic_load_binary;
 }
 
 unsigned int

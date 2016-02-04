@@ -211,6 +211,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->run_native = pocl_basic_run_native;
   ops->get_timer_value = pocl_basic_get_timer_value;
   ops->get_supported_image_formats = pocl_basic_get_supported_image_formats;
+  ops->load_binary = pocl_basic_load_binary;
 }
 
 void
@@ -870,10 +871,30 @@ struct compiler_cache_item
 static compiler_cache_item *compiler_cache;
 static pocl_lock_t compiler_cache_lock;
 
-void check_compiler_cache (_cl_command_node *cmd)
+void pocl_basic_load_binary(const char *binary,
+                            _cl_command_node *cmd)
 {
   char workgroup_string[WORKGROUP_STRING_LENGTH];
   lt_dlhandle dlhandle;
+
+  dlhandle = lt_dlopen (binary);
+  if (dlhandle == NULL)
+  {
+    printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", 
+            binary, lt_dlerror());
+    printf ("note: missing symbols in the kernel binary might be" 
+            "reported as 'file not found' errors.\n");
+    abort();
+  }
+  snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
+            "_pocl_launcher_%s_workgroup", cmd->command.run.kernel->name);
+  cmd->command.run.wg = /*ci->wg = */
+    (pocl_workgroup) lt_dlsym (dlhandle, workgroup_string);
+  
+}
+
+void check_compiler_cache (_cl_command_node *cmd)
+{
   compiler_cache_item *ci = NULL;
   
   if (compiler_cache == NULL)
@@ -900,19 +921,8 @@ void check_compiler_cache (_cl_command_node *cmd)
   const char* module_fn = llvm_codegen (cmd->command.run.tmp_dir,
                                         cmd->command.run.kernel,
                                         cmd->device);
-  dlhandle = lt_dlopen (module_fn);
-  if (dlhandle == NULL)
-    {
-      printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", 
-              module_fn, lt_dlerror());
-      printf ("note: missing symbols in the kernel binary might be" 
-              "reported as 'file not found' errors.\n");
-      abort();
-    }
-  snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
-            "_pocl_launcher_%s_workgroup", cmd->command.run.kernel->name);
-  cmd->command.run.wg = ci->wg = 
-    (pocl_workgroup) lt_dlsym (dlhandle, workgroup_string);
+
+  pocl_basic_load_binary(module_fn, cmd);
 
   LL_APPEND (compiler_cache, ci);
   POCL_UNLOCK (compiler_cache_lock);

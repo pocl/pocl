@@ -252,6 +252,37 @@ DETERMINE_LOCAL_SIZE:
   if (error != CL_SUCCESS)
     goto ERROR;
 
+  if (kernel->program->isBinaryFormat) {
+    char *binary;
+    int i=0;
+    while (i < kernel->program->num_devices){
+      if ( realdev->vendor_id == *((cl_uint*)(kernel->program->BF[i])))
+        break;
+    }
+    POCL_RETURN_ERROR_COND(i == kernel->program->num_devices, 
+                           CL_INVALID_PROGRAM_EXECUTABLE);
+      
+    binary = (char *)(kernel->program->BF[i]);
+    char *end_of_binary = binary + kernel->program->BF_sizes[i];
+    binary += sizeof(cl_uint);
+    while (binary < end_of_binary){
+      size_t kernel_name_size = *((size_t*)binary);
+      binary += sizeof(size_t);
+      if (strncmp(binary, kernel->name, kernel_name_size) 
+          && strlen(kernel->name) == kernel_name_size){
+        binary += kernel_name_size + sizeof(size_t);
+        break;
+      }
+      binary += kernel_name_size;
+      binary += sizeof(size_t) + *((size_t *)binary);
+    }
+    POCL_RETURN_ERROR_COND(binary >= end_of_binary, 
+                           CL_INVALID_PROGRAM_EXECUTABLE);
+
+    realdev->ops->load_binary(binary,command_node);
+  }
+
+
   pc.work_dim = work_dim;
   pc.num_groups[0] = global_x / local_x;
   pc.num_groups[1] = global_y / local_y;

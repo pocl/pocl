@@ -110,7 +110,7 @@ cl_int compileKernels(cl_program program, cl_device_id device,
     ((size_t *)binary)[0] = fsize;
   }
 
-  int binary_size_tmp = 0;
+  int binary_size_tmp = sizeof(cl_uint);
   for (i=0; i<num_kernels; i++) binary_size_tmp += kernel_tab_sizes[i];
   
   POCL_GOTO_ERROR_COND((binary = malloc(binary_size_tmp)) == NULL,
@@ -118,6 +118,8 @@ cl_int compileKernels(cl_program program, cl_device_id device,
 
   *binary_ptr = (void *)binary;
   *binary_size = binary_size_tmp;
+
+  *((cl_uint*)binary) = device->vendor_id;
 
   for (i=0; i<num_kernels; i++){
     memcpu(binary, kernel_tab[i], kernel_tab_sizes[i]);
