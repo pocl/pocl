@@ -111,7 +111,8 @@ static void exec_commands (_cl_command_node *node_list)
     {
       event = &(node->event);
 
-      if (node->device->ops->compile_submitted_kernels)
+      if (node->device->ops->compile_submitted_kernels
+        && !node->command.run.kernel->program->isBinaryFormat)
         node->device->ops->compile_submitted_kernels (node);
 
       switch (node->type)
