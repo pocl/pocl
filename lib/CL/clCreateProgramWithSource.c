@@ -102,6 +102,8 @@ POname(clCreateProgramWithSource)(cl_context context,
   program->build_status = CL_BUILD_NONE;
   program->read_locks = NULL;
   program->isBinaryFormat = 0;
+  program->BF = NULL;
+  program->BF_sizes = NULL;
 
   if ((program->binary_sizes =
        (size_t*) calloc (program->num_devices, sizeof(size_t))) == NULL ||
