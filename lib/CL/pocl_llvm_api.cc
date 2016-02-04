@@ -1257,34 +1257,39 @@ kernel_library
   if (libs.find(device) != libs.end())
     return libs[device];
 
+  const char *subdir = "host";
+  bool is_host = true;
+  if (0)
+    ;
+#ifdef ENABLE_TCE
+  else if (triple.getArch() == Triple::tce) {
+    subdir = "tce";
+    is_host = false;
+  }
+#endif
+#ifdef BUILD_HSA
+  else if (triple.getArch() == Triple::hsail64) {
+    subdir = "hsail64";
+    is_host = false;
+  }
+#endif
+#ifdef AMDGCN_ENABLED
+  else if (triple.getArch == Triple::amdgcn) {
+    subdir = "amdgcn";
+    is_host = false;
+  }
+#endif
+
   // TODO sync with Nat Ferrus' indexed linking
   std::string kernellib;
   if (pocl_get_bool_option("POCL_BUILDING", 0)) {
     kernellib = BUILDDIR;
     kernellib += "/lib/kernel/";
+    kernellib += subdir;
     // TODO: get this from the TCE target triplet
-    if (0)
-      ;
-#ifdef ENABLE_TCE
-    else if (triple.getArch() == Triple::tce) {
-      kernellib += "tce";
-    }
-#endif
-#ifdef BUILD_HSA
-    else if (triple.getArch() == Triple::hsail64) {
-      kernellib += "hsail64";
-    }
-#endif
-#ifdef AMDGCN_ENABLED
-    else if (triple.getArch == Triple::amdgcn) {
-      kernellib += "amdgcn";
-    }
-#endif
-    else {
-      kernellib += "host";
-    }
     kernellib += "/kernel-";
     kernellib += device->llvm_target_triplet;
+    if (is_host) {
 #ifdef POCL_BUILT_WITH_CMAKE
     kernellib += '-';
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
@@ -1295,10 +1300,12 @@ kernel_library
 #endif
       kernellib += device->llvm_cpu;
 #endif
+    }
   } else { // POCL_BUILDING == 0, use install dir
     kernellib = PKGDATADIR;
     kernellib += "/kernel-";
     kernellib += device->llvm_target_triplet;
+    if (is_host) {
 #ifdef POCL_BUILT_WITH_CMAKE
     kernellib += '-';
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
@@ -1309,6 +1316,7 @@ kernel_library
 #endif
       kernellib += device->llvm_cpu;
 #endif
+    }
   }
   kernellib += ".bc";
 
