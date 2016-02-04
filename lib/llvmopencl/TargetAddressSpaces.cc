@@ -118,6 +118,57 @@ UpdateAddressSpace(llvm::Value& val, std::map<unsigned, unsigned> &addrSpaceMap,
   return true;
 }
 
+/* Removes AddrSpaceCastInst either as Inst or ConstantExpr, if they cast
+   to generic addrspace, or if they point to the same AS
+   ConstExpr removing is 2 step: CE -> convert to ASCI -> remove ASCI.
+
+   \param [in] v the ASCI to remove
+   \param [in] beforeinst in case of a ConstantExpr, after converting it to Instr
+               we need to insert it into BB; this is an Instr before
+               which we insert it (it's the CE itself)
+   \returns true if replacement took place (-> BB iterator needs to restart)
+*/
+static bool removeASCI(llvm::Value *v, llvm::Instruction *beforeinst,
+                     std::map<unsigned, unsigned> &addrSpaceMap,
+                     std::map<llvm::Type*, llvm::StructType*> &convertedStructsCache) {
+  if (isa<ConstantExpr>(v)) {
+      ConstantExpr *ce = dyn_cast<ConstantExpr>(v);
+      Value *in = ce->getAsInstruction();
+      AddrSpaceCastInst *asci = dyn_cast<AddrSpaceCastInst>(in);
+      assert(asci);
+      if (asci->getDestTy()->getPointerAddressSpace() == POCL_ADDRESS_SPACE_GENERIC) {
+        asci->insertBefore(beforeinst);
+        v->replaceAllUsesWith(in);
+        in->takeName(v);
+        return true;
+      } else
+        return false;
+  }
+  if (isa<AddrSpaceCastInst>(v)) {
+      AddrSpaceCastInst *as = dyn_cast<AddrSpaceCastInst>(v);
+      Type* SrcTy = as->getSrcTy();
+      Type* DstTy = as->getDestTy();
+      if (isa<PointerType>(SrcTy) && isa<PointerType>(DstTy)) {
+        if ((DstTy->getPointerAddressSpace() == SrcTy->getPointerAddressSpace())
+            || (DstTy->getPointerAddressSpace() == POCL_ADDRESS_SPACE_GENERIC))
+          {
+            if (DstTy->getPointerAddressSpace() == POCL_ADDRESS_SPACE_GENERIC)
+              UpdateAddressSpace(*as, addrSpaceMap, convertedStructsCache);
+            Value* srcVal = as->getOperand(0);
+            as->replaceAllUsesWith(srcVal);
+            as->eraseFromParent();
+            return true;
+          }
+      }
+  }
+
+  return false;
+
+}
+
+
+
+
 /**
  * After converting the pointer address spaces, there
  * might be llvm.memcpy.* or llvm.memset.* calls to wrong
@@ -168,6 +219,8 @@ FixMemIntrinsics(llvm::Function& F) {
     }
   }
 }
+
+
 
 bool
 TargetAddressSpaces::runOnModule(llvm::Module &M) {
@@ -279,6 +332,42 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
     }
 
     SmallVector<ReturnInst *, 1> ri;
+
+    /* Remove generic address space casts. Converts types with generic AS to
+     * private AS and then removes redundant AS casting instructions */
+    for (llvm::Function::iterator bbi = F.begin(), bbe = F.end(); bbi != bbe;
+         ++bbi)
+      for (llvm::BasicBlock::iterator ii = bbi->begin(), ie = bbi->end(); ii != ie;
+           ++ii) {
+
+        llvm::Instruction *instr = &*ii;
+
+        if (isa<AddrSpaceCastInst>(instr)) {
+            if (removeASCI(instr, nullptr, addrSpaceMap, convertedStructsCache))
+              { ii = bbi->begin(); continue; }
+          }
+        if (isa<StoreInst>(instr)) {
+            StoreInst *st = dyn_cast<StoreInst>(instr);
+            Value *pt = st->getPointerOperand();
+            if (Operator::getOpcode(pt) == Instruction::AddrSpaceCast) {
+              if (removeASCI(pt, instr, addrSpaceMap, convertedStructsCache))
+                { ii = bbi->begin(); continue; }
+            } else
+              if (st->getPointerAddressSpace() == POCL_ADDRESS_SPACE_GENERIC)
+                UpdateAddressSpace(*pt, addrSpaceMap, convertedStructsCache);
+        }
+        if (isa<LoadInst>(instr)) {
+            LoadInst *ld = dyn_cast<LoadInst>(instr);
+            Value *pt = ld->getPointerOperand();
+            if (Operator::getOpcode(pt) == Instruction::AddrSpaceCast) {
+              if (removeASCI(pt, instr, addrSpaceMap, convertedStructsCache))
+                { ii = bbi->begin(); continue; }
+            } else
+              if (ld->getPointerAddressSpace() == POCL_ADDRESS_SPACE_GENERIC)
+                UpdateAddressSpace(*pt, addrSpaceMap, convertedStructsCache);
+        }
+
+      }
 
     class AddressSpaceReMapper : public ValueMapTypeRemapper {
     public:
