@@ -75,7 +75,6 @@
 #include "pocl_cache.h"
 #include "pocl_llvm.h"
 #include "pocl_util.h"
-#include "utarray.h"
 
 #include <assert.h>
 #include <string.h>
