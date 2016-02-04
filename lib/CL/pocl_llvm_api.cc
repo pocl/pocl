@@ -1547,7 +1547,17 @@ pocl_llvm_codegen(cl_kernel kernel,
 
     llvm::Triple triple(device->llvm_target_triplet);
     llvm::TargetMachine *target = GetTargetMachine(device);
+
     llvm::Module *input = ParseIRFile(infilename, Err, *GlobalContext());
+    if (triple.getArch() == Triple::x86 || triple.getArch() == Triple::x86_64) {
+        if (input->getTargetTriple().substr(0, 6) == std::string("spir64")) {
+            input->setTargetTriple(triple.getTriple());
+            input->setDataLayout("e-m:e-i64:64-f80:128-n8:16:32:64-S128");
+        } else if (input->getTargetTriple().substr(0, 4) == std::string("spir")) {
+            input->setTargetTriple(triple.getTriple());
+            input->setDataLayout("e-m:e-p:32:32-i64:64-f80:32-n8:16:32-S32");
+        }
+    }
 
     PassManager PM;
 #ifdef LLVM_OLDER_THAN_3_7
@@ -1557,11 +1567,11 @@ pocl_llvm_codegen(cl_kernel kernel,
     llvm::TargetLibraryInfoWrapperPass *TLIPass = new TargetLibraryInfoWrapperPass(triple);
     PM.add(TLIPass);
 #endif
-    if (target != NULL) {
 #ifdef LLVM_OLDER_THAN_3_7
+    if (target != NULL) {
       target->addAnalysisPasses(PM);
-#endif
     }
+#endif
 
     // TODO: get DataLayout from the 'device'
     // TODO: better error check
