@@ -7,12 +7,14 @@
 char *kernelSource = NULL;
 char *outputFile = NULL;
 int openclDevice = CL_DEVICE_TYPE_DEFAULT;
-
+char *build_options = NULL;
 
 int print_help(){
     printf("USAGE: poclcc [OPTION]... [FILE]\n");
     printf("\n");
     printf("OPTIONS:\n");
+    printf("\t--build_options=<options>\n");
+    printf("\t\tBuild the program with <options> options\n");
     printf("\t-d <device_type>\n");
     printf("\t\tSelect <device_type> as the device_type for clGetDeviceIDs." 
            "Default: CL_DEVICE_TYPE_DEFAULT\n");
@@ -98,6 +100,16 @@ int process_opencl_device(int arg, char **argv, int argc){
     return 0;
 }
 
+const char *bo_id="--build_options";
+int process_build_options(int arg, char **argv){
+    char *bo = argv[arg];
+    unsigned size = strlen(bo) - strlen(bo_id) ;
+    build_options = malloc(size+1);
+    memcpy(build_options, &bo[strlen(bo_id)+1], size);
+    build_options[size]='\0';
+    return 0;
+}
+
 int process_args(int *arg, char **argv, int argc){
     int prev_arg = *arg;
     char *current_arg = argv[*arg];
@@ -109,6 +121,9 @@ int process_args(int *arg, char **argv, int argc){
     } else if (!strcmp(current_arg, "-o")) { 
         *arg = prev_arg+2;
         return process_output(prev_arg+1, argv, argc);
+    } else if (!strncmp(current_arg, bo_id, strlen(bo_id))) {
+        *arg = prev_arg+1;
+        return process_build_options(prev_arg, argv);
     } else 
         return poclcc_error("Unknown argument!\n");
 }
@@ -145,10 +160,11 @@ int main(int argc, char **argv) {
     program = clCreateProgramWithSource(context, 1, &kernelSource, NULL, &err);
     assert(program && "clCreateProgramWithSource failed");
 
-    clBuildProgram(program, 0, NULL, NULL, NULL, NULL);  
+    err = clBuildProgram(program, 0, NULL, build_options, NULL, NULL);  
+    assert(!err && "clBuildProgram failed");
 
     err = clExportBinaryFormat(program, &buff, &size);
-    assert(!err);
+    assert(!err && "clExportBinaryFormat failed");
 
 //GENERATE FILE
     FILE *fp=fopen(outputFile, "w"); 
