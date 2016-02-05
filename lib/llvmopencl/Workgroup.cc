@@ -328,7 +328,7 @@ createLauncher(Module &M, Function *F)
     }
   }
 
-  if (WGLocalSizeX == 0 && WGLocalSizeY == 0 && WGLocalSizeZ == 0){
+  if (isKernelWithDynamicLocalSize){
 #if defined LLVM_OLDER_THAN_3_7
     ptr = builder.CreateStructGEP(ai,
                                   TypeBuilder<PoclContext, true>::LOCAL_SIZE);

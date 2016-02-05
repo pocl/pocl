@@ -63,6 +63,7 @@ using namespace llvm;
 size_t WGLocalSizeX = 1;
 size_t WGLocalSizeY = 1;
 size_t WGLocalSizeZ = 1;
+size_t isKernelWithDynamicLocalSize = 0;
 
 cl::opt<bool>
 AddWIMetadata("add-wi-metadata", cl::init(false), cl::Hidden,

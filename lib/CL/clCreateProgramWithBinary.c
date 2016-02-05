@@ -154,8 +154,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
       } else if ((!strncmp(binaries[i], POCLCC_STRING_ID, strlen(POCLCC_STRING_ID)) 
                   && *((uint32_t*)(&binaries[i][strlen(POCLCC_STRING_ID)])) 
                   == device_list[i]->vendor_id)) {
-        char *binary = binaries[i];
-        memcpy (program->BF[i], binary, lengths[i]);
+        memcpy (program->BF[i], &binaries[i], lengths[i]);
         if (binary_status != NULL)
           binary_status[i] = CL_SUCCESS;
 

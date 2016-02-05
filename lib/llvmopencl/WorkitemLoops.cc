@@ -299,9 +299,8 @@ WorkitemLoops::CreateLoopAround
 
   builder.SetInsertPoint(forCondBB);
 
-  //LocalSizeForDim is null if we are compiling without knowing local sizes
   llvm::Value *cmpResult;
-  if (LocalSizeForDim !=0 )
+  if (!isKernelWithDynamicLocalSize)
     cmpResult= 
       builder.CreateICmpULT
       (builder.CreateLoad(localIdVar),
@@ -551,8 +550,7 @@ WorkitemLoops::ProcessFunction(Function &F)
         }
       }
 
-    //workItemCount is null if we are compiling without knowing the local sizes
-    if (workItemCount == 0){
+    if (isKernelWithDynamicLocalSize){
 
       GlobalVariable *gv;
       gv = M->getGlobalVariable("_local_size_x");
@@ -633,8 +631,7 @@ WorkitemLoops::ProcessFunction(Function &F)
        localIdXFirstVar);       
   }
 
-  //workItemCount is null if we are compiling without knowing the local sizes
-  if (workItemCount != 0) 
+  if (!isKernelWithDynamicLocalSize) 
     K->addLocalSizeInitCode(WGLocalSizeX, WGLocalSizeY, WGLocalSizeZ);
 
   ParallelRegion::insertLocalIdInit(&F.getEntryBlock(), 0, 0, 0);

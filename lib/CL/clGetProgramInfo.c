@@ -169,7 +169,7 @@ cl_int compileForDevices(cl_program program)
     POCL_GOTO_ERROR_COND(errcode != CL_SUCCESS, errcode);
   }
 
-  program->BF = device_tab;
+  program->BF = (unsigned char **)device_tab;
   program->BF_sizes = device_tab_sizes;
 
   return errcode;

@@ -1193,6 +1193,7 @@ namespace pocl {
     extern size_t WGLocalSizeX;
     extern size_t WGLocalSizeY;
     extern size_t WGLocalSizeZ;
+    extern size_t isKernelWithDynamicLocalSize;
 } 
 
 /**
@@ -1481,6 +1482,9 @@ pocl_llvm_codegen(cl_kernel kernel,
 
     if (pocl_exists(outfilename))
       return 0;
+
+    if (kernel->program->isBinaryFormat)
+      pocl::isKernelWithDynamicLocalSize = 1;
 
     llvm::Triple triple(device->llvm_target_triplet);
     llvm::TargetMachine *target = GetTargetMachine(device);

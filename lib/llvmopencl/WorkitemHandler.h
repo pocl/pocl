@@ -85,6 +85,7 @@ namespace pocl {
   extern size_t WGLocalSizeX;
   extern size_t WGLocalSizeY;
   extern size_t WGLocalSizeZ;
+  extern size_t isKernelWithDynamicLocalSize;
 }
 
 #endif
