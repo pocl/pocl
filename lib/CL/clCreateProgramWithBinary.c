@@ -148,15 +148,14 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
           binary_status[i] = CL_SUCCESS;
 
         /* Machin specific binary
-         * the first 4 bytes avec a magic string to identify pocl binary
+         * the first bytes are a magic string to identify pocl binary
          * the next 4 bytes are the vendor_id of the device
          */
       } else if ((!strncmp(binaries[i], POCLCC_STRING_ID, strlen(POCLCC_STRING_ID)) 
-                  && *((cl_uint*)(&binaries[i][sizeof(cl_uint)/sizeof(char)])) 
+                  && *((uint32_t*)(&binaries[i][strlen(POCLCC_STRING_ID)])) 
                   == device_list[i]->vendor_id)) {
-        memcpy (program->BF[i], 
-                &binaries[i][2*sizeof(cl_uint)/sizeof(unsigned char)], 
-                lengths[i]);
+        char *binary = binaries[i];
+        memcpy (program->BF[i], binary, lengths[i]);
         if (binary_status != NULL)
           binary_status[i] = CL_SUCCESS;
 

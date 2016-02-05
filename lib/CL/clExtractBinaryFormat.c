@@ -42,21 +42,21 @@ POname(clExtractBinaryFormat)(void *input_buffer,
     goto ERROR_CLEAN_BINARIES_SIZES;
   }
 
-  i = header_size;
-  int j=0;
-  for (; j<num_binaries; j++){
-    binaries_sizes[j] = *((cl_uint*)(&((char*)input_buffer)[i]));
-    
-    if ((binaries_tab[j] = malloc(binaries_sizes[j]*sizeof(unsigned char))) 
+  char *buffer = (char *)input_buffer;
+  buffer += header_size;
+  for (i=0; i<num_binaries; i++){
+    binaries_sizes[i] = *((uint32_t *)buffer);
+    buffer += sizeof(uint32_t);
+
+    if ((binaries_tab[i] = malloc(binaries_sizes[i]*sizeof(unsigned char))) 
         == NULL){
       errcode = CL_OUT_OF_HOST_MEMORY;
       goto ERROR;
     }
 
-    memcpy(binaries_tab[j], &((char*)input_buffer)[i + sizeof(cl_uint)], 
-           binaries_sizes[j]);
+    memcpy(binaries_tab[i], buffer, binaries_sizes[i]);
 
-    i += *((cl_uint*)(&((char*)input_buffer)[i])) + sizeof(cl_uint);
+    buffer += binaries_sizes[i];
   }
 
   *lengths = binaries_sizes;
@@ -65,8 +65,8 @@ POname(clExtractBinaryFormat)(void *input_buffer,
   return errcode;
 
 ERROR:
-  for (j=0; j<num_binaries; j++)
-    POCL_MEM_FREE(binaries_tab[j]);
+  for (i=0; i<num_binaries; i++)
+    POCL_MEM_FREE(binaries_tab[i]);
   POCL_MEM_FREE(binaries_tab);
 ERROR_CLEAN_BINARIES_SIZES:
   POCL_MEM_FREE(binaries_sizes);

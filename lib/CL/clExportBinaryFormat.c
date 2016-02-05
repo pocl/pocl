@@ -51,7 +51,7 @@ POname(clExportBinaryFormat)(cl_program program,
 
   *binary_size = sizeof_string_id 
     + sizeof(cl_uint) 
-    + num_devices*sizeof(size_t) 
+    + num_devices*sizeof(uint32_t) 
     + sizeof_binaries;
   if ((*binary_format = malloc(*binary_size)) == NULL){
     errcode = CL_OUT_OF_HOST_MEMORY;
@@ -66,8 +66,8 @@ POname(clExportBinaryFormat)(cl_program program,
   bf += sizeof(cl_uint);
 
   for (i=0; i<num_devices; i++){
-    memcpy(bf, &binaries_sizes[i], sizeof(size_t));
-    bf += sizeof(size_t);
+    memcpy(bf, &binaries_sizes[i], sizeof(uint32_t));
+    bf += sizeof(uint32_t);
     memcpy(bf, binaries[i], binaries_sizes[i]*sizeof(char));
     bf += binaries_sizes[i]*sizeof(char);
   }

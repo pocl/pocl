@@ -256,7 +256,9 @@ DETERMINE_LOCAL_SIZE:
     char *binary;
     int i=0;
     while (i < kernel->program->num_devices){
-      if ( realdev->vendor_id == *((cl_uint*)(kernel->program->BF[i])))
+      char *binary_i = kernel->program->BF[i];
+      binary_i += strlen(POCLCC_STRING_ID);
+      if ( realdev->vendor_id == *((uint32_t*)binary_i))
         break;
     }
     POCL_RETURN_ERROR_COND(i == kernel->program->num_devices, 
@@ -264,17 +266,17 @@ DETERMINE_LOCAL_SIZE:
       
     binary = (char *)(kernel->program->BF[i]);
     char *end_of_binary = binary + kernel->program->BF_sizes[i];
-    binary += sizeof(cl_uint);
+    binary += strlen(POCLCC_STRING_ID) + sizeof(uint32_t);
     while (binary < end_of_binary){
-      size_t kernel_name_size = *((size_t*)binary);
-      binary += sizeof(size_t);
+      uint32_t kernel_name_size = *((uint32_t*)binary);
+      binary += sizeof(uint32_t);
       if (strncmp(binary, kernel->name, kernel_name_size) 
           && strlen(kernel->name) == kernel_name_size){
-        binary += kernel_name_size + sizeof(size_t);
+        binary += kernel_name_size + sizeof(uint32_t);
         break;
       }
       binary += kernel_name_size;
-      binary += sizeof(size_t) + *((size_t *)binary);
+      binary += sizeof(uint32_t) + *((uint32_t *)binary);
     }
     POCL_RETURN_ERROR_COND(binary >= end_of_binary, 
                            CL_INVALID_PROGRAM_EXECUTABLE);
