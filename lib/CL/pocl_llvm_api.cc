@@ -939,7 +939,8 @@ static TargetMachine* GetTargetMachine(cl_device_id device,
 
   const Target *TheTarget = 
     TargetRegistry::lookupTarget("", TheTriple, Error);
-  
+  if (!TheTarget)
+    return nullptr;
   assert(TheTarget->getName() != std::string("cpp"));
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;
