@@ -65,7 +65,7 @@ POname(clExtractBinaryFormat)(void *input_buffer,
   return errcode;
 
 ERROR:
-  for (--j; j>=0; j--)
+  for (j=0; j<num_binaries; j++)
     POCL_MEM_FREE(binaries_tab[j]);
   POCL_MEM_FREE(binaries_tab);
 ERROR_CLEAN_BINARIES_SIZES:

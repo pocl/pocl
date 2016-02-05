@@ -393,6 +393,9 @@ pocl_pthread_run
     arguments->device = cmd->device;
     arguments->pc = *pc;
     arguments->pc.group_id[0] = first_gid_x;
+    arguments->pc.local_size[0] = cmd->command.run.local_x;
+    arguments->pc.local_size[1] = cmd->command.run.local_y;
+    arguments->pc.local_size[2] = cmd->command.run.local_z;
     arguments->workgroup = cmd->command.run.wg;
     arguments->last_gid_x = last_gid_x;
     arguments->kernel_args = cmd->command.run.arguments;
@@ -500,6 +503,8 @@ workgroup_thread (void *p)
       arguments[i] = malloc (sizeof (void *));
       *(void **)(arguments[i]) = pocl_memalign_alloc (MAX_EXTENDED_ALIGNMENT, al->size);
     }
+
+
 
   size_t first_gid_x = ta->pc.group_id[0];
   unsigned gid_z, gid_y, gid_x;

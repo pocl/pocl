@@ -66,27 +66,30 @@ cl_int compileKernels(cl_program program, cl_device_id device,
                                          0,0,0);
 
     errcode = pocl_llvm_generate_workgroup_function(device,
-                                                  kernel[i],
-                                                  0,0,0);
+                                                    kernel[i],
+                                                    0,0,0);
     if (errcode) goto ERROR_CLEAN_KERNEL_TAB;
 
+    command_node->command.run.kernel = kernel[i];
+    command_node->command.run.tmp_dir = strdup(cachedir);
     device->ops->compile_submitted_kernels(command_node);
   
     //READ OBJFILE
     char objfile[POCL_FILENAME_LENGTH];
     errcode = snprintf(objfile, POCL_FILENAME_LENGTH, 
-                     "%s/%s.so.o", 
+                     "%s/%s.so", 
                      command_node->command.run.tmp_dir, 
                      kernel[i]->name);
     assert(errcode >= 0);
-  
+    errcode = CL_SUCCESS;
+
     void *lock =pocl_cache_acquire_reader_lock(program, device);
 
     FILE *f = fopen(objfile, "r");
     fseek(f, 0, SEEK_END);
     long fsize = ftell(f);
     fseek(f, 0, SEEK_SET);
-  
+
     int sizeof_kernel_name = strlen(kernel[i]->name);
     int header_size = 2 * sizeof(size_t) + sizeof_kernel_name;
     if ((binary = malloc(fsize + header_size )) == NULL){
@@ -120,9 +123,10 @@ cl_int compileKernels(cl_program program, cl_device_id device,
   *binary_size = binary_size_tmp;
 
   *((cl_uint*)binary) = device->vendor_id;
+  binary += sizeof(cl_uint);
 
   for (i=0; i<num_kernels; i++){
-    memcpu(binary, kernel_tab[i], kernel_tab_sizes[i]);
+    memcpy(binary, kernel_tab[i], kernel_tab_sizes[i]);
     binary += kernel_tab_sizes[i];
   }
 

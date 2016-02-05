@@ -557,30 +557,24 @@ WorkitemLoops::ProcessFunction(Function &F)
       GlobalVariable *gv;
       gv = M->getGlobalVariable("_local_size_x");
       auto *Int32Ty = Type::getInt32Ty(M->getContext());
-      if (gv == NULL) {
+      if (gv == NULL) 
         gv = new GlobalVariable(*M, Int32Ty, true, GlobalValue::CommonLinkage, NULL, "_local_size_x", NULL, llvm::GlobalValue::ThreadLocalMode::NotThreadLocal, 0, true);
-        std::cout << "local x created\n";
-      }
 
       l = CreateLoopAround(
         *original, l.first, l.second, peelFirst, 
         localIdX, WGLocalSizeX, !unrolled, gv);
 
       gv = M->getGlobalVariable("_local_size_y");
-      if (gv == NULL) {
+      if (gv == NULL) 
         gv = new GlobalVariable(*M, Int32Ty, false, GlobalValue::CommonLinkage, NULL, "_local_size_y");
-        std::cout << "local y created\n";
-      }
 
       l = CreateLoopAround(
         *original, l.first, l.second, 
         false, localIdY, WGLocalSizeY, !unrolled, gv);
     
       gv = M->getGlobalVariable("_local_size_z");
-      if (gv == NULL) {
+      if (gv == NULL) 
         gv = new GlobalVariable(*M, Int32Ty, true, GlobalValue::CommonLinkage, NULL, "_local_size_z", NULL, llvm::GlobalValue::ThreadLocalMode::NotThreadLocal, 0, true);
-        std::cout << "local z created\n";
-      }
 
       l = CreateLoopAround(
         *original, l.first, l.second, 

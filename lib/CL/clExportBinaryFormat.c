@@ -72,10 +72,10 @@ POname(clExportBinaryFormat)(cl_program program,
     bf += binaries_sizes[i]*sizeof(char);
   }
 
-  return errcode;
+  //return errcode;
 
 ERROR:
-  for (--i; i>=0; i--)
+  for (i=0; i<num_devices; i++)
     POCL_MEM_FREE(binaries[i]);
   POCL_MEM_FREE(binaries);
 ERROR_CLEAN_BINARIES_SIZES:

@@ -36,7 +36,7 @@ struct pocl_context {
   size_t num_groups[3];
   size_t group_id[3];
   size_t global_offset[3];
-  
+  size_t local_size[3];
 };
 
 typedef void (*pocl_workgroup) (void **, struct pocl_context *);
