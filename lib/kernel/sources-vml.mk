@@ -100,6 +100,7 @@ LKERNEL_SRCS_EXCLUDE =				\
         native_recip.cl                         \
         native_rsqrt.cl                         \
         native_sin.cl                           \
+        native_sqrt.cl                          \
         native_tan.cl                           \
 	normalize.cl				\
 	pow.cl					\
@@ -221,6 +222,7 @@ LKERNEL_SRCS_EXTRA = $(addprefix vecmathlib-pocl/,	\
 	native_recip.cl					\
 	native_rsqrt.cl					\
 	native_sin.cl					\
+	native_sqrt.cl  				\
 	native_tan.cl					\
 	normalize.cl					\
 	pow.cc						\

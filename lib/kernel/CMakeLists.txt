@@ -139,6 +139,7 @@ native_powr.cl
 native_recip.cl
 native_rsqrt.cl
 native_sin.cl
+native_sqrt.cl
 native_tan.cl
 nextafter.cl
 normalize.cl
@@ -334,6 +335,7 @@ vecmathlib-pocl/native_powr.cl
 vecmathlib-pocl/native_recip.cl
 vecmathlib-pocl/native_rsqrt.cl
 vecmathlib-pocl/native_sin.cl
+vecmathlib-pocl/native_sqrt.cl
 vecmathlib-pocl/native_tan.cl
 vecmathlib-pocl/normalize.cl
 vecmathlib-pocl/pow.cc
