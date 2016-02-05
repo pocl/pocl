@@ -1261,7 +1261,7 @@ kernel_library
   bool is_host = true;
   if (0)
     ;
-#ifdef ENABLE_TCE
+#ifdef TCE_AVAILABLE
   else if (triple.getArch() == Triple::tce) {
     subdir = "tce";
     is_host = false;
