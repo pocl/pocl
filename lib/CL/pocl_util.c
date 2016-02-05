@@ -286,6 +286,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
   (*cmd)->type = command_type;
   (*cmd)->next = NULL;
   (*cmd)->device = command_queue->device;
+  (*cmd)->isBinaryFormat = 0;
 
   //printf("create_command (end): event=%d new_event=%d cmd->event=%d cmd=%d\n", event, new_event, (*cmd)->event, *cmd);
 

@@ -282,6 +282,7 @@ DETERMINE_LOCAL_SIZE:
                            CL_INVALID_PROGRAM_EXECUTABLE);
 
     realdev->ops->load_binary(binary,command_node);
+    command_node->isBinaryFormat=1;
   }
 
 
