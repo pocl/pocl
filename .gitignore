@@ -51,6 +51,8 @@ scripts/pocl-build
 scripts/pocl-kernel
 scripts/pocl-standalone
 scripts/pocl-workgroup
+scripts/poclcc/poclcc
+scripts/poclcc/poclccreader
 stamp-h1
 tests/atconfig
 tests/atlocal
