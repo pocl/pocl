@@ -154,7 +154,7 @@ _CL_OVERLOADABLE NONATOMIC_TYPE QUAL(pocl_atomic_exchange) ( volatile Q ATOMIC_T
 }
 
 bool _CL_OVERLOADABLE QUAL(pocl_atomic_compare_exchange_strong) ( volatile Q ATOMIC_TYPE  *object,
-  Q NONATOMIC_TYPE  *expected,
+  NONATOMIC_TYPE  *expected,
   NONATOMIC_TYPE  desired,
   memory_order success,
   memory_order failure,
@@ -164,7 +164,7 @@ bool _CL_OVERLOADABLE QUAL(pocl_atomic_compare_exchange_strong) ( volatile Q ATO
 }
 
 bool _CL_OVERLOADABLE QUAL(pocl_atomic_compare_exchange_weak) ( volatile Q ATOMIC_TYPE  *object,
-  Q NONATOMIC_TYPE  *expected,
+  NONATOMIC_TYPE  *expected,
   NONATOMIC_TYPE  desired,
   memory_order success,
   memory_order failure,
