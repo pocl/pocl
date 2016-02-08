@@ -1260,22 +1260,20 @@ kernel_library
 
   const char *subdir = "host";
   bool is_host = true;
-  if (0)
-    ;
 #ifdef TCE_AVAILABLE
-  else if (triple.getArch() == Triple::tce) {
+  if (triple.getArch() == Triple::tce) {
     subdir = "tce";
     is_host = false;
   }
 #endif
 #ifdef BUILD_HSA
-  else if (triple.getArch() == Triple::hsail64) {
+  if (triple.getArch() == Triple::hsail64) {
     subdir = "hsail64";
     is_host = false;
   }
 #endif
 #ifdef AMDGCN_ENABLED
-  else if (triple.getArch == Triple::amdgcn) {
+  if (triple.getArch == Triple::amdgcn) {
     subdir = "amdgcn";
     is_host = false;
   }
