@@ -58,6 +58,8 @@ POname(clExportBinaryFormat)(cl_program program,
                        CL_OUT_OF_HOST_MEMORY);
   binaryFormat2Buffer(*binary_format, *binary_size, &poclcc);
 
+  poclcc_free(&poclcc);
+
   return errcode;
 
 ERROR:

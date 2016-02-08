@@ -1,5 +1,28 @@
 #include "pocl_binary_format.h"
 
+void poclcc_free(poclcc_global *binary_format){
+  int i;
+  if (binary_format->devices != NULL){
+    for (i=0; i<binary_format->num_devices; i++){
+      poclcc_device *device = &(binary_format->devices[i]);
+      if (device != NULL){
+        if (device->kernels != NULL){
+          int j;
+          for (j=0; j<device->num_kernels; j++){
+            poclcc_kernel *kernel = &(device->kernels[j]);
+            if (kernel != NULL){
+              POCL_MEM_FREE(kernel->kernel_name);
+              POCL_MEM_FREE(kernel->binary);
+            }
+          }
+          POCL_MEM_FREE(device->kernels);
+        }
+      }
+    }
+    POCL_MEM_FREE(binary_format->devices);
+  }
+}
+
 int poclcc_check_global(poclcc_global *binary_format){
   if (binary_format->version != POCLCC_VERSION)
     return 0;
@@ -103,6 +126,39 @@ cl_int programInfos2BinaryFormat(poclcc_global *binary_format, unsigned char **b
     poclcc_device *device_src = (poclcc_device *)(binaries[i]);
     memcpy(device_dst, device_src, sizeof(poclcc_device));    
     assert(poclcc_check_device(device_dst));
+    
+    int num_kernels = device_dst->num_kernels;
+    if ((device_dst->kernels = malloc(num_kernels*sizeof(poclcc_kernel))) == NULL){
+      poclcc_free(binary_format);
+      return CL_OUT_OF_HOST_MEMORY;
+    }
+    int j;
+    for (j=0; j<num_kernels; j++){
+      poclcc_kernel *kernel_dst = &(device_dst->kernels[i]);
+      char *kernel_src = (char *)(&(device_src->kernels[i]));
+
+      int sizeofKernelName = *((int *)kernel_src);
+      kernel_dst->sizeofKernelName = sizeofKernelName;
+      kernel_src += sizeof(int);
+
+      if ((kernel_dst->kernel_name = malloc(sizeofKernelName)) == NULL){
+        poclcc_free(binary_format);
+        return CL_OUT_OF_HOST_MEMORY;
+      }
+      memcpy(kernel_dst->kernel_name, kernel_src, sizeofKernelName);
+      kernel_src += sizeofKernelName;
+
+      int sizeofBinary = *((int *)kernel_src);
+      kernel_dst->sizeofBinary = sizeofBinary;
+      kernel_src += sizeof(int);
+
+      if ((kernel_dst->binary = malloc(sizeofBinary)) == NULL){
+        poclcc_free(binary_format);
+        return CL_OUT_OF_HOST_MEMORY;
+      }
+      memcpy(kernel_dst->binary, kernel_src, sizeofBinary);
+      kernel_src += sizeofBinary;
+    }
   }
   return CL_SUCCESS;
 }
@@ -120,12 +176,42 @@ cl_int binaryFormat2ProgramInfos(unsigned char ***binaries, size_t **binaries_si
   
   int i;
   for (i=0; i<num_devices; i++){
+    unsigned char *devicecc_binary;
     poclcc_device *device = &(binary_format->devices[i]);
-    (*binaries)[i] = (unsigned char*)device;
-    (*binaries_sizes)[i] = sizeofPoclccDevice(device);
+    int sizeofDevicecc = sizeofPoclccDevice(device);
+    if ((devicecc_binary = malloc(sizeofDevicecc)) == NULL)
+      goto ERROR_CLEAN_BINARIES_ALL;
+    (*binaries)[i] = devicecc_binary;
+    (*binaries_sizes)[i] = sizeofDevicecc;
+
+    memcpy(devicecc_binary, device, sizeof(poclcc_device));
+    devicecc_binary += sizeof(poclcc_device) - sizeof(poclcc_kernel *);
+    
+    int j;
+    for (j=0; j<device->num_kernels; j++){
+      poclcc_kernel *kernel = &(device->kernels[j]);
+
+      int sizeofKernelName = kernel->sizeofKernelName;
+      *((int *)devicecc_binary) = sizeofKernelName;
+      devicecc_binary += sizeof(int);
+
+      memcpy(devicecc_binary, kernel->kernel_name, sizeofKernelName);
+      devicecc_binary += sizeofKernelName;
+
+      int sizeofBinary = kernel->sizeofBinary;
+      *((int *)devicecc_binary) = sizeofBinary;
+      devicecc_binary += sizeof(int);
+
+      memcpy(devicecc_binary, kernel->binary, sizeofBinary);
+      devicecc_binary += sizeofBinary;
+    }
   }
   return CL_SUCCESS;
 
+ERROR_CLEAN_BINARIES_ALL:
+  for (i=0; i<num_devices; i++)
+    free(binaries[i]);
+  free(binaries);
 ERROR_CLEAN_BINARIES_SIZES:
   free(binaries_sizes);
 ERROR:
@@ -268,6 +354,7 @@ void poclcc_init_kernel(poclcc_kernel *kernelcc, char *kernel_name, int sizeofKe
 
 int LookForKernelBinary(poclcc_global *binary_format, cl_device_id device, char *kernel_name, 
                         char **binary, int *binary_size){
+
   int i;
   for (i=0; i<binary_format->num_devices; i++){
     poclcc_device *devicecc = (poclcc_device *)(&(binary_format->devices[i]));
@@ -276,7 +363,10 @@ int LookForKernelBinary(poclcc_global *binary_format, cl_device_id device, char 
       for (j=0; j<devicecc->num_kernels; j++){
         poclcc_kernel *kernel = &(devicecc->kernels[i]);
         if (!strncmp(kernel->kernel_name, kernel_name, kernel->sizeofKernelName)){
-          *binary = kernel->binary;
+          int sizeofBinary = kernel->sizeofBinary;
+          if ((*binary = malloc(sizeofBinary)) == NULL)
+            return CL_OUT_OF_HOST_MEMORY;
+          memcpy(*binary, kernel->binary, sizeofBinary);
           *binary_size = kernel->sizeofBinary;
           return CL_SUCCESS;
         }

@@ -34,6 +34,8 @@ typedef struct poclcc_global_ {
   poclcc_device *devices;
 } poclcc_global;
 
+void poclcc_free(poclcc_global *binary_format);
+
 int poclcc_check_global(poclcc_global *binary_format);
 int poclcc_check_device(poclcc_device *device);
 uint64_t poclcc_get_device_id(cl_device_id device);

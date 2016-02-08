@@ -266,6 +266,8 @@ DETERMINE_LOCAL_SIZE:
       != CL_SUCCESS,
       error);
 
+    poclcc_free(&poclcc);
+
     realdev->ops->load_binary(binary, binary_size, command_node);
     command_node->isBinaryFormat=1;
   }

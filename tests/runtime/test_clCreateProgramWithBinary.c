@@ -46,11 +46,15 @@ main(void){
   if (err != CL_SUCCESS)
     return EXIT_FAILURE;
 
+  printf("toto...");
   err = clBuildProgram(program, num_devices, devices, NULL, NULL, NULL);
+  printf("OK\n");
   if (err != CL_SUCCESS)
     return EXIT_FAILURE;
   
+  printf("toto...");
   err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, 0, 0, &num_binaries);
+  printf("OK\n");
   if (err != CL_SUCCESS)
       goto FREE_AND_EXIT;
 
@@ -58,9 +62,11 @@ main(void){
   binary_sizes = (size_t*)malloc(num_binaries * sizeof(size_t));
   binaries = (const unsigned char**)calloc(num_binaries, sizeof(unsigned char*));
 
+  printf("toto...\n");
   err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, 
 			 num_binaries*sizeof(size_t), binary_sizes , 
 			 &num_bytes_copied);
+  printf("OK\n");
   if (err != CL_SUCCESS)
       goto FREE_AND_EXIT;
   
@@ -68,8 +74,10 @@ main(void){
     binaries[i] = (const unsigned char*) malloc(binary_sizes[i] *
 						sizeof(const unsigned char));
 
+  printf("toto...");
   err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, 
 			 num_binaries*sizeof(char*), binaries, &num_bytes_copied);
+  printf("OK\n");
   if (err != CL_SUCCESS)
       goto FREE_AND_EXIT;
   
@@ -80,8 +88,10 @@ main(void){
       goto FREE_AND_EXIT;
     }
   
+  printf("toto...");
   program_with_binary = clCreateProgramWithBinary(context, num, devices, binary_sizes, 
 						  binaries, binary_statuses, &err);
+  printf("OK\n");
   if (err != CL_SUCCESS)
     goto FREE_AND_EXIT;
 
@@ -98,8 +108,10 @@ main(void){
   // negative test1: invalid device
   device_id0 = devices[0];
   devices[0] = NULL; // invalid device
+  printf("toto...");
   program_with_binary = clCreateProgramWithBinary(context, num, devices, binary_sizes, 
 						  binaries, binary_statuses, &err);
+  printf("OK\n");
 
   if (err != CL_INVALID_DEVICE || program_with_binary != NULL)
     {
@@ -138,8 +150,10 @@ main(void){
     goto FREE_AND_EXIT;
   
   memcpy((void*)binaries[1], (void*)binaries[0], binary_sizes[0]);      
+  printf("toto...");
   program_with_binary = clCreateProgramWithBinary(context, 2, devices, binary_sizes, 
 						  binaries, binary_statuses2, &err);
+  printf("OK\n");
   if (err != CL_INVALID_DEVICE || program_with_binary != NULL)
     {
       err = !CL_SUCCESS;

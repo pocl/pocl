@@ -17,6 +17,8 @@ POname(clExtractBinaryFormat)(void *input_buffer,
     (errcode=binaryFormat2ProgramInfos(binaries, lengths, &poclcc)) == CL_SUCCESS,
     errcode);
 
+  poclcc_free(&poclcc);
+
   return errcode;
 }
 POsym(clExtractBinaryFormat)
