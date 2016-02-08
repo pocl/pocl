@@ -128,8 +128,6 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
    * So we can alias the pointers for the IR binary and the pocl binary  
    */
   unsigned isIRBinary = !strncmp(binaries[0], "BC", 2);
-  program->BF = program->binaries;
-  program->BF_sizes = program->binary_sizes;
 
   for (i = 0; i < num_devices; ++i)
     {
@@ -140,7 +138,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
        * It would be better if LLVM had a external function to check 
        * the header of IR files
        */
-      if ( isIRBinary && strncmp(binaries[i], "BC", 2) )
+      if ( isIRBinary && !strncmp(binaries[i], "BC", 2) )
       {
         memcpy (program->binaries[i], 
                 binaries[i], 
@@ -152,7 +150,8 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
          * the first bytes are a magic string to identify pocl binary
          * the next 4 bytes are the vendor_id of the device
          */
-      } else if (poclcc_check_binary(device_list[i], binaries[i])) {
+      } else if (!isIRBinary 
+                 && poclcc_check_binary(device_list[i], binaries[i])) {
         memcpy (program->BF[i], &binaries[i], lengths[i]);
         if (binary_status != NULL)
           binary_status[i] = CL_SUCCESS;
@@ -166,7 +165,11 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
       }
     }
   
-  program->isBinaryFormat = !isIRBinary;
+  if (!isIRBinary){
+    program->isBinaryFormat = 1;  
+    program->BF = program->binaries;
+    program->BF_sizes = program->binary_sizes;
+  }
 
   POCL_RETAIN_OBJECT(context);
 

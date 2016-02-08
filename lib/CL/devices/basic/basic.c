@@ -874,6 +874,7 @@ struct compiler_cache_item
 
 static compiler_cache_item *compiler_cache;
 static pocl_lock_t compiler_cache_lock;
+static compiler_cache_item *ci;
 
 void pocl_basic_load_binary(const char *binary, int binary_size,
                             _cl_command_node *cmd)
@@ -892,14 +893,17 @@ void pocl_basic_load_binary(const char *binary, int binary_size,
   }
   snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
             "_pocl_launcher_%s_workgroup", cmd->command.run.kernel->name);
+
   cmd->command.run.wg = /*ci->wg = */
     (pocl_workgroup) lt_dlsym (dlhandle, workgroup_string);
-  
+
+  if (ci != NULL)
+    ci->wg = cmd->command.run.wg;
 }
 
 void check_compiler_cache (_cl_command_node *cmd)
 {
-  compiler_cache_item *ci = NULL;
+  ci = NULL;
   
   if (compiler_cache == NULL)
     POCL_INIT_LOCK (compiler_cache_lock);

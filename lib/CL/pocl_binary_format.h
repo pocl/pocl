@@ -22,7 +22,7 @@ typedef struct poclcc_kernel_ {
 
 typedef struct poclcc_device_ {
   char pocl_id[POCLCC_STRING_ID_LENGTH];
-  uint32_t device_id;
+  uint64_t device_id;
   uint32_t num_kernels;
   poclcc_kernel *kernels;
 } poclcc_device;
@@ -36,7 +36,7 @@ typedef struct poclcc_global_ {
 
 int poclcc_check_global(poclcc_global *binary_format);
 int poclcc_check_device(poclcc_device *device);
-int poclcc_get_device_id(cl_device_id device);
+uint64_t poclcc_get_device_id(cl_device_id device);
 int poclcc_check_device_id(cl_device_id device, poclcc_device *devicecc);
 int poclcc_check_binary(cl_device_id device, const unsigned char *binary);
 

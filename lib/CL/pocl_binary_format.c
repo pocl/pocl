@@ -10,8 +10,28 @@ int poclcc_check_device(poclcc_device *device){
   return !strncmp(device->pocl_id, POCLCC_STRING_ID, POCLCC_STRING_ID_LENGTH);
 }
 
-int poclcc_get_device_id(cl_device_id device){
-  return device->vendor_id;
+#define FNV_OFFSET 0xcbf29ce484222325
+#define FNV_PRIME 0x100000001b3
+uint64_t poclcc_get_device_id(cl_device_id device){
+  //FNV-1A with vendor_id, llvm_target_triplet and llvm_cpu
+  uint64_t result = FNV_OFFSET;
+  const char *llvm_tt = device->llvm_target_triplet;
+  const char *llvm_cpu = device->llvm_cpu;
+
+  result *= 0x100000001b3;
+  result ^= device->vendor_id;
+  int i, length = strlen(llvm_tt);
+  for (i=0; i<length; i++){
+    result *= FNV_PRIME;
+    result ^= llvm_tt[i];
+  }
+  length = strlen(llvm_cpu);
+  for (i=0; i<length; i++){
+    result *= FNV_PRIME;
+    result ^= llvm_cpu[i];
+  }
+
+  return result;
 }
 
 int poclcc_check_device_id(cl_device_id device, poclcc_device *devicecc){
