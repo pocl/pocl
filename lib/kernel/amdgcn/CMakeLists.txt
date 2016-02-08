@@ -40,7 +40,7 @@ endforeach()
 set(CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-emit-llvm" "-target" "amdgcn--amdhsa" "-mcpu=kaveri")
 set(LLC_FLAGS "")
 
-make_kernel_bc(KERNEL_BC "amdgcn--amdhsa" ${KERNEL_SOURCES})
+make_kernel_bc(KERNEL_BC "amdgcn--amdhsa" "gcn" ${KERNEL_SOURCES})
 
 # just debug
 message(STATUS "AMDGCN Kernel BC: ${KERNEL_BC}")

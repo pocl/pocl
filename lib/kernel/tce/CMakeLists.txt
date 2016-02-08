@@ -48,7 +48,7 @@ set(LLC_FLAGS ${TCE_TARGET_LLC_FLAGS})
 #LD_FLAGS    = @TARGET_LD_FLAGS@
 
 #KERNEL_TARGET = tce (WRONG)
-make_kernel_bc(KERNEL_BC "tce-tut-llvm" ${SOURCES_WITHOUT_VML})
+make_kernel_bc(KERNEL_BC "tce-tut-llvm" "tta" ${SOURCES_WITHOUT_VML})
 
 # just debug
 message(STATUS "TCE Kernel BC: ${KERNEL_BC}")
