@@ -26,10 +26,6 @@
 */
 
 /* Language feature detection */
-#if (__clang_major__ == 3) && (__clang_minor__ >= 3)
-#  define _CL_HAS_EVENT_T
-#  define _CL_HAS_IMAGE_ACCESS
-#endif
 #include "_kernel_c.h"
 
 /* If the -cl-std build option is not specified, the highest OpenCL C 1.x
@@ -2222,12 +2218,12 @@ void atomic_work_item_fence(cl_mem_fence_flags flags,
 
 #define _CL_DECL_ATOMICS_EXPL_CMPXCH(TYPE, MOD, A, C)                   \
   _CL_OVERLOADABLE bool atomic_compare_exchange_##TYPE(                 \
-                      volatile MOD A *object, C *expected, C desired);  \
+                      volatile MOD A *object, MOD C *expected, C desired);  \
   _CL_OVERLOADABLE bool atomic_compare_exchange_##TYPE##_explicit(      \
-                      volatile MOD A *object, C *expected, C desired,   \
+                      volatile MOD A *object, MOD C *expected, C desired,   \
                       memory_order success, memory_order failure);      \
   _CL_OVERLOADABLE bool atomic_compare_exchange_##TYPE##_explicit(      \
-                      volatile MOD A *object, C *expected, C desired,   \
+                      volatile MOD A *object, MOD C *expected, C desired,   \
                       memory_order success, memory_order failure,       \
                       memory_scope scope);
 
@@ -2305,18 +2301,6 @@ __IF_FP64(
 _CL_DECLARE_SHUFFLE_MN(double, ulong ))
 
 
-#if __clang_major__ < 3 || (__clang_major__ == 3 && __clang_minor__ < 4)
-
-// If Clang is too old, we just wrap the libc printf
-// Note: These older versions of Clang do not put string literals into
-// the "constant" address space, so we have to use "const" here.
-// Note: We cannot use __attribute__((format(printf, 1, 2))), since
-// this is confused about the difference between C long and OpenCL C
-// long.
-int printf(const char* restrict fmt, ...);
-
-#else
-
 // We provide our own printf
 // Note: We declare our printf as taking a constant format string, but
 // we implement it in C using a const format string (i.e. a format
@@ -2327,15 +2311,9 @@ int printf(const char* restrict fmt, ...);
 int _cl_printf(constant char* restrict format, ...);
 #define printf _cl_printf
 
-#endif
-
 
 /* Async Copies from Global to Local Memory, Local to
    Global Memory, and Prefetch */
-
-#ifndef _CL_HAS_EVENT_T
-typedef uint event_t;
-#endif
 
 #define _CL_DECLARE_ASYNC_COPY_FUNCS_SINGLE(GENTYPE)            \
   _CL_OVERLOADABLE                                              \

@@ -49,6 +49,7 @@
 #define POCL_ADDRESS_SPACE_GLOBAL 1
 #define POCL_ADDRESS_SPACE_LOCAL 2
 #define POCL_ADDRESS_SPACE_CONSTANT 3
+#define POCL_ADDRESS_SPACE_GENERIC 4
 
 #define POCL_FILENAME_LENGTH 1024
 
@@ -245,19 +246,13 @@ typedef struct _cl_command_node_struct
 
 /* Additional LLVM version macros to simplify ifdefs */
 
-#if defined(LLVM_3_2) || defined(LLVM_3_3) || defined(LLVM_3_4)
-#define LLVM_OLDER_THAN_3_5 1
+#if (defined LLVM_3_6)
+# define LLVM_OLDER_THAN_3_7 1
+# define LLVM_OLDER_THAN_3_8 1
 #endif
 
-#if defined(LLVM_3_2) || defined(LLVM_3_3) || defined(LLVM_3_4) || \
-    defined(LLVM_3_5)
-
-# define LLVM_OLDER_THAN_3_6 1
-# define LLVM_OLDER_THAN_3_7 1
-#elif (defined LLVM_3_6)
-
-# define LLVM_OLDER_THAN_3_7 1
-
+#if (defined LLVM_3_7)
+# define LLVM_OLDER_THAN_3_8 1
 #endif
 
 #endif /* POCL_H */

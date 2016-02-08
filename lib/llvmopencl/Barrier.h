@@ -21,17 +21,12 @@
 // THE SOFTWARE.
 
 #include "config.h"
-#if (defined LLVM_3_1 || defined LLVM_3_2)
-#include "llvm/Instructions.h"
-#include "llvm/Function.h"
-#include "llvm/Module.h"
-#else
+
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/IR/GlobalValue.h"
-#endif
 
 #include "llvm/Support/Casting.h"
 

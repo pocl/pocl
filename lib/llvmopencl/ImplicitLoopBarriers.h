@@ -20,8 +20,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "llvm/Analysis/LoopPass.h"
 #include <set>
+
+#include "llvm/Analysis/LoopPass.h"
 
 namespace pocl {
   class ImplicitLoopBarriers : public llvm::LoopPass {

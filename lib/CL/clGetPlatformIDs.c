@@ -205,6 +205,20 @@ struct _cl_icd_dispatch pocl_dispatch = {
   NULL, /* &clUnknown164 */
   NULL, /* &clUnknown165 */
 #endif
+#if (OCL_ICD_IDENTIFIED_FUNCTIONS > 127)
+  NULL, /* &clUnknown166 */
+  NULL, /* &clUnknown167 */
+  NULL, /* &clUnknown168 */
+  NULL, /* &clUnknown169 */
+  NULL, /* &clUnknown170 */
+  NULL, /* &clUnknown171 */
+  NULL, /* &clUnknown172 */
+  NULL, /* &clUnknown173 */
+  NULL, /* &clUnknown174 */
+  NULL, /* &clUnknown175 */
+  NULL, /* &clUnknown176 */
+  NULL, /* &clUnknown177 */
+#endif
 };
 
 struct _cl_platform_id _platforms[1]  = {{&pocl_dispatch}};

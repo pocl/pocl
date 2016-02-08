@@ -10,6 +10,8 @@ Android applications can use pocl using jni. App has to dlopen
 “/data/data/org.pocl.libs/files/lib/libpocl.so” and dlsym OpenCL function
 symbols from it.
 
+.. _linking-with-icd:
+
 Linking your program with pocl through an icd loader
 ----------------------------------------------------
 

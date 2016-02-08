@@ -12,26 +12,20 @@
    licence. See file COPYING.
  */
 
-#include "config.h"
-#include "pocl.h"
-
-#ifdef LLVM_3_2
-#include "llvm/Function.h"
-#include "llvm/Instructions.h"
-#include "llvm/Module.h"
-#else
-#include "llvm/IR/Function.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/Module.h"
-#endif
-
-#include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/Transforms/Utils/ValueMapper.h"
-
 #include <list>
 #include <iostream>
 
+#include "config.h"
+#include "pocl.h"
+
+#include "llvm/IR/Function.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Module.h"
+#include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/Transforms/Utils/ValueMapper.h"
+
 #include "linker.h"
+
 using namespace llvm;
 
 //#include <cstdio>
@@ -124,7 +118,7 @@ CopyFunc( const llvm::StringRef Name,
          e=SrcFunc->arg_end();
          i != e; ++i) {
         j->setName(i->getName());
-        VVMap[i]=j;
+        VVMap[&*i] = &*j;
         ++j;
     }
     if (!SrcFunc->isDeclaration()) {
@@ -204,7 +198,7 @@ link(llvm::Module *krn, const llvm::Module *lib)
 
         // Find all functions the kernel source calls
         // TODO: is there no direct way?
-        find_called_functions(fi, declared);
+        find_called_functions(&*fi, declared);
     }
     declared.sort(stringref_cmp);
     declared.unique(stringref_equal);
@@ -226,8 +220,8 @@ link(llvm::Module *krn, const llvm::Module *lib)
                                               (GlobalVariable*) 0,
                                               gi->getThreadLocalMode(),
                                               gi->getType()->getAddressSpace());
-        GV->copyAttributesFrom(gi);
-        vvm[gi]=GV;
+        GV->copyAttributesFrom(&*gi);
+        vvm[&*gi]=GV;
     }
 
     // For each undefined function in krn, clone it from the lib to the krn module,
@@ -247,10 +241,7 @@ link(llvm::Module *krn, const llvm::Module *lib)
          ai++) {
         DB_PRINT(" %s\n", ai->getName().data());
         GlobalAlias *GA =
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-            new GlobalAlias(ai->getType(), ai->getLinkage(),
-                            ai->getName(), NULL, krn);
-#elif (defined LLVM_OLDER_THAN_3_7)
+#ifndef LLVM_3_7
             GlobalAlias::create(ai->getType(),
                                 ai->getType()->getAddressSpace(),
                                 ai->getLinkage(), ai->getName(), NULL, krn);
@@ -259,15 +250,15 @@ link(llvm::Module *krn, const llvm::Module *lib)
                                 ai->getLinkage(), ai->getName(), NULL, krn);
 #endif
 
-        GA->copyAttributesFrom(ai);
-        vvm[ai]=GA;
+        GA->copyAttributesFrom(&*ai);
+        vvm[&*ai]=GA;
     }
 
     // initialize the globals that were copied
     for (gi=lib->global_begin(), ge=lib->global_end();
          gi != ge;
          gi++) {
-        GlobalVariable *GV=cast<GlobalVariable>(vvm[gi]);
+        GlobalVariable *GV=cast<GlobalVariable>(vvm[&*gi]);
         if (gi->hasInitializer())
             GV->setInitializer(MapValue(gi->getInitializer(), vvm));
     }
@@ -282,11 +273,7 @@ link(llvm::Module *krn, const llvm::Module *lib)
         DB_PRINT(" %s:\n", NMD.getName().data());
         NamedMDNode *NewNMD=krn->getOrInsertNamedMetadata(NMD.getName());
         for (unsigned i=0, e=NMD.getNumOperands(); i != e; ++i)
-#ifdef LLVM_OLDER_THAN_3_6
-            NewNMD->addOperand(MapValue(NMD.getOperand(i), vvm));
-#else
             NewNMD->addOperand(MapMetadata(NMD.getOperand(i), vvm));
-#endif
     }
 }
 

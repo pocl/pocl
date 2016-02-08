@@ -23,21 +23,14 @@
 #ifndef _POCL_LLVM_UTILS_H
 #define _POCL_LLVM_UTILS_H
 
-#include "pocl.h"
 #include <map>
 #include <string>
 
-#include "config.h"
+#include "pocl.h"
 
-#ifdef LLVM_3_2
-#include <llvm/Module.h>
-#include <llvm/Metadata.h>
-#include <llvm/DerivedTypes.h>
-#else
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Metadata.h>
 #include <llvm/IR/DerivedTypes.h>
-#endif
 
 namespace llvm {
     class Module;

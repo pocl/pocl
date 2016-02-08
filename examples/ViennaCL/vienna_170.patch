@@ -1,0 +1,11 @@
+--- a/viennacl/device_specific/builtin_database/common.hpp.orig	2016-01-20 16:41:12.219439157 +0100
++++ b/viennacl/device_specific/builtin_database/common.hpp	2016-01-20 16:57:01.459447796 +0100
+@@ -94,7 +94,7 @@
+            viennacl::device_specific::at(
+            viennacl::device_specific::at(
+              viennacl::device_specific::at(map.d, p0).d,
+-           p1).d,
++           (p1 & (~1)) ).d,
+            p2).d,
+          p3).d,
+          p4);

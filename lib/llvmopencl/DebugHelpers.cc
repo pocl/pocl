@@ -20,34 +20,25 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "CompilerWarnings.h"
-IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <set>
 
-#include "DebugHelpers.h"
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
-#include "config.h"
 #include "pocl.h"
 
-#include "Barrier.h"
-#include "BarrierBlock.h"
-#include "Workgroup.h"
-
-#if (defined LLVM_3_1 || defined LLVM_3_2)
-#include "llvm/Constants.h"
-#include "llvm/Instructions.h"
-#include "llvm/Module.h"
-#else
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
-#endif
-
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+
+#include "DebugHelpers.h"
+#include "Barrier.h"
+#include "BarrierBlock.h"
+#include "Workgroup.h"
 
 POP_COMPILER_DIAGS
 
@@ -177,14 +168,14 @@ void dumpCFG(
   }
 
   for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
-    BasicBlock *b = i;
+    BasicBlock *b = &*i;
     if (regionBBs.find(b) != regionBBs.end()) continue;
     printBasicBlock
       (b, s, highlights != NULL && highlights->find(b) != highlights->end());
   }
 
   for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
-    BasicBlock *b = i;
+    BasicBlock *b = &*i;
     printBranches
       (b, s, highlights != NULL && highlights->find(b) != highlights->end());
   }
@@ -200,7 +191,7 @@ bool chopBBs(llvm::Function &F, llvm::Pass &P) {
   do {
     fchanged = false;
     for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
-      BasicBlock *b = i;
+      BasicBlock *b = &*i;
       
       if (b->size() > MAX_INSTRUCTIONS_PER_BB + 1)
         {
@@ -214,7 +205,7 @@ bool chopBBs(llvm::Function &F, llvm::Pass &P) {
 #ifdef LLVM_OLDER_THAN_3_7
           SplitBlock(b, splitPoint, &P);
 #else
-          SplitBlock(b, splitPoint);
+          SplitBlock(b, &*splitPoint);
 #endif
           fchanged = true;
           break;

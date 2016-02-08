@@ -99,8 +99,8 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   PROPERTIES
     COST 2.0
     PROCESSORS 1
-    DEPENDS "pocl_version_check")
-
+    DEPENDS "pocl_version_check"
+    LABELS "internal;runtime")
 
 
 set_tests_properties("runtime/clGetSupportedImageFormats"
@@ -110,12 +110,6 @@ set_tests_properties("runtime/clGetSupportedImageFormats"
 set_tests_properties("runtime/clCreateKernelsInProgram"
   PROPERTIES
     PASS_REGULAR_EXPRESSION "Hello\nWorld")
-
-if(LLVM_3_2)
-  set_tests_properties("runtime/clGetKernelArgInfo"
-    PROPERTIES WILL_FAIL 1)
-endif()
-
 
 
 set_tests_properties("runtime/clFinish"

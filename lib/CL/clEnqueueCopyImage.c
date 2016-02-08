@@ -20,6 +20,5 @@ POname(clEnqueueCopyImage)(cl_command_queue      command_queue ,
     0, 0,
     num_events_in_wait_list, event_wait_list,
     event);
-  int errcode;
 }
 POsym(clEnqueueCopyImage)

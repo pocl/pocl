@@ -155,11 +155,10 @@ typedef ulong ulong16 __attribute__((__ext_vector_type__(16)));
 
 /* Starting from Clang 3.3 the image and sampler are detected
    as opaque types by the frontend. In order to define
-   the default builtins we use C functions which require 
-   the typedefs to the actual underlying types. Clang 3.2
-   the typedefs throughout as the types are not detected
-   by the frontend. */
-#if !defined(_CL_HAS_IMAGE_ACCESS)
+   the default builtins we use C functions which require
+   the typedefs to the actual underlying types.
+*/
+#if defined(__CBUILD__)
 typedef int sampler_t;
 
 /* Since some built-ins have different return types
@@ -178,8 +177,6 @@ typedef struct _pocl_image2d_array_t { dev_image_t base; }* image2d_array_t;
 typedef struct _pocl_image1d_array_t { dev_image_t base; }* image1d_array_t;
 #endif
 
-
-//#ifdef _CL_HAS_IMAGE_ACCESS
 
 float4 _CL_OVERLOADABLE read_imagef (image2d_t image, sampler_t sampler,
                                      int2 coord);

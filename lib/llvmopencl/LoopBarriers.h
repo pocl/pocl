@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include <set>
+
 #ifndef POCL_LOOP_BARRIERS_H
 #define POCL_LOOP_BARRIERS_H
 
@@ -27,7 +29,6 @@
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "llvm/Analysis/LoopPass.h"
-#include <set>
 
 POP_COMPILER_DIAGS
 

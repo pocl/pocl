@@ -35,8 +35,10 @@ add_subdirectory("EinsteinToolkit")
 
 # TODO:   opencl-book-samples  PyOpenCL
 set(ALL_TESTSUITES
-    AMD AMDSDK2.9 AMDSDK3.0 ASL
-    CloverLeaf Halide IntelSVM OpenCV
+    AMD AMDSDK2.9 AMDSDK3.0
+    ASL arrayfire clBLAS clFFT
+    CloverLeaf Halide IntelSVM
+    opencl-book-samples OpenCV
     Parboil piglit PyOpenCL
     Rodinia VexCL ViennaCL)
 

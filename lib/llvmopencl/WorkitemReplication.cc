@@ -24,47 +24,33 @@
 
 #define DEBUG_TYPE "workitem"
 
+#include <iostream>
+#include <map>
+#include <sstream>
+#include <vector>
+
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
-#include "WorkitemReplication.h"
-#include "Workgroup.h"
-#include "Barrier.h"
-#include "Kernel.h"
+#include "pocl.h"
+
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CommandLine.h"
-#include "config.h"
-#include "pocl.h"
-
-#ifdef LLVM_3_1
-#include "llvm/Support/IRBuilder.h"
-#include "llvm/Target/TargetData.h"
-#include "llvm/Instructions.h"
-#include "llvm/Module.h"
-#include "llvm/ValueSymbolTable.h"
-#elif defined LLVM_3_2
-#include "llvm/IRBuilder.h"
-#include "llvm/DataLayout.h"
-#include "llvm/Instructions.h"
-#include "llvm/Module.h"
-#include "llvm/ValueSymbolTable.h"
-#else
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/ValueSymbolTable.h"
-#endif
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
+
+#include "WorkitemReplication.h"
+#include "Workgroup.h"
+#include "Barrier.h"
+#include "Kernel.h"
 #include "WorkitemHandlerChooser.h"
 #include "DebugHelpers.h"
 #include "VariableUniformityAnalysis.h"
-
-#include <iostream>
-#include <map>
-#include <sstream>
-#include <vector>
 
 //#define DEBUG_BB_MERGING
 //#define DUMP_RESULT_CFG
@@ -92,22 +78,14 @@ char WorkitemReplication::ID = 0;
 void
 WorkitemReplication::getAnalysisUsage(AnalysisUsage &AU) const
 {
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  AU.addRequired<DominatorTree>();
-#else
   AU.addRequired<DominatorTreeWrapperPass>();
-#endif
 
 #ifdef LLVM_OLDER_THAN_3_7
   AU.addRequired<LoopInfo>();
 #else
   AU.addRequired<LoopInfoWrapperPass>();
 #endif
-#ifdef LLVM_3_1
-  AU.addRequired<TargetData>();
-#elif (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  AU.addRequired<DataLayout>();
-#elif (defined LLVM_OLDER_THAN_3_7)
+#ifdef LLVM_OLDER_THAN_3_7
   AU.addRequired<DataLayoutPass>();
 #endif
   AU.addRequired<pocl::WorkitemHandlerChooser>();
@@ -124,12 +102,8 @@ WorkitemReplication::runOnFunction(Function &F)
       pocl::WorkitemHandlerChooser::POCL_WIH_FULL_REPLICATION)
     return false;
 
-  #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  DT = &getAnalysis<DominatorTree>();
-  #else
   DTP = &getAnalysis<DominatorTreeWrapperPass>();
   DT = &DTP->getDomTree();
-  #endif
 
 #ifdef LLVM_OLDER_THAN_3_7
   LI = &getAnalysis<LoopInfo>();
@@ -143,11 +117,7 @@ WorkitemReplication::runOnFunction(Function &F)
   cfgPrinter->runOnFunction(F);
 #endif
 
-  #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  changed |= fixUndominatedVariableUses(DT, F);
-  #else
   changed |= fixUndominatedVariableUses(DTP, F);
-  #endif
   return changed;
 }
 
@@ -169,8 +139,8 @@ WorkitemReplication::ProcessFunction(Function &F)
 
   BasicBlockVector original_bbs;
   for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
-      if (!Barrier::hasBarrier(i))
-        original_bbs.push_back(i);
+      if (!Barrier::hasBarrier(&*i))
+        original_bbs.push_back(&*i);
   }
 
 #ifdef LLVM_OLDER_THAN_3_7
@@ -202,15 +172,7 @@ WorkitemReplication::ProcessFunction(Function &F)
 #endif
   
   // Measure the required context (variables alive in more than one region).
-#ifdef LLVM_3_1
-  TargetData &TD = getAnalysis<TargetData>();
-#elif (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  DataLayout &TD = getAnalysis<DataLayout>();
-#elif (defined LLVM_OLDER_THAN_3_7)
-  const DataLayout &TD = getAnalysis<DataLayoutPass>().getDataLayout();
-#else
   const DataLayout &TD = F.getParent()->getDataLayout();
-#endif
 
   for (SmallVector<ParallelRegion *, 8>::iterator
          i = original_parallel_regions->begin(), 
@@ -227,11 +189,7 @@ WorkitemReplication::ProcessFunction(Function &F)
         for (Value::use_iterator i4 = i3->use_begin(), e4 = i3->use_end();
              i4 != e4; ++i4) {
           // Instructions can only be used by instructions.
-#if defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4
-          llvm::Instruction *user = cast<Instruction>(*i4);
-#else
           llvm::Instruction *user = cast<Instruction>(i4->getUser());
-#endif
           
           if (find (pr->begin(), pr->end(), user->getParent()) ==
               pr->end()) {

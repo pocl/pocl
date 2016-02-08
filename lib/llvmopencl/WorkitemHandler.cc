@@ -22,31 +22,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-#include "CompilerWarnings.h"
-IGNORE_COMPILER_WARNING("-Wunused-parameter")
-
-#include "config.h"
 #include <sstream>
 #include <iostream>
 
-#if (defined LLVM_3_1 || defined LLVM_3_2)
-#include "llvm/Metadata.h"
-#include "llvm/Constants.h"
-#include "llvm/Module.h"
-#include "llvm/Instructions.h"
-#include "llvm/ValueSymbolTable.h"
-#else
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
+#include "pocl.h"
+
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/ValueSymbolTable.h"
-#endif
 #include "llvm/Support/CommandLine.h"
+
 #include "WorkitemHandler.h"
 #include "Kernel.h"
 #include "DebugHelpers.h"
-#include "pocl.h"
 
 POP_COMPILER_DIAGS
 
@@ -92,13 +85,6 @@ WorkitemHandler::Initialize(Kernel *K) {
   if (size_info) {
     for (unsigned i = 0, e = size_info->getNumOperands(); i != e; ++i) {
       llvm::MDNode *KernelSizeInfo = size_info->getOperand(i);
-#ifdef LLVM_OLDER_THAN_3_6
-      if (KernelSizeInfo->getOperand(0) != K) 
-        continue;
-      LocalSizeX = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(1)))->getLimitedValue();
-      LocalSizeY = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(2)))->getLimitedValue();
-      LocalSizeZ = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(3)))->getLimitedValue();
-#else
       if (dyn_cast<ValueAsMetadata>(
         KernelSizeInfo->getOperand(0).get())->getValue() != K) 
         continue;
@@ -112,7 +98,6 @@ WorkitemHandler::Initialize(Kernel *K) {
       LocalSizeZ = (llvm::cast<ConstantInt>(
                      llvm::dyn_cast<ConstantAsMetadata>(
                        KernelSizeInfo->getOperand(3))->getValue()))->getLimitedValue();
-#endif
       break;
     }
   }
@@ -128,14 +113,7 @@ WorkitemHandler::Initialize(Kernel *K) {
 
   llvm::Type *localIdType; 
   size_t_width = 0;
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  if (M->getPointerSize() == llvm::Module::Pointer64)
-    size_t_width = 64;
-  else if (M->getPointerSize() == llvm::Module::Pointer32)
-    size_t_width = 32;
-  else
-    assert (false && "Only 32 and 64 bit size_t widths supported.");
-#elif (defined LLVM_OLDER_THAN_3_7)
+#ifdef LLVM_OLDER_THAN_3_7
   if (M->getDataLayout()->getPointerSize(0) == 8)
     size_t_width = 64;
   else if (M->getDataLayout()->getPointerSize(0) == 4)
@@ -159,16 +137,10 @@ WorkitemHandler::Initialize(Kernel *K) {
 }
 
 
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-bool
-WorkitemHandler::dominatesUse
-(llvm::DominatorTree *DT, Instruction &I, unsigned i) {
-#else
 bool
 WorkitemHandler::dominatesUse
 (llvm::DominatorTreeWrapperPass *DTP, Instruction &I, unsigned i) {
   DominatorTree *DT = &DTP->getDomTree();
-#endif
   Instruction *Op = cast<Instruction>(I.getOperand(i));
   BasicBlock *OpBlock = Op->getParent();
   PHINode *PN = dyn_cast<PHINode>(&I);
@@ -225,22 +197,16 @@ WorkitemHandler::dominatesUse
    the old one. This should ensure the reachability without 
    the costly dominance analysis.
 */
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-bool
-WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTree *DT, 
-                                            llvm::Function &F) 
-#else
 bool
 WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTreeWrapperPass *DT,
                                             llvm::Function &F)
-#endif
 {
   bool changed = false;
   DT->runOnFunction(F);
 
   for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) 
     {
-      llvm::BasicBlock *bb = i;
+      llvm::BasicBlock *bb = &*i;
       for (llvm::BasicBlock::iterator ins = bb->begin(), inse = bb->end();
            ins != inse; ++ins)
         {

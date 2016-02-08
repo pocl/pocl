@@ -40,7 +40,8 @@ add_test("pocl_version_check" "runtime/test_version")
 set_tests_properties("pocl_version_check"
   PROPERTIES
   ENVIRONMENT "POCL_DEVICES=basic"
-  PASS_REGULAR_EXPRESSION "basic")
+  PASS_REGULAR_EXPRESSION "basic"
+  LABELS "internal")
 
 #######################################################################
 
@@ -53,6 +54,6 @@ endif()
 add_subdirectory("runtime")
 add_subdirectory("workgroup")
 if(ENABLE_TCE)
-  #add_subdirectory("tce")
+  add_subdirectory("tce")
 endif()
 

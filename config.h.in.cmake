@@ -75,6 +75,10 @@
 #define HSA_DEVICE_EXTENSIONS "@HSA_DEVICE_EXTENSIONS@"
 
 
+#define KERNELLIB_HOST_CPU_VARIANTS "@KERNELLIB_HOST_CPU_VARIANTS@"
+
+#cmakedefine KERNELLIB_HOST_DISTRO_VARIANTS
+
 #define LLVM_LLC "@LLVM_LLC@"
 
 
@@ -83,6 +87,9 @@
 
 /* "Using LLVM 3.7" */
 #cmakedefine LLVM_3_7
+
+/* "Using LLVM 3.8" */
+#cmakedefine LLVM_3_8
 
 
 /* Defined to greatest expected alignment for extended types, in bytes. */

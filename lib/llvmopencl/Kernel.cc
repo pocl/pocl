@@ -21,26 +21,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include <iostream>
+
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
-#include "Kernel.h"
-#include "Barrier.h"
-#include <iostream>
+#include "pocl.h"
 
-#include "config.h"
-#ifdef LLVM_3_1
-#include "llvm/Support/IRBuilder.h"
-#elif defined LLVM_3_2
-#include "llvm/IRBuilder.h"
-#include "llvm/InlineAsm.h"
-#else
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InlineAsm.h"
-#endif
-POP_COMPILER_DIAGS
 
+#include "Kernel.h"
+#include "Barrier.h"
 #include "DebugHelpers.h"
+
+POP_COMPILER_DIAGS
 
 using namespace llvm;
 using namespace pocl;
@@ -281,9 +276,7 @@ Kernel::addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY, size_t LocalS
   llvm::Module* M = getParent();
 
   int size_t_width = 32;
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  if (M->getPointerSize() == llvm::Module::Pointer64)
-#elif (defined LLVM_3_5 || defined LLVM_3_6) 
+#ifdef LLVM_OLDER_THAN_3_7
   // This breaks (?) if _local_size_x is not stored in AS0,
   // but it always will be as it's just a pseudo variable that
   // will be scalarized.

@@ -24,20 +24,16 @@
 #define _POCL_DEBUG_HELPERS_H
 
 #include <string>
-
-#include "ParallelRegion.h"
-
-#include "config.h"
-#if (defined LLVM_3_1 || defined LLVM_3_2)
-#include "llvm/Function.h"
-#else
-#include "llvm/IR/Function.h"
-#endif
-#include "llvm/Pass.h"
-
 #if _MSC_VER
 #  include <set>
 #endif
+
+#include "config.h"
+
+#include "llvm/IR/Function.h"
+#include "llvm/Pass.h"
+
+#include "ParallelRegion.h"
 
 namespace pocl {
   // View CFG with visual aids to debug kernel compiler problems.

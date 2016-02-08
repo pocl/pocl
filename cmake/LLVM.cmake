@@ -36,6 +36,7 @@ else()
   # search for any version
   find_program(LLVM_CONFIG
     NAMES "llvm-config"
+      "llvm-config-mp-3.8" "llvm-config-3.8" "llvm-config38"
       "llvm-config-mp-3.7" "llvm-config-3.7" "llvm-config37"
       "llvm-config-mp-3.6" "llvm-config-3.6" "llvm-config36"
     DOC "llvm-config executable")
@@ -151,6 +152,8 @@ if(LLVM_VERSION MATCHES "3[.]([0-9]+)")
     set(LLVM_3_6 1)
   elseif(LLVM_MINOR STREQUAL "7")
     set(LLVM_3_7 1)
+  elseif(LLVM_MINOR STREQUAL "8")
+    set(LLVM_3_8 1)
   else()
     message(FATAL_ERROR "Unknown/unsupported minor llvm version: ${LLVM_MINOR}")
   endif()
@@ -190,11 +193,10 @@ list(APPEND LLVM_INCLUDE_DIRS
   "${LLVM_OBJ_ROOT}/tools/clang/include")
 
 # Llvm-config does not include clang libs
-set(CLANG_LIBNAMES clangFrontendTool clangFrontend clangDriver clangSerialization clangCodeGen clangParse clangSema)
-if(LLVM_MINOR GREATER 4)
-  list(APPEND CLANG_LIBNAMES clangRewrite)
-endif()
-list(APPEND CLANG_LIBNAMES clangRewriteFrontend clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers clangStaticAnalyzerCore clangAnalysis clangEdit clangAST clangLex clangBasic)
+set(CLANG_LIBNAMES clangFrontendTool clangFrontend clangDriver clangSerialization
+    clangCodeGen clangParse clangSema clangRewrite clangRewriteFrontend
+    clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers
+    clangStaticAnalyzerCore clangAnalysis clangEdit clangAST clangLex clangBasic)
 
 foreach(LIBNAME ${CLANG_LIBNAMES})
   find_library(C_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")

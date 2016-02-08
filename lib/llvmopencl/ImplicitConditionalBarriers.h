@@ -21,12 +21,8 @@
 // THE SOFTWARE.
 
 #include "config.h"
-#if (defined LLVM_3_1 || defined LLVM_3_2)
-#include "llvm/Function.h"
-#else
-#include "llvm/IR/Function.h"
-#endif
 
+#include "llvm/IR/Function.h"
 #include "llvm/Pass.h"
 #include "llvm/Analysis/PostDominators.h"
 

@@ -55,6 +55,9 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
     BinarySearch
     BinomialOption
     BinomialOptionMultiGPU
+    BitonicSort
+    BlackScholes
+    BlackScholesDP
     DCT
     DwtHaar1D
     DynamicOpenCLDetection
@@ -99,6 +102,17 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
         WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/bin/x86_64")
       set_tests_properties("AMD_29_${SAMPLE}" PROPERTIES LABELS "amdsdk_29")
     endforeach()
+
+  # TODO
+  set_tests_properties(
+    AMD_29_BitonicSort AMD_29_BinarySearch AMD_29_BinomialOption AMD_29_DCT
+    AMD_29_BlackScholes AMD_29_FastWalshTransform AMD_29_FloydWarshall
+    AMD_29_HelloWorld AMD_29_Histogram AMD_29_MatrixMultiplication
+    AMD_29_MatrixTranspose AMD_29_PrefixSum AMD_29_QuasiRandomSequence
+    AMD_29_ScanLargeArrays AMD_29_SimpleConvolution AMD_29_URNG
+    PROPERTIES
+      LABELS "hsa")
+
 
   else()
     message(WARNING "Disabling testsuite ${TS_NAME} - tarball not found")

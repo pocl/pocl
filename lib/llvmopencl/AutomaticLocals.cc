@@ -23,30 +23,14 @@
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
-#include "config.h"
 #include "pocl.h"
-#include "Workgroup.h"
+
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Transforms/Utils/Cloning.h"
-#ifdef LLVM_3_1
-#include "llvm/Target/TargetData.h"
-#elif defined LLVM_3_2
-#include "llvm/DataLayout.h"
-#else
 #include "llvm/IR/DataLayout.h"
-#endif
 
-#if (defined LLVM_3_1 || defined LLVM_3_2)
-#include "llvm/Argument.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Function.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/Instructions.h"
-#include "llvm/Module.h"
-#else
 #include "llvm/IR/Argument.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -54,9 +38,9 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
-#endif
 
 #include "LLVMUtils.h"
+#include "Workgroup.h"
 
 POP_COMPILER_DIAGS
 
@@ -85,9 +69,7 @@ static RegisterPass<AutomaticLocals> X("automatic-locals",
 
 void
 AutomaticLocals::getAnalysisUsage(AnalysisUsage &AU) const {
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  AU.addRequired<DataLayout>();
-#elif (LLVM_OLDER_THAN_3_7)
+#if (LLVM_OLDER_THAN_3_7)
   AU.addRequired<DataLayoutPass>();
 #endif
 }
@@ -108,7 +90,7 @@ AutomaticLocals::runOnModule(Module &M)
     if (!Workgroup::isKernelToProcess(*mi))
       continue;
   
-    Function *F = mi;
+    Function *F = &*mi;
 
     Function *new_kernel = ProcessAutomaticLocals(F);
     if (new_kernel != F)
@@ -152,7 +134,7 @@ AutomaticLocals::ProcessAutomaticLocals(Function *F)
     std::string funcName = "";
     funcName = F->getName().str();
     if (is_automatic_local(funcName, *i)) {
-      locals.push_back(i);
+      locals.push_back(&*i);
       // Add the parameters to the end of the function parameter list.
       parameters.push_back(i->getType());
     }
@@ -179,13 +161,13 @@ AutomaticLocals::ProcessAutomaticLocals(Function *F)
          e = F->arg_end();
        i != e; ++i) {
     j->setName(i->getName());
-    vv[i] = j;
+    vv[&*i] = &*j;
     ++j;
   }
   
   for (int i = 0; j != new_kernel->arg_end(); ++i, ++j) {
     j->setName("_local" + Twine(i));
-    vv[locals[i]] = j;
+    vv[locals[i]] = &*j;
   }
                                  
   SmallVector<ReturnInst *, 1> ri;

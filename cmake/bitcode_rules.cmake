@@ -30,9 +30,9 @@ separate_arguments(KERNEL_CLANGXX_FLAGS)
 
 #/usr/bin/clang --target=x86_64-pc-linux-gnu -march=bdver1 -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off -D__OPENCL_VERSION__=120 -DPOCL_VECMATHLIB_BUILTIN -D__CBUILD__ -o get_local_id.bc -c ${CMAKE_SOURCE_DIR}/lib/kernel/get_local_id.c -include ${CMAKE_SOURCE_DIR}/include/_kernel_c.h
 #	  @CLANG@ ${CLANG_FLAGS} ${KERNEL_CL_FLAGS} -D__CBUILD__ -c -o $@ -include ${abs_top_srcdir}/include/_kernel_c.h $< 
-function(compile_c_to_bc FILENAME BC_FILE_LIST)
+function(compile_c_to_bc FILENAME SUBDIR BC_FILE_LIST)
     get_filename_component(FNAME "${FILENAME}" NAME)
-    set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${FNAME}.bc")
+    set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}.bc")
     set(${BC_FILE_LIST} ${${BC_FILE_LIST}} ${BC_FILE} PARENT_SCOPE)
     set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
 
@@ -48,9 +48,9 @@ endfunction()
 
 # /usr/bin/clang++ --target=x86_64-pc-linux-gnu -march=bdver1 -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off -DVML_NO_IOSTREAM -DPOCL_VECMATHLIB_BUILTIN -o trunc.bc -c ${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib-pocl/trunc.cc
 # 	@CLANGXX@ ${CLANG_FLAGS} ${KERNEL_CLANGXX_FLAGS} -c -o $@ $<
-function(compile_cc_to_bc FILENAME BC_FILE_LIST)
+function(compile_cc_to_bc FILENAME SUBDIR BC_FILE_LIST)
     get_filename_component(FNAME "${FILENAME}" NAME)
-    set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${FNAME}.bc")
+    set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}.bc")
     set(${BC_FILE_LIST} ${${BC_FILE_LIST}} ${BC_FILE} PARENT_SCOPE)
     set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
 
@@ -65,9 +65,9 @@ function(compile_cc_to_bc FILENAME BC_FILE_LIST)
 endfunction()
 
 # /usr/bin/clang --target=x86_64-pc-linux-gnu -march=bdver1 -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off -x cl -D__OPENCL_VERSION__=120 -DPOCL_VECMATHLIB_BUILTIN -fsigned-char -o atan2pi.bc -c ${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib-pocl/atan2pi.cl -include ${CMAKE_SOURCE_DIR}/include/_kernel.h
-function(compile_cl_to_bc FILENAME BC_FILE_LIST)
+function(compile_cl_to_bc FILENAME SUBDIR BC_FILE_LIST)
     get_filename_component(FNAME "${FILENAME}" NAME)
-    set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${FNAME}.bc")
+    set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}.bc")
     set(${BC_FILE_LIST} ${${BC_FILE_LIST}} ${BC_FILE} PARENT_SCOPE)
     set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
 
@@ -88,9 +88,9 @@ endfunction()
 
 
 
-function(compile_ll_to_bc FILENAME BC_FILE_LIST)
+function(compile_ll_to_bc FILENAME SUBDIR BC_FILE_LIST)
     get_filename_component(FNAME "${FILENAME}" NAME)
-    set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${FNAME}.bc")
+    set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}.bc")
     set(${BC_FILE_LIST} ${${BC_FILE_LIST}} ${BC_FILE} PARENT_SCOPE)
     set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
 
@@ -103,16 +103,16 @@ function(compile_ll_to_bc FILENAME BC_FILE_LIST)
 endfunction()
 
 
-macro(compile_to_bc OUTPUT_FILE_LIST)
+macro(compile_to_bc SUBDIR OUTPUT_FILE_LIST)
   foreach(FILENAME ${ARGN})
   if(FILENAME MATCHES "[.]c$")
-    compile_c_to_bc("${FILENAME}" ${OUTPUT_FILE_LIST})
+    compile_c_to_bc("${FILENAME}" "${SUBDIR}" ${OUTPUT_FILE_LIST})
   elseif(FILENAME MATCHES "[.]cc$")
-    compile_cc_to_bc("${FILENAME}" ${OUTPUT_FILE_LIST})
+    compile_cc_to_bc("${FILENAME}" "${SUBDIR}" ${OUTPUT_FILE_LIST})
   elseif(FILENAME MATCHES "[.]cl$")
-    compile_cl_to_bc("${FILENAME}" ${OUTPUT_FILE_LIST})
+    compile_cl_to_bc("${FILENAME}" "${SUBDIR}" ${OUTPUT_FILE_LIST})
   elseif(FILENAME MATCHES "[.]ll$")
-    compile_ll_to_bc("${FILENAME}" ${OUTPUT_FILE_LIST})
+    compile_ll_to_bc("${FILENAME}" "${SUBDIR}" ${OUTPUT_FILE_LIST})
   else()
     message(FATAL_ERROR "Dont know how to compile ${FILENAME} to .bc !")
   endif()
@@ -121,20 +121,21 @@ endmacro()
 
 
 
-function(make_kernel_bc OUTPUT_VAR NAME)
+function(make_kernel_bc OUTPUT_VAR NAME SUBDIR)
   set(KERNEL_BC "${CMAKE_CURRENT_BINARY_DIR}/kernel-${NAME}.bc")
   set(${OUTPUT_VAR} "${KERNEL_BC}" PARENT_SCOPE)
 
-  compile_to_bc(BC_LIST ${ARGN})
+  file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}")
+  compile_to_bc("${SUBDIR}" BC_LIST ${ARGN})
 
   # fix too long commandline with cat and xargs
-  SET(BC_LIST_FILE_TXT "")
+  set(BC_LIST_FILE_TXT "")
   foreach(FILENAME ${BC_LIST})
     # straight parsing semicolon separated list with xargs -d didn't work on windows.. no such switch available
-    SET(BC_LIST_FILE_TXT "${BC_LIST_FILE_TXT} \"${FILENAME}\"")
+    set(BC_LIST_FILE_TXT "${BC_LIST_FILE_TXT} \"${FILENAME}\"")
   endforeach()
-  SET (BC_LIST_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/kernel_${NAME}_linklist.txt")
-  FILE (WRITE "${BC_LIST_FILE}" "${BC_LIST_FILE_TXT}")
+  set(BC_LIST_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/kernel_${NAME}_linklist.txt")
+  file(WRITE "${BC_LIST_FILE}" "${BC_LIST_FILE_TXT}")
 
   add_custom_command( OUTPUT "${KERNEL_BC}"
 # ${KERNEL_BC}: ${OBJ}
@@ -144,17 +145,6 @@ function(make_kernel_bc OUTPUT_VAR NAME)
         COMMAND "${LLVM_OPT}" ${LLC_FLAGS} "-O3" "-fp-contract=off" "-o" "${KERNEL_BC}" "kernel-${NAME}-unoptimized.bc"
         COMMENT "Linking Kernel bitcode ${KERNEL_BC}" 
         VERBATIM)
-
-  add_custom_command( OUTPUT "${CMAKE_BINARY_DIR}/kernellib_hash.h"
-    COMMAND "${CMAKE_COMMAND}" -DKERNELBC='${KERNEL_BC}'
-        -DINCLUDEDIR='${CMAKE_SOURCE_DIR}/include'
-        -DOUTPUT='${CMAKE_BINARY_DIR}/kernellib_hash.h'
-        -P "${CMAKE_SOURCE_DIR}/cmake/kernellib_hash.cmake"
-    DEPENDS "${KERNEL_BC}" "${CMAKE_SOURCE_DIR}/include/_kernel.h"
-        "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
-        "${CMAKE_SOURCE_DIR}/include/pocl_types.h"
-    COMMENT "Generating SHA1 of kernel lib..."
-    VERBATIM)
 
 endfunction()
 

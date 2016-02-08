@@ -20,32 +20,24 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include <iostream>
+
+#include "config.h"
+
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/TypeBuilder.h"
+
 #include "PHIsToAllocas.h"
 #include "Workgroup.h"
 #include "WorkitemHandlerChooser.h"
 #include "WorkitemLoops.h"
 #include "VariableUniformityAnalysis.h"
 
-#include "config.h"
-
-#ifdef LLVM_3_1
-#include "llvm/Support/IRBuilder.h"
-#include "llvm/Support/TypeBuilder.h"
-#elif defined LLVM_3_2
-#include "llvm/IRBuilder.h"
-#include "llvm/TypeBuilder.h"
-#else
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/TypeBuilder.h"
-#endif
-
 namespace {
   static
   llvm::RegisterPass<pocl::PHIsToAllocas> X(
       "phistoallocas", "Convert all PHI nodes to allocas");
 }
-
-#include <iostream>
 
 namespace pocl {
 
@@ -81,7 +73,7 @@ PHIsToAllocas::runOnFunction(Function &F) {
   for (Function::iterator bb = F.begin(); bb != F.end(); ++bb) {
     for (BasicBlock::iterator p = bb->begin(); 
          p != bb->end(); ++p) {
-        Instruction* instr = p;
+        Instruction* instr = &*p;
         if (isa<PHINode>(instr)) {
             PHIs.push_back(instr);
         }
@@ -128,7 +120,7 @@ PHIsToAllocas::BreakPHIToAllocas(PHINode* phi) {
 
   const bool OriginalPHIWasUniform = VUA.isUniform(function, phi);
 
-  IRBuilder<> builder(function->getEntryBlock().getFirstInsertionPt());
+  IRBuilder<> builder(&*(function->getEntryBlock().getFirstInsertionPt()));
 
   llvm::Instruction *alloca = 
     builder.CreateAlloca(phi->getType(), 0, allocaName);

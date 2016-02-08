@@ -26,6 +26,8 @@
 separate_arguments(HOST_CLANG_FLAGS)
 separate_arguments(HOST_LLC_FLAGS)
 
+add_subdirectory("kernel")
+
 add_subdirectory("llvmopencl")
 
 add_subdirectory("CL")
@@ -82,8 +84,6 @@ set(OPENCL_LIBS "${OPENCL_LIBS}" PARENT_SCOPE)
 set(OPENCL_EXTLIBS "${OPENCL_EXTLIBS}" PARENT_SCOPE)
 set(OPENCL_CMAKE_OPTIONS "${OPENCL_CMAKE_OPTIONS}" PARENT_SCOPE)
 set(OPENCL_CFLAGS "${OPENCL_CFLAGS}" PARENT_SCOPE)
-
-add_subdirectory("kernel")
 
 add_subdirectory("poclu")
 

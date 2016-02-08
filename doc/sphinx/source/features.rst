@@ -7,6 +7,17 @@ listed here as encountered.
 Frontend/Clang
 --------------
 
+* OpenCL 1.x
+
+  * OpenGL interoperability
+  * Image support is incomplete
+
+* OpenCL 2.0
+
+  * generic address space (recognized by LLVM 3.8+ but incomplete)
+  * pipes (WIP)
+  * device-side enqueue
+
 * cl_khr_f16: half precision float literals
 
   Compiling "3434.0h" fails with:

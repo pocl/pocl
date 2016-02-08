@@ -44,30 +44,90 @@ else()
   endif()
 endif()
 
-# Use HOST flags:
-#~ CLANG_FLAGS = @HOST_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off
 separate_arguments(HOST_CLANG_FLAGS)
-set(CLANG_FLAGS ${HOST_CLANG_FLAGS} "-Xclang" "-ffake-address-space-map" "-emit-llvm" "-ffp-contract=off")
-
-# LLC_FLAGS   = @HOST_LLC_FLAGS@
 separate_arguments(HOST_LLC_FLAGS)
-set(LLC_FLAGS ${HOST_LLC_FLAGS})
-
-# TODO LLC_flags is used by kernel.bc target, but ld is unused
-#LD_FLAGS    = @HOST_LD_FLAGS@
-
 set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=${HOST_DEVICE_CL_VERSION} ${HOST_DEVICE_EXTENSION_DEFINES}")
 separate_arguments(DEVICE_CL_FLAGS)
 
+
+function(x86_distro_variant_to_flags VARIANT OUT_LLC_FLAGS OUT_CLANG_FLAGS)
+
+  if("${VARIANT}" STREQUAL "sse2")
+    set(CLANG_F "${CLANG_MARCH_FLAG}athlon64")
+    set(LLC_F "-mcpu=athlon64")
+
+  elseif("${VARIANT}" STREQUAL "ssse3")
+    set(CLANG_F "${CLANG_MARCH_FLAG}core2")
+    set(LLC_F "-mcpu=core2")
+
+  elseif("${VARIANT}" STREQUAL "sse41")
+    set(CLANG_F "${CLANG_MARCH_FLAG}penryn")
+    set(LLC_F "-mcpu=penryn")
+
+  elseif("${VARIANT}" STREQUAL "avx")
+    set(CLANG_F "${CLANG_MARCH_FLAG}sandybridge")
+    set(LLC_F "-mcpu=sandybridge")
+
+  elseif("${VARIANT}" STREQUAL "avx_fma4")
+    set(CLANG_F "${CLANG_MARCH_FLAG}bdver1")
+    set(LLC_F "-mcpu=bdver1")
+
+  elseif("${VARIANT}" STREQUAL "avx2")
+    set(CLANG_F "${CLANG_MARCH_FLAG}haswell")
+    set(LLC_F "-mcpu=haswell")
+
+  elseif("${VARIANT}" STREQUAL "avx512")
+    set(CLANG_F "${CLANG_MARCH_FLAG}skylake")
+    set(LLC_F "-mcpu=skylake")
+
+  else()
+    set(CLANG_F "${CLANG_MARCH_FLAG}${VARIANT}")
+    set(LLC_F "-mcpu=${VARIANT}")
+
+  endif()
+
+  set(${OUT_LLC_FLAGS} "${LLC_F}" PARENT_SCOPE)
+  set(${OUT_CLANG_FLAGS} "${CLANG_F}" PARENT_SCOPE)
+endfunction()
+
+###############################################################################
+
+foreach(CPU_VARIANT IN LISTS KERNELLIB_HOST_CPU_VARIANTS)
+
+if(CPU_VARIANT MATCHES "native")
+  set(VARIANT "${LLC_HOST_CPU}")
+else()
+  set(VARIANT "${CPU_VARIANT}")
+endif()
+
+if(X86_64 OR I386)
+  x86_distro_variant_to_flags("${VARIANT}" LLC_CPUFLAGS CLANG_CPUFLAGS)
+else()
+  set(CLANG_CPUFLAGS "${CLANG_MARCH_FLAG}${VARIANT}")
+  set(LLC_CPUFLAGS "-mcpu=${VARIANT}")
+endif()
+
+separate_arguments(CLANG_CPUFLAGS)
+separate_arguments(LLC_CPUFLAGS)
+set(CLANG_FLAGS ${HOST_CLANG_FLAGS} ${CLANG_CPUFLAGS} "-Xclang" "-ffake-address-space-map" "-emit-llvm" "-ffp-contract=off")
+set(LLC_FLAGS ${HOST_LLC_FLAGS} ${LLC_CPUFLAGS})
+
 # KERNEL_TARGET = @OCL_KERNEL_TARGET@
-make_kernel_bc(KERNEL_BC "${OCL_KERNEL_TARGET}" ${KERNEL_SOURCES})
+make_kernel_bc(KERNEL_BC "${OCL_KERNEL_TARGET}-${VARIANT}" "${VARIANT}" ${KERNEL_SOURCES})
 
 # just debug
-message(STATUS "Host Kernel BC: ${KERNEL_BC}")
+message(STATUS "Host Kernel BC for \"${VARIANT}\": ${KERNEL_BC}")
+
+list(APPEND KERNEL_BC_LIST "${KERNEL_BC}")
+set(KERNEL_BC_LIST "${KERNEL_BC_LIST}" PARENT_SCOPE)
 
 # a target is needed...
-add_custom_target("kernel_host" ALL
-    DEPENDS ${KERNEL_BC} "${CMAKE_BINARY_DIR}/kernellib_hash.h")
+add_custom_target("kernel_host_${VARIANT}" DEPENDS ${KERNEL_BC})
+
+list(APPEND KERNEL_TARGET_LIST "kernel_host_${VARIANT}")
+set(KERNEL_TARGET_LIST "${KERNEL_TARGET_LIST}" PARENT_SCOPE)
 
 install(FILES "${KERNEL_BC}"
         DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}")
+
+endforeach()

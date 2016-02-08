@@ -25,6 +25,12 @@
 
 if(UNIX)
 
+  if((X86_64 OR I386) AND KERNELLIB_HOST_DISTRO_VARIANTS)
+    set(KERNLIB_VARIANT "sse2")
+  else()
+    set(KERNLIB_VARIANT "${LLC_HOST_CPU}")
+  endif()
+
   # build-dir script
   set(LLVMOPENCL_LOCATION "$<TARGET_FILE:llvmopencl>")
   set(KERNEL_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/include")

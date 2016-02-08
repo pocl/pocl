@@ -2,11 +2,8 @@
 #define POCL_LINKER_H
 
 #include "config.h"
-#ifdef LLVM_3_2
-#include "llvm/Module.h"
-#else
+
 #include "llvm/IR/Module.h"
-#endif
 
 /**
  * Link in module lib to krn.
