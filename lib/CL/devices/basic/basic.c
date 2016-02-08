@@ -875,7 +875,7 @@ struct compiler_cache_item
 static compiler_cache_item *compiler_cache;
 static pocl_lock_t compiler_cache_lock;
 
-void pocl_basic_load_binary(const char *binary,
+void pocl_basic_load_binary(const char *binary, int binary_size,
                             _cl_command_node *cmd)
 {
   char workgroup_string[WORKGROUP_STRING_LENGTH];
@@ -926,7 +926,7 @@ void check_compiler_cache (_cl_command_node *cmd)
                                         cmd->command.run.kernel,
                                         cmd->device);
 
-  pocl_basic_load_binary(module_fn, cmd);
+  pocl_basic_load_binary(module_fn, 0, cmd);
 
   LL_APPEND (compiler_cache, ci);
   POCL_UNLOCK (compiler_cache_lock);

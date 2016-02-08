@@ -1,16 +1,13 @@
 #include "pocl_util.h"
+#include "pocl_binary_format.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clExportBinaryFormat)(cl_program program,
                              void **binary_format,
                              cl_uint *binary_size){
-  const char *poclcc_string_id = POCLCC_STRING_ID;
-  const cl_uint poclcc_version = POCLCC_VERSION;
   cl_int num_devices;
   size_t size_ret;
-  int i,
-    sizeof_binaries = 0,
-    sizeof_string_id = strlen(poclcc_string_id)*sizeof(char);
+  int i;
   size_t *binaries_sizes;
   unsigned char **binaries;
   cl_int errcode = CL_SUCCESS;
@@ -41,7 +38,6 @@ POname(clExportBinaryFormat)(cl_program program,
       errcode = CL_OUT_OF_HOST_MEMORY;
       goto ERROR;
     }
-    sizeof_binaries += binaries_sizes[i];
   }
 
   errcode = clGetProgramInfo(program, CL_PROGRAM_BINARIES, 
@@ -49,30 +45,20 @@ POname(clExportBinaryFormat)(cl_program program,
                              binaries, &size_ret);
   if (errcode != 0) goto ERROR;
 
-  *binary_size = sizeof_string_id 
-    + sizeof(cl_uint) 
-    + num_devices*sizeof(uint32_t) 
-    + sizeof_binaries;
+  *binary_size = sizeofPoclccGlobalFromBinariesSizes(binaries_sizes, 
+                                                     num_devices);
   if ((*binary_format = malloc(*binary_size)) == NULL){
     errcode = CL_OUT_OF_HOST_MEMORY;
     goto ERROR;
   }
+  
+  poclcc_global poclcc;
+  POCL_GOTO_ERROR_COND(programInfos2BinaryFormat(&poclcc, binaries, num_devices)
+                       != CL_SUCCESS, 
+                       CL_OUT_OF_HOST_MEMORY);
+  binaryFormat2Buffer(*binary_format, *binary_size, &poclcc);
 
-  void *bf = *binary_format;
-  strcpy(bf, poclcc_string_id);
-  bf += sizeof_string_id;
-
-  memcpy(bf, &poclcc_version, sizeof(cl_uint));
-  bf += sizeof(cl_uint);
-
-  for (i=0; i<num_devices; i++){
-    memcpy(bf, &binaries_sizes[i], sizeof(uint32_t));
-    bf += sizeof(uint32_t);
-    memcpy(bf, binaries[i], binaries_sizes[i]*sizeof(char));
-    bf += binaries_sizes[i]*sizeof(char);
-  }
-
-  //return errcode;
+  return errcode;
 
 ERROR:
   for (i=0; i<num_devices; i++)

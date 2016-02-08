@@ -25,9 +25,11 @@
 #include "pocl_llvm.h"
 #include "pocl_util.h"
 #include "pocl_cache.h"
+#include "pocl_binary_format.h"
+
 
 cl_int compileKernels(cl_program program, cl_device_id device, 
-                      void **binary_ptr, size_t *binary_size)
+                      unsigned char **binary_ptr, size_t *binary_size)
 {
   cl_int errcode = CL_SUCCESS;
 
@@ -45,17 +47,12 @@ cl_int compileKernels(cl_program program, cl_device_id device,
   errcode = clCreateKernelsInProgram(program, 32, kernel, &num_kernels);
   POCL_RETURN_ERROR_COND(errcode != CL_SUCCESS, errcode);
 
-  void **kernel_tab;
-  uint32_t *kernel_tab_sizes;
-  char *binary;
-  POCL_RETURN_ERROR_COND((kernel_tab = malloc(sizeof(void*)*num_kernels)) == NULL,
-                         CL_OUT_OF_HOST_MEMORY);
+  poclcc_kernel *kernel_tab;
+  unsigned char *binary;
+  POCL_RETURN_ERROR_COND(
+    (kernel_tab = malloc(sizeof(poclcc_kernel)*num_kernels)) == NULL,
+    CL_OUT_OF_HOST_MEMORY);
     
-  if ((kernel_tab_sizes = malloc(sizeof(uint32_t)*num_kernels)) == NULL){
-    errcode = CL_OUT_OF_HOST_MEMORY;
-    goto ERROR_CLEAN_KERNEL_TAB;
-  }
-
   int i=0;
   for (; i<num_kernels; i++){
 
@@ -65,10 +62,11 @@ cl_int compileKernels(cl_program program, cl_device_id device,
                                          device, kernel[i],
                                          0,0,0);
 
-    errcode = pocl_llvm_generate_workgroup_function(device,
-                                                    kernel[i],
-                                                    0,0,0);
-    if (errcode) goto ERROR_CLEAN_KERNEL_TAB;
+    POCL_GOTO_ERROR_COND(
+      (errcode = pocl_llvm_generate_workgroup_function(device,
+                                                       kernel[i],
+                                                       0,0,0)) == 0,
+      errcode);
 
     command_node->command.run.kernel = kernel[i];
     command_node->command.run.tmp_dir = strdup(cachedir);
@@ -87,58 +85,43 @@ cl_int compileKernels(cl_program program, cl_device_id device,
 
     FILE *f = fopen(objfile, "r");
     fseek(f, 0, SEEK_END);
-    uint32_t fsize = ftell(f);
+    int fsize = ftell(f);
     fseek(f, 0, SEEK_SET);
+      
+    POCL_GOTO_ERROR_COND(
+      (binary = malloc(fsize)) == NULL, CL_OUT_OF_HOST_MEMORY);
 
-    int sizeof_kernel_name = strlen(kernel[i]->name);
-    int header_size = 2 * sizeof(uint32_t) + sizeof_kernel_name;
-    if ((binary = malloc(fsize + header_size )) == NULL){
-      errcode = CL_OUT_OF_HOST_MEMORY;
-      goto ERROR;
-    }
-
-    kernel_tab[i] = binary;
-    kernel_tab_sizes[i] = header_size + fsize;
-
-    fread(&binary[header_size], fsize, 1, f);
+    fread(binary, fsize, 1, f);
     fclose(f);
 
     pocl_cache_release_lock(lock);
-  
-    //WRITE METADATA
-    ((uint32_t *)binary)[0] = sizeof_kernel_name;
-    binary += sizeof(uint32_t);
-    memcpy(&binary[0], kernel[i]->name, sizeof_kernel_name);
-    binary += sizeof_kernel_name;
-    ((uint32_t *)binary)[0] = fsize;
-  }
 
-  size_t binary_size_tmp = sizeof(cl_uint) + strlen(POCLCC_STRING_ID);
-  for (i=0; i<num_kernels; i++) binary_size_tmp += kernel_tab_sizes[i];
+    int sizeofKernelName = strlen(kernel[i]->name);
+    char *kernel_name;
+    POCL_GOTO_ERROR_COND(
+      (kernel_name = malloc(sizeofKernelName)) 
+      == NULL,
+      CL_OUT_OF_HOST_MEMORY);
+    memcpy(kernel_name, kernel[i]->name, sizeofKernelName);
+    
+    poclcc_kernel *kernelcc = &(kernel_tab[i]);
+    poclcc_init_kernel(kernelcc, kernel_name, sizeofKernelName, binary, fsize);           
+  }
   
-  POCL_GOTO_ERROR_COND((binary = malloc(binary_size_tmp)) == NULL,
+  poclcc_device *devicecc;
+  POCL_GOTO_ERROR_COND((devicecc = malloc(sizeof(poclcc_device))) == NULL,
                        CL_OUT_OF_HOST_MEMORY);
 
-  *binary_ptr = (void *)binary;
-  *binary_size = binary_size_tmp;
+  poclcc_init_device(devicecc, device, num_kernels, kernel_tab);
 
-  memcpy(binary, POCLCC_STRING_ID, strlen(POCLCC_STRING_ID));
-  binary += strlen(POCLCC_STRING_ID);
-  *((cl_uint*)binary) = device->vendor_id;
-  binary += sizeof(cl_uint);
+  *binary_ptr = (void *)devicecc;
+  *binary_size = sizeofPoclccDevice(devicecc);
 
-  for (i=0; i<num_kernels; i++){
-    memcpy(binary, kernel_tab[i], kernel_tab_sizes[i]);
-    binary += kernel_tab_sizes[i];
-  }
+  return errcode;
 
 ERROR:
-  for (i=0; i<num_kernels; i++)
-    free(kernel_tab[i]);
-  free(kernel_tab_sizes);
-ERROR_CLEAN_KERNEL_TAB:
-  free(kernel_tab);
-
+  POCL_MEM_FREE(kernel_tab);
+  POCL_MEM_FREE(devicecc);  
   return errcode;
 }
 
@@ -152,7 +135,7 @@ cl_int compileForDevices(cl_program program)
   assert(program->BF == NULL);
   assert(program->BF_sizes == NULL);
 
-  void **device_tab;
+  unsigned char **device_tab;
   size_t *device_tab_sizes;
   POCL_RETURN_ERROR_COND((device_tab = malloc(sizeof(void*)*num_devices)) == NULL,
                          CL_OUT_OF_HOST_MEMORY);
@@ -169,7 +152,7 @@ cl_int compileForDevices(cl_program program)
     POCL_GOTO_ERROR_COND(errcode != CL_SUCCESS, errcode);
   }
 
-  program->BF = (unsigned char **)device_tab;
+  program->BF = device_tab;
   program->BF_sizes = device_tab_sizes;
 
   return errcode;

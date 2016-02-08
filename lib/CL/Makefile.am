@@ -135,6 +135,7 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clSetKernelExecInfo.c \
                    clExportBinaryFormat.c \
                    clExtractBinaryFormat.c \
+                   pocl_binary_format.c pocl_binary_format.h \
                    pocl_cl.h \
                    pocl_util.c pocl_util.h \
                    pocl_queue_util.c pocl_queue_util.h \

@@ -24,6 +24,7 @@
 #include "pocl_cl.h"
 #include "pocl_util.h"
 #include <string.h>
+#include "pocl_binary_format.h"
 
 CL_API_ENTRY cl_program CL_API_CALL
 POname(clCreateProgramWithBinary)(cl_context                     context,
@@ -151,9 +152,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
          * the first bytes are a magic string to identify pocl binary
          * the next 4 bytes are the vendor_id of the device
          */
-      } else if ((!strncmp(binaries[i], POCLCC_STRING_ID, strlen(POCLCC_STRING_ID)) 
-                  && *((uint32_t*)(&binaries[i][strlen(POCLCC_STRING_ID)])) 
-                  == device_list[i]->vendor_id)) {
+      } else if (poclcc_check_binary(device_list[i], binaries[i])) {
         memcpy (program->BF[i], &binaries[i], lengths[i]);
         if (binary_status != NULL)
           binary_status[i] = CL_SUCCESS;

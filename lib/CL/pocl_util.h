@@ -37,10 +37,6 @@
 extern "C" {
 #endif
 
-/* Binary format identifier */
-#define POCLCC_STRING_ID "poclbin"
-#define POCLCC_VERSION 1  
-
 uint32_t byteswap_uint32_t (uint32_t word, char should_swap);
 float byteswap_float (float word, char should_swap);
 

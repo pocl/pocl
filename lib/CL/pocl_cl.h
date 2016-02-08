@@ -270,7 +270,7 @@ void (*memfill) (void *ptr,
   void* (*map_mem) (void *data, void *buf_ptr, size_t offset, size_t size, void *host_ptr);
   void* (*unmap_mem) (void *data, void *host_ptr, void *device_start_ptr, size_t size);
   
-  void (*load_binary) (const char *binary, _cl_command_node* cmd);
+  void (*load_binary) (const char *binary, int binary_size,_cl_command_node* cmd);
   void (*compile_submitted_kernels) (_cl_command_node* cmd);
   void (*run) (void *data, _cl_command_node* cmd);
   void (*run_native) (void *data, _cl_command_node* cmd);

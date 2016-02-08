@@ -28,6 +28,7 @@
 #include "pocl_util.h"
 #include "pocl_cache.h"
 #include "utlist.h"
+#include "pocl_binary_format.h"
 #ifndef _MSC_VER
 #  include <unistd.h>
 #else
@@ -252,39 +253,22 @@ DETERMINE_LOCAL_SIZE:
   if (error != CL_SUCCESS)
     goto ERROR;
 
-  if (kernel->program->isBinaryFormat) {
-    char *binary;
-    int i=0;
-    while (i < kernel->program->num_devices){
-      char *binary_i = kernel->program->BF[i];
-      binary_i += strlen(POCLCC_STRING_ID);
-      if ( realdev->vendor_id == *((uint32_t*)binary_i))
-        break;
-    }
-    POCL_RETURN_ERROR_COND(i == kernel->program->num_devices, 
-                           CL_INVALID_PROGRAM_EXECUTABLE);
-      
-    binary = (char *)(kernel->program->BF[i]);
-    char *end_of_binary = binary + kernel->program->BF_sizes[i];
-    binary += strlen(POCLCC_STRING_ID) + sizeof(uint32_t);
-    while (binary < end_of_binary){
-      uint32_t kernel_name_size = *((uint32_t*)binary);
-      binary += sizeof(uint32_t);
-      if (strncmp(binary, kernel->name, kernel_name_size) 
-          && strlen(kernel->name) == kernel_name_size){
-        binary += kernel_name_size + sizeof(uint32_t);
-        break;
-      }
-      binary += kernel_name_size;
-      binary += sizeof(uint32_t) + *((uint32_t *)binary);
-    }
-    POCL_RETURN_ERROR_COND(binary >= end_of_binary, 
-                           CL_INVALID_PROGRAM_EXECUTABLE);
+  if (kernel->program->isBinaryFormat) {    
 
-    realdev->ops->load_binary(binary,command_node);
+    poclcc_global poclcc;
+    programInfos2BinaryFormat(
+      &poclcc, kernel->program->BF, kernel->program->num_devices);
+
+    char *binary;
+    int binary_size;
+    POCL_RETURN_ERROR_COND(
+      (error=LookForKernelBinary(&poclcc, realdev, kernel->name, &binary, &binary_size)) 
+      != CL_SUCCESS,
+      error);
+
+    realdev->ops->load_binary(binary, binary_size, command_node);
     command_node->isBinaryFormat=1;
   }
-
 
   pc.work_dim = work_dim;
   pc.num_groups[0] = global_x / local_x;
