@@ -169,7 +169,8 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
     program->isBinaryFormat = 1;  
     program->BF = program->binaries;
     program->BF_sizes = program->binary_sizes;
-  }
+  } else
+    program->isBinaryFormat = 0;    
 
   POCL_RETAIN_OBJECT(context);
 
