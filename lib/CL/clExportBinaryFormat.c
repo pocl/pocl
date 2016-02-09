@@ -56,7 +56,9 @@ POname(clExportBinaryFormat)(cl_program program,
   POCL_GOTO_ERROR_COND(programInfos2BinaryFormat(&poclcc, binaries, num_devices)
                        != CL_SUCCESS, 
                        CL_OUT_OF_HOST_MEMORY);
-  binaryFormat2Buffer(*binary_format, *binary_size, &poclcc);
+  POCL_GOTO_ERROR_COND(
+    (errcode=binaryFormat2Buffer(*binary_format, *binary_size, &poclcc)) != CL_SUCCESS,
+    errcode);
 
   poclcc_free(&poclcc);
 

@@ -96,6 +96,8 @@ add_test("\"regression/assigning a loop iterator variable to a private makes it 
 add_test("\"regression/assigning a loop iterator variable to a private makes it local 2 (repl)\""
                            "test_assign_loop_variable_to_privvar_makes_it_local_2")
 
+add_test("\"regression/enqueue kernel created with binary (repl)\"" "test_enqueue_kernel_from_binary")
+
 set_tests_properties("\"regression/phi nodes not replicated (repl)\""
   "\"regression/issues with local pointers (repl)\""
   "\"regression/barrier between two for loops (repl)\""
@@ -109,6 +111,7 @@ set_tests_properties("\"regression/phi nodes not replicated (repl)\""
   "\"regression/undominated variable from conditional barrier handling (repl)\""
   "\"regression/assigning a loop iterator variable to a private makes it local (repl)\""
   "\"regression/assigning a loop iterator variable to a private makes it local 2 (repl)\""
+  "\"regression/enqueue kernel created with binary (repl)\""
   PROPERTIES
     ENVIRONMENT "POCL_WORK_GROUP_METHOD=workitemrepl"
     COST 1.5

@@ -81,8 +81,15 @@ POname(clCreateKernel)(cl_program program,
       /* If there is no device dir for this device, the program was
          not built for that device in clBuildProgram. This seems to
          be OK by the standard. */
+      if (program->isBinaryFormat){
+        kernel->dyn_arguments = malloc(32*sizeof(struct pocl_argument));
+        kernel->arg_info = malloc(32*sizeof(struct pocl_argument_info));
+        kernel->num_locals = 0;
+        kernel->num_args = 0;
+        continue;
+      }
       if (!pocl_cache_device_cachedir_exists(program, device_i))
-          continue;
+        continue;
 
       error = pocl_llvm_get_kernel_metadata(program,
                       kernel, device_i, kernel_name, &errcode);

@@ -134,9 +134,9 @@ cl_int programInfos2BinaryFormat(poclcc_global *binary_format, unsigned char **b
       return CL_OUT_OF_HOST_MEMORY;
     }
     int j;
+    char *kernel_src = (char *)(&(device_src->kernels));
     for (j=0; j<num_kernels; j++){
       poclcc_kernel *kernel_dst = &(device_dst->kernels[i]);
-      char *kernel_src = (char *)(&(device_src->kernels[i]));
 
       int sizeofKernelName = *((int *)kernel_src);
       kernel_dst->sizeofKernelName = sizeofKernelName;
@@ -259,9 +259,10 @@ int binaryFormat2Buffer(char *buffer, int sizeofBuffer, poclcc_global *binary_fo
       assert(buffer < endofBuffer && "buffer is not a binaryformat");
     }
   }
-  return sizeofBuffer - (int)(endofBuffer - buffer) == 0? 
-    CL_SUCCESS:
-    sizeofBuffer - (int)(endofBuffer - buffer);  
+  return CL_SUCCESS;
+    /* (int)(endofBuffer - buffer) == 0?  */
+    /* CL_SUCCESS: */
+    /* (int)(endofBuffer - buffer);   */
 }
 
 int buffer2BinaryFormat(poclcc_global *binary_format, char *buffer, int sizeofBuffer){
@@ -314,9 +315,10 @@ int buffer2BinaryFormat(poclcc_global *binary_format, char *buffer, int sizeofBu
 
     }
   }
-  return sizeofBuffer - (int)(endofBuffer - buffer) == 0? 
-    CL_SUCCESS:
-    sizeofBuffer - (int)(endofBuffer - buffer);  
+  return CL_SUCCESS;
+    /* (int)(endofBuffer - buffer) == 0?  */
+    /* CL_SUCCESS: */
+    /* (int)(endofBuffer - buffer);   */
 
 ERROR_CLEAN_DEVICE_KERNEL:
   for (i=0; i<binary_format->num_devices; i++){

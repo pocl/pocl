@@ -10,11 +10,11 @@ POname(clExtractBinaryFormat)(void *input_buffer,
 
   poclcc_global poclcc;
   POCL_RETURN_ERROR_COND(
-    (errcode=buffer2BinaryFormat(&poclcc, input_buffer, input_buffer_size))==CL_SUCCESS,
+    (errcode=buffer2BinaryFormat(&poclcc, input_buffer, input_buffer_size)) != CL_SUCCESS,
     errcode);
 
   POCL_RETURN_ERROR_COND(
-    (errcode=binaryFormat2ProgramInfos(binaries, lengths, &poclcc)) == CL_SUCCESS,
+    (errcode=binaryFormat2ProgramInfos(binaries, lengths, &poclcc)) != CL_SUCCESS,
     errcode);
 
   poclcc_free(&poclcc);

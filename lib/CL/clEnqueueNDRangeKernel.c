@@ -235,10 +235,9 @@ DETERMINE_LOCAL_SIZE:
 
   char cachedir[POCL_FILENAME_LENGTH];
   pocl_cache_make_kernel_cachedir_path(cachedir, kernel->program,
-                                  realdev, kernel,
-                                  local_x, local_y, local_z);
-
-
+                                       realdev, kernel,
+                                       local_x, local_y, local_z);
+  
   if (!kernel->program->isBinaryFormat) {
     error = pocl_llvm_generate_workgroup_function(realdev,
                                                   kernel, 
@@ -252,25 +251,6 @@ DETERMINE_LOCAL_SIZE:
                                event_wait_list);
   if (error != CL_SUCCESS)
     goto ERROR;
-
-  if (kernel->program->isBinaryFormat) {    
-
-    poclcc_global poclcc;
-    programInfos2BinaryFormat(
-      &poclcc, kernel->program->BF, kernel->program->num_devices);
-
-    char *binary;
-    int binary_size;
-    POCL_RETURN_ERROR_COND(
-      (error=LookForKernelBinary(&poclcc, realdev, kernel->name, &binary, &binary_size)) 
-      != CL_SUCCESS,
-      error);
-
-    poclcc_free(&poclcc);
-
-    realdev->ops->load_binary(binary, binary_size, command_node);
-    command_node->isBinaryFormat=1;
-  }
 
   pc.work_dim = work_dim;
   pc.num_groups[0] = global_x / local_x;
@@ -322,8 +302,7 @@ DETERMINE_LOCAL_SIZE:
     }
 
   command_node->next = NULL; 
-  
-  
+    
   POname(clRetainKernel) (kernel);
 
   command_node->command.run.arg_buffer_count = 0;
@@ -355,6 +334,35 @@ DETERMINE_LOCAL_SIZE:
         command_node->command.run.arg_buffers[count] = buf;
         ++count;
       }
+  }
+
+  if (kernel->program->isBinaryFormat) {    
+   
+    poclcc_global poclcc;
+    programInfos2BinaryFormat(
+      &poclcc, kernel->program->BF, kernel->program->num_devices);
+
+    char *binary;
+    int binary_size;
+    POCL_RETURN_ERROR_COND(
+      (error=LookForKernelBinary(&poclcc, realdev, kernel->name, &binary, &binary_size)) 
+      != CL_SUCCESS,
+      error);
+
+    poclcc_free(&poclcc);
+
+    char objfile[POCL_FILENAME_LENGTH];
+    snprintf(objfile, POCL_FILENAME_LENGTH, 
+             "%s/%s.so", 
+             cachedir,
+             kernel->name);
+    
+    FILE *fp = fopen(objfile, "w");
+    fwrite(binary, sizeof(char), binary_size, fp);
+    fclose(fp);
+
+    realdev->ops->load_binary(objfile, binary_size, command_node);
+    command_node->isBinaryFormat=1;
   }
 
   pocl_command_enqueue (command_queue, command_node);
