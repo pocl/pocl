@@ -28,8 +28,7 @@
 #include "pocl_binary_format.h"
 
 
-cl_int compileKernels(cl_program program, cl_device_id device, 
-                      unsigned char **binary_ptr, size_t *binary_size)
+cl_int compileKernels(cl_program program, cl_device_id device, poclcc_device *devicecc)
 {
   cl_int errcode = CL_SUCCESS;
 
@@ -48,13 +47,12 @@ cl_int compileKernels(cl_program program, cl_device_id device,
   POCL_RETURN_ERROR_COND(errcode != CL_SUCCESS, errcode);
 
   poclcc_kernel *kernel_tab;
-  unsigned char *binary;
   POCL_RETURN_ERROR_COND(
     (kernel_tab = malloc(sizeof(poclcc_kernel)*num_kernels)) == NULL,
     CL_OUT_OF_HOST_MEMORY);
     
-  int i=0;
-  for (; i<num_kernels; i++){
+  int i;
+  for (i=0; i<num_kernels; i++){
 
     //COMPILATION
     char cachedir[POCL_FILENAME_LENGTH];
@@ -65,7 +63,7 @@ cl_int compileKernels(cl_program program, cl_device_id device,
     POCL_GOTO_ERROR_COND(
       (errcode = pocl_llvm_generate_workgroup_function(device,
                                                        kernel[i],
-                                                       0,0,0)) == 0,
+                                                       0,0,0)) != CL_SUCCESS,
       errcode);
 
     command_node->command.run.kernel = kernel[i];
@@ -88,6 +86,7 @@ cl_int compileKernels(cl_program program, cl_device_id device,
     int fsize = ftell(f);
     fseek(f, 0, SEEK_SET);
       
+    unsigned char *binary;
     POCL_GOTO_ERROR_COND(
       (binary = malloc(fsize)) == NULL, CL_OUT_OF_HOST_MEMORY);
 
@@ -103,25 +102,17 @@ cl_int compileKernels(cl_program program, cl_device_id device,
       == NULL,
       CL_OUT_OF_HOST_MEMORY);
     memcpy(kernel_name, kernel[i]->name, sizeofKernelName);
-    
+
     poclcc_kernel *kernelcc = &(kernel_tab[i]);
     poclcc_init_kernel(kernelcc, kernel_name, sizeofKernelName, binary, fsize);           
   }
   
-  poclcc_device *devicecc;
-  POCL_GOTO_ERROR_COND((devicecc = malloc(sizeof(poclcc_device))) == NULL,
-                       CL_OUT_OF_HOST_MEMORY);
-
   poclcc_init_device(devicecc, device, num_kernels, kernel_tab);
-
-  *binary_ptr = (void *)devicecc;
-  *binary_size = sizeofPoclccDevice(devicecc);
 
   return errcode;
 
 ERROR:
   POCL_MEM_FREE(kernel_tab);
-  POCL_MEM_FREE(devicecc);  
   return errcode;
 }
 
@@ -135,32 +126,27 @@ cl_int compileForDevices(cl_program program)
   assert(program->BF == NULL);
   assert(program->BF_sizes == NULL);
 
-  unsigned char **device_tab;
-  size_t *device_tab_sizes;
-  POCL_RETURN_ERROR_COND((device_tab = malloc(sizeof(void*)*num_devices)) == NULL,
-                         CL_OUT_OF_HOST_MEMORY);
-    
-  if ((device_tab_sizes = malloc(sizeof(uint32_t)*num_devices)) == NULL){
-    errcode = CL_OUT_OF_HOST_MEMORY;
-    goto ERROR_CLEAN_DEVICE_TAB;
-  }
+  poclcc_global poclcc;
+  poclcc_device *devicecc;
+  POCL_RETURN_ERROR_COND(
+    (devicecc = malloc(sizeof(poclcc_device)*num_devices)) == NULL,
+    CL_OUT_OF_HOST_MEMORY);
+  poclcc_init_global(&poclcc, num_devices, devicecc);
 
-  int i=0;
-  for (; i<num_devices; i++){
+  int i;
+  for (i=0; i<num_devices; i++){
     cl_device_id device = program->devices[i];
-    errcode = compileKernels(program, device, &device_tab[i], &device_tab_sizes[i]);
+    errcode = compileKernels(program, device, &(poclcc.devices[i]));
     POCL_GOTO_ERROR_COND(errcode != CL_SUCCESS, errcode);
   }
 
-  program->BF = device_tab;
-  program->BF_sizes = device_tab_sizes;
+  errcode = binaryFormat2ProgramInfos(&(program->BF), &(program->BF_sizes), &poclcc);
+  POCL_GOTO_ERROR_COND(errcode != CL_SUCCESS, errcode);
 
   return errcode;
 
 ERROR:
-  POCL_MEM_FREE(device_tab_sizes);
-ERROR_CLEAN_DEVICE_TAB:
-  POCL_MEM_FREE(device_tab);
+  poclcc_free(&poclcc);
   return errcode;
 }
 
@@ -172,6 +158,7 @@ POname(clGetProgramInfo)(cl_program program,
                  size_t *param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
   unsigned i;
+  cl_int errcode = CL_SUCCESS;
 
   POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
 
@@ -195,7 +182,10 @@ POname(clGetProgramInfo)(cl_program program,
     {
       size_t const value_size = sizeof(size_t) * program->num_devices;
       if (param_value)
-        compileForDevices(program);
+        errcode = compileForDevices(program);
+      
+      if (errcode != CL_SUCCESS)
+        return errcode;
 
       POCL_RETURN_GETINFO_SIZE(value_size, program->BF_sizes);
     }
@@ -205,7 +195,11 @@ POname(clGetProgramInfo)(cl_program program,
       size_t const value_size = sizeof(unsigned char *) * program->num_devices;
       if (param_value)
       {
-        compileForDevices(program);
+        errcode = compileForDevices(program);
+
+        if (errcode != CL_SUCCESS)
+          return errcode;
+
         if (param_value_size < value_size) return CL_INVALID_VALUE;
         unsigned char **target = (unsigned char**) param_value;
         for (i = 0; i < program->num_devices; ++i)

@@ -80,6 +80,7 @@ int sizeofPoclccDevice(poclcc_device *device){
   for (i=0; i<device->num_kernels; i++){
     size += sizeofPoclccKernel(&(device->kernels[i]));
   }
+  return size;
 }
 
 int sizeofPoclccGlobal(poclcc_global *binary_format){
@@ -335,6 +336,13 @@ ERROR:
 }
 
 
+
+void poclcc_init_global(poclcc_global *globalcc, int num_devices, poclcc_device *devices){
+  globalcc->num_devices = num_devices;
+  globalcc->devices = devices;
+  strncpy(globalcc->pocl_id, POCLCC_STRING_ID, POCLCC_STRING_ID_LENGTH);
+  globalcc->version = POCLCC_VERSION;
+}
 
 void poclcc_init_device(poclcc_device *devicecc, cl_device_id device, 
                         int num_kernels, poclcc_kernel *kernels){

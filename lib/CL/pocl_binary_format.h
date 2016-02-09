@@ -55,6 +55,7 @@ cl_int binaryFormat2ProgramInfos(unsigned char ***binaries, size_t **binaries_si
 int binaryFormat2Buffer(char *buffer, int sizeofBuffer, poclcc_global *binary_format);
 int buffer2BinaryFormat(poclcc_global *binary_format, char *buffer, int sizeofBuffer);
 
+void poclcc_init_global(poclcc_global *globalcc, int num_devices, poclcc_device *devices);
 void poclcc_init_device(poclcc_device *devicecc, cl_device_id device, 
                         int num_kernels, poclcc_kernel *kernels);
 void poclcc_init_kernel(poclcc_kernel *kernelcc, char *kernel_name, int sizeofKernelName, 

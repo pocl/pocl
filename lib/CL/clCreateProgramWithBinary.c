@@ -133,6 +133,8 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
     {
       program->binary_sizes[i] = lengths[i];
       program->binaries[i] = (unsigned char*) malloc (lengths[i]);
+      program->BF = program->binaries;
+      program->BF_sizes = program->binary_sizes;
       
       /* IR binary (it always start with those 2 char)
        * It would be better if LLVM had a external function to check 
@@ -152,7 +154,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
          */
       } else if (!isIRBinary 
                  && poclcc_check_binary(device_list[i], binaries[i])) {
-        memcpy (program->BF[i], &binaries[i], lengths[i]);
+        memcpy (program->BF[i], binaries[i], lengths[i]);
         if (binary_status != NULL)
           binary_status[i] = CL_SUCCESS;
 
@@ -165,12 +167,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
       }
     }
   
-  if (!isIRBinary){
-    program->isBinaryFormat = 1;  
-    program->BF = program->binaries;
-    program->BF_sizes = program->binary_sizes;
-  } else
-    program->isBinaryFormat = 0;    
+  program->isBinaryFormat = !isIRBinary;  
 
   POCL_RETAIN_OBJECT(context);
 

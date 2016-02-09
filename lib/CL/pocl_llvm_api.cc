@@ -1269,6 +1269,9 @@ extern cl::opt<std::string> KernelName;
 int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
                                           size_t local_x, size_t local_y, size_t local_z)
 {
+
+  pocl::isKernelWithDynamicLocalSize = local_x == 0 && local_y == 0 && local_z == 0;
+
   cl_program program = kernel->program;
   int device_i = pocl_cl_device_to_index(program, device);
   assert(device_i >= 0);
@@ -1482,9 +1485,6 @@ pocl_llvm_codegen(cl_kernel kernel,
 
     if (pocl_exists(outfilename))
       return 0;
-
-    if (kernel->program->isBinaryFormat)
-      pocl::isKernelWithDynamicLocalSize = 1;
 
     llvm::Triple triple(device->llvm_target_triplet);
     llvm::TargetMachine *target = GetTargetMachine(device);
