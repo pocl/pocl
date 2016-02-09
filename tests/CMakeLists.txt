@@ -46,11 +46,7 @@ set_tests_properties("pocl_version_check"
 #######################################################################
 
 add_subdirectory("kernel")
-if(HAVE_OPENCL_HPP)
-  add_subdirectory("regression")
-else()
-  message(STATUS "cl.hpp unavailable, skipping regression tests")
-endif()
+add_subdirectory("regression")
 add_subdirectory("runtime")
 add_subdirectory("workgroup")
 if(ENABLE_TCE)
