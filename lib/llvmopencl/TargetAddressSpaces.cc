@@ -366,6 +366,17 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
               if (ld->getPointerAddressSpace() == POCL_ADDRESS_SPACE_GENERIC)
                 UpdateAddressSpace(*pt, addrSpaceMap, convertedStructsCache);
         }
+        if (isa<GetElementPtrInst>(instr)) {
+            GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(instr);
+            Value *pt = gep->getPointerOperand();
+            if (Operator::getOpcode(pt) == Instruction::AddrSpaceCast) {
+                if (removeASCI(pt, instr, addrSpaceMap, convertedStructsCache))
+                  { ii = bbi->begin(); continue; }
+              } else {
+                if (gep->getPointerAddressSpace() == POCL_ADDRESS_SPACE_GENERIC)
+                  UpdateAddressSpace(*pt, addrSpaceMap, convertedStructsCache);
+              }
+        }
 
       }
 
