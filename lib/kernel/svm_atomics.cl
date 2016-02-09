@@ -208,7 +208,7 @@ NONATOMIC_TYPE _CL_OVERLOADABLE atomic_exchange_explicit ( volatile Q ATOMIC_TYP
 
 
 bool _CL_OVERLOADABLE atomic_compare_exchange_strong ( volatile Q ATOMIC_TYPE  *object,
-  Q NONATOMIC_TYPE  *expected,
+  NONATOMIC_TYPE  *expected,
   NONATOMIC_TYPE  desired)
 {
   return atomic_compare_exchange_strong_explicit(
@@ -216,7 +216,7 @@ bool _CL_OVERLOADABLE atomic_compare_exchange_strong ( volatile Q ATOMIC_TYPE  *
 }
 
 bool _CL_OVERLOADABLE atomic_compare_exchange_strong_explicit ( volatile Q ATOMIC_TYPE  *object,
-  Q NONATOMIC_TYPE  *expected,
+  NONATOMIC_TYPE  *expected,
   NONATOMIC_TYPE  desired,
   memory_order success,
   memory_order failure)
@@ -226,7 +226,7 @@ bool _CL_OVERLOADABLE atomic_compare_exchange_strong_explicit ( volatile Q ATOMI
 }
 
 bool _CL_OVERLOADABLE atomic_compare_exchange_strong_explicit ( volatile Q ATOMIC_TYPE  *object,
-  Q NONATOMIC_TYPE  *expected,
+  NONATOMIC_TYPE  *expected,
   NONATOMIC_TYPE  desired,
   memory_order success,
   memory_order failure,
@@ -236,7 +236,7 @@ bool _CL_OVERLOADABLE atomic_compare_exchange_strong_explicit ( volatile Q ATOMI
 }
 
 bool _CL_OVERLOADABLE atomic_compare_exchange_weak ( volatile Q ATOMIC_TYPE  *object,
-  Q NONATOMIC_TYPE  *expected,
+  NONATOMIC_TYPE  *expected,
   NONATOMIC_TYPE  desired)
 {
   return atomic_compare_exchange_weak_explicit(
@@ -244,7 +244,7 @@ bool _CL_OVERLOADABLE atomic_compare_exchange_weak ( volatile Q ATOMIC_TYPE  *ob
 }
 
 bool _CL_OVERLOADABLE atomic_compare_exchange_weak_explicit ( volatile Q ATOMIC_TYPE  *object,
-  Q NONATOMIC_TYPE  *expected,
+  NONATOMIC_TYPE  *expected,
   NONATOMIC_TYPE  desired,
   memory_order success,
   memory_order failure)
@@ -254,7 +254,7 @@ bool _CL_OVERLOADABLE atomic_compare_exchange_weak_explicit ( volatile Q ATOMIC_
 }
 
 bool _CL_OVERLOADABLE atomic_compare_exchange_weak_explicit ( volatile Q ATOMIC_TYPE  *object,
-  Q NONATOMIC_TYPE  *expected,
+  NONATOMIC_TYPE  *expected,
   NONATOMIC_TYPE  desired,
   memory_order success,
   memory_order failure,
