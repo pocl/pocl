@@ -42,38 +42,6 @@ POname(clSetKernelArg)(cl_kernel kernel,
 
   POCL_RETURN_ERROR_COND((kernel == NULL), CL_INVALID_KERNEL);
 
-  if (kernel->program->isBinaryFormat){
-    kernel->num_args ++;
-    POCL_RETURN_ERROR_ON(arg_index >= 32, CL_INVALID_ARG_INDEX, 
-                         "This kernel was created with a binary, "
-                         "it can have 32 args maximum\n");
-
-    /* FIXME: this is a cludge to determine an acceptable alignment,
-     * we should probably extract the argument alignment from the
-     * LLVM bytecode during kernel header generation. */
-    arg_alignment = pocl_size_ceil2(arg_size);
-    if (arg_alignment >= MAX_EXTENDED_ALIGNMENT)
-      arg_alignment = MAX_EXTENDED_ALIGNMENT;
-    arg_alloc_size = arg_size;
-    if (arg_alloc_size < arg_alignment)
-      arg_alloc_size = arg_alignment;
-
-    value = pocl_aligned_malloc (arg_alignment, arg_alloc_size);
-    if (value == NULL)
-    {
-      POCL_UNLOCK_OBJ (kernel);
-      return CL_OUT_OF_HOST_MEMORY;
-    }
-      
-    memcpy (value, arg_value, arg_size);
-
-    kernel->dyn_arguments[arg_index].value = value;
-    kernel->dyn_arguments[arg_index].size = arg_size;
-    kernel->arg_info[arg_index].is_set = 1;
-
-    return CL_SUCCESS;
-  }
-
   POCL_RETURN_ERROR_ON((arg_index >= kernel->num_args), CL_INVALID_ARG_INDEX,
     "This kernel has %u args, cannot set arg %u\n",
     (unsigned)kernel->num_args, (unsigned)arg_index);

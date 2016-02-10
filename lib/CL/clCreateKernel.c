@@ -26,6 +26,7 @@
 #include "pocl_file_util.h"
 #include "pocl_cache.h"
 #include "pocl_llvm.h"
+#include "pocl_binary_format.h"
 #include <string.h>
 #include <sys/stat.h>
 #ifndef _MSC_VER
@@ -45,6 +46,7 @@ POname(clCreateKernel)(cl_program program,
   int errcode;
   int error;
   unsigned device_i;
+  poclcc_global poclcc;
 
   POCL_GOTO_ERROR_COND((kernel_name == NULL), CL_INVALID_VALUE);
 
@@ -82,10 +84,17 @@ POname(clCreateKernel)(cl_program program,
          not built for that device in clBuildProgram. This seems to
          be OK by the standard. */
       if (program->isBinaryFormat){
-        kernel->dyn_arguments = malloc(32*sizeof(struct pocl_argument));
-        kernel->arg_info = malloc(32*sizeof(struct pocl_argument_info));
-        kernel->num_locals = 0;
-        kernel->num_args = 0;
+        POCL_GOTO_ERROR_COND(programInfos2BinaryFormat(&poclcc, 
+                                                       program->binaries, 
+                                                       program->num_devices)
+                             != CL_SUCCESS, 
+                             CL_OUT_OF_HOST_MEMORY);
+        POCL_GOTO_ERROR_COND(
+          (errcode=binaryFormat2ClKernel(&poclcc, 
+                                         kernel_name, kernel,
+                                         program->devices[device_i])) 
+          != CL_SUCCESS,
+          errcode);
         continue;
       }
       if (!pocl_cache_device_cachedir_exists(program, device_i))
@@ -126,6 +135,7 @@ POname(clCreateKernel)(cl_program program,
 ERROR:
   POCL_MEM_FREE(kernel);
   kernel = NULL;
+  poclcc_free(&poclcc);
 
 SUCCESS:
   if(errcode_ret != NULL)
