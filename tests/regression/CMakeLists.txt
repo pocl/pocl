@@ -23,6 +23,17 @@
 #
 #=============================================================================
 
+set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
+     test_assign_loop_variable_to_privvar_makes_it_local_2)
+foreach(PROG ${C_PROGRAMS_TO_BUILD})
+  if(MSVC)
+    set_source_files_properties( "${PROG}.c" PROPERTIES LANGUAGE CXX )
+  endif(MSVC)
+  add_executable("${PROG}" "${PROG}.c")
+  target_link_libraries("${PROG}" ${POCLU_LINK_OPTIONS})
+endforeach()
+
+
 set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
   test_for_with_var_iteration_count test_id_dependent_computation
   test_locals test_loop_phi_replication test_multi_level_loops_with_barriers
@@ -31,33 +42,18 @@ set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
   test_undominated_variable test_setargs test_null_arg
   test_fors_with_var_iteration_counts test_issue_231)
 
-#AM_LDFLAGS = ../../lib/poclu/libpoclu.la @OPENCL_LIBS@
-# POCLU_LINK_OPTIONS
 
-#AM_CXXFLAGS = @OPENCL_CFLAGS@ -Wno-deprecated -Wno-deprecated-declarations
 if (MSVC)
   add_compile_options(${OPENCL_CFLAGS})
 else ()
   add_compile_options("-std=c++11" "-Wno-deprecated" "-Wno-deprecated-declarations" ${OPENCL_CFLAGS})
 endif ()
  
-
-#AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_builddir)/include -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL -DSRCDIR='"$(abs_srcdir)"'
 add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 include_directories("${CMAKE_SOURCE_DIR}/lib/CL")
 
 foreach(PROG ${PROGRAMS_TO_BUILD})
   add_executable("${PROG}" "${PROG}.cpp")
-  target_link_libraries("${PROG}" ${POCLU_LINK_OPTIONS})
-endforeach()
-
-set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
-     test_assign_loop_variable_to_privvar_makes_it_local_2)
-foreach(PROG ${C_PROGRAMS_TO_BUILD})
-  if(MSVC)
-    set_source_files_properties( "${PROG}.c" PROPERTIES LANGUAGE CXX )
-  endif(MSVC)
-  add_executable("${PROG}" "${PROG}.c")
   target_link_libraries("${PROG}" ${POCLU_LINK_OPTIONS})
 endforeach()
 
