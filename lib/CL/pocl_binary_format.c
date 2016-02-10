@@ -279,7 +279,7 @@ int binaryFormat2Buffer(char *buffer, int sizeofBuffer, poclcc_global *binary_fo
   assert(poclcc_check_global(binary_format));
   memcpy(buffer, binary_format, sizeof(poclcc_global));
   buffer = (char *)(&(((poclcc_global *)buffer)->devices));
-  assert(buffer < endofBuffer && "buffer is not a binaryformat");
+  assert(buffer < endofBuffer);
 
   int i;
   for (i=0; i<binary_format->num_devices; i++){
@@ -287,13 +287,13 @@ int binaryFormat2Buffer(char *buffer, int sizeofBuffer, poclcc_global *binary_fo
     assert(poclcc_check_device(device));
     memcpy(buffer, device, sizeof(poclcc_device));
     buffer = (char*)(&(((poclcc_device *)buffer)->kernels));
-    assert(buffer < endofBuffer && "buffer is not a binaryformat");
+    assert(buffer < endofBuffer);
 
     int j;
     for (j=0; j<device->num_kernels; j++){
       poclcc_kernel *kernel = &(device->kernels[j]);
       copyKernel2Buffer(kernel, &buffer);
-      assert(buffer < endofBuffer && "buffer is not a binaryformat");
+      assert(buffer <= endofBuffer);
     }
   }
   return CL_SUCCESS;
@@ -306,9 +306,9 @@ int buffer2BinaryFormat(poclcc_global *binary_format, char *buffer, int sizeofBu
   char *endofBuffer = buffer + sizeofBuffer;
 
   memcpy(binary_format, buffer, sizeof(poclcc_global));
-  assert(poclcc_check_global(binary_format) && "check file identifier and version");
+  assert(poclcc_check_global(binary_format));
   buffer = (char *)(&(((poclcc_global *)buffer)->devices));
-  assert(buffer < endofBuffer && "buffer is not a binaryformat");
+  assert(buffer < endofBuffer);
   
   if ((binary_format->devices = malloc(binary_format->num_devices*sizeof(poclcc_device))) == NULL)
     goto ERROR;
@@ -318,7 +318,7 @@ int buffer2BinaryFormat(poclcc_global *binary_format, char *buffer, int sizeofBu
     poclcc_device *device = &(binary_format->devices[i]);
     memcpy(device, buffer, sizeof(poclcc_device));
     buffer = (char *)&(((poclcc_device *)buffer)->kernels);
-    assert(buffer < endofBuffer && "buffer is not a binaryformat");
+    assert(buffer < endofBuffer);
     assert(poclcc_check_device(device));
 
     if ((device->kernels = malloc(device->num_kernels*sizeof(poclcc_kernel))) == NULL)
@@ -329,7 +329,7 @@ int buffer2BinaryFormat(poclcc_global *binary_format, char *buffer, int sizeofBu
       poclcc_kernel *kernel = &(device->kernels[j]);
       if (copyBuffer2Kernel(&buffer, kernel) != CL_SUCCESS)
         goto ERROR;
-      assert(buffer < endofBuffer && "buffer is not a binaryformat");
+      assert(buffer <= endofBuffer);
     }
   }
   return CL_SUCCESS;
@@ -381,8 +381,12 @@ cl_int binaryFormat2ClKernel(poclcc_global *binary_format, const char *kernel_na
     goto ERROR;
   memcpy(kernel->arg_info, kernelcc->arg_info, sizeofArgInfo);
 
+  if ((kernel->reqd_wg_size = malloc(3*sizeof(int))) == NULL)
+    goto ERROR; 
+
   return CL_SUCCESS;
 ERROR:
+  free(kernel->reqd_wg_size);
   free(kernel->dyn_arguments);
   free(kernel->arg_info);
   return CL_OUT_OF_HOST_MEMORY;

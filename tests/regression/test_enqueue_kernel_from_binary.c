@@ -8,9 +8,9 @@
 
 // OpenCL kernel. Each work item takes care of one element of c
 const char *kernelSource =                                                "\n" \
-"__kernel void vecAdd( __constant double *a,                               \n" \
-"                      __constant double *b,                               \n" \
-"                      __global double *c)                                 \n" \
+"__kernel void vecAdd( __constant int *a,                               \n" \
+"                      __constant int *b,                               \n" \
+"                      __global int *c)                                 \n" \
 "{                                                                         \n" \
 "unsigned int i = get_global_id(0) * get_global_size(1) + get_global_id(1);\n" \
 "c[i] = a[i] + b[i];                                                       \n" \
@@ -192,11 +192,11 @@ int main(void)
 // Check output of each kernels
 
         for(i = 0; i < BUFFER_SIZE; i++) {
-                if(h_c1[i] == h_c2[i]) {
+                if(h_c1[i] != h_c2[i]) {
                         printf("Check failed at offset %d, %i instead of %i\n", i, h_c2[i], h_c1[i]);
                         exit(1);
                 }
-                printf("%i - %i\n", h_c1[i], h_c3[i]);
+                printf("%i - %i\n", h_c1[i], h_c3[i]); 
         }
 
 //###################################################################
@@ -212,7 +212,7 @@ int main(void)
 	clReleaseProgram(program2);
 	clReleaseKernel(kernel1);
 	clReleaseKernel(kernel2);
-	clReleaseKernel(kernel3);
+ 	clReleaseKernel(kernel3);
 	clReleaseCommandQueue(queue);
 	clReleaseContext(context);
 
