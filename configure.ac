@@ -23,7 +23,7 @@
 # THE SOFTWARE.
 
 AC_PREREQ([2.64])
-AC_INIT([pocl], [0.13], [pocl-devel@lists.sourceforge.net])
+AC_INIT([pocl], [0.14-pre], [pocl-devel@lists.sourceforge.net])
 AC_CONFIG_SRCDIR([config.h.in])
 AC_CONFIG_HEADER([config.h])
 AC_CONFIG_AUX_DIR([config])
@@ -1568,10 +1568,11 @@ AC_C_BIGENDIAN(
 # 5:0:4 == 0.11 (currently backwards compatible with 0.7, thus age = 4).
 # 6:0:5 == 0.12 (currently backwards compatible with 0.7, thus age = 5).
 # 7:0:6 == 0.13 (currently backwards compatible with 0.7, thus age = 6).
+# 8:0:7 == 0.14 (currently backwards compatible with 0.7, thus age = 7).
 
-LIB_CURRENT_VERSION=7
+LIB_CURRENT_VERSION=8
 LIB_REVISION_VERSION=0
-LIB_AGE_VERSION=6
+LIB_AGE_VERSION=7
 LIB_FIRST_VERSION=$(($LIB_CURRENT_VERSION - $LIB_AGE_VERSION))
 BUILD_TIMESTAMP=""
 AC_SUBST([LIB_VERSION], ["$LIB_CURRENT_VERSION:$LIB_REVISION_VERSION:$LIB_AGE_VERSION"])
