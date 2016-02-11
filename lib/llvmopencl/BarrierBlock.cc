@@ -20,15 +20,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include <cassert>
+
+#include "config.h"
+
+#include "llvm/IR/Instructions.h"
+
 #include "BarrierBlock.h"
 #include "Barrier.h"
-#include "config.h"
-#if (defined LLVM_3_1 || defined LLVM_3_2)
-#include "llvm/Instructions.h"
-#else
-#include "llvm/IR/Instructions.h"
-#endif
-#include <cassert>
 
 using namespace llvm;
 using namespace pocl;

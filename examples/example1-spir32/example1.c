@@ -48,7 +48,6 @@ main (void)
   int source_size;
   cl_float4 *srcA, *srcB;
   cl_float *dst;
-  int ierr;
   int i;
 
   source_file = fopen("example1.spir", "r");

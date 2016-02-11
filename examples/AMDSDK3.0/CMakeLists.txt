@@ -132,6 +132,17 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
       set_tests_properties("AMD_30_${SAMPLE}" PROPERTIES LABELS "amdsdk_30")
     endforeach()
 
+    # AMD_30_HeatPDE
+    # AMD_30_FineGrainSVMCAS
+    set_tests_properties(
+        AMD_30_BinomialOption AMD_30_CalcPie AMD_30_DCT AMD_30_BlackScholes
+        AMD_30_FastWalshTransform AMD_30_FloydWarshall AMD_30_HelloWorld
+        AMD_30_Histogram AMD_30_MatrixMultiplication AMD_30_MatrixTranspose
+        AMD_30_PrefixSum AMD_30_QuasiRandomSequence AMD_30_ScanLargeArrays
+        AMD_30_SimpleConvolution AMD_30_URNG
+      PROPERTIES
+        LABELS "hsa")
+
   else()
     message(WARNING "Disabling testsuite ${TS_NAME} - tarball not found")
   endif()

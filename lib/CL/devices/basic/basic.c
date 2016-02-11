@@ -36,6 +36,7 @@
 
 #include "pocl_cache.h"
 #include "pocl_timing.h"
+#include "pocl_llvm.h"
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
@@ -332,7 +333,11 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->extensions = HOST_DEVICE_EXTENSIONS;
 
   dev->llvm_target_triplet = OCL_KERNEL_TARGET;
+#ifdef POCL_BUILT_WITH_CMAKE
+  dev->llvm_cpu = get_cpu_name();
+#else
   dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
+#endif
   dev->has_64bit_long = 1;
   dev->autolocals_to_args = 1;
 }
@@ -897,6 +902,7 @@ void pocl_basic_load_binary(const char *binary, int binary_size,
           return;
         }
     }
+
   ci = (compiler_cache_item*) malloc (sizeof (compiler_cache_item));
   ci->next = NULL;
   ci->tmp_dir = strdup(cmd->command.run.tmp_dir);

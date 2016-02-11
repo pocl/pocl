@@ -21,27 +21,23 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include <iostream>
+#include <algorithm>
+
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
-#include "config.h"
+#include "pocl.h"
+
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/Transforms/Utils/Cloning.h"
+#include "llvm/IR/InstrTypes.h"
+#include "llvm/IR/Instructions.h"
+
 #include "BarrierTailReplication.h"
 #include "Barrier.h"
 #include "Workgroup.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/Transforms/Utils/Cloning.h"
-#if (defined LLVM_3_1 || defined LLVM_3_2)
-#include "llvm/InstrTypes.h"
-#include "llvm/Instructions.h"
-#else
-#include "llvm/IR/InstrTypes.h"
-#include "llvm/IR/Instructions.h"
-#endif
-
 #include "VariableUniformityAnalysis.h"
-
-#include <iostream>
-#include <algorithm>
 
 POP_COMPILER_DIAGS
 
@@ -63,13 +59,8 @@ char BarrierTailReplication::ID = 0;
 void
 BarrierTailReplication::getAnalysisUsage(AnalysisUsage &AU) const
 {
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  AU.addRequired<DominatorTree>();
-  AU.addPreserved<DominatorTree>();
-#else
   AU.addRequired<DominatorTreeWrapperPass>();
   AU.addPreserved<DominatorTreeWrapperPass>();
-#endif
 #ifdef LLVM_OLDER_THAN_3_7
   AU.addRequired<LoopInfo>();
   AU.addPreserved<LoopInfo>();
@@ -91,12 +82,8 @@ BarrierTailReplication::runOnFunction(Function &F)
   std::cerr << "### BTR on " << F.getName().str() << std::endl;
 #endif
 
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  DT = &getAnalysis<DominatorTree>();
-#else
   DTP = &getAnalysis<DominatorTreeWrapperPass>();
   DT = &DTP->getDomTree();
-#endif
 
 #ifdef LLVM_OLDER_THAN_3_7
   LI = &getAnalysis<LoopInfo>();
@@ -106,11 +93,7 @@ BarrierTailReplication::runOnFunction(Function &F)
 
   bool changed = ProcessFunction(F);
 
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  DT->verifyAnalysis();
-#else
   DT->verifyDomTree();
-#endif
 
   LI->verifyAnalysis();
   /* The created tails might contain PHI nodes with operands 
@@ -120,7 +103,7 @@ BarrierTailReplication::runOnFunction(Function &F)
   for (Function::iterator i = F.begin(), e = F.end();
        i != e; ++i)
     {
-      llvm::BasicBlock *bb = i;
+      llvm::BasicBlock *bb = &*i;
       changed |= CleanupPHIs(bb);
     }      
 
@@ -236,17 +219,9 @@ BarrierTailReplication::ReplicateJoinedSubgraphs(BasicBlock *dominator,
       {
         // We have modified the function. Possibly created new loops.
         // Update analysis passes.
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-        DT->runOnFunction(*f);
-#else
         DTP->runOnFunction(*f);
-#endif
 
-#ifdef LLVM_3_1
-        LI->getBase().Calculate(DT->getBase());
-#else
         LI->runOnFunction(*f);
-#endif
       }
   }
   processed_bbs.insert(subgraph_entry);
@@ -381,7 +356,7 @@ BarrierTailReplication::ReplicateBasicBlocks(BasicBlockVector &new_graph,
     for (BasicBlock::iterator i2 = b->begin(), e2 = b->end();
 	 i2 != e2; ++i2) {
       Instruction *i = i2->clone();
-      reference_map.insert(std::make_pair(i2, i));
+      reference_map.insert(std::make_pair(&*i2, i));
       new_b->getInstList().push_back(i);
     }
 
@@ -437,7 +412,7 @@ BarrierTailReplication::UpdateReferences(const BasicBlockVector &graph,
     BasicBlock *b = *i;
     for (BasicBlock::iterator i2 = b->begin(), e2 = b->end();
          i2 != e2; ++i2) {
-      Instruction *i = i2;
+      Instruction *i = &*i2;
       RemapInstruction(i, reference_map,
                        RF_IgnoreMissingEntries | RF_NoModuleLevelChanges);
     }

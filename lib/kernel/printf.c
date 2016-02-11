@@ -22,17 +22,15 @@
    THE SOFTWARE.
 */
 
-// Make the C99 printf visible again
-#undef printf
-
 #include <limits.h>
 #include <stdarg.h>
 #include <stdbool.h>
 
 // We implement the OpenCL printf by calling the C99 printf. This is
 // not very efficient, but is easy to implement.
-int printf(const char* restrict fmt, ...);
-int snprintf(char* restrict str, size_t size, const char* restrict fmt, ...);
+#define OCL_C_AS __attribute__((address_space(0)))
+int printf(OCL_C_AS const char* restrict fmt, ...);
+int snprintf(OCL_C_AS char* restrict str, size_t size, OCL_C_AS const char* restrict fmt, ...);
 
 // For debugging
 // Use as: DEBUG_PRINTF((fmt, args...)) -- note double parentheses!
@@ -59,7 +57,7 @@ typedef struct {
 
 #define DEFINE_PRINT_INTS(WIDTH)                                        \
   void _cl_print_ints_##WIDTH(flags_t flags, int field_width, int precision, \
-                              char conv, const void* vals, int n)       \
+                              char conv, OCL_C_AS const void* vals, int n)       \
   {                                                                     \
     DEBUG_PRINTF(("[printf:ints:n=%df]\n", n));                         \
     char outfmt[1000];                                                  \
@@ -78,7 +76,7 @@ typedef struct {
     for (int d=0; d<n; ++d) {                                           \
       DEBUG_PRINTF(("[printf:ints:d=%d]\n", d));                        \
       if (d != 0) printf(",");                                          \
-      printf(outfmt, ((const WIDTH*)vals)[d]);                          \
+      printf(outfmt, ((OCL_C_AS const WIDTH*)vals)[d]);                          \
     }                                                                   \
     DEBUG_PRINTF(("[printf:ints:done]\n"));                             \
   }
@@ -110,7 +108,7 @@ float __attribute__((overloadable)) vload_half(size_t offset, const half *p);
 
 #define DEFINE_PRINT_FLOATS(WIDTH)                                      \
   void _cl_print_floats_##WIDTH(flags_t flags, int field_width, int precision, \
-                                char conv, const void* vals, int n)     \
+                                char conv, OCL_C_AS const void* vals, int n)     \
   {                                                                     \
     DEBUG_PRINTF(("[printf:floats:n=%dd]\n", n));                       \
     char outfmt[1000];                                                  \
@@ -129,7 +127,7 @@ float __attribute__((overloadable)) vload_half(size_t offset, const half *p);
     for (int d=0; d<n; ++d) {                                           \
       DEBUG_PRINTF(("[printf:floats:d=%d]\n", d));                      \
       if (d != 0) printf(",");                                          \
-      printf(outfmt, FLOAT_GET_##WIDTH((const WIDTH*)vals+d));          \
+      printf(outfmt, FLOAT_GET_##WIDTH((OCL_C_AS const WIDTH*)vals+d));          \
     }                                                                   \
     DEBUG_PRINTF(("[printf:floats:done]\n"));                           \
   }
@@ -161,7 +159,7 @@ void _cl_print_char(flags_t flags, int field_width, int val)
   DEBUG_PRINTF(("[printf:char:done]\n"));
 }
 
-void _cl_print_string(flags_t flags, int field_width, const char* val)
+void _cl_print_string(flags_t flags, int field_width, OCL_C_AS const char* val)
 {
   DEBUG_PRINTF(("[printf:char]\n"));
   char outfmt[1000];
@@ -174,7 +172,7 @@ void _cl_print_string(flags_t flags, int field_width, const char* val)
   DEBUG_PRINTF(("[printf:char:done]\n"));
 }
 
-void _cl_print_pointer(flags_t flags, int field_width, const void* val)
+void _cl_print_pointer(flags_t flags, int field_width, OCL_C_AS const void* val)
 {
   DEBUG_PRINTF(("[printf:char]\n"));
   char outfmt[1000];
@@ -417,7 +415,7 @@ int _cl_printf(const OCL_CONSTANT_AS char* restrict format, ...)
           if (precision != -1) goto error;
           if (vector_length != 1) goto error;
           if (length != 0) goto error;
-          const char* val = va_arg(ap, const char*);
+          OCL_C_AS const char* val = va_arg(ap, OCL_C_AS const char*);
           _cl_print_string(flags, field_width, val);
           break;
         }
@@ -428,7 +426,7 @@ int _cl_printf(const OCL_CONSTANT_AS char* restrict format, ...)
           if (precision != -1) goto error;
           if (vector_length != 1) goto error;
           if (length != 0) goto error;
-          const void* val = va_arg(ap, const void*);
+          OCL_C_AS const void* val = va_arg(ap, OCL_C_AS const void*);
           _cl_print_pointer(flags, field_width, val);
           break;
         }

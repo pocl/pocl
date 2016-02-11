@@ -27,10 +27,28 @@ cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 
 project(pocl)
 set(MAJOR_VERSION 0)
-set(MINOR_VERSION 13)
+set(MINOR_VERSION 14)
 set(VERSION_SUFFIX "-pre")
 set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION}${VERSION_SUFFIX})
 set(POCL_VERSION ${VERSION_STRING})
+
+##################################################################################
+
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc")
+  set(POWERPC 1)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "mips")
+  set(MIPS 1)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv7")
+  set(ARMV7 1)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv6")
+  set(ARMV6 1)
+elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "(i386|AMD64|x86_64)")
+  if(POCL_DEVICE_ADDRESS_BITS MATCHES "32")
+    set(I386 1)
+  else()
+    set(X86_64 1)
+  endif()
+endif()
 
 ######################################################################################
 
@@ -579,11 +597,6 @@ endif()
 set(DEFAULT_HOST_CLANG_FLAGS "${CLANG_TARGET_OPTION}${LLC_TRIPLE}")
 set(DEFAULT_HOST_LLC_FLAGS "-relocation-model=pic -mtriple=${LLC_TRIPLE}")
 
-if(NOT LLC_HOST_CPU MATCHES "unknown")
-  set(DEFAULT_HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} ${CLANG_MARCH_FLAG}${LLC_HOST_CPU}")
-  set(DEFAULT_HOST_LLC_FLAGS "${DEFAULT_HOST_LLC_FLAGS} -mcpu=${LLC_HOST_CPU}")
-endif()
-
 if(LLC_TRIPLE MATCHES "^arm")
   if(LLC_TRIPLE MATCHES "gnueabihf")
     # hardfloat
@@ -623,6 +636,21 @@ foreach(EXT ${TEMP_EXT})
 endforeach()
 
 set(HOST_DEVICE_CL_VERSION "200")
+
+if(NOT DEFINED KERNELLIB_HOST_CPU_VARIANTS)
+  set(KERNELLIB_HOST_CPU_VARIANTS "native")
+# else TODO test cpu list for unknown values
+endif()
+
+set(KERNELLIB_HOST_DISTRO_VARIANTS 0)
+if(KERNELLIB_HOST_CPU_VARIANTS STREQUAL "distro")
+  if(X86_64 OR I386)
+    set(KERNELLIB_HOST_CPU_VARIANTS sse2 ssse3 sse41 avx avx_fma4 avx2 avx512)
+  else()
+    message(FATAL_ERROR "Don't know what CPU variants to use for kernel library on this platform.")
+  endif()
+  set(KERNELLIB_HOST_DISTRO_VARIANTS 1)
+endif()
 
 ####################################################################
 
@@ -671,7 +699,11 @@ if(NOT DEFINED DEFAULT_ENABLE_TCE)
 
     message(STATUS "Found tcecc + tce-config + ttasim, testing setup")
 
-    execute_process(COMMAND "${TCE_CONFIG}" --libs OUTPUT_VARIABLE TCE_LIBS RESULT_VARIABLE RESV1)
+    get_filename_component(TCE_BASEDIR "${TCE_CONFIG}" DIRECTORY)
+    find_library(TCE_LIBS "tce" HINTS "${TCE_BASEDIR}/../lib" ENV PATH)
+    if(NOT TCE_LIBS)
+      execute_process(COMMAND "${TCE_CONFIG}" --libs OUTPUT_VARIABLE TCE_LIBS RESULT_VARIABLE RESV1)
+    endif()
     execute_process(COMMAND "${TCE_CONFIG}" --includes OUTPUT_VARIABLE TCE_INCLUDES RESULT_VARIABLE RESV2)
     execute_process(COMMAND "${TCE_CONFIG}" --version OUTPUT_VARIABLE TCE_VERSION RESULT_VARIABLE RESV3)
     execute_process(COMMAND "${TCE_CONFIG}" --cxxflags OUTPUT_VARIABLE TCE_CXXFLAGS RESULT_VARIABLE RESV4)
@@ -844,10 +876,11 @@ endif()
 # 5:0:4 == 0.11 (currently backwards compatible with 0.7, thus age = 4).
 # 6:0:5 == 0.12 (currently backwards compatible with 0.7, thus age = 5).
 # 7:0:6 == 0.13 (currently backwards compatible with 0.7, thus age = 6).
+# 8:0:7 == 0.14 (currently backwards compatible with 0.7, thus age = 7).
 
-set(LIB_CURRENT_VERSION 7)
+set(LIB_CURRENT_VERSION 8)
 set(LIB_REVISION_VERSION 0)
-set(LIB_AGE_VERSION 6)
+set(LIB_AGE_VERSION 7)
 
 math(EXPR LIB_FIRST_VERSION "${LIB_CURRENT_VERSION} - ${LIB_AGE_VERSION}")
 
@@ -911,23 +944,6 @@ if(UNIX)
 endif()
 
 #############################################################
-
-# for tests & examples
-if(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc")
-  set(POWERPC 1)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "mips")
-  set(MIPS 1)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv7")
-  set(ARMV7 1)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv6")
-  set(ARMV6 1)
-elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "(i386|AMD64|x86_64)")
-  if(POCL_DEVICE_ADDRESS_BITS MATCHES "32")
-    set(I386 1)
-  else()
-    set(X86_64 1)
-  endif()
-endif()
 
 include_directories("fix-include" "include")
 
@@ -993,6 +1009,8 @@ MESSAGE(STATUS "USE_VECMATHLIB: ${USE_VECMATHLIB}")
 MESSAGE(STATUS "Available testsuites: ${ALL_TESTSUITES}")
 MESSAGE(STATUS "Enabled testsuites: ${ACTUALLY_ENABLED_TESTSUITES}")
 MESSAGE(STATUS "Kernel caching: ${KERNEL_CACHE_DEFAULT}")
+MESSAGE(STATUS "Kernel library CPU variants: ${KERNELLIB_HOST_CPU_VARIANTS}")
+MESSAGE(STATUS "Kernel library distro build: ${KERNELLIB_HOST_DISTRO_VARIANTS}")
 
 MESSAGE(STATUS " ")
 MESSAGE(STATUS "******* Programs:")

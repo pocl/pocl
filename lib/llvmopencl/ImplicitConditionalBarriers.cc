@@ -21,27 +21,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include <iostream>
+
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "config.h"
+
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/Module.h"
+
 #include "ImplicitConditionalBarriers.h"
 #include "Barrier.h"
 #include "BarrierBlock.h"
 #include "Workgroup.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#if (defined LLVM_3_1 || defined LLVM_3_2)
-#include "llvm/Constants.h"
-#include "llvm/Instructions.h"
-#include "llvm/Module.h"
-#else
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/Module.h"
-#endif
-
-#include <iostream>
-
 #include "VariableUniformityAnalysis.h"
 
 POP_COMPILER_DIAGS
@@ -64,13 +59,8 @@ ImplicitConditionalBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 {
   AU.addRequired<PostDominatorTree>();
   AU.addPreserved<PostDominatorTree>();
-  #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  AU.addRequired<DominatorTree>();
-  AU.addPreserved<DominatorTree>();
-  #else
   AU.addRequired<DominatorTreeWrapperPass>();
   AU.addPreserved<DominatorTreeWrapperPass>();
-  #endif
   AU.addPreserved<VariableUniformityAnalysis>();
 }
 
@@ -83,11 +73,7 @@ BasicBlock*
 ImplicitConditionalBarriers::firstNonBackedgePredecessor(
     llvm::BasicBlock *bb) {
 
-    #if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-    DominatorTree *DT = &getAnalysis<DominatorTree>();
-    #else
     DominatorTree *DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-    #endif
 
     pred_iterator I = pred_begin(bb), E = pred_end(bb);
     if (I == E) return NULL;
@@ -110,7 +96,7 @@ ImplicitConditionalBarriers::runOnFunction(Function &F) {
   typedef std::vector<BasicBlock*> BarrierBlockIndex;
   BarrierBlockIndex conditionalBarriers;
   for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
-    BasicBlock *b = i;
+    BasicBlock *b = &*i;
     if (!Barrier::hasBarrier(b)) continue;
 
     // Unconditional barrier postdominates the entry node.

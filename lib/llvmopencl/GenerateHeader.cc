@@ -20,35 +20,22 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include <iostream>
+
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "config.h"
 #include "pocl.h"
-#include "Workgroup.h"
+
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Transforms/Utils/Cloning.h"
-#ifdef LLVM_3_1
-#include "llvm/Target/TargetData.h"
-#elif defined LLVM_3_2
-#include "llvm/DataLayout.h"
-#else
 #include "llvm/IR/DataLayout.h"
-#endif
 
-#if (defined LLVM_3_1 || defined LLVM_3_2)
-#include "llvm/Argument.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Function.h"
-#include "llvm/GlobalVariable.h"
-#include "llvm/Instructions.h"
-#include "llvm/Module.h"
-#else
 #include "llvm/IR/Argument.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
@@ -56,8 +43,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/IR/GlobalVariable.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
-#endif
 
+#include "Workgroup.h"
 #include "LLVMUtils.h"
 
 POP_COMPILER_DIAGS
@@ -99,13 +86,10 @@ static RegisterPass<GenerateHeader> X("generate-header",
 void
 GenerateHeader::getAnalysisUsage(AnalysisUsage &AU) const
 {
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  AU.addRequired<DataLayout>();
-#elif (defined LLVM_OLDER_THAN_3_7)
-  AU.addRequired<DataLayoutPass>();
-#else
-  // In LLVM 3.7, DataLayout is not a pass anymore, it can be created from 
+  // In LLVM 3.7, DataLayout is not a pass anymore, it can be created from
   // a llvm::Module
+#ifdef LLVM_OLDER_THAN_3_7
+  AU.addRequired<DataLayoutPass>();
 #endif
 }
 
@@ -119,25 +103,15 @@ GenerateHeader::runOnModule(Module &M)
   // kernels
   FunctionMapping kernels;
 
-  #if LLVM_VERSION_MAJOR <= 3 && LLVM_VERSION_MINOR <6
-  string ErrorInfo;
-  #else
   std::error_code ErrorInfo;
-  #endif
 
-  #if defined LLVM_3_2 || defined LLVM_3_3 
-  raw_fd_ostream out(Header.c_str(), ErrorInfo, raw_fd_ostream::F_Append);
-  #elif defined LLVM_3_4 || defined LLVM_3_5
-  raw_fd_ostream out(Header.c_str(), ErrorInfo, sys::fs::F_Append);
-  #else
   raw_fd_ostream out(Header, ErrorInfo, sys::fs::F_Append);
-  #endif
 
   for (Module::iterator mi = M.begin(), me = M.end(); mi != me; ++mi) {
     if (!Workgroup::isKernelToProcess(*mi))
       continue;
   
-    Function *F = mi;
+    Function *F = &*mi;
 
     ProcessPointers(F, out);    
     ProcessReqdWGSize(F, out);
@@ -165,7 +139,6 @@ GenerateHeader::runOnModule(Module &M)
   return changed;
 }
 
-#include <iostream>
 
 void
 GenerateHeader::ProcessReqdWGSize(Function *F,
@@ -178,13 +151,6 @@ GenerateHeader::ProcessReqdWGSize(Function *F,
   if (size_info) {
     for (unsigned i = 0, e = size_info->getNumOperands(); i != e; ++i) {
       llvm::MDNode *KernelSizeInfo = size_info->getOperand(i);
-#ifdef LLVM_OLDER_THAN_3_6
-      if (KernelSizeInfo->getOperand(0) != F) 
-        continue;
-      LocalSizeX = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(1)))->getLimitedValue();
-      LocalSizeY = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(2)))->getLimitedValue();
-      LocalSizeZ = (llvm::cast<ConstantInt>(KernelSizeInfo->getOperand(3)))->getLimitedValue();
-#else
       if (dyn_cast<ValueAsMetadata>(KernelSizeInfo->getOperand(0).get())->getValue() != F) 
         continue;
       LocalSizeX = (llvm::cast<ConstantInt>(
@@ -196,7 +162,6 @@ GenerateHeader::ProcessReqdWGSize(Function *F,
       LocalSizeZ = (llvm::cast<ConstantInt>(
                      llvm::dyn_cast<ConstantAsMetadata>(
                        KernelSizeInfo->getOperand(3))->getValue()))->getLimitedValue();
-#endif
       break;
     }
   }
@@ -300,10 +265,7 @@ GenerateHeader::ProcessAutomaticLocals(Function *F,
                                        raw_fd_ostream &out)
 {
   Module *M = F->getParent();
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  DataLayout &TDr = getAnalysis<DataLayout>();
-  DataLayout *TD=&TDr;
-#elif (defined LLVM_OLDER_THAN_3_7)
+#ifdef  LLVM_OLDER_THAN_3_7
   const DataLayout *TD = &getAnalysis<DataLayoutPass>().getDataLayout();
 #else
   const DataLayout DLayout(F->getParent());
@@ -327,7 +289,7 @@ GenerateHeader::ProcessAutomaticLocals(Function *F,
       // Additional checks might be needed here. For now
       // we assume any global starting with kernel name
       // is declaring a local variable.
-      locals.push_back(i);
+      locals.push_back(&*i);
       // Add the parameters to the end of the function parameter list.
       parameters.push_back(i->getType());
     }

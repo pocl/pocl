@@ -24,19 +24,16 @@
 #ifndef _POCL_WORKITEM_REPLICATION_H
 #define _POCL_WORKITEM_REPLICATION_H
 
-#include "config.h"
+#include <map>
+#include <vector>
+
 #include "pocl.h"
 
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-#include "llvm/Analysis/Dominators.h"
-#else
 #include "llvm/IR/Dominators.h"
-#endif
 #include "llvm/ADT/Twine.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
-#include <map>
-#include <vector>
+
 #include "WorkitemHandler.h"
 
 namespace pocl {
@@ -56,9 +53,7 @@ namespace pocl {
   private:
 
     llvm::DominatorTree *DT;
-#if ! (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
     llvm::DominatorTreeWrapperPass *DTP;
-#endif
 
 #ifdef LLVM_OLDER_THAN_3_7
     llvm::LoopInfo *LI;

@@ -23,34 +23,6 @@
 #
 #=============================================================================
 
-set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
-  test_for_with_var_iteration_count test_id_dependent_computation
-  test_locals test_loop_phi_replication test_multi_level_loops_with_barriers
-  test_simple_for_with_a_barrier test_structs_as_args test_vectors_as_args
-  test_barrier_before_return test_infinite_loop test_constant_array
-  test_undominated_variable test_setargs test_null_arg
-  test_fors_with_var_iteration_counts)
-
-#AM_LDFLAGS = ../../lib/poclu/libpoclu.la @OPENCL_LIBS@
-# POCLU_LINK_OPTIONS
-
-#AM_CXXFLAGS = @OPENCL_CFLAGS@ -Wno-deprecated -Wno-deprecated-declarations
-if (MSVC)
-  add_compile_options(${OPENCL_CFLAGS})
-else ()
-  add_compile_options("-std=c++11" "-Wno-deprecated" "-Wno-deprecated-declarations" ${OPENCL_CFLAGS})
-endif ()
- 
-
-#AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_builddir)/include -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL -DSRCDIR='"$(abs_srcdir)"'
-add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
-include_directories("${CMAKE_SOURCE_DIR}/lib/CL")
-
-foreach(PROG ${PROGRAMS_TO_BUILD})
-  add_executable("${PROG}" "${PROG}.cpp")
-  target_link_libraries("${PROG}" ${POCLU_LINK_OPTIONS})
-endforeach()
-
 set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
      test_assign_loop_variable_to_privvar_makes_it_local_2)
 foreach(PROG ${C_PROGRAMS_TO_BUILD})
@@ -58,6 +30,30 @@ foreach(PROG ${C_PROGRAMS_TO_BUILD})
     set_source_files_properties( "${PROG}.c" PROPERTIES LANGUAGE CXX )
   endif(MSVC)
   add_executable("${PROG}" "${PROG}.c")
+  target_link_libraries("${PROG}" ${POCLU_LINK_OPTIONS})
+endforeach()
+
+
+set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
+  test_for_with_var_iteration_count test_id_dependent_computation
+  test_locals test_loop_phi_replication test_multi_level_loops_with_barriers
+  test_simple_for_with_a_barrier test_structs_as_args test_vectors_as_args
+  test_barrier_before_return test_infinite_loop test_constant_array
+  test_undominated_variable test_setargs test_null_arg
+  test_fors_with_var_iteration_counts test_issue_231)
+
+
+if (MSVC)
+  add_compile_options(${OPENCL_CFLAGS})
+else ()
+  add_compile_options("-std=c++11" "-Wno-deprecated" "-Wno-deprecated-declarations" ${OPENCL_CFLAGS})
+endif ()
+ 
+add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
+include_directories("${CMAKE_SOURCE_DIR}/lib/CL")
+
+foreach(PROG ${PROGRAMS_TO_BUILD})
+  add_executable("${PROG}" "${PROG}.cpp")
   target_link_libraries("${PROG}" ${POCLU_LINK_OPTIONS})
 endforeach()
 
@@ -116,7 +112,8 @@ set_tests_properties("\"regression/phi nodes not replicated (repl)\""
     ENVIRONMENT "POCL_WORK_GROUP_METHOD=workitemrepl"
     COST 1.5
     PROCESSORS 1
-    DEPENDS "pocl_version_check")
+    DEPENDS "pocl_version_check"
+    LABELS "internal;regression")
 
 
 # loops
@@ -166,10 +163,13 @@ set_tests_properties("\"regression/phi nodes not replicated (loops)\""
     ENVIRONMENT "POCL_WORK_GROUP_METHOD=workitemloops"
     COST 1.5
     PROCESSORS 1
-    DEPENDS "pocl_version_check")
+    DEPENDS "pocl_version_check"
+    LABELS "internal;regression")
 
 
 # other
+
+add_test("\"regression/LoopVectorizer crash with Haswell and Broadwell - issue 231\"" "test_issue_231")
 
 add_test("\"regression/setting a buffer argument to NULL causes a segfault\"" "test_null_arg")
 
@@ -187,10 +187,12 @@ set_tests_properties("\"regression/setting a buffer argument to NULL causes a se
   "\"regression/clSetKernelArg overwriting the previous kernel's args\""
   "\"regression/passing a constant array as an arg\""
   "\"regression/case with multiple variable length loops and a barrier in one\""
+  "\"regression/LoopVectorizer crash with Haswell and Broadwell - issue 231\""
   PROPERTIES
     COST 1.5
     PROCESSORS 1
-    DEPENDS "pocl_version_check")
+    DEPENDS "pocl_version_check"
+    LABELS "internal;regression")
 
 #  "\"regression/struct kernel arguments\""
 #  "\"regression/vector kernel arguments\""
@@ -200,10 +202,6 @@ set_tests_properties("\"regression/setting a buffer argument to NULL causes a se
 if(POWERPC)
   set_tests_properties("\"regression/for-loop with a variable iteration count (loops)\""
     PROPERTIES  WILL_FAIL 1)
-  if(LLVM_3_2)
-    set_tests_properties("\"regression/vector kernel arguments\""
-      PROPERTIES  WILL_FAIL 1)
-  endif()
 endif()
 
 # The vector/struct kernel arguments are known to be flaky and

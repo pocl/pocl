@@ -89,6 +89,10 @@ add_test("runtime/clGetSupportedImageFormats" "test_clGetSupportedImageFormats")
 
 add_test("runtime/clCreateKernelsInProgram" "test_clCreateKernelsInProgram")
 
+add_test("runtime/clCreateSubDevices"  "test_clCreateSubDevices")
+
+add_test("runtime/test_event_free"  "test_event_free")
+
 set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/clGetEventInfo" "runtime/clCreateProgramWithBinary"
   "runtime/clBuildProgram" "runtime/clFinish" "runtime/clSetEventCallback"
@@ -96,11 +100,12 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/clCreateKernel" "runtime/clGetKernelArgInfo"
   "runtime/test_kernel_cache_includes" "runtime/test_event_cycle"
   "runtime/test_read-copy-write-buffer" #"runtime/test_link_error"
+  "runtime/test_event_free" "runtime/clCreateSubDevices"
   PROPERTIES
     COST 2.0
     PROCESSORS 1
-    DEPENDS "pocl_version_check")
-
+    DEPENDS "pocl_version_check"
+    LABELS "internal;runtime")
 
 
 set_tests_properties("runtime/clGetSupportedImageFormats"
@@ -110,12 +115,6 @@ set_tests_properties("runtime/clGetSupportedImageFormats"
 set_tests_properties("runtime/clCreateKernelsInProgram"
   PROPERTIES
     PASS_REGULAR_EXPRESSION "Hello\nWorld")
-
-if(LLVM_3_2)
-  set_tests_properties("runtime/clGetKernelArgInfo"
-    PROPERTIES WILL_FAIL 1)
-endif()
-
 
 
 set_tests_properties("runtime/clFinish"

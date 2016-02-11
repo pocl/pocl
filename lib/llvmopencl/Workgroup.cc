@@ -22,36 +22,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include <cstdio>
+#include <map>
+#include <iostream>
+
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
-#include "Barrier.h"
-#include "Workgroup.h"
+#include "pocl.h"
 
-#include "CanonicalizeBarriers.h"
-#include "BarrierTailReplication.h"
-#include "WorkitemReplication.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
-#include "config.h"
-#ifdef LLVM_3_1
-#include "llvm/Support/IRBuilder.h"
-#include "llvm/Support/TypeBuilder.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/InstrTypes.h"
-#include "llvm/Module.h"
-#elif defined LLVM_3_2
-#include "llvm/IRBuilder.h"
-#include "llvm/TypeBuilder.h"
-#include "llvm/BasicBlock.h"
-#include "llvm/Constants.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/InstrTypes.h"
-#include "llvm/Module.h"
-#else
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/TypeBuilder.h"
 #include "llvm/IR/BasicBlock.h"
@@ -59,15 +41,16 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/IR/DerivedTypes.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Module.h"
-#endif
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
-#include <cstdio>
-#include <map>
-#include <iostream>
 
-#include "pocl.h"
+#include "CanonicalizeBarriers.h"
+#include "BarrierTailReplication.h"
+#include "WorkitemReplication.h"
+#include "Barrier.h"
+#include "Workgroup.h"
+
 
 #if _MSC_VER
 #  include "vccompat.hpp"
@@ -166,20 +149,7 @@ bool
 Workgroup::runOnModule(Module &M)
 {
 
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  if (M.getPointerSize() == llvm::Module::Pointer64)
-    {
-      TypeBuilder<PoclContext, true>::setSizeTWidth(64);
-    }
-  else if (M.getPointerSize() == llvm::Module::Pointer32) 
-    {
-      TypeBuilder<PoclContext, true>::setSizeTWidth(32);
-    }
-  else 
-    {
-      assert (false && "Target has an unsupported pointer width.");
-    }  
-#elif (defined LLVM_3_5 || defined LLVM_3_6)
+#ifdef LLVM_OLDER_THAN_3_7
   if (M.getDataLayout()->getPointerSize(0) == 8)
     {
       TypeBuilder<PoclContext, true>::setSizeTWidth(64);
@@ -214,13 +184,9 @@ Workgroup::runOnModule(Module &M)
 
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     if (!isKernelToProcess(*i)) continue;
-    Function *L = createLauncher(M, i);
+    Function *L = createLauncher(M, &*i);
       
-#if defined LLVM_3_2
-    L->addFnAttr(Attributes::NoInline);
-#else
     L->addFnAttr(Attribute::NoInline);
-#endif
 
     privatizeContext(M, L);
 
@@ -263,7 +229,7 @@ createLauncher(Module &M, Function *F)
   SmallVector<Value *, 8> arguments;
   Function::arg_iterator ai = L->arg_begin();
   for (unsigned i = 0, e = F->getArgumentList().size(); i != e; ++i)  {
-    arguments.push_back(ai);
+    arguments.push_back(&*ai);
     ++ai;
   }  
 
@@ -277,11 +243,11 @@ createLauncher(Module &M, Function *F)
 
   IRBuilder<> builder(BasicBlock::Create(M.getContext(), "", L));
 
-#if defined LLVM_OLDER_THAN_3_7
+#ifdef LLVM_OLDER_THAN_3_7
   ptr = builder.CreateStructGEP(ai,
 				TypeBuilder<PoclContext, true>::WORK_DIM);
 #else
-  ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), ai,
+  ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), &*ai,
                                 TypeBuilder<PoclContext, true>::WORK_DIM);
 #endif
   gv = M.getGlobalVariable("_work_dim");
@@ -292,20 +258,18 @@ createLauncher(Module &M, Function *F)
 
 
   int size_t_width = 32;
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  if (M.getPointerSize() == llvm::Module::Pointer64)
-#elif (defined LLVM_OLDER_THAN_3_7)
+#ifdef LLVM_OLDER_THAN_3_7
   if (M.getDataLayout()->getPointerSize(0) == 8)
 #else
   if (M.getDataLayout().getPointerSize(0) == 8)
 #endif
     size_t_width = 64;
 
-#if defined LLVM_OLDER_THAN_3_7
+#ifdef LLVM_OLDER_THAN_3_7
   ptr = builder.CreateStructGEP(ai,
 				TypeBuilder<PoclContext, true>::GROUP_ID);
 #else
-  ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), ai,
+  ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), &*ai,
                                 TypeBuilder<PoclContext, true>::GROUP_ID);
 #endif
   for (int i = 0; i < 3; ++i) {
@@ -361,7 +325,7 @@ createLauncher(Module &M, Function *F)
   ptr = builder.CreateStructGEP(ai,
 				TypeBuilder<PoclContext, true>::NUM_GROUPS);
 #else
-  ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), ai,
+  ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), &*ai,
                                 TypeBuilder<PoclContext, true>::NUM_GROUPS);
 #endif
   for (int i = 0; i < 3; ++i) {
@@ -388,7 +352,7 @@ createLauncher(Module &M, Function *F)
   ptr = builder.CreateStructGEP(ai,
 				TypeBuilder<PoclContext, true>::GLOBAL_OFFSET);
 #else
-  ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), ai,
+  ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), &*ai,
                                 TypeBuilder<PoclContext, true>::GLOBAL_OFFSET);
 #endif
   for (int i = 0; i < 3; ++i) {
@@ -583,7 +547,7 @@ createWorkgroup(Module &M, Function *F)
        ii != ee; ++ii) {
     Type *t = ii->getType();
 
-    Value *gep = builder.CreateGEP(ai,
+    Value *gep = builder.CreateGEP(&*ai,
             ConstantInt::get(IntegerType::get(M.getContext(), 32), i));
     Value *pointer = builder.CreateLoad(gep);
 
@@ -591,17 +555,9 @@ createWorkgroup(Module &M, Function *F)
      * as is to the function, no need to load form it first. */
     Value *value;
     if (ii->hasByValAttr()) {
-#if defined(LLVM_3_2) || defined(LLVM_3_3)
-        value = builder.CreateBitCast(pointer, t);
-#else
         value = builder.CreatePointerCast(pointer, t);
-#endif
     } else {
-#if defined(LLVM_3_2) || defined(LLVM_3_3)
-        value = builder.CreateBitCast(pointer, t->getPointerTo());
-#else
         value = builder.CreatePointerCast(pointer, t->getPointerTo());
-#endif
         value = builder.CreateLoad(value);
     }
 
@@ -609,7 +565,7 @@ createWorkgroup(Module &M, Function *F)
     ++i;
   }
 
-  arguments.back() = ++ai;
+  arguments.back() = &*(++ai);
   
   builder.CreateCall(F, ArrayRef<Value*>(arguments));
   builder.CreateRetVoid();
@@ -643,11 +599,7 @@ createWorkgroupFast(Module &M, Function *F)
     dyn_cast<Function>(M.getOrInsertFunction(funcName + "_workgroup_fast", ft));
   assert(workgroup != NULL);
 
-#if defined LLVM_3_2
-  workgroup->addFnAttr(Attributes::NoInline);
-#else
   workgroup->addFnAttr(Attribute::NoInline);
-#endif
 
   builder.SetInsertPoint(BasicBlock::Create(M.getContext(), "", workgroup));
 
@@ -658,18 +610,14 @@ createWorkgroupFast(Module &M, Function *F)
   for (Function::const_arg_iterator ii = F->arg_begin(), ee = F->arg_end();
        ii != ee; ++i, ++ii) {
     Type *t = ii->getType();
-    Value *gep = builder.CreateGEP(ai, 
+    Value *gep = builder.CreateGEP(&*ai,
             ConstantInt::get(IntegerType::get(M.getContext(), 32), i));
     Value *pointer = builder.CreateLoad(gep);
      
     if (t->isPointerTy()) {
       if (!ii->hasByValAttr()) {
         /* Assume the pointer is directly in the arg array. */
-#if defined(LLVM_3_2) || defined(LLVM_3_3)
-        arguments.push_back(builder.CreateBitCast(pointer, t));
-#else
         arguments.push_back(builder.CreatePointerCast(pointer, t));
-#endif
         continue;
       }
 
@@ -681,13 +629,6 @@ createWorkgroupFast(Module &M, Function *F)
     /* If it's a pass by value pointer argument, we just pass the pointer
      * as is to the function, no need to load from it first. */
     Value *value;
-#if defined(LLVM_3_2) || defined(LLVM_3_3)
-    if (!ii->hasByValAttr() || ((PointerType*)t)->getAddressSpace() == 1)
-      value = builder.CreateBitCast
-        (pointer, t->getPointerTo(POCL_ADDRESS_SPACE_GLOBAL));
-    else
-      value = builder.CreateBitCast(pointer, t->getPointerTo());
-#else
 
     if (!ii->hasByValAttr() || ((PointerType*)t)->getAddressSpace() == 1)
       value = builder.CreatePointerCast
@@ -695,7 +636,6 @@ createWorkgroupFast(Module &M, Function *F)
     else
       value = builder.CreatePointerCast(pointer, t->getPointerTo());
 
-#endif
     if (!ii->hasByValAttr()) {
       value = builder.CreateLoad(value);
     }
@@ -703,7 +643,7 @@ createWorkgroupFast(Module &M, Function *F)
     arguments.push_back(value);
   }
 
-  arguments.back() = ++ai;
+  arguments.back() = &*(++ai);
   
   builder.CreateCall(F, ArrayRef<Value*>(arguments));
   builder.CreateRetVoid();
@@ -732,14 +672,10 @@ Workgroup::isKernelToProcess(const Function &F)
   for (unsigned i = 0, e = kernels->getNumOperands(); i != e; ++i) {
     if (kernels->getOperand(i)->getOperand(0) == NULL)
       continue; // globaldce might have removed uncalled kernels
-#ifdef LLVM_OLDER_THAN_3_6
-    Function *k = cast<Function>(kernels->getOperand(i)->getOperand(0));
-#else
     Function *k = 
       cast<Function>(
         dyn_cast<ValueAsMetadata>(kernels->getOperand(i)->getOperand(0))
           ->getValue());
-#endif
     if (&F == k)
       return true;
   }
@@ -756,7 +692,7 @@ Workgroup::hasWorkgroupBarriers(const Function &F)
 {
   for (llvm::Function::const_iterator i = F.begin(), e = F.end();
        i != e; ++i) {
-    const llvm::BasicBlock* bb = i;
+    const llvm::BasicBlock* bb = &*i;
     if (Barrier::hasBarrier(bb)) {
 
       // Ignore the implicit entry and exit barriers.

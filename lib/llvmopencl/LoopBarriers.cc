@@ -21,28 +21,18 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include <iostream>
+
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
-#include "config.h"
 #include "pocl.h"
 
-#if (defined LLVM_3_1 || defined LLVM_3_2)
-#include "llvm/Constants.h"
-#include "llvm/Instructions.h"
-#include "llvm/Module.h"
-#else
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
-#endif
-
-#if ! (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
 #include "llvm/IR/Dominators.h"
-#endif
-
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include <iostream>
 
 #include "LoopBarriers.h"
 #include "Barrier.h"
@@ -66,13 +56,8 @@ char LoopBarriers::ID = 0;
 void
 LoopBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 {
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  AU.addRequired<DominatorTree>();
-  AU.addPreserved<DominatorTree>();
-#else
   AU.addRequired<DominatorTreeWrapperPass>();
   AU.addPreserved<DominatorTreeWrapperPass>();
-#endif
 
 }
 
@@ -85,19 +70,11 @@ LoopBarriers::runOnLoop(Loop *L, LPPassManager &LPM)
   if (!Workgroup::hasWorkgroupBarriers(*L->getHeader()->getParent()))
     return false;
 
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  DT = &getAnalysis<DominatorTree>();
-#else
   DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-#endif
 
   bool changed = ProcessLoop(L, LPM);
 
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  DT->verifyAnalysis();
-#else
   DT->verifyDomTree();
-#endif
 
   return changed;
 }

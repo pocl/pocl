@@ -18,37 +18,25 @@
 
 #define DEBUG_TYPE "break-constgeps"
 
+#include <iostream>
+#include <map>
+#include <utility>
+
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
-#include "config.h"
 #include "pocl.h"
-#if (defined LLVM_3_1 || defined LLVM_3_2)
-#include "llvm/Constants.h"
-#include "llvm/InstrTypes.h"
-#include "llvm/Instruction.h"
-#include "llvm/Instructions.h"
-#include "llvm/LLVMContext.h"
-#else
+
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Instruction.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LLVMContext.h"
-#endif
 #include "llvm/ADT/Statistic.h"
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-#include "llvm/Support/InstIterator.h"
-#else
 #include "llvm/IR/InstIterator.h"
-#endif
 
 #include "BreakConstantGEPs.h"
 #include "Workgroup.h"
-
-#include <iostream>
-#include <map>
-#include <utility>
 
 // Identifier variable for the pass
 char BreakConstantGEPs::ID = 0;
@@ -85,9 +73,7 @@ hasConstantGEP (Value * V) {
         CE->getOpcode() == Instruction::GetElementPtr ||
         CE->getOpcode() == Instruction::BitCast;
 
-#if !(defined(LLVM_3_2) || defined(LLVM_3_3))
     isGEPOrCast |= CE->getOpcode() == Instruction::AddrSpaceCast;
-#endif
     if (isGEPOrCast) {
       return CE;
     } else {
@@ -204,9 +190,7 @@ convertExpression (ConstantExpr * CE, Instruction * InsertPt) {
     case Instruction::FPExt:
     case Instruction::PtrToInt:
     case Instruction::IntToPtr:
-#if !(defined(LLVM_3_2) || defined(LLVM_3_3))
     case Instruction::AddrSpaceCast:
-#endif
     case Instruction::BitCast: {
       Instruction::CastOps Op = (Instruction::CastOps)(CE->getOpcode());
       NewInst = CastInst::Create (Op,
@@ -221,7 +205,7 @@ convertExpression (ConstantExpr * CE, Instruction * InsertPt) {
     case Instruction:: ICmp: {
       Instruction::OtherOps Op = (Instruction::OtherOps)(CE->getOpcode());
       NewInst = CmpInst::Create (Op,
-                                 CE->getPredicate(),
+                                 (llvm::CmpInst::Predicate)CE->getPredicate(),
                                  CE->getOperand(0),
                                  CE->getOperand(1),
                                  CE->getName(),
@@ -284,7 +268,7 @@ BreakConstantGEPs::runOnFunction (Function & F) {
       // Scan through the operands of this instruction.  If it is a constant
       // expression GEP, insert an instruction GEP before the instruction.
       //
-      Instruction * I = i;
+      Instruction * I = &*i;
       for (unsigned index = 0; index < I->getNumOperands(); ++index) {
         if (hasConstantGEP (I->getOperand(index))) {
           Worklist.push_back (I);

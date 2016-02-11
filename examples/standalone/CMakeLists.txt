@@ -38,3 +38,9 @@ add_test("pocl-standalone" "/bin/sh" "${CMAKE_BINARY_DIR}/scripts/pocl-standalon
           -o "${CMAKE_BINARY_DIR}/standalone.bc"
           "${CMAKE_CURRENT_SOURCE_DIR}/standalone.cl")
 
+set_tests_properties( "pocl-standalone"
+  PROPERTIES
+    COST 3.0
+    PROCESSORS 1
+    LABELS "internal"
+    DEPENDS "pocl_version_check")

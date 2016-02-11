@@ -40,19 +40,16 @@ add_test("pocl_version_check" "runtime/test_version")
 set_tests_properties("pocl_version_check"
   PROPERTIES
   ENVIRONMENT "POCL_DEVICES=basic"
-  PASS_REGULAR_EXPRESSION "basic")
+  PASS_REGULAR_EXPRESSION "basic"
+  LABELS "internal")
 
 #######################################################################
 
 add_subdirectory("kernel")
-if(HAVE_OPENCL_HPP)
-  add_subdirectory("regression")
-else()
-  message(STATUS "cl.hpp unavailable, skipping regression tests")
-endif()
+add_subdirectory("regression")
 add_subdirectory("runtime")
 add_subdirectory("workgroup")
 if(ENABLE_TCE)
-  #add_subdirectory("tce")
+  add_subdirectory("tce")
 endif()
 

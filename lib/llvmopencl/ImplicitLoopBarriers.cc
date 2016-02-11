@@ -21,27 +21,20 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+#include <iostream>
+
 #include "config.h"
-#include "ImplicitLoopBarriers.h"
-#include "Barrier.h"
-#include "Workgroup.h"
+
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#if (defined LLVM_3_1 || defined LLVM_3_2)
-#include "llvm/Constants.h"
-#include "llvm/Instructions.h"
-#include "llvm/Module.h"
-#else
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
-#endif
-#if ! (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
 #include "llvm/IR/Dominators.h"
-#endif
 
+#include "ImplicitLoopBarriers.h"
+#include "Barrier.h"
+#include "Workgroup.h"
 #include "VariableUniformityAnalysis.h"
-
-#include <iostream>
 
 //#define DEBUG_ILOOP_BARRIERS
 
@@ -57,13 +50,8 @@ namespace {
 char ImplicitLoopBarriers::ID = 0;
 
 void ImplicitLoopBarriers::getAnalysisUsage(AnalysisUsage &AU) const {
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  AU.addRequired<DominatorTree>();
-  AU.addPreserved<DominatorTree>();
-#else
   AU.addRequired<DominatorTreeWrapperPass>();
   AU.addPreserved<DominatorTreeWrapperPass>();
-#endif
   AU.addRequired<VariableUniformityAnalysis>();
   AU.addPreserved<VariableUniformityAnalysis>();
 }

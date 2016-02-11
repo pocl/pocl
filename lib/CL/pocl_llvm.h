@@ -29,6 +29,9 @@
 extern "C" {
 #endif
 
+/* Returns the cpu name as reported by LLVM. */
+char* get_cpu_name();
+
 /* Compiles an .cl file into LLVM IR.
  */
 int pocl_llvm_build_program

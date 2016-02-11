@@ -76,6 +76,7 @@ using llvm::legacy::PassManager;
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/SubtargetFeature.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
+#include "llvm/Support/Host.h"
 
 #include <iostream>
 #include <fstream>
@@ -165,6 +166,10 @@ unlink_source(FrontendOptions &fe)
   }
 
 }
+
+#ifndef LLVM_OLDER_THAN_3_8
+#define PassManager legacy::PassManager
+#endif
 
 static llvm::Module*
 ParseIRFile(const char* fname, SMDiagnostic &Err, llvm::LLVMContext &ctx)
@@ -592,6 +597,8 @@ int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
               current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_LOCAL; break;
             case POCL_ADDRESS_SPACE_CONSTANT:
               current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_CONSTANT; break;
+            case POCL_ADDRESS_SPACE_GENERIC:
+              current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
           }
         }
       }
@@ -706,7 +713,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
     funcName = kernel_function->getName().str();
     if (pocl::is_automatic_local(funcName, *i))
       {
-        locals.push_back(i);
+        locals.push_back(&*i);
       }
   }
 
@@ -844,6 +851,15 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   return 0;
 }
 
+char* get_cpu_name() {
+  StringRef r = llvm::sys::getHostCPUName();
+  assert(r.size() > 0);
+  char* cpu_name = (char*) malloc (r.size()+1);
+  strncpy(cpu_name, r.data(), r.size());
+  cpu_name[r.size()] = 0;
+  return cpu_name;
+}
+
 /* helpers copied from LLVM opt START */
 
 /* FIXME: these options should come from the cl_device, and
@@ -881,24 +897,51 @@ static llvm::TargetOptions GetTargetOptions() {
 #endif
   return Options;
 }
+
+/* for "distro" style kernel libs, return which kernellib to use, at runtime */
+const char* getX86KernelLibName() {
+  StringMap<bool> Features;
+  llvm::sys::getHostCPUFeatures(Features);
+  const char *res = NULL;
+
+  if (Features["sse2"])
+    res = "sse2";
+  else
+    POCL_ABORT("Pocl on x86_64 requires at least SSE2");
+  if (Features["ssse3"] && Features["cx16"])
+    res = "ssse3";
+  if (Features["sse4.1"] && Features["cx16"])
+    res = "sse41";
+  if (Features["avx"] && Features["cx16"] && Features["popcnt"])
+    res = "avx";
+  if (Features["avx"] && Features["cx16"] && Features["popcnt"]
+      && Features["xop"] && Features["fma4"])
+    res = "avx_fma4";
+  if (Features["avx"] && Features["avx2"] && Features["cx16"]
+      && Features["popcnt"] && Features["lzcnt"] && Features["f16c"]
+      && Features["fma"] && Features["bmi"] && Features["bmi2"])
+    res = "avx2";
+  if (Features["avx512f"] )
+    res = "avx512";
+
+  return res;
+}
+
+
 // Returns the TargetMachine instance or zero if no triple is provided.
 static TargetMachine* GetTargetMachine(cl_device_id device,
  const std::vector<std::string>& MAttrs=std::vector<std::string>()) {
 
   std::string Error;
   Triple TheTriple(device->llvm_target_triplet);
+
   std::string MCPU =  device->llvm_cpu ? device->llvm_cpu : "";
+
   const Target *TheTarget = 
     TargetRegistry::lookupTarget("", TheTriple, Error);
-  
-  // In LLVM 3.4 and earlier, the target registry falls back to 
-  // the cpp backend in case a proper match was not found. In 
-  // that case simply do not use target info in the compilation 
-  // because it can be an off-tree target not registered at
-  // this point (read: TCE).
-  if (!TheTarget || TheTarget->getName() == std::string("cpp")) {
-    return 0;
-  }
+  if (!TheTarget)
+    return nullptr;
+  assert(TheTarget->getName() != std::string("cpp"));
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;
   if (MAttrs.size()) {
@@ -962,7 +1005,9 @@ static PassManager& kernel_compiler_passes
     initializeVectorization(Registry);
     initializeIPO(Registry);
     initializeAnalysis(Registry);
+#ifdef LLVM_OLDER_THAN_3_8
     initializeIPA(Registry);
+#endif
     initializeTransformUtils(Registry);
     initializeInstCombine(Registry);
     initializeInstrumentation(Registry);
@@ -1212,46 +1257,68 @@ kernel_library
   Triple triple(device->llvm_target_triplet);
 
   if (libs.find(device) != libs.end())
-    {
-      return libs[device];
-    }
+    return libs[device];
+
+  const char *subdir = "host";
+  bool is_host = true;
+#ifdef TCE_AVAILABLE
+  if (triple.getArch() == Triple::tce) {
+    subdir = "tce";
+    is_host = false;
+  }
+#endif
+#ifdef BUILD_HSA
+  if (triple.getArch() == Triple::hsail64) {
+    subdir = "hsail64";
+    is_host = false;
+  }
+#endif
+#ifdef AMDGCN_ENABLED
+  if (triple.getArch == Triple::amdgcn) {
+    subdir = "amdgcn";
+    is_host = false;
+  }
+#endif
 
   // TODO sync with Nat Ferrus' indexed linking
   std::string kernellib;
-  if (pocl_get_bool_option("POCL_BUILDING", 0))
-    {
-      kernellib = BUILDDIR;
-      kernellib += "/lib/kernel/";
-      // TODO: get this from the TCE target triplet
-      if (triple.getArch() == Triple::tce) 
-        {
-          kernellib += "tce";
-        }
-#ifdef BUILD_HSA
-      else if (triple.getArch() == Triple::hsail64) {
-          kernellib += "hsail64";
-      }
+  if (pocl_get_bool_option("POCL_BUILDING", 0)) {
+    kernellib = BUILDDIR;
+    kernellib += "/lib/kernel/";
+    kernellib += subdir;
+    // TODO: get this from the TCE target triplet
+    kernellib += "/kernel-";
+    kernellib += device->llvm_target_triplet;
+    if (is_host) {
+#ifdef POCL_BUILT_WITH_CMAKE
+    kernellib += '-';
+#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
+    if (triple.getArch() == Triple::x86_64 ||
+        triple.getArch() == Triple::x86)
+      kernellib += getX86KernelLibName();
+    else
 #endif
-#ifdef AMDGCN_ENABLED
-      else if (triple.getArch() == Triple::amdgcn) {
-          kernellib += "amdgcn";
-      }
+      kernellib += device->llvm_cpu;
 #endif
-      else 
-        {
-          kernellib += "host";
-        }
-      kernellib += "/kernel-"; 
-      kernellib += device->llvm_target_triplet;
-      kernellib +=".bc";   
     }
-  else
-    {
-      kernellib = PKGDATADIR;
-      kernellib += "/kernel-";
-      kernellib += device->llvm_target_triplet;
-      kernellib += ".bc";
+  } else { // POCL_BUILDING == 0, use install dir
+    kernellib = PKGDATADIR;
+    kernellib += "/kernel-";
+    kernellib += device->llvm_target_triplet;
+    if (is_host) {
+#ifdef POCL_BUILT_WITH_CMAKE
+    kernellib += '-';
+#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
+    if (triple.getArch() == Triple::x86_64 ||
+        triple.getArch() == Triple::x86)
+      kernellib += getX86KernelLibName();
+    else
+#endif
+      kernellib += device->llvm_cpu;
+#endif
     }
+  }
+  kernellib += ".bc";
 
   POCL_MSG_PRINT_INFO("using %s as the built-in lib.\n", kernellib.c_str());
 
@@ -1310,9 +1377,12 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
 #ifdef DEBUG_POCL_LLVM_API        
       printf("### cloning the preloaded LLVM IR\n");
 #endif
-      input = 
-        llvm::CloneModule
-        ((llvm::Module*)kernel->program->llvm_irs[device_i]);
+      llvm::Module* p = (llvm::Module*)kernel->program->llvm_irs[device_i];
+#ifdef LLVM_OLDER_THAN_3_8
+      input = llvm::CloneModule(p);
+#else
+      input = (llvm::CloneModule(p)).release();
+#endif
     }
   else
     {
@@ -1351,6 +1421,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
   pocl_cache_write_kernel_parallel_bc(input, program, device_i, kernel,
                                   local_x, local_y, local_z);
 
+  delete input;
   return 0;
 }
 
@@ -1488,7 +1559,17 @@ pocl_llvm_codegen(cl_kernel kernel,
 
     llvm::Triple triple(device->llvm_target_triplet);
     llvm::TargetMachine *target = GetTargetMachine(device);
+
     llvm::Module *input = ParseIRFile(infilename, Err, *GlobalContext());
+    if (triple.getArch() == Triple::x86 || triple.getArch() == Triple::x86_64) {
+        if (input->getTargetTriple().substr(0, 6) == std::string("spir64")) {
+            input->setTargetTriple(triple.getTriple());
+            input->setDataLayout("e-m:e-i64:64-f80:128-n8:16:32:64-S128");
+        } else if (input->getTargetTriple().substr(0, 4) == std::string("spir")) {
+            input->setTargetTriple(triple.getTriple());
+            input->setDataLayout("e-m:e-p:32:32-i64:64-f80:32-n8:16:32-S32");
+        }
+    }
 
     PassManager PM;
 #ifdef LLVM_OLDER_THAN_3_7
@@ -1498,11 +1579,11 @@ pocl_llvm_codegen(cl_kernel kernel,
     llvm::TargetLibraryInfoWrapperPass *TLIPass = new TargetLibraryInfoWrapperPass(triple);
     PM.add(TLIPass);
 #endif
-    if (target != NULL) {
 #ifdef LLVM_OLDER_THAN_3_7
+    if (target != NULL) {
       target->addAnalysisPasses(PM);
-#endif
     }
+#endif
 
     // TODO: get DataLayout from the 'device'
     // TODO: better error check

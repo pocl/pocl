@@ -40,7 +40,11 @@ if(EXISTS "${ViennaCL_TGZ}")
     ${TS_NAME}
     PREFIX "${TS_BASEDIR}"
     SOURCE_DIR "${TS_BASEDIR}/src/${VIENNA}"
-    DOWNLOAD_COMMAND pwd && echo untaring && tar xzf "${ViennaCL_TGZ}"
+    DOWNLOAD_COMMAND pwd &&
+      test -d "${TS_BASEDIR}/src/${VIENNA}" || tar xzf "${ViennaCL_TGZ}"
+    PATCH_COMMAND pwd && patch -N -r- -p1 -i
+      ${CMAKE_CURRENT_SOURCE_DIR}/vienna_170.patch || /bin/true
+    UPDATE_COMMAND /bin/true
     CMAKE_ARGS
       -DCMAKE_BUILD_TYPE=RelWithDebInfo
       -DBUILD_TESTING:BOOL=ON

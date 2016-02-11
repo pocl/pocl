@@ -103,17 +103,8 @@ set_tests_properties("kernel/test_min_max" "kernel/test_length_distance"
     FAIL_REGULAR_EXPRESSION "FAIL"
     PASS_REGULAR_EXPRESSION "\nOK\n"
     PROCESSORS 1
-    DEPENDS "pocl_version_check")
-
-if(LLVM_3_2 AND POWERPC)
-  set_tests_properties("kernel/test_short16"
-    PROPERTIES WILL_FAIL 1)
-endif()
-
-if(LLVM_3_2 OR (LLVM_3_3 AND POWERPC))
-  set_tests_properties("kernel/test_rotate"
-    PROPERTIES WILL_FAIL 1)
-endif()
+    DEPENDS "pocl_version_check"
+    LABELS "internal;kernel")
 
 if(LLVM_ASSERTS_BUILD)
   set_tests_properties("kernel/test_local_struct_array"
@@ -130,13 +121,8 @@ endif()
 if(POWERPC)
   set_tests_properties(
   "kernel/test_convert_type_1" "kernel/test_convert_type_2" "kernel/test_convert_type_4"
-  "kernel/test_convert_type_8" "kernel/test_convert_type_16"
-    PROPERTIES WILL_FAIL 1)
-endif()
-
-if(POWERPC)
-  set_tests_properties("kernel/test_as_type" "kernel/test_fmin_fmax_fma"
-  "kernel/test_bitselect" "kernel/test_fabs" "test_hadd"
+  "kernel/test_convert_type_8" "kernel/test_convert_type_16" "kernel/test_as_type"
+  "kernel/test_fmin_fmax_fma" "kernel/test_bitselect" "kernel/test_fabs" "test_hadd"
     PROPERTIES WILL_FAIL 1)
 endif()
 
@@ -164,7 +150,8 @@ set_tests_properties( "kernel/test_sampler_address_clamp"
     COST 4.0
     PASS_REGULAR_EXPRESSION "\nOK\n"
     PROCESSORS 1
-    DEPENDS "pocl_version_check")
+    DEPENDS "pocl_version_check"
+    LABELS "internal;kernel")
 
 ######################################################################
 
@@ -203,7 +190,8 @@ set_tests_properties("kernel/test_shuffle_char" "kernel/test_shuffle_short"
     COST 77
     PASS_REGULAR_EXPRESSION "OK\n"
     PROCESSORS 1
-    DEPENDS "pocl_version_check")
+    DEPENDS "pocl_version_check"
+    LABELS "internal;kernel")
 
 
 
@@ -241,7 +229,7 @@ OK"
     PROCESSORS 1
     DEPENDS "pocl_version_check")
 
-if(I386 OR (LLVM_VERSION VERSION_LESS "3.4"))
+if(I386)
   set_tests_properties("kernel/test_printf"
     PROPERTIES WILL_FAIL 1)
 endif()
