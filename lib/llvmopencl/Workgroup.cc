@@ -63,11 +63,13 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
+#include "LLVMUtils.h"
 #include <cstdio>
 #include <map>
 #include <iostream>
 
 #include "pocl.h"
+#include "pocl_cl.h"
 
 #if _MSC_VER
 #  include "vccompat.hpp"
@@ -76,6 +78,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #define STRING_LENGTH 32
 
 POP_COMPILER_DIAGS
+
+extern cl_device_id globalPoclDevice;
 
 using namespace std;
 using namespace llvm;
@@ -162,52 +166,27 @@ static RegisterPass<Workgroup> X("workgroup", "Workgroup creation pass");
 bool
 Workgroup::runOnModule(Module &M)
 {
-
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  if (M.getPointerSize() == llvm::Module::Pointer64)
-    {
-      TypeBuilder<PoclContext, true>::setSizeTWidth(64);
-    }
-  else if (M.getPointerSize() == llvm::Module::Pointer32) 
-    {
-      TypeBuilder<PoclContext, true>::setSizeTWidth(32);
-    }
-  else 
-    {
-      assert (false && "Target has an unsupported pointer width.");
-    }  
-#elif (defined LLVM_3_5 || defined LLVM_3_6)
-  if (M.getDataLayout()->getPointerSize(0) == 8)
-    {
-      TypeBuilder<PoclContext, true>::setSizeTWidth(64);
-    }
-  else if (M.getDataLayout()->getPointerSize(0) == 4)
-    {
-      TypeBuilder<PoclContext, true>::setSizeTWidth(32);
-    }
-  else 
-    {
-      assert (false && "Target has an unsupported pointer width.");
-    }
-#else
-  if (M.getDataLayout().getPointerSize(0) == 8)
-    {
-      TypeBuilder<PoclContext, true>::setSizeTWidth(64);
-    }
-  else if (M.getDataLayout().getPointerSize(0) == 4)
-    {
-      TypeBuilder<PoclContext, true>::setSizeTWidth(32);
-    }
-  else 
-    {
-      assert (false && "Target has an unsupported pointer width.");
-    }
-#endif
-
+  switch (globalPoclDevice->address_bits) {
+  case 64:
+    TypeBuilder<PoclContext, true>::setSizeTWidth(64);
+    break;
+  case 32:
+    TypeBuilder<PoclContext, true>::setSizeTWidth(32);
+    break;
+  default:
+    assert (false && "Target has an unsupported pointer width.");
+    break;
+  }
+  
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     if (!i->isDeclaration())
       i->setLinkage(Function::InternalLinkage);
   }
+
+  // store the new and old kernel pairs in order to regenerate
+  // all the metadata that used to point to the unmodified
+  // kernels
+  FunctionMapping kernels;
 
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     if (!isKernelToProcess(*i)) continue;
@@ -221,8 +200,26 @@ Workgroup::runOnModule(Module &M)
 
     privatizeContext(M, L);
 
-    createWorkgroup(M, L);
-    createWorkgroupFast(M, L);
+    if (!globalPoclDevice->spmd) {
+      createWorkgroup(M, L);
+      createWorkgroupFast(M, L);
+    }
+    else
+      kernels[i] = L;
+  }
+
+  if (globalPoclDevice->spmd) {
+    regenerate_kernel_metadata(M, kernels);
+
+    /* Delete the old kernels. */
+    for (FunctionMapping::const_iterator i = kernels.begin(),
+           e = kernels.end(); i != e; ++i) 
+      {
+        Function *old_kernel = (*i).first;
+        Function *new_kernel = (*i).second;
+        if (old_kernel == new_kernel) continue;
+        old_kernel->eraseFromParent();
+      }
   }
 
   Function *barrier = cast<Function> 
@@ -243,7 +240,12 @@ createLauncher(Module &M, Function *F)
   for (Function::const_arg_iterator i = F->arg_begin(), e = F->arg_end();
        i != e; ++i)
     sv.push_back (i->getType());
-  sv.push_back(TypeBuilder<PoclContext*, true>::get(M.getContext()));
+  if (globalPoclDevice->spmd) {
+    PointerType* g_pc_ptr = PointerType::get(TypeBuilder<PoclContext, true>::get(M.getContext()), 1);
+    sv.push_back(g_pc_ptr);
+  }
+  else
+    sv.push_back(TypeBuilder<PoclContext*, true>::get(M.getContext()));
 
   FunctionType *ft = FunctionType::get(Type::getVoidTy(M.getContext()),
 				       ArrayRef<Type *> (sv),
@@ -251,11 +253,20 @@ createLauncher(Module &M, Function *F)
 
   std::string funcName = "";
   funcName = F->getName().str();
-
-  Function *L = Function::Create(ft,
-				 Function::ExternalLinkage,
-				 "_pocl_launcher_" + funcName,
-				 &M);
+  Function *L = NULL;
+  if (globalPoclDevice->spmd) {
+    Function *F = M.getFunction(funcName);
+    F->setName(funcName + "_original");
+    L = Function::Create(ft,
+                         Function::ExternalLinkage,
+                         funcName,
+                         &M);
+  }
+  else
+    L = Function::Create(ft,
+                         Function::ExternalLinkage,
+                         "_pocl_launcher_" + funcName,
+                         &M);
 
   SmallVector<Value *, 8> arguments;
   Function::arg_iterator ai = L->arg_begin();
@@ -289,13 +300,7 @@ createLauncher(Module &M, Function *F)
 
 
   int size_t_width = 32;
-#if (defined LLVM_3_2 || defined LLVM_3_3 || defined LLVM_3_4)
-  if (M.getPointerSize() == llvm::Module::Pointer64)
-#elif (defined LLVM_OLDER_THAN_3_7)
-  if (M.getDataLayout()->getPointerSize(0) == 8)
-#else
-  if (M.getDataLayout().getPointerSize(0) == 8)
-#endif
+  if (globalPoclDevice->address_bits == 64)
     size_t_width = 64;
 
 #if defined LLVM_OLDER_THAN_3_7

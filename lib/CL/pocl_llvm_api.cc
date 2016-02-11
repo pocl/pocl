@@ -120,6 +120,9 @@ LLVMContext *GlobalContext() {
 
 static llvm::sys::Mutex kernelCompilerLock;
 
+/* Global pocl device to be used by passes if needed */
+cl_device_id globalPoclDevice = NULL;
+
 static void InitializeLLVM();
 
 //#define DEBUG_POCL_LLVM_API
@@ -950,15 +953,17 @@ static PassManager& kernel_compiler_passes
 {
   static std::map<cl_device_id, PassManager*> kernel_compiler_passes;
 
+  bool SPMDDevice = device->spmd;
+
+  globalPoclDevice = device;
+
   if (kernel_compiler_passes.find(device) != 
       kernel_compiler_passes.end())
     {
       return *kernel_compiler_passes[device];
     }
-
+  
   Triple triple(device->llvm_target_triplet);
-
-  bool SPMDDevice = device->spmd;
 
   PassRegistry &Registry = *PassRegistry::getPassRegistry();
 
@@ -1069,8 +1074,8 @@ static PassManager& kernel_compiler_passes
       passes.push_back("workitemrepl");
       //passes.push_back("print-module");
       passes.push_back("workitemloops");
-      passes.push_back("workgroup");
   }
+  passes.push_back("workgroup");
   passes.push_back("allocastoentry");
   passes.push_back("target-address-spaces");
   // Later passes might get confused (and expose possible bugs in them) due to

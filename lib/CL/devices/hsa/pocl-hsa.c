@@ -807,6 +807,12 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
           write_pos += al->size;
         }
     }
+  /* pointer to pocl_context */
+  CHECK_AND_ALIGN_SPACE(sizeof (uint64_t));
+
+  uint64_t pc_addr = (uint64_t)&cmd->command.run.pc;
+  memcpy(write_pos, &pc_addr, sizeof(uint64_t));
+  write_pos += sizeof(uint64_t);
 
 #if 0
   for (size_t i = cmd->command.run.kernel->num_args;
