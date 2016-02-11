@@ -24,7 +24,7 @@
 #include "pocl_cl.h"
 #include "pocl_util.h"
 #include <string.h>
-#include "pocl_binary_format.h"
+#include "poclcc_binary.h"
 
 CL_API_ENTRY cl_program CL_API_CALL
 POname(clCreateProgramWithBinary)(cl_context                     context,
@@ -127,47 +127,48 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
   /* We do no want a binary with different kind of binary in it
    * So we can alias the pointers for the IR binary and the pocl binary  
    */
-  unsigned isIRBinary = !strncmp(binaries[0], "BC", 2);
+  unsigned isPoclccBinary = strncmp(binaries[0], "BC", 2);
 
   for (i = 0; i < num_devices; ++i)
     {
       program->binary_sizes[i] = lengths[i];
       program->binaries[i] = (unsigned char*) malloc (lengths[i]);
-      program->BF = program->binaries;
-      program->BF_sizes = program->binary_sizes;
+      program->poclcc_binaries = program->binaries;
+      program->poclcc_binary_sizes = program->binary_sizes;
       
       /* IR binary (it always start with those 2 char)
        * It would be better if LLVM had a external function to check 
        * the header of IR files
        */
-      if ( isIRBinary && !strncmp(binaries[i], "BC", 2) )
-      {
-        memcpy (program->binaries[i], 
-                binaries[i], 
-                lengths[i]);
-        if (binary_status != NULL)
-          binary_status[i] = CL_SUCCESS;
-
-        /* Machin specific binary
-         * the first bytes are a magic string to identify pocl binary
-         * the next 4 bytes are the vendor_id of the device
-         */
-      } else if (!isIRBinary 
-                 && poclcc_check_binary(device_list[i], binaries[i])) {
-        memcpy (program->BF[i], binaries[i], lengths[i]);
-        if (binary_status != NULL)
-          binary_status[i] = CL_SUCCESS;
-
-      // Unknown binary
-      } else {
-        if (binary_status != NULL) 
-          binary_status[i] = CL_INVALID_BINARY;
-        errcode = CL_INVALID_BINARY;
-        goto ERROR_CLEAN_PROGRAM_AND_BINARIES;
-      }
+      if ( !isPoclccBinary && !strncmp(binaries[i], "BC", 2) )
+        {
+          memcpy (program->binaries[i], 
+                  binaries[i], 
+                  lengths[i]);
+          if (binary_status != NULL)
+            binary_status[i] = CL_SUCCESS;
+          
+        } 
+      /* Poclcc binary */
+      else if (isPoclccBinary 
+                   && poclcc_check_binary(device_list[i], binaries[i])) 
+        {
+          memcpy (program->poclcc_binaries[i], binaries[i], lengths[i]);
+          if (binary_status != NULL)
+            binary_status[i] = CL_SUCCESS;
+          
+        } 
+      /* Unknown binary */
+      else 
+        {
+          if (binary_status != NULL) 
+            binary_status[i] = CL_INVALID_BINARY;
+          errcode = CL_INVALID_BINARY;
+          goto ERROR_CLEAN_PROGRAM_AND_BINARIES;
+        }
     }
   
-  program->isBinaryFormat = !isIRBinary;  
+  program->isPoclccBinary = isPoclccBinary;  
 
   POCL_RETAIN_OBJECT(context);
 

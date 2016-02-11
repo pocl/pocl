@@ -504,8 +504,6 @@ workgroup_thread (void *p)
       *(void **)(arguments[i]) = pocl_memalign_alloc (MAX_EXTENDED_ALIGNMENT, al->size);
     }
 
-
-
   size_t first_gid_x = ta->pc.group_id[0];
   unsigned gid_z, gid_y, gid_x;
   for (gid_z = 0; gid_z < ta->pc.num_groups[2]; ++gid_z)

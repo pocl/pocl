@@ -26,7 +26,7 @@
 #include "pocl_file_util.h"
 #include "pocl_cache.h"
 #include "pocl_llvm.h"
-#include "pocl_binary_format.h"
+#include "poclcc_binary.h"
 #include <string.h>
 #include <sys/stat.h>
 #ifndef _MSC_VER
@@ -80,23 +80,27 @@ POname(clCreateKernel)(cl_program program,
       if (device_i > 0)
         POname(clRetainKernel) (kernel);
 
+      /* If the program was created with a poclcc's binary, we won't be able to
+         get the metadata for the cl_kernel from an IR file, so we call poclcc 
+         function to initialize the cl_kernel data */
+      if (program->isPoclccBinary)
+        {
+          POCL_GOTO_ERROR_COND(
+            poclcc_programInfos2BinaryFormat(&poclcc, 
+                                             program->binaries, 
+                                             program->num_devices) != CL_SUCCESS, 
+            CL_OUT_OF_HOST_MEMORY);
+          POCL_GOTO_ERROR_COND(
+            (errcode=poclcc_binaryFormat2ClKernel(&poclcc, 
+                                                  kernel_name, kernel,
+                                                  program->devices[device_i])) 
+            != CL_SUCCESS,
+            errcode);
+          continue;
+        }
       /* If there is no device dir for this device, the program was
          not built for that device in clBuildProgram. This seems to
          be OK by the standard. */
-      if (program->isBinaryFormat){
-        POCL_GOTO_ERROR_COND(programInfos2BinaryFormat(&poclcc, 
-                                                       program->binaries, 
-                                                       program->num_devices)
-                             != CL_SUCCESS, 
-                             CL_OUT_OF_HOST_MEMORY);
-        POCL_GOTO_ERROR_COND(
-          (errcode=binaryFormat2ClKernel(&poclcc, 
-                                         kernel_name, kernel,
-                                         program->devices[device_i])) 
-          != CL_SUCCESS,
-          errcode);
-        continue;
-      }
       if (!pocl_cache_device_cachedir_exists(program, device_i))
         continue;
 
@@ -135,7 +139,8 @@ POname(clCreateKernel)(cl_program program,
 ERROR:
   POCL_MEM_FREE(kernel);
   kernel = NULL;
-  poclcc_free(&poclcc);
+  if (program != NULL && program->isPoclccBinary)
+    poclcc_free(&poclcc);
 
 SUCCESS:
   if(errcode_ret != NULL)

@@ -87,12 +87,12 @@ int main(void)
 
         void *program_buffer;
         cl_uint program_buffer_size;
-        err = clExportBinaryFormat(program1, &program_buffer, &program_buffer_size);
+        err = clExportPoclccBinary(program1, &program_buffer, &program_buffer_size);
         assert(!err);
 
         size_t *binaries_sizes;
         unsigned char **binaries;
-        err = clExtractBinaryFormat(program_buffer, program_buffer_size, &binaries_sizes, &binaries);
+        err = clExtractPoclccBinary(program_buffer, program_buffer_size, &binaries_sizes, &binaries);
 
         program2 = clCreateProgramWithBinary(
           context, 1, &device_id, binaries_sizes, (const unsigned char **)binaries, NULL, &err);

@@ -209,14 +209,15 @@ CL_API_SUFFIX__VERSION_1_0
       device_list = unique_devlist;
     }
 
-  if (program->isBinaryFormat){
-    error = pocl_cache_create_program_cachedir(program, device_i,
-                                               NULL, 0, program_bc_path);
-    POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
-                       "Could not create program cachedir");
-    
-    goto SUCCESS;
-  }
+  if (program->isPoclccBinary)
+    {
+      error = pocl_cache_create_program_cachedir(program, device_i,
+                                                 NULL, 0, program_bc_path);
+      POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
+                         "Could not create program cachedir");
+      
+      goto SUCCESS;
+    }
 
   POCL_MSG_PRINT_INFO("building program with options %s\n",
                       user_options != NULL ? user_options : "");

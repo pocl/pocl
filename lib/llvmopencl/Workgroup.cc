@@ -292,35 +292,39 @@ createLauncher(Module &M, Function *F)
     }
   }
 
-  if (isKernelWithDynamicLocalSize){
+  if (isKernelWithDynamicLocalSize)
+    {
 #if defined LLVM_OLDER_THAN_3_7
-    ptr = builder.CreateStructGEP(ai,
-                                  TypeBuilder<PoclContext, true>::LOCAL_SIZE);
+      ptr = builder.CreateStructGEP(ai,
+                                    TypeBuilder<PoclContext, true>::LOCAL_SIZE);
 #else
-    ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), ai,
-                                  TypeBuilder<PoclContext, true>::LOCAL_SIZE);
+      ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), ai,
+                                    TypeBuilder<PoclContext, true>::LOCAL_SIZE);
 #endif
-    for (int i = 0; i < 3; ++i) {
-      snprintf(s, STRING_LENGTH, "_local_size_%c", 'x' + i);
-      gv = M.getGlobalVariable(s);
-      if (gv != NULL) {
-        if (size_t_width == 64)
+      for (int i = 0; i < 3; ++i) 
         {
-          v = builder.CreateLoad(builder.CreateConstGEP2_64(ptr, 0, i));
-        }
-        else
-        {
+          snprintf(s, STRING_LENGTH, "_local_size_%c", 'x' + i);
+          gv = M.getGlobalVariable(s);
+          if (gv != NULL) {
+            if (size_t_width == 64)
+              {
+                v = builder.CreateLoad(builder.CreateConstGEP2_64(ptr, 0, i));
+              }
+            else
+              {
 #ifdef LLVM_OLDER_THAN_3_7
-          v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, i));
+                v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, i));
 #else
-          v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr->getType()->getPointerElementType(), ptr, 0, i));
+                v = builder.CreateLoad(
+                  builder.CreateConstGEP2_32(ptr->getType()->getPointerElementType(), 
+                                             ptr, 0, i));
 #endif
+              }
+            builder.CreateStore(v, gv);
+          }
         }
-        builder.CreateStore(v, gv);
-      }
     }
-  }
-
+  
 #ifdef LLVM_OLDER_THAN_3_7
   ptr = builder.CreateStructGEP(ai,
 				TypeBuilder<PoclContext, true>::NUM_GROUPS);

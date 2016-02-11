@@ -25,7 +25,7 @@
 #include "pocl_llvm.h"
 #include "pocl_util.h"
 #include "pocl_cache.h"
-#include "pocl_binary_format.h"
+#include "poclcc_binary.h"
 
 
 cl_int compileKernels(cl_program program, cl_device_id device, poclcc_device *devicecc)
@@ -52,83 +52,84 @@ cl_int compileKernels(cl_program program, cl_device_id device, poclcc_device *de
     CL_OUT_OF_HOST_MEMORY);
     
   int i;
-  for (i=0; i<num_kernels; i++){
+  for (i=0; i<num_kernels; i++)
+    {
 
-    //COMPILATION
-    char cachedir[POCL_FILENAME_LENGTH];
-    pocl_cache_make_kernel_cachedir_path(cachedir, program,
-                                         device, kernel[i],
-                                         0,0,0);
-
-    POCL_GOTO_ERROR_COND(
-      (errcode = pocl_llvm_generate_workgroup_function(device,
-                                                       kernel[i],
-                                                       0,0,0)) != CL_SUCCESS,
-      errcode);
-
-    command_node->command.run.kernel = kernel[i];
-    command_node->command.run.tmp_dir = strdup(cachedir);
-    device->ops->compile_submitted_kernels(command_node);
-
-    //READ OBJFILE
-    char objfile[POCL_FILENAME_LENGTH];
-    errcode = snprintf(objfile, POCL_FILENAME_LENGTH, 
-                     "%s/%s.so", 
-                     command_node->command.run.tmp_dir, 
-                     kernel[i]->name);
-    assert(errcode >= 0);
-    errcode = CL_SUCCESS;
-
-    void *lock =pocl_cache_acquire_reader_lock(program, device);
-
-    FILE *f = fopen(objfile, "r");
-    fseek(f, 0, SEEK_END);
-    int fsize = ftell(f);
-    fseek(f, 0, SEEK_SET);
+      //COMPILATION
+      char cachedir[POCL_FILENAME_LENGTH];
+      pocl_cache_make_kernel_cachedir_path(cachedir, program,
+                                           device, kernel[i],
+                                           0,0,0);
       
-    unsigned char *binary;
-    POCL_GOTO_ERROR_COND(
-      (binary = malloc(fsize)) == NULL, CL_OUT_OF_HOST_MEMORY);
+      POCL_GOTO_ERROR_COND(
+        (errcode = pocl_llvm_generate_workgroup_function(device,
+                                                         kernel[i],
+                                                         0,0,0)) != CL_SUCCESS,
+        errcode);
+      
+      command_node->command.run.kernel = kernel[i];
+      command_node->command.run.tmp_dir = strdup(cachedir);
+      device->ops->compile_submitted_kernels(command_node);
+      
+      //READ OBJFILE
+      char objfile[POCL_FILENAME_LENGTH];
+      errcode = snprintf(objfile, POCL_FILENAME_LENGTH, 
+                         "%s/%s.so", 
+                         command_node->command.run.tmp_dir, 
+                         kernel[i]->name);
+      assert(errcode >= 0);
+      errcode = CL_SUCCESS;
+      
+      void *lock =pocl_cache_acquire_reader_lock(program, device);
+      
+      FILE *f = fopen(objfile, "r");
+      fseek(f, 0, SEEK_END);
+      int fsize = ftell(f);
+      fseek(f, 0, SEEK_SET);
+      
+      unsigned char *binary;
+      POCL_GOTO_ERROR_COND(
+        (binary = malloc(fsize)) == NULL, CL_OUT_OF_HOST_MEMORY);
+      
+      fread(binary, fsize, 1, f);
+      fclose(f);
+      
+      pocl_cache_release_lock(lock);
+      
+      //ALLOC KERNEL INFOS
+      char *kernel_name;
+      struct pocl_argument *dyn_arguments;
+      struct pocl_argument_info *arg_info;
+      
+      int sizeofKernelName = strlen(kernel[i]->name);
+      POCL_GOTO_ERROR_COND(
+        (kernel_name = malloc(sizeofKernelName)) 
+        == NULL,
+        CL_OUT_OF_HOST_MEMORY);
+      memcpy(kernel_name, kernel[i]->name, sizeofKernelName);
 
-    fread(binary, fsize, 1, f);
-    fclose(f);
+      int num_args = kernel[i]->num_args;
+      int num_locals = kernel[i]->num_locals;
 
-    pocl_cache_release_lock(lock);
-
-    //ALLOC KERNEL INFOS
-    char *kernel_name;
-    struct pocl_argument *dyn_arguments;
-    struct pocl_argument_info *arg_info;
-    
-    int sizeofKernelName = strlen(kernel[i]->name);
-    POCL_GOTO_ERROR_COND(
-      (kernel_name = malloc(sizeofKernelName)) 
-      == NULL,
-      CL_OUT_OF_HOST_MEMORY);
-    memcpy(kernel_name, kernel[i]->name, sizeofKernelName);
-
-    int num_args = kernel[i]->num_args;
-    int num_locals = kernel[i]->num_locals;
-
-    POCL_GOTO_ERROR_COND(
-      (dyn_arguments = malloc((num_args+num_locals)*sizeof(struct pocl_argument))) 
-      == NULL,
-      CL_OUT_OF_HOST_MEMORY);
-    memcpy(dyn_arguments, kernel[i]->dyn_arguments, 
-           (num_args+num_locals)*sizeof(struct pocl_argument));
-
-    POCL_GOTO_ERROR_COND(
-      (arg_info = malloc((num_args)*sizeof(struct pocl_argument_info))) 
-      == NULL,
-      CL_OUT_OF_HOST_MEMORY);
-    memcpy(arg_info, kernel[i]->arg_info, 
-           (num_args)*sizeof(struct pocl_argument_info));
-    
-    //INITIALIZE POCLCC KERNEL  
-    poclcc_kernel *kernelcc = &(kernel_tab[i]);
-    poclcc_init_kernel(kernelcc, kernel_name, sizeofKernelName, binary, fsize, 
-                       num_args, num_locals, dyn_arguments, arg_info);
-  }
+      POCL_GOTO_ERROR_COND(
+        (dyn_arguments = malloc((num_args+num_locals)*sizeof(struct pocl_argument))) 
+        == NULL,
+        CL_OUT_OF_HOST_MEMORY);
+      memcpy(dyn_arguments, kernel[i]->dyn_arguments, 
+             (num_args+num_locals)*sizeof(struct pocl_argument));
+      
+      POCL_GOTO_ERROR_COND(
+        (arg_info = malloc((num_args)*sizeof(struct pocl_argument_info))) 
+        == NULL,
+        CL_OUT_OF_HOST_MEMORY);
+      memcpy(arg_info, kernel[i]->arg_info, 
+             (num_args)*sizeof(struct pocl_argument_info));
+      
+      //INITIALIZE POCLCC KERNEL  
+      poclcc_kernel *kernelcc = &(kernel_tab[i]);
+      poclcc_init_kernel(kernelcc, kernel_name, sizeofKernelName, binary, fsize, 
+                         num_args, num_locals, dyn_arguments, arg_info);
+    }
   
   poclcc_init_device(devicecc, device, num_kernels, kernel_tab);
 
@@ -144,10 +145,10 @@ cl_int compileForDevices(cl_program program)
   cl_int errcode = CL_SUCCESS;
   int num_devices = program->num_devices;
 
-  if (program->BF != NULL && program->BF_sizes != NULL)
+  if (program->poclcc_binaries != NULL && program->poclcc_binary_sizes != NULL)
     return errcode;
-  assert(program->BF == NULL);
-  assert(program->BF_sizes == NULL);
+  assert(program->poclcc_binaries == NULL);
+  assert(program->poclcc_binary_sizes == NULL);
 
   poclcc_global poclcc;
   poclcc_device *devicecc;
@@ -157,13 +158,16 @@ cl_int compileForDevices(cl_program program)
   poclcc_init_global(&poclcc, num_devices, devicecc);
 
   int i;
-  for (i=0; i<num_devices; i++){
-    cl_device_id device = program->devices[i];
-    errcode = compileKernels(program, device, &(poclcc.devices[i]));
-    POCL_GOTO_ERROR_COND(errcode != CL_SUCCESS, errcode);
-  }
-
-  errcode = binaryFormat2ProgramInfos(&(program->BF), &(program->BF_sizes), &poclcc);
+  for (i=0; i<num_devices; i++)
+    {
+      cl_device_id device = program->devices[i];
+      errcode = compileKernels(program, device, &(poclcc.devices[i]));
+      POCL_GOTO_ERROR_COND(errcode != CL_SUCCESS, errcode);
+    }
+  
+  errcode = poclcc_binaryFormat2ProgramInfos(&(program->poclcc_binaries), 
+                                             &(program->poclcc_binary_sizes), 
+                                             &poclcc);
   POCL_GOTO_ERROR_COND(errcode != CL_SUCCESS, errcode);
 
   return errcode;
@@ -210,7 +214,7 @@ POname(clGetProgramInfo)(cl_program program,
       if (errcode != CL_SUCCESS)
         return errcode;
 
-      POCL_RETURN_GETINFO_SIZE(value_size, program->BF_sizes);
+      POCL_RETURN_GETINFO_SIZE(value_size, program->poclcc_binary_sizes);
     }
 
   case CL_PROGRAM_BINARIES:
@@ -228,7 +232,7 @@ POname(clGetProgramInfo)(cl_program program,
         for (i = 0; i < program->num_devices; ++i)
           {
             if (target[i] == NULL) continue;
-            memcpy (target[i], program->BF[i], program->BF_sizes[i]);
+            memcpy (target[i], program->poclcc_binaries[i], program->poclcc_binary_sizes[i]);
           }
       }
       if (param_value_size_ret)

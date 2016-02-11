@@ -1,10 +1,11 @@
 #include "pocl_util.h"
-#include "pocl_binary_format.h"
+#include "poclcc_binary.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-POname(clExportBinaryFormat)(cl_program program,
-                             void **binary_format,
-                             cl_uint *binary_size){
+POname(clExportPoclccBinary)(cl_program program,
+                             void **poclcc_binary,
+                             cl_uint *poclcc_binary_size)
+{
   cl_int num_devices;
   size_t size_ret;
   int i;
@@ -27,37 +28,43 @@ POname(clExportBinaryFormat)(cl_program program,
                              binaries_sizes, &size_ret);
   if (errcode != 0) goto ERROR_CLEAN_BINARIES_SIZES;
 
-  if ((binaries = malloc(num_devices*sizeof(unsigned char*))) == NULL){
-    errcode = CL_OUT_OF_HOST_MEMORY;
-    goto ERROR_CLEAN_BINARIES_SIZES;
-  }
-  
-  for (i=0; i<num_devices; i++){
-    if ( (binaries[i] = malloc(binaries_sizes[i]*sizeof(unsigned char))) 
-        == NULL ){
+  if ((binaries = malloc(num_devices*sizeof(unsigned char*))) == NULL)
+    {
       errcode = CL_OUT_OF_HOST_MEMORY;
-      goto ERROR;
+      goto ERROR_CLEAN_BINARIES_SIZES;
     }
-  }
+  
+  for (i=0; i<num_devices; i++)
+    {
+      if ( (binaries[i] = malloc(binaries_sizes[i]*sizeof(unsigned char))) 
+           == NULL )
+        {
+          errcode = CL_OUT_OF_HOST_MEMORY;
+          goto ERROR;
+        }
+    }
 
   errcode = clGetProgramInfo(program, CL_PROGRAM_BINARIES, 
                              num_devices*sizeof(unsigned char*), 
                              binaries, &size_ret);
   if (errcode != 0) goto ERROR;
 
-  *binary_size = sizeofPoclccGlobalFromBinariesSizes(binaries_sizes, 
+  *poclcc_binary_size = poclcc_sizeofGlobalFromBinariesSizes(binaries_sizes, 
                                                      num_devices);
-  if ((*binary_format = malloc(*binary_size)) == NULL){
-    errcode = CL_OUT_OF_HOST_MEMORY;
-    goto ERROR;
-  }
+  if ((*poclcc_binary = malloc(*poclcc_binary_size)) == NULL)
+    {
+      errcode = CL_OUT_OF_HOST_MEMORY;
+      goto ERROR;
+    }
   
   poclcc_global poclcc;
-  POCL_GOTO_ERROR_COND(programInfos2BinaryFormat(&poclcc, binaries, num_devices)
+  POCL_GOTO_ERROR_COND(poclcc_programInfos2BinaryFormat(&poclcc, binaries, num_devices)
                        != CL_SUCCESS, 
                        CL_OUT_OF_HOST_MEMORY);
   POCL_GOTO_ERROR_COND(
-    (errcode=binaryFormat2Buffer(*binary_format, *binary_size, &poclcc)) != CL_SUCCESS,
+    (errcode=poclcc_binaryFormat2Buffer(*poclcc_binary, 
+                                        *poclcc_binary_size, 
+                                        &poclcc)) != CL_SUCCESS,
     errcode);
 
   poclcc_free(&poclcc);
@@ -73,4 +80,4 @@ ERROR_CLEAN_BINARIES_SIZES:
   return errcode;
 
 }
-POsym(clExportBinaryFormat)
+POsym(clExportPoclccBinary)

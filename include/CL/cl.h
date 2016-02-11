@@ -1375,17 +1375,17 @@ clEnqueueTask(cl_command_queue  /* command_queue */,
               const cl_event *  /* event_wait_list */,
               cl_event *        /* event */) CL_EXT_SUFFIX__VERSION_1_2_DEPRECATED;
 
-
+/* Poclcc OpenCL APIs */
 extern CL_API_ENTRY cl_int CL_API_CALL
-clExportBinaryFormat(cl_program /* program */,
-                   void **     /* binary_format */,
-                   cl_uint *  /* binary_size */);
-
+clExportPoclccBinary(cl_program /* program */,
+                     void **    /* poclcc_binary */,
+                     cl_uint *  /* poclcc_binary_size */);
+  
 extern CL_API_ENTRY cl_int CL_API_CALL
-clExtractBinaryFormat(void *     /* input_buffer */,
-                      cl_uint    /* input_buffer_size */,
-                      size_t **                 /* lengths */,
-                      unsigned char ***         /* binaries */);
+clExtractPoclccBinary(void *            /* input_buffer */,
+                      cl_uint           /* input_buffer_size */,
+                      size_t **         /* lengths */,
+                      unsigned char *** /* binaries */);
 
 #ifdef __cplusplus
 }

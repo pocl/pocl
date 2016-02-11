@@ -163,7 +163,7 @@ int main(int argc, char **argv) {
     err = clBuildProgram(program, 0, NULL, build_options, NULL, NULL);  
     assert(!err && "clBuildProgram failed");
 
-    err = clExportBinaryFormat(program, &buff, &size);
+    err = clExportPoclccBinary(program, &buff, &size);
     assert(!err && "clExportBinaryFormat failed");
 
 //GENERATE FILE

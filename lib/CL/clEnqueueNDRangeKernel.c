@@ -28,7 +28,7 @@
 #include "pocl_util.h"
 #include "pocl_cache.h"
 #include "utlist.h"
-#include "pocl_binary_format.h"
+#include "poclcc_binary.h"
 #ifndef _MSC_VER
 #  include <unistd.h>
 #else
@@ -238,13 +238,14 @@ DETERMINE_LOCAL_SIZE:
                                        realdev, kernel,
                                        local_x, local_y, local_z);
   
-  if (!kernel->program->isBinaryFormat) {
-    error = pocl_llvm_generate_workgroup_function(realdev,
-                                                  kernel, 
-                                                  local_x, local_y, local_z);
-    if (error) goto ERROR;
-  }
-
+  if (!kernel->program->isPoclccBinary) 
+    {
+      error = pocl_llvm_generate_workgroup_function(realdev,
+                                                    kernel, 
+                                                    local_x, local_y, local_z);
+      if (error) goto ERROR;
+    }
+  
   error = pocl_create_command (&command_node, command_queue,
                                CL_COMMAND_NDRANGE_KERNEL,
                                event, num_events_in_wait_list,
@@ -337,35 +338,37 @@ DETERMINE_LOCAL_SIZE:
       }
   }
 
-  if (kernel->program->isBinaryFormat) {    
-   
-    poclcc_global poclcc;
-    programInfos2BinaryFormat(
-      &poclcc, kernel->program->BF, kernel->program->num_devices);
-
-    char *binary;
-    int binary_size;
-    POCL_RETURN_ERROR_COND(
-      (error=LookForKernelBinary(&poclcc, realdev, kernel->name, &binary, &binary_size)) 
-      != CL_SUCCESS,
-      error);
-
-    poclcc_free(&poclcc);
-
-    char objfile[POCL_FILENAME_LENGTH];
-    snprintf(objfile, POCL_FILENAME_LENGTH, 
-             "%s/%s.so", 
-             cachedir,
-             kernel->name);
-    
-    FILE *fp = fopen(objfile, "w");
-    fwrite(binary, sizeof(char), binary_size, fp);
-    fclose(fp);
-
-    command_node->isBinaryFormat=1;
-    realdev->ops->load_binary(objfile, binary_size, command_node);
-  }
-
+  if (kernel->program->isPoclccBinary) 
+    {    
+      poclcc_global poclcc;
+      poclcc_programInfos2BinaryFormat(
+        &poclcc, kernel->program->poclcc_binaries, kernel->program->num_devices);
+      
+      char *binary;
+      int binary_size;
+      POCL_RETURN_ERROR_COND(
+        (error=poclcc_LookForKernelBinary(&poclcc, 
+                                          realdev, kernel->name, 
+                                          &binary, &binary_size)) 
+        != CL_SUCCESS,
+        error);
+      
+      poclcc_free(&poclcc);
+      
+      char objfile[POCL_FILENAME_LENGTH];
+      snprintf(objfile, POCL_FILENAME_LENGTH, 
+               "%s/%s.so", 
+               cachedir,
+               kernel->name);
+      
+      FILE *fp = fopen(objfile, "w");
+      fwrite(binary, sizeof(char), binary_size, fp);
+      fclose(fp);
+      
+      command_node->isPoclccBinary=1;
+      realdev->ops->load_binary(objfile, command_node);
+    }
+  
   pocl_command_enqueue (command_queue, command_node);
   error = CL_SUCCESS;
 

@@ -880,8 +880,7 @@ struct compiler_cache_item
 static compiler_cache_item *compiler_cache;
 static pocl_lock_t compiler_cache_lock;
 
-void pocl_basic_load_binary(const char *binary, int binary_size,
-                            _cl_command_node *cmd)
+void pocl_basic_load_binary(const char *binary_path, _cl_command_node *cmd)
 {
   char workgroup_string[WORKGROUP_STRING_LENGTH];
   lt_dlhandle dlhandle;
@@ -908,22 +907,29 @@ void pocl_basic_load_binary(const char *binary, int binary_size,
   ci->tmp_dir = strdup(cmd->command.run.tmp_dir);
   ci->function_name = strdup (cmd->command.run.kernel->name);
 
-  if (!cmd->isBinaryFormat){
-    const char* module_fn = llvm_codegen (cmd->command.run.tmp_dir,
-                                          cmd->command.run.kernel,
-                                          cmd->device);
-    dlhandle = lt_dlopen (module_fn);
-  } else 
-    dlhandle = lt_dlopen (binary);
+  char *module_fn;
+  if (!cmd->isPoclccBinary)
+    {
+      module_fn = (char *)llvm_codegen (cmd->command.run.tmp_dir,
+                                        cmd->command.run.kernel,
+                                        cmd->device);
+      dlhandle = lt_dlopen (module_fn);
+    } 
+  else 
+    dlhandle = lt_dlopen (binary_path);
 
   if (dlhandle == NULL)
-  {
-    printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", 
-            binary, lt_dlerror());
-    printf ("note: missing symbols in the kernel binary might be" 
-            "reported as 'file not found' errors.\n");
-    abort();
-  }
+    {
+      if (!cmd->isPoclccBinary)
+        printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", 
+                module_fn, lt_dlerror());
+      else
+        printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", 
+                binary_path, lt_dlerror());        
+      printf ("note: missing symbols in the kernel binary might be" 
+              "reported as 'file not found' errors.\n");
+      abort();
+    }
   snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
             "_pocl_launcher_%s_workgroup", cmd->command.run.kernel->name);
   cmd->command.run.wg = ci->wg = 
@@ -938,5 +944,5 @@ void
 pocl_basic_compile_submitted_kernels (_cl_command_node *cmd)
 {
   if (cmd->type == CL_COMMAND_NDRANGE_KERNEL)
-    pocl_basic_load_binary (NULL, 0, cmd);
+    pocl_basic_load_binary (NULL, cmd);
 }
