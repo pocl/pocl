@@ -302,7 +302,8 @@ DETERMINE_LOCAL_SIZE:
     }
 
   command_node->next = NULL; 
-    
+  
+  
   POname(clRetainKernel) (kernel);
 
   command_node->command.run.arg_buffer_count = 0;
@@ -361,8 +362,8 @@ DETERMINE_LOCAL_SIZE:
     fwrite(binary, sizeof(char), binary_size, fp);
     fclose(fp);
 
-    realdev->ops->load_binary(objfile, binary_size, command_node);
     command_node->isBinaryFormat=1;
+    realdev->ops->load_binary(objfile, binary_size, command_node);
   }
 
   pocl_command_enqueue (command_queue, command_node);
