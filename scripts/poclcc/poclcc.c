@@ -157,7 +157,7 @@ int main(int argc, char **argv) {
     context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
     assert(context && "clCreateContext failed");
 
-    program = clCreateProgramWithSource(context, 1, &kernelSource, NULL, &err);
+    program = clCreateProgramWithSource(context, 1, (const char **)&kernelSource, NULL, &err);
     assert(program && "clCreateProgramWithSource failed");
 
     err = clBuildProgram(program, 0, NULL, build_options, NULL, NULL);  
