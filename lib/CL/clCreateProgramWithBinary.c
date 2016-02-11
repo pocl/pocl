@@ -136,8 +136,8 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
       program->poclcc_binaries = program->binaries;
       program->poclcc_binary_sizes = program->binary_sizes;
       
-      /* IR binary (it always start with those 2 char)
-       * It would be better if LLVM had a external function to check 
+      /* IR binary (it always starts with those 2 char)
+       * It would be better if LLVM had an external function to check 
        * the header of IR files
        */
       if ( !isPoclccBinary && !strncmp(binaries[i], "BC", 2) )
