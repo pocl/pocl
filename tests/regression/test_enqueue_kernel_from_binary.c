@@ -7,15 +7,15 @@
 #define BUFFER_SIZE 1024
 
 // OpenCL kernel. Each work item takes care of one element of c
-const char *kernelSource =                                                "\n" \
-"__kernel void vecAdd( __constant int *a,                               \n" \
-"                      __constant int *b,                               \n" \
-"                      __global int *c)                                 \n" \
-"{                                                                         \n" \
-"unsigned int i = get_global_id(0) * get_global_size(1) + get_global_id(1);\n" \
-"c[i] = a[i] + b[i];                                                       \n" \
-"}                                                                         \n" \
-                                                                          "\n" ;
+const char *kernelSource =                                                 "\n" \
+"__kernel void vecAdd( __constant int *a,                                   \n" \
+"                      __constant int *b,                                   \n" \
+"                      __global int *c)                                     \n" \
+"{                                                                          \n" \
+"unsigned int i = get_global_id(0) * get_global_size(1) + get_global_id(1); \n" \
+"c[i] = a[i] + b[i] + get_local_id(0) * get_local_size(1) + get_local_id(1);\n" \
+"}                                                                          \n" \
+                                                                           "\n" ;
 
 int main(void)
 {
@@ -166,10 +166,10 @@ int main(void)
                                      0, NULL, NULL);
         assert(!err);
 
-	localSize[0] = 4;
+	localSize[0] = 2;
 	localSize[1] = 8;
 	globalSize[0] = 16;
-	globalSize[1] = 16;
+	globalSize[1] = 64;
         err = clEnqueueNDRangeKernel(queue, kernel3, 2, NULL, globalSize, localSize,
                                      0, NULL, NULL);
         assert(!err);
@@ -192,11 +192,18 @@ int main(void)
 // Check output of each kernels
 
         for(i = 0; i < BUFFER_SIZE; i++) {
-                if(h_c1[i] != h_c2[i]) {
-                        printf("Check failed at offset %d, %i instead of %i\n", i, h_c2[i], h_c1[i]);
-                        exit(1);
-                }
-                printf("%i - %i\n", h_c1[i], h_c3[i]); 
+          if(h_c1[i] != h_c2[i]) {
+            printf("Check failed at offset %d, %i instead of %i\n", i, h_c2[i], h_c1[i]);
+            exit(1);
+          }
+          if ((((i/128)%2) && (h_c1[i]-16 != h_c3[i]))){
+            printf("Check failed at offset %d, %i instead of %i\n", i, h_c3[i], h_c1[i]-16);
+            exit(1);
+          }
+          if (!((i/128)%2) && (h_c1[i] != h_c3[i])){            
+            printf("Check failed at offset %d, %i instead of %i\n", i, h_c3[i], h_c1[i]);
+            exit(1);
+          }
         }
 
 //###################################################################
