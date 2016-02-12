@@ -27,6 +27,7 @@ typedef struct poclcc_kernel_ {
 
 typedef struct poclcc_device_ {
   char pocl_id[POCLCC_STRING_ID_LENGTH];
+  uint32_t version;
   uint64_t device_id;
   uint32_t num_kernels;
   poclcc_kernel *kernels;
@@ -52,22 +53,22 @@ int poclcc_check_device_id(cl_device_id device, poclcc_device *devicecc);
 int poclcc_check_binary(cl_device_id device, const unsigned char *binary);
 
 // get size of struct (as a continuous buffer)
-int poclcc_sizeofKernel(poclcc_kernel *kernel);
-int poclcc_sizeofDevice(poclcc_device *device);
-int poclcc_sizeofGlobal(poclcc_global *binary_format);
-int poclcc_sizeofGlobalFromBinariesSizes(size_t *binaries_sizes, int num_devices);
+int poclcc_sizeof_kernel(poclcc_kernel *kernel);
+int poclcc_sizeof_device(poclcc_device *device);
+int poclcc_sizeof_global(poclcc_global *binary_format);
+int poclcc_sizeof_gGlobal_from_binaries_sizes(size_t *binaries_sizes, int num_devices);
 
 // conversion from/to binary format
-cl_int poclcc_programInfos2BinaryFormat(poclcc_global *binary_format, unsigned char **binaries,
+cl_int poclcc_program_infos_2_binary_format(poclcc_global *binary_format, unsigned char **binaries,
                                  unsigned num_devices);
-cl_int poclcc_binaryFormat2ProgramInfos(unsigned char ***binaries, size_t **binaries_sizes, 
+cl_int poclcc_binary_format_2_program_infos(unsigned char ***binaries, size_t **binaries_sizes, 
                                  poclcc_global *binary_format);
 
-int poclcc_binaryFormat2Buffer(char *buffer, int sizeofBuffer, poclcc_global *binary_format);
-int poclcc_buffer2BinaryFormat(poclcc_global *binary_format, char *buffer, int sizeofBuffer);
+int poclcc_binary_format_2_buffer(char *buffer, int sizeofBuffer, poclcc_global *binary_format);
+int poclcc_buffer_2_binary_format(poclcc_global *binary_format, char *buffer, int sizeofBuffer);
 
 // initialize cl_kernel data from a poclcc_kernel specify with kernel_name and cl_device_id
-cl_int poclcc_binaryFormat2ClKernel(poclcc_global *binary_format, const char *kernel_name,
+cl_int poclcc_binary_format_2_clKernel(poclcc_global *binary_format, const char *kernel_name,
                              cl_kernel kernel, cl_device_id device);
 
 // initialize internal struct
@@ -79,7 +80,7 @@ void poclcc_init_kernel(poclcc_kernel *kernelcc, char *kernel_name, int sizeofKe
                         struct pocl_argument *dyn_arguments, struct pocl_argument_info *arg_info);
 
 // look for a binary with kernel_name and cl_device_id
-int poclcc_LookForKernelBinary(poclcc_global *binary_format, cl_device_id device, const char *kernel_name, 
+int poclcc_look_for_kernel_binary(poclcc_global *binary_format, cl_device_id device, const char *kernel_name, 
                         char **binary, int *binary_size);
 
 #endif

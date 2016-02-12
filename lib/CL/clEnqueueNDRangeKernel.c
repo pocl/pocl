@@ -238,7 +238,7 @@ DETERMINE_LOCAL_SIZE:
                                        realdev, kernel,
                                        local_x, local_y, local_z);
   
-  if (!kernel->program->isPoclccBinary) 
+  if (!kernel->program->is_poclcc_binary) 
     {
       error = pocl_llvm_generate_workgroup_function(realdev,
                                                     kernel, 
@@ -338,16 +338,16 @@ DETERMINE_LOCAL_SIZE:
       }
   }
 
-  if (kernel->program->isPoclccBinary) 
+  if (kernel->program->is_poclcc_binary) 
     {    
       poclcc_global poclcc;
-      poclcc_programInfos2BinaryFormat(
+      poclcc_program_infos_2_binary_format(
         &poclcc, kernel->program->poclcc_binaries, kernel->program->num_devices);
       
       char *binary;
       int binary_size;
       POCL_RETURN_ERROR_COND(
-        (error=poclcc_LookForKernelBinary(&poclcc, 
+        (error=poclcc_look_for_kernel_binary(&poclcc, 
                                           realdev, kernel->name, 
                                           &binary, &binary_size)) 
         != CL_SUCCESS,
@@ -365,7 +365,6 @@ DETERMINE_LOCAL_SIZE:
       fwrite(binary, sizeof(char), binary_size, fp);
       fclose(fp);
       
-      command_node->isPoclccBinary=1;
       realdev->ops->load_binary(objfile, command_node);
     }
   

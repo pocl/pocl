@@ -85,17 +85,19 @@ int main(void)
 
  	clBuildProgram(program1, 0, NULL, NULL, NULL, NULL);
 
-        void *program_buffer;
-        cl_uint program_buffer_size;
-        err = clExportPoclccBinary(program1, &program_buffer, &program_buffer_size);
+        size_t binary_sizes;
+        unsigned char *binary;
+        err = clGetProgramInfo(program1, CL_PROGRAM_BINARY_SIZES, sizeof(size_t), &binary_sizes, NULL);
+        assert(!err);
+        
+        binary = malloc(sizeof(unsigned char)*binary_sizes);
+        assert(binary);
+
+        err = clGetProgramInfo(program1, CL_PROGRAM_BINARIES, sizeof(unsigned char*), &binary, NULL);
         assert(!err);
 
-        size_t *binaries_sizes;
-        unsigned char **binaries;
-        err = clExtractPoclccBinary(program_buffer, program_buffer_size, &binaries_sizes, &binaries);
-
         program2 = clCreateProgramWithBinary(
-          context, 1, &device_id, binaries_sizes, (const unsigned char **)binaries, NULL, &err);
+          context, 1, &device_id, &binary_sizes, (const unsigned char **)(&binary), NULL, &err);
         assert(!err);
 
  	clBuildProgram(program2, 0, NULL, NULL, NULL, NULL);
@@ -228,9 +230,7 @@ int main(void)
 	free(h_c1);
 	free(h_c2);
 	free(h_c3);
-        free(binaries);
-        free(binaries_sizes);
-        free(program_buffer);
+        free(binary);
 
 	return 0;
 }

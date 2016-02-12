@@ -908,7 +908,7 @@ void pocl_basic_load_binary(const char *binary_path, _cl_command_node *cmd)
   ci->function_name = strdup (cmd->command.run.kernel->name);
 
   char *module_fn;
-  if (!cmd->isPoclccBinary)
+  if (!cmd->command.run.kernel->program->is_poclcc_binary)
     {
       module_fn = (char *)llvm_codegen (cmd->command.run.tmp_dir,
                                         cmd->command.run.kernel,
@@ -920,7 +920,7 @@ void pocl_basic_load_binary(const char *binary_path, _cl_command_node *cmd)
 
   if (dlhandle == NULL)
     {
-      if (!cmd->isPoclccBinary)
+      if (!cmd->command.run.kernel->program->is_poclcc_binary)
         printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", 
                 module_fn, lt_dlerror());
       else

@@ -147,7 +147,6 @@ int main(int argc, char **argv) {
     cl_context context;
     cl_program program;
     cl_int err;
-    void * buff;
     cl_uint size;
 
     err = clGetPlatformIDs(1, &cpPlatform, NULL);
@@ -163,17 +162,27 @@ int main(int argc, char **argv) {
     err = clBuildProgram(program, 0, NULL, build_options, NULL, NULL);  
     assert(!err && "clBuildProgram failed");
 
-    err = clExportPoclccBinary(program, &buff, &size);
-    assert(!err && "clExportBinaryFormat failed");
+    size_t binary_sizes;
+    unsigned char *binary;
+    err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeof(size_t), &binary_sizes, NULL);
+    assert(!err);
+    
+    binary = malloc(sizeof(unsigned char)*binary_sizes);
+    assert(binary);
+    
+    err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, sizeof(unsigned char*), &binary, NULL);
+    assert(!err);
 
 //GENERATE FILE
     FILE *fp=fopen(outputFile, "w"); 
-    fwrite(buff, 1, size, fp);
+    fwrite(binary, 1, size, fp);
     fclose(fp);
 
 //RELEASE OPENCL STUFF
     clReleaseProgram(program);
     clReleaseContext(context);
+
+    free(binary);
 
     return 0;
 }

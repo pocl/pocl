@@ -28,7 +28,7 @@
 #include "poclcc_binary.h"
 
 
-cl_int compileKernels(cl_program program, cl_device_id device, poclcc_device *devicecc)
+cl_int compile_kernels(cl_program program, cl_device_id device, poclcc_device *devicecc)
 {
   cl_int errcode = CL_SUCCESS;
 
@@ -140,7 +140,7 @@ ERROR:
   return errcode;
 }
 
-cl_int compileForDevices(cl_program program)
+cl_int compile_for_devices(cl_program program)
 {
   cl_int errcode = CL_SUCCESS;
   int num_devices = program->num_devices;
@@ -161,11 +161,11 @@ cl_int compileForDevices(cl_program program)
   for (i=0; i<num_devices; i++)
     {
       cl_device_id device = program->devices[i];
-      errcode = compileKernels(program, device, &(poclcc.devices[i]));
+      errcode = compile_kernels(program, device, &(poclcc.devices[i]));
       POCL_GOTO_ERROR_COND(errcode != CL_SUCCESS, errcode);
     }
   
-  errcode = poclcc_binaryFormat2ProgramInfos(&(program->poclcc_binaries), 
+  errcode = poclcc_binary_format_2_program_infos(&(program->poclcc_binaries), 
                                              &(program->poclcc_binary_sizes), 
                                              &poclcc);
   POCL_GOTO_ERROR_COND(errcode != CL_SUCCESS, errcode);
@@ -209,7 +209,7 @@ POname(clGetProgramInfo)(cl_program program,
     {
       size_t const value_size = sizeof(size_t) * program->num_devices;
       if (param_value)
-        errcode = compileForDevices(program);
+        errcode = compile_for_devices(program);
       
       if (errcode != CL_SUCCESS)
         return errcode;
@@ -222,7 +222,7 @@ POname(clGetProgramInfo)(cl_program program,
       size_t const value_size = sizeof(unsigned char *) * program->num_devices;
       if (param_value)
       {
-        errcode = compileForDevices(program);
+        errcode = compile_for_devices(program);
 
         if (errcode != CL_SUCCESS)
           return errcode;

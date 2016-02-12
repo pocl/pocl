@@ -534,7 +534,7 @@ struct _cl_program {
   size_t *binary_sizes; 
   unsigned char **binaries; 
   /* Poclcc binary format*/
-  unsigned isPoclccBinary;
+  unsigned is_poclcc_binary;
   size_t *poclcc_binary_sizes;
   unsigned char **poclcc_binaries;
   /* implementation */

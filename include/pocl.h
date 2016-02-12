@@ -242,7 +242,6 @@ typedef struct _cl_command_node_struct
   const cl_event *event_wait_list;
   cl_uint num_events_in_wait_list;
   cl_device_id device;
-  cl_uint isPoclccBinary;
 } _cl_command_node;
 
 /* Additional LLVM version macros to simplify ifdefs */

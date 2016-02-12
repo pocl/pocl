@@ -209,7 +209,7 @@ CL_API_SUFFIX__VERSION_1_0
       device_list = unique_devlist;
     }
 
-  if (program->isPoclccBinary)
+  if (program->is_poclcc_binary)
     {
       error = pocl_cache_create_program_cachedir(program, device_i,
                                                  NULL, 0, program_bc_path);

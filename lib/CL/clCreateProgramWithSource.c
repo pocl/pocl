@@ -101,7 +101,7 @@ POname(clCreateProgramWithSource)(cl_context context,
   program->kernels = NULL;
   program->build_status = CL_BUILD_NONE;
   program->read_locks = NULL;
-  program->isPoclccBinary = 0;
+  program->is_poclcc_binary = 0;
   program->poclcc_binaries = NULL;
   program->poclcc_binary_sizes = NULL;
 

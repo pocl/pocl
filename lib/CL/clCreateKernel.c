@@ -83,15 +83,15 @@ POname(clCreateKernel)(cl_program program,
       /* If the program was created with a poclcc's binary, we won't be able to
          get the metadata for the cl_kernel from an IR file, so we call poclcc 
          function to initialize the cl_kernel data */
-      if (program->isPoclccBinary)
+      if (program->is_poclcc_binary)
         {
           POCL_GOTO_ERROR_COND(
-            poclcc_programInfos2BinaryFormat(&poclcc, 
+            poclcc_program_infos_2_binary_format(&poclcc, 
                                              program->binaries, 
                                              program->num_devices) != CL_SUCCESS, 
             CL_OUT_OF_HOST_MEMORY);
           POCL_GOTO_ERROR_COND(
-            (errcode=poclcc_binaryFormat2ClKernel(&poclcc, 
+            (errcode=poclcc_binary_format_2_clKernel(&poclcc, 
                                                   kernel_name, kernel,
                                                   program->devices[device_i])) 
             != CL_SUCCESS,
@@ -139,7 +139,7 @@ POname(clCreateKernel)(cl_program program,
 ERROR:
   POCL_MEM_FREE(kernel);
   kernel = NULL;
-  if (program != NULL && program->isPoclccBinary)
+  if (program != NULL && program->is_poclcc_binary)
     poclcc_free(&poclcc);
 
 SUCCESS:
