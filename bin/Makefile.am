@@ -22,13 +22,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = poclcc
+CFLAGS += -I../include/ -lOpenCL
+LDFLAGS += -L../lib/CL/.libs/
 
-bin_SCRIPTS = pocl-standalone
+bin_PROGRAMS = poclcc
+poclcc_SOURCES = poclcc.c
 pkgdataincludedir = $(pkgdatadir)/include
 
-CLEANFILES = pocl-standalone
-EXTRA_DIST = pocl-standalone.in CMakeLists.txt
+CLEANFILES = poclcc
+EXTRA_DIST = poclcc.c CMakeLists.txt
 
 do_subst = sed -e 's|[@]abs_top_srcdir[@]|$(abs_top_srcdir)|g'		\
                -e 's|[@]abs_top_builddir[@]|$(abs_top_builddir)|g'	\
@@ -55,14 +57,3 @@ do_subst = sed -e 's|[@]abs_top_srcdir[@]|$(abs_top_srcdir)|g'		\
                -e 's|[@]LLVM_VERSION[@]|$(LLVM_VERSION)|g'              \
                -e 's|[@]HOST_DEVICE_EXTENSION_DEFINES[@]|$(HOST_DEVICE_EXTENSION_DEFINES)|g'
 
-pocl-standalone: %: %.in Makefile ../install-paths.h
-	$(do_subst) < $< > $@
-	chmod +x $@
-
-install-exec-hook: $(bin_SCRIPTS) 
-	for f in $(bin_SCRIPTS) ; do \
-		sed -e '/^# BEGIN REMOVE ONCE INSTALLED$$/,/^# END REMOVE ONCE INSTALLED$$/d' \
-			> "$(DESTDIR)$(bindir)/$$f" \
-			< "$$f" && \
-		chmod +x "$(DESTDIR)$(bindir)/$$f" ; \
-	done

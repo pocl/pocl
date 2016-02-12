@@ -33,12 +33,11 @@
 #clean-local:
 # rm -f $(EXTRA_DIST:.cl=.bc) $(EXTRA_DIST:.cl=.h)
 
-add_test("pocl-standalone" "/bin/sh" "${CMAKE_BINARY_DIR}/scripts/pocl-standalone"
-          -h "${CMAKE_BINARY_DIR}/standalone.h"
-          -o "${CMAKE_BINARY_DIR}/standalone.bc"
-          "${CMAKE_CURRENT_SOURCE_DIR}/standalone.cl")
+add_test("poclcc" "/bin/sh" "${CMAKE_BINARY_DIR}/bin/poclcc"
+          -o "${CMAKE_BINARY_DIR}/poclcc.c.pocl"
+          "${CMAKE_CURRENT_SOURCE_DIR}/poclcc.cl")
 
-set_tests_properties( "pocl-standalone"
+set_tests_properties( "poclcc"
   PROPERTIES
     COST 3.0
     PROCESSORS 1

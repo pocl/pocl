@@ -47,11 +47,7 @@ m4/lt~obsolete.m4
 ocl-vendors/pocl-tests.icd
 pocl.icd
 pocl.pc
-scripts/pocl-build
-scripts/pocl-kernel
-scripts/pocl-standalone
-scripts/pocl-workgroup
-scripts/poclcc/poclcc
+bin/poclcc
 stamp-h1
 tests/atconfig
 tests/atlocal

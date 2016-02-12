@@ -1619,7 +1619,7 @@ AC_CONFIG_FILES([Makefile
                  examples/example1-spir32/Makefile
                  examples/example2/Makefile
                  examples/example2a/Makefile
-                 examples/standalone/Makefile
+                 examples/poclcc/Makefile
                  examples/trig/Makefile
                  examples/scalarwave/Makefile
                  examples/opencl-book-samples/Makefile
@@ -1636,8 +1636,7 @@ AC_CONFIG_FILES([Makefile
                  examples/Halide/Makefile
                  examples/OpenCV/Makefile
                  examples/CloverLeaf/Makefile
-                 scripts/Makefile
-                 scripts/poclcc/Makefile
+                 bin/Makefile
                  tests/Makefile
                  tests/kernel/Makefile
                  tests/regression/Makefile
