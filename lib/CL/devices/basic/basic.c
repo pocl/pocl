@@ -857,7 +857,7 @@ pocl_basic_uninit (cl_device_id device)
 cl_ulong
 pocl_basic_get_timer_value (void *data) 
 {
-  return pocl_gettime_ns();
+  return pocl_gettimemono_ns();
 }
 
 cl_int 

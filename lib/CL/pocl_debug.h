@@ -100,7 +100,6 @@ extern "C" {
     #define __func__ __FUNCTION__
     #endif
 
-    #ifdef HAVE_CLOCK_GETTIME
         #define POCL_DEBUG_HEADER pocl_debug_print_header(__func__, __LINE__);
         extern void pocl_debug_print_header(const char * func, unsigned line);
         extern void pocl_debug_measure_start(uint64_t* start);
@@ -118,14 +117,6 @@ extern "C" {
           pocl_debug_measure_finish(&pocl_time_start_ ## SUFFIX, \
                          &pocl_time_finish_ ## SUFFIX, "API: " #SUFFIX, \
                          __func__, __LINE__);
-    #else
-        #define POCL_DEBUG_HEADER                                           \
-            fprintf(stderr, "** POCL ** : in function %s"                   \
-            " at line %u:\n", __func__, __LINE__);
-        #define POCL_MEASURE_START(SUFFIX)
-        #define POCL_MEASURE_FINISH(SUFFIX)
-        #define pocl_debug_print_duration(X)
-    #endif
 
     #define POCL_MSG_PRINT(TYPE, ERRCODE, ...)                              \
         do {                                                                \
@@ -162,6 +153,9 @@ extern "C" {
           else POCL_MSG_PRINT(" *** INFO *** ", errcode, __VA_ARGS__); } while (0)
     #define POCL_MSG_PRINT_INFO(...) POCL_MSG_PRINT_INFO2("", __VA_ARGS__)
 
+    #define POCL_DEBUG_EVENT_TIME(eventp, msg) \
+        pocl_debug_print_duration(__func__, __LINE__, "Event " msg, (uint64_t)((*eventp)->time_end - (*eventp)->time_start))
+
 #else
 
     #define POCL_MSG_WARN(...)
@@ -169,11 +163,14 @@ extern "C" {
     #define POCL_MSG_PRINT(...)
     #define POCL_MSG_PRINT2(...)
     #define POCL_MSG_PRINT_INFO(...)
+    #define POCL_MSG_PRINT_INFO2(...)
+    #define POCL_DEBUG_HEADER
+    #define POCL_MEASURE_START(...)
+    #define POCL_MEASURE_FINISH(...)
+    #define POCL_DEBUG_EVENT_TIME(...)
 
 #endif
 
-#define POCL_DEBUG_EVENT_TIME(eventp, msg) \
-        pocl_debug_print_duration(__func__, __LINE__, "Event " msg, (uint64_t)((*eventp)->time_end - (*eventp)->time_start))
 
 #define POCL_GOTO_ERROR_ON(cond, err_code, ...)                             \
   do                                                                        \

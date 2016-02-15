@@ -32,6 +32,9 @@ message(STATUS "Enabling testsuite ${TS_NAME}")
 list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
 set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
 
+# Halide disabled for now, need to find out which tests actually use OpenCL
+if(0)
+
 ExternalProject_Add(
   ${TS_NAME}
   PREFIX "${TS_BASEDIR}"
@@ -69,8 +72,6 @@ add_dependencies(prepare_examples ${TS_NAME})
 # nested_externs.generator paramtest.generator pyramid.generator
 # runtime.generator tiled_blur.generator tiled_blur_blur.generator
 # user_context.generator user_context_insanity.generator
-
-
 
 add_test(NAME halide_bilateral_grid
          COMMAND "${TS_BUILDDIR}/bin/bilateral_grid")
@@ -606,10 +607,6 @@ add_test(NAME halide_generator_jit_example
          COMMAND "${TS_BUILDDIR}/bin/generator_jit_example")
 add_test(NAME halide_generator_jit_paramtest
          COMMAND "${TS_BUILDDIR}/bin/generator_jit_paramtest")
-add_test(NAME halide_glsl_halide_blur
-         COMMAND "${TS_BUILDDIR}/bin/glsl_halide_blur")
-add_test(NAME halide_glsl_halide_ycc
-         COMMAND "${TS_BUILDDIR}/bin/glsl_halide_ycc")
 add_test(NAME halide_halide_blur
          COMMAND "${TS_BUILDDIR}/bin/halide_blur")
 add_test(NAME halide_HalideTraceViz
@@ -648,32 +645,6 @@ add_test(NAME halide_ll_process
          COMMAND "${TS_BUILDDIR}/bin/ll_process")
 add_test(NAME halide_local_laplacian_gen
          COMMAND "${TS_BUILDDIR}/bin/local_laplacian_gen")
-add_test(NAME halide_opengl_copy_pixels
-         COMMAND "${TS_BUILDDIR}/bin/opengl_copy_pixels")
-add_test(NAME halide_opengl_copy_to_device
-         COMMAND "${TS_BUILDDIR}/bin/opengl_copy_to_device")
-add_test(NAME halide_opengl_copy_to_host
-         COMMAND "${TS_BUILDDIR}/bin/opengl_copy_to_host")
-add_test(NAME halide_opengl_float_texture
-         COMMAND "${TS_BUILDDIR}/bin/opengl_float_texture")
-add_test(NAME halide_opengl_internal
-         COMMAND "${TS_BUILDDIR}/bin/opengl_internal")
-add_test(NAME halide_opengl_lut
-         COMMAND "${TS_BUILDDIR}/bin/opengl_lut")
-add_test(NAME halide_opengl_produce
-         COMMAND "${TS_BUILDDIR}/bin/opengl_produce")
-add_test(NAME halide_opengl_select
-         COMMAND "${TS_BUILDDIR}/bin/opengl_select")
-add_test(NAME halide_opengl_set_pixels
-         COMMAND "${TS_BUILDDIR}/bin/opengl_set_pixels")
-add_test(NAME halide_opengl_shifted_domains
-         COMMAND "${TS_BUILDDIR}/bin/opengl_shifted_domains")
-add_test(NAME halide_opengl_special_funcs
-         COMMAND "${TS_BUILDDIR}/bin/opengl_special_funcs")
-add_test(NAME halide_opengl_test
-         COMMAND "${TS_BUILDDIR}/bin/opengl_test")
-add_test(NAME halide_opengl_varying
-         COMMAND "${TS_BUILDDIR}/bin/opengl_varying")
 add_test(NAME halide_performance_block_transpose
          COMMAND "${TS_BUILDDIR}/bin/performance_block_transpose")
 add_test(NAME halide_performance_boundary_conditions
@@ -1001,8 +972,6 @@ set_tests_properties(
   halide_generator_aot_user_context_insanity
   halide_generator_jit_example
   halide_generator_jit_paramtest
-  halide_glsl_halide_blur
-  halide_glsl_halide_ycc
   halide_halide_blur
   halide_HalideTraceViz
   halide_lesson_01_basics
@@ -1022,19 +991,6 @@ set_tests_properties(
   halide_lesson_14_types
   halide_ll_process
   halide_local_laplacian_gen
-  halide_opengl_copy_pixels
-  halide_opengl_copy_to_device
-  halide_opengl_copy_to_host
-  halide_opengl_float_texture
-  halide_opengl_internal
-  halide_opengl_lut
-  halide_opengl_produce
-  halide_opengl_select
-  halide_opengl_set_pixels
-  halide_opengl_shifted_domains
-  halide_opengl_special_funcs
-  halide_opengl_test
-  halide_opengl_varying
   halide_performance_block_transpose
   halide_performance_boundary_conditions
   halide_performance_clamped_vector_load
@@ -1065,3 +1021,56 @@ set_tests_properties(
   halide_warning_vectorize_size_one
   PROPERTIES
     LABELS "Halide")
+    ENVIRONMENT "HL_JIT_TARGET=opencl" "HL_TARGET=opencl")
+
+# disabled OpenGL tests
+
+# halide_opengl_copy_pixels
+# halide_opengl_copy_to_device
+# halide_opengl_copy_to_host
+# halide_opengl_float_texture
+# halide_opengl_internal
+# halide_opengl_lut
+# halide_opengl_produce
+# halide_opengl_select
+# halide_opengl_set_pixels
+# halide_opengl_shifted_domains
+# halide_opengl_special_funcs
+# halide_opengl_test
+# halide_opengl_varying
+# halide_glsl_halide_blur
+# halide_glsl_halide_ycc
+# add_test(NAME halide_opengl_copy_pixels
+         # COMMAND "${TS_BUILDDIR}/bin/opengl_copy_pixels")
+# add_test(NAME halide_opengl_copy_to_device
+         # COMMAND "${TS_BUILDDIR}/bin/opengl_copy_to_device")
+# add_test(NAME halide_opengl_copy_to_host
+         # COMMAND "${TS_BUILDDIR}/bin/opengl_copy_to_host")
+# add_test(NAME halide_opengl_float_texture
+         # COMMAND "${TS_BUILDDIR}/bin/opengl_float_texture")
+# add_test(NAME halide_opengl_internal
+         # COMMAND "${TS_BUILDDIR}/bin/opengl_internal")
+# add_test(NAME halide_opengl_lut
+         # COMMAND "${TS_BUILDDIR}/bin/opengl_lut")
+# add_test(NAME halide_opengl_produce
+         # COMMAND "${TS_BUILDDIR}/bin/opengl_produce")
+# add_test(NAME halide_opengl_select
+         # COMMAND "${TS_BUILDDIR}/bin/opengl_select")
+# add_test(NAME halide_opengl_set_pixels
+         # COMMAND "${TS_BUILDDIR}/bin/opengl_set_pixels")
+# add_test(NAME halide_opengl_shifted_domains
+         # COMMAND "${TS_BUILDDIR}/bin/opengl_shifted_domains")
+# add_test(NAME halide_opengl_special_funcs
+         # COMMAND "${TS_BUILDDIR}/bin/opengl_special_funcs")
+# add_test(NAME halide_opengl_test
+         # COMMAND "${TS_BUILDDIR}/bin/opengl_test")
+# add_test(NAME halide_opengl_varying
+         # COMMAND "${TS_BUILDDIR}/bin/opengl_varying")
+# add_test(NAME halide_glsl_halide_blur
+         # COMMAND "${TS_BUILDDIR}/bin/glsl_halide_blur")
+# add_test(NAME halide_glsl_halide_ycc
+         # COMMAND "${TS_BUILDDIR}/bin/glsl_halide_ycc")
+
+
+
+endif()

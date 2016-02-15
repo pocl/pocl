@@ -301,6 +301,13 @@ setup_cached_var(USE_VECMATHLIB "Vecmathlib use"
   "Requested enabling vecmathlib use, but either clang++ doesnt work or vecmathlib sources are missing.. -> disabling vecmathlib use"
   "Vecmathlib is usable, but requested disabling it")
 
+# vecmathlib does not compile with fp16 currently
+if(USE_VECMATHLIB AND (NOT CL_DISABLE_HALF))
+  message(STATUS "Half available, but disabling half support since vecmathlib is enabled.")
+  set(CL_DISABLE_HALF 1)
+  set(CL_DISABLE_HALF 1 CACHE BOOL "Disable cl_khr_fp16 because fp16 is not supported")
+endif()
+
 ######################################################################################
 
 if(UNIX)

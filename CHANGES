@@ -1,17 +1,39 @@
-0.13 unreleased
+0.13 February 2016
 ================
 
 Highlights
 -----------
+- Support for LLVM/Clang 3.8
+- initial (partial) OpenCL 2.0 support
+  (only Shared Virtual Memory and Atomics are supported ATM)
+- CMake build system almost on parity with autotools
+  (TCE, all external testsuites)
+- CMake build is now able to build multiple kernel libraries
+  for different CPUs and let pocl select a suitable one at runtime
 
 Bugfixes
 ---------
+- clEnqueueCopyImage() now works properly
+- improved file locking (much less disk access to kernel cache)
+- Address spaces of structs are handled properly
 
 Other
 ------
 - removed custom buffer alloc from pthread device
-- removed Cell support
+- removed IBM Cell support
 - removed support for older LLVM versions (before 3.6)
+- significantly higher performance with a lot of small kernel enqueues
+  (due to improved file locking)
+- vecmathlib now supports AVX2
+- a few more HSA kernel library implementations: l/tgamma, erf(c), hypot
+- implemented OpenCL 2.0 API calls: clEnqueueSVM*, clSVMalloc/free,
+  clEnqueueFillBuffer, clSetKernelExecInfo, clSetKernelArgSVMPointer,
+  clCreateCommandQueueWithProperties - no device side queues yet
+- OpenCL 2.0 atomics (C11 atomics subset) for x86-64 and HSA
+- new testsuites: AMD SDK 3.0, Intel SVM
+- New CMake-only testsuites: ASL, clBLAS, clFFT, arrayfire
+- more debugging info (timing, mem stats)
+- ansi colors with POCL_DEBUG=1 if the output is a terminal
 
 
 0.12 October 2015

@@ -5,7 +5,6 @@
 int pocl_debug_messages;
 int stderr_is_a_tty;
 
-#ifdef HAVE_CLOCK_GETTIME
 
   #if !defined(_MSC_VER) && !defined(__MINGW32__)
 
@@ -13,13 +12,10 @@ int stderr_is_a_tty;
     #include <stdio.h>
 
     void pocl_debug_print_header(const char* func, unsigned line) {
-        struct tm t;
-        long tm_nanosec;
-        struct timespec timespec;
 
-        clock_gettime(CLOCK_REALTIME, &timespec);
-        tm_nanosec = timespec.tv_nsec;
-        gmtime_r(&timespec.tv_sec, &t);
+        int year, mon, day, hour, min, sec, nanosec;
+        pocl_gettimereal(&year, &mon, &day, &hour, &min, &sec, &nanosec);
+
         const char* formatstring;
         if (stderr_is_a_tty)
           formatstring = POCL_COLOR_BLUE
@@ -28,18 +24,17 @@ int stderr_is_a_tty;
               POCL_COLOR_CYAN " %s "
               POCL_COLOR_RESET "at line %u:\n";
         else
-          formatstring = "[%04i-%02i-%02i %02i:%02i:%02i.%09li] "
+          formatstring = "[%04i-%02i-%02i %02i:%02i:%02i.%09i] "
               "POCL: in fn %s at line %u:\n";
         fprintf(stderr,
-            formatstring, (t.tm_year + 1900),
-            t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min,
-            t.tm_sec, tm_nanosec,  func, line);
+            formatstring, year, mon, day, hour, min,
+            sec, nanosec, func, line);
     }
 
     void pocl_debug_measure_start(uint64_t *start) {
       if (!pocl_debug_messages)
         return;
-      *start = pocl_gettime_ns();
+      *start = pocl_gettimemono_ns();
     }
 
     void pocl_debug_print_duration(const char* func, unsigned line,
@@ -92,7 +87,7 @@ int stderr_is_a_tty;
                                    unsigned line) {
       if (!pocl_debug_messages)
         return;
-      *finish = pocl_gettime_ns();
+      *finish = pocl_gettimemono_ns();
       pocl_debug_print_duration(func, line, msg, (*finish - *start) );
     }
 
@@ -125,6 +120,5 @@ int stderr_is_a_tty;
   #endif
 
 
-#endif
 
 #endif
