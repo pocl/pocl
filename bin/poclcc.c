@@ -4,185 +4,329 @@
 #include <assert.h>
 #include <string.h>
 
-char *kernelSource = NULL;
-char *outputFile = NULL;
-int openclDevice = CL_DEVICE_TYPE_DEFAULT;
+#define DEVICE_INFO_MAX_LENGTH 128
+#define NUM_OF_DEVICE_ID 32
+#define NUM_OPTIONS 6
+
+char *kernel_source = NULL;
+char *output_file = NULL;
+int opencl_device = CL_DEVICE_TYPE_DEFAULT;
+int opencl_device_id = 0;
+int list_devices = 0;
+int list_devices_only = 0;
 char *build_options = NULL;
 
-int print_help(){
-    printf("USAGE: poclcc [OPTION]... [FILE]\n");
-    printf("\n");
-    printf("OPTIONS:\n");
-    printf("\t--build_options=<options>\n");
-    printf("\t\tBuild the program with <options> options\n");
-    printf("\t-d <device_type>\n");
-    printf("\t\tSelect <device_type> as the device_type for clGetDeviceIDs." 
-           "Default: CL_DEVICE_TYPE_DEFAULT\n");
-    printf("\t-o <file>\n");
-    printf("\t\tWrite output to <file>\n");
-    return -1;
+/**********************************************************/
+
+typedef int(*poclcc_process)(int, char **, int);
+
+typedef struct _poclcc_option {
+  poclcc_process fct;
+  char *id;
+  char *helper;
+  int num_args_read;
+} poclcc_option;
+
+/**********************************************************/
+
+poclcc_option *options_help;
+int print_help()
+{
+  printf("USAGE: poclcc [OPTION]... [FILE]\n");
+  printf("\n");
+  printf("OPTIONS:\n");
+  int i;
+  for (i=0; i<NUM_OPTIONS; i++)
+    printf("%s", options_help[i].helper);
+
+  return -1;
 }
 
-int poclcc_error(char *msg){
-    printf("ERROR: %s", msg);
-    return print_help();
+int poclcc_error(char *msg)
+{
+  printf("ERROR: %s", msg);
+  return print_help();
 }
 
-char *kernel_load_file(const char * filename){
-    char *buffer;
-    size_t size, read_size;
-    FILE *kern_file;
+/**********************************************************
+ * MANAGE INPUT KERNEL FILE */
 
-    kern_file = fopen(filename, "r");
-    if (kern_file == NULL) {
-        return NULL;
+char *kernel_load_file(const char * filename)
+{
+  char *buffer;
+  size_t size, read_size;
+  FILE *kern_file;
+
+  kern_file = fopen(filename, "r");
+  if (kern_file == NULL) 
+    return NULL;
+
+  fseek(kern_file, 0, SEEK_END);
+  size = ftell(kern_file);
+  rewind(kern_file);
+
+  buffer = malloc(size + 1);
+  read_size = fread(buffer, 1, size, kern_file);
+  if (read_size != size) 
+    {
+      free(buffer);
+      fclose(kern_file);
+      return NULL;
     }
+  fclose(kern_file);
+  buffer[size] = '\0';
 
-    fseek(kern_file, 0, SEEK_END);
-    size = ftell(kern_file);
-    rewind(kern_file);
+  return buffer;
+}
 
-    buffer = malloc(size + 1);
-    read_size = fread(buffer, 1, size, kern_file);
-    if (read_size != size) {
-        free(buffer);
-        fclose(kern_file);
-        return NULL;
+int process_kernel_file(int arg, char **argv, int argc)
+{
+  if (arg >= argc)
+    return poclcc_error("Incomplete argument for input file!\n");
+     
+  char *filename = argv[arg];
+  char *ext = ".pocl";
+  kernel_source = kernel_load_file(filename);
+  if (output_file == NULL)
+    {
+      output_file = malloc(strlen(filename)+strlen(ext));
+      strcpy(output_file, filename);
+      strcat(output_file, ext);
     }
-    fclose(kern_file);
-    buffer[size] = '\0';
-
-    return buffer;
+  return 0;
 }
 
-int process_kernel_file(int arg, char **argv, int argc){
-    if (arg >= argc)
-        return poclcc_error("Incomplete argument for input file!\n");
+/**********************************************************
+ * OPTIONS PROCESS FUNCTIONS*/
 
-    char *filename = argv[arg];
-    char *ext = ".pocl";
-    kernelSource = kernel_load_file(filename);
-    if (outputFile == NULL){
-        outputFile = malloc(strlen(filename)+strlen(ext));
-        strcpy(outputFile, filename);
-        strcat(outputFile, ext);
+int process_help(int arg, char **argv, int argc)
+{
+  print_help();
+  return 0;
+}
+
+int process_output(int arg, char **argv, int argc)
+{
+  if (arg >= argc)
+    return poclcc_error("Incomplete argument for output file!\n");
+
+  output_file = argv[arg];
+  return 0;
+}
+
+int process_opencl_device(int arg, char **argv, int argc)
+{
+  if (arg >= argc)
+    return poclcc_error("Incomplete argument for device_type!\n");
+
+  char *opencl_string = argv[arg];
+  if (!strcmp(opencl_string, "CL_DEVICE_TYPE_CPU"))
+    opencl_device = CL_DEVICE_TYPE_CPU;
+  else if (!strcmp(opencl_string, "CL_DEVICE_TYPE_GPU"))
+    opencl_device = CL_DEVICE_TYPE_GPU;
+  else if (!strcmp(opencl_string, "CL_DEVICE_TYPE_ACCELERATOR"))
+    opencl_device = CL_DEVICE_TYPE_ACCELERATOR;
+  else if (!strcmp(opencl_string, "CL_DEVICE_TYPE_DEFAULT"))
+    opencl_device = CL_DEVICE_TYPE_DEFAULT;
+  else if (!strcmp(opencl_string, "CL_DEVICE_TYPE_ALL"))
+    opencl_device = CL_DEVICE_TYPE_ALL;
+  else 
+    { 
+      printf("Invalid argument for device_type!\n");
+      return print_help();
     }
-    return 0;
+  return 0;
 }
 
-int process_output(int arg, char **argv, int argc){
-    if (arg >= argc)
-        return poclcc_error("Incomplete argument for output file!\n");
+int process_build_options(int arg, char **argv, int argc)
+{
+  if (arg >= argc)
+    return poclcc_error("Incomplete argument for build_options!\n");
 
-    outputFile = argv[arg];
-    return 0;
+  build_options = argv[arg];
+  return 0;
 }
 
-int process_opencl_device(int arg, char **argv, int argc){
-    if (arg >= argc)
-        return poclcc_error("Incomplete argument for device_type!\n");
+int process_device_id(int arg, char **argv, int argc)
+{
+  if (arg >= argc)
+    return poclcc_error("Incomplete argument for build_options!\n");
 
-    char *opencl_string = argv[arg];
-    if (!strcmp(opencl_string, "CL_DEVICE_TYPE_CPU"))
-        openclDevice = CL_DEVICE_TYPE_CPU;
-    else if (!strcmp(opencl_string, "CL_DEVICE_TYPE_GPU"))
-        openclDevice = CL_DEVICE_TYPE_GPU;
-    else if (!strcmp(opencl_string, "CL_DEVICE_TYPE_ACCELERATOR"))
-        openclDevice = CL_DEVICE_TYPE_ACCELERATOR;
-    else if (!strcmp(opencl_string, "CL_DEVICE_TYPE_DEFAULT"))
-        openclDevice = CL_DEVICE_TYPE_DEFAULT;
-    else if (!strcmp(opencl_string, "CL_DEVICE_TYPE_ALL"))
-        openclDevice = CL_DEVICE_TYPE_ALL;
-    else { 
-        printf("Invalid argument for device_type!\n");
-        return print_help();
+  opencl_device_id = atoi(argv[arg]);  
+  return 0;
+}
+
+int process_list_devices(int arg, char **argv, int argc)
+{
+  list_devices = 1;
+  return 0;
+}
+
+/**********************************************************/
+
+poclcc_option options[NUM_OPTIONS]=
+{
+  {process_help, "-h",
+   "\t-h\n"
+   "\t\tDisplay the help\n",
+   1},
+  {process_build_options, "-b",
+   "\t-b <options>\n"
+   "\t\tBuild the program with <options> options\n",
+   2},
+  {process_opencl_device, "-d",
+   "\t-d <device_type>\n"
+   "\t\tSelect <device_type> as the device_type for clGetDeviceIDs.\n" 
+   "\t\tDefault: CL_DEVICE_TYPE_DEFAULT\n",
+   2},
+  {process_list_devices, "-l",
+   "\t-l\n"
+   "\t\tList the opencl device found (that match the <device_type>\n",
+   1},
+  {process_device_id, "-i", 
+   "\t-i <device_id>\n"
+   "\t\tSelect the <device_id> opencl device to generate the pocl binary file\n"
+   "\t\tDefault: 0\n", 
+   2},
+  {process_output, "-o", 
+   "\t-o <file>\n"
+   "\t\tWrite output to <file>\n", 
+   2}
+};
+
+/**********************************************************/
+
+int search_process(char *arg)
+{
+  int i;
+  for (i=0; i<NUM_OPTIONS; i++)
+    {
+      if (!strcmp(options[i].id, arg))
+        return i;
     }
-    return 0;
+  return -1;
 }
 
-const char *bo_id="--build_options";
-int process_build_options(int arg, char **argv){
-    char *bo = argv[arg];
-    unsigned size = strlen(bo) - strlen(bo_id) ;
-    build_options = malloc(size+1);
-    memcpy(build_options, &bo[strlen(bo_id)+1], size);
-    build_options[size]='\0';
-    return 0;
+int process_arg(int *arg, char **argv, int argc)
+{
+  int prev_arg = *arg;
+  char *current_arg = argv[*arg];
+  int current_process = search_process(current_arg);
+  if (current_process == -1)
+    return poclcc_error("Unknown argument!\n");
+  else
+    {
+      poclcc_option * current_option = &options[current_process];
+      int num_args_read = current_option->num_args_read;
+      *arg = prev_arg + num_args_read;
+      return current_option->fct(prev_arg + 1, argv, argc);
+    }
 }
 
-int process_args(int *arg, char **argv, int argc){
-    int prev_arg = *arg;
-    char *current_arg = argv[*arg];
-    if (!strcmp(current_arg, "-h") || !strcmp(current_arg, "--help")){
-        return print_help();
-    } else if (!strcmp(current_arg, "-d")) { 
-        *arg = prev_arg+2;
-        return process_opencl_device(prev_arg+1, argv, argc);
-    } else if (!strcmp(current_arg, "-o")) { 
-        *arg = prev_arg+2;
-        return process_output(prev_arg+1, argv, argc);
-    } else if (!strncmp(current_arg, bo_id, strlen(bo_id))) {
-        *arg = prev_arg+1;
-        return process_build_options(prev_arg, argv);
-    } else 
-        return poclcc_error("Unknown argument!\n");
-}
+/**********************************************************/
 
-int main(int argc, char **argv) {
+int main(int argc, char **argv) 
+{
 //MANAGEMENT OF ARGUMENTS
-    int arg_num=1;
-    if (argc < 2)
-        return poclcc_error("Invalid argument!\n");
+  options_help = options;
+  int arg_num=1;
+  if (argc < 2)
+    return poclcc_error("Invalid argument!\n");
 
-    while (arg_num < argc-1){
-        if (process_args(&arg_num, argv, argc))
-            return -1;
-    }
-    if (process_kernel_file(arg_num, argv, argc))
+  while (arg_num < argc-1)
+      if (process_arg(&arg_num, argv, argc))
         return -1;
 
+  if (arg_num >= argc && list_devices)
+    list_devices_only = 1;
+  else if (arg_num >= argc)
+    poclcc_error("Invalid arguments!\n");
+  else
+    {
+      int current_process = search_process(argv[arg_num]);
+      if (current_process == -1 && process_kernel_file(arg_num, argv, argc))
+        return -1;
+      else if (current_process != -1)
+        {
+          process_arg(&arg_num, argv, argc);
+          list_devices_only = 1;
+        }
+    }
+
 //OPENCL STUFF
-    cl_platform_id cpPlatform;
-    cl_device_id device_id;
-    cl_context context;
-    cl_program program;
-    cl_int err;
-    cl_uint size;
+  cl_platform_id cpPlatform;
+  cl_device_id device_id[NUM_OF_DEVICE_ID];
+  cl_context context;
+  cl_program program;
+  cl_int err;
+  cl_uint num_devices, i;
 
-    err = clGetPlatformIDs(1, &cpPlatform, NULL);
-    err = clGetDeviceIDs(cpPlatform, openclDevice, 1, &device_id, NULL);
-    assert(!err && "clGetDeviceIDs failed");
+  err = clGetPlatformIDs(1, &cpPlatform, NULL);
 
-    context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
-    assert(context && "clCreateContext failed");
+  err = clGetDeviceIDs(cpPlatform, opencl_device, NUM_OF_DEVICE_ID, device_id, &num_devices);
+  assert(!err && "clGetDeviceIDs failed");
+ 
+  if (opencl_device_id >= num_devices)
+    return poclcc_error("Invalid opencl device_id!\n");
+     
+  if (list_devices)
+    {
+      context = clCreateContext(0, num_devices, device_id, NULL, NULL, &err);
+      assert(context && "clCreateContext failed");
+  
+      printf("LIST OF DEVICES:\n");
+      for (i=0; i<num_devices; i++)
+        {
+          printf("%i: ", i);
 
-    program = clCreateProgramWithSource(context, 1, (const char **)&kernelSource, NULL, &err);
-    assert(program && "clCreateProgramWithSource failed");
+          char str[DEVICE_INFO_MAX_LENGTH];
+          err = clGetDeviceInfo(device_id[i], CL_DEVICE_VENDOR, 
+                                DEVICE_INFO_MAX_LENGTH, str, NULL);
+          assert(!err);
+          printf("%s --- ", str);
 
-    err = clBuildProgram(program, 0, NULL, build_options, NULL, NULL);  
-    assert(!err && "clBuildProgram failed");
+          err = clGetDeviceInfo(device_id[i], CL_DEVICE_NAME, 
+                                DEVICE_INFO_MAX_LENGTH, str, NULL);
+          assert(!err);
+          printf("%s\n", str);
+        }
 
-    size_t binary_sizes;
-    unsigned char *binary;
-    err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeof(size_t), &binary_sizes, NULL);
-    assert(!err);
-    
-    binary = malloc(sizeof(unsigned char)*binary_sizes);
-    assert(binary);
-    
-    err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, sizeof(unsigned char*), &binary, NULL);
-    assert(!err);
+      clReleaseContext(context);
+    }
+  if (list_devices_only)
+    return 0;
+
+  context = clCreateContext(0, 1, &device_id[opencl_device_id], NULL, NULL, &err);
+  assert(context && "clCreateContext failed");  
+
+  program = clCreateProgramWithSource(context, 1, (const char **)&kernel_source, NULL, &err);
+  assert(program && "clCreateProgramWithSource failed");
+
+  err = clBuildProgram(program, 0, NULL, build_options, NULL, NULL);  
+  assert(!err && "clBuildProgram failed");
+
+  size_t binary_sizes;
+  unsigned char *binary;
+
+  err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeof(size_t), &binary_sizes, NULL);
+  assert(!err);
+  
+  binary = malloc(sizeof(unsigned char)*binary_sizes);
+  assert(binary);
+  
+  err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, sizeof(unsigned char*), &binary, NULL);
+  assert(!err);
 
 //GENERATE FILE
-    FILE *fp=fopen(outputFile, "w"); 
-    fwrite(binary, 1, size, fp);
-    fclose(fp);
+  FILE *fp=fopen(output_file, "w"); 
+  fwrite(binary, 1, binary_sizes, fp);
+  fclose(fp);
 
 //RELEASE OPENCL STUFF
-    clReleaseProgram(program);
-    clReleaseContext(context);
+  clReleaseProgram(program);
+  clReleaseContext(context);
 
-    free(binary);
+  free(binary);
 
-    return 0;
+  return 0;
 }

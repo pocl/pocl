@@ -25,10 +25,14 @@
 #include "pocl_llvm.h"
 #include "pocl_util.h"
 #include "pocl_cache.h"
-#include "poclcc_binary.h"
+#include "pocl_binary.h"
 
-
-cl_int compile_kernels(cl_program program, cl_device_id device, poclcc_device *devicecc)
+/* This function compile every kernels in "program" for the device "device" 
+ * with an unknown local size from a LLVM IR format to the machine specific code.
+ * We need it for the pocl binary format.
+ * It returns the kernels compiled in "devicecc".
+ */
+cl_int compile_kernels(cl_program program, cl_device_id device, pocl_binary *binary_pocl)
 {
   cl_int errcode = CL_SUCCESS;
 
@@ -46,9 +50,9 @@ cl_int compile_kernels(cl_program program, cl_device_id device, poclcc_device *d
   errcode = clCreateKernelsInProgram(program, 32, kernel, &num_kernels);
   POCL_RETURN_ERROR_COND(errcode != CL_SUCCESS, errcode);
 
-  poclcc_kernel *kernel_tab;
+  pocl_binary_kernel *kernel_tab;
   POCL_RETURN_ERROR_COND(
-    (kernel_tab = malloc(sizeof(poclcc_kernel)*num_kernels)) == NULL,
+    (kernel_tab = malloc(sizeof(pocl_binary_kernel)*num_kernels)) == NULL,
     CL_OUT_OF_HOST_MEMORY);
     
   int i;
@@ -96,84 +100,86 @@ cl_int compile_kernels(cl_program program, cl_device_id device, poclcc_device *d
       
       pocl_cache_release_lock(lock);
       
-      //ALLOC KERNEL INFOS
-      char *kernel_name;
-      struct pocl_argument *dyn_arguments;
-      struct pocl_argument_info *arg_info;
-      
-      int sizeofKernelName = strlen(kernel[i]->name);
-      POCL_GOTO_ERROR_COND(
-        (kernel_name = malloc(sizeofKernelName)) 
-        == NULL,
-        CL_OUT_OF_HOST_MEMORY);
-      memcpy(kernel_name, kernel[i]->name, sizeofKernelName);
-
+      //INITIALIZE POCLCC KERNEL  
+      int sizeof_kernel_name = strlen(kernel[i]->name);
       int num_args = kernel[i]->num_args;
       int num_locals = kernel[i]->num_locals;
-
-      POCL_GOTO_ERROR_COND(
-        (dyn_arguments = malloc((num_args+num_locals)*sizeof(struct pocl_argument))) 
-        == NULL,
-        CL_OUT_OF_HOST_MEMORY);
-      memcpy(dyn_arguments, kernel[i]->dyn_arguments, 
-             (num_args+num_locals)*sizeof(struct pocl_argument));
       
+      pocl_binary_kernel *kernel_pocl = &(kernel_tab[i]);
       POCL_GOTO_ERROR_COND(
-        (arg_info = malloc((num_args)*sizeof(struct pocl_argument_info))) 
-        == NULL,
-        CL_OUT_OF_HOST_MEMORY);
-      memcpy(arg_info, kernel[i]->arg_info, 
-             (num_args)*sizeof(struct pocl_argument_info));
-      
-      //INITIALIZE POCLCC KERNEL  
-      poclcc_kernel *kernelcc = &(kernel_tab[i]);
-      poclcc_init_kernel(kernelcc, kernel_name, sizeofKernelName, binary, fsize, 
-                         num_args, num_locals, dyn_arguments, arg_info);
+        (errcode = pocl_binary_init_kernel(
+          kernel_pocl, kernel[i]->name, sizeof_kernel_name, 
+          binary, fsize, 
+          num_args, num_locals, 
+          kernel[i]->dyn_arguments, kernel[i]->arg_info))
+        != CL_SUCCESS,
+        errcode);
+      POCL_MEM_FREE(binary);
     }
   
-  poclcc_init_device(devicecc, device, num_kernels, kernel_tab);
+  pocl_binary_init_binary(binary_pocl, device, num_kernels, kernel_tab);
 
   return errcode;
 
 ERROR:
+  for (i=0; i<num_kernels; i++)
+    {
+      pocl_binary_free_kernel(&kernel_tab[i]);
+    }
   POCL_MEM_FREE(kernel_tab);
   return errcode;
 }
 
+/* Run compile_kernels for every devices in "program" */
 cl_int compile_for_devices(cl_program program)
 {
   cl_int errcode = CL_SUCCESS;
   int num_devices = program->num_devices;
 
-  if (program->poclcc_binaries != NULL && program->poclcc_binary_sizes != NULL)
+  if (program->pocl_binaries != NULL && program->pocl_binary_sizes != NULL)
     return errcode;
-  assert(program->poclcc_binaries == NULL);
-  assert(program->poclcc_binary_sizes == NULL);
+  assert(program->pocl_binaries == NULL);
+  assert(program->pocl_binary_sizes == NULL);
 
-  poclcc_global poclcc;
-  poclcc_device *devicecc;
   POCL_RETURN_ERROR_COND(
-    (devicecc = malloc(sizeof(poclcc_device)*num_devices)) == NULL,
+    (program->pocl_binaries = malloc(num_devices * sizeof(unsigned char *))) 
+    == NULL,
     CL_OUT_OF_HOST_MEMORY);
-  poclcc_init_global(&poclcc, num_devices, devicecc);
+
+  POCL_GOTO_ERROR_COND(
+    (program->pocl_binary_sizes = malloc(num_devices * sizeof(size_t))) == NULL,
+    CL_OUT_OF_HOST_MEMORY);
 
   int i;
   for (i=0; i<num_devices; i++)
     {
       cl_device_id device = program->devices[i];
-      errcode = compile_kernels(program, device, &(poclcc.devices[i]));
+      pocl_binary binary;
+      errcode = compile_kernels(program, device, &binary);
       POCL_GOTO_ERROR_COND(errcode != CL_SUCCESS, errcode);
+      int sizeof_buffer = pocl_binary_sizeof_binary(&binary);
+      POCL_GOTO_ERROR_COND(
+        (program->pocl_binaries[i] = malloc(sizeof_buffer))
+        == NULL,
+        CL_OUT_OF_HOST_MEMORY);
+      pocl_binary_serialize_binary(program->pocl_binaries[i],sizeof_buffer, &binary); 
+      program->pocl_binary_sizes[i] = sizeof_buffer;
     }
   
-  errcode = poclcc_binary_format_2_program_infos(&(program->poclcc_binaries), 
-                                             &(program->poclcc_binary_sizes), 
-                                             &poclcc);
-  POCL_GOTO_ERROR_COND(errcode != CL_SUCCESS, errcode);
-
   return errcode;
-
+  
 ERROR:
-  poclcc_free(&poclcc);
+  if (program->pocl_binaries != NULL)
+    {
+      for (i=0; i<num_devices; i++)
+        {
+          if (program->pocl_binaries[i] != NULL)
+            POCL_MEM_FREE(program->pocl_binaries[i]);
+        }
+      POCL_MEM_FREE(program->pocl_binaries);
+    }
+  if (program->pocl_binary_sizes != NULL)
+    POCL_MEM_FREE(program->pocl_binary_sizes);
   return errcode;
 }
 
@@ -214,7 +220,7 @@ POname(clGetProgramInfo)(cl_program program,
       if (errcode != CL_SUCCESS)
         return errcode;
 
-      POCL_RETURN_GETINFO_SIZE(value_size, program->poclcc_binary_sizes);
+      POCL_RETURN_GETINFO_SIZE(value_size, program->pocl_binary_sizes);
     }
 
   case CL_PROGRAM_BINARIES:
@@ -232,7 +238,7 @@ POname(clGetProgramInfo)(cl_program program,
         for (i = 0; i < program->num_devices; ++i)
           {
             if (target[i] == NULL) continue;
-            memcpy (target[i], program->poclcc_binaries[i], program->poclcc_binary_sizes[i]);
+            memcpy (target[i], program->pocl_binaries[i], program->pocl_binary_sizes[i]);
           }
       }
       if (param_value_size_ret)

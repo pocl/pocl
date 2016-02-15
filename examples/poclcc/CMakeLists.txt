@@ -34,7 +34,7 @@
 # rm -f $(EXTRA_DIST:.cl=.bc) $(EXTRA_DIST:.cl=.h)
 
 add_test("poclcc" "/bin/sh" "${CMAKE_BINARY_DIR}/bin/poclcc"
-          -o "${CMAKE_BINARY_DIR}/poclcc.c.pocl"
+          -o "${CMAKE_BINARY_DIR}/poclcc.cl.pocl"
           "${CMAKE_CURRENT_SOURCE_DIR}/poclcc.cl")
 
 set_tests_properties( "poclcc"

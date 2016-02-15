@@ -63,7 +63,7 @@ WorkitemHandlerChooser::runOnFunction(Function &F)
   if (!Workgroup::isKernelToProcess(F))
     return false;
 
-  if (isKernelWithDynamicLocalSize)
+  if (WGDynamicLocalSize)
     {
       chosenHandler_ = POCL_WIH_LOOPS;
       return false;

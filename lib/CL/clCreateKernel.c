@@ -26,7 +26,7 @@
 #include "pocl_file_util.h"
 #include "pocl_cache.h"
 #include "pocl_llvm.h"
-#include "poclcc_binary.h"
+#include "pocl_binary.h"
 #include <string.h>
 #include <sys/stat.h>
 #ifndef _MSC_VER
@@ -46,7 +46,6 @@ POname(clCreateKernel)(cl_program program,
   int errcode;
   int error;
   unsigned device_i;
-  poclcc_global poclcc;
 
   POCL_GOTO_ERROR_COND((kernel_name == NULL), CL_INVALID_VALUE);
 
@@ -80,20 +79,16 @@ POname(clCreateKernel)(cl_program program,
       if (device_i > 0)
         POname(clRetainKernel) (kernel);
 
-      /* If the program was created with a poclcc's binary, we won't be able to
-         get the metadata for the cl_kernel from an IR file, so we call poclcc 
-         function to initialize the cl_kernel data */
-      if (program->is_poclcc_binary)
+      /* If the program was created with a pocl binary, we won't be able to
+         get the metadata for the cl_kernel from an IR file, so we call pocl 
+         binary function to initialize the cl_kernel data */
+      if (program->is_pocl_binary)
         {
           POCL_GOTO_ERROR_COND(
-            poclcc_program_infos_2_binary_format(&poclcc, 
-                                             program->binaries, 
-                                             program->num_devices) != CL_SUCCESS, 
-            CL_OUT_OF_HOST_MEMORY);
-          POCL_GOTO_ERROR_COND(
-            (errcode=poclcc_binary_format_2_clKernel(&poclcc, 
-                                                  kernel_name, kernel,
-                                                  program->devices[device_i])) 
+            (errcode=pocl_binary_add_clkernel_data(program->pocl_binaries, 
+                                                   program->num_devices,
+                                                   kernel_name, kernel,
+                                                   program->devices[device_i])) 
             != CL_SUCCESS,
             errcode);
           continue;
@@ -139,8 +134,6 @@ POname(clCreateKernel)(cl_program program,
 ERROR:
   POCL_MEM_FREE(kernel);
   kernel = NULL;
-  if (program != NULL && program->is_poclcc_binary)
-    poclcc_free(&poclcc);
 
 SUCCESS:
   if(errcode_ret != NULL)

@@ -101,9 +101,9 @@ POname(clCreateProgramWithSource)(cl_context context,
   program->kernels = NULL;
   program->build_status = CL_BUILD_NONE;
   program->read_locks = NULL;
-  program->is_poclcc_binary = 0;
-  program->poclcc_binaries = NULL;
-  program->poclcc_binary_sizes = NULL;
+  program->is_pocl_binary = 0;
+  program->pocl_binaries = NULL;
+  program->pocl_binary_sizes = NULL;
 
   if ((program->binary_sizes =
        (size_t*) calloc (program->num_devices, sizeof(size_t))) == NULL ||

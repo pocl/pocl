@@ -1238,7 +1238,7 @@ namespace pocl {
     extern size_t WGLocalSizeX;
     extern size_t WGLocalSizeY;
     extern size_t WGLocalSizeZ;
-    extern size_t isKernelWithDynamicLocalSize;
+    extern bool WGDynamicLocalSize;
 } 
 
 /**
@@ -1337,7 +1337,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
                                           size_t local_x, size_t local_y, size_t local_z)
 {
 
-  pocl::isKernelWithDynamicLocalSize = local_x == 0 && local_y == 0 && local_z == 0;
+  pocl::WGDynamicLocalSize = local_x == 0 && local_y == 0 && local_z == 0;
 
   cl_program program = kernel->program;
   int device_i = pocl_cl_device_to_index(program, device);

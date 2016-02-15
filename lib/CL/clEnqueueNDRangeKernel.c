@@ -28,7 +28,7 @@
 #include "pocl_util.h"
 #include "pocl_cache.h"
 #include "utlist.h"
-#include "poclcc_binary.h"
+#include "pocl_binary.h"
 #ifndef _MSC_VER
 #  include <unistd.h>
 #else
@@ -238,7 +238,7 @@ DETERMINE_LOCAL_SIZE:
                                        realdev, kernel,
                                        local_x, local_y, local_z);
   
-  if (!kernel->program->is_poclcc_binary) 
+  if (!kernel->program->is_pocl_binary) 
     {
       error = pocl_llvm_generate_workgroup_function(realdev,
                                                     kernel, 
@@ -338,23 +338,19 @@ DETERMINE_LOCAL_SIZE:
       }
   }
 
-  if (kernel->program->is_poclcc_binary) 
-    {    
-      poclcc_global poclcc;
-      poclcc_program_infos_2_binary_format(
-        &poclcc, kernel->program->poclcc_binaries, kernel->program->num_devices);
-      
-      char *binary;
+  if (kernel->program->is_pocl_binary) 
+    {          
+      unsigned char *binary;
       int binary_size;
       POCL_RETURN_ERROR_COND(
-        (error=poclcc_look_for_kernel_binary(&poclcc, 
-                                          realdev, kernel->name, 
-                                          &binary, &binary_size)) 
+        (error=pocl_binary_search_kernel_binary(
+          kernel->program->pocl_binaries,
+          kernel->program->num_devices,
+          realdev, kernel->name, 
+          &binary, &binary_size)) 
         != CL_SUCCESS,
         error);
-      
-      poclcc_free(&poclcc);
-      
+            
       char objfile[POCL_FILENAME_LENGTH];
       snprintf(objfile, POCL_FILENAME_LENGTH, 
                "%s/%s.so", 

@@ -24,7 +24,7 @@
 #include "pocl_cl.h"
 #include "pocl_util.h"
 #include <string.h>
-#include "poclcc_binary.h"
+#include "pocl_binary.h"
 
 CL_API_ENTRY cl_program CL_API_CALL
 POname(clCreateProgramWithBinary)(cl_context                     context,
@@ -127,20 +127,20 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
   /* We do no want a binary with different kind of binary in it
    * So we can alias the pointers for the IR binary and the pocl binary  
    */
-  unsigned is_poclcc_binary = strncmp(binaries[0], "BC", 2);
+  unsigned is_pocl_binary = strncmp(binaries[0], "BC", 2);
 
   for (i = 0; i < num_devices; ++i)
     {
       program->binary_sizes[i] = lengths[i];
       program->binaries[i] = (unsigned char*) malloc (lengths[i]);
-      program->poclcc_binaries = program->binaries;
-      program->poclcc_binary_sizes = program->binary_sizes;
+      program->pocl_binaries = program->binaries;
+      program->pocl_binary_sizes = program->binary_sizes;
       
       /* IR binary (it always starts with those 2 char)
        * It would be better if LLVM had an external function to check 
        * the header of IR files
        */
-      if ( !is_poclcc_binary && !strncmp(binaries[i], "BC", 2) )
+      if ( !is_pocl_binary && !strncmp(binaries[i], "BC", 2) )
         {
           memcpy (program->binaries[i], 
                   binaries[i], 
@@ -150,10 +150,10 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
           
         } 
       /* Poclcc binary */
-      else if (is_poclcc_binary 
-                   && poclcc_check_binary(device_list[i], binaries[i])) 
+      else if (is_pocl_binary 
+               && pocl_binary_check_binary(device_list[i], (pocl_binary *)binaries[i])) 
         {
-          memcpy (program->poclcc_binaries[i], binaries[i], lengths[i]);
+          memcpy (program->pocl_binaries[i], binaries[i], lengths[i]);
           if (binary_status != NULL)
             binary_status[i] = CL_SUCCESS;
           
@@ -168,7 +168,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
         }
     }
   
-  program->is_poclcc_binary = is_poclcc_binary;  
+  program->is_pocl_binary = is_pocl_binary;  
 
   POCL_RETAIN_OBJECT(context);
 

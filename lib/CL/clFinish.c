@@ -113,7 +113,7 @@ static void exec_commands (_cl_command_node *node_list)
 
       if (node->device->ops->compile_submitted_kernels
           && !(node->type == CL_COMMAND_NDRANGE_KERNEL 
-               && node->command.run.kernel->program->is_poclcc_binary))
+               && node->command.run.kernel->program->is_pocl_binary))
         node->device->ops->compile_submitted_kernels (node);
 
       switch (node->type)
