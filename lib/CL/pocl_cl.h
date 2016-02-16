@@ -584,6 +584,7 @@ struct _cl_event {
   cl_context context;
   cl_command_queue queue;
   cl_command_type command_type;
+  _cl_command_node *command;
 
   /* list of callback functions */
   event_callback_item* callback_list;
@@ -617,6 +618,7 @@ struct _cl_sampler {
       {                                                                 \
         cl_command_queue __cq = (*(__event))->queue;                    \
         (*(__event))->status = CL_QUEUED;                               \
+        pocl_event_updated(*(__event), CL_QUEUED);                      \
         if (__cq && __cq->properties & CL_QUEUE_PROFILING_ENABLE)       \
           (*(__event))->time_queue =                                    \
             __cq->device->ops->get_timer_value(__cq->device->data);     \
@@ -629,6 +631,7 @@ struct _cl_sampler {
       {                                                                 \
         assert((*(__event))->status == CL_QUEUED);                      \
         (*(__event))->status = CL_SUBMITTED;                            \
+        pocl_event_updated(*(__event), CL_SUBMITTED);                   \
         cl_command_queue __cq = (*(__event))->queue;                    \
         if (__cq && __cq->properties & CL_QUEUE_PROFILING_ENABLE)       \
           (*(__event))->time_submit =                                   \
@@ -642,6 +645,7 @@ struct _cl_sampler {
       {                                                                 \
         assert((*(__event))->status == CL_SUBMITTED);                   \
         (*(__event))->status = CL_RUNNING;                              \
+        pocl_event_updated(*(__event), CL_RUNNING);                     \
         cl_command_queue __cq = (*(__event))->queue;                    \
         if (__cq && __cq->properties & CL_QUEUE_PROFILING_ENABLE)       \
           (*(__event))->time_start =                                    \
@@ -655,6 +659,7 @@ struct _cl_sampler {
       {                                                                 \
         assert((*(__event))->status == CL_RUNNING);                     \
         (*(__event))->status = CL_COMPLETE;                             \
+        pocl_event_updated(*(__event), CL_COMPLETE);                    \
         cl_command_queue __cq = (*(__event))->queue;                    \
         if (__cq && __cq->properties & CL_QUEUE_PROFILING_ENABLE)       \
           (*(__event))->time_end =                                      \

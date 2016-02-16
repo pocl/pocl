@@ -37,6 +37,7 @@
 #include "basic/basic.h"
 #include "pthread/pocl-pthread.h"
 #include "pocl_debug.h"
+#include "pocl_event.h"
 #include "pocl_cache.h"
 #include "pocl_queue_util.h"
 
@@ -214,7 +215,7 @@ pocl_init_devices()
 #endif
 
   pocl_cache_init_topdir();
-
+  pocl_event_tracing_init();
   pocl_init_queue_list();
 
   /* Init operations */

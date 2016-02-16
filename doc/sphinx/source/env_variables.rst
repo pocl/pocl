@@ -142,3 +142,14 @@ pocl.
               might avoid storing work-item context to memory.
               However, the code bloat is increased with larger
               WG sizes.
+
+- **POCL_TRACE_EVENT** and **POCL_TRACE_EVENT_OPT**
+
+ If POCL_TRACE_EVENT is set to some tracer name, then all events
+ will be traced automatically. Depending on the backend, traces
+ may be output in different formats.
+
+    text   -- Basic text logger for each events state
+			  Use POCL_TRACE_EVENT_OPT=<file> to set the 
+			  output file. If not specified, it defaults to
+			  pocl_trace_event.log

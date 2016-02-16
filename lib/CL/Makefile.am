@@ -135,6 +135,7 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clSetKernelExecInfo.c \
                    pocl_cl.h \
                    pocl_util.c pocl_util.h \
+                   pocl_event.c pocl_event.h \
                    pocl_queue_util.c pocl_queue_util.h \
                    pocl_image_util.c pocl_image_util.h \
                    pocl_img_buf_cpy.h pocl_img_buf_cpy.c \
