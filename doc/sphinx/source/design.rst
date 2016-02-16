@@ -10,3 +10,4 @@ to this part.
    host_library
    kernel_compiler
    memory_management
+   pocl_binary
