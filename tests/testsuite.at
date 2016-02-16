@@ -232,12 +232,6 @@ AT_CHECK([$abs_top_builddir/tests/kernel/kernel test_fabs], 0, expout)
 AT_CLEANUP
 
 AT_SETUP([Kernel functions abs abs_diff add_sat hadd mad_hi mad_sat mul_hi rhadd sub_sat (loopvec)])
-# 3-element vector cases fail when vectorizer is enabled,
-# at least with Intel Core i5 and AMD FX8. Assume it fails on all others too.
-AT_XFAIL_IF([grep OCL_KERNEL_TARGET $abs_top_builddir/config.h | cut -d\" -f2 | grep -q x86_64 &&
-             grep -q "#define LLVM_3_5" $abs_top_builddir/config.h])
-AT_XFAIL_IF([grep OCL_KERNEL_TARGET $abs_top_builddir/config.h | cut -d\" -f2 | grep -q x86_64 &&
-             grep -q "#define LLVM_3_6" $abs_top_builddir/config.h])
 AT_DATA([expout],
 [Running test test_hadd...
 OK
