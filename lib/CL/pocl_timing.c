@@ -21,59 +21,70 @@
    THE SOFTWARE.
 */
 
-#include "pocl_timing.h"
+#include "config.h"
 
+#ifndef _MSC_VER
+#  ifndef __STDC_FORMAT_MACROS
+#    define __STDC_FORMAT_MACROS
+#  endif
+#  include <inttypes.h>
+#  ifdef HAVE_CLOCK_GETTIME
+#    include <time.h>
+#  else
+#    include <sys/time.h>
+#  endif
+#  ifdef __MACH__
+#    include <mach/clock.h>
+#    include <mach/mach.h>
+#  endif
+#  include <sys/resource.h>
+#  include <unistd.h>
+#else
+#  include "vccompat.hpp"
+#  include <stdint.h>
+#  include <stddef.h> // size_t
+#endif
+
+#include "pocl_timing.h"
 
 #ifdef HAVE_CLOCK_GETTIME
 // clock_gettime is (at best) nanosec res
-const size_t pocl_timer_resolution = 1;
+const unsigned pocl_timer_resolution = 1;
 #else
 #  ifndef _MSC_VER
 // gettimeofday() has (at best) microsec res
-const size_t pocl_timer_resolution = 1000;
+const unsigned pocl_timer_resolution = 1000;
 #  else
 // the resolution of windows clock is "it depends"...
-const size_t pocl_timer_resolution = 1000;
+const unsigned pocl_timer_resolution = 1000;
 #  endif
 #endif
 
 
-uint64_t pocl_gettime_ns() {
-  uint64_t res = 0;
+uint64_t pocl_gettimemono_ns() {
 
-#ifndef _MSC_VER
-
-# ifdef HAVE_CLOCK_GETTIME
+#ifdef HAVE_CLOCK_GETTIME
   struct timespec timespec;
-
-#  ifdef __linux__
+# ifdef __linux__
   clock_gettime(CLOCK_MONOTONIC_RAW, &timespec);
-#  elif defined(__DragonFly__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+# elif defined(__DragonFly__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
   clock_gettime(CLOCK_UPTIME_FAST, &timespec);
-#  elif defined(__MACH__)
-  /* TODO test */
-  /* clock_get_system_nanotime() in kern/clock.h
-   * nanotime(struct timespec) in mach/mach_time.h */
+# else
+# warn Using clock_gettime with CLOCK_REALTIME for monotonic clocks
+  clock_gettime(CLOCK_REALTIME, &timespec);
+# endif
+  return ((timespec.tv_sec * 1000000000UL) + timespec.tv_nsec);
+
+
+#elif defined(__APPLE__)
   clock_serv_t cclock;
   mach_timespec_t mts;
   host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
   clock_get_time(cclock, &mts);
   mach_port_deallocate(mach_task_self(), cclock);
-  timespec.tv_sec = mts.tv_sec;
-  timespec.tv_nsec = mts.tv_nsec;
-#  else
-  clock_gettime(CLOCK_REALTIME, &ts);
-#  endif
+  return ((mts.tv_sec * 1000000000UL) + mts.tv_nsec);
 
-  res = timespec.tv_sec * 1000000000UL;
-  return (res + timespec.tv_nsec);
-# else /* HAVE_CLOCK_GETTIME */
-  struct timeval current;
-  gettimeofday(&current, NULL);
-  return ((uint64_t)current.tv_sec * 1000000 + current.tv_usec)*1000;
-# endif
-
-#else  /* MSVC */
+#elif defined(_WIN32)
   FILETIME ft;
   GetSystemTimeAsFileTime(&ft);
   res |= ft.dwHighDateTime;
@@ -82,5 +93,61 @@ uint64_t pocl_gettime_ns() {
   res -= 11644473600000000Ui64;
   res /= 10;
   return res;
+
+#else
+  struct timeval current;
+  gettimeofday(&current, NULL);
+  return ((uint64_t)current.tv_sec * 1000000 + current.tv_usec)*1000;
+
 #endif
+}
+
+int pocl_gettimereal(int *year, int *mon, int *day, int *hour, int *min, int *sec, int* nanosec)
+{
+#if defined(HAVE_CLOCK_GETTIME) || defined(__APPLE__) || defined(HAVE_GETTIMEOFDAY)
+  struct tm t;
+  struct timespec timespec;
+  time_t sec_input;
+
+#if defined(HAVE_CLOCK_GETTIME)
+  clock_gettime(CLOCK_REALTIME, &timespec);
+  *nanosec = timespec.tv_nsec;
+  sec_input = timespec.tv_sec;
+#elif defined(__APPLE__)
+  clock_serv_t cclock;
+  mach_timespec_t mts;
+  host_get_clock_service(mach_host_self(), CALENDAR_CLOCK, &cclock);
+  clock_get_time(cclock, &mts);
+  mach_port_deallocate(mach_task_self(), cclock);
+  *nanosec = mts.tv_nsec;
+  sec_input = mts.tv_sec;
+#else /* gettimeofday */
+  struct timeval current;
+  gettimeofday(&current, NULL);
+  *nanosec = (uint64_t)current.tv_sec * 1000000;
+  sec_input = current.tv_usec;
+#endif
+  gmtime_r(&sec_input, &t);
+  *year = (t.tm_year + 1900);
+  *mon = t.tm_mon;
+  *day = t.tm_mday;
+  *hour = t.tm_hour;
+  *min = t.tm_min;
+  *sec = t.tm_sec;
+  return 0;
+
+#elif defined(_WIN32)
+  FILETIME ft;
+  GetSystemTimeAsFileTime(&ft);
+  res |= ft.dwHighDateTime;
+  res <<= 32;
+  res |= ft.dwLowDateTime;
+  res -= 11644473600000000Ui64;
+  res /= 10;
+  // TODO finish this
+  return 1;
+#else
+#error Unknown system variant
+#endif
+
 }
