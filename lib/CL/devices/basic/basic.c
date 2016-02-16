@@ -772,24 +772,28 @@ void pocl_basic_memfill(void *ptr,
       for (i = 0; i < size; i++)
         p[i] = *(uint8_t*)pattern;
       }
+      break;
     case 2:
       {
       uint16_t * p = (uint16_t*)ptr + offset;
       for (i = 0; i < size; i++)
         p[i] = *(uint16_t*)pattern;
       }
+      break;
     case 4:
       {
       uint32_t * p = (uint32_t*)ptr + offset;
       for (i = 0; i < size; i++)
         p[i] = *(uint32_t*)pattern;
       }
+      break;
     case 8:
       {
       uint64_t * p = (uint64_t*)ptr + offset;
       for (i = 0; i < size; i++)
         p[i] = *(uint64_t*)pattern;
       }
+      break;
     case 16:
       {
       uint64_t * p = (uint64_t*)ptr + offset;
@@ -797,6 +801,7 @@ void pocl_basic_memfill(void *ptr,
         for (j = 0; j < 2; j++)
           p[(i<<1) + j] = *((uint64_t*)pattern + j);
       }
+      break;
     case 32:
       {
       uint64_t * p = (uint64_t*)ptr + offset;
@@ -804,6 +809,7 @@ void pocl_basic_memfill(void *ptr,
         for (j = 0; j < 4; j++)
           p[(i<<2) + j] = *((uint64_t*)pattern + j);
       }
+      break;
     case 64:
       {
       uint64_t * p = (uint64_t*)ptr + offset;
@@ -811,6 +817,7 @@ void pocl_basic_memfill(void *ptr,
         for (j = 0; j < 8; j++)
           p[(i<<3) + j] = *((uint64_t*)pattern + j);
       }
+      break;
     case 128:
       {
       uint64_t * p = (uint64_t*)ptr + offset;
@@ -818,6 +825,10 @@ void pocl_basic_memfill(void *ptr,
         for (j = 0; j < 16; j++)
           p[(i<<4) + j] = *((uint64_t*)pattern + j);
       }
+      break;
+    default:
+      assert (0 && "Invalid pattern size");
+      break;
     }
 }
 
@@ -851,7 +862,7 @@ pocl_basic_uninit (cl_device_id device)
 cl_ulong
 pocl_basic_get_timer_value (void *data) 
 {
-  return pocl_gettime_ns();
+  return pocl_gettimemono_ns();
 }
 
 cl_int 

@@ -99,6 +99,7 @@ CL_API_SUFFIX__VERSION_1_2
   cmd->command.memfill.pattern = p;
   cmd->command.memfill.pattern_size = pattern_size;
 
+  POname(clRetainMemObject) (buffer);
   pocl_command_enqueue(command_queue, cmd);
 
   return CL_SUCCESS;

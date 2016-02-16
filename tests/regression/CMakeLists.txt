@@ -23,6 +23,9 @@
 #
 #=============================================================================
 
+# Mac OS X currently can't digest cl2.hpp, which all reg tests include
+if(NOT APPLE)
+
 set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
      test_assign_loop_variable_to_privvar_makes_it_local_2)
 foreach(PROG ${C_PROGRAMS_TO_BUILD})
@@ -224,3 +227,5 @@ set_tests_properties(
 "changing the value at global_id: 6, local_id 2, group_id 1, to: 3
 value is changed at global_id: 6, local_id 2, group_id 1, to: 3
 ")
+
+endif()
