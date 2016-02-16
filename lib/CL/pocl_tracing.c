@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string.h>
-#include "pocl_event.h"
+#include "pocl_tracing.h"
 #include "pocl_runtime_config.h"
 
 static int tracing_initialized = 0;

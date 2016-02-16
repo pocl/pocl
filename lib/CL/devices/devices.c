@@ -37,7 +37,7 @@
 #include "basic/basic.h"
 #include "pthread/pocl-pthread.h"
 #include "pocl_debug.h"
-#include "pocl_event.h"
+#include "pocl_tracing.h"
 #include "pocl_cache.h"
 #include "pocl_queue_util.h"
 
