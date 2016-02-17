@@ -52,9 +52,11 @@ if (EXISTS "${INTEL_ZIP}")
   add_dependencies(prepare_examples ${TS_NAME})
 
   add_test(NAME intel_svm_coarse
-    COMMAND "${TS_BUILDDIR}/coarse")
+    COMMAND "${TS_BUILDDIR}/coarse" -p 0 -t default
+    WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/SVMBasicCoarseGrained")
   add_test(NAME intel_svm_fine
-    COMMAND "${TS_BUILDDIR}/fine")
+    COMMAND "${TS_BUILDDIR}/fine" -p 0 -t default
+    WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/SVMBasicFineGrained")
 
   set_tests_properties( intel_svm_coarse intel_svm_fine
     PROPERTIES  LABELS "IntelSVM;hsa")
