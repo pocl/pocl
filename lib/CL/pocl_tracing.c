@@ -3,7 +3,12 @@
 #include "pocl_tracing.h"
 #include "pocl_runtime_config.h"
 
+#ifdef LTTNG_UST_AVAILABLE
+#include "pocl_lttng.h"
+#endif
+
 static int tracing_initialized = 0;
+static uint8_t event_trace_filter = 0xF;
 
 static const char *status_to_str[] = {
   "complete",
@@ -13,12 +18,16 @@ static const char *status_to_str[] = {
 };
 
 static const struct pocl_event_tracer text_logger;
+static const struct pocl_event_tracer lttng_tracer;
 
 /**
  * List of tracers
  */
 static const struct pocl_event_tracer *pocl_event_tracers[] = {
   &text_logger,
+#ifdef LTTNG_UST_AVAILABLE
+  &lttng_tracer,
+#endif
 };
 
 #define POCL_TRACER_COUNT (sizeof(pocl_event_tracers) / sizeof((pocl_event_tracers)[0]))
@@ -38,8 +47,43 @@ int pocl_event_updated(cl_event event, int status)
 						  cb_ptr->user_data);
     }
 
-  if (event_tracer)
+  if (event_tracer && ((1 << status) & event_trace_filter))
     event_tracer->event_updated(event, status);
+}
+
+void pocl_parse_event_filter()
+{
+  const char *trace_filter;
+  char *tmp_str, *save_ptr, *token;
+
+  trace_filter = pocl_get_string_option("POCL_TRACE_EVENT_FILTER", NULL);
+  if (trace_filter == NULL)
+    return;
+
+  tmp_str = strdup(trace_filter);
+  if (tmp_str == NULL)
+    return;
+
+  event_trace_filter = 0;
+  while(1)
+    {
+      token = strtok_r(tmp_str, ",", &save_ptr);
+      if (token == NULL)
+        goto PARSE_OUT;
+      if (strcmp(token, "queued") == 0)
+        event_trace_filter |= (1 << CL_QUEUED);
+      else if (strcmp(token, "submitted") == 0)
+        event_trace_filter |= (1 << CL_SUBMITTED);
+      else if (strcmp(token, "running") == 0)
+        event_trace_filter |= (1 << CL_RUNNING);
+      else if (strcmp(token, "complete") == 0)
+        event_trace_filter |= (1 << CL_COMPLETE);
+
+      tmp_str = NULL;
+    }
+
+PARSE_OUT:
+  free(tmp_str);
 }
 
 void pocl_event_tracing_init()
@@ -65,6 +109,8 @@ void pocl_event_tracing_init()
 	  }
   if (event_tracer == NULL)
     goto EVENT_INIT_OUT;
+    
+  pocl_parse_event_filter();
 
   event_tracer->init();
 
@@ -115,7 +161,7 @@ static const char *command_to_str(cl_command_type cmd)
 }
 
 /**
- * Basic text logger
+ * Basic text logger, useful for grep/cut/sed operations
  */
 static FILE *text_tracer_file = NULL;
 static pocl_lock_t text_tracer_lock = POCL_LOCK_INITIALIZER;
@@ -158,7 +204,9 @@ static void text_tracer_event_updated(cl_event event, int status)
 														node->command.read.host_ptr);
       break;
     case CL_COMMAND_WRITE_BUFFER:
-      text_size += sprintf(cur_buf, "size=%d\n", node->command.write.cb);
+      text_size += sprintf(cur_buf, "size=%d, host_ptr=%p\n\n",
+                            node->command.write.cb,
+														node->command.write.host_ptr);
       break;
     case CL_COMMAND_COPY_BUFFER:
       text_size += sprintf(cur_buf, "size=%d\n", node->command.copy.cb);
@@ -186,3 +234,66 @@ static const struct pocl_event_tracer text_logger = {
   text_tracer_init,
   text_tracer_event_updated,
 };
+
+
+#ifdef LTTNG_UST_AVAILABLE
+
+/**
+ * LTTNG tracer
+ */
+
+static void lttng_tracer_init()
+{
+  
+}
+
+static void lttng_tracer_event_updated(cl_event event, int status)
+{
+  _cl_command_node *node = event->command;
+
+  if (node == NULL)
+	  return;
+
+  switch (event->command_type)
+    {
+    case CL_COMMAND_NDRANGE_KERNEL:
+      tracepoint(pocl_trace, ndrange_kernel, status,
+                    node->command.run.kernel->name);
+      break;
+    case CL_COMMAND_READ_BUFFER:
+      tracepoint(pocl_trace, read_buffer, status,
+                    node->command.write.host_ptr,
+                    node->command.write.cb);
+      break;
+    case CL_COMMAND_WRITE_BUFFER:
+      tracepoint(pocl_trace, write_buffer, status,
+                    node->command.write.host_ptr,
+                    node->command.write.cb);
+      break;
+    case CL_COMMAND_COPY_BUFFER:
+      tracepoint(pocl_trace, copy_buffer, status,
+                    node->command.copy.cb);
+      break;
+    case CL_COMMAND_FILL_BUFFER:
+      tracepoint(pocl_trace, fill_buffer, status,
+                    node->command.copy.cb);
+      break;
+    case CL_COMMAND_MAP_BUFFER:
+    case CL_COMMAND_MAP_IMAGE:
+      tracepoint(pocl_trace, map, status,
+                    node->command.map.mapping->size);
+      break;
+    default:
+      tracepoint(pocl_trace, command, status,
+                    command_to_str(event->command_type));
+      break;
+    }
+}
+
+static const struct pocl_event_tracer lttng_tracer = {
+  "text",
+  lttng_tracer_init,
+  lttng_tracer_event_updated,
+};
+
+#endif

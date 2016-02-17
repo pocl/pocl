@@ -147,10 +147,14 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    pocl_hash.c pocl_hash.h pocl_cache.c \
                    pocl_debug.c pocl_debug.h
 
-
-libpocl_la_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/fix-include/OpenCL -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices $(OCL_ICD_CFLAGS)
+libpocl_la_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/fix-include/OpenCL -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices $(OCL_ICD_CFLAGS) @LTTNG_UST_CFLAGS@
 libpocl_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ -version-info ${LIB_VERSION}
 #libpocl_la_LDFLAGS += -Wl,-z,defs 
+
+if LTTNG_UST_AVAILABLE
+libpocl_la_SOURCES += pocl_lttng.h pocl_lttng.c
+endif
+
 
 if TCE_AVAILABLE
 # The ttasim device is written in C++ as it accesses the ttasim library of TCE
@@ -173,7 +177,6 @@ if HAVE_CLOCK_GETTIME
 libpocl_la_LIBADD += -lrt
 endif
 
-
 #Kludge: compile pocl_llvm_api.cc into a library of its own.
 #The source file is necessarely a C++ file, and having a C++ file
 #causes the entire pocl project to be linked with g++, which in turn
@@ -194,7 +197,7 @@ libpocl_la_LIBADD += -lclangFrontend -lclangDriver -lclangParse -lclangSema -lcl
 libpocl_la_LIBADD += -lclangAST -lclangBasic -lclangFrontendTool -lclangRewriteFrontend 
 libpocl_la_LIBADD += -lclangStaticAnalyzerFrontend -lclangStaticAnalyzerCore
 libpocl_la_LIBADD += -lclangAnalysis -lclangCodeGen -lclangAST
-libpocl_la_LIBADD += -lstdc++ -lm @LLVM_LIBS@
+libpocl_la_LIBADD += -lstdc++ -lm @LLVM_LIBS@ @LTTNG_UST_LIBS@
 
 if LLVM_3_6
 libpocl_la_LIBADD += -lclangToolingCore 
