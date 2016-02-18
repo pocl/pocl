@@ -46,7 +46,7 @@ typedef struct pocl_binary_kernel_ {
   struct pocl_argument *dyn_arguments;
   struct pocl_argument_info *arg_info;
   unsigned char *binary;
-} pocl_binary_kernel;
+} __attribute__((packed)) pocl_binary_kernel;
 
 typedef struct pocl_binary_ {
   char pocl_id[POCLCC_STRING_ID_LENGTH];
@@ -54,7 +54,7 @@ typedef struct pocl_binary_ {
   uint64_t device_id;
   uint32_t num_kernels;
   pocl_binary_kernel *kernels;
-} pocl_binary;
+} __attribute__((packed)) pocl_binary;
 
 /* free internal structures */
 void pocl_binary_free_binary(pocl_binary *binary);

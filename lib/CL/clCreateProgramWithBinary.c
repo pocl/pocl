@@ -127,7 +127,8 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
   /* We do no want a binary with different kind of binary in it
    * So we can alias the pointers for the IR binary and the pocl binary  
    */
-  unsigned is_pocl_binary = strncmp(binaries[0], "BC", 2);
+  unsigned is_pocl_binary = strncmp(
+    (const char*)binaries[0], "BC", 2);
 
   for (i = 0; i < num_devices; ++i)
     {
@@ -140,7 +141,8 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
        * It would be better if LLVM had an external function to check 
        * the header of IR files
        */
-      if ( !is_pocl_binary && !strncmp(binaries[i], "BC", 2) )
+      if ( !is_pocl_binary 
+           && !strncmp((const char *)binaries[i], "BC", 2) )
         {
           memcpy (program->binaries[i], 
                   binaries[i], 
