@@ -243,13 +243,8 @@ createLauncher(Module &M, Function *F)
 
   IRBuilder<> builder(BasicBlock::Create(M.getContext(), "", L));
 
-#ifdef LLVM_OLDER_THAN_3_7
-  ptr = builder.CreateStructGEP(ai,
-				TypeBuilder<PoclContext, true>::WORK_DIM);
-#else
   ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), &*ai,
                                 TypeBuilder<PoclContext, true>::WORK_DIM);
-#endif
   gv = M.getGlobalVariable("_work_dim");
   if (gv != NULL) {
     v = builder.CreateLoad(builder.CreateConstGEP1_32(ptr, 0));
@@ -258,20 +253,11 @@ createLauncher(Module &M, Function *F)
 
 
   int size_t_width = 32;
-#ifdef LLVM_OLDER_THAN_3_7
-  if (M.getDataLayout()->getPointerSize(0) == 8)
-#else
   if (M.getDataLayout().getPointerSize(0) == 8)
-#endif
     size_t_width = 64;
 
-#ifdef LLVM_OLDER_THAN_3_7
-  ptr = builder.CreateStructGEP(ai,
-				TypeBuilder<PoclContext, true>::GROUP_ID);
-#else
   ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), &*ai,
                                 TypeBuilder<PoclContext, true>::GROUP_ID);
-#endif
   for (int i = 0; i < 3; ++i) {
     snprintf(s, STRING_LENGTH, "_group_id_%c", 'x' + i);
     gv = M.getGlobalVariable(s);
@@ -282,11 +268,7 @@ createLauncher(Module &M, Function *F)
         }
       else
         {
-#ifdef LLVM_OLDER_THAN_3_7
-          v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, i));
-#else
           v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr->getType()->getPointerElementType(), ptr, 0, i));
-#endif
         }
       builder.CreateStore(v, gv);
     }
@@ -294,13 +276,8 @@ createLauncher(Module &M, Function *F)
 
   if (WGDynamicLocalSize)
     {
-#if defined LLVM_OLDER_THAN_3_7
-      ptr = builder.CreateStructGEP(ai,
+      ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), &*ai,
                                     TypeBuilder<PoclContext, true>::LOCAL_SIZE);
-#else
-      ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), ai,
-                                    TypeBuilder<PoclContext, true>::LOCAL_SIZE);
-#endif
       for (int i = 0; i < 3; ++i) 
         {
           snprintf(s, STRING_LENGTH, "_local_size_%c", 'x' + i);
@@ -312,26 +289,17 @@ createLauncher(Module &M, Function *F)
               }
             else
               {
-#ifdef LLVM_OLDER_THAN_3_7
-                v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, i));
-#else
                 v = builder.CreateLoad(
                   builder.CreateConstGEP2_32(ptr->getType()->getPointerElementType(), 
                                              ptr, 0, i));
-#endif
               }
             builder.CreateStore(v, gv);
           }
         }
     }
   
-#ifdef LLVM_OLDER_THAN_3_7
-  ptr = builder.CreateStructGEP(ai,
-				TypeBuilder<PoclContext, true>::NUM_GROUPS);
-#else
   ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), &*ai,
                                 TypeBuilder<PoclContext, true>::NUM_GROUPS);
-#endif
   for (int i = 0; i < 3; ++i) {
     snprintf(s, STRING_LENGTH, "_num_groups_%c", 'x' + i);
     gv = M.getGlobalVariable(s);
@@ -342,23 +310,14 @@ createLauncher(Module &M, Function *F)
         }
       else 
         {
-#ifdef LLVM_OLDER_THAN_3_7
-          v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, i));
-#else
           v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr->getType()->getPointerElementType(), ptr, 0, i));
-#endif
         }
       builder.CreateStore(v, gv);
     }
   }
 
-#ifdef LLVM_OLDER_THAN_3_7
-  ptr = builder.CreateStructGEP(ai,
-				TypeBuilder<PoclContext, true>::GLOBAL_OFFSET);
-#else
   ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), &*ai,
                                 TypeBuilder<PoclContext, true>::GLOBAL_OFFSET);
-#endif
   for (int i = 0; i < 3; ++i) {
     snprintf(s, STRING_LENGTH, "_global_offset_%c", 'x' + i);
     gv = M.getGlobalVariable(s);
@@ -369,11 +328,7 @@ createLauncher(Module &M, Function *F)
         }
       else
         {
-#ifdef LLVM_OLDER_THAN_3_7
-          v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr, 0, i));
-#else
           v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr->getType()->getPointerElementType(), ptr, 0, i));
-#endif
         }
       builder.CreateStore(v, gv);
     }
