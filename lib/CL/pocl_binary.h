@@ -24,11 +24,6 @@
 #ifndef POCL_BINARY_FORMAT_H
 #define POCL_BINARY_FORMAT_H
 
-#include <stdint.h>
-#include <assert.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "pocl_cl.h"
 
 /* pocl binary identifier */
@@ -49,9 +44,10 @@ typedef struct pocl_binary_kernel_ {
 } __attribute__((packed)) pocl_binary_kernel;
 
 typedef struct pocl_binary_ {
+  char endian;
   char pocl_id[POCLCC_STRING_ID_LENGTH];
-  uint32_t version;
   uint64_t device_id;
+  uint32_t version;
   uint32_t num_kernels;
   pocl_binary_kernel *kernels;
 } __attribute__((packed)) pocl_binary;

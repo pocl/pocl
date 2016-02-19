@@ -21,7 +21,19 @@
    THE SOFTWARE.
 */
 
+#include <stdint.h>
+#include <assert.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include "config.h"
 #include "pocl_binary.h"
+
+#if defined(WORDS_BIGENDIAN) && WORDS_BIGENDIAN == 1
+  const char host_endian = 1;
+#else
+  const char host_endian = 0;
+#endif
 
 /***********************************************************/
 
@@ -54,6 +66,8 @@ void pocl_binary_free_kernel(pocl_binary_kernel *kernel)
 
 int pocl_binary_check_binary_header(pocl_binary *binary)
 {
+  if (binary->endian != host_endian)
+    return 0;
   if (binary->version != POCLCC_VERSION)
     return 0;
   return !strncmp(binary->pocl_id, POCLCC_STRING_ID, POCLCC_STRING_ID_LENGTH);
@@ -384,6 +398,7 @@ int pocl_binary_search_kernel_binary(unsigned char **binaries, int num_devices,
 void pocl_binary_init_binary(pocl_binary *binary, cl_device_id device, 
                              int num_kernels, pocl_binary_kernel *kernels)
 {
+  binary->endian = host_endian;
   strncpy(binary->pocl_id, POCLCC_STRING_ID, POCLCC_STRING_ID_LENGTH);
   binary->version = POCLCC_VERSION;
   binary->device_id = pocl_binary_get_device_id(device);
