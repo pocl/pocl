@@ -55,7 +55,7 @@ cl_int compile_kernels(cl_program program, cl_device_id device, pocl_binary *bin
     (kernel_tab = malloc(sizeof(pocl_binary_kernel)*num_kernels)) == NULL,
     CL_OUT_OF_HOST_MEMORY);
     
-  int i;
+  unsigned i;
   for (i=0; i<num_kernels; i++)
     {
 
@@ -134,7 +134,7 @@ ERROR:
 cl_int compile_for_devices(cl_program program)
 {
   cl_int errcode = CL_SUCCESS;
-  int num_devices = program->num_devices;
+  unsigned num_devices = program->num_devices;
 
   if (program->pocl_binaries != NULL && program->pocl_binary_sizes != NULL)
     return errcode;
@@ -150,14 +150,14 @@ cl_int compile_for_devices(cl_program program)
     (program->pocl_binary_sizes = malloc(num_devices * sizeof(size_t))) == NULL,
     CL_OUT_OF_HOST_MEMORY);
 
-  int i;
+  unsigned i;
   for (i=0; i<num_devices; i++)
     {
       cl_device_id device = program->devices[i];
       pocl_binary binary;
       errcode = compile_kernels(program, device, &binary);
       POCL_GOTO_ERROR_COND(errcode != CL_SUCCESS, errcode);
-      int sizeof_buffer = pocl_binary_sizeof_binary(&binary);
+      size_t sizeof_buffer = pocl_binary_sizeof_binary(&binary);
       POCL_GOTO_ERROR_COND(
         (program->pocl_binaries[i] = malloc(sizeof_buffer))
         == NULL,

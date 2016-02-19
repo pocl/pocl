@@ -63,14 +63,14 @@ int pocl_binary_check_device_id(cl_device_id device, pocl_binary *binary);
 int pocl_binary_check_binary(cl_device_id device, pocl_binary *binary);
 
 /* get size of struct (serialized) */
-int pocl_binary_sizeof_kernel(pocl_binary_kernel *kernel);
-int pocl_binary_sizeof_binary(pocl_binary *binary);
+size_t pocl_binary_sizeof_kernel(pocl_binary_kernel *kernel);
+size_t pocl_binary_sizeof_binary(pocl_binary *binary);
 
 /* serialization/deserialization of pocl binary */
-int pocl_binary_serialize_binary(unsigned char *buffer, int sizeof_buffer, 
+int pocl_binary_serialize_binary(unsigned char *buffer, size_t sizeof_buffer,
                                  pocl_binary *binary);
-int pocl_binary_deserialize_binary(pocl_binary *binary, 
-                                   unsigned char *buffer, int sizeof_buffer);
+int pocl_binary_deserialize_binary(pocl_binary *binary,
+                                   unsigned char *buffer, size_t sizeof_buffer);
 
 /* initialize cl_kernel data from a pocl_binary_kernel specify 
    with kernel_name and cl_device_id */
