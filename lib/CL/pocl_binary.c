@@ -345,12 +345,10 @@ cl_int pocl_binary_add_clkernel_data(unsigned char **binaries, int num_devices,
 
   return CL_SUCCESS;
 ERROR:
-  if (kernel->reqd_wg_size != NULL)
-    free(kernel->reqd_wg_size);
-  if (kernel->dyn_arguments != NULL)
-    free(kernel->dyn_arguments);
-  if (kernel->arg_info != NULL)
-    free(kernel->arg_info);
+  POCL_MEM_FREE(kernel->reqd_wg_size);
+  POCL_MEM_FREE(kernel->dyn_arguments);
+  POCL_MEM_FREE(kernel->dyn_arguments);
+  POCL_MEM_FREE(kernel->arg_info);
   return errcode;
 }
 

@@ -918,7 +918,7 @@ void pocl_basic_load_binary(const char *binary_path, _cl_command_node *cmd)
   ci->tmp_dir = strdup(cmd->command.run.tmp_dir);
   ci->function_name = strdup (cmd->command.run.kernel->name);
 
-  char *module_fn;
+  char *module_fn = NULL;
   if (!cmd->command.run.kernel->program->is_pocl_binary)
     {
       module_fn = (char *)llvm_codegen (cmd->command.run.tmp_dir,
