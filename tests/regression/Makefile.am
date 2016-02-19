@@ -23,8 +23,8 @@
 # THE SOFTWARE.
 
 noinst_PROGRAMS = test_assign_loop_variable_to_privvar_makes_it_local
-noinst_PROGRAMS += test_assign_loop_variable_to_privvar_makes_it_local_2 \
-	test_enqueue_kernel_from_binary
+noinst_PROGRAMS += test_assign_loop_variable_to_privvar_makes_it_local_2
+
 if HAVE_OPENCL_HPP
 noinst_PROGRAMS += test_barrier_between_for_loops test_early_return \
 	test_for_with_var_iteration_count test_id_dependent_computation \

@@ -50,6 +50,12 @@ AT_CHECK_UNQUOTED([cd $abs_top_builddir/tests/runtime/; $abs_top_builddir/tests/
 ])
 AT_CLEANUP
 
+AT_SETUP([enqueue_kernel_created_with_binary])
+AT_KEYWORDS([runtime])
+AT_CHECK([$abs_top_builddir/tests/runtime/test_enqueue_kernel_from_binary], 0)
+AT_CLEANUP
+
+
 AT_SETUP([clBuildProgram link error])
 AT_XFAIL_IF(true)
 AT_KEYWORDS([runtime])
