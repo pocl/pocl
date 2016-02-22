@@ -26,6 +26,14 @@
 
 #include "pocl_cl.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifdef __GNUC__
+#pragma GCC visibility push(hidden)
+#endif
+
 /* pocl binary identifier */
 #define POCLCC_STRING_ID "poclbin"
 #define POCLCC_STRING_ID_LENGTH 7
@@ -37,7 +45,7 @@ typedef struct pocl_binary_kernel_ {
   uint32_t num_args;
   uint32_t num_locals;
   uint32_t sizeof_binary;
-  char * kernel_name;
+  char *kernel_name;
   struct pocl_argument *dyn_arguments;
   struct pocl_argument_info *arg_info;
   unsigned char *binary;
@@ -53,17 +61,12 @@ typedef struct pocl_binary_ {
 } __attribute__((packed)) pocl_binary;
 
 /* free internal structures */
-void pocl_binary_free_binary(pocl_binary *binary);
 void pocl_binary_free_kernel(pocl_binary_kernel *kernel);
 
 /* check binary format validity */
-int pocl_binary_check_binary_header(pocl_binary *binary);
-uint64_t pocl_binary_get_device_id(cl_device_id device);
-int pocl_binary_check_device_id(cl_device_id device, pocl_binary *binary);
 int pocl_binary_check_binary(cl_device_id device, pocl_binary *binary);
 
 /* get size of struct (serialized) */
-size_t pocl_binary_sizeof_kernel(pocl_binary_kernel *kernel);
 size_t pocl_binary_sizeof_binary(pocl_binary *binary);
 
 /* serialization/deserialization of pocl binary */
@@ -92,5 +95,13 @@ int pocl_binary_init_kernel(pocl_binary_kernel *kernel,
                              int num_args, int num_locals,
                              struct pocl_argument *dyn_arguments, 
                              struct pocl_argument_info *arg_info);
+
+#ifdef __GNUC__
+#pragma GCC visibility pop
+#endif
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

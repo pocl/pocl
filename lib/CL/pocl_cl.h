@@ -181,10 +181,10 @@ typedef pthread_mutex_t pocl_lock_t;
 #define POCL_HAS_KERNEL_ARG_TYPE_QUALIFIER     8
 #define POCL_HAS_KERNEL_ARG_NAME               16
 
-struct pocl_argument {
+typedef struct pocl_argument {
   size_t size;
   void *value;
-};
+} pocl_argument;
 
 /**
  * Enumeration for kernel argument types
@@ -194,18 +194,18 @@ typedef enum {
   POCL_ARG_TYPE_POINTER = 1,
   POCL_ARG_TYPE_IMAGE = 2,
   POCL_ARG_TYPE_SAMPLER = 3,
-} pocl_argument_type;
+} __attribute__((packed)) pocl_argument_type;
 
-struct pocl_argument_info {
-  pocl_argument_type type;
-  char is_local;
-  char is_set;
+typedef struct pocl_argument_info {
+  char* type_name;
+  char* name;
   cl_kernel_arg_address_qualifier address_qualifier;
   cl_kernel_arg_access_qualifier access_qualifier;
-  char* type_name;
   cl_kernel_arg_type_qualifier type_qualifier;
-  char* name;
-};
+  char is_local;
+  char is_set;
+  pocl_argument_type type;
+} __attribute__((packed)) pocl_argument_info;
 
 struct pocl_device_ops {
   const char *device_name;
