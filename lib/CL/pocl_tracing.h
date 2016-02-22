@@ -1,4 +1,6 @@
-/* pocl_event.h: interface for event update and tracing system
+/* pocl_tracing.h: interface for event update and tracing system
+
+   Copyright (c) 2015 Clément Léger / Kalray
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -19,8 +21,8 @@
    THE SOFTWARE.
 */
 
-#ifndef POCL_EVENT_H
-#define POCL_EVENT_H
+#ifndef POCL_TRACING_H
+#define POCL_TRACING_H
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -32,27 +34,27 @@
 #endif
 
 #ifdef __cplusplus
-extern "C" {
+extern "C"
+{
 #endif
 
-int pocl_event_updated(cl_event event, int new_status);
+  int pocl_event_updated (cl_event event, int new_status);
 
-/**
- * Initialized event tracing system 
+/* Initializes event tracing system 
  */
-void pocl_event_tracing_init();
+  void pocl_event_tracing_init ();
 
-/**
- *  Struct of trace handlers
+/* Struct of trace handlers
  */
-struct pocl_event_tracer {
-  /* Tracer name used to match POCL_TRACE_EVENT=xxx env var*/
-  const char *name;
-  /* Init function called when the tracer is matched */
-  void (*init)();
-  /* Callback called when an event has been updated */
-  void (*event_updated)(cl_event /* event */, int /* status */);
-};
+  struct pocl_event_tracer
+  {
+    /* Tracer name used to match POCL_TRACE_EVENT=xxx env var */
+    const char *name;
+    /* Init function called when the tracer is matched */
+    void (*init) ();
+    /* Callback called when an event has been updated */
+    void (*event_updated) (cl_event /* event */ , int /* status */ );
+  };
 
 #ifdef __cplusplus
 }
@@ -62,4 +64,4 @@ struct pocl_event_tracer {
 #pragma GCC visibility pop
 #endif
 
-#endif /* POCL_EVENT_H */
+#endif				/* POCL_TRACING_H */
