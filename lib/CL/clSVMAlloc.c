@@ -98,7 +98,7 @@ POname(clSVMAlloc)(cl_context context,
   device_ptrs[dev->global_mem_id].mem_ptr = NULL;
   mem->device_ptrs = device_ptrs;
 
-  cl_int errcode = dev->ops->alloc_mem_obj(dev, mem);
+  cl_int errcode = dev->ops->alloc_mem_obj(dev, mem, NULL);
   /* There was a failure to allocate resources */
   POCL_RETURN_ERROR_ON((errcode != CL_SUCCESS), NULL,
                        "Failed to allocate the memory: %u\n", errcode);

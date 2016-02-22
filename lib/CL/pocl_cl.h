@@ -46,7 +46,6 @@
 #include "pocl_debug.h"
 #include "pocl_hash.h"
 #include "pocl_runtime_config.h"
-#include "common.h"
 
 #if __STDC_VERSION__ < 199901L
 # if __GNUC__ >= 2
@@ -269,7 +268,7 @@ struct pocl_device_ops {
   void (*uninit) (cl_device_id device);
   unsigned int (*probe) (struct pocl_device_ops *ops);
   void (*init) (cl_device_id device, const char *parameters);
-  cl_int (*alloc_mem_obj) (cl_device_id device, cl_mem mem_obj);
+  cl_int (*alloc_mem_obj) (cl_device_id device, cl_mem mem_obj, void* host_ptr);
   void *(*create_sub_buffer) (void *data, void* buffer, size_t origin, size_t size);
   void (*free) (cl_device_id device, cl_mem mem_obj);
   void (*free_ptr) (cl_device_id device, void* mem_ptr);

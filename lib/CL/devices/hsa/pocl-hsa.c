@@ -700,7 +700,7 @@ void pocl_hsa_copy (void *data, const void *src_ptr, size_t src_offset,
   HSA_CHECK(hsa_memory_copy(dst_ptr, src_ptr, cb));
 }
 
-cl_int pocl_hsa_alloc_mem_obj(cl_device_id device, cl_mem mem_obj)
+cl_int pocl_hsa_alloc_mem_obj(cl_device_id device, cl_mem mem_obj, void* host_ptr)
 {
   void *b = NULL;
   cl_mem_flags flags = mem_obj->flags;

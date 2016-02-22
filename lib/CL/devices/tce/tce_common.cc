@@ -317,7 +317,7 @@ pocl_tce_malloc (void *device_data, cl_mem_flags flags,
 }
 
 cl_int
-pocl_tce_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
+pocl_tce_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
 {
   void *b = NULL;
   cl_int flags = mem_obj->flags;

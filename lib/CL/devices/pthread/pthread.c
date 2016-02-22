@@ -294,7 +294,7 @@ pocl_pthread_uninit (cl_device_id device)
 
 
 cl_int
-pocl_pthread_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
+pocl_pthread_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
 {
   void *b = NULL;
   cl_mem_flags flags = mem_obj->flags;
