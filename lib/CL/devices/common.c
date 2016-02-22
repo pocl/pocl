@@ -418,6 +418,7 @@ void pocl_exec_command (_cl_command_node * volatile node)
       POCL_MEM_FREE(node->command.memfill.pattern);
       POCL_UPDATE_EVENT_COMPLETE(event);
       POCL_DEBUG_EVENT_TIME(event, "Fill Buffer           ");
+      break;
     case CL_COMMAND_MARKER:
       POCL_UPDATE_EVENT_RUNNING(event);
       POCL_UPDATE_EVENT_COMPLETE(event);
@@ -460,9 +461,9 @@ void pocl_exec_command (_cl_command_node * volatile node)
         node->device->ops->unmap_mem
           (node->device->data, NULL,
            node->command.svm_unmap.svm_ptr, 0);
-      break;
       POCL_UPDATE_EVENT_COMPLETE(event);
       POCL_DEBUG_EVENT_TIME(event, "SVM Unmap             ");
+      break;
     case CL_COMMAND_SVM_MEMCPY:
       POCL_UPDATE_EVENT_RUNNING(event);
       node->device->ops->copy(NULL,
