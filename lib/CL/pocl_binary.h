@@ -40,7 +40,7 @@ extern "C" {
 #define POCLCC_VERSION 1  
 
 /* pocl binary structures */
-typedef struct pocl_binary_kernel_ {
+typedef struct pocl_binary_kernel_s {
   uint32_t sizeof_kernel_name;
   uint32_t num_args;
   uint32_t num_locals;
@@ -49,16 +49,16 @@ typedef struct pocl_binary_kernel_ {
   struct pocl_argument *dyn_arguments;
   struct pocl_argument_info *arg_info;
   unsigned char *binary;
-} __attribute__((packed)) pocl_binary_kernel;
+} pocl_binary_kernel;
 
-typedef struct pocl_binary_ {
+typedef struct pocl_binary_s {
   char endian;
   char pocl_id[POCLCC_STRING_ID_LENGTH];
   uint64_t device_id;
   uint32_t version;
   uint32_t num_kernels;
   pocl_binary_kernel *kernels;
-} __attribute__((packed)) pocl_binary;
+} pocl_binary;
 
 /* free internal structures */
 void pocl_binary_free_kernel(pocl_binary_kernel *kernel);

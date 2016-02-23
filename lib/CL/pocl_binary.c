@@ -113,46 +113,103 @@ int pocl_binary_check_binary(cl_device_id device, pocl_binary *binary)
 
 /***********************************************************/
 
+#define BUFFER_STORE(elem, type) \
+  *(type*)buffer = elem; \
+  buffer += sizeof(type)
+
+#define BUFFER_READ(elem, type) \
+  elem = *(type*)buffer; \
+  buffer += sizeof(type)
+
+#define BUFFER_STORE_STR2(elem, len)  \
+  do {                          \
+    BUFFER_STORE(len, uint32_t);  \
+    if (len)                    \
+      {                         \
+        memcpy(buffer, elem, len); \
+        buffer += len;          \
+      }                         \
+  } while (0)
+
+#define BUFFER_READ_STR2(elem, len) \
+  do {                        \
+    BUFFER_READ(len, uint32_t); \
+    if (len)                  \
+      {                       \
+        elem = malloc(len);   \
+        memcpy(elem, buffer, len);  \
+        buffer += len;        \
+      }                       \
+  } while (0)
+
+#define BUFFER_STORE_STR(elem)  \
+  do { uint32_t len = strlen(elem);  \
+    BUFFER_STORE_STR2(elem, len); } while (0)
+
+#define BUFFER_READ_STR(elem)  \
+  do { uint32_t len = 0;  \
+    BUFFER_READ_STR2(elem, len); } while (0)
+
+#define ADD_STRLEN(else_b)            \
+    if (serialized)                   \
+      {                               \
+        unsigned char* t = buffer+res;\
+        res += *(uint32_t*)t;         \
+        res += sizeof(uint32_t);      \
+      }                               \
+    else                              \
+      {                               \
+        res += sizeof(uint32_t);      \
+        res += else_b;                \
+      }
+
 size_t pocl_binary_sizeof_kernel(int serialized, pocl_binary_kernel *kernel)
 {
-  size_t res = sizeof(pocl_binary_kernel)
-    + kernel->sizeof_kernel_name + kernel->sizeof_binary
-    // dyn args -> pocl_argument
-    + (kernel->num_args + kernel->num_locals) * sizeof(size_t)
-    // arg info -> pocl_argument_info
-    + kernel->num_args * sizeof(pocl_argument_info)
-    // - pointers
-    - sizeof(kernel->kernel_name) - sizeof(kernel->binary)
-    - sizeof(kernel->dyn_arguments) - sizeof(kernel->arg_info);
+  size_t res = 0;
+  unsigned char *buffer = (unsigned char*)kernel;
+  uint32_t num_args, num_locals;
 
-  unsigned char *buffer = (unsigned char *)(&(kernel->kernel_name));
-  pocl_argument_info *tmp;
-  tmp = (pocl_argument_info*)(buffer + kernel->num_args * sizeof(size_t));
-
-  unsigned i;
-  for (i=0; i<kernel->num_args; i++)
+  res += sizeof(kernel->num_args);
+  res += sizeof(kernel->num_locals);
+  if (serialized)
     {
-      if (serialized)
-        {
-          res += (intptr_t)tmp[i].type_name;
-          res += (intptr_t)tmp[i].name;
-        }
-      else
-        {
-          if(kernel->arg_info[i].type_name)
-            res += strlen(kernel->arg_info[i].type_name);
-          if(kernel->arg_info[i].name)
-            res += strlen(kernel->arg_info[i].name);
-        }
+      BUFFER_READ(num_args, uint32_t);
+      BUFFER_READ(num_locals, uint32_t);
+      buffer = (unsigned char*)kernel;
     }
+  else
+    {
+      num_args = kernel->num_args;
+      num_locals = kernel->num_locals;
+    }
+  /* dyn args -> pocl_argument */
+  res += (num_args + num_locals) * sizeof(uint64_t);
+
+  /* arg info */
+  unsigned i;
+  for (i=0; i < num_args; i++)
+    {
+      res += sizeof(cl_kernel_arg_access_qualifier);
+      res += sizeof(cl_kernel_arg_address_qualifier);
+      res += sizeof(cl_kernel_arg_type_qualifier);
+      res += sizeof(char);
+      res += sizeof(char);
+      res += sizeof(uint32_t);
+      ADD_STRLEN(strlen(kernel->arg_info[i].name));
+      ADD_STRLEN(strlen(kernel->arg_info[i].type_name));
+    }
+
+  ADD_STRLEN(kernel->sizeof_binary);
+  ADD_STRLEN(kernel->sizeof_kernel_name);
+
   return res;
 }
 
 size_t pocl_binary_sizeof_binary(pocl_binary *binary)
 {
-  size_t size = sizeof(pocl_binary) - sizeof(binary->kernels);
+  size_t size = 8 + sizeof(uint64_t) + sizeof(uint32_t) + sizeof(uint32_t);
   unsigned i;
-  for (i=0; i<binary->num_kernels; i++)
+  for (i=0; i < binary->num_kernels; i++)
     size += pocl_binary_sizeof_kernel(0, &(binary->kernels[i]));
 
   return size;
@@ -160,11 +217,14 @@ size_t pocl_binary_sizeof_binary(pocl_binary *binary)
 
 size_t pocl_binary_sizeof_binary_serialized(unsigned char *binary)
 {
-  pocl_binary *binary_pocl = (pocl_binary *)binary;
   unsigned char *start_of_binary = binary;
-  binary += sizeof(pocl_binary) - sizeof(binary_pocl->kernels);
+
+  binary += (8 + sizeof(uint64_t) + sizeof(uint32_t));
+  uint32_t num_kernels = *(uint32_t*)binary;
+  binary += sizeof(uint32_t);
+
   unsigned i;
-  for (i=0; i < binary_pocl->num_kernels; i++)
+  for (i=0; i < num_kernels; i++)
       binary += pocl_binary_sizeof_kernel(1, (pocl_binary_kernel *)binary);
 
   return binary - start_of_binary;
@@ -177,46 +237,30 @@ void pocl_binary_serialize_kernel_to_buffer(pocl_binary_kernel *kernel,
 {
   unsigned char *buffer = *buf;
   unsigned i;
-  pocl_binary_kernel *kernel_tmp = (pocl_binary_kernel *)buffer;
 
-  kernel_tmp->sizeof_kernel_name = kernel->sizeof_kernel_name;
-  kernel_tmp->num_args = kernel->num_args;
-  kernel_tmp->num_locals = kernel->num_locals;
-  kernel_tmp->sizeof_binary = kernel->sizeof_binary;
-
-  buffer = (unsigned char *)(&(kernel_tmp->kernel_name));
+  BUFFER_STORE(kernel->num_args, uint32_t);
+  BUFFER_STORE(kernel->num_locals, uint32_t);
 
   for (i=0; i < (kernel->num_args + kernel->num_locals); i++)
     {
-      *(size_t*)buffer = kernel->dyn_arguments[i].size;
-      buffer += sizeof(size_t);
+      BUFFER_STORE(kernel->dyn_arguments[i].size, uint64_t);
     }
 
-  pocl_argument_info *tmp;
   for (i=0; i < kernel->num_args; i++)
     {
-      tmp = (pocl_argument_info*)buffer;
-      memcpy(tmp, &kernel->arg_info[i], sizeof(pocl_argument_info));
-      tmp->type_name = (tmp->type_name ? (void*)strlen(tmp->type_name) : 0);
-      tmp->name = (tmp->name ? (void*)strlen(tmp->name) : 0);
-      buffer += sizeof(pocl_argument_info);
-      if ((intptr_t)tmp->type_name > 0)
-        {
-          memcpy(buffer, kernel->arg_info[i].type_name, (intptr_t)tmp->type_name);
-          buffer += (intptr_t)tmp->type_name;
-        }
-      if ((intptr_t)tmp->name > 0)
-        {
-          memcpy(buffer, kernel->arg_info[i].name, (intptr_t)tmp->name);
-          buffer += (intptr_t)tmp->name;
-        }
+      pocl_argument_info *ai = &kernel->arg_info[i];
+      BUFFER_STORE(ai->access_qualifier, cl_kernel_arg_access_qualifier);
+      BUFFER_STORE(ai->address_qualifier, cl_kernel_arg_address_qualifier);
+      BUFFER_STORE(ai->type_qualifier, cl_kernel_arg_type_qualifier);
+      BUFFER_STORE(ai->is_local, char);
+      BUFFER_STORE(ai->is_set, char);
+      BUFFER_STORE(ai->type, uint32_t);
+      BUFFER_STORE_STR(ai->name);
+      BUFFER_STORE_STR(ai->type_name);
     }
 
-  memcpy(buffer, kernel->kernel_name, kernel->sizeof_kernel_name);
-  buffer += kernel->sizeof_kernel_name;
-
-  memcpy(buffer, kernel->binary, kernel->sizeof_binary);
-  buffer += kernel->sizeof_binary;
+  BUFFER_STORE_STR2(kernel->kernel_name, kernel->sizeof_kernel_name);
+  BUFFER_STORE_STR2(kernel->binary, kernel->sizeof_binary);
 
   *buf = buffer;
 }
@@ -226,63 +270,41 @@ int pocl_binary_deserialize_kernel_from_buffer(unsigned char **buf,
 {
   unsigned i;
   unsigned char *buffer = *buf;
-  pocl_binary_kernel *kernel_tmp_src = (pocl_binary_kernel *)buffer;
 
   memset(kernel, 0, sizeof(pocl_binary_kernel));
-  kernel->sizeof_kernel_name = kernel_tmp_src->sizeof_kernel_name;
-  kernel->num_args = kernel_tmp_src->num_args;
-  kernel->num_locals = kernel_tmp_src->num_locals;
-  kernel->sizeof_binary = kernel_tmp_src->sizeof_binary;
-
-  buffer = (unsigned char *)(&(kernel_tmp_src->kernel_name));
+  BUFFER_READ(kernel->num_args, uint32_t);
+  BUFFER_READ(kernel->num_locals, uint32_t);
 
   kernel->dyn_arguments = calloc((kernel->num_args + kernel->num_locals),
                                  sizeof(struct pocl_argument));
   if (!kernel->dyn_arguments)
     goto ERROR;
+
   for (i=0; i < (kernel->num_args + kernel->num_locals); i++)
     {
-      kernel->dyn_arguments[i].size = *(size_t*)buffer;
+      BUFFER_READ(kernel->dyn_arguments[i].size, uint64_t);
       kernel->dyn_arguments[i].value = NULL;
-      buffer += sizeof(size_t);
     }
 
   kernel->arg_info = calloc(kernel->num_args, sizeof(struct pocl_argument_info));
   if (!kernel->arg_info)
     goto ERROR;
 
-  pocl_argument_info *tmp;
   for (i=0; i < kernel->num_args; i++)
     {
-      tmp = (pocl_argument_info*)buffer;
-      memcpy(&kernel->arg_info[i], tmp, sizeof(pocl_argument_info));
-      intptr_t type_name_size = (intptr_t)tmp->type_name;
-      intptr_t name_size = (intptr_t)tmp->name;
-      buffer += sizeof(pocl_argument_info);
-      if (type_name_size > 0)
-        {
-          kernel->arg_info[i].type_name = malloc(type_name_size);
-          memcpy(kernel->arg_info[i].type_name, buffer, type_name_size);
-          buffer += type_name_size;
-        }
-      if (name_size > 0)
-        {
-          kernel->arg_info[i].name = malloc(name_size);
-          memcpy(kernel->arg_info[i].name, buffer, name_size);
-          buffer += name_size;
-        }
+      pocl_argument_info *ai = &kernel->arg_info[i];
+      BUFFER_READ(ai->access_qualifier, cl_kernel_arg_access_qualifier);
+      BUFFER_READ(ai->address_qualifier, cl_kernel_arg_address_qualifier);
+      BUFFER_READ(ai->type_qualifier, cl_kernel_arg_type_qualifier);
+      BUFFER_READ(ai->is_local, char);
+      BUFFER_READ(ai->is_set, char);
+      BUFFER_READ(ai->type, uint32_t);
+      BUFFER_READ_STR(ai->name);
+      BUFFER_READ_STR(ai->type_name);
     }
 
-
-  if ((kernel->kernel_name = malloc(kernel->sizeof_kernel_name)) == NULL)
-    goto ERROR;
-  memcpy(kernel->kernel_name, buffer, kernel->sizeof_kernel_name);
-  buffer += kernel->sizeof_kernel_name;
-
-  if ((kernel->binary = malloc(kernel->sizeof_binary)) == NULL)
-    goto ERROR;
-  memcpy(kernel->binary, buffer, kernel->sizeof_binary);
-  buffer += kernel->sizeof_binary;
+  BUFFER_READ_STR2(kernel->kernel_name, kernel->sizeof_kernel_name);
+  BUFFER_READ_STR2(kernel->binary, kernel->sizeof_binary);
 
   *buf = buffer;
   return CL_SUCCESS;
@@ -300,8 +322,14 @@ int pocl_binary_serialize_binary(unsigned char *buffer, size_t sizeof_buffer,
   unsigned char *end_of_buffer = buffer + sizeof_buffer;
 
   assert(pocl_binary_check_binary_header(binary));
-  memcpy(buffer, binary, sizeof(pocl_binary));
-  buffer = (unsigned char *)(&(((pocl_binary *)buffer)->kernels));
+
+  BUFFER_STORE(binary->endian, char);
+  memcpy(buffer, POCLCC_STRING_ID, POCLCC_STRING_ID_LENGTH);
+  buffer += POCLCC_STRING_ID_LENGTH;
+  BUFFER_STORE(binary->device_id, uint64_t);
+  BUFFER_STORE(binary->version, uint32_t);
+  BUFFER_STORE(binary->num_kernels, uint32_t);
+
   assert(buffer < end_of_buffer);
 
   unsigned i;
@@ -320,9 +348,15 @@ int pocl_binary_deserialize_binary(pocl_binary *binary,
 {
   unsigned char *end_of_buffer = buffer + sizeof_buffer;
 
-  memcpy(binary, buffer, sizeof(pocl_binary));
+  memset(binary, 0, sizeof(pocl_binary));
+  BUFFER_READ(binary->endian, char);
+  memcpy(binary->pocl_id, buffer, POCLCC_STRING_ID_LENGTH);
+  buffer += POCLCC_STRING_ID_LENGTH;
+  BUFFER_READ(binary->device_id, uint64_t);
+  BUFFER_READ(binary->version, uint32_t);
+  BUFFER_READ(binary->num_kernels, uint32_t);
+
   assert(pocl_binary_check_binary_header(binary));
-  buffer = (unsigned char *)(&(((pocl_binary *)buffer)->kernels));
   assert(buffer < end_of_buffer);
 
   if ((binary->kernels = calloc(binary->num_kernels, sizeof(pocl_binary_kernel))) == NULL)
@@ -413,16 +447,19 @@ cl_int pocl_binary_add_clkernel_data(unsigned char **binaries, int num_devices,
   kernel->num_args = kernel_pocl->num_args;
   kernel->num_locals = kernel_pocl->num_locals;
 
-  int sizeof_dyn_args = (kernel->num_args + kernel->num_locals) * sizeof(struct pocl_argument);
-  int sizeof_arg_info = kernel->num_args * sizeof(struct pocl_argument_info);
+  POCL_RETURN_ERROR_COND((kernel->dyn_arguments =
+                          calloc((kernel->num_args + kernel->num_locals),
+                                  sizeof(struct pocl_argument))
+                          ) == NULL,  CL_OUT_OF_HOST_MEMORY);
+  memcpy(kernel->dyn_arguments, kernel_pocl->dyn_arguments,
+         (kernel->num_args + kernel->num_locals) * sizeof(struct pocl_argument));
 
-  POCL_RETURN_ERROR_COND((kernel->dyn_arguments = malloc(sizeof_dyn_args)) == NULL,
-                         CL_OUT_OF_HOST_MEMORY);
-  memcpy(kernel->dyn_arguments, kernel_pocl->dyn_arguments, sizeof_dyn_args);
-
-  POCL_GOTO_ERROR_COND((kernel->arg_info = malloc(sizeof_arg_info)) == NULL,
-                       CL_OUT_OF_HOST_MEMORY);
-  memcpy(kernel->arg_info, kernel_pocl->arg_info, sizeof_arg_info);
+  POCL_GOTO_ERROR_COND((kernel->arg_info =
+                        calloc(kernel->num_args,
+                               sizeof(struct pocl_argument_info))
+                        ) == NULL,  CL_OUT_OF_HOST_MEMORY);
+  memcpy(kernel->arg_info, kernel_pocl->arg_info,
+         kernel->num_args * sizeof(struct pocl_argument_info));
 
   POCL_GOTO_ERROR_COND((kernel->reqd_wg_size = malloc(3*sizeof(int))) == NULL,
                        CL_OUT_OF_HOST_MEMORY);
