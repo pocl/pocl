@@ -66,8 +66,8 @@ pocl_event_updated (cl_event event, int status)
   for (cb_ptr = event->callback_list; cb_ptr; cb_ptr = cb_ptr->next)
     {
       if (cb_ptr->trigger_status == status)
-	cb_ptr->callback_function (event, cb_ptr->trigger_status,
-				   cb_ptr->user_data);
+       cb_ptr->callback_function (event, cb_ptr->trigger_status,
+                               cb_ptr->user_data);
     }
 
   if (event_tracer && ((1 << status) & event_trace_filter))
@@ -93,15 +93,15 @@ pocl_parse_event_filter ()
     {
       token = strtok_r (tmp_str, ",", &save_ptr);
       if (token == NULL)
-	goto PARSE_OUT;
+        goto PARSE_OUT;
       if (strcmp (token, "queued") == 0)
-	event_trace_filter |= (1 << CL_QUEUED);
+        event_trace_filter |= (1 << CL_QUEUED);
       else if (strcmp (token, "submitted") == 0)
-	event_trace_filter |= (1 << CL_SUBMITTED);
+        event_trace_filter |= (1 << CL_SUBMITTED);
       else if (strcmp (token, "running") == 0)
-	event_trace_filter |= (1 << CL_RUNNING);
+        event_trace_filter |= (1 << CL_RUNNING);
       else if (strcmp (token, "complete") == 0)
-	event_trace_filter |= (1 << CL_COMPLETE);
+        event_trace_filter |= (1 << CL_COMPLETE);
 
       tmp_str = NULL;
     }
@@ -127,10 +127,10 @@ pocl_event_tracing_init ()
   for (i = 0; i < POCL_TRACER_COUNT; i++)
     {
       if (strcmp (trace_env, pocl_event_tracers[i]->name) == 0)
-	{
-	  event_tracer = pocl_event_tracers[i];
-	  break;
-	}
+       {
+         event_tracer = pocl_event_tracers[i];
+         break;
+       }
     }
   if (event_tracer == NULL)
     goto EVENT_INIT_OUT;
@@ -226,7 +226,7 @@ text_tracer_init ()
   const char *text_tracer_output;
 
   text_tracer_output = pocl_get_string_option ("POCL_TRACE_EVENT_OPT",
-					       "pocl_trace_events.log");
+                                          "pocl_trace_events.log");
   text_tracer_file = fopen (text_tracer_output, "w");
   if (!text_tracer_file)
     POCL_ABORT ("Failed to open text tracer output\n");
@@ -248,28 +248,28 @@ text_tracer_event_updated (cl_event event, int status)
     return;
 
   text_size = sprintf (cur_buf, "%lld %s %s ", ts,
-		       command_to_str (event->command_type),
-		       status_to_str[event->status]);
+                       command_to_str (event->command_type),
+                       status_to_str[event->status]);
   cur_buf += text_size;
   /* Print more informations for some commonly used commands */
   switch (event->command_type)
     {
     case CL_COMMAND_READ_BUFFER:
       text_size += sprintf (cur_buf, "size=%d, host_ptr=%p\n",
-			    node->command.read.cb,
-			    node->command.read.host_ptr);
+                            node->command.read.cb,
+                            node->command.read.host_ptr);
       break;
     case CL_COMMAND_WRITE_BUFFER:
       text_size += sprintf (cur_buf, "size=%d, host_ptr=%p\n\n",
-			    node->command.write.cb,
-			    node->command.write.host_ptr);
+                            node->command.write.cb,
+                            node->command.write.host_ptr);
       break;
     case CL_COMMAND_COPY_BUFFER:
       text_size += sprintf (cur_buf, "size=%d\n", node->command.copy.cb);
       break;
     case CL_COMMAND_NDRANGE_KERNEL:
       text_size += sprintf (cur_buf, "name=%s\n",
-			    node->command.run.kernel->name);
+                            node->command.run.kernel->name);
       break;
     case CL_COMMAND_FILL_BUFFER:
       text_size += sprintf (cur_buf, "size=%d\n", node->command.memfill.size);
@@ -314,15 +314,15 @@ lttng_tracer_event_updated (cl_event event, int status)
     {
     case CL_COMMAND_NDRANGE_KERNEL:
       tracepoint (pocl_trace, ndrange_kernel, status,
-		  node->command.run.kernel->name);
+                  node->command.run.kernel->name);
       break;
     case CL_COMMAND_READ_BUFFER:
       tracepoint (pocl_trace, read_buffer, status,
-		  node->command.write.host_ptr, node->command.write.cb);
+                  node->command.write.host_ptr, node->command.write.cb);
       break;
     case CL_COMMAND_WRITE_BUFFER:
       tracepoint (pocl_trace, write_buffer, status,
-		  node->command.write.host_ptr, node->command.write.cb);
+                  node->command.write.host_ptr, node->command.write.cb);
       break;
     case CL_COMMAND_COPY_BUFFER:
       tracepoint (pocl_trace, copy_buffer, status, node->command.copy.cb);
@@ -336,7 +336,7 @@ lttng_tracer_event_updated (cl_event event, int status)
       break;
     default:
       tracepoint (pocl_trace, command, status,
-		  command_to_str (event->command_type));
+                  command_to_str (event->command_type));
       break;
     }
 }
