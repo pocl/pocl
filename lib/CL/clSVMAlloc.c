@@ -106,3 +106,5 @@ POname(clSVMAlloc)(cl_context context,
   return device_ptrs[dev->global_mem_id].mem_ptr;
 
 }
+POsym(clSVMAlloc);
+
