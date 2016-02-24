@@ -64,7 +64,7 @@ POname(clCreateKernel)(cl_program program,
     CL_INVALID_PROGRAM_EXECUTABLE, "No built binaries in program "
     "(this shouldn't happen...)\n");
 
-  kernel = (cl_kernel) malloc(sizeof(struct _cl_kernel));
+  kernel = (cl_kernel) calloc(1, sizeof(struct _cl_kernel));
   if (kernel == NULL)
   {
     errcode = CL_OUT_OF_HOST_MEMORY;
@@ -125,9 +125,12 @@ POname(clCreateKernel)(cl_program program,
   goto SUCCESS;
 
 ERROR:
-  POCL_MEM_FREE(kernel->name);
-  POCL_MEM_FREE(kernel);
-
+  if (kernel)
+    { 
+      if (kernel->name)
+        POCL_MEM_FREE(kernel->name);
+      POCL_MEM_FREE(kernel);
+    }
 SUCCESS:
   if(errcode_ret != NULL)
   {
