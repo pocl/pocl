@@ -79,3 +79,5 @@ POname(clEnqueueSVMMemcpy) (cl_command_queue command_queue,
   return CL_SUCCESS;
 
 }
+POsym(clEnqueueSVMMemcpy);
+
