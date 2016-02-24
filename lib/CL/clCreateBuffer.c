@@ -26,11 +26,11 @@
 #include "devices.h"
 
 CL_API_ENTRY cl_mem CL_API_CALL
-POname(clCreateBuffer)(cl_context context,
-               cl_mem_flags flags,
-               size_t size,
-               void *host_ptr,
-               cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_0
+POname(clCreateBuffer)(cl_context   context,
+                       cl_mem_flags flags,
+                       size_t       size,
+                       void         *host_ptr,
+                       cl_int       *errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
   cl_mem mem = NULL;
   cl_device_id device;
@@ -92,6 +92,7 @@ POname(clCreateBuffer)(cl_context context,
         "host_ptr is not NULL, but flags don't specify {COPY|USE}_HOST_PTR\n");
     }
   
+
   for (i = 0; i < context->num_devices; ++i)
     {
       cl_ulong max_alloc;
@@ -126,19 +127,37 @@ POname(clCreateBuffer)(cl_context context,
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
       goto ERROR;
-    }  
-  
+    }
+
+  /* init dev pointer structure to ease inter device pointer sharing in ops->alloc_mem_obj */
   for (i = 0; i < pocl_num_devices; ++i)
     {
+      mem->device_ptrs[i].global_mem_id = context->devices[i]->global_mem_id;
       mem->device_ptrs[i].mem_ptr = NULL;
     }
 
-  mem->mem_host_ptr = host_ptr; 
   mem->size = size;
   mem->context = context;
-  
+  mem->mem_host_ptr = NULL;
+  mem->shared_mem_allocation_owner = NULL;
+
+  /* if there is a "special needs" device (hsa) operating in the host memory 
+     let it alloc memory first for shared memory use */
+  if (context->svm_allocdev)
+    {
+      if (context->svm_allocdev->ops->alloc_mem_obj (context->svm_allocdev, mem, host_ptr) != CL_SUCCESS)
+        {
+          errcode = CL_MEM_OBJECT_ALLOCATION_FAILURE;
+          goto ERROR_CLEAN_MEM_AND_DEVICE;
+        }
+    }
+
   for (i = 0; i < context->num_devices; ++i)
     {
+      /* this is already handled iff available */
+      if (context->svm_allocdev == context->devices[i])
+        continue;
+
       if (i > 0)
         POname(clRetainMemObject) (mem);
       device = context->devices[i];
@@ -149,13 +168,28 @@ POname(clCreateBuffer)(cl_context context,
           goto ERROR_CLEAN_MEM_AND_DEVICE;
         }
     }
-  
+
+  /* Some device driver may already have allocated host accessible memory */
+  if (flags & CL_MEM_ALLOC_HOST_PTR && mem->mem_host_ptr == NULL)
+    {
+      assert(mem->shared_mem_allocation_owner == NULL);
+      mem->mem_host_ptr = pocl_memalign_alloc (MAX_EXTENDED_ALIGNMENT, size);
+      if (mem->mem_host_ptr == NULL)
+        {
+          errcode = CL_OUT_OF_HOST_MEMORY;
+          goto ERROR;
+        }
+    }
+
+  if (flags & CL_MEM_USE_HOST_PTR && mem->mem_host_ptr == NULL)
+    mem->mem_host_ptr = host_ptr;
+
   POCL_RETAIN_OBJECT(context);
-  
+
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;
   return mem;
-  
+
 ERROR_CLEAN_MEM_AND_DEVICE:
   for (j = 0; j < i; ++j)
     {

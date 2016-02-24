@@ -76,12 +76,10 @@ void pthread_scheduler_uinit ()
   int i;
   scheduler.thread_pool_shutdown_requested = 1;
 
-  for (i = 0; i < scheduler.num_threads; ++i)
-    {
-      pthread_mutex_lock (&scheduler.thread_pool[i].lock);
-      pthread_cond_signal (&scheduler.thread_pool[i].wakeup_cond);
-      pthread_mutex_unlock (&scheduler.thread_pool[i].lock);
-    }
+  pthread_mutex_lock (&scheduler.wq_lock);
+  pthread_cond_broadcast (&scheduler.wake_pool);
+  pthread_mutex_unlock (&scheduler.wq_lock);
+
   for (i = 0; i < scheduler.num_threads; ++i)
     {
       pthread_join (scheduler.thread_pool[i].thread, NULL);
@@ -114,7 +112,7 @@ void pthread_scheduler_wait_cq (cl_command_queue cq)
         {
           POCL_UNLOCK_OBJ (cq);
           pthread_mutex_unlock (&scheduler.cq_finished_lock);
-          break;
+          return;
         }
       POCL_UNLOCK_OBJ (cq);
       pthread_cond_wait (&scheduler.cq_finished_cond,
@@ -178,9 +176,12 @@ int pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
 
 void pthread_scheduler_sleep()
 {
+  static struct timespec time_to_wait = {0, 0};
+  time_to_wait.tv_sec = time(NULL) + 5;
+
   PTHREAD_LOCK (&scheduler.wq_lock, NULL);
   if (scheduler.work_queue == NULL && scheduler.kernel_queue == 0)
-    pthread_cond_wait (&scheduler.wake_pool, &scheduler.wq_lock);
+    pthread_cond_timedwait (&scheduler.wake_pool, &scheduler.wq_lock, &time_to_wait);
   PTHREAD_UNLOCK (&scheduler.wq_lock);
 }
 

@@ -110,9 +110,9 @@
 #define COMMAND_LIST_SIZE 4096
 #define EVENT_LIST_SIZE 511
 
-
 typedef struct pocl_hsa_event_data_s {
   void* actual_kernargs;
+  pthread_cond_t event_cond;
 } pocl_hsa_event_data_t;
 
 /* Simple statically-sized kernel data cache */
@@ -216,12 +216,12 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->broadcast = pocl_hsa_broadcast;
   ops->wait_event = pocl_hsa_wait_event;
   ops->compile_kernel = pocl_hsa_compile_kernel;
-  ops->update_event = NULL;
-  ops->free_event_data = NULL;
+  ops->update_event = pocl_hsa_update_event;
+  ops->free_event_data = pocl_hsa_free_event_data;
   ops->init_target_machine = NULL;
   ops->run = NULL;
-  ops->wait_event = NULL;
-  ops->update_event = NULL;
+  ops->wait_event = pocl_hsa_wait_event;
+  ops->update_event = pocl_hsa_update_event;
   ops->free_event_data = NULL;
 }
 
@@ -529,15 +529,8 @@ void
 pocl_hsa_init (cl_device_id device, const char* parameters)
 {
   pocl_hsa_device_data_t *d;
-  static int global_mem_id;
-  static int first_hsa_init = 1;
 
-  if (first_hsa_init)
-    {
-      first_hsa_init = 0;
-      global_mem_id = device->dev_id;
-    }
-  device->global_mem_id = global_mem_id;
+  device->global_mem_id = 0;
 
   d = (pocl_hsa_device_data_t *) calloc (1, sizeof(pocl_hsa_device_data_t));
 
@@ -649,6 +642,15 @@ pocl_hsa_malloc (cl_device_id device, cl_mem_flags flags, size_t size, void *hos
   void *b = NULL;
   pocl_global_mem_t *mem = device->global_memory;
 
+  if (flags & CL_MEM_USE_HOST_PTR)
+    {
+      POCL_MSG_PRINT_INFO("HSA: hsa_memory_register (CL_MEM_USE_HOST_PTR)\n");
+      assert(host_ptr != NULL);
+      // TODO bookkeeping of mem registrations
+      hsa_memory_register(host_ptr, size);
+      return host_ptr;
+    }
+
   if (flags & CL_MEM_COPY_HOST_PTR)
     {
       POCL_MSG_PRINT_INFO("HSA: hsa_memory_allocate + hsa_memory_copy (CL_MEM_COPY_HOST_PTR)\n");
@@ -658,15 +660,6 @@ pocl_hsa_malloc (cl_device_id device, cl_mem_flags flags, size_t size, void *hos
       if (b)
         hsa_memory_copy(b, host_ptr, size);
       return b;
-    }
-
-  if (flags & CL_MEM_USE_HOST_PTR)
-    {
-      POCL_MSG_PRINT_INFO("HSA: hsa_memory_register (CL_MEM_USE_HOST_PTR)\n");
-      assert(host_ptr != NULL);
-      // TODO bookkeeping of mem registrations
-      hsa_memory_register(host_ptr, size);
-      return host_ptr;
     }
 
   assert(host_ptr == NULL);
@@ -681,7 +674,8 @@ pocl_hsa_free (cl_device_id device, cl_mem memobj)
   void* ptr = memobj->device_ptrs[device->dev_id].mem_ptr;
   size_t size = memobj->size;
 
-  if (flags & CL_MEM_USE_HOST_PTR)
+  if (flags & CL_MEM_USE_HOST_PTR ||
+      memobj->shared_mem_allocation_owner != device)
     hsa_memory_deregister(ptr, size);
   else
     {
@@ -690,6 +684,8 @@ pocl_hsa_free (cl_device_id device, cl_mem memobj)
       mem->currently_allocated -= size;
       hsa_memory_free(ptr);
     }
+  if (memobj->flags | CL_MEM_ALLOC_HOST_PTR)
+    memobj->mem_host_ptr = NULL;
 }
 
 void pocl_hsa_copy (void *data, const void *src_ptr, size_t src_offset,
@@ -704,22 +700,35 @@ cl_int pocl_hsa_alloc_mem_obj(cl_device_id device, cl_mem mem_obj, void* host_pt
 {
   void *b = NULL;
   cl_mem_flags flags = mem_obj->flags;
+  int i;
 
-  /* if memory for this global memory is not yet allocated -> do it */
-  if (mem_obj->device_ptrs[device->global_mem_id].mem_ptr == NULL)
+  /* check if some driver has already allocated memory for this mem_obj 
+     in our global address space, and use that*/
+  for (i = 0; i < mem_obj->context->num_devices; ++i)
     {
-      b = pocl_hsa_malloc(device, flags, mem_obj->size, mem_obj->mem_host_ptr);
-      if (b == NULL)
-        return CL_MEM_OBJECT_ALLOCATION_FAILURE;
-
-      mem_obj->device_ptrs[device->global_mem_id].mem_ptr = b;
-      mem_obj->device_ptrs[device->global_mem_id].global_mem_id =
-        device->global_mem_id;
+      if (mem_obj->device_ptrs[i].global_mem_id == device->global_mem_id
+          && mem_obj->device_ptrs[i].mem_ptr != NULL)
+        {
+          mem_obj->device_ptrs[device->dev_id].mem_ptr =
+            mem_obj->device_ptrs[i].mem_ptr;
+          hsa_memory_register(mem_obj->device_ptrs[device->dev_id].mem_ptr, mem_obj->size);
+          return CL_SUCCESS;
+        }
     }
 
-  /* copy already allocated global mem info to devices own slot */
-  mem_obj->device_ptrs[device->dev_id] =
-    mem_obj->device_ptrs[device->global_mem_id];
+  /* memory for this global memory is not yet allocated -> do it */
+  b = pocl_hsa_malloc(device, flags, mem_obj->size, host_ptr);
+  if (b == NULL)
+    return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+
+  /* take ownership iff not USE_HOST_PTR */
+  if (!flags & CL_MEM_USE_HOST_PTR)
+    mem_obj->shared_mem_allocation_owner = device;
+
+  mem_obj->device_ptrs[device->dev_id].mem_ptr = b;
+
+  if (flags & CL_MEM_ALLOC_HOST_PTR)
+    mem_obj->mem_host_ptr = b;
 
   return CL_SUCCESS;
 
@@ -807,6 +816,7 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
           write_pos += al->size;
         }
     }
+
   /* pointer to pocl_context */
   CHECK_AND_ALIGN_SPACE(sizeof (uint64_t));
 
@@ -1095,6 +1105,7 @@ void pocl_hsa_submit (_cl_command_node *node, cl_command_queue cq)
 
   POCL_LOCK_OBJ (node->event);
   PTHREAD_CHECK(pthread_mutex_lock(&d->list_mutex));
+  POCL_UPDATE_EVENT_SUBMITTED(&node->event);
 
   /* this "ready" consept to ensure that command is pushed only once */
   if (!(node->ready) && pocl_command_is_ready(node->event))
@@ -1110,8 +1121,6 @@ void pocl_hsa_submit (_cl_command_node *node, cl_command_queue cq)
 
   PTHREAD_CHECK(pthread_mutex_unlock(&d->list_mutex));
   POCL_UNLOCK_OBJ (node->event);
-
-  POCL_UPDATE_EVENT_SUBMITTED(&node->event);
 
   if (added_to_readylist)
     hsa_signal_subtract_relaxed(d->nudge_driver_thread, 1);
@@ -1134,17 +1143,19 @@ void pocl_hsa_join (cl_device_id device, cl_command_queue cq)
 
   POCL_MSG_PRINT_INFO("pocl-hsa: device->join on event %u\n", event->id);
 
-  PTHREAD_CHECK(pthread_mutex_lock(&event->complete_notify_signal_mutex));
   if (event->status == CL_COMPLETE)
     {
       POCL_MSG_PRINT_INFO("pocl-hsa: device->join: last event (%u) in queue exists, but is complete\n", event->id);
-      PTHREAD_CHECK(pthread_mutex_unlock(&event->complete_notify_signal_mutex));
       POCL_UNLOCK_OBJ(event);
       return;
     }
+
+  while (event->status != CL_COMPLETE)
+    {
+      pocl_hsa_event_data_t *e_d = (pocl_hsa_event_data_t *)event->data;
+      PTHREAD_CHECK (pthread_cond_wait (&e_d->event_cond, &event->pocl_lock));
+    }
   POCL_UNLOCK_OBJ(event);
-  PTHREAD_CHECK(pthread_cond_wait(&event->complete_notify_signal, &event->complete_notify_signal_mutex));
-  PTHREAD_CHECK(pthread_mutex_unlock(&event->complete_notify_signal_mutex));
 
   POCL_MSG_PRINT_INFO("pocl-hsa: device->join on event %u finished with status: %i\n", event->id, event->status);
   assert(event->status == CL_COMPLETE);
@@ -1206,17 +1217,18 @@ void pocl_hsa_wait_event(cl_device_id device, cl_event event)
 {
   POCL_MSG_PRINT_INFO("pocl-hsa: device->wait_event on event %u\n", event->id);
   POCL_LOCK_OBJ (event);
-  PTHREAD_CHECK(pthread_mutex_lock(&event->complete_notify_signal_mutex));
   if (event->status == CL_COMPLETE)
     {
       POCL_MSG_PRINT_INFO("pocl-hsa: device->wain_event: last event (%u) in queue exists, but is complete\n", event->id);
-      PTHREAD_CHECK(pthread_mutex_unlock(&event->complete_notify_signal_mutex));
       POCL_UNLOCK_OBJ(event);
       return;
     }
+  while (event->status != CL_COMPLETE)
+    {
+      pocl_hsa_event_data_t *e_d = (pocl_hsa_event_data_t *)event->data;
+      PTHREAD_CHECK(pthread_cond_wait(&(e_d->event_cond), &event->pocl_lock));
+    }
   POCL_UNLOCK_OBJ(event);
-  PTHREAD_CHECK(pthread_cond_wait(&event->complete_notify_signal, &event->complete_notify_signal_mutex));
-  PTHREAD_CHECK(pthread_mutex_unlock(&event->complete_notify_signal_mutex));
 
   POCL_MSG_PRINT_INFO("event wait finished with status: %i\n", event->status);
   assert(event->status == CL_COMPLETE);
@@ -1240,10 +1252,7 @@ static void pocl_hsa_launch(pocl_hsa_device_data_t *d, cl_event event)
   struct pocl_context *pc = &cmd->command.run.pc;
   hsa_kernel_dispatch_packet_t *kernel_packet;
   pocl_hsa_device_pthread_data_t* dd = &d->driver_data;
-
-  pocl_hsa_event_data_t *event_data =
-     (pocl_hsa_event_data_t *) malloc (sizeof(pocl_hsa_event_data_t));
-  event->data = event_data;
+  pocl_hsa_event_data_t *event_data = (pocl_hsa_event_data_t *)event->data;
 
   pocl_hsa_kernel_cache_t* cached_data = NULL;
   unsigned i;
@@ -1355,8 +1364,7 @@ static void pocl_hsa_ndrange_event_finished (pocl_hsa_device_data_t *d, size_t i
   dd->running_signals[i] = dd->running_signals[dd->running_list_size];
 
   hsa_memory_free(event_data->actual_kernargs);
-  POCL_MEM_FREE(event->data);
-
+  
   POCL_UNLOCK_OBJ (event);
   POCL_UPDATE_EVENT_COMPLETE(&event);
 
@@ -1507,4 +1515,68 @@ EXIT_PTHREAD:
   POCL_MEM_FREE(dd->queues);
 
   pthread_exit(NULL);
+}
+
+void pocl_hsa_update_event (cl_device_id device, cl_event event, cl_int status)
+{
+  pocl_hsa_event_data_t *e_d = NULL;
+  int cq_ready = 0;
+
+  if(event->data == NULL && status == CL_QUEUED)
+    {
+      pocl_hsa_event_data_t *e_d =
+        (pocl_hsa_event_data_t *) malloc (sizeof(pocl_hsa_event_data_t));
+      assert (e_d);
+      pthread_cond_init(&e_d->event_cond, NULL);
+      event->data = (void *) e_d;
+    }
+  else
+    {
+      e_d = event->data;
+    }
+
+  switch (status)
+    {
+    case CL_QUEUED:
+      event->status = status;
+      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+        event->time_queue = device->ops->get_timer_value(device->data);
+      break;
+    case CL_SUBMITTED:
+      event->status = status;
+      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+        event->time_submit = device->ops->get_timer_value(device->data);
+      break;
+    case CL_RUNNING:
+      event->status = status;
+      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+        event->time_start = device->ops->get_timer_value(device->data);
+      break;
+    case CL_COMPLETE:
+      POCL_MSG_PRINT_INFO("HSA: Command complete, event %d\n", event->id);
+      pocl_mem_objs_cleanup (event);
+      cq_ready = pocl_update_command_queue (event);
+
+      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+        event->time_end = device->ops->get_timer_value(device->data);
+
+      POCL_LOCK_OBJ (event);
+      event->status = CL_COMPLETE;
+
+      pthread_cond_signal(&e_d->event_cond);
+
+      device->ops->broadcast (event);
+      POCL_UNLOCK_OBJ (event);
+      break;
+    default:
+      assert("Invalid event status\n");
+      break;
+    }
+}
+
+void pocl_hsa_free_event_data (cl_event event)
+{
+  assert(event->data != NULL);
+  free(event->data);
+  event->data = NULL;
 }

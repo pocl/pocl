@@ -31,6 +31,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
   cl_device_id device_id;
   unsigned i;
   mem_mapping_t *mapping, *temp;
+  cl_context context = memobj->context;
 
   POCL_RETURN_ERROR_COND((memobj == NULL), CL_INVALID_MEM_OBJECT);
 
@@ -49,12 +50,20 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
       POCL_MSG_PRINT_INFO ("free mem obj %p\n", memobj);
       if (memobj->parent == NULL) 
         {
+          cl_device_id shared_mem_owner_dev = memobj->shared_mem_allocation_owner;
+          
           for (i = 0; i < memobj->context->num_devices; ++i)
             {
+              /* owner is called last */
+              if (shared_mem_owner_dev == context->devices[i])
+                 continue;
               device_id = memobj->context->devices[i];
               device_id->ops->free(device_id, memobj);
               memobj->device_ptrs[device_id->dev_id].mem_ptr = NULL;
             }
+          if (shared_mem_owner_dev)
+            shared_mem_owner_dev->ops->free (shared_mem_owner_dev, memobj);
+
         } else 
         {
           /* a sub buffer object does not free the memory from
@@ -67,7 +76,13 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
           POCL_MEM_FREE(mapping);
         }
       memobj->mappings = NULL;
-      
+
+      /* Free host mem allocated by the runtime (not for sub buffers) */
+      if (memobj->parent == NULL && memobj->flags & CL_MEM_ALLOC_HOST_PTR
+          && memobj->mem_host_ptr != NULL)
+        {
+          POCL_MEM_FREE(memobj->mem_host_ptr);
+        }
       POCL_MEM_FREE(memobj->device_ptrs);
       POCL_MEM_FREE(memobj);
     }

@@ -379,7 +379,6 @@ void
 pocl_basic_init (cl_device_id device, const char* parameters)
 {
   struct data *d;
-  static int global_mem_id;
   static int first_basic_init = 1;
   static int device_number = 0;
   
@@ -387,9 +386,8 @@ pocl_basic_init (cl_device_id device, const char* parameters)
     {
       pocl_init_dlhandle_cache();
       first_basic_init = 0;
-      global_mem_id = device->dev_id;
     }
-  device->global_mem_id = global_mem_id;
+  device->global_mem_id = 0;
 
   d = (struct data *) calloc (1, sizeof (struct data));
   
@@ -438,52 +436,71 @@ pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
 {
   void *b = NULL;
   cl_mem_flags flags = mem_obj->flags;
+  int i;
 
-  /* if memory for this global memory is not yet allocated -> do it */
-  if (mem_obj->device_ptrs[device->global_mem_id].mem_ptr == NULL)
+  /* check if some driver has already allocated memory for this mem_obj 
+     in our global address space, and use that*/
+  for (i = 0; i < mem_obj->context->num_devices; ++i)
     {
-      if (flags & CL_MEM_USE_HOST_PTR)
+      if (mem_obj->device_ptrs[i].global_mem_id == device->global_mem_id
+          && mem_obj->device_ptrs[i].mem_ptr != NULL)
         {
-          // mem_host_ptr must be non-NULL
-          assert(mem_obj->mem_host_ptr != NULL);
-          b = mem_obj->mem_host_ptr;
-        }
-      else
-        {
-          b = pocl_memalign_alloc_global_mem(device, MAX_EXTENDED_ALIGNMENT, mem_obj->size);
-          if (b == NULL)
-            return CL_MEM_OBJECT_ALLOCATION_FAILURE;
-        }
+          mem_obj->device_ptrs[device->dev_id].mem_ptr =
+            mem_obj->device_ptrs[i].mem_ptr;
 
-      if (flags & CL_MEM_COPY_HOST_PTR)
-        {
-          // mem_host_ptr must be non-NULL
-          assert(mem_obj->mem_host_ptr != NULL);
-          memcpy (b, mem_obj->mem_host_ptr, mem_obj->size);
+          return CL_SUCCESS;
         }
-
-      mem_obj->device_ptrs[device->global_mem_id].mem_ptr = b;
-      mem_obj->device_ptrs[device->global_mem_id].global_mem_id = 
-        device->global_mem_id;
     }
-  /* copy already allocated global mem info to devices own slot */
-  mem_obj->device_ptrs[device->dev_id] = 
-    mem_obj->device_ptrs[device->global_mem_id];
+
+  /* memory for this global memory is not yet allocated -> do it */
+  if (flags & CL_MEM_USE_HOST_PTR)
+    {
+      // mem_host_ptr must be non-NULL
+      assert(host_ptr != NULL);
+      b = host_ptr;
+    }
+  else
+    {
+      b = pocl_memalign_alloc_global_mem (device, MAX_EXTENDED_ALIGNMENT,
+                                          mem_obj->size);
+      if (b==NULL)
+        return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+
+      mem_obj->shared_mem_allocation_owner = device;
+    }
+
+  /* use this dev mem allocation as host ptr */
+  if (flags & CL_MEM_ALLOC_HOST_PTR && (mem_obj->mem_host_ptr == NULL))
+    mem_obj->mem_host_ptr = b;
+
+  if (flags & CL_MEM_COPY_HOST_PTR)
+    {
+      // mem_host_ptr must be non-NULL
+      assert(host_ptr != NULL);
+      memcpy (b, host_ptr, mem_obj->size);
+    }
+
+  mem_obj->device_ptrs[device->dev_id].mem_ptr = b;
 
   return CL_SUCCESS;
 }
+
 
 void
 pocl_basic_free (cl_device_id device, cl_mem memobj)
 {
   cl_mem_flags flags = memobj->flags;
 
-  if (flags & CL_MEM_USE_HOST_PTR)
+  /* aloocation owner executes freeing */
+  if (flags & CL_MEM_USE_HOST_PTR ||
+      memobj->shared_mem_allocation_owner != device)
     return;
 
   void* ptr = memobj->device_ptrs[device->dev_id].mem_ptr;
   size_t size = memobj->size;
 
+  if (memobj->flags | CL_MEM_ALLOC_HOST_PTR)
+    memobj->mem_host_ptr = NULL;
   pocl_free_global_mem(device, ptr, size);
 }
 
@@ -790,24 +807,28 @@ void pocl_basic_memfill(void *ptr,
       for (i = 0; i < size; i++)
         p[i] = *(uint8_t*)pattern;
       }
+      break;
     case 2:
       {
       uint16_t * p = (uint16_t*)ptr + offset;
       for (i = 0; i < size; i++)
         p[i] = *(uint16_t*)pattern;
       }
+      break;
     case 4:
       {
       uint32_t * p = (uint32_t*)ptr + offset;
       for (i = 0; i < size; i++)
         p[i] = *(uint32_t*)pattern;
       }
+      break;
     case 8:
       {
       uint64_t * p = (uint64_t*)ptr + offset;
       for (i = 0; i < size; i++)
         p[i] = *(uint64_t*)pattern;
       }
+      break;
     case 16:
       {
       uint64_t * p = (uint64_t*)ptr + offset;
@@ -815,6 +836,7 @@ void pocl_basic_memfill(void *ptr,
         for (j = 0; j < 2; j++)
           p[(i<<1) + j] = *((uint64_t*)pattern + j);
       }
+      break;
     case 32:
       {
       uint64_t * p = (uint64_t*)ptr + offset;
@@ -822,6 +844,7 @@ void pocl_basic_memfill(void *ptr,
         for (j = 0; j < 4; j++)
           p[(i<<2) + j] = *((uint64_t*)pattern + j);
       }
+      break;
     case 64:
       {
       uint64_t * p = (uint64_t*)ptr + offset;
@@ -829,6 +852,7 @@ void pocl_basic_memfill(void *ptr,
         for (j = 0; j < 8; j++)
           p[(i<<3) + j] = *((uint64_t*)pattern + j);
       }
+      break;
     case 128:
       {
       uint64_t * p = (uint64_t*)ptr + offset;
@@ -836,6 +860,7 @@ void pocl_basic_memfill(void *ptr,
         for (j = 0; j < 16; j++)
           p[(i<<4) + j] = *((uint64_t*)pattern + j);
       }
+      break;
     }
 }
 

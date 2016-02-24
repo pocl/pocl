@@ -559,6 +559,9 @@ struct _cl_mem {
      The location of the device's buffer ptr is determined by
      the device's dev_id. */
   pocl_mem_identifier *device_ptrs;
+  /* device that allocated, and is going to free, 
+     the shared system mem allocation */
+  cl_device_id shared_mem_allocation_owner;
   /* device where this mem obj resides */
   volatile cl_device_id owning_device;
   /* latest event assosiated with the buffer, set NULL when event completed */
@@ -694,10 +697,6 @@ struct _cl_event {
 
   void *data; /* Device specific data */  
 
-  /* for any thread waiting on status change of this event */
-  pthread_mutex_t complete_notify_signal_mutex;
-  pthread_cond_t complete_notify_signal;
-
   /* impicit event = an event for pocl's internal use, not visible to user */
   int implicit_event;
   _cl_event * volatile next;
@@ -769,16 +768,13 @@ struct _cl_sampler {
         if ((__cq)->device->ops->update_event)                          \
           (__cq)->device->ops->update_event((__cq)->device, (*(__event)), CL_COMPLETE); \
         else{                                                           \
-          POCL_LOCK_OBJ (*(__event));                                   \
           pocl_mem_objs_cleanup ((*__event));                           \
+          POCL_LOCK_OBJ (*(__event));                                   \
           (*(__event))->status = CL_COMPLETE;                           \
           if ((__cq)->properties & CL_QUEUE_PROFILING_ENABLE){          \
             (*(__event))->time_end =                                    \
             (__cq)->device->ops->get_timer_value((__cq)->device->data); \
           }                                                             \
-          pthread_mutex_lock(&((*__event)->complete_notify_signal_mutex));  \
-          pthread_cond_broadcast(&((*__event)->complete_notify_signal));\
-          pthread_mutex_unlock(&((*__event)->complete_notify_signal_mutex));  \
           (__cq)->device->ops->broadcast(*(__event));                   \
           POCL_UNLOCK_OBJ (*(__event));                                 \
           pocl_update_command_queue(*(__event));                        \

@@ -90,7 +90,7 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
       goto ERROR;
     }
 
-  if (buffer->flags & CL_MEM_USE_HOST_PTR)
+  if (buffer->flags & CL_MEM_USE_HOST_PTR || buffer->flags & CL_MEM_ALLOC_HOST_PTR)
     {
       /* In this case it should use the given host_ptr + offset as
          the mapping area in the host memory. */   

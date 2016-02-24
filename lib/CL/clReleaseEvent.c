@@ -41,8 +41,6 @@ POname(clReleaseEvent)(cl_event event) CL_API_SUFFIX__VERSION_1_0
           event->queue->device->ops->free_event_data)
         event->queue->device->ops->free_event_data(event);
 
-      pthread_cond_destroy(&event->complete_notify_signal);
-      pthread_mutex_destroy(&event->complete_notify_signal_mutex);
       POname(clReleaseContext) (event->context);
       if (event->queue)
         POname(clReleaseCommandQueue) (event->queue);

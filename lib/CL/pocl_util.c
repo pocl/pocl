@@ -193,8 +193,6 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
       *event = pocl_mem_manager_new_event ();
       if (event == NULL)
         return CL_OUT_OF_HOST_MEMORY;
-      pthread_mutex_init(&((*event)->complete_notify_signal_mutex), NULL);
-      pthread_cond_init(&((*event)->complete_notify_signal), NULL);
 
       (*event)->context = context;
       POname(clRetainContext) (context);

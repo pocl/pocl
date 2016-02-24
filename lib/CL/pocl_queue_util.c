@@ -67,7 +67,7 @@ void pocl_init_queue_list()
   if (!queue_list)
     POCL_ABORT("unable to allocate queue list!");
 
-  atexit(pocl_finish_all_queues);
+  //atexit(pocl_finish_all_queues);
 
   POCL_UNLOCK(queue_lock);
 

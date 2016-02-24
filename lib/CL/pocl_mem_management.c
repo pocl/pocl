@@ -72,7 +72,7 @@ cl_event pocl_mem_manager_new_event ()
       return ev;
     }
   POCL_UNLOCK (mm->event_lock);
-    
+
   ev = (struct _cl_event*) calloc (1, sizeof (struct _cl_event));
   POCL_INIT_OBJECT(ev);
   ev->pocl_refcount = 1;

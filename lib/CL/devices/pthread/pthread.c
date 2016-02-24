@@ -133,8 +133,8 @@ pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
   ops->init_device_infos = pocl_pthread_init_device_infos;
   ops->uninit = pocl_pthread_uninit;
   ops->init = pocl_pthread_init;
-  ops->alloc_mem_obj = pocl_pthread_alloc_mem_obj;
-  ops->free = pocl_pthread_free;
+  ops->alloc_mem_obj = pocl_basic_alloc_mem_obj;
+  ops->free = pocl_basic_free;
   ops->read = pocl_pthread_read;
   ops->write = pocl_pthread_write;
   ops->copy = pocl_pthread_copy;
@@ -260,13 +260,12 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
     {
       scheduler_initialized = 1;
       pocl_init_dlhandle_cache();
-      global_mem_id = device->dev_id;
-
       pocl_init_kernel_run_command_manager();
 
       pthread_scheduler_init (num_worker_threads);
     }
-  device->global_mem_id = global_mem_id;
+  /* system mem as global memory */
+  device->global_mem_id = 0;
 }
 
 void
@@ -290,63 +289,6 @@ pocl_pthread_uninit (cl_device_id device)
   device->ops->shared_data = NULL;
   POCL_MEM_FREE(d);
   device->data = NULL;
-}
-
-
-cl_int
-pocl_pthread_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
-{
-  void *b = NULL;
-  cl_mem_flags flags = mem_obj->flags;
-
-  /* if memory for this global memory is not yet allocated -> do it */
-  if (mem_obj->device_ptrs[device->global_mem_id].mem_ptr == NULL)
-    {
-      if (flags & CL_MEM_USE_HOST_PTR)
-        {
-          // mem_host_ptr must be non-NULL
-          assert(mem_obj->mem_host_ptr != NULL);
-          b = mem_obj->mem_host_ptr;
-        }
-      else
-        {
-          b = pocl_memalign_alloc_global_mem( device, MAX_EXTENDED_ALIGNMENT,
-                                        mem_obj->size);
-          if (b==NULL)
-            return CL_MEM_OBJECT_ALLOCATION_FAILURE;
-        }
-
-      if (flags & CL_MEM_COPY_HOST_PTR)
-        {
-          // mem_host_ptr must be non-NULL
-          assert(mem_obj->mem_host_ptr != NULL);
-          memcpy (b, mem_obj->mem_host_ptr, mem_obj->size);
-        }
-
-      mem_obj->device_ptrs[device->global_mem_id].mem_ptr = b;
-      mem_obj->device_ptrs[device->global_mem_id].global_mem_id = 
-        device->global_mem_id;
-    }
-  /* copy already allocated global mem info to devices own slot */
-  mem_obj->device_ptrs[device->dev_id] = 
-    mem_obj->device_ptrs[device->global_mem_id];
-
-  return CL_SUCCESS;
-}
-
-
-void
-pocl_pthread_free (cl_device_id device, cl_mem memobj)
-{
-  cl_mem_flags flags = memobj->flags;
-
-  if (flags & CL_MEM_USE_HOST_PTR)
-    return;
-
-  void* ptr = memobj->device_ptrs[device->dev_id].mem_ptr;
-  size_t size = memobj->size;
-
-  pocl_free_global_mem(device, ptr, size);
 }
 
 
@@ -522,11 +464,11 @@ void pocl_pthread_update_event (cl_device_id device, cl_event event, cl_int stat
       pocl_mem_objs_cleanup (event);
       cq_ready = pocl_update_command_queue (event);
 
-      POCL_LOCK_OBJ (event);
-      event->status = CL_COMPLETE;
-
       if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
         event->time_end = device->ops->get_timer_value(device->data);
+
+      POCL_LOCK_OBJ (event);
+      event->status = CL_COMPLETE;
 
       pthread_cond_signal(&e_d->event_cond);
       if (cq_ready)
@@ -559,5 +501,6 @@ void pocl_pthread_free_event_data (cl_event event)
   assert(event->data != NULL);
   free(event->data);
   event->data = NULL;
+
 }
 
