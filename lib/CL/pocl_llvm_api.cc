@@ -1322,6 +1322,8 @@ kernel_library
 
   POCL_MSG_PRINT_INFO("using %s as the built-in lib.\n", kernellib.c_str());
 
+  if (!pocl_exists(kernellib.c_str()))
+    POCL_ABORT("kernel library file doesn't exist.");
   SMDiagnostic Err;
   llvm::Module *lib = ParseIRFile(kernellib.c_str(), Err, *GlobalContext());
   assert (lib != NULL);
