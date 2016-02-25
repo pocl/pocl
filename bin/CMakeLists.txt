@@ -25,7 +25,7 @@
 
 add_executable(poclcc poclcc.c)
 
-target_link_libraries(poclcc ${OPENCL_LIBS})
+target_link_libraries(poclcc ${POCLU_LINK_OPTIONS})
 
 install(TARGETS "poclcc" RUNTIME
         DESTINATION "${POCL_INSTALL_PUBLIC_BINDIR}")

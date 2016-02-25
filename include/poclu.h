@@ -109,6 +109,9 @@ poclu_write_file(char* filemane, char* content, size_t size);
 POCLU_API int POCLU_CALL
 check_cl_error(cl_int cl_err, int line, const char* func_name);
 
+#define CHECK_CL_ERROR(cond) check_cl_error(cond, __LINE__, __PRETTY_FUNCTION__)
+#define CHECK_CL_ERROR2(err, func) check_cl_error(err, __LINE__, #func)
+
 #ifdef __cplusplus
 }
 #endif
