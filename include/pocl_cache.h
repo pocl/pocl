@@ -107,6 +107,14 @@ int pocl_cache_write_kernel_parallel_bc(void*        bc,
                                         size_t       local_z);
 
 
+// required by pocl_binary.c
+
+void pocl_cache_program_path(char*        path,
+                             cl_program   program,
+                             unsigned     device_i);
+
+void pocl_cache_kernel_cachedir(char* kernel_cachedir_path, cl_program   program,
+                                unsigned device_i, cl_kernel kernel);
 
 // these two required by llvm API
 

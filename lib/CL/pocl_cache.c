@@ -79,6 +79,12 @@ static void program_device_dir(char*        path,
     assert(bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
 }
 
+void pocl_cache_program_path(char*        path,
+                             cl_program   program,
+                             unsigned     device_i)
+{
+  program_device_dir(path, program, device_i, "");
+}
 
 // required in llvm API
 void pocl_cache_program_bc_path(char*        program_bc_path,
@@ -113,6 +119,15 @@ static void pocl_cache_kernel_cachedir_path(char* kernel_cachedir_path, cl_progr
 
 }
 
+void pocl_cache_kernel_cachedir(char* kernel_cachedir_path, cl_program   program,
+                                unsigned device_i, cl_kernel kernel)
+{
+  int bytes_written;
+  char tempstring[POCL_FILENAME_LENGTH];
+  bytes_written = snprintf(tempstring, POCL_FILENAME_LENGTH,
+                           "/%s", kernel->name);
+  program_device_dir(kernel_cachedir_path, program, device_i, tempstring);
+}
 
 
 // required in llvm API
