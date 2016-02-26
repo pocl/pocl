@@ -291,6 +291,9 @@ CL_API_SUFFIX__VERSION_1_0
           POCL_GOTO_ERROR_ON(errcode, CL_BUILD_PROGRAM_FAILURE,
                              "Failed to write binaries to program.bc\n");
         }
+      else if (program->pocl_binaries[device_i])
+        /* TODO pocl_binaries[i] might contain program.bc */
+        continue;
       /* fail */
       else
         POCL_GOTO_ERROR_ON(1, CL_INVALID_BINARY, "Don't have sources and also no "
@@ -337,6 +340,7 @@ CL_API_SUFFIX__VERSION_1_0
                      "not available for the program, or do not exist\n");
 
   program->build_status = CL_BUILD_SUCCESS;
+  /* TODO should not unlock program while adding default kernels */
   POCL_UNLOCK_OBJ(program);
 
   /* set up all program kernels */
@@ -374,7 +378,11 @@ CL_API_SUFFIX__VERSION_1_0
           if (device_list[i] == device) found = 1;
       if (!found) continue;
 
-      if (!program->binaries[device_i]) continue;
+      if (!program->binaries[device_i])
+        {
+          assert(program->pocl_binaries[device_i]);
+          continue;
+        }
 
       cmd.device = device;
       for (i=0; i < program->num_kernels; i++)
