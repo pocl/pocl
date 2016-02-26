@@ -1529,7 +1529,7 @@ pocl_llvm_get_kernel_count(cl_program program)
 }
 
 unsigned
-pocl_llvm_get_kernel_names( cl_program program, const char **knames, unsigned max_num_krn )
+pocl_llvm_get_kernel_names( cl_program program, char **knames, unsigned max_num_krn )
 {
   llvm::NamedMDNode *md;
   unsigned i, n = pocl_llvm_get_kernel_count(program, &md);
@@ -1540,7 +1540,7 @@ pocl_llvm_get_kernel_names( cl_program program, const char **knames, unsigned ma
       cast<Function>(
         dyn_cast<llvm::ValueAsMetadata>(md->getOperand(i)->getOperand(0))->getValue());
     if (i < max_num_krn)
-      knames[i]= k->getName().data();
+      knames[i] = strdup(k->getName().data());
   }
   return i;
 }
