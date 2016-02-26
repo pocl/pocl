@@ -71,7 +71,6 @@ POname(clCreateProgramWithSource)(cl_context context,
   }
 
   program->source = source;
-  program->compiler_options = NULL;
 
   for (i = 0; i < count; ++i)
     {
@@ -94,16 +93,10 @@ POname(clCreateProgramWithSource)(cl_context context,
 
   *source = '\0';
 
-  program->main_build_log[0] = 0;
   program->context = context;
   program->num_devices = context->num_devices;
   program->devices = context->devices;
-  program->kernels = NULL;
   program->build_status = CL_BUILD_NONE;
-  program->read_locks = NULL;
-  program->num_kernels = 0;
-  program->default_kernels = NULL;
-  program->kernel_names = NULL;
 
   if ((program->binary_sizes =
        (size_t*) calloc (program->num_devices, sizeof(size_t))) == NULL ||

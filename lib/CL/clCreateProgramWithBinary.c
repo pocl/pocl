@@ -87,18 +87,13 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
         "device not found in the device list of the context\n");
     }
   
-  if ((program = (cl_program) malloc (sizeof (struct _cl_program))) == NULL)
+  if ((program = (cl_program) calloc (1, sizeof (struct _cl_program))) == NULL)
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
       goto ERROR;
     }
   
   POCL_INIT_OBJECT(program);
-  program->binary_sizes = NULL;
-  program->binaries = NULL;
-  program->compiler_options = NULL;
-  program->llvm_irs = NULL;
-  program->read_locks = NULL;
 
   if ((program->binary_sizes =
        (size_t*) calloc (num_devices, sizeof(size_t))) == NULL ||
@@ -121,16 +116,10 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
       goto ERROR_CLEAN_PROGRAM_AND_BINARIES;
     }
 
-  program->main_build_log[0] = 0;
   program->context = context;
   program->num_devices = num_devices;
   program->devices = unique_devlist;
-  program->source = NULL;
-  program->kernels = NULL;
   program->build_status = CL_BUILD_NONE;
-  program->num_kernels = 0;
-  program->default_kernels = NULL;
-  program->kernel_names = NULL;
   char program_bc_path[POCL_FILENAME_LENGTH];
 
   for (i = 0; i < num_devices; ++i)
@@ -192,6 +181,9 @@ ERROR_CLEAN_PROGRAM_AND_BINARIES:
       POCL_MEM_FREE(program->binaries[i]);
   POCL_MEM_FREE(program->binaries);
   POCL_MEM_FREE(program->binary_sizes);
+  if (program->pocl_binaries)
+    for (i = 0; i < num_devices; ++i)
+      POCL_MEM_FREE(program->pocl_binaries[i]);
   POCL_MEM_FREE(program->pocl_binaries);
   POCL_MEM_FREE(program->pocl_binary_sizes);
 /*ERROR_CLEAN_PROGRAM:*/
