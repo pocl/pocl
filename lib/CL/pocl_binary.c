@@ -74,6 +74,7 @@ typedef struct pocl_binary_s {
   uint64_t device_id;
   uint32_t version;
   uint32_t num_kernels;
+  SHA1_digest_t program_build_hash;
 } pocl_binary;
 
 /***********************************************************/
@@ -103,6 +104,7 @@ typedef struct pocl_binary_s {
       {                                           \
         elem = malloc(len+1);                     \
         memcpy(elem, buffer, len);                \
+        elem[len] = 0;                            \
         buffer += len;                            \
       }                                           \
   } while (0)
@@ -139,6 +141,8 @@ static unsigned char* read_header(pocl_binary *b, unsigned char *buffer)
   BUFFER_READ(b->device_id, uint64_t);
   BUFFER_READ(b->version, uint32_t);
   BUFFER_READ(b->num_kernels, uint32_t);
+  memcpy(b->program_build_hash, buffer, sizeof(SHA1_digest_t));
+  buffer += sizeof(SHA1_digest_t);
   return buffer;
 }
 
@@ -190,6 +194,16 @@ int pocl_binary_check_binary(cl_device_id device, unsigned char *binary)
 }
 
 /*****************************************************************************/
+
+void pocl_binary_set_program_buildhash(cl_program program,
+                                         unsigned device_i,
+                                         unsigned char *binary)
+{
+  pocl_binary b;
+  read_header(&b, binary);
+  memcpy(program->build_hash[device_i],
+         b.program_build_hash, sizeof(SHA1_digest_t));
+}
 
 cl_uint pocl_binary_get_kernel_count(unsigned char *binary)
 {
@@ -353,27 +367,28 @@ static size_t untar_file(unsigned char* buffer, char* basedir, size_t offset)
   BUFFER_READ_STR2(relpath, len);
   assert(len > 0);
 
-  char *p = basedir + offset;
-  *p++ = '/';
-  strcpy(p, relpath);
-  free(relpath);
-
-  char* dir = strdup(basedir);
-  char* dirpath = dirname(dir);
-  POCL_MSG_PRINT_INFO("dirpath: %s\n", dirpath);
-  if (!pocl_exists(dirpath))
-    pocl_mkdir_p(dirpath);
-  free(dir);
-
   char* content = NULL;
   BUFFER_READ_STR2(content, len);
   assert(len > 0);
 
-  char *path = basedir;
-  POCL_MSG_PRINT_INFO("writing %" PRIuS " to PATH %s\n", len, path);
-  pocl_write_file(path, content, len, 0, 0);
-  free(content);
+  char *p = basedir + offset;
+  strcpy(p, relpath);
+  free(relpath);
 
+  char *fullpath = basedir;
+  if (pocl_exists(fullpath))
+    goto RET;
+
+  char* dir = strdup(basedir);
+  char* dirpath = dirname(dir);
+  if (!pocl_exists(dirpath))
+    pocl_mkdir_p(dirpath);
+  free(dir);
+
+  pocl_write_file(fullpath, content, len, 0, 0);
+
+RET:
+  free(content);
   return (buffer - orig_buffer);
 }
 
@@ -471,6 +486,8 @@ cl_int pocl_binary_serialize(cl_program program, unsigned device_i, size_t *size
   BUFFER_STORE(pocl_binary_get_device_id(program->devices[device_i]), uint64_t);
   BUFFER_STORE(POCLCC_VERSION, uint32_t);
   BUFFER_STORE(num_kernels, uint32_t);
+  memcpy(buffer, program->build_hash[device_i], sizeof(SHA1_digest_t));
+  buffer += sizeof(SHA1_digest_t);
 
   assert(buffer < end_of_buffer);
 

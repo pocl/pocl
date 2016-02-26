@@ -151,6 +151,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
           program->pocl_binaries[i] = (unsigned char*) malloc(lengths[i]);
           memcpy (program->pocl_binaries[i], binaries[i], lengths[i]);
 
+          pocl_binary_set_program_buildhash(program, i, binaries[i]);
           int error = pocl_cache_create_program_cachedir(program, i,
                                                      NULL, 0, program_bc_path);
           POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,

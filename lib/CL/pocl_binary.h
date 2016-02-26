@@ -50,6 +50,10 @@ cl_int pocl_binary_untar(cl_program program, unsigned device_i);
 cl_int pocl_binary_serialize(cl_program program, unsigned device_i, size_t *size);
 
 
+/* sets the program's build_hash[device_i] for creating a program directory */
+void pocl_binary_set_program_buildhash(cl_program program,
+                                       unsigned device_i,
+                                       unsigned char *binary);
 
 /* returns the number of kernels without unpacking the binary */
 cl_uint pocl_binary_get_kernel_count(unsigned char *binary);
