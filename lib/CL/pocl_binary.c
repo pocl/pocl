@@ -28,12 +28,53 @@
 
 #include "pocl_cl.h"
 #include "pocl_binary.h"
+#include "pocl_cache.h"
+#include "pocl_file_util.h"
+
+#include <sys/stat.h>
+#include <dirent.h>
+#include <libgen.h>
 
 #if defined(WORDS_BIGENDIAN) && WORDS_BIGENDIAN == 1
   const char host_endian = 1;
 #else
   const char host_endian = 0;
 #endif
+
+/* pocl binary identifier */
+#define POCLCC_STRING_ID "poclbin"
+#define POCLCC_STRING_ID_LENGTH 7
+#define POCLCC_VERSION 1
+
+/* pocl binary structures */
+
+typedef struct pocl_binary_kernel_s {
+  /* the first 3 fields are sizes in bytes of the data pieces that follow
+   * (to allow fast skipping) */
+
+  // size of the entire struct
+  uint64_t struct_size;
+  // size of tared content
+  uint64_t tar_size;
+  // arginfo size
+  uint32_t arginfo_size;
+
+  uint32_t sizeof_kernel_name;
+  char *kernel_name;
+
+  uint32_t num_args;
+  uint32_t num_locals;
+  struct pocl_argument *dyn_arguments;
+  struct pocl_argument_info *arg_info;
+} pocl_binary_kernel;
+
+typedef struct pocl_binary_s {
+  char endian;
+  char pocl_id[POCLCC_STRING_ID_LENGTH];
+  uint64_t device_id;
+  uint32_t version;
+  uint32_t num_kernels;
+} pocl_binary;
 
 /***********************************************************/
 
