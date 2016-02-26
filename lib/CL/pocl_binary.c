@@ -78,30 +78,55 @@ typedef struct pocl_binary_s {
 
 /***********************************************************/
 
-void pocl_binary_free_binary(pocl_binary *binary)
-{
-  if (binary != NULL)
-    {
-      if (binary->kernels != NULL)
-        {
-          unsigned j;
-          for (j=0; j<binary->num_kernels; j++)
-            pocl_binary_free_kernel(&(binary->kernels[j]));
-          POCL_MEM_FREE(binary->kernels);
-        }
-    }
-}
+#define BUFFER_STORE(elem, type)                  \
+  *(type*)buffer = elem;                          \
+  buffer += sizeof(type)
 
-void pocl_binary_free_kernel(pocl_binary_kernel *kernel)
-{
-  if (kernel != NULL)
-    {
-      POCL_MEM_FREE(kernel->kernel_name);
-      POCL_MEM_FREE(kernel->binary);
-      POCL_MEM_FREE(kernel->dyn_arguments);
-      POCL_MEM_FREE(kernel->arg_info);
-    }
-}
+#define BUFFER_READ(elem, type)                   \
+  elem = *(type*)buffer;                          \
+  buffer += sizeof(type)
+
+#define BUFFER_STORE_STR2(elem, len)              \
+  do {                                            \
+    BUFFER_STORE(len, uint32_t);                  \
+    if (len)                                      \
+      {                                           \
+        memcpy(buffer, elem, len);                \
+        buffer += len;                            \
+      }                                           \
+  } while (0)
+
+#define BUFFER_READ_STR2(elem, len)               \
+  do {                                            \
+    BUFFER_READ(len, uint32_t);                   \
+    if (len)                                      \
+      {                                           \
+        elem = malloc(len+1);                     \
+        memcpy(elem, buffer, len);                \
+        buffer += len;                            \
+      }                                           \
+  } while (0)
+
+#define BUFFER_STORE_STR(elem)                    \
+  do { uint32_t len = strlen(elem);               \
+    BUFFER_STORE_STR2(elem, len); } while (0)
+
+#define BUFFER_READ_STR(elem)                     \
+  do { uint32_t len = 0;                          \
+    BUFFER_READ_STR2(elem, len); } while (0)
+
+#define ADD_STRLEN(else_b)                        \
+    if (serialized)                               \
+      {                                           \
+        unsigned char* t = buffer+res;            \
+        res += *(uint32_t*)t;                     \
+        res += sizeof(uint32_t);                  \
+      }                                           \
+    else                                          \
+      {                                           \
+        res += sizeof(uint32_t);                  \
+        res += else_b;                            \
+      }
 
 /***********************************************************/
 
