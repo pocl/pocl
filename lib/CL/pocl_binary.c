@@ -541,25 +541,29 @@ size_t pocl_binary_sizeof_binary(cl_program program, unsigned device_i)
 {
   if (program->pocl_binary_sizes[device_i])
     return program->pocl_binary_sizes[device_i];
-  else
-    {
-      assert(program->pocl_binaries[device_i] == NULL);
-      /* dumb solution, but
+
+  assert(program->pocl_binaries[device_i] == NULL);
+  /* dumb solution, but
        * 1) it's simple,
        * 2) we'll likely need the binary itself soon anyway,
        * 3) memory is COW these days.. */
-      size_t res = 0;
-      program->pocl_binaries[device_i] = malloc(MAX_BINARY_SIZE);
-      program->pocl_binary_sizes[device_i] = MAX_BINARY_SIZE;
-      if (pocl_binary_serialize(program, device_i, &res) != CL_SUCCESS)
-        {
-          POCL_MEM_FREE(program->pocl_binaries[device_i]);
-          program->pocl_binary_sizes[device_i] = 0;
-          return 0;
-        }
-      program->pocl_binary_sizes[device_i] = res;
-      return res;
+  size_t res = 0;
+  unsigned char *temp_buf = malloc(MAX_BINARY_SIZE);
+  program->pocl_binaries[device_i] = temp_buf;
+  program->pocl_binary_sizes[device_i] = MAX_BINARY_SIZE;
+
+  if (pocl_binary_serialize(program, device_i, &res) != CL_SUCCESS)
+    {
+      POCL_MEM_FREE(program->pocl_binaries[device_i]);
+      program->pocl_binary_sizes[device_i] = 0;
+      return 0;
     }
+
+  program->pocl_binaries[device_i] = malloc(res);
+  program->pocl_binary_sizes[device_i] = res;
+  memcpy(program->pocl_binaries[device_i], temp_buf, res);
+  free(temp_buf);
+  return res;
 
 }
 
