@@ -39,6 +39,7 @@
 #include "pocl_cache.h"
 #include "config.h"
 #include "pocl_runtime_config.h"
+#include "pocl_binary.h"
 
 /* supported compiler parameters which should pass to the frontend directly
    by using -Xclang */
@@ -90,6 +91,48 @@ static const char cl_parameters_not_yet_supported_by_clang[] =
     size_t l = strlen(program->main_build_log); \
     snprintf(program->main_build_log + l, (640 - l), __VA_ARGS__); \
   }
+
+static void program_set_num_kernels(cl_program program)
+{
+  unsigned i;
+  for (i=0; i < program->num_devices; i++)
+    {
+      if (program->binaries[i])
+        {
+          program->num_kernels = pocl_llvm_get_kernel_count(program);
+          return;
+        }
+      if (program->pocl_binaries[i])
+        {
+          program->num_kernels = pocl_binary_get_kernel_count(program->pocl_binaries[i]);
+          return;
+        }
+    }
+  POCL_ABORT("No binaries in a built program!\n");
+}
+
+static void program_set_kernel_names(cl_program program)
+{
+  program->kernel_names = calloc(program->num_kernels, sizeof(char*));
+  unsigned i;
+  for (i=0; i < program->num_devices; i++)
+    {
+      if (program->binaries[i])
+        {
+          pocl_llvm_get_kernel_names(program, program->kernel_names, program->num_kernels);
+          return;
+        }
+      if (program->pocl_binaries[i])
+        {
+          pocl_binary_get_kernel_names(program->pocl_binaries[i],
+                                       program->kernel_names,
+                                       program->num_kernels);
+          return;
+        }
+    }
+  POCL_ABORT("No binaries in a built program!\n");
+}
+
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clBuildProgram)(cl_program program,
@@ -209,16 +252,6 @@ CL_API_SUFFIX__VERSION_1_0
       device_list = unique_devlist;
     }
 
-  if (program->is_pocl_binary)
-    {
-      error = pocl_cache_create_program_cachedir(program, device_i,
-                                                 NULL, 0, program_bc_path);
-      POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
-                         "Could not create program cachedir");
-      
-      goto SUCCESS;
-    }
-
   POCL_MSG_PRINT_INFO("building program with options %s\n",
                       user_options != NULL ? user_options : "");
 
@@ -245,17 +278,18 @@ CL_API_SUFFIX__VERSION_1_0
                              "pocl_llvm_build_program() failed\n");
         }
       /* clCreateProgramWithBinaries */
-      else if (program->binaries[device_i]) {
-            error = pocl_cache_create_program_cachedir(program, device_i,
-                                               NULL, 0, program_bc_path);
-            POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
-                               "Could not create program cachedir");
-            write_cache_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
-            assert(write_cache_lock);
-            errcode = pocl_write_file(program_bc_path, (char*)program->binaries[device_i],
+      else if (program->binaries[device_i])
+        {
+          error = pocl_cache_create_program_cachedir(program, device_i,
+                                                     NULL, 0, program_bc_path);
+          POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
+                             "Could not create program cachedir");
+          write_cache_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
+          assert(write_cache_lock);
+          errcode = pocl_write_file(program_bc_path, (char*)program->binaries[device_i],
                           (uint64_t)program->binary_sizes[device_i], 0, 0);
-            POCL_GOTO_ERROR_ON(errcode, CL_BUILD_PROGRAM_FAILURE,
-                               "Failed to write binaries to program.bc\n");
+          POCL_GOTO_ERROR_ON(errcode, CL_BUILD_PROGRAM_FAILURE,
+                             "Failed to write binaries to program.bc\n");
         }
       /* fail */
       else
@@ -302,10 +336,69 @@ CL_API_SUFFIX__VERSION_1_0
                      "Some of the devices on the argument-supplied list are"
                      "not available for the program, or do not exist\n");
 
-SUCCESS:
   program->build_status = CL_BUILD_SUCCESS;
   POCL_UNLOCK_OBJ(program);
+
+  /* set up all program kernels */
+  /* TODO probably wrong to assume */
+  assert(program->num_kernels == 0);
+  program_set_num_kernels(program);
+  program_set_kernel_names(program);
+  program->default_kernels = calloc(program->num_kernels, sizeof(cl_kernel));
+  for (i=0; i < program->num_kernels; i++)
+    {
+      program->default_kernels[i] =
+          POname(clCreateKernel)(program,
+                                 program->kernel_names[i],
+                                 &error);
+      POCL_GOTO_ERROR_COND((error != CL_SUCCESS),
+                           CL_BUILD_PROGRAM_FAILURE);
+    }
+
+  _cl_command_node cmd;
+  memset(&cmd, 0, sizeof(_cl_command_node));
+  cmd.type = CL_COMMAND_NDRANGE_KERNEL;
+  char cachedir[POCL_FILENAME_LENGTH];
+  cmd.command.run.tmp_dir = cachedir;
+  POCL_LOCK_OBJ(program);
+
+  /* build the dynamic WG sized parallel.bc and device specific code,
+   * for each kernel & device combo */
+  for (device_i = 0; device_i < program->num_devices; ++device_i)
+    {
+      cl_device_id device = program->devices[device_i];
+
+      /* find the device in the supplied devices-to-build-for list */
+      int found = 0;
+      for (i = 0; i < num_devices; ++i)
+          if (device_list[i] == device) found = 1;
+      if (!found) continue;
+
+      if (!program->binaries[device_i]) continue;
+
+      cmd.device = device;
+      for (i=0; i < program->num_kernels; i++)
+        {
+          pocl_cache_make_kernel_cachedir_path(cachedir, program, device,
+                                               program->default_kernels[i],
+                                               0,0,0);
+
+          errcode = pocl_llvm_generate_workgroup_function(device,
+                                                          program->default_kernels[i],
+                                                          0,0,0);
+          POCL_GOTO_ERROR_ON((errcode != CL_SUCCESS),
+                             CL_BUILD_PROGRAM_FAILURE,
+                             "Failed to generate workgroup function for kernel %s",
+                             program->kernel_names[i]);
+
+          cmd.command.run.kernel = program->default_kernels[i];
+          device->ops->compile_submitted_kernels(&cmd);
+        }
+
+    }
+
   POCL_MEM_FREE(unique_devlist);
+  POCL_UNLOCK_OBJ(program);
   return CL_SUCCESS;
 
   /* Set pointers to NULL during cleanup so that clProgramRelease won't
