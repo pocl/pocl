@@ -77,6 +77,19 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
           POCL_MEM_FREE(program->build_log[i]);
       POCL_MEM_FREE(program->build_log);
 
+      if (program->num_kernels)
+        {
+          for (i=0; i < program->num_kernels; i++)
+            {
+              if (program->kernel_names)
+                POCL_MEM_FREE(program->kernel_names[i]);
+              if (program->default_kernels && program->default_kernels[i])
+                clReleaseKernel(program->default_kernels[i]);
+            }
+          POCL_MEM_FREE(program->kernel_names);
+          POCL_MEM_FREE(program->default_kernels);
+        }
+
       POCL_MEM_FREE(program->build_hash);
       POCL_MEM_FREE(program->llvm_irs);
       POCL_MEM_FREE(program);

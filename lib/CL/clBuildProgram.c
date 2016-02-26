@@ -419,6 +419,18 @@ ERROR:
     pocl_cache_release_lock(program->read_locks[i]);
     program->read_locks[i] = NULL;
   }
+  if (program->num_kernels)
+    {
+      for (i=0; i < program->num_kernels; i++)
+        {
+          if (program->kernel_names)
+            POCL_MEM_FREE(program->kernel_names[i]);
+          if (program->default_kernels && program->default_kernels[i])
+            clReleaseKernel(program->default_kernels[i]);
+        }
+      POCL_MEM_FREE(program->kernel_names);
+      POCL_MEM_FREE(program->default_kernels);
+    }
   POCL_MEM_FREE(program->binaries);
   POCL_MEM_FREE(program->binary_sizes);
   POCL_MEM_FREE(unique_devlist);
