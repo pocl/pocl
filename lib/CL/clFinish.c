@@ -111,9 +111,7 @@ static void exec_commands (_cl_command_node *node_list)
     {
       event = &(node->event);
 
-      if (node->device->ops->compile_submitted_kernels
-          && !(node->type == CL_COMMAND_NDRANGE_KERNEL 
-               && node->command.run.kernel->program->is_pocl_binary))
+      if (node->device->ops->compile_submitted_kernels)
         node->device->ops->compile_submitted_kernels (node);
 
       switch (node->type)
