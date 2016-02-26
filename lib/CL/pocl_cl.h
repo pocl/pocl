@@ -534,9 +534,13 @@ struct _cl_program {
   size_t *binary_sizes; 
   unsigned char **binaries; 
   /* Poclcc binary format*/
-  unsigned is_pocl_binary;
   size_t *pocl_binary_sizes;
   unsigned char **pocl_binaries;
+  /* "default" kernels */
+  size_t num_kernels;
+  char **kernel_names;
+  cl_kernel *default_kernels;
+
   /* implementation */
   cl_kernel kernels;
   /* Per-device program hash after build */

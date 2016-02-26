@@ -103,6 +103,10 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
        (size_t*) calloc (num_devices, sizeof(size_t))) == NULL ||
       (program->binaries = (unsigned char**)
        calloc (num_devices, sizeof(unsigned char*))) == NULL ||
+      (program->pocl_binaries = (unsigned char**)
+       calloc (program->num_devices, sizeof(unsigned char*))) == NULL ||
+      (program->pocl_binary_sizes =
+             (size_t*) calloc (num_devices, sizeof(size_t))) == NULL ||
       (program->build_log = (char**)
        calloc (num_devices, sizeof(char*))) == NULL ||
       ((program->llvm_irs =
@@ -123,12 +127,10 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
   program->source = NULL;
   program->kernels = NULL;
   program->build_status = CL_BUILD_NONE;
-
-  /* We do no want a binary with different kind of binary in it
-   * So we can alias the pointers for the IR binary and the pocl binary  
-   */
-  unsigned is_pocl_binary = strncmp(
-    (const char*)binaries[0], "BC", 2);
+  program->num_kernels = 0;
+  program->default_kernels = NULL;
+  program->kernel_names = NULL;
+  char program_bc_path[POCL_FILENAME_LENGTH];
 
   for (i = 0; i < num_devices; ++i)
     {
@@ -170,8 +172,6 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
         }
     }
   
-  program->is_pocl_binary = is_pocl_binary;  
-
   POCL_RETAIN_OBJECT(context);
 
   if (errcode_ret != NULL)
@@ -188,6 +188,8 @@ ERROR_CLEAN_PROGRAM_AND_BINARIES:
       POCL_MEM_FREE(program->binaries[i]);
   POCL_MEM_FREE(program->binaries);
   POCL_MEM_FREE(program->binary_sizes);
+  POCL_MEM_FREE(program->pocl_binaries);
+  POCL_MEM_FREE(program->pocl_binary_sizes);
 /*ERROR_CLEAN_PROGRAM:*/
   POCL_MEM_FREE(program);
 ERROR:
