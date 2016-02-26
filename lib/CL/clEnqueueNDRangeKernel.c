@@ -237,15 +237,16 @@ DETERMINE_LOCAL_SIZE:
   pocl_cache_make_kernel_cachedir_path(cachedir, kernel->program,
                                        realdev, kernel,
                                        local_x, local_y, local_z);
-  
-  if (!kernel->program->is_pocl_binary) 
+
+  int realdev_i = pocl_cl_device_to_index(kernel->program, realdev);
+  if (kernel->program->source || kernel->program->binaries[realdev_i])
     {
       error = pocl_llvm_generate_workgroup_function(realdev,
-                                                    kernel, 
+                                                    kernel,
                                                     local_x, local_y, local_z);
       if (error) goto ERROR;
     }
-  
+
   error = pocl_create_command (&command_node, command_queue,
                                CL_COMMAND_NDRANGE_KERNEL,
                                event, num_events_in_wait_list,
@@ -338,32 +339,6 @@ DETERMINE_LOCAL_SIZE:
       }
   }
 
-  if (kernel->program->is_pocl_binary) 
-    {          
-      unsigned char *binary;
-      int binary_size;
-      POCL_RETURN_ERROR_COND(
-        (error=pocl_binary_search_kernel_binary(
-          kernel->program->pocl_binaries,
-          kernel->program->num_devices,
-          realdev, kernel->name, 
-          &binary, &binary_size)) 
-        != CL_SUCCESS,
-        error);
-            
-      char objfile[POCL_FILENAME_LENGTH];
-      snprintf(objfile, POCL_FILENAME_LENGTH, 
-               "%s/%s.so", 
-               cachedir,
-               kernel->name);
-      
-      FILE *fp = fopen(objfile, "w");
-      fwrite(binary, sizeof(char), binary_size, fp);
-      fclose(fp);
-      
-      realdev->ops->load_binary(objfile, command_node);
-    }
-  
   pocl_command_enqueue (command_queue, command_node);
   error = CL_SUCCESS;
 

@@ -212,7 +212,6 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->run_native = pocl_basic_run_native;
   ops->get_timer_value = pocl_basic_get_timer_value;
   ops->get_supported_image_formats = pocl_basic_get_supported_image_formats;
-  ops->load_binary = pocl_basic_load_binary;
 }
 
 void
@@ -891,7 +890,7 @@ struct compiler_cache_item
 static compiler_cache_item *compiler_cache;
 static pocl_lock_t compiler_cache_lock;
 
-void pocl_basic_load_binary(const char *binary_path, _cl_command_node *cmd)
+void check_compiler_cache (_cl_command_node *cmd)
 {
   char workgroup_string[WORKGROUP_STRING_LENGTH];
   lt_dlhandle dlhandle;
@@ -955,5 +954,6 @@ void
 pocl_basic_compile_submitted_kernels (_cl_command_node *cmd)
 {
   if (cmd->type == CL_COMMAND_NDRANGE_KERNEL)
-    pocl_basic_load_binary (NULL, cmd);
+    check_compiler_cache (cmd);
+
 }
