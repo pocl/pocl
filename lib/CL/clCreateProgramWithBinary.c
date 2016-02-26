@@ -25,6 +25,7 @@
 #include "pocl_util.h"
 #include <string.h>
 #include "pocl_binary.h"
+#include "pocl_cache.h"
 
 CL_API_ENTRY cl_program CL_API_CALL
 POname(clCreateProgramWithBinary)(cl_context                     context,
@@ -134,33 +135,35 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
 
   for (i = 0; i < num_devices; ++i)
     {
-      program->binary_sizes[i] = lengths[i];
-      program->binaries[i] = (unsigned char*) malloc (lengths[i]);
-      program->pocl_binaries = program->binaries;
-      program->pocl_binary_sizes = program->binary_sizes;
-      
-      /* IR binary (it always starts with those 2 char)
-       * It would be better if LLVM had an external function to check 
-       * the header of IR files
-       */
-      if ( !is_pocl_binary 
-           && !strncmp((const char *)binaries[i], "BC", 2) )
+      /* LLVM IR */
+      if (!strncmp((const char *)binaries[i], "BC", 2))
         {
-          memcpy (program->binaries[i], 
-                  binaries[i], 
-                  lengths[i]);
+          program->binary_sizes[i] = lengths[i];
+          program->binaries[i] = (unsigned char*) malloc(lengths[i]);
+          memcpy (program->binaries[i], binaries[i], lengths[i]);
           if (binary_status != NULL)
             binary_status[i] = CL_SUCCESS;
-          
-        } 
+        }
       /* Poclcc binary */
-      else if (is_pocl_binary 
-               && pocl_binary_check_binary(device_list[i], (pocl_binary *)binaries[i])) 
+      else if (pocl_binary_check_binary(device_list[i], binaries[i]))
         {
+          program->pocl_binary_sizes[i] = lengths[i];
+          program->pocl_binaries[i] = (unsigned char*) malloc(lengths[i]);
           memcpy (program->pocl_binaries[i], binaries[i], lengths[i]);
+
+          int error = pocl_cache_create_program_cachedir(program, i,
+                                                     NULL, 0, program_bc_path);
+          POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
+                             "Could not create program cachedir");
+          void* write_cache_lock = pocl_cache_acquire_writer_lock_i(program, i);
+          assert(write_cache_lock);
+          POCL_GOTO_ERROR_ON(pocl_binary_untar(program, i),
+                             CL_INVALID_BINARY,
+                             "Could not unpack a pocl binary\n");
+          pocl_cache_release_lock(write_cache_lock);
+
           if (binary_status != NULL)
             binary_status[i] = CL_SUCCESS;
-          
         } 
       /* Unknown binary */
       else 
