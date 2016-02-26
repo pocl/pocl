@@ -568,6 +568,7 @@ size_t pocl_binary_sizeof_binary(cl_program program, unsigned device_i)
 cl_int pocl_binary_get_kernel_metadata(unsigned char *binary, const char *kernel_name,
                                        cl_kernel kernel, cl_device_id device)
 {
+  assert(kernel_name);
   size_t name_len = strlen(kernel_name);
 
   int found;
@@ -578,24 +579,24 @@ cl_int pocl_binary_get_kernel_metadata(unsigned char *binary, const char *kernel
 
   unsigned char* buffer = read_header(&b, binary);
 
-  if (pocl_binary_check_binary(device, binary))
+  POCL_RETURN_ERROR_ON((!pocl_binary_check_binary(device, binary)),
+                       CL_INVALID_PROGRAM,
+                       "Deserialized a binary, but it doesn't seem to be "
+                       "for this device.\n");
+
+  unsigned j;
+  assert(b.num_kernels > 0);
+  for (j=0; j < b.num_kernels; j++)
     {
-      unsigned j;
-      assert(b.num_kernels > 0);
-      for (j=0; j < b.num_kernels; j++)
+      if (pocl_binary_deserialize_kernel_from_buffer(
+            &buffer, &k, kernel_name, name_len, NULL) == CL_SUCCESS)
         {
-          if (pocl_binary_deserialize_kernel_from_buffer(
-                &buffer, &k, kernel_name, name_len, NULL) == CL_SUCCESS)
-            {
-              found = 1;
-              break;
-            }
+          found = 1;
+          break;
         }
     }
-  else
-    POCL_MSG_WARN("Deserialized a binary, but it doesn't seem to be for this device.\n");
 
-  POCL_RETURN_ERROR_ON((!found), CL_INVALID_PROGRAM_EXECUTABLE, "Kernel not found\n");
+  POCL_RETURN_ERROR_ON((!found), CL_INVALID_KERNEL_NAME, "Kernel not found\n");
 
   kernel->num_args = k.num_args;
   kernel->num_locals = k.num_locals;
