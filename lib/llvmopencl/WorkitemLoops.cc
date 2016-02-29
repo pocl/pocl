@@ -513,9 +513,9 @@ WorkitemLoops::ProcessFunction(Function &F)
 
       GlobalVariable *gv;
       gv = M->getGlobalVariable("_local_size_x");
-      auto *Int32Ty = Type::getInt32Ty(M->getContext());
+      auto *SizeT_Ty = Type::getIntNTy(M->getContext(), size_t_width);
       if (gv == NULL) 
-        gv = new GlobalVariable(*M, Int32Ty, true, GlobalValue::CommonLinkage, NULL, "_local_size_x", NULL, llvm::GlobalValue::ThreadLocalMode::NotThreadLocal, 0, true);
+        gv = new GlobalVariable(*M, SizeT_Ty, true, GlobalValue::CommonLinkage, NULL, "_local_size_x", NULL, llvm::GlobalValue::ThreadLocalMode::NotThreadLocal, 0, true);
 
       l = CreateLoopAround(
         *original, l.first, l.second, peelFirst, 
@@ -523,7 +523,7 @@ WorkitemLoops::ProcessFunction(Function &F)
 
       gv = M->getGlobalVariable("_local_size_y");
       if (gv == NULL) 
-        gv = new GlobalVariable(*M, Int32Ty, false, GlobalValue::CommonLinkage, NULL, "_local_size_y");
+        gv = new GlobalVariable(*M, SizeT_Ty, false, GlobalValue::CommonLinkage, NULL, "_local_size_y");
 
       l = CreateLoopAround(
         *original, l.first, l.second, 
@@ -531,7 +531,7 @@ WorkitemLoops::ProcessFunction(Function &F)
     
       gv = M->getGlobalVariable("_local_size_z");
       if (gv == NULL) 
-        gv = new GlobalVariable(*M, Int32Ty, true, GlobalValue::CommonLinkage, NULL, "_local_size_z", NULL, llvm::GlobalValue::ThreadLocalMode::NotThreadLocal, 0, true);
+        gv = new GlobalVariable(*M, SizeT_Ty, true, GlobalValue::CommonLinkage, NULL, "_local_size_z", NULL, llvm::GlobalValue::ThreadLocalMode::NotThreadLocal, 0, true);
 
       l = CreateLoopAround(
         *original, l.first, l.second, 
