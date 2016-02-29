@@ -34,9 +34,8 @@
 #endif
 
 /* writes pixel to coord in image */
-void pocl_write_pixel (void* color_, void* image, int4 coord)
+void pocl_write_pixel (void* color_, ADDRESS_SPACE dev_image_t* dev_image, int4 coord)
 {  
-  ADDRESS_SPACE dev_image_t* dev_image = *((ADDRESS_SPACE dev_image_t**)image);
   uint4 *color = (uint4*)color_;
   int i, idx;
   int width = dev_image->width;
@@ -88,7 +87,7 @@ void pocl_write_pixel (void* color_, void* image, int4 coord)
   {                                                                     \
   int4 coord4;                                                          \
   INITCOORD##__COORD__(coord4, coord);                                  \
-  pocl_write_pixel (&color, &image, coord4);                             \
+  pocl_write_pixel (&color, *(ADDRESS_SPACE dev_image_t**)&image, coord4);                             \
   }                                                                     \
 
 IMPLEMENT_WRITE_IMAGE_INT_COORD(image2d_t, uint4, ui, int2)
