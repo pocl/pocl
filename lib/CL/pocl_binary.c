@@ -132,7 +132,7 @@ typedef struct pocl_binary_s {
 
 /***********************************************************/
 
-static unsigned char* read_header(pocl_binary *b, unsigned char *buffer)
+static unsigned char* read_header(pocl_binary *b, const unsigned char *buffer)
 {
   memset(b, 0, sizeof(pocl_binary));
   BUFFER_READ(b->endian, char);
@@ -143,7 +143,7 @@ static unsigned char* read_header(pocl_binary *b, unsigned char *buffer)
   BUFFER_READ(b->num_kernels, uint32_t);
   memcpy(b->program_build_hash, buffer, sizeof(SHA1_digest_t));
   buffer += sizeof(SHA1_digest_t);
-  return buffer;
+  return (unsigned char*)buffer;
 }
 
 #define FNV_OFFSET UINT64_C(0xcbf29ce484222325)
@@ -173,7 +173,7 @@ static uint64_t pocl_binary_get_device_id(cl_device_id device)
   return result;
 }
 
-static unsigned char* check_binary(cl_device_id device, unsigned char *binary)
+static unsigned char* check_binary(cl_device_id device, const unsigned char *binary)
 {
   pocl_binary b;
   unsigned char *p = read_header(&b, binary);
@@ -188,7 +188,7 @@ static unsigned char* check_binary(cl_device_id device, unsigned char *binary)
   return p;
 }
 
-int pocl_binary_check_binary(cl_device_id device, unsigned char *binary)
+int pocl_binary_check_binary(cl_device_id device, const unsigned char *binary)
 {
   return (check_binary(device, binary) != NULL);
 }
@@ -197,7 +197,7 @@ int pocl_binary_check_binary(cl_device_id device, unsigned char *binary)
 
 void pocl_binary_set_program_buildhash(cl_program program,
                                          unsigned device_i,
-                                         unsigned char *binary)
+                                         const unsigned char *binary)
 {
   pocl_binary b;
   read_header(&b, binary);

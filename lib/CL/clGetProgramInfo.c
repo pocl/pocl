@@ -168,7 +168,7 @@ POname(clGetProgramInfo)(cl_program program,
          --- guicho271828
       */
       size_t num_kernels = program->num_kernels;
-      const char ** kernel_names = program->kernel_names;
+      char ** kernel_names = program->kernel_names;
       size_t size = 0;
 
       /* optimized for clarity */
