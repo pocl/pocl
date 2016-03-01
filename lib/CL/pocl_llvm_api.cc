@@ -1396,6 +1396,21 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
       input = ParseIRFile(program_bc_path, Err, *GlobalContext());
     }
 
+  /* Note this is a hack to get SPIR working. We'll be linking the
+   * host kernel library (plain LLVM IR) to the SPIR program.bc,
+   * so LLVM complains about incompatible DataLayouts. The proper solution
+   * would be to generate a SPIR kernel library
+   */
+  if (triple.getArch() == Triple::x86 || triple.getArch() == Triple::x86_64) {
+      if (input->getTargetTriple().substr(0, 6) == std::string("spir64")) {
+          input->setTargetTriple(triple.getTriple());
+          input->setDataLayout("e-m:e-i64:64-f80:128-n8:16:32:64-S128");
+      } else if (input->getTargetTriple().substr(0, 4) == std::string("spir")) {
+          input->setTargetTriple(triple.getTriple());
+          input->setDataLayout("e-m:e-p:32:32-i64:64-f80:32-n8:16:32-S32");
+      }
+  }
+
   // Later this should be replaced with indexed linking of source code
   // and/or bitcode for each kernel.
   llvm::Module *libmodule = kernel_library(device);
@@ -1563,15 +1578,6 @@ pocl_llvm_codegen(cl_kernel kernel,
     llvm::TargetMachine *target = GetTargetMachine(device);
 
     llvm::Module *input = ParseIRFile(infilename, Err, *GlobalContext());
-    if (triple.getArch() == Triple::x86 || triple.getArch() == Triple::x86_64) {
-        if (input->getTargetTriple().substr(0, 6) == std::string("spir64")) {
-            input->setTargetTriple(triple.getTriple());
-            input->setDataLayout("e-m:e-i64:64-f80:128-n8:16:32:64-S128");
-        } else if (input->getTargetTriple().substr(0, 4) == std::string("spir")) {
-            input->setTargetTriple(triple.getTriple());
-            input->setDataLayout("e-m:e-p:32:32-i64:64-f80:32-n8:16:32-S32");
-        }
-    }
 
     PassManager PM;
 #ifdef LLVM_OLDER_THAN_3_7
