@@ -51,6 +51,90 @@ find_from_list(llvm::StringRef             needle,
     }
     return false;
 }
+
+/* Fixes address space on opencl.imageX_t arguments to be global.
+ * Note this does not change the types in Function->FunctionType
+ * so it's only used inside CopyFunc on kernel library functions */
+static void fixOpenCLimageArguments(llvm::Function *Func) {
+  Function::arg_iterator b = Func->arg_begin();
+  Function::arg_iterator e = Func->arg_end();
+  for (; b != e; b++)  {
+      Argument *j = &*b;
+      Type *t = j->getType();
+      if (t->isPointerTy() && t->getPointerElementType()->isStructTy()) {
+        Type *pe_type = t->getPointerElementType();
+        if (pe_type->getStructName().startswith("opencl.image"))  {
+          //std::cerr << "BOOM \n" << t2->getStructName().data() << "\n";
+          Type *new_t = PointerType::get(pe_type, POCL_ADDRESS_SPACE_GLOBAL);
+          j->mutateType(new_t);
+        }// else
+          //std::cerr << "NO BOOM  " << t2->getStructName().data() << "\n";
+      }
+  }
+
+}
+
+/* Fixes opencl.imageX_t type arguments which miss address space global
+ * returns F if no changes are required, or a new cloned F if the arguments
+ * require a fix. To be used on user's kernel code itself, not on kernel library.
+ */
+static llvm::Function *
+CloneFuncFixOpenCLImageT(llvm::Module *Mod, llvm::Function *F)
+{
+  assert(F && "No function to copy");
+  assert(!F->isDeclaration());
+
+  int changed = 0;
+  ValueToValueMapTy VVMap;
+  SmallVector<Type *, 8> sv;
+  for (Function::arg_iterator i = F->arg_begin(), e = F->arg_end();
+       i != e; ++i) {
+      Argument *j = &*i;
+      Type *t = j->getType();
+      Type *new_t = t;
+      if (t->isPointerTy() && t->getPointerElementType()->isStructTy()) {
+          Type *pe_type = t->getPointerElementType();
+          if (pe_type->getStructName().startswith("opencl.image")) {
+            if (t->getPointerAddressSpace() != POCL_ADDRESS_SPACE_GLOBAL) {
+              new_t = PointerType::get(pe_type, POCL_ADDRESS_SPACE_GLOBAL);
+              changed = 1;
+              }
+            }
+        }
+      sv.push_back(new_t);
+    }
+
+    if (!changed)
+      return F;
+
+    F->removeFromParent();
+
+    FunctionType *NewFT = FunctionType::get(F->getReturnType(),
+                                         ArrayRef<Type *> (sv),
+                                         false);
+    assert(NewFT);
+    llvm::Function *DstFunc = nullptr;
+
+    DstFunc = Function::Create(NewFT, F->getLinkage(), F->getName(), Mod);
+
+    Function::arg_iterator j = DstFunc->arg_begin();
+    for (Function::const_arg_iterator i = F->arg_begin(),
+         e = F->arg_end();
+         i != e; ++i) {
+        j->setName(i->getName());
+        VVMap[&*i] = &*j;
+        ++j;
+    }
+
+    DstFunc->copyAttributesFrom(F);
+
+    SmallVector<ReturnInst*, 8> RI;          // Ignore returns cloned.
+    CloneFunctionInto(DstFunc, F, VVMap, true, RI);
+    delete F;
+
+    return DstFunc;
+}
+
 /* Find all functions in the calltree of F, append their
  * name to list.
  */
@@ -125,6 +209,7 @@ CopyFunc( const llvm::StringRef Name,
         SmallVector<ReturnInst*, 8> RI;          // Ignore returns cloned.
         DB_PRINT("  cloning %s\n", Name.data());
         CloneFunctionInto(DstFunc, SrcFunc, VVMap, true, RI);
+        fixOpenCLimageArguments(DstFunc);
     } else {
         DB_PRINT("  found %s, but its a declaration, do nothing\n",
                  Name.data());
@@ -185,8 +270,22 @@ link(llvm::Module *krn, const llvm::Module *lib)
     ValueToValueMapTy vvm;
     std::list<llvm::StringRef> declared;
 
-    // Inspect the kernel, find undefined functions
     llvm::Module::iterator fi,fe;
+
+    // Find and fix opencl.imageX_t arguments
+    for (fi=krn->begin(), fe=krn->end();
+         fi != fe;
+         fi++) {
+        llvm::Function *f = &*fi;
+        if (f->isDeclaration())
+            continue;
+        // need to restart iteration if we replace a function
+        if (CloneFuncFixOpenCLImageT(krn, f) != f) {
+          fi = krn->begin();
+          }
+      }
+
+    // Inspect the kernel, find undefined functions
     for (fi=krn->begin(), fe=krn->end();
          fi != fe;
          fi++) {
