@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014 pocl developers
+#   Copyright (c) 2016 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -23,24 +23,9 @@
 #
 #=============================================================================
 
-#EXTRA_DIST = standalone.cl
+add_executable(poclcc poclcc.c)
 
-#noinst_DATA = $(EXTRA_DIST:.cl=.bc)
+target_link_libraries(poclcc ${POCLU_LINK_OPTIONS})
 
-#.cl.bc:
-# ../../scripts/pocl-standalone -h $(@:.bc=.h) -o $@ $<
-
-#clean-local:
-# rm -f $(EXTRA_DIST:.cl=.bc) $(EXTRA_DIST:.cl=.h)
-
-add_test("pocl-standalone" "/bin/sh" "${CMAKE_BINARY_DIR}/scripts/pocl-standalone"
-          -h "${CMAKE_BINARY_DIR}/standalone.h"
-          -o "${CMAKE_BINARY_DIR}/standalone.bc"
-          "${CMAKE_CURRENT_SOURCE_DIR}/standalone.cl")
-
-set_tests_properties( "pocl-standalone"
-  PROPERTIES
-    COST 3.0
-    PROCESSORS 1
-    LABELS "internal"
-    DEPENDS "pocl_version_check")
+install(TARGETS "poclcc" RUNTIME
+        DESTINATION "${POCL_INSTALL_PUBLIC_BINDIR}")

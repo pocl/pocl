@@ -28,6 +28,7 @@
 #include "pocl_util.h"
 #include "pocl_cache.h"
 #include "utlist.h"
+#include "pocl_binary.h"
 #ifndef _MSC_VER
 #  include <unistd.h>
 #else
@@ -234,12 +235,17 @@ DETERMINE_LOCAL_SIZE:
 
   char cachedir[POCL_FILENAME_LENGTH];
   pocl_cache_make_kernel_cachedir_path(cachedir, kernel->program,
-                                  realdev, kernel,
-                                  local_x, local_y, local_z);
+                                       realdev, kernel,
+                                       local_x, local_y, local_z);
 
-  error = pocl_llvm_generate_workgroup_function(realdev,
-                                kernel, local_x, local_y, local_z);
-  if (error) goto ERROR;
+  int realdev_i = pocl_cl_device_to_index(kernel->program, realdev);
+  if (kernel->program->source || kernel->program->binaries[realdev_i])
+    {
+      error = pocl_llvm_generate_workgroup_function(realdev,
+                                                    kernel,
+                                                    local_x, local_y, local_z);
+      if (error) goto ERROR;
+    }
 
   error = pocl_create_command (&command_node, command_queue,
                                CL_COMMAND_NDRANGE_KERNEL,

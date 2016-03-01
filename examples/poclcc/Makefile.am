@@ -22,13 +22,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-EXTRA_DIST = standalone.cl CMakeLists.txt
+EXTRA_DIST = poclcc.cl CMakeLists.txt
 
-noinst_DATA = $(EXTRA_DIST:.cl=.bc)
+#noinst_DATA = $(EXTRA_DIST:.cl=.bc)
 
-.cl.bc:
-	../../scripts/pocl-standalone -h $(@:.bc=.h) -o $@ $<
+.cl:
+	../../bin/poclc $<
 
 clean-local:
-	rm -f standalone.bc standalone.h
+	rm -f poclcc.cl.pocl
 

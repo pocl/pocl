@@ -89,6 +89,7 @@
                             const void* pattern,      \
                             size_t pattern_size);     \
   void pocl_##__DRV__##_compile_submitted_kernels (_cl_command_node *node);  \
+  void pocl_##__DRV__##_load_binary (const char *binary_path, _cl_command_node *node); \
   void pocl_##__DRV__##_run (void *data, _cl_command_node* cmd);        \
   void pocl_##__DRV__##_run_native (void *data, _cl_command_node* cmd); \
   void* pocl_##__DRV__##_map_mem (void *data, void *buf_ptr,         \

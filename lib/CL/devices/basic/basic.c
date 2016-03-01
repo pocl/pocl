@@ -37,6 +37,7 @@
 #include "pocl_cache.h"
 #include "pocl_timing.h"
 #include "pocl_llvm.h"
+#include "pocl_file_util.h"
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
@@ -572,6 +573,10 @@ pocl_basic_run
       *(void **)(arguments[i]) = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, al->size);
     }
 
+  pc->local_size[0]=cmd->command.run.local_x;
+  pc->local_size[1]=cmd->command.run.local_y;
+  pc->local_size[2]=cmd->command.run.local_z;
+  
   for (z = 0; z < pc->num_groups[2]; ++z)
     {
       for (y = 0; y < pc->num_groups[1]; ++y)
@@ -912,13 +917,33 @@ void check_compiler_cache (_cl_command_node *cmd)
   ci->next = NULL;
   ci->tmp_dir = strdup(cmd->command.run.tmp_dir);
   ci->function_name = strdup (cmd->command.run.kernel->name);
-  const char* module_fn = llvm_codegen (cmd->command.run.tmp_dir,
+
+  char *module_fn = NULL;
+  cl_kernel k = cmd->command.run.kernel;
+  cl_program p = k->program;
+  cl_device_id dev = cmd->device;
+  int dev_i = pocl_cl_device_to_index(p, dev);
+
+  if (p->binaries[dev_i])
+    {
+      module_fn = (char *)llvm_codegen (cmd->command.run.tmp_dir,
                                         cmd->command.run.kernel,
                                         cmd->device);
+    }
+  else
+    {
+      module_fn = malloc(POCL_FILENAME_LENGTH);
+      pocl_cache_final_binary_path(module_fn, p, dev_i, k, 0, 0, 0);
+      POCL_MSG_PRINT_INFO("Using dynamic WG size binary: %s\n", module_fn);
+      if (!pocl_exists(module_fn))
+        POCL_ABORT("Dynamic WG size binary does not exist\n");
+    }
   dlhandle = lt_dlopen (module_fn);
+  free(module_fn);
+
   if (dlhandle == NULL)
     {
-      printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", 
+      printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n",
               module_fn, lt_dlerror());
       printf ("note: missing symbols in the kernel binary might be" 
               "reported as 'file not found' errors.\n");

@@ -71,7 +71,6 @@ POname(clCreateProgramWithSource)(cl_context context,
   }
 
   program->source = source;
-  program->compiler_options = NULL;
 
   for (i = 0; i < count; ++i)
     {
@@ -94,18 +93,19 @@ POname(clCreateProgramWithSource)(cl_context context,
 
   *source = '\0';
 
-  program->main_build_log[0] = 0;
   program->context = context;
   program->num_devices = context->num_devices;
   program->devices = context->devices;
-  program->kernels = NULL;
   program->build_status = CL_BUILD_NONE;
-  program->read_locks = NULL;
 
   if ((program->binary_sizes =
        (size_t*) calloc (program->num_devices, sizeof(size_t))) == NULL ||
       (program->binaries = (unsigned char**)
        calloc (program->num_devices, sizeof(unsigned char*))) == NULL ||
+      (program->pocl_binaries = (unsigned char**)
+       calloc (program->num_devices, sizeof(unsigned char*))) == NULL ||
+      (program->pocl_binary_sizes =
+             (size_t*) calloc (program->num_devices, sizeof(size_t))) == NULL ||
       (program->build_log = (char**)
        calloc (program->num_devices, sizeof(char*))) == NULL ||
       ((program->llvm_irs =
@@ -118,7 +118,6 @@ POname(clCreateProgramWithSource)(cl_context context,
       errcode = CL_OUT_OF_HOST_MEMORY;
       goto ERROR;
     }
-
 
   POCL_RETAIN_OBJECT(context);
 
@@ -133,6 +132,8 @@ ERROR:
     POCL_MEM_FREE(program->build_log);
     POCL_MEM_FREE(program->binaries);
     POCL_MEM_FREE(program->binary_sizes);
+    POCL_MEM_FREE(program->pocl_binaries);
+    POCL_MEM_FREE(program->pocl_binary_sizes);
     POCL_MEM_FREE(program->source);
   }
   POCL_MEM_FREE(program);

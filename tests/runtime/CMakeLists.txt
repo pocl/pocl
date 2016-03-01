@@ -29,7 +29,8 @@ set(PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_clSetEventCallback test_clEnqueueNativeKernel test_clBuildProgram
   test_clCreateKernelsInProgram test_clCreateKernel test_clGetKernelArgInfo
   test_version test_kernel_cache_includes test_event_cycle test_link_error
-  test_read-copy-write-buffer test_clCreateSubDevices test_event_free)
+  test_read-copy-write-buffer test_clCreateSubDevices test_event_free
+  test_enqueue_kernel_from_binary)
 
 #EXTRA_DIST= \
 # test_kernel_src_in_pwd.h \
@@ -93,6 +94,8 @@ add_test("runtime/clCreateSubDevices"  "test_clCreateSubDevices")
 
 add_test("runtime/test_event_free"  "test_event_free")
 
+add_test("runtime/test_enqueue_kernel_from_binary" "test_enqueue_kernel_from_binary")
+
 set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/clGetEventInfo" "runtime/clCreateProgramWithBinary"
   "runtime/clBuildProgram" "runtime/clFinish" "runtime/clSetEventCallback"
@@ -101,6 +104,7 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/test_kernel_cache_includes" "runtime/test_event_cycle"
   "runtime/test_read-copy-write-buffer" #"runtime/test_link_error"
   "runtime/test_event_free" "runtime/clCreateSubDevices"
+  "runtime/test_enqueue_kernel_from_binary"
   PROPERTIES
     COST 2.0
     PROCESSORS 1

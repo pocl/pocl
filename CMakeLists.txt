@@ -966,8 +966,8 @@ message(STATUS "OPENCL_CFLAGS: ${OPENCL_CFLAGS}")
 set(POCLU_LINK_OPTIONS ${LIBMATH} ${OPENCL_LIBS} "poclu")
 message(STATUS "POCLU LINK OPTS: ${POCLU_LINK_OPTIONS}")
 
-# DONE - just pocl-standalone script
-add_subdirectory("scripts")
+# poclcc bin
+add_subdirectory("bin")
 
 # TODO In progress
 add_subdirectory("tests")
