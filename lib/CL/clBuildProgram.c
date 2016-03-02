@@ -92,7 +92,8 @@ static const char cl_parameters_not_yet_supported_by_clang[] =
     snprintf(program->main_build_log + l, (640 - l), __VA_ARGS__); \
   }
 
-static void program_set_num_kernels(cl_program program)
+static void
+program_set_num_kernels(cl_program program)
 {
   unsigned i;
   for (i=0; i < program->num_devices; i++)
@@ -104,14 +105,16 @@ static void program_set_num_kernels(cl_program program)
         }
       if (program->pocl_binaries[i])
         {
-          program->num_kernels = pocl_binary_get_kernel_count(program->pocl_binaries[i]);
+          program->num_kernels =
+              pocl_binary_get_kernel_count(program->pocl_binaries[i]);
           return;
         }
     }
   POCL_ABORT("No binaries in a built program!\n");
 }
 
-static void program_set_kernel_names(cl_program program)
+static void
+program_set_kernel_names(cl_program program)
 {
   program->kernel_names = calloc(program->num_kernels, sizeof(char*));
   unsigned i;
@@ -119,7 +122,9 @@ static void program_set_kernel_names(cl_program program)
     {
       if (program->binaries[i])
         {
-          pocl_llvm_get_kernel_names(program, program->kernel_names, program->num_kernels);
+          pocl_llvm_get_kernel_names(program,
+                                     program->kernel_names,
+                                     program->num_kernels);
           return;
         }
       if (program->pocl_binaries[i])
@@ -307,7 +312,9 @@ CL_API_SUFFIX__VERSION_1_0
             write_cache_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
           assert(write_cache_lock);
           errcode = pocl_read_file(program_bc_path, &binary, &fsize);
-          POCL_GOTO_ERROR_ON(errcode, CL_BUILD_ERROR, "Failed to read binaries from program.bc to memory: %s\n", program_bc_path);
+          POCL_GOTO_ERROR_ON(errcode, CL_BUILD_ERROR,
+                             "Failed to read binaries from program.bc to "
+                             "memory: %s\n", program_bc_path);
 
           program->binary_sizes[device_i] = (size_t)fsize;
           program->binaries[device_i] = (unsigned char *)binary;

@@ -573,9 +573,9 @@ pocl_basic_run
       *(void **)(arguments[i]) = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, al->size);
     }
 
-  pc->local_size[0]=cmd->command.run.local_x;
-  pc->local_size[1]=cmd->command.run.local_y;
-  pc->local_size[2]=cmd->command.run.local_z;
+  pc->local_size[0] = cmd->command.run.local_x;
+  pc->local_size[1] = cmd->command.run.local_y;
+  pc->local_size[2] = cmd->command.run.local_z;
   
   for (z = 0; z < pc->num_groups[2]; ++z)
     {
