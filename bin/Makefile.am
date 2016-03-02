@@ -22,8 +22,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-CFLAGS += -I../include/ -lOpenCL
-LDFLAGS += -L../lib/CL/.libs/
+AM_LDFLAGS = @OPENCL_LIBS@ ../lib/poclu/libpoclu.la
+AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include @OPENCL_CFLAGS@
 
 bin_PROGRAMS = poclcc
 poclcc_SOURCES = poclcc.c
@@ -31,29 +31,3 @@ pkgdataincludedir = $(pkgdatadir)/include
 
 CLEANFILES = poclcc
 EXTRA_DIST = poclcc.c CMakeLists.txt
-
-do_subst = sed -e 's|[@]abs_top_srcdir[@]|$(abs_top_srcdir)|g'		\
-               -e 's|[@]abs_top_builddir[@]|$(abs_top_builddir)|g'	\
-               -e 's|[@]pkgdataincludedir[@]|$(pkgdataincludedir)|g'		\
-               -e 's|[@]pkglibdir[@]|$(pkglibdir)|g'			\
-               -e 's|[@]pkgdatadir[@]|$(pkgdatadir)|g'			\
-               -e 's|[@]pkglibexecdir[@]|$(pkglibexecdir)|g'		\
-               -e 's|[@]CLANG[@]|$(CLANG)|g'				\
-               -e 's|[@]CLFLAGS[@]|$(CLFLAGS)|g'			\
-               -e 's|[@]FORCED_CLFLAGS[@]|$(FORCED_CLFLAGS)|g'		\
-               -e 's|[@]LD_SHARED[@]|$(LD_SHARED)|g'			\
-               -e 's|[@]OCL_KERNEL_TARGET[@]|$(OCL_KERNEL_TARGET)|g'	\
-               -e 's|[@]TARGET[@]|$(TARGET)|g'				\
-               -e 's|[@]TARGET_CLANG_FLAGS[@]|$(TARGET_CLANG_FLAGS)|g'	\
-               -e 's|[@]TARGET_LLC_FLAGS[@]|$(TARGET_LLC_FLAGS)|g'	\
-               -e 's|[@]TARGET_LD_FLAGS[@]|$(TARGET_LD_FLAGS)|g'	\
-               -e 's|[@]HOST[@]|$(HOST)|g'				\
-               -e 's|[@]HOST_CLANG_FLAGS[@]|$(HOST_CLANG_FLAGS)|g'	\
-               -e 's|[@]HOST_LLC_FLAGS[@]|$(HOST_LLC_FLAGS)|g'		\
-               -e 's|[@]HOST_LD_FLAGS[@]|$(HOST_LD_FLAGS)|g'		\
-               -e 's|[@]OPT[@]|$(OPT)|g'				\
-               -e 's|[@]LLVM_LINK[@]|$(LLVM_LINK)|g'			\
-               -e 's|[@]LLC[@]|$(LLC)|g' 				\
-               -e 's|[@]LLVM_VERSION[@]|$(LLVM_VERSION)|g'              \
-               -e 's|[@]HOST_DEVICE_EXTENSION_DEFINES[@]|$(HOST_DEVICE_EXTENSION_DEFINES)|g'
-

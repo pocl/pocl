@@ -27,7 +27,7 @@ EXTRA_DIST = poclcc.cl CMakeLists.txt
 #noinst_DATA = $(EXTRA_DIST:.cl=.bc)
 
 .cl:
-	../../bin/poclc $<
+	../../bin/poclcc $<
 
 clean-local:
 	rm -f poclcc.cl.pocl

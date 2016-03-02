@@ -23,16 +23,6 @@
 #
 #=============================================================================
 
-#EXTRA_DIST = standalone.cl
-
-#noinst_DATA = $(EXTRA_DIST:.cl=.bc)
-
-#.cl.bc:
-# ../../scripts/pocl-standalone -h $(@:.bc=.h) -o $@ $<
-
-#clean-local:
-# rm -f $(EXTRA_DIST:.cl=.bc) $(EXTRA_DIST:.cl=.h)
-
 add_test(NAME "poclcc" COMMAND "poclcc"
           -o "${CMAKE_BINARY_DIR}/poclcc.cl.pocl"
           "${CMAKE_CURRENT_SOURCE_DIR}/poclcc.cl")
