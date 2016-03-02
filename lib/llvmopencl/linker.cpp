@@ -56,22 +56,19 @@ find_from_list(llvm::StringRef             needle,
  * Note this does not change the types in Function->FunctionType
  * so it's only used inside CopyFunc on kernel library functions */
 static void fixOpenCLimageArguments(llvm::Function *Func) {
-  Function::arg_iterator b = Func->arg_begin();
-  Function::arg_iterator e = Func->arg_end();
-  for (; b != e; b++)  {
-      Argument *j = &*b;
-      Type *t = j->getType();
-      if (t->isPointerTy() && t->getPointerElementType()->isStructTy()) {
-        Type *pe_type = t->getPointerElementType();
-        if (pe_type->getStructName().startswith("opencl.image"))  {
-          //std::cerr << "BOOM \n" << t2->getStructName().data() << "\n";
-          Type *new_t = PointerType::get(pe_type, POCL_ADDRESS_SPACE_GLOBAL);
-          j->mutateType(new_t);
-        }// else
-          //std::cerr << "NO BOOM  " << t2->getStructName().data() << "\n";
-      }
-  }
-
+    Function::arg_iterator b = Func->arg_begin();
+    Function::arg_iterator e = Func->arg_end();
+    for (; b != e; b++)  {
+        Argument *j = &*b;
+        Type *t = j->getType();
+        if (t->isPointerTy() && t->getPointerElementType()->isStructTy()) {
+            Type *pe_type = t->getPointerElementType();
+            if (pe_type->getStructName().startswith("opencl.image"))  {
+                Type *new_t = PointerType::get(pe_type, POCL_ADDRESS_SPACE_GLOBAL);
+                j->mutateType(new_t);
+            }
+        }
+    }
 }
 
 /* Fixes opencl.imageX_t type arguments which miss address space global
@@ -81,27 +78,27 @@ static void fixOpenCLimageArguments(llvm::Function *Func) {
 static llvm::Function *
 CloneFuncFixOpenCLImageT(llvm::Module *Mod, llvm::Function *F)
 {
-  assert(F && "No function to copy");
-  assert(!F->isDeclaration());
+    assert(F && "No function to copy");
+    assert(!F->isDeclaration());
 
-  int changed = 0;
-  ValueToValueMapTy VVMap;
-  SmallVector<Type *, 8> sv;
-  for (Function::arg_iterator i = F->arg_begin(), e = F->arg_end();
-       i != e; ++i) {
-      Argument *j = &*i;
-      Type *t = j->getType();
-      Type *new_t = t;
-      if (t->isPointerTy() && t->getPointerElementType()->isStructTy()) {
-          Type *pe_type = t->getPointerElementType();
-          if (pe_type->getStructName().startswith("opencl.image")) {
-            if (t->getPointerAddressSpace() != POCL_ADDRESS_SPACE_GLOBAL) {
-              new_t = PointerType::get(pe_type, POCL_ADDRESS_SPACE_GLOBAL);
-              changed = 1;
-              }
+    int changed = 0;
+    ValueToValueMapTy VVMap;
+    SmallVector<Type *, 8> sv;
+    for (Function::arg_iterator i = F->arg_begin(), e = F->arg_end();
+          i != e; ++i) {
+        Argument *j = &*i;
+        Type *t = j->getType();
+        Type *new_t = t;
+        if (t->isPointerTy() && t->getPointerElementType()->isStructTy()) {
+            Type *pe_type = t->getPointerElementType();
+            if (pe_type->getStructName().startswith("opencl.image")) {
+                if (t->getPointerAddressSpace() != POCL_ADDRESS_SPACE_GLOBAL) {
+                    new_t = PointerType::get(pe_type, POCL_ADDRESS_SPACE_GLOBAL);
+                    changed = 1;
+                }
             }
         }
-      sv.push_back(new_t);
+        sv.push_back(new_t);
     }
 
     if (!changed)
@@ -281,9 +278,9 @@ link(llvm::Module *krn, const llvm::Module *lib)
             continue;
         // need to restart iteration if we replace a function
         if (CloneFuncFixOpenCLImageT(krn, f) != f) {
-          fi = krn->begin();
-          }
-      }
+            fi = krn->begin();
+        }
+    }
 
     // Inspect the kernel, find undefined functions
     for (fi=krn->begin(), fe=krn->end();
