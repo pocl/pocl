@@ -34,6 +34,7 @@
 #include <sys/stat.h>
 #include <dirent.h>
 #include <libgen.h>
+#include <endian.h>
 
 #if defined(WORDS_BIGENDIAN) && WORDS_BIGENDIAN == 1
   const char host_endian = 1;
@@ -43,7 +44,7 @@
 
 /* pocl binary identifier */
 #define POCLCC_STRING_ID "poclbin"
-#define POCLCC_STRING_ID_LENGTH 7
+#define POCLCC_STRING_ID_LENGTH 8
 #define POCLCC_VERSION 1
 
 /* pocl binary structures */
@@ -92,14 +93,28 @@ typedef struct pocl_binary_s
   SHA1_digest_t program_build_hash;
 } pocl_binary;
 
+
+#define TO_LE(x)                                \
+  ((sizeof(x) == 8) ? htole64((uint64_t)x) :    \
+  ((sizeof(x) == 4) ? htole32((uint32_t)x) :    \
+  ((sizeof(x) == 2) ? htole16((uint16_t)x) :    \
+  ((sizeof(x) == 1) ? (uint8_t)(x) : 0 ))))
+
+#define FROM_LE(x)                              \
+  ((sizeof(x) == 8) ? le64toh((uint64_t)x) :    \
+  ((sizeof(x) == 4) ? le32toh((uint32_t)x) :    \
+  ((sizeof(x) == 2) ? le16toh((uint16_t)x) :    \
+  ((sizeof(x) == 1) ? (uint8_t)(x) : 0 ))))
+
 /***********************************************************/
 
 #define BUFFER_STORE(elem, type)                  \
-  *(type*)buffer = elem;                          \
+  *(type*)buffer = (type)TO_LE((type)elem);       \
   buffer += sizeof(type)
 
 #define BUFFER_READ(elem, type)                   \
   elem = *(type*)buffer;                          \
+  elem = (type)FROM_LE((type)elem);               \
   buffer += sizeof(type)
 
 #define BUFFER_STORE_STR2(elem, len)              \
@@ -151,7 +166,6 @@ static unsigned char*
 read_header(pocl_binary *b, const unsigned char *buffer)
 {
   memset(b, 0, sizeof(pocl_binary));
-  BUFFER_READ(b->endian, char);
   memcpy(b->pocl_id, buffer, POCLCC_STRING_ID_LENGTH);
   buffer += POCLCC_STRING_ID_LENGTH;
   BUFFER_READ(b->device_id, uint64_t);
@@ -195,8 +209,6 @@ check_binary(cl_device_id device, const unsigned char *binary)
 {
   pocl_binary b;
   unsigned char *p = read_header(&b, binary);
-  if (b.endian != host_endian)
-    return NULL;
   if (b.version != POCLCC_VERSION)
     return NULL;
   if (strncmp(b.pocl_id, POCLCC_STRING_ID, POCLCC_STRING_ID_LENGTH))
@@ -349,7 +361,7 @@ pocl_binary_serialize_kernel_to_buffer(cl_kernel kernel,
   BUFFER_STORE(0, uint64_t); // struct_size
   BUFFER_STORE(0, uint64_t); // tar_size
   BUFFER_STORE(0, uint32_t); // arginfo size
-  size_t namelen = strlen(kernel->name);
+  uint32_t namelen = strlen(kernel->name);
   BUFFER_STORE_STR2(kernel->name, namelen);
 
   BUFFER_STORE(kernel->num_args, uint32_t);
@@ -518,7 +530,6 @@ pocl_binary_serialize(cl_program program, unsigned device_i, size_t *size)
 
   unsigned num_kernels = program->num_kernels;
 
-  BUFFER_STORE(host_endian, char);
   memcpy(buffer, POCLCC_STRING_ID, POCLCC_STRING_ID_LENGTH);
   buffer += POCLCC_STRING_ID_LENGTH;
   BUFFER_STORE(pocl_binary_get_device_id(program->devices[device_i]), uint64_t);
