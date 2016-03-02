@@ -16,7 +16,6 @@ POname(clCreateKernelsInProgram)(cl_program      program ,
                          cl_uint *       num_kernels_ret ) CL_API_SUFFIX__VERSION_1_0
 {
   unsigned idx;
-  unsigned num_kern_found;
 
   POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
 
@@ -34,25 +33,31 @@ POname(clCreateKernelsInProgram)(cl_program      program ,
     CL_INVALID_PROGRAM_EXECUTABLE, "No built binaries in program "
     "(this shouldn't happen...)\n");
 
-  num_kern_found = pocl_llvm_get_kernel_count(program);
+  POCL_RETURN_ERROR_ON(((kernels != NULL && num_kernels == 0)
+                       || (kernels == NULL && num_kernels != 0)),
+                       CL_INVALID_VALUE, "kernels & num_kernels must be "
+                       "either both set, or both NULL\n");
 
-  POCL_RETURN_ERROR_ON((kernels && num_kernels < num_kern_found), CL_INVALID_VALUE,
-      "kernels is not NULL and num_kernels "
-      "is less than the number of kernels in program");
+  POCL_RETURN_ERROR_ON((kernels && num_kernels < program->num_kernels),
+                       CL_INVALID_VALUE,
+                       "kernels is not NULL and num_kernels "
+                       "is less than the number of kernels in program\n");
 
-  if (num_kern_found > 0 && kernels != NULL)
+  for (idx = 0; idx < num_kernels; idx++)
+    kernels[idx] = NULL;
+
+  if (num_kernels > program->num_kernels)
+    num_kernels = program->num_kernels;
+
+  cl_int error_ret;
+  if (num_kernels > 0 && kernels != NULL)
     {
-      /* Get list of kernel names in program */
-      char** knames = (char**)calloc( num_kernels, sizeof(const char *) );
-      if (knames == NULL)
-        return CL_OUT_OF_HOST_MEMORY;
-      pocl_llvm_get_kernel_names (program, knames, num_kernels);
-
       /* Create the kernels in the 'knames' list */
-      for (idx = 0; idx < num_kern_found; idx++)
+      for (idx = 0; idx < num_kernels; idx++)
         {
-          cl_int error_ret;
-          kernels[idx] = POname(clCreateKernel) (program, knames[idx], &error_ret);
+          kernels[idx] = POname(clCreateKernel) (program,
+                                                 program->kernel_names[idx],
+                                                 &error_ret);
 
           /* Check for errors, clean up & bail.
            * If we happened to pass a invalid kernel name after all
@@ -63,10 +68,7 @@ POname(clCreateKernelsInProgram)(cl_program      program ,
           if (error_ret != CL_SUCCESS)
             {
               for (; idx>0; idx--)
-                {
-                  POname(clReleaseKernel) (kernels[idx-1]);
-                }
-              POCL_MEM_FREE(knames);
+                POname(clReleaseKernel) (kernels[idx-1]);
               /* If error_ret is INVALID_KERNEL_DEFINITION, returning it here
                * is against the specification. But the specs doesn't say what to
                * do in such a case, and just returning it is the sanest thing
@@ -74,15 +76,10 @@ POname(clCreateKernelsInProgram)(cl_program      program ,
               return error_ret;
             }
         }
-      for (idx = num_kern_found ; idx < num_kernels; idx++)
-        {
-          kernels[idx] = NULL;
-        }
-      POCL_MEM_FREE(knames);
     }
 
   if (num_kernels_ret)
-    *num_kernels_ret = num_kern_found;
+    *num_kernels_ret = program->num_kernels;
 
   return CL_SUCCESS;
 }
