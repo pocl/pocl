@@ -30,7 +30,6 @@
 
 #include "poclu.h"
 
-
 #define DEVICE_INFO_MAX_LENGTH 2048
 #define NUM_OF_DEVICE_ID 32
 #define NUM_OPTIONS 6
@@ -62,7 +61,9 @@ typedef struct _poclcc_option {
 /**********************************************************/
 
 poclcc_option *options_help;
-int print_help()
+
+static int
+print_help()
 {
   printf("USAGE: poclcc [OPTION]... [FILE]\n");
   printf("\n");
@@ -74,7 +75,8 @@ int print_help()
   return -1;
 }
 
-int poclcc_error(char *msg)
+static int
+poclcc_error(char *msg)
 {
   printf("ERROR: %s", msg);
   return print_help();
@@ -83,42 +85,17 @@ int poclcc_error(char *msg)
 /**********************************************************
  * MANAGE INPUT KERNEL FILE */
 
-char *kernel_load_file(const char * filename)
-{
-  char *buffer;
-  size_t size, read_size;
-  FILE *kern_file;
-
-  kern_file = fopen(filename, "r");
-  if (kern_file == NULL)
-    return NULL;
-
-  fseek(kern_file, 0, SEEK_END);
-  size = ftell(kern_file);
-  rewind(kern_file);
-
-  buffer = malloc(size + 1);
-  read_size = fread(buffer, 1, size, kern_file);
-  if (read_size != size)
-    {
-      free(buffer);
-      fclose(kern_file);
-      return NULL;
-    }
-  fclose(kern_file);
-  buffer[size] = '\0';
-
-  return buffer;
-}
-
-int process_kernel_file(int arg, char **argv, int argc)
+static int
+process_kernel_file(int arg, char **argv, int argc)
 {
   if (arg >= argc)
     return poclcc_error("Incomplete argument for input file!\n");
 
   char *filename = argv[arg];
   char *ext = ".pocl";
-  kernel_source = kernel_load_file(filename);
+  kernel_source = poclu_read_file(filename);
+  if (!kernel_source)
+    ERRNO_EXIT(filename);
   if (output_file == NULL)
     {
       output_file = malloc(strlen(filename)+strlen(ext));
@@ -131,13 +108,15 @@ int process_kernel_file(int arg, char **argv, int argc)
 /**********************************************************
  * OPTIONS PROCESS FUNCTIONS*/
 
-int process_help(int arg, char **argv, int argc)
+static int
+process_help(int arg, char **argv, int argc)
 {
   print_help();
   return 0;
 }
 
-int process_output(int arg, char **argv, int argc)
+static int
+process_output(int arg, char **argv, int argc)
 {
   if (arg >= argc)
     return poclcc_error("Incomplete argument for output file!\n");
@@ -146,7 +125,8 @@ int process_output(int arg, char **argv, int argc)
   return 0;
 }
 
-int process_opencl_device(int arg, char **argv, int argc)
+static int
+process_opencl_device(int arg, char **argv, int argc)
 {
   if (arg >= argc)
     return poclcc_error("Incomplete argument for device_type!\n");
@@ -170,7 +150,8 @@ int process_opencl_device(int arg, char **argv, int argc)
   return 0;
 }
 
-int process_build_options(int arg, char **argv, int argc)
+static int
+process_build_options(int arg, char **argv, int argc)
 {
   if (arg >= argc)
     return poclcc_error("Incomplete argument for build_options!\n");
@@ -179,7 +160,8 @@ int process_build_options(int arg, char **argv, int argc)
   return 0;
 }
 
-int process_device_id(int arg, char **argv, int argc)
+static int
+process_device_id(int arg, char **argv, int argc)
 {
   if (arg >= argc)
     return poclcc_error("Incomplete argument for build_options!\n");
@@ -188,7 +170,8 @@ int process_device_id(int arg, char **argv, int argc)
   return 0;
 }
 
-int process_list_devices(int arg, char **argv, int argc)
+static int
+process_list_devices(int arg, char **argv, int argc)
 {
   list_devices = 1;
   return 0;
@@ -196,7 +179,7 @@ int process_list_devices(int arg, char **argv, int argc)
 
 /**********************************************************/
 
-poclcc_option options[NUM_OPTIONS]=
+static poclcc_option options[NUM_OPTIONS] =
 {
   {process_help, "-h",
    "\t-h\n"
@@ -228,7 +211,8 @@ poclcc_option options[NUM_OPTIONS]=
 
 /**********************************************************/
 
-int search_process(char *arg)
+static int
+search_process(char *arg)
 {
   int i;
   for (i=0; i<NUM_OPTIONS; i++)
@@ -239,7 +223,8 @@ int search_process(char *arg)
   return -1;
 }
 
-int process_arg(int *arg, char **argv, int argc)
+static int
+process_arg(int *arg, char **argv, int argc)
 {
   int prev_arg = *arg;
   char *current_arg = argv[*arg];
@@ -257,7 +242,8 @@ int process_arg(int *arg, char **argv, int argc)
 
 /**********************************************************/
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
 //MANAGEMENT OF ARGUMENTS
   options_help = options;
@@ -266,8 +252,8 @@ int main(int argc, char **argv)
     return poclcc_error("Invalid argument!\n");
 
   while (arg_num < argc-1)
-      if (process_arg(&arg_num, argv, argc))
-        return -1;
+    if (process_arg(&arg_num, argv, argc))
+      return -1;
 
   if (arg_num >= argc && list_devices)
     list_devices_only = 1;
@@ -336,12 +322,12 @@ int main(int argc, char **argv)
   CHECK_CL_ERROR(clBuildProgram(program, 0, NULL, build_options, NULL, NULL));
 
   size_t binary_sizes;
-  unsigned char *binary;
+  char *binary;
 
   CHECK_CL_ERROR(clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES,
                                   sizeof(size_t), &binary_sizes, NULL));
 
-  binary = malloc(sizeof(unsigned char)*binary_sizes);
+  binary = malloc(sizeof(char)*binary_sizes);
   if (!binary)
     {
       printf("malloc(binary) failed\n");
@@ -354,12 +340,7 @@ int main(int argc, char **argv)
   CHECK_CL_ERROR(clReleaseProgram(program));
   CHECK_CL_ERROR(clReleaseContext(context));
 
-  FILE *fp = fopen(output_file, "w");
-  if (!fp)
-    ERRNO_EXIT(output_file);
-  if (fwrite(binary, 1, binary_sizes, fp) < binary_sizes)
-    ERRNO_EXIT(output_file);
-  if (fclose(fp))
+  if (!poclu_write_file(output_file, binary, binary_sizes))
     ERRNO_EXIT(output_file);
 
   free(binary);
