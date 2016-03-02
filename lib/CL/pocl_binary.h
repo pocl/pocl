@@ -44,7 +44,7 @@ int pocl_binary_check_binary(cl_device_id device, const unsigned char *binary);
 size_t pocl_binary_sizeof_binary(cl_program program, unsigned device_i);
 
 /* unpacks the content of program->pocl_binaries[device_i] into pocl cache */
-cl_int pocl_binary_untar(cl_program program, unsigned device_i);
+cl_int pocl_binary_deserialize(cl_program program, unsigned device_i);
 
 /* pocl cache -> program->pocl_binaries[device_i] */
 cl_int pocl_binary_serialize(cl_program program, unsigned device_i, size_t *size);
