@@ -166,18 +166,18 @@ CL_API_SUFFIX__VERSION_1_0
 
   POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
 
-  POCL_GOTO_ERROR_COND((num_devices > 0 && device_list == NULL), CL_INVALID_VALUE);
-  POCL_GOTO_ERROR_COND((num_devices == 0 && device_list != NULL), CL_INVALID_VALUE);
+  POCL_RETURN_ERROR_COND((num_devices > 0 && device_list == NULL), CL_INVALID_VALUE);
+  POCL_RETURN_ERROR_COND((num_devices == 0 && device_list != NULL), CL_INVALID_VALUE);
 
-  POCL_GOTO_ERROR_COND((pfn_notify == NULL && user_data != NULL), CL_INVALID_VALUE);
+  POCL_RETURN_ERROR_COND((pfn_notify == NULL && user_data != NULL), CL_INVALID_VALUE);
 
-  POCL_LOCK_OBJ(program);
+  POCL_RETURN_ERROR_ON(program->kernels, CL_INVALID_OPERATION, "Program already has kernels\n");
 
-  POCL_GOTO_ERROR_ON(program->kernels, CL_INVALID_OPERATION, "Program already has kernels\n");
-
-  POCL_GOTO_ERROR_ON((program->source == NULL && program->binaries == NULL),
+  POCL_RETURN_ERROR_ON((program->source == NULL && program->binaries == NULL),
     CL_INVALID_PROGRAM, "Program doesn't have sources or binaries! You need "
                         "to call clCreateProgramWith{Binary|Source} first\n");
+
+  POCL_LOCK_OBJ(program);
 
   program->main_build_log[0] = 0;
 
@@ -420,6 +420,7 @@ CL_API_SUFFIX__VERSION_1_0
    * cause a double free. */
 
 ERROR:
+  POCL_UNLOCK_OBJ(program);
   for(i = 0; i < num_devices; i++)
   {
     POCL_MEM_FREE(program->binaries[i]);
@@ -433,7 +434,7 @@ ERROR:
           if (program->kernel_names)
             POCL_MEM_FREE(program->kernel_names[i]);
           if (program->default_kernels && program->default_kernels[i])
-            clReleaseKernel(program->default_kernels[i]);
+            POname(clReleaseKernel)(program->default_kernels[i]);
         }
       POCL_MEM_FREE(program->kernel_names);
       POCL_MEM_FREE(program->default_kernels);
@@ -441,6 +442,7 @@ ERROR:
   POCL_MEM_FREE(program->binaries);
   POCL_MEM_FREE(program->binary_sizes);
   POCL_MEM_FREE(unique_devlist);
+  POCL_LOCK_OBJ(program);
   pocl_cache_release_lock(write_cache_lock);
 ERROR_CLEAN_OPTIONS:
   POCL_MEM_FREE(modded_options);
