@@ -547,12 +547,12 @@ WorkitemLoops::ProcessFunction(Function &F)
         }
 
       if (WGLocalSizeY > 1) {
-          l = CreateLoopAround(*original, l.first, l.second, peelFirst,
+          l = CreateLoopAround(*original, l.first, l.second, false,
                                localIdY, WGLocalSizeY);
         }
 
       if (WGLocalSizeZ > 1) {
-          l = CreateLoopAround(*original, l.first, l.second, peelFirst,
+          l = CreateLoopAround(*original, l.first, l.second, false,
                                localIdZ, WGLocalSizeZ);
         }
     }
