@@ -1,8 +1,8 @@
 # Process this file with automake to produce Makefile.in (in this,
 # and all subdirectories).
-# Makefile.am for tests/regression.
+# Makefile.am for pocl/scripts.
 # 
-# Copyright (c) 2012 Cyril Roelandt and Pekka Jääskeläinen
+# Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,22 +22,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-noinst_PROGRAMS= test_clFinish test_clGetDeviceInfo test_clGetEventInfo \
-	test_read-copy-write-buffer test_event_cycle test_event_free \
-	test_clCreateProgramWithBinary test_clGetSupportedImageFormats \
-	test_clSetEventCallback test_clEnqueueNativeKernel test_clBuildProgram \
-	test_link_error test_kernel_cache_includes \
-	test_clCreateSubDevices test_enqueue_kernel_from_binary \
-	test_clCreateKernelsInProgram test_clCreateKernel test_version \
-	test_clGetKernelArgInfo
-
-EXTRA_DIST= \
-	test_kernel_src_in_pwd.h test_clSetEventCallback_expout.txt \
-	test_clCreateKernelsInProgram.cl CMakeLists.txt \
-	test_data/test_kernel_src_in_another_dir.h \
-        test_kernel_cache_includes.cl test_kernel_cache_includes_expout.txt \
-	clGetKernelArgInfo.spir32_meta clGetKernelArgInfo.spir32_nometa \
-	clGetKernelArgInfo.spir64_meta clGetKernelArgInfo.spir64_nometa
-
-AM_LDFLAGS = @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
+AM_LDFLAGS = @OPENCL_LIBS@ ../lib/poclu/libpoclu.la
 AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include @OPENCL_CFLAGS@
+
+bin_PROGRAMS = poclcc
+poclcc_SOURCES = poclcc.c
+pkgdataincludedir = $(pkgdatadir)/include
+
+CLEANFILES = poclcc
+EXTRA_DIST = poclcc.c CMakeLists.txt

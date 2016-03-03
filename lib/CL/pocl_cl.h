@@ -181,10 +181,10 @@ typedef pthread_mutex_t pocl_lock_t;
 #define POCL_HAS_KERNEL_ARG_TYPE_QUALIFIER     8
 #define POCL_HAS_KERNEL_ARG_NAME               16
 
-struct pocl_argument {
-  size_t size;
+typedef struct pocl_argument {
+  uint64_t size;
   void *value;
-};
+} pocl_argument;
 
 /**
  * Enumeration for kernel argument types
@@ -196,16 +196,16 @@ typedef enum {
   POCL_ARG_TYPE_SAMPLER = 3,
 } pocl_argument_type;
 
-struct pocl_argument_info {
+typedef struct pocl_argument_info {
+  char* type_name;
+  char* name;
+  cl_kernel_arg_address_qualifier address_qualifier;
+  cl_kernel_arg_access_qualifier access_qualifier;
+  cl_kernel_arg_type_qualifier type_qualifier;
   pocl_argument_type type;
   char is_local;
   char is_set;
-  cl_kernel_arg_address_qualifier address_qualifier;
-  cl_kernel_arg_access_qualifier access_qualifier;
-  char* type_name;
-  cl_kernel_arg_type_qualifier type_qualifier;
-  char* name;
-};
+} pocl_argument_info;
 
 struct pocl_device_ops {
   const char *device_name;
@@ -532,6 +532,14 @@ struct _cl_program {
      sequential bitcode produced from the kernel sources.*/
   size_t *binary_sizes; 
   unsigned char **binaries; 
+  /* Poclcc binary format*/
+  size_t *pocl_binary_sizes;
+  unsigned char **pocl_binaries;
+  /* "default" kernels */
+  size_t num_kernels;
+  char **kernel_names;
+  cl_kernel *default_kernels;
+
   /* implementation */
   cl_kernel kernels;
   /* Per-device program hash after build */

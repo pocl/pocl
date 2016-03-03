@@ -25,7 +25,7 @@
 SUBDIRS = include lib
 
 if !POCL_ANDROID
-SUBDIRS += scripts examples tests
+SUBDIRS += bin examples tests
 endif
 
 ACLOCAL_AMFLAGS = -I m4
@@ -67,7 +67,7 @@ EXTRA_DIST = config/xclang tools/data/test_machine.adf tools/data/test_machine_f
 EXTRA_DIST += CMakeLists.txt cmake/FindHwloc.cmake cmake/FindPthreadsWin32.cmake \
   cmake/LLVM.cmake cmake/Sphinx.cmake cmake/bitcode_rules.cmake cmake/run_test.cmake \
 	android/androideabi.cmake config.h.in.cmake pocl.icd.in.cmake pocl.pc.in.cmake \
-	scripts/pocl-standalone.in.cmake cmake/kernellib_hash.cmake
+	cmake/kernellib_hash.cmake
 
 # Sphinx dist:
 EXTRA_DIST += doc/sphinx/source/conf.py doc/sphinx/source/design.rst doc/sphinx/source/development.rst doc/sphinx/source/env_variables.rst doc/sphinx/source/faq.rst doc/sphinx/source/features.rst doc/sphinx/source/host_library.rst doc/sphinx/source/hsa.rst doc/sphinx/source/index.rst doc/sphinx/source/kernel_compiler.rst doc/sphinx/source/memory_management.rst doc/sphinx/source/releasing.rst doc/sphinx/source/using.rst doc/sphinx/Makefile

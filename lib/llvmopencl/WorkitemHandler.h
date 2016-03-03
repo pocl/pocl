@@ -73,6 +73,7 @@ namespace pocl {
   extern size_t WGLocalSizeX;
   extern size_t WGLocalSizeY;
   extern size_t WGLocalSizeZ;
+  extern bool WGDynamicLocalSize;
 }
 
 #endif
