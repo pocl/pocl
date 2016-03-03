@@ -78,6 +78,15 @@ LD_FLAGS_BIN=""
 ###################################################
 # LLVM configuration
 #
+AC_ARG_ENABLE([ocs],
+              [AS_HELP_STRING([--enable-ocs], [Build pocl with online compiler support (default yes)])],
+              [ocs="$enableval"],
+              [ocs="yes"])
+OCS_available=no
+if test x"$ocs" != x"no"; then :
+  
+  OCS_available=yes
+
 AC_ARG_VAR([LLVM_CONFIG], [Program used to retrieve LLVM options and binaries])
 AC_PATH_PROGS([LLVM_CONFIG], [llvm-config llvm-config-mp-3.7 llvm-config-3.7 llvm-config37 llvm-config-mp-3.6 llvm-config-3.6 llvm-config36])
 test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
@@ -165,6 +174,10 @@ if test x"$LLVM_RTTI_CHECK" != x; then
 AC_MSG_WARN([Your LLVM was not built with RTTI. 
 You should rebuild LLVM with 'make REQUIRES_RTTI=1'. 
 See the INSTALL file for more information.])
+fi
+
+else
+AM_CONDITIONAL([LLVM_3_6], [test "x$LLVM_3_6" = "xtrue"])
 fi
 
 ####################################################################
@@ -725,6 +738,9 @@ PKG_CHECK_MODULES([GLEW], [glew],
   ],
   [AC_MSG_NOTICE([libGLEW not found. A few tests will not work])])
 
+
+if test x"$OCS_available" = x"yes"
+then
 # Checks for programs.
 AC_DEFUN([LLVM_PROG], [
   AC_ARG_VAR([$1], [$3])
@@ -1146,7 +1162,11 @@ if test x"$use_vecmathlib" = xyes; then
   CLANGXX_FLAGS="$CLANGXX_FLAGS -DVML_NO_IOSTREAM"
 fi
 
-
+else
+AM_CONDITIONAL([CLANGXX_AVAILABLE], test ! -z $CLANGXX)
+AM_CONDITIONAL([HOST_CPU_IS_X86_64], [test "$host_cpu" = "x86_64"])
+AM_CONDITIONAL([USE_VECMATHLIB], test ! -z "$use_vecmathlib")
+fi
 
 ####################################################################
 # Determine which device drivers to build.
@@ -1320,6 +1340,9 @@ LLVM_AMDGCN_TARGET=no
 #   enable_hsa=no
 #fi
 
+if test x"$OCS_available" = x"yes"
+then
+
 AC_MSG_CHECKING([if the hsail64 target is supported in Clang/LLVM])
 if $LLVM_BINDIR/clang conftest.c -target hsail64 -emit-llvm -S -c -o - 2>/dev/null | grep -cq 'target triple = "hsail64"';
 then
@@ -1328,6 +1351,10 @@ then
 else
    AC_MSG_RESULT([no])
    enable_hsa=no
+fi
+
+else
+   enalbe_hsa=no
 fi
 
 tempCPPFLAGS=$CPPFLAGS
@@ -1592,9 +1619,6 @@ AC_SUBST([KERNEL_COMPILER_LIB_VERSION], ["$LIB_CURRENT_VERSION:0:0"])
 AC_SUBST([LD_FLAGS_BIN])
 
 AC_CONFIG_FILES([Makefile
-                 pocl.pc
-                 tests/atlocal
-                 ocl-vendors/pocl-tests.icd
                  include/Makefile
                  include/CL/Makefile
                  include/OpenCL/Makefile
@@ -1607,12 +1631,18 @@ AC_CONFIG_FILES([Makefile
                  lib/CL/devices/tce/ttasim/Makefile
                  lib/CL/devices/topology/Makefile
                  lib/CL/devices/hsa/Makefile
-                 lib/llvmopencl/Makefile
+                 lib/poclu/Makefile
+                 ])
+
+if test x"$OCS_available" = x"yes"
+then
+AC_CONFIG_FILES([lib/llvmopencl/Makefile
                  lib/kernel/Makefile
                  lib/kernel/host/Makefile
                  lib/kernel/tce/Makefile
                  lib/kernel/hsail64/Makefile
-                 lib/poclu/Makefile
+                 pocl.pc
+                 ocl-vendors/pocl-tests.icd
                  examples/Makefile
                  examples/example1/Makefile
                  examples/example1-spir64/Makefile
@@ -1637,6 +1667,7 @@ AC_CONFIG_FILES([Makefile
                  examples/OpenCV/Makefile
                  examples/CloverLeaf/Makefile
                  bin/Makefile
+                 tests/atlocal
                  tests/Makefile
                  tests/kernel/Makefile
                  tests/regression/Makefile
@@ -1646,7 +1677,8 @@ AC_CONFIG_FILES([Makefile
                  tests/tce/ttasim/Makefile
                  tests/tce/tcemc/Makefile
                  tests/tce/fp16/Makefile
-                 ])
+])
+fi
 
 AC_OUTPUT
 
@@ -1655,8 +1687,11 @@ AC_OUTPUT
 echo
 echo =======================================================================
 echo
+if test x"$OCS_available" = x"yes"
+then
 echo Using LLVM version $LLVM_VERSION from $($LLVM_CONFIG --prefix)
 echo
+fi
 echo -n ICD extension:
 if test x"$icd" == xno;
 then
