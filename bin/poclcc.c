@@ -295,8 +295,6 @@ main(int argc, char **argv)
       printf("LIST OF DEVICES:\n");
       for (i=0; i<num_devices; i++)
         {
-          printf("%i: ", i);
-
           char str[DEVICE_INFO_MAX_LENGTH];
           CHECK_CL_ERROR(clGetDeviceInfo(device_ids[i], CL_DEVICE_VENDOR,
                                          DEVICE_INFO_MAX_LENGTH, str, NULL));
