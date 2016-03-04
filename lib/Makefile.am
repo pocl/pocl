@@ -22,6 +22,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-SUBDIRS = llvmopencl CL kernel poclu
+SUBDIRS = CL poclu
+
+if OCS_AVAILABLE
+SUBDIRS += llvmopencl kernel
+endif
 
 EXTRA_DIST = CMakeLists.txt

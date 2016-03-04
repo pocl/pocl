@@ -95,9 +95,9 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
 
       // clang is used as the linker driver in LINK_CMD
       error = snprintf (command, COMMAND_LENGTH,
-#ifndef POCL_ANDROID
+#if defined(POCL_ANDROID) && defined(OCS_AVAILABLE) 
             LINK_CMD " " HOST_CLANG_FLAGS " " HOST_LD_FLAGS " -o %s %s",
-#else
+#elsif OCS_AVAILABLE
             POCL_ANDROID_PREFIX"/bin/ld " HOST_LD_FLAGS " -o %s %s ",
 #endif
             module, objfile);

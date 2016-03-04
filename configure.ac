@@ -86,6 +86,7 @@ OCS_available=no
 if test x"$ocs" != x"no"; then :
   
   OCS_available=yes
+  AC_DEFINE([OCS_AVAILABLE], [1], [Defined to 1 if compiling with online compiler support])
 
 AC_ARG_VAR([LLVM_CONFIG], [Program used to retrieve LLVM options and binaries])
 AC_PATH_PROGS([LLVM_CONFIG], [llvm-config llvm-config-mp-3.7 llvm-config-3.7 llvm-config37 llvm-config-mp-3.6 llvm-config-3.6 llvm-config36])
@@ -179,6 +180,7 @@ fi
 else
 AM_CONDITIONAL([LLVM_3_6], [test "x$LLVM_3_6" = "xtrue"])
 fi
+AM_CONDITIONAL([OCS_AVAILABLE], [test x"$ocs" = x"yes"])
 
 ####################################################################
 # Manage optional testsuites

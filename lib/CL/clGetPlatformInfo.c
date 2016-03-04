@@ -50,8 +50,13 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
       POCL_RETURN_GETINFO_STR("FULL_PROFILE");
 
     case CL_PLATFORM_VERSION:
+#ifdef OCS_AVAILABLE
       POCL_RETURN_GETINFO_STR("OpenCL " POCL_CL_VERSION\
                         " pocl " PACKAGE_VERSION ", LLVM " LLVM_VERSION);
+#els
+      POCL_RETURN_GETINFO_STR("OpenCL " POCL_CL_VERSION\
+                        " pocl " PACKAGE_VERSION ", no online compiler support");
+#endif
 
     case CL_PLATFORM_NAME:
       POCL_RETURN_GETINFO_STR("Portable Computing Language");

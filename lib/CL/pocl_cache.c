@@ -332,6 +332,9 @@ int pocl_cache_write_kernel_parallel_bc(void*        bc,
                                         size_t       local_x,
                                         size_t       local_y,
                                         size_t       local_z) {
+#ifndef OCS_AVAILABLE
+    return -1;
+#else
     assert(bc);
 
     char kernel_parallel_path[POCL_FILENAME_LENGTH];
@@ -345,6 +348,7 @@ int pocl_cache_write_kernel_parallel_bc(void*        bc,
             (POCL_FILENAME_LENGTH - strlen(POCL_PARALLEL_BC_FILENAME)));
     strcat(kernel_parallel_path, POCL_PARALLEL_BC_FILENAME);
     return pocl_write_module(bc, kernel_parallel_path, 0);
+#endif
 }
 
 int pocl_cache_make_kernel_cachedir_path(char*        kernel_cachedir_path,
@@ -409,8 +413,10 @@ build_program_compute_hash(cl_program program,
     pocl_SHA1_Update(&hash_ctx, (uint8_t*) wg_method, strlen(wg_method));
     pocl_SHA1_Update(&hash_ctx, (uint8_t*) PACKAGE_VERSION,
                      strlen(PACKAGE_VERSION));
+#ifdef OCS_AVAILABLE
     pocl_SHA1_Update(&hash_ctx, (uint8_t*) LLVM_VERSION,
                      strlen(LLVM_VERSION));
+#endif
     pocl_SHA1_Update(&hash_ctx, (uint8_t*) POCL_BUILD_TIMESTAMP,
                      strlen(POCL_BUILD_TIMESTAMP));
     pocl_SHA1_Update(&hash_ctx, (const uint8_t *)POCL_KERNELLIB_SHA1,
