@@ -741,7 +741,7 @@ PKG_CHECK_MODULES([GLEW], [glew],
   [AC_MSG_NOTICE([libGLEW not found. A few tests will not work])])
 
 
-if test x"$OCS_available" = x"yes"
+if test x"$ocs" = x"yes"
 then
 # Checks for programs.
 AC_DEFUN([LLVM_PROG], [
@@ -1342,7 +1342,7 @@ LLVM_AMDGCN_TARGET=no
 #   enable_hsa=no
 #fi
 
-if test x"$OCS_available" = x"yes"
+if test x"$ocs" = x"yes"
 then
 
 AC_MSG_CHECKING([if the hsail64 target is supported in Clang/LLVM])
@@ -1636,7 +1636,7 @@ AC_CONFIG_FILES([Makefile
                  lib/poclu/Makefile
                  ])
 
-if test x"$OCS_available" = x"yes"
+if test x"$ocs" = x"yes"
 then
 AC_CONFIG_FILES([lib/llvmopencl/Makefile
                  lib/kernel/Makefile
@@ -1689,7 +1689,7 @@ AC_OUTPUT
 echo
 echo =======================================================================
 echo
-if test x"$OCS_available" = x"yes"
+if test x"$ocs" = x"yes"
 then
 echo Using LLVM version $LLVM_VERSION from $($LLVM_CONFIG --prefix)
 echo

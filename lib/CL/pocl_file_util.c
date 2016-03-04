@@ -15,9 +15,7 @@
 
 /* #define to disable locking completely */
 #undef DISABLE_LOCKMANAGER
-#ifndef OCS_AVAILABLE
-#define DISABLE_LOCKMANAGER
-#endif
+
 // using namespace llvm;
 
 /*****************************************************************************/
@@ -172,36 +170,8 @@ int pocl_write_file(const char *path, const char* content,
 /****************************************************************************/
 
 static void* acquire_lock_internal(const char* path, int shared) {
-#ifdef DISABLE_LOCKMANAGER
     /* Can't return value that compares equal to NULL */
     return (void*)4096;
-#else
-    assert(path);
-    LockFileManager *lfm = new LockFileManager(path);
-
-    switch (lfm->getState()) {
-    case LockFileManager::LockFileState::LFS_Owned:
-        return (void*)lfm;
-
-    case LockFileManager::LockFileState::LFS_Shared:
-        if (shared)
-            return (void*)lfm;
-        lfm->waitForUnlock();
-        delete lfm;
-        lfm = new LockFileManager(path);
-        if (lfm->getState() == LockFileManager::LockFileState::LFS_Owned)
-            return (void*)lfm;
-        else
-          {
-            delete lfm;
-            return NULL;
-          }
-
-    case LockFileManager::LockFileState::LFS_Error:
-        return NULL;
-    }
-    return NULL;
-#endif
 }
 
 
@@ -211,12 +181,5 @@ void* acquire_lock(const char *path, int shared) {
 
 
 void release_lock(void* lock) {
-#ifdef DISABLE_LOCKMANAGER
     return;
-#else
-    if (!lock)
-        return;
-    LockFileManager *l = (LockFileManager*)lock;
-    delete l;
-#endif
 }

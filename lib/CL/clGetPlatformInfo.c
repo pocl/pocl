@@ -53,7 +53,7 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
 #ifdef OCS_AVAILABLE
       POCL_RETURN_GETINFO_STR("OpenCL " POCL_CL_VERSION\
                         " pocl " PACKAGE_VERSION ", LLVM " LLVM_VERSION);
-#els
+#else
       POCL_RETURN_GETINFO_STR("OpenCL " POCL_CL_VERSION\
                         " pocl " PACKAGE_VERSION ", no online compiler support");
 #endif

@@ -136,7 +136,6 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    pocl_binary.c pocl_binary.h \
                    pocl_cl.h \
                    pocl_util.c pocl_util.h \
-                   pocl_file_util.c \
                    pocl_queue_util.c pocl_queue_util.h \
                    pocl_image_util.c pocl_image_util.h \
                    pocl_img_buf_cpy.h pocl_img_buf_cpy.c \
@@ -147,6 +146,10 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    pocl_mem_management.c pocl_mem_management.h \
                    pocl_hash.c pocl_hash.h pocl_cache.c \
                    pocl_debug.c pocl_debug.h
+
+if ! OCS_AVAILABLE
+libpocl_la_SOURCES += pocl_file_util.c
+endif
 
 
 libpocl_la_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/fix-include/OpenCL -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices $(OCL_ICD_CFLAGS)
