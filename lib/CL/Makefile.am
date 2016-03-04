@@ -196,9 +196,6 @@ libpocl_la_LIBADD += -lclangStaticAnalyzerFrontend -lclangStaticAnalyzerCore
 libpocl_la_LIBADD += -lclangAnalysis -lclangCodeGen -lclangAST
 libpocl_la_LIBADD += -lstdc++ -lm @LLVM_LIBS@
 
-if LLVM_3_6
-libpocl_la_LIBADD += -lclangToolingCore 
-endif
 
 libpocl_la_LIBADD += -lclangASTMatchers -lclangBasic
 

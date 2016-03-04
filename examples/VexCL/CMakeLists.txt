@@ -37,6 +37,7 @@ ExternalProject_Add(
   PREFIX "${TS_BASEDIR}"
   GIT_REPOSITORY "https://github.com/ddemidov/vexcl.git"
   CMAKE_ARGS
+    -DVEXCL_CACHE_KERNELS=OFF
     -DCMAKE_BUILD_TYPE=RelWithDebInfo
     -DVEXCL_BACKEND=OpenCL
   INSTALL_COMMAND /bin/true

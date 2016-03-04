@@ -1020,7 +1020,7 @@ set_tests_properties(
   halide_warning_parallel_size_one
   halide_warning_vectorize_size_one
   PROPERTIES
-    LABELS "Halide")
+    LABELS "Halide"
     ENVIRONMENT "HL_JIT_TARGET=opencl" "HL_TARGET=opencl")
 
 # disabled OpenGL tests

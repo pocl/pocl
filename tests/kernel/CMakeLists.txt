@@ -111,12 +111,6 @@ if(LLVM_ASSERTS_BUILD)
     PROPERTIES WILL_FAIL 1)
 endif()
 
-# 3-element vector cases fail when vectorizer is enabled,
-# at least with Intel Core i5 and AMD FX8. Assume it fails on all others too.
-if(X86_64 AND (LLVM_3_5 OR LLVM_3_6))
-  set_tests_properties("kernel/test_hadd_loopvec"
-    PROPERTIES WILL_FAIL 1)
-endif()
 
 if(POWERPC)
   set_tests_properties(
