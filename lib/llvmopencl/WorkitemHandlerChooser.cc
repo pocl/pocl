@@ -63,6 +63,11 @@ WorkitemHandlerChooser::runOnFunction(Function &F)
   if (!Workgroup::isKernelToProcess(F))
     return false;
 
+  if (WGDynamicLocalSize) {
+      chosenHandler_ = POCL_WIH_LOOPS;
+      return false;
+  }
+  
   Kernel *K = cast<Kernel> (&F);
 
   /* FIXME: this is not thread safe. We cannot compile multiple kernels at

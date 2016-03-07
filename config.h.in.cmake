@@ -84,9 +84,6 @@
 #define LLVM_LLC "@LLVM_LLC@"
 
 
-/* "Using LLVM 3.6" */
-#cmakedefine LLVM_3_6
-
 /* "Using LLVM 3.7" */
 #cmakedefine LLVM_3_7
 

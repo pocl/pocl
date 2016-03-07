@@ -24,6 +24,8 @@
 #include "pocl_cl.h"
 #include "pocl_util.h"
 #include <string.h>
+#include "pocl_binary.h"
+#include "pocl_cache.h"
 
 CL_API_ENTRY cl_program CL_API_CALL
 POname(clCreateProgramWithBinary)(cl_context                     context,
@@ -85,23 +87,22 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
         "device not found in the device list of the context\n");
     }
   
-  if ((program = (cl_program) malloc (sizeof (struct _cl_program))) == NULL)
+  if ((program = (cl_program) calloc (1, sizeof (struct _cl_program))) == NULL)
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
       goto ERROR;
     }
   
   POCL_INIT_OBJECT(program);
-  program->binary_sizes = NULL;
-  program->binaries = NULL;
-  program->compiler_options = NULL;
-  program->llvm_irs = NULL;
-  program->read_locks = NULL;
 
   if ((program->binary_sizes =
        (size_t*) calloc (num_devices, sizeof(size_t))) == NULL ||
       (program->binaries = (unsigned char**)
        calloc (num_devices, sizeof(unsigned char*))) == NULL ||
+      (program->pocl_binaries = (unsigned char**)
+       calloc (program->num_devices, sizeof(unsigned char*))) == NULL ||
+      (program->pocl_binary_sizes =
+             (size_t*) calloc (num_devices, sizeof(size_t))) == NULL ||
       (program->build_log = (char**)
        calloc (num_devices, sizeof(char*))) == NULL ||
       ((program->llvm_irs =
@@ -115,23 +116,55 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
       goto ERROR_CLEAN_PROGRAM_AND_BINARIES;
     }
 
-  program->main_build_log[0] = 0;
   program->context = context;
   program->num_devices = num_devices;
   program->devices = unique_devlist;
-  program->source = NULL;
-  program->kernels = NULL;
   program->build_status = CL_BUILD_NONE;
+  char program_bc_path[POCL_FILENAME_LENGTH];
 
   for (i = 0; i < num_devices; ++i)
     {
-      program->binary_sizes[i] = lengths[i];
-      program->binaries[i] = (unsigned char*) malloc (lengths[i]);
-      memcpy (program->binaries[i], binaries[i], lengths[i]);
-      if (binary_status != NULL) /* TODO: validate the binary */
-        binary_status[i] = CL_SUCCESS;
-    }
+      /* LLVM IR */
+      if (!strncmp((const char *)binaries[i], "BC", 2))
+        {
+          program->binary_sizes[i] = lengths[i];
+          program->binaries[i] = (unsigned char*) malloc(lengths[i]);
+          memcpy (program->binaries[i], binaries[i], lengths[i]);
+          if (binary_status != NULL)
+            binary_status[i] = CL_SUCCESS;
+        }
+      /* Poclcc binary */
+      else if (pocl_binary_check_binary(device_list[i], binaries[i]))
+        {
+          program->pocl_binary_sizes[i] = lengths[i];
+          program->pocl_binaries[i] = (unsigned char*) malloc(lengths[i]);
+          memcpy (program->pocl_binaries[i], binaries[i], lengths[i]);
 
+          pocl_binary_set_program_buildhash(program, i, binaries[i]);
+          int error = pocl_cache_create_program_cachedir(program, i,
+                                                     NULL, 0, program_bc_path);
+          POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
+                             "Could not create program cachedir");
+          void* write_cache_lock = pocl_cache_acquire_writer_lock_i(program, i);
+          assert(write_cache_lock);
+          POCL_GOTO_ERROR_ON(pocl_binary_deserialize(program, i),
+                             CL_INVALID_BINARY,
+                             "Could not unpack a pocl binary\n");
+          pocl_cache_release_lock(write_cache_lock);
+
+          if (binary_status != NULL)
+            binary_status[i] = CL_SUCCESS;
+        } 
+      /* Unknown binary */
+      else 
+        {
+          if (binary_status != NULL) 
+            binary_status[i] = CL_INVALID_BINARY;
+          errcode = CL_INVALID_BINARY;
+          goto ERROR_CLEAN_PROGRAM_AND_BINARIES;
+        }
+    }
+  
   POCL_RETAIN_OBJECT(context);
 
   if (errcode_ret != NULL)
@@ -148,6 +181,11 @@ ERROR_CLEAN_PROGRAM_AND_BINARIES:
       POCL_MEM_FREE(program->binaries[i]);
   POCL_MEM_FREE(program->binaries);
   POCL_MEM_FREE(program->binary_sizes);
+  if (program->pocl_binaries)
+    for (i = 0; i < num_devices; ++i)
+      POCL_MEM_FREE(program->pocl_binaries[i]);
+  POCL_MEM_FREE(program->pocl_binaries);
+  POCL_MEM_FREE(program->pocl_binary_sizes);
 /*ERROR_CLEAN_PROGRAM:*/
   POCL_MEM_FREE(program);
 ERROR:

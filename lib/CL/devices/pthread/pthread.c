@@ -131,7 +131,6 @@ pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
   ops->copy_rect = pocl_basic_copy_rect;
   ops->run = pocl_pthread_run;
   ops->compile_submitted_kernels = pocl_basic_compile_submitted_kernels;
-
 }
 
 unsigned int
@@ -393,6 +392,9 @@ pocl_pthread_run
     arguments->device = cmd->device;
     arguments->pc = *pc;
     arguments->pc.group_id[0] = first_gid_x;
+    arguments->pc.local_size[0] = cmd->command.run.local_x;
+    arguments->pc.local_size[1] = cmd->command.run.local_y;
+    arguments->pc.local_size[2] = cmd->command.run.local_z;
     arguments->workgroup = cmd->command.run.wg;
     arguments->last_gid_x = last_gid_x;
     arguments->kernel_args = cmd->command.run.arguments;

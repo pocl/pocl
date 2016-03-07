@@ -133,6 +133,7 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clEnqueueSVMMemFill.c \
                    clSetKernelArgSVMPointer.c \
                    clSetKernelExecInfo.c \
+                   pocl_binary.c pocl_binary.h \
                    pocl_cl.h \
                    pocl_util.c pocl_util.h \
                    pocl_tracing.c pocl_tracing.h \
@@ -199,9 +200,6 @@ libpocl_la_LIBADD += -lclangStaticAnalyzerFrontend -lclangStaticAnalyzerCore
 libpocl_la_LIBADD += -lclangAnalysis -lclangCodeGen -lclangAST
 libpocl_la_LIBADD += -lstdc++ -lm @LLVM_LIBS@ @LTTNG_UST_LIBS@
 
-if LLVM_3_6
-libpocl_la_LIBADD += -lclangToolingCore 
-endif
 
 libpocl_la_LIBADD += -lclangASTMatchers -lclangBasic
 

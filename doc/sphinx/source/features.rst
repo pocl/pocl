@@ -25,3 +25,10 @@ Frontend/Clang
 
   Tested with Clang 3.4 on 2014-07-10.
 
+
+Unimplemented host side functions
+---------------------------------
+
+The list of unimplemented host-side API functions can be seen as the NULLs in the ICD dispatch struct in
+https://github.com/pocl/pocl/blob/master/lib/CL/clGetPlatformIDs.c
+

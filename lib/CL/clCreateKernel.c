@@ -26,6 +26,7 @@
 #include "pocl_file_util.h"
 #include "pocl_cache.h"
 #include "pocl_llvm.h"
+#include "pocl_binary.h"
 #include <string.h>
 #include <sys/stat.h>
 #ifndef _MSC_VER
@@ -42,8 +43,7 @@ POname(clCreateKernel)(cl_program program,
                cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
   cl_kernel kernel = NULL;
-  int errcode;
-  int error;
+  int errcode = CL_SUCCESS;
   unsigned device_i;
 
   POCL_GOTO_ERROR_COND((kernel_name == NULL), CL_INVALID_VALUE);
@@ -64,37 +64,44 @@ POname(clCreateKernel)(cl_program program,
     CL_INVALID_PROGRAM_EXECUTABLE, "No built binaries in program "
     "(this shouldn't happen...)\n");
 
-  kernel = (cl_kernel) malloc(sizeof(struct _cl_kernel));
-  if (kernel == NULL)
-  {
-    errcode = CL_OUT_OF_HOST_MEMORY;
-    goto ERROR;
-  }
+  kernel = (cl_kernel) calloc(1, sizeof(struct _cl_kernel));
+  POCL_GOTO_ERROR_ON((kernel == NULL), CL_OUT_OF_HOST_MEMORY,
+                     "clCreateKernel couldn't allocate memory");
 
   POCL_INIT_OBJECT (kernel);
+  POCL_RETAIN_OBJECT (kernel);
 
   for (device_i = 0; device_i < program->num_devices; ++device_i)
     {
-      if (device_i > 0)
-        POname(clRetainKernel) (kernel);
-
-      /* If there is no device dir for this device, the program was
-         not built for that device in clBuildProgram. This seems to
-         be OK by the standard. */
-      if (!pocl_cache_device_cachedir_exists(program, device_i))
-          continue;
-
-      error = pocl_llvm_get_kernel_metadata(program,
-                      kernel, device_i, kernel_name, &errcode);
-
-      if (error)
+      if (program->binaries[device_i] &&
+          pocl_cache_device_cachedir_exists(program, device_i))
         {
-          POCL_MSG_ERR("Failed to get kernel metadata "
-            "for kernel %s on device %s\n", kernel_name,
-              program->devices[device_i]->short_name);
-          goto ERROR;
-        } 
+          pocl_llvm_get_kernel_metadata(program, kernel, device_i,
+                                        kernel_name, &errcode);
+        }
+      /* If the program was created with a pocl binary, we won't be able to
+      get the metadata for the cl_kernel from an IR file, so we call pocl
+      binary function to initialize the cl_kernel data */
+      else if (program->pocl_binaries[device_i])
+        {
+          errcode = pocl_binary_get_kernel_metadata(program->pocl_binaries[device_i],
+                                                    kernel_name, kernel,
+                                                    program->devices[device_i]);
+        }
+      else
+        /* If there is no device dir for this device, the program was
+           not built for that device in clBuildProgram. This seems to
+           be OK by the standard. */
+        continue;
 
+      if (errcode != CL_SUCCESS)
+        {
+          POCL_MSG_ERR( "Failed to get kernel metadata "
+                        "for kernel %s on device %s\n", kernel_name,
+                        program->devices[device_i]->short_name);
+          goto ERROR;
+        }
+      break;
     }
 
   kernel->name = strdup(kernel_name);
@@ -117,7 +124,13 @@ POname(clCreateKernel)(cl_program program,
   goto SUCCESS;
 
 ERROR:
-  POCL_MEM_FREE(kernel);
+  if (kernel)
+    {
+      POCL_MEM_FREE(kernel->reqd_wg_size);
+      POCL_MEM_FREE(kernel->dyn_arguments);
+      POCL_MEM_FREE(kernel->arg_info);
+      POCL_MEM_FREE(kernel);
+    }
   kernel = NULL;
 
 SUCCESS:

@@ -1,4 +1,6 @@
-# Process this file with automake to produce Makefile.in
+# Process this file with automake to produce Makefile.in (in this,
+# and all subdirectories).
+# Makefile.am for pocl/scripts.
 # 
 # Copyright (c) 2011 Universidad Rey Juan Carlos
 # 
@@ -20,28 +22,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
+AM_LDFLAGS = @OPENCL_LIBS@ ../lib/poclu/libpoclu.la
+AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include @OPENCL_CFLAGS@
 
+bin_PROGRAMS = poclcc
+poclcc_SOURCES = poclcc.c
+pkgdataincludedir = $(pkgdatadir)/include
 
-KERNEL_TARGET = @OCL_KERNEL_TARGET@
-
-# Use HOST flags:
-CLANG_FLAGS = @HOST_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off
-LLC_FLAGS   = @HOST_LLC_FLAGS@
-LD_FLAGS    = @HOST_LD_FLAGS@
-DEVICE_CL_FLAGS = -D__OPENCL_VERSION__=200 @HOST_DEVICE_EXTENSION_DEFINES@
-
-include ../rules.mk
-include ../sources.mk
-if USE_VECMATHLIB
-include ../sources-vml.mk
-endif
-
-if HOST_CPU_IS_X86_64
-  LKERNEL_SRCS_EXTRA2 = svm_atomics_x86_64.ll svm_atomics.cl
-else
-  LKERNEL_SRCS_EXTRA2 = svm_atomics_host.cl svm_atomics.cl
-endif
-
-
-
-EXTRA_DIST = CMakeLists.txt
+CLEANFILES = poclcc
+EXTRA_DIST = poclcc.c CMakeLists.txt

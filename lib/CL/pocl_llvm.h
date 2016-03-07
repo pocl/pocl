@@ -96,7 +96,7 @@ unsigned pocl_llvm_get_kernel_count(cl_program program);
  * Returns the number of kernels found in the program (may be greater than
  * 'max_num_krn')
  */
-unsigned pocl_llvm_get_kernel_names( cl_program program, const char **knames, unsigned max_num_krn);
+unsigned pocl_llvm_get_kernel_names( cl_program program, char **knames, unsigned max_num_krn);
 
 /** Compile the kernel in infile from LLVM bitcode to native object file for
  * device, into outfile.

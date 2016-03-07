@@ -25,6 +25,60 @@
 #include "pocl_llvm.h"
 #include "pocl_util.h"
 #include "pocl_cache.h"
+#include "pocl_binary.h"
+
+cl_int
+program_compile_dynamic_wg_binaries(cl_program program);
+
+/******************************************************************************/
+
+static void get_binary_sizes(cl_program program, size_t *sizes)
+{
+  if (program_compile_dynamic_wg_binaries(program) != CL_SUCCESS)
+    {
+      memset(sizes, 0, program->num_devices * sizeof(size_t));
+      return;
+    }
+
+  unsigned i;
+  for (i=0; i < program->num_devices; i++)
+    {
+      if (!program->pocl_binaries[i] && program->binaries[i])
+        program->pocl_binary_sizes[i] = pocl_binary_sizeof_binary(program, i);
+      if (program->pocl_binaries[i])
+        sizes[i] = program->pocl_binary_sizes[i];
+      else
+        sizes[i] = 0;
+    }
+}
+
+static void get_binaries(cl_program program, unsigned char **binaries)
+{
+  if (program_compile_dynamic_wg_binaries(program) != CL_SUCCESS)
+    {
+      memset(binaries, 0, program->num_devices * sizeof(unsigned char*));
+      return;
+    }
+
+  unsigned i;
+  size_t res;
+  for (i=0; i < program->num_devices; i++)
+    {
+      if (!program->pocl_binaries[i] && program->binaries[i])
+        {
+          pocl_binary_serialize(program, i, &res);
+          if (program->pocl_binary_sizes[i])
+            assert(program->pocl_binary_sizes[i] == res);
+          program->pocl_binary_sizes[i] = res;
+        }
+      if (program->pocl_binaries[i])
+        memcpy(binaries[i], program->pocl_binaries[i], program->pocl_binary_sizes[i]);
+      else
+        binaries[i] = NULL;
+    }
+}
+
+/******************************************************************************/
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clGetProgramInfo)(cl_program program,
@@ -34,6 +88,7 @@ POname(clGetProgramInfo)(cl_program program,
                  size_t *param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
   unsigned i;
+  cl_int errcode = CL_SUCCESS;
 
   POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
 
@@ -52,56 +107,49 @@ POname(clGetProgramInfo)(cl_program program,
 
       POCL_RETURN_GETINFO_STR(source);
     }
-    
+
   case CL_PROGRAM_BINARY_SIZES:
     {
+      POCL_RETURN_ERROR_COND(program->build_status != CL_BUILD_SUCCESS,
+                             CL_INVALID_PROGRAM);
       size_t const value_size = sizeof(size_t) * program->num_devices;
-      if (param_value)
-        pocl_llvm_update_binaries (program);
-
-      POCL_RETURN_GETINFO_SIZE(value_size, program->binary_sizes);
+      POCL_RETURN_GETINFO_INNER(value_size, get_binary_sizes(program, param_value));
     }
 
   case CL_PROGRAM_BINARIES:
     {
+      POCL_RETURN_ERROR_COND(program->build_status != CL_BUILD_SUCCESS,
+                             CL_INVALID_PROGRAM);
       size_t const value_size = sizeof(unsigned char *) * program->num_devices;
-      if (param_value)
-      {
-        if (param_value_size < value_size) return CL_INVALID_VALUE;
-        unsigned char **target = (unsigned char**) param_value;
-        for (i = 0; i < program->num_devices; ++i)
-          {
-            if (target[i] == NULL) continue;
-            memcpy (target[i], program->binaries[i], program->binary_sizes[i]);
-          }
-      }
-      if (param_value_size_ret)
-        *param_value_size_ret = value_size;
-      return CL_SUCCESS;
+      POCL_RETURN_GETINFO_INNER(value_size, get_binaries(program, param_value));
     }
+
   case CL_PROGRAM_NUM_DEVICES:
     POCL_RETURN_GETINFO(cl_uint, program->num_devices);
 
   case CL_PROGRAM_DEVICES:
     {
       size_t const value_size = sizeof(cl_device_id) * program->num_devices;
-      if (param_value)
-        {
-          if (param_value_size < value_size) return CL_INVALID_VALUE;
-          memcpy(param_value, (void*)program->devices, value_size);
-        }
-      if (param_value_size_ret)
-        *param_value_size_ret = value_size;
-      return CL_SUCCESS;
+      POCL_RETURN_GETINFO_SIZE(value_size, program->devices);
     }
+
   case CL_PROGRAM_NUM_KERNELS:
     {
-      size_t num_kernels = pocl_llvm_get_kernel_count(program);
-      POCL_RETURN_GETINFO(size_t, num_kernels);
+      POCL_RETURN_ERROR_ON((program->build_status != CL_BUILD_SUCCESS),
+                           CL_INVALID_PROGRAM_EXECUTABLE,
+                           "This information is only available after a "
+                           "successful program executable has been built\n");
+      POCL_RETURN_GETINFO(size_t, program->num_kernels);
     }
+
   case CL_PROGRAM_KERNEL_NAMES:
     {
-      /* Note: In the specification (2.0) of the other XXXInfo
+      POCL_RETURN_ERROR_ON((program->build_status != CL_BUILD_SUCCESS),
+                           CL_INVALID_PROGRAM_EXECUTABLE,
+                           "This information is only available after a "
+                           "successful program executable has been built\n");
+
+       /* Note: In the specification (2.0) of the other XXXInfo
          functions, param_value_size_ret is described as follows:
 
          > param_value_size_ret returns the actual size in bytes of data
@@ -132,11 +180,9 @@ POname(clGetProgramInfo)(cl_program program,
 
          --- guicho271828
       */
-
-      const char *kernel_names[32];
-      unsigned num_kernels = 0;
+      size_t num_kernels = program->num_kernels;
+      char ** kernel_names = program->kernel_names;
       size_t size = 0;
-      num_kernels = pocl_llvm_get_kernel_names(program, kernel_names, 32);
 
       /* optimized for clarity */
       for (i = 0; i < num_kernels; ++i)
@@ -168,12 +214,9 @@ POname(clGetProgramInfo)(cl_program program,
       return CL_SUCCESS;
     }
   default:
-    break;
+    POCL_RETURN_ERROR_ON(1, CL_INVALID_VALUE,
+                         "Parameter %i not implemented\n", param_name);
   }
-  
-  char error_str[64];
-  sprintf(error_str, "clGetProgramInfo: %X", param_name);
-  POCL_ABORT_UNIMPLEMENTED(error_str);
-  return CL_INVALID_VALUE;
+
 }
 POsym(clGetProgramInfo)

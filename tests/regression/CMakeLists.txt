@@ -95,6 +95,7 @@ add_test("\"regression/assigning a loop iterator variable to a private makes it 
 add_test("\"regression/assigning a loop iterator variable to a private makes it local 2 (repl)\""
                            "test_assign_loop_variable_to_privvar_makes_it_local_2")
 
+
 set_tests_properties("\"regression/phi nodes not replicated (repl)\""
   "\"regression/issues with local pointers (repl)\""
   "\"regression/barrier between two for loops (repl)\""
