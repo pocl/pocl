@@ -1,7 +1,7 @@
 Portable Computing Language (pocl) v0.13 released
 -------------------------------------------------
 
-February 2016
+March 2016
 
 Pocl's goal is to become a performance portable open source (MIT-licensed)
 implementation of the OpenCL standard.

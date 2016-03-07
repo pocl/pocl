@@ -336,16 +336,9 @@ serialize_kernel_cachedir(cl_kernel kernel, unsigned device_i, unsigned char* bu
   pocl_cache_program_path(basedir, program, device_i);
   size_t basedir_len = strlen(basedir);
 
-  pocl_cache_program_bc_path(path, program, device_i);
-  if (pocl_exists(path))
-    buffer = serialize_file(path, basedir_len, buffer);
-
-  unsigned i;
-  for (i=0; i < program->num_kernels; i++)
-    {
-      pocl_cache_kernel_cachedir(path, program, device_i, program->default_kernels[i]);
-      buffer = recursively_serialize_path(path, basedir_len, buffer);
-    }
+  pocl_cache_kernel_cachedir(path, program, device_i, kernel);
+  POCL_MSG_PRINT_INFO("Kernel %s: recur serializing cachedir %s\n", kernel->name, path);
+  buffer = recursively_serialize_path(path, basedir_len, buffer);
 
   return buffer;
 }
@@ -567,8 +560,6 @@ pocl_binary_deserialize(cl_program program, unsigned device_i)
   unsigned char *buffer = program->pocl_binaries[device_i];
   size_t sizeof_buffer = program->pocl_binary_sizes[device_i];
   unsigned char *end_of_buffer = buffer + sizeof_buffer;
-
-  unsigned num_kernels = program->num_kernels;
 
   pocl_binary b;
   buffer = read_header(&b, buffer);

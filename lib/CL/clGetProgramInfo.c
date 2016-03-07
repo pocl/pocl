@@ -27,10 +27,19 @@
 #include "pocl_cache.h"
 #include "pocl_binary.h"
 
+cl_int
+program_compile_dynamic_wg_binaries(cl_program program);
+
 /******************************************************************************/
 
 static void get_binary_sizes(cl_program program, size_t *sizes)
 {
+  if (program_compile_dynamic_wg_binaries(program) != CL_SUCCESS)
+    {
+      memset(sizes, 0, program->num_devices * sizeof(size_t));
+      return;
+    }
+
   unsigned i;
   for (i=0; i < program->num_devices; i++)
     {
@@ -45,6 +54,12 @@ static void get_binary_sizes(cl_program program, size_t *sizes)
 
 static void get_binaries(cl_program program, unsigned char **binaries)
 {
+  if (program_compile_dynamic_wg_binaries(program) != CL_SUCCESS)
+    {
+      memset(binaries, 0, program->num_devices * sizeof(unsigned char*));
+      return;
+    }
+
   unsigned i;
   size_t res;
   for (i=0; i < program->num_devices; i++)
@@ -98,9 +113,7 @@ POname(clGetProgramInfo)(cl_program program,
       POCL_RETURN_ERROR_COND(program->build_status != CL_BUILD_SUCCESS,
                              CL_INVALID_PROGRAM);
       size_t const value_size = sizeof(size_t) * program->num_devices;
-      size_t *sizes = alloca(value_size);
-      get_binary_sizes(program, sizes);
-      POCL_RETURN_GETINFO_SIZE(value_size, sizes);
+      POCL_RETURN_GETINFO_INNER(value_size, get_binary_sizes(program, param_value));
     }
 
   case CL_PROGRAM_BINARIES:

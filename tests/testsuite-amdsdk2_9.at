@@ -427,7 +427,7 @@ POAT_AMDSDK_SETUP([montecarloasian])
 # kernel compilation fails due to 
 # error: can't convert between vector values of different size ('float4' and 'int')
 # It should be a legal implicit conversion according to 6.3 Operators. Works also with Intel OCL
-AT_XFAIL_IF(true)
+AT_XFAIL_IF([grep -q "define LLVM_3_7" $abs_top_builddir/config.h])
 AT_CHECK_UNQUOTED([make test_MonteCarloAsian -sC $abs_top_builddir/examples/AMDSDK2.9 | grep Passed], 0, 
 [Passed!
 ])

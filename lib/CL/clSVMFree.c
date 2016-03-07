@@ -46,3 +46,5 @@ POname(clSVMFree)(cl_context context,
   context->svm_allocdev->ops->free_ptr(context->svm_allocdev, svm_pointer);
 
 }
+POsym(clSVMFree);
+

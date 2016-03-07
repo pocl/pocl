@@ -94,56 +94,61 @@ static const char cl_parameters_not_yet_supported_by_clang[] =
     snprintf(program->main_build_log + l, (640 - l), __VA_ARGS__); \
   }
 
-static void
-program_set_num_kernels(cl_program program)
+cl_int
+program_compile_dynamic_wg_binaries(cl_program program)
 {
-  unsigned i;
-  for (i=0; i < program->num_devices; i++)
-    {
-      if (program->binaries[i])
-        {
-#ifdef OCS_AVAILABLE
-          program->num_kernels = pocl_llvm_get_kernel_count(program);
-#endif
-          return;
-        }
-      if (program->pocl_binaries[i])
-        {
-          program->num_kernels =
-              pocl_binary_get_kernel_count(program->pocl_binaries[i]);
-          return;
-        }
-    }
-  POCL_ABORT("No binaries in a built program!\n");
-}
+  unsigned i, device_i;
+  cl_int errcode = CL_SUCCESS;
+  _cl_command_node cmd;
 
-static void
-program_set_kernel_names(cl_program program)
-{
-  program->kernel_names = calloc(program->num_kernels, sizeof(char*));
-  unsigned i;
-  for (i=0; i < program->num_devices; i++)
-    {
-      if (program->binaries[i])
-        {
-#ifdef OCS_AVAILABLE
-          pocl_llvm_get_kernel_names(program,
-                                     program->kernel_names,
-                                     program->num_kernels);
-#endif
-          return;
-        }
-      if (program->pocl_binaries[i])
-        {
-          pocl_binary_get_kernel_names(program->pocl_binaries[i],
-                                       program->kernel_names,
-                                       program->num_kernels);
-          return;
-        }
-    }
-  POCL_ABORT("No binaries in a built program!\n");
-}
+  assert(program->num_kernels);
+  assert(program->build_status == CL_BUILD_SUCCESS);
 
+  memset(&cmd, 0, sizeof(_cl_command_node));
+  cmd.type = CL_COMMAND_NDRANGE_KERNEL;
+  char cachedir[POCL_FILENAME_LENGTH];
+  cmd.command.run.tmp_dir = cachedir;
+  POCL_LOCK_OBJ(program);
+
+  /* build the dynamic WG sized parallel.bc and device specific code,
+ * for each kernel & device combo */
+  for (device_i = 0; device_i < program->num_devices; ++device_i)
+    {
+      cl_device_id device = program->devices[device_i];
+
+      /* program may not be built for some of its devices */
+      if (program->pocl_binaries[device_i] || (!program->binaries[device_i]))
+        continue;
+
+      cmd.device = device;
+
+      for (i=0; i < program->num_kernels; i++)
+        {
+          pocl_cache_make_kernel_cachedir_path(cachedir, program, device,
+                                               program->default_kernels[i],
+                                               0,0,0);
+
+          errcode = pocl_llvm_generate_workgroup_function(device,
+                                                          program->default_kernels[i],
+                                                          0,0,0);
+          if (errcode != CL_SUCCESS)
+            {
+              POCL_MSG_ERR("Failed to generate workgroup function for "
+                           "kernel %s for device %s\n",
+                           program->kernel_names[i], device->short_name);
+              goto RET;
+            }
+
+          cmd.command.run.kernel = program->default_kernels[i];
+          device->ops->compile_submitted_kernels(&cmd);
+        }
+
+    }
+
+RET:
+  POCL_UNLOCK_OBJ(program);
+  return errcode;
+}
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clBuildProgram)(cl_program program,
@@ -353,27 +358,60 @@ CL_API_SUFFIX__VERSION_1_0
 
     }
 
-
   POCL_GOTO_ERROR_ON((actually_built < num_devices), CL_BUILD_PROGRAM_FAILURE,
                      "Some of the devices on the argument-supplied list are"
                      "not available for the program, or do not exist\n");
 
+  /* TODO probably wrong to assume */
+  assert(program->num_kernels == 0);
+  for (i=0; i < program->num_devices; i++)
+    {
+      if (program->binaries[i])
+        {
+          program->num_kernels = pocl_llvm_get_kernel_count(program);
+          if (program->num_kernels)
+            {
+              program->kernel_names = calloc(program->num_kernels, sizeof(char*));
+              pocl_llvm_get_kernel_names(program,
+                                         program->kernel_names,
+                                         program->num_kernels);
+            }
+          break;
+        }
+      if (program->pocl_binaries[i])
+        {
+          program->num_kernels =
+              pocl_binary_get_kernel_count(program->pocl_binaries[i]);
+          if (program->num_kernels)
+            {
+              program->kernel_names = calloc(program->num_kernels, sizeof(char*));
+              pocl_binary_get_kernel_names(program->pocl_binaries[i],
+                                           program->kernel_names,
+                                           program->num_kernels);
+            }
+          break;
+        }
+    }
+  POCL_GOTO_ERROR_ON((i >= program->num_devices),
+                     CL_INVALID_BINARY,
+                     "Could not set kernel number / names from the binary\n");
+
+  POCL_MEM_FREE(unique_devlist);
   program->build_status = CL_BUILD_SUCCESS;
-  /* TODO should not unlock program while adding default kernels */
   POCL_UNLOCK_OBJ(program);
 
   /* set up all program kernels */
-  /* TODO probably wrong to assume */
-  assert(program->num_kernels == 0);
-  program_set_num_kernels(program);
-  program_set_kernel_names(program);
+  /* TODO should not have to unlock program while adding default kernels */
+  assert(program->default_kernels == NULL);
   program->default_kernels = calloc(program->num_kernels, sizeof(cl_kernel));
+
   for (i=0; i < program->num_kernels; i++)
     {
       program->default_kernels[i] =
           POname(clCreateKernel)(program,
                                  program->kernel_names[i],
                                  &error);
+<<<<<<< HEAD
       POCL_GOTO_ERROR_COND((error != CL_SUCCESS),
                            CL_BUILD_PROGRAM_FAILURE);
     }
@@ -426,39 +464,42 @@ CL_API_SUFFIX__VERSION_1_0
           device->ops->compile_submitted_kernels(&cmd);
         }
 
+=======
+      POCL_GOTO_ERROR_ON((error != CL_SUCCESS),
+                         CL_BUILD_PROGRAM_FAILURE,
+                         "Failed to create default kernels\n");
+>>>>>>> da6db64508ac91a81860bd13ce8a5266a4c702f4
     }
 
-  POCL_MEM_FREE(unique_devlist);
-  POCL_UNLOCK_OBJ(program);
   return CL_SUCCESS;
 
   /* Set pointers to NULL during cleanup so that clProgramRelease won't
    * cause a double free. */
 
 ERROR:
-  POCL_UNLOCK_OBJ(program);
-  for(i = 0; i < num_devices; i++)
+  for(i = 0; i < program->num_devices; i++)
   {
     POCL_MEM_FREE(program->binaries[i]);
     pocl_cache_release_lock(program->read_locks[i]);
     program->read_locks[i] = NULL;
   }
-  if (program->num_kernels)
+  if (program->num_kernels && program->kernel_names)
     {
       for (i=0; i < program->num_kernels; i++)
-        {
-          if (program->kernel_names)
-            POCL_MEM_FREE(program->kernel_names[i]);
-          if (program->default_kernels && program->default_kernels[i])
-            POname(clReleaseKernel)(program->default_kernels[i]);
-        }
+        POCL_MEM_FREE(program->kernel_names[i]);
       POCL_MEM_FREE(program->kernel_names);
+    }
+  if (program->default_kernels)
+    {
+      for (i=0; i < program->num_kernels; i++)
+        if (program->default_kernels[i])
+          POname(clReleaseKernel)(program->default_kernels[i]);
       POCL_MEM_FREE(program->default_kernels);
+      POCL_LOCK_OBJ(program);
     }
   POCL_MEM_FREE(program->binaries);
   POCL_MEM_FREE(program->binary_sizes);
   POCL_MEM_FREE(unique_devlist);
-  POCL_LOCK_OBJ(program);
   pocl_cache_release_lock(write_cache_lock);
 ERROR_CLEAN_OPTIONS:
   POCL_MEM_FREE(modded_options);

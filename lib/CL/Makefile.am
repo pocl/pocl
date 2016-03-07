@@ -207,10 +207,6 @@ if OCS_AVAILABLE
 libpocl_la_LIBADD +=@LLVM_LIBS@
 endif
 
-if OCS_AVAILABLE
-if LLVM_3_6
-libpocl_la_LIBADD += -lclangToolingCore 
-endif
 
 libpocl_la_LIBADD += -lclangASTMatchers -lclangBasic
 endif

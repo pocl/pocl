@@ -38,7 +38,6 @@ else()
     NAMES "llvm-config"
       "llvm-config-mp-3.8" "llvm-config-3.8" "llvm-config38"
       "llvm-config-mp-3.7" "llvm-config-3.7" "llvm-config37"
-      "llvm-config-mp-3.6" "llvm-config-3.6" "llvm-config36"
     DOC "llvm-config executable")
 endif()
 
@@ -148,9 +147,7 @@ if(LLVM_VERSION MATCHES "3[.]([0-9]+)")
   set(LLVM_MAJOR 3)
   string(STRIP "${CMAKE_MATCH_1}" LLVM_MINOR)
   message(STATUS "Minor llvm version: ${LLVM_MINOR}")
-  if(LLVM_MINOR STREQUAL "6")
-    set(LLVM_3_6 1)
-  elseif(LLVM_MINOR STREQUAL "7")
+  if(LLVM_MINOR STREQUAL "7")
     set(LLVM_3_7 1)
   elseif(LLVM_MINOR STREQUAL "8")
     set(LLVM_3_8 1)
@@ -616,7 +613,7 @@ if(ENABLE_HSA)
     set(HSA_RUNTIME_DIR "/opt/hsa")
   endif()
 
-  if((IS_ABSOLUTE "${WITH_HSA_RUNTIME_DIR}") AND (EXISTS "${WITH_HSA_RUNTIME_DIR}"))
+  if((IS_ABSOLUTE "${HSA_RUNTIME_DIR}") AND (EXISTS "${HSA_RUNTIME_DIR}"))
     set(HSA_INCLUDEDIR "${HSA_RUNTIME_DIR}/include")
     set(HSA_LIBDIR "${HSA_RUNTIME_DIR}/lib")
   else()
@@ -638,14 +635,18 @@ if(ENABLE_HSA)
   if(DEFINED WITH_HSAILASM_PATH)
     set(HSAILASM_SEARCH_PATH "${WITH_HSAILASM_PATH}")
   else()
-    set(HSAILASM_SEARCH_PATH "${HSA_RUNTIME_DIR}/bin")
+    set(HSAILASM_SEARCH_PATH "${HSA_RUNTIME_DIR}")
   endif()
 
-  find_program(HSAIL_ASM "HSAILasm${CMAKE_EXECUTABLE_SUFFIX}" PATHS "${HSAILASM_SEARCH_PATH}")
+  if((EXISTS "${HSAILASM_SEARCH_PATH}") AND
+     (NOT IS_DIRECTORY "${HSAILASM_SEARCH_PATH}"))
+    set(HSAIL_ASM "${HSAILASM_SEARCH_PATH}")
+  else()
+    find_program(HSAIL_ASM "HSAILasm${CMAKE_EXECUTABLE_SUFFIX}" PATHS "${HSAILASM_SEARCH_PATH}" "${HSAILASM_SEARCH_PATH}/bin")
+  endif()
   if(NOT HSAIL_ASM)
     message(FATAL_ERROR "HSAILasm executable not found (use -DWITH_HSAILASM_PATH=... to specify)")
   endif()
-
 
   message(STATUS "OK, building HSA")
 endif()
