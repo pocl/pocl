@@ -191,22 +191,15 @@ pocl_binary_get_device_id(cl_device_id device)
 {
   //FNV-1A with vendor_id, llvm_target_triplet and llvm_cpu
   uint64_t result = FNV_OFFSET;
-  const char *llvm_tt = device->llvm_target_triplet;
-  const char *llvm_cpu = device->llvm_cpu;
+  const char *long_name = device->long_name;
 
   result *= FNV_PRIME;
   result ^= device->vendor_id;
-  int i, length = strlen(llvm_tt);
+  int i, length = strlen(long_name);
   for (i=0; i<length; i++)
     {
       result *= FNV_PRIME;
-      result ^= llvm_tt[i];
-    }
-  length = strlen(llvm_cpu);
-  for (i=0; i<length; i++)
-    {
-      result *= FNV_PRIME;
-      result ^= llvm_cpu[i];
+      result ^= long_name[i];
     }
 
   return result;
