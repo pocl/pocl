@@ -341,6 +341,8 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
 #else
 #ifdef OCS_AVAILABLE
   dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
+#else
+  dev->llvm_cpu = "";
 #endif
 #endif
   dev->has_64bit_long = 1;

@@ -9,6 +9,7 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <errno.h>
 
 #include "pocl.h"
 #include "pocl_file_util.h"
@@ -61,9 +62,10 @@ pocl_rm_rf(const char* path) {
 
 int
 pocl_mkdir_p(const char* path) {
-    if (!pocl_exists(path))
-        return mkdir(path,0);
-    return -1;
+    int error = mkdir(path,0);
+    if (errno == EEXIST)
+        return 0;
+    return error;
 }
 
 int
