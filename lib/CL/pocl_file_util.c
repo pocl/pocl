@@ -61,7 +61,8 @@ pocl_rm_rf(const char* path) {
 
 int
 pocl_mkdir_p(const char* path) {
-    return mkdir(path,0);
+    int error = mkdir(path,0);
+    return (error == EEXIST)? 0: error;
 }
 
 int
