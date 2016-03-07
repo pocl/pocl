@@ -575,3 +575,76 @@ void pocl_setup_context(cl_context context)
           break;
         }
 }
+
+
+/* Convert a command type to its representation string
+ */
+const char *
+pocl_command_to_str (cl_command_type cmd)
+{
+  switch (cmd)
+    {
+    case CL_COMMAND_NDRANGE_KERNEL:
+      return "ndrange_kernel";
+    case CL_COMMAND_TASK:
+      return "task_kernel";
+    case CL_COMMAND_NATIVE_KERNEL:
+      return "native_kernel";
+    case CL_COMMAND_READ_BUFFER:
+      return "read_buffer";
+    case CL_COMMAND_WRITE_BUFFER:
+      return "write_buffer";
+    case CL_COMMAND_COPY_BUFFER:
+      return "copy_buffer";
+    case CL_COMMAND_READ_IMAGE:
+      return "read_image";
+    case CL_COMMAND_WRITE_IMAGE:
+      return "write_image";
+    case CL_COMMAND_COPY_IMAGE:
+      return "copy_image";
+    case CL_COMMAND_COPY_IMAGE_TO_BUFFER:
+      return "copy_image_to_buffer";
+    case CL_COMMAND_COPY_BUFFER_TO_IMAGE:
+      return "copy_buffer_to_image";
+    case CL_COMMAND_MAP_BUFFER:
+      return "map_buffer";
+    case CL_COMMAND_MAP_IMAGE:
+      return "map_image";
+    case CL_COMMAND_UNMAP_MEM_OBJECT:
+      return "unmap_mem_object";
+    case CL_COMMAND_MARKER:
+      return "marker";
+    case CL_COMMAND_ACQUIRE_GL_OBJECTS:
+      return "acquire_gl_objects";
+    case CL_COMMAND_RELEASE_GL_OBJECTS:
+      return "release_gl_objects";
+    case CL_COMMAND_READ_BUFFER_RECT:
+      return "read_buffer_rect";
+    case CL_COMMAND_WRITE_BUFFER_RECT:
+      return "write_buffer_rect";
+    case CL_COMMAND_COPY_BUFFER_RECT:
+      return "copy_buffer_rect";
+    case CL_COMMAND_USER:
+      return "user";
+    case CL_COMMAND_BARRIER:
+      return "barrier";
+    case CL_COMMAND_MIGRATE_MEM_OBJECTS:
+      return "migrate_mem_objects";
+    case CL_COMMAND_FILL_BUFFER:
+      return "fill_buffer";
+    case CL_COMMAND_FILL_IMAGE:
+      return "fill_image";
+    case CL_COMMAND_SVM_FREE:
+      return "svm_free";
+    case CL_COMMAND_SVM_MEMCPY:
+      return "svm_memcpy";
+    case CL_COMMAND_SVM_MEMFILL:
+      return "svm_memfill";
+    case CL_COMMAND_SVM_MAP:
+      return "svm_map";
+    case CL_COMMAND_SVM_UNMAP:
+      return "svm_unmap";
+    }
+
+  return "unknown";
+}

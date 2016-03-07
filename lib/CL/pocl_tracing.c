@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "pocl_util.h"
 #include "pocl_tracing.h"
 #include "pocl_runtime_config.h"
 
@@ -32,13 +33,6 @@
 
 static int tracing_initialized = 0;
 static uint8_t event_trace_filter = 0xF;
-
-static const char *status_to_str[] = {
-  "complete",
-  "running",
-  "submitted",
-  "queued"
-};
 
 static const struct pocl_event_tracer text_logger;
 static const struct pocl_event_tracer lttng_tracer;
@@ -143,77 +137,6 @@ EVENT_INIT_OUT:
   tracing_initialized = 1;
 }
 
-/* Convert a command type to it's equivalent string
- */
-static const char *
-command_to_str (cl_command_type cmd)
-{
-  switch (cmd)
-    {
-    case CL_COMMAND_NDRANGE_KERNEL:
-      return "ndrange_kernel";
-    case CL_COMMAND_TASK:
-      return "task_kernel";
-    case CL_COMMAND_NATIVE_KERNEL:
-      return "native_kernel";
-    case CL_COMMAND_READ_BUFFER:
-      return "read_buffer";
-    case CL_COMMAND_WRITE_BUFFER:
-      return "write_buffer";
-    case CL_COMMAND_COPY_BUFFER:
-      return "copy_buffer";
-    case CL_COMMAND_READ_IMAGE:
-      return "read_image";
-    case CL_COMMAND_WRITE_IMAGE:
-      return "write_image";
-    case CL_COMMAND_COPY_IMAGE:
-      return "copy_image";
-    case CL_COMMAND_COPY_IMAGE_TO_BUFFER:
-      return "copy_image_to_buffer";
-    case CL_COMMAND_COPY_BUFFER_TO_IMAGE:
-      return "copy_buffer_to_image";
-    case CL_COMMAND_MAP_BUFFER:
-      return "map_buffer";
-    case CL_COMMAND_MAP_IMAGE:
-      return "map_image";
-    case CL_COMMAND_UNMAP_MEM_OBJECT:
-      return "unmap_mem_object";
-    case CL_COMMAND_MARKER:
-      return "marker";
-    case CL_COMMAND_ACQUIRE_GL_OBJECTS:
-      return "acquire_gl_objects";
-    case CL_COMMAND_RELEASE_GL_OBJECTS:
-      return "release_gl_objects";
-    case CL_COMMAND_READ_BUFFER_RECT:
-      return "read_buffer_rect";
-    case CL_COMMAND_WRITE_BUFFER_RECT:
-      return "write_buffer_rect";
-    case CL_COMMAND_COPY_BUFFER_RECT:
-      return "copy_buffer_rect";
-    case CL_COMMAND_USER:
-      return "user";
-    case CL_COMMAND_BARRIER:
-      return "barrier";
-    case CL_COMMAND_MIGRATE_MEM_OBJECTS:
-      return "migrate_mem_objects";
-    case CL_COMMAND_FILL_BUFFER:
-      return "fill_buffer";
-    case CL_COMMAND_FILL_IMAGE:
-      return "fill_image";
-    case CL_COMMAND_SVM_FREE:
-      return "svm_free";
-    case CL_COMMAND_SVM_MEMCPY:
-      return "svm_memcpy";
-    case CL_COMMAND_SVM_MEMFILL:
-      return "svm_memfill";
-    case CL_COMMAND_SVM_MAP:
-      return "svm_map";
-    case CL_COMMAND_SVM_UNMAP:
-      return "svm_unmap";
-    }
-
-  return "unknown";
-}
 
 /* Basic text logger, useful for grep/cut/sed operations
  */
@@ -248,8 +171,8 @@ text_tracer_event_updated (cl_event event, int status)
     return;
 
   text_size = sprintf (cur_buf, "%lld %s %s ", ts,
-                       command_to_str (event->command_type),
-                       status_to_str[event->status]);
+                       pocl_command_to_str (event->command_type),
+                       pocl_status_to_str[event->status]);
   cur_buf += text_size;
   /* Print more informations for some commonly used commands */
   switch (event->command_type)
@@ -336,7 +259,7 @@ lttng_tracer_event_updated (cl_event event, int status)
       break;
     default:
       tracepoint (pocl_trace, command, status,
-                  command_to_str (event->command_type));
+                  pocl_command_to_str (event->command_type));
       break;
     }
 }
