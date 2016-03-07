@@ -25,7 +25,9 @@
 #include "pocl_cl.h"
 #include "pocl_file_util.h"
 #include "pocl_cache.h"
+#ifdef OCS_AVAILABLE
 #include "pocl_llvm.h"
+#endif
 #include "pocl_binary.h"
 #include <string.h>
 #include <sys/stat.h>
@@ -76,8 +78,10 @@ POname(clCreateKernel)(cl_program program,
       if (program->binaries[device_i] &&
           pocl_cache_device_cachedir_exists(program, device_i))
         {
+#ifdef OCS_AVAILABLE
           pocl_llvm_get_kernel_metadata(program, kernel, device_i,
                                         kernel_name, &errcode);
+#endif
         }
       /* If the program was created with a pocl binary, we won't be able to
       get the metadata for the cl_kernel from an IR file, so we call pocl

@@ -90,8 +90,10 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
                         "%s%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
       assert (error >= 0);
       
+#ifdef OCS_AVAILABLE
       error = pocl_llvm_codegen( kernel, device, bytecode, objfile);
       assert (error == 0);
+#endif
 
       // clang is used as the linker driver in LINK_CMD
       error = snprintf (command, COMMAND_LENGTH,

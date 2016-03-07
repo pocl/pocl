@@ -241,9 +241,13 @@ DETERMINE_LOCAL_SIZE:
   int realdev_i = pocl_cl_device_to_index(kernel->program, realdev);
   if (kernel->program->source || kernel->program->binaries[realdev_i])
     {
+#ifdef OCS_AVAILABLE
       error = pocl_llvm_generate_workgroup_function(realdev,
                                                     kernel,
                                                     local_x, local_y, local_z);
+#else
+      error = 1;
+#endif
       if (error) goto ERROR;
     }
 

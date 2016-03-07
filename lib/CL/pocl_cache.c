@@ -577,7 +577,9 @@ pocl_cache_create_program_cachedir(cl_program program,
             POCL_MEM_FREE(program->binaries[device_i]);
             program->binary_sizes[device_i] = 0;
         }
+#ifdef OCS_AVAILABLE
         pocl_free_llvm_irs(program, device_i);
+#endif
         pocl_cache_release_lock(program->read_locks[device_i]);
         program->read_locks[device_i] = NULL;
     }

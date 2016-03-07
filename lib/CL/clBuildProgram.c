@@ -33,7 +33,9 @@
 #else
 #  include "vccompat.hpp"
 #endif
+#ifdef OCS_AVAILABLE
 #include "pocl_llvm.h"
+#endif
 #include "pocl_util.h"
 #include "pocl_file_util.h"
 #include "pocl_cache.h"
@@ -100,7 +102,9 @@ program_set_num_kernels(cl_program program)
     {
       if (program->binaries[i])
         {
+#ifdef OCS_AVAILABLE
           program->num_kernels = pocl_llvm_get_kernel_count(program);
+#endif
           return;
         }
       if (program->pocl_binaries[i])
@@ -122,9 +126,11 @@ program_set_kernel_names(cl_program program)
     {
       if (program->binaries[i])
         {
+#ifdef OCS_AVAILABLE
           pocl_llvm_get_kernel_names(program,
                                      program->kernel_names,
                                      program->num_kernels);
+#endif
           return;
         }
       if (program->pocl_binaries[i])
@@ -277,8 +283,12 @@ CL_API_SUFFIX__VERSION_1_0
       /* clCreateProgramWithSource */
       if (program->source)
         {
+#ifdef OCS_AVAILABLE
           error = pocl_llvm_build_program(program, device_i,
                                           user_options, program_bc_path);
+#else
+          error=-1;
+#endif
           POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
                              "pocl_llvm_build_program() failed\n");
         }
@@ -325,7 +335,9 @@ CL_API_SUFFIX__VERSION_1_0
           if (!write_cache_lock)
             write_cache_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
           assert(write_cache_lock);
+#ifdef OCS_AVAILABLE
           pocl_update_program_llvm_irs(program, device_i, device);
+#endif
         }
 
       /* Maintain a 'last_accessed' file in every program's
@@ -398,9 +410,13 @@ CL_API_SUFFIX__VERSION_1_0
                                                program->default_kernels[i],
                                                0,0,0);
 
+#ifdef OCS_AVAILABLE
           errcode = pocl_llvm_generate_workgroup_function(device,
                                                           program->default_kernels[i],
                                                           0,0,0);
+#else
+          errcode = 1;
+#endif
           POCL_GOTO_ERROR_ON((errcode != CL_SUCCESS),
                              CL_BUILD_PROGRAM_FAILURE,
                              "Failed to generate workgroup function for kernel %s",
