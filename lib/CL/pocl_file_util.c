@@ -11,6 +11,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <string.h>
+#include <dirent.h>
 
 #include "pocl.h"
 #include "pocl_file_util.h"
@@ -24,40 +25,39 @@
 
 int
 pocl_rm_rf(const char* path) {
-    return -1;
+    DIR *d = opendir(path);
+    size_t path_len = strlen(path);
+    int error = -1;
 
-    /* std::error_code ec; */
-    /* SmallString<128> DirNative; */
+    if(d) {
+        struct dirent *p;
+        error = 0;
+        while (!error && p==readdir(d)){
+            char *buf;
+            if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, ".."))
+                continue;
 
-    /* sys::path::native(Twine(path), DirNative); */
+            size_t len = path_len + strlen(p->d_name) + 2;
+            buf = malloc(len);
+            buf[len] = '\0';
+            if (buf){
+                struct stat statbuf;
+                snprintf(buf, len, "%s/%s", path, p->d_name);
 
-    /* std::vector<std::string> FileSet, DirSet; */
+                if (!stat(buf, &statbuf)){
+                    error = pocl_rm_rf(buf);
+                } else {
+                    error = remove(buf);
+                }
+                free(buf);
+            }
+        }
+        closedir(d);
 
-    /* for (sys::fs::recursive_directory_iterator Dir(DirNative.str(), ec), DirEnd; */
-    /*      Dir != DirEnd && !ec; Dir.increment(ec)) { */
-    /*     Twine p = Dir->path(); */
-    /*     std::string s = p.str(); */
-    /*     if (sys::fs::is_directory(p)) { */
-    /*         DirSet.push_back(s); */
-    /*     } else */
-    /*         FileSet.push_back(s); */
-    /* } */
-    /* RETURN_IF_EC; */
-
-    /* std::vector<std::string>::iterator it; */
-    /* for (it = FileSet.begin(); it != FileSet.end(); ++it) { */
-    /*     ec = sys::fs::remove(*it, true); */
-    /*     RETURN_IF_EC; */
-    /* } */
-
-    /* std::sort(DirSet.begin(), DirSet.end()); */
-    /* std::vector<std::string>::reverse_iterator it2; */
-    /* for (it2 = DirSet.rbegin(); it2 != DirSet.rend(); ++it2) { */
-    /*     ec = sys::fs::remove(*it2, true); */
-    /*     RETURN_IF_EC; */
-    /* } */
-
-    /* return 0; */
+        if (!error)
+            remove(path);
+    }
+    return error;
 }
 
 
