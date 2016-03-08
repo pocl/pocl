@@ -168,8 +168,6 @@ You should rebuild LLVM with 'make REQUIRES_RTTI=1'.
 See the INSTALL file for more information.])
 fi
 
-else
-AM_CONDITIONAL([LLVM_3_6], [test "x$LLVM_3_6" = "xtrue"])
 fi
 AM_CONDITIONAL([OCS_AVAILABLE], [test x"$ocs" = x"yes"])
 

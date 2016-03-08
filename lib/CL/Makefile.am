@@ -208,6 +208,7 @@ libpocl_la_LIBADD +=@LLVM_LIBS@
 endif
 
 
+if OCS_AVAILABLE
 libpocl_la_LIBADD += -lclangASTMatchers -lclangBasic
 endif
 

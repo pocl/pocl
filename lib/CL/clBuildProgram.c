@@ -411,64 +411,9 @@ CL_API_SUFFIX__VERSION_1_0
           POname(clCreateKernel)(program,
                                  program->kernel_names[i],
                                  &error);
-<<<<<<< HEAD
-      POCL_GOTO_ERROR_COND((error != CL_SUCCESS),
-                           CL_BUILD_PROGRAM_FAILURE);
-    }
-
-  _cl_command_node cmd;
-  memset(&cmd, 0, sizeof(_cl_command_node));
-  cmd.type = CL_COMMAND_NDRANGE_KERNEL;
-  char cachedir[POCL_FILENAME_LENGTH];
-  cmd.command.run.tmp_dir = cachedir;
-  POCL_LOCK_OBJ(program);
-
-  /* build the dynamic WG sized parallel.bc and device specific code,
-   * for each kernel & device combo */
-  for (device_i = 0; device_i < program->num_devices; ++device_i)
-    {
-      cl_device_id device = program->devices[device_i];
-
-      /* find the device in the supplied devices-to-build-for list */
-      int found = 0;
-      for (i = 0; i < num_devices; ++i)
-          if (device_list[i] == device) found = 1;
-      if (!found) continue;
-
-      if (!program->binaries[device_i])
-        {
-          assert(program->pocl_binaries[device_i]);
-          continue;
-        }
-
-      cmd.device = device;
-      for (i=0; i < program->num_kernels; i++)
-        {
-          pocl_cache_make_kernel_cachedir_path(cachedir, program, device,
-                                               program->default_kernels[i],
-                                               0,0,0);
-
-#ifdef OCS_AVAILABLE
-          errcode = pocl_llvm_generate_workgroup_function(device,
-                                                          program->default_kernels[i],
-                                                          0,0,0);
-#else
-          errcode = 1;
-#endif
-          POCL_GOTO_ERROR_ON((errcode != CL_SUCCESS),
-                             CL_BUILD_PROGRAM_FAILURE,
-                             "Failed to generate workgroup function for kernel %s",
-                             program->kernel_names[i]);
-
-          cmd.command.run.kernel = program->default_kernels[i];
-          device->ops->compile_submitted_kernels(&cmd);
-        }
-
-=======
       POCL_GOTO_ERROR_ON((error != CL_SUCCESS),
                          CL_BUILD_PROGRAM_FAILURE,
                          "Failed to create default kernels\n");
->>>>>>> da6db64508ac91a81860bd13ce8a5266a4c702f4
     }
 
   return CL_SUCCESS;
