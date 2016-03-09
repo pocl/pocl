@@ -140,9 +140,9 @@ WorkitemLoops::runOnFunction(Function &F)
 std::pair<llvm::BasicBlock *, llvm::BasicBlock *>
 WorkitemLoops::CreateLoopAround
 (ParallelRegion &region,
- llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB, 
+ llvm::BasicBlock *entryBB, llvm::BasicBlock *exitBB,
  bool peeledFirst, llvm::Value *localIdVar, size_t LocalSizeForDim,
- bool addIncBlock, llvm::Value *DynamicLocalSize) 
+ bool addIncBlock, llvm::Value *DynamicLocalSize)
 {
   assert (localIdVar != NULL);
 
@@ -266,17 +266,15 @@ WorkitemLoops::CreateLoopAround
 
   llvm::Value *cmpResult;
   if (!WGDynamicLocalSize)
-    cmpResult= 
-      builder.CreateICmpULT
-      (builder.CreateLoad(localIdVar),
-       (ConstantInt::get
-        (IntegerType::get(C, size_t_width), 
-         LocalSizeForDim)));
+    cmpResult = builder.CreateICmpULT(
+                  builder.CreateLoad(localIdVar),
+                    ConstantInt::get(
+                      IntegerType::get(C, size_t_width),
+                      LocalSizeForDim));
   else
-    cmpResult = 
-      builder.CreateICmpULT
-      (builder.CreateLoad(localIdVar),
-       builder.CreateLoad(DynamicLocalSize));
+    cmpResult = builder.CreateICmpULT(
+                  builder.CreateLoad(localIdVar),
+                    builder.CreateLoad(DynamicLocalSize));
   
   Instruction *loopBranch =
       builder.CreateCondBr(cmpResult, loopBodyEntryBB, loopEndBB);
@@ -509,50 +507,54 @@ WorkitemLoops::ProcessFunction(Function &F)
         }
       }
 
-    if (WGDynamicLocalSize){
+    if (WGDynamicLocalSize) {
 
       GlobalVariable *gv;
       gv = M->getGlobalVariable("_local_size_x");
       auto *SizeT_Ty = Type::getIntNTy(M->getContext(), size_t_width);
       if (gv == NULL) 
-        gv = new GlobalVariable(*M, SizeT_Ty, true, GlobalValue::CommonLinkage, NULL, "_local_size_x", NULL, llvm::GlobalValue::ThreadLocalMode::NotThreadLocal, 0, true);
+        gv = new GlobalVariable(*M, SizeT_Ty, true, GlobalValue::CommonLinkage,
+                                NULL, "_local_size_x", NULL,
+                                GlobalValue::ThreadLocalMode::NotThreadLocal,
+                                0, true);
 
-      l = CreateLoopAround(
-        *original, l.first, l.second, peelFirst, 
-        localIdX, WGLocalSizeX, !unrolled, gv);
+      l = CreateLoopAround(*original, l.first, l.second, peelFirst,
+                           localIdX, WGLocalSizeX, !unrolled, gv);
 
       gv = M->getGlobalVariable("_local_size_y");
       if (gv == NULL) 
-        gv = new GlobalVariable(*M, SizeT_Ty, false, GlobalValue::CommonLinkage, NULL, "_local_size_y");
+        gv = new GlobalVariable(*M, SizeT_Ty, false, GlobalValue::CommonLinkage,
+                                NULL, "_local_size_y");
 
-      l = CreateLoopAround(
-        *original, l.first, l.second, 
-        false, localIdY, WGLocalSizeY, !unrolled, gv);
-    
+      l = CreateLoopAround(*original, l.first, l.second,
+                           false, localIdY, WGLocalSizeY, !unrolled, gv);
+
       gv = M->getGlobalVariable("_local_size_z");
       if (gv == NULL) 
-        gv = new GlobalVariable(*M, SizeT_Ty, true, GlobalValue::CommonLinkage, NULL, "_local_size_z", NULL, llvm::GlobalValue::ThreadLocalMode::NotThreadLocal, 0, true);
+        gv = new GlobalVariable(*M, SizeT_Ty, true, GlobalValue::CommonLinkage,
+                                NULL, "_local_size_z", NULL,
+                                GlobalValue::ThreadLocalMode::NotThreadLocal,
+                                0, true);
 
-      l = CreateLoopAround(
-        *original, l.first, l.second, 
-        false, localIdZ, WGLocalSizeZ, !unrolled, gv);
+      l = CreateLoopAround(*original, l.first, l.second,
+                           false, localIdZ, WGLocalSizeZ, !unrolled, gv);
 
     } else {
 
-      if (WGLocalSizeX > 1)
-        l = CreateLoopAround(
-          *original, l.first, l.second, peelFirst,
-          localIdX, WGLocalSizeX, !unrolled);
+      if (WGLocalSizeX > 1) {
+          l = CreateLoopAround(*original, l.first, l.second, peelFirst,
+                               localIdX, WGLocalSizeX, !unrolled);
+        }
 
-      if (WGLocalSizeY > 1)
-        l = CreateLoopAround(
-          *original, l.first, l.second, peelFirst,
-          localIdY, WGLocalSizeY);
+      if (WGLocalSizeY > 1) {
+          l = CreateLoopAround(*original, l.first, l.second, false,
+                               localIdY, WGLocalSizeY);
+        }
 
-      if (WGLocalSizeZ > 1)
-        l = CreateLoopAround(
-          *original, l.first, l.second, peelFirst,
-          localIdZ, WGLocalSizeZ);      
+      if (WGLocalSizeZ > 1) {
+          l = CreateLoopAround(*original, l.first, l.second, false,
+                               localIdZ, WGLocalSizeZ);
+        }
     }
 
     /* Loop edges coming from another region mean B-loops which means 

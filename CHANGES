@@ -1,4 +1,4 @@
-0.13 February 2016
+0.13 March 2016
 ================
 
 Highlights
@@ -21,7 +21,7 @@ Other
 ------
 - removed custom buffer alloc from pthread device
 - removed IBM Cell support
-- removed support for older LLVM versions (before 3.6)
+- removed support for older LLVM versions (before 3.7)
 - significantly higher performance with a lot of small kernel enqueues
   (due to improved file locking)
 - vecmathlib now supports AVX2

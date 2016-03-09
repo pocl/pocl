@@ -84,7 +84,7 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
               if (program->kernel_names)
                 POCL_MEM_FREE(program->kernel_names[i]);
               if (program->default_kernels && program->default_kernels[i])
-                clReleaseKernel(program->default_kernels[i]);
+                POname(clReleaseKernel)(program->default_kernels[i]);
             }
           POCL_MEM_FREE(program->kernel_names);
           POCL_MEM_FREE(program->default_kernels);

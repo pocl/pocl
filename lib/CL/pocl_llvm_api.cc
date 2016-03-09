@@ -1282,6 +1282,7 @@ kernel_library
 
   // TODO sync with Nat Ferrus' indexed linking
   std::string kernellib;
+  std::string kernellib_fallback;
   if (pocl_get_bool_option("POCL_BUILDING", 0)) {
     kernellib = BUILDDIR;
     kernellib += "/lib/kernel/";
@@ -1292,6 +1293,9 @@ kernel_library
     if (is_host) {
 #ifdef POCL_BUILT_WITH_CMAKE
     kernellib += '-';
+    kernellib_fallback = kernellib;
+    kernellib_fallback += OCL_KERNEL_TARGET_CPU;
+    kernellib_fallback += ".bc";
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
     if (triple.getArch() == Triple::x86_64 ||
         triple.getArch() == Triple::x86)
@@ -1308,6 +1312,9 @@ kernel_library
     if (is_host) {
 #ifdef POCL_BUILT_WITH_CMAKE
     kernellib += '-';
+    kernellib_fallback = kernellib;
+    kernellib_fallback += OCL_KERNEL_TARGET_CPU;
+    kernellib_fallback += ".bc";
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
     if (triple.getArch() == Triple::x86_64 ||
         triple.getArch() == Triple::x86)
@@ -1320,12 +1327,25 @@ kernel_library
   }
   kernellib += ".bc";
 
-  POCL_MSG_PRINT_INFO("using %s as the built-in lib.\n", kernellib.c_str());
-
-  if (!pocl_exists(kernellib.c_str()))
-    POCL_ABORT("kernel library file doesn't exist.");
+  llvm::Module *lib;
   SMDiagnostic Err;
-  llvm::Module *lib = ParseIRFile(kernellib.c_str(), Err, *GlobalContext());
+
+  if (pocl_exists(kernellib.c_str()))
+    {
+      POCL_MSG_PRINT_INFO("Using %s as the built-in lib.\n", kernellib.c_str());
+      lib = ParseIRFile(kernellib.c_str(), Err, *GlobalContext());
+    }
+  else
+    {
+      if (is_host && pocl_exists(kernellib_fallback.c_str()))
+        {
+          POCL_MSG_WARN("Using fallback %s as the built-in lib.\n",
+                        kernellib_fallback.c_str());
+          lib = ParseIRFile(kernellib_fallback.c_str(), Err, *GlobalContext());
+        }
+      else
+        POCL_ABORT("Kernel library file %s doesn't exist.", kernellib.c_str());
+    }
   assert (lib != NULL);
   libs[device] = lib;
 
@@ -1339,7 +1359,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
                                           size_t local_x, size_t local_y, size_t local_z)
 {
 
-  pocl::WGDynamicLocalSize = local_x == 0 && local_y == 0 && local_z == 0;
+  pocl::WGDynamicLocalSize = (local_x == 0 && local_y == 0 && local_z == 0);
 
   cl_program program = kernel->program;
   int device_i = pocl_cl_device_to_index(program, device);

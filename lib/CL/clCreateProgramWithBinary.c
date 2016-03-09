@@ -147,7 +147,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
                              "Could not create program cachedir");
           void* write_cache_lock = pocl_cache_acquire_writer_lock_i(program, i);
           assert(write_cache_lock);
-          POCL_GOTO_ERROR_ON(pocl_binary_untar(program, i),
+          POCL_GOTO_ERROR_ON(pocl_binary_deserialize(program, i),
                              CL_INVALID_BINARY,
                              "Could not unpack a pocl binary\n");
           pocl_cache_release_lock(write_cache_lock);

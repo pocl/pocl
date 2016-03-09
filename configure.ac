@@ -86,18 +86,11 @@ LLVM_VERSION=`$LLVM_CONFIG --version`
 LLVM_BINDIR=`$LLVM_CONFIG --bindir`
 LLVM_LIBDIR=`$LLVM_CONFIG --libdir`
 LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
-# Whether we can use our own printf implementation
-LLVM_3_6=false
 
 AC_SUBST([LLVM_VERSION], [$LLVM_VERSION])
 AC_DEFINE_UNQUOTED([LLVM_VERSION], ["$LLVM_VERSION"], "LLVM version as a string.")
 
 case "$LLVM_VERSION" in
-     3.6*)
-     AC_DEFINE([LLVM_3_6], [], "Using LLVM 3.6")
-     LLVM_3_6=true
-     LLVM_LDFLAGS="$LLVM_LDFLAGS `$LLVM_CONFIG --system-libs`"
-   ;;
      3.7*)
      AC_DEFINE([LLVM_3_7], [], "Using LLVM 3.7")
      LLVM_LDFLAGS="$LLVM_LDFLAGS `$LLVM_CONFIG --system-libs`"
@@ -109,13 +102,11 @@ case "$LLVM_VERSION" in
      *)
    AC_MSG_ERROR(
    [
-Unsupported LLVM version. Please use LLVM version 3.6 or 3.7 or 3.8.
+Unsupported LLVM version. Please use LLVM version 3.7 or 3.8.
    ])
    LLVM_VERSION=
    ;;
 esac
-
-AM_CONDITIONAL([LLVM_3_6], [test "x$LLVM_3_6" = "xtrue"])
 
 AC_SUBST([LLVM_LDFLAGS], [$LLVM_LDFLAGS], [llvm-config returned ldflags])
 

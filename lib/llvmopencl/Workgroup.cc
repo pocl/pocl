@@ -262,41 +262,37 @@ createLauncher(Module &M, Function *F)
     snprintf(s, STRING_LENGTH, "_group_id_%c", 'x' + i);
     gv = M.getGlobalVariable(s);
     if (gv != NULL) {
-      if (size_t_width == 64)
-        {
+      if (size_t_width == 64) {
           v = builder.CreateLoad(builder.CreateConstGEP2_64(ptr, 0, i));
-        }
-      else
-        {
-          v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr->getType()->getPointerElementType(), ptr, 0, i));
-        }
+      } else {
+          v = builder.CreateLoad(
+                builder.CreateConstGEP2_32(
+                                   ptr->getType()->getPointerElementType(),
+                                   ptr, 0, i));
+      }
       builder.CreateStore(v, gv);
     }
   }
 
-  if (WGDynamicLocalSize)
-    {
+  if (WGDynamicLocalSize) {
       ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), &*ai,
                                     TypeBuilder<PoclContext, true>::LOCAL_SIZE);
-      for (int i = 0; i < 3; ++i) 
-        {
+      for (int i = 0; i < 3; ++i) {
           snprintf(s, STRING_LENGTH, "_local_size_%c", 'x' + i);
           gv = M.getGlobalVariable(s);
           if (gv != NULL) {
-            if (size_t_width == 64)
-              {
-                v = builder.CreateLoad(builder.CreateConstGEP2_64(ptr, 0, i));
+              if (size_t_width == 64) {
+                  v = builder.CreateLoad(builder.CreateConstGEP2_64(ptr, 0, i));
+              } else {
+                  v = builder.CreateLoad(
+                        builder.CreateConstGEP2_32(
+                          ptr->getType()->getPointerElementType(),
+                          ptr, 0, i));
               }
-            else
-              {
-                v = builder.CreateLoad(
-                  builder.CreateConstGEP2_32(ptr->getType()->getPointerElementType(), 
-                                             ptr, 0, i));
-              }
-            builder.CreateStore(v, gv);
+              builder.CreateStore(v, gv);
           }
-        }
-    }
+      }
+  }
   
   ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), &*ai,
                                 TypeBuilder<PoclContext, true>::NUM_GROUPS);
@@ -310,7 +306,9 @@ createLauncher(Module &M, Function *F)
         }
       else 
         {
-          v = builder.CreateLoad(builder.CreateConstGEP2_32(ptr->getType()->getPointerElementType(), ptr, 0, i));
+          v = builder.CreateLoad(
+                builder.CreateConstGEP2_32(
+                  ptr->getType()->getPointerElementType(), ptr, 0, i));
         }
       builder.CreateStore(v, gv);
     }
