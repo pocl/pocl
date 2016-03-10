@@ -51,7 +51,7 @@ endif()
 
 if(ENABLE_CUDA)
   add_subdirectory("cuda")
-  #list(APPEND POCL_DEVICES_LINK_LIST ${CUDALIB})
+  list(APPEND POCL_DEVICES_LINK_LIST cuda)
 endif()
 
 set(POCL_DEVICES_SOURCES
