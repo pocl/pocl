@@ -119,6 +119,7 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "pocl_image_util.c" "pocl_image_util.h"
                    "pocl_img_buf_cpy.h" "pocl_img_buf_cpy.c"
                    "pocl_icd.h" "pocl_llvm.h"
+                   "pocl_tracing.h" "pocl_tracing.c"
                    "pocl_runtime_config.c" "pocl_runtime_config.h"
                    "pocl_mem_management.c"  "pocl_mem_management.h"
                    "pocl_llvm_api.cc" "pocl_hash.c"
@@ -134,9 +135,14 @@ set(LIBPOCL_OBJS "$<TARGET_OBJECTS:llvmpasses>"
                  "$<TARGET_OBJECTS:pocl_cache>"
                  ${POCL_DEVICES_OBJS})
 
-add_compile_options(${OCL_ICD_CFLAGS})
+add_compile_options(${OCL_ICD_CFLAGS} ${LTTNG_UST_CFLAGS})
 
 include_directories(${LLVM_INCLUDE_DIRS})
+
+if(HAVE_LTTNG_UST)
+  list(APPEND POCL_LIB_SOURCES "pocl_lttng.c" "pocl_lttng.h")
+endif()
+
 
 # set llvm C++ flags on pocl_llvm_api.cc
 set_source_files_properties("pocl_llvm_api.cc" PROPERTIES COMPILE_FLAGS "${LLVM_CXXFLAGS} -I\"${CMAKE_CURRENT_SOURCE_DIR}/../llvmopencl\"")
@@ -156,9 +162,9 @@ add_dependencies("pocl_cache" "kernellib_hash")
 #################################################################
 
 if (MSVC)
-  set(POCL_PUBLIC_LINK_LIST ${Pthreads_LIBRARIES} ${POCL_DEVICES_LINK_LIST})
+  set(POCL_PUBLIC_LINK_LIST ${Pthreads_LIBRARIES} ${POCL_DEVICES_LINK_LIST} ${LTTNG_UST_LDFLAGS})
 else()
-  set(POCL_PUBLIC_LINK_LIST "${LTDL_LIB}" ${CMAKE_THREAD_LIBS_INIT} ${POCL_DEVICES_LINK_LIST})
+  set(POCL_PUBLIC_LINK_LIST "${LTDL_LIB}" ${CMAKE_THREAD_LIBS_INIT} ${POCL_DEVICES_LINK_LIST} ${LTTNG_UST_LDFLAGS})
 endif()
 
 set(POCL_PRIVATE_LINK_LIST ${CLANG_LIBFILES} ${POCL_LLVM_LIBS} ${LLVM_SYSLIBS})
@@ -175,7 +181,7 @@ add_library("pocl" ${LIBPOCL_OBJS} )
 
 set_target_properties("pocl" PROPERTIES SOVERSION "${LIB_API_VERSION}" 
   VERSION "${LIB_BUILD_VERSION}" 
-  LINK_FLAGS "${LLVM_LDFLAGS} ${ICD_LD_FLAGS}")
+  LINK_FLAGS "${LLVM_LDFLAGS}  ${ICD_LD_FLAGS}")
 target_link_libraries("pocl" PUBLIC ${POCL_PUBLIC_LINK_LIST} PRIVATE ${POCL_PRIVATE_LINK_LIST} )
 install(TARGETS "pocl"
         LIBRARY DESTINATION ${POCL_INSTALL_PUBLIC_LIBDIR}

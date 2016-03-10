@@ -142,3 +142,28 @@ pocl.
               might avoid storing work-item context to memory.
               However, the code bloat is increased with larger
               WG sizes.
+
+- **POCL_TRACE_EVENT**, **POCL_TRACE_EVENT_OPT** and **POCL_TRACE_EVENT_FILTER**
+
+ If POCL_TRACE_EVENT is set to some tracer name, then all events
+ will be traced automatically. Depending on the backend, traces
+ may be output in different formats.
+ POCL_TRACE_EVENT_FILTER is a comma separated list of string to 
+ indicate which event status should be filtered. For instance to trace
+ complete and running events POCL_TRACE_EVENT_FILTER should be set
+ to "complete,running". Default behavior is to trace all events.
+
+    text   -- Basic text logger for each events state
+              Use POCL_TRACE_EVENT_OPT=<file> to set the 
+              output file. If not specified, it defaults to
+              pocl_trace_event.log
+    lttng  -- LTTNG tracepoint support. When activated, a lttng session
+              must be started. The following tracepoints are available:
+               - pocl_trace:ndrange_kernel -> Kernel execution
+               - pocl_trace:read_buffer    -> Read buffer
+               - pocl_trace:write_buffer   -> Write buffer
+               - pocl_trace:copy_buffer    -> Copy buffer
+               - pocl_trace:map            -> Map image/buffer
+               - pocl_trace:command        -> other commands
+              For more informations, please see lttng documentation:
+              http://lttng.org/docs/#doc-tracing-your-own-user-application

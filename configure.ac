@@ -497,7 +497,24 @@ CPPFLAGS="$old_CPPFLAGS"
 
 LD_FLAGS_BIN="$LD_FLAGS_BIN $PTHREAD_LDFLAGS"
 
+####################################################################
+# lttng
 
+AC_ARG_ENABLE([use_lttng],
+              [AS_HELP_STRING([--enable-lttng-ust], [Build pocl with the lttng trace support (default yes)])],
+              [use_lttng="$enableval"],
+              [use_lttng="yes"])
+
+if test x"$use_lttng" == xyes; then :
+  PKG_CHECK_MODULES([LTTNG_UST], [lttng-ust >= 2.7], 
+    [ LTTNG_UST_available=yes 
+      AC_DEFINE([LTTNG_UST_AVAILABLE], [1], [Defined to 1 if lttng-ust is found on system]) ],
+    [:])
+  AC_SUBST([LTTNG_UST_CFLAGS])
+  AC_SUBST([LTTNG_UST_LIBS])
+fi
+
+AM_CONDITIONAL(LTTNG_UST_AVAILABLE, test "$LTTNG_UST_available" = "yes")
 ####################################################################
 
 # Option to build as an ICD
@@ -1688,6 +1705,13 @@ else
  echo "Linking directly with libpocl will not work."
 fi
 echo
+
+
+if test x"$LTTNG_UST_available" == xyes;
+then
+ echo "Enabling LTTNG traces."
+ echo
+fi
 
 if test x"$use_vecmathlib" == xyes;
 then

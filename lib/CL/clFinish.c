@@ -105,7 +105,6 @@ static void exec_commands (_cl_command_node *node_list)
   unsigned i;
   cl_event *event = NULL;
   _cl_command_node *node;
-  event_callback_item* cb_ptr;
 
   LL_FOREACH (node_list, node)
     {
@@ -351,13 +350,6 @@ static void exec_commands (_cl_command_node *node_list)
 
         if (*event)
           {
-            /* event callback handling
-               just call functions in the same order they were added */
-            for (cb_ptr = (*event)->callback_list; cb_ptr; cb_ptr = cb_ptr->next)
-              {
-                cb_ptr->callback_function ((*event), cb_ptr->trigger_status,
-                                           cb_ptr->user_data);
-              }
             if ((*event)->implicit_event)
               POname(clReleaseEvent) (*event);
           }
