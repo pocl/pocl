@@ -1274,12 +1274,18 @@ AC_ARG_WITH(hsa-runtime-dir,
 AC_SUBST([HSA_INCLUDES], ["-I${HSA_RUNTIME_DIR}/include"] )
 
 # Search for the HSA runtime lib.
+# TODO: Should we support accessing multiple different HSA Runtime libs
+# at the same time to access all HSA-supported devices available? Or
+# should we assume a single HSA Runtime controls all devices in the
+# platform. With that assumption we cannot combine a phsa CPU Agent
+# with an AMD GPU Agent. Might not be worth the effort as the CPU
+# device is better accessed directly, without the HSA layer anyways.
 AC_MSG_CHECKING([for HSA runtime])
 old_LIBS="$LIBS"
 old_LDFLAGS="$LDFLAGS"
 LDFLAGS="$LDFLAGS -L${HSA_RUNTIME_DIR}/lib"
 LIBS=""
-AC_SEARCH_LIBS([hsa_executable_get_symbol], [hsa-runtime64], [
+AC_SEARCH_LIBS([hsa_executable_get_symbol], [hsa-runtime64 phsa-runtime64], [
 HSA_LIBS="$LIBS"
 AC_SUBST([HSA_LIBS])
 ],
@@ -1328,6 +1334,8 @@ AC_MSG_CHECKING([for HSA runtime headers])
 AC_COMPILE_IFELSE(
   [AC_LANG_PROGRAM(
     [[ #include <hsa.h> ]]
+    [[ #include <hsa_ext_finalize.h> ]]
+    [[ #include <hsa_ext_image.h> ]]
   )],
 [AC_MSG_RESULT(yes)],
 [AC_MSG_RESULT(no)
