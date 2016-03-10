@@ -6,6 +6,7 @@
 #define ALIGNOF_FLOAT16 @ALIGNOF_FLOAT16@
 
 #cmakedefine BUILD_HSA
+#cmakedefine BUILD_CUDA
 
 #define POCL_BUILT_WITH_CMAKE
 

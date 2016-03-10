@@ -49,6 +49,8 @@ option(POCL_DEBUG_MESSAGES
 
 option(ENABLE_HSA "Enable the HSA device driver for AMD GCN devices" OFF)
 
+option(ENABLE_CUDA "Enable the CUDA device driver for NVIDIA devices" OFF)
+
 option(KERNEL_CACHE_DEFAULT "Default value for the kernel compile cache. If disabled, pocl will still use the kernel cache, but will delete cachefiles on exit. You can still enable keeping the files it at runtime with an env var." ON)
 
 option(DEVELOPER_MODE "This will SIGNIFICANTLY slow down pocl (but speed up its compilation). Only turn on if you know what you're doing." OFF)
@@ -822,6 +824,19 @@ endif()
 
 ##########################################################
 
+if(ENABLE_CUDA)
+  #set(OCL_DRIVERS "${OCL_DRIVERS} cuda")
+  #set(OCL_TARGETS "${OCL_TARGETS} cuda")
+  # this is for config.h
+  # TODO unify with autotools
+  set(BUILD_CUDA 1)
+
+  #set(CUDA_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64 cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
+  #set(CUDA_DEVICE_CL_VERSION "120")
+endif()
+
+##########################################################
+
 message(STATUS "Building the following device drivers: ${OCL_DRIVERS}")
 
 set(BUILDDIR "${CMAKE_BINARY_DIR}")
@@ -1129,6 +1144,7 @@ MESSAGE(STATUS "ENABLE_ICD: ${ENABLE_ICD}")
 MESSAGE(STATUS "ENABLE_TCE: ${ENABLE_TCE}")
 MESSAGE(STATUS "ENABLE_TCEMC: ${ENABLE_TCEMC}")
 MESSAGE(STATUS "ENABLE_HSA: ${ENABLE_HSA}")
+MESSAGE(STATUS "ENABLE_CUDA: ${ENABLE_CUDA}")
 MESSAGE(STATUS "ENABLE_ASAN (address sanitizer): ${ENABLE_ASAN}")
 MESSAGE(STATUS "INSTALL_OPENCL_HEADERS (Install our headers): ${INSTALL_OPENCL_HEADERS}")
 MESSAGE(STATUS "OCL_DRIVERS (Drivers built): ${OCL_DRIVERS}")

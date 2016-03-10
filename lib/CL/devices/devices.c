@@ -47,6 +47,10 @@
 
 #include "hsa/pocl-hsa.h"
 
+#if defined(BUILD_CUDA)
+#include "cuda/pocl-cuda.h"
+#endif
+
 #define MAX_DEV_NAME_LEN 64
 
 /* the enabled devices */
@@ -66,6 +70,9 @@ static init_device_ops pocl_devices_init_ops[] = {
 #endif
 #if defined(BUILD_HSA)
   pocl_hsa_init_device_ops,
+#endif
+#if defined(BUILD_CUDA)
+  pocl_cuda_init_device_ops,
 #endif
 };
 
