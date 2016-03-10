@@ -123,7 +123,9 @@ append_new_chunk (memory_region_t *region,
   chunk_info_t* new_chunk = NULL;
   BA_LOCK (region->lock);
 
+#ifdef ENABLE_ASSERTS
   assert (!region->last_chunk->is_allocated);
+#endif
   /* if the last_chunk is too small we cannot append
      a new chunk before it */
   if (!chunk_slack (region->last_chunk, size, NULL))
@@ -183,7 +185,9 @@ append_new_chunk (memory_region_t *region,
 chunk_info_t*
 alloc_buffer_from_region (memory_region_t *region, size_t size)
 {
+#ifdef ENABLE_ASSERTS
   assert (region != NULL);
+#endif
   /* The memory-wasteful but fast strategy:
 
      Assume there's plenty of memory so just try to append the
@@ -236,6 +240,8 @@ alloc_buffer_from_region (memory_region_t *region, size_t size)
  * @return The start address of the chunk, or 0 if no space available
  * in the buffer.
  */
+
+#ifndef BUFALLOC_NO_MULTIPLE_REGIONS 
 chunk_info_t *
 alloc_buffer (memory_region_t *regions, size_t size)
 {
@@ -249,6 +255,7 @@ alloc_buffer (memory_region_t *regions, size_t size)
     }
   return NULL;
 }
+#endif
 
 /**
  * Creates a reference to a part of a chunk.
@@ -256,6 +263,7 @@ alloc_buffer (memory_region_t *regions, size_t size)
  * @todo Register to the parent also so it can free the
  * child references.
  */
+#ifndef BUFALLOC_NO_SUB_CHUNKS
 chunk_info_t *
 create_sub_chunk (chunk_info_t *parent, size_t offset, size_t size)
 {
@@ -266,7 +274,7 @@ create_sub_chunk (chunk_info_t *parent, size_t offset, size_t size)
   DL_APPEND(parent->children, subchunk);
   return subchunk;
 }
-
+#endif
 
 /**
  * Merges two unallocated chunks together to a larger chunk, if both
@@ -278,8 +286,10 @@ create_sub_chunk (chunk_info_t *parent, size_t offset, size_t size)
  * @return A pointer to the coalesced chunk, or the second chunk in case
  * coalsecing could not be done.
  */
-static chunk_info_t *
-coalesce_chunks (chunk_info_t* first,
+
+#ifndef BUFALLOC_NO_CHUNK_COALESCING
+static chunk_info_t * 
+coalesce_chunks (chunk_info_t* first, 
                  chunk_info_t* second)
 {
   if (first == NULL) return second;
@@ -310,6 +320,7 @@ coalesce_chunks (chunk_info_t* first,
 
   return first;
 }
+#endif
 
 memory_region_t *
 free_buffer (memory_region_t *regions, memory_address_t addr)
@@ -329,7 +340,9 @@ free_buffer (memory_region_t *regions, memory_address_t addr)
           if (chunk->start_address == addr)
             {
               chunk->is_allocated = 0;
+#ifndef BUFALLOC_NO_CHUNK_COALESCING
               coalesce_chunks (coalesce_chunks (chunk->prev, chunk), chunk->next);
+#endif
               BA_UNLOCK (region->lock);
 #ifdef DEBUG_BUFALLOC
               printf ("#### region %x after free_buffer at addr %x\n",
@@ -357,7 +370,9 @@ free_chunk (chunk_info_t* chunk)
   memory_region_t *region = chunk->parent_region;
   BA_LOCK (region->lock);
   chunk->is_allocated = 0;
+#ifndef BUFALLOC_NO_CHUNK_COALESCING
   coalesce_chunks (coalesce_chunks (chunk->prev, chunk), chunk->next);
+#endif
   BA_UNLOCK (region->lock);
 
 #ifdef DEBUG_BUFALLOC
@@ -383,7 +398,8 @@ init_mem_region (memory_region_t *region, memory_address_t start, size_t size)
   region->chunks = NULL;
   region->free_chunks = NULL;
   region->alignment = 64;
-
+  region->next = NULL;
+  region->prev = NULL;
   /* Create the "sentinel chunk" */
   region->last_chunk = &region->all_chunks[0];
   region->last_chunk->start_address = start;

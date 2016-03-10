@@ -27,6 +27,7 @@
 
 #include "pocl_cl.h"
 #include "dev_image.h"
+#include "utlist.h"
 
 #define XSETUP_DEVICE_CL_VERSION(A, B)             \
   dev->cl_version_major = A;                      \
@@ -83,6 +84,10 @@
 #define POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF POCL_DEVICES_PREFERRED_VECTOR_WIDTH_SHORT
 #define POCL_DEVICES_NATIVE_VECTOR_WIDTH_HALF POCL_DEVICES_NATIVE_VECTOR_WIDTH_SHORT
 
+#ifdef __cplusplus  
+extern "C" {
+#endif
+
 const char* llvm_codegen (const char* tmpdir,
                           cl_kernel kernel,
                           cl_device_id device);
@@ -94,6 +99,27 @@ void fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg);
 
 void* pocl_memalign_alloc(size_t align_width, size_t size);
 
+void pocl_copy_mem_object (cl_device_id dest_dev, cl_mem dest, 
+                           size_t dest_offset,
+                           cl_device_id source_dev, cl_mem source,
+                           size_t source_offset, size_t cb);
+
+void pocl_migrate_mem_objects (_cl_command_node *node);
+
+void pocl_scheduler (_cl_command_node * volatile * ready_list,
+                     pthread_mutex_t *lock_ptr);
+
+void pocl_exec_command (_cl_command_node * volatile node);
+
+void pocl_ndrange_node_cleanup(_cl_command_node *node);
+void pocl_native_kernel_cleanup(_cl_command_node *node);
+void pocl_mem_objs_cleanup (cl_event event);
+
+void pocl_broadcast (cl_event event);
+
+void pocl_init_dlhandle_cache ();
+
+void pocl_check_dlhandle_cache (_cl_command_node *cmd);
 
 void pocl_setup_device_for_system_memory(cl_device_id device);
 
@@ -104,5 +130,9 @@ void* pocl_memalign_alloc_global_mem(cl_device_id device, size_t align, size_t s
 void pocl_free_global_mem(cl_device_id device, void *ptr, size_t size);
 
 void pocl_print_system_memory_stats();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

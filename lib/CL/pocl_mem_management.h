@@ -33,3 +33,7 @@ void pocl_mem_manager_free_event (cl_event event);
 _cl_command_node* pocl_mem_manager_new_command (void);
 
 void pocl_mem_manager_free_command (_cl_command_node *cmd_ptr);
+
+event_node* pocl_mem_manager_new_event_node ();
+
+void pocl_mem_manager_free_event_node (event_node *ed);

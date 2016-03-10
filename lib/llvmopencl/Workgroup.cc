@@ -51,6 +51,13 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "Barrier.h"
 #include "Workgroup.h"
 
+#include "LLVMUtils.h"
+#include <cstdio>
+#include <map>
+#include <iostream>
+
+#include "pocl.h"
+#include "pocl_cl.h"
 
 #if _MSC_VER
 #  include "vccompat.hpp"
@@ -59,6 +66,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #define STRING_LENGTH 32
 
 POP_COMPILER_DIAGS
+
+extern cl_device_id currentPoclDevice;
 
 using namespace std;
 using namespace llvm;
@@ -148,39 +157,27 @@ static RegisterPass<Workgroup> X("workgroup", "Workgroup creation pass");
 bool
 Workgroup::runOnModule(Module &M)
 {
-
-#ifdef LLVM_OLDER_THAN_3_7
-  if (M.getDataLayout()->getPointerSize(0) == 8)
-    {
-      TypeBuilder<PoclContext, true>::setSizeTWidth(64);
-    }
-  else if (M.getDataLayout()->getPointerSize(0) == 4)
-    {
-      TypeBuilder<PoclContext, true>::setSizeTWidth(32);
-    }
-  else 
-    {
-      assert (false && "Target has an unsupported pointer width.");
-    }
-#else
-  if (M.getDataLayout().getPointerSize(0) == 8)
-    {
-      TypeBuilder<PoclContext, true>::setSizeTWidth(64);
-    }
-  else if (M.getDataLayout().getPointerSize(0) == 4)
-    {
-      TypeBuilder<PoclContext, true>::setSizeTWidth(32);
-    }
-  else 
-    {
-      assert (false && "Target has an unsupported pointer width.");
-    }
-#endif
-
+  switch (currentPoclDevice->address_bits) {
+  case 64:
+    TypeBuilder<PoclContext, true>::setSizeTWidth(64);
+    break;
+  case 32:
+    TypeBuilder<PoclContext, true>::setSizeTWidth(32);
+    break;
+  default:
+    assert (false && "Target has an unsupported pointer width.");
+    break;
+  }
+  
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     if (!i->isDeclaration())
       i->setLinkage(Function::InternalLinkage);
   }
+
+  // store the new and old kernel pairs in order to regenerate
+  // all the metadata that used to point to the unmodified
+  // kernels
+  FunctionMapping kernels;
 
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     if (!isKernelToProcess(*i)) continue;
@@ -190,8 +187,26 @@ Workgroup::runOnModule(Module &M)
 
     privatizeContext(M, L);
 
-    createWorkgroup(M, L);
-    createWorkgroupFast(M, L);
+    if (!currentPoclDevice->spmd) {
+      createWorkgroup(M, L);
+      createWorkgroupFast(M, L);
+    }
+    else
+      kernels[&*i] = L;
+  }
+
+  if (currentPoclDevice->spmd) {
+    regenerate_kernel_metadata(M, kernels);
+
+    /* Delete the old kernels. */
+    for (FunctionMapping::const_iterator i = kernels.begin(),
+           e = kernels.end(); i != e; ++i) 
+      {
+        Function *old_kernel = (*i).first;
+        Function *new_kernel = (*i).second;
+        if (old_kernel == new_kernel) continue;
+        old_kernel->eraseFromParent();
+      }
   }
 
   Function *barrier = cast<Function> 
@@ -212,7 +227,12 @@ createLauncher(Module &M, Function *F)
   for (Function::const_arg_iterator i = F->arg_begin(), e = F->arg_end();
        i != e; ++i)
     sv.push_back (i->getType());
-  sv.push_back(TypeBuilder<PoclContext*, true>::get(M.getContext()));
+  if (currentPoclDevice->spmd) {
+    PointerType* g_pc_ptr = PointerType::get(TypeBuilder<PoclContext, true>::get(M.getContext()), 1);
+    sv.push_back(g_pc_ptr);
+  }
+  else
+    sv.push_back(TypeBuilder<PoclContext*, true>::get(M.getContext()));
 
   FunctionType *ft = FunctionType::get(Type::getVoidTy(M.getContext()),
 				       ArrayRef<Type *> (sv),
@@ -220,11 +240,20 @@ createLauncher(Module &M, Function *F)
 
   std::string funcName = "";
   funcName = F->getName().str();
-
-  Function *L = Function::Create(ft,
-				 Function::ExternalLinkage,
-				 "_pocl_launcher_" + funcName,
-				 &M);
+  Function *L = NULL;
+  if (currentPoclDevice->spmd) {
+    Function *F = M.getFunction(funcName);
+    F->setName(funcName + "_original");
+    L = Function::Create(ft,
+                         Function::ExternalLinkage,
+                         funcName,
+                         &M);
+  }
+  else
+    L = Function::Create(ft,
+                         Function::ExternalLinkage,
+                         "_pocl_launcher_" + funcName,
+                         &M);
 
   SmallVector<Value *, 8> arguments;
   Function::arg_iterator ai = L->arg_begin();
@@ -253,7 +282,7 @@ createLauncher(Module &M, Function *F)
 
 
   int size_t_width = 32;
-  if (M.getDataLayout().getPointerSize(0) == 8)
+  if (currentPoclDevice->address_bits == 64)
     size_t_width = 64;
 
   ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), &*ai,
@@ -275,23 +304,23 @@ createLauncher(Module &M, Function *F)
   }
 
   if (WGDynamicLocalSize) {
-      ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), &*ai,
-                                    TypeBuilder<PoclContext, true>::LOCAL_SIZE);
-      for (int i = 0; i < 3; ++i) {
-          snprintf(s, STRING_LENGTH, "_local_size_%c", 'x' + i);
-          gv = M.getGlobalVariable(s);
-          if (gv != NULL) {
-              if (size_t_width == 64) {
-                  v = builder.CreateLoad(builder.CreateConstGEP2_64(ptr, 0, i));
-              } else {
-                  v = builder.CreateLoad(
-                        builder.CreateConstGEP2_32(
-                          ptr->getType()->getPointerElementType(),
-                          ptr, 0, i));
-              }
-              builder.CreateStore(v, gv);
-          }
+    ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), &*ai,
+                                  TypeBuilder<PoclContext, true>::LOCAL_SIZE);
+    for (int i = 0; i < 3; ++i) {
+      snprintf(s, STRING_LENGTH, "_local_size_%c", 'x' + i);
+      gv = M.getGlobalVariable(s);
+      if (gv != NULL) {
+        if (size_t_width == 64) {
+          v = builder.CreateLoad(builder.CreateConstGEP2_64(ptr, 0, i));
+        } else {
+          v = builder.CreateLoad(
+                 builder.CreateConstGEP2_32(
+                                    ptr->getType()->getPointerElementType(),
+                                    ptr, 0, i));
+        }
+        builder.CreateStore(v, gv);
       }
+    }
   }
   
   ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), &*ai,

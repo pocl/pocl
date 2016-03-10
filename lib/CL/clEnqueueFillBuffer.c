@@ -86,10 +86,11 @@ CL_API_SUFFIX__VERSION_1_2
 
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_FILL_BUFFER,
                                  event, num_events_in_wait_list,
-                                 event_wait_list);
+                                 event_wait_list, 1, &buffer);
   if (errcode != CL_SUCCESS)
     return errcode;
 
+  cmd->command.memfill.buffer = buffer;
   cmd->command.memfill.ptr =
       buffer->device_ptrs[command_queue->device->dev_id].mem_ptr;
   cmd->command.memfill.size = size;
@@ -100,6 +101,9 @@ CL_API_SUFFIX__VERSION_1_2
   cmd->command.memfill.pattern_size = pattern_size;
 
   POname(clRetainMemObject) (buffer);
+  buffer->owning_device = command_queue->device;
+  pocl_update_mem_obj_sync (command_queue, cmd, buffer, 'w');
+
   pocl_command_enqueue(command_queue, cmd);
 
   return CL_SUCCESS;

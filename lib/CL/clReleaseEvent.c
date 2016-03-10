@@ -33,12 +33,18 @@ POname(clReleaseEvent)(cl_event event) CL_API_SUFFIX__VERSION_1_0
   POCL_RETURN_ERROR_COND((event->context == NULL), CL_INVALID_EVENT);
 
   POCL_RELEASE_OBJECT (event, new_refcount);
-
+  
   if (new_refcount == 0)
     {
+      POCL_MSG_PRINT_INFO ("Freeing event %d\n", event->id);
+      if (event->command_type != CL_COMMAND_USER &&
+          event->queue->device->ops->free_event_data)
+        event->queue->device->ops->free_event_data(event);
+
       POname(clReleaseContext) (event->context);
       if (event->queue)
         POname(clReleaseCommandQueue) (event->queue);
+
       pocl_mem_manager_free_event (event);
     }
 

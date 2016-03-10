@@ -43,6 +43,7 @@
 #include "utlist.h"
 #include "common.h"
 #include "pocl_mem_management.h"
+#include "devices.h"
 #include "pocl_runtime_config.h"
 
 struct list_item;
@@ -178,10 +179,13 @@ pocl_aligned_free (void *ptr)
 }
 #endif
 
-cl_int pocl_create_event (cl_event *event, cl_context context,
-                          cl_command_queue command_queue,
-                          cl_command_type command_type)
+
+cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue, 
+                          cl_command_type command_type, int num_buffers,
+                          const cl_mem *buffers, cl_context context)
 {
+  static unsigned int event_id_counter = 0;
+
   if (context == NULL || !(context->valid))
     return CL_INVALID_CONTEXT;
   if (event != NULL)
@@ -193,40 +197,94 @@ cl_int pocl_create_event (cl_event *event, cl_context context,
       (*event)->context = context;
       POname(clRetainContext) (context);
       (*event)->queue = command_queue;
+
       /* user events have a NULL command queue, don't retain it */
       if (command_queue)
         POname(clRetainCommandQueue) (command_queue);
+
       (*event)->command_type = command_type;
+      (*event)->command =  NULL;
       (*event)->callback_list = NULL;
+      (*event)->id = event_id_counter++;
+      (*event)->notify_list = NULL;
+      (*event)->data = NULL;
+      (*event)->num_buffers = num_buffers;
+      if (num_buffers > 0)
+        {
+          (*event)->mem_objs = malloc (num_buffers * sizeof(cl_mem));
+          memcpy ((*event)->mem_objs, buffers, num_buffers * sizeof(cl_mem));
+        }
+      else
+        (*event)->mem_objs = NULL;
+      (*event)->status = CL_QUEUED;
       (*event)->implicit_event = 0;
       (*event)->next = NULL;
+      (*event)->prev = NULL;
+
+      /* user events do not have cq */
+      if (!command_queue)
+        return CL_SUCCESS;
+
     }
   return CL_SUCCESS;
 }
 
+int pocl_create_event_sync(cl_event waiting_event, 
+                           cl_event notifier_event, cl_mem mem)
+{
+  event_node * volatile notify_target = NULL;
+  event_node * volatile wait_list_item = NULL;
+  assert(notifier_event->pocl_refcount != 0);
+  POCL_MSG_PRINT_INFO("create event sync: waiting %d, notifier %d\n", waiting_event->id, notifier_event->id);
+  if (waiting_event == notifier_event)
+    {
+      printf("waiting id %d, notifier id = %d\n", waiting_event->id, 
+             notifier_event->id);
+      assert(waiting_event != notifier_event);
+    }
+  LL_FOREACH (waiting_event->wait_list, wait_list_item)
+    {
+      if (wait_list_item->event == notifier_event)
+        return CL_SUCCESS;
+    }
+  POCL_LOCK_OBJ (waiting_event);
+
+  if (notifier_event == NULL || notifier_event->status == CL_COMPLETE)
+    {
+      POCL_UNLOCK_OBJ (waiting_event);
+      return CL_SUCCESS;
+    }
+
+  notify_target = pocl_mem_manager_new_event_node();
+  wait_list_item = pocl_mem_manager_new_event_node();
+  if (!notify_target || !wait_list_item)
+    return CL_OUT_OF_HOST_MEMORY;
+    
+  notify_target->event = waiting_event;
+  wait_list_item->event = notifier_event;
+  LL_PREPEND (notifier_event->notify_list, notify_target);
+  LL_PREPEND (waiting_event->wait_list, wait_list_item);
+  POCL_UNLOCK_OBJ (waiting_event);
+
+  return CL_SUCCESS;
+}
+
 cl_int pocl_create_command (_cl_command_node **cmd,
-                            cl_command_queue command_queue,
-                            cl_command_type command_type, cl_event *event_p,
-                            cl_int num_events, const cl_event *wait_list)
+                            cl_command_queue command_queue, 
+                            cl_command_type command_type, cl_event *event_p, 
+                            cl_int num_events, const cl_event *wait_list,
+                            int num_buffers, const cl_mem *buffers)
 {
   int i;
   int err;
   cl_event *event = NULL;
-  /* the provided waiting list will be cloned, because the calling program
-   * might recycle the array for a different command.
-   */
-  cl_event *event_wl = NULL;
-  /* Additionally, if the command queue is non-empty and in-order, we want to
-   * add the previous command to the waiting list: double-bang to ensure that
-   * add_prev_command will be 1 in this case, and 0 otherwise
-   */
-  cl_int add_prev_command = !!(
-    !(command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
-    && command_queue->root != NULL);
-
+  
   if ((wait_list == NULL && num_events != 0) ||
       (wait_list != NULL && num_events == 0))
-    return CL_INVALID_EVENT_WAIT_LIST;
+    {
+      assert(0);
+      return CL_INVALID_EVENT_WAIT_LIST;
+    }
 
   for (i = 0; i < num_events; ++i)
     {
@@ -235,79 +293,177 @@ cl_int pocl_create_command (_cl_command_node **cmd,
     }
 
   *cmd = pocl_mem_manager_new_command ();
-
   if (*cmd == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 
-  if (num_events || add_prev_command)
-    {
-      event_wl = (cl_event*)malloc((num_events + add_prev_command)*sizeof(cl_event));
-      if (event_wl == NULL)
-        return CL_OUT_OF_HOST_MEMORY;
-    }
+  (*cmd)->type = command_type;
 
-  /* if user does not provide event pointer, create event anyway */
+  /* Even if user does not provide event pointer, create event anyway */
   event = &((*cmd)->event);
-  err = pocl_create_event(event, command_queue->context, command_queue, command_type);
+  err = pocl_create_event(event, command_queue, 0, num_buffers, 
+                          buffers, command_queue->context);
+
   if (err != CL_SUCCESS)
     {
-      POCL_MEM_FREE(event_wl);
       POCL_MEM_FREE(*cmd);
       return err;
     }
+  (*event)->command_type = command_type;
   if (event_p)
-    *event_p = *event;
+    {
+      *event_p = *event;
+      (*event)->implicit_event = 0;
+      (*event)->pocl_refcount = 2;
+    }  
   else
-    (*event)->implicit_event = 1;
+    {
+      (*event)->implicit_event = 1;
+      (*event)->pocl_refcount = 1;
+    }
 
-  /* clone the event list */
+  (*cmd)->next = NULL;
+  (*cmd)->prev = NULL;
+  (*cmd)->device = command_queue->device;
+  (*cmd)->event->command = (*cmd);
+  (*cmd)->ready = 0;
+
+  if (!(command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE))
+    {
+      POCL_LOCK_OBJ (command_queue);
+      if (command_queue->last_event.event)
+        {
+          POCL_LOCK_OBJ (command_queue->last_event.event);
+          pocl_create_event_sync ((*cmd)->event,
+                                  command_queue->last_event.event,
+                                  NULL);
+          POCL_UNLOCK_OBJ (command_queue->last_event.event);
+        }
+      POCL_UNLOCK_OBJ (command_queue);
+    }
+  /* Form the wait list for command */
   for (i = 0; i < num_events; ++i)
     {
-      event_wl[i] = wait_list[i];
+      cl_event wle = wait_list[i];
+      POCL_LOCK_OBJ (wle);
+      pocl_create_event_sync ((*cmd)->event, wle, NULL);
+      POCL_UNLOCK_OBJ (wle);
     }
-
-  if (add_prev_command)
-    {
-      // find the previous command
-      _cl_command_node *prev_command;
-      for (prev_command = command_queue->root; prev_command->next != NULL;
-           prev_command = prev_command->next){}
-      //printf("create_command: prev_com=%d prev_com->event = %d \n",prev_command, prev_command->event);
-      event_wl[i] = prev_command->event;
-    }
-#if 0
-  for (i = 0; i < num_events + add_prev_command; ++i)
-    {
-      printf("create-command: event_wl[%i]=%p\n", i, event_wl[i]);
-    }
-#endif
-  (*cmd)->event_wait_list = event_wl;
-  (*cmd)->num_events_in_wait_list = num_events + add_prev_command;
-  (*cmd)->type = command_type;
-  (*cmd)->next = NULL;
-  (*cmd)->device = command_queue->device;
-
-  //printf("create_command (end): event=%d new_event=%d cmd->event=%d cmd=%d\n", event, new_event, (*cmd)->event, *cmd);
-
-
+  POCL_MSG_PRINT_INFO("Created command struct (event %d, type %X)\n", 
+                      (*cmd)->event->id, command_type);
   return CL_SUCCESS;
 }
 
 void pocl_command_enqueue (cl_command_queue command_queue,
                           _cl_command_node *node)
 {
-  POCL_LOCK_OBJ(command_queue);
-  LL_APPEND (command_queue->root, node);
-  POCL_UNLOCK_OBJ(command_queue);
-  #ifdef POCL_DEBUG_BUILD
-  if (pocl_is_option_set("POCL_IMPLICIT_FINISH"))
-    POclFinish (command_queue);
-  #endif
-  POCL_UPDATE_EVENT_QUEUED (&node->event);
+  cl_event event;
 
+  POCL_LOCK_OBJ (node->event);
+  assert(node->event->status == CL_QUEUED);
+  POCL_UNLOCK_OBJ (node->event);
+
+  assert (command_queue == node->event->queue);
+
+  POCL_LOCK_OBJ (command_queue);
+  ++command_queue->command_count;
+  if ((node->type == CL_COMMAND_BARRIER || node->type == CL_COMMAND_MARKER) &&
+      node->command.barrier.has_wait_list == 0)
+    {
+      DL_FOREACH (command_queue->events, event)
+        {
+          POCL_LOCK_OBJ(event);
+          pocl_create_event_sync (node->event, event, NULL);
+          POCL_UNLOCK_OBJ (event);
+        }
+    }
+  if (node->type == CL_COMMAND_BARRIER)
+    command_queue->barrier = node->event;
+  else
+    {
+      if (command_queue->barrier)
+        {
+          POCL_LOCK_OBJ(command_queue->barrier);
+          pocl_create_event_sync (node->event, command_queue->barrier, NULL);
+          POCL_UNLOCK_OBJ (command_queue->barrier);
+        }
+    }
+  DL_APPEND (command_queue->events, node->event);
+  command_queue->last_event.event = node->event;
+  command_queue->last_event.event_id = node->event->id;
+  POCL_UNLOCK_OBJ (command_queue);
+
+  POCL_UPDATE_EVENT_QUEUED (&node->event);
+  
+  command_queue->device->ops->submit(node, command_queue);
 }
 
 
+void
+pocl_command_push (_cl_command_node *node, 
+                   _cl_command_node *volatile *ready_list, 
+                   _cl_command_node *volatile *pending_list)
+{
+  assert (node != NULL);
+
+  /* If the last command inserted is a barrier,
+     command is necessary not ready */
+  if ((*ready_list) != NULL && (*ready_list)->prev
+      && (*ready_list)->prev->type == CL_COMMAND_BARRIER)
+    {
+      CDL_PREPEND ((*pending_list), node);
+      return;
+    }
+  POCL_LOCK_OBJ (node->event);
+  if (pocl_command_is_ready(node->event))
+    {
+      CDL_PREPEND ((*ready_list), node);
+    }
+  else
+    {
+      CDL_PREPEND ((*pending_list), node);
+    }
+  POCL_UNLOCK_OBJ (node->event);
+}
+
+int pocl_update_command_queue (cl_event event)
+{
+  int cq_ready;
+
+  POCL_LOCK_OBJ (event->queue);
+  --event->queue->command_count;
+  if (event->queue->barrier == event)
+    event->queue->barrier = NULL;
+
+  if (event->queue->last_event.event == event)
+    event->queue->last_event.event = NULL;
+  assert (event->queue->command_count >= 0);
+
+  DL_DELETE (event->queue->events, event);
+
+  cq_ready = (event->queue->command_count) ? 0: 1;
+  POCL_UNLOCK_OBJ (event->queue);
+  return cq_ready;
+}
+
+cl_int pocl_update_mem_obj_sync (cl_command_queue cq, _cl_command_node *cmd, 
+                                 cl_mem mem, char operation)
+{
+  int i;
+  POCL_LOCK_OBJ (mem);
+  mem->owning_device = cmd->device;
+  mem->latest_event = cmd->event;
+  POCL_UNLOCK_OBJ (mem);
+
+  for (i = 0; i < cmd->event->num_buffers; ++i)
+    {
+      if (cmd->event->mem_objs[i] == NULL)
+        {
+          cmd->event->mem_objs[i] = mem;
+          break;
+        }
+    }
+  return CL_SUCCESS;
+}
 
 int pocl_buffer_boundcheck(cl_mem buffer, size_t offset, size_t size) {
   POCL_RETURN_ERROR_ON((offset > buffer->size), CL_INVALID_VALUE,

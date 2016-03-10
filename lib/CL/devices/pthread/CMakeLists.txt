@@ -24,6 +24,6 @@
 #=============================================================================
 
 if(MSVC)
-  set_source_files_properties( pocl-pthread.h pthread.c PROPERTIES LANGUAGE CXX )
+  set_source_files_properties( pocl-pthread.h pthread.c pthread_scheduler.c pthread_utils.c PROPERTIES LANGUAGE CXX )
 endif(MSVC)
-add_library("pocl-devices-pthread" OBJECT pocl-pthread.h pthread.c)
+add_library("pocl-devices-pthread" OBJECT pocl-pthread.h pthread.c pthread_scheduler.c pthread_utils.c)

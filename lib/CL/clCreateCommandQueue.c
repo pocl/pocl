@@ -35,13 +35,11 @@ POname(clCreateCommandQueue)(cl_context context,
   int errcode;
   cl_bool found = CL_FALSE;
 
+  POCL_MSG_PRINT_INFO("Create Command queue on device %d\n", device->dev_id);
+
   /* validate flags */
   POCL_GOTO_ERROR_ON((properties > (1<<2)-1), CL_INVALID_VALUE,
             "Properties must be <= 3 (there are only 2)\n");
-
-  /* we don't handle out-of-order queues yet */
-  POCL_GOTO_ERROR_ON((properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE),
-      CL_INVALID_QUEUE_PROPERTIES, "Pocl doesn't have out-of-order queues yet\n");
 
   if (pocl_debug_messages)
     properties |= CL_QUEUE_PROFILING_ENABLE;
@@ -67,7 +65,13 @@ POname(clCreateCommandQueue)(cl_context context,
   command_queue->context = context;
   command_queue->device = device;
   command_queue->properties = properties;
+  command_queue->barrier = NULL;
+  command_queue->events = NULL;
   command_queue->root = NULL;
+  command_queue->command_count = 0;
+  command_queue->last_event.event = NULL;
+  command_queue->last_event.event_id = -1;
+  command_queue->last_event.next = NULL;
 
   POCL_RETAIN_OBJECT(context);
   POCL_RETAIN_OBJECT(device);

@@ -58,14 +58,20 @@ typedef pocl_lock_t ba_lock_t;
 #include "tce-sync.h"
 #include "dthread.h"
 
+#ifdef NO_LOCKING
+typedef int ba_lock_t;
+#define BA_LOCK(LOCK)
+#define BA_UNLOCK(LOCK)
+#define BA_INIT_LOCK(LOCK)
+#else
 typedef tce_sm_lock ba_lock_t;
-
 #define BA_LOCK(LOCK) tce_sync_spin_lock (&LOCK)
 #define BA_UNLOCK(LOCK) tce_sync_unlock (&LOCK)
 #define BA_INIT_LOCK(LOCK) LOCK = 0
+#endif
 
 #ifndef AS_QUALIFIER
-#define AS_QUALIFIER __shared__
+#define AS_QUALIFIER
 #endif
 
 #endif
@@ -74,7 +80,7 @@ typedef tce_sm_lock ba_lock_t;
    maximum number of kernel buffer arguments. Running out of chunk
    data structures might leave region space unused due to that only. */
 #ifndef MAX_CHUNKS_IN_REGION
-#define MAX_CHUNKS_IN_REGION 64
+#define MAX_CHUNKS_IN_REGION 1024
 #endif
 
 /* address-space agnostic memory address */
@@ -90,9 +96,13 @@ enum allocation_strategy
                       */
   };
 
+#ifdef __TCE_STANDALONE__
+typedef AS_QUALIFIER volatile struct chunk_info chunk_info_t;
+typedef AS_QUALIFIER volatile struct memory_region memory_region_t;
+#else
 typedef AS_QUALIFIER struct chunk_info chunk_info_t;
-
 typedef AS_QUALIFIER struct memory_region memory_region_t;
+#endif
 
 /* Info of a single "chunk" inside a memory region. Chunk is a piece
    of memory that has been allocated to a buffer (but might have been

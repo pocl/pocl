@@ -35,7 +35,7 @@
 
 #define IMPLEMENT_GET_IMAGE_HEIGHT(__IMGTYPE__)                   \
   int _CL_OVERLOADABLE get_image_height(__IMGTYPE__ image){       \
-    return (*(ADDRESS_SPACE dev_image_t**)&image)->height;               \
+    return (*(ADDRESS_SPACE dev_image_t**)&image)->_height;       \
   }                                                               \
 
 

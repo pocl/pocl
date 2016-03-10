@@ -1,3 +1,18 @@
+0.14 unreleased
+================
+
+Highlights
+----------
+- Out of order execution execution now enabled.
+  - New driver api extension to support OoO and asynchronous devices/drivers.
+  - Pthread driver now fully asynchronous.
+  - HSA driver now fully asynchronous?
+
+OpenCL Runtime/Platform API support
+-----------------------------------
+- implemented clEnqueueBarrierWithWaitList
+- implemented clEnqueeuMigrateMemObjects
+
 0.13 March 2016
 ================
 

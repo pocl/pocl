@@ -53,7 +53,7 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
   error = pocl_create_command (&command_node, command_queue,
                                CL_COMMAND_NATIVE_KERNEL,
                                event, num_events_in_wait_list,
-                               event_wait_list);
+                               event_wait_list, num_mem_objects, mem_list);
   if (error != CL_SUCCESS)
     return error;
 
@@ -104,7 +104,7 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
 
       /* put the device ptr of the clmem in the argument */
       buf = mem_list[i]->device_ptrs[command_queue->device->dev_id].mem_ptr;
-
+      mem_list[i]->owning_device = command_queue->device;
       POname(clRetainMemObject) (mem_list[i]);
       /* args_mem_loc is a pointer relative to the original args, since we
        * recopy them, we must do some relocation */
