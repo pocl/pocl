@@ -34,7 +34,7 @@ pocl_cuda_init_device_ops(struct pocl_device_ops *ops)
 
   /* TODO: more descriptive name from CUDA probing the device */
   ops->device_name = "CUDA";
-  //ops->init_device_infos = pocl_cuda_init_device_infos;
+  ops->init_device_infos = pocl_cuda_init_device_infos;
   ops->probe = pocl_cuda_probe;
   //ops->uninit = pocl_cuda_uninit;
   //ops->init = pocl_cuda_init;
@@ -49,6 +49,14 @@ pocl_cuda_init_device_ops(struct pocl_device_ops *ops)
   //ops->copy = pocl_cuda_copy;
   //ops->copy_rect = pocl_basic_copy_rect;
   //ops->get_timer_value = pocl_cuda_get_timer_value;
+}
+
+void
+pocl_cuda_init_device_infos(struct _cl_device_id* dev)
+{
+  pocl_basic_init_device_infos(dev);
+
+  dev->type = CL_DEVICE_TYPE_GPU;
 }
 
 unsigned int
