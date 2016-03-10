@@ -30,5 +30,6 @@
 
 #include "prototypes.inc"
 GEN_PROTOTYPES (cuda)
+GEN_PROTOTYPES (basic)
 
 #endif /* POCL_CUDA_H */
