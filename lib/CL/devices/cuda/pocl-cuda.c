@@ -29,6 +29,11 @@
 
 #include <cuda.h>
 
+typedef struct pocl_cuda_device_data_s {
+  CUdevice device;
+  CUcontext context;
+} pocl_cuda_device_data_t;
+
 static void pocl_cuda_abort_on_error(CUresult result,
                                      unsigned line,
                                      const char* func,
@@ -60,8 +65,8 @@ pocl_cuda_init_device_ops(struct pocl_device_ops *ops)
   ops->probe = pocl_cuda_probe;
   ops->uninit = pocl_cuda_uninit;
   ops->init = pocl_cuda_init;
-  //ops->alloc_mem_obj = pocl_cuda_alloc_mem_obj;
-  //ops->free = pocl_cuda_free;
+  ops->alloc_mem_obj = pocl_cuda_alloc_mem_obj;
+  ops->free = pocl_cuda_free;
   //ops->compile_submitted_kernels = pocl_cuda_compile_submitted_kernels;
   //ops->run = pocl_cuda_run;
   //ops->read = pocl_basic_read;
@@ -84,19 +89,27 @@ pocl_cuda_init(cl_device_id device, const char* parameters)
   if (device->data)
     return;
 
-  device->data = malloc(sizeof(CUdevice));
-  CUdevice *cuda_device = (CUdevice*)device->data;
-  result = cuDeviceGet(cuda_device, 0);
+  pocl_cuda_device_data_t *data = malloc(sizeof(pocl_cuda_device_data_t));
+  result = cuDeviceGet(&data->device, 0);
   CUDA_CHECK(result, "cuDeviceGet");
 
   // Get specific device name
   device->long_name = device->short_name = malloc(256*sizeof(char));
-  cuDeviceGetName(device->long_name, 256, *cuda_device);
+  cuDeviceGetName(device->long_name, 256, data->device);
 
   // Get other device properties
   cuDeviceGetAttribute((int*)&device->max_compute_units,
                        CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT,
-                       *cuda_device);
+                       data->device);
+
+  // TODO: Actual maximum size
+  device->max_mem_alloc_size = 1024*1024*1024;
+
+  // Create context
+  result = cuCtxCreate(&data->context, 0, data->device);
+  CUDA_CHECK(result, "cuCtxCreate");
+
+  device->data = data;
 }
 
 void
@@ -123,8 +136,48 @@ pocl_cuda_probe(struct pocl_device_ops *ops)
 void
 pocl_cuda_uninit(cl_device_id device)
 {
-  POCL_MEM_FREE(device->data);
+  pocl_cuda_device_data_t *data = device->data;
+
+  cuCtxDestroy(data->context);
+
+  POCL_MEM_FREE(data);
   device->data = NULL;
 
   POCL_MEM_FREE(device->long_name);
+}
+
+cl_int pocl_cuda_alloc_mem_obj(cl_device_id device, cl_mem mem_obj)
+{
+  void *b = NULL;
+
+  /* if memory for this global memory is not yet allocated -> do it */
+  if (mem_obj->device_ptrs[device->global_mem_id].mem_ptr == NULL)
+  {
+    // TODO: Deal with mem flags
+    CUresult result = cuMemAlloc((CUdeviceptr*)&b, mem_obj->size);
+    if (result != CUDA_SUCCESS)
+    {
+      const char *err;
+      cuGetErrorName(result, &err);
+      POCL_MSG_PRINT2(__FUNCTION__, __LINE__,
+                      "-> Failed to allocate memory: %s\n", err);
+      return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+    }
+
+    mem_obj->device_ptrs[device->global_mem_id].mem_ptr = b;
+    mem_obj->device_ptrs[device->global_mem_id].global_mem_id =
+      device->global_mem_id;
+  }
+
+  /* copy already allocated global mem info to devices own slot */
+  mem_obj->device_ptrs[device->dev_id] =
+    mem_obj->device_ptrs[device->global_mem_id];
+
+  return CL_SUCCESS;
+}
+
+void pocl_cuda_free(cl_device_id device, cl_mem mem_obj)
+{
+  void* ptr = mem_obj->device_ptrs[device->dev_id].mem_ptr;
+  cuMemFree((CUdeviceptr)ptr);
 }
