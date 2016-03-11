@@ -300,52 +300,62 @@ void pocl_exec_command (_cl_command_node * volatile node)
       break;
     case CL_COMMAND_WRITE_IMAGE:
       POCL_UPDATE_EVENT_RUNNING(event);
-      node->device->ops->write_rect 
-        (node->device->data, node->command.w_image.host_ptr,
-         node->command.w_image.device_ptr, node->command.w_image.origin,
-         node->command.w_image.origin, node->command.w_image.region, 
-         node->command.w_image.b_rowpitch, 
-         node->command.w_image.b_slicepitch,
-         node->command.w_image.b_rowpitch,
-         node->command.w_image.b_slicepitch);
+      node->device->ops->write_rect
+        (node->device->data,
+         node->command.write_image.host_ptr,
+         node->command.write_image.device_ptr,
+         node->command.write_image.origin,
+         node->command.write_image.origin,
+         node->command.write_image.region,
+         node->command.write_image.b_rowpitch,
+         node->command.write_image.b_slicepitch,
+         node->command.write_image.b_rowpitch,
+         node->command.write_image.b_slicepitch);
       POCL_UPDATE_EVENT_COMPLETE(event);
       break;
     case CL_COMMAND_WRITE_BUFFER_RECT:
       POCL_UPDATE_EVENT_RUNNING(event);
-      node->device->ops->write_rect 
-        (node->device->data, node->command.w_image.host_ptr,
-         node->command.w_image.device_ptr, node->command.w_image.origin,
-         node->command.w_image.h_origin, node->command.w_image.region, 
-         node->command.w_image.b_rowpitch, 
-         node->command.w_image.b_slicepitch,
-         node->command.w_image.h_rowpitch,
-         node->command.w_image.h_slicepitch);
+      node->device->ops->write_rect
+        (node->device->data,
+         node->command.write_image.host_ptr,
+         node->command.write_image.device_ptr,
+         node->command.write_image.origin,
+         node->command.write_image.h_origin,
+         node->command.write_image.region,
+         node->command.write_image.b_rowpitch,
+         node->command.write_image.b_slicepitch,
+         node->command.write_image.h_rowpitch,
+         node->command.write_image.h_slicepitch);
       POCL_UPDATE_EVENT_COMPLETE(event);
       POCL_DEBUG_EVENT_TIME(event, "Write Image           ");
       break;
     case CL_COMMAND_READ_IMAGE:
       POCL_UPDATE_EVENT_RUNNING(event);
-      node->device->ops->read_rect 
-        (node->device->data, node->command.r_image.host_ptr,
-         node->command.r_image.device_ptr, node->command.r_image.origin,
-         node->command.r_image.origin, node->command.r_image.region, 
-         node->command.r_image.b_rowpitch, 
-         node->command.r_image.b_slicepitch,
-         node->command.r_image.b_rowpitch,
-         node->command.r_image.b_slicepitch);
+      node->device->ops->read_rect
+        (node->device->data, node->command.read_image.host_ptr,
+         node->command.read_image.device_ptr,
+         node->command.read_image.origin,
+         node->command.read_image.origin,
+         node->command.read_image.region,
+         node->command.read_image.b_rowpitch,
+         node->command.read_image.b_slicepitch,
+         node->command.read_image.b_rowpitch,
+         node->command.read_image.b_slicepitch);
       POCL_UPDATE_EVENT_COMPLETE(event);
       POCL_DEBUG_EVENT_TIME(event, "Read Image            ");
       break;
     case CL_COMMAND_READ_BUFFER_RECT:
       POCL_UPDATE_EVENT_RUNNING(event);
-      node->device->ops->read_rect 
-        (node->device->data, node->command.r_image.host_ptr,
-         node->command.r_image.device_ptr, node->command.r_image.origin,
-         node->command.r_image.h_origin, node->command.r_image.region, 
-         node->command.r_image.b_rowpitch, 
-         node->command.r_image.b_slicepitch,
-         node->command.r_image.h_rowpitch,
-         node->command.r_image.h_slicepitch);
+      node->device->ops->read_rect
+        (node->device->data, node->command.read_image.host_ptr,
+         node->command.read_image.device_ptr,
+         node->command.read_image.origin,
+         node->command.read_image.h_origin,
+         node->command.read_image.region,
+         node->command.read_image.b_rowpitch,
+         node->command.read_image.b_slicepitch,
+         node->command.read_image.h_rowpitch,
+         node->command.read_image.h_slicepitch);
       POCL_UPDATE_EVENT_COMPLETE(event);
       POCL_DEBUG_EVENT_TIME(event, "Read Buffer Rect      ");
       break;

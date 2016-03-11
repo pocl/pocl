@@ -55,14 +55,14 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
       return errcode;
     }  
 
-  cmd->command.w_image.device_ptr = 
+  cmd->command.write_image.device_ptr = 
     image->device_ptrs[command_queue->device->dev_id].mem_ptr;
-  cmd->command.w_image.host_ptr = (void*) ptr;
-  memcpy ((cmd->command.w_image.origin), tuned_origin, 3*sizeof (size_t));
-  memcpy ((cmd->command.w_image.region), tuned_region, 3*sizeof (size_t));
-  cmd->command.w_image.b_rowpitch = image->image_row_pitch;
-  cmd->command.w_image.b_slicepitch = image->image_slice_pitch;
-  cmd->command.w_image.buffer = image;
+  cmd->command.write_image.host_ptr = (void*) ptr;
+  memcpy ((cmd->command.write_image.origin), tuned_origin, 3*sizeof (size_t));
+  memcpy ((cmd->command.write_image.region), tuned_region, 3*sizeof (size_t));
+  cmd->command.write_image.b_rowpitch = image->image_row_pitch;
+  cmd->command.write_image.b_slicepitch = image->image_slice_pitch;
+  cmd->command.write_image.buffer = image;
 
   POname(clRetainMemObject) (image);
   pocl_command_enqueue(command_queue, cmd);

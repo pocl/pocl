@@ -94,20 +94,22 @@ POname(clEnqueueWriteBufferRect)(cl_command_queue command_queue,
   POname(clRetainMemObject) (buffer);
 
   pocl_create_command (&cmd, command_queue, CL_COMMAND_WRITE_BUFFER_RECT,
-                       event, num_events_in_wait_list, event_wait_list, 1, 
+                       event, num_events_in_wait_list, event_wait_list, 1,
                        &buffer);
 
-  cmd->command.w_image.device_ptr = 
+  cmd->command.write_image.device_ptr =
     buffer->device_ptrs[device->dev_id].mem_ptr;
-  cmd->command.w_image.host_ptr = ptr;
-  memcpy (&cmd->command.w_image.origin, buffer_origin, sizeof (size_t) * 3);
-  memcpy (&cmd->command.w_image.h_origin, host_origin, sizeof (size_t) * 3);
-  memcpy (&cmd->command.w_image.region, region, sizeof (size_t) * 3);
-  cmd->command.w_image.h_rowpitch = host_row_pitch;
-  cmd->command.w_image.h_slicepitch = host_slice_pitch;
-  cmd->command.w_image.b_rowpitch = buffer_row_pitch;
-  cmd->command.w_image.b_slicepitch = buffer_slice_pitch;
-  cmd->command.w_image.buffer = buffer;
+  cmd->command.write_image.host_ptr = ptr;
+  memcpy (&cmd->command.write_image.origin,
+          buffer_origin, sizeof (size_t) * 3);
+  memcpy (&cmd->command.write_image.h_origin,
+          host_origin, sizeof (size_t) * 3);
+  memcpy (&cmd->command.write_image.region, region, sizeof (size_t) * 3);
+  cmd->command.write_image.h_rowpitch = host_row_pitch;
+  cmd->command.write_image.h_slicepitch = host_slice_pitch;
+  cmd->command.write_image.b_rowpitch = buffer_row_pitch;
+  cmd->command.write_image.b_slicepitch = buffer_slice_pitch;
+  cmd->command.write_image.buffer = buffer;
 
   buffer->owning_device = command_queue->device;
   pocl_command_enqueue (command_queue, cmd);

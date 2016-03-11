@@ -98,17 +98,17 @@ POname(clEnqueueReadBufferRect)(cl_command_queue command_queue,
                        event, num_events_in_wait_list, event_wait_list, 1, 
                        &buffer);
 
-  cmd->command.r_image.device_ptr = 
+  cmd->command.read_image.device_ptr = 
     buffer->device_ptrs[device->dev_id].mem_ptr;
-  cmd->command.r_image.host_ptr = ptr;
-  memcpy (&cmd->command.r_image.origin, buffer_origin, sizeof (size_t) * 3);
-  memcpy (&cmd->command.r_image.h_origin, host_origin, sizeof (size_t) * 3);
-  memcpy (&cmd->command.r_image.region, region, sizeof (size_t) * 3);
-  cmd->command.r_image.h_rowpitch = host_row_pitch;
-  cmd->command.r_image.h_slicepitch = host_slice_pitch;
-  cmd->command.r_image.b_rowpitch = buffer_row_pitch;
-  cmd->command.r_image.b_slicepitch = buffer_slice_pitch;
-  cmd->command.r_image.buffer = buffer;
+  cmd->command.read_image.host_ptr = ptr;
+  memcpy (&cmd->command.read_image.origin, buffer_origin, sizeof (size_t) * 3);
+  memcpy (&cmd->command.read_image.h_origin, host_origin, sizeof (size_t) * 3);
+  memcpy (&cmd->command.read_image.region, region, sizeof (size_t) * 3);
+  cmd->command.read_image.h_rowpitch = host_row_pitch;
+  cmd->command.read_image.h_slicepitch = host_slice_pitch;
+  cmd->command.read_image.b_rowpitch = buffer_row_pitch;
+  cmd->command.read_image.b_slicepitch = buffer_slice_pitch;
+  cmd->command.read_image.buffer = buffer;
 
   buffer->owning_device = command_queue->device;
   pocl_command_enqueue (command_queue, cmd);

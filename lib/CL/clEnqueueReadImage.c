@@ -80,14 +80,14 @@ CL_API_SUFFIX__VERSION_1_0
       return errcode;
     }
 
-  cmd->command.r_image.device_ptr = 
+  cmd->command.read_image.device_ptr = 
     image->device_ptrs[command_queue->device->dev_id].mem_ptr;
-  cmd->command.r_image.host_ptr = ptr;
-  memcpy ((cmd->command.r_image.origin), tuned_origin, 3*sizeof (size_t));
-  memcpy ((cmd->command.r_image.region), tuned_region, 3*sizeof (size_t));
-  cmd->command.r_image.b_rowpitch = image->image_row_pitch;
-  cmd->command.r_image.b_slicepitch = image->image_slice_pitch;
-  cmd->command.r_image.buffer = image;
+  cmd->command.read_image.host_ptr = ptr;
+  memcpy ((cmd->command.read_image.origin), tuned_origin, 3*sizeof (size_t));
+  memcpy ((cmd->command.read_image.region), tuned_region, 3*sizeof (size_t));
+  cmd->command.read_image.b_rowpitch = image->image_row_pitch;
+  cmd->command.read_image.b_slicepitch = image->image_slice_pitch;
+  cmd->command.read_image.buffer = image;
 
   POname(clRetainMemObject) (image);  
   image->owning_device = command_queue->device;

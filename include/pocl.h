@@ -150,7 +150,7 @@ typedef struct
   size_t b_rowpitch;
   size_t b_slicepitch;
   cl_mem buffer;
-} _cl_command_r_image;
+} _cl_command_read_image;
 
 typedef struct
 {
@@ -164,7 +164,7 @@ typedef struct
   size_t b_rowpitch;
   size_t b_slicepitch;
   cl_mem buffer;
-} _cl_command_w_image;
+} _cl_command_write_image;
 
 /* clEnqueueUnMapMemObject */
 typedef struct
@@ -257,8 +257,8 @@ typedef union
   _cl_command_copy copy;
   _cl_command_map map;
   _cl_command_fill_image fill_image;
-  _cl_command_r_image r_image;
-  _cl_command_w_image w_image;
+  _cl_command_read_image read_image;
+  _cl_command_write_image write_image;
   _cl_command_marker marker;
   _cl_command_barrier barrier;
   _cl_command_unmap unmap;
