@@ -24,8 +24,13 @@
 #include "config.h"
 
 #include "pocl-cuda.h"
+#include "pocl-ptx-gen.h"
 #include "common.h"
 #include "devices.h"
+#include "pocl_cache.h"
+#include "pocl_file_util.h"
+
+#include <string.h>
 
 #include <cuda.h>
 
@@ -46,8 +51,8 @@ static void pocl_cuda_abort_on_error(CUresult result,
     const char *err_string;
     cuGetErrorName(result, &err_name);
     cuGetErrorString(result, &err_string);
-    POCL_MSG_PRINT2(func, line, "-> Error during %s\n", api);
-    POCL_ABORT("-> %s: %s\n", err_name, err_string);
+    POCL_MSG_PRINT2(func, line, "Error during %s\n", api);
+    POCL_ABORT("%s: %s\n", err_name, err_string);
   }
 }
 
@@ -67,8 +72,8 @@ pocl_cuda_init_device_ops(struct pocl_device_ops *ops)
   ops->init = pocl_cuda_init;
   ops->alloc_mem_obj = pocl_cuda_alloc_mem_obj;
   ops->free = pocl_cuda_free;
-  //ops->compile_submitted_kernels = pocl_cuda_compile_submitted_kernels;
-  //ops->run = pocl_cuda_run;
+  ops->compile_submitted_kernels = pocl_cuda_compile_submitted_kernels;
+  ops->run = pocl_cuda_run;
   ops->read = pocl_cuda_read;
   //ops->read_rect = pocl_basic_read_rect;
   ops->write = pocl_cuda_write;
@@ -194,4 +199,65 @@ pocl_cuda_write(void *data, const void *host_ptr, void *device_ptr,
                 size_t offset, size_t cb)
 {
   cuMemcpyHtoD((CUdeviceptr)(device_ptr+offset), host_ptr, cb);
+}
+
+void
+pocl_cuda_compile_submitted_kernels(_cl_command_node *cmd)
+{
+  CUresult result;
+
+  if (cmd->type != CL_COMMAND_NDRANGE_KERNEL)
+    return;
+
+  char bc_filename[POCL_FILENAME_LENGTH];
+  snprintf(bc_filename, POCL_FILENAME_LENGTH, "%s/../../program.bc",
+           cmd->command.run.tmp_dir);
+
+  char ptx_filename[POCL_FILENAME_LENGTH];
+  snprintf(ptx_filename, POCL_FILENAME_LENGTH, "%s/../../program.ptx",
+           cmd->command.run.tmp_dir);
+
+  // Generate PTX from LLVM bitcode
+  if (pocl_ptx_gen(bc_filename, ptx_filename))
+    POCL_ABORT("pocl-cuda: failed to generate PTX\n");
+
+  // Load PTX module
+  CUmodule module;
+  result = cuModuleLoad(&module, ptx_filename);
+  CUDA_CHECK(result, "cuModuleLoad");
+
+  cmd->command.run.data = module;
+}
+
+void
+pocl_cuda_run(void *dptr, _cl_command_node* cmd)
+{
+  CUresult result;
+  CUmodule module = cmd->command.run.data;
+  cl_device_id device = cmd->device;
+
+  // Construct kernel name (prefix with underscore)
+  const char *name = cmd->command.run.kernel->name;
+  char *kname = malloc((strlen(name)+2)*sizeof(char));
+  snprintf(kname, strlen(name)+2, "_%s", name);
+
+  // Get kernel function
+  CUfunction function;
+  result = cuModuleGetFunction(&function, module, kname);
+  CUDA_CHECK(result, "cuModuleGetFunction");
+
+  free(kname);
+
+  // Prepare kernel arguments
+  cl_uint nargs = cmd->command.run.kernel->num_args;
+  void *params[nargs];
+  for (unsigned i = 0; i < nargs; i++)
+  {
+    cl_mem mem = *(void**)cmd->command.run.kernel->dyn_arguments[i].value;
+    params[i] = &mem->device_ptrs[device->dev_id].mem_ptr;
+  }
+
+  // Launch kernel
+  result = cuLaunchKernel(function, 1, 1, 1, 1, 1, 1, 0, NULL, params, NULL);
+  CUDA_CHECK(result, "cuLaunchKernel");
 }

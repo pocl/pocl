@@ -23,5 +23,8 @@
 #
 #=============================================================================
 
-add_library("pocl-devices-cuda" OBJECT pocl-cuda.c pocl-cuda.h)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS}")
+include_directories(${LLVM_INCLUDE_DIRS})
+
+add_library("pocl-devices-cuda" OBJECT pocl-cuda.c pocl-cuda.h pocl-ptx-gen.cpp pocl-ptx-gen.h)
 set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS};$<TARGET_OBJECTS:pocl-devices-cuda>" PARENT_SCOPE)
