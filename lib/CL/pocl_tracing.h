@@ -38,7 +38,7 @@ extern "C"
 {
 #endif
 
-  int pocl_event_updated (cl_event event, int new_status);
+  void pocl_event_updated (cl_event event, int new_status);
 
 /* Initializes event tracing system 
  */
