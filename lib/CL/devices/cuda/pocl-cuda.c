@@ -69,9 +69,9 @@ pocl_cuda_init_device_ops(struct pocl_device_ops *ops)
   ops->free = pocl_cuda_free;
   //ops->compile_submitted_kernels = pocl_cuda_compile_submitted_kernels;
   //ops->run = pocl_cuda_run;
-  //ops->read = pocl_basic_read;
+  ops->read = pocl_cuda_read;
   //ops->read_rect = pocl_basic_read_rect;
-  //ops->write = pocl_basic_write;
+  ops->write = pocl_cuda_write;
   //ops->write_rect = pocl_basic_write_rect;
   //ops->copy = pocl_cuda_copy;
   //ops->copy_rect = pocl_basic_copy_rect;
@@ -180,4 +180,18 @@ void pocl_cuda_free(cl_device_id device, cl_mem mem_obj)
 {
   void* ptr = mem_obj->device_ptrs[device->dev_id].mem_ptr;
   cuMemFree((CUdeviceptr)ptr);
+}
+
+void
+pocl_cuda_read(void *data, void *host_ptr, const void *device_ptr,
+               size_t offset, size_t cb)
+{
+  cuMemcpyDtoH(host_ptr, (CUdeviceptr)(device_ptr+offset), cb);
+}
+
+void
+pocl_cuda_write(void *data, const void *host_ptr, void *device_ptr,
+                size_t offset, size_t cb)
+{
+  cuMemcpyHtoD((CUdeviceptr)(device_ptr+offset), host_ptr, cb);
 }
