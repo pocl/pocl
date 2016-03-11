@@ -32,6 +32,14 @@ set(VERSION_SUFFIX "-pre")
 set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION}${VERSION_SUFFIX})
 set(POCL_VERSION ${VERSION_STRING})
 
+
+##################################################################################
+
+option(OCS_AVAILABLE "Online compiler support available to build pocl with. Default is available." ON)
+if (OCS_AVAILABLE)
+	set(OCS_AVAILABLE 1)
+endif()
+
 ##################################################################################
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc")
@@ -211,6 +219,8 @@ endif()
 
 ######################################################################################
 
+if (OCS_AVAILABLE)
+
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 include(LLVM RESULT_VARIABLE RES)
 if(NOT RES)
@@ -219,6 +229,8 @@ endif()
 
 if("${LLVM_VERSION}" VERSION_LESS "3.6")
   message(FATAL_ERROR "POCL requires LLVM version >= 3.6 !")
+endif()
+
 endif()
 
 ######################################################################################
@@ -351,6 +363,8 @@ message(STATUS "OpenCL flags for compiling kernel library: ${KERNEL_CL_FLAGS}")
 
 ######################################################################################
 
+if (OCS_AVAILABLE)
+
 option(STATIC_LLVM "Link LLVM statically. Default is dynamic." OFF)
 
 if(STATIC_LLVM)
@@ -369,6 +383,7 @@ else()
   endif()
 endif()
 
+endif()
 
 ######################################################################################
 
@@ -566,6 +581,8 @@ file(WRITE "${CMAKE_BINARY_DIR}/pocl_build_timestamp.h" "#define POCL_BUILD_TIME
 
 ######################################################################################
 
+if (OCS_AVAILABLE)
+
 if("${LLVM_CLANG_VERSION}" MATCHES "SPIR")
   set(CLANG_SPIR 1)
   message(STATUS "Using a SPIR generator Clang from Khronos.")
@@ -574,6 +591,7 @@ else()
   message(STATUS "NOT using SPIR")
 endif()
 
+endif()
 
 ####################################################################
 
@@ -819,15 +837,25 @@ endif()
 
 ##########################################################
 
+if (OCS_AVAILABLE)
+
 CHECK_ALIGNOF("float16" "typedef float float16  __attribute__((__ext_vector_type__(16)));" ALIGNOF_FLOAT16 ${LLC_TRIPLE})
 
 CHECK_ALIGNOF("double16" "typedef double double16  __attribute__((__ext_vector_type__(16)));" ALIGNOF_DOUBLE16 ${LLC_TRIPLE})
+
+else()
+
+set(ALIGNOF_FLOAT16 64)
+set(ALIGNOF_DOUBLE16 128)
+
+endif()
 
 if(ALIGNOF_FLOAT16 GREATER ALIGNOF_DOUBLE16)
   set(MAX_EXTENDED_ALIGNMENT "${ALIGNOF_FLOAT16}")
 else()
   set(MAX_EXTENDED_ALIGNMENT "${ALIGNOF_DOUBLE16}")
 endif()
+
 
 ##########################################################
 
@@ -1011,6 +1039,7 @@ MESSAGE(STATUS "INSTALL_OPENCL_HEADERS (Install our headers): ${INSTALL_OPENCL_H
 MESSAGE(STATUS "OCL_DRIVERS (Drivers built): ${OCL_DRIVERS}")
 MESSAGE(STATUS "OCL_TARGETS (Targets built): ${OCL_TARGETS}")
 MESSAGE(STATUS "STATIC_LLVM: ${STATIC_LLVM}")
+MESSAGE(STATUS "OCS_AVAILABLE: ${OCS_AVAILABLE}")
 MESSAGE(STATUS "TESTS_USE_ICD: ${TESTS_USE_ICD}")
 MESSAGE(STATUS "USE_VECMATHLIB: ${USE_VECMATHLIB}")
 MESSAGE(STATUS "Available testsuites: ${ALL_TESTSUITES}")
@@ -1023,6 +1052,7 @@ MESSAGE(STATUS " ")
 MESSAGE(STATUS "******* Programs:")
 MESSAGE(STATUS " ")
 
+if (OCS_AVAILABLE)
 MESSAGE(STATUS "LLVM_CONFIG: ${LLVM_CONFIG}")
 MESSAGE(STATUS "LLVM_OPT: ${LLVM_OPT}")
 MESSAGE(STATUS "LLVM_LLC: ${LLVM_LLC}")
@@ -1030,7 +1060,7 @@ MESSAGE(STATUS "LLVM_AS: ${LLVM_AS}")
 MESSAGE(STATUS "LLVM_LINK: ${LLVM_LINK}")
 MESSAGE(STATUS "LLVM_LLI: ${LLVM_LLI}")
 MESSAGE(STATUS "WITH_LLVM_CONFIG (User preferred llvm-config): ${WITH_LLVM_CONFIG}")
-
+endif()
 
 MESSAGE(STATUS " ")
 MESSAGE(STATUS "******* Various Flags:")
@@ -1056,6 +1086,7 @@ MESSAGE(STATUS "PTHREAD_LDFLAGS: ${PTHREAD_LDFLAGS}")
 MESSAGE(STATUS "PTHREAD_CFLAGS: ${PTHREAD_CFLAGS}")
 MESSAGE(STATUS "LIB_API_VERSION: ${LIB_API_VERSION}")
 MESSAGE(STATUS "LIB_BUILD_VERSION: ${LIB_BUILD_VERSION}")
+if (OCS_AVAILABLE)
 MESSAGE(STATUS "LLVM_VERSION: ${LLVM_VERSION}")
 MESSAGE(STATUS "LLVM_ASSERTS_BUILD ${LLVM_ASSERTS_BUILD}")
 MESSAGE(STATUS "LLVM_CFLAGS: ${LLVM_CFLAGS}")
@@ -1071,6 +1102,7 @@ MESSAGE(STATUS "LLVM_ALL_TARGETS: ${LLVM_ALL_TARGETS}")
 MESSAGE(STATUS "LLVM_HOST_TARGET: ${LLVM_HOST_TARGET}")
 MESSAGE(STATUS "LLC_TRIPLE: ${LLC_TRIPLE}")
 MESSAGE(STATUS "LLC_HOST_CPU: ${LLC_HOST_CPU}")
+endif()
 MESSAGE(STATUS "MAX_EXTENDED_ALIGNMENT: ${MAX_EXTENDED_ALIGNMENT}")
 MESSAGE(STATUS "OCL_KERNEL_TARGET: ${OCL_KERNEL_TARGET}")
 MESSAGE(STATUS "OCL_KERNEL_TARGET_CPU: ${OCL_KERNEL_TARGET_CPU}")

@@ -128,9 +128,11 @@ program_compile_dynamic_wg_binaries(cl_program program)
                                                program->default_kernels[i],
                                                0,0,0);
 
+#ifdef OCS_AVAILABLE
           errcode = pocl_llvm_generate_workgroup_function(device,
                                                           program->default_kernels[i],
                                                           0,0,0);
+#endif
           if (errcode != CL_SUCCESS)
             {
               POCL_MSG_ERR("Failed to generate workgroup function for "
@@ -368,26 +370,34 @@ CL_API_SUFFIX__VERSION_1_0
     {
       if (program->binaries[i])
         {
+#ifdef OCS_AVAILABLE
           program->num_kernels = pocl_llvm_get_kernel_count(program);
+#endif
           if (program->num_kernels)
             {
               program->kernel_names = calloc(program->num_kernels, sizeof(char*));
+#ifdef OCS_AVAILABLE
               pocl_llvm_get_kernel_names(program,
                                          program->kernel_names,
                                          program->num_kernels);
+#endif
             }
           break;
         }
       if (program->pocl_binaries[i])
         {
+#ifdef OCS_AVAILABLE
           program->num_kernels =
               pocl_binary_get_kernel_count(program->pocl_binaries[i]);
+#endif
           if (program->num_kernels)
             {
               program->kernel_names = calloc(program->num_kernels, sizeof(char*));
+#ifdef OCS_AVAILABLE
               pocl_binary_get_kernel_names(program->pocl_binaries[i],
                                            program->kernel_names,
                                            program->num_kernels);
+#endif
             }
           break;
         }

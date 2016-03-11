@@ -429,28 +429,6 @@ endif()
 
 #*********************************************************************
 
-# "Escape" a list before passing to an external command
-string(REPLACE ";" "****" KERNEL_BC_LIST_ESCAPED "${KERNEL_BC_LIST}")
-
-add_custom_command( OUTPUT "${CMAKE_BINARY_DIR}/kernellib_hash.h"
-  COMMAND "${CMAKE_COMMAND}"
-      -DKERNEL_BC_LIST_ESCAPED='${KERNEL_BC_LIST_ESCAPED}'
-      -DINCLUDEDIR='${CMAKE_SOURCE_DIR}/include'
-      -DOUTPUT='${CMAKE_BINARY_DIR}/kernellib_hash.h'
-      -P "${CMAKE_SOURCE_DIR}/cmake/kernellib_hash.cmake"
-  DEPENDS ${KERNEL_BC_LIST}
-      "${CMAKE_SOURCE_DIR}/include/_kernel.h"
-      "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
-      "${CMAKE_SOURCE_DIR}/include/pocl_types.h"
-  COMMENT "Generating SHA1 of all kernel libs..."
-  VERBATIM)
-
-
-add_custom_target("kernellib_hash" ALL
-    DEPENDS "${CMAKE_BINARY_DIR}/kernellib_hash.h")
-foreach(DEP IN LISTS KERNEL_TARGET_LIST)
-  add_dependencies("kernellib_hash" ${DEP})
-endforeach()
 
 # TODO extra_dist in lib/kernel/Makefile.am:
 # EXTRA_DIST = *.c *.cl *.h *.ll      \

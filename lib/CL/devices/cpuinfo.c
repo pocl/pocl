@@ -339,5 +339,7 @@ pocl_cpuinfo_detect_device_info(cl_device_id device)
   res = pocl_cpuinfo_detect_max_clock_frequency();
   device->max_clock_frequency = (res > 0) ? (cl_uint)res : 0;
 
+#ifdef OCS_AVAILABLE
   pocl_cpuinfo_get_cpu_name_and_vendor(device);
+#endif
 }
