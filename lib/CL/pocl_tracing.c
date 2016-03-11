@@ -170,7 +170,7 @@ text_tracer_event_updated (cl_event event, int status)
   if (node == NULL)
     return;
 
-  text_size = sprintf (cur_buf, "%lu %s %s ", ts,
+  text_size = sprintf (cur_buf, "%"PRIu64" %s %s ", ts,
                        pocl_command_to_str (event->command_type),
                        pocl_status_to_str[event->status]);
   cur_buf += text_size;
@@ -178,24 +178,25 @@ text_tracer_event_updated (cl_event event, int status)
   switch (event->command_type)
     {
     case CL_COMMAND_READ_BUFFER:
-      text_size += sprintf (cur_buf, "size=%lu, host_ptr=%p\n",
+      text_size += sprintf (cur_buf, "size=%"PRIuS", host_ptr=%p\n",
                             node->command.read.cb,
                             node->command.read.host_ptr);
       break;
     case CL_COMMAND_WRITE_BUFFER:
-      text_size += sprintf (cur_buf, "size=%lu, host_ptr=%p\n\n",
+      text_size += sprintf (cur_buf, "size=%"PRIuS", host_ptr=%p\n\n",
                             node->command.write.cb,
                             node->command.write.host_ptr);
       break;
     case CL_COMMAND_COPY_BUFFER:
-      text_size += sprintf (cur_buf, "size=%lu\n", node->command.copy.cb);
+      text_size += sprintf (cur_buf, "size=%"PRIuS"\n", node->command.copy.cb);
       break;
     case CL_COMMAND_NDRANGE_KERNEL:
       text_size += sprintf (cur_buf, "name=%s\n",
                             node->command.run.kernel->name);
       break;
     case CL_COMMAND_FILL_BUFFER:
-      text_size += sprintf (cur_buf, "size=%lu\n", node->command.memfill.size);
+      text_size += sprintf (cur_buf, "size=%"PRIuS"\n", 
+                            node->command.memfill.size);
       break;
     default:
       cur_buf[0] = '\n';
