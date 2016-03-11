@@ -258,6 +258,15 @@ pocl_cuda_run(void *dptr, _cl_command_node* cmd)
   }
 
   // Launch kernel
-  result = cuLaunchKernel(function, 1, 1, 1, 1, 1, 1, 0, NULL, params, NULL);
+  struct pocl_context pc = cmd->command.run.pc;
+  result = cuLaunchKernel(
+    function,
+    pc.num_groups[0],
+    pc.num_groups[1],
+    pc.num_groups[2],
+    cmd->command.run.local_x,
+    cmd->command.run.local_y,
+    cmd->command.run.local_z,
+    0, NULL, params, NULL);
   CUDA_CHECK(result, "cuLaunchKernel");
 }
