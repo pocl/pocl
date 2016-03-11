@@ -43,6 +43,7 @@
 #  include "pocl_icd.h"
 #endif
 #include "pocl.h"
+#include "pocl_tracing.h"
 #include "pocl_debug.h"
 #include "pocl_hash.h"
 
