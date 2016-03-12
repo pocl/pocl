@@ -36,6 +36,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 
+void pocl_add_kernel_annotations(llvm::Module *module);
 void pocl_insert_ptx_intrinsics(llvm::Module *module);
 
 int pocl_ptx_gen(char *bc_filename, char *ptx_filename)
@@ -52,37 +53,9 @@ int pocl_ptx_gen(char *bc_filename, char *ptx_filename)
   if (!module)
     return 1;
 
-  llvm::LLVMContext& context = llvm::getGlobalContext();
-
-  // Add nvvm.annotations metadata to mark kernel entry points
-  llvm::NamedMDNode *md_kernels = (*module)->getNamedMetadata("opencl.kernels");
-  if (md_kernels)
-  {
-    llvm::NamedMDNode *nvvm_annotations =
-      (*module)->getOrInsertNamedMetadata("nvvm.annotations");
-    for (auto k = md_kernels->op_begin(); k != md_kernels->op_end(); k++)
-    {
-      llvm::ConstantAsMetadata *cam =
-        llvm::dyn_cast<llvm::ConstantAsMetadata>((*k)->getOperand(0).get());
-      if (!cam)
-        continue;
-
-      llvm::Function *function =
-        llvm::dyn_cast<llvm::Function>(cam->getValue());
-
-      llvm::Constant *one =
-        llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(context), 1);
-      llvm::Metadata *md_f = llvm::ValueAsMetadata::get(function);
-      llvm::Metadata *md_n = llvm::MDString::get(context, "kernel");
-      llvm::Metadata *md_1 = llvm::ConstantAsMetadata::get(one);
-
-      llvm::ArrayRef<llvm::Metadata*> md({md_f, md_n, md_1});
-      nvvm_annotations->addOperand(llvm::MDNode::get(context, md));
-    }
-  }
-
+  // Apply transforms to prepare for lowering to PTX
+  pocl_add_kernel_annotations(module->get());
   pocl_insert_ptx_intrinsics(module->get());
-
   //(*module)->dump();
 
   // TODO: support 32-bit?
@@ -116,6 +89,38 @@ int pocl_ptx_gen(char *bc_filename, char *ptx_filename)
   passes.run(**module);
 
   return 0;
+}
+
+void pocl_add_kernel_annotations(llvm::Module *module)
+{
+  llvm::LLVMContext& context = llvm::getGlobalContext();
+
+  // Add nvvm.annotations metadata to mark kernel entry points
+  llvm::NamedMDNode *md_kernels = module->getNamedMetadata("opencl.kernels");
+  if (md_kernels)
+  {
+    llvm::NamedMDNode *nvvm_annotations =
+      module->getOrInsertNamedMetadata("nvvm.annotations");
+    for (auto k = md_kernels->op_begin(); k != md_kernels->op_end(); k++)
+    {
+      llvm::ConstantAsMetadata *cam =
+        llvm::dyn_cast<llvm::ConstantAsMetadata>((*k)->getOperand(0).get());
+      if (!cam)
+        continue;
+
+      llvm::Function *function =
+        llvm::dyn_cast<llvm::Function>(cam->getValue());
+
+      llvm::Constant *one =
+        llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(context), 1);
+      llvm::Metadata *md_f = llvm::ValueAsMetadata::get(function);
+      llvm::Metadata *md_n = llvm::MDString::get(context, "kernel");
+      llvm::Metadata *md_1 = llvm::ConstantAsMetadata::get(one);
+
+      llvm::ArrayRef<llvm::Metadata*> md({md_f, md_n, md_1});
+      nvvm_annotations->addOperand(llvm::MDNode::get(context, md));
+    }
+  }
 }
 
 void pocl_insert_ptx_intrinsics(llvm::Module *module)
