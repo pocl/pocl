@@ -141,6 +141,9 @@ void pocl_insert_ptx_intrinsics(llvm::Module *module)
     {"_group_id_x", "llvm.nvvm.read.ptx.sreg.ctaid.x"},
     {"_group_id_y", "llvm.nvvm.read.ptx.sreg.ctaid.y"},
     {"_group_id_z", "llvm.nvvm.read.ptx.sreg.ctaid.z"},
+    {"_num_groups_x", "llvm.nvvm.read.ptx.sreg.nctaid.x"},
+    {"_num_groups_y", "llvm.nvvm.read.ptx.sreg.nctaid.y"},
+    {"_num_groups_z", "llvm.nvvm.read.ptx.sreg.nctaid.z"},
   };
   size_t num_intrinsics = sizeof(intrinsic_map)/sizeof(ptx_intrinsic_map_entry);
 
