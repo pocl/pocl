@@ -53,8 +53,8 @@ POname(clGetDeviceInfo)(cl_device_id   device,
 {
   switch (param_name)
   {
-  case CL_DEVICE_IMAGE_SUPPORT: 
-    POCL_RETURN_GETINFO(cl_bool, CL_TRUE);
+  case CL_DEVICE_IMAGE_SUPPORT:
+    POCL_RETURN_GETINFO(cl_bool, device->image_support);
   case CL_DEVICE_TYPE:
     POCL_RETURN_GETINFO(cl_device_type, device->type);   
   case CL_DEVICE_VENDOR_ID:

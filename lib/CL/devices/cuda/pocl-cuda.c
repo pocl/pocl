@@ -126,6 +126,9 @@ pocl_cuda_init_device_infos(struct _cl_device_id* dev)
   dev->llvm_target_triplet = "nvptx64";
   dev->llvm_cpu = NULL;
   dev->spmd = CL_TRUE;
+
+  // TODO: Get images working
+  dev->image_support = CL_FALSE;
 }
 
 unsigned int
