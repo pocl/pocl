@@ -825,14 +825,14 @@ endif()
 ##########################################################
 
 if(ENABLE_CUDA)
-  #set(OCL_DRIVERS "${OCL_DRIVERS} cuda")
-  #set(OCL_TARGETS "${OCL_TARGETS} cuda")
+  set(OCL_DRIVERS "${OCL_DRIVERS} cuda")
+  set(OCL_TARGETS "${OCL_TARGETS} cuda")
   # this is for config.h
   # TODO unify with autotools
   set(BUILD_CUDA 1)
 
-  #set(CUDA_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64 cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
-  #set(CUDA_DEVICE_CL_VERSION "120")
+  set(CUDA_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64 cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
+  set(CUDA_DEVICE_CL_VERSION "120")
 endif()
 
 ##########################################################

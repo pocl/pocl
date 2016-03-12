@@ -27,6 +27,7 @@
 
 #include "llvm/Bitcode/ReaderWriter.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/Instructions.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
 #include "llvm/Support/FileSystem.h"
@@ -34,6 +35,8 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
+
+void pocl_insert_ptx_intrinsics(llvm::Module *module);
 
 int pocl_ptx_gen(char *bc_filename, char *ptx_filename)
 {
@@ -78,6 +81,8 @@ int pocl_ptx_gen(char *bc_filename, char *ptx_filename)
     }
   }
 
+  pocl_insert_ptx_intrinsics(module->get());
+
   //(*module)->dump();
 
   // TODO: support 32-bit?
@@ -111,4 +116,54 @@ int pocl_ptx_gen(char *bc_filename, char *ptx_filename)
   passes.run(**module);
 
   return 0;
+}
+
+void pocl_insert_ptx_intrinsics(llvm::Module *module)
+{
+  struct ptx_intrinsic_map_entry
+  {
+    const char *varname;
+    const char *intrinsic;
+  };
+  struct ptx_intrinsic_map_entry intrinsic_map[] =
+  {
+    {"_local_id_x", "llvm.nvvm.read.ptx.sreg.tid.x"},
+    {"_local_id_y", "llvm.nvvm.read.ptx.sreg.tid.y"},
+    {"_local_id_z", "llvm.nvvm.read.ptx.sreg.tid.z"},
+    {"_local_size_x", "llvm.nvvm.read.ptx.sreg.ntid.x"},
+    {"_local_size_y", "llvm.nvvm.read.ptx.sreg.ntid.y"},
+    {"_local_size_z", "llvm.nvvm.read.ptx.sreg.ntid.z"},
+    {"_group_id_x", "llvm.nvvm.read.ptx.sreg.ctaid.x"},
+    {"_group_id_y", "llvm.nvvm.read.ptx.sreg.ctaid.y"},
+    {"_group_id_z", "llvm.nvvm.read.ptx.sreg.ctaid.z"},
+  };
+  size_t num_intrinsics = sizeof(intrinsic_map)/sizeof(ptx_intrinsic_map_entry);
+
+  llvm::LLVMContext& context = llvm::getGlobalContext();
+  llvm::Type *int32Ty = llvm::Type::getInt32Ty(context);
+  llvm::FunctionType *intrinsicTy = llvm::FunctionType::get(int32Ty, {});
+
+  for (unsigned i = 0; i < num_intrinsics; i++)
+  {
+    ptx_intrinsic_map_entry entry = intrinsic_map[i];
+
+    llvm::GlobalVariable *var = module->getGlobalVariable(entry.varname);
+    if (!var)
+      continue;
+
+    for (auto u = var->user_begin(); u != var->user_end(); u++)
+    {
+      // Look for loads from the global variable
+      llvm::LoadInst *load = llvm::dyn_cast<llvm::LoadInst>(*u);
+      if (load)
+      {
+        // Replace load with intrinsic
+        llvm::Constant *func =
+          module->getOrInsertFunction(entry.intrinsic, intrinsicTy);
+        llvm::CallInst *call = llvm::CallInst::Create(func, {}, load);
+        load->replaceAllUsesWith(call);
+        load->eraseFromParent();
+      }
+    }
+  }
 }

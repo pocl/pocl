@@ -123,6 +123,9 @@ pocl_cuda_init_device_infos(struct _cl_device_id* dev)
   pocl_basic_init_device_infos(dev);
 
   dev->type = CL_DEVICE_TYPE_GPU;
+  dev->llvm_target_triplet = "nvptx64";
+  dev->llvm_cpu = NULL;
+  dev->spmd = CL_TRUE;
 }
 
 unsigned int
@@ -210,11 +213,11 @@ pocl_cuda_compile_submitted_kernels(_cl_command_node *cmd)
     return;
 
   char bc_filename[POCL_FILENAME_LENGTH];
-  snprintf(bc_filename, POCL_FILENAME_LENGTH, "%s/../../program.bc",
-           cmd->command.run.tmp_dir);
+  snprintf(bc_filename, POCL_FILENAME_LENGTH, "%s%s",
+           cmd->command.run.tmp_dir, POCL_PARALLEL_BC_FILENAME);
 
   char ptx_filename[POCL_FILENAME_LENGTH];
-  snprintf(ptx_filename, POCL_FILENAME_LENGTH, "%s/../../program.ptx",
+  snprintf(ptx_filename, POCL_FILENAME_LENGTH, "%s/program.ptx",
            cmd->command.run.tmp_dir);
 
   // Generate PTX from LLVM bitcode
@@ -236,17 +239,11 @@ pocl_cuda_run(void *dptr, _cl_command_node* cmd)
   CUmodule module = cmd->command.run.data;
   cl_device_id device = cmd->device;
 
-  // Construct kernel name (prefix with underscore)
-  const char *name = cmd->command.run.kernel->name;
-  char *kname = malloc((strlen(name)+2)*sizeof(char));
-  snprintf(kname, strlen(name)+2, "_%s", name);
-
   // Get kernel function
   CUfunction function;
-  result = cuModuleGetFunction(&function, module, kname);
+  result = cuModuleGetFunction(&function, module,
+                               cmd->command.run.kernel->name);
   CUDA_CHECK(result, "cuModuleGetFunction");
-
-  free(kname);
 
   // Prepare kernel arguments
   cl_uint nargs = cmd->command.run.kernel->num_args;

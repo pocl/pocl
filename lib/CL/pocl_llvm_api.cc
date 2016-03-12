@@ -1579,6 +1579,12 @@ kernel_library
     is_host = false;
   }
 #endif
+#ifdef BUILD_CUDA
+  if (triple.getArch() == Triple::nvptx64) {
+    subdir = "cuda";
+    is_host = false;
+  }
+#endif
 
   // TODO sync with Nat Ferrus' indexed linking
   std::string kernellib;
