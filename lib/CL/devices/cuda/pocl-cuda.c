@@ -103,12 +103,55 @@ pocl_cuda_init(cl_device_id device, const char* parameters)
   cuDeviceGetName(device->long_name, 256, data->device);
 
   // Get other device properties
+  cuDeviceGetAttribute((int*)&device->max_work_group_size,
+                       CU_DEVICE_ATTRIBUTE_MAX_THREADS_PER_BLOCK,
+                       data->device);
+  cuDeviceGetAttribute((int*)(device->max_work_item_sizes+0),
+                       CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_X,
+                       data->device);
+  cuDeviceGetAttribute((int*)(device->max_work_item_sizes+1),
+                       CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_Y,
+                       data->device);
+  cuDeviceGetAttribute((int*)(device->max_work_item_sizes+2),
+                       CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_Z,
+                       data->device);
+  cuDeviceGetAttribute((int*)&device->local_mem_size,
+                       CU_DEVICE_ATTRIBUTE_MAX_SHARED_MEMORY_PER_MULTIPROCESSOR,
+                       data->device);
   cuDeviceGetAttribute((int*)&device->max_compute_units,
                        CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT,
                        data->device);
+  cuDeviceGetAttribute((int*)&device->max_clock_frequency,
+                       CU_DEVICE_ATTRIBUTE_CLOCK_RATE,
+                       data->device);
+  cuDeviceGetAttribute((int*)&device->error_correction_support,
+                       CU_DEVICE_ATTRIBUTE_ECC_ENABLED,
+                       data->device);
+  cuDeviceGetAttribute((int*)&device->host_unified_memory,
+                       CU_DEVICE_ATTRIBUTE_INTEGRATED,
+                       data->device);
+
+  device->preferred_vector_width_char   = 1;
+  device->preferred_vector_width_short  = 1;
+  device->preferred_vector_width_int    = 1;
+  device->preferred_vector_width_long   = 1;
+  device->preferred_vector_width_float  = 1;
+  device->preferred_vector_width_double = 1;
+  device->preferred_vector_width_half   = 0;
+  device->native_vector_width_char      = 1;
+  device->native_vector_width_short     = 1;
+  device->native_vector_width_int       = 1;
+  device->native_vector_width_long      = 1;
+  device->native_vector_width_float     = 1;
+  device->native_vector_width_double    = 1;
+  device->native_vector_width_half      = 0;
 
   // TODO: Actual maximum size
   device->max_mem_alloc_size = 1024*1024*1024;
+  device->global_mem_size    = 1024*1024*1024;
+
+  device->local_mem_type = CL_LOCAL;
+  device->host_unified_memory = 0;
 
   // Create context
   result = cuCtxCreate(&data->context, 0, data->device);
@@ -224,6 +267,7 @@ pocl_cuda_compile_submitted_kernels(_cl_command_node *cmd)
            cmd->command.run.tmp_dir);
 
   // Generate PTX from LLVM bitcode
+  // TODO: Load from cache if present
   if (pocl_ptx_gen(bc_filename, ptx_filename))
     POCL_ABORT("pocl-cuda: failed to generate PTX\n");
 
