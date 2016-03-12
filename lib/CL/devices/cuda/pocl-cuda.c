@@ -253,8 +253,23 @@ pocl_cuda_run(void *dptr, _cl_command_node* cmd)
   void *params[nargs];
   for (unsigned i = 0; i < nargs; i++)
   {
-    cl_mem mem = *(void**)cmd->command.run.kernel->dyn_arguments[i].value;
-    params[i] = &mem->device_ptrs[device->dev_id].mem_ptr;
+    pocl_argument_type type = cmd->command.run.kernel->arg_info[i].type;
+    switch (type)
+    {
+    case POCL_ARG_TYPE_NONE:
+      params[i] = cmd->command.run.kernel->dyn_arguments[i].value;
+      break;
+    case POCL_ARG_TYPE_POINTER:
+    {
+      cl_mem mem = *(void**)cmd->command.run.kernel->dyn_arguments[i].value;
+      params[i] = &mem->device_ptrs[device->dev_id].mem_ptr;
+      break;
+    }
+    case POCL_ARG_TYPE_IMAGE:
+    case POCL_ARG_TYPE_SAMPLER:
+      POCL_ABORT("Unhandled argument type for CUDA");
+      break;
+    }
   }
 
   // Launch kernel
