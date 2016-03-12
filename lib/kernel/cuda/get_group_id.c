@@ -1,4 +1,4 @@
-/* OpenCL built-in library: get_global_id() for CUDA
+/* OpenCL built-in library: get_group_id() for CUDA
 
    Copyright (c) 2016 James Price
 
@@ -21,31 +21,18 @@
    THE SOFTWARE.
 */
 
-extern uint _local_size_x;
-extern uint _local_size_y;
-extern uint _local_size_z;
-
 extern uint _group_id_x;
 extern uint _group_id_y;
 extern uint _group_id_z;
 
-extern uint _local_id_x;
-extern uint _local_id_y;
-extern uint _local_id_z;
-
-// extern uint _global_offset_x;
-// extern uint _global_offset_y;
-// extern uint _global_offset_z;
-
 size_t _CL_OVERLOADABLE
-get_global_id(unsigned int dimindx)
+get_group_id(unsigned int dimindx)
 {
   switch(dimindx)
     {
-    // TODO: Handle global offsets
-    case 0: return _local_size_x * _group_id_x + _local_id_x;
-    case 1: return _local_size_y * _group_id_y + _local_id_y;
-    case 2: return _local_size_z * _group_id_z + _local_id_z;
+    case 0: return _group_id_x;
+    case 1: return _group_id_y;
+    case 2: return _group_id_z;
     default: return 0;
     }
-}
+ }

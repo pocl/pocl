@@ -25,8 +25,19 @@
 
 include("bitcode_rules")
 
-#set(KERNEL_SOURCES ${SOURCES_WITHOUT_VML})
-set(KERNEL_SOURCES cuda/get_global_id.c)
+set(KERNEL_SOURCES ${SOURCES_WITHOUT_VML})
+
+foreach(FILE atomics.cl get_global_offset.c get_work_dim.c printf.c)
+  list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
+endforeach()
+
+foreach(FILE
+  get_global_id.c get_global_size.c get_group_id.c
+  get_local_id.c get_local_size.c get_num_groups.c
+  )
+  list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
+  list(APPEND KERNEL_SOURCES "cuda/${FILE}")
+endforeach()
 
 set(CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-emit-llvm" "-target" "nvptx64" "-D_CL_DISABLE_HALF")
 set(LLC_FLAGS "")
