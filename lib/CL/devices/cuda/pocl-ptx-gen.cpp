@@ -165,5 +165,7 @@ void pocl_insert_ptx_intrinsics(llvm::Module *module)
         load->eraseFromParent();
       }
     }
+
+    var->eraseFromParent();
   }
 }
