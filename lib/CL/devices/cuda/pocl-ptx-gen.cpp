@@ -23,6 +23,7 @@
 
 #include "config.h"
 
+#include "pocl.h"
 #include "pocl-ptx-gen.h"
 
 #include "llvm/Bitcode/ReaderWriter.h"
@@ -35,8 +36,11 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Transforms/Utils/Cloning.h"
 
+// TODO: Should these be proper passes?
 void pocl_add_kernel_annotations(llvm::Module *module);
+void pocl_gen_local_mem_args(llvm::Module *module);
 void pocl_insert_ptx_intrinsics(llvm::Module *module);
 
 int pocl_ptx_gen(char *bc_filename, char *ptx_filename)
@@ -54,8 +58,9 @@ int pocl_ptx_gen(char *bc_filename, char *ptx_filename)
     return 1;
 
   // Apply transforms to prepare for lowering to PTX
-  pocl_add_kernel_annotations(module->get());
+  pocl_gen_local_mem_args(module->get());
   pocl_insert_ptx_intrinsics(module->get());
+  pocl_add_kernel_annotations(module->get());
   //(*module)->dump();
 
   // TODO: support 32-bit?
@@ -97,29 +102,141 @@ void pocl_add_kernel_annotations(llvm::Module *module)
 
   // Add nvvm.annotations metadata to mark kernel entry points
   llvm::NamedMDNode *md_kernels = module->getNamedMetadata("opencl.kernels");
-  if (md_kernels)
+  if (!md_kernels)
+    return;
+
+  llvm::NamedMDNode *nvvm_annotations =
+    module->getOrInsertNamedMetadata("nvvm.annotations");
+  for (auto K = md_kernels->op_begin(); K != md_kernels->op_end(); K++)
   {
-    llvm::NamedMDNode *nvvm_annotations =
-      module->getOrInsertNamedMetadata("nvvm.annotations");
-    for (auto k = md_kernels->op_begin(); k != md_kernels->op_end(); k++)
+    llvm::ConstantAsMetadata *cam =
+      llvm::dyn_cast<llvm::ConstantAsMetadata>((*K)->getOperand(0).get());
+    if (!cam)
+      continue;
+
+    llvm::Function *function = llvm::dyn_cast<llvm::Function>(cam->getValue());
+
+    llvm::Constant *one =
+      llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(context), 1);
+    llvm::Metadata *md_f = llvm::ValueAsMetadata::get(function);
+    llvm::Metadata *md_n = llvm::MDString::get(context, "kernel");
+    llvm::Metadata *md_1 = llvm::ConstantAsMetadata::get(one);
+
+    llvm::ArrayRef<llvm::Metadata*> md({md_f, md_n, md_1});
+    nvvm_annotations->addOperand(llvm::MDNode::get(context, md));
+  }
+}
+
+void pocl_gen_local_mem_args(llvm::Module *module)
+{
+  llvm::LLVMContext& context = llvm::getGlobalContext();
+
+  llvm::NamedMDNode *md_kernels = module->getNamedMetadata("opencl.kernels");
+  if (!md_kernels)
+    return;
+
+  // Create global variable for local memory allocations
+  llvm::Type *byte_array_type =
+    llvm::ArrayType::get(llvm::Type::getInt8Ty(context), 0);
+  llvm::GlobalVariable *shared_ptr =
+    new llvm::GlobalVariable(*module, byte_array_type,
+                             false, llvm::GlobalValue::ExternalLinkage,
+                             NULL, "_shared_memory_region_", NULL,
+                             llvm::GlobalValue::NotThreadLocal,
+                             3, false);
+
+  // Loop over kernels
+  for (auto K = md_kernels->op_begin(); K != md_kernels->op_end(); K++)
+  {
+    llvm::ConstantAsMetadata *cam =
+      llvm::dyn_cast<llvm::ConstantAsMetadata>((*K)->getOperand(0).get());
+    if (!cam)
+      continue;
+
+    llvm::Function *function = llvm::dyn_cast<llvm::Function>(cam->getValue());
+
+    // Argument info for creating new function
+    std::vector<llvm::Argument*> arguments;
+    std::vector<llvm::Type*> argument_types;
+
+    // Loop over arguments
+    bool has_local_args = false;
+    for (auto arg = function->arg_begin(); arg != function->arg_end(); arg++)
     {
-      llvm::ConstantAsMetadata *cam =
-        llvm::dyn_cast<llvm::ConstantAsMetadata>((*k)->getOperand(0).get());
-      if (!cam)
-        continue;
+      // Check for local memory pointer
+      llvm::Type *arg_type = arg->getType();
+      if (arg_type->getPointerAddressSpace() == POCL_ADDRESS_SPACE_LOCAL)
+      {
+        has_local_args = true;
 
-      llvm::Function *function =
-        llvm::dyn_cast<llvm::Function>(cam->getValue());
+        // Create new argument for offset into shared memory allocation
+        llvm::Type *i32ty = llvm::Type::getInt32Ty(context);
+        llvm::Argument *offset =
+          new llvm::Argument(i32ty, arg->getName() + "_offset");
+        arguments.push_back(offset);
+        argument_types.push_back(i32ty);
 
-      llvm::Constant *one =
-        llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(context), 1);
-      llvm::Metadata *md_f = llvm::ValueAsMetadata::get(function);
-      llvm::Metadata *md_n = llvm::MDString::get(context, "kernel");
-      llvm::Metadata *md_1 = llvm::ConstantAsMetadata::get(one);
+        // Cast shared memory pointer to generic address space
+        llvm::AddrSpaceCastInst *generic_ptr =
+          new llvm::AddrSpaceCastInst(shared_ptr,
+                                      byte_array_type->getPointerTo(0));
+        generic_ptr->insertBefore(&*function->begin()->begin());
 
-      llvm::ArrayRef<llvm::Metadata*> md({md_f, md_n, md_1});
-      nvvm_annotations->addOperand(llvm::MDNode::get(context, md));
+        // Insert GEP to add offset
+        llvm::Value *zero = llvm::ConstantInt::getSigned(i32ty, 0);
+        llvm::GetElementPtrInst *gep =
+          llvm::GetElementPtrInst::Create(byte_array_type, generic_ptr,
+                                          {zero, offset});
+        gep->insertAfter(generic_ptr);
+
+        // Cast pointer to correct type
+        llvm::Type *final_type =
+          arg_type->getPointerElementType()->getPointerTo(0);
+        llvm::BitCastInst *cast = new llvm::BitCastInst(gep, final_type);
+        cast->insertAfter(gep);
+
+        cast->takeName(&*arg);
+        arg->replaceAllUsesWith(cast);
+      }
+      else
+      {
+        // No change to other arguments
+        arguments.push_back(&*arg);
+        argument_types.push_back(arg->getType());
+      }
     }
+
+    if (!has_local_args)
+      continue;
+
+    // Create new function with offsets instead of local memory pointers
+    llvm::FunctionType *new_func_type =
+      llvm::FunctionType::get(function->getReturnType(), argument_types, false);
+    llvm::Function *new_func =
+      llvm::Function::Create(new_func_type, function->getLinkage(),
+                             function->getName(), module);
+    new_func->takeName(function);
+
+    // Take function body from old function
+    new_func->getBasicBlockList().splice(new_func->begin(),
+                                         function->getBasicBlockList());
+
+    // TODO: Copy attributes from old function
+
+    // Update function body with new arguments
+    std::vector<llvm::Argument*>::iterator old_arg;
+    llvm::Function::arg_iterator new_arg;
+    for (old_arg = arguments.begin(), new_arg = new_func->arg_begin();
+         new_arg != new_func->arg_end();
+         new_arg++, old_arg++)
+    {
+      new_arg->takeName(*old_arg);
+      (*old_arg)->replaceAllUsesWith(&*new_arg);
+    }
+
+    // Remove old function
+    function->replaceAllUsesWith(new_func);
+    function->eraseFromParent();
   }
 }
 
@@ -149,7 +266,7 @@ void pocl_insert_ptx_intrinsics(llvm::Module *module)
 
   llvm::LLVMContext& context = llvm::getGlobalContext();
   llvm::Type *int32Ty = llvm::Type::getInt32Ty(context);
-  llvm::FunctionType *intrinsicTy = llvm::FunctionType::get(int32Ty, {});
+  llvm::FunctionType *intrinsic_type = llvm::FunctionType::get(int32Ty, false);
 
   for (unsigned i = 0; i < num_intrinsics; i++)
   {
@@ -159,15 +276,15 @@ void pocl_insert_ptx_intrinsics(llvm::Module *module)
     if (!var)
       continue;
 
-    for (auto u = var->user_begin(); u != var->user_end(); u++)
+    for (auto U = var->user_begin(); U != var->user_end(); U++)
     {
       // Look for loads from the global variable
-      llvm::LoadInst *load = llvm::dyn_cast<llvm::LoadInst>(*u);
+      llvm::LoadInst *load = llvm::dyn_cast<llvm::LoadInst>(*U);
       if (load)
       {
         // Replace load with intrinsic
         llvm::Constant *func =
-          module->getOrInsertFunction(entry.intrinsic, intrinsicTy);
+          module->getOrInsertFunction(entry.intrinsic, intrinsic_type);
         llvm::CallInst *call = llvm::CallInst::Create(func, {}, load);
         load->replaceAllUsesWith(call);
         load->eraseFromParent();

@@ -293,8 +293,10 @@ pocl_cuda_run(void *dptr, _cl_command_node* cmd)
   CUDA_CHECK(result, "cuModuleGetFunction");
 
   // Prepare kernel arguments
+  unsigned sharedMemBytes = 0;
   cl_uint nargs = cmd->command.run.kernel->num_args;
   void *params[nargs];
+  unsigned sharedMemOffsets[nargs];
   for (unsigned i = 0; i < nargs; i++)
   {
     pocl_argument_type type = cmd->command.run.kernel->arg_info[i].type;
@@ -305,8 +307,17 @@ pocl_cuda_run(void *dptr, _cl_command_node* cmd)
       break;
     case POCL_ARG_TYPE_POINTER:
     {
-      cl_mem mem = *(void**)cmd->command.run.kernel->dyn_arguments[i].value;
-      params[i] = &mem->device_ptrs[device->dev_id].mem_ptr;
+      if (cmd->command.run.kernel->arg_info[i].is_local)
+      {
+        sharedMemOffsets[i] = sharedMemBytes;
+        sharedMemBytes += cmd->command.run.kernel->dyn_arguments[i].size;
+        params[i] = sharedMemOffsets+i;
+      }
+      else
+      {
+        cl_mem mem = *(void**)cmd->command.run.kernel->dyn_arguments[i].value;
+        params[i] = &mem->device_ptrs[device->dev_id].mem_ptr;
+      }
       break;
     }
     case POCL_ARG_TYPE_IMAGE:
@@ -326,6 +337,6 @@ pocl_cuda_run(void *dptr, _cl_command_node* cmd)
     cmd->command.run.local_x,
     cmd->command.run.local_y,
     cmd->command.run.local_z,
-    0, NULL, params, NULL);
+    sharedMemBytes, NULL, params, NULL);
   CUDA_CHECK(result, "cuLaunchKernel");
 }
