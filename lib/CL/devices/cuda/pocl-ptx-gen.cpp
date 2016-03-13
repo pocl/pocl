@@ -23,6 +23,7 @@
 
 #include "config.h"
 
+#include "common.h"
 #include "pocl.h"
 #include "pocl-ptx-gen.h"
 
@@ -50,14 +51,22 @@ int pocl_ptx_gen(const char *bc_filename,
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer =
     llvm::MemoryBuffer::getFile(bc_filename);
   if (!buffer)
+  {
+    POCL_MSG_ERR("[CUDA] ptx-gen: failed to open bitcode file\n");
     return 1;
+  }
 
   // Load bitcode
   llvm::ErrorOr<std::unique_ptr<llvm::Module>> module =
     parseBitcodeFile(buffer->get()->getMemBufferRef(),
     llvm::getGlobalContext());
   if (!module)
+  {
+    POCL_MSG_ERR("[CUDA] ptx-gen: failed to load bitcode\n");
     return 1;
+  }
+
+  llvm::InitializeAllTargets();
 
   // Apply transforms to prepare for lowering to PTX
   pocl_gen_local_mem_args(module->get());
@@ -73,7 +82,11 @@ int pocl_ptx_gen(const char *bc_filename,
   const llvm::Target *target = llvm::TargetRegistry::lookupTarget(
     triple, error);
   if (!target)
+  {
+    POCL_MSG_ERR("[CUDA] ptx-gen: failed to get target\n");
+    POCL_MSG_ERR("%s\n", error.c_str());
     return 1;
+  }
 
   // TODO: set options
   llvm::TargetOptions options;
@@ -90,7 +103,10 @@ int pocl_ptx_gen(const char *bc_filename,
     new llvm::raw_fd_ostream(ptx_filename, ec, llvm::sys::fs::F_Text);
   if (machine->addPassesToEmitFile(passes, *ptx,
                                    llvm::TargetMachine::CGFT_AssemblyFile))
+  {
+    POCL_MSG_ERR("[CUDA] ptx-gen: failed to add passes\n");
     return 1;
+  }
 
   // Run passes
   passes.run(**module);
