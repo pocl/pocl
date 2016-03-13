@@ -147,8 +147,9 @@ void pocl_add_kernel_annotations(llvm::Module *module)
     llvm::Metadata *md_n = llvm::MDString::get(context, "kernel");
     llvm::Metadata *md_1 = llvm::ConstantAsMetadata::get(one);
 
-    llvm::ArrayRef<llvm::Metadata*> md({md_f, md_n, md_1});
-    nvvm_annotations->addOperand(llvm::MDNode::get(context, md));
+    std::vector<llvm::Metadata*> v_md = {md_f, md_n, md_1};
+    llvm::MDNode *node = llvm::MDNode::get(context, v_md);
+    nvvm_annotations->addOperand(node);
   }
 }
 
