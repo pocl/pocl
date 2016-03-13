@@ -134,6 +134,9 @@ void pocl_add_kernel_annotations(llvm::Module *module)
   nvvm_annotations = module->getOrInsertNamedMetadata("nvvm.annotations");
   for (auto K = md_kernels->op_begin(); K != md_kernels->op_end(); K++)
   {
+    if (!(*K)->getOperand(0))
+      continue;
+
     llvm::ConstantAsMetadata *cam =
       llvm::dyn_cast<llvm::ConstantAsMetadata>((*K)->getOperand(0).get());
     if (!cam)
@@ -176,6 +179,9 @@ void pocl_gen_local_mem_args(llvm::Module *module)
   // Loop over kernels
   for (auto K = md_kernels->op_begin(); K != md_kernels->op_end(); K++)
   {
+    if (!(*K)->getOperand(0))
+      continue;
+
     llvm::ConstantAsMetadata *cam =
       llvm::dyn_cast<llvm::ConstantAsMetadata>((*K)->getOperand(0).get());
     if (!cam)
@@ -193,7 +199,8 @@ void pocl_gen_local_mem_args(llvm::Module *module)
     {
       // Check for local memory pointer
       llvm::Type *arg_type = arg->getType();
-      if (arg_type->getPointerAddressSpace() == POCL_ADDRESS_SPACE_LOCAL)
+      if (arg_type->isPointerTy() &&
+          arg_type->getPointerAddressSpace() == POCL_ADDRESS_SPACE_LOCAL)
       {
         has_local_args = true;
 
@@ -252,7 +259,7 @@ void pocl_gen_local_mem_args(llvm::Module *module)
       {
         // No change to other arguments
         arguments.push_back(&*arg);
-        argument_types.push_back(arg->getType());
+        argument_types.push_back(arg_type);
       }
     }
 
