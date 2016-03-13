@@ -346,6 +346,8 @@ pocl_cuda_run(void *dptr, _cl_command_node* cmd)
     }
   }
 
+  // TODO: Deal with static local memory allocations
+
   // Launch kernel
   struct pocl_context pc = cmd->command.run.pc;
   result = cuLaunchKernel(

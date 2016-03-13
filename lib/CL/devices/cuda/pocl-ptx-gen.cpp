@@ -67,6 +67,8 @@ int pocl_ptx_gen(const char *bc_filename,
   }
 
   llvm::InitializeAllTargets();
+  llvm::InitializeAllTargetMCs();
+  llvm::InitializeAllAsmPrinters();
 
   // Apply transforms to prepare for lowering to PTX
   pocl_gen_local_mem_args(module->get());
@@ -118,13 +120,18 @@ void pocl_add_kernel_annotations(llvm::Module *module)
 {
   llvm::LLVMContext& context = llvm::getGlobalContext();
 
-  // Add nvvm.annotations metadata to mark kernel entry points
+  // Remove nvvm.annotations metadata since it is sometimes corrupt
+  llvm::NamedMDNode *nvvm_annotations =
+    module->getNamedMetadata("nvvm.annotations");
+  if (nvvm_annotations)
+    nvvm_annotations->eraseFromParent();
+
   llvm::NamedMDNode *md_kernels = module->getNamedMetadata("opencl.kernels");
   if (!md_kernels)
     return;
 
-  llvm::NamedMDNode *nvvm_annotations =
-    module->getOrInsertNamedMetadata("nvvm.annotations");
+  // Add nvvm.annotations metadata to mark kernel entry points
+  nvvm_annotations = module->getOrInsertNamedMetadata("nvvm.annotations");
   for (auto K = md_kernels->op_begin(); K != md_kernels->op_end(); K++)
   {
     llvm::ConstantAsMetadata *cam =
