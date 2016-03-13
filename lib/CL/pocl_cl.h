@@ -672,6 +672,9 @@ struct _cl_kernel {
      These are copied to the command queue command at enqueue. */
   struct pocl_argument *dyn_arguments;
   struct _cl_kernel *next;
+
+  /* backend specific data */
+  void *data;
 };
 
 typedef struct event_callback_item event_callback_item;

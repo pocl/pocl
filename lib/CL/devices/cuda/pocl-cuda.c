@@ -270,6 +270,12 @@ pocl_cuda_compile_submitted_kernels(_cl_command_node *cmd)
   if (cmd->type != CL_COMMAND_NDRANGE_KERNEL)
     return;
 
+  cl_kernel kernel = cmd->command.run.kernel;
+
+  // Check if we already have a compiled kernel function
+  if (kernel->data)
+    return;
+
   char bc_filename[POCL_FILENAME_LENGTH];
   snprintf(bc_filename, POCL_FILENAME_LENGTH, "%s%s",
            cmd->command.run.tmp_dir, POCL_PARALLEL_BC_FILENAME);
@@ -284,25 +290,26 @@ pocl_cuda_compile_submitted_kernels(_cl_command_node *cmd)
     POCL_ABORT("pocl-cuda: failed to generate PTX\n");
 
   // Load PTX module
+  // TODO: When can we unload the module?
   CUmodule module;
   result = cuModuleLoad(&module, ptx_filename);
   CUDA_CHECK(result, "cuModuleLoad");
 
-  cmd->command.run.data = module;
+  // Get kernel function
+  CUfunction function;
+  result = cuModuleGetFunction(&function, module, kernel->name);
+  CUDA_CHECK(result, "cuModuleGetFunction");
+
+  kernel->data = function;
 }
 
 void
 pocl_cuda_run(void *dptr, _cl_command_node* cmd)
 {
   CUresult result;
-  CUmodule module = cmd->command.run.data;
-  cl_device_id device = cmd->device;
 
-  // Get kernel function
-  CUfunction function;
-  result = cuModuleGetFunction(&function, module,
-                               cmd->command.run.kernel->name);
-  CUDA_CHECK(result, "cuModuleGetFunction");
+  cl_device_id device = cmd->device;
+  CUfunction function = cmd->command.run.kernel->data;
 
   // Prepare kernel arguments
   unsigned sharedMemBytes = 0;
@@ -351,4 +358,8 @@ pocl_cuda_run(void *dptr, _cl_command_node* cmd)
     cmd->command.run.local_z,
     sharedMemBytes, NULL, params, NULL);
   CUDA_CHECK(result, "cuLaunchKernel");
+
+  // TODO: We don't really want to sync here
+  result = cuStreamSynchronize(0);
+  CUDA_CHECK(result, "cuStreamSynchronize");
 }
