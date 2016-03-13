@@ -129,6 +129,8 @@ void pocl_add_kernel_annotations(llvm::Module *module)
 
 void pocl_gen_local_mem_args(llvm::Module *module)
 {
+  // TODO: Deal with non-kernel functions that take local memory arguments
+
   llvm::LLVMContext& context = llvm::getGlobalContext();
 
   llvm::NamedMDNode *md_kernels = module->getNamedMetadata("opencl.kernels");
@@ -197,6 +199,28 @@ void pocl_gen_local_mem_args(llvm::Module *module)
 
         cast->takeName(&*arg);
         arg->replaceAllUsesWith(cast);
+
+        // Update users of this new cast to use generic address space
+        auto cast_users = cast->users();
+        std::vector<llvm::Value*> users(cast_users.begin(), cast_users.end());
+        for (auto U = users.begin(); U != users.end(); U++)
+        {
+          // TODO: Do we need to do this for anything other than GEPs?
+
+          llvm::GetElementPtrInst *gep_user =
+            llvm::dyn_cast<llvm::GetElementPtrInst>(*U);
+          if (!gep_user)
+            continue;
+
+          // Create and insert new GEP instruction
+          auto ops = gep_user->operands();
+          std::vector<llvm::Value*> indices(ops.begin()+1, ops.end());
+          llvm::GetElementPtrInst *new_gep_user =
+            llvm::GetElementPtrInst::Create(NULL, cast, indices);
+          new_gep_user->insertAfter(gep_user);
+          gep_user->replaceAllUsesWith(new_gep_user);
+          gep_user->eraseFromParent();
+        }
       }
       else
       {
