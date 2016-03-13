@@ -326,7 +326,9 @@ void pocl_insert_ptx_intrinsics(llvm::Module *module)
     if (!var)
       continue;
 
-    for (auto U = var->user_begin(); U != var->user_end(); U++)
+    auto var_users = var->users();
+    std::vector<llvm::Value*> users(var_users.begin(), var_users.end());
+    for (auto U = users.begin(); U != users.end(); U++)
     {
       // Look for loads from the global variable
       llvm::LoadInst *load = llvm::dyn_cast<llvm::LoadInst>(*U);
