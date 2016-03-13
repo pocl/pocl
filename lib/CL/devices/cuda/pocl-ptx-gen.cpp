@@ -43,7 +43,9 @@ void pocl_add_kernel_annotations(llvm::Module *module);
 void pocl_gen_local_mem_args(llvm::Module *module);
 void pocl_insert_ptx_intrinsics(llvm::Module *module);
 
-int pocl_ptx_gen(char *bc_filename, char *ptx_filename)
+int pocl_ptx_gen(const char *bc_filename,
+                 const char *ptx_filename,
+                 const char *gpu_arch)
 {
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer =
     llvm::MemoryBuffer::getFile(bc_filename);
@@ -78,7 +80,7 @@ int pocl_ptx_gen(char *bc_filename, char *ptx_filename)
 
   // TODO: CPU and features?
   std::unique_ptr<llvm::TargetMachine> machine(
-      target->createTargetMachine(triple, "", "", options));
+      target->createTargetMachine(triple, gpu_arch, "", options));
 
   llvm::legacy::PassManager passes;
 

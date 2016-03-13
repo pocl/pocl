@@ -153,6 +153,19 @@ pocl_cuda_init(cl_device_id device, const char* parameters)
   device->local_mem_type = CL_LOCAL;
   device->host_unified_memory = 0;
 
+  // Get GPU architecture name
+  int sm_maj, sm_min;
+  cuDeviceGetAttribute(&sm_maj,
+                       CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MAJOR,
+                       data->device);
+  cuDeviceGetAttribute(&sm_min,
+                       CU_DEVICE_ATTRIBUTE_COMPUTE_CAPABILITY_MINOR,
+                       data->device);
+  char *gpu_arch = malloc(16*sizeof(char));
+  snprintf(gpu_arch, 16, "sm_%d%d", sm_maj, sm_min);
+  device->llvm_cpu = gpu_arch;
+  POCL_MSG_PRINT_INFO("[CUDA] GPU architecture = %s\n", gpu_arch);
+
   // Create context
   result = cuCtxCreate(&data->context, 0, data->device);
   CUDA_CHECK(result, "cuCtxCreate");
@@ -167,7 +180,6 @@ pocl_cuda_init_device_infos(struct _cl_device_id* dev)
 
   dev->type = CL_DEVICE_TYPE_GPU;
   dev->llvm_target_triplet = "nvptx64";
-  dev->llvm_cpu = NULL;
   dev->spmd = CL_TRUE;
 
   // TODO: Get images working
@@ -268,7 +280,7 @@ pocl_cuda_compile_submitted_kernels(_cl_command_node *cmd)
 
   // Generate PTX from LLVM bitcode
   // TODO: Load from cache if present
-  if (pocl_ptx_gen(bc_filename, ptx_filename))
+  if (pocl_ptx_gen(bc_filename, ptx_filename, cmd->device->llvm_cpu))
     POCL_ABORT("pocl-cuda: failed to generate PTX\n");
 
   // Load PTX module

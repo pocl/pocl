@@ -31,7 +31,9 @@ extern "C"
 {
 #endif
 
-int pocl_ptx_gen(char *bc_filename, char *ptx_filename);
+int pocl_ptx_gen(const char *bc_filename,
+                 const char *ptx_filename,
+                 const char *gpu_arch);
 
 #ifdef __cplusplus
 }
