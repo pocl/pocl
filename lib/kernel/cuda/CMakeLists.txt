@@ -32,6 +32,7 @@ foreach(FILE atomics.cl get_global_offset.c get_work_dim.c printf.c)
 endforeach()
 
 foreach(FILE
+  barrier.ll
   get_global_id.c get_global_size.c get_group_id.c
   get_local_id.c get_local_size.c get_num_groups.c
   )
