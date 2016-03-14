@@ -1,5 +1,5 @@
-0.14 unreleased
-================
+0.14 unreleased 2016
+====================
 
 Highlights
 ----------
@@ -12,6 +12,11 @@ OpenCL Runtime/Platform API support
 -----------------------------------
 - implemented clEnqueueBarrierWithWaitList
 - implemented clEnqueueMigrateMemObjects
+
+Other
+-----
+- HSA: added support for phsa (https://github.com/HSAFoundation/phsa)
+
 
 0.13 March 2016
 ================
