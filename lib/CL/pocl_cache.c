@@ -324,7 +324,6 @@ int pocl_cache_append_to_buildlog(cl_program  program,
 
 /******************************************************************************/
 
-
 int pocl_cache_write_kernel_parallel_bc(void*        bc,
                                         cl_program   program,
                                         unsigned     device_i,
@@ -344,7 +343,12 @@ int pocl_cache_write_kernel_parallel_bc(void*        bc,
     assert( strlen(kernel_parallel_path) <
             (POCL_FILENAME_LENGTH - strlen(POCL_PARALLEL_BC_FILENAME)));
     strcat(kernel_parallel_path, POCL_PARALLEL_BC_FILENAME);
+#ifdef OCS_AVAILABLE
     return pocl_write_module(bc, kernel_parallel_path, 0);
+#else
+    // This function should not be called if there is no online compiler support
+    return 1;
+#endif
 }
 
 int pocl_cache_make_kernel_cachedir_path(char*        kernel_cachedir_path,
