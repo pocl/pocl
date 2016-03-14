@@ -67,48 +67,48 @@ endforeach()
 
 # repl
 
-add_test("\"regression/phi nodes not replicated (repl)\"" "test_loop_phi_replication")
+add_test_pocl(NAME "regression/phi_nodes_not_replicated_REPL" COMMAND "test_loop_phi_replication")
 
-add_test("\"regression/issues with local pointers (repl)\"" "test_locals")
+add_test_pocl(NAME "regression/issues_with_local_pointers_REPL" COMMAND "test_locals")
 
-add_test("\"regression/barrier between two for loops (repl)\"" "test_barrier_between_for_loops")
+add_test_pocl(NAME "regression/barrier_between_two_for_loops_REPL" COMMAND "test_barrier_between_for_loops")
 
-add_test("\"regression/simple for-loop with a barrier inside (repl)\"" "test_simple_for_with_a_barrier")
+add_test_pocl(NAME "regression/simple_for-loop_with_a_barrier_inside_REPL" COMMAND "test_simple_for_with_a_barrier")
 
-add_test("\"regression/for-loop with computation after the brexit (repl)\"" "test_multi_level_loops_with_barriers")
+add_test_pocl(NAME "regression/for-loop_with_computation_after_the_brexit_REPL" COMMAND "test_multi_level_loops_with_barriers")
 
-add_test("\"regression/for-loop with a variable iteration count (repl)\"" "test_for_with_var_iteration_count")
+add_test_pocl(NAME "regression/for-loop_with_a_variable_iteration_count_REPL" COMMAND "test_for_with_var_iteration_count")
 
-add_test("\"regression/early return before a barrier region (repl)\"" "test_early_return")
+add_test_pocl(NAME "regression/early_return_before_a_barrier_region_REPL" COMMAND "test_early_return")
 
-add_test("\"regression/id-dependent computation before kernel exit (repl)\"" "test_id_dependent_computation")
+add_test_pocl(NAME "regression/id-dependent_computation_before_kernel_exit_REPL" COMMAND "test_id_dependent_computation")
 
-add_test("\"regression/barrier just before return (repl)\"" "test_barrier_before_return")
+add_test_pocl(NAME "regression/barrier_just_before_return_REPL" COMMAND "test_barrier_before_return")
 
-add_test("\"regression/infinite loop (repl)\"" "test_infinite_loop")
+add_test_pocl(NAME "regression/infinite_loop_REPL" COMMAND "test_infinite_loop")
 
-add_test("\"regression/undominated variable from conditional barrier handling (repl)\"" "test_undominated_variable")
+add_test_pocl(NAME "regression/undominated_variable_from_conditional_barrier_handling_REPL" COMMAND "test_undominated_variable")
 
-add_test("\"regression/assigning a loop iterator variable to a private makes it local (repl)\""
-                           "test_assign_loop_variable_to_privvar_makes_it_local")
+add_test_pocl(NAME "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_REPL"
+              COMMAND "test_assign_loop_variable_to_privvar_makes_it_local")
 
-add_test("\"regression/assigning a loop iterator variable to a private makes it local 2 (repl)\""
-                           "test_assign_loop_variable_to_privvar_makes_it_local_2")
+add_test_pocl(NAME "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_REPL"
+              COMMAND "test_assign_loop_variable_to_privvar_makes_it_local_2")
 
 
-set_tests_properties("\"regression/phi nodes not replicated (repl)\""
-  "\"regression/issues with local pointers (repl)\""
-  "\"regression/barrier between two for loops (repl)\""
-  "\"regression/simple for-loop with a barrier inside (repl)\""
-  "\"regression/for-loop with computation after the brexit (repl)\""
-  "\"regression/for-loop with a variable iteration count (repl)\""
-  "\"regression/early return before a barrier region (repl)\""
-  "\"regression/id-dependent computation before kernel exit (repl)\""
-  "\"regression/barrier just before return (repl)\""
-  "\"regression/infinite loop (repl)\""
-  "\"regression/undominated variable from conditional barrier handling (repl)\""
-  "\"regression/assigning a loop iterator variable to a private makes it local (repl)\""
-  "\"regression/assigning a loop iterator variable to a private makes it local 2 (repl)\""
+set_tests_properties("regression/phi_nodes_not_replicated_REPL"
+  "regression/issues_with_local_pointers_REPL"
+  "regression/barrier_between_two_for_loops_REPL"
+  "regression/simple_for-loop_with_a_barrier_inside_REPL"
+  "regression/for-loop_with_computation_after_the_brexit_REPL"
+  "regression/for-loop_with_a_variable_iteration_count_REPL"
+  "regression/early_return_before_a_barrier_region_REPL"
+  "regression/id-dependent_computation_before_kernel_exit_REPL"
+  "regression/barrier_just_before_return_REPL"
+  "regression/infinite_loop_REPL"
+  "regression/undominated_variable_from_conditional_barrier_handling_REPL"
+  "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_REPL"
+  "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_REPL"
   PROPERTIES
     ENVIRONMENT "POCL_WORK_GROUP_METHOD=workitemrepl"
     COST 1.5
@@ -119,47 +119,47 @@ set_tests_properties("\"regression/phi nodes not replicated (repl)\""
 
 # loops
 
-add_test("\"regression/phi nodes not replicated (loops)\"" "test_loop_phi_replication")
+add_test_pocl(NAME "regression/phi_nodes_not_replicated_LOOPS" COMMAND "test_loop_phi_replication")
 
-add_test("\"regression/issues with local pointers (loops)\"" "test_locals")
+add_test_pocl(NAME "regression/issues_with_local_pointers_LOOPS" COMMAND "test_locals")
 
-add_test("\"regression/barrier between two for loops (loops)\"" "test_barrier_between_for_loops")
+add_test_pocl(NAME "regression/barrier_between_two_for_loops_LOOPS" COMMAND "test_barrier_between_for_loops")
 
-add_test("\"regression/simple for-loop with a barrier inside (loops)\"" "test_simple_for_with_a_barrier")
+add_test_pocl(NAME "regression/simple_for-loop_with_a_barrier_inside_LOOPS" COMMAND "test_simple_for_with_a_barrier")
 
-add_test("\"regression/for-loop with computation after the brexit (loops)\"" "test_multi_level_loops_with_barriers")
+add_test_pocl(NAME "regression/for-loop_with_computation_after_the_brexit_LOOPS" COMMAND "test_multi_level_loops_with_barriers")
 
-add_test("\"regression/for-loop with a variable iteration count (loops)\"" "test_for_with_var_iteration_count")
+add_test_pocl(NAME "regression/for-loop_with_a_variable_iteration_count_LOOPS" COMMAND "test_for_with_var_iteration_count")
 
-add_test("\"regression/early return before a barrier region (loops)\"" "test_early_return")
+add_test_pocl(NAME "regression/early_return_before_a_barrier_region_LOOPS" COMMAND "test_early_return")
 
-add_test("\"regression/id-dependent computation before kernel exit (loops)\"" "test_id_dependent_computation")
+add_test_pocl(NAME "regression/id-dependent_computation_before_kernel_exit_LOOPS" COMMAND "test_id_dependent_computation")
 
-add_test("\"regression/barrier just before return (loops)\"" "test_barrier_before_return")
+add_test_pocl(NAME "regression/barrier_just_before_return_LOOPS" COMMAND "test_barrier_before_return")
 
-add_test("\"regression/infinite loop (loops)\"" "test_infinite_loop")
+add_test_pocl(NAME "regression/infinite_loop_LOOPS" COMMAND "test_infinite_loop")
 
-add_test("\"regression/undominated variable from conditional barrier handling (loops)\"" "test_undominated_variable")
+add_test_pocl(NAME "regression/undominated_variable_from_conditional_barrier_handling_LOOPS" COMMAND "test_undominated_variable")
 
-add_test("\"regression/assigning a loop iterator variable to a private makes it local (loops)\""
-                           "test_assign_loop_variable_to_privvar_makes_it_local")
+add_test_pocl(NAME "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_LOOPS"
+              COMMAND "test_assign_loop_variable_to_privvar_makes_it_local")
 
-add_test("\"regression/assigning a loop iterator variable to a private makes it local 2 (loops)\""
-                           "test_assign_loop_variable_to_privvar_makes_it_local_2")
+add_test_pocl(NAME "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_LOOPS"
+              COMMAND "test_assign_loop_variable_to_privvar_makes_it_local_2")
 
-set_tests_properties("\"regression/phi nodes not replicated (loops)\""
-  "\"regression/issues with local pointers (loops)\""
-  "\"regression/barrier between two for loops (loops)\""
-  "\"regression/simple for-loop with a barrier inside (loops)\""
-  "\"regression/for-loop with computation after the brexit (loops)\""
-  "\"regression/for-loop with a variable iteration count (loops)\""
-  "\"regression/early return before a barrier region (loops)\""
-  "\"regression/id-dependent computation before kernel exit (loops)\""
-  "\"regression/barrier just before return (loops)\""
-  "\"regression/infinite loop (loops)\""
-  "\"regression/undominated variable from conditional barrier handling (loops)\""
-  "\"regression/assigning a loop iterator variable to a private makes it local (loops)\""
-  "\"regression/assigning a loop iterator variable to a private makes it local 2 (loops)\""
+set_tests_properties("regression/phi_nodes_not_replicated_LOOPS"
+  "regression/issues_with_local_pointers_LOOPS"
+  "regression/barrier_between_two_for_loops_LOOPS"
+  "regression/simple_for-loop_with_a_barrier_inside_LOOPS"
+  "regression/for-loop_with_computation_after_the_brexit_LOOPS"
+  "regression/for-loop_with_a_variable_iteration_count_LOOPS"
+  "regression/early_return_before_a_barrier_region_LOOPS"
+  "regression/id-dependent_computation_before_kernel_exit_LOOPS"
+  "regression/barrier_just_before_return_LOOPS"
+  "regression/infinite_loop_LOOPS"
+  "regression/undominated_variable_from_conditional_barrier_handling_LOOPS"
+  "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_LOOPS"
+  "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_LOOPS"
   PROPERTIES
     ENVIRONMENT "POCL_WORK_GROUP_METHOD=workitemloops"
     COST 1.5
@@ -170,57 +170,56 @@ set_tests_properties("\"regression/phi nodes not replicated (loops)\""
 
 # other
 
-add_test("\"regression/LoopVectorizer crash with Haswell and Broadwell - issue 231\"" "test_issue_231")
+add_test_pocl(NAME "regression/LoopVectorizer_crash_with_Haswell_and_Broadwell_-_issue_231" COMMAND "test_issue_231")
 
-add_test("\"regression/setting a buffer argument to NULL causes a segfault\"" "test_null_arg")
+add_test_pocl(NAME "regression/setting_a_buffer_argument_to_NULL_causes_a_segfault" COMMAND "test_null_arg")
 
-add_test("\"regression/clSetKernelArg overwriting the previous kernel's args\"" "test_setargs")
+add_test_pocl(NAME "regression/clSetKernelArg_overwriting_the_previous_kernel's_args" COMMAND "test_setargs")
 
-add_test("\"regression/passing a constant array as an arg\"" "test_constant_array")
+add_test_pocl(NAME "regression/passing_a_constant_array_as_an_arg" COMMAND "test_constant_array")
 
-add_test("\"regression/case with multiple variable length loops and a barrier in one\"" "test_fors_with_var_iteration_counts")
+add_test_pocl(NAME "regression/case_with_multiple_variable_length_loops_and_a_barrier_in_one" COMMAND "test_fors_with_var_iteration_counts")
 
-#add_test("\"regression/struct kernel arguments\"" "test_structs_as_args")
+# these 2 will fail
+add_test_pocl(NAME "regression/struct_kernel_arguments" COMMAND "test_structs_as_args")
 
-#add_test("\"regression/vector kernel arguments\"" "test_vectors_as_args")
+add_test_pocl(NAME "regression/vector_kernel_arguments" COMMAND "test_vectors_as_args")
 
-set_tests_properties("\"regression/setting a buffer argument to NULL causes a segfault\""
-  "\"regression/clSetKernelArg overwriting the previous kernel's args\""
-  "\"regression/passing a constant array as an arg\""
-  "\"regression/case with multiple variable length loops and a barrier in one\""
-  "\"regression/LoopVectorizer crash with Haswell and Broadwell - issue 231\""
+set_tests_properties("regression/setting_a_buffer_argument_to_NULL_causes_a_segfault"
+  "regression/clSetKernelArg_overwriting_the_previous_kernel's_args"
+  "regression/passing_a_constant_array_as_an_arg"
+  "regression/case_with_multiple_variable_length_loops_and_a_barrier_in_one"
+  "regression/LoopVectorizer_crash_with_Haswell_and_Broadwell_-_issue_231"
+  "regression/struct_kernel_arguments" "regression/vector_kernel_arguments"
   PROPERTIES
     COST 1.5
     PROCESSORS 1
     DEPENDS "pocl_version_check"
     LABELS "internal;regression")
 
-#  "\"regression/struct kernel arguments\""
-#  "\"regression/vector kernel arguments\""
+# The vector/struct kernel arguments are known to be flaky and
+# work by luck sometimes. Disable them for now.
+#if((LLVM_CXXFLAGS MATCHES "_DEBUG") OR (NOT LLVM_CXXFLAGS MATCHES "DNDEBUG"))
+#  set_tests_properties("regression/vector_kernel_arguments"
+#    PROPERTIES  WILL_FAIL 1)
+#endif()
+
+set_tests_properties("regression/struct_kernel_arguments"
+                     "regression/vector_kernel_arguments"
+                      PROPERTIES  WILL_FAIL 1)
 
 ###################################################################
 
 if(POWERPC)
-  set_tests_properties("\"regression/for-loop with a variable iteration count (loops)\""
+  set_tests_properties("regression/for-loop_with_a_variable_iteration_count_LOOPS"
     PROPERTIES  WILL_FAIL 1)
 endif()
 
-# The vector/struct kernel arguments are known to be flaky and
-# work by luck sometimes. Disable them for now.
-#
-#if((LLVM_CXXFLAGS MATCHES "_DEBUG") OR (NOT LLVM_CXXFLAGS MATCHES "DNDEBUG"))
-#  set_tests_properties("\"regression/vector kernel arguments\""
-#    PROPERTIES  WILL_FAIL 1)
-#endif()
-
 # TODO infinite loop test: AT_SKIP_IF([ env | grep -q POCL_IMPLICIT_FINISH])
 
-#set_tests_properties("\"regression/struct kernel arguments\""
-#  PROPERTIES  WILL_FAIL 1)
-
 set_tests_properties(
-  "\"regression/assigning a loop iterator variable to a private makes it local 2 (repl)\""
-  "\"regression/assigning a loop iterator variable to a private makes it local 2 (loops)\""
+  "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_REPL"
+  "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_LOOPS"
     PROPERTIES PASS_REGULAR_EXPRESSION
 "changing the value at global_id: 6, local_id 2, group_id 1, to: 3
 value is changed at global_id: 6, local_id 2, group_id 1, to: 3
