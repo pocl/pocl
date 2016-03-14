@@ -332,9 +332,6 @@ int pocl_cache_write_kernel_parallel_bc(void*        bc,
                                         size_t       local_x,
                                         size_t       local_y,
                                         size_t       local_z) {
-#ifndef OCS_AVAILABLE
-    return -1;
-#else
     assert(bc);
 
     char kernel_parallel_path[POCL_FILENAME_LENGTH];
@@ -348,7 +345,6 @@ int pocl_cache_write_kernel_parallel_bc(void*        bc,
             (POCL_FILENAME_LENGTH - strlen(POCL_PARALLEL_BC_FILENAME)));
     strcat(kernel_parallel_path, POCL_PARALLEL_BC_FILENAME);
     return pocl_write_module(bc, kernel_parallel_path, 0);
-#endif
 }
 
 int pocl_cache_make_kernel_cachedir_path(char*        kernel_cachedir_path,
