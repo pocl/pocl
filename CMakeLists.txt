@@ -425,6 +425,17 @@ else()
   endif()
 endif()
 
+######################################################################################
+# LTTNG
+
+if(NOT MSVC)
+  pkg_check_modules(LTTNG_UST lttng-ust>=2.7)
+  if(LTTNG_UST_FOUND)
+    set(HAVE_LTTNG_UST 1)
+  else()
+    set(HAVE_LTTNG_UST 0)
+  endif()
+endif()
 
 ######################################################################################
 # DONE
@@ -1072,6 +1083,7 @@ MESSAGE(STATUS "CL_DISABLE_HALF: ${CL_DISABLE_HALF}")
 MESSAGE(STATUS "CL_DISABLE_LONG: ${CL_DISABLE_LONG}")
 MESSAGE(STATUS "HAVE_CLOCK_GETTIME: ${HAVE_CLOCK_GETTIME}")
 MESSAGE(STATUS "HAVE_GLEW: ${HAVE_GLEW}")
+MESSAGE(STATUS "HAVE_LTTNG_UST: ${HAVE_LTTNG_UST}")
 MESSAGE(STATUS "HOST_AS_FLAGS: ${HOST_AS_FLAGS}")
 MESSAGE(STATUS "HOST_CLANG_FLAGS: ${HOST_CLANG_FLAGS}")
 MESSAGE(STATUS "HOST_LD_FLAGS: ${HOST_LD_FLAGS}")

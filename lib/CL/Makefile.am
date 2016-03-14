@@ -136,6 +136,7 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    pocl_binary.c pocl_binary.h \
                    pocl_cl.h \
                    pocl_util.c pocl_util.h \
+                   pocl_tracing.c pocl_tracing.h \
                    pocl_queue_util.c pocl_queue_util.h \
                    pocl_image_util.c pocl_image_util.h \
                    pocl_img_buf_cpy.h pocl_img_buf_cpy.c \
@@ -151,10 +152,14 @@ if ! OCS_AVAILABLE
 libpocl_la_SOURCES += pocl_file_util.c
 endif
 
-
-libpocl_la_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/fix-include/OpenCL -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices $(OCL_ICD_CFLAGS)
+libpocl_la_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/fix-include/OpenCL -I$(top_srcdir)/include -I$(top_srcdir)/lib/CL/devices $(OCL_ICD_CFLAGS) @LTTNG_UST_CFLAGS@
 libpocl_la_LDFLAGS = -lltdl @PTHREAD_CFLAGS@ -version-info ${LIB_VERSION}
 #libpocl_la_LDFLAGS += -Wl,-z,defs 
+
+if LTTNG_UST_AVAILABLE
+libpocl_la_SOURCES += pocl_lttng.h pocl_lttng.c
+endif
+
 
 if TCE_AVAILABLE
 # The ttasim device is written in C++ as it accesses the ttasim library of TCE
@@ -163,7 +168,7 @@ libpocl_la_LDFLAGS += -lstdc++ `@TCE_CONFIG@ --libs`
 endif
 
 if BUILD_HSA
-libpocl_la_LDFLAGS += -lhsa-runtime64
+libpocl_la_LDFLAGS += ${HSA_LIBS}
 endif
 
 libpocl_la_LIBADD = devices/libpocl-devices.la
@@ -176,7 +181,6 @@ libpocl_la_LIBADD += ${LTDL_LIBS}
 if HAVE_CLOCK_GETTIME
 libpocl_la_LIBADD += -lrt
 endif
-
 
 #Kludge: compile pocl_llvm_api.cc into a library of its own.
 #The source file is necessarely a C++ file, and having a C++ file
@@ -206,6 +210,9 @@ libpocl_la_LIBADD += -lstdc++ -lm
 if OCS_AVAILABLE
 libpocl_la_LIBADD +=@LLVM_LIBS@
 endif
+
+libpocl_la_LIBADD += @LTTNG_UST_LIBS@
+
 
 
 if OCS_AVAILABLE

@@ -510,7 +510,24 @@ CPPFLAGS="$old_CPPFLAGS"
 
 LD_FLAGS_BIN="$LD_FLAGS_BIN $PTHREAD_LDFLAGS"
 
+####################################################################
+# lttng
 
+AC_ARG_ENABLE([use_lttng],
+              [AS_HELP_STRING([--enable-lttng-ust], [Build pocl with the lttng trace support (default yes)])],
+              [use_lttng="$enableval"],
+              [use_lttng="yes"])
+
+if test x"$use_lttng" == xyes; then :
+  PKG_CHECK_MODULES([LTTNG_UST], [lttng-ust >= 2.7], 
+    [ LTTNG_UST_available=yes 
+      AC_DEFINE([LTTNG_UST_AVAILABLE], [1], [Defined to 1 if lttng-ust is found on system]) ],
+    [:])
+  AC_SUBST([LTTNG_UST_CFLAGS])
+  AC_SUBST([LTTNG_UST_LIBS])
+fi
+
+AM_CONDITIONAL(LTTNG_UST_AVAILABLE, test "$LTTNG_UST_available" = "yes")
 ####################################################################
 
 # Option to build as an ICD
@@ -1294,12 +1311,18 @@ AC_ARG_WITH(hsa-runtime-dir,
 AC_SUBST([HSA_INCLUDES], ["-I${HSA_RUNTIME_DIR}/include"] )
 
 # Search for the HSA runtime lib.
+# TODO: Should we support accessing multiple different HSA Runtime libs
+# at the same time to access all HSA-supported devices available? Or
+# should we assume a single HSA Runtime controls all devices in the
+# platform. With that assumption we cannot combine a phsa CPU Agent
+# with an AMD GPU Agent. Might not be worth the effort as the CPU
+# device is better accessed directly, without the HSA layer anyways.
 AC_MSG_CHECKING([for HSA runtime])
 old_LIBS="$LIBS"
 old_LDFLAGS="$LDFLAGS"
 LDFLAGS="$LDFLAGS -L${HSA_RUNTIME_DIR}/lib"
 LIBS=""
-AC_SEARCH_LIBS([hsa_executable_get_symbol], [hsa-runtime64], [
+AC_SEARCH_LIBS([hsa_executable_get_symbol], [hsa-runtime64 phsa-runtime64], [
 HSA_LIBS="$LIBS"
 AC_SUBST([HSA_LIBS])
 ],
@@ -1355,6 +1378,8 @@ AC_MSG_CHECKING([for HSA runtime headers])
 AC_COMPILE_IFELSE(
   [AC_LANG_PROGRAM(
     [[ #include <hsa.h> ]]
+    [[ #include <hsa_ext_finalize.h> ]]
+    [[ #include <hsa_ext_image.h> ]]
   )],
 [AC_MSG_RESULT(yes)],
 [AC_MSG_RESULT(no)
@@ -1715,6 +1740,13 @@ else
  echo "Linking directly with libpocl will not work."
 fi
 echo
+
+
+if test x"$LTTNG_UST_available" == xyes;
+then
+ echo "Enabling LTTNG traces."
+ echo
+fi
 
 if test x"$use_vecmathlib" == xyes;
 then
