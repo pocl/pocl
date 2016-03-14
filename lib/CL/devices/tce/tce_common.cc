@@ -385,11 +385,11 @@ pocl_tce_free (cl_device_id device, cl_mem mem_obj)
   free_chunk ((chunk_info_t*) ptr);
 }
 
-void 
-pocl_tce_run 
-(void *data, 
- _cl_command_node* cmd) {
+void
+pocl_tce_compile_submitted_kernels(_cl_command_node *cmd)
+{
 
+  void* data = cmd->device->data;
   TCEDevice *d = (TCEDevice*)data;
   int error;
   char bytecode[POCL_FILENAME_LENGTH];
@@ -401,22 +401,18 @@ pocl_tce_run
   if (d->isNewKernel(&(cmd->command.run))) {
     std::string assemblyFileName(cmd->command.run.tmp_dir);
     assemblyFileName += "/parallel.tpef";
-    
-    std::string kernelMdSymbolName = "_";
-    kernelMdSymbolName += cmd->command.run.kernel->name;
-    kernelMdSymbolName += "_md";
-    
+
     std::string userProgramBuildOptions;
     if (cmd->command.run.kernel->program->compiler_options != NULL)
       userProgramBuildOptions = cmd->command.run.kernel->program->compiler_options;
-    
+
     if (access (assemblyFileName.c_str(), F_OK) != 0)
       {
         error = snprintf (bytecode, POCL_FILENAME_LENGTH,
                           "%s%s", cmd->command.run.tmp_dir, POCL_PARALLEL_BC_FILENAME);
-        TCEString buildCmd = 
+        TCEString buildCmd =
           d->tceccCommandLine(&cmd->command.run, bytecode, assemblyFileName);
-        
+
 #ifdef DEBUG_TTA_DRIVER
       std::cerr << "CMD: " << buildCmd << std::endl;
 #endif
@@ -424,7 +420,27 @@ pocl_tce_run
       if (error != 0)
         POCL_ABORT("Error while running tcecc.");
       }
-    
+  }
+}
+
+void
+pocl_tce_run(void *data, _cl_command_node* cmd)
+{
+
+  TCEDevice *d = (TCEDevice*)data;
+  int error;
+  char bytecode[POCL_FILENAME_LENGTH];
+  uint32_t kernelAddr;
+  unsigned i;
+
+  if (d->isNewKernel(&(cmd->command.run))) {
+    std::string assemblyFileName(cmd->command.run.tmp_dir);
+    assemblyFileName += "/parallel.tpef";
+
+    std::string kernelMdSymbolName = "_";
+    kernelMdSymbolName += cmd->command.run.kernel->name;
+    kernelMdSymbolName += "_md";
+
     try {
       d->loadProgramToDevice(assemblyFileName);
       d->restartProgram();

@@ -91,6 +91,7 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
   ops->get_timer_value = pocl_ttasim_get_timer_value;
   ops->init_build = pocl_tce_init_build;
   ops->build_hash = pocl_tce_build_hash;
+  ops->compile_submitted_kernels = pocl_tce_compile_submitted_kernels;
 }
 
 
