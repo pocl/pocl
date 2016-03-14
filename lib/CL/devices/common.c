@@ -64,15 +64,16 @@
  * @param return the generated binary filename.
  */
 
-const char*
+char*
 llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
 
   char command[COMMAND_LENGTH];
   char bytecode[POCL_FILENAME_LENGTH];
   char objfile[POCL_FILENAME_LENGTH];
-
-  char* module = (char*) malloc(min(POCL_FILENAME_LENGTH, 
-                                    strlen(tmpdir) + strlen(kernel->name) + 5)); /* strlen of / .so 4+1 */
+  /* strlen of / .so 4+1 */
+  int file_name_alloc_size = 
+    min(POCL_FILENAME_LENGTH, strlen(tmpdir) + strlen(kernel->name) + 5);
+  char* module = (char*) malloc(file_name_alloc_size); 
 
   int error;
 
@@ -128,8 +129,9 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
  * Populates the device specific image data structure used by kernel
  * from given kernel image argument
  */
-void fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg, 
-                       cl_device_id device)
+void
+fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg,
+                  cl_device_id device)
 {
   cl_mem mem = *(cl_mem *)parg->value;
   di->data = (mem->device_ptrs[device->dev_id].mem_ptr);
@@ -145,10 +147,11 @@ void fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg,
                               &(di->elem_size));
 }
 
-void pocl_copy_mem_object (cl_device_id dest_dev, cl_mem dest, 
-                           size_t dest_offset,
-                           cl_device_id source_dev, cl_mem source,
-                           size_t source_offset, size_t cb)
+void
+pocl_copy_mem_object (cl_device_id dest_dev, cl_mem dest,
+                      size_t dest_offset,
+                      cl_device_id source_dev, cl_mem source,
+                      size_t source_offset, size_t cb)
 {
   /* if source_dev is NULL -> src and dest dev must be the same */
   cl_device_id src_dev = (source_dev) ? source_dev : dest_dev;
@@ -189,7 +192,8 @@ void pocl_copy_mem_object (cl_device_id dest_dev, cl_mem dest,
   return;
 }
 
-void pocl_migrate_mem_objects (_cl_command_node * volatile node)
+void
+pocl_migrate_mem_objects (_cl_command_node * volatile node)
 {
   int i;
   cl_mem *mem_objects = node->command.migrate.mem_objects;
@@ -205,7 +209,8 @@ void pocl_migrate_mem_objects (_cl_command_node * volatile node)
     }
 }
 
-void pocl_ndrange_node_cleanup(_cl_command_node *node)
+void
+pocl_ndrange_node_cleanup(_cl_command_node *node)
 {
   int i;
   free (node->command.run.arg_buffers);
@@ -220,13 +225,15 @@ void pocl_ndrange_node_cleanup(_cl_command_node *node)
   POname(clReleaseKernel)(node->command.run.kernel);
 }
 
-void pocl_native_kernel_cleanup(_cl_command_node *node)
+void
+pocl_native_kernel_cleanup(_cl_command_node *node)
 {
   free (node->command.native.mem_list);
   free (node->command.native.args);
 }
 
-void pocl_mem_objs_cleanup (cl_event event)
+void
+pocl_mem_objs_cleanup (cl_event event)
 {
   int i;
   for (i = 0; i < event->num_buffers; ++i)
@@ -243,7 +250,8 @@ void pocl_mem_objs_cleanup (cl_event event)
 /**
  * executes given command.
  */
-void pocl_exec_command (_cl_command_node * volatile node)
+void
+pocl_exec_command (_cl_command_node * volatile node)
 {
   int i;
   /* because of POCL_UPDATE_EVENT_ */
@@ -536,7 +544,8 @@ pocl_broadcast (cl_event brc_event)
  * Populates the device specific sampler data structure used by kernel
  * from given kernel sampler argument
  */
-void fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg)
+void
+fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg)
 {
   cl_sampler_t sampler = *(cl_sampler_t *)parg->value;
 
@@ -600,7 +609,8 @@ static pocl_lock_t pocl_dlhandle_lock;
 static int pocl_dlhandle_cache_initialized;
 
 /* only to be called in basic/pthread/<other cpu driver> init */
-void pocl_init_dlhandle_cache ()
+void
+pocl_init_dlhandle_cache ()
 {
   if (!pocl_dlhandle_cache_initialized)
     {
@@ -612,7 +622,8 @@ void pocl_init_dlhandle_cache ()
 }
 
 static int handle_count = 0;
-void pocl_check_dlhandle_cache (_cl_command_node *cmd)
+void
+pocl_check_dlhandle_cache (_cl_command_node *cmd)
 {
   char workgroup_string[256];
   pocl_dlhandle_cache_item *ci = NULL;
@@ -706,7 +717,8 @@ void pocl_check_dlhandle_cache (_cl_command_node *cmd)
   POCL_UNLOCK (pocl_dlhandle_cache_lock);
 }
 
-void pocl_free_dlhandle (_cl_command_node *cmd)
+void
+pocl_free_dlhandle (_cl_command_node *cmd)
 {
   pocl_dlhandle_cache_item *ci = NULL;
   POCL_LOCK (pocl_dlhandle_cache_lock);
@@ -738,7 +750,8 @@ void pocl_free_dlhandle (_cl_command_node *cmd)
 /* accounting object for the main memory */
 static pocl_global_mem_t system_memory;
 
-void pocl_setup_device_for_system_memory(cl_device_id device)
+void
+pocl_setup_device_for_system_memory(cl_device_id device)
 {
   /* set up system memory limits, if required */
   if (system_memory.total_alloc_limit == 0)
@@ -843,7 +856,8 @@ pocl_set_buffer_image_limits(cl_device_id device)
 
 }
 
-void* pocl_memalign_alloc_global_mem(cl_device_id device, size_t align, size_t size)
+void*
+pocl_memalign_alloc_global_mem(cl_device_id device, size_t align, size_t size)
 {
   pocl_global_mem_t *mem = device->global_memory;
   if ((mem->total_alloc_limit - mem->currently_allocated) < size)
@@ -861,7 +875,8 @@ void* pocl_memalign_alloc_global_mem(cl_device_id device, size_t align, size_t s
   return ptr;
 }
 
-void pocl_free_global_mem(cl_device_id device, void* ptr, size_t size)
+void
+pocl_free_global_mem(cl_device_id device, void* ptr, size_t size)
 {
   pocl_global_mem_t *mem = device->global_memory;
 
@@ -871,7 +886,8 @@ void pocl_free_global_mem(cl_device_id device, void* ptr, size_t size)
   POCL_MEM_FREE(ptr);
 }
 
-void pocl_print_system_memory_stats()
+void
+pocl_print_system_memory_stats()
 {
   POCL_MSG_PRINT("MEM STATS:\n", "",
   "____ Total available system memory  : %10zu KB\n"
