@@ -133,7 +133,7 @@ program_compile_dynamic_wg_binaries(cl_program program)
                                                           program->default_kernels[i],
                                                           0,0,0);
 #else
-          error = 1;
+          errcode = 1;
 #endif
           if (errcode != CL_SUCCESS)
             {
