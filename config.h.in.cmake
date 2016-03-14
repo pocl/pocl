@@ -48,6 +48,8 @@
 
 #cmakedefine HAVE_CLOCK_GETTIME
 
+#cmakedefine HAVE_LTTNG_UST
+
 #cmakedefine HAVE_OCL_ICD
 
 /* Defined if posix_memalign is available. */
