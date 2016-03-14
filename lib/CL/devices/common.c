@@ -92,9 +92,10 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
       
 #ifdef OCS_AVAILABLE
       error = pocl_llvm_codegen( kernel, device, bytecode, objfile);
-      assert (error == 0);
+#else
+      error = 1;      
 #endif
-
+      assert (error == 0);
       // clang is used as the linker driver in LINK_CMD
       error = snprintf (command, COMMAND_LENGTH,
 #ifdef OCS_AVAILABLE

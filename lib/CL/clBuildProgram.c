@@ -132,6 +132,8 @@ program_compile_dynamic_wg_binaries(cl_program program)
           errcode = pocl_llvm_generate_workgroup_function(device,
                                                           program->default_kernels[i],
                                                           0,0,0);
+#else
+          error = 1;
 #endif
           if (errcode != CL_SUCCESS)
             {
@@ -294,7 +296,7 @@ CL_API_SUFFIX__VERSION_1_0
           error = pocl_llvm_build_program(program, device_i,
                                           user_options, program_bc_path);
 #else
-          error=-1;
+          error=1;
 #endif
           POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
                              "pocl_llvm_build_program() failed\n");

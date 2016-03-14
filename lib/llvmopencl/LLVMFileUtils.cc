@@ -278,4 +278,3 @@ void release_lock(void* lock) {
     delete l;
 #endif
 }
-

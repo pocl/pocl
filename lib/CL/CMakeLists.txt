@@ -272,10 +272,10 @@ endif()
 add_compile_options(${OCL_ICD_CFLAGS} ${LTTNG_UST_CFLAGS})
 
 if (OCS_AVAILABLE)
-include_directories(${LLVM_INCLUDE_DIRS})
+	include_directories(${LLVM_INCLUDE_DIRS})
 
-# set llvm C++ flags on pocl_llvm_api.cc
-set_source_files_properties("pocl_llvm_api.cc" PROPERTIES COMPILE_FLAGS "${LLVM_CXXFLAGS} -I\"${CMAKE_CURRENT_SOURCE_DIR}/../llvmopencl\"")
+	# set llvm C++ flags on pocl_llvm_api.cc
+	set_source_files_properties("pocl_llvm_api.cc" PROPERTIES COMPILE_FLAGS "${LLVM_CXXFLAGS} -I\"${CMAKE_CURRENT_SOURCE_DIR}/../llvmopencl\"")
 endif()
 
 if(HAVE_LTTNG_UST)

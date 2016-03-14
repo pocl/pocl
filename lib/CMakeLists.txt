@@ -27,9 +27,9 @@ separate_arguments(HOST_CLANG_FLAGS)
 separate_arguments(HOST_LLC_FLAGS)
 
 if (OCS_AVAILABLE)
-add_subdirectory("kernel")
+  add_subdirectory("kernel")
 
-add_subdirectory("llvmopencl")
+  add_subdirectory("llvmopencl")
 endif()
 
 add_subdirectory("CL")
