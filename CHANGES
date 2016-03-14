@@ -1,3 +1,10 @@
+0.14 unreleased 2016
+====================
+
+Other
+-----
+- HSA: added support for phsa (https://github.com/HSAFoundation/phsa)
+
 0.13 March 2016
 ================
 

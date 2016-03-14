@@ -25,7 +25,7 @@ Installing prerequisite software
   Alternatively, you can use *phsa* to add generic HSA support on your gcc-supported
   CPU. Its installation instructions are here:
 
-  https://github.com/parmance/phsa
+  https://github.com/HSAFoundation/phsa
 
 2) Build & install the LLVM with HSAIL support
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
