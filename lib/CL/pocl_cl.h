@@ -43,6 +43,7 @@
 #  include "pocl_icd.h"
 #endif
 #include "pocl.h"
+#include "pocl_tracing.h"
 #include "pocl_debug.h"
 #include "pocl_hash.h"
 #include "pocl_runtime_config.h"
@@ -680,7 +681,6 @@ struct _cl_event {
   cl_command_queue queue;
   cl_command_type command_type;
   _cl_command_node *command;
-  
   unsigned int id;
 
   /* list of callback functions */
@@ -727,10 +727,13 @@ struct _cl_sampler {
         cl_command_queue __cq = (*(__event))->queue;                    \
         if ((__cq)->device->ops->update_event)                   \
           (__cq)->device->ops->update_event((__cq)->device, (*__event), CL_QUEUED);    \
-        (*(__event))->status = CL_QUEUED;                               \
-        if (__cq && __cq->properties & CL_QUEUE_PROFILING_ENABLE)       \
-          (*(__event))->time_queue =                                    \
-            __cq->device->ops->get_timer_value(__cq->device->data);     \
+        else {                                                          \
+          (*(__event))->status = CL_QUEUED;                             \
+          if (__cq && __cq->properties & CL_QUEUE_PROFILING_ENABLE)     \
+            (*(__event))->time_queue =                                  \
+              __cq->device->ops->get_timer_value(__cq->device->data);   \
+        }                                                               \
+        pocl_event_updated(*(__event), CL_QUEUED);                      \
       }                                                                 \
   } while (0)                                                           \
 
@@ -742,11 +745,13 @@ struct _cl_sampler {
          cl_command_queue __cq = (*(__event))->queue;                    \
         if ((__cq)->device->ops->update_event)                   \
           (__cq)->device->ops->update_event((__cq)->device, (*(__event)), CL_SUBMITTED);    \
-        else                                                            \
-        (*(__event))->status = CL_SUBMITTED;                            \
-        if (__cq && __cq->properties & CL_QUEUE_PROFILING_ENABLE)       \
-          (*(__event))->time_submit =                                   \
-            __cq->device->ops->get_timer_value(__cq->device->data);     \
+        else {                                                          \
+          (*(__event))->status = CL_SUBMITTED;                          \
+          if (__cq && __cq->properties & CL_QUEUE_PROFILING_ENABLE)     \
+            (*(__event))->time_submit =                                 \
+              __cq->device->ops->get_timer_value(__cq->device->data);   \
+        }                                                               \
+        pocl_event_updated(*(__event), CL_SUBMITTED);                   \
       }                                                                 \
   } while (0)                                                           \
 
@@ -758,11 +763,13 @@ struct _cl_sampler {
         cl_command_queue __cq = (*(__event))->queue;                    \
         if ((__cq)->device->ops->update_event)                   \
           (__cq)->device->ops->update_event((__cq)->device, (*(__event)), CL_RUNNING);    \
-        else                                                            \
-        (*(__event))->status = CL_RUNNING;                              \
-        if (__cq && __cq->properties & CL_QUEUE_PROFILING_ENABLE)       \
-          (*(__event))->time_start =                                    \
-            __cq->device->ops->get_timer_value(__cq->device->data);     \
+        else {                                                          \
+          (*(__event))->status = CL_RUNNING;                            \
+          if (__cq && __cq->properties & CL_QUEUE_PROFILING_ENABLE)     \
+            (*(__event))->time_start =                                  \
+              __cq->device->ops->get_timer_value(__cq->device->data);   \
+        }                                                               \
+        pocl_event_updated(*(__event), CL_RUNNING);                     \
       }                                                                 \
   } while (0)                                                           \
 
@@ -770,7 +777,7 @@ struct _cl_sampler {
   do {                                                                  \
     if ((__event) != NULL && (*(__event)) != NULL)                      \
       {                                                                 \
-        event_callback_item *cb_ptr;                                    \
+        assert((*(__event))->status == CL_RUNNING);                     \
         cl_command_queue __cq = (*(__event))->queue;                    \
         assert((*(__event))->status == CL_RUNNING);                     \
         if ((__cq)->device->ops->update_event)                          \
@@ -787,12 +794,7 @@ struct _cl_sampler {
           POCL_UNLOCK_OBJ (*(__event));                                 \
           pocl_update_command_queue(*(__event));                        \
         }                                                               \
-        for (cb_ptr = (*__event)->callback_list ; cb_ptr;               \
-             cb_ptr = cb_ptr->next)                                     \
-          {                                                             \
-            cb_ptr->callback_function ((*__event), cb_ptr->trigger_status, \
-                                       cb_ptr->user_data);              \
-          }                                                             \
+        pocl_event_updated(*(__event), CL_COMPLETE);                    \
         clReleaseEvent (*(__event));                                    \
       }                                                                 \
   } while (0)                                                           \

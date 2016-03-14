@@ -71,9 +71,8 @@ AT_CLEANUP
 
 AT_SETUP([clSetEventCallback])
 AT_KEYWORDS([runtime])
-AT_CHECK_UNQUOTED([$abs_top_builddir/tests/runtime/test_clSetEventCallback], 0, 
-[$(cat $abs_top_srcdir/tests/runtime/test_clSetEventCallback_expout.txt)
-])
+AT_CHECK([$abs_top_builddir/tests/runtime/test_clSetEventCallback], 0, ignore,
+ignore)
 AT_CLEANUP
 
 AT_SETUP([clGetSupportedImageFormats])

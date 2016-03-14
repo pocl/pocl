@@ -1,6 +1,6 @@
 /* pocl-hsa.c - driver for HSA supported devices. Currently only AMDGCN.
 
-   Copyright (c) 2015 Pekka Jääskeläinen <pekka.jaaskelainen@tut.fi>
+   Copyright (c) 2015-2016 Pekka Jääskeläinen <pekka.jaaskelainen@tut.fi>
                  2015 Charles Chen <ccchen@pllab.cs.nthu.edu.tw>
                       Shao-chung Wang <scwang@pllab.cs.nthu.edu.tw>
                  2015 Michal Babej <michal.babej@tut.fi>
@@ -267,10 +267,6 @@ pocl_hsa_get_agents_callback(hsa_agent_t agent, void *data)
 {
   hsa_device_type_t type;
   HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_DEVICE, &type));
-  if (type != HSA_DEVICE_TYPE_GPU)
-    {
-      return HSA_STATUS_SUCCESS;
-    }
 
   hsa_agent_feature_t features;
   HSA_CHECK(hsa_agent_get_info(agent, HSA_AGENT_INFO_FEATURE, &features));
@@ -310,8 +306,8 @@ setup_agent_memory_regions_callback(hsa_region_t region, void* data)
   return HSA_STATUS_SUCCESS;
 }
 
-//Get hsa-unsupported device features from hsa device list.
-static unsigned num_hsa_device = 1;
+// Get hsa-unsupported device features from hsa device list.
+static int num_hsa_device = 2;
 
 static struct _cl_device_id
 supported_hsa_devices[MAX_HSA_AGENTS] =
@@ -342,6 +338,34 @@ supported_hsa_devices[MAX_HSA_AGENTS] =
     .native_vector_width_float = 1,
     .native_vector_width_double = 1
   },
+  [1] =
+  { .long_name = "phsa generic CPU agent",
+    .llvm_cpu = NULL,
+    .llvm_target_triplet = "hsail64",
+    .has_64bit_long = 1,
+    .vendor_id = 0xffff,
+    .global_mem_cache_type = CL_READ_WRITE_CACHE,
+    .max_constant_buffer_size = 65536,
+    .local_mem_type = CL_LOCAL,
+    .endian_little = !(WORDS_BIGENDIAN),
+    .extensions = HSA_DEVICE_EXTENSIONS,
+    .preferred_wg_size_multiple = 1,
+		// We want to exploit the widest vector types in HSAIL
+		// for the CPUs assuming they have some sort of SIMD ISE
+		// which the finalizer than can more readily utilize.
+    .preferred_vector_width_char = 16,
+    .preferred_vector_width_short = 16,
+    .preferred_vector_width_int = 16,
+    .preferred_vector_width_long = 16,
+    .preferred_vector_width_float = 16,
+    .preferred_vector_width_double = 16,
+    .native_vector_width_char = 16,
+    .native_vector_width_short = 16,
+    .native_vector_width_int = 16,
+    .native_vector_width_long = 16,
+    .native_vector_width_float = 16,
+    .native_vector_width_double = 16
+  }
 };
 
 // Detect the HSA device and populate its properties to the device
@@ -384,12 +408,16 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
         }
     }
   if (!found)
-    POCL_ABORT("We found a device for which we don't have device"
-               "OpenCL attribute information (compute unit count,"
-               "constant buffer size etc), and there's no way to get"
-               "the required stuff from HSA API. Please create a "
-               "new entry with the information in supported_hsa_devices,"
-               "and send a note/patch to pocl developers. Thanks!");
+		{
+			POCL_MSG_PRINT_INFO("pocl-hsa: found unknown HSA devices '%s'.\n",
+													dev_name);
+			POCL_ABORT("We found a device for which we don't have device "
+								 "OpenCL attribute information (compute unit count, "
+								 "constant buffer size etc), and there's no way to get all "
+								 "the required info from HSA API. Please create a "
+								 "new entry with the information in supported_hsa_devices, "
+								 "and send a note/patch to pocl developers. Thanks!");
+		}
 }
 
 void
@@ -563,7 +591,11 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
    * for now, use the max alloc size, it seems to be a much more reasonable value.
    * HSA_CHECK(hsa_region_get_info(d->global_region, HSA_REGION_INFO_SIZE, &sizearg));
    */
+  HSA_CHECK(hsa_region_get_info(d->global_region,
+                               HSA_REGION_INFO_SIZE, &sizearg));
   device->global_mem_size = sizearg;
+	if (device->global_mem_size > 16*1024*1024*(uint64_t)1024)
+		device->global_mem_size = device->max_mem_alloc_size;
 
   pocl_setup_device_for_system_memory(device);
 

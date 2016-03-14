@@ -25,20 +25,31 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+volatile int submit = 0;
+volatile int running = 0;
+volatile int complete = 0;
+
 void callback_function(cl_event event, 
                        cl_int   event_command_exec_status, 
                        void     *user_data)
 {
   printf("%s ", (const char *)user_data);
   if(event_command_exec_status == CL_SUBMITTED)
-    printf("CL_SUBMITTED\n");
-
+    {
+      printf("CL_SUBMITTED\n");
+      submit = 1;
+    }
   if(event_command_exec_status == CL_RUNNING)
-    printf("CL_RUNNING\n");
+    {
+      printf("CL_RUNNING\n");
+      running = 1;
+    }
 
   if(event_command_exec_status == CL_COMPLETE)
-    printf("CL_COMPLETE\n");
-  
+    {
+      printf("CL_COMPLETE\n");
+      complete = 1;
+    }
   return;
 }
 
@@ -65,6 +76,7 @@ int main()
   cl_command_queue queue = NULL;
   /* events */
   cl_event an_event = NULL;
+  int i;
   
   err = clGetPlatformIDs(1, platforms, &nplatforms);	
   if (err != CL_SUCCESS && !nplatforms)
@@ -145,6 +157,17 @@ int main()
 
   clFinish(queue);
 
+  i = 0;
+  while (!submit || !running || !complete)
+    {
+      sleep(1);
+      ++i;
+      if (i >= 10)
+        {
+          puts("Callback functions were not called in 10s -> assume FAIL\n");
+          return EXIT_FAILURE;
+        }
+    }
   return EXIT_SUCCESS;
 
  error:
