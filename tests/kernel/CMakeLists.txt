@@ -41,23 +41,32 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 ${OPENCL_CFLAGS}")
 add_executable("kernel" "kernel.c") # test_as_type.cl test_bitselect.cl test_convert_sat_regression.cl test_convert_type_*.cl test_fabs.cl test_fmin_fmax_fma.cl test_hadd.cl test_min_max.cl test_length_distance.cl test_rotate.cl test_short16.cl test_sizeof.cl test_block.cl test_printf.cl
 target_link_libraries("kernel" ${POCLU_LINK_OPTIONS})
 
-add_test("kernel/test_as_type" "kernel" "test_as_type")
+add_test_pocl(NAME "kernel/test_as_type"
+              COMMAND "kernel" "test_as_type")
 
-add_test("kernel/test_convert_type_1" "kernel" "test_convert_type_1")
+add_test_pocl(NAME "kernel/test_convert_type_1"
+              COMMAND "kernel" "test_convert_type_1")
 
-add_test("kernel/test_convert_type_2" "kernel" "test_convert_type_2")
+add_test_pocl(NAME "kernel/test_convert_type_2"
+              COMMAND "kernel" "test_convert_type_2")
 
-add_test("kernel/test_convert_type_4" "kernel" "test_convert_type_4")
+add_test_pocl(NAME "kernel/test_convert_type_4"
+              COMMAND "kernel" "test_convert_type_4")
 
-add_test("kernel/test_convert_type_8" "kernel" "test_convert_type_8")
+add_test_pocl(NAME "kernel/test_convert_type_8"
+              COMMAND "kernel" "test_convert_type_8")
 
-add_test("kernel/test_convert_type_16" "kernel" "test_convert_type_16")
+add_test_pocl(NAME "kernel/test_convert_type_16"
+              COMMAND "kernel" "test_convert_type_16")
 
-add_test("kernel/test_bitselect" "kernel" "test_bitselect")
+add_test_pocl(NAME "kernel/test_bitselect"
+              COMMAND "kernel" "test_bitselect")
 
-add_test("kernel/test_hadd_loopvec" "kernel" "test_hadd")
+add_test_pocl(NAME "kernel/test_hadd_loopvec"
+              COMMAND "kernel" "test_hadd")
 
-add_test("kernel/test_hadd_loops" "kernel" "test_hadd")
+add_test_pocl(NAME "kernel/test_hadd_loops"
+              COMMAND "kernel" "test_hadd")
 
 set_tests_properties( "kernel/test_as_type" "kernel/test_bitselect"
   "kernel/test_convert_type_1" "kernel/test_convert_type_2" "kernel/test_convert_type_4"
@@ -76,23 +85,32 @@ set_tests_properties("kernel/test_hadd_loops"
 set_tests_properties("kernel/test_hadd_loopvec"
   PROPERTIES ENVIRONMENT "POCL_WORK_GROUP_METHOD=loopvec")
 
-add_test("kernel/test_min_max" "kernel" "test_min_max")
+add_test_pocl(NAME "kernel/test_min_max"
+              COMMAND "kernel" "test_min_max")
 
-add_test("kernel/test_length_distance" "kernel" "test_length_distance")
+add_test_pocl(NAME "kernel/test_length_distance"
+              COMMAND "kernel" "test_length_distance")
 
-add_test("kernel/test_fmin_fmax_fma" "kernel" "test_fmin_fmax_fma")
+add_test_pocl(NAME "kernel/test_fmin_fmax_fma"
+              COMMAND "kernel" "test_fmin_fmax_fma")
 
-add_test("kernel/test_convert_sat_regression" "kernel" "test_convert_sat_regression")
+add_test_pocl(NAME "kernel/test_convert_sat_regression"
+              COMMAND "kernel" "test_convert_sat_regression")
 
-add_test("kernel/test_rotate" "kernel" "test_rotate")
+add_test_pocl(NAME "kernel/test_rotate"
+              COMMAND "kernel" "test_rotate")
 
-add_test("kernel/test_fabs" "kernel" "test_fabs")
+add_test_pocl(NAME "kernel/test_fabs"
+              COMMAND "kernel" "test_fabs")
 
-add_test("kernel/test_short16" "kernel" "test_short16")
+add_test_pocl(NAME "kernel/test_short16"
+              COMMAND "kernel" "test_short16")
 
-add_test("kernel/test_frexp_modf" "kernel" "test_frexp_modf")
+add_test_pocl(NAME "kernel/test_frexp_modf"
+              COMMAND "kernel" "test_frexp_modf")
 
-add_test("kernel/test_local_struct_array" "kernel" "test_local_struct_array")
+add_test_pocl(NAME "kernel/test_local_struct_array"
+              COMMAND "kernel" "test_local_struct_array")
 
 set_tests_properties("kernel/test_min_max" "kernel/test_length_distance"
   "kernel/test_fmin_fmax_fma" "kernel/test_local_struct_array"
@@ -112,15 +130,6 @@ if(LLVM_ASSERTS_BUILD)
 endif()
 
 
-if(POWERPC)
-  set_tests_properties(
-  "kernel/test_convert_type_1" "kernel/test_convert_type_2" "kernel/test_convert_type_4"
-  "kernel/test_convert_type_8" "kernel/test_convert_type_16" "kernel/test_as_type"
-  "kernel/test_fmin_fmax_fma" "kernel/test_bitselect" "kernel/test_fabs" "test_hadd"
-    PROPERTIES WILL_FAIL 1)
-endif()
-
-
 ######################################################################
 if(MSVC)
   set_source_files_properties( 
@@ -134,9 +143,11 @@ target_link_libraries("sampler_address_clamp" ${POCLU_LINK_OPTIONS})
 add_executable("image_query_funcs" "image_query_funcs.c") #test_image_query_funcs.cl
 target_link_libraries("image_query_funcs" ${POCLU_LINK_OPTIONS})
 
-add_test("kernel/test_sampler_address_clamp" "sampler_address_clamp")
+add_test_pocl(NAME "kernel/test_sampler_address_clamp"
+              COMMAND "sampler_address_clamp")
 
-add_test("kernel/test_image_query_funcs" "image_query_funcs")
+add_test_pocl(NAME "kernel/test_image_query_funcs"
+              COMMAND "image_query_funcs")
 
 set_tests_properties( "kernel/test_sampler_address_clamp"
   "kernel/test_image_query_funcs"
@@ -152,28 +163,38 @@ set_tests_properties( "kernel/test_sampler_address_clamp"
 add_executable("test_shuffle" "test_shuffle.cc")
 target_link_libraries("test_shuffle" ${POCLU_LINK_OPTIONS})
 
-add_test("kernel/test_shuffle_char" "test_shuffle" "char")
+add_test_pocl(NAME "kernel/test_shuffle_char"
+              COMMAND "test_shuffle" "char")
 
-add_test("kernel/test_shuffle_short" "test_shuffle" "short")
+add_test_pocl(NAME "kernel/test_shuffle_short"
+              COMMAND "test_shuffle" "short")
 
-add_test("kernel/test_shuffle_ushort" "test_shuffle" "ushort")
+add_test_pocl(NAME "kernel/test_shuffle_ushort"
+              COMMAND "test_shuffle" "ushort")
 
 if(NOT CL_DISABLE_HALF)
-  add_test("kernel/test_shuffle_half" "test_shuffle" "half")
+  add_test_pocl(NAME "kernel/test_shuffle_half"
+              COMMAND "test_shuffle" "half")
   set(HALF_TEST "kernel/test_shuffle_half")
 endif()
 
-add_test("kernel/test_shuffle_int" "test_shuffle" "int")
+add_test_pocl(NAME "kernel/test_shuffle_int"
+              COMMAND "test_shuffle" "int")
 
-add_test("kernel/test_shuffle_uint" "test_shuffle" "uint")
+add_test_pocl(NAME "kernel/test_shuffle_uint"
+              COMMAND "test_shuffle" "uint")
 
-add_test("kernel/test_shuffle_float" "test_shuffle" "float")
+add_test_pocl(NAME "kernel/test_shuffle_float"
+              COMMAND "test_shuffle" "float")
 
-add_test("kernel/test_shuffle_long" "test_shuffle" "long")
+add_test_pocl(NAME "kernel/test_shuffle_long"
+              COMMAND "test_shuffle" "long")
 
-add_test("kernel/test_shuffle_ulong" "test_shuffle" "ulong")
+add_test_pocl(NAME "kernel/test_shuffle_ulong"
+              COMMAND "test_shuffle" "ulong")
 
-add_test("kernel/test_shuffle_double" "test_shuffle" "double")
+add_test_pocl(NAME "kernel/test_shuffle_double"
+              COMMAND "test_shuffle" "double")
 
 set_tests_properties("kernel/test_shuffle_char" "kernel/test_shuffle_short"
   "kernel/test_shuffle_ushort"   ${HALF_TEST}
@@ -192,7 +213,8 @@ set_tests_properties("kernel/test_shuffle_char" "kernel/test_shuffle_short"
 ######################################################################
 
 
-add_test("kernel/test_printf" "kernel" "test_printf")
+add_test_pocl(NAME "kernel/test_printf"
+              COMMAND "kernel" "test_printf")
 
 set_tests_properties("kernel/test_printf"
   PROPERTIES
@@ -230,8 +252,10 @@ endif()
 
 ######################################################################
 
-add_test_custom("${CMAKE_CURRENT_BINARY_DIR}/kernel" "kernel/test_sizeof_uint"
-                "test_sizeof_expout.txt" "test_sizeof")
+add_test_pocl(NAME "kernel/test_sizeof_uint"
+              EXPECTED_OUTPUT "test_sizeof_expout.txt"
+              COMMAND "kernel" "test_sizeof")
+
 
 ######################################################################
 
