@@ -340,22 +340,16 @@ void pocl_gen_local_mem_args(llvm::Module *module)
         arguments.push_back(offset);
         argument_types.push_back(i32ty);
 
-        // Cast shared memory pointer to generic address space
-        llvm::AddrSpaceCastInst *generic_ptr =
-          new llvm::AddrSpaceCastInst(shared_ptr,
-                                      byte_array_type->getPointerTo(0));
-        generic_ptr->insertBefore(&*function->begin()->begin());
-
         // Insert GEP to add offset
         llvm::Value *zero = llvm::ConstantInt::getSigned(i32ty, 0);
         llvm::GetElementPtrInst *gep =
-          llvm::GetElementPtrInst::Create(byte_array_type, generic_ptr,
+          llvm::GetElementPtrInst::Create(byte_array_type, shared_ptr,
                                           {zero, offset});
-        gep->insertAfter(generic_ptr);
+        gep->insertBefore(&*function->begin()->begin());
 
         // Cast pointer to correct type
         llvm::Type *final_type =
-          arg_type->getPointerElementType()->getPointerTo(0);
+          arg_type->getPointerElementType()->getPointerTo(3);
         llvm::BitCastInst *cast = new llvm::BitCastInst(gep, final_type);
         cast->insertAfter(gep);
 
