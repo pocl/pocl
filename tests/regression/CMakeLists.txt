@@ -205,7 +205,6 @@ set_tests_properties("regression/setting_a_buffer_argument_to_NULL_causes_a_segf
 #endif()
 
 set_tests_properties("regression/struct_kernel_arguments"
-                     "regression/vector_kernel_arguments"
                       PROPERTIES  WILL_FAIL 1)
 
 ###################################################################
