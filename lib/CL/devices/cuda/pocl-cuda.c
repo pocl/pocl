@@ -130,6 +130,9 @@ pocl_cuda_init(cl_device_id device, const char* parameters)
   cuDeviceGetAttribute((int*)&device->host_unified_memory,
                        CU_DEVICE_ATTRIBUTE_INTEGRATED,
                        data->device);
+  cuDeviceGetAttribute((int*)&device->max_constant_buffer_size,
+                       CU_DEVICE_ATTRIBUTE_TOTAL_CONSTANT_MEMORY,
+                       data->device);
 
   device->preferred_vector_width_char   = 1;
   device->preferred_vector_width_short  = 1;

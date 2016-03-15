@@ -41,6 +41,7 @@
 
 // TODO: Should these be proper passes?
 void pocl_add_kernel_annotations(llvm::Module *module);
+void pocl_fix_constant_address_space(llvm::Module *module);
 void pocl_gen_local_mem_args(llvm::Module *module);
 void pocl_insert_ptx_intrinsics(llvm::Module *module);
 
@@ -72,6 +73,7 @@ int pocl_ptx_gen(const char *bc_filename,
 
   // Apply transforms to prepare for lowering to PTX
   pocl_gen_local_mem_args(module->get());
+  pocl_fix_constant_address_space(module->get());
   pocl_insert_ptx_intrinsics(module->get());
   pocl_add_kernel_annotations(module->get());
   //(*module)->dump();
@@ -156,7 +158,7 @@ void pocl_add_kernel_annotations(llvm::Module *module)
   }
 }
 
-void pocl_update_users_address_space(llvm::Instruction *inst)
+void pocl_update_users_address_space(llvm::Value *inst)
 {
   std::vector<llvm::Value*> users(inst->users().begin(), inst->users().end());
   for (auto U = users.begin(); U != users.end(); U++)
@@ -198,6 +200,88 @@ void pocl_update_users_address_space(llvm::Instruction *inst)
 
       pocl_update_users_address_space(new_gep);
     }
+  }
+}
+
+void pocl_fix_constant_address_space(llvm::Module *module)
+{
+  // TODO: Deal with program scope constant variables
+
+  // Loop over functions
+  std::vector<llvm::Function*> functions;
+  for (auto F = module->begin(); F != module->end(); F++)
+  {
+    functions.push_back(&*F);
+  }
+
+  for (auto F = functions.begin(); F != functions.end(); F++)
+  {
+    // Argument info for creating new function
+    std::vector<llvm::Argument*> arguments;
+    std::vector<llvm::Type*> argument_types;
+
+    // Loop over arguments
+    bool has_constant_args = false;
+    for (auto arg = (*F)->arg_begin(); arg != (*F)->arg_end(); arg++)
+    {
+      // Check for constant memory pointer
+      llvm::Type *arg_type = arg->getType();
+      if (arg_type->isPointerTy() &&
+          arg_type->getPointerAddressSpace() == POCL_ADDRESS_SPACE_CONSTANT)
+      {
+        has_constant_args = true;
+
+        // Create new argument in global address space
+        llvm::Type *elem_type = arg_type->getPointerElementType();
+        llvm::Type *new_arg_type = elem_type->getPointerTo(1);
+        llvm::Argument *new_arg = new llvm::Argument(new_arg_type);
+        arguments.push_back(new_arg);
+        argument_types.push_back(new_arg_type);
+
+        new_arg->takeName(&*arg);
+        arg->replaceAllUsesWith(new_arg);
+
+        pocl_update_users_address_space(new_arg);
+      }
+      else
+      {
+        // No change to other arguments
+        arguments.push_back(&*arg);
+        argument_types.push_back(arg_type);
+      }
+    }
+
+    if (!has_constant_args)
+      continue;
+
+    // Create new function with updated arguments
+    llvm::FunctionType *new_func_type =
+      llvm::FunctionType::get((*F)->getReturnType(), argument_types, false);
+    llvm::Function *new_func =
+      llvm::Function::Create(new_func_type, (*F)->getLinkage(),
+                             (*F)->getName(), module);
+    new_func->takeName(&*(*F));
+
+    // Take function body from old function
+    new_func->getBasicBlockList().splice(new_func->begin(),
+                                         (*F)->getBasicBlockList());
+
+    // TODO: Copy attributes from old function
+
+    // Update function body with new arguments
+    std::vector<llvm::Argument*>::iterator old_arg;
+    llvm::Function::arg_iterator new_arg;
+    for (old_arg = arguments.begin(), new_arg = new_func->arg_begin();
+         new_arg != new_func->arg_end();
+         new_arg++, old_arg++)
+    {
+      new_arg->takeName(*old_arg);
+      (*old_arg)->replaceAllUsesWith(&*new_arg);
+    }
+
+    // Remove old function
+    (*F)->replaceAllUsesWith(new_func);
+    (*F)->eraseFromParent();
   }
 }
 
