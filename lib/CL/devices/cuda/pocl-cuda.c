@@ -309,32 +309,33 @@ pocl_cuda_run(void *dptr, _cl_command_node* cmd)
   CUresult result;
 
   cl_device_id device = cmd->device;
+  cl_kernel kernel = cmd->command.run.kernel;
   CUfunction function = cmd->command.run.kernel->data;
 
   // Prepare kernel arguments
   unsigned sharedMemBytes = 0;
-  cl_uint nargs = cmd->command.run.kernel->num_args;
-  void *params[nargs];
-  unsigned sharedMemOffsets[nargs];
-  for (unsigned i = 0; i < nargs; i++)
+  void *params[kernel->num_args + kernel->num_locals];
+  unsigned sharedMemOffsets[kernel->num_args + kernel->num_locals];
+  for (unsigned i = 0; i < kernel->num_args; i++)
   {
-    pocl_argument_type type = cmd->command.run.kernel->arg_info[i].type;
+    pocl_argument_type type = kernel->arg_info[i].type;
     switch (type)
     {
     case POCL_ARG_TYPE_NONE:
-      params[i] = cmd->command.run.kernel->dyn_arguments[i].value;
+      params[i] = kernel->dyn_arguments[i].value;
       break;
     case POCL_ARG_TYPE_POINTER:
     {
-      if (cmd->command.run.kernel->arg_info[i].is_local)
+      if (kernel->arg_info[i].is_local)
       {
         sharedMemOffsets[i] = sharedMemBytes;
-        sharedMemBytes += cmd->command.run.kernel->dyn_arguments[i].size;
         params[i] = sharedMemOffsets+i;
+
+        sharedMemBytes += kernel->dyn_arguments[i].size;
       }
       else
       {
-        cl_mem mem = *(void**)cmd->command.run.kernel->dyn_arguments[i].value;
+        cl_mem mem = *(void**)kernel->dyn_arguments[i].value;
         params[i] = &mem->device_ptrs[device->dev_id].mem_ptr;
       }
       break;
@@ -346,7 +347,14 @@ pocl_cuda_run(void *dptr, _cl_command_node* cmd)
     }
   }
 
-  // TODO: Deal with static local memory allocations
+  // Deal with automatic local allocations
+  // TODO: Would be better to remove arguments and make these static GEPs
+  for (int i = 0; i < kernel->num_locals; ++i)
+  {
+    sharedMemOffsets[kernel->num_args + i] = sharedMemBytes;
+    sharedMemBytes += kernel->dyn_arguments[kernel->num_args + i].size;
+    params[kernel->num_args+i] = sharedMemOffsets + kernel->num_args + i;
+  }
 
   // Launch kernel
   struct pocl_context pc = cmd->command.run.pc;
