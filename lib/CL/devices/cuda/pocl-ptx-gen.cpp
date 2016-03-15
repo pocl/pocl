@@ -72,8 +72,8 @@ int pocl_ptx_gen(const char *bc_filename,
   llvm::InitializeAllAsmPrinters();
 
   // Apply transforms to prepare for lowering to PTX
-  pocl_gen_local_mem_args(module->get());
   pocl_fix_constant_address_space(module->get());
+  pocl_gen_local_mem_args(module->get());
   pocl_insert_ptx_intrinsics(module->get());
   pocl_add_kernel_annotations(module->get());
   //(*module)->dump();
@@ -205,7 +205,33 @@ void pocl_update_users_address_space(llvm::Value *inst)
 
 void pocl_fix_constant_address_space(llvm::Module *module)
 {
-  // TODO: Deal with program scope constant variables
+  // Loop over global variables
+  std::vector<llvm::GlobalVariable*> globals;
+  for (auto G = module->global_begin(); G != module->global_end(); G++)
+  {
+    globals.push_back(&*G);
+  }
+
+  for (auto G = globals.begin(); G != globals.end(); G++)
+  {
+    llvm::Type *type = (*G)->getType();
+    if (type->getPointerAddressSpace() != POCL_ADDRESS_SPACE_CONSTANT)
+      continue;
+
+    // Create new global variable in correct address space
+    llvm::GlobalVariable *new_global =
+      new llvm::GlobalVariable(*module,
+                               type->getPointerElementType(), true,
+                               (*G)->getLinkage(),
+                               (*G)->getInitializer(), "", *G,
+                               (*G)->getThreadLocalMode(),
+                               4, (*G)->isExternallyInitialized());
+    new_global->takeName(*G);
+    (*G)->replaceAllUsesWith(new_global);
+    (*G)->eraseFromParent();
+
+    pocl_update_users_address_space(new_global);
+  }
 
   // Loop over functions
   std::vector<llvm::Function*> functions;
