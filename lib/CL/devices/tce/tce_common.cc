@@ -389,14 +389,18 @@ void
 pocl_tce_compile_submitted_kernels(_cl_command_node *cmd)
 {
 
+  if (cmd->type != CL_COMMAND_NDRANGE_KERNEL)
+    return;
+
   void* data = cmd->device->data;
   TCEDevice *d = (TCEDevice*)data;
+
   int error;
   char bytecode[POCL_FILENAME_LENGTH];
-  uint32_t kernelAddr;
-  unsigned i;
 
-  assert (data != NULL);
+  assert(d != NULL);
+  assert(cmd->command.run.kernel);
+  assert(cmd->command.run.tmp_dir);
 
   if (d->isNewKernel(&(cmd->command.run))) {
     std::string assemblyFileName(cmd->command.run.tmp_dir);
@@ -426,12 +430,15 @@ pocl_tce_compile_submitted_kernels(_cl_command_node *cmd)
 void
 pocl_tce_run(void *data, _cl_command_node* cmd)
 {
+  assert(cmd->type == CL_COMMAND_NDRANGE_KERNEL);
 
   TCEDevice *d = (TCEDevice*)data;
-  int error;
-  char bytecode[POCL_FILENAME_LENGTH];
   uint32_t kernelAddr;
   unsigned i;
+
+  assert(d != NULL);
+  assert(cmd->command.run.kernel);
+  assert(cmd->command.run.tmp_dir);
 
   if (d->isNewKernel(&(cmd->command.run))) {
     std::string assemblyFileName(cmd->command.run.tmp_dir);
