@@ -156,6 +156,51 @@ void pocl_add_kernel_annotations(llvm::Module *module)
   }
 }
 
+void pocl_update_users_address_space(llvm::Instruction *inst)
+{
+  std::vector<llvm::Value*> users(inst->users().begin(), inst->users().end());
+  for (auto U = users.begin(); U != users.end(); U++)
+  {
+    if (auto bitcast = llvm::dyn_cast<llvm::BitCastInst>(*U))
+    {
+      llvm::Type *src_type = bitcast->getSrcTy();
+      llvm::Type *dst_type = bitcast->getDestTy();
+      if (!src_type->isPointerTy() || !dst_type->isPointerTy())
+        continue;
+
+      // Skip if address space is already the same
+      unsigned srcAddrSpace = src_type->getPointerAddressSpace();
+      unsigned dstAddrSpace = dst_type->getPointerAddressSpace();
+      if (srcAddrSpace == dstAddrSpace)
+        continue;
+
+      // Create and insert new bitcast instruction
+      llvm::Type *new_dst_type =
+        dst_type->getPointerElementType()->getPointerTo(srcAddrSpace);
+      llvm::BitCastInst *new_bitcast =
+        new llvm::BitCastInst(inst, new_dst_type);
+      new_bitcast->insertAfter(bitcast);
+      bitcast->replaceAllUsesWith(new_bitcast);
+      bitcast->eraseFromParent();
+
+      pocl_update_users_address_space(new_bitcast);
+    }
+    else if (auto gep = llvm::dyn_cast<llvm::GetElementPtrInst>(*U))
+    {
+      // Create and insert new GEP instruction
+      auto ops = gep->operands();
+      std::vector<llvm::Value*> indices(ops.begin()+1, ops.end());
+      llvm::GetElementPtrInst *new_gep =
+        llvm::GetElementPtrInst::Create(NULL, inst, indices);
+      new_gep->insertAfter(gep);
+      gep->replaceAllUsesWith(new_gep);
+      gep->eraseFromParent();
+
+      pocl_update_users_address_space(new_gep);
+    }
+  }
+}
+
 void pocl_gen_local_mem_args(llvm::Module *module)
 {
   // TODO: Deal with non-kernel functions that take local memory arguments
@@ -233,27 +278,7 @@ void pocl_gen_local_mem_args(llvm::Module *module)
         cast->takeName(&*arg);
         arg->replaceAllUsesWith(cast);
 
-        // Update users of this new cast to use generic address space
-        auto cast_users = cast->users();
-        std::vector<llvm::Value*> users(cast_users.begin(), cast_users.end());
-        for (auto U = users.begin(); U != users.end(); U++)
-        {
-          // TODO: Do we need to do this for anything other than GEPs?
-
-          llvm::GetElementPtrInst *gep_user =
-            llvm::dyn_cast<llvm::GetElementPtrInst>(*U);
-          if (!gep_user)
-            continue;
-
-          // Create and insert new GEP instruction
-          auto ops = gep_user->operands();
-          std::vector<llvm::Value*> indices(ops.begin()+1, ops.end());
-          llvm::GetElementPtrInst *new_gep_user =
-            llvm::GetElementPtrInst::Create(NULL, cast, indices);
-          new_gep_user->insertAfter(gep_user);
-          gep_user->replaceAllUsesWith(new_gep_user);
-          gep_user->eraseFromParent();
-        }
+        pocl_update_users_address_space(cast);
       }
       else
       {
