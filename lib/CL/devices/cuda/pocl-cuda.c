@@ -78,7 +78,7 @@ pocl_cuda_init_device_ops(struct pocl_device_ops *ops)
   //ops->read_rect = pocl_basic_read_rect;
   ops->write = pocl_cuda_write;
   //ops->write_rect = pocl_basic_write_rect;
-  //ops->copy = pocl_cuda_copy;
+  ops->copy = pocl_cuda_copy;
   //ops->copy_rect = pocl_basic_copy_rect;
   //ops->get_timer_value = pocl_cuda_get_timer_value;
 }
@@ -268,6 +268,18 @@ pocl_cuda_write(void *data, const void *host_ptr, void *device_ptr,
                 size_t offset, size_t cb)
 {
   cuMemcpyHtoD((CUdeviceptr)(device_ptr+offset), host_ptr, cb);
+}
+
+void
+pocl_cuda_copy(void *data, const void *src_ptr, size_t src_offset,
+	       void *__restrict__ dst_ptr, size_t dst_offset, size_t cb)
+{
+  if (src_ptr == dst_ptr)
+    return;
+
+  cuMemcpyDtoD((CUdeviceptr)(dst_ptr+dst_offset),
+               (CUdeviceptr)(src_ptr+src_offset),
+	       cb);
 }
 
 void
