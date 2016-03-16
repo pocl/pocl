@@ -235,6 +235,15 @@ if (OCS_AVAILABLE)
     message(STATUS "NOT using SPIR")
   endif()
 
+  if(NOT DEFINED HOST_DEVICE_BUILD_HASH)
+    set(HOST_DEVICE_BUILD_HASH "${LLC_TRIPLE}-${LLC_HOST_CPU}")
+  endif()
+
+else()
+  if(NOT DEFINED HOST_DEVICE_BUILD_HASH)
+    message(FATAL_ERROR "For compiler-less builds, you must define HOST_DEVICE_BUILD_HASH")
+  endif()
+
 endif()
 
 ######################################################################################
