@@ -94,6 +94,7 @@ static const char cl_parameters_not_yet_supported_by_clang[] =
     snprintf(program->main_build_log + l, (640 - l), __VA_ARGS__); \
   }
 
+#ifdef OCS_AVAILABLE
 cl_int
 program_compile_dynamic_wg_binaries(cl_program program)
 {
@@ -128,13 +129,9 @@ program_compile_dynamic_wg_binaries(cl_program program)
                                                program->default_kernels[i],
                                                0,0,0);
 
-#ifdef OCS_AVAILABLE
           errcode = pocl_llvm_generate_workgroup_function(device,
                                                           program->default_kernels[i],
                                                           0,0,0);
-#else
-          errcode = 1;
-#endif
           if (errcode != CL_SUCCESS)
             {
               POCL_MSG_ERR("Failed to generate workgroup function for "
@@ -153,6 +150,8 @@ RET:
   POCL_UNLOCK_OBJ(program);
   return errcode;
 }
+
+#endif
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clBuildProgram)(cl_program program,
