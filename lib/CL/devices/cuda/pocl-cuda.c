@@ -156,10 +156,6 @@ pocl_cuda_init(cl_device_id device, const char* parameters)
   device->double_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO
       | CL_FP_ROUND_TO_INF | CL_FP_FMA | CL_FP_INF_NAN | CL_FP_DENORM;
 
-  // TODO: Actual maximum size
-  device->max_mem_alloc_size = 1024*1024*1024;
-  device->global_mem_size    = 1024*1024*1024;
-
   device->local_mem_type = CL_LOCAL;
   device->host_unified_memory = 0;
 
@@ -179,6 +175,12 @@ pocl_cuda_init(cl_device_id device, const char* parameters)
   // Create context
   result = cuCtxCreate(&data->context, CU_CTX_MAP_HOST, data->device);
   CUDA_CHECK(result, "cuCtxCreate");
+
+  // Get global memory size
+  size_t memfree, memtotal;
+  result = cuMemGetInfo(&memfree, &memtotal);
+  device->max_mem_alloc_size = max(memtotal/4, 128*1024*1024);
+  device->global_mem_size    = memtotal;
 
   device->data = data;
 }
