@@ -299,11 +299,16 @@ main(int argc, char **argv)
           CHECK_CL_ERROR(clGetDeviceInfo(device_ids[i], CL_DEVICE_VENDOR,
                                          DEVICE_INFO_MAX_LENGTH, str, NULL));
 
-          printf("%i: %s --- ", i, str);
+          printf("%i:\n  Vendor:   %s\n", i, str);
 
           CHECK_CL_ERROR(clGetDeviceInfo(device_ids[i], CL_DEVICE_NAME,
                                          DEVICE_INFO_MAX_LENGTH, str, NULL));
-          printf("%s\n", str);
+          printf("    Name:   %s\n", str);
+
+          // to print device->poclbin_hash_string
+          CHECK_CL_ERROR(clGetDeviceInfo(device_ids[i], CL_DEVICE_VERSION,
+                                         DEVICE_INFO_MAX_LENGTH, str, NULL));
+          printf(" Version:   %s\n", str);
         }
 
       clReleaseContext(context);
