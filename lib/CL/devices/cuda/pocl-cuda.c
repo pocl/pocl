@@ -81,6 +81,8 @@ pocl_cuda_init_device_ops(struct pocl_device_ops *ops)
   ops->copy = pocl_cuda_copy;
   //ops->copy_rect = pocl_basic_copy_rect;
   //ops->get_timer_value = pocl_cuda_get_timer_value;
+  ops->map_mem = pocl_cuda_map_mem;
+  ops->unmap_mem = pocl_cuda_unmap_mem;
 }
 
 void
@@ -175,7 +177,7 @@ pocl_cuda_init(cl_device_id device, const char* parameters)
   POCL_MSG_PRINT_INFO("[CUDA] GPU architecture = %s\n", gpu_arch);
 
   // Create context
-  result = cuCtxCreate(&data->context, 0, data->device);
+  result = cuCtxCreate(&data->context, CU_CTX_MAP_HOST, data->device);
   CUDA_CHECK(result, "cuCtxCreate");
 
   device->data = data;
@@ -244,8 +246,11 @@ cl_int pocl_cuda_alloc_mem_obj(cl_device_id device, cl_mem mem_obj)
     }
     else if (flags & CL_MEM_ALLOC_HOST_PTR)
     {
-      result = cuMemHostAlloc(&b, mem_obj->size, CU_MEMHOSTREGISTER_DEVICEMAP);
+      void *ptr;
+      result = cuMemHostAlloc(&ptr, mem_obj->size, CU_MEMHOSTREGISTER_DEVICEMAP);
       CUDA_CHECK(result, "cuMemHostAlloc");
+      result = cuMemHostGetDevicePointer((CUdeviceptr*)&b, ptr, 0);
+      CUDA_CHECK(result, "cuMemHostGetDevicePointer");
     }
     else
     {
@@ -295,6 +300,31 @@ pocl_cuda_copy(void *data, const void *src_ptr, size_t src_offset,
   cuMemcpyDtoD((CUdeviceptr)(dst_ptr+dst_offset),
                (CUdeviceptr)(src_ptr+src_offset),
       	       cb);
+}
+
+void *
+pocl_cuda_map_mem(void *data, void *buf_ptr,
+                  size_t offset, size_t size,
+                  void *host_ptr)
+{
+  if (host_ptr != NULL) return host_ptr;
+
+  void *ptr = malloc(size);
+  cuMemcpyDtoH(ptr, (CUdeviceptr)(buf_ptr+offset), size);
+  return ptr;
+}
+
+void* pocl_cuda_unmap_mem(void *data, void *host_ptr,
+                          void *device_start_ptr,
+                          size_t size)
+{
+  if (host_ptr)
+  {
+    // TODO: offset?
+    cuMemcpyHtoD((CUdeviceptr)(device_start_ptr), host_ptr, size);
+    free(host_ptr);
+  }
+  return NULL;
 }
 
 void
