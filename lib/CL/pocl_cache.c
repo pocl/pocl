@@ -27,10 +27,14 @@
 #include <unistd.h>
 
 #include "config.h"
+
 #ifdef POCL_BUILT_WITH_CMAKE
 #include "pocl_build_timestamp.h"
 #endif
+
+#ifdef OCS_AVAILABLE
 #include "kernellib_hash.h"
+#endif
 
 #include "pocl_hash.h"
 #include "pocl_cache.h"
