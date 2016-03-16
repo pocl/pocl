@@ -36,8 +36,11 @@
 
 #include "pocl_cache.h"
 #include "pocl_timing.h"
-#include "pocl_llvm.h"
 #include "pocl_file_util.h"
+
+#ifdef OCS_AVAILABLE
+#include "pocl_llvm.h"
+#endif
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
@@ -929,11 +932,16 @@ void check_compiler_cache (_cl_command_node *cmd)
   cl_device_id dev = cmd->device;
   int dev_i = pocl_cl_device_to_index(p, dev);
 
-  if (p->binaries[dev_i])
+  if (p->binaries[dev_i] && !p->pocl_binaries[dev_i])
     {
+#ifdef OCS_AVAILABLE
       module_fn = (char *)llvm_codegen (cmd->command.run.tmp_dir,
                                         cmd->command.run.kernel,
                                         cmd->device);
+#else
+      POCL_ABORT("pocl built without online compiler support "
+                 "cannot compile LLVM IRs to machine code\n");
+#endif
     }
   else
     {

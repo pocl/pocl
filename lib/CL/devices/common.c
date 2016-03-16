@@ -43,8 +43,11 @@
 #include "devices.h"
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
-#include "pocl_llvm.h"
 #include "pocl_debug.h"
+
+#ifdef OCS_AVAILABLE
+#include "pocl_llvm.h"
+#endif
 
 #include "_kernel_constants.h"
 
@@ -59,6 +62,7 @@
  * @param tmpdir The directory of the work-group function bitcode.
  * @param return the generated binary filename.
  */
+#ifdef OCS_AVAILABLE
 const char*
 llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
 
@@ -90,22 +94,14 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
                         "%s%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
       assert (error >= 0);
       
-#ifdef OCS_AVAILABLE
       error = pocl_llvm_codegen( kernel, device, bytecode, objfile);
-#else
-      error = 1;      
-#endif
       assert (error == 0);
       // clang is used as the linker driver in LINK_CMD
       error = snprintf (command, COMMAND_LENGTH,
-#ifdef OCS_AVAILABLE
 #ifndef POCL_ANDROID
             LINK_CMD " " HOST_CLANG_FLAGS " " HOST_LD_FLAGS " -o %s %s",
 #else
             POCL_ANDROID_PREFIX"/bin/ld " HOST_LD_FLAGS " -o %s %s ",
-#endif
-#else
-            "",
 #endif
             module, objfile);
       assert (error >= 0);
@@ -125,6 +121,8 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
 
   return module;
 }
+#endif
+
 
 /**
  * Populates the device specific image data structure used by kernel
