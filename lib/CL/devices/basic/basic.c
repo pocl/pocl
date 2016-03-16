@@ -251,12 +251,7 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->native_vector_width_double = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE;
   dev->native_vector_width_half = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF;
   dev->max_clock_frequency = 0;
-#ifdef OCS_AVAILABLE
   dev->address_bits = POCL_DEVICE_ADDRESS_BITS;
-#else
-  /* If there is no online compiler support, this should not be used */
-  dev->address_bits = 0; 
-#endif
   dev->image_support = CL_TRUE;
   /* Use the minimum values until we get a more sensible
      upper limit from somewhere. */
