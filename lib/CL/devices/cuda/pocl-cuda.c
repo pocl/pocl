@@ -149,6 +149,11 @@ pocl_cuda_init(cl_device_id device, const char* parameters)
   device->native_vector_width_double    = 1;
   device->native_vector_width_half      = 0;
 
+  device->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO
+      | CL_FP_ROUND_TO_INF | CL_FP_FMA | CL_FP_INF_NAN | CL_FP_DENORM;
+  device->double_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO
+      | CL_FP_ROUND_TO_INF | CL_FP_FMA | CL_FP_INF_NAN | CL_FP_DENORM;
+
   // TODO: Actual maximum size
   device->max_mem_alloc_size = 1024*1024*1024;
   device->global_mem_size    = 1024*1024*1024;
