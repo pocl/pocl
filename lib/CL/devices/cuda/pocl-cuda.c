@@ -257,7 +257,14 @@ cl_int pocl_cuda_alloc_mem_obj(cl_device_id device, cl_mem mem_obj)
     else
     {
       result = cuMemAlloc((CUdeviceptr*)&b, mem_obj->size);
-      CUDA_CHECK(result, "cuMemAlloc");
+      if (result != CUDA_SUCCESS)
+      {
+        const char *err;
+        cuGetErrorName(result, &err);
+        POCL_MSG_PRINT2(__FUNCTION__, __LINE__,
+                        "-> Failed to allocate memory: %s\n", err);
+        return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+      }
     }
 
     mem_obj->device_ptrs[device->global_mem_id].mem_ptr = b;
