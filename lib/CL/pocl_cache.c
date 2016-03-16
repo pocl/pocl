@@ -430,8 +430,11 @@ build_program_compute_hash(cl_program program,
                      strlen(POCL_KERNELLIB_SHA1));
     /*devices may include their own information to hash */
     if (device->ops->build_hash)
-        device->ops->build_hash(device->data, &hash_ctx);
-
+      {
+        char *dev_hash = device->ops->build_hash(device);
+        pocl_SHA1_Update(&hash_ctx, (const uint8_t *)dev_hash, strlen(dev_hash));
+        free(dev_hash);
+      }
 
     uint8_t digest[SHA1_DIGEST_SIZE];
     pocl_SHA1_Final(&hash_ctx, digest);

@@ -191,16 +191,17 @@ pocl_binary_get_device_id(cl_device_id device)
 {
   //FNV-1A with vendor_id, llvm_target_triplet and llvm_cpu
   uint64_t result = FNV_OFFSET;
-  const char *long_name = device->long_name;
+  char *dev_hash = device->ops->build_hash(device);
 
   result *= FNV_PRIME;
   result ^= device->vendor_id;
-  int i, length = strlen(long_name);
+  int i, length = strlen(dev_hash);
   for (i=0; i<length; i++)
     {
       result *= FNV_PRIME;
-      result ^= long_name[i];
+      result ^= dev_hash[i];
     }
+  free(dev_hash);
 
   return result;
 }

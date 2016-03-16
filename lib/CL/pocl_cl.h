@@ -282,7 +282,7 @@ void (*memfill) (void *ptr,
      owns the returned string. */
   char* (*init_build) (void *data);
 
-  void (*build_hash) (void *data, SHA1_CTX *build_hash);
+  char* (*build_hash) (cl_device_id device);
 
     /* return supported image formats */
   cl_int (*get_supported_image_formats) (cl_mem_flags flags,

@@ -216,6 +216,15 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->run_native = pocl_basic_run_native;
   ops->get_timer_value = pocl_basic_get_timer_value;
   ops->get_supported_image_formats = pocl_basic_get_supported_image_formats;
+  ops->build_hash = pocl_basic_build_hash;
+}
+
+char *
+pocl_basic_build_hash (cl_device_id device)
+{
+  char* res = calloc(1000, sizeof(char));
+  snprintf(res, 1000, "basic-%s", HOST_DEVICE_BUILD_HASH);
+  return res;
 }
 
 void
@@ -334,18 +343,20 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
 
   dev->extensions = HOST_DEVICE_EXTENSIONS;
 
-#ifdef OCS_AVAILABLE
   dev->llvm_target_triplet = OCL_KERNEL_TARGET;
-#endif
+
 #ifdef OCS_AVAILABLE
+
 #ifdef POCL_BUILT_WITH_CMAKE
   dev->llvm_cpu = get_cpu_name();
 #else
   dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
 #endif
+
 #else
   dev->llvm_cpu = "";
 #endif
+
   dev->has_64bit_long = 1;
   dev->autolocals_to_args = 1;
 }

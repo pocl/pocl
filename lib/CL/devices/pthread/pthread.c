@@ -131,6 +131,15 @@ pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
   ops->copy_rect = pocl_basic_copy_rect;
   ops->run = pocl_pthread_run;
   ops->compile_submitted_kernels = pocl_basic_compile_submitted_kernels;
+  ops->build_hash = pocl_pthread_build_hash;
+}
+
+char *
+pocl_pthread_build_hash (cl_device_id device)
+{
+  char* res = calloc(1000, sizeof(char));
+  snprintf(res, 1000, "pthread-%s", HOST_DEVICE_BUILD_HASH);
+  return res;
 }
 
 unsigned int

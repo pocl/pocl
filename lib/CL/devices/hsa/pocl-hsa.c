@@ -181,6 +181,7 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->copy = pocl_hsa_copy;
   ops->copy_rect = pocl_basic_copy_rect;
   ops->get_timer_value = pocl_hsa_get_timer_value;
+  ops->build_hash = pocl_hsa_build_hash;
 }
 
 #define MAX_HSA_AGENTS 16
@@ -311,6 +312,14 @@ supported_hsa_devices[MAX_HSA_AGENTS] =
     .native_vector_width_double = 16
   }
 };
+
+char *
+pocl_hsa_build_hash (cl_device_id device)
+{
+  char* res = calloc(1000, sizeof(char));
+  strncpy("HSA-%s-%s", device->llvm_target_triplet, device->long_name);
+  return res;
+}
 
 // Detect the HSA device and populate its properties to the device
 // struct.
