@@ -54,47 +54,48 @@ endforeach()
 #######################################################################
 
 
-add_test("runtime/clGetDeviceInfo" "test_clGetDeviceInfo")
+add_test_pocl(NAME "runtime/clGetDeviceInfo" COMMAND "test_clGetDeviceInfo")
 
-add_test("runtime/clEnqueueNativeKernel" "test_clEnqueueNativeKernel")
+add_test_pocl(NAME "runtime/clEnqueueNativeKernel" COMMAND "test_clEnqueueNativeKernel")
 
-add_test("runtime/clGetEventInfo" "test_clGetEventInfo")
+add_test_pocl(NAME "runtime/clGetEventInfo" COMMAND "test_clGetEventInfo")
 
-add_test("runtime/clCreateProgramWithBinary" "test_clCreateProgramWithBinary")
+add_test_pocl(NAME "runtime/clCreateProgramWithBinary" COMMAND "test_clCreateProgramWithBinary")
 
-add_test(NAME "runtime/clBuildProgram"
-         WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-         COMMAND "${CMAKE_CURRENT_BINARY_DIR}/test_clBuildProgram")
+add_test_pocl(NAME "runtime/clBuildProgram"
+              WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+              COMMAND "test_clBuildProgram")
 
-add_test(NAME "runtime/test_kernel_cache_includes"
-         WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-         COMMAND "${CMAKE_CURRENT_BINARY_DIR}/test_kernel_cache_includes")
+add_test_pocl(NAME "runtime/test_kernel_cache_includes"
+              WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+              COMMAND "test_kernel_cache_includes")
 
-add_test("runtime/clFinish" "test_clFinish")
+add_test_pocl(NAME "runtime/clFinish" COMMAND "test_clFinish")
 
-add_test("runtime/test_event_cycle" "test_event_cycle")
+add_test_pocl(NAME "runtime/test_event_cycle" COMMAND "test_event_cycle")
 
 # currently fails, see commit 13e5bc89a6b7675efbc
 #add_test("runtime/test_link_error" "test_link_error")
 
-add_test("runtime/test_read-copy-write-buffer" "test_read-copy-write-buffer")
+add_test_pocl(NAME "runtime/test_read-copy-write-buffer" COMMAND "test_read-copy-write-buffer")
 
-add_test("runtime/clCreateKernel" "test_clCreateKernel")
+add_test_pocl(NAME "runtime/clCreateKernel" COMMAND "test_clCreateKernel")
 
-add_test("runtime/clGetKernelArgInfo" "test_clGetKernelArgInfo")
+add_test_pocl(NAME "runtime/clGetKernelArgInfo" COMMAND "test_clGetKernelArgInfo")
 
-add_test_custom("${CMAKE_CURRENT_BINARY_DIR}/test_clSetEventCallback"
-                "runtime/clSetEventCallback" "test_clSetEventCallback_expout.txt" )
+add_test_pocl(NAME "runtime/clSetEventCallback"
+              COMMAND "test_clSetEventCallback"
+              EXPECTED_OUTPUT "test_clSetEventCallback_expout.txt" )
 
-add_test("runtime/clGetSupportedImageFormats" "test_clGetSupportedImageFormats")
+add_test_pocl(NAME "runtime/clGetSupportedImageFormats" COMMAND "test_clGetSupportedImageFormats")
 
-add_test("runtime/clCreateKernelsInProgram" "test_clCreateKernelsInProgram")
+add_test_pocl(NAME "runtime/clCreateKernelsInProgram" COMMAND "test_clCreateKernelsInProgram")
 
-add_test("runtime/clCreateSubDevices"  "test_clCreateSubDevices")
+add_test_pocl(NAME "runtime/clCreateSubDevices" COMMAND  "test_clCreateSubDevices")
 
-add_test("runtime/test_event_free"  "test_event_free")
+add_test_pocl(NAME "runtime/test_event_free" COMMAND  "test_event_free")
 
-add_test("runtime/test_enqueue_kernel_from_binary" "test_enqueue_kernel_from_binary")
+add_test_pocl(NAME "runtime/test_enqueue_kernel_from_binary" COMMAND "test_enqueue_kernel_from_binary")
 
 set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/clGetEventInfo" "runtime/clCreateProgramWithBinary"
