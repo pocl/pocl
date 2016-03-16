@@ -242,17 +242,15 @@ cl_int pocl_cuda_alloc_mem_obj(cl_device_id device, cl_mem mem_obj)
                                          mem_obj->mem_host_ptr, 0);
       CUDA_CHECK(result, "cuMemHostGetDevicePointer");
     }
+    else if (flags & CL_MEM_ALLOC_HOST_PTR)
+    {
+      result = cuMemHostAlloc(&b, mem_obj->size, CU_MEMHOSTREGISTER_DEVICEMAP);
+      CUDA_CHECK(result, "cuMemHostAlloc");
+    }
     else
     {
       result = cuMemAlloc((CUdeviceptr*)&b, mem_obj->size);
-      if (result != CUDA_SUCCESS)
-      {
-        const char *err;
-        cuGetErrorName(result, &err);
-        POCL_MSG_PRINT2(__FUNCTION__, __LINE__,
-                        "-> Failed to allocate memory: %s\n", err);
-        return CL_MEM_OBJECT_ALLOCATION_FAILURE;
-      }
+      CUDA_CHECK(result, "cuMemAlloc");
     }
 
     mem_obj->device_ptrs[device->global_mem_id].mem_ptr = b;
