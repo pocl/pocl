@@ -294,15 +294,20 @@ CL_API_SUFFIX__VERSION_1_0
 #ifdef OCS_AVAILABLE
           error = pocl_llvm_build_program(program, device_i,
                                           user_options, program_bc_path);
-#else
-          error=1;
-#endif
           POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
                              "pocl_llvm_build_program() failed\n");
+#else
+          strcpy(program->main_build_log,
+                 "Cannot build a program from sources with pocl "
+                 "that does not have online compiler support\n");
+          POCL_GOTO_ERROR_ON(1, CL_BUILD_PROGRAM_FAILURE,
+                             "%s", program->main_build_log);
+#endif
         }
       /* clCreateProgramWithBinaries */
       else if (program->binaries[device_i])
         {
+#ifdef OCS_AVAILABLE
           error = pocl_cache_create_program_cachedir(program, device_i,
                                                      NULL, 0, program_bc_path);
           POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
@@ -313,6 +318,18 @@ CL_API_SUFFIX__VERSION_1_0
                           (uint64_t)program->binary_sizes[device_i], 0, 0);
           POCL_GOTO_ERROR_ON(errcode, CL_BUILD_PROGRAM_FAILURE,
                              "Failed to write binaries to program.bc\n");
+#else
+          if (!program->pocl_binaries[device_i])
+            {
+              strcpy(program->main_build_log,
+                     "Cannot build program from LLVM IR binaries with "
+                     "pocl that does not have online compiler support\n");
+              POCL_GOTO_ERROR_ON(1, CL_BUILD_PROGRAM_FAILURE,
+                                 "%s", program->main_build_log);
+            }
+          else
+            continue;
+#endif
         }
       else if (program->pocl_binaries[device_i])
         /* TODO pocl_binaries[i] might contain program.bc */
@@ -323,6 +340,7 @@ CL_API_SUFFIX__VERSION_1_0
                            "binaries for device %s - can't build the program\n",
                            device->short_name);
 
+#ifdef OCS_AVAILABLE
       /* Read binaries from program.bc to memory */
       if (program->binaries[device_i] == NULL)
         {
@@ -343,11 +361,8 @@ CL_API_SUFFIX__VERSION_1_0
           if (!write_cache_lock)
             write_cache_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
           assert(write_cache_lock);
-#ifdef OCS_AVAILABLE
           pocl_update_program_llvm_irs(program, device_i, device);
-#endif
         }
-
       /* Maintain a 'last_accessed' file in every program's
        * cache directory. Will be useful for cache pruning script
        * that flushes old directories based on LRU */
@@ -358,6 +373,7 @@ CL_API_SUFFIX__VERSION_1_0
           pocl_cache_release_lock(write_cache_lock);
           write_cache_lock = NULL;
         }
+#endif
 
     }
 
@@ -369,36 +385,30 @@ CL_API_SUFFIX__VERSION_1_0
   assert(program->num_kernels == 0);
   for (i=0; i < program->num_devices; i++)
     {
+#ifdef OCS_AVAILABLE
       if (program->binaries[i])
         {
-#ifdef OCS_AVAILABLE
           program->num_kernels = pocl_llvm_get_kernel_count(program);
-#endif
           if (program->num_kernels)
             {
               program->kernel_names = calloc(program->num_kernels, sizeof(char*));
-#ifdef OCS_AVAILABLE
               pocl_llvm_get_kernel_names(program,
                                          program->kernel_names,
                                          program->num_kernels);
-#endif
             }
           break;
         }
+#endif
       if (program->pocl_binaries[i])
         {
-#ifdef OCS_AVAILABLE
           program->num_kernels =
               pocl_binary_get_kernel_count(program->pocl_binaries[i]);
-#endif
           if (program->num_kernels)
             {
               program->kernel_names = calloc(program->num_kernels, sizeof(char*));
-#ifdef OCS_AVAILABLE
               pocl_binary_get_kernel_names(program->pocl_binaries[i],
                                            program->kernel_names,
                                            program->num_kernels);
-#endif
             }
           break;
         }
