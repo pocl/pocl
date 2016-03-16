@@ -55,6 +55,15 @@
 static char cache_topdir[POCL_FILENAME_LENGTH];
 static int cache_topdir_initialized = 0;
 
+/* sanity check on SHA1 digest emptiness */
+static unsigned buildhash_is_valid(cl_program   program, unsigned     device_i)
+{
+  unsigned i, sum = 0;
+  for(i=0; i<sizeof(SHA1_digest_t); i++)
+    sum += program->build_hash[device_i][i];
+  return sum;
+}
+
 int pocl_cl_device_to_index(cl_program   program,
                             cl_device_id device) {
     unsigned i;
@@ -73,8 +82,7 @@ static void program_device_dir(char*        path,
     assert(path);
     assert(program);
     assert(device_i < program->num_devices);
-    /* sanity check on SHA1 digest emptiness */
-    assert(program->build_hash[device_i][0] > 0);
+    assert(buildhash_is_valid(program, device_i));
 
     int bytes_written = snprintf(path, POCL_FILENAME_LENGTH,
                                  "%s/%s%s", cache_topdir,
