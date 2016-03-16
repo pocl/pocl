@@ -193,6 +193,7 @@ pocl_cuda_init_device_infos(struct _cl_device_id* dev)
   dev->type = CL_DEVICE_TYPE_GPU;
   dev->llvm_target_triplet = "nvptx64";
   dev->spmd = CL_TRUE;
+  dev->execution_capabilities = CL_EXEC_KERNEL;
 
   // TODO: Get images working
   dev->image_support = CL_FALSE;
