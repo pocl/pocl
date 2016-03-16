@@ -36,9 +36,6 @@ set(POCL_VERSION ${VERSION_STRING})
 ##################################################################################
 
 option(OCS_AVAILABLE "Online compiler support available to build pocl with. Default is available." ON)
-if (OCS_AVAILABLE)
-	set(OCS_AVAILABLE 1)
-endif()
 
 ##################################################################################
 
@@ -221,7 +218,6 @@ endif()
 
 if (OCS_AVAILABLE)
 
-  set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
   include(LLVM RESULT_VARIABLE RES)
   if(NOT RES)
     message(FATAL_ERROR "Could not load LLVM.cmake")
@@ -229,6 +225,14 @@ if (OCS_AVAILABLE)
 
   if("${LLVM_VERSION}" VERSION_LESS "3.6")
     message(FATAL_ERROR "POCL requires LLVM version >= 3.6 !")
+  endif()
+
+  if("${LLVM_CLANG_VERSION}" MATCHES "SPIR")
+    set(CLANG_SPIR 1)
+    message(STATUS "Using a SPIR generator Clang from Khronos.")
+  else()
+    set(CLANG_SPIR 0)
+    message(STATUS "NOT using SPIR")
   endif()
 
 endif()
@@ -591,20 +595,6 @@ string(TIMESTAMP POCL_BUILD_TIMESTAMP "%d%m%Y%H%M%S")
 file(WRITE "${CMAKE_BINARY_DIR}/pocl_build_timestamp.h" "#define POCL_BUILD_TIMESTAMP \"${POCL_BUILD_TIMESTAMP}\"")
 
 ######################################################################################
-
-if (OCS_AVAILABLE)
-
-  if("${LLVM_CLANG_VERSION}" MATCHES "SPIR")
-    set(CLANG_SPIR 1)
-    message(STATUS "Using a SPIR generator Clang from Khronos.")
-  else()
-    set(CLANG_SPIR 0)
-    message(STATUS "NOT using SPIR")
-  endif()
-
-endif()
-
-####################################################################
 
 # The Clang flags that are used always when compiling OpenCL C code.
 # Note: We use -Wno-format to avoid warnings for printf, where we
@@ -1049,8 +1039,8 @@ MESSAGE(STATUS "ENABLE_HSA: ${ENABLE_HSA}")
 MESSAGE(STATUS "INSTALL_OPENCL_HEADERS (Install our headers): ${INSTALL_OPENCL_HEADERS}")
 MESSAGE(STATUS "OCL_DRIVERS (Drivers built): ${OCL_DRIVERS}")
 MESSAGE(STATUS "OCL_TARGETS (Targets built): ${OCL_TARGETS}")
-MESSAGE(STATUS "STATIC_LLVM: ${STATIC_LLVM}")
 MESSAGE(STATUS "OCS_AVAILABLE: ${OCS_AVAILABLE}")
+MESSAGE(STATUS "STATIC_LLVM: ${STATIC_LLVM}")
 MESSAGE(STATUS "TESTS_USE_ICD: ${TESTS_USE_ICD}")
 MESSAGE(STATUS "USE_VECMATHLIB: ${USE_VECMATHLIB}")
 MESSAGE(STATUS "Available testsuites: ${ALL_TESTSUITES}")
@@ -1059,11 +1049,10 @@ MESSAGE(STATUS "Kernel caching: ${KERNEL_CACHE_DEFAULT}")
 MESSAGE(STATUS "Kernel library CPU variants: ${KERNELLIB_HOST_CPU_VARIANTS}")
 MESSAGE(STATUS "Kernel library distro build: ${KERNELLIB_HOST_DISTRO_VARIANTS}")
 
-MESSAGE(STATUS " ")
-MESSAGE(STATUS "******* Programs:")
-MESSAGE(STATUS " ")
-
 if (OCS_AVAILABLE)
+  MESSAGE(STATUS " ")
+  MESSAGE(STATUS "******* LLVM Programs:")
+  MESSAGE(STATUS " ")
   MESSAGE(STATUS "LLVM_CONFIG: ${LLVM_CONFIG}")
   MESSAGE(STATUS "LLVM_OPT: ${LLVM_OPT}")
   MESSAGE(STATUS "LLVM_LLC: ${LLVM_LLC}")
@@ -1127,6 +1116,8 @@ MESSAGE(STATUS "TCE_LIBS: ${TCE_LIBS}")
 MESSAGE(STATUS "TCE_VERSION: ${TCE_VERSION}")
 MESSAGE(STATUS "TCE_PREFIX: ${TCE_PREFIX}")
 MESSAGE(STATUS "")
+
+if (OCS_AVAILABLE)
 MESSAGE(STATUS "----------- -------------------------------- --------")
 MESSAGE(STATUS "llvm libs libpocl will be linked to (POCL_LLVM_LIBS):")
 MESSAGE(STATUS "${POCL_LLVM_LIBS}")
@@ -1137,3 +1128,4 @@ MESSAGE(STATUS "----------- -------------------------------- --------")
 MESSAGE(STATUS "system libs libpocl will be linked to (LLVM_SYSLIBS):")
 MESSAGE(STATUS "${LLVM_SYSLIBS}")
 MESSAGE(STATUS "----------- -------------------------------- --------")
+endif()
