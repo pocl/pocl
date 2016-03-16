@@ -222,20 +222,37 @@ pocl_cuda_uninit(cl_device_id device)
 
 cl_int pocl_cuda_alloc_mem_obj(cl_device_id device, cl_mem mem_obj)
 {
+  CUresult result;
   void *b = NULL;
 
   /* if memory for this global memory is not yet allocated -> do it */
   if (mem_obj->device_ptrs[device->global_mem_id].mem_ptr == NULL)
   {
+    cl_mem_flags flags = mem_obj->flags;
+
     // TODO: Deal with mem flags
-    CUresult result = cuMemAlloc((CUdeviceptr*)&b, mem_obj->size);
-    if (result != CUDA_SUCCESS)
+    if (flags & CL_MEM_USE_HOST_PTR)
     {
-      const char *err;
-      cuGetErrorName(result, &err);
-      POCL_MSG_PRINT2(__FUNCTION__, __LINE__,
-                      "-> Failed to allocate memory: %s\n", err);
-      return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+      result = cuMemHostRegister(mem_obj->mem_host_ptr, mem_obj->size,
+                                 CU_MEMHOSTREGISTER_DEVICEMAP);
+      if (result != CUDA_SUCCESS &&
+          result != CUDA_ERROR_HOST_MEMORY_ALREADY_REGISTERED)
+        CUDA_CHECK(result, "cuMemHostRegister");
+      result = cuMemHostGetDevicePointer((CUdeviceptr*)&b,
+                                         mem_obj->mem_host_ptr, 0);
+      CUDA_CHECK(result, "cuMemHostGetDevicePointer");
+    }
+    else
+    {
+      result = cuMemAlloc((CUdeviceptr*)&b, mem_obj->size);
+      if (result != CUDA_SUCCESS)
+      {
+        const char *err;
+        cuGetErrorName(result, &err);
+        POCL_MSG_PRINT2(__FUNCTION__, __LINE__,
+                        "-> Failed to allocate memory: %s\n", err);
+        return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+      }
     }
 
     mem_obj->device_ptrs[device->global_mem_id].mem_ptr = b;
@@ -279,7 +296,7 @@ pocl_cuda_copy(void *data, const void *src_ptr, size_t src_offset,
 
   cuMemcpyDtoD((CUdeviceptr)(dst_ptr+dst_offset),
                (CUdeviceptr)(src_ptr+src_offset),
-	       cb);
+      	       cb);
 }
 
 void
