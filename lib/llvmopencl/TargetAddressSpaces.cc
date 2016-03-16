@@ -565,6 +565,11 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
     addrSpaceMapDown[POCL_AS_FAKE_GLOBAL] = 1;
     addrSpaceMapDown[POCL_AS_FAKE_LOCAL] = 3;
     addrSpaceMapDown[POCL_AS_FAKE_CONSTANT] = 2;
+  } else if (arch.startswith("nvptx")) {
+    addrSpaceMapDown[POCL_AS_FAKE_GENERIC] = 0;
+    addrSpaceMapDown[POCL_AS_FAKE_GLOBAL] = 1;
+    addrSpaceMapDown[POCL_AS_FAKE_LOCAL] = 3;
+    addrSpaceMapDown[POCL_AS_FAKE_CONSTANT] = 4;
   } else {
     /* Assume the fake address space map works directly in case not
        overridden here.  */

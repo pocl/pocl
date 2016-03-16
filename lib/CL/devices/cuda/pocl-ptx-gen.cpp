@@ -205,34 +205,6 @@ void pocl_update_users_address_space(llvm::Value *inst)
 
 void pocl_fix_constant_address_space(llvm::Module *module)
 {
-  // Loop over global variables
-  std::vector<llvm::GlobalVariable*> globals;
-  for (auto G = module->global_begin(); G != module->global_end(); G++)
-  {
-    globals.push_back(&*G);
-  }
-
-  for (auto G = globals.begin(); G != globals.end(); G++)
-  {
-    llvm::Type *type = (*G)->getType();
-    if (type->getPointerAddressSpace() != POCL_ADDRESS_SPACE_CONSTANT)
-      continue;
-
-    // Create new global variable in correct address space
-    llvm::GlobalVariable *new_global =
-      new llvm::GlobalVariable(*module,
-                               type->getPointerElementType(), true,
-                               (*G)->getLinkage(),
-                               (*G)->getInitializer(), "", *G,
-                               (*G)->getThreadLocalMode(),
-                               4, (*G)->isExternallyInitialized());
-    new_global->takeName(*G);
-    (*G)->replaceAllUsesWith(new_global);
-    (*G)->eraseFromParent();
-
-    pocl_update_users_address_space(new_global);
-  }
-
   // Loop over functions
   std::vector<llvm::Function*> functions;
   for (auto F = module->begin(); F != module->end(); F++)
@@ -253,7 +225,7 @@ void pocl_fix_constant_address_space(llvm::Module *module)
       // Check for constant memory pointer
       llvm::Type *arg_type = arg->getType();
       if (arg_type->isPointerTy() &&
-          arg_type->getPointerAddressSpace() == POCL_ADDRESS_SPACE_CONSTANT)
+          arg_type->getPointerAddressSpace() == 4)
       {
         has_constant_args = true;
 
@@ -324,7 +296,7 @@ void pocl_gen_local_mem_args(llvm::Module *module)
   // Create global variable for local memory allocations
   llvm::Type *byte_array_type =
     llvm::ArrayType::get(llvm::Type::getInt8Ty(context), 0);
-  llvm::GlobalVariable *shared_ptr =
+  llvm::GlobalVariable *shared_base =
     new llvm::GlobalVariable(*module, byte_array_type,
                              false, llvm::GlobalValue::ExternalLinkage,
                              NULL, "_shared_memory_region_", NULL,
@@ -355,7 +327,7 @@ void pocl_gen_local_mem_args(llvm::Module *module)
       // Check for local memory pointer
       llvm::Type *arg_type = arg->getType();
       if (arg_type->isPointerTy() &&
-          arg_type->getPointerAddressSpace() == POCL_ADDRESS_SPACE_LOCAL)
+          arg_type->getPointerAddressSpace() == 3)
       {
         has_local_args = true;
 
@@ -369,20 +341,16 @@ void pocl_gen_local_mem_args(llvm::Module *module)
         // Insert GEP to add offset
         llvm::Value *zero = llvm::ConstantInt::getSigned(i32ty, 0);
         llvm::GetElementPtrInst *gep =
-          llvm::GetElementPtrInst::Create(byte_array_type, shared_ptr,
+          llvm::GetElementPtrInst::Create(byte_array_type, shared_base,
                                           {zero, offset});
         gep->insertBefore(&*function->begin()->begin());
 
         // Cast pointer to correct type
-        llvm::Type *final_type =
-          arg_type->getPointerElementType()->getPointerTo(3);
-        llvm::BitCastInst *cast = new llvm::BitCastInst(gep, final_type);
+        llvm::BitCastInst *cast = new llvm::BitCastInst(gep, arg_type);
         cast->insertAfter(gep);
 
         cast->takeName(&*arg);
         arg->replaceAllUsesWith(cast);
-
-        pocl_update_users_address_space(cast);
       }
       else
       {
