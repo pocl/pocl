@@ -336,6 +336,7 @@ int pocl_cache_append_to_buildlog(cl_program  program,
 
 /******************************************************************************/
 
+#ifdef OCS_AVAILABLE
 int pocl_cache_write_kernel_parallel_bc(void*        bc,
                                         cl_program   program,
                                         unsigned     device_i,
@@ -355,13 +356,9 @@ int pocl_cache_write_kernel_parallel_bc(void*        bc,
     assert( strlen(kernel_parallel_path) <
             (POCL_FILENAME_LENGTH - strlen(POCL_PARALLEL_BC_FILENAME)));
     strcat(kernel_parallel_path, POCL_PARALLEL_BC_FILENAME);
-#ifdef OCS_AVAILABLE
     return pocl_write_module(bc, kernel_parallel_path, 0);
-#else
-    // This function should not be called if there is no online compiler support
-    return 1;
-#endif
 }
+#endif
 
 int pocl_cache_make_kernel_cachedir_path(char*        kernel_cachedir_path,
                                          cl_program   program,
@@ -387,7 +384,7 @@ int pocl_cache_make_kernel_cachedir_path(char*        kernel_cachedir_path,
 
 
 
-
+#ifdef OCS_AVAILABLE
 static inline void
 build_program_compute_hash(cl_program program,
                            unsigned   device_i,
@@ -425,10 +422,8 @@ build_program_compute_hash(cl_program program,
     pocl_SHA1_Update(&hash_ctx, (uint8_t*) wg_method, strlen(wg_method));
     pocl_SHA1_Update(&hash_ctx, (uint8_t*) PACKAGE_VERSION,
                      strlen(PACKAGE_VERSION));
-#ifdef OCS_AVAILABLE
     pocl_SHA1_Update(&hash_ctx, (uint8_t*) LLVM_VERSION,
                      strlen(LLVM_VERSION));
-#endif
     pocl_SHA1_Update(&hash_ctx, (uint8_t*) POCL_BUILD_TIMESTAMP,
                      strlen(POCL_BUILD_TIMESTAMP));
     pocl_SHA1_Update(&hash_ctx, (const uint8_t *)POCL_KERNELLIB_SHA1,
@@ -452,6 +447,8 @@ build_program_compute_hash(cl_program program,
     program->build_hash[device_i][2] = '/';
 
 }
+#endif
+
 
 #ifdef ANDROID
 static
@@ -561,11 +558,12 @@ pocl_cache_create_program_cachedir(cl_program program,
                                    size_t source_len,
                                    char* program_bc_path)
 {
+    assert(cache_topdir_initialized);
+
+#ifdef OCS_AVAILABLE
     const char *hash_source = NULL;
     uint8_t old_build_hash[SHA1_DIGEST_SIZE] = {0};
     size_t hs_len = 0;
-
-    assert(cache_topdir_initialized);
 
     if (program->source && preprocessed_source==NULL) {
         hash_source = program->source;
@@ -589,12 +587,14 @@ pocl_cache_create_program_cachedir(cl_program program,
             POCL_MEM_FREE(program->binaries[device_i]);
             program->binary_sizes[device_i] = 0;
         }
-#ifdef OCS_AVAILABLE
         pocl_free_llvm_irs(program, device_i);
-#endif
         pocl_cache_release_lock(program->read_locks[device_i]);
         program->read_locks[device_i] = NULL;
     }
+#else
+    assert(buildhash_is_valid(program, device_i));
+    assert(program->read_locks[device_i] == NULL);
+#endif
 
     program_device_dir(program_bc_path, program, device_i, "");
 
