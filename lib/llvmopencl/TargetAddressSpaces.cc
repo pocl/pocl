@@ -288,6 +288,25 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
 
   bool changed = false;
 
+  /* Handle global variables. These should be fixed *after*
+     fixing the instruction referring to them.  If we fix
+     the address spaces before, there might be possible
+     illegal bitcasts casting the LLVM's global pointer to
+     another one, causing the CloneFunctionInto to crash when
+     it encounters such.
+
+     Update: ^this seems not to be an issue anymore and this commit
+     seems to cause the problems it is trying to fix on hsa and
+     amd scanlargearrays....  Original commit:
+     dcbcd39811638bcb953afbbfdd2620fb8ab45af4
+  */
+  llvm::Module::global_iterator globalI = M.global_begin();
+  llvm::Module::global_iterator globalE = M.global_end();
+  for (; globalI != globalE; ++globalI) {
+    llvm::Value &global = *globalI;
+    changed |= UpdateAddressSpace(global, addrSpaceMap, convertedStructsCache);
+  }
+
   FunctionMapping funcReplacements;
   std::vector<llvm::Function*> unhandledFuncs;
 
@@ -401,20 +420,6 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
     funcReplacements[&F] = newFunc;
   }
 
-  /* Handle global variables. These should be fixed *after*
-     fixing the instruction referring to them.  If we fix
-     the address spaces before, there might be possible
-     illegal bitcasts casting the LLVM's global pointer to
-     another one, causing the CloneFunctionInto to crash when
-     it encounters such.
-   */
-  llvm::Module::global_iterator globalI = M.global_begin();
-  llvm::Module::global_iterator globalE = M.global_end();
-  for (; globalI != globalE; ++globalI) {
-    llvm::Value &global = *globalI;
-    changed |= UpdateAddressSpace(global, addrSpaceMap, convertedStructsCache);
-  }
-  
   /* Replace all references to the old function to the new one.
      Also, for LLVM 3.4, replace the pointercasts to bitcasts in
      case the new address spaces are the same in both sides. */
