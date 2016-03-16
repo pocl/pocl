@@ -378,6 +378,7 @@ pocl_cuda_run(void *dptr, _cl_command_node* cmd)
   CUfunction function = cmd->command.run.kernel->data;
 
   // Prepare kernel arguments
+  void *null = NULL;
   unsigned sharedMemBytes = 0;
   void *params[kernel->num_args + kernel->num_locals];
   unsigned sharedMemOffsets[kernel->num_args + kernel->num_locals];
@@ -400,8 +401,15 @@ pocl_cuda_run(void *dptr, _cl_command_node* cmd)
       }
       else
       {
-        cl_mem mem = *(void**)kernel->dyn_arguments[i].value;
-        params[i] = &mem->device_ptrs[device->dev_id].mem_ptr;
+        if (kernel->dyn_arguments[i].value)
+        {
+          cl_mem mem = *(void**)kernel->dyn_arguments[i].value;
+          params[i] = &mem->device_ptrs[device->dev_id].mem_ptr;
+        }
+        else
+        {
+          params[i] = &null;
+        }
       }
       break;
     }
