@@ -24,6 +24,7 @@
 
 #include "pocl_cl.h"
 #include "devices.h"
+#include "common.h"
 
 CL_API_ENTRY cl_mem CL_API_CALL
 POname(clCreateBuffer)(cl_context   context,
