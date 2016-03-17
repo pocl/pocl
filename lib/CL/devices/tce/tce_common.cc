@@ -678,13 +678,14 @@ pocl_tce_build_hash (cl_device_id device)
   pocl_SHA1_Update(&ctx, adf_data, size);
   pocl_SHA1_Final(&ctx, bin_dig);
 
-  char *result = calloc(1000, sizeof(char));
+  char *result = (char *)calloc(1000, sizeof(char));
   strcpy(result, "tce-");
-  unsigned char *temp = result + 4;
+  char *temp = result + 4;
+  unsigned i;
   for (i=0; i < SHA1_DIGEST_SIZE; i++)
     {
-      *temp++ = (digest[i] & 0x0F) + 65;
-      *temp++ = ((digest[i] & 0xF0) >> 4) + 65;
+      *temp++ = (bin_dig[i] & 0x0F) + 65;
+      *temp++ = ((bin_dig[i] & 0xF0) >> 4) + 65;
     }
   *temp++ = '_';
   *temp = 0;
