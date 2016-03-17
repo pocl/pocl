@@ -47,6 +47,7 @@
 #include "pocl_debug.h"
 #include "pocl_hash.h"
 #include "pocl_runtime_config.h"
+#include "common.h"
 
 #if __STDC_VERSION__ < 199901L
 # if __GNUC__ >= 2

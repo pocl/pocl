@@ -172,7 +172,7 @@ text_tracer_event_updated (cl_event event, int status)
 
   text_size = sprintf (cur_buf, "%"PRIu64" %s %s ", ts,
                        pocl_command_to_str (event->command_type),
-                       pocl_status_to_str[event->status]);
+                       pocl_status_to_str(event->status));
   cur_buf += text_size;
   /* Print more informations for some commonly used commands */
   switch (event->command_type)

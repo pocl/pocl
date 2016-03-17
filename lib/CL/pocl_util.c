@@ -735,6 +735,17 @@ void pocl_setup_context(cl_context context)
         }
 }
 
+const char*
+pocl_status_to_str (int status)
+{
+  static const char *status_to_str[] = {
+  "complete",
+  "running",
+  "submitted",
+  "queued"};
+  return status_to_str[status];
+};
+
 
 /* Convert a command type to its representation string
  */

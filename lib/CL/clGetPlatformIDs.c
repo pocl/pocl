@@ -36,7 +36,7 @@
 * (or even stubs) in pocl
 */
 #ifdef BUILD_ICD
-struct _cl_icd_dispatch pocl_dispatch = {
+struct _cl_icd_dispatch pocl_dispatch = {{
   &POclGetPlatformIDs,
   &POclGetPlatformInfo,
   &POclGetDeviceIDs,
@@ -219,7 +219,7 @@ struct _cl_icd_dispatch pocl_dispatch = {
   NULL, /* &clUnknown176 */
   NULL, /* &clUnknown177 */
 #endif
-};
+}};
 
 struct _cl_platform_id _platforms[1]  = {{&pocl_dispatch}};
 #else

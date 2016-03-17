@@ -184,7 +184,6 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
 #ifdef CUSTOM_BUFFER_ALLOCATOR
   static mem_regions_management* mrm = NULL;
 #endif
-  static int global_mem_id;
   int num_worker_threads;
 
   // TODO: this checks if the device was already initialized previously.

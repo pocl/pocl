@@ -257,9 +257,9 @@ DETERMINE_LOCAL_SIZE:
     {
       struct pocl_argument *al = &(kernel->dyn_arguments[i]);
       if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE ||
-           !kernel->arg_info[i].is_local
-          && kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER
-          && al->value != NULL)
+          (!kernel->arg_info[i].is_local
+           && kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER
+           && al->value != NULL))
         {
           cl_mem buf = *(cl_mem *) (al->value);
           ++buffer_count;
@@ -291,9 +291,9 @@ DETERMINE_LOCAL_SIZE:
     {
       struct pocl_argument *al = &(kernel->dyn_arguments[i]);
       if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE ||
-          !kernel->arg_info[i].is_local
-          && kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER
-          && al->value != NULL)
+          (!kernel->arg_info[i].is_local
+           && kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER
+           && al->value != NULL))
         {
           cl_mem buf = *(cl_mem *) (al->value);
           POname(clRetainMemObject) (buf);
