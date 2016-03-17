@@ -1007,11 +1007,13 @@ message(STATUS "POCLU LINK OPTS: ${POCLU_LINK_OPTIONS}")
 # poclcc bin
 add_subdirectory("bin")
 
-# TODO In progress
-add_subdirectory("tests")
+if (OCS_AVAILABLE)
+  # TODO In progress
+  add_subdirectory("tests")
 
-# TODO In progress
-add_subdirectory("examples")
+  # TODO In progress
+  add_subdirectory("examples")
+endif()
 
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} ${COMMAND_USES_TERMINAL})
 

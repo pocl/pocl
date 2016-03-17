@@ -3,15 +3,16 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <dirent.h>
 #else
 #include <io.h>
 #endif
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <string.h>
-#include <dirent.h>
 
 #include "pocl.h"
 #include "pocl_file_util.h"
@@ -27,9 +28,9 @@ pocl_rm_rf(const char* path)
   
   if(d) 
     {
-      struct dirent *p;
+      struct dirent *p = readdir(d);
       error = 0;
-      while (!error && p==readdir(d))
+      while (!error && p)
         {
           char *buf;
           if (!strcmp(p->d_name, ".") || !strcmp(p->d_name, ".."))
@@ -50,6 +51,7 @@ pocl_rm_rf(const char* path)
               
               free(buf);
             }
+          p = readdir(d);
         }
       closedir(d);
       
@@ -92,13 +94,7 @@ pocl_remove(const char* path)
 int
 pocl_exists(const char* path) 
 {
-  FILE *f;
-  if (f = fopen(path, "r"))
-    {
-      fclose(f);
-      return 1;
-    }
-  return 0;
+  return !access(path, R_OK);
 }
 
 int
@@ -118,8 +114,8 @@ pocl_filesize(const char* path, uint64_t* res)
 int 
 pocl_touch_file(const char* path) 
 {
-  FILE *f;
-  if (f = fopen(path, "w"))
+  FILE *f = fopen(path, "w");
+  if (f)
     {
       fclose(f);
       return 0;
@@ -196,7 +192,7 @@ pocl_write_file(const char *path, const char* content,
   if (f == NULL)
     return -1;
   
-  if (fwrite(content, 1, (ssize_t)count, f) < (ssize_t)count)
+  if (fwrite(content, 1, (size_t)count, f) < (size_t)count)
     return -1;
   
   return fclose(f);
