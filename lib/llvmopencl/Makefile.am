@@ -34,7 +34,7 @@ noinst_LTLIBRARIES = libllvmpasses.la
 pkglib_LTLIBRARIES = llvmopencl.la
 
 AM_CXXFLAGS = -I@top_srcdir@/fix-include -I@top_srcdir@/include \
-              -I$(top_srcdir)/lib/CL -I$(top_srcdir)/lib/CL/devices \
+              -I$(top_srcdir)/lib/CL -I@top_srcdir@/lib/CL/devices \
 	           @LLVM_CXX_FLAGS@
 
 AM_LDFLAGS = -module -export-dynamic @LLVM_LDFLAGS@ -version-info ${KERNEL_COMPILER_LIB_VERSION}
