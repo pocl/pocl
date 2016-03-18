@@ -139,7 +139,7 @@ POname(clCreateBuffer)(cl_context   context,
 
   mem->size = size;
   mem->context = context;
-  mem->mem_host_ptr = NULL;
+  mem->mem_host_ptr = host_ptr;
   mem->shared_mem_allocation_owner = NULL;
 
   /* if there is a "special needs" device (hsa) operating in the host memory 
@@ -181,9 +181,6 @@ POname(clCreateBuffer)(cl_context   context,
           goto ERROR;
         }
     }
-
-  if (flags & CL_MEM_USE_HOST_PTR && mem->mem_host_ptr == NULL)
-    mem->mem_host_ptr = host_ptr;
 
   POCL_RETAIN_OBJECT(context);
 
