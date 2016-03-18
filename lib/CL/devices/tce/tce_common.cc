@@ -836,11 +836,11 @@ static void tce_command_scheduler (TCEDevice *d)
   while ((node = d->ready_list))
     {
       assert (pocl_command_is_ready(node->event));
-      CDL_DELETE (d->ready_list, node);
-
-      
+      CDL_DELETE (d->ready_list, node); 
       pthread_mutex_unlock (&d->cq_lock);
       assert (node->event->status == CL_SUBMITTED);
+      if (node->type == CL_COMMAND_NDRANGE_KERNEL)
+        pocl_tce_compile_submitted_kernels(node);
       pocl_exec_command(node);
       pthread_mutex_lock (&d->cq_lock);
     }
