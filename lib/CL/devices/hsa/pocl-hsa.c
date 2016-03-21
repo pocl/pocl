@@ -262,10 +262,10 @@ supported_hsa_devices[MAX_HSA_AGENTS] =
     .long_name = "Spectre",
     .llvm_cpu = NULL,                 // native: "kaveri",
     .llvm_target_triplet = "hsail64", // native: "amdgcn--amdhsa"
-		.has_64bit_long = 1,
-		.vendor_id = 0x1002,
-		.global_mem_cache_type = CL_READ_WRITE_CACHE,
-		.max_constant_buffer_size = 65536,
+    .has_64bit_long = 1,
+    .vendor_id = 0x1002,
+    .global_mem_cache_type = CL_READ_WRITE_CACHE,
+    .max_constant_buffer_size = 65536,
     .local_mem_type = CL_LOCAL,
     .endian_little = CL_TRUE,
     .extensions = HSA_DEVICE_EXTENSIONS,
@@ -287,17 +287,17 @@ supported_hsa_devices[MAX_HSA_AGENTS] =
   { .long_name = "phsa generic CPU agent",
     .llvm_cpu = NULL,
     .llvm_target_triplet = "hsail64",
-		.has_64bit_long = 1,
-		.vendor_id = 0xffff,
-		.global_mem_cache_type = CL_READ_WRITE_CACHE,
-		.max_constant_buffer_size = 65536,
+    .has_64bit_long = 1,
+    .vendor_id = 0xffff,
+    .global_mem_cache_type = CL_READ_WRITE_CACHE,
+    .max_constant_buffer_size = 65536,
     .local_mem_type = CL_LOCAL,
     .endian_little = !(WORDS_BIGENDIAN),
     .extensions = HSA_DEVICE_EXTENSIONS,
     .preferred_wg_size_multiple = 1,
-		// We want to exploit the widest vector types in HSAIL
-		// for the CPUs assuming they have some sort of SIMD ISE
-		// which the finalizer than can more readily utilize.
+    // We want to exploit the widest vector types in HSAIL
+    // for the CPUs assuming they have some sort of SIMD ISE
+    // which the finalizer than can more readily utilize.
     .preferred_vector_width_char = 16,
     .preferred_vector_width_short = 16,
     .preferred_vector_width_int = 16,
