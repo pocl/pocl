@@ -14,15 +14,15 @@ CL_API_SUFFIX__VERSION_1_1
   /* Can only be done once */
   POCL_RETURN_ERROR_COND((event->status <= CL_COMPLETE), CL_INVALID_OPERATION);
 
+  POCL_LOCK_OBJ (event);
   event->status = execution_status;
   if (execution_status == CL_COMPLETE)
     {
       event->time_end = pocl_gettimemono_ns();
       event->time_start = event->time_end;
-      POCL_LOCK_OBJ (event);
       pocl_broadcast (event);
-      POCL_UNLOCK_OBJ (event);
     }
+  POCL_UNLOCK_OBJ (event);
   return CL_SUCCESS;
 }
 POsym(clSetUserEventStatus)

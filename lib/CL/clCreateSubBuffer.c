@@ -131,7 +131,7 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
     }
 
   mem->device_ptrs = (pocl_mem_identifier*)
-    malloc(pocl_num_devices * sizeof(pocl_mem_identifier));
+    malloc(buffer->context->num_devices * sizeof(pocl_mem_identifier));
   if (mem->device_ptrs == NULL)
     {
         errcode = CL_OUT_OF_HOST_MEMORY;
@@ -161,6 +161,8 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
 
   POCL_RETAIN_OBJECT(mem->parent);
   POCL_RETAIN_OBJECT(mem->context);
+
+  POCL_MSG_PRINT_INFO ("Created Subbuffer %p, parent %p\n", mem, mem->parent);
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;

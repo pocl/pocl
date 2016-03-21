@@ -65,11 +65,6 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
           if (shared_mem_owner_dev)
             shared_mem_owner_dev->ops->free (shared_mem_owner_dev, memobj);
 
-        } else 
-        {
-          /* a sub buffer object does not free the memory from
-             the device */          
-          POCL_RELEASE_OBJECT(memobj->parent, new_refcount);
         }
       DL_FOREACH_SAFE(memobj->mappings, mapping, temp)
         {
