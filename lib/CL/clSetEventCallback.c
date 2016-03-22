@@ -28,8 +28,19 @@ POname(clSetEventCallback) (cl_event     event ,
   cb_ptr->next = NULL;
 
   POCL_LOCK_OBJ (event);
-  LL_APPEND (event->callback_list, cb_ptr);
-  POCL_UNLOCK_OBJ (event);
+  if (event->status > command_exec_callback_type)
+    {
+      LL_APPEND (event->callback_list, cb_ptr);
+      POCL_UNLOCK_OBJ (event);
+    }
+  else
+    {
+      POCL_UNLOCK_OBJ (event);
+      cb_ptr->callback_function (event, cb_ptr->trigger_status, 
+                                 cb_ptr->user_data);
+      free (cb_ptr);
+    }
+  
 
   return CL_SUCCESS;
 }

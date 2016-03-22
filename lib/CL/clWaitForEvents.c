@@ -28,7 +28,7 @@ POname(clWaitForEvents)(cl_uint              num_events ,
                   const cl_event *     event_list ) CL_API_SUFFIX__VERSION_1_0
 {
   unsigned event_i;
-
+  cl_device_id dev;
   POCL_RETURN_ERROR_COND((num_events == 0 || event_list == NULL), CL_INVALID_VALUE);
 
   for (event_i = 0; event_i < num_events; ++event_i)
@@ -43,8 +43,20 @@ POname(clWaitForEvents)(cl_uint              num_events ,
   // dummy implementation, waits until *all* events have completed.
   for (event_i = 0; event_i < num_events; ++event_i)
     {
-      POname(clFinish)(event_list[event_i]->queue);
+      /* lets handle user events later */
+      if (event_list[event_i]->command_type == CL_COMMAND_USER)
+        continue;
+      dev = event_list[event_i]->queue->device;
+      if (dev->ops->wait_event)  
+        dev->ops->wait_event(dev, event_list[event_i]);
+      else
+        POname(clFinish)(event_list[event_i]->queue);
     }
+  /* brute force wait for user events */
+  for (event_i = 0; event_i < num_events; ++event_i)
+    if (event_list[event_i]->command_type == CL_COMMAND_USER)
+      while (event_list[event_i]->status != CL_COMPLETE){}
+
   return CL_SUCCESS;
 }
 POsym(clWaitForEvents)

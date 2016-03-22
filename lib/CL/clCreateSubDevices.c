@@ -151,7 +151,8 @@ ERROR:
       if (new_devs[i] == NULL)
         break;
       POCL_RELEASE_OBJECT(new_devs[i], new_refcount);
-      POCL_MEM_FREE(new_devs[i]);
+      if (new_refcount == 0)
+        POCL_MEM_FREE(new_devs[i]);
     }
 
     free(new_devs);

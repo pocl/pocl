@@ -53,6 +53,17 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
   POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
     CL_INVALID_EVENT_WAIT_LIST);
 
+  for (i = 0; i < num_events_in_wait_list; ++i)
+    {
+      POCL_GOTO_ERROR_COND((event_wait_list[i] == NULL), CL_INVALID_EVENT_WAIT_LIST);
+      if (i > 0)
+        {
+          POCL_GOTO_ERROR_COND((event_wait_list[i]->context 
+                                  != event_wait_list[i - 1]->context), 
+                                 CL_INVALID_CONTEXT);
+        }
+    }
+
   POCL_LOCK_OBJ (memobj);
   DL_FOREACH (memobj->mappings, mapping)
     {
@@ -66,16 +77,20 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
   /* find the index of the device's ptr in the buffer */
   POCL_CHECK_DEV_IN_CMDQ;
 
-  errcode = pocl_create_command (&cmd, command_queue,
-                                 CL_COMMAND_UNMAP_MEM_OBJECT,
-                                 event, num_events_in_wait_list,
-                                 event_wait_list);
+  errcode = pocl_create_command (&cmd, command_queue, 
+                                 CL_COMMAND_UNMAP_MEM_OBJECT, 
+                                 event, num_events_in_wait_list, 
+                                 event_wait_list, 1, &memobj);
+
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
   cmd->command.unmap.data = command_queue->device->data;
   cmd->command.unmap.memobj = memobj;
   cmd->command.unmap.mapping = mapping;
+
+  POname(clRetainMemObject) (memobj);
+  memobj->owning_device = command_queue->device;
   pocl_command_enqueue(command_queue, cmd);
 
   return CL_SUCCESS;

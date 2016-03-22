@@ -70,6 +70,9 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
   mem->type = CL_MEM_OBJECT_BUFFER;
   mem->size = info->size;
   mem->context = buffer->context;
+  mem->latest_event = NULL;
+  mem->owning_device = buffer->owning_device;
+  mem->is_pipe = CL_FALSE;
 
   POCL_GOTO_ERROR_ON((buffer->flags & CL_MEM_WRITE_ONLY &&
        flags & (CL_MEM_READ_WRITE | CL_MEM_READ_ONLY)), CL_INVALID_VALUE,
@@ -122,13 +125,13 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
     (buffer->flags & CL_MEM_ALLOC_HOST_PTR) |
     (buffer->flags & CL_MEM_COPY_HOST_PTR);
 
-  if (mem->flags & CL_MEM_USE_HOST_PTR)
+  if (mem->flags & CL_MEM_USE_HOST_PTR || mem->flags & CL_MEM_ALLOC_HOST_PTR)
     {
       mem->mem_host_ptr = (char*)buffer->mem_host_ptr + info->origin;
     }
 
   mem->device_ptrs = (pocl_mem_identifier*)
-    malloc(pocl_num_devices * sizeof(pocl_mem_identifier));
+    malloc(buffer->context->num_devices * sizeof(pocl_mem_identifier));
   if (mem->device_ptrs == NULL)
     {
         errcode = CL_OUT_OF_HOST_MEMORY;
@@ -158,6 +161,8 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
 
   POCL_RETAIN_OBJECT(mem->parent);
   POCL_RETAIN_OBJECT(mem->context);
+
+  POCL_MSG_PRINT_INFO ("Created Subbuffer %p, parent %p\n", mem, mem->parent);
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;

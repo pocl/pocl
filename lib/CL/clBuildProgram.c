@@ -139,9 +139,9 @@ program_compile_dynamic_wg_binaries(cl_program program)
                            program->kernel_names[i], device->short_name);
               goto RET;
             }
-
           cmd.command.run.kernel = program->default_kernels[i];
-          device->ops->compile_submitted_kernels(&cmd);
+          device->ops->compile_kernel(&cmd, program->default_kernels[i],
+                                      device);
         }
 
     }
@@ -200,7 +200,16 @@ CL_API_SUFFIX__VERSION_1_0
       size_t size = 512;
       size_t i = 1; /* terminating char */
       modded_options = (char*) calloc (size, 1);
-      temp_options = strdup (options);
+
+      if (strstr(options, "-cl-kernel-arg-info"))
+        temp_options = strdup (options);
+      else
+        {
+          temp_options = 
+            calloc (1, strlen(options) + 1 + strlen(" -cl-kernel-arg-info"));
+          strcat (temp_options, options);
+          strcat (temp_options, " -cl-kernel-arg-info");
+        }
       token = strtok_r (temp_options, " ", &saveptr);
       while (token != NULL)
         {
@@ -254,7 +263,8 @@ CL_API_SUFFIX__VERSION_1_0
     }
   else
     {
-      POCL_MEM_FREE(program->compiler_options);
+      program->compiler_options = calloc (1, strlen("-cl-kernel-arg-info")+1);
+      strcat (program->compiler_options, "-cl-kernel-arg-info");
     }
 
   if (num_devices == 0)

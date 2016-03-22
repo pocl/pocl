@@ -22,6 +22,8 @@
 */
 #include "tce_common.h"
 #include "pocl_util.h"
+#include "utlist.h"
+#include "common.h"
 
 #include "config.h"
 #include "install-paths.h"
@@ -65,8 +67,11 @@ using namespace TTAMachine;
 
 TCEDevice::TCEDevice(cl_device_id dev, const char* adfName) :
   local_as(NULL), global_as(NULL), private_as(NULL), machine_file(adfName), parent(dev),
-  currentProgram(NULL), curKernelAddr(0), curKernel(NULL), globalCycleCount(0) {
+  currentProgram(NULL), curKernelAddr(0), curKernel(NULL), globalCycleCount(0),
+  ready_list(NULL), command_list(NULL) {
   parent->data = this;
+  pthread_mutex_init (&cq_lock, NULL);
+  dev->address_bits = 32;
 #if defined(WORDS_BIGENDIAN) && WORDS_BIGENDIAN == 1
   needsByteSwap = false;
 #else
@@ -313,25 +318,32 @@ pocl_tce_malloc (void *device_data, cl_mem_flags flags,
 }
 
 cl_int
-pocl_tce_alloc_mem_obj (cl_device_id device, cl_mem mem_obj)
+pocl_tce_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
 {
   void *b = NULL;
   cl_int flags = mem_obj->flags;
+  int i;
 
-  /* if memory for this global memory is not yet allocated -> do it */
-  if (mem_obj->device_ptrs[device->global_mem_id].mem_ptr == NULL)
+  /* check if some driver has already allocated memory for this mem_obj 
+     in our global address space, and use that*/
+  for (i = 0; i < mem_obj->context->num_devices; ++i)
     {
-      b = pocl_tce_malloc
-        (device->data, flags, mem_obj->size, mem_obj->mem_host_ptr);
-      if (b == NULL) return CL_MEM_OBJECT_ALLOCATION_FAILURE;
-      mem_obj->device_ptrs[device->global_mem_id].mem_ptr = b;
-      mem_obj->device_ptrs[device->global_mem_id].global_mem_id = 
-        device->global_mem_id;
+      if (mem_obj->device_ptrs[i].global_mem_id == device->global_mem_id
+          && mem_obj->device_ptrs[i].mem_ptr != NULL)
+        {
+          mem_obj->device_ptrs[device->dev_id].mem_ptr =
+            mem_obj->device_ptrs[i].mem_ptr;
+
+          return CL_SUCCESS;
+        }
     }
-  /* copy already allocated global mem info to devices own slot */
-  mem_obj->device_ptrs[device->dev_id] = 
-    mem_obj->device_ptrs[device->global_mem_id];
-    
+
+  b = pocl_tce_malloc
+    (device->data, flags, mem_obj->size, host_ptr);
+  if (b == NULL) return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+
+  mem_obj->device_ptrs[device->dev_id].mem_ptr = b;
+
   return CL_SUCCESS;
 
 }
@@ -385,38 +397,38 @@ pocl_tce_free (cl_device_id device, cl_mem mem_obj)
   free_chunk ((chunk_info_t*) ptr);
 }
 
-void 
-pocl_tce_run 
-(void *data, 
- _cl_command_node* cmd) {
+void
+pocl_tce_compile_submitted_kernels(_cl_command_node *cmd)
+{
 
+  if (cmd->type != CL_COMMAND_NDRANGE_KERNEL)
+    return;
+
+  void* data = cmd->device->data;
   TCEDevice *d = (TCEDevice*)data;
+
   int error;
   char bytecode[POCL_FILENAME_LENGTH];
-  uint32_t kernelAddr;
-  unsigned i;
 
-  assert (data != NULL);
+  assert(d != NULL);
+  assert(cmd->command.run.kernel);
+  assert(cmd->command.run.tmp_dir);
 
   if (d->isNewKernel(&(cmd->command.run))) {
     std::string assemblyFileName(cmd->command.run.tmp_dir);
     assemblyFileName += "/parallel.tpef";
-    
-    std::string kernelMdSymbolName = "_";
-    kernelMdSymbolName += cmd->command.run.kernel->name;
-    kernelMdSymbolName += "_md";
-    
+
     std::string userProgramBuildOptions;
     if (cmd->command.run.kernel->program->compiler_options != NULL)
       userProgramBuildOptions = cmd->command.run.kernel->program->compiler_options;
-    
+
     if (access (assemblyFileName.c_str(), F_OK) != 0)
       {
         error = snprintf (bytecode, POCL_FILENAME_LENGTH,
                           "%s%s", cmd->command.run.tmp_dir, POCL_PARALLEL_BC_FILENAME);
-        TCEString buildCmd = 
+        TCEString buildCmd =
           d->tceccCommandLine(&cmd->command.run, bytecode, assemblyFileName);
-        
+
 #ifdef DEBUG_TTA_DRIVER
       std::cerr << "CMD: " << buildCmd << std::endl;
 #endif
@@ -424,7 +436,30 @@ pocl_tce_run
       if (error != 0)
         POCL_ABORT("Error while running tcecc.");
       }
-    
+  }
+}
+
+void
+pocl_tce_run(void *data, _cl_command_node* cmd)
+{
+  assert(cmd->type == CL_COMMAND_NDRANGE_KERNEL);
+
+  TCEDevice *d = (TCEDevice*)data;
+  uint32_t kernelAddr;
+  unsigned i;
+
+  assert(d != NULL);
+  assert(cmd->command.run.kernel);
+  assert(cmd->command.run.tmp_dir);
+
+  if (d->isNewKernel(&(cmd->command.run))) {
+    std::string assemblyFileName(cmd->command.run.tmp_dir);
+    assemblyFileName += "/parallel.tpef";
+
+    std::string kernelMdSymbolName = "_";
+    kernelMdSymbolName += cmd->command.run.kernel->name;
+    kernelMdSymbolName += "_md";
+
     try {
       d->loadProgramToDevice(assemblyFileName);
       d->restartProgram();
@@ -808,4 +843,101 @@ pocl_tce_read_rect (void *data,
           + buffer_slice_pitch * k;
         pocl_tce_write (data, h_ptr, device_ptr, offset, region[0]);
       }
+}
+
+static void tce_command_scheduler (TCEDevice *d) 
+{
+  _cl_command_node *node;
+  
+  /* execute commands from ready list */
+  while ((node = d->ready_list))
+    {
+      assert (pocl_command_is_ready(node->event));
+      CDL_DELETE (d->ready_list, node); 
+      pthread_mutex_unlock (&d->cq_lock);
+      assert (node->event->status == CL_SUBMITTED);
+      if (node->type == CL_COMMAND_NDRANGE_KERNEL)
+        pocl_tce_compile_submitted_kernels(node);
+      pocl_exec_command(node);
+      pthread_mutex_lock (&d->cq_lock);
+    }
+    
+  return;
+}
+
+void
+pocl_tce_submit (_cl_command_node *node, cl_command_queue /*cq*/)
+{
+  TCEDevice *d = (TCEDevice*)node->device->data;
+  cl_event *event = &(node->event);
+
+  POCL_LOCK (d->cq_lock);
+  POCL_UPDATE_EVENT_SUBMITTED(event);
+  pocl_command_push(node, &d->ready_list, &d->command_list);
+
+  tce_command_scheduler (d);
+
+  POCL_UNLOCK (d->cq_lock);
+
+  return;
+}
+
+void pocl_tce_flush (cl_device_id device, cl_command_queue /*cq*/)
+{
+  TCEDevice *d = (TCEDevice*)device->data;
+
+  POCL_LOCK (d->cq_lock);
+  tce_command_scheduler (d);
+  POCL_UNLOCK (d->cq_lock);
+}
+
+void
+pocl_tce_push_command (_cl_command_node *node)
+{
+  TCEDevice *d = (TCEDevice*)node->device->data;
+
+  pocl_command_push(node, &d->ready_list, &d->command_list);
+
+}
+
+void
+pocl_tce_join(cl_device_id device, cl_command_queue /*cq*/)
+{
+  TCEDevice *d = (TCEDevice*)device->data;
+
+  POCL_LOCK (d->cq_lock);
+  tce_command_scheduler (d);
+  POCL_UNLOCK (d->cq_lock);
+
+  return;
+}
+
+void
+pocl_tce_notify (cl_device_id device, cl_event event)
+{
+  TCEDevice *d = (TCEDevice*)device->data;
+  _cl_command_node * volatile node = event->command;
+  
+  POCL_LOCK_OBJ (event);
+  if (!(node->ready) && pocl_command_is_ready(node->event))
+    {
+      node->ready = 1;
+      POCL_UNLOCK_OBJ (event);
+      if (node->event->status == CL_SUBMITTED)
+        {
+          POCL_LOCK (d->cq_lock);
+          CDL_DELETE (d->command_list, node);
+          CDL_PREPEND (d->ready_list, node);
+          tce_command_scheduler (d);
+          POCL_UNLOCK (d->cq_lock);
+        }
+      return;
+    }
+  POCL_UNLOCK_OBJ (event);
+}
+
+void
+pocl_tce_broadcast (cl_event event)
+{
+  pocl_broadcast (event);
 }

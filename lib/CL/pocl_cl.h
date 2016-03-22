@@ -46,7 +46,8 @@
 #include "pocl_tracing.h"
 #include "pocl_debug.h"
 #include "pocl_hash.h"
-
+#include "pocl_runtime_config.h"
+#include "common.h"
 
 #if __STDC_VERSION__ < 199901L
 # if __GNUC__ >= 2
@@ -71,23 +72,25 @@ typedef pthread_mutex_t pocl_lock_t;
 #define POCL_LOCK(__LOCK__) pthread_mutex_lock (&(__LOCK__))
 #define POCL_UNLOCK(__LOCK__) pthread_mutex_unlock (&(__LOCK__))
 #define POCL_INIT_LOCK(__LOCK__) pthread_mutex_init (&(__LOCK__), NULL)
-#define POCL_DESTROY_LOCK(__LOCK__) pthread_mutex_destroy (&(__LOCK__))
+/* We recycle OpenCL objects by not actually freeing them until the
+   very end. Thus, the lock should not be destoryed at the refcount 0. */
+#define POCL_DESTROY_LOCK(__LOCK__) pthread_mutex_destroy (&(__LOCK__)) 
 
 #define POCL_LOCK_OBJ(__OBJ__) POCL_LOCK((__OBJ__)->pocl_lock)
 #define POCL_UNLOCK_OBJ(__OBJ__) POCL_UNLOCK((__OBJ__)->pocl_lock)
 
-#define POCL_RELEASE_OBJECT(__OBJ__, __NEW_REFCOUNT__)  \
-  do {                                                  \
-    POCL_LOCK_OBJ (__OBJ__);                            \
-    __NEW_REFCOUNT__ = --(__OBJ__)->pocl_refcount;      \
-    POCL_UNLOCK_OBJ (__OBJ__);                          \
-    if (__NEW_REFCOUNT__ == 0) POCL_DESTROY_LOCK ((__OBJ__)->pocl_lock); \
+#define POCL_RELEASE_OBJECT(__OBJ__, __NEW_REFCOUNT__)                  \
+  do {                                                                  \
+    POCL_LOCK_OBJ (__OBJ__);                                            \
+    __NEW_REFCOUNT__ = --(__OBJ__)->pocl_refcount;                      \
+    assert((__OBJ__)->pocl_refcount >= 0);                              \
+    POCL_UNLOCK_OBJ (__OBJ__);                                          \
   } while (0)
 
 #define POCL_RETAIN_OBJECT(__OBJ__)             \
   do {                                          \
     POCL_LOCK_OBJ (__OBJ__);                    \
-    (__OBJ__)->pocl_refcount++;                   \
+    ++((__OBJ__)->pocl_refcount);               \
     POCL_UNLOCK_OBJ (__OBJ__);                  \
   } while (0)
 
@@ -120,7 +123,7 @@ typedef pthread_mutex_t pocl_lock_t;
 /* Declares the generic pocl object attributes inside a struct. */
 #define POCL_OBJECT \
   pocl_lock_t pocl_lock; \
-  int pocl_refcount 
+  volatile int pocl_refcount 
 
 #define POCL_OBJECT_INIT \
   POCL_LOCK_INITIALIZER, 0
@@ -187,6 +190,9 @@ typedef struct pocl_argument {
   void *value;
 } pocl_argument;
 
+
+typedef struct event_node event_node;
+
 /**
  * Enumeration for kernel argument types
  */
@@ -210,12 +216,61 @@ typedef struct pocl_argument_info {
 
 struct pocl_device_ops {
   const char *device_name;
+  void *shared_data; /* data to be shared by a devices of same type */
   void (*init_device_infos) (struct _cl_device_id*);
   /* implementation */
+
+  /* New driver api extension for out-of-order execution and
+     asynchronous devices.
+     See this for reference: http://URN.fi/URN:NBN:fi:tty-201412051583
+     See basic and pthread driver for reference. */
+
+  /* submit gives the command for the device. The command may be left in the cq
+     or stored to the device driver owning the cq. */
+  void (*submit) (_cl_command_node *node, cl_command_queue cq);
+
+  /* join is called by clFinish and this function blocks until all the enqueued
+     commands are finished. */
+  void (*join) (cl_device_id device, cl_command_queue cq);
+
+  /* flush is called when clFlush is called. This function ensures that
+     commands will be eventually executed. It is up to the device what happens
+     here, if anything. See basic and pthread for reference. */
+  void (*flush) (cl_device_id device, cl_command_queue cq);
+
+  /* notify is used to communicate to a device driver that an event, it has
+     been waiting, has been completed. */
+  void (*notify) (cl_device_id device, cl_event event);
+
+  /* broadcast is(has to be) called by the device driver when a command is
+     completed.
+     It is used to broadcast notifications to device drivers waiting
+     this event to complete.
+     There is a default implementation for this. Use it if there is no need
+     to do anything special here. */
+  void (*broadcast) (cl_event event);
+
+  /* wait_event is blocking the execution until the waited event is complete.*/
+  void (*wait_event) (cl_device_id device, cl_event event);
+
+  /* update_event is an alternative way of handling event status changes if
+     something device spesific needs to be done when the status of the event
+     changes.
+     this function is called POCL_UPDATE_EVENT_* macros if available.
+     may be NULL, no need to implement if not needed. */
+  void (*update_event) (cl_device_id device, cl_event event, cl_int status);
+
+  /* free_event_data may be called when event is freed. Event data may only be
+     used by the device driver owning the corresponding command.
+     No need to implement this if the device does not need any event data. */
+  void (*free_event_data) (cl_event event);
+
+  /* /New driver api extension */
+
   void (*uninit) (cl_device_id device);
   unsigned int (*probe) (struct pocl_device_ops *ops);
   void (*init) (cl_device_id device, const char *parameters);
-  cl_int (*alloc_mem_obj) (cl_device_id device, cl_mem mem_obj);
+  cl_int (*alloc_mem_obj) (cl_device_id device, cl_mem mem_obj, void* host_ptr);
   void *(*create_sub_buffer) (void *data, void* buffer, size_t origin, size_t size);
   void (*free) (cl_device_id device, cl_mem mem_obj);
   void (*free_ptr) (cl_device_id device, void* mem_ptr);
@@ -250,7 +305,7 @@ struct pocl_device_ops {
                      size_t dst_row_pitch,
                      size_t dst_slice_pitch);
 
-void (*fill_rect) (void *data,
+  void (*fill_rect) (void *data,
                    void *__restrict__ const device_ptr,
                    const size_t *__restrict__ const buffer_origin,
                    const size_t *__restrict__ const region,
@@ -259,19 +314,19 @@ void (*fill_rect) (void *data,
                    void *fill_pixel,
                    size_t pixel_size);
 
-void (*memfill) (void *ptr,
-                 size_t size,
-                 size_t offset,
-                 const void* pattern,
-                 size_t pattern_size);
+  void (*memfill) (void *ptr,
+                   size_t size,
+                   size_t offset,
+                   const void* pattern,
+                   size_t pattern_size);
 
   /* Maps 'size' bytes of device global memory at buf_ptr + offset to 
      host-accessible memory. This might or might not involve copying 
      the block from the device. */
   void* (*map_mem) (void *data, void *buf_ptr, size_t offset, size_t size, void *host_ptr);
   void* (*unmap_mem) (void *data, void *host_ptr, void *device_start_ptr, size_t size);
-  
-  void (*compile_submitted_kernels) (_cl_command_node* cmd);
+
+  void (*compile_kernel) (_cl_command_node* cmd, cl_kernel kernel, cl_device_id device);
   void (*run) (void *data, _cl_command_node* cmd);
   void (*run_native) (void *data, _cl_command_node* cmd);
 
@@ -281,6 +336,8 @@ void (*memfill) (void *ptr,
      build options that are required for the device. The caller
      owns the returned string. */
   char* (*init_build) (void *data);
+
+  void (*init_target_machine) (void *data, void *target_machine);
 
   char* (*build_hash) (cl_device_id device);
 
@@ -414,6 +471,7 @@ struct _cl_device_id {
   cl_command_queue_properties on_host_queue_props;
 
   struct pocl_device_ops *ops; /* Device operations, shared amongst same devices */
+
 };
 
 #define DEVICE_SVM_FINEGR(dev) (dev->svm_caps & (CL_DEVICE_SVM_FINE_GRAIN_BUFFER \
@@ -451,6 +509,14 @@ struct _cl_context {
 
 };
 
+typedef struct _pocl_data_sync_item pocl_data_sync_item;
+struct _pocl_data_sync_item {
+  unsigned int volatile event_id;
+  cl_event volatile event;
+  pocl_data_sync_item *volatile next;
+};
+
+struct _cl_event;
 struct _cl_command_queue {
   POCL_ICD_OBJECT
   POCL_OBJECT;
@@ -459,12 +525,17 @@ struct _cl_command_queue {
   cl_device_id device;
   cl_command_queue_properties properties;
   /* implementation */
-  _cl_command_node *root;
+  cl_event events; /* events of the enqueued commands in enqueue order */
+  _cl_command_node * volatile root;
+  struct _cl_event * volatile barrier;
+  volatile int command_count; /* counter for unfinished command enqueued */
+  volatile pocl_data_sync_item last_event;
 };
+
 
 /* memory identifier: id to point the global memory where memory resides 
                       + pointer to actual data */
-typedef struct _pocl_mem_identifier{
+typedef struct _pocl_mem_identifier {
   int global_mem_id;
   void* mem_ptr;
 } pocl_mem_identifier;
@@ -490,12 +561,20 @@ struct _cl_mem {
      The location of the device's buffer ptr is determined by
      the device's dev_id. */
   pocl_mem_identifier *device_ptrs;
+  /* device that allocated, and is going to free, 
+     the shared system mem allocation */
+  cl_device_id shared_mem_allocation_owner;
+  /* device where this mem obj resides */
+  volatile cl_device_id owning_device;
+  /* latest event assosiated with the buffer, set NULL when event completed */
+  volatile cl_event latest_event;
   /* A linked list of regions of the buffer mapped to the 
      host memory */
   mem_mapping_t *mappings;
   /* in case this is a sub buffer, this points to the parent
      buffer */
   cl_mem_t *parent;
+
   /* Image flags */
   cl_bool                 is_image;
   cl_channel_order        image_channel_order;
@@ -511,9 +590,11 @@ struct _cl_mem {
   cl_uint                 num_mip_levels;
   cl_uint                 num_samples;
   cl_mem                  buffer;
-  /* Pipe specific */
-  cl_uint packet_size;
-  cl_uint max_packets;
+
+  /* pipe flags */
+  cl_bool                 is_pipe;
+  size_t                  pipe_packet_size;
+  size_t                  pipe_max_packets;
 };
 
 typedef uint8_t SHA1_digest_t[SHA1_DIGEST_SIZE * 2 + 1];
@@ -586,6 +667,13 @@ struct event_callback_item
   struct event_callback_item *next;
 };
 
+
+struct event_node
+{
+  cl_event event;
+  event_node * volatile next;
+};
+
 typedef struct _cl_event _cl_event;
 struct _cl_event {
   POCL_ICD_OBJECT
@@ -594,26 +682,38 @@ struct _cl_event {
   cl_command_queue queue;
   cl_command_type command_type;
   _cl_command_node *command;
+  unsigned int id;
 
   /* list of callback functions */
-  event_callback_item* callback_list;
+  event_callback_item *volatile callback_list;
+
+  /* list of devices needing completion notification for this event */
+  event_node * volatile notify_list;
+  event_node * volatile wait_list;
+
+  /* OoO doesn't use sync points -> put used buffers here */
+  cl_mem *mem_objs;
+  int num_buffers;
 
   /* The execution status of the command this event is monitoring. */
-  cl_int status;
+  volatile cl_int status;
 
   /* Profiling data: time stamps of the different phases of execution. */
   cl_ulong time_queue;  /* the enqueue time */
   cl_ulong time_submit; /* the time the command was submitted to the device */
   cl_ulong time_start;  /* the time the command actually started executing */
-  cl_ulong time_end;    /* the finish time of the command */   
+  cl_ulong time_end;    /* the finish time of the command */
+
+  void *data; /* Device specific data */  
 
   /* impicit event = an event for pocl's internal use, not visible to user */
   int implicit_event;
   _cl_event * volatile next;
+  _cl_event * volatile prev;
 };
 
-typedef struct _cl_sampler cl_sampler_t;
 
+typedef struct _cl_sampler cl_sampler_t;
 struct _cl_sampler {
   POCL_ICD_OBJECT
   cl_bool             normalized_coords;
@@ -626,11 +726,15 @@ struct _cl_sampler {
     if ((__event) != NULL && (*(__event)) != NULL)                      \
       {                                                                 \
         cl_command_queue __cq = (*(__event))->queue;                    \
-        (*(__event))->status = CL_QUEUED;                               \
+        if ((__cq)->device->ops->update_event)                   \
+          (__cq)->device->ops->update_event((__cq)->device, (*__event), CL_QUEUED);    \
+        else {                                                          \
+          (*(__event))->status = CL_QUEUED;                             \
+          if (__cq && __cq->properties & CL_QUEUE_PROFILING_ENABLE)     \
+            (*(__event))->time_queue =                                  \
+              __cq->device->ops->get_timer_value(__cq->device->data);   \
+        }                                                               \
         pocl_event_updated(*(__event), CL_QUEUED);                      \
-        if (__cq && __cq->properties & CL_QUEUE_PROFILING_ENABLE)       \
-          (*(__event))->time_queue =                                    \
-            __cq->device->ops->get_timer_value(__cq->device->data);     \
       }                                                                 \
   } while (0)                                                           \
 
@@ -639,12 +743,16 @@ struct _cl_sampler {
     if ((__event) != NULL && (*(__event)) != NULL)                      \
       {                                                                 \
         assert((*(__event))->status == CL_QUEUED);                      \
-        (*(__event))->status = CL_SUBMITTED;                            \
+         cl_command_queue __cq = (*(__event))->queue;                    \
+        if ((__cq)->device->ops->update_event)                   \
+          (__cq)->device->ops->update_event((__cq)->device, (*(__event)), CL_SUBMITTED);    \
+        else {                                                          \
+          (*(__event))->status = CL_SUBMITTED;                          \
+          if (__cq && __cq->properties & CL_QUEUE_PROFILING_ENABLE)     \
+            (*(__event))->time_submit =                                 \
+              __cq->device->ops->get_timer_value(__cq->device->data);   \
+        }                                                               \
         pocl_event_updated(*(__event), CL_SUBMITTED);                   \
-        cl_command_queue __cq = (*(__event))->queue;                    \
-        if (__cq && __cq->properties & CL_QUEUE_PROFILING_ENABLE)       \
-          (*(__event))->time_submit =                                   \
-            __cq->device->ops->get_timer_value(__cq->device->data);     \
       }                                                                 \
   } while (0)                                                           \
 
@@ -653,12 +761,16 @@ struct _cl_sampler {
     if (__event != NULL && (*(__event)) != NULL)                        \
       {                                                                 \
         assert((*(__event))->status == CL_SUBMITTED);                   \
-        (*(__event))->status = CL_RUNNING;                              \
-        pocl_event_updated(*(__event), CL_RUNNING);                     \
         cl_command_queue __cq = (*(__event))->queue;                    \
-        if (__cq && __cq->properties & CL_QUEUE_PROFILING_ENABLE)       \
-          (*(__event))->time_start =                                    \
-            __cq->device->ops->get_timer_value(__cq->device->data);     \
+        if ((__cq)->device->ops->update_event)                   \
+          (__cq)->device->ops->update_event((__cq)->device, (*(__event)), CL_RUNNING);    \
+        else {                                                          \
+          (*(__event))->status = CL_RUNNING;                            \
+          if (__cq && __cq->properties & CL_QUEUE_PROFILING_ENABLE)     \
+            (*(__event))->time_start =                                  \
+              __cq->device->ops->get_timer_value(__cq->device->data);   \
+        }                                                               \
+        pocl_event_updated(*(__event), CL_RUNNING);                     \
       }                                                                 \
   } while (0)                                                           \
 
@@ -667,15 +779,27 @@ struct _cl_sampler {
     if ((__event) != NULL && (*(__event)) != NULL)                      \
       {                                                                 \
         assert((*(__event))->status == CL_RUNNING);                     \
-        (*(__event))->status = CL_COMPLETE;                             \
-        pocl_event_updated(*(__event), CL_COMPLETE);                    \
         cl_command_queue __cq = (*(__event))->queue;                    \
-        if (__cq && __cq->properties & CL_QUEUE_PROFILING_ENABLE)       \
-          (*(__event))->time_end =                                      \
-            __cq->device->ops->get_timer_value(__cq->device->data);     \
+        assert((*(__event))->status == CL_RUNNING);                     \
+        if ((__cq)->device->ops->update_event)                          \
+          (__cq)->device->ops->update_event((__cq)->device, (*(__event)), CL_COMPLETE); \
+        else{                                                           \
+          pocl_mem_objs_cleanup ((*__event));                           \
+          POCL_LOCK_OBJ (*(__event));                                   \
+          (*(__event))->status = CL_COMPLETE;                           \
+          if ((__cq)->properties & CL_QUEUE_PROFILING_ENABLE){          \
+            (*(__event))->time_end =                                    \
+            (__cq)->device->ops->get_timer_value((__cq)->device->data); \
+          }                                                             \
+          (__cq)->device->ops->broadcast(*(__event));                   \
+          POCL_UNLOCK_OBJ (*(__event));                                 \
+          pocl_update_command_queue(*(__event));                        \
+        }                                                               \
+        pocl_event_updated(*(__event), CL_COMPLETE);                    \
+        clReleaseEvent (*(__event));                                    \
       }                                                                 \
   } while (0)                                                           \
-
+    
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 

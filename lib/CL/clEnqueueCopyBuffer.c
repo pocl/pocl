@@ -1,8 +1,9 @@
 /* OpenCL runtime library: clEnqueueCopyBuffer()
 
-   Copyright (c) 2011-2012 Universidad Rey Juan Carlos and
+   Copyright (c) 2011-2015 Universidad Rey Juan Carlos and
                            Pekka Jääskeläinen / Tampere Univ. of Tech.
-   
+                           Ville Korhonen / Tampere Univ. of Tech.
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights
@@ -42,6 +43,7 @@ CL_API_SUFFIX__VERSION_1_0
   unsigned i;
   _cl_command_node *cmd = NULL;
   int errcode;
+  cl_mem buffers[2] = {src_buffer, dst_buffer};
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
@@ -76,19 +78,23 @@ CL_API_SUFFIX__VERSION_1_0
 
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_COPY_BUFFER, 
                                  event, num_events_in_wait_list, 
-                                 event_wait_list);
+                                 event_wait_list, 2, buffers);
   if (errcode != CL_SUCCESS)
     return errcode;
 
   cmd->command.copy.src_buffer = src_buffer;
+  cmd->command.copy.src_offset = src_offset;
+  cmd->command.copy.src_dev = src_buffer->owning_device;
+
   cmd->command.copy.dst_buffer = dst_buffer;
-  
-  POname(clRetainMemObject)(src_buffer);
-  POname(clRetainMemObject)(dst_buffer);
+  cmd->command.copy.dst_offset = dst_offset;
+  if (dst_buffer->owning_device)
+    cmd->command.copy.dst_dev = dst_buffer->owning_device;
+  else
+    cmd->command.copy.dst_dev = device;
 
   cmd->command.copy.data = device->data;
-  /* TODO: call device->buf_offset() or similar as device_ptrs might not be
-     actual buffer pointers but pointers to a book keeping structure. */
+
   cmd->command.copy.src_ptr = 
     (char*)src_buffer->device_ptrs[device->dev_id].mem_ptr;
   cmd->command.copy.src_offset = src_offset;
@@ -98,6 +104,11 @@ CL_API_SUFFIX__VERSION_1_0
   cmd->command.copy.dst_offset = dst_offset;
   cmd->command.copy.cb = size;
 
+  POname(clRetainMemObject)(src_buffer);
+  POname(clRetainMemObject)(dst_buffer);
+
+  dst_buffer->owning_device = command_queue->device;
+  
   pocl_command_enqueue(command_queue, cmd);
 
   return CL_SUCCESS;

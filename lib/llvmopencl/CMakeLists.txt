@@ -53,6 +53,8 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LLVM_CFLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS}")
 
 include_directories(${LLVM_INCLUDE_DIRS})
+include_directories(../CL)
+include_directories(../CL/devices)
 
 if(MSVC)
   set_source_files_properties( ${LLVMPASSES_SOURCES} PROPERTIES LANGUAGE CXX )

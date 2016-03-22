@@ -45,9 +45,13 @@ SUBDIRS += tce
 libpocl_devices_la_LIBADD += tce/libpocl-devices-tce.la
 endif
 
+# may be needed by some implementations
+dist_pkgdata_DATA = bufalloc.h bufalloc.c
+
 if BUILD_HSA
 SUBDIRS += hsa
 libpocl_devices_la_LIBADD += hsa/libpocl-devices-hsa.la
 endif
 
 EXTRA_DIST = CMakeLists.txt
+

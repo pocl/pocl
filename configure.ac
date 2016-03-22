@@ -1761,3 +1761,8 @@ echo
 echo Basic and pthreads devices optimized for:
 echo architecture: $host_cpu
 echo cpu variant: $llc_host_cpu
+echo
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+echo "NOTE: Autotools-based build system is deprecated and will be removed"
+echo "      soon. Please switch to cmake and report any problems you find."
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"

@@ -23,15 +23,19 @@
 
 #include "pocl_cl.h"
 #include "utlist.h"
+#include "assert.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clFlush)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 {
-  /* "clFlush only guarantees that all queued commands to command_queue
-     will eventually be submitted to the appropriate device. There is no guarantee 
-     that they will be complete after clFlush returns." */
-  /* This could be implemented as an asyc clFinish(), executing it in another
-     thread? */
-  return POname(clFinish) (command_queue);
+
+  /* Some AMD tests assume that flushed commands will be asynchronously 
+     executed. Call join here so that possible blocking device can execute 
+     commands here. */
+
+  if(command_queue->device->ops->flush)
+    command_queue->device->ops->flush (command_queue->device, command_queue);
+  
+  return CL_SUCCESS;
 }
 POsym(clFlush)

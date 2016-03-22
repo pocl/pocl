@@ -330,9 +330,6 @@ serialize_kernel_cachedir(cl_kernel kernel, unsigned device_i, unsigned char* bu
   cl_program program = kernel->program;
   char path[POCL_FILENAME_LENGTH];
   char basedir[POCL_FILENAME_LENGTH];
-  char* p;
-  size_t len;
-  unsigned char* orig_buffer = buffer;
 
   pocl_cache_program_path(basedir, program, device_i);
   size_t basedir_len = strlen(basedir);

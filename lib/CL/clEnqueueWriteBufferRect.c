@@ -43,6 +43,7 @@ POname(clEnqueueWriteBufferRect)(cl_command_queue command_queue,
 {
   cl_device_id device;
   unsigned i;
+  _cl_command_node *cmd;
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
@@ -90,37 +91,31 @@ POname(clEnqueueWriteBufferRect)(cl_command_queue command_queue,
     }
   assert(i < command_queue->context->num_devices);
 
+  POname(clRetainMemObject) (buffer);
 
-  /* execute directly */
-  /* TODO: enqueue the write_rect if this is a non-blocking read (see
-     clEnqueueWriteBuffer) */
-  if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
-    {
-      /* wait for the event in event_wait_list to finish */
-      POCL_ABORT_UNIMPLEMENTED("clEnqueueReadBufferRect: Out-of-order queue");
-    }
-  else
-    {
-      /* in-order queue - all previously enqueued commands must 
-       * finish before this read */
-      // ensure our buffer is not freed yet
-      POname(clRetainMemObject) (buffer);
-      POname(clFinish)(command_queue);
-    }
+  pocl_create_command (&cmd, command_queue, CL_COMMAND_WRITE_BUFFER_RECT,
+                       event, num_events_in_wait_list, event_wait_list, 1,
+                       &buffer);
 
-  POCL_UPDATE_EVENT_RUNNING(event);
+  cmd->command.write_image.device_ptr =
+    buffer->device_ptrs[device->dev_id].mem_ptr;
+  cmd->command.write_image.host_ptr = ptr;
+  memcpy (&cmd->command.write_image.origin,
+          buffer_origin, sizeof (size_t) * 3);
+  memcpy (&cmd->command.write_image.h_origin,
+          host_origin, sizeof (size_t) * 3);
+  memcpy (&cmd->command.write_image.region, region, sizeof (size_t) * 3);
+  cmd->command.write_image.h_rowpitch = host_row_pitch;
+  cmd->command.write_image.h_slicepitch = host_slice_pitch;
+  cmd->command.write_image.b_rowpitch = buffer_row_pitch;
+  cmd->command.write_image.b_slicepitch = buffer_slice_pitch;
+  cmd->command.write_image.buffer = buffer;
 
-  /* TODO: offset computation doesn't work in case the ptr is not 
-     a direct pointer */
-  device->ops->write_rect (device->data, ptr, 
-                           buffer->device_ptrs[device->dev_id].mem_ptr,
-                           buffer_origin, host_origin, region,
-                           buffer_row_pitch, buffer_slice_pitch,
-                           host_row_pitch, host_slice_pitch);
+  buffer->owning_device = command_queue->device;
+  pocl_command_enqueue (command_queue, cmd);
 
-  POCL_UPDATE_EVENT_COMPLETE(event);
-
-  POname(clReleaseMemObject) (buffer);
+  if (blocking_write)
+    POname(clFinish)(command_queue);
 
   return CL_SUCCESS;
 }

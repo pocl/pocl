@@ -110,7 +110,7 @@ CL_API_SUFFIX__VERSION_1_2
   */
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_FILL_IMAGE, 
                                  event, num_events_in_wait_list, 
-                                 event_wait_list);
+                                 event_wait_list, 1, &image);
   if (errcode != CL_SUCCESS)
     goto ERROR_CLEAN;
 
@@ -124,6 +124,9 @@ CL_API_SUFFIX__VERSION_1_2
   cmd->command.fill_image.slicepitch = image->image_slice_pitch;
   cmd->command.fill_image.fill_pixel = fill_pixel;
   cmd->command.fill_image.pixel_size = image->image_elem_size * image->image_channels;
+
+  POname(clRetainMemObject) (image);
+
   pocl_command_enqueue(command_queue, cmd);
   
   POCL_MEM_FREE(supported_image_formats);

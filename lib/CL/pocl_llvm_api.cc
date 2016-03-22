@@ -121,6 +121,9 @@ LLVMContext *GlobalContext() {
 
 static llvm::sys::Mutex kernelCompilerLock;
 
+/* Global pocl device to be used by passes if needed */
+cl_device_id currentPoclDevice = NULL;
+
 static void InitializeLLVM();
 
 //#define DEBUG_POCL_LLVM_API
@@ -417,6 +420,10 @@ int pocl_llvm_build_program(cl_program program,
   // Let the vectorizer or another optimization pass unroll the loops,
   // in case it sees beneficial.
   cg.UnrollLoops = false;
+  // Lets leave vectorization to later compilation phase
+  cg.VectorizeLoop = false;
+  cg.VectorizeSLP = false;
+  cg.VectorizeBB = false;
   // This workarounds a Frontend codegen issues with an illegal address
   // space cast which is later flattened (and thus implicitly fixed) in
   // the TargetAddressSpaces. See:  https://github.com/pocl/pocl/issues/195
@@ -662,7 +669,6 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 
   int i;
   llvm::Module *input = NULL;
-
   assert(program->devices[device_i]->llvm_target_triplet && 
          "Device has no target triple set"); 
 
@@ -752,7 +758,6 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   {
     llvm::Type *t = ii->getType();
     kernel->arg_info[i].type = POCL_ARG_TYPE_NONE;
-
     const llvm::PointerType *p = dyn_cast<llvm::PointerType>(t);
     if (p && !ii->hasByValAttr()) {
       kernel->arg_info[i].type = POCL_ARG_TYPE_POINTER;
@@ -775,7 +780,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
     } else {
       kernel->arg_info[i].is_local = false;
     }
-
+        
     if (pocl::is_image_type(*t))
       {
         kernel->arg_info[i].type = POCL_ARG_TYPE_IMAGE;
@@ -786,7 +791,6 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
       }
     i++;  
   }
-  
   // fill 'kernel->reqd_wg_size'
   kernel->reqd_wg_size = (int*)malloc(3*sizeof(int));
 
@@ -939,9 +943,16 @@ static TargetMachine* GetTargetMachine(cl_device_id device,
 
   const Target *TheTarget = 
     TargetRegistry::lookupTarget("", TheTriple, Error);
-  if (!TheTarget)
-    return nullptr;
-  assert(TheTarget->getName() != std::string("cpp"));
+  
+  // In LLVM 3.4 and earlier, the target registry falls back to 
+  // the cpp backend in case a proper match was not found. In 
+  // that case simply do not use target info in the compilation 
+  // because it can be an off-tree target not registered at
+  // this point (read: TCE).
+  if (!TheTarget || TheTarget->getName() == std::string("cpp")) {
+    return 0;
+  }
+  
   // Package up features to be passed to target/subtarget
   std::string FeaturesStr;
   if (MAttrs.size()) {
@@ -951,10 +962,17 @@ static TargetMachine* GetTargetMachine(cl_device_id device,
     FeaturesStr = Features.getString();
   }
 
-  return TheTarget->createTargetMachine(TheTriple.getTriple(),
-                                        MCPU, FeaturesStr, GetTargetOptions(),
-                                        Reloc::PIC_, CodeModel::Default,
-                                        CodeGenOpt::Aggressive);
+  TargetMachine* TM = TheTarget->createTargetMachine(TheTriple.getTriple(),
+                                                     MCPU, FeaturesStr, 
+                                                     GetTargetOptions(),
+                                                     Reloc::PIC_, 
+                                                     CodeModel::Default,
+                                                     CodeGenOpt::Aggressive);
+  assert (TM != NULL && "llvm target has no targetMachine constructor"); 
+  if (device->ops->init_target_machine)
+    device->ops->init_target_machine(device->data, TM);
+
+  return TM;
 }
 /* helpers copied from LLVM opt END */
 
@@ -984,15 +1002,17 @@ static PassManager& kernel_compiler_passes
 {
   static std::map<cl_device_id, PassManager*> kernel_compiler_passes;
 
+  bool SPMDDevice = device->spmd;
+
+  currentPoclDevice = device;
+
   if (kernel_compiler_passes.find(device) != 
       kernel_compiler_passes.end())
     {
       return *kernel_compiler_passes[device];
     }
-
+  
   Triple triple(device->llvm_target_triplet);
-
-  bool SPMDDevice = device->spmd;
 
   PassRegistry &Registry = *PassRegistry::getPassRegistry();
 
@@ -1105,8 +1125,8 @@ static PassManager& kernel_compiler_passes
       passes.push_back("workitemrepl");
       //passes.push_back("print-module");
       passes.push_back("workitemloops");
-      passes.push_back("workgroup");
   }
+  passes.push_back("workgroup");
   passes.push_back("allocastoentry");
   passes.push_back("target-address-spaces");
   // Later passes might get confused (and expose possible bugs in them) due to
@@ -1468,8 +1488,8 @@ pocl_update_program_llvm_irs(cl_program program,
                              cl_device_id device)
 {
   SMDiagnostic Err;
-
   char program_bc_path[POCL_FILENAME_LENGTH];
+  llvm::MutexGuard lockHolder(kernelCompilerLock);
   pocl_cache_program_bc_path(program_bc_path, program, device_i);
 
   if (!pocl_exists(program_bc_path))
@@ -1589,6 +1609,8 @@ pocl_llvm_codegen(cl_kernel kernel,
                   const char *infilename,
                   const char *outfilename)
 {
+    llvm::MutexGuard lockHolder(kernelCompilerLock);
+
     SMDiagnostic Err;
 
     if (pocl_exists(outfilename))

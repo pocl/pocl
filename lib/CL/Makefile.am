@@ -55,6 +55,7 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clEnqueueReadBufferRect.c	\
                    clEnqueueMapBuffer.c	\
                    clEnqueueMapBuffer.h	\
+                   clEnqueueMigrateMemObjects.c \
                    clEnqueueUnmapMemObject.c	\
                    clEnqueueMarkerWithWaitList.c \
                    clReleaseMemObject.c		\
@@ -90,6 +91,7 @@ libpocl_la_SOURCES = clCreateContextFromType.c	\
                    clFinish.c			\
                    clFlush.c			\
                    clEnqueueBarrier.c		\
+                   clEnqueueBarrierWithWaitList.c \
                    clEnqueueMarker.c		\
                    clGetKernelWorkGroupInfo.c	\
                    clGetProgramInfo.c		\
@@ -164,7 +166,7 @@ endif
 if TCE_AVAILABLE
 # The ttasim device is written in C++ as it accesses the ttasim library of TCE
 # directly.
-libpocl_la_LDFLAGS += -lstdc++ `@TCE_CONFIG@ --libs`
+libpocl_la_LDFLAGS += -lstdc++ `@TCE_CONFIG@ --libs` -ltce
 endif
 
 if BUILD_HSA

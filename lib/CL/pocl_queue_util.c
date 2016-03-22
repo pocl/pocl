@@ -40,9 +40,13 @@ static cl_command_queue *queue_list = NULL;
 
 #define QUEUE_ALLOC_SIZE 256
 
+int pocl_aborting;
+
 void pocl_finish_all_queues()
 {
   size_t i;
+  if (pocl_aborting)
+    return;
   for (i = 0; i < queue_size; ++i) {
     if (queue_list[i])
       POname(clFinish)(queue_list[i]);
@@ -63,7 +67,7 @@ void pocl_init_queue_list()
   if (!queue_list)
     POCL_ABORT("unable to allocate queue list!");
 
-  atexit(pocl_finish_all_queues);
+  //atexit(pocl_finish_all_queues);
 
   POCL_UNLOCK(queue_lock);
 

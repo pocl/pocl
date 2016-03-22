@@ -120,6 +120,10 @@ class TCEDevice {
   size_t curLocalZ;
 
   uint64_t globalCycleCount;
+
+  pthread_mutex_t cq_lock;
+  _cl_command_node *volatile ready_list;
+  _cl_command_node *volatile command_list;
 };
 
 #endif
@@ -135,7 +139,7 @@ class TCEDevice {
    device global memory. The structures start from 0, the
    buffer storage starts after them. TODO: check from the
    symbol table of the produced program. */
-#define TTA_UNALLOCATED_GLOBAL_SPACE (72*1024)
+#define TTA_UNALLOCATED_GLOBAL_SPACE (16*1024)
 
 #ifdef __cplusplus
 extern "C" {

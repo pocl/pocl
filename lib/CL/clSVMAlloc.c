@@ -32,6 +32,8 @@ POname(clSVMAlloc)(cl_context context,
 {
   unsigned i, p;
 
+  POCL_MSG_PRINT_INFO("clSVMAlloc\n");
+
   POCL_RETURN_ERROR_COND((context == NULL), NULL);
 
   POCL_RETURN_ERROR_ON((!context->svm_allocdev), NULL,
@@ -93,16 +95,25 @@ POname(clSVMAlloc)(cl_context context,
   cl_mem mem = alloca(sizeof(struct _cl_mem));
   mem->flags = CL_MEM_ALLOC_HOST_PTR | CL_MEM_READ_WRITE;
   mem->mem_host_ptr = NULL;
+  mem->context = context;
   mem->size = size;
   pocl_mem_identifier device_ptrs[pocl_num_devices];
   device_ptrs[dev->global_mem_id].mem_ptr = NULL;
   mem->device_ptrs = device_ptrs;
 
-  cl_int errcode = dev->ops->alloc_mem_obj(dev, mem);
+  for (i = 0; i < context->num_devices; ++i)
+    {
+      mem->device_ptrs[i].global_mem_id = context->devices[i]->global_mem_id;
+      mem->device_ptrs[i].mem_ptr = NULL;
+    }
+
+  cl_int errcode = dev->ops->alloc_mem_obj(dev, mem, NULL);
   /* There was a failure to allocate resources */
   POCL_RETURN_ERROR_ON((errcode != CL_SUCCESS), NULL,
                        "Failed to allocate the memory: %u\n", errcode);
-
+  
+  printf("clSVMALLOC return pointer %p\n", 
+         device_ptrs[dev->global_mem_id].mem_ptr);
   return device_ptrs[dev->global_mem_id].mem_ptr;
 
 }

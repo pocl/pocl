@@ -1,6 +1,7 @@
 /* OpenCL runtime library: clEnqueueReadBufferRect()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
+                 2014 Pekka Jääskeläinen
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -44,6 +45,7 @@ POname(clEnqueueReadBufferRect)(cl_command_queue command_queue,
 {
   cl_device_id device;
   unsigned i;
+  _cl_command_node *cmd;
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
@@ -79,39 +81,40 @@ POname(clEnqueueReadBufferRect)(cl_command_queue command_queue,
   if (pocl_buffer_boundcheck_3d(((size_t)-1), host_origin, region, &host_row_pitch,
       &host_slice_pitch, "") != CL_SUCCESS) return CL_INVALID_VALUE;
 
-
   POCL_CHECK_DEV_IN_CMDQ;
 
-  /* execute directly */
-  /* TODO: enqueue the read_rect if this is a non-blocking read (see
-     clEnqueueReadBuffer) */
-  if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
-    {
-      /* wait for the event in event_wait_list to finish */
-      POCL_ABORT_UNIMPLEMENTED("clEnqueueReadBufferRect: Out-of-order queue");
-    }
-  else
-    {
-      /* in-order queue - all previously enqueued commands must 
-       * finish before this read */
-      // ensure our buffer is not freed yet
-      POname(clRetainMemObject) (buffer);
-      POname(clFinish)(command_queue);
-    }
-  POCL_UPDATE_EVENT_SUBMITTED(event);
-  POCL_UPDATE_EVENT_RUNNING(event);
+  POCL_MSG_PRINT_INFO("borigin %u %u %u horigin %u %u %u row_pitch %lu slice pitch "
+                      "%lu host_row_pitch %lu host_slice_pitch %lu\n",
+                      (unsigned)buffer_origin[0], (unsigned)buffer_origin[1], 
+                      (unsigned)buffer_origin[2], 
+                      (unsigned)host_origin[0], (unsigned)host_origin[1], 
+                      (unsigned)host_origin[2], 
+                      (unsigned long)buffer_row_pitch, (unsigned long)buffer_slice_pitch, 
+                      (unsigned long)host_row_pitch, (unsigned long)host_slice_pitch);
+  
+  POname(clRetainMemObject) (buffer);
+  
+  pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_BUFFER_RECT,
+                       event, num_events_in_wait_list, event_wait_list, 1, 
+                       &buffer);
 
-  /* TODO: offset computation doesn't work in case the ptr is not 
-     a direct pointer */
-  device->ops->read_rect(device->data, ptr, 
-                    buffer->device_ptrs[device->dev_id].mem_ptr,
-                    buffer_origin, host_origin, region,
-                    buffer_row_pitch, buffer_slice_pitch,
-                    host_row_pitch, host_slice_pitch);
+  cmd->command.read_image.device_ptr = 
+    buffer->device_ptrs[device->dev_id].mem_ptr;
+  cmd->command.read_image.host_ptr = ptr;
+  memcpy (&cmd->command.read_image.origin, buffer_origin, sizeof (size_t) * 3);
+  memcpy (&cmd->command.read_image.h_origin, host_origin, sizeof (size_t) * 3);
+  memcpy (&cmd->command.read_image.region, region, sizeof (size_t) * 3);
+  cmd->command.read_image.h_rowpitch = host_row_pitch;
+  cmd->command.read_image.h_slicepitch = host_slice_pitch;
+  cmd->command.read_image.b_rowpitch = buffer_row_pitch;
+  cmd->command.read_image.b_slicepitch = buffer_slice_pitch;
+  cmd->command.read_image.buffer = buffer;
 
-  POCL_UPDATE_EVENT_COMPLETE(event);
+  buffer->owning_device = command_queue->device;
+  pocl_command_enqueue (command_queue, cmd);
 
-  POname(clReleaseMemObject) (buffer);
+  if (blocking_read)
+    POname(clFinish)(command_queue);
 
   return CL_SUCCESS;
 }

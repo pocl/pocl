@@ -1,7 +1,6 @@
-/* OpenCL built-in library: get_image_width()
+/* OpenCL built-in library: get_global_offset()
 
-   Copyright (c) 2013-2014 Ville Korhonen, Pekka Jääskeläinen
-                           Tampere University of Technology
+   Copyright (c) 2011 Universidad Rey Juan Carlos
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -22,23 +21,19 @@
    THE SOFTWARE.
 */
 
-#include "templates.h"
+extern unsigned long long _global_offset_x;
+extern unsigned long long _global_offset_y;
+extern unsigned long long _global_offset_z;
 
-#if (__clang_major__ == 3) && (__clang_minor__ >= 5)
-// Clang 3.5 crashes in case trying to cast to the private pointer,
-// adding the global qualifier fixes it. Clang 3.4 crashes if it's
-// there. The issue is in SROA.
-#define ADDRESS_SPACE global
-#else
-#define ADDRESS_SPACE
-#endif
-
-#define IMPLEMENT_GET_IMAGE_WIDTH(__IMGTYPE__)               \
-  int _CL_OVERLOADABLE get_image_width(__IMGTYPE__ image){   \
-    return (*(ADDRESS_SPACE dev_image_t**)&image)->_width;   \
-  }                                                          \
-
-IMPLEMENT_GET_IMAGE_WIDTH(image1d_t)
-IMPLEMENT_GET_IMAGE_WIDTH(image2d_t)
-IMPLEMENT_GET_IMAGE_WIDTH(image3d_t)
+size_t _CL_OVERLOADABLE
+get_global_offset(unsigned int dimindx)
+{
+  switch(dimindx)
+    {
+    case 0: return _global_offset_x;
+    case 1: return _global_offset_y;
+    case 2: return _global_offset_z;
+    default: return 0;
+    }
+}
 

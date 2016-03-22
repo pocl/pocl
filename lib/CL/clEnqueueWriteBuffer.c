@@ -74,19 +74,21 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
   errcode = pocl_create_command (&cmd, command_queue, 
                                  CL_COMMAND_WRITE_BUFFER, 
                                  event, num_events_in_wait_list, 
-                                 event_wait_list);
+                                 event_wait_list, 1, &buffer);
   if (errcode != CL_SUCCESS)
     return errcode;
-  
+
   cmd->command.write.host_ptr = ptr;
   cmd->command.write.device_ptr =
     (char*)buffer->device_ptrs[device->dev_id].mem_ptr;
   cmd->command.write.offset = offset;
   cmd->command.write.cb = cb;
   cmd->command.write.buffer = buffer;
+
   POname(clRetainMemObject) (buffer);
+  buffer->owning_device = command_queue->device;
   pocl_command_enqueue(command_queue, cmd);
-  
+
   if (blocking_write)
     POname(clFinish) (command_queue);
 

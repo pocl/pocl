@@ -60,14 +60,15 @@ void pocl_aligned_free(void* ptr);
 #endif
 
 /* Function for creating events */
-cl_int pocl_create_event (cl_event *event, cl_context context,
-                          cl_command_queue command_queue,
-                          cl_command_type command_type);
+cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
+                          cl_command_type command_type, int num_buffers,
+                          const cl_mem* buffers, cl_context context);
 
 cl_int pocl_create_command (_cl_command_node **cmd,
                             cl_command_queue command_queue,
                             cl_command_type command_type, cl_event *event,
-                            cl_int num_events, const cl_event *wait_list);
+                            cl_int num_events, const cl_event *wait_list,
+                            int num_buffers, const cl_mem *buffers);
 
 
 void pocl_command_enqueue (cl_command_queue command_queue,
@@ -93,8 +94,33 @@ check_copy_overlap(const size_t src_offset[3],
                    const size_t region[3],
                    const size_t row_pitch, const size_t slice_pitch);
 
-void pocl_setup_context(cl_context context);
+/**
+ * Push a command into ready list if all previous events are completed or
+ * in pending_list if the command still has pending dependencies
+ */
+void
+pocl_command_push (_cl_command_node *node, 
+                   _cl_command_node * volatile * ready_list, 
+                   _cl_command_node * volatile * pending_list);
 
+/**
+ * Return true if a command is ready to execute (no more event in wait list
+ * or false if not
+ */
+static inline int
+pocl_command_is_ready(cl_event event)
+{
+  return event->wait_list == NULL;
+}
+
+int
+pocl_update_command_queue (cl_event event);
+
+cl_int 
+pocl_update_mem_obj_sync (cl_command_queue cq, _cl_command_node *cmd, 
+                          cl_mem mem, char operation);
+
+void pocl_setup_context(cl_context context);
 
 /* Helpers for dealing with devices / subdevices */
 
@@ -114,7 +140,6 @@ cl_device_id * pocl_unique_device_list(const cl_device_id * in, cl_uint num, cl_
       assert(i < command_queue->context->num_devices);                       \
     }                                                                        \
   while (0)
-
 
 #ifdef __cplusplus
 }
@@ -175,13 +200,8 @@ cl_device_id * pocl_unique_device_list(const cl_device_id * in, cl_uint num, cl_
     }                                                                   \
   while (0)
 
-
-static const char *pocl_status_to_str[] = {
-  "complete",
-  "running",
-  "submitted",
-  "queued"
-};
+const char*
+pocl_status_to_str (int status);
 
 const char *
 pocl_command_to_str (cl_command_type cmd);

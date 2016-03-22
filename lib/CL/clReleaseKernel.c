@@ -32,15 +32,15 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
   unsigned i;
 
   POCL_RETURN_ERROR_COND((kernel == NULL), CL_INVALID_KERNEL);
-
   POCL_RELEASE_OBJECT (kernel, new_refcount);
 
   if (new_refcount == 0)
     {
-
+      POCL_MSG_PRINT_INFO ("Freeing kernel %p\n", kernel);
       if (kernel->program != NULL)
         {
           /* Find the kernel in the program's linked list of kernels */
+          POCL_LOCK_OBJ (kernel->program);
           for (pk=&kernel->program->kernels; *pk != NULL; pk = &(*pk)->next)
             {
               if (*pk == kernel) break;
@@ -55,6 +55,7 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
           /* Remove the kernel from the program's linked list of
              kernels */
           *pk = (*pk)->next;
+          POCL_UNLOCK_OBJ (kernel->program);
           POname(clReleaseProgram) (kernel->program);
         }
       

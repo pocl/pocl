@@ -49,6 +49,7 @@ build:
 	if [ ! -d $(viennacl_local_src_dir) ]; then cp -aL $(testsuite_src_dir) . ; fi
 	cd $(viennacl_local_src_dir)/build; \
 	cmake \
+		-D OPENCL_LIBRARIES="-lOpenCL" \
 		-D BUILD_TESTING:BOOL=ON \
 		-D BUILD_DOXYGEN_DOCS:BOOL=OFF \
 		-D BUILD_MANUAL:BOOL=OFF \
