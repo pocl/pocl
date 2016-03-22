@@ -84,10 +84,9 @@ poclu_get_any_device( cl_context *context, cl_device_id *device, cl_command_queu
 }
 
 char *
-poclu_read_file(char *filename)
+poclu_read_binfile(char *filename, size_t *len)
 {
   FILE *file;
-  long size;
   char* src;
   
   file = fopen(filename, "r");
@@ -95,8 +94,8 @@ poclu_read_file(char *filename)
     return NULL;
   
   fseek( file, 0, SEEK_END);
-  size = ftell(file);
-  src = (char*)malloc(size+1);
+  *len = ftell(file);
+  src = (char*)malloc(*len + 1);
   if (src == NULL) 
     {
       fclose(file);
@@ -104,12 +103,21 @@ poclu_read_file(char *filename)
     }
 
   fseek(file, 0, SEEK_SET);
-  fread(src, size, 1, file);
+  fread(src, *len, 1, file);
   fclose(file);
-  src[size]=0;
 
   return src;
 }
+
+char *
+poclu_read_file(char *filename)
+{
+  size_t size;
+  char *res = poclu_read_binfile(filename, &size);
+  res[size] = 0;
+  return res;
+}
+
 
 int
 poclu_write_file(char* filemane, char* content, size_t size)

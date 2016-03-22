@@ -99,6 +99,9 @@ poclu_cl_half_to_float(cl_half value);
 POCLU_API char * POCLU_CALL
 poclu_read_file(char* filemane);
 
+POCLU_API char * POCLU_CALL
+poclu_read_binfile(char *filename, size_t *len);
+
 POCLU_API int POCLU_CALL
 poclu_write_file(char* filemane, char* content, size_t size);
 
