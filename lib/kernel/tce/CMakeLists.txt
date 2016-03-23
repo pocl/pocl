@@ -29,10 +29,11 @@ include("bitcode_rules")
 # fails in TCE code gen:
 # SplitVectorResult #0: 0x24c5ae0: v8i16,ch = vaarg 0x20628e8, 0x2423ed0, 0x24c59e0, 0x24c4fe0 [ORD=223] [ID=0]
 # LLVM ERROR: Do not know how to split the result of this operator!
-list(REMOVE_ITEM SOURCES_WITHOUT_VML "printf.c")
+list(REMOVE_ITEM SOURCES_WITHOUT_VML "printf.c" "atomics.cl")
 list(APPEND SOURCES_WITHOUT_VML "printf_constant.c")
 
-
+set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=${TCE_DEVICE_CL_VERSION} ${TCE_DEVICE_EXTENSION_DEFINES}")
+separate_arguments(DEVICE_CL_FLAGS)
 
 # Use TARGET flags:
 # with some additional CLANG_FLAGS
