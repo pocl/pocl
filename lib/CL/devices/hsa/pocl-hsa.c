@@ -383,7 +383,7 @@ char *
 pocl_hsa_build_hash (cl_device_id device)
 {
   char* res = calloc(1000, sizeof(char));
-  strncpy("HSA-%s-%s", device->llvm_target_triplet, device->long_name);
+  snprintf(res, 1000, "HSA-%s-%s", device->llvm_target_triplet, device->long_name);
   return res;
 }
 
