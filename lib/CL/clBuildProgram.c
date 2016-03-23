@@ -165,13 +165,11 @@ CL_API_SUFFIX__VERSION_1_0
 {
   char program_bc_path[POCL_FILENAME_LENGTH];
   int errcode;
-  size_t i;
   int error;
   uint64_t fsize;
   cl_device_id * unique_devlist = NULL;
   char *binary = NULL;
   unsigned device_i = 0, actually_built = 0;
-  const char *user_options = "";
   char *temp_options = NULL;
   char *modded_options = NULL;
   char *token = NULL;
@@ -195,21 +193,16 @@ CL_API_SUFFIX__VERSION_1_0
 
   program->main_build_log[0] = 0;
 
+  size_t size = 512;
+  size_t i = 1; /* terminating char */
+  modded_options = (char*) calloc (512, 1);
+
   if (options != NULL)
     {
       size_t size = 512;
       size_t i = 1; /* terminating char */
-      modded_options = (char*) calloc (size, 1);
+      temp_options = strdup(options);
 
-      if (strstr(options, "-cl-kernel-arg-info"))
-        temp_options = strdup (options);
-      else
-        {
-          temp_options = 
-            calloc (1, strlen(options) + 1 + strlen(" -cl-kernel-arg-info"));
-          strcat (temp_options, options);
-          strcat (temp_options, " -cl-kernel-arg-info");
-        }
       token = strtok_r (temp_options, " ", &saveptr);
       while (token != NULL)
         {
@@ -258,14 +251,10 @@ CL_API_SUFFIX__VERSION_1_0
           token = strtok_r (NULL, " ", &saveptr);
         }
       POCL_MEM_FREE(temp_options);
-      user_options = modded_options;
-      program->compiler_options = strdup (modded_options);
     }
-  else
-    {
-      program->compiler_options = calloc (1, strlen("-cl-kernel-arg-info")+1);
-      strcat (program->compiler_options, "-cl-kernel-arg-info");
-    }
+
+  POCL_MEM_FREE(program->compiler_options);
+  program->compiler_options = modded_options;
 
   if (num_devices == 0)
     {
@@ -282,7 +271,7 @@ CL_API_SUFFIX__VERSION_1_0
     }
 
   POCL_MSG_PRINT_INFO("building program with options %s\n",
-                      user_options != NULL ? user_options : "");
+                       program->compiler_options);
 
   /* Build the fully linked non-parallel bitcode for all
          devices. */
@@ -303,7 +292,8 @@ CL_API_SUFFIX__VERSION_1_0
         {
 #ifdef OCS_AVAILABLE
           error = pocl_llvm_build_program(program, device_i,
-                                          user_options, program_bc_path);
+                                          program->compiler_options,
+                                          program_bc_path);
           POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
                              "pocl_llvm_build_program() failed\n");
 #else

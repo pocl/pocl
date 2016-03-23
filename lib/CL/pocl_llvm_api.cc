@@ -289,6 +289,8 @@ int pocl_llvm_build_program(cl_program program,
   ss << "-Dinline= ";
   // The current directory is a standard search path.
   ss << "-I. ";
+  // required for clGetKernelArgInfo()
+  ss << "-cl-kernel-arg-info ";
 
   ss << user_options << " ";
 

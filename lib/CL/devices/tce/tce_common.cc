@@ -242,10 +242,6 @@ TCEDevice::tceccCommandLine
     extraFlags += " " + 
       TCEString(pocl_get_string_option("POCL_TCECC_EXTRA_FLAGS", ""));
 
-  std::string userProgramBuildOptions;
-  if (run_cmd->kernel->program->compiler_options != NULL)
-    userProgramBuildOptions = run_cmd->kernel->program->compiler_options;
-
   std::string kernelMdSymbolName = "_";
   kernelMdSymbolName += run_cmd->kernel->name;
   kernelMdSymbolName += "_md";
@@ -255,7 +251,7 @@ TCEDevice::tceccCommandLine
      use case when producing the kernel capture scripts. */
   TCEString cmdLine;
   cmdLine << "tcecc -llwpr " + poclIncludePathSwitch + " " + deviceMainSrc + " " + 
-    userProgramBuildOptions + " " + kernelObjSrc + " " + inputSrc + 
+    " " + kernelObjSrc + " " + inputSrc +
     " -k " + kernelMdSymbolName +
     " -g -O3 --emit-llvm -o " + programBcFile + " " + extraFlags + ";";
 
@@ -417,10 +413,6 @@ pocl_tce_compile_submitted_kernels(_cl_command_node *cmd)
   if (d->isNewKernel(&(cmd->command.run))) {
     std::string assemblyFileName(cmd->command.run.tmp_dir);
     assemblyFileName += "/parallel.tpef";
-
-    std::string userProgramBuildOptions;
-    if (cmd->command.run.kernel->program->compiler_options != NULL)
-      userProgramBuildOptions = cmd->command.run.kernel->program->compiler_options;
 
     if (access (assemblyFileName.c_str(), F_OK) != 0)
       {
