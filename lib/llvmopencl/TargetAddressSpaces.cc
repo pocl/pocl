@@ -315,7 +315,7 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
      the Module's function iterator. */
   for (llvm::Module::iterator functionI = M.begin(), functionE = M.end(); 
        functionI != functionE; ++functionI) {
-    if (functionI->getName().startswith("_GLOBAL"))
+    if (functionI->empty() || functionI->getName().startswith("_GLOBAL")) 
       continue;
     unhandledFuncs.push_back(&*functionI);
   }
@@ -339,14 +339,6 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
 
     llvm::Function *newFunc = Function::Create(ft, F.getLinkage(), "", &M);
     newFunc->takeName(&F);
-
-    /* Skip the rest if we're dealing with a func prototype.
-     * We need the previous part to run on prototypes, because we need
-     * to get rid of generic AS in prototype arguments. */
-    if (F.empty()) {
-        funcReplacements[&F] = newFunc;
-        continue;
-    }
 
     ValueToValueMapTy vv;
     Function::arg_iterator j = newFunc->arg_begin();
