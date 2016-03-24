@@ -266,7 +266,7 @@ lttng_tracer_event_updated (cl_event event, int status)
 }
 
 static const struct pocl_event_tracer lttng_tracer = {
-  "text",
+  "lttng",
   lttng_tracer_init,
   lttng_tracer_event_updated,
 };
