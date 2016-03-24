@@ -192,7 +192,7 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
 #ifdef CUSTOM_BUFFER_ALLOCATOR
   static mem_regions_management* mrm = NULL;
 #endif
-  int num_worker_threads;
+  unsigned num_worker_threads;
 
   // TODO: this checks if the device was already initialized previously.
   // Should we instead have a separate bool field in device, or do the
@@ -229,7 +229,7 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
   device->global_mem_size = 1;
   pocl_topology_detect_device_info(device);
   num_worker_threads = max (get_max_thread_count (device), 
-                            pocl_get_int_option("POCL_PTHREAD_MIN_THREADS", 1));
+                            (unsigned)pocl_get_int_option("POCL_PTHREAD_MIN_THREADS", 1));
   
   pocl_cpuinfo_detect_device_info(device);
   pocl_set_buffer_image_limits(device);

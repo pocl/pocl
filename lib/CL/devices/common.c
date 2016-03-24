@@ -201,7 +201,7 @@ pocl_copy_mem_object (cl_device_id dest_dev, cl_mem dest,
 void
 pocl_migrate_mem_objects (_cl_command_node * volatile node)
 {
-  int i;
+  size_t i;
   cl_mem *mem_objects = node->command.migrate.mem_objects;
   
   for (i = 0; i < node->command.migrate.num_mem_objects; ++i)
@@ -218,7 +218,7 @@ pocl_migrate_mem_objects (_cl_command_node * volatile node)
 void
 pocl_ndrange_node_cleanup(_cl_command_node *node)
 {
-  int i;
+  cl_uint i;
   free (node->command.run.arg_buffers);
   free (node->command.run.tmp_dir);
   for (i = 0; i < node->command.run.kernel->num_args + 
@@ -259,7 +259,7 @@ pocl_mem_objs_cleanup (cl_event event)
 void
 pocl_exec_command (_cl_command_node * volatile node)
 {
-  int i;
+  unsigned i;
   /* because of POCL_UPDATE_EVENT_ */
   cl_event *event = &(node->event);
   switch (node->type)

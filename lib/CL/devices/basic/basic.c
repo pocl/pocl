@@ -461,7 +461,7 @@ pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
 {
   void *b = NULL;
   cl_mem_flags flags = mem_obj->flags;
-  int i;
+  unsigned i;
   POCL_MSG_PRINT_INFO("BASIC: alloc_mem_obj, mem %p, dev %d\n", 
                       mem_obj, device->dev_id);
   /* check if some driver has already allocated memory for this mem_obj 

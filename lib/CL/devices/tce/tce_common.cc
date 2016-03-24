@@ -318,7 +318,7 @@ pocl_tce_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
 {
   void *b = NULL;
   cl_int flags = mem_obj->flags;
-  int i;
+  unsigned i;
 
   /* check if some driver has already allocated memory for this mem_obj 
      in our global address space, and use that*/
@@ -690,7 +690,6 @@ pocl_tce_build_hash (cl_device_id device)
   size_t size;
   uint8_t* adf_data = 0;
   const char *extra_flags = NULL;
-  size_t ef_size;
 
   fseek (adf_file, 0 , SEEK_END);
   size = ftell (adf_file);
@@ -720,7 +719,6 @@ pocl_tce_build_hash (cl_device_id device)
   if (pocl_is_option_set("POCL_TCECC_EXTRA_FLAGS"))
     {
       extra_flags = pocl_get_string_option("POCL_TCECC_EXTRA_FLAGS", "");
-      ef_size = strlen (extra_flags);
       strncpy(temp, extra_flags, (1000-(temp-result)) );
     }
 
