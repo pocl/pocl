@@ -368,9 +368,9 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
 
   dev->extensions = HOST_DEVICE_EXTENSIONS;
 
-  dev->llvm_target_triplet = OCL_KERNEL_TARGET;
-
 #ifdef OCS_AVAILABLE
+
+  dev->llvm_target_triplet = OCL_KERNEL_TARGET;
 
 #ifdef POCL_BUILT_WITH_CMAKE
   dev->llvm_cpu = get_cpu_name();
@@ -379,7 +379,8 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
 #endif
 
 #else
-  dev->llvm_cpu = "";
+  dev->llvm_cpu = NULL;
+  dev->llvm_target_triplet = "";
 #endif
 
   dev->has_64bit_long = 1;
@@ -446,7 +447,7 @@ pocl_basic_init (cl_device_id device, const char* parameters)
      using multiple OpenCL devices. */
   device->max_compute_units = 1;
 
-  if(!strcmp(device->llvm_cpu, "(unknown)"))
+  if(device->llvm_cpu && (!strcmp(device->llvm_cpu, "(unknown)")))
     device->llvm_cpu = NULL;
 
   // work-around LLVM bug where sizeof(long)=4

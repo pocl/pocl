@@ -254,7 +254,7 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
   device->num_partition_types = 0;
   device->partition_type = NULL;
 
-  if(!strcmp(device->llvm_cpu, "(unknown)"))
+  if(device->llvm_cpu && (!strcmp(device->llvm_cpu, "(unknown)")))
     device->llvm_cpu = NULL;
 
   // work-around LLVM bug where sizeof(long)=4
