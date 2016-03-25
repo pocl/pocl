@@ -1181,6 +1181,14 @@ else
   AM_CONDITIONAL([CLANGXX_AVAILABLE], test ! -z $CLANGXX)
   AM_CONDITIONAL([HOST_CPU_IS_X86_64], [test "$host_cpu" = "x86_64"])
   AM_CONDITIONAL([USE_VECMATHLIB], test ! -z "$use_vecmathlib")
+  AC_CHECK_SIZEOF([void *])
+  # AC_SUBST([TARGET_SIZEOF_VOID_P], [$ac_cv_sizeof_void_p])
+  CL_DEVICE_ADDRESS_BITS=$((ac_cv_sizeof_void_p * 8))
+  AC_SUBST([POCL_DEVICE_ADDRESS_BITS], [$CL_DEVICE_ADDRESS_BITS])
+  AC_DEFINE_UNQUOTED([POCL_DEVICE_ADDRESS_BITS],
+               [$CL_DEVICE_ADDRESS_BITS],
+               [Value based on host processor, for basic and pthreads devices])
+
 fi
 
 ####################################################################
