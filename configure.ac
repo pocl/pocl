@@ -82,6 +82,8 @@ AC_ARG_ENABLE([ocs],
               [AS_HELP_STRING([--enable-ocs], [Build pocl with online compiler support (default yes)])],
               [ocs="$enableval"],
               [ocs="yes"])
+AC_ARG_VAR([HOST_DEVICE_BUILD_HASH], [Program used to retrieve LLVM options and binaries])
+
 OCS_available=no
 if test x"$ocs" != x"no"; then :
   
@@ -168,6 +170,11 @@ if test x"$ocs" != x"no"; then :
   See the INSTALL file for more information.])
   fi
 
+else
+  if test x"$HOST_DEVICE_BUILD_HASH" == x; then
+    AC_MSG_ERROR([You must define HOST_DEVICE_BUILD_HASH for llvm-less builds.])
+  fi
+  AC_DEFINE_UNQUOTED([HOST_DEVICE_BUILD_HASH], ["$HOST_DEVICE_BUILD_HASH"], [host device build hash])
 fi
 AM_CONDITIONAL([OCS_AVAILABLE], [test x"$ocs" = x"yes"])
 
