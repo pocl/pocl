@@ -248,6 +248,22 @@ void pocl_update_users_address_space(llvm::Value *inst,
 
 void pocl_fix_constant_address_space(llvm::Module *module)
 {
+  // Loop over global variables
+  std::vector<llvm::GlobalVariable*> globals;
+  for (auto G = module->global_begin(); G != module->global_end(); G++)
+  {
+    globals.push_back(&*G);
+  }
+
+  for (auto G = globals.begin(); G != globals.end(); G++)
+  {
+    llvm::Type *type = (*G)->getType();
+    llvm::Type *new_type = type->getPointerElementType()->getPointerTo(1);
+    (*G)->mutateType(new_type);
+    pocl_update_users_address_space(*G);
+  }
+
+
   // Loop over functions
   std::vector<llvm::Function*> functions;
   for (auto F = module->begin(); F != module->end(); F++)
