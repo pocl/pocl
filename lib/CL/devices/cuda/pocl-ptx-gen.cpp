@@ -43,6 +43,7 @@
 
 // TODO: Should these be proper passes?
 void pocl_add_kernel_annotations(llvm::Module *module);
+void pocl_cuda_fix_printf(llvm::Module *module);
 void pocl_fix_constant_address_space(llvm::Module *module);
 void pocl_gen_local_mem_args(llvm::Module *module);
 void pocl_insert_ptx_intrinsics(llvm::Module *module);
@@ -75,6 +76,7 @@ int pocl_ptx_gen(const char *bc_filename,
 
   // Apply transforms to prepare for lowering to PTX
   pocl_fix_constant_address_space(module->get());
+  pocl_cuda_fix_printf(module->get());
   pocl_gen_local_mem_args(module->get());
   pocl_insert_ptx_intrinsics(module->get());
   pocl_add_kernel_annotations(module->get());
@@ -158,6 +160,151 @@ void pocl_add_kernel_annotations(llvm::Module *module)
     llvm::MDNode *node = llvm::MDNode::get(context, v_md);
     nvvm_annotations->addOperand(node);
   }
+}
+
+void pocl_erase_function_and_callers(llvm::Function *func)
+{
+  if (!func)
+    return;
+
+  std::vector<llvm::Value*> callers(func->users().begin(), func->users().end());
+  for (auto U = callers.begin(); U != callers.end(); U++)
+  {
+    llvm::CallInst *call = llvm::dyn_cast<llvm::CallInst>(*U);
+    if (!call)
+      continue;
+    call->eraseFromParent();
+  }
+  func->eraseFromParent();
+}
+
+void pocl_cuda_fix_printf(llvm::Module *module)
+{
+  llvm::Function *cl_printf = module->getFunction("_cl_printf");
+  if (!cl_printf)
+    return;
+
+  llvm::LLVMContext& context = llvm::getGlobalContext();
+  llvm::Type *i32 = llvm::Type::getInt32Ty(context);
+  llvm::Type *i32Array = llvm::PointerType::get(i32, 0);
+  llvm::Type *format_type = cl_printf->getFunctionType()->getParamType(0);
+
+  // Remove calls to va_start and va_end
+  pocl_erase_function_and_callers(module->getFunction("llvm.va_start"));
+  pocl_erase_function_and_callers(module->getFunction("llvm.va_end"));
+
+  // Create new non-variadic _cl_printf function
+  llvm::FunctionType *new_func_type =
+    llvm::FunctionType::get(i32, {format_type, i32Array}, false);
+  llvm::Function *new_cl_printf =
+    llvm::Function::Create(new_func_type, cl_printf->getLinkage(), "", module);
+  new_cl_printf->takeName(cl_printf);
+
+  // Take function body from old function
+  new_cl_printf->getBasicBlockList().splice(new_cl_printf->begin(),
+                                            cl_printf->getBasicBlockList());
+
+  // Create i32 to hold current argument index
+  llvm::AllocaInst *arg_index_ptr =
+    new llvm::AllocaInst(i32, llvm::ConstantInt::get(i32, 1));
+  arg_index_ptr->insertBefore(&*new_cl_printf->begin()->begin());
+  llvm::StoreInst *arg_index_init =
+    new llvm::StoreInst(llvm::ConstantInt::get(i32, 0), arg_index_ptr);
+  arg_index_init->insertAfter(arg_index_ptr);
+
+  // Replace calls to _cl_va_arg with reads from new i32 array argument
+  llvm::Function *cl_va_arg = module->getFunction("_cl_va_arg");
+  assert(cl_va_arg);
+  llvm::Argument *args_in = &*++new_cl_printf->getArgumentList().begin();
+  std::vector<llvm::Value*> va_arg_calls(cl_va_arg->users().begin(),
+                                         cl_va_arg->users().end());
+  for (auto U = va_arg_calls.begin(); U != va_arg_calls.end(); U++)
+  {
+    llvm::CallInst *call = llvm::dyn_cast<llvm::CallInst>(*U);
+    if (!call)
+      continue;
+
+    llvm::Value *args_out = call->getArgOperand(1);
+
+    // Get current argument index
+    llvm::LoadInst *arg_index = new llvm::LoadInst(arg_index_ptr);
+    arg_index->insertBefore(call);
+
+    // Load argument
+    // TODO: Need to know how many words (should be an argument to _cl_va_arg)
+    llvm::GetElementPtrInst *arg_ptr =
+      llvm::GetElementPtrInst::Create(i32, args_in, {arg_index});
+    arg_ptr->insertAfter(call);
+    llvm::LoadInst *arg_value = new llvm::LoadInst(arg_ptr);
+    arg_value->insertAfter(arg_ptr);
+    llvm::StoreInst *arg_store = new llvm::StoreInst(arg_value, args_out);
+    arg_store->insertAfter(arg_value);
+
+    // Increment argument index
+    // TODO: Increment by correct number of words
+    llvm::BinaryOperator *inc =
+      llvm::BinaryOperator::Create(llvm::BinaryOperator::Add,
+                                   arg_index, llvm::ConstantInt::get(i32, 1));
+    inc->insertAfter(arg_index);
+    llvm::StoreInst *store_inc = new llvm::StoreInst(inc, arg_index_ptr);
+    store_inc->insertAfter(inc);
+
+    // Remove call to _cl_va_arg
+    call->eraseFromParent();
+  }
+
+  // Loop over function callers
+  // Generate array of i32 arguments to replace variadic arguments
+  std::vector<llvm::Value*> callers(cl_printf->users().begin(),
+                                    cl_printf->users().end());
+  for (auto U = callers.begin(); U != callers.end(); U++)
+  {
+    llvm::CallInst *call = llvm::dyn_cast<llvm::CallInst>(*U);
+    if (!call)
+      continue;
+
+    unsigned num_args = call->getNumArgOperands() - 1;
+    llvm::Value *format = call->getArgOperand(0);
+
+    // Allocate array for arguments
+    llvm::AllocaInst *args =
+      new llvm::AllocaInst(i32, llvm::ConstantInt::get(i32, num_args));
+    args->insertBefore(call);
+
+    // Loop over arguments (skipping format)
+    for (unsigned a = 0; a < num_args; a++)
+    {
+      // Get pointer to argument in i32 array
+      // TODO: promote arguments that are shorter than 32 bits
+      // TODO: deal with multi-word arguments (long and double)
+      llvm::Constant *arg_idx = llvm::ConstantInt::get(i32, a);
+      llvm::GetElementPtrInst *arg_ptr =
+        llvm::GetElementPtrInst::Create(i32, args, {arg_idx});
+      arg_ptr->insertBefore(call);
+
+      // Store argument to i32 array
+      llvm::StoreInst *store =
+        new llvm::StoreInst(call->getArgOperand(a+1), arg_ptr);
+      store->insertBefore(call);
+    }
+
+    // Replace call with new non-variadic function
+    llvm::CallInst *new_call =
+      llvm::CallInst::Create(new_cl_printf, {format, args});
+    new_call->insertBefore(call);
+    call->replaceAllUsesWith(new_call);
+    call->eraseFromParent();
+  }
+
+  // Update arguments
+  llvm::Function::arg_iterator old_arg = cl_printf->arg_begin();
+  llvm::Function::arg_iterator new_arg = new_cl_printf->arg_begin();
+  new_arg->takeName(&*old_arg);
+  old_arg->replaceAllUsesWith(&*new_arg);
+
+  // Remove old functions
+  cl_va_arg->eraseFromParent();
+  cl_printf->eraseFromParent();
 }
 
 void pocl_update_users_address_space(llvm::Value *inst,

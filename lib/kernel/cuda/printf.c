@@ -21,14 +21,49 @@
    THE SOFTWARE.
 */
 
+#include <stdarg.h>
+
+void _cl_va_arg(va_list ap, int data[]);
+
 int
 _cl_printf(__attribute__((address_space(3))) char* restrict format, ...)
 {
+  // TODO: Might need more than 2 words for (e.g.) vectors
+  int arg_data[2];
+
+  va_list ap;
+  va_start(ap, format);
   char ch = *format;
   while (ch) {
-    // TODO: Handle format specifiers
-    vprintf("%c", &ch);
-    ch = *++format;
+    if (ch == '%') {
+      ch = *++format;
+
+      if (ch == '%') {
+        vprintf("%%", arg_data); // literal %
+        ch = *++format;
+      } else {
+        // TODO: other format specifiers
+        switch (ch) {
+          case 'd':
+            _cl_va_arg(ap, arg_data);
+            vprintf("%d", arg_data);
+            break;
+          default: goto error;
+        }
+        ch = *++format;
+      }
+    }
+    else {
+      vprintf("%c", &ch);
+      ch = *++format;
+    }
   }
+
+  va_end(ap);
   return 0;
+
+  error:
+  va_end(ap);
+  vprintf("(printf format string error)", &ch);
+  return -1;
 }
