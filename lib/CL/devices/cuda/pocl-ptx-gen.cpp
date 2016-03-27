@@ -39,6 +39,8 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 
+#include <set>
+
 // TODO: Should these be proper passes?
 void pocl_add_kernel_annotations(llvm::Module *module);
 void pocl_fix_constant_address_space(llvm::Module *module);
@@ -158,11 +160,17 @@ void pocl_add_kernel_annotations(llvm::Module *module)
   }
 }
 
-void pocl_update_users_address_space(llvm::Value *inst)
+void pocl_update_users_address_space(llvm::Value *inst,
+                                     std::set<llvm::Value*> visited = {})
 {
+  visited.insert(inst);
+
   std::vector<llvm::Value*> users(inst->users().begin(), inst->users().end());
   for (auto U = users.begin(); U != users.end(); U++)
   {
+    if (visited.count(*U))
+      continue;
+
     if (auto bitcast = llvm::dyn_cast<llvm::BitCastInst>(*U))
     {
       llvm::Type *src_type = bitcast->getSrcTy();
@@ -185,7 +193,7 @@ void pocl_update_users_address_space(llvm::Value *inst)
       bitcast->replaceAllUsesWith(new_bitcast);
       bitcast->eraseFromParent();
 
-      pocl_update_users_address_space(new_bitcast);
+      pocl_update_users_address_space(new_bitcast, visited);
     }
     else if (auto gep = llvm::dyn_cast<llvm::GetElementPtrInst>(*U))
     {
@@ -198,7 +206,42 @@ void pocl_update_users_address_space(llvm::Value *inst)
       gep->replaceAllUsesWith(new_gep);
       gep->eraseFromParent();
 
-      pocl_update_users_address_space(new_gep);
+      pocl_update_users_address_space(new_gep, visited);
+    }
+    else if (auto phi = llvm::dyn_cast<llvm::PHINode>(*U))
+    {
+      unsigned addrspace = inst->getType()->getPointerAddressSpace();
+      llvm::Type *old_type = phi->getType();
+      llvm::Type *new_type =
+        old_type->getPointerElementType()->getPointerTo(addrspace);
+
+      unsigned num_inc = phi->getNumIncomingValues();
+      llvm::PHINode *new_phi = llvm::PHINode::Create(new_type, num_inc);
+      for (unsigned i = 0; i < num_inc; i++)
+      {
+        new_phi->addIncoming(phi->getIncomingValue(i),
+                             phi->getIncomingBlock(i));
+      }
+
+      new_phi->insertAfter(phi);
+      phi->replaceAllUsesWith(new_phi);
+      phi->eraseFromParent();
+
+      pocl_update_users_address_space(new_phi, visited);
+    }
+    else if (auto const_expr = llvm::dyn_cast<llvm::ConstantExpr>(*U))
+    {
+      if (const_expr->getOpcode() == llvm::Instruction::GetElementPtr)
+      {
+        llvm::Constant *ptr = const_expr->getOperand(0);
+        auto ops = const_expr->operands();
+        std::vector<llvm::Value*> indices(ops.begin()+1, ops.end());
+        llvm::Constant *new_const_gep =
+          llvm::ConstantExpr::getGetElementPtr(NULL, ptr, indices);
+        const_expr->replaceAllUsesWith(new_const_gep);
+
+        pocl_update_users_address_space(new_const_gep, visited);
+      }
     }
   }
 }
