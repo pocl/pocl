@@ -22,8 +22,13 @@
 */
 
 int
-_cl_printf(__attribute__((address_space(3))) char* restrict fmt, ...)
+_cl_printf(__attribute__((address_space(3))) char* restrict format, ...)
 {
-  char data[0];
-  return vprintf("[PRINTF UNIMPLEMENTED]\n", data);
+  char ch = *format;
+  while (ch) {
+    // TODO: Handle format specifiers
+    vprintf("%c", &ch);
+    ch = *++format;
+  }
+  return 0;
 }
