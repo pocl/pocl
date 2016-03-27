@@ -25,6 +25,7 @@
 
 #include "common.h"
 #include "pocl.h"
+#include "pocl_runtime_config.h"
 #include "pocl-ptx-gen.h"
 
 #include "llvm/Bitcode/ReaderWriter.h"
@@ -80,7 +81,8 @@ int pocl_ptx_gen(const char *bc_filename,
   pocl_gen_local_mem_args(module->get());
   pocl_insert_ptx_intrinsics(module->get());
   pocl_add_kernel_annotations(module->get());
-  //(*module)->dump();
+  if (pocl_get_bool_option("POCL_DEBUG_PTX", 0))
+    (*module)->dump();
 
   // TODO: support 32-bit?
   llvm::StringRef triple = "nvptx64-nvidia-cuda";
