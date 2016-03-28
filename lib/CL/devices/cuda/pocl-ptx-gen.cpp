@@ -207,8 +207,9 @@ void pocl_cuda_fix_printf(llvm::Module *module)
   pocl_erase_function_and_callers(module->getFunction("llvm.va_end"));
 
   // Create new non-variadic _cl_printf function
+  llvm::Type *ret_type = cl_printf->getReturnType();
   llvm::FunctionType *new_func_type =
-    llvm::FunctionType::get(i32, {format_type, i64ptr}, false);
+    llvm::FunctionType::get(ret_type, {format_type, i64ptr}, false);
   llvm::Function *new_cl_printf =
     llvm::Function::Create(new_func_type, cl_printf->getLinkage(), "", module);
   new_cl_printf->takeName(cl_printf);
