@@ -33,6 +33,7 @@
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/Verifier.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
@@ -83,6 +84,15 @@ int pocl_ptx_gen(const char *bc_filename,
   pocl_add_kernel_annotations(module->get());
   if (pocl_get_bool_option("POCL_DEBUG_PTX", 0))
     (*module)->dump();
+
+  // Verify module
+  std::string err;
+  llvm::raw_string_ostream errs(err);
+  if (llvm::verifyModule(*module->get(), &errs))
+  {
+    printf("\n%s\n", err.c_str());
+    POCL_ABORT("[CUDA] ptx-gen: module verification failed\n");
+  }
 
   // TODO: support 32-bit?
   llvm::StringRef triple = "nvptx64-nvidia-cuda";
