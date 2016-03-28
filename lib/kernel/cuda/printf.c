@@ -56,6 +56,12 @@ _cl_printf(__attribute__((address_space(3))) char* restrict format, ...)
             vprintf("%lf", arg_data);
             break;
           }
+          case 's':
+          {
+            _cl_va_arg(ap, arg_data, 2);
+            vprintf("%s", arg_data);
+            break;
+          }
           default: goto error;
         }
         ch = *++format;
