@@ -217,42 +217,47 @@ void pocl_cuda_fix_printf(llvm::Module *module)
 
   // Replace calls to _cl_va_arg with reads from new i64 array argument
   llvm::Function *cl_va_arg = module->getFunction("_cl_va_arg");
-  assert(cl_va_arg);
-  llvm::Argument *args_in = &*++new_cl_printf->getArgumentList().begin();
-  std::vector<llvm::Value*> va_arg_calls(cl_va_arg->users().begin(),
-                                         cl_va_arg->users().end());
-  for (auto U = va_arg_calls.begin(); U != va_arg_calls.end(); U++)
+  if (cl_va_arg)
   {
-    llvm::CallInst *call = llvm::dyn_cast<llvm::CallInst>(*U);
-    if (!call)
-      continue;
+    llvm::Argument *args_in = &*++new_cl_printf->getArgumentList().begin();
+    std::vector<llvm::Value*> va_arg_calls(cl_va_arg->users().begin(),
+                                           cl_va_arg->users().end());
+    for (auto U = va_arg_calls.begin(); U != va_arg_calls.end(); U++)
+    {
+      llvm::CallInst *call = llvm::dyn_cast<llvm::CallInst>(*U);
+      if (!call)
+        continue;
 
-    // Get current argument index
-    llvm::LoadInst *arg_index = new llvm::LoadInst(arg_index_ptr);
-    arg_index->insertBefore(call);
+      // Get current argument index
+      llvm::LoadInst *arg_index = new llvm::LoadInst(arg_index_ptr);
+      arg_index->insertBefore(call);
 
-    // Get pointer to argument data
-    llvm::Value *arg_out = call->getArgOperand(1);
-    llvm::GetElementPtrInst *arg_in =
-      llvm::GetElementPtrInst::Create(i64, args_in, {arg_index});
-    arg_in->insertAfter(arg_index);
+      // Get pointer to argument data
+      llvm::Value *arg_out = call->getArgOperand(1);
+      llvm::GetElementPtrInst *arg_in =
+        llvm::GetElementPtrInst::Create(i64, args_in, {arg_index});
+      arg_in->insertAfter(arg_index);
 
-    // Load argument
-    llvm::LoadInst *arg_value = new llvm::LoadInst(arg_in);
-    arg_value->insertAfter(arg_in);
-    llvm::StoreInst *arg_store = new llvm::StoreInst(arg_value, arg_out);
-    arg_store->insertAfter(arg_value);
+      // Load argument
+      llvm::LoadInst *arg_value = new llvm::LoadInst(arg_in);
+      arg_value->insertAfter(arg_in);
+      llvm::StoreInst *arg_store = new llvm::StoreInst(arg_value, arg_out);
+      arg_store->insertAfter(arg_value);
 
-    // Increment argument index
-    llvm::BinaryOperator *inc =
-      llvm::BinaryOperator::Create(llvm::BinaryOperator::Add,
-                                   arg_index, llvm::ConstantInt::get(i32,1));
-    inc->insertAfter(arg_index);
-    llvm::StoreInst *store_inc = new llvm::StoreInst(inc, arg_index_ptr);
-    store_inc->insertAfter(inc);
+      // Increment argument index
+      llvm::BinaryOperator *inc =
+        llvm::BinaryOperator::Create(llvm::BinaryOperator::Add,
+                                     arg_index, llvm::ConstantInt::get(i32,1));
+      inc->insertAfter(arg_index);
+      llvm::StoreInst *store_inc = new llvm::StoreInst(inc, arg_index_ptr);
+      store_inc->insertAfter(inc);
 
-    // Remove call to _cl_va_arg
-    call->eraseFromParent();
+      // Remove call to _cl_va_arg
+      call->eraseFromParent();
+    }
+
+    // Remove function from module
+    cl_va_arg->eraseFromParent();
   }
 
   // Loop over function callers
@@ -315,8 +320,7 @@ void pocl_cuda_fix_printf(llvm::Module *module)
   new_arg->takeName(&*old_arg);
   old_arg->replaceAllUsesWith(&*new_arg);
 
-  // Remove old functions
-  cl_va_arg->eraseFromParent();
+  // Remove old function
   cl_printf->eraseFromParent();
 }
 
