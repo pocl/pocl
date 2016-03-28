@@ -317,6 +317,12 @@ void pocl_cuda_fix_printf(llvm::Module *module)
       store->insertBefore(call);
     }
 
+    // Fix address space of undef format values
+    if (format->getValueID() == llvm::Value::UndefValueVal)
+    {
+      format = llvm::UndefValue::get(format_type);
+    }
+
     // Replace call with new non-variadic function
     llvm::CallInst *new_call =
       llvm::CallInst::Create(new_cl_printf, {format, args});
