@@ -465,6 +465,8 @@ void pocl_fix_constant_address_space(llvm::Module *module)
   for (auto G = globals.begin(); G != globals.end(); G++)
   {
     llvm::Type *type = (*G)->getType();
+    if (type->getPointerAddressSpace() != 4)
+      continue;
     llvm::Type *new_type = type->getPointerElementType()->getPointerTo(1);
     (*G)->mutateType(new_type);
     pocl_update_users_address_space(*G);
