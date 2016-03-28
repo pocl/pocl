@@ -392,6 +392,7 @@ pocl_cuda_run(void *dptr, _cl_command_node* cmd)
 
   cl_device_id device = cmd->device;
   cl_kernel kernel = cmd->command.run.kernel;
+  pocl_argument *arguments = cmd->command.run.arguments;
   CUfunction function = cmd->command.run.kernel->data;
 
   // Prepare kernel arguments
@@ -405,7 +406,7 @@ pocl_cuda_run(void *dptr, _cl_command_node* cmd)
     switch (type)
     {
     case POCL_ARG_TYPE_NONE:
-      params[i] = kernel->dyn_arguments[i].value;
+      params[i] = arguments[i].value;
       break;
     case POCL_ARG_TYPE_POINTER:
     {
@@ -414,13 +415,13 @@ pocl_cuda_run(void *dptr, _cl_command_node* cmd)
         sharedMemOffsets[i] = sharedMemBytes;
         params[i] = sharedMemOffsets+i;
 
-        sharedMemBytes += kernel->dyn_arguments[i].size;
+        sharedMemBytes += arguments[i].size;
       }
       else
       {
-        if (kernel->dyn_arguments[i].value)
+        if (arguments[i].value)
         {
-          cl_mem mem = *(void**)kernel->dyn_arguments[i].value;
+          cl_mem mem = *(void**)arguments[i].value;
           params[i] = &mem->device_ptrs[device->dev_id].mem_ptr;
         }
         else
@@ -442,7 +443,7 @@ pocl_cuda_run(void *dptr, _cl_command_node* cmd)
   for (int i = 0; i < kernel->num_locals; ++i)
   {
     sharedMemOffsets[kernel->num_args + i] = sharedMemBytes;
-    sharedMemBytes += kernel->dyn_arguments[kernel->num_args + i].size;
+    sharedMemBytes += arguments[kernel->num_args + i].size;
     params[kernel->num_args+i] = sharedMemOffsets + kernel->num_args + i;
   }
 
