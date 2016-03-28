@@ -339,6 +339,32 @@ void pocl_cuda_fix_printf(llvm::Module *module)
 
   // Remove old function
   cl_printf->eraseFromParent();
+
+
+  // Fix address space of vprintf format arguments
+  llvm::Function *vprintf_func = module->getFunction("vprintf");
+  if (!vprintf_func)
+    return;
+  callers.assign(vprintf_func->users().begin(), vprintf_func->users().end());
+  for (auto U = callers.begin(); U != callers.end(); U++)
+  {
+    llvm::CallInst *call = llvm::dyn_cast<llvm::CallInst>(*U);
+    if (!call)
+      continue;
+
+    llvm::Value *format = call->getArgOperand(0);
+    llvm::Type *arg_type = format->getType();
+    if (arg_type->getPointerAddressSpace() != 0)
+    {
+      // Cast address space to generic
+      llvm::Type *new_arg_type =
+        arg_type->getPointerElementType()->getPointerTo(0);
+      llvm::AddrSpaceCastInst *asc =
+        new llvm::AddrSpaceCastInst(format, new_arg_type);
+      asc->insertBefore(call);
+      call->setArgOperand(0, asc);
+    }
+  }
 }
 
 void pocl_update_users_address_space(llvm::Value *inst,
