@@ -23,13 +23,13 @@
 
 #include <stdarg.h>
 
-void _cl_va_arg(va_list ap, int data[]);
+void _cl_va_arg(va_list ap, long data[], int num_words);
 
 int
 _cl_printf(__attribute__((address_space(3))) char* restrict format, ...)
 {
   // TODO: Might need more than 2 words for (e.g.) vectors
-  int arg_data[2];
+  long arg_data[1];
 
   va_list ap;
   va_start(ap, format);
@@ -45,9 +45,17 @@ _cl_printf(__attribute__((address_space(3))) char* restrict format, ...)
         // TODO: other format specifiers
         switch (ch) {
           case 'd':
-            _cl_va_arg(ap, arg_data);
+          {
+            _cl_va_arg(ap, arg_data, 1);
             vprintf("%d", arg_data);
             break;
+          }
+          case 'f':
+          {
+            _cl_va_arg(ap, arg_data, 2);
+            vprintf("%lf", arg_data);
+            break;
+          }
           default: goto error;
         }
         ch = *++format;

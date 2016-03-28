@@ -188,7 +188,8 @@ void pocl_cuda_fix_printf(llvm::Module *module)
 
   llvm::LLVMContext& context = llvm::getGlobalContext();
   llvm::Type *i32 = llvm::Type::getInt32Ty(context);
-  llvm::Type *i32Array = llvm::PointerType::get(i32, 0);
+  llvm::Type *i64 = llvm::Type::getInt64Ty(context);
+  llvm::Type *i64ptr = llvm::PointerType::get(i64, 0);
   llvm::Type *format_type = cl_printf->getFunctionType()->getParamType(0);
 
   // Remove calls to va_start and va_end
@@ -197,7 +198,7 @@ void pocl_cuda_fix_printf(llvm::Module *module)
 
   // Create new non-variadic _cl_printf function
   llvm::FunctionType *new_func_type =
-    llvm::FunctionType::get(i32, {format_type, i32Array}, false);
+    llvm::FunctionType::get(i32, {format_type, i64ptr}, false);
   llvm::Function *new_cl_printf =
     llvm::Function::Create(new_func_type, cl_printf->getLinkage(), "", module);
   new_cl_printf->takeName(cl_printf);
@@ -214,7 +215,7 @@ void pocl_cuda_fix_printf(llvm::Module *module)
     new llvm::StoreInst(llvm::ConstantInt::get(i32, 0), arg_index_ptr);
   arg_index_init->insertAfter(arg_index_ptr);
 
-  // Replace calls to _cl_va_arg with reads from new i32 array argument
+  // Replace calls to _cl_va_arg with reads from new i64 array argument
   llvm::Function *cl_va_arg = module->getFunction("_cl_va_arg");
   assert(cl_va_arg);
   llvm::Argument *args_in = &*++new_cl_printf->getArgumentList().begin();
@@ -226,27 +227,26 @@ void pocl_cuda_fix_printf(llvm::Module *module)
     if (!call)
       continue;
 
-    llvm::Value *args_out = call->getArgOperand(1);
-
     // Get current argument index
     llvm::LoadInst *arg_index = new llvm::LoadInst(arg_index_ptr);
     arg_index->insertBefore(call);
 
+    // Get pointer to argument data
+    llvm::Value *arg_out = call->getArgOperand(1);
+    llvm::GetElementPtrInst *arg_in =
+      llvm::GetElementPtrInst::Create(i64, args_in, {arg_index});
+    arg_in->insertAfter(arg_index);
+
     // Load argument
-    // TODO: Need to know how many words (should be an argument to _cl_va_arg)
-    llvm::GetElementPtrInst *arg_ptr =
-      llvm::GetElementPtrInst::Create(i32, args_in, {arg_index});
-    arg_ptr->insertAfter(call);
-    llvm::LoadInst *arg_value = new llvm::LoadInst(arg_ptr);
-    arg_value->insertAfter(arg_ptr);
-    llvm::StoreInst *arg_store = new llvm::StoreInst(arg_value, args_out);
+    llvm::LoadInst *arg_value = new llvm::LoadInst(arg_in);
+    arg_value->insertAfter(arg_in);
+    llvm::StoreInst *arg_store = new llvm::StoreInst(arg_value, arg_out);
     arg_store->insertAfter(arg_value);
 
     // Increment argument index
-    // TODO: Increment by correct number of words
     llvm::BinaryOperator *inc =
       llvm::BinaryOperator::Create(llvm::BinaryOperator::Add,
-                                   arg_index, llvm::ConstantInt::get(i32, 1));
+                                   arg_index, llvm::ConstantInt::get(i32,1));
     inc->insertAfter(arg_index);
     llvm::StoreInst *store_inc = new llvm::StoreInst(inc, arg_index_ptr);
     store_inc->insertAfter(inc);
@@ -256,7 +256,7 @@ void pocl_cuda_fix_printf(llvm::Module *module)
   }
 
   // Loop over function callers
-  // Generate array of i32 arguments to replace variadic arguments
+  // Generate array of i64 arguments to replace variadic arguments
   std::vector<llvm::Value*> callers(cl_printf->users().begin(),
                                     cl_printf->users().end());
   for (auto U = callers.begin(); U != callers.end(); U++)
@@ -269,24 +269,35 @@ void pocl_cuda_fix_printf(llvm::Module *module)
     llvm::Value *format = call->getArgOperand(0);
 
     // Allocate array for arguments
+    // TODO: Deal with vector arguments
     llvm::AllocaInst *args =
-      new llvm::AllocaInst(i32, llvm::ConstantInt::get(i32, num_args));
+      new llvm::AllocaInst(i64, llvm::ConstantInt::get(i32, num_args));
     args->insertBefore(call);
 
     // Loop over arguments (skipping format)
     for (unsigned a = 0; a < num_args; a++)
     {
-      // Get pointer to argument in i32 array
+      llvm::Value *arg = call->getArgOperand(a+1);
+      llvm::Type *arg_type = arg->getType();
+
+      // Get pointer to argument in i64 array
       // TODO: promote arguments that are shorter than 32 bits
-      // TODO: deal with multi-word arguments (long and double)
       llvm::Constant *arg_idx = llvm::ConstantInt::get(i32, a);
-      llvm::GetElementPtrInst *arg_ptr =
-        llvm::GetElementPtrInst::Create(i32, args, {arg_idx});
+      llvm::Instruction *arg_ptr =
+        llvm::GetElementPtrInst::Create(i64, args, {arg_idx});
       arg_ptr->insertBefore(call);
 
-      // Store argument to i32 array
-      llvm::StoreInst *store =
-        new llvm::StoreInst(call->getArgOperand(a+1), arg_ptr);
+      // Cast pointer to correct type if necessary
+      if (arg_ptr->getType()->getPointerElementType() != arg_type)
+      {
+        llvm::BitCastInst *bc_arg_ptr =
+          new llvm::BitCastInst(arg_ptr, arg_type->getPointerTo(0));
+        bc_arg_ptr->insertAfter(arg_ptr);
+        arg_ptr = bc_arg_ptr;
+      }
+
+      // Store argument to i64 array
+      llvm::StoreInst *store = new llvm::StoreInst(arg, arg_ptr);
       store->insertBefore(call);
     }
 
