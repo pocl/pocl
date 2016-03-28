@@ -268,6 +268,13 @@ cl_int pocl_cuda_alloc_mem_obj(cl_device_id device, cl_mem mem_obj)
       }
     }
 
+    if (flags & CL_MEM_COPY_HOST_PTR)
+    {
+      result = cuMemcpyHtoD((CUdeviceptr)b,
+                            mem_obj->mem_host_ptr, mem_obj->size);
+      CUDA_CHECK(result, "cuMemcpyHtoD");
+    }
+
     mem_obj->device_ptrs[device->global_mem_id].mem_ptr = b;
     mem_obj->device_ptrs[device->global_mem_id].global_mem_id =
       device->global_mem_id;
