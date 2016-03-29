@@ -189,12 +189,11 @@ read_header(pocl_binary *b, const unsigned char *buffer)
 static uint64_t
 pocl_binary_get_device_id(cl_device_id device)
 {
-  //FNV-1A with vendor_id, llvm_target_triplet and llvm_cpu
+  /* FNV-1A with whatever device returns
+   * as its build hash string */
   uint64_t result = FNV_OFFSET;
   char *dev_hash = device->ops->build_hash(device);
 
-  result *= FNV_PRIME;
-  result ^= device->vendor_id;
   int i, length = strlen(dev_hash);
   for (i=0; i<length; i++)
     {
