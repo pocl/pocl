@@ -25,7 +25,9 @@
 SUBDIRS = include lib
 
 if !POCL_ANDROID
+if OCS_AVAILABLE
 SUBDIRS += bin examples tests
+endif
 endif
 
 if !OCS_AVAILABLE
