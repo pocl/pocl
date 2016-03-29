@@ -536,6 +536,7 @@ struct _cl_command_queue {
 /* memory identifier: id to point the global memory where memory resides 
                       + pointer to actual data */
 typedef struct _pocl_mem_identifier {
+  int available; /* ... in this mem objs context */
   int global_mem_id;
   void* mem_ptr;
 } pocl_mem_identifier;

@@ -123,19 +123,23 @@ POname(clCreateBuffer)(cl_context   context,
      location in the buffer (dev_id), even though the context
      might not contain all the devices. */
   mem->device_ptrs =
-    (pocl_mem_identifier*) malloc(context->num_devices
-                                  * sizeof(pocl_mem_identifier));
+    (pocl_mem_identifier*) calloc(pocl_num_devices,
+                                  sizeof(pocl_mem_identifier));
   if (mem->device_ptrs == NULL)
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
       goto ERROR;
     }
 
-  /* init dev pointer structure to ease inter device pointer sharing in ops->alloc_mem_obj */
+  /* init dev pointer structure to ease inter device pointer sharing
+     in ops->alloc_mem_obj */
   for (i = 0; i < context->num_devices; ++i)
     {
-      mem->device_ptrs[i].global_mem_id = context->devices[i]->global_mem_id;
-      mem->device_ptrs[i].mem_ptr = NULL;
+      int dev_id = context->devices[i]->dev_id;
+
+      mem->device_ptrs[dev_id].global_mem_id =
+        context->devices[dev_id]->global_mem_id;
+      mem->device_ptrs[i].available = 1;
     }
 
   mem->size = size;
@@ -154,8 +158,12 @@ POname(clCreateBuffer)(cl_context   context,
         }
     }
 
-  for (i = 0; i < context->num_devices; ++i)
+  for (i = 0; i < pocl_num_devices; ++i)
     {
+      /* if this device does not belong to this context */
+      if (!mem->device_ptrs[i].available)
+        continue;
+
       /* this is already handled iff available */
       if (context->svm_allocdev == context->devices[i])
         continue;

@@ -449,6 +449,9 @@ pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
      in our global address space, and use that*/
   for (i = 0; i < mem_obj->context->num_devices; ++i)
     {
+      if (!mem_obj->device_ptrs[i].available)
+        continue;
+
       if (mem_obj->device_ptrs[i].global_mem_id == device->global_mem_id
           && mem_obj->device_ptrs[i].mem_ptr != NULL)
         {
