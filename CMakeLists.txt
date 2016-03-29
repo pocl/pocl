@@ -690,6 +690,9 @@ set(OCL_KERNEL_TARGET_CPU "${LLC_HOST_CPU}") #The kernel target CPU variant.
 
 if(NOT DEFINED DEFAULT_ENABLE_TCE)
 
+  set(HAVE_TCE 0)
+  set(HAVE_TCEMC 0)
+
   if (NOT WITH_TCE)
     set(WITH_TCE ENV PATH)
   endif()
@@ -718,11 +721,10 @@ if(NOT DEFINED DEFAULT_ENABLE_TCE)
     execute_process(COMMAND "${TTASIM}" --help OUTPUT_VARIABLE TTASIM_HELP RESULT_VARIABLE RESV9)
 
     if (RESV1 OR RESV2 OR RESV3 OR RESV4 OR RESV5)
-      message(FATAL_ERROR "tce-config: Nonzero exit status")
-    endif()
-    if (RESV9)
-      message(FATAL_ERROR "ttasim: Nonzero exit status")
-    endif()
+      message(WARNING "tce-config: Nonzero exit status, disabling TCE")
+    elseif (RESV9)
+      message(WARNING "ttasim: Nonzero exit status, disabling TCE")
+    else()
 
     string(STRIP "${TCE_LIBS}" TCE_LIBS)
     separate_arguments(TCE_LIBS)
@@ -742,16 +744,19 @@ if(NOT DEFINED DEFAULT_ENABLE_TCE)
     # TODO
     set(LD_FLAGS_BIN ${LD_FLAGS_BIN} ${TCE_LIBS})
 
-    set(DEFAULT_ENABLE_TCE 1 CACHE INTERNAL "TCE available")
+    set(HAVE_TCE 1)
     if(TCE_VERSION MATCHES "trunk")
-      set(DEFAULT_ENABLE_TCEMC 1 CACHE INTERNAL "TCEMC available")
+      set(HAVE_TCEMC 1)
+    endif()
+
     endif()
 
   else()
     message(STATUS "Failed to find tcecc or tce-config, disabling TCE")
-    set(DEFAULT_ENABLE_TCE 0 CACHE INTERNAL "TCE available")
-    set(DEFAULT_ENABLE_TCEMC 0 CACHE INTERNAL "TCEMC available")
   endif()
+
+  set(DEFAULT_ENABLE_TCE ${HAVE_TCE} CACHE INTERNAL "TCE available")
+  set(DEFAULT_ENABLE_TCEMC ${HAVE_TCEMC} CACHE INTERNAL "TCEMC available")
 
 endif()
 
