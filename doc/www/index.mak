@@ -27,6 +27,9 @@ The Bristol's publication uses pocl in context of an OpenCL to FPGA flow.
 <p>If any of you have more publications or thesis about using or enhancing pocl somehow, please let 
 <a href="discussion.html">us know</a>.</p>
 
+<h2>2016-03-31: <a href="pocl-0.13.html">Portable Computing Language
+(pocl) v0.13 released</a></h2>
+
 <h2>2015-10-26: <a href="pocl-0.12.html">Portable Computing Language
 (pocl) v0.12 released</a></h2>
 
