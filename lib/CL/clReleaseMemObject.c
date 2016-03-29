@@ -49,10 +49,11 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
   if (new_refcount == 0)
     {
       POCL_MSG_PRINT_INFO ("free mem obj %p\n", memobj);
-      if (memobj->parent == NULL) 
+      if (memobj->parent == NULL)
         {
-          cl_device_id shared_mem_owner_dev = memobj->shared_mem_allocation_owner;
-          
+          cl_device_id shared_mem_owner_dev =
+            memobj->shared_mem_allocation_owner;
+
           for (i = 0; i < memobj->context->num_devices; ++i)
             {
               /* owner is called last */

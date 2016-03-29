@@ -158,12 +158,8 @@ POname(clCreateBuffer)(cl_context   context,
         }
     }
 
-  for (i = 0; i < pocl_num_devices; ++i)
+  for (i = 0; i < context->num_devices; ++i)
     {
-      /* if this device does not belong to this context */
-      if (!mem->device_ptrs[i].available)
-        continue;
-
       /* this is already handled iff available */
       if (context->svm_allocdev == context->devices[i])
         continue;
