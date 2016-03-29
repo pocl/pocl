@@ -945,8 +945,6 @@ then
   HOST_AS_FLAGS=""
   HOST_LD_FLAGS="$LD_SHARED"
 
-
-
   # TODO: We need to set both target-triple and cpu-type when
   # building, since the ABI depends on both. We can either add flags
   # to all the scripts, or set the respective flags here in
@@ -1176,6 +1174,9 @@ then
     AC_DEFINE([USE_VECMATHLIB], [], "Use vecmathlib if available for the target.")
     CLANGXX_FLAGS="$CLANGXX_FLAGS -DVML_NO_IOSTREAM"
   fi
+
+  AC_DEFINE_UNQUOTED([HOST_DEVICE_BUILD_HASH], ["${llc_triple}-${llc_host_cpu}"],
+                     [host device build hash])
 
 else
   AM_CONDITIONAL([CLANGXX_AVAILABLE], test ! -z $CLANGXX)
