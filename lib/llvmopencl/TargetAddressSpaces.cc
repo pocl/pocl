@@ -222,71 +222,32 @@ FixMemIntrinsics(llvm::Function& F) {
 
 
 
-bool
-TargetAddressSpaces::runOnModule(llvm::Module &M) {
 
-  llvm::StringRef arch(M.getTargetTriple());
+static void
+run(llvm::Module &M,
+    std::map<unsigned, unsigned> &addrSpaceMap,
+    bool handle_generic_AS) {
 
   std::map<llvm::Type*, llvm::StructType*> convertedStructsCache;
 
-  std::map<unsigned, unsigned> addrSpaceMap;
+  /* Handle global variables. These should be fixed *after*
+     fixing the instruction referring to them.  If we fix
+     the address spaces before, there might be possible
+     illegal bitcasts casting the LLVM's global pointer to
+     another one, causing the CloneFunctionInto to crash when
+     it encounters such.
 
-  if (arch.startswith("x86_64")) {
-    /* x86_64 supports flattening the address spaces at the backend, but
-       we still flatten them in pocl due to a couple of reasons.
-
-       At least LLVM 3.5 exposes an issue with pocl's printf or another LLVM pass:
-       After the code emission optimizations there appears a
-       PHI node where the two alternative pointer assignments have different
-       address spaces:
-       %format.addr.2347 =
-          phi i8 addrspace(3)* [ %incdec.ptr58, %if.end56 ],
-                               [ %format.addr.1, %while.body45.preheader ]
-
-       This leads to an LLVM crash when it tries to generate a no-op bitcast
-       while it won't be such due to the address space difference (I assume).
-       Workaround this by flattening the address spaces to 0 here also for
-       x86_64 until the real culprit is found.
-
-       Another reason is that LoopVectorizer of LLVM 3.7 crashes when it
-       tries to create a masked store intrinsics with the fake address space
-       ids, so we need to flatten them out before vectorizing.
-    */
-    addrSpaceMap[POCL_ADDRESS_SPACE_GLOBAL] =
-        addrSpaceMap[POCL_ADDRESS_SPACE_LOCAL] =
-        addrSpaceMap[POCL_ADDRESS_SPACE_GENERIC] =
-        addrSpaceMap[POCL_ADDRESS_SPACE_CONSTANT] = 0;
-
-  } else if (arch.startswith("arm")) {
-    /* Same thing happens here as with x86_64 above.
-     */
-    addrSpaceMap[POCL_ADDRESS_SPACE_GLOBAL] =
-        addrSpaceMap[POCL_ADDRESS_SPACE_LOCAL] =
-        addrSpaceMap[POCL_ADDRESS_SPACE_GENERIC] =
-        addrSpaceMap[POCL_ADDRESS_SPACE_CONSTANT] = 0;
-  } else if (arch.startswith("tce")) {
-    /* TCE requires the remapping. */
-    addrSpaceMap[POCL_ADDRESS_SPACE_GENERIC] = 0;
-    addrSpaceMap[POCL_ADDRESS_SPACE_GLOBAL] = 3;
-    addrSpaceMap[POCL_ADDRESS_SPACE_LOCAL] = 4;
-    addrSpaceMap[POCL_ADDRESS_SPACE_CONSTANT] = 5;
-  } else if (arch.startswith("mips")) {
-    addrSpaceMap[POCL_ADDRESS_SPACE_GLOBAL] =
-    addrSpaceMap[POCL_ADDRESS_SPACE_LOCAL] =
-    addrSpaceMap[POCL_ADDRESS_SPACE_GENERIC] =
-    addrSpaceMap[POCL_ADDRESS_SPACE_CONSTANT] = 0;
-  } else if (arch.startswith("amdgcn") || arch.startswith("hsail")) {
-    addrSpaceMap[POCL_ADDRESS_SPACE_GENERIC] = 0;
-    addrSpaceMap[POCL_ADDRESS_SPACE_GLOBAL] = 1;
-    addrSpaceMap[POCL_ADDRESS_SPACE_LOCAL] = 3;
-    addrSpaceMap[POCL_ADDRESS_SPACE_CONSTANT] = 2;
-  } else {
-    /* Assume the fake address space map works directly in case not
-       overridden here.  */
-    return false;
+     Update: ^this seems not to be an issue anymore and this commit
+     seems to cause the problems it is trying to fix on hsa and
+     amd scanlargearrays....  Original commit:
+     dcbcd39811638bcb953afbbfdd2620fb8ab45af4
+  */
+  llvm::Module::global_iterator globalI = M.global_begin();
+  llvm::Module::global_iterator globalE = M.global_end();
+  for (; globalI != globalE; ++globalI) {
+    llvm::Value &global = *globalI;
+    UpdateAddressSpace(global, addrSpaceMap, convertedStructsCache);
   }
-
-  bool changed = false;
 
   FunctionMapping funcReplacements;
   std::vector<llvm::Function*> unhandledFuncs;
@@ -333,6 +294,7 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
 
     SmallVector<ReturnInst *, 1> ri;
 
+    if (handle_generic_AS) {
     /* Remove generic address space casts. Converts types with generic AS to
      * private AS and then removes redundant AS casting instructions */
     for (llvm::Function::iterator bbi = F.begin(), bbe = F.end(); bbi != bbe;
@@ -379,6 +341,7 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
         }
 
       }
+    }
 
     class AddressSpaceReMapper : public ValueMapTypeRemapper {
     public:
@@ -401,20 +364,6 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
     funcReplacements[&F] = newFunc;
   }
 
-  /* Handle global variables. These should be fixed *after*
-     fixing the instruction referring to them.  If we fix
-     the address spaces before, there might be possible
-     illegal bitcasts casting the LLVM's global pointer to
-     another one, causing the CloneFunctionInto to crash when
-     it encounters such.
-   */
-  llvm::Module::global_iterator globalI = M.global_begin();
-  llvm::Module::global_iterator globalE = M.global_end();
-  for (; globalI != globalE; ++globalI) {
-    llvm::Value &global = *globalI;
-    changed |= UpdateAddressSpace(global, addrSpaceMap, convertedStructsCache);
-  }
-  
   /* Replace all references to the old function to the new one.
      Also, for LLVM 3.4, replace the pointercasts to bitcasts in
      case the new address spaces are the same in both sides. */
@@ -482,7 +431,93 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
     i = funcReplacements.begin();
   }
 
+}
+
+#define POCL_AS_FAKE_GENERIC 0
+#define POCL_AS_FAKE_GLOBAL 201
+#define POCL_AS_FAKE_LOCAL 202
+#define POCL_AS_FAKE_CONSTANT 203
+
+bool
+TargetAddressSpaces::runOnModule(llvm::Module &M) {
+
+  /* Annoying but we need to do two AS conversions.
+   * This is neccessary because the Pocl fake AS numbers
+   * conflict with real AS numbers (for some devices).
+   * First we map the Pocl fake AS numbers higher (above 200),
+   * then we map that down to real device AS */
+
+  std::map<unsigned, unsigned> addrSpaceMapUp;
+
+  addrSpaceMapUp[POCL_ADDRESS_SPACE_GLOBAL] = POCL_AS_FAKE_GLOBAL;
+  addrSpaceMapUp[POCL_ADDRESS_SPACE_LOCAL] = POCL_AS_FAKE_LOCAL;
+  addrSpaceMapUp[POCL_ADDRESS_SPACE_GENERIC] = POCL_AS_FAKE_GENERIC;
+  addrSpaceMapUp[POCL_ADDRESS_SPACE_CONSTANT] = POCL_AS_FAKE_CONSTANT;
+
+  run(M, addrSpaceMapUp, true);
+
+  std::map<unsigned, unsigned> addrSpaceMapDown;
+
+  llvm::StringRef arch(M.getTargetTriple());
+
+  if (arch.startswith("x86_64")) {
+    /* x86_64 supports flattening the address spaces at the backend, but
+       we still flatten them in pocl due to a couple of reasons.
+
+       At least LLVM 3.5 exposes an issue with pocl's printf or another LLVM pass:
+       After the code emission optimizations there appears a
+       PHI node where the two alternative pointer assignments have different
+       address spaces:
+       %format.addr.2347 =
+          phi i8 addrspace(3)* [ %incdec.ptr58, %if.end56 ],
+                               [ %format.addr.1, %while.body45.preheader ]
+
+       This leads to an LLVM crash when it tries to generate a no-op bitcast
+       while it won't be such due to the address space difference (I assume).
+       Workaround this by flattening the address spaces to 0 here also for
+       x86_64 until the real culprit is found.
+
+       Another reason is that LoopVectorizer of LLVM 3.7 crashes when it
+       tries to create a masked store intrinsics with the fake address space
+       ids, so we need to flatten them out before vectorizing.
+    */
+    addrSpaceMapDown[POCL_AS_FAKE_GLOBAL] =
+        addrSpaceMapDown[POCL_AS_FAKE_LOCAL] =
+        addrSpaceMapDown[POCL_AS_FAKE_GENERIC] =
+        addrSpaceMapDown[POCL_AS_FAKE_CONSTANT] = 0;
+
+  } else if (arch.startswith("arm")) {
+    /* Same thing happens here as with x86_64 above.
+     */
+    addrSpaceMapDown[POCL_AS_FAKE_GLOBAL] =
+        addrSpaceMapDown[POCL_AS_FAKE_LOCAL] =
+        addrSpaceMapDown[POCL_AS_FAKE_GENERIC] =
+        addrSpaceMapDown[POCL_AS_FAKE_CONSTANT] = 0;
+  } else if (arch.startswith("tce")) {
+    /* TCE requires the remapping. */
+    addrSpaceMapDown[POCL_AS_FAKE_GENERIC] = 0;
+    addrSpaceMapDown[POCL_AS_FAKE_GLOBAL] = 3;
+    addrSpaceMapDown[POCL_AS_FAKE_LOCAL] = 4;
+    addrSpaceMapDown[POCL_AS_FAKE_CONSTANT] = 5;
+  } else if (arch.startswith("mips")) {
+    addrSpaceMapDown[POCL_AS_FAKE_GLOBAL] =
+    addrSpaceMapDown[POCL_AS_FAKE_LOCAL] =
+    addrSpaceMapDown[POCL_AS_FAKE_GENERIC] =
+    addrSpaceMapDown[POCL_AS_FAKE_CONSTANT] = 0;
+  } else if (arch.startswith("amdgcn") || arch.startswith("hsail")) {
+    addrSpaceMapDown[POCL_AS_FAKE_GENERIC] = 0;
+    addrSpaceMapDown[POCL_AS_FAKE_GLOBAL] = 1;
+    addrSpaceMapDown[POCL_AS_FAKE_LOCAL] = 3;
+    addrSpaceMapDown[POCL_AS_FAKE_CONSTANT] = 2;
+  } else {
+    /* Assume the fake address space map works directly in case not
+       overridden here.  */
+    return false;
+  }
+
+  run(M, addrSpaceMapDown, false);
+
   return true;
 }
 
-}
+} // namespace pocl
