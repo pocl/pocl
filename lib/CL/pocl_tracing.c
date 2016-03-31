@@ -108,7 +108,7 @@ void
 pocl_event_tracing_init ()
 {
   const char *trace_env;
-  int i;
+  unsigned i;
 
   if (tracing_initialized)
     return;

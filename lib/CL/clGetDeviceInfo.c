@@ -192,7 +192,13 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_PROFILE                           : 
     POCL_RETURN_GETINFO_STR(device->profile);
   case CL_DEVICE_VERSION                           : 
-    POCL_RETURN_GETINFO_STR(device->version);
+    {
+      char res[1000];
+      char *hash = device->ops->build_hash(device);
+      snprintf(res, 1000, "%s HSTR: %s", device->version, hash);
+      free(hash);
+      POCL_RETURN_GETINFO_STR(res);
+    }
   case CL_DEVICE_EXTENSIONS                        : 
     POCL_RETURN_GETINFO_STR(device->extensions);
   case CL_DEVICE_PLATFORM                          :

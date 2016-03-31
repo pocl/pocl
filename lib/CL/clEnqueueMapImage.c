@@ -49,7 +49,7 @@ CL_API_SUFFIX__VERSION_1_0
   cl_device_id device;
   _cl_command_node *cmd = NULL;
   mem_mapping_t *mapping_info = NULL;
-  int event_i;
+  cl_uint event_i;
 
   POCL_GOTO_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 

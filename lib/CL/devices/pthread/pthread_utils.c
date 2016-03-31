@@ -60,7 +60,7 @@ void setup_kernel_arg_array(void **arguments, kernel_run_command *k)
 {
   struct pocl_argument *al;  
   cl_kernel kernel = k->kernel;
-  int i;
+  cl_uint i;
 
   for (i = 0; i < kernel->num_args; ++i)
     {
@@ -131,7 +131,7 @@ void setup_kernel_arg_array(void **arguments, kernel_run_command *k)
 
 void free_kernel_arg_array (void **arguments, kernel_run_command *k)
 {
-  int i;
+  cl_uint i;
   cl_kernel kernel = k->kernel;
   for (i = 0; i < kernel->num_args; ++i)
     {

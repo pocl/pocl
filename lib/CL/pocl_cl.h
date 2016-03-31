@@ -339,7 +339,7 @@ struct pocl_device_ops {
 
   void (*init_target_machine) (void *data, void *target_machine);
 
-  void (*build_hash) (void *data, SHA1_CTX *build_hash);
+  char* (*build_hash) (cl_device_id device);
 
     /* return supported image formats */
   cl_int (*get_supported_image_formats) (cl_mem_flags flags,

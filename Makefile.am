@@ -25,7 +25,13 @@
 SUBDIRS = include lib
 
 if !POCL_ANDROID
+if OCS_AVAILABLE
 SUBDIRS += bin examples tests
+endif
+endif
+
+if !OCS_AVAILABLE
+SUBDIRS = include lib
 endif
 
 ACLOCAL_AMFLAGS = -I m4

@@ -39,8 +39,11 @@
 
 #include "pocl_cache.h"
 #include "pocl_timing.h"
-#include "pocl_llvm.h"
 #include "pocl_file_util.h"
+
+#ifdef OCS_AVAILABLE
+#include "pocl_llvm.h"
+#endif
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
@@ -227,6 +230,15 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->broadcast = pocl_basic_broadcast;
   ops->notify = pocl_basic_notify;
   ops->flush = pocl_basic_flush;
+  ops->build_hash = pocl_basic_build_hash;
+}
+
+char *
+pocl_basic_build_hash (cl_device_id device)
+{
+  char* res = calloc(1000, sizeof(char));
+  snprintf(res, 1000, "basic-%s", HOST_DEVICE_BUILD_HASH);
+  return res;
 }
 
 void
@@ -266,7 +278,6 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->native_vector_width_half = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF;
   dev->max_clock_frequency = 0;
   dev->address_bits = POCL_DEVICE_ADDRESS_BITS;
-
   dev->image_support = CL_TRUE;
   /* Use the minimum values until we get a more sensible
      upper limit from somewhere. */
@@ -357,12 +368,21 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
 
   dev->extensions = HOST_DEVICE_EXTENSIONS;
 
+#ifdef OCS_AVAILABLE
+
   dev->llvm_target_triplet = OCL_KERNEL_TARGET;
+
 #ifdef POCL_BUILT_WITH_CMAKE
   dev->llvm_cpu = get_cpu_name();
 #else
   dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
 #endif
+
+#else
+  dev->llvm_cpu = NULL;
+  dev->llvm_target_triplet = "";
+#endif
+
   dev->has_64bit_long = 1;
   dev->autolocals_to_args = 1;
 }
@@ -427,7 +447,7 @@ pocl_basic_init (cl_device_id device, const char* parameters)
      using multiple OpenCL devices. */
   device->max_compute_units = 1;
 
-  if(!strcmp(device->llvm_cpu, "(unknown)"))
+  if(device->llvm_cpu && (!strcmp(device->llvm_cpu, "(unknown)")))
     device->llvm_cpu = NULL;
 
   // work-around LLVM bug where sizeof(long)=4
@@ -442,7 +462,7 @@ pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
 {
   void *b = NULL;
   cl_mem_flags flags = mem_obj->flags;
-  int i;
+  unsigned i;
   POCL_MSG_PRINT_INFO("BASIC: alloc_mem_obj, mem %p, dev %d\n", 
                       mem_obj, device->dev_id);
   /* check if some driver has already allocated memory for this mem_obj 

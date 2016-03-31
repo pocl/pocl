@@ -123,7 +123,7 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "pocl_tracing.h" "pocl_tracing.c"
                    "pocl_runtime_config.c" "pocl_runtime_config.h"
                    "pocl_mem_management.c"  "pocl_mem_management.h"
-                   "pocl_llvm_api.cc" "pocl_hash.c"
+                   "pocl_hash.c"
                    "pocl_debug.h" "pocl_debug.c" "pocl_timing.c"
                    "clSVMAlloc.c" "clSVMFree.c" "clEnqueueSVMFree.c"
                    "clEnqueueSVMMap.c" "clEnqueueSVMUnmap.c"
@@ -131,22 +131,29 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "clSetKernelArgSVMPointer.c" "clSetKernelExecInfo.c"
                    "pocl_binary.c")
 
-set(LIBPOCL_OBJS "$<TARGET_OBJECTS:llvmpasses>"
-                 "$<TARGET_OBJECTS:libpocl_unlinked_objs>"
+set(LIBPOCL_OBJS "$<TARGET_OBJECTS:libpocl_unlinked_objs>"
                  "$<TARGET_OBJECTS:pocl_cache>"
                  ${POCL_DEVICES_OBJS})
 
-add_compile_options(${OCL_ICD_CFLAGS} ${LTTNG_UST_CFLAGS})
+add_library("pocl_cache" OBJECT "pocl_cache.c")
 
-include_directories(${LLVM_INCLUDE_DIRS})
+if (OCS_AVAILABLE)
+  include_directories(${LLVM_INCLUDE_DIRS})
+  list(APPEND POCL_LIB_SOURCES "pocl_llvm_api.cc")
+  set_source_files_properties("pocl_llvm_api.cc" PROPERTIES COMPILE_FLAGS "${LLVM_CXXFLAGS} -I\"${CMAKE_CURRENT_SOURCE_DIR}/../llvmopencl\"")
+  list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:llvmpasses>")
+  # pocl_cache.c depends on a SHA1 hash of all built kernel-<target>.bc
+  add_dependencies("pocl_cache" "kernellib_hash")
+else()
+  list(APPEND POCL_LIB_SOURCES "pocl_file_util.c")
+endif()
+
+add_compile_options(${OCL_ICD_CFLAGS} ${LTTNG_UST_CFLAGS})
 
 if(HAVE_LTTNG_UST)
   list(APPEND POCL_LIB_SOURCES "pocl_lttng.c" "pocl_lttng.h")
 endif()
 
-
-# set llvm C++ flags on pocl_llvm_api.cc
-set_source_files_properties("pocl_llvm_api.cc" PROPERTIES COMPILE_FLAGS "${LLVM_CXXFLAGS} -I\"${CMAKE_CURRENT_SOURCE_DIR}/../llvmopencl\"")
 
 if(MSVC)
   set_source_files_properties( ${POCL_LIB_SOURCES} PROPERTIES LANGUAGE CXX )
@@ -154,11 +161,6 @@ endif(MSVC)
 
 # this is so that we don't compile twice when building both libpocl and libOpenCL
 add_library("libpocl_unlinked_objs" OBJECT ${POCL_LIB_SOURCES})
-
-add_library("pocl_cache" OBJECT "pocl_cache.c")
-
-# pocl_cache.c depends on a SHA1 hash of all built kernel-<target>.bc
-add_dependencies("pocl_cache" "kernellib_hash")
 
 #################################################################
 
