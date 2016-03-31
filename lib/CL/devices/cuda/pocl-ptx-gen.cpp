@@ -34,18 +34,27 @@
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Verifier.h"
+#include "llvm/Linker/Linker.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Transforms/IPO.h"
+#include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 
 #include <set>
 
+namespace llvm
+{
+  extern ModulePass* createNVVMReflectPass(const StringMap<int>& Mapping);
+}
+
 // TODO: Should these be proper passes?
 void pocl_add_kernel_annotations(llvm::Module *module);
 void pocl_cuda_fix_printf(llvm::Module *module);
+void pocl_cuda_link_libdevice(llvm::Module *module, const char *gpu_arch);
 void pocl_fix_constant_address_space(llvm::Module *module);
 void pocl_gen_local_mem_args(llvm::Module *module);
 void pocl_insert_ptx_intrinsics(llvm::Module *module);
@@ -82,6 +91,7 @@ int pocl_ptx_gen(const char *bc_filename,
   pocl_gen_local_mem_args(module->get());
   pocl_insert_ptx_intrinsics(module->get());
   pocl_add_kernel_annotations(module->get());
+  pocl_cuda_link_libdevice(module->get(), gpu_arch);
   if (pocl_get_bool_option("POCL_DEBUG_PTX", 0))
     (*module)->dump();
 
@@ -365,6 +375,86 @@ void pocl_cuda_fix_printf(llvm::Module *module)
       call->setArgOperand(0, asc);
     }
   }
+}
+
+void pocl_cuda_link_libdevice(llvm::Module *module, const char *gpu_arch)
+{
+  // TODO: Can we link libdevice into the kernel library at pocl build time?
+  // This would remove this runtime depenency on the CUDA toolkit.
+  // Had some issues with the other pocl LLVM passess crashing on the libdevice
+  // code - needs more investigation.
+
+  // Construct path to libdevice bitcode library
+  const char *cuda_path = pocl_get_string_option("CUDA_PATH", "");
+  const char *libdevice_fmt = "%s/nvvm/libdevice/libdevice.compute_%s.10.bc";
+  size_t sz = snprintf(NULL, 0, libdevice_fmt, cuda_path, gpu_arch+3);
+  char *libdevice_path = (char*)malloc(sz + 1);
+  sprintf(libdevice_path, libdevice_fmt, cuda_path, gpu_arch+3);
+  POCL_MSG_PRINT_INFO("loading libdevice from '%s'\n", libdevice_path);
+  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer =
+    llvm::MemoryBuffer::getFile(libdevice_path);
+  free(libdevice_path);
+  if (!buffer)
+    POCL_ABORT("[CUDA] failed to open libdevice library file\n");
+
+  // Load libdevice bitcode library
+  llvm::ErrorOr<std::unique_ptr<llvm::Module>> libdevice_module =
+    parseBitcodeFile(buffer->get()->getMemBufferRef(),
+    llvm::getGlobalContext());
+  if (!libdevice_module)
+    POCL_ABORT("[CUDA] failed to load libdevice bitcode\n");
+
+  // Fix triple and data-layout of libdevice module
+  (*libdevice_module)->setTargetTriple(module->getTargetTriple());
+  (*libdevice_module)->setDataLayout(module->getDataLayout());
+
+  // Link libdevice into module
+  llvm::Linker linker(*module);
+  if (linker.linkInModule(std::move(libdevice_module.get())))
+  {
+    POCL_ABORT("[CUDA] failed to link to libdevice");
+  }
+
+
+  llvm::legacy::PassManager passes;
+
+  // Assume this exists since this should be the last transform
+  llvm::NamedMDNode *md_kernels = module->getNamedMetadata("nvvm.annotations");
+  assert(md_kernels);
+
+  // Get list of kernel names
+  // TODO: If PTX is generated per kernel, we can do this for a single kernel
+  std::vector<const char*> kernel_names;
+  for (auto K = md_kernels->op_begin(); K != md_kernels->op_end(); K++)
+  {
+    if (!(*K)->getOperand(0))
+      continue;
+
+    llvm::ConstantAsMetadata *cam =
+      llvm::dyn_cast<llvm::ConstantAsMetadata>((*K)->getOperand(0).get());
+    if (!cam)
+      continue;
+
+    llvm::Function *function = llvm::dyn_cast<llvm::Function>(cam->getValue());
+    kernel_names.push_back(function->getName().str().c_str());
+  }
+
+  // Run internalize to mark all non-kernel functions as internal
+  passes.add(llvm::createInternalizePass(kernel_names));
+
+  // Run NVVM reflect pass to set math options
+  // TODO: Determine correct FTZ value from frontend compiler options
+  llvm::StringMap<int> reflect_params;
+  reflect_params["__CUDA_FTZ"] = 1;
+  passes.add(llvm::createNVVMReflectPass(reflect_params));
+
+  // Run optimization passes to clean up unused functions etc
+  llvm::PassManagerBuilder Builder;
+  Builder.OptLevel = 3;
+  Builder.SizeLevel = 0;
+  Builder.populateModulePassManager(passes);
+
+  passes.run(*module);
 }
 
 void pocl_update_users_address_space(llvm::Value *inst,
