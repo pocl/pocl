@@ -328,7 +328,7 @@ macro(custom_try_run_exe SOURCE1 SOURCE2 OUTPUT_VAR RES_VAR)
 endmacro()
 
 # clang try-compile-run macro, run via lli, the llvm interpreter
-macro(custom_try_run_lli SOURCE1 SOURCE2 OUTPUT_VAR RES_VAR)
+macro(custom_try_run_lli SILENT SOURCE1 SOURCE2 OUTPUT_VAR RES_VAR)
 # this uses "lli" - the interpreter, so we can run any -target
 # TODO variable for target !!
   set(OUTF "${CMAKE_BINARY_DIR}/try_run.bc")
@@ -344,7 +344,7 @@ macro(custom_try_run_lli SOURCE1 SOURCE2 OUTPUT_VAR RES_VAR)
     execute_process(COMMAND "${LLVM_LLI}" "-force-interpreter" "${OUTF}" RESULT_VARIABLE RESV OUTPUT_VARIABLE ${OUTPUT_VAR} ERROR_VARIABLE EV)
     set(${RES_VAR} ${RESV})
     file(REMOVE "${OUTF}")
-    if(${RESV})
+    if(${RESV} AND (NOT ${SILENT}))
       message(STATUS " ########## The command ${LLVM_LLI} -force-interpreter ${OUTF}")
       message(STATUS " ########## Exited with nonzero status: ${RESV}")
       if(${${OUTPUT_VAR}})
@@ -410,7 +410,7 @@ macro(CHECK_ALIGNOF TYPE TYPEDEF RES_VAR TRIPLE)
 
   if(NOT DEFINED ${CACHE_VAR_NAME})
 
-    custom_try_run_lli("
+    custom_try_run_lli(TRUE "
 #ifndef offsetof
 #define offsetof(type, member) ((char *) &((type *) 0)->member - (char *) 0)
 #endif
