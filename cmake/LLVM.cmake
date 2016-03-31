@@ -593,6 +593,61 @@ endif()
 set(LLC_HOST_CPU "${LLC_HOST_CPU}" CACHE STRING "The Host CPU to use with llc")
 
 ####################################################################
+
+# This tests that we can actually link to the llvm libraries.
+# Mostly to catch issues like #295 - cannot find -ledit
+
+setup_cache_var_name(LLVM_LINK_TEST "LLVM_LINK_TEST-${LLVM_HOST_TARGET}-${CLANG}")
+
+if(NOT DEFINED ${CACHE_VAR_NAME})
+
+  set(LLVM_LINK_TEST_SOURCE "
+    #include <stdio.h>
+    #include \"llvm/IR/LLVMContext.h\"
+    #include \"llvm/Support/SourceMgr.h\"
+    #include \"llvm/IR/Module.h\"
+    #include \"llvm/IRReader/IRReader.h\"
+
+    int main( int argc, char* argv[] )
+    {
+       if( argc < 2 )
+         exit(2);
+
+       llvm::LLVMContext &context = llvm::getGlobalContext();
+       llvm::SMDiagnostic err;
+       std::unique_ptr<llvm::Module> module = llvm::parseIRFile( argv[1], err, context );
+
+       if( !module )
+         exit(1);
+       else
+         module->dump();
+
+       return 0;
+    }")
+
+  string(RANDOM RNDNAME)
+  set(LLVM_LINK_TEST_FILENAME "${CMAKE_BINARY_DIR}/llvm_link_test_${RNDNAME}.cc")
+  file(WRITE "${LLVM_LINK_TEST_FILENAME}" "${LLVM_LINK_TEST_SOURCE}")
+
+  try_compile(LLVM_LINK_TEST ${CMAKE_BINARY_DIR} "${LLVM_LINK_TEST_FILENAME}"
+              CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_INCLUDE_DIRS}"
+              CMAKE_FLAGS "-DLINK_DIRECTORIES:STRING=${LLVM_LIBDIR}"
+              LINK_LIBRARIES "${LLVM_LDFLAGS} ${LLVM_LIBS} ${LLVM_SYSLIBS}"
+              COMPILE_DEFINITIONS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS}"
+              OUTPUT_VARIABLE _TRY_COMPILE_OUTPUT)
+
+  if (LLVM_LINK_TEST)
+    message(STATUS "LLVM link test OK")
+  else()
+    message(STATUS "LLVM link test output: ${_TRY_COMPILE_OUTPUT}")
+    message(FATAL_ERROR "LLVM link test FAILED. This mostly happens when your LLVM installation does not have all dependencies installed.")
+  endif()
+
+endif()
+
+set_cache_var(LLVM_LINK_TEST "LLVM link test result")
+
+####################################################################
 #X86 has -march and -mcpu reversed, for clang
 
 if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "(powerpc|armv7)")
