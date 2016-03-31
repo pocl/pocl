@@ -114,7 +114,7 @@ set_tests_properties("regression/phi_nodes_not_replicated_REPL"
     COST 1.5
     PROCESSORS 1
     DEPENDS "pocl_version_check"
-    LABELS "internal;regression")
+    LABELS "internal;regression;tce")
 
 
 # loops
@@ -165,7 +165,7 @@ set_tests_properties("regression/phi_nodes_not_replicated_LOOPS"
     COST 1.5
     PROCESSORS 1
     DEPENDS "pocl_version_check"
-    LABELS "internal;regression")
+    LABELS "internal;regression;tce")
 
 
 # other
@@ -195,7 +195,7 @@ set_tests_properties("regression/setting_a_buffer_argument_to_NULL_causes_a_segf
     COST 1.5
     PROCESSORS 1
     DEPENDS "pocl_version_check"
-    LABELS "internal;regression")
+    LABELS "internal;regression;tce")
 
 # The vector/struct kernel arguments are known to be flaky and
 # work by luck sometimes. Disable them for now.

@@ -32,7 +32,7 @@ add_compile_options( -Wno-deprecated -Wno-deprecated-declarations)
 add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
 #add_custom_test("fp16_host" "tce/fp16/repl" "expected_out.txt" run)
-add_test("tce/fp16/repl" "fp16_host" run)
+add_test_pocl(NAME "tce/fp16/repl" COMMAND "fp16_host" run)
 
 #AT_SETUP([Half-precision floats on ttasim (repl)])
 set_tests_properties( "tce/fp16/repl"
@@ -41,11 +41,12 @@ set_tests_properties( "tce/fp16/repl"
     PROCESSORS 1
     PASS_REGULAR_EXPRESSION "PING23456.000000 2000001OK"
     LABELS "tce;tta;ttasim;half"
+    WILL_FAIL 1
     ENVIRONMENT "POCL_DEVICES=ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine.adf;POCL_WORK_GROUP_METHOD=repl"
     DEPENDS "pocl_version_check")
 
 #add_custom_test("fp16_host" "tce/fp16/loopvec" "expected_out.txt" run)
-add_test("tce/fp16/loopvec" "fp16_host" run)
+add_test_pocl(NAME "tce/fp16/loopvec" COMMAND "fp16_host" run)
 
 # AT_SETUP([Half-precision floats on ttasim (loopvec)])
 set_tests_properties( "tce/fp16/loopvec"
@@ -54,5 +55,6 @@ set_tests_properties( "tce/fp16/loopvec"
     PROCESSORS 1
     PASS_REGULAR_EXPRESSION "PING23456.000000 2000001OK"
     LABELS "tce;tta;ttasim;half"
+    WILL_FAIL 1
     ENVIRONMENT "POCL_DEVICES=ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine.adf;POCL_WORK_GROUP_METHOD=loopvec"
     DEPENDS "pocl_version_check")

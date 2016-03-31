@@ -31,7 +31,7 @@ add_compile_options( -Wno-deprecated -Wno-deprecated-declarations)
 
 add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
-add_test("tce/tcemc" "tcemc_host" run)
+add_test_pocl(NAME "tce/tcemc" COMMAND "tcemc_host" run)
 
 #AT_SETUP([A basic TCEMC test])
 set_tests_properties( "tce/tcemc"
