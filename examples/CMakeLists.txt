@@ -46,16 +46,16 @@ if("${ENABLE_TESTSUITES}" STREQUAL "all")
   set(ENABLE_TESTSUITES ${ALL_TESTSUITES})
 endif()
 
-message(STATUS "Trying to enable testsuites: ${ENABLE_TESTSUITES}")
-
 include(ExternalProject)
-
-set(ACTUALLY_ENABLED_TESTSUITES "")
 
 # invoke this to build all examples
 add_custom_target(prepare_examples)
 
-if(ENABLE_TESTSUITES)
+if(ENABLE_TESTSUITES AND (NOT DEFINED ACTUALLY_ENABLED_TESTSUITES))
+
+  message(STATUS "Trying to enable testsuites: ${ENABLE_TESTSUITES}")
+
+  set(ACTUALLY_ENABLED_TESTSUITES "")
 
   if(NOT DEFINED TESTSUITE_BASEDIR)
     # TODO maybe current src dir ?
@@ -87,8 +87,9 @@ if(ENABLE_TESTSUITES)
       message(WARNING "Unknown testsuite ${TESTSUITE} requested")
     endif()
   endforeach()
+
+  set(ACTUALLY_ENABLED_TESTSUITES "${ACTUALLY_ENABLED_TESTSUITES}" CACHE STRING "Actually available & enabled testsuites")
 endif()
 
 set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
 set(ALL_TESTSUITES ${ALL_TESTSUITES} PARENT_SCOPE)
-
