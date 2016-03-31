@@ -33,6 +33,7 @@ extern "C"
 
 int pocl_ptx_gen(const char *bc_filename,
                  const char *ptx_filename,
+                 const char *kernel_name,
                  const char *gpu_arch);
 
 #ifdef __cplusplus

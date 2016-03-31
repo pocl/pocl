@@ -368,7 +368,8 @@ pocl_cuda_compile_submitted_kernels(_cl_command_node *cmd)
 
   // Generate PTX from LLVM bitcode
   // TODO: Load from cache if present
-  if (pocl_ptx_gen(bc_filename, ptx_filename, cmd->device->llvm_cpu))
+  if (pocl_ptx_gen(bc_filename, ptx_filename,
+                   kernel->name, cmd->device->llvm_cpu))
     POCL_ABORT("pocl-cuda: failed to generate PTX\n");
 
   // Load PTX module

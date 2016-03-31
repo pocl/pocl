@@ -54,13 +54,15 @@ namespace llvm
 // TODO: Should these be proper passes?
 void pocl_add_kernel_annotations(llvm::Module *module);
 void pocl_cuda_fix_printf(llvm::Module *module);
-void pocl_cuda_link_libdevice(llvm::Module *module, const char *gpu_arch);
+void pocl_cuda_link_libdevice(llvm::Module *module,
+                              const char *kernel, const char *gpu_arch);
 void pocl_fix_constant_address_space(llvm::Module *module);
 void pocl_gen_local_mem_args(llvm::Module *module);
 void pocl_insert_ptx_intrinsics(llvm::Module *module);
 
 int pocl_ptx_gen(const char *bc_filename,
                  const char *ptx_filename,
+                 const char *kernel_name,
                  const char *gpu_arch)
 {
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer =
@@ -91,7 +93,7 @@ int pocl_ptx_gen(const char *bc_filename,
   pocl_gen_local_mem_args(module->get());
   pocl_insert_ptx_intrinsics(module->get());
   pocl_add_kernel_annotations(module->get());
-  pocl_cuda_link_libdevice(module->get(), gpu_arch);
+  pocl_cuda_link_libdevice(module->get(), kernel_name, gpu_arch);
   if (pocl_get_bool_option("POCL_DEBUG_PTX", 0))
     (*module)->dump();
 
@@ -377,7 +379,8 @@ void pocl_cuda_fix_printf(llvm::Module *module)
   }
 }
 
-void pocl_cuda_link_libdevice(llvm::Module *module, const char *gpu_arch)
+void pocl_cuda_link_libdevice(llvm::Module *module,
+                              const char *kernel, const char *gpu_arch)
 {
   // TODO: Can we link libdevice into the kernel library at pocl build time?
   // This would remove this runtime depenency on the CUDA toolkit.
@@ -418,29 +421,8 @@ void pocl_cuda_link_libdevice(llvm::Module *module, const char *gpu_arch)
 
   llvm::legacy::PassManager passes;
 
-  // Assume this exists since this should be the last transform
-  llvm::NamedMDNode *md_kernels = module->getNamedMetadata("nvvm.annotations");
-  assert(md_kernels);
-
-  // Get list of kernel names
-  // TODO: If PTX is generated per kernel, we can do this for a single kernel
-  std::vector<const char*> kernel_names;
-  for (auto K = md_kernels->op_begin(); K != md_kernels->op_end(); K++)
-  {
-    if (!(*K)->getOperand(0))
-      continue;
-
-    llvm::ConstantAsMetadata *cam =
-      llvm::dyn_cast<llvm::ConstantAsMetadata>((*K)->getOperand(0).get());
-    if (!cam)
-      continue;
-
-    llvm::Function *function = llvm::dyn_cast<llvm::Function>(cam->getValue());
-    kernel_names.push_back(function->getName().str().c_str());
-  }
-
   // Run internalize to mark all non-kernel functions as internal
-  passes.add(llvm::createInternalizePass(kernel_names));
+  passes.add(llvm::createInternalizePass({kernel}));
 
   // Run NVVM reflect pass to set math options
   // TODO: Determine correct FTZ value from frontend compiler options
