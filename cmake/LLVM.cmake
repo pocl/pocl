@@ -242,7 +242,7 @@ find_program_or_die(LLVM_LLI "lli" "LLVM interpreter")
 ####################################################################
 
 # try compile with any compiler (supplied as argument)
-macro(custom_try_compile_any COMPILER SUFFIX SOURCE RES_VAR)
+macro(custom_try_compile_any SILENT COMPILER SUFFIX SOURCE RES_VAR)
   string(RANDOM RNDNAME)
   set(RANDOM_FILENAME "${CMAKE_BINARY_DIR}/compile_test_${RNDNAME}.${SUFFIX}")
   file(WRITE "${RANDOM_FILENAME}" "${SOURCE}")
@@ -250,7 +250,7 @@ macro(custom_try_compile_any COMPILER SUFFIX SOURCE RES_VAR)
   math(EXPR LSIZE "${ARGC} - 4")
 
   execute_process(COMMAND "${COMPILER}" ${ARGN} "${RANDOM_FILENAME}" RESULT_VARIABLE ${RES_VAR} OUTPUT_VARIABLE OV ERROR_VARIABLE EV)
-  if(${${RES_VAR}})
+  if(${${RES_VAR}} AND (NOT ${SILENT}))
     message(STATUS " ########## The command: ")
     string(REPLACE ";" " " ARGN_STR "${ARGN}")
     message(STATUS "${COMPILER} ${ARGN_STR} ${RANDOM_FILENAME}")
@@ -276,7 +276,20 @@ macro(custom_try_compile_c_cxx COMPILER SUFFIX SOURCE1 SOURCE2 RES_VAR)
   ${SOURCE2}
 
   }")
-  custom_try_compile_any("${COMPILER}" ${SUFFIX} "${SOURCE_PROG}" ${RES_VAR} ${ARGN})
+  custom_try_compile_any(FALSE "${COMPILER}" ${SUFFIX} "${SOURCE_PROG}" ${RES_VAR} ${ARGN})
+endmacro()
+
+# convenience c/c++ source wrapper
+macro(custom_try_compile_c_cxx_silent COMPILER SUFFIX SOURCE1 SOURCE2 RES_VAR)
+  set(SOURCE_PROG "
+  ${SOURCE1}
+
+  int main(int argc, char** argv) {
+
+  ${SOURCE2}
+
+  }")
+  custom_try_compile_any(TRUE "${COMPILER}" ${SUFFIX} "${SOURCE_PROG}" ${RES_VAR} ${ARGN})
 endmacro()
 
 # clang++ try-compile macro
@@ -583,14 +596,15 @@ endif()
 
 if(NOT DEFINED ${CL_DISABLE_HALF})
   set(CL_DISABLE_HALF 0)
-  # TODO -march=CPU flags !
-  custom_try_compile_c_cxx("${CLANG}" "c" "__fp16 callfp16(__fp16 a) { return a * (__fp16)1.8; };" "__fp16 x=callfp16((__fp16)argc);" RESV -c ${CLANG_TARGET_OPTION}${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${LLC_HOST_CPU})
+  message(STATUS "Checking fp16 support")
+  custom_try_compile_c_cxx_silent("${CLANG}" "c" "__fp16 callfp16(__fp16 a) { return a * (__fp16)1.8; };" "__fp16 x=callfp16((__fp16)argc);" RESV -c ${CLANG_TARGET_OPTION}${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${LLC_HOST_CPU})
   if(RESV)
     set(CL_DISABLE_HALF 1)
   endif()
 endif()
 
 set(CL_DISABLE_HALF "${CL_DISABLE_HALF}" CACHE BOOL "Disable cl_khr_fp16 because fp16 is not supported")
+message(STATUS "fp16 disabled: ${CL_DISABLE_HALF}")
 
 ####################################################################
 
