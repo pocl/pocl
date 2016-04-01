@@ -42,6 +42,10 @@ set(ALL_TESTSUITES
     Parboil piglit PyOpenCL
     Rodinia VexCL ViennaCL)
 
+if(NOT DEFINED ENABLE_TESTSUITES)
+  set(ENABLE_TESTSUITES "all")
+endif()
+
 if("${ENABLE_TESTSUITES}" STREQUAL "all")
   set(ENABLE_TESTSUITES ${ALL_TESTSUITES})
 endif()
