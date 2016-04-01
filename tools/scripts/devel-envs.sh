@@ -11,6 +11,9 @@ export OCL_ICD_VENDORS=$PWD/ocl-vendors
 # AMDSDK supports the overriding via other env name.
 export OPENCL_VENDOR_PATH=$OCL_ICD_VENDORS
 
+# for cmake, we don't need either of these
+if [ "$1" != "cmake" ]; then
+
 #pocl test-cases don't link against pthreads, but libpocl does.
 #this confuses gdb, unless we preload libpthread
 #If libpocl is not built yet, this will fail...
@@ -20,6 +23,8 @@ export LD_PRELOAD=$(ldd lib/CL/$libs_subdir/libpocl.so | grep pthread | cut -f 3
 #also, this is needed if the test binaries are run in gdb without the wrapper
 #shell script automake generates
 export LD_LIBRARY_PATH=$PWD/lib/CL/$libs_subdir:$PWD/lib/poclu/$libs_subdir/:$LD_LIBRARY_PATH
+
+fi
 
 #sometimes useful variable when ICD fails (and we use ocl-icd)
 #export OCL_ICD_DEBUG=15
