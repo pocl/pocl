@@ -1,0 +1,14 @@
+--- svmbasic.h	2016-03-06 19:57:17.113577850 +0100
++++ svmbasic.h.patched	2016-03-06 19:58:34.973575665 +0100
+@@ -3,7 +3,7 @@
+ // Then it is traversed in the OpenCL kernel on the device.
+ typedef struct _Element
+ {
+-    global float* internal; //points to the "value" of another Element from the same array
+-    global float* external; //points to the entry in a separate array of floating-point values
+-    float value;
+-} Element;
++    global float* internal __attribute__ ((aligned (8))); //points to the "value" of another Element from the same array
++    global float* external __attribute__ ((aligned (8))); //points to the entry in a separate array of floating-point values
++    float value __attribute__ ((aligned (8)));
++} Element __attribute__ ((aligned (32)));
