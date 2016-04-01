@@ -175,9 +175,11 @@ RegisterAnalysisGroup<AliasAnalysis> Y(X);
 RegisterAnalysisGroup<WorkItemAAResult> Y(X);
 #endif
 
+/*
 FunctionPass *createWorkItemAliasAnalysisPass() {
     return new WorkItemAliasAnalysis();
 }
+*/
 
 extern "C" {                                
     FunctionPass*

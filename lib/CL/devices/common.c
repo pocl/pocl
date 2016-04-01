@@ -728,7 +728,8 @@ pocl_check_dlhandle_cache (_cl_command_node *cmd)
   POCL_UNLOCK (pocl_dlhandle_cache_lock);
 }
 
-void
+/*
+static void
 pocl_free_dlhandle (_cl_command_node *cmd)
 {
   pocl_dlhandle_cache_item *ci = NULL;
@@ -755,6 +756,7 @@ pocl_free_dlhandle (_cl_command_node *cmd)
     }
   POCL_UNLOCK (pocl_dlhandle_cache_lock);
 }
+*/
 
 #define MIN_MAX_MEM_ALLOC_SIZE (128*1024*1024)
 
