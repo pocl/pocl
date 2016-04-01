@@ -29,6 +29,10 @@
 extern "C" {
 #endif
 
+#ifdef __GNUC__
+#pragma GCC visibility push(hidden)
+#endif
+
 /* Returns the cpu name as reported by LLVM. */
 char* get_cpu_name();
 
@@ -112,6 +116,9 @@ pocl_update_program_llvm_irs(cl_program program, unsigned device_i,
                              cl_device_id device);
 
 
+#ifdef __GNUC__
+#pragma GCC visibility pop
+#endif
 
 
 #ifdef __cplusplus

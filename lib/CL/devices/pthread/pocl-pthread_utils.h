@@ -14,7 +14,9 @@
 
 #define PTHREAD_UNLOCK(__lock) do { pthread_mutex_unlock((__lock)); }while(0)
 
-
+#ifdef __GNUC__
+#pragma GCC visibility push(hidden)
+#endif
 
 typedef struct kernel_run_command kernel_run_command;
 struct kernel_run_command
@@ -44,5 +46,9 @@ kernel_run_command* new_kernel_run_command ();
 void free_kernel_run_command (kernel_run_command *k);
 void setup_kernel_arg_array(void **arguments, kernel_run_command *k);
 void free_kernel_arg_array (void **arguments, kernel_run_command *k);
+
+#ifdef __GNUC__
+#pragma GCC visibility pop
+#endif
 
 #endif

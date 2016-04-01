@@ -5,6 +5,10 @@
 
 #include "llvm/IR/Module.h"
 
+#ifdef __GNUC__
+#pragma GCC visibility push(hidden)
+#endif
+
 /**
  * Link in module lib to krn.
  * This function searches for each undefined symbol 
@@ -13,5 +17,9 @@
  * running DCE.
  */
 void link(llvm::Module *krn, const llvm::Module *lib);
+
+#ifdef __GNUC__
+#pragma GCC visibility pop
+#endif
 
 #endif

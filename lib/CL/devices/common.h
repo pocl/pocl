@@ -88,6 +88,10 @@
 extern "C" {
 #endif
 
+#ifdef __GNUC__
+#pragma GCC visibility push(hidden)
+#endif
+
 char* llvm_codegen (const char* tmpdir,
                     cl_kernel kernel,
                     cl_device_id device);
@@ -130,6 +134,10 @@ void* pocl_memalign_alloc_global_mem(cl_device_id device, size_t align, size_t s
 void pocl_free_global_mem(cl_device_id device, void *ptr, size_t size);
 
 void pocl_print_system_memory_stats();
+
+#ifdef __GNUC__
+#pragma GCC visibility pop
+#endif
 
 #ifdef __cplusplus
 }

@@ -23,6 +23,9 @@
 
 #include "pocl_cl.h"
 
+#ifdef __GNUC__
+#pragma GCC visibility push(hidden)
+#endif
 
 void pocl_init_mem_manager (void);
 
@@ -37,3 +40,7 @@ void pocl_mem_manager_free_command (_cl_command_node *cmd_ptr);
 event_node* pocl_mem_manager_new_event_node ();
 
 void pocl_mem_manager_free_event_node (event_node *ed);
+
+#ifdef __GNUC__
+#pragma GCC visibility pop
+#endif
