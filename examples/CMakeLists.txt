@@ -33,7 +33,7 @@ add_subdirectory("scalarwave")
 add_subdirectory("trig")
 add_subdirectory("EinsteinToolkit")
 
-# TODO:   opencl-book-samples  PyOpenCL
+# TODO:   opencl-book-samples
 set(ALL_TESTSUITES
     AMD AMDSDK2.9 AMDSDK3.0
     ASL arrayfire clBLAS clFFT
