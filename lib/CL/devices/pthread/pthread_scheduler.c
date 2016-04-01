@@ -132,7 +132,7 @@ static int
 work_group_scheduler (kernel_run_command *k,
                       struct pool_thread_data *thread_data);
 
-void finalize_kernel_command (thread_data *thread_data,
+static void finalize_kernel_command (thread_data *thread_data,
                               kernel_run_command *k);
 
 int pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
@@ -174,7 +174,8 @@ int pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
   return 1;
 }
 
-void pthread_scheduler_sleep()
+static void
+pthread_scheduler_sleep()
 {
   static struct timespec time_to_wait = {0, 0};
   time_to_wait.tv_sec = time(NULL) + 5;
@@ -266,7 +267,7 @@ work_group_scheduler (kernel_run_command *k,
 }
 
 void finalize_kernel_command (struct pool_thread_data *thread_data,
-                              kernel_run_command *k)
+                                     kernel_run_command *k)
 {
 #ifdef DEBUG_MT
   printf("### kernel %s finished\n", k->cmd->command.run.kernel->name);
@@ -280,7 +281,7 @@ void finalize_kernel_command (struct pool_thread_data *thread_data,
   free_kernel_run_command (k);
 }
 
-void
+static void
 pocl_pthread_prepare_kernel
 (void *data, 
  _cl_command_node* cmd)
@@ -327,8 +328,9 @@ pocl_pthread_prepare_kernel
 
 }
 
-void pocl_pthread_exec_command (_cl_command_node * volatile cmd,
-                                struct pool_thread_data *td)
+static void
+pocl_pthread_exec_command (_cl_command_node * volatile cmd,
+                           struct pool_thread_data *td)
 {
   if(cmd->type == CL_COMMAND_NDRANGE_KERNEL)
     {

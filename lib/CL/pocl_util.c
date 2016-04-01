@@ -229,8 +229,9 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
   return CL_SUCCESS;
 }
 
-int pocl_create_event_sync(cl_event waiting_event, 
-                           cl_event notifier_event, cl_mem mem)
+static int
+pocl_create_event_sync(cl_event waiting_event,
+                       cl_event notifier_event, cl_mem mem)
 {
   event_node * volatile notify_target = NULL;
   event_node * volatile wait_list_item = NULL;

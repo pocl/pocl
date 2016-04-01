@@ -25,7 +25,7 @@
 #include "utlist.h"
 #include <assert.h>
 #include "pocl_util.h"
-#include "clEnqueueMapBuffer.h"
+#include "pocl_shared.h"
 
 CL_API_ENTRY void * CL_API_CALL
 POname(clEnqueueMapBuffer)(cl_command_queue command_queue,

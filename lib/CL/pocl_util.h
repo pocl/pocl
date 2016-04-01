@@ -141,6 +141,12 @@ cl_device_id * pocl_unique_device_list(const cl_device_id * in, cl_uint num, cl_
     }                                                                        \
   while (0)
 
+const char*
+pocl_status_to_str (int status);
+
+const char *
+pocl_command_to_str (cl_command_type cmd);
+
 #ifdef __cplusplus
 }
 #endif
@@ -199,11 +205,5 @@ cl_device_id * pocl_unique_device_list(const cl_device_id * in, cl_uint num, cl_
                   memcpy(param_value, __VALUE__, value_size));          \
     }                                                                   \
   while (0)
-
-const char*
-pocl_status_to_str (int status);
-
-const char *
-pocl_command_to_str (cl_command_type cmd);
 
 #endif

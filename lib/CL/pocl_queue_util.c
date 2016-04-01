@@ -74,7 +74,8 @@ void pocl_init_queue_list()
 }
 
 // walk the queue list, 
-void pocl_compact_queue_list() {
+static void
+pocl_compact_queue_list() {
   size_t i; // walking index
   size_t compact = 0; // number of non-NULL elements
   for (i = 0; i < queue_size; ++i) {

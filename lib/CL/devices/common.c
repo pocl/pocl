@@ -23,7 +23,7 @@
    THE SOFTWARE.
 */
 #include "common.h"
-#include "clEnqueueMapBuffer.h"
+#include "pocl_shared.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

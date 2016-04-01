@@ -1,18 +1,17 @@
-/* pocl_img_buf_cpy.h: common parts of image and buffer copying
+/* OpenCL runtime library: shared functions
 
-   Copyright (c) 2011 Universidad Rey Juan Carlos
-   Copyright (c) 2015 Giuseppe Bilotta
-   
+   Copyright (c) 2016 Michal Babej / Tampere University of Technology
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights
    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
    copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -22,9 +21,26 @@
    THE SOFTWARE.
 */
 
+#ifndef POCL_SHARED_H
+#define POCL_SHARED_H
+
 #include "pocl_cl.h"
-#include <assert.h>
-#include "pocl_util.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+#ifdef __GNUC__
+#pragma GCC visibility push(hidden)
+#endif
+
+
+/* Function for performing the actual mapping, used both from the
+   clFinish() and the blocking call. */
+void*
+pocl_map_mem_cmd(cl_device_id device,
+                 cl_mem buffer,
+                 mem_mapping_t *mapping_info);
 
 cl_int pocl_rect_copy(cl_command_queue command_queue,
                       cl_mem src,
@@ -41,3 +57,20 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
                       cl_uint num_events_in_wait_list,
                       const cl_event *event_wait_list,
                       cl_event *event);
+
+cl_int program_compile_dynamic_wg_binaries(cl_program program);
+
+
+int context_set_properties(cl_context                    context,
+                           const cl_context_properties * properties,
+                           cl_int *                      errcode);
+
+#ifdef __GNUC__
+#pragma GCC visibility pop
+#endif
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // POCL_SHARED_H

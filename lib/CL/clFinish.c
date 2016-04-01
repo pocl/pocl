@@ -26,7 +26,7 @@
 #include "pocl_debug.h"
 #include "pocl_image_util.h"
 #include "utlist.h"
-#include "clEnqueueMapBuffer.h"
+#include "pocl_shared.h"
 #include "common.h"
 #include "pocl_mem_management.h"
 

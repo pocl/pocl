@@ -24,7 +24,7 @@
 #include "pocl_cl.h"
 #include <assert.h>
 #include "pocl_util.h"
-#include "pocl_img_buf_cpy.h"
+#include "pocl_shared.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clEnqueueCopyBufferRect)(cl_command_queue command_queue,
