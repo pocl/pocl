@@ -47,8 +47,11 @@
 #include "devices.h"
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
-#include "pocl_llvm.h"
 #include "pocl_debug.h"
+
+#ifdef OCS_AVAILABLE
+#include "pocl_llvm.h"
+#endif
 
 #include "_kernel_constants.h"
 
@@ -64,6 +67,7 @@
  * @param return the generated binary filename.
  */
 
+#ifdef OCS_AVAILABLE
 char*
 llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
 
@@ -124,6 +128,8 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
 
   return module;
 }
+#endif
+
 
 /**
  * Populates the device specific image data structure used by kernel
@@ -195,7 +201,7 @@ pocl_copy_mem_object (cl_device_id dest_dev, cl_mem dest,
 void
 pocl_migrate_mem_objects (_cl_command_node * volatile node)
 {
-  int i;
+  size_t i;
   cl_mem *mem_objects = node->command.migrate.mem_objects;
   
   for (i = 0; i < node->command.migrate.num_mem_objects; ++i)
@@ -212,7 +218,7 @@ pocl_migrate_mem_objects (_cl_command_node * volatile node)
 void
 pocl_ndrange_node_cleanup(_cl_command_node *node)
 {
-  int i;
+  cl_uint i;
   free (node->command.run.arg_buffers);
   free (node->command.run.tmp_dir);
   for (i = 0; i < node->command.run.kernel->num_args + 
@@ -253,7 +259,7 @@ pocl_mem_objs_cleanup (cl_event event)
 void
 pocl_exec_command (_cl_command_node * volatile node)
 {
-  int i;
+  unsigned i;
   /* because of POCL_UPDATE_EVENT_ */
   cl_event *event = &(node->event);
   switch (node->type)
@@ -671,14 +677,19 @@ pocl_check_dlhandle_cache (_cl_command_node *cmd)
   cl_device_id dev = cmd->device;
   int dev_i = pocl_cl_device_to_index(p, dev);
 
-  if (p->binaries[dev_i])
+  if (p->binaries[dev_i] && !p->pocl_binaries[dev_i])
     {
+#ifdef OCS_AVAILABLE
       POCL_LOCK (pocl_llvm_codegen_lock);
-      module_fn = llvm_codegen (cmd->command.run.tmp_dir,
-                                cmd->command.run.kernel,
-                                cmd->device);
+      module_fn = (char *)llvm_codegen (cmd->command.run.tmp_dir,
+                                        cmd->command.run.kernel,
+                                        cmd->device);
       POCL_UNLOCK (pocl_llvm_codegen_lock);
       POCL_MSG_PRINT_INFO("Using static WG size binary: %s\n", module_fn);
+#else
+      POCL_ABORT("pocl built without online compiler support "
+                 "cannot compile LLVM IRs to machine code\n");
+#endif
     }
   else
     {

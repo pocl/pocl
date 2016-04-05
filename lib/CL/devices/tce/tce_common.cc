@@ -242,10 +242,6 @@ TCEDevice::tceccCommandLine
     extraFlags += " " + 
       TCEString(pocl_get_string_option("POCL_TCECC_EXTRA_FLAGS", ""));
 
-  std::string userProgramBuildOptions;
-  if (run_cmd->kernel->program->compiler_options != NULL)
-    userProgramBuildOptions = run_cmd->kernel->program->compiler_options;
-
   std::string kernelMdSymbolName = "_";
   kernelMdSymbolName += run_cmd->kernel->name;
   kernelMdSymbolName += "_md";
@@ -255,7 +251,7 @@ TCEDevice::tceccCommandLine
      use case when producing the kernel capture scripts. */
   TCEString cmdLine;
   cmdLine << "tcecc -llwpr " + poclIncludePathSwitch + " " + deviceMainSrc + " " + 
-    userProgramBuildOptions + " " + kernelObjSrc + " " + inputSrc + 
+    " " + kernelObjSrc + " " + inputSrc +
     " -k " + kernelMdSymbolName +
     " -g -O3 --emit-llvm -o " + programBcFile + " " + extraFlags + ";";
 
@@ -322,7 +318,7 @@ pocl_tce_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
 {
   void *b = NULL;
   cl_int flags = mem_obj->flags;
-  int i;
+  unsigned i;
 
   /* check if some driver has already allocated memory for this mem_obj 
      in our global address space, and use that*/
@@ -420,10 +416,6 @@ pocl_tce_compile_submitted_kernels(_cl_command_node *cmd)
   if (d->isNewKernel(&(cmd->command.run))) {
     std::string assemblyFileName(cmd->command.run.tmp_dir);
     assemblyFileName += "/parallel.tpef";
-
-    std::string userProgramBuildOptions;
-    if (cmd->command.run.kernel->program->compiler_options != NULL)
-      userProgramBuildOptions = cmd->command.run.kernel->program->compiler_options;
 
     if (access (assemblyFileName.c_str(), F_OK) != 0)
       {
@@ -693,15 +685,14 @@ pocl_tce_init_build(void *data)
   return include_switch;
 }
 
-void 
-pocl_tce_build_hash (void *data, SHA1_CTX *build_hash)
+char *
+pocl_tce_build_hash (cl_device_id device)
 {
-  TCEDevice *tce_dev = (TCEDevice*)data;
+  TCEDevice *tce_dev = (TCEDevice*)device->data;
   FILE* adf_file = fopen (tce_dev->machine_file.c_str(), "r");
   size_t size;
   uint8_t* adf_data = 0;
   const char *extra_flags = NULL;
-  size_t ef_size;
 
   fseek (adf_file, 0 , SEEK_END);
   size = ftell (adf_file);
@@ -709,16 +700,32 @@ pocl_tce_build_hash (void *data, SHA1_CTX *build_hash)
   adf_data = (uint8_t*)malloc (size);
   if (fread (adf_data, 1, size, adf_file) == 0)
       POCL_ABORT ("Could not read ADF.");
-  
-  //TCEString machine_hash = tce->dev->hash();
-  pocl_SHA1_Update (build_hash, adf_data, size);
+
+  SHA1_CTX ctx;
+  uint8_t bin_dig[SHA1_DIGEST_SIZE];
+  pocl_SHA1_Init(&ctx);
+  pocl_SHA1_Update(&ctx, adf_data, size);
+  pocl_SHA1_Final(&ctx, bin_dig);
+
+  char *result = (char *)calloc(1000, sizeof(char));
+  strcpy(result, "tce-");
+  char *temp = result + 4;
+  unsigned i;
+  for (i=0; i < SHA1_DIGEST_SIZE; i++)
+    {
+      *temp++ = (bin_dig[i] & 0x0F) + 65;
+      *temp++ = ((bin_dig[i] & 0xF0) >> 4) + 65;
+    }
+  *temp++ = '_';
+  *temp = 0;
 
   if (pocl_is_option_set("POCL_TCECC_EXTRA_FLAGS"))
     {
       extra_flags = pocl_get_string_option("POCL_TCECC_EXTRA_FLAGS", "");
-      ef_size = strlen (extra_flags);
-      pocl_SHA1_Update (build_hash, (uint8_t*)extra_flags, ef_size);
+      strncpy(temp, extra_flags, (1000-(temp-result)) );
     }
+
+  return result;
 }
 
 void

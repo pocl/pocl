@@ -32,6 +32,11 @@ set(VERSION_SUFFIX "-pre")
 set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION}${VERSION_SUFFIX})
 set(POCL_VERSION ${VERSION_STRING})
 
+
+##################################################################################
+
+option(OCS_AVAILABLE "Online compiler support available to build pocl with. Default is available." ON)
+
 ##################################################################################
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc")
@@ -211,14 +216,34 @@ endif()
 
 ######################################################################################
 
-set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
-include(LLVM RESULT_VARIABLE RES)
-if(NOT RES)
-  message(FATAL_ERROR "Could not load LLVM.cmake")
-endif()
+if (OCS_AVAILABLE)
 
-if("${LLVM_VERSION}" VERSION_LESS "3.6")
-  message(FATAL_ERROR "POCL requires LLVM version >= 3.6 !")
+  include(LLVM RESULT_VARIABLE RES)
+  if(NOT RES)
+    message(FATAL_ERROR "Could not load LLVM.cmake")
+  endif()
+
+  if("${LLVM_VERSION}" VERSION_LESS "3.6")
+    message(FATAL_ERROR "POCL requires LLVM version >= 3.6 !")
+  endif()
+
+  if("${LLVM_CLANG_VERSION}" MATCHES "SPIR")
+    set(CLANG_SPIR 1)
+    message(STATUS "Using a SPIR generator Clang from Khronos.")
+  else()
+    set(CLANG_SPIR 0)
+    message(STATUS "NOT using SPIR")
+  endif()
+
+  if(NOT DEFINED HOST_DEVICE_BUILD_HASH)
+    set(HOST_DEVICE_BUILD_HASH "${LLC_TRIPLE}-${LLC_HOST_CPU}")
+  endif()
+
+else()
+  if(NOT DEFINED HOST_DEVICE_BUILD_HASH)
+    message(FATAL_ERROR "For compiler-less builds, you must define HOST_DEVICE_BUILD_HASH")
+  endif()
+
 endif()
 
 ######################################################################################
@@ -351,24 +376,27 @@ message(STATUS "OpenCL flags for compiling kernel library: ${KERNEL_CL_FLAGS}")
 
 ######################################################################################
 
-option(STATIC_LLVM "Link LLVM statically. Default is dynamic." OFF)
+if (OCS_AVAILABLE)
 
-if(STATIC_LLVM)
-  message(STATUS "Linking LLVM statically")
-  set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
-else()
-  message(STATUS "Trying to link LLVM dynamically")
-  find_library(LLVM_SHARED_LIB_FILE NAMES "LLVM-${LLVM_VERSION}" "LLVM" PATHS "${LLVM_LIBDIR}" NO_DEFAULT_PATH)
-  if(LLVM_SHARED_LIB_FILE AND EXISTS "${LLVM_SHARED_LIB_FILE}")
-    message(STATUS "..using ${LLVM_SHARED_LIB_FILE}")
-    set(POCL_LLVM_LIBS "${LLVM_SHARED_LIB_FILE}")
-  else()
-    message(STATUS "LLVM-${LLVM_VERSION} library not found (Probably because LLVM is built with cmake).
-    Linking libpocl (possibly statically) to LLVM_LIBFILES")
+  option(STATIC_LLVM "Link LLVM statically. Default is dynamic." OFF)
+
+  if(STATIC_LLVM)
+    message(STATUS "Linking LLVM statically")
     set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
+  else()
+    message(STATUS "Trying to link LLVM dynamically")
+    find_library(LLVM_SHARED_LIB_FILE NAMES "LLVM-${LLVM_VERSION}" "LLVM" PATHS "${LLVM_LIBDIR}" NO_DEFAULT_PATH)
+    if(LLVM_SHARED_LIB_FILE AND EXISTS "${LLVM_SHARED_LIB_FILE}")
+      message(STATUS "..using ${LLVM_SHARED_LIB_FILE}")
+      set(POCL_LLVM_LIBS "${LLVM_SHARED_LIB_FILE}")
+    else()
+      message(STATUS "LLVM-${LLVM_VERSION} library not found (Probably because LLVM is built with cmake).
+      Linking libpocl (possibly statically) to LLVM_LIBFILES")
+      set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
+    endif()
   endif()
-endif()
 
+endif()
 
 ######################################################################################
 
@@ -576,17 +604,6 @@ string(TIMESTAMP POCL_BUILD_TIMESTAMP "%d%m%Y%H%M%S")
 file(WRITE "${CMAKE_BINARY_DIR}/pocl_build_timestamp.h" "#define POCL_BUILD_TIMESTAMP \"${POCL_BUILD_TIMESTAMP}\"")
 
 ######################################################################################
-
-if("${LLVM_CLANG_VERSION}" MATCHES "SPIR")
-  set(CLANG_SPIR 1)
-  message(STATUS "Using a SPIR generator Clang from Khronos.")
-else()
-  set(CLANG_SPIR 0)
-  message(STATUS "NOT using SPIR")
-endif()
-
-
-####################################################################
 
 # The Clang flags that are used always when compiling OpenCL C code.
 # Note: We use -Wno-format to avoid warnings for printf, where we
@@ -830,15 +847,25 @@ endif()
 
 ##########################################################
 
-CHECK_ALIGNOF("float16" "typedef float float16  __attribute__((__ext_vector_type__(16)));" ALIGNOF_FLOAT16 ${LLC_TRIPLE})
+if (OCS_AVAILABLE)
 
-CHECK_ALIGNOF("double16" "typedef double double16  __attribute__((__ext_vector_type__(16)));" ALIGNOF_DOUBLE16 ${LLC_TRIPLE})
+  CHECK_ALIGNOF("float16" "typedef float float16  __attribute__((__ext_vector_type__(16)));" ALIGNOF_FLOAT16 ${LLC_TRIPLE})
+
+  CHECK_ALIGNOF("double16" "typedef double double16  __attribute__((__ext_vector_type__(16)));" ALIGNOF_DOUBLE16 ${LLC_TRIPLE})
+
+else()
+
+  set(ALIGNOF_FLOAT16 64)
+  set(ALIGNOF_DOUBLE16 128)
+
+endif()
 
 if(ALIGNOF_FLOAT16 GREATER ALIGNOF_DOUBLE16)
   set(MAX_EXTENDED_ALIGNMENT "${ALIGNOF_FLOAT16}")
 else()
   set(MAX_EXTENDED_ALIGNMENT "${ALIGNOF_DOUBLE16}")
 endif()
+
 
 ##########################################################
 
@@ -980,11 +1007,13 @@ message(STATUS "POCLU LINK OPTS: ${POCLU_LINK_OPTIONS}")
 # poclcc bin
 add_subdirectory("bin")
 
-# TODO In progress
-add_subdirectory("tests")
+if (OCS_AVAILABLE)
+  # TODO In progress
+  add_subdirectory("tests")
 
-# TODO In progress
-add_subdirectory("examples")
+  # TODO In progress
+  add_subdirectory("examples")
+endif()
 
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} ${COMMAND_USES_TERMINAL})
 
@@ -1021,6 +1050,7 @@ MESSAGE(STATUS "ENABLE_HSA: ${ENABLE_HSA}")
 MESSAGE(STATUS "INSTALL_OPENCL_HEADERS (Install our headers): ${INSTALL_OPENCL_HEADERS}")
 MESSAGE(STATUS "OCL_DRIVERS (Drivers built): ${OCL_DRIVERS}")
 MESSAGE(STATUS "OCL_TARGETS (Targets built): ${OCL_TARGETS}")
+MESSAGE(STATUS "OCS_AVAILABLE: ${OCS_AVAILABLE}")
 MESSAGE(STATUS "STATIC_LLVM: ${STATIC_LLVM}")
 MESSAGE(STATUS "TESTS_USE_ICD: ${TESTS_USE_ICD}")
 MESSAGE(STATUS "USE_VECMATHLIB: ${USE_VECMATHLIB}")
@@ -1030,18 +1060,18 @@ MESSAGE(STATUS "Kernel caching: ${KERNEL_CACHE_DEFAULT}")
 MESSAGE(STATUS "Kernel library CPU variants: ${KERNELLIB_HOST_CPU_VARIANTS}")
 MESSAGE(STATUS "Kernel library distro build: ${KERNELLIB_HOST_DISTRO_VARIANTS}")
 
-MESSAGE(STATUS " ")
-MESSAGE(STATUS "******* Programs:")
-MESSAGE(STATUS " ")
-
-MESSAGE(STATUS "LLVM_CONFIG: ${LLVM_CONFIG}")
-MESSAGE(STATUS "LLVM_OPT: ${LLVM_OPT}")
-MESSAGE(STATUS "LLVM_LLC: ${LLVM_LLC}")
-MESSAGE(STATUS "LLVM_AS: ${LLVM_AS}")
-MESSAGE(STATUS "LLVM_LINK: ${LLVM_LINK}")
-MESSAGE(STATUS "LLVM_LLI: ${LLVM_LLI}")
-MESSAGE(STATUS "WITH_LLVM_CONFIG (User preferred llvm-config): ${WITH_LLVM_CONFIG}")
-
+if (OCS_AVAILABLE)
+  MESSAGE(STATUS " ")
+  MESSAGE(STATUS "******* LLVM Programs:")
+  MESSAGE(STATUS " ")
+  MESSAGE(STATUS "LLVM_CONFIG: ${LLVM_CONFIG}")
+  MESSAGE(STATUS "LLVM_OPT: ${LLVM_OPT}")
+  MESSAGE(STATUS "LLVM_LLC: ${LLVM_LLC}")
+  MESSAGE(STATUS "LLVM_AS: ${LLVM_AS}")
+  MESSAGE(STATUS "LLVM_LINK: ${LLVM_LINK}")
+  MESSAGE(STATUS "LLVM_LLI: ${LLVM_LLI}")
+  MESSAGE(STATUS "WITH_LLVM_CONFIG (User preferred llvm-config): ${WITH_LLVM_CONFIG}")
+endif()
 
 MESSAGE(STATUS " ")
 MESSAGE(STATUS "******* Various Flags:")
@@ -1068,21 +1098,23 @@ MESSAGE(STATUS "PTHREAD_LDFLAGS: ${PTHREAD_LDFLAGS}")
 MESSAGE(STATUS "PTHREAD_CFLAGS: ${PTHREAD_CFLAGS}")
 MESSAGE(STATUS "LIB_API_VERSION: ${LIB_API_VERSION}")
 MESSAGE(STATUS "LIB_BUILD_VERSION: ${LIB_BUILD_VERSION}")
-MESSAGE(STATUS "LLVM_VERSION: ${LLVM_VERSION}")
-MESSAGE(STATUS "LLVM_ASSERTS_BUILD ${LLVM_ASSERTS_BUILD}")
-MESSAGE(STATUS "LLVM_CFLAGS: ${LLVM_CFLAGS}")
-MESSAGE(STATUS "LLVM_CXXFLAGS: ${LLVM_CXXFLAGS}")
-MESSAGE(STATUS "LLVM_CPPFLAGS: ${LLVM_CPPFLAGS}")
-MESSAGE(STATUS "LLVM_LDFLAGS: ${LLVM_LDFLAGS}")
-MESSAGE(STATUS "LLVM_LIBDIR: ${LLVM_LIBDIR}")
-MESSAGE(STATUS "LLVM_INCLUDEDIR: ${LLVM_INCLUDEDIR}")
-MESSAGE(STATUS "LLVM_SRC_ROOT: ${LLVM_SRC_ROOT}")
-MESSAGE(STATUS "LLVM_OBJ_ROOT: ${LLVM_OBJ_ROOT}")
-MESSAGE(STATUS "LLVM_INCLUDE_DIRS: ${LLVM_INCLUDE_DIRS}")
-MESSAGE(STATUS "LLVM_ALL_TARGETS: ${LLVM_ALL_TARGETS}")
-MESSAGE(STATUS "LLVM_HOST_TARGET: ${LLVM_HOST_TARGET}")
-MESSAGE(STATUS "LLC_TRIPLE: ${LLC_TRIPLE}")
-MESSAGE(STATUS "LLC_HOST_CPU: ${LLC_HOST_CPU}")
+if (OCS_AVAILABLE)
+  MESSAGE(STATUS "LLVM_VERSION: ${LLVM_VERSION}")
+  MESSAGE(STATUS "LLVM_ASSERTS_BUILD ${LLVM_ASSERTS_BUILD}")
+  MESSAGE(STATUS "LLVM_CFLAGS: ${LLVM_CFLAGS}")
+  MESSAGE(STATUS "LLVM_CXXFLAGS: ${LLVM_CXXFLAGS}")
+  MESSAGE(STATUS "LLVM_CPPFLAGS: ${LLVM_CPPFLAGS}")
+  MESSAGE(STATUS "LLVM_LDFLAGS: ${LLVM_LDFLAGS}")
+  MESSAGE(STATUS "LLVM_LIBDIR: ${LLVM_LIBDIR}")
+  MESSAGE(STATUS "LLVM_INCLUDEDIR: ${LLVM_INCLUDEDIR}")
+  MESSAGE(STATUS "LLVM_SRC_ROOT: ${LLVM_SRC_ROOT}")
+  MESSAGE(STATUS "LLVM_OBJ_ROOT: ${LLVM_OBJ_ROOT}")
+  MESSAGE(STATUS "LLVM_INCLUDE_DIRS: ${LLVM_INCLUDE_DIRS}")
+  MESSAGE(STATUS "LLVM_ALL_TARGETS: ${LLVM_ALL_TARGETS}")
+  MESSAGE(STATUS "LLVM_HOST_TARGET: ${LLVM_HOST_TARGET}")
+  MESSAGE(STATUS "LLC_TRIPLE: ${LLC_TRIPLE}")
+  MESSAGE(STATUS "LLC_HOST_CPU: ${LLC_HOST_CPU}")
+endif()
 MESSAGE(STATUS "MAX_EXTENDED_ALIGNMENT: ${MAX_EXTENDED_ALIGNMENT}")
 MESSAGE(STATUS "OCL_KERNEL_TARGET: ${OCL_KERNEL_TARGET}")
 MESSAGE(STATUS "OCL_KERNEL_TARGET_CPU: ${OCL_KERNEL_TARGET_CPU}")
@@ -1095,6 +1127,8 @@ MESSAGE(STATUS "TCE_LIBS: ${TCE_LIBS}")
 MESSAGE(STATUS "TCE_VERSION: ${TCE_VERSION}")
 MESSAGE(STATUS "TCE_PREFIX: ${TCE_PREFIX}")
 MESSAGE(STATUS "")
+
+if (OCS_AVAILABLE)
 MESSAGE(STATUS "----------- -------------------------------- --------")
 MESSAGE(STATUS "llvm libs libpocl will be linked to (POCL_LLVM_LIBS):")
 MESSAGE(STATUS "${POCL_LLVM_LIBS}")
@@ -1105,3 +1139,4 @@ MESSAGE(STATUS "----------- -------------------------------- --------")
 MESSAGE(STATUS "system libs libpocl will be linked to (LLVM_SYSLIBS):")
 MESSAGE(STATUS "${LLVM_SYSLIBS}")
 MESSAGE(STATUS "----------- -------------------------------- --------")
+endif()

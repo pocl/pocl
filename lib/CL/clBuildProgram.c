@@ -33,7 +33,9 @@
 #else
 #  include "vccompat.hpp"
 #endif
+#ifdef OCS_AVAILABLE
 #include "pocl_llvm.h"
+#endif
 #include "pocl_util.h"
 #include "pocl_file_util.h"
 #include "pocl_cache.h"
@@ -92,6 +94,7 @@ static const char cl_parameters_not_yet_supported_by_clang[] =
     snprintf(program->main_build_log + l, (640 - l), __VA_ARGS__); \
   }
 
+#ifdef OCS_AVAILABLE
 cl_int
 program_compile_dynamic_wg_binaries(cl_program program)
 {
@@ -148,6 +151,8 @@ RET:
   return errcode;
 }
 
+#endif
+
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clBuildProgram)(cl_program program,
                        cl_uint num_devices,
@@ -160,13 +165,11 @@ CL_API_SUFFIX__VERSION_1_0
 {
   char program_bc_path[POCL_FILENAME_LENGTH];
   int errcode;
-  size_t i;
   int error;
   uint64_t fsize;
   cl_device_id * unique_devlist = NULL;
   char *binary = NULL;
   unsigned device_i = 0, actually_built = 0;
-  const char *user_options = "";
   char *temp_options = NULL;
   char *modded_options = NULL;
   char *token = NULL;
@@ -190,21 +193,16 @@ CL_API_SUFFIX__VERSION_1_0
 
   program->main_build_log[0] = 0;
 
+  size_t size = 512;
+  size_t i = 1; /* terminating char */
+  modded_options = (char*) calloc (512, 1);
+
   if (options != NULL)
     {
       size_t size = 512;
       size_t i = 1; /* terminating char */
-      modded_options = (char*) calloc (size, 1);
+      temp_options = strdup(options);
 
-      if (strstr(options, "-cl-kernel-arg-info"))
-        temp_options = strdup (options);
-      else
-        {
-          temp_options = 
-            calloc (1, strlen(options) + 1 + strlen(" -cl-kernel-arg-info"));
-          strcat (temp_options, options);
-          strcat (temp_options, " -cl-kernel-arg-info");
-        }
       token = strtok_r (temp_options, " ", &saveptr);
       while (token != NULL)
         {
@@ -253,14 +251,10 @@ CL_API_SUFFIX__VERSION_1_0
           token = strtok_r (NULL, " ", &saveptr);
         }
       POCL_MEM_FREE(temp_options);
-      user_options = modded_options;
-      program->compiler_options = strdup (modded_options);
     }
-  else
-    {
-      program->compiler_options = calloc (1, strlen("-cl-kernel-arg-info")+1);
-      strcat (program->compiler_options, "-cl-kernel-arg-info");
-    }
+
+  POCL_MEM_FREE(program->compiler_options);
+  program->compiler_options = modded_options;
 
   if (num_devices == 0)
     {
@@ -277,7 +271,7 @@ CL_API_SUFFIX__VERSION_1_0
     }
 
   POCL_MSG_PRINT_INFO("building program with options %s\n",
-                      user_options != NULL ? user_options : "");
+                       program->compiler_options);
 
   /* Build the fully linked non-parallel bitcode for all
          devices. */
@@ -296,14 +290,24 @@ CL_API_SUFFIX__VERSION_1_0
       /* clCreateProgramWithSource */
       if (program->source)
         {
+#ifdef OCS_AVAILABLE
           error = pocl_llvm_build_program(program, device_i,
-                                          user_options, program_bc_path);
+                                          program->compiler_options,
+                                          program_bc_path);
           POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
                              "pocl_llvm_build_program() failed\n");
+#else
+          strcpy(program->main_build_log,
+                 "Cannot build a program from sources with pocl "
+                 "that does not have online compiler support\n");
+          POCL_GOTO_ERROR_ON(1, CL_BUILD_PROGRAM_FAILURE,
+                             "%s", program->main_build_log);
+#endif
         }
       /* clCreateProgramWithBinaries */
       else if (program->binaries[device_i])
         {
+#ifdef OCS_AVAILABLE
           error = pocl_cache_create_program_cachedir(program, device_i,
                                                      NULL, 0, program_bc_path);
           POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
@@ -314,6 +318,18 @@ CL_API_SUFFIX__VERSION_1_0
                           (uint64_t)program->binary_sizes[device_i], 0, 0);
           POCL_GOTO_ERROR_ON(errcode, CL_BUILD_PROGRAM_FAILURE,
                              "Failed to write binaries to program.bc\n");
+#else
+          if (!program->pocl_binaries[device_i])
+            {
+              strcpy(program->main_build_log,
+                     "Cannot build program from LLVM IR binaries with "
+                     "pocl that does not have online compiler support\n");
+              POCL_GOTO_ERROR_ON(1, CL_BUILD_PROGRAM_FAILURE,
+                                 "%s", program->main_build_log);
+            }
+          else
+            continue;
+#endif
         }
       else if (program->pocl_binaries[device_i])
         /* TODO pocl_binaries[i] might contain program.bc */
@@ -324,6 +340,7 @@ CL_API_SUFFIX__VERSION_1_0
                            "binaries for device %s - can't build the program\n",
                            device->short_name);
 
+#ifdef OCS_AVAILABLE
       /* Read binaries from program.bc to memory */
       if (program->binaries[device_i] == NULL)
         {
@@ -346,7 +363,6 @@ CL_API_SUFFIX__VERSION_1_0
           assert(write_cache_lock);
           pocl_update_program_llvm_irs(program, device_i, device);
         }
-
       /* Maintain a 'last_accessed' file in every program's
        * cache directory. Will be useful for cache pruning script
        * that flushes old directories based on LRU */
@@ -357,6 +373,7 @@ CL_API_SUFFIX__VERSION_1_0
           pocl_cache_release_lock(write_cache_lock);
           write_cache_lock = NULL;
         }
+#endif
 
     }
 
@@ -368,6 +385,7 @@ CL_API_SUFFIX__VERSION_1_0
   assert(program->num_kernels == 0);
   for (i=0; i < program->num_devices; i++)
     {
+#ifdef OCS_AVAILABLE
       if (program->binaries[i])
         {
           program->num_kernels = pocl_llvm_get_kernel_count(program);
@@ -380,6 +398,7 @@ CL_API_SUFFIX__VERSION_1_0
             }
           break;
         }
+#endif
       if (program->pocl_binaries[i])
         {
           program->num_kernels =

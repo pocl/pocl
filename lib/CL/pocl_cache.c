@@ -27,10 +27,14 @@
 #include <unistd.h>
 
 #include "config.h"
+
 #ifdef POCL_BUILT_WITH_CMAKE
 #include "pocl_build_timestamp.h"
 #endif
+
+#ifdef OCS_AVAILABLE
 #include "kernellib_hash.h"
+#endif
 
 #include "pocl_hash.h"
 #include "pocl_cache.h"
@@ -51,6 +55,15 @@
 static char cache_topdir[POCL_FILENAME_LENGTH];
 static int cache_topdir_initialized = 0;
 
+/* sanity check on SHA1 digest emptiness */
+static unsigned buildhash_is_valid(cl_program   program, unsigned     device_i)
+{
+  unsigned i, sum = 0;
+  for(i=0; i<sizeof(SHA1_digest_t); i++)
+    sum += program->build_hash[device_i][i];
+  return sum;
+}
+
 int pocl_cl_device_to_index(cl_program   program,
                             cl_device_id device) {
     unsigned i;
@@ -69,8 +82,7 @@ static void program_device_dir(char*        path,
     assert(path);
     assert(program);
     assert(device_i < program->num_devices);
-    /* sanity check on SHA1 digest emptiness */
-    assert(program->build_hash[device_i][0] > 0);
+    assert(buildhash_is_valid(program, device_i));
 
     int bytes_written = snprintf(path, POCL_FILENAME_LENGTH,
                                  "%s/%s%s", cache_topdir,
@@ -324,7 +336,7 @@ int pocl_cache_append_to_buildlog(cl_program  program,
 
 /******************************************************************************/
 
-
+#ifdef OCS_AVAILABLE
 int pocl_cache_write_kernel_parallel_bc(void*        bc,
                                         cl_program   program,
                                         unsigned     device_i,
@@ -346,6 +358,7 @@ int pocl_cache_write_kernel_parallel_bc(void*        bc,
     strcat(kernel_parallel_path, POCL_PARALLEL_BC_FILENAME);
     return pocl_write_module(bc, kernel_parallel_path, 0);
 }
+#endif
 
 int pocl_cache_make_kernel_cachedir_path(char*        kernel_cachedir_path,
                                          cl_program   program,
@@ -371,7 +384,7 @@ int pocl_cache_make_kernel_cachedir_path(char*        kernel_cachedir_path,
 
 
 
-
+#ifdef OCS_AVAILABLE
 static inline void
 build_program_compute_hash(cl_program program,
                            unsigned   device_i,
@@ -417,8 +430,11 @@ build_program_compute_hash(cl_program program,
                      strlen(POCL_KERNELLIB_SHA1));
     /*devices may include their own information to hash */
     if (device->ops->build_hash)
-        device->ops->build_hash(device->data, &hash_ctx);
-
+      {
+        char *dev_hash = device->ops->build_hash(device);
+        pocl_SHA1_Update(&hash_ctx, (const uint8_t *)dev_hash, strlen(dev_hash));
+        free(dev_hash);
+      }
 
     uint8_t digest[SHA1_DIGEST_SIZE];
     pocl_SHA1_Final(&hash_ctx, digest);
@@ -434,6 +450,8 @@ build_program_compute_hash(cl_program program,
     program->build_hash[device_i][2] = '/';
 
 }
+#endif
+
 
 #ifdef ANDROID
 static
@@ -543,11 +561,12 @@ pocl_cache_create_program_cachedir(cl_program program,
                                    size_t source_len,
                                    char* program_bc_path)
 {
+    assert(cache_topdir_initialized);
+
+#ifdef OCS_AVAILABLE
     const char *hash_source = NULL;
     uint8_t old_build_hash[SHA1_DIGEST_SIZE] = {0};
     size_t hs_len = 0;
-
-    assert(cache_topdir_initialized);
 
     if (program->source && preprocessed_source==NULL) {
         hash_source = program->source;
@@ -575,6 +594,10 @@ pocl_cache_create_program_cachedir(cl_program program,
         pocl_cache_release_lock(program->read_locks[device_i]);
         program->read_locks[device_i] = NULL;
     }
+#else
+    assert(buildhash_is_valid(program, device_i));
+    assert(program->read_locks[device_i] == NULL);
+#endif
 
     program_device_dir(program_bc_path, program, device_i, "");
 

@@ -451,6 +451,3 @@ add_custom_target("kernellib_hash" ALL
 foreach(DEP IN LISTS KERNEL_TARGET_LIST)
   add_dependencies("kernellib_hash" ${DEP})
 endforeach()
-
-# TODO extra_dist in lib/kernel/Makefile.am:
-# EXTRA_DIST = *.c *.cl *.h *.ll      \

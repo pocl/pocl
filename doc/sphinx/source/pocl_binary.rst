@@ -1,3 +1,34 @@
+.. _pocl-without-llvm:
+
+Pocl LLVM-less build
+--------------------
+You can build a runtime-only pocl to run prebuilt pocl binaries on a device.
+To do this
+
+* First, build a pocl with LLVM somewhere.
+* on that machine, set up env vars required for your device (if any), then
+  run ``bin/poclcc -l``. That should print something like::
+
+    LIST OF DEVICES:
+    0:
+     Vendor:   AuthenticAMD
+       Name:   pthread-AMD A10-7800 Radeon R7, 12 Compute Cores 4C+8G
+    Version:   OpenCL 2.0 pocl HSTR: pthread-x86_64-unknown-linux-gnu-bdver3
+
+The string after "HSTR:" is the device build hash.
+
+* now build the LLVM-less pocl. You will need the device build hash from
+  previous step
+
+  ``./configure --disable-ocs HOST_DEVICE_BUILD_HASH=<something> ...``
+
+  or cmake:
+
+  ``cmake -DOCS_AVAILABLE=0 -DHOST_DEVICE_BUILD_HASH=<something> ...``
+
+  This is required because pocl binaries contain a device hash, and the LLVM-less
+  pocl needs to know which binaries it can load.
+
 Binary inputs format
 --------------------
 

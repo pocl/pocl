@@ -223,6 +223,8 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->wait_event = pocl_hsa_wait_event;
   ops->update_event = pocl_hsa_update_event;
   ops->free_event_data = NULL;
+
+  ops->build_hash = pocl_hsa_build_hash;
 }
 
 #define MAX_HSA_AGENTS 16
@@ -359,9 +361,9 @@ supported_hsa_devices[MAX_HSA_AGENTS] =
     .endian_little = !(WORDS_BIGENDIAN),
     .extensions = HSA_DEVICE_EXTENSIONS,
     .preferred_wg_size_multiple = 1,
-		// We want to exploit the widest vector types in HSAIL
-		// for the CPUs assuming they have some sort of SIMD ISE
-		// which the finalizer than can more readily utilize.
+    // We want to exploit the widest vector types in HSAIL
+    // for the CPUs assuming they have some sort of SIMD ISE
+    // which the finalizer than can more readily utilize.
     .preferred_vector_width_char = 16,
     .preferred_vector_width_short = 16,
     .preferred_vector_width_int = 16,
@@ -376,6 +378,14 @@ supported_hsa_devices[MAX_HSA_AGENTS] =
     .native_vector_width_double = 16
   }
 };
+
+char *
+pocl_hsa_build_hash (cl_device_id device)
+{
+  char* res = calloc(1000, sizeof(char));
+  snprintf(res, 1000, "HSA-%s-%s", device->llvm_target_triplet, device->long_name);
+  return res;
+}
 
 // Detect the HSA device and populate its properties to the device
 // struct.

@@ -14,7 +14,7 @@ static void* pocl_pthread_driver_thread (void *p);
 struct pool_thread_data
 {
   pthread_t thread;
-  int my_id;
+  size_t my_id;
   struct shared_data * sd;
   _cl_command_node *volatile work_queue;
   kernel_run_command *volatile kernel_queue;
@@ -48,7 +48,7 @@ static scheduler_data scheduler;
 
 void pthread_scheduler_init (size_t num_worker_threads)
 {
-  int i;
+  size_t i;
   pthread_mutex_init (&(scheduler.wq_lock), NULL);
   pthread_mutex_init (&(scheduler.cq_finished_lock), NULL);
   pthread_cond_init (&(scheduler.cq_finished_cond), NULL);
@@ -189,7 +189,7 @@ void pthread_scheduler_sleep()
 static int get_wg_index_range (kernel_run_command *k, unsigned *start_index,
                                unsigned *end_index, char *last_wgs)
 {
-  int max_wgs;
+  unsigned max_wgs;
   *last_wgs = 0;
   PTHREAD_LOCK (&k->lock, NULL);
   if (k->remaining_wgs == 0)
@@ -228,7 +228,7 @@ work_group_scheduler (kernel_run_command *k,
 {
   void *arguments[k->kernel->num_args + k->kernel->num_locals];
   struct pocl_context pc;
-  int i;
+  unsigned i;
   unsigned start_index;
   unsigned end_index;
   char last_wgs = 0;

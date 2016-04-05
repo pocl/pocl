@@ -28,7 +28,7 @@
  * the private space (0) and calls a system vprintf.
  */
 
-
+#include <stddef.h>
 #include <stdarg.h>
 
 #ifdef __TCE_V1__
@@ -45,11 +45,16 @@
 
 #endif
 
-#include <stdio.h>
 
 #define OCL_CONSTANT_AS __attribute__((address_space(3)))
-int vprintf(const char *, __builtin_va_list);
-int fflush(FILE *stream);
+
+/* AS 0 is required for the prototypes, otherwise they get assigned
+ * the generic AS (#4) */
+#define OCL_C_AS __attribute__((address_space(0)))
+int vprintf(OCL_C_AS const char *, __builtin_va_list);
+int fflush(OCL_C_AS void *stream);
+
+
 
 #undef printf
 #define MAX_FORMAT_STR_SIZE 2048

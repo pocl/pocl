@@ -149,7 +149,15 @@ pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
   ops->wait_event = pocl_pthread_wait_event;
   ops->update_event = pocl_pthread_update_event;
   ops->free_event_data = pocl_pthread_free_event_data;
+  ops->build_hash = pocl_pthread_build_hash;
+}
 
+char *
+pocl_pthread_build_hash (cl_device_id device)
+{
+  char* res = calloc(1000, sizeof(char));
+  snprintf(res, 1000, "pthread-%s", HOST_DEVICE_BUILD_HASH);
+  return res;
 }
 
 unsigned int
@@ -184,7 +192,7 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
 #ifdef CUSTOM_BUFFER_ALLOCATOR
   static mem_regions_management* mrm = NULL;
 #endif
-  int num_worker_threads;
+  unsigned num_worker_threads;
 
   // TODO: this checks if the device was already initialized previously.
   // Should we instead have a separate bool field in device, or do the
@@ -221,7 +229,7 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
   device->global_mem_size = 1;
   pocl_topology_detect_device_info(device);
   num_worker_threads = max (get_max_thread_count (device), 
-                            pocl_get_int_option("POCL_PTHREAD_MIN_THREADS", 1));
+                            (unsigned)pocl_get_int_option("POCL_PTHREAD_MIN_THREADS", 1));
   
   pocl_cpuinfo_detect_device_info(device);
   pocl_set_buffer_image_limits(device);
@@ -246,7 +254,7 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
   device->num_partition_types = 0;
   device->partition_type = NULL;
 
-  if(!strcmp(device->llvm_cpu, "(unknown)"))
+  if(device->llvm_cpu && (!strcmp(device->llvm_cpu, "(unknown)")))
     device->llvm_cpu = NULL;
 
   // work-around LLVM bug where sizeof(long)=4
