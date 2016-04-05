@@ -25,9 +25,6 @@
    THE SOFTWARE.
 */
 
-/* Language feature detection */
-#include "_kernel_c.h"
-
 /* If the -cl-std build option is not specified, the highest OpenCL C 1.x
  * language version supported by each device is used as the version of
  * OpenCL C when compiling the program for each device.
@@ -52,6 +49,12 @@
 #define CL_VERSION_2_0 200
 #endif
 
+#include "_enable_all_exts.h"
+
+/* Language feature detection */
+/* must come after _enable_all_exts.h b/c of pocl_types.h*/
+#include "_kernel_c.h"
+
 /* Enable double precision. This should really only be done when
    building the run-time library; when building application code, we
    should instead check a macro to see whether the application has
@@ -62,12 +65,6 @@
    only. Seems the pragma does not add the macro, so we have the target
    define the macro and the pragma is conditionally enabled.
 */
-#ifdef cl_khr_fp16
-#  pragma OPENCL EXTENSION cl_khr_fp16: enable
-#endif
-#ifdef cl_khr_fp64
-#  pragma OPENCL EXTENSION cl_khr_fp64: enable
-#endif
 
 /* Define some feature test macros to help write generic code */
 #ifdef cl_khr_int64
@@ -88,14 +85,12 @@
 
 #ifdef cl_khr_int64_base_atomics
 #define __IF_BA64(x) x
-#pragma OPENCL EXTENSION cl_khr_int64_base_atomics : enable
 #else
 #define __IF_BA64(x)
 #endif
 
 #ifdef cl_khr_int64_extended_atomics
 #define __IF_EA64(x) x
-#pragma OPENCL EXTENSION cl_khr_int64_extended_atomics : enable
 #else
 #define __IF_EA64(x)
 #endif
@@ -2352,3 +2347,4 @@ __IF_FP16(_CL_DECLARE_ASYNC_COPY_FUNCS_SINGLE(half));
 _CL_DECLARE_ASYNC_COPY_FUNCS(float);
 __IF_FP64(_CL_DECLARE_ASYNC_COPY_FUNCS(double));
 
+#pragma OPENCL EXTENSION all : disable
