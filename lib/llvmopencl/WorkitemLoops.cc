@@ -508,7 +508,6 @@ WorkitemLoops::ProcessFunction(Function &F)
       }
 
     if (WGDynamicLocalSize) {
-
       GlobalVariable *gv;
       gv = M->getGlobalVariable("_local_size_x");
       auto *SizeT_Ty = Type::getIntNTy(M->getContext(), size_t_width);
@@ -540,7 +539,6 @@ WorkitemLoops::ProcessFunction(Function &F)
                            false, localIdZ, WGLocalSizeZ, !unrolled, gv);
 
     } else {
-
       if (WGLocalSizeX > 1) {
           l = CreateLoopAround(*original, l.first, l.second, peelFirst,
                                localIdX, WGLocalSizeX, !unrolled);
@@ -682,6 +680,45 @@ WorkitemLoops::FixMultiRegionVariables(ParallelRegion *region)
     }
 }
 
+llvm::Value *
+WorkitemLoops::GetLinearWiIndex(llvm::IRBuilder<> &builder, llvm::Module *M,
+                               ParallelRegion *region)
+{
+  auto *SizeT_Ty = Type::getIntNTy(M->getContext(), size_t_width);
+  GlobalVariable *ls_x_p =
+    cast<GlobalVariable>(M->getOrInsertGlobal("_local_size_x", SizeT_Ty));
+  GlobalVariable *ls_y_p =
+    cast<GlobalVariable>(M->getOrInsertGlobal("_local_size_y", SizeT_Ty));
+
+  assert(ls_y_p != NULL && ls_x_p != NULL);
+
+  LoadInst* load_x = builder.CreateLoad(ls_x_p, "ls_x");
+  LoadInst* load_y = builder.CreateLoad(ls_y_p, "ls_y");
+
+  /* Form linear index from xyz coordinates:
+       local_size_x * local_size_y * local_id_z  (z dimension)
+     + local_size_x * local_id_y                 (y dimension)
+     + local_id_x                                (x dimension)
+  */
+  Value* ls_xy =
+    builder.CreateBinOp(Instruction::Mul, load_x, load_y, "ls_xy");
+
+  Value* ls_xy_z =
+    builder.CreateBinOp(Instruction::Mul, ls_xy, region->LocalIDZLoad(),
+                        "tmp");
+
+  Value* ls_x_y =
+    builder.CreateBinOp(Instruction::Mul, load_x, region->LocalIDYLoad(),
+                        "ls_x_y");
+
+  Value* sum =
+    builder.CreateBinOp(Instruction::Add, ls_xy_z, ls_x_y,
+                        "sum");
+
+  return builder.CreateBinOp(Instruction::Add, sum, region->LocalIDXLoad(),
+                             "linear_xyz_idx");
+}
+
 llvm::Instruction *
 WorkitemLoops::AddContextSave
 (llvm::Instruction *instruction, llvm::Instruction *alloca)
@@ -707,19 +744,28 @@ WorkitemLoops::AddContextSave
 
   IRBuilder<> builder(&*definition);
   std::vector<llvm::Value *> gepArgs;
-  gepArgs.push_back(ConstantInt::get(IntegerType::get(instruction->getContext(), size_t_width), 0));
-
+  
   /* Reuse the id loads earlier in the region, if possible, to
      avoid messy output with lots of redundant loads. */
   ParallelRegion *region = RegionOfBlock(instruction->getParent());
   assert ("Adding context save outside any region produces illegal code." && 
           region != NULL);
 
-  gepArgs.push_back(region->LocalIDZLoad());
-  gepArgs.push_back(region->LocalIDYLoad());
-  gepArgs.push_back(region->LocalIDXLoad());
+  if (WGDynamicLocalSize)
+    {
+      Module *M = alloca->getParent()->getParent()->getParent();
+      gepArgs.push_back(GetLinearWiIndex(builder, M, region));
+    }
+  else
+    {
+      gepArgs.push_back(ConstantInt::get(IntegerType::get(instruction->getContext(), size_t_width), 0));
+      gepArgs.push_back(region->LocalIDZLoad());
+      gepArgs.push_back(region->LocalIDYLoad());
+      gepArgs.push_back(region->LocalIDXLoad());
+    }
 
-  return builder.CreateStore(instruction, builder.CreateGEP(alloca, gepArgs));
+  return builder.CreateStore(instruction, builder.CreateGEP(alloca,
+                                                            gepArgs));
 }
 
 llvm::Instruction *
@@ -744,9 +790,7 @@ WorkitemLoops::AddContextRestore
       assert (false && "Unknown context restore location!");
     }
 
-  
   std::vector<llvm::Value *> gepArgs;
-  gepArgs.push_back(ConstantInt::get(IntegerType::get(val->getContext(), size_t_width), 0));
 
   /* Reuse the id loads earlier in the region, if possible, to
      avoid messy output with lots of redundant loads. */
@@ -754,19 +798,28 @@ WorkitemLoops::AddContextRestore
   assert ("Adding context save outside any region produces illegal code." && 
           region != NULL);
 
-  gepArgs.push_back(region->LocalIDZLoad());
-  gepArgs.push_back(region->LocalIDYLoad());
-  gepArgs.push_back(region->LocalIDXLoad());
+  if (WGDynamicLocalSize)
+    {
+      Module *M = alloca->getParent()->getParent()->getParent();
+      gepArgs.push_back(GetLinearWiIndex(builder, M, region));
+    }
+  else
+    {
+      gepArgs.push_back(ConstantInt::get(IntegerType::get(val->getContext(),
+                                                          size_t_width), 0));
+      gepArgs.push_back(region->LocalIDZLoad());
+      gepArgs.push_back(region->LocalIDYLoad());
+      gepArgs.push_back(region->LocalIDXLoad());
+    }
 
-
-  llvm::Instruction *gep = 
+  llvm::Instruction *gep =
     dyn_cast<Instruction>(builder.CreateGEP(alloca, gepArgs));
   if (isAlloca) {
     /* In case the context saved instruction was an alloca, we created a
        context array with pointed-to elements, and now want to return a pointer 
        to the elements to emulate the original alloca. */
     return gep;
-  }           
+  }
   return builder.CreateLoad(gep);
 }
 
@@ -827,17 +880,41 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
       elementType = instruction->getType();
     }
 
-  /* 3D context array. */
-  llvm::Type *contextArrayType = 
-    ArrayType::get(
+  llvm::AllocaInst *alloca;
+  Module* M = instruction->getParent()->getParent()->getParent();
+  if (WGDynamicLocalSize)
+    {
+      char s[32];
+      GlobalVariable* ls;
+      LoadInst* ls_load[3];
+      auto *SizeT_Ty = Type::getIntNTy(M->getContext(), size_t_width);
+      for (int i = 0; i < 3; ++i) {
+        snprintf(s, 32, "_local_size_%c", 'x' + i);
+        ls = cast<GlobalVariable>(M->getOrInsertGlobal(s, SizeT_Ty));
+        ls_load[i] = builder.CreateLoad(ls);
+      }
+
+      Value* tmp =
+        builder.CreateBinOp(Instruction::Mul, ls_load[0], ls_load[1], "tmp");
+      Value* num_wi =
+        builder.CreateBinOp(Instruction::Mul, tmp, ls_load[2], "num_wi");
+
+      alloca = builder.CreateAlloca(elementType, num_wi, varName);
+    }
+  else
+    {
+      /* 3D context array. */
+      llvm::Type *contextArrayType =
         ArrayType::get(
+          ArrayType::get(
             ArrayType::get(
-                elementType, WGLocalSizeX), 
+                           elementType, WGLocalSizeX),
             WGLocalSizeY), WGLocalSizeZ);
 
-  /* Allocate the context data array for the variable. */
-  llvm::AllocaInst *alloca = 
-    builder.CreateAlloca(contextArrayType, 0, varName);
+      /* Allocate the context data array for the variable. */
+      alloca = builder.CreateAlloca(contextArrayType, 0, varName);
+    }
+
   /* Align the context arrays to stack to enable wide vectors
      accesses to them. Also, LLVM 3.3 seems to produce illegal
      code at least with Core i5 when aligned only at the element

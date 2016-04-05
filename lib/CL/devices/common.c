@@ -678,6 +678,7 @@ pocl_check_dlhandle_cache (_cl_command_node *cmd)
                                 cmd->command.run.kernel,
                                 cmd->device);
       POCL_UNLOCK (pocl_llvm_codegen_lock);
+      POCL_MSG_PRINT_INFO("Using static WG size binary: %s\n", module_fn);
     }
   else
     {
@@ -691,8 +692,7 @@ pocl_check_dlhandle_cache (_cl_command_node *cmd)
   POCL_LOCK (pocl_dlhandle_lock);
   ci->dlhandle = lt_dlopen (module_fn);
   POCL_UNLOCK (pocl_dlhandle_lock);
-  free(module_fn);
-
+  
   if (ci->dlhandle == NULL)
     {
       printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", 
@@ -701,11 +701,13 @@ pocl_check_dlhandle_cache (_cl_command_node *cmd)
               " reported as 'file not found' errors.\n");
       abort();
     }
+  free(module_fn);
+
   snprintf (workgroup_string, 256, "_pocl_launcher_%s_workgroup", 
             cmd->command.run.kernel->name);
 
   POCL_LOCK (pocl_dlhandle_lock);
-  cmd->command.run.wg = ci->wg = 
+  cmd->command.run.wg = ci->wg =
     (pocl_workgroup) lt_dlsym (ci->dlhandle, workgroup_string);
   POCL_UNLOCK (pocl_dlhandle_lock);
 
