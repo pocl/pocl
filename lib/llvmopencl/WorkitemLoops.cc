@@ -684,38 +684,39 @@ llvm::Value *
 WorkitemLoops::GetLinearWiIndex(llvm::IRBuilder<> &builder, llvm::Module *M,
                                ParallelRegion *region)
 {
-  auto *SizeT_Ty = Type::getIntNTy(M->getContext(), size_t_width);
-  GlobalVariable *ls_x_p =
-    cast<GlobalVariable>(M->getOrInsertGlobal("_local_size_x", SizeT_Ty));
-  GlobalVariable *ls_y_p =
-    cast<GlobalVariable>(M->getOrInsertGlobal("_local_size_y", SizeT_Ty));
+  auto *SizeTType = Type::getIntNTy(M->getContext(), size_t_width);
+  GlobalVariable *LocalSizeXPtr =
+    cast<GlobalVariable>(M->getOrInsertGlobal("_local_size_x", SizeTType));
+  GlobalVariable *LocalSizeYPtr =
+    cast<GlobalVariable>(M->getOrInsertGlobal("_local_size_y", SizeTType));
 
-  assert(ls_y_p != NULL && ls_x_p != NULL);
+  assert(LocalSizeXPtr != NULL && LocalSizeYPtr != NULL);
 
-  LoadInst* load_x = builder.CreateLoad(ls_x_p, "ls_x");
-  LoadInst* load_y = builder.CreateLoad(ls_y_p, "ls_y");
+  LoadInst* LoadX = builder.CreateLoad(LocalSizeXPtr, "ls_x");
+  LoadInst* LoadY = builder.CreateLoad(LocalSizeYPtr, "ls_y");
 
   /* Form linear index from xyz coordinates:
        local_size_x * local_size_y * local_id_z  (z dimension)
      + local_size_x * local_id_y                 (y dimension)
      + local_id_x                                (x dimension)
   */
-  Value* ls_xy =
-    builder.CreateBinOp(Instruction::Mul, load_x, load_y, "ls_xy");
+  Value* LocalSizeXTimesY =
+    builder.CreateBinOp(Instruction::Mul, LoadX, LoadY, "ls_xy");
 
-  Value* ls_xy_z =
-    builder.CreateBinOp(Instruction::Mul, ls_xy, region->LocalIDZLoad(),
+  Value* ZPart =
+    builder.CreateBinOp(Instruction::Mul, LocalSizeXTimesY,
+                        region->LocalIDZLoad(),
                         "tmp");
 
-  Value* ls_x_y =
-    builder.CreateBinOp(Instruction::Mul, load_x, region->LocalIDYLoad(),
+  Value* YPart =
+    builder.CreateBinOp(Instruction::Mul, LoadX, region->LocalIDYLoad(),
                         "ls_x_y");
 
-  Value* sum =
-    builder.CreateBinOp(Instruction::Add, ls_xy_z, ls_x_y,
-                        "sum");
+  Value* ZYSum =
+    builder.CreateBinOp(Instruction::Add, ZPart, YPart,
+                        "zy_sum");
 
-  return builder.CreateBinOp(Instruction::Add, sum, region->LocalIDXLoad(),
+  return builder.CreateBinOp(Instruction::Add, ZYSum, region->LocalIDXLoad(),
                              "linear_xyz_idx");
 }
 
@@ -880,26 +881,29 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
       elementType = instruction->getType();
     }
 
-  llvm::AllocaInst *alloca;
+  llvm::AllocaInst *Alloca;
   Module* M = instruction->getParent()->getParent()->getParent();
   if (WGDynamicLocalSize)
     {
-      char s[32];
-      GlobalVariable* ls;
-      LoadInst* ls_load[3];
+      char GlobalName[32];
+      GlobalVariable* LocalSize;
+      LoadInst* LocalSizeLoad[3];
       auto *SizeT_Ty = Type::getIntNTy(M->getContext(), size_t_width);
       for (int i = 0; i < 3; ++i) {
-        snprintf(s, 32, "_local_size_%c", 'x' + i);
-        ls = cast<GlobalVariable>(M->getOrInsertGlobal(s, SizeT_Ty));
-        ls_load[i] = builder.CreateLoad(ls);
+        snprintf(GlobalName, 32, "_local_size_%c", 'x' + i);
+        LocalSize =
+          cast<GlobalVariable>(M->getOrInsertGlobal(GlobalName, SizeT_Ty));
+        LocalSizeLoad[i] = builder.CreateLoad(LocalSize);
       }
 
-      Value* tmp =
-        builder.CreateBinOp(Instruction::Mul, ls_load[0], ls_load[1], "tmp");
-      Value* num_wi =
-        builder.CreateBinOp(Instruction::Mul, tmp, ls_load[2], "num_wi");
+      Value* LocalXTimesY =
+        builder.CreateBinOp(Instruction::Mul, LocalSizeLoad[0],
+                            LocalSizeLoad[1], "tmp");
+      Value* NumberOfWorkItems =
+        builder.CreateBinOp(Instruction::Mul, LocalXTimesY,
+                            LocalSizeLoad[2], "num_wi");
 
-      alloca = builder.CreateAlloca(elementType, num_wi, varName);
+      Alloca = builder.CreateAlloca(elementType, NumberOfWorkItems, varName);
     }
   else
     {
@@ -912,17 +916,17 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
             WGLocalSizeY), WGLocalSizeZ);
 
       /* Allocate the context data array for the variable. */
-      alloca = builder.CreateAlloca(contextArrayType, 0, varName);
+      Alloca = builder.CreateAlloca(contextArrayType, 0, varName);
     }
 
   /* Align the context arrays to stack to enable wide vectors
      accesses to them. Also, LLVM 3.3 seems to produce illegal
      code at least with Core i5 when aligned only at the element
      size. */
-  alloca->setAlignment(CONTEXT_ARRAY_ALIGN);
+  Alloca->setAlignment(CONTEXT_ARRAY_ALIGN);
 
-  contextArrays[varName] = alloca;
-  return alloca;
+  contextArrays[varName] = Alloca;
+  return Alloca;
 }
 
 
