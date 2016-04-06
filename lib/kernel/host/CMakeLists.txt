@@ -31,7 +31,7 @@ else()
   set(KERNEL_SOURCES ${SOURCES_WITHOUT_VML})
 endif()
 
-if(X86_64)
+if(X86_64 OR I386)
   list(APPEND KERNEL_SOURCES svm_atomics_x86_64.ll svm_atomics.cl)
 elseif(MIPS)
   message(STATUS "OpenCL 2.0 atomics are currently broken on MIPS")
