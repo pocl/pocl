@@ -31,6 +31,7 @@
 #include "llvm/ADT/Twine.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
+#include "llvm/IR/IRBuilder.h"
 
 #include "WorkitemHandler.h"
 #include "ParallelRegion.h"
@@ -77,7 +78,10 @@ namespace pocl {
     void FixMultiRegionVariables(ParallelRegion *region);
     void AddContextSaveRestore(llvm::Instruction *instruction);
 
-    llvm::Instruction *AddContextSave(llvm::Instruction *instruction, llvm::Instruction *alloca);
+    llvm::Value *GetLinearWiIndex(llvm::IRBuilder<> &builder, llvm::Module *M,
+                                  ParallelRegion *region);
+    llvm::Instruction *AddContextSave(llvm::Instruction *instruction,
+                                      llvm::Instruction *alloca);
     llvm::Instruction *AddContextRestore
         (llvm::Value *val, llvm::Instruction *alloca, 
          llvm::Instruction *before=NULL, 
