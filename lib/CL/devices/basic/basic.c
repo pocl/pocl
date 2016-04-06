@@ -994,8 +994,8 @@ void pocl_basic_flush (cl_device_id device, cl_command_queue cq)
   basic_command_scheduler (d);
   POCL_UNLOCK (d->cq_lock);
 }
-
-void
+/*
+static void
 pocl_basic_push_command (_cl_command_node *node)
 {
   struct data *d = (struct data*)node->device->data;
@@ -1003,7 +1003,7 @@ pocl_basic_push_command (_cl_command_node *node)
   pocl_command_push(node, &d->ready_list, &d->command_list);
 
 }
-
+*/
 void
 pocl_basic_join(cl_device_id device, cl_command_queue cq)
 {

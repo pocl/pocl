@@ -23,8 +23,21 @@
 
 #include "pocl_cl.h"
 
-int pocl_find_img_format (cl_image_format *toFind, const cl_image_format* list,
-                          int num_entries);
+static int pocl_find_img_format (cl_image_format *toFind,
+                                 const cl_image_format* list,
+                                 int num_entries)
+{
+  int i;
+  for (i = 0; i < num_entries; i++)
+    {
+      if (toFind->image_channel_order == list[i].image_channel_order &&
+          toFind->image_channel_data_type == list[i].image_channel_data_type)
+        {
+          return 1;
+        }
+    }
+  return 0;
+}
 
 extern CL_API_ENTRY cl_int CL_API_CALL
 POname(clGetSupportedImageFormats) (cl_context           context,
@@ -131,18 +144,3 @@ CL_API_SUFFIX__VERSION_1_0
   return errcode;
 } 
 POsym(clGetSupportedImageFormats)
-
-
-int pocl_find_img_format (cl_image_format *toFind, const cl_image_format* list,
-                          int num_entries){
-  int i;
-  for (i = 0; i < num_entries; i++)
-    {
-      if (toFind->image_channel_order == list[i].image_channel_order &&
-          toFind->image_channel_data_type == list[i].image_channel_data_type)
-        {
-          return 1;
-        }
-    }
-  return 0;
-}

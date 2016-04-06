@@ -37,9 +37,9 @@
 #include <endian.h>
 
 #if defined(WORDS_BIGENDIAN) && WORDS_BIGENDIAN == 1
-  const char host_endian = 1;
+  static const char host_endian = 1;
 #else
-  const char host_endian = 0;
+  static const char host_endian = 0;
 #endif
 
 /* pocl binary identifier */

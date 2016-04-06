@@ -42,6 +42,7 @@
 #include "config.h"
 #include "pocl_runtime_config.h"
 #include "pocl_binary.h"
+#include "pocl_shared.h"
 
 /* supported compiler parameters which should pass to the frontend directly
    by using -Xclang */

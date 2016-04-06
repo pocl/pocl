@@ -23,44 +23,31 @@
 #
 #=============================================================================
 
-set(TS_NAME IntelSVM)
+set(TS_NAME "PyOpenCL")
 set(TS_BASEDIR "${TESTSUITE_BASEDIR}/${TS_NAME}")
 set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build")
 set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
-set(INTEL_ZIP "${TS_SRCDIR}/intel_ocl_svm_basic_win.zip")
 
-if (EXISTS "${INTEL_ZIP}")
+# see README on how to install PyOpenCL
+
+# TODO this will need some tweaks for proper setup. For now:
+#   mkdir & cd ${TESTSUITE_BASEDIR}/PyOpenCL/src/PyOpenCL-build
+# then execute the steps from the README.
+
+if (EXISTS "${TS_BUILDDIR}/mypy/bin/py.test" AND
+    IS_DIRECTORY "${TS_BUILDDIR}/pyopencl/test")
+
   message(STATUS "Enabling testsuite ${TS_NAME}")
   list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
   set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
 
-  ExternalProject_Add(
-    ${TS_NAME}
-    PREFIX "${TS_BASEDIR}"
-    DOWNLOAD_COMMAND /bin/true
-    PATCH_COMMAND pwd && unzip "${INTEL_ZIP}" &&
-      cp "${CMAKE_CURRENT_SOURCE_DIR}/intelsvm_CMakeLists.txt" ./CMakeLists.txt &&
-      patch -p1 -d SVMBasicCoarseGrained -i ${CMAKE_CURRENT_SOURCE_DIR}/intelsvm.patch
-      patch -p1 -d SVMBasicFineGrained -i ${CMAKE_CURRENT_SOURCE_DIR}/intelsvm.patch
-    CMAKE_ARGS
-      -DCMAKE_BUILD_TYPE=RelWithDebInfo
-      "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=-O2 -g -DCL_USE_DEPRECATED_OPENCL_1_2_APIS"
-      -DOPENCL_LIBRARIES:STRING=OpenCL
-    INSTALL_COMMAND "/bin/true"
-  )
+  add_test(NAME "PyOpenCL"
+           COMMAND cd "${TS_BUILDDIR}" && source mypy/bin/activate && cd pyopencl/test &&
+           PYOPENCL_NO_CACHE=1 PYOPENCL_TEST=portable py.test -v --tb=native)
 
-  set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
-  add_dependencies(prepare_examples ${TS_NAME})
-
-  add_test(NAME intel_svm_coarse
-    COMMAND "${TS_BUILDDIR}/coarse" -p 0 -t default
-    WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/SVMBasicCoarseGrained")
-  add_test(NAME intel_svm_fine
-    COMMAND "${TS_BUILDDIR}/fine" -p 0 -t default
-    WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/SVMBasicFineGrained")
-
-  set_tests_properties( intel_svm_coarse intel_svm_fine
-    PROPERTIES  LABELS "IntelSVM;hsa")
+  set_tests_properties("PyOpenCL"
+    PROPERTIES
+      LABELS "PyOpenCL")
 
 else()
 

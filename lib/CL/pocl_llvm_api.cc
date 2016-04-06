@@ -111,7 +111,7 @@ POP_COMPILER_DIAGS
  * work-around, allocate this from heap.
  */
 static LLVMContext *globalContext = NULL;
-LLVMContext *GlobalContext() {
+static LLVMContext *GlobalContext() {
   if (globalContext == NULL) globalContext = new LLVMContext();
   return globalContext;
 }
@@ -523,10 +523,9 @@ ERROR_BUILDLOG:
   return CL_BUILD_PROGRAM_FAILURE;
 
 }
-
-int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
-                                      llvm::Module *input,
-                                      cl_kernel kernel)
+static int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
+                                             llvm::Module *input,
+                                             cl_kernel kernel)
 {
 
   // find the right kernel in "opencl.kernels" metadata
@@ -905,7 +904,8 @@ static llvm::TargetOptions GetTargetOptions() {
 }
 
 /* for "distro" style kernel libs, return which kernellib to use, at runtime */
-const char* getX86KernelLibName() {
+#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
+static const char* getX86KernelLibName() {
   StringMap<bool> Features;
   llvm::sys::getHostCPUFeatures(Features);
   const char *res = NULL;
@@ -932,7 +932,7 @@ const char* getX86KernelLibName() {
 
   return res;
 }
-
+#endif
 
 // Returns the TargetMachine instance or zero if no triple is provided.
 static TargetMachine* GetTargetMachine(cl_device_id device,
@@ -1559,7 +1559,7 @@ void pocl_llvm_update_binaries (cl_program program) {
 /* This is the implementation of the public pocl_llvm_get_kernel_count(),
  * and is used internally also by pocl_llvm_get_kernel_names to
  */
-unsigned
+static unsigned
 pocl_llvm_get_kernel_count(cl_program program, llvm::NamedMDNode **md_ret)
 {
   llvm::MutexGuard lockHolder(kernelCompilerLock);

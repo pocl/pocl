@@ -140,13 +140,20 @@ function(make_kernel_bc OUTPUT_VAR NAME SUBDIR)
   set(BC_LIST_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/kernel_${NAME}_linklist.txt")
   file(WRITE "${BC_LIST_FILE}" "${BC_LIST_FILE_TXT}")
 
+  # opt command of llvm debug builds takes forever, skip it
+  if(LLVM_BUILD_MODE_DEBUG)
+    set(OPT_CMD "${CMAKE_COMMAND}" -E copy "kernel-${NAME}-unoptimized.bc" "${KERNEL_BC}")
+  else()
+    set(OPT_CMD "${LLVM_OPT}" ${LLC_FLAGS} "-O3" "-fp-contract=off" "-o" "${KERNEL_BC}" "kernel-${NAME}-unoptimized.bc")
+  endif()
+
   add_custom_command( OUTPUT "${KERNEL_BC}"
 # ${KERNEL_BC}: ${OBJ}
         DEPENDS ${BC_LIST}
 #	    @LLVM_LINK@ $^ -o - | @LLVM_OPT@ ${LLC_FLAGS} ${KERNEL_LIB_OPT_FLAGS} -O3 -fp-contract=off -o $@
         COMMAND "${XARGS_EXEC}" "${LLVM_LINK}" "-o" "kernel-${NAME}-unoptimized.bc" < "${BC_LIST_FILE}"
-        COMMAND "${LLVM_OPT}" ${LLC_FLAGS} "-O3" "-fp-contract=off" "-o" "${KERNEL_BC}" "kernel-${NAME}-unoptimized.bc"
-        COMMENT "Linking Kernel bitcode ${KERNEL_BC}" 
+        COMMAND ${OPT_CMD}
+        COMMENT "Linking & optimizing Kernel bitcode ${KERNEL_BC}"
         VERBATIM)
 
 endfunction()

@@ -22,10 +22,16 @@
    THE SOFTWARE.
 */
 
+#include "pocl_cl.h"
+
 #ifndef POCL_PTHREAD_SCHEDULER_H
 #define POCL_PTHREAD_SCHEDULER_H
+
 #include "pocl-pthread_utils.h"
-#include "pocl_cl.h"
+
+#ifdef __GNUC__
+#pragma GCC visibility push(hidden)
+#endif
 
 typedef struct pool_thread_data thread_data;
 
@@ -46,5 +52,9 @@ void pthread_scheduler_wait_cq (cl_command_queue cq);
 void pthread_scheduler_release_host ();
 
 int pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr);
+
+#ifdef __GNUC__
+#pragma GCC visibility pop
+#endif
 
 #endif

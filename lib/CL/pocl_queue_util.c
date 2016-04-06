@@ -41,8 +41,9 @@ static cl_command_queue *queue_list = NULL;
 #define QUEUE_ALLOC_SIZE 256
 
 int pocl_aborting;
-
-void pocl_finish_all_queues()
+/*
+static void
+pocl_finish_all_queues()
 {
   size_t i;
   if (pocl_aborting)
@@ -53,6 +54,7 @@ void pocl_finish_all_queues()
   }
   pocl_print_system_memory_stats();
 }
+*/
 
 void pocl_init_queue_list()
 {
@@ -74,7 +76,8 @@ void pocl_init_queue_list()
 }
 
 // walk the queue list, 
-void pocl_compact_queue_list() {
+static void
+pocl_compact_queue_list() {
   size_t i; // walking index
   size_t compact = 0; // number of non-NULL elements
   for (i = 0; i < queue_size; ++i) {

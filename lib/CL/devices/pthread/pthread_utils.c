@@ -8,7 +8,7 @@
 
 static kernel_run_command *volatile kernel_pool = 0;
 static int kernel_pool_initialized = 0;
-pocl_lock_t kernel_pool_lock;
+static pocl_lock_t kernel_pool_lock;
 
 
 void pocl_init_kernel_run_command_manager (void)

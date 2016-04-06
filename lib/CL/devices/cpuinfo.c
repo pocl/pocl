@@ -34,12 +34,12 @@
 #include "config.h"
 #include "cpuinfo.h"
 
-const char* cpuinfo = "/proc/cpuinfo";
+static const char* cpuinfo = "/proc/cpuinfo";
 #define MAX_CPUINFO_SIZE 64*1024
 //#define DEBUG_POCL_CPUINFO
 
 //Linux' cpufrec interface
-const char* cpufreq_file="/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq";
+static const char* cpufreq_file="/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq";
 
 /* Strings to parse in /proc/cpuinfo. Else branch is for x86, x86_64 */
 #if   defined  __powerpc__
@@ -75,7 +75,8 @@ static const char *cpuvendor_default = DEFAULTVENDOR;
  * 
  * @return CPU maximum frequency in MHz, or -1 if cpufreq is not avaialble.
  */
-int pocl_cpufreq_get_max()
+static int
+pocl_cpufreq_get_max()
 {
   int retval=-1;
   if (access (cpufreq_file, R_OK) != 0)
@@ -104,7 +105,7 @@ int pocl_cpufreq_get_max()
  *
  * @return The clock frequency in MHz, or -1 if couldn't figure it out.
  */
-int
+static int
 pocl_cpuinfo_detect_max_clock_frequency()
 {
   int cpufreq=-1;
@@ -160,7 +161,7 @@ pocl_cpuinfo_detect_max_clock_frequency()
  *
  * @return The number of hardware threads, or -1 if couldn't figure it out.
  */
-int
+static int
 pocl_cpuinfo_detect_compute_unit_count()
 {
   if (access (cpuinfo, R_OK) != 0) 
@@ -262,7 +263,7 @@ pocl_sysfs_detect_compute_unit_count()
 }
 #endif
 
-void
+static void
 pocl_cpuinfo_get_cpu_name_and_vendor(cl_device_id device)
 {
   /* If something fails here, have this as backup solution.

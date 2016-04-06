@@ -26,6 +26,7 @@
 #include "pocl_util.h"
 #include "pocl_cache.h"
 #include "pocl_binary.h"
+#include "pocl_shared.h"
 
 cl_int
 program_compile_dynamic_wg_binaries(cl_program program);
