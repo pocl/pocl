@@ -1,7 +1,7 @@
 Portable Computing Language (pocl) v0.13 released
 -------------------------------------------------
 
-March 2016
+April 2016
 
 Pocl's goal is to become a performance portable open source (MIT-licensed)
 implementation of the OpenCL standard.
@@ -12,13 +12,14 @@ performance portability of OpenCL programs with compiler
 optimizations, reducing the need for target-dependent manual
 optimizations.
 
-Release highlights:
+Release highlights
+------------------
 
-Highlights
------------
-* Support for LLVM/Clang 3.8 and 3.7, all older are unsupported
-* initial (partial) OpenCL 2.0 support
+* Support for LLVM/Clang 3.8 and 3.7, all older are now unsupported
+* Started work on OpenCL 2.0 support
 * CMake build system almost on parity with autotools
+* Improved HSA support
+* Other optimizations and bug fixes
 
 We consider pocl ready for wider scale testing, although the OpenCL
 standard is not yet fully implemented, and it contains known bugs.
@@ -31,16 +32,11 @@ among others.
 Acknowledgements
 ----------------
 
-We'd like to thank Finnish Funding Agency for Technology and Innovation
-(project "Parallel Acceleration 2", funding decision 40115/13), Academy of
-Finland (funding decision 253087) and ARTEMIS joint undertaking under grant
-agreement no 641439 (ALMARVI) for funding the development of
-this release. Special thanks to HSA Foundation who sponsors the work on
+We'd like to thank thank Finnish Funding Agency for Technology
+and Innovation (project "Parallel Acceleration 3", funding decision
+1134/31/2015) and ARTEMIS JU under grant agreement no 621439
+(ALMARVI). Special thanks to HSA Foundation who sponsors the work on
 implementing the HSA support.
-
-A pocl developer E. Schnetter acknowledges support from the Perimeter
-Institute, as well as funding from NSERC (Canada) via a Discovery Grant and
-from NSF (USA) via OCI Award 0905046.
 
 Links
 -----

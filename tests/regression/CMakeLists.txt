@@ -95,7 +95,6 @@ add_test_pocl(NAME "regression/assigning_a_loop_iterator_variable_to_a_private_m
 add_test_pocl(NAME "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_REPL"
               COMMAND "test_assign_loop_variable_to_privvar_makes_it_local_2")
 
-
 set_tests_properties("regression/phi_nodes_not_replicated_REPL"
   "regression/issues_with_local_pointers_REPL"
   "regression/barrier_between_two_for_loops_REPL"

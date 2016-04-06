@@ -244,7 +244,7 @@ find_program_or_die(LLVM_LLI "lli" "LLVM interpreter")
 ####################################################################
 
 # try compile with any compiler (supplied as argument)
-macro(custom_try_compile_any COMPILER SUFFIX SOURCE RES_VAR)
+macro(custom_try_compile_any SILENT COMPILER SUFFIX SOURCE RES_VAR)
   string(RANDOM RNDNAME)
   set(RANDOM_FILENAME "${CMAKE_BINARY_DIR}/compile_test_${RNDNAME}.${SUFFIX}")
   file(WRITE "${RANDOM_FILENAME}" "${SOURCE}")
@@ -252,7 +252,7 @@ macro(custom_try_compile_any COMPILER SUFFIX SOURCE RES_VAR)
   math(EXPR LSIZE "${ARGC} - 4")
 
   execute_process(COMMAND "${COMPILER}" ${ARGN} "${RANDOM_FILENAME}" RESULT_VARIABLE ${RES_VAR} OUTPUT_VARIABLE OV ERROR_VARIABLE EV)
-  if(${${RES_VAR}})
+  if(${${RES_VAR}} AND (NOT ${SILENT}))
     message(STATUS " ########## The command: ")
     string(REPLACE ";" " " ARGN_STR "${ARGN}")
     message(STATUS "${COMPILER} ${ARGN_STR} ${RANDOM_FILENAME}")
@@ -278,7 +278,20 @@ macro(custom_try_compile_c_cxx COMPILER SUFFIX SOURCE1 SOURCE2 RES_VAR)
   ${SOURCE2}
 
   }")
-  custom_try_compile_any("${COMPILER}" ${SUFFIX} "${SOURCE_PROG}" ${RES_VAR} ${ARGN})
+  custom_try_compile_any(FALSE "${COMPILER}" ${SUFFIX} "${SOURCE_PROG}" ${RES_VAR} ${ARGN})
+endmacro()
+
+# convenience c/c++ source wrapper
+macro(custom_try_compile_c_cxx_silent COMPILER SUFFIX SOURCE1 SOURCE2 RES_VAR)
+  set(SOURCE_PROG "
+  ${SOURCE1}
+
+  int main(int argc, char** argv) {
+
+  ${SOURCE2}
+
+  }")
+  custom_try_compile_any(TRUE "${COMPILER}" ${SUFFIX} "${SOURCE_PROG}" ${RES_VAR} ${ARGN})
 endmacro()
 
 # clang++ try-compile macro
@@ -317,7 +330,7 @@ macro(custom_try_run_exe SOURCE1 SOURCE2 OUTPUT_VAR RES_VAR)
 endmacro()
 
 # clang try-compile-run macro, run via lli, the llvm interpreter
-macro(custom_try_run_lli SOURCE1 SOURCE2 OUTPUT_VAR RES_VAR)
+macro(custom_try_run_lli SILENT SOURCE1 SOURCE2 OUTPUT_VAR RES_VAR)
 # this uses "lli" - the interpreter, so we can run any -target
 # TODO variable for target !!
   set(OUTF "${CMAKE_BINARY_DIR}/try_run.bc")
@@ -333,7 +346,7 @@ macro(custom_try_run_lli SOURCE1 SOURCE2 OUTPUT_VAR RES_VAR)
     execute_process(COMMAND "${LLVM_LLI}" "-force-interpreter" "${OUTF}" RESULT_VARIABLE RESV OUTPUT_VARIABLE ${OUTPUT_VAR} ERROR_VARIABLE EV)
     set(${RES_VAR} ${RESV})
     file(REMOVE "${OUTF}")
-    if(${RESV})
+    if(${RESV} AND (NOT ${SILENT}))
       message(STATUS " ########## The command ${LLVM_LLI} -force-interpreter ${OUTF}")
       message(STATUS " ########## Exited with nonzero status: ${RESV}")
       if(${${OUTPUT_VAR}})
@@ -399,7 +412,7 @@ macro(CHECK_ALIGNOF TYPE TYPEDEF RES_VAR TRIPLE)
 
   if(NOT DEFINED ${CACHE_VAR_NAME})
 
-    custom_try_run_lli("
+    custom_try_run_lli(TRUE "
 #ifndef offsetof
 #define offsetof(type, member) ((char *) &((type *) 0)->member - (char *) 0)
 #endif
@@ -573,6 +586,61 @@ endif()
 set(LLC_HOST_CPU "${LLC_HOST_CPU}" CACHE STRING "The Host CPU to use with llc")
 
 ####################################################################
+
+# This tests that we can actually link to the llvm libraries.
+# Mostly to catch issues like #295 - cannot find -ledit
+
+setup_cache_var_name(LLVM_LINK_TEST "LLVM_LINK_TEST-${LLVM_HOST_TARGET}-${CLANG}")
+
+if(NOT DEFINED ${CACHE_VAR_NAME})
+
+  set(LLVM_LINK_TEST_SOURCE "
+    #include <stdio.h>
+    #include \"llvm/IR/LLVMContext.h\"
+    #include \"llvm/Support/SourceMgr.h\"
+    #include \"llvm/IR/Module.h\"
+    #include \"llvm/IRReader/IRReader.h\"
+
+    int main( int argc, char* argv[] )
+    {
+       if( argc < 2 )
+         exit(2);
+
+       llvm::LLVMContext &context = llvm::getGlobalContext();
+       llvm::SMDiagnostic err;
+       std::unique_ptr<llvm::Module> module = llvm::parseIRFile( argv[1], err, context );
+
+       if( !module )
+         exit(1);
+       else
+         module->dump();
+
+       return 0;
+    }")
+
+  string(RANDOM RNDNAME)
+  set(LLVM_LINK_TEST_FILENAME "${CMAKE_BINARY_DIR}/llvm_link_test_${RNDNAME}.cc")
+  file(WRITE "${LLVM_LINK_TEST_FILENAME}" "${LLVM_LINK_TEST_SOURCE}")
+
+  try_compile(LLVM_LINK_TEST ${CMAKE_BINARY_DIR} "${LLVM_LINK_TEST_FILENAME}"
+              CMAKE_FLAGS "-DINCLUDE_DIRECTORIES:STRING=${LLVM_INCLUDE_DIRS}"
+              CMAKE_FLAGS "-DLINK_DIRECTORIES:STRING=${LLVM_LIBDIR}"
+              LINK_LIBRARIES "${LLVM_LDFLAGS} ${LLVM_LIBS} ${LLVM_SYSLIBS}"
+              COMPILE_DEFINITIONS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS}"
+              OUTPUT_VARIABLE _TRY_COMPILE_OUTPUT)
+
+  if (LLVM_LINK_TEST)
+    message(STATUS "LLVM link test OK")
+  else()
+    message(STATUS "LLVM link test output: ${_TRY_COMPILE_OUTPUT}")
+    message(FATAL_ERROR "LLVM link test FAILED. This mostly happens when your LLVM installation does not have all dependencies installed.")
+  endif()
+
+endif()
+
+set_cache_var(LLVM_LINK_TEST "LLVM link test result")
+
+####################################################################
 #X86 has -march and -mcpu reversed, for clang
 
 if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "(powerpc|armv7)")
@@ -585,14 +653,15 @@ endif()
 
 if(NOT DEFINED ${CL_DISABLE_HALF})
   set(CL_DISABLE_HALF 0)
-  # TODO -march=CPU flags !
-  custom_try_compile_c_cxx("${CLANG}" "c" "__fp16 callfp16(__fp16 a) { return a * (__fp16)1.8; };" "__fp16 x=callfp16((__fp16)argc);" RESV -c ${CLANG_TARGET_OPTION}${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${LLC_HOST_CPU})
+  message(STATUS "Checking fp16 support")
+  custom_try_compile_c_cxx_silent("${CLANG}" "c" "__fp16 callfp16(__fp16 a) { return a * (__fp16)1.8; };" "__fp16 x=callfp16((__fp16)argc);" RESV -c ${CLANG_TARGET_OPTION}${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${LLC_HOST_CPU})
   if(RESV)
     set(CL_DISABLE_HALF 1)
   endif()
 endif()
 
 set(CL_DISABLE_HALF "${CL_DISABLE_HALF}" CACHE BOOL "Disable cl_khr_fp16 because fp16 is not supported")
+message(STATUS "fp16 disabled: ${CL_DISABLE_HALF}")
 
 ####################################################################
 

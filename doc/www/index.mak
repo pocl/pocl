@@ -18,6 +18,9 @@ in parallel programming on heterogeneous platforms.</p>
 
 <h1>News</h1>
 
+<h2>2016-04-04: <a href="pocl-0.13.html">Portable Computing Language
+(pocl) v0.13 released</a></h2>
+
 <h2>2015-12-04:
   <a href="publications.html">Added a master's thesis from Delft and a publication from Bristol</a>
 </h2>
