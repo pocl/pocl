@@ -31,7 +31,7 @@ add_compile_options( -Wno-deprecated -Wno-deprecated-declarations)
 
 add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
-add_test("tce/ttasim" "ttasim_host")
+add_test_pocl(NAME "tce/ttasim" COMMAND "ttasim_host")
 
 set_tests_properties( "tce/ttasim"
   PROPERTIES
