@@ -536,12 +536,12 @@ void pocl_cache_init_topdir() {
     }
 
     if (needed >= POCL_FILENAME_LENGTH) {
-        POCL_ABORT("pocl: cache path longer than maximum filename length");
+        POCL_ABORT("pocl: cache path longer than maximum filename length\n");
     }
 
     assert(strlen(cache_topdir) > 0);
     if (pocl_mkdir_p(cache_topdir))
-        POCL_ABORT("Could not create topdir for cache");
+        POCL_ABORT("Could not create topdir %s for cache\n", cache_topdir);
     cache_topdir_initialized = 1;
 
 }
