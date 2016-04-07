@@ -137,21 +137,25 @@ AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regressio
 AT_CLEANUP
 
 AT_SETUP([infinite loop (repl) - lp:941558])
-AT_KEYWORDS([regression infinite-loop tce])
+# This used to be also tce test, but not anymore
+# (requires threading for tce driver)
+AT_KEYWORDS([regression infinite-loop])
 AT_SKIP_IF([! grep "#define HAVE_OPENCL_HPP" $abs_top_builddir/config.h])
 AT_SKIP_IF([ env | grep -q POCL_IMPLICIT_FINISH])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemrepl $abs_top_builddir/tests/regression/test_infinite_loop], 0)
 AT_CLEANUP
 
 AT_SETUP([infinite loop (loops) - lp:941558])
-AT_KEYWORDS([regression infinite-loop tce])
+AT_KEYWORDS([regression infinite-loop])
 AT_SKIP_IF([! grep "#define HAVE_OPENCL_HPP" $abs_top_builddir/config.h])
 AT_SKIP_IF([ env | grep -q POCL_IMPLICIT_FINISH])
 AT_CHECK([POCL_WORK_GROUP_METHOD=workitemloops $abs_top_builddir/tests/regression/test_infinite_loop], 0)
 AT_CLEANUP
 
 AT_SETUP([passing a constant array as an arg - lp:1032203])
-AT_KEYWORDS([regression const-array tce])
+# This used to be also tce test, but not anymore
+# (requires threading for tce driver)
+AT_KEYWORDS([regression const-array])
 AT_SKIP_IF([! grep "#define HAVE_OPENCL_HPP" $abs_top_builddir/config.h])
 AT_CHECK([$abs_top_builddir/tests/regression/test_constant_array], 0)
 AT_CLEANUP
