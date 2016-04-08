@@ -114,7 +114,7 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
 
 if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "^arm")
   set_property(TEST "runtime/test_enqueue_kernel_from_binary"
-    PROPERTIES WILL FAIL 1)
+    PROPERTY WILL FAIL 1)
 
 endif()
 
