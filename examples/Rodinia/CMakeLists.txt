@@ -39,10 +39,7 @@ if (EXISTS "${RODINIA_TGZ}")
   ExternalProject_Add(
     ${TS_NAME}
     PREFIX "${TS_BASEDIR}"
-    DOWNLOAD_COMMAND test -d ${RODINIA} || (pwd && echo "extracting rodinia tgz"
-      && tar xjf "${RODINIA_TGZ}"
-      && patch -p1 -i -r- -N "${CMAKE_CURRENT_SOURCE_DIR}/Rodinia.patch"
-      && rmdir Rodinia && mv ${RODINIA} Rodinia)
+    DOWNLOAD_COMMAND test -d ${RODINIA} || /bin/bash -c "pwd && echo 'extracting rodinia tgz' && tar xjf '${RODINIA_TGZ}' && patch -p1 -r- -N -i '${CMAKE_CURRENT_SOURCE_DIR}/Rodinia.patch' && rmdir Rodinia && mv ${RODINIA} Rodinia"
     CONFIGURE_COMMAND /bin/true
     BUILD_IN_SOURCE 1
     BUILD_COMMAND pwd && make OPENCL

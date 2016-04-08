@@ -31,6 +31,8 @@ add_compile_options("-std=c++11")
 
 include_directories("common")
 
+include_directories("${POCL_OPENCL_HEADERS}")
+
 add_executable(fine SVMBasicFineGrained/svmbasic.cpp
     common/basic.cpp  common/basic.hpp
     common/cmdparser.cpp  common/cmdparser.hpp

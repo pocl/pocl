@@ -40,12 +40,13 @@ if (EXISTS "${INTEL_ZIP}")
     DOWNLOAD_COMMAND /bin/true
     PATCH_COMMAND pwd && unzip "${INTEL_ZIP}" &&
       cp "${CMAKE_CURRENT_SOURCE_DIR}/intelsvm_CMakeLists.txt" ./CMakeLists.txt &&
-      patch -p1 -d SVMBasicCoarseGrained -i ${CMAKE_CURRENT_SOURCE_DIR}/intelsvm.patch
-      patch -p1 -d SVMBasicFineGrained -i ${CMAKE_CURRENT_SOURCE_DIR}/intelsvm.patch
+      patch -p0 -d SVMBasicCoarseGrained -i ${CMAKE_CURRENT_SOURCE_DIR}/intelsvm.patch &&
+      patch -p0 -d SVMBasicFineGrained -i ${CMAKE_CURRENT_SOURCE_DIR}/intelsvm.patch
     CMAKE_ARGS
       -DCMAKE_BUILD_TYPE=RelWithDebInfo
       "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=-O2 -g -DCL_USE_DEPRECATED_OPENCL_1_2_APIS"
       -DOPENCL_LIBRARIES:STRING=OpenCL
+      "-DPOCL_OPENCL_HEADERS=${CMAKE_SOURCE_DIR}/include"
     INSTALL_COMMAND "/bin/true"
   )
 

@@ -40,9 +40,9 @@ if(EXISTS "${ViennaCL_TGZ}")
     ${TS_NAME}
     PREFIX "${TS_BASEDIR}"
     SOURCE_DIR "${TS_BASEDIR}/src/${VIENNA}"
-    DOWNLOAD_COMMAND pwd &&
-      test -d "${TS_BASEDIR}/src/${VIENNA}" || tar xzf "${ViennaCL_TGZ}"
-    PATCH_COMMAND pwd && patch -N -r- -p1 -i
+    DOWNLOAD_COMMAND
+      test -d "${TS_BASEDIR}/src/${VIENNA}/ViennaCLConfig.cmake" || tar xzf "${ViennaCL_TGZ}"
+    PATCH_COMMAND patch -N -r- -p1 -i
       ${CMAKE_CURRENT_SOURCE_DIR}/vienna_170.patch || /bin/true
     UPDATE_COMMAND /bin/true
     CMAKE_ARGS

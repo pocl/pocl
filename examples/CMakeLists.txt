@@ -23,6 +23,15 @@
 #
 #=============================================================================
 
+# to install system packages required for all examples:
+#
+# on Archlinux:
+#    pacman -S blas cblas lapack lapacke openmpi svn  freeimage  python-numpy python2-numpy  python-mako python2-mako
+#
+# on Ubuntu:
+#    apt-get install libblas-dev liblapack-dev  liblapacke-dev  libopenmpi-dev   subversion python-numpy python-mako
+#
+
 add_subdirectory("example1")
 add_subdirectory("example1-spir32")
 add_subdirectory("example1-spir64")
