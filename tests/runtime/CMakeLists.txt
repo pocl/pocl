@@ -113,8 +113,10 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
     LABELS "internal;runtime")
 
 if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "^arm")
-  set_property("runtime/test_enqueue_kernel_from_binary"
+  set_property(TEST "runtime/test_enqueue_kernel_from_binary"
     PROPERTIES WILL FAIL 1)
+
+endif()
 
 set_tests_properties("runtime/clGetSupportedImageFormats"
   PROPERTIES
