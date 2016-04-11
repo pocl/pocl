@@ -281,23 +281,6 @@ macro(setup_cached_var VARNAME DESCRIPTION DOCS_FEATURE_IS_UNAVAILABLE DOCS_REQU
   endif()
 endmacro()
 
-
-######################################################################################
-
-if(NOT DEFINED DEFAULT_ENABLE_DOCS)
-  include(Sphinx RESULT_VARIABLE RES)
-  if(SPHINX_EXECUTABLE)
-    set(DEFAULT_ENABLE_DOCS 1 CACHE INTERNAL "Enable building of documentation")
-  else()
-    set(DEFAULT_ENABLE_DOCS 0 CACHE INTERNAL "Enable building of documentation")
-  endif()
-endif()
-
-
-setup_cached_var(ENABLE_DOCS "Documentation building"
-  "Requested enabling documentation, but could not find Sphinx ! -> disabling docs.."
-  "Sphinx found, but requested disabling docs")
-
 ######################################################################################
 
 if(UNIX)
