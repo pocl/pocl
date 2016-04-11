@@ -100,7 +100,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
       (program->binaries = (unsigned char**)
        calloc (num_devices, sizeof(unsigned char*))) == NULL ||
       (program->pocl_binaries = (unsigned char**)
-       calloc (program->num_devices, sizeof(unsigned char*))) == NULL ||
+       calloc (num_devices, sizeof(unsigned char*))) == NULL ||
       (program->pocl_binary_sizes =
              (size_t*) calloc (num_devices, sizeof(size_t))) == NULL ||
       (program->build_log = (char**)
