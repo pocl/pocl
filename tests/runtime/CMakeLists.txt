@@ -112,12 +112,6 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
     DEPENDS "pocl_version_check"
     LABELS "internal;runtime")
 
-if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "^arm")
-  set_property(TEST "runtime/test_enqueue_kernel_from_binary"
-    PROPERTY WILL_FAIL 1)
-
-endif()
-
 set_tests_properties("runtime/clGetSupportedImageFormats"
   PROPERTIES
     ENVIRONMENT "POCL_DEVICES=pthread\ pthread")
@@ -125,7 +119,6 @@ set_tests_properties("runtime/clGetSupportedImageFormats"
 set_tests_properties("runtime/clCreateKernelsInProgram"
   PROPERTIES
     PASS_REGULAR_EXPRESSION "Hello\nWorld")
-
 
 set_tests_properties("runtime/clFinish"
   PROPERTIES
