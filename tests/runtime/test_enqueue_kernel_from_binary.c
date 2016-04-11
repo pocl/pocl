@@ -57,8 +57,8 @@ int main(void)
   int *h_c1;
   int *h_c2;
   int *h_c3;
-  int bb1[8];
-  int bb2[8];
+  int *bb1;
+  int *bb2;
 
   cl_mem d_a;
   cl_mem d_b;
@@ -90,6 +90,8 @@ int main(void)
   h_c1 = (int*)malloc(bytes);
   h_c2 = (int*)malloc(bytes);
   h_c3 = (int*)malloc(bytes);
+  bb1 = (int*)malloc(bytes);
+  bb2 = (int*)malloc(bytes);
 
   unsigned int i;
   for( i = 0; i < BUFFER_SIZE; i++ )
@@ -356,6 +358,8 @@ int main(void)
   clReleaseCommandQueue(queue);
   clReleaseContext(context);
 
+  free(bb1);
+  free(bb2);
   free(h_a);
   free(h_b);
   free(h_c1);
