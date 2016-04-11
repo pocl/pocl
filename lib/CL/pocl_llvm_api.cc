@@ -857,7 +857,14 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 }
 
 char* get_cpu_name() {
+#ifdef __mips__
+  // The MIPS backend isn't able to automatically detect the host yet and the
+  // value returned by llvm::sys::getHostCPUName() isn't usable in the
+  // -target-cpu option so we must use the CPU detected by CMake.
+  StringRef r = OCL_KERNEL_TARGET_CPU;
+#else
   StringRef r = llvm::sys::getHostCPUName();
+#endif
   assert(r.size() > 0);
   char* cpu_name = (char*) malloc (r.size()+1);
   strncpy(cpu_name, r.data(), r.size());
