@@ -37,6 +37,8 @@ set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
 #-- Found PythonMako: success (found suitable version "1.0.3", minimum required is "0.8.0")
 #-- Found PythonSix: success (found suitable version "1.10.0", minimum required is "1.4.0")
 
+if(HAVE_GIT)
+
 ExternalProject_Add(
   ${TS_NAME}
   PREFIX "${TS_BASEDIR}"
@@ -218,3 +220,7 @@ set_tests_properties(
 
   PROPERTIES
     LABELS "piglit")
+
+else()
+  message(STATUS "Disabling piglit, requires git to checkout sources")
+endif()

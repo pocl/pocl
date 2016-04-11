@@ -33,15 +33,12 @@ set(PB_BENCH "${TS_SRCDIR}/pb2.5benchmarks.tgz")
 set(PB_DATASET "${TS_SRCDIR}/pb2.5datasets_standard.tgz")
 set(PB_MAKE "${CMAKE_BINARY_DIR}/Parboil.makefile")
 
+find_package(PythonInterp 2.7 QUIET)
+
+if (PYTHONINTERP_FOUND)
 if (EXISTS "${PB_DRIVER}" AND
     EXISTS "${PB_BENCH}" AND
     EXISTS "${PB_DATASET}")
-
-  # Parboil is not python 3 compatible
-  find_package(PythonInterp 2.7)
-  if (NOT PYTHONINTERP_FOUND)
-    message(FATAL_ERROR "Parboil testsuite requires python 2.7, can't find it")
-  endif()
 
   file(WRITE "${PB_MAKE}" "OPENCL_PATH=${CMAKE_SOURCE_DIR}\n")
   #file(APPEND "${PB_MAKE}" "OPENCL_LIB_PATH=/usr/lib\n")
@@ -143,7 +140,9 @@ if (EXISTS "${PB_DRIVER}" AND
       LABELS "Parboil")
 
 else()
-
-  message(STATUS "Disabling testsuite ${TS_NAME}, required files not found" )
-
+  message(STATUS "Disabling testsuite ${TS_NAME}, required files (parboil sources) not found" )
+endif()
+else()
+if (NOT PYTHONINTERP_FOUND)
+  message(STATUS "Disabling testsuite ${TS_NAME}, requires python 2.7 (Parboil is not python 3 compatible)")
 endif()

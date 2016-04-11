@@ -32,6 +32,8 @@ message(STATUS "Enabling testsuite ${TS_NAME}")
 list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
 set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
 
+if(HAVE_GIT)
+
 ExternalProject_Add(
   ${TS_NAME}
   PREFIX "${TS_BASEDIR}"
@@ -111,3 +113,7 @@ set_tests_properties(vexcl_boost_version vexcl_types vexcl_deduce
   vexcl_reduce_by_key vexcl_logical vexcl_threads
   PROPERTIES
     LABELS "VexCL")
+
+else()
+  message(STATUS "Disabling piglit, requires git to checkout sources")
+endif()

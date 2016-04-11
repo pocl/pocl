@@ -28,8 +28,10 @@ set(TS_BASEDIR "${TESTSUITE_BASEDIR}/${TS_NAME}")
 set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build")
 set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
 
-find_package(LAPACK)
-find_package(Boost)
+find_package(LAPACK QUIET)
+find_package(Boost QUIET)
+
+if(HAVE_GIT)
 
 if(LAPACK_FOUND AND
    Boost_FOUND AND (NOT Boost_VERSION VERSION_LESS "1.48"))
@@ -673,9 +675,10 @@ if(LAPACK_FOUND AND
 
 
 else()
-
   message(STATUS "Disabling testsuite ${TS_NAME}, required files (Boost/LAPACK) not found" )
-
+endif()
+else()
+  message(STATUS "Disabling testsuite ${TS_NAME}, requires git to checkout sources")
 endif()
 
 # disabled tests / examples

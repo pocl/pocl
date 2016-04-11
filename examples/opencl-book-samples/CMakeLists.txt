@@ -31,6 +31,8 @@ set(TS_SRCDIR "${TS_BASEDIR}/src/${TS_NAME}")
 message(STATUS "Enabling testsuite ${TS_NAME}")
 set(ENABLED_TESTSUITES "${ENABLED_TESTSUITES};${TS_NAME}" PARENT_SCOPE)
 
+if(HAVE_SVN)
+
 ExternalProject_Add(
   ${TS_NAME}
   PREFIX "${TS_BASEDIR}"
@@ -103,3 +105,8 @@ set_tests_properties(
 #  opencl_book_samples_spmv
   PROPERTIES
     LABELS "opencl-book-samples")
+
+
+else()
+  message(STATUS "Disabling opencl-book-samples, requires Subversion to checkout the sources")
+endif()

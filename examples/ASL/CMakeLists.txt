@@ -30,8 +30,8 @@ set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
 set(ASL_TGZ "${TS_SRCDIR}/v0.1.6.tar.gz")
 
 # find required libs - boost & vtk
-find_package(Boost 1.55)
-find_package(VTK)
+find_package(Boost 1.55 QUIET)
+find_package(VTK QUIET)
 set(VTK_VER "${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}")
 
 if ((NOT "${CMAKE_VERSION}" VERSION_LESS "3.0.2")
@@ -182,7 +182,5 @@ if ((NOT "${CMAKE_VERSION}" VERSION_LESS "3.0.2")
       LABELS "ASL")
 
 else()
-
-  message(STATUS "Disabling testsuite ${TS_NAME}, required files not found" )
-
+  message(STATUS "Disabling testsuite ${TS_NAME}, required files (Boost or VTK) not found" )
 endif()

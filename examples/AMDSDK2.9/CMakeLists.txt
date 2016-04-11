@@ -115,9 +115,9 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
 
 
   else()
-    message(WARNING "Disabling testsuite ${TS_NAME} - tarball not found")
+    message(STATUS "Disabling testsuite ${TS_NAME} - tarball not found")
   endif()
 
 else()
-  message(warning "AMD APP SDK testsuite is only enabled for x86_64 Linux systems currently")
+  message(STATUS "AMD APP SDK testsuite is only enabled for x86_64 Linux systems currently")
 endif()

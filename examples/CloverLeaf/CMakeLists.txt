@@ -33,7 +33,7 @@ list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
 set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
 
 if(UNIX)
-  pkg_check_modules(OPENMPI ompi)
+  pkg_check_modules(OPENMPI QUIET ompi)
   if (OPENMPI_FOUND)
     set(EXTRA_LIB_HINTS "HINTS" "${OPENMPI_LIBRARY_DIRS}")
   endif()
@@ -45,6 +45,7 @@ find_program(MPI_CC  mpicc)
 find_program(MPI_CXX  mpiCC)
 find_library(MPI_LIB mpi_cxx ${EXTRA_LIB_HINTS})
 
+if(HAVE_GIT)
 if (MPI_F90 AND MPI_CC AND MPI_CXX AND MPI_LIB)
 
   ExternalProject_Add(
@@ -76,7 +77,8 @@ if (MPI_F90 AND MPI_CC AND MPI_CXX AND MPI_LIB)
       LABELS "CloverLeaf")
 
 else()
-
-  message(STATUS "Disabling testsuite ${TS_NAME}, required files not found" )
-
+  message(STATUS "Disabling testsuite ${TS_NAME}, required files (OpenMPI/gfortran) not found" )
+endif()
+else()
+  message(STATUS "Disabling testsuite ${TS_NAME}, requires git to checkout sources")
 endif()
