@@ -37,8 +37,6 @@
 #define KERNEL_CL_FLAGS  "@KERNEL_CL_FLAGS@"
 
 
-#cmakedefine DIRECT_LINKAGE
-
 
 #define FORCED_CLFLAGS  "@FORCED_CLFLAGS@"
 

@@ -444,31 +444,26 @@ if(NOT MSVC)
 endif()
 
 ######################################################################################
-# DONE
+
+if(NOT DEFINED DEFAULT_ENABLE_ICD)
 
 if (MSVC)
   message(STATUS "Building ICD not yet supported on Windows.")
   set(DEFAULT_ENABLE_ICD 0 CACHE INTERNAL "Going to use ICD loader")
-  set(DEFAULT_DIRECT_LINKAGE 1 CACHE INTERNAL "Software links directly to pocl")
-  set(DEFAULT_TESTS_USE_ICD 0 CACHE INTERNAL "Tests use ICD")
-endif()
-
-if(NOT DEFINED DEFAULT_ENABLE_ICD)
+else()
 
   pkg_check_modules(OCL_ICD ocl-icd>=1.3)
 
   if(OCL_ICD_FOUND)
 
-    set(HAVE_OCL_ICD 1)
+    set(HAVE_OCL_ICD 1 CACHE INTERNAL "ICL library is ocl-icd")
     set(OPENCL_FOUND 1 CACHE INTERNAL "opencl ICD/library found")
     set(OPENCL_LIBRARIES "OpenCL" CACHE INTERNAL "opencl ICD/library paths") # duh, why doesnt ocl-icd set this in .pc file ??
     set(DEFAULT_ENABLE_ICD 1 CACHE INTERNAL "ICD loader availability")
-    set(DEFAULT_DIRECT_LINKAGE 0 CACHE INTERNAL "direct linkage")
-    set(DEFAULT_TESTS_USE_ICD 1 CACHE INTERNAL "tests use ICD")
 
   else()
 
-    set(HAVE_OCL_ICD 0)
+    set(HAVE_OCL_ICD 0 CACHE INTERNAL "ICL library is ocl-icd")
     # fallback to other ICD loaders
     message(STATUS "ocl-icd not found -> trying fallback ICD implementations")
     pkg_check_modules(OPENCL OpenCL>=1.2)
@@ -486,18 +481,15 @@ if(NOT DEFINED DEFAULT_ENABLE_ICD)
       # no ocl-icd, but libopencl
       message(STATUS "libOpenCL (unknown ICD loader) found")
       set(DEFAULT_ENABLE_ICD 1 CACHE INTERNAL "ICD loader availability")
-      # tests can't use the icl loader - must use direct linkage
-      set(DEFAULT_DIRECT_LINKAGE 1 CACHE INTERNAL "direct linkage")
-      set(DEFAULT_TESTS_USE_ICD 0 CACHE INTERNAL "tests use ICD")
     else()
       message(STATUS "No ICD loader of any kind found (or its OpenCL version is <1.2)")
       # no ocl-icd, no libopencl
       set(DEFAULT_ENABLE_ICD 0 CACHE INTERNAL "no ICL loader found availability")
-      set(DEFAULT_DIRECT_LINKAGE 1 CACHE INTERNAL "direct linkage")
-      set(DEFAULT_TESTS_USE_ICD 0 CACHE INTERNAL "tests use ICD")
     endif()
 
   endif()
+
+endif()
 
 endif()
 
@@ -505,43 +497,16 @@ setup_cached_var(ENABLE_ICD "Using an ICD loader"
   "Requested build with icd, but ICD loader not found! some examples will not work.."
   "ICD loader found, but requested build without it")
 
-
-######################################################################################
-# DONE
-
-# Option to allow to link a OpenCL program directly against libpocl
-# instead of going through an ICD Loader
-if(NOT DEFINED DIRECT_LINKAGE)
-  set(DIRECT_LINKAGE ${DEFAULT_DIRECT_LINKAGE} CACHE BOOL "Allow OpenCL programs to be linked directly against the pocl library instead of using a ICD Loader (OpenCL library), defaults to !ENABLE_ICD")
-endif()
-
-message(STATUS "Direct linkage: ${DIRECT_LINKAGE}")
-
-if(NOT DIRECT_LINKAGE)
-  if(ENABLE_ICD)
-    message(STATUS "Disabling direct linkage, using ICD loader instead")
-  else()
-    message(FATAL_ERROR "Either ICD or direct-linkage must be enabled !")
-  endif()
-endif()
-
-
-######################################################################################
-# DONE
-
-if(NOT DEFINED TESTS_USE_ICD)
-  set(TESTS_USE_ICD ${DEFAULT_TESTS_USE_ICD} CACHE BOOL "Tests use the ICD loader")
+if(ENABLE_ICD)
+  # only meaningful to link tests with ocl-icd
+  set(TESTS_USE_ICD ${HAVE_OCL_ICD})
+  set(POCL_LIBRARY_NAME "pocl")
+else()
+  set(TESTS_USE_ICD 0)
+  set(POCL_LIBRARY_NAME "OpenCL")
 endif()
 
 message(STATUS "Run tests with ICD: ${TESTS_USE_ICD}")
-
-if(TESTS_USE_ICD AND (NOT ENABLE_ICD))
-  message(FATAL_ERROR "Cannot use ICD for tests when its not available")
-endif()
-if((NOT TESTS_USE_ICD) AND (NOT DIRECT_LINKAGE))
-  message(FATAL_ERROR "Tests set to link directly, but direct-linkage is disabled")
-endif()
-
 
 ######################################################################################
 
@@ -1034,8 +999,6 @@ MESSAGE(STATUS "******* Enabled features:")
 MESSAGE(STATUS " ")
 
 MESSAGE(STATUS "CLANG_SPIR: ${CLANG_SPIR}")
-MESSAGE(STATUS "DIRECT_LINKAGE: ${DIRECT_LINKAGE}")
-MESSAGE(STATUS "ENABLE_DOCS: ${ENABLE_DOCS}")
 MESSAGE(STATUS "ENABLE_ICD: ${ENABLE_ICD}")
 MESSAGE(STATUS "ENABLE_TCE: ${ENABLE_TCE}")
 MESSAGE(STATUS "ENABLE_TCEMC: ${ENABLE_TCEMC}")

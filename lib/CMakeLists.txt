@@ -28,7 +28,6 @@ separate_arguments(HOST_LLC_FLAGS)
 
 if (OCS_AVAILABLE)
   add_subdirectory("kernel")
-
   add_subdirectory("llvmopencl")
 endif()
 
@@ -36,55 +35,28 @@ add_subdirectory("CL")
 
 #############################################################
 
-# must be after tce b/c of LD_FLAGS_BIN
-# and after adding lib/CL subdir b/c of libpocl location,
+# must be after adding lib/CL subdir b/c of libpocl target,
 # but before poclu & examples & tests (they need these variables)
-
-set(OPENCL_CFLAGS "${PTHREAD_CFLAGS}")
 
 if(TESTS_USE_ICD)
 
-  if(OPENCL_FOUND)
-    set(OPENCL_LIBS ${OPENCL_LIBRARIES})
-  else()
-    message(WARNING "Tests-use-ICD requested, but cannot find an OpenCL library; adding -lOpenCL to LDFLAGS")
-    set(OPENCL_LIBS "OpenCL")
-  endif()
-
-  set(OPENCL_LIBS "${PTHREAD_LDFLAGS};${OPENCL_LIBS}")
-
-  set(OPENCL_EXTLIBS ${OPENCL_LIBS})
-  set(OPENCL_CMAKE_OPTIONS "")
+  # -pthread makes gdb happier when debugging tests
+  set(OPENCL_LIBS "${PTHREAD_LDFLAGS};${OPENCL_LIBRARIES}")
 
 else()
 
-  # used by examples / tests
-
-  #OPENCL_LIBS='$(abs_top_builddir)/lib/CL/libpocl.la $(PTHREAD_LIBS) $(LD_FLAGS_BIN)'
-  set(OPENCL_LIBS ${LD_FLAGS_BIN} "OpenCL")
-
-  # TODO used by Rodinia makefile.am ?
-  #OPENCL_EXTLIBS='-L$(abs_top_builddir)/lib/CL/.libs -lpocl -Xlinker -rpath=${abs_top_builddir}/lib/CL/.libs $(PTHREAD_LIBS) $(LD_FLAGS_BIN)'
-  set(OPENCL_EXTLIBS "TODO_FIX_THIS")
-
-  #~ OPENCL_CMAKE=' \
-  #~ -D OPENCL_LIBRARIES:FILEPATH=${abs_top_builddir}/lib/CL/.libs/libpocl.so \
-  #~ -D OPENCL_LIBRARY:FILEPATH=${abs_top_builddir}/lib/CL/.libs/libpocl.so \
-  #~ -D CMAKE_EXE_LINKER_FLAGS:STRING='${CMAKE_THREAD_LIBS_INIT}' \
-  #~ -D OPENCL_INCLUDE_DIRS:PATH=${abs_top_srcdir}/include \
-  #~ -D OPENCL_INCLUDE_DIR:PATH=${abs_top_srcdir}/include
-  #~ '
-  set(OPENCL_CMAKE_OPTIONS "-D OPENCL_LIBRARIES:FILEPATH='$<TARGET_FILE:pocl>'
-                            -D OPENCL_LIBRARY:FILEPATH='$<TARGET_FILE:pocl>'
-                            -D CMAKE_EXE_LINKER_FLAGS:STRING='${CMAKE_THREAD_LIBS_INIT}'
-                            -D OPENCL_INCLUDE_DIRS:PATH='${CMAKE_SOURCE_DIR}/include'
-                            -D OPENCL_INCLUDE_DIR:PATH='${CMAKE_SOURCE_DIR}/include' ")
+  # when we link pocl directly as libOpenCL.so,
+  # llvm+clang libs are a transitive dependency of
+  # executables (e.g. poclcc -> libOpenCL -> libLLVM)
+  # and this must be specified on new systems,
+  # otherwise linking fails.
+  set(OPENCL_LIBS "${PTHREAD_LDFLAGS};${POCL_LIBRARY_NAME};${POCL_TRANSITIVE_LIBS}")
 
 endif()
 
+set(OPENCL_CFLAGS "${PTHREAD_CFLAGS}")
+
 set(OPENCL_LIBS "${OPENCL_LIBS}" PARENT_SCOPE)
-set(OPENCL_EXTLIBS "${OPENCL_EXTLIBS}" PARENT_SCOPE)
-set(OPENCL_CMAKE_OPTIONS "${OPENCL_CMAKE_OPTIONS}" PARENT_SCOPE)
 set(OPENCL_CFLAGS "${OPENCL_CFLAGS}" PARENT_SCOPE)
 
 add_subdirectory("poclu")

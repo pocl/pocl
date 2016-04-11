@@ -172,6 +172,9 @@ endif()
 
 set(POCL_PRIVATE_LINK_LIST ${CLANG_LIBFILES} ${POCL_LLVM_LIBS} ${LLVM_SYSLIBS})
 
+# see lib/CMakeLists.txt
+set(POCL_TRANSITIVE_LIBS ${POCL_PRIVATE_LINK_LIST} PARENT_SCOPE)
+
 # -lrt is required for glibc < 2.17
 if(HAVE_CLOCK_GETTIME AND (NOT WIN32))
   list(APPEND POCL_PUBLIC_LINK_LIST "rt")
@@ -179,27 +182,13 @@ endif()
 
 #################################################################
 
+add_library("${POCL_LIBRARY_NAME}" ${LIBPOCL_OBJS} )
 
-add_library("pocl" ${LIBPOCL_OBJS} )
-
-set_target_properties("pocl" PROPERTIES SOVERSION "${LIB_API_VERSION}" 
+set_target_properties("${POCL_LIBRARY_NAME}" PROPERTIES SOVERSION "${LIB_API_VERSION}"
   VERSION "${LIB_BUILD_VERSION}" 
   LINK_FLAGS "${LLVM_LDFLAGS}  ${ICD_LD_FLAGS}")
-target_link_libraries("pocl" PUBLIC ${POCL_PUBLIC_LINK_LIST} PRIVATE ${POCL_PRIVATE_LINK_LIST} )
-install(TARGETS "pocl"
+
+target_link_libraries("${POCL_LIBRARY_NAME}" PUBLIC ${POCL_PUBLIC_LINK_LIST} PRIVATE ${POCL_PRIVATE_LINK_LIST} )
+install(TARGETS "${POCL_LIBRARY_NAME}"
         LIBRARY DESTINATION ${POCL_INSTALL_PUBLIC_LIBDIR}
         ARCHIVE DESTINATION ${POCL_INSTALL_PUBLIC_LIBDIR}/static)
-
-
-if(DIRECT_LINKAGE)
-  add_library("OpenCL" ${LIBPOCL_OBJS})
-  set_target_properties("OpenCL" PROPERTIES SOVERSION "${LIB_API_VERSION}" VERSION "${LIB_BUILD_VERSION}" LINK_FLAGS "${LLVM_LDFLAGS} ${ICD_LD_FLAGS}")
-  target_link_libraries("OpenCL" PUBLIC ${POCL_PUBLIC_LINK_LIST} PRIVATE ${POCL_PRIVATE_LINK_LIST} )
-  if(NOT ENABLE_ICD)
-    install(TARGETS "OpenCL"
-          LIBRARY DESTINATION ${POCL_INSTALL_PUBLIC_LIBDIR}
-          ARCHIVE DESTINATION ${POCL_INSTALL_PUBLIC_LIBDIR}/static)
-  endif()
-endif()
-
-
