@@ -36,6 +36,7 @@ set(PB_MAKE "${CMAKE_BINARY_DIR}/Parboil.makefile")
 find_package(PythonInterp 2.7 QUIET)
 
 if (PYTHONINTERP_FOUND)
+
 if (EXISTS "${PB_DRIVER}" AND
     EXISTS "${PB_BENCH}" AND
     EXISTS "${PB_DATASET}")
@@ -143,6 +144,5 @@ else()
   message(STATUS "Disabling testsuite ${TS_NAME}, required files (parboil sources) not found" )
 endif()
 else()
-if (NOT PYTHONINTERP_FOUND)
   message(STATUS "Disabling testsuite ${TS_NAME}, requires python 2.7 (Parboil is not python 3 compatible)")
 endif()
