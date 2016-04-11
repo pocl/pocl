@@ -524,7 +524,6 @@ else() # Undefined = auto -> check
   set(INSTALL_OPENCL_HEADERS ${IOH} CACHE BOOL "Install POCL's OpenCL headers. (Ones from Kronos should be installed instead)")
 endif()
 
-
 ######################################################################################
 # TODO check if this works!
 
@@ -535,18 +534,15 @@ endif()
 
 ######################################################################################
 
-if(MSVC)
-  message(STATUS "Finding libGLEW binary distribution (http://glew.sourceforge.net/index.html) for Widows not implemented. Consider writing FindGlew.cmake macro.")
-  message(STATUS "libGLEW not found. A few tests will not work")
-else()
+if(NOT MSVC)
   pkg_check_modules(GLEW glew)
 endif()
 
-if(NOT GLEW_FOUND)
+if(GLEW_FOUND)
+  set(HAVE_GLEW 1)
+else()
   set(HAVE_GLEW 0)
   message(WARNING "libGLEW not found. A few tests will not work")
-else()
-  set(HAVE_GLEW 1)
 endif()
 
 ######################################################################################
@@ -564,7 +560,6 @@ file(WRITE "${CMAKE_BINARY_DIR}/pocl_build_timestamp.h" "#define POCL_BUILD_TIME
 # architectures).
 set(FORCED_CLFLAGS "-Xclang -ffake-address-space-map -fno-math-errno -fblocks -fno-builtin -fasm -Wno-format")
 
-
 ####################################################################
 
 # line 620
@@ -580,7 +575,7 @@ endif()
 
 ####################################################################
 
-# TODO some more work required here
+# Host (basic/pthread) driver setup
 
 set(DEFAULT_HOST_CLANG_FLAGS "${CLANG_TARGET_OPTION}${LLC_TRIPLE}")
 set(DEFAULT_HOST_LLC_FLAGS "-relocation-model=pic -mtriple=${LLC_TRIPLE}")
@@ -772,8 +767,6 @@ if(ENABLE_HSA)
   set(OCL_DRIVERS "${OCL_DRIVERS} hsa")
   set(OCL_TARGETS "${OCL_TARGETS} hsail64")
   # this is for config.h
-  # TODO unify with autotools
-  set(BUILD_HSA 1)
 
   set(HSA_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64 cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
   set(HSA_DEVICE_CL_VERSION "200")
@@ -808,7 +801,6 @@ endif()
 if (OCS_AVAILABLE)
 
   CHECK_ALIGNOF("float16" "typedef float float16  __attribute__((__ext_vector_type__(16)));" ALIGNOF_FLOAT16 ${LLC_TRIPLE})
-
   CHECK_ALIGNOF("double16" "typedef double double16  __attribute__((__ext_vector_type__(16)));" ALIGNOF_DOUBLE16 ${LLC_TRIPLE})
 
 else()
@@ -905,6 +897,7 @@ set(KERNEL_COMPILER_LIB_VERSION "${LIB_CURRENT_VERSION}.0.0")
 #TODO
 # these vars are copies b/c tons of sources use BUILD_ICD etc
 set(BUILD_ICD ${ENABLE_ICD})
+set(BUILD_HSA ${ENABLE_HSA})
 set(TCE_AVAILABLE ${ENABLE_TCE})
 set(TCEMC_AVAILABLE ${ENABLE_TCEMC})
 set(_CL_DISABLE_LONG ${CL_DISABLE_LONG})
@@ -966,10 +959,7 @@ message(STATUS "POCLU LINK OPTS: ${POCLU_LINK_OPTIONS}")
 add_subdirectory("bin")
 
 if (OCS_AVAILABLE)
-  # TODO In progress
   add_subdirectory("tests")
-
-  # TODO In progress
   add_subdirectory("examples")
 endif()
 
@@ -1045,9 +1035,13 @@ MESSAGE(STATUS "HOST_AS_FLAGS: ${HOST_AS_FLAGS}")
 MESSAGE(STATUS "HOST_CLANG_FLAGS: ${HOST_CLANG_FLAGS}")
 MESSAGE(STATUS "HOST_LD_FLAGS: ${HOST_LD_FLAGS}")
 MESSAGE(STATUS "HOST_LLC_FLAGS: ${HOST_LLC_FLAGS}")
-MESSAGE(STATUS "HSA_INCLUDES: ${HSA_INCLUDES}")
-MESSAGE(STATUS "HSALIB: ${HSALIB}")
-MESSAGE(STATUS "HSAIL_ASM: ${HSAIL_ASM}")
+if (ENABLE_HSA)
+  MESSAGE(STATUS "")
+  MESSAGE(STATUS "HSA_INCLUDES: ${HSA_INCLUDES}")
+  MESSAGE(STATUS "HSALIB: ${HSALIB}")
+  MESSAGE(STATUS "HSAIL_ASM: ${HSAIL_ASM}")
+endif()
+MESSAGE(STATUS "")
 MESSAGE(STATUS "ICD_LD_FLAGS: ${ICD_LD_FLAGS}")
 MESSAGE(STATUS "KERNEL_CLANGXX_FLAGS: ${KERNEL_CLANGXX_FLAGS}")
 MESSAGE(STATUS "KERNEL_CL_FLAGS: ${KERNEL_CL_FLAGS}")
@@ -1056,6 +1050,7 @@ MESSAGE(STATUS "PTHREAD_CFLAGS: ${PTHREAD_CFLAGS}")
 MESSAGE(STATUS "LIB_API_VERSION: ${LIB_API_VERSION}")
 MESSAGE(STATUS "LIB_BUILD_VERSION: ${LIB_BUILD_VERSION}")
 if (OCS_AVAILABLE)
+  MESSAGE(STATUS "")
   MESSAGE(STATUS "LLVM_VERSION: ${LLVM_VERSION}")
   MESSAGE(STATUS "LLVM_ASSERTS_BUILD ${LLVM_ASSERTS_BUILD}")
   MESSAGE(STATUS "LLVM_BUILD_MODE ${LLVM_BUILD_MODE}")
@@ -1077,13 +1072,16 @@ MESSAGE(STATUS "MAX_EXTENDED_ALIGNMENT: ${MAX_EXTENDED_ALIGNMENT}")
 MESSAGE(STATUS "OCL_KERNEL_TARGET: ${OCL_KERNEL_TARGET}")
 MESSAGE(STATUS "OCL_KERNEL_TARGET_CPU: ${OCL_KERNEL_TARGET_CPU}")
 MESSAGE(STATUS "POCL_DEVICE_ADDRESS_BITS: ${POCL_DEVICE_ADDRESS_BITS}")
-MESSAGE(STATUS "TCE_TARGET_CLANG_FLAGS: ${TCE_TARGET_CLANG_FLAGS}")
-MESSAGE(STATUS "TCE_TARGET_LLC_FLAGS: ${TCE_TARGET_LLC_FLAGS}")
-MESSAGE(STATUS "TCE_CXXFLAGS: ${TCE_CXXFLAGS}")
-MESSAGE(STATUS "TCE_INCLUDES: ${TCE_INCLUDES}")
-MESSAGE(STATUS "TCE_LIBS: ${TCE_LIBS}")
-MESSAGE(STATUS "TCE_VERSION: ${TCE_VERSION}")
-MESSAGE(STATUS "TCE_PREFIX: ${TCE_PREFIX}")
+if (ENABLE_TCE)
+  MESSAGE(STATUS "")
+  MESSAGE(STATUS "TCE_TARGET_CLANG_FLAGS: ${TCE_TARGET_CLANG_FLAGS}")
+  MESSAGE(STATUS "TCE_TARGET_LLC_FLAGS: ${TCE_TARGET_LLC_FLAGS}")
+  MESSAGE(STATUS "TCE_CXXFLAGS: ${TCE_CXXFLAGS}")
+  MESSAGE(STATUS "TCE_INCLUDES: ${TCE_INCLUDES}")
+  MESSAGE(STATUS "TCE_LIBS: ${TCE_LIBS}")
+  MESSAGE(STATUS "TCE_VERSION: ${TCE_VERSION}")
+  MESSAGE(STATUS "TCE_PREFIX: ${TCE_PREFIX}")
+endif()
 MESSAGE(STATUS "")
 
 if (OCS_AVAILABLE)
