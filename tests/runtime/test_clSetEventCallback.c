@@ -55,10 +55,17 @@ void callback_function(cl_event event,
   return;
 }
 
+/* TODO this test relied on output of printf() from kernel
+ * appearing in specific order WRT event state callbacks,
+ * which is likely UB. OpenCL states printf()
+ * should happen "at clFinish time" but AFAICT
+ * does not state, if it should happen before
+ * or after the event-completed callback call.
+ * -> test disabled for now. */
 char kernelASourceCode[] = 
 "kernel \n"
 "void test_kernel(constant char* input) {\n"
-"    printf(\"%s\", input);\n"
+"    if (input[0] == 'X') printf(\"match\");\n"
 "}\n";
 
 int main()
@@ -146,8 +153,8 @@ int main()
     }
  
   /* launch kernel*/
-  err = clEnqueueNDRangeKernel (queue, kernel, 1, NULL, global_work_size, 
-                                local_work_size, 0, NULL, &an_event); 
+  err = clEnqueueNDRangeKernel (queue, kernel, 1, NULL, global_work_size,
+                                local_work_size, 0, NULL, &an_event);
   if (err != CL_SUCCESS) 
     {
       puts("clEnqueueNDRangeKernel call failed\n");
