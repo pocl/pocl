@@ -51,6 +51,7 @@ void callback_function(cl_event event,
       printf("CL_COMPLETE\n");
       complete = 1;
     }
+  fflush(stdout);
   return;
 }
 
