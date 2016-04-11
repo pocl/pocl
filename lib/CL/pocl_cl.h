@@ -57,12 +57,6 @@
 # endif
 #endif
 
-#ifdef CLANGXX
-#define LINK_CMD CLANGXX
-#else
-#define LINK_CMD CLANG
-#endif
-
 typedef pthread_mutex_t pocl_lock_t;
 #define POCL_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
 
@@ -156,10 +150,10 @@ typedef pthread_mutex_t pocl_lock_t;
 #  define POCL_ALIAS_OPENCL_SYMBOL(name)                                \
   __typeof__(name) name __attribute__((alias ("PO" #name), visibility("default")));
 #  define POsymAlways(name) POCL_ALIAS_OPENCL_SYMBOL(name)
-#  ifdef DIRECT_LINKAGE
-#    define POsym(name) POCL_ALIAS_OPENCL_SYMBOL(name)
-#  else
+#  ifdef BUILD_ICD
 #    define POsym(name)
+#  else
+#    define POsym(name) POCL_ALIAS_OPENCL_SYMBOL(name)
 #  endif
 
 #endif
