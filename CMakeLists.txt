@@ -248,6 +248,17 @@ endif()
 
 ######################################################################################
 
+if (NOT MSVC)
+  find_program(LINK_COMMAND
+    NAMES ld${CMAKE_EXECUTABLE_SUFFIX}
+    HINTS ENV PATH
+  )
+else()
+    set(LINK_COMMAND "${CLANGXX}")
+endif()
+
+######################################################################################
+
 # if variable FEATURE_X isnt defined, sets it to DEFAULT_FEATURE_X;
 # also, if DEFAULT_FEATURE_X is 0, prevents FEATURE_X being 1
 # since it takes DEFAULT_FEATURE_X=0 to mean "FEATURE_X is unavailable"

@@ -178,6 +178,9 @@ else
 fi
 AM_CONDITIONAL([OCS_AVAILABLE], [test x"$ocs" = x"yes"])
 
+AC_PATH_PROGS([LINKER], [ld], [none])
+AC_DEFINE([LINK_COMMAND, ["$LINKER"], [path to linker])
+
 ####################################################################
 # Manage optional testsuites
 

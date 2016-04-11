@@ -93,7 +93,7 @@
 
 #cmakedefine LLVM_3_9
 
-
+#define LINK_COMMAND "@LINK_COMMAND@"
 
 /* Defined to greatest expected alignment for extended types, in bytes. */
 #define MAX_EXTENDED_ALIGNMENT @MAX_EXTENDED_ALIGNMENT@
