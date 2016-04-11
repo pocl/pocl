@@ -32,10 +32,24 @@ set(VERSION_SUFFIX "-pre")
 set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION}${VERSION_SUFFIX})
 set(POCL_VERSION ${VERSION_STRING})
 
+# required b/c SHARED libs defaults to ON while OBJECT defaults to OFF
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+enable_testing()
 
 ##################################################################################
 
 option(OCS_AVAILABLE "Online compiler support available to build pocl with. Default is available." ON)
+
+option(BUILD_SHARED_LIBS "ON=Build shared libs, OFF=static libs" ON)
+
+option(POCL_DEBUG_MESSAGES
+  "Enable debug messages from pocl (useful for OpenCL developers), must be enabled at runtime, with env var POCL_DEBUG"
+  ON)
+
+option(ENABLE_HSA "Enable the HSA device driver for AMD GCN devices" OFF)
+
+option(KERNEL_CACHE_DEFAULT "Default value for the kernel compile cache. If disabled, pocl will still use the kernel cache, but will delete cachefiles on exit. You can still enable keeping the files it at runtime with an env var." ON)
 
 ##################################################################################
 
@@ -138,25 +152,6 @@ if(APPLE)
 else()
   set(POCL_INSTALL_OPENCL_HEADER_DIR "${POCL_INSTALL_PUBLIC_HEADER_DIR}/CL" CACHE PATH "POCL header dir for OpenCL headers")
 endif()
-
-option(BUILD_SHARED_LIBS "ON=Build shared libs, OFF=static libs" ON)
-
-option(
-  POCL_DEBUG_MESSAGES
-  "Enable debug messages from pocl (useful for OpenCL developers), must be enabled at runtime, with env var POCL_DEBUG"
-  ON)
-
-# required b/c SHARED libs defaults to ON while OBJECT defaults to OFF
-set(CMAKE_POSITION_INDEPENDENT_CODE ON)
-
-######################################################################################
-
-# AMD HSA
-option(ENABLE_HSA "Enable the HSA device driver for AMD GCN devices" OFF)
-
-######################################################################################
-
-enable_testing()
 
 ######################################################################################
 
@@ -604,12 +599,7 @@ endif()
 
 ######################################################################################
 
-option(KERNEL_CACHE_DEFAULT "Default value for the kernel compile cache. If disabled, pocl will still use the kernel cache, but will delete cachefiles on exit. You can still enable keeping the files it at runtime with an env var." ON)
-if(KERNEL_CACHE_DEFAULT)
-  set(POCL_KERNEL_CACHE_DEFAULT 1)
-else()
-  set(POCL_KERNEL_CACHE_DEFAULT 0)
-endif()
+set_expr(POCL_KERNEL_CACHE_DEFAULT KERNEL_CACHE_DEFAULT)
 
 string(TIMESTAMP POCL_BUILD_TIMESTAMP "%d%m%Y%H%M%S")
 file(WRITE "${CMAKE_BINARY_DIR}/pocl_build_timestamp.h" "#define POCL_BUILD_TIMESTAMP \"${POCL_BUILD_TIMESTAMP}\"")
