@@ -1272,7 +1272,7 @@ then
 fi
 
 # List of extension supported by the TCE device
-TCE_DEVICE_EXTENSIONS="cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics cl_khr_fp16"
+TCE_DEVICE_EXTENSIONS="cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics"
 TCE_DEVICE_EXTENSION_DEFINES=`echo $TCE_DEVICE_EXTENSIONS | sed s/cl_khr/-Dcl_khr/g`
 AC_DEFINE_UNQUOTED([TCE_DEVICE_EXTENSIONS], ["$TCE_DEVICE_EXTENSIONS"], [TCE device supported extension list])
 AC_SUBST([TCE_DEVICE_EXTENSION_DEFINES])
