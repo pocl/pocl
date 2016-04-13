@@ -28,6 +28,8 @@ set(TS_BASEDIR "${TESTSUITE_BASEDIR}/${TS_NAME}")
 set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build")
 set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
 
+if(HAVE_GIT)
+
 message(STATUS "Enabling testsuite ${TS_NAME}")
 list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
 set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
@@ -36,8 +38,6 @@ set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
 #-- Found PythonNumpy: success (found suitable version "1.10.2", minimum required is "1.6.2")
 #-- Found PythonMako: success (found suitable version "1.0.3", minimum required is "0.8.0")
 #-- Found PythonSix: success (found suitable version "1.10.0", minimum required is "1.4.0")
-
-if(HAVE_GIT)
 
 ExternalProject_Add(
   ${TS_NAME}
@@ -222,5 +222,5 @@ set_tests_properties(
     LABELS "piglit")
 
 else()
-  message(STATUS "Disabling piglit, requires git to checkout sources")
+  message(STATUS "Disabling testsuite ${TS_NAME}, requires git to checkout sources")
 endif()

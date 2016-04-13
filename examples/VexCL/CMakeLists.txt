@@ -28,11 +28,11 @@ set(TS_BASEDIR "${TESTSUITE_BASEDIR}/${TS_NAME}")
 set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build")
 set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
 
+if(HAVE_GIT)
+
 message(STATUS "Enabling testsuite ${TS_NAME}")
 list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
 set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
-
-if(HAVE_GIT)
 
 ExternalProject_Add(
   ${TS_NAME}
@@ -115,5 +115,5 @@ set_tests_properties(vexcl_boost_version vexcl_types vexcl_deduce
     LABELS "VexCL")
 
 else()
-  message(STATUS "Disabling piglit, requires git to checkout sources")
+  message(STATUS "Disabling testsuite ${TS_NAME}, requires git to checkout sources")
 endif()

@@ -28,10 +28,10 @@ set(TS_BASEDIR "${TESTSUITE_BASEDIR}/${TS_NAME}")
 set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build")
 set(TS_SRCDIR "${TS_BASEDIR}/src/${TS_NAME}")
 
+if(HAVE_SVN)
+
 message(STATUS "Enabling testsuite ${TS_NAME}")
 set(ENABLED_TESTSUITES "${ENABLED_TESTSUITES};${TS_NAME}" PARENT_SCOPE)
-
-if(HAVE_SVN)
 
 ExternalProject_Add(
   ${TS_NAME}
