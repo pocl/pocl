@@ -599,6 +599,7 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
              d->readWordFromDevice(d->commandQueueAddr));
       sleep(1);
 #endif
+  usleep(20000);
   } while (d->readWordFromDevice(d->commandQueueAddr) != POCL_KST_FINISHED);
 
 #ifdef DEBUG_TTA_DRIVER
