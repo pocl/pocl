@@ -26,6 +26,15 @@
 add_compile_options(${TCE_INCLUDES})
 add_compile_options(${TCE_CXXFLAGS})
 
+# If we compile with -pedantic, the #include_next in our
+# CL headers result in a bunch of annoying warnings like:
+#
+#    warning: #include_next is a GCC extension
+#
+# ... which is impossible to disable in any other way
+# than disabling -pedantic (AFAICT, with GCC 4/5)
+add_compile_options("-Wno-pedantic")
+
 add_subdirectory("ttasim")
 add_subdirectory("fp16")
 
