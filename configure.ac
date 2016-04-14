@@ -91,7 +91,7 @@ if test x"$ocs" != x"no"; then :
   AC_DEFINE([OCS_AVAILABLE], [1], [Defined to 1 if compiling with online compiler support])
 
   AC_ARG_VAR([LLVM_CONFIG], [Program used to retrieve LLVM options and binaries])
-  AC_PATH_PROGS([LLVM_CONFIG], [llvm-config llvm-config-mp-3.7 llvm-config-3.7 llvm-config37 llvm-config-mp-3.6 llvm-config-3.6 llvm-config36])
+  AC_PATH_PROGS([LLVM_CONFIG], [llvm-config llvm-config-mp-3.8 llvm-config-3.8 llvm-config38 llvm-config-mp-3.7 llvm-config-3.7 llvm-config37])
   test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
 
   LLVM_VERSION=`$LLVM_CONFIG --version`

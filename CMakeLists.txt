@@ -218,10 +218,6 @@ if (OCS_AVAILABLE)
     message(FATAL_ERROR "Could not load LLVM.cmake")
   endif()
 
-  if("${LLVM_VERSION}" VERSION_LESS "3.6")
-    message(FATAL_ERROR "POCL requires LLVM version >= 3.6 !")
-  endif()
-
   if("${LLVM_CLANG_VERSION}" MATCHES "SPIR")
     set(CLANG_SPIR 1)
     message(STATUS "Using a SPIR generator Clang from Khronos.")
