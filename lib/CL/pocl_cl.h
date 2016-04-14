@@ -150,10 +150,10 @@ typedef pthread_mutex_t pocl_lock_t;
 #  define POCL_ALIAS_OPENCL_SYMBOL(name)                                \
   __typeof__(name) name __attribute__((alias ("PO" #name), visibility("default")));
 #  define POsymAlways(name) POCL_ALIAS_OPENCL_SYMBOL(name)
-#  ifdef BUILD_ICD
-#    define POsym(name)
-#  else
+#  if defined(DIRECT_LINKAGE) || !defined(BUILD_ICD)
 #    define POsym(name) POCL_ALIAS_OPENCL_SYMBOL(name)
+#  else
+#    define POsym(name)
 #  endif
 
 #endif
