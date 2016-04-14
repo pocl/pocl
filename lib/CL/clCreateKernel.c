@@ -116,12 +116,14 @@ POname(clCreateKernel)(cl_program program,
   kernel->program = program;
   kernel->next = NULL;
 
-  POCL_LOCK_OBJ (program);
-  cl_kernel k = program->kernels;
-  program->kernels = kernel;
-  POCL_UNLOCK_OBJ (program);
-  kernel->next = k;
-
+  if (program->kernels != ADDING_DEFAULT_KERNELS_TO_CL_PROGRAM)
+    {
+      POCL_LOCK_OBJ (program);
+      cl_kernel k = program->kernels;
+      program->kernels = kernel;
+      POCL_UNLOCK_OBJ (program);
+      kernel->next = k;
+    }
   POCL_RETAIN_OBJECT(program);
 
   errcode = CL_SUCCESS;

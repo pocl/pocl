@@ -594,6 +594,9 @@ struct _cl_mem {
 
 typedef uint8_t SHA1_digest_t[SHA1_DIGEST_SIZE * 2 + 1];
 
+/* Any value except zero, just have to be an invalid pointer. */
+#define ADDING_DEFAULT_KERNELS_TO_CL_PROGRAM 11
+
 struct _cl_program {
   POCL_ICD_OBJECT
   POCL_OBJECT;
