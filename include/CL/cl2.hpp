@@ -4103,7 +4103,7 @@ public:
         {
             CL_MEM_OBJECT_IMAGE1D,
             width,
-            0, 0, 0, 0, 0, 0, 0, 0
+            0, 0, 0, 0, 0, 0, 0, { 0 }
         };
         object_ = ::clCreateImage(
             context(), 
@@ -4192,7 +4192,7 @@ public:
             CL_MEM_OBJECT_IMAGE1D_BUFFER,
             width,
             0, 0, 0, 0, 0, 0, 0,
-            buffer()
+            { buffer() }
         };
         object_ = ::clCreateImage(
             context(), 
@@ -4280,7 +4280,7 @@ public:
             0, 0,  // height, depth (unused)
             arraySize,
             rowPitch,
-            0, 0, 0, 0
+            0, 0, 0, { 0 }
         };
         object_ = ::clCreateImage(
             context(), 
@@ -4395,7 +4395,7 @@ public:
                 height,
                 0, 0, // depth, array size (unused)
                 row_pitch,
-                0, 0, 0, 0
+                0, 0, 0, { 0 }
             };
             object_ = ::clCreateImage(
                 context(),
@@ -4713,7 +4713,7 @@ public:
             arraySize,
             rowPitch,
             slicePitch,
-            0, 0, 0
+            0, 0, { 0 }
         };
         object_ = ::clCreateImage(
             context(), 
@@ -4828,7 +4828,7 @@ public:
                 0,      // array size (unused)
                 row_pitch,
                 slice_pitch,
-                0, 0, 0
+                0, 0, { 0 }
             };
             object_ = ::clCreateImage(
                 context(), 

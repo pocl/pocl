@@ -623,7 +623,7 @@ pocl_binary_get_kernel_metadata(unsigned char *binary, const char *kernel_name,
   assert(kernel_name);
   size_t name_len = strlen(kernel_name);
 
-  int found;
+  int found = 0;
   pocl_binary b;
   memset(&b, 0, sizeof(pocl_binary));
   pocl_binary_kernel k;
