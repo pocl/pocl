@@ -290,7 +290,7 @@ pocl_pthread_prepare_kernel
   unsigned i;
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
-  cl_device_id device;
+  cl_device_id device = NULL;
 
   cmd->device->ops->compile_kernel (cmd, NULL, NULL);
 

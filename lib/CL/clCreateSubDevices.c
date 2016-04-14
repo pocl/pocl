@@ -71,7 +71,7 @@ POname(clCreateSubDevices)(cl_device_id in_device,
      // error out if the number of CUs per device is 0 or bigger than the number of
      // CUs of in_device
      POCL_GOTO_ERROR_COND(
-       (properties[1] == 0 || properties[1] > in_device->max_compute_units),
+       (properties[1] == 0 || (cl_uint)properties[1] > in_device->max_compute_units),
        CL_INVALID_VALUE);
      // error out if properties isn't zero-terminated
      POCL_GOTO_ERROR_COND(properties[2] != 0, CL_INVALID_VALUE);
