@@ -654,7 +654,7 @@ set_cache_var(LLVM_LINK_TEST "LLVM link test result")
 ####################################################################
 #X86 has -march and -mcpu reversed, for clang
 
-if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "(powerpc|armv7)")
+if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "(powerpc|armv7|aarch64)")
   set(CLANG_MARCH_FLAG "-mcpu=")
 else()
   set(CLANG_MARCH_FLAG "-march=")
