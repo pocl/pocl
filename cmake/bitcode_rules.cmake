@@ -83,7 +83,7 @@ function(compile_cl_to_bc FILENAME SUBDIR BC_FILE_LIST)
           "${CMAKE_SOURCE_DIR}/include/pocl_types.h" 
           ${KERNEL_DEPEND_HEADERS}
         COMMAND "${CLANG}" ${CLANG_FLAGS} "-x" "cl" ${KERNEL_CL_FLAGS} ${DEVICE_CL_FLAGS}
-        "-fsigned-char" "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
+        "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
         "-include" "${CMAKE_SOURCE_DIR}/include/_kernel.h"
         "-include" "${CMAKE_SOURCE_DIR}/include/_enable_all_exts.h"
         COMMENT "Building CL to LLVM bitcode ${BC_FILE}" 

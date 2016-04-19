@@ -7,12 +7,12 @@
 
 namespace vecmathlib {
 
-inline char builtin_abs(char x) { return __builtin_abs(x); }
-inline short builtin_abs(short x) { return __builtin_abs(x); }
-inline int builtin_abs(int x) { return __builtin_abs(x); }
-inline long builtin_abs(long x) { return __builtin_labs(x); }
+inline unsigned char builtin_abs(signed char x) { return __builtin_abs(x); }
+inline unsigned short builtin_abs(signed short x) { return __builtin_abs(x); }
+inline unsigned int builtin_abs(signed int x) { return __builtin_abs(x); }
+inline unsigned long builtin_abs(signed long x) { return __builtin_labs(x); }
 #if __SIZEOF_LONG_LONG__
-inline long long builtin_abs(long long x) { return __builtin_llabs(x); }
+inline unsigned long long builtin_abs(signed long long x) { return __builtin_llabs(x); }
 #endif
 
 inline unsigned char builtin_clz(unsigned char x) {
