@@ -590,6 +590,10 @@ if(NOT DEFINED LLC_HOST_CPU AND NOT CMAKE_CROSSCOMPILING)
   endif()
 endif()
 
+if(LLC_HOST_CPU MATCHES "unknown")
+  message(FATAL_ERROR "LLVM could not recognize your CPU model automatically. Please rerun cmake with -DLLC_HOST_CPU=<model> (to see a list of models, try: llc -mcpu help)")
+endif()
+
 set(LLC_HOST_CPU "${LLC_HOST_CPU}" CACHE STRING "The Host CPU to use with llc")
 
 ####################################################################
