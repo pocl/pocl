@@ -93,7 +93,7 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
   ops->flush = pocl_tce_flush;
   ops->join = pocl_tce_join;
   ops->submit = pocl_tce_submit;
-  ops->compile_kernel = NULL;
+  ops->compile_kernel = pocl_tce_compile_kernel;
   ops->broadcast = pocl_broadcast;
   ops->notify = pocl_tce_notify;
   ops->update_event = NULL; //pocl_ttasim_update_event;

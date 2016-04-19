@@ -397,7 +397,8 @@ pocl_tce_free (cl_device_id device, cl_mem mem_obj)
 }
 
 void
-pocl_tce_compile_submitted_kernels(_cl_command_node *cmd)
+pocl_tce_compile_kernel(_cl_command_node *cmd,
+                        cl_kernel kernel, cl_device_id device)
 {
 
   if (cmd->type != CL_COMMAND_NDRANGE_KERNEL)
@@ -851,7 +852,7 @@ static void tce_command_scheduler (TCEDevice *d)
       pthread_mutex_unlock (&d->cq_lock);
       assert (node->event->status == CL_SUBMITTED);
       if (node->type == CL_COMMAND_NDRANGE_KERNEL)
-        pocl_tce_compile_submitted_kernels(node);
+        pocl_tce_compile_kernel(node, NULL, NULL);
       pocl_exec_command(node);
       pthread_mutex_lock (&d->cq_lock);
     }
