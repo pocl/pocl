@@ -51,6 +51,13 @@ option(ENABLE_HSA "Enable the HSA device driver for AMD GCN devices" OFF)
 
 option(KERNEL_CACHE_DEFAULT "Default value for the kernel compile cache. If disabled, pocl will still use the kernel cache, but will delete cachefiles on exit. You can still enable keeping the files it at runtime with an env var." ON)
 
+# currently only works with gcc as host compiler
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+  option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
+else()
+  set(ENABLE_ASAN 0)
+endif()
+
 ##################################################################################
 
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "ppc")
@@ -992,6 +999,7 @@ MESSAGE(STATUS "ENABLE_ICD: ${ENABLE_ICD}")
 MESSAGE(STATUS "ENABLE_TCE: ${ENABLE_TCE}")
 MESSAGE(STATUS "ENABLE_TCEMC: ${ENABLE_TCEMC}")
 MESSAGE(STATUS "ENABLE_HSA: ${ENABLE_HSA}")
+MESSAGE(STATUS "ENABLE_ASAN (address sanitizer): ${ENABLE_ASAN}")
 MESSAGE(STATUS "INSTALL_OPENCL_HEADERS (Install our headers): ${INSTALL_OPENCL_HEADERS}")
 MESSAGE(STATUS "OCL_DRIVERS (Drivers built): ${OCL_DRIVERS}")
 MESSAGE(STATUS "OCL_TARGETS (Targets built): ${OCL_TARGETS}")

@@ -23,6 +23,10 @@
 #
 #=============================================================================
 
+if(ENABLE_ASAN)
+  add_compile_options(-fsanitize=address -fsanitize=leak -fsanitize=undefined -fno-omit-frame-pointer)
+endif()
+
 
 include_directories(BEFORE "../../fix-include/OpenCL")
 include_directories(AFTER "devices" ".")
@@ -171,6 +175,9 @@ else()
 endif()
 
 set(POCL_PRIVATE_LINK_LIST ${CLANG_LIBFILES} ${POCL_LLVM_LIBS} ${LLVM_SYSLIBS})
+if(ENABLE_ASAN)
+  list(APPEND POCL_PRIVATE_LINK_LIST "asan" "ubsan")
+endif()
 
 # see lib/CMakeLists.txt
 set(POCL_TRANSITIVE_LIBS ${POCL_PRIVATE_LINK_LIST} PARENT_SCOPE)
