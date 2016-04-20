@@ -26,7 +26,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "poclu.h"
-#include "pocl_tests.h"
 #include "config.h"
 
 char kernelSourceCode[] =
@@ -276,29 +275,16 @@ int test_program_nometa(cl_program program) {
   return EXIT_SUCCESS;
 }
 
-int spir_program(const char * filename, cl_context ctx, cl_device_id did, cl_program* program) {
+int spir_program(char * filename, cl_context ctx, cl_device_id did, cl_program* program) {
   cl_int err;
+
   size_t program_size;
   char* program_buffer;
-  FILE *spir_bitcode;
 
-  printf("opening File: %s\n", filename);
-  spir_bitcode = fopen(filename, "r");
-  TEST_ASSERT(spir_bitcode && "couldn't find spir bitcode file for this test");
-
-  fseek (spir_bitcode, 0, SEEK_END);
-  program_size = ftell (spir_bitcode);
-  fseek (spir_bitcode, 0, SEEK_SET);
+  program_buffer = poclu_read_binfile(filename, &program_size);
   TEST_ASSERT(program_size > 2000);
+  TEST_ASSERT(program_buffer != NULL);
   printf("program size: %zi\n", program_size);
-
-  program_buffer = (char *) malloc (program_size +1 );
-  TEST_ASSERT(program_buffer);
-
-  TEST_ASSERT(fread(program_buffer, program_size, 1, spir_bitcode) == 1);
-
-  TEST_ASSERT(fclose(spir_bitcode) == 0);
-
 
   *program = clCreateProgramWithBinary (ctx, 1, &did, &program_size,
                                        (const unsigned char**)&program_buffer,
@@ -306,8 +292,7 @@ int spir_program(const char * filename, cl_context ctx, cl_device_id did, cl_pro
   CHECK_OPENCL_ERROR_IN("clCreateProgramWithBinary");
   TEST_ASSERT(program);
 
-  err = clBuildProgram (*program, 1, &did, NULL, NULL, NULL);
-  CHECK_OPENCL_ERROR_IN("clBuildProgram");
+  CHECK_CL_ERROR(clBuildProgram (*program, 1, &did, NULL, NULL, NULL));
 
   return EXIT_SUCCESS;
 }
@@ -324,7 +309,6 @@ int main()
   char* program_buffer;
 
   cl_program program = NULL;
-
 
   poclu_get_any_device(&ctx, &did, &queue);
   TEST_ASSERT(ctx);
@@ -346,28 +330,25 @@ int main()
   CHECK_OPENCL_ERROR_IN("clBuildProgram");
 
   printf("\nNON-SPIR\n");
-  if (test_program(program, 0) != EXIT_SUCCESS) return EXIT_FAILURE;
+  TEST_ASSERT(test_program(program, 0) == EXIT_SUCCESS);
 
-  err = clReleaseProgram(program);
-  CHECK_OPENCL_ERROR_IN("clReleaseProgram");
+  CHECK_CL_ERROR(clReleaseProgram(program));
 
   /* SPIR program */
 
   printf("\nSPIR with metadata\n");
-  if(spir_program(SPIR_FILE(POCL_DEVICE_ADDRESS_BITS, "_meta"), ctx, did, &program) != EXIT_SUCCESS) return EXIT_FAILURE;
+  TEST_ASSERT(spir_program(SPIR_FILE(POCL_DEVICE_ADDRESS_BITS, "_meta"), ctx, did, &program) == EXIT_SUCCESS);
 
-  if (test_program(program, 1) != EXIT_SUCCESS) return EXIT_FAILURE;
+  TEST_ASSERT(test_program(program, 1) == EXIT_SUCCESS);
 
-  err = clReleaseProgram(program);
-  CHECK_OPENCL_ERROR_IN("clReleaseProgram");
+  CHECK_CL_ERROR(clReleaseProgram(program));
 
   printf("\nSPIR WITHOUT metadata\n");
-  if(spir_program(SPIR_FILE(POCL_DEVICE_ADDRESS_BITS, "_nometa"), ctx, did, &program) != EXIT_SUCCESS) return EXIT_FAILURE;
+  TEST_ASSERT(spir_program(SPIR_FILE(POCL_DEVICE_ADDRESS_BITS, "_nometa"), ctx, did, &program) == EXIT_SUCCESS);
 
-  if (test_program_nometa(program) != EXIT_SUCCESS) return EXIT_FAILURE;
+  TEST_ASSERT(test_program_nometa(program) == EXIT_SUCCESS);
 
-  err = clReleaseProgram(program);
-  CHECK_OPENCL_ERROR_IN("clReleaseProgram");
+  CHECK_CL_ERROR(clReleaseProgram(program));
 
   printf("\nOK\n");
   return EXIT_SUCCESS;

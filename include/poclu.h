@@ -112,8 +112,25 @@ poclu_write_file(char* filemane, char* content, size_t size);
 POCLU_API int POCLU_CALL
 check_cl_error(cl_int cl_err, int line, const char* func_name);
 
-#define CHECK_CL_ERROR(cond) check_cl_error(cond, __LINE__, __PRETTY_FUNCTION__)
-#define CHECK_CL_ERROR2(err, func) check_cl_error(err, __LINE__, #func)
+#define _POCLU_CHECK_CL_ERROR_INNER(cond, func, line)                   \
+do {                                                                    \
+   if(check_cl_error(cond, line, func))                                 \
+     exit(EXIT_FAILURE);                                                \
+} while (0)
+
+#define CHECK_CL_ERROR(cond) _POCLU_CHECK_CL_ERROR_INNER(cond, __PRETTY_FUNCTION__, __LINE__)
+
+#define CHECK_OPENCL_ERROR_IN(message) _POCLU_CHECK_CL_ERROR_INNER(err, message, __LINE__)
+
+
+#define TEST_ASSERT(EXP)                                                \
+do {                                                                    \
+  if (!(EXP)) {                                                         \
+    fprintf(stderr, "Assertion: \n" #EXP "\nfailed on %s:%i\n",         \
+        __FILE__, __LINE__);                                            \
+    return EXIT_FAILURE;                                                \
+  }                                                                     \
+} while (0)
 
 #ifdef __cplusplus
 }

@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <CL/cl.h>
+#include "poclu.h"
 
 #define MAX_PLATFORMS 32
 #define MAX_DEVICES   32
@@ -39,16 +40,12 @@ main(void)
   cl_uint ndevices;
   cl_uint i, j;
 
-  err = clGetPlatformIDs(MAX_PLATFORMS, platforms, &nplatforms);
-  if (err != CL_SUCCESS)
-    return EXIT_FAILURE;
+  CHECK_CL_ERROR(clGetPlatformIDs(MAX_PLATFORMS, platforms, &nplatforms));
 
   for (i = 0; i < nplatforms; i++)
   {
-    err = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, MAX_DEVICES,
-      devices, &ndevices);
-    if (err != CL_SUCCESS)
-      return EXIT_FAILURE;
+    CHECK_CL_ERROR(clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, MAX_DEVICES,
+      devices, &ndevices));
 
     /* Only test the devices we actually have room for */
     if (ndevices > MAX_DEVICES)
@@ -57,18 +54,15 @@ main(void)
     for (j = 0; j < ndevices; j++)
     {
       cl_context context = clCreateContext(NULL, 1, &devices[j], NULL, NULL, &err);
-      if (err != CL_SUCCESS)
-        return EXIT_FAILURE;
+      CHECK_OPENCL_ERROR_IN("clCreateContext");
       cl_command_queue queue = clCreateCommandQueue(context, devices[j], 0, &err);
-      if (err != CL_SUCCESS)
-        return EXIT_FAILURE;
+      CHECK_OPENCL_ERROR_IN("clCreateCommandQueue");
 
       cl_ulong alloc;
 #define MAXALLOC (1024U*1024U)
 
-      if (clGetDeviceInfo(devices[j], CL_DEVICE_MAX_MEM_ALLOC_SIZE,
-          sizeof(alloc), &alloc, NULL) != CL_SUCCESS)
-        return EXIT_FAILURE;
+      CHECK_CL_ERROR(clGetDeviceInfo(devices[j], CL_DEVICE_MAX_MEM_ALLOC_SIZE,
+          sizeof(alloc), &alloc, NULL));
 
       while (alloc > MAXALLOC)
         alloc /= 2;
@@ -76,45 +70,33 @@ main(void)
       const size_t buf_size = (alloc/sizeof(cl_int))*sizeof(cl_int);
 
       cl_int *host_buf1 = malloc(buf_size);
-      if (host_buf1 == NULL)
-        return EXIT_FAILURE;
+      TEST_ASSERT(host_buf1);
       cl_int *host_buf2 = malloc(buf_size);
-      if (host_buf2 == NULL)
-        return EXIT_FAILURE;
+      TEST_ASSERT(host_buf2);
 
       memset(host_buf1, 1, buf_size);
       memset(host_buf2, 2, buf_size);
 
       cl_mem buf1 = clCreateBuffer(context, CL_MEM_READ_WRITE, buf_size, NULL, &err);
-      if (err != CL_SUCCESS)
-        return EXIT_FAILURE;
+      CHECK_OPENCL_ERROR_IN("clCreateBuffer");
       cl_mem buf2 = clCreateBuffer(context, CL_MEM_READ_WRITE, buf_size, NULL, &err);
-      if (err != CL_SUCCESS)
-        return EXIT_FAILURE;
+      CHECK_OPENCL_ERROR_IN("clCreateBuffer");
 
-      if (clEnqueueWriteBuffer(queue, buf1, CL_TRUE, 0, buf_size, host_buf1,
-	  0, NULL, NULL) != CL_SUCCESS)
-        return EXIT_FAILURE;
+      CHECK_CL_ERROR(clEnqueueWriteBuffer(queue, buf1, CL_TRUE, 0, buf_size, host_buf1, 0, NULL, NULL));
 
-      if (clEnqueueCopyBuffer(queue, buf1, buf2, 0, 0, buf_size,
-	  0, NULL, NULL) != CL_SUCCESS)
-        return EXIT_FAILURE;
+      CHECK_CL_ERROR(clEnqueueCopyBuffer(queue, buf1, buf2, 0, 0, buf_size, 0, NULL, NULL));
 
-      if (clEnqueueReadBuffer(queue, buf2, CL_TRUE, 0, buf_size, host_buf2,
-	  0, NULL, NULL) != CL_SUCCESS)
-        return EXIT_FAILURE;
+      CHECK_CL_ERROR(clEnqueueReadBuffer(queue, buf2, CL_TRUE, 0, buf_size, host_buf2, 0, NULL, NULL));
 
-      if (clFinish(queue) != CL_SUCCESS)
-        return EXIT_FAILURE;
+      CHECK_CL_ERROR(clFinish(queue));
 
-      if (memcmp(host_buf2, host_buf1, buf_size) != 0)
-        return EXIT_FAILURE;
+      TEST_ASSERT(memcmp(host_buf2, host_buf1, buf_size) == 0);
 
       free(host_buf2);
       free(host_buf1);
-      clReleaseMemObject(buf2);
-      clReleaseMemObject(buf1);
-      clReleaseCommandQueue(queue);
+      CHECK_CL_ERROR(clReleaseMemObject(buf2));
+      CHECK_CL_ERROR(clReleaseMemObject(buf1));
+      CHECK_CL_ERROR(clReleaseCommandQueue(queue));
     }
   }
   return EXIT_SUCCESS;

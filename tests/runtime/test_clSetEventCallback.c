@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "poclu.h"
+
 volatile int submit = 0;
 volatile int running = 0;
 volatile int complete = 0;
@@ -72,99 +74,56 @@ int main()
 {
   size_t global_work_size[1] = { 1 }, local_work_size[1]= { 1 };
   cl_int err;
-  cl_platform_id platforms[1];
-  cl_uint nplatforms;
-  cl_device_id devices[1]; // + 1 for duplicate test
-  cl_uint num_devices;
   cl_program program = NULL;
   cl_kernel kernel = NULL;
   char input[] = "kernel in execution\n";
   char *user_data = "Callback function: event status:";
   cl_mem inputBuffer = NULL;
-  /* command queues */
-  cl_command_queue queue = NULL;
   /* events */
   cl_event an_event = NULL;
   int i;
-  
-  err = clGetPlatformIDs(1, platforms, &nplatforms);	
-  if (err != CL_SUCCESS && !nplatforms)
-    return EXIT_FAILURE;
-  
-  err = clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_ALL, 1,
-                       devices, &num_devices);  
-  if (err != CL_SUCCESS)
-    return EXIT_FAILURE;
 
-  cl_context context = clCreateContext(NULL, num_devices, devices, NULL, 
-                                       NULL, &err);
-  if (err != CL_SUCCESS)
-    return EXIT_FAILURE;
+  cl_context context;
+  cl_command_queue queue;
+  cl_device_id device;
 
-  err = clGetContextInfo(context, CL_CONTEXT_DEVICES,
-                         sizeof(cl_device_id), devices, NULL);
-  if (err != CL_SUCCESS) 
-    {
-      puts("clGetContextInfo call failed\n");
-      goto error;
-    }
+  CHECK_CL_ERROR(poclu_get_any_device(&context, &device, &queue));
+  TEST_ASSERT( context );
+  TEST_ASSERT( device );
+  TEST_ASSERT( queue );
 
-  queue = clCreateCommandQueue(context, devices[0], 0, NULL); 
-  if (!queue) 
-    {
-      puts("clCreateCommandQueue call failed\n");
-      goto error;
-    }
+  CHECK_CL_ERROR(clGetContextInfo(context, CL_CONTEXT_DEVICES,
+                         sizeof(cl_device_id), &device, NULL));
 
   inputBuffer = clCreateBuffer(context, 
                                CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, 
                                strlen (input)+1, (void *) input, &err);
-  if (inputBuffer == NULL)
-    {
-      printf("clCreateBuffer call failed err = %d\n", err);
-      goto error;
-    }
-  
+  CHECK_OPENCL_ERROR_IN("clCreateBuffer");
+
   size_t kernel_size = strlen (kernelASourceCode);
   char* kernel_buffer = kernelASourceCode;
   
   program = clCreateProgramWithSource (context, 1, 
                                        (const char**)&kernel_buffer, 
                                        &kernel_size, &err);
-  if (err != CL_SUCCESS)
-    return EXIT_FAILURE;
+  CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
 
-  err = clBuildProgram (program, num_devices, devices, NULL, NULL, NULL);
-  if (err != CL_SUCCESS)
-    return EXIT_FAILURE;
+  CHECK_CL_ERROR(clBuildProgram (program, 1, &device, NULL, NULL, NULL));
 
-  kernel = clCreateKernel (program, "test_kernel", NULL); 
-  if (!kernel) 
-    {
-      puts("clCreateKernel call failed\n");
-      goto error;
-    }
+  kernel = clCreateKernel (program, "test_kernel", &err);
+  CHECK_OPENCL_ERROR_IN("clCreateKernel");
   
-  err = clSetKernelArg (kernel, 0, sizeof (cl_mem), &inputBuffer);
-  if (err)
-    {
-      puts("clSetKernelArg failed\n");
-      goto error;
-    }
+  CHECK_CL_ERROR(clSetKernelArg (kernel, 0, sizeof (cl_mem), &inputBuffer));
  
   /* launch kernel*/
-  err = clEnqueueNDRangeKernel (queue, kernel, 1, NULL, global_work_size,
-                                local_work_size, 0, NULL, &an_event);
-  if (err != CL_SUCCESS) 
-    {
-      puts("clEnqueueNDRangeKernel call failed\n");
-      goto error;
-    }
-  clSetEventCallback(an_event, CL_SUBMITTED, callback_function, user_data);
-  clSetEventCallback(an_event, CL_RUNNING, callback_function, user_data);
-  clSetEventCallback(an_event, CL_COMPLETE, callback_function, user_data);
+  CHECK_CL_ERROR(clEnqueueNDRangeKernel (queue, kernel, 1, NULL, global_work_size,
+                                local_work_size, 0, NULL, &an_event));
 
-  clFinish(queue);
+  CHECK_CL_ERROR(clSetEventCallback(an_event, CL_SUBMITTED, callback_function, user_data));
+  CHECK_CL_ERROR(clSetEventCallback(an_event, CL_RUNNING, callback_function, user_data));
+  CHECK_CL_ERROR(clSetEventCallback(an_event, CL_COMPLETE, callback_function, user_data));
+
+  CHECK_CL_ERROR(clFinish(queue));
 
   i = 0;
   while (!submit || !running || !complete)
@@ -178,8 +137,5 @@ int main()
         }
     }
   return EXIT_SUCCESS;
-
- error:
-  return EXIT_FAILURE;
 
 }

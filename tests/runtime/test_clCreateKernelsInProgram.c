@@ -4,7 +4,6 @@
 #include <CL/opencl.h>
 #include "poclu.h"
 #include "config.h"
-#include "pocl_tests.h"
 
 static const char *empty_src = "\n";
 
@@ -19,7 +18,8 @@ int main(int argc, char **argv)
   cl_uint num_krn;
   cl_kernel kernels[2];
 
-  poclu_get_any_device(&ctx, &did, &queue);
+  err = poclu_get_any_device(&ctx, &did, &queue);
+  CHECK_OPENCL_ERROR_IN("poclu_get_any_device");
   TEST_ASSERT( ctx );
   TEST_ASSERT( did );
   TEST_ASSERT( queue );

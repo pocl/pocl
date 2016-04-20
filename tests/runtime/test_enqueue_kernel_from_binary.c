@@ -27,6 +27,8 @@
 #include <assert.h>
 #include <CL/opencl.h>
 
+#include "poclu.h"
+
 #define BUFFER_SIZE 1024
 
 // OpenCL kernel. Each work item takes care of one element of c
@@ -68,7 +70,6 @@ int main(void)
   cl_mem barrier_buffer1;
   cl_mem barrier_buffer2;
 
-  cl_platform_id cpPlatform;  // OpenCL platform
   cl_device_id device_id;   // device ID
   cl_context context;   // context
   cl_command_queue queue;   // command queue
@@ -112,139 +113,135 @@ int main(void)
 //###################################################################
 // Initialize cl_programS
 
-  err = clGetPlatformIDs(1, &cpPlatform, NULL);
-  assert(!err);
-
-  err = clGetDeviceIDs(cpPlatform, CL_DEVICE_TYPE_ALL, 1, &device_id, NULL);
-  assert(!err);
-
-  context = clCreateContext(0, 1, &device_id, NULL, NULL, &err);
-  assert(context);
-
-  queue = clCreateCommandQueue(context, device_id, 0, &err);
-  assert(queue);
+  CHECK_CL_ERROR(poclu_get_any_device(&context, &device_id, &queue));
+  TEST_ASSERT( context );
+  TEST_ASSERT( device_id );
+  TEST_ASSERT( queue );
 
   program1 = clCreateProgramWithSource(context, 1,
         (const char **) & kernelSource, NULL, &err);
-  assert(program1);
+  TEST_ASSERT(program1);
 
-  clBuildProgram(program1, 0, NULL, NULL, NULL, NULL);
+  CHECK_CL_ERROR(clBuildProgram(program1, 0, NULL, NULL, NULL, NULL));
 
   size_t binary_sizes;
   unsigned char *binary;
-  err = clGetProgramInfo(program1, CL_PROGRAM_BINARY_SIZES,
-                         sizeof(size_t), &binary_sizes, NULL);
-  assert(!err);
+  CHECK_CL_ERROR(clGetProgramInfo(program1, CL_PROGRAM_BINARY_SIZES,
+                         sizeof(size_t), &binary_sizes, NULL));
 
   binary = malloc(sizeof(unsigned char)*binary_sizes);
   assert(binary);
 
-  err = clGetProgramInfo(program1, CL_PROGRAM_BINARIES, sizeof(unsigned char*), &binary, NULL);
-  assert(!err);
+  CHECK_CL_ERROR(clGetProgramInfo(program1, CL_PROGRAM_BINARIES, sizeof(unsigned char*), &binary, NULL));
 
   program2 = clCreateProgramWithBinary(
     context, 1, &device_id, &binary_sizes, (const unsigned char **)(&binary), NULL, &err);
-  assert(!err);
+  CHECK_OPENCL_ERROR_IN("clCreateProgramWithBinary");
 
-  clBuildProgram(program2, 0, NULL, NULL, NULL, NULL);
+  CHECK_CL_ERROR(clBuildProgram(program2, 0, NULL, NULL, NULL, NULL));
 
   /* Barrier programs */
   b_program1 = clCreateProgramWithSource(context, 1,
                                          (const char **)
                                          &barrier_kernelSource,
                                          NULL, &err);
-  assert(b_program1);
+  CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
+  TEST_ASSERT(b_program1);
 
-  clBuildProgram(b_program1, 0, NULL, NULL, NULL, NULL);
+  CHECK_CL_ERROR(clBuildProgram(b_program1, 0, NULL, NULL, NULL, NULL));
 
   size_t barrier_binary_sizes;
   unsigned char *barrier_binary;
-  err = clGetProgramInfo(b_program1, CL_PROGRAM_BINARY_SIZES,
-                         sizeof(size_t), &barrier_binary_sizes, NULL);
-  assert(!err);
+  CHECK_CL_ERROR(clGetProgramInfo(b_program1, CL_PROGRAM_BINARY_SIZES,
+                         sizeof(size_t), &barrier_binary_sizes, NULL));
 
   barrier_binary = malloc(sizeof(unsigned char)*barrier_binary_sizes);
   assert(barrier_binary);
 
-  err = clGetProgramInfo(b_program1, CL_PROGRAM_BINARIES,
-                         sizeof(unsigned char*), &barrier_binary, NULL);
-  assert(!err);
-
+  CHECK_CL_ERROR(clGetProgramInfo(b_program1, CL_PROGRAM_BINARIES,
+                         sizeof(unsigned char*), &barrier_binary, NULL));
   b_program2 =
     clCreateProgramWithBinary(context, 1, &device_id,
                               &barrier_binary_sizes,
                               (const unsigned char **)(&barrier_binary),
                               NULL, &err);
-  assert(!err);
+  CHECK_OPENCL_ERROR_IN("clCreateProgramWithBinary 2");
 
-  clBuildProgram(b_program2, 0, NULL, NULL, NULL, NULL);
-//###################################################################
+  CHECK_CL_ERROR(clBuildProgram(b_program2, 0, NULL, NULL, NULL, NULL));
+
+  //###################################################################
 //###################################################################
 // Set up buffers in memory
 
-  d_a = clCreateBuffer(context, CL_MEM_READ_ONLY, bytes, NULL, NULL);
-  assert(d_a);
-  d_b = clCreateBuffer(context, CL_MEM_READ_ONLY, bytes, NULL, NULL);
-  assert(d_b);
-  d_c1 = clCreateBuffer(context, CL_MEM_WRITE_ONLY, bytes, NULL, NULL);
-  assert(d_c1);
-  d_c2 = clCreateBuffer(context, CL_MEM_WRITE_ONLY, bytes, NULL, NULL);
-  assert(d_c2);
-  d_c3 = clCreateBuffer(context, CL_MEM_WRITE_ONLY, bytes, NULL, NULL);
-  assert(d_c3);
+  d_a = clCreateBuffer(context, CL_MEM_READ_ONLY, bytes, NULL, &err);
+  CHECK_OPENCL_ERROR_IN("clCreateBuffer");
+  TEST_ASSERT(d_a);
+  d_b = clCreateBuffer(context, CL_MEM_READ_ONLY, bytes, NULL, &err);
+  CHECK_OPENCL_ERROR_IN("clCreateBuffer");
+  TEST_ASSERT(d_b);
+  d_c1 = clCreateBuffer(context, CL_MEM_WRITE_ONLY, bytes, NULL, &err);
+  CHECK_OPENCL_ERROR_IN("clCreateBuffer");
+  TEST_ASSERT(d_c1);
+  d_c2 = clCreateBuffer(context, CL_MEM_WRITE_ONLY, bytes, NULL, &err);
+  CHECK_OPENCL_ERROR_IN("clCreateBuffer");
+  TEST_ASSERT(d_c2);
+  d_c3 = clCreateBuffer(context, CL_MEM_WRITE_ONLY, bytes, NULL, &err);
+  CHECK_OPENCL_ERROR_IN("clCreateBuffer");
+  TEST_ASSERT(d_c3);
 
   barrier_buffer1 = clCreateBuffer(context, CL_MEM_COPY_HOST_PTR, bytes, bb1,
                                    NULL);
-  
+  CHECK_OPENCL_ERROR_IN("clCreateBuffer");
+  TEST_ASSERT(barrier_buffer1);
+
   barrier_buffer2 = clCreateBuffer(context, CL_MEM_COPY_HOST_PTR, bytes, bb2,
                                    NULL);
+  CHECK_OPENCL_ERROR_IN("clCreateBuffer");
+  TEST_ASSERT(barrier_buffer2);
 
-  err = clEnqueueWriteBuffer(queue, d_a, CL_TRUE, 0,
-                             bytes, h_a, 0, NULL, NULL);
-  assert(!err);
-  err |= clEnqueueWriteBuffer(queue, d_b, CL_TRUE, 0,
-                              bytes, h_b, 0, NULL, NULL);
-  assert(!err);
+  CHECK_CL_ERROR(clEnqueueWriteBuffer(queue, d_a, CL_TRUE, 0,
+                             bytes, h_a, 0, NULL, NULL));
+  CHECK_CL_ERROR(clEnqueueWriteBuffer(queue, d_b, CL_TRUE, 0,
+                              bytes, h_b, 0, NULL, NULL));
 
 //###################################################################
 //###################################################################
 // Create kernels
 
   kernel1 = clCreateKernel(program1, "vecAdd", &err);
-  assert(kernel1);
+  CHECK_OPENCL_ERROR_IN("clCreateKernel");
+  TEST_ASSERT(kernel1);
 
-  err = clSetKernelArg(kernel1, 0, sizeof(cl_mem), &d_a);
-  err |= clSetKernelArg(kernel1, 1, sizeof(cl_mem), &d_b);
-  err |= clSetKernelArg(kernel1, 2, sizeof(cl_mem), &d_c1);
-  assert(!err);
+  CHECK_CL_ERROR(clSetKernelArg(kernel1, 0, sizeof(cl_mem), &d_a));
+  CHECK_CL_ERROR(clSetKernelArg(kernel1, 1, sizeof(cl_mem), &d_b));
+  CHECK_CL_ERROR(clSetKernelArg(kernel1, 2, sizeof(cl_mem), &d_c1));
 
   barrier_kernel1 = clCreateKernel(b_program1, "barrier_kernel", &err);
-  assert(barrier_kernel1);
+  TEST_ASSERT(barrier_kernel1);
 
-  err = clSetKernelArg(barrier_kernel1, 0, sizeof(cl_mem), &barrier_buffer1);
-  assert(!err);
+  CHECK_CL_ERROR(clSetKernelArg(barrier_kernel1, 0, sizeof(cl_mem), &barrier_buffer1));
 
   kernel2 = clCreateKernel(program2, "vecAdd", &err);
-  assert(kernel2);
+  CHECK_OPENCL_ERROR_IN("clCreateKernel");
+  TEST_ASSERT(kernel2);
 
-  err = clSetKernelArg(kernel2, 0, sizeof(cl_mem), &d_a);
-  err |= clSetKernelArg(kernel2, 1, sizeof(cl_mem), &d_b);
-  err |= clSetKernelArg(kernel2, 2, sizeof(cl_mem), &d_c2);
-  assert(!err);
+  CHECK_CL_ERROR(clSetKernelArg(kernel2, 0, sizeof(cl_mem), &d_a));
+  CHECK_CL_ERROR(clSetKernelArg(kernel2, 1, sizeof(cl_mem), &d_b));
+  CHECK_CL_ERROR(clSetKernelArg(kernel2, 2, sizeof(cl_mem), &d_c2));
 
   barrier_kernel2 = clCreateKernel(b_program2, "barrier_kernel", &err);
-  assert(barrier_kernel2);
+  CHECK_OPENCL_ERROR_IN("clCreateKernel");
+  TEST_ASSERT(barrier_kernel2);
 
-  err = clSetKernelArg(barrier_kernel2, 0, sizeof(cl_mem), &barrier_buffer2);
-  assert(!err);
+  CHECK_CL_ERROR(clSetKernelArg(barrier_kernel2, 0, sizeof(cl_mem), &barrier_buffer2));
 
   kernel3 = clCreateKernel(program2, "vecAdd", &err);
-  assert(kernel3);
+  CHECK_OPENCL_ERROR_IN("clCreateKernel");
+  TEST_ASSERT(kernel3);
 
-  err = clSetKernelArg(kernel3, 0, sizeof(cl_mem), &d_a);
-  err |= clSetKernelArg(kernel3, 1, sizeof(cl_mem), &d_b);
-  err |= clSetKernelArg(kernel3, 2, sizeof(cl_mem), &d_c3);
-  assert(!err);
+  CHECK_CL_ERROR(clSetKernelArg(kernel3, 0, sizeof(cl_mem), &d_a));
+  CHECK_CL_ERROR(clSetKernelArg(kernel3, 1, sizeof(cl_mem), &d_b));
+  CHECK_CL_ERROR(clSetKernelArg(kernel3, 2, sizeof(cl_mem), &d_c3));
 
 //###################################################################
 //###################################################################
@@ -254,53 +251,49 @@ int main(void)
   localSize[1] = 8;
   globalSize[0] = 16;
   globalSize[1] = 64;
-  err = clEnqueueNDRangeKernel(queue, kernel1, 2, NULL, globalSize, localSize,
-                               0, NULL, NULL);
-  assert(!err);
+  CHECK_CL_ERROR(clEnqueueNDRangeKernel(queue, kernel1, 2, NULL, globalSize, localSize,
+                               0, NULL, NULL));
 
-  err = clEnqueueNDRangeKernel(queue, kernel2, 2, NULL, globalSize, localSize,
-                               0, NULL, NULL);
-  assert(!err);
+  CHECK_CL_ERROR(clEnqueueNDRangeKernel(queue, kernel2, 2, NULL, globalSize, localSize,
+                               0, NULL, NULL));
 
   localSize[0] = 2;
   localSize[1] = 8;
   globalSize[0] = 16;
   globalSize[1] = 64;
-  err = clEnqueueNDRangeKernel(queue, kernel3, 2, NULL, globalSize, localSize,
-                               0, NULL, NULL);
+  CHECK_CL_ERROR(clEnqueueNDRangeKernel(queue, kernel3, 2, NULL, globalSize, localSize,
+                               0, NULL, NULL));
   assert(!err);
   
   localSize[0] = 6;
   globalSize[0] = 6;
   size_t global_offset = 1;
-  err = clEnqueueNDRangeKernel(queue, barrier_kernel1, 1, &global_offset,
+  CHECK_CL_ERROR(clEnqueueNDRangeKernel(queue, barrier_kernel1, 1, &global_offset,
                                globalSize,
                                localSize,
-                               0, NULL, NULL);
-  assert(!err);
+                               0, NULL, NULL));
 
-  err = clEnqueueNDRangeKernel(queue, barrier_kernel2, 1, &global_offset,
+  CHECK_CL_ERROR(clEnqueueNDRangeKernel(queue, barrier_kernel2, 1, &global_offset,
                                globalSize,
                                localSize,
-                               0, NULL, NULL);
-  assert(!err);
+                               0, NULL, NULL));
   
 //###################################################################
 //###################################################################
 // Read output buffers
 
-  clFinish(queue);
+  CHECK_CL_ERROR(clFinish(queue));
 
-  clEnqueueReadBuffer(queue, d_c1, CL_TRUE, 0,
-                      bytes, h_c1, 0, NULL, NULL);
-  clEnqueueReadBuffer(queue, d_c2, CL_TRUE, 0,
-                      bytes, h_c2, 0, NULL, NULL);
-  clEnqueueReadBuffer(queue, d_c3, CL_TRUE, 0,
-                      bytes, h_c3, 0, NULL, NULL);
-  clEnqueueReadBuffer(queue, barrier_buffer1, CL_TRUE, 0,
-                      bytes, bb1, 0, NULL, NULL);
-  clEnqueueReadBuffer(queue, barrier_buffer2, CL_TRUE, 0,
-                      bytes, bb2, 0, NULL, NULL);
+  CHECK_CL_ERROR(clEnqueueReadBuffer(queue, d_c1, CL_TRUE, 0,
+                      bytes, h_c1, 0, NULL, NULL));
+  CHECK_CL_ERROR(clEnqueueReadBuffer(queue, d_c2, CL_TRUE, 0,
+                      bytes, h_c2, 0, NULL, NULL));
+  CHECK_CL_ERROR(clEnqueueReadBuffer(queue, d_c3, CL_TRUE, 0,
+                      bytes, h_c3, 0, NULL, NULL));
+  CHECK_CL_ERROR(clEnqueueReadBuffer(queue, barrier_buffer1, CL_TRUE, 0,
+                      bytes, bb1, 0, NULL, NULL));
+  CHECK_CL_ERROR(clEnqueueReadBuffer(queue, barrier_buffer2, CL_TRUE, 0,
+                      bytes, bb2, 0, NULL, NULL));
 
 //###################################################################
 //###################################################################
@@ -339,24 +332,24 @@ int main(void)
 //###################################################################
 // Release everythings
 
-  clReleaseMemObject(d_a);
-  clReleaseMemObject(d_b);
-  clReleaseMemObject(d_c1);
-  clReleaseMemObject(d_c2);
-  clReleaseMemObject(d_c3);
-  clReleaseMemObject(barrier_buffer1);
-  clReleaseMemObject(barrier_buffer2);
-  clReleaseProgram(program1);
-  clReleaseProgram(program2);
-  clReleaseProgram(b_program1);
-  clReleaseProgram(b_program2);
-  clReleaseKernel(kernel1);
-  clReleaseKernel(kernel2);
-  clReleaseKernel(kernel3);
-  clReleaseKernel(barrier_kernel1);
-  clReleaseKernel(barrier_kernel2);
-  clReleaseCommandQueue(queue);
-  clReleaseContext(context);
+  CHECK_CL_ERROR(clReleaseMemObject(d_a));
+  CHECK_CL_ERROR(clReleaseMemObject(d_b));
+  CHECK_CL_ERROR(clReleaseMemObject(d_c1));
+  CHECK_CL_ERROR(clReleaseMemObject(d_c2));
+  CHECK_CL_ERROR(clReleaseMemObject(d_c3));
+  CHECK_CL_ERROR(clReleaseMemObject(barrier_buffer1));
+  CHECK_CL_ERROR(clReleaseMemObject(barrier_buffer2));
+  CHECK_CL_ERROR(clReleaseProgram(program1));
+  CHECK_CL_ERROR(clReleaseProgram(program2));
+  CHECK_CL_ERROR(clReleaseProgram(b_program1));
+  CHECK_CL_ERROR(clReleaseProgram(b_program2));
+  CHECK_CL_ERROR(clReleaseKernel(kernel1));
+  CHECK_CL_ERROR(clReleaseKernel(kernel2));
+  CHECK_CL_ERROR(clReleaseKernel(kernel3));
+  CHECK_CL_ERROR(clReleaseKernel(barrier_kernel1));
+  CHECK_CL_ERROR(clReleaseKernel(barrier_kernel2));
+  CHECK_CL_ERROR(clReleaseCommandQueue(queue));
+  CHECK_CL_ERROR(clReleaseContext(context));
 
   free(bb1);
   free(bb2);

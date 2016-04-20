@@ -25,6 +25,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "poclu.h"
 
 
 struct native_kernel_args {
@@ -61,12 +62,8 @@ int main(int argc, char **argv) {
   cl_mem d_b;
   cl_mem d_c;
   
-  cl_platform_id platforms[1];
-  cl_uint nplatforms;
-  cl_device_id devices[1]; // + 1 for duplicate test
-  cl_uint num_devices;
-
-  cl_context context;
+  cl_context ctx;
+  cl_device_id did;
   cl_command_queue queue;
  
   size_t bytes = n * sizeof(double);
@@ -84,53 +81,22 @@ int main(int argc, char **argv) {
 
   cl_int err;
 
-  err = clGetPlatformIDs(1, platforms, &nplatforms);	
-  if (err != CL_SUCCESS && !nplatforms)
-    return EXIT_FAILURE;
-  
-  err = clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_ALL, 1,
-                       devices, &num_devices);  
-  if (err != CL_SUCCESS)
-    return EXIT_FAILURE;
+  CHECK_CL_ERROR(poclu_get_any_device(&ctx, &did, &queue));
+  TEST_ASSERT( ctx );
+  TEST_ASSERT( did );
+  TEST_ASSERT( queue );
 
-  context = clCreateContext(NULL, num_devices, devices, NULL, 
-                                       NULL, &err);
-  if (err != CL_SUCCESS)
-    return EXIT_FAILURE;
+  d_a = clCreateBuffer(ctx, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes, h_a, &err);
+  CHECK_OPENCL_ERROR_IN("clCreateBuffer");
+  TEST_ASSERT(d_a);
 
-  err = clGetContextInfo(context, CL_CONTEXT_DEVICES,
-                         sizeof(cl_device_id), devices, NULL);
-  if (err != CL_SUCCESS) 
-    {
-      puts("clGetContextInfo call failed\n");
-      goto error;
-    }
+  d_b = clCreateBuffer(ctx, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes, h_b, &err);
+  CHECK_OPENCL_ERROR_IN("clCreateBuffer");
+  TEST_ASSERT(d_b);
 
-  queue = clCreateCommandQueue(context, devices[0], 0, NULL); 
-  if (!queue) 
-    {
-      puts("clCreateCommandQueue call failed\n");
-      goto error;
-    }
-
-  d_a = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes, h_a, &err);
-  if (d_a == NULL)
-    {
-      printf("clCreateBuffer call failed err = %d\n", err);
-      goto error;
-    }
-  d_b = clCreateBuffer(context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, bytes, h_b, &err);
-  if (d_b == NULL)
-    {
-      printf("clCreateBuffer call failed err = %d\n", err);
-      goto error;
-    }
-  d_c = clCreateBuffer(context, CL_MEM_WRITE_ONLY, bytes, NULL, &err);
-  if (d_c == NULL)
-    {
-      printf("clCreateBuffer call failed err = %d\n", err);
-      goto error;
-    }
+  d_c = clCreateBuffer(ctx, CL_MEM_WRITE_ONLY, bytes, NULL, &err);
+  CHECK_OPENCL_ERROR_IN("clCreateBuffer");
+  TEST_ASSERT(d_c);
 
   args.size = n;
   args.a = 0;
@@ -147,20 +113,13 @@ int main(int argc, char **argv) {
   
   err = clEnqueueNativeKernel ( queue, native_vec_add, &args, sizeof(struct native_kernel_args),
           3, mem_list, args_mem_loc, 0, NULL, NULL);
-  if (err != CL_SUCCESS) 
-    {
-      puts("clGetContextInfo call failed\n");
-      goto error;
-    }
+  CHECK_OPENCL_ERROR_IN("clEnqueueNativeKernel");
  
   err = clEnqueueReadBuffer(queue, d_c, CL_TRUE, 0, bytes, h_c, 0, NULL, NULL );
-  if (err != CL_SUCCESS) 
-    {
-      puts("clGetContextInfo call failed\n");
-      goto error;
-    }
+  CHECK_OPENCL_ERROR_IN("clEnqueueReadBuffer");
 
-  clFinish(queue);
+  err = clFinish(queue);
+  CHECK_OPENCL_ERROR_IN("clFinish");
 
   for(i = 0; i < n; i++)
     if(h_c[i] != 2 * i)
@@ -169,11 +128,11 @@ int main(int argc, char **argv) {
         goto error;
       }
      
-  clReleaseMemObject(d_a);
-  clReleaseMemObject(d_b);
-  clReleaseMemObject(d_c);
-  clReleaseCommandQueue(queue);
-  clReleaseContext(context);
+  CHECK_CL_ERROR(clReleaseMemObject(d_a));
+  CHECK_CL_ERROR(clReleaseMemObject(d_b));
+  CHECK_CL_ERROR(clReleaseMemObject(d_c));
+  CHECK_CL_ERROR(clReleaseCommandQueue(queue));
+  CHECK_CL_ERROR(clReleaseContext(ctx));
  
   free(h_a);
   free(h_b);

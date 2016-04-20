@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <CL/cl.h>
+#include "poclu.h"
 
 #define MAX_PLATFORMS 32
 #define MAX_DEVICES   32
@@ -16,15 +17,15 @@ main(void)
   cl_uint i, j;
 
   err = clGetPlatformIDs(MAX_PLATFORMS, platforms, &nplatforms);	
-  if (err != CL_SUCCESS)
+  CHECK_OPENCL_ERROR_IN("clGetPlatformIDs");
+  if (!nplatforms)
     return EXIT_FAILURE;
 
   for (i = 0; i < nplatforms; i++)
   {
     err = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, MAX_DEVICES,
                          devices, &ndevices);
-    if (err != CL_SUCCESS)
-      return EXIT_FAILURE;
+    CHECK_OPENCL_ERROR_IN("clGetDeviceIDs");
 
     for (j = 0; j < ndevices; j++)
     {
@@ -32,24 +33,20 @@ main(void)
 
       err = clGetDeviceInfo(devices[j], CL_DEVICE_GLOBAL_MEM_SIZE,
                             sizeof(global_memsize), &global_memsize, NULL);
-      if (err != CL_SUCCESS)
-        return EXIT_FAILURE;
+      CHECK_OPENCL_ERROR_IN("clGetDeviceInfo");
 
       err = clGetDeviceInfo(devices[j], CL_DEVICE_MAX_MEM_ALLOC_SIZE,
                             sizeof(max_mem_alloc_size), &max_mem_alloc_size,
                             NULL);
-      if (err != CL_SUCCESS)
-        return EXIT_FAILURE;
+      CHECK_OPENCL_ERROR_IN("clGetDeviceInfo");
 
-      if (global_memsize == 0)
-        return EXIT_FAILURE;
+      TEST_ASSERT(global_memsize > 0);
 
       min_max_mem_alloc_size = 128*1024*1024;
       if (min_max_mem_alloc_size < global_memsize/4)
         min_max_mem_alloc_size = global_memsize/4;
 
-      if (max_mem_alloc_size < min_max_mem_alloc_size)
-        return EXIT_FAILURE;
+      TEST_ASSERT(max_mem_alloc_size >= min_max_mem_alloc_size);
     }
   }
   return EXIT_SUCCESS;

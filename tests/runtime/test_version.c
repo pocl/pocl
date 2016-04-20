@@ -7,29 +7,32 @@
 #include "poclu.h"
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 #include "config.h"
 
 int main(void)
 {
-	cl_context ctx;
+	cl_context context;
 	cl_device_id did;
 	cl_platform_id pid; 
 	cl_command_queue queue;
-	cl_int rv;
+	cl_int err;
 	size_t rvs;
 	char result[1024];
 	char *needle;
 
 	/* Check that the default platform we get from the ICD loader
 	 * matches the pocl version string this binary was built against. */
-	poclu_get_any_device( &ctx, &did, &queue);
-	rv = clGetDeviceInfo( did, CL_DEVICE_PLATFORM, 
-	                      sizeof(cl_platform_id), &pid, NULL);
+	CHECK_CL_ERROR(poclu_get_any_device(&context, &did, &queue));
+	TEST_ASSERT( context );
+	TEST_ASSERT( did );
+	TEST_ASSERT( queue );
+	CHECK_CL_ERROR(clGetDeviceInfo( did, CL_DEVICE_PLATFORM,
+			      sizeof(cl_platform_id), &pid, NULL));
 
-	rv |= clGetPlatformInfo( pid, CL_PLATFORM_VERSION, 
-	                        sizeof(result), result, &rvs);
-	if( rv != CL_SUCCESS )
-		return 1;
+	CHECK_CL_ERROR(clGetPlatformInfo( pid, CL_PLATFORM_VERSION,
+				sizeof(result), result, &rvs));
+
 	result[rvs]=0;	// spec doesn't say it is null-terminated.
 	if( strcmp( result, 
 	            "OpenCL " POCL_CL_VERSION " pocl " PACKAGE_VERSION ", LLVM " LLVM_VERSION) != 0 ) {
@@ -42,10 +45,9 @@ int main(void)
 	 * available. If not, they are of the form 'type'.
 	 * print here only the type, as the details will be computer
 	 * dependent */
-	rv = clGetDeviceInfo( did, CL_DEVICE_NAME, 
-	                      sizeof(result), result, NULL);
-	if( rv != CL_SUCCESS )
-		return 3;
+	CHECK_CL_ERROR(clGetDeviceInfo( did, CL_DEVICE_NAME,
+			      sizeof(result), result, NULL));
+
 	result[rvs]=0;
 	needle = strchr(result, '-');
 	if( needle != NULL ){

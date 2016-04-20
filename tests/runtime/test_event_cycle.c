@@ -28,7 +28,6 @@
 #include <signal.h>
 #include <CL/cl.h>
 
-#include "pocl_tests.h"
 #include "poclu.h"
 
 #define MAX_PLATFORMS 32
@@ -57,14 +56,12 @@ main(void)
   sa.sa_handler = timeout;
   sigaction(SIGALRM, &sa, NULL);
 
-  err = clGetPlatformIDs(MAX_PLATFORMS, platforms, &nplatforms);
-  CHECK_OPENCL_ERROR_IN("clGetPlatformIDs");
+  CHECK_CL_ERROR(clGetPlatformIDs(MAX_PLATFORMS, platforms, &nplatforms));
 
   for (i = 0; i < nplatforms; i++)
   {
-    err = clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, MAX_DEVICES,
-      devices, &ndevices);
-    CHECK_OPENCL_ERROR_IN("clGetDeviceIDs");
+    CHECK_CL_ERROR(clGetDeviceIDs(platforms[i], CL_DEVICE_TYPE_ALL, MAX_DEVICES,
+      devices, &ndevices));
 
     for (j = 0; j < ndevices; j++)
     {
@@ -76,9 +73,8 @@ main(void)
       cl_ulong alloc;
 #define MAXALLOC (128*1024U*1024U)
 
-      if (clGetDeviceInfo(devices[j], CL_DEVICE_MAX_MEM_ALLOC_SIZE,
-          sizeof(alloc), &alloc, NULL) != CL_SUCCESS)
-      CHECK_OPENCL_ERROR_IN("get max alloc");
+      CHECK_CL_ERROR(clGetDeviceInfo(devices[j], CL_DEVICE_MAX_MEM_ALLOC_SIZE,
+          sizeof(alloc), &alloc, NULL));
 
       while (alloc > MAXALLOC)
         alloc /= 2;
@@ -86,11 +82,9 @@ main(void)
       const size_t buf_size = alloc;
 
       cl_int *host_buf1 = malloc(buf_size);
-      if (host_buf1 == NULL)
-        return EXIT_FAILURE;
+      TEST_ASSERT(host_buf1 != NULL);
       cl_int *host_buf2 = malloc(buf_size);
-      if (host_buf2 == NULL)
-        return EXIT_FAILURE;
+      TEST_ASSERT(host_buf2 != NULL);
 
       memset(host_buf1, 1, buf_size);
       memset(host_buf2, 2, buf_size);
@@ -107,31 +101,27 @@ main(void)
 
       /* Note that this must be CL_TRUE because to trigger the bug the next
        * command must have a completed event in the waiting lists */
-      err = clEnqueueWriteBuffer(queue, buf1, CL_TRUE, 0, buf_size, host_buf1,
-	0, NULL, &buf1_event);
+      CHECK_CL_ERROR(clEnqueueWriteBuffer(queue, buf1, CL_TRUE, 0, buf_size, host_buf1,
+        0, NULL, &buf1_event));
       CHECK_OPENCL_ERROR_IN("write buf1");
 
       *wait_list = buf1_event;
 
-      err = clEnqueueCopyBuffer(queue, buf1, buf2, 0, 0, buf_size,
-	1, wait_list, &bufcp_event);
-      CHECK_OPENCL_ERROR_IN("copy buffers");
+      CHECK_CL_ERROR(clEnqueueCopyBuffer(queue, buf1, buf2, 0, 0, buf_size,
+        1, wait_list, &bufcp_event));
 
       *wait_list = bufcp_event;
 
-      err = clEnqueueReadBuffer(queue, buf2, CL_FALSE, 0, buf_size, host_buf2,
-	1, wait_list, &buf2_event);
-      CHECK_OPENCL_ERROR_IN("read buf");
+      CHECK_CL_ERROR(clEnqueueReadBuffer(queue, buf2, CL_FALSE, 0, buf_size, host_buf2,
+        1, wait_list, &buf2_event));
 
       /* timeout after 30 seconds: if we're not done by then, timeout() will be
        * invoked and terminate the program with an EXIT_FAILURE */
       alarm(30);
 
-      err = clFinish(queue);
-      CHECK_OPENCL_ERROR_IN("clFinish");
+      CHECK_CL_ERROR(clFinish(queue));
 
-      if (memcmp(host_buf2, host_buf1, buf_size) != 0)
-        return EXIT_FAILURE;
+      TEST_ASSERT(memcmp(host_buf2, host_buf1, buf_size) == 0);
 
       free(host_buf2);
       free(host_buf1);

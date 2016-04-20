@@ -4,7 +4,6 @@
 #include <CL/opencl.h>
 #include "poclu.h"
 #include "config.h"
-#include "pocl_tests.h"
 
 
 int main(int argc, char **argv)
@@ -17,7 +16,7 @@ int main(int argc, char **argv)
   cl_device_id did;
   cl_kernel kernel;
 
-  poclu_get_any_device(&ctx, &did, &queue);
+  CHECK_CL_ERROR(poclu_get_any_device(&ctx, &did, &queue));
   TEST_ASSERT(ctx);
   TEST_ASSERT(did);
   TEST_ASSERT(queue);
@@ -28,8 +27,7 @@ int main(int argc, char **argv)
   program = clCreateProgramWithSource(ctx, 1, &krn_src, NULL, &err);
   CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
 
-  err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL);
-  CHECK_OPENCL_ERROR_IN("clBuildProgram");
+  CHECK_CL_ERROR(clBuildProgram(program, 0, NULL, NULL, NULL, NULL));
 
   kernel = clCreateKernel(program, NULL, &err);
   TEST_ASSERT(err == CL_INVALID_VALUE);

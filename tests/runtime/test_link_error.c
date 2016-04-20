@@ -27,7 +27,6 @@
 #include <string.h>
 #include <CL/cl.h>
 #include <poclu.h>
-#include "pocl_tests.h"
 
 #define MAX_PLATFORMS 32
 #define MAX_DEVICES   32
@@ -41,32 +40,25 @@ char program_src[] =
 int
 main(void){
   cl_int err;
-  cl_platform_id platforms[MAX_PLATFORMS];
-  cl_uint nplatforms;
-  cl_device_id devices[MAX_DEVICES + 1]; // + 1 for duplicate test
-  cl_uint num_devices;
-  cl_program program = NULL;
-  err = clGetPlatformIDs(MAX_PLATFORMS, platforms, &nplatforms);
-  CHECK_OPENCL_ERROR_IN("clGetPlatformIDs");
-  if (!nplatforms)
-    return EXIT_FAILURE;
 
-  err = clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_ALL, MAX_DEVICES,
-		       devices, &num_devices);
-  CHECK_OPENCL_ERROR_IN("clGetDeviceIDs");
+  cl_context context;
+  cl_device_id did;
+  cl_command_queue queue;
 
-  cl_context context = clCreateContext(NULL, num_devices, devices, NULL, NULL, &err);
-  CHECK_OPENCL_ERROR_IN("clCreateContext");
+  CHECK_CL_ERROR(poclu_get_any_device(&context, &did, &queue));
+  TEST_ASSERT( context );
+  TEST_ASSERT( did );
+  TEST_ASSERT( queue );
 
   size_t program_size = strlen(program_src);
   char* program_buffer = program_src;
 
-  program = clCreateProgramWithSource(context, 1, (const char**)&program_buffer,
+  cl_program program = clCreateProgramWithSource(context, 1, (const char**)&program_buffer,
                                      &program_size, &err);
   //clCreateProgramWithSource for the program with #include failed
   CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
 
-  err = clBuildProgram(program, num_devices, devices, NULL, NULL, NULL);
+  err = clBuildProgram(program, 1, &did, NULL, NULL, NULL);
   TEST_ASSERT(err == CL_BUILD_PROGRAM_FAILURE);
 
   return EXIT_SUCCESS;

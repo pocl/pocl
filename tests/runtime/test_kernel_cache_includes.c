@@ -4,7 +4,6 @@
 #include <CL/opencl.h>
 #include "poclu.h"
 #include "config.h"
-#include "pocl_tests.h"
 
 char first_include[] =
     "#define PRINT_DEFINE \"This is printf from the first include\\n\"\n"

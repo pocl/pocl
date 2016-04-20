@@ -290,7 +290,7 @@ main(int argc, char **argv)
   if (list_devices)
     {
       context = clCreateContext(0, num_devices, device_ids, NULL, NULL, &err);
-      CHECK_CL_ERROR2(err, clCreateContext);
+      CHECK_OPENCL_ERROR_IN("clCreateContext");
 
       printf("LIST OF DEVICES:\n");
       for (i=0; i<num_devices; i++)
@@ -317,10 +317,10 @@ main(int argc, char **argv)
     return 0;
 
   context = clCreateContext(0, 1, &device_ids[opencl_device_id], NULL, NULL, &err);
-  CHECK_CL_ERROR2(err, clCreateContext);
+  CHECK_OPENCL_ERROR_IN("clCreateContext");
 
   program = clCreateProgramWithSource(context, 1, (const char **)&kernel_source, NULL, &err);
-  CHECK_CL_ERROR2(err, clCreateProgramWithSource);
+  CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
 
   CHECK_CL_ERROR(clBuildProgram(program, 0, NULL, build_options, NULL, NULL));
 

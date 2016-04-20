@@ -27,7 +27,6 @@
 #include <CL/opencl.h>
 #include "poclu.h"
 #include "config.h"
-#include "pocl_tests.h"
 
 /* Two different kernel sources, to ensure that the test for all devices
  * and the test with only sub-devices do not interphere with each other
@@ -57,8 +56,7 @@ int test_context(cl_context ctx, const char *prog_src, int mul,
   prog = clCreateProgramWithSource(ctx, 1, &prog_src, NULL, &err);
   CHECK_OPENCL_ERROR_IN("create program");
 
-  err = clBuildProgram(prog, 0, NULL, NULL, NULL, NULL);
-  CHECK_OPENCL_ERROR_IN("build program");
+  CHECK_CL_ERROR(clBuildProgram(prog, 0, NULL, NULL, NULL, NULL));
 
   krn = clCreateKernel(prog, "setidx", &err);
   CHECK_OPENCL_ERROR_IN("create kernel");
@@ -67,8 +65,7 @@ int test_context(cl_context ctx, const char *prog_src, int mul,
     CL_MEM_HOST_READ_ONLY, ndevs*sizeof(cl_int), NULL, &err);
   CHECK_OPENCL_ERROR_IN("create buffer");
 
-  err = clSetKernelArg(krn, 0, sizeof(cl_mem), &buf);
-  CHECK_OPENCL_ERROR_IN("set kernel arg 0");
+  CHECK_CL_ERROR(clSetKernelArg(krn, 0, sizeof(cl_mem), &buf));
 
   /* create one queue per device, and submit task, waiting for all
    * previous */
@@ -94,8 +91,7 @@ int test_context(cl_context ctx, const char *prog_src, int mul,
   TEST_ASSERT(mismatch == 0);
 
   /* enqueue unmap on first */
-  err = clEnqueueUnmapMemObject(queue[0], buf, buf_host, 0, NULL, NULL);
-  CHECK_OPENCL_ERROR_IN("unmap buffer");
+  CHECK_CL_ERROR(clEnqueueUnmapMemObject(queue[0], buf, buf_host, 0, NULL, NULL));
 
   for (i = 0 ; i < ndevs; ++i) {
     err = clFinish(queue[i]);

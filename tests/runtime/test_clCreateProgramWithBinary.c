@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <CL/cl.h>
+#include "poclu.h"
 
 #define MAX_PLATFORMS 32
 #define MAX_DEVICES   32
@@ -25,34 +26,31 @@ main(void){
   cl_int binary_statuses2[MAX_BINARIES];
   cl_program program = NULL;
   cl_program program_with_binary = NULL;
-  err = clGetPlatformIDs(MAX_PLATFORMS, platforms, &nplatforms);	
-  if (err != CL_SUCCESS && !nplatforms)
+
+  err = clGetPlatformIDs(MAX_PLATFORMS, platforms, &nplatforms);
+  CHECK_OPENCL_ERROR_IN("clGetPlatformIDs");
+  if (!nplatforms)
     return EXIT_FAILURE;
   
   err = clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_ALL, MAX_DEVICES,
-		       devices, &num_devices);  
-  if (err != CL_SUCCESS)
-    return EXIT_FAILURE;
+                      devices, &num_devices);
+  CHECK_OPENCL_ERROR_IN("clGetDeviceIDs");
 
   cl_context context = clCreateContext(NULL, num_devices, devices, NULL, NULL, &err);
-  if (err != CL_SUCCESS)
-    return EXIT_FAILURE;
+  CHECK_OPENCL_ERROR_IN("clCreateContext");
 
   size_t kernel_size = strlen(kernel);
   char* kernel_buffer = kernel;
 
   program = clCreateProgramWithSource(context, 1, (const char**)&kernel_buffer, 
 				      &kernel_size, &err);
-  if (err != CL_SUCCESS)
-    return EXIT_FAILURE;
+  CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
 
   err = clBuildProgram(program, num_devices, devices, NULL, NULL, NULL);
-  if (err != CL_SUCCESS)
-    return EXIT_FAILURE;
+  CHECK_OPENCL_ERROR_IN("clBuildProgram");
   
   err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, 0, 0, &num_binaries);
-  if (err != CL_SUCCESS)
-      goto FREE_AND_EXIT;
+  CHECK_OPENCL_ERROR_IN("clGetProgramInfo");
 
   num_binaries = num_binaries/sizeof(size_t);
   binary_sizes = (size_t*)malloc(num_binaries * sizeof(size_t));
@@ -61,8 +59,7 @@ main(void){
   err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, 
 			 num_binaries*sizeof(size_t), binary_sizes , 
 			 &num_bytes_copied);
-  if (err != CL_SUCCESS)
-      goto FREE_AND_EXIT;
+  CHECK_OPENCL_ERROR_IN("clGetProgramInfo");
   
   for (i = 0; i < num_binaries; ++i) 
     binaries[i] = (const unsigned char*) malloc(binary_sizes[i] *
@@ -70,8 +67,7 @@ main(void){
 
   err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, 
 			 num_binaries*sizeof(char*), binaries, &num_bytes_copied);
-  if (err != CL_SUCCESS)
-      goto FREE_AND_EXIT;
+  CHECK_OPENCL_ERROR_IN("clGetProgramInfo");
   
   cl_uint num = num_binaries < num_devices ? num_binaries : num_devices;
   if (num == 0)
@@ -82,17 +78,18 @@ main(void){
   
   program_with_binary = clCreateProgramWithBinary(context, num, devices, binary_sizes, 
 						  binaries, binary_statuses, &err);
-  if (err != CL_SUCCESS)
-    goto FREE_AND_EXIT;
+  CHECK_OPENCL_ERROR_IN("clCreateProgramWithBinary");
 
-  clReleaseProgram(program_with_binary);
+  err = clReleaseProgram(program_with_binary);
+  CHECK_OPENCL_ERROR_IN("clReleaseProgram");
+
   for (i = 0; i < num; i++)
     {
       if (binary_statuses[i] != CL_SUCCESS)
-	{
-	  err = !CL_SUCCESS;
-	  goto FREE_AND_EXIT;
-	}
+        {
+          err = !CL_SUCCESS;
+          goto FREE_AND_EXIT;
+        }
     }
     
   // negative test1: invalid device
@@ -122,8 +119,7 @@ main(void){
   
   err = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, 1*sizeof(size_t), 
 			 binary_sizes , &num_bytes_copied);
-  if (err != CL_SUCCESS)
-    goto FREE_AND_EXIT;
+  CHECK_OPENCL_ERROR_IN("clGetProgramInfo");
   
   binary_sizes[1] = binary_sizes[0];
   
@@ -134,8 +130,7 @@ main(void){
   
   err = clGetProgramInfo(program, CL_PROGRAM_BINARIES, 1 * sizeof(char*), 
 			 binaries, &num_bytes_copied);
-  if (err != CL_SUCCESS)
-    goto FREE_AND_EXIT;
+  CHECK_OPENCL_ERROR_IN("clGetProgramInfo");
   
   memcpy((void*)binaries[1], (void*)binaries[0], binary_sizes[0]);      
   program_with_binary = clCreateProgramWithBinary(context, 2, devices, binary_sizes, 

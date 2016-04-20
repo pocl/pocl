@@ -28,7 +28,6 @@
 #include <CL/cl.h>
 #include <poclu.h>
 #include "config.h"
-#include "pocl_tests.h"
 
 #define MAX_PLATFORMS 32
 #define MAX_DEVICES   32
@@ -66,14 +65,11 @@ main(void){
   cl_uint num_devices;
   cl_uint i;
   cl_program program = NULL;
-  err = clGetPlatformIDs(MAX_PLATFORMS, platforms, &nplatforms);
-  CHECK_OPENCL_ERROR_IN("clGetPlatformIDs");
-  if (!nplatforms)
-    return EXIT_FAILURE;
+  CHECK_CL_ERROR(clGetPlatformIDs(MAX_PLATFORMS, platforms, &nplatforms));
+  TEST_ASSERT(nplatforms > 0);
 
-  err = clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_ALL, MAX_DEVICES,
-		       devices, &num_devices);  
-  CHECK_OPENCL_ERROR_IN("clGetDeviceIDs");
+  CHECK_CL_ERROR(clGetDeviceIDs(platforms[0], CL_DEVICE_TYPE_ALL, MAX_DEVICES,
+                       devices, &num_devices));
 
   cl_context context = clCreateContext(NULL, num_devices, devices, NULL, NULL, &err);
   CHECK_OPENCL_ERROR_IN("clCreateContext");
@@ -86,12 +82,10 @@ main(void){
   //clCreateProgramWithSource for the kernel with #include failed
   CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
 
-  err = clBuildProgram(program, num_devices, devices, 
-     "-D__FUNC__=helper_func -I./test_data", NULL, NULL);
-  CHECK_OPENCL_ERROR_IN("clBuildProgram");
+  CHECK_CL_ERROR(clBuildProgram(program, num_devices, devices,
+     "-D__FUNC__=helper_func -I./test_data", NULL, NULL));
 
-  err = clReleaseProgram(program);
-  CHECK_OPENCL_ERROR_IN("clReleaseProgram");
+  CHECK_CL_ERROR(clReleaseProgram(program));
 
   kernel_size = strlen(invalid_kernel);
   kernel_buffer = invalid_kernel;
@@ -104,8 +98,7 @@ main(void){
   err = clBuildProgram(program, num_devices, devices, NULL, NULL, NULL);
   TEST_ASSERT(err == CL_BUILD_PROGRAM_FAILURE);
 
-  err = clReleaseProgram(program);
-  CHECK_OPENCL_ERROR_IN("clReleaseProgram");
+  CHECK_CL_ERROR(clReleaseProgram(program));
 
   kernel_size = strlen(preprocess_fail);
   kernel_buffer = preprocess_fail;
@@ -120,13 +113,11 @@ main(void){
 
   for (i = 0; i < num_devices; ++i) {
           size_t log_size = 0;
-          err = clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
-                  0, NULL, &log_size);
-          CHECK_OPENCL_ERROR_IN("get build log size");
+          CHECK_CL_ERROR(clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
+                  0, NULL, &log_size));
           char *log = malloc(log_size);
-          err = clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
-                  log_size, log, NULL);
-          CHECK_OPENCL_ERROR_IN("get build log");
+          CHECK_CL_ERROR(clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
+                  log_size, log, NULL));
           log[log_size] = '\0';
           fprintf(stderr, "preprocess failure log[%u]: %s\n", i, log);
   }
@@ -147,8 +138,7 @@ main(void){
 	  fprintf(stderr, "preprocess failure log[%u]: %s\n", i, log);
   }
 
-  err = clReleaseProgram(program);
-  CHECK_OPENCL_ERROR_IN("clReleaseProgram");
+  CHECK_CL_ERROR(clReleaseProgram(program));
 
   /* Test the possibility to call a kernel 'init'.
    * Due to the delayed linking in current pocl, this will succeed even if it
@@ -162,8 +152,7 @@ main(void){
 				      &kernel_size, &err);
   CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
 
-  err = clBuildProgram(program, num_devices, devices, NULL, NULL, NULL);
-  TEST_ASSERT(err == CL_SUCCESS);
+  CHECK_CL_ERROR(clBuildProgram(program, num_devices, devices, NULL, NULL, NULL));
 
   /* TODO FIXME: from here to the clFinish() should be removed once
    * delayed linking is disabled/removed in pocl, probably
@@ -173,18 +162,14 @@ main(void){
   cl_kernel k = clCreateKernel(program, "init", &err);
   CHECK_OPENCL_ERROR_IN("clCreateKernel");
 
-  err = clSetKernelArg(k, 0, sizeof(cl_mem), NULL);
-  CHECK_OPENCL_ERROR_IN("clSetKernelArg");
+  CHECK_CL_ERROR(clSetKernelArg(k, 0, sizeof(cl_mem), NULL));
   size_t gws[] = {1};
-  err = clEnqueueNDRangeKernel(q, k, 1, NULL, gws, NULL, 0, NULL, NULL);
-  CHECK_OPENCL_ERROR_IN("clEnqueueNDRangeKernel");
-  err = clFinish(q);
-  TEST_ASSERT(err == CL_SUCCESS);
+  CHECK_CL_ERROR(clEnqueueNDRangeKernel(q, k, 1, NULL, gws, NULL, 0, NULL, NULL));
+  CHECK_CL_ERROR(clFinish(q));
 
-  err  = clReleaseCommandQueue(q);
-  err |= clReleaseKernel(k);
-  err |= clReleaseProgram(program);
-  CHECK_OPENCL_ERROR_IN("'init' kernel name test clean-up");
+  CHECK_CL_ERROR(clReleaseCommandQueue(q));
+  CHECK_CL_ERROR(clReleaseKernel(k));
+  CHECK_CL_ERROR(clReleaseProgram(program));
 
   // macro test
   char* macro_kernel = poclu_read_file(SRCDIR "/tests/runtime/test_clBuildProgram_macros.cl" );
@@ -193,11 +178,9 @@ main(void){
                                       &s, &err);
   CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
 
-  err = clBuildProgram(program, num_devices, devices, NULL, NULL, NULL);
-  TEST_ASSERT(err == CL_SUCCESS);
+  CHECK_CL_ERROR(clBuildProgram(program, num_devices, devices, NULL, NULL, NULL));
 
-  err = clReleaseProgram(program);
-  CHECK_OPENCL_ERROR_IN("clReleaseProgram");
+  CHECK_CL_ERROR(clReleaseProgram(program));
 
   return EXIT_SUCCESS;
 }

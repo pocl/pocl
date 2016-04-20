@@ -2,7 +2,6 @@
 #include <stdlib.h>
 #include <CL/cl.h>
 #include "poclu.h"
-#include "pocl_tests.h"
 
 #define MAX_DEVICES   2
 
@@ -18,33 +17,29 @@ main(void)
   cl_uint num_entries;
   
   err = clGetPlatformIDs (1, platform, &nplatforms);	
-  if (err != CL_SUCCESS)
-    return EXIT_FAILURE;
+  CHECK_OPENCL_ERROR_IN("clGetPlatformIDs");
 
   err = clGetDeviceIDs (platform[0], CL_DEVICE_TYPE_ALL, MAX_DEVICES,
                         devices, &ndevices);
-  if (err != CL_SUCCESS)
-	return EXIT_FAILURE;
+  CHECK_OPENCL_ERROR_IN("clGetDeviceIDs");
 
   TEST_ASSERT(ndevices >= 2);
 
   cl_context context = clCreateContext (NULL, ndevices, devices, NULL, NULL, 
                                         &err);
+  CHECK_OPENCL_ERROR_IN("clCreateContext");
 
-  if (err != CL_SUCCESS)
-    return EXIT_FAILURE;
-  
-  clGetSupportedImageFormats (context, 0, CL_MEM_OBJECT_IMAGE2D, 0, 
+  err = clGetSupportedImageFormats (context, 0, CL_MEM_OBJECT_IMAGE2D, 0,
                               NULL, &num_entries);
+  CHECK_OPENCL_ERROR_IN("clGetSupportedImageFormats");
   
   img_formats = (cl_image_format*)malloc (sizeof(cl_image_format)*num_entries);
 
-  clGetSupportedImageFormats (context, 0, CL_MEM_OBJECT_IMAGE2D, 
+  err = clGetSupportedImageFormats (context, 0, CL_MEM_OBJECT_IMAGE2D,
                                       num_entries, img_formats, NULL);
+  CHECK_OPENCL_ERROR_IN("clGetSupportedImageFormats");
 
-  if (err != CL_SUCCESS || num_entries == 0) 
-    return EXIT_FAILURE;
-  
+  TEST_ASSERT(num_entries != 0);
 
   return EXIT_SUCCESS;
 }

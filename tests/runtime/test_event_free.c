@@ -26,7 +26,6 @@
 #include <string.h>
 #include <CL/cl.h>
 #include "poclu.h"
-#include "pocl_tests.h"
 
 int main(int argc, char **argv)
 {
