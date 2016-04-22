@@ -281,7 +281,7 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->image_support = CL_TRUE;
   /* Use the minimum values until we get a more sensible
      upper limit from somewhere. */
-  dev->max_read_image_args = dev->max_write_image_args = 128;
+  dev->max_read_image_args = dev->max_write_image_args = dev->max_read_write_image_args = 128;
   dev->image2d_max_width = dev->image2d_max_height = 8192;
   dev->image3d_max_width = dev->image3d_max_height = dev->image3d_max_depth = 2048;
   dev->image_max_buffer_size = 65536;

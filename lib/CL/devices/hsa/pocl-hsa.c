@@ -533,7 +533,8 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
      &dev->max_read_image_args));
   HSA_CHECK(hsa_agent_get_info
     (agent, HSA_EXT_AGENT_INFO_MAX_IMAGE_RORW_HANDLES,
-     &dev->max_write_image_args));
+     &dev->max_read_write_image_args));
+  dev->max_write_image_args = dev->max_read_write_image_args;
   HSA_CHECK(hsa_agent_get_info
     (agent, HSA_EXT_AGENT_INFO_MAX_SAMPLER_HANDLERS, &dev->max_samplers));
 

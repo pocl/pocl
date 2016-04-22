@@ -378,6 +378,7 @@ struct _cl_device_id {
   cl_bool image_support;
   cl_uint max_read_image_args;
   cl_uint max_write_image_args;
+  cl_uint max_read_write_image_args;
   size_t image2d_max_width;
   size_t image2d_max_height;
   size_t image3d_max_width;
