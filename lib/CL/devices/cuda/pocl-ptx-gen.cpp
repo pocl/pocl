@@ -59,6 +59,7 @@ void pocl_cuda_link_libdevice(llvm::Module *module,
 void pocl_fix_constant_address_space(llvm::Module *module);
 void pocl_gen_local_mem_args(llvm::Module *module);
 void pocl_insert_ptx_intrinsics(llvm::Module *module);
+void pocl_map_libdevice_calls(llvm::Module *module);
 
 int pocl_ptx_gen(const char *bc_filename,
                  const char *ptx_filename,
@@ -93,6 +94,7 @@ int pocl_ptx_gen(const char *bc_filename,
   pocl_gen_local_mem_args(module->get());
   pocl_insert_ptx_intrinsics(module->get());
   pocl_add_kernel_annotations(module->get());
+  pocl_map_libdevice_calls(module->get());
   pocl_cuda_link_libdevice(module->get(), kernel_name, gpu_arch);
   if (pocl_get_bool_option("POCL_DEBUG_PTX", 0))
     (*module)->dump();
@@ -781,12 +783,104 @@ void pocl_insert_ptx_intrinsics(llvm::Module *module)
         // Replace load with intrinsic
         llvm::Constant *func =
           module->getOrInsertFunction(entry.intrinsic, intrinsic_type);
-        llvm::CallInst *call = llvm::CallInst::Create(func, {}, load);
+        llvm::CallInst *call = llvm::CallInst::Create(func, "", load);
         load->replaceAllUsesWith(call);
         load->eraseFromParent();
       }
     }
 
     var->eraseFromParent();
+  }
+}
+
+void pocl_map_libdevice_calls(llvm::Module *module)
+{
+  struct function_map_entry
+  {
+    const char *ocl_funcname;
+    const char *libdevice_funcname;
+  };
+  struct function_map_entry function_map[] =
+  {
+    // TODO: FP64 versions - not all of them just worked in the same way...
+    {"acosf", "__nv_acosf"},
+    {"acoshf", "__nv_acoshf"},
+    {"asinf", "__nv_asinf"},
+    {"asinhf", "__nv_asinhf"},
+    {"atanf", "__nv_atanf"},
+    {"atanhf", "__nv_atanhf"},
+    {"atan2f", "__nv_atan2f"},
+    {"cbrtf", "__nv_cbrtf"},
+    {"ceilf", "__nv_ceilf"},
+    {"copysignf", "__nv_copysignf"},
+    {"coshf", "__nv_coshf"},
+    {"expf", "__nv_expf"},
+    {"exp2f", "__nv_exp2f"},
+    {"expm1f", "__nv_expm1f"},
+    {"fdimf", "__nv_fdimf"},
+    {"floorf", "__nv_floorf"},
+    {"fmaxf", "__nv_fmaxf"},
+    {"fminf", "__nv_fminf"},
+    // TODO: frexp
+    {"hypotf", "__nv_hypotf"},
+    {"ilogbf", "__nv_ilogbf"},
+    // TODO: ldexp
+    {"lgammaf", "__nv_lgammaf"},
+    // TODO: lgamma_r
+    {"logf", "__nv_logf"},
+    {"log2f", "__nv_log2f"},
+    {"log10f", "__nv_log10f"},
+    {"log1pf", "__nv_log1pf"},
+    {"logbf", "__nv_logbf"},
+    // TODO: modf
+    {"nextafterf", "__nv_nextafterf"},
+    {"llvm.pow.f32", "__nv_powf"},
+    // TODO: pown
+    {"remainderf", "__nv_remainderf"},
+    // TODO: remquo
+    {"rintf", "__nv_rintf"},
+    // TODO: rootn
+    {"roundf", "__nv_roundf"},
+    {"sinhf", "__nv_sinhf"},
+    {"tanf", "__nv_tanf"},
+    {"tanhf", "__nv_tanhf"},
+    {"truncf", "__nv_truncf"},
+  };
+  size_t num_functions = sizeof(function_map)/sizeof(function_map_entry);
+
+  for (unsigned i = 0; i < num_functions; i++)
+  {
+    function_map_entry entry = function_map[i];
+
+    llvm::Function *func = module->getFunction(entry.ocl_funcname);
+    if (!func)
+      continue;
+
+    auto func_users = func->users();
+    std::vector<llvm::Value*> users(func_users.begin(), func_users.end());
+    for (auto U = users.begin(); U != users.end(); U++)
+    {
+      // Look for calls to function
+      llvm::CallInst *call = llvm::dyn_cast<llvm::CallInst>(*U);
+      if (call)
+      {
+        // Create function declaration for lidevice version
+        llvm::FunctionType *func_type = func->getFunctionType();
+        llvm::Constant *libdevice_func =
+          module->getOrInsertFunction(entry.libdevice_funcname, func_type);
+
+        // Replace function with libdevice version
+        std::vector<llvm::Value*> args;
+        for (auto arg = call->arg_begin(); arg != call->arg_end(); arg++)
+          args.push_back(*arg);
+        llvm::CallInst *new_call =
+          llvm::CallInst::Create(libdevice_func, args, "", call);
+        new_call->takeName(call);
+        call->replaceAllUsesWith(new_call);
+        call->eraseFromParent();
+      }
+    }
+
+    func->eraseFromParent();
   }
 }
