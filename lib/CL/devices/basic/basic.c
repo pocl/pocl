@@ -290,17 +290,6 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->max_constant_args = 8;
 
   dev->max_mem_alloc_size = 0;
-  dev->image_support = CL_TRUE;
-  dev->max_read_image_args = 128;
-  dev->max_write_image_args = 128;
-  dev->image2d_max_width = 8192;
-  dev->image2d_max_height = 8192;
-  dev->image3d_max_width = 2048;
-  dev->image3d_max_height = 2048;
-  dev->image3d_max_depth = 2048;
-  dev->image_max_buffer_size = 0;
-  dev->image_max_array_size = 0;
-  dev->max_samplers = 16;
   dev->max_parameter_size = 1024;
   dev->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT; // this is in bytes
   dev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT*8; // this is in bits
