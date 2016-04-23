@@ -1,0 +1,25 @@
+Support for NVIDIA GPUs via CUDA is currently experimental and many
+features may be missing or incomplete.
+
+# Compiling pocl with CUDA support
+
+Add -DENABLE_CUDA=ON to the CMake command-line.
+
+Assumes libcuda.so is on library search path. (TODO: Get CMake to sort
+this out).
+
+Currently only tested with LLVM 3.8, and CUDA 7.0/7.5.
+
+# Running on a CUDA device
+
+Requires CUDA_PATH environment variable to be set to root of CUDA
+installation.
+
+# Known issues
+
+- Images and samplers are unimplemented
+- Atomics are unimplimented
+- Global offsets are unimplemented
+- get_work_dim is unimplemented
+- FP64 math functions are mostly missing
+- printf format support is incomplete
