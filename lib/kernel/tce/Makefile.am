@@ -28,7 +28,9 @@ KERNEL_TARGET = tce-tut-llvm
 CLANG_FLAGS = @TARGET_CLANG_FLAGS@ -Xclang -ffake-address-space-map -Xclang -menable-no-nans -emit-llvm -ffp-contract=off -target tce-tut-llvm  -isystem `tce-config --prefix`/tce-llvm/include
 LLC_FLAGS   = @TARGET_LLC_FLAGS@
 LD_FLAGS    = @TARGET_LD_FLAGS@
-DEVICE_CL_FLAGS = -D__OPENCL_VERSION__=200 @TCE_DEVICE_EXTENSION_DEFINES@
+
+# currently doesn't work
+# DEVICE_CL_FLAGS = -D__OPENCL_VERSION__=200 @TCE_DEVICE_EXTENSION_DEFINES@
 
 include ../rules.mk
 include ../sources.mk
