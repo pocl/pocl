@@ -119,6 +119,8 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->max_read_image_args);
   case CL_DEVICE_MAX_WRITE_IMAGE_ARGS              :
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->max_write_image_args);
+  case CL_DEVICE_MAX_READ_WRITE_IMAGE_ARGS         :
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->max_read_write_image_args);
   case CL_DEVICE_MAX_MEM_ALLOC_SIZE:
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->max_mem_alloc_size);
   case CL_DEVICE_IMAGE2D_MAX_WIDTH                 : 
