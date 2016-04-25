@@ -73,6 +73,14 @@ POname(clCreateKernel)(cl_program program,
   POCL_INIT_OBJECT (kernel);
   POCL_RETAIN_OBJECT (kernel);
 
+  kernel->name = strdup(kernel_name);
+  POCL_GOTO_ERROR_ON((kernel->name == NULL), CL_OUT_OF_HOST_MEMORY,
+                     "clCreateKernel couldn't allocate memory");
+
+  kernel->context = program->context;
+  kernel->program = program;
+  kernel->next = NULL;
+
   for (device_i = 0; device_i < program->num_devices; ++device_i)
     {
       if (program->binaries[device_i] &&
@@ -81,6 +89,14 @@ POname(clCreateKernel)(cl_program program,
 #ifdef OCS_AVAILABLE
           pocl_llvm_get_kernel_metadata(program, kernel, device_i,
                                         kernel_name, &errcode);
+          cl_device_id device = program->devices[device_i];
+          if (device->spmd)
+            {
+              errcode = pocl_llvm_generate_workgroup_function(device,
+                                                            kernel, 0, 0, 0);
+              if (errcode == CL_SUCCESS)
+                device->ops->compile_kernel(NULL, kernel, device);
+            }
 #endif
         }
       /* If the program was created with a pocl binary, we won't be able to
@@ -108,13 +124,6 @@ POname(clCreateKernel)(cl_program program,
       break;
     }
 
-  kernel->name = strdup(kernel_name);
-  POCL_GOTO_ERROR_ON((kernel->name == NULL), CL_OUT_OF_HOST_MEMORY,
-                     "clCreateKernel couldn't allocate memory");
-
-  kernel->context = program->context;
-  kernel->program = program;
-  kernel->next = NULL;
 
   if (program->kernels != ADDING_DEFAULT_KERNELS_TO_CL_PROGRAM)
     {
