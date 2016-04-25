@@ -50,8 +50,8 @@ and they do NOT use the same alignment rules. The C standards specify almost not
 PHSA
 ----
 This project (Portable HSA, https://github.com/HSAFoundation/phsa) aims to support generic CPUs as HSA devices.
-Aims to support all CPUs which have a gcc backend. Pocl will support this runtime as backend for its HSA driver.
-Currently (early 2016) this is still a work in progress.
+Aims to support all CPUs which have a gcc backend. Pocl supports this runtime as backend for its HSA driver.
+
 
 Caveats/Bugs/missing features
 =============================
