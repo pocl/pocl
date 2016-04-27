@@ -318,7 +318,7 @@ setup_agent_memory_regions_callback(hsa_region_t region, void* data)
 }
 
 // Get hsa-unsupported device features from hsa device list.
-static int num_hsa_device = 2;
+static unsigned num_hsa_device = 2;
 
 static struct _cl_device_id
 supported_hsa_devices[MAX_HSA_AGENTS] =
@@ -774,7 +774,7 @@ pocl_hsa_alloc_mem_obj(cl_device_id device, cl_mem mem_obj, void* host_ptr)
 {
   void *b = NULL;
   cl_mem_flags flags = mem_obj->flags;
-  int i;
+  unsigned i;
 
   /* check if some driver has already allocated memory for this mem_obj 
      in our global address space, and use that*/
@@ -801,8 +801,8 @@ pocl_hsa_alloc_mem_obj(cl_device_id device, cl_mem mem_obj, void* host_ptr)
   if (b == NULL)
     return CL_MEM_OBJECT_ALLOCATION_FAILURE;
 
-  /* take ownership iff not USE_HOST_PTR */
-  if (!flags & CL_MEM_USE_HOST_PTR)
+  /* take ownership if not USE_HOST_PTR */
+  if (~flags & CL_MEM_USE_HOST_PTR)
     mem_obj->shared_mem_allocation_owner = device;
 
   mem_obj->device_ptrs[device->dev_id].mem_ptr = b;
@@ -1647,7 +1647,6 @@ void
 pocl_hsa_update_event (cl_device_id device, cl_event event, cl_int status)
 {
   pocl_hsa_event_data_t *e_d = NULL;
-  int cq_ready = 0;
 
   if(event->data == NULL && status == CL_QUEUED)
     {
@@ -1682,7 +1681,7 @@ pocl_hsa_update_event (cl_device_id device, cl_event event, cl_int status)
     case CL_COMPLETE:
       POCL_MSG_PRINT_INFO("HSA: Command complete, event %d\n", event->id);
       pocl_mem_objs_cleanup (event);
-      cq_ready = pocl_update_command_queue (event);
+      pocl_update_command_queue (event);
 
       if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
         event->time_end = device->ops->get_timer_value(device->data);
