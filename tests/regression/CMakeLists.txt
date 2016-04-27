@@ -217,6 +217,12 @@ set_tests_properties("regression/barrier_between_two_for_loops_LOOPS"
 set_tests_properties("regression/struct_kernel_arguments"
                       PROPERTIES  WILL_FAIL 1)
 
+if(ARM64)
+  set_tests_properties("regression/vector_kernel_arguments"
+    "regression/LoopVectorizer_crash_with_Haswell_and_Broadwell_-_issue_231"
+    PROPERTIES  WILL_FAIL 1)
+endif()
+
 ###################################################################
 
 # TODO infinite loop test: AT_SKIP_IF([ env | grep -q POCL_IMPLICIT_FINISH])
