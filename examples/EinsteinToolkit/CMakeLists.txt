@@ -38,9 +38,11 @@ add_executable("EinsteinToolkit" EinsteinToolkit.c ML_BSSN_CL_RHS1.cl ML_BSSN_CL
 # EinsteinToolkit_LDADD = @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
 target_link_libraries("EinsteinToolkit" ${POCLU_LINK_OPTIONS})
 
-add_test(NAME "EinsteinToolkit" COMMAND "EinsteinToolkit")
+if(NOT MIPS)
+  add_test(NAME "EinsteinToolkit" COMMAND "EinsteinToolkit")
 
-set_tests_properties( "EinsteinToolkit"
-  PROPERTIES
+  set_tests_properties( "EinsteinToolkit"
+    PROPERTIES
     LABELS "internal;Einstein"
     DEPENDS "pocl_version_check")
+endif()
