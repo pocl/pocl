@@ -246,7 +246,9 @@ DETERMINE_LOCAL_SIZE:
     {
 #ifdef OCS_AVAILABLE
       // SPMD devices already have compiled at this point
-      if (!realdev->spmd)
+      if (realdev->spmd)
+        error = CL_SUCCESS;
+      else
         error = pocl_llvm_generate_workgroup_function(realdev,
                                                       kernel,
                                                       local_x, local_y, local_z);

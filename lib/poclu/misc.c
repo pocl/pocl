@@ -114,7 +114,8 @@ poclu_read_file(char *filename)
 {
   size_t size;
   char *res = poclu_read_binfile(filename, &size);
-  res[size] = 0;
+  if (res)
+    res[size] = 0;
   return res;
 }
 
