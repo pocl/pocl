@@ -722,9 +722,6 @@ if(NOT DEFINED DEFAULT_ENABLE_TCE)
     set(TCE_CXXFLAGS "${TCE_CXXFLAGS}" CACHE INTERNAL "tce-config --cxxflags")
     set(TCE_PREFIX "${TCE_PREFIX}" CACHE INTERNAL "tce-config --prefix")
 
-    # TODO
-    set(LD_FLAGS_BIN ${LD_FLAGS_BIN} ${TCE_LIBS})
-
     set(HAVE_TCE 1)
     if(TCE_VERSION MATCHES "trunk")
       set(HAVE_TCEMC 1)

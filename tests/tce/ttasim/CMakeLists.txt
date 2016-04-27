@@ -25,7 +25,7 @@
 
 add_executable("ttasim_host" host.cpp)
 
-target_link_libraries("ttasim_host" ${POCLU_LINK_OPTIONS} ${LD_FLAGS_BIN})
+target_link_libraries("ttasim_host" ${POCLU_LINK_OPTIONS})
 
 add_compile_options( -Wno-deprecated -Wno-deprecated-declarations)
 
