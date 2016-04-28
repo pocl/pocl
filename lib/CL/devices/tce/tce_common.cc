@@ -198,7 +198,7 @@ TCEDevice::initMemoryManagement(const TTAMachine::Machine& mach) {
      parent->global_mem_size);
 }
 
-#define SUBST(x) "-DKERNEL_EXE_CMD_OFFSET=" # x
+#define SUBST(x) "  -DKERNEL_EXE_CMD_OFFSET=" # x
 #define OFFSET_ARG(c) SUBST(c)
 
 TCEString
