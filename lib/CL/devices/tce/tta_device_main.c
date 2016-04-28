@@ -97,6 +97,8 @@ static void tta_opencl_wg_launch(kernel_exec_cmd* cmd) {
     int num_groups_x = cmd->num_groups[0];
     int i, first_gid_x, last_gid_x;
 
+    cmd->status = POCL_KST_RUNNING;
+
     /* single thread version: execute all work groups in
        a single trampoline call as fast as possible. 
 
@@ -119,6 +121,7 @@ static void tta_opencl_wg_launch(kernel_exec_cmd* cmd) {
 #ifdef DEBUG_TTA_DEVICE
         lwpr_print_str("\ntta: ------------------- kernel finished\n");
 #endif
+        cmd->status = POCL_KST_FINISHED;
 }
 
 extern kernel_metadata _test_kernel_md;
@@ -126,7 +129,7 @@ extern kernel_metadata _test_kernel_md;
 /* The shared kernel_command object using which the device is controlled. */
 #if !defined(_STANDALONE_MODE) || _STANDALONE_MODE == 0
 
-kernel_exec_cmd kernel_command;
+kernel_exec_cmd *kernel_command_ptr = (kernel_exec_cmd*)KERNEL_EXE_CMD_OFFSET;
 
 #ifndef _STANDALONE_MODE
 #define _STANDALONE_MODE 0
@@ -142,19 +145,11 @@ extern kernel_exec_cmd kernel_command;
 
 #endif
 
-static kernel_exec_cmd* wait_for_command() {
-    while (kernel_command.status != POCL_KST_READY) 
-        ;
-    kernel_command.status = POCL_KST_RUNNING;
-    return &kernel_command;
-}
-
 #if _STANDALONE_MODE == 1
 void initialize_kernel_launch();
 #endif
 
 int main() {
-    kernel_exec_cmd *next_command;
     kernel_metadata *next_kernel;
     int work_dim = 1;
     size_t local_work_sizes[3] = {1, 0, 0};
@@ -167,6 +162,9 @@ int main() {
 
 #if _STANDALONE_MODE == 1
     initialize_kernel_launch();
+    kernel_exec_cmd *next_command = &kernel_command;
+#else
+    kernel_exec_cmd *next_command = kernel_command_ptr;
 #endif
 
     do {
@@ -175,9 +173,10 @@ int main() {
         lwpr_print_str("tta: waiting for commands\n");
 #endif
 
-        next_command = wait_for_command();
+        while (next_command->status != POCL_KST_READY)
+            ;
 
-        next_kernel = (kernel_metadata*)next_command->kernel;
+        next_kernel = (kernel_metadata*)(next_command->kernel);
 
 #ifdef DEBUG_TTA_DEVICE
         lwpr_print_str("tta: got a command to execute: ");
@@ -198,7 +197,6 @@ int main() {
         lwpr_newline();
 #endif
         tta_opencl_wg_launch(next_command);
-        kernel_command.status = POCL_KST_FINISHED;   
 
         /* In case this is the host-device setup (not the standalone mode),
            wait forever for commands from the host. Otherwise, execute the
