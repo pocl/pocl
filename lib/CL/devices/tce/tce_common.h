@@ -139,7 +139,10 @@ class TCEDevice {
    device global memory. The structures start from 0, the
    buffer storage starts after them. TODO: check from the
    symbol table of the produced program. */
-#define TTA_UNALLOCATED_GLOBAL_SPACE (2*1024)
+/* Note that this is also the offset into global memory where
+ * a struct kernel_exe_cmd is located, so memory allocations
+ * should start after this + sizeof(kernel_exe_cmd) */
+#define TTA_UNALLOCATED_GLOBAL_SPACE 2048
 
 #ifdef __cplusplus
 extern "C" {

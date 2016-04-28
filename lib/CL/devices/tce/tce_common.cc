@@ -125,12 +125,8 @@ TCEDevice::findDataMemoryAddresses() {
   assert (prog != NULL);
 
   const TTAProgram::GlobalScope& globalScope = prog->globalScopeConst();
-  
-  try {
-    commandQueueAddr = globalScope.dataLabel("kernel_command").address().location();
-  } catch (const KeyNotFound& e) {
-    POCL_ABORT ("Could not find the shared data structures from the device binary.");
-  }    
+
+  commandQueueAddr = global_as->start() + TTA_UNALLOCATED_GLOBAL_SPACE;
 }
 
 void
@@ -198,9 +194,12 @@ TCEDevice::initMemoryManagement(const TTAMachine::Machine& mach) {
   init_mem_region 
     (&local_mem, (memory_address_t)local_as->start(), parent->local_mem_size);
   init_mem_region 
-    (&global_mem, (memory_address_t)global_as->start() + TTA_UNALLOCATED_GLOBAL_SPACE, 
+    (&global_mem, (memory_address_t)global_as->start() + TTA_UNALLOCATED_GLOBAL_SPACE + sizeof(__kernel_exec_cmd),
      parent->global_mem_size);
 }
+
+#define SUBST(x) "-DKERNEL_EXE_CMD_OFFSET=" # x
+#define OFFSET_ARG(c) SUBST(c)
 
 TCEString
 TCEDevice::tceccCommandLine
@@ -231,6 +230,8 @@ TCEDevice::tceccCommandLine
   TCEString extraFlags = extraParams;
   if (isMultiCoreMachine())
     extraFlags += " -ldthread -lsync-lu -llockunit";
+
+  extraFlags += OFFSET_ARG(TTA_UNALLOCATED_GLOBAL_SPACE);
 
   TCEString tempDir = run_cmd->tmp_dir;
 
