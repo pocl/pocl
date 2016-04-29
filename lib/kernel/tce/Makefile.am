@@ -29,8 +29,7 @@ CLANG_FLAGS = @TARGET_CLANG_FLAGS@ -Xclang -ffake-address-space-map -Xclang -men
 LLC_FLAGS   = @TARGET_LLC_FLAGS@
 LD_FLAGS    = @TARGET_LD_FLAGS@
 
-# currently doesn't work
-# DEVICE_CL_FLAGS = -D__OPENCL_VERSION__=200 @TCE_DEVICE_EXTENSION_DEFINES@
+DEVICE_CL_FLAGS = -D__OPENCL_VERSION__=200 @TCE_DEVICE_EXTENSION_DEFINES@
 
 include ../rules.mk
 include ../sources.mk
