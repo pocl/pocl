@@ -14,6 +14,11 @@
    capabilities.
  */
 
+#ifdef cl_khr_fp64
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+#endif
+
+
 typedef struct grid_t {
   double dt;                    // time step
   double dx, dy, dz;            // resolution

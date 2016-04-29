@@ -8,10 +8,10 @@
 // TESTING: ilogb
 // TESTING: ldexp
 
-#if __clang_major__ == 3 && __clang_minor__ < 4
-typedef const char* string;     /* for backward compatibility */
-#else
 typedef constant char* string;
+
+#ifdef cl_khr_fp64
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 #endif
 
 #define IMPLEMENT_BODY_V(NAME, BODY, SIZE,                              \

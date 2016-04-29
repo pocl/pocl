@@ -1,5 +1,8 @@
 // -*-C-*-
 
+#ifdef cl_khr_fp64
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+#endif
 
 
 #define CCTK_ATTRIBUTE_UNUSED    __attribute__((__unused__))

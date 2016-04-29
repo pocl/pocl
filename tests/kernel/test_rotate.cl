@@ -123,6 +123,7 @@ typedef constant char* string;
 
 
 #if __has_extension(c_generic_selections) && defined cl_khr_fp64
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 # define is_floating(T) _Generic((T)0, float: 1, double: 1, default: 0)
 #else
 # define is_floating(T) ((T)0.1f > (T)0.0f)
