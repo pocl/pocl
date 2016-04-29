@@ -102,7 +102,14 @@ if test x"$ocs" != x"no"; then :
   AC_SUBST([LLVM_VERSION], [$LLVM_VERSION])
   AC_DEFINE_UNQUOTED([LLVM_VERSION], ["$LLVM_VERSION"], "LLVM version as a string.")
 
+  LLVM_3_6=false
+
   case "$LLVM_VERSION" in
+       3.6*)
+       AC_DEFINE([LLVM_3_6], [], "Using LLVM 3.6")
+       LLVM_3_6=true
+       LLVM_LDFLAGS="$LLVM_LDFLAGS `$LLVM_CONFIG --system-libs`"
+     ;;
        3.7*)
        AC_DEFINE([LLVM_3_7], [], "Using LLVM 3.7")
        LLVM_LDFLAGS="$LLVM_LDFLAGS `$LLVM_CONFIG --system-libs`"
@@ -119,6 +126,8 @@ if test x"$ocs" != x"no"; then :
      LLVM_VERSION=
      ;;
   esac
+
+  AM_CONDITIONAL([LLVM_3_6], [test "x$LLVM_3_6" = "xtrue"])
 
   AC_SUBST([LLVM_LDFLAGS], [$LLVM_LDFLAGS], [llvm-config returned ldflags])
 

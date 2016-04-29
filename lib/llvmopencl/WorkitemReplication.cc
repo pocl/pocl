@@ -172,7 +172,6 @@ WorkitemReplication::ProcessFunction(Function &F)
 #endif
   
   // Measure the required context (variables alive in more than one region).
-  const DataLayout &TD = F.getParent()->getDataLayout();
 
   for (SmallVector<ParallelRegion *, 8>::iterator
          i = original_parallel_regions->begin(), 
@@ -195,7 +194,11 @@ WorkitemReplication::ProcessFunction(Function &F)
               pr->end()) {
             // User is not in the defining region.
             ++ContextValues;
-            ContextSize += TD.getTypeAllocSize(i3->getType());
+#ifdef LLVM_OLDER_THAN_3_7
+            ContextSize += F.getParent()->getDataLayout()->getTypeAllocSize(i3->getType());
+#else
+            ContextSize += F.getParent()->getDataLayout().getTypeAllocSize(i3->getType());
+#endif
             break;
           }
         }
