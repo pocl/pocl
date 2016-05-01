@@ -25,6 +25,7 @@
 
 #include "pocl-cuda.h"
 #include "pocl-ptx-gen.h"
+#include "pocl_runtime_config.h"
 #include "common.h"
 #include "devices.h"
 #include "pocl_cache.h"
@@ -169,8 +170,8 @@ pocl_cuda_init(cl_device_id device, const char* parameters)
                        data->device);
   char *gpu_arch = malloc(16*sizeof(char));
   snprintf(gpu_arch, 16, "sm_%d%d", sm_maj, sm_min);
-  device->llvm_cpu = gpu_arch;
-  POCL_MSG_PRINT_INFO("[CUDA] GPU architecture = %s\n", gpu_arch);
+  device->llvm_cpu = pocl_get_string_option("POCL_CUDA_GPU_ARCH", gpu_arch);
+  POCL_MSG_PRINT_INFO("[CUDA] GPU architecture = %s\n", device->llvm_cpu);
 
   // Create context
   result = cuCtxCreate(&data->context, CU_CTX_MAP_HOST, data->device);
