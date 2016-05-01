@@ -402,7 +402,9 @@ pocl_cuda_run(void *dptr, _cl_command_node* cmd)
   unsigned sharedMemBytes = 0;
   void *params[kernel->num_args + kernel->num_locals];
   unsigned sharedMemOffsets[kernel->num_args + kernel->num_locals];
-  for (unsigned i = 0; i < kernel->num_args; i++)
+
+  unsigned i;
+  for (i = 0; i < kernel->num_args; i++)
   {
     pocl_argument_type type = kernel->arg_info[i].type;
     switch (type)
@@ -442,7 +444,7 @@ pocl_cuda_run(void *dptr, _cl_command_node* cmd)
 
   // Deal with automatic local allocations
   // TODO: Would be better to remove arguments and make these static GEPs
-  for (int i = 0; i < kernel->num_locals; ++i)
+  for (i = 0; i < kernel->num_locals; ++i)
   {
     sharedMemOffsets[kernel->num_args + i] = sharedMemBytes;
     sharedMemBytes += arguments[kernel->num_args + i].size;
