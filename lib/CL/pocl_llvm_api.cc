@@ -1580,7 +1580,7 @@ kernel_library
   }
 #endif
 #ifdef BUILD_CUDA
-  if (triple.getArch() == Triple::nvptx64) {
+  if (triple.getArch() == Triple::nvptx || triple.getArch() == Triple::nvptx64){
     subdir = "cuda";
     is_host = false;
   }

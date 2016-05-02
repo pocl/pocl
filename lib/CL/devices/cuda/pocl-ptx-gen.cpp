@@ -108,8 +108,8 @@ int pocl_ptx_gen(const char *bc_filename,
     POCL_ABORT("[CUDA] ptx-gen: module verification failed\n");
   }
 
-  // TODO: support 32-bit?
-  llvm::StringRef triple = "nvptx64-nvidia-cuda";
+  llvm::StringRef triple =
+    (sizeof(void*)==8) ? "nvptx64-nvidia-cuda" : "nvptx-nvidia-cuda";
 
   // Get NVPTX target
   std::string error;

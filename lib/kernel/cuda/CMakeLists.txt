@@ -41,7 +41,17 @@ foreach(FILE
   list(APPEND KERNEL_SOURCES "cuda/${FILE}")
 endforeach()
 
-set(CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-emit-llvm" "-target" "nvptx64" "-D_CL_DISABLE_HALF")
+
+# Select either NVPTX or NVPTX64
+if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+  set(LLVM_TARGET nvptx64)
+else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+  set(LLVM_TARGET nvptx)
+endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
+
+
+set(CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-emit-llvm"
+                "-target" "${LLVM_TARGET}" "-D_CL_DISABLE_HALF")
 set(LLC_FLAGS "")
 set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=${CUDA_DEVICE_CL_VERSION}")
 separate_arguments(CUDA_DEVICE_EXTENSIONS)
@@ -50,18 +60,18 @@ foreach(EXT ${CUDA_DEVICE_EXTENSIONS})
 endforeach()
 separate_arguments(DEVICE_CL_FLAGS)
 
-make_kernel_bc(KERNEL_BC "nvptx64" "BCs" ${KERNEL_SOURCES})
+make_kernel_bc(KERNEL_BC "${LLVM_TARGET}" "BCs" ${KERNEL_SOURCES})
 
 # just debug
-message(STATUS "NVPTX64 Kernel BC: ${KERNEL_BC}")
+message(STATUS "${LLVM_TARGET} Kernel BC: ${KERNEL_BC}")
 
 list(APPEND KERNEL_BC_LIST "${KERNEL_BC}")
 set(KERNEL_BC_LIST "${KERNEL_BC_LIST}" PARENT_SCOPE)
 
 # a target is needed...
-add_custom_target("kernel_nvptx64" DEPENDS ${KERNEL_BC})
+add_custom_target("kernel_${LLVM_TARGET}" DEPENDS ${KERNEL_BC})
 
-list(APPEND KERNEL_TARGET_LIST "kernel_nvptx64")
+list(APPEND KERNEL_TARGET_LIST "kernel_${LLVM_TARGET}")
 set(KERNEL_TARGET_LIST "${KERNEL_TARGET_LIST}" PARENT_SCOPE)
 
 install(FILES "${KERNEL_BC}"
