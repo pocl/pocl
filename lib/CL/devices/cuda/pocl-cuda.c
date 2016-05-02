@@ -236,9 +236,15 @@ cl_int pocl_cuda_alloc_mem_obj(cl_device_id device, cl_mem mem_obj)
   {
     cl_mem_flags flags = mem_obj->flags;
 
-    // TODO: Deal with mem flags
     if (flags & CL_MEM_USE_HOST_PTR)
     {
+#if defined __arm__
+      // cuMemHostRegister is not supported on ARN
+      // Allocate device memory and perform explicit copies
+      // before and after running a kernel
+      result = cuMemAlloc((CUdeviceptr*)&b, mem_obj->size);
+      CUDA_CHECK(result, "cuMemAlloc");
+#else
       result = cuMemHostRegister(mem_obj->mem_host_ptr, mem_obj->size,
                                  CU_MEMHOSTREGISTER_DEVICEMAP);
       if (result != CUDA_SUCCESS &&
@@ -247,6 +253,7 @@ cl_int pocl_cuda_alloc_mem_obj(cl_device_id device, cl_mem mem_obj)
       result = cuMemHostGetDevicePointer((CUdeviceptr*)&b,
                                          mem_obj->mem_host_ptr, 0);
       CUDA_CHECK(result, "cuMemHostGetDevicePointer");
+#endif
     }
     else if (flags & CL_MEM_ALLOC_HOST_PTR)
     {
@@ -427,6 +434,14 @@ pocl_cuda_run(void *dptr, _cl_command_node* cmd)
         {
           cl_mem mem = *(void**)arguments[i].value;
           params[i] = &mem->device_ptrs[device->dev_id].mem_ptr;
+
+#if defined __arm__
+          // On ARM with USE_HOST_PTR, perform explicit copy to device
+          if (mem->flags & CL_MEM_USE_HOST_PTR)
+          {
+            cuMemcpyHtoD(*(CUdeviceptr*)(params[i]), mem->mem_host_ptr, mem->size);
+          }
+#endif
         }
         else
         {
@@ -467,4 +482,23 @@ pocl_cuda_run(void *dptr, _cl_command_node* cmd)
   // TODO: We don't really want to sync here
   result = cuStreamSynchronize(0);
   CUDA_CHECK(result, "cuStreamSynchronize");
+
+#if defined __arm__
+  // On ARM with USE_HOST_PTR, perform explict copies back from device
+  for (i = 0; i < kernel->num_args; i++)
+  {
+    if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
+    {
+      if (!kernel->arg_info[i].is_local && arguments[i].value)
+      {
+        cl_mem mem = *(void**)arguments[i].value;
+        if (mem->flags & CL_MEM_USE_HOST_PTR)
+        {
+          CUdeviceptr ptr = (CUdeviceptr)mem->device_ptrs[device->dev_id].mem_ptr;
+          cuMemcpyDtoH(mem->mem_host_ptr, ptr, mem->size);
+        }
+      }
+    }
+  }
+#endif
 }
