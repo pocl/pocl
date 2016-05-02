@@ -23,13 +23,13 @@
 
 #include <stdarg.h>
 
-void _cl_va_arg(va_list ap, long data[], int num_words);
+void _cl_va_arg(va_list ap, char data[], int num_words);
 
 int
 _cl_printf(__attribute__((address_space(3))) char* restrict format, ...)
 {
   // TODO: Might need more than 2 words for (e.g.) vectors
-  long arg_data[1];
+  char arg_data[8];
 
   va_list ap;
   va_start(ap, format);

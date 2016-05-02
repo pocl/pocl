@@ -263,6 +263,11 @@ void pocl_cuda_fix_printf(llvm::Module *module)
         llvm::GetElementPtrInst::Create(i64, args_in, {arg_index});
       arg_in->insertAfter(arg_index);
 
+      // Cast arg_out pointer to i64*
+      llvm::BitCastInst *bc_arg_out = new llvm::BitCastInst(arg_out, i64ptr);
+      bc_arg_out->insertAfter(arg_in);
+      arg_out = bc_arg_out;
+
       // Load argument
       llvm::LoadInst *arg_value = new llvm::LoadInst(arg_in);
       arg_value->insertAfter(arg_in);
