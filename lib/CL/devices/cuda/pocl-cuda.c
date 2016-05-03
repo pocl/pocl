@@ -73,7 +73,7 @@ pocl_cuda_init_device_ops(struct pocl_device_ops *ops)
   ops->init = pocl_cuda_init;
   ops->alloc_mem_obj = pocl_cuda_alloc_mem_obj;
   ops->free = pocl_cuda_free;
-  ops->compile_submitted_kernels = pocl_cuda_compile_submitted_kernels;
+  ops->compile_kernel = pocl_cuda_compile_kernel;
   ops->run = pocl_cuda_run;
   ops->read = pocl_cuda_read;
   //ops->read_rect = pocl_basic_read_rect;
@@ -226,7 +226,8 @@ pocl_cuda_uninit(cl_device_id device)
   POCL_MEM_FREE(device->long_name);
 }
 
-cl_int pocl_cuda_alloc_mem_obj(cl_device_id device, cl_mem mem_obj)
+cl_int
+pocl_cuda_alloc_mem_obj(cl_device_id device, cl_mem mem_obj, void *host_ptr)
 {
   CUresult result;
   void *b = NULL;
@@ -245,13 +246,12 @@ cl_int pocl_cuda_alloc_mem_obj(cl_device_id device, cl_mem mem_obj)
       result = cuMemAlloc((CUdeviceptr*)&b, mem_obj->size);
       CUDA_CHECK(result, "cuMemAlloc");
 #else
-      result = cuMemHostRegister(mem_obj->mem_host_ptr, mem_obj->size,
+      result = cuMemHostRegister(host_ptr, mem_obj->size,
                                  CU_MEMHOSTREGISTER_DEVICEMAP);
       if (result != CUDA_SUCCESS &&
           result != CUDA_ERROR_HOST_MEMORY_ALREADY_REGISTERED)
         CUDA_CHECK(result, "cuMemHostRegister");
-      result = cuMemHostGetDevicePointer((CUdeviceptr*)&b,
-                                         mem_obj->mem_host_ptr, 0);
+      result = cuMemHostGetDevicePointer((CUdeviceptr*)&b, host_ptr, 0);
       CUDA_CHECK(result, "cuMemHostGetDevicePointer");
 #endif
     }
@@ -278,8 +278,7 @@ cl_int pocl_cuda_alloc_mem_obj(cl_device_id device, cl_mem mem_obj)
 
     if (flags & CL_MEM_COPY_HOST_PTR)
     {
-      result = cuMemcpyHtoD((CUdeviceptr)b,
-                            mem_obj->mem_host_ptr, mem_obj->size);
+      result = cuMemcpyHtoD((CUdeviceptr)b, host_ptr, mem_obj->size);
       CUDA_CHECK(result, "cuMemcpyHtoD");
     }
 
@@ -353,14 +352,10 @@ void* pocl_cuda_unmap_mem(void *data, void *host_ptr,
 }
 
 void
-pocl_cuda_compile_submitted_kernels(_cl_command_node *cmd)
+pocl_cuda_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
+                         cl_device_id device)
 {
   CUresult result;
-
-  if (cmd->type != CL_COMMAND_NDRANGE_KERNEL)
-    return;
-
-  cl_kernel kernel = cmd->command.run.kernel;
 
   // Check if we already have a compiled kernel function
   if (kernel->data)
