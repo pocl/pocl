@@ -74,7 +74,6 @@ pocl_cuda_init_device_ops(struct pocl_device_ops *ops)
   ops->alloc_mem_obj = pocl_cuda_alloc_mem_obj;
   ops->free = pocl_cuda_free;
   ops->compile_kernel = pocl_cuda_compile_kernel;
-  ops->run = pocl_cuda_run;
   ops->read = pocl_cuda_read;
   //ops->read_rect = pocl_basic_read_rect;
   ops->write = pocl_cuda_write;
@@ -84,6 +83,16 @@ pocl_cuda_init_device_ops(struct pocl_device_ops *ops)
   //ops->get_timer_value = pocl_cuda_get_timer_value;
   ops->map_mem = pocl_cuda_map_mem;
   ops->unmap_mem = pocl_cuda_unmap_mem;
+
+  ops->run = NULL;
+  ops->submit = pocl_cuda_submit;
+  ops->join = pocl_cuda_join;
+  ops->flush = pocl_cuda_flush;
+  //ops->notify = pocl_cuda_notify;
+  //ops->broadcast = pocl_cuda_broadcast;
+  //ops->wait_event = pocl_cuda_wait_event;
+  //ops->update_event = pocl_cuda_update_event;
+  //ops->free_event_data = pocl_cuda_free_event_data;
 }
 
 void
@@ -363,17 +372,18 @@ pocl_cuda_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
     return;
 
   char bc_filename[POCL_FILENAME_LENGTH];
-  snprintf(bc_filename, POCL_FILENAME_LENGTH, "%s%s",
-           cmd->command.run.tmp_dir, POCL_PARALLEL_BC_FILENAME);
+  unsigned device_i = pocl_cl_device_to_index(kernel->program, device);
+  pocl_cache_work_group_function_path(bc_filename, kernel->program,
+                                      device_i, kernel, 0, 0, 0);
 
   char ptx_filename[POCL_FILENAME_LENGTH];
-  snprintf(ptx_filename, POCL_FILENAME_LENGTH, "%s/program.ptx",
-           cmd->command.run.tmp_dir);
+  strcpy(ptx_filename, bc_filename);
+  strncat(ptx_filename, ".ptx", POCL_FILENAME_LENGTH-1);
 
   // Generate PTX from LLVM bitcode
   // TODO: Load from cache if present
   if (pocl_ptx_gen(bc_filename, ptx_filename,
-                   kernel->name, cmd->device->llvm_cpu))
+                   kernel->name, device->llvm_cpu))
     POCL_ABORT("pocl-cuda: failed to generate PTX\n");
 
   // Load PTX module
@@ -391,14 +401,17 @@ pocl_cuda_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
 }
 
 void
-pocl_cuda_run(void *dptr, _cl_command_node* cmd)
+pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
 {
   CUresult result;
 
-  cl_device_id device = cmd->device;
-  cl_kernel kernel = cmd->command.run.kernel;
-  pocl_argument *arguments = cmd->command.run.arguments;
-  CUfunction function = cmd->command.run.kernel->data;
+  if (node->type != CL_COMMAND_NDRANGE_KERNEL)
+    return;
+
+  cl_device_id device = cq->device;
+  cl_kernel kernel = node->command.run.kernel;
+  pocl_argument *arguments = node->command.run.arguments;
+  CUfunction function = node->command.run.kernel->data;
 
   // Prepare kernel arguments
   void *null = NULL;
@@ -463,21 +476,17 @@ pocl_cuda_run(void *dptr, _cl_command_node* cmd)
   }
 
   // Launch kernel
-  struct pocl_context pc = cmd->command.run.pc;
+  struct pocl_context pc = node->command.run.pc;
   result = cuLaunchKernel(
     function,
     pc.num_groups[0],
     pc.num_groups[1],
     pc.num_groups[2],
-    cmd->command.run.local_x,
-    cmd->command.run.local_y,
-    cmd->command.run.local_z,
+    node->command.run.local_x,
+    node->command.run.local_y,
+    node->command.run.local_z,
     sharedMemBytes, NULL, params, NULL);
   CUDA_CHECK(result, "cuLaunchKernel");
-
-  // TODO: We don't really want to sync here
-  result = cuStreamSynchronize(0);
-  CUDA_CHECK(result, "cuStreamSynchronize");
 
 #if defined __arm__
   // On ARM with USE_HOST_PTR, perform explict copies back from device
@@ -497,4 +506,17 @@ pocl_cuda_run(void *dptr, _cl_command_node* cmd)
     }
   }
 #endif
+}
+
+void
+pocl_cuda_flush(cl_device_id device, cl_command_queue cq)
+{
+  // TODO: Something here?
+}
+
+void
+pocl_cuda_join(cl_device_id device, cl_command_queue cq)
+{
+  CUresult result = cuStreamSynchronize(0);
+  CUDA_CHECK(result, "cuStreamSynchronize");
 }
