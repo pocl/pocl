@@ -30,6 +30,7 @@
 #include "devices.h"
 #include "pocl_cache.h"
 #include "pocl_file_util.h"
+#include "pocl_util.h"
 
 #include <string.h>
 
@@ -405,8 +406,13 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
 {
   CUresult result;
 
+  POCL_UPDATE_EVENT_SUBMITTED(&node->event);
+
   if (node->type != CL_COMMAND_NDRANGE_KERNEL)
+  {
+    pocl_exec_command(node);
     return;
+  }
 
   cl_device_id device = cq->device;
   cl_kernel kernel = node->command.run.kernel;
@@ -475,6 +481,8 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
     params[kernel->num_args+i] = sharedMemOffsets + kernel->num_args + i;
   }
 
+  POCL_UPDATE_EVENT_RUNNING(&node->event);
+
   // Launch kernel
   struct pocl_context pc = node->command.run.pc;
   result = cuLaunchKernel(
@@ -506,6 +514,8 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
     }
   }
 #endif
+
+  POCL_UPDATE_EVENT_COMPLETE(&node->event);
 }
 
 void
