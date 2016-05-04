@@ -1404,7 +1404,9 @@ static PassManager& kernel_compiler_passes
   }
   // Add the work group launcher functions and privatize the pseudo variable
   // (local id) accesses.
-  passes.push_back("workgroup");
+  // TODO: get the workgroup pass working with CUDA?
+  if (strcmp(device->ops->device_name, "CUDA"))
+    passes.push_back("workgroup");
 
   // Attempt to move all allocas to the entry block to avoid the need for
   // dynamic stack which is problematic for some architectures.
