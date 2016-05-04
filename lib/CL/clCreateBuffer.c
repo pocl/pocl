@@ -138,7 +138,7 @@ POname(clCreateBuffer)(cl_context   context,
       int dev_id = context->devices[i]->dev_id;
 
       mem->device_ptrs[dev_id].global_mem_id =
-        context->devices[dev_id]->global_mem_id;
+        context->devices[i]->global_mem_id;
       mem->device_ptrs[i].available = 1;
     }
 
