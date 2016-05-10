@@ -58,5 +58,14 @@ EXCLUDE="$EXCLUDE|LoopVectorizer_crash_with_Haswell_and_Broadwell_-_issue_231$"
 EXCLUDE="$EXCLUDE|struct_kernel_arguments$"
 EXCLUDE="$EXCLUDE|poclcc$"
 
+# Exclude workgroup tests since they just use basic device
+# Can't use -L and -LE together with older CMake versions
+CTEST_VERSION="`ctest --version | head -n 1`"
+echo $CTEST_VERSION
+echo ${CTEST_VERSION:14:1}
+if [ "${CTEST_VERSION:14:1}" -ge 3 ]; then
+  LABEL_EXCLUDE="-LE workgroup"
+fi
+
 # TODO: Enable more than just 'internal'
-ctest -L internal -LE workgroup -E "$EXCLUDE" $@
+ctest -L internal $LABEL_EXCLUDE -E "$EXCLUDE" $@
