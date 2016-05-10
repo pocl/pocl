@@ -47,5 +47,9 @@ EXCLUDE="$EXCLUDE|clCreateSubDevices$"
 EXCLUDE="$EXCLUDE|test_event_free$"
 EXCLUDE="$EXCLUDE|test_enqueue_kernel_from_binary$"
 EXCLUDE="$EXCLUDE|EinsteinToolkit$"
+EXCLUDE="$EXCLUDE|assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_REPL$"
+EXCLUDE="$EXCLUDE|assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_LOOPS$"
+EXCLUDE="$EXCLUDE|LoopVectorizer_crash_with_Haswell_and_Broadwell_-_issue_231$"
+EXCLUDE="$EXCLUDE|struct_kernel_arguments$"
 
 ctest -L internal -LE workgroup -E "$EXCLUDE" $@
