@@ -33,6 +33,11 @@ else
   echo "Using OCL_ICD_VENDORS: $OCL_ICD_VENDORS"
 fi
 
+if [ -z "$CUDA_PATH" ]; then
+  echo "CUDA_PATH not set - many tests will fail without it"
+  exit 1
+fi
+
 EXCLUDE="test_fabs$"
 EXCLUDE="$EXCLUDE|test_frexp_modf$"
 EXCLUDE="$EXCLUDE|test_sampler_address_clamp$"
@@ -52,4 +57,5 @@ EXCLUDE="$EXCLUDE|assigning_a_loop_iterator_variable_to_a_private_makes_it_local
 EXCLUDE="$EXCLUDE|LoopVectorizer_crash_with_Haswell_and_Broadwell_-_issue_231$"
 EXCLUDE="$EXCLUDE|struct_kernel_arguments$"
 
+# TODO: Enable more than just 'internal'
 ctest -L internal -LE workgroup -E "$EXCLUDE" $@
