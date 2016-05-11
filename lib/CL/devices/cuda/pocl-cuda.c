@@ -381,11 +381,14 @@ pocl_cuda_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
   strcpy(ptx_filename, bc_filename);
   strncat(ptx_filename, ".ptx", POCL_FILENAME_LENGTH-1);
 
-  // Generate PTX from LLVM bitcode
-  // TODO: Load from cache if present
-  if (pocl_ptx_gen(bc_filename, ptx_filename,
-                   kernel->name, device->llvm_cpu))
-    POCL_ABORT("pocl-cuda: failed to generate PTX\n");
+  if (pocl_get_bool_option("POCL_NO_PTX_CACHE", 0) ||
+      !pocl_exists(ptx_filename))
+  {
+    // Generate PTX from LLVM bitcode
+    if (pocl_ptx_gen(bc_filename, ptx_filename,
+                     kernel->name, device->llvm_cpu))
+      POCL_ABORT("pocl-cuda: failed to generate PTX\n");
+  }
 
   // Load PTX module
   // TODO: When can we unload the module?
