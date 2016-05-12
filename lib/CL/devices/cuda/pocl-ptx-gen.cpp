@@ -550,14 +550,14 @@ void pocl_gen_local_mem_args(llvm::Module *module)
                              llvm::GlobalValue::NotThreadLocal,
                              3, false);
 
-  // Loop over kernels
-  for (auto K = md_kernels->op_begin(); K != md_kernels->op_end(); K++)
+  for (unsigned i = 0; i < md_kernels->getNumOperands(); i++)
   {
-    if (!(*K)->getOperand(0))
+    auto kernel = md_kernels->getOperand(i);
+    if (!kernel->getOperand(0))
       continue;
 
     llvm::ConstantAsMetadata *cam =
-      llvm::dyn_cast<llvm::ConstantAsMetadata>((*K)->getOperand(0).get());
+      llvm::dyn_cast<llvm::ConstantAsMetadata>(kernel->getOperand(0).get());
     if (!cam)
       continue;
 
@@ -635,8 +635,13 @@ void pocl_gen_local_mem_args(llvm::Module *module)
       (*old_arg)->replaceAllUsesWith(&*new_arg);
     }
 
-    // Remove old function
-    function->replaceAllUsesWith(new_func);
+    // Update metadata with reference to new kernel
+    auto new_md = llvm::ConstantAsMetadata::get(new_func);
+    llvm::MDNode *node = llvm::MDNode::get(llvm::getGlobalContext(), {new_md});
+    md_kernels->setOperand(i, node);
+
+    // TODO: Deal with calls to this kernel from other function?
+
     function->eraseFromParent();
   }
 }
