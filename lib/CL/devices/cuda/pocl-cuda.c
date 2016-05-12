@@ -319,14 +319,18 @@ void
 pocl_cuda_read(void *data, void *host_ptr, const void *device_ptr,
                size_t offset, size_t cb)
 {
-  cuMemcpyDtoH(host_ptr, (CUdeviceptr)(device_ptr+offset), cb);
+  CUresult result = cuMemcpyDtoH(host_ptr,
+                                 (CUdeviceptr)(device_ptr+offset), cb);
+  CUDA_CHECK(result, "cuMemcpyDtoH");
 }
 
 void
 pocl_cuda_write(void *data, const void *host_ptr, void *device_ptr,
                 size_t offset, size_t cb)
 {
-  cuMemcpyHtoD((CUdeviceptr)(device_ptr+offset), host_ptr, cb);
+  CUresult result = cuMemcpyHtoD((CUdeviceptr)(device_ptr+offset),
+                                 host_ptr, cb);
+  CUDA_CHECK(result, "cuMemcpyHtoD");
 }
 
 void
@@ -336,9 +340,10 @@ pocl_cuda_copy(void *data, const void *src_ptr, size_t src_offset,
   if (src_ptr == dst_ptr)
     return;
 
-  cuMemcpyDtoD((CUdeviceptr)(dst_ptr+dst_offset),
-               (CUdeviceptr)(src_ptr+src_offset),
-      	       cb);
+  CUresult result = cuMemcpyDtoD((CUdeviceptr)(dst_ptr+dst_offset),
+                                 (CUdeviceptr)(src_ptr+src_offset),
+                                 cb);
+  CUDA_CHECK(result, "cuMemcpyDtoD");
 }
 
 void
@@ -463,7 +468,8 @@ pocl_cuda_map_mem(void *data, void *buf_ptr,
   if (host_ptr != NULL) return host_ptr;
 
   void *ptr = malloc(size);
-  cuMemcpyDtoH(ptr, (CUdeviceptr)(buf_ptr+offset), size);
+  CUresult result = cuMemcpyDtoH(ptr, (CUdeviceptr)(buf_ptr+offset), size);
+  CUDA_CHECK(result, "cuMemcpyDtoH");
   return ptr;
 }
 
@@ -474,7 +480,9 @@ void* pocl_cuda_unmap_mem(void *data, void *host_ptr,
   if (host_ptr)
   {
     // TODO: offset?
-    cuMemcpyHtoD((CUdeviceptr)(device_start_ptr), host_ptr, size);
+    CUresult result = cuMemcpyHtoD((CUdeviceptr)(device_start_ptr),
+                                   host_ptr, size);
+    CUDA_CHECK(result, "cuMemcpyHtoD");
     free(host_ptr);
   }
   return NULL;
