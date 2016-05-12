@@ -56,7 +56,6 @@ void pocl_add_kernel_annotations(llvm::Module *module);
 void pocl_cuda_fix_printf(llvm::Module *module);
 void pocl_cuda_link_libdevice(llvm::Module *module,
                               const char *kernel, const char *gpu_arch);
-void pocl_fix_constant_address_space(llvm::Module *module);
 void pocl_gen_local_mem_args(llvm::Module *module);
 void pocl_insert_ptx_intrinsics(llvm::Module *module);
 void pocl_map_libdevice_calls(llvm::Module *module);
@@ -89,7 +88,6 @@ int pocl_ptx_gen(const char *bc_filename,
   llvm::InitializeAllAsmPrinters();
 
   // Apply transforms to prepare for lowering to PTX
-  pocl_fix_constant_address_space(module->get());
   pocl_cuda_fix_printf(module->get());
   pocl_gen_local_mem_args(module->get());
   pocl_insert_ptx_intrinsics(module->get());
@@ -529,104 +527,6 @@ void pocl_update_users_address_space(llvm::Value *inst,
         pocl_update_users_address_space(new_const_gep, visited);
       }
     }
-  }
-}
-
-void pocl_fix_constant_address_space(llvm::Module *module)
-{
-  // Loop over global variables
-  std::vector<llvm::GlobalVariable*> globals;
-  for (auto G = module->global_begin(); G != module->global_end(); G++)
-  {
-    globals.push_back(&*G);
-  }
-
-  for (auto G = globals.begin(); G != globals.end(); G++)
-  {
-    llvm::Type *type = (*G)->getType();
-    if (type->getPointerAddressSpace() != 4)
-      continue;
-    llvm::Type *new_type = type->getPointerElementType()->getPointerTo(1);
-    (*G)->mutateType(new_type);
-    pocl_update_users_address_space(*G);
-  }
-
-
-  // Loop over functions
-  std::vector<llvm::Function*> functions;
-  for (auto F = module->begin(); F != module->end(); F++)
-  {
-    functions.push_back(&*F);
-  }
-
-  for (auto F = functions.begin(); F != functions.end(); F++)
-  {
-    // Argument info for creating new function
-    std::vector<llvm::Argument*> arguments;
-    std::vector<llvm::Type*> argument_types;
-
-    // Loop over arguments
-    bool has_constant_args = false;
-    for (auto arg = (*F)->arg_begin(); arg != (*F)->arg_end(); arg++)
-    {
-      // Check for constant memory pointer
-      llvm::Type *arg_type = arg->getType();
-      if (arg_type->isPointerTy() &&
-          arg_type->getPointerAddressSpace() == 4)
-      {
-        has_constant_args = true;
-
-        // Create new argument in global address space
-        llvm::Type *elem_type = arg_type->getPointerElementType();
-        llvm::Type *new_arg_type = elem_type->getPointerTo(1);
-        llvm::Argument *new_arg = new llvm::Argument(new_arg_type);
-        arguments.push_back(new_arg);
-        argument_types.push_back(new_arg_type);
-
-        new_arg->takeName(&*arg);
-        arg->replaceAllUsesWith(new_arg);
-
-        pocl_update_users_address_space(new_arg);
-      }
-      else
-      {
-        // No change to other arguments
-        arguments.push_back(&*arg);
-        argument_types.push_back(arg_type);
-      }
-    }
-
-    if (!has_constant_args)
-      continue;
-
-    // Create new function with updated arguments
-    llvm::FunctionType *new_func_type =
-      llvm::FunctionType::get((*F)->getReturnType(), argument_types, false);
-    llvm::Function *new_func =
-      llvm::Function::Create(new_func_type, (*F)->getLinkage(),
-                             (*F)->getName(), module);
-    new_func->takeName(&*(*F));
-
-    // Take function body from old function
-    new_func->getBasicBlockList().splice(new_func->begin(),
-                                         (*F)->getBasicBlockList());
-
-    // TODO: Copy attributes from old function
-
-    // Update function body with new arguments
-    std::vector<llvm::Argument*>::iterator old_arg;
-    llvm::Function::arg_iterator new_arg;
-    for (old_arg = arguments.begin(), new_arg = new_func->arg_begin();
-         new_arg != new_func->arg_end();
-         new_arg++, old_arg++)
-    {
-      new_arg->takeName(*old_arg);
-      (*old_arg)->replaceAllUsesWith(&*new_arg);
-    }
-
-    // Remove old function
-    (*F)->replaceAllUsesWith(new_func);
-    (*F)->eraseFromParent();
   }
 }
 
