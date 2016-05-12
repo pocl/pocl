@@ -169,8 +169,6 @@ set_tests_properties("regression/phi_nodes_not_replicated_LOOPS"
 
 # other
 
-add_test_pocl(NAME "regression/LoopVectorizer_crash_with_Haswell_and_Broadwell_-_issue_231" COMMAND "test_issue_231")
-
 add_test_pocl(NAME "regression/setting_a_buffer_argument_to_NULL_causes_a_segfault" COMMAND "test_null_arg")
 
 add_test_pocl(NAME "regression/clSetKernelArg_overwriting_the_previous_kernel's_args" COMMAND "test_setargs")
@@ -188,7 +186,6 @@ set_tests_properties("regression/setting_a_buffer_argument_to_NULL_causes_a_segf
   "regression/clSetKernelArg_overwriting_the_previous_kernel's_args"
   "regression/passing_a_constant_array_as_an_arg"
   "regression/case_with_multiple_variable_length_loops_and_a_barrier_in_one"
-  "regression/LoopVectorizer_crash_with_Haswell_and_Broadwell_-_issue_231"
   "regression/struct_kernel_arguments" "regression/vector_kernel_arguments"
   PROPERTIES
     COST 1.5
@@ -219,7 +216,6 @@ set_tests_properties("regression/struct_kernel_arguments"
 
 if(ARM64)
   set_tests_properties("regression/vector_kernel_arguments"
-    "regression/LoopVectorizer_crash_with_Haswell_and_Broadwell_-_issue_231"
     PROPERTIES  WILL_FAIL 1)
 endif()
 
