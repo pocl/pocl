@@ -76,11 +76,11 @@ pocl_cuda_init_device_ops(struct pocl_device_ops *ops)
   ops->free = pocl_cuda_free;
   ops->compile_kernel = pocl_cuda_compile_kernel;
   ops->read = pocl_cuda_read;
-  //ops->read_rect = pocl_basic_read_rect;
+  ops->read_rect = pocl_cuda_read_rect;
   ops->write = pocl_cuda_write;
-  //ops->write_rect = pocl_basic_write_rect;
+  ops->write_rect = pocl_cuda_write_rect;
   ops->copy = pocl_cuda_copy;
-  //ops->copy_rect = pocl_basic_copy_rect;
+  ops->copy_rect = pocl_cuda_copy_rect;
   //ops->get_timer_value = pocl_cuda_get_timer_value;
   ops->map_mem = pocl_cuda_map_mem;
   ops->unmap_mem = pocl_cuda_unmap_mem;
@@ -339,6 +339,120 @@ pocl_cuda_copy(void *data, const void *src_ptr, size_t src_offset,
   cuMemcpyDtoD((CUdeviceptr)(dst_ptr+dst_offset),
                (CUdeviceptr)(src_ptr+src_offset),
       	       cb);
+}
+
+void
+pocl_cuda_read_rect(void *data,
+                    void *__restrict__ const host_ptr,
+                    void *__restrict__ const device_ptr,
+                    const size_t *__restrict__ const buffer_origin,
+                    const size_t *__restrict__ const host_origin,
+                    const size_t *__restrict__ const region,
+                    size_t const buffer_row_pitch,
+                    size_t const buffer_slice_pitch,
+                    size_t const host_row_pitch,
+                    size_t const host_slice_pitch)
+{
+  CUDA_MEMCPY3D params = {0};
+
+  params.WidthInBytes = region[0];
+  params.Height       = region[1];
+  params.Depth        = region[2];
+
+  params.dstMemoryType = CU_MEMORYTYPE_HOST;
+  params.dstHost = host_ptr;
+  params.dstXInBytes = host_origin[0];
+  params.dstY = host_origin[1];
+  params.dstZ = host_origin[2];
+  params.dstPitch = host_row_pitch;
+  params.dstHeight = host_slice_pitch / host_row_pitch;
+
+  params.srcMemoryType = CU_MEMORYTYPE_DEVICE;
+  params.srcDevice = (CUdeviceptr)device_ptr;
+  params.srcXInBytes = buffer_origin[0];
+  params.srcY = buffer_origin[1];
+  params.srcZ = buffer_origin[2];
+  params.srcPitch = buffer_row_pitch;
+  params.srcHeight = buffer_slice_pitch / buffer_row_pitch;
+
+  CUresult result = cuMemcpy3D(&params);
+  CUDA_CHECK(result, "cuMemcpy3D");
+}
+
+void
+pocl_cuda_write_rect(void *data,
+                     const void *__restrict__ const host_ptr,
+                     void *__restrict__ const device_ptr,
+                     const size_t *__restrict__ const buffer_origin,
+                     const size_t *__restrict__ const host_origin,
+                     const size_t *__restrict__ const region,
+                     size_t const buffer_row_pitch,
+                     size_t const buffer_slice_pitch,
+                     size_t const host_row_pitch,
+                     size_t const host_slice_pitch)
+{
+  CUDA_MEMCPY3D params = {0};
+
+  params.WidthInBytes = region[0];
+  params.Height       = region[1];
+  params.Depth        = region[2];
+
+  params.srcMemoryType = CU_MEMORYTYPE_HOST;
+  params.srcHost = host_ptr;
+  params.srcXInBytes = host_origin[0];
+  params.srcY = host_origin[1];
+  params.srcZ = host_origin[2];
+  params.srcPitch = host_row_pitch;
+  params.srcHeight = host_slice_pitch / host_row_pitch;
+
+  params.dstMemoryType = CU_MEMORYTYPE_DEVICE;
+  params.dstDevice = (CUdeviceptr)device_ptr;
+  params.dstXInBytes = buffer_origin[0];
+  params.dstY = buffer_origin[1];
+  params.dstZ = buffer_origin[2];
+  params.dstPitch = buffer_row_pitch;
+  params.dstHeight = buffer_slice_pitch / buffer_row_pitch;
+
+  CUresult result = cuMemcpy3D(&params);
+  CUDA_CHECK(result, "cuMemcpy3D");
+}
+
+void
+pocl_cuda_copy_rect(void *data,
+                    const void *__restrict const src_ptr,
+                    void *__restrict__ const dst_ptr,
+                    const size_t *__restrict__ const src_origin,
+                    const size_t *__restrict__ const dst_origin,
+                    const size_t *__restrict__ const region,
+                    size_t const src_row_pitch,
+                    size_t const src_slice_pitch,
+                    size_t const dst_row_pitch,
+                    size_t const dst_slice_pitch)
+{
+  CUDA_MEMCPY3D params = {0};
+
+  params.WidthInBytes = region[0];
+  params.Height       = region[1];
+  params.Depth        = region[2];
+
+  params.srcMemoryType = CU_MEMORYTYPE_DEVICE;
+  params.srcDevice = (CUdeviceptr)src_ptr;
+  params.srcXInBytes = src_origin[0];
+  params.srcY = src_origin[1];
+  params.srcZ = src_origin[2];
+  params.srcPitch = src_row_pitch;
+  params.srcHeight = src_slice_pitch / src_row_pitch;
+
+  params.dstMemoryType = CU_MEMORYTYPE_DEVICE;
+  params.dstDevice = (CUdeviceptr)dst_ptr;
+  params.dstXInBytes = dst_origin[0];
+  params.dstY = dst_origin[1];
+  params.dstZ = dst_origin[2];
+  params.dstPitch = dst_row_pitch;
+  params.dstHeight = dst_slice_pitch / dst_row_pitch;
+
+  CUresult result = cuMemcpy3D(&params);
+  CUDA_CHECK(result, "cuMemcpy3D");
 }
 
 void *
