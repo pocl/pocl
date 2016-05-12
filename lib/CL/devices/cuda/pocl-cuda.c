@@ -240,6 +240,8 @@ pocl_cuda_uninit(cl_device_id device)
 cl_int
 pocl_cuda_alloc_mem_obj(cl_device_id device, cl_mem mem_obj, void *host_ptr)
 {
+  cuCtxSetCurrent(((pocl_cuda_device_data_t*)device->data)->context);
+
   CUresult result;
   void *b = NULL;
 
@@ -307,6 +309,8 @@ pocl_cuda_alloc_mem_obj(cl_device_id device, cl_mem mem_obj, void *host_ptr)
 
 void pocl_cuda_free(cl_device_id device, cl_mem mem_obj)
 {
+  cuCtxSetCurrent(((pocl_cuda_device_data_t*)device->data)->context);
+
   void* ptr = mem_obj->device_ptrs[device->dev_id].mem_ptr;
   cuMemFree((CUdeviceptr)ptr);
 }
@@ -366,6 +370,8 @@ void
 pocl_cuda_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
                          cl_device_id device)
 {
+  cuCtxSetCurrent(((pocl_cuda_device_data_t*)device->data)->context);
+
   CUresult result;
 
   // Check if we already have a compiled kernel function
@@ -407,6 +413,8 @@ pocl_cuda_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
 void
 pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
 {
+  cuCtxSetCurrent(((pocl_cuda_device_data_t*)cq->device->data)->context);
+
   CUresult result;
 
   POCL_UPDATE_EVENT_SUBMITTED(&node->event);
@@ -530,6 +538,8 @@ pocl_cuda_flush(cl_device_id device, cl_command_queue cq)
 void
 pocl_cuda_join(cl_device_id device, cl_command_queue cq)
 {
+  cuCtxSetCurrent(((pocl_cuda_device_data_t*)device->data)->context);
+
   CUresult result = cuStreamSynchronize(0);
   CUDA_CHECK(result, "cuStreamSynchronize");
 }
