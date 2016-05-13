@@ -40,8 +40,12 @@ int main()
   // additionally, no objects involved in a command that waits on the user event should
   // be released before the event status is set; however, it should be possible to release
   // everything even if the status is set to something which is NOT CL_COMPLETE. So
-  // try both CL_COMPELTE and a negative value
+  // try both CL_COMPLETE and a negative value
   cl_int status[] = {CL_INVALID_EVENT, CL_COMPLETE };
+
+  // We also query for profiling info of the event, which according to the standard
+  // should return CL_PROFILING_INFO_NOT_AVAILABLE
+  cl_ulong queued, submitted, started, endtime;
 
   for (i = 0; i < ARRAY_SIZE(status); ++i) {
 	  cl_context context;
@@ -58,6 +62,20 @@ int main()
 	  TEST_ASSERT( user_evt );
 
 	  CHECK_CL_ERROR(clSetUserEventStatus(user_evt, status[i]));
+
+	  err = clGetEventProfilingInfo(user_evt, CL_PROFILING_COMMAND_QUEUED,
+		  sizeof(queued), &queued, NULL);
+	  TEST_ASSERT(err == CL_PROFILING_INFO_NOT_AVAILABLE);
+	  err = clGetEventProfilingInfo(user_evt, CL_PROFILING_COMMAND_SUBMIT,
+		  sizeof(submitted), &submitted, NULL);
+	  TEST_ASSERT(err == CL_PROFILING_INFO_NOT_AVAILABLE);
+	  err = clGetEventProfilingInfo(user_evt, CL_PROFILING_COMMAND_START,
+		  sizeof(started), &started, NULL);
+	  TEST_ASSERT(err == CL_PROFILING_INFO_NOT_AVAILABLE);
+	  err = clGetEventProfilingInfo(user_evt, CL_PROFILING_COMMAND_END,
+		  sizeof(endtime), &endtime, NULL);
+	  TEST_ASSERT(err == CL_PROFILING_INFO_NOT_AVAILABLE);
+
 	  CHECK_CL_ERROR(clReleaseEvent(user_evt));
 	  CHECK_CL_ERROR(clReleaseCommandQueue(queue));
 	  CHECK_CL_ERROR(clReleaseContext(context));
