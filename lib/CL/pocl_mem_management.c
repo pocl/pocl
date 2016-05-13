@@ -81,7 +81,7 @@ cl_event pocl_mem_manager_new_event ()
 
 void pocl_mem_manager_free_event (cl_event event)
 {
-  assert (event->status == CL_COMPLETE);
+  assert (event->status <= CL_COMPLETE);
   POCL_LOCK (mm->event_lock);
   LL_PREPEND (mm->event_list, event);
   POCL_UNLOCK(mm->event_lock);
