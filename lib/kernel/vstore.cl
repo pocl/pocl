@@ -108,6 +108,6 @@ IMPLEMENT_VSTORE(uint  , __private)
 IMPLEMENT_VSTORE(ulong , __private)
 #endif
 IMPLEMENT_VSTORE(float , __private)
-#if defined(cl_khr_fpt64)
+#if defined(cl_khr_fp64)
 IMPLEMENT_VSTORE(double, __private)
 #endif
