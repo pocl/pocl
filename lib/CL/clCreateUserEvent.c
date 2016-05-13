@@ -20,7 +20,6 @@ POname(clCreateUserEvent)(cl_context     context ,
       event->pocl_refcount = 1;
       event->status = CL_SUBMITTED;
       event->context = context;
-      event->time_queue = pocl_gettimemono_ns();
     }
 
   if (errcode_ret)

@@ -18,8 +18,6 @@ CL_API_SUFFIX__VERSION_1_1
   event->status = execution_status;
   if (execution_status == CL_COMPLETE)
     {
-      event->time_end = pocl_gettimemono_ns();
-      event->time_start = event->time_end;
       pocl_broadcast (event);
     }
   POCL_UNLOCK_OBJ (event);
