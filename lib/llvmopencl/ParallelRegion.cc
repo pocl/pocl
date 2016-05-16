@@ -160,8 +160,13 @@ ParallelRegion::remap(ValueToValueMapTy &map)
 
     for (BasicBlock::iterator ii = (*i)->begin(), ee = (*i)->end();
          ii != ee; ++ii)
+#ifdef LLVM_OLDER_THAN_3_9
       RemapInstruction(&*ii, map,
                        RF_IgnoreMissingEntries | RF_NoModuleLevelChanges);
+#else
+      RemapInstruction(&*ii, map,
+                       RF_IgnoreMissingLocals | RF_NoModuleLevelChanges);
+#endif
 
 #ifdef DEBUG_REMAP
     std::cerr << endl << "### block after remap: " << std::endl;
