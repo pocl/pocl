@@ -884,7 +884,9 @@ char* get_cpu_name() {
  * cl_program's options. */
 static llvm::TargetOptions GetTargetOptions() {
   llvm::TargetOptions Options;
+#ifdef LLVM_OLDER_THAN_3_9
   Options.PositionIndependentExecutable = true;
+#endif
   #ifdef HOST_FLOAT_SOFT_ABI
   Options.FloatABIType = FloatABI::Soft;
   #else
