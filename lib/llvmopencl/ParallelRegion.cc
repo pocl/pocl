@@ -687,7 +687,7 @@ ParallelRegion::InjectPrintF
   #else
   Constant* const_ptr_8 =
     ConstantExpr::getGetElementPtr
-    (PointerType::getUnqual(Type::getInt8Ty(getGlobalContext())), cast<Constant>(stringArg), const_ptr_8_indices);
+    (PointerType::getUnqual(Type::getInt8Ty(M->getContext())), cast<Constant>(stringArg), const_ptr_8_indices);
   #endif
 
   std::vector<Value*> args;
