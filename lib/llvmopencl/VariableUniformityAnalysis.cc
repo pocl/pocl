@@ -64,8 +64,14 @@ VariableUniformityAnalysis::VariableUniformityAnalysis() : FunctionPass(ID) {
 
 void
 VariableUniformityAnalysis::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+#ifdef LLVM_OLDER_THAN_3_9
   AU.addRequired<PostDominatorTree>();
   AU.addPreserved<PostDominatorTree>();
+#else
+  AU.addRequired<PostDominatorTreeWrapperPass>();
+  AU.addPreserved<PostDominatorTreeWrapperPass>();
+#endif
+
 #ifdef LLVM_OLDER_THAN_3_7
   AU.addRequired<LoopInfo>();
   AU.addPreserved<LoopInfo>();
@@ -208,8 +214,13 @@ VariableUniformityAnalysis::analyzeBBDivergence
 
   // Condition b)
   if (newPreviousUniformBB != bb) {
+#ifdef LLVM_OLDER_THAN_3_9
     llvm::PostDominatorTree *PDT = &getAnalysis<PostDominatorTree>();
     if (PDT->dominates(bb, previousUniformBB)) {
+#else
+    llvm::PostDominatorTreeWrapperPass *PDT = &getAnalysis<PostDominatorTreeWrapperPass>();
+    if (PDT->getPostDomTree().dominates(bb, previousUniformBB)) {
+#endif
       setUniform(f, bb, true);
       newPreviousUniformBB = bb;
     }
