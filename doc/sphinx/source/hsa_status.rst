@@ -1,29 +1,35 @@
 .. _hsa-status:
 
-HSA implementation status (as of April 2016)
-============================================
+HSA support implementation status as of 2016-05-17
+==================================================
 
-What’s implemented
+What’s Implemented
 ------------------
 
 * global/local/private memory
-* atomics, barriers
-* most of the OpenCL kernel library builtins
-* SVM (shared virtual memory)
+* barriers
+* most of the OpenCL 1.2 kernel builtins
+* OpenCL 2.0 shared virtual memory (SVM)
 * OpenCL 2.0 atomics
 
-What's missing
+What's Missing
 --------------
 
-* printf() is not implemented
+* printf() is not implemented, this should wait until we have a proper in-tree printf() in pocl with a stdout ring buffer
 * several builtins are not implemented yet (logb, remainder, nextafter); some are suboptimal or may give incorrect results with under/overflows (most of the builtins are taken from vecmathlib library, rewritten to fit HSAIL).
 * image support is not implemented
-* the support of new devices
-* support of 32bit HSA devices
+* support for GPU devices other than Kaveri; currently only Kaveri and phsa-based CPU Agents have been tested
+* support for 32bit HSA devices
 
-Shared Virtual Memory
----------------------
-OpenCL 2.0 SVM is a feature that lets you fully share memory between CPU and GPU including sharing pointers. Note that while SVM works in Pocl, one must carefully align all structs explicitly (both struct members and struct itself). For example, you can see this in Intel SVM examples:
+About the Shared Virtual Memory Implementation
+----------------------------------------------
+
+OpenCL 2.0 SVM is a feature that lets you share virtual memory between CPU and GPUs.
+Note that while SVM works in pocl, one must carefully align all structs explicitly (both struct
+members and struct itself). This is because the alignment of the structs with the host's
+compiler might differ from the one in the device.
+
+For example, you can see the issue in Intel's SVM examples:
 
 .. code-block:: c
 
@@ -34,8 +40,15 @@ OpenCL 2.0 SVM is a feature that lets you fully share memory between CPU and GPU
         float value;
     } Element;
 
-This *may* work with Intel's OpenCL SDK, but crashes with Pocl's HSA driver immediately. The reason is, Pocl compiles this header with two different compilers (gcc for host code, llvm-HSAIL compiler for GPU part)
-and they do NOT use the same alignment rules. The C standards specify almost nothing with regards to struct alignment in memory, so one must take care to explicitly specify alignment when using structs in shared memory. So the proper way to declare the struct would be:
+This *may* work with Intel's OpenCL SDK in case only using CPU devices, but crashes when offlodaing to HSA
+via pocl's HSA driver. The reason is that when using HSA, pocl compiles this header with two different
+compilers: usually gcc/clang for host C code and, llvm-HSAIL (Clang) for the device side,
+and they do *not* use the same alignment rules.
+
+The C standard specify almost nothing with regards to struct alignment in memory, so one must take care
+to explicitly specify alignment when using structs in shared memory.
+
+A proper way to declare the struct would be to utilize the widely supported 'aligned' attribute.
 
 .. code-block:: c
 
@@ -47,38 +60,56 @@ and they do NOT use the same alignment rules. The C standards specify almost not
     } Element __attribute__ ((aligned (32)));
 
 
-PHSA
+phsa
 ----
-This project (Portable HSA, https://github.com/HSAFoundation/phsa) aims to support generic CPUs as HSA devices.
-Aims to support all CPUs which have a gcc backend. Pocl supports this runtime as backend for its HSA driver.
 
+`Portable HSA (phsa) <https://github.com/HSAFoundation/phsa>`_ provides similar portable HSA implementation
+for CPUs/DSPs and other processors as pocl aims to do for OpenCL. Using phsa one can implement HSA Agent support
+for any processor which has a gcc backend with ease.
 
-Caveats/Bugs/missing features
-=============================
+pocl supports phsa as a backend for its HSA driver, thus any processor utilizing phsa for HSA Agent support
+can get OpenCL support via pocl. We used phsa for testing the HSA driver works with other devices and
+runtimes than AMD's.
 
-OpenCL 2.0 atomics
-------------------
-There is a "memory scope" parameter present in HSA, which applies to atomic memory instructions or memory fences. It's purpose is to limit the scope of these instructions. However, Pocl translates to HSAIL via LLVM bitcode, and the "atomicrmw" LLVM instruction only takes a memory order parameter, not scope.
-For this reason the memory scope in HSAIL is always "system".
+Known Issues
+============
 
-Multiple HSA device(agent) support
------------------------------------
-While multiple device support should not be a problem for Pocl, the HSA specification lacks the "loader" feature that e.g. OpenCL has in ICD. Thus support for devices is limited to what the linked HSA runtime supports.
+OpenCL 2.0 Atomics and HSA Memory Scope
+---------------------------------------
+
+There is a "memory scope" parameter present in HSA, which applies to atomic memory instructions or
+memory fences. Its purpose is to limit the scope of these instructions. However, pocl translates
+to HSAIL via LLVM bitcode, and the "atomicrmw" LLVM instruction only takes a memory order parameter, not scope.
+For this reason the memory scope in HSAIL is always the widest "system" scope.
+
+Multiple HSA Agent Support
+--------------------------
+
+While multiple OpenCL device support is not a problem for pocl, the HSA 1.0 specification lacks a "loader/proxy"
+feature that OpenCL has in ICD. Thus, support for devices is limited to what the linked HSA runtime supports.
+
+Currently, if one wants to control multiple HSA Agents as multiple pocl OpenCL devices, one needs to implement
+a HSA runtime that lists all the Agents to pocl. There is no capability to load multiple HSA runtimes in pocl
+as we consider it out of scope and a job for a proxy HSA runtime similar to ICD.
 
 Performance
 ===========
 
-Setup
------
+We conducted preliminary benchmarking with a set of test cases to serve as a basis for future optimization
+efforts.
+
+Evaluation Setup
+----------------
+
 Hardware: AMD A10-7800, 8GB 1600Mhz of dual-channel memory, TDP set to 65W
 
 * Configuration 1: Windows 10 x86-64, AMD Crimson drivers
 * Configuration 2: Ubuntu 15.04 x86-64, kernel 4.0.0 & runtime 1.0.3 from https://github.com/HSAFoundation
 
-Tests: from AMD SDK 3.0 samples/opencl/bin/x86_64
-Tests were run with -i (iterations) parameter ranging from 10 to 200 (slower tests were ran with fewer iterations).
+Test applications from AMD SDK 3.0 samples/opencl/bin/x86_64. The tests were run with -i (iterations)
+parameter ranging from 10 to 200 (longer tests were ran with fewer iterations).
 
-Performance generally lags behind proprietary AMD's OpenCL on Windows by a factor of 1x to 5x
+The performance currently lags behind the AMD's proprietary OpenCL on Windows by a factor of 1x to 5x
 
 ===================================================  ==============  ======================  =============== ============= =============================
 AMD SDK example with arguments                       AMD runtime(s)  other(GB/s,opts/s etc)  POCL runtime(s) other         POCL/AMD (>1.0 = POCL slower)
@@ -96,8 +127,40 @@ Reduction -q -t -x 100000000                         0.1108          -          
 SimpleConvolution -q -t -x 204800                    0.1056          0.565378                0.1154          1.68136       2.973
 ===================================================  ==============  ======================  =============== ============= =============================
 
-The first issue is, we have recently introduced out-of-order queues in Pocl, thus the driver model changed significantly, and has not yet been fully optimized.
-There is ongoing work in this area. This issue (Pocl overhead) may be the reason why extremely short kernels like QuasiRandomSequence are >5x slower.
+We briefly analyzed the bottlenecks and the first clear issue is that we have recently introduced out-of-order queues
+in pocl, and the driver layer changed significantly with this regard, and it has not yet been fully optimized for HSA.
+There is ongoing work in this area. The slow kernel launches may be the reason why extremely short kernels like QuasiRandomSequence
+are >5x slower.
 
-The other issue is that the HSAIL compiler is likely producing suboptimal code. If we take MatrixMultiplication as an example, the GPU code produced by the proprietary AMD OpenCL driver on windows uses 76 VGPRs, 26 SGPRs and has no spills. The HSAIL from pocl contains about 70 spills. While the HSA PRM (programmer's reference manual) states "the finalizer might be able to deploy extra hardware registers and remove the spills", it's likely not successful in this case.
-This may change when AMD releases a better HSAIL compiler/finalizer.
+The other major issue is that the LLVM 3.7 based HSAIL compiler is sometimes producing clearly suboptimal code. If we take
+MatrixMultiplication as an example, the GPU code generated by the proprietary AMD OpenCL driver on windows uses 76 VGPRs, 26 SGPRs and
+has no spills. The HSAIL code from pocl contains about 70 spills! While the HSA PRM (programmer's reference manual) states "the
+finalizer might be able to deploy extra hardware registers and remove the spills", it's likely not successful in this case, assuming
+AMD's HSAIL finalizer is putting only minimal effort to optimize the code to provide fast finalization times.
+
+This hopefully will change when the HSAIL is updated to later LLVM versions and its main bottlenecks are optimized, or in case
+AMD does optimization in the finalization of the suboptimal HSAIL input.
+
+Credits
+=======
+
+The current implementation was mainly done by our `Customized Parallel Computing <http://cpc.cs.tut.fi>`_ group of
+Tampere University of Technology, Finland with early prototype code contributions from the Programming Language Lab
+at National Tsing-Hua University, Hsinchu, Taiwan.
+
+CPC group thanks HSA Foundation and ARTEMIS JU (under grant agreement no 621439, ALMARVI) for funding
+this initial pocl HSA driver work. This driver added GPU device support to pocl for the first time, and, on the
+other hand, produced an easier path for HSA-supported devices to implement the OpenCL API by utilizing the pocl
+code base as a starting point.
+
+In the future we hope to see more effort put in optimizing the results to reach the performance of the
+proprietary SDKs on HSA devices.
+
+
+
+
+
+
+
+
+
