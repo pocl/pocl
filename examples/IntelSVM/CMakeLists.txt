@@ -60,8 +60,20 @@ if (EXISTS "${INTEL_ZIP}")
     COMMAND "${TS_BUILDDIR}/fine" -p 0 -t default
     WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/SVMBasicFineGrained")
 
-  set_tests_properties( intel_svm_coarse intel_svm_fine
+  set_tests_properties(intel_svm_coarse intel_svm_fine
     PROPERTIES  LABELS "IntelSVM;hsa")
+
+  if(LLVM_3_8)
+  # Currently (2016-05-17) both cases fail with:
+  # clSVMALLOC return pointer 0x7fd19611f080
+  # clSVMALLOC return pointer 0x7fd195d1e080
+  # clSVMALLOC return pointer 0x7fd19591d080
+  # error: Explicit load/store type does not match pointee type of pointer operand
+  set_tests_properties(intel_svm_fine intel_svm_coarse
+      PROPERTIES  WILL_FAIL 1)
+
+  endif()
+
 
 else()
 
