@@ -52,7 +52,7 @@ Installing prerequisite software
     mkdir build
     cd build
     cmake .. -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=HSAIL \
-    -DBUILD_SHARED_LIBS=off -DSINGLE_LLVM_LIB=off -DCMAKE_INSTALL_PREFIX=INSTALL_DIR \
+    -DBUILD_SHARED_LIBS=off -DCMAKE_INSTALL_PREFIX=INSTALL_DIR \
     -DLLVM_ENABLE_RTTI=on -DLLVM_BUILD_LLVM_DYLIB=on -DLLVM_ENABLE_EH=ON -DHSAIL_USE_LIBHSAIL=OFF
 
   ``-DHSAIL_USE_LIBHSAIL=OFF`` is only for safety. If you accidentally build clang with libHSAIL,
@@ -82,22 +82,14 @@ Installing prerequisite software
 4) Build pocl
 ~~~~~~~~~~~~~
 
-  Using autotools::
+  Using cmake::
 
-    ./configure --with-hsa-runtime-dir=\</opt/hsa\> \
-    LLVM_CONFIG=<hsail-built-llvm-dir>/bin/llvm-config \
-    HSAILASM=\<path/to/HSAILasm\>
-
-  You can omit LLVM_CONFIG and HSAILASM in case you installed the LLVM and
-  HSAILasm to somewhere in PATH in the above steps.
-
-  Or using cmake::
-
+    mkdir build ; cd build
     cmake -DENABLE_HSA=ON -DWITH_HSA_RUNTIME_DIR=\</opt/hsa\> \
-    -DWITH_HSAILASM_PATH=\<path/to/HSAILasm\>
+    -DWITH_HSAILASM_PATH=\<path/to/HSAILasm\> -DSINGLE_LLVM_LIB=off ..
 
-  Both should result in "hsa" appearing in pocl's targets to build ("OCL_TARGETS"
-  in cmake output, "Enabled device drivers:" in autoconf output)
+  It should result in "hsa" appearing in pocl's targets to build. ``-DSINGLE_LLVM_LIB=off``
+  workarounds an LLVM 3.7 build system issue.
 
 5) Run tests & play around
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -105,8 +97,7 @@ Installing prerequisite software
   After building pocl, you can smoke test the HSA driver by executing the HSA
   tests of the pocl testsuite::
 
-    make check TESTSUITEFLAGS="-k hsa"
-
+    ../tools/scripts/run_hsa_tests
 
 HSA Support notes
 ------------------
