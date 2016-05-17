@@ -138,8 +138,8 @@ has no spills. The HSAIL code from pocl contains about 70 spills! While the HSA 
 finalizer might be able to deploy extra hardware registers and remove the spills", it's likely not successful in this case, assuming
 AMD's HSAIL finalizer is putting only minimal effort to optimize the code to provide fast finalization times.
 
-This hopefully will change when the HSAIL is updated to later LLVM versions and its main bottlenecks are optimized, or in case
-AMD does optimization in the finalization of the suboptimal HSAIL input.
+This hopefully will change when LLVM-HSAIL is updated to later LLVM versions and its main bottlenecks are optimized, or in case
+new AMD SDK versions do optimization in the finalization of the suboptimal HSAIL input.
 
 Credits
 =======
