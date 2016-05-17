@@ -111,9 +111,6 @@ POname(clSVMAlloc)(cl_context context,
   /* There was a failure to allocate resources */
   POCL_RETURN_ERROR_ON((errcode != CL_SUCCESS), NULL,
                        "Failed to allocate the memory: %u\n", errcode);
-  
-  printf("clSVMALLOC return pointer %p\n", 
-         device_ptrs[dev->global_mem_id].mem_ptr);
   return device_ptrs[dev->global_mem_id].mem_ptr;
 
 }
