@@ -23,6 +23,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl.h"
 #include <assert.h>
 #include <string.h>
 #include <sys/types.h>
@@ -70,7 +71,7 @@ static const char cl_parameters_not_yet_supported_by_clang[] =
 #define MEM_ASSERT(x, err_jmp) do{ if (x){errcode = CL_OUT_OF_HOST_MEMORY;goto err_jmp;}} while(0)
 
 // append token, growing modded_options, if necessary, by max(strlen(token)+1, 256)
-#define APPEND_TOKEN() do { \
+#define APPEND_TOKEN() do {          \
   size_t needed = strlen(token) + 1; \
   if (size <= (i + needed)) { \
     size_t grow_by = needed > 256 ? needed : 256; \
@@ -209,7 +210,7 @@ CL_API_SUFFIX__VERSION_1_0
         {
           /* check if parameter is supported compiler parameter */
           if (memcmp (token, "-cl", 3) == 0 || memcmp (token, "-w", 2) == 0 
-              || memcmp(token, "-g", 2) == 0 || memcmp(token, "-Werror", 7) == 0)
+              || memcmp(token, "-Werror", 7) == 0)
             {
               if (strstr (cl_parameters, token))
                 {
@@ -228,6 +229,12 @@ CL_API_SUFFIX__VERSION_1_0
                   errcode = CL_INVALID_BUILD_OPTIONS;
                   goto ERROR_CLEAN_OPTIONS;
                 }
+            }
+          else if (memcmp(token, "-g", 2) == 0)
+            {
+#ifndef LLVM_OLDER_THAN_3_8
+              token = "-debug-info-kind=line-tables-only";
+#endif
             }
           else if (memcmp (token, "-D", 2) == 0 || memcmp (token, "-I", 2) == 0)
             {
