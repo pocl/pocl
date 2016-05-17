@@ -52,8 +52,8 @@ Installing prerequisite software
     mkdir build
     cd build
     cmake .. -DLLVM_EXPERIMENTAL_TARGETS_TO_BUILD=HSAIL \
-    -DBUILD_SHARED_LIBS=off -DCMAKE_INSTALL_PREFIX=INSTALL_DIR -DLLVM_ENABLE_RTTI=on \
-    -DLLVM_BUILD_LLVM_DYLIB=on -DLLVM_ENABLE_EH=ON -DHSAIL_USE_LIBHSAIL=OFF
+    -DBUILD_SHARED_LIBS=off -DSINGLE_LLVM_LIB=off -DCMAKE_INSTALL_PREFIX=INSTALL_DIR \
+    -DLLVM_ENABLE_RTTI=on -DLLVM_BUILD_LLVM_DYLIB=on -DLLVM_ENABLE_EH=ON -DHSAIL_USE_LIBHSAIL=OFF
 
   ``-DHSAIL_USE_LIBHSAIL=OFF`` is only for safety. If you accidentally build clang with libHSAIL,
   it will cause mysterious link errors later when building pocl.
