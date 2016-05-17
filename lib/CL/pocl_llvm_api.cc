@@ -289,6 +289,7 @@ int pocl_llvm_build_program(cl_program program,
   ss << "-Dinline= ";
   // The current directory is a standard search path.
   ss << "-I. ";
+
   // required for clGetKernelArgInfo()
   ss << "-cl-kernel-arg-info ";
 
@@ -316,15 +317,14 @@ int pocl_llvm_build_program(cl_program program,
   int cl_std_major = temp.c_str()[pos] - '0';
   int cl_std_minor = temp.c_str()[pos+2] - '0';
   int cl_std_i = cl_std_major * 100 + cl_std_minor * 10;
-  // if (cl_std_i != 10) && (cl_std != 11) && (cl_std != 12) (cl_std != 20)
   ss << "-D__OPENCL_C_VERSION__=" << cl_std_i << " ";
 
   /* With fp-contract we get calls to fma with processors which do not
-      have fma instructions. These ruin the performance. Better to have
-      the mul+add separated in the IR. */
+     have fma instructions. These ruin the performance. Better to have
+     the mul+add separated in the IR. */
   ss << "-fno-builtin -ffp-contract=off ";
   // This is required otherwise the initialization fails with
-  // unknown triplet ''
+  // unknown triple ''
   ss << "-triple=" << device->llvm_target_triplet << " ";
   if (device->llvm_cpu != NULL)
     ss << "-target-cpu " << device->llvm_cpu << " ";
@@ -435,7 +435,6 @@ int pocl_llvm_build_program(cl_program program,
   poo.ShowCPP = 1;
   poo.ShowComments = 0;
   poo.ShowLineMarkers = 0;
-  //poo.UseLineDirectives = 0;   // probably LLVM 3.7 thing
   poo.ShowMacroComments = 0;
   poo.ShowMacros = 1;
   poo.RewriteIncludes = 0;
@@ -1175,14 +1174,6 @@ static PassManager& kernel_compiler_passes
               assert(O && "could not find LLVM option 'scalarize-load-store'");
               O->addOccurrence(1, StringRef("scalarize-load-store"), StringRef(""), false); 
             }
-
-#ifdef DEBUG_POCL_LLVM_API        
-          printf ("### autovectorizer enabled\n");
-
-          O = opts["debug-only"];
-          assert(O && "could not find LLVM option 'debug'");
-          O->addOccurrence(1, StringRef("debug-only"), StringRef("loop-vectorize"), false); 
-#endif
 
           if (pocl_get_bool_option("POCL_VECTORIZER_REMARKS", 0) == 1) {
             // Enable diagnostics from the loop vectorizer.
