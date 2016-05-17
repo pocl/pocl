@@ -39,7 +39,11 @@
 #include "Workgroup.h"
 #include "LLVMUtils.h"
 
+#include "pocl_cl.h"
+
 #define DEBUG_TARGET_ADDRESS_SPACES
+
+extern cl_device_id currentPoclDevice;
 
 namespace pocl {
 
@@ -458,7 +462,7 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
 
   std::map<unsigned, unsigned> addrSpaceMapDown;
 
-  llvm::StringRef arch(M.getTargetTriple());
+  llvm::StringRef arch = currentPoclDevice->llvm_target_triplet;
 
   if (arch.startswith("x86_64")) {
     /* x86_64 supports flattening the address spaces at the backend, but
