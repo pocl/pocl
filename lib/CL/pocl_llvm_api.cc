@@ -370,8 +370,14 @@ int pocl_llvm_build_program(cl_program program,
     }
   
   LangOptions *la = pocl_build.getLangOpts();
+#ifdef LLVM_OLDER_THAN_3_9
   pocl_build.setLangDefaults
     (*la, clang::IK_OpenCL, clang::LangStandard::lang_opencl12);
+#else
+  llvm::Triple triple(device->llvm_target_triplet);
+  pocl_build.setLangDefaults
+    (*la, clang::IK_OpenCL, triple, clang::LangStandard::lang_opencl12);
+#endif
   
   // LLVM 3.3 and older do not set that char is signed which is
   // defined by the OpenCL C specs (but not by C specs).
@@ -877,7 +883,9 @@ char* get_cpu_name() {
  * cl_program's options. */
 static llvm::TargetOptions GetTargetOptions() {
   llvm::TargetOptions Options;
+#ifdef LLVM_OLDER_THAN_3_9
   Options.PositionIndependentExecutable = true;
+#endif
   #ifdef HOST_FLOAT_SOFT_ABI
   Options.FloatABIType = FloatABI::Soft;
   #else

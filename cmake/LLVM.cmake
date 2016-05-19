@@ -619,7 +619,7 @@ if(NOT DEFINED ${CACHE_VAR_NAME})
        if( argc < 2 )
          exit(2);
 
-       llvm::LLVMContext &context = llvm::getGlobalContext();
+       llvm::LLVMContext context;
        llvm::SMDiagnostic err;
        std::unique_ptr<llvm::Module> module = llvm::parseIRFile( argv[1], err, context );
 

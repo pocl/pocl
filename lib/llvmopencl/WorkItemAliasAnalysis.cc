@@ -35,7 +35,9 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "pocl.h"
 
 #include "llvm/Analysis/AliasAnalysis.h"
-#include "llvm/Analysis/TargetLibraryInfo.h"
+#ifndef LLVM_OLDER_THAN_3_7
+# include "llvm/Analysis/TargetLibraryInfo.h"
+#endif
 #include "llvm/Analysis/Passes.h"
 #include "llvm/Pass.h"
 #include "llvm/IR/Metadata.h"
@@ -104,12 +106,21 @@ class WorkItemAAResult : public AAResultBase<WorkItemAAResult> {
 public:
     static char ID;
 
+#ifdef LLVM_OLDER_THAN_3_9
     WorkItemAAResult(const TargetLibraryInfo &TLI)
         : AAResultBase(TLI) {}
     WorkItemAAResult(const WorkItemAAResult &Arg)
         : AAResultBase(Arg.TLI) {}
     WorkItemAAResult(WorkItemAAResult &&Arg)
         : AAResultBase(Arg.TLI) {}
+#else
+    WorkItemAAResult(const TargetLibraryInfo &TLI)
+        : AAResultBase() {}
+    WorkItemAAResult(const WorkItemAAResult &Arg)
+        : AAResultBase() {}
+    WorkItemAAResult(WorkItemAAResult &&Arg)
+        : AAResultBase() {}
+#endif
 
     AliasResult alias(const MemoryLocation &LocA, const MemoryLocation &LocB);
 };

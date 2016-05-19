@@ -73,7 +73,11 @@ namespace pocl {
     
     llvm::BasicBlock* firstNonBackedgePredecessor(llvm::BasicBlock *bb);
 
+#ifdef LLVM_OLDER_THAN_3_9
     llvm::PostDominatorTree *PDT;
+#else
+    llvm::PostDominatorTreeWrapperPass *PDT;
+#endif
 
   };
 }

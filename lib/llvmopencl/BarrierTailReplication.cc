@@ -413,8 +413,13 @@ BarrierTailReplication::UpdateReferences(const BasicBlockVector &graph,
     for (BasicBlock::iterator i2 = b->begin(), e2 = b->end();
          i2 != e2; ++i2) {
       Instruction *i = &*i2;
+#ifdef LLVM_OLDER_THAN_3_9
       RemapInstruction(i, reference_map,
                        RF_IgnoreMissingEntries | RF_NoModuleLevelChanges);
+#else
+      RemapInstruction(i, reference_map,
+                       RF_IgnoreMissingLocals | RF_NoModuleLevelChanges);
+#endif
     }
   }
 }

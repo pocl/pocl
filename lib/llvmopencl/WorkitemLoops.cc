@@ -72,8 +72,12 @@ char WorkitemLoops::ID = 0;
 void
 WorkitemLoops::getAnalysisUsage(AnalysisUsage &AU) const
 {
-
+#ifdef LLVM_OLDER_THAN_3_9
   AU.addRequired<PostDominatorTree>();
+#else
+  AU.addRequired<PostDominatorTreeWrapperPass>();
+#endif
+
 #ifdef LLVM_OLDER_THAN_3_7
   AU.addRequired<LoopInfo>();
 #else
@@ -106,7 +110,12 @@ WorkitemLoops::runOnFunction(Function &F)
 #else
   LI = &getAnalysis<LoopInfoWrapperPass>();
 #endif
+
+#ifdef LLVM_OLDER_THAN_3_9
   PDT = &getAnalysis<PostDominatorTree>();
+#else
+  PDT = &getAnalysis<PostDominatorTreeWrapperPass>();
+#endif
 
   tempInstructionIndex = 0;
 
