@@ -32,6 +32,8 @@ you compile & build LLVM with ``make REQUIRES_RTTI=1``, as follows:
   of pocl release, **plus the previous** LLVM version. All older LLVM
   versions are unsupported.
 
+  [18 May 2016] pocl has been updated for LLVM trunk (rev 269957)
+
 
 Configure & Build using autotools
 ---------------------------------
