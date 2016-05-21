@@ -74,9 +74,9 @@ int pocl_ptx_gen(const char *bc_filename,
   }
 
   // Load bitcode
+  llvm::LLVMContext context;
   llvm::ErrorOr<std::unique_ptr<llvm::Module>> module =
-    parseBitcodeFile(buffer->get()->getMemBufferRef(),
-    llvm::getGlobalContext());
+    parseBitcodeFile(buffer->get()->getMemBufferRef(), context);
   if (!module)
   {
     POCL_MSG_ERR("[CUDA] ptx-gen: failed to load bitcode\n");
@@ -148,7 +148,7 @@ int pocl_ptx_gen(const char *bc_filename,
 
 void pocl_add_kernel_annotations(llvm::Module *module)
 {
-  llvm::LLVMContext& context = llvm::getGlobalContext();
+  llvm::LLVMContext& context = module->getContext();
 
   // Remove nvvm.annotations metadata since it is sometimes corrupt
   llvm::NamedMDNode *nvvm_annotations =
@@ -208,7 +208,7 @@ void pocl_cuda_fix_printf(llvm::Module *module)
   if (!cl_printf)
     return;
 
-  llvm::LLVMContext& context = llvm::getGlobalContext();
+  llvm::LLVMContext& context = module->getContext();
   llvm::Type *i32 = llvm::Type::getInt32Ty(context);
   llvm::Type *i64 = llvm::Type::getInt64Ty(context);
   llvm::Type *i64ptr = llvm::PointerType::get(i64, 0);
@@ -407,8 +407,7 @@ void pocl_cuda_link_libdevice(llvm::Module *module,
 
   // Load libdevice bitcode library
   llvm::ErrorOr<std::unique_ptr<llvm::Module>> libdevice_module =
-    parseBitcodeFile(buffer->get()->getMemBufferRef(),
-    llvm::getGlobalContext());
+    parseBitcodeFile(buffer->get()->getMemBufferRef(), module->getContext());
   if (!libdevice_module)
     POCL_ABORT("[CUDA] failed to load libdevice bitcode\n");
 
@@ -448,7 +447,7 @@ void pocl_gen_local_mem_args(llvm::Module *module)
 {
   // TODO: Deal with non-kernel functions that take local memory arguments
 
-  llvm::LLVMContext& context = llvm::getGlobalContext();
+  llvm::LLVMContext& context = module->getContext();
 
   llvm::NamedMDNode *md_kernels = module->getNamedMetadata("opencl.kernels");
   if (!md_kernels)
@@ -551,7 +550,7 @@ void pocl_gen_local_mem_args(llvm::Module *module)
 
     // Update metadata with reference to new kernel
     auto new_md = llvm::ConstantAsMetadata::get(new_func);
-    llvm::MDNode *node = llvm::MDNode::get(llvm::getGlobalContext(), {new_md});
+    llvm::MDNode *node = llvm::MDNode::get(module->getContext(), {new_md});
     md_kernels->setOperand(i, node);
 
     // TODO: Deal with calls to this kernel from other function?
@@ -584,7 +583,7 @@ void pocl_insert_ptx_intrinsics(llvm::Module *module)
   };
   size_t num_intrinsics = sizeof(intrinsic_map)/sizeof(ptx_intrinsic_map_entry);
 
-  llvm::LLVMContext& context = llvm::getGlobalContext();
+  llvm::LLVMContext& context = module->getContext();
   llvm::Type *int32Ty = llvm::Type::getInt32Ty(context);
   llvm::FunctionType *intrinsic_type = llvm::FunctionType::get(int32Ty, false);
 
