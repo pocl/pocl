@@ -666,6 +666,7 @@ void pocl_map_libdevice_calls(llvm::Module *module)
     // TODO: rootn
     {"roundf", "__nv_roundf"},
     {"sinhf", "__nv_sinhf"},
+    {"sqrtf", "__nv_sqrtf"},
     {"tanf", "__nv_tanf"},
     {"tanhf", "__nv_tanhf"},
     {"truncf", "__nv_truncf"},
