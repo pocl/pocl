@@ -25,6 +25,7 @@
 
 #include "common.h"
 #include "pocl.h"
+#include "pocl_file_util.h"
 #include "pocl_runtime_config.h"
 #include "pocl-ptx-gen.h"
 
@@ -130,10 +131,9 @@ int pocl_ptx_gen(const char *bc_filename,
   llvm::legacy::PassManager passes;
 
   // Add pass to emit PTX
-  std::error_code ec;
-  llvm::raw_fd_ostream *ptx =
-    new llvm::raw_fd_ostream(ptx_filename, ec, llvm::sys::fs::F_Text);
-  if (machine->addPassesToEmitFile(passes, *ptx,
+  llvm::SmallVector<char, 4096> data;
+  llvm::raw_svector_ostream ptx_stream(data);
+  if (machine->addPassesToEmitFile(passes, ptx_stream,
                                    llvm::TargetMachine::CGFT_AssemblyFile))
   {
     POCL_MSG_ERR("[CUDA] ptx-gen: failed to add passes\n");
@@ -143,7 +143,8 @@ int pocl_ptx_gen(const char *bc_filename,
   // Run passes
   passes.run(**module);
 
-  return 0;
+  std::string ptx = ptx_stream.str(); // flush
+  return pocl_write_file(ptx_filename, ptx.c_str(), ptx.size(), 0, 0);
 }
 
 void pocl_add_kernel_annotations(llvm::Module *module)
