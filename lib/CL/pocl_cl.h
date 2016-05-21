@@ -570,6 +570,8 @@ struct _cl_mem {
   /* in case this is a sub buffer, this points to the parent
      buffer */
   cl_mem_t *parent;
+  /* A linked list of destructor callbacks */
+  mem_destructor_callback_t *destructor_callbacks;
 
   /* Image flags */
   cl_bool                 is_image;

@@ -62,6 +62,14 @@ struct _mem_mapping {
   mem_mapping_t *prev, *next;
 };
 
+typedef struct _mem_destructor_callback mem_destructor_callback_t;
+/* represents a memory object destructor callback */
+struct _mem_destructor_callback {
+  void (CL_CALLBACK * pfn_notify)(cl_mem, void*); /* callback function */
+  void *user_data; /* user supplied data passed to callback function */
+  mem_destructor_callback_t *prev, *next;
+};
+
 // Command Queue datatypes
 
 // clEnqueueNDRangeKernel
