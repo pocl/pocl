@@ -67,7 +67,7 @@ typedef struct _mem_destructor_callback mem_destructor_callback_t;
 struct _mem_destructor_callback {
   void (CL_CALLBACK * pfn_notify)(cl_mem, void*); /* callback function */
   void *user_data; /* user supplied data passed to callback function */
-  mem_destructor_callback_t *prev, *next;
+  mem_destructor_callback_t *next;
 };
 
 // Command Queue datatypes
