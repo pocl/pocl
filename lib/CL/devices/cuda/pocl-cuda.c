@@ -270,10 +270,11 @@ pocl_cuda_alloc_mem_obj(cl_device_id device, cl_mem mem_obj, void *host_ptr)
     }
     else if (flags & CL_MEM_ALLOC_HOST_PTR)
     {
-      void *ptr;
-      result = cuMemHostAlloc(&ptr, mem_obj->size, CU_MEMHOSTREGISTER_DEVICEMAP);
+      result = cuMemHostAlloc(&mem_obj->mem_host_ptr, mem_obj->size,
+                              CU_MEMHOSTREGISTER_DEVICEMAP);
       CUDA_CHECK(result, "cuMemHostAlloc");
-      result = cuMemHostGetDevicePointer((CUdeviceptr*)&b, ptr, 0);
+      result = cuMemHostGetDevicePointer((CUdeviceptr*)&b,
+                                         mem_obj->mem_host_ptr, 0);
       CUDA_CHECK(result, "cuMemHostGetDevicePointer");
     }
     else
