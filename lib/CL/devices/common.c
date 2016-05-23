@@ -390,13 +390,12 @@ pocl_exec_command (_cl_command_node * volatile node)
           /* Assume the region is automatically up to date. */
         } else 
         {
-          /* TODO: fixme. The offset computation must be done at the device 
-             driver. */
           if (node->device->ops->unmap_mem != NULL)        
             node->device->ops->unmap_mem
               (node->device->data, 
                (node->command.unmap.mapping)->host_ptr, 
                (node->command.unmap.memobj)->device_ptrs[node->device->dev_id].mem_ptr, 
+               (node->command.unmap.mapping)->offset,
                (node->command.unmap.mapping)->size);
         }
       DL_DELETE((node->command.unmap.memobj)->mappings, 
@@ -488,7 +487,7 @@ pocl_exec_command (_cl_command_node * volatile node)
       else
         node->device->ops->unmap_mem
           (node->device->data, NULL,
-           node->command.svm_unmap.svm_ptr, 0);
+           node->command.svm_unmap.svm_ptr, 0, 0);
       POCL_UPDATE_EVENT_COMPLETE(event);
       POCL_DEBUG_EVENT_TIME(event, "SVM Unmap             ");
       break;
