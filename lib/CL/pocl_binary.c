@@ -447,9 +447,6 @@ deserialize_file (unsigned char* buffer,
 
   pocl_write_file (fullpath, content, len, 0, 0);
 
-  POCL_MSG_PRINT_INFO ("wrote file %s (%d bytes)\n", fullpath, len);
-
-
 RET:
   free (content);
   return (buffer - orig_buffer);
