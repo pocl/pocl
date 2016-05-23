@@ -32,6 +32,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
   cl_mem parent = NULL;
   unsigned i;
   mem_mapping_t *mapping, *temp;
+  mem_destructor_callback_t *callback, *next_callback;
   cl_context context = memobj->context;
 
   POCL_RETURN_ERROR_COND((memobj == NULL), CL_INVALID_MEM_OBJECT);
@@ -82,6 +83,17 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
           POCL_MEM_FREE(memobj->mem_host_ptr);
         }
       POCL_MEM_FREE(memobj->device_ptrs);
+
+      /* Fire any registered destructor callbacks */
+      callback = memobj->destructor_callbacks;
+      while (callback)
+      {
+        callback->pfn_notify (memobj, callback->user_data);
+        next_callback = callback->next;
+        free (callback);
+        callback = next_callback;
+      }
+
       POCL_MEM_FREE(memobj);
 
       if (parent)
