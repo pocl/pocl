@@ -105,7 +105,8 @@
   void* pocl_##__DRV__##_map_mem (void *data, void *buf_ptr,         \
                         size_t offset, size_t size, void *host_ptr); \
   void* pocl_##__DRV__##_unmap_mem (void *data, void *host_ptr, \
-                                    void *device_start_ptr, size_t size); \
+                                    void *device_start_ptr, size_t offset, \
+                                    size_t size); \
   cl_ulong pocl_##__DRV__##_get_timer_value(void *data); \
   char* pocl_##__DRV__##_init_build (void *data); \
   char* pocl_##__DRV__##_build_hash (cl_device_id device); \

@@ -903,7 +903,7 @@ pocl_basic_map_mem (void *data, void *buf_ptr,
 
 void* pocl_basic_unmap_mem(void *data, void *host_ptr,
                            void *device_start_ptr,
-                           size_t size)
+                           size_t offset, size_t size)
 {
   return host_ptr;
 }
