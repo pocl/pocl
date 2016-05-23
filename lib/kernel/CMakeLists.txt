@@ -147,6 +147,7 @@ popcount.cl
 pow.cl
 pown.cl
 powr.cl
+prefetch.cl
 printf.c
 radians.cl
 read_image.cl
