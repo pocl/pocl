@@ -11,13 +11,14 @@ export OCL_ICD_VENDORS=$PWD/ocl-vendors
 # AMDSDK supports the overriding via other env name.
 export OPENCL_VENDOR_PATH=$OCL_ICD_VENDORS
 
-# for cmake, we don't need either of these
-if [ "$1" != "cmake" ]; then
-
-#pocl test-cases don't link against pthreads, but libpocl does.
-#this confuses gdb, unless we preload libpthread
-#If libpocl is not built yet, this will fail...
+# pocl test-cases don't link against pthreads, but libpocl does.
+# this confuses gdb unless we preload libpthread.
+# Not having this also makes cl2.hpp throw std::system_error exception for
+# an unknown reason (at least on Ubuntu 14.04 / gcc 4.8.4).
+# If libpocl is not built yet, this will fail...
 export LD_PRELOAD=$(ldd lib/CL/$libs_subdir/libpocl.so | grep pthread | cut -f 3 -d' ')
+
+if [ "$1" != "cmake" ]; then
 
 #make sure we use the new built pocl, not some installed version.
 #also, this is needed if the test binaries are run in gdb without the wrapper
