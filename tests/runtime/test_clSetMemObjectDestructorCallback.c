@@ -36,13 +36,13 @@ main(void)
   cl_context context = clCreateContext (NULL, 1, devices, NULL, NULL, &err);
   CHECK_OPENCL_ERROR_IN("clCreateContext");
 
-  cl_mem mem = clCreateBuffer(context, 0, 1024, NULL, &err);
+  cl_mem mem = clCreateBuffer (context, 0, 1024, NULL, &err);
   CHECK_OPENCL_ERROR_IN("clCreateBuffer");
 
-  err = clSetMemObjectDestructorCallback(mem, callback, (void*)FAKE_PTR);
+  err = clSetMemObjectDestructorCallback (mem, callback, (void*)FAKE_PTR);
   CHECK_OPENCL_ERROR_IN("clSetMemObjectDestructorCallback");
 
-  err = clReleaseMemObject(mem);
+  err = clReleaseMemObject (mem);
   CHECK_OPENCL_ERROR_IN("clReleaseMemObject");
 
   return EXIT_SUCCESS;
