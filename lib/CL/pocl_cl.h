@@ -793,7 +793,7 @@ struct _cl_sampler {
           pocl_update_command_queue(*(__event));                        \
         }                                                               \
         pocl_event_updated(*(__event), CL_COMPLETE);                    \
-        clReleaseEvent (*(__event));                                    \
+        POname(clReleaseEvent) (*(__event));                            \
       }                                                                 \
   } while (0)                                                           \
     
