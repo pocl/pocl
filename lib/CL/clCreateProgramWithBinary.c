@@ -50,6 +50,8 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
 
   POCL_GOTO_ERROR_COND((lengths == NULL), CL_INVALID_VALUE);
 
+  POCL_MSG_PRINT_INFO("creating a program with binary\n");
+
   for (i = 0; i < num_devices; ++i)
     {
       POCL_GOTO_ERROR_ON((lengths[i] == 0 || binaries[i] == NULL), CL_INVALID_VALUE,
@@ -137,28 +139,28 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
       else if (pocl_binary_check_binary(device_list[i], binaries[i]))
         {
           program->pocl_binary_sizes[i] = lengths[i];
-          program->pocl_binaries[i] = (unsigned char*) malloc(lengths[i]);
+          program->pocl_binaries[i] = (unsigned char*) malloc (lengths[i]);
           memcpy (program->pocl_binaries[i], binaries[i], lengths[i]);
 
-          pocl_binary_set_program_buildhash(program, i, binaries[i]);
-          int error = pocl_cache_create_program_cachedir(program, i,
-                                                     NULL, 0, program_bc_path);
+          pocl_binary_set_program_buildhash (program, i, binaries[i]);
+          int error = pocl_cache_create_program_cachedir
+            (program, i, NULL, 0, program_bc_path);
           POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
                              "Could not create program cachedir");
-          void* write_cache_lock = pocl_cache_acquire_writer_lock_i(program, i);
-          assert(write_cache_lock);
-          POCL_GOTO_ERROR_ON(pocl_binary_deserialize(program, i),
+          void* write_cache_lock = pocl_cache_acquire_writer_lock_i (program, i);
+          assert (write_cache_lock);
+          POCL_GOTO_ERROR_ON(pocl_binary_deserialize (program, i),
                              CL_INVALID_BINARY,
                              "Could not unpack a pocl binary\n");
-          pocl_cache_release_lock(write_cache_lock);
+          pocl_cache_release_lock (write_cache_lock);
 
           if (binary_status != NULL)
             binary_status[i] = CL_SUCCESS;
-        } 
+        }
       /* Unknown binary */
-      else 
+      else
         {
-          if (binary_status != NULL) 
+          if (binary_status != NULL)
             binary_status[i] = CL_INVALID_BINARY;
           errcode = CL_INVALID_BINARY;
           goto ERROR_CLEAN_PROGRAM_AND_BINARIES;

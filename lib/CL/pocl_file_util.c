@@ -63,22 +63,22 @@ pocl_rm_rf(const char* path)
 
 
 int
-pocl_mkdir_p(const char* path) 
+pocl_mkdir_p (const char* path)
 {
   int error;
   int errno_tmp;
-  error = mkdir(path, S_IRWXU);
+  error = mkdir (path, S_IRWXU);
   if (error && errno == ENOENT)
     { // creates all needed directories recursively
       char *previous_path;
-      int previous_path_length = strrchr(path, '/') - path;
-      previous_path = malloc(previous_path_length + 1);
-      strncpy(previous_path, path, previous_path_length);
-      previous_path[previous_path_length]='\0';
-      pocl_mkdir_p((const char*)previous_path);
-      free(previous_path);
-      error = mkdir(path, S_IRWXU);
-    } 
+      int previous_path_length = strrchr (path, '/') - path;
+      previous_path = malloc (previous_path_length + 1);
+      strncpy (previous_path, path, previous_path_length);
+      previous_path[previous_path_length] = '\0';
+      pocl_mkdir_p ((const char*) previous_path);
+      free (previous_path);
+      error = mkdir (path, S_IRWXU);
+    }
   else if (error && errno == EEXIST)
     error = 0;
 

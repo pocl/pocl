@@ -114,7 +114,7 @@ program_compile_dynamic_wg_binaries(cl_program program)
   POCL_LOCK_OBJ(program);
 
   /* build the dynamic WG sized parallel.bc and device specific code,
- * for each kernel & device combo */
+   * for each kernel & device combo */
   for (device_i = 0; device_i < program->num_devices; ++device_i)
     {
       cl_device_id device = program->devices[device_i];
@@ -298,6 +298,7 @@ CL_API_SUFFIX__VERSION_1_0
       /* clCreateProgramWithSource */
       if (program->source)
         {
+          POCL_MSG_PRINT_INFO("building from sources for device %d\n", device_i);
 #ifdef OCS_AVAILABLE
           error = pocl_llvm_build_program(program, device_i,
                                           program->compiler_options,
@@ -315,6 +316,8 @@ CL_API_SUFFIX__VERSION_1_0
       /* clCreateProgramWithBinaries */
       else if (program->binaries[device_i])
         {
+          POCL_MSG_PRINT_INFO("building from a BC binary for device %d\n", device_i);
+
 #ifdef OCS_AVAILABLE
           error = pocl_cache_create_program_cachedir(program, device_i,
                                                      NULL, 0, program_bc_path);
@@ -340,13 +343,22 @@ CL_API_SUFFIX__VERSION_1_0
 #endif
         }
       else if (program->pocl_binaries[device_i])
-        /* TODO pocl_binaries[i] might contain program.bc */
-        continue;
-      /* fail */
+        {
+          POCL_MSG_PRINT_INFO("having a poclbinary for device %d\n", device_i);
+          /* TODO pocl_binaries[i] might contain program.bc */
+          continue;
+          /* fail */
+        }
       else
-        POCL_GOTO_ERROR_ON(1, CL_INVALID_BINARY, "Don't have sources and also no "
-                           "binaries for device %s - can't build the program\n",
-                           device->short_name);
+        {
+          POCL_MSG_PRINT_INFO("no sources nor binaries to build for device %d\n",
+                              device_i);
+          /* TODO pocl_binaries[i] might contain program.bc */
+
+          POCL_GOTO_ERROR_ON(1, CL_INVALID_BINARY,
+                             "No sources nor binaries for device %s - can't "
+                             "build the program\n", device->short_name);
+        }
 
 #ifdef OCS_AVAILABLE
       /* Read binaries from program.bc to memory */

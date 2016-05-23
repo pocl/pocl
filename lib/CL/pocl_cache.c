@@ -75,10 +75,11 @@ int pocl_cl_device_to_index(cl_program   program,
     return -1;
 }
 
-static void program_device_dir(char*        path,
-                              cl_program   program,
-                              unsigned     device_i,
-                              const char*        append_path) {
+static void program_device_dir(char *path,
+                               cl_program program,
+                               unsigned device_i,
+                               const char* append_path)
+{
     assert(path);
     assert(program);
     assert(device_i < program->num_devices);
@@ -95,7 +96,7 @@ void pocl_cache_program_path(char*        path,
                              cl_program   program,
                              unsigned     device_i)
 {
-  program_device_dir(path, program, device_i, "");
+  program_device_dir (path, program, device_i, "");
 }
 
 // required in llvm API
@@ -106,9 +107,14 @@ void pocl_cache_program_bc_path(char*        program_bc_path,
                        device_i, POCL_PROGRAM_BC_FILENAME);
 }
 
-static void pocl_cache_kernel_cachedir_path(char* kernel_cachedir_path, cl_program   program,
-                                 unsigned device_i, cl_kernel kernel, char* append_str,
-                                 size_t local_x, size_t local_y, size_t local_z)
+static void pocl_cache_kernel_cachedir_path (char* kernel_cachedir_path,
+                                             cl_program program,
+                                             unsigned device_i,
+                                             cl_kernel kernel,
+                                             char* append_str,
+                                             size_t local_x,
+                                             size_t local_y,
+                                             size_t local_z)
 {
   int bytes_written;
   char tempstring[POCL_FILENAME_LENGTH];
@@ -360,20 +366,20 @@ int pocl_cache_write_kernel_parallel_bc(void*        bc,
 }
 #endif
 
-int pocl_cache_make_kernel_cachedir_path(char*        kernel_cachedir_path,
-                                         cl_program   program,
-                                         cl_device_id device,
-                                         cl_kernel    kernel,
-                                         size_t       local_x,
-                                         size_t       local_y,
-                                         size_t       local_z) {
-    int index = pocl_cl_device_to_index(program, device);
-    assert(index >= 0);
+int pocl_cache_make_kernel_cachedir_path (char*        kernel_cachedir_path,
+                                          cl_program   program,
+                                          cl_device_id device,
+                                          cl_kernel    kernel,
+                                          size_t       local_x,
+                                          size_t       local_y,
+                                          size_t       local_z) {
+    int index = pocl_cl_device_to_index (program, device);
+    assert (index >= 0);
 
-    pocl_cache_kernel_cachedir_path(kernel_cachedir_path, program, index,
+    pocl_cache_kernel_cachedir_path (kernel_cachedir_path, program, index,
                                      kernel, "", local_x, local_y, local_z);
 
-    return pocl_mkdir_p(kernel_cachedir_path);
+    return pocl_mkdir_p (kernel_cachedir_path);
 }
 
 

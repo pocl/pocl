@@ -503,6 +503,8 @@ int pocl_llvm_build_program(cl_program program,
   /* Always retain program.bc. Its required in clBuildProgram */
   pocl_write_module(*mod, program_bc_path, 0);
 
+  POCL_MSG_PRINT_INFO("Wrote program.bc to %s.\n", program_bc_path);
+
   /* To avoid writing & reading the same back,
    * save program->binaries[i]
    */
@@ -523,7 +525,7 @@ int pocl_llvm_build_program(cl_program program,
 
 ERROR_BUILDLOG:
   pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
-    program_bc_path);
+                                     program_bc_path);
   get_build_log(program, device_i, ss_build_log, diagsBuffer, CI.getSourceManager());
   return CL_BUILD_PROGRAM_FAILURE;
 
@@ -1661,7 +1663,8 @@ pocl_llvm_codegen(cl_kernel kernel,
 
     PM.run(*input);
     std::string o = sos.str(); // flush
-    return pocl_write_file(outfilename, o.c_str(), o.size(), 0, 0);
+    POCL_MSG_PRINT_INFO("Writing code gen output to %s.\n", outfilename);
 
+    return pocl_write_file(outfilename, o.c_str(), o.size(), 0, 0);
 }
 /* vim: set ts=4 expandtab: */

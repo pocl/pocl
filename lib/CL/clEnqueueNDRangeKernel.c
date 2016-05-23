@@ -237,9 +237,9 @@ DETERMINE_LOCAL_SIZE:
     CL_INVALID_EVENT_WAIT_LIST);
 
   char cachedir[POCL_FILENAME_LENGTH];
-  pocl_cache_make_kernel_cachedir_path(cachedir, kernel->program,
-                                       realdev, kernel,
-                                       local_x, local_y, local_z);
+  pocl_cache_make_kernel_cachedir_path (cachedir, kernel->program,
+                                        realdev, kernel,
+                                        local_x, local_y, local_z);
 
   int realdev_i = pocl_cl_device_to_index(kernel->program, realdev);
   if (kernel->program->source || kernel->program->binaries[realdev_i])
@@ -350,7 +350,7 @@ DETERMINE_LOCAL_SIZE:
 
   command_node->type = CL_COMMAND_NDRANGE_KERNEL;
   command_node->command.run.data = command_queue->device->data;
-  command_node->command.run.tmp_dir = strdup(cachedir);
+  command_node->command.run.tmp_dir = strdup (cachedir);
   command_node->command.run.kernel = kernel;
   command_node->command.run.pc = pc;
   command_node->command.run.local_x = local_x;

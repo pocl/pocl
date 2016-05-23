@@ -697,10 +697,10 @@ pocl_check_dlhandle_cache (_cl_command_node *cmd)
     }
   else
     {
-      module_fn = malloc(POCL_FILENAME_LENGTH);
-      pocl_cache_final_binary_path(module_fn, p, dev_i, k, 0, 0, 0);
+      module_fn = malloc (POCL_FILENAME_LENGTH);
+      pocl_cache_final_binary_path (module_fn, p, dev_i, k, 0, 0, 0);
       POCL_MSG_PRINT_INFO("Using dynamic WG size binary: %s\n", module_fn);
-      if (!pocl_exists(module_fn))
+      if (!pocl_exists (module_fn))
         POCL_ABORT("Dynamic WG size binary does not exist\n");
     }
 
