@@ -55,6 +55,7 @@ EXCLUDE="$EXCLUDE|assigning_a_loop_iterator_variable_to_a_private_makes_it_local
 EXCLUDE="$EXCLUDE|assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_LOOPS$"
 EXCLUDE="$EXCLUDE|LoopVectorizer_crash_with_Haswell_and_Broadwell_-_issue_231$"
 EXCLUDE="$EXCLUDE|struct_kernel_arguments$"
+EXCLUDE="$EXCLUDE|infinite_loop_"
 EXCLUDE="$EXCLUDE|poclcc$"
 EXCLUDE="$EXCLUDE|^workgroup/"
 
