@@ -88,9 +88,9 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
       callback = memobj->destructor_callbacks;
       while (callback)
       {
-        callback->pfn_notify(memobj, callback->user_data);
+        callback->pfn_notify (memobj, callback->user_data);
         next_callback = callback->next;
-        free(callback);
+        free (callback);
         callback = next_callback;
       }
 
