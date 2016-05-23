@@ -18,6 +18,11 @@ in parallel programming on heterogeneous platforms.</p>
 
 <h1>News</h1>
 
+<h2>2016-05-23: HSA driver status update</h2>
+
+<p>In case you have been wondering what's the status of the pocl-hsa driver,
+<a href="/docs/html/hsa_status.html">here's a summary</a>.</p>
+
 <h2>2016-04-04: <a href="pocl-0.13.html">Portable Computing Language
 (pocl) v0.13 released</a></h2>
 
