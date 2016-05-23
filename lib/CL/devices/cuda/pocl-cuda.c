@@ -476,12 +476,12 @@ pocl_cuda_map_mem(void *data, void *buf_ptr,
 
 void* pocl_cuda_unmap_mem(void *data, void *host_ptr,
                           void *device_start_ptr,
-                          size_t size)
+                          size_t offset, size_t size)
 {
   if (host_ptr)
   {
     // TODO: offset?
-    CUresult result = cuMemcpyHtoD((CUdeviceptr)(device_start_ptr),
+    CUresult result = cuMemcpyHtoD((CUdeviceptr)(device_start_ptr+offset),
                                    host_ptr, size);
     CUDA_CHECK(result, "cuMemcpyHtoD");
     free(host_ptr);
