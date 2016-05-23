@@ -596,11 +596,11 @@ pocl_binary_deserialize(cl_program program, unsigned device_i)
 
   pocl_binary_kernel k;
   char basedir[POCL_FILENAME_LENGTH];
-  pocl_cache_program_path (basedir, program, device_i);
 
   unsigned i;
   for (i = 0; i < b.num_kernels; i++)
     {
+      pocl_cache_program_path (basedir, program, device_i);
       if (pocl_binary_deserialize_kernel_from_buffer
           (&buffer, &k, 0, 0, basedir) != CL_SUCCESS)
         goto ERROR;
