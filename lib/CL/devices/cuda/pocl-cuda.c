@@ -489,9 +489,8 @@ void* pocl_cuda_unmap_mem(void *data, void *host_ptr,
   return NULL;
 }
 
-void
-pocl_cuda_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
-                         cl_device_id device)
+static void
+load_or_generate_kernel(cl_kernel kernel, cl_device_id device)
 {
   cuCtxSetCurrent(((pocl_cuda_device_data_t*)device->data)->context);
 
@@ -534,6 +533,13 @@ pocl_cuda_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
 }
 
 void
+pocl_cuda_compile_kernel(_cl_command_node *cmd, cl_kernel kernel,
+                         cl_device_id device)
+{
+  load_or_generate_kernel(kernel, device);
+}
+
+void
 pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
 {
   cuCtxSetCurrent(((pocl_cuda_device_data_t*)cq->device->data)->context);
@@ -551,7 +557,11 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
   cl_device_id device = cq->device;
   cl_kernel kernel = node->command.run.kernel;
   pocl_argument *arguments = node->command.run.arguments;
-  CUfunction function = node->command.run.kernel->data;
+
+  // Ensure kernel has been loaded
+  load_or_generate_kernel(kernel, device);
+
+  CUfunction function = kernel->data;
 
   // Prepare kernel arguments
   void *null = NULL;
