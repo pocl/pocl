@@ -65,6 +65,7 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
 
   POCL_INIT_OBJECT(mem);
   mem->mappings = NULL;
+  mem->destructor_callbacks = NULL;
   mem->parent = buffer;
 
   mem->type = CL_MEM_OBJECT_BUFFER;
