@@ -312,8 +312,16 @@ void pocl_cuda_free(cl_device_id device, cl_mem mem_obj)
 {
   cuCtxSetCurrent(((pocl_cuda_device_data_t*)device->data)->context);
 
-  void* ptr = mem_obj->device_ptrs[device->dev_id].mem_ptr;
-  cuMemFree((CUdeviceptr)ptr);
+  if (mem_obj->flags & CL_MEM_ALLOC_HOST_PTR)
+  {
+    cuMemFreeHost(mem_obj->mem_host_ptr);
+    mem_obj->mem_host_ptr = NULL;
+  }
+  else
+  {
+    void* ptr = mem_obj->device_ptrs[device->dev_id].mem_ptr;
+    cuMemFree((CUdeviceptr)ptr);
+  }
 }
 
 void
