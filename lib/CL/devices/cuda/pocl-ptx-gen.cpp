@@ -127,9 +127,9 @@ int pocl_ptx_gen(const char *bc_filename,
   // TODO: CPU and features?
   std::unique_ptr<llvm::TargetMachine> machine(
 #ifdef LLVM_OLDER_THAN_3_9
-      target->createTargetMachine(triple, gpu_arch, "", options));
+      target->createTargetMachine(triple, gpu_arch, "+ptx40", options));
 #else
-      target->createTargetMachine(triple, gpu_arch, "", options, llvm::None));
+      target->createTargetMachine(triple, gpu_arch, "+ptx40", options, llvm::None));
 #endif
 
   llvm::legacy::PassManager passes;
