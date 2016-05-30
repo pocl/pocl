@@ -639,49 +639,57 @@ void pocl_map_libdevice_calls(llvm::Module *module)
   struct function_map_entry function_map[] =
   {
     // TODO: FP64 versions - not all of them just worked in the same way...
-    {"acosf", "__nv_acosf"},
-    {"acoshf", "__nv_acoshf"},
-    {"asinf", "__nv_asinf"},
-    {"asinhf", "__nv_asinhf"},
-    {"atanf", "__nv_atanf"},
-    {"atanhf", "__nv_atanhf"},
-    {"atan2f", "__nv_atan2f"},
-    {"cbrtf", "__nv_cbrtf"},
-    {"ceilf", "__nv_ceilf"},
-    {"copysignf", "__nv_copysignf"},
-    {"coshf", "__nv_coshf"},
-    {"expf", "__nv_expf"},
-    {"exp2f", "__nv_exp2f"},
-    {"expm1f", "__nv_expm1f"},
-    {"fdimf", "__nv_fdimf"},
-    {"floorf", "__nv_floorf"},
-    {"fmaxf", "__nv_fmaxf"},
-    {"fminf", "__nv_fminf"},
-    // TODO: frexp
-    {"hypotf", "__nv_hypotf"},
-    {"ilogbf", "__nv_ilogbf"},
-    // TODO: ldexp
-    {"lgammaf", "__nv_lgammaf"},
-    // TODO: lgamma_r
-    {"logf", "__nv_logf"},
-    {"log2f", "__nv_log2f"},
-    {"log10f", "__nv_log10f"},
-    {"log1pf", "__nv_log1pf"},
-    {"logbf", "__nv_logbf"},
-    // TODO: modf
-    {"nextafterf", "__nv_nextafterf"},
+
+#define LDMAP(name) \
+  {name "f", "__nv_" name "f"}, \
+  {name,     "__nv_" name},
+    LDMAP("acos")
+    LDMAP("acosh")
+    LDMAP("asin")
+    LDMAP("asinh")
+    LDMAP("atan")
+    LDMAP("atanh")
+    LDMAP("atan2")
+    LDMAP("cbrt")
+    LDMAP("ceil")
+    LDMAP("copysign")
+    LDMAP("cosh")
+    LDMAP("exp")
+    LDMAP("exp2")
+    LDMAP("expm1")
+    LDMAP("fdim")
+    LDMAP("floor")
+    LDMAP("fmax")
+    LDMAP("fmin")
+    LDMAP("hypot")
+    LDMAP("ilogb")
+    LDMAP("lgamma")
+    LDMAP("log")
+    LDMAP("log2")
+    LDMAP("log10")
+    LDMAP("log1p")
+    LDMAP("logb")
+    LDMAP("nextafter")
+    LDMAP("remainder")
+    LDMAP("rint")
+    LDMAP("round")
+    LDMAP("sinh")
+    LDMAP("sqrt")
+    LDMAP("tan")
+    LDMAP("tanh")
+    LDMAP("trunc")
+#undef LDMAP
+
     {"llvm.pow.f32", "__nv_powf"},
+    {"llvm.pow.f64", "__nv_pow"},
+
+    // TODO: frexp
+    // TODO: ldexp
+    // TODO: lgamma_r
+    // TODO: modf
     // TODO: pown
-    {"remainderf", "__nv_remainderf"},
     // TODO: remquo
-    {"rintf", "__nv_rintf"},
     // TODO: rootn
-    {"roundf", "__nv_roundf"},
-    {"sinhf", "__nv_sinhf"},
-    {"sqrtf", "__nv_sqrtf"},
-    {"tanf", "__nv_tanf"},
-    {"tanhf", "__nv_tanhf"},
-    {"truncf", "__nv_truncf"},
   };
   size_t num_functions = sizeof(function_map)/sizeof(function_map_entry);
 
