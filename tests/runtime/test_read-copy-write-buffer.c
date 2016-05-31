@@ -67,7 +67,9 @@ main(void)
       while (alloc > MAXALLOC)
         alloc /= 2;
 
-      const size_t buf_size = (alloc/sizeof(cl_int))*sizeof(cl_int);
+      /* ensure we are allocating an even number of elements */
+      const size_t nels = (alloc/sizeof(cl_int)/2)*2;
+      const size_t buf_size = nels*sizeof(cl_int);
 
       cl_int *host_buf1 = malloc(buf_size);
       TEST_ASSERT(host_buf1);
@@ -91,6 +93,28 @@ main(void)
       CHECK_CL_ERROR(clFinish(queue));
 
       TEST_ASSERT(memcmp(host_buf2, host_buf1, buf_size) == 0);
+
+      { /* pretend the buffers are linearized buffers with 2 rows and nels/2 columns, and
+           do a rectangular copy of the two rows */
+        const size_t origin[] = {0, 0, 0};
+        const size_t region[] = {sizeof(cl_int)*nels/2, 2, 1};
+        cl_event evts[3] = {NULL, NULL, NULL};
+        memset(host_buf2, 2, buf_size);
+        CHECK_CL_ERROR(clEnqueueWriteBufferRect(queue, buf2, CL_TRUE, origin, origin, region,
+            0, 0, 0, 0, /* natural pitches */
+            host_buf2,
+            0, NULL, evts));
+        CHECK_CL_ERROR(clEnqueueCopyBufferRect(queue, buf2, buf1, origin, origin, region,
+            0, 0, 0, 0, /* natural pitches */
+            1, evts, evts + 1));
+        CHECK_CL_ERROR(clEnqueueReadBufferRect(queue, buf1, CL_TRUE, origin, origin, region,
+            0, 0, 0, 0, /* natural pitches */
+            host_buf1,
+            2, evts, evts + 2));
+        CHECK_CL_ERROR(clFinish(queue));
+
+        TEST_ASSERT(memcmp(host_buf2, host_buf1, buf_size) == 0);
+      }
 
       free(host_buf2);
       free(host_buf1);
