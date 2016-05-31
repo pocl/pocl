@@ -377,6 +377,23 @@ pocl_exec_command (_cl_command_node * volatile node)
       POCL_UPDATE_EVENT_COMPLETE(event);
       POCL_DEBUG_EVENT_TIME(event, "Read Buffer Rect      ");
       break;
+    case CL_COMMAND_COPY_BUFFER_RECT:
+    case CL_COMMAND_COPY_IMAGE:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      node->device->ops->copy_rect
+        (node->device->data,
+         node->command.copy_image.src_ptr,
+         node->command.copy_image.dst_ptr,
+         node->command.copy_image.src_origin,
+         node->command.copy_image.dst_origin,
+         node->command.copy_image.region,
+         node->command.copy_image.src_rowpitch,
+         node->command.copy_image.src_slicepitch,
+         node->command.copy_image.dst_rowpitch,
+         node->command.copy_image.dst_slicepitch);
+      POCL_UPDATE_EVENT_COMPLETE(event);
+      POCL_DEBUG_EVENT_TIME(event, "Copy Buffer Rect      ");
+      break;
     case CL_COMMAND_UNMAP_MEM_OBJECT:
       POCL_UPDATE_EVENT_RUNNING(event);
       if ((node->command.unmap.memobj)->flags & 

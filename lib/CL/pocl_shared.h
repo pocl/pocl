@@ -43,6 +43,7 @@ pocl_map_mem_cmd(cl_device_id device,
                  mem_mapping_t *mapping_info);
 
 cl_int pocl_rect_copy(cl_command_queue command_queue,
+                      cl_command_type command_type,
                       cl_mem src,
                       cl_int src_is_image,
                       cl_mem dst,

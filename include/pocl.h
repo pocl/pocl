@@ -175,6 +175,19 @@ typedef struct
   cl_mem buffer;
 } _cl_command_write_image;
 
+typedef struct
+{
+  void *dst_ptr;
+  const void *src_ptr;
+  size_t dst_origin[3];
+  size_t src_origin[3];
+  size_t region[3];
+  size_t dst_rowpitch;
+  size_t dst_slicepitch;
+  size_t src_rowpitch;
+  size_t src_slicepitch;
+} _cl_command_copy_image;
+
 /* clEnqueueUnMapMemObject */
 typedef struct
 {
@@ -268,6 +281,7 @@ typedef union
   _cl_command_fill_image fill_image;
   _cl_command_read_image read_image;
   _cl_command_write_image write_image;
+  _cl_command_copy_image copy_image;
   _cl_command_marker marker;
   _cl_command_barrier barrier;
   _cl_command_unmap unmap;

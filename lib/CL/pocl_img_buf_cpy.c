@@ -34,6 +34,7 @@
  */
 
 cl_int pocl_rect_copy(cl_command_queue command_queue,
+                      cl_command_type command_type,
                       cl_mem src,
                       cl_int src_is_image,
                       cl_mem dst,
@@ -51,7 +52,9 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
 {
   cl_int errcode;
   cl_device_id device;
+  _cl_command_node *cmd = NULL;
   unsigned i;
+  cl_mem buffers[2] = {src, dst};
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
@@ -179,39 +182,33 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
 
   POCL_CHECK_DEV_IN_CMDQ;
 
-  /* execute directly */
-  /* TODO: enqueue the read_rect if this is a non-blocking read (see
-     clEnqueueReadBuffer) */
-  if (command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE)
-    {
-      POCL_ABORT_UNIMPLEMENTED("clEnqueueCopyBufferRect: Out-of-order queue");
-      /* wait for the event in event_wait_list to finish */
-    }
-  else
-    {
-      /* in-order queue - all previously enqueued commands must 
-       * finish before this read */
-      // ensure our buffer is not freed yet
-      POname(clRetainMemObject) (src);
-      POname(clRetainMemObject) (dst);
-      POname(clFinish)(command_queue);
-    }
-  POCL_UPDATE_EVENT_SUBMITTED(event);
-  POCL_UPDATE_EVENT_RUNNING(event);
+  errcode = pocl_create_command (&cmd, command_queue, command_type,
+                                 event, num_events_in_wait_list,
+                                 event_wait_list, 2, buffers);
 
-  /* TODO: offset computation doesn't work in case the ptr is not 
-     a direct pointer */
-  device->ops->copy_rect(device->data,
-                       src->device_ptrs[device->dev_id].mem_ptr,
-                       dst->device_ptrs[device->dev_id].mem_ptr,
-                       mod_src_origin, mod_dst_origin, mod_region,
-                       src_row_pitch, src_slice_pitch,
-                       dst_row_pitch, dst_slice_pitch);
+  if (errcode != CL_SUCCESS)
+    return errcode;
 
-  POCL_UPDATE_EVENT_COMPLETE(event);
+  cmd->command.copy_image.src_ptr = src->device_ptrs[device->dev_id].mem_ptr;
+  cmd->command.copy_image.dst_ptr = dst->device_ptrs[device->dev_id].mem_ptr;
+  cmd->command.copy_image.src_origin[0] = mod_src_origin[0];
+  cmd->command.copy_image.src_origin[1] = mod_src_origin[1];
+  cmd->command.copy_image.src_origin[2] = mod_src_origin[2];
+  cmd->command.copy_image.dst_origin[0] = mod_dst_origin[0];
+  cmd->command.copy_image.dst_origin[1] = mod_dst_origin[1];
+  cmd->command.copy_image.dst_origin[2] = mod_dst_origin[2];
+  cmd->command.copy_image.region[0] = mod_region[0];
+  cmd->command.copy_image.region[1] = mod_region[1];
+  cmd->command.copy_image.region[2] = mod_region[2];
+  cmd->command.copy_image.src_rowpitch = src_row_pitch;
+  cmd->command.copy_image.src_slicepitch = src_slice_pitch;
+  cmd->command.copy_image.dst_rowpitch = dst_row_pitch;
+  cmd->command.copy_image.dst_slicepitch = dst_slice_pitch;
 
-  POname(clReleaseMemObject) (src);
-  POname(clReleaseMemObject) (dst);
+  POname(clRetainMemObject) (src);
+  POname(clRetainMemObject) (dst);
+
+  pocl_command_enqueue(command_queue, cmd);
 
   return CL_SUCCESS;
 }

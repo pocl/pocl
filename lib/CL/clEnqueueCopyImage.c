@@ -12,7 +12,7 @@ POname(clEnqueueCopyImage)(cl_command_queue      command_queue ,
                    const cl_event *      event_wait_list ,
                    cl_event *            event ) CL_API_SUFFIX__VERSION_1_0
 {
-  return pocl_rect_copy(command_queue,
+  return pocl_rect_copy(command_queue, CL_COMMAND_COPY_IMAGE,
     src_image, CL_TRUE,
     dst_image, CL_TRUE,
     src_origin, dst_origin, region,
