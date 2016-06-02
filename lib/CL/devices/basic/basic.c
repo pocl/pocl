@@ -822,6 +822,9 @@ void pocl_basic_memfill(void *ptr,
   size_t i;
   unsigned j;
 
+  /* memfill size is in bytes, we wanto make it into elements */
+  size /= pattern_size;
+
   switch (pattern_size)
     {
     case 1:
