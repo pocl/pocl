@@ -121,10 +121,15 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
   memcpy(mod_src_origin, src_origin, 3*sizeof(size_t));
   memcpy(mod_dst_origin, dst_origin, 3*sizeof(size_t));
 
-  if (src_is_image && dst_is_image)
+  if (src_is_image)
     {
       mod_region[0] *= src->image_elem_size * src->image_channels;
       mod_src_origin[0] *= src->image_elem_size * src->image_channels;
+    }
+  if (dst_is_image)
+    {
+      if (!src_is_image)
+        mod_region[0] *= dst->image_elem_size * dst->image_channels;
       mod_dst_origin[0] *= dst->image_elem_size * dst->image_channels;
     }
 

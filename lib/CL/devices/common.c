@@ -378,6 +378,8 @@ pocl_exec_command (_cl_command_node * volatile node)
       POCL_DEBUG_EVENT_TIME(event, "Read Buffer Rect      ");
       break;
     case CL_COMMAND_COPY_BUFFER_RECT:
+    case CL_COMMAND_COPY_BUFFER_TO_IMAGE:
+    case CL_COMMAND_COPY_IMAGE_TO_BUFFER:
     case CL_COMMAND_COPY_IMAGE:
       POCL_UPDATE_EVENT_RUNNING(event);
       node->device->ops->copy_rect
