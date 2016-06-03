@@ -174,6 +174,7 @@ static int
 process_list_devices(int arg, char **argv, int argc)
 {
   list_devices = 1;
+  opencl_device = CL_DEVICE_TYPE_ALL;
   return 0;
 }
 
