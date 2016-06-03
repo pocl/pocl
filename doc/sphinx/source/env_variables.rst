@@ -101,6 +101,12 @@ pocl.
  Forces the maximum WG size returned by the device or kernel work group queries
  to be at most this number.
 
+- **POCL_OFFLINE_COMPILE**
+
+ Bool. When enabled(==1), some drivers will create virtual devices which are only
+ good for creating pocl binaries. Requires those drivers to be compiled with support
+ for compilation for those devices.
+
 - **POCL_VECTORIZER_REMARKS**
 
  When set to 1, prints out remarks produced by the loop vectorizer of LLVM

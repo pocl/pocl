@@ -102,10 +102,12 @@ pocl_get_devices(cl_device_type device_type, struct _cl_device_id **devices, uns
 {
   unsigned int i, dev_added = 0;
 
+  int offline_compile = pocl_get_bool_option("POCL_OFFLINE_COMPILE", 0);
+
   for (i = 0; i < pocl_num_devices; ++i)
     {
       if ((pocl_devices[i].type & device_type) &&
-          (pocl_devices[i].available == CL_TRUE))
+          (offline_compile || (pocl_devices[i].available == CL_TRUE)))
         {
             if (dev_added < num_devices)
               {
@@ -127,10 +129,12 @@ pocl_get_device_type_count(cl_device_type device_type)
   int count = 0;
   unsigned int i;
 
+  int offline_compile = pocl_get_bool_option("POCL_OFFLINE_COMPILE", 0);
+
   for (i = 0; i < pocl_num_devices; ++i)
     {
       if ((pocl_devices[i].type & device_type) &&
-          (pocl_devices[i].available == CL_TRUE))
+          (offline_compile || (pocl_devices[i].available == CL_TRUE)))
         {
            ++count;
         }

@@ -133,6 +133,7 @@ POname(clCreateContext)(const cl_context_properties * properties,
 
   POCL_GOTO_ERROR_COND((pfn_notify == NULL && user_data != NULL), CL_INVALID_VALUE);
 
+  int offline_compile = pocl_get_bool_option("POCL_OFFLINE_COMPILE", 0);
   
   lt_dlinit();
   pocl_init_devices();
@@ -171,9 +172,14 @@ POname(clCreateContext)(const cl_context_properties * properties,
           goto ERROR_CLEAN_CONTEXT_AND_DEVICES;
         }
       
-      if (device_ptr->available != CL_TRUE)
+      if (!offline_compile && (device_ptr->available != CL_TRUE))
         {
-          POCL_MSG_WARN("Dropping unavailable device: %s\n", device_ptr->long_name);
+          POCL_MSG_WARN("Offline compilation disabled - dropping unavailable device: %s\n", device_ptr->long_name);
+          context->devices[i] = context->devices[--context->num_devices];
+        }
+      else if((device_ptr->compiler_available != CL_TRUE) && (device_ptr->available != CL_TRUE))
+        {
+          POCL_MSG_WARN("Device unavailable and device compiler unavailable - dropping device: %s\n", device_ptr->long_name);
           context->devices[i] = context->devices[--context->num_devices];
         }
       else
