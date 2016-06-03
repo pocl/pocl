@@ -290,6 +290,7 @@ endmacro()
 
 if(UNIX)
   include(CheckCSourceCompiles)
+  set(CMAKE_REQUIRED_LIBRARIES "rt")
   CHECK_C_SOURCE_COMPILES("
 #include <time.h>
 int main() {
@@ -298,6 +299,7 @@ int main() {
   return 0;
 }
   " HAVE_CLOCK_GETTIME)
+  unset(CMAKE_REQUIRED_LIBRARIES)
 else()
   set(HAVE_CLOCK_GETTIME 0)
 endif()
@@ -738,7 +740,7 @@ if(NOT DEFINED DEFAULT_ENABLE_TCE)
 
 endif()
 
-setup_cached_var(ENABLE_TCE "TCE"
+setup_cached_var(ENABLE_TCE "TCE support"
   "Requested enabling TCE, but no usable TCE installation found !"
   "TCE is available, but requested disabling it")
 
