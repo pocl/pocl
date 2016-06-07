@@ -309,7 +309,7 @@ CL_API_SUFFIX__VERSION_1_0
           strcpy(program->main_build_log,
                  "Cannot build a program from sources with pocl "
                  "that does not have online compiler support\n");
-          POCL_GOTO_ERROR_ON(1, CL_BUILD_PROGRAM_FAILURE,
+          POCL_GOTO_ERROR_ON(1, CL_COMPILER_NOT_AVAILABLE,
                              "%s", program->main_build_log);
 #endif
         }
@@ -335,7 +335,7 @@ CL_API_SUFFIX__VERSION_1_0
               strcpy(program->main_build_log,
                      "Cannot build program from LLVM IR binaries with "
                      "pocl that does not have online compiler support\n");
-              POCL_GOTO_ERROR_ON(1, CL_BUILD_PROGRAM_FAILURE,
+              POCL_GOTO_ERROR_ON(1, CL_COMPILER_NOT_AVAILABLE,
                                  "%s", program->main_build_log);
             }
           else
