@@ -1,7 +1,7 @@
 <%inherit file="basic_page.makt" />
 <p>Portable Computing Language (pocl) aims to become a MIT-licensed open source implementation of the OpenCL 
 standard which can be easily adapted for new targets and devices, both for homogeneous
-CPU and heterogenous GPUs/accelerators.</p>
+CPU and heterogeneous GPUs/accelerators.</p>
 
 <p>pocl uses  <a href="http://clang.llvm.org">Clang</a> as an OpenCL C frontend and 
 <a href="http://llvm.org">LLVM</a> for the kernel compiler implementation, 
@@ -17,6 +17,13 @@ multicore, multithread ...</p>
 in parallel programming on heterogeneous platforms.</p>
 
 <h1>News</h1>
+
+<h2>2016-07-01: pocl in Texas Instruments' OpenCL SDK</h2>
+
+<p>Read <a href="texas-instruments-pocl-use-case.html">here</a> how TI benefits
+from the modular structure of pocl by being able to utilize the "de-SPMD" kernel
+compiler to produce efficient multi-WI work-group execution when running OpenCL kernels
+on their DSPs.</p>
 
 <h2>2016-05-23: HSA driver status update</h2>
 
