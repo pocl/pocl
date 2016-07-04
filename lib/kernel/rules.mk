@@ -74,7 +74,7 @@ _kernel.h.pch: @top_builddir@/include/${TARGET_DIR}/types.h @top_srcdir@/include
 	@CLANG@ ${CLANG_FLAGS} ${CLFLAGS} ${DEVICE_CL_FLAGS} -D__CBUILD__ -c -o $@ -include ${abs_top_srcdir}/include/_kernel_c.h $<
 %.cc.bc: %.cc  ${LKERNEL_HDRS_EXTRA}
 	mkdir -p ${dir $@}
-	@CLANGXX@ ${CLANG_FLAGS} ${CLANGXX_FLAGS} ${DEVICE_CL_FLAGS} -c -o $@ $<
+	@CLANGXX@ -std=c++11 ${CLANG_FLAGS} ${CLANGXX_FLAGS} ${DEVICE_CL_FLAGS} -c -o $@ $<
 %.cl.bc: %.cl ${abs_top_srcdir}/include/_kernel.h ${abs_top_srcdir}/include/_kernel_c.h ${abs_top_srcdir}/include/_enable_all_exts.h ${LKERNEL_HDRS_EXTRA}
 	mkdir -p ${dir $@}
 	@CLANG@ ${CLANG_FLAGS} -x cl ${CLFLAGS} ${DEVICE_CL_FLAGS} -fsigned-char -c -o $@ $< -include ${abs_top_srcdir}/include/_kernel.h -include ${abs_top_srcdir}/include/_enable_all_exts.h

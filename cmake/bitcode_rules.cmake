@@ -62,7 +62,7 @@ function(compile_cc_to_bc FILENAME SUBDIR BC_FILE_LIST)
         DEPENDS "${FULL_F_PATH}"
           ${KERNEL_DEPEND_HEADERS}
         COMMAND  "${CLANGXX}" ${CLANG_FLAGS} ${KERNEL_CLANGXX_FLAGS}
-        ${DEVICE_CL_FLAGS} "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
+        ${DEVICE_CL_FLAGS} "-std=c++11" "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
         COMMENT "Building C++ to LLVM bitcode ${BC_FILE}" 
         VERBATIM)
 endfunction()
