@@ -802,8 +802,12 @@ struct _cl_sampler {
         POname(clReleaseEvent) (*(__event));                            \
       }                                                                 \
   } while (0)                                                           \
-    
+
+#ifndef __cplusplus
+
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #define max(a,b) (((a) > (b)) ? (a) : (b))
+
+#endif
 
 #endif /* POCL_CL_H */
