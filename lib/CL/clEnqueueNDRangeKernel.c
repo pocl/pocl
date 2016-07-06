@@ -271,6 +271,8 @@ DETERMINE_LOCAL_SIZE:
         {
           cl_mem buf = *(cl_mem *) (al->value);
           ++buffer_count;
+          if (buf->owning_device == NULL)
+                buf->owning_device = realdev;
           if (buf->owning_device != NULL &&
               buf->owning_device->global_mem_id !=
               command_queue->device->global_mem_id)
