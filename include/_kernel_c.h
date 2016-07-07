@@ -1,4 +1,4 @@
-/* pocl/_kernel_c.h - C compatible OpenCL types and runtime library
+﻿/* pocl/_kernel_c.h - C compatible OpenCL types and runtime library
    functions declarations.
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
@@ -184,6 +184,12 @@ float4 _CL_OVERLOADABLE read_imagef (image2d_t image, sampler_t sampler,
 float4 _CL_OVERLOADABLE read_imagef (image2d_t image, sampler_t sampler,
                                      float2 coord);
 
+float4 _CL_OVERLOADABLE read_imagef (image2d_t image, sampler_t sampler,
+                                     int4 coord);
+
+float4 _CL_OVERLOADABLE read_imagef (image3d_t image, sampler_t sampler,
+                                     int4 coord);
+
 uint4 _CL_OVERLOADABLE read_imageui (image2d_t image, sampler_t sampler, 
                                      int2 coord);
 
@@ -205,6 +211,10 @@ void _CL_OVERLOADABLE write_imageui (image2d_t image, int2 coord, uint4 color);
 
 void _CL_OVERLOADABLE write_imagef (image2d_t image, int2 coord,
                                     float4 color);
+
+void _CL_OVERLOADABLE write_imagef (image3d_t image, int4 coord,
+                                    float4 color);
+
 /* not implemented 
 void _CL_OVERLOADABLE write_imagef (image2d_array_t image, int4 coord,
                                     float4 color);
