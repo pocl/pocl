@@ -154,6 +154,10 @@ pocl_get_image_information (cl_channel_order ch_order,
     {
       *channels_out = 1;
     }
+  else if (ch_order == CL_RG || ch_order == CL_RGx || ch_order == CL_RA)
+    {
+      *channels_out = 2;
+    }
   else
     {
       *channels_out = 4;

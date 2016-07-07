@@ -108,7 +108,12 @@ TYPE_SUPPORTED:
     
     size = image_desc->image_width * image_desc->image_height * elem_size * 
       channels;
-    
+
+    if (image_desc->image_depth > 0)
+      {
+        size *= image_desc->image_depth;
+      }
+
     if (row_pitch == 0)
       {
         row_pitch = image_desc->image_width * elem_size * channels;

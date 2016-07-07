@@ -91,6 +91,5 @@ void pocl_write_pixel (void* color_, ADDRESS_SPACE dev_image_t* dev_image, int4 
   }                                                                     \
 
 IMPLEMENT_WRITE_IMAGE_INT_COORD(image2d_t, uint4, ui, int2)
-IMPLEMENT_WRITE_IMAGE_INT_COORD(image2d_t, float4, f, int2);
-
-
+IMPLEMENT_WRITE_IMAGE_INT_COORD(image2d_t, float4, f, int2)
+IMPLEMENT_WRITE_IMAGE_INT_COORD(image3d_t, float4, f, int4)
