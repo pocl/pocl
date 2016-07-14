@@ -1596,6 +1596,7 @@ pocl_hsa_driver_pthread (void * cldev)
 
   while (1)
     {
+      // reset the signal
 
       if (pocl_hsa_run_ready_commands(d))
         kernel_timeout_ns = d->timeout >> 3;
@@ -1603,11 +1604,14 @@ pocl_hsa_driver_pthread (void * cldev)
       if (d->exit_driver_thread)
         goto EXIT_PTHREAD;
 
-      // reset the signal
-      hsa_signal_store_release(d->nudge_driver_thread, 1);
-
       // wait for anything to happen or timeout
 #ifdef HAVE_HSA_EXT_AMD_H
+      // FIXME: An ABA race condition here. If there was (another) submit after
+      // the previous wait returned, but before this reset, we miss the
+      // notification decrement and get stuck if there are no further submits
+      // to decrement the 1.
+      hsa_signal_store_release(d->nudge_driver_thread, 1);
+
       if (d->have_wait_any)
         {
           dd->running_signals[dd->running_list_size].handle =
@@ -1621,11 +1625,16 @@ pocl_hsa_driver_pthread (void * cldev)
       else
         {
 #endif
+#if 0
           if (kernel_timeout_ns < (d->timeout >> 1))
             kernel_timeout_ns = (kernel_timeout_ns * 22937UL) >> 14;
+	  // See the above comment. Busy wait for now until a proper
+	  // synchronization fix is in place.
           hsa_signal_wait_acquire(d->nudge_driver_thread,
                                   HSA_SIGNAL_CONDITION_LT, 1,
                                   kernel_timeout_ns, HSA_WAIT_STATE_BLOCKED);
+#endif
+
 #ifdef HAVE_HSA_EXT_AMD_H
         }
 #endif
