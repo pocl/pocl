@@ -1,9 +1,9 @@
-/* pocl-hsa.c - driver for HSA supported devices. Currently only AMDGCN.
+/* pocl-hsa.c - driver for HSA supported devices.
 
    Copyright (c) 2015-2016 Pekka Jääskeläinen <pekka.jaaskelainen@tut.fi>
                  2015 Charles Chen <ccchen@pllab.cs.nthu.edu.tw>
                       Shao-chung Wang <scwang@pllab.cs.nthu.edu.tw>
-                 2015 Michal Babej <michal.babej@tut.fi>
+                 2015-2016 Michal Babej <michal.babej@tut.fi>
 
    Short snippets borrowed from the MatrixMultiplication example in
    the HSA runtime library sources (c) 2014 HSA Foundation Inc.
@@ -427,16 +427,16 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
         }
     }
   if (!found)
-		{
-			POCL_MSG_PRINT_INFO("pocl-hsa: found unknown HSA devices '%s'.\n",
-													dev_name);
-			POCL_ABORT("We found a device for which we don't have device "
-                    "OpenCL attribute information (compute unit count, "
-                    "constant buffer size etc), and there's no way to get all "
-                    "the required info from HSA API. Please create a "
-                    "new entry with the information in supported_hsa_devices, "
-                    "and send a note/patch to pocl developers. Thanks!");
-		}
+    {
+      POCL_MSG_PRINT_INFO("pocl-hsa: found unknown HSA devices '%s'.\n",
+			  dev_name);
+      POCL_ABORT("We found a device for which we don't have device "
+		 "OpenCL attribute information (compute unit count, "
+		 "constant buffer size etc), and there's no way to get all "
+		 "the required info from HSA API. Please create a "
+		 "new entry with the information in supported_hsa_devices, "
+		 "and send a note/patch to pocl developers. Thanks!");
+    }
 }
 
 void
@@ -467,7 +467,9 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
 
   dev->type = CL_DEVICE_TYPE_GPU;
 
-  dev->image_support = CL_FALSE;   // until it's actually implemented
+  // Enable when it's actually implemented AND if supported by
+  // the target agent (check with hsa_agent_extension_supported).
+  dev->image_support = CL_FALSE;
 
   dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO
       | CL_FP_ROUND_TO_INF | CL_FP_FMA | CL_FP_INF_NAN;
@@ -613,14 +615,14 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
 #ifdef HAVE_HSA_EXT_AMD_H
   char booltest = 0;
   HSA_CHECK(hsa_region_get_info(d->global_region,
-                               HSA_AMD_REGION_INFO_HOST_ACCESSIBLE,
+				HSA_AMD_REGION_INFO_HOST_ACCESSIBLE,
                                 &booltest));
   assert(booltest != 0);
 #endif
 
   size_t sizearg;
   HSA_CHECK(hsa_region_get_info(d->global_region,
-                               HSA_REGION_INFO_ALLOC_MAX_SIZE, &sizearg));
+				HSA_REGION_INFO_ALLOC_MAX_SIZE, &sizearg));
   device->max_mem_alloc_size = sizearg;
 
   /* For some reason, the global region size returned is 128 Terabytes...
@@ -642,7 +644,7 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
   device->local_mem_size = sizearg;
 
   HSA_CHECK(hsa_region_get_info(d->global_region,
-                               HSA_REGION_INFO_RUNTIME_ALLOC_ALIGNMENT,
+				HSA_REGION_INFO_RUNTIME_ALLOC_ALIGNMENT,
                                 &sizearg));
   device->mem_base_addr_align = sizearg * 8;
 
