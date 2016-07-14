@@ -248,6 +248,16 @@ endif()
 
 ######################################################################################
 
+if(ENABLE_HSA)
+  include(HSA RESULT_VARIABLE RES)
+  if(NOT RES)
+    message(FATAL_ERROR "Could not load HSA.cmake")
+  endif()
+endif()
+
+
+######################################################################################
+
 if (NOT MSVC)
   find_program(LINK_COMMAND
     NAMES ld${CMAKE_EXECUTABLE_SUFFIX}
