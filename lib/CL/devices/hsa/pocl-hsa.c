@@ -1076,8 +1076,6 @@ pocl_hsa_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
 
   HSA_CHECK(hsa_executable_freeze (final_obj, NULL));
 
-  HSA_CHECK(hsa_code_object_destroy(code_object));
-
   HSA_CHECK(hsa_ext_program_destroy(hsa_program));
 
   free(brig_blob);
@@ -1155,6 +1153,9 @@ pocl_hsa_uninit (cl_device_id device)
   for (i = 0; i < HSA_KERNEL_CACHE_SIZE; i++)
     if (d->kernel_cache[i].kernel)
       HSA_CHECK(hsa_executable_destroy(d->kernel_cache[i].hsa_exe));
+
+  // TODO: destroy the executables that didn't fit to the kernel
+  // cache. Also code objects are not destroyed at the moment.
 
   hsa_signal_destroy(d->nudge_driver_thread);
 
