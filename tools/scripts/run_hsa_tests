@@ -28,9 +28,9 @@ if [ -z "$OCL_ICD_VENDORS" ]; then
 fi
 if [ ! -e "$OCL_ICD_VENDORS" ]; then
   echo "OCL_ICD_VENDORS: $OCL_ICD_VENDORS doesn't exist"
-  exit 1
+else
+  echo "Using OCL_ICD_VENDORS: $OCL_ICD_VENDORS"
 fi
-echo "Using OCL_ICD_VENDORS: $OCL_ICD_VENDORS"
 
 if [ ! -f "CMakeCache.txt" ]; then
   make check TESTSUITEFLAGS="-k hsa"
