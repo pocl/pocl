@@ -511,34 +511,37 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
   HSA_CHECK(hsa_agent_get_info
     (agent, HSA_AGENT_INFO_WORKGROUP_MAX_SIZE, &dev->max_work_group_size));
 
-  /*Image features*/
-  hsa_dim3_t image_size;
-  HSA_CHECK(hsa_agent_get_info (agent,
-                                HSA_EXT_AGENT_INFO_IMAGE_1D_MAX_ELEMENTS,
-                                &image_size));
-  dev->image_max_buffer_size = image_size.x;
-  HSA_CHECK(hsa_agent_get_info (agent,
-                                HSA_EXT_AGENT_INFO_IMAGE_2D_MAX_ELEMENTS,
-                                &image_size));
-  dev->image2d_max_height = image_size.x;
-  dev->image2d_max_width = image_size.y;
-  HSA_CHECK(hsa_agent_get_info (agent,
-                                HSA_EXT_AGENT_INFO_IMAGE_3D_MAX_ELEMENTS,
-                                &image_size));
-  dev->image3d_max_height = image_size.x;
-  dev->image3d_max_width = image_size.y;
-  dev->image3d_max_depth = image_size.z;
-  // is this directly the product of the dimensions?
-  //stat = hsa_agent_get_info(agent, ??, &dev->image_max_array_size);
-  HSA_CHECK(hsa_agent_get_info
-    (agent, HSA_EXT_AGENT_INFO_MAX_IMAGE_RD_HANDLES,
-     &dev->max_read_image_args));
-  HSA_CHECK(hsa_agent_get_info
-    (agent, HSA_EXT_AGENT_INFO_MAX_IMAGE_RORW_HANDLES,
-     &dev->max_read_write_image_args));
-  dev->max_write_image_args = dev->max_read_write_image_args;
-  HSA_CHECK(hsa_agent_get_info
-    (agent, HSA_EXT_AGENT_INFO_MAX_SAMPLER_HANDLERS, &dev->max_samplers));
+  /* Image features. */
+  if (dev->image_support == CL_TRUE)
+    {
+      hsa_dim3_t image_size;
+      HSA_CHECK(hsa_agent_get_info (agent,
+				    HSA_EXT_AGENT_INFO_IMAGE_1D_MAX_ELEMENTS,
+				    &image_size));
+      dev->image_max_buffer_size = image_size.x;
+      HSA_CHECK(hsa_agent_get_info (agent,
+				    HSA_EXT_AGENT_INFO_IMAGE_2D_MAX_ELEMENTS,
+				    &image_size));
+      dev->image2d_max_height = image_size.x;
+      dev->image2d_max_width = image_size.y;
+      HSA_CHECK(hsa_agent_get_info (agent,
+				    HSA_EXT_AGENT_INFO_IMAGE_3D_MAX_ELEMENTS,
+				    &image_size));
+      dev->image3d_max_height = image_size.x;
+      dev->image3d_max_width = image_size.y;
+      dev->image3d_max_depth = image_size.z;
+      // is this directly the product of the dimensions?
+      //stat = hsa_agent_get_info(agent, ??, &dev->image_max_array_size);
+      HSA_CHECK(hsa_agent_get_info
+		(agent, HSA_EXT_AGENT_INFO_MAX_IMAGE_RD_HANDLES,
+		 &dev->max_read_image_args));
+      HSA_CHECK(hsa_agent_get_info
+		(agent, HSA_EXT_AGENT_INFO_MAX_IMAGE_RORW_HANDLES,
+		 &dev->max_read_write_image_args));
+      dev->max_write_image_args = dev->max_read_write_image_args;
+      HSA_CHECK(hsa_agent_get_info
+		(agent, HSA_EXT_AGENT_INFO_MAX_SAMPLER_HANDLERS, &dev->max_samplers));
+    }
 
   dev->should_allocate_svm = 1;
   /* OpenCL 2.0 properties */
