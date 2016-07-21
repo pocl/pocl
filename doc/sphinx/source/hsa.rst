@@ -34,15 +34,11 @@ Installing prerequisite software
 
     git clone https://github.com/HSAFoundation/HLC-HSAIL-Development-LLVM/ -b hsail-stable-3.7
 
-  Patch it a bit with::
-
-    cd HLC-HSAIL-Development-LLVM; patch -p1 < PATHTO-POCL/tools/patches/llvm-3.7-hsail-branch.patch
-
   Fetch the upstream Clang 3.7 branch::
 
     cd tools; svn co http://llvm.org/svn/llvm-project/cfe/branches/release_37 clang
 
-  Patch it also::
+  Patch it::
 
     cd clang; patch -p0 < PATHTO-POCL/tools/patches/clang-3.7-hsail-branch.patch
 
