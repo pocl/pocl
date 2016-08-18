@@ -63,6 +63,13 @@ if (EXISTS "${INTEL_ZIP}")
   set_tests_properties(intel_svm_coarse intel_svm_fine
     PROPERTIES  LABELS "IntelSVM;hsa")
 
+  if (LLVM_3_8)
+  # LLVM 3.8 fails with
+  # error: Explicit load/store type does not match pointee type of pointer operand
+  set_tests_properties(intel_svm_coarse intel_svm_fine
+    PROPERTIES  WILL_FAIL 1)
+  endif()
+
 else()
 
   message(STATUS "Disabling testsuite ${TS_NAME}, required files not found" )
