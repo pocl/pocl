@@ -46,7 +46,7 @@ POname(clCreateSubDevices)(cl_device_id in_device,
    cl_device_id *new_devs = NULL;
    // number of elements in (copies of) properties, including terminating null
    cl_uint num_props = 0;
-   uint i;
+   cl_uint i;
 
    POCL_GOTO_ERROR_COND((in_device == NULL), CL_INVALID_DEVICE);
    POCL_GOTO_ERROR_COND((properties == NULL), CL_INVALID_VALUE);
