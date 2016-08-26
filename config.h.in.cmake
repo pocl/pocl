@@ -25,6 +25,10 @@
 
 #define HSAIL_ASM "@HSAIL_ASM@"
 
+#cmakedefine HSA_RUNTIME_IS_ROCM
+
+#define ROCM_LIBAMDGCN_DIR "@ROCM_LIBAMDGCN_DIR@"
+
 /* clang++ compiler flags */
 /* TODO in sources */
 #define KERNEL_CLANGXX_FLAGS "@KERNEL_CLANGXX_FLAGS@"
@@ -81,6 +85,8 @@
 #cmakedefine KERNELLIB_HOST_DISTRO_VARIANTS
 
 #define LLVM_LLC "@LLVM_LLC@"
+
+#define LLVM_LD "@LLVM_LD@"
 
 /* "Using LLVM 3.6" */
 #cmakedefine LLVM_3_6

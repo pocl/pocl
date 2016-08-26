@@ -23,6 +23,24 @@
 #
 #=============================================================================
 
+if(HSA_RUNTIME_IS_ROCM)
+
+  # don't need to build the lib, use compiled libclc (libamdgcn.<cpu>.bc)
+  message(STATUS "HSAIL64 Kernel BC: using AMD's bitcode")
+
+  # for SHA1 of kernel bitcodes
+  list(APPEND KERNEL_BC_LIST "${ROCM_LIBAMDGCN_DIR}/lib/libamdgcn.kaveri.bc")
+  list(APPEND KERNEL_BC_LIST "${ROCM_LIBAMDGCN_DIR}/lib/libamdgcn.carrizo.bc")
+  list(APPEND KERNEL_BC_LIST "${ROCM_LIBAMDGCN_DIR}/lib/libamdgcn.fiji.bc")
+  set(KERNEL_BC_LIST "${KERNEL_BC_LIST}" PARENT_SCOPE)
+
+  # Don't need a target...
+  #add_custom_target("kernel_hsail64")
+  #list(APPEND KERNEL_TARGET_LIST "kernel_hsail64")
+  #set(KERNEL_TARGET_LIST "${KERNEL_TARGET_LIST}" PARENT_SCOPE)
+
+else()
+
 include("bitcode_rules")
 
 set(KERNEL_SOURCES ${SOURCES_WITHOUT_VML})
@@ -81,3 +99,5 @@ set(KERNEL_TARGET_LIST "${KERNEL_TARGET_LIST}" PARENT_SCOPE)
 
 install(FILES "${KERNEL_BC}"
         DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}")
+
+endif()
