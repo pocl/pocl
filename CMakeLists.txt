@@ -473,13 +473,34 @@ if (MSVC)
   set(DEFAULT_ENABLE_ICD 0 CACHE INTERNAL "Going to use ICD loader")
 else()
 
-  pkg_check_modules(OCL_ICD ocl-icd>=1.3)
+  # pkg-config doesn't work with cross-compiling
+  if (NOT CMAKE_CROSSCOMPILING)
+    pkg_check_modules(OCL_ICD ocl-icd>=1.3)
+  endif()
+  if (CMAKE_CROSSCOMPILING OR (NOT OCL_ICD_FOUND))
+    find_path(OCL_ICD_INCLUDE_DIR
+      NAMES
+        ocl_icd.h
+    )
+    find_library(OCL_ICD_LIBRARIES
+      NAMES
+        OpenCL
+    )
+    if(OCL_ICD_INCLUDE_DIR AND OCL_ICD_LIBRARIES)
+      set(OCL_ICD_FOUND 1)
+    endif()
+  endif()
 
   if(OCL_ICD_FOUND)
 
     set(HAVE_OCL_ICD 1 CACHE INTERNAL "ICL library is ocl-icd")
     set(OPENCL_FOUND 1 CACHE INTERNAL "opencl ICD/library found")
-    set(OPENCL_LIBRARIES "OpenCL" CACHE INTERNAL "opencl ICD/library paths") # duh, why doesnt ocl-icd set this in .pc file ??
+    # duh, why doesnt ocl-icd set this in it's .pc file ??
+    if (CMAKE_CROSSCOMPILING)
+      set(OPENCL_LIBRARIES "${OCL_ICD_LIBRARIES}" CACHE INTERNAL "opencl ICD/library paths")
+    else()
+      set(OPENCL_LIBRARIES "OpenCL" CACHE INTERNAL "opencl ICD/library paths")
+    endif()
     set(DEFAULT_ENABLE_ICD 1 CACHE INTERNAL "ICD loader availability")
 
   else()
