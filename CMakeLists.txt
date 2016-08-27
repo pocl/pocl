@@ -425,7 +425,8 @@ else()
     get_filename_component(LTDL_H_INCLUDE_DIR "${LTDL_H}" DIRECTORY)
     string(FIND "${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES}" "${LTDL_H_INCLUDE_DIR}" LTPOSITION)
     # include the directory of ltdl.h, if its not in the default system include dirs
-    if(LTPOSITION LESS "0")
+    # also when cross-compiling this includes <cross-compile-root>/usr/include, which screws things up
+    if((LTPOSITION LESS "0") AND (NOT CMAKE_CROSSCOMPILING))
       include_directories("${LTDL_H_INCLUDE_DIR}")
     endif()
 
