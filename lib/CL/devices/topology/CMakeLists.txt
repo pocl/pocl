@@ -23,7 +23,12 @@
 #
 #=============================================================================
 
-add_compile_options(${Hwloc_CFLAGS})
+if(Hwloc_CFLAGS)
+  add_compile_options(${Hwloc_CFLAGS})
+else()
+  include_directories(${Hwloc_INCLUDE_DIRS})
+endif()
+
 if(MSVC)
   set_source_files_properties( pocl_topology.c pocl_topology.h PROPERTIES LANGUAGE CXX )
 endif(MSVC)
