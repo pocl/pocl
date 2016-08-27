@@ -410,6 +410,10 @@ endif()
 
 ######################################################################################
 
+include_directories("fix-include" "include")
+
+######################################################################################
+
 if(WIN32)
     message(STATUS "Using LoadLibrary/FreeLibrary in Windows, libltdl not needed.")
 else()
@@ -954,8 +958,6 @@ if(UNIX)
 endif()
 
 #############################################################
-
-include_directories("fix-include" "include")
 
 add_subdirectory("include")
 
