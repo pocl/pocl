@@ -120,3 +120,20 @@ foreach(TS ${ACTUALLY_ENABLED_TESTSUITES})
 endforeach()
 
 set(DISABLED_TESTSUITES ${DISABLED} PARENT_SCOPE)
+
+######################################################################################
+
+if(ACTUALLY_ENABLED_TESTSUITES MATCHES "AMD")
+
+  if(NOT MSVC)
+    pkg_check_modules(GLEW glew)
+  endif()
+
+  if(GLEW_FOUND)
+    set(HAVE_GLEW 1 PARENT_SCOPE)
+  else()
+    set(HAVE_GLEW 0 PARENT_SCOPE)
+    message(WARNING "libGLEW not found. A few tests from AMD testsuite will not work")
+  endif()
+
+endif()

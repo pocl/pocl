@@ -577,19 +577,6 @@ endif()
 
 ######################################################################################
 
-if(NOT MSVC)
-  pkg_check_modules(GLEW glew)
-endif()
-
-if(GLEW_FOUND)
-  set(HAVE_GLEW 1)
-else()
-  set(HAVE_GLEW 0)
-  message(WARNING "libGLEW not found. A few tests will not work")
-endif()
-
-######################################################################################
-
 set_expr(POCL_KERNEL_CACHE_DEFAULT KERNEL_CACHE_DEFAULT)
 
 string(TIMESTAMP POCL_BUILD_TIMESTAMP "%d%m%Y%H%M%S")
