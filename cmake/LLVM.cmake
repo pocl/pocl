@@ -175,26 +175,11 @@ endif()
 
 ####################################################################
 
-# DONE
-if("${LLVM_CXXFLAGS}" MATCHES "-fno-rtti")
-  message(WARNING "Your LLVM was not built with RTTI.
-       You should rebuild LLVM with 'make REQUIRES_RTTI=1'.
-       See the INSTALL file for more information.")
-endif()
-
 # A few work-arounds for llvm-config issues
 
 # - pocl doesn't compile with '-pedantic'
 #LLVM_CXX_FLAGS=$($LLVM_CONFIG --cxxflags | sed -e 's/ -pedantic / /g')
 string(REPLACE " -pedantic" "" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
-
-# - '-fno-rtti' is a work-around for llvm bug 14200
-# Which according to bug report has been fixed in llvm 3.7
-# sadly, that bugreport is mistaken, it's not fixed in 3.7
-if (NOT MSVC)
-  set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -fno-rtti")
-endif()
-
 
 # Llvm-config may be installed or it might be used from build directory, in which case
 # we need to add few extra include paths to find clang includes and compiled includes
