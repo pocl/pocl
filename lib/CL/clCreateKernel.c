@@ -92,8 +92,11 @@ POname(clCreateKernel)(cl_program program,
           cl_device_id device = program->devices[device_i];
           if (device->spmd)
             {
-              errcode = pocl_llvm_generate_workgroup_function(device,
-                                                            kernel, 0, 0, 0);
+              char cachedir[POCL_FILENAME_LENGTH];
+              pocl_cache_kernel_cachedir_path(cachedir, program, device_i, kernel, "", 0, 0, 0);
+
+              errcode = pocl_llvm_generate_workgroup_function(cachedir, device,
+                                                              kernel, 0, 0, 0);
               if (errcode == CL_SUCCESS)
                 device->ops->compile_kernel(NULL, kernel, device);
             }

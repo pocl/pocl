@@ -237,11 +237,10 @@ DETERMINE_LOCAL_SIZE:
     CL_INVALID_EVENT_WAIT_LIST);
 
   char cachedir[POCL_FILENAME_LENGTH];
-  pocl_cache_make_kernel_cachedir_path (cachedir, kernel->program,
-                                        realdev, kernel,
-                                        local_x, local_y, local_z);
-
   int realdev_i = pocl_cl_device_to_index(kernel->program, realdev);
+  assert(realdev_i >= 0);
+  pocl_cache_kernel_cachedir_path(cachedir, kernel->program, realdev_i, kernel, "", local_x, local_y, local_z);
+
   if (kernel->program->source || kernel->program->binaries[realdev_i])
     {
 #ifdef OCS_AVAILABLE
@@ -249,8 +248,7 @@ DETERMINE_LOCAL_SIZE:
       if (realdev->spmd)
         error = CL_SUCCESS;
       else
-        error = pocl_llvm_generate_workgroup_function(realdev,
-                                                      kernel,
+        error = pocl_llvm_generate_workgroup_function(cachedir, realdev, kernel,
                                                       local_x, local_y, local_z);
 #else
       error = 1;

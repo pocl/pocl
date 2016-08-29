@@ -139,12 +139,11 @@ program_compile_dynamic_wg_binaries(cl_program program)
               local_z = kernel->reqd_wg_size[2];
             }
 
-          pocl_cache_make_kernel_cachedir_path (cachedir, program, device,
-                                                kernel, local_x, local_y, local_z);
+          pocl_cache_kernel_cachedir_path(cachedir, program, device_i, kernel,
+                                          "", local_x, local_y, local_z);
 
-          errcode
-            = pocl_llvm_generate_workgroup_function
-            (device, kernel, local_x, local_y, local_z);
+          errcode = pocl_llvm_generate_workgroup_function(cachedir, device, kernel,
+                                                          local_x, local_y, local_z);
           if (errcode != CL_SUCCESS)
             {
               POCL_MSG_ERR("Failed to generate workgroup function for "
