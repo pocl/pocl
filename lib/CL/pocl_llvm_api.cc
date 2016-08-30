@@ -275,7 +275,8 @@ int pocl_llvm_build_program(cl_program program,
   }
 
 #ifdef HSA_RUNTIME_IS_ROCM
-  ss << "-Dcl_clang_storage_class_specifiers -D__CLC_INTERNAL -I" ROCM_LIBAMDGCN_DIR "/include  ";
+  if (device->spmd)
+    ss << "-Dcl_clang_storage_class_specifiers -D__CLC_INTERNAL -I" ROCM_LIBAMDGCN_DIR "/include  ";
 #endif
 
   // This can cause illegal optimizations when unaware
@@ -404,8 +405,10 @@ int pocl_llvm_build_program(cl_program program,
 
   std::string kernelh;
 #ifdef HSA_RUNTIME_IS_ROCM
-  kernelh = ROCM_LIBAMDGCN_DIR "/include/clc/clc.h";
-#else
+  if (device->spmd)
+    kernelh = ROCM_LIBAMDGCN_DIR "/include/clc/clc.h";
+  else
+#endif
   if (pocl_get_bool_option("POCL_BUILDING", 0))
     { 
       kernelh  = SRCDIR;
@@ -416,7 +419,6 @@ int pocl_llvm_build_program(cl_program program,
       kernelh = PKGDATADIR;
       kernelh += "/include/_kernel.h";
     }
-#endif
   po.Includes.push_back(kernelh);
 
   clang::TargetOptions &ta = pocl_build.getTargetOpts();
@@ -1331,6 +1333,14 @@ kernel_library
   // TODO sync with Nat Ferrus' indexed linking
   std::string kernellib;
   std::string kernellib_fallback;
+
+#ifdef HSA_RUNTIME_IS_ROCM
+  if (device->spmd) {
+    kernellib = ROCM_LIBAMDGCN_DIR;
+    kernellib += "/lib/libamdgcn.";
+    kernellib += device->llvm_cpu;
+  } else
+#endif
   if (pocl_get_bool_option("POCL_BUILDING", 0)) {
     kernellib = BUILDDIR;
     kernellib += "/lib/kernel/";
@@ -1374,15 +1384,6 @@ kernel_library
     }
   }
   kernellib += ".bc";
-
-#ifdef HSA_RUNTIME_IS_ROCM
-  if (device->spmd) {
-    kernellib = ROCM_LIBAMDGCN_DIR;
-    kernellib += "/lib/libamdgcn.";
-    kernellib += device->llvm_cpu;
-    kernellib += ".bc";
-  }
-#endif
 
   llvm::Module *lib;
   SMDiagnostic Err;
