@@ -370,13 +370,15 @@ int pocl_llvm_build_program(cl_program program,
     }
   
   LangOptions *la = pocl_build.getLangOpts();
+  PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
+
 #ifdef LLVM_OLDER_THAN_3_9
   pocl_build.setLangDefaults
     (*la, clang::IK_OpenCL, clang::LangStandard::lang_opencl12);
 #else
   llvm::Triple triple(device->llvm_target_triplet);
   pocl_build.setLangDefaults
-    (*la, clang::IK_OpenCL, triple, clang::LangStandard::lang_opencl12);
+    (*la, clang::IK_OpenCL, triple, po, clang::LangStandard::lang_opencl12);
 #endif
   
   // LLVM 3.3 and older do not set that char is signed which is
@@ -390,8 +392,6 @@ int pocl_llvm_build_program(cl_program program,
   la->MathErrno = false; // -fno-math-errno
   la->NoBuiltin = true;  // -fno-builtin
   la->AsmBlocks = true;  // -fasm (?)
-
-  PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
 
   std::string kernelh;
   if (pocl_get_bool_option("POCL_BUILDING", 0))
@@ -534,46 +534,104 @@ static int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
                                              llvm::Module *input,
                                              cl_kernel kernel)
 {
-
-  // find the right kernel in "opencl.kernels" metadata
-  llvm::NamedMDNode *opencl_kernels = input->getNamedMetadata("opencl.kernels");
   llvm::MDNode *kernel_metadata = NULL;
+  int bitcode_is_spir = input->getTargetTriple().find("spir") == 0;
+  SmallVector<std::pair<std::string, llvm::MDNode*>, 6> llvm39_kernel_meta;
+  bool llvm_older_than_3_9 = false;
+#if defined(LLVM_OLDER_THAN_3_9)
+  llvm_older_than_3_9 = true;
+#endif
 
-  // Not sure what to do in this case
-  if (!opencl_kernels || opencl_kernels->getNumOperands() == 0) return -1;
+  llvm::NamedMDNode *opencl_kernels = input->getNamedMetadata("opencl.kernels");
+  if (opencl_kernels) {
+    // find the right kernel in "opencl.kernels" metadata
 
-  for (unsigned i = 0, e = opencl_kernels->getNumOperands(); i != e; ++i) {
-    llvm::MDNode *kernel_iter = opencl_kernels->getOperand(i);
+    // Not sure what to do in this case
+    if (!opencl_kernels || opencl_kernels->getNumOperands() == 0) return -1;
 
-    llvm::Function *kernel_prototype = 
-      llvm::cast<llvm::Function>(
-        dyn_cast<llvm::ValueAsMetadata>(kernel_iter->getOperand(0))->getValue());
-    std::string name = kernel_prototype->getName().str();
-    if (name == kernel_name) {
-      kernel_metadata = kernel_iter;
-      break;
+    for (unsigned i = 0, e = opencl_kernels->getNumOperands(); i != e; ++i) {
+      llvm::MDNode *kernel_iter = opencl_kernels->getOperand(i);
+
+      llvm::Function *kernel_prototype =
+        llvm::cast<llvm::Function>(
+                                   dyn_cast<llvm::ValueAsMetadata>(kernel_iter->getOperand(0))->getValue());
+      std::string name = kernel_prototype->getName().str();
+      if (name == kernel_name) {
+        kernel_metadata = kernel_iter;
+        break;
+      }
     }
+    assert(kernel_metadata && "kernel NOT found in opencl.kernels metadata");
+  }
+  // LLVM 3.9 does not use opencl.kernels meta, but kernel_arg_* function meta
+  // Store meta and names in a vector so we can use rest of the code as is
+  else {
+    for (llvm::Module::iterator i = input->begin(), e = input->end();
+         i != e; ++i) {
+      if (i->getMetadata("kernel_arg_access_qual")
+          && i->getName() == kernel_name)
+        {
+          //printf("found kernel with name\n");
+          //i->getMetadata("kernel_arg_type")->dump();
+
+          llvm39_kernel_meta.push_back
+            (std::make_pair("kernel_arg_addr_space",
+                            i->getMetadata("kernel_arg_addr_space")));
+          llvm39_kernel_meta.push_back
+            (std::make_pair("kernel_arg_access_qual",
+                            i->getMetadata("kernel_arg_access_qual")));
+          llvm39_kernel_meta.push_back
+            (std::make_pair("kernel_arg_type",
+                            i->getMetadata("kernel_arg_type")));
+          llvm39_kernel_meta.push_back
+            (std::make_pair("kernel_arg_base_type",
+                            i->getMetadata("kernel_arg_base_type")));
+          llvm39_kernel_meta.push_back
+            (std::make_pair("kernel_arg_type_qual",
+                            i->getMetadata("kernel_arg_type_qual")));
+          llvm39_kernel_meta.push_back
+            (std::make_pair("kernel_arg_name",
+                            i->getMetadata("kernel_arg_name")));
+          kernel_metadata = i->getMetadata(0);
+        }
+    }
+    assert (llvm39_kernel_meta.size() > 0 && "Kernel not found.");
+  }
+  kernel->has_arg_metadata = 0;
+
+  unsigned e;
+  // offset to actual meta. <3.9 first operand is the name of the meta and
+  // in 3.9 meta name is not in the operands
+  int meta_offset;
+  if (llvm_older_than_3_9 || bitcode_is_spir) {
+    e = kernel_metadata->getNumOperands();
+    meta_offset = 1;
+  }
+  else {
+    e = llvm39_kernel_meta.size();
+    meta_offset = 0;
   }
 
-  kernel->has_arg_metadata = 0;
-  int bitcode_is_spir = input->getTargetTriple().find("spir") == 0;
-
-  assert(kernel_metadata && "kernel NOT found in opencl.kernels metadata");
-
-  unsigned e = kernel_metadata->getNumOperands();
-  for (unsigned i = 1; i != e; ++i) {
-    llvm::MDNode *meta_node = llvm::cast<MDNode>(kernel_metadata->getOperand(i));
-
+  for (unsigned i = meta_offset; i != e; ++i) {
+    llvm::MDNode *meta_node;
+    std::string meta_name;
+    if (llvm_older_than_3_9 || bitcode_is_spir) {
+      meta_node = llvm::cast<MDNode>(kernel_metadata->getOperand(i));
+      llvm::MDString *meta_name_node =
+        llvm::cast<MDString>(meta_node->getOperand(0));
+      meta_name = meta_name_node->getString().str();
+    }
+    else {
+      meta_node = llvm::cast<MDNode>(llvm39_kernel_meta[i].second);
+      meta_name = llvm39_kernel_meta[i].first;
+    }
     // argument num
     unsigned arg_num = meta_node->getNumOperands();
 #ifndef NDEBUG
-    int has_meta_for_every_arg = ((arg_num-1) == kernel->num_args);
+    int has_meta_for_every_arg = ((arg_num - meta_offset) == kernel->num_args);
 #endif
 
-    llvm::MDString *meta_name_node = llvm::cast<MDString>(meta_node->getOperand(0));
-    std::string meta_name = meta_name_node->getString().str();
-
-    for (unsigned j = 1; j != arg_num; ++j) {
+    for (unsigned j = meta_offset; j != arg_num; ++j) {
       llvm::Value *meta_arg_value = NULL;
       if (isa<ValueAsMetadata>(meta_node->getOperand(j)))
         meta_arg_value = 
@@ -581,7 +639,7 @@ static int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
       else if (isa<ConstantAsMetadata>(meta_node->getOperand(j)))
         meta_arg_value = 
           dyn_cast<ConstantAsMetadata>(meta_node->getOperand(j))->getValue(); 
-      struct pocl_argument_info* current_arg = &kernel->arg_info[j-1];
+      struct pocl_argument_info* current_arg = &kernel->arg_info[j-meta_offset];
 
       if (meta_arg_value != NULL && isa<ConstantInt>(meta_arg_value) && 
           meta_name == "kernel_arg_addr_space") {
@@ -1568,7 +1626,7 @@ void pocl_llvm_update_binaries (cl_program program) {
  * and is used internally also by pocl_llvm_get_kernel_names to
  */
 static unsigned
-pocl_llvm_get_kernel_count(cl_program program, llvm::NamedMDNode **md_ret)
+pocl_llvm_get_kernel_count(cl_program program, char **knames, unsigned max_num_krn)
 {
   llvm::MutexGuard lockHolder(kernelCompilerLock);
   InitializeLLVM();
@@ -1576,38 +1634,49 @@ pocl_llvm_get_kernel_count(cl_program program, llvm::NamedMDNode **md_ret)
   // TODO: is it safe to assume every device (i.e. the index 0 here)
   // has the same set of programs & kernels?
   llvm::Module *mod = (llvm::Module *) program->llvm_irs[0];
+
   llvm::NamedMDNode *md = mod->getNamedMetadata("opencl.kernels");
+  if (md) {
 
-  if (md_ret)
-    *md_ret = md;
-
-  if (md == NULL)
-    return 0;
-
-  return md->getNumOperands();
+    if (knames) {
+      for (unsigned i=0; i<max_num_krn; i++) {
+        assert( md->getOperand(i)->getOperand(0) != NULL);
+        llvm::ValueAsMetadata *value =
+          dyn_cast<llvm::ValueAsMetadata>(md->getOperand(i)->getOperand(0));
+        llvm::Function *k = cast<Function>(value->getValue());
+        knames[i] = strdup(k->getName().data());
+      }
+    }
+    return md->getNumOperands();
+  }
+  // LLVM 3.9 does not use opencl.kernels meta, but kernel_arg_* function meta
+  else {
+    unsigned kernel_count = 0;
+    for (llvm::Module::iterator i = mod->begin(), e = mod->end();
+           i != e; ++i) {
+      if (i->getMetadata("kernel_arg_access_qual")) {
+        if (knames && kernel_count < max_num_krn) {
+          knames[kernel_count] = strdup(i->getName().str().c_str());
+        }
+        ++kernel_count;
+      }
+    }
+    return kernel_count;
+  }
 }
 
 unsigned
 pocl_llvm_get_kernel_count(cl_program program)
 {
-  return pocl_llvm_get_kernel_count(program, NULL);
+  return pocl_llvm_get_kernel_count(program, NULL, 0);
 }
 
 unsigned
-pocl_llvm_get_kernel_names( cl_program program, char **knames, unsigned max_num_krn )
+pocl_llvm_get_kernel_names (cl_program program, char **knames, unsigned max_num_krn)
 {
-  llvm::NamedMDNode *md;
-  unsigned i, n = pocl_llvm_get_kernel_count(program, &md);
+  unsigned n = pocl_llvm_get_kernel_count(program, knames, max_num_krn);
 
-  for (i=0; i<n; i++) {
-    assert( md->getOperand(i)->getOperand(0) != NULL);
-    llvm::Function *k = 
-      cast<Function>(
-        dyn_cast<llvm::ValueAsMetadata>(md->getOperand(i)->getOperand(0))->getValue());
-    if (i < max_num_krn)
-      knames[i] = strdup(k->getName().data());
-  }
-  return i;
+  return n;
 }
 
 /* Run LLVM codegen on input file (parallel-optimized).

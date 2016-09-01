@@ -42,6 +42,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "LLVMUtils.h"
 #include "Workgroup.h"
 
+#include <iostream>
 POP_COMPILER_DIAGS
 
 using namespace std;
@@ -85,23 +86,27 @@ AutomaticLocals::runOnModule(Module &M)
   FunctionMapping kernels;
 
   string ErrorInfo;
-
+  std::vector<Function*> NewFuncs;
   for (Module::iterator mi = M.begin(), me = M.end(); mi != me; ++mi) {
+    // This is to prevent recursion with llvm 3.9. The new kernels are
+    // recognized as kernelsToProcess.
+    if (find(NewFuncs.begin(), NewFuncs.end(), &*mi) != NewFuncs.end())
+      continue;
     if (!Workgroup::isKernelToProcess(*mi))
       continue;
-  
+
     Function *F = &*mi;
 
     Function *new_kernel = ProcessAutomaticLocals(F);
     if (new_kernel != F)
       changed = true;
     kernels[F] = new_kernel;
+    NewFuncs.push_back(new_kernel);
   }
 
   if (changed)
     {
       regenerate_kernel_metadata(M, kernels);
-
       /* Delete the old kernels. */
       for (FunctionMapping::const_iterator i = kernels.begin(),
              e = kernels.end(); i != e; ++i) 
@@ -144,7 +149,7 @@ AutomaticLocals::ProcessAutomaticLocals(Function *F)
     // This kernel fingerprint has not changed.
     return F;
   }
-  
+
   // Create the new function.
   FunctionType *ft = FunctionType::get(F->getReturnType(),
                                        parameters,

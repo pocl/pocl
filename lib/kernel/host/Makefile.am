@@ -39,7 +39,13 @@ endif
 if ! LLVM_3_6
 
 if HOST_CPU_IS_X86_64
+# clang 3.9 has different mangling,
+# thus new ir file until better implementation is provided
+if LLVM_3_9
+  LKERNEL_SRCS_EXTRA2 = svm_atomics_x86_64_llvm3_9.ll svm_atomics.cl
+else
   LKERNEL_SRCS_EXTRA2 = svm_atomics_x86_64.ll svm_atomics.cl
+endif
 else
   LKERNEL_SRCS_EXTRA2 = svm_atomics_host.cl svm_atomics.cl
 endif

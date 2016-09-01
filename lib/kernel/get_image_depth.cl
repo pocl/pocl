@@ -33,10 +33,12 @@
 #define ADDRESS_SPACE
 #endif
 
-#define IMPLEMENT_GET_IMAGE_DEPTH(__IMGTYPE__)              \
-  int _CL_OVERLOADABLE get_image_depth(__IMGTYPE__ image){  \
-    return (*(ADDRESS_SPACE dev_image_t**)&image)->_depth;  \
-  }                                                         \
+#define IMPLEMENT_GET_IMAGE_DEPTH(__IMGTYPE__)                \
+  int _CL_OVERLOADABLE get_image_depth(__IMGTYPE__ image){    \
+    ADDRESS_SPACE dev_image_t* ptr =                          \
+      __builtin_astype(image, ADDRESS_SPACE dev_image_t*);    \
+    return ptr->_depth;                                       \
+  }                                                           \
 
 IMPLEMENT_GET_IMAGE_DEPTH(image1d_t)
 IMPLEMENT_GET_IMAGE_DEPTH(image2d_t)

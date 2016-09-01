@@ -215,7 +215,7 @@ Workgroup::runOnModule(Module &M)
                            NULL));
   BasicBlock *bb = BasicBlock::Create(M.getContext(), "", barrier);
   ReturnInst::Create(M.getContext(), 0, bb);
-  
+
   return true;
 }
 
@@ -631,6 +631,9 @@ Workgroup::isKernelToProcess(const Function &F)
 {
   const Module *m = F.getParent();
 
+  if (F.getMetadata("kernel_arg_access_qual"))
+    return true;
+
   NamedMDNode *kernels = m->getNamedMetadata("opencl.kernels");
   if (kernels == NULL) {
     if (KernelName == "")
@@ -639,15 +642,15 @@ Workgroup::isKernelToProcess(const Function &F)
       return true;
 
     return false;
-  }  
+  }
 
   for (unsigned i = 0, e = kernels->getNumOperands(); i != e; ++i) {
     if (kernels->getOperand(i)->getOperand(0) == NULL)
       continue; // globaldce might have removed uncalled kernels
-    Function *k = 
+    Function *k =
       cast<Function>(
         dyn_cast<ValueAsMetadata>(kernels->getOperand(i)->getOperand(0))
-          ->getValue());
+        ->getValue());
     if (&F == k)
       return true;
   }

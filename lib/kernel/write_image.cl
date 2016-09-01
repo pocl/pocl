@@ -33,6 +33,14 @@
 #define ADDRESS_SPACE
 #endif
 
+// 3.9 needs access qualifier
+// TODO: rw images
+#if (__clang_major__ == 3) && (__clang_minor__ >= 9)
+#define IMG_WRITE_AQ __write_only
+#else
+#define IMG_WRITE_AQ
+#endif
+
 /* writes pixel to coord in image */
 void pocl_write_pixel (void* color_, ADDRESS_SPACE dev_image_t* dev_image, int4 coord)
 {  
@@ -81,13 +89,14 @@ void pocl_write_pixel (void* color_, ADDRESS_SPACE dev_image_t* dev_image, int4 
 */
 #define IMPLEMENT_WRITE_IMAGE_INT_COORD(__IMGTYPE__,__DTYPE__,__POSTFIX__, \
                                         __COORD__)                      \
-  void _CL_OVERLOADABLE write_image##__POSTFIX__ (__IMGTYPE__ image,    \
+  void _CL_OVERLOADABLE write_image##__POSTFIX__ (__write_only __IMGTYPE__ image,    \
                                                   __COORD__ coord,      \
                                                   __DTYPE__ color)      \
   {                                                                     \
-  int4 coord4;                                                          \
-  INITCOORD##__COORD__(coord4, coord);                                  \
-  pocl_write_pixel (&color, *(ADDRESS_SPACE dev_image_t**)&image, coord4);                             \
+    int4 coord4;                                                        \
+    INITCOORD##__COORD__(coord4, coord);                                \
+    global dev_image_t* i_ptr = __builtin_astype (image, global dev_image_t*); \
+    pocl_write_pixel (&color, i_ptr, coord4);                             \
   }                                                                     \
 
 IMPLEMENT_WRITE_IMAGE_INT_COORD(image2d_t, uint4, ui, int2)

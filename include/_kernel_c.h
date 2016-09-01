@@ -69,6 +69,10 @@
 #  define _CL_UNAVAILABLE
 #endif
 
+#if (__clang_major__ == 3) && (__clang_minor__ >= 9)
+#define CLANG_3_9
+#endif
+
 typedef char char2  __attribute__((__ext_vector_type__(2)));
 typedef char char3  __attribute__((__ext_vector_type__(3)));
 typedef char char4  __attribute__((__ext_vector_type__(4)));
@@ -105,7 +109,7 @@ typedef uint uint4  __attribute__((__ext_vector_type__(4)));
 typedef uint uint8  __attribute__((__ext_vector_type__(8)));
 typedef uint uint16 __attribute__((__ext_vector_type__(16)));
 
-#if defined(__CBUILD__) && defined(cl_khr_fp16)
+#if defined(__CBUILD__) && defined(cl_khr_fp16) && !defined(CLANG_3_9)
 /* NOTE: the Clang's __fp16 does not work robustly in C mode, 
    it might produce invalid code at least with half vectors.
    Using the native 'half' type in OpenCL C mode works better. */
@@ -158,7 +162,7 @@ typedef ulong ulong16 __attribute__((__ext_vector_type__(16)));
    the default builtins we use C functions which require
    the typedefs to the actual underlying types.
 */
-#if defined(__CBUILD__)
+#if defined(__CBUILD__) && !defined(CLANG_3_9)
 typedef int sampler_t;
 
 /* Since some built-ins have different return types
@@ -169,6 +173,7 @@ typedef int sampler_t;
  * dev_image_t. The structs are not anonymous to allow identification
  * by name.
  */
+
 typedef struct _pocl_image2d_t { dev_image_t base; }* image2d_t;
 typedef struct _pocl_image3d_t { dev_image_t base; }* image3d_t;
 typedef struct _pocl_image1d_t { dev_image_t base; }* image1d_t;
@@ -177,6 +182,13 @@ typedef struct _pocl_image2d_array_t { dev_image_t base; }* image2d_array_t;
 typedef struct _pocl_image1d_array_t { dev_image_t base; }* image1d_array_t;
 #endif
 
+// 3.9 needs access qualifier
+// TODO: rw images
+#ifdef CLANG_3_9
+#define IMG_WRITE_AQ __write_only
+#else
+#define IMG_WRITE_AQ
+#endif
 
 float4 _CL_OVERLOADABLE read_imagef (image2d_t image, sampler_t sampler,
                                      int2 coord);
@@ -203,16 +215,16 @@ int4 _CL_OVERLOADABLE read_imagei (image2d_t image, sampler_t sampler,
                                    int2 coord);
 
 
-void _CL_OVERLOADABLE write_imagei (image2d_t image, int2 coord, int4 color);
+void _CL_OVERLOADABLE write_imagei (IMG_WRITE_AQ image2d_t image, int2 coord, int4 color);
 
-void _CL_OVERLOADABLE write_imageui (image2d_t image, int2 coord, uint4 color);
+void _CL_OVERLOADABLE write_imageui (IMG_WRITE_AQ image2d_t image, int2 coord, uint4 color);
 
 
 
-void _CL_OVERLOADABLE write_imagef (image2d_t image, int2 coord,
+void _CL_OVERLOADABLE write_imagef (IMG_WRITE_AQ image2d_t image, int2 coord,
                                     float4 color);
 
-void _CL_OVERLOADABLE write_imagef (image3d_t image, int4 coord,
+void _CL_OVERLOADABLE write_imagef (IMG_WRITE_AQ image3d_t image, int4 coord,
                                     float4 color);
 
 /* not implemented 
@@ -270,5 +282,9 @@ int _CL_OVERLOADABLE get_image_depth (image3d_t image);
 int2 _CL_OVERLOADABLE get_image_dim (image2d_t image);
 int2 _CL_OVERLOADABLE get_image_dim (image2d_array_t image);
 int4 _CL_OVERLOADABLE get_image_dim (image3d_t image);
+
+#ifdef CLANG_3_9
+#undef CLANG_3_9
+#endif
 
 #endif
