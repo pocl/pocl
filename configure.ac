@@ -104,6 +104,7 @@ if test x"$ocs" != x"no"; then :
 
   LLVM_3_6=false
   LLVM_3_9=false
+  LLVM_OLDER_THAN_3_9=true
 
   case "$LLVM_VERSION" in
        3.6*)
@@ -135,7 +136,7 @@ if test x"$ocs" != x"no"; then :
 
   AM_CONDITIONAL([LLVM_3_6], [test "x$LLVM_3_6" = "xtrue"])
   AM_CONDITIONAL([LLVM_3_9], [test "x$LLVM_3_9" = "xtrue"])
-  
+  AM_CONDITIONAL([LLVM_OLDER_THAN_3_9], [test "x$LLVM_3_9" = "xfalse"])
   AC_SUBST([LLVM_LDFLAGS], [$LLVM_LDFLAGS], [llvm-config returned ldflags])
 
   # When building with API linking, clang is always linked statically, so user might want to link llvm static to libpocl too

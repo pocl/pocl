@@ -283,8 +283,4 @@ int2 _CL_OVERLOADABLE get_image_dim (image2d_t image);
 int2 _CL_OVERLOADABLE get_image_dim (image2d_array_t image);
 int4 _CL_OVERLOADABLE get_image_dim (image3d_t image);
 
-#ifdef CLANG_3_9
-#undef CLANG_3_9
-#endif
-
 #endif
