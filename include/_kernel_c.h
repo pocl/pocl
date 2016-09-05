@@ -69,8 +69,8 @@
 #  define _CL_UNAVAILABLE
 #endif
 
-#if (__clang_major__ == 3) && (__clang_minor__ >= 9)
-#define CLANG_3_9
+#if !((__clang_major__ == 3) && (__clang_minor__ == 9)) && !(__clang_major__ == 4)
+#define CLANG_OLDER_THAN_3_9
 #endif
 
 typedef char char2  __attribute__((__ext_vector_type__(2)));
@@ -109,7 +109,7 @@ typedef uint uint4  __attribute__((__ext_vector_type__(4)));
 typedef uint uint8  __attribute__((__ext_vector_type__(8)));
 typedef uint uint16 __attribute__((__ext_vector_type__(16)));
 
-#if defined(__CBUILD__) && defined(cl_khr_fp16) && !defined(CLANG_3_9)
+#if defined(__CBUILD__) && defined(cl_khr_fp16) && defined(CLANG_OLDER_THAN_3_9)
 /* NOTE: the Clang's __fp16 does not work robustly in C mode, 
    it might produce invalid code at least with half vectors.
    Using the native 'half' type in OpenCL C mode works better. */
@@ -162,7 +162,7 @@ typedef ulong ulong16 __attribute__((__ext_vector_type__(16)));
    the default builtins we use C functions which require
    the typedefs to the actual underlying types.
 */
-#if defined(__CBUILD__) && !defined(CLANG_3_9)
+#if defined(__CBUILD__) && defined(CLANG_OLDER_THAN_3_9)
 typedef int sampler_t;
 
 /* Since some built-ins have different return types
@@ -184,10 +184,10 @@ typedef struct _pocl_image1d_array_t { dev_image_t base; }* image1d_array_t;
 
 // 3.9 needs access qualifier
 // TODO: rw images
-#ifdef CLANG_3_9
-#define IMG_WRITE_AQ __write_only
-#else
+#ifdef CLANG_OLDER_THAN_3_9
 #define IMG_WRITE_AQ
+#else
+#define IMG_WRITE_AQ __write_only
 #endif
 
 float4 _CL_OVERLOADABLE read_imagef (image2d_t image, sampler_t sampler,

@@ -530,9 +530,12 @@ ERROR_BUILDLOG:
   return CL_BUILD_PROGRAM_FAILURE;
 
 }
-static int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
-                                             llvm::Module *input,
-                                             cl_kernel kernel)
+
+// The old way of getting kernel metadata from "opencl.kernels" module meta.
+// LLVM < 3.9 and SPIR
+static int pocl_get_kernel_arg_module_metadata(const char* kernel_name,
+                                               llvm::Module *input,
+                                               cl_kernel kernel)
 {
   // find the right kernel in "opencl.kernels" metadata
   llvm::NamedMDNode *opencl_kernels = input->getNamedMetadata("opencl.kernels");
@@ -543,9 +546,9 @@ static int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
   for (unsigned i = 0, e = opencl_kernels->getNumOperands(); i != e; ++i) {
     llvm::MDNode *kernel_iter = opencl_kernels->getOperand(i);
 
-    llvm::Function *kernel_prototype = 
-      llvm::cast<llvm::Function>(
-        dyn_cast<llvm::ValueAsMetadata>(kernel_iter->getOperand(0))->getValue());
+    llvm::Value *meta =
+      dyn_cast<llvm::ValueAsMetadata>(kernel_iter->getOperand(0))->getValue();
+    llvm::Function *kernel_prototype = llvm::cast<llvm::Function>(meta);
     std::string name = kernel_prototype->getName().str();
     if (name == kernel_name) {
       kernel_metadata = kernel_iter;
@@ -666,17 +669,18 @@ static int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
   return 0;
 }
 
-
-static int pocl_llvm_get_kernel_arg_metadata_llvm3_9(const char* kernel_name,
-                                                     llvm::Module *input,
-                                                     cl_kernel kernel)
+// Clang 3.9 uses function metadata instead of module metadata for presenting
+// OpenCL kernel information.
+static int pocl_get_kernel_arg_function_metadata(const char* kernel_name,
+                                                 llvm::Module *input,
+                                                 cl_kernel kernel)
 {
   llvm::Function* Kernel = NULL;
   int bitcode_is_spir = input->getTargetTriple().find("spir") == 0;
 
   // SPIR still uses "opencl.kernels" meta
   if(bitcode_is_spir)
-    return pocl_llvm_get_kernel_arg_metadata(kernel_name, input, kernel);
+    return pocl_get_kernel_arg_module_metadata(kernel_name, input, kernel);
 
   for (llvm::Module::iterator i = input->begin(), e = input->end();
        i != e; ++i) {
@@ -1023,12 +1027,12 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 #endif
 
 #if defined(LLVM_OLDER_THAN_3_9)
-  if (pocl_llvm_get_kernel_arg_metadata(kernel_name, input, kernel)) {
+  if (pocl_get_kernel_arg_module_metadata(kernel_name, input, kernel)) {
     *errcode = CL_INVALID_KERNEL;
     return 1;
   };
 #else
-  if (pocl_llvm_get_kernel_arg_metadata_llvm3_9(kernel_name, input, kernel)) {
+  if (pocl_get_kernel_arg_function_metadata(kernel_name, input, kernel)) {
     *errcode = CL_INVALID_KERNEL;
     return 1;
   };
@@ -1744,7 +1748,8 @@ void pocl_llvm_update_binaries (cl_program program) {
  * and is used internally also by pocl_llvm_get_kernel_names to
  */
 static unsigned
-pocl_llvm_get_kernel_count(cl_program program, char **knames, unsigned max_num_krn)
+pocl_llvm_get_kernel_count(cl_program program, char **knames,
+                           unsigned max_num_krn)
 {
   llvm::MutexGuard lockHolder(kernelCompilerLock);
   InitializeLLVM();
@@ -1790,7 +1795,8 @@ pocl_llvm_get_kernel_count(cl_program program)
 }
 
 unsigned
-pocl_llvm_get_kernel_names (cl_program program, char **knames, unsigned max_num_krn)
+pocl_llvm_get_kernel_names(cl_program program, char **knames,
+                           unsigned max_num_krn)
 {
   unsigned n = pocl_llvm_get_kernel_count(program, knames, max_num_krn);
 
