@@ -38,6 +38,7 @@ else()
     NAMES "llvm-config"
       "llvm-config-mp-3.8" "llvm-config-3.8" "llvm-config38"
       "llvm-config-mp-3.7" "llvm-config-3.7" "llvm-config37"
+      "llvm-config-mp-3.9" "llvm-config-3.9" "llvm-config39"
     DOC "llvm-config executable")
 endif()
 

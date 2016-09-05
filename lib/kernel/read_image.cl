@@ -181,11 +181,14 @@ void __pocl_read_pixel (void* color, ADDRESS_SPACE dev_image_t* dev_image, int4 
     __RETVAL__ color;                                                   \
     int4 coord4;                                                        \
     INITCOORD##__COORD__(coord4, coord);                                \
-    if (__pocl_is_out_of_bounds (*(ADDRESS_SPACE dev_image_t**)&image, coord4, (dev_sampler_t*)&sampler, &color)) \
+    ADDRESS_SPACE dev_image_t* i_ptr =                                  \
+      __builtin_astype (image, ADDRESS_SPACE dev_image_t*);             \
+    dev_sampler_t s = __builtin_astype(sampler, dev_sampler_t);         \
+    if (__pocl_is_out_of_bounds (i_ptr, coord4, &s, &color))            \
       {                                                                 \
         return color;                                                   \
       }                                                                 \
-    __pocl_read_pixel (&color, (*(ADDRESS_SPACE dev_image_t**)&image), coord4); \
+    __pocl_read_pixel (&color, i_ptr, coord4); \
                                                                         \
     return color;                                                       \
   }                                                                     \

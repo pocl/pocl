@@ -30,7 +30,8 @@
 // not very efficient, but is easy to implement.
 #define OCL_C_AS __attribute__((address_space(0)))
 int printf(OCL_C_AS const char* restrict fmt, ...);
-int snprintf(OCL_C_AS char* restrict str, size_t size, OCL_C_AS const char* restrict fmt, ...);
+int snprintf(OCL_C_AS char* restrict str, size_t size,
+             OCL_C_AS const char* restrict fmt, ...);
 
 // For debugging
 // Use as: DEBUG_PRINTF((fmt, args...)) -- note double parentheses!
@@ -57,12 +58,13 @@ typedef struct {
 
 #define DEFINE_PRINT_INTS(WIDTH)                                        \
   void _cl_print_ints_##WIDTH(flags_t flags, int field_width, int precision, \
-                              char conv, OCL_C_AS const void* vals, int n)       \
+                              char conv, OCL_C_AS const void* vals, int n) \
   {                                                                     \
     DEBUG_PRINTF(("[printf:ints:n=%df]\n", n));                         \
     char outfmt[1000];                                                  \
+    OCL_C_AS char str[] = "%%%s%s%s%s%s%.0d%s%.0d" INT_CONV_##WIDTH "%c"; \
     snprintf(outfmt, sizeof outfmt,                                     \
-             "%%%s%s%s%s%s%.0d%s%.0d" INT_CONV_##WIDTH "%c",            \
+             str,                                                       \
              flags.left ? "-" : "",                                     \
              flags.plus ? "+" : "",                                     \
              flags.space ? " " : "",                                    \
@@ -73,10 +75,11 @@ typedef struct {
              precision != -1 ? precision : 0,                           \
              conv);                                                     \
     DEBUG_PRINTF(("[printf:ints:outfmt=%s]\n", outfmt));                \
+    OCL_C_AS char comma[] = ",";                                        \
     for (int d=0; d<n; ++d) {                                           \
       DEBUG_PRINTF(("[printf:ints:d=%d]\n", d));                        \
-      if (d != 0) printf(",");                                          \
-      printf(outfmt, ((OCL_C_AS const WIDTH*)vals)[d]);                          \
+      if (d != 0) printf(comma);                                        \
+      printf(outfmt, ((OCL_C_AS const WIDTH*)vals)[d]);                 \
     }                                                                   \
     DEBUG_PRINTF(("[printf:ints:done]\n"));                             \
   }
@@ -95,7 +98,8 @@ DEFINE_PRINT_INTS(long)
 // Helper routines to output floats
 
 // Defined in OpenCL
-float __attribute__((overloadable)) vload_half(size_t offset, const half *p);
+float __attribute__((overloadable)) vload_half(size_t offset,
+                                               OCL_C_AS const half *p);
 
 // Note: To simplify implementation, we print double values with %lf,
 // although %f would suffice as well
@@ -112,8 +116,9 @@ float __attribute__((overloadable)) vload_half(size_t offset, const half *p);
   {                                                                     \
     DEBUG_PRINTF(("[printf:floats:n=%dd]\n", n));                       \
     char outfmt[1000];                                                  \
+    OCL_C_AS char str[] = "%%%s%s%s%s%s%.0d%s%.0d" FLOAT_CONV_##WIDTH "%c"; \
     snprintf(outfmt, sizeof outfmt,                                     \
-             "%%%s%s%s%s%s%.0d%s%.0d" FLOAT_CONV_##WIDTH "%c",          \
+             str,                                                       \
              flags.left ? "-" : "",                                     \
              flags.plus ? "+" : "",                                     \
              flags.space ? " " : "",                                    \
@@ -124,10 +129,11 @@ float __attribute__((overloadable)) vload_half(size_t offset, const half *p);
              precision != -1 ? precision : 0,                           \
              conv);                                                     \
     DEBUG_PRINTF(("[printf:floats:outfmt=%s]\n", outfmt));              \
+    OCL_C_AS char comma[] = ",";                                        \
     for (int d=0; d<n; ++d) {                                           \
       DEBUG_PRINTF(("[printf:floats:d=%d]\n", d));                      \
-      if (d != 0) printf(",");                                          \
-      printf(outfmt, FLOAT_GET_##WIDTH((OCL_C_AS const WIDTH*)vals+d));          \
+      if (d != 0) printf(comma);                                        \
+      printf(outfmt, FLOAT_GET_##WIDTH((OCL_C_AS const WIDTH*)vals+d)); \
     }                                                                   \
     DEBUG_PRINTF(("[printf:floats:done]\n"));                           \
   }
@@ -150,8 +156,9 @@ void _cl_print_char(flags_t flags, int field_width, int val)
 {
   DEBUG_PRINTF(("[printf:char]\n"));
   char outfmt[1000];
+  char string[] = "%%%s%.0dc";
   snprintf(outfmt, sizeof outfmt,
-           "%%%s%.0dc",
+           string,
            flags.left ? "-" : "",
            field_width);
   DEBUG_PRINTF(("[printf:char:outfmt=%s]\n", outfmt));
@@ -163,8 +170,9 @@ void _cl_print_string(flags_t flags, int field_width, OCL_C_AS const char* val)
 {
   DEBUG_PRINTF(("[printf:char]\n"));
   char outfmt[1000];
+  char string[] = "%%%s%.0ds";
   snprintf(outfmt, sizeof outfmt,
-           "%%%s%.0ds",
+           string,
            flags.left ? "-" : "",
            field_width);
   DEBUG_PRINTF(("[printf:char:outfmt=%s]\n", outfmt));
@@ -176,8 +184,9 @@ void _cl_print_pointer(flags_t flags, int field_width, OCL_C_AS const void* val)
 {
   DEBUG_PRINTF(("[printf:char]\n"));
   char outfmt[1000];
+  char string[] = "%%%s%.0dp";
   snprintf(outfmt, sizeof outfmt,
-           "%%%s%.0dp",
+           string,
            flags.left ? "-" : "",
            field_width);
   DEBUG_PRINTF(("[printf:char:outfmt=%s]\n", outfmt));
@@ -213,7 +222,8 @@ int _cl_printf(const OCL_CONSTANT_AS char* restrict format, ...)
       
       if (ch == '%') {
         DEBUG_PRINTF(("[printf:%%]\n"));
-        printf("%%");           // literal %
+        char s[] = "%%";
+        printf(s);           // literal %
         ch = *++format;
       } else {
         DEBUG_PRINTF(("[printf:arg]\n"));
@@ -439,7 +449,8 @@ int _cl_printf(const OCL_CONSTANT_AS char* restrict format, ...)
 
     } else {
       DEBUG_PRINTF(("[printf:literal]\n"));
-      printf("%c", ch);
+      char literal[] = "%c";
+      printf(literal, ch);
       ch = *++format;
     }
   }
@@ -451,6 +462,7 @@ int _cl_printf(const OCL_CONSTANT_AS char* restrict format, ...)
  error:;
   va_end(ap);
   DEBUG_PRINTF(("[printf:error]\n"));
-  printf("(printf format string error)");
+  char string [] = "(printf format string error)";
+  printf(string);
   return -1;
 }

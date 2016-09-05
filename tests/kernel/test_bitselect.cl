@@ -1188,7 +1188,7 @@ DEFINE_BODY_G
      // abs
      equal = true;
      for (int n=0; n<vecsize; ++n) {
-       sgtype signbit = (sgtype)1 << (sgtype)(count_bits(sgtype)-1);
+       sgtype signbit = (sgtype)((sgtype)1 << (sgtype)(count_bits(sgtype)-1));
        // Note: left.s[n] < 0 leads to a compiler warning for unsigned types,
        // so we check the sign bit explicitly
        sugtype absval =
