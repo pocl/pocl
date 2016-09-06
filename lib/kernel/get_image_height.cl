@@ -33,10 +33,12 @@
 #define ADDRESS_SPACE
 #endif
 
-#define IMPLEMENT_GET_IMAGE_HEIGHT(__IMGTYPE__)                   \
-  int _CL_OVERLOADABLE get_image_height(__IMGTYPE__ image){       \
-    return (*(ADDRESS_SPACE dev_image_t**)&image)->_height;       \
-  }                                                               \
+#define IMPLEMENT_GET_IMAGE_HEIGHT(__IMGTYPE__)                              \
+  int _CL_OVERLOADABLE get_image_height(__IMGTYPE__ image){                  \
+    ADDRESS_SPACE dev_image_t* ptr =                                         \
+      __builtin_astype(image, ADDRESS_SPACE dev_image_t*);                   \
+    return ptr->_height;                                                     \
+  }                                                                          \
 
 
 IMPLEMENT_GET_IMAGE_HEIGHT(image1d_t)

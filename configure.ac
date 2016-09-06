@@ -91,7 +91,7 @@ if test x"$ocs" != x"no"; then :
   AC_DEFINE([OCS_AVAILABLE], [1], [Defined to 1 if compiling with online compiler support])
 
   AC_ARG_VAR([LLVM_CONFIG], [Program used to retrieve LLVM options and binaries])
-  AC_PATH_PROGS([LLVM_CONFIG], [llvm-config llvm-config-mp-3.8 llvm-config-3.8 llvm-config38 llvm-config-mp-3.7 llvm-config-3.7 llvm-config37])
+  AC_PATH_PROGS([LLVM_CONFIG], [llvm-config llvm-config-mp-3.9 llvm-config-3.9 llvm-config39 llvm-config-mp-3.8 llvm-config-3.8 llvm-config38 llvm-config-mp-3.7 llvm-config-3.7 llvm-config37])
   test -z "$LLVM_CONFIG" && AC_MSG_FAILURE([no llvm-config found in \$PATH])
 
   LLVM_VERSION=`$LLVM_CONFIG --version`
@@ -103,6 +103,8 @@ if test x"$ocs" != x"no"; then :
   AC_DEFINE_UNQUOTED([LLVM_VERSION], ["$LLVM_VERSION"], "LLVM version as a string.")
 
   LLVM_3_6=false
+  LLVM_3_9=false
+  LLVM_OLDER_THAN_3_9=true
 
   case "$LLVM_VERSION" in
        3.6*)
@@ -118,17 +120,23 @@ if test x"$ocs" != x"no"; then :
        AC_DEFINE([LLVM_3_8], [], "Using LLVM 3.8")
        LLVM_LDFLAGS="$LLVM_LDFLAGS `$LLVM_CONFIG --system-libs`"
      ;;
+       3.9*)
+       AC_DEFINE([LLVM_3_9], [], "Using LLVM 3.9")
+       LLVM_3_9=true
+       LLVM_LDFLAGS="$LLVM_LDFLAGS `$LLVM_CONFIG --system-libs`"
+     ;;
        *)
      AC_MSG_ERROR(
      [
-  Unsupported LLVM version. Please use LLVM version 3.7 or 3.8.
+  Unsupported LLVM version. Please use LLVM version 3.7, 3.8 or 3.9.
      ])
      LLVM_VERSION=
      ;;
   esac
 
   AM_CONDITIONAL([LLVM_3_6], [test "x$LLVM_3_6" = "xtrue"])
-
+  AM_CONDITIONAL([LLVM_3_9], [test "x$LLVM_3_9" = "xtrue"])
+  AM_CONDITIONAL([LLVM_OLDER_THAN_3_9], [test "x$LLVM_3_9" = "xfalse"])
   AC_SUBST([LLVM_LDFLAGS], [$LLVM_LDFLAGS], [llvm-config returned ldflags])
 
   # When building with API linking, clang is always linked statically, so user might want to link llvm static to libpocl too

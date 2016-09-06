@@ -38,6 +38,7 @@ else()
     NAMES "llvm-config"
       "llvm-config-mp-3.8" "llvm-config-3.8" "llvm-config38"
       "llvm-config-mp-3.7" "llvm-config-3.7" "llvm-config37"
+      "llvm-config-mp-3.9" "llvm-config-3.9" "llvm-config39"
     DOC "llvm-config executable")
 endif()
 
@@ -156,10 +157,13 @@ if(LLVM_VERSION MATCHES "3[.]([0-9]+)")
   message(STATUS "Minor llvm version: ${LLVM_MINOR}")
   if(LLVM_MINOR STREQUAL "6")
     set(LLVM_3_6 1)
+    set(LLVM_OLDER_THAN_3_9 1)
   elseif(LLVM_MINOR STREQUAL "7")
     set(LLVM_3_7 1)
+    set(LLVM_OLDER_THAN_3_9 1)
   elseif(LLVM_MINOR STREQUAL "8")
     set(LLVM_3_8 1)
+    set(LLVM_OLDER_THAN_3_9 1)
   elseif(LLVM_MINOR STREQUAL "9")
     set(LLVM_3_9 1)
   else()

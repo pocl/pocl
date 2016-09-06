@@ -375,7 +375,9 @@ BarrierTailReplication::ReplicateBasicBlocks(BasicBlockVector &new_graph,
           
           // Get value for original incoming edge and add new predicate.
           Value *v = phi->getIncomingValueForBlock(b);
-          Value *new_v = reference_map[v];
+          Value *new_v = reference_map.find(v) == reference_map.end() ?
+            NULL : reference_map[v];
+
           if (new_v == NULL) {
             /* This case can happen at least when replicating a latch 
                block in a b-loop. The value produced might be from a common

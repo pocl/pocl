@@ -370,13 +370,15 @@ int pocl_llvm_build_program(cl_program program,
     }
   
   LangOptions *la = pocl_build.getLangOpts();
+  PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
+
 #ifdef LLVM_OLDER_THAN_3_9
   pocl_build.setLangDefaults
     (*la, clang::IK_OpenCL, clang::LangStandard::lang_opencl12);
 #else
   llvm::Triple triple(device->llvm_target_triplet);
   pocl_build.setLangDefaults
-    (*la, clang::IK_OpenCL, triple, clang::LangStandard::lang_opencl12);
+    (*la, clang::IK_OpenCL, triple, po, clang::LangStandard::lang_opencl12);
 #endif
   
   // LLVM 3.3 and older do not set that char is signed which is
@@ -390,8 +392,6 @@ int pocl_llvm_build_program(cl_program program,
   la->MathErrno = false; // -fno-math-errno
   la->NoBuiltin = true;  // -fno-builtin
   la->AsmBlocks = true;  // -fasm (?)
-
-  PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
 
   std::string kernelh;
   if (pocl_get_bool_option("POCL_BUILDING", 0))
@@ -530,24 +530,25 @@ ERROR_BUILDLOG:
   return CL_BUILD_PROGRAM_FAILURE;
 
 }
-static int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
-                                             llvm::Module *input,
-                                             cl_kernel kernel)
-{
 
+// The old way of getting kernel metadata from "opencl.kernels" module meta.
+// LLVM < 3.9 and SPIR
+static int pocl_get_kernel_arg_module_metadata(const char* kernel_name,
+                                               llvm::Module *input,
+                                               cl_kernel kernel)
+{
   // find the right kernel in "opencl.kernels" metadata
   llvm::NamedMDNode *opencl_kernels = input->getNamedMetadata("opencl.kernels");
   llvm::MDNode *kernel_metadata = NULL;
 
-  // Not sure what to do in this case
-  if (!opencl_kernels || opencl_kernels->getNumOperands() == 0) return -1;
+  assert(opencl_kernels && opencl_kernels->getNumOperands());
 
   for (unsigned i = 0, e = opencl_kernels->getNumOperands(); i != e; ++i) {
     llvm::MDNode *kernel_iter = opencl_kernels->getOperand(i);
 
-    llvm::Function *kernel_prototype = 
-      llvm::cast<llvm::Function>(
-        dyn_cast<llvm::ValueAsMetadata>(kernel_iter->getOperand(0))->getValue());
+    llvm::Value *meta =
+      dyn_cast<llvm::ValueAsMetadata>(kernel_iter->getOperand(0))->getValue();
+    llvm::Function *kernel_prototype = llvm::cast<llvm::Function>(meta);
     std::string name = kernel_prototype->getName().str();
     if (name == kernel_name) {
       kernel_metadata = kernel_iter;
@@ -667,6 +668,177 @@ static int pocl_llvm_get_kernel_arg_metadata(const char* kernel_name,
   }
   return 0;
 }
+
+// Clang 3.9 uses function metadata instead of module metadata for presenting
+// OpenCL kernel information.
+static int pocl_get_kernel_arg_function_metadata(const char* kernel_name,
+                                                 llvm::Module *input,
+                                                 cl_kernel kernel)
+{
+  llvm::Function* Kernel = NULL;
+  int bitcode_is_spir = input->getTargetTriple().find("spir") == 0;
+
+  // SPIR still uses "opencl.kernels" meta
+  if(bitcode_is_spir)
+    return pocl_get_kernel_arg_module_metadata(kernel_name, input, kernel);
+
+  for (llvm::Module::iterator i = input->begin(), e = input->end();
+       i != e; ++i) {
+    if (i->getMetadata("kernel_arg_access_qual")
+        && i->getName() == kernel_name)
+      {
+        Kernel = &*i;
+        break;
+      }
+  }
+  assert(Kernel);
+  kernel->has_arg_metadata = 0;
+
+  llvm::MDNode *meta_node;
+  llvm::Value *meta_arg_value = NULL;
+  struct pocl_argument_info* current_arg = NULL;
+
+  // kernel_arg_addr_space
+  meta_node = Kernel->getMetadata("kernel_arg_addr_space");
+  unsigned arg_num = meta_node->getNumOperands();
+#ifndef NDEBUG
+  int has_meta_for_every_arg = (arg_num == kernel->num_args);
+#endif
+  for (unsigned j = 0; j < arg_num; ++j) {
+    assert(has_meta_for_every_arg && "kernel_arg_addr_space meta incomplete");
+
+    current_arg = &kernel->arg_info[j];
+    kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER;
+    //std::cout << "is ConstantInt /  kernel_arg_addr_space" << std::endl;
+     meta_arg_value =
+          dyn_cast<ConstantAsMetadata>(meta_node->getOperand(j))->getValue();
+    llvm::ConstantInt *m = llvm::cast<ConstantInt>(meta_arg_value);
+    uint64_t val = m->getLimitedValue(UINT_MAX);
+    //std::cout << "with value: " << val << std::endl;
+    if (bitcode_is_spir) {
+      switch(val) {
+      case 0:
+        current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
+      case 1:
+        current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_GLOBAL; break;
+      case 3:
+        current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_LOCAL; break;
+      case 2:
+        current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_CONSTANT; break;
+      }
+    } else {
+      switch(val) {
+      case POCL_ADDRESS_SPACE_PRIVATE:
+        current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
+      case POCL_ADDRESS_SPACE_GLOBAL:
+        current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_GLOBAL; break;
+      case POCL_ADDRESS_SPACE_LOCAL:
+        current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_LOCAL; break;
+      case POCL_ADDRESS_SPACE_CONSTANT:
+        current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_CONSTANT; break;
+      case POCL_ADDRESS_SPACE_GENERIC:
+        current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
+      }
+    }
+  }
+
+  // kernel_arg_access_qual
+  meta_node = Kernel->getMetadata("kernel_arg_access_qual");
+  arg_num = meta_node->getNumOperands();
+#ifndef NDEBUG
+  has_meta_for_every_arg = (arg_num == kernel->num_args);
+#endif
+  assert(has_meta_for_every_arg && "kernel_arg_access_qual meta incomplete");
+
+  for (unsigned j= 0; j < meta_node->getNumOperands(); ++j) {
+    current_arg = &kernel->arg_info[j];
+    //std::cout << "is MDString" << std::endl;
+    llvm::MDString *m = llvm::cast<MDString>(meta_node->getOperand(j));
+    std::string val = m->getString().str();
+    //std::cout << "with value: " << val << std::endl;
+    assert(has_meta_for_every_arg && "kernel_arg_access_qual meta incomplete");
+    kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_ACCESS_QUALIFIER;
+    if (val == "read_write")
+      current_arg->access_qualifier = CL_KERNEL_ARG_ACCESS_READ_WRITE;
+    else if (val == "read_only")
+      current_arg->access_qualifier = CL_KERNEL_ARG_ACCESS_READ_ONLY;
+    else if (val == "write_only")
+      current_arg->access_qualifier = CL_KERNEL_ARG_ACCESS_WRITE_ONLY;
+    else if (val == "none")
+      current_arg->access_qualifier = CL_KERNEL_ARG_ACCESS_NONE;
+    else
+      std::cout << "UNKNOWN kernel_arg_access_qual value: " << val << std::endl;
+  }
+
+  // kernel_arg_type
+  meta_node = Kernel->getMetadata("kernel_arg_type");
+  arg_num = meta_node->getNumOperands();
+#ifndef NDEBUG
+  has_meta_for_every_arg = (arg_num == kernel->num_args);
+#endif
+  assert(has_meta_for_every_arg && "kernel_arg_type meta incomplete");
+
+  for (unsigned j= 0; j < meta_node->getNumOperands(); ++j) {
+    llvm::MDString *m = llvm::cast<MDString>(meta_node->getOperand(j));
+    std::string val = m->getString().str();
+
+    current_arg = &kernel->arg_info[j];
+    kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_TYPE_NAME;
+    current_arg->type_name = new char[val.size() + 1];
+    std::strcpy(current_arg->type_name, val.c_str());
+  }
+
+  // kernel_arg_base_type
+  meta_node = Kernel->getMetadata("kernel_arg_base type");
+  arg_num = meta_node->getNumOperands();
+  for (unsigned j= 0; j < meta_node->getNumOperands(); ++j) {
+    // may or may not be present even in SPIR
+    // apparently there is no use for this meta atm.
+  }
+
+  // kernel_arg_type_qual
+  meta_node = Kernel->getMetadata("kernel_arg_type_qual");
+  arg_num = meta_node->getNumOperands();
+#ifndef NDEBUG
+  has_meta_for_every_arg = (arg_num == kernel->num_args);
+#endif
+  assert(has_meta_for_every_arg && "kernel_arg_type_qual meta incomplete");
+  for (unsigned j= 0; j < meta_node->getNumOperands(); ++j) {
+    llvm::MDString *m = llvm::cast<MDString>(meta_node->getOperand(j));
+    std::string val = m->getString().str();
+
+    current_arg = &kernel->arg_info[j];
+    assert(has_meta_for_every_arg && "kernel_arg_type_qual meta incomplete");
+    kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_TYPE_QUALIFIER;
+    current_arg->type_qualifier = 0;
+    if (val.find("const") != std::string::npos)
+      current_arg->type_qualifier |= CL_KERNEL_ARG_TYPE_CONST;
+    if (val.find("restrict") != std::string::npos)
+      current_arg->type_qualifier |= CL_KERNEL_ARG_TYPE_RESTRICT;
+    if (val.find("volatile") != std::string::npos)
+      current_arg->type_qualifier |= CL_KERNEL_ARG_TYPE_VOLATILE;
+  }
+
+  //kernel_arg_name
+  meta_node = Kernel->getMetadata("kernel_arg_name");
+  arg_num = meta_node->getNumOperands();
+#ifndef NDEBUG
+  has_meta_for_every_arg = (arg_num == kernel->num_args);
+#endif
+  assert(has_meta_for_every_arg && "kernel_arg_name meta incomplete");
+  for (unsigned j= 0; j < meta_node->getNumOperands(); ++j) {
+    llvm::MDString *m = llvm::cast<MDString>(meta_node->getOperand(j));
+    std::string val = m->getString().str();
+
+    current_arg = &kernel->arg_info[j];
+    kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_NAME;
+    current_arg->name = new char[val.size() + 1];
+    std::strcpy(current_arg->name, val.c_str());
+  }
+
+  return 0;
+}
+
 
 int pocl_llvm_get_kernel_metadata(cl_program program, 
                                   cl_kernel kernel,
@@ -854,10 +1026,18 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
                               content.str().size());
 #endif
 
-  if (pocl_llvm_get_kernel_arg_metadata(kernel_name, input, kernel)) {
+#if defined(LLVM_OLDER_THAN_3_9)
+  if (pocl_get_kernel_arg_module_metadata(kernel_name, input, kernel)) {
     *errcode = CL_INVALID_KERNEL;
     return 1;
   };
+#else
+  if (pocl_get_kernel_arg_function_metadata(kernel_name, input, kernel)) {
+    *errcode = CL_INVALID_KERNEL;
+    return 1;
+  };
+#endif
+
 
   *errcode = CL_SUCCESS;
   return 0;
@@ -1568,7 +1748,8 @@ void pocl_llvm_update_binaries (cl_program program) {
  * and is used internally also by pocl_llvm_get_kernel_names to
  */
 static unsigned
-pocl_llvm_get_kernel_count(cl_program program, llvm::NamedMDNode **md_ret)
+pocl_llvm_get_kernel_count(cl_program program, char **knames,
+                           unsigned max_num_krn)
 {
   llvm::MutexGuard lockHolder(kernelCompilerLock);
   InitializeLLVM();
@@ -1576,38 +1757,50 @@ pocl_llvm_get_kernel_count(cl_program program, llvm::NamedMDNode **md_ret)
   // TODO: is it safe to assume every device (i.e. the index 0 here)
   // has the same set of programs & kernels?
   llvm::Module *mod = (llvm::Module *) program->llvm_irs[0];
+
   llvm::NamedMDNode *md = mod->getNamedMetadata("opencl.kernels");
+  if (md) {
 
-  if (md_ret)
-    *md_ret = md;
-
-  if (md == NULL)
-    return 0;
-
-  return md->getNumOperands();
+    if (knames) {
+      for (unsigned i=0; i<max_num_krn; i++) {
+        assert( md->getOperand(i)->getOperand(0) != NULL);
+        llvm::ValueAsMetadata *value =
+          dyn_cast<llvm::ValueAsMetadata>(md->getOperand(i)->getOperand(0));
+        llvm::Function *k = cast<Function>(value->getValue());
+        knames[i] = strdup(k->getName().data());
+      }
+    }
+    return md->getNumOperands();
+  }
+  // LLVM 3.9 does not use opencl.kernels meta, but kernel_arg_* function meta
+  else {
+    unsigned kernel_count = 0;
+    for (llvm::Module::iterator i = mod->begin(), e = mod->end();
+           i != e; ++i) {
+      if (i->getMetadata("kernel_arg_access_qual")) {
+        if (knames && kernel_count < max_num_krn) {
+          knames[kernel_count] = strdup(i->getName().str().c_str());
+        }
+        ++kernel_count;
+      }
+    }
+    return kernel_count;
+  }
 }
 
 unsigned
 pocl_llvm_get_kernel_count(cl_program program)
 {
-  return pocl_llvm_get_kernel_count(program, NULL);
+  return pocl_llvm_get_kernel_count(program, NULL, 0);
 }
 
 unsigned
-pocl_llvm_get_kernel_names( cl_program program, char **knames, unsigned max_num_krn )
+pocl_llvm_get_kernel_names(cl_program program, char **knames,
+                           unsigned max_num_krn)
 {
-  llvm::NamedMDNode *md;
-  unsigned i, n = pocl_llvm_get_kernel_count(program, &md);
+  unsigned n = pocl_llvm_get_kernel_count(program, knames, max_num_krn);
 
-  for (i=0; i<n; i++) {
-    assert( md->getOperand(i)->getOperand(0) != NULL);
-    llvm::Function *k = 
-      cast<Function>(
-        dyn_cast<llvm::ValueAsMetadata>(md->getOperand(i)->getOperand(0))->getValue());
-    if (i < max_num_krn)
-      knames[i] = strdup(k->getName().data());
-  }
-  return i;
+  return n;
 }
 
 /* Run LLVM codegen on input file (parallel-optimized).
