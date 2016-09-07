@@ -1,13 +1,17 @@
-# This is an example Toolchain file to cross-compile for ARM
-# or other boards from x86_64
+# This is an example Toolchain file to cross-compile for ARM/MIPS/other
+# boards from x86_64. Copy & modify
+#
 # Steps:
-# 1) Install g++ and gcc cross-compilers (apt install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf)
+# 1) Install g++ and gcc cross-compilers
+#    (apt install gcc-arm-linux-gnueabihf g++-arm-linux-gnueabihf)
 # 2) On your board, install libltdl, ocl-icd and libhwloc + their development headers
-# 3) copy the entire root filesystem of the board somewhere on your host, then set CMAKE_FIND_ROOT_PATH to this path
+# 3) copy the entire root filesystem of the board somewhere on your host,
+     then set CMAKE_FIND_ROOT_PATH below to this path
 # 4) run cmake like this:
 #          cmake -DHOST_DEVICE_BUILD_HASH=<SOME_HASH> -DOCS_AVAILABLE=0
-#           -DCMAKE_TOOLCHAIN_FILE=<path-to-Toolchain.cmake>
-#           -DLLC_TRIPLE=arm-gnueabihf-linux-gnu -DLLC_HOST_CPU=armv7a
+#           -DCMAKE_TOOLCHAIN_FILE=<path-to-this-file>
+#           -DLLC_TRIPLE=<your-triple (e.g.arm-gnueabihf-linux-gnu)
+#           -DLLC_HOST_CPU=<your-cpu (e.g. armv7a)>
 #           <path-to-pocl-source>
 
 SET(CMAKE_SYSTEM_NAME Linux)
