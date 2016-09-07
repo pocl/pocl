@@ -151,7 +151,7 @@ else()
   )
 
   if(Hwloc_INCLUDE_DIRS AND Hwloc_LIBRARIES)
-    # this is kindof arbitrary
+    message(WARNING "HWLOC library found using find_library() - cannot determine version. Assuming 1.7.0")
     set(Hwloc_FOUND 1)
     set(Hwloc_VERSION "1.7.0")
   endif()
