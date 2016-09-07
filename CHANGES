@@ -7,6 +7,8 @@ Highlights
   - New driver api extension to support OoO and asynchronous devices/drivers.
   - Pthread driver now fully asynchronous.
   - HSA driver now fully asynchronous
+  - HSA supports AMD's new ROCm runtime - since it compiles LLVM IR directly
+    to GCN without intermediate HSAIL, this might result in improved performance.
 
 OpenCL Runtime/Platform API support
 -----------------------------------
