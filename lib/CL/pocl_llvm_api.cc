@@ -669,6 +669,7 @@ static int pocl_get_kernel_arg_module_metadata(const char* kernel_name,
   return 0;
 }
 
+#ifndef LLVM_OLDER_THAN_3_9
 // Clang 3.9 uses function metadata instead of module metadata for presenting
 // OpenCL kernel information.
 static int pocl_get_kernel_arg_function_metadata(const char* kernel_name,
@@ -838,7 +839,7 @@ static int pocl_get_kernel_arg_function_metadata(const char* kernel_name,
 
   return 0;
 }
-
+#endif
 
 int pocl_llvm_get_kernel_metadata(cl_program program, 
                                   cl_kernel kernel,
