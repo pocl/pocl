@@ -325,9 +325,16 @@ supported_hsa_devices[MAX_HSA_AGENTS] =
 {
   [0] =
   {
+#ifdef HSA_RUNTIME_IS_ROCM
+    //.long_name = "Kaveri",
     .long_name = "Spectre",
-    .llvm_cpu = NULL,                 // native: "kaveri",
-    .llvm_target_triplet = "hsail64", // native: "amdgcn--amdhsa"
+    .llvm_cpu = "kaveri",
+    .llvm_target_triplet = "amdgcn--amdhsa",
+#else
+    .long_name = "Spectre",
+    .llvm_cpu = NULL,
+    .llvm_target_triplet = "hsail64",
+#endif
     .has_64bit_long = 1,
     .vendor_id = 0x1002,
     .global_mem_cache_type = CL_READ_WRITE_CACHE,
@@ -350,7 +357,36 @@ supported_hsa_devices[MAX_HSA_AGENTS] =
     .native_vector_width_double = 1
   },
   [1] =
-  { .long_name = "phsa generic CPU agent",
+  {
+#ifdef HSA_RUNTIME_IS_ROCM
+    .long_name = "Fiji",
+    .llvm_cpu = "fiji",
+    .llvm_target_triplet = "amdgcn--amdhsa",
+    .has_64bit_long = 1,
+    .vendor_id = 0x1002,
+    .global_mem_cache_type = CL_READ_WRITE_CACHE,
+    .max_constant_buffer_size = 65536,
+    .local_mem_type = CL_LOCAL,
+    .endian_little = CL_TRUE,
+    .extensions = HSA_DEVICE_EXTENSIONS,
+    .preferred_wg_size_multiple = 256,
+    .preferred_vector_width_char = 4,
+    .preferred_vector_width_short = 2,
+    .preferred_vector_width_int = 1,
+    .preferred_vector_width_long = 1,
+    .preferred_vector_width_float = 1,
+    .preferred_vector_width_double = 1,
+    .native_vector_width_char = 4,
+    .native_vector_width_short = 2,
+    .native_vector_width_int = 1,
+    .native_vector_width_long = 1,
+    .native_vector_width_float = 1,
+    .native_vector_width_double = 1
+  },
+  [2] =
+  {
+#endif
+    .long_name = "phsa generic CPU agent",
     .llvm_cpu = NULL,
     .llvm_target_triplet = "hsail64",
     .has_64bit_long = 1,
@@ -965,6 +1001,7 @@ run_command(char* args[])
     }
 }
 
+#ifndef HSA_RUNTIME_IS_ROCM
 static int
 compile_parallel_bc_to_brig(char* brigfile, cl_kernel kernel,
                             cl_device_id device) {
@@ -1011,17 +1048,80 @@ compile_parallel_bc_to_brig(char* brigfile, cl_kernel kernel,
   return 0;
 }
 
+#else
+
+static int
+compile_parallel_bc_to_hsaco(cl_kernel kernel, cl_device_id device,
+                             hsa_code_object_t *co) {
+  int error;
+  char gcnfile[POCL_FILENAME_LENGTH];
+  char hsacofile[POCL_FILENAME_LENGTH];
+  char parallel_bc_path[POCL_FILENAME_LENGTH];
+
+  unsigned device_i = pocl_cl_device_to_index(kernel->program, device);
+  pocl_cache_work_group_function_path(parallel_bc_path, kernel->program,
+                                      device_i, kernel, 0, 0, 0);
+
+  strcpy(gcnfile, parallel_bc_path);
+  strncat(gcnfile, ".gcn", POCL_FILENAME_LENGTH-1);
+  strcpy(hsacofile, parallel_bc_path);
+  strncat(hsacofile, ".hsaco", POCL_FILENAME_LENGTH-1);
+
+  if (pocl_exists(hsacofile))
+    POCL_MSG_PRINT_INFO("pocl-hsa: using existing HSACO file: \n%s\n",
+                        hsacofile);
+  else
+    {
+      // TODO call llvm via c++ interface like pocl_llvm_codegen()
+      POCL_MSG_PRINT_INFO("pocl-hsa: hsaco file not found,"
+                          " compiling parallel.bc: \n%s\n",
+                          parallel_bc_path);
+
+
+      char* args1[] = { LLVM_LLC, "-O2", "-mtriple", device->llvm_target_triplet,
+                        "-mcpu", device->llvm_cpu, "-filetype=obj",
+                        "-o", gcnfile, parallel_bc_path, NULL };
+      if ((error = run_command(args1)))
+        {
+          POCL_MSG_PRINT_INFO("pocl-hsa: llc exit status %i\n", error);
+          return error;
+        }
+
+      char* args2[] = { LLVM_LD,  "--no-undefined", "-shared", "-o",
+                        hsacofile, gcnfile, NULL };
+      if ((error = run_command(args2)))
+        {
+          POCL_MSG_PRINT_INFO("pocl-hsa: ld.lld exit status %i\n", error);
+          return error;
+        }
+    }
+
+  POCL_MSG_PRINT_INFO("pocl-hsa: loading binary from file %s.\n", hsacofile);
+  uint64_t filesize = 0;
+  char *blob;
+  int read = pocl_read_file(hsacofile, &blob, &filesize);
+
+  if (read != 0)
+    POCL_ABORT("pocl-hsa: could not read the hsaco binary.\n");
+
+  POCL_MSG_PRINT_INFO("pocl-hsa: HSACO binary size: %lu.\n", filesize);
+
+  HSA_CHECK(hsa_code_object_deserialize(blob, filesize, NULL, co));
+
+  return 0;
+}
+
+#endif
+
 void
 pocl_hsa_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
                          cl_device_id device)
 {
-  char brigfile[POCL_FILENAME_LENGTH];
-  char *brig_blob;
-
   pocl_hsa_device_data_t *d =
     (pocl_hsa_device_data_t*)device->data;
 
   hsa_executable_t final_obj;
+  hsa_code_object_t code_object;
 
   unsigned i;
   for (i = 0; i<HSA_KERNEL_CACHE_SIZE; i++)
@@ -1031,6 +1131,14 @@ pocl_hsa_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
                             " kernel cache, returning\n");
         return;
       }
+
+#ifdef HSA_RUNTIME_IS_ROCM
+  if (compile_parallel_bc_to_hsaco(kernel, device, &code_object))
+    POCL_ABORT("Compiling LLVM IR -> HSACO failed.\n");
+
+#else
+  char brigfile[POCL_FILENAME_LENGTH];
+  char *brig_blob;
 
   if (compile_parallel_bc_to_brig(brigfile, kernel, device))
     POCL_ABORT("Compiling LLVM IR -> HSAIL -> BRIG failed.\n");
@@ -1062,10 +1170,12 @@ pocl_hsa_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
   hsa_ext_control_directives_t control_directives;
   memset (&control_directives, 0, sizeof (hsa_ext_control_directives_t));
 
-  hsa_code_object_t code_object;
   HSA_CHECK(hsa_ext_program_finalize
     (hsa_program, isa, 0, control_directives, "",
      HSA_CODE_OBJECT_TYPE_PROGRAM, &code_object));
+#endif
+
+// *****************************************************************
 
   HSA_CHECK(hsa_executable_create (d->agent_profile,
                                   HSA_EXECUTABLE_STATE_UNFROZEN,
@@ -1076,9 +1186,11 @@ pocl_hsa_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
 
   HSA_CHECK(hsa_executable_freeze (final_obj, NULL));
 
+#ifndef HSA_RUNTIME_IS_ROCM
   HSA_CHECK(hsa_ext_program_destroy(hsa_program));
 
   free(brig_blob);
+#endif
 
   i = d->kernel_cache_lastptr;
   if (i < HSA_KERNEL_CACHE_SIZE)
@@ -1091,13 +1203,15 @@ pocl_hsa_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
     POCL_ABORT("kernel cache full");
 
   hsa_executable_symbol_t kernel_symbol;
-
+#ifdef HSA_RUNTIME_IS_ROCM
+  char* symbol = strdup(kernel->name);
+#else
   size_t kernel_name_length = strlen (kernel->name);
   char *symbol = malloc (kernel_name_length + 2);
   symbol[0] = '&';
   symbol[1] = '\0';
-
   strncat (symbol, kernel->name, kernel_name_length);
+#endif
 
   POCL_MSG_PRINT_INFO("pocl-hsa: getting kernel symbol %s.\n", symbol);
 

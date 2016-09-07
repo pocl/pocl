@@ -274,6 +274,11 @@ int pocl_llvm_build_program(cl_program program,
     }
   }
 
+#ifdef HSA_RUNTIME_IS_ROCM
+  if (device->spmd)
+    ss << "-Dcl_clang_storage_class_specifiers -D__CLC_INTERNAL -I" ROCM_LIBAMDGCN_DIR "/include  ";
+#endif
+
   // This can cause illegal optimizations when unaware
   // of the barrier semantics. -O2 is the default opt level in
   // Clang for OpenCL C and seems to affect the performance
@@ -387,13 +392,23 @@ int pocl_llvm_build_program(cl_program program,
 
   // the per-file types don't seem to override this 
   la->OpenCLVersion = cl_std_i;
+#ifdef HSA_RUNTIME_IS_ROCM
+  if (!device->spmd)
+    la->FakeAddressSpaceMap = true;
+#else
   la->FakeAddressSpaceMap = true;
+#endif
   la->Blocks = true; //-fblocks
   la->MathErrno = false; // -fno-math-errno
   la->NoBuiltin = true;  // -fno-builtin
   la->AsmBlocks = true;  // -fasm (?)
 
   std::string kernelh;
+#ifdef HSA_RUNTIME_IS_ROCM
+  if (device->spmd)
+    kernelh = ROCM_LIBAMDGCN_DIR "/include/clc/clc.h";
+  else
+#endif
   if (pocl_get_bool_option("POCL_BUILDING", 0))
     { 
       kernelh  = SRCDIR;
@@ -1327,7 +1342,12 @@ static PassManager& kernel_compiler_passes
   }
   passes.push_back("workgroup");
   passes.push_back("allocastoentry");
+#ifdef HSA_RUNTIME_IS_ROCM
+  if (!device->spmd)
+    passes.push_back("target-address-spaces");
+#else
   passes.push_back("target-address-spaces");
+#endif
   // Later passes might get confused (and expose possible bugs in them) due to
   // UNREACHABLE blocks left by repl. So let's clean up the CFG before running the
   // standard LLVM optimizations.
@@ -1494,6 +1514,14 @@ kernel_library
   // TODO sync with Nat Ferrus' indexed linking
   std::string kernellib;
   std::string kernellib_fallback;
+
+#ifdef HSA_RUNTIME_IS_ROCM
+  if (device->spmd) {
+    kernellib = ROCM_LIBAMDGCN_DIR;
+    kernellib += "/lib/libamdgcn.";
+    kernellib += device->llvm_cpu;
+  } else
+#endif
   if (pocl_get_bool_option("POCL_BUILDING", 0)) {
     kernellib = BUILDDIR;
     kernellib += "/lib/kernel/";
