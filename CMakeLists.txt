@@ -410,6 +410,10 @@ endif()
 
 ######################################################################################
 
+include_directories("fix-include" "include")
+
+######################################################################################
+
 if(WIN32)
     message(STATUS "Using LoadLibrary/FreeLibrary in Windows, libltdl not needed.")
 else()
@@ -421,7 +425,8 @@ else()
     get_filename_component(LTDL_H_INCLUDE_DIR "${LTDL_H}" DIRECTORY)
     string(FIND "${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES}" "${LTDL_H_INCLUDE_DIR}" LTPOSITION)
     # include the directory of ltdl.h, if its not in the default system include dirs
-    if(LTPOSITION LESS "0")
+    # also when cross-compiling this includes <cross-compile-root>/usr/include, which screws things up
+    if((LTPOSITION LESS "0") AND (NOT CMAKE_CROSSCOMPILING))
       include_directories("${LTDL_H_INCLUDE_DIR}")
     endif()
 
@@ -469,13 +474,34 @@ if (MSVC)
   set(DEFAULT_ENABLE_ICD 0 CACHE INTERNAL "Going to use ICD loader")
 else()
 
-  pkg_check_modules(OCL_ICD ocl-icd>=1.3)
+  # pkg-config doesn't work with cross-compiling
+  if (NOT CMAKE_CROSSCOMPILING)
+    pkg_check_modules(OCL_ICD ocl-icd>=1.3)
+  endif()
+  if (CMAKE_CROSSCOMPILING OR (NOT OCL_ICD_FOUND))
+    find_path(OCL_ICD_INCLUDE_DIR
+      NAMES
+        ocl_icd.h
+    )
+    find_library(OCL_ICD_LIBRARIES
+      NAMES
+        OpenCL
+    )
+    if(OCL_ICD_INCLUDE_DIR AND OCL_ICD_LIBRARIES)
+      set(OCL_ICD_FOUND 1)
+    endif()
+  endif()
 
   if(OCL_ICD_FOUND)
 
     set(HAVE_OCL_ICD 1 CACHE INTERNAL "ICL library is ocl-icd")
     set(OPENCL_FOUND 1 CACHE INTERNAL "opencl ICD/library found")
-    set(OPENCL_LIBRARIES "OpenCL" CACHE INTERNAL "opencl ICD/library paths") # duh, why doesnt ocl-icd set this in .pc file ??
+    # duh, why doesnt ocl-icd set this in it's .pc file ??
+    if (CMAKE_CROSSCOMPILING)
+      set(OPENCL_LIBRARIES "${OCL_ICD_LIBRARIES}" CACHE INTERNAL "opencl ICD/library paths")
+    else()
+      set(OPENCL_LIBRARIES "OpenCL" CACHE INTERNAL "opencl ICD/library paths")
+    endif()
     set(DEFAULT_ENABLE_ICD 1 CACHE INTERNAL "ICD loader availability")
 
   else()
@@ -954,8 +980,6 @@ if(UNIX)
 endif()
 
 #############################################################
-
-include_directories("fix-include" "include")
 
 add_subdirectory("include")
 
