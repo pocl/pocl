@@ -4,6 +4,7 @@
 Highlights
 ----------
 - Out of order execution execution now enabled.
+  - It's now possible to cross-compile pocl (when building a LLVM-less build)
   - New driver api extension to support OoO and asynchronous devices/drivers.
   - Pthread driver now fully asynchronous.
   - HSA driver now fully asynchronous
