@@ -973,13 +973,14 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 
   unsigned reqdx = 0, reqdy = 0, reqdz = 0;
 
-  llvm::NamedMDNode *size_info = 
+#ifdef LLVM_OLDER_THAN_3_9
+  llvm::NamedMDNode *size_info =
     kernel_function->getParent()->getNamedMetadata("opencl.kernel_wg_size_info");
   if (size_info) {
     for (unsigned i = 0, e = size_info->getNumOperands(); i != e; ++i) {
       llvm::MDNode *KernelSizeInfo = size_info->getOperand(i);
       if (dyn_cast<ValueAsMetadata>(
-        KernelSizeInfo->getOperand(0).get())->getValue() != kernel_function) 
+        KernelSizeInfo->getOperand(0).get())->getValue() != kernel_function)
         continue;
       reqdx = (llvm::cast<ConstantInt>(
                  llvm::dyn_cast<ConstantAsMetadata>(
@@ -993,6 +994,22 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
       break;
     }
   }
+#else
+  llvm::MDNode *ReqdWGSize =
+    kernel_function->getMetadata("reqd_work_group_size");
+  if (ReqdWGSize != NULL) {
+    reqdx = (llvm::cast<ConstantInt>(
+               llvm::dyn_cast<ConstantAsMetadata>(
+                 ReqdWGSize->getOperand(0))->getValue()))->getLimitedValue();
+    reqdy = (llvm::cast<ConstantInt>(
+               llvm::dyn_cast<ConstantAsMetadata>(
+                 ReqdWGSize->getOperand(1))->getValue()))->getLimitedValue();
+    reqdz = (llvm::cast<ConstantInt>(
+               llvm::dyn_cast<ConstantAsMetadata>(
+                 ReqdWGSize->getOperand(2))->getValue()))->getLimitedValue();
+  }
+#endif
+
   kernel->reqd_wg_size[0] = reqdx;
   kernel->reqd_wg_size[1] = reqdy;
   kernel->reqd_wg_size[2] = reqdz;

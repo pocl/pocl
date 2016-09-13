@@ -692,7 +692,6 @@ pocl_check_dlhandle_cache (_cl_command_node *cmd)
   ci->function_name = strdup (cmd->command.run.kernel->name);
   ci->ref_count = 1;
 
-
   char *module_fn = NULL;
   cl_kernel k = cmd->command.run.kernel;
   cl_program p = k->program;
@@ -716,10 +715,22 @@ pocl_check_dlhandle_cache (_cl_command_node *cmd)
   else
     {
       module_fn = malloc (POCL_FILENAME_LENGTH);
-      pocl_cache_final_binary_path (module_fn, p, dev_i, k, 0, 0, 0);
-      POCL_MSG_PRINT_INFO("Using dynamic WG size binary: %s\n", module_fn);
+      /* First try to find a static WG binary for the local size as they
+         are always more efficient than the dynamic ones.  Also, in case
+         of reqd_wg_size, there might not be a dynamic sized one at all.  */
+      pocl_cache_final_binary_path (module_fn, p, dev_i, k,
+                                    cmd->command.run.local_x,
+                                    cmd->command.run.local_y,
+                                    cmd->command.run.local_z);
       if (!pocl_exists (module_fn))
-        POCL_ABORT("Dynamic WG size binary does not exist\n");
+        {
+          pocl_cache_final_binary_path (module_fn, p, dev_i, k, 0, 0, 0);
+          if (!pocl_exists (module_fn))
+            POCL_ABORT("Dynamic WG size binary does not exist\n");
+          POCL_MSG_PRINT_INFO("Using dynamic local size binary: %s\n", module_fn);
+        }
+      else
+        POCL_MSG_PRINT_INFO("Using static local size binary: %s\n", module_fn);
     }
 
   POCL_LOCK (pocl_dlhandle_lock);

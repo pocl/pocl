@@ -33,24 +33,31 @@
 
 // OpenCL kernel. Each work item takes care of one element of c
 const char *kernelSource =                                               "\n"
-"__kernel void vecAdd( __constant int *a,                                 \n"
-"                      __constant int *b,                                 \n"
-"                      __global int *c)                                   \n"
-"{                                                                        \n"
-"unsigned int i = get_global_id(0) * get_global_size(1)                   \n"
-"    + get_global_id(1);                                                  \n"
-"c[i] = a[i] + b[i] + get_local_id(0) * get_local_size(1)                 \n"
-"    + get_local_id(1);                                                   \n"
-"}                                                                        \n";
+  "__kernel void vecAdd( __constant int *a,                                 \n"
+  "                      __constant int *b,                                 \n"
+  "                      __global int *c)                                   \n"
+  "{                                                                        \n"
+  "unsigned int i = get_global_id(0) * get_global_size(1)                   \n"
+  "    + get_global_id(1);                                                  \n"
+  "c[i] = a[i] + b[i] + get_local_id(0) * get_local_size(1)                 \n"
+  "    + get_local_id(1);                                                   \n"
+  "}                                                                        \n";
 
 const char *barrier_kernelSource =
-"__kernel void barrier_kernel (global int *buffer) \n"
-"{ \n"
-"  private int a = buffer[get_global_id(0)-1] \n"
-"    + buffer[get_global_id(0)] + buffer[get_global_id(0)+1]; \n"
-"  barrier(CLK_LOCAL_MEM_FENCE); \n"
-"  buffer[get_global_id(0)] = a/3; \n"
-"} \n";
+  "__kernel void barrier_kernel (global int *buffer) \n"
+  "{ \n"
+  "  private int a = buffer[get_global_id(0)-1] \n"
+  "    + buffer[get_global_id(0)] + buffer[get_global_id(0)+1]; \n"
+  "  barrier(CLK_LOCAL_MEM_FENCE); \n"
+  "  buffer[get_global_id(0)] = a/3; \n"
+  "} \n";
+
+const char *barrier_kernel_reqd_wg_size_source =
+  "__attribute__((reqd_work_group_size(6, 1, 1)))\n"
+  "__kernel void static_wg_kernel (global int *buffer) \n"
+  "{ \n"
+  "  buffer[get_local_id (0)] = 2 + get_global_id (0); \n"
+  "} \n";
 
 int main(void)
 {
@@ -61,6 +68,7 @@ int main(void)
   int *h_c3;
   int *bb1;
   int *bb2;
+  int *static_wg_buf;
 
   cl_mem d_a;
   cl_mem d_b;
@@ -69,13 +77,16 @@ int main(void)
   cl_mem d_c3;
   cl_mem barrier_buffer1;
   cl_mem barrier_buffer2;
+  cl_mem static_wg_buffer;
 
-  cl_device_id device_id;   // device ID
-  cl_context context;   // context
-  cl_command_queue queue;   // command queue
-  cl_program program1, program2;    // program
-  cl_program b_program1, b_program2;
-  cl_kernel kernel1, kernel2, kernel3, barrier_kernel1, barrier_kernel2;
+  cl_device_id device_id;
+  cl_context context;
+  cl_command_queue queue;
+  cl_program program1, program2;
+  cl_program b_program1, b_program2, static_wg_size_program,
+    static_wg_size_bin_program;
+  cl_kernel kernel1, kernel2, kernel3, barrier_kernel1, barrier_kernel2,
+    static_wg_kernel;
 
   size_t globalSize[2], localSize[2];
   cl_int err;
@@ -93,6 +104,7 @@ int main(void)
   h_c3 = (int*)malloc(bytes);
   bb1 = (int*)malloc(bytes);
   bb2 = (int*)malloc(bytes);
+  static_wg_buf = (int*)malloc(bytes);
 
   unsigned int i;
   for( i = 0; i < BUFFER_SIZE; i++ )
@@ -100,7 +112,7 @@ int main(void)
     h_a[i] = 2*i-1;
     h_b[i] = -i;
   }
-  
+
   for (i = 0; i < 8; ++i)
     {
       bb1[i] = bb2[i] = i*3;
@@ -109,9 +121,7 @@ int main(void)
   memset(h_c2, 0, bytes);
   memset(h_c3, 0, bytes);
 
-//###################################################################
-//###################################################################
-// Initialize cl_programS
+  /* Initialize cl_programs.  */
 
   CHECK_CL_ERROR(poclu_get_any_device(&context, &device_id, &queue));
   TEST_ASSERT( context );
@@ -132,23 +142,37 @@ int main(void)
   binary = malloc(sizeof(unsigned char)*binary_sizes);
   assert(binary);
 
-  CHECK_CL_ERROR(clGetProgramInfo(program1, CL_PROGRAM_BINARIES, sizeof(unsigned char*), &binary, NULL));
+  CHECK_CL_ERROR (clGetProgramInfo (program1, CL_PROGRAM_BINARIES,
+                                    sizeof(unsigned char*), &binary, NULL));
 
-  program2 = clCreateProgramWithBinary(
-    context, 1, &device_id, &binary_sizes, (const unsigned char **)(&binary), NULL, &err);
-  CHECK_OPENCL_ERROR_IN("clCreateProgramWithBinary");
+  program2
+    = clCreateProgramWithBinary (context, 1, &device_id, &binary_sizes,
+                                 (const unsigned char **)(&binary), NULL, &err);
+  CHECK_OPENCL_ERROR_IN ("clCreateProgramWithBinary");
 
-  CHECK_CL_ERROR(clBuildProgram(program2, 0, NULL, NULL, NULL, NULL));
+  CHECK_CL_ERROR (clBuildProgram (program2, 0, NULL, NULL, NULL, NULL));
 
-  /* Barrier programs */
-  b_program1 = clCreateProgramWithSource(context, 1,
-                                         (const char **)
-                                         &barrier_kernelSource,
-                                         NULL, &err);
+  /* Barrier programs.  */
+  b_program1 = clCreateProgramWithSource (context, 1,
+                                          (const char **)
+                                          &barrier_kernelSource,
+                                          NULL, &err);
+
   CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
   TEST_ASSERT(b_program1);
-
   CHECK_CL_ERROR(clBuildProgram(b_program1, 0, NULL, NULL, NULL, NULL));
+
+  static_wg_size_program
+    = clCreateProgramWithSource (context, 1,
+                                 (const char **)
+                                 &barrier_kernel_reqd_wg_size_source,
+                                 NULL, &err);
+
+  CHECK_OPENCL_ERROR_IN ("clCreateProgramWithSource");
+  TEST_ASSERT (static_wg_size_program);
+
+  CHECK_CL_ERROR (clBuildProgram (static_wg_size_program, 0, NULL, NULL, NULL,
+                                  NULL));
 
   size_t barrier_binary_sizes;
   unsigned char *barrier_binary;
@@ -169,9 +193,30 @@ int main(void)
 
   CHECK_CL_ERROR(clBuildProgram(b_program2, 0, NULL, NULL, NULL, NULL));
 
-  //###################################################################
-//###################################################################
-// Set up buffers in memory
+  size_t static_wg_binary_sizes;
+  unsigned char *static_wg_binary;
+  CHECK_CL_ERROR (clGetProgramInfo (static_wg_size_program, CL_PROGRAM_BINARY_SIZES,
+                                    sizeof (size_t), &static_wg_binary_sizes,
+                                    NULL));
+
+  static_wg_binary = malloc (sizeof (unsigned char)*static_wg_binary_sizes);
+  assert (static_wg_binary);
+
+  CHECK_CL_ERROR (clGetProgramInfo (static_wg_size_program, CL_PROGRAM_BINARIES,
+                                    sizeof (unsigned char*), &static_wg_binary,
+                                    NULL));
+
+  static_wg_size_bin_program =
+    clCreateProgramWithBinary (context, 1, &device_id,
+                               &static_wg_binary_sizes,
+                               (const unsigned char **)(&static_wg_binary),
+                               NULL, &err);
+  CHECK_OPENCL_ERROR_IN ("clCreateProgramWithBinary (static wg size)");
+
+  CHECK_CL_ERROR (clBuildProgram (static_wg_size_bin_program, 0, NULL, NULL, NULL,
+                                  NULL));
+
+  /* Set up buffers in memory.  */
 
   d_a = clCreateBuffer(context, CL_MEM_READ_ONLY, bytes, NULL, &err);
   CHECK_OPENCL_ERROR_IN("clCreateBuffer");
@@ -179,6 +224,7 @@ int main(void)
   d_b = clCreateBuffer(context, CL_MEM_READ_ONLY, bytes, NULL, &err);
   CHECK_OPENCL_ERROR_IN("clCreateBuffer");
   TEST_ASSERT(d_b);
+
   d_c1 = clCreateBuffer(context, CL_MEM_WRITE_ONLY, bytes, NULL, &err);
   CHECK_OPENCL_ERROR_IN("clCreateBuffer");
   TEST_ASSERT(d_c1);
@@ -199,14 +245,17 @@ int main(void)
   CHECK_OPENCL_ERROR_IN("clCreateBuffer");
   TEST_ASSERT(barrier_buffer2);
 
-  CHECK_CL_ERROR(clEnqueueWriteBuffer(queue, d_a, CL_TRUE, 0,
-                             bytes, h_a, 0, NULL, NULL));
-  CHECK_CL_ERROR(clEnqueueWriteBuffer(queue, d_b, CL_TRUE, 0,
-                              bytes, h_b, 0, NULL, NULL));
+  static_wg_buffer = clCreateBuffer (context, CL_MEM_COPY_HOST_PTR, bytes,
+                                     static_wg_buf, NULL);
+  CHECK_OPENCL_ERROR_IN ("clCreateBuffer");
+  TEST_ASSERT (static_wg_buffer);
 
-//###################################################################
-//###################################################################
-// Create kernels
+  CHECK_CL_ERROR(clEnqueueWriteBuffer(queue, d_a, CL_TRUE, 0,
+                                      bytes, h_a, 0, NULL, NULL));
+  CHECK_CL_ERROR(clEnqueueWriteBuffer(queue, d_b, CL_TRUE, 0,
+                                      bytes, h_b, 0, NULL, NULL));
+
+  /* Create kernels.  */
 
   kernel1 = clCreateKernel(program1, "vecAdd", &err);
   CHECK_OPENCL_ERROR_IN("clCreateKernel");
@@ -243,9 +292,15 @@ int main(void)
   CHECK_CL_ERROR(clSetKernelArg(kernel3, 1, sizeof(cl_mem), &d_b));
   CHECK_CL_ERROR(clSetKernelArg(kernel3, 2, sizeof(cl_mem), &d_c3));
 
-//###################################################################
-//###################################################################
-// Enqueue kernels
+  static_wg_kernel
+    = clCreateKernel (static_wg_size_bin_program, "static_wg_kernel", &err);
+  CHECK_OPENCL_ERROR_IN ("clCreateKernel");
+  TEST_ASSERT (static_wg_kernel);
+
+  CHECK_CL_ERROR (clSetKernelArg (static_wg_kernel, 0, sizeof (cl_mem),
+                                  &static_wg_buffer));
+
+  /* Enqueue kernels.  */
 
   localSize[0] = 4;
   localSize[1] = 8;
@@ -264,40 +319,46 @@ int main(void)
   CHECK_CL_ERROR(clEnqueueNDRangeKernel(queue, kernel3, 2, NULL, globalSize, localSize,
                                0, NULL, NULL));
   assert(!err);
-  
+
   localSize[0] = 6;
   globalSize[0] = 6;
   size_t global_offset = 1;
-  CHECK_CL_ERROR(clEnqueueNDRangeKernel(queue, barrier_kernel1, 1, &global_offset,
-                               globalSize,
-                               localSize,
-                               0, NULL, NULL));
+  CHECK_CL_ERROR (clEnqueueNDRangeKernel (queue, barrier_kernel1, 1,
+                                          &global_offset,
+                                          globalSize,
+                                          localSize,
+                                          0, NULL, NULL));
 
-  CHECK_CL_ERROR(clEnqueueNDRangeKernel(queue, barrier_kernel2, 1, &global_offset,
-                               globalSize,
-                               localSize,
-                               0, NULL, NULL));
-  
-//###################################################################
-//###################################################################
-// Read output buffers
+  CHECK_CL_ERROR (clEnqueueNDRangeKernel (queue, barrier_kernel2,
+                                          1, &global_offset,
+                                          globalSize,
+                                          localSize,
+                                          0, NULL, NULL));
 
-  CHECK_CL_ERROR(clFinish(queue));
+  CHECK_CL_ERROR (clEnqueueNDRangeKernel (queue, static_wg_kernel, 1,
+                                          &global_offset,
+                                          globalSize,
+                                          localSize,
+                                          0, NULL, NULL));
 
-  CHECK_CL_ERROR(clEnqueueReadBuffer(queue, d_c1, CL_TRUE, 0,
-                      bytes, h_c1, 0, NULL, NULL));
-  CHECK_CL_ERROR(clEnqueueReadBuffer(queue, d_c2, CL_TRUE, 0,
-                      bytes, h_c2, 0, NULL, NULL));
-  CHECK_CL_ERROR(clEnqueueReadBuffer(queue, d_c3, CL_TRUE, 0,
-                      bytes, h_c3, 0, NULL, NULL));
-  CHECK_CL_ERROR(clEnqueueReadBuffer(queue, barrier_buffer1, CL_TRUE, 0,
-                      bytes, bb1, 0, NULL, NULL));
-  CHECK_CL_ERROR(clEnqueueReadBuffer(queue, barrier_buffer2, CL_TRUE, 0,
-                      bytes, bb2, 0, NULL, NULL));
+  /* Read output buffers.  */
 
-//###################################################################
-//###################################################################
-// Check output of each kernels
+  CHECK_CL_ERROR (clEnqueueReadBuffer (queue, d_c1, CL_TRUE, 0,
+                                       bytes, h_c1, 0, NULL, NULL));
+  CHECK_CL_ERROR (clEnqueueReadBuffer (queue, d_c2, CL_TRUE, 0,
+                                       bytes, h_c2, 0, NULL, NULL));
+  CHECK_CL_ERROR (clEnqueueReadBuffer (queue, d_c3, CL_TRUE, 0,
+                                       bytes, h_c3, 0, NULL, NULL));
+  CHECK_CL_ERROR (clEnqueueReadBuffer (queue, barrier_buffer1, CL_TRUE, 0,
+                                       bytes, bb1, 0, NULL, NULL));
+  CHECK_CL_ERROR (clEnqueueReadBuffer (queue, barrier_buffer2, CL_TRUE, 0,
+                                       bytes, bb2, 0, NULL, NULL));
+  CHECK_CL_ERROR (clEnqueueReadBuffer (queue, static_wg_buffer, CL_TRUE, 0,
+                                       bytes, static_wg_buf, 0, NULL, NULL));
+  CHECK_CL_ERROR (clFinish (queue));
+
+
+  /* Check output of each kernels.  */
 
   for(i = 0; i < BUFFER_SIZE; i++)
   {
@@ -318,19 +379,21 @@ int main(void)
     }
   }
 
-  for (i = 0; i < 8; ++i)
+  for (i = 0; i < 6; ++i)
     {
       if (bb1[i] != bb2[i])
         {
-          printf("barrier kernel Failed at index %d\n", i);
+          printf("barrier kernel failed at index %d: (%d != %d)\n", i, bb1[i],
+                 bb2[i]);
+          return EXIT_FAILURE;
+        }
+      if (static_wg_buf[i] != 2 + i + 1)
+        {
+          printf("static wg kernel failed at index %d (%d != %d)\n", i,
+                 static_wg_buf[i], 2 + i + 1);
           return EXIT_FAILURE;
         }
     }
-  
-
-//###################################################################
-//###################################################################
-// Release everythings
 
   CHECK_CL_ERROR(clReleaseMemObject(d_a));
   CHECK_CL_ERROR(clReleaseMemObject(d_b));

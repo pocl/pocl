@@ -127,13 +127,24 @@ program_compile_dynamic_wg_binaries(cl_program program)
 
       for (i=0; i < program->num_kernels; i++)
         {
-          pocl_cache_make_kernel_cachedir_path(cachedir, program, device,
-                                               program->default_kernels[i],
-                                               0,0,0);
+          cl_kernel kernel = program->default_kernels[i];
+          size_t local_x = 0, local_y = 0, local_z = 0;
+          if (kernel->reqd_wg_size != NULL &&
+              kernel->reqd_wg_size[0] > 0 &&
+              kernel->reqd_wg_size[1] > 0 &&
+              kernel->reqd_wg_size[2] > 0)
+            {
+              local_x = kernel->reqd_wg_size[0];
+              local_y = kernel->reqd_wg_size[1];
+              local_z = kernel->reqd_wg_size[2];
+            }
 
-          errcode = pocl_llvm_generate_workgroup_function(device,
-                                                          program->default_kernels[i],
-                                                          0,0,0);
+          pocl_cache_make_kernel_cachedir_path (cachedir, program, device,
+                                                kernel, local_x, local_y, local_z);
+
+          errcode
+            = pocl_llvm_generate_workgroup_function
+            (device, kernel, local_x, local_y, local_z);
           if (errcode != CL_SUCCESS)
             {
               POCL_MSG_ERR("Failed to generate workgroup function for "
@@ -141,11 +152,9 @@ program_compile_dynamic_wg_binaries(cl_program program)
                            program->kernel_names[i], device->short_name);
               goto RET;
             }
-          cmd.command.run.kernel = program->default_kernels[i];
-          device->ops->compile_kernel(&cmd, program->default_kernels[i],
-                                      device);
+          cmd.command.run.kernel = kernel;
+          device->ops->compile_kernel (&cmd, kernel, device);
         }
-
     }
 
 RET:
