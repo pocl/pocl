@@ -236,7 +236,7 @@ typedef struct
   void *data;
   size_t num_mem_objects;
   cl_mem *mem_objects;
-  cl_device_id *source_devices; 
+  cl_device_id *source_devices;
 } _cl_command_migrate;
 
 typedef struct

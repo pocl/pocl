@@ -615,14 +615,14 @@ struct _cl_program {
   char *source;
   /* The options in the last clBuildProgram call for this Program. */
   char *compiler_options;
-  /* The binaries for each device. Currently the binary is directly the
-     sequential bitcode produced from the kernel sources.*/
-  size_t *binary_sizes; 
-  unsigned char **binaries; 
-  /* Poclcc binary format*/
+  /* The binaries for each device.  Currently the binary is directly the
+     sequential bitcode produced from the kernel sources.  */
+  size_t *binary_sizes;
+  unsigned char **binaries;
+  /* Poclcc binary format.  */
   size_t *pocl_binary_sizes;
   unsigned char **pocl_binaries;
-  /* "default" kernels */
+  /* "Default" kernels.   */
   size_t num_kernels;
   char **kernel_names;
   cl_kernel *default_kernels;

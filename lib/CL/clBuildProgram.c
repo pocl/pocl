@@ -113,8 +113,8 @@ program_compile_dynamic_wg_binaries(cl_program program)
   cmd.command.run.tmp_dir = cachedir;
   POCL_LOCK_OBJ(program);
 
-  /* build the dynamic WG sized parallel.bc and device specific code,
-   * for each kernel & device combo */
+  /* Build the dynamic WG sized parallel.bc and device specific code,
+     for each kernel & device combo.  */
   for (device_i = 0; device_i < program->num_devices; ++device_i)
     {
       cl_device_id device = program->devices[device_i];
@@ -441,9 +441,9 @@ CL_API_SUFFIX__VERSION_1_0
   program->build_status = CL_BUILD_SUCCESS;
   POCL_UNLOCK_OBJ(program);
 
-  /* set up all program kernels */
-  /* TODO should not have to unlock program while adding default kernels */
-  assert(program->default_kernels == NULL);
+  /* Set up all program kernels.  */
+  /* TODO: Should not have to unlock program while adding default kernels.  */
+  assert (program->default_kernels == NULL);
   program->kernels = ADDING_DEFAULT_KERNELS_TO_CL_PROGRAM;
   program->default_kernels = calloc(program->num_kernels, sizeof(cl_kernel));
 

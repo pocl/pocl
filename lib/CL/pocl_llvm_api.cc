@@ -888,8 +888,8 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   if (!ModuleDataLayout.empty())
     TD = new DataLayout(ModuleDataLayout);
 
-  const llvm::Function::ArgumentListType &arglist = 
-      kernel_function->getArgumentList();
+  const llvm::Function::ArgumentListType &arglist =
+    kernel_function->getArgumentList();
   kernel->num_args = arglist.size();
 
   SmallVector<GlobalVariable *, 8> locals;
@@ -920,7 +920,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   /* Fill up automatic local arguments. */
   for (unsigned i = 0; i < kernel->num_locals; ++i)
     {
-      unsigned auto_local_size = 
+      unsigned auto_local_size =
         TD->getTypeAllocSize(locals[i]->getInitializer()->getType());
       kernel->dyn_arguments[kernel->num_args + i].value = NULL;
       kernel->dyn_arguments[kernel->num_args + i].size = auto_local_size;
@@ -933,10 +933,9 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   memset(kernel->arg_info, 0, sizeof(struct pocl_argument_info)*kernel->num_args);
 
   i = 0;
-  for( llvm::Function::const_arg_iterator ii = arglist.begin(), 
-                                          ee = arglist.end(); 
-       ii != ee ; ii++)
-  {
+  for (llvm::Function::const_arg_iterator ii = arglist.begin(),
+                                          ee = arglist.end();
+       ii != ee ; ii++) {
     llvm::Type *t = ii->getType();
     kernel->arg_info[i].type = POCL_ARG_TYPE_NONE;
     const llvm::PointerType *p = dyn_cast<llvm::PointerType>(t);
@@ -961,16 +960,13 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
     } else {
       kernel->arg_info[i].is_local = false;
     }
-        
-    if (pocl::is_image_type(*t))
-      {
-        kernel->arg_info[i].type = POCL_ARG_TYPE_IMAGE;
-      } 
-    else if (pocl::is_sampler_type(*t)) 
-      {
-        kernel->arg_info[i].type = POCL_ARG_TYPE_SAMPLER;
-      }
-    i++;  
+
+    if (pocl::is_image_type(*t)) {
+      kernel->arg_info[i].type = POCL_ARG_TYPE_IMAGE;
+    } else if (pocl::is_sampler_type(*t)) {
+      kernel->arg_info[i].type = POCL_ARG_TYPE_SAMPLER;
+    }
+    i++;
   }
   // fill 'kernel->reqd_wg_size'
   kernel->reqd_wg_size = (int*)malloc(3*sizeof(int));
@@ -1000,7 +996,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   kernel->reqd_wg_size[0] = reqdx;
   kernel->reqd_wg_size[1] = reqdy;
   kernel->reqd_wg_size[2] = reqdz;
-  
+
 #ifndef POCL_ANDROID
   // Generate the kernel_obj.c file. This should be optional
   // and generated only for the heterogeneous devices which need

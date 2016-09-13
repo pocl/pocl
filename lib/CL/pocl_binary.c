@@ -452,7 +452,7 @@ RET:
   return (buffer - orig_buffer);
 }
 
-/* deserializes all files of a single pocl kernel cachedir. */
+/* Deserializes all files of a single pocl kernel cachedir.  */
 static unsigned char*
 deserialize_kernel_cachedir (char* basedir, unsigned char* buffer, size_t bytes)
 {
@@ -467,16 +467,16 @@ deserialize_kernel_cachedir (char* basedir, unsigned char* buffer, size_t bytes)
   return (buffer + done);
 }
 
-/** Deserializes a single kernel.
- *
- * This has two modes of operation:
- *
- * 1) if name_len and name_match are non-NULL, it only fills in pocl_binary_kernel
- *    with metadata (doesn't unpack files) and only if the name matches - used by
- *    pocl_binary_get_kernel_metadata()
- * 2) if name_len and name_match are NULL, unpacks kernel cachedir on disk, but
- *    does not set up kernel metadata of pocl_binary_kernel argument - used by
- *    pocl_binary_deserialize()
+/* Deserializes a single kernel.
+
+   This has two modes of operation:
+
+   1) if name_len and name_match are non-NULL, it only fills in pocl_binary_kernel
+   with metadata (doesn't unpack files) and only if the name matches - used by
+   pocl_binary_get_kernel_metadata()
+   2) if name_len and name_match are NULL, unpacks kernel cachedir on disk, but
+   does not set up kernel metadata of pocl_binary_kernel argument - used by
+   pocl_binary_deserialize()
  */
 static int
 pocl_binary_deserialize_kernel_from_buffer (unsigned char **buf,

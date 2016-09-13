@@ -51,7 +51,7 @@ POname(clCreateKernel)(cl_program program,
   POCL_GOTO_ERROR_COND((kernel_name == NULL), CL_INVALID_VALUE);
 
   POCL_GOTO_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
-  
+
   POCL_GOTO_ERROR_ON((program->num_devices == 0),
     CL_INVALID_PROGRAM, "Invalid program (has no devices assigned)\n");
 
@@ -100,13 +100,14 @@ POname(clCreateKernel)(cl_program program,
 #endif
         }
       /* If the program was created with a pocl binary, we won't be able to
-      get the metadata for the cl_kernel from an IR file, so we call pocl
-      binary function to initialize the cl_kernel data */
+         get the metadata for the cl_kernel from an IR file, so we call pocl
+         binary function to initialize the cl_kernel data */
       else if (program->pocl_binaries[device_i])
         {
-          errcode = pocl_binary_get_kernel_metadata(program->pocl_binaries[device_i],
-                                                    kernel_name, kernel,
-                                                    program->devices[device_i]);
+          errcode
+            = pocl_binary_get_kernel_metadata (program->pocl_binaries[device_i],
+                                               kernel_name, kernel,
+                                               program->devices[device_i]);
         }
       else
         /* If there is no device dir for this device, the program was
@@ -123,7 +124,6 @@ POname(clCreateKernel)(cl_program program,
         }
       break;
     }
-
 
   if (program->kernels != ADDING_DEFAULT_KERNELS_TO_CL_PROGRAM)
     {

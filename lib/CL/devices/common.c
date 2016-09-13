@@ -655,12 +655,12 @@ pocl_check_dlhandle_cache (_cl_command_node *cmd)
 {
   char workgroup_string[256];
   pocl_dlhandle_cache_item *ci = NULL;
-  
+
   POCL_LOCK (pocl_dlhandle_cache_lock);
   DL_FOREACH (pocl_dlhandle_cache, ci)
     {
       if (strcmp (ci->tmp_dir, cmd->command.run.tmp_dir) == 0 &&
-          strcmp (ci->function_name, 
+          strcmp (ci->function_name,
                   cmd->command.run.kernel->name) == 0)
         {
           /* move to the front of the line */
