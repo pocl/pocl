@@ -1,8 +1,5 @@
-if [ "$1" = "cmake" ]; then
-  libs_subdir=.
-else
-  libs_subdir=.libs
-fi
+#!/bin/sh
+libs_subdir=.
 
 # source this while in the pocl build dir
 export POCL_BUILDING=1
@@ -17,15 +14,6 @@ export OPENCL_VENDOR_PATH=$OCL_ICD_VENDORS
 # an unknown reason (at least on Ubuntu 14.04 / gcc 4.8.4).
 # If libpocl is not built yet, this will fail...
 export LD_PRELOAD=$(ldd lib/CL/$libs_subdir/libpocl.so | grep pthread | cut -f 3 -d' ')
-
-if [ "$1" != "cmake" ]; then
-
-#make sure we use the new built pocl, not some installed version.
-#also, this is needed if the test binaries are run in gdb without the wrapper
-#shell script automake generates
-export LD_LIBRARY_PATH=$PWD/lib/CL/$libs_subdir:$PWD/lib/poclu/$libs_subdir/:$LD_LIBRARY_PATH
-
-fi
 
 #sometimes useful variable when ICD fails (and we use ocl-icd)
 #export OCL_ICD_DEBUG=15
