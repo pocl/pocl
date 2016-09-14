@@ -18,57 +18,28 @@ Testing is done using either "make test" or invoking "ctest" directly;
 "make check" does not work. Invoke ctest with -jX option to run X tests
 in parallel.
 
-Configuring
------------
-
-If you checked out a development version of pocl, the configuration
-scripts need to be regenerated. This is achieved by issuing the
-command::
-
-    ./autogen.sh
-
-in the root of the source tree. You will need a decent version of GNU
-autotools, usually installable from distribution packages 'automake',
-'autoconf', and 'libtool'.
-
-Once that is done, the usual GNU build commands build pocl. Builds out
-of source directory are supported. We recommend using::
-
-    ./configure --enable-debug 
-    make
-
-This will build pocl without optimization, which simplifies debugging.
-(This does not influence whether pocl will optimize the code that it
-generates from OpenCL source files.)
-
 Testsuite
 ----------
 
 Before changes are committed to the mainline, all tests in the 'make
-check' suite should pass. As a minimum requirement the short test
-suite should be executed before committing as follows::
+check' suite should pass::
 
-   make check TESTSUITEFLAGS="-k \!long"
+   make check
 
 Under the 'examples' directory there are placeholder directories for
 external OpenCL application projects which are used as test suites for
-pocl (e.g. ViennaCL). These test suites can be enabled at configure
-time with --enable-testsuites (you can specify a list of test suites
+pocl (e.g. ViennaCL). These test suites can be enabled for cmake
+with -DENABLE_TESTSUITES (you can specify a list of test suites
 if you do not want to enabled all of them, see configure help for the
 available list).  Note that these additionnal test suites require
 additionnal software (tools and libraries). The configure script checks
-some of them but the check is not exhautive. Test suites are disabled if 
+some of them but the check is not exhautive. Test suites are disabled if
 their requirement files are not available.
 
 In order to prepare the external OpenCL examples for the testsuite, you
 need to run the following build command once::
 
-   make prepare-examples
-
-The pocl OpenCL implementation can be used directly or through an ICD
-loader.  The --enable-tests-with-icd configure option allows to choose
-how tests are linked to pocl when running the 'make check' target. By
-default, if the ICD is built, tests are done through the ICD loader.
+   make prepare_examples
 
 IMPORTANT: using the ICD for in tree 'make check' requires an icd
 loader that allows overriding the icd search path. Other ICD loaders
@@ -83,7 +54,7 @@ Debugging a Failed Test
 If there are failing tests in the suite, the usual way to start
 debugging is to look what was printed to the logs for the failing
 cases. After running the test suite, the logs are stored under
-``tests/testsuite.dir/[testcasenumber]/``.  
+``Testing/Temporary/*.log``
 
 Ocl-icd
 -------
@@ -112,15 +83,15 @@ the kernel compiler).
 
    http://www.gnu.org/prep/standards/html_node/Writing-C.html
 
-2) In the C++ sources (mostly the LLVM passes), follow the LLVM coding 
-   guidelines so it is easier to upstream general code to the LLVM project 
+2) In the C++ sources (mostly the LLVM passes), follow the LLVM coding
+   guidelines so it is easier to upstream general code to the LLVM project
    at any point.
 
    http://llvm.org/docs/CodingStandards.html
 
-It's acknowledged that the pocl code base does fully not adhere to these 
+It's acknowledged that the pocl code base does fully not adhere to these
 principles at the moment, but the aim is to gradually fix the style and any
-new code should adhere to these guidelines.
+new code merged to master should adhere to them.
 
 Khronos ICD Loader
 ------------------
@@ -157,22 +128,10 @@ testsuite does this automatically.
 
 There's a helper script that, when sourced, in addition to setting
 POCL_BUILDING setups the OCL_ICD_VENDORS path to point to the pocl in
-the build tree. This removes the need to install pocl to test the 
-built version. It should be executed in the source root::
+the build tree. This removes the need to install pocl to test the
+built version. It should be executed in the build root, typically::
 
-  . tools/scripts/devel-envs.sh [cmake]
-
-The ``cmake`` argument is required when pocl is built with cmake.
-
-To test as much as possible link options, it is recommended to
-configure pocl two times and run "make check" with both. One should be
-configured with::
-
-  $src/configure --enable-icd --disable-direct-linkage ...
-
-And the second one with::
-
-  $src/configure --disable-icd --enable-direct-linkage ...
+  . ../tools/scripts/devel-envs.sh
 
 Target and Host CPU Architectures for 'basic' and 'pthread' Devices
 -------------------------------------------------------------------

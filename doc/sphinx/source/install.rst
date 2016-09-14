@@ -20,49 +20,22 @@ Clang / LLVM Notes
 ------------------
 
 **IMPORTANT NOTE!** Some platforms (TCE and possibly HSA) require that
-you compile & build LLVM with ``make REQUIRES_RTTI=1``, as follows:
-
-  ``./configure --<llvm-configure-options>`` or ``cmake -D<llvm-options>``
-
-  ``make REQUIRES_RTTI=1 && make install``
+you compile & build LLVM with RTTI on. It can be enabled on cmake command
+line, as follows:
 
 **Supported versions**
 
   Note that pocl aims to support **the latest LLVM version** at the time
   of pocl release, **plus the previous** LLVM version. All older LLVM
-  versions are unsupported.
+  versions are supported with "best effort" basis; there might not be
+  build bots continuously testing the code base nor anyone fixing their
+  possible breakage.
 
-  [18 May 2016] pocl has been updated for LLVM trunk (rev 269957)
+  [August 2016] pocl has been updated for LLVM 3.9
 
 
-Configure & Build using autotools
----------------------------------
-
-After all the requirements are installed. The installation procedure
-follows the usual autotools configure, make, make install. If you are
-using a development source tree, you need to generate the autotool
-build files with
-
-  ``./autogen.sh``
-
-Autotools: important options & features
------------------------------------------
-
-- ``LLVM_CONFIG`` **IMPORTANT** Path to a llvm-config binary.
-  This determines the LLVM installation used by pocl.
-  If not specified, pocl will try to find and link against
-  llvm-config in PATH env var (usually means your system LLVM).
-- ``--enable-static-llvm`` enable this to link LLVM statically into pocl.
-  Note that you need LLVM built with static libs. This option might result
-  in much longer build times and much larger pocl library, but the
-  resulting libpocl will not require an LLVM installation to run.
-- ``--enable-icd`` and ``--enable-direct-linkage`` By default pocl's
-  buildsystem will try to find an ICD and build pocl as a dynamic library
-  named "libpocl". These options are useful if you want to avoid ICD and
-  build pocl directly as libOpenCL library. See also :ref:`linking-with-icd`
-
-Configure & Build using CMake
------------------------------
+Configure & Build
+-----------------
 
 CMake version 2.8.12 or higher is required.
 
@@ -72,6 +45,7 @@ The build+install is the usual CMake way::
   mkdir build
   cd build
   cmake [-D<option>=<value> ...] ..
+  make && make install
 
 To see the default detected values, run ``cmake ..`` without any options,
 it will produce a summary.
@@ -126,6 +100,14 @@ LLVM-less build
  See :ref:`pocl-without-llvm`
 
 
+Building on Ubuntu 16.04 LTS
+----------------------------
+
+The Clang/LLVM 3.8 shipped with Ubuntu 16.04 works fine with pocl.
+Be sure to install also the 'libclang-3.8-dev' package in addition
+to the 'clang-3.8 and llvm-3.8-dev' packages, otherwise cmake will
+fail.
+
 Known build-time issues
 -----------------------
 
@@ -134,12 +116,7 @@ for a complete listing at https://github.com/pocl/pocl/issues
 
 Known issues not related to pocl are listed below.
 
-- automake 1.11 is known to work,
-  automake 1.96 might not work
-
 - Using Clang compiled with gcc 4.7 causes indeterminism in the
-  kernel compilation results. See the LLVM bug report:
+  kernel compilation results. See LLVM bug report:
   http://llvm.org/bugs/show_bug.cgi?id=12945
 
-- autogen.sh whines about AC_MSG_ERROR(). This happens (for some reason)
-  if you do not have pkg-config installed.
