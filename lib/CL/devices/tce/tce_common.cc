@@ -351,26 +351,27 @@ pocl_tce_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
 
 void
 pocl_tce_write (void *data, const void *host_ptr, void *device_ptr, 
-                size_t /*offset*/, size_t cb)
+                size_t offset, size_t cb)
 {
   TCEDevice *d = (TCEDevice*)data;
   chunk_info_t *chunk = (chunk_info_t*)device_ptr;
 #ifdef DEBUG_TTA_DRIVER
-  printf("host: write %x %x %u\n", host_ptr, chunk->start_address, cb);
+  printf("host: write %x %x %u\n", host_ptr, chunk->start_address + offset, cb);
 #endif
-  d->copyHostToDevice(host_ptr, chunk->start_address, cb);
+  d->copyHostToDevice(host_ptr, chunk->start_address + offset, cb);
 }
 
 void
 pocl_tce_read (void *data, void *host_ptr, const void *device_ptr, 
-               size_t /*offset*/, size_t cb)
+               size_t offset, size_t cb)
 {
   TCEDevice* d = (TCEDevice*)data;
   chunk_info_t *chunk = (chunk_info_t*)device_ptr;
 #ifdef DEBUG_TTA_DRIVER
-  printf("host: read to %x (host) from %d (device) %u\n", host_ptr, chunk->start_address, cb);
+  printf("host: read to %x (host) from %d (device) %u\n", host_ptr,
+    chunk->start_address + offset, cb);
 #endif
-  d->copyDeviceToHost(chunk->start_address, host_ptr, cb);
+  d->copyDeviceToHost(chunk->start_address + offset, host_ptr, cb);
 }
 
 void *
@@ -834,11 +835,11 @@ pocl_tce_read_rect (void *data,
   for (k = 0; k < region[2]; ++k)
     for (j = 0; j < region[1]; ++j)
       {
-        char const *__restrict h_ptr = adjusted_host_ptr + host_row_pitch * j 
+        char *__restrict__ h_ptr = adjusted_host_ptr + host_row_pitch * j 
           + host_slice_pitch * k;       
         size_t offset = base_offset + buffer_row_pitch * j 
           + buffer_slice_pitch * k;
-        pocl_tce_write (data, h_ptr, device_ptr, offset, region[0]);
+        pocl_tce_read (data, h_ptr, device_ptr, offset, region[0]);
       }
 }
 
