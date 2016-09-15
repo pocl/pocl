@@ -369,7 +369,7 @@ pocl_tce_read (void *data, void *host_ptr, const void *device_ptr,
   chunk_info_t *chunk = (chunk_info_t*)device_ptr;
 #ifdef DEBUG_TTA_DRIVER
   printf("host: read to %x (host) from %d (device) %u\n", host_ptr,
-    chunk->start_address + offset, cb);
+         chunk->start_address + offset, cb);
 #endif
   d->copyDeviceToHost(chunk->start_address + offset, host_ptr, cb);
 }
