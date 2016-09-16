@@ -3,12 +3,18 @@
 
 Highlights
 ----------
-- Out of order execution execution now enabled.
+- Support for LLVM/Clang 3.9 which is the first release to include
+  all frontend features for OpenCL 2.0.
+- Ability to build pocl in a mode where online compilation is not
+  supported to run in hosts without LLVM and binaries compiled offline
+  e.g. using poclcc.
 - It's now possible to cross-compile pocl when building an offline
-  compiler build
+  compiler build.
+- Initial support for out-of-order execution execution of command queues.
 - New driver api extension to support OoO and asynchronous devices/drivers.
 - Pthread driver now fully asynchronous.
-- HSA driver now fully asynchronous
+- HSA driver is now fully asynchronous.
+- CMake now the only supported build system, autotools removed.
 
 OpenCL Runtime/Platform API support
 -----------------------------------
@@ -17,7 +23,11 @@ OpenCL Runtime/Platform API support
 
 Other
 -----
+- Support for reqd_work_group_size attribute in the binary format and poclcc:
+  Generates a static sized work-group function to help optimizations
+  such as autovectorization.
 - HSA: added support for phsa (https://github.com/HSAFoundation/phsa)
+- A lot of bugfixes.
 
 
 0.13 April 2016
