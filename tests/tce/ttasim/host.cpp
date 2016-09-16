@@ -35,7 +35,7 @@
 #include "poclu.h"
 
 static char
-kernelSourceCode[] = 
+kernelSourceCode[] =
 "int putchar(int c);\n"
 "kernel \n"
 "void test_kernel(constant char *input,\n"
@@ -43,6 +43,12 @@ kernelSourceCode[] =
 "                 float a,\n"
 "                 int b) {\n"
 "    constant char* pos = input; \n"
+"    local char auto_local_array[5]; \n"
+"    auto_local_array[0] = 'P'; \n"
+"    auto_local_array[1] = 'O'; \n"
+"    auto_local_array[2] = 'N'; \n"
+"    auto_local_array[3] = 'G'; \n"
+"    auto_local_array[4] = '\\0'; \n"
 "    while (*pos) {\n"
 "        putchar (*pos);\n"
 "        ++pos;\n"
@@ -53,11 +59,7 @@ kernelSourceCode[] =
 "#error The machine should have ADDF in the ISA\n"
 "#endif\n"
 "    printf(\"%f %d\", a, b);\n"
-"    output[0] = 'P'; \n"
-"    output[1] = 'O'; \n"
-"    output[2] = 'N'; \n"
-"    output[3] = 'G'; \n"
-"    output[4] = '\\0'; \n"
+"    for (int i = 0; i < 5; ++i) output[i] = auto_local_array[i]; \n"
 "}\n";
 
 int

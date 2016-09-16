@@ -1316,7 +1316,7 @@ static PassManager& kernel_compiler_passes
   passes.push_back("mem2reg");
   passes.push_back("domtree");
   passes.push_back("break-constgeps");
-  if(device->autolocals_to_args)
+  if (device->autolocals_to_args)
 	  passes.push_back("automatic-locals");
   passes.push_back("flatten");
   passes.push_back("always-inline");

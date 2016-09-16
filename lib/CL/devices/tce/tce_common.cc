@@ -73,6 +73,7 @@ TCEDevice::TCEDevice(cl_device_id dev, const char* adfName) :
   parent->data = this;
   pthread_mutex_init (&cq_lock, NULL);
   dev->address_bits = 32;
+  dev->autolocals_to_args = 1;
 #if defined(WORDS_BIGENDIAN) && WORDS_BIGENDIAN == 1
   needsByteSwap = false;
 #else
