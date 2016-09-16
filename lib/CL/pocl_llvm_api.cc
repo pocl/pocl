@@ -1337,6 +1337,7 @@ static PassManager& kernel_compiler_passes
       passes.push_back("workitemrepl");
       //passes.push_back("print-module");
       passes.push_back("workitemloops");
+      passes.push_back("remove-barriers");
   }
   passes.push_back("workgroup");
   passes.push_back("allocastoentry");
