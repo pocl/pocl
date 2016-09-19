@@ -89,35 +89,45 @@ VariableUniformityAnalysis::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
 #endif
 }
 
+// Recursively mark the canonical induction variable PHI as uniform.
+// If there's a canonical induction variable in loops, the variable
+// update for each iteration should be uniform. Note: this does not yet
+// imply all the work-items execute the loop same number of times!
+void
+VariableUniformityAnalysis::markInductionVariables(Function &F, llvm::Loop &L) {
+
+  if (llvm::PHINode *inductionVar = L.getCanonicalInductionVariable()) {
+#ifdef DEBUG_UNIFORMITY_ANALYSIS
+    std::cerr << "### canonical induction variable, assuming uniform:";
+    inductionVar->dump();
+#endif
+    setUniform(&F, inductionVar);
+  }
+  for (llvm::Loop *Subloop : L.getSubLoops()) {
+    markInductionVariables(F, *Subloop);
+  }
+}
+
 bool
 VariableUniformityAnalysis::runOnFunction(Function &F) {
 
 #ifdef DEBUG_UNIFORMITY_ANALYSIS
   std::cerr << "### refreshing VUA" << std::endl;
-#endif  
+#endif
 
-  /* Do the actual analysis on-demand except for the basic block 
+  /* Do the actual analysis on-demand except for the basic block
      divergence analysis. */
-  uniformityCache_[&F].clear();  
+  uniformityCache_[&F].clear();
 
-  /* Mark the canonical induction variable PHI as uniform. 
-     If there's a canonical induction variable in loops, the variable
-     update for each iteration should be uniform. Note: this does not yet imply
-     all the work-items execute the loop same number of times! */
 #ifdef LLVM_OLDER_THAN_3_7
   llvm::LoopInfo &LI = getAnalysis<LoopInfo>();
 #else
   llvm::LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
 #endif
+
   for (llvm::LoopInfo::iterator i = LI.begin(), e = LI.end(); i != e; ++i) {
     llvm::Loop *L = *i;
-    if (llvm::PHINode *inductionVar = L->getCanonicalInductionVariable()) {
-#ifdef DEBUG_UNIFORMITY_ANALYSIS
-      std::cerr << "### canonical induction variable, assuming uniform:";
-      inductionVar->dump();
-#endif
-      setUniform(&F, inductionVar);
-    }    
+    markInductionVariables(F, *L);
   }
 
   setUniform(&F, &F.getEntryBlock());

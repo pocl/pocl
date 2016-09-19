@@ -28,6 +28,10 @@
 #include "llvm/IR/Function.h"
 #include "llvm/Pass.h"
 
+namespace llvm {
+class Loop;
+}
+
 namespace pocl {
   /**
    * Analyses the variables in the function to figure out if a variable
@@ -60,6 +64,7 @@ namespace pocl {
 
     virtual bool shouldBePrivatized(llvm::Function *f, llvm::Value *val);
     virtual bool doFinalization(llvm::Module& M);
+    virtual void markInductionVariables(llvm::Function &F, llvm::Loop &L);
 
   private:
 
