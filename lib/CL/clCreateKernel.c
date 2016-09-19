@@ -87,16 +87,17 @@ POname(clCreateKernel)(cl_program program,
           pocl_cache_device_cachedir_exists(program, device_i))
         {
 #ifdef OCS_AVAILABLE
-          pocl_llvm_get_kernel_metadata(program, kernel, device_i,
-                                        kernel_name, &errcode);
+          pocl_llvm_get_kernel_metadata (program, kernel, device_i,
+                                         kernel_name, &errcode);
           cl_device_id device = program->devices[device_i];
           if (device->spmd)
             {
               char cachedir[POCL_FILENAME_LENGTH];
-              pocl_cache_kernel_cachedir_path(cachedir, program, device_i, kernel, "", 0, 0, 0);
+              pocl_cache_kernel_cachedir_path (cachedir, program, device_i,
+                                               kernel, "", 0, 0, 0);
 
-              errcode = pocl_llvm_generate_workgroup_function(cachedir, device,
-                                                              kernel, 0, 0, 0);
+              errcode = pocl_llvm_generate_workgroup_function (cachedir, device,
+                                                               kernel, 0, 0, 0);
               if (errcode == CL_SUCCESS)
                 device->ops->compile_kernel(NULL, kernel, device);
             }

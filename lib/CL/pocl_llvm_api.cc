@@ -1580,8 +1580,9 @@ kernel_library
 /* This is used to control the kernel we want to process in the kernel compilation. */
 extern cl::opt<std::string> KernelName;
 
-int pocl_llvm_generate_workgroup_function(char* kernel_cachedir, cl_device_id device, cl_kernel kernel,
-                                          size_t local_x, size_t local_y, size_t local_z)
+int pocl_llvm_generate_workgroup_function(char* kernel_cachedir, cl_device_id device,
+                                          cl_kernel kernel, size_t local_x,
+                                          size_t local_y, size_t local_z)
 {
 
   pocl::WGDynamicLocalSize = (local_x == 0 && local_y == 0 && local_z == 0);

@@ -89,13 +89,13 @@ int pocl_cache_write_descriptor(cl_program   program,
                                 size_t       size);
 
 void pocl_cache_kernel_cachedir_path (char* kernel_cachedir_path,
-                                             cl_program program,
-                                             unsigned device_i,
-                                             cl_kernel kernel,
-                                             char* append_str,
-                                             size_t local_x,
-                                             size_t local_y,
-                                             size_t local_z);
+                                      cl_program program,
+                                      unsigned device_i,
+                                      cl_kernel kernel,
+                                      char* append_str,
+                                      size_t local_x,
+                                      size_t local_y,
+                                      size_t local_z);
 
 
 int pocl_cache_write_kernel_parallel_bc(void*        bc,
