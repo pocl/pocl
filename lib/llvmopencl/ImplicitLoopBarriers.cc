@@ -36,6 +36,8 @@
 #include "Workgroup.h"
 #include "VariableUniformityAnalysis.h"
 
+#include "pocl_runtime_config.h"
+
 //#define DEBUG_ILOOP_BARRIERS
 
 using namespace llvm;
@@ -60,7 +62,8 @@ bool ImplicitLoopBarriers::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (!Workgroup::isKernelToProcess(*L->getHeader()->getParent()))
     return false;
 
-  if (!Workgroup::hasWorkgroupBarriers(*L->getHeader()->getParent())) {
+  if (!pocl_get_bool_option("POCL_FORCE_PARALLEL_OUTER_LOOP", 0) &&
+      !Workgroup::hasWorkgroupBarriers(*L->getHeader()->getParent())) {
 #ifdef DEBUG_ILOOP_BARRIERS
     std::cerr << "### ILB: The kernel has no barriers, let's not add implicit ones "
               << "either to avoid WI context switch overheads"

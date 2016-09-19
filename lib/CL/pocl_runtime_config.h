@@ -28,18 +28,10 @@
 extern "C" {
 #endif
 
-#ifdef __GNUC__
-#pragma GCC visibility push(hidden)
-#endif
-
 int pocl_is_option_set(const char *key);
 int pocl_get_int_option(const char *key, int default_value);
 int pocl_get_bool_option(const char *key, int default_value);
 const char* pocl_get_string_option(const char *key, const char *default_value);
-
-#ifdef __GNUC__
-#pragma GCC visibility pop
-#endif
 
 #ifdef __cplusplus
 }
