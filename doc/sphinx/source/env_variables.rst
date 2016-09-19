@@ -33,6 +33,10 @@ pocl.
  CL_INVALID_VALUE. If clock_gettime is available, messages
  will include a timestamp.
 
+- **POCL_DEBUG_LLVM_PASSES**
+
+ When set to 1, enables debug output from LLVM passes during optimization.
+
 - **POCL_DEVICES** and **POCL_x_PARAMETERS**
 
  POCL_DEVICES is a space separated list of the device instances to be enabled.

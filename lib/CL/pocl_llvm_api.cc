@@ -1247,9 +1247,6 @@ static PassManager& kernel_compiler_passes
     initializeTarget(Registry);
   }
 
-  // Scalarizer is in LLVM upstream since 3.4.
-  const bool SCALARIZE = pocl_is_option_set("POCL_SCALARIZE_KERNELS");
-
 # ifdef LLVM_OLDER_THAN_3_7
   StringMap<llvm::cl::Option*> opts;
   llvm::cl::getRegisteredOptions(opts);
@@ -1323,87 +1320,101 @@ static PassManager& kernel_compiler_passes
   passes.push_back("always-inline");
   passes.push_back("globaldce");
   if (!SPMDDevice) {
-      passes.push_back("simplifycfg");
-      passes.push_back("loop-simplify");
-      passes.push_back("uniformity");
-      passes.push_back("phistoallocas");
-      passes.push_back("isolate-regions");
-      passes.push_back("implicit-loop-barriers");
-      passes.push_back("implicit-cond-barriers");
-      passes.push_back("loop-barriers");
-      passes.push_back("barriertails");
-      passes.push_back("barriers");
-      passes.push_back("isolate-regions");
-      passes.push_back("wi-aa");
-      passes.push_back("workitemrepl");
-      //passes.push_back("print-module");
-      passes.push_back("workitemloops");
-      passes.push_back("remove-barriers");
+    passes.push_back("simplifycfg");
+    passes.push_back("loop-simplify");
+    passes.push_back("uniformity");
+    passes.push_back("phistoallocas");
+    passes.push_back("isolate-regions");
+    passes.push_back("implicit-loop-barriers");
+    passes.push_back("implicit-cond-barriers");
+    passes.push_back("loop-barriers");
+    passes.push_back("barriertails");
+    passes.push_back("barriers");
+    passes.push_back("isolate-regions");
+    passes.push_back("wi-aa");
+    passes.push_back("workitemrepl");
+    //passes.push_back("print-module");
+    passes.push_back("workitemloops");
+    // Remove the (pseudo) barriers.   They have no use anymore due to the
+    // work-item loop control taking care of them.
+    passes.push_back("remove-barriers");
   }
+  // Add the work group launcher functions and privatize the pseudo variable
+  // (local id) accesses.
   passes.push_back("workgroup");
-  passes.push_back("allocastoentry");
-  passes.push_back("target-address-spaces");
-  // Later passes might get confused (and expose possible bugs in them) due to
-  // UNREACHABLE blocks left by repl. So let's clean up the CFG before running the
-  // standard LLVM optimizations.
-  passes.push_back("simplifycfg");
-  //passes.push_back("print-module");
 
-  const std::string wg_method = 
+  // Attempt to move all allocas to the entry block to avoid the need for
+  // dynamic stack which is problematic for some architectures.
+  passes.push_back("allocastoentry");
+
+  // Convert the semantical OpenCL address space IDs to the ones of the target.
+  passes.push_back("target-address-spaces");
+
+  // Later passes might get confused (and expose possible bugs in them) due to
+  // UNREACHABLE blocks left by repl. So let's clean up the CFG before running
+  // the standard LLVM optimizations.
+  passes.push_back("simplifycfg");
+
+#if 0
+  passes.push_back("print-module");
+  passes.push_back("dot-cfg");
+#endif
+
+  const std::string wg_method =
     pocl_get_string_option("POCL_WORK_GROUP_METHOD", "loopvec");
 
-  if (wg_method == "loopvec")
-    {
+  if (kernel_compiler_passes.size() == 0) {
+    // Set the options only once. TODO: fix it so that each
+    // device can reset their own options. Now one cannot compile
+    // with different options to different devices at one run.
 
-      if (SCALARIZE)
-        {
-          printf("SCALARIZE\n");
-          passes.push_back("scalarizer");
-        }
+    llvm::cl::Option *O = nullptr;
+    if (wg_method == "loopvec") {
 
-      if (kernel_compiler_passes.size() == 0) 
-        {
-          // Set the options only once. TODO: fix it so that each
-          // device can reset their own options. Now one cannot compile
-          // with different options to different devices at one run.
+      passes.push_back("scalarizer");
 
-          // LLVM inner loop vectorizer does not check whether the loop inside 
-          // another loop, in which case even a small trip count loops might be 
-          // worthwhile to vectorize.
-          llvm::cl::Option *O = opts["vectorizer-min-trip-count"];
-          assert(O && "could not find LLVM option 'vectorizer-min-trip-count'");
-          O->addOccurrence(1, StringRef("vectorizer-min-trip-count"), StringRef("2"), false); 
+      O = opts["scalarize-load-store"];
+      assert(O && "could not find LLVM option 'scalarize-load-store'");
+      O->addOccurrence(1, StringRef("scalarize-load-store"),
+                       StringRef("1"), false);
 
-          if (SCALARIZE) 
-            {
-              O = opts["scalarize-load-store"];
-              assert(O && "could not find LLVM option 'scalarize-load-store'");
-              O->addOccurrence(1, StringRef("scalarize-load-store"), StringRef(""), false); 
-            }
+      // LLVM inner loop vectorizer does not check whether the loop inside
+      // another loop, in which case even a small trip count loops might be
+      // worthwhile to vectorize.
+      O = opts["vectorizer-min-trip-count"];
+      assert(O && "could not find LLVM option 'vectorizer-min-trip-count'");
+      O->addOccurrence(1, StringRef("vectorizer-min-trip-count"),
+                       StringRef("2"), false);
 
-          if (pocl_get_bool_option("POCL_VECTORIZER_REMARKS", 0) == 1) {
-            // Enable diagnostics from the loop vectorizer.
-            O = opts["pass-remarks-missed"];
-            assert(O && "could not find LLVM option 'pass-remarks-missed'");
-            O->addOccurrence(1, StringRef("pass-remarks-missed"), StringRef("loop-vectorize"), 
-                             false); 
+      if (pocl_get_bool_option("POCL_VECTORIZER_REMARKS", 0) == 1) {
+        // Enable diagnostics from the loop vectorizer.
+        O = opts["pass-remarks-missed"];
+        assert(O && "could not find LLVM option 'pass-remarks-missed'");
+        O->addOccurrence(1, StringRef("pass-remarks-missed"),
+                         StringRef("loop-vectorize"), false);
 
-            O = opts["pass-remarks-analysis"];
-            assert(O && "could not find LLVM option 'pass-remarks-analysis'");
-            O->addOccurrence(1, StringRef("pass-remarks-analysis"), StringRef("loop-vectorize"), 
-                             false); 
+        O = opts["pass-remarks-analysis"];
+        assert(O && "could not find LLVM option 'pass-remarks-analysis'");
+        O->addOccurrence(1, StringRef("pass-remarks-analysis"),
+                         StringRef("loop-vectorize"), false);
 
-            O = opts["pass-remarks"];
-            assert(O && "could not find LLVM option 'pass-remarks'");
-            O->addOccurrence(1, StringRef("pass-remarks"), StringRef("loop-vectorize"), 
-                             false); 
-          }
+        O = opts["pass-remarks"];
+        assert(O && "could not find LLVM option 'pass-remarks'");
+        O->addOccurrence(1, StringRef("pass-remarks"),
+                         StringRef("loop-vectorize"), false);
+      }
 
-          O = opts["unroll-threshold"];
-          assert(O && "could not find LLVM option 'unroll-threshold'");
-          O->addOccurrence(1, StringRef("unroll-threshold"), StringRef("1"), false); 
-        }
-    } 
+    }
+    if (pocl_get_bool_option("POCL_DEBUG_LLVM_PASSES", 0) == 1) {
+      O = opts["debug"];
+      assert(O && "could not find LLVM option 'debug'");
+      O->addOccurrence(1, StringRef("debug"), StringRef("true"), false);
+    }
+
+    O = opts["unroll-threshold"];
+    assert(O && "could not find LLVM option 'unroll-threshold'");
+    O->addOccurrence(1, StringRef("unroll-threshold"), StringRef("1"), false);
+  }
 
   passes.push_back("instcombine");
   passes.push_back("STANDARD_OPTS");
