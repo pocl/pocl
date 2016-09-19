@@ -39,6 +39,7 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 // causes an error. Some kind of macro definition issue. To investigate.
 #include "pocl.h"
 
+
 #include "llvm/LinkAllPasses.h"
 #ifdef LLVM_OLDER_THAN_3_7
 #include "llvm/PassManager.h"
@@ -1409,10 +1410,8 @@ static PassManager& kernel_compiler_passes
   passes.push_back("instcombine");
 
   // Now actually add the listed passes to the PassManager.
-  for(unsigned i = 0; i < passes.size(); ++i)
-    {
-    
-      // This is (more or less) -O3
+  for(unsigned i = 0; i < passes.size(); ++i) {
+      // This is (more or less) -O3.
       if (passes[i] == "STANDARD_OPTS")
         {
           PassManagerBuilder Builder;
@@ -1435,9 +1434,7 @@ static PassManager& kernel_compiler_passes
             Builder.BBVectorize = pocl_get_bool_option ("POCL_BBVECTORIZE", 0);
 #endif
           }
-
           Builder.populateModulePassManager(*Passes);
-     
           continue;
         }
 
@@ -1454,6 +1451,8 @@ static PassManager& kernel_compiler_passes
           POCL_ABORT("FAIL");
         }
     }
+
+
   kernel_compiler_passes[device] = Passes;
   return *Passes;
 }

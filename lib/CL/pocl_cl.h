@@ -619,10 +619,12 @@ struct _cl_program {
      sequential bitcode produced from the kernel sources.  */
   size_t *binary_sizes;
   unsigned char **binaries;
+
   /* Poclcc binary format.  */
   size_t *pocl_binary_sizes;
   unsigned char **pocl_binaries;
-  /* "Default" kernels.   */
+
+  /* "Default" kernels. See: https://github.com/pocl/pocl/issues/390  */
   size_t num_kernels;
   char **kernel_names;
   cl_kernel *default_kernels;

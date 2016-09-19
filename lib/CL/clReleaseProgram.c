@@ -23,7 +23,7 @@
 */
 
 #include <string.h>
-   
+
 #ifndef _MSC_VER
 #  include <unistd.h>
 #else
@@ -54,12 +54,12 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
          FIXME: this should not be needed if the kernels
          retain the parent program (and release when the kernel
          is released). */
-      for (k=program->kernels; k!=NULL; k=k->next)
+      for (k = program->kernels; k != NULL; k = k->next)
         {
           k->program = NULL;
         }
 
-      if(program->devices != program->context->devices)
+      if (program->devices != program->context->devices)
         POCL_MEM_FREE(program->devices);
 
       POCL_MEM_FREE(program->source);

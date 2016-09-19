@@ -71,7 +71,6 @@ bool ImplicitLoopBarriers::runOnLoop(Loop *L, LPPassManager &LPM) {
   return ProcessLoop(L, LPM);
 }
 
-
 /**
  * Adds a barrier to the first BB of each loop.
  *

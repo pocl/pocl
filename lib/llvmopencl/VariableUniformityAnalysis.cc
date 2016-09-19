@@ -122,7 +122,6 @@ VariableUniformityAnalysis::runOnFunction(Function &F) {
 
   setUniform(&F, &F.getEntryBlock());
   analyzeBBDivergence(&F, &F.getEntryBlock(), &F.getEntryBlock());
-  //  F.viewCFG();
   return false;
 }
 
