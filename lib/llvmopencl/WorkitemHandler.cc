@@ -75,44 +75,8 @@ void
 WorkitemHandler::Initialize(Kernel *K) {
 
   llvm::Module *M = K->getParent();
-  
-  // Check that the dynamically set local size and a possible
-  // required WG size match.
-  size_t LocalSizeX = WGLocalSizeX, LocalSizeY = WGLocalSizeY, 
-      LocalSizeZ = WGLocalSizeZ;
- 
-  llvm::NamedMDNode *size_info = 
-    M->getNamedMetadata("opencl.kernel_wg_size_info");
-  if (size_info) {
-    for (unsigned i = 0, e = size_info->getNumOperands(); i != e; ++i) {
-      llvm::MDNode *KernelSizeInfo = size_info->getOperand(i);
-      if (dyn_cast<ValueAsMetadata>(
-        KernelSizeInfo->getOperand(0).get())->getValue() != K) 
-        continue;
 
-      LocalSizeX = (llvm::cast<ConstantInt>(
-                     llvm::dyn_cast<ConstantAsMetadata>(
-                       KernelSizeInfo->getOperand(1))->getValue()))->getLimitedValue();
-      LocalSizeY = (llvm::cast<ConstantInt>(
-                     llvm::dyn_cast<ConstantAsMetadata>(
-                       KernelSizeInfo->getOperand(2))->getValue()))->getLimitedValue();
-      LocalSizeZ = (llvm::cast<ConstantInt>(
-                     llvm::dyn_cast<ConstantAsMetadata>(
-                       KernelSizeInfo->getOperand(3))->getValue()))->getLimitedValue();
-      break;
-    }
-  }
-
-  // This funny looking check is to silence a compiler warning that we 
-  // do not ignore the LocalSize* variables. Even in a NDEBUG build.
-  // TODO: how to handle the case in a NDEBUG build when they don't match?
-  if( !(LocalSizeX == WGLocalSizeX && LocalSizeY == WGLocalSizeY && 
-          LocalSizeZ == WGLocalSizeZ) ){
-     assert(false && "Local sizes don't match");
-     return;
-  }
-
-  llvm::Type *localIdType; 
+  llvm::Type *localIdType;
   size_t_width = 0;
 #ifdef LLVM_OLDER_THAN_3_7
   if (M->getDataLayout()->getPointerSize(0) == 8)
