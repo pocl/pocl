@@ -414,10 +414,16 @@ run(llvm::Module &M,
   /* Delete the old functions. */
   while (funcReplacements.size() > 0) {
 
-    if (Workgroup::isKernelToProcess(*i->first)) {
-      FunctionMapping repl;
-      repl[i->first] = i->second;
-      regenerate_kernel_metadata(M, repl);
+    if (currentPoclDevice->spmd) {
+      // The opencl.kernel metadata needs to be maintained only for
+      // SPMD devices (read: HSA at the time of this writing) because
+      // for non-SPMD machines the original kernel function is not
+      // there anymore, but is replaced with a work-group function.
+      if (Workgroup::isKernelToProcess(*i->first)) {
+        FunctionMapping repl;
+        repl[i->first] = i->second;
+        regenerate_kernel_metadata(M, repl);
+      }
     }
 
     if (i->first->getNumUses() > 0) {
@@ -434,6 +440,21 @@ run(llvm::Module &M,
     funcReplacements.erase(i);
     i = funcReplacements.begin();
   }
+
+  if (!currentPoclDevice->spmd) {
+    // The opencl.kernels metadata is stale for non-SPMD machines
+    // which now have the kernel WI function converted to a WG
+    // function.  Remove it.
+    NamedMDNode *KernelsMD = M.getNamedMetadata("opencl.kernels");
+    if (KernelsMD)
+      M.eraseNamedMetadata(KernelsMD);
+    // Ditto for the old opencl.kernel_wg_size_info.
+    NamedMDNode *SizeInfoMD = M.getNamedMetadata("opencl.kernel_wg_size_info");
+    if (SizeInfoMD)
+      M.eraseNamedMetadata(SizeInfoMD);
+
+  }
+
 
 }
 
