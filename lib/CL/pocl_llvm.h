@@ -67,8 +67,8 @@ int pocl_llvm_get_kernel_metadata
  * at a time or control the options through thread safe methods.
  */
 int pocl_llvm_generate_workgroup_function
-(cl_device_id device, cl_kernel kernel,
- size_t local_x, size_t local_y, size_t local_z
+(char* kernel_cachedir, cl_device_id device,
+ cl_kernel kernel, size_t local_x, size_t local_y, size_t local_z
 );
 
 /**

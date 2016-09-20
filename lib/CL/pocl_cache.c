@@ -107,7 +107,7 @@ void pocl_cache_program_bc_path(char*        program_bc_path,
                        device_i, POCL_PROGRAM_BC_FILENAME);
 }
 
-static void pocl_cache_kernel_cachedir_path (char* kernel_cachedir_path,
+void pocl_cache_kernel_cachedir_path (char* kernel_cachedir_path,
                                              cl_program program,
                                              unsigned device_i,
                                              cl_kernel kernel,
@@ -364,33 +364,10 @@ int pocl_cache_write_kernel_parallel_bc(void*        bc,
     strcat(kernel_parallel_path, POCL_PARALLEL_BC_FILENAME);
     return pocl_write_module(bc, kernel_parallel_path, 0);
 }
-#endif
-
-int pocl_cache_make_kernel_cachedir_path (char*        kernel_cachedir_path,
-                                          cl_program   program,
-                                          cl_device_id device,
-                                          cl_kernel    kernel,
-                                          size_t       local_x,
-                                          size_t       local_y,
-                                          size_t       local_z) {
-    int index = pocl_cl_device_to_index (program, device);
-    assert (index >= 0);
-
-    pocl_cache_kernel_cachedir_path (kernel_cachedir_path, program, index,
-                                     kernel, "", local_x, local_y, local_z);
-
-    return pocl_mkdir_p (kernel_cachedir_path);
-}
 
 
 /******************************************************************************/
 
-
-
-
-
-
-#ifdef OCS_AVAILABLE
 static inline void
 build_program_compute_hash(cl_program program,
                            unsigned   device_i,

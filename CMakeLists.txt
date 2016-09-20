@@ -577,19 +577,6 @@ endif()
 
 ######################################################################################
 
-if(NOT MSVC)
-  pkg_check_modules(GLEW glew)
-endif()
-
-if(GLEW_FOUND)
-  set(HAVE_GLEW 1)
-else()
-  set(HAVE_GLEW 0)
-  message(WARNING "libGLEW not found. A few tests will not work")
-endif()
-
-######################################################################################
-
 set_expr(POCL_KERNEL_CACHE_DEFAULT KERNEL_CACHE_DEFAULT)
 
 string(TIMESTAMP POCL_BUILD_TIMESTAMP "%d%m%Y%H%M%S")
@@ -797,7 +784,19 @@ if(ENABLE_TCE)
 
   set(TCE_DEVICE_CL_VERSION "120")
 
+  if("${LLVM_CXXFLAGS}" MATCHES "-fno-rtti")
+    message(WARNING "TCE is enabled but your LLVM was not built with RTTI. You should rebuild LLVM with 'make REQUIRES_RTTI=1'. See the INSTALL file for more information.")
+  endif()
+
 else()
+
+  # - '-fno-rtti' is a work-around for llvm bug 14200
+  # Which according to bug report has been fixed in llvm 3.7
+  # sadly, that bugreport is mistaken, it's not fixed in 3.7
+  if (NOT MSVC)
+    set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -fno-rtti")
+  endif()
+
   set(ENABLE_TCEMC 0)
 endif()
 

@@ -1590,8 +1590,9 @@ kernel_library
 /* This is used to control the kernel we want to process in the kernel compilation. */
 extern cl::opt<std::string> KernelName;
 
-int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
-                                          size_t local_x, size_t local_y, size_t local_z)
+int pocl_llvm_generate_workgroup_function(char* kernel_cachedir, cl_device_id device,
+                                          cl_kernel kernel, size_t local_x,
+                                          size_t local_y, size_t local_z)
 {
 
   pocl::WGDynamicLocalSize = (local_x == 0 && local_y == 0 && local_z == 0);
@@ -1611,6 +1612,8 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
 
   if (pocl_exists(final_binary_path))
     return CL_SUCCESS;
+
+  pocl_mkdir_p(kernel_cachedir);
 
   llvm::MutexGuard lockHolder(kernelCompilerLock);
   InitializeLLVM();
@@ -1848,6 +1851,7 @@ pocl_llvm_codegen(cl_kernel kernel,
     llvm::TargetMachine *target = GetTargetMachine(device);
 
     llvm::Module *input = ParseIRFile(infilename, Err, *GlobalContext());
+    assert(input);
 
     PassManager PM;
 #ifdef LLVM_OLDER_THAN_3_7
