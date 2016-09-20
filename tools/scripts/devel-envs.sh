@@ -17,3 +17,4 @@ export LD_PRELOAD=$(ldd lib/CL/$libs_subdir/libpocl.so | grep pthread | cut -f 3
 
 #sometimes useful variable when ICD fails (and we use ocl-icd)
 #export OCL_ICD_DEBUG=15
+export PATH=$PWD/bin:$PATH
