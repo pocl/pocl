@@ -142,7 +142,7 @@ Flatten::runOnModule(Module &M)
     pending.pop_back();
 
     for (Value::use_iterator i = v->use_begin(), e = v->use_end();
-	 i != e; ++i) {
+         i != e; ++i) {
       llvm::User *user = i->getUser();
       if (Instruction *ci = dyn_cast<Instruction>(user) {
         // Prevent infinite looping on recursive functions

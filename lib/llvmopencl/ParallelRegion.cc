@@ -601,7 +601,7 @@ ParallelRegion::LocalIDZLoad()
 {
   if (LocalIDZLoadInstr != NULL) return LocalIDZLoadInstr;
   IRBuilder<> builder(&*(entryBB()->getFirstInsertionPt()));
-  return LocalIDZLoadInstr = 
+  return LocalIDZLoadInstr =
     builder.CreateLoad
     (entryBB()->getParent()->getParent()->getGlobalVariable(POCL_LOCAL_ID_Z_GLOBAL));
 }
