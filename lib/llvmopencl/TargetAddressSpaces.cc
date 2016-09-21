@@ -77,32 +77,37 @@ ConvertedType(llvm::Type *type, std::map<unsigned, unsigned> &addrSpaceMap,
           ConvertedType(type->getArrayElementType(),
                         addrSpaceMap, convertedStructsCache),
           type->getArrayNumElements());
+    // TO CLEAN: Check what is the issue with TCE. If it's a TCE-specific problem,
+    // add a runtime check here for the target device, not compile time!
 #ifndef TCE_AVAILABLE
   } else if (type->isStructTy()) {
+
+    // We need to handle the fields of the structs recursively,
+    // converting their address spaces to the target's and
+    // creating a new struct type in the process.
     if (convertedStructsCache[type])
       return convertedStructsCache[type];
 
-    llvm::StructType* t = dyn_cast<llvm::StructType>(type);
-    llvm::StructType* tn;
-    if (!t->isLiteral()) {
-      std::string s = t->getName().str();
+    llvm::StructType* OrigType = dyn_cast<llvm::StructType>(type);
+    llvm::StructType* NewType;
+    if (!OrigType->isLiteral()) {
+      std::string s = OrigType->getName().str();
       s += "_tas_struct";
-      tn = StructType::create(t->getContext(), s);
-      convertedStructsCache[type] = tn;
+      NewType = StructType::create(OrigType->getContext(), s);
     }
     std::vector<llvm::Type*> newtypes;
-    for (llvm::StructType::element_iterator i = t->element_begin(),
-         e = t->element_end(); i < e; ++i) {
+    for (llvm::StructType::element_iterator i = OrigType->element_begin(),
+         e = OrigType->element_end(); i < e; ++i) {
       newtypes.push_back(ConvertedType(*i, addrSpaceMap, convertedStructsCache));
     }
     ArrayRef<Type*> a(newtypes);
-    if (t->isLiteral()) {
-      tn = StructType::get(t->getContext(), a, t->isPacked());
-      convertedStructsCache[type] = tn;
+    if (OrigType->isLiteral()) {
+      NewType = StructType::get(OrigType->getContext(), a, OrigType->isPacked());
     } else {
-      tn->setBody(a, t->isPacked());
+      NewType->setBody(a, OrigType->isPacked());
     }
-    return tn;
+    convertedStructsCache[type] = NewType;
+    return NewType;
 #endif
   } else {
     return type;
@@ -159,6 +164,16 @@ static bool removeASCI(llvm::Value *v, llvm::Instruction *beforeinst,
             if (DstTy->getPointerAddressSpace() == POCL_ADDRESS_SPACE_GENERIC)
               UpdateAddressSpace(*as, addrSpaceMap, convertedStructsCache);
             Value* srcVal = as->getOperand(0);
+            // We cannot just replaceAllUsesWith directly as UpdateAddressSpace
+            // might have changed the struct type to a new *_tas_struct type.
+            // In that case we need to replace also the referred types at least
+            // in case of array accesses. See issue #342 which is using events
+            // and events are context saved for each work-item and the GEPs
+            // that refer to the context array still have the old opencl.event_t
+            // type reference and we have converted the opencl.event_t to
+            // a new opencl.event_t_tas_struct and thus the replaceAllUsesWith
+            // fails with an assertion (if LLVM has assertions enabled) due to
+            // the mismatching type.
             as->replaceAllUsesWith(srcVal);
             as->eraseFromParent();
             return true;
@@ -266,10 +281,10 @@ run(llvm::Module &M,
     unhandledFuncs.push_back(&*functionI);
   }
 
-  for (std::vector<llvm::Function*>::iterator i = unhandledFuncs.begin(), 
+  for (std::vector<llvm::Function*>::iterator i = unhandledFuncs.begin(),
          e = unhandledFuncs.end(); i != e; ++i) {
     llvm::Function &F = **i;
-   
+
     /* Convert the FunctionType. Because there is no mutator API in
        LLVM for this, we need to recreate the whole darn function :( */
     SmallVector<Type *, 8> parameters;
@@ -299,52 +314,60 @@ run(llvm::Module &M,
     SmallVector<ReturnInst *, 1> ri;
 
     if (handle_generic_AS) {
-    /* Remove generic address space casts. Converts types with generic AS to
-     * private AS and then removes redundant AS casting instructions */
-    for (llvm::Function::iterator bbi = F.begin(), bbe = F.end(); bbi != bbe;
-         ++bbi)
-      for (llvm::BasicBlock::iterator ii = bbi->begin(), ie = bbi->end(); ii != ie;
-           ++ii) {
 
-        llvm::Instruction *instr = &*ii;
+      /* Remove generic address space casts. Converts types with generic AS to
+       * private AS and then removes redundant AS casting instructions */
+      for (llvm::Function::iterator bbi = F.begin(), bbe = F.end(); bbi != bbe;
+           ++bbi)
+        for (llvm::BasicBlock::iterator ii = bbi->begin(), ie = bbi->end(); ii != ie;
+             ++ii) {
 
-        if (isa<AddrSpaceCastInst>(instr)) {
-            if (removeASCI(instr, nullptr, addrSpaceMap, convertedStructsCache))
-              { ii = bbi->begin(); continue; }
+          llvm::Instruction *instr = &*ii;
+
+          if (isa<AddrSpaceCastInst>(instr)) {
+            if (removeASCI(instr, nullptr, addrSpaceMap,
+                           convertedStructsCache)) {
+              ii = bbi->begin();
+              continue;
+            }
           }
-        if (isa<StoreInst>(instr)) {
+          if (isa<StoreInst>(instr)) {
             StoreInst *st = dyn_cast<StoreInst>(instr);
             Value *pt = st->getPointerOperand();
             if (Operator::getOpcode(pt) == Instruction::AddrSpaceCast) {
-              if (removeASCI(pt, instr, addrSpaceMap, convertedStructsCache))
-                { ii = bbi->begin(); continue; }
+              if (removeASCI(pt, instr, addrSpaceMap,
+                             convertedStructsCache)) {
+                ii = bbi->begin();
+                continue;
+              }
             } else
               if (st->getPointerAddressSpace() == POCL_ADDRESS_SPACE_GENERIC)
                 UpdateAddressSpace(*pt, addrSpaceMap, convertedStructsCache);
         }
-        if (isa<LoadInst>(instr)) {
+          if (isa<LoadInst>(instr)) {
             LoadInst *ld = dyn_cast<LoadInst>(instr);
             Value *pt = ld->getPointerOperand();
             if (Operator::getOpcode(pt) == Instruction::AddrSpaceCast) {
-              if (removeASCI(pt, instr, addrSpaceMap, convertedStructsCache))
-                { ii = bbi->begin(); continue; }
+              if (removeASCI(pt, instr, addrSpaceMap, convertedStructsCache)) {
+                ii = bbi->begin();
+                continue;
+              }
             } else
               if (ld->getPointerAddressSpace() == POCL_ADDRESS_SPACE_GENERIC)
                 UpdateAddressSpace(*pt, addrSpaceMap, convertedStructsCache);
         }
-        if (isa<GetElementPtrInst>(instr)) {
+          if (isa<GetElementPtrInst>(instr)) {
             GetElementPtrInst *gep = dyn_cast<GetElementPtrInst>(instr);
             Value *pt = gep->getPointerOperand();
             if (Operator::getOpcode(pt) == Instruction::AddrSpaceCast) {
-                if (removeASCI(pt, instr, addrSpaceMap, convertedStructsCache))
-                  { ii = bbi->begin(); continue; }
-              } else {
-                if (gep->getPointerAddressSpace() == POCL_ADDRESS_SPACE_GENERIC)
-                  UpdateAddressSpace(*pt, addrSpaceMap, convertedStructsCache);
-              }
+              if (removeASCI(pt, instr, addrSpaceMap, convertedStructsCache))
+              { ii = bbi->begin(); continue; }
+            } else {
+              if (gep->getPointerAddressSpace() == POCL_ADDRESS_SPACE_GENERIC)
+                UpdateAddressSpace(*pt, addrSpaceMap, convertedStructsCache);
+            }
+          }
         }
-
-      }
     }
 
     class AddressSpaceReMapper : public ValueMapTypeRemapper {
@@ -399,13 +422,13 @@ run(llvm::Module &M,
           ii = bbi->begin();
           continue;
         }
-        
+
         if (!isa<CallInst>(instr)) continue;
 
         llvm::CallInst *call = dyn_cast<CallInst>(instr);
         llvm::Function *calledF = call->getCalledFunction();
         if (funcReplacements.find(calledF) == funcReplacements.end()) continue;
-         
+
         call->setCalledFunction(funcReplacements[calledF]);
       }
   }
@@ -427,7 +450,7 @@ run(llvm::Module &M,
     }
 
     if (i->first->getNumUses() > 0) {
-      for (Value::use_iterator ui = i->first->use_begin(), 
+      for (Value::use_iterator ui = i->first->use_begin(),
              ue = i->first->use_end(); ui != ue; ++ui) {
         User* user = (*ui).getUser();
         user->dump();
@@ -452,10 +475,7 @@ run(llvm::Module &M,
     NamedMDNode *SizeInfoMD = M.getNamedMetadata("opencl.kernel_wg_size_info");
     if (SizeInfoMD)
       M.eraseNamedMetadata(SizeInfoMD);
-
   }
-
-
 }
 
 #define POCL_AS_FAKE_GENERIC 0
