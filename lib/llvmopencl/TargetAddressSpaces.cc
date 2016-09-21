@@ -138,8 +138,9 @@ UpdateAddressSpace(llvm::Value& val, std::map<unsigned, unsigned> &addrSpaceMap,
    \returns true if replacement took place (-> BB iterator needs to restart)
 */
 static bool removeASCI(llvm::Value *v, llvm::Instruction *beforeinst,
-                     std::map<unsigned, unsigned> &addrSpaceMap,
-                     std::map<llvm::Type*, llvm::StructType*> &convertedStructsCache) {
+                       std::map<unsigned, unsigned> &addrSpaceMap,
+                       std::map<llvm::Type*,
+                       llvm::StructType*> &convertedStructsCache) {
   if (isa<ConstantExpr>(v)) {
       ConstantExpr *ce = dyn_cast<ConstantExpr>(v);
       Value *in = ce->getAsInstruction();
@@ -492,6 +493,39 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
    * First we map the Pocl fake AS numbers higher (above 200),
    * then we map that down to real device AS */
 
+  // I will celebrate on the day when we get rid of TAS ;) --Pekka
+
+  llvm::StringRef arch = currentPoclDevice->llvm_target_triplet;
+
+  /* x86_64 supports flattening the address spaces at the backend, but
+     we still flatten them in pocl due to a couple of reasons.
+
+     At least LLVM 3.5 exposes an issue with pocl's printf or another LLVM pass:
+     After the code emission optimizations there appears a
+     PHI node where the two alternative pointer assignments have different
+     address spaces:
+     %format.addr.2347 =
+     phi i8 addrspace(3)* [ %incdec.ptr58, %if.end56 ],
+     [ %format.addr.1, %while.body45.preheader ]
+
+     This leads to an LLVM crash when it tries to generate a no-op bitcast
+     while it won't be such due to the address space difference (I assume).
+     Workaround this by flattening the address spaces to 0 here also for
+     x86_64 until the real culprit is found.
+
+     Another reason is that LoopVectorizer of LLVM 3.7 crashes when it
+     tries to create a masked store intrinsics with the fake address space
+     ids, so we need to flatten them out before vectorizing.
+
+     Seems starting from LLVM 3.8 this situation has improved. Thus, skipping
+     TAS for now until we have the time to get rid off it completely.
+  */
+
+#ifndef LLVM_OLDER_THAN_3_8
+  if (arch.startswith("x86_64"))
+    return false;
+#endif
+
   std::map<unsigned, unsigned> addrSpaceMapUp;
 
   addrSpaceMapUp[POCL_ADDRESS_SPACE_GLOBAL] = POCL_AS_FAKE_GLOBAL;
@@ -503,34 +537,11 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
 
   std::map<unsigned, unsigned> addrSpaceMapDown;
 
-  llvm::StringRef arch = currentPoclDevice->llvm_target_triplet;
-
   if (arch.startswith("x86_64")) {
-    /* x86_64 supports flattening the address spaces at the backend, but
-       we still flatten them in pocl due to a couple of reasons.
-
-       At least LLVM 3.5 exposes an issue with pocl's printf or another LLVM pass:
-       After the code emission optimizations there appears a
-       PHI node where the two alternative pointer assignments have different
-       address spaces:
-       %format.addr.2347 =
-          phi i8 addrspace(3)* [ %incdec.ptr58, %if.end56 ],
-                               [ %format.addr.1, %while.body45.preheader ]
-
-       This leads to an LLVM crash when it tries to generate a no-op bitcast
-       while it won't be such due to the address space difference (I assume).
-       Workaround this by flattening the address spaces to 0 here also for
-       x86_64 until the real culprit is found.
-
-       Another reason is that LoopVectorizer of LLVM 3.7 crashes when it
-       tries to create a masked store intrinsics with the fake address space
-       ids, so we need to flatten them out before vectorizing.
-    */
     addrSpaceMapDown[POCL_AS_FAKE_GLOBAL] =
         addrSpaceMapDown[POCL_AS_FAKE_LOCAL] =
         addrSpaceMapDown[POCL_AS_FAKE_GENERIC] =
         addrSpaceMapDown[POCL_AS_FAKE_CONSTANT] = 0;
-
   } else if (arch.startswith("arm")) {
     /* Same thing happens here as with x86_64 above.
      */
