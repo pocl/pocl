@@ -330,9 +330,7 @@ int pocl_llvm_build_program(cl_program program,
   if (device->llvm_cpu != NULL)
     ss << "-target-cpu " << device->llvm_cpu << " ";
 
-#ifdef DEBUG_POCL_LLVM_API
-  std::cout << "pocl_llvm_build_program: Final options: " << ss.str() << std::endl;
-#endif
+  POCL_MSG_PRINT_INFO("all build options: %s.\n", ss.str().c_str());
 
   std::istream_iterator<std::string> begin(ss);
   std::istream_iterator<std::string> end;
@@ -361,15 +359,14 @@ int pocl_llvm_build_program(cl_program program,
     POCL_MEM_FREE(program->build_log[device_i]);
 
   if (!CompilerInvocation::CreateFromArgs
-      (pocl_build, itemcstrs.data(), itemcstrs.data() + itemcstrs.size(), 
-       diags))
-    {
-      pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
-        program_bc_path);
-      get_build_log(program, device_i, ss_build_log, diagsBuffer, CI.getSourceManager());
-      return CL_INVALID_BUILD_OPTIONS;
-    }
-  
+      (pocl_build, itemcstrs.data(), itemcstrs.data() + itemcstrs.size(),
+       diags)) {
+    pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
+                                       program_bc_path);
+    get_build_log(program, device_i, ss_build_log, diagsBuffer, CI.getSourceManager());
+    return CL_INVALID_BUILD_OPTIONS;
+  }
+
   LangOptions *la = pocl_build.getLangOpts();
   PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
 
@@ -419,8 +416,8 @@ int pocl_llvm_build_program(cl_program program,
 
   FrontendOptions &fe = pocl_build.getFrontendOpts();
   // The CreateFromArgs created an stdin input which we should remove first.
-  fe.Inputs.clear(); 
-  if (load_source(fe, program)!=0)
+  fe.Inputs.clear();
+  if (load_source(fe, program) != 0)
     return CL_OUT_OF_HOST_MEMORY;
 
   CodeGenOptions &cg = pocl_build.getCodeGenOpts();
@@ -451,25 +448,28 @@ int pocl_llvm_build_program(cl_program program,
   fe.OutputFile = tempfile;
 
   bool success = true;
-  clang::PrintPreprocessedAction action2;
-  clang::EmitLLVMOnlyAction action(GlobalContext());
-  success = CI.ExecuteAction(action2);
-  if (!success)
-    goto ERROR_BUILDLOG;
+  clang::PrintPreprocessedAction Preprocess;
+  success = CI.ExecuteAction(Preprocess);
+  char *PreprocessedOut = nullptr;
+  size_t PreprocessedSize = 0;
 
-  char *preprocessed_out;
-  uint64_t size;
-  pocl_read_file(tempfile, &preprocessed_out, &size);
-  pocl_remove(tempfile);
-  fe.OutputFile = saved_output;
+  if (success) {
+    pocl_read_file(tempfile, &PreprocessedOut, &PreprocessedSize);
+    pocl_remove(tempfile);
+    fe.OutputFile = saved_output;
+  }
 
-  if (!preprocessed_out)
-    goto ERROR_BUILDLOG;
+  if (PreprocessedOut == nullptr) {
+    pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
+                                       program_bc_path);
+    get_build_log(program, device_i, ss_build_log, diagsBuffer, CI.getSourceManager());
+    return CL_BUILD_PROGRAM_FAILURE;
+  }
 
-  pocl_cache_create_program_cachedir(program, device_i, preprocessed_out,
-                                     size, program_bc_path);
+  pocl_cache_create_program_cachedir(program, device_i, PreprocessedOut,
+                                     PreprocessedSize, program_bc_path);
 
-  POCL_MEM_FREE(preprocessed_out);
+  POCL_MEM_FREE(PreprocessedOut);
 
   if (pocl_exists(program_bc_path)) {
     unlink_source(fe);
@@ -479,8 +479,8 @@ int pocl_llvm_build_program(cl_program program,
   // TODO: use pch: it is possible to disable the strict checking for
   // the compilation flags used to compile it and the current translation
   // unit via the preprocessor options directly.
-
-  success = CI.ExecuteAction(action);
+  clang::EmitLLVMOnlyAction EmitLLVM(GlobalContext());
+  success = CI.ExecuteAction(EmitLLVM);
 
   unlink_source(fe);
 
@@ -493,7 +493,7 @@ int pocl_llvm_build_program(cl_program program,
   if (*mod != NULL)
     delete (llvm::Module*)*mod;
 
-  *mod = action.takeModule().release();
+  *mod = EmitLLVM.takeModule().release();
 
   if (*mod == NULL)
     return CL_BUILD_PROGRAM_FAILURE;
@@ -523,13 +523,6 @@ int pocl_llvm_build_program(cl_program program,
   pocl_cache_release_lock(write_lock);
 
   return CL_SUCCESS;
-
-ERROR_BUILDLOG:
-  pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
-                                     program_bc_path);
-  get_build_log(program, device_i, ss_build_log, diagsBuffer, CI.getSourceManager());
-  return CL_BUILD_PROGRAM_FAILURE;
-
 }
 
 // The old way of getting kernel metadata from "opencl.kernels" module meta.
