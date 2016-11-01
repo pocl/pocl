@@ -1,7 +1,7 @@
 #=============================================================================
-#   CMake build system files
+#   CMake build system files for detecting Clang and LLVM
 #
-#   Copyright (c) 2014 pocl developers
+#   Copyright (c) 2014-2016 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -152,25 +152,32 @@ endif(WIN32)
 
 # required for sources..
 if(LLVM_VERSION MATCHES "3[.]([0-9]+)")
-  set(LLVM_MAJOR 3)
   string(STRIP "${CMAKE_MATCH_1}" LLVM_MINOR)
   message(STATUS "Minor llvm version: ${LLVM_MINOR}")
+  set(LLVM_MAJOR 3)
   if(LLVM_MINOR STREQUAL "6")
     set(LLVM_3_6 1)
     set(LLVM_OLDER_THAN_3_9 1)
+    set(LLVM_OLDER_THAN_4_0 1)
   elseif(LLVM_MINOR STREQUAL "7")
     set(LLVM_3_7 1)
     set(LLVM_OLDER_THAN_3_9 1)
+    set(LLVM_OLDER_THAN_4_0 1)
   elseif(LLVM_MINOR STREQUAL "8")
     set(LLVM_3_8 1)
     set(LLVM_OLDER_THAN_3_9 1)
+    set(LLVM_OLDER_THAN_4_0 1)
   elseif(LLVM_MINOR STREQUAL "9")
     set(LLVM_3_9 1)
+    set(LLVM_OLDER_THAN_4_0 1)
   else()
-    message(FATAL_ERROR "Unknown/unsupported minor llvm version: ${LLVM_MINOR}")
+    message(FATAL_ERROR "Unknown/unsupported llvm version: 3.${LLVM_MINOR}")
   endif()
+elseif(LLVM_VERSION MATCHES "4[.]0")
+    set(LLVM_MAJOR 4)
+    set(LLVM_4_0 1)
 else()
-  message(FATAL_ERROR "LLVM version 3.x required, found: ${LLVM_VERSION}")
+  message(FATAL_ERROR "LLVM version 3.7+ required, found: ${LLVM_VERSION}")
 endif()
 
 ####################################################################

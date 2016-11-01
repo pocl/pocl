@@ -79,7 +79,11 @@ ParallelRegion::GenerateTempNames(llvm::BasicBlock *bb)
           name << ".pocl_temp." << tempCounter;
           ++tempCounter;
           tempName = name.str();
+#ifdef LLVM_OLDER_THAN_4_0
       } while (bb->getParent()->getValueSymbolTable().lookup(tempName) != NULL);
+#else
+      } while (bb->getParent()->getValueSymbolTable()->lookup(tempName) != NULL);
+#endif
       instr->setName(tempName);
     }
 }

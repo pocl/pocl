@@ -2295,7 +2295,7 @@ _CL_DECLARE_SHUFFLE_MN(ulong , ulong ))
 __IF_FP64(
 _CL_DECLARE_SHUFFLE_MN(double, ulong ))
 
-
+#if (__clang_major__ == 3)
 // We provide our own printf
 // Note: We declare our printf as taking a constant format string, but
 // we implement it in C using a const format string (i.e. a format
@@ -2305,6 +2305,15 @@ _CL_DECLARE_SHUFFLE_MN(double, ulong ))
 // Clang doesn't support the OpenCL C format specifiers yet.
 int _cl_printf(constant char* restrict format, ...);
 #define printf _cl_printf
+
+#else
+
+#warning TODO: printf for Clang 4.0+
+// Clang 4.0 fails due to the new diagnostic:
+// error: invalid prototype, variadic arguments are not allowed in OpenCL
+// The proper fix is to implement our own printf() instead of delegating
+// to the system's. It should be the only one allowed to have variadic args.
+#endif
 
 
 /* Async Copies from Global to Local Memory, Local to

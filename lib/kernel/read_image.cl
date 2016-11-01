@@ -35,6 +35,8 @@
 #define ADDRESS_SPACE
 #endif
 
+#if (__clang_major__ < 4)
+
 /* checks if integer coord is out of bounds. If out of bounds: Sets coord in
    bounds and returns false OR populates color with border colour and returns
    true. If in bounds, returns false */
@@ -201,3 +203,9 @@ IMPLEMENT_READ_IMAGE_INT_COORD(image3d_t, uint4, ui, int4)
 IMPLEMENT_READ_IMAGE_INT_COORD(image2d_t, float4, f, int2)
 IMPLEMENT_READ_IMAGE_INT_COORD(image2d_t, float4, f, int4)
 IMPLEMENT_READ_IMAGE_INT_COORD(image3d_t, float4, f, int4)
+
+#else
+
+#warning TODO: Fix sampler for Clang 4.0+
+
+#endif

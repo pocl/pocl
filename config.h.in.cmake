@@ -91,7 +91,11 @@
 /* "Using LLVM 3.8" */
 #cmakedefine LLVM_3_8
 
+/* "Using LLVM 3.9" */
 #cmakedefine LLVM_3_9
+
+/* "Using LLVM 4.0" */
+#cmakedefine LLVM_4_0
 
 #define LINK_COMMAND "@LINK_COMMAND@"
 

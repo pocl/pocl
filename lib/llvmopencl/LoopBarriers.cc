@@ -160,7 +160,7 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &)
         InvBlockTraits::ChildIteratorType PE = InvBlockTraits::child_end(Header);
         BasicBlock *Latch = NULL;
         for (; PI != PE; ++PI) {
-          InvBlockTraits::NodeType *N = *PI;
+          BasicBlock *N = *PI;
           if (L->contains(N)) {
             Latch = N;
             // Latch found in the loop, see if the barrier dominates it

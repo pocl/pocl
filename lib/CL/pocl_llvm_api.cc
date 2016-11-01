@@ -35,6 +35,10 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
 
+#ifndef LLVM_OLDER_THAN_4_0
+#include "clang/Lex/PreprocessorOptions.h"
+#endif
+
 // For some reason including pocl.h before including CodeGenAction.h
 // causes an error. Some kind of macro definition issue. To investigate.
 #include "pocl.h"

@@ -25,6 +25,8 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wformat-security"
 
+#if (__clang_major__ == 3)
+
 #include <limits.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -211,7 +213,15 @@ void _cl_print_pointer(flags_t flags, int field_width, OCL_C_AS const void* val)
 // - if there is an error during parsing, a "goto error" aborts the
 //   routine, returning -1
 
+// This should be queried from the machine in the non-TAS case.
+// For now assume that if we are not using the fake address space
+// ids then we have a single address space. This version of printf
+// doesn't work with multiple address spaces anyways.
+#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
 #define OCL_CONSTANT_AS __attribute__((address_space(3)))
+#else
+#define OCL_CONSTANT_AS
+#endif
 int _cl_printf(const OCL_CONSTANT_AS char* restrict format, ...)
 {
   DEBUG_PRINTF(("[printf:format=%s]\n", format));
@@ -471,3 +481,9 @@ int _cl_printf(const OCL_CONSTANT_AS char* restrict format, ...)
 }
 
 #pragma clang diagnostic pop
+
+#else
+
+#warning TODO: Clang 4.0+ now errors out with variadic arguments
+
+#endif
