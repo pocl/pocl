@@ -217,22 +217,22 @@ int pocl_write_module(void *module, const char* path, int dont_rewrite) {
     }
     /* To avoid corrupted .bc files, create a tmp file first and
        then rename it */
-    std::string tmp_path(path);
-    tmp_path.append(".tmp");
+    std::string TmpPath(path);
+    TmpPath.append(".tmp");
 
-    raw_fd_ostream os(tmp_path, ec, sys::fs::F_RW | sys::fs::F_Excl);
+    raw_fd_ostream os(TmpPath, ec, sys::fs::F_RW | sys::fs::F_Excl);
     RETURN_IF_EC;
 
     WriteBitcodeToFile((llvm::Module*)module, os);
     os.close();
-    if (!os.has_error()) {
-      std::string command("mv ");
-      command += tmp_path;
-      command += " ";
-      command += path;
-      return system (command.c_str());
-    }
-    return 1;
+    if (os.has_error())
+      return 1;
+
+    std::string Command("mv ");
+    Command += TmpPath;
+    Command += " ";
+    Command += path;
+    return system(Command.c_str());
 }
 
 
