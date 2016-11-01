@@ -225,15 +225,13 @@ int pocl_write_module(void *module, const char* path, int dont_rewrite) {
 
     WriteBitcodeToFile((llvm::Module*)module, os);
     os.close();
-    if (!os.has_error())
-      {
-        std::string command("mv ");
-        command += tmp_path;
-        command += " ";
-        command += path;
-        int error = system (command.c_str());
-        return (error) ? 1 : 0;
-      }
+    if (!os.has_error()) {
+      std::string command("mv ");
+      command += tmp_path;
+      command += " ";
+      command += path;
+      return system (command.c_str());
+    }
     return 1;
 }
 
