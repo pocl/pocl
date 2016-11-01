@@ -34,6 +34,8 @@ endif()
 if(X86_64 OR I386)
   if(LLVM_3_6)
     message(STATUS "OpenCL 2.0 atomics only works with LLVM >= 3.7")
+  elseif(LLVM_4_0)
+    message(STATUS "TODO: OpenCL 2.0 atomics for Clang 4.0+")
   elseif(LLVM_OLDER_THAN_3_9)
     list(APPEND KERNEL_SOURCES svm_atomics_x86_64.ll svm_atomics.cl)
   else()
@@ -111,7 +113,12 @@ endif()
 
 separate_arguments(CLANG_CPUFLAGS)
 separate_arguments(LLC_CPUFLAGS)
-set(CLANG_FLAGS ${HOST_CLANG_FLAGS} ${CLANG_CPUFLAGS} "-Xclang" "-ffake-address-space-map" "-emit-llvm" "-ffp-contract=off")
+set(CLANG_FLAGS ${HOST_CLANG_FLAGS} ${CLANG_CPUFLAGS} "-emit-llvm" "-ffp-contract=off")
+
+if(POCL_USE_FAKE_ADDR_SPACE_IDS)
+list(APPEND CLANG_FLAGS "-Xclang" "-ffake-address-space-map")
+endif()
+
 set(LLC_FLAGS ${HOST_LLC_FLAGS} ${LLC_CPUFLAGS})
 
 # KERNEL_TARGET = @OCL_KERNEL_TARGET@

@@ -673,3 +673,26 @@ set(CL_DISABLE_HALF "${CL_DISABLE_HALF}" CACHE BOOL "Disable cl_khr_fp16 because
 message(STATUS "fp16 disabled: ${CL_DISABLE_HALF}")
 
 #####################################################################
+
+# Check if https://reviews.llvm.org/D26157 has been applied. That is,
+# if the argument info metadata always returns SPIR ids for the
+# address spaces. In that case we do not need to use the fake
+# address space map to transfer the OpenCL address space info to
+# pocl which saves us from many troubles caused by the TargetAddressSpaces
+# pass.
+
+# The patch is also available in
+# tools/patches/clang-4.0-kernel_arg_addr_space-always-spir-ids.patch
+
+set(FILENAME "${CMAKE_BINARY_DIR}/compile_test_clang_as_check.cl")
+file(WRITE "${FILENAME}" "kernel void K(global int *G, constant int* C, local int* L) {}")
+
+execute_process(COMMAND "${CLANG}" "-target" "x86_64-unknown-unknown" "${FILENAME}" "-emit-llvm" "-c" "-S" "-o" "-"
+  OUTPUT_VARIABLE AS_CHECK_RESULT)
+
+message("$AS_CHECK_RESULT")
+if(NOT AS_CHECK_RESULT MATCHES "!1 = !{i32 1, i32 2, i32 3}")
+  set(POCL_USE_FAKE_ADDR_SPACE_IDS 1)
+else()
+  set(POCL_USE_FAKE_ADDR_SPACE_IDS 0)
+endif()

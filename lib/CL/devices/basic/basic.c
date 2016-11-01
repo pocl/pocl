@@ -279,8 +279,8 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->max_clock_frequency = 0;
   dev->address_bits = POCL_DEVICE_ADDRESS_BITS;
   dev->image_support = CL_TRUE;
-  /* Use the minimum values until we get a more sensible
-     upper limit from somewhere. */
+  /* Use the minimum values until we get a more sensible upper limit from
+     somewhere. */
   dev->max_read_image_args = dev->max_write_image_args = dev->max_read_write_image_args = 128;
   dev->image2d_max_width = dev->image2d_max_height = 8192;
   dev->image3d_max_width = dev->image3d_max_height = dev->image3d_max_depth = 2048;
@@ -336,6 +336,8 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
      extension  string assume this rule. Future extension additions should
      ensure that there is no more than a single space between
      identifiers. */
+
+  dev->global_as_id = dev->local_as_id = dev->constant_as_id = 0;
 
   dev->should_allocate_svm = 0;
   /* OpenCL 2.0 properties */

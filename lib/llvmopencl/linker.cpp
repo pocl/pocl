@@ -23,6 +23,7 @@
 #include "llvm/IR/Module.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
+#include "pocl_cl.h"
 
 #include "linker.h"
 
@@ -31,6 +32,8 @@ using namespace llvm;
 //#include <cstdio>
 //#define DB_PRINT(...) printf("linker:" __VA_ARGS__)
 #define DB_PRINT(...)
+
+extern cl_device_id currentPoclDevice;
 
 /*
  * Find needle in haystack. O(n) implementation, but n should be
@@ -64,8 +67,14 @@ static void fixOpenCLimageArguments(llvm::Function *Func) {
         if (t->isPointerTy() && t->getPointerElementType()->isStructTy()) {
             Type *pe_type = t->getPointerElementType();
             if (pe_type->getStructName().startswith("opencl.image"))  {
-                Type *new_t = PointerType::get(pe_type, POCL_ADDRESS_SPACE_GLOBAL);
-                j->mutateType(new_t);
+#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
+              Type *new_t =
+                PointerType::get(pe_type, POCL_ADDRESS_SPACE_GLOBAL);
+#else
+              Type *new_t =
+                PointerType::get(pe_type, currentPoclDevice->global_as_id);
+#endif
+              j->mutateType(new_t);
             }
         }
     }
@@ -90,13 +99,21 @@ CloneFuncFixOpenCLImageT(llvm::Module *Mod, llvm::Function *F)
         Type *t = j->getType();
         Type *new_t = t;
         if (t->isPointerTy() && t->getPointerElementType()->isStructTy()) {
-            Type *pe_type = t->getPointerElementType();
-            if (pe_type->getStructName().startswith("opencl.image")) {
-                if (t->getPointerAddressSpace() != POCL_ADDRESS_SPACE_GLOBAL) {
-                    new_t = PointerType::get(pe_type, POCL_ADDRESS_SPACE_GLOBAL);
-                    changed = 1;
-                }
+          Type *pe_type = t->getPointerElementType();
+          if (pe_type->getStructName().startswith("opencl.image")) {
+
+#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
+            if (t->getPointerAddressSpace() != POCL_ADDRESS_SPACE_GLOBAL) {
+              new_t = PointerType::get(pe_type, POCL_ADDRESS_SPACE_GLOBAL);
+              changed = 1;
             }
+#else
+            if (t->getPointerAddressSpace() != currentPoclDevice->global_as_id) {
+              new_t = PointerType::get(pe_type, currentPoclDevice->global_as_id);
+              changed = 1;
+            }
+#endif
+          }
         }
         sv.push_back(new_t);
     }

@@ -450,6 +450,10 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
   dev->spmd = CL_TRUE;
   dev->autolocals_to_args = 0;
 
+  dev->global_as_id = 1;
+  dev->local_as_id = 3;
+  dev->constant_as_id = 2;
+
   assert(found_hsa_agents > 0);
   assert(last_assigned_agent < found_hsa_agents);
   dev->data = (void*)last_assigned_agent;

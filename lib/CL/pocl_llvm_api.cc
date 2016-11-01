@@ -382,30 +382,31 @@ int pocl_llvm_build_program(cl_program program,
   pocl_build.setLangDefaults
     (*la, clang::IK_OpenCL, triple, po, clang::LangStandard::lang_opencl12);
 #endif
-  
+
   // LLVM 3.3 and older do not set that char is signed which is
   // defined by the OpenCL C specs (but not by C specs).
   la->CharIsSigned = true;
 
-  // the per-file types don't seem to override this 
+  // the per-file types don't seem to override this
   la->OpenCLVersion = cl_std_i;
+#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
   la->FakeAddressSpaceMap = true;
+#else
+  la->FakeAddressSpaceMap = false;
+#endif
   la->Blocks = true; //-fblocks
   la->MathErrno = false; // -fno-math-errno
   la->NoBuiltin = true;  // -fno-builtin
   la->AsmBlocks = true;  // -fasm (?)
 
   std::string kernelh;
-  if (pocl_get_bool_option("POCL_BUILDING", 0))
-    { 
-      kernelh  = SRCDIR;
-      kernelh += "/include/_kernel.h";
-    }
-  else
-    {
-      kernelh = PKGDATADIR;
-      kernelh += "/include/_kernel.h";
-    }
+  if (pocl_get_bool_option("POCL_BUILDING", 0)) {
+    kernelh  = SRCDIR;
+    kernelh += "/include/_kernel.h";
+  } else {
+    kernelh = PKGDATADIR;
+    kernelh += "/include/_kernel.h";
+  }
   po.Includes.push_back(kernelh);
 
   clang::TargetOptions &ta = pocl_build.getTargetOpts();
@@ -554,14 +555,24 @@ static int pocl_get_kernel_arg_module_metadata(const char* kernel_name,
     }
   }
 
+  kernel->arg_info =
+    (struct pocl_argument_info*)calloc(
+      kernel->num_args, sizeof(struct pocl_argument_info));
+  memset(
+    kernel->arg_info, 0, sizeof(struct pocl_argument_info) * kernel->num_args);
+
   kernel->has_arg_metadata = 0;
-  int bitcode_is_spir = input->getTargetTriple().find("spir") == 0;
 
   assert(kernel_metadata && "kernel NOT found in opencl.kernels metadata");
 
+#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
+  int BitcodeIsSPIR = input->getTargetTriple().find("spir") == 0;
+#endif
+
   unsigned e = kernel_metadata->getNumOperands();
   for (unsigned i = 1; i != e; ++i) {
-    llvm::MDNode *meta_node = llvm::cast<MDNode>(kernel_metadata->getOperand(i));
+    llvm::MDNode *meta_node =
+      llvm::cast<MDNode>(kernel_metadata->getOperand(i));
 
     // argument num
     unsigned arg_num = meta_node->getNumOperands();
@@ -575,22 +586,30 @@ static int pocl_get_kernel_arg_module_metadata(const char* kernel_name,
     for (unsigned j = 1; j != arg_num; ++j) {
       llvm::Value *meta_arg_value = NULL;
       if (isa<ValueAsMetadata>(meta_node->getOperand(j)))
-        meta_arg_value = 
-          dyn_cast<ValueAsMetadata>(meta_node->getOperand(j))->getValue();      
+        meta_arg_value =
+          dyn_cast<ValueAsMetadata>(meta_node->getOperand(j))->getValue();
       else if (isa<ConstantAsMetadata>(meta_node->getOperand(j)))
-        meta_arg_value = 
-          dyn_cast<ConstantAsMetadata>(meta_node->getOperand(j))->getValue(); 
+        meta_arg_value =
+          dyn_cast<ConstantAsMetadata>(meta_node->getOperand(j))->getValue();
       struct pocl_argument_info* current_arg = &kernel->arg_info[j-1];
 
-      if (meta_arg_value != NULL && isa<ConstantInt>(meta_arg_value) && 
+      if (meta_arg_value != NULL && isa<ConstantInt>(meta_arg_value) &&
           meta_name == "kernel_arg_addr_space") {
         assert(has_meta_for_every_arg && "kernel_arg_addr_space meta incomplete");
         kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER;
         //std::cout << "is ConstantInt /  kernel_arg_addr_space" << std::endl;
         llvm::ConstantInt *m = llvm::cast<ConstantInt>(meta_arg_value);
         uint64_t val = m->getLimitedValue(UINT_MAX);
-        //std::cout << "with value: " << val << std::endl;
-        if (bitcode_is_spir) {
+        bool SPIRAddressSpaceIDs;
+#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
+        SPIRAddressSpaceIDs = BitcodeIsSPIR;
+#else
+        // We have an LLVM fixed to produce always SPIR AS ids for the argument
+        // info metadata.
+        SPIRAddressSpaceIDs = true;
+#endif
+
+        if (SPIRAddressSpaceIDs) {
           switch(val) {
             case 0:
               current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
@@ -603,6 +622,7 @@ static int pocl_get_kernel_arg_module_metadata(const char* kernel_name,
           }
         } else {
           switch(val) {
+#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
             case POCL_ADDRESS_SPACE_PRIVATE:
               current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
             case POCL_ADDRESS_SPACE_GLOBAL:
@@ -613,6 +633,10 @@ static int pocl_get_kernel_arg_module_metadata(const char* kernel_name,
               current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_CONSTANT; break;
             case POCL_ADDRESS_SPACE_GENERIC:
               current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
+#endif
+          default:
+            POCL_MSG_ERR("Unknown address space ID %lu\n", val);
+            break;
           }
         }
       }
@@ -620,7 +644,7 @@ static int pocl_get_kernel_arg_module_metadata(const char* kernel_name,
         //std::cout << "is MDString" << std::endl;
         llvm::MDString *m = llvm::cast<MDString>(meta_node->getOperand(j));
         std::string val = m->getString().str();
-        //std::cout << "with value: " << val << std::endl;
+
         if (meta_name == "kernel_arg_access_qual") {
           assert(has_meta_for_every_arg && "kernel_arg_access_qual meta incomplete");
           kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_ACCESS_QUALIFIER;
@@ -674,10 +698,10 @@ static int pocl_get_kernel_arg_function_metadata(const char* kernel_name,
                                                  llvm::Module *input,
                                                  cl_kernel kernel)
 {
-  llvm::Function* Kernel = NULL;
+  llvm::Function *Kernel = NULL;
   int bitcode_is_spir = input->getTargetTriple().find("spir") == 0;
 
-  // SPIR still uses "opencl.kernels" meta
+  // SPIR still uses the "opencl.kernels" MD.
   if(bitcode_is_spir)
     return pocl_get_kernel_arg_module_metadata(kernel_name, input, kernel);
 
@@ -697,8 +721,15 @@ static int pocl_get_kernel_arg_function_metadata(const char* kernel_name,
   llvm::Value *meta_arg_value = NULL;
   struct pocl_argument_info* current_arg = NULL;
 
+  kernel->arg_info =
+    (struct pocl_argument_info*)calloc(
+      kernel->num_args, sizeof(struct pocl_argument_info));
+  memset(
+    kernel->arg_info, 0, sizeof(struct pocl_argument_info) * kernel->num_args);
+
   // kernel_arg_addr_space
   meta_node = Kernel->getMetadata("kernel_arg_addr_space");
+  assert(meta_node != nullptr);
   unsigned arg_num = meta_node->getNumOperands();
 #ifndef NDEBUG
   int has_meta_for_every_arg = (arg_num == kernel->num_args);
@@ -713,8 +744,16 @@ static int pocl_get_kernel_arg_function_metadata(const char* kernel_name,
           dyn_cast<ConstantAsMetadata>(meta_node->getOperand(j))->getValue();
     llvm::ConstantInt *m = llvm::cast<ConstantInt>(meta_arg_value);
     uint64_t val = m->getLimitedValue(UINT_MAX);
-    //std::cout << "with value: " << val << std::endl;
-    if (bitcode_is_spir) {
+
+    bool SPIRAddressSpaceIDs;
+#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
+    SPIRAddressSpaceIDs = bitcode_is_spir;
+#else
+    // We have an LLVM fixed to produce always SPIR AS ids for the argument
+    // info metadata.
+    SPIRAddressSpaceIDs = true;
+#endif
+    if (SPIRAddressSpaceIDs) {
       switch(val) {
       case 0:
         current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
@@ -724,9 +763,13 @@ static int pocl_get_kernel_arg_function_metadata(const char* kernel_name,
         current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_LOCAL; break;
       case 2:
         current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_CONSTANT; break;
+      default:
+        POCL_MSG_ERR("Unknown address space ID %lu\n", val);
+        break;
       }
     } else {
       switch(val) {
+#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
       case POCL_ADDRESS_SPACE_PRIVATE:
         current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
       case POCL_ADDRESS_SPACE_GLOBAL:
@@ -737,6 +780,10 @@ static int pocl_get_kernel_arg_function_metadata(const char* kernel_name,
         current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_CONSTANT; break;
       case POCL_ADDRESS_SPACE_GENERIC:
         current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
+#endif
+      default:
+        POCL_MSG_ERR("Unknown address space ID %lu\n", val);
+        break;
       }
     }
   }
@@ -754,7 +801,7 @@ static int pocl_get_kernel_arg_function_metadata(const char* kernel_name,
     //std::cout << "is MDString" << std::endl;
     llvm::MDString *m = llvm::cast<MDString>(meta_node->getOperand(j));
     std::string val = m->getString().str();
-    //std::cout << "with value: " << val << std::endl;
+
     assert(has_meta_for_every_arg && "kernel_arg_access_qual meta incomplete");
     kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_ACCESS_QUALIFIER;
     if (val == "read_write")
@@ -771,6 +818,7 @@ static int pocl_get_kernel_arg_function_metadata(const char* kernel_name,
 
   // kernel_arg_type
   meta_node = Kernel->getMetadata("kernel_arg_type");
+  assert(meta_node != nullptr);
   arg_num = meta_node->getNumOperands();
 #ifndef NDEBUG
   has_meta_for_every_arg = (arg_num == kernel->num_args);
@@ -785,14 +833,6 @@ static int pocl_get_kernel_arg_function_metadata(const char* kernel_name,
     kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_TYPE_NAME;
     current_arg->type_name = new char[val.size() + 1];
     std::strcpy(current_arg->type_name, val.c_str());
-  }
-
-  // kernel_arg_base_type
-  meta_node = Kernel->getMetadata("kernel_arg_base type");
-  arg_num = meta_node->getNumOperands();
-  for (unsigned j= 0; j < meta_node->getNumOperands(); ++j) {
-    // may or may not be present even in SPIR
-    // apparently there is no use for this meta atm.
   }
 
   // kernel_arg_type_qual
@@ -839,67 +879,74 @@ static int pocl_get_kernel_arg_function_metadata(const char* kernel_name,
 }
 #endif
 
-int pocl_llvm_get_kernel_metadata(cl_program program, 
+int pocl_llvm_get_kernel_metadata(cl_program program,
                                   cl_kernel kernel,
-                                  int device_i,     
+                                  int device_i,
                                   const char* kernel_name,
                                   int * errcode)
 {
 
   int i;
   llvm::Module *input = NULL;
-  assert(program->devices[device_i]->llvm_target_triplet && 
-         "Device has no target triple set"); 
+  cl_device_id Device = program->devices[device_i];
+
+  assert(Device->llvm_target_triplet &&
+         "Device has no target triple set");
 
   if (program->llvm_irs != NULL &&
       program->llvm_irs[device_i] != NULL)
-    {
-      input = (llvm::Module*)program->llvm_irs[device_i];
-#ifdef DEBUG_POCL_LLVM_API
-      printf("### use a saved llvm::Module\n");
+    input = (llvm::Module*)program->llvm_irs[device_i];
+  else {
+    *errcode = CL_INVALID_PROGRAM_EXECUTABLE;
+    return 1;
+  }
+
+  llvm::Function *KernelFunction = input->getFunction(kernel_name);
+  if (!KernelFunction) {
+    *errcode = CL_INVALID_KERNEL_NAME;
+    return 1;
+  }
+  kernel->num_args = KernelFunction->getArgumentList().size();
+
+#if defined(LLVM_OLDER_THAN_3_9)
+  if (pocl_get_kernel_arg_module_metadata(kernel_name, input, kernel)) {
+    *errcode = CL_INVALID_KERNEL;
+    return 1;
+  }
+#else
+  if (pocl_get_kernel_arg_function_metadata(kernel_name, input, kernel)) {
+    *errcode = CL_INVALID_KERNEL;
+    return 1;
+  }
 #endif
-    }
-  else
-    {
-      *errcode = CL_INVALID_PROGRAM_EXECUTABLE;
-      return 1;
-    }
 
-
-#ifdef DEBUG_POCL_LLVM_API        
+#ifdef DEBUG_POCL_LLVM_API
   printf("### fetching kernel metadata for kernel %s program %p input llvm::Module %p\n",
          kernel_name, program, input);
 #endif
 
-  llvm::Function *kernel_function = input->getFunction(kernel_name);
-  if (!kernel_function) {
-    *errcode = CL_INVALID_KERNEL_NAME;
-    return 1;
-  }
-
   DataLayout *TD = 0;
 #ifdef LLVM_OLDER_THAN_3_7
-  const std::string &ModuleDataLayout = input->getDataLayout()->getStringRepresentation();
+  const std::string &ModuleDataLayout =
+    input->getDataLayout()->getStringRepresentation();
 #else
-  const std::string &ModuleDataLayout = input->getDataLayout().getStringRepresentation();
+  const std::string &ModuleDataLayout =
+    input->getDataLayout().getStringRepresentation();
 #endif
   if (!ModuleDataLayout.empty())
     TD = new DataLayout(ModuleDataLayout);
-
-  const llvm::Function::ArgumentListType &arglist =
-    kernel_function->getArgumentList();
-  kernel->num_args = arglist.size();
 
   SmallVector<GlobalVariable *, 8> locals;
   for (llvm::Module::global_iterator i = input->global_begin(),
          e = input->global_end();
        i != e; ++i) {
     std::string funcName = "";
-    funcName = kernel_function->getName().str();
-    if (pocl::is_automatic_local(funcName, *i))
-      {
-        locals.push_back(&*i);
-      }
+    funcName = KernelFunction->getName().str();
+    if (pocl::is_automatic_local(funcName, *i)) {
+      POCL_MSG_PRINT_INFO("Automatic local detected: %s\n",
+                          i->getName().str().c_str());
+      locals.push_back(&*i);
+    }
   }
 
   kernel->num_locals = locals.size();
@@ -927,19 +974,27 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 #endif
     }
 
-  kernel->arg_info = (struct pocl_argument_info*) calloc(kernel->num_args, sizeof(struct pocl_argument_info));
-  memset(kernel->arg_info, 0, sizeof(struct pocl_argument_info)*kernel->num_args);
+  const llvm::Function::ArgumentListType &ArgList =
+    KernelFunction->getArgumentList();
 
   i = 0;
-  for (llvm::Function::const_arg_iterator ii = arglist.begin(),
-                                          ee = arglist.end();
+  for (llvm::Function::const_arg_iterator ii = ArgList.begin(),
+                                          ee = ArgList.end();
        ii != ee ; ii++) {
     llvm::Type *t = ii->getType();
-    kernel->arg_info[i].type = POCL_ARG_TYPE_NONE;
+    struct pocl_argument_info &ArgInfo = kernel->arg_info[i];
+    ArgInfo.type = POCL_ARG_TYPE_NONE;
+    ArgInfo.is_local = false;
     const llvm::PointerType *p = dyn_cast<llvm::PointerType>(t);
     if (p && !ii->hasByValAttr()) {
-      kernel->arg_info[i].type = POCL_ARG_TYPE_POINTER;
+      ArgInfo.type = POCL_ARG_TYPE_POINTER;
       // index 0 is for function attributes, parameters start at 1.
+      // TODO: detect the address space from MD.
+
+#ifndef POCL_USE_FAKE_ADDR_SPACE_IDS
+      if (ArgInfo.address_qualifier == CL_KERNEL_ARG_ADDRESS_LOCAL)
+        ArgInfo.is_local = true;
+#else
       if (p->getAddressSpace() == POCL_ADDRESS_SPACE_GLOBAL ||
           p->getAddressSpace() == POCL_ADDRESS_SPACE_CONSTANT ||
           pocl::is_image_type(*t) || pocl::is_sampler_type(*t))
@@ -955,8 +1010,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
             }
           kernel->arg_info[i].is_local = true;
         }
-    } else {
-      kernel->arg_info[i].is_local = false;
+#endif
     }
 
     if (pocl::is_image_type(*t)) {
@@ -973,12 +1027,12 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 
 #ifdef LLVM_OLDER_THAN_3_9
   llvm::NamedMDNode *size_info =
-    kernel_function->getParent()->getNamedMetadata("opencl.kernel_wg_size_info");
+    KernelFunction->getParent()->getNamedMetadata("opencl.kernel_wg_size_info");
   if (size_info) {
     for (unsigned i = 0, e = size_info->getNumOperands(); i != e; ++i) {
       llvm::MDNode *KernelSizeInfo = size_info->getOperand(i);
       if (dyn_cast<ValueAsMetadata>(
-        KernelSizeInfo->getOperand(0).get())->getValue() != kernel_function)
+        KernelSizeInfo->getOperand(0).get())->getValue() != KernelFunction)
         continue;
       reqdx = (llvm::cast<ConstantInt>(
                  llvm::dyn_cast<ConstantAsMetadata>(
@@ -994,7 +1048,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   }
 #else
   llvm::MDNode *ReqdWGSize =
-    kernel_function->getMetadata("reqd_work_group_size");
+    KernelFunction->getMetadata("reqd_work_group_size");
   if (ReqdWGSize != NULL) {
     reqdx = (llvm::cast<ConstantInt>(
                llvm::dyn_cast<ConstantAsMetadata>(
@@ -1014,8 +1068,8 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 
 #ifndef POCL_ANDROID
   // Generate the kernel_obj.c file. This should be optional
-  // and generated only for the heterogeneous devices which need
-  // these definitions to accompany the kernels, for the launcher
+  // and generated only for the heterogeneous standalone devices which
+  // need the definitions to accompany the kernels, for the launcher
   // code.
   // TODO: the scripts use a generated kernel.h header file that
   // gets added to this file. No checks seem to fail if that file
@@ -1023,33 +1077,27 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 
   std::stringstream content;
 
-  content <<  "\n #include <pocl_device.h>\n";
-  content << "void _pocl_launcher_" << kernel_name << "_workgroup(void** args, struct pocl_context*);\n";
-  content << "void _pocl_launcher_" << kernel_name << "_workgroup_fast(void** args, struct pocl_context*);\n";
-  content << "__attribute__((address_space(3))) __kernel_metadata _" << kernel_name << "_md = {\n";
-  content << "     \"" << kernel_name << "\", /* name */ \n";
-  content << "     " << kernel->num_args << ", /* num_args */\n";
-  content << "     " << kernel->num_locals << ", /* num_locals */\n";
-  content << "     _pocl_launcher_" << kernel_name << "_workgroup_fast\n";
-  content << " };\n";
+  content << std::endl << "#include <pocl_device.h>" << std::endl
+          << "void _pocl_launcher_" << kernel_name
+          << "_workgroup(void** args, struct pocl_context*);" << std::endl
+          << "void _pocl_launcher_" << kernel_name
+          << "_workgroup_fast(void** args, struct pocl_context*);" << std::endl;
+
+  if (Device->global_as_id != 0)
+    content << "__attribute__((address_space(" << Device->global_as_id << ")))"
+            << std::endl;
+
+  content << "__kernel_metadata _" << kernel_name << "_md = {" << std::endl
+          << "     \"" << kernel_name << "\"," << std::endl
+          << "     " << kernel->num_args << "," << std::endl
+          << "     " << kernel->num_locals << "," << std::endl
+          << "     _pocl_launcher_" << kernel_name << "_workgroup_fast" << std::endl
+          << " };" << std::endl;
 
   pocl_cache_write_descriptor(program, device_i,
                               kernel_name, content.str().c_str(),
                               content.str().size());
 #endif
-
-#if defined(LLVM_OLDER_THAN_3_9)
-  if (pocl_get_kernel_arg_module_metadata(kernel_name, input, kernel)) {
-    *errcode = CL_INVALID_KERNEL;
-    return 1;
-  };
-#else
-  if (pocl_get_kernel_arg_function_metadata(kernel_name, input, kernel)) {
-    *errcode = CL_INVALID_KERNEL;
-    return 1;
-  };
-#endif
-
 
   *errcode = CL_SUCCESS;
   return 0;
@@ -1344,8 +1392,10 @@ static PassManager& kernel_compiler_passes
   // dynamic stack which is problematic for some architectures.
   passes.push_back("allocastoentry");
 
+#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
   // Convert the semantical OpenCL address space IDs to the ones of the target.
   passes.push_back("target-address-spaces");
+#endif
 
   // Later passes might get confused (and expose possible bugs in them) due to
   // UNREACHABLE blocks left by repl. So let's clean up the CFG before running

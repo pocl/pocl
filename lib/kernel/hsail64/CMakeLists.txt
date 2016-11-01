@@ -56,7 +56,12 @@ foreach(FILE atomics.cl atomic_impl.ll barrier.c
   list(APPEND KERNEL_SOURCES "hsail64/${FILE}")
 endforeach()
 
-set(CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-emit-llvm" "-target" "hsail64" "-D_CL_DISABLE_HALF")
+set(CLANG_FLAGS "-emit-llvm" "-target" "hsail64" "-D_CL_DISABLE_HALF")
+
+if(POCL_USE_FAKE_ADDR_SPACE_IDS)
+list(APPEND CLANG_FLAGS "-Xclang" "-ffake-address-space-map")
+endif()
+
 set(LLC_FLAGS "")
 set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=${HSA_DEVICE_CL_VERSION}")
 separate_arguments(HSA_DEVICE_EXTENSIONS)

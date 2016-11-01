@@ -38,18 +38,24 @@
 #include "pocl_device.h"
 #include "config.h"
 
+#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
 /*
- * During pocl kernel compiler transformations we use the fixed address 
- * space ids of clang's -ffake-address-space-map to mark the different 
+ * During pocl kernel compiler transformations we use the fixed address
+ * space ids of clang's -ffake-address-space-map to mark the different
  * address spaces to keep the processing target-independent. These
  * are converted to the target's address space map (if any), in a final
- * kernel compiler pass.
+ * kernel compiler pass (TargetAddressSpaces). This is deprecated and
+ * will go after https://reviews.llvm.org/D26157 is available in the
+ * oldest pocl supported LLVM version.
+ *
  */
 #define POCL_ADDRESS_SPACE_PRIVATE 0
 #define POCL_ADDRESS_SPACE_GLOBAL 1
 #define POCL_ADDRESS_SPACE_LOCAL 2
 #define POCL_ADDRESS_SPACE_CONSTANT 3
 #define POCL_ADDRESS_SPACE_GENERIC 4
+
+#endif
 
 #define POCL_FILENAME_LENGTH 1024
 

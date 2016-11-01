@@ -97,6 +97,8 @@
 /* "Using LLVM 4.0" */
 #cmakedefine LLVM_4_0
 
+#cmakedefine POCL_USE_FAKE_ADDR_SPACE_IDS
+
 #define LINK_COMMAND "@LINK_COMMAND@"
 
 /* Defined to greatest expected alignment for extended types, in bytes. */

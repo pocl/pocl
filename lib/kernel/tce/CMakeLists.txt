@@ -39,7 +39,11 @@ separate_arguments(DEVICE_CL_FLAGS)
 # with some additional CLANG_FLAGS
 #CLANG_FLAGS = @TARGET_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off
 separate_arguments(TCE_TARGET_CLANG_FLAGS)
-set(CLANG_FLAGS ${TCE_TARGET_CLANG_FLAGS} "-Xclang" "-ffake-address-space-map" "-emit-llvm" "-ffp-contract=off" "-target" "tce-tut-llvm" "-isystem" "${TCE_PREFIX}/tce-llvm/include")
+set(CLANG_FLAGS ${TCE_TARGET_CLANG_FLAGS} "-emit-llvm" "-ffp-contract=off" "-target" "tce-tut-llvm" "-isystem" "${TCE_PREFIX}/tce-llvm/include")
+
+if(POCL_USE_FAKE_ADDR_SPACE_IDS)
+list(APPEND CLANG_FLAGS "-Xclang" "-ffake-address-space-map")
+endif()
 
 #LLC_FLAGS   = @TARGET_LLC_FLAGS@
 separate_arguments(TCE_TARGET_LLC_FLAGS)

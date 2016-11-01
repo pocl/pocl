@@ -145,6 +145,11 @@ pocl_ttasim_init_device_infos(struct _cl_device_id* dev)
   dev->extensions = TCE_DEVICE_EXTENSIONS;
   dev->llvm_target_triplet = "tce-tut-llvm";
   dev->has_64bit_long = 1;
+  dev->autolocals_to_args = 1;
+
+  dev->global_as_id = 3;
+  dev->local_as_id = 4;
+  dev->constant_as_id = 5;
 
   SETUP_DEVICE_CL_VERSION(TCE_DEVICE_CL_VERSION_MAJOR, TCE_DEVICE_CL_VERSION_MINOR);
 

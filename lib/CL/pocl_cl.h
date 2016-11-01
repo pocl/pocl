@@ -436,12 +436,13 @@ struct _cl_device_id {
   cl_uint cl_version_minor;    // 0
   const char *cl_version_std;  // "CL2.0"
   cl_uint cl_version_int;      // 200
- 
+
   void *data;
   const char* llvm_target_triplet; /* the llvm target triplet to use */
   const char* llvm_cpu; /* the llvm CPU variant to use */
-  /* A running number (starting from zero) across all the device instances. Used for 
-     indexing  arrays in data structures with device specific entries. */
+  /* A running number (starting from zero) across all the device instances.
+     Used for indexing arrays in data structures with device specific
+     entries. */
   int dev_id;
   int global_mem_id; /* identifier for device global memory */
   /* pointer to an accounting struct for global memory */
@@ -450,8 +451,13 @@ struct _cl_device_id {
   /* Convert automatic local variables to kernel arguments? */
   int autolocals_to_args;
 
-  // True if the device supports SVM has priority
-  // at allocating Shared Virtual Memory
+  /* The target specific IDs for the different OpenCL address spaces. */
+  int global_as_id;
+  int local_as_id;
+  int constant_as_id;
+
+  /* True if the device supports SVM. Then it has the responsibility of
+     allocating shared buffers residing in Shared Virtual Memory areas. */
   cl_bool should_allocate_svm;
   /* OpenCL 2.0 properties */
   cl_device_svm_capabilities svm_caps;

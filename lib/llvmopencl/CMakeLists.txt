@@ -41,7 +41,6 @@ set(LLVMPASSES_SOURCES "Barrier.h"
   "BreakConstantGEPs.h" "BreakConstantGEPs.cpp"
   "WorkitemHandlerChooser.h" "WorkitemHandlerChooser.cc"
   "AllocasToEntry.h" "AllocasToEntry.cc"
-  "TargetAddressSpaces.h" "TargetAddressSpaces.cc"
   "LLVMUtils.cc" "LLVMUtils.h" "LLVMFileUtils.cc"
   "VariableUniformityAnalysis.h" "VariableUniformityAnalysis.cc"
   "AutomaticLocals.cc" "ImplicitConditionalBarriers.cc"
@@ -49,6 +48,9 @@ set(LLVMPASSES_SOURCES "Barrier.h"
   "DebugHelpers.h" "DebugHelpers.cc"
   "RemoveBarrierCalls.h" "RemoveBarrierCalls.cc")
 
+if(POCL_USE_FAKE_ADDR_SPACE_IDS)
+list(APPEND LLVMPASSES_SOURCES "TargetAddressSpaces.cc")
+endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LLVM_CFLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS}")
