@@ -38,8 +38,8 @@ if __name__ == "__main__":
     if len(sys.argv) != 3:
         print "Usage: generate_html.py source_template.mak destination.html"
 
-    mylookup = TemplateLookup(directories=['.'])
-    template = Template(filename=sys.argv[1], lookup=mylookup, strict_undefined=False)
+    mylookup = TemplateLookup(directories=['.'], input_encoding='utf-8')
+    template = Template(filename=sys.argv[1], lookup=mylookup, strict_undefined=False, input_encoding='utf-8')
     output = template.render()
     f = open(sys.argv[2], "w+")
     f.write(output)

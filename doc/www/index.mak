@@ -18,6 +18,14 @@ in parallel programming on heterogeneous platforms.</p>
 
 <h1>News</h1>
 
+<h2>2016-11-03: Hiring: Enthusiastic Open Source Developers</h2>
+
+<p>The original developers of pocl, 
+the Customized Parallel Computing (CPC) group of Department of Pervasive
+Computing of Tampere University of Technology (Finland)
+<a href="pocl-jobs-fall-2016.html">is hiring
+software developers to work on pocl's OpenCL standard conformance</a>. 
+
 <h2>2016-07-01: pocl in Texas Instruments' OpenCL SDK</h2>
 
 <p>Read <a href="texas-instruments-pocl-use-case.html">here</a> how TI benefits
