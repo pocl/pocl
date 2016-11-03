@@ -456,7 +456,7 @@ int pocl_llvm_build_program(cl_program program,
   clang::PrintPreprocessedAction Preprocess;
   success = CI.ExecuteAction(Preprocess);
   char *PreprocessedOut = nullptr;
-  size_t PreprocessedSize = 0;
+  uint64_t PreprocessedSize = 0;
 
   if (success) {
     pocl_read_file(tempfile, &PreprocessedOut, &PreprocessedSize);

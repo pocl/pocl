@@ -78,7 +78,9 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
   int file_name_alloc_size = 
     min(POCL_FILENAME_LENGTH, strlen(tmpdir) + strlen(kernel->name) + 5);
   char* module = (char*) malloc(file_name_alloc_size); 
-
+  /* To avoid corrupted .so files, create a tmp file first
+     and then rename it. */
+  char tmp_module[file_name_alloc_size + 4]; /* .tmp postfix */
   int error;
 
   error = snprintf(module, POCL_FILENAME_LENGTH,
@@ -93,40 +95,48 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
   if (pocl_exists(module))
     return module;
 
+  memcpy (tmp_module, module, file_name_alloc_size);
+  strcat (tmp_module, ".tmp");
+
   void* write_lock = pocl_cache_acquire_writer_lock(kernel->program, device);
   assert(write_lock);
 
-      error = snprintf (bytecode, POCL_FILENAME_LENGTH,
-                        "%s%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
-      assert (error >= 0);
+  error = snprintf (bytecode, POCL_FILENAME_LENGTH,
+		    "%s%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
+  assert (error >= 0);
 
-      error = pocl_llvm_codegen( kernel, device, bytecode, objfile);
-      assert (error == 0);
+  error = pocl_llvm_codegen( kernel, device, bytecode, objfile);
+  assert (error == 0);
 
-      /* clang is used as the linker driver in LINK_CMD */
-      error = snprintf (command, COMMAND_LENGTH,
+  /* clang is used as the linker driver in LINK_CMD */
+  error = snprintf (command, COMMAND_LENGTH,
 #ifndef POCL_ANDROID
 #ifdef OCS_AVAILABLE
-            CLANGXX " " HOST_CLANG_FLAGS " " HOST_LD_FLAGS " -o %s %s",
+                    CLANGXX " " HOST_CLANG_FLAGS " " HOST_LD_FLAGS " -o %s %s",
 #else
-            LINK_COMMAND " " HOST_LD_FLAGS " -o %s %s",
+                    LINK_COMMAND " " HOST_LD_FLAGS " -o %s %s",
 #endif
 #else
-            POCL_ANDROID_PREFIX"/bin/ld " HOST_LD_FLAGS " -o %s %s ",
+                    POCL_ANDROID_PREFIX"/bin/ld " HOST_LD_FLAGS " -o %s %s ",
 #endif
-            module, objfile);
-      assert (error >= 0);
+                    tmp_module, objfile);
+  assert (error >= 0);
 
-      POCL_MSG_PRINT_INFO ("executing [%s]\n", command);
-      error = system (command);
-      assert (error == 0);
+  POCL_MSG_PRINT_INFO ("executing [%s]\n", command);
+  error = system (command);
+  assert (error == 0);
 
-      /* Save space in kernel cache */
-      if (!pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
-        {
-          pocl_remove(objfile);
-          pocl_remove(bytecode);
-        }
+  error = snprintf (command, COMMAND_LENGTH, "mv %s %s", tmp_module, module);
+  assert (error >= 0);
+  error = system (command);
+  assert (error == 0);
+
+  /* Save space in kernel cache */
+  if (!pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
+    {
+      pocl_remove(objfile);
+      pocl_remove(bytecode);
+    }
 
   pocl_cache_release_lock(write_lock);
 
