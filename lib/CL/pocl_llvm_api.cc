@@ -1637,8 +1637,7 @@ extern cl::opt<std::string> KernelName;
 
 int pocl_llvm_generate_workgroup_function(char* kernel_cachedir, cl_device_id device,
                                           cl_kernel kernel, size_t local_x,
-                                          size_t local_y, size_t local_z)
-{
+                                          size_t local_y, size_t local_z) {
 
   pocl::WGDynamicLocalSize = (local_x == 0 && local_y == 0 && local_z == 0);
 
@@ -1665,7 +1664,7 @@ int pocl_llvm_generate_workgroup_function(char* kernel_cachedir, cl_device_id de
   llvm::MutexGuard lockHolder(kernelCompilerLock);
   InitializeLLVM();
 
-#ifdef DEBUG_POCL_LLVM_API        
+#ifdef DEBUG_POCL_LLVM_API
   printf("### calling the kernel compiler for kernel %s local_x %zu "
          "local_y %zu local_z %zu parallel_filename: %s\n",
          kernel->name, local_x, local_y, local_z, parallel_bc_path);
@@ -1678,10 +1677,10 @@ int pocl_llvm_generate_workgroup_function(char* kernel_cachedir, cl_device_id de
 
   // Link the kernel and runtime library
   llvm::Module *input = NULL;
-  if (kernel->program->llvm_irs != NULL && 
+  if (kernel->program->llvm_irs != NULL &&
       kernel->program->llvm_irs[device_i] != NULL)
     {
-#ifdef DEBUG_POCL_LLVM_API        
+#ifdef DEBUG_POCL_LLVM_API
       printf("### cloning the preloaded LLVM IR\n");
 #endif
       llvm::Module* p = (llvm::Module*)kernel->program->llvm_irs[device_i];
@@ -1693,7 +1692,7 @@ int pocl_llvm_generate_workgroup_function(char* kernel_cachedir, cl_device_id de
     }
   else
     {
-#ifdef DEBUG_POCL_LLVM_API        
+#ifdef DEBUG_POCL_LLVM_API
       printf("### loading the kernel bitcode from disk\n");
 #endif
       char program_bc_path[POCL_FILENAME_LENGTH];
