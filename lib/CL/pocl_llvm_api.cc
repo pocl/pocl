@@ -1262,8 +1262,6 @@ static PassManager& kernel_compiler_passes
 
   bool SPMDDevice = device->spmd;
 
-  currentPoclDevice = device;
-
   if (kernel_compiler_passes.find(device) != 
       kernel_compiler_passes.end())
     {
@@ -1643,6 +1641,8 @@ int pocl_llvm_generate_workgroup_function(char* kernel_cachedir, cl_device_id de
 {
 
   pocl::WGDynamicLocalSize = (local_x == 0 && local_y == 0 && local_z == 0);
+
+  currentPoclDevice = device;
 
   cl_program program = kernel->program;
   int device_i = pocl_cl_device_to_index(program, device);

@@ -452,9 +452,9 @@ struct _cl_device_id {
   int autolocals_to_args;
 
   /* The target specific IDs for the different OpenCL address spaces. */
-  int global_as_id;
-  int local_as_id;
-  int constant_as_id;
+  unsigned global_as_id;
+  unsigned local_as_id;
+  unsigned constant_as_id;
 
   /* True if the device supports SVM. Then it has the responsibility of
      allocating shared buffers residing in Shared Virtual Memory areas. */
