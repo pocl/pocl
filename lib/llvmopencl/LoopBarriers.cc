@@ -56,8 +56,6 @@ char LoopBarriers::ID = 0;
 void
 LoopBarriers::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<DominatorTreeWrapperPass>();
-  AU.addPreserved<DominatorTreeWrapperPass>();
-
 }
 
 bool
@@ -68,13 +66,7 @@ LoopBarriers::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (!Workgroup::hasWorkgroupBarriers(*L->getHeader()->getParent()))
     return false;
 
-  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
-
-  bool changed = ProcessLoop(L, LPM);
-
-  DT->verifyDomTree();
-
-  return changed;
+  return ProcessLoop(L, LPM);;
 }
 
 bool
@@ -82,6 +74,7 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &) {
   bool isBLoop = false;
   bool changed = false;
 
+  DT = &getAnalysis<DominatorTreeWrapperPass>().getDomTree();
 
   for (Loop::block_iterator i = L->block_begin(), e = L->block_end();
        i != e && !isBLoop; ++i) {
