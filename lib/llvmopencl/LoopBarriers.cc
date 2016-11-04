@@ -1,8 +1,8 @@
 // LLVM loop pass that adds required barriers to loops.
-// 
+//
 // Copyright (c) 2011 Universidad Rey Juan Carlos
 //               2012-2013 Pekka Jääskeläinen / Tampere University of Technology
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
@@ -54,16 +54,14 @@ namespace {
 char LoopBarriers::ID = 0;
 
 void
-LoopBarriers::getAnalysisUsage(AnalysisUsage &AU) const
-{
+LoopBarriers::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<DominatorTreeWrapperPass>();
   AU.addPreserved<DominatorTreeWrapperPass>();
 
 }
 
 bool
-LoopBarriers::runOnLoop(Loop *L, LPPassManager &LPM)
-{
+LoopBarriers::runOnLoop(Loop *L, LPPassManager &LPM) {
   if (!Workgroup::isKernelToProcess(*L->getHeader()->getParent()))
     return false;
 
@@ -79,12 +77,11 @@ LoopBarriers::runOnLoop(Loop *L, LPPassManager &LPM)
   return changed;
 }
 
-
 bool
-LoopBarriers::ProcessLoop(Loop *L, LPPassManager &)
-{
+LoopBarriers::ProcessLoop(Loop *L, LPPassManager &) {
   bool isBLoop = false;
   bool changed = false;
+
 
   for (Loop::block_iterator i = L->block_begin(), e = L->block_end();
        i != e && !isBLoop; ++i) {
@@ -106,9 +103,9 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &)
         // Found a barrier in this loop:
         // 1) add a barrier in the loop header.
         // 2) add a barrier in the latches
-        
+
         // Add a barrier on the preheader to ensure all WIs reach
-        // the loop header with all the previous code already 
+        // the loop header with all the previous code already
         // executed.
         BasicBlock *preheader = L->getLoopPreheader();
         assert((preheader != NULL) && "Non-canonicalized loop found!\n");
@@ -156,8 +153,11 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &)
         // go trough all the latches.
         BasicBlock *Header = L->getHeader();
         typedef GraphTraits<Inverse<BasicBlock *> > InvBlockTraits;
-        InvBlockTraits::ChildIteratorType PI = InvBlockTraits::child_begin(Header);
-        InvBlockTraits::ChildIteratorType PE = InvBlockTraits::child_end(Header);
+        InvBlockTraits::ChildIteratorType PI =
+          InvBlockTraits::child_begin(Header);
+        InvBlockTraits::ChildIteratorType PE =
+          InvBlockTraits::child_end(Header);
+
         BasicBlock *Latch = NULL;
         for (; PI != PE; ++PI) {
           BasicBlock *N = *PI;
@@ -178,12 +178,13 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &)
   }
 
   /* This is a loop without a barrier. Ensure we have a non-barrier
-     block as a preheader so we can replicate the loop as a whole. 
+     block as a preheader so we can replicate the loop as a whole.
 
      If the block has proper instructions after the barrier, it
      will be split in CanonicalizeBarriers. */
   BasicBlock *preheader = L->getLoopPreheader();
   assert((preheader != NULL) && "Non-canonicalized loop found!\n");
+
   TerminatorInst *t = preheader->getTerminator();
   Instruction *prev = NULL;
   if (&preheader->front() != t)
@@ -200,4 +201,3 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &)
 
   return changed;
 }
-
