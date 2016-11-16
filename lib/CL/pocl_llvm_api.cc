@@ -472,7 +472,7 @@ int pocl_llvm_build_program(cl_program program,
   }
 
   pocl_cache_create_program_cachedir(program, device_i, PreprocessedOut,
-                                     PreprocessedSize, program_bc_path);
+                                     static_cast<size_t>(PreprocessedSize), program_bc_path);
 
   POCL_MEM_FREE(PreprocessedOut);
 
