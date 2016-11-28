@@ -101,7 +101,7 @@ exec_dot_product_kernel(const char *program_source, size_t source_size,
     } 
  
   // build the program 
-  err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL); 
+  err = clBuildProgram(program, 0, NULL, "-x spir -spir-std=1.2", NULL, NULL);
   if (err != CL_SUCCESS) 
     { 
       delete_memobjs(memobjs, 3); 
