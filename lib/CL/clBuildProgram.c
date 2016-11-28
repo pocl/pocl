@@ -257,6 +257,38 @@ CL_API_SUFFIX__VERSION_1_0
                   continue;
                 }
             }
+          else if (memcmp (token, "-x", 2) == 0 && strlen (token) == 2)
+            {
+              /* only "-x spir" is valid for the "-x" option */
+              token = strtok_r (NULL, " ", &saveptr);
+              if (!token || memcmp (token, "spir", 4) != 0)
+                {
+                  APPEND_TO_MAIN_BUILD_LOG("Invalid parameter to -x build option\n");
+                  errcode = CL_INVALID_BUILD_OPTIONS;
+                  goto ERROR_CLEAN_OPTIONS;
+                }
+              /* "-x spir" is not valid if we are building from source */
+              else if (program->source)
+                {
+                  APPEND_TO_MAIN_BUILD_LOG("\"-x spir\" is not valid when building from source\n");
+                  errcode = CL_INVALID_BUILD_OPTIONS;
+                  goto ERROR_CLEAN_OPTIONS;
+                }
+              token = strtok_r (NULL, " ", &saveptr);
+              continue;
+            }
+          else if (memcmp (token, "-spir-std=1.2", 13) == 0)
+            {
+              /* "-spir-std=" flags are not valid when building from source */
+              if (program->source)
+                {
+                  APPEND_TO_MAIN_BUILD_LOG("\"-spir-std=\" flag is not valid when building from source\n");
+                  errcode = CL_INVALID_BUILD_OPTIONS;
+                  goto ERROR_CLEAN_OPTIONS;
+                }
+              token = strtok_r (NULL, " ", &saveptr);
+              continue;
+            }
           else
             {
               APPEND_TO_MAIN_BUILD_LOG("Invalid build option: %s\n", token);
