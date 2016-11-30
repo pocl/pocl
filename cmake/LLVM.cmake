@@ -188,14 +188,6 @@ endif()
 #LLVM_CXX_FLAGS=$($LLVM_CONFIG --cxxflags | sed -e 's/ -pedantic / /g')
 string(REPLACE " -pedantic" "" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
 
-# Llvm-config may be installed or it might be used from build directory, in which case
-# we need to add few extra include paths to find clang includes and compiled includes
-list(APPEND LLVM_INCLUDE_DIRS 
-  "${LLVM_INCLUDEDIR}" 
-  "${LLVM_SRC_ROOT}/tools/clang/include" 
-  "${LLVM_OBJ_ROOT}/include" 
-  "${LLVM_OBJ_ROOT}/tools/clang/include")
-
 # Llvm-config does not include clang libs
 set(CLANG_LIBNAMES clangFrontendTool clangFrontend clangDriver clangSerialization
     clangCodeGen clangParse clangSema clangRewrite clangRewriteFrontend
