@@ -402,10 +402,34 @@ void pocl_cuda_link_libdevice(llvm::Module *module,
 
   // Construct path to libdevice bitcode library
   const char *cuda_path = pocl_get_string_option("CUDA_PATH", "");
-  const char *libdevice_fmt = "%s/nvvm/libdevice/libdevice.compute_%s.10.bc";
-  size_t sz = snprintf(NULL, 0, libdevice_fmt, cuda_path, gpu_arch+3);
+  const char *libdevice_fmt = "%s/nvvm/libdevice/libdevice.compute_%d.10.bc";
+
+  char *end;
+  unsigned long sm = strtoul(gpu_arch+3, &end, 10);
+  if (!sm || strlen(end))
+    POCL_ABORT("[CUDA] invalid GPU architecture %s\n", gpu_arch);
+
+  // This mapping from SM version to libdevice library version is given here:
+  // http://docs.nvidia.com/cuda/libdevice-users-guide/basic-usage.html#version-selection
+  int ldsm = 0;
+  if (sm < 30)
+    ldsm = 20;
+  else if (sm == 30)
+    ldsm = 30;
+  else if (sm < 35)
+    ldsm = 20;
+  else if (sm <= 37)
+    ldsm = 35;
+  else if (sm < 50)
+    ldsm = 30;
+  else if (sm <= 53)
+    ldsm = 50;
+  else
+    ldsm = 30;
+
+  size_t sz = snprintf(NULL, 0, libdevice_fmt, cuda_path, ldsm);
   char *libdevice_path = (char*)malloc(sz + 1);
-  sprintf(libdevice_path, libdevice_fmt, cuda_path, gpu_arch+3);
+  sprintf(libdevice_path, libdevice_fmt, cuda_path, ldsm);
   POCL_MSG_PRINT_INFO("loading libdevice from '%s'\n", libdevice_path);
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer =
     llvm::MemoryBuffer::getFile(libdevice_path);
