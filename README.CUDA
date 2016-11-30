@@ -8,7 +8,9 @@ Add `-DENABLE_CUDA=ON` to the CMake command-line.
 Assumes `libcuda.so` is on library search path. (TODO: Get CMake to sort
 this out).
 
-Currently only tested with LLVM 3.8, and CUDA 7.0/7.5.
+Currently requires LLVM 3.9.1, and CUDA 7.5/8.0.
+It may work to some extent with LLVM 3.8, although some features may be broken
+due to the TargetAddressSpace pass.
 
 # Running on a CUDA device
 
@@ -19,7 +21,7 @@ CUDA installation (containing the `nvvm` directory).
 
 The `POCL_CUDA_GPU_ARCH` environment variable can be set to override
 the target GPU architecture (e.g. `POCL_CUDA_GPU_ARCH=sm_35`), which
-may be necessary in casees where LLVM doesn't yet support the
+may be necessary in cases where LLVM doesn't yet support the
 architecture (currently an issue for `sm_32` and `sm_53`).
 
 The `POCL_NO_PTX_CACHE` environment variable can be set to `1` to
@@ -29,7 +31,7 @@ cached version.
 # Known issues
 
 - Images and samplers are unimplemented
-- Atomics are unimplimented
+- Atomics are unimplemented
 - Global offsets are unimplemented
 - get_work_dim is unimplemented
 - FP64 math functions are mostly missing
