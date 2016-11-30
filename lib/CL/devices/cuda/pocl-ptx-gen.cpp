@@ -53,7 +53,7 @@ namespace llvm
 }
 
 // TODO: Should these be proper passes?
-void pocl_add_kernel_annotations(llvm::Module *module);
+void pocl_add_kernel_annotations(llvm::Module *module, const char *kernel);
 void pocl_cuda_fix_printf(llvm::Module *module);
 void pocl_cuda_link_libdevice(llvm::Module *module,
                               const char *kernel, const char *gpu_arch);
@@ -92,7 +92,7 @@ int pocl_ptx_gen(const char *bc_filename,
   pocl_cuda_fix_printf(module->get());
   pocl_gen_local_mem_args(module->get());
   pocl_insert_ptx_intrinsics(module->get());
-  pocl_add_kernel_annotations(module->get());
+  pocl_add_kernel_annotations(module->get(), kernel_name);
   pocl_map_libdevice_calls(module->get());
   pocl_cuda_link_libdevice(module->get(), kernel_name, gpu_arch);
   if (pocl_get_bool_option("POCL_DEBUG_PTX", 0))
@@ -151,44 +151,33 @@ int pocl_ptx_gen(const char *bc_filename,
   return pocl_write_file(ptx_filename, ptx.c_str(), ptx.size(), 0, 0);
 }
 
-void pocl_add_kernel_annotations(llvm::Module *module)
+void pocl_add_kernel_annotations(llvm::Module *module, const char *kernel)
 {
   llvm::LLVMContext& context = module->getContext();
 
-  // Remove nvvm.annotations metadata since it is sometimes corrupt
-  llvm::NamedMDNode *nvvm_annotations =
-    module->getNamedMetadata("nvvm.annotations");
+  // Remove existing nvvm.annotations metadata since it is sometimes corrupt
+  auto nvvm_annotations = module->getNamedMetadata("nvvm.annotations");
   if (nvvm_annotations)
     nvvm_annotations->eraseFromParent();
 
-  llvm::NamedMDNode *md_kernels = module->getNamedMetadata("opencl.kernels");
-  if (!md_kernels)
-    return;
-
-  // Add nvvm.annotations metadata to mark kernel entry points
+  // Add nvvm.annotations metadata to mark kernel entry point
   nvvm_annotations = module->getOrInsertNamedMetadata("nvvm.annotations");
-  for (auto K = md_kernels->op_begin(); K != md_kernels->op_end(); K++)
-  {
-    if (!(*K)->getOperand(0))
-      continue;
 
-    llvm::ConstantAsMetadata *cam =
-      llvm::dyn_cast<llvm::ConstantAsMetadata>((*K)->getOperand(0).get());
-    if (!cam)
-      continue;
+  // Get handle to function
+  auto func = module->getFunction(kernel);
+  if (!func)
+    POCL_ABORT("[CUDA] ptx-gen: kernel function not found in module\n");
 
-    llvm::Function *function = llvm::dyn_cast<llvm::Function>(cam->getValue());
+  // Create metadata
+  llvm::Constant *one =
+    llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(context), 1);
+  llvm::Metadata *md_f = llvm::ValueAsMetadata::get(func);
+  llvm::Metadata *md_n = llvm::MDString::get(context, "kernel");
+  llvm::Metadata *md_1 = llvm::ConstantAsMetadata::get(one);
 
-    llvm::Constant *one =
-      llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(context), 1);
-    llvm::Metadata *md_f = llvm::ValueAsMetadata::get(function);
-    llvm::Metadata *md_n = llvm::MDString::get(context, "kernel");
-    llvm::Metadata *md_1 = llvm::ConstantAsMetadata::get(one);
-
-    std::vector<llvm::Metadata*> v_md = {md_f, md_n, md_1};
-    llvm::MDNode *node = llvm::MDNode::get(context, v_md);
-    nvvm_annotations->addOperand(node);
-  }
+  std::vector<llvm::Metadata*> v_md = {md_f, md_n, md_1};
+  llvm::MDNode *node = llvm::MDNode::get(context, v_md);
+  nvvm_annotations->addOperand(node);
 }
 
 void pocl_erase_function_and_callers(llvm::Function *func)
