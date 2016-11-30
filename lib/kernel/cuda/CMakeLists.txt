@@ -50,8 +50,12 @@ else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 
 
-set(CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-emit-llvm"
-                "-target" "${LLVM_TARGET}" "-D_CL_DISABLE_HALF")
+set(CLANG_FLAGS "-emit-llvm" "-target" "${LLVM_TARGET}" "-D_CL_DISABLE_HALF")
+
+if(POCL_USE_FAKE_ADDR_SPACE_IDS)
+  list(APPEND CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-DPOCL_USE_FAKE_ADDR_SPACE_IDS")
+endif()
+
 set(LLC_FLAGS "")
 set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=${CUDA_DEVICE_CL_VERSION}")
 separate_arguments(CUDA_DEVICE_EXTENSIONS)

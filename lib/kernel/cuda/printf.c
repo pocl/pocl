@@ -25,8 +25,12 @@
 
 void _cl_va_arg(va_list ap, char data[], int num_words);
 
+#ifndef POCL_USE_FAKE_ADDR_SPACE_IDS
+int vprintf(__constant char*, char*);
+#endif
+
 int
-_cl_printf(__attribute__((address_space(3))) char* restrict format, ...)
+_cl_printf(__attribute__((address_space(4))) char* restrict format, ...)
 {
   // TODO: Might need more than 2 words for (e.g.) vectors
   char arg_data[8];

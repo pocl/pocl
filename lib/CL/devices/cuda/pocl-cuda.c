@@ -207,6 +207,10 @@ pocl_cuda_init_device_infos(struct _cl_device_id* dev)
   dev->spmd = CL_TRUE;
   dev->execution_capabilities = CL_EXEC_KERNEL;
 
+  dev->global_as_id = 1;
+  dev->local_as_id = 3;
+  dev->constant_as_id = 1;
+
   // TODO: Get images working
   dev->image_support = CL_FALSE;
 }

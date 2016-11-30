@@ -57,7 +57,7 @@ void pocl_add_kernel_annotations(llvm::Module *module, const char *kernel);
 void pocl_cuda_fix_printf(llvm::Module *module);
 void pocl_cuda_link_libdevice(llvm::Module *module,
                               const char *kernel, const char *gpu_arch);
-void pocl_gen_local_mem_args(llvm::Module *module);
+void pocl_gen_local_mem_args(llvm::Module *module, const char *kernel);
 void pocl_insert_ptx_intrinsics(llvm::Module *module);
 void pocl_map_libdevice_calls(llvm::Module *module);
 
@@ -90,7 +90,7 @@ int pocl_ptx_gen(const char *bc_filename,
 
   // Apply transforms to prepare for lowering to PTX
   pocl_cuda_fix_printf(module->get());
-  pocl_gen_local_mem_args(module->get());
+  pocl_gen_local_mem_args(module->get(), kernel_name);
   pocl_insert_ptx_intrinsics(module->get());
   pocl_add_kernel_annotations(module->get(), kernel_name);
   pocl_map_libdevice_calls(module->get());
@@ -264,7 +264,7 @@ void pocl_cuda_fix_printf(llvm::Module *module)
       llvm::LoadInst *arg_value = new llvm::LoadInst(arg_in);
       arg_value->insertAfter(arg_in);
       llvm::StoreInst *arg_store = new llvm::StoreInst(arg_value, arg_out);
-      arg_store->insertAfter(arg_value);
+      arg_store->insertAfter(bc_arg_out);
 
       // Increment argument index
       llvm::BinaryOperator *inc =
@@ -352,10 +352,21 @@ void pocl_cuda_fix_printf(llvm::Module *module)
   cl_printf->eraseFromParent();
 
 
-  // Fix address space of vprintf format arguments
+  // Get handle to vprintf function
   llvm::Function *vprintf_func = module->getFunction("vprintf");
   if (!vprintf_func)
     return;
+
+  // Change address space of vprintf format argument to generic
+  auto i8ptr = llvm::PointerType::get(llvm::Type::getInt8Ty(context), 0);
+  auto new_vprintf_type = llvm::FunctionType::get(vprintf_func->getReturnType(),
+                                                  {i8ptr, i8ptr}, false);
+  auto new_vprintf = llvm::Function::Create(new_vprintf_type,
+                                            vprintf_func->getLinkage(),
+                                            "", module);
+  new_vprintf->takeName(vprintf_func);
+
+  // Update vprintf callers to pass format arguments in generic address space
   callers.assign(vprintf_func->users().begin(), vprintf_func->users().end());
   for (auto U = callers.begin(); U != callers.end(); U++)
   {
@@ -373,9 +384,12 @@ void pocl_cuda_fix_printf(llvm::Module *module)
       llvm::AddrSpaceCastInst *asc =
         new llvm::AddrSpaceCastInst(format, new_arg_type);
       asc->insertBefore(call);
+      call->setCalledFunction(new_vprintf);
       call->setArgOperand(0, asc);
     }
   }
+
+  vprintf_func->eraseFromParent();
 }
 
 void pocl_cuda_link_libdevice(llvm::Module *module,
@@ -445,15 +459,15 @@ void pocl_cuda_link_libdevice(llvm::Module *module,
   passes.run(*module);
 }
 
-void pocl_gen_local_mem_args(llvm::Module *module)
+void pocl_gen_local_mem_args(llvm::Module *module, const char *kernel)
 {
   // TODO: Deal with non-kernel functions that take local memory arguments
 
   llvm::LLVMContext& context = module->getContext();
 
-  llvm::NamedMDNode *md_kernels = module->getNamedMetadata("opencl.kernels");
-  if (!md_kernels)
-    return;
+  llvm::Function *function = module->getFunction(kernel);
+  if (!function)
+    POCL_ABORT("[CUDA] ptx-gen: kernel function not found in module\n");
 
   // Create global variable for local memory allocations
   llvm::Type *byte_array_type =
@@ -465,100 +479,82 @@ void pocl_gen_local_mem_args(llvm::Module *module)
                              llvm::GlobalValue::NotThreadLocal,
                              3, false);
 
-  for (unsigned i = 0; i < md_kernels->getNumOperands(); i++)
+
+  // Argument info for creating new function
+  std::vector<llvm::Argument*> arguments;
+  std::vector<llvm::Type*> argument_types;
+
+  // Loop over arguments
+  bool has_local_args = false;
+  for (auto arg = function->arg_begin(); arg != function->arg_end(); arg++)
   {
-    auto kernel = md_kernels->getOperand(i);
-    if (!kernel->getOperand(0))
-      continue;
-
-    llvm::ConstantAsMetadata *cam =
-      llvm::dyn_cast<llvm::ConstantAsMetadata>(kernel->getOperand(0).get());
-    if (!cam)
-      continue;
-
-    llvm::Function *function = llvm::dyn_cast<llvm::Function>(cam->getValue());
-
-    // Argument info for creating new function
-    std::vector<llvm::Argument*> arguments;
-    std::vector<llvm::Type*> argument_types;
-
-    // Loop over arguments
-    bool has_local_args = false;
-    for (auto arg = function->arg_begin(); arg != function->arg_end(); arg++)
+    // Check for local memory pointer
+    llvm::Type *arg_type = arg->getType();
+    if (arg_type->isPointerTy() &&
+        arg_type->getPointerAddressSpace() == 3)
     {
-      // Check for local memory pointer
-      llvm::Type *arg_type = arg->getType();
-      if (arg_type->isPointerTy() &&
-          arg_type->getPointerAddressSpace() == 3)
-      {
-        has_local_args = true;
+      has_local_args = true;
 
-        // Create new argument for offset into shared memory allocation
-        llvm::Type *i32ty = llvm::Type::getInt32Ty(context);
-        llvm::Argument *offset =
-          new llvm::Argument(i32ty, arg->getName() + "_offset");
-        arguments.push_back(offset);
-        argument_types.push_back(i32ty);
+      // Create new argument for offset into shared memory allocation
+      llvm::Type *i32ty = llvm::Type::getInt32Ty(context);
+      llvm::Argument *offset =
+        new llvm::Argument(i32ty, arg->getName() + "_offset");
+      arguments.push_back(offset);
+      argument_types.push_back(i32ty);
 
-        // Insert GEP to add offset
-        llvm::Value *zero = llvm::ConstantInt::getSigned(i32ty, 0);
-        llvm::GetElementPtrInst *gep =
-          llvm::GetElementPtrInst::Create(byte_array_type, shared_base,
-                                          {zero, offset});
-        gep->insertBefore(&*function->begin()->begin());
+      // Insert GEP to add offset
+      llvm::Value *zero = llvm::ConstantInt::getSigned(i32ty, 0);
+      llvm::GetElementPtrInst *gep =
+        llvm::GetElementPtrInst::Create(byte_array_type, shared_base,
+                                        {zero, offset});
+      gep->insertBefore(&*function->begin()->begin());
 
-        // Cast pointer to correct type
-        llvm::BitCastInst *cast = new llvm::BitCastInst(gep, arg_type);
-        cast->insertAfter(gep);
+      // Cast pointer to correct type
+      llvm::BitCastInst *cast = new llvm::BitCastInst(gep, arg_type);
+      cast->insertAfter(gep);
 
-        cast->takeName(&*arg);
-        arg->replaceAllUsesWith(cast);
-      }
-      else
-      {
-        // No change to other arguments
-        arguments.push_back(&*arg);
-        argument_types.push_back(arg_type);
-      }
+      cast->takeName(&*arg);
+      arg->replaceAllUsesWith(cast);
     }
-
-    if (!has_local_args)
-      continue;
-
-    // Create new function with offsets instead of local memory pointers
-    llvm::FunctionType *new_func_type =
-      llvm::FunctionType::get(function->getReturnType(), argument_types, false);
-    llvm::Function *new_func =
-      llvm::Function::Create(new_func_type, function->getLinkage(),
-                             function->getName(), module);
-    new_func->takeName(function);
-
-    // Take function body from old function
-    new_func->getBasicBlockList().splice(new_func->begin(),
-                                         function->getBasicBlockList());
-
-    // TODO: Copy attributes from old function
-
-    // Update function body with new arguments
-    std::vector<llvm::Argument*>::iterator old_arg;
-    llvm::Function::arg_iterator new_arg;
-    for (old_arg = arguments.begin(), new_arg = new_func->arg_begin();
-         new_arg != new_func->arg_end();
-         new_arg++, old_arg++)
+    else
     {
-      new_arg->takeName(*old_arg);
-      (*old_arg)->replaceAllUsesWith(&*new_arg);
+      // No change to other arguments
+      arguments.push_back(&*arg);
+      argument_types.push_back(arg_type);
     }
-
-    // Update metadata with reference to new kernel
-    auto new_md = llvm::ConstantAsMetadata::get(new_func);
-    llvm::MDNode *node = llvm::MDNode::get(module->getContext(), {new_md});
-    md_kernels->setOperand(i, node);
-
-    // TODO: Deal with calls to this kernel from other function?
-
-    function->eraseFromParent();
   }
+
+  if (!has_local_args)
+    return;
+
+  // Create new function with offsets instead of local memory pointers
+  llvm::FunctionType *new_func_type =
+    llvm::FunctionType::get(function->getReturnType(), argument_types, false);
+  llvm::Function *new_func =
+    llvm::Function::Create(new_func_type, function->getLinkage(),
+                           function->getName(), module);
+  new_func->takeName(function);
+
+  // Take function body from old function
+  new_func->getBasicBlockList().splice(new_func->begin(),
+                                       function->getBasicBlockList());
+
+  // TODO: Copy attributes from old function
+
+  // Update function body with new arguments
+  std::vector<llvm::Argument*>::iterator old_arg;
+  llvm::Function::arg_iterator new_arg;
+  for (old_arg = arguments.begin(), new_arg = new_func->arg_begin();
+       new_arg != new_func->arg_end();
+       new_arg++, old_arg++)
+  {
+    new_arg->takeName(*old_arg);
+    (*old_arg)->replaceAllUsesWith(&*new_arg);
+  }
+
+  // TODO: Deal with calls to this kernel from other function?
+
+  function->eraseFromParent();
 }
 
 void pocl_insert_ptx_intrinsics(llvm::Module *module)
