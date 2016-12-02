@@ -39,7 +39,7 @@ among others.</p>
 Research Center, Finnish Funding Agency for Technology and Innovation 
 (project "Parallel Acceleration", funding decision 40115/13), Academy of 
 Finland (funding decision 253087) and ARTEMIS joint undertaking under grant 
-agreement no 641439 (ALMARVI) for funding the development of 
+agreement no 621439 (ALMARVI) for funding the development of 
 this release.<p>
 
 <p>A pocl developer E. Schnetter acknowledges support from the Perimeter 
