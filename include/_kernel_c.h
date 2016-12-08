@@ -283,4 +283,33 @@ int2 _CL_OVERLOADABLE get_image_dim (image2d_t image);
 int2 _CL_OVERLOADABLE get_image_dim (image2d_array_t image);
 int4 _CL_OVERLOADABLE get_image_dim (image3d_t image);
 
+
+#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
+/*
+ * During pocl kernel compiler transformations we use the fixed address
+ * space ids of clang's -ffake-address-space-map to mark the different
+ * address spaces to keep the processing target-independent. These
+ * are converted to the target's address space map (if any), in a final
+ * kernel compiler pass (TargetAddressSpaces). This is deprecated and
+ * will go after https://reviews.llvm.org/D26157 is available in the
+ * oldest pocl supported LLVM version.
+ *
+ */
+#define POCL_ADDRESS_SPACE_PRIVATE 0
+#define POCL_ADDRESS_SPACE_GLOBAL 1
+#define POCL_ADDRESS_SPACE_LOCAL 2
+#define POCL_ADDRESS_SPACE_CONSTANT 3
+#define POCL_ADDRESS_SPACE_GENERIC 4
+
+#elif defined(__TCE__)
+
+#define POCL_ADDRESS_SPACE_PRIVATE 0
+#define POCL_ADDRESS_SPACE_GLOBAL 3
+#define POCL_ADDRESS_SPACE_LOCAL 4
+#define POCL_ADDRESS_SPACE_CONSTANT 5
+#define POCL_ADDRESS_SPACE_GENERIC 6
+
+#endif
+
+
 #endif

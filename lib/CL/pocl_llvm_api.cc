@@ -99,6 +99,7 @@ using llvm::legacy::PassManager;
 #include "linker.h"
 #include "pocl_file_util.h"
 #include "pocl_cache.h"
+#include "TargetAddressSpaces.h"
 
 using namespace clang;
 using namespace llvm;
@@ -623,15 +624,15 @@ static int pocl_get_kernel_arg_module_metadata(const char* kernel_name,
         } else {
           switch(val) {
 #ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
-            case POCL_ADDRESS_SPACE_PRIVATE:
+            case POCL_FAKE_AS_PRIVATE:
               current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
-            case POCL_ADDRESS_SPACE_GLOBAL:
+            case POCL_FAKE_AS_GLOBAL:
               current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_GLOBAL; break;
-            case POCL_ADDRESS_SPACE_LOCAL:
+            case POCL_FAKE_AS_LOCAL:
               current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_LOCAL; break;
-            case POCL_ADDRESS_SPACE_CONSTANT:
+            case POCL_FAKE_AS_CONSTANT:
               current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_CONSTANT; break;
-            case POCL_ADDRESS_SPACE_GENERIC:
+            case POCL_FAKE_AS_GENERIC:
               current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
 #endif
           default:
@@ -770,15 +771,15 @@ static int pocl_get_kernel_arg_function_metadata(const char* kernel_name,
     } else {
       switch(val) {
 #ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
-      case POCL_ADDRESS_SPACE_PRIVATE:
+      case POCL_FAKE_AS_PRIVATE:
         current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
-      case POCL_ADDRESS_SPACE_GLOBAL:
+      case POCL_FAKE_AS_GLOBAL:
         current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_GLOBAL; break;
-      case POCL_ADDRESS_SPACE_LOCAL:
+      case POCL_FAKE_AS_LOCAL:
         current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_LOCAL; break;
-      case POCL_ADDRESS_SPACE_CONSTANT:
+      case POCL_FAKE_AS_CONSTANT:
         current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_CONSTANT; break;
-      case POCL_ADDRESS_SPACE_GENERIC:
+      case POCL_FAKE_AS_GENERIC:
         current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE; break;
 #endif
       default:
@@ -995,18 +996,18 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
       if (ArgInfo.address_qualifier == CL_KERNEL_ARG_ADDRESS_LOCAL)
         ArgInfo.is_local = true;
 #else
-      if (p->getAddressSpace() == POCL_ADDRESS_SPACE_GLOBAL ||
-          p->getAddressSpace() == POCL_ADDRESS_SPACE_CONSTANT ||
+      if (p->getAddressSpace() == POCL_FAKE_AS_GLOBAL ||
+          p->getAddressSpace() == POCL_FAKE_AS_CONSTANT ||
           pocl::is_image_type(*t) || pocl::is_sampler_type(*t))
         {
           kernel->arg_info[i].is_local = false;
         }
       else
         {
-          if (p->getAddressSpace() != POCL_ADDRESS_SPACE_LOCAL)
+          if (p->getAddressSpace() != POCL_FAKE_AS_LOCAL)
             {
               p->dump();
-              assert(p->getAddressSpace() == POCL_ADDRESS_SPACE_LOCAL);
+              assert(p->getAddressSpace() == POCL_FAKE_AS_LOCAL);
             }
           kernel->arg_info[i].is_local = true;
         }

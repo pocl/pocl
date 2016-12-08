@@ -774,7 +774,7 @@ if(ENABLE_TCE)
     set(ENABLE_TCEMC 1)
     set(OCL_DRIVERS "${OCL_DRIVERS} tcemc") # TCEMC is a "superset" of TCE (lp:tce) features.
   endif()
-  set(TCE_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics cl_khr_fp16")
+  set(TCE_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_fp16")
   set(TEMP_EXT "${TCE_DEVICE_EXTENSIONS}")
   set(TCE_DEVICE_EXTENSION_DEFINES "")
   separate_arguments(TEMP_EXT)

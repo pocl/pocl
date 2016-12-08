@@ -27,6 +27,8 @@
 
 #include "linker.h"
 
+#include "TargetAddressSpaces.h"
+
 using namespace llvm;
 
 //#include <cstdio>
@@ -69,7 +71,7 @@ static void fixOpenCLimageArguments(llvm::Function *Func) {
             if (pe_type->getStructName().startswith("opencl.image"))  {
 #ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
               Type *new_t =
-                PointerType::get(pe_type, POCL_ADDRESS_SPACE_GLOBAL);
+                PointerType::get(pe_type, POCL_FAKE_AS_GLOBAL);
 #else
               Type *new_t =
                 PointerType::get(pe_type, currentPoclDevice->global_as_id);
@@ -103,8 +105,8 @@ CloneFuncFixOpenCLImageT(llvm::Module *Mod, llvm::Function *F)
           if (pe_type->getStructName().startswith("opencl.image")) {
 
 #ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
-            if (t->getPointerAddressSpace() != POCL_ADDRESS_SPACE_GLOBAL) {
-              new_t = PointerType::get(pe_type, POCL_ADDRESS_SPACE_GLOBAL);
+            if (t->getPointerAddressSpace() != POCL_FAKE_AS_GLOBAL) {
+              new_t = PointerType::get(pe_type, POCL_FAKE_AS_GLOBAL);
               changed = 1;
             }
 #else

@@ -1,18 +1,18 @@
 // Header for TargetAddressSpaces, an LLVM pass that converts the
-// generic address space ids to the target specific ones.
-// 
+// fake address space ids to the target specific ones.
+//
 // Copyright (c) 2013 Pekka Jääskeläinen / TUT
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -35,7 +35,7 @@ namespace pocl {
      detect the different OpenCL address spaces ambiguously, regardless
      of the target. This pass converts the fake address space ids to
      the target-specific ones, if required by the code generator of that
-     target. */       
+     target. */
   class TargetAddressSpaces : public llvm::ModulePass {
   public:
     static char ID;
@@ -46,5 +46,11 @@ namespace pocl {
     virtual bool runOnModule(llvm::Module &M);    
   };
 }
+
+#define POCL_FAKE_AS_PRIVATE 0
+#define POCL_FAKE_AS_GLOBAL 1
+#define POCL_FAKE_AS_LOCAL 2
+#define POCL_FAKE_AS_CONSTANT 3
+#define POCL_FAKE_AS_GENERIC 4
 
 #endif

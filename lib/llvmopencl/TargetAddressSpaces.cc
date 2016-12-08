@@ -146,7 +146,7 @@ static bool removeASCI(llvm::Value *v, llvm::Instruction *beforeinst,
       Value *in = ce->getAsInstruction();
       AddrSpaceCastInst *asci = dyn_cast<AddrSpaceCastInst>(in);
       assert(asci);
-      if (asci->getDestTy()->getPointerAddressSpace() == POCL_ADDRESS_SPACE_GENERIC) {
+      if (asci->getDestTy()->getPointerAddressSpace() == POCL_FAKE_AS_GENERIC) {
         asci->insertBefore(beforeinst);
         v->replaceAllUsesWith(in);
         in->takeName(v);
@@ -160,9 +160,9 @@ static bool removeASCI(llvm::Value *v, llvm::Instruction *beforeinst,
       Type* DstTy = as->getDestTy();
       if (isa<PointerType>(SrcTy) && isa<PointerType>(DstTy)) {
         if ((DstTy->getPointerAddressSpace() == SrcTy->getPointerAddressSpace())
-            || (DstTy->getPointerAddressSpace() == POCL_ADDRESS_SPACE_GENERIC))
+            || (DstTy->getPointerAddressSpace() == POCL_FAKE_AS_GENERIC))
           {
-            if (DstTy->getPointerAddressSpace() == POCL_ADDRESS_SPACE_GENERIC)
+            if (DstTy->getPointerAddressSpace() == POCL_FAKE_AS_GENERIC)
               UpdateAddressSpace(*as, addrSpaceMap, convertedStructsCache);
             Value* srcVal = as->getOperand(0);
             // We cannot just replaceAllUsesWith directly as UpdateAddressSpace
@@ -342,7 +342,7 @@ run(llvm::Module &M,
                 continue;
               }
             } else
-              if (st->getPointerAddressSpace() == POCL_ADDRESS_SPACE_GENERIC)
+              if (st->getPointerAddressSpace() == POCL_FAKE_AS_GENERIC)
                 UpdateAddressSpace(*pt, addrSpaceMap, convertedStructsCache);
         }
           if (isa<LoadInst>(instr)) {
@@ -354,7 +354,7 @@ run(llvm::Module &M,
                 continue;
               }
             } else
-              if (ld->getPointerAddressSpace() == POCL_ADDRESS_SPACE_GENERIC)
+              if (ld->getPointerAddressSpace() == POCL_FAKE_AS_GENERIC)
                 UpdateAddressSpace(*pt, addrSpaceMap, convertedStructsCache);
         }
           if (isa<GetElementPtrInst>(instr)) {
@@ -364,7 +364,7 @@ run(llvm::Module &M,
               if (removeASCI(pt, instr, addrSpaceMap, convertedStructsCache))
               { ii = bbi->begin(); continue; }
             } else {
-              if (gep->getPointerAddressSpace() == POCL_ADDRESS_SPACE_GENERIC)
+              if (gep->getPointerAddressSpace() == POCL_FAKE_AS_GENERIC)
                 UpdateAddressSpace(*pt, addrSpaceMap, convertedStructsCache);
             }
           }
@@ -528,10 +528,10 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
 
   std::map<unsigned, unsigned> addrSpaceMapUp;
 
-  addrSpaceMapUp[POCL_ADDRESS_SPACE_GLOBAL] = POCL_AS_FAKE_GLOBAL;
-  addrSpaceMapUp[POCL_ADDRESS_SPACE_LOCAL] = POCL_AS_FAKE_LOCAL;
-  addrSpaceMapUp[POCL_ADDRESS_SPACE_GENERIC] = POCL_AS_FAKE_GENERIC;
-  addrSpaceMapUp[POCL_ADDRESS_SPACE_CONSTANT] = POCL_AS_FAKE_CONSTANT;
+  addrSpaceMapUp[POCL_FAKE_AS_GLOBAL] = POCL_AS_FAKE_GLOBAL;
+  addrSpaceMapUp[POCL_FAKE_AS_LOCAL] = POCL_AS_FAKE_LOCAL;
+  addrSpaceMapUp[POCL_FAKE_AS_GENERIC] = POCL_AS_FAKE_GENERIC;
+  addrSpaceMapUp[POCL_FAKE_AS_CONSTANT] = POCL_AS_FAKE_CONSTANT;
 
   run(M, addrSpaceMapUp, true);
 
