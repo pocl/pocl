@@ -24,7 +24,7 @@
 #include "pocl_cl.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
-POname(clUnloadPlatformCompiler)(void)
+POname(clUnloadPlatformCompiler)(cl_platform_id platform)
 CL_API_SUFFIX__VERSION_1_2
 {
   return CL_SUCCESS;
