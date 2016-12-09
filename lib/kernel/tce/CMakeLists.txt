@@ -42,7 +42,7 @@ separate_arguments(TCE_TARGET_CLANG_FLAGS)
 set(CLANG_FLAGS ${TCE_TARGET_CLANG_FLAGS} "-emit-llvm" "-ffp-contract=off" "-target" "tce-tut-llvm" "-isystem" "${TCE_PREFIX}/tce-llvm/include")
 
 if(POCL_USE_FAKE_ADDR_SPACE_IDS)
-list(APPEND CLANG_FLAGS "-Xclang" "-ffake-address-space-map")
+list(APPEND CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-DPOCL_USE_FAKE_ADDR_SPACE_IDS")
 endif()
 
 #LLC_FLAGS   = @TARGET_LLC_FLAGS@
