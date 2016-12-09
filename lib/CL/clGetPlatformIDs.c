@@ -137,7 +137,7 @@ struct _cl_icd_dispatch pocl_dispatch = {
   NULL, /* &POclCreateProgramWithBuiltInKernels, */
   NULL, /* &POclCompileProgram,          */
   NULL, /* &POclLinkProgram,             */
-  NULL, /* &POclUnloadPlatformCompiler,  */
+  &POclUnloadPlatformCompiler, 
   &POclGetKernelArgInfo,
   &POclEnqueueFillBuffer,
   &POclEnqueueFillImage,
