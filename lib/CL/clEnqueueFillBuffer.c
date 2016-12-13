@@ -46,9 +46,6 @@ CL_API_SUFFIX__VERSION_1_2
   POCL_RETURN_ERROR_ON((buffer->type != CL_MEM_OBJECT_BUFFER), CL_INVALID_MEM_OBJECT,
                        "buffer is not a CL_MEM_OBJECT_BUFFER\n");
 
-  POCL_RETURN_ERROR_ON((buffer->flags & CL_MEM_READ_ONLY), CL_INVALID_MEM_OBJECT,
-                       "buffer is CL_MEM_READ_ONLY\n");
-
   POCL_RETURN_ERROR_ON((command_queue->context != buffer->context), CL_INVALID_CONTEXT,
                        "buffer and command_queue are not from the same context\n");
 
