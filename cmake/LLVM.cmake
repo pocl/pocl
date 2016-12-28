@@ -188,6 +188,12 @@ endif()
 #LLVM_CXX_FLAGS=$($LLVM_CONFIG --cxxflags | sed -e 's/ -pedantic / /g')
 string(REPLACE " -pedantic" "" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
 
+#llvm-config clutters CXXFLAGS with a lot of -W<whatever> flags.
+#(They are not needed - we want to use -Wall anyways)
+#This is a problem if LLVM was built with a different compiler than we use here,
+#and our compiler chokes on unrecognized command-line options.
+string(REGEX REPLACE "-W[^ ]*" "" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
+
 # Llvm-config does not include clang libs
 set(CLANG_LIBNAMES clangFrontendTool clangFrontend clangDriver clangSerialization
     clangCodeGen clangParse clangSema clangRewrite clangRewriteFrontend
