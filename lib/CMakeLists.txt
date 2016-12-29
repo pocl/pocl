@@ -38,7 +38,7 @@ add_subdirectory("CL")
 # must be after adding lib/CL subdir b/c of libpocl target,
 # but before poclu & examples & tests (they need these variables)
 
-if(TESTS_USE_ICD)
+if(ENABLE_ICD)
 
   # -pthread makes gdb happier when debugging tests
   set(OPENCL_LIBS "${PTHREAD_LDFLAGS};${OPENCL_LIBRARIES}")
