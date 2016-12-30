@@ -623,6 +623,11 @@ if(LLC_TRIPLE MATCHES "^arm")
     set(DEFAULT_HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} -mfloat-abi=soft")
     set(DEFAULT_HOST_AS_FLAGS "${DEFAULT_HOST_AS_FLAGS} -mfloat-abi=soft")
   endif()
+  #This is very much a Q&D solution. We assume every modern ARM out there
+  #has the vfp4 floating point unit.
+  #This used to be implicitly assumed in clang < 3.9. With 3.9, we have to pass
+  #this flag, or intrinsics in vecmathlib are not defined.
+  set(DEFAULT_HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} -mfpu=vfp4")
 endif()
 
 if(CL_DISABLE_LONG)
