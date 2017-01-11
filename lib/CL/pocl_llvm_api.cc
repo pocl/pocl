@@ -1061,7 +1061,7 @@ char* get_cpu_name() {
   StringRef r = llvm::sys::getHostCPUName();
 #endif
 
-#ifdef LLVM_OLDER_THAN_3_9
+#ifdef LLVM_3_8
   // https://github.com/pocl/pocl/issues/413
   if (r.str() == "skylake")
   {
