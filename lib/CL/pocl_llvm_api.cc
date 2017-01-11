@@ -853,6 +853,12 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 
 char* get_cpu_name() {
   StringRef r = llvm::sys::getHostCPUName();
+#ifdef LLVM_OLDER_THAN_3_9
+  if (r.str() == "skylake")
+  {
+    r = llvm::StringRef("haswell");
+  }
+#endif
   assert(r.size() > 0);
   char* cpu_name = (char*) malloc (r.size()+1);
   strncpy(cpu_name, r.data(), r.size());
