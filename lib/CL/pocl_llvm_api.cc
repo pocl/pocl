@@ -1113,6 +1113,15 @@ char* get_cpu_name() {
 #else
   StringRef r = llvm::sys::getHostCPUName();
 #endif
+
+#ifdef LLVM_3_8
+  // https://github.com/pocl/pocl/issues/413
+  if (r.str() == "skylake")
+  {
+    r = llvm::StringRef("haswell");
+  }
+#endif
+
   assert(r.size() > 0);
   char* cpu_name = (char*) malloc (r.size()+1);
   strncpy(cpu_name, r.data(), r.size());
