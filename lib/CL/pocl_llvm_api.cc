@@ -1116,8 +1116,7 @@ char* get_cpu_name() {
 
 #ifdef LLVM_3_8
   // https://github.com/pocl/pocl/issues/413
-  if (r.str() == "skylake")
-  {
+  if (r.str() == "skylake") {
     r = llvm::StringRef("haswell");
   }
 #endif
