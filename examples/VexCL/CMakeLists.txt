@@ -28,8 +28,12 @@ set(TS_BASEDIR "${TESTSUITE_BASEDIR}/${TS_NAME}")
 set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build")
 set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
 
-if(HAVE_GIT)
+if(HAVE_GIT==false)
+  message(STATUS "Disabling testsuite ${TS_NAME}, requires git to checkout sources")
+elseif(NOT TESTS_USE_ICD)
+  message(STATUS "Disabling testsuite ${TS_NAME}, requires ocl-icd")
 
+else()
 message(STATUS "Enabling testsuite ${TS_NAME}")
 list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
 set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
@@ -114,6 +118,4 @@ set_tests_properties(vexcl_boost_version vexcl_types vexcl_deduce
   PROPERTIES
     LABELS "VexCL")
 
-else()
-  message(STATUS "Disabling testsuite ${TS_NAME}, requires git to checkout sources")
 endif()
