@@ -471,9 +471,9 @@ pocl_exec_command (_cl_command_node * volatile node)
          node->command.memfill.offset,
          node->command.memfill.pattern,
          node->command.memfill.pattern_size);
-      POCL_MEM_FREE(node->command.memfill.pattern);
       POCL_UPDATE_EVENT_COMPLETE(event);
       POCL_DEBUG_EVENT_TIME(event, "Fill Buffer           ");
+      pocl_aligned_free(node->command.memfill.pattern);
       break;
     case CL_COMMAND_MARKER:
       POCL_UPDATE_EVENT_RUNNING(event);
