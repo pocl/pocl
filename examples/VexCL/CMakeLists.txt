@@ -28,7 +28,7 @@ set(TS_BASEDIR "${TESTSUITE_BASEDIR}/${TS_NAME}")
 set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build")
 set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
 
-if(HAVE_GIT==false)
+if(NOT HAVE_GIT)
   message(STATUS "Disabling testsuite ${TS_NAME}, requires git to checkout sources")
 elseif(NOT TESTS_USE_ICD)
   message(STATUS "Disabling testsuite ${TS_NAME}, requires ocl-icd")
