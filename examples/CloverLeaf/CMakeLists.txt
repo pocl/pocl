@@ -39,10 +39,11 @@ endif()
 find_program(MPI_F90 mpif90)
 find_program(MPI_CC  mpicc)
 find_program(MPI_CXX  mpiCC)
+find_program(GFORTRAN gfortran)
 find_library(MPI_LIB mpi_cxx ${EXTRA_LIB_HINTS})
 
 if(HAVE_GIT)
-if (MPI_F90 AND MPI_CC AND MPI_CXX AND MPI_LIB)
+if (MPI_F90 AND MPI_CC AND MPI_CXX AND MPI_LIB AND GFORTRAN)
 
   message(STATUS "Enabling testsuite ${TS_NAME}")
   list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")

@@ -30,9 +30,14 @@ set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
 
 find_package(Boost 1.44 QUIET)
 
-if(HAVE_GIT)
-if(Boost_FOUND)
+if(NOT HAVE_GIT)
+  message(STATUS "Disabling testsuite ${TS_NAME}, requires git to checkout sources")
+elseif(NOT Boost_FOUND)
+  message(STATUS "Disabling testsuite ${TS_NAME}, required Boost version not found" )
+elseif(NOT TESTS_USE_ICD)
+  message(STATUS "Disabling testsuite ${TS_NAME}, requires ocl-icd" )
 
+else()
   message(STATUS "Enabling testsuite ${TS_NAME}")
   list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
   set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
@@ -261,10 +266,4 @@ if(Boost_FOUND)
       LABELS "${TS_NAME}"
       ENVIRONMENT "LD_LIBRARY_PATH=${TS_BUILDDIR}/library")
 
-else()
-  message(STATUS "Disabling testsuite ${TS_NAME}, required Boost version not found" )
-endif()
-
-else()
-  message(STATUS "Disabling testsuite ${TS_NAME}, requires git to checkout sources")
 endif()
