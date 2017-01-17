@@ -239,11 +239,11 @@ int pocl_llvm_build_program(cl_program program,
   // Use CompilerInvocation::CreateFromArgs to initialize
   // CompilerInvocation. This way we can reuse the Clang's
   // command line parsing.
-  llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diagID = 
+  llvm::IntrusiveRefCntPtr<clang::DiagnosticIDs> diagID =
     new clang::DiagnosticIDs();
-  llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagOpts = 
+  llvm::IntrusiveRefCntPtr<clang::DiagnosticOptions> diagOpts =
     new clang::DiagnosticOptions();
-  clang::TextDiagnosticBuffer *diagsBuffer = 
+  clang::TextDiagnosticBuffer *diagsBuffer =
     new clang::TextDiagnosticBuffer();
 
   clang::DiagnosticsEngine diags(diagID, &*diagOpts, diagsBuffer);
@@ -335,7 +335,7 @@ int pocl_llvm_build_program(cl_program program,
   if (device->llvm_cpu != NULL)
     ss << "-target-cpu " << device->llvm_cpu << " ";
 
-  POCL_MSG_PRINT_INFO("all build options: %s.\n", ss.str().c_str());
+  POCL_MSG_PRINT_INFO("all build options: %s\n", ss.str().c_str());
 
   std::istream_iterator<std::string> begin(ss);
   std::istream_iterator<std::string> end;

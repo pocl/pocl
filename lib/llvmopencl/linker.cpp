@@ -1,5 +1,5 @@
 /*
-   Lightweight linker to replace
+   Lightweight bitcode linker to replace
    llvm::Linker. Unlike the LLVM default linker, this
    does not link in the entire given module, only
    the called functions are cloned from the input.
@@ -151,71 +151,75 @@ CloneFuncFixOpenCLImageT(llvm::Module *Mod, llvm::Function *F)
     return DstFunc;
 }
 
-/* Find all functions in the calltree of F, append their
- * name to list.
- */
+// Find all functions in the calltree of F, append their
+// name to list.
 static inline void
-find_called_functions(llvm::Function *            F,
+find_called_functions(llvm::Function *F,
                       std::list<llvm::StringRef> &list)
 {
-    llvm::Function::iterator fi,fe;
-    for (fi=F->begin(), fe=F->end();
-         fi != fe;
-         fi++) {
-        llvm::BasicBlock::iterator bi,be;
-        for (bi=fi->begin(), be=fi->end();
-             bi != be;
-             bi++) {
-            CallInst *CI=dyn_cast<CallInst>(bi);
-            if (CI == NULL)
-                continue;
-            llvm::Function *callee=CI->getCalledFunction();
-            // this happens with e.g. inline asm calls
-            if (callee == NULL)
-                continue;
-            DB_PRINT("search: %s calls %s\n",
-                     F->getName().data(), callee->getName().data());
-            if (find_from_list(callee->getName(), list))
-                continue;
-            else {
-                list.push_back(callee->getName());
-                DB_PRINT("search: recursing into %s\n",
-                         callee->getName().data());
-                find_called_functions(callee, list);
-            }
-        }
+  if (F->isDeclaration()) {
+    DB_PRINT("it's a declaration.\n");
+    return;
+  }
+  llvm::Function::iterator fi,fe;
+  for (fi = F->begin(), fe = F->end();
+       fi != fe; fi++) {
+    llvm::BasicBlock::iterator bi, be;
+    for (bi = fi->begin(), be = fi->end();
+         bi != be;
+         bi++) {
+      CallInst *CI = dyn_cast<CallInst>(bi);
+      if (CI == NULL)
+        continue;
+      llvm::Function *callee = CI->getCalledFunction();
+      // this happens with e.g. inline asm calls
+      if (callee == NULL) {
+        DB_PRINT("search: %s callee NULL\n", F->getName().str().c_str());
+        continue;
+      }
+      DB_PRINT("search: %s calls %s\n",
+               F->getName().data(), callee->getName().data());
+      if (find_from_list(callee->getName(), list))
+        continue;
+      else {
+        list.push_back(callee->getName());
+        DB_PRINT("search: recursing into %s\n",
+                 callee->getName().data());
+        find_called_functions(callee, list);
+      }
     }
+  }
 }
 
 // Copies one function from one module to another
 // does not inspect it for callgraphs
 static void
-CopyFunc( const llvm::StringRef Name,
-          const llvm::Module *  From,
-          llvm::Module *        To,
-          ValueToValueMapTy &   VVMap)
-{
-    llvm::Function *SrcFunc=From->getFunction(Name);
+CopyFunc(const llvm::StringRef Name,
+         const llvm::Module *  From,
+         llvm::Module *        To,
+         ValueToValueMapTy &   VVMap) {
+
+    llvm::Function *SrcFunc = From->getFunction(Name);
     // TODO: is this the linker error "not found", and not an assert?
     assert(SrcFunc && "Did not find function to copy in kernel library");
-    llvm::Function *DstFunc=To->getFunction(Name);
+    llvm::Function *DstFunc = To->getFunction(Name);
 
     if (DstFunc == NULL) {
         DB_PRINT("   %s not found in destination module, creating\n",
                  Name.data());
-        DstFunc=
-            Function::Create(cast<FunctionType>(
-                                 SrcFunc->getType()->getElementType()),
-                             SrcFunc->getLinkage(),
-                             SrcFunc->getName(),
-                             To);
+        DstFunc =
+          Function::Create(cast<FunctionType>(
+                             SrcFunc->getType()->getElementType()),
+                           SrcFunc->getLinkage(),
+                           SrcFunc->getName(),
+                           To);
         DstFunc->copyAttributesFrom(SrcFunc);
     }
-    VVMap[SrcFunc]=DstFunc;
+    VVMap[SrcFunc] = DstFunc;
 
-    Function::arg_iterator j=DstFunc->arg_begin();
-    for (Function::const_arg_iterator i=SrcFunc->arg_begin(),
-         e=SrcFunc->arg_end();
+    Function::arg_iterator j = DstFunc->arg_begin();
+    for (Function::const_arg_iterator i = SrcFunc->arg_begin(),
+         e = SrcFunc->arg_end();
          i != e; ++i) {
         j->setName(i->getName());
         VVMap[&*i] = &*j;
@@ -237,29 +241,32 @@ CopyFunc( const llvm::StringRef Name,
  * 'vvm'.
  */
 static void
-copy_func_callgraph( const llvm::StringRef func_name,
-                     const llvm::Module *  from,
-                     llvm::Module *        to,
-                     ValueToValueMapTy &   vvm)
+copy_func_callgraph(const llvm::StringRef func_name,
+                    const llvm::Module *  from,
+                    llvm::Module *        to,
+                    ValueToValueMapTy &   vvm)
 {
     std::list<llvm::StringRef> callees;
-    llvm::Function *rootfunc=from->getFunction(func_name);
+    llvm::Function *rootfunc = from->getFunction(func_name);
     if (rootfunc == NULL)
-        return;
+      return;
     DB_PRINT("copying function %s with callgraph\n", func_name.data());
 
     find_called_functions(rootfunc, callees);
 
-    // Fisrt copy the callees of func, then the function itself.
+    // First copy the callees of func, then the function itself.
     // Recurse into callees to handle the case where kernel library
     // functions call other kernel library functions.
     std::list<llvm::StringRef>::iterator ci,ce;
-    for (ci=callees.begin(), ce=callees.end();
+    for (ci = callees.begin(), ce = callees.end();
          ci != ce;
          ci++) {
-        llvm::Function *SrcFunc=from->getFunction(*ci);
+        llvm::Function *SrcFunc = from->getFunction(*ci);
         if (!SrcFunc->isDeclaration()) {
-            copy_func_callgraph(*ci,from, to, vvm);
+          copy_func_callgraph(*ci, from, to, vvm);
+        } else {
+          DB_PRINT("%s is declaration, not recursing into it!\n",
+                   SrcFunc->getName().str().c_str());
         }
         CopyFunc(*ci, from, to, vvm);
     }
@@ -281,35 +288,35 @@ stringref_cmp(llvm::StringRef a, llvm::StringRef b)
 void
 link(llvm::Module *krn, const llvm::Module *lib)
 {
-    assert(krn);
-    assert(lib);
-    ValueToValueMapTy vvm;
-    std::list<llvm::StringRef> declared;
+  assert(krn);
+  assert(lib);
+  ValueToValueMapTy vvm;
+  std::list<llvm::StringRef> declared;
 
-    llvm::Module::iterator fi,fe;
+  llvm::Module::iterator fi,fe;
 
-    // Find and fix opencl.imageX_t arguments
-    for (fi=krn->begin(), fe=krn->end();
-         fi != fe;
-         fi++) {
-        llvm::Function *f = &*fi;
-        if (f->isDeclaration())
-            continue;
-        // need to restart iteration if we replace a function
-        if (CloneFuncFixOpenCLImageT(krn, f) != f) {
-            fi = krn->begin();
-        }
+  // Find and fix opencl.imageX_t arguments
+  for (fi = krn->begin(), fe = krn->end();
+       fi != fe;
+       fi++) {
+    llvm::Function *f = &*fi;
+    if (f->isDeclaration())
+      continue;
+    // need to restart iteration if we replace a function
+    if (CloneFuncFixOpenCLImageT(krn, f) != f) {
+      fi = krn->begin();
     }
+  }
 
-    // Inspect the kernel, find undefined functions
-    for (fi=krn->begin(), fe=krn->end();
-         fi != fe;
-         fi++) {
-        if ((*fi).isDeclaration()) {
-            DB_PRINT("%s is not defined\n", fi->getName().data());
-            declared.push_back(fi->getName());
-            continue;
-        }
+  // Inspect the kernel, find undefined functions
+  for (fi=krn->begin(), fe=krn->end();
+       fi != fe;
+       fi++) {
+    if ((*fi).isDeclaration()) {
+      DB_PRINT("%s is not defined\n", fi->getName().data());
+      declared.push_back(fi->getName());
+      continue;
+    }
 
         // Find all functions the kernel source calls
         // TODO: is there no direct way?
@@ -342,10 +349,9 @@ link(llvm::Module *krn, const llvm::Module *lib)
     // For each undefined function in krn, clone it from the lib to the krn module,
     // if found in lib
     std::list<llvm::StringRef>::iterator di,de;
-    for (di=declared.begin(), de=declared.end();
-         di != de;
-         di++) {
-        copy_func_callgraph( *di, lib, krn, vvm);
+    for (di = declared.begin(), de = declared.end();
+         di != de; di++) {
+        copy_func_callgraph(*di, lib, krn, vvm);
     }
 
     // copy any aliases to krn

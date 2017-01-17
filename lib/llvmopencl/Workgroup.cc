@@ -1,19 +1,19 @@
 // LLVM module pass to create the single function (fully inlined)
 // and parallelized kernel for an OpenCL workgroup.
-// 
+//
 // Copyright (c) 2011 Universidad Rey Juan Carlos
 //               2012-2015 Pekka Jääskeläinen
-// 
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -81,8 +81,6 @@ static void privatizeContext(Module &M, Function *F);
 static void createWorkgroup(Module &M, Function *F);
 static void createWorkgroupFast(Module &M, Function *F);
 
-// extern cl::opt<string> Header;
-
 /* The kernel to process in this kernel compiler launch. */
 cl::opt<string>
 KernelName("kernel",
@@ -93,7 +91,7 @@ KernelName("kernel",
 namespace llvm {
 
   typedef struct _pocl_context PoclContext;
-  
+
   template<bool xcompile> class TypeBuilder<PoclContext, xcompile> {
   public:
     static StructType *get(LLVMContext &Context) {
@@ -145,14 +143,13 @@ namespace llvm {
     };
   private:
     static int size_t_width;
-    
-  };  
+  };
 
-  template<bool xcompile>  
+  template<bool xcompile>
   int TypeBuilder<PoclContext, xcompile>::size_t_width = 0;
 
 }  // namespace llvm
-  
+
 char Workgroup::ID = 0;
 static RegisterPass<Workgroup> X("workgroup", "Workgroup creation pass");
 
@@ -171,7 +168,7 @@ Workgroup::runOnModule(Module &M)
     assert (false && "Target has an unsupported pointer width.");
     break;
   }
-  
+
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     if (!i->isDeclaration())
       i->setLinkage(Function::InternalLinkage);
@@ -185,7 +182,7 @@ Workgroup::runOnModule(Module &M)
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     if (!isKernelToProcess(*i)) continue;
     Function *L = createLauncher(M, &*i);
-      
+
     L->addFnAttr(Attribute::NoInline);
 
     privatizeContext(M, L);
@@ -201,10 +198,9 @@ Workgroup::runOnModule(Module &M)
   if (currentPoclDevice->spmd) {
     regenerate_kernel_metadata(M, kernels);
 
-    /* Delete the old kernels. */
+    // Delete the old kernels.
     for (FunctionMapping::const_iterator i = kernels.begin(),
-           e = kernels.end(); i != e; ++i) 
-      {
+           e = kernels.end(); i != e; ++i) {
         Function *old_kernel = (*i).first;
         Function *new_kernel = (*i).second;
         if (old_kernel == new_kernel) continue;
@@ -212,7 +208,7 @@ Workgroup::runOnModule(Module &M)
       }
   }
 
-  Function *barrier = cast<Function> 
+  Function *barrier = cast<Function>
     (M.getOrInsertFunction(BARRIER_FUNCTION_NAME,
                            Type::getVoidTy(M.getContext()),
                            NULL));
@@ -263,23 +259,23 @@ static void addGEPs(llvm::Module &M,
 
 
 static Function *
-createLauncher(Module &M, Function *F)
-{
+createLauncher(Module &M, Function *F) {
+
   SmallVector<Type *, 8> sv;
 
   for (Function::const_arg_iterator i = F->arg_begin(), e = F->arg_end();
        i != e; ++i)
     sv.push_back (i->getType());
   if (currentPoclDevice->spmd) {
-    PointerType* g_pc_ptr = PointerType::get(TypeBuilder<PoclContext, true>::get(M.getContext()), 1);
+    PointerType* g_pc_ptr =
+      PointerType::get(TypeBuilder<PoclContext, true>::get(M.getContext()), 1);
     sv.push_back(g_pc_ptr);
-  }
-  else
+  } else
     sv.push_back(TypeBuilder<PoclContext*, true>::get(M.getContext()));
 
   FunctionType *ft = FunctionType::get(Type::getVoidTy(M.getContext()),
-				       ArrayRef<Type *> (sv),
-				       false);
+                                       ArrayRef<Type *> (sv),
+                                       false);
 
   std::string funcName = "";
   funcName = F->getName().str();
@@ -291,8 +287,7 @@ createLauncher(Module &M, Function *F)
                          Function::ExternalLinkage,
                          funcName,
                          &M);
-  }
-  else
+  } else
     L = Function::Create(ft,
                          Function::ExternalLinkage,
                          "_pocl_launcher_" + funcName,
@@ -300,15 +295,14 @@ createLauncher(Module &M, Function *F)
 
   SmallVector<Value *, 8> arguments;
   Function::arg_iterator ai = L->arg_begin();
-  for (unsigned i = 0, e = F->getArgumentList().size(); i != e; ++i)  {
+  for (unsigned i = 0, e = F->getArgumentList().size(); i != e; ++i) {
     arguments.push_back(&*ai);
     ++ai;
-  }  
+  }
 
-  /* Copy the function attributes to transfer noalias etc. from the
-     original kernel which will be inlined into the launcher. */
+  // Copy the function attributes to transfer noalias etc. from the
+  // original kernel which will be inlined into the launcher.
   L->setAttributes(F->getAttributes());
-
 
   IRBuilder<> builder(BasicBlock::Create(M.getContext(), "", L));
 
@@ -316,10 +310,12 @@ createLauncher(Module &M, Function *F)
   if (gv != NULL) {
     Value *ptr;
 #ifdef LLVM_OLDER_THAN_3_7
-    ptr = builder.CreateStructGEP(ai, TypeBuilder<PoclContext, true>::WORK_DIM);
+    ptr =
+      builder.CreateStructGEP(ai, TypeBuilder<PoclContext, true>::WORK_DIM);
 #else
-    ptr = builder.CreateStructGEP(ai->getType()->getPointerElementType(), &*ai,
-                                TypeBuilder<PoclContext, true>::WORK_DIM);
+    ptr =
+      builder.CreateStructGEP(ai->getType()->getPointerElementType(), &*ai,
+                              TypeBuilder<PoclContext, true>::WORK_DIM);
 #endif
     Value *v = builder.CreateLoad(builder.CreateConstGEP1_32(ptr, 0));
     builder.CreateStore(v, gv);
@@ -341,7 +337,7 @@ createLauncher(Module &M, Function *F)
   if (WGDynamicLocalSize) {
     addGEPs(M, builder, a, size_t_width, TypeBuilder<PoclContext, true>::LOCAL_SIZE,
             "_local_size_%c");
-    }
+  }
 
   addGEPs(M, builder, a, size_t_width, TypeBuilder<PoclContext, true>::NUM_GROUPS,
           "_num_groups_%c");
@@ -355,7 +351,7 @@ createLauncher(Module &M, Function *F)
 
   InlineFunctionInfo IFI;
   InlineFunction(c, IFI);
-  
+
   return L;
 }
 
@@ -541,7 +537,7 @@ createWorkgroup(Module &M, Function *F)
   }
 
   arguments.back() = &*(++ai);
-  
+
   builder.CreateCall(F, ArrayRef<Value*>(arguments));
   builder.CreateRetVoid();
 }
