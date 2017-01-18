@@ -74,104 +74,282 @@ main(void){
   cl_context context = clCreateContext(NULL, num_devices, devices, NULL, NULL, &err);
   CHECK_OPENCL_ERROR_IN("clCreateContext");
 
-  size_t kernel_size = strlen(kernel);
-  const char* kernel_buffer = kernel;
+  /* TEST 1: Dummy kernel includes another kernel */
+  {
+      size_t kernel_size = strlen(kernel);
+      const char* kernel_buffer = kernel;
 
-  program = clCreateProgramWithSource(context, 1, (const char**)&kernel_buffer, 
-                                     &kernel_size, &err);
-  //clCreateProgramWithSource for the kernel with #include failed
-  CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
+      program = clCreateProgramWithSource(context, 1, (const char**)&kernel_buffer,
+                                         &kernel_size, &err);
+      //clCreateProgramWithSource for the kernel with #include failed
+      CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
 
-  CHECK_CL_ERROR(clBuildProgram(program, num_devices, devices,
-     "-D__FUNC__=helper_func -I./test_data", NULL, NULL));
+      CHECK_CL_ERROR(clBuildProgram(program, num_devices, devices,
+         "-D__FUNC__=helper_func -I./test_data", NULL, NULL));
 
-  CHECK_CL_ERROR(clReleaseProgram(program));
+      CHECK_CL_ERROR(clReleaseProgram(program));
+  }
+  /* TEST 2: invalid kernel */
+  {
+      size_t kernel_size = strlen(invalid_kernel);
+      const char* kernel_buffer = invalid_kernel;
 
-  kernel_size = strlen(invalid_kernel);
-  kernel_buffer = invalid_kernel;
+      program = clCreateProgramWithSource(context, 1, (const char**)&kernel_buffer,
+                          &kernel_size, &err);
+      //clCreateProgramWithSource for invalid kernel failed
+      CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
 
-  program = clCreateProgramWithSource(context, 1, (const char**)&kernel_buffer,
-				      &kernel_size, &err);
-  //clCreateProgramWithSource for invalid kernel failed
-  CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
+      err = clBuildProgram(program, num_devices, devices, NULL, NULL, NULL);
+      TEST_ASSERT(err == CL_BUILD_PROGRAM_FAILURE);
 
-  err = clBuildProgram(program, num_devices, devices, NULL, NULL, NULL);
-  TEST_ASSERT(err == CL_BUILD_PROGRAM_FAILURE);
+      CHECK_CL_ERROR(clReleaseProgram(program));
+  }
 
-  CHECK_CL_ERROR(clReleaseProgram(program));
+  /* TEST 3: preprocess fail kernel with invalid build option */
+  {
+      size_t kernel_size = strlen(preprocess_fail);
+      const char* kernel_buffer = preprocess_fail;
 
-  kernel_size = strlen(preprocess_fail);
-  kernel_buffer = preprocess_fail;
+      program = clCreateProgramWithSource(context, 1, (const char**)&kernel_buffer,
+                          &kernel_size, &err);
+      //clCreateProgramWithSource for invalid kernel failed
+      CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
 
-  program = clCreateProgramWithSource(context, 1, (const char**)&kernel_buffer,
-				      &kernel_size, &err);
-  //clCreateProgramWithSource for invalid kernel failed
-  CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
+      err = clBuildProgram(program, num_devices, devices, invalid_build_option, NULL, NULL);
+      TEST_ASSERT(err == CL_INVALID_BUILD_OPTIONS);
 
-  err = clBuildProgram(program, num_devices, devices, invalid_build_option, NULL, NULL);
-  TEST_ASSERT(err == CL_INVALID_BUILD_OPTIONS);
+      for (i = 0; i < num_devices; ++i) {
+              size_t log_size = 0;
+              CHECK_CL_ERROR(clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
+                      0, NULL, &log_size));
+              char *log = malloc(log_size);
+              CHECK_CL_ERROR(clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
+                      log_size, log, NULL));
+              log[log_size] = '\0';
+              fprintf(stderr, "preprocess failure log[%u]: %s\n", i, log);
+              free(log);
+      }
+      /*Lets not release the program as we need it in the next test case*/
+      /*CHECK_CL_ERROR(clReleaseProgram(program));*/
+  }
 
-  for (i = 0; i < num_devices; ++i) {
+  /* TEST 4: preprocess fail kernel with valid build option */
+  {
+      err = clBuildProgram(program, num_devices, devices, NULL, NULL, NULL);
+      TEST_ASSERT(err == CL_BUILD_PROGRAM_FAILURE);
+
+      for (i = 0; i < num_devices; ++i) {
           size_t log_size = 0;
-          CHECK_CL_ERROR(clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
-                  0, NULL, &log_size));
+          err = clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
+              0, NULL, &log_size);
+          CHECK_OPENCL_ERROR_IN("get build log size");
           char *log = malloc(log_size);
-          CHECK_CL_ERROR(clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
-                  log_size, log, NULL));
+          err = clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
+              log_size, log, NULL);
+          CHECK_OPENCL_ERROR_IN("get build log");
           log[log_size] = '\0';
           fprintf(stderr, "preprocess failure log[%u]: %s\n", i, log);
+          free(log);
+      }
+
+      CHECK_CL_ERROR(clReleaseProgram(program));
   }
-
-  err = clBuildProgram(program, num_devices, devices, NULL, NULL, NULL);
-  TEST_ASSERT(err == CL_BUILD_PROGRAM_FAILURE);
-
-  for (i = 0; i < num_devices; ++i) {
-	  size_t log_size = 0;
-	  err = clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
-		  0, NULL, &log_size);
-	  CHECK_OPENCL_ERROR_IN("get build log size");
-	  char *log = malloc(log_size);
-	  err = clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
-		  log_size, log, NULL);
-	  CHECK_OPENCL_ERROR_IN("get build log");
-	  log[log_size] = '\0';
-	  fprintf(stderr, "preprocess failure log[%u]: %s\n", i, log);
-  }
-
-  CHECK_CL_ERROR(clReleaseProgram(program));
 
   /* Test the possibility to call a kernel 'init'.
    * Due to the delayed linking in current pocl, this will succeed even if it
    * would fail at link time. Force linking by issuing the kernel once.
    */
 
-  kernel_size = strlen(valid_kernel);
-  kernel_buffer = valid_kernel;
+  /* TEST 5: valid kernel */
+  {
+      size_t kernel_size = strlen(valid_kernel);
+      const char* kernel_buffer = valid_kernel;
 
-  program = clCreateProgramWithSource(context, 1, (const char**)&kernel_buffer,
-				      &kernel_size, &err);
-  CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
+      program = clCreateProgramWithSource(context, 1, (const char**)&kernel_buffer,
+                          &kernel_size, &err);
+      CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
 
-  CHECK_CL_ERROR(clBuildProgram(program, num_devices, devices, NULL, NULL, NULL));
+      CHECK_CL_ERROR(clBuildProgram(program, num_devices, devices, NULL, NULL, NULL));
 
-  /* TODO FIXME: from here to the clFinish() should be removed once
-   * delayed linking is disabled/removed in pocl, probably
-   */
-  cl_command_queue q = clCreateCommandQueue(context, devices[0], 0, &err);
-  CHECK_OPENCL_ERROR_IN("clCreateCommandQueue");
-  cl_kernel k = clCreateKernel(program, "init", &err);
-  CHECK_OPENCL_ERROR_IN("clCreateKernel");
+      /* TODO FIXME: from here to the clFinish() should be removed once
+       * delayed linking is disabled/removed in pocl, probably
+       */
+      cl_command_queue q = clCreateCommandQueue(context, devices[0], 0, &err);
+      CHECK_OPENCL_ERROR_IN("clCreateCommandQueue");
+      cl_kernel k = clCreateKernel(program, "init", &err);
+      CHECK_OPENCL_ERROR_IN("clCreateKernel");
 
-  CHECK_CL_ERROR(clSetKernelArg(k, 0, sizeof(cl_mem), NULL));
-  size_t gws[] = {1};
-  CHECK_CL_ERROR(clEnqueueNDRangeKernel(q, k, 1, NULL, gws, NULL, 0, NULL, NULL));
-  CHECK_CL_ERROR(clFinish(q));
+      CHECK_CL_ERROR(clSetKernelArg(k, 0, sizeof(cl_mem), NULL));
+      size_t gws[] = {1};
+      CHECK_CL_ERROR(clEnqueueNDRangeKernel(q, k, 1, NULL, gws, NULL, 0, NULL, NULL));
+      CHECK_CL_ERROR(clFinish(q));
 
-  CHECK_CL_ERROR(clReleaseCommandQueue(q));
-  CHECK_CL_ERROR(clReleaseKernel(k));
-  CHECK_CL_ERROR(clReleaseProgram(program));
+      CHECK_CL_ERROR(clReleaseCommandQueue(q));
+      CHECK_CL_ERROR(clReleaseKernel(k));
+      CHECK_CL_ERROR(clReleaseProgram(program));
+  }
 
-  // macro test
+  /* TEST 6: valid kernel with Compile option -Werror */
+  {
+      size_t  kernel_size = strlen(valid_kernel);
+      const char* kernel_buffer = valid_kernel;
+
+      program = clCreateProgramWithSource(context, 1, (const char**)&kernel_buffer,
+                          &kernel_size, &err);
+      CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
+
+      CHECK_CL_ERROR(clBuildProgram(program, num_devices, devices, "-Werror", NULL, NULL));
+
+      /* TODO FIXME: from here to the clFinish() should be removed once
+       * delayed linking is disabled/removed in pocl, probably
+       */
+      cl_command_queue q = clCreateCommandQueue(context, devices[0], 0, &err);
+      CHECK_OPENCL_ERROR_IN("clCreateCommandQueue");
+      cl_kernel k = clCreateKernel(program, "init", &err);
+      CHECK_OPENCL_ERROR_IN("clCreateKernel");
+
+      CHECK_CL_ERROR(clSetKernelArg(k, 0, sizeof(cl_mem), NULL));
+      size_t gws[] = {1};
+      CHECK_CL_ERROR(clEnqueueNDRangeKernel(q, k, 1, NULL, gws, NULL, 0, NULL, NULL));
+      CHECK_CL_ERROR(clFinish(q));
+
+      CHECK_CL_ERROR(clReleaseCommandQueue(q));
+      CHECK_CL_ERROR(clReleaseKernel(k));
+      CHECK_CL_ERROR(clReleaseProgram(program));
+  }
+
+  /* TEST 7: valid kernel with Compile option -cl-strict-aliasing (deprecated after OCL1.0) */
+  {
+      size_t kernel_size = strlen(valid_kernel);
+      const char* kernel_buffer = valid_kernel;
+
+      program = clCreateProgramWithSource(context, 1, (const char**)&kernel_buffer,
+                                          &kernel_size, &err);
+      CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
+
+      CHECK_CL_ERROR(clBuildProgram(program, num_devices, devices, "-cl-strict-aliasing", NULL, NULL));
+
+      /* TODO FIXME: from here to the clFinish() should be removed once
+       * delayed linking is disabled/removed in pocl, probably
+       */
+      cl_command_queue q = clCreateCommandQueue(context, devices[0], 0, &err);
+      CHECK_OPENCL_ERROR_IN("clCreateCommandQueue");
+      cl_kernel k = clCreateKernel(program, "init", &err);
+      CHECK_OPENCL_ERROR_IN("clCreateKernel");
+
+      CHECK_CL_ERROR(clSetKernelArg(k, 0, sizeof(cl_mem), NULL));
+      size_t gws[] = {1};
+      CHECK_CL_ERROR(clEnqueueNDRangeKernel(q, k, 1, NULL, gws, NULL, 0, NULL, NULL));
+      CHECK_CL_ERROR(clFinish(q));
+
+      for (i = 0; i < num_devices; ++i) {
+          size_t log_size = 0;
+          err = clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
+                                      0, NULL, &log_size);
+          CHECK_OPENCL_ERROR_IN("get build log size");
+          char *log = malloc(log_size);
+          err = clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
+                                      log_size, log, NULL);
+          CHECK_OPENCL_ERROR_IN("get build log");
+          log[log_size] = '\0';
+          /*As this build option deprecated after OCL1.0 we should see a warning here*/
+          fprintf(stderr, "Deprecated -cl-strict-aliasing log[%u]: %s\n", i, log);
+          free(log);
+      }
+
+      CHECK_CL_ERROR(clReleaseCommandQueue(q));
+      CHECK_CL_ERROR(clReleaseKernel(k));
+      CHECK_CL_ERROR(clReleaseProgram(program));
+  }
+
+  /* TEST 8: valid kernel with Compile option -cl-denorms-are-zero*/
+  {
+      size_t kernel_size = strlen(valid_kernel);
+      const char* kernel_buffer = valid_kernel;
+
+      program = clCreateProgramWithSource(context, 1, (const char**)&kernel_buffer,
+                                          &kernel_size, &err);
+      CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
+
+      CHECK_CL_ERROR(clBuildProgram(program, num_devices, devices, "-cl-denorms-are-zero", NULL, NULL));
+
+      /* TODO FIXME: from here to the clFinish() should be removed once
+       * delayed linking is disabled/removed in pocl, probably
+       */
+      cl_command_queue q = clCreateCommandQueue(context, devices[0], 0, &err);
+      CHECK_OPENCL_ERROR_IN("clCreateCommandQueue");
+      cl_kernel k = clCreateKernel(program, "init", &err);
+      CHECK_OPENCL_ERROR_IN("clCreateKernel");
+
+      CHECK_CL_ERROR(clSetKernelArg(k, 0, sizeof(cl_mem), NULL));
+      size_t gws[] = {1};
+      CHECK_CL_ERROR(clEnqueueNDRangeKernel(q, k, 1, NULL, gws, NULL, 0, NULL, NULL));
+      CHECK_CL_ERROR(clFinish(q));
+
+      CHECK_CL_ERROR(clReleaseCommandQueue(q));
+      CHECK_CL_ERROR(clReleaseKernel(k));
+      CHECK_CL_ERROR(clReleaseProgram(program));
+  }
+
+  /*TEST 9: valid kernel with Compile option -cl-no-signed-zeros */
+  {
+      size_t kernel_size = strlen(valid_kernel);
+      const char* kernel_buffer = valid_kernel;
+
+      program = clCreateProgramWithSource(context, 1, (const char**)&kernel_buffer,
+                                          &kernel_size, &err);
+      CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
+
+      CHECK_CL_ERROR(clBuildProgram(program, num_devices, devices, "-cl-no-signed-zeros", NULL, NULL));
+
+      /* TODO FIXME: from here to the clFinish() should be removed once
+       * delayed linking is disabled/removed in pocl, probably
+       */
+      cl_command_queue q = clCreateCommandQueue(context, devices[0], 0, &err);
+      CHECK_OPENCL_ERROR_IN("clCreateCommandQueue");
+      cl_kernel k = clCreateKernel(program, "init", &err);
+      CHECK_OPENCL_ERROR_IN("clCreateKernel");
+
+      CHECK_CL_ERROR(clSetKernelArg(k, 0, sizeof(cl_mem), NULL));
+      size_t gws[] = {1};
+      CHECK_CL_ERROR(clEnqueueNDRangeKernel(q, k, 1, NULL, gws, NULL, 0, NULL, NULL));
+      CHECK_CL_ERROR(clFinish(q));
+
+      CHECK_CL_ERROR(clReleaseCommandQueue(q));
+      CHECK_CL_ERROR(clReleaseKernel(k));
+      CHECK_CL_ERROR(clReleaseProgram(program));
+  }
+
+  /*TEST 10: valid kernel with Compile option -cl-std=CL2.0*/
+  {
+      size_t kernel_size = strlen(valid_kernel);
+      const char* kernel_buffer = valid_kernel;
+
+      program = clCreateProgramWithSource(context, 1, (const char**)&kernel_buffer,
+                                          &kernel_size, &err);
+      CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
+
+      CHECK_CL_ERROR(clBuildProgram(program, num_devices, devices, "-cl-std=CL2.0", NULL, NULL));
+
+      /* TODO FIXME: from here to the clFinish() should be removed once
+       * delayed linking is disabled/removed in pocl, probably
+       */
+      cl_command_queue q = clCreateCommandQueue(context, devices[0], 0, &err);
+      CHECK_OPENCL_ERROR_IN("clCreateCommandQueue");
+      cl_kernel k = clCreateKernel(program, "init", &err);
+      CHECK_OPENCL_ERROR_IN("clCreateKernel");
+
+      CHECK_CL_ERROR(clSetKernelArg(k, 0, sizeof(cl_mem), NULL));
+      size_t gws[] = {1};
+      CHECK_CL_ERROR(clEnqueueNDRangeKernel(q, k, 1, NULL, gws, NULL, 0, NULL, NULL));
+      CHECK_CL_ERROR(clFinish(q));
+
+      CHECK_CL_ERROR(clReleaseCommandQueue(q));
+      CHECK_CL_ERROR(clReleaseKernel(k));
+      CHECK_CL_ERROR(clReleaseProgram(program));
+  }
+
+  /*TEST 11: macro test */
   char* macro_kernel = poclu_read_file(SRCDIR "/tests/runtime/test_clBuildProgram_macros.cl" );
   size_t s = strlen(macro_kernel);
   program = clCreateProgramWithSource(context, 1, (const char**)&macro_kernel,
