@@ -68,6 +68,9 @@ static const char cl_parameters_supported_after_clang_3_9[] =
   "-cl-denorms-are-zero "
   "-cl-no-signed-zeros ";
 
+static const char cl_parameters_not_yet_supported_by_clang[] =
+  "-cl-uniform-work-group-size ";
+
 #define MEM_ASSERT(x, err_jmp) do{ if (x){errcode = CL_OUT_OF_HOST_MEMORY;goto err_jmp;}} while(0)
 
 // append token, growing modded_options, if necessary, by max(strlen(token)+1, 256)
@@ -229,12 +232,18 @@ CL_API_SUFFIX__VERSION_1_0
                 {
 #ifndef LLVM_OLDER_THAN_3_9
                   /* the LLVM API call pushes the parameters directly to the
-		   * frontend without using -Xclang*/
+                   * frontend without using -Xclang*/
 #else
                   APPEND_TO_MAIN_BUILD_LOG("This build option is supported after clang3.9: %s\n", token);
                   token = strtok_r (NULL, " ", &saveptr);  
                   continue;
 #endif
+                }
+              else if (strstr (cl_parameters_not_yet_supported_by_clang, token))
+                {
+                  APPEND_TO_MAIN_BUILD_LOG("This build option is not yet supported by clang: %s\n", token);
+                  token = strtok_r (NULL, " ", &saveptr);
+                  continue;
                 }
               else
                 {
