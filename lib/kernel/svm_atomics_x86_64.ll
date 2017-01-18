@@ -8070,6 +8070,3 @@ attributes #0 = { nounwind uwtable "disable-tail-calls"="false" "less-precise-fp
 attributes #1 = { noreturn nounwind uwtable "disable-tail-calls"="false" "less-precise-fpmad"="false" "no-frame-pointer-elim"="true" "no-frame-pointer-elim-non-leaf" "no-infs-fp-math"="false" "no-nans-fp-math"="false" "stack-protector-buffer-size"="8" "unsafe-fp-math"="false" "use-soft-float"="false" }
 attributes #2 = { noreturn nounwind }
 
-!llvm.ident = !{!0}
-
-!0 = !{!"Franz clang version 3.7.0 (https://github.com/llvm-mirror/clang.git 40b68b4c02b9d9e1e4138815747adf5589496240) (https://github.com/HSAFoundation/HLC-HSAIL-Development-LLVM.git 183de0bdbefa5664920942fa418d1efefb87faeb) (based on LLVM 3.7.0svn)"}
