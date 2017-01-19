@@ -70,6 +70,7 @@ POname(clCreateProgramWithSource)(cl_context context,
     goto ERROR;
   }
 
+  program->buildprogram_callback = NULL;
   program->source = source;
 
   for (i = 0; i < count; ++i)
