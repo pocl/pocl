@@ -82,6 +82,7 @@ CL_API_SUFFIX__VERSION_1_2
             supported_image_formats[i].image_channel_data_type ==
             image_format->image_channel_data_type)
           {
+            POCL_MEM_FREE(supported_image_formats);
             goto TYPE_SUPPORTED;
           }
       }
