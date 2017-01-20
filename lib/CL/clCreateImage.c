@@ -87,6 +87,7 @@ CL_API_SUFFIX__VERSION_1_2
           }
       }
 
+    POCL_MEM_FREE(supported_image_formats);
     POCL_MSG_ERR("Requested image format is not supported\n");
     errcode = CL_IMAGE_FORMAT_NOT_SUPPORTED;
     goto ERROR;
