@@ -1,3 +1,32 @@
+/*
+    Copyright (c) 2016-2017 Tampere University of Technology.
+
+    Permission is hereby granted, free of charge, to any person obtaining a
+    copy of this software and associated documentation files (the "Software"),
+    to deal in the Software without restriction, including without limitation
+    the rights to use, copy, modify, merge, publish, distribute, sublicense,
+    and/or sell copies of the Software, and to permit persons to whom the
+    Software is furnished to do so, subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in
+    all copies or substantial portions of the Software.
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+    THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+    FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+    DEALINGS IN THE SOFTWARE.
+ */
+/**
+ * @file LLVMFileUtils.cc
+ *
+ * File utility functions based on LLVM APIs.
+ *
+ * @author Michal Babej 2016
+ */
+
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
 #include <unistd.h>
 #include <sys/types.h>
@@ -19,6 +48,9 @@
 #include "pocl.h"
 #include "pocl_file_util.h"
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
 #include <llvm/Support/LockFileManager.h>
 
 #include "llvm/Support/FileSystem.h"
@@ -29,6 +61,8 @@
 #include "llvm/Bitcode/ReaderWriter.h"
 
 #include <llvm/Support/Errc.h>
+
+POP_COMPILER_DIAGS
 
 #define RETURN_IF_EC if (ec) return ec.default_error_condition().value()
 #define OPEN_FOR_READ ec = sys::fs::openFileForRead(p, fd)

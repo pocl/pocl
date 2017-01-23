@@ -1,5 +1,5 @@
 /*
-    Copyright (c) 2012-2015 Tampere University of Technology.
+    Copyright (c) 2012-2017 Tampere University of Technology.
 
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the "Software"),
@@ -24,7 +24,8 @@
  *
  * Definition of WorkItemAliasAnalysis class.
  *
- * @author Vladimír Guzma 2012
+ * @author Vladimír Guzma 2012,
+ * @author Pekka Jääskeläinen 2015-2017
  */
 
 #include <iostream>
@@ -63,7 +64,7 @@ typedef llvm::AliasResult AliasResult;
 #ifdef LLVM_OLDER_THAN_3_8
 class WorkItemAliasAnalysis : public FunctionPass, public AliasAnalysis {
 public:
-    static char ID; 
+    static char ID;
     WorkItemAliasAnalysis() : FunctionPass(ID) {}
 
     /// getAdjustedAnalysisPointer - This method is used when a pass implements
@@ -90,7 +91,7 @@ public:
         return false;
     }
 #endif
-    
+
     private:
         virtual void getAnalysisUsage(AnalysisUsage &AU) const;
         virtual AliasResult alias(const Location &LocA, const Location &LocB);
@@ -114,11 +115,11 @@ public:
     WorkItemAAResult(WorkItemAAResult &&Arg)
         : AAResultBase(Arg.TLI) {}
 #else
-    WorkItemAAResult(const TargetLibraryInfo &TLI)
+    WorkItemAAResult(const TargetLibraryInfo &)
         : AAResultBase() {}
-    WorkItemAAResult(const WorkItemAAResult &Arg)
+    WorkItemAAResult(const WorkItemAAResult &)
         : AAResultBase() {}
-    WorkItemAAResult(WorkItemAAResult &&Arg)
+    WorkItemAAResult(WorkItemAAResult &&)
         : AAResultBase() {}
 #endif
 
@@ -164,10 +165,10 @@ char WorkItemAAResult::ID = 0;
 void WorkItemAliasAnalysis::anchor() {}
 
 WorkItemAAResult WorkItemAA::run(Function &F, AnalysisManager<Function> *AM) {
-    return WorkItemAAResult( AM->getResult<WorkItemAA>(F) );
+    return WorkItemAAResult(AM->getResult<WorkItemAA>(F));
 }
 
-bool WorkItemAliasAnalysis::runOnFunction(llvm::Function &F) {
+bool WorkItemAliasAnalysis::runOnFunction(llvm::Function &) {
     auto &TLIWP = getAnalysis<TargetLibraryInfoWrapperPass>();
     Result.reset(new WorkItemAAResult(TLIWP.getTLI()));
     return false;
