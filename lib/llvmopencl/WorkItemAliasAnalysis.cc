@@ -130,8 +130,12 @@ class WorkItemAA {
 public:
     typedef WorkItemAAResult Result;
 
+#ifdef LLVM_OLDER_THAN_4_0
     /// \brief Opaque, unique identifier for this analysis pass.
     static void *ID() { return (void *)&PassID; }
+#else
+    static AnalysisKey *ID() { return &PassID; }
+#endif
 
     WorkItemAAResult run(Function &F, AnalysisManager<Function> *AM);
 
@@ -139,7 +143,11 @@ public:
     static StringRef name() { return "WorkItemAliasAnalysis"; }
 
 private:
+#ifdef LLVM_OLDER_THAN_4_0
     static char PassID;
+#else
+    static AnalysisKey PassID;
+#endif
 };
 
 /// Legacy wrapper pass to provide the (WorkItemAAWrapperPass) object.
@@ -160,7 +168,11 @@ public:
     void getAnalysisUsage(AnalysisUsage &AU) const override;
 };
 
+#ifdef LLVM_OLDER_THAN_4_0
 char WorkItemAA::PassID;
+#else
+AnalysisKey WorkItemAA::PassID;
+#endif
 char WorkItemAAResult::ID = 0;
 void WorkItemAliasAnalysis::anchor() {}
 

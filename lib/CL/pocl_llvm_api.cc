@@ -55,7 +55,13 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 using llvm::legacy::PassManager;
 #endif
 
+#ifdef LLVM_OLDER_THAN_4_0
 #include "llvm/Bitcode/ReaderWriter.h"
+#else
+#include "llvm/Bitcode/BitcodeReader.h"
+#include "llvm/Bitcode/BitcodeWriter.h"
+#endif
+
 #include "llvm/Transforms/Utils/Cloning.h"
 
 #include "llvm/Linker/Linker.h"
