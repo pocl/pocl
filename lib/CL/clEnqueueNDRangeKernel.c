@@ -404,7 +404,12 @@ DETERMINE_LOCAL_SIZE:
   pocl_command_enqueue (command_queue, command_node);
   error = CL_SUCCESS;
 
+  return error;
 ERROR:
+  if (mem_list)
+    POCL_MEM_FREE(mem_list);
+  if (new_event_wait_list)
+    POCL_MEM_FREE(new_event_wait_list);
   return error;
 
 }
