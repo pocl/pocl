@@ -55,11 +55,11 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
 
   for (i = 0; i < num_events_in_wait_list; ++i)
     {
-      POCL_GOTO_ERROR_COND((event_wait_list[i] == NULL), CL_INVALID_EVENT_WAIT_LIST);
+      POCL_RETURN_ERROR_COND((event_wait_list[i] == NULL), CL_INVALID_EVENT_WAIT_LIST);
       if (i > 0)
         {
-          POCL_GOTO_ERROR_COND((event_wait_list[i]->context 
-                                  != event_wait_list[i - 1]->context), 
+          POCL_RETURN_ERROR_COND((event_wait_list[i]->context
+                                  != event_wait_list[i - 1]->context),
                                  CL_INVALID_CONTEXT);
         }
     }
