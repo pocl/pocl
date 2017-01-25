@@ -48,6 +48,8 @@ static const char preprocess_fail[] =
 static const char invalid_kernel[] =
   "kernel void test_kernel(constant int a, j) { return 3; }\n";
 
+static const char warning_kernel[] =
+  "kernel void test_kernel(int j, k) { return; }\n";
 
 /* kernel can have any name, except main() starting from OpenCL 2.0 */
 static const char valid_kernel[] =
@@ -55,6 +57,19 @@ static const char valid_kernel[] =
 
 static const char invalid_build_option[] =
   "-fnothing-to-see-here";
+
+#define FAKE_PTR 0xDEADBEEF
+
+void buildprogram_callback(cl_program program, void *user_data)
+{
+  fprintf(stderr, "cl_program callback (via pfn_notify)\n");
+
+  if (user_data == (void*)FAKE_PTR)
+    fprintf(stderr, "OK\n");
+  else
+    fprintf(stderr, "FAIL\n");
+}
+
 
 int
 main(void){
@@ -189,16 +204,17 @@ main(void){
       CHECK_CL_ERROR(clReleaseProgram(program));
   }
 
-  /* TEST 6: valid kernel with Compile option -Werror */
+  /* TEST 6: valid kernel build pfn-nofity */
   {
       size_t  kernel_size = strlen(valid_kernel);
       const char* kernel_buffer = valid_kernel;
 
       program = clCreateProgramWithSource(context, 1, (const char**)&kernel_buffer,
-                          &kernel_size, &err);
+                                          &kernel_size, &err);
       CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
 
-      CHECK_CL_ERROR(clBuildProgram(program, num_devices, devices, "-Werror", NULL, NULL));
+      /*pfn_notify function should print out "Test6" (userdata)*/
+      CHECK_CL_ERROR(clBuildProgram(program, num_devices, devices, NULL, &buildprogram_callback, (void*)FAKE_PTR));
 
       /* TODO FIXME: from here to the clFinish() should be removed once
        * delayed linking is disabled/removed in pocl, probably
@@ -350,15 +366,47 @@ main(void){
   }
 
   /*TEST 11: macro test */
-  char* macro_kernel = poclu_read_file(SRCDIR "/tests/runtime/test_clBuildProgram_macros.cl" );
-  size_t s = strlen(macro_kernel);
-  program = clCreateProgramWithSource(context, 1, (const char**)&macro_kernel,
-                                      &s, &err);
-  CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
+  {
+    char* macro_kernel = poclu_read_file(SRCDIR "/tests/runtime/test_clBuildProgram_macros.cl" );
+    size_t s = strlen(macro_kernel);
+    program = clCreateProgramWithSource(context, 1, (const char**)&macro_kernel,
+                                        &s, &err);
+    CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
 
-  CHECK_CL_ERROR(clBuildProgram(program, num_devices, devices, NULL, NULL, NULL));
+    CHECK_CL_ERROR(clBuildProgram(program, num_devices, devices, NULL, NULL, NULL));
 
-  CHECK_CL_ERROR(clReleaseProgram(program));
+    CHECK_CL_ERROR(clReleaseProgram(program));
+  }
+
+  /* TEST 12: warning into error */
+  {
+      size_t kernel_size = strlen(warning_kernel);
+      const char* kernel_buffer = warning_kernel;
+
+      program = clCreateProgramWithSource(context, 1, (const char**)&kernel_buffer,
+                          &kernel_size, &err);
+      //clCreateProgramWithSource for invalid kernel failed
+      CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
+
+      /* This kernel normally build with 1 warning:
+       *warning: type specifier missing, defaults to 'int'
+       *kernel void test_kernel(int j, k) { return; }
+       *                               ^
+       *1 warning generated.
+       *
+       *with -Werror we make this 1 warning into error
+       *error: type specifier missing, defaults to 'int'
+       *kernel void test_kernel(int j, k) { return; }
+       *                               ^
+       *1 error generated.
+       *
+       *If the Error is not generated this test should fail.
+      */
+      err = clBuildProgram(program, num_devices, devices, "-Werror", NULL, NULL);
+      TEST_ASSERT(err == CL_BUILD_PROGRAM_FAILURE);
+
+      CHECK_CL_ERROR(clReleaseProgram(program));
+  }
 
   return EXIT_SUCCESS;
 }

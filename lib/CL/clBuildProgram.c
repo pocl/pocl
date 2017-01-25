@@ -188,6 +188,7 @@ CL_API_SUFFIX__VERSION_1_0
   char *token = NULL;
   char *saveptr = NULL;
   void* write_cache_lock = NULL;
+  build_program_callback_t *callback = NULL;
 
   POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
 
@@ -203,6 +204,20 @@ CL_API_SUFFIX__VERSION_1_0
                         "to call clCreateProgramWith{Binary|Source} first\n");
 
   POCL_LOCK_OBJ(program);
+
+  if (pfn_notify)
+    {
+      callback = (build_program_callback_t*) malloc (sizeof(build_program_callback_t));
+      if (callback == NULL)
+        {
+          POCL_UNLOCK_OBJ(program);
+          return CL_OUT_OF_HOST_MEMORY;
+        }
+
+      callback->callback_function = pfn_notify;
+      callback->user_data = user_data;
+      program->buildprogram_callback = callback;
+    }
 
   program->main_build_log[0] = 0;
 
@@ -495,6 +510,11 @@ CL_API_SUFFIX__VERSION_1_0
   program->build_status = CL_BUILD_SUCCESS;
   POCL_UNLOCK_OBJ(program);
 
+  /* callback freed in ProgramRelease */
+  if (program->buildprogram_callback)
+    program->buildprogram_callback->callback_function (program,
+                                  program->buildprogram_callback->user_data);
+
   /* Set up all program kernels.  */
   /* TODO: Should not have to unlock program while adding default kernels.  */
   assert (program->default_kernels == NULL);
@@ -520,6 +540,12 @@ CL_API_SUFFIX__VERSION_1_0
    * cause a double free. */
 
 ERROR:
+  if (program->buildprogram_callback)
+    {
+      program->buildprogram_callback->callback_function(program,
+                         program->buildprogram_callback->user_data);
+      POCL_MEM_FREE(program->buildprogram_callback);
+    }
   program->kernels = 0;
   for(i = 0; i < program->num_devices; i++)
   {

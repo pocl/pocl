@@ -118,6 +118,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
       goto ERROR_CLEAN_PROGRAM_AND_BINARIES;
     }
 
+  program->buildprogram_callback = NULL;
   program->context = context;
   program->num_devices = num_devices;
   program->devices = unique_devlist;
