@@ -86,6 +86,10 @@ POname(clGetProgramBuildInfo)(cl_program            program,
         *param_value_size_ret = value_size;
       return CL_SUCCESS;
     }
+  case CL_PROGRAM_BINARY_TYPE:
+    {
+      POCL_RETURN_GETINFO(cl_program_binary_type, program->binary_type);
+    }
   }
   
   return CL_INVALID_VALUE;

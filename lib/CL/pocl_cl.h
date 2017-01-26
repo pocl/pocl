@@ -649,6 +649,8 @@ struct _cl_program {
   void** read_locks;
   /* Use to store build status */
   cl_build_status build_status;
+  /* Use to store binary type */
+  cl_program_binary_type binary_type;
   /* Use to store build porgram callback (pfn_notify) */
   build_program_callback_t *buildprogram_callback;
 };

@@ -123,6 +123,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
   program->num_devices = num_devices;
   program->devices = unique_devlist;
   program->build_status = CL_BUILD_NONE;
+  program->binary_type = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
   char program_bc_path[POCL_FILENAME_LENGTH];
 
   for (i = 0; i < num_devices; ++i)
@@ -167,7 +168,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
           goto ERROR_CLEAN_PROGRAM_AND_BINARIES;
         }
     }
-  
+
   POCL_RETAIN_OBJECT(context);
 
   if (errcode_ret != NULL)
