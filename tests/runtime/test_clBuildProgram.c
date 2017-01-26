@@ -270,7 +270,31 @@ main(void){
           log[log_size] = '\0';
           /*As this build option deprecated after OCL1.0 we should see a warning here*/
           fprintf(stderr, "Deprecated -cl-strict-aliasing log[%u]: %s\n", i, log);
+
           free(log);
+
+          cl_program_binary_type bin_type = 0;
+          err = clGetProgramBuildInfo(program, devices[i],
+                                      CL_PROGRAM_BINARY_TYPE,
+                                      sizeof(bin_type), (void *)&bin_type,
+                                      NULL);
+          CHECK_OPENCL_ERROR_IN("get program binary type");
+
+          /* cl_program_binary_type */
+          switch(bin_type) {
+            case CL_PROGRAM_BINARY_TYPE_NONE: /*0x0*/
+              fprintf(stderr, "program binary type: CL_PROGRAM_BINARY_TYPE_NONE\n");
+            break;
+            case CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT: /*0x1*/
+              fprintf(stderr, "program binary type: CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT\n");
+            break;
+            case CL_PROGRAM_BINARY_TYPE_LIBRARY: /*0x2*/
+              fprintf(stderr, "program binary type: CL_PROGRAM_BINARY_TYPE_LIBRARY\n");
+            break;
+            case CL_PROGRAM_BINARY_TYPE_EXECUTABLE: /*0x4*/
+              fprintf(stderr, "program binary type: CL_PROGRAM_BINARY_TYPE_EXECUTABLE\n");
+            break;
+          }
       }
 
       CHECK_CL_ERROR(clReleaseCommandQueue(q));
