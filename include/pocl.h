@@ -59,7 +59,6 @@ struct _mem_destructor_callback
 };
 
 typedef struct _build_program_callback build_program_callback_t;
-/* represents a build program callback */
 struct _build_program_callback
 {
     void (CL_CALLBACK * callback_function) (cl_program, void*); /* callback function */

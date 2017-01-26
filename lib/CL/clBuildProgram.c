@@ -510,7 +510,6 @@ CL_API_SUFFIX__VERSION_1_0
   program->build_status = CL_BUILD_SUCCESS;
   POCL_UNLOCK_OBJ(program);
 
-  /* callback freed in ProgramRelease */
   if (program->buildprogram_callback)
     program->buildprogram_callback->callback_function (program,
                                   program->buildprogram_callback->user_data);
