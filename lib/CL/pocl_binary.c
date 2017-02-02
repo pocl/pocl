@@ -128,16 +128,18 @@ typedef struct pocl_binary_s
 /***********************************************************/
 
 #define BUFFER_STORE(elem, type)                  \
-  do {                                            \
-    type b_s_tmp = (type)TO_LE((type)elem);       \
-    memcpy(buffer, &b_s_tmp, sizeof(type));       \
-    buffer += sizeof(type);                       \
-  } while(0)
+  do                                              \
+    {                                             \
+      type b_s_tmp = (type) TO_LE ( (type) elem); \
+      memcpy (buffer, &b_s_tmp, sizeof (type));   \
+      buffer += sizeof (type);                    \
+    }                                             \
+  while(0)
 
 #define BUFFER_READ(elem, type)                   \
-  memcpy(&elem, buffer, sizeof(type));            \
-  elem = (type)FROM_LE((type)elem);               \
-  buffer += sizeof(type)
+  memcpy (&elem, buffer, sizeof (type));          \
+  elem = (type) FROM_LE ( (type) elem);           \
+  buffer += sizeof (type)
 
 #define BUFFER_STORE_STR2(elem, len)              \
   do {                                            \
