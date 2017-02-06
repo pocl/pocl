@@ -40,33 +40,33 @@
 /* checks if integer coord is out of bounds. If out of bounds: Sets coord in
    bounds and returns false OR populates color with border colour and returns
    true. If in bounds, returns false */
-int __pocl_is_out_of_bounds (ADDRESS_SPACE dev_image_t* dev_image, int4 coord,
+int __pocl_is_out_of_bounds (ADDRESS_SPACE dev_image_t* dev_image, int4 *coord,
                              dev_sampler_t* dev_sampler, void *color_)
 {
   uint4 *color = (uint4*)color_;
   if(*dev_sampler & CLK_ADDRESS_CLAMP_TO_EDGE)
     {
-      if (coord.x >= dev_image->_width)
-        coord.x = dev_image->_width-1;
-      if (dev_image->_height != 0 && coord.y >= dev_image->_height)
-        coord.y = dev_image->_height-1;
-      if (dev_image->_depth != 0 && coord.z >= dev_image->_depth)
-        coord.z = dev_image->_depth-1;
+      if (coord->x >= dev_image->_width)
+        coord->x = dev_image->_width-1;
+      if (dev_image->_height != 0 && coord->y >= dev_image->_height)
+        coord->y = dev_image->_height-1;
+      if (dev_image->_depth != 0 && coord->z >= dev_image->_depth)
+        coord->z = dev_image->_depth-1;
 
-      if (coord.x < 0)
-        coord.x = 0;
-      if (coord.y < 0)
-        coord.y = 0;
-      if (coord.z < 0)
-        coord.z = 0;
+      if (coord->x < 0)
+        coord->x = 0;
+      if (coord->y < 0)
+        coord->y = 0;
+      if (coord->z < 0)
+        coord->z = 0;
 
       return 0;
     }
   if (*dev_sampler & CLK_ADDRESS_CLAMP)
     {
-      if(coord.x >= dev_image->_width || coord.x < 0 ||
-         coord.y >= dev_image->_height || coord.y < 0 ||
-         (dev_image->_depth != 0 && (coord.z >= dev_image->_depth || coord.z <0)))
+      if(coord->x >= dev_image->_width || coord->x < 0 ||
+         coord->y >= dev_image->_height || coord->y < 0 ||
+         (dev_image->_depth != 0 && (coord->z >= dev_image->_depth || coord->z <0)))
         {
           (*color)[0] = 0;
           (*color)[1] = 0;
@@ -186,7 +186,7 @@ void __pocl_read_pixel (void* color, ADDRESS_SPACE dev_image_t* dev_image, int4 
     ADDRESS_SPACE dev_image_t* i_ptr =                                  \
       __builtin_astype (image, ADDRESS_SPACE dev_image_t*);             \
     dev_sampler_t s = __builtin_astype(sampler, dev_sampler_t);         \
-    if (__pocl_is_out_of_bounds (i_ptr, coord4, &s, &color))            \
+    if (__pocl_is_out_of_bounds (i_ptr, &coord4, &s, &color))           \
       {                                                                 \
         return color;                                                   \
       }                                                                 \
