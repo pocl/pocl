@@ -196,12 +196,57 @@ void __pocl_read_pixel (void* color, ADDRESS_SPACE dev_image_t* dev_image, int4 
   }                                                                     \
 
 
-/* read_image function instantions */
+/* NO Sampler Implementation for read_image with any image data type
+   and int coordinates
+   __IMGTYPE__ = image type (image2d_t, ...)
+   __RETVAL__  = return value (int4 or uint4 float4)
+   __POSTFIX__ = function name postfix (i, ui, f)
+   __COORD__   = coordinate type (int, int2, int4)
+   OCL 1.2 Spec Says
+   The samplerless read image functions behave exactly as the
+   corresponding read image functions that take integer
+   coordinates and a sampler with filter mode set to
+   CLK_FILTER_NEAREST, normalized coordinates set to
+   CLK_NORMALIZED_COORDS_FALSE and
+   addressing mode to CLK_ADDRESS_NONE.
+   CLK_ADDRESS_NONE – for this addressing mode the programmer guarantees that
+   the image coordinates used to sample elements of the image refer to a
+   location inside the image; otherwise the results are undefined.
+   Thus we do not need out of bound check for now.
+   If we need sampler for other cases it has to be defined as default sampler:
+   const sampler_t defualt_sampler = CLK_NORMALIZED_COORDS_FALSE |
+                                  CLK_ADDRESS_NONE |
+                                  CLK_FILTER_NEAREST;
+*/
+#define IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER(__IMGTYPE__,__RETVAL__,\
+                                                 __POSTFIX__,__COORD__) \
+  __RETVAL__ _CL_OVERLOADABLE read_image##__POSTFIX__ (__IMGTYPE__ image, \
+                                                       __COORD__ coord) \
+  {                                                                     \
+    __RETVAL__ color;                                                   \
+    int4 coord4;                                                        \
+    INITCOORD##__COORD__(coord4, coord);                                \
+    ADDRESS_SPACE dev_image_t* i_ptr =                                  \
+      __builtin_astype (image, ADDRESS_SPACE dev_image_t*);             \
+    __pocl_read_pixel (&color, i_ptr, coord4);  \
+                                                                        \
+    return color;                                                       \
+  }                                                                     \
+
+
+/* read_image 2d function instantions */
+IMPLEMENT_READ_IMAGE_INT_COORD(image2d_t, float4, f, int2)
+
+IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER(image2d_t, float4, f, int2)
+IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER(image2d_array_t, float4, f, int4)
+
+IMPLEMENT_READ_IMAGE_INT_COORD(image2d_array_t, float4, f, int4)
+
 IMPLEMENT_READ_IMAGE_INT_COORD(image2d_t, uint4, ui, int2)
 IMPLEMENT_READ_IMAGE_INT_COORD(image2d_t, int4, i, int2)
+
+/* read_image 3d function instantions */
 IMPLEMENT_READ_IMAGE_INT_COORD(image3d_t, uint4, ui, int4)
-IMPLEMENT_READ_IMAGE_INT_COORD(image2d_t, float4, f, int2)
-IMPLEMENT_READ_IMAGE_INT_COORD(image2d_t, float4, f, int4)
 IMPLEMENT_READ_IMAGE_INT_COORD(image3d_t, float4, f, int4)
 
 #else
