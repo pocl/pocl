@@ -198,11 +198,9 @@ float4 _CL_OVERLOADABLE read_imagef (image2d_t image, sampler_t sampler,
                                      float2 coord);
 */
 
-float4 _CL_OVERLOADABLE read_imagef (image2d_t image,
-                                     int2 coord);
+float4 _CL_OVERLOADABLE read_imagef (image2d_t image, int2 coord);
 
-float4 _CL_OVERLOADABLE read_imagef (image2d_array_t image,
-                                     int4  coord);
+float4 _CL_OVERLOADABLE read_imagef (image2d_array_t image, int4 coord);
 
 float4 _CL_OVERLOADABLE read_imagef (image2d_array_t image, sampler_t sampler,
                                      int4 coord);

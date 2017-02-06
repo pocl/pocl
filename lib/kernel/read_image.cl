@@ -218,14 +218,14 @@ void __pocl_read_pixel (void* color, ADDRESS_SPACE dev_image_t* dev_image, int4 
                                   CLK_ADDRESS_NONE |
                                   CLK_FILTER_NEAREST;
 */
-#define IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER(__IMGTYPE__,__RETVAL__,\
-                                                 __POSTFIX__,__COORD__) \
+#define IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER(__IMGTYPE__, __RETVAL__, \
+                                                 __POSTFIX__, __COORD__) \
   __RETVAL__ _CL_OVERLOADABLE read_image##__POSTFIX__ (__IMGTYPE__ image, \
                                                        __COORD__ coord) \
   {                                                                     \
     __RETVAL__ color;                                                   \
     int4 coord4;                                                        \
-    INITCOORD##__COORD__(coord4, coord);                                \
+    INITCOORD##__COORD__ (coord4, coord);                               \
     ADDRESS_SPACE dev_image_t* i_ptr =                                  \
       __builtin_astype (image, ADDRESS_SPACE dev_image_t*);             \
     __pocl_read_pixel (&color, i_ptr, coord4);  \
@@ -235,19 +235,19 @@ void __pocl_read_pixel (void* color, ADDRESS_SPACE dev_image_t* dev_image, int4 
 
 
 /* read_image 2d function instantions */
-IMPLEMENT_READ_IMAGE_INT_COORD(image2d_t, float4, f, int2)
+IMPLEMENT_READ_IMAGE_INT_COORD (image2d_t, float4, f, int2)
 
-IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER(image2d_t, float4, f, int2)
-IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER(image2d_array_t, float4, f, int4)
+IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER (image2d_t, float4, f, int2)
+IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER (image2d_array_t, float4, f, int4)
 
-IMPLEMENT_READ_IMAGE_INT_COORD(image2d_array_t, float4, f, int4)
+IMPLEMENT_READ_IMAGE_INT_COORD (image2d_array_t, float4, f, int4)
 
-IMPLEMENT_READ_IMAGE_INT_COORD(image2d_t, uint4, ui, int2)
-IMPLEMENT_READ_IMAGE_INT_COORD(image2d_t, int4, i, int2)
+IMPLEMENT_READ_IMAGE_INT_COORD (image2d_t, uint4, ui, int2)
+IMPLEMENT_READ_IMAGE_INT_COORD (image2d_t, int4, i, int2)
 
 /* read_image 3d function instantions */
-IMPLEMENT_READ_IMAGE_INT_COORD(image3d_t, uint4, ui, int4)
-IMPLEMENT_READ_IMAGE_INT_COORD(image3d_t, float4, f, int4)
+IMPLEMENT_READ_IMAGE_INT_COORD (image3d_t, uint4, ui, int4)
+IMPLEMENT_READ_IMAGE_INT_COORD (image3d_t, float4, f, int4)
 
 #else
 
