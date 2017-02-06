@@ -42,46 +42,53 @@
 #endif
 
 /* writes pixel to coord in image */
-void pocl_write_pixel (void* color_, ADDRESS_SPACE dev_image_t* dev_image, int4 coord)
-{  
+void pocl_write_pixel (void* color_, ADDRESS_SPACE dev_image_t* dev_image,
+                       int4 coord)
+{
   uint4 *color = (uint4*)color_;
-  int i, idx;
   int width = dev_image->_width;
   int height = dev_image->_height;
   int num_channels = dev_image->_num_channels;
+  int i = num_channels;
   int elem_size = dev_image->_elem_size;
+  int const base_index =
+    (coord.x + coord.y*width + coord.z*height*width) * num_channels;
 
   if (dev_image->_order == CL_A)
     {
-      idx = (coord.x + coord.y*width + coord.z*height*width) * num_channels;
       if (elem_size == 1)
-        ((uchar*)(dev_image->_data))[idx] = (*color)[3];
+        ((uchar*) (dev_image->_data))[base_index] = (*color)[3];
       else if (elem_size == 2)
-        ((ushort*)(dev_image->_data))[idx] = (*color)[3];
+        ((ushort*) (dev_image->_data))[base_index] = (*color)[3];
       else if (elem_size == 4)
-        ((uint*)(dev_image->_data))[idx] = (*color)[3];
+        ((uint*) (dev_image->_data))[base_index] = (*color)[3];
       return;
     }
 
-  for (i = 0; i < num_channels; i++)
+  if (elem_size == 1)
     {
-      idx = i + (coord.x + coord.y*width + coord.z*height*width)*num_channels;
-      if (elem_size == 1)
+      while (i--)
         {
-          ((uchar*)dev_image->_data)[idx] = (*color)[i];          
+          ((uchar*) (dev_image->_data))[base_index + i] = (*color)[i];
         }
-      else if (elem_size == 2)
+    }
+  else if (elem_size == 2)
+    {
+      while (i--)
         {
-          ((ushort*)dev_image->_data)[idx] = (*color)[i];
+          ((ushort*) dev_image->_data)[base_index + i] = (*color)[i];
         }
-      else if (elem_size == 4)
+    }
+  else if (elem_size == 4)
+    {
+      while (i--)
         {
-          ((uint*)dev_image->_data)[idx] = (*color)[i];
+          ((uint*) dev_image->_data)[base_index + i] = (*color)[i];
         }
     }
 }
 
-/* Implementation for write_image with any image data type and int coordinates 
+/* Implementation for write_image with any image data type and int coordinates
    __IMGTYPE__ = image type (image2d_t, ...)
    __DTYPE__  = data type to be read (int4 or uint4 float4)
    __POSTFIX__ = function name postfix (i, ui, f)
@@ -99,6 +106,6 @@ void pocl_write_pixel (void* color_, ADDRESS_SPACE dev_image_t* dev_image, int4 
     pocl_write_pixel (&color, i_ptr, coord4);                             \
   }                                                                     \
 
-IMPLEMENT_WRITE_IMAGE_INT_COORD(image2d_t, uint4, ui, int2)
-IMPLEMENT_WRITE_IMAGE_INT_COORD(image2d_t, float4, f, int2)
-IMPLEMENT_WRITE_IMAGE_INT_COORD(image3d_t, float4, f, int4)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (image2d_t, uint4, ui, int2)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (image2d_t, float4, f, int2)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (image3d_t, float4, f, int4)
