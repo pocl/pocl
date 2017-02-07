@@ -65,7 +65,7 @@ ExternalProject_Add(
     -DPIGLIT_BUILD_GLX_TESTS=OFF
     "-DOPENCL_INCLUDE_PATH=${CMAKE_SOURCE_DIR}/include/"
     "-DOPENCL_opencl_LIBRARY:LIST=OpenCL"
-  INSTALL_COMMAND /bin/true
+  INSTALL_COMMAND ""
 )
 
 set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
