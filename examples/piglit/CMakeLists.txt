@@ -37,6 +37,8 @@ elseif(NOT GLUT_FOUND)
   message(STATUS "Disabling testsuite ${TS_NAME}, requires glut library")
 elseif(NOT PNG_FOUND)
   message(STATUS "Disabling testsuite ${TS_NAME}, requires PNG library")
+elseif(NOT TESTS_USE_ICD)
+  message(STATUS "Disabling testsuite ${TS_NAME}, requires ocl-icd")
 
 else()
 message(STATUS "Enabling testsuite ${TS_NAME}")
