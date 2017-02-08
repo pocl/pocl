@@ -121,7 +121,7 @@ struct pair_double16 { double16 lo, hi; };
 
 // Generic conversion function
 template<typename A, typename B>
-static B bitcast(A a)
+B bitcast(A a)
 {
   B b;
   std::memcpy(&b, &a, std::min(sizeof a, sizeof b));

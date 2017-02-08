@@ -214,6 +214,9 @@ CopyFunc(const llvm::StringRef Name,
                            SrcFunc->getName(),
                            To);
         DstFunc->copyAttributesFrom(SrcFunc);
+    } else if (DstFunc->size() > 0) {
+      // We have already encountered and copied this function.
+      return;
     }
     VVMap[SrcFunc] = DstFunc;
 
