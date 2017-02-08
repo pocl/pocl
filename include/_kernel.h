@@ -2,7 +2,7 @@
    functions declarations.
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
-   Copyright (c) 2011-2013 Pekka Jääskeläinen / TUT
+   Copyright (c) 2011-2017 Pekka Jääskeläinen / TUT
    Copyright (c) 2011-2013 Erik Schnetter <eschnetter@perimeterinstitute.ca>
                            Perimeter Institute for Theoretical Physics
    
@@ -2308,11 +2308,11 @@ int _cl_printf(constant char* restrict format, ...);
 
 #else
 
-#warning TODO: printf for Clang 4.0+
-// Clang 4.0 fails due to the new diagnostic:
-// error: invalid prototype, variadic arguments are not allowed in OpenCL
-// The proper fix is to implement our own printf() instead of delegating
-// to the system's. It should be the only one allowed to have variadic args.
+// Just declare printf directly without the macro trick.
+// It's the only varargs function allowed by OpenCL C and the new clang.
+// We will define the function in C.
+int printf(constant char *restrict format, ...);
+
 #endif
 
 
