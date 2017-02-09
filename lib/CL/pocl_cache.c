@@ -385,12 +385,20 @@ build_program_compute_hash(cl_program program,
         assert(source_len > 0);
         pocl_SHA1_Update(&hash_ctx, (uint8_t*)preprocessed_source,
                          source_len);
-    } else     { /* Program was created with clCreateProgramWithBinary() */
-        assert(program->binaries[device_i] ||
-               program->pocl_binaries[device_i]);
-        pocl_SHA1_Update(&hash_ctx,
-                         (uint8_t*) program->binaries[device_i],
-                         program->binary_sizes[device_i]);
+    } else if (program->pocl_binary_sizes[device_i] > 0) {
+      /* Program was created with clCreateProgramWithBinary() with
+	 a pocl binary */
+      assert(program->pocl_binaries[device_i]);
+      pocl_SHA1_Update(&hash_ctx,
+		       (uint8_t*) program->pocl_binaries[device_i],
+		       program->pocl_binary_sizes[device_i]);
+
+    } else {
+      /* Program was created with clCreateProgramWithBinary() with an LLVM IR binary */
+      assert(program->binaries[device_i]);
+      pocl_SHA1_Update(&hash_ctx,
+		       (uint8_t*) program->binaries[device_i],
+		       program->binary_sizes[device_i]);
     }
 
     if (program->compiler_options)
