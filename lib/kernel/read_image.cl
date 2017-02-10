@@ -35,8 +35,6 @@
 #define ADDRESS_SPACE
 #endif
 
-#if (__clang_major__ < 4)
-
 /* checks if integer coord is out of bounds. If out of bounds: Sets coord in
    bounds and returns false OR populates color with border colour and returns
    true. If in bounds, returns false */
@@ -174,6 +172,12 @@ void __pocl_read_pixel (void* color, ADDRESS_SPACE dev_image_t* dev_image, int4 
    __POSTFIX__ = function name postfix (i, ui, f)
    __COORD__   = coordinate type (int, int2, int4)
 */
+
+#if __clang_major__ > 3
+
+// After Clang 4.0, the sampler_t is passed as an opaque struct (ptr)
+// which we convert to int32 with the LLVM pass HandleSamplerInitialization.
+
 #define IMPLEMENT_READ_IMAGE_INT_COORD(__IMGTYPE__,__RETVAL__,__POSTFIX__,\
                                             __COORD__)                  \
   __RETVAL__ _CL_OVERLOADABLE read_image##__POSTFIX__ (__IMGTYPE__ image, \
@@ -185,7 +189,7 @@ void __pocl_read_pixel (void* color, ADDRESS_SPACE dev_image_t* dev_image, int4 
     INITCOORD##__COORD__(coord4, coord);                                \
     ADDRESS_SPACE dev_image_t* i_ptr =                                  \
       __builtin_astype (image, ADDRESS_SPACE dev_image_t*);             \
-    dev_sampler_t s = __builtin_astype(sampler, dev_sampler_t);         \
+    dev_sampler_t s = *__builtin_astype(sampler, dev_sampler_t*);	\
     if (__pocl_is_out_of_bounds (i_ptr, &coord4, &s, &color))           \
       {                                                                 \
         return color;                                                   \
@@ -193,8 +197,33 @@ void __pocl_read_pixel (void* color, ADDRESS_SPACE dev_image_t* dev_image, int4 
     __pocl_read_pixel (&color, i_ptr, coord4); \
                                                                         \
     return color;                                                       \
-  }                                                                     \
+  }
 
+#else
+
+// Before Clang 4.0, the sampler_t was passed as an int32.
+
+#define IMPLEMENT_READ_IMAGE_INT_COORD(__IMGTYPE__,__RETVAL__,__POSTFIX__,\
+                                            __COORD__)                  \
+  __RETVAL__ _CL_OVERLOADABLE read_image##__POSTFIX__ (__IMGTYPE__ image, \
+                                                       sampler_t sampler, \
+                                                       __COORD__ coord) \
+  {                                                                     \
+    __RETVAL__ color;                                                   \
+    int4 coord4;                                                        \
+    INITCOORD##__COORD__(coord4, coord);                                \
+    ADDRESS_SPACE dev_image_t* i_ptr =                                  \
+      __builtin_astype (image, ADDRESS_SPACE dev_image_t*);             \
+    dev_sampler_t s = __builtin_astype(sampler, dev_sampler_t);		\
+    if (__pocl_is_out_of_bounds (i_ptr, &coord4, &s, &color))           \
+      {                                                                 \
+        return color;                                                   \
+      }                                                                 \
+    __pocl_read_pixel (&color, i_ptr, coord4); \
+                                                                        \
+    return color;                                                       \
+  }
+#endif
 
 /* NO Sampler Implementation for read_image with any image data type
    and int coordinates
@@ -249,8 +278,3 @@ IMPLEMENT_READ_IMAGE_INT_COORD (image2d_t, int4, i, int2)
 IMPLEMENT_READ_IMAGE_INT_COORD (image3d_t, uint4, ui, int4)
 IMPLEMENT_READ_IMAGE_INT_COORD (image3d_t, float4, f, int4)
 
-#else
-
-#warning TODO: Fix sampler for Clang 4.0+
-
-#endif

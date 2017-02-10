@@ -46,7 +46,8 @@ set(LLVMPASSES_SOURCES "Barrier.h"
   "AutomaticLocals.cc" "ImplicitConditionalBarriers.cc"
   "ImplicitConditionalBarriers.h"
   "DebugHelpers.h" "DebugHelpers.cc"
-  "RemoveBarrierCalls.h" "RemoveBarrierCalls.cc")
+  "RemoveBarrierCalls.h" "RemoveBarrierCalls.cc"
+  "HandleSamplerInitialization.h" "HandleSamplerInitialization.cc")
 
 if(POCL_USE_FAKE_ADDR_SPACE_IDS)
 list(APPEND LLVMPASSES_SOURCES "TargetAddressSpaces.cc")

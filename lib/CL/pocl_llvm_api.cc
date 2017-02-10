@@ -1368,6 +1368,7 @@ static PassManager& kernel_compiler_passes
      context restore them with non-PHI code if the value is needed in another PHI). */
 
   std::vector<std::string> passes;
+  passes.push_back("handle-samplers");
   passes.push_back("workitem-handler-chooser");
   passes.push_back("mem2reg");
   passes.push_back("domtree");
