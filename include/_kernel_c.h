@@ -32,7 +32,51 @@
 #define _KERNEL_C_H
 
 #include "pocl_types.h"
-#include "pocl_llvm_version.h"
+
+#if (__clang_major__ == 3)
+# if (__clang_minor__ == 7)
+# undef LLVM_3_7
+# define LLVM_3_7
+#elif (__clang_minor__ == 8)
+# undef LLVM_3_8
+# define LLVM_3_8
+#elif (__clang_minor__ == 9)
+# undef LLVM_3_9
+# define LLVM_3_9
+#endif
+
+#elif (__clang_major__ == 4)
+
+# undef LLVM_4_0
+# define LLVM_4_0
+
+#else
+
+#error Unsupported Clang/LLVM version.
+
+#endif
+
+#if (defined LLVM_3_6)
+# define LLVM_OLDER_THAN_3_7 1
+# define LLVM_OLDER_THAN_3_8 1
+# define LLVM_OLDER_THAN_3_9 1
+# define LLVM_OLDER_THAN_4_0 1
+#endif
+
+#if (defined LLVM_3_7)
+# define LLVM_OLDER_THAN_3_8 1
+# define LLVM_OLDER_THAN_3_9 1
+# define LLVM_OLDER_THAN_4_0 1
+#endif
+
+#if (defined LLVM_3_8)
+# define LLVM_OLDER_THAN_3_9 1
+# define LLVM_OLDER_THAN_4_0 1
+#endif
+
+#if (defined LLVM_3_9)
+# define LLVM_OLDER_THAN_4_0 1
+#endif
 
 #include "_kernel_constants.h"
 
