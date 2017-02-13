@@ -319,31 +319,6 @@ check_function_exists(fork HAVE_FORK)
 check_function_exists(vfork HAVE_VFORK)
 
 ######################################################################################
-# Test for presence of Clang calling convention patch from
-# https://github.com/pocl/pocl/issues/1
-
-if(CLANGXX_WORKS AND EXISTS "${CMAKE_SOURCE_DIR}/cmake/spir-cc-test-kernel.cl")
-  execute_process(
-    COMMAND
-    "${CLANGXX}" -S -x cl -emit-llvm "${CMAKE_SOURCE_DIR}/cmake/spir-cc-test-kernel.cl" -o -
-    OUTPUT_VARIABLE SPIR_PATCH_TEST_IR
-    ERROR_VARIABLE _DUMMY
-    RESULT_VARIABLE RESV1)
-  if(RESV1)
-    message(FATAL_ERROR "Clang exited with non-zero status when trying to compile calling convention test")
-  endif()
-  string(FIND "${SPIR_PATCH_TEST_IR}" "spir_kernel" RESV1)
-  if("${RESV1}" MATCHES "-1")
-    set(CLANG_IS_PATCHED_FOR_SPIR_CC 0 INTERNAL "Whether clang has the patch from https://github.com/pocl/pocl/issues/1")
-    message(STATUS "Clang is NOT patched for SPIR CC")
-  else()
-    set(CLANG_IS_PATCHED_FOR_SPIR_CC 1 INTERNAL "Whether clang has the patch from https://github.com/pocl/pocl/issues/1")
-    set(POCL_VERSION "${POCL_VERSION}-spirccpatch")
-    message(STATUS "Clang IS patched for SPIR CC")
-  endif()
-endif()
-
-######################################################################################
 
 if(NOT DEFINED DEFAULT_USE_VECMATHLIB)
   if(CLANGXX_WORKS AND EXISTS "${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vecmathlib.h")

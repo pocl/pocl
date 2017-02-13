@@ -130,14 +130,11 @@
 /* The size of `__fp16', as computed by sizeof. */
 #define SIZEOF___FP16  @SIZEOF___FP16@
 
-
+#cmakedefine CLANG_IS_PATCHED_FOR_SPIR_CC
+#cmakedefine POCL_KCACHE_SALT "@POCL_KCACHE_SALT@"
 
 /* used in tce_common.c & pocl_llvm_api.cc  */
 #define SRCDIR  "@SRCDIR@"
-
-
-
-
 
 #cmakedefine TCEMC_AVAILABLE
 

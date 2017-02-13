@@ -688,7 +688,6 @@ file(WRITE "${FILENAME}" "kernel void K(global int *G, constant int* C, local in
 execute_process(COMMAND "${CLANG}" "-target" "x86_64-unknown-unknown" "${FILENAME}" "-emit-llvm" "-c" "-S" "-o" "-"
   OUTPUT_VARIABLE AS_CHECK_RESULT)
 
-message("$AS_CHECK_RESULT")
 if(LLVM_OLDER_THAN_3_9)
   if(NOT AS_CHECK_RESULT MATCHES "!1 = !{!\"kernel_arg_addr_space\", i32 1, i32 2, i32 3}")
     set(POCL_USE_FAKE_ADDR_SPACE_IDS 1)
@@ -701,4 +700,29 @@ else()
   else()
     set(POCL_USE_FAKE_ADDR_SPACE_IDS 0)
   endif()
+endif()
+
+######################################################################################
+# Test for presence of Clang calling convention patch from
+# https://github.com/pocl/pocl/issues/1
+
+execute_process(
+  COMMAND
+    "${CLANG}" "-S" "-xcl" "-emit-llvm" "${CMAKE_SOURCE_DIR}/cmake/spir-cc-test-kernel.cl" "-o" "-"
+    OUTPUT_VARIABLE SPIR_PATCH_TEST_IR
+    ERROR_VARIABLE _DUMMY
+    RESULT_VARIABLE SPIR_CC_RES)
+
+if(SPIR_CC_RES)
+  message(FATAL_ERROR "Clang exited with non-zero status when trying to compile calling convention test")
+endif()
+
+string(FIND "${SPIR_PATCH_TEST_IR}" "spir_kernel" SPIR_CC_RES)
+if("${SPIR_CC_RES}" MATCHES "-1")
+  set(CLANG_IS_PATCHED_FOR_SPIR_CC 0)
+  message(STATUS "Clang is NOT patched for SPIR CC")
+else()
+  set(CLANG_IS_PATCHED_FOR_SPIR_CC 1)
+  set(POCL_KCACHE_SALT "${POCL_KCACHE_SALT}-spirccpatch")
+  message(STATUS "Clang IS patched for SPIR CC")
 endif()

@@ -211,12 +211,15 @@ set_tests_properties("regression/barrier_between_two_for_loops_LOOPS"
 #    PROPERTIES  WILL_FAIL 1)
 #endif()
 
+if (NOT CLANG_IS_PATCHED_FOR_SPIR_CC)
 set_tests_properties("regression/struct_kernel_arguments"
                       PROPERTIES  WILL_FAIL 1)
 
 if(ARM64)
   set_tests_properties("regression/vector_kernel_arguments"
     PROPERTIES  WILL_FAIL 1)
+endif()
+
 endif()
 
 ###################################################################
