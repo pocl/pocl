@@ -325,6 +325,25 @@ link(llvm::Module *krn, const llvm::Module *lib)
     }
   }
 
+  // Replace calls to printf to the internal target-specific
+  // _cl_printf() version. We cannot call it directly via
+  // #define as in Clang 4.0 only printf() can have variable
+  // length argument list as mandated by OpenCL C specs.
+  for (fi = krn->begin(), fe = krn->end(); fi != fe; fi++) {
+    llvm::Function *F = &*fi;
+    for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
+      for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE;
+	   ++BI) {
+	Instruction *Instr = dyn_cast<Instruction>(BI);
+	if (!llvm::isa<CallInst>(Instr)) continue;
+	CallInst *CallInstr = dyn_cast<CallInst>(Instr);
+	if (CallInstr->getCalledFunction() != nullptr &&
+	    CallInstr->getCalledFunction()->getName() == "printf")
+	    CallInstr->getCalledFunction()->setName("_cl_printf");
+      }
+    }
+  }
+
   // Inspect the kernel, find undefined functions
   for (fi = krn->begin(), fe = krn->end();  fi != fe; fi++) {
     if ((*fi).isDeclaration()) {

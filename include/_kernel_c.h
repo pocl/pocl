@@ -32,6 +32,7 @@
 #define _KERNEL_C_H
 
 #include "pocl_types.h"
+#include "pocl_llvm_version.h"
 
 #include "_kernel_constants.h"
 
@@ -67,10 +68,6 @@
 #  define _CL_UNAVAILABLE __attribute__((__unavailable__))
 #else
 #  define _CL_UNAVAILABLE
-#endif
-
-#if !((__clang_major__ == 3) && (__clang_minor__ == 9)) && !(__clang_major__ == 4)
-#define CLANG_OLDER_THAN_3_9
 #endif
 
 typedef char char2  __attribute__((__ext_vector_type__(2)));
@@ -109,8 +106,8 @@ typedef uint uint4  __attribute__((__ext_vector_type__(4)));
 typedef uint uint8  __attribute__((__ext_vector_type__(8)));
 typedef uint uint16 __attribute__((__ext_vector_type__(16)));
 
-#if defined(__CBUILD__) && defined(cl_khr_fp16) && defined(CLANG_OLDER_THAN_3_9)
-/* NOTE: the Clang's __fp16 does not work robustly in C mode, 
+#if defined(__CBUILD__) && defined(cl_khr_fp16) && defined(LLVM_OLDER_THAN_4_0)
+/* NOTE: the Clang's __fp16 does not work robustly in C mode,
    it might produce invalid code at least with half vectors.
    Using the native 'half' type in OpenCL C mode works better. */
 typedef __fp16 half;
@@ -189,113 +186,6 @@ typedef struct _pocl_image1d_array_t { dev_image_t base; }* image1d_array_t;
 #else
 #define IMG_WRITE_AQ __write_only
 #endif
-
-/* read_imagef 2d functions*/
-float4 _CL_OVERLOADABLE read_imagef (image2d_t image, sampler_t sampler,
-                                     int2 coord);
-/* float coords not implemented yet
-float4 _CL_OVERLOADABLE read_imagef (image2d_t image, sampler_t sampler,
-                                     float2 coord);
-*/
-
-float4 _CL_OVERLOADABLE read_imagef (image2d_t image, int2 coord);
-
-float4 _CL_OVERLOADABLE read_imagef (image2d_array_t image, int4 coord);
-
-float4 _CL_OVERLOADABLE read_imagef (image2d_array_t image, sampler_t sampler,
-                                     int4 coord);
-
-/*float coords not immplemented yet
-float4 _CL_OVERLOADABLE read_imagef (image2d_array_t image, sampler_t sampler,
-                                     float4 coord);
-*/
-
-/* read_imagef 3d functions*/
-float4 _CL_OVERLOADABLE read_imagef (image3d_t image, sampler_t sampler,
-                                     int4 coord);
-
-/* read_imageui 2d functions*/
-uint4 _CL_OVERLOADABLE read_imageui (image2d_t image, sampler_t sampler,
-                                     int2 coord);
-
-uint4 _CL_OVERLOADABLE read_imageui (image2d_t image, sampler_t sampler, 
-                                     int4 coord);
-
-uint4 _CL_OVERLOADABLE read_imageui (image3d_t image, sampler_t sampler, 
-                                     int4 coord);
-
-int4 _CL_OVERLOADABLE read_imagei (image2d_t image, sampler_t sampler, 
-                                   int2 coord);
-
-
-void _CL_OVERLOADABLE write_imagei (IMG_WRITE_AQ image2d_t image, int2 coord, int4 color);
-
-void _CL_OVERLOADABLE write_imageui (IMG_WRITE_AQ image2d_t image, int2 coord, uint4 color);
-
-
-
-void _CL_OVERLOADABLE write_imagef (IMG_WRITE_AQ image2d_t image, int2 coord,
-                                    float4 color);
-
-void _CL_OVERLOADABLE write_imagef (IMG_WRITE_AQ image3d_t image, int4 coord,
-                                    float4 color);
-
-/* not implemented 
-void _CL_OVERLOADABLE write_imagef (image2d_array_t image, int4 coord,
-                                    float4 color);
-
-void _CL_OVERLOADABLE write_imagei (image2d_array_t image, int4 coord,
-                                    int4 color);
-
-void _CL_OVERLOADABLE write_imageui (image2d_array_t image, int4 coord,
-                                     uint4 color);
-
-void _CL_OVERLOADABLE write_imagef (image1d_t image, int coord,
-                                    float4 color);
-
-void _CL_OVERLOADABLE write_imagei (image1d_t image, int coord,
-                                    int4 color);
-
-void _CL_OVERLOADABLE write_imageui (image1d_t image, int coord, 
-                                     uint4 color);
-
-void _CL_OVERLOADABLE write_imagef (image1d_buffer_t image, int coord, 
-                                    float4 color);
-
-void _CL_OVERLOADABLE write_imagei (image1d_buffer_t image, int coord,
-                                     int4 color);
-
-void _CL_OVERLOADABLE write_imageui (image1d_buffer_t image, int coord,
-                                     uint4 color);
-
-void _CL_OVERLOADABLE write_imagef (image1d_array_t image, int2 coord,
-                                    float4 color);
-
-void _CL_OVERLOADABLE write_imagei (image1d_array_t image, int2 coord,
-                                    int4 color);
-
-void _CL_OVERLOADABLE write_imageui (image1d_array_t image, int2 coord,
-                                     uint4 color);
-
-void _CL_OVERLOADABLE write_imageui (image3d_t image, int4 coord,
-                                     uint4 color);
-*/
-int _CL_OVERLOADABLE get_image_width (image1d_t image);
-int _CL_OVERLOADABLE get_image_width (image2d_t image);
-int _CL_OVERLOADABLE get_image_width (image3d_t image);
-
-int _CL_OVERLOADABLE get_image_height (image1d_t image);
-int _CL_OVERLOADABLE get_image_height (image2d_t image);
-int _CL_OVERLOADABLE get_image_height (image3d_t image);
-
-int _CL_OVERLOADABLE get_image_depth (image1d_t image);
-int _CL_OVERLOADABLE get_image_depth (image2d_t image);
-int _CL_OVERLOADABLE get_image_depth (image3d_t image);
-
-int2 _CL_OVERLOADABLE get_image_dim (image2d_t image);
-int2 _CL_OVERLOADABLE get_image_dim (image2d_array_t image);
-int4 _CL_OVERLOADABLE get_image_dim (image3d_t image);
-
 
 #ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
 /*

@@ -4,6 +4,25 @@
 #  error "cl_khr_fp64 requires cl_khr_int64"
 #endif
 
+#ifdef __CBUILD__
+
+/* Define the required OpenCL C fixed size types in a C compatible way.
+   The C-based kernel library implementations need these. Avoid using
+   stdint.h types as it might not be available for Clang during
+   kernel compilation. */
+typedef unsigned char uchar;
+typedef unsigned short ushort;
+typedef unsigned int uint;
+
+#ifdef cl_khr_int64
+typedef unsigned long ulong;
+#else
+typedef unsigned int ulong;
+#endif
+
+typedef ulong size_t;
+
+#endif
 
 
 /* Disable undefined datatypes */
@@ -30,7 +49,7 @@ typedef struct error_undefined_type_double error_undefined_type_double;
 #  define double error_undefined_type_double
 #endif
 
-
+#ifndef __CBUILD__
 
 /* Define unsigned datatypes */
 
@@ -48,6 +67,7 @@ typedef __PTRDIFF_TYPE__ ptrdiff_t;
 typedef ptrdiff_t intptr_t;
 typedef size_t uintptr_t;
 
+#endif
 
 /* Image types.
  * Note: there is a duplicate definition in

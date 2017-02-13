@@ -1,5 +1,5 @@
 /* pocl/_kernel.h - OpenCL types and runtime library
-   functions declarations.
+   functions declarations. This should be included only from OpenCL C files.
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
    Copyright (c) 2011-2017 Pekka Jääskeläinen / TUT
@@ -2380,5 +2380,111 @@ __IF_INT64(_CL_DECLARE_PREFETCH_FUNCS(ulong));
 __IF_FP16(_CL_DECLARE_PREFETCH_FUNCS(half));
 _CL_DECLARE_PREFETCH_FUNCS(float);
 __IF_FP64(_CL_DECLARE_PREFETCH_FUNCS(double));
+
+/* read_imagef 2d functions*/
+float4 _CL_OVERLOADABLE read_imagef (image2d_t image, sampler_t sampler,
+                                     int2 coord);
+/* float coords not implemented yet
+float4 _CL_OVERLOADABLE read_imagef (image2d_t image, sampler_t sampler,
+                                     float2 coord);
+*/
+
+float4 _CL_OVERLOADABLE read_imagef (image2d_t image, int2 coord);
+
+float4 _CL_OVERLOADABLE read_imagef (image2d_array_t image, int4 coord);
+
+float4 _CL_OVERLOADABLE read_imagef (image2d_array_t image, sampler_t sampler,
+                                     int4 coord);
+
+/*float coords not immplemented yet
+float4 _CL_OVERLOADABLE read_imagef (image2d_array_t image, sampler_t sampler,
+                                     float4 coord);
+*/
+
+/* read_imagef 3d functions*/
+float4 _CL_OVERLOADABLE read_imagef (image3d_t image, sampler_t sampler,
+                                     int4 coord);
+
+/* read_imageui 2d functions*/
+uint4 _CL_OVERLOADABLE read_imageui (image2d_t image, sampler_t sampler,
+                                     int2 coord);
+
+uint4 _CL_OVERLOADABLE read_imageui (image2d_t image, sampler_t sampler, 
+                                     int4 coord);
+
+uint4 _CL_OVERLOADABLE read_imageui (image3d_t image, sampler_t sampler, 
+                                     int4 coord);
+
+int4 _CL_OVERLOADABLE read_imagei (image2d_t image, sampler_t sampler, 
+                                   int2 coord);
+
+
+void _CL_OVERLOADABLE write_imagei (IMG_WRITE_AQ image2d_t image, int2 coord, int4 color);
+
+void _CL_OVERLOADABLE write_imageui (IMG_WRITE_AQ image2d_t image, int2 coord, uint4 color);
+
+
+
+void _CL_OVERLOADABLE write_imagef (IMG_WRITE_AQ image2d_t image, int2 coord,
+                                    float4 color);
+
+void _CL_OVERLOADABLE write_imagef (IMG_WRITE_AQ image3d_t image, int4 coord,
+                                    float4 color);
+
+/* not implemented 
+void _CL_OVERLOADABLE write_imagef (image2d_array_t image, int4 coord,
+                                    float4 color);
+
+void _CL_OVERLOADABLE write_imagei (image2d_array_t image, int4 coord,
+                                    int4 color);
+
+void _CL_OVERLOADABLE write_imageui (image2d_array_t image, int4 coord,
+                                     uint4 color);
+
+void _CL_OVERLOADABLE write_imagef (image1d_t image, int coord,
+                                    float4 color);
+
+void _CL_OVERLOADABLE write_imagei (image1d_t image, int coord,
+                                    int4 color);
+
+void _CL_OVERLOADABLE write_imageui (image1d_t image, int coord, 
+                                     uint4 color);
+
+void _CL_OVERLOADABLE write_imagef (image1d_buffer_t image, int coord, 
+                                    float4 color);
+
+void _CL_OVERLOADABLE write_imagei (image1d_buffer_t image, int coord,
+                                     int4 color);
+
+void _CL_OVERLOADABLE write_imageui (image1d_buffer_t image, int coord,
+                                     uint4 color);
+
+void _CL_OVERLOADABLE write_imagef (image1d_array_t image, int2 coord,
+                                    float4 color);
+
+void _CL_OVERLOADABLE write_imagei (image1d_array_t image, int2 coord,
+                                    int4 color);
+
+void _CL_OVERLOADABLE write_imageui (image1d_array_t image, int2 coord,
+                                     uint4 color);
+
+void _CL_OVERLOADABLE write_imageui (image3d_t image, int4 coord,
+                                     uint4 color);
+*/
+int _CL_OVERLOADABLE get_image_width (image1d_t image);
+int _CL_OVERLOADABLE get_image_width (image2d_t image);
+int _CL_OVERLOADABLE get_image_width (image3d_t image);
+
+int _CL_OVERLOADABLE get_image_height (image1d_t image);
+int _CL_OVERLOADABLE get_image_height (image2d_t image);
+int _CL_OVERLOADABLE get_image_height (image3d_t image);
+
+int _CL_OVERLOADABLE get_image_depth (image1d_t image);
+int _CL_OVERLOADABLE get_image_depth (image2d_t image);
+int _CL_OVERLOADABLE get_image_depth (image3d_t image);
+
+int2 _CL_OVERLOADABLE get_image_dim (image2d_t image);
+int2 _CL_OVERLOADABLE get_image_dim (image2d_array_t image);
+int4 _CL_OVERLOADABLE get_image_dim (image3d_t image);
 
 #pragma OPENCL EXTENSION all : disable

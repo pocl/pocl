@@ -41,10 +41,10 @@ function(compile_c_to_bc FILENAME SUBDIR BC_FILE_LIST)
         "${CMAKE_SOURCE_DIR}/include/pocl_types.h"
         "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
         ${KERNEL_DEPEND_HEADERS}
-        COMMAND "${CLANG}" ${CLANG_FLAGS} ${KERNEL_CL_FLAGS} ${DEVICE_CL_FLAGS}
-        "-D__CBUILD__" "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
+        COMMAND "${CLANG}" ${CLANG_FLAGS} ${DEVICE_CL_FLAGS}
+        "-xc" "-D__CBUILD__" "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
         "-include" "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
-        COMMENT "Building C to LLVM bitcode ${BC_FILE}" 
+        COMMENT "Building C to LLVM bitcode ${BC_FILE}"
         VERBATIM)
 endfunction()
 

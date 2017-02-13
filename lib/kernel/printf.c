@@ -25,8 +25,6 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wformat-security"
 
-#if (__clang_major__ == 3)
-
 #include <limits.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -40,7 +38,7 @@ int snprintf(OCL_C_AS char* restrict str, size_t size,
 
 // For debugging
 // Use as: DEBUG_PRINTF((fmt, args...)) -- note double parentheses!
-// #define DEBUG_PRINTF(args) (printf args)
+//#define DEBUG_PRINTF(args) (printf args)
 #define DEBUG_PRINTF(args) ((void)0)
 
 // Conversion flags
@@ -481,9 +479,3 @@ int _cl_printf(const OCL_CONSTANT_AS char* restrict format, ...)
 }
 
 #pragma clang diagnostic pop
-
-#else
-
-#warning TODO: Clang 4.0+ now errors out with variadic arguments
-
-#endif

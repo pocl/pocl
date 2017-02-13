@@ -28,8 +28,10 @@
  * the private space (0) and calls a system vprintf.
  */
 
-#include <stddef.h>
+//#include <stddef.h>
 #include <stdarg.h>
+
+#define NULL ((void*)0)
 
 #ifdef __TCE_V1__
 /* TCE includes need tceops.h to be generated just for _TCE_STDOUT in
