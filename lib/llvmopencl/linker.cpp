@@ -1,3 +1,27 @@
+// LLVM function pass to convert the sampler initializer calls to a target
+// desired format
+//
+// Copyright (c) 2014 Kalle Raiskila
+//               2016-2017 Pekka Jääskeläinen / Tampere University of Technology
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+// THE SOFTWARE.
+
 /*
    Lightweight bitcode linker to replace
    llvm::Linker. Unlike the LLVM default linker, this
@@ -6,11 +30,7 @@
    This is to speed up the linking of the kernel lib
    which is so big, that it takes seconds to clone it,
    even on top-of-the line current processors
-
-   Copyright 2014 Kalle Raiskila.
-   This file is a part of pocl, distributed under the MIT
-   licence. See file COPYING.
- */
+*/
 
 #include <list>
 #include <iostream>
@@ -247,33 +267,29 @@ static void
 copy_func_callgraph(const llvm::StringRef func_name,
                     const llvm::Module *  from,
                     llvm::Module *        to,
-                    ValueToValueMapTy &   vvm)
-{
+                    ValueToValueMapTy &   vvm) {
     std::list<llvm::StringRef> callees;
-    llvm::Function *rootfunc = from->getFunction(func_name);
-    if (rootfunc == NULL)
+    llvm::Function *RootFunc = from->getFunction(func_name);
+    if (RootFunc == NULL)
       return;
-    DB_PRINT("copying function %s with callgraph\n", func_name.data());
+    DB_PRINT("copying function %s with callgraph\n", RootFunc.data());
 
-    find_called_functions(rootfunc, callees);
+    find_called_functions(RootFunc, callees);
 
     // First copy the callees of func, then the function itself.
     // Recurse into callees to handle the case where kernel library
     // functions call other kernel library functions.
     std::list<llvm::StringRef>::iterator ci,ce;
-    for (ci = callees.begin(), ce = callees.end();
-         ci != ce;
-         ci++) {
-        llvm::Function *SrcFunc = from->getFunction(*ci);
-        if (!SrcFunc->isDeclaration()) {
-          copy_func_callgraph(*ci, from, to, vvm);
-        } else {
-          DB_PRINT("%s is declaration, not recursing into it!\n",
-                   SrcFunc->getName().str().c_str());
-        }
-        CopyFunc(*ci, from, to, vvm);
+    for (ci = callees.begin(), ce = callees.end(); ci != ce; ci++) {
+      llvm::Function *SrcFunc = from->getFunction(*ci);
+      if (!SrcFunc->isDeclaration()) {
+        copy_func_callgraph(*ci, from, to, vvm);
+      } else {
+        DB_PRINT("%s is declaration, not recursing into it!\n",
+		 SrcFunc->getName().str().c_str());
+      }
+      CopyFunc(*ci, from, to, vvm);
     }
-
     CopyFunc(func_name, from, to, vvm);
 }
 
@@ -296,12 +312,10 @@ link(llvm::Module *krn, const llvm::Module *lib)
   ValueToValueMapTy vvm;
   std::list<llvm::StringRef> declared;
 
-  llvm::Module::iterator fi,fe;
+  llvm::Module::iterator fi, fe;
 
   // Find and fix opencl.imageX_t arguments
-  for (fi = krn->begin(), fe = krn->end();
-       fi != fe;
-       fi++) {
+  for (fi = krn->begin(), fe = krn->end(); fi != fe; fi++) {
     llvm::Function *f = &*fi;
     if (f->isDeclaration())
       continue;
@@ -312,93 +326,82 @@ link(llvm::Module *krn, const llvm::Module *lib)
   }
 
   // Inspect the kernel, find undefined functions
-  for (fi=krn->begin(), fe=krn->end();
-       fi != fe;
-       fi++) {
+  for (fi = krn->begin(), fe = krn->end();  fi != fe; fi++) {
     if ((*fi).isDeclaration()) {
       DB_PRINT("%s is not defined\n", fi->getName().data());
       declared.push_back(fi->getName());
       continue;
     }
 
-        // Find all functions the kernel source calls
-        // TODO: is there no direct way?
-        find_called_functions(&*fi, declared);
-    }
-    declared.sort(stringref_cmp);
-    declared.unique(stringref_equal);
+    // Find all functions the kernel source calls
+    // TODO: is there no direct way?
+    find_called_functions(&*fi, declared);
+  }
+  declared.sort(stringref_cmp);
+  declared.unique(stringref_equal);
 
-    // copy all the globals from lib to krn.
-    // it probably is faster to just copy them all, than to inspect
-    // both krn and lib to find which actually are used.
-    DB_PRINT("cloning the global variables:\n");
-    llvm::Module::const_global_iterator gi,ge;
-    for (gi=lib->global_begin(), ge=lib->global_end();
-         gi != ge;
-         gi++) {
-        DB_PRINT(" %s\n", gi->getName().data());
-        GlobalVariable *GV=new GlobalVariable(*krn,
-                                              gi->getType()->getElementType(),
-                                              gi->isConstant(),
-                                              gi->getLinkage(),
-                                              (Constant*) 0, gi->getName(),
-                                              (GlobalVariable*) 0,
-                                              gi->getThreadLocalMode(),
-                                              gi->getType()->getAddressSpace());
-        GV->copyAttributesFrom(&*gi);
-        vvm[&*gi]=GV;
-    }
+  // Copy all the globals from lib to krn.
+  // It probably is faster to just copy them all, than to inspect
+  // both krn and lib to find which actually are used.
+  DB_PRINT("cloning the global variables:\n");
+  llvm::Module::const_global_iterator gi,ge;
+  for (gi=lib->global_begin(), ge=lib->global_end(); gi != ge; gi++) {
+    DB_PRINT(" %s\n", gi->getName().data());
+    GlobalVariable *GV = new GlobalVariable(
+      *krn, gi->getType()->getElementType(), gi->isConstant(),
+      gi->getLinkage(), (Constant*)0, gi->getName(), (GlobalVariable*)0,
+      gi->getThreadLocalMode(), gi->getType()->getAddressSpace());
+    GV->copyAttributesFrom(&*gi);
+    vvm[&*gi]=GV;
+  }
 
-    // For each undefined function in krn, clone it from the lib to the krn module,
-    // if found in lib
-    std::list<llvm::StringRef>::iterator di,de;
-    for (di = declared.begin(), de = declared.end();
-         di != de; di++) {
-        copy_func_callgraph(*di, lib, krn, vvm);
-    }
+  // For each undefined function in krn, clone it from the lib to the krn module,
+  // if found in lib
+  std::list<llvm::StringRef>::iterator di,de;
+  for (di = declared.begin(), de = declared.end();
+       di != de; di++) {
+      copy_func_callgraph(*di, lib, krn, vvm);
+  }
 
-    // copy any aliases to krn
-    DB_PRINT("cloning the aliases:\n");
-    llvm::Module::const_alias_iterator ai, ae;
-    for (ai = lib->alias_begin(), ae = lib->alias_end();
-         ai != ae;
-         ai++) {
-        DB_PRINT(" %s\n", ai->getName().data());
-        GlobalAlias *GA =
+  // copy any aliases to krn
+  DB_PRINT("cloning the aliases:\n");
+  llvm::Module::const_alias_iterator ai, ae;
+  for (ai = lib->alias_begin(), ae = lib->alias_end(); ai != ae; ai++) {
+    DB_PRINT(" %s\n", ai->getName().data());
+    GlobalAlias *GA =
 #ifndef LLVM_3_7
-            GlobalAlias::create(ai->getType(),
-                                ai->getType()->getAddressSpace(),
-                                ai->getLinkage(), ai->getName(), NULL, krn);
+      GlobalAlias::create(
+	ai->getType(), ai->getType()->getAddressSpace(), ai->getLinkage(),
+	ai->getName(), NULL, krn);
 #else
-            GlobalAlias::create(ai->getType(),
-                                ai->getLinkage(), ai->getName(), NULL, krn);
+    GlobalAlias::create(
+	ai->getType(), ai->getLinkage(), ai->getName(), NULL, krn);
 #endif
 
-        GA->copyAttributesFrom(&*ai);
-        vvm[&*ai]=GA;
-    }
+    GA->copyAttributesFrom(&*ai);
+    vvm[&*ai]=GA;
+  }
 
-    // initialize the globals that were copied
-    for (gi=lib->global_begin(), ge=lib->global_end();
-         gi != ge;
-         gi++) {
-        GlobalVariable *GV=cast<GlobalVariable>(vvm[&*gi]);
-        if (gi->hasInitializer())
-            GV->setInitializer(MapValue(gi->getInitializer(), vvm));
-    }
+  // initialize the globals that were copied
+  for (gi=lib->global_begin(), ge=lib->global_end();
+       gi != ge;
+       gi++) {
+      GlobalVariable *GV=cast<GlobalVariable>(vvm[&*gi]);
+      if (gi->hasInitializer())
+	  GV->setInitializer(MapValue(gi->getInitializer(), vvm));
+  }
 
-    // copy metadata
-    DB_PRINT("cloning metadata:\n");
-    llvm::Module::const_named_metadata_iterator mi,me;
-    for (mi=lib->named_metadata_begin(), me=lib->named_metadata_end();
-         mi != me;
-         mi++) {
-        const NamedMDNode &NMD=*mi;
-        DB_PRINT(" %s:\n", NMD.getName().data());
-        NamedMDNode *NewNMD=krn->getOrInsertNamedMetadata(NMD.getName());
-        for (unsigned i=0, e=NMD.getNumOperands(); i != e; ++i)
-            NewNMD->addOperand(MapMetadata(NMD.getOperand(i), vvm));
-    }
+  // copy metadata
+  DB_PRINT("cloning metadata:\n");
+  llvm::Module::const_named_metadata_iterator mi,me;
+  for (mi=lib->named_metadata_begin(), me=lib->named_metadata_end();
+       mi != me; mi++) {
+      const NamedMDNode &NMD=*mi;
+      DB_PRINT(" %s:\n", NMD.getName().data());
+      NamedMDNode *NewNMD=krn->getOrInsertNamedMetadata(NMD.getName());
+      for (unsigned i=0, e=NMD.getNumOperands(); i != e; ++i)
+	NewNMD->addOperand(MapMetadata(NMD.getOperand(i), vvm));
+  }
 }
 
 /* vim: set expandtab ts=4 : */
