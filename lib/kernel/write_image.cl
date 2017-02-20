@@ -24,7 +24,7 @@
 #include "templates.h"
 #include "pocl_image_rw_utils.h"
 
-#if (__clang_major__ == 3) && (__clang_minor__ >= 5)
+#if (__clang_major__ > 3) || ((__clang_major__ == 3) && (__clang_minor__ >= 5))
 // Clang 3.5 crashes in case trying to cast to the private pointer,
 // adding the global qualifier fixes it. Clang 3.4 crashes if it's
 // there. The issue is in SROA.
