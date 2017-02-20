@@ -246,17 +246,15 @@ static void addGEPs(llvm::Module &M,
             v = builder.CreateLoad(
                   builder.CreateConstGEP2_32(ptr, 0, i));
 #else
-                v = builder.CreateLoad(
-                      builder.CreateConstGEP2_32(
-                        ptr->getType()->getPointerElementType(), ptr, 0, i));
+            v = builder.CreateLoad(
+              builder.CreateConstGEP2_32(
+                ptr->getType()->getPointerElementType(), ptr, 0, i));
 #endif
         }
         builder.CreateStore(v, gv);
       }
     }
 }
-
-
 
 static Function *
 createLauncher(Module &M, Function *F) {
@@ -334,17 +332,15 @@ createLauncher(Module &M, Function *F) {
   addGEPs(M, builder, a, size_t_width, TypeBuilder<PoclContext, true>::GROUP_ID,
           "_group_id_%c");
 
-  if (WGDynamicLocalSize) {
+  if (WGDynamicLocalSize)
     addGEPs(M, builder, a, size_t_width, TypeBuilder<PoclContext, true>::LOCAL_SIZE,
             "_local_size_%c");
-  }
 
   addGEPs(M, builder, a, size_t_width, TypeBuilder<PoclContext, true>::NUM_GROUPS,
           "_num_groups_%c");
 
   addGEPs(M, builder, a, size_t_width, TypeBuilder<PoclContext, true>::GLOBAL_OFFSET,
           "_global_offset_%c");
-
 
   CallInst *c = builder.CreateCall(F, ArrayRef<Value*>(arguments));
   builder.CreateRetVoid();

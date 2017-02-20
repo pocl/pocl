@@ -407,7 +407,7 @@ link(llvm::Module *krn, const llvm::Module *lib)
        gi++) {
       GlobalVariable *GV=cast<GlobalVariable>(vvm[&*gi]);
       if (gi->hasInitializer())
-	  GV->setInitializer(MapValue(gi->getInitializer(), vvm));
+        GV->setInitializer(MapValue(gi->getInitializer(), vvm));
   }
 
   // copy metadata
@@ -419,7 +419,7 @@ link(llvm::Module *krn, const llvm::Module *lib)
       DB_PRINT(" %s:\n", NMD.getName().data());
       NamedMDNode *NewNMD=krn->getOrInsertNamedMetadata(NMD.getName());
       for (unsigned i=0, e=NMD.getNumOperands(); i != e; ++i)
-	NewNMD->addOperand(MapMetadata(NMD.getOperand(i), vvm));
+        NewNMD->addOperand(MapMetadata(NMD.getOperand(i), vvm));
   }
 }
 

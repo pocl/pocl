@@ -63,7 +63,7 @@ function(compile_cc_to_bc FILENAME SUBDIR BC_FILE_LIST)
           ${KERNEL_DEPEND_HEADERS}
         COMMAND  "${CLANGXX}" ${CLANG_FLAGS} ${KERNEL_CLANGXX_FLAGS}
         ${DEVICE_CL_FLAGS} "-std=c++11" "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
-        COMMENT "Building C++ to LLVM bitcode ${BC_FILE}" 
+        COMMENT "Building C++ to LLVM bitcode ${BC_FILE}"
         VERBATIM)
 endfunction()
 
@@ -80,13 +80,13 @@ function(compile_cl_to_bc FILENAME SUBDIR BC_FILE_LIST)
         DEPENDS "${FULL_F_PATH}"
           "${CMAKE_SOURCE_DIR}/include/_kernel.h"
           "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
-          "${CMAKE_SOURCE_DIR}/include/pocl_types.h" 
+          "${CMAKE_SOURCE_DIR}/include/pocl_types.h"
           ${KERNEL_DEPEND_HEADERS}
         COMMAND "${CLANG}" ${CLANG_FLAGS} "-x" "cl" ${KERNEL_CL_FLAGS} ${DEVICE_CL_FLAGS}
         "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
         "-include" "${CMAKE_SOURCE_DIR}/include/_kernel.h"
         "-include" "${CMAKE_SOURCE_DIR}/include/_enable_all_exts.h"
-        COMMENT "Building CL to LLVM bitcode ${BC_FILE}" 
+        COMMENT "Building CL to LLVM bitcode ${BC_FILE}"
         VERBATIM)
 endfunction()
 
