@@ -2169,7 +2169,7 @@ _CL_DECLARE_ATOMICS64(__local , ulong)
 
 /* OpenCL 2.0 Atomics */
 
-#if (__clang_major__ == 3) && (__clang_minor__ >= 7)
+#if ((__clang_major__ >= 4) || (__clang_major__ == 3) && (__clang_minor__ >= 7))
 
 #if (__OPENCL_C_VERSION__ > 199) && (__OPENCL_VERSION__ > 199)
 
