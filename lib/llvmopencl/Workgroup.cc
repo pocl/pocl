@@ -345,6 +345,41 @@ createLauncher(Module &M, Function *F) {
   CallInst *c = builder.CreateCall(F, ArrayRef<Value*>(arguments));
   builder.CreateRetVoid();
 
+#ifdef LLVM_4_0
+  // At least with LLVM 4.0, the runtime of AddAliasScopeMetadata of
+  // llvm::InlineFunction explodes in case of kernels with restrict
+  // metadata and a lot of lifetime markers. The issue produces at
+  // least with EinsteinToolkit which has a lot of restrict kernel
+  // args). Remove them here before inlining to speed it up.
+  // TODO: Investigate the root cause.
+
+  std::set<CallInst*> Calls;
+
+  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
+    for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE; ++BI) {
+      Instruction *Instr = dyn_cast<Instruction>(BI);
+      if (!llvm::isa<CallInst>(Instr)) continue;
+      CallInst *CallInstr = dyn_cast<CallInst>(Instr);
+      if (CallInstr->getCalledFunction() != nullptr &&
+          (CallInstr->getCalledFunction()->getName() ==
+           "llvm.lifetime.end" ||
+           CallInstr->getCalledFunction()->getName() ==
+           "llvm.lifetime.start")) {
+        Calls.insert(CallInstr);
+      }
+    }
+  }
+
+  bool Changed = false;
+  for (auto C : Calls) {
+    C->eraseFromParent();
+  }
+#endif
+
+
+  // TODO: Get rid of this step as inlining takes surprisingly long
+  // with large functions and the effect to total kernel runtime
+  // is meaningless.
   InlineFunctionInfo IFI;
   InlineFunction(c, IFI);
 
