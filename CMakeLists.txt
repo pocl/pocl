@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014 pocl developers
+#   Copyright (c) 2014-2017 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,7 @@ cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 project(pocl)
 set(MAJOR_VERSION 0)
 set(MINOR_VERSION 14)
-set(VERSION_SUFFIX "-pre")
+set(VERSION_SUFFIX "")
 set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION}${VERSION_SUFFIX})
 set(POCL_VERSION ${VERSION_STRING})
 
