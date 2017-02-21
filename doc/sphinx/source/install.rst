@@ -8,13 +8,13 @@ Requirements
 In order to build pocl, you need the following support libraries and
 tools:
 
-  * LLVM & Clang; for more details see :ref:`supported-compilers`
+  * Latest released version of LLVM & Clang
   * GNU make
   * libtool dlopen wrapper files (e.g. libltdl3-dev in Debian)
   * pthread (should be installed by default)
   * hwloc v1.0 or newer (e.g. libhwloc-dev)
   * pkg-config
-  * autotools or cmake
+  * cmake
 
 Clang / LLVM Notes
 ------------------
@@ -30,9 +30,6 @@ line, as follows:
   versions are supported with "best effort" basis; there might not be
   build bots continuously testing the code base nor anyone fixing their
   possible breakage.
-
-  [August 2016] pocl has been updated for LLVM 3.9
-
 
 Configure & Build
 -----------------
@@ -103,7 +100,7 @@ LLVM-less build
 Building on Ubuntu 16.04 LTS
 ----------------------------
 
-The Clang/LLVM 3.8 shipped with Ubuntu 16.04 works fine with pocl.
+The Clang/LLVM 3.8 shipped with Ubuntu 16.04 should work with pocl.
 Be sure to install also the 'libclang-3.8-dev' package in addition
 to the 'clang-3.8 and llvm-3.8-dev' packages, otherwise cmake will
 fail.

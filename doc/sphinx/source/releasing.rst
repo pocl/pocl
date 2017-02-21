@@ -37,7 +37,8 @@ A checklist and hints for testing and making a release successfully:
   because LLVM API lives.  That is, modify configure.ac in the release branch to not
   allow the currently unreleased development version of LLVM.
 * Update the release notes in *doc/notes-VERNUM.txt*.
-* Create and test the tar ball package with command along the lines of 'git archive --format=tar.gz --prefix=pocl-0.14/ HEAD -o pocl-0.14-rc1.tar.gz'.
+* Add a git tag for the release candidate: 'git tag 0.14-rc1'
+* Create and test the tar ball package with command along the lines of 'git archive --format=tar.gz --prefix=pocl-0.14/ 0.14-rc1 -o pocl-0.14-rc1.tar.gz'.
 * Upload the package to portablecl.org/downloads via SFTP or to the
   sourceforge file listing for the pocl project.
 * Request for testers in Twitter and/or mailing list. Point the testers to
