@@ -427,9 +427,11 @@ pocl_exec_command (_cl_command_node * volatile node)
                (node->command.unmap.mapping)->offset,
                (node->command.unmap.mapping)->size);
         }
+      POCL_LOCK_OBJ (node->command.unmap.memobj);
       DL_DELETE((node->command.unmap.memobj)->mappings, 
                 node->command.unmap.mapping);
       (node->command.unmap.memobj)->map_count--;
+      POCL_UNLOCK_OBJ (node->command.unmap.memobj);
       POCL_UPDATE_EVENT_COMPLETE(event);
       POCL_DEBUG_EVENT_TIME(event, "Unmap Mem obj         ");
       break;
