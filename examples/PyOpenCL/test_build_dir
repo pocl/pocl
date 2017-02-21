@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Runs the PyOpenCL tests against a pocl build dir located in the
+# current working directory. Assumes an ICD build.
+
+pyopencl_root=`dirname $0`
+# Go to the build root directory.
+cd ../..
+export POCL_BUILDING=1
+export OCL_ICD_VENDORS=$PWD/ocl-vendors
+export OPENCL_VENDOR_PATH=$OCL_ICD_VENDORS
+
+cd $pyopencl_root/PyOpenCL-build
+source mypy/bin/activate
+cd pyopencl/test
+test_run=`PYOPENCL_TEST=portable py.test 2>&1 | tail -1`
+fail_count=`echo "$test_run" | grep -Eo "[0-9]*" | head -1`
+
+if test $fail_count -le 10;
+then
+# 10 failures with LLVM 4.0 has not the kernabi patch.
+    echo "OK number of failing tests ($fail_count)."
+    exit 0
+else
+    echo "Unexpectedly many failing tests ($fail_count)."
+    exit -1
+fi
