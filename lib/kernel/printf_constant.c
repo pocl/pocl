@@ -56,7 +56,7 @@ int fflush(OCL_C_AS void *stream);
 #undef printf
 #define MAX_FORMAT_STR_SIZE 2048
 int
-_cl_printf(__attribute__((address_space(POCL_ADDRESS_SPACE_CONSTANT)))
+__cl_printf(__attribute__((address_space(POCL_ADDRESS_SPACE_CONSTANT)))
            char* restrict fmt, ...)
 {
   /* http://www.pagetable.com/?p=298 */

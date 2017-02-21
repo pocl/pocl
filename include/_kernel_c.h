@@ -150,7 +150,7 @@ typedef uint uint4  __attribute__((__ext_vector_type__(4)));
 typedef uint uint8  __attribute__((__ext_vector_type__(8)));
 typedef uint uint16 __attribute__((__ext_vector_type__(16)));
 
-#if defined(__CBUILD__) && defined(cl_khr_fp16) && defined(LLVM_OLDER_THAN_4_0)
+#if defined(__CBUILD__) && defined(cl_khr_fp16)
 /* NOTE: the Clang's __fp16 does not work robustly in C mode,
    it might produce invalid code at least with half vectors.
    Using the native 'half' type in OpenCL C mode works better. */

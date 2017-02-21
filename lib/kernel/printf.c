@@ -220,7 +220,7 @@ void _cl_print_pointer(flags_t flags, int field_width, OCL_C_AS const void* val)
 #else
 #define OCL_CONSTANT_AS
 #endif
-int _cl_printf(const OCL_CONSTANT_AS char* restrict format, ...)
+int __cl_printf(const OCL_CONSTANT_AS char* restrict format, ...)
 {
   DEBUG_PRINTF(("[printf:format=%s]\n", format));
   va_list ap;

@@ -49,6 +49,10 @@ endif()
 separate_arguments(TCE_TARGET_LLC_FLAGS)
 set(LLC_FLAGS ${TCE_TARGET_LLC_FLAGS})
 
+if(NOT LLVM_OLDER_THAN_4_0)
+set(KERNEL_CL_FLAGS "-Xclang" "-cl-ext=all,-cl_khr_fp64")
+endif()
+
 # TODO LLC_flags is used by kernel.bc target, but ld is unused
 #LD_FLAGS    = @TARGET_LD_FLAGS@
 

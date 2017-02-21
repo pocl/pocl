@@ -283,6 +283,9 @@ int pocl_llvm_build_program(cl_program program,
       llvm::StringRef tok = extensions.slice(e_start, e_end);
       e_start = e_end + 1;
       ss << "-D" << tok.str() << " ";
+#ifndef LLVM_OLDER_THAN_4_0
+      ss << "-cl-ext=" << tok.str() << " ";
+#endif
     }
   }
 

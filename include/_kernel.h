@@ -2295,26 +2295,13 @@ _CL_DECLARE_SHUFFLE_MN(ulong , ulong ))
 __IF_FP64(
 _CL_DECLARE_SHUFFLE_MN(double, ulong ))
 
-#if (__clang_major__ == 3)
 // We provide our own printf
 // Note: We declare our printf as taking a constant format string, but
 // we implement it in C using a const format string (i.e. a format
 // string living in a different address space). This works only if all
 // address spaces are actually the same, e.g. on CPUs.
-// Note: We cannot use __attribute__((format(printf, 1, 2))), since
-// Clang doesn't support the OpenCL C format specifiers yet.
-int _cl_printf(constant char* restrict format, ...);
-#define printf _cl_printf
-
-#else
-
-// Just declare printf directly without the macro trick.
-// It's the only varargs function allowed by OpenCL C and the new clang.
-// We will define the function in C.
-int printf(constant char *restrict format, ...);
-
-#endif
-
+int __cl_printf(constant char* restrict format, ...);
+#define printf __cl_printf
 
 /* Async Copies from Global to Local Memory, Local to
    Global Memory, and Prefetch */

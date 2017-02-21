@@ -24,6 +24,7 @@
 #=============================================================================
 
 set(TS_NAME "PyOpenCL")
+set(TS_BASEDIR "${TESTSUITE_BASEDIR}/${TS_NAME}")
 set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
 set(TS_BUILDDIR "${TS_SRCDIR}/PyOpenCL-build")
 
@@ -38,16 +39,6 @@ if (EXISTS "${TS_BUILDDIR}/mypy/bin/py.test" AND
 
   add_test(NAME "PyOpenCL"
            COMMAND "${TS_SRCDIR}/test_build_dir")
-  ExternalProject_Add(
-    ${TS_NAME}
-    PREFIX ""
-    SOURCE_DIR ""
-    DOWNLOAD_COMMAND ""
-    PATCH_COMMAND ""
-    UPDATE_COMMAND ""
-    CMAKE_ARGS ""
-    INSTALL_COMMAND ""
-  )
 
   set_tests_properties("PyOpenCL"
     PROPERTIES
