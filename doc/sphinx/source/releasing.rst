@@ -37,10 +37,7 @@ A checklist and hints for testing and making a release successfully:
   because LLVM API lives.  That is, modify configure.ac in the release branch to not 
   allow the currently unreleased development version of LLVM.
 * Update the release notes in *doc/notes-VERNUM.txt*.
-* Create and test the tar ball package with 'make distcheck'. It
-  creates a package with pocl-versionstring.tar.gz by default. For
-  testing, rename this package to contain the RC number. For example,
-  pocl-0.10-rc1.tar.gz.
+* Create and test the tar ball package with command along the lines of 'git archive --format=tar.gz --prefix=pocl-0.14/ HEAD -o pocl-0.14-rc1.tar.gz'.
 * Upload the package to portablecl.org/downloads via SFTP or to the 
   sourceforge file listing for the pocl project.
 * Request for testers in Twitter and/or mailing list. Point the testers to
@@ -61,6 +58,7 @@ A checklist and hints for testing and making a release successfully:
 In case of any problems, ask any previous release manager for help.
 Previous releases were managed by the following pocl developers:
 
+* 0.14: Pekka Jääskeläinen
 * 0.11: Michal Babej
 * 0.10: Pekka Jääskeläinen
 * 0.9: Kalle Raiskila

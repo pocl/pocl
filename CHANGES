@@ -1,20 +1,23 @@
-0.14 unreleased 2016
-====================
+0.14 March 2017
+===============
 
 Highlights
 ----------
-- Support for LLVM/Clang 3.9 which is the first release to include
-  all frontend features for OpenCL 2.0.
+- Support for LLVM/Clang versions 3.9 and 4.0. Version 3.9 was the first
+  release to include all frontend features for OpenCL 2.0.
 - Ability to build pocl in a mode where online compilation is not
   supported to run in hosts without LLVM and binaries compiled offline
   e.g. using poclcc.
+- pocl's binary format now can contain all the necessary bits to
+  execute the programs on a host without online compiler support.
+- Initial support for out-of-order execution execution of command queues.
 - It's now possible to cross-compile pocl when building an offline
   compiler build.
-- Initial support for out-of-order execution execution of command queues.
-- New driver api extension to support OoO and asynchronous devices/drivers.
-- Pthread driver now fully asynchronous.
-- HSA driver is now fully asynchronous.
+- New driver api extension to support out-of-order and asynchronous
+  devices/drivers.
+- Pthread and HSA drivers are now fully asynchronous.
 - CMake now the only supported build system, autotools removed.
+- LTTng tracing support
 
 OpenCL Runtime/Platform API support
 -----------------------------------
@@ -27,8 +30,11 @@ Other
   Generates a static sized work-group function to help optimizations
   such as autovectorization.
 - HSA: added support for phsa (https://github.com/HSAFoundation/phsa)
-- A lot of bugfixes.
-
+- A lot of bug and memory leak fixes. Some notable ones:
+  - Issue #1, passing aggregates as kernel value parameters, can be
+    now fixed with an LLVM patch.
+  - Now it's possible to build pocl without using the fake address
+    space ids, which were a source of many annoying issues.
 
 0.13 April 2016
 ===============
