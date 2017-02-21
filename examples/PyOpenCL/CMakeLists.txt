@@ -24,15 +24,10 @@
 #=============================================================================
 
 set(TS_NAME "PyOpenCL")
-set(TS_BASEDIR "${TESTSUITE_BASEDIR}/${TS_NAME}")
-set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build")
 set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
+set(TS_BUILDDIR "${TS_SRCDIR}/PyOpenCL-build")
 
-# see README on how to install PyOpenCL
-
-# TODO this will need some tweaks for proper setup. For now:
-#   mkdir & cd ${TESTSUITE_BASEDIR}/PyOpenCL/src/PyOpenCL-build
-# then execute the steps from the README.
+# see README on how to install PyOpenCL to the example dir
 
 if (EXISTS "${TS_BUILDDIR}/mypy/bin/py.test" AND
     IS_DIRECTORY "${TS_BUILDDIR}/pyopencl/test")
@@ -42,8 +37,17 @@ if (EXISTS "${TS_BUILDDIR}/mypy/bin/py.test" AND
   set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
 
   add_test(NAME "PyOpenCL"
-           COMMAND cd "${TS_BUILDDIR}" && source mypy/bin/activate && cd pyopencl/test &&
-           PYOPENCL_NO_CACHE=1 PYOPENCL_TEST=portable py.test -v --tb=native)
+           COMMAND "${TS_SRCDIR}/test_build_dir")
+  ExternalProject_Add(
+    ${TS_NAME}
+    PREFIX ""
+    SOURCE_DIR ""
+    DOWNLOAD_COMMAND ""
+    PATCH_COMMAND ""
+    UPDATE_COMMAND ""
+    CMAKE_ARGS ""
+    INSTALL_COMMAND ""
+  )
 
   set_tests_properties("PyOpenCL"
     PROPERTIES
@@ -51,6 +55,6 @@ if (EXISTS "${TS_BUILDDIR}/mypy/bin/py.test" AND
 
 else()
 
-  message(STATUS "Disabling testsuite ${TS_NAME}, required files not found" )
+  message(STATUS "Disabling testsuite ${TS_NAME}, required files not found in ${TS_BUILDDIR}." )
 
 endif()

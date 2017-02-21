@@ -1,7 +1,8 @@
 Installation:
 
+$ mkdir PyOpenCL-build && cd PyOpenCL-build
 $ git clone --recursive git://github.com/inducer/pyopencl
-$ apt-get install python-pip python-virtualenv python-numpy python-mako
+$ apt-get install python-pip python-virtualenv python-numpy python-mako python-dev
 
   (or equivalent, for example:
   curl -O https://raw.github.com/pypa/pip/master/contrib/get-pip.py
@@ -12,7 +13,9 @@ $ virtualenv --system-site-packages mypy
 $ source mypy/bin/activate
 $ cd pyopencl
 $ ./configure.py
-[Edit siteconf.py to taste--for example to find CL headers.]
+
+Edit siteconf.py: set CL_INC_DIR = ['../../../include']
+
 $ python setup.py install
 
 Update:
@@ -28,10 +31,6 @@ Run test:
 $ source mypy/bin/activate
 $ cd pyopencl/test
 $ PYOPENCL_NO_CACHE=1 PYOPENCL_TEST=portable py.test -v --tb=native
-
-'PYOPENCL_NO_CACHE=1' turns off binary caching (aka use of
-clCreateProgramWithBinary), which pocl doesn't appear to
-support. (results in 'out of host memory' error)
 
 'PYOPENCL_TEST=portable' restricts the test run to pocl.
 
