@@ -418,23 +418,16 @@ pocl_exec_command (_cl_command_node * volatile node)
          destination device */
       else
         {
-          void* tofree = NULL;
-          void* tmp = NULL;
-          if (src_buf->flags & CL_MEM_USE_HOST_PTR)
-            tmp = src_buf->mem_host_ptr;
-          else if (dst_buf->flags & CL_MEM_USE_HOST_PTR)
-            tmp = dst_buf->mem_host_ptr;
-          else
-            {
-              size_t size = node->command.copy_image.region[0]
-                * node->command.copy_image.region[1]
-                * node->command.copy_image.region[2];
-              tmp = calloc (1, size);
-              tofree = tmp;
-            }
+          size_t size = node->command.copy_image.region[0]
+            * node->command.copy_image.region[1]
+            * node->command.copy_image.region[2];
+          void *tmp = malloc (size);
+
           /* origin and slice pitch for tmp buffer */
           const size_t null_origin[3] = {0, 0, 0};
-          size_t host_slicepitch =
+          size_t tmp_rowpitch =
+            node->command.copy_image.region[0];
+          size_t tmp_slicepitch =
             node->command.copy_image.region[0]
             * node->command.copy_image.region[1];
 
@@ -447,8 +440,8 @@ pocl_exec_command (_cl_command_node * volatile node)
              node->command.copy_image.region,
              node->command.copy_image.src_rowpitch,
              node->command.copy_image.src_slicepitch,
-             node->command.copy_image.region[0],
-             host_slicepitch);
+             tmp_rowpitch,
+             tmp_slicepitch);
 
           dst_dev->ops->write_rect
             (dst_dev->data,
@@ -459,10 +452,9 @@ pocl_exec_command (_cl_command_node * volatile node)
              node->command.copy_image.region,
              node->command.copy_image.dst_rowpitch,
              node->command.copy_image.dst_slicepitch,
-             node->command.copy_image.region[0],
-             host_slicepitch);
+             tmp_rowpitch,
+             tmp_slicepitch);
 
-          free (tofree);
         }
       POCL_UPDATE_EVENT_COMPLETE(event);
       POCL_DEBUG_EVENT_TIME(event, "Copy Buffer Rect      ");
