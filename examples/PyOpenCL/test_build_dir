@@ -1,20 +1,50 @@
 #!/bin/bash
 
 # Runs the PyOpenCL tests against a pocl build dir located in the
-# current working directory. Assumes an ICD build.
+# current working directory. Assumes an ICD build in PWD.
 
 pyopencl_root=`dirname $0`
+
+pushd . > /dev/null
+cd $pyopencl_root
+pyopencl_root=$PWD
+popd > /dev/null
+
 # Go to the build root directory.
-cd ../..
+
+if ! test -d ocl-vendors;
+then
+    cd ../..
+fi
+
+if ! test -d ocl-vendors;
+then
+    echo "Start the script either in the build dir or under build dir's examples/PyOpenCL"
+    exit -1
+fi
+
 export POCL_BUILDING=1
 export OCL_ICD_VENDORS=$PWD/ocl-vendors
 export OPENCL_VENDOR_PATH=$OCL_ICD_VENDORS
 
-cd $pyopencl_root/PyOpenCL-build
-source mypy/bin/activate
+cd $pyopencl_root/PyOpenCL-build || exit -1
+source mypy/bin/activate || exit -1
+
 cd pyopencl/test
-test_run=`PYOPENCL_TEST=portable py.test 2>&1 | tail -1`
-fail_count=`echo "$test_run" | grep -Eo "[0-9]*" | head -1`
+test_log=`mktemp`
+{ PYOPENCL_TEST=portable py.test --tb=native
+} > $test_log 2>&1
+fail_count=`cat $test_log | tail -1 | grep -Eo "[0-9]*" | head -1`
+
+if ! grep -i "passed" $test_log;
+then
+    cat $test_log
+    rm $test_log
+    echo "Nothing passed!"
+    exit -1
+fi
+
+rm -f $test_log
 
 if test $fail_count -le 10;
 then
