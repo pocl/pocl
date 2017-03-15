@@ -454,7 +454,7 @@ pocl_exec_command (_cl_command_node * volatile node)
              node->command.copy_image.dst_slicepitch,
              tmp_rowpitch,
              tmp_slicepitch);
-
+          free (tmp);
         }
       POCL_UPDATE_EVENT_COMPLETE(event);
       POCL_DEBUG_EVENT_TIME(event, "Copy Buffer Rect      ");
