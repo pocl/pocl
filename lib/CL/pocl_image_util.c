@@ -112,8 +112,10 @@ pocl_check_device_supports_image(const cl_mem image,
           image->image_channel_order &&
           supported_image_formats[i].image_channel_data_type ==
           image->image_channel_data_type)
-        errcode = CL_SUCCESS;
-        goto ERROR;
+        {
+          errcode = CL_SUCCESS;
+          goto ERROR;
+        }
     }
 
   POCL_GOTO_ERROR_ON(1, CL_INVALID_IMAGE_FORMAT_DESCRIPTOR,

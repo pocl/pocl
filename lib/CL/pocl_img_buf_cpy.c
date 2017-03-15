@@ -194,8 +194,12 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  cmd->command.copy_image.src_ptr = src->device_ptrs[device->dev_id].mem_ptr;
-  cmd->command.copy_image.dst_ptr = dst->device_ptrs[device->dev_id].mem_ptr;
+  cmd->command.copy_image.src_buffer = src;
+  cmd->command.copy_image.src_device =
+    (src->owning_device) ? src->owning_device : command_queue->device;
+  cmd->command.copy_image.dst_buffer = dst;
+  cmd->command.copy_image.dst_device =
+    (dst->owning_device) ? dst->owning_device : command_queue->device;
   cmd->command.copy_image.src_origin[0] = mod_src_origin[0];
   cmd->command.copy_image.src_origin[1] = mod_src_origin[1];
   cmd->command.copy_image.src_origin[2] = mod_src_origin[2];

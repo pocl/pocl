@@ -233,7 +233,6 @@ void
 pocl_ndrange_node_cleanup(_cl_command_node *node)
 {
   cl_uint i;
-  free (node->command.run.arg_buffers);
   free (node->command.run.tmp_dir);
   for (i = 0; i < node->command.run.kernel->num_args + 
        node->command.run.kernel->num_locals; ++i)
@@ -265,6 +264,8 @@ pocl_mem_objs_cleanup (cl_event event)
       POCL_UNLOCK_OBJ (event->mem_objs[i]);
       POname(clReleaseMemObject) (event->mem_objs[i]);
     }
+  free (event->mem_objs);
+  event->mem_objs = NULL;
 }
 
 /**
@@ -392,17 +393,77 @@ pocl_exec_command (_cl_command_node * volatile node)
     case CL_COMMAND_COPY_IMAGE_TO_BUFFER:
     case CL_COMMAND_COPY_IMAGE:
       POCL_UPDATE_EVENT_RUNNING(event);
-      node->device->ops->copy_rect
-        (node->device->data,
-         node->command.copy_image.src_ptr,
-         node->command.copy_image.dst_ptr,
-         node->command.copy_image.src_origin,
-         node->command.copy_image.dst_origin,
-         node->command.copy_image.region,
-         node->command.copy_image.src_rowpitch,
-         node->command.copy_image.src_slicepitch,
-         node->command.copy_image.dst_rowpitch,
-         node->command.copy_image.dst_slicepitch);
+      cl_device_id src_dev = node->command.copy_image.src_device;
+      cl_mem src_buf = node->command.copy_image.src_buffer;
+      cl_device_id dst_dev = node->command.copy_image.dst_device;
+      cl_mem dst_buf = node->command.copy_image.dst_buffer;
+
+      /* if source and destination are in the same global mem  */
+      if (src_dev->global_mem_id == dst_dev->global_mem_id)
+        {
+          node->device->ops->copy_rect
+            (node->device->data,
+             src_buf->device_ptrs[src_dev->dev_id].mem_ptr,
+             dst_buf->device_ptrs[dst_dev->dev_id].mem_ptr,
+             node->command.copy_image.src_origin,
+             node->command.copy_image.dst_origin,
+             node->command.copy_image.region,
+             node->command.copy_image.src_rowpitch,
+             node->command.copy_image.src_slicepitch,
+             node->command.copy_image.dst_rowpitch,
+             node->command.copy_image.dst_slicepitch);
+        }
+      /* if source and destination are in different global mem
+         data needs to be read to the host memory and then written to
+         destination device */
+      else
+        {
+          void* tofree = NULL;
+          void* tmp = NULL;
+          if (src_buf->flags & CL_MEM_USE_HOST_PTR)
+            tmp = src_buf->mem_host_ptr;
+          else if (dst_buf->flags & CL_MEM_USE_HOST_PTR)
+            tmp = dst_buf->mem_host_ptr;
+          else
+            {
+              size_t size = node->command.copy_image.region[0]
+                * node->command.copy_image.region[1]
+                * node->command.copy_image.region[2];
+              tmp = calloc (1, size);
+              tofree = tmp;
+            }
+          /* origin and slice pitch for tmp buffer */
+          const size_t null_origin[3] = {0, 0, 0};
+          size_t host_slicepitch =
+            node->command.copy_image.region[0]
+            * node->command.copy_image.region[1];
+
+          src_dev->ops->read_rect
+            (src_dev->data,
+             tmp,
+             src_buf->device_ptrs[src_dev->dev_id].mem_ptr,
+             node->command.copy_image.src_origin,
+             null_origin,
+             node->command.copy_image.region,
+             node->command.copy_image.src_rowpitch,
+             node->command.copy_image.src_slicepitch,
+             node->command.copy_image.region[0],
+             host_slicepitch);
+
+          dst_dev->ops->write_rect
+            (dst_dev->data,
+             tmp,
+             dst_buf->device_ptrs[dst_dev->dev_id].mem_ptr,
+             node->command.copy_image.dst_origin,
+             null_origin,
+             node->command.copy_image.region,
+             node->command.copy_image.dst_rowpitch,
+             node->command.copy_image.dst_slicepitch,
+             node->command.copy_image.region[0],
+             host_slicepitch);
+
+          free (tofree);
+        }
       POCL_UPDATE_EVENT_COMPLETE(event);
       POCL_DEBUG_EVENT_TIME(event, "Copy Buffer Rect      ");
       break;

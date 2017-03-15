@@ -74,10 +74,6 @@ typedef struct
   char *tmp_dir; 
   pocl_workgroup wg;
   cl_kernel kernel;
-  /* A list of argument buffers to free after the command has 
-     been executed. */
-  cl_mem *arg_buffers;
-  unsigned arg_buffer_count;
   size_t local_x;
   size_t local_y;
   size_t local_z;
@@ -171,8 +167,10 @@ typedef struct
 
 typedef struct
 {
-  void *dst_ptr;
-  const void *src_ptr;
+  cl_device_id dst_device;
+  cl_mem dst_buffer;
+  cl_device_id src_device;
+  cl_mem src_buffer;
   size_t dst_origin[3];
   size_t src_origin[3];
   size_t region[3];

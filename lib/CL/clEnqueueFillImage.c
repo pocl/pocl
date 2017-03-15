@@ -126,7 +126,7 @@ CL_API_SUFFIX__VERSION_1_2
   cmd->command.fill_image.pixel_size = image->image_elem_size * image->image_channels;
 
   POname(clRetainMemObject) (image);
-
+  image->owning_device = command_queue->device;
   pocl_command_enqueue(command_queue, cmd);
   
   POCL_MEM_FREE(supported_image_formats);

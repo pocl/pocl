@@ -310,12 +310,15 @@ cl_int pocl_create_command (_cl_command_node **cmd,
       return err;
     }
   (*event)->command_type = command_type;
+
+  /* if host application wants this commands event
+     one reference for the host and one for the runtime/driver */
   if (event_p)
     {
       *event_p = *event;
       (*event)->implicit_event = 0;
       (*event)->pocl_refcount = 2;
-    }  
+    }
   else
     {
       (*event)->implicit_event = 1;
@@ -328,6 +331,8 @@ cl_int pocl_create_command (_cl_command_node **cmd,
   (*cmd)->event->command = (*cmd);
   (*cmd)->ready = 0;
 
+  /* in case of in-order queue, synchronize to previously enqueued command
+     if available */
   if (!(command_queue->properties & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE))
     {
       POCL_LOCK_OBJ (command_queue);
@@ -341,7 +346,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
         }
       POCL_UNLOCK_OBJ (command_queue);
     }
-  /* Form the wait list for command */
+  /* Form event synchronizations based on the given wait list */
   for (i = 0; i < num_events; ++i)
     {
       cl_event wle = wait_list[i];

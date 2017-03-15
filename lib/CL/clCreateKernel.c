@@ -126,7 +126,6 @@ POname(clCreateKernel)(cl_program program,
                         program->devices[device_i]->short_name);
           goto ERROR;
         }
-      break;
     }
 
   if (program->kernels != ADDING_DEFAULT_KERNELS_TO_CL_PROGRAM)

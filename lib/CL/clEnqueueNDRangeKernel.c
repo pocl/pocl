@@ -58,14 +58,16 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   size_t offset_x, offset_y, offset_z;
   size_t global_x, global_y, global_z;
   size_t local_x, local_y, local_z;
-  int m_count, b_count, buffer_migrate_count, buffer_count;
+  int b_migrate_count, buffer_count;
   unsigned i;
-  int error;
+  int error = 0;
   cl_device_id realdev = NULL;
   struct pocl_context pc;
   _cl_command_node *command_node;
-  cl_mem *mem_list;
-  cl_event *new_event_wait_list;
+  /* alloc from stack to avoid malloc. num_args is the absolute max needed */
+  cl_mem mem_list[kernel->num_args];
+  /* reserve space for potential buffer migrate events */
+  cl_event new_event_wait_list[num_events_in_wait_list + kernel->num_args];
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
@@ -258,9 +260,10 @@ DETERMINE_LOCAL_SIZE:
       if (error) goto ERROR;
     }
 
-  buffer_migrate_count = 0;
+  b_migrate_count = 0;
   buffer_count = 0;
-  /* count mem objects and number of mem migrations needed */
+
+  /* count mem objects and enqueue needed mem migrations */
   for (i = 0; i < kernel->num_args; ++i)
     {
       struct pocl_argument *al = &(kernel->dyn_arguments[i]);
@@ -270,73 +273,44 @@ DETERMINE_LOCAL_SIZE:
            && al->value != NULL))
         {
           cl_mem buf = *(cl_mem *) (al->value);
-          ++buffer_count;
+          mem_list[buffer_count++] = buf;
+          POname(clRetainMemObject) (buf);
+          /* if buffer has no owner,
+             it has not been used yet -> just claim it */
           if (buf->owning_device == NULL)
-                buf->owning_device = realdev;
+            buf->owning_device = realdev;
+          /* If buffer is located located in another global memory
+             (other device), it needs to be migrated before this kernel
+             may be executed */
           if (buf->owning_device != NULL &&
               buf->owning_device->global_mem_id !=
               command_queue->device->global_mem_id)
             {
 #if DEBUG_NDRANGE
-              printf("ownig device = %d, queue_device = %d\n",
+              printf("mem migrate needed: owning dev = %d, target dev = %d\n",
                      buf->owning_device->global_mem_id,
                      command_queue->device->global_mem_id);
 #endif
-              ++buffer_migrate_count;
-            }
-        }
-    }
-  mem_list = calloc (buffer_count, sizeof(cl_mem));
-
-  if (buffer_migrate_count)
-    {
-      new_event_wait_list = malloc
-        (sizeof (cl_event) * (num_events_in_wait_list + buffer_migrate_count));
-      m_count = 0;
-    }
-
-  /* Create implicit mem migrate commands */
-  b_count = 0;
-  for (i = 0; i < kernel->num_args; ++i)
-    {
-      struct pocl_argument *al = &(kernel->dyn_arguments[i]);
-      if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE ||
-          (!kernel->arg_info[i].is_local
-           && kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER
-           && al->value != NULL))
-        {
-          cl_mem buf = *(cl_mem *) (al->value);
-          POname(clRetainMemObject) (buf);
-          mem_list[b_count] = buf;
-          ++b_count;
-
-          if (buf->owning_device != NULL &&
-              buf->owning_device->global_mem_id !=
-              command_queue->device->global_mem_id)
-            {
               cl_event mem_event = buf->latest_event;
               POname(clEnqueueMigrateMemObjects)
                 (command_queue, 1, &buf, 0, (mem_event ? 1 : 0),
                  (mem_event ? &mem_event : NULL),
-                 &new_event_wait_list[m_count]);
-              ++m_count;
+                 &new_event_wait_list[b_migrate_count++]);
             }
+          buf->owning_device = realdev;
         }
     }
-  if (buffer_migrate_count)
-    memcpy (&new_event_wait_list[m_count], event_wait_list,
-            num_events_in_wait_list * sizeof (cl_event));
-  else
+
+  if (num_events_in_wait_list)
     {
-      new_event_wait_list = malloc (sizeof(cl_event) * num_events_in_wait_list);
-      memcpy (new_event_wait_list, event_wait_list,
+      memcpy (&new_event_wait_list[b_migrate_count], event_wait_list,
               sizeof(cl_event) * num_events_in_wait_list);
     }
 
   error = pocl_create_command (&command_node, command_queue,
                                CL_COMMAND_NDRANGE_KERNEL, event,
-                               num_events_in_wait_list + buffer_migrate_count,
-                               (num_events_in_wait_list + buffer_migrate_count)?
+                               num_events_in_wait_list + b_migrate_count,
+                               (num_events_in_wait_list + b_migrate_count)?
                                new_event_wait_list : NULL,
                                buffer_count, mem_list);
   if (error != CL_SUCCESS)
@@ -393,23 +367,12 @@ DETERMINE_LOCAL_SIZE:
 
   command_node->next = NULL;
 
-
   POname(clRetainKernel) (kernel);
-
-  command_node->command.run.arg_buffer_count = buffer_count;
-
-  /* Copy the argument buffers just so we can free them after execution. */
-  command_node->command.run.arg_buffers = mem_list;
 
   pocl_command_enqueue (command_queue, command_node);
   error = CL_SUCCESS;
 
-  return error;
 ERROR:
-  if (mem_list)
-    POCL_MEM_FREE(mem_list);
-  if (new_event_wait_list)
-    POCL_MEM_FREE(new_event_wait_list);
   return error;
 
 }

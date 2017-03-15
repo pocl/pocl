@@ -65,6 +65,7 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
   cmd->command.write_image.buffer = image;
 
   POname(clRetainMemObject) (image);
+  image->owning_device = command_queue->device;
   pocl_command_enqueue(command_queue, cmd);
 
   if (blocking_write)
