@@ -3,17 +3,13 @@ Information for Release Managers
 
 We aim to make a new release according to the Clang/LLVM release schedule.
 
+
 For each release, a release manager is assigned. Release manager is responsible
 for creating and uploading new release candidate tar balls and requesting for
 testers from different platforms. After a release candidate round with
 success reports and no failure reports, a release is published.
 
-General requirements for a new release are:
-
-* No regressions against the previous versions.
-  If something worked previously, it should not break in the new version.
-* Support the latest released Clang/LLVM version. Support for older versions
-  is secondary and implemented with best effort.
+See the :ref:`maintenance-policy` for the current release criteria.
 
 A checklist and hints for testing and making a release successfully:
 

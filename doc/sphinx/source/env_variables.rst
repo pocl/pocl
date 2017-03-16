@@ -175,5 +175,7 @@ pocl.
                - pocl_trace:copy_buffer    -> Copy buffer
                - pocl_trace:map            -> Map image/buffer
                - pocl_trace:command        -> other commands
-              For more informations, please see lttng documentation:
+
+              For more information, please see lttng documentation:
               http://lttng.org/docs/#doc-tracing-your-own-user-application
+
