@@ -162,11 +162,14 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
           local_y != kernel->reqd_wg_size[1] ||
           local_z != kernel->reqd_wg_size[2]), CL_INVALID_WORK_GROUP_SIZE);
     }
-  /* otherwise, if the local work size was not specified or it's bigger
-   * than the global work size, find the optimal one
+  /* otherwise, if the local work size was not specified find the optimal one.
+   * Note that at some point we also checked for local > global. This doesn't
+   * make sense while we only have 1.2 support for kernel enqueue (and
+   * when only uniform group sizes are allowed), but it might turn useful
+   * when picking the hardware sub-group size in more sophisticated
+   * 2.0 support scenarios.
    */
-  else if (local_work_size == NULL ||
-      (local_x > global_x || local_y > global_y || local_z > global_z))
+  else if (local_work_size == NULL)
     {
       /* Embarrassingly parallel kernel with a free work-group
          size. Try to figure out one which utilizes all the
