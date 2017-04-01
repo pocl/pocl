@@ -138,6 +138,15 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
           (local_z > command_queue->device->max_work_item_sizes[2]),
           CL_INVALID_WORK_ITEM_SIZE,
           "local_work_size.z > device's max_workitem_sizes[2]\n");
+
+      /* TODO For full 2.x conformance the 'local must divide global'
+       * requirement will have to be limited to the cases of kernels compiled
+       * with the -cl-uniform-work-group-size option
+       */
+      POCL_RETURN_ERROR_COND((global_x % local_x != 0), CL_INVALID_WORK_GROUP_SIZE);
+      POCL_RETURN_ERROR_COND((global_y % local_y != 0), CL_INVALID_WORK_GROUP_SIZE);
+      POCL_RETURN_ERROR_COND((global_z % local_z != 0), CL_INVALID_WORK_GROUP_SIZE);
+
     }
 
   /* If the kernel has the reqd_work_group_size attribute, then the local
@@ -257,9 +266,10 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   assert(local_y <= command_queue->device->max_work_item_sizes[1]);
   assert(local_z <= command_queue->device->max_work_item_sizes[2]);
 
-  POCL_RETURN_ERROR_COND((global_x % local_x != 0), CL_INVALID_WORK_GROUP_SIZE);
-  POCL_RETURN_ERROR_COND((global_y % local_y != 0), CL_INVALID_WORK_GROUP_SIZE);
-  POCL_RETURN_ERROR_COND((global_z % local_z != 0), CL_INVALID_WORK_GROUP_SIZE);
+  /* See TODO above for 'local must divide global' */
+  assert(global_x % local_x == 0);
+  assert(global_y % local_y == 0);
+  assert(global_z % local_z == 0);
 
   POCL_RETURN_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
     CL_INVALID_EVENT_WAIT_LIST);
