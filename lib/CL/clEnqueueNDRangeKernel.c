@@ -117,7 +117,23 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
       local_z = work_dim > 2 ? local_work_size[2] : 1;
     }
 
-  if (local_work_size == NULL ||
+  /* If the kernel has the reqd_work_group_size attribute, then the local
+   * work size _must_ be specified, and it _must_ match the attribute specification
+   */
+  if (kernel->reqd_wg_size != NULL &&
+      kernel->reqd_wg_size[0] > 0 &&
+      kernel->reqd_wg_size[1] > 0 &&
+      kernel->reqd_wg_size[2] > 0)
+    {
+      POCL_RETURN_ERROR_COND((local_work_size == NULL ||
+          local_x != kernel->reqd_wg_size[0] ||
+          local_y != kernel->reqd_wg_size[1] ||
+          local_z != kernel->reqd_wg_size[2]), CL_INVALID_WORK_GROUP_SIZE);
+    }
+  /* otherwise, if the local work size was not specified or it's bigger
+   * than the global work size, find the optimal one
+   */
+  else if (local_work_size == NULL ||
       (local_x > global_x || local_y > global_y || local_z > global_z))
     {
       /* Embarrassingly parallel kernel with a free work-group
