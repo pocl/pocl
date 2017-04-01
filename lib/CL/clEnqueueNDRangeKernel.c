@@ -115,6 +115,29 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
       local_x = local_work_size[0];
       local_y = work_dim > 1 ? local_work_size[1] : 1;
       local_z = work_dim > 2 ? local_work_size[2] : 1;
+
+      POCL_RETURN_ERROR_ON(
+        (local_x * local_y * local_z >
+         command_queue->device->max_work_group_size),
+        CL_INVALID_WORK_GROUP_SIZE,
+        "Local worksize dimensions exceed device's max workgroup size\n");
+
+      POCL_RETURN_ERROR_ON(
+        (local_x > command_queue->device->max_work_item_sizes[0]),
+        CL_INVALID_WORK_ITEM_SIZE,
+        "local_work_size.x > device's max_workitem_sizes[0]\n");
+
+      if (work_dim > 1)
+        POCL_RETURN_ERROR_ON(
+          (local_y > command_queue->device->max_work_item_sizes[1]),
+          CL_INVALID_WORK_ITEM_SIZE,
+          "local_work_size.y > device's max_workitem_sizes[1]\n");
+
+      if (work_dim > 2)
+        POCL_RETURN_ERROR_ON(
+          (local_z > command_queue->device->max_work_item_sizes[2]),
+          CL_INVALID_WORK_ITEM_SIZE,
+          "local_work_size.z > device's max_workitem_sizes[2]\n");
     }
 
   /* If the kernel has the reqd_work_group_size attribute, then the local
@@ -229,19 +252,10 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
                       (unsigned)(global_y / local_y),
                       (unsigned)(global_z / local_z));
 
-  POCL_RETURN_ERROR_ON((local_x * local_y * local_z > command_queue->device->max_work_group_size),
-    CL_INVALID_WORK_GROUP_SIZE, "Local worksize dimensions exceed device's max workgroup size\n");
-
-  POCL_RETURN_ERROR_ON((local_x > command_queue->device->max_work_item_sizes[0]),
-    CL_INVALID_WORK_ITEM_SIZE, "local_work_size.x > device's max_workitem_sizes[0]\n");
-
-  if (work_dim > 1)
-    POCL_RETURN_ERROR_ON((local_y > command_queue->device->max_work_item_sizes[1]),
-    CL_INVALID_WORK_ITEM_SIZE, "local_work_size.y > device's max_workitem_sizes[1]\n");
-
-  if (work_dim > 2)
-    POCL_RETURN_ERROR_ON((local_z > command_queue->device->max_work_item_sizes[2]),
-    CL_INVALID_WORK_ITEM_SIZE, "local_work_size.z > device's max_workitem_sizes[2]\n");
+  assert(local_x * local_y * local_z <= command_queue->device->max_work_group_size);
+  assert(local_x <= command_queue->device->max_work_item_sizes[0]);
+  assert(local_y <= command_queue->device->max_work_item_sizes[1]);
+  assert(local_z <= command_queue->device->max_work_item_sizes[2]);
 
   POCL_RETURN_ERROR_COND((global_x % local_x != 0), CL_INVALID_WORK_GROUP_SIZE);
   POCL_RETURN_ERROR_COND((global_y % local_y != 0), CL_INVALID_WORK_GROUP_SIZE);
