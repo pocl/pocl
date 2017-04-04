@@ -226,9 +226,19 @@ typedef struct _pocl_image1d_array_t { dev_image_t base; }* image1d_array_t;
 // 3.9 needs access qualifier
 // TODO: rw images
 #ifdef CLANG_OLDER_THAN_3_9
-#define IMG_WRITE_AQ
+
+#define CLANG_HAS_IMAGE_AS 0
+#define IMG_WO_AQ
+#define IMG_RO_AQ
+#define IMG_RW_AQ
+
 #else
-#define IMG_WRITE_AQ __write_only
+
+#define CLANG_HAS_IMAGE_AS 1
+#define IMG_RO_AQ __read_only
+#define IMG_WO_AQ __write_only
+#define IMG_RW_AQ __read_write
+
 #endif
 
 #ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
