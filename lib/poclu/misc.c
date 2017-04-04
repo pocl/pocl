@@ -32,16 +32,15 @@ cl_context
 poclu_create_any_context ()
 {
   cl_uint i;
-  cl_platform_id* platforms
-    = (cl_platform_id*) malloc (sizeof (cl_platform_id));
+  cl_platform_id platform;
 
-  clGetPlatformIDs (1, platforms, &i);
+  clGetPlatformIDs (1, &platform, &i);
   if (i == 0)
     return (cl_context) 0;
 
   cl_context_properties properties[] =
     {CL_CONTEXT_PLATFORM,
-     (cl_context_properties)platforms[0],
+     (cl_context_properties)platform,
      0};
 
   // create the OpenCL context on any available OCL device
@@ -49,7 +48,6 @@ poclu_create_any_context ()
                                                 CL_DEVICE_TYPE_ALL,
                                                 NULL, NULL, NULL);
 
-  free (platforms);
   return context;
 }
 
