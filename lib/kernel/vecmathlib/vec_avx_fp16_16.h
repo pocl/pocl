@@ -300,7 +300,7 @@ template <> struct intvec<fp16, 16> : floatprops<fp16> {
   }
   intvec operator>>(intvec n) const {
 #ifdef __AVX2__
-    intvec_t offset = U(1) << (bits - 1);
+    intvec_t offset = (intvec_t)1 << (bits - 1);
     return (*this + offset).lsr(n) - offset.lsr(n);
 #else
     intvec r;

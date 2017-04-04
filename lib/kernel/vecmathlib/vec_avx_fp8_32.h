@@ -272,7 +272,7 @@ template <> struct intvec<fp8, 32> : floatprops<fp8> {
 #ifdef __AVX2__
     // There is no _mm256_srai_epi8. To emulate it, add 0x80 before
     // shifting, and subtract the shifted 0x80 after shifting
-    intvec_t offset = U(1) << (bits - 1);
+    intvec_t offset = (intvec_t)1 << (bits - 1);
     return (*this + offset).lsr(n) - offset.lsr(n);
 #else
     __m128i vlo = _mm256_castsi256_si128(v);

@@ -29,13 +29,13 @@
 
 #ifdef LTTNG_UST_AVAILABLE
 #include "pocl_lttng.h"
+static const struct pocl_event_tracer lttng_tracer;
 #endif
 
 static int tracing_initialized = 0;
 static uint8_t event_trace_filter = 0xF;
 
 static const struct pocl_event_tracer text_logger;
-static const struct pocl_event_tracer lttng_tracer;
 
 /* List of tracers
  */
