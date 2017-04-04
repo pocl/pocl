@@ -877,7 +877,7 @@ pocl_setup_device_for_system_memory(cl_device_id device)
        */
       size_t alloc_limit = device->global_mem_size;
       if ((alloc_limit >> 20) > (7 << 10))
-        system_memory.total_alloc_limit = alloc_limit - (size_t)(1 << 31);
+        system_memory.total_alloc_limit = alloc_limit - (size_t)(1UL << 31);
       else
         {
           size_t temp = (alloc_limit >> 2);
