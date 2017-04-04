@@ -26,22 +26,27 @@
 #include "templates.h"
 #include "pocl_image_rw_utils.h"
 
-#if (__clang_major__ == 3) && (__clang_minor__ >= 5)
-// Clang 3.5 crashes in case trying to cast to the private pointer,
-// adding the global qualifier fixes it. Clang 3.4 crashes if it's
-// there. The issue is in SROA.
-#define ADDRESS_SPACE global
-#else
-#define ADDRESS_SPACE
-#endif
+static const int ARGB_MAP[] = { 3, 0, 1, 2 };
+static const int BGRA_MAP[] = { 2, 1, 0, 3 };
+
+static int map_channel(int i, int order) {
+    switch(order)
+    {
+        case CL_ARGB: return ARGB_MAP[i];
+        case CL_BGRA: return BGRA_MAP[i];
+        case CL_RGBA:
+        default: return i;
+    }
+    return i;
+}
+
 
 /* checks if integer coord is out of bounds. If out of bounds: Sets coord in
    bounds and returns false OR populates color with border colour and returns
    true. If in bounds, returns false */
-int __pocl_is_out_of_bounds (ADDRESS_SPACE dev_image_t* dev_image, int4 *coord,
-                             dev_sampler_t* dev_sampler, void *color_)
+static int __pocl_is_out_of_bounds (global dev_image_t* dev_image, int4 *coord,
+                             dev_sampler_t* dev_sampler)
 {
-  uint4 *color = (uint4*)color_;
   if(*dev_sampler & CLK_ADDRESS_CLAMP_TO_EDGE)
     {
       if (coord->x >= dev_image->_width)
@@ -66,25 +71,19 @@ int __pocl_is_out_of_bounds (ADDRESS_SPACE dev_image_t* dev_image, int4 *coord,
          coord->y >= dev_image->_height || coord->y < 0 ||
          (dev_image->_depth != 0 && (coord->z >= dev_image->_depth || coord->z <0)))
         {
-          (*color)[0] = 0;
-          (*color)[1] = 0;
-          (*color)[2] = 0;
-
           if (dev_image->_order == CL_A || dev_image->_order == CL_INTENSITY ||
               dev_image->_order == CL_RA || dev_image->_order == CL_ARGB ||
               dev_image->_order == CL_BGRA || dev_image->_order == CL_RGBA)
-            (*color)[3] = 0;
+            return 1; // clamp to 0,0,0,0
           else
-            (*color)[3] = 1;
-
-          return 1;
+            return 2; // clamp to 0,0,0,1
         }
     }
   return 0;
 }
 
 /* Reads a four element pixel from image pointed by integer coords. */
-void __pocl_read_pixel (void* color, ADDRESS_SPACE dev_image_t* dev_image, int4 coord)
+static void __pocl_read_pixel (void* color, global dev_image_t* dev_image, int4 coord)
 {
 
   uint4* color_ptr = (uint4*)color;
@@ -92,11 +91,12 @@ void __pocl_read_pixel (void* color, ADDRESS_SPACE dev_image_t* dev_image, int4 
   int height = dev_image->_height;
   int num_channels = dev_image->_num_channels;
   int i = num_channels;
+  int order = dev_image->_order;
   int elem_size = dev_image->_elem_size;
   int const base_index =
     (coord.x + coord.y*width + coord.z*height*width) * num_channels;
 
-  if (dev_image->_order == CL_A)
+  if (order == CL_A)
     {
       /* these can be garbage
       (*color_ptr)[0] = 0;
@@ -112,58 +112,79 @@ void __pocl_read_pixel (void* color, ADDRESS_SPACE dev_image_t* dev_image, int4 
       return;
     }
 
+
   if (elem_size == 1)
     {
-      if(dev_image->_order == CL_BGRA)
+      for (int i=0; i<num_channels; i++)
         {
-          (*color_ptr)[0] = ((uchar*)(dev_image->_data))[base_index + 2];
-          (*color_ptr)[1] = ((uchar*)(dev_image->_data))[base_index + 1];
-          (*color_ptr)[2] = ((uchar*)(dev_image->_data))[base_index + 0];
-          (*color_ptr)[3] = ((uchar*)(dev_image->_data))[base_index + 3]; 
-        }
-      else
-        {
-          while (i--)
-            {
-              (*color_ptr)[i] = ((uchar*)(dev_image->_data))[base_index + i];
-            }
+          (*color_ptr)[map_channel(i, order)] = ((uchar*)(dev_image->_data))[base_index + i];
         }
     }
   else if (elem_size == 2)
     {
-      if(dev_image->_order == CL_BGRA)
+      for (int i=0; i<num_channels; i++)
         {
-          (*color_ptr)[0] = ((ushort*)(dev_image->_data))[base_index + 2];
-          (*color_ptr)[1] = ((ushort*)(dev_image->_data))[base_index + 1];
-          (*color_ptr)[2] = ((ushort*)(dev_image->_data))[base_index + 0];
-          (*color_ptr)[3] = ((ushort*)(dev_image->_data))[base_index + 3]; 
+          (*color_ptr)[map_channel(i, order)] = ((ushort*)(dev_image->_data))[base_index + i];
         }
-      else
-        {
-          while (i--)
-            {
-              (*color_ptr)[i] = ((ushort*)(dev_image->_data))[base_index + i];
-            }
-      }
     }
   else if (elem_size == 4)
     {
-      if(dev_image->_order == CL_BGRA)
+      for (int i=0; i<num_channels; i++)
         {
-          (*color_ptr)[0] = ((uint*)(dev_image->_data))[base_index + 2];
-          (*color_ptr)[1] = ((uint*)(dev_image->_data))[base_index + 1];
-          (*color_ptr)[2] = ((uint*)(dev_image->_data))[base_index + 0];
-          (*color_ptr)[3] = ((uint*)(dev_image->_data))[base_index + 3]; 
-        }
-      else
-        {
-          while (i--)
-            {
-              (*color_ptr)[i] = ((uint*)(dev_image->_data))[base_index + i];
-            }
+          (*color_ptr)[map_channel(i, order)] = ((uint*)(dev_image->_data))[base_index + i];
         }
     }
+
 }
+
+
+static constant float4 maxval8_i = ((float4)(1.0f / (float)UCHAR_MAX));
+static constant float4 maxval16_i = ((float4)(1.0f / (float)USHRT_MAX));
+static constant float4 maxval8_2i = ((float4)(2.0f / (float)UCHAR_MAX));
+static constant float4 maxval16_2i = ((float4)(2.0f / (float)USHRT_MAX));
+static constant float4 minval8 = ((float4)(SCHAR_MIN));
+static constant float4 minval16 = ((float4)(SHRT_MIN));
+
+// only for CL_SNORM_INT8, CL_UNORM_INT8, CL_SNORM_INT16, CL_UNORM_INT16,
+static float4 convert_uint4_to_float4(uint4 color, int type, int elem_size)
+{
+  if ((type == CL_SNORM_INT8) ||
+      (type == CL_SNORM_INT16))
+    {
+      //  <I*_MIN, I*_MAX> to <-1.0, 1.0>
+      // Imin,Imax -> 0, Umax -> / UmaxHalf -> -1.0f
+      if (elem_size == 1)
+        return ((convert_float4(as_int4(color)) - minval8) * maxval8_2i - (float4)1.0f);
+      else
+        return ((convert_float4(as_int4(color)) - minval16) * maxval16_2i -(float4)1.0f);
+    }
+  else
+    {
+      //  <0, I*_MAX> to <0.0, 1.0>
+      if (elem_size == 1)
+        return convert_float4(color) * maxval8_i;
+      else
+        return convert_float4(color) * maxval16_i;
+    }
+}
+
+#define HANDLE_FLOAT_IMGTYPE \
+    if (i_ptr->_data_type == CL_FLOAT)                                  \
+      {                                                                 \
+        float4 color;                                                   \
+        __pocl_read_pixel (&color, i_ptr, coord4);                      \
+        return color;                                                   \
+      }                                                                 \
+    else                                                                \
+      {                                                                 \
+        uint4 color;                                                    \
+        __pocl_read_pixel (&color, i_ptr, coord4);                      \
+        return convert_uint4_to_float4(color,                           \
+                                     i_ptr->_data_type,                 \
+                                     i_ptr->_elem_size);                \
+      }                                                                 \
+    }
+
 
 
 /* Implementation for read_image with any image data type and int coordinates
@@ -173,38 +194,30 @@ void __pocl_read_pixel (void* color, ADDRESS_SPACE dev_image_t* dev_image, int4 
    __COORD__   = coordinate type (int, int2, int4)
 */
 
-#if __clang_major__ > 3
 
+#if __clang_major__ > 3
 // After Clang 4.0, the sampler_t is passed as an opaque struct (ptr)
 // which we convert to int32 with the LLVM pass HandleSamplerInitialization.
-
-#define IMPLEMENT_READ_IMAGE_INT_COORD(__IMGTYPE__,__RETVAL__,__POSTFIX__,\
-                                            __COORD__)                  \
-  __RETVAL__ _CL_OVERLOADABLE read_image##__POSTFIX__ (__IMGTYPE__ image, \
-                                                       sampler_t sampler, \
-                                                       __COORD__ coord) \
-  {                                                                     \
-    __RETVAL__ color;                                                   \
-    int4 coord4;                                                        \
-    INITCOORD##__COORD__(coord4, coord);                                \
-    ADDRESS_SPACE dev_image_t* i_ptr =                                  \
-      __builtin_astype (image, ADDRESS_SPACE dev_image_t*);             \
-    dev_sampler_t s = *__builtin_astype(sampler, dev_sampler_t*);	\
-    if (__pocl_is_out_of_bounds (i_ptr, &coord4, &s, &color))           \
-      {                                                                 \
-        return color;                                                   \
-      }                                                                 \
-    __pocl_read_pixel (&color, i_ptr, coord4); \
-                                                                        \
-    return color;                                                       \
-  }
-
+#define READ_SAMPLER                                                    \
+    dev_sampler_t s = *__builtin_astype(sampler, dev_sampler_t*);
 #else
-
 // Before Clang 4.0, the sampler_t was passed as an int32.
+#define READ_SAMPLER                                                    \
+    dev_sampler_t s = __builtin_astype(sampler, dev_sampler_t);
+#endif
 
-#define IMPLEMENT_READ_IMAGE_INT_COORD(__IMGTYPE__,__RETVAL__,__POSTFIX__,\
-                                            __COORD__)                  \
+
+#define SAMPLERING(VEC)                                                 \
+    READ_SAMPLER                                                        \
+    int r = __pocl_is_out_of_bounds (i_ptr, &coord4, &s);               \
+    if (r == 1)                                                         \
+        return (VEC)0;                                                  \
+    if (r == 2)                                                         \
+        return (VEC)(0,0,0,1);
+
+
+#define IMPLEMENT_READ_IMAGE_INT_COORD_INT4(__IMGTYPE__,__RETVAL__,     \
+                                            __POSTFIX__,__COORD__)      \
   __RETVAL__ _CL_OVERLOADABLE read_image##__POSTFIX__ (__IMGTYPE__ image, \
                                                        sampler_t sampler, \
                                                        __COORD__ coord) \
@@ -212,18 +225,27 @@ void __pocl_read_pixel (void* color, ADDRESS_SPACE dev_image_t* dev_image, int4 
     __RETVAL__ color;                                                   \
     int4 coord4;                                                        \
     INITCOORD##__COORD__(coord4, coord);                                \
-    ADDRESS_SPACE dev_image_t* i_ptr =                                  \
-      __builtin_astype (image, ADDRESS_SPACE dev_image_t*);             \
-    dev_sampler_t s = __builtin_astype(sampler, dev_sampler_t);		\
-    if (__pocl_is_out_of_bounds (i_ptr, &coord4, &s, &color))           \
-      {                                                                 \
-        return color;                                                   \
-      }                                                                 \
-    __pocl_read_pixel (&color, i_ptr, coord4); \
-                                                                        \
+    global dev_image_t* i_ptr =                                         \
+      __builtin_astype (image, global dev_image_t*);                    \
+    SAMPLERING(__RETVAL__)                                              \
+    __pocl_read_pixel (&color, i_ptr, coord4);                          \
     return color;                                                       \
   }
-#endif
+
+#define IMPLEMENT_READ_IMAGE_INT_COORD_FLOAT4(__IMGTYPE__,              \
+                                              __COORD__)                \
+  float4 _CL_OVERLOADABLE read_imagef (__IMGTYPE__ image,               \
+                                                       sampler_t sampler, \
+                                                       __COORD__ coord) \
+  {                                                                     \
+    int4 coord4;                                                        \
+    INITCOORD##__COORD__(coord4, coord);                                \
+    global dev_image_t* i_ptr =                                         \
+      __builtin_astype (image, global dev_image_t*);                    \
+    SAMPLERING(float4)                                                  \
+    HANDLE_FLOAT_IMGTYPE
+
+
 
 /* NO Sampler Implementation for read_image with any image data type
    and int coordinates
@@ -247,7 +269,7 @@ void __pocl_read_pixel (void* color, ADDRESS_SPACE dev_image_t* dev_image, int4 
                                   CLK_ADDRESS_NONE |
                                   CLK_FILTER_NEAREST;
 */
-#define IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER(__IMGTYPE__, __RETVAL__, \
+#define IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER_INT4(__IMGTYPE__, __RETVAL__, \
                                                  __POSTFIX__, __COORD__) \
   __RETVAL__ _CL_OVERLOADABLE read_image##__POSTFIX__ (__IMGTYPE__ image, \
                                                        __COORD__ coord) \
@@ -255,26 +277,68 @@ void __pocl_read_pixel (void* color, ADDRESS_SPACE dev_image_t* dev_image, int4 
     __RETVAL__ color;                                                   \
     int4 coord4;                                                        \
     INITCOORD##__COORD__ (coord4, coord);                               \
-    ADDRESS_SPACE dev_image_t* i_ptr =                                  \
-      __builtin_astype (image, ADDRESS_SPACE dev_image_t*);             \
-    __pocl_read_pixel (&color, i_ptr, coord4);  \
+    global dev_image_t* i_ptr =                                         \
+    __builtin_astype (image, global dev_image_t*);                      \
+    __pocl_read_pixel (&color, i_ptr, coord4);                          \
                                                                         \
     return color;                                                       \
   }                                                                     \
 
 
+#define IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER_FLOAT4(__IMGTYPE__,    \
+                                                        __COORD__)      \
+  float4 _CL_OVERLOADABLE read_imagef (__IMGTYPE__ image,               \
+                                                       __COORD__ coord) \
+  {                                                                     \
+    int4 coord4;                                                        \
+    INITCOORD##__COORD__ (coord4, coord);                               \
+    global dev_image_t* i_ptr =                                         \
+      __builtin_astype (image, global dev_image_t*);                    \
+    HANDLE_FLOAT_IMGTYPE
+
+
+
+
+
 /* read_image 2d function instantions */
-IMPLEMENT_READ_IMAGE_INT_COORD (image2d_t, float4, f, int2)
 
-IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER (image2d_t, float4, f, int2)
-IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER (image2d_array_t, float4, f, int4)
+IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER_FLOAT4 ( IMG_RO_AQ image2d_t, int2)
+IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER_FLOAT4 ( IMG_RO_AQ image2d_array_t, int4)
+IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER_INT4 ( IMG_RO_AQ image2d_t, uint4, ui, int2)
+IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER_INT4 ( IMG_RO_AQ image2d_t, int4, i, int2)
+IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER_INT4 ( IMG_RO_AQ image2d_array_t, uint4, ui, int2)
+IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER_INT4 ( IMG_RO_AQ image2d_array_t, int4, i, int2)
 
-IMPLEMENT_READ_IMAGE_INT_COORD (image2d_array_t, float4, f, int4)
 
-IMPLEMENT_READ_IMAGE_INT_COORD (image2d_t, uint4, ui, int2)
-IMPLEMENT_READ_IMAGE_INT_COORD (image2d_t, int4, i, int2)
+IMPLEMENT_READ_IMAGE_INT_COORD_FLOAT4 ( IMG_RO_AQ image2d_t, int2)
+IMPLEMENT_READ_IMAGE_INT_COORD_FLOAT4 ( IMG_RO_AQ image2d_array_t, int4)
 
-/* read_image 3d function instantions */
-IMPLEMENT_READ_IMAGE_INT_COORD (image3d_t, uint4, ui, int4)
-IMPLEMENT_READ_IMAGE_INT_COORD (image3d_t, float4, f, int4)
+IMPLEMENT_READ_IMAGE_INT_COORD_INT4 ( IMG_RO_AQ image2d_t, uint4, ui, int2)
+IMPLEMENT_READ_IMAGE_INT_COORD_INT4 ( IMG_RO_AQ image2d_t, int4, i, int2)
 
+// read_image 3d function instantions
+IMPLEMENT_READ_IMAGE_INT_COORD_INT4 ( IMG_RO_AQ image3d_t, uint4, ui, int4)
+IMPLEMENT_READ_IMAGE_INT_COORD_FLOAT4 ( IMG_RO_AQ image3d_t, int4)
+
+
+#if CLANG_HAS_IMAGE_AS
+
+IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER_FLOAT4 ( IMG_RW_AQ image2d_t, int2)
+IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER_FLOAT4 ( IMG_RW_AQ image2d_array_t, int4)
+IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER_INT4 ( IMG_RW_AQ image2d_t, uint4, ui, int2)
+IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER_INT4 ( IMG_RW_AQ image2d_t, int4, i, int2)
+IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER_INT4 ( IMG_RW_AQ image2d_array_t, uint4, ui, int2)
+IMPLEMENT_READ_IMAGE_INT_COORD_NOSAMPLER_INT4 ( IMG_RW_AQ image2d_array_t, int4, i, int2)
+
+
+IMPLEMENT_READ_IMAGE_INT_COORD_FLOAT4 ( IMG_RW_AQ image2d_t, int2)
+IMPLEMENT_READ_IMAGE_INT_COORD_FLOAT4 ( IMG_RW_AQ image2d_array_t, int4)
+
+IMPLEMENT_READ_IMAGE_INT_COORD_INT4 ( IMG_RW_AQ image2d_t, uint4, ui, int2)
+IMPLEMENT_READ_IMAGE_INT_COORD_INT4 ( IMG_RW_AQ image2d_t, int4, i, int2)
+
+// read_image 3d function instantions
+IMPLEMENT_READ_IMAGE_INT_COORD_INT4 ( IMG_RW_AQ image3d_t, uint4, ui, int4)
+IMPLEMENT_READ_IMAGE_INT_COORD_FLOAT4 ( IMG_RW_AQ image3d_t, int4)
+
+#endif
