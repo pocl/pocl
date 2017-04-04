@@ -513,6 +513,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
 #define FLT_MAX        0x1.fffffep127f
 #define FLT_MIN        0x1.0p-126f
 #define FLT_EPSILON    0x1.0p-23f
+#define FLT_RADIX 2
 
 #define FP_ILOGB0   INT_MIN
 #define FP_ILOGBNAN INT_MIN
@@ -545,6 +546,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
 #define DBL_MAX        0x1.fffffffffffffp1023
 #define DBL_MIN        0x1.0p-1022
 #define DBL_EPSILON    0x1.0p-52
+#define DBL_RADIX 2
 
 #define M_E        2.71828182845904523536028747135
 #define M_LOG2E    1.44269504088896340735992468100
