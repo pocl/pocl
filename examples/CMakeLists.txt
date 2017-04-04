@@ -65,8 +65,6 @@ if(ENABLE_TESTSUITES AND (NOT DEFINED ACTUALLY_ENABLED_TESTSUITES))
     unset(CMAKE_MODULE_PATH) # Use CMake builtin find module
     find_package(Git QUIET)
     set_expr(HAVE_GIT GIT_EXECUTABLE)
-    find_package(Subversion QUIET)
-    set_expr(HAVE_SVN Subversion_SVN_EXECUTABLE)
 
   message(STATUS "Trying to enable testsuites: ${ENABLE_TESTSUITES}")
 
