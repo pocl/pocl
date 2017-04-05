@@ -48,12 +48,11 @@ void
 regenerate_kernel_metadata(llvm::Module &M, FunctionMapping &kernels);
 
 inline bool
-is_automatic_local(const std::string &funcName, llvm::GlobalVariable &var) 
-{
+isAutomaticLocal(const std::string &FuncName, llvm::GlobalVariable &Var) {
 #ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
-  return var.getName().startswith(funcName + ".") &&
-    llvm::isa<llvm::PointerType>(var.getType()) &&
-    var.getType()->getPointerAddressSpace() == POCL_FAKE_AS_LOCAL;
+  return Var.getName().startswith(FuncName + ".") &&
+    llvm::isa<llvm::PointerType>(Var.getType()) &&
+    Var.getType()->getPointerAddressSpace() == POCL_FAKE_AS_LOCAL;
 #else
   // Without the fake address space IDs, there is no reliable way to figure out
   // if the address space is local from the bitcode. We could check its AS

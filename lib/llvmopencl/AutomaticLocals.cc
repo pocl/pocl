@@ -50,16 +50,16 @@ using namespace pocl;
 
 namespace {
   class AutomaticLocals : public ModulePass {
-  
+
   public:
     static char ID;
     AutomaticLocals() : ModulePass(ID) {}
-    
+
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
     virtual bool runOnModule(Module &M);
 
   private:
-    Function *ProcessAutomaticLocals(Function *F);
+    Function *processAutomaticLocals(Function *F);
   };
 }
 
@@ -67,12 +67,16 @@ char AutomaticLocals::ID = 0;
 static RegisterPass<AutomaticLocals> X("automatic-locals",
 				      "Processes automatic locals");
 
+#if (LLVM_OLDER_THAN_3_7)
 void
 AutomaticLocals::getAnalysisUsage(AnalysisUsage &AU) const {
-#if (LLVM_OLDER_THAN_3_7)
   AU.addRequired<DataLayoutPass>();
-#endif
 }
+#else
+void
+AutomaticLocals::getAnalysisUsage(AnalysisUsage &) const {
+}
+#endif
 
 bool
 AutomaticLocals::runOnModule(Module &M)
@@ -96,7 +100,7 @@ AutomaticLocals::runOnModule(Module &M)
 
     Function *F = &*mi;
 
-    Function *new_kernel = ProcessAutomaticLocals(F);
+    Function *new_kernel = processAutomaticLocals(F);
     if (new_kernel != F)
       changed = true;
     kernels[F] = new_kernel;
@@ -120,63 +124,56 @@ AutomaticLocals::runOnModule(Module &M)
 }
 
 Function *
-AutomaticLocals::ProcessAutomaticLocals(Function *F)
-{
-  Module *M = F->getParent();
-  
-  SmallVector<GlobalVariable *, 8> locals;
+AutomaticLocals::processAutomaticLocals(Function *F) {
 
-  SmallVector<Type *, 8> parameters;
+  Module *M = F->getParent();
+
+  SmallVector<GlobalVariable *, 8> Locals;
+
+  SmallVector<Type *, 8> Parameters;
   for (Function::const_arg_iterator i = F->arg_begin(),
-         e = F->arg_end();
-       i != e; ++i)
-    parameters.push_back(i->getType());
-    
+         e = F->arg_end(); i != e; ++i)
+    Parameters.push_back(i->getType());
+
   for (Module::global_iterator i = M->global_begin(),
-         e = M->global_end();
-       i != e; ++i) {
-    std::string funcName = "";
-    funcName = F->getName().str();
-    if (is_automatic_local(funcName, *i)) {
-      locals.push_back(&*i);
+         e = M->global_end(); i != e; ++i) {
+    std::string FuncName = "";
+    FuncName = F->getName().str();
+    if (isAutomaticLocal(FuncName, *i)) {
+      Locals.push_back(&*i);
       // Add the parameters to the end of the function parameter list.
-      parameters.push_back(i->getType());
+      Parameters.push_back(i->getType());
     }
   }
 
-  if (locals.empty()) {
+  if (Locals.empty()) {
     // This kernel fingerprint has not changed.
     return F;
   }
 
   // Create the new function.
-  FunctionType *ft = FunctionType::get(F->getReturnType(),
-                                       parameters,
-                                       F->isVarArg());
-  Function *new_kernel = Function::Create(ft,
-                                          F->getLinkage(),
-                                          "",
-                                          M);
-  new_kernel->takeName(F);
-  
-  ValueToValueMapTy vv;
-  Function::arg_iterator j = new_kernel->arg_begin();
-  for (Function::const_arg_iterator i = F->arg_begin(),
-         e = F->arg_end();
+  FunctionType *FT =
+    FunctionType::get(F->getReturnType(), Parameters, F->isVarArg());
+  Function *NewKernel = Function::Create(FT, F->getLinkage(), "", M);
+  NewKernel->takeName(F);
+
+  ValueToValueMapTy VV;
+  Function::arg_iterator j = NewKernel->arg_begin();
+  for (Function::const_arg_iterator i = F->arg_begin(), e = F->arg_end();
        i != e; ++i) {
     j->setName(i->getName());
-    vv[&*i] = &*j;
+    VV[&*i] = &*j;
     ++j;
   }
-  
-  for (int i = 0; j != new_kernel->arg_end(); ++i, ++j) {
-    j->setName("_local" + Twine(i));
-    vv[locals[i]] = &*j;
-  }
-                                 
-  SmallVector<ReturnInst *, 1> ri;
-  CloneFunctionInto(new_kernel, F, vv, false, ri);
 
-  return new_kernel;
+  for (int i = 0; j != NewKernel->arg_end(); ++i, ++j) {
+    j->setName("_local" + Twine(i));
+    VV[Locals[i]] = &*j;
+  }
+
+  SmallVector<ReturnInst *, 1> RI;
+  CloneFunctionInto(NewKernel, F, VV, false, RI);
+
+  return NewKernel;
 }
 
