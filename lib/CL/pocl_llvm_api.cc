@@ -952,7 +952,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
        i != e; ++i) {
     std::string funcName = "";
     funcName = KernelFunction->getName().str();
-    if (pocl::is_automatic_local(funcName, *i)) {
+    if (pocl::isAutomaticLocal(funcName, *i)) {
       POCL_MSG_PRINT_INFO("Automatic local detected: %s\n",
                           i->getName().str().c_str());
       locals.push_back(&*i);
