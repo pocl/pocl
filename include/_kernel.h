@@ -2370,6 +2370,26 @@ __IF_FP16(_CL_DECLARE_PREFETCH_FUNCS(half));
 _CL_DECLARE_PREFETCH_FUNCS(float);
 __IF_FP64(_CL_DECLARE_PREFETCH_FUNCS(double));
 
+
+// 3.9 needs access qualifier
+#if ((__clang_major__ < 4) && (__clang_minor__ < 9))
+
+#define CLANG_HAS_IMAGE_AS 0
+#define IMG_WO_AQ
+#define IMG_RO_AQ
+#define IMG_RW_AQ
+
+#else
+
+#define CLANG_HAS_IMAGE_AS 1
+#define IMG_RO_AQ __read_only
+#define IMG_WO_AQ __write_only
+#define IMG_RW_AQ __read_write
+
+#endif
+
+
+
 /* read_imagef 2d functions*/
 float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image2d_t image, sampler_t sampler,
                                      int2 coord);
