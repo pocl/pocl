@@ -26,8 +26,8 @@
 #include "templates.h"
 #include "pocl_image_rw_utils.h"
 
-static const int ARGB_MAP[] = { 3, 0, 1, 2 };
-static const int BGRA_MAP[] = { 2, 1, 0, 3 };
+static constant const int ARGB_MAP[] = { 3, 0, 1, 2 };
+static constant const int BGRA_MAP[] = { 2, 1, 0, 3 };
 
 static int map_channel(int i, int order) {
     switch(order)
