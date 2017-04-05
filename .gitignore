@@ -69,21 +69,6 @@ bin/poclcc
 
 stamp-h1
 
-tests/atconfig
-tests/atlocal
-tests/kernel/kernel
-tests/kernel/image_query_funcs
-tests/kernel/sampler_address_clamp
-tests/package.m4
-tests/*/test_*
-!tests/runtime/*.c
-tests/testsuite
-tests/testsuite.dir
-tests/testsuite.log
-tests/workgroup/run_kernel
-
-
-
 # these are created by Qt Creator
 
 pocl.config

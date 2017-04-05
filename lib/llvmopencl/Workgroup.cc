@@ -370,7 +370,6 @@ createLauncher(Module &M, Function *F) {
     }
   }
 
-  bool Changed = false;
   for (auto C : Calls) {
     C->eraseFromParent();
   }
