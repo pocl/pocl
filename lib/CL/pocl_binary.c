@@ -503,11 +503,11 @@ pocl_binary_deserialize_kernel_from_buffer (unsigned char **buf,
 
   if (name_len > 0 && name_match)
     {
+      *buf = *buf + kernel->struct_size;
+      if (kernel->sizeof_kernel_name != name_len)
+          return CL_INVALID_KERNEL_NAME;
       if (strncmp (kernel->kernel_name, name_match, kernel->sizeof_kernel_name))
-        {
-          *buf = *buf + kernel->struct_size;
-          return -11111;
-        }
+          return CL_INVALID_KERNEL_NAME;
 
       kernel->dyn_arguments = calloc ((kernel->num_args + kernel->num_locals),
                                       sizeof(struct pocl_argument));
