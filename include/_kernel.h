@@ -2371,7 +2371,7 @@ _CL_DECLARE_PREFETCH_FUNCS(float);
 __IF_FP64(_CL_DECLARE_PREFETCH_FUNCS(double));
 
 
-// 3.9 needs access qualifier
+/* 3.9 needs access qualifier */
 #if ((__clang_major__ < 4) && (__clang_minor__ < 9))
 
 #define CLANG_HAS_IMAGE_AS 0

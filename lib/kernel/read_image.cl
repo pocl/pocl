@@ -40,11 +40,13 @@ static int map_channel(int i, int order) {
     return i;
 }
 
+#define CLAMP_TO_0000 1 /* clamp to 0,0,0,0 */
+#define CLAMP_TO_0001 2 /* clamp to 0,0,0,1 */
 
 /* checks if integer coord is out of bounds. If out of bounds: Sets coord in
    bounds and returns false OR populates color with border colour and returns
    true. If in bounds, returns false */
-static int __pocl_is_out_of_bounds (global dev_image_t* dev_image, int4 *coord,
+static int pocl_is_out_of_bounds (global dev_image_t* dev_image, int4 *coord,
                              dev_sampler_t* dev_sampler)
 {
   if(*dev_sampler & CLK_ADDRESS_CLAMP_TO_EDGE)
@@ -74,16 +76,16 @@ static int __pocl_is_out_of_bounds (global dev_image_t* dev_image, int4 *coord,
           if (dev_image->_order == CL_A || dev_image->_order == CL_INTENSITY ||
               dev_image->_order == CL_RA || dev_image->_order == CL_ARGB ||
               dev_image->_order == CL_BGRA || dev_image->_order == CL_RGBA)
-            return 1; // clamp to 0,0,0,0
+            return CLAMP_TO_0000;
           else
-            return 2; // clamp to 0,0,0,1
+            return CLAMP_TO_0001;
         }
     }
   return 0;
 }
 
 /* Reads a four element pixel from image pointed by integer coords. */
-static void __pocl_read_pixel (void* color, global dev_image_t* dev_image, int4 coord)
+static void pocl_read_pixel (void* color, global dev_image_t* dev_image, int4 coord)
 {
 
   uint4* color_ptr = (uint4*)color;
@@ -115,23 +117,26 @@ static void __pocl_read_pixel (void* color, global dev_image_t* dev_image, int4 
 
   if (elem_size == 1)
     {
-      for (int i=0; i<num_channels; i++)
+      for (int i = 0; i < num_channels; i++)
         {
-          (*color_ptr)[map_channel(i, order)] = ((uchar*)(dev_image->_data))[base_index + i];
+          (*color_ptr)[map_channel(i, order)] =
+                  ((uchar*)(dev_image->_data))[base_index + i];
         }
     }
   else if (elem_size == 2)
     {
-      for (int i=0; i<num_channels; i++)
+      for (int i = 0; i < num_channels; i++)
         {
-          (*color_ptr)[map_channel(i, order)] = ((ushort*)(dev_image->_data))[base_index + i];
+          (*color_ptr)[map_channel(i, order)] =
+                  ((ushort*)(dev_image->_data))[base_index + i];
         }
     }
   else if (elem_size == 4)
     {
-      for (int i=0; i<num_channels; i++)
+      for (int i = 0; i < num_channels; i++)
         {
-          (*color_ptr)[map_channel(i, order)] = ((uint*)(dev_image->_data))[base_index + i];
+          (*color_ptr)[map_channel(i, order)] =
+                  ((uint*)(dev_image->_data))[base_index + i];
         }
     }
 
@@ -145,22 +150,23 @@ static constant float4 maxval16_2i = ((float4)(2.0f / (float)USHRT_MAX));
 static constant float4 minval8 = ((float4)(SCHAR_MIN));
 static constant float4 minval16 = ((float4)(SHRT_MIN));
 
-// only for CL_SNORM_INT8, CL_UNORM_INT8, CL_SNORM_INT16, CL_UNORM_INT16,
+/* only for CL_SNORM_INT8, CL_UNORM_INT8, CL_SNORM_INT16, CL_UNORM_INT16, */
 static float4 convert_uint4_to_float4(uint4 color, int type, int elem_size)
 {
   if ((type == CL_SNORM_INT8) ||
       (type == CL_SNORM_INT16))
     {
-      //  <I*_MIN, I*_MAX> to <-1.0, 1.0>
-      // Imin,Imax -> 0, Umax -> / UmaxHalf -> -1.0f
+      /*  <I*_MIN, I*_MAX> to <-1.0, 1.0>
+       * Imin,Imax -> 0, Umax -> / UmaxHalf -> -1.0f    */
+      float4 colorf = convert_float4(as_int4(color));
       if (elem_size == 1)
-        return ((convert_float4(as_int4(color)) - minval8) * maxval8_2i - (float4)1.0f);
+        return ((colorf - minval8) * maxval8_2i - (float4)1.0f);
       else
-        return ((convert_float4(as_int4(color)) - minval16) * maxval16_2i -(float4)1.0f);
+        return ((colorf - minval16) * maxval16_2i -(float4)1.0f);
     }
   else
     {
-      //  <0, I*_MAX> to <0.0, 1.0>
+      /* <0, I*_MAX> to <0.0, 1.0> */
       if (elem_size == 1)
         return convert_float4(color) * maxval8_i;
       else
@@ -172,13 +178,13 @@ static float4 convert_uint4_to_float4(uint4 color, int type, int elem_size)
     if (i_ptr->_data_type == CL_FLOAT)                                  \
       {                                                                 \
         float4 color;                                                   \
-        __pocl_read_pixel (&color, i_ptr, coord4);                      \
+        pocl_read_pixel (&color, i_ptr, coord4);                        \
         return color;                                                   \
       }                                                                 \
     else                                                                \
       {                                                                 \
         uint4 color;                                                    \
-        __pocl_read_pixel (&color, i_ptr, coord4);                      \
+        pocl_read_pixel (&color, i_ptr, coord4);                        \
         return convert_uint4_to_float4(color,                           \
                                      i_ptr->_data_type,                 \
                                      i_ptr->_elem_size);                \
@@ -196,12 +202,12 @@ static float4 convert_uint4_to_float4(uint4 color, int type, int elem_size)
 
 
 #if __clang_major__ > 3
-// After Clang 4.0, the sampler_t is passed as an opaque struct (ptr)
-// which we convert to int32 with the LLVM pass HandleSamplerInitialization.
+/* After Clang 4.0, the sampler_t is passed as an opaque struct (ptr)
+ which we convert to int32 with the LLVM pass HandleSamplerInitialization. */
 #define READ_SAMPLER                                                    \
     dev_sampler_t s = *__builtin_astype(sampler, dev_sampler_t*);
 #else
-// Before Clang 4.0, the sampler_t was passed as an int32.
+/* Before Clang 4.0, the sampler_t was passed as an int32. */
 #define READ_SAMPLER                                                    \
     dev_sampler_t s = __builtin_astype(sampler, dev_sampler_t);
 #endif
@@ -209,10 +215,10 @@ static float4 convert_uint4_to_float4(uint4 color, int type, int elem_size)
 
 #define SAMPLERING(VEC)                                                 \
     READ_SAMPLER                                                        \
-    int r = __pocl_is_out_of_bounds (i_ptr, &coord4, &s);               \
-    if (r == 1)                                                         \
+    int r = pocl_is_out_of_bounds (i_ptr, &coord4, &s);                 \
+    if (r == CLAMP_TO_0000)                                             \
         return (VEC)0;                                                  \
-    if (r == 2)                                                         \
+    if (r == CLAMP_TO_0001)                                             \
         return (VEC)(0,0,0,1);
 
 
@@ -228,7 +234,7 @@ static float4 convert_uint4_to_float4(uint4 color, int type, int elem_size)
     global dev_image_t* i_ptr =                                         \
       __builtin_astype (image, global dev_image_t*);                    \
     SAMPLERING(__RETVAL__)                                              \
-    __pocl_read_pixel (&color, i_ptr, coord4);                          \
+    pocl_read_pixel (&color, i_ptr, coord4);                          \
     return color;                                                       \
   }
 
@@ -279,7 +285,7 @@ static float4 convert_uint4_to_float4(uint4 color, int type, int elem_size)
     INITCOORD##__COORD__ (coord4, coord);                               \
     global dev_image_t* i_ptr =                                         \
     __builtin_astype (image, global dev_image_t*);                      \
-    __pocl_read_pixel (&color, i_ptr, coord4);                          \
+    pocl_read_pixel (&color, i_ptr, coord4);                          \
                                                                         \
     return color;                                                       \
   }                                                                     \
@@ -316,7 +322,7 @@ IMPLEMENT_READ_IMAGE_INT_COORD_FLOAT4 ( IMG_RO_AQ image2d_array_t, int4)
 IMPLEMENT_READ_IMAGE_INT_COORD_INT4 ( IMG_RO_AQ image2d_t, uint4, ui, int2)
 IMPLEMENT_READ_IMAGE_INT_COORD_INT4 ( IMG_RO_AQ image2d_t, int4, i, int2)
 
-// read_image 3d function instantions
+/* read_image 3d function instantions */
 IMPLEMENT_READ_IMAGE_INT_COORD_INT4 ( IMG_RO_AQ image3d_t, uint4, ui, int4)
 IMPLEMENT_READ_IMAGE_INT_COORD_FLOAT4 ( IMG_RO_AQ image3d_t, int4)
 
@@ -337,7 +343,7 @@ IMPLEMENT_READ_IMAGE_INT_COORD_FLOAT4 ( IMG_RW_AQ image2d_array_t, int4)
 IMPLEMENT_READ_IMAGE_INT_COORD_INT4 ( IMG_RW_AQ image2d_t, uint4, ui, int2)
 IMPLEMENT_READ_IMAGE_INT_COORD_INT4 ( IMG_RW_AQ image2d_t, int4, i, int2)
 
-// read_image 3d function instantions
+/* read_image 3d function instantions */
 IMPLEMENT_READ_IMAGE_INT_COORD_INT4 ( IMG_RW_AQ image3d_t, uint4, ui, int4)
 IMPLEMENT_READ_IMAGE_INT_COORD_FLOAT4 ( IMG_RW_AQ image3d_t, int4)
 
