@@ -29,7 +29,7 @@ private_local_array(__global int *__restrict__ out)
 }
 )CLC";
 
-int main(int, char *)
+int main(int, char **)
 {
   try {
     int N = 9;
