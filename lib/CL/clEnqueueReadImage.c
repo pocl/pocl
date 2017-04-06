@@ -32,8 +32,8 @@ POname(clEnqueueReadImage)(cl_command_queue     command_queue,
                            cl_bool              blocking_read, 
                            const size_t *       origin, /* [3] */
                            const size_t *       region, /* [3] */
-                           size_t               host_row_pitch,
-                           size_t               host_slice_pitch, 
+                           size_t               row_pitch,
+                           size_t               slice_pitch,
                            void *               ptr,
                            cl_uint              num_events_in_wait_list,
                            const cl_event *     event_wait_list,
@@ -85,8 +85,10 @@ CL_API_SUFFIX__VERSION_1_0
   cmd->command.read_image.host_ptr = ptr;
   memcpy ((cmd->command.read_image.origin), tuned_origin, 3*sizeof (size_t));
   memcpy ((cmd->command.read_image.region), tuned_region, 3*sizeof (size_t));
-  cmd->command.read_image.b_rowpitch = image->image_row_pitch;
-  cmd->command.read_image.b_slicepitch = image->image_slice_pitch;
+  cmd->command.write_image.b_rowpitch = image->image_row_pitch;
+  cmd->command.write_image.b_slicepitch = image->image_slice_pitch;
+  cmd->command.write_image.h_rowpitch = (row_pitch ? row_pitch : image->image_row_pitch);
+  cmd->command.write_image.h_slicepitch = (slice_pitch ? slice_pitch : image->image_slice_pitch);
   cmd->command.read_image.buffer = image;
 
   POname(clRetainMemObject) (image);  

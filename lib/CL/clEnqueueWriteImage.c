@@ -7,8 +7,8 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
                     cl_bool             blocking_write, 
                     const size_t *      origin, /*[3]*/
                     const size_t *      region, /*[3]*/
-                    size_t              host_row_pitch,
-                    size_t              host_slice_pitch, 
+                    size_t              input_row_pitch,
+                    size_t              input_slice_pitch,
                     const void *        ptr,
                     cl_uint             num_events_in_wait_list,
                     const cl_event *    event_wait_list,
@@ -62,6 +62,8 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
   memcpy ((cmd->command.write_image.region), tuned_region, 3*sizeof (size_t));
   cmd->command.write_image.b_rowpitch = image->image_row_pitch;
   cmd->command.write_image.b_slicepitch = image->image_slice_pitch;
+  cmd->command.write_image.h_rowpitch = (input_row_pitch ? input_row_pitch : image->image_row_pitch);
+  cmd->command.write_image.h_slicepitch = (input_slice_pitch ? input_slice_pitch : image->image_slice_pitch);
   cmd->command.write_image.buffer = image;
 
   POname(clRetainMemObject) (image);
