@@ -217,10 +217,13 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
          SIMD instruction utilization).
       */
       size_t preferred_wg_multiple;
-      POname(clGetKernelWorkGroupInfo)
+      cl_int prop_err = POname(clGetKernelWorkGroupInfo)
         (kernel, command_queue->device,
          CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
          sizeof (size_t), &preferred_wg_multiple, NULL);
+
+      if (prop_err != CL_SUCCESS) /* unlikely */
+        preferred_wg_multiple = 1;
 
       POCL_MSG_PRINT_INFO("Preferred WG size multiple %zu\n",
                           preferred_wg_multiple);
