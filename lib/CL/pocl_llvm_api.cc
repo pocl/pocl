@@ -472,7 +472,7 @@ int pocl_llvm_build_program(cl_program program,
     pocl_read_file(tempfile, &PreprocessedOut, &PreprocessedSize);
     fe.OutputFile = saved_output;
   }
-  if (pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES",0) == 0)
+  if (pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0) == 0)
     pocl_remove(tempfile);
 
   if (PreprocessedOut == nullptr) {

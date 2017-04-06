@@ -66,21 +66,24 @@ static void pocl_write_pixel (void* color_, global dev_image_t* dev_image,
     {
       for (int i=0; i<num_channels; i++)
         {
-          ((uchar*) (dev_image->_data))[base_index + i] = (*color)[map_channel(i, order)];
+          ((uchar*) (dev_image->_data))[base_index + i] =
+                  (*color)[map_channel(i, order)];
         }
     }
   else if (elem_size == 2)
     {
       for (int i=0; i<num_channels; i++)
         {
-          ((ushort*) dev_image->_data)[base_index + i] = (*color)[map_channel(i, order)];
+          ((ushort*) dev_image->_data)[base_index + i] =
+                  (*color)[map_channel(i, order)];
         }
     }
   else if (elem_size == 4)
     {
       for (int i=0; i<num_channels; i++)
         {
-          ((uint*) dev_image->_data)[base_index + i] = (*color)[map_channel(i, order)];
+          ((uint*) dev_image->_data)[base_index + i] =
+                  (*color)[map_channel(i, order)];
         }
     }
 }
@@ -92,7 +95,7 @@ static constant float4 maxval16_2 = (float4)((float)USHRT_MAX / 2.0f);
 static constant float4 minval8 = ((float4)(SCHAR_MIN));
 static constant float4 minval16 = ((float4)(SHRT_MIN));
 
-// only for CL_SNORM_INT8, CL_UNORM_INT8, CL_SNORM_INT16, CL_UNORM_INT16,
+/* only for CL_SNORM_INT8, CL_UNORM_INT8, CL_SNORM_INT16, CL_UNORM_INT16 */
 static uint4 convert_float4_to_uint4(float4 color, int type, int elem_size)
 {
   if ((type == CL_SNORM_INT8) ||
@@ -100,10 +103,11 @@ static uint4 convert_float4_to_uint4(float4 color, int type, int elem_size)
     {
       // <-1.0, 1.0> to <I*_MIN, I*_MAX>
       // -1.0,1.0 -> 0.0,2.0 -> * Umax/2.0 -> + Smin
+      float4 color_p1 = (color + (float4)1.0f);
       if (elem_size == 1)
-        return convert_uint4((color + (float4)1.0f) * maxval8_2 + minval8);
+        return convert_uint4(color_p1 * maxval8_2 + minval8);
       else
-        return convert_uint4((color + (float4)1.0f) * maxval16_2 + minval16);
+        return convert_uint4(color_p1 * maxval16_2 + minval16);
     }
   else
     {
@@ -115,11 +119,13 @@ static uint4 convert_float4_to_uint4(float4 color, int type, int elem_size)
 }
 
 /*
-write_imagei can only be used with image objects created with image_channel_data_type
-set to one of the following values: CL_SIGNED_INT8, CL_SIGNED_INT16, and CL_SIGNED_INT32.
+write_imagei can only be used with image objects created with
+image_channel_data_type set to one of the following values:
+CL_SIGNED_INT8, CL_SIGNED_INT16, and CL_SIGNED_INT32.
 
-write_imageui functions can only be used with image objects created with image_channel_data_type
-set to one of the following values: CL_UNSIGNED_INT8, CL_UNSIGNED_INT16, or CL_UNSIGNED_INT32.
+write_imageui functions can only be used with image objects created with
+image_channel_data_type set to one of the following values:
+CL_UNSIGNED_INT8, CL_UNSIGNED_INT16, or CL_UNSIGNED_INT32.
 */
 
 #define IMPLEMENT_WRITE_IMAGE_INT_COORD(__IMGTYPE__,__POSTFIX__,        \
@@ -136,8 +142,10 @@ set to one of the following values: CL_UNSIGNED_INT8, CL_UNSIGNED_INT16, or CL_U
   }                                                                     \
 
 /*
-write_imagef can only be used with image objects created with image_channel_data_type set to one of the pre-defined packed formats
- or set to CL_SNORM_INT8, CL_UNORM_INT8, CL_SNORM_INT16, CL_UNORM_INT16, CL_HALF_FLOAT or CL_FLOAT.
+ * write_imagef can only be used with image objects created with
+ * image_channel_data_type set to one of the pre-defined packed formats,
+ * or set to CL_SNORM_INT8, CL_UNORM_INT8, CL_SNORM_INT16,
+ * CL_UNORM_INT16, CL_HALF_FLOAT or CL_FLOAT.
 */
 
 #define IMPLEMENT_WRITE_IMAGE_INT_COORD_FLOAT4(__IMGTYPE__,             \
