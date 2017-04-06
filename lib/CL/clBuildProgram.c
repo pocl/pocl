@@ -517,7 +517,7 @@ CL_API_SUFFIX__VERSION_1_0
   /* Set up all program kernels.  */
   /* TODO: Should not have to unlock program while adding default kernels.  */
   assert (program->default_kernels == NULL);
-  program->kernels = ADDING_DEFAULT_KERNELS_TO_CL_PROGRAM;
+  program->operating_on_default_kernels = 1;
   program->default_kernels = calloc(program->num_kernels, sizeof(cl_kernel));
 
   for (i=0; i < program->num_kernels; i++)
@@ -531,7 +531,7 @@ CL_API_SUFFIX__VERSION_1_0
                          "Failed to create default kernels\n");
     }
 
-  program->kernels = 0;
+  program->operating_on_default_kernels = 0;
 
   return CL_SUCCESS;
 

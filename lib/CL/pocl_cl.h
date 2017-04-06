@@ -607,15 +607,16 @@ struct _cl_mem {
 
 typedef uint8_t SHA1_digest_t[SHA1_DIGEST_SIZE * 2 + 1];
 
-/* Any value except zero, just have to be an invalid pointer. */
-#define ADDING_DEFAULT_KERNELS_TO_CL_PROGRAM (void*)11
-
 struct _cl_program {
   POCL_ICD_OBJECT
   POCL_OBJECT;
   /* queries */
   cl_context context;
   cl_uint num_devices;
+  /* bool flag, set to 1 when removing/adding default kernels to a program
+   * This code needs to be eventually fixed by introducing kernel_metadata
+   * struct, see Issue #390 */
+  int operating_on_default_kernels;
   cl_device_id *devices;
   /* all the program sources appended together, terminated with a zero */
   char *source;

@@ -127,7 +127,9 @@ POname(clCreateKernel)(cl_program program,
         }
     }
 
-  if (program->kernels != ADDING_DEFAULT_KERNELS_TO_CL_PROGRAM)
+  /* default kernels don't go on the program-kernels linked list,
+   * and they don't increase the program refcount. */
+  if (!program->operating_on_default_kernels)
     {
       POCL_LOCK_OBJ (program);
       cl_kernel k = program->kernels;
