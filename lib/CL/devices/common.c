@@ -268,6 +268,7 @@ pocl_mem_objs_cleanup (cl_event event)
   event->mem_objs = NULL;
 }
 
+static const size_t zero_origin[] = { 0, 0, 0 };
 /**
  * executes given command.
  */
@@ -329,17 +330,17 @@ pocl_exec_command (_cl_command_node * volatile node)
       break;
     case CL_COMMAND_WRITE_IMAGE:
       POCL_UPDATE_EVENT_RUNNING(event);
-      node->device->ops->write_rect
-        (node->device->data,
+      node->device->ops->write_rect (
+         node->device->data,
          node->command.write_image.host_ptr,
          node->command.write_image.device_ptr,
          node->command.write_image.origin,
-         node->command.write_image.origin,
+         zero_origin,
          node->command.write_image.region,
          node->command.write_image.b_rowpitch,
          node->command.write_image.b_slicepitch,
-         node->command.write_image.b_rowpitch,
-         node->command.write_image.b_slicepitch);
+         node->command.write_image.h_rowpitch,
+         node->command.write_image.h_slicepitch);
       POCL_UPDATE_EVENT_COMPLETE(event);
       break;
     case CL_COMMAND_WRITE_BUFFER_RECT:
@@ -360,16 +361,17 @@ pocl_exec_command (_cl_command_node * volatile node)
       break;
     case CL_COMMAND_READ_IMAGE:
       POCL_UPDATE_EVENT_RUNNING(event);
-      node->device->ops->read_rect
-        (node->device->data, node->command.read_image.host_ptr,
+      node->device->ops->read_rect (
+         node->device->data,
+         node->command.read_image.host_ptr,
          node->command.read_image.device_ptr,
          node->command.read_image.origin,
-         node->command.read_image.origin,
+         zero_origin,
          node->command.read_image.region,
          node->command.read_image.b_rowpitch,
          node->command.read_image.b_slicepitch,
-         node->command.read_image.b_rowpitch,
-         node->command.read_image.b_slicepitch);
+         node->command.read_image.h_rowpitch,
+         node->command.read_image.h_slicepitch);
       POCL_UPDATE_EVENT_COMPLETE(event);
       POCL_DEBUG_EVENT_TIME(event, "Read Image            ");
       break;
