@@ -37,11 +37,13 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
   if (new_refcount == 0)
     {
       POCL_MSG_PRINT_INFO ("Freeing kernel %p\n", kernel);
-      if (kernel->program != NULL)
+      cl_program program = kernel->program;
+      if ((program != NULL) &&
+          (program->kernels != REMOVING_DEFAULT_KERNELS_FROM_CL_PROGRAM))
         {
           /* Find the kernel in the program's linked list of kernels */
-          POCL_LOCK_OBJ (kernel->program);
-          for (pk=&kernel->program->kernels; *pk != NULL; pk = &(*pk)->next)
+          POCL_LOCK_OBJ (program);
+          for (pk=&program->kernels; *pk != NULL; pk = &(*pk)->next)
             {
               if (*pk == kernel) break;
             }
@@ -55,8 +57,8 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
           /* Remove the kernel from the program's linked list of
              kernels */
           *pk = (*pk)->next;
-          POCL_UNLOCK_OBJ (kernel->program);
-          POname(clReleaseProgram) (kernel->program);
+          POCL_UNLOCK_OBJ (program);
+          POname(clReleaseProgram) (program);
         }
       
       POCL_MEM_FREE(kernel->name);
@@ -71,6 +73,7 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
             }
         }
 
+      POCL_MEM_FREE(kernel->arg_info);
       POCL_MEM_FREE(kernel->dyn_arguments);
       POCL_MEM_FREE(kernel->reqd_wg_size);
       POCL_MEM_FREE(kernel);

@@ -609,6 +609,7 @@ typedef uint8_t SHA1_digest_t[SHA1_DIGEST_SIZE * 2 + 1];
 
 /* Any value except zero, just have to be an invalid pointer. */
 #define ADDING_DEFAULT_KERNELS_TO_CL_PROGRAM (void*)11
+#define REMOVING_DEFAULT_KERNELS_FROM_CL_PROGRAM (void*)13
 
 struct _cl_program {
   POCL_ICD_OBJECT
