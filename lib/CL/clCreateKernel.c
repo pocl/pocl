@@ -134,8 +134,8 @@ POname(clCreateKernel)(cl_program program,
       program->kernels = kernel;
       POCL_UNLOCK_OBJ (program);
       kernel->next = k;
+      POCL_RETAIN_OBJECT (program);
     }
-  POCL_RETAIN_OBJECT(program);
 
   errcode = CL_SUCCESS;
   goto SUCCESS;
