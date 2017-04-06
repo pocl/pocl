@@ -280,6 +280,10 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
        * vectorization candidate, followed by y and then by z. (This assumption
        * is in some sense sanctioned by the standard itself, see e.g. the
        * get_{global,local}_linear_id functions in OpenCL 2.x)
+       * TODO this might not be optimal in all cases. For example, devices with
+       * a hardware sampler might benefit from more evenly sized work-groups
+       * for kernels that use images. Some kind of kernel + device analysis
+       * would be needed here.
        */
 
       while (local_x * local_y * local_z > max_group_size)
@@ -330,6 +334,89 @@ if (local_##coord > 1) \
 #undef DESPERATE_CASE
 #undef TRY_LEAST_GRAIN
 #undef TRY_HALVE
+        }
+
+      /* We now have the largest possible local work-group size that satisfies
+       * all the hard constraints (divide global, per-dimension bound, overall
+       * bound) and our soft constraint of being as close as possible a multiple
+       * of the preferred work-group size multiple. Such a greedy algorithm
+       * minimizes the total number of work-groups. In moderate-sized launch
+       * grid, this may result in less work-groups than the number of Compute
+       * Units, with a resulting imbalance in the workload distribution.
+       * At the same time, we want to avoid too many work-groups, since some
+       * devices are penalized by such fragmentation.
+       * Finding a good balance between the two is a hard problem, and generally
+       * depends on the device as well as the kernel utilization of its
+       * resources.
+       * Lacking that, as a first step we will simply try to guarantee that we
+       * have at least one work-group per CU, as long as the local work size
+       * does not drop below a given threshold.
+       */
+
+      /* Pick a minimum work-group size of 4 times the preferred work-group size
+       * multiple, under the assumption that this would be a good candidate
+       * below which a Compute Unit will not do enough work. */
+      const size_t min_group_size = 4*preferred_wg_multiple;
+
+      /* We need the number of Compute Units in the device, since we want
+       * at least that many work-groups, if possible */
+
+      cl_uint ncus = command_queue->device->max_compute_units;
+
+      /* number of workgroups */
+      size_t nwg_x = global_x/local_x;
+      size_t nwg_y = global_y/local_y;
+      size_t nwg_z = global_z/local_z;
+
+      size_t splits; /* number of splits to bring ngws to reach ncu */
+      /* Only proceed if splitting wouldn't bring us below the minimum
+       * group size */
+      while (((splits = ncus/(nwg_x*nwg_y*nwg_z)) > 1) &&
+             (local_x*local_y*local_z > splits*min_group_size))
+        {
+          /* Very simple splitting approach: find a dimension divisible
+           * by split, and lacking that divide by something less, if possible.
+           * If we fail at splitting at all, we will try killing the smaller of
+           * the dimensions.
+           * We will set splits to 0 if we succeed in the TRY_SPLIT, so that
+           * we know that we can skip the rest.
+           * If we get to the end of the while without splitting and without
+           * killing a dimension, we bail out early because it means
+           * we couldn't do anything useful without dropping below
+           * min_group_size
+           */
+
+#define TRY_SPLIT(coord) \
+if ((local_##coord % splits) == 0 && \
+    divide_chain(grain_##coord, local_##coord/splits, global_##coord)) \
+  { \
+    local_##coord /= splits; nwg_##coord *= splits; splits = 0; \
+    continue; \
+  }
+
+#define TRY_LEAST_DIM(c1, c2, c3) \
+if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
+    local_##c2*local_##c3 >= min_group_size) \
+  { \
+    local_##c1 = 1; nwg_##c1 = global_##c1; \
+    continue; \
+  }
+
+          while (splits > 1)
+            {
+              TRY_SPLIT(z) else TRY_SPLIT(y) else TRY_SPLIT(x)
+                else splits--;
+            }
+          /* When we get here, splits will be 0 if we split, 1 if we failed:
+           * in which case we will just kill one of the dimensions instead,
+           * using the same TRY_LEAST_GRAIN and DESPERATE_CASE seen before
+           */
+          if (splits == 0)
+            continue;
+          TRY_LEAST_DIM(z, x, y) else TRY_LEAST_DIM(y, z, x) else
+          TRY_LEAST_DIM(x, y, z) else break;
+#undef TRY_LEAST_DIM
+#undef TRY_SPLIT
         }
     }
 
