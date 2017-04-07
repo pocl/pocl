@@ -2374,17 +2374,23 @@ __IF_FP64(_CL_DECLARE_PREFETCH_FUNCS(double));
 /* 3.9 needs access qualifier */
 #if ((__clang_major__ < 4) && (__clang_minor__ < 9))
 
-#define CLANG_HAS_IMAGE_AS 0
+#undef CLANG_HAS_IMAGE_AS
 #define IMG_WO_AQ
 #define IMG_RO_AQ
 #define IMG_RW_AQ
 
 #else
 
-#define CLANG_HAS_IMAGE_AS 1
+#define CLANG_HAS_IMAGE_AS
 #define IMG_RO_AQ __read_only
 #define IMG_WO_AQ __write_only
+
+#ifdef CL_VERSION_2_0
+#define CLANG_HAS_RW_IMAGES
 #define IMG_RW_AQ __read_write
+#else
+#define IMG_RW_AQ __RW_IMAGES_UNSUPPORTED_BEFORE_CL_20
+#endif
 
 #endif
 
@@ -2427,7 +2433,7 @@ uint4 _CL_OVERLOADABLE read_imageui ( IMG_RO_AQ image3d_t image, sampler_t sampl
 int4 _CL_OVERLOADABLE read_imagei ( IMG_RO_AQ image2d_t image, sampler_t sampler,
                                    int2 coord);
 
-#if CLANG_HAS_IMAGE_AS
+#ifdef CLANG_HAS_RW_IMAGES
 
 /* read_imagef 2d functions*/
 float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image2d_t image, sampler_t sampler,
@@ -2480,7 +2486,7 @@ void _CL_OVERLOADABLE write_imagef ( IMG_WO_AQ  image2d_t image, int2 coord,
 void _CL_OVERLOADABLE write_imagef ( IMG_WO_AQ  image3d_t image, int4 coord,
                                     float4 color);
 
-#if CLANG_HAS_IMAGE_AS
+#ifdef CLANG_HAS_RW_IMAGES
 
 void _CL_OVERLOADABLE write_imagei ( IMG_RW_AQ  image2d_t image, int2 coord, int4 color);
 
@@ -2551,7 +2557,7 @@ int2 _CL_OVERLOADABLE get_image_dim (IMG_RO_AQ image2d_t image);
 int2 _CL_OVERLOADABLE get_image_dim (IMG_RO_AQ image2d_array_t image);
 int4 _CL_OVERLOADABLE get_image_dim (IMG_RO_AQ image3d_t image);
 
-#if CLANG_HAS_IMAGE_AS
+#ifdef CLANG_HAS_IMAGE_AS
 
 int _CL_OVERLOADABLE get_image_width (IMG_WO_AQ image1d_t image);
 int _CL_OVERLOADABLE get_image_width (IMG_WO_AQ image2d_t image);
@@ -2566,6 +2572,10 @@ int _CL_OVERLOADABLE get_image_depth (IMG_WO_AQ image3d_t image);
 int2 _CL_OVERLOADABLE get_image_dim (IMG_WO_AQ image2d_t image);
 int2 _CL_OVERLOADABLE get_image_dim (IMG_WO_AQ image2d_array_t image);
 int4 _CL_OVERLOADABLE get_image_dim (IMG_WO_AQ image3d_t image);
+
+#endif
+
+#ifdef CLANG_HAS_RW_IMAGES
 
 int _CL_OVERLOADABLE get_image_width (IMG_RW_AQ image1d_t image);
 int _CL_OVERLOADABLE get_image_width (IMG_RW_AQ image2d_t image);
