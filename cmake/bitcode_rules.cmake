@@ -141,14 +141,21 @@ function(make_kernel_bc OUTPUT_VAR NAME SUBDIR)
   set(BC_LIST_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/kernel_${NAME}_linklist.txt")
   file(WRITE "${BC_LIST_FILE}" "${BC_LIST_FILE_TXT}")
 
-  set(OPT_CMD "${LLVM_OPT}" ${LLC_FLAGS} "-O3" "-fp-contract=off" "-o" "${KERNEL_BC}" "kernel-${NAME}-unoptimized.bc")
+  # @LLVM_LINK@ $^ -o - | @LLVM_OPT@ ${LLC_FLAGS} ${KERNEL_LIB_OPT_FLAGS} -O3 -fp-contract=off -o $@
+
+  # don't waste time optimizing the kernels IR when in developer mode
+  if(DEVELOPER_MODE)
+    set(LINK_OPT_COMMAND COMMAND "${XARGS_EXEC}" "${LLVM_LINK}" "-o" "${KERNEL_BC}" < "${BC_LIST_FILE}")
+  else()
+    set(LINK_CMD COMMAND "${XARGS_EXEC}" "${LLVM_LINK}" "-o" "kernel-${NAME}-unoptimized.bc" < "${BC_LIST_FILE}")
+    set(OPT_CMD COMMAND "${LLVM_OPT}" ${LLC_FLAGS} "-O3" "-fp-contract=off" "-o" "${KERNEL_BC}" "kernel-${NAME}-unoptimized.bc")
+    set(LINK_OPT_COMMAND ${LINK_CMD} ${OPT_CMD})
+  endif()
 
   add_custom_command( OUTPUT "${KERNEL_BC}"
 # ${KERNEL_BC}: ${OBJ}
         DEPENDS ${BC_LIST}
-#	    @LLVM_LINK@ $^ -o - | @LLVM_OPT@ ${LLC_FLAGS} ${KERNEL_LIB_OPT_FLAGS} -O3 -fp-contract=off -o $@
-        COMMAND "${XARGS_EXEC}" "${LLVM_LINK}" "-o" "kernel-${NAME}-unoptimized.bc" < "${BC_LIST_FILE}"
-        COMMAND ${OPT_CMD}
+        ${LINK_OPT_COMMAND}
         COMMENT "Linking & optimizing Kernel bitcode ${KERNEL_BC}"
         VERBATIM)
 

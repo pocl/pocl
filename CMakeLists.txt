@@ -51,6 +51,8 @@ option(ENABLE_HSA "Enable the HSA device driver for AMD GCN devices" OFF)
 
 option(KERNEL_CACHE_DEFAULT "Default value for the kernel compile cache. If disabled, pocl will still use the kernel cache, but will delete cachefiles on exit. You can still enable keeping the files it at runtime with an env var." ON)
 
+option(DEVELOPER_MODE "This will SIGNIFICANTLY slow down pocl (but speed up its compilation). Only turn on if you know what you're doing." OFF)
+
 # currently only works with gcc as host compiler
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
