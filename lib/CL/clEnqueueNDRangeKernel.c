@@ -45,7 +45,8 @@
 //#define DEBUG_NDRANGE
 
 /* Euclid's algorithm for the Greatest Common Divisor */
-static size_t gcd(size_t a, size_t b)
+static inline size_t
+gcd (size_t a, size_t b)
 {
   int c;
   while (a) {
@@ -55,7 +56,8 @@ static size_t gcd(size_t a, size_t b)
 }
 
 /* Find the largest divisor of dividend which is less than limit */
-static inline size_t upper_divisor(size_t dividend, size_t limit)
+static inline size_t
+upper_divisor (size_t dividend, size_t limit)
 {
   /* The algorithm is currently not very smart, we
    * start from limit and subtract until we find something
@@ -64,13 +66,14 @@ static inline size_t upper_divisor(size_t dividend, size_t limit)
    * TODO FIXME improve algorithm
    */
   if (dividend < limit) return dividend; // small optimization
-  assert(limit > 0); // should never be called with limit == 0
+  assert (limit > 0); // should never be called with limit == 0
   while (dividend % limit != 0) --limit;
   return limit;
 }
 
 /* Check that a divides b and b divides c */
-static inline int divide_chain(size_t a, size_t b, size_t c)
+static inline int
+divide_chain (size_t a, size_t b, size_t c)
 {
   return (b % a == 0 && c % b == 0);
 }
@@ -90,9 +93,11 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   size_t offset_x, offset_y, offset_z;
   size_t global_x, global_y, global_z;
   size_t local_x, local_y, local_z;
-  /* cached values for max_work_item_sizes, since we are going to access them repeatedly */
+  /* cached values for max_work_item_sizes,
+   * since we are going to access them repeatedly */
   size_t max_local_x, max_local_y, max_local_z;
-  /* cached values for max_work_group_size, since we are going to access them repeatedly */
+  /* cached values for max_work_group_size,
+   * since we are going to access them repeatedly */
   size_t max_group_size;
 
   int b_migrate_count, buffer_count;
@@ -111,13 +116,16 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   POCL_RETURN_ERROR_COND((kernel == NULL), CL_INVALID_KERNEL);
 
   POCL_RETURN_ERROR_ON((command_queue->context != kernel->context),
-    CL_INVALID_CONTEXT, "kernel and command_queue are not from the same context\n");
+    CL_INVALID_CONTEXT,
+    "kernel and command_queue are not from the same context\n");
 
   POCL_RETURN_ERROR_COND((work_dim < 1), CL_INVALID_WORK_DIMENSION);
-  POCL_RETURN_ERROR_ON((work_dim > command_queue->device->max_work_item_dimensions),
-    CL_INVALID_WORK_DIMENSION, "work_dim exceeds devices' max workitem dimensions\n");
+  POCL_RETURN_ERROR_ON(
+    (work_dim > command_queue->device->max_work_item_dimensions),
+    CL_INVALID_WORK_DIMENSION,
+    "work_dim exceeds devices' max workitem dimensions\n");
 
-  assert(command_queue->device->max_work_item_dimensions <= 3);
+  assert (command_queue->device->max_work_item_dimensions <= 3);
 
   realdev = POCL_REAL_DEV(command_queue->device);
 
@@ -143,8 +151,8 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
 
   for (i = 0; i < kernel->num_args; i++)
     {
-      POCL_RETURN_ERROR_ON((!kernel->arg_info[i].is_set), CL_INVALID_KERNEL_ARGS,
-        "The %i-th kernel argument is not set!\n", i);
+      POCL_RETURN_ERROR_ON((!kernel->arg_info[i].is_set),
+        CL_INVALID_KERNEL_ARGS, "The %i-th kernel argument is not set!\n", i);
     }
 
   max_local_x = command_queue->device->max_work_item_sizes[0];
@@ -180,14 +188,18 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
        * requirement will have to be limited to the cases of kernels compiled
        * with the -cl-uniform-work-group-size option
        */
-      POCL_RETURN_ERROR_COND((global_x % local_x != 0), CL_INVALID_WORK_GROUP_SIZE);
-      POCL_RETURN_ERROR_COND((global_y % local_y != 0), CL_INVALID_WORK_GROUP_SIZE);
-      POCL_RETURN_ERROR_COND((global_z % local_z != 0), CL_INVALID_WORK_GROUP_SIZE);
+      POCL_RETURN_ERROR_COND((global_x % local_x != 0),
+        CL_INVALID_WORK_GROUP_SIZE);
+      POCL_RETURN_ERROR_COND((global_y % local_y != 0),
+        CL_INVALID_WORK_GROUP_SIZE);
+      POCL_RETURN_ERROR_COND((global_z % local_z != 0),
+        CL_INVALID_WORK_GROUP_SIZE);
 
     }
 
   /* If the kernel has the reqd_work_group_size attribute, then the local
-   * work size _must_ be specified, and it _must_ match the attribute specification
+   * work size _must_ be specified, and it _must_ match the attribute
+   * specification
    */
   if (kernel->reqd_wg_size != NULL &&
       kernel->reqd_wg_size[0] > 0 &&
@@ -208,19 +220,17 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
    */
   else if (local_work_size == NULL)
     {
-      /* Embarrassingly parallel kernel with a free work-group
-         size. Try to figure out one which utilizes all the
-         resources efficiently. Assume work-groups are scheduled
-         to compute units, so try to split it to a number of
-         work groups at the equal to the number of CUs, while still
-         trying to respect the preferred WG size multiple (for better
-         SIMD instruction utilization).
+      /* Embarrassingly parallel kernel with a free work-group size. Try to
+       * figure out one which utilizes all the resources efficiently. Assume
+       * work-groups are scheduled to compute units, so try to split it to a
+       * number of work groups at the equal to the number of CUs, while still
+       * trying to respect the preferred WG size multiple (for better SIMD
+       * instruction utilization).
       */
-      size_t preferred_wg_multiple;
-      cl_int prop_err = POname(clGetKernelWorkGroupInfo)
-        (kernel, command_queue->device,
-         CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE,
-         sizeof (size_t), &preferred_wg_multiple, NULL);
+      size_t preferred_wg_multiple; cl_int prop_err =
+        POname(clGetKernelWorkGroupInfo) (kernel, command_queue->device,
+          CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, sizeof (size_t),
+          &preferred_wg_multiple, NULL);
 
       if (prop_err != CL_SUCCESS) /* unlikely */
         preferred_wg_multiple = 1;
@@ -236,26 +246,28 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
        * 3. the product of local_{x,y,z} must be less than the maximum local
        *    work-group size.
        *
-       * Due to constraint 1., we may not have the possibility to proceed by multiples
-       * of the preferred_wg_multiple (e.g. if preferred = 16 and global size = 24).
-       * Our stepping granularity in each direction will therefore be the GCD of
-       * the global size in that direction and the preferred wg size.
+       * Due to constraint 1., we may not have the possibility to proceed by
+       * multiples of the preferred_wg_multiple (e.g. if preferred = 16 and
+       * global size = 24). Our stepping granularity in each direction will
+       * therefore be the GCD of the global size in that direction and the
+       * preferred wg size.
        *
        * Note that the grain might actually be as low as 1, if the two values
        * are coprimes (e.g. preferred = 8, global size = 17). There is no good
-       * solution in this case, and there's nothing we can do about it.
-       * On the opposite side of the spectrum, we might be lucky and grain_* =
-       * preferred_wg_multiple (this is the case e.g. if the programmer already checked
-       * for the preferred wg multiple and rounded the global size up to the
-       * multiple of it).
+       * solution in this case, and there's nothing we can do about it. On the
+       * opposite side of the spectrum, we might be lucky and grain_* =
+       * preferred_wg_multiple (this is the case e.g. if the programmer already
+       * checked for the preferred wg multiple and rounded the global size up
+       * to the multiple of it).
        */
 
-      const size_t grain_x = gcd(preferred_wg_multiple, global_x);
-      const size_t grain_y = gcd(preferred_wg_multiple, global_y);
-      const size_t grain_z = gcd(preferred_wg_multiple, global_z);
+      const size_t grain_x = gcd (preferred_wg_multiple, global_x);
+      const size_t grain_y = gcd (preferred_wg_multiple, global_y);
+      const size_t grain_z = gcd (preferred_wg_multiple, global_z);
 
-      /* We now want to get the largest multiple of the grain size that still divides
-       * global_* _and_ is less than the maximum local size in each direction.
+      /* We now want to get the largest multiple of the grain size that still
+       * divides global_* _and_ is less than the maximum local size in each
+       * direction.
        *
        * So we have G = K*g and we want to find k such that k*g < M and
        * k*g still divides G, i.e. k must divide K.
@@ -263,20 +275,23 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
        * (M/g)*g (integer division), so our upper bound for k is k' = M/g.
        */
 
-      /*                      /----- K -----\   /------- k' ------\        */
-      local_x = upper_divisor(global_x/grain_x, max_local_x/grain_x)*grain_x;
-      local_y = upper_divisor(global_y/grain_y, max_local_y/grain_y)*grain_y;
-      local_z = upper_divisor(global_z/grain_z, max_local_z/grain_z)*grain_z;
+      /*                      /------- K ------\  /-------- k' -------\  */
+      local_x = upper_divisor (global_x / grain_x, max_local_x / grain_x);
+      local_y = upper_divisor (global_y / grain_y, max_local_y / grain_y);
+      local_z = upper_divisor (global_z / grain_z, max_local_z / grain_z);
+
+      local_x *= grain_x;
+      local_y *= grain_y;
+      local_z *= grain_z;
 
       /* So we now have the largest possible local sizes that divide the global
        * sizes while being multiples of the grain size.
-       * We still have to ensure that the work-group size overall
-       * is not larger than the maximum allowed, and we have to do this
-       * while preserving the 'local divides global' condition,
-       * and we would like to preserve the 'multiple of grain' too,
-       * if possible.
-       * We always reduce z first, then y, then x, on the assumption
-       * that kernels will work with x varying faster, and thus being a better
+       * We still have to ensure that the work-group size overall is not larger
+       * than the maximum allowed, and we have to do this while preserving the
+       * 'local divides global' condition, and we would like to preserve the
+       * 'multiple of grain' too, if possible.
+       * We always reduce z first, then y, then x, on the assumption that
+       * kernels will work with x varying faster, and thus being a better
        * vectorization candidate, followed by y and then by z. (This assumption
        * is in some sense sanctioned by the standard itself, see e.g. the
        * get_{global,local}_linear_id functions in OpenCL 2.x)
@@ -301,7 +316,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
 
 #define TRY_HALVE(coord) \
 if ((local_##coord & 1) == 0 && \
-    divide_chain(grain_##coord, local_##coord/2, global_##coord)) \
+    divide_chain (grain_##coord, local_##coord/2, global_##coord)) \
   { \
     local_##coord /= 2; \
     continue; \
@@ -338,25 +353,25 @@ if (local_##coord > 1) \
 
       /* We now have the largest possible local work-group size that satisfies
        * all the hard constraints (divide global, per-dimension bound, overall
-       * bound) and our soft constraint of being as close as possible a multiple
-       * of the preferred work-group size multiple. Such a greedy algorithm
-       * minimizes the total number of work-groups. In moderate-sized launch
-       * grid, this may result in less work-groups than the number of Compute
-       * Units, with a resulting imbalance in the workload distribution.
-       * At the same time, we want to avoid too many work-groups, since some
-       * devices are penalized by such fragmentation.
-       * Finding a good balance between the two is a hard problem, and generally
-       * depends on the device as well as the kernel utilization of its
-       * resources.
+       * bound) and our soft constraint of being as close as possible a
+       * multiple of the preferred work-group size multiple. Such a greedy
+       * algorithm minimizes the total number of work-groups. In moderate-sized
+       * launch grid, this may result in less work-groups than the number of
+       * Compute Units, with a resulting imbalance in the workload
+       * distribution. At the same time, we want to avoid too many work-groups,
+       * since some devices are penalized by such fragmentation. Finding a good
+       * balance between the two is a hard problem, and generally depends on
+       * the device as well as the kernel utilization of its resources.
        * Lacking that, as a first step we will simply try to guarantee that we
        * have at least one work-group per CU, as long as the local work size
        * does not drop below a given threshold.
        */
 
-      /* Pick a minimum work-group size of 4 times the preferred work-group size
-       * multiple, under the assumption that this would be a good candidate
-       * below which a Compute Unit will not do enough work. */
-      const size_t min_group_size = 4*preferred_wg_multiple;
+      /* Pick a minimum work-group size of 4 times the preferred work-group
+       * size multiple, under the assumption that this would be a good
+       * candidate below which a Compute Unit will not do enough work.
+       */
+      const size_t min_group_size = 4 * preferred_wg_multiple;
 
       /* We need the number of Compute Units in the device, since we want
        * at least that many work-groups, if possible */
@@ -364,31 +379,30 @@ if (local_##coord > 1) \
       cl_uint ncus = command_queue->device->max_compute_units;
 
       /* number of workgroups */
-      size_t nwg_x = global_x/local_x;
-      size_t nwg_y = global_y/local_y;
-      size_t nwg_z = global_z/local_z;
+      size_t nwg_x = global_x / local_x;
+      size_t nwg_y = global_y / local_y;
+      size_t nwg_z = global_z / local_z;
 
       size_t splits; /* number of splits to bring ngws to reach ncu */
       /* Only proceed if splitting wouldn't bring us below the minimum
        * group size */
-      while (((splits = ncus/(nwg_x*nwg_y*nwg_z)) > 1) &&
-             (local_x*local_y*local_z > splits*min_group_size))
+      while (((splits = ncus / (nwg_x * nwg_y * nwg_z)) > 1) &&
+             (local_x * local_y * local_z > splits * min_group_size))
         {
-          /* Very simple splitting approach: find a dimension divisible
-           * by split, and lacking that divide by something less, if possible.
+          /* Very simple splitting approach: find a dimension divisible by
+           * split, and lacking that divide by something less, if possible.
            * If we fail at splitting at all, we will try killing the smaller of
            * the dimensions.
            * We will set splits to 0 if we succeed in the TRY_SPLIT, so that
            * we know that we can skip the rest.
            * If we get to the end of the while without splitting and without
-           * killing a dimension, we bail out early because it means
-           * we couldn't do anything useful without dropping below
-           * min_group_size
+           * killing a dimension, we bail out early because it means we
+           * couldn't do anything useful without dropping below min_group_size.
            */
 
 #define TRY_SPLIT(coord) \
 if ((local_##coord % splits) == 0 && \
-    divide_chain(grain_##coord, local_##coord/splits, global_##coord)) \
+    divide_chain (grain_##coord, local_##coord/splits, global_##coord)) \
   { \
     local_##coord /= splits; nwg_##coord *= splits; splits = 0; \
     continue; \
@@ -413,6 +427,7 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
            */
           if (splits == 0)
             continue;
+
           TRY_LEAST_DIM(z, x, y) else TRY_LEAST_DIM(y, z, x) else
           TRY_LEAST_DIM(x, y, z) else break;
 #undef TRY_LEAST_DIM
@@ -428,25 +443,27 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
                       (unsigned)(global_y / local_y),
                       (unsigned)(global_z / local_z));
 
-  assert(local_x * local_y * local_z <= max_group_size);
-  assert(local_x <= max_local_x);
-  assert(local_y <= max_local_y);
-  assert(local_z <= max_local_z);
+  assert (local_x * local_y * local_z <= max_group_size);
+  assert (local_x <= max_local_x);
+  assert (local_y <= max_local_y);
+  assert (local_z <= max_local_z);
 
   /* See TODO above for 'local must divide global' */
-  assert(global_x % local_x == 0);
-  assert(global_y % local_y == 0);
-  assert(global_z % local_z == 0);
+  assert (global_x % local_x == 0);
+  assert (global_y % local_y == 0);
+  assert (global_z % local_z == 0);
 
-  POCL_RETURN_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
+  POCL_RETURN_ERROR_COND(
+    (event_wait_list == NULL && num_events_in_wait_list > 0),
     CL_INVALID_EVENT_WAIT_LIST);
 
-  POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
+  POCL_RETURN_ERROR_COND(
+    (event_wait_list != NULL && num_events_in_wait_list == 0),
     CL_INVALID_EVENT_WAIT_LIST);
 
   char cachedir[POCL_FILENAME_LENGTH];
   int realdev_i = pocl_cl_device_to_index (kernel->program, realdev);
-  assert(realdev_i >= 0);
+  assert (realdev_i >= 0);
   pocl_cache_kernel_cachedir_path (cachedir, kernel->program,
                                    realdev_i, kernel, "",
                                    local_x, local_y, local_z);
