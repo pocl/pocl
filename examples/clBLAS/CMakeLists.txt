@@ -46,8 +46,8 @@ else()
     ${TS_NAME}
     PREFIX "${TS_BASEDIR}"
     GIT_REPOSITORY "https://github.com/clMathLibraries/${TS_NAME}.git"
-    PATCH_COMMAND cd src && pwd && find samples/ -type f -name *.c | xargs sed -i "s/CL_DEVICE_TYPE_GPU/CL_DEVICE_TYPE_CPU/g"
-    UPDATE_COMMAND /bin/true
+    PATCH_COMMAND cd src && pwd && patch -p1 -i ${CMAKE_SOURCE_DIR}/examples/clBLAS/clBLAS_float_error.patch && patch -p1 -i ${CMAKE_SOURCE_DIR}/examples/clBLAS/clBLAS_link.patch
+    UPDATE_COMMAND pwd && find ./src/samples/ -type f -name *.c | xargs sed -i "s/CL_DEVICE_TYPE_GPU/CL_DEVICE_TYPE_CPU/g"
     CONFIGURE_COMMAND ${CMAKE_COMMAND}
       -DBUILD_RUNTIME=ON
       -DBUILD_TEST=OFF
