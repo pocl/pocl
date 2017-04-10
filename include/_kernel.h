@@ -2385,10 +2385,11 @@ __IF_FP64(_CL_DECLARE_PREFETCH_FUNCS(double));
 #define IMG_RO_AQ __read_only
 #define IMG_WO_AQ __write_only
 
-#ifdef CL_VERSION_2_0
+#if (__OPENCL_C_VERSION__ > 199)
 #define CLANG_HAS_RW_IMAGES
 #define IMG_RW_AQ __read_write
 #else
+#undef CLANG_HAS_RW_IMAGES
 #define IMG_RW_AQ __RW_IMAGES_UNSUPPORTED_BEFORE_CL_20
 #endif
 
