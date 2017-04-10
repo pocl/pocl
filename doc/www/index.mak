@@ -18,6 +18,9 @@ in parallel programming on heterogeneous platforms.</p>
 
 <h1>News</h1>
 
+<h2>2017-04-10: <a href="pocl-0.14.html">Portable Computing Language
+(pocl) v0.14 released</a></h2>
+
 <h2>2016-11-03: Hiring: Enthusiastic Open Source Developers</h2>
 
 <p>The original developers of pocl, 
