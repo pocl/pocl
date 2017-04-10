@@ -23,6 +23,10 @@ that uses OpenCL to remain regression free in the future pocl releases:
 
   http://portablecl.org/docs/html/maintainer-policy.html
 
+We are looking for active maintainers to look after the ARM(64) and MacOS
+ports. If you are interested in helping to keep pocl working well on these
+platforms, please let us know!
+
 Acknowledgements
 ----------------
 
