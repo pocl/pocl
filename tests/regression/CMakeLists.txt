@@ -27,6 +27,7 @@
 if(NOT APPLE)
 
 set(C_PROGRAMS_TO_BUILD test_assign_loop_variable_to_privvar_makes_it_local
+     test_program_from_binary_with_local_1_1_1
      test_assign_loop_variable_to_privvar_makes_it_local_2)
 foreach(PROG ${C_PROGRAMS_TO_BUILD})
   if(MSVC)
@@ -95,6 +96,9 @@ add_test_pocl(NAME "regression/assigning_a_loop_iterator_variable_to_a_private_m
 add_test_pocl(NAME "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_REPL"
               COMMAND "test_assign_loop_variable_to_privvar_makes_it_local_2")
 
+add_test_pocl(NAME "regression/test_program_from_binary_with_local_1_1_1_REPL"
+              COMMAND "test_program_from_binary_with_local_1_1_1")
+
 set_tests_properties("regression/phi_nodes_not_replicated_REPL"
   "regression/issues_with_local_pointers_REPL"
   "regression/barrier_between_two_for_loops_REPL"
@@ -108,6 +112,7 @@ set_tests_properties("regression/phi_nodes_not_replicated_REPL"
   "regression/undominated_variable_from_conditional_barrier_handling_REPL"
   "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_REPL"
   "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_REPL"
+  "regression/test_program_from_binary_with_local_1_1_1_REPL"
   PROPERTIES
     ENVIRONMENT "POCL_WORK_GROUP_METHOD=workitemrepl"
     COST 1.5
@@ -146,6 +151,9 @@ add_test_pocl(NAME "regression/assigning_a_loop_iterator_variable_to_a_private_m
 add_test_pocl(NAME "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_LOOPS"
               COMMAND "test_assign_loop_variable_to_privvar_makes_it_local_2")
 
+add_test_pocl(NAME "regression/test_program_from_binary_with_local_1_1_1_LOOPS"
+              COMMAND "test_program_from_binary_with_local_1_1_1")
+
 set_tests_properties("regression/phi_nodes_not_replicated_LOOPS"
   "regression/issues_with_local_pointers_LOOPS"
   "regression/barrier_between_two_for_loops_LOOPS"
@@ -159,6 +167,7 @@ set_tests_properties("regression/phi_nodes_not_replicated_LOOPS"
   "regression/undominated_variable_from_conditional_barrier_handling_LOOPS"
   "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_LOOPS"
   "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_LOOPS"
+  "regression/test_program_from_binary_with_local_1_1_1_LOOPS"
   PROPERTIES
     ENVIRONMENT "POCL_WORK_GROUP_METHOD=workitemloops"
     COST 1.5
