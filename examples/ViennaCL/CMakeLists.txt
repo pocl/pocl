@@ -102,16 +102,16 @@ if(EXISTS "${ViennaCL_TGZ}")
           COMMAND "${TS_BUILDDIR}/examples/tutorial/libviennacl-tutorial"
           WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
 
-  add_test(NAME viennacl_benchmarks_opencl_bench_opencl
-          COMMAND "${TS_BUILDDIR}/examples/benchmarks/opencl-bench-opencl"
-          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
-  add_test(NAME viennacl_benchmarks_dense_blas_bench_opencl
-          COMMAND "${TS_BUILDDIR}/examples/benchmarks/dense_blas-bench-opencl"
-          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
+#  add_test(NAME viennacl_benchmarks_opencl_bench_opencl
+#          COMMAND "${TS_BUILDDIR}/examples/benchmarks/opencl-bench-opencl"
+#          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
+#  add_test(NAME viennacl_benchmarks_dense_blas_bench_opencl
+#          COMMAND "${TS_BUILDDIR}/examples/benchmarks/dense_blas-bench-opencl"
+#          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
 
-  add_test(NAME viennacl_tests_bisect_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/bisect-test-opencl"
-          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
+#  add_test(NAME viennacl_tests_bisect_test_opencl
+#          COMMAND "${TS_BUILDDIR}/tests/bisect-test-opencl"
+#          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_fft_1d_test_opencl
           COMMAND "${TS_BUILDDIR}/tests/fft_1d-test-opencl"
           WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
@@ -202,9 +202,9 @@ if(EXISTS "${ViennaCL_TGZ}")
   add_test(NAME viennacl_tests_spmdm_test_opencl
           COMMAND "${TS_BUILDDIR}/tests/spmdm-test-opencl"
           WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
-  add_test(NAME viennacl_tests_svd_test_opencl
-          COMMAND "${TS_BUILDDIR}/tests/svd-test-opencl"
-          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
+#  add_test(NAME viennacl_tests_svd_test_opencl
+#          COMMAND "${TS_BUILDDIR}/tests/svd-test-opencl"
+#          WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
   add_test(NAME viennacl_tests_tql_test_opencl
           COMMAND "${TS_BUILDDIR}/tests/tql-test-opencl"
           WORKING_DIRECTORY "${TS_BUILDDIR}/tests")
@@ -242,14 +242,16 @@ if(EXISTS "${ViennaCL_TGZ}")
     PROPERTIES
       LABELS "ViennaCL ViennaCL_examples")
 
-  set_tests_properties(
-  viennacl_benchmarks_opencl_bench_opencl
-  viennacl_benchmarks_dense_blas_bench_opencl
-    PROPERTIES
-      LABELS "ViennaCL ViennaCL_benchmarks")
+  # too slow
+  # set_tests_properties(
+  # viennacl_benchmarks_opencl_bench_opencl
+  # viennacl_benchmarks_dense_blas_bench_opencl
+  #  PROPERTIES
+  #    LABELS "ViennaCL_benchmarks")
 
   set_tests_properties(
-  viennacl_tests_bisect_test_opencl
+  # slow
+  # viennacl_tests_bisect_test_opencl
   viennacl_tests_fft_1d_test_opencl
   viennacl_tests_external_linkage_opencl
   viennacl_tests_blas3_solve_test_opencl
@@ -280,7 +282,8 @@ if(EXISTS "${ViennaCL_TGZ}")
   viennacl_tests_sparse_test_opencl
   viennacl_tests_structured_matrices_test_opencl
   viennacl_tests_spmdm_test_opencl
-  viennacl_tests_svd_test_opencl
+  # slow
+  # viennacl_tests_svd_test_opencl
   viennacl_tests_tql_test_opencl
   viennacl_tests_vector_convert_test_opencl
   viennacl_tests_vector_float_double_test_opencl
