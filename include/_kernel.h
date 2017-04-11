@@ -2395,152 +2395,173 @@ __IF_FP64(_CL_DECLARE_PREFETCH_FUNCS(double));
 
 #endif
 
-
-
-/* read_imagef 2d functions*/
-float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image2d_t image, sampler_t sampler,
-                                     int2 coord);
-/* float coords not implemented yet
-float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image2d_t image, sampler_t sampler,
-                                     float2 coord);
-*/
+/* NO sampler */
 
 float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image2d_t image, int2 coord);
-
 float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image2d_array_t image, int4 coord);
+float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image3d_t image, int4 coord);
 
-float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image2d_array_t image, sampler_t sampler,
-                                     int4 coord);
+uint4 _CL_OVERLOADABLE read_imageui ( IMG_RO_AQ image2d_t image, int2 coord);
+int4 _CL_OVERLOADABLE read_imagei ( IMG_RO_AQ image2d_t image, int2 coord);
+uint4 _CL_OVERLOADABLE read_imageui ( IMG_RO_AQ image2d_array_t image, int4 coord);
+int4 _CL_OVERLOADABLE read_imagei ( IMG_RO_AQ image2d_array_t image, int4 coord);
+uint4 _CL_OVERLOADABLE read_imageui ( IMG_RO_AQ image3d_t image, int4 coord);
+int4 _CL_OVERLOADABLE read_imagei ( IMG_RO_AQ image3d_t image, int4 coord);
 
-/*float coords not immplemented yet
+/* float4 img + float coords + sampler */
+
+float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image2d_t image, sampler_t sampler,
+                                     float2 coord);
 float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image2d_array_t image, sampler_t sampler,
                                      float4 coord);
-*/
+float4 _CL_OVERLOADABLE read_imagef ( IMG_RO_AQ image3d_t image, sampler_t sampler,
+                                     float4 coord);
 
-/* read_imagef 3d functions*/
+/* float4 img + int coords + sampler */
+
+float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image2d_t image, sampler_t sampler,
+                                     int2 coord);
+float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image2d_array_t image, sampler_t sampler,
+                                     int4 coord);
 float4 _CL_OVERLOADABLE read_imagef ( IMG_RO_AQ image3d_t image, sampler_t sampler,
                                      int4 coord);
 
-/* read_imageui 2d functions*/
+/* int4 img + float coords + sampler */
+
+uint4 _CL_OVERLOADABLE read_imageui ( IMG_RO_AQ image2d_t image, sampler_t sampler,
+                                     float2 coord);
+int4 _CL_OVERLOADABLE read_imagei ( IMG_RO_AQ image2d_t image, sampler_t sampler,
+                                     float2 coord);
+uint4 _CL_OVERLOADABLE read_imageui ( IMG_RO_AQ image2d_array_t image, sampler_t sampler,
+                                     float4 coord);
+int4 _CL_OVERLOADABLE read_imagei ( IMG_RO_AQ image2d_array_t image, sampler_t sampler,
+                                   float4 coord);
+uint4 _CL_OVERLOADABLE read_imageui ( IMG_RO_AQ image3d_t image, sampler_t sampler,
+                                     float4 coord);
+int4 _CL_OVERLOADABLE read_imagei ( IMG_RO_AQ image3d_t image, sampler_t sampler,
+                                   float4 coord);
+
+/* int4 img + int coords + sampler */
+
 uint4 _CL_OVERLOADABLE read_imageui ( IMG_RO_AQ image2d_t image, sampler_t sampler,
                                      int2 coord);
-
-uint4 _CL_OVERLOADABLE read_imageui ( IMG_RO_AQ image2d_t image, sampler_t sampler,
+int4 _CL_OVERLOADABLE read_imagei ( IMG_RO_AQ image2d_t image, sampler_t sampler,
+                                     int2 coord);
+uint4 _CL_OVERLOADABLE read_imageui ( IMG_RO_AQ image2d_array_t image, sampler_t sampler,
                                      int4 coord);
-
+int4 _CL_OVERLOADABLE read_imagei ( IMG_RO_AQ image2d_array_t image, sampler_t sampler,
+                                   int4 coord);
 uint4 _CL_OVERLOADABLE read_imageui ( IMG_RO_AQ image3d_t image, sampler_t sampler,
                                      int4 coord);
+int4 _CL_OVERLOADABLE read_imagei ( IMG_RO_AQ image3d_t image, sampler_t sampler,
+                                   int4 coord);
 
-int4 _CL_OVERLOADABLE read_imagei ( IMG_RO_AQ image2d_t image, sampler_t sampler,
-                                   int2 coord);
+
+/****************************************************************************/
 
 #ifdef CLANG_HAS_RW_IMAGES
 
-/* read_imagef 2d functions*/
-float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image2d_t image, sampler_t sampler,
-                                     int2 coord);
-/* float coords not implemented yet
-float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image2d_t image, sampler_t sampler,
-                                     float2 coord);
-*/
+/* NO sampler */
 
 float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image2d_t image, int2 coord);
-
 float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image2d_array_t image, int4 coord);
+float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image3d_t image, int4 coord);
 
-float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image2d_array_t image, sampler_t sampler,
-                                     int4 coord);
+uint4 _CL_OVERLOADABLE read_imageui ( IMG_RW_AQ image2d_t image, int2 coord);
+int4 _CL_OVERLOADABLE read_imagei ( IMG_RW_AQ image2d_t image, int2 coord);
+uint4 _CL_OVERLOADABLE read_imageui ( IMG_RW_AQ image2d_array_t image, int4 coord);
+int4 _CL_OVERLOADABLE read_imagei ( IMG_RW_AQ image2d_array_t image, int4 coord);
+uint4 _CL_OVERLOADABLE read_imageui ( IMG_RW_AQ image3d_t image, int4 coord);
+int4 _CL_OVERLOADABLE read_imagei ( IMG_RW_AQ image3d_t image, int4 coord);
 
-/*float coords not immplemented yet
+/* float4 img + float coords + sampler */
+
+float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image2d_t image, sampler_t sampler,
+                                     float2 coord);
 float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image2d_array_t image, sampler_t sampler,
                                      float4 coord);
-*/
+float4 _CL_OVERLOADABLE read_imagef ( IMG_RW_AQ image3d_t image, sampler_t sampler,
+                                     float4 coord);
 
-/* read_imagef 3d functions*/
+/* float4 img + int coords + sampler */
+
+float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image2d_t image, sampler_t sampler,
+                                     int2 coord);
+float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image2d_array_t image, sampler_t sampler,
+                                     int4 coord);
 float4 _CL_OVERLOADABLE read_imagef ( IMG_RW_AQ image3d_t image, sampler_t sampler,
                                      int4 coord);
 
-/* read_imageui 2d functions*/
+/* int4 img + float coords + sampler */
+
+uint4 _CL_OVERLOADABLE read_imageui ( IMG_RW_AQ image2d_t image, sampler_t sampler,
+                                     float2 coord);
+int4 _CL_OVERLOADABLE read_imagei ( IMG_RW_AQ image2d_t image, sampler_t sampler,
+                                     float2 coord);
+uint4 _CL_OVERLOADABLE read_imageui ( IMG_RW_AQ image2d_array_t image, sampler_t sampler,
+                                     float4 coord);
+int4 _CL_OVERLOADABLE read_imagei ( IMG_RW_AQ image2d_array_t image, sampler_t sampler,
+                                   float4 coord);
+uint4 _CL_OVERLOADABLE read_imageui ( IMG_RW_AQ image3d_t image, sampler_t sampler,
+                                     float4 coord);
+int4 _CL_OVERLOADABLE read_imagei ( IMG_RW_AQ image3d_t image, sampler_t sampler,
+                                   float4 coord);
+
+/* int4 img + int coords + sampler */
+
 uint4 _CL_OVERLOADABLE read_imageui ( IMG_RW_AQ image2d_t image, sampler_t sampler,
                                      int2 coord);
-
-uint4 _CL_OVERLOADABLE read_imageui ( IMG_RW_AQ image2d_t image, sampler_t sampler,
+int4 _CL_OVERLOADABLE read_imagei ( IMG_RW_AQ image2d_t image, sampler_t sampler,
+                                     int2 coord);
+uint4 _CL_OVERLOADABLE read_imageui ( IMG_RW_AQ image2d_array_t image, sampler_t sampler,
                                      int4 coord);
-
+int4 _CL_OVERLOADABLE read_imagei ( IMG_RW_AQ image2d_array_t image, sampler_t sampler,
+                                   int4 coord);
 uint4 _CL_OVERLOADABLE read_imageui ( IMG_RW_AQ image3d_t image, sampler_t sampler,
                                      int4 coord);
-
-int4 _CL_OVERLOADABLE read_imagei ( IMG_RW_AQ image2d_t image, sampler_t sampler,
-                                   int2 coord);
+int4 _CL_OVERLOADABLE read_imagei ( IMG_RW_AQ image3d_t image, sampler_t sampler,
+                                   int4 coord);
 
 #endif
 
 /******************************************************************************************/
 
-void _CL_OVERLOADABLE write_imagei ( IMG_WO_AQ  image2d_t image, int2 coord, int4 color);
+void _CL_OVERLOADABLE write_imagef( IMG_WO_AQ image2d_t  image, int2 coord , float4  color);
+void _CL_OVERLOADABLE write_imagei( IMG_WO_AQ image2d_t  image, int2 coord ,  int2 color);
+void _CL_OVERLOADABLE write_imageui( IMG_WO_AQ image2d_t  image, int2 coord , uint2 color);
+__IF_FP16(void _CL_OVERLOADABLE write_imageh( IMG_WO_AQ image2d_t  image, int2 coord , half4  color));
 
-void _CL_OVERLOADABLE write_imageui ( IMG_WO_AQ  image2d_t image, int2 coord, uint4 color);
+void _CL_OVERLOADABLE write_imagef( IMG_WO_AQ image2d_array_t  image , int4  coord , float4  color);
+void _CL_OVERLOADABLE write_imagei( IMG_WO_AQ image2d_array_t  image , int4  coord , int4  color);
+void _CL_OVERLOADABLE write_imageui( IMG_WO_AQ image2d_array_t  image , int4  coord , uint4  color);
+__IF_FP16(void _CL_OVERLOADABLE write_imageh( IMG_WO_AQ image2d_array_t  image , int4  coord , half4  color));
 
-void _CL_OVERLOADABLE write_imagef ( IMG_WO_AQ  image2d_t image, int2 coord,
-                                    float4 color);
+void _CL_OVERLOADABLE write_imagef( IMG_WO_AQ image3d_t  image , int4  coord , float4  color);
+void _CL_OVERLOADABLE write_imagei( IMG_WO_AQ image3d_t  image , int4  coord , int4  color);
+void _CL_OVERLOADABLE write_imageui( IMG_WO_AQ image3d_t  image , int4  coord , uint4  color);
+__IF_FP16(void _CL_OVERLOADABLE write_imageh( IMG_WO_AQ image3d_t  image , int4  coord , half4  color));
 
-void _CL_OVERLOADABLE write_imagef ( IMG_WO_AQ  image3d_t image, int4 coord,
-                                    float4 color);
+/* UNIMPLEMENTED: 1d / 1d array */
 
 #ifdef CLANG_HAS_RW_IMAGES
 
-void _CL_OVERLOADABLE write_imagei ( IMG_RW_AQ  image2d_t image, int2 coord, int4 color);
+void _CL_OVERLOADABLE write_imagef( IMG_RW_AQ image2d_t  image, int2 coord , float4  color);
+void _CL_OVERLOADABLE write_imagei( IMG_RW_AQ image2d_t  image, int2 coord ,  int2 color);
+void _CL_OVERLOADABLE write_imageui( IMG_RW_AQ image2d_t  image, int2 coord , uint2 color);
+__IF_FP16(void _CL_OVERLOADABLE write_imageh( IMG_RW_AQ image2d_t  image, int2 coord , half4  color));
 
-void _CL_OVERLOADABLE write_imageui ( IMG_RW_AQ  image2d_t image, int2 coord, uint4 color);
+void _CL_OVERLOADABLE write_imagef( IMG_RW_AQ image2d_array_t  image , int4  coord , float4  color);
+void _CL_OVERLOADABLE write_imagei( IMG_RW_AQ image2d_array_t  image , int4  coord , int4  color);
+void _CL_OVERLOADABLE write_imageui( IMG_RW_AQ image2d_array_t  image , int4  coord , uint4  color);
+__IF_FP16(void _CL_OVERLOADABLE write_imageh( IMG_RW_AQ image2d_array_t  image , int4  coord , half4  color));
 
-void _CL_OVERLOADABLE write_imagef ( IMG_RW_AQ  image2d_t image, int2 coord,
-                                    float4 color);
-
-void _CL_OVERLOADABLE write_imagef ( IMG_RW_AQ  image3d_t image, int4 coord,
-                                    float4 color);
+void _CL_OVERLOADABLE write_imagef( IMG_RW_AQ image3d_t  image , int4  coord , float4  color);
+void _CL_OVERLOADABLE write_imagei( IMG_RW_AQ image3d_t  image , int4  coord , int4  color);
+void _CL_OVERLOADABLE write_imageui( IMG_RW_AQ image3d_t  image , int4  coord , uint4  color);
+__IF_FP16(void _CL_OVERLOADABLE write_imageh( IMG_RW_AQ image3d_t  image , int4  coord , half4  color));
 
 #endif
 
-/* not implemented 
-void _CL_OVERLOADABLE write_imagef (image2d_array_t image, int4 coord,
-                                    float4 color);
-
-void _CL_OVERLOADABLE write_imagei (image2d_array_t image, int4 coord,
-                                    int4 color);
-
-void _CL_OVERLOADABLE write_imageui (image2d_array_t image, int4 coord,
-                                     uint4 color);
-
-void _CL_OVERLOADABLE write_imagef (image1d_t image, int coord,
-                                    float4 color);
-
-void _CL_OVERLOADABLE write_imagei (image1d_t image, int coord,
-                                    int4 color);
-
-void _CL_OVERLOADABLE write_imageui (image1d_t image, int coord, 
-                                     uint4 color);
-
-void _CL_OVERLOADABLE write_imagef (image1d_buffer_t image, int coord, 
-                                    float4 color);
-
-void _CL_OVERLOADABLE write_imagei (image1d_buffer_t image, int coord,
-                                     int4 color);
-
-void _CL_OVERLOADABLE write_imageui (image1d_buffer_t image, int coord,
-                                     uint4 color);
-
-void _CL_OVERLOADABLE write_imagef (image1d_array_t image, int2 coord,
-                                    float4 color);
-
-void _CL_OVERLOADABLE write_imagei (image1d_array_t image, int2 coord,
-                                    int4 color);
-
-void _CL_OVERLOADABLE write_imageui (image1d_array_t image, int2 coord,
-                                     uint4 color);
-
-void _CL_OVERLOADABLE write_imageui (image3d_t image, int4 coord,
-                                     uint4 color);
-*/
 
 /******************************************************************************************/
 
