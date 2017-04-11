@@ -788,6 +788,7 @@ if(ENABLE_TCE)
   endforeach()
 
   set(TCE_DEVICE_CL_VERSION "120")
+  set(TCE_DEVICE_CL_STD "1.2")
 
   if("${LLVM_CXXFLAGS}" MATCHES "-fno-rtti")
     message(WARNING "TCE is enabled but your LLVM was not built with RTTI. You should rebuild LLVM with 'make REQUIRES_RTTI=1'. See the INSTALL file for more information.")
