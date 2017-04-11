@@ -43,6 +43,6 @@ if(NOT MIPS)
 
   set_tests_properties( "EinsteinToolkit"
     PROPERTIES
-    LABELS "internal;Einstein"
+    LABELS "EinsteinToolkit"
     DEPENDS "pocl_version_check")
 endif()

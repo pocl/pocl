@@ -1536,6 +1536,8 @@ struct ReferenceHandler<cl_event>
 
 
 // Extracts version number with major in the upper 16 bits, minor in the lower 16
+
+#if CL_HPP_TARGET_OPENCL_VERSION >= 120 && CL_HPP_MINIMUM_OPENCL_VERSION < 120
 static cl_uint getVersion(const vector<char> &versionInfo)
 {
     int highVersion = 0;
@@ -1555,7 +1557,6 @@ static cl_uint getVersion(const vector<char> &versionInfo)
     return (highVersion << 16) | lowVersion;
 }
 
-#if CL_HPP_TARGET_OPENCL_VERSION >= 120 && CL_HPP_MINIMUM_OPENCL_VERSION < 120
 static cl_uint getPlatformVersion(cl_platform_id platform)
 {
     size_type size = 0;
@@ -1783,7 +1784,7 @@ public:
 
     cl_type& operator ()() { return object_; }
 
-    const cl_type get() const { return object_; }
+    cl_type get() const { return object_; }
 
     cl_type get() { return object_; }
 
@@ -6520,7 +6521,7 @@ inline cl_int cl::Program::getInfo(cl_program_info name, vector<vector<unsigned 
 
         // Resize the parameter array and constituent arrays
         param->resize(numBinaries);
-        for (int i = 0; i < numBinaries; ++i) {
+        for (unsigned i = 0; i < numBinaries; ++i) {
             (*param)[i].resize(sizes[i]);
         }
 

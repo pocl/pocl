@@ -877,7 +877,7 @@ pocl_setup_device_for_system_memory(cl_device_id device)
        */
       size_t alloc_limit = device->global_mem_size;
       if ((alloc_limit >> 20) > (7 << 10))
-        system_memory.total_alloc_limit = alloc_limit - (size_t)(1 << 31);
+        system_memory.total_alloc_limit = alloc_limit - (size_t)(1UL << 31);
       else
         {
           size_t temp = (alloc_limit >> 2);
@@ -929,9 +929,13 @@ pocl_set_buffer_image_limits(cl_device_id device)
 {
   pocl_setup_device_for_system_memory(device);
   /* these aren't set up in pocl_setup_device_for_system_memory,
-   * because some devices (HSA) set them up themselves */
+   * because some devices (HSA) set them up themselves
+   *
+   * it's max mem alloc / 4 because some programs (conformance test)
+   * try to allocate max size constant objects and run out of memory
+   * while trying to fill them. */
   device->local_mem_size = device->max_constant_buffer_size =
-      device->max_mem_alloc_size;
+      (device->max_mem_alloc_size / 4);
 
   /* We don't have hardware limitations on the buffer-backed image sizes,
    * so we set the maximum size in terms of the maximum amount of pixels

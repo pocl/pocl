@@ -387,10 +387,10 @@ int main(void)
                  bb2[i]);
           return EXIT_FAILURE;
         }
-      if (static_wg_buf[i] != 2 + i + 1)
+      if (static_wg_buf[i] != 2 + (int)i + 1)
         {
           printf("static wg kernel failed at index %d (%d != %d)\n", i,
-                 static_wg_buf[i], 2 + i + 1);
+                 static_wg_buf[i], 2 + (int)i + 1);
           return EXIT_FAILURE;
         }
     }

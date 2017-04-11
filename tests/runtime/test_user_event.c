@@ -34,7 +34,7 @@ int main()
 {
   cl_int err;
   cl_event user_evt = NULL;
-  int i;
+  unsigned i;
 
   // An user event can be set to either complete or a negative value, indicating error;
   // additionally, no objects involved in a command that waits on the user event should

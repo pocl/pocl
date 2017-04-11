@@ -62,9 +62,9 @@ POname(clSetKernelArg)(cl_kernel kernel,
     "not sizeof(cl_mem)", arg_index);
 
   POCL_RETURN_ERROR_ON((pi->type == POCL_ARG_TYPE_SAMPLER
-    && (arg_size != sizeof(cl_sampler_t))),
+    && (arg_size != sizeof(cl_sampler))),
     CL_INVALID_ARG_SIZE, "Arg %u is sampler, but arg_size is "
-    "not sizeof(cl_sampler_t)", arg_index);
+    "not sizeof(cl_sampler)", arg_index);
 
   p = &(kernel->dyn_arguments[arg_index]); 
   POCL_LOCK_OBJ (kernel);

@@ -28,17 +28,18 @@ set(TS_BASEDIR "${TESTSUITE_BASEDIR}/${TS_NAME}")
 set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build")
 set(TS_SRCDIR "${TS_BASEDIR}/src/${TS_NAME}")
 
-if(HAVE_SVN)
+if(HAVE_GIT)
 
-message(STATUS "Enabling testsuite ${TS_NAME}")
-set(ENABLED_TESTSUITES "${ENABLED_TESTSUITES};${TS_NAME}" PARENT_SCOPE)
+  message(STATUS "Enabling testsuite ${TS_NAME}")
+  list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
+  set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
 
 ExternalProject_Add(
   ${TS_NAME}
   PREFIX "${TS_BASEDIR}"
   #DOWNLOAD_COMMAND "/bin/true"
-  SVN_REPOSITORY "http://opencl-book-samples.googlecode.com/svn/trunk"
-  PATCH_COMMAND pwd && echo Patching &&	sed -i "s/bool doCPU = false/bool doCPU = true/g" src/Chapter_16/Dijkstra/oclDijkstra.cpp &&
+  GIT_REPOSITORY "https://github.com/bgaster/opencl-book-samples.git"
+  PATCH_COMMAND pwd && echo Patching && sed -i "s/bool doCPU = false/bool doCPU = true/g" src/Chapter_16/Dijkstra/oclDijkstra.cpp &&
   sed -i "s/size_t localWorkSize = maxWorkGroupSize/size_t localWorkSize = 2/g" src/Chapter_16/Dijkstra/oclDijkstraKernel.cpp &&
   sed -i "s/device.j..type == CL_DEVICE_TYPE_GPU/device[j].type \\& CL_DEVICE_TYPE_GPU/g" src/Chapter_22/spmv.c &&
   sed -i "s/context.CL_DEVICE_TYPE_GPU/context\(CL_DEVICE_TYPE_CPU/g" src/Chapter_12/VectorAdd/vecadd.cpp &&
@@ -79,16 +80,17 @@ add_test(NAME "opencl_book_samples_SimpleBufferSubBuffer"
 add_test(NAME "opencl_book_samples_vecadd"
          COMMAND "${TS_BUILDDIR}/src/Chapter_12/VectorAdd/vecadd"
          WORKING_DIRECTORY "${TS_SRCDIR}/src/Chapter_12/VectorAdd")
-#add_test(NAME "opencl_book_samples_histogram"
-#         COMMAND "${TS_BUILDDIR}/src/Chapter_14/histogram/histogram"
-#         WORKING_DIRECTORY "${TS_SRCDIR}/src/Chapter_14/histogram")
+add_test(NAME "opencl_book_samples_histogram"
+         COMMAND "${TS_BUILDDIR}/src/Chapter_14/histogram/histogram"
+         WORKING_DIRECTORY "${TS_SRCDIR}/src/Chapter_14/histogram")
 add_test(NAME "opencl_book_samples_Dijkstra"
          COMMAND "${TS_BUILDDIR}/src/Chapter_16/Dijkstra/Dijkstra" --cpu
          WORKING_DIRECTORY "${TS_SRCDIR}/src/Chapter_16/Dijkstra")
 # doesn't work
-#add_test(NAME "opencl_book_samples_spmv"
-#         COMMAND "${TS_BUILDDIR}/src/Chapter_22/spmv"
-#         WORKING_DIRECTORY "${TS_SRCDIR}/src/Chapter_22")
+add_test(NAME "opencl_book_samples_spmv"
+         COMMAND "${TS_BUILDDIR}/src/Chapter_22/spmv"
+         WORKING_DIRECTORY "${TS_SRCDIR}/src/Chapter_22")
+
 
 
 
@@ -100,9 +102,9 @@ set_tests_properties(
   opencl_book_samples_SimpleBufferSubBuffer
 #  opencl_book_samples_ImageFilter2D
   opencl_book_samples_vecadd
-#  opencl_book_samples_histogram
+  opencl_book_samples_histogram
   opencl_book_samples_Dijkstra
-#  opencl_book_samples_spmv
+  opencl_book_samples_spmv
   PROPERTIES
     LABELS "opencl-book-samples")
 

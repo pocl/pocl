@@ -470,9 +470,10 @@ int pocl_llvm_build_program(cl_program program,
 
   if (success) {
     pocl_read_file(tempfile, &PreprocessedOut, &PreprocessedSize);
-    pocl_remove(tempfile);
     fe.OutputFile = saved_output;
   }
+  if (pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0) == 0)
+    pocl_remove(tempfile);
 
   if (PreprocessedOut == nullptr) {
     pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
@@ -1024,9 +1025,9 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
     }
 
     if (pocl::is_image_type(*t)) {
-      kernel->arg_info[i].type = POCL_ARG_TYPE_IMAGE;
+      ArgInfo.type = POCL_ARG_TYPE_IMAGE;
     } else if (pocl::is_sampler_type(*t)) {
-      kernel->arg_info[i].type = POCL_ARG_TYPE_SAMPLER;
+      ArgInfo.type = POCL_ARG_TYPE_SAMPLER;
     }
     i++;
   }

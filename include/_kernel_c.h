@@ -223,14 +223,6 @@ typedef struct _pocl_image2d_array_t { dev_image_t base; }* image2d_array_t;
 typedef struct _pocl_image1d_array_t { dev_image_t base; }* image1d_array_t;
 #endif
 
-// 3.9 needs access qualifier
-// TODO: rw images
-#ifdef CLANG_OLDER_THAN_3_9
-#define IMG_WRITE_AQ
-#else
-#define IMG_WRITE_AQ __write_only
-#endif
-
 #ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
 /*
  * During pocl kernel compiler transformations we use the fixed address

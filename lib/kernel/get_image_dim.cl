@@ -25,32 +25,42 @@
 
 #include "templates.h"
 
-#if (__clang_major__ == 3) && (__clang_minor__ >= 5)
-// Clang 3.5 crashes in case trying to cast to the private pointer,
-// adding the global qualifier fixes it. Clang 3.4 crashes if it's
-// there. The issue is in SROA.
-#define ADDRESS_SPACE global
-#else
-#define ADDRESS_SPACE
+#define IMPLEMENT_GET_IMAGE_DIM_2D(__IMG_AQ__)                  \
+int2 _CL_OVERLOADABLE get_image_dim(__IMG_AQ__ image2d_t image) \
+{                                                               \
+  global dev_image_t* img =                                     \
+    __builtin_astype(image, global dev_image_t*);               \
+  return (int2)(img->_width, img->_height);                     \
+}
+
+#define IMPLEMENT_GET_IMAGE_DIM_2DA(__IMG_AQ__)                       \
+int2 _CL_OVERLOADABLE get_image_dim(__IMG_AQ__ image2d_array_t image) \
+{                                                                     \
+  global dev_image_t* img =                                           \
+    __builtin_astype (image, global dev_image_t*);                    \
+  return (int2)(img->_width, img->_height);                           \
+}
+
+#define IMPLEMENT_GET_IMAGE_DIM_3D(__IMG_AQ__)                  \
+int4 _CL_OVERLOADABLE get_image_dim(__IMG_AQ__ image3d_t image) \
+{                                                               \
+  global dev_image_t* img =                                     \
+    __builtin_astype (image, global dev_image_t*);              \
+  return (int4)(img->_width, img->_height, img->_depth, 0);     \
+}
+
+IMPLEMENT_GET_IMAGE_DIM_2D(IMG_RO_AQ)
+IMPLEMENT_GET_IMAGE_DIM_2DA(IMG_RO_AQ)
+IMPLEMENT_GET_IMAGE_DIM_3D(IMG_RO_AQ)
+
+#ifdef CLANG_HAS_IMAGE_AS
+IMPLEMENT_GET_IMAGE_DIM_2D(IMG_WO_AQ)
+IMPLEMENT_GET_IMAGE_DIM_2DA(IMG_WO_AQ)
+IMPLEMENT_GET_IMAGE_DIM_3D(IMG_WO_AQ)
 #endif
 
-int2 _CL_OVERLOADABLE get_image_dim(image2d_t image)
-{
-  ADDRESS_SPACE dev_image_t* img =
-    __builtin_astype(image, ADDRESS_SPACE dev_image_t*);
-  return (int2)(img->_width, img->_height);
-}
-
-int2 _CL_OVERLOADABLE get_image_dim(image2d_array_t image)
-{
-  ADDRESS_SPACE dev_image_t* img =
-    __builtin_astype (image, ADDRESS_SPACE dev_image_t*);
-  return (int2)(img->_width, img->_height);
-}
-
-int4 _CL_OVERLOADABLE get_image_dim(image3d_t image)
-{
-  ADDRESS_SPACE dev_image_t* img =
-    __builtin_astype (image, ADDRESS_SPACE dev_image_t*);
-  return (int4)(img->_width, img->_height, img->_depth, 0);
-}
+#ifdef CLANG_HAS_RW_IMAGES
+IMPLEMENT_GET_IMAGE_DIM_2D(IMG_RW_AQ)
+IMPLEMENT_GET_IMAGE_DIM_2DA(IMG_RW_AQ)
+IMPLEMENT_GET_IMAGE_DIM_3D(IMG_RW_AQ)
+#endif

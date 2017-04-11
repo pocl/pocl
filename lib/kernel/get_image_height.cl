@@ -24,25 +24,27 @@
 
 #include "templates.h"
 
-#if (__clang_major__ == 3) && (__clang_minor__ >= 5)
-// Clang 3.5 crashes in case trying to cast to the private pointer,
-// adding the global qualifier fixes it. Clang 3.4 crashes if it's
-// there. The issue is in SROA.
-#define ADDRESS_SPACE global
-#else
-#define ADDRESS_SPACE
-#endif
-
 #define IMPLEMENT_GET_IMAGE_HEIGHT(__IMGTYPE__)                              \
   int _CL_OVERLOADABLE get_image_height(__IMGTYPE__ image){                  \
-    ADDRESS_SPACE dev_image_t* ptr =                                         \
-      __builtin_astype(image, ADDRESS_SPACE dev_image_t*);                   \
+    global dev_image_t* ptr =                                         \
+      __builtin_astype(image, global dev_image_t*);                   \
     return ptr->_height;                                                     \
   }                                                                          \
 
 
-IMPLEMENT_GET_IMAGE_HEIGHT(image1d_t)
-IMPLEMENT_GET_IMAGE_HEIGHT(image2d_t)
-IMPLEMENT_GET_IMAGE_HEIGHT(image3d_t)
+IMPLEMENT_GET_IMAGE_HEIGHT(IMG_RO_AQ image1d_t)
+IMPLEMENT_GET_IMAGE_HEIGHT(IMG_RO_AQ image2d_t)
+IMPLEMENT_GET_IMAGE_HEIGHT(IMG_RO_AQ image3d_t)
 
 
+#ifdef CLANG_HAS_IMAGE_AS
+IMPLEMENT_GET_IMAGE_HEIGHT(IMG_WO_AQ image1d_t)
+IMPLEMENT_GET_IMAGE_HEIGHT(IMG_WO_AQ image2d_t)
+IMPLEMENT_GET_IMAGE_HEIGHT(IMG_WO_AQ image3d_t)
+#endif
+
+#ifdef CLANG_HAS_RW_IMAGES
+IMPLEMENT_GET_IMAGE_HEIGHT(IMG_RW_AQ image1d_t)
+IMPLEMENT_GET_IMAGE_HEIGHT(IMG_RW_AQ image2d_t)
+IMPLEMENT_GET_IMAGE_HEIGHT(IMG_RW_AQ image3d_t)
+#endif
