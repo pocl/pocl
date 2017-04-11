@@ -62,8 +62,8 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
   memcpy ((cmd->command.write_image.region), tuned_region, 3*sizeof (size_t));
   cmd->command.write_image.b_rowpitch = image->image_row_pitch;
   cmd->command.write_image.b_slicepitch = image->image_slice_pitch;
-  cmd->command.write_image.h_rowpitch = (input_row_pitch ? input_row_pitch : image->image_row_pitch);
-  cmd->command.write_image.h_slicepitch = (input_slice_pitch ? input_slice_pitch : image->image_slice_pitch);
+  cmd->command.write_image.h_rowpitch = (input_row_pitch ? input_row_pitch : tuned_region[0]);
+  cmd->command.write_image.h_slicepitch = (input_slice_pitch ? input_slice_pitch : (tuned_region[0] * region[1]));
   cmd->command.write_image.buffer = image;
 
   POname(clRetainMemObject) (image);

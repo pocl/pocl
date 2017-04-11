@@ -87,8 +87,8 @@ CL_API_SUFFIX__VERSION_1_0
   memcpy ((cmd->command.read_image.region), tuned_region, 3*sizeof (size_t));
   cmd->command.write_image.b_rowpitch = image->image_row_pitch;
   cmd->command.write_image.b_slicepitch = image->image_slice_pitch;
-  cmd->command.write_image.h_rowpitch = (row_pitch ? row_pitch : image->image_row_pitch);
-  cmd->command.write_image.h_slicepitch = (slice_pitch ? slice_pitch : image->image_slice_pitch);
+  cmd->command.write_image.h_rowpitch = (row_pitch ? row_pitch : tuned_region[0]);
+  cmd->command.write_image.h_slicepitch = (slice_pitch ? slice_pitch : (tuned_region[0]*region[1]));
   cmd->command.read_image.buffer = image;
 
   POname(clRetainMemObject) (image);  
