@@ -47,12 +47,6 @@
   #define le64toh(x) OSSwapLittleToHostInt64(x)
 #endif
 
-#if defined(WORDS_BIGENDIAN) && WORDS_BIGENDIAN == 1
-  static const char host_endian = 1;
-#else
-  static const char host_endian = 0;
-#endif
-
 /* pocl binary identifier */
 #define POCLCC_STRING_ID "poclbin"
 #define POCLCC_STRING_ID_LENGTH 8
