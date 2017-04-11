@@ -45,4 +45,28 @@
   dest.w = source.w;                                 \
   }
 
+#define INITCOORDfloat(dest, source)                                          \
+  {                                                                           \
+    dest.x = source.x;                                                        \
+    dest.y = 0.0f;                                                            \
+    dest.z = 0.0f;                                                            \
+    dest.w = 0.0f;                                                            \
+  }
+
+#define INITCOORDfloat2(dest, source)                                         \
+  {                                                                           \
+    dest.x = source.x;                                                        \
+    dest.y = source.y;                                                        \
+    dest.z = 0.0f;                                                            \
+    dest.w = 0.0f;                                                            \
+  }
+
+#define INITCOORDfloat4(dest, source)                                         \
+  {                                                                           \
+    dest.x = source.x;                                                        \
+    dest.y = source.y;                                                        \
+    dest.z = source.z;                                                        \
+    dest.w = source.w;                                                        \
+  }
+
 #endif
