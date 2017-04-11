@@ -251,19 +251,26 @@ WorkitemLoops::CreateLoopAround
 
   IRBuilder<> builder(forInitBB);
 
-  if (peeledFirst)
-    {
-      builder.CreateStore(builder.CreateLoad(localIdXFirstVar), localIdVar);
-      builder.CreateStore
-        (ConstantInt::get(IntegerType::get(C, size_t_width), 0), localIdXFirstVar);
-    }
-  else
-    {
-      builder.CreateStore
-        (ConstantInt::get(IntegerType::get(C, size_t_width), 0), localIdVar);
-    }
+  if (peeledFirst) {
+    builder.CreateStore(builder.CreateLoad(localIdXFirstVar), localIdVar);
+    builder.CreateStore
+      (ConstantInt::get(IntegerType::get(C, size_t_width), 0), localIdXFirstVar);
 
-  builder.CreateBr(loopBodyEntryBB);
+    if (WGDynamicLocalSize) {
+      llvm::Value *cmpResult;
+      cmpResult = builder.CreateICmpULT(builder.CreateLoad(localIdVar),
+                                        builder.CreateLoad(DynamicLocalSize));
+
+      builder.CreateCondBr(cmpResult, loopBodyEntryBB, loopEndBB);
+    } else {
+      builder.CreateBr(loopBodyEntryBB);
+    }
+  } else {
+    builder.CreateStore
+      (ConstantInt::get(IntegerType::get(C, size_t_width), 0), localIdVar);
+
+    builder.CreateBr(loopBodyEntryBB);
+  }
 
   exitBB->getTerminator()->replaceUsesOfWith(oldExit, forCondBB);
   if (addIncBlock)
