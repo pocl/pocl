@@ -47,6 +47,7 @@ if ((NOT "${CMAKE_VERSION}" VERSION_LESS "3.0.2")
     PREFIX "${TS_BASEDIR}"
     # GIT_REPOSITORY "https://github.com/AvtechScientific/ASL"
     URL "https://github.com/AvtechScientific/ASL/archive/v0.1.6.tar.gz"
+    PATCH_COMMAND pwd && patch -p1 -i ${CMAKE_SOURCE_DIR}/examples/ASL/asl.patch
     CMAKE_ARGS
       -DCMAKE_BUILD_TYPE=RelWithDebInfo
       -DWITH_API_DOC:BOOL=OFF
