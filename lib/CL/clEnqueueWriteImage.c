@@ -28,6 +28,14 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
 
   errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
                                         event_wait_list);
+  if (image->buffer)
+    POCL_RETURN_ERROR_ON (
+        (image->buffer->flags
+         & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)),
+        CL_INVALID_OPERATION,
+        "image buffer has been created with CL_MEM_HOST_READ_ONLY "
+        "or CL_MEM_HOST_NO_ACCESS\n");
+
   if (errcode != CL_SUCCESS)
     return errcode;
 

@@ -39,6 +39,8 @@ POname(clGetProgramBuildInfo)(cl_program            program,
 
   POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
 
+  POCL_RETURN_ERROR_COND ((device == NULL), CL_INVALID_DEVICE);
+
   int device_i = pocl_cl_device_to_index(program, device);
   POCL_RETURN_ERROR_ON((device_i < 0), CL_INVALID_DEVICE, "Program does not have "
     "this device in it's device list\n");

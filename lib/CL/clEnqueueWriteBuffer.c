@@ -49,7 +49,14 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
   POCL_RETURN_ERROR_ON((command_queue->context != buffer->context),
     CL_INVALID_CONTEXT, "buffer and command_queue are not from the same context\n");
 
+  POCL_RETURN_ERROR_ON (
+      (buffer->flags & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)),
+      CL_INVALID_OPERATION,
+      "buffer has been created with CL_MEM_HOST_READ_ONLY "
+      "or CL_MEM_HOST_NO_ACCESS\n");
+
   POCL_RETURN_ERROR_COND((ptr == NULL), CL_INVALID_VALUE);
+
   if (pocl_buffer_boundcheck(buffer, offset, cb) != CL_SUCCESS)
     return CL_INVALID_VALUE;
 

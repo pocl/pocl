@@ -39,6 +39,8 @@ POname(clCreateProgramWithSource)(cl_context context,
   unsigned i;
   int errcode;
 
+  POCL_GOTO_ERROR_COND ((context == NULL), CL_INVALID_CONTEXT);
+
   POCL_GOTO_ERROR_COND((count == 0), CL_INVALID_VALUE);
 
   program = (cl_program) calloc(1, sizeof(struct _cl_program));
