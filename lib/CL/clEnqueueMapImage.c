@@ -67,8 +67,7 @@ CL_API_SUFFIX__VERSION_1_0
 
   errcode = pocl_check_event_wait_list(command_queue, num_events_in_wait_list, event_wait_list);
   if (errcode != CL_SUCCESS)
-    return errcode;
-
+    goto ERROR;
 
   errcode = pocl_check_device_supports_image(image, command_queue);
   if (errcode != CL_SUCCESS)
