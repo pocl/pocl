@@ -25,8 +25,8 @@
 
 set(TS_NAME "PyOpenCL")
 set(TS_BASEDIR "${TESTSUITE_BASEDIR}/${TS_NAME}")
+set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build")
 set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
-set(TS_BUILDDIR "${TS_SRCDIR}/PyOpenCL-build")
 
 # see README on how to install PyOpenCL to the example dir
 
@@ -38,7 +38,10 @@ if (EXISTS "${TS_BUILDDIR}/mypy/bin/py.test" AND
   set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
 
   add_test(NAME "PyOpenCL"
-           COMMAND "${TS_SRCDIR}/test_build_dir")
+           COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/test_build_dir" "${TS_BASEDIR}/src")
+
+  set_tests_properties("PyOpenCL" PROPERTIES
+          ENVIRONMENT "PYOPENCL_NO_CACHE=1;PYOPENCL_TEST=portable")
 
   set_tests_properties("PyOpenCL"
     PROPERTIES

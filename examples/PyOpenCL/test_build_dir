@@ -3,7 +3,12 @@
 # Runs the PyOpenCL tests against a pocl build dir located in the
 # current working directory. Assumes an ICD build in PWD.
 
-pyopencl_root=`dirname $0`
+pyopencl_root=$1
+if [ -z "$pyopencl_root" ]; then
+  pyopencl_root=`dirname $0`
+fi
+
+if [ -z "$OCL_ICD_VENDORS" ]; then
 
 pushd . > /dev/null
 cd $pyopencl_root
@@ -25,6 +30,13 @@ fi
 
 export POCL_BUILDING=1
 export OCL_ICD_VENDORS=$PWD/ocl-vendors
+
+else
+
+echo "###### NOTE: using OCL_ICD_VENDORS already set to: $OCL_ICD_VENDORS, POCL_BUILDING set to: $POCL_BUILDING"
+
+fi
+
 export OPENCL_VENDOR_PATH=$OCL_ICD_VENDORS
 
 cd $pyopencl_root/PyOpenCL-build || exit -1
