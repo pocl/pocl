@@ -477,11 +477,11 @@ cl_int pocl_update_mem_obj_sync (cl_command_queue cq, _cl_command_node *cmd,
 
 int pocl_buffer_boundcheck(cl_mem buffer, size_t offset, size_t size) {
   POCL_RETURN_ERROR_ON((offset > buffer->size), CL_INVALID_VALUE,
-            "offset(%zu) > buffer->size(%zu)", offset, buffer->size);
+            "offset(%zu) > buffer->size(%zu)\n", offset, buffer->size);
   POCL_RETURN_ERROR_ON((size > buffer->size), CL_INVALID_VALUE,
-            "size(%zu) > buffer->size(%zu)", size, buffer->size);
+            "size(%zu) > buffer->size(%zu)\n", size, buffer->size);
   POCL_RETURN_ERROR_ON((offset + size > buffer->size), CL_INVALID_VALUE,
-            "offset + size (%zu) > buffer->size(%zu)", (offset+size), buffer->size);
+            "offset + size (%zu) > buffer->size(%zu)\n", (offset+size), buffer->size);
   return CL_SUCCESS;
 }
 
