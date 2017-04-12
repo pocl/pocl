@@ -47,22 +47,10 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
   POCL_RETURN_ERROR_ON((command_queue->context != memobj->context),
     CL_INVALID_CONTEXT, "memobj and command_queue are not from the same context\n");
 
-  POCL_RETURN_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
-    CL_INVALID_EVENT_WAIT_LIST);
-
-  POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
-    CL_INVALID_EVENT_WAIT_LIST);
-
-  for (i = 0; i < num_events_in_wait_list; ++i)
-    {
-      POCL_RETURN_ERROR_COND((event_wait_list[i] == NULL), CL_INVALID_EVENT_WAIT_LIST);
-      if (i > 0)
-        {
-          POCL_RETURN_ERROR_COND((event_wait_list[i]->context
-                                  != event_wait_list[i - 1]->context),
-                                 CL_INVALID_CONTEXT);
-        }
-    }
+  errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
+                                        event_wait_list);
+  if (errcode != CL_SUCCESS)
+    return errcode;
 
   POCL_LOCK_OBJ (memobj);
   DL_FOREACH (memobj->mappings, mapping)

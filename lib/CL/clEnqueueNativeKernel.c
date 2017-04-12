@@ -23,7 +23,7 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
   _cl_command_node *command_node = NULL;
   cl_mem *mem_list_copy = NULL;
   void *args_copy = NULL;
-  cl_int error;
+  cl_int errcode;
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
@@ -44,18 +44,18 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
     CL_EXEC_NATIVE_KERNEL), CL_INVALID_OPERATION, "device associated with "
     "command_queue cannot execute the native kernel\n");
 
-  POCL_RETURN_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
-    CL_INVALID_EVENT_WAIT_LIST);
+  errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
+                                        event_wait_list);
+  if (errcode != CL_SUCCESS)
+    return errcode;
 
-  POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
-    CL_INVALID_EVENT_WAIT_LIST);
 
-  error = pocl_create_command (&command_node, command_queue,
+  errcode = pocl_create_command (&command_node, command_queue,
                                CL_COMMAND_NATIVE_KERNEL,
                                event, num_events_in_wait_list,
                                event_wait_list, num_mem_objects, mem_list);
-  if (error != CL_SUCCESS)
-    return error;
+  if (errcode != CL_SUCCESS)
+    return errcode;
 
   command_node->command.native.data = command_queue->device->data;
   command_node->command.native.num_mem_objects = num_mem_objects;

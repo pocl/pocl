@@ -102,7 +102,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
 
   int b_migrate_count, buffer_count;
   unsigned i;
-  int error = 0;
+  int errcode = 0;
   cl_device_id realdev = NULL;
   struct pocl_context pc;
   _cl_command_node *command_node;
@@ -118,6 +118,11 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   POCL_RETURN_ERROR_ON((command_queue->context != kernel->context),
     CL_INVALID_CONTEXT,
     "kernel and command_queue are not from the same context\n");
+
+  errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
+                                        event_wait_list);
+  if (errcode != CL_SUCCESS)
+    return errcode;
 
   POCL_RETURN_ERROR_COND((work_dim < 1), CL_INVALID_WORK_DIMENSION);
   POCL_RETURN_ERROR_ON(
@@ -453,14 +458,6 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
   assert (global_y % local_y == 0);
   assert (global_z % local_z == 0);
 
-  POCL_RETURN_ERROR_COND(
-    (event_wait_list == NULL && num_events_in_wait_list > 0),
-    CL_INVALID_EVENT_WAIT_LIST);
-
-  POCL_RETURN_ERROR_COND(
-    (event_wait_list != NULL && num_events_in_wait_list == 0),
-    CL_INVALID_EVENT_WAIT_LIST);
-
   char cachedir[POCL_FILENAME_LENGTH];
   int realdev_i = pocl_cl_device_to_index (kernel->program, realdev);
   assert (realdev_i >= 0);
@@ -473,14 +470,15 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
 #ifdef OCS_AVAILABLE
       // SPMD devices already have compiled at this point
       if (realdev->spmd)
-        error = CL_SUCCESS;
+        errcode = CL_SUCCESS;
       else
-        error = pocl_llvm_generate_workgroup_function (cachedir, realdev, kernel,
-                                                       local_x, local_y, local_z);
+        errcode = pocl_llvm_generate_workgroup_function (
+            cachedir, realdev, kernel, local_x, local_y, local_z);
 #else
-      error = 1;
+      errcode = 1;
 #endif
-      if (error) goto ERROR;
+      if (errcode)
+        goto ERROR;
     }
 
   b_migrate_count = 0;
@@ -530,13 +528,13 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
               sizeof(cl_event) * num_events_in_wait_list);
     }
 
-  error = pocl_create_command (&command_node, command_queue,
+  errcode = pocl_create_command (&command_node, command_queue,
                                CL_COMMAND_NDRANGE_KERNEL, event,
                                num_events_in_wait_list + b_migrate_count,
                                (num_events_in_wait_list + b_migrate_count)?
                                new_event_wait_list : NULL,
                                buffer_count, mem_list);
-  if (error != CL_SUCCESS)
+  if (errcode != CL_SUCCESS)
     goto ERROR;
 
   pc.work_dim = work_dim;
@@ -593,10 +591,10 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
   POname(clRetainKernel) (kernel);
 
   pocl_command_enqueue (command_queue, command_node);
-  error = CL_SUCCESS;
+  errcode = CL_SUCCESS;
 
 ERROR:
-  return error;
+  return errcode;
 
 }
 POsym(clEnqueueNDRangeKernel)

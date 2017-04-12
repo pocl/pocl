@@ -46,6 +46,7 @@ POname(clEnqueueReadBufferRect)(cl_command_queue command_queue,
   cl_device_id device;
   unsigned i;
   _cl_command_node *cmd;
+  int errcode;
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
@@ -61,11 +62,10 @@ POname(clEnqueueReadBufferRect)(cl_command_queue command_queue,
   POCL_RETURN_ERROR_ON((command_queue->context != buffer->context),
     CL_INVALID_CONTEXT, "buffer and command_queue are not from the same context\n");
 
-  POCL_RETURN_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
-    CL_INVALID_EVENT_WAIT_LIST);
-
-  POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
-    CL_INVALID_EVENT_WAIT_LIST);
+  errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
+                                        event_wait_list);
+  if (errcode != CL_SUCCESS)
+    return errcode;
 
   POCL_RETURN_ERROR_COND((ptr == NULL), CL_INVALID_VALUE);
   POCL_RETURN_ERROR_COND((buffer_origin == NULL), CL_INVALID_VALUE);

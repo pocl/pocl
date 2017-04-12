@@ -32,6 +32,8 @@ POname(clEnqueueSVMUnmap) (cl_command_queue command_queue,
                    cl_event *event) CL_API_SUFFIX__VERSION_2_0
 {
   unsigned i;
+  cl_int errcode;
+
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
   POCL_RETURN_ERROR_ON((command_queue->context->svm_allocdev == NULL),
@@ -44,18 +46,17 @@ POname(clEnqueueSVMUnmap) (cl_command_queue command_queue,
 
   POCL_RETURN_ERROR_COND((svm_ptr == NULL), CL_INVALID_VALUE);
 
-  POCL_RETURN_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
-                         CL_INVALID_EVENT_WAIT_LIST);
-
-  POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
-                         CL_INVALID_EVENT_WAIT_LIST);
+  errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
+                                        event_wait_list);
+  if (errcode != CL_SUCCESS)
+    return errcode;
 
   for(i=0; i<num_events_in_wait_list; i++)
     POCL_RETURN_ERROR_COND((event_wait_list[i] == NULL), CL_INVALID_EVENT_WAIT_LIST);
 
   _cl_command_node *cmd = NULL;
 
-  int errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_SVM_UNMAP,
+  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_SVM_UNMAP,
                                      event, num_events_in_wait_list,
                                      event_wait_list, 0, NULL);
 

@@ -59,14 +59,14 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   POCL_GOTO_ERROR_ON((command_queue->context != buffer->context),
     CL_INVALID_CONTEXT, "buffer and command_queue are not from the same context\n");
 
-  POCL_GOTO_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
-    CL_INVALID_EVENT_WAIT_LIST);
-
-  POCL_GOTO_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
-    CL_INVALID_EVENT_WAIT_LIST);
+  errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
+                                        event_wait_list);
+  if (errcode != CL_SUCCESS)
+    goto ERROR;
 
   errcode = pocl_buffer_boundcheck(buffer, offset, size);
-  if (errcode != CL_SUCCESS) goto ERROR;
+  if (errcode != CL_SUCCESS)
+    goto ERROR;
 
   POCL_GOTO_ERROR_ON((buffer->flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS) &&
     map_flags & CL_MAP_READ), CL_INVALID_OPERATION, "buffer has been created with "

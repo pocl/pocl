@@ -741,6 +741,35 @@ void pocl_setup_context(cl_context context)
         }
 }
 
+int
+pocl_check_event_wait_list (cl_command_queue command_queue,
+                            cl_uint num_events_in_wait_list,
+                            const cl_event *event_wait_list)
+{
+  POCL_RETURN_ERROR_COND (
+      (event_wait_list == NULL && num_events_in_wait_list > 0),
+      CL_INVALID_EVENT_WAIT_LIST);
+
+  POCL_RETURN_ERROR_COND (
+      (event_wait_list != NULL && num_events_in_wait_list == 0),
+      CL_INVALID_EVENT_WAIT_LIST);
+
+  if (event_wait_list)
+    {
+      unsigned i;
+      for (i = 0; i < num_events_in_wait_list; i++)
+        {
+          POCL_RETURN_ERROR_COND ((event_wait_list[i] == NULL),
+                                  CL_INVALID_EVENT_WAIT_LIST);
+          POCL_RETURN_ERROR_COND (
+              (event_wait_list[i]->context != command_queue->context),
+              CL_INVALID_CONTEXT);
+        }
+    }
+
+  return CL_SUCCESS;
+}
+
 const char*
 pocl_status_to_str (int status)
 {
