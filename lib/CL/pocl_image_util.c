@@ -36,7 +36,7 @@ pocl_check_image_origin_region (const cl_mem image,
   POCL_RETURN_ERROR_COND((region == NULL), CL_INVALID_VALUE);
   
   /* check if origin + region in each dimension is with in image bounds */
-  if (((origin[0] + region[0]) > image->image_row_pitch) || 
+  if (((origin[0] + region[0]) > image->image_width) ||
       (image->image_height > 0 && 
        ((origin[1] + region[1]) > image->image_height)) ||
       (image->image_depth > 0 && (origin[2] + region[2]) > image->image_depth))
