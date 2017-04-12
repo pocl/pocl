@@ -49,11 +49,10 @@ CL_API_SUFFIX__VERSION_1_2
   POCL_RETURN_ERROR_ON((command_queue->context != buffer->context), CL_INVALID_CONTEXT,
                        "buffer and command_queue are not from the same context\n");
 
-  POCL_RETURN_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
-                         CL_INVALID_EVENT_WAIT_LIST);
+  errcode = pocl_check_event_wait_list(command_queue, num_events_in_wait_list, event_wait_list);
+  if (errcode != CL_SUCCESS)
+    return errcode;
 
-  POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
-                         CL_INVALID_EVENT_WAIT_LIST);
 
   errcode = pocl_buffer_boundcheck(buffer, offset, size);
   if (errcode != CL_SUCCESS)

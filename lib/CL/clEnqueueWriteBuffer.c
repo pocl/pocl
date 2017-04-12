@@ -53,14 +53,10 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
   if (pocl_buffer_boundcheck(buffer, offset, cb) != CL_SUCCESS)
     return CL_INVALID_VALUE;
 
-  POCL_RETURN_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
-    CL_INVALID_EVENT_WAIT_LIST);
+  errcode = pocl_check_event_wait_list(command_queue, num_events_in_wait_list, event_wait_list);
+  if (errcode != CL_SUCCESS)
+    return errcode;
 
-  POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
-    CL_INVALID_EVENT_WAIT_LIST);
-
-  for(i=0; i<num_events_in_wait_list; i++)
-    POCL_RETURN_ERROR_COND((event_wait_list[i] == NULL), CL_INVALID_EVENT_WAIT_LIST);
 
   device = POCL_REAL_DEV(command_queue->device);
 
