@@ -2527,8 +2527,8 @@ int4 _CL_OVERLOADABLE read_imagei ( IMG_RW_AQ image3d_t image, sampler_t sampler
 /******************************************************************************************/
 
 void _CL_OVERLOADABLE write_imagef( IMG_WO_AQ image2d_t  image, int2 coord , float4  color);
-void _CL_OVERLOADABLE write_imagei( IMG_WO_AQ image2d_t  image, int2 coord ,  int2 color);
-void _CL_OVERLOADABLE write_imageui( IMG_WO_AQ image2d_t  image, int2 coord , uint2 color);
+void _CL_OVERLOADABLE write_imagei( IMG_WO_AQ image2d_t  image, int2 coord ,  int4 color);
+void _CL_OVERLOADABLE write_imageui( IMG_WO_AQ image2d_t  image, int2 coord , uint4 color);
 __IF_FP16(void _CL_OVERLOADABLE write_imageh( IMG_WO_AQ image2d_t  image, int2 coord , half4  color));
 
 void _CL_OVERLOADABLE write_imagef( IMG_WO_AQ image2d_array_t  image , int4  coord , float4  color);
