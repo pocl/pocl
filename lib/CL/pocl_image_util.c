@@ -25,6 +25,21 @@
 #include "pocl_image_util.h"
 #include "assert.h"
 
+static unsigned pocl_get_image_dim(const cl_mem image)
+{
+  if ((image->type == CL_MEM_OBJECT_IMAGE1D) ||
+      (image->type == CL_MEM_OBJECT_IMAGE1D_BUFFER))
+    return 1;
+  if ((image->type == CL_MEM_OBJECT_IMAGE2D) ||
+      (image->type == CL_MEM_OBJECT_IMAGE1D_ARRAY))
+    return 2;
+  if ((image->type == CL_MEM_OBJECT_IMAGE3D) ||
+      (image->type == CL_MEM_OBJECT_IMAGE2D_ARRAY))
+    return 3;
+
+  return (unsigned)-1;
+}
+
 extern cl_int 
 pocl_check_image_origin_region (const cl_mem image, 
                                 const size_t *origin, 
@@ -34,7 +49,27 @@ pocl_check_image_origin_region (const cl_mem image,
 
   POCL_RETURN_ERROR_COND((origin == NULL), CL_INVALID_VALUE);
   POCL_RETURN_ERROR_COND((region == NULL), CL_INVALID_VALUE);
-  
+
+  unsigned dim = pocl_get_image_dim(image);
+
+  if (dim < 3)
+    {
+      /* If image is a 2D image object, origin[2] must be 0.
+       * If image is a 1D image or 1D image buffer object,
+       * origin[1] and origin[2] must be 0.
+       * If image is a 2D image object, region[2] must be 1.
+       * If image is a 1D image or 1D image buffer object,
+       * region[1] and region[2] must be 1.
+       * If image is a 1D image array object, region[2] must be 1.
+       */
+      unsigned i;
+      for (i = dim; i < 3; i++)
+        {
+          POCL_RETURN_ERROR_ON((origin[i] != 0), CL_INVALID_VALUE, "Image origin[x] must be 0 for x>=image_dim\n");
+          POCL_RETURN_ERROR_ON((region[i] != 1), CL_INVALID_VALUE, "Image region[x] must be 1 for x>=image_dim\n");
+        }
+    }
+
   /* check if origin + region in each dimension is with in image bounds */
   if (((origin[0] + region[0]) > image->image_width) ||
       (image->image_height > 0 && 
