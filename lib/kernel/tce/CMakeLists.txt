@@ -49,7 +49,10 @@ endif()
 separate_arguments(TCE_TARGET_LLC_FLAGS)
 set(LLC_FLAGS ${TCE_TARGET_LLC_FLAGS})
 
+if(NOT LLVM_OLDER_THAN_3_9)
 set(KERNEL_CL_FLAGS "-cl-std=CL${TCE_DEVICE_CL_STD}")
+endif()
+
 if(NOT LLVM_OLDER_THAN_4_0)
 set(KERNEL_CL_FLAGS ${KERNEL_CL_FLAGS} "-Xclang" "-cl-ext=all,-cl_khr_fp64")
 endif()
