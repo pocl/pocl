@@ -44,25 +44,6 @@ pocl_get_image_information (cl_channel_order  ch_order,
 extern cl_int
 pocl_check_device_supports_image(const cl_mem image,
                                  const cl_command_queue command_queue);
-
-extern cl_int
-pocl_write_image(cl_mem               image,
-                 cl_device_id         device_id,
-                 const size_t *       origin_, /*[3]*/
-                 const size_t *       region_, /*[3]*/
-                 size_t               host_row_pitch,
-                 size_t               host_slice_pitch, 
-                 const void *         ptr);
-
-extern cl_int         
-pocl_read_image(cl_mem               image,
-                cl_device_id         device,
-                const size_t *       origin, /*[3]*/
-                const size_t *       region, /*[3]*/
-                size_t               host_row_pitch,
-                size_t               host_slice_pitch, 
-                void *               ptr);
-
 #ifdef __GNUC__
 #pragma GCC visibility pop
 #endif
