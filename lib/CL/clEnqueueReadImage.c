@@ -52,6 +52,10 @@ CL_API_SUFFIX__VERSION_1_0
   POCL_RETURN_ERROR_ON((command_queue->context != image->context),
     CL_INVALID_CONTEXT, "image and command_queue are not from the same context\n");
 
+  POCL_RETURN_ERROR_ON((image->buffer->flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS)),
+    CL_INVALID_OPERATION, "Image buffer has been created with CL_MEM_HOST_WRITE_ONLY "
+    "or CL_MEM_HOST_NO_ACCESS\n");
+
   errcode = pocl_check_event_wait_list(command_queue, num_events_in_wait_list, event_wait_list);
   if (errcode != CL_SUCCESS)
     return errcode;
