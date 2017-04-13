@@ -31,6 +31,8 @@ else()
   set(KERNEL_SOURCES ${SOURCES_WITHOUT_VML})
 endif()
 
+list(APPEND KERNEL_SOURCES "mem_fence.c")
+
 if(X86_64 OR I386)
   if(LLVM_3_6)
     message(STATUS "OpenCL 2.0 atomics only works with LLVM >= 3.7")

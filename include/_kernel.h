@@ -108,8 +108,6 @@
 #  define _CL_STATIC_ASSERT(_t, _x) typedef int __cl_ai##_t[(x) ? 1 : -1];
 #endif
 
-typedef uint cl_mem_fence_flags;
-
 /* Ensure the data types have the right sizes */
 _CL_STATIC_ASSERT(char  , sizeof(char  ) == 1);
 _CL_STATIC_ASSERT(char2 , sizeof(char2 ) == 2 *sizeof(char));
@@ -445,6 +443,12 @@ size_t _CL_OVERLOADABLE get_local_id(uint);
 size_t _CL_OVERLOADABLE get_num_groups(uint);
 size_t _CL_OVERLOADABLE get_group_id(uint);
 size_t _CL_OVERLOADABLE get_global_offset(uint);
+
+#if (__OPENCL_C_VERSION__ < 121)
+void read_mem_fence (cl_mem_fence_flags flags);
+void write_mem_fence (cl_mem_fence_flags flags);
+void mem_fence (cl_mem_fence_flags flags);
+#endif
 
 #if __has_attribute(__noduplicate__)
 void _CL_OVERLOADABLE __attribute__ ((__noduplicate__))
