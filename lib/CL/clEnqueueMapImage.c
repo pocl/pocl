@@ -65,6 +65,15 @@ CL_API_SUFFIX__VERSION_1_0
   POCL_GOTO_ERROR_ON((!image->is_image), CL_INVALID_MEM_OBJECT,
     "image argument is not an image type cl_mem\n");
 
+  POCL_GOTO_ERROR_COND((image_row_pitch == NULL), CL_INVALID_VALUE);
+
+  POCL_GOTO_ERROR_ON((image_slice_pitch == NULL &&
+      (image->type == CL_MEM_OBJECT_IMAGE3D ||
+       image->type == CL_MEM_OBJECT_IMAGE1D_ARRAY ||
+       image->type == CL_MEM_OBJECT_IMAGE2D_ARRAY)), CL_INVALID_VALUE,
+       "For a 3D image, 1D, and 2D image array, "
+       "image_slice_pitch must be a non-NULL value\n");
+
   errcode = pocl_check_event_wait_list(command_queue, num_events_in_wait_list, event_wait_list);
   if (errcode != CL_SUCCESS)
     goto ERROR;
@@ -73,23 +82,19 @@ CL_API_SUFFIX__VERSION_1_0
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
-  POCL_GOTO_ERROR_COND((image_row_pitch == NULL), CL_INVALID_VALUE);
-
   errcode = pocl_check_image_origin_region(image, origin, region);
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
-  POCL_GOTO_ERROR_ON((image_slice_pitch == NULL &&
-      (image->type == CL_MEM_OBJECT_IMAGE3D || 
-       image->type == CL_MEM_OBJECT_IMAGE1D_ARRAY ||
-       image->type == CL_MEM_OBJECT_IMAGE2D_ARRAY)), CL_INVALID_VALUE,
-       "For a 3D image, 1D, and 2D image array, "
-       "image_slice_pitch must be a non-NULL value\n");
-
   /* TODO: more error checks */
   
-  offset = image->image_channels * image->image_elem_size * origin[0];
-  
+  size_t tuned_origin[3] =
+    {origin[0] * image->image_elem_size * image->image_channels, origin[1],
+     origin[2]};
+
+  offset = tuned_origin[0] + tuned_origin[1] * image->image_row_pitch +
+           tuned_origin[2] * image->image_slice_pitch;
+
   mapping_info = (mem_mapping_t*) malloc (sizeof (mem_mapping_t));
   if (mapping_info == NULL)
     {
