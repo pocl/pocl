@@ -477,11 +477,11 @@ cl_int pocl_update_mem_obj_sync (cl_command_queue cq, _cl_command_node *cmd,
 
 int pocl_buffer_boundcheck(cl_mem buffer, size_t offset, size_t size) {
   POCL_RETURN_ERROR_ON((offset > buffer->size), CL_INVALID_VALUE,
-            "offset(%zu) > buffer->size(%zu)", offset, buffer->size);
+            "offset(%zu) > buffer->size(%zu)\n", offset, buffer->size);
   POCL_RETURN_ERROR_ON((size > buffer->size), CL_INVALID_VALUE,
-            "size(%zu) > buffer->size(%zu)", size, buffer->size);
+            "size(%zu) > buffer->size(%zu)\n", size, buffer->size);
   POCL_RETURN_ERROR_ON((offset + size > buffer->size), CL_INVALID_VALUE,
-            "offset + size (%zu) > buffer->size(%zu)", (offset+size), buffer->size);
+            "offset + size (%zu) > buffer->size(%zu)\n", (offset+size), buffer->size);
   return CL_SUCCESS;
 }
 
@@ -739,6 +739,29 @@ void pocl_setup_context(cl_context context)
           context->svm_allocdev = context->devices[i];
           break;
         }
+}
+
+int pocl_check_event_wait_list(cl_command_queue     command_queue,
+                               cl_uint              num_events_in_wait_list,
+                               const cl_event *     event_wait_list)
+{
+  POCL_RETURN_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
+    CL_INVALID_EVENT_WAIT_LIST);
+
+  POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
+    CL_INVALID_EVENT_WAIT_LIST);
+
+  if (event_wait_list)
+    {
+      unsigned i;
+      for (i = 0; i < num_events_in_wait_list; i++)
+        {
+          POCL_RETURN_ERROR_COND((event_wait_list[i] == NULL), CL_INVALID_EVENT_WAIT_LIST);
+          POCL_RETURN_ERROR_COND((event_wait_list[i]->context != command_queue->context), CL_INVALID_CONTEXT);
+        }
+    }
+
+  return CL_SUCCESS;
 }
 
 const char*

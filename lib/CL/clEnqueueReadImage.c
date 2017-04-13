@@ -32,8 +32,8 @@ POname(clEnqueueReadImage)(cl_command_queue     command_queue,
                            cl_bool              blocking_read, 
                            const size_t *       origin, /* [3] */
                            const size_t *       region, /* [3] */
-                           size_t               host_row_pitch,
-                           size_t               host_slice_pitch, 
+                           size_t               row_pitch,
+                           size_t               slice_pitch,
                            void *               ptr,
                            cl_uint              num_events_in_wait_list,
                            const cl_event *     event_wait_list,
@@ -52,11 +52,14 @@ CL_API_SUFFIX__VERSION_1_0
   POCL_RETURN_ERROR_ON((command_queue->context != image->context),
     CL_INVALID_CONTEXT, "image and command_queue are not from the same context\n");
 
-  POCL_RETURN_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
-    CL_INVALID_EVENT_WAIT_LIST);
+  if (image->buffer)
+    POCL_RETURN_ERROR_ON((image->buffer->flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS)),
+      CL_INVALID_OPERATION, "Image buffer has been created with CL_MEM_HOST_WRITE_ONLY "
+      "or CL_MEM_HOST_NO_ACCESS\n");
 
-  POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
-    CL_INVALID_EVENT_WAIT_LIST);
+  errcode = pocl_check_event_wait_list(command_queue, num_events_in_wait_list, event_wait_list);
+  if (errcode != CL_SUCCESS)
+    return errcode;
 
   errcode = pocl_check_device_supports_image(image, command_queue);
   if (errcode != CL_SUCCESS)
@@ -85,8 +88,10 @@ CL_API_SUFFIX__VERSION_1_0
   cmd->command.read_image.host_ptr = ptr;
   memcpy ((cmd->command.read_image.origin), tuned_origin, 3*sizeof (size_t));
   memcpy ((cmd->command.read_image.region), tuned_region, 3*sizeof (size_t));
-  cmd->command.read_image.b_rowpitch = image->image_row_pitch;
-  cmd->command.read_image.b_slicepitch = image->image_slice_pitch;
+  cmd->command.write_image.b_rowpitch = image->image_row_pitch;
+  cmd->command.write_image.b_slicepitch = image->image_slice_pitch;
+  cmd->command.write_image.h_rowpitch = (row_pitch ? row_pitch : tuned_region[0]);
+  cmd->command.write_image.h_slicepitch = (slice_pitch ? slice_pitch : (tuned_region[0]*region[1]));
   cmd->command.read_image.buffer = image;
 
   POname(clRetainMemObject) (image);  

@@ -49,7 +49,6 @@ CL_API_SUFFIX__VERSION_1_0
   cl_device_id device;
   _cl_command_node *cmd = NULL;
   mem_mapping_t *mapping_info = NULL;
-  cl_uint event_i;
 
   POCL_GOTO_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
@@ -66,44 +65,36 @@ CL_API_SUFFIX__VERSION_1_0
   POCL_GOTO_ERROR_ON((!image->is_image), CL_INVALID_MEM_OBJECT,
     "image argument is not an image type cl_mem\n");
 
-  POCL_GOTO_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
-    CL_INVALID_EVENT_WAIT_LIST);
-
-  POCL_GOTO_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
-    CL_INVALID_EVENT_WAIT_LIST);
-
-  for (event_i = 0; event_i < num_events_in_wait_list; ++event_i)
-    {
-      POCL_GOTO_ERROR_COND((event_wait_list[event_i] == NULL), CL_INVALID_EVENT_WAIT_LIST);
-      if (event_i > 0)
-        {
-          POCL_GOTO_ERROR_COND((event_wait_list[event_i]->context 
-                                  != event_wait_list[event_i - 1]->context), 
-                                 CL_INVALID_CONTEXT);
-        }
-    }
-
-  errcode = pocl_check_device_supports_image(image, command_queue);
-  if (errcode != CL_SUCCESS)
-    goto ERROR;
-
   POCL_GOTO_ERROR_COND((image_row_pitch == NULL), CL_INVALID_VALUE);
 
-  errcode = pocl_check_image_origin_region(image, origin, region);
-  if (errcode != CL_SUCCESS)
-    goto ERROR;
-
   POCL_GOTO_ERROR_ON((image_slice_pitch == NULL &&
-      (image->type == CL_MEM_OBJECT_IMAGE3D || 
+      (image->type == CL_MEM_OBJECT_IMAGE3D ||
        image->type == CL_MEM_OBJECT_IMAGE1D_ARRAY ||
        image->type == CL_MEM_OBJECT_IMAGE2D_ARRAY)), CL_INVALID_VALUE,
        "For a 3D image, 1D, and 2D image array, "
        "image_slice_pitch must be a non-NULL value\n");
 
+  errcode = pocl_check_event_wait_list(command_queue, num_events_in_wait_list, event_wait_list);
+  if (errcode != CL_SUCCESS)
+    goto ERROR;
+
+  errcode = pocl_check_device_supports_image(image, command_queue);
+  if (errcode != CL_SUCCESS)
+    goto ERROR;
+
+  errcode = pocl_check_image_origin_region(image, origin, region);
+  if (errcode != CL_SUCCESS)
+    goto ERROR;
+
   /* TODO: more error checks */
   
-  offset = image->image_channels * image->image_elem_size * origin[0];
-  
+  size_t tuned_origin[3] =
+    {origin[0] * image->image_elem_size * image->image_channels, origin[1],
+     origin[2]};
+
+  offset = tuned_origin[0] + tuned_origin[1] * image->image_row_pitch +
+           tuned_origin[2] * image->image_slice_pitch;
+
   mapping_info = (mem_mapping_t*) malloc (sizeof (mem_mapping_t));
   if (mapping_info == NULL)
     {

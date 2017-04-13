@@ -44,6 +44,8 @@ POname(clCreateCommandQueueWithProperties)(cl_context context,
 
   POCL_GOTO_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
 
+  POCL_GOTO_ERROR_COND((device == NULL), CL_INVALID_DEVICE);
+
   for (i=0; i<context->num_devices; i++)
     {
       if (context->devices[i] == POCL_REAL_DEV(device))

@@ -1,0 +1,11 @@
+--- a/samples/example_ctrsm.c	2017-04-10 13:40:17.793250767 +0200
++++ b/samples/example_ctrsm.c	2017-04-10 13:40:31.869925562 +0200
+@@ -71,7 +71,7 @@
+     nrows = (sizeof(result) / sizeof(FloatComplex)) / ldb;
+     for (i = 0; i < nrows; i++) {
+         for (j = 0; j < ldb; j++) {
+-            printf("%.5f ", result[i * ldb + j].x);
++            printf("%.5f ", result[i * ldb + j].s[0]);
+         }
+         printf("\n");
+     }

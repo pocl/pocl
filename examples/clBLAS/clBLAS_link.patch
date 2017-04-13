@@ -1,0 +1,12 @@
+--- a/library/CMakeLists.txt	2017-04-07 16:05:59.000000000 +0200
++++ b/library/CMakeLists.txt	2017-04-07 16:06:19.000000000 +0200
+@@ -887,7 +887,7 @@
+ set_target_properties(clBLAS PROPERTIES VERSION ${clBLAS_VERSION})
+ set_target_properties(clBLAS PROPERTIES SOVERSION ${clBLAS_SOVERSION})
+ set_target_properties( clBLAS PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/staging" )
+-target_link_libraries(clBLAS ${OPENCL_LIBRARIES} ${MATH_LIBRARY} ${THREAD_LIBRARY})
++target_link_libraries(clBLAS ${OPENCL_LIBRARIES} ${MATH_LIBRARY} ${THREAD_LIBRARY} "cblas")
+ 
+ # CPack configuration; include the executable into the package
+ install( TARGETS clBLAS
+

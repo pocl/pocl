@@ -7,8 +7,8 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
                     cl_bool             blocking_write, 
                     const size_t *      origin, /*[3]*/
                     const size_t *      region, /*[3]*/
-                    size_t              host_row_pitch,
-                    size_t              host_slice_pitch, 
+                    size_t              input_row_pitch,
+                    size_t              input_slice_pitch,
                     const void *        ptr,
                     cl_uint             num_events_in_wait_list,
                     const cl_event *    event_wait_list,
@@ -26,11 +26,15 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
   POCL_RETURN_ERROR_ON((command_queue->context != image->context),
     CL_INVALID_CONTEXT, "image and command_queue are not from the same context\n");
 
-  POCL_RETURN_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
-    CL_INVALID_EVENT_WAIT_LIST);
+  if (image->buffer)
+    POCL_RETURN_ERROR_ON((image->buffer->flags & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)),
+      CL_INVALID_OPERATION, "image buffer has been created with CL_MEM_HOST_READ_ONLY "
+      "or CL_MEM_HOST_NO_ACCESS\n");
 
-  POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
-    CL_INVALID_EVENT_WAIT_LIST);
+  errcode = pocl_check_event_wait_list(command_queue, num_events_in_wait_list, event_wait_list);
+  if (errcode != CL_SUCCESS)
+    return errcode;
+
 
   errcode = pocl_check_device_supports_image(image, command_queue);
   if (errcode != CL_SUCCESS)
@@ -62,6 +66,8 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
   memcpy ((cmd->command.write_image.region), tuned_region, 3*sizeof (size_t));
   cmd->command.write_image.b_rowpitch = image->image_row_pitch;
   cmd->command.write_image.b_slicepitch = image->image_slice_pitch;
+  cmd->command.write_image.h_rowpitch = (input_row_pitch ? input_row_pitch : tuned_region[0]);
+  cmd->command.write_image.h_slicepitch = (input_slice_pitch ? input_slice_pitch : (tuned_region[0] * region[1]));
   cmd->command.write_image.buffer = image;
 
   POname(clRetainMemObject) (image);

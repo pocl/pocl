@@ -37,6 +37,7 @@ asin.cl
 asinh.cl
 asinpi.cl
 async_work_group_copy.cl
+async_work_group_strided_copy.cl
 atan.cl
 atan2.cl
 atan2pi.cl
@@ -192,6 +193,7 @@ all.cl
 any.cl
 as_type.cl
 async_work_group_copy.cl
+async_work_group_strided_copy.cl
 atomics.cl
 barrier.ll
 bitselect.cl
@@ -225,6 +227,7 @@ mul24.cl
 mul_hi.cl
 nextafter.cl
 popcount.cl
+prefetch.cl
 printf.c
 read_image.cl
 rhadd.cl

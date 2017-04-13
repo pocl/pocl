@@ -25,6 +25,21 @@
 #include "pocl_image_util.h"
 #include "assert.h"
 
+static unsigned pocl_get_image_dim(const cl_mem image)
+{
+  if ((image->type == CL_MEM_OBJECT_IMAGE1D) ||
+      (image->type == CL_MEM_OBJECT_IMAGE1D_BUFFER))
+    return 1;
+  if ((image->type == CL_MEM_OBJECT_IMAGE2D) ||
+      (image->type == CL_MEM_OBJECT_IMAGE1D_ARRAY))
+    return 2;
+  if ((image->type == CL_MEM_OBJECT_IMAGE3D) ||
+      (image->type == CL_MEM_OBJECT_IMAGE2D_ARRAY))
+    return 3;
+
+  return (unsigned)-1;
+}
+
 extern cl_int 
 pocl_check_image_origin_region (const cl_mem image, 
                                 const size_t *origin, 
@@ -34,9 +49,29 @@ pocl_check_image_origin_region (const cl_mem image,
 
   POCL_RETURN_ERROR_COND((origin == NULL), CL_INVALID_VALUE);
   POCL_RETURN_ERROR_COND((region == NULL), CL_INVALID_VALUE);
-  
+
+  unsigned dim = pocl_get_image_dim(image);
+
+  if (dim < 3)
+    {
+      /* If image is a 2D image object, origin[2] must be 0.
+       * If image is a 1D image or 1D image buffer object,
+       * origin[1] and origin[2] must be 0.
+       * If image is a 2D image object, region[2] must be 1.
+       * If image is a 1D image or 1D image buffer object,
+       * region[1] and region[2] must be 1.
+       * If image is a 1D image array object, region[2] must be 1.
+       */
+      unsigned i;
+      for (i = dim; i < 3; i++)
+        {
+          POCL_RETURN_ERROR_ON((origin[i] != 0), CL_INVALID_VALUE, "Image origin[x] must be 0 for x>=image_dim\n");
+          POCL_RETURN_ERROR_ON((region[i] != 1), CL_INVALID_VALUE, "Image region[x] must be 1 for x>=image_dim\n");
+        }
+    }
+
   /* check if origin + region in each dimension is with in image bounds */
-  if (((origin[0] + region[0]) > image->image_row_pitch) || 
+  if (((origin[0] + region[0]) > image->image_width) ||
       (image->image_height > 0 && 
        ((origin[1] + region[1]) > image->image_height)) ||
       (image->image_depth > 0 && (origin[2] + region[2]) > image->image_depth))
@@ -164,98 +199,4 @@ pocl_get_image_information (cl_channel_order ch_order,
     {
       *channels_out = 4;
     }
-}
-
-cl_int
-pocl_write_image(cl_mem               image,
-                 cl_device_id         device_id,
-                 const size_t *       origin, /*[3]*/
-                 const size_t *       region, /*[3]*/
-                 size_t               host_row_pitch,
-                 size_t               host_slice_pitch, 
-                 const void *         ptr)
-{
-  
-  if (image == NULL)
-    return CL_INVALID_MEM_OBJECT;
-
-  if ((ptr == NULL) || (region == NULL) || origin == NULL)
-    return CL_INVALID_VALUE;
-    
-  size_t dev_elem_size = sizeof(cl_float);
-  int dev_channels = 4;
-
-  size_t tuned_origin[3] = {origin[0]*dev_elem_size*dev_channels, origin[1], 
-                            origin[2]};
-  size_t tuned_region[3] = {region[0]*dev_elem_size*dev_channels, region[1], 
-                            region[2]};
-    
-  size_t image_row_pitch = image->image_row_pitch;
-  size_t image_slice_pitch = 0;
-    
-  if ((tuned_region[0]*tuned_region[1]*tuned_region[2] > 0) &&
-      (tuned_region[0]-1 +
-       image_row_pitch * (tuned_region[1]-1) +
-       image_slice_pitch * (tuned_region[2]-1) >= image->size))
-    return CL_INVALID_VALUE;
-  
-  device_id->ops->write_rect (device_id->data, ptr, 
-                         image->device_ptrs[device_id->dev_id].mem_ptr,
-                         tuned_origin, tuned_origin, tuned_region,
-                         image_row_pitch, image_slice_pitch,
-                         image_row_pitch, image_slice_pitch);
-  
-  
-  return CL_SUCCESS;
-}
-           
-extern cl_int         
-pocl_read_image(cl_mem               image,
-                cl_device_id         device_id,
-                const size_t *       origin, /*[3]*/
-                const size_t *       region, /*[3]*/
-                size_t               host_row_pitch,
-                size_t               host_slice_pitch, 
-                void *               ptr) 
-{
-    
-  if (image == NULL)
-    return CL_INVALID_MEM_OBJECT;
-
-  if ((ptr == NULL) || (region == NULL) || origin == NULL)
-    return CL_INVALID_VALUE;
-    
-  size_t width = image->image_width;
-  size_t height = image->image_height;
-
-  /* dev imagetype = host imagetype, in current implementation */
-  size_t dev_elem_size = image->image_elem_size;
-  size_t dev_channels = image->image_channels;
-
-  size_t tuned_origin[3] = {origin[0]*dev_elem_size*dev_channels, origin[1], 
-                            origin[2]};
-  size_t tuned_region[3] = {region[0]*dev_elem_size*dev_channels, region[1], 
-                            region[2]};
-  
-  size_t image_row_pitch = width*dev_elem_size*dev_channels; 
-  size_t image_slice_pitch = height*image_row_pitch;
-    
-  if ((tuned_origin[0] + tuned_region[0] > image_row_pitch) || 
-      (tuned_origin[1] + tuned_region[1] > height))
-     return CL_INVALID_VALUE;
-  
-  if ((image->type == CL_MEM_OBJECT_IMAGE3D && 
-       (tuned_origin[2] + tuned_region[2] > image->image_depth)))
-    return CL_INVALID_VALUE;
-  
-  if (image->type != CL_MEM_OBJECT_IMAGE3D && region[2] != 1)
-    return CL_INVALID_VALUE;
-  
-  device_id->ops->read_rect(device_id->data, ptr, 
-                       image->device_ptrs[device_id->dev_id].mem_ptr,
-                       tuned_origin, tuned_origin, tuned_region,
-                       image_row_pitch, image_slice_pitch,
-                       image_row_pitch, image_slice_pitch);
-  
-  return CL_SUCCESS;
 }

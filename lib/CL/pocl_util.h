@@ -141,6 +141,10 @@ cl_device_id * pocl_unique_device_list(const cl_device_id * in, cl_uint num, cl_
     }                                                                        \
   while (0)
 
+int pocl_check_event_wait_list(cl_command_queue     command_queue,
+                               cl_uint              num_events_in_wait_list,
+                               const cl_event *     event_wait_list);
+
 const char*
 pocl_status_to_str (int status);
 

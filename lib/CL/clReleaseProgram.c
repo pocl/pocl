@@ -80,6 +80,7 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
           POCL_MEM_FREE(program->build_log[i]);
       POCL_MEM_FREE(program->build_log);
 
+      program->kernels = REMOVING_DEFAULT_KERNELS_FROM_CL_PROGRAM;
       if (program->num_kernels)
         {
           for (i=0; i < program->num_kernels; i++)
