@@ -55,6 +55,12 @@
 /* must come after _enable_all_exts.h b/c of pocl_types.h*/
 #include "_kernel_c.h"
 
+/* required to be defined by the OpenCL standard, see:
+   https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/preprocessorDirectives.html */
+#define __kernel_exec(X, typen)                                               \
+  __kernel __attribute__ ((work_group_size_hint (X, 1, 1)))                   \
+      __attribute__ ((vec_type_hint (typen)))
+
 /* Enable double precision. This should really only be done when
    building the run-time library; when building application code, we
    should instead check a macro to see whether the application has
