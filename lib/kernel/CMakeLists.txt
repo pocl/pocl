@@ -225,6 +225,7 @@ mul24.cl
 mul_hi.cl
 nextafter.cl
 popcount.cl
+prefetch.cl
 printf.c
 read_image.cl
 rhadd.cl
