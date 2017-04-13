@@ -457,7 +457,6 @@ barrier (cl_mem_fence_flags flags);
 void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
 #endif
 
-
 /* Math Constants */
 
 /* half */
@@ -2315,6 +2314,10 @@ _CL_DECLARE_SHUFFLE_MN(double, ulong ))
 int __cl_printf(constant char* restrict format, ...);
 #define printf __cl_printf
 
+void wait_group_events (int num_events, event_t *event_list);
+
+/***************************************************************************/
+
 /* Async Copies from Global to Local Memory, Local to
    Global Memory, and Prefetch */
 
@@ -2331,9 +2334,6 @@ int __cl_printf(constant char* restrict format, ...);
                                  size_t num_gentypes,           \
                                  event_t event);                \
                                                                 
-void wait_group_events (int num_events,                      
-                        event_t *event_list);                 
-
 #define _CL_DECLARE_ASYNC_COPY_FUNCS(GENTYPE)      \
   _CL_DECLARE_ASYNC_COPY_FUNCS_SINGLE(GENTYPE)     \
   _CL_DECLARE_ASYNC_COPY_FUNCS_SINGLE(GENTYPE##2)   \
@@ -2351,10 +2351,45 @@ _CL_DECLARE_ASYNC_COPY_FUNCS(uint);
 __IF_INT64(_CL_DECLARE_ASYNC_COPY_FUNCS(long));
 __IF_INT64(_CL_DECLARE_ASYNC_COPY_FUNCS(ulong));
 
-__IF_FP16(_CL_DECLARE_ASYNC_COPY_FUNCS_SINGLE(half));
+__IF_FP16 (_CL_DECLARE_ASYNC_COPY_FUNCS (half));
 _CL_DECLARE_ASYNC_COPY_FUNCS(float);
 __IF_FP64(_CL_DECLARE_ASYNC_COPY_FUNCS(double));
 
+/***************************************************************************/
+
+#define _CL_DECLARE_ASYNC_STRIDED_COPY_FUNCS_SINGLE(GENTYPE)                  \
+  _CL_OVERLOADABLE                                                            \
+  event_t async_work_group_strided_copy (                                     \
+      __local GENTYPE *dst, const __global GENTYPE *src, size_t num_gentypes, \
+      size_t src_stride, event_t event);                                      \
+                                                                              \
+  _CL_OVERLOADABLE                                                            \
+  event_t async_work_group_strided_copy (                                     \
+      __global GENTYPE *dst, const __local GENTYPE *src, size_t num_gentypes, \
+      size_t dst_stride, event_t event);
+
+#define _CL_DECLARE_ASYNC_STRIDED_COPY_FUNCS(GENTYPE)                         \
+  _CL_DECLARE_ASYNC_STRIDED_COPY_FUNCS_SINGLE (GENTYPE)                       \
+  _CL_DECLARE_ASYNC_STRIDED_COPY_FUNCS_SINGLE (GENTYPE##2)                    \
+  _CL_DECLARE_ASYNC_STRIDED_COPY_FUNCS_SINGLE (GENTYPE##3)                    \
+  _CL_DECLARE_ASYNC_STRIDED_COPY_FUNCS_SINGLE (GENTYPE##4)                    \
+  _CL_DECLARE_ASYNC_STRIDED_COPY_FUNCS_SINGLE (GENTYPE##8)                    \
+  _CL_DECLARE_ASYNC_STRIDED_COPY_FUNCS_SINGLE (GENTYPE##16)
+
+_CL_DECLARE_ASYNC_STRIDED_COPY_FUNCS (char);
+_CL_DECLARE_ASYNC_STRIDED_COPY_FUNCS (uchar);
+_CL_DECLARE_ASYNC_STRIDED_COPY_FUNCS (short);
+_CL_DECLARE_ASYNC_STRIDED_COPY_FUNCS (ushort);
+_CL_DECLARE_ASYNC_STRIDED_COPY_FUNCS (int);
+_CL_DECLARE_ASYNC_STRIDED_COPY_FUNCS (uint);
+__IF_INT64 (_CL_DECLARE_ASYNC_STRIDED_COPY_FUNCS (long));
+__IF_INT64 (_CL_DECLARE_ASYNC_STRIDED_COPY_FUNCS (ulong));
+
+__IF_FP16 (_CL_DECLARE_ASYNC_STRIDED_COPY_FUNCS (half));
+_CL_DECLARE_ASYNC_STRIDED_COPY_FUNCS (float);
+__IF_FP64 (_CL_DECLARE_ASYNC_STRIDED_COPY_FUNCS (double));
+
+/***************************************************************************/
 
 #define _CL_DECLARE_PREFETCH_FUNCS_SINGLE(GENTYPE) \
   _CL_OVERLOADABLE \
