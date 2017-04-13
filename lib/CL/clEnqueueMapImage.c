@@ -88,9 +88,14 @@ CL_API_SUFFIX__VERSION_1_0
        "image_slice_pitch must be a non-NULL value\n");
 
   /* TODO: more error checks */
-  
-  offset = image->image_channels * image->image_elem_size * origin[0];
-  
+
+  size_t tuned_origin[3]
+      = { origin[0] * image->image_elem_size * image->image_channels,
+          origin[1], origin[2] };
+
+  offset = tuned_origin[0] + tuned_origin[1] * image->image_row_pitch
+           + tuned_origin[2] * image->image_slice_pitch;
+
   mapping_info = (mem_mapping_t*) malloc (sizeof (mem_mapping_t));
   if (mapping_info == NULL)
     {
