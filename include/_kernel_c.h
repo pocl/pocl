@@ -250,5 +250,6 @@ typedef struct _pocl_image1d_array_t { dev_image_t base; }* image1d_array_t;
 
 #endif
 
+typedef uint cl_mem_fence_flags;
 
 #endif
