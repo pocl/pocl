@@ -45,7 +45,7 @@ POname(clCreateCommandQueue)(cl_context context,
   POCL_GOTO_ERROR_ON((properties > (1<<2)-1), CL_INVALID_VALUE,
             "Properties must be <= 3 (there are only 2)\n");
 
-  if (pocl_debug_messages)
+  if (POCL_DEBUGGING_ON)
     properties |= CL_QUEUE_PROFILING_ENABLE;
 
   for (i=0; i<context->num_devices; i++)

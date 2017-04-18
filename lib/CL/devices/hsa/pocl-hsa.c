@@ -239,7 +239,7 @@ pocl_hsa_abort_on_hsa_error(hsa_status_t status,
   if (status != HSA_STATUS_SUCCESS)
     {
       hsa_status_string(status, &str);
-      POCL_MSG_PRINT2(func, line, "Error from HSA Runtime call:\n");
+      POCL_MSG_PRINT2(HSA, func, line, "Error from HSA Runtime call:\n");
       POCL_ABORT("%s", str);
     }
 }
@@ -258,7 +258,7 @@ pocl_hsa_abort_on_pthread_error(int status,
 {
   if (status != 0)
     {
-      POCL_MSG_PRINT2(func, line, "Error from pthread call:\n");
+      POCL_MSG_PRINT2(HSA, func, line, "Error from pthread call:\n");
       POCL_ABORT("%s", strerror(status));
     }
 }

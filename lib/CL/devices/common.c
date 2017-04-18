@@ -1009,7 +1009,7 @@ pocl_free_global_mem(cl_device_id device, void* ptr, size_t size)
 void
 pocl_print_system_memory_stats()
 {
-  POCL_MSG_PRINT("MEM STATS:\n", "",
+  POCL_MSG_PRINT_F (MEMORY, INFO, "",
   "____ Total available system memory  : %10zu KB\n"
   " ____ Currently used system memory   : %10zu KB\n"
   " ____ Max used system memory         : %10zu KB\n",
