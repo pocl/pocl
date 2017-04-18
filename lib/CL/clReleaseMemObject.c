@@ -39,6 +39,8 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
 
   POCL_RELEASE_OBJECT(memobj, new_refcount);
 
+  POCL_MSG_PRINT_REFCOUNTS ("Release mem obj %p  %d\n", memobj, new_refcount);
+
   /* OpenCL 1.2 Page 118:
 
      After the memobj reference count becomes zero and commands queued for execution on 
@@ -49,7 +51,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
 
   if (new_refcount == 0)
     {
-      POCL_MSG_PRINT_INFO ("free mem obj %p\n", memobj);
+      POCL_MSG_PRINT_REFCOUNTS ("Free mem obj %p\n", memobj);
       if (memobj->parent == NULL)
         {
           cl_device_id shared_mem_owner_dev =

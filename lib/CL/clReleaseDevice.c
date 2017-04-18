@@ -33,7 +33,10 @@ POname(clReleaseDevice)(cl_device_id device) CL_API_SUFFIX__VERSION_1_2
   POCL_RELEASE_OBJECT (device, new_refcount);
 
   if (new_refcount == 0)
-    POCL_MEM_FREE(device);
+    {
+      POCL_MEM_FREE(device);
+      POCL_MSG_PRINT_REFCOUNTS ("Free Device %p\n", device);
+    }
 
   return CL_SUCCESS;
 }

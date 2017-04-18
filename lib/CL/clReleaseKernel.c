@@ -33,10 +33,11 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
 
   POCL_RETURN_ERROR_COND((kernel == NULL), CL_INVALID_KERNEL);
   POCL_RELEASE_OBJECT (kernel, new_refcount);
+  POCL_MSG_PRINT_REFCOUNTS ("Release kernel %p  %d\n", kernel, new_refcount);
 
   if (new_refcount == 0)
     {
-      POCL_MSG_PRINT_INFO ("Freeing kernel %p\n", kernel);
+      POCL_MSG_PRINT_REFCOUNTS ("Free kernel %p\n", kernel);
       cl_program program = kernel->program;
       /* default kernels are not put into the program->kernels linked list */
       if ((program != NULL)
@@ -61,6 +62,7 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
           *pk = (*pk)->next;
           POCL_UNLOCK_OBJ (program);
           POname (clReleaseProgram) (program);
+          POCL_MSG_PRINT_REFCOUNTS ("Released non-default kernel kernel %p, program %p now has refs: %d \n", kernel, kernel->program, kernel->program->pocl_refcount);
         }
 
       POCL_MEM_FREE (kernel->name);
