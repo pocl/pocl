@@ -198,7 +198,7 @@ void pocl_erase_function_and_callers(llvm::Function *func)
 
 void pocl_cuda_fix_printf(llvm::Module *module)
 {
-  llvm::Function *cl_printf = module->getFunction("_cl_printf");
+  llvm::Function *cl_printf = module->getFunction("__cl_printf");
   if (!cl_printf)
     return;
 
@@ -212,7 +212,7 @@ void pocl_cuda_fix_printf(llvm::Module *module)
   pocl_erase_function_and_callers(module->getFunction("llvm.va_start"));
   pocl_erase_function_and_callers(module->getFunction("llvm.va_end"));
 
-  // Create new non-variadic _cl_printf function
+  // Create new non-variadic __cl_printf function
   llvm::Type *ret_type = cl_printf->getReturnType();
   llvm::FunctionType *new_func_type =
     llvm::FunctionType::get(ret_type, {format_type, i64ptr}, false);
@@ -233,7 +233,7 @@ void pocl_cuda_fix_printf(llvm::Module *module)
   arg_index_init->insertAfter(arg_index_ptr);
 
   // Replace calls to _cl_va_arg with reads from new i64 array argument
-  llvm::Function *cl_va_arg = module->getFunction("_cl_va_arg");
+  llvm::Function *cl_va_arg = module->getFunction("__cl_va_arg");
   if (cl_va_arg)
   {
     llvm::Argument *args_in = &*++new_cl_printf->getArgumentList().begin();
@@ -357,6 +357,11 @@ void pocl_cuda_fix_printf(llvm::Module *module)
   if (!vprintf_func)
     return;
 
+  // If vprintf format address space is already generic, then we're done
+  auto vprintf_format_type = vprintf_func->getFunctionType()->getParamType(0);
+  if (vprintf_format_type->getPointerAddressSpace() == 0)
+    return;
+
   // Change address space of vprintf format argument to generic
   auto i8ptr = llvm::PointerType::get(llvm::Type::getInt8Ty(context), 0);
   auto new_vprintf_type = llvm::FunctionType::get(vprintf_func->getReturnType(),
@@ -384,9 +389,9 @@ void pocl_cuda_fix_printf(llvm::Module *module)
       llvm::AddrSpaceCastInst *asc =
         new llvm::AddrSpaceCastInst(format, new_arg_type);
       asc->insertBefore(call);
-      call->setCalledFunction(new_vprintf);
       call->setArgOperand(0, asc);
     }
+    call->setCalledFunction(new_vprintf);
   }
 
   vprintf_func->eraseFromParent();
