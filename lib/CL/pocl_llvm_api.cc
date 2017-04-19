@@ -424,7 +424,7 @@ int pocl_llvm_build_program(cl_program program,
   if (device->llvm_cpu != NULL)
     ta.CPU = device->llvm_cpu;
 
-#ifndef LLVM_OLDER_THAN_3_9
+#ifdef LLVM_3_9
   if (!ta.Triple.compare(0, 5, "nvptx"))
   {
     ta.SupportedOpenCLOptions.cl_khr_fp64 = 1;
