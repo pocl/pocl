@@ -462,7 +462,8 @@ void pocl_pthread_update_event (cl_device_id device, cl_event event, cl_int stat
         event->time_start = device->ops->get_timer_value(device->data);
       break;
     case CL_COMPLETE:
-      POCL_MSG_PRINT_INFO("PTHREAD: Command complete, event %d\n", event->id);
+      POCL_MSG_PRINT_EVENTS ("PTHREAD: Command complete, event %d\n",
+                             event->id);
       pocl_mem_objs_cleanup (event);
       cq_ready = pocl_update_command_queue (event);
 

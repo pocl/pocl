@@ -354,8 +354,8 @@ cl_int pocl_create_command (_cl_command_node **cmd,
       pocl_create_event_sync ((*cmd)->event, wle, NULL);
       POCL_UNLOCK_OBJ (wle);
     }
-  POCL_MSG_PRINT_INFO("Created command struct (event %d, type %X)\n", 
-                      (*cmd)->event->id, command_type);
+  POCL_MSG_PRINT_EVENTS ("Created command struct (event %d, type %X)\n",
+                         (*cmd)->event->id, command_type);
   return CL_SUCCESS;
 }
 
