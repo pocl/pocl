@@ -92,9 +92,8 @@ extern "C" {
 #pragma GCC visibility push(hidden)
 #endif
 
-char* llvm_codegen (const char* tmpdir,
-                    cl_kernel kernel,
-                    cl_device_id device);
+char *llvm_codegen (const char *tmpdir, cl_kernel kernel, cl_device_id device,
+                    size_t local_x, size_t local_y, size_t local_z);
 
 void fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg, 
                        cl_device_id device);

@@ -22,6 +22,8 @@
 */
 #include "tce_common.h"
 #include "pocl_util.h"
+#include "pocl_cache.h"
+#include "pocl_llvm.h"
 #include "utlist.h"
 #include "common.h"
 
@@ -53,8 +55,6 @@
 #include <GlobalScope.hh>
 #include <Environment.hh>
 
-#include "pocl_cache.h"
-
 using namespace TTAMachine;
 
 #define COMMAND_LENGTH 256
@@ -72,6 +72,7 @@ TCEDevice::TCEDevice(cl_device_id dev, const char* adfName) :
   ready_list(NULL), command_list(NULL) {
   parent->data = this;
   pthread_mutex_init (&cq_lock, NULL);
+  POCL_INIT_LOCK(tce_compile_lock);
   dev->address_bits = 32;
   dev->autolocals_to_args = 1;
 #if defined(WORDS_BIGENDIAN) && WORDS_BIGENDIAN == 1
@@ -404,14 +405,29 @@ void
 pocl_tce_compile_kernel(_cl_command_node *cmd,
                         cl_kernel kernel, cl_device_id device)
 {
-
   if (cmd->type != CL_COMMAND_NDRANGE_KERNEL)
     return;
 
   void* data = cmd->device->data;
   TCEDevice *d = (TCEDevice*)data;
 
-  int error;
+  if (!kernel)
+    kernel = cmd->command.run.kernel;
+  if (!device)
+    device = cmd->device;
+
+  POCL_LOCK(d->tce_compile_lock);
+  int error = pocl_llvm_generate_workgroup_function(device, kernel,
+      cmd->command.run.local_x, cmd->command.run.local_y,
+      cmd->command.run.local_z);
+
+  if (error) {
+    POCL_UNLOCK(d->tce_compile_lock);
+    POCL_MSG_PRINT_GENERAL("TCE: pocl_llvm_generate_workgroup_function()"
+                           " failed for kernel %s\n", kernel->name);
+    assert(error == 0);
+  }
+
   char bytecode[POCL_FILENAME_LENGTH];
 
   assert(d != NULL);
@@ -437,6 +453,8 @@ pocl_tce_compile_kernel(_cl_command_node *cmd,
         POCL_ABORT("Error while running tcecc.");
       }
   }
+
+  POCL_UNLOCK(d->tce_compile_lock);
 }
 
 void

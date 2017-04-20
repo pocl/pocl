@@ -66,10 +66,9 @@ int pocl_llvm_get_kernel_metadata
  * control the compilation. We should enforce only one compilations is done
  * at a time or control the options through thread safe methods.
  */
-int pocl_llvm_generate_workgroup_function
-(char* kernel_cachedir, cl_device_id device,
- cl_kernel kernel, size_t local_x, size_t local_y, size_t local_z
-);
+int pocl_llvm_generate_workgroup_function(cl_device_id device,
+                                          cl_kernel kernel, size_t local_x,
+                                          size_t local_y, size_t local_z);
 
 /**
  * Free the LLVM IR of a program for a given device

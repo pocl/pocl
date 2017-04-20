@@ -122,6 +122,7 @@ class TCEDevice {
   uint64_t globalCycleCount;
 
   pthread_mutex_t cq_lock;
+  pocl_lock_t tce_compile_lock;
   _cl_command_node *volatile ready_list;
   _cl_command_node *volatile command_list;
 };

@@ -69,7 +69,9 @@
 
 #ifdef OCS_AVAILABLE
 char*
-llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
+llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
+              size_t local_x, size_t local_y, size_t local_z)
+{
 
   char command[COMMAND_LENGTH];
   char bytecode[POCL_FILENAME_LENGTH];
@@ -100,6 +102,15 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
 
   void* write_lock = pocl_cache_acquire_writer_lock(kernel->program, device);
   assert(write_lock);
+
+  error = pocl_llvm_generate_workgroup_function (device, kernel,
+                                                 local_x, local_y, local_z);
+  if (error)
+    {
+      POCL_MSG_PRINT_GENERAL ("pocl_llvm_generate_workgroup_function() failed"
+                              " for kernel %s\n", kernel->name);
+      assert (error == 0);
+    }
 
   error = snprintf (bytecode, POCL_FILENAME_LENGTH,
 		    "%s%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
@@ -772,7 +783,10 @@ pocl_check_dlhandle_cache (_cl_command_node *cmd)
       POCL_LOCK (pocl_llvm_codegen_lock);
       module_fn = (char *)llvm_codegen (cmd->command.run.tmp_dir,
                                         cmd->command.run.kernel,
-                                        cmd->device);
+                                        cmd->device,
+                                        cmd->command.run.local_x,
+                                        cmd->command.run.local_y,
+                                        cmd->command.run.local_z);
       POCL_UNLOCK (pocl_llvm_codegen_lock);
       POCL_MSG_PRINT_INFO("Using static WG size binary: %s\n", module_fn);
 #else

@@ -184,7 +184,12 @@ typedef struct pocl_hsa_device_data_s {
 
   /* if agent supports async handlers*/
   int have_wait_any;
+
+  /* compilation lock */
+  pocl_lock_t pocl_hsa_compilation_lock;
 } pocl_hsa_device_data_t;
+
+
 
 void
 pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
@@ -604,6 +609,8 @@ pocl_hsa_init (cl_device_id device, const char* parameters)
   device->global_mem_id = 0;
 
   d = (pocl_hsa_device_data_t *) calloc (1, sizeof(pocl_hsa_device_data_t));
+
+  POCL_INIT_LOCK (d->pocl_hsa_compilation_lock);
 
   intptr_t agent_index = (intptr_t)device->data;
   d->agent.handle = hsa_agents[agent_index].handle;
@@ -1027,12 +1034,26 @@ pocl_hsa_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
 
   hsa_executable_t final_obj;
 
+  POCL_LOCK (d->pocl_hsa_compilation_lock);
+
+  int error = pocl_llvm_generate_workgroup_function (device, kernel,
+                                        cmd->command.run.local_x,
+                                        cmd->command.run.local_y,
+                                        cmd->command.run.local_z);
+  if (error)
+    {
+      POCL_MSG_PRINT_GENERAL ("HSA: pocl_llvm_generate_workgroup_function()"
+                              " failed for kernel %s\n", kernel->name);
+      assert (error == 0);
+    }
+
   unsigned i;
   for (i = 0; i<HSA_KERNEL_CACHE_SIZE; i++)
     if (d->kernel_cache[i].kernel == kernel)
       {
         POCL_MSG_PRINT_INFO("kernel.hsa_exe found in"
                             " kernel cache, returning\n");
+        POCL_UNLOCK (d->pocl_hsa_compilation_lock);
         return;
       }
 
@@ -1136,6 +1157,7 @@ pocl_hsa_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
        kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_KERNEL_KERNARG_SEGMENT_SIZE,
        &d->kernel_cache[i].args_segment_size));
 
+  POCL_UNLOCK (d->pocl_hsa_compilation_lock);
 }
 
 void
@@ -1164,6 +1186,8 @@ pocl_hsa_uninit (cl_device_id device)
   hsa_signal_destroy(d->nudge_driver_thread);
 
   PTHREAD_CHECK(pthread_mutex_destroy(&d->list_mutex));
+
+  POCL_DESTROY_LOCK (d->pocl_hsa_compilation_lock);
 
   POCL_MEM_FREE(d);
   device->data = NULL;
