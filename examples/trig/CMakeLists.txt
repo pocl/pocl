@@ -40,9 +40,10 @@ target_link_libraries("trig" ${POCLU_LINK_OPTIONS})
 add_test("examples/trig" "trig")
 
 set_tests_properties(
+  "examples/trig"
   PROPERTIES
     COST 3.0
     PASS_REGULAR_EXPRESSION "OK\n"
     PROCESSORS 1
-    LABELS "OpenCL_Spec"
+    LABELS "OpenCL_Spec;cuda"
     DEPENDS "pocl_version_check")
