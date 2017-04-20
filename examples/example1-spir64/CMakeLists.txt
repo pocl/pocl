@@ -51,7 +51,7 @@ set_tests_properties( "spec_tests/example1_dot_product_spir64"
 [(]3[.]000000, 3[.]000000, 3[.]000000, 3[.]000000[)] [.] [(]3[.]000000, 3[.]000000, 3[.]000000, 3[.]000000[)] = 36[.]000000
 OK"
     PROCESSORS 1
-    LABELS "internal;spir"
+    LABELS "internal;spir;cuda"
     DEPENDS "pocl_version_check")
 
 endif()

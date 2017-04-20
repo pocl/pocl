@@ -78,5 +78,5 @@ set_tests_properties( "examples/scalarwave"
     COST 3.0
     PASS_REGULAR_EXPRESSION "Done.\n"
     PROCESSORS 1
-    LABELS "internal"
+    LABELS "internal;cuda"
     DEPENDS "pocl_version_check")

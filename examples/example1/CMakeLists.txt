@@ -49,5 +49,5 @@ set_tests_properties( "examples/example1_dot_product"
 [(]3[.]000000, 3[.]000000, 3[.]000000, 3[.]000000[)] [.] [(]3[.]000000, 3[.]000000, 3[.]000000, 3[.]000000[)] = 36[.]000000
 OK"
     PROCESSORS 1
-    LABELS "internal;hsa;tce"
+    LABELS "internal;hsa;tce;cuda"
     DEPENDS "pocl_version_check")

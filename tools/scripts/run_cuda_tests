@@ -38,26 +38,4 @@ if [ -z "$CUDA_PATH" ]; then
   exit 1
 fi
 
-EXCLUDE="test_fabs$"
-EXCLUDE="$EXCLUDE|test_frexp_modf$"
-EXCLUDE="$EXCLUDE|test_sampler_address_clamp$"
-EXCLUDE="$EXCLUDE|test_image_query_funcs$"
-EXCLUDE="$EXCLUDE|clEnqueueNativeKernel$"
-EXCLUDE="$EXCLUDE|clBuildProgram$"
-EXCLUDE="$EXCLUDE|clCreateKernel$"
-EXCLUDE="$EXCLUDE|test_event_cycle$"
-EXCLUDE="$EXCLUDE|clGetKernelArgInfo$"
-EXCLUDE="$EXCLUDE|clCreateSubDevices$"
-EXCLUDE="$EXCLUDE|test_event_free$"
-EXCLUDE="$EXCLUDE|test_enqueue_kernel_from_binary$"
-EXCLUDE="$EXCLUDE|EinsteinToolkit$"
-EXCLUDE="$EXCLUDE|assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_REPL$"
-EXCLUDE="$EXCLUDE|assigning_a_loop_iterator_variable_to_a_private_makes_it_local_2_LOOPS$"
-EXCLUDE="$EXCLUDE|LoopVectorizer_crash_with_Haswell_and_Broadwell_-_issue_231$"
-EXCLUDE="$EXCLUDE|struct_kernel_arguments$"
-EXCLUDE="$EXCLUDE|infinite_loop_"
-EXCLUDE="$EXCLUDE|poclcc$"
-EXCLUDE="$EXCLUDE|^workgroup/"
-
-# TODO: Enable more than just 'internal'
-ctest -L internal -E "$EXCLUDE" $@
+ctest -L cuda $@

@@ -46,5 +46,5 @@ set_tests_properties( "examples/example2_matrix_transpose"
     COST 3.0
     PASS_REGULAR_EXPRESSION "OK\n"
     PROCESSORS 1
-    LABELS "internal;hsa;tce"
+    LABELS "internal;hsa;tce;cuda"
     DEPENDS "pocl_version_check")

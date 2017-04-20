@@ -86,7 +86,7 @@ set_tests_properties("pocl_version_check"
   PROPERTIES
   ENVIRONMENT "POCL_DEVICES=basic"
   PASS_REGULAR_EXPRESSION "basic"
-  LABELS "internal")
+  LABELS "internal;cuda")
 
 #######################################################################
 

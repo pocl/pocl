@@ -135,3 +135,20 @@ set_tests_properties("runtime/clFinish"
 set_tests_properties("runtime/test_kernel_cache_includes"
   PROPERTIES PASS_REGULAR_EXPRESSION
   "function 1.*first include.*function 2.*second include")
+
+# Label tests that work with CUDA backend
+set_property(TEST
+  "runtime/clGetDeviceInfo"
+  "runtime/clGetEventInfo"
+  "runtime/clCreateProgramWithBinary"
+  "runtime/test_kernel_cache_includes"
+  "runtime/clFinish"
+  "runtime/test_read-copy-write-buffer"
+  "runtime/test_buffer-image-copy"
+  "runtime/clSetEventCallback"
+  "runtime/clGetSupportedImageFormats"
+  "runtime/clCreateKernelsInProgram"
+  "runtime/test_event_cycle"
+  "runtime/test_user_event"
+  "runtime/clSetMemObjectDestructorCallback"
+  APPEND PROPERTY LABELS "cuda")

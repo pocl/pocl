@@ -283,3 +283,23 @@ add_test_pocl(NAME "kernel/test_sizeof_uint"
 #    COST 2.0
 #    PROCESSORS 1
 #    DEPENDS "pocl_version_check")
+
+# Label tests that work with CUDA backend
+set_property(TEST
+  "kernel/test_min_max"
+  "kernel/test_length_distance"
+  "kernel/test_fmin_fmax_fma"
+  "kernel/test_convert_sat_regression"
+  "kernel/test_rotate"
+  "kernel/test_short16"
+  "kernel/test_local_struct_array"
+  "kernel/test_shuffle_char"
+  "kernel/test_shuffle_short"
+  "kernel/test_shuffle_ushort"
+  "kernel/test_shuffle_int"
+  "kernel/test_shuffle_uint"
+  "kernel/test_shuffle_float"
+  "kernel/test_shuffle_long"
+  "kernel/test_shuffle_ulong"
+  "kernel/test_shuffle_double"
+  APPEND PROPERTY LABELS "cuda")
