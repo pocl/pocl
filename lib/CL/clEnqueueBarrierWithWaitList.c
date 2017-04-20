@@ -32,30 +32,32 @@ POname(clEnqueueBarrierWithWaitList)(cl_command_queue command_queue,
                                      cl_event         *event) 
 CL_API_SUFFIX__VERSION_1_2
 {
+  int errcode;
   _cl_command_node *cmd;
-  unsigned i;
-
-  POCL_RETURN_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
-    CL_INVALID_EVENT_WAIT_LIST);
-
-  POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
-    CL_INVALID_EVENT_WAIT_LIST);
-
-  for (i = 0; i < num_events_in_wait_list; i++)
-    POCL_RETURN_ERROR_COND((event_wait_list[i] == NULL), CL_INVALID_EVENT_WAIT_LIST);
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
-  POCL_RETURN_ERROR_COND((command_queue->device == NULL), CL_INVALID_COMMAND_QUEUE);
-  POCL_RETURN_ERROR_COND((command_queue->context == NULL), CL_INVALID_COMMAND_QUEUE);
+
+  errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
+                                        event_wait_list);
+  if (errcode != CL_SUCCESS)
+    return errcode;
 
   /* Even if we do not need to create a full command, the runtime requires it */
-  pocl_create_command (&cmd, command_queue, 
-                       CL_COMMAND_BARRIER, NULL, 
-                       num_events_in_wait_list, event_wait_list, 0, NULL);
+  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_BARRIER,
+                                 event, num_events_in_wait_list,
+                                 event_wait_list, 0, NULL);
+
+  if (errcode != CL_SUCCESS)
+    goto ERROR;
 
   cmd->command.barrier.has_wait_list = num_events_in_wait_list;
   pocl_command_enqueue(command_queue, cmd);
 
   return CL_SUCCESS;
+
+ ERROR:
+  POCL_MEM_FREE(cmd);
+  return errcode;
+
 }
 POsym(clEnqueueBarrierWithWaitList)
