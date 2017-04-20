@@ -825,6 +825,12 @@ endif()
 ##########################################################
 
 if(ENABLE_CUDA)
+
+  # Require LLVM 4.0 or newer
+  if ("${LLVM_MAJOR}" STRLESS "4")
+    message(FATAL_ERROR "The CUDA backend requires LLVM 4.0 or newer")
+  endif()
+
   set(OCL_DRIVERS "${OCL_DRIVERS} cuda")
   set(OCL_TARGETS "${OCL_TARGETS} cuda")
   # this is for config.h
