@@ -93,6 +93,9 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   size_t offset_x, offset_y, offset_z;
   size_t global_x, global_y, global_z;
   size_t local_x, local_y, local_z;
+  offset_x = offset_y = offset_z = 0;
+  global_x = global_y = global_z = 0;
+  local_x = local_y = local_z = 0;
   /* cached values for max_work_item_sizes,
    * since we are going to access them repeatedly */
   size_t max_local_x, max_local_y, max_local_z;

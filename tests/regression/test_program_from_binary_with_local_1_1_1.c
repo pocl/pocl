@@ -71,7 +71,7 @@ int main ()
 
   char *binary;
 
-  unsigned k, i, j;
+  unsigned k, i;
 
   for (k=0; k<global_size; k++)
     {

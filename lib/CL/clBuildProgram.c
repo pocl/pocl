@@ -221,7 +221,6 @@ CL_API_SUFFIX__VERSION_1_0
 
   program->main_build_log[0] = 0;
 
-  size_t size = 512;
   size_t i = 1; /* terminating char */
   modded_options = (char*) calloc (512, 1);
 

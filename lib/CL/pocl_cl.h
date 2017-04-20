@@ -672,7 +672,7 @@ struct _cl_kernel {
   struct pocl_argument_info *arg_info;
   cl_bitfield has_arg_metadata;
   cl_uint num_locals;
-  int *reqd_wg_size;
+  unsigned *reqd_wg_size;
   /* The kernel arguments that are set with clSetKernelArg().
      These are copied to the command queue command at enqueue. */
   struct pocl_argument *dyn_arguments;

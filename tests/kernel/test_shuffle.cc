@@ -336,6 +336,11 @@ int main( int argc, char *argv[])
 
 	poclu_get_any_device( &ctx, &did, &queue);
 
+#if (__GNUC__ > 5)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-attributes"
+#endif
+
 	/* Loop over input (m) and output (n) vector lengths.
 	 * The big if-else is needed to pass the string
 	 * representation to runtest.
@@ -394,6 +399,10 @@ int main( int argc, char *argv[])
 	     return -1;
 
 	   }
+
+#if (__GNUC__ > 5)
+#pragma GCC diagnostic pop
+#endif
 
 	if( num_errors == 0)
 		std::cout << "OK" << std::endl;

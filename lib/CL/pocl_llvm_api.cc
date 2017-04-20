@@ -1032,7 +1032,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
     i++;
   }
   // fill 'kernel->reqd_wg_size'
-  kernel->reqd_wg_size = (int*)malloc(3*sizeof(int));
+  kernel->reqd_wg_size = (unsigned *)malloc(3 * sizeof(unsigned));
 
   unsigned reqdx = 0, reqdy = 0, reqdz = 0;
 

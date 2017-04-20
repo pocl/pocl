@@ -83,12 +83,21 @@ int main(int argc, char *argv[])
   cl::CommandQueue queue = cl::CommandQueue::getDefault();
   cl::Program program(SOURCE, true);
 
+#if (__GNUC__ > 5)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-attributes"
+#endif
+
   auto kernel = cl::KernelFunctor<cl::Buffer, cl::Buffer, cl::Buffer, cl_int, cl_int, cl::Buffer>(program, "scan_scan_intervals_lev1");
 
   cl_int i = 0;
   cl::Buffer buffer;
   kernel(cl::EnqueueArgs(queue, cl::NDRange(16), cl::NDRange(16)),
          buffer, buffer, buffer, i, i, buffer);
+
+#if (__GNUC__ > 5)
+#pragma GCC diagnostic pop
+#endif
 
   queue.finish();
 }
