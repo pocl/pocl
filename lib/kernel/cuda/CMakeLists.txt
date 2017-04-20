@@ -56,6 +56,10 @@ if(POCL_USE_FAKE_ADDR_SPACE_IDS)
   list(APPEND CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-DPOCL_USE_FAKE_ADDR_SPACE_IDS")
 endif()
 
+if(NOT LLVM_OLDER_THAN_4_0)
+set(KERNEL_CL_FLAGS ${KERNEL_CL_FLAGS} "-Xclang" "-cl-ext=all")
+endif()
+
 set(LLC_FLAGS "")
 set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=${CUDA_DEVICE_CL_VERSION}")
 separate_arguments(CUDA_DEVICE_EXTENSIONS)
