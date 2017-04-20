@@ -424,15 +424,6 @@ int pocl_llvm_build_program(cl_program program,
   if (device->llvm_cpu != NULL)
     ta.CPU = device->llvm_cpu;
 
-#ifdef LLVM_3_9
-  if (!ta.Triple.compare(0, 5, "nvptx"))
-  {
-    ta.SupportedOpenCLOptions.cl_khr_fp64 = 1;
-    ta.SupportedOpenCLOptions.cl_khr_int64_base_atomics = 1;
-    ta.SupportedOpenCLOptions.cl_khr_int64_extended_atomics = 1;
-  }
-#endif
-
 #ifdef DEBUG_POCL_LLVM_API
   std::cout << "### Triple: " << ta.Triple.c_str() <<  ", CPU: " << ta.CPU.c_str();
 #endif

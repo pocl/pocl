@@ -29,11 +29,7 @@
 #include "pocl_runtime_config.h"
 #include "pocl-ptx-gen.h"
 
-#ifdef LLVM_OLDER_THAN_4_0
-#include "llvm/Bitcode/ReaderWriter.h"
-#else
 #include "llvm/Bitcode/BitcodeReader.h"
-#endif
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LegacyPassManager.h"
@@ -80,11 +76,7 @@ int pocl_ptx_gen(const char *bc_filename,
 
   // Load bitcode
   llvm::LLVMContext context;
-#ifdef LLVM_OLDER_THAN_4_0
-  llvm::ErrorOr<std::unique_ptr<llvm::Module>> module =
-#else
   llvm::Expected<std::unique_ptr<llvm::Module>> module =
-#endif
     parseBitcodeFile(buffer->get()->getMemBufferRef(), context);
   if (!module)
   {
@@ -134,11 +126,7 @@ int pocl_ptx_gen(const char *bc_filename,
 
   // TODO: CPU and features?
   std::unique_ptr<llvm::TargetMachine> machine(
-#ifdef LLVM_OLDER_THAN_3_9
-      target->createTargetMachine(triple, gpu_arch, "+ptx40", options));
-#else
       target->createTargetMachine(triple, gpu_arch, "+ptx40", options, llvm::None));
-#endif
 
   llvm::legacy::PassManager passes;
 
@@ -451,11 +439,7 @@ void pocl_cuda_link_libdevice(llvm::Module *module,
     POCL_ABORT("[CUDA] failed to open libdevice library file\n");
 
   // Load libdevice bitcode library
-#ifdef LLVM_OLDER_THAN_4_0
-  llvm::ErrorOr<std::unique_ptr<llvm::Module>> libdevice_module =
-#else
   llvm::Expected<std::unique_ptr<llvm::Module>> libdevice_module =
-#endif
     parseBitcodeFile(buffer->get()->getMemBufferRef(), module->getContext());
   if (!libdevice_module)
     POCL_ABORT("[CUDA] failed to load libdevice bitcode\n");
@@ -475,15 +459,11 @@ void pocl_cuda_link_libdevice(llvm::Module *module,
   llvm::legacy::PassManager passes;
 
   // Run internalize to mark all non-kernel functions as internal
-#ifdef LLVM_OLDER_THAN_3_9
-  passes.add(llvm::createInternalizePass({kernel}));
-#else
   auto preserve_kernel = [=](const llvm::GlobalValue &GV)
   {
     return GV.getName() == kernel;
   };
   passes.add(llvm::createInternalizePass(preserve_kernel));
-#endif
 
   // Run NVVM reflect pass to set math options
   // TODO: Determine correct FTZ value from frontend compiler options
