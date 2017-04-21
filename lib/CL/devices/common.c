@@ -40,20 +40,22 @@
 #endif
 
 #include "config.h"
-#include "pocl_image_util.h"
-#include "pocl_file_util.h"
-#include "pocl_util.h"
-#include "pocl_cache.h"
+#include "config2.h"
 #include "devices.h"
+#include "pocl_cache.h"
+#include "pocl_debug.h"
+#include "pocl_file_util.h"
+#include "pocl_image_util.h"
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
-#include "pocl_debug.h"
+#include "pocl_util.h"
 
 #ifdef OCS_AVAILABLE
 #include "pocl_llvm.h"
 #endif
 
 #include "_kernel_constants.h"
+
 
 #define COMMAND_LENGTH 2048
 
@@ -73,7 +75,6 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
               size_t local_x, size_t local_y, size_t local_z)
 {
 
-  char command[COMMAND_LENGTH];
   char bytecode[POCL_FILENAME_LENGTH];
   char objfile[POCL_FILENAME_LENGTH];
   /* strlen of / .so 4+1 */
@@ -120,22 +121,28 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
   assert (error == 0);
 
   /* clang is used as the linker driver in LINK_CMD */
-  error = snprintf (command, COMMAND_LENGTH,
-#ifndef POCL_ANDROID
-                    LINK_COMMAND " " HOST_LD_FLAGS " -o %s %s",
-#else
-                    POCL_ANDROID_PREFIX"/bin/ld " HOST_LD_FLAGS " -o %s %s ",
-#endif
-                    tmp_module, objfile);
-  assert (error >= 0);
 
-  POCL_MSG_PRINT_INFO ("executing [%s]\n", command);
-  error = system (command);
+  POCL_MSG_PRINT_INFO ("Linking final module\n");
+  char *const args1[]
+#ifndef POCL_ANDROID
+      = { LINK_COMMAND,
+          HOST_LD_FLAGS_ARRAY,
+          "-o",
+          tmp_module,
+          objfile,
+          NULL };
+#else
+      = { POCL_ANDROID_PREFIX "/bin/ld",
+          HOST_LD_FLAGS_ARRAY,
+          "-o",
+          tmp_module,
+          objfile,
+          NULL };
+#endif
+  error = pocl_run_command (args1);
   assert (error == 0);
 
-  error = snprintf (command, COMMAND_LENGTH, "mv %s %s", tmp_module, module);
-  assert (error >= 0);
-  error = system (command);
+  error = pocl_rename (tmp_module, module);
   assert (error == 0);
 
   /* Save space in kernel cache */

@@ -685,6 +685,10 @@ set(EXTRA_HOST_LLC_FLAGS "" CACHE STRING "Extra parameters to llc for code gener
 
 set(HOST_AS_FLAGS "${DEFAULT_HOST_AS_FLAGS} ${EXTRA_HOST_AS_FLAGS}")
 set(HOST_LD_FLAGS "${DEFAULT_HOST_LD_FLAGS} ${EXTRA_HOST_LD_FLAGS}" )
+string(STRIP "${HOST_LD_FLAGS}" HOST_LD_FLAGS_STRIPPED)
+string(REGEX REPLACE "[\r\n\t ]+" "\", \"" HOST_LD_FLAGS_ARRAY "${HOST_LD_FLAGS_STRIPPED}")
+# string(REPLACE "###, ###" " oo \", \" oo " HOST_LD_FLAGS_ARRAY "${HOST_LD_FLAGS_ARRAY_1}")
+
 set(HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} ${EXTRA_HOST_CLANG_FLAGS}")
 set(HOST_LLC_FLAGS "${DEFAULT_HOST_LLC_FLAGS} ${EXTRA_HOST_LLC_FLAGS}")
 
@@ -974,6 +978,10 @@ set(PACKAGE_VERSION "${POCL_VERSION}")
 
 configure_file("config.h.in.cmake" "config.h.new" ESCAPE_QUOTES)
 rename_if_different("${CMAKE_BINARY_DIR}/config.h.new" "${CMAKE_BINARY_DIR}/config.h")
+
+configure_file("config2.h.in.cmake" "config2.h.new")
+rename_if_different("${CMAKE_BINARY_DIR}/config2.h.new" "${CMAKE_BINARY_DIR}/config2.h")
+
 include_directories("${CMAKE_BINARY_DIR}")
 
 # autotools compat

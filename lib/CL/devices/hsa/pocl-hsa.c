@@ -941,41 +941,6 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
 #endif
 }
 
-/*
- * This replaces a simple system(), because system() was causing issues
- * (gpu lockups) when compiling code (via compile_parallel_bc_to_brig)
- * with OpenCL 2.0 atomics (like CalcPie from AMD SDK).
- * The reason of lockups is unknown (yet).
- */
-static int
-run_command(char* args[])
-{
-  POCL_MSG_PRINT_INFO("Launching: %s\n", args[0]);
-#ifdef HAVE_VFORK
-  pid_t p = vfork();
-#elif defined(HAVE_FORK)
-  pid_t p = fork();
-#else
-#error Must have fork() or vfork() system calls for HSA
-#endif
-  if (p == 0)
-    {
-      return execv(args[0], args);
-    }
-  else
-    {
-      if (p < 0)
-        return -1;
-      int status;
-      if (waitpid(p, &status, 0) < 0)
-        POCL_ABORT("pocl-hsa: waitpid() itself failed.\n");
-      if (WIFEXITED(status))
-        return WEXITSTATUS(status);
-      else
-        return -2;
-    }
-}
-
 static int
 compile_parallel_bc_to_brig(char* brigfile, cl_kernel kernel,
                             cl_device_id device) {
@@ -1005,14 +970,14 @@ compile_parallel_bc_to_brig(char* brigfile, cl_kernel kernel,
 
       char* args1[] = { LLVM_LLC, "-O2", "-march=hsail64", "-filetype=asm",
                         "-o", hsailfile, parallel_bc_path, NULL };
-      if ((error = run_command(args1)))
+      if ((error = pocl_run_command (args1)))
         {
           POCL_MSG_PRINT_INFO("pocl-hsa: llc exit status %i\n", error);
           return error;
         }
 
       char* args2[] = { HSAIL_ASM, "-o", brigfile, hsailfile, NULL };
-      if ((error = run_command(args2)))
+      if ((error = pocl_run_command (args2)))
         {
           POCL_MSG_PRINT_INFO("pocl-hsa: HSAILasm exit status %i\n", error);
           return error;
