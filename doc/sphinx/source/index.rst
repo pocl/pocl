@@ -20,6 +20,7 @@ Contents:
    design
    features
    hsa
+   cuda
 
 Back to `pocl home page <http://pocl.sourceforge.net>`_.
 
