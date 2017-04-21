@@ -6,6 +6,7 @@ Highlights
 - Improved automatic local work-group sizing on kernel enqueue, taking
   into account standard constraints, SIMD width for vectorization as
   well as the number of compute units available on the device.
+- Support for NVIDIA GPUs via a new CUDA backend (currently experimental).
 
 0.14 April 2017
 ===============
