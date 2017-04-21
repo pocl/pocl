@@ -764,7 +764,7 @@ void pocl_basic_memfill(void *ptr,
       break;
     case 16:
       {
-      uint64_t * p = (uint64_t*)ptr + offset;
+      uint64_t * p = (uint64_t*)ptr + (offset << 1);
       for (i = 0; i < size; i++)
         for (j = 0; j < 2; j++)
           p[(i<<1) + j] = *((uint64_t*)pattern + j);
@@ -772,7 +772,7 @@ void pocl_basic_memfill(void *ptr,
       break;
     case 32:
       {
-      uint64_t * p = (uint64_t*)ptr + offset;
+      uint64_t * p = (uint64_t*)ptr + (offset << 2);
       for (i = 0; i < size; i++)
         for (j = 0; j < 4; j++)
           p[(i<<2) + j] = *((uint64_t*)pattern + j);
@@ -780,7 +780,7 @@ void pocl_basic_memfill(void *ptr,
       break;
     case 64:
       {
-      uint64_t * p = (uint64_t*)ptr + offset;
+      uint64_t * p = (uint64_t*)ptr + (offset << 3);
       for (i = 0; i < size; i++)
         for (j = 0; j < 8; j++)
           p[(i<<3) + j] = *((uint64_t*)pattern + j);
@@ -788,7 +788,7 @@ void pocl_basic_memfill(void *ptr,
       break;
     case 128:
       {
-      uint64_t * p = (uint64_t*)ptr + offset;
+      uint64_t * p = (uint64_t*)ptr + (offset << 4);
       for (i = 0; i < size; i++)
         for (j = 0; j < 16; j++)
           p[(i<<4) + j] = *((uint64_t*)pattern + j);
