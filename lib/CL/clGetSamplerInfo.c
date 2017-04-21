@@ -31,8 +31,23 @@ POname(clGetSamplerInfo)(cl_sampler          sampler ,
                  void *              param_value ,
                  size_t *            param_value_size_ret ) CL_API_SUFFIX__VERSION_1_0
 {
-  POCL_ABORT_UNIMPLEMENTED("The entire clGetSamplerInfo call");
-  return CL_SUCCESS;
+  POCL_RETURN_ERROR_COND ((sampler == NULL), CL_INVALID_SAMPLER);
+
+  switch (param_name)
+    {
+    case CL_SAMPLER_REFERENCE_COUNT:
+      POCL_RETURN_GETINFO (cl_uint, sampler->pocl_refcount);
+    case CL_SAMPLER_CONTEXT:
+      POCL_RETURN_GETINFO (cl_context, sampler->context);
+    case CL_SAMPLER_NORMALIZED_COORDS:
+      POCL_RETURN_GETINFO (cl_bool, sampler->normalized_coords);
+    case CL_SAMPLER_ADDRESSING_MODE:
+      POCL_RETURN_GETINFO (cl_addressing_mode, sampler->addressing_mode);
+    case CL_SAMPLER_FILTER_MODE:
+      POCL_RETURN_GETINFO (cl_filter_mode, sampler->filter_mode);
+    }
+
+  return CL_INVALID_VALUE;
 }
 
 POsym(clGetSamplerInfo)
