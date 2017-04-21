@@ -45,19 +45,10 @@ CL_API_SUFFIX__VERSION_1_0
     errcode = CL_OUT_OF_HOST_MEMORY;
     goto ERROR;
   }
-  
-  if (normalized_coords == CL_TRUE)
-    POCL_ABORT_UNIMPLEMENTED("clCreateSampler: normalized_coords");
-  
-  if (addressing_mode != CL_ADDRESS_CLAMP_TO_EDGE)
-    POCL_ABORT_UNIMPLEMENTED("clCreateSampler: Addressing modes "
-                              "other than CL_ADDRESS_CLAMP_TO_EDGE");
-  
-  if (filter_mode != CL_FILTER_NEAREST)
-    POCL_ABORT_UNIMPLEMENTED("clCreateSampler: Filter modes other than "
-                                    "CL_FILTER_NEAREST");
-  
-  POCL_INIT_ICD_OBJECT(sampler);
+
+  POCL_INIT_OBJECT (sampler);
+  POname (clRetainContext) (context);
+  sampler->context = context;
   sampler->normalized_coords = normalized_coords;
   sampler->addressing_mode = addressing_mode;
   sampler->filter_mode = filter_mode;
@@ -69,6 +60,6 @@ ERROR:
   {
     *errcode_ret = errcode;
   }
-    return NULL;
+  return NULL;
 }
 POsym(clCreateSampler)

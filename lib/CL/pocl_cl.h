@@ -740,6 +740,8 @@ struct _cl_event {
 typedef struct _cl_sampler cl_sampler_t;
 struct _cl_sampler {
   POCL_ICD_OBJECT
+  POCL_OBJECT;
+  cl_context context;
   cl_bool             normalized_coords;
   cl_addressing_mode  addressing_mode;
   cl_filter_mode      filter_mode;
