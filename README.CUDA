@@ -16,17 +16,20 @@ due to the TargetAddressSpace pass.
 
 Use `POCL_DEVICES=CUDA` to select only CUDA devices.
 
-Requires `CUDA_PATH` environment variable to be set to the root of the
-CUDA installation (containing the `nvvm` directory).
+Requires `POCL_CUDA_TOOLKIT_PATH` environment variable to be set to the root of
+the CUDA installation (containing the `nvvm` directory).
 
 The `POCL_CUDA_GPU_ARCH` environment variable can be set to override
 the target GPU architecture (e.g. `POCL_CUDA_GPU_ARCH=sm_35`), which
 may be necessary in cases where LLVM doesn't yet support the
 architecture (currently an issue for `sm_32` and `sm_53`).
 
-The `POCL_NO_PTX_CACHE` environment variable can be set to `1` to
+The `POCL_CUDA_NO_PTX_CACHE` environment variable can be set to `1` to
 force pocl to always regenerate the PTX module instead of using a
 cached version.
+
+The `POCL_CUDA_DUMP_NVVM` environment variable can be set to `1` to
+dump the LLVM IR that is fed into the NVPTX backend for debugging purposes.
 
 # Known issues
 
@@ -34,5 +37,4 @@ cached version.
 - Atomics are unimplemented
 - Global offsets are unimplemented
 - get_work_dim is unimplemented
-- FP64 math functions are mostly missing
 - printf format support is incomplete

@@ -95,7 +95,7 @@ int pocl_ptx_gen(const char *bc_filename,
   pocl_add_kernel_annotations(module->get(), kernel_name);
   pocl_map_libdevice_calls(module->get());
   pocl_cuda_link_libdevice(module->get(), kernel_name, gpu_arch);
-  if (pocl_get_bool_option("POCL_DEBUG_PTX", 0))
+  if (pocl_get_bool_option("POCL_CUDA_DUMP_NVVM", 0))
     (*module)->dump();
 
   // Verify module
@@ -397,12 +397,12 @@ void pocl_cuda_link_libdevice(llvm::Module *module,
                               const char *kernel, const char *gpu_arch)
 {
   // TODO: Can we link libdevice into the kernel library at pocl build time?
-  // This would remove this runtime depenency on the CUDA toolkit.
-  // Had some issues with the other pocl LLVM passess crashing on the libdevice
+  // This would remove this runtime dependency on the CUDA toolkit.
+  // Had some issues with the other pocl LLVM passes crashing on the libdevice
   // code - needs more investigation.
 
   // Construct path to libdevice bitcode library
-  const char *cuda_path = pocl_get_string_option("CUDA_PATH", "");
+  const char *cuda_path = pocl_get_string_option("POCL_CUDA_TOOLKIT_PATH", "");
   const char *libdevice_fmt = "%s/nvvm/libdevice/libdevice.compute_%d.10.bc";
 
   char *end;
