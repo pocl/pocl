@@ -23,10 +23,15 @@
 
 #include "pocl_util.h"
 
-CL_API_ENTRY cl_int CL_API_CALL
-POname(clRetainSampler)(cl_sampler  sampler ) CL_API_SUFFIX__VERSION_1_0
+CL_API_ENTRY cl_int CL_API_CALL POname (clRetainSampler) (cl_sampler sampler)
+    CL_API_SUFFIX__VERSION_1_0
 {
-  POCL_ABORT_UNIMPLEMENTED("The entire clRetainSampler call");
+  POCL_RETURN_ERROR_COND ((sampler == NULL), CL_INVALID_SAMPLER);
+
+  POCL_RETAIN_OBJECT (sampler);
+  POCL_MSG_PRINT_REFCOUNTS ("RETAIN Sampler %p  : %d\n", sampler,
+                            sampler->pocl_refcount);
+
   return CL_SUCCESS;
 }
 
