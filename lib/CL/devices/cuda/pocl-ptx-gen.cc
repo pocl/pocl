@@ -1,4 +1,4 @@
-/* pocl-ptx-gen.c - PTX code generation functions
+/* pocl-ptx-gen.cc - PTX code generation functions
 
    Copyright (c) 2016 James Price / University of Bristol
 
