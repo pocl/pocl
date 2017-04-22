@@ -658,6 +658,8 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
     }
 #endif
 
+  pocl_ndrange_node_cleanup (node);
+
   POCL_UPDATE_EVENT_COMPLETE (&node->event);
 }
 
