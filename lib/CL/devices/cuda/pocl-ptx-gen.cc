@@ -93,10 +93,10 @@ int pocl_ptx_gen(const char *bc_filename, const char *ptx_filename,
     (*module)->dump();
 
   // Verify module
-  std::string err;
-  llvm::raw_string_ostream errs(err);
+  std::string error;
+  llvm::raw_string_ostream errs(error);
   if (llvm::verifyModule(*module->get(), &errs)) {
-    printf("\n%s\n", err.c_str());
+    POCL_MSG_ERR("\n%s\n", error.c_str());
     POCL_ABORT("[CUDA] ptx-gen: module verification failed\n");
   }
 
@@ -104,7 +104,6 @@ int pocl_ptx_gen(const char *bc_filename, const char *ptx_filename,
       (sizeof(void *) == 8) ? "nvptx64-nvidia-cuda" : "nvptx-nvidia-cuda";
 
   // Get NVPTX target
-  std::string error;
   const llvm::Target *target =
       llvm::TargetRegistry::lookupTarget(triple, error);
   if (!target) {
