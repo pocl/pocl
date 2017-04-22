@@ -41,6 +41,15 @@ Building pocl with CUDA support
   Set this variable to the root of the toolkit installation (the directory
   containing the ``nvvm`` directory).
 
+  Use ``POCL_DEVICES=CUDA`` to select only CUDA devices.
+
+  The ``POCL_CUDA_GPU_ARCH`` environment variable can be set to override the
+  target GPU architecture (e.g. ``POCL_CUDA_GPU_ARCH=sm_35``), which may be
+  necessary in cases where LLVM doesn't yet support the architecture.
+
+  The ``POCL_CUDA_DUMP_NVVM`` environment variable can be set to ``1`` to
+  dump the LLVM IR that is fed into the NVPTX backend for debugging purposes.
+
 4) Run tests
 ~~~~~~~~~~~~
   After building pocl, you can smoke test the CUDA backend by executing the
