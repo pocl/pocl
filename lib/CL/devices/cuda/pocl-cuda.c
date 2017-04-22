@@ -510,8 +510,7 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device)
   strcpy (ptx_filename, bc_filename);
   strncat (ptx_filename, ".ptx", POCL_FILENAME_LENGTH - 1);
 
-  if (pocl_get_bool_option ("POCL_CUDA_NO_PTX_CACHE", 0)
-      || !pocl_exists (ptx_filename))
+  if (!pocl_exists (ptx_filename))
     {
       // Generate PTX from LLVM bitcode
       if (pocl_ptx_gen (bc_filename, ptx_filename, kernel->name,
