@@ -78,10 +78,6 @@ int pocl_ptx_gen(const char *bc_filename, const char *ptx_filename,
     return 1;
   }
 
-  llvm::InitializeAllTargets();
-  llvm::InitializeAllTargetMCs();
-  llvm::InitializeAllAsmPrinters();
-
   // Apply transforms to prepare for lowering to PTX
   pocl_cuda_fix_printf(module->get());
   pocl_gen_local_mem_args(module->get(), kernel_name);
