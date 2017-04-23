@@ -216,6 +216,7 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->available = CL_TRUE;
   dev->compiler_available = CL_TRUE;
   dev->spmd = CL_FALSE;
+  dev->workgroup_pass = CL_TRUE;
   dev->execution_capabilities = CL_EXEC_KERNEL | CL_EXEC_NATIVE_KERNEL;
   dev->platform = 0;
 

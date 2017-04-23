@@ -413,6 +413,7 @@ struct _cl_device_id {
      we need to generate work-item loops to execute all the work-items
      in the WG, otherwise the hardware spawns the WIs. */
   cl_bool spmd;
+  cl_bool workgroup_pass;
   cl_device_exec_capabilities execution_capabilities;
   cl_command_queue_properties queue_properties;
   cl_platform_id platform;

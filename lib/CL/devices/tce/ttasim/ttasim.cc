@@ -138,6 +138,7 @@ pocl_ttasim_init_device_infos(struct _cl_device_id* dev)
   dev->available = CL_TRUE;
   dev->compiler_available = CL_TRUE;
   dev->spmd = CL_FALSE;
+  dev->workgroup_pass = CL_TRUE;
   dev->execution_capabilities = CL_EXEC_KERNEL;
   dev->queue_properties = CL_QUEUE_PROFILING_ENABLE;
   dev->vendor = "TTA-Based Co-design Environment";
