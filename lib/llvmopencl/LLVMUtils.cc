@@ -24,6 +24,7 @@
 
 #include "pocl.h"
 
+#include <llvm/IR/Instructions.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Metadata.h>
 
@@ -88,5 +89,19 @@ regenerate_kernel_metadata(llvm::Module &M, FunctionMapping &kernels)
   }
 }
 
+void eraseFunctionAndCallers(llvm::Function *Function) {
+  if (!Function)
+    return;
+
+  std::vector<llvm::Value *> Callers(Function->user_begin(),
+                                     Function->user_end());
+  for (auto &U : Callers) {
+    llvm::CallInst *Call = llvm::dyn_cast<llvm::CallInst>(U);
+    if (!Call)
+      continue;
+    Call->eraseFromParent();
+  }
+  Function->eraseFromParent();
 }
 
+}

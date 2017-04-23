@@ -47,6 +47,9 @@ typedef std::map<llvm::Function*, llvm::Function*> FunctionMapping;
 void
 regenerate_kernel_metadata(llvm::Module &M, FunctionMapping &kernels);
 
+// Remove a function from a module, along with all callsites.
+void eraseFunctionAndCallers(llvm::Function *Function);
+
 inline bool
 isAutomaticLocal(const std::string &FuncName, llvm::GlobalVariable &Var) {
 #ifdef POCL_USE_FAKE_ADDR_SPACE_IDS

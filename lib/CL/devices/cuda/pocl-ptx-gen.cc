@@ -23,6 +23,7 @@
 
 #include "config.h"
 
+#include "LLVMUtils.h"
 #include "common.h"
 #include "pocl-ptx-gen.h"
 #include "pocl.h"
@@ -160,22 +161,6 @@ void addKernelAnnotations(llvm::Module *Module, const char *KernelName) {
   Annotations->addOperand(Node);
 }
 
-// Remove a function from a module, along with all callsites.
-static void eraseFunctionAndCallers(llvm::Function *Function) {
-  if (!Function)
-    return;
-
-  std::vector<llvm::Value *> Callers(Function->user_begin(),
-                                     Function->user_end());
-  for (auto &U : Callers) {
-    llvm::CallInst *Call = llvm::dyn_cast<llvm::CallInst>(U);
-    if (!Call)
-      continue;
-    Call->eraseFromParent();
-  }
-  Function->eraseFromParent();
-}
-
 // PTX doesn't support variadic functions, so we need to modify the IR to
 // support printf. The vprintf system call that is provided is described here:
 // http://docs.nvidia.com/cuda/ptx-writers-guide-to-interoperability/index.html#system-calls
@@ -199,8 +184,8 @@ void fixPrintF(llvm::Module *Module) {
   llvm::Type *FormatType = OldPrintF->getFunctionType()->getParamType(0);
 
   // Remove calls to va_start and va_end.
-  eraseFunctionAndCallers(Module->getFunction("llvm.va_start"));
-  eraseFunctionAndCallers(Module->getFunction("llvm.va_end"));
+  pocl::eraseFunctionAndCallers(Module->getFunction("llvm.va_start"));
+  pocl::eraseFunctionAndCallers(Module->getFunction("llvm.va_end"));
 
   // Create new non-variadic __cl_printf function.
   llvm::Type *ReturnType = OldPrintF->getReturnType();
