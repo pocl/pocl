@@ -31,10 +31,12 @@ extern "C"
 {
 #endif
 
-int pocl_ptx_gen(const char *bc_filename,
-                 const char *ptx_filename,
-                 const char *kernel_name,
-                 const char *gpu_arch);
+// Generate a PTX file from an LLVM bitcode file.
+// Returns zero on success, non-zero on failure.
+int pocl_ptx_gen(const char *BitcodeFilename,
+                 const char *PTXFilename,
+                 const char *KernelName,
+                 const char *Arch);
 
 #ifdef __cplusplus
 }

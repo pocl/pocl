@@ -51,494 +51,515 @@ namespace llvm {
 extern ModulePass *createNVVMReflectPass(const StringMap<int> &Mapping);
 }
 
-// TODO: Should these be proper passes?
-void pocl_add_kernel_annotations(llvm::Module *module, const char *kernel);
-void pocl_cuda_fix_printf(llvm::Module *module);
-void pocl_cuda_link_libdevice(llvm::Module *module, const char *kernel,
-                              const char *gpu_arch);
-void pocl_gen_local_mem_args(llvm::Module *module, const char *kernel);
-void pocl_insert_ptx_intrinsics(llvm::Module *module);
-void pocl_map_libdevice_calls(llvm::Module *module);
+static void addKernelAnnotations(llvm::Module *Module, const char *KernelName);
+static void fixLocalMemArgs(llvm::Module *Module, const char *KernelName);
+static void fixPrintF(llvm::Module *Module);
+static void insertPTXIntrinsics(llvm::Module *Module);
+static void linkLibDevice(llvm::Module *Module, const char *KernelName,
+                          const char *Arch);
+static void mapLibDeviceCalls(llvm::Module *Module);
 
-int pocl_ptx_gen(const char *bc_filename, const char *ptx_filename,
-                 const char *kernel_name, const char *gpu_arch) {
-  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer =
-      llvm::MemoryBuffer::getFile(bc_filename);
-  if (!buffer) {
+int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
+                 const char *KernelName, const char *Arch) {
+  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Buffer =
+      llvm::MemoryBuffer::getFile(BitcodeFilename);
+  if (!Buffer) {
     POCL_MSG_ERR("[CUDA] ptx-gen: failed to open bitcode file\n");
     return 1;
   }
 
-  // Load bitcode
-  llvm::LLVMContext context;
-  llvm::Expected<std::unique_ptr<llvm::Module>> module =
-      parseBitcodeFile(buffer->get()->getMemBufferRef(), context);
-  if (!module) {
+  // Load the LLVM bitcode module.
+  llvm::LLVMContext Context;
+  llvm::Expected<std::unique_ptr<llvm::Module>> Module =
+      parseBitcodeFile(Buffer->get()->getMemBufferRef(), Context);
+  if (!Module) {
     POCL_MSG_ERR("[CUDA] ptx-gen: failed to load bitcode\n");
     return 1;
   }
 
-  // Apply transforms to prepare for lowering to PTX
-  pocl_cuda_fix_printf(module->get());
-  pocl_gen_local_mem_args(module->get(), kernel_name);
-  pocl_insert_ptx_intrinsics(module->get());
-  pocl_add_kernel_annotations(module->get(), kernel_name);
-  pocl_map_libdevice_calls(module->get());
-  pocl_cuda_link_libdevice(module->get(), kernel_name, gpu_arch);
+  // Apply transforms to prepare for lowering to PTX.
+  fixPrintF(Module->get());
+  fixLocalMemArgs(Module->get(), KernelName);
+  insertPTXIntrinsics(Module->get());
+  addKernelAnnotations(Module->get(), KernelName);
+  mapLibDeviceCalls(Module->get());
+  linkLibDevice(Module->get(), KernelName, Arch);
   if (pocl_get_bool_option("POCL_CUDA_DUMP_NVVM", 0))
-    (*module)->dump();
+    (*Module)->dump();
 
-  // Verify module
-  std::string error;
-  llvm::raw_string_ostream errs(error);
-  if (llvm::verifyModule(*module->get(), &errs)) {
-    POCL_MSG_ERR("\n%s\n", error.c_str());
+  // Verify module.
+  std::string Error;
+  llvm::raw_string_ostream Errs(Error);
+  if (llvm::verifyModule(*Module->get(), &Errs)) {
+    POCL_MSG_ERR("\n%s\n", Error.c_str());
     POCL_ABORT("[CUDA] ptx-gen: module verification failed\n");
   }
 
-  llvm::StringRef triple =
+  llvm::StringRef Triple =
       (sizeof(void *) == 8) ? "nvptx64-nvidia-cuda" : "nvptx-nvidia-cuda";
 
-  // Get NVPTX target
-  const llvm::Target *target =
-      llvm::TargetRegistry::lookupTarget(triple, error);
-  if (!target) {
+  // Get NVPTX target.
+  const llvm::Target *Target =
+      llvm::TargetRegistry::lookupTarget(Triple, Error);
+  if (!Target) {
     POCL_MSG_ERR("[CUDA] ptx-gen: failed to get target\n");
-    POCL_MSG_ERR("%s\n", error.c_str());
+    POCL_MSG_ERR("%s\n", Error.c_str());
     return 1;
   }
 
-  // TODO: set options
-  llvm::TargetOptions options;
+  // TODO: Set options?
+  llvm::TargetOptions Options;
 
   // TODO: CPU and features?
-  std::unique_ptr<llvm::TargetMachine> machine(target->createTargetMachine(
-      triple, gpu_arch, "+ptx40", options, llvm::None));
+  std::unique_ptr<llvm::TargetMachine> Machine(
+      Target->createTargetMachine(Triple, Arch, "+ptx40", Options, llvm::None));
 
-  llvm::legacy::PassManager passes;
+  llvm::legacy::PassManager Passes;
 
-  // Add pass to emit PTX
-  llvm::SmallVector<char, 4096> data;
-  llvm::raw_svector_ostream ptx_stream(data);
-  if (machine->addPassesToEmitFile(passes, ptx_stream,
+  // Add pass to emit PTX.
+  llvm::SmallVector<char, 4096> Data;
+  llvm::raw_svector_ostream PTXStream(Data);
+  if (Machine->addPassesToEmitFile(Passes, PTXStream,
                                    llvm::TargetMachine::CGFT_AssemblyFile)) {
     POCL_MSG_ERR("[CUDA] ptx-gen: failed to add passes\n");
     return 1;
   }
 
-  // Run passes
-  passes.run(**module);
+  // Run passes.
+  Passes.run(**Module);
 
-  std::string ptx = ptx_stream.str(); // flush
-  return pocl_write_file(ptx_filename, ptx.c_str(), ptx.size(), 0, 0);
+  std::string PTX = PTXStream.str();
+  return pocl_write_file(PTXFilename, PTX.c_str(), PTX.size(), 0, 0);
 }
 
-void pocl_add_kernel_annotations(llvm::Module *module, const char *kernel) {
-  llvm::LLVMContext &context = module->getContext();
+// Add the metadata needed to mark a function as a kernel in PTX.
+void addKernelAnnotations(llvm::Module *Module, const char *KernelName) {
+  llvm::LLVMContext &Context = Module->getContext();
 
-  // Remove existing nvvm.annotations metadata since it is sometimes corrupt
-  auto nvvm_annotations = module->getNamedMetadata("nvvm.annotations");
-  if (nvvm_annotations)
-    nvvm_annotations->eraseFromParent();
+  // Remove existing nvvm.annotations metadata since it is sometimes corrupt.
+  auto *Annotations = Module->getNamedMetadata("nvvm.annotations");
+  if (Annotations)
+    Annotations->eraseFromParent();
 
-  // Add nvvm.annotations metadata to mark kernel entry point
-  nvvm_annotations = module->getOrInsertNamedMetadata("nvvm.annotations");
+  // Add nvvm.annotations metadata to mark kernel entry point.
+  Annotations = Module->getOrInsertNamedMetadata("nvvm.annotations");
 
-  // Get handle to function
-  auto func = module->getFunction(kernel);
-  if (!func)
+  // Get handle to function.
+  auto *Function = Module->getFunction(KernelName);
+  if (!Function)
     POCL_ABORT("[CUDA] ptx-gen: kernel function not found in module\n");
 
-  // Create metadata
-  llvm::Constant *one =
-      llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(context), 1);
-  llvm::Metadata *md_f = llvm::ValueAsMetadata::get(func);
-  llvm::Metadata *md_n = llvm::MDString::get(context, "kernel");
-  llvm::Metadata *md_1 = llvm::ConstantAsMetadata::get(one);
+  // Create metadata.
+  llvm::Constant *One =
+      llvm::ConstantInt::getSigned(llvm::Type::getInt32Ty(Context), 1);
+  llvm::Metadata *FuncMD = llvm::ValueAsMetadata::get(Function);
+  llvm::Metadata *NameMD = llvm::MDString::get(Context, "kernel");
+  llvm::Metadata *OneMD = llvm::ConstantAsMetadata::get(One);
 
-  std::vector<llvm::Metadata *> v_md = {md_f, md_n, md_1};
-  llvm::MDNode *node = llvm::MDNode::get(context, v_md);
-  nvvm_annotations->addOperand(node);
+  llvm::MDNode *Node = llvm::MDNode::get(Context, {FuncMD, NameMD, OneMD});
+  Annotations->addOperand(Node);
 }
 
-void pocl_erase_function_and_callers(llvm::Function *func) {
-  if (!func)
+// Remove a function from a module, along with all callsites.
+static void eraseFunctionAndCallers(llvm::Function *Function) {
+  if (!Function)
     return;
 
-  std::vector<llvm::Value *> callers(func->users().begin(),
-                                     func->users().end());
-  for (auto U = callers.begin(); U != callers.end(); U++) {
-    llvm::CallInst *call = llvm::dyn_cast<llvm::CallInst>(*U);
-    if (!call)
+  std::vector<llvm::Value *> Callers(Function->user_begin(),
+                                     Function->user_end());
+  for (auto &U : Callers) {
+    llvm::CallInst *Call = llvm::dyn_cast<llvm::CallInst>(U);
+    if (!Call)
       continue;
-    call->eraseFromParent();
+    Call->eraseFromParent();
   }
-  func->eraseFromParent();
+  Function->eraseFromParent();
 }
 
-void pocl_cuda_fix_printf(llvm::Module *module) {
-  llvm::Function *cl_printf = module->getFunction("__cl_printf");
-  if (!cl_printf)
+// PTX doesn't support variadic functions, so we need to modify the IR to
+// support printf. The vprintf system call that is provided is described here:
+// http://docs.nvidia.com/cuda/ptx-writers-guide-to-interoperability/index.html#system-calls
+// Essentially, the variadic list of arguments is replaced with a single array
+// instead.
+//
+// This function changes the prototype of __cl_printf to take an array instead
+// of a variadic argument list. It updates the function body to read from
+// this array to retrieve each argument instead of using the dummy __cl_va_arg
+// function. We then visit each __cl_printf callsite and generate the argument
+// array to pass instead of the variadic list.
+void fixPrintF(llvm::Module *Module) {
+  llvm::Function *OldPrintF = Module->getFunction("__cl_printf");
+  if (!OldPrintF)
     return;
 
-  llvm::LLVMContext &context = module->getContext();
-  llvm::Type *i32 = llvm::Type::getInt32Ty(context);
-  llvm::Type *i64 = llvm::Type::getInt64Ty(context);
-  llvm::Type *i64ptr = llvm::PointerType::get(i64, 0);
-  llvm::Type *format_type = cl_printf->getFunctionType()->getParamType(0);
+  llvm::LLVMContext &Context = Module->getContext();
+  llvm::Type *I32 = llvm::Type::getInt32Ty(Context);
+  llvm::Type *I64 = llvm::Type::getInt64Ty(Context);
+  llvm::Type *I64Ptr = llvm::PointerType::get(I64, 0);
+  llvm::Type *FormatType = OldPrintF->getFunctionType()->getParamType(0);
 
-  // Remove calls to va_start and va_end
-  pocl_erase_function_and_callers(module->getFunction("llvm.va_start"));
-  pocl_erase_function_and_callers(module->getFunction("llvm.va_end"));
+  // Remove calls to va_start and va_end.
+  eraseFunctionAndCallers(Module->getFunction("llvm.va_start"));
+  eraseFunctionAndCallers(Module->getFunction("llvm.va_end"));
 
-  // Create new non-variadic __cl_printf function
-  llvm::Type *ret_type = cl_printf->getReturnType();
-  llvm::FunctionType *new_func_type =
-      llvm::FunctionType::get(ret_type, {format_type, i64ptr}, false);
-  llvm::Function *new_cl_printf = llvm::Function::Create(
-      new_func_type, cl_printf->getLinkage(), "", module);
-  new_cl_printf->takeName(cl_printf);
+  // Create new non-variadic __cl_printf function.
+  llvm::Type *ReturnType = OldPrintF->getReturnType();
+  llvm::FunctionType *NewPrintfType =
+      llvm::FunctionType::get(ReturnType, {FormatType, I64Ptr}, false);
+  llvm::Function *NewPrintF = llvm::Function::Create(
+      NewPrintfType, OldPrintF->getLinkage(), "", Module);
+  NewPrintF->takeName(OldPrintF);
 
-  // Take function body from old function
-  new_cl_printf->getBasicBlockList().splice(new_cl_printf->begin(),
-                                            cl_printf->getBasicBlockList());
+  // Take function body from old function.
+  NewPrintF->getBasicBlockList().splice(NewPrintF->begin(),
+                                        OldPrintF->getBasicBlockList());
 
-  // Create i32 to hold current argument index
-  llvm::AllocaInst *arg_index_ptr =
-      new llvm::AllocaInst(i32, llvm::ConstantInt::get(i32, 1));
-  arg_index_ptr->insertBefore(&*new_cl_printf->begin()->begin());
-  llvm::StoreInst *arg_index_init =
-      new llvm::StoreInst(llvm::ConstantInt::get(i32, 0), arg_index_ptr);
-  arg_index_init->insertAfter(arg_index_ptr);
+  // Create i32 to hold current argument index.
+  llvm::AllocaInst *ArgIndexPtr =
+      new llvm::AllocaInst(I32, llvm::ConstantInt::get(I32, 1));
+  ArgIndexPtr->insertBefore(&*NewPrintF->begin()->begin());
+  llvm::StoreInst *ArgIndexInit =
+      new llvm::StoreInst(llvm::ConstantInt::get(I32, 0), ArgIndexPtr);
+  ArgIndexInit->insertAfter(ArgIndexPtr);
 
-  // Replace calls to _cl_va_arg with reads from new i64 array argument
-  llvm::Function *cl_va_arg = module->getFunction("__cl_va_arg");
-  if (cl_va_arg) {
-    llvm::Argument *args_in = &*++new_cl_printf->getArgumentList().begin();
-    std::vector<llvm::Value *> va_arg_calls(cl_va_arg->users().begin(),
-                                            cl_va_arg->users().end());
-    for (auto U = va_arg_calls.begin(); U != va_arg_calls.end(); U++) {
-      llvm::CallInst *call = llvm::dyn_cast<llvm::CallInst>(*U);
-      if (!call)
+  // Replace calls to _cl_va_arg with reads from new i64 array argument.
+  llvm::Function *VaArgFunc = Module->getFunction("__cl_va_arg");
+  if (VaArgFunc) {
+    llvm::Argument *ArgsIn = &*++NewPrintF->getArgumentList().begin();
+    std::vector<llvm::Value *> VaArgCalls(VaArgFunc->user_begin(),
+                                          VaArgFunc->user_end());
+    for (auto &U : VaArgCalls) {
+      llvm::CallInst *Call = llvm::dyn_cast<llvm::CallInst>(U);
+      if (!Call)
         continue;
 
-      // Get current argument index
-      llvm::LoadInst *arg_index = new llvm::LoadInst(arg_index_ptr);
-      arg_index->insertBefore(call);
+      // Get current argument index.
+      llvm::LoadInst *ArgIndex = new llvm::LoadInst(ArgIndexPtr);
+      ArgIndex->insertBefore(Call);
 
-      // Get pointer to argument data
-      llvm::Value *arg_out = call->getArgOperand(1);
-      llvm::GetElementPtrInst *arg_in =
-          llvm::GetElementPtrInst::Create(i64, args_in, {arg_index});
-      arg_in->insertAfter(arg_index);
+      // Get pointer to argument data.
+      llvm::Value *ArgOut = Call->getArgOperand(1);
+      llvm::GetElementPtrInst *ArgIn =
+          llvm::GetElementPtrInst::Create(I64, ArgsIn, {ArgIndex});
+      ArgIn->insertAfter(ArgIndex);
 
-      // Cast arg_out pointer to i64*
-      llvm::BitCastInst *bc_arg_out = new llvm::BitCastInst(arg_out, i64ptr);
-      bc_arg_out->insertAfter(arg_in);
-      arg_out = bc_arg_out;
+      // Cast ArgOut pointer to i64*.
+      llvm::BitCastInst *ArgOutBC = new llvm::BitCastInst(ArgOut, I64Ptr);
+      ArgOutBC->insertAfter(ArgIn);
+      ArgOut = ArgOutBC;
 
-      // Load argument
-      llvm::LoadInst *arg_value = new llvm::LoadInst(arg_in);
-      arg_value->insertAfter(arg_in);
-      llvm::StoreInst *arg_store = new llvm::StoreInst(arg_value, arg_out);
-      arg_store->insertAfter(bc_arg_out);
+      // Load argument.
+      llvm::LoadInst *ArgValue = new llvm::LoadInst(ArgIn);
+      ArgValue->insertAfter(ArgIn);
+      llvm::StoreInst *ArgStore = new llvm::StoreInst(ArgValue, ArgOut);
+      ArgStore->insertAfter(ArgOutBC);
 
-      // Increment argument index
-      llvm::BinaryOperator *inc = llvm::BinaryOperator::Create(
-          llvm::BinaryOperator::Add, arg_index, llvm::ConstantInt::get(i32, 1));
-      inc->insertAfter(arg_index);
-      llvm::StoreInst *store_inc = new llvm::StoreInst(inc, arg_index_ptr);
-      store_inc->insertAfter(inc);
+      // Increment argument index.
+      llvm::BinaryOperator *Inc = llvm::BinaryOperator::Create(
+          llvm::BinaryOperator::Add, ArgIndex, llvm::ConstantInt::get(I32, 1));
+      Inc->insertAfter(ArgIndex);
+      llvm::StoreInst *StoreInc = new llvm::StoreInst(Inc, ArgIndexPtr);
+      StoreInc->insertAfter(Inc);
 
-      // Remove call to _cl_va_arg
-      call->eraseFromParent();
+      // Remove call to _cl_va_arg.
+      Call->eraseFromParent();
     }
 
-    // Remove function from module
-    cl_va_arg->eraseFromParent();
+    // Remove function from module.
+    VaArgFunc->eraseFromParent();
   }
 
-  // Loop over function callers
-  // Generate array of i64 arguments to replace variadic arguments
-  std::vector<llvm::Value *> callers(cl_printf->users().begin(),
-                                     cl_printf->users().end());
-  for (auto U = callers.begin(); U != callers.end(); U++) {
-    llvm::CallInst *call = llvm::dyn_cast<llvm::CallInst>(*U);
-    if (!call)
+  // Loop over function callers.
+  // Generate array of i64 arguments to replace variadic arguments/
+  std::vector<llvm::Value *> Callers(OldPrintF->user_begin(),
+                                     OldPrintF->user_end());
+  for (auto &U : Callers) {
+    llvm::CallInst *Call = llvm::dyn_cast<llvm::CallInst>(U);
+    if (!Call)
       continue;
 
-    unsigned num_args = call->getNumArgOperands() - 1;
-    llvm::Value *format = call->getArgOperand(0);
+    unsigned NumArgs = Call->getNumArgOperands() - 1;
+    llvm::Value *Format = Call->getArgOperand(0);
 
-    // Allocate array for arguments
-    // TODO: Deal with vector arguments
-    llvm::AllocaInst *args =
-        new llvm::AllocaInst(i64, llvm::ConstantInt::get(i32, num_args));
-    args->insertBefore(call);
+    // Allocate array for arguments.
+    // TODO: Deal with vector arguments.
+    llvm::AllocaInst *Args =
+        new llvm::AllocaInst(I64, llvm::ConstantInt::get(I32, NumArgs));
+    Args->insertBefore(Call);
 
-    // Loop over arguments (skipping format)
-    for (unsigned a = 0; a < num_args; a++) {
-      llvm::Value *arg = call->getArgOperand(a + 1);
-      llvm::Type *arg_type = arg->getType();
+    // Loop over arguments (skipping format).
+    for (unsigned A = 0; A < NumArgs; A++) {
+      llvm::Value *Arg = Call->getArgOperand(A + 1);
+      llvm::Type *ArgType = Arg->getType();
 
-      // Get pointer to argument in i64 array
-      // TODO: promote arguments that are shorter than 32 bits
-      llvm::Constant *arg_idx = llvm::ConstantInt::get(i32, a);
-      llvm::Instruction *arg_ptr =
-          llvm::GetElementPtrInst::Create(i64, args, {arg_idx});
-      arg_ptr->insertBefore(call);
+      // Get pointer to argument in i64 array.
+      // TODO: promote arguments that are shorter than 32 bits.
+      llvm::Constant *ArgIndex = llvm::ConstantInt::get(I32, A);
+      llvm::Instruction *ArgPtr =
+          llvm::GetElementPtrInst::Create(I64, Args, {ArgIndex});
+      ArgPtr->insertBefore(Call);
 
-      // Cast pointer to correct type if necessary
-      if (arg_ptr->getType()->getPointerElementType() != arg_type) {
-        llvm::BitCastInst *bc_arg_ptr =
-            new llvm::BitCastInst(arg_ptr, arg_type->getPointerTo(0));
-        bc_arg_ptr->insertAfter(arg_ptr);
-        arg_ptr = bc_arg_ptr;
+      // Cast pointer to correct type if necessary.
+      if (ArgPtr->getType()->getPointerElementType() != ArgType) {
+        llvm::BitCastInst *ArgPtrBC =
+            new llvm::BitCastInst(ArgPtr, ArgType->getPointerTo(0));
+        ArgPtrBC->insertAfter(ArgPtr);
+        ArgPtr = ArgPtrBC;
       }
 
-      // Store argument to i64 array
-      llvm::StoreInst *store = new llvm::StoreInst(arg, arg_ptr);
-      store->insertBefore(call);
+      // Store argument to i64 array.
+      llvm::StoreInst *Store = new llvm::StoreInst(Arg, ArgPtr);
+      Store->insertBefore(Call);
     }
 
-    // Fix address space of undef format values
-    if (format->getValueID() == llvm::Value::UndefValueVal) {
-      format = llvm::UndefValue::get(format_type);
+    // Fix address space of undef format values.
+    if (Format->getValueID() == llvm::Value::UndefValueVal) {
+      Format = llvm::UndefValue::get(FormatType);
     }
 
-    // Replace call with new non-variadic function
-    llvm::CallInst *new_call =
-        llvm::CallInst::Create(new_cl_printf, {format, args});
-    new_call->insertBefore(call);
-    call->replaceAllUsesWith(new_call);
-    call->eraseFromParent();
+    // Replace call with new non-variadic function.
+    llvm::CallInst *NewCall = llvm::CallInst::Create(NewPrintF, {Format, Args});
+    NewCall->insertBefore(Call);
+    Call->replaceAllUsesWith(NewCall);
+    Call->eraseFromParent();
   }
 
-  // Update arguments
-  llvm::Function::arg_iterator old_arg = cl_printf->arg_begin();
-  llvm::Function::arg_iterator new_arg = new_cl_printf->arg_begin();
-  new_arg->takeName(&*old_arg);
-  old_arg->replaceAllUsesWith(&*new_arg);
+  // Update arguments.
+  llvm::Function::arg_iterator OldArg = OldPrintF->arg_begin();
+  llvm::Function::arg_iterator NewArg = NewPrintF->arg_begin();
+  NewArg->takeName(&*OldArg);
+  OldArg->replaceAllUsesWith(&*NewArg);
 
-  // Remove old function
-  cl_printf->eraseFromParent();
+  // Remove old function.
+  OldPrintF->eraseFromParent();
 
-  // Get handle to vprintf function
-  llvm::Function *vprintf_func = module->getFunction("vprintf");
-  if (!vprintf_func)
+  // Get handle to vprintf function.
+  llvm::Function *VPrintF = Module->getFunction("vprintf");
+  if (!VPrintF)
     return;
 
-  // If vprintf format address space is already generic, then we're done
-  auto vprintf_format_type = vprintf_func->getFunctionType()->getParamType(0);
-  if (vprintf_format_type->getPointerAddressSpace() == 0)
+  // If vprintf format address space is already generic, then we're done.
+  auto *VPrintFFormatType = VPrintF->getFunctionType()->getParamType(0);
+  if (VPrintFFormatType->getPointerAddressSpace() == 0)
     return;
 
-  // Change address space of vprintf format argument to generic
-  auto i8ptr = llvm::PointerType::get(llvm::Type::getInt8Ty(context), 0);
-  auto new_vprintf_type = llvm::FunctionType::get(vprintf_func->getReturnType(),
-                                                  {i8ptr, i8ptr}, false);
-  auto new_vprintf = llvm::Function::Create(
-      new_vprintf_type, vprintf_func->getLinkage(), "", module);
-  new_vprintf->takeName(vprintf_func);
+  // Change address space of vprintf format argument to generic.
+  auto *I8Ptr = llvm::PointerType::get(llvm::Type::getInt8Ty(Context), 0);
+  auto *NewVPrintFType =
+      llvm::FunctionType::get(VPrintF->getReturnType(), {I8Ptr, I8Ptr}, false);
+  auto *NewVPrintF =
+      llvm::Function::Create(NewVPrintFType, VPrintF->getLinkage(), "", Module);
+  NewVPrintF->takeName(VPrintF);
 
-  // Update vprintf callers to pass format arguments in generic address space
-  callers.assign(vprintf_func->users().begin(), vprintf_func->users().end());
-  for (auto U = callers.begin(); U != callers.end(); U++) {
-    llvm::CallInst *call = llvm::dyn_cast<llvm::CallInst>(*U);
-    if (!call)
+  // Update vprintf callers to pass format arguments in generic address space.
+  Callers.assign(VPrintF->user_begin(), VPrintF->user_end());
+  for (auto &U : Callers) {
+    llvm::CallInst *Call = llvm::dyn_cast<llvm::CallInst>(U);
+    if (!Call)
       continue;
 
-    llvm::Value *format = call->getArgOperand(0);
-    llvm::Type *arg_type = format->getType();
-    if (arg_type->getPointerAddressSpace() != 0) {
-      // Cast address space to generic
-      llvm::Type *new_arg_type =
-          arg_type->getPointerElementType()->getPointerTo(0);
-      llvm::AddrSpaceCastInst *asc =
-          new llvm::AddrSpaceCastInst(format, new_arg_type);
-      asc->insertBefore(call);
-      call->setArgOperand(0, asc);
+    llvm::Value *Format = Call->getArgOperand(0);
+    llvm::Type *FormatType = Format->getType();
+    if (FormatType->getPointerAddressSpace() != 0) {
+      // Cast address space to generic.
+      llvm::Type *NewFormatType =
+          FormatType->getPointerElementType()->getPointerTo(0);
+      llvm::AddrSpaceCastInst *FormatASC =
+          new llvm::AddrSpaceCastInst(Format, NewFormatType);
+      FormatASC->insertBefore(Call);
+      Call->setArgOperand(0, FormatASC);
     }
-    call->setCalledFunction(new_vprintf);
+    Call->setCalledFunction(NewVPrintF);
   }
 
-  vprintf_func->eraseFromParent();
+  VPrintF->eraseFromParent();
 }
 
-void pocl_cuda_link_libdevice(llvm::Module *module, const char *kernel,
-                              const char *gpu_arch) {
-  // TODO: Can we link libdevice into the kernel library at pocl build time?
-  // This would remove this runtime dependency on the CUDA toolkit.
-  // Had some issues with the other pocl LLVM passes crashing on the libdevice
-  // code - needs more investigation.
-
-  // Construct path to libdevice bitcode library
-  const char *cuda_path = pocl_get_string_option("POCL_CUDA_TOOLKIT_PATH", "");
-  const char *libdevice_fmt = "%s/nvvm/libdevice/libdevice.compute_%d.10.bc";
-
-  char *end;
-  unsigned long sm = strtoul(gpu_arch + 3, &end, 10);
-  if (!sm || strlen(end))
-    POCL_ABORT("[CUDA] invalid GPU architecture %s\n", gpu_arch);
+// Link CUDA's libdevice bitcode library to provide implementations for most of
+// the OpenCL math functions.
+// TODO: Can we link libdevice into the kernel library at pocl build time?
+// This would remove this runtime dependency on the CUDA toolkit.
+// Had some issues with the earlier pocl LLVM passes crashing on the libdevice
+// code - needs more investigation.
+void linkLibDevice(llvm::Module *Module, const char *KernelName,
+                   const char *Arch) {
+  char *End;
+  unsigned long SM = strtoul(Arch + 3, &End, 10);
+  if (!SM || strlen(End))
+    POCL_ABORT("[CUDA] invalid GPU architecture %s\n", Arch);
 
   // This mapping from SM version to libdevice library version is given here:
   // http://docs.nvidia.com/cuda/libdevice-users-guide/basic-usage.html#version-selection
-  int ldsm = 0;
-  if (sm < 30)
-    ldsm = 20;
-  else if (sm == 30)
-    ldsm = 30;
-  else if (sm < 35)
-    ldsm = 20;
-  else if (sm <= 37)
-    ldsm = 35;
-  else if (sm < 50)
-    ldsm = 30;
-  else if (sm <= 53)
-    ldsm = 50;
+  int LibDeviceSM = 0;
+  if (SM < 30)
+    LibDeviceSM = 20;
+  else if (SM == 30)
+    LibDeviceSM = 30;
+  else if (SM < 35)
+    LibDeviceSM = 20;
+  else if (SM <= 37)
+    LibDeviceSM = 35;
+  else if (SM < 50)
+    LibDeviceSM = 30;
+  else if (SM <= 53)
+    LibDeviceSM = 50;
   else
-    ldsm = 30;
+    LibDeviceSM = 30;
 
-  size_t sz = snprintf(NULL, 0, libdevice_fmt, cuda_path, ldsm);
-  char *libdevice_path = (char *)malloc(sz + 1);
-  sprintf(libdevice_path, libdevice_fmt, cuda_path, ldsm);
-  POCL_MSG_PRINT_INFO("loading libdevice from '%s'\n", libdevice_path);
-  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> buffer =
-      llvm::MemoryBuffer::getFile(libdevice_path);
-  free(libdevice_path);
-  if (!buffer)
+  // Construct path to libdevice bitcode library.
+  const char *ToolkitPath =
+      pocl_get_string_option("POCL_CUDA_TOOLKIT_PATH", "");
+  const char *LibDeviceFormat = "%s/nvvm/libdevice/libdevice.compute_%d.10.bc";
+
+  size_t PathSize =
+      snprintf(NULL, 0, LibDeviceFormat, ToolkitPath, LibDeviceSM);
+  char *LibDevicePath = (char *)malloc(PathSize + 1);
+  sprintf(LibDevicePath, LibDeviceFormat, ToolkitPath, LibDeviceSM);
+  POCL_MSG_PRINT_INFO("loading libdevice from '%s'\n", LibDevicePath);
+  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Buffer =
+      llvm::MemoryBuffer::getFile(LibDevicePath);
+  free(LibDevicePath);
+  if (!Buffer)
     POCL_ABORT("[CUDA] failed to open libdevice library file\n");
 
-  // Load libdevice bitcode library
-  llvm::Expected<std::unique_ptr<llvm::Module>> libdevice_module =
-      parseBitcodeFile(buffer->get()->getMemBufferRef(), module->getContext());
-  if (!libdevice_module)
+  // Load libdevice bitcode library.
+  llvm::Expected<std::unique_ptr<llvm::Module>> LibDeviceModule =
+      parseBitcodeFile(Buffer->get()->getMemBufferRef(), Module->getContext());
+  if (!LibDeviceModule)
     POCL_ABORT("[CUDA] failed to load libdevice bitcode\n");
 
-  // Fix triple and data-layout of libdevice module
-  (*libdevice_module)->setTargetTriple(module->getTargetTriple());
-  (*libdevice_module)->setDataLayout(module->getDataLayout());
+  // Fix triple and data-layout of libdevice module.
+  (*LibDeviceModule)->setTargetTriple(Module->getTargetTriple());
+  (*LibDeviceModule)->setDataLayout(Module->getDataLayout());
 
-  // Link libdevice into module
-  llvm::Linker linker(*module);
-  if (linker.linkInModule(std::move(libdevice_module.get()))) {
+  // Link libdevice into module.
+  llvm::Linker Linker(*Module);
+  if (Linker.linkInModule(std::move(LibDeviceModule.get()))) {
     POCL_ABORT("[CUDA] failed to link to libdevice");
   }
 
-  llvm::legacy::PassManager passes;
+  llvm::legacy::PassManager Passes;
 
-  // Run internalize to mark all non-kernel functions as internal
-  auto preserve_kernel = [=](const llvm::GlobalValue &GV) {
-    return GV.getName() == kernel;
+  // Run internalize to mark all non-kernel functions as internal.
+  auto PreserveKernel = [=](const llvm::GlobalValue &GV) {
+    return GV.getName() == KernelName;
   };
-  passes.add(llvm::createInternalizePass(preserve_kernel));
+  Passes.add(llvm::createInternalizePass(PreserveKernel));
 
-  // Run NVVM reflect pass to set math options
-  // TODO: Determine correct FTZ value from frontend compiler options
-  llvm::StringMap<int> reflect_params;
-  reflect_params["__CUDA_FTZ"] = 1;
-  passes.add(llvm::createNVVMReflectPass(reflect_params));
+  // Run NVVM reflect pass to set math options.
+  // TODO: Determine correct FTZ value from frontend compiler options.
+  llvm::StringMap<int> ReflectParams;
+  ReflectParams["__CUDA_FTZ"] = 1;
+  Passes.add(llvm::createNVVMReflectPass(ReflectParams));
 
-  // Run optimization passes to clean up unused functions etc
+  // Run optimization passes to clean up unused functions etc.
   llvm::PassManagerBuilder Builder;
   Builder.OptLevel = 3;
   Builder.SizeLevel = 0;
-  Builder.populateModulePassManager(passes);
+  Builder.populateModulePassManager(Passes);
 
-  passes.run(*module);
+  Passes.run(*Module);
 }
 
-void pocl_gen_local_mem_args(llvm::Module *module, const char *kernel) {
-  // TODO: Deal with non-kernel functions that take local memory arguments
+// CUDA doesn't allow multiple local memory arguments or automatic variables, so
+// we have to create a single global variable for local memory allocations, and
+// then manually add offsets to it to get each individual local memory
+// allocation. This transformation replaces each local memory pointer argument
+// with an integer offset, and then inserts the necessary GEP+BitCast
+// instructions to calculate the base pointers.
+void fixLocalMemArgs(llvm::Module *Module, const char *KernelName) {
+  // TODO: Deal with non-kernel functions that take local memory arguments.
 
-  llvm::LLVMContext &context = module->getContext();
+  llvm::LLVMContext &Context = Module->getContext();
 
-  llvm::Function *function = module->getFunction(kernel);
-  if (!function)
+  llvm::Function *Function = Module->getFunction(KernelName);
+  if (!Function)
     POCL_ABORT("[CUDA] ptx-gen: kernel function not found in module\n");
 
-  // Create global variable for local memory allocations
-  llvm::Type *byte_array_type =
-      llvm::ArrayType::get(llvm::Type::getInt8Ty(context), 0);
-  llvm::GlobalVariable *shared_base = new llvm::GlobalVariable(
-      *module, byte_array_type, false, llvm::GlobalValue::ExternalLinkage, NULL,
+  // Create global variable for local memory allocations.
+  llvm::Type *ByteArrayType =
+      llvm::ArrayType::get(llvm::Type::getInt8Ty(Context), 0);
+  llvm::GlobalVariable *SharedMemBase = new llvm::GlobalVariable(
+      *Module, ByteArrayType, false, llvm::GlobalValue::ExternalLinkage, NULL,
       "_shared_memory_region_", NULL, llvm::GlobalValue::NotThreadLocal, 3,
       false);
 
-  // Argument info for creating new function
-  std::vector<llvm::Argument *> arguments;
-  std::vector<llvm::Type *> argument_types;
+  // Argument info for creating new function.
+  std::vector<llvm::Argument *> Arguments;
+  std::vector<llvm::Type *> ArgumentTypes;
 
-  // Loop over arguments
-  bool has_local_args = false;
-  for (auto arg = function->arg_begin(); arg != function->arg_end(); arg++) {
-    // Check for local memory pointer
-    llvm::Type *arg_type = arg->getType();
-    if (arg_type->isPointerTy() && arg_type->getPointerAddressSpace() == 3) {
-      has_local_args = true;
+  // Loop over arguments.
+  bool HasLocalMemArgs = false;
+  for (auto &Arg : Function->args()) {
+    // Check for local memory pointer.
+    llvm::Type *ArgType = Arg.getType();
+    if (ArgType->isPointerTy() && ArgType->getPointerAddressSpace() == 3) {
+      HasLocalMemArgs = true;
 
-      // Create new argument for offset into shared memory allocation
-      llvm::Type *i32ty = llvm::Type::getInt32Ty(context);
-      llvm::Argument *offset =
-          new llvm::Argument(i32ty, arg->getName() + "_offset");
-      arguments.push_back(offset);
-      argument_types.push_back(i32ty);
+      // Create new argument for offset into shared memory allocation.
+      llvm::Type *I32ty = llvm::Type::getInt32Ty(Context);
+      llvm::Argument *Offset =
+          new llvm::Argument(I32ty, Arg.getName() + "_offset");
+      Arguments.push_back(Offset);
+      ArgumentTypes.push_back(I32ty);
 
-      // Insert GEP to add offset
-      llvm::Value *zero = llvm::ConstantInt::getSigned(i32ty, 0);
-      llvm::GetElementPtrInst *gep = llvm::GetElementPtrInst::Create(
-          byte_array_type, shared_base, {zero, offset});
-      gep->insertBefore(&*function->begin()->begin());
+      // Insert GEP to add offset.
+      llvm::Value *Zero = llvm::ConstantInt::getSigned(I32ty, 0);
+      llvm::GetElementPtrInst *GEP = llvm::GetElementPtrInst::Create(
+          ByteArrayType, SharedMemBase, {Zero, Offset});
+      GEP->insertBefore(&*Function->begin()->begin());
 
-      // Cast pointer to correct type
-      llvm::BitCastInst *cast = new llvm::BitCastInst(gep, arg_type);
-      cast->insertAfter(gep);
+      // Cast pointer to correct type.
+      llvm::BitCastInst *Cast = new llvm::BitCastInst(GEP, ArgType);
+      Cast->insertAfter(GEP);
 
-      cast->takeName(&*arg);
-      arg->replaceAllUsesWith(cast);
+      Cast->takeName(&Arg);
+      Arg.replaceAllUsesWith(Cast);
     } else {
-      // No change to other arguments
-      arguments.push_back(&*arg);
-      argument_types.push_back(arg_type);
+      // No change to other arguments.
+      Arguments.push_back(&Arg);
+      ArgumentTypes.push_back(ArgType);
     }
   }
 
-  if (!has_local_args)
+  if (!HasLocalMemArgs)
     return;
 
-  // Create new function with offsets instead of local memory pointers
-  llvm::FunctionType *new_func_type =
-      llvm::FunctionType::get(function->getReturnType(), argument_types, false);
-  llvm::Function *new_func = llvm::Function::Create(
-      new_func_type, function->getLinkage(), function->getName(), module);
-  new_func->takeName(function);
+  // Create new function with offsets instead of local memory pointers.
+  llvm::FunctionType *NewFunctionType =
+      llvm::FunctionType::get(Function->getReturnType(), ArgumentTypes, false);
+  llvm::Function *NewFunction = llvm::Function::Create(
+      NewFunctionType, Function->getLinkage(), Function->getName(), Module);
+  NewFunction->takeName(Function);
 
-  // Take function body from old function
-  new_func->getBasicBlockList().splice(new_func->begin(),
-                                       function->getBasicBlockList());
+  // Take function body from old function.
+  NewFunction->getBasicBlockList().splice(NewFunction->begin(),
+                                          Function->getBasicBlockList());
 
-  // TODO: Copy attributes from old function
+  // TODO: Copy attributes from old function.
 
-  // Update function body with new arguments
-  std::vector<llvm::Argument *>::iterator old_arg;
-  llvm::Function::arg_iterator new_arg;
-  for (old_arg = arguments.begin(), new_arg = new_func->arg_begin();
-       new_arg != new_func->arg_end(); new_arg++, old_arg++) {
-    new_arg->takeName(*old_arg);
-    (*old_arg)->replaceAllUsesWith(&*new_arg);
+  // Update function body with new arguments.
+  std::vector<llvm::Argument *>::iterator OldArg;
+  llvm::Function::arg_iterator NewArg;
+  for (OldArg = Arguments.begin(), NewArg = NewFunction->arg_begin();
+       NewArg != NewFunction->arg_end(); NewArg++, OldArg++) {
+    NewArg->takeName(*OldArg);
+    (*OldArg)->replaceAllUsesWith(&*NewArg);
   }
 
   // TODO: Deal with calls to this kernel from other function?
 
-  function->eraseFromParent();
+  Function->eraseFromParent();
 }
 
-void pocl_insert_ptx_intrinsics(llvm::Module *module) {
-  struct ptx_intrinsic_map_entry {
-    const char *varname;
-    const char *intrinsic;
+// Replace work-item/work-group placeholder variables with calls to the
+// corresponding PTX intrinsics.
+void insertPTXIntrinsics(llvm::Module *Module) {
+  struct IntrinsicMapEntry {
+    const char *VarName;
+    const char *Intrinsic;
   };
-  struct ptx_intrinsic_map_entry intrinsic_map[] = {
+  struct IntrinsicMapEntry IntrinsicMap[] = {
       {"_local_id_x", "llvm.nvvm.read.ptx.sreg.tid.x"},
       {"_local_id_y", "llvm.nvvm.read.ptx.sreg.tid.y"},
       {"_local_id_z", "llvm.nvvm.read.ptx.sreg.tid.z"},
@@ -552,45 +573,41 @@ void pocl_insert_ptx_intrinsics(llvm::Module *module) {
       {"_num_groups_y", "llvm.nvvm.read.ptx.sreg.nctaid.y"},
       {"_num_groups_z", "llvm.nvvm.read.ptx.sreg.nctaid.z"},
   };
-  size_t num_intrinsics =
-      sizeof(intrinsic_map) / sizeof(ptx_intrinsic_map_entry);
 
-  llvm::LLVMContext &context = module->getContext();
-  llvm::Type *int32Ty = llvm::Type::getInt32Ty(context);
-  llvm::FunctionType *intrinsic_type = llvm::FunctionType::get(int32Ty, false);
+  llvm::LLVMContext &Context = Module->getContext();
+  llvm::Type *I32 = llvm::Type::getInt32Ty(Context);
+  llvm::FunctionType *IntrinsicType = llvm::FunctionType::get(I32, false);
 
-  for (unsigned i = 0; i < num_intrinsics; i++) {
-    ptx_intrinsic_map_entry entry = intrinsic_map[i];
-
-    llvm::GlobalVariable *var = module->getGlobalVariable(entry.varname);
-    if (!var)
+  for (auto &Entry : IntrinsicMap) {
+    llvm::GlobalVariable *Var = Module->getGlobalVariable(Entry.VarName);
+    if (!Var)
       continue;
 
-    auto var_users = var->users();
-    std::vector<llvm::Value *> users(var_users.begin(), var_users.end());
-    for (auto U = users.begin(); U != users.end(); U++) {
-      // Look for loads from the global variable
-      llvm::LoadInst *load = llvm::dyn_cast<llvm::LoadInst>(*U);
-      if (load) {
-        // Replace load with intrinsic
-        llvm::Constant *func =
-            module->getOrInsertFunction(entry.intrinsic, intrinsic_type);
-        llvm::CallInst *call = llvm::CallInst::Create(func, "", load);
-        load->replaceAllUsesWith(call);
-        load->eraseFromParent();
+    std::vector<llvm::Value *> Users(Var->user_begin(), Var->user_end());
+    for (auto &U : Users) {
+      // Look for loads from the global variable.
+      llvm::LoadInst *Load = llvm::dyn_cast<llvm::LoadInst>(U);
+      if (Load) {
+        // Replace load with intrinsic.
+        llvm::Constant *Function =
+            Module->getOrInsertFunction(Entry.Intrinsic, IntrinsicType);
+        llvm::CallInst *Call = llvm::CallInst::Create(Function, "", Load);
+        Load->replaceAllUsesWith(Call);
+        Load->eraseFromParent();
       }
     }
 
-    var->eraseFromParent();
+    Var->eraseFromParent();
   }
 }
 
-void pocl_map_libdevice_calls(llvm::Module *module) {
-  struct function_map_entry {
-    const char *ocl_funcname;
-    const char *libdevice_funcname;
+// Map kernel math functions onto the corresponding CUDA libdevice functions.
+void mapLibDeviceCalls(llvm::Module *Module) {
+  struct FunctionMapEntry {
+    const char *OCLFunctionName;
+    const char *LibDeviceFunctionName;
   };
-  struct function_map_entry function_map[] = {
+  struct FunctionMapEntry FunctionMap[] = {
 
 // clang-format off
 #define LDMAP(name) \
@@ -649,38 +666,32 @@ void pocl_map_libdevice_calls(llvm::Module *module) {
   };
   // clang-format on
 
-  size_t num_functions = sizeof(function_map) / sizeof(function_map_entry);
-
-  for (unsigned i = 0; i < num_functions; i++) {
-    function_map_entry entry = function_map[i];
-
-    llvm::Function *func = module->getFunction(entry.ocl_funcname);
-    if (!func)
+  for (auto &Entry : FunctionMap) {
+    llvm::Function *Function = Module->getFunction(Entry.OCLFunctionName);
+    if (!Function)
       continue;
 
-    auto func_users = func->users();
-    std::vector<llvm::Value *> users(func_users.begin(), func_users.end());
-    for (auto U = users.begin(); U != users.end(); U++) {
-      // Look for calls to function
-      llvm::CallInst *call = llvm::dyn_cast<llvm::CallInst>(*U);
-      if (call) {
-        // Create function declaration for lidevice version
-        llvm::FunctionType *func_type = func->getFunctionType();
-        llvm::Constant *libdevice_func =
-            module->getOrInsertFunction(entry.libdevice_funcname, func_type);
+    std::vector<llvm::Value *> Users(Function->user_begin(),
+                                     Function->user_end());
+    for (auto &U : Users) {
+      // Look for calls to function.
+      llvm::CallInst *Call = llvm::dyn_cast<llvm::CallInst>(U);
+      if (Call) {
+        // Create function declaration for libdevice version.
+        llvm::FunctionType *FunctionType = Function->getFunctionType();
+        llvm::Constant *LibDeviceFunction = Module->getOrInsertFunction(
+            Entry.LibDeviceFunctionName, FunctionType);
 
-        // Replace function with libdevice version
-        std::vector<llvm::Value *> args;
-        for (auto arg = call->arg_begin(); arg != call->arg_end(); arg++)
-          args.push_back(*arg);
-        llvm::CallInst *new_call =
-            llvm::CallInst::Create(libdevice_func, args, "", call);
-        new_call->takeName(call);
-        call->replaceAllUsesWith(new_call);
-        call->eraseFromParent();
+        // Replace function with libdevice version.
+        std::vector<llvm::Value *> Args(Call->arg_begin(), Call->arg_end());
+        llvm::CallInst *NewCall =
+            llvm::CallInst::Create(LibDeviceFunction, Args, "", Call);
+        NewCall->takeName(Call);
+        Call->replaceAllUsesWith(NewCall);
+        Call->eraseFromParent();
       }
     }
 
-    func->eraseFromParent();
+    Function->eraseFromParent();
   }
 }
