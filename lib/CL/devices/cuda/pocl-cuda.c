@@ -81,7 +81,6 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->write_rect = pocl_cuda_write_rect;
   ops->copy = pocl_cuda_copy;
   ops->copy_rect = pocl_cuda_copy_rect;
-  // ops->get_timer_value = pocl_cuda_get_timer_value;
   ops->map_mem = pocl_cuda_map_mem;
   ops->unmap_mem = pocl_cuda_unmap_mem;
 
@@ -89,11 +88,14 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->submit = pocl_cuda_submit;
   ops->join = pocl_cuda_join;
   ops->flush = pocl_cuda_flush;
-  // ops->notify = pocl_cuda_notify;
-  // ops->broadcast = pocl_cuda_broadcast;
-  // ops->wait_event = pocl_cuda_wait_event;
-  // ops->update_event = pocl_cuda_update_event;
-  // ops->free_event_data = pocl_cuda_free_event_data;
+
+  /* TODO: implement remaining ops functions: */
+  /* get_timer_value */
+  /* notify */
+  /* broadcast */
+  /* wait_event */
+  /* update_event */
+  /* free_event_data */
 }
 
 void
