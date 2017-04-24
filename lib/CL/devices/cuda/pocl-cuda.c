@@ -1,6 +1,6 @@
 /* pocl-cuda.c - driver for CUDA devices
 
-   Copyright (c) 2016 James Price / University of Bristol
+   Copyright (c) 2016-2017 James Price / University of Bristol
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
