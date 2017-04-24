@@ -31,8 +31,8 @@ extern "C"
 {
 #endif
 
-// Generate a PTX file from an LLVM bitcode file.
-// Returns zero on success, non-zero on failure.
+/* Generate a PTX file from an LLVM bitcode file. */
+/* Returns zero on success, non-zero on failure. */
 int pocl_ptx_gen(const char *BitcodeFilename,
                  const char *PTXFilename,
                  const char *KernelName,
