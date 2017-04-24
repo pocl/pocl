@@ -393,7 +393,7 @@ void linkLibDevice(llvm::Module *Module, const char *KernelName,
 
   // Construct path to libdevice bitcode library.
   const char *ToolkitPath =
-      pocl_get_string_option("POCL_CUDA_TOOLKIT_PATH", "");
+      pocl_get_string_option("POCL_CUDA_TOOLKIT_PATH", CUDA_TOOLKIT_ROOT_DIR);
   const char *LibDeviceFormat = "%s/nvvm/libdevice/libdevice.compute_%d.10.bc";
 
   size_t PathSize =

@@ -33,9 +33,4 @@ else
   echo "Using OCL_ICD_VENDORS: $OCL_ICD_VENDORS"
 fi
 
-if [ -z "$POCL_CUDA_TOOLKIT_PATH" ]; then
-  echo "POCL_CUDA_TOOLKIT_PATH not set - many tests will fail without it"
-  exit 1
-fi
-
 ctest -L cuda $@

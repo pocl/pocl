@@ -19,9 +19,11 @@ Building pocl with CUDA support
   Aside from the usual pocl dependencies, you will also need the CUDA toolkit.
   Currently this backend has only been tested against CUDA 8.0, but it may also
   be possible to build against other versions.
-  The include directory containing ``cuda.h`` should be on your header search
-  path, and the library directory containing ``libcuda.{so,dylib}`` should be
-  on your library search path.
+
+  If you experience build failures regarding missing CUDA headers or libraries,
+  you may need to add the include directory containing ``cuda.h`` to your header
+  search path, and/or the library directory containing ``libcuda.{so,dylib}`` to
+  your library search path.
 
   The CUDA backend requires LLVM 4.0 or newer, and LLVM must have been built
   with the NVPTX backend enabled.
@@ -33,15 +35,23 @@ Building pocl with CUDA support
 
   Otherwise, build and install pocl as normal.
 
-3) Configuration
+3) Run tests
+~~~~~~~~~~~~
+  After building pocl, you can smoke test the CUDA backend by executing the
+  subset of pocl's tests that are known to pass on NVIDIA GPUs::
+
+    ../tools/scripts/run_cuda_tests
+
+4) Configuration
 ~~~~~~~~~~~~~~~~
-  The CUDA backend currently has a runtime dependency on the CUDA toolkit.
-  The ``POCL_CUDA_TOOLKIT_PATH`` environment variable needs to be set to tell
-  pocl where the CUDA toolkit is installed.
+  Use ``POCL_DEVICES=CUDA`` to select only CUDA devices.
+
+  The CUDA backend currently has a runtime dependency on the CUDA toolkit. If
+  you receive errors regarding a failure to load ``libdevice``, you may need
+  to set the ``POCL_CUDA_TOOLKIT_PATH`` environment variable to tell pocl
+  where the CUDA toolkit is installed.
   Set this variable to the root of the toolkit installation (the directory
   containing the ``nvvm`` directory).
-
-  Use ``POCL_DEVICES=CUDA`` to select only CUDA devices.
 
   The ``POCL_CUDA_GPU_ARCH`` environment variable can be set to override the
   target GPU architecture (e.g. ``POCL_CUDA_GPU_ARCH=sm_35``), which may be
@@ -49,13 +59,6 @@ Building pocl with CUDA support
 
   The ``POCL_CUDA_DUMP_NVVM`` environment variable can be set to ``1`` to
   dump the LLVM IR that is fed into the NVPTX backend for debugging purposes.
-
-4) Run tests
-~~~~~~~~~~~~
-  After building pocl, you can smoke test the CUDA backend by executing the
-  subset of pocl's tests that are known to pass on NVIDIA GPUs::
-
-    ../tools/scripts/run_cuda_tests
 
 
 CUDA backend status
