@@ -413,6 +413,10 @@ struct _cl_device_id {
      we need to generate work-item loops to execute all the work-items
      in the WG, otherwise the hardware spawns the WIs. */
   cl_bool spmd;
+  /* The Workgroup pass creates launcher functions and replaces work-item
+     placeholder global variables (e.g. _local_size_, _global_offset_ etc) with
+     loads from the context struct passed as a kernel argument. This flag
+     enables or disables this pass. */
   cl_bool workgroup_pass;
   cl_device_exec_capabilities execution_capabilities;
   cl_command_queue_properties queue_properties;
