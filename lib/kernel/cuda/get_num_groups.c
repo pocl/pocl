@@ -21,18 +21,18 @@
    THE SOFTWARE.
 */
 
-extern uint _num_groups_x;
-extern uint _num_groups_y;
-extern uint _num_groups_z;
+uint get_nvvm_nctaid_x();
+uint get_nvvm_nctaid_y();
+uint get_nvvm_nctaid_z();
 
 size_t _CL_OVERLOADABLE
 get_num_groups(unsigned int dimindx)
 {
   switch(dimindx)
     {
-    case 0: return _num_groups_x;
-    case 1: return _num_groups_y;
-    case 2: return _num_groups_z;
+    case 0: return get_nvvm_nctaid_x();
+    case 1: return get_nvvm_nctaid_y();
+    case 2: return get_nvvm_nctaid_z();
     default: return 0;
     }
 }

@@ -55,7 +55,6 @@ extern ModulePass *createNVVMReflectPass(const StringMap<int> &Mapping);
 static void addKernelAnnotations(llvm::Module *Module, const char *KernelName);
 static void fixLocalMemArgs(llvm::Module *Module, const char *KernelName);
 static void fixPrintF(llvm::Module *Module);
-static void insertPTXIntrinsics(llvm::Module *Module);
 static void linkLibDevice(llvm::Module *Module, const char *KernelName,
                           const char *Arch);
 static void mapLibDeviceCalls(llvm::Module *Module);
@@ -81,7 +80,6 @@ int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
   // Apply transforms to prepare for lowering to PTX.
   fixPrintF(Module->get());
   fixLocalMemArgs(Module->get(), KernelName);
-  insertPTXIntrinsics(Module->get());
   addKernelAnnotations(Module->get(), KernelName);
   mapLibDeviceCalls(Module->get());
   linkLibDevice(Module->get(), KernelName, Arch);
@@ -535,55 +533,6 @@ void fixLocalMemArgs(llvm::Module *Module, const char *KernelName) {
   // TODO: Deal with calls to this kernel from other function?
 
   Function->eraseFromParent();
-}
-
-// Replace work-item/work-group placeholder variables with calls to the
-// corresponding PTX intrinsics.
-void insertPTXIntrinsics(llvm::Module *Module) {
-  struct IntrinsicMapEntry {
-    const char *VarName;
-    const char *Intrinsic;
-  };
-  struct IntrinsicMapEntry IntrinsicMap[] = {
-      {"_local_id_x", "llvm.nvvm.read.ptx.sreg.tid.x"},
-      {"_local_id_y", "llvm.nvvm.read.ptx.sreg.tid.y"},
-      {"_local_id_z", "llvm.nvvm.read.ptx.sreg.tid.z"},
-      {"_local_size_x", "llvm.nvvm.read.ptx.sreg.ntid.x"},
-      {"_local_size_y", "llvm.nvvm.read.ptx.sreg.ntid.y"},
-      {"_local_size_z", "llvm.nvvm.read.ptx.sreg.ntid.z"},
-      {"_group_id_x", "llvm.nvvm.read.ptx.sreg.ctaid.x"},
-      {"_group_id_y", "llvm.nvvm.read.ptx.sreg.ctaid.y"},
-      {"_group_id_z", "llvm.nvvm.read.ptx.sreg.ctaid.z"},
-      {"_num_groups_x", "llvm.nvvm.read.ptx.sreg.nctaid.x"},
-      {"_num_groups_y", "llvm.nvvm.read.ptx.sreg.nctaid.y"},
-      {"_num_groups_z", "llvm.nvvm.read.ptx.sreg.nctaid.z"},
-  };
-
-  llvm::LLVMContext &Context = Module->getContext();
-  llvm::Type *I32 = llvm::Type::getInt32Ty(Context);
-  llvm::FunctionType *IntrinsicType = llvm::FunctionType::get(I32, false);
-
-  for (auto &Entry : IntrinsicMap) {
-    llvm::GlobalVariable *Var = Module->getGlobalVariable(Entry.VarName);
-    if (!Var)
-      continue;
-
-    std::vector<llvm::Value *> Users(Var->user_begin(), Var->user_end());
-    for (auto &U : Users) {
-      // Look for loads from the global variable.
-      llvm::LoadInst *Load = llvm::dyn_cast<llvm::LoadInst>(U);
-      if (Load) {
-        // Replace load with intrinsic.
-        llvm::Constant *Function =
-            Module->getOrInsertFunction(Entry.Intrinsic, IntrinsicType);
-        llvm::CallInst *Call = llvm::CallInst::Create(Function, "", Load);
-        Load->replaceAllUsesWith(Call);
-        Load->eraseFromParent();
-      }
-    }
-
-    Var->eraseFromParent();
-  }
 }
 
 // Map kernel math functions onto the corresponding CUDA libdevice functions.

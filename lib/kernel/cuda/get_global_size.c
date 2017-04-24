@@ -21,22 +21,22 @@
    THE SOFTWARE.
 */
 
-extern uint _local_size_x;
-extern uint _local_size_y;
-extern uint _local_size_z;
+uint get_nvvm_ntid_x();
+uint get_nvvm_ntid_y();
+uint get_nvvm_ntid_z();
 
-extern uint _num_groups_x;
-extern uint _num_groups_y;
-extern uint _num_groups_z;
+uint get_nvvm_nctaid_x();
+uint get_nvvm_nctaid_y();
+uint get_nvvm_nctaid_z();
 
 size_t _CL_OVERLOADABLE
 get_global_size(unsigned int dimindx)
 {
   switch(dimindx)
     {
-    case 0: return _local_size_x * _num_groups_x;
-    case 1: return _local_size_y * _num_groups_y;
-    case 2: return _local_size_z * _num_groups_z;
+    case 0: return get_nvvm_ntid_x() * get_nvvm_nctaid_x();
+    case 1: return get_nvvm_ntid_y() * get_nvvm_nctaid_y();
+    case 2: return get_nvvm_ntid_z() * get_nvvm_nctaid_z();
     default: return 0;
     }
 }

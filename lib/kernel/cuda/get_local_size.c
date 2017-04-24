@@ -21,18 +21,18 @@
    THE SOFTWARE.
 */
 
-extern uint _local_size_x;
-extern uint _local_size_y;
-extern uint _local_size_z;
+uint get_nvvm_ntid_x();
+uint get_nvvm_ntid_y();
+uint get_nvvm_ntid_z();
 
 size_t _CL_OVERLOADABLE
 get_local_size(unsigned int dimindx)
 {
   switch(dimindx)
     {
-    case 0: return _local_size_x;
-    case 1: return _local_size_y;
-    case 2: return _local_size_z;
+    case 0: return get_nvvm_ntid_x();
+    case 1: return get_nvvm_ntid_y();
+    case 2: return get_nvvm_ntid_z();
     default: return 0;
     }
 }

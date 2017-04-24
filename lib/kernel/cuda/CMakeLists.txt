@@ -41,6 +41,7 @@ foreach(FILE
   list(APPEND KERNEL_SOURCES "cuda/${FILE}")
 endforeach()
 
+list(APPEND KERNEL_SOURCES "cuda/nvvm_functions.ll")
 
 # Select either NVPTX or NVPTX64
 if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
