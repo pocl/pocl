@@ -137,8 +137,6 @@ pocl_cuda_init (cl_device_id dev, const char *parameters)
   cuDeviceGetAttribute ((int *)&dev->max_compute_units,
                         CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT,
                         data->device);
-  cuDeviceGetAttribute ((int *)&dev->max_clock_frequency,
-                        CU_DEVICE_ATTRIBUTE_CLOCK_RATE, data->device);
   cuDeviceGetAttribute ((int *)&dev->error_correction_support,
                         CU_DEVICE_ATTRIBUTE_ECC_ENABLED, data->device);
   cuDeviceGetAttribute ((int *)&dev->host_unified_memory,
@@ -146,6 +144,9 @@ pocl_cuda_init (cl_device_id dev, const char *parameters)
   cuDeviceGetAttribute ((int *)&dev->max_constant_buffer_size,
                         CU_DEVICE_ATTRIBUTE_TOTAL_CONSTANT_MEMORY,
                         data->device);
+  cuDeviceGetAttribute ((int *)&dev->max_clock_frequency,
+                        CU_DEVICE_ATTRIBUTE_CLOCK_RATE, data->device);
+  dev->max_clock_frequency /= 1000;
 
   dev->preferred_wg_size_multiple = 32;
   dev->preferred_vector_width_char = 1;
