@@ -45,6 +45,12 @@ typedef struct pocl_cuda_device_data_s
   char libdevice[PATH_MAX];
 } pocl_cuda_device_data_t;
 
+typedef struct pocl_cuda_kernel_data_s
+{
+  CUfunction kernel;
+  CUfunction kernel_offsets;
+} pocl_cuda_kernel_data_t;
+
 static void
 pocl_cuda_abort_on_error (CUresult result, unsigned line, const char *func,
                           const char *code, const char *api)
@@ -512,16 +518,29 @@ pocl_cuda_unmap_mem (void *data, void *host_ptr, void *device_start_ptr,
   return NULL;
 }
 
-static void
-load_or_generate_kernel (cl_kernel kernel, cl_device_id device)
+static CUfunction
+load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
+                         int has_offsets)
 {
   cuCtxSetCurrent (((pocl_cuda_device_data_t *)device->data)->context);
 
   CUresult result;
 
   // Check if we already have a compiled kernel function
-  if (kernel->data)
-    return;
+  pocl_cuda_kernel_data_t *kdata = (pocl_cuda_kernel_data_t *)kernel->data;
+  if (kdata)
+    {
+      if (has_offsets && kdata->kernel_offsets)
+        return kdata->kernel_offsets;
+      else if (!has_offsets && kdata->kernel)
+        return kdata->kernel;
+    }
+  else
+    {
+      // TODO: when can we release this?
+      kernel->data = calloc (1, sizeof (pocl_cuda_kernel_data_t));
+      kdata = kernel->data;
+    }
 
   char bc_filename[POCL_FILENAME_LENGTH];
   unsigned device_i = pocl_cl_device_to_index (kernel->program, device);
@@ -530,6 +549,8 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device)
 
   char ptx_filename[POCL_FILENAME_LENGTH];
   strcpy (ptx_filename, bc_filename);
+  if (has_offsets)
+    strncat (ptx_filename, ".offsets", POCL_FILENAME_LENGTH - 1);
   strncat (ptx_filename, ".ptx", POCL_FILENAME_LENGTH - 1);
 
   if (!pocl_exists (ptx_filename))
@@ -537,7 +558,8 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device)
       // Generate PTX from LLVM bitcode
       if (pocl_ptx_gen (bc_filename, ptx_filename, kernel->name,
                         device->llvm_cpu,
-                        ((pocl_cuda_device_data_t *)device->data)->libdevice))
+                        ((pocl_cuda_device_data_t *)device->data)->libdevice,
+                        has_offsets))
         POCL_ABORT ("pocl-cuda: failed to generate PTX\n");
     }
 
@@ -552,14 +574,19 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device)
   result = cuModuleGetFunction (&function, module, kernel->name);
   CUDA_CHECK (result, "cuModuleGetFunction");
 
-  kernel->data = function;
+  if (has_offsets)
+    kdata->kernel_offsets = function;
+  else
+    kdata->kernel = function;
+
+  return function;
 }
 
 void
 pocl_cuda_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
                           cl_device_id device)
 {
-  load_or_generate_kernel (kernel, device);
+  load_or_generate_kernel (kernel, device, 0);
 }
 
 void
@@ -580,17 +607,22 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
   cl_device_id device = cq->device;
   cl_kernel kernel = node->command.run.kernel;
   pocl_argument *arguments = node->command.run.arguments;
+  struct pocl_context pc = node->command.run.pc;
 
-  // Ensure kernel has been loaded
-  load_or_generate_kernel (kernel, device);
+  // Check if we need to handle global work offsets
+  int has_offsets = 0;
+  if (pc.global_offset[0] || pc.global_offset[1] || pc.global_offset[2])
+    has_offsets = 1;
 
-  CUfunction function = kernel->data;
+  // Get kernel function
+  CUfunction function = load_or_generate_kernel (kernel, device, has_offsets);
 
   // Prepare kernel arguments
   void *null = NULL;
   unsigned sharedMemBytes = 0;
-  void *params[kernel->num_args + kernel->num_locals];
+  void *params[kernel->num_args + kernel->num_locals + (has_offsets ? 3 : 0)];
   unsigned sharedMemOffsets[kernel->num_args + kernel->num_locals];
+  unsigned globalOffsets[3];
 
   unsigned i;
   for (i = 0; i < kernel->num_args; i++)
@@ -650,10 +682,20 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
       params[kernel->num_args + i] = sharedMemOffsets + kernel->num_args + i;
     }
 
+  // Add global offsets if necessary
+  if (has_offsets)
+    {
+      globalOffsets[0] = pc.global_offset[0];
+      globalOffsets[1] = pc.global_offset[1];
+      globalOffsets[2] = pc.global_offset[2];
+      params[kernel->num_args + kernel->num_locals + 0] = globalOffsets + 0;
+      params[kernel->num_args + kernel->num_locals + 1] = globalOffsets + 1;
+      params[kernel->num_args + kernel->num_locals + 2] = globalOffsets + 2;
+    }
+
   POCL_UPDATE_EVENT_RUNNING (&node->event);
 
   // Launch kernel
-  struct pocl_context pc = node->command.run.pc;
   result = cuLaunchKernel (
       function, pc.num_groups[0], pc.num_groups[1], pc.num_groups[2],
       node->command.run.local_x, node->command.run.local_y,

@@ -90,7 +90,6 @@ The following is a non-comprehensive list of known issues in the CUDA backend:
 
 * image types and samplers are unimplemented
 * atomics are unimplemented
-* global offsets are unimplemented
 * get_work_dim is unimplemented
 * printf format support is incomplete
 

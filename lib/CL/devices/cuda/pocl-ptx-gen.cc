@@ -55,13 +55,15 @@ extern ModulePass *createNVVMReflectPass(const StringMap<int> &Mapping);
 static void addKernelAnnotations(llvm::Module *Module, const char *KernelName);
 static void fixLocalMemArgs(llvm::Module *Module, const char *KernelName);
 static void fixPrintF(llvm::Module *Module);
+static void handleGlobalOffsets(llvm::Module *Module, const char *KernelName,
+                                bool HasOffsets);
 static void linkLibDevice(llvm::Module *Module, const char *KernelName,
                           const char *LibDevicePath);
 static void mapLibDeviceCalls(llvm::Module *Module);
 
 int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
                  const char *KernelName, const char *Arch,
-                 const char *LibDevicePath) {
+                 const char *LibDevicePath, int HasOffsets) {
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Buffer =
       llvm::MemoryBuffer::getFile(BitcodeFilename);
   if (!Buffer) {
@@ -81,6 +83,7 @@ int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
   // Apply transforms to prepare for lowering to PTX.
   fixPrintF(Module->get());
   fixLocalMemArgs(Module->get(), KernelName);
+  handleGlobalOffsets(Module->get(), KernelName, HasOffsets);
   addKernelAnnotations(Module->get(), KernelName);
   mapLibDeviceCalls(Module->get());
   linkLibDevice(Module->get(), KernelName, LibDevicePath);
@@ -375,6 +378,86 @@ void fixPrintF(llvm::Module *Module) {
   }
 
   VPrintF->eraseFromParent();
+}
+
+// Replace all uses of a global offset variable with new value.
+static void replaceGlobalOffset(llvm::Module *Module, const char *Name,
+                                llvm::Value *NewValue) {
+  auto GlobalVar = Module->getGlobalVariable(Name);
+  if (!GlobalVar)
+    return;
+
+  std::vector<llvm::Value *> Users(GlobalVar->user_begin(),
+                                   GlobalVar->user_end());
+  for (auto *U : Users) {
+    auto Load = llvm::dyn_cast<llvm::LoadInst>(U);
+    assert(Load && "Use of a global offset placeholder is not a load");
+    Load->replaceAllUsesWith(NewValue);
+    Load->eraseFromParent();
+  }
+  GlobalVar->eraseFromParent();
+}
+
+// If we don't need to handle offsets, just replaces uses of the offset
+// variables with constant zero. Otherwise, add additional kernel arguments for
+// the offsets and use those instead.
+void handleGlobalOffsets(llvm::Module *Module, const char *KernelName,
+                         bool HasOffsets) {
+  if (!HasOffsets) {
+    llvm::Type *I32 = llvm::Type::getInt32Ty(Module->getContext());
+    llvm::Value *Zero = llvm::ConstantInt::getSigned(I32, 0);
+    replaceGlobalOffset(Module, "_global_offset_x", Zero);
+    replaceGlobalOffset(Module, "_global_offset_y", Zero);
+    replaceGlobalOffset(Module, "_global_offset_z", Zero);
+    return;
+  }
+
+  llvm::Function *Function = Module->getFunction(KernelName);
+  if (!Function)
+    POCL_ABORT("[CUDA] ptx-gen: kernel function not found in module\n");
+
+  // Add additional arguments for the global offsets.
+  llvm::FunctionType *FunctionType = Function->getFunctionType();
+  std::vector<llvm::Type *> ArgumentTypes(FunctionType->param_begin(),
+                                          FunctionType->param_end());
+  llvm::Type *I32 = llvm::Type::getInt32Ty(Module->getContext());
+  ArgumentTypes.push_back(I32);
+  ArgumentTypes.push_back(I32);
+  ArgumentTypes.push_back(I32);
+
+  // Create new function.
+  llvm::FunctionType *NewFunctionType =
+      llvm::FunctionType::get(Function->getReturnType(), ArgumentTypes, false);
+  llvm::Function *NewFunction = llvm::Function::Create(
+      NewFunctionType, Function->getLinkage(), Function->getName(), Module);
+  NewFunction->takeName(Function);
+
+  // Take function body from old function.
+  NewFunction->getBasicBlockList().splice(NewFunction->begin(),
+                                          Function->getBasicBlockList());
+
+  // TODO: Copy attributes from old function?
+
+  // Update function body with the original arguments.
+  llvm::Function::arg_iterator OldArg;
+  llvm::Function::arg_iterator NewArg;
+  for (OldArg = Function->arg_begin(), NewArg = NewFunction->arg_begin();
+       OldArg != Function->arg_end(); NewArg++, OldArg++) {
+    NewArg->takeName(&*OldArg);
+    (&*OldArg)->replaceAllUsesWith(&*NewArg);
+  }
+
+  // Replace uses of the global offset variables with the new arguments.
+  NewArg->setName("global_offset_x");
+  replaceGlobalOffset(Module, "_global_offset_x", (&*NewArg++));
+  NewArg->setName("global_offset_y");
+  replaceGlobalOffset(Module, "_global_offset_y", (&*NewArg++));
+  NewArg->setName("global_offset_z");
+  replaceGlobalOffset(Module, "_global_offset_z", (&*NewArg++));
+
+  // TODO: What if the offsets are in a function that isn't the kernel?
+
+  Function->eraseFromParent();
 }
 
 int findLibDevice(char LibDevicePath[PATH_MAX], const char *Arch) {

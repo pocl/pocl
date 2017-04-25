@@ -1,6 +1,6 @@
-/* pocl-ptx-gen.h - declarations for PTX code generator
+/* OpenCL built-in library: get_global_offset() for CUDA
 
-   Copyright (c) 2016-2017 James Price / University of Bristol
+   Copyright (c) 2017 James Price
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -21,35 +21,18 @@
    THE SOFTWARE.
 */
 
-#ifndef POCL_PTX_GEN_H
-#define POCL_PTX_GEN_H
+extern uint _global_offset_x;
+extern uint _global_offset_y;
+extern uint _global_offset_z;
 
-#include "config.h"
-
-#ifdef __cplusplus
-extern "C"
+size_t _CL_OVERLOADABLE
+get_global_offset(unsigned int dimindx)
 {
-#endif
-
-#ifndef PATH_MAX
-#define PATH_MAX 4096
-#endif
-
-/* Search for the libdevice bitcode library for the given GPU architecture. */
-/* Returns zero on success, non-zero on failure. */
-int findLibDevice(char LibDevicePath[PATH_MAX], const char *Arch);
-
-/* Generate a PTX file from an LLVM bitcode file. */
-/* Returns zero on success, non-zero on failure. */
-int pocl_ptx_gen(const char *BitcodeFilename,
-                 const char *PTXFilename,
-                 const char *KernelName,
-                 const char *Arch,
-                 const char *LibDevicePath,
-                 int HasOffsets);
-
-#ifdef __cplusplus
+  switch(dimindx)
+    {
+    case 0: return _global_offset_x;
+    case 1: return _global_offset_y;
+    case 2: return _global_offset_z;
+    default: return 0;
+    }
 }
-#endif
-
-#endif /* POCL_PTX_GEN_H */
