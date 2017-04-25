@@ -69,6 +69,7 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
 
   ops->device_name = "CUDA";
   ops->init_device_infos = pocl_cuda_init_device_infos;
+  ops->build_hash = pocl_cuda_build_hash;
   ops->probe = pocl_cuda_probe;
   ops->uninit = pocl_cuda_uninit;
   ops->init = pocl_cuda_init;
@@ -99,14 +100,14 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
 }
 
 void
-pocl_cuda_init (cl_device_id device, const char *parameters)
+pocl_cuda_init (cl_device_id dev, const char *parameters)
 {
   CUresult result;
 
   result = cuInit (0);
   CUDA_CHECK (result, "cuInit");
 
-  if (device->data)
+  if (dev->data)
     return;
 
   pocl_cuda_device_data_t *data = malloc (sizeof (pocl_cuda_device_data_t));
@@ -114,59 +115,62 @@ pocl_cuda_init (cl_device_id device, const char *parameters)
   CUDA_CHECK (result, "cuDeviceGet");
 
   // Get specific device name
-  device->long_name = device->short_name = malloc (256 * sizeof (char));
-  cuDeviceGetName (device->long_name, 256, data->device);
+  dev->long_name = dev->short_name = malloc (256 * sizeof (char));
+  cuDeviceGetName (dev->long_name, 256, data->device);
+
+  SETUP_DEVICE_CL_VERSION (CUDA_DEVICE_CL_VERSION_MAJOR,
+                           CUDA_DEVICE_CL_VERSION_MINOR);
 
   // Get other device properties
-  cuDeviceGetAttribute ((int *)&device->max_work_group_size,
+  cuDeviceGetAttribute ((int *)&dev->max_work_group_size,
                         CU_DEVICE_ATTRIBUTE_MAX_THREADS_PER_BLOCK,
                         data->device);
-  cuDeviceGetAttribute ((int *)(device->max_work_item_sizes + 0),
+  cuDeviceGetAttribute ((int *)(dev->max_work_item_sizes + 0),
                         CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_X, data->device);
-  cuDeviceGetAttribute ((int *)(device->max_work_item_sizes + 1),
+  cuDeviceGetAttribute ((int *)(dev->max_work_item_sizes + 1),
                         CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_Y, data->device);
-  cuDeviceGetAttribute ((int *)(device->max_work_item_sizes + 2),
+  cuDeviceGetAttribute ((int *)(dev->max_work_item_sizes + 2),
                         CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_Z, data->device);
   cuDeviceGetAttribute (
-      (int *)&device->local_mem_size,
+      (int *)&dev->local_mem_size,
       CU_DEVICE_ATTRIBUTE_MAX_SHARED_MEMORY_PER_MULTIPROCESSOR, data->device);
-  cuDeviceGetAttribute ((int *)&device->max_compute_units,
+  cuDeviceGetAttribute ((int *)&dev->max_compute_units,
                         CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT,
                         data->device);
-  cuDeviceGetAttribute ((int *)&device->max_clock_frequency,
+  cuDeviceGetAttribute ((int *)&dev->max_clock_frequency,
                         CU_DEVICE_ATTRIBUTE_CLOCK_RATE, data->device);
-  cuDeviceGetAttribute ((int *)&device->error_correction_support,
+  cuDeviceGetAttribute ((int *)&dev->error_correction_support,
                         CU_DEVICE_ATTRIBUTE_ECC_ENABLED, data->device);
-  cuDeviceGetAttribute ((int *)&device->host_unified_memory,
+  cuDeviceGetAttribute ((int *)&dev->host_unified_memory,
                         CU_DEVICE_ATTRIBUTE_INTEGRATED, data->device);
-  cuDeviceGetAttribute ((int *)&device->max_constant_buffer_size,
+  cuDeviceGetAttribute ((int *)&dev->max_constant_buffer_size,
                         CU_DEVICE_ATTRIBUTE_TOTAL_CONSTANT_MEMORY,
                         data->device);
 
-  device->preferred_vector_width_char = 1;
-  device->preferred_vector_width_short = 1;
-  device->preferred_vector_width_int = 1;
-  device->preferred_vector_width_long = 1;
-  device->preferred_vector_width_float = 1;
-  device->preferred_vector_width_double = 1;
-  device->preferred_vector_width_half = 0;
-  device->native_vector_width_char = 1;
-  device->native_vector_width_short = 1;
-  device->native_vector_width_int = 1;
-  device->native_vector_width_long = 1;
-  device->native_vector_width_float = 1;
-  device->native_vector_width_double = 1;
-  device->native_vector_width_half = 0;
+  dev->preferred_vector_width_char = 1;
+  dev->preferred_vector_width_short = 1;
+  dev->preferred_vector_width_int = 1;
+  dev->preferred_vector_width_long = 1;
+  dev->preferred_vector_width_float = 1;
+  dev->preferred_vector_width_double = 1;
+  dev->preferred_vector_width_half = 0;
+  dev->native_vector_width_char = 1;
+  dev->native_vector_width_short = 1;
+  dev->native_vector_width_int = 1;
+  dev->native_vector_width_long = 1;
+  dev->native_vector_width_float = 1;
+  dev->native_vector_width_double = 1;
+  dev->native_vector_width_half = 0;
 
-  device->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO
-                             | CL_FP_ROUND_TO_INF | CL_FP_FMA | CL_FP_INF_NAN
-                             | CL_FP_DENORM;
-  device->double_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO
-                             | CL_FP_ROUND_TO_INF | CL_FP_FMA | CL_FP_INF_NAN
-                             | CL_FP_DENORM;
+  dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO
+                          | CL_FP_ROUND_TO_INF | CL_FP_FMA | CL_FP_INF_NAN
+                          | CL_FP_DENORM;
+  dev->double_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_ROUND_TO_ZERO
+                          | CL_FP_ROUND_TO_INF | CL_FP_FMA | CL_FP_INF_NAN
+                          | CL_FP_DENORM;
 
-  device->local_mem_type = CL_LOCAL;
-  device->host_unified_memory = 0;
+  dev->local_mem_type = CL_LOCAL;
+  dev->host_unified_memory = 0;
 
   // Get GPU architecture name
   int sm_maj, sm_min;
@@ -176,8 +180,8 @@ pocl_cuda_init (cl_device_id device, const char *parameters)
                         data->device);
   char *gpu_arch = malloc (16 * sizeof (char));
   snprintf (gpu_arch, 16, "sm_%d%d", sm_maj, sm_min);
-  device->llvm_cpu = pocl_get_string_option ("POCL_CUDA_GPU_ARCH", gpu_arch);
-  POCL_MSG_PRINT_INFO ("[CUDA] GPU architecture = %s\n", device->llvm_cpu);
+  dev->llvm_cpu = pocl_get_string_option ("POCL_CUDA_GPU_ARCH", gpu_arch);
+  POCL_MSG_PRINT_INFO ("[CUDA] GPU architecture = %s\n", dev->llvm_cpu);
 
   // Create context
   result = cuCtxCreate (&data->context, CU_CTX_MAP_HOST, data->device);
@@ -186,10 +190,18 @@ pocl_cuda_init (cl_device_id device, const char *parameters)
   // Get global memory size
   size_t memfree, memtotal;
   result = cuMemGetInfo (&memfree, &memtotal);
-  device->max_mem_alloc_size = max (memtotal / 4, 128 * 1024 * 1024);
-  device->global_mem_size = memtotal;
+  dev->max_mem_alloc_size = max (memtotal / 4, 128 * 1024 * 1024);
+  dev->global_mem_size = memtotal;
 
-  device->data = data;
+  dev->data = data;
+}
+
+char *
+pocl_cuda_build_hash (cl_device_id device)
+{
+  char *res = calloc (1000, sizeof (char));
+  snprintf (res, 1000, "CUDA-%s", device->llvm_cpu);
+  return res;
 }
 
 void
