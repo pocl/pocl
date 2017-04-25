@@ -56,11 +56,12 @@ static void addKernelAnnotations(llvm::Module *Module, const char *KernelName);
 static void fixLocalMemArgs(llvm::Module *Module, const char *KernelName);
 static void fixPrintF(llvm::Module *Module);
 static void linkLibDevice(llvm::Module *Module, const char *KernelName,
-                          const char *Arch);
+                          const char *LibDevicePath);
 static void mapLibDeviceCalls(llvm::Module *Module);
 
 int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
-                 const char *KernelName, const char *Arch) {
+                 const char *KernelName, const char *Arch,
+                 const char *LibDevicePath) {
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Buffer =
       llvm::MemoryBuffer::getFile(BitcodeFilename);
   if (!Buffer) {
@@ -82,7 +83,7 @@ int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
   fixLocalMemArgs(Module->get(), KernelName);
   addKernelAnnotations(Module->get(), KernelName);
   mapLibDeviceCalls(Module->get());
-  linkLibDevice(Module->get(), KernelName, Arch);
+  linkLibDevice(Module->get(), KernelName, LibDevicePath);
   if (pocl_get_bool_option("POCL_CUDA_DUMP_NVVM", 0)) {
     std::string ModuleString;
     llvm::raw_string_ostream ModuleStringStream(ModuleString);
@@ -376,14 +377,8 @@ void fixPrintF(llvm::Module *Module) {
   VPrintF->eraseFromParent();
 }
 
-// Link CUDA's libdevice bitcode library to provide implementations for most of
-// the OpenCL math functions.
-// TODO: Can we link libdevice into the kernel library at pocl build time?
-// This would remove this runtime dependency on the CUDA toolkit.
-// Had some issues with the earlier pocl LLVM passes crashing on the libdevice
-// code - needs more investigation.
-void linkLibDevice(llvm::Module *Module, const char *KernelName,
-                   const char *Arch) {
+int findLibDevice(char LibDevicePath[PATH_MAX], const char *Arch) {
+  // Extract numeric portion of SM version.
   char *End;
   unsigned long SM = strtoul(Arch + 3, &End, 10);
   if (!SM || strlen(End))
@@ -408,44 +403,50 @@ void linkLibDevice(llvm::Module *Module, const char *KernelName,
     LibDeviceSM = 30;
 
   const char *BasePath[] = {
+    pocl_get_string_option("POCL_CUDA_TOOLKIT_PATH", CUDA_TOOLKIT_ROOT_DIR),
     "/usr/local/lib/cuda",
     "/usr/local/lib",
     "/usr/lib",
-    pocl_get_string_option("POCL_CUDA_TOOLKIT_PATH", CUDA_TOOLKIT_ROOT_DIR),
-    NULL
   };
 
   static const char *NVVMPath[] = {
     "/nvvm",
     "/nvidia-cuda-toolkit",
     "",
-    NULL
   };
 
-  // Construct path to libdevice bitcode library.
-  static const char *LibDeviceFormat = "%s%s/libdevice/libdevice.compute_%d.10.bc";
-#ifndef PATH_MAX
-#define PATH_MAX 4096
-#endif
-  char LibDevicePath[PATH_MAX];
+  static const char *PathFormat = "%s%s/libdevice/libdevice.compute_%d.10.bc";
 
-  bool found = false;
-  for (int bp = 0; !found && BasePath[bp]; ++bp) {
-    for (int np = 0; !found && NVVMPath[np]; ++np) {
-      size_t ps = snprintf(LibDevicePath, PATH_MAX-1, LibDeviceFormat,
-        BasePath[bp], NVVMPath[np], LibDeviceSM);
+  // Search combinations of paths for the libdevice library.
+  for (auto bp : BasePath) {
+    for (auto np : NVVMPath) {
+      size_t ps = snprintf(LibDevicePath, PATH_MAX - 1, PathFormat, bp, np,
+                           LibDeviceSM);
       LibDevicePath[ps] = '\0';
-      POCL_MSG_PRINT2(__func__, __LINE__ , "looking for libdevice at '%s'\n", LibDevicePath);
-      found = llvm::sys::fs::exists(LibDevicePath);
+      POCL_MSG_PRINT2(__FUNCTION__, __LINE__, "looking for libdevice at '%s'\n",
+                      LibDevicePath);
+      if (pocl_exists(LibDevicePath)) {
+        POCL_MSG_PRINT2(__FUNCTION__, __LINE__, "found libdevice at '%s'\n",
+                        LibDevicePath);
+        return 0;
+      }
     }
   }
 
-  // if (!found), this will fail. It might also fail due to other errors loading
-  // the bytecode file, which is fine for us anyway
-  auto Buffer = llvm::MemoryBuffer::getFile(LibDevicePath);
+  return 1;
+}
 
+// Link CUDA's libdevice bitcode library to provide implementations for most of
+// the OpenCL math functions.
+// TODO: Can we link libdevice into the kernel library at pocl build time?
+// This would remove this runtime dependency on the CUDA toolkit.
+// Had some issues with the earlier pocl LLVM passes crashing on the libdevice
+// code - needs more investigation.
+void linkLibDevice(llvm::Module *Module, const char *KernelName,
+                   const char *LibDevicePath) {
+  auto Buffer = llvm::MemoryBuffer::getFile(LibDevicePath);
   if (!Buffer)
-    POCL_ABORT("[CUDA] failed to find libdevice library file\n");
+    POCL_ABORT("[CUDA] failed to open libdevice library file\n");
 
   POCL_MSG_PRINT_INFO("loading libdevice from '%s'\n", LibDevicePath);
 

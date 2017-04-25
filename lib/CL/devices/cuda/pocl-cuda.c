@@ -42,6 +42,7 @@ typedef struct pocl_cuda_device_data_s
 {
   CUdevice device;
   CUcontext context;
+  char libdevice[PATH_MAX];
 } pocl_cuda_device_data_t;
 
 static void
@@ -184,6 +185,10 @@ pocl_cuda_init (cl_device_id dev, const char *parameters)
   snprintf (gpu_arch, 16, "sm_%d%d", sm_maj, sm_min);
   dev->llvm_cpu = pocl_get_string_option ("POCL_CUDA_GPU_ARCH", gpu_arch);
   POCL_MSG_PRINT_INFO ("[CUDA] GPU architecture = %s\n", dev->llvm_cpu);
+
+  // Find libdevice library
+  if (findLibDevice (data->libdevice, dev->llvm_cpu))
+    POCL_ABORT ("[CUDA] failed to find libdevice library\n");
 
   // Create context
   result = cuCtxCreate (&data->context, CU_CTX_MAP_HOST, data->device);
@@ -531,7 +536,8 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device)
     {
       // Generate PTX from LLVM bitcode
       if (pocl_ptx_gen (bc_filename, ptx_filename, kernel->name,
-                        device->llvm_cpu))
+                        device->llvm_cpu,
+                        ((pocl_cuda_device_data_t *)device->data)->libdevice))
         POCL_ABORT ("pocl-cuda: failed to generate PTX\n");
     }
 
