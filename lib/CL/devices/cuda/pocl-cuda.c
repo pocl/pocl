@@ -86,12 +86,12 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
 
   ops->run = NULL;
   ops->submit = pocl_cuda_submit;
+  ops->notify = pocl_cuda_notify;
   ops->join = pocl_cuda_join;
   ops->flush = pocl_cuda_flush;
 
   /* TODO: implement remaining ops functions: */
   /* get_timer_value */
-  /* notify */
   /* broadcast */
   /* wait_event */
   /* update_event */
@@ -663,6 +663,12 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
   pocl_ndrange_node_cleanup (node);
 
   POCL_UPDATE_EVENT_COMPLETE (&node->event);
+}
+
+void
+pocl_cuda_notify (cl_device_id device, cl_event event)
+{
+  // TODO: Implement event dependencies
 }
 
 void
