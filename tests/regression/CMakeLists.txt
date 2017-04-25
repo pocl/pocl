@@ -245,7 +245,6 @@ set_property(TEST
   "regression/test_program_from_binary_with_local_1_1_1_LOOPS"
   "regression/setting_a_buffer_argument_to_NULL_causes_a_segfault"
   "regression/clSetKernelArg_overwriting_the_previous_kernel's_args"
-  "regression/passing_a_constant_array_as_an_arg"
   "regression/case_with_multiple_variable_length_loops_and_a_barrier_in_one"
   "regression/vector_kernel_arguments"
   APPEND PROPERTY LABELS "cuda")
