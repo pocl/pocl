@@ -248,9 +248,6 @@ set_property(TEST
   "regression/passing_a_constant_array_as_an_arg"
   "regression/case_with_multiple_variable_length_loops_and_a_barrier_in_one"
   "regression/vector_kernel_arguments"
-  "regression/infinite_loop_REPL"
-  "regression/infinite_loop_LOOPS"
-  "regression/autolocals_in_constexprs"
   APPEND PROPERTY LABELS "cuda")
 
 # The vector/struct kernel arguments are known to be flaky and
