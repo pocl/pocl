@@ -147,6 +147,7 @@ pocl_cuda_init (cl_device_id dev, const char *parameters)
                         CU_DEVICE_ATTRIBUTE_TOTAL_CONSTANT_MEMORY,
                         data->device);
 
+  dev->preferred_wg_size_multiple = 32;
   dev->preferred_vector_width_char = 1;
   dev->preferred_vector_width_short = 1;
   dev->preferred_vector_width_int = 1;
