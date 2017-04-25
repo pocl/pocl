@@ -407,21 +407,47 @@ void linkLibDevice(llvm::Module *Module, const char *KernelName,
   else
     LibDeviceSM = 30;
 
-  // Construct path to libdevice bitcode library.
-  const char *ToolkitPath =
-      pocl_get_string_option("POCL_CUDA_TOOLKIT_PATH", CUDA_TOOLKIT_ROOT_DIR);
-  const char *LibDeviceFormat = "%s/nvvm/libdevice/libdevice.compute_%d.10.bc";
+  const char *BasePath[] = {
+    "/usr/local/lib/cuda",
+    "/usr/local/lib",
+    "/usr/lib",
+    pocl_get_string_option("POCL_CUDA_TOOLKIT_PATH", CUDA_TOOLKIT_ROOT_DIR),
+    NULL
+  };
 
-  size_t PathSize =
-      snprintf(NULL, 0, LibDeviceFormat, ToolkitPath, LibDeviceSM);
-  char *LibDevicePath = (char *)malloc(PathSize + 1);
-  sprintf(LibDevicePath, LibDeviceFormat, ToolkitPath, LibDeviceSM);
-  POCL_MSG_PRINT_INFO("loading libdevice from '%s'\n", LibDevicePath);
-  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Buffer =
-      llvm::MemoryBuffer::getFile(LibDevicePath);
-  free(LibDevicePath);
+  static const char *NVVMPath[] = {
+    "/nvvm",
+    "/nvidia-cuda-toolkit",
+    "",
+    NULL
+  };
+
+  // Construct path to libdevice bitcode library.
+  static const char *LibDeviceFormat = "%s%s/libdevice/libdevice.compute_%d.10.bc";
+#ifndef PATH_MAX
+#define PATH_MAX 4096
+#endif
+  char LibDevicePath[PATH_MAX];
+
+  bool found = false;
+  for (int bp = 0; !found && BasePath[bp]; ++bp) {
+    for (int np = 0; !found && NVVMPath[np]; ++np) {
+      size_t ps = snprintf(LibDevicePath, PATH_MAX-1, LibDeviceFormat,
+        BasePath[bp], NVVMPath[np], LibDeviceSM);
+      LibDevicePath[ps] = '\0';
+      POCL_MSG_PRINT2(__func__, __LINE__ , "looking for libdevice at '%s'\n", LibDevicePath);
+      found = llvm::sys::fs::exists(LibDevicePath);
+    }
+  }
+
+  // if (!found), this will fail. It might also fail due to other errors loading
+  // the bytecode file, which is fine for us anyway
+  auto Buffer = llvm::MemoryBuffer::getFile(LibDevicePath);
+
   if (!Buffer)
-    POCL_ABORT("[CUDA] failed to open libdevice library file\n");
+    POCL_ABORT("[CUDA] failed to find libdevice library file\n");
+
+  POCL_MSG_PRINT_INFO("loading libdevice from '%s'\n", LibDevicePath);
 
   // Load libdevice bitcode library.
   llvm::Expected<std::unique_ptr<llvm::Module>> LibDeviceModule =
