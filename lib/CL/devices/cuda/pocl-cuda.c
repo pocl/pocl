@@ -654,6 +654,13 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
       node->command.run.local_z, sharedMemBytes, NULL, params, NULL);
   CUDA_CHECK (result, "cuLaunchKernel");
 
+  // Wait for kernel to finish
+  // TODO: Ideally we wouldn't do this here as it causes overheads
+  // when launching many small kernels. Experimented with using
+  // cuStreamSetCallback, but that was *much* slower.
+  result = cuStreamSynchronize (0);
+  CUDA_CHECK (result, "cuStreamSynchronize");
+
 #if defined __arm__
   // On ARM with USE_HOST_PTR, perform explict copies back from device
   for (i = 0; i < kernel->num_args; i++)
@@ -694,8 +701,5 @@ pocl_cuda_flush (cl_device_id device, cl_command_queue cq)
 void
 pocl_cuda_join (cl_device_id device, cl_command_queue cq)
 {
-  cuCtxSetCurrent (((pocl_cuda_device_data_t *)device->data)->context);
-
-  CUresult result = cuStreamSynchronize (0);
-  CUDA_CHECK (result, "cuStreamSynchronize");
+  // We currently block after each kernel launch (see comment above).
 }
