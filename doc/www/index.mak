@@ -1,22 +1,31 @@
 <%inherit file="basic_page.makt" />
-<p>Portable Computing Language (pocl) aims to become a MIT-licensed open source implementation of the OpenCL 
+<p>Portable Computing Language (pocl) aims to become a MIT-licensed
+open source implementation of the OpenCL
 standard which can be easily adapted for new targets and devices, both for homogeneous
 CPU and heterogeneous GPUs/accelerators.</p>
 
-<p>pocl uses  <a href="http://clang.llvm.org">Clang</a> as an OpenCL C frontend and 
-<a href="http://llvm.org">LLVM</a> for the kernel compiler implementation, 
+<p>pocl uses  <a href="http://clang.llvm.org">Clang</a> as an OpenCL C frontend and
+<a href="http://llvm.org">LLVM</a> for kernel compiler implementation,
 and as a portability layer. Thus, if your desired target has an LLVM backend, it
 should be able to get OpenCL support easily by using pocl.</p>
 
-<p>The goal is to accomplish improved performance portability using a  kernel 
-compiler that can generate multi-work-item work-group functions that exploit 
-various types of parallel hardware resources: VLIW, superscalar, SIMD, SIMT,
-multicore, multithread ...</p>
+<p>pocl currently has backends supporting many CPUs, ASIPs (TCE/TTA),
+NVIDIA GPUs (via CUDA), HSA-supported GPUs and multiple private off-tree
+targets.</p>
 
-<p>Additional purpose of the project is to serve as a research platform for issues 
-in parallel programming on heterogeneous platforms.</p>
+<p>In addition to providing an open source implementation of OpenCL for
+various platforms, an additional purpose of the project is to serve as a research
+platform for issues in parallel programming of heterogeneous platforms.</p>
 
 <h1>News</h1>
+
+<h2>2017-04-25: <a href="cuda-backend.html">NVIDIA GPU support via CUDA backend</a></h2>
+
+pocl now has experimental support for NVIDIA GPU devices via a new backend
+which makes use of the LLVM NVPTX backend and the CUDA driver API.
+This work was primarily carried out by James Price from the
+<a href="http://uob-hpc.github.io">High Performance Computing group</a> at the
+University of Bristol. Read more about it <a href="cuda-backend.html">here</a>.
 
 <h2>2017-04-10: <a href="pocl-0.14.html">Portable Computing Language
 (pocl) v0.14 released</a></h2>
@@ -103,17 +112,7 @@ unimplemented OpenCL APIs. These will be added gradually as needed by new tested
   <li><a href="http://www.luxrender.net/wiki/LuxMark">Luxmark v2.0</a>
   <li><a href="http://piglit.freedesktop.org/">piglit (97%+ of the tests pass)</a>
 </ul>
-
-<p>pocl has been tested on the following platforms <a href="http://llvm.org/docs/GettingStarted.html#hardware">supported by LLVM</a>:</p>
-
-<ul>
-  <li>X86_64/Linux (host&amp;device)</li>
-  <li>MIPS32/Linux (host&amp;device)</li>
-  <li>ARM v7/Linux (host&amp;device)</li>
-  <li>AMD HSA APUs/Linux (host&amp;device)</li>
-  <li>Multiple VLIW-style TTA processors designed using <a href="http://tce.cs.tut.fi">TCE</a> in heterogeneous host-device setups.</li>
-</ul>
-  
+ 
 <h1>Feature highlights</h1>
 <ul>
   <li>portable kernel compiler with horizontal autovectorization of work-groups (experimental)</li>
