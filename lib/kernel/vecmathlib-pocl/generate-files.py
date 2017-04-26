@@ -748,9 +748,6 @@ def output_directfunc(func):
     else:
         spaces = [""]
     for basetype in ["half", "float", "double"]:
-        if ((name.startswith("half_") or name.startswith("native_")) and
-            basetype!="float"):
-            continue
         if basetype=="half":
             decl("#ifdef cl_khr_fp16")
             out("")
