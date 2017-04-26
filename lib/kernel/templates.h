@@ -1046,12 +1046,27 @@
     return EXPR;                                        \
   }
 #define DEFINE_EXPR_F_F(NAME, EXPR)                     \
+  __IF_FP16(                                            \
+  IMPLEMENT_EXPR_F_F(NAME, EXPR, half   , half )        \
+  IMPLEMENT_EXPR_F_F(NAME, EXPR, half2  , half )        \
+  IMPLEMENT_EXPR_F_F(NAME, EXPR, half3  , half )        \
+  IMPLEMENT_EXPR_F_F(NAME, EXPR, half4  , half )        \
+  IMPLEMENT_EXPR_F_F(NAME, EXPR, half8  , half )        \
+  IMPLEMENT_EXPR_F_F(NAME, EXPR, half16 , half ))       \
   IMPLEMENT_EXPR_F_F(NAME, EXPR, float   , float )      \
   IMPLEMENT_EXPR_F_F(NAME, EXPR, float2  , float )      \
   IMPLEMENT_EXPR_F_F(NAME, EXPR, float3  , float )      \
   IMPLEMENT_EXPR_F_F(NAME, EXPR, float4  , float )      \
   IMPLEMENT_EXPR_F_F(NAME, EXPR, float8  , float )      \
-  IMPLEMENT_EXPR_F_F(NAME, EXPR, float16 , float )
+  IMPLEMENT_EXPR_F_F(NAME, EXPR, float16 , float )      \
+  __IF_FP64(                                            \
+  IMPLEMENT_EXPR_F_F(NAME, EXPR, double   , double )    \
+  IMPLEMENT_EXPR_F_F(NAME, EXPR, double2  , double )    \
+  IMPLEMENT_EXPR_F_F(NAME, EXPR, double3  , double )    \
+  IMPLEMENT_EXPR_F_F(NAME, EXPR, double4  , double )    \
+  IMPLEMENT_EXPR_F_F(NAME, EXPR, double8  , double )    \
+  IMPLEMENT_EXPR_F_F(NAME, EXPR, double16 , double ))
+
 
 #define IMPLEMENT_EXPR_F_FF(NAME, EXPR, VTYPE, STYPE, JTYPE)    \
   VTYPE __attribute__ ((overloadable))                          \
@@ -1062,13 +1077,28 @@
     typedef JTYPE jtype;                                        \
     return EXPR;                                                \
   }
+
 #define DEFINE_EXPR_F_FF(NAME, EXPR)                            \
+  __IF_FP16(                                                    \
+  IMPLEMENT_EXPR_F_FF(NAME, EXPR, half   , half , short)        \
+  IMPLEMENT_EXPR_F_FF(NAME, EXPR, half2  , half , short2)       \
+  IMPLEMENT_EXPR_F_FF(NAME, EXPR, half3  , half , short3)       \
+  IMPLEMENT_EXPR_F_FF(NAME, EXPR, half4  , half , short4)       \
+  IMPLEMENT_EXPR_F_FF(NAME, EXPR, half8  , half , short8)       \
+  IMPLEMENT_EXPR_F_FF(NAME, EXPR, half16 , half , short16))     \
   IMPLEMENT_EXPR_F_FF(NAME, EXPR, float   , float , int   )     \
   IMPLEMENT_EXPR_F_FF(NAME, EXPR, float2  , float , int2  )     \
   IMPLEMENT_EXPR_F_FF(NAME, EXPR, float3  , float , int3  )     \
   IMPLEMENT_EXPR_F_FF(NAME, EXPR, float4  , float , int4  )     \
   IMPLEMENT_EXPR_F_FF(NAME, EXPR, float8  , float , int8  )     \
-  IMPLEMENT_EXPR_F_FF(NAME, EXPR, float16 , float , int16 )
+  IMPLEMENT_EXPR_F_FF(NAME, EXPR, float16 , float , int16 )     \
+  __IF_FP64(                                                    \
+  IMPLEMENT_EXPR_F_FF(NAME, EXPR, double   , double , long)     \
+  IMPLEMENT_EXPR_F_FF(NAME, EXPR, double2  , double , long2)    \
+  IMPLEMENT_EXPR_F_FF(NAME, EXPR, double3  , double , long3)    \
+  IMPLEMENT_EXPR_F_FF(NAME, EXPR, double4  , double , long4)    \
+  IMPLEMENT_EXPR_F_FF(NAME, EXPR, double8  , double , long8)    \
+  IMPLEMENT_EXPR_F_FF(NAME, EXPR, double16 , double , long16))
 
 
 
