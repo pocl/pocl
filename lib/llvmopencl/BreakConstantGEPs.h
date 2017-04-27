@@ -47,8 +47,8 @@ struct BreakConstantGEPs : public FunctionPass {
 #else
     llvm::StringRef getPassName() const override {return "Remove Constant GEP Expressions";}
 #endif
-    virtual bool runOnFunction (Function & F);
-    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    virtual bool runOnFunction (Function & F) override;
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const override {
       // This pass does not modify the control-flow graph of the function
       AU.setPreservesCFG();
     }
