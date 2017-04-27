@@ -197,17 +197,18 @@ ParallelRegion::chainAfter(ParallelRegion *region)
       tail = region->at(region->size() - 2);
       t = tail->getTerminator();
     }
-  if (t->getNumSuccessors() != 1)
-    {
+#ifdef LLVM_BUILD_MODE_DEBUG
+    if (t->getNumSuccessors() != 1) {
       std::cout << "!!! trying to chain region" << std::endl;
       this->dumpNames();
       std::cout << "!!! after region" << std::endl;
       region->dumpNames();
       t->getParent()->dump();
-      
+
       assert (t->getNumSuccessors() == 1);
     }
-  
+#endif
+
   BasicBlock *successor = t->getSuccessor(0);
   Function::BasicBlockListType &bb_list = 
     successor->getParent()->getBasicBlockList();
@@ -342,8 +343,10 @@ ParallelRegion::insertPrologue(unsigned x,
 void
 ParallelRegion::dump()
 {
+#ifdef LLVM_BUILD_MODE_DEBUG
   for (iterator i = begin(), e = end(); i != e; ++i)
     (*i)->dump();
+#endif
 }
 
 void
@@ -439,12 +442,14 @@ ParallelRegion::Verify()
       ParallelRegion::ParallelRegionVector regions;
       regions.push_back(this);
 
+#ifdef LLVM_BUILD_MODE_DEBUG
       std::set<llvm::BasicBlock*> highlights;
       highlights.insert((*i));
       highlights.insert(exitBB());
       exitBB()->dump();
       dumpNames();
       dumpCFG(*(*i)->getParent(), "broken.dot", &regions, &highlights);
+#endif
 
       assert(0 && "Multiple outgoing edges from exit block!");
       return false;
@@ -670,7 +675,11 @@ ParallelRegion::InjectPrintF
        /*Name=*/"printf", M); 
     printfFunc->setCallingConv(CallingConv::C);
 
+#if LLVM_OLDER_THAN_5_0
     AttributeSet func_printf_PAL;
+#else
+    AttributeList func_printf_PAL;
+#endif
     {
       func_printf_PAL.addAttribute( M->getContext(), 1U, Attribute::NoCapture);
       func_printf_PAL.addAttribute( M->getContext(), 4294967295U, Attribute::NoUnwind);

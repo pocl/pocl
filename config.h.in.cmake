@@ -98,6 +98,8 @@
 /* "Using LLVM 4.0" */
 #cmakedefine LLVM_4_0
 
+#cmakedefine LLVM_BUILD_MODE_DEBUG
+
 #cmakedefine POCL_USE_FAKE_ADDR_SPACE_IDS
 
 #define LINK_COMMAND "@LINK_COMMAND@"

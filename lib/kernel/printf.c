@@ -31,7 +31,11 @@
 
 // We implement the OpenCL printf by calling the C99 printf. This is
 // not very efficient, but is easy to implement.
+#if LLVM_OLDER_THAN_5_0
 #define OCL_C_AS __attribute__((address_space(0)))
+#else
+#define OCL_C_AS
+#endif
 int printf(OCL_C_AS const char* restrict fmt, ...);
 int snprintf(OCL_C_AS char* restrict str, size_t size,
              OCL_C_AS const char* restrict fmt, ...);

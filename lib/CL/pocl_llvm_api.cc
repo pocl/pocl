@@ -160,7 +160,11 @@ load_source(FrontendOptions &fe,
                        CL_OUT_OF_HOST_MEMORY, "Could not write program source");
 
   fe.Inputs.push_back
-    (FrontendInputFile(source_file, clang::IK_OpenCL));
+#if LLVM_OLDER_THAN_5_0
+      (FrontendInputFile(source_file, clang::IK_OpenCL));
+#else
+      (FrontendInputFile(source_file, clang::InputKind::OpenCL));
+#endif
 
   return 0;
 }
@@ -390,7 +394,12 @@ int pocl_llvm_build_program(cl_program program,
 #else
   llvm::Triple triple(device->llvm_target_triplet);
   pocl_build.setLangDefaults
-    (*la, clang::IK_OpenCL, triple, po, clang::LangStandard::lang_opencl12);
+#if LLVM_OLDER_THAN_5_0
+      (*la, clang::IK_OpenCL, triple, po, clang::LangStandard::lang_opencl12);
+#else
+      (*la, clang::InputKind::OpenCL, triple, po,
+       clang::LangStandard::lang_opencl12);
+#endif
 #endif
 
   // LLVM 3.3 and older do not set that char is signed which is
@@ -917,7 +926,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
     *errcode = CL_INVALID_KERNEL_NAME;
     return 1;
   }
-  kernel->num_args = KernelFunction->getArgumentList().size();
+  kernel->num_args = KernelFunction->arg_size();
 
 #if defined(LLVM_OLDER_THAN_3_9)
   if (pocl_get_kernel_arg_module_metadata(kernel_name, input, kernel)) {
@@ -985,13 +994,10 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
 #endif
     }
 
-  const llvm::Function::ArgumentListType &ArgList =
-    KernelFunction->getArgumentList();
-
   i = 0;
-  for (llvm::Function::const_arg_iterator ii = ArgList.begin(),
-                                          ee = ArgList.end();
-       ii != ee ; ii++) {
+  for (llvm::Function::const_arg_iterator ii = KernelFunction->arg_begin(),
+                                          ee = KernelFunction->arg_end();
+       ii != ee; ii++) {
     llvm::Type *t = ii->getType();
     struct pocl_argument_info &ArgInfo = kernel->arg_info[i];
     ArgInfo.type = POCL_ARG_TYPE_NONE;

@@ -138,7 +138,9 @@ ImplicitConditionalBarriers::runOnFunction(Function &F) {
     // BB before which to inject the barrier.
     BasicBlock *pos = b;
     if (pred_begin(b) == pred_end(b)) {
+#ifdef DEBUG_COND_BARRIERS
       b->dump();
+#endif
       assert (pred_begin(b) == pred_end(b));
     }
     BasicBlock *pred = firstNonBackedgePredecessor(b);

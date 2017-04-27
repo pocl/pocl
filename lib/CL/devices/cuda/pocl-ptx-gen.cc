@@ -83,8 +83,12 @@ int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
   addKernelAnnotations(Module->get(), KernelName);
   mapLibDeviceCalls(Module->get());
   linkLibDevice(Module->get(), KernelName, Arch);
-  if (pocl_get_bool_option("POCL_CUDA_DUMP_NVVM", 0))
-    (*Module)->dump();
+  if (pocl_get_bool_option("POCL_CUDA_DUMP_NVVM", 0)) {
+    std::string ModuleString;
+    llvm::raw_string_ostream ModuleStringStream(ModuleString);
+    (*Module)->print(ModuleStringStream, NULL);
+    POCL_MSG_PRINT_INFO("NVVM module:\n%s\n", ModuleString.c_str());
+  }
 
   // Verify module.
   std::string Error;
@@ -199,7 +203,11 @@ void fixPrintF(llvm::Module *Module) {
 
   // Create i32 to hold current argument index.
   llvm::AllocaInst *ArgIndexPtr =
+#if LLVM_OLDER_THAN_5_0
       new llvm::AllocaInst(I32, llvm::ConstantInt::get(I32, 1));
+#else
+      new llvm::AllocaInst(I32, 0, llvm::ConstantInt::get(I32, 1));
+#endif
   ArgIndexPtr->insertBefore(&*NewPrintF->begin()->begin());
   llvm::StoreInst *ArgIndexInit =
       new llvm::StoreInst(llvm::ConstantInt::get(I32, 0), ArgIndexPtr);
@@ -208,7 +216,13 @@ void fixPrintF(llvm::Module *Module) {
   // Replace calls to _cl_va_arg with reads from new i64 array argument.
   llvm::Function *VaArgFunc = Module->getFunction("__cl_va_arg");
   if (VaArgFunc) {
-    llvm::Argument *ArgsIn = &*++NewPrintF->getArgumentList().begin();
+#if LLVM_OLDER_THAN_5_0
+    llvm::Argument *ArgsIn = &*++NewPrintF->arg_begin();
+#else
+    auto args = NewPrintF->arg_begin();
+    args++;
+    llvm::Argument *ArgsIn = args;
+#endif
     std::vector<llvm::Value *> VaArgCalls(VaArgFunc->user_begin(),
                                           VaArgFunc->user_end());
     for (auto &U : VaArgCalls) {
@@ -267,7 +281,11 @@ void fixPrintF(llvm::Module *Module) {
     // Allocate array for arguments.
     // TODO: Deal with vector arguments.
     llvm::AllocaInst *Args =
+#if LLVM_OLDER_THAN_5_0
         new llvm::AllocaInst(I64, llvm::ConstantInt::get(I32, NumArgs));
+#else
+        new llvm::AllocaInst(I64, 0, llvm::ConstantInt::get(I32, NumArgs));
+#endif
     Args->insertBefore(Call);
 
     // Loop over arguments (skipping format).
@@ -429,11 +447,18 @@ void linkLibDevice(llvm::Module *Module, const char *KernelName,
   };
   Passes.add(llvm::createInternalizePass(PreserveKernel));
 
-  // Run NVVM reflect pass to set math options.
+  // Add NVVM reflect module flags to set math options.
   // TODO: Determine correct FTZ value from frontend compiler options.
-  llvm::StringMap<int> ReflectParams;
-  ReflectParams["__CUDA_FTZ"] = 1;
-  Passes.add(llvm::createNVVMReflectPass(ReflectParams));
+  llvm::LLVMContext &Context = Module->getContext();
+  llvm::Type *I32 = llvm::Type::getInt32Ty(Context);
+  llvm::Metadata *FourMD =
+      llvm::ValueAsMetadata::get(llvm::ConstantInt::getSigned(I32, 4));
+  llvm::Metadata *NameMD = llvm::MDString::get(Context, "nvvm-reflect-ftz");
+  llvm::Metadata *OneMD =
+      llvm::ConstantAsMetadata::get(llvm::ConstantInt::getSigned(I32, 1));
+  llvm::MDNode *ReflectFlag =
+      llvm::MDNode::get(Context, {FourMD, NameMD, OneMD});
+  Module->addModuleFlag(ReflectFlag);
 
   // Run optimization passes to clean up unused functions etc.
   llvm::PassManagerBuilder Builder;

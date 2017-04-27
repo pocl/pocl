@@ -50,6 +50,11 @@
 # undef LLVM_4_0
 # define LLVM_4_0
 
+#elif (__clang_major__ == 5)
+
+# undef LLVM_5_0
+# define LLVM_5_0
+
 #else
 
 #error Unsupported Clang/LLVM version.
@@ -76,6 +81,10 @@
 
 #if (defined LLVM_3_9)
 # define LLVM_OLDER_THAN_4_0 1
+#endif
+
+#if (defined LLVM_4_0)
+# define LLVM_OLDER_THAN_5_0 1
 #endif
 
 #include "_kernel_constants.h"

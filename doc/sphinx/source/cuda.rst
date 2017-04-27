@@ -58,7 +58,8 @@ Building pocl with CUDA support
   necessary in cases where LLVM doesn't yet support the architecture.
 
   The ``POCL_CUDA_DUMP_NVVM`` environment variable can be set to ``1`` to
-  dump the LLVM IR that is fed into the NVPTX backend for debugging purposes.
+  dump the LLVM IR that is fed into the NVPTX backend for debugging purposes
+  (requires ``POCL_DEBUG=1``).
 
 
 CUDA backend status

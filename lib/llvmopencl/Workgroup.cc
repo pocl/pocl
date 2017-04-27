@@ -208,10 +208,15 @@ Workgroup::runOnModule(Module &M)
       }
   }
 
+#if LLVM_OLDER_THAN_5_0
   Function *barrier = cast<Function>
     (M.getOrInsertFunction(BARRIER_FUNCTION_NAME,
-                           Type::getVoidTy(M.getContext()),
-                           NULL));
+                           Type::getVoidTy(M.getContext()), NULL));
+#else
+  Function *barrier = cast<Function>
+    (M.getOrInsertFunction(BARRIER_FUNCTION_NAME,
+                           Type::getVoidTy(M.getContext())));
+#endif
   BasicBlock *bb = BasicBlock::Create(M.getContext(), "", barrier);
   ReturnInst::Create(M.getContext(), 0, bb);
 
@@ -293,7 +298,7 @@ createLauncher(Module &M, Function *F) {
 
   SmallVector<Value *, 8> arguments;
   Function::arg_iterator ai = L->arg_begin();
-  for (unsigned i = 0, e = F->getArgumentList().size(); i != e; ++i) {
+  for (unsigned i = 0, e = F->arg_size(); i != e; ++i) {
     arguments.push_back(&*ai);
     ++ai;
   }

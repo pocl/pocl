@@ -22,6 +22,8 @@
 
 #include "config.h"
 
+#include "pocl.h"
+
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
@@ -58,10 +60,15 @@ namespace pocl {
           llvm::isa<Barrier>(InsertBefore->getPrevNode()))
         return llvm::cast<Barrier>(InsertBefore->getPrevNode());
 
+#if LLVM_OLDER_THAN_5_0
       llvm::Function *F = llvm::cast<llvm::Function>
         (M->getOrInsertFunction(BARRIER_FUNCTION_NAME,
-                                llvm::Type::getVoidTy(M->getContext()),
-                                NULL));
+                                llvm::Type::getVoidTy(M->getContext()), NULL));
+#else
+      llvm::Function *F = llvm::cast<llvm::Function>
+        (M->getOrInsertFunction(BARRIER_FUNCTION_NAME,
+                                llvm::Type::getVoidTy(M->getContext())));
+#endif
       F->setLinkage(llvm::GlobalValue::LinkOnceAnyLinkage);
       return llvm::cast<pocl::Barrier>
         (llvm::CallInst::Create(F, "", InsertBefore));

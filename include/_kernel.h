@@ -2592,6 +2592,7 @@ void _CL_OVERLOADABLE write_imageui (IMG_WO_AQ image2d_array_t image,
 __IF_FP16 (void _CL_OVERLOADABLE write_imageh (IMG_WO_AQ image2d_array_t image,
                                                int4 coord, half4 color));
 
+#ifdef cl_khr_3d_image_writes
 void _CL_OVERLOADABLE write_imagef (IMG_WO_AQ image3d_t image, int4 coord,
                                     float4 color);
 void _CL_OVERLOADABLE write_imagei (IMG_WO_AQ image3d_t image, int4 coord,
@@ -2600,6 +2601,7 @@ void _CL_OVERLOADABLE write_imageui (IMG_WO_AQ image3d_t image, int4 coord,
                                      uint4 color);
 __IF_FP16 (void _CL_OVERLOADABLE write_imageh (IMG_WO_AQ image3d_t image,
                                                int4 coord, half4 color));
+#endif
 
 /* UNIMPLEMENTED: 1d / 1d array */
 
@@ -2655,17 +2657,19 @@ int4 _CL_OVERLOADABLE get_image_dim (IMG_RO_AQ image3d_t image);
 
 int _CL_OVERLOADABLE get_image_width (IMG_WO_AQ image1d_t image);
 int _CL_OVERLOADABLE get_image_width (IMG_WO_AQ image2d_t image);
-int _CL_OVERLOADABLE get_image_width (IMG_WO_AQ image3d_t image);
 
 int _CL_OVERLOADABLE get_image_height (IMG_WO_AQ image1d_t image);
 int _CL_OVERLOADABLE get_image_height (IMG_WO_AQ image2d_t image);
-int _CL_OVERLOADABLE get_image_height (IMG_WO_AQ image3d_t image);
-
-int _CL_OVERLOADABLE get_image_depth (IMG_WO_AQ image3d_t image);
 
 int2 _CL_OVERLOADABLE get_image_dim (IMG_WO_AQ image2d_t image);
 int2 _CL_OVERLOADABLE get_image_dim (IMG_WO_AQ image2d_array_t image);
+
+#ifdef cl_khr_3d_image_writes
+int _CL_OVERLOADABLE get_image_width (IMG_WO_AQ image3d_t image);
+int _CL_OVERLOADABLE get_image_height (IMG_WO_AQ image3d_t image);
+int _CL_OVERLOADABLE get_image_depth (IMG_WO_AQ image3d_t image);
 int4 _CL_OVERLOADABLE get_image_dim (IMG_WO_AQ image3d_t image);
+#endif
 
 #endif
 
