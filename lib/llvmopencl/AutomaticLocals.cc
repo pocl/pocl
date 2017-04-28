@@ -143,6 +143,17 @@ AutomaticLocals::processAutomaticLocals(Function *F) {
       Locals.push_back(&*i);
       // Add the parameters to the end of the function parameter list.
       Parameters.push_back(i->getType());
+
+      // Replace any constant expression users with an equivalent instruction.
+      // Otherwise, the IR breaks when we replace the local with an argument.
+      std::vector<llvm::Value *> Users(i->user_begin(), i->user_end());
+      for (auto *U : Users) {
+        if (auto *CE = llvm::dyn_cast<llvm::ConstantExpr>(U)) {
+          llvm::Instruction *I = CE->getAsInstruction();
+          I->insertBefore(&*F->begin()->begin());
+          U->replaceAllUsesWith(I);
+        }
+      }
     }
   }
 
