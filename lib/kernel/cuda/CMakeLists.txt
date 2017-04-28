@@ -27,7 +27,7 @@ include("bitcode_rules")
 
 set(KERNEL_SOURCES ${SOURCES_WITHOUT_VML})
 
-foreach(FILE atomics.cl get_work_dim.c)
+foreach(FILE atomics.cl)
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
 endforeach()
 

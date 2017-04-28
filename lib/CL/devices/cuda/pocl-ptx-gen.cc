@@ -55,6 +55,7 @@ extern ModulePass *createNVVMReflectPass(const StringMap<int> &Mapping);
 static void addKernelAnnotations(llvm::Module *Module, const char *KernelName);
 static void fixLocalMemArgs(llvm::Module *Module, const char *KernelName);
 static void fixPrintF(llvm::Module *Module);
+static void handleGetWorkDim(llvm::Module *Module, const char *KernelName);
 static void handleGlobalOffsets(llvm::Module *Module, const char *KernelName,
                                 bool HasOffsets);
 static void linkLibDevice(llvm::Module *Module, const char *KernelName,
@@ -83,6 +84,7 @@ int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
   // Apply transforms to prepare for lowering to PTX.
   fixPrintF(Module->get());
   fixLocalMemArgs(Module->get(), KernelName);
+  handleGetWorkDim(Module->get(), KernelName);
   handleGlobalOffsets(Module->get(), KernelName, HasOffsets);
   addKernelAnnotations(Module->get(), KernelName);
   mapLibDeviceCalls(Module->get());
@@ -380,9 +382,9 @@ void fixPrintF(llvm::Module *Module) {
   VPrintF->eraseFromParent();
 }
 
-// Replace all uses of a global offset variable with new value.
-static void replaceGlobalOffset(llvm::Module *Module, const char *Name,
-                                llvm::Value *NewValue) {
+// Replace all load users of a scalar global variable with new value.
+static void replaceScalarGlobalVar(llvm::Module *Module, const char *Name,
+                                   llvm::Value *NewValue) {
   auto GlobalVar = Module->getGlobalVariable(Name);
   if (!GlobalVar)
     return;
@@ -391,11 +393,58 @@ static void replaceGlobalOffset(llvm::Module *Module, const char *Name,
                                    GlobalVar->user_end());
   for (auto *U : Users) {
     auto Load = llvm::dyn_cast<llvm::LoadInst>(U);
-    assert(Load && "Use of a global offset placeholder is not a load");
+    assert(Load && "Use of a scalar global variable is not a load");
     Load->replaceAllUsesWith(NewValue);
     Load->eraseFromParent();
   }
   GlobalVar->eraseFromParent();
+}
+
+// Add an extra kernel argument for the dimensionality.
+void handleGetWorkDim(llvm::Module *Module, const char *KernelName) {
+  llvm::Function *Function = Module->getFunction(KernelName);
+  if (!Function)
+    POCL_ABORT("[CUDA] ptx-gen: kernel function not found in module\n");
+
+  // Add additional argument for the work item dimensionality.
+  llvm::FunctionType *FunctionType = Function->getFunctionType();
+  std::vector<llvm::Type *> ArgumentTypes(FunctionType->param_begin(),
+                                          FunctionType->param_end());
+  ArgumentTypes.push_back(llvm::Type::getInt32Ty(Module->getContext()));
+
+  // Create new function.
+  llvm::FunctionType *NewFunctionType =
+      llvm::FunctionType::get(Function->getReturnType(), ArgumentTypes, false);
+  llvm::Function *NewFunction = llvm::Function::Create(
+      NewFunctionType, Function->getLinkage(), Function->getName(), Module);
+  NewFunction->takeName(Function);
+
+  // Take function body from old function.
+  NewFunction->getBasicBlockList().splice(NewFunction->begin(),
+                                          Function->getBasicBlockList());
+
+  // TODO: Copy attributes from old function?
+
+  // Update function body with the original arguments.
+  llvm::Function::arg_iterator OldArg;
+  llvm::Function::arg_iterator NewArg;
+  for (OldArg = Function->arg_begin(), NewArg = NewFunction->arg_begin();
+       OldArg != Function->arg_end(); NewArg++, OldArg++) {
+    NewArg->takeName(&*OldArg);
+    (&*OldArg)->replaceAllUsesWith(&*NewArg);
+  }
+
+  Function->eraseFromParent();
+
+  auto WorkDimVar = Module->getGlobalVariable("_work_dim");
+  if (!WorkDimVar)
+    return;
+
+  // Replace uses of the global offset variables with the new arguments.
+  NewArg->setName("work_dim");
+  replaceScalarGlobalVar(Module, "_work_dim", (&*NewArg++));
+
+  // TODO: What if get_work_dim() is called from a non-kernel function?
 }
 
 // If we don't need to handle offsets, just replaces uses of the offset
@@ -406,9 +455,9 @@ void handleGlobalOffsets(llvm::Module *Module, const char *KernelName,
   if (!HasOffsets) {
     llvm::Type *I32 = llvm::Type::getInt32Ty(Module->getContext());
     llvm::Value *Zero = llvm::ConstantInt::getSigned(I32, 0);
-    replaceGlobalOffset(Module, "_global_offset_x", Zero);
-    replaceGlobalOffset(Module, "_global_offset_y", Zero);
-    replaceGlobalOffset(Module, "_global_offset_z", Zero);
+    replaceScalarGlobalVar(Module, "_global_offset_x", Zero);
+    replaceScalarGlobalVar(Module, "_global_offset_y", Zero);
+    replaceScalarGlobalVar(Module, "_global_offset_z", Zero);
     return;
   }
 
@@ -449,11 +498,11 @@ void handleGlobalOffsets(llvm::Module *Module, const char *KernelName,
 
   // Replace uses of the global offset variables with the new arguments.
   NewArg->setName("global_offset_x");
-  replaceGlobalOffset(Module, "_global_offset_x", (&*NewArg++));
+  replaceScalarGlobalVar(Module, "_global_offset_x", (&*NewArg++));
   NewArg->setName("global_offset_y");
-  replaceGlobalOffset(Module, "_global_offset_y", (&*NewArg++));
+  replaceScalarGlobalVar(Module, "_global_offset_y", (&*NewArg++));
   NewArg->setName("global_offset_z");
-  replaceGlobalOffset(Module, "_global_offset_z", (&*NewArg++));
+  replaceScalarGlobalVar(Module, "_global_offset_z", (&*NewArg++));
 
   // TODO: What if the offsets are in a function that isn't the kernel?
 

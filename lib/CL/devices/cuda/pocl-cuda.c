@@ -620,7 +620,7 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
   // Prepare kernel arguments
   void *null = NULL;
   unsigned sharedMemBytes = 0;
-  void *params[kernel->num_args + kernel->num_locals + (has_offsets ? 3 : 0)];
+  void *params[kernel->num_args + kernel->num_locals + 4];
   unsigned sharedMemOffsets[kernel->num_args + kernel->num_locals];
   unsigned globalOffsets[3];
 
@@ -673,14 +673,19 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
         }
     }
 
+  unsigned arg_index = kernel->num_args;
+
   // Deal with automatic local allocations
   // TODO: Would be better to remove arguments and make these static GEPs
-  for (i = 0; i < kernel->num_locals; ++i)
+  for (i = 0; i < kernel->num_locals; ++i, ++arg_index)
     {
-      sharedMemOffsets[kernel->num_args + i] = sharedMemBytes;
-      sharedMemBytes += arguments[kernel->num_args + i].size;
-      params[kernel->num_args + i] = sharedMemOffsets + kernel->num_args + i;
+      sharedMemOffsets[arg_index] = sharedMemBytes;
+      sharedMemBytes += arguments[arg_index].size;
+      params[arg_index] = sharedMemOffsets + arg_index;
     }
+
+  // Add global work dimensionality
+  params[arg_index++] = &pc.work_dim;
 
   // Add global offsets if necessary
   if (has_offsets)
@@ -688,9 +693,9 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
       globalOffsets[0] = pc.global_offset[0];
       globalOffsets[1] = pc.global_offset[1];
       globalOffsets[2] = pc.global_offset[2];
-      params[kernel->num_args + kernel->num_locals + 0] = globalOffsets + 0;
-      params[kernel->num_args + kernel->num_locals + 1] = globalOffsets + 1;
-      params[kernel->num_args + kernel->num_locals + 2] = globalOffsets + 2;
+      params[arg_index++] = globalOffsets + 0;
+      params[arg_index++] = globalOffsets + 1;
+      params[arg_index++] = globalOffsets + 2;
     }
 
   POCL_UPDATE_EVENT_RUNNING (&node->event);
