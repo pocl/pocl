@@ -29,7 +29,7 @@
 char kernelASourceCode[] = 
 "kernel \n"
 "void test_kernel(constant char* input) {\n"
-"    printf(\"%s\", input);\n"
+"    printf(\"%c\", *input);\n"
 "}\n";
 
 int main()
