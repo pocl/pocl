@@ -46,6 +46,12 @@ __cl_printf(__attribute__((address_space(4))) char* restrict format, ...)
       } else {
         // TODO: other format specifiers
         switch (ch) {
+          case 'c':
+          {
+            __cl_va_arg(ap, arg_data, 1);
+            vprintf("%c", arg_data);
+            break;
+          }
           case 'd':
           {
             __cl_va_arg(ap, arg_data, 1);
