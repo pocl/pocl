@@ -47,6 +47,8 @@ typedef struct pocl_cuda_device_data_s
 
 typedef struct pocl_cuda_kernel_data_s
 {
+  CUmodule module;
+  CUmodule module_offsets;
   CUfunction kernel;
   CUfunction kernel_offsets;
 } pocl_cuda_kernel_data_t;
@@ -518,7 +520,7 @@ pocl_cuda_unmap_mem (void *data, void *host_ptr, void *device_start_ptr,
   return NULL;
 }
 
-static CUfunction
+static pocl_cuda_kernel_data_t *
 load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
                          int has_offsets)
 {
@@ -530,10 +532,9 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
   pocl_cuda_kernel_data_t *kdata = (pocl_cuda_kernel_data_t *)kernel->data;
   if (kdata)
     {
-      if (has_offsets && kdata->kernel_offsets)
-        return kdata->kernel_offsets;
-      else if (!has_offsets && kdata->kernel)
-        return kdata->kernel;
+      if ((has_offsets && kdata->kernel_offsets)
+          || (!has_offsets && kdata->kernel))
+        return kdata;
     }
   else
     {
@@ -575,11 +576,17 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
   CUDA_CHECK (result, "cuModuleGetFunction");
 
   if (has_offsets)
-    kdata->kernel_offsets = function;
+    {
+      kdata->module_offsets = module;
+      kdata->kernel_offsets = function;
+    }
   else
-    kdata->kernel = function;
+    {
+      kdata->module = module;
+      kdata->kernel = function;
+    }
 
-  return function;
+  return kdata;
 }
 
 void
@@ -615,14 +622,25 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
     has_offsets = 1;
 
   // Get kernel function
-  CUfunction function = load_or_generate_kernel (kernel, device, has_offsets);
+  pocl_cuda_kernel_data_t *kdata
+      = load_or_generate_kernel (kernel, device, has_offsets);
+  CUmodule module = has_offsets ? kdata->module_offsets : kdata->module;
+  CUfunction function = has_offsets ? kdata->kernel_offsets : kdata->kernel;
 
   // Prepare kernel arguments
   void *null = NULL;
   unsigned sharedMemBytes = 0;
   void *params[kernel->num_args + kernel->num_locals + 4];
   unsigned sharedMemOffsets[kernel->num_args + kernel->num_locals];
+  unsigned constantMemBytes = 0;
+  unsigned constantMemOffsets[kernel->num_args];
   unsigned globalOffsets[3];
+
+  // Get handle to constant memory buffer
+  size_t constant_mem_size;
+  CUdeviceptr constant_mem_base = 0;
+  cuModuleGetGlobal (&constant_mem_base, &constant_mem_size, module,
+                     "_constant_memory_region_");
 
   unsigned i;
   for (i = 0; i < kernel->num_args; i++)
@@ -637,10 +655,32 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
           {
             if (kernel->arg_info[i].is_local)
               {
+                // TODO: Alignment
                 sharedMemOffsets[i] = sharedMemBytes;
                 params[i] = sharedMemOffsets + i;
 
                 sharedMemBytes += arguments[i].size;
+              }
+            else if (kernel->arg_info[i].address_qualifier
+                     == CL_KERNEL_ARG_ADDRESS_CONSTANT)
+              {
+                assert (constant_mem_base);
+
+                // Get device pointer
+                cl_mem mem = *(void **)arguments[i].value;
+                CUdeviceptr src
+                    = (CUdeviceptr)mem->device_ptrs[device->dev_id].mem_ptr;
+
+                // Copy to constant buffer at current offset
+                // TODO: Alignment
+                result = cuMemcpyDtoD (constant_mem_base + constantMemBytes,
+                                       src, mem->size);
+                CUDA_CHECK (result, "cuMemcpyDtoD");
+
+                constantMemOffsets[i] = constantMemBytes;
+                params[i] = constantMemOffsets + i;
+
+                constantMemBytes += mem->size;
               }
             else
               {
@@ -672,6 +712,10 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
           break;
         }
     }
+
+  if (constantMemBytes > constant_mem_size)
+    POCL_ABORT ("[CUDA] Total constant buffer size %u exceeds %lu allocated",
+                constantMemBytes, constant_mem_size);
 
   unsigned arg_index = kernel->num_args;
 

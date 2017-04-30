@@ -32,6 +32,7 @@
 
 #include "llvm/Bitcode/BitcodeReader.h"
 #include "llvm/IR/Constants.h"
+#include "llvm/IR/InstIterator.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/Module.h"
@@ -53,6 +54,7 @@ extern ModulePass *createNVVMReflectPass(const StringMap<int> &Mapping);
 }
 
 static void addKernelAnnotations(llvm::Module *Module, const char *KernelName);
+static void fixConstantMemArgs(llvm::Module *Module, const char *KernelName);
 static void fixLocalMemArgs(llvm::Module *Module, const char *KernelName);
 static void fixPrintF(llvm::Module *Module);
 static void handleGetWorkDim(llvm::Module *Module, const char *KernelName);
@@ -83,6 +85,7 @@ int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
 
   // Apply transforms to prepare for lowering to PTX.
   fixPrintF(Module->get());
+  fixConstantMemArgs(Module->get(), KernelName);
   fixLocalMemArgs(Module->get(), KernelName);
   handleGetWorkDim(Module->get(), KernelName);
   handleGlobalOffsets(Module->get(), KernelName, HasOffsets);
@@ -628,14 +631,12 @@ void linkLibDevice(llvm::Module *Module, const char *KernelName,
   Passes.run(*Module);
 }
 
-// CUDA doesn't allow multiple local memory arguments or automatic variables, so
-// we have to create a single global variable for local memory allocations, and
-// then manually add offsets to it to get each individual local memory
-// allocation. This transformation replaces each local memory pointer argument
-// with an integer offset, and then inserts the necessary GEP+BitCast
-// instructions to calculate the base pointers.
-void fixLocalMemArgs(llvm::Module *Module, const char *KernelName) {
-  // TODO: Deal with non-kernel functions that take local memory arguments.
+// This transformation replaces each pointer argument in the specific address
+// space with an integer offset, and then inserts the necessary GEP+BitCast
+// instructions to calculate the new pointers from the provided base global
+// variable.
+void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
+                             unsigned AddrSpace, llvm::GlobalVariable *Base) {
 
   llvm::LLVMContext &Context = Module->getContext();
 
@@ -643,25 +644,18 @@ void fixLocalMemArgs(llvm::Module *Module, const char *KernelName) {
   if (!Function)
     POCL_ABORT("[CUDA] ptx-gen: kernel function not found in module\n");
 
-  // Create global variable for local memory allocations.
-  llvm::Type *ByteArrayType =
-      llvm::ArrayType::get(llvm::Type::getInt8Ty(Context), 0);
-  llvm::GlobalVariable *SharedMemBase = new llvm::GlobalVariable(
-      *Module, ByteArrayType, false, llvm::GlobalValue::ExternalLinkage, NULL,
-      "_shared_memory_region_", NULL, llvm::GlobalValue::NotThreadLocal, 3,
-      false);
-
   // Argument info for creating new function.
   std::vector<llvm::Argument *> Arguments;
   std::vector<llvm::Type *> ArgumentTypes;
 
   // Loop over arguments.
-  bool HasLocalMemArgs = false;
+  bool NeedsArgOffsets = false;
   for (auto &Arg : Function->args()) {
     // Check for local memory pointer.
     llvm::Type *ArgType = Arg.getType();
-    if (ArgType->isPointerTy() && ArgType->getPointerAddressSpace() == 3) {
-      HasLocalMemArgs = true;
+    if (ArgType->isPointerTy() &&
+        ArgType->getPointerAddressSpace() == AddrSpace) {
+      NeedsArgOffsets = true;
 
       // Create new argument for offset into shared memory allocation.
       llvm::Type *I32ty = llvm::Type::getInt32Ty(Context);
@@ -672,8 +666,8 @@ void fixLocalMemArgs(llvm::Module *Module, const char *KernelName) {
 
       // Insert GEP to add offset.
       llvm::Value *Zero = llvm::ConstantInt::getSigned(I32ty, 0);
-      llvm::GetElementPtrInst *GEP = llvm::GetElementPtrInst::Create(
-          ByteArrayType, SharedMemBase, {Zero, Offset});
+      llvm::GetElementPtrInst *GEP =
+          llvm::GetElementPtrInst::Create(nullptr, Base, {Zero, Offset});
       GEP->insertBefore(&*Function->begin()->begin());
 
       // Cast pointer to correct type.
@@ -689,7 +683,7 @@ void fixLocalMemArgs(llvm::Module *Module, const char *KernelName) {
     }
   }
 
-  if (!HasLocalMemArgs)
+  if (!NeedsArgOffsets)
     return;
 
   // Create new function with offsets instead of local memory pointers.
@@ -717,6 +711,48 @@ void fixLocalMemArgs(llvm::Module *Module, const char *KernelName) {
   // TODO: Deal with calls to this kernel from other function?
 
   Function->eraseFromParent();
+}
+
+// CUDA doesn't allow constant pointer arguments, so we have to convert them to
+// offsets and manually add them to a global variable base pointer.
+void fixConstantMemArgs(llvm::Module *Module, const char *KernelName) {
+
+  // Calculate total size of automatic constant allocations.
+  size_t TotalAutoConstantSize = 0;
+  for (auto &GlobalVar : Module->globals()) {
+    if (GlobalVar.getType()->getPointerAddressSpace() == 4)
+      TotalAutoConstantSize += Module->getDataLayout().getTypeAllocSize(
+          GlobalVar.getInitializer()->getType());
+  }
+
+  // Create global variable for constant memory allocations.
+  // TODO: Does allocating the maximum amount have a penalty?
+  llvm::Type *ByteArrayType =
+      llvm::ArrayType::get(llvm::Type::getInt8Ty(Module->getContext()),
+                           65536 - TotalAutoConstantSize);
+  llvm::GlobalVariable *ConstantMemBase = new llvm::GlobalVariable(
+      *Module, ByteArrayType, false, llvm::GlobalValue::InternalLinkage,
+      llvm::Constant::getNullValue(ByteArrayType), "_constant_memory_region_",
+      NULL, llvm::GlobalValue::NotThreadLocal, 4, false);
+
+  convertPtrArgsToOffsets(Module, KernelName, 4, ConstantMemBase);
+}
+
+// CUDA doesn't allow multiple local memory arguments or automatic variables, so
+// we have to create a single global variable for local memory allocations, and
+// then manually add offsets to it to get each individual local memory
+// allocation.
+void fixLocalMemArgs(llvm::Module *Module, const char *KernelName) {
+
+  // Create global variable for local memory allocations.
+  llvm::Type *ByteArrayType =
+      llvm::ArrayType::get(llvm::Type::getInt8Ty(Module->getContext()), 0);
+  llvm::GlobalVariable *SharedMemBase = new llvm::GlobalVariable(
+      *Module, ByteArrayType, false, llvm::GlobalValue::ExternalLinkage, NULL,
+      "_shared_memory_region_", NULL, llvm::GlobalValue::NotThreadLocal, 3,
+      false);
+
+  convertPtrArgsToOffsets(Module, KernelName, 3, SharedMemBase);
 }
 
 // Map kernel math functions onto the corresponding CUDA libdevice functions.
