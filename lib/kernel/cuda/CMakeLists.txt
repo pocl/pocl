@@ -32,7 +32,9 @@ foreach(FILE atomics.cl)
 endforeach()
 
 foreach(FILE
-  barrier.ll
+  atomic_add.ll atomic_and.ll atomic_cmpxchg.ll atomic_dec.ll atomic_inc.ll
+  atomic_min.ll atomic_max.ll atomic_or.ll atomic_sub.ll atomic_xchg.ll
+  atomic_xor.ll barrier.ll
   get_global_id.c get_global_size.c get_group_id.c
   get_local_id.c get_local_size.c get_num_groups.c
   get_global_offset.c
