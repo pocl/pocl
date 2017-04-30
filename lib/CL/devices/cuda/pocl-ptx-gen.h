@@ -48,6 +48,13 @@ int pocl_ptx_gen(const char *BitcodeFilename,
                  const char *LibDevicePath,
                  int HasOffsets);
 
+/* Populate the Alignments array with the required pointer alignments for */
+/* each kernel argument. */
+/* Returns zero on success, non-zero on failure. */
+int pocl_cuda_get_ptr_arg_alignment(const char *BitcodeFilename,
+                                    const char *KernelName,
+                                    size_t *Alignments);
+
 #ifdef __cplusplus
 }
 #endif

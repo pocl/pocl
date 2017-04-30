@@ -51,6 +51,7 @@ typedef struct pocl_cuda_kernel_data_s
   CUmodule module_offsets;
   CUfunction kernel;
   CUfunction kernel_offsets;
+  size_t *alignments;
 } pocl_cuda_kernel_data_t;
 
 static void
@@ -575,6 +576,15 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
   result = cuModuleGetFunction (&function, module, kernel->name);
   CUDA_CHECK (result, "cuModuleGetFunction");
 
+  // Get pointer aligment
+  if (!kdata->alignments)
+    {
+      kdata->alignments = calloc (kernel->num_args + kernel->num_locals + 4,
+                                  sizeof (size_t));
+      pocl_cuda_get_ptr_arg_alignment (bc_filename, kernel->name,
+                                       kdata->alignments);
+    }
+
   if (has_offsets)
     {
       kdata->module_offsets = module;
@@ -655,11 +665,17 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
           {
             if (kernel->arg_info[i].is_local)
               {
-                // TODO: Alignment
+                size_t size = arguments[i].size;
+                size_t align = kdata->alignments[i];
+
+                // Pad offset to align memory
+                if (sharedMemBytes % align)
+                  sharedMemBytes += align - (sharedMemBytes % align);
+
                 sharedMemOffsets[i] = sharedMemBytes;
                 params[i] = sharedMemOffsets + i;
 
-                sharedMemBytes += arguments[i].size;
+                sharedMemBytes += size;
               }
             else if (kernel->arg_info[i].address_qualifier
                      == CL_KERNEL_ARG_ADDRESS_CONSTANT)
@@ -671,8 +687,13 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
                 CUdeviceptr src
                     = (CUdeviceptr)mem->device_ptrs[device->dev_id].mem_ptr;
 
+                size_t align = kdata->alignments[i];
+                if (constantMemBytes % align)
+                  {
+                    constantMemBytes += align - (constantMemBytes % align);
+                  }
+
                 // Copy to constant buffer at current offset
-                // TODO: Alignment
                 result = cuMemcpyDtoD (constant_mem_base + constantMemBytes,
                                        src, mem->size);
                 CUDA_CHECK (result, "cuMemcpyDtoD");
@@ -723,8 +744,15 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
   // TODO: Would be better to remove arguments and make these static GEPs
   for (i = 0; i < kernel->num_locals; ++i, ++arg_index)
     {
+      size_t size = arguments[arg_index].size;
+      size_t align = kdata->alignments[arg_index];
+
+      // Pad offset to align memory
+      if (sharedMemBytes % align)
+        sharedMemBytes += align - (sharedMemBytes % align);
+
       sharedMemOffsets[arg_index] = sharedMemBytes;
-      sharedMemBytes += arguments[arg_index].size;
+      sharedMemBytes += size;
       params[arg_index] = sharedMemOffsets + arg_index;
     }
 

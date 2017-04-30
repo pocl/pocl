@@ -849,3 +849,44 @@ void mapLibDeviceCalls(llvm::Module *Module) {
     Function->eraseFromParent();
   }
 }
+
+int pocl_cuda_get_ptr_arg_alignment(const char *BitcodeFilename,
+                                    const char *KernelName,
+                                    size_t *Alignments) {
+  // Create buffer for bitcode file.
+  llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Buffer =
+      llvm::MemoryBuffer::getFile(BitcodeFilename);
+  if (!Buffer) {
+    POCL_MSG_ERR("[CUDA] ptx-gen: failed to open bitcode file\n");
+    return 1;
+  }
+
+  // Load the LLVM bitcode module.
+  llvm::LLVMContext Context;
+  llvm::Expected<std::unique_ptr<llvm::Module>> Module =
+      parseBitcodeFile(Buffer->get()->getMemBufferRef(), Context);
+  if (!Module) {
+    POCL_MSG_ERR("[CUDA] ptx-gen: failed to load bitcode\n");
+    return 1;
+  }
+
+  // Get kernel function.
+  llvm::Function *Kernel = (*Module)->getFunction(KernelName);
+  if (!Kernel)
+    POCL_ABORT("[CUDA] kernel function not found in module\n");
+
+  // Calculate alignment for each argument.
+  const llvm::DataLayout &DL = (*Module)->getDataLayout();
+  for (auto &Arg : Kernel->args()) {
+    unsigned i = Arg.getArgNo();
+    llvm::Type *Type = Arg.getType();
+    if (!Type->isPointerTy())
+      Alignments[i] = 0;
+    else {
+      llvm::Type *ElemType = Type->getPointerElementType();
+      Alignments[i] = DL.getTypeAllocSize(ElemType);
+    }
+  }
+
+  return 0;
+}
