@@ -123,6 +123,25 @@ AutomaticLocals::runOnModule(Module &M)
   return changed;
 }
 
+// Recursively descend a Value's users and convert any constant expressions into
+// regular instructions.
+static void breakConstantExpressions(llvm::Value *Val, llvm::Function *Func) {
+  std::vector<llvm::Value *> Users(Val->user_begin(), Val->user_end());
+  for (auto *U : Users) {
+    if (auto *CE = llvm::dyn_cast<llvm::ConstantExpr>(U)) {
+      // First, make sure no users of this constant expression are themselves
+      // constant expressions.
+      breakConstantExpressions(U, Func);
+
+      // Convert this constant expression to an instruction.
+      llvm::Instruction *I = CE->getAsInstruction();
+      I->insertBefore(&*Func->begin()->begin());
+      CE->replaceAllUsesWith(I);
+      CE->destroyConstant();
+    }
+  }
+}
+
 Function *
 AutomaticLocals::processAutomaticLocals(Function *F) {
 
@@ -146,14 +165,7 @@ AutomaticLocals::processAutomaticLocals(Function *F) {
 
       // Replace any constant expression users with an equivalent instruction.
       // Otherwise, the IR breaks when we replace the local with an argument.
-      std::vector<llvm::Value *> Users(i->user_begin(), i->user_end());
-      for (auto *U : Users) {
-        if (auto *CE = llvm::dyn_cast<llvm::ConstantExpr>(U)) {
-          llvm::Instruction *I = CE->getAsInstruction();
-          I->insertBefore(&*F->begin()->begin());
-          U->replaceAllUsesWith(I);
-        }
-      }
+      breakConstantExpressions(&*i, F);
     }
   }
 
