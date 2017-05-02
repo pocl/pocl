@@ -268,12 +268,7 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
 #ifdef OCS_AVAILABLE
 
   dev->llvm_target_triplet = OCL_KERNEL_TARGET;
-
-#ifdef POCL_BUILT_WITH_CMAKE
   dev->llvm_cpu = get_cpu_name();
-#else
-  dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
-#endif
 
 #else
   dev->llvm_cpu = NULL;

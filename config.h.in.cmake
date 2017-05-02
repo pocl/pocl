@@ -8,8 +8,6 @@
 #cmakedefine BUILD_HSA
 #cmakedefine BUILD_CUDA
 
-#define POCL_BUILT_WITH_CMAKE
-
 #define BUILDDIR "@BUILDDIR@"
 
 /* "Build with ICD" */

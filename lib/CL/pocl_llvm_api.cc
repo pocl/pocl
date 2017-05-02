@@ -1606,38 +1606,34 @@ kernel_library
     kernellib += "/kernel-";
     kernellib += device->llvm_target_triplet;
     if (is_host) {
-#ifdef POCL_BUILT_WITH_CMAKE
-    kernellib += '-';
-    kernellib_fallback = kernellib;
-    kernellib_fallback += OCL_KERNEL_TARGET_CPU;
-    kernellib_fallback += ".bc";
+      kernellib += '-';
+      kernellib_fallback = kernellib;
+      kernellib_fallback += OCL_KERNEL_TARGET_CPU;
+      kernellib_fallback += ".bc";
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-    if (triple.getArch() == Triple::x86_64 ||
-        triple.getArch() == Triple::x86)
-      kernellib += getX86KernelLibName();
-    else
+      if (triple.getArch() == Triple::x86_64 ||
+          triple.getArch() == Triple::x86)
+        kernellib += getX86KernelLibName();
+      else
 #endif
-      kernellib += device->llvm_cpu;
-#endif
+        kernellib += device->llvm_cpu;
     }
   } else { // POCL_BUILDING == 0, use install dir
     kernellib = PKGDATADIR;
     kernellib += "/kernel-";
     kernellib += device->llvm_target_triplet;
     if (is_host) {
-#ifdef POCL_BUILT_WITH_CMAKE
-    kernellib += '-';
-    kernellib_fallback = kernellib;
-    kernellib_fallback += OCL_KERNEL_TARGET_CPU;
-    kernellib_fallback += ".bc";
+      kernellib += '-';
+      kernellib_fallback = kernellib;
+      kernellib_fallback += OCL_KERNEL_TARGET_CPU;
+      kernellib_fallback += ".bc";
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-    if (triple.getArch() == Triple::x86_64 ||
-        triple.getArch() == Triple::x86)
-      kernellib += getX86KernelLibName();
-    else
+      if (triple.getArch() == Triple::x86_64 ||
+          triple.getArch() == Triple::x86)
+        kernellib += getX86KernelLibName();
+      else
 #endif
-      kernellib += device->llvm_cpu;
-#endif
+        kernellib += device->llvm_cpu;
     }
   }
   kernellib += ".bc";
