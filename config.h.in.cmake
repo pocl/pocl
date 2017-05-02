@@ -19,6 +19,8 @@
 #define LLVM_VERSION "@LLVM_VERSION_FULL@"
 #endif
 
+#cmakedefine CLANG_IS_PATCHED_FOR_SPIR_CC
+
 #define CLANG "@CLANG@"
 
 /* clang++ executable */
@@ -33,11 +35,8 @@
 /* "Using a SPIR generator Clang from Khronos." */
 #cmakedefine CLANG_SPIR
 
-
 /* TODO in sources */
 #define KERNEL_CL_FLAGS  "@KERNEL_CL_FLAGS@"
-
-
 
 #define FORCED_CLFLAGS  "@FORCED_CLFLAGS@"
 
@@ -55,7 +54,6 @@
 #cmakedefine HAVE_POSIX_MEMALIGN
 
 #cmakedefine HAVE_HSA_EXT_AMD_H
-
 
 #define HOST  "@HOST@"
 
@@ -117,6 +115,7 @@
 
 #define PACKAGE_VERSION "@PACKAGE_VERSION@"
 
+#define POCL_KCACHE_SALT "@POCL_KCACHE_SALT@"
 
 #define POCL_KERNEL_CACHE_DEFAULT @POCL_KERNEL_CACHE_DEFAULT@
 
@@ -132,9 +131,6 @@
 
 /* The size of `__fp16', as computed by sizeof. */
 #define SIZEOF___FP16  @SIZEOF___FP16@
-
-#cmakedefine CLANG_IS_PATCHED_FOR_SPIR_CC
-#cmakedefine POCL_KCACHE_SALT "@POCL_KCACHE_SALT@"
 
 /* used in tce_common.c & pocl_llvm_api.cc  */
 #define SRCDIR  "@SRCDIR@"
