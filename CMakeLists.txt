@@ -641,8 +641,14 @@ if(CL_DISABLE_HALF)
   set(DEFAULT_HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} -D_CL_DISABLE_HALF")
 endif()
 
+set(HOST_DEVICE_CL_VERSION "120")
+set(HOST_DEVICE_CL_STD "1.2")
+
 # define it here, b/c we'll need these both at runtime and buildtime
-set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_spir")
+set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics")
+if((HOST_DEVICE_CL_VERSION GREATER 199) AND (CLANG_SPIR))
+  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_spir")
+endif()
 if(NOT CL_DISABLE_HALF)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp16")
 endif()
@@ -656,9 +662,6 @@ separate_arguments(TEMP_EXT)
 foreach(EXT ${TEMP_EXT})
   set(HOST_DEVICE_EXTENSION_DEFINES "${HOST_DEVICE_EXTENSION_DEFINES} -D${EXT}")
 endforeach()
-
-set(HOST_DEVICE_CL_VERSION "120")
-set(HOST_DEVICE_CL_STD "1.2")
 
 if(NOT DEFINED KERNELLIB_HOST_CPU_VARIANTS)
   set(KERNELLIB_HOST_CPU_VARIANTS "native")
