@@ -1039,9 +1039,9 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
     i++;
   }
   // fill 'kernel->reqd_wg_size'
-  kernel->reqd_wg_size = (unsigned *)malloc(3 * sizeof(unsigned));
+  kernel->reqd_wg_size = (size_t *)malloc(3 * sizeof(size_t));
 
-  unsigned reqdx = 0, reqdy = 0, reqdz = 0;
+  size_t reqdx = 0, reqdy = 0, reqdz = 0;
 
 #ifdef LLVM_OLDER_THAN_3_9
   llvm::NamedMDNode *size_info =

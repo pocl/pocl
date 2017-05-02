@@ -683,7 +683,8 @@ pocl_binary_get_kernel_metadata (unsigned char *binary, const char *kernel_name,
   kernel->arg_info = k.arg_info;
   free (k.kernel_name);
 
-  POCL_RETURN_ERROR_COND ((kernel->reqd_wg_size = calloc(3, sizeof(int))) == NULL,
+  POCL_RETURN_ERROR_COND ((kernel->reqd_wg_size = calloc (3, sizeof (size_t)))
+                              == NULL,
                           CL_OUT_OF_HOST_MEMORY);
 
   return CL_SUCCESS;
