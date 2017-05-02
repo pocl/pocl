@@ -31,6 +31,7 @@
 #include "pocl-ptx-gen.h"
 #include "pocl_cache.h"
 #include "pocl_file_util.h"
+#include "pocl_llvm.h"
 #include "pocl_runtime_config.h"
 #include "pocl_util.h"
 
@@ -43,6 +44,7 @@ typedef struct pocl_cuda_device_data_s
   CUdevice device;
   CUcontext context;
   char libdevice[PATH_MAX];
+  pocl_lock_t compile_lock;
 } pocl_cuda_device_data_t;
 
 typedef struct pocl_cuda_kernel_data_s
@@ -210,6 +212,8 @@ pocl_cuda_init (cl_device_id dev, const char *parameters)
   dev->global_mem_size = memtotal;
 
   dev->data = data;
+
+  POCL_INIT_LOCK (data->compile_lock);
 }
 
 char *
@@ -525,8 +529,6 @@ static pocl_cuda_kernel_data_t *
 load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
                          int has_offsets)
 {
-  cuCtxSetCurrent (((pocl_cuda_device_data_t *)device->data)->context);
-
   CUresult result;
 
   // Check if we already have a compiled kernel function
@@ -542,6 +544,20 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
       // TODO: when can we release this?
       kernel->data = calloc (1, sizeof (pocl_cuda_kernel_data_t));
       kdata = kernel->data;
+    }
+
+  pocl_cuda_device_data_t *ddata = (pocl_cuda_device_data_t *)device->data;
+  cuCtxSetCurrent (ddata->context);
+
+  POCL_LOCK(ddata->compile_lock);
+
+  // Generate the parallel bitcode file linked with the kernel library
+  int error = pocl_llvm_generate_workgroup_function (device, kernel, 0, 0, 0);
+  if (error)
+    {
+      POCL_MSG_PRINT_GENERAL ("pocl_llvm_generate_workgroup_function() failed"
+                              " for kernel %s\n", kernel->name);
+      assert (error == 0);
     }
 
   char bc_filename[POCL_FILENAME_LENGTH];
@@ -595,6 +611,8 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
       kdata->module = module;
       kdata->kernel = function;
     }
+
+  POCL_UNLOCK(ddata->compile_lock);
 
   return kdata;
 }
