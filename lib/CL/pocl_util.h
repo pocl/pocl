@@ -151,6 +151,9 @@ pocl_status_to_str (int status);
 const char *
 pocl_command_to_str (cl_command_type cmd);
 
+int
+pocl_run_command(char * const *args);
+
 #ifdef __cplusplus
 }
 #endif

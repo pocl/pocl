@@ -28,6 +28,7 @@ POname(clRetainContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
 {
   POCL_RETURN_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
   POCL_RETAIN_OBJECT(context);
+  POCL_MSG_PRINT_REFCOUNTS ("Retain Context %p  : %d\n", context, context->pocl_refcount);
   return CL_SUCCESS;
 }
 POsym(clRetainContext)

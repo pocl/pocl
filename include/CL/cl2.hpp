@@ -5809,6 +5809,10 @@ public:
 
     /*! \brief setArg overload taking a POD type
      */
+#if (__GNUC__ > 5)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-attributes"
+#endif
     template <typename T>
     typename std::enable_if<!std::is_pointer<T>::value, cl_int>::type
         setArg(cl_uint index, const T &value)
@@ -5821,6 +5825,9 @@ public:
                 detail::KernelArgumentHandler<T>::ptr(value)),
             __SET_KERNEL_ARGS_ERR);
     }
+#if (__GNUC__ > 5)
+#pragma GCC diagnostic pop
+#endif
 
     cl_int setArg(cl_uint index, size_type size, const void* argPtr)
     {
@@ -6106,6 +6113,11 @@ public:
      *   CL_INVALID_BINARY if an invalid program binary was encountered for any device. binaryStatus will return specific status for each device.
      *   CL_OUT_OF_HOST_MEMORY if there is a failure to allocate resources required by the OpenCL implementation on the host.
      */
+#if (__GNUC__ > 5)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wignored-attributes"
+#endif
+
     Program(
         const Context& context,
         const vector<Device>& devices,
@@ -6164,7 +6176,10 @@ public:
         }
     }
 
-    
+#if (__GNUC__ > 5)
+#pragma GCC diagnostic pop
+#endif
+
 #if CL_HPP_TARGET_OPENCL_VERSION >= 120
     /**
      * Create program using builtin kernels.

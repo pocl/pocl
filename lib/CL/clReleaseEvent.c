@@ -36,7 +36,7 @@ POname(clReleaseEvent)(cl_event event) CL_API_SUFFIX__VERSION_1_0
   
   if (new_refcount == 0)
     {
-      POCL_MSG_PRINT_INFO ("Freeing event %d\n", event->id);
+      POCL_MSG_PRINT_REFCOUNTS ("Free event %d\n", event->id);
       if (event->command_type != CL_COMMAND_USER &&
           event->queue->device->ops->free_event_data)
         event->queue->device->ops->free_event_data(event);

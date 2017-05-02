@@ -52,6 +52,8 @@ int pocl_mkdir_p(const char* path);
 /* Remove a file or empty directory */
 int pocl_remove(const char* path);
 
+int pocl_rename(const char *oldpath, const char *newpath);
+
 int pocl_exists(const char* path);
 
 int pocl_filesize(const char* path, uint64_t* res);

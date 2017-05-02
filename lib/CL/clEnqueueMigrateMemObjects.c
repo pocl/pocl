@@ -38,16 +38,14 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
   int errcode;
   _cl_command_node *cmd = NULL;
 
-  POCL_RETURN_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
-    CL_INVALID_EVENT_WAIT_LIST);
-
-  POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
-    CL_INVALID_EVENT_WAIT_LIST);
-
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
-
   POCL_RETURN_ERROR_COND((num_mem_objects == 0), CL_INVALID_VALUE);
   POCL_RETURN_ERROR_COND((mem_objects == NULL), CL_INVALID_VALUE);
+
+  errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
+                                        event_wait_list);
+  if (errcode != CL_SUCCESS)
+    return errcode;
 
   for (i = 0; i < num_mem_objects; ++i)
     {
@@ -56,9 +54,6 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
       POCL_RETURN_ERROR_COND((mem_objects[i]->context != command_queue->context),
         CL_INVALID_CONTEXT);
     }
-
-  for (i = 0; i < num_events_in_wait_list; i++)
-    POCL_RETURN_ERROR_COND((event_wait_list[i] == NULL), CL_INVALID_EVENT_WAIT_LIST);
 
   errcode = pocl_create_command (&cmd, command_queue,
                                  CL_COMMAND_MIGRATE_MEM_OBJECTS,

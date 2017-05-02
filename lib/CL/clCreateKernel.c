@@ -92,13 +92,30 @@ POname(clCreateKernel)(cl_program program,
           if (device->spmd)
             {
               char cachedir[POCL_FILENAME_LENGTH];
+              _cl_command_node cmd;
+              memset (&cmd, 0, sizeof(_cl_command_node));
+              cmd.type = CL_COMMAND_NDRANGE_KERNEL;
+              cmd.command.run.tmp_dir = cachedir;
+              cmd.command.run.kernel = kernel;
+              cmd.device = device;
+              size_t local_x = 0, local_y = 0, local_z = 0;
+              if (kernel->reqd_wg_size != NULL &&
+                  kernel->reqd_wg_size[0] > 0 &&
+                  kernel->reqd_wg_size[1] > 0 &&
+                  kernel->reqd_wg_size[2] > 0)
+                {
+                  local_x = kernel->reqd_wg_size[0];
+                  local_y = kernel->reqd_wg_size[1];
+                  local_z = kernel->reqd_wg_size[2];
+                }
+              cmd.command.run.local_x = local_x;
+              cmd.command.run.local_y = local_y;
+              cmd.command.run.local_z = local_z;
               pocl_cache_kernel_cachedir_path (cachedir, program, device_i,
-                                               kernel, "", 0, 0, 0);
+                                               kernel, "", local_x,
+                                               local_y, local_z);
 
-              errcode = pocl_llvm_generate_workgroup_function (cachedir, device,
-                                                               kernel, 0, 0, 0);
-              if (errcode == CL_SUCCESS)
-                device->ops->compile_kernel(NULL, kernel, device);
+              device->ops->compile_kernel (&cmd, kernel, device);
             }
 #endif
         }

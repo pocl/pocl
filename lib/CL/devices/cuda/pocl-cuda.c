@@ -54,7 +54,7 @@ pocl_cuda_abort_on_error (CUresult result, unsigned line, const char *func,
       const char *err_string;
       cuGetErrorName (result, &err_name);
       cuGetErrorString (result, &err_string);
-      POCL_MSG_PRINT2 (func, line, "Error during %s\n", api);
+      POCL_MSG_PRINT2 (CUDA, func, line, "Error during %s\n", api);
       POCL_ABORT ("%s: %s\n", err_name, err_string);
     }
 }
@@ -285,7 +285,7 @@ pocl_cuda_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void *host_ptr)
             {
               const char *err;
               cuGetErrorName (result, &err);
-              POCL_MSG_PRINT2 (__FUNCTION__, __LINE__,
+              POCL_MSG_PRINT2 (CUDA, __FUNCTION__, __LINE__,
                                "-> Failed to allocate memory: %s\n", err);
               return CL_MEM_OBJECT_ALLOCATION_FAILURE;
             }

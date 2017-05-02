@@ -40,20 +40,22 @@
 #endif
 
 #include "config.h"
-#include "pocl_image_util.h"
-#include "pocl_file_util.h"
-#include "pocl_util.h"
-#include "pocl_cache.h"
+#include "config2.h"
 #include "devices.h"
+#include "pocl_cache.h"
+#include "pocl_debug.h"
+#include "pocl_file_util.h"
+#include "pocl_image_util.h"
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
-#include "pocl_debug.h"
+#include "pocl_util.h"
 
 #ifdef OCS_AVAILABLE
 #include "pocl_llvm.h"
 #endif
 
 #include "_kernel_constants.h"
+
 
 #define COMMAND_LENGTH 2048
 
@@ -69,9 +71,10 @@
 
 #ifdef OCS_AVAILABLE
 char*
-llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
+llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
+              size_t local_x, size_t local_y, size_t local_z)
+{
 
-  char command[COMMAND_LENGTH];
   char bytecode[POCL_FILENAME_LENGTH];
   char objfile[POCL_FILENAME_LENGTH];
   /* strlen of / .so 4+1 */
@@ -101,6 +104,15 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
   void* write_lock = pocl_cache_acquire_writer_lock(kernel->program, device);
   assert(write_lock);
 
+  error = pocl_llvm_generate_workgroup_function (device, kernel,
+                                                 local_x, local_y, local_z);
+  if (error)
+    {
+      POCL_MSG_PRINT_GENERAL ("pocl_llvm_generate_workgroup_function() failed"
+                              " for kernel %s\n", kernel->name);
+      assert (error == 0);
+    }
+
   error = snprintf (bytecode, POCL_FILENAME_LENGTH,
 		    "%s%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
   assert (error >= 0);
@@ -109,26 +121,28 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device) {
   assert (error == 0);
 
   /* clang is used as the linker driver in LINK_CMD */
-  error = snprintf (command, COMMAND_LENGTH,
-#ifndef POCL_ANDROID
-#ifdef OCS_AVAILABLE
-                    CLANGXX " " HOST_CLANG_FLAGS " " HOST_LD_FLAGS " -o %s %s",
-#else
-                    LINK_COMMAND " " HOST_LD_FLAGS " -o %s %s",
-#endif
-#else
-                    POCL_ANDROID_PREFIX"/bin/ld " HOST_LD_FLAGS " -o %s %s ",
-#endif
-                    tmp_module, objfile);
-  assert (error >= 0);
 
-  POCL_MSG_PRINT_INFO ("executing [%s]\n", command);
-  error = system (command);
+  POCL_MSG_PRINT_INFO ("Linking final module\n");
+  char *const args1[]
+#ifndef POCL_ANDROID
+      = { LINK_COMMAND,
+          HOST_LD_FLAGS_ARRAY,
+          "-o",
+          tmp_module,
+          objfile,
+          NULL };
+#else
+      = { POCL_ANDROID_PREFIX "/bin/ld",
+          HOST_LD_FLAGS_ARRAY,
+          "-o",
+          tmp_module,
+          objfile,
+          NULL };
+#endif
+  error = pocl_run_command (args1);
   assert (error == 0);
 
-  error = snprintf (command, COMMAND_LENGTH, "mv %s %s", tmp_module, module);
-  assert (error >= 0);
-  error = system (command);
+  error = pocl_rename (tmp_module, module);
   assert (error == 0);
 
   /* Save space in kernel cache */
@@ -772,7 +786,10 @@ pocl_check_dlhandle_cache (_cl_command_node *cmd)
       POCL_LOCK (pocl_llvm_codegen_lock);
       module_fn = (char *)llvm_codegen (cmd->command.run.tmp_dir,
                                         cmd->command.run.kernel,
-                                        cmd->device);
+                                        cmd->device,
+                                        cmd->command.run.local_x,
+                                        cmd->command.run.local_y,
+                                        cmd->command.run.local_z);
       POCL_UNLOCK (pocl_llvm_codegen_lock);
       POCL_MSG_PRINT_INFO("Using static WG size binary: %s\n", module_fn);
 #else
@@ -1009,7 +1026,7 @@ pocl_free_global_mem(cl_device_id device, void* ptr, size_t size)
 void
 pocl_print_system_memory_stats()
 {
-  POCL_MSG_PRINT("MEM STATS:\n", "",
+  POCL_MSG_PRINT_F (MEMORY, INFO, "",
   "____ Total available system memory  : %10zu KB\n"
   " ____ Currently used system memory   : %10zu KB\n"
   " ____ Max used system memory         : %10zu KB\n",

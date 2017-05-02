@@ -160,6 +160,15 @@ int pocl_touch_file(const char* path) {
     return (close(fd) ? (-errno) : 0);
 
 }
+
+int pocl_rename(const char *oldpath, const char *newpath) {
+
+    Twine op(oldpath);
+    Twine np(newpath);
+    std::error_code ec = sys::fs::rename(op, np);
+    return ec.default_error_condition().value();
+}
+
 /****************************************************************************/
 
 int
@@ -197,14 +206,15 @@ pocl_read_file(const char* path, char** content, uint64_t *filesize) {
 }
 
 
-
-int pocl_write_file(const char *path, const char* content,
-                                    uint64_t    count,
-                                    int         append,
-                                    int         dont_rewrite) {
+/* Atomic write - with rename()
+ * NOTE: still requires a pocl lock before attempting it - because the tempfile
+ * name is not random */
+int pocl_write_file(const char *path, const char *content, uint64_t count,
+                    int append, int dont_rewrite) {
     int fd;
     std::error_code ec;
-    Twine p(path);
+    std::string TmpPath(path);
+    TmpPath.append(".tmp");
 
     assert(path);
     assert(content);
@@ -220,23 +230,34 @@ int pocl_write_file(const char *path, const char* content,
         }
     }
 
-    if (append)
+    if (append) {
+        Twine p(path);
         OPEN_FOR_APPEND;
-    else
+    } else {
+        Twine p(TmpPath);
         OPEN_CREATE;
+    }
 
     RETURN_IF_EC;
 
     if (write(fd, content, (ssize_t)count) < (ssize_t)count)
         return errno ? -errno : -1;
 
-    return (close(fd) ? (-errno) : 0);
+    if (close(fd))
+      return -errno;
+
+    if (append)
+      return 0;
+    else
+      return pocl_rename(TmpPath.c_str(), path);
 }
 
 
 
 
-
+/* Atomic write of IR - with rename()
+ * NOTE: still requires a pocl lock before attempting it - because the tempfile
+ * name is not random */
 int pocl_write_module(void *module, const char* path, int dont_rewrite) {
 
     assert(module);
@@ -267,11 +288,7 @@ int pocl_write_module(void *module, const char* path, int dont_rewrite) {
     if (os.has_error())
       return 1;
 
-    std::string Command("mv ");
-    Command += TmpPath;
-    Command += " ";
-    Command += path;
-    return system(Command.c_str());
+    return pocl_rename(TmpPath.c_str(), path);
 }
 
 

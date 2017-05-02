@@ -526,10 +526,11 @@ int pocl_llvm_build_program(cl_program program,
   write_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
   assert(write_lock);
 
-  /* Always retain program.bc. Its required in clBuildProgram */
-  pocl_write_module(*mod, program_bc_path, 0);
+  POCL_MSG_PRINT_INFO("Writing program.bc to %s.\n", program_bc_path);
 
-  POCL_MSG_PRINT_INFO("Wrote program.bc to %s.\n", program_bc_path);
+  /* Always retain program.bc. Its required in clBuildProgram */
+  int error = pocl_write_module(*mod, program_bc_path, 0);
+  assert(error == 0);
 
   /* To avoid writing & reading the same back,
    * save program->binaries[i]
@@ -1038,7 +1039,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
     i++;
   }
   // fill 'kernel->reqd_wg_size'
-  kernel->reqd_wg_size = (int*)malloc(3*sizeof(int));
+  kernel->reqd_wg_size = (unsigned *)malloc(3 * sizeof(unsigned));
 
   unsigned reqdx = 0, reqdy = 0, reqdz = 0;
 
@@ -1669,7 +1670,7 @@ kernel_library
 /* This is used to control the kernel we want to process in the kernel compilation. */
 extern cl::opt<std::string> KernelName;
 
-int pocl_llvm_generate_workgroup_function(char* kernel_cachedir, cl_device_id device,
+int pocl_llvm_generate_workgroup_function(cl_device_id device,
                                           cl_kernel kernel, size_t local_x,
                                           size_t local_y, size_t local_z) {
 
@@ -1692,8 +1693,6 @@ int pocl_llvm_generate_workgroup_function(char* kernel_cachedir, cl_device_id de
 
   if (pocl_exists(final_binary_path))
     return CL_SUCCESS;
-
-  pocl_mkdir_p(kernel_cachedir);
 
   llvm::MutexGuard lockHolder(kernelCompilerLock);
   InitializeLLVM();
@@ -1772,9 +1771,11 @@ int pocl_llvm_generate_workgroup_function(char* kernel_cachedir, cl_device_id de
       input->getDataLayout().getStringRepresentation())
       .run(*input);
 #endif
+
   // TODO: don't write this once LLC is called via API, not system()
-  pocl_cache_write_kernel_parallel_bc(input, program, device_i, kernel,
-                                  local_x, local_y, local_z);
+  int error = pocl_cache_write_kernel_parallel_bc(input, program, device_i,
+                                  kernel, local_x, local_y, local_z);
+  assert(error == 0);
 
   delete input;
   return 0;
@@ -1813,6 +1814,7 @@ void pocl_llvm_update_binaries (cl_program program) {
   InitializeLLVM();
   char program_bc_path[POCL_FILENAME_LENGTH];
   void* cache_lock = NULL;
+  int error;
 
   // Dump the LLVM IR Modules to memory buffers. 
   assert (program->llvm_irs != NULL);
@@ -1827,9 +1829,12 @@ void pocl_llvm_update_binaries (cl_program program) {
           continue;
 
       cache_lock = pocl_cache_acquire_writer_lock_i(program, i);
+      assert(cache_lock);
 
       pocl_cache_program_bc_path(program_bc_path, program, i);
-      pocl_write_module((llvm::Module*)program->llvm_irs[i], program_bc_path, 1);
+      error = pocl_write_module((llvm::Module*)program->llvm_irs[i],
+                                 program_bc_path, 1);
+      assert(error == 0);
 
       std::string content;
       llvm::raw_string_ostream sos(content);
@@ -1845,6 +1850,8 @@ void pocl_llvm_update_binaries (cl_program program) {
       std::memcpy(program->binaries[i], content.c_str(), n);
 
       pocl_cache_release_lock(cache_lock);
+      cache_lock = NULL;
+
 #ifdef DEBUG_POCL_LLVM_API        
       printf("### binary for device %zi was of size %zu\n", i, program->binary_sizes[i]);
 #endif

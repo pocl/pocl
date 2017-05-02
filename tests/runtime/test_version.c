@@ -16,7 +16,6 @@ int main(void)
 	cl_device_id did;
 	cl_platform_id pid; 
 	cl_command_queue queue;
-	cl_int err;
 	size_t rvs;
 	char result[1024];
 	char *needle;

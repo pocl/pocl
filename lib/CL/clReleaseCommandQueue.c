@@ -36,15 +36,19 @@ POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VER
 
   POname(clFlush)(command_queue);
   POCL_RELEASE_OBJECT(command_queue, new_refcount);
+  POCL_MSG_PRINT_REFCOUNTS ("Release Command Queue %p  %d\n", command_queue, new_refcount);
+
   if (new_refcount == 0)
     {
-      POCL_MSG_PRINT_INFO ("Free Command Queue %p\n", command_queue);
+      POCL_MSG_PRINT_REFCOUNTS ("Free Command Queue %p\n", command_queue);
       POname(clFinish)(command_queue);
       pocl_queue_list_delete(command_queue);
       POCL_MEM_FREE(command_queue);
 
       POname(clReleaseContext)(context);
       POname(clReleaseDevice)(device);
+
+      POCL_MSG_PRINT_REFCOUNTS ("Context refs after freeing CmdQueue: %d\n", context->pocl_refcount);
     }
   return CL_SUCCESS;
 }

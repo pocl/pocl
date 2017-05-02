@@ -93,6 +93,9 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   size_t offset_x, offset_y, offset_z;
   size_t global_x, global_y, global_z;
   size_t local_x, local_y, local_z;
+  offset_x = offset_y = offset_z = 0;
+  global_x = global_y = global_z = 0;
+  local_x = local_y = local_z = 0;
   /* cached values for max_work_item_sizes,
    * since we are going to access them repeatedly */
   size_t max_local_x, max_local_y, max_local_z;
@@ -464,22 +467,6 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
   pocl_cache_kernel_cachedir_path (cachedir, kernel->program,
                                    realdev_i, kernel, "",
                                    local_x, local_y, local_z);
-
-  if (kernel->program->source || kernel->program->binaries[realdev_i])
-    {
-#ifdef OCS_AVAILABLE
-      // SPMD devices already have compiled at this point
-      if (realdev->spmd)
-        errcode = CL_SUCCESS;
-      else
-        errcode = pocl_llvm_generate_workgroup_function (
-            cachedir, realdev, kernel, local_x, local_y, local_z);
-#else
-      errcode = 1;
-#endif
-      if (errcode)
-        goto ERROR;
-    }
 
   b_migrate_count = 0;
   buffer_count = 0;

@@ -141,9 +141,9 @@ struct _cl_icd_dispatch pocl_dispatch = {
   &POclGetKernelArgInfo,
   &POclEnqueueFillBuffer,
   &POclEnqueueFillImage,
-  NULL, /* &POclEnqueueMigrateMemObjects, */
+  &POclEnqueueMigrateMemObjects,
   &POclEnqueueMarkerWithWaitList,
-  NULL, /* &POclEnqueueBarrierWithWaitList, */
+  &POclEnqueueBarrierWithWaitList,
   NULL, /* &POclGetExtensionFunctionAddressForPlatform, */
   NULL, /* &POclCreateFromGLTexture,     */
   NULL, /* &clUnknown109 */
