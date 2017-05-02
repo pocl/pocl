@@ -39,11 +39,18 @@
     if (param_value_size_ret)                                       \
       *param_value_size_ret = value_size;                           \
     return CL_SUCCESS;                                              \
-  } 
+  }
 
-    
+#define STRINGIFY_(x) #x
+#define STRINGIFY(x) STRINGIFY_ (x)
+#define HOST_DEVICE_CL_VERSION_MAJOR_STR                                      \
+  STRINGIFY (HOST_DEVICE_CL_VERSION_MAJOR)
+#define HOST_DEVICE_CL_VERSION_MINOR_STR                                      \
+  STRINGIFY (HOST_DEVICE_CL_VERSION_MINOR)
+#define HOST_CL_VERSION                                                       \
+  "OpenCL C " HOST_DEVICE_CL_VERSION_MAJOR_STR                                \
+  "." HOST_DEVICE_CL_VERSION_MINOR_STR " pocl"
 
-  
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clGetDeviceInfo)(cl_device_id   device,
                 cl_device_info param_name, 
@@ -238,7 +245,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF          : 
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->native_vector_width_half);
   case CL_DEVICE_OPENCL_C_VERSION                  :
-    POCL_RETURN_GETINFO_STR("OpenCL C 2.0");
+    POCL_RETURN_GETINFO_STR (HOST_CL_VERSION);
   case CL_DEVICE_BUILT_IN_KERNELS                  :
     POCL_RETURN_GETINFO_STR("");
 
