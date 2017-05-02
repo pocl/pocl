@@ -38,6 +38,9 @@
 #include "pocl_device.h"
 #include "config.h"
 
+/* detects restrict, variadic macros etc */
+#include "pocl_compiler_features.h"
+
 #define POCL_FILENAME_LENGTH 1024
 
 typedef struct _mem_mapping mem_mapping_t;
@@ -331,5 +334,6 @@ struct _cl_command_node
 #if (defined LLVM_4_0)
 # define LLVM_OLDER_THAN_5_0 1
 #endif
+
 
 #endif /* POCL_H */
