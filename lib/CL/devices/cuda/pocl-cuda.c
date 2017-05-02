@@ -351,6 +351,11 @@ pocl_cuda_free (cl_device_id device, cl_mem mem_obj)
       cuMemFreeHost (mem_obj->mem_host_ptr);
       mem_obj->mem_host_ptr = NULL;
     }
+  else if (mem_obj->flags & CL_MEM_USE_HOST_PTR)
+    {
+      cuMemHostUnregister (mem_obj->mem_host_ptr);
+      mem_obj->mem_host_ptr = NULL;
+    }
   else
     {
       void *ptr = mem_obj->device_ptrs[device->dev_id].mem_ptr;
