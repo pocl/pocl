@@ -198,7 +198,9 @@ pocl_basic_init_device_infos(struct _cl_device_id* dev)
   dev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT*8; // this is in bits
   dev->half_fp_config = 0;
   dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
-  dev->double_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
+  dev->double_fp_config = CL_FP_FMA | CL_FP_ROUND_TO_NEAREST
+                          | CL_FP_ROUND_TO_ZERO | CL_FP_ROUND_TO_INF
+                          | CL_FP_INF_NAN | CL_FP_DENORM;
   dev->global_mem_cache_type = CL_NONE;
   dev->global_mem_cacheline_size = 0;
   dev->global_mem_cache_size = 0;
