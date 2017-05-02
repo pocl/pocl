@@ -558,10 +558,10 @@ int findLibDevice(char LibDevicePath[PATH_MAX], const char *Arch) {
       size_t ps = snprintf(LibDevicePath, PATH_MAX - 1, PathFormat, bp, np,
                            LibDeviceSM);
       LibDevicePath[ps] = '\0';
-      POCL_MSG_PRINT2(__FUNCTION__, __LINE__, "looking for libdevice at '%s'\n",
+      POCL_MSG_PRINT2(CUDA, __FUNCTION__, __LINE__, "looking for libdevice at '%s'\n",
                       LibDevicePath);
       if (pocl_exists(LibDevicePath)) {
-        POCL_MSG_PRINT2(__FUNCTION__, __LINE__, "found libdevice at '%s'\n",
+        POCL_MSG_PRINT2(CUDA, __FUNCTION__, __LINE__, "found libdevice at '%s'\n",
                         LibDevicePath);
         return 0;
       }
