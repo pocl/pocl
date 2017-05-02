@@ -1,4 +1,3 @@
-
 /* The normal alignment of `double16', in bytes. */
 #define ALIGNOF_DOUBLE16 @ALIGNOF_DOUBLE16@
 
@@ -13,28 +12,15 @@
 /* "Build with ICD" */
 #cmakedefine BUILD_ICD
 
-#ifndef LLVM_VERSION
-#define LLVM_VERSION "@LLVM_VERSION_FULL@"
-#endif
-
 #cmakedefine CLANG_IS_PATCHED_FOR_SPIR_CC
 
 #define CLANG "@CLANG@"
 
-/* clang++ executable */
-#define CLANGXX "@CLANGXX@"
-
-#define HSAIL_ASM "@HSAIL_ASM@"
-
-/* clang++ compiler flags */
-/* TODO in sources */
-#define KERNEL_CLANGXX_FLAGS "@KERNEL_CLANGXX_FLAGS@"
-
 /* "Using a SPIR generator Clang from Khronos." */
 #cmakedefine CLANG_SPIR
 
-/* TODO in sources */
-#define KERNEL_CL_FLAGS  "@KERNEL_CL_FLAGS@"
+/* clang++ executable */
+#define CLANGXX "@CLANGXX@"
 
 #define FORCED_CLFLAGS  "@FORCED_CLFLAGS@"
 
@@ -73,9 +59,19 @@
 
 #define HSA_DEVICE_EXTENSIONS "@HSA_DEVICE_EXTENSIONS@"
 
+#define HSAIL_ASM "@HSAIL_ASM@"
+
+
 #define KERNELLIB_HOST_CPU_VARIANTS "@KERNELLIB_HOST_CPU_VARIANTS@"
 
 #cmakedefine KERNELLIB_HOST_DISTRO_VARIANTS
+
+/* clang++ compiler flags */
+/* TODO in sources */
+#define KERNEL_CLANGXX_FLAGS "@KERNEL_CLANGXX_FLAGS@"
+
+/* TODO in sources */
+#define KERNEL_CL_FLAGS  "@KERNEL_CL_FLAGS@"
 
 #define LLVM_LLC "@LLVM_LLC@"
 
@@ -96,14 +92,14 @@
 
 #cmakedefine LLVM_BUILD_MODE_DEBUG
 
-#cmakedefine POCL_USE_FAKE_ADDR_SPACE_IDS
+#ifndef LLVM_VERSION
+#define LLVM_VERSION "@LLVM_VERSION_FULL@"
+#endif
 
 #define LINK_COMMAND "@LINK_COMMAND@"
 
 /* Defined to greatest expected alignment for extended types, in bytes. */
 #define MAX_EXTENDED_ALIGNMENT @MAX_EXTENDED_ALIGNMENT@
-
-
 
 /* used in lib/CL/devices/basic */
 #define OCL_KERNEL_TARGET  "@OCL_KERNEL_TARGET@"
@@ -125,10 +121,9 @@
 
 #define POCL_INSTALL_PRIVATE_DATADIR "@POCL_INSTALL_PRIVATE_DATADIR@"
 
-/* these are *host* values */
+#cmakedefine POCL_USE_FAKE_ADDR_SPACE_IDS
 
-/* The size of `__fp16', as computed by sizeof. */
-#define SIZEOF___FP16  @SIZEOF___FP16@
+/* these are *host* values */
 
 /* used in tce_common.c & pocl_llvm_api.cc  */
 #define SRCDIR  "@SRCDIR@"
