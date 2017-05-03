@@ -124,21 +124,20 @@ void pocl_setup_context(cl_context context);
 
 /* Helpers for dealing with devices / subdevices */
 
-#define POCL_REAL_DEV(dev) (dev->parent_device ? dev->parent_device : dev)
-
+cl_device_id pocl_real_dev (const cl_device_id);
 cl_device_id * pocl_unique_device_list(const cl_device_id * in, cl_uint num, cl_uint *real);
 
-#define POCL_CHECK_DEV_IN_CMDQ                                               \
-  do                                                                         \
-    {                                                                        \
-      device = command_queue->device;                                        \
-      for (i = 0; i < command_queue->context->num_devices; ++i)              \
-        {                                                                    \
-          if (command_queue->context->devices[i] == POCL_REAL_DEV(device))   \
-            break;                                                           \
-        }                                                                    \
-      assert(i < command_queue->context->num_devices);                       \
-    }                                                                        \
+#define POCL_CHECK_DEV_IN_CMDQ                                                \
+  do                                                                          \
+    {                                                                         \
+      device = pocl_real_dev (command_queue->device);                         \
+      for (i = 0; i < command_queue->context->num_devices; ++i)               \
+        {                                                                     \
+          if (command_queue->context->devices[i] == device)                   \
+            break;                                                            \
+        }                                                                     \
+      assert (i < command_queue->context->num_devices);                       \
+    }                                                                         \
   while (0)
 
 int pocl_check_event_wait_list(cl_command_queue     command_queue,

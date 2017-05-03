@@ -79,17 +79,7 @@ POname(clEnqueueWriteBufferRect)(cl_command_queue command_queue,
   if (pocl_buffer_boundcheck_3d(((size_t)-1), host_origin, region, &host_row_pitch,
       &host_slice_pitch, "") != CL_SUCCESS) return CL_INVALID_VALUE;
 
-
-
-
-  device = POCL_REAL_DEV(command_queue->device);
-
-  for (i = 0; i < command_queue->context->num_devices; ++i)
-    {
-      if (command_queue->context->devices[i] == device)
-        break;
-    }
-  assert(i < command_queue->context->num_devices);
+  POCL_CHECK_DEV_IN_CMDQ;
 
   POname(clRetainMemObject) (buffer);
 

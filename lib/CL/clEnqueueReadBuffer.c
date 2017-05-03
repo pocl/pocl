@@ -40,6 +40,7 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
   cl_device_id device;
   _cl_command_node *cmd = NULL;
   int errcode;
+  size_t i;
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
@@ -63,7 +64,7 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  device = POCL_REAL_DEV(command_queue->device);
+  POCL_CHECK_DEV_IN_CMDQ;
 
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_BUFFER, 
                                  event, num_events_in_wait_list, 

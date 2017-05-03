@@ -135,7 +135,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
 
   assert (command_queue->device->max_work_item_dimensions <= 3);
 
-  realdev = POCL_REAL_DEV(command_queue->device);
+  realdev = pocl_real_dev (command_queue->device);
 
   if (global_work_offset != NULL)
     {

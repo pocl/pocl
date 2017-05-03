@@ -24,11 +24,11 @@ POname(clGetKernelWorkGroupInfo)
       unsigned i;
       int found_it = 0;
       for (i = 0; i < kernel->context->num_devices; i++)
-        if (POCL_REAL_DEV(device) == kernel->context->devices[i])
-        {
-          found_it = 1;
-          break;
-        }
+        if (pocl_real_dev (device) == kernel->context->devices[i])
+          {
+            found_it = 1;
+            break;
+          }
       POCL_RETURN_ERROR_ON((!found_it), CL_INVALID_DEVICE, "could not find the "
         "device supplied in argument\n");
     }

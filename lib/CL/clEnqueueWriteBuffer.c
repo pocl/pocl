@@ -65,14 +65,7 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  device = POCL_REAL_DEV(command_queue->device);
-
-  for (i = 0; i < command_queue->context->num_devices; ++i)
-    {
-        if (command_queue->context->devices[i] == device)
-            break;
-    }
-  assert(i < command_queue->context->num_devices);
+  POCL_CHECK_DEV_IN_CMDQ;
 
   errcode = pocl_create_command (&cmd, command_queue, 
                                  CL_COMMAND_WRITE_BUFFER, 

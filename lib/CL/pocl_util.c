@@ -688,6 +688,15 @@ check_copy_overlap(const size_t src_offset[3],
   return overlap;
 }
 
+/* For a subdevice parameter, return the actual device it belongs to. */
+cl_device_id
+pocl_real_dev (const cl_device_id dev)
+{
+  cl_device_id ret = dev;
+  while (ret->parent_device)
+    ret = ret->parent_device;
+  return ret;
+}
 
 /* Make a list of unique devices. If any device is a subdevice,
  * replace with parent, then remove duplicate parents. */
@@ -700,7 +709,7 @@ cl_device_id * pocl_unique_device_list(const cl_device_id * in, cl_uint num, cl_
 
   unsigned i;
   for (i=0; i < num; ++i)
-    out[i] = (in[i] ? POCL_REAL_DEV(in[i]) : NULL);
+    out[i] = (in[i] ? pocl_real_dev (in[i]) : NULL);
 
   i=1;
   unsigned device_i=0;

@@ -340,7 +340,8 @@ get_max_thread_count(cl_device_id device)
   if (device->max_compute_units == 0)
     return pocl_get_int_option (THREAD_COUNT_ENV, FALLBACK_MAX_THREAD_COUNT);
   else
-    return pocl_get_int_option(THREAD_COUNT_ENV, POCL_REAL_DEV(device)->max_compute_units);
+    return pocl_get_int_option (THREAD_COUNT_ENV,
+                                pocl_real_dev (device)->max_compute_units);
 }
 
 void
