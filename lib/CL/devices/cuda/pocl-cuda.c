@@ -242,6 +242,8 @@ pocl_cuda_init_device_infos (struct _cl_device_id *dev)
 
   // TODO: Get images working
   dev->image_support = CL_FALSE;
+  // always enable 64bit ints
+  dev->has_64bit_long = 1;
 }
 
 unsigned int

@@ -141,7 +141,7 @@
 /* Defined on big endian systems */
 #define WORDS_BIGENDIAN @WORDS_BIGENDIAN@
 
-/* Disable cl_khr_int64 when a clang bug is present */
+/* Disable 64bit ints when a clang bug is present */
 #cmakedefine _CL_DISABLE_LONG
 
 /* Disable cl_khr_fp16 because fp16 is not supported */

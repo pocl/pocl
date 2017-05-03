@@ -292,7 +292,8 @@ int pocl_llvm_build_program(cl_program program,
 #endif
     }
   }
-
+  if (device->has_64bit_long)
+    ss << "-Dcl_khr_int64 ";
   // This can cause illegal optimizations when unaware
   // of the barrier semantics. -O2 is the default opt level in
   // Clang for OpenCL C and seems to affect the performance
