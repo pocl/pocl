@@ -173,15 +173,19 @@ void _cl_print_char(flags_t flags, int field_width, int val)
   DEBUG_PRINTF(("[printf:char:done]\n"));
 }
 
-void _cl_print_string(flags_t flags, int field_width, OCL_C_AS const char* val)
+void
+_cl_print_string (flags_t flags, int field_width, int precision,
+                  OCL_C_AS const char *val)
 {
   DEBUG_PRINTF(("[printf:char]\n"));
   char outfmt[1000];
-  char string[] = "%%%s%.0ds";
+  char string[] = "%%%s%.0d%s%.0ds";
   snprintf(outfmt, sizeof outfmt,
            string,
            flags.left ? "-" : "",
-           field_width);
+           field_width,
+           (precision > 0) ? "." : "",
+           (precision > 0) ? precision : 0);
   DEBUG_PRINTF(("[printf:char:outfmt=%s]\n", outfmt));
   printf(outfmt, val);
   DEBUG_PRINTF(("[printf:char:done]\n"));
@@ -437,11 +441,10 @@ int __cl_printf(const OCL_CONSTANT_AS char* restrict format, ...)
           // Output a string
         case 's': {
           if (flags.plus || flags.space || flags.alt || flags.zero) goto error;
-          if (precision != -1) goto error;
           if (vector_length != 1) goto error;
           if (length != 0) goto error;
           OCL_C_AS const char* val = va_arg(ap, OCL_C_AS const char*);
-          _cl_print_string(flags, field_width, val);
+          _cl_print_string (flags, field_width, precision, val);
           break;
         }
           
