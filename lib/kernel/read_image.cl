@@ -26,210 +26,816 @@
 #include "templates.h"
 #include "pocl_image_rw_utils.h"
 
-static constant const int ARGB_MAP[] = { 3, 0, 1, 2 };
-static constant const int BGRA_MAP[] = { 2, 1, 0, 3 };
-
-static int map_channel(int i, int order) {
-    switch(order)
+static uint4
+map_channels (uint4 color, int order)
+{
+  switch (order)
     {
-        case CL_ARGB: return ARGB_MAP[i];
-        case CL_BGRA: return BGRA_MAP[i];
-        case CL_RGBA:
-        default: return i;
+    case CL_ARGB:
+      return color.yzwx;
+    case CL_BGRA:
+      return color.zyxw;
+    case CL_RGBA:
+    default:
+      return color;
     }
-    return i;
 }
 
-#define CLAMP_TO_0000 1 /* clamp to 0,0,0,0 */
-#define CLAMP_TO_0001 2 /* clamp to 0,0,0,1 */
+/*************************************************************************/
 
-/* checks if integer coord is out of bounds. If out of bounds: Sets coord in
-   bounds and returns false OR populates color with border colour and returns
-   true. If in bounds, returns false */
-static int
-pocl_is_out_of_bounds (global dev_image_t *dev_image, int4 *coord,
-                       dev_sampler_t dev_sampler)
+/* only for CL_FLOAT, CL_SNORM_INT8, CL_UNORM_INT8,
+ * CL_SNORM_INT16, CL_UNORM_INT16 channel types */
+static float4
+get_float4_pixel (void *data, size_t base_index, int type, int elem_size)
 {
-  if (dev_sampler & CLK_ADDRESS_CLAMP_TO_EDGE)
+  if (type == CL_FLOAT)
+    return ((float4 *)data)[base_index];
+#ifdef cl_khr_fp16
+  if (type == CL_HALF_FLOAT)
+    return convert_float4 (((half4 *)data)[base_index]);
+#endif
+  const float4 one_127th = (float4) (1.0f / 127.0f);
+  const float4 one_32767th = (float4) (1.0f / 32767.0f);
+  const float4 one_255th = ((float4) (1.0f / (float)UCHAR_MAX));
+  const float4 one_65535th = ((float4) (1.0f / (float)USHRT_MAX));
+  if (type == CL_SNORM_INT8)
     {
-      if (coord->x >= dev_image->_width)
-        coord->x = dev_image->_width-1;
-      if (dev_image->_height != 0 && coord->y >= dev_image->_height)
-        coord->y = dev_image->_height-1;
-      if (dev_image->_depth != 0 && coord->z >= dev_image->_depth)
-        coord->z = dev_image->_depth-1;
-
-      if (coord->x < 0)
-        coord->x = 0;
-      if (coord->y < 0)
-        coord->y = 0;
-      if (coord->z < 0)
-        coord->z = 0;
-
-      return 0;
+      /*  <I*_MIN, I*_MAX> to <-1.0, 1.0> */
+      int4 color = convert_int4 (((char4 *)data)[base_index]);
+      float4 colorf = convert_float4 (color);
+      return max ((float4) (-1.0f), (one_127th * colorf));
     }
-  if (dev_sampler & CLK_ADDRESS_CLAMP)
+  if (type == CL_SNORM_INT16)
     {
-      if(coord->x >= dev_image->_width || coord->x < 0 ||
-         coord->y >= dev_image->_height || coord->y < 0 ||
-         (dev_image->_depth != 0 && (coord->z >= dev_image->_depth || coord->z <0)))
-        {
-          if (dev_image->_order == CL_A || dev_image->_order == CL_INTENSITY ||
-              dev_image->_order == CL_RA || dev_image->_order == CL_ARGB ||
-              dev_image->_order == CL_BGRA || dev_image->_order == CL_RGBA)
-            return CLAMP_TO_0000;
-          else
-            return CLAMP_TO_0001;
-        }
+      int4 color = convert_int4 (((short4 *)data)[base_index]);
+      float4 colorf = convert_float4 (color);
+      return max ((float4) (-1.0f), (one_32767th * colorf));
     }
-  return 0;
+  if (type == CL_UNORM_INT8)
+    {
+      /* <0, I*_MAX> to <0.0, 1.0> */
+      return convert_float4 (((uchar4 *)data)[base_index]) * one_255th;
+    }
+  if (type == CL_UNORM_INT16)
+    {
+      /* <0, I*_MAX> to <0.0, 1.0> */
+      return convert_float4 (((ushort4 *)data)[base_index]) * one_65535th;
+    }
+  return (float4) (123.0f);
 }
 
-static int
-pocl_is_out_of_bounds_floatc (global dev_image_t *dev_image, float4 *coord,
-                              dev_sampler_t dev_sampler,
-                              int4 *unnorm_int_coord)
+/* only for CL_FLOAT, CL_SNORM_INT8, CL_UNORM_INT8,
+ * CL_SNORM_INT16, CL_UNORM_INT16 channel types */
+static float
+get_float_pixel (void *data, size_t base_index, int type, int elem_size)
 {
-  float4 unnorm = *coord;
-  if (dev_sampler & CLK_NORMALIZED_COORDS_TRUE)
+  if (type == CL_FLOAT)
+    return ((float *)data)[base_index];
+#ifdef cl_khr_fp16
+  if (type == CL_HALF_FLOAT)
+    return convert_float (((half *)data)[base_index]);
+#endif
+  const float one_127th = (float)(1.0f / 127.0f);
+  const float one_32767th = (float)(1.0f / 32767.0f);
+  const float one_255th = ((float)(1.0f / (float)UCHAR_MAX));
+  const float one_65535th = ((float)(1.0f / (float)USHRT_MAX));
+  if (type == CL_SNORM_INT8)
     {
-      float4 imgsize = (float4) (dev_image->_width, dev_image->_height,
-                                 dev_image->_depth, 0);
-      unnorm *= imgsize;
+      /*  <I*_MIN, I*_MAX> to <-1.0, 1.0> */
+      char color = ((char *)data)[base_index];
+      float colorf = convert_float (color);
+      return max ((-1.0f), (one_127th * colorf));
     }
-  float4 res = unnorm;
-
-  /* TODO: border color */
-  if (dev_sampler & CLK_FILTER_NEAREST)
-    res = floor (unnorm);
-
-  /* TODO: border color */
-  if (dev_sampler & CLK_FILTER_LINEAR)
+  if (type == CL_SNORM_INT16)
     {
-      float4 r0 = floor (unnorm - (float4) (0.5f));
-      float4 r1 = floor (unnorm - (float4) (0.5f)) + (float4) (1.0f);
-      float4 unused;
-      float4 abc = fract ((unnorm - (float4) (0.5f)), &unused);
-      /* TODO */
+      short color = ((short *)data)[base_index];
+      float colorf = convert_float (color);
+      return max ((-1.0f), (one_32767th * colorf));
+    }
+  if (type == CL_UNORM_INT8)
+    {
+      /* <0, I*_MAX> to <0.0, 1.0> */
+      return convert_float (((uchar *)data)[base_index]) * one_255th;
+    }
+  if (type == CL_UNORM_INT16)
+    {
+      return convert_float (((ushort *)data)[base_index]) * one_65535th;
     }
 
-  *unnorm_int_coord = convert_int4 (res);
-  return pocl_is_out_of_bounds (dev_image, unnorm_int_coord, dev_sampler);
+  return 234.0f;
 }
 
-/* Reads a four element pixel from image pointed by integer coords. */
-static void pocl_read_pixel (void* color, global dev_image_t* dev_image, int4 coord)
-{
+/*************************************************************************/
 
-  uint4* color_ptr = (uint4*)color;
-  int width = dev_image->_width;
-  int height = dev_image->_height;
-  int num_channels = dev_image->_num_channels;
-  int i = num_channels;
-  int order = dev_image->_order;
-  int elem_size = dev_image->_elem_size;
-  int const base_index =
-    (coord.x + coord.y*width + coord.z*height*width) * num_channels;
+/* for use inside filter functions
+ * no channel mapping
+ * no pointers to img metadata */
+static uint4
+pocl_read_pixel_fast_ui (int4 coord, int width, int height, int depth,
+                         int order, int num_channels, int elem_size,
+                         void *data)
+{
+  uint4 color;
+  size_t base_index = coord.x + coord.y * width;
+  if (depth)
+    base_index += (coord.z * height * width);
+
+  if (coord.x >= width || coord.x < 0 || coord.y >= height || coord.y < 0
+      || (depth != 0 && (coord.z >= depth || coord.z < 0)))
+    {
+      /* if out of bounds, return BORDER COLOR:
+       * since pocl's basic/pthread device only
+       * supports CL_A + CL_{RGBA combos},
+       * the border color is always zeroes. */
+      return (uint4) (0);
+    }
 
   if (order == CL_A)
     {
-      /* these can be garbage
-      (*color_ptr)[0] = 0;
-      (*color_ptr)[1] = 0;
-      (*color_ptr)[2] = 0;
-      */
+      color = (uint4)0;
       if (elem_size == 1)
-        (*color_ptr)[3] = ((uchar*)(dev_image->_data))[base_index];
+        color.z = ((uchar *)data)[base_index];
       else if (elem_size == 2)
-        (*color_ptr)[3] = ((ushort*)(dev_image->_data))[base_index];
+        color.z = ((ushort *)data)[base_index];
       else if (elem_size == 4)
-        (*color_ptr)[3] = ((uint*)(dev_image->_data))[base_index];
-      return;
+        color.z = ((uint *)data)[base_index];
+      return color;
     }
 
   if (elem_size == 1)
     {
-      for (int i = 0; i < num_channels; i++)
-        {
-          (*color_ptr)[map_channel(i, order)] =
-                  ((uchar*)(dev_image->_data))[base_index + i];
-        }
+      return convert_uint4 (((uchar4 *)data)[base_index]);
     }
   else if (elem_size == 2)
     {
-      for (int i = 0; i < num_channels; i++)
-        {
-          (*color_ptr)[map_channel(i, order)] =
-                  ((ushort*)(dev_image->_data))[base_index + i];
-        }
+      return convert_uint4 (((ushort4 *)data)[base_index]);
     }
   else if (elem_size == 4)
     {
-      for (int i = 0; i < num_channels; i++)
-        {
-          (*color_ptr)[map_channel(i, order)] =
-                  ((uint*)(dev_image->_data))[base_index + i];
-        }
+      return ((uint4 *)data)[base_index];
     }
 
+  return (uint4)0;
 }
 
-
-static constant float4 maxval8_i = ((float4)(1.0f / (float)UCHAR_MAX));
-static constant float4 maxval16_i = ((float4)(1.0f / (float)USHRT_MAX));
-static constant float4 maxval8_2i = ((float4)(2.0f / (float)UCHAR_MAX));
-static constant float4 maxval16_2i = ((float4)(2.0f / (float)USHRT_MAX));
-static constant float4 minval8 = ((float4)(SCHAR_MIN));
-static constant float4 minval16 = ((float4)(SHRT_MIN));
-
-/* only for CL_SNORM_INT8, CL_UNORM_INT8, CL_SNORM_INT16, CL_UNORM_INT16, */
-static float4 convert_uint4_to_float4(uint4 color, int type, int elem_size)
+/* for use inside filter functions
+ * no channel mapping
+ * no pointers to img metadata */
+static float4
+pocl_read_pixel_fast_f (int4 coord, int width, int height, int depth,
+                        int channel_type, int order, int num_channels,
+                        int elem_size, void *data)
 {
-  if ((type == CL_SNORM_INT8) ||
-      (type == CL_SNORM_INT16))
+  size_t base_index = coord.x + coord.y * width;
+  if (depth)
+    base_index += (coord.z * height * width);
+
+  if (coord.x >= width || coord.x < 0 || coord.y >= height || coord.y < 0
+      || (depth != 0 && (coord.z >= depth || coord.z < 0)))
     {
-      /*  <I*_MIN, I*_MAX> to <-1.0, 1.0>
-       * Imin,Imax -> 0, Umax -> / UmaxHalf -> -1.0f
-       * TODO this is actually imprecise */
-      float4 colorf = convert_float4(as_int4(color));
+      /* if out of bounds, return BORDER COLOR:
+       * since pocl's basic/pthread device only
+       * supports CL_A + CL_{RGBA combos},
+       * the border color is always zeroes. */
+      return (float4) (0.0f);
+    }
+
+  if (order == CL_A)
+    {
+      float p = get_float_pixel (data, base_index, channel_type, elem_size);
+      return (float4) (0.0f, 0.0f, 0.0f, p);
+    }
+
+  return get_float4_pixel (data, base_index, channel_type, elem_size);
+}
+
+/* for use inside filter functions
+ * no channel mapping
+ * no pointers to img metadata */
+static int4
+pocl_read_pixel_fast_i (int4 coord, int width, int height, int depth,
+                        int order, int num_channels, int elem_size, void *data)
+{
+  int4 color;
+  size_t base_index = coord.x + coord.y * width;
+  if (depth)
+    base_index += (coord.z * height * width);
+
+  if (coord.x >= width || coord.x < 0 || coord.y >= height || coord.y < 0
+      || (depth != 0 && (coord.z >= depth || coord.z < 0)))
+    {
+      /* if out of bounds, return BORDER COLOR:
+       * since pocl's basic/pthread device only
+       * supports CL_A + CL_{RGBA combos},
+       * the border color is always zeroes. */
+      return (int4) (0);
+    }
+
+  if (order == CL_A)
+    {
+      color = (int4)0;
       if (elem_size == 1)
-        return ((colorf - minval8) * maxval8_2i - (float4)1.0f);
+        color.z = ((char *)data)[base_index];
+      else if (elem_size == 2)
+        color.z = ((short *)data)[base_index];
+      else if (elem_size == 4)
+        color.z = ((int *)data)[base_index];
+      return color;
+    }
+
+  if (elem_size == 1)
+    {
+      return convert_int4 (((char4 *)data)[base_index]);
+    }
+  else if (elem_size == 2)
+    {
+      return convert_int4 (((short4 *)data)[base_index]);
+    }
+  else if (elem_size == 4)
+    {
+      return ((int4 *)data)[base_index];
+    }
+  return (int4)0;
+}
+
+/*************************************************************************/
+
+/* full read with channel map conversion etc  */
+/* Reads a four element pixel from image pointed by integer coords.
+ * Returns Border color (0) for out-of-range reads. This is OK since
+ * reads behind border should either return border color, or are undefined */
+static uint4
+pocl_read_pixel (global dev_image_t *img, int4 coord)
+{
+  uint4 color;
+  int width = img->_width;
+  int height = img->_height;
+  int depth = img->_depth;
+  int num_channels = img->_num_channels;
+  int order = img->_order;
+  int elem_size = img->_elem_size;
+  int channel_type = img->_data_type;
+  void *data = img->_data;
+
+  if ((channel_type == CL_SIGNED_INT8) || (channel_type == CL_SIGNED_INT16)
+      || (channel_type == CL_SIGNED_INT32))
+    color = as_uint4 (pocl_read_pixel_fast_i (
+        coord, width, height, depth, order, num_channels, elem_size, data));
+  else if ((channel_type == CL_UNSIGNED_INT8)
+           || (channel_type == CL_UNSIGNED_INT16)
+           || (channel_type == CL_UNSIGNED_INT32))
+    color = pocl_read_pixel_fast_ui (coord, width, height, depth, order,
+                                     num_channels, elem_size, data);
+  else // TODO unsupported channel types
+    color = as_uint4 (pocl_read_pixel_fast_f (coord, width, height, depth,
+                                              channel_type, order,
+                                              num_channels, elem_size, data));
+
+  return map_channels (color, order);
+}
+
+/* Transforms coords based on image addressing mode */
+static int4
+pocl_address_mode (global dev_image_t *img, int4 input_coord,
+                   dev_sampler_t samp)
+{
+  if (samp & CLK_ADDRESS_CLAMP_TO_EDGE)
+    {
+      return clamp (
+          input_coord, (int4) (0),
+          (int4) (img->_width - 1, img->_height - 1, img->_depth - 1, 1));
+    }
+
+  if (samp & CLK_ADDRESS_CLAMP)
+    {
+      return clamp (input_coord, (int4) (-1),
+                    (int4) (img->_width, img->_height, img->_depth, 1));
+    }
+
+  return input_coord;
+}
+
+/*************************************************************************/
+
+static float4
+read_pixel_linear_3d_float (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
+                            int width, int height, int depth, int channel_type,
+                            int order, int num_channels, int elem_size,
+                            void *data)
+{
+  // 3D image
+  // T = (1 – a) * (1 – b) * (1 – c) * Ti0j0k0
+  return (
+      one_m.x * one_m.y * one_m.z
+          * pocl_read_pixel_fast_f (ijk0, width, height, depth, channel_type,
+                                    order, num_channels, elem_size, data)
+      // + a * (1 – b) * (1 – c) * Ti1j0k0
+      + abc.x * one_m.y * one_m.z
+            * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk0.y, ijk0.z, 0),
+                                      width, height, depth, channel_type,
+                                      order, num_channels, elem_size, data)
+      // + (1 – a) * b * (1 – c) * Ti0j1k0
+      + one_m.x * abc.y * one_m.z
+            * pocl_read_pixel_fast_f ((int4) (ijk0.x, ijk1.y, ijk0.z, 0),
+                                      width, height, depth, channel_type,
+                                      order, num_channels, elem_size, data)
+      // + a * b * (1 – c) * Ti1j1k0
+      + abc.x * abc.y * one_m.z
+            * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk1.y, ijk0.z, 0),
+                                      width, height, depth, channel_type,
+                                      order, num_channels, elem_size, data)
+      // + (1 – a) * (1 – b) * c * Ti0j0k1
+      + one_m.x * one_m.y * abc.z
+            * pocl_read_pixel_fast_f ((int4) (ijk0.x, ijk0.y, ijk1.z, 0),
+                                      width, height, depth, channel_type,
+                                      order, num_channels, elem_size, data)
+      // + a * (1 – b) * c * Ti1j0k1
+      + abc.x * one_m.y * abc.z
+            * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk0.y, ijk1.z, 0),
+                                      width, height, depth, channel_type,
+                                      order, num_channels, elem_size, data)
+      // + (1 – a) * b * c * Ti0j1k1
+      + one_m.x * abc.y * abc.z
+            * pocl_read_pixel_fast_f ((int4) (ijk0.x, ijk1.y, ijk1.z, 0),
+                                      width, height, depth, channel_type,
+                                      order, num_channels, elem_size, data)
+      // + a * b * c * Ti1j1k1
+      + abc.x * abc.y * abc.z
+            * pocl_read_pixel_fast_f (ijk1, width, height, depth, channel_type,
+                                      order, num_channels, elem_size, data));
+}
+
+/* TODO: float * convert_flaot(UINT32) is imprecise, so reading from images
+ * with 32bit channel types may return quite bad results.
+ */
+
+static uint4
+read_pixel_linear_3d_uint (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
+                           int width, int height, int depth, int order,
+                           int num_channels, int elem_size, void *data)
+{
+  // 3D image
+  // T = (1 – a) * (1 – b) * (1 – c) * Ti0j0k0
+  return convert_uint4 (
+      one_m.x * one_m.y * one_m.z * convert_float4 (pocl_read_pixel_fast_ui (
+                                        ijk0, width, height, depth, order,
+                                        num_channels, elem_size, data))
+      // + a * (1 – b) * (1 – c) * Ti1j0k0
+      + abc.x * one_m.y * one_m.z
+            * convert_float4 (pocl_read_pixel_fast_ui (
+                  (int4) (ijk1.x, ijk0.y, ijk0.z, 0), width, height, depth,
+                  order, num_channels, elem_size, data))
+      // + (1 – a) * b * (1 – c) * Ti0j1k0
+      + one_m.x * abc.y * one_m.z
+            * convert_float4 (pocl_read_pixel_fast_ui (
+                  (int4) (ijk0.x, ijk1.y, ijk0.z, 0), width, height, depth,
+                  order, num_channels, elem_size, data))
+      // + a * b * (1 – c) * Ti1j1k0
+      + abc.x * abc.y * one_m.z
+            * convert_float4 (pocl_read_pixel_fast_ui (
+                  (int4) (ijk1.x, ijk1.y, ijk0.z, 0), width, height, depth,
+                  order, num_channels, elem_size, data))
+      // + (1 – a) * (1 – b) * c * Ti0j0k1
+      + one_m.x * one_m.y * abc.z
+            * convert_float4 (pocl_read_pixel_fast_ui (
+                  (int4) (ijk0.x, ijk0.y, ijk1.z, 0), width, height, depth,
+                  order, num_channels, elem_size, data))
+      // + a * (1 – b) * c * Ti1j0k1
+      + abc.x * one_m.y * abc.z
+            * convert_float4 (pocl_read_pixel_fast_ui (
+                  (int4) (ijk1.x, ijk0.y, ijk1.z, 0), width, height, depth,
+                  order, num_channels, elem_size, data))
+      // + (1 – a) * b * c * Ti0j1k1
+      + one_m.x * abc.y * abc.z
+            * convert_float4 (pocl_read_pixel_fast_ui (
+                  (int4) (ijk0.x, ijk1.y, ijk1.z, 0), width, height, depth,
+                  order, num_channels, elem_size, data))
+      // + a * b * c * Ti1j1k1
+      + abc.x * abc.y * abc.z * convert_float4 (pocl_read_pixel_fast_ui (
+                                    ijk1, width, height, depth, order,
+                                    num_channels, elem_size, data)));
+}
+
+static int4
+read_pixel_linear_3d_int (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
+                          int width, int height, int depth, int order,
+                          int num_channels, int elem_size, void *data)
+{
+  // 3D image
+  // T = (1 – a) * (1 – b) * (1 – c) * Ti0j0k0
+  return convert_int4 (
+      one_m.x * one_m.y * one_m.z * convert_float4 (pocl_read_pixel_fast_i (
+                                        ijk0, width, height, depth, order,
+                                        num_channels, elem_size, data))
+      // + a * (1 – b) * (1 – c) * Ti1j0k0
+      + abc.x * one_m.y * one_m.z
+            * convert_float4 (pocl_read_pixel_fast_i (
+                  (int4) (ijk1.x, ijk0.y, ijk0.z, 0), width, height, depth,
+                  order, num_channels, elem_size, data))
+      // + (1 – a) * b * (1 – c) * Ti0j1k0
+      + one_m.x * abc.y * one_m.z
+            * convert_float4 (pocl_read_pixel_fast_i (
+                  (int4) (ijk0.x, ijk1.y, ijk0.z, 0), width, height, depth,
+                  order, num_channels, elem_size, data))
+      // + a * b * (1 – c) * Ti1j1k0
+      + abc.x * abc.y * one_m.z
+            * convert_float4 (pocl_read_pixel_fast_i (
+                  (int4) (ijk1.x, ijk1.y, ijk0.z, 0), width, height, depth,
+                  order, num_channels, elem_size, data))
+      // + (1 – a) * (1 – b) * c * Ti0j0k1
+      + one_m.x * one_m.y * abc.z
+            * convert_float4 (pocl_read_pixel_fast_i (
+                  (int4) (ijk0.x, ijk0.y, ijk1.z, 0), width, height, depth,
+                  order, num_channels, elem_size, data))
+      // + a * (1 – b) * c * Ti1j0k1
+      + abc.x * one_m.y * abc.z
+            * convert_float4 (pocl_read_pixel_fast_i (
+                  (int4) (ijk1.x, ijk0.y, ijk1.z, 0), width, height, depth,
+                  order, num_channels, elem_size, data))
+      // + (1 – a) * b * c * Ti0j1k1
+      + one_m.x * abc.y * abc.z
+            * convert_float4 (pocl_read_pixel_fast_i (
+                  (int4) (ijk0.x, ijk1.y, ijk1.z, 0), width, height, depth,
+                  order, num_channels, elem_size, data))
+      // + a * b * c * Ti1j1k1
+      + abc.x * abc.y * abc.z * convert_float4 (pocl_read_pixel_fast_i (
+                                    ijk1, width, height, depth, order,
+                                    num_channels, elem_size, data)));
+}
+
+static uint4
+read_pixel_linear_3d (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
+                      int width, int height, int depth, int channel_type,
+                      int order, int num_channels, int elem_size, void *data)
+{
+  // TODO unsupported channel types
+  if ((channel_type == CL_SIGNED_INT8) || (channel_type == CL_SIGNED_INT16)
+      || (channel_type == CL_SIGNED_INT32))
+    return as_uint4 (read_pixel_linear_3d_int (abc, one_m, ijk0, ijk1, width,
+                                               height, depth, order,
+                                               num_channels, elem_size, data));
+  if ((channel_type == CL_UNSIGNED_INT8) || (channel_type == CL_UNSIGNED_INT16)
+      || (channel_type == CL_UNSIGNED_INT32))
+    return read_pixel_linear_3d_uint (abc, one_m, ijk0, ijk1, width, height,
+                                      depth, order, num_channels, elem_size,
+                                      data);
+  return as_uint4 (read_pixel_linear_3d_float (
+      abc, one_m, ijk0, ijk1, width, height, depth, channel_type, order,
+      num_channels, elem_size, data));
+}
+
+/*************************************************************************/
+
+static float4
+read_pixel_linear_2d_float (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
+                            int width, int height, int depth, int channel_type,
+                            int order, int num_channels, int elem_size,
+                            void *data)
+{
+  // 2D image
+  // T = (1 – a) * (1 – b) * Ti0j0
+  return (one_m.x * one_m.y * pocl_read_pixel_fast_f (
+                                  ijk0, width, height, depth, channel_type,
+                                  order, num_channels, elem_size, data)
+          // + a * (1 – b) * Ti1j0
+          + abc.x * one_m.y
+                * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk0.y, 0, 0), width,
+                                          height, depth, channel_type, order,
+                                          num_channels, elem_size, data)
+          // + (1 – a) * b * Ti0j1
+          + one_m.x * abc.y
+                * pocl_read_pixel_fast_f ((int4) (ijk0.x, ijk1.y, 0, 0), width,
+                                          height, depth, channel_type, order,
+                                          num_channels, elem_size, data)
+          // + a * b * Ti1j1
+          + abc.x * abc.y * pocl_read_pixel_fast_f (
+                                ijk1, width, height, depth, channel_type,
+                                order, num_channels, elem_size, data));
+}
+
+/* TODO: float * convert_flaot(UINT32) is imprecise, so reading from images
+ * with 32bit channel types may return quite bad results.
+ */
+
+static uint4
+read_pixel_linear_2d_uint (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
+                           int width, int height, int depth, int order,
+                           int num_channels, int elem_size, void *data)
+{
+  // 2D image
+  // T = (1 – a) * (1 – b) * Ti0j0
+  return convert_uint4 (
+      one_m.x * one_m.y * convert_float4 (pocl_read_pixel_fast_ui (
+                              ijk0, width, height, depth, order, num_channels,
+                              elem_size, data))
+      // + a * (1 – b) * Ti1j0
+      + abc.x * one_m.y * convert_float4 (pocl_read_pixel_fast_ui (
+                              (int4) (ijk1.x, ijk0.y, 0, 0), width, height,
+                              depth, order, num_channels, elem_size, data))
+      // + (1 – a) * b * Ti0j1
+      + one_m.x * abc.y * convert_float4 (pocl_read_pixel_fast_ui (
+                              (int4) (ijk0.x, ijk1.y, 0, 0), width, height,
+                              depth, order, num_channels, elem_size, data))
+      // + a * b * Ti1j1
+      + abc.x * abc.y * convert_float4 (pocl_read_pixel_fast_ui (
+                            ijk1, width, height, depth, order, num_channels,
+                            elem_size, data)));
+}
+
+static int4
+read_pixel_linear_2d_int (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
+                          int width, int height, int depth, int order,
+                          int num_channels, int elem_size, void *data)
+{
+  // 2D image
+  // T = (1 – a) * (1 – b) * Ti0j0
+  return convert_int4 (
+      one_m.x * one_m.y * convert_float4 (pocl_read_pixel_fast_i (
+                              ijk0, width, height, depth, order, num_channels,
+                              elem_size, data))
+      // + a * (1 – b) * Ti1j0
+      + abc.x * one_m.y * convert_float4 (pocl_read_pixel_fast_i (
+                              (int4) (ijk1.x, ijk0.y, 0, 0), width, height,
+                              depth, order, num_channels, elem_size, data))
+      // + (1 – a) * b * Ti0j1
+      + one_m.x * abc.y * convert_float4 (pocl_read_pixel_fast_i (
+                              (int4) (ijk0.x, ijk1.y, 0, 0), width, height,
+                              depth, order, num_channels, elem_size, data))
+      // + a * b * Ti1j1
+      + abc.x * abc.y * convert_float4 (pocl_read_pixel_fast_i (
+                            ijk1, width, height, depth, order, num_channels,
+                            elem_size, data)));
+}
+
+static uint4
+read_pixel_linear_2d (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
+                      int width, int height, int depth, int channel_type,
+                      int order, int num_channels, int elem_size, void *data)
+{
+  // TODO unsupported channel types
+  if ((channel_type == CL_SIGNED_INT8) || (channel_type == CL_SIGNED_INT16)
+      || (channel_type == CL_SIGNED_INT32))
+    return as_uint4 (read_pixel_linear_2d_int (abc, one_m, ijk0, ijk1, width,
+                                               height, depth, order,
+                                               num_channels, elem_size, data));
+  if ((channel_type == CL_UNSIGNED_INT8) || (channel_type == CL_UNSIGNED_INT16)
+      || (channel_type == CL_UNSIGNED_INT32))
+    return read_pixel_linear_2d_uint (abc, one_m, ijk0, ijk1, width, height,
+                                      depth, order, num_channels, elem_size,
+                                      data);
+  return as_uint4 (read_pixel_linear_2d_float (
+      abc, one_m, ijk0, ijk1, width, height, depth, channel_type, order,
+      num_channels, elem_size, data));
+}
+
+/*************************************************************************/
+
+/* These magic constant should be converted to some sort of
+ * error signaling */
+#define INVALID_SAMPLER_ADDRMODE (uint4) (11)
+#define INVALID_SAMPLER_FILTER (uint4) (22)
+#define INVALID_SAMPLER_NORMAL (uint4) (33)
+
+static uint4
+nonrepeat_filter (global dev_image_t *img, float4 orig_coord,
+                  dev_sampler_t samp)
+{
+  float4 coord = orig_coord;
+  if (samp & CLK_NORMALIZED_COORDS_TRUE)
+    {
+      float4 imgsize = (float4) (img->_width, img->_height, img->_depth, 0);
+      coord *= imgsize;
+    }
+
+  if (samp & CLK_FILTER_NEAREST)
+    {
+      int4 final_coord
+          = pocl_address_mode (img, convert_int4 (floor (coord)), samp);
+      return pocl_read_pixel (img, final_coord);
+    }
+  else if (samp & CLK_FILTER_LINEAR)
+    {
+      float4 r0 = floor (coord - (float4) (0.5f)); // ijk0, address mod
+      float4 r1 = floor (coord - (float4) (0.5f))
+                  + (float4) (1.0f); // ijk1, address mod
+      int4 ijk0 = pocl_address_mode (img, convert_int4 (r0), samp);
+      int4 ijk1 = pocl_address_mode (img, convert_int4 (r1), samp);
+      float4 unused;
+      float4 abc = fract ((coord - (float4) (0.5f)), &unused);
+      float4 one_m = (float4) (1.0f) - abc;
+      uint4 res;
+      if (img->_depth != 0)
+        {
+          res = read_pixel_linear_3d (
+              abc, one_m, ijk0, ijk1, img->_width, img->_height, img->_depth,
+              img->_data_type, img->_order, img->_num_channels,
+              img->_elem_size, img->_data);
+        }
       else
-        return ((colorf - minval16) * maxval16_2i -(float4)1.0f);
+        {
+          res = read_pixel_linear_2d (
+              abc, one_m, ijk0, ijk1, img->_width, img->_height, img->_depth,
+              img->_data_type, img->_order, img->_num_channels,
+              img->_elem_size, img->_data);
+        }
+      return map_channels (res, img->_order);
     }
   else
     {
-      /* <0, I*_MAX> to <0.0, 1.0> */
-      if (elem_size == 1)
-        return convert_float4(color) * maxval8_i;
-      else
-        return convert_float4(color) * maxval16_i;
+      // this should never happen - filter can only be LINEAR/NEAREST
+      return INVALID_SAMPLER_FILTER;
     }
 }
 
-#define POCL_READ_PIXEL_FLOAT                                                 \
-  if (i_ptr->_data_type == CL_FLOAT)                                          \
-    {                                                                         \
-      float4 color;                                                           \
-      pocl_read_pixel (&color, i_ptr, coord4);                                \
-      return color;                                                           \
-    }                                                                         \
-  else                                                                        \
-    {                                                                         \
-      uint4 color;                                                            \
-      pocl_read_pixel (&color, i_ptr, coord4);                                \
-      return convert_uint4_to_float4 (color, i_ptr->_data_type,               \
-                                      i_ptr->_elem_size);                     \
-    }                                                                         \
-  }
+static uint4
+repeat_filter (global dev_image_t *img, float4 coord, dev_sampler_t samp)
+{
+  if (samp & CLK_FILTER_NEAREST)
+    {
+      /*
+         uvw = (str – floor(str)) * whd
+         ijk = (int)floor(uvw)
+         if (ijk > whd – 1)
+           ijk = ijk – whd
+         ... same for 3 coords
+      */
+      int4 maxcoord = (int4) (img->_width, img->_height, img->_depth, 0);
+      float4 whd = convert_float4 (maxcoord);
+      float4 uvw = (coord - floor (coord)) * whd;
+      int4 ijk = convert_int4 (floor (uvw));
+      int4 final_coord = select (ijk, (ijk - maxcoord), (ijk >= maxcoord));
+      return pocl_read_pixel (img, final_coord);
+    }
+  else if (samp & CLK_FILTER_LINEAR)
+    {
+      /*
+          u = (s – floor(s)) * wt
+          i0 = (int)floor(u – 0.5)
+          i1 = i0 + 1
+          if (i0 < 0)
+           i0 = wt + i0
+          if (i1 > wt – 1)
+           i1 = i1 – wt
+      */
+      int4 maxcoord = (int4) (img->_width, img->_height, img->_depth, 1);
+      float4 whd = convert_float4 (maxcoord);
+      float4 uvw = (coord - floor (coord)) * whd;
+      int4 ijk0 = convert_int4 (floor (uvw - (float4) (0.5f)));
+      int4 ijk1 = ijk0 + (int4) (1);
+      ijk0 = select (ijk0, (ijk0 + maxcoord), (ijk0 < (int4) (0)));
+      maxcoord = max (maxcoord, (int4)1);
+      ijk1 = ijk1 % maxcoord;
+      float4 unused;
+      float4 abc = fract ((uvw - (float4) (0.5f)), &unused);
+      float4 one_m = (float4) (1.0f) - abc;
+      uint4 res;
+      if (img->_depth != 0)
+        {
+          res = read_pixel_linear_3d (
+              abc, one_m, ijk0, ijk1, img->_width, img->_height, img->_depth,
+              img->_data_type, img->_order, img->_num_channels,
+              img->_elem_size, img->_data);
+        }
+      else
+        {
+          res = read_pixel_linear_2d (
+              abc, one_m, ijk0, ijk1, img->_width, img->_height, img->_depth,
+              img->_data_type, img->_order, img->_num_channels,
+              img->_elem_size, img->_data);
+        }
+      return map_channels (res, img->_order);
+    }
+  else
+    {
+      // this should never happen - filter can only be LINEAR/NEAREST
+      return INVALID_SAMPLER_FILTER;
+    }
+}
 
-/* Implementation for read_image with any image data type and int coordinates
-   __IMGTYPE__ = image type (image2d_t, ...)
-   __RETVAL__  = return value (int4 or uint4 float4)
-   __POSTFIX__ = function name postfix (i, ui, f)
-   __COORD__   = coordinate type (int, int2, int4)
+static uint4
+mirrored_repeat_filter (global dev_image_t *img, float4 coord,
+                        dev_sampler_t samp)
+{
+  if (samp & CLK_FILTER_NEAREST)
+    {
+      /*
+        s’ = 2.0f * rint(0.5f * s)
+        s’ = fabs(s – s’)
+        u = s’ * wt
+        i = (int)floor(u)
+        i = min(i, wt – 1)
+      */
+      float4 ss = (float4) (2.0f) * rint ((float4) (0.5f) * coord);
+      ss = fabs (coord - ss);
+      int4 maxcoord = (int4) (img->_width, img->_height, img->_depth, 1);
+      float4 uvw = ss * convert_float4 (maxcoord);
+      int4 ijk = convert_int4 (floor (uvw));
+      int4 final_coord = min (ijk, (maxcoord - (int4) (1)));
+      return pocl_read_pixel (img, final_coord);
+    }
+  else if (samp & CLK_FILTER_LINEAR)
+    {
+      /*
+        s’ = 2.0f * rint(0.5f * s)
+        s’ = fabs(s – s’)
+        u = s’ * wt
+        i0 = (int)floor(u – 0.5f)
+        i1 = i0 + 1
+        i0 = max(i0, 0)
+        i1 = min(i1, wt – 1)
+      */
+      float4 ss = (float4) (2.0f) * rint ((float4) (0.5f) * coord);
+      ss = fabs (coord - ss);
+      int4 maxcoord = (int4) (img->_width, img->_height, img->_depth, 1);
+      float4 uvw = ss * convert_float4 (maxcoord);
+      int4 ijk0 = convert_int4 (floor (uvw - (float4) (0.5f)));
+      int4 ijk1 = ijk0 + (int4) (1);
+      ijk0 = max (ijk0, (int4)0);
+      ijk1 = min (ijk1, (maxcoord - (int4) (1)));
+      float4 unused;
+      float4 abc = fract ((uvw - (float4) (0.5f)), &unused);
+      float4 one_m = (float4) (1.0f) - abc;
+      uint4 res;
+      if (img->_depth != 0)
+        {
+          res = read_pixel_linear_3d (
+              abc, one_m, ijk0, ijk1, img->_width, img->_height, img->_depth,
+              img->_data_type, img->_order, img->_num_channels,
+              img->_elem_size, img->_data);
+        }
+      else
+        {
+          res = read_pixel_linear_2d (
+              abc, one_m, ijk0, ijk1, img->_width, img->_height, img->_depth,
+              img->_data_type, img->_order, img->_num_channels,
+              img->_elem_size, img->_data);
+        }
+      return map_channels (res, img->_order);
+    }
+  else
+    {
+      // this should never happen - filter can only be LINEAR/NEAREST
+      return INVALID_SAMPLER_FILTER;
+    }
+}
+
+/*************************************************************************/
+/* read pixel with float coordinates */
+static uint4
+pocl_read_pixel_floatc (global dev_image_t *img, float4 coord,
+                        dev_sampler_t samp)
+{
+  if (samp & CLK_ADDRESS_REPEAT)
+    return repeat_filter (img, coord, samp);
+  else if (samp & CLK_ADDRESS_MIRRORED_REPEAT)
+    return mirrored_repeat_filter (img, coord, samp);
+  else
+    return nonrepeat_filter (img, coord, samp);
+}
+
+/*************************************************************************/
+/* read pixel with int coordinates
+ * from Spec:
+ *
+ * Furthermore, the read_imagei and read_imageui calls that take integer
+ * coordinates must use a sampler with normalized coordinates set to
+ * CLK_NORMALIZED_COORDS_FALSE and addressing mode set to
+ * CLK_ADDRESS_CLAMP_TO_EDGE, CLK_ADDRESS_CLAMP or CLK_ADDRESS_NONE;
+ * otherwise the values returned are undefined.
 */
 
+static uint4
+pocl_read_pixel_intc (global dev_image_t *img, int4 coord, dev_sampler_t samp)
+{
+  if (samp & CLK_NORMALIZED_COORDS_TRUE)
+    return INVALID_SAMPLER_NORMAL;
+  if ((samp & CLK_ADDRESS_REPEAT) || (samp & CLK_ADDRESS_MIRRORED_REPEAT))
+    return INVALID_SAMPLER_ADDRMODE;
+
+  int4 final_coord = pocl_address_mode (img, coord, samp);
+  return pocl_read_pixel (img, final_coord);
+}
+
+/******************* DONE *************************************************/
+/* read pixel with float coordinates, WITHOUT sampler
+ * from Spec:
+ * The samplerless read image functions behave exactly as the corresponding
+ * read image functions that take integer coordinates and a sampler with
+ * filter mode set to CLK_FILTER_NEAREST, normalized coordinates set to
+ * CLK_NORMALIZED_COORDS_FALSE and addressing mode to CLK_ADDRESS_NONE.
+ */
+
+static uint4
+pocl_read_pixel_intc_samplerless (global dev_image_t *img, int4 coord)
+{
+  dev_sampler_t samp
+      = CLK_FILTER_NEAREST | CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE;
+
+  int4 final_coord = pocl_address_mode (img, coord, samp);
+  return pocl_read_pixel (img, final_coord);
+}
+
+/*************************************************************************/
 
 #if __clang_major__ > 3
 /* After Clang 4.0, the sampler_t is passed as an opaque struct (ptr)
@@ -242,35 +848,25 @@ static float4 convert_uint4_to_float4(uint4 color, int type, int elem_size)
     dev_sampler_t s = __builtin_astype(sampler, dev_sampler_t);
 #endif
 
-#define SAMPLE_INT_COORDS(RETTYPE)                                            \
-  READ_SAMPLER                                                                \
-  int r = pocl_is_out_of_bounds (i_ptr, &coord4, s);                          \
-  if (r == CLAMP_TO_0000)                                                     \
-    return (RETTYPE)0;                                                        \
-  if (r == CLAMP_TO_0001)                                                     \
-    return (RETTYPE) (0, 0, 0, 1);
-
-#define SAMPLE_FLOAT_COORDS(RETTYPE)                                          \
-  READ_SAMPLER                                                                \
-  int r = pocl_is_out_of_bounds_floatc (i_ptr, &coord4f, s, &coord4);         \
-  if (r == CLAMP_TO_0000)                                                     \
-    return (RETTYPE)0;                                                        \
-  if (r == CLAMP_TO_0001)                                                     \
-    return (RETTYPE) (0, 0, 0, 1);
+/* Implementation for read_image with any image data type and int coordinates
+   __IMGTYPE__ = image type (image2d_t, ...)
+   __RETVAL__  = return value (int4 or uint4 float4)
+   __POSTFIX__ = function name postfix (i, ui, f)
+   __COORD__   = coordinate type (int, int2, int4)
+*/
 
 #define IMPLEMENT_READ_INT4_IMAGE_INT_COORD(__IMGTYPE__, __RETVAL__,          \
                                             __POSTFIX__, __COORD__)           \
   __RETVAL__ _CL_OVERLOADABLE read_image##__POSTFIX__ (                       \
       __IMGTYPE__ image, sampler_t sampler, __COORD__ coord)                  \
   {                                                                           \
-    __RETVAL__ color;                                                         \
     int4 coord4;                                                              \
     INITCOORD##__COORD__ (coord4, coord);                                     \
     global dev_image_t *i_ptr                                                 \
         = __builtin_astype (image, global dev_image_t *);                     \
-    SAMPLE_INT_COORDS (__RETVAL__)                                            \
-    pocl_read_pixel (&color, i_ptr, coord4);                                  \
-    return color;                                                             \
+    READ_SAMPLER                                                              \
+    uint4 color = pocl_read_pixel_intc (i_ptr, coord4, s);                    \
+    return as_##__RETVAL__ (color);                                           \
   }
 
 #define IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD(__IMGTYPE__, __COORD__)         \
@@ -281,35 +877,36 @@ static float4 convert_uint4_to_float4(uint4 color, int type, int elem_size)
     INITCOORD##__COORD__ (coord4, coord);                                     \
     global dev_image_t *i_ptr                                                 \
         = __builtin_astype (image, global dev_image_t *);                     \
-    SAMPLE_INT_COORDS (float4)                                                \
-    POCL_READ_PIXEL_FLOAT
+    READ_SAMPLER                                                              \
+    uint4 color = pocl_read_pixel_intc (i_ptr, coord4, s);                    \
+    return as_float4 (color);                                                 \
+  }
 
 #define IMPLEMENT_READ_FLOAT4_IMAGE_FLOAT_COORD(__IMGTYPE__, __COORD__)       \
   float4 _CL_OVERLOADABLE read_imagef (__IMGTYPE__ image, sampler_t sampler,  \
                                        __COORD__ coord)                       \
   {                                                                           \
-    float4 coord4f;                                                           \
-    int4 coord4;                                                              \
-    INITCOORD##__COORD__ (coord4f, coord);                                    \
+    float4 coord4;                                                            \
+    INITCOORD##__COORD__ (coord4, coord);                                     \
     global dev_image_t *i_ptr                                                 \
         = __builtin_astype (image, global dev_image_t *);                     \
-    SAMPLE_FLOAT_COORDS (float4)                                              \
-    POCL_READ_PIXEL_FLOAT
+    READ_SAMPLER                                                              \
+    uint4 color = pocl_read_pixel_floatc (i_ptr, coord4, s);                  \
+    return as_float4 (color);                                                 \
+  }
 
 #define IMPLEMENT_READ_INT4_IMAGE_FLOAT_COORD(__IMGTYPE__, __RETVAL__,        \
                                               __POSTFIX__, __COORD__)         \
   __RETVAL__ _CL_OVERLOADABLE read_image##__POSTFIX__ (                       \
       __IMGTYPE__ image, sampler_t sampler, __COORD__ coord)                  \
   {                                                                           \
-    __RETVAL__ color;                                                         \
-    float4 coord4f;                                                           \
-    int4 coord4;                                                              \
-    INITCOORD##__COORD__ (coord4f, coord);                                    \
+    float4 coord4;                                                            \
+    INITCOORD##__COORD__ (coord4, coord);                                     \
     global dev_image_t *i_ptr                                                 \
         = __builtin_astype (image, global dev_image_t *);                     \
-    SAMPLE_FLOAT_COORDS (__RETVAL__)                                          \
-    pocl_read_pixel (&color, i_ptr, coord4);                                  \
-    return color;                                                             \
+    READ_SAMPLER                                                              \
+    uint4 color = pocl_read_pixel_floatc (i_ptr, coord4, s);                  \
+    return as_##__RETVAL__ (color);                                           \
   }
 
 /* NO Sampler Implementation for read_image with any image data type
@@ -334,19 +931,18 @@ static float4 convert_uint4_to_float4(uint4 color, int type, int elem_size)
                                   CLK_ADDRESS_NONE |
                                   CLK_FILTER_NEAREST;
 */
+
 #define IMPLEMENT_READ_INT4_IMAGE_INT_COORD_NOSAMPLER(                        \
     __IMGTYPE__, __RETVAL__, __POSTFIX__, __COORD__)                          \
   __RETVAL__ _CL_OVERLOADABLE read_image##__POSTFIX__ (__IMGTYPE__ image,     \
                                                        __COORD__ coord)       \
   {                                                                           \
-    __RETVAL__ color;                                                         \
     int4 coord4;                                                              \
     INITCOORD##__COORD__ (coord4, coord);                                     \
     global dev_image_t *i_ptr                                                 \
         = __builtin_astype (image, global dev_image_t *);                     \
-    pocl_read_pixel (&color, i_ptr, coord4);                                  \
-                                                                              \
-    return color;                                                             \
+    uint4 color = pocl_read_pixel_intc_samplerless (i_ptr, coord4);           \
+    return as_##__RETVAL__ (color);                                           \
   }
 
 #define IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD_NOSAMPLER(__IMGTYPE__,          \
@@ -357,7 +953,9 @@ static float4 convert_uint4_to_float4(uint4 color, int type, int elem_size)
     INITCOORD##__COORD__ (coord4, coord);                                     \
     global dev_image_t *i_ptr                                                 \
         = __builtin_astype (image, global dev_image_t *);                     \
-    POCL_READ_PIXEL_FLOAT
+    uint4 color = pocl_read_pixel_intc_samplerless (i_ptr, coord4);           \
+    return as_float4 (color);                                                 \
+  }
 
 /* NO sampler */
 
