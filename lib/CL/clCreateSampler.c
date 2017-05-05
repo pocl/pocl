@@ -37,14 +37,28 @@ CL_API_SUFFIX__VERSION_1_0
   int errcode;
   cl_sampler sampler;
 
-  POCL_GOTO_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
-  
+  POCL_GOTO_ERROR_COND ((context == NULL), CL_INVALID_CONTEXT);
+
+  /* at least 1 device must support images */
+  size_t i, any_device_has_images = 0;
+  for (i = 0; i < context->num_devices; i++)
+    any_device_has_images += (size_t)context->devices[i]->image_support;
+  POCL_GOTO_ERROR_ON ((!any_device_has_images), CL_INVALID_OPERATION,
+                      "None of the devices within context support images\n");
+
+  /* check requested sampler validity */
+  POCL_GOTO_ERROR_COND (
+      ((normalized_coords != CL_TRUE) && (normalized_coords != CL_FALSE)),
+      CL_INVALID_VALUE);
+  POCL_GOTO_ERROR_COND (((normalized_coords != CL_TRUE)
+                         && (addressing_mode == CL_ADDRESS_MIRRORED_REPEAT)),
+                        CL_INVALID_VALUE);
+  POCL_GOTO_ERROR_COND (((normalized_coords != CL_TRUE)
+                         && (addressing_mode == CL_ADDRESS_REPEAT)),
+                        CL_INVALID_VALUE);
+
   sampler = (cl_sampler) malloc(sizeof(struct _cl_sampler));
-  if (sampler == NULL)
-  {
-    errcode = CL_OUT_OF_HOST_MEMORY;
-    goto ERROR;
-  }
+  POCL_GOTO_ERROR_COND ((sampler == NULL), CL_OUT_OF_HOST_MEMORY);
 
   POCL_INIT_OBJECT (sampler);
   POname (clRetainContext) (context);
