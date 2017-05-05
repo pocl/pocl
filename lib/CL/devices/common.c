@@ -657,13 +657,13 @@ pocl_broadcast (cl_event brc_event)
 void
 fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg)
 {
-  cl_sampler_t sampler = *(cl_sampler_t *)parg->value;
+  cl_sampler sampler = *(cl_sampler *)parg->value;
 
-  *ds = 0;
-  *ds |= sampler.normalized_coords == CL_TRUE ? CLK_NORMALIZED_COORDS_TRUE :
-      CLK_NORMALIZED_COORDS_FALSE;
+  *ds = (sampler->normalized_coords == CL_TRUE) ? CLK_NORMALIZED_COORDS_TRUE
+                                                : CLK_NORMALIZED_COORDS_FALSE;
 
-  switch (sampler.addressing_mode) {
+  switch (sampler->addressing_mode)
+    {
     case CL_ADDRESS_NONE:
       *ds |= CLK_ADDRESS_NONE; break;
     case CL_ADDRESS_CLAMP_TO_EDGE:
@@ -676,7 +676,8 @@ fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg)
       *ds |= CLK_ADDRESS_MIRRORED_REPEAT; break;
   }
 
-  switch (sampler.filter_mode) {
+  switch (sampler->filter_mode)
+    {
     case CL_FILTER_NEAREST:
       *ds |= CLK_FILTER_NEAREST; break;
     case CL_FILTER_LINEAR :
