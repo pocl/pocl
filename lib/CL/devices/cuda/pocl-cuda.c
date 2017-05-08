@@ -111,19 +111,23 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   /* free_event_data */
 }
 
+/* The CUDA device to be initialized next. This is reset when probing,
+ * and incremented every time a device gets initialized.
+ * TODO this is a bit of a hack, which is also shared by HSA. It might
+ * be a good idea to consider extending the init() function to also
+ * get a progressive index, and use that instead */
+static int next_cuda_device = 0;
+
 void
 pocl_cuda_init (cl_device_id dev, const char *parameters)
 {
   CUresult result;
 
-  result = cuInit (0);
-  CUDA_CHECK (result, "cuInit");
-
   if (dev->data)
     return;
 
   pocl_cuda_device_data_t *data = malloc (sizeof (pocl_cuda_device_data_t));
-  result = cuDeviceGet (&data->device, 0);
+  result = cuDeviceGet (&data->device, next_cuda_device++);
   CUDA_CHECK (result, "cuDeviceGet");
 
   // Get specific device name
@@ -251,12 +255,29 @@ pocl_cuda_probe (struct pocl_device_ops *ops)
 {
   int env_count = pocl_device_get_env_count (ops->device_name);
 
-  // TODO: Check how many CUDA device available (if any)
+  int probe_count = 0;
+  CUresult ret = cuInit (0);
+  if (ret == CUDA_SUCCESS)
+    {
+      ret = cuDeviceGetCount (&probe_count);
+      if (ret != CUDA_SUCCESS)
+        probe_count = 0;
+    }
 
-  if (env_count < 0)
-    return 1;
+  /* If the user requested a specific number of CUDA devices,
+   * pretend we only have that many, if we can. If they requested
+   * more than there are, abort informing the user of the issue.
+   */
+  if (env_count >= 0)
+    {
+      if (env_count > probe_count)
+        POCL_ABORT ("[CUDA] %d devices requested, but only %d are available\n",
+          env_count, probe_count);
+      probe_count = env_count;
+    }
 
-  return env_count;
+  next_cuda_device = 0;
+  return probe_count;
 }
 
 void
