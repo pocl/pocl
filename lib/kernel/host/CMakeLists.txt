@@ -33,6 +33,7 @@ endif()
 
 list(APPEND KERNEL_SOURCES "mem_fence.c")
 
+if(HOST_DEVICE_CL_VERSION GREATER 199)
 if(X86_64 OR I386)
   if(LLVM_3_6)
     message(STATUS "OpenCL 2.0 atomics only works with LLVM >= 3.7")
@@ -49,7 +50,9 @@ else()
   message(STATUS "Using generic OpenCL 2.0 atomics. Might or might not break your build.")
   list(APPEND KERNEL_SOURCES svm_atomics_host.cl svm_atomics.cl)
 endif()
+endif()
 
+set(KERNEL_CL_FLAGS "-Xclang" "-cl-std=CL${HOST_DEVICE_CL_STD}" "-D__OPENCL_C_VERSION__=${HOST_DEVICE_CL_VERSION}" ${KERNEL_CL_FLAGS})
 separate_arguments(HOST_CLANG_FLAGS)
 separate_arguments(HOST_LLC_FLAGS)
 set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=${HOST_DEVICE_CL_VERSION} ${HOST_DEVICE_EXTENSION_DEFINES}")

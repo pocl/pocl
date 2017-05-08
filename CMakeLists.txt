@@ -365,7 +365,7 @@ endif()
 
 option(USE_VECMATHLIB_BUILTINS_ONLY "Use only __builtin_* functions in the kernel library." OFF)
 
-set(DEFAULT_KERNEL_CL_FLAGS "-Xclang -cl-std=CL2.0 -D__OPENCL_C_VERSION__=200")
+set(DEFAULT_KERNEL_CL_FLAGS "")
 if(USE_VECMATHLIB)
   set(DEFAULT_KERNEL_CLANGXX_FLAGS "-DVML_NO_IOSTREAM ${CLANGXX_STDLIB}")
   if(USE_VECMATHLIB_BUILTINS_ONLY)
@@ -657,7 +657,8 @@ foreach(EXT ${TEMP_EXT})
   set(HOST_DEVICE_EXTENSION_DEFINES "${HOST_DEVICE_EXTENSION_DEFINES} -D${EXT}")
 endforeach()
 
-set(HOST_DEVICE_CL_VERSION "200")
+set(HOST_DEVICE_CL_VERSION "120")
+set(HOST_DEVICE_CL_STD "1.2")
 
 if(NOT DEFINED KERNELLIB_HOST_CPU_VARIANTS)
   set(KERNELLIB_HOST_CPU_VARIANTS "native")
@@ -823,6 +824,7 @@ if(ENABLE_HSA)
 
   set(HSA_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64 cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
   set(HSA_DEVICE_CL_VERSION "200")
+  set(HSA_DEVICE_CL_STD "2.0")
   find_path(HAVE_HSA_EXT_AMD_H "hsa_ext_amd.h" HINTS "${HSA_INCLUDEDIR}" ENV PATH)
 endif()
 
@@ -843,6 +845,7 @@ if(ENABLE_CUDA)
 
   set(CUDA_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_int64 cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
   set(CUDA_DEVICE_CL_VERSION "120")
+  set(CUDA_DEVICE_CL_STD "1.2")
 endif()
 
 ##########################################################

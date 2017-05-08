@@ -49,12 +49,10 @@ endif()
 separate_arguments(TCE_TARGET_LLC_FLAGS)
 set(LLC_FLAGS ${TCE_TARGET_LLC_FLAGS})
 
-if(NOT LLVM_OLDER_THAN_3_9)
-set(KERNEL_CL_FLAGS "-cl-std=CL${TCE_DEVICE_CL_STD}")
-endif()
+set(KERNEL_CL_FLAGS "-D__OPENCL_C_VERSION__=${TCE_DEVICE_CL_VERSION}" "-Xclang" "-cl-std=CL${TCE_DEVICE_CL_STD}")
 
 if(NOT LLVM_OLDER_THAN_4_0)
-set(KERNEL_CL_FLAGS ${KERNEL_CL_FLAGS} "-Xclang" "-cl-ext=all,-cl_khr_fp64")
+list(APPEND KERNEL_CL_FLAGS "-Xclang" "-cl-ext=all,-cl_khr_fp64")
 endif()
 
 # TODO LLC_flags is used by kernel.bc target, but ld is unused

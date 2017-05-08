@@ -61,7 +61,7 @@ if(POCL_USE_FAKE_ADDR_SPACE_IDS)
 endif()
 
 # Enable all extensions
-set(KERNEL_CL_FLAGS ${KERNEL_CL_FLAGS} "-Xclang" "-cl-ext=all")
+set(KERNEL_CL_FLAGS "-Xclang" "-cl-std=CL${CUDA_DEVICE_CL_STD}" "-D__OPENCL_C_VERSION__=${CUDA_DEVICE_CL_VERSION}" "-Xclang" "-cl-ext=all" ${KERNEL_CL_FLAGS})
 
 set(LLC_FLAGS "")
 set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=${CUDA_DEVICE_CL_VERSION}")

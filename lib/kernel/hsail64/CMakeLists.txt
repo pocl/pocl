@@ -62,6 +62,8 @@ if(POCL_USE_FAKE_ADDR_SPACE_IDS)
 list(APPEND CLANG_FLAGS "-Xclang" "-ffake-address-space-map")
 endif()
 
+set(KERNEL_CL_FLAGS "-Xclang" "-cl-std=CL${HSA_DEVICE_CL_STD}" "-D__OPENCL_C_VERSION__=${HSA_DEVICE_CL_VERSION}" ${KERNEL_CL_FLAGS})
+
 set(LLC_FLAGS "")
 set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=${HSA_DEVICE_CL_VERSION}")
 separate_arguments(HSA_DEVICE_EXTENSIONS)
