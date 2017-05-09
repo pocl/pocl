@@ -61,9 +61,7 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
     BlackScholes
     BlackScholesDP
     BoxFilter
-    BufferImageInterop
     BuiltInScan
-    CalcPie
     ConcurrentKernel
     DCT
     DeviceFission
@@ -123,7 +121,19 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
     #     DeviceEnqueueBFS ExtractPrimes GlobalMemoryBandwidth
     #     RegionGrowingSegmentation SimpleSPIR
     # disabled - requires pipe: PipeProducerConsumerKernels SimplePipe
+    # requires OpenCL 2.0: BufferImageInterop
 
+    set(HSA_LABELED_TESTS
+        AMD_30_BinomialOption AMD_30_DCT AMD_30_BlackScholes
+        AMD_30_FastWalshTransform AMD_30_FloydWarshall AMD_30_HelloWorld
+        AMD_30_Histogram AMD_30_MatrixMultiplication AMD_30_MatrixTranspose
+        AMD_30_PrefixSum AMD_30_QuasiRandomSequence AMD_30_ScanLargeArrays
+        AMD_30_SimpleConvolution AMD_30_URNG)
+
+    if(ENABLE_HSA)
+      list(APPEND AMD_SAMPLES CalcPie)
+      list(APPEND HSA_LABELED_TESTS AMD_30_CalcPie)
+    endif()
 
     foreach(SAMPLE IN LISTS AMD_SAMPLES)
       add_test(NAME "AMD_30_${SAMPLE}"
@@ -135,11 +145,7 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
     # AMD_30_HeatPDE
     # AMD_30_FineGrainSVMCAS
     set_tests_properties(
-        AMD_30_BinomialOption AMD_30_CalcPie AMD_30_DCT AMD_30_BlackScholes
-        AMD_30_FastWalshTransform AMD_30_FloydWarshall AMD_30_HelloWorld
-        AMD_30_Histogram AMD_30_MatrixMultiplication AMD_30_MatrixTranspose
-        AMD_30_PrefixSum AMD_30_QuasiRandomSequence AMD_30_ScanLargeArrays
-        AMD_30_SimpleConvolution AMD_30_URNG
+      ${HSA_LABELED_TESTS}
       PROPERTIES
         LABELS "hsa")
 
