@@ -50,10 +50,18 @@ get_float4_pixel (void *data, size_t base_index, int type)
 {
   if (type == CL_FLOAT)
     return ((float4 *)data)[base_index];
-#ifdef cl_khr_fp16
   if (type == CL_HALF_FLOAT)
-    return convert_float4 (((half4 *)data)[base_index]);
+    {
+#if !defined(LLVM_OLDER_THAN_3_9) && __has_builtin(__builtin_convertvector)
+      typedef float  vector4float  __attribute__((__vector_size__(16)));
+      typedef half  vector4half  __attribute__((__vector_size__(8)));
+      vector4half vh = ((vector4half *)data)[base_index];
+      vector4float vf = __builtin_convertvector(vh, vector4float);
+      return vf;
+#else
+      __builtin_trap();
 #endif
+    }
   const float4 one_127th = (float4) (1.0f / 127.0f);
   const float4 one_32767th = (float4) (1.0f / 32767.0f);
   const float4 one_255th = ((float4) (1.0f / (float)UCHAR_MAX));
