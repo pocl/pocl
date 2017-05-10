@@ -158,11 +158,11 @@ pocl_read_pixel_fast_ui (int4 coord, int width, int height, int depth,
     {
       color = (uint4)0;
       if (elem_size == 1)
-        color.z = ((uchar *)data)[base_index];
+        color.w = ((uchar *)data)[base_index];
       else if (elem_size == 2)
-        color.z = ((ushort *)data)[base_index];
+        color.w = ((ushort *)data)[base_index];
       else if (elem_size == 4)
-        color.z = ((uint *)data)[base_index];
+        color.w = ((uint *)data)[base_index];
       return color;
     }
 
@@ -239,11 +239,11 @@ pocl_read_pixel_fast_i (int4 coord, int width, int height, int depth,
     {
       color = (int4)0;
       if (elem_size == 1)
-        color.z = ((char *)data)[base_index];
+        color.w = ((char *)data)[base_index];
       else if (elem_size == 2)
-        color.z = ((short *)data)[base_index];
+        color.w = ((short *)data)[base_index];
       else if (elem_size == 4)
-        color.z = ((int *)data)[base_index];
+        color.w = ((int *)data)[base_index];
       return color;
     }
 
