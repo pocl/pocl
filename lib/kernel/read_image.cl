@@ -91,10 +91,6 @@ get_float_pixel (void *data, size_t base_index, int type, int elem_size)
 {
   if (type == CL_FLOAT)
     return ((float *)data)[base_index];
-#ifdef cl_khr_fp16
-  if (type == CL_HALF_FLOAT)
-    return convert_float (((half *)data)[base_index]);
-#endif
   const float one_127th = (float)(1.0f / 127.0f);
   const float one_32767th = (float)(1.0f / 32767.0f);
   const float one_255th = ((float)(1.0f / (float)UCHAR_MAX));
