@@ -46,7 +46,7 @@ map_channels (uint4 color, int order)
 /* only for CL_FLOAT, CL_SNORM_INT8, CL_UNORM_INT8,
  * CL_SNORM_INT16, CL_UNORM_INT16 channel types */
 static float4
-get_float4_pixel (void *data, size_t base_index, int type, int elem_size)
+get_float4_pixel (void *data, size_t base_index, int type)
 {
   if (type == CL_FLOAT)
     return ((float4 *)data)[base_index];
@@ -87,7 +87,7 @@ get_float4_pixel (void *data, size_t base_index, int type, int elem_size)
 /* only for CL_FLOAT, CL_SNORM_INT8, CL_UNORM_INT8,
  * CL_SNORM_INT16, CL_UNORM_INT16 channel types */
 static float
-get_float_pixel (void *data, size_t base_index, int type, int elem_size)
+get_float_pixel (void *data, size_t base_index, int type)
 {
   if (type == CL_FLOAT)
     return ((float *)data)[base_index];
@@ -198,11 +198,11 @@ pocl_read_pixel_fast_f (int4 coord, int width, int height, int depth,
 
   if (order == CL_A)
     {
-      float p = get_float_pixel (data, base_index, channel_type, elem_size);
+      float p = get_float_pixel (data, base_index, channel_type);
       return (float4) (0.0f, 0.0f, 0.0f, p);
     }
 
-  return get_float4_pixel (data, base_index, channel_type, elem_size);
+  return get_float4_pixel (data, base_index, channel_type);
 }
 
 /* for use inside filter functions
