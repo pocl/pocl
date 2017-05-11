@@ -131,27 +131,30 @@ get_float_pixel (void *data, size_t base_index, int type)
 
 /*************************************************************************/
 
+#define BORDER_COLOR (0)
+#define BORDER_COLOR_F (0.0f)
+
 /* for use inside filter functions
  * no channel mapping
  * no pointers to img metadata */
 static uint4
 pocl_read_pixel_fast_ui (int4 coord, int width, int height, int depth,
-                         int order, int num_channels, int elem_size,
-                         void *data)
+                         size_t row_pitch, size_t slice_pitch, int order,
+                         int elem_size, void *data)
 {
   uint4 color;
-  size_t base_index = coord.x + coord.y * width;
-  if (depth)
-    base_index += (coord.z * height * width);
+  size_t base_index
+      = coord.x + (coord.y * row_pitch) + (coord.z * slice_pitch);
 
-  if (coord.x >= width || coord.x < 0 || coord.y >= height || coord.y < 0
-      || (depth != 0 && (coord.z >= depth || coord.z < 0)))
+  if ((coord.x >= width || coord.x < 0)
+      || ((height != 0) && (coord.y >= height || coord.y < 0))
+      || ((depth != 0) && (coord.z >= depth || coord.z < 0)))
     {
+      return (uint4)BORDER_COLOR;
       /* if out of bounds, return BORDER COLOR:
        * since pocl's basic/pthread device only
        * supports CL_A + CL_{RGBA combos},
        * the border color is always zeroes. */
-      return (uint4) (0);
     }
 
   if (order == CL_A)
@@ -187,21 +190,21 @@ pocl_read_pixel_fast_ui (int4 coord, int width, int height, int depth,
  * no pointers to img metadata */
 static float4
 pocl_read_pixel_fast_f (int4 coord, int width, int height, int depth,
-                        int channel_type, int order, int num_channels,
-                        int elem_size, void *data)
+                        size_t row_pitch, size_t slice_pitch, int channel_type,
+                        int order, void *data)
 {
-  size_t base_index = coord.x + coord.y * width;
-  if (depth)
-    base_index += (coord.z * height * width);
+  size_t base_index
+      = coord.x + (coord.y * row_pitch) + (coord.z * slice_pitch);
 
-  if (coord.x >= width || coord.x < 0 || coord.y >= height || coord.y < 0
-      || (depth != 0 && (coord.z >= depth || coord.z < 0)))
+  if ((coord.x >= width || coord.x < 0)
+      || ((height != 0) && (coord.y >= height || coord.y < 0))
+      || ((depth != 0) && (coord.z >= depth || coord.z < 0)))
     {
       /* if out of bounds, return BORDER COLOR:
        * since pocl's basic/pthread device only
        * supports CL_A + CL_{RGBA combos},
        * the border color is always zeroes. */
-      return (float4) (0.0f);
+      return (float4) (BORDER_COLOR_F);
     }
 
   if (order == CL_A)
@@ -218,21 +221,22 @@ pocl_read_pixel_fast_f (int4 coord, int width, int height, int depth,
  * no pointers to img metadata */
 static int4
 pocl_read_pixel_fast_i (int4 coord, int width, int height, int depth,
-                        int order, int num_channels, int elem_size, void *data)
+                        size_t row_pitch, size_t slice_pitch, int order,
+                        int elem_size, void *data)
 {
   int4 color;
-  size_t base_index = coord.x + coord.y * width;
-  if (depth)
-    base_index += (coord.z * height * width);
+  size_t base_index
+      = coord.x + (coord.y * row_pitch) + (coord.z * slice_pitch);
 
-  if (coord.x >= width || coord.x < 0 || coord.y >= height || coord.y < 0
-      || (depth != 0 && (coord.z >= depth || coord.z < 0)))
+  if ((coord.x >= width || coord.x < 0)
+      || ((height != 0) && (coord.y >= height || coord.y < 0))
+      || ((depth != 0) && (coord.z >= depth || coord.z < 0)))
     {
       /* if out of bounds, return BORDER COLOR:
        * since pocl's basic/pthread device only
        * supports CL_A + CL_{RGBA combos},
        * the border color is always zeroes. */
-      return (int4) (0);
+      return (int4) (BORDER_COLOR);
     }
 
   if (order == CL_A)
@@ -264,6 +268,32 @@ pocl_read_pixel_fast_i (int4 coord, int width, int height, int depth,
 
 /*************************************************************************/
 
+static int4
+get_image_array_offset (global dev_image_t *img, int4 uvw_after_rint,
+                        int4 orig_coord)
+{
+  int4 res = uvw_after_rint;
+  if (img->_image_array_size > 0)
+    {
+      if (img->_height > 0)
+        {
+          res.z = clamp (orig_coord.z, 0,
+                         convert_int_rte (img->_image_array_size - 1));
+          res.w = 0;
+        }
+      else
+        {
+          res.y = clamp (orig_coord.y, 0,
+                         convert_int_rte (img->_image_array_size - 1));
+          res.z = 0;
+          res.w = 0;
+        }
+    }
+  return res;
+}
+
+/*************************************************************************/
+
 /* full read with channel map conversion etc  */
 /* Reads a four element pixel from image pointed by integer coords.
  * Returns Border color (0) for out-of-range reads. This is OK since
@@ -280,20 +310,24 @@ pocl_read_pixel (global dev_image_t *img, int4 coord)
   int elem_size = img->_elem_size;
   int channel_type = img->_data_type;
   void *data = img->_data;
+  size_t elem_bytes = num_channels * elem_size;
+  size_t row_pitch = img->_row_pitch / elem_bytes;
+  size_t slice_pitch = img->_slice_pitch / elem_bytes;
 
   if ((channel_type == CL_SIGNED_INT8) || (channel_type == CL_SIGNED_INT16)
       || (channel_type == CL_SIGNED_INT32))
-    color = as_uint4 (pocl_read_pixel_fast_i (
-        coord, width, height, depth, order, num_channels, elem_size, data));
+    color = as_uint4 (pocl_read_pixel_fast_i (coord, width, height, depth,
+                                              row_pitch, slice_pitch, order,
+                                              elem_size, data));
   else if ((channel_type == CL_UNSIGNED_INT8)
            || (channel_type == CL_UNSIGNED_INT16)
            || (channel_type == CL_UNSIGNED_INT32))
-    color = pocl_read_pixel_fast_ui (coord, width, height, depth, order,
-                                     num_channels, elem_size, data);
+    color = pocl_read_pixel_fast_ui (coord, width, height, depth, row_pitch,
+                                     slice_pitch, order, elem_size, data);
   else // TODO unsupported channel types
     color = as_uint4 (pocl_read_pixel_fast_f (coord, width, height, depth,
-                                              channel_type, order,
-                                              num_channels, elem_size, data));
+                                              row_pitch, slice_pitch,
+                                              channel_type, order, data));
 
   return map_channels (color, order);
 }
@@ -305,15 +339,17 @@ pocl_address_mode (global dev_image_t *img, int4 input_coord,
 {
   if (samp & CLK_ADDRESS_CLAMP_TO_EDGE)
     {
-      return clamp (
-          input_coord, (int4) (0),
-          (int4) (img->_width - 1, img->_height - 1, img->_depth - 1, 1));
+      int4 max_clamp = max (
+          (int4) (img->_width - 1, img->_height - 1, img->_depth - 1, 0),
+          (int4)0);
+      return clamp (input_coord, (int4) (0), max_clamp);
     }
 
   if (samp & CLK_ADDRESS_CLAMP)
     {
-      return clamp (input_coord, (int4) (-1),
-                    (int4) (img->_width, img->_height, img->_depth, 1));
+      int4 max_clamp
+          = max ((int4) (img->_width, img->_height, img->_depth, 0), (int4)0);
+      return clamp (input_coord, (int4) (-1), max_clamp);
     }
 
   return input_coord;
@@ -324,49 +360,49 @@ pocl_address_mode (global dev_image_t *img, int4 input_coord,
 static float4
 read_pixel_linear_3d_float (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
                             int width, int height, int depth, int channel_type,
-                            int order, int num_channels, int elem_size,
+                            size_t row_pitch, size_t slice_pitch, int order,
                             void *data)
 {
   // 3D image
   // T = (1 – a) * (1 – b) * (1 – c) * Ti0j0k0
   return (
       one_m.x * one_m.y * one_m.z
-          * pocl_read_pixel_fast_f (ijk0, width, height, depth, channel_type,
-                                    order, num_channels, elem_size, data)
+          * pocl_read_pixel_fast_f (ijk0, width, height, depth, row_pitch,
+                                    slice_pitch, channel_type, order, data)
       // + a * (1 – b) * (1 – c) * Ti1j0k0
       + abc.x * one_m.y * one_m.z
             * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk0.y, ijk0.z, 0),
-                                      width, height, depth, channel_type,
-                                      order, num_channels, elem_size, data)
+                                      width, height, depth, row_pitch,
+                                      slice_pitch, channel_type, order, data)
       // + (1 – a) * b * (1 – c) * Ti0j1k0
       + one_m.x * abc.y * one_m.z
             * pocl_read_pixel_fast_f ((int4) (ijk0.x, ijk1.y, ijk0.z, 0),
-                                      width, height, depth, channel_type,
-                                      order, num_channels, elem_size, data)
+                                      width, height, depth, row_pitch,
+                                      slice_pitch, channel_type, order, data)
       // + a * b * (1 – c) * Ti1j1k0
       + abc.x * abc.y * one_m.z
             * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk1.y, ijk0.z, 0),
-                                      width, height, depth, channel_type,
-                                      order, num_channels, elem_size, data)
+                                      width, height, depth, row_pitch,
+                                      slice_pitch, channel_type, order, data)
       // + (1 – a) * (1 – b) * c * Ti0j0k1
       + one_m.x * one_m.y * abc.z
             * pocl_read_pixel_fast_f ((int4) (ijk0.x, ijk0.y, ijk1.z, 0),
-                                      width, height, depth, channel_type,
-                                      order, num_channels, elem_size, data)
+                                      width, height, depth, row_pitch,
+                                      slice_pitch, channel_type, order, data)
       // + a * (1 – b) * c * Ti1j0k1
       + abc.x * one_m.y * abc.z
             * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk0.y, ijk1.z, 0),
-                                      width, height, depth, channel_type,
-                                      order, num_channels, elem_size, data)
+                                      width, height, depth, row_pitch,
+                                      slice_pitch, channel_type, order, data)
       // + (1 – a) * b * c * Ti0j1k1
       + one_m.x * abc.y * abc.z
             * pocl_read_pixel_fast_f ((int4) (ijk0.x, ijk1.y, ijk1.z, 0),
-                                      width, height, depth, channel_type,
-                                      order, num_channels, elem_size, data)
+                                      width, height, depth, row_pitch,
+                                      slice_pitch, channel_type, order, data)
       // + a * b * c * Ti1j1k1
       + abc.x * abc.y * abc.z
-            * pocl_read_pixel_fast_f (ijk1, width, height, depth, channel_type,
-                                      order, num_channels, elem_size, data));
+            * pocl_read_pixel_fast_f (ijk1, width, height, depth, row_pitch,
+                                      slice_pitch, channel_type, order, data));
 }
 
 /* TODO: float * convert_flaot(UINT32) is imprecise, so reading from images
@@ -375,117 +411,120 @@ read_pixel_linear_3d_float (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
 
 static uint4
 read_pixel_linear_3d_uint (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
-                           int width, int height, int depth, int order,
-                           int num_channels, int elem_size, void *data)
+                           int width, int height, int depth, size_t row_pitch,
+                           size_t slice_pitch, int order, int elem_size,
+                           void *data)
 {
   // 3D image
   // T = (1 – a) * (1 – b) * (1 – c) * Ti0j0k0
   return convert_uint4 (
       one_m.x * one_m.y * one_m.z * convert_float4 (pocl_read_pixel_fast_ui (
-                                        ijk0, width, height, depth, order,
-                                        num_channels, elem_size, data))
+                                        ijk0, width, height, depth, row_pitch,
+                                        slice_pitch, order, elem_size, data))
       // + a * (1 – b) * (1 – c) * Ti1j0k0
       + abc.x * one_m.y * one_m.z
             * convert_float4 (pocl_read_pixel_fast_ui (
                   (int4) (ijk1.x, ijk0.y, ijk0.z, 0), width, height, depth,
-                  order, num_channels, elem_size, data))
+                  row_pitch, slice_pitch, order, elem_size, data))
       // + (1 – a) * b * (1 – c) * Ti0j1k0
       + one_m.x * abc.y * one_m.z
             * convert_float4 (pocl_read_pixel_fast_ui (
                   (int4) (ijk0.x, ijk1.y, ijk0.z, 0), width, height, depth,
-                  order, num_channels, elem_size, data))
+                  row_pitch, slice_pitch, order, elem_size, data))
       // + a * b * (1 – c) * Ti1j1k0
       + abc.x * abc.y * one_m.z
             * convert_float4 (pocl_read_pixel_fast_ui (
                   (int4) (ijk1.x, ijk1.y, ijk0.z, 0), width, height, depth,
-                  order, num_channels, elem_size, data))
+                  row_pitch, slice_pitch, order, elem_size, data))
       // + (1 – a) * (1 – b) * c * Ti0j0k1
       + one_m.x * one_m.y * abc.z
             * convert_float4 (pocl_read_pixel_fast_ui (
                   (int4) (ijk0.x, ijk0.y, ijk1.z, 0), width, height, depth,
-                  order, num_channels, elem_size, data))
+                  row_pitch, slice_pitch, order, elem_size, data))
       // + a * (1 – b) * c * Ti1j0k1
       + abc.x * one_m.y * abc.z
             * convert_float4 (pocl_read_pixel_fast_ui (
                   (int4) (ijk1.x, ijk0.y, ijk1.z, 0), width, height, depth,
-                  order, num_channels, elem_size, data))
+                  row_pitch, slice_pitch, order, elem_size, data))
       // + (1 – a) * b * c * Ti0j1k1
       + one_m.x * abc.y * abc.z
             * convert_float4 (pocl_read_pixel_fast_ui (
                   (int4) (ijk0.x, ijk1.y, ijk1.z, 0), width, height, depth,
-                  order, num_channels, elem_size, data))
+                  row_pitch, slice_pitch, order, elem_size, data))
       // + a * b * c * Ti1j1k1
       + abc.x * abc.y * abc.z * convert_float4 (pocl_read_pixel_fast_ui (
-                                    ijk1, width, height, depth, order,
-                                    num_channels, elem_size, data)));
+                                    ijk1, width, height, depth, row_pitch,
+                                    slice_pitch, order, elem_size, data)));
 }
 
 static int4
 read_pixel_linear_3d_int (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
-                          int width, int height, int depth, int order,
-                          int num_channels, int elem_size, void *data)
+                          int width, int height, int depth, size_t row_pitch,
+                          size_t slice_pitch, int order, int elem_size,
+                          void *data)
 {
   // 3D image
   // T = (1 – a) * (1 – b) * (1 – c) * Ti0j0k0
   return convert_int4 (
       one_m.x * one_m.y * one_m.z * convert_float4 (pocl_read_pixel_fast_i (
-                                        ijk0, width, height, depth, order,
-                                        num_channels, elem_size, data))
+                                        ijk0, width, height, depth, row_pitch,
+                                        slice_pitch, order, elem_size, data))
       // + a * (1 – b) * (1 – c) * Ti1j0k0
       + abc.x * one_m.y * one_m.z
             * convert_float4 (pocl_read_pixel_fast_i (
                   (int4) (ijk1.x, ijk0.y, ijk0.z, 0), width, height, depth,
-                  order, num_channels, elem_size, data))
+                  row_pitch, slice_pitch, order, elem_size, data))
       // + (1 – a) * b * (1 – c) * Ti0j1k0
       + one_m.x * abc.y * one_m.z
             * convert_float4 (pocl_read_pixel_fast_i (
                   (int4) (ijk0.x, ijk1.y, ijk0.z, 0), width, height, depth,
-                  order, num_channels, elem_size, data))
+                  row_pitch, slice_pitch, order, elem_size, data))
       // + a * b * (1 – c) * Ti1j1k0
       + abc.x * abc.y * one_m.z
             * convert_float4 (pocl_read_pixel_fast_i (
                   (int4) (ijk1.x, ijk1.y, ijk0.z, 0), width, height, depth,
-                  order, num_channels, elem_size, data))
+                  row_pitch, slice_pitch, order, elem_size, data))
       // + (1 – a) * (1 – b) * c * Ti0j0k1
       + one_m.x * one_m.y * abc.z
             * convert_float4 (pocl_read_pixel_fast_i (
                   (int4) (ijk0.x, ijk0.y, ijk1.z, 0), width, height, depth,
-                  order, num_channels, elem_size, data))
+                  row_pitch, slice_pitch, order, elem_size, data))
       // + a * (1 – b) * c * Ti1j0k1
       + abc.x * one_m.y * abc.z
             * convert_float4 (pocl_read_pixel_fast_i (
                   (int4) (ijk1.x, ijk0.y, ijk1.z, 0), width, height, depth,
-                  order, num_channels, elem_size, data))
+                  row_pitch, slice_pitch, order, elem_size, data))
       // + (1 – a) * b * c * Ti0j1k1
       + one_m.x * abc.y * abc.z
             * convert_float4 (pocl_read_pixel_fast_i (
                   (int4) (ijk0.x, ijk1.y, ijk1.z, 0), width, height, depth,
-                  order, num_channels, elem_size, data))
+                  row_pitch, slice_pitch, order, elem_size, data))
       // + a * b * c * Ti1j1k1
       + abc.x * abc.y * abc.z * convert_float4 (pocl_read_pixel_fast_i (
-                                    ijk1, width, height, depth, order,
-                                    num_channels, elem_size, data)));
+                                    ijk1, width, height, depth, row_pitch,
+                                    slice_pitch, order, elem_size, data)));
 }
 
 static uint4
 read_pixel_linear_3d (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
                       int width, int height, int depth, int channel_type,
-                      int order, int num_channels, int elem_size, void *data)
+                      size_t row_pitch, size_t slice_pitch, int order,
+                      int elem_size, void *data)
 {
   // TODO unsupported channel types
   if ((channel_type == CL_SIGNED_INT8) || (channel_type == CL_SIGNED_INT16)
       || (channel_type == CL_SIGNED_INT32))
-    return as_uint4 (read_pixel_linear_3d_int (abc, one_m, ijk0, ijk1, width,
-                                               height, depth, order,
-                                               num_channels, elem_size, data));
+    return as_uint4 (read_pixel_linear_3d_int (
+        abc, one_m, ijk0, ijk1, width, height, depth, row_pitch, slice_pitch,
+        order, elem_size, data));
   if ((channel_type == CL_UNSIGNED_INT8) || (channel_type == CL_UNSIGNED_INT16)
       || (channel_type == CL_UNSIGNED_INT32))
     return read_pixel_linear_3d_uint (abc, one_m, ijk0, ijk1, width, height,
-                                      depth, order, num_channels, elem_size,
-                                      data);
+                                      depth, row_pitch, slice_pitch, order,
+                                      elem_size, data);
   return as_uint4 (read_pixel_linear_3d_float (
-      abc, one_m, ijk0, ijk1, width, height, depth, channel_type, order,
-      num_channels, elem_size, data));
+      abc, one_m, ijk0, ijk1, width, height, depth, channel_type, row_pitch,
+      slice_pitch, order, data));
 }
 
 /*************************************************************************/
@@ -493,28 +532,29 @@ read_pixel_linear_3d (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
 static float4
 read_pixel_linear_2d_float (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
                             int width, int height, int depth, int channel_type,
-                            int order, int num_channels, int elem_size,
+                            size_t row_pitch, size_t slice_pitch, int order,
                             void *data)
 {
   // 2D image
   // T = (1 – a) * (1 – b) * Ti0j0
-  return (one_m.x * one_m.y * pocl_read_pixel_fast_f (
-                                  ijk0, width, height, depth, channel_type,
-                                  order, num_channels, elem_size, data)
-          // + a * (1 – b) * Ti1j0
-          + abc.x * one_m.y
-                * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk0.y, 0, 0), width,
-                                          height, depth, channel_type, order,
-                                          num_channels, elem_size, data)
-          // + (1 – a) * b * Ti0j1
-          + one_m.x * abc.y
-                * pocl_read_pixel_fast_f ((int4) (ijk0.x, ijk1.y, 0, 0), width,
-                                          height, depth, channel_type, order,
-                                          num_channels, elem_size, data)
-          // + a * b * Ti1j1
-          + abc.x * abc.y * pocl_read_pixel_fast_f (
-                                ijk1, width, height, depth, channel_type,
-                                order, num_channels, elem_size, data));
+  return (
+      one_m.x * one_m.y * pocl_read_pixel_fast_f (ijk0, width, height, depth,
+                                                  row_pitch, slice_pitch,
+                                                  channel_type, order, data)
+      // + a * (1 – b) * Ti1j0
+      + abc.x * one_m.y
+            * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk0.y, 0, 0), width,
+                                      height, depth, row_pitch, slice_pitch,
+                                      channel_type, order, data)
+      // + (1 – a) * b * Ti0j1
+      + one_m.x * abc.y
+            * pocl_read_pixel_fast_f ((int4) (ijk0.x, ijk1.y, 0, 0), width,
+                                      height, depth, row_pitch, slice_pitch,
+                                      channel_type, order, data)
+      // + a * b * Ti1j1
+      + abc.x * abc.y * pocl_read_pixel_fast_f (ijk1, width, height, depth,
+                                                row_pitch, slice_pitch,
+                                                channel_type, order, data));
 }
 
 /* TODO: float * convert_flaot(UINT32) is imprecise, so reading from images
@@ -523,82 +563,89 @@ read_pixel_linear_2d_float (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
 
 static uint4
 read_pixel_linear_2d_uint (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
-                           int width, int height, int depth, int order,
-                           int num_channels, int elem_size, void *data)
+                           int width, int height, int depth, size_t row_pitch,
+                           size_t slice_pitch, int order, int elem_size,
+                           void *data)
 {
   // 2D image
   // T = (1 – a) * (1 – b) * Ti0j0
   return convert_uint4 (
       one_m.x * one_m.y * convert_float4 (pocl_read_pixel_fast_ui (
-                              ijk0, width, height, depth, order, num_channels,
-                              elem_size, data))
+                              ijk0, width, height, depth, row_pitch,
+                              slice_pitch, order, elem_size, data))
       // + a * (1 – b) * Ti1j0
-      + abc.x * one_m.y * convert_float4 (pocl_read_pixel_fast_ui (
-                              (int4) (ijk1.x, ijk0.y, 0, 0), width, height,
-                              depth, order, num_channels, elem_size, data))
+      + abc.x * one_m.y
+            * convert_float4 (pocl_read_pixel_fast_ui (
+                  (int4) (ijk1.x, ijk0.y, 0, 0), width, height, depth,
+                  row_pitch, slice_pitch, order, elem_size, data))
       // + (1 – a) * b * Ti0j1
-      + one_m.x * abc.y * convert_float4 (pocl_read_pixel_fast_ui (
-                              (int4) (ijk0.x, ijk1.y, 0, 0), width, height,
-                              depth, order, num_channels, elem_size, data))
+      + one_m.x * abc.y
+            * convert_float4 (pocl_read_pixel_fast_ui (
+                  (int4) (ijk0.x, ijk1.y, 0, 0), width, height, depth,
+                  row_pitch, slice_pitch, order, elem_size, data))
       // + a * b * Ti1j1
       + abc.x * abc.y * convert_float4 (pocl_read_pixel_fast_ui (
-                            ijk1, width, height, depth, order, num_channels,
-                            elem_size, data)));
+                            ijk1, width, height, depth, row_pitch, slice_pitch,
+                            order, elem_size, data)));
 }
 
 static int4
 read_pixel_linear_2d_int (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
-                          int width, int height, int depth, int order,
-                          int num_channels, int elem_size, void *data)
+                          int width, int height, int depth, size_t row_pitch,
+                          size_t slice_pitch, int order, int elem_size,
+                          void *data)
 {
   // 2D image
   // T = (1 – a) * (1 – b) * Ti0j0
   return convert_int4 (
       one_m.x * one_m.y * convert_float4 (pocl_read_pixel_fast_i (
-                              ijk0, width, height, depth, order, num_channels,
-                              elem_size, data))
+                              ijk0, width, height, depth, row_pitch,
+                              slice_pitch, order, elem_size, data))
       // + a * (1 – b) * Ti1j0
-      + abc.x * one_m.y * convert_float4 (pocl_read_pixel_fast_i (
-                              (int4) (ijk1.x, ijk0.y, 0, 0), width, height,
-                              depth, order, num_channels, elem_size, data))
+      + abc.x * one_m.y
+            * convert_float4 (pocl_read_pixel_fast_i (
+                  (int4) (ijk1.x, ijk0.y, 0, 0), width, height, depth,
+                  row_pitch, slice_pitch, order, elem_size, data))
       // + (1 – a) * b * Ti0j1
-      + one_m.x * abc.y * convert_float4 (pocl_read_pixel_fast_i (
-                              (int4) (ijk0.x, ijk1.y, 0, 0), width, height,
-                              depth, order, num_channels, elem_size, data))
+      + one_m.x * abc.y
+            * convert_float4 (pocl_read_pixel_fast_i (
+                  (int4) (ijk0.x, ijk1.y, 0, 0), width, height, depth,
+                  row_pitch, slice_pitch, order, elem_size, data))
       // + a * b * Ti1j1
       + abc.x * abc.y * convert_float4 (pocl_read_pixel_fast_i (
-                            ijk1, width, height, depth, order, num_channels,
-                            elem_size, data)));
+                            ijk1, width, height, depth, row_pitch, slice_pitch,
+                            order, elem_size, data)));
 }
 
 static uint4
 read_pixel_linear_2d (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
                       int width, int height, int depth, int channel_type,
-                      int order, int num_channels, int elem_size, void *data)
+                      size_t row_pitch, size_t slice_pitch, int order,
+                      int elem_size, void *data)
 {
   // TODO unsupported channel types
   if ((channel_type == CL_SIGNED_INT8) || (channel_type == CL_SIGNED_INT16)
       || (channel_type == CL_SIGNED_INT32))
-    return as_uint4 (read_pixel_linear_2d_int (abc, one_m, ijk0, ijk1, width,
-                                               height, depth, order,
-                                               num_channels, elem_size, data));
+    return as_uint4 (read_pixel_linear_2d_int (
+        abc, one_m, ijk0, ijk1, width, height, depth, row_pitch, slice_pitch,
+        order, elem_size, data));
   if ((channel_type == CL_UNSIGNED_INT8) || (channel_type == CL_UNSIGNED_INT16)
       || (channel_type == CL_UNSIGNED_INT32))
     return read_pixel_linear_2d_uint (abc, one_m, ijk0, ijk1, width, height,
-                                      depth, order, num_channels, elem_size,
-                                      data);
+                                      depth, row_pitch, slice_pitch, order,
+                                      elem_size, data);
   return as_uint4 (read_pixel_linear_2d_float (
-      abc, one_m, ijk0, ijk1, width, height, depth, channel_type, order,
-      num_channels, elem_size, data));
+      abc, one_m, ijk0, ijk1, width, height, depth, channel_type, row_pitch,
+      slice_pitch, order, data));
 }
 
 /*************************************************************************/
 
 /* These magic constant should be converted to some sort of
  * error signaling */
-#define INVALID_SAMPLER_ADDRMODE (uint4) (11)
-#define INVALID_SAMPLER_FILTER (uint4) (22)
-#define INVALID_SAMPLER_NORMAL (uint4) (33)
+#define INVALID_SAMPLER_ADDRMODE (uint4) (0x1111)
+#define INVALID_SAMPLER_FILTER (uint4) (0x2222)
+#define INVALID_SAMPLER_NORMAL (uint4) (0x3333)
 
 static uint4
 nonrepeat_filter (global dev_image_t *img, float4 orig_coord,
@@ -611,11 +658,19 @@ nonrepeat_filter (global dev_image_t *img, float4 orig_coord,
       coord *= imgsize;
     }
 
+  int num_channels = img->_num_channels;
+  int elem_size = img->_elem_size;
+  size_t elem_bytes = num_channels * elem_size;
+  size_t row_pitch = img->_row_pitch / elem_bytes;
+  size_t slice_pitch = img->_slice_pitch / elem_bytes;
+
   if (samp & CLK_FILTER_NEAREST)
     {
       int4 final_coord
           = pocl_address_mode (img, convert_int4 (floor (coord)), samp);
-      return pocl_read_pixel (img, final_coord);
+      int4 array_coord = get_image_array_offset (img, final_coord,
+                                                 convert_int4 (rint (coord)));
+      return pocl_read_pixel (img, array_coord);
     }
   else if (samp & CLK_FILTER_LINEAR)
     {
@@ -632,14 +687,14 @@ nonrepeat_filter (global dev_image_t *img, float4 orig_coord,
         {
           res = read_pixel_linear_3d (
               abc, one_m, ijk0, ijk1, img->_width, img->_height, img->_depth,
-              img->_data_type, img->_order, img->_num_channels,
+              img->_data_type, row_pitch, slice_pitch, img->_order,
               img->_elem_size, img->_data);
         }
       else
         {
           res = read_pixel_linear_2d (
               abc, one_m, ijk0, ijk1, img->_width, img->_height, img->_depth,
-              img->_data_type, img->_order, img->_num_channels,
+              img->_data_type, row_pitch, slice_pitch, img->_order,
               img->_elem_size, img->_data);
         }
       return map_channels (res, img->_order);
@@ -654,6 +709,12 @@ nonrepeat_filter (global dev_image_t *img, float4 orig_coord,
 static uint4
 repeat_filter (global dev_image_t *img, float4 coord, dev_sampler_t samp)
 {
+  int num_channels = img->_num_channels;
+  int elem_size = img->_elem_size;
+  size_t elem_bytes = num_channels * elem_size;
+  size_t row_pitch = img->_row_pitch / elem_bytes;
+  size_t slice_pitch = img->_slice_pitch / elem_bytes;
+
   if (samp & CLK_FILTER_NEAREST)
     {
       /*
@@ -668,7 +729,8 @@ repeat_filter (global dev_image_t *img, float4 coord, dev_sampler_t samp)
       float4 uvw = (coord - floor (coord)) * whd;
       int4 ijk = convert_int4 (floor (uvw));
       int4 final_coord = select (ijk, (ijk - maxcoord), (ijk >= maxcoord));
-      return pocl_read_pixel (img, final_coord);
+      int4 array_coord = get_image_array_offset (img, final_coord, ijk);
+      return pocl_read_pixel (img, array_coord);
     }
   else if (samp & CLK_FILTER_LINEAR)
     {
@@ -697,14 +759,14 @@ repeat_filter (global dev_image_t *img, float4 coord, dev_sampler_t samp)
         {
           res = read_pixel_linear_3d (
               abc, one_m, ijk0, ijk1, img->_width, img->_height, img->_depth,
-              img->_data_type, img->_order, img->_num_channels,
+              img->_data_type, row_pitch, slice_pitch, img->_order,
               img->_elem_size, img->_data);
         }
       else
         {
           res = read_pixel_linear_2d (
               abc, one_m, ijk0, ijk1, img->_width, img->_height, img->_depth,
-              img->_data_type, img->_order, img->_num_channels,
+              img->_data_type, row_pitch, slice_pitch, img->_order,
               img->_elem_size, img->_data);
         }
       return map_channels (res, img->_order);
@@ -720,6 +782,12 @@ static uint4
 mirrored_repeat_filter (global dev_image_t *img, float4 coord,
                         dev_sampler_t samp)
 {
+  int num_channels = img->_num_channels;
+  int elem_size = img->_elem_size;
+  size_t elem_bytes = num_channels * elem_size;
+  size_t row_pitch = img->_row_pitch / elem_bytes;
+  size_t slice_pitch = img->_slice_pitch / elem_bytes;
+
   if (samp & CLK_FILTER_NEAREST)
     {
       /*
@@ -735,7 +803,8 @@ mirrored_repeat_filter (global dev_image_t *img, float4 coord,
       float4 uvw = ss * convert_float4 (maxcoord);
       int4 ijk = convert_int4 (floor (uvw));
       int4 final_coord = min (ijk, (maxcoord - (int4) (1)));
-      return pocl_read_pixel (img, final_coord);
+      int4 array_coord = get_image_array_offset (img, final_coord, ijk);
+      return pocl_read_pixel (img, array_coord);
     }
   else if (samp & CLK_FILTER_LINEAR)
     {
@@ -764,14 +833,14 @@ mirrored_repeat_filter (global dev_image_t *img, float4 coord,
         {
           res = read_pixel_linear_3d (
               abc, one_m, ijk0, ijk1, img->_width, img->_height, img->_depth,
-              img->_data_type, img->_order, img->_num_channels,
+              img->_data_type, row_pitch, slice_pitch, img->_order,
               img->_elem_size, img->_data);
         }
       else
         {
           res = read_pixel_linear_2d (
               abc, one_m, ijk0, ijk1, img->_width, img->_height, img->_depth,
-              img->_data_type, img->_order, img->_num_channels,
+              img->_data_type, row_pitch, slice_pitch, img->_order,
               img->_elem_size, img->_data);
         }
       return map_channels (res, img->_order);
@@ -817,7 +886,8 @@ pocl_read_pixel_intc (global dev_image_t *img, int4 coord, dev_sampler_t samp)
     return INVALID_SAMPLER_ADDRMODE;
 
   int4 final_coord = pocl_address_mode (img, coord, samp);
-  return pocl_read_pixel (img, final_coord);
+  int4 array_coord = get_image_array_offset (img, final_coord, coord);
+  return pocl_read_pixel (img, array_coord);
 }
 
 /******************* DONE *************************************************/
@@ -836,7 +906,8 @@ pocl_read_pixel_intc_samplerless (global dev_image_t *img, int4 coord)
       = CLK_FILTER_NEAREST | CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE;
 
   int4 final_coord = pocl_address_mode (img, coord, samp);
-  return pocl_read_pixel (img, final_coord);
+  int4 array_coord = get_image_array_offset (img, final_coord, coord);
+  return pocl_read_pixel (img, array_coord);
 }
 
 /*************************************************************************/
