@@ -1034,10 +1034,30 @@ pocl_read_pixel_intc_samplerless (global dev_image_t *img, int4 coord)
 
 /* NO sampler */
 
+IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RO_AQ image1d_t, int)
+/* IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RO_AQ image1d_buffer_t, int) */
+IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RO_AQ image1d_array_t, int2)
+
 IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RO_AQ image2d_t, int2)
 IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RO_AQ image2d_array_t,
                                                  int4)
 IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RO_AQ image3d_t, int4)
+
+
+
+IMPLEMENT_READ_INT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RO_AQ image1d_t, uint4, ui,
+                                               int)
+IMPLEMENT_READ_INT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RO_AQ image1d_t, int4, i,
+                                               int)
+IMPLEMENT_READ_INT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RO_AQ image1d_array_t, uint4, ui,
+                                               int2)
+IMPLEMENT_READ_INT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RO_AQ image1d_array_t, int4, i,
+                                               int2)
+/*IMPLEMENT_READ_INT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RO_AQ image1d_buffer_t, uint4, ui,
+ *                                               int)
+ *IMPLEMENT_READ_INT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RO_AQ image1d_buffer_t, int4, i,
+ *                                               int)
+ */
 
 IMPLEMENT_READ_INT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RO_AQ image2d_t, uint4, ui,
                                                int2)
@@ -1054,17 +1074,28 @@ IMPLEMENT_READ_INT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RO_AQ image3d_t, int4, i,
 
 /* float4 img + float coords + sampler */
 
+IMPLEMENT_READ_FLOAT4_IMAGE_FLOAT_COORD (IMG_RO_AQ image1d_t, float)
+IMPLEMENT_READ_FLOAT4_IMAGE_FLOAT_COORD (IMG_RO_AQ image1d_array_t, float2)
 IMPLEMENT_READ_FLOAT4_IMAGE_FLOAT_COORD (IMG_RO_AQ image2d_t, float2)
 IMPLEMENT_READ_FLOAT4_IMAGE_FLOAT_COORD (IMG_RO_AQ image2d_array_t, float4)
 IMPLEMENT_READ_FLOAT4_IMAGE_FLOAT_COORD (IMG_RO_AQ image3d_t, float4)
 
 /* float4 img + int coords + sampler */
 
+IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD (IMG_RO_AQ image1d_t, int)
+IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD (IMG_RO_AQ image1d_array_t, int2)
 IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD (IMG_RO_AQ image2d_t, int2)
 IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD (IMG_RO_AQ image2d_array_t, int4)
 IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD (IMG_RO_AQ image3d_t, int4)
 
 /* int4 img + float coords + sampler */
+
+IMPLEMENT_READ_INT4_IMAGE_FLOAT_COORD (IMG_RO_AQ image1d_t, uint4, ui, float)
+IMPLEMENT_READ_INT4_IMAGE_FLOAT_COORD (IMG_RO_AQ image1d_t, int4, i, float)
+IMPLEMENT_READ_INT4_IMAGE_FLOAT_COORD (IMG_RO_AQ image1d_array_t, uint4, ui,
+                                       float2)
+IMPLEMENT_READ_INT4_IMAGE_FLOAT_COORD (IMG_RO_AQ image1d_array_t, int4, i,
+                                       float2)
 
 IMPLEMENT_READ_INT4_IMAGE_FLOAT_COORD (IMG_RO_AQ image2d_t, uint4, ui, float2)
 IMPLEMENT_READ_INT4_IMAGE_FLOAT_COORD (IMG_RO_AQ image2d_t, int4, i, float2)
@@ -1076,6 +1107,12 @@ IMPLEMENT_READ_INT4_IMAGE_FLOAT_COORD (IMG_RO_AQ image3d_t, uint4, ui, float4)
 IMPLEMENT_READ_INT4_IMAGE_FLOAT_COORD (IMG_RO_AQ image3d_t, int4, i, float4)
 
 /* int4 img + int coords + sampler */
+
+IMPLEMENT_READ_INT4_IMAGE_INT_COORD (IMG_RO_AQ image1d_t, uint4, ui, int)
+IMPLEMENT_READ_INT4_IMAGE_INT_COORD (IMG_RO_AQ image1d_t, int4, i, int)
+IMPLEMENT_READ_INT4_IMAGE_INT_COORD (IMG_RO_AQ image1d_array_t, uint4, ui,
+                                     int2)
+IMPLEMENT_READ_INT4_IMAGE_INT_COORD (IMG_RO_AQ image1d_array_t, int4, i, int2)
 
 IMPLEMENT_READ_INT4_IMAGE_INT_COORD (IMG_RO_AQ image2d_t, uint4, ui, int2)
 IMPLEMENT_READ_INT4_IMAGE_INT_COORD (IMG_RO_AQ image2d_t, int4, i, int2)
@@ -1092,10 +1129,30 @@ IMPLEMENT_READ_INT4_IMAGE_INT_COORD (IMG_RO_AQ image3d_t, int4, i, int4)
 
 /* NO sampler */
 
+IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RW_AQ image1d_t, int)
+/* IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RW_AQ image1d_buffer_t, int) */
+IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RW_AQ image1d_array_t, int2)
+
 IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RW_AQ image2d_t, int2)
 IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RW_AQ image2d_array_t,
                                                  int4)
 IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RW_AQ image3d_t, int4)
+
+
+IMPLEMENT_READ_INT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RW_AQ image1d_t, uint4, ui,
+                                               int)
+IMPLEMENT_READ_INT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RW_AQ image1d_t, int4, i,
+                                               int)
+IMPLEMENT_READ_INT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RW_AQ image1d_array_t, uint4, ui,
+                                               int2)
+IMPLEMENT_READ_INT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RW_AQ image1d_array_t, int4, i,
+                                               int2)
+/*IMPLEMENT_READ_INT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RW_AQ image1d_buffer_t, uint4, ui,
+ *                                               int)
+ *IMPLEMENT_READ_INT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RW_AQ image1d_buffer_t, int4, i,
+ *                                               int)
+ */
+
 
 IMPLEMENT_READ_INT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RW_AQ image2d_t, uint4, ui,
                                                int2)
@@ -1112,17 +1169,28 @@ IMPLEMENT_READ_INT4_IMAGE_INT_COORD_NOSAMPLER (IMG_RW_AQ image3d_t, int4, i,
 
 /* float4 img + float coords + sampler */
 
+IMPLEMENT_READ_FLOAT4_IMAGE_FLOAT_COORD (IMG_RW_AQ image1d_t, float)
+IMPLEMENT_READ_FLOAT4_IMAGE_FLOAT_COORD (IMG_RW_AQ image1d_array_t, float2)
 IMPLEMENT_READ_FLOAT4_IMAGE_FLOAT_COORD (IMG_RW_AQ image2d_t, float2)
 IMPLEMENT_READ_FLOAT4_IMAGE_FLOAT_COORD (IMG_RW_AQ image2d_array_t, float4)
 IMPLEMENT_READ_FLOAT4_IMAGE_FLOAT_COORD (IMG_RW_AQ image3d_t, float4)
 
 /* float4 img + int coords + sampler */
 
+IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD (IMG_RW_AQ image1d_t, int)
+IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD (IMG_RW_AQ image1d_array_t, int2)
 IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD (IMG_RW_AQ image2d_t, int2)
 IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD (IMG_RW_AQ image2d_array_t, int4)
 IMPLEMENT_READ_FLOAT4_IMAGE_INT_COORD (IMG_RW_AQ image3d_t, int4)
 
 /* int4 img + float coords + sampler */
+
+IMPLEMENT_READ_INT4_IMAGE_FLOAT_COORD (IMG_RW_AQ image1d_t, uint4, ui, float)
+IMPLEMENT_READ_INT4_IMAGE_FLOAT_COORD (IMG_RW_AQ image1d_t, int4, i, float)
+IMPLEMENT_READ_INT4_IMAGE_FLOAT_COORD (IMG_RW_AQ image1d_array_t, uint4, ui,
+                                       float2)
+IMPLEMENT_READ_INT4_IMAGE_FLOAT_COORD (IMG_RW_AQ image1d_array_t, int4, i,
+                                       float2)
 
 IMPLEMENT_READ_INT4_IMAGE_FLOAT_COORD (IMG_RW_AQ image2d_t, uint4, ui, float2)
 IMPLEMENT_READ_INT4_IMAGE_FLOAT_COORD (IMG_RW_AQ image2d_t, int4, i, float2)
@@ -1134,6 +1202,12 @@ IMPLEMENT_READ_INT4_IMAGE_FLOAT_COORD (IMG_RW_AQ image3d_t, uint4, ui, float4)
 IMPLEMENT_READ_INT4_IMAGE_FLOAT_COORD (IMG_RW_AQ image3d_t, int4, i, float4)
 
 /* int4 img + int coords + sampler */
+
+IMPLEMENT_READ_INT4_IMAGE_INT_COORD (IMG_RW_AQ image1d_t, uint4, ui, int)
+IMPLEMENT_READ_INT4_IMAGE_INT_COORD (IMG_RW_AQ image1d_t, int4, i, int)
+IMPLEMENT_READ_INT4_IMAGE_INT_COORD (IMG_RW_AQ image1d_array_t, uint4, ui,
+                                     int2)
+IMPLEMENT_READ_INT4_IMAGE_INT_COORD (IMG_RW_AQ image1d_array_t, int4, i, int2)
 
 IMPLEMENT_READ_INT4_IMAGE_INT_COORD (IMG_RW_AQ image2d_t, uint4, ui, int2)
 IMPLEMENT_READ_INT4_IMAGE_INT_COORD (IMG_RW_AQ image2d_t, int4, i, int2)

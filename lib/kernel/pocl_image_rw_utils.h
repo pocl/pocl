@@ -25,7 +25,7 @@
 
 /* coordinate initialization */
 #define INITCOORDint(dest, source){             \
-  dest.x = source.x;                            \
+  dest.x = source;                              \
   dest.y = 0;                                   \
   dest.z = 0;                                   \
   dest.w = 0;                                   \
@@ -47,7 +47,7 @@
 
 #define INITCOORDfloat(dest, source)                                          \
   {                                                                           \
-    dest.x = source.x;                                                        \
+    dest.x = source;                                                          \
     dest.y = 0.0f;                                                            \
     dest.z = 0.0f;                                                            \
     dest.w = 0.0f;                                                            \
