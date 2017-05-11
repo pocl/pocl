@@ -41,9 +41,10 @@ pocl_get_image_information (cl_channel_order  ch_order,
                             cl_int*           host_channels,
                             cl_int*           host_elem_size);
 
-extern cl_int
-pocl_check_device_supports_image(const cl_mem image,
-                                 const cl_command_queue command_queue);
+extern cl_int pocl_check_device_supports_image (
+    cl_device_id device, const cl_image_format *image_format,
+    const cl_image_desc *image_desc, cl_image_format *supported_image_formats,
+    cl_uint num_entries);
 #ifdef __GNUC__
 #pragma GCC visibility pop
 #endif

@@ -52,6 +52,10 @@ CL_API_SUFFIX__VERSION_1_0
   POCL_RETURN_ERROR_ON((command_queue->context != image->context),
     CL_INVALID_CONTEXT, "image and command_queue are not from the same context\n");
 
+  POCL_RETURN_ERROR_ON (
+      (!command_queue->device->image_support), CL_INVALID_OPERATION,
+      "Device %s does not support images\n", command_queue->device->long_name);
+
   errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
                                         event_wait_list);
   if (image->buffer)
@@ -62,10 +66,6 @@ CL_API_SUFFIX__VERSION_1_0
         "Image buffer has been created with CL_MEM_HOST_WRITE_ONLY "
         "or CL_MEM_HOST_NO_ACCESS\n");
 
-  if (errcode != CL_SUCCESS)
-    return errcode;
-
-  errcode = pocl_check_device_supports_image(image, command_queue);
   if (errcode != CL_SUCCESS)
     return errcode;
 

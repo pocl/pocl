@@ -33,22 +33,23 @@ POname(clCreateImage) (cl_context              context,
 CL_API_SUFFIX__VERSION_1_2
 {
     cl_mem mem = NULL;
-    unsigned i;
+    unsigned i, devices_supporting_images = 0;
     cl_uint num_entries = 0;
-    cl_image_format *supported_image_formats;
-    size_t size;
+    cl_image_format *supported_image_formats = NULL;
+    size_t size = 0;
     int errcode;
     size_t row_pitch;
     size_t slice_pitch;
     int elem_size;
     int channels;
+    size_t elem_bytes;
 
     POCL_GOTO_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
 
     POCL_GOTO_ERROR_COND((image_format == NULL), CL_INVALID_IMAGE_FORMAT_DESCRIPTOR);
 
     POCL_GOTO_ERROR_COND((image_desc == NULL), CL_INVALID_IMAGE_DESCRIPTOR);
-    
+
     if (image_desc->num_mip_levels != 0 || image_desc->num_samples != 0) {
       POCL_ABORT_UNIMPLEMENTED("clCreateImage with image_desc->num_mip_levels != 0"
       " || image_desc->num_samples != 0 ");
@@ -66,60 +67,72 @@ CL_API_SUFFIX__VERSION_1_2
         errcode = CL_OUT_OF_HOST_MEMORY;
         goto ERROR;
       }
-    
-    errcode = POname(clGetSupportedImageFormats) (context, flags, 
-            image_desc->image_type, num_entries, supported_image_formats, NULL);
-    
+
+    errcode = POname (clGetSupportedImageFormats) (
+        context, flags, image_desc->image_type, num_entries,
+        supported_image_formats, NULL);
+
     if (errcode != CL_SUCCESS){
       POCL_MSG_ERR("Couldn't get the supported image formats\n");
       goto ERROR;
     }
-    
-    for (i = 0; i < num_entries; i++)
+
+    /* CL_INVALID_IMAGE_SIZE if image dimensions specified in image_desc exceed
+     * the minimum maximum image dimensions described in the table of allowed
+     * values for param_name for clGetDeviceInfo FOR ALL DEVICES IN CONTEXT.
+     */
+    for (i = 0; i < context->num_devices; i++)
       {
-        if (supported_image_formats[i].image_channel_order == 
-            image_format->image_channel_order &&
-            supported_image_formats[i].image_channel_data_type ==
-            image_format->image_channel_data_type)
-          {
-            POCL_MEM_FREE(supported_image_formats);
-            goto TYPE_SUPPORTED;
-          }
+        cl_device_id dev = context->devices[i];
+        if (!dev->image_support)
+          continue;
+        else
+          ++devices_supporting_images;
+        if (pocl_check_device_supports_image (dev, image_format, image_desc,
+                                              supported_image_formats,
+                                              num_entries)
+            != CL_SUCCESS)
+          goto ERROR;
       }
+    POCL_GOTO_ERROR_ON (
+        (devices_supporting_images == 0), CL_INVALID_OPERATION,
+        "There are no devices in context that support images\n");
 
-    POCL_MEM_FREE(supported_image_formats);
-    POCL_MSG_ERR("Requested image format is not supported\n");
-    errcode = CL_IMAGE_FORMAT_NOT_SUPPORTED;
-    goto ERROR;
-
-TYPE_SUPPORTED:
-
-    /* maybe they are implemented */
-    if (image_desc->image_type != CL_MEM_OBJECT_IMAGE2D &&
-        image_desc->image_type != CL_MEM_OBJECT_IMAGE3D) {
-        POCL_ABORT_UNIMPLEMENTED("clCreateImage with images other than "
-        "CL_MEM_OBJECT_IMAGE2D or CL_MEM_OBJECT_IMAGE3D");
-    }
-    
     pocl_get_image_information (image_format->image_channel_order,
                                 image_format->image_channel_data_type, 
                                 &channels, &elem_size);
-    
+    elem_bytes = elem_size * channels;
+
     row_pitch = image_desc->image_row_pitch;
     slice_pitch = image_desc->image_slice_pitch;
-    
-    size = image_desc->image_width * image_desc->image_height * elem_size * 
-      channels;
 
-    if (image_desc->image_depth > 0)
-      {
-        size *= image_desc->image_depth;
-      }
-
+    /* This must be 0 if host_ptr is NULL and can be either 0 or ≥
+     * image_width * size of element in bytes if host_ptr is not NULL.
+     * If host_ptr is not NULL and image_row_pitch = 0, image_row_pitch
+     * is calculated as image_width * size of element in bytes. If
+     * image_row_pitch is not 0, it must be a multiple of the
+     * image element size in bytes.
+     */
     if (row_pitch == 0)
       {
-        row_pitch = image_desc->image_width * elem_size * channels;
+        row_pitch = image_desc->image_width * elem_bytes;
       }
+    else
+      {
+        POCL_GOTO_ERROR_COND ((row_pitch % elem_bytes), CL_INVALID_VALUE);
+      }
+
+    /* The size in bytes of each 2D slice in the 3D image or the size in bytes
+     * of each image in a 1D or 2D image array. This must be 0 if host_ptr is
+     * NULL. If host_ptr is not NULL, image_slice_pitch can be either 0 or ≥
+     * image_row_pitch * image_height for a 2D image array or 3D image and can
+     * be either 0 or ≥ image_row_pitch for a 1D image array. If host_ptr is
+     * not NULL and image_slice_pitch = 0, image_slice_pitch is calculated as
+     * image_row_pitch * image_height for a 2D image array or 3D image and
+     * image_row_pitch for a 1D image array. If image_slice_pitch is not 0,
+     * it must be a multiple of the image_row_pitch.
+     */
+
     if (slice_pitch == 0)
       {
         if (image_desc->image_type == CL_MEM_OBJECT_IMAGE3D ||
@@ -132,6 +145,25 @@ TYPE_SUPPORTED:
             slice_pitch = row_pitch;
           }
       }
+    else
+      {
+        POCL_GOTO_ERROR_COND ((slice_pitch % row_pitch), CL_INVALID_VALUE);
+      }
+
+    if (image_desc->image_type == CL_MEM_OBJECT_IMAGE3D)
+      size = slice_pitch * image_desc->image_depth;
+
+    if (image_desc->image_type == CL_MEM_OBJECT_IMAGE2D)
+      size = row_pitch * image_desc->image_height;
+
+    if (image_desc->image_type == CL_MEM_OBJECT_IMAGE1D)
+      size = row_pitch;
+
+    if (image_desc->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY
+        || image_desc->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
+      {
+        size = slice_pitch * image_desc->image_array_size;
+      }
 
     /* Create buffer and fill in missing parts */
     mem = POname(clCreateBuffer) (context, flags, size, host_ptr, &errcode);
@@ -141,11 +173,22 @@ TYPE_SUPPORTED:
 
     mem->type = image_desc->image_type;
     mem->is_image = CL_TRUE;
-    
     mem->image_width = image_desc->image_width;
-    mem->image_height = image_desc->image_height;
-    mem->image_depth = image_desc->image_depth;
-    mem->image_array_size = image_desc->image_array_size;
+    if (image_desc->image_type == CL_MEM_OBJECT_IMAGE2D
+        || image_desc->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY
+        || image_desc->image_type == CL_MEM_OBJECT_IMAGE3D)
+      mem->image_height = image_desc->image_height;
+    else
+      mem->image_height = 0;
+    if (image_desc->image_type == CL_MEM_OBJECT_IMAGE3D)
+      mem->image_depth = image_desc->image_depth;
+    else
+      mem->image_depth = 0;
+    if (image_desc->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY
+        || image_desc->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
+      mem->image_array_size = image_desc->image_array_size;
+    else
+      mem->image_array_size = 0;
     mem->image_row_pitch = row_pitch;
     mem->image_slice_pitch = slice_pitch;
     mem->image_channel_data_type = image_format->image_channel_data_type;
@@ -171,14 +214,16 @@ TYPE_SUPPORTED:
     
     if (errcode_ret != NULL)
       *errcode_ret = CL_SUCCESS;
-    
+
+    POCL_MEM_FREE (supported_image_formats);
     return mem;
     
  ERROR:
-    if (errcode_ret) 
-      {
-        *errcode_ret = errcode;
-      }
-    return NULL;
+   POCL_MEM_FREE (supported_image_formats);
+   if (errcode_ret)
+     {
+       *errcode_ret = errcode;
+     }
+   return NULL;
 }
 POsym(clCreateImage)

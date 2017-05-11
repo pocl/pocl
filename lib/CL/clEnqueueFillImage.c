@@ -39,9 +39,7 @@ CL_API_SUFFIX__VERSION_1_2
 {
   int errcode = CL_SUCCESS;
   _cl_command_node *cmd = NULL;
-  cl_image_format *supported_image_formats = NULL;
   void *fill_pixel = NULL;
-/*  size_t tuned_origin[3]; */
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
@@ -65,10 +63,6 @@ CL_API_SUFFIX__VERSION_1_2
     return errcode;
 
   errcode = pocl_check_image_origin_region (image, origin, region);
-  if (errcode != CL_SUCCESS)
-    return errcode;
-
-  errcode = pocl_check_device_supports_image(image, command_queue);
   if (errcode != CL_SUCCESS)
     return errcode;
 
@@ -127,11 +121,9 @@ CL_API_SUFFIX__VERSION_1_2
   image->owning_device = command_queue->device;
   pocl_command_enqueue(command_queue, cmd);
   
-  POCL_MEM_FREE(supported_image_formats);
   return errcode;
   
  ERROR_CLEAN:
-  POCL_MEM_FREE(supported_image_formats);
   POCL_MEM_FREE(fill_pixel);
   return errcode;
 }
