@@ -126,7 +126,7 @@ POname(clCreateContext)(const cl_context_properties * properties,
 {
   unsigned i;
   cl_device_id device_ptr;
-  int errcode = 0;
+  cl_int errcode = 0;
   cl_context context = NULL;
 
   POCL_GOTO_ERROR_COND((devices == NULL || num_devices == 0), CL_INVALID_VALUE);
@@ -134,9 +134,21 @@ POname(clCreateContext)(const cl_context_properties * properties,
   POCL_GOTO_ERROR_COND((pfn_notify == NULL && user_data != NULL), CL_INVALID_VALUE);
 
   int offline_compile = pocl_get_bool_option("POCL_OFFLINE_COMPILE", 0);
-  
+
   lt_dlinit();
-  pocl_init_devices();
+  errcode = pocl_init_devices();
+  /* clCreateContext cannot return CL_DEVICE_NOT_FOUND, which is what
+   * pocl_init_devices() returns if no devices could be probed. Hence,
+   * remap this error to CL_INVALID_DEVICE. Note that this particular
+   * situation should never arise, since an application should issue
+   * clGetDeviceIDs before clCreateContext, and we would have returned
+   * CL_DEVICE_NOT_FOUND already from clGetDeviceIDs. Still, no reason
+   * not to handle it.
+   */
+  POCL_GOTO_ERROR_COND (errcode == CL_DEVICE_NOT_FOUND, CL_INVALID_DEVICE);
+  /* Other error conditions (e.g. CL_OUT_OF_HOST_MEMORY) */
+  if (errcode)
+    goto ERROR;
 
   context = (cl_context) malloc(sizeof(struct _cl_context));
   if (context == NULL)

@@ -45,7 +45,7 @@ extern unsigned int pocl_num_devices;
  * The devices are shared across contexts, thus must implement resource
  * management internally also across multiple contexts.
  */
-void pocl_init_devices();
+cl_int pocl_init_devices();
 
 /**
  * \brief Get the count of devices for a specific type

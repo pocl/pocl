@@ -187,7 +187,7 @@ pocl_string_to_dirname(char *str)
     }
 }
 
-void 
+cl_int
 pocl_init_devices()
 {
   static unsigned int init_done = 0;
@@ -206,7 +206,7 @@ pocl_init_devices()
      infinite loop. */
 
   if (init_in_progress)
-      return;
+      return CL_SUCCESS; /* debatable, but what else can we do ? */
   init_in_progress = 1;
 
   if (init_done == 0)
@@ -215,7 +215,7 @@ pocl_init_devices()
   if (init_done) 
     {
       POCL_UNLOCK(pocl_init_lock);
-      return;
+      return pocl_num_devices ? CL_SUCCESS : CL_DEVICE_NOT_FOUND;
     }
 
   /* Set a global debug flag, so we don't have to call pocl_get_bool_option
@@ -244,10 +244,20 @@ pocl_init_devices()
       pocl_num_devices += device_count[i];
     }
 
-  assert(pocl_num_devices > 0);
+  if (pocl_num_devices == 0)
+    {
+      const char *dev_env = getenv (POCL_DEVICES_ENV);
+      if (dev_env)
+        POCL_MSG_WARN ("no devices found. %s=%s\n", POCL_DEVICES_ENV, dev_env);
+      return CL_DEVICE_NOT_FOUND;
+    }
+
   pocl_devices = (struct _cl_device_id*) calloc(pocl_num_devices, sizeof(struct _cl_device_id));
   if (pocl_devices == NULL)
-    POCL_ABORT("Can not allocate memory for devices\n");
+    {
+      POCL_MSG_ERR ("Can not allocate memory for devices\n");
+      return CL_OUT_OF_HOST_MEMORY;
+    }
 
   dev_index = 0;
   /* Init infos for each probed devices */
@@ -263,7 +273,7 @@ pocl_init_devices()
              it to point to some other device's global memory id in case of
              a shared global memory. */
           pocl_devices[dev_index].global_mem_id = dev_index;
-          
+
           pocl_device_ops[i].init_device_infos(&pocl_devices[dev_index]);
 
           pocl_device_common_init(&pocl_devices[dev_index]);
@@ -272,7 +282,10 @@ pocl_init_devices()
           /* Check if there are device-specific parameters set in the
              POCL_DEVICEn_PARAMETERS env. */
           if (snprintf (env_name, 1024, "POCL_%s%d_PARAMETERS", dev_name, j) < 0)
-            POCL_ABORT("Unable to generate the env string.");
+            {
+              POCL_MSG_ERR("Unable to generate the env string.");
+              return CL_OUT_OF_HOST_MEMORY;
+            }
           pocl_devices[dev_index].ops->init(&pocl_devices[dev_index], getenv(env_name));
 
           if (dev_index == 0)
@@ -280,13 +293,14 @@ pocl_init_devices()
 
           pocl_devices[dev_index].cache_dir_name = strdup(pocl_devices[dev_index].long_name);
           pocl_string_to_dirname(pocl_devices[dev_index].cache_dir_name);
-          
+
           ++dev_index;
         }
     }
 
   init_done = 1;
   POCL_UNLOCK(pocl_init_lock);
+  return CL_SUCCESS;
 }
 
 int pocl_get_unique_global_mem_id ()
