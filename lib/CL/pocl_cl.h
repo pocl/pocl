@@ -268,7 +268,7 @@ struct pocl_device_ops {
    *  device : struct to initialize
    *  parameters : optional environment with device-specific parameters
    */
-  void (*init) (unsigned j, cl_device_id device, const char *parameters);
+  cl_int (*init) (unsigned j, cl_device_id device, const char *parameters);
   cl_int (*alloc_mem_obj) (cl_device_id device, cl_mem mem_obj, void* host_ptr);
   void *(*create_sub_buffer) (void *data, void* buffer, size_t origin, size_t size);
   void (*free) (cl_device_id device, cl_mem mem_obj);

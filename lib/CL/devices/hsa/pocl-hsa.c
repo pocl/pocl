@@ -599,7 +599,7 @@ hsa_queue_callback(hsa_status_t status, hsa_queue_t *q, void* data) {
 /* driver pthread prototype */
 void * pocl_hsa_driver_pthread (void *cldev);
 
-void
+cl_int
 pocl_hsa_init (unsigned j, cl_device_id device, const char* parameters)
 {
   pocl_hsa_device_data_t *d;
@@ -696,6 +696,7 @@ pocl_hsa_init (unsigned j, cl_device_id device, const char* parameters)
   d->exit_driver_thread = 0;
   PTHREAD_CHECK(pthread_create(&d->driver_pthread_id, NULL,
                  &pocl_hsa_driver_pthread, device));
+  return CL_SUCCESS;
 }
 
 static void*

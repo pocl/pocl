@@ -111,13 +111,13 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   /* free_event_data */
 }
 
-void
+cl_int
 pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
 {
   CUresult result;
 
   if (dev->data)
-    return;
+    return CL_SUCCESS;
 
   pocl_cuda_device_data_t *data = malloc (sizeof (pocl_cuda_device_data_t));
   result = cuDeviceGet (&data->device, j);
@@ -211,6 +211,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->data = data;
 
   POCL_INIT_LOCK (data->compile_lock);
+  return CL_SUCCESS;
 }
 
 char *

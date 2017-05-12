@@ -178,7 +178,7 @@ pocl_pthread_init_device_infos(unsigned j, struct _cl_device_id* dev)
 }
 
 
-void
+cl_int
 pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 {
   struct data *d;
@@ -192,7 +192,7 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   // Should we instead have a separate bool field in device, or do the
   // initialization at library startup time with __attribute__((constructor))?
   if (device->data!=NULL)
-    return;
+    return CL_SUCCESS;
 
   d = (struct data *) calloc (1, sizeof (struct data));
 
@@ -266,6 +266,7 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
     }
   /* system mem as global memory */
   device->global_mem_id = 0;
+  return CL_SUCCESS;
 }
 
 void

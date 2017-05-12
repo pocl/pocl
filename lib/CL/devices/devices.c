@@ -266,6 +266,7 @@ pocl_init_devices()
       assert(pocl_device_ops[i].init);
       for (j = 0; j < device_count[i]; ++j)
         {
+          cl_int ret = CL_SUCCESS;
           pocl_devices[dev_index].ops = &pocl_device_ops[i];
           pocl_devices[dev_index].dev_id = dev_index;
           /* The default value for the global memory space identifier is
@@ -286,7 +287,16 @@ pocl_init_devices()
               POCL_MSG_ERR("Unable to generate the env string.");
               return CL_OUT_OF_HOST_MEMORY;
             }
-          pocl_devices[dev_index].ops->init (j, &pocl_devices[dev_index], getenv(env_name));
+          ret = pocl_devices[dev_index].ops->init (j, &pocl_devices[dev_index], getenv(env_name));
+          switch (ret)
+          {
+          case CL_OUT_OF_HOST_MEMORY:
+            return ret;
+          case CL_SUCCESS:
+            break;
+          default:
+            pocl_devices[dev_index].available = 0;
+          }
 
           if (dev_index == 0)
             pocl_devices[dev_index].type |= CL_DEVICE_TYPE_DEFAULT;

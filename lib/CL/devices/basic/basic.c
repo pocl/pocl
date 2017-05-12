@@ -293,12 +293,12 @@ pocl_basic_probe(struct pocl_device_ops *ops)
 
 
 
-void
+cl_int
 pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 {
   struct data *d;
   static int first_basic_init = 1;
-  
+
   if (first_basic_init)
     {
       pocl_init_dlhandle_cache();
@@ -307,7 +307,7 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
   device->global_mem_id = 0;
 
   d = (struct data *) calloc (1, sizeof (struct data));
-  
+
   d->current_kernel = NULL;
   d->current_dlhandle = 0;
   device->data = d;
@@ -345,6 +345,7 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
   device->has_64bit_long=0;
   #endif
 
+  return CL_SUCCESS;
 }
 
 cl_int
