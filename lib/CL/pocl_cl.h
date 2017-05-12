@@ -211,7 +211,7 @@ typedef struct pocl_argument_info {
 struct pocl_device_ops {
   const char *device_name;
   void *shared_data; /* data to be shared by a devices of same type */
-  void (*init_device_infos) (struct _cl_device_id*);
+  void (*init_device_infos) (unsigned j, struct _cl_device_id*);
   /* implementation */
 
   /* New driver api extension for out-of-order execution and
@@ -263,7 +263,12 @@ struct pocl_device_ops {
 
   void (*uninit) (cl_device_id device);
   unsigned int (*probe) (struct pocl_device_ops *ops);
-  void (*init) (cl_device_id device, const char *parameters);
+  /* Device initialization. Parameters:
+   *  j : progressive index for the devices of the same type
+   *  device : struct to initialize
+   *  parameters : optional environment with device-specific parameters
+   */
+  void (*init) (unsigned j, cl_device_id device, const char *parameters);
   cl_int (*alloc_mem_obj) (cl_device_id device, cl_mem mem_obj, void* host_ptr);
   void *(*create_sub_buffer) (void *data, void* buffer, size_t origin, size_t size);
   void (*free) (cl_device_id device, cl_mem mem_obj);

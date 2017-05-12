@@ -111,15 +111,8 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   /* free_event_data */
 }
 
-/* The CUDA device to be initialized next. This is reset when probing,
- * and incremented every time a device gets initialized.
- * TODO this is a bit of a hack, which is also shared by HSA. It might
- * be a good idea to consider extending the init() function to also
- * get a progressive index, and use that instead */
-static int next_cuda_device = 0;
-
 void
-pocl_cuda_init (cl_device_id dev, const char *parameters)
+pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
 {
   CUresult result;
 
@@ -127,7 +120,7 @@ pocl_cuda_init (cl_device_id dev, const char *parameters)
     return;
 
   pocl_cuda_device_data_t *data = malloc (sizeof (pocl_cuda_device_data_t));
-  result = cuDeviceGet (&data->device, next_cuda_device++);
+  result = cuDeviceGet (&data->device, j);
   CUDA_CHECK (result, "cuDeviceGet");
 
   // Get specific device name
@@ -229,9 +222,9 @@ pocl_cuda_build_hash (cl_device_id device)
 }
 
 void
-pocl_cuda_init_device_infos (struct _cl_device_id *dev)
+pocl_cuda_init_device_infos (unsigned j, struct _cl_device_id *dev)
 {
-  pocl_basic_init_device_infos (dev);
+  pocl_basic_init_device_infos (j, dev);
 
   dev->type = CL_DEVICE_TYPE_GPU;
   dev->address_bits = (sizeof (void *) * 8);
@@ -276,7 +269,6 @@ pocl_cuda_probe (struct pocl_device_ops *ops)
       probe_count = env_count;
     }
 
-  next_cuda_device = 0;
   return probe_count;
 }
 

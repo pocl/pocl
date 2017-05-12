@@ -145,7 +145,7 @@ pocl_basic_build_hash (cl_device_id device)
 }
 
 void
-pocl_basic_init_device_infos(struct _cl_device_id* dev)
+pocl_basic_init_device_infos(unsigned j, struct _cl_device_id* dev)
 {
   dev->type = CL_DEVICE_TYPE_CPU;
   dev->vendor_id = 0;
@@ -294,11 +294,10 @@ pocl_basic_probe(struct pocl_device_ops *ops)
 
 
 void
-pocl_basic_init (cl_device_id device, const char* parameters)
+pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 {
   struct data *d;
   static int first_basic_init = 1;
-  static int device_number = 0;
   
   if (first_basic_init)
     {
@@ -330,8 +329,7 @@ pocl_basic_init (cl_device_id device, const char* parameters)
     device->vendor_id =
       magic[0] | magic[1] << 8 | magic[2] << 16 | magic[3] << 24;
 
-  device->vendor_id += device_number;
-  device_number++;
+  device->vendor_id += j;
 
   /* The basic driver represents only one "compute unit" as
      it doesn't exploit multiple hardware threads. Multiple

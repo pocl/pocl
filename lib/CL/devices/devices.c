@@ -274,7 +274,7 @@ pocl_init_devices()
              a shared global memory. */
           pocl_devices[dev_index].global_mem_id = dev_index;
 
-          pocl_device_ops[i].init_device_infos(&pocl_devices[dev_index]);
+          pocl_device_ops[i].init_device_infos(j, &pocl_devices[dev_index]);
 
           pocl_device_common_init(&pocl_devices[dev_index]);
 
@@ -286,7 +286,7 @@ pocl_init_devices()
               POCL_MSG_ERR("Unable to generate the env string.");
               return CL_OUT_OF_HOST_MEMORY;
             }
-          pocl_devices[dev_index].ops->init(&pocl_devices[dev_index], getenv(env_name));
+          pocl_devices[dev_index].ops->init (j, &pocl_devices[dev_index], getenv(env_name));
 
           if (dev_index == 0)
             pocl_devices[dev_index].type |= CL_DEVICE_TYPE_DEFAULT;

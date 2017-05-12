@@ -103,7 +103,7 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
 
 
 void
-pocl_ttasim_init_device_infos(struct _cl_device_id* dev)
+pocl_ttasim_init_device_infos(unsigned j, struct _cl_device_id* dev)
 {
   dev->type = CL_DEVICE_TYPE_GPU;
   dev->max_compute_units = 1;
@@ -531,7 +531,7 @@ private:
 
 
 void
-pocl_ttasim_init (cl_device_id device, const char* parameters)
+pocl_ttasim_init (unsigned j, cl_device_id device, const char* parameters)
 {
   if (parameters == NULL)
     POCL_ABORT("The tta device requires the adf file as a device parameter.\n"

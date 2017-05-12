@@ -172,16 +172,15 @@ pocl_pthread_probe(struct pocl_device_ops *ops)
 }
 
 void
-pocl_pthread_init_device_infos(struct _cl_device_id* dev)
+pocl_pthread_init_device_infos(unsigned j, struct _cl_device_id* dev)
 {
-  pocl_basic_init_device_infos(dev);
+  pocl_basic_init_device_infos(j, dev);
 }
 
 
 void
-pocl_pthread_init (cl_device_id device, const char* parameters)
+pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 {
-  static int device_number = 0;
   struct data *d;
   static char scheduler_initialized = 0;
 #ifdef CUSTOM_BUFFER_ALLOCATOR
@@ -236,8 +235,7 @@ pocl_pthread_init (cl_device_id device, const char* parameters)
     device->vendor_id =
       magic[0] | magic[1] << 8 | magic[2] << 16 | magic[3] << 24;
 
-  device->vendor_id += device_number;
-  device_number++;
+  device->vendor_id += j;
 
   // pthread has elementary partitioning support
   device->max_sub_devices = device->max_compute_units;

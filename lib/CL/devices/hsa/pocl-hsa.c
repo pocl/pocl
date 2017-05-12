@@ -274,7 +274,6 @@ pocl_hsa_abort_on_pthread_error(int status,
                                                             #code);
 
 static hsa_agent_t hsa_agents[MAX_HSA_AGENTS];
-static intptr_t last_assigned_agent = 0;
 static int found_hsa_agents = 0;
 
 static hsa_status_t
@@ -445,9 +444,9 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
 }
 
 void
-pocl_hsa_init_device_infos(struct _cl_device_id* dev)
+pocl_hsa_init_device_infos(unsigned j, struct _cl_device_id* dev)
 {
-  pocl_basic_init_device_infos (dev);
+  pocl_basic_init_device_infos (j, dev);
 
   SETUP_DEVICE_CL_VERSION(HSA_DEVICE_CL_VERSION_MAJOR,
                           HSA_DEVICE_CL_VERSION_MINOR)
@@ -459,10 +458,10 @@ pocl_hsa_init_device_infos(struct _cl_device_id* dev)
   dev->local_as_id = 3;
   dev->constant_as_id = 2;
 
-  assert(found_hsa_agents > 0);
-  assert(last_assigned_agent < found_hsa_agents);
-  dev->data = (void*)last_assigned_agent;
-  hsa_agent_t agent = hsa_agents[last_assigned_agent++];
+  assert (found_hsa_agents > 0);
+  assert (j < found_hsa_agents);
+  dev->data = (void*)(uintptr_t)j;
+  hsa_agent_t agent = hsa_agents[j];
 
   uint32_t cache_sizes[4];
   HSA_CHECK(hsa_agent_get_info (agent, HSA_AGENT_INFO_CACHE_SIZE,
@@ -588,7 +587,6 @@ pocl_hsa_probe(struct pocl_device_ops *ops)
   HSA_CHECK(hsa_iterate_agents(pocl_hsa_get_agents_callback, NULL));
 
   POCL_MSG_PRINT_INFO("pocl-hsa: found %d agents.\n", found_hsa_agents);
-  last_assigned_agent = 0;
 
   return found_hsa_agents;
 }
@@ -602,7 +600,7 @@ hsa_queue_callback(hsa_status_t status, hsa_queue_t *q, void* data) {
 void * pocl_hsa_driver_pthread (void *cldev);
 
 void
-pocl_hsa_init (cl_device_id device, const char* parameters)
+pocl_hsa_init (unsigned j, cl_device_id device, const char* parameters)
 {
   pocl_hsa_device_data_t *d;
 
