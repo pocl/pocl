@@ -182,6 +182,8 @@ cl_int
 pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 {
   struct data *d;
+  cl_int ret = CL_SUCCESS;
+  int err;
   static char scheduler_initialized = 0;
 #ifdef CUSTOM_BUFFER_ALLOCATOR
   static mem_regions_management* mrm = NULL;
@@ -195,20 +197,27 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
     return CL_SUCCESS;
 
   d = (struct data *) calloc (1, sizeof (struct data));
-
-  d->current_kernel = NULL;
-  d->current_dlhandle = 0;
-  device->data = d;
+  if (d == NULL)
+    return CL_OUT_OF_HOST_MEMORY;
 
 #ifdef CUSTOM_BUFFER_ALLOCATOR
   if (mrm == NULL)
     {
       mrm = malloc (sizeof (mem_regions_management));
+      if (mrm == NULL)
+        {
+          free (d);
+          return CL_OUT_OF_HOST_MEMORY;
+        }
       BA_INIT_LOCK (mrm->mem_regions_lock);
       mrm->mem_regions = NULL;
     }
   d->mem_regions = mrm;
 #endif
+
+  d->current_kernel = NULL;
+  d->current_dlhandle = 0;
+  device->data = d;
 
   device->address_bits = sizeof(void*) * 8;
 
@@ -221,10 +230,12 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
      initialize global_mem_size which it is not yet. Just put 
      a nonzero there for now. */
   device->global_mem_size = 1;
-  pocl_topology_detect_device_info(device);
+  err = pocl_topology_detect_device_info (device);
+  if (err)
+    ret = CL_INVALID_DEVICE;
   num_worker_threads = max (get_max_thread_count (device), 
                             (unsigned)pocl_get_int_option("POCL_PTHREAD_MIN_THREADS", 1));
-  
+
   pocl_cpuinfo_detect_device_info(device);
   pocl_set_buffer_image_limits(device);
 
@@ -266,7 +277,7 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
     }
   /* system mem as global memory */
   device->global_mem_id = 0;
-  return CL_SUCCESS;
+  return ret;
 }
 
 void
