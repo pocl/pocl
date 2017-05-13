@@ -27,10 +27,11 @@
 
 #include "pocl_topology.h"
 
-void
+int
 pocl_topology_detect_device_info(cl_device_id device)
 {
   hwloc_topology_t pocl_topology;
+  int ret = 0;
 
   /*
    * hwloc's OpenCL backend causes problems at the initialization stage
@@ -44,15 +45,21 @@ pocl_topology_detect_device_info(cl_device_id device)
    */
   setenv ("HWLOC_PLUGINS_PATH", "/dev/null", 1);
 
-  int ret = hwloc_topology_init(&pocl_topology);
+  ret = hwloc_topology_init (&pocl_topology);
   if (ret == -1)
-    POCL_ABORT("Cannot initialize the topology.\n");
+  {
+    POCL_MSG_ERR ("Cannot initialize the topology.\n");
+    return ret;
+  }
 
-  hwloc_topology_set_flags(pocl_topology, HWLOC_TOPOLOGY_FLAG_WHOLE_IO);
+  hwloc_topology_set_flags (pocl_topology, HWLOC_TOPOLOGY_FLAG_WHOLE_IO);
 
-  ret = hwloc_topology_load(pocl_topology);
+  ret = hwloc_topology_load (pocl_topology);
   if (ret == -1)
-    POCL_ABORT("Cannot load the topology.\n");
+  {
+    POCL_MSG_ERR ("Cannot load the topology.\n");
+    return ret;
+  }
 
   device->global_mem_size =
       hwloc_get_root_obj(pocl_topology)->memory.total_memory;
@@ -100,7 +107,9 @@ pocl_topology_detect_device_info(cl_device_id device)
   } while (0);
 
   // Destroy topology object and return
-  hwloc_topology_destroy(pocl_topology);
+exit_destroy:
+  hwloc_topology_destroy (pocl_topology);
+  return ret;
 
 }
 

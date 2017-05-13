@@ -37,7 +37,7 @@
 #pragma GCC visibility push(hidden)
 #endif
 
-void pocl_topology_detect_device_info(cl_device_id device);
+int pocl_topology_detect_device_info(cl_device_id device);
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

@@ -297,6 +297,8 @@ cl_int
 pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 {
   struct data *d;
+  cl_int ret = CL_SUCCESS;
+  int err;
   static int first_basic_init = 1;
 
   if (first_basic_init)
@@ -307,6 +309,8 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
   device->global_mem_id = 0;
 
   d = (struct data *) calloc (1, sizeof (struct data));
+  if (d == NULL)
+    return CL_OUT_OF_HOST_MEMORY;
 
   d->current_kernel = NULL;
   d->current_dlhandle = 0;
@@ -317,7 +321,10 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
      initialize global_mem_size which it is not yet. Just put 
      a nonzero there for now. */
   device->global_mem_size = 1;
-  pocl_topology_detect_device_info(device);
+  err = pocl_topology_detect_device_info(device);
+  if (err)
+    ret = CL_INVALID_DEVICE;
+
   POCL_INIT_LOCK (d->cq_lock);
   pocl_cpuinfo_detect_device_info(device);
   pocl_set_buffer_image_limits(device);
@@ -345,7 +352,7 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
   device->has_64bit_long=0;
   #endif
 
-  return CL_SUCCESS;
+  return ret;
 }
 
 cl_int
