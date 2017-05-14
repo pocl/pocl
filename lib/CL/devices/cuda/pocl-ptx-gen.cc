@@ -517,7 +517,10 @@ int findLibDevice(char LibDevicePath[PATH_MAX], const char *Arch) {
   char *End;
   unsigned long SM = strtoul(Arch + 3, &End, 10);
   if (!SM || strlen(End))
-    POCL_ABORT("[CUDA] invalid GPU architecture %s\n", Arch);
+    {
+      POCL_MSG_ERR ("[CUDA] invalid GPU architecture %s\n", Arch);
+      return 1;
+    }
 
   // This mapping from SM version to libdevice library version is given here:
   // http://docs.nvidia.com/cuda/libdevice-users-guide/basic-usage.html#version-selection
