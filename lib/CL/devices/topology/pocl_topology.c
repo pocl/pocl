@@ -58,7 +58,7 @@ pocl_topology_detect_device_info(cl_device_id device)
   if (ret == -1)
   {
     POCL_MSG_ERR ("Cannot load the topology.\n");
-    return ret;
+    goto exit_destroy;
   }
 
   device->global_mem_size =
