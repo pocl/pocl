@@ -28,6 +28,7 @@
 #include <limits.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <math.h>
 
 // We implement the OpenCL printf by calling the C99 printf. This is
 // not very efficient, but is easy to implement.
@@ -110,9 +111,6 @@ float __attribute__((overloadable)) vload_half(size_t offset,
 
 // Note: To simplify implementation, we print double values with %lf,
 // although %f would suffice as well
-#define FLOAT_CONV_half   "h"
-#define FLOAT_CONV_float  ""
-#define FLOAT_CONV_double "l"
 #define FLOAT_GET_half(ptr)   vload_half(0, ptr)
 #define FLOAT_GET_float(ptr)  (*(ptr))
 #define FLOAT_GET_double(ptr) (*(ptr))
@@ -123,7 +121,7 @@ float __attribute__((overloadable)) vload_half(size_t offset,
   {                                                                     \
     DEBUG_PRINTF(("[printf:floats:n=%dd]\n", n));                       \
     char outfmt[1000];                                                  \
-    OCL_C_AS char str[] = "%%%s%s%s%s%s%.0d%s%.0d" FLOAT_CONV_##WIDTH "%c"; \
+    OCL_C_AS char str[] = "%%%s%s%s%s%s%.0d%s%.0d" "%c";                \
     snprintf(outfmt, sizeof outfmt,                                     \
              str,                                                       \
              flags.left ? "-" : "",                                     \
@@ -140,7 +138,10 @@ float __attribute__((overloadable)) vload_half(size_t offset,
     for (int d=0; d<n; ++d) {                                           \
       DEBUG_PRINTF(("[printf:floats:d=%d]\n", d));                      \
       if (d != 0) printf(comma);                                        \
-      printf(outfmt, FLOAT_GET_##WIDTH((OCL_C_AS const WIDTH*)vals+d)); \
+      WIDTH val = (FLOAT_GET_##WIDTH((OCL_C_AS const WIDTH*)vals+d));   \
+      if (isnan (val))                                                  \
+        val = NAN;                                                      \
+      printf(outfmt, (double)val);                                      \
     }                                                                   \
     DEBUG_PRINTF(("[printf:floats:done]\n"));                           \
   }
