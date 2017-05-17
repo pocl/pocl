@@ -175,6 +175,7 @@ fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg,
   di->row_pitch = mem->image_row_pitch;
   di->slice_pitch = mem->image_slice_pitch;
   di->order = mem->image_channel_order;
+  di->image_array_size = mem->image_array_size;
   di->data_type = mem->image_channel_data_type;
   pocl_get_image_information (mem->image_channel_order,
                               mem->image_channel_data_type, &(di->num_channels),
