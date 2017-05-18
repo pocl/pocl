@@ -564,6 +564,7 @@ struct _cl_mem {
   cl_mem_object_type type;
   cl_mem_flags flags;
   size_t size;
+  size_t origin; /* for sub-buffers */
   void *mem_host_ptr;
   cl_uint map_count;
   cl_context context;

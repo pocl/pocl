@@ -54,8 +54,8 @@ POname(clGetMemObjectInfo)(cl_mem      memobj ,
   case CL_MEM_OFFSET:
     if (memobj->parent == NULL)
       POCL_RETURN_GETINFO (size_t, 0);
-
-    POCL_ABORT_UNIMPLEMENTED("clGetMemObjectInfo: CL_MEM_OFFSET in subbuffers");
+    else
+      POCL_RETURN_GETINFO (size_t, memobj->origin);
   }
   return CL_INVALID_VALUE;
 }

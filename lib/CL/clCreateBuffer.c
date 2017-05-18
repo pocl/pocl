@@ -144,6 +144,7 @@ POname(clCreateBuffer)(cl_context   context,
     }
 
   mem->size = size;
+  mem->origin = 0;
   mem->context = context;
   mem->mem_host_ptr = host_ptr;
   mem->shared_mem_allocation_owner = NULL;

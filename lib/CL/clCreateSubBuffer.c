@@ -67,9 +67,9 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
   mem->mappings = NULL;
   mem->destructor_callbacks = NULL;
   mem->parent = buffer;
-
   mem->type = CL_MEM_OBJECT_BUFFER;
   mem->size = info->size;
+  mem->origin = info->origin;
   mem->context = buffer->context;
   mem->latest_event = NULL;
   mem->owning_device = buffer->owning_device;
