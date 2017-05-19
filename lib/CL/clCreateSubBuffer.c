@@ -113,13 +113,32 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
         (flags & CL_MEM_READ_WRITE) |
         (flags & CL_MEM_READ_ONLY) |
         (flags & CL_MEM_WRITE_ONLY);
-    } else 
+    }
+  else
     {
       mem->flags =
         (buffer->flags & CL_MEM_READ_WRITE) |
         (buffer->flags & CL_MEM_READ_ONLY) |
         (buffer->flags & CL_MEM_WRITE_ONLY);
     }
+
+  if ((flags & CL_MEM_HOST_NO_ACCESS)
+      | (flags & CL_MEM_HOST_READ_ONLY)
+      | (flags & CL_MEM_HOST_WRITE_ONLY))
+    {
+      mem->flags = mem->flags |
+        ((flags & CL_MEM_HOST_NO_ACCESS)
+        | (flags & CL_MEM_HOST_READ_ONLY)
+        | (flags & CL_MEM_HOST_WRITE_ONLY));
+    }
+  else
+    {
+      mem->flags = mem->flags |
+        ((buffer->flags & CL_MEM_HOST_NO_ACCESS)
+        | (buffer->flags & CL_MEM_HOST_READ_ONLY)
+        | (buffer->flags & CL_MEM_HOST_WRITE_ONLY));
+    }
+
 
   mem->flags = mem->flags |
     (buffer->flags & CL_MEM_USE_HOST_PTR) |
