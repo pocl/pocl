@@ -55,20 +55,20 @@
 
 #ifdef cl_khr_int64
 #  define T long
-#  define MIN(a,b) (__builtin_trap(), 0L)
-#  define MAX(a,b) (__builtin_trap(), 0L)
-#  include "atomics.cl"
-#  undef T
 #  undef MIN
 #  undef MAX
+#  define IS_UINT64
+#  include "atomics.cl"
+#  undef IS_UINT64
+#  undef T
 
 #  define T ulong
-#  define MIN(a,b) (__builtin_trap(), 0UL)
-#  define MAX(a,b) (__builtin_trap(), 0UL)
-#  include "atomics.cl"
-#  undef T
 #  undef MIN
 #  undef MAX
+#  define IS_UINT64
+#  include "atomics.cl"
+#  undef IS_UINT64
+#  undef T
 #endif
 
 
@@ -159,6 +159,7 @@ T atomic_cmpxchg(volatile Q T *p, T cmp, T val)
 
 // extended
 
+#ifdef MIN
 __attribute__((overloadable))
 T atomic_min(volatile Q T *p, T val)
 {
@@ -168,7 +169,24 @@ T atomic_min(volatile Q T *p, T val)
   u2.i = u1.i;
   return MIN(u2.p, val);
 }
+#endif
 
+#ifdef IS_UINT64
+__attribute__((overloadable))
+T atomic_min (volatile Q T *p, T val)
+{
+  T min,old;
+  do {
+    old = min = *p;
+    if (val < min)
+      old = atomic_cmpxchg(p, min, val);
+  } while (old != min);
+  return old;
+}
+#endif
+
+
+#ifdef MAX
 __attribute__((overloadable))
 T atomic_max(volatile Q T *p, T val)
 {
@@ -178,6 +196,21 @@ T atomic_max(volatile Q T *p, T val)
   u2.i = u1.i;
   return MAX(u2.p, val);
 }
+#endif
+
+#ifdef IS_UINT64
+__attribute__((overloadable))
+T atomic_max (volatile Q T *p, T val)
+{
+  T max,old;
+  do {
+    old = max = *p;
+    if (val > max)
+      old = atomic_cmpxchg(p, max, val);
+  } while (old != max);
+  return old;
+}
+#endif
 
 __attribute__((overloadable))
 T atomic_and(volatile Q T *p, T val)
