@@ -214,6 +214,7 @@ Workgroup::runOnModule(Module &M)
     Function *L = createLauncher(M, &*i);
 
     L->addFnAttr(Attribute::NoInline);
+    L->removeFnAttr(Attribute::AlwaysInline);
 
     privatizeContext(M, L);
 

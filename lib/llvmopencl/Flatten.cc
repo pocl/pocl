@@ -61,7 +61,7 @@ static RegisterPass<Flatten> X("flatten", "Kernel function flattening pass");
 
 //#define DEBUG_FLATTEN
 
-#define INLINE_ALL_NON_KERNEL
+//#define INLINE_ALL_NON_KERNEL
 
 #ifdef INLINE_ALL_NON_KERNEL
 
@@ -153,7 +153,7 @@ Flatten::runOnModule(Module &M)
     for (Value::use_iterator i = v->use_begin(), e = v->use_end();
          i != e; ++i) {
       llvm::User *user = i->getUser();
-      if (Instruction *ci = dyn_cast<Instruction>(user) {
+      if (Instruction *ci = dyn_cast<Instruction>(user)) {
         // Prevent infinite looping on recursive functions
         // (though OpenCL does not allow this?)
         Function *f = ci->getParent()->getParent();;
@@ -173,6 +173,17 @@ Flatten::runOnModule(Module &M)
        i != e; ++i) {
     (*i)->removeFnAttr(Attribute::NoInline);
     (*i)->addFnAttr(Attribute::AlwaysInline);
+  }
+
+  StringRef barrier("_Z7barrierj");
+  for (llvm::Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
+    llvm::Function *f = &*i;
+    if (f->isDeclaration())
+      continue;
+    if (f->getName().equals(barrier)) {
+      f->removeFnAttr(Attribute::NoInline);
+      f->addFnAttr(Attribute::AlwaysInline);
+    }
   }
 
   return true;
