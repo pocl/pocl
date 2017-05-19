@@ -93,13 +93,11 @@
 __attribute__((overloadable))
 float atomic_xchg(volatile Q float *p, float val)
 {
-  // NOTE: We compare the float as int here...
-  union { volatile Q float *p; intptr_t i; } u1;
-  union { intptr_t i; volatile int *p; } u2;
-  u1.p = p;
-  u2.i = u1.i;
-  return __atomic_exchange_n(u2.p, val, __ATOMIC_RELAXED);
+  int retval = atomic_xchg ((volatile Q int *)p, as_int(val));
+  return as_float(retval);
 }
+
+
 
 #else
 
