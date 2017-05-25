@@ -567,6 +567,10 @@ endif()
 
 set_cache_var(LLC_TRIPLE "LLC_TRIPLE")
 
+# FIXME: The cpu name printed by llc --version is the same cpu that will be
+# targeted if ypu pass -mcpu=native to llc, so we could replace this auto-detection
+# with just: set(LLC_HOST_CPU "native"), however, we can't do this at the moment
+# because of the work-around for arm1176jz-s.
 if(NOT DEFINED LLC_HOST_CPU AND NOT CMAKE_CROSSCOMPILING)
   message(STATUS "Find out LLC host CPU with ${LLVM_LLC}")
   execute_process(COMMAND ${LLVM_LLC} "--version" RESULT_VARIABLE RES_VAR OUTPUT_VARIABLE OUTPUT_VAR)
@@ -589,7 +593,8 @@ if(NOT DEFINED LLC_HOST_CPU AND NOT CMAKE_CROSSCOMPILING)
 endif()
 
 if(LLC_HOST_CPU MATCHES "unknown")
-  message(FATAL_ERROR "LLVM could not recognize your CPU model automatically. Please rerun cmake with -DLLC_HOST_CPU=<model> (to see a list of models, try: llc -mcpu help)")
+  message(WARNING "LLVM could not recognize your CPU model automatically.  Using a generic CPU target.")
+  set(LLC_HOST_CPU "generic")
 endif()
 
 set(LLC_HOST_CPU "${LLC_HOST_CPU}" CACHE STRING "The Host CPU to use with llc")
