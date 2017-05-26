@@ -34,7 +34,6 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/IR/Dominators.h"
 
 #include "CanonicalizeBarriers.h"
-#include "BarrierBlock.h"
 #include "Barrier.h"
 #include "Workgroup.h"
 #include "VariableUniformityAnalysis.h"
@@ -66,7 +65,7 @@ CanonicalizeBarriers::runOnFunction(Function &F)
     return false;
 
   BasicBlock *entry = &F.getEntryBlock();
-  if (!isa<BarrierBlock>(entry)) {
+  if (!Barrier::hasOnlyBarrier(entry)) {
 #ifdef LLVM_OLDER_THAN_3_7
     BasicBlock *effective_entry = SplitBlock(entry, 
                                              &(entry->front()),
@@ -86,7 +85,7 @@ CanonicalizeBarriers::runOnFunction(Function &F)
     TerminatorInst *t = b->getTerminator();
 
     const bool isExitNode = 
-      (t->getNumSuccessors() == 0) && (!isa<BarrierBlock>(b));
+      (t->getNumSuccessors() == 0) && (!Barrier::hasOnlyBarrier(b));
 
     // The function exits should have barriers.
     if (isExitNode && !Barrier::hasOnlyBarrier(b)) {

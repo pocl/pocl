@@ -69,56 +69,50 @@ bool
 Flatten::runOnModule(Module &M)
 {
   bool changed = false;
-  for (llvm::Module::iterator i = M.begin(), e = M.end(); i != e; ++i)
-    {
-      llvm::Function *f = &*i;
-      if (f->isDeclaration()) continue;
-      if (KernelName == f->getName() || 
-          (KernelName == "" && pocl::Workgroup::isKernelToProcess(*f)))
-      {
+  for (llvm::Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
+    llvm::Function *f = &*i;
+    if (f->isDeclaration()) continue;
+    if (KernelName == f->getName() ||
+        (KernelName == "" && pocl::Workgroup::isKernelToProcess(*f))) {
 #if LLVM_OLDER_THAN_5_0
-        AttributeSet Attrs;
-        f->removeAttributes(AttributeSet::FunctionIndex,
-                            Attrs.addAttribute(M.getContext(),
-                                               AttributeSet::FunctionIndex,
-                                               Attribute::AlwaysInline));
+      AttributeSet Attrs;
+      f->removeAttributes(AttributeSet::FunctionIndex,
+                          Attrs.addAttribute(M.getContext(),
+                                             AttributeSet::FunctionIndex,
+                                             Attribute::AlwaysInline));
 #else
-        AttributeList Attrs;
-        f->removeAttributes(AttributeList::FunctionIndex,
-                            Attrs.addAttribute(M.getContext(),
-                                               AttributeList::FunctionIndex,
-                                               Attribute::AlwaysInline));
+      AttributeSet Attrs;
+      f->removeAttributes(AttributeList::FunctionIndex,
+                          Attrs.addAttribute(M.getContext(),
+                                             Attribute::AlwaysInline));
 #endif
 
-          f->addFnAttr(Attribute::NoInline);
+      f->addFnAttr(Attribute::NoInline);
 
-          f->setLinkage(llvm::GlobalValue::ExternalLinkage);
-          changed = true;
+      f->setLinkage(llvm::GlobalValue::ExternalLinkage);
+      changed = true;
 #ifdef DEBUG_FLATTEN
-          std::cerr << "### NoInline for " << f->getName().str() << std::endl;
+      std::cerr << "### NoInline for " << f->getName().str() << std::endl;
 #endif
-      }
-      else
-      {
+      } else {
 #if LLVM_OLDER_THAN_5_0
-          AttributeSet Attrs;
-          f->removeAttributes(AttributeSet::FunctionIndex,
-                              Attrs.addAttribute(M.getContext(),
-                                                 AttributeSet::FunctionIndex,
-                                                 Attribute::NoInline));
+      AttributeSet Attrs;
+      f->removeAttributes(AttributeSet::FunctionIndex,
+                          Attrs.addAttribute(M.getContext(),
+                                             AttributeSet::FunctionIndex,
+                                             Attribute::NoInline));
 #else
-          AttributeList Attrs;
-          f->removeAttributes(AttributeList::FunctionIndex,
-                              Attrs.addAttribute(M.getContext(),
-                                                 AttributeList::FunctionIndex,
-                                                 Attribute::NoInline));
+      AttributeSet Attrs;
+      f->removeAttributes(AttributeList::FunctionIndex,
+                          Attrs.addAttribute(M.getContext(),
+                                             Attribute::NoInline));
 #endif
-          f->addFnAttr(Attribute::AlwaysInline);
+      f->addFnAttr(Attribute::AlwaysInline);
 
-          f->setLinkage(llvm::GlobalValue::InternalLinkage);
-          changed = true;
+      f->setLinkage(llvm::GlobalValue::InternalLinkage);
+      changed = true;
 #ifdef DEBUG_FLATTEN
-          std::cerr << "### AlwaysInline for " << f->getName().str() << std::endl;
+      std::cerr << "### AlwaysInline for " << f->getName().str() << std::endl;
 #endif
       }
     }

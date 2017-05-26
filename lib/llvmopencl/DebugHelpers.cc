@@ -37,7 +37,6 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "DebugHelpers.h"
 #include "Barrier.h"
-#include "BarrierBlock.h"
 #include "Workgroup.h"
 
 POP_COMPILER_DIAGS

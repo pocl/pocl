@@ -97,6 +97,7 @@ namespace llvm {
     static StructType *get(LLVMContext &Context) {
       if (size_t_width == 64)
         {
+#ifdef LLVM_OLDER_THAN_5_0
           return StructType::get
             (TypeBuilder<types::i<32>, xcompile>::get(Context),
              TypeBuilder<types::i<64>[3], xcompile>::get(Context),
@@ -104,9 +105,24 @@ namespace llvm {
              TypeBuilder<types::i<64>[3], xcompile>::get(Context),
              TypeBuilder<types::i<64>[3], xcompile>::get(Context),
              NULL);
+#else
+          SmallVector<Type*, 8> Elements;
+          Elements.push_back(
+            TypeBuilder<types::i<32>, xcompile>::get(Context));
+          Elements.push_back(
+            TypeBuilder<types::i<64>[3], xcompile>::get(Context));
+          Elements.push_back(
+            TypeBuilder<types::i<64>[3], xcompile>::get(Context));
+          Elements.push_back(
+            TypeBuilder<types::i<64>[3], xcompile>::get(Context));
+          Elements.push_back(
+            TypeBuilder<types::i<64>[3], xcompile>::get(Context));
+          return StructType::get(Context, Elements);
+#endif
         }
       else if (size_t_width == 32)
         {
+#ifdef LLVM_OLDER_THAN_5_0
           return StructType::get
             (TypeBuilder<types::i<32>, xcompile>::get(Context),
              TypeBuilder<types::i<32>[3], xcompile>::get(Context),
@@ -114,6 +130,20 @@ namespace llvm {
              TypeBuilder<types::i<32>[3], xcompile>::get(Context),
              TypeBuilder<types::i<32>[3], xcompile>::get(Context),
              NULL);
+#else
+          SmallVector<Type*, 8> Elements;
+          Elements.push_back(
+            TypeBuilder<types::i<32>, xcompile>::get(Context));
+          Elements.push_back(
+            TypeBuilder<types::i<32>[3], xcompile>::get(Context));
+          Elements.push_back(
+            TypeBuilder<types::i<32>[3], xcompile>::get(Context));
+          Elements.push_back(
+            TypeBuilder<types::i<32>[3], xcompile>::get(Context));
+          Elements.push_back(
+            TypeBuilder<types::i<32>[3], xcompile>::get(Context));
+          return StructType::get(Context, Elements);
+#endif
         }
       else
         {
@@ -350,7 +380,7 @@ createLauncher(Module &M, Function *F) {
   CallInst *c = builder.CreateCall(F, ArrayRef<Value*>(arguments));
   builder.CreateRetVoid();
 
-#ifdef LLVM_4_0
+#ifndef LLVM_OLDER_THAN_4_0
   // At least with LLVM 4.0, the runtime of AddAliasScopeMetadata of
   // llvm::InlineFunction explodes in case of kernels with restrict
   // metadata and a lot of lifetime markers. The issue produces at

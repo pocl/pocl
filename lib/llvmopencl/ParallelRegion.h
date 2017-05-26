@@ -36,8 +36,6 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 
-#include "BarrierBlock.h"
-
 namespace pocl {
 
 #define POCL_LOCAL_ID_X_GLOBAL "_local_id_x"

@@ -45,25 +45,28 @@ static void add_predecessors(SmallVectorImpl<BasicBlock *> &v,
 static bool verify_no_barriers(const BasicBlock *B);
 
 void
-Kernel::getExitBlocks(SmallVectorImpl<BarrierBlock *> &B) 
+Kernel::getExitBlocks(SmallVectorImpl<llvm::BasicBlock *> &B)
 {
   for (iterator i = begin(), e = end(); i != e; ++i) {
     const TerminatorInst *t = i->getTerminator();
     if (t->getNumSuccessors() == 0) {
       // All exits must be barrier blocks.
-      B.push_back(cast<BarrierBlock>(i));
+      llvm::BasicBlock *BB = cast<BasicBlock>(i);
+      if (!Barrier::hasBarrier(BB))
+        Barrier::Create(BB->getTerminator());
+      B.push_back(BB);
     }
   }
 }
 
 ParallelRegion *
-Kernel::createParallelRegionBefore(BarrierBlock *B) 
+Kernel::createParallelRegionBefore(llvm::BasicBlock *B)
 {
   SmallVector<BasicBlock *, 4> pending_blocks;
   SmallPtrSet<BasicBlock *, 8> blocks_in_region;
-  BarrierBlock *region_entry_barrier = NULL;
-  llvm::BasicBlock *entry = NULL;
-  llvm::BasicBlock *exit = B->getSinglePredecessor();
+  BasicBlock *region_entry_barrier = NULL;
+  BasicBlock *entry = NULL;
+  BasicBlock *exit = B->getSinglePredecessor();
   add_predecessors(pending_blocks, B);
 
 #ifdef DEBUG_PR_CREATION
@@ -89,9 +92,9 @@ Kernel::createParallelRegionBefore(BarrierBlock *B)
     
     // If we reach another barrier this must be the
     // parallel region entry.
-    if (isa<BarrierBlock>(current)) {
+    if (Barrier::hasOnlyBarrier(current)) {
       if (region_entry_barrier == NULL)
-        region_entry_barrier = cast<BarrierBlock>(current);
+        region_entry_barrier = current;
 #ifdef DEBUG_PR_CREATION
       std::cerr << "### it's a barrier!" << std::endl;        
 #endif     
@@ -166,18 +169,18 @@ Kernel::getParallelRegions(llvm::LoopInfo *LI) {
   ParallelRegion::ParallelRegionVector *parallel_regions =
     new ParallelRegion::ParallelRegionVector;
 
-  SmallVector<BarrierBlock *, 4> exit_blocks;
+  SmallVector<BasicBlock *, 4> exit_blocks;
   getExitBlocks(exit_blocks);
 
   // We need to keep track of traversed barriers to detect back edges.
-  SmallPtrSet<BarrierBlock *, 8> found_barriers;
+  SmallPtrSet<BasicBlock *, 8> found_barriers;
 
   // First find all the ParallelRegions in the Function.
   while (!exit_blocks.empty()) {
     
     // We start on an exit block and process the parallel regions upwards
     // (finding an execution trace).
-    BarrierBlock *exit = exit_blocks.back();
+    BasicBlock *exit = exit_blocks.back();
     exit_blocks.pop_back();
 
     while (ParallelRegion *PR = createParallelRegionBefore(exit)) {
@@ -189,10 +192,10 @@ Kernel::getParallelRegions(llvm::LoopInfo *LI) {
       parallel_regions->push_back(PR);
       BasicBlock *entry = PR->entryBB();
       int found_predecessors = 0;
-      BarrierBlock *loop_barrier = NULL;
+      BasicBlock *loop_barrier = NULL;
       for (pred_iterator i = pred_begin(entry), e = pred_end(entry);
            i != e; ++i) {
-        BarrierBlock *barrier = cast<BarrierBlock> (*i);
+        BasicBlock *barrier = (*i);
         if (!found_barriers.count(barrier)) {
           /* If this is a loop header block we might have edges from two 
              unprocessed barriers. The one inside the loop (coming from a 

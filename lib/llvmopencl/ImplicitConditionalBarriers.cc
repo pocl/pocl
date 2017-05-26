@@ -37,7 +37,6 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "ImplicitConditionalBarriers.h"
 #include "Barrier.h"
-#include "BarrierBlock.h"
 #include "Workgroup.h"
 #include "VariableUniformityAnalysis.h"
 
@@ -146,9 +145,9 @@ ImplicitConditionalBarriers::runOnFunction(Function &F) {
     BasicBlock *pred = firstNonBackedgePredecessor(b);
 
 #ifdef LLVM_OLDER_THAN_3_9
-    while (!isa<BarrierBlock>(pred) && PDT->dominates(b, pred)) {
+    while (!Barrier::hasOnlyBarrier(pred) && PDT->dominates(b, pred)) {
 #else
-    while (!isa<BarrierBlock>(pred) && PDT->getPostDomTree().dominates(b, pred)) {
+    while (!Barrier::hasOnlyBarrier(pred) && PDT->getPostDomTree().dominates(b, pred)) {
 #endif
 
 #ifdef DEBUG_COND_BARRIERS
@@ -163,9 +162,9 @@ ImplicitConditionalBarriers::runOnFunction(Function &F) {
 
     }
 
-    if (isa<BarrierBlock>(pos)) continue;
-    // Inject a barrier at the beginning of the BB and let the CanonicalizeBarrier
-    // to clean it up (split to a separate BB).
+    if (Barrier::hasOnlyBarrier(pos)) continue;
+    // Inject a barrier at the beginning of the BB and let the
+    // CanonicalizeBarrier to clean it up (split to a separate BB).
 
     // mri-q of parboil breaks in case injected at the beginning
     // TODO: investigate. It might related to the alloca-converted

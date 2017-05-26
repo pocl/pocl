@@ -24,7 +24,6 @@
 #=============================================================================
 
 set(LLVMPASSES_SOURCES "Barrier.h"
-  "BarrierBlock.h" "BarrierBlock.cc"
   "Kernel.h" "Kernel.cc"
   "ParallelRegion.h" "ParallelRegion.cc"
   "CanonicalizeBarriers.h" "CanonicalizeBarriers.cc"

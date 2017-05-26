@@ -33,8 +33,8 @@ namespace pocl {
 
   class Kernel : public llvm::Function {
   public:
-    void getExitBlocks(llvm::SmallVectorImpl<BarrierBlock *> &B);
-    ParallelRegion *createParallelRegionBefore(BarrierBlock *B);
+    void getExitBlocks(llvm::SmallVectorImpl<llvm::BasicBlock *> &B);
+    ParallelRegion *createParallelRegionBefore(llvm::BasicBlock *B);
     
     ParallelRegion::ParallelRegionVector* 
       getParallelRegions(llvm::LoopInfo *LI);
