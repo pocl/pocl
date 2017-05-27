@@ -56,6 +56,8 @@ typedef struct pocl_cuda_kernel_data_s
   size_t *alignments;
 } pocl_cuda_kernel_data_t;
 
+extern unsigned int pocl_num_devices;
+
 static void
 pocl_cuda_abort_on_error (CUresult result, unsigned line, const char *func,
                           const char *code, const char *api)
@@ -599,6 +601,7 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
   pocl_cuda_kernel_data_t *kdata = (pocl_cuda_kernel_data_t *)kernel->data;
   if (kdata)
     {
+      kdata += device->dev_id;
       if ((has_offsets && kdata->kernel_offsets)
           || (!has_offsets && kdata->kernel))
         return kdata;
@@ -606,8 +609,9 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
   else
     {
       // TODO: when can we release this?
-      kernel->data = calloc (1, sizeof (pocl_cuda_kernel_data_t));
-      kdata = kernel->data;
+      kernel->data
+          = calloc (pocl_num_devices, sizeof (pocl_cuda_kernel_data_t));
+      kdata = kernel->data + device->dev_id;
     }
 
   pocl_cuda_device_data_t *ddata = (pocl_cuda_device_data_t *)device->data;
