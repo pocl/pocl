@@ -32,6 +32,7 @@
 #include "pocl_cache.h"
 #include "pocl_file_util.h"
 #include "pocl_llvm.h"
+#include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
 #include "pocl_util.h"
 
@@ -109,25 +110,25 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->alloc_mem_obj = pocl_cuda_alloc_mem_obj;
   ops->free = pocl_cuda_free;
   ops->compile_kernel = pocl_cuda_compile_kernel;
-  ops->read = pocl_cuda_read;
-  ops->read_rect = pocl_cuda_read_rect;
-  ops->write = pocl_cuda_write;
-  ops->write_rect = pocl_cuda_write_rect;
-  ops->copy = pocl_cuda_copy;
-  ops->copy_rect = pocl_cuda_copy_rect;
   ops->map_mem = pocl_cuda_map_mem;
-  ops->unmap_mem = pocl_cuda_unmap_mem;
-
-  ops->run = NULL;
   ops->submit = pocl_cuda_submit;
   ops->notify = pocl_cuda_notify;
+  ops->broadcast = pocl_cuda_broadcast;
+  ops->wait_event = pocl_cuda_wait_event;
   ops->join = pocl_cuda_join;
   ops->flush = pocl_cuda_flush;
 
+  ops->read = NULL;
+  ops->read_rect = NULL;
+  ops->write = NULL;
+  ops->write_rect = NULL;
+  ops->copy = NULL;
+  ops->copy_rect = NULL;
+  ops->unmap_mem = NULL;
+  ops->run = NULL;
+
   /* TODO: implement remaining ops functions: */
   /* get_timer_value */
-  /* broadcast */
-  /* wait_event */
   /* update_event */
   /* free_event_data */
 }
@@ -425,45 +426,47 @@ pocl_cuda_free (cl_device_id device, cl_mem mem_obj)
 }
 
 void
-pocl_cuda_read (void *data, void *host_ptr, const void *device_ptr,
-                size_t offset, size_t cb)
+pocl_cuda_submit_read (void *data, void *host_ptr, const void *device_ptr,
+                       size_t offset, size_t cb)
 {
-  CUresult result
-      = cuMemcpyDtoH (host_ptr, (CUdeviceptr) (device_ptr + offset), cb);
+  CUresult result = cuMemcpyDtoHAsync (
+      host_ptr, (CUdeviceptr) (device_ptr + offset), cb, 0);
   CUDA_CHECK (result, "cuMemcpyDtoH");
 }
 
 void
-pocl_cuda_write (void *data, const void *host_ptr, void *device_ptr,
-                 size_t offset, size_t cb)
+pocl_cuda_submit_write (void *data, const void *host_ptr, void *device_ptr,
+                        size_t offset, size_t cb)
 {
-  CUresult result
-      = cuMemcpyHtoD ((CUdeviceptr) (device_ptr + offset), host_ptr, cb);
+  CUresult result = cuMemcpyHtoDAsync ((CUdeviceptr) (device_ptr + offset),
+                                       host_ptr, cb, 0);
   CUDA_CHECK (result, "cuMemcpyHtoD");
 }
 
 void
-pocl_cuda_copy (void *data, const void *src_ptr, size_t src_offset,
-                void *__restrict__ dst_ptr, size_t dst_offset, size_t cb)
+pocl_cuda_submit_copy (void *data, const void *src_ptr, size_t src_offset,
+                       void *__restrict__ dst_ptr, size_t dst_offset,
+                       size_t cb)
 {
   if (src_ptr == dst_ptr)
     return;
 
-  CUresult result = cuMemcpyDtoD ((CUdeviceptr) (dst_ptr + dst_offset),
-                                  (CUdeviceptr) (src_ptr + src_offset), cb);
+  CUresult result
+      = cuMemcpyDtoDAsync ((CUdeviceptr) (dst_ptr + dst_offset),
+                           (CUdeviceptr) (src_ptr + src_offset), cb, 0);
   CUDA_CHECK (result, "cuMemcpyDtoD");
 }
 
 void
-pocl_cuda_read_rect (void *data, void *__restrict__ const host_ptr,
-                     void *__restrict__ const device_ptr,
-                     const size_t *__restrict__ const buffer_origin,
-                     const size_t *__restrict__ const host_origin,
-                     const size_t *__restrict__ const region,
-                     size_t const buffer_row_pitch,
-                     size_t const buffer_slice_pitch,
-                     size_t const host_row_pitch,
-                     size_t const host_slice_pitch)
+pocl_cuda_submit_read_rect (void *data, void *__restrict__ const host_ptr,
+                            void *__restrict__ const device_ptr,
+                            const size_t *__restrict__ const buffer_origin,
+                            const size_t *__restrict__ const host_origin,
+                            const size_t *__restrict__ const region,
+                            size_t const buffer_row_pitch,
+                            size_t const buffer_slice_pitch,
+                            size_t const host_row_pitch,
+                            size_t const host_slice_pitch)
 {
   CUDA_MEMCPY3D params = { 0 };
 
@@ -487,20 +490,21 @@ pocl_cuda_read_rect (void *data, void *__restrict__ const host_ptr,
   params.srcPitch = buffer_row_pitch;
   params.srcHeight = buffer_slice_pitch / buffer_row_pitch;
 
-  CUresult result = cuMemcpy3D (&params);
+  CUresult result = cuMemcpy3DAsync (&params, 0);
   CUDA_CHECK (result, "cuMemcpy3D");
 }
 
 void
-pocl_cuda_write_rect (void *data, const void *__restrict__ const host_ptr,
-                      void *__restrict__ const device_ptr,
-                      const size_t *__restrict__ const buffer_origin,
-                      const size_t *__restrict__ const host_origin,
-                      const size_t *__restrict__ const region,
-                      size_t const buffer_row_pitch,
-                      size_t const buffer_slice_pitch,
-                      size_t const host_row_pitch,
-                      size_t const host_slice_pitch)
+pocl_cuda_submit_write_rect (void *data,
+                             const void *__restrict__ const host_ptr,
+                             void *__restrict__ const device_ptr,
+                             const size_t *__restrict__ const buffer_origin,
+                             const size_t *__restrict__ const host_origin,
+                             const size_t *__restrict__ const region,
+                             size_t const buffer_row_pitch,
+                             size_t const buffer_slice_pitch,
+                             size_t const host_row_pitch,
+                             size_t const host_slice_pitch)
 {
   CUDA_MEMCPY3D params = { 0 };
 
@@ -524,18 +528,20 @@ pocl_cuda_write_rect (void *data, const void *__restrict__ const host_ptr,
   params.dstPitch = buffer_row_pitch;
   params.dstHeight = buffer_slice_pitch / buffer_row_pitch;
 
-  CUresult result = cuMemcpy3D (&params);
+  CUresult result = cuMemcpy3DAsync (&params, 0);
   CUDA_CHECK (result, "cuMemcpy3D");
 }
 
 void
-pocl_cuda_copy_rect (void *data, const void *__restrict const src_ptr,
-                     void *__restrict__ const dst_ptr,
-                     const size_t *__restrict__ const src_origin,
-                     const size_t *__restrict__ const dst_origin,
-                     const size_t *__restrict__ const region,
-                     size_t const src_row_pitch, size_t const src_slice_pitch,
-                     size_t const dst_row_pitch, size_t const dst_slice_pitch)
+pocl_cuda_submit_copy_rect (void *data, const void *__restrict const src_ptr,
+                            void *__restrict__ const dst_ptr,
+                            const size_t *__restrict__ const src_origin,
+                            const size_t *__restrict__ const dst_origin,
+                            const size_t *__restrict__ const region,
+                            size_t const src_row_pitch,
+                            size_t const src_slice_pitch,
+                            size_t const dst_row_pitch,
+                            size_t const dst_slice_pitch)
 {
   CUDA_MEMCPY3D params = { 0 };
 
@@ -559,7 +565,7 @@ pocl_cuda_copy_rect (void *data, const void *__restrict const src_ptr,
   params.dstPitch = dst_row_pitch;
   params.dstHeight = dst_slice_pitch / dst_row_pitch;
 
-  CUresult result = cuMemcpy3D (&params);
+  CUresult result = cuMemcpy3DAsync (&params, 0);
   CUDA_CHECK (result, "cuMemcpy3D");
 }
 
@@ -570,8 +576,10 @@ pocl_cuda_map_mem (void *data, void *buf_ptr, size_t offset, size_t size,
   if (host_ptr != NULL)
     return host_ptr;
 
+  // TODO: Map instead of copy?
   void *ptr = malloc (size);
-  CUresult result = cuMemcpyDtoH (ptr, (CUdeviceptr) (buf_ptr + offset), size);
+  CUresult result
+      = cuMemcpyDtoHAsync (ptr, (CUdeviceptr) (buf_ptr + offset), size, 0);
   CUDA_CHECK (result, "cuMemcpyDtoH");
   return ptr;
 }
@@ -582,11 +590,10 @@ pocl_cuda_unmap_mem (void *data, void *host_ptr, void *device_start_ptr,
 {
   if (host_ptr)
     {
-      // TODO: offset?
-      CUresult result = cuMemcpyHtoD (
-          (CUdeviceptr) (device_start_ptr + offset), host_ptr, size);
+      // TODO: Only copy back if mapped for writing
+      CUresult result = cuMemcpyHtoDAsync (
+          (CUdeviceptr) (device_start_ptr + offset), host_ptr, size, 0);
       CUDA_CHECK (result, "cuMemcpyHtoD");
-      free (host_ptr);
     }
   return NULL;
 }
@@ -693,24 +700,12 @@ pocl_cuda_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
 }
 
 void
-pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
+pocl_cuda_submit_kernel (_cl_command_run run, cl_device_id device,
+                         cl_event event)
 {
-  cuCtxSetCurrent (((pocl_cuda_device_data_t *)cq->device->data)->context);
-
-  CUresult result;
-
-  POCL_UPDATE_EVENT_SUBMITTED (&node->event);
-
-  if (node->type != CL_COMMAND_NDRANGE_KERNEL)
-    {
-      pocl_exec_command (node);
-      return;
-    }
-
-  cl_device_id device = cq->device;
-  cl_kernel kernel = node->command.run.kernel;
-  pocl_argument *arguments = node->command.run.arguments;
-  struct pocl_context pc = node->command.run.pc;
+  cl_kernel kernel = run.kernel;
+  pocl_argument *arguments = run.arguments;
+  struct pocl_context pc = run.pc;
 
   // Check if we need to handle global work offsets
   int has_offsets = 0;
@@ -738,6 +733,7 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
   cuModuleGetGlobal (&constant_mem_base, &constant_mem_size, module,
                      "_constant_memory_region_");
 
+  CUresult result;
   unsigned i;
   for (i = 0; i < kernel->num_args; i++)
     {
@@ -856,45 +852,140 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
       params[arg_index++] = globalOffsets + 2;
     }
 
-  POCL_UPDATE_EVENT_RUNNING (&node->event);
-
   // Launch kernel
-  result = cuLaunchKernel (
-      function, pc.num_groups[0], pc.num_groups[1], pc.num_groups[2],
-      node->command.run.local_x, node->command.run.local_y,
-      node->command.run.local_z, sharedMemBytes, NULL, params, NULL);
+  result = cuLaunchKernel (function, pc.num_groups[0], pc.num_groups[1],
+                           pc.num_groups[2], run.local_x, run.local_y,
+                           run.local_z, sharedMemBytes, NULL, params, NULL);
   CUDA_CHECK (result, "cuLaunchKernel");
+}
 
-  // Wait for kernel to finish
-  // TODO: Ideally we wouldn't do this here as it causes overheads
-  // when launching many small kernels. Experimented with using
-  // cuStreamSetCallback, but that was *much* slower.
-  result = cuStreamSynchronize (0);
-  CUDA_CHECK (result, "cuStreamSynchronize");
+void
+pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
+{
+  cuCtxSetCurrent (((pocl_cuda_device_data_t *)cq->device->data)->context);
 
-#if defined __arm__
-  // On ARM with USE_HOST_PTR, perform explict copies back from device
-  for (i = 0; i < kernel->num_args; i++)
+  POCL_UPDATE_EVENT_SUBMITTED (&node->event);
+
+  switch (node->type)
     {
-      if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
-        {
-          if (!kernel->arg_info[i].is_local && arguments[i].value)
-            {
-              cl_mem mem = *(void **)arguments[i].value;
-              if (mem->flags & CL_MEM_USE_HOST_PTR)
-                {
-                  CUdeviceptr ptr
-                      = (CUdeviceptr)mem->device_ptrs[device->dev_id].mem_ptr;
-                  cuMemcpyDtoH (mem->mem_host_ptr, ptr, mem->size);
-                }
-            }
-        }
+    case CL_COMMAND_READ_BUFFER:
+      pocl_cuda_submit_read (node->device->data, node->command.read.host_ptr,
+                             node->command.read.device_ptr,
+                             node->command.read.offset, node->command.read.cb);
+      break;
+    case CL_COMMAND_WRITE_BUFFER:
+      pocl_cuda_submit_write (node->device->data, node->command.write.host_ptr,
+                              node->command.write.device_ptr,
+                              node->command.write.offset,
+                              node->command.write.cb);
+      break;
+    case CL_COMMAND_COPY_BUFFER:
+      {
+        cl_device_id src_dev = node->command.copy.src_dev;
+        cl_mem src_buf = node->command.copy.src_buffer;
+        cl_device_id dst_dev = node->command.copy.dst_dev;
+        cl_mem dst_buf = node->command.copy.dst_buffer;
+        if (!src_dev)
+          src_dev = dst_dev;
+        pocl_cuda_submit_copy (
+            node->device->data, src_buf->device_ptrs[src_dev->dev_id].mem_ptr,
+            node->command.copy.src_offset,
+            dst_buf->device_ptrs[dst_dev->dev_id].mem_ptr,
+            node->command.copy.dst_offset, node->command.copy.cb);
+        break;
+      }
+    case CL_COMMAND_READ_BUFFER_RECT:
+      pocl_cuda_submit_read_rect (
+          node->device->data, node->command.read_image.host_ptr,
+          node->command.read_image.device_ptr, node->command.read_image.origin,
+          node->command.read_image.h_origin, node->command.read_image.region,
+          node->command.read_image.b_rowpitch,
+          node->command.read_image.b_slicepitch,
+          node->command.read_image.h_rowpitch,
+          node->command.read_image.h_slicepitch);
+      break;
+    case CL_COMMAND_WRITE_BUFFER_RECT:
+      pocl_cuda_submit_write_rect (
+          node->device->data, node->command.write_image.host_ptr,
+          node->command.write_image.device_ptr,
+          node->command.write_image.origin, node->command.write_image.h_origin,
+          node->command.write_image.region,
+          node->command.write_image.b_rowpitch,
+          node->command.write_image.b_slicepitch,
+          node->command.write_image.h_rowpitch,
+          node->command.write_image.h_slicepitch);
+      break;
+    case CL_COMMAND_COPY_BUFFER_RECT:
+      {
+        cl_device_id src_dev = node->command.copy_image.src_device;
+        cl_mem src_buf = node->command.copy_image.src_buffer;
+        cl_device_id dst_dev = node->command.copy_image.dst_device;
+        cl_mem dst_buf = node->command.copy_image.dst_buffer;
+        if (!src_dev)
+          src_dev = dst_dev;
+        pocl_cuda_submit_copy_rect (
+            node->device->data, src_buf->device_ptrs[src_dev->dev_id].mem_ptr,
+            dst_buf->device_ptrs[dst_dev->dev_id].mem_ptr,
+            node->command.copy_image.src_origin,
+            node->command.copy_image.dst_origin,
+            node->command.copy_image.region,
+            node->command.copy_image.src_rowpitch,
+            node->command.copy_image.src_slicepitch,
+            node->command.copy_image.dst_rowpitch,
+            node->command.copy_image.dst_slicepitch);
+        break;
+      }
+    case CL_COMMAND_MAP_BUFFER:
+      {
+        cl_device_id device = node->device;
+        cl_mem buffer = node->command.map.buffer;
+        pocl_cuda_map_mem (
+            node->device->data, buffer->device_ptrs[device->dev_id].mem_ptr,
+            node->command.map.mapping->offset, node->command.map.mapping->size,
+            node->command.map.mapping->host_ptr);
+        POCL_LOCK_OBJ (buffer);
+        buffer->map_count++;
+        POCL_UNLOCK_OBJ (buffer);
+        break;
+      }
+    case CL_COMMAND_UNMAP_MEM_OBJECT:
+      {
+        cl_device_id device = node->device;
+        cl_mem buffer = node->command.unmap.memobj;
+        pocl_cuda_unmap_mem (node->device->data,
+                             node->command.unmap.mapping->host_ptr,
+                             buffer->device_ptrs[device->dev_id].mem_ptr,
+                             node->command.unmap.mapping->offset,
+                             node->command.unmap.mapping->size);
+        break;
+      }
+    case CL_COMMAND_NDRANGE_KERNEL:
+      pocl_cuda_submit_kernel (node->command.run, node->device, node->event);
+      break;
+
+    case CL_COMMAND_MARKER:
+    case CL_COMMAND_BARRIER:
+      break;
+
+    case CL_COMMAND_FILL_BUFFER:
+    case CL_COMMAND_MIGRATE_MEM_OBJECTS:
+    case CL_COMMAND_READ_IMAGE:
+    case CL_COMMAND_WRITE_IMAGE:
+    case CL_COMMAND_COPY_IMAGE:
+    case CL_COMMAND_COPY_BUFFER_TO_IMAGE:
+    case CL_COMMAND_COPY_IMAGE_TO_BUFFER:
+    case CL_COMMAND_FILL_IMAGE:
+    case CL_COMMAND_MAP_IMAGE:
+    case CL_COMMAND_NATIVE_KERNEL:
+    case CL_COMMAND_SVM_FREE:
+    case CL_COMMAND_SVM_MAP:
+    case CL_COMMAND_SVM_UNMAP:
+    case CL_COMMAND_SVM_MEMCPY:
+    case CL_COMMAND_SVM_MEMFILL:
+    default:
+      POCL_ABORT_UNIMPLEMENTED ("Command type for CUDA devices");
+      break;
     }
-#endif
-
-  pocl_ndrange_node_cleanup (node);
-
-  POCL_UPDATE_EVENT_COMPLETE (&node->event);
 }
 
 void
@@ -904,13 +995,130 @@ pocl_cuda_notify (cl_device_id device, cl_event event)
 }
 
 void
+pocl_cuda_broadcast (cl_event event)
+{
+  // TODO: call notify for each event in notify_list?
+}
+
+void
 pocl_cuda_flush (cl_device_id device, cl_command_queue cq)
 {
   // TODO: Something here?
 }
 
 void
+pocl_cuda_wait_event (cl_device_id device, cl_event event)
+{
+  if (!event || event->status <= CL_COMPLETE)
+    return;
+  if (event->command_type == CL_COMMAND_USER)
+    {
+      while (event->status > CL_COMPLETE)
+        {
+        };
+      return;
+    }
+
+  // Recursively wait for dependencies
+  int dep_failed = 0;
+  event_node *dep = NULL;
+  LL_FOREACH (event->wait_list, dep)
+    {
+      pocl_cuda_wait_event (event->queue->device, dep->event);
+
+      if (dep->event->status < 0)
+        dep_failed = 1;
+    }
+
+  // Clean up wait_list nodes
+  dep = event->wait_list;
+  while (dep)
+    {
+      event_node *next = dep->next;
+      pocl_mem_manager_free_event_node (dep);
+      dep = next;
+    }
+
+  if (event->status <= CL_COMPLETE)
+    return;
+
+  if (dep_failed)
+    {
+      pocl_mem_manager_free_command (event->command);
+      event->status = -1;
+      return;
+    }
+
+  if (event->command_type == CL_COMMAND_MARKER
+      || event->command_type == CL_COMMAND_BARRIER)
+    {
+      pocl_mem_manager_free_command (event->command);
+      POCL_UPDATE_EVENT_RUNNING (&event);
+      POCL_UPDATE_EVENT_COMPLETE (&event);
+      return;
+    }
+
+  // Wait for command to finish
+  // TODO: Ideally just wait for individual command
+  cuCtxSetCurrent (((pocl_cuda_device_data_t *)device->data)->context);
+  CUresult result = cuStreamSynchronize (0);
+  CUDA_CHECK (result, "cuStreamSynchronize");
+
+  if (event->command_type == CL_COMMAND_UNMAP_MEM_OBJECT)
+    {
+      cl_mem buffer = event->command->command.unmap.memobj;
+      mem_mapping_t *mapping = event->command->command.unmap.mapping;
+      if (mapping->host_ptr
+          && !(buffer->flags & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR)))
+        free (mapping->host_ptr);
+
+      POCL_LOCK_OBJ (buffer);
+      DL_DELETE (buffer->mappings, mapping);
+      buffer->map_count--;
+      POCL_UNLOCK_OBJ (buffer);
+    }
+
+  if (event->command_type == CL_COMMAND_NDRANGE_KERNEL
+      || event->command_type == CL_COMMAND_TASK)
+    {
+#if defined __arm__
+      // On ARM with USE_HOST_PTR, perform explict copies back from device
+      cl_kernel kernel = event->command.run.kernel;
+      pocl_argument *arguments = event->command.run.arguments;
+      unsigned i;
+      for (i = 0; i < kernel->num_args; i++)
+        {
+          if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
+            {
+              if (!kernel->arg_info[i].is_local && arguments[i].value)
+                {
+                  cl_mem mem = *(void **)arguments[i].value;
+                  if (mem->flags & CL_MEM_USE_HOST_PTR)
+                    {
+                      CUdeviceptr ptr
+                          = (CUdeviceptr)mem->device_ptrs[device->dev_id]
+                                .mem_ptr;
+                      cuMemcpyDtoH (mem->mem_host_ptr, ptr, mem->size);
+                    }
+                }
+            }
+        }
+#endif
+
+      pocl_ndrange_node_cleanup (event->command);
+    }
+  else
+    {
+      pocl_mem_manager_free_command (event->command);
+    }
+
+  // TODO: Fix timing info (use CUDA events)
+  POCL_UPDATE_EVENT_RUNNING (&event);
+  POCL_UPDATE_EVENT_COMPLETE (&event);
+}
+
+void
 pocl_cuda_join (cl_device_id device, cl_command_queue cq)
 {
-  // We currently block after each kernel launch (see comment above).
+  pocl_cuda_wait_event (device, cq->last_event.event);
 }
