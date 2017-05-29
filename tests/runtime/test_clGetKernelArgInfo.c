@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include "poclu.h"
 #include "config.h"
+#include "pocl.h"
 
 char kernelSourceCode[] =
 "constant sampler_t samp =  CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;\n"
@@ -171,11 +172,42 @@ int test_program(cl_program program, int is_spir) {
   TEST_ASSERT((kernel_arg.type==CL_KERNEL_ARG_TYPE_NONE) &&
 	      "type qualifier of arg of test_kernel is not NONE");
 
-  err = clGetKernelArgInfo(test_kernel, 3, CL_KERNEL_ARG_TYPE_QUALIFIER,
-                            BUF_LEN, &kernel_arg.type, &retsize);
-  CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
-  TEST_ASSERT((kernel_arg.type==CL_KERNEL_ARG_TYPE_CONST) &&
-	      "type qualifier of arg of test_kernel is not CONST");
+#ifndef LLVM_OLDER_THAN_5_0
+  if (!is_spir) {
+
+    /* Clang versions before 5 added the const MD also for non-pointer
+       types even though OpenCL specs mandates to put them only in
+       pointer args. This was fixed in Clang r299192 (see below).
+       TODO: update the SPIRs with 5.0+ Clang to drop the metadata. */
+
+    /*
+      r299192 | echuraev | 2017-03-31 13:14:52 +0300 (Fri, 31 Mar 2017) | 26 lines
+
+      [OpenCL] Do not generate "kernel_arg_type_qual" metadata for non-pointer args
+
+      Summary:
+      "kernel_arg_type_qual" metadata should contain const/volatile/restrict
+      tags only for pointer types to match the corresponding requirement of
+      the OpenCL specification.
+
+      OpenCL 2.0 spec 5.9.3 Kernel Object Queries:
+
+      CL_KERNEL_ARG_TYPE_VOLATILE is returned if the argument is a pointer
+      and the referenced type is declared with the volatile qualifier.
+      [...]
+      Similarly, CL_KERNEL_ARG_TYPE_CONST is returned if the argument is a
+      pointer and the referenced type is declared with the restrict or const
+      qualifier.
+      [...]
+      CL_KERNEL_ARG_TYPE_RESTRICT will be returned if the pointer type is
+      marked restrict.
+    */
+    err = clGetKernelArgInfo(test_kernel, 3, CL_KERNEL_ARG_TYPE_QUALIFIER,
+                             BUF_LEN, &kernel_arg.type, &retsize);
+    CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
+    TEST_ASSERT((kernel_arg.type == CL_KERNEL_ARG_TYPE_NONE));
+  }
+#endif
 
   /* NAME tests */
   // constant char* msg, global volatile float* in, global float* out, const float j, local int* c

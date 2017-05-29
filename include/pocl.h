@@ -335,5 +335,4 @@ struct _cl_command_node
 # define LLVM_OLDER_THAN_5_0 1
 #endif
 
-
 #endif /* POCL_H */
