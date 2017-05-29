@@ -68,23 +68,31 @@ pocl_check_image_origin_region (const cl_mem image,
         {
           POCL_RETURN_ERROR_ON (
               (origin[i] != 0), CL_INVALID_VALUE,
-              "Image origin[x] must be 0 for x>=image_dim\n");
+              "Image origin[x](=%zu) must be 0 for x(=%u) >= image_dim\n",
+              origin[i], i);
           POCL_RETURN_ERROR_ON (
               (region[i] != 1), CL_INVALID_VALUE,
-              "Image region[x] must be 1 for x>=image_dim\n");
+              "Image region[x](=%zu) must be 1 for x(=%u) >= image_dim\n",
+              region[i], i);
         }
     }
 
   /* check if origin + region in each dimension is with in image bounds */
-  POCL_RETURN_ERROR_COND (((origin[0] + region[0]) > image->image_width),
-                          CL_INVALID_VALUE);
-  POCL_RETURN_ERROR_COND ((image->image_height > 0
-                           && ((origin[1] + region[1]) > image->image_height)),
-                          CL_INVALID_VALUE);
-  POCL_RETURN_ERROR_COND (
+  POCL_RETURN_ERROR_ON (
+      ((origin[0] + region[0]) > image->image_width), CL_INVALID_VALUE,
+      "(origin[0](=%zu) + region[0](=%zu)) > image->image_width(=%zu)",
+      origin[0], region[0], image->image_width);
+  POCL_RETURN_ERROR_ON (
+      (image->image_height > 0
+       && ((origin[1] + region[1]) > image->image_height)),
+      CL_INVALID_VALUE,
+      "(origin[1](=%zu) + region[1](=%zu)) > image->image_height(=%zu)",
+      origin[1], region[2], image->image_height);
+  POCL_RETURN_ERROR_ON (
       (image->image_depth > 0 && (origin[2] + region[2]) > image->image_depth),
-      CL_INVALID_VALUE);
-
+      CL_INVALID_VALUE,
+      "(origin[2](=%zu) + region[2](=%zu)) > image->image_depth(=%zu)",
+      origin[1], region[2], image->image_depth);
   return CL_SUCCESS;
 }
 
