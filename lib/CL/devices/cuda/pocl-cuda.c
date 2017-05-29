@@ -866,6 +866,13 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
 
   POCL_UPDATE_EVENT_SUBMITTED (&node->event);
 
+  // Increment reference count for any event dependencies
+  event_node *dep = NULL;
+  LL_FOREACH (node->event->wait_list, dep)
+    {
+      POname(clRetainEvent) (dep->event);
+    }
+
   switch (node->type)
     {
     case CL_COMMAND_READ_BUFFER:
@@ -1035,6 +1042,7 @@ pocl_cuda_wait_event (cl_device_id device, cl_event event)
   while (dep)
     {
       event_node *next = dep->next;
+      POname(clReleaseEvent) (dep->event);
       pocl_mem_manager_free_event_node (dep);
       dep = next;
     }
