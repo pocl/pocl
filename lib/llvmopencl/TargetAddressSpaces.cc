@@ -89,21 +89,19 @@ ConvertedType(llvm::Type *type, std::map<unsigned, unsigned> &addrSpaceMap,
       return convertedStructsCache[type];
 
     llvm::StructType* OrigType = dyn_cast<llvm::StructType>(type);
-    llvm::StructType* NewType;
-    if (!OrigType->isLiteral()) {
-      std::string s = OrigType->getName().str();
-      s += "_tas_struct";
-      NewType = StructType::create(OrigType->getContext(), s);
-    }
     std::vector<llvm::Type*> newtypes;
     for (llvm::StructType::element_iterator i = OrigType->element_begin(),
          e = OrigType->element_end(); i < e; ++i) {
       newtypes.push_back(ConvertedType(*i, addrSpaceMap, convertedStructsCache));
     }
     ArrayRef<Type*> a(newtypes);
+    llvm::StructType* NewType;
     if (OrigType->isLiteral()) {
       NewType = StructType::get(OrigType->getContext(), a, OrigType->isPacked());
     } else {
+      std::string s = OrigType->getName().str();
+      s += "_tas_struct";
+      NewType = StructType::create(OrigType->getContext(), s);
       NewType->setBody(a, OrigType->isPacked());
     }
     convertedStructsCache[type] = NewType;
