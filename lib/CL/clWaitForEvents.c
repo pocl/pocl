@@ -29,6 +29,7 @@ POname(clWaitForEvents)(cl_uint              num_events ,
 {
   unsigned event_i;
   cl_device_id dev;
+  cl_int ret = CL_SUCCESS;
   POCL_RETURN_ERROR_COND((num_events == 0 || event_list == NULL), CL_INVALID_VALUE);
 
   for (event_i = 0; event_i < num_events; ++event_i)
@@ -51,12 +52,20 @@ POname(clWaitForEvents)(cl_uint              num_events ,
         dev->ops->wait_event(dev, event_list[event_i]);
       else
         POname(clFinish)(event_list[event_i]->queue);
+      if (event_list[event_i]->status < 0)
+        ret = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
     }
   /* brute force wait for user events */
   for (event_i = 0; event_i < num_events; ++event_i)
     if (event_list[event_i]->command_type == CL_COMMAND_USER)
-      while (event_list[event_i]->status != CL_COMPLETE){}
+      {
+        while (event_list[event_i]->status > CL_COMPLETE)
+          {
+          }
+        if (event_list[event_i]->status < 0)
+          ret = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
+      }
 
-  return CL_SUCCESS;
+  return ret;
 }
 POsym(clWaitForEvents)
