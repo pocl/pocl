@@ -45,6 +45,8 @@ typedef struct pocl_cuda_device_data_s
   CUdevice device;
   CUcontext context;
   CUstream stream;
+  CUevent epoch_event;
+  cl_ulong epoch;
   char libdevice[PATH_MAX];
   pocl_lock_t compile_lock;
 } pocl_cuda_device_data_t;
@@ -57,6 +59,14 @@ typedef struct pocl_cuda_kernel_data_s
   CUfunction kernel_offsets;
   size_t *alignments;
 } pocl_cuda_kernel_data_t;
+
+typedef struct pocl_cuda_event_data_s
+{
+  CUevent start;
+  CUevent end;
+  cl_int *ext_event_flag;
+  unsigned num_ext_events;
+} pocl_cuda_event_data_t;
 
 extern unsigned int pocl_num_devices;
 
@@ -116,6 +126,7 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->notify = pocl_cuda_notify;
   ops->broadcast = pocl_cuda_broadcast;
   ops->wait_event = pocl_cuda_wait_event;
+  ops->free_event_data = pocl_cuda_free_event_data;
   ops->join = pocl_cuda_join;
   ops->flush = pocl_cuda_flush;
 
@@ -131,7 +142,6 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   /* TODO: implement remaining ops functions: */
   /* get_timer_value */
   /* update_event */
-  /* free_event_data */
 }
 
 cl_int
@@ -252,6 +262,20 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
     {
       result = cuStreamCreate (&data->stream, CU_STREAM_NON_BLOCKING);
       if (CUDA_CHECK_ERROR (result, "cuStreamCreate"))
+        ret = CL_INVALID_DEVICE;
+    }
+
+  // Create epoch event for timing info
+  if (ret != CL_INVALID_DEVICE)
+    {
+      result = cuEventCreate (&data->epoch_event, CU_EVENT_DEFAULT);
+      CUDA_CHECK_ERROR (result, "cuEventCreate");
+
+      data->epoch = dev->ops->get_timer_value (dev->data);
+
+      result = cuEventRecord (data->epoch_event, 0);
+      result = cuEventSynchronize (data->epoch_event);
+      if (CUDA_CHECK_ERROR (result, "cuEventSynchronize"))
         ret = CL_INVALID_DEVICE;
     }
 
@@ -891,14 +915,65 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
 {
   cuCtxSetCurrent (((pocl_cuda_device_data_t *)cq->device->data)->context);
 
-  POCL_UPDATE_EVENT_SUBMITTED (&node->event);
+  CUresult result;
+  CUstream stream = ((pocl_cuda_device_data_t *)cq->device->data)->stream;
 
-  // Increment reference count for any event dependencies
+  POCL_LOCK_OBJ (node->event);
+
+  pocl_cuda_event_data_t *event_data
+      = (pocl_cuda_event_data_t *)calloc (1, sizeof (pocl_cuda_event_data_t));
+  node->event->data = event_data;
+
+  // Process event dependencies
   event_node *dep = NULL;
   LL_FOREACH (node->event->wait_list, dep)
     {
-      POname(clRetainEvent) (dep->event);
+      POname (clRetainEvent) (dep->event);
+
+      // Add CUDA event dependency
+      if (dep->event->command_type != CL_COMMAND_USER
+          && dep->event->queue->device->ops == cq->device->ops)
+        {
+          // TODO: Don't bother if queue is the same
+          pocl_cuda_event_data_t *dep_data
+              = (pocl_cuda_event_data_t *)dep->event->data;
+          result = cuStreamWaitEvent (stream, dep_data->end, 0);
+          CUDA_CHECK (result, "cuStreamWaitEvent");
+        }
+      else
+        event_data->num_ext_events++;
     }
+
+  // Wait on flag for external events
+  if (event_data->num_ext_events)
+    {
+      CUdeviceptr dev_ext_event_flag;
+      result = cuMemHostAlloc ((void **)&event_data->ext_event_flag, 4,
+                               CU_MEMHOSTALLOC_DEVICEMAP);
+      CUDA_CHECK (result, "cuMemAllocHost");
+
+      *event_data->ext_event_flag = 0;
+
+      result = cuMemHostGetDevicePointer (&dev_ext_event_flag,
+                                          event_data->ext_event_flag, 0);
+      CUDA_CHECK (result, "cuMemHostGetDevicePointer");
+      result = cuStreamWaitValue32 (stream, dev_ext_event_flag, 1,
+                                    CU_STREAM_WAIT_VALUE_GEQ);
+      CUDA_CHECK (result, "cuStreamWaitValue32");
+    }
+
+  // Create and record event for command start if profiling enabled
+  if (cq->properties & CL_QUEUE_PROFILING_ENABLE)
+    {
+      result = cuEventCreate (&event_data->start, CU_EVENT_DEFAULT);
+      CUDA_CHECK (result, "cuEventCreate");
+      result = cuEventRecord (event_data->start, stream);
+      CUDA_CHECK (result, "cuEventRecord");
+    }
+
+  POCL_UPDATE_EVENT_SUBMITTED (&node->event);
+
+  POCL_UNLOCK_OBJ (node->event);
 
   switch (node->type)
     {
@@ -1020,18 +1095,37 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
       POCL_ABORT_UNIMPLEMENTED ("Command type for CUDA devices");
       break;
     }
+
+  // Create and record event for command end
+  if (cq->properties & CL_QUEUE_PROFILING_ENABLE)
+    result = cuEventCreate (&event_data->end, CU_EVENT_DEFAULT);
+  else
+    result = cuEventCreate (&event_data->end, CU_EVENT_DISABLE_TIMING);
+  CUDA_CHECK (result, "cuEventCreate");
+  result = cuEventRecord (
+      event_data->end, ((pocl_cuda_device_data_t *)cq->device->data)->stream);
+  CUDA_CHECK (result, "cuEventRecord");
 }
 
 void
 pocl_cuda_notify (cl_device_id device, cl_event event)
 {
-  // TODO: Implement event dependencies
+  pocl_cuda_event_data_t *event_data = (pocl_cuda_event_data_t *)event->data;
+
+  assert (event_data);
+  assert (event_data->num_ext_events > 0);
+  assert (event_data->ext_event_flag);
+
+  // Decrement external event counter
+  // Trigger flag if none left
+  if (!--event_data->num_ext_events)
+    *event_data->ext_event_flag = 1;
 }
 
 void
 pocl_cuda_broadcast (cl_event event)
 {
-  // TODO: call notify for each event in notify_list?
+  // TODO: call notify for each non-CUDA event in notify_list
 }
 
 void
@@ -1047,6 +1141,7 @@ pocl_cuda_wait_event (cl_device_id device, cl_event event)
     return;
   if (event->command_type == CL_COMMAND_USER)
     {
+      // TODO: Can get rid of this loop if we handle via CUDA event?
       while (event->status > CL_COMPLETE)
         {
         };
@@ -1058,6 +1153,7 @@ pocl_cuda_wait_event (cl_device_id device, cl_event event)
   event_node *dep = NULL;
   LL_FOREACH (event->wait_list, dep)
     {
+      // TODO: Use device->ops->wait_event for non-CUDA events
       pocl_cuda_wait_event (event->queue->device, dep->event);
 
       if (dep->event->status < 0)
@@ -1087,6 +1183,7 @@ pocl_cuda_wait_event (cl_device_id device, cl_event event)
   if (event->command_type == CL_COMMAND_MARKER
       || event->command_type == CL_COMMAND_BARRIER)
     {
+      // TODO: set start/end time to CUDA event times
       pocl_mem_manager_free_command (event->command);
       POCL_UPDATE_EVENT_RUNNING (&event);
       POCL_UPDATE_EVENT_COMPLETE (&event);
@@ -1094,11 +1191,10 @@ pocl_cuda_wait_event (cl_device_id device, cl_event event)
     }
 
   // Wait for command to finish
-  // TODO: Ideally just wait for individual command
   cuCtxSetCurrent (((pocl_cuda_device_data_t *)device->data)->context);
-  CUresult result = cuStreamSynchronize (
-      ((pocl_cuda_device_data_t *)device->data)->stream);
-  CUDA_CHECK (result, "cuStreamSynchronize");
+  pocl_cuda_event_data_t *event_data = ((pocl_cuda_event_data_t *)event->data);
+  CUresult result = cuEventSynchronize (event_data->end);
+  CUDA_CHECK (result, "cuEventSynchronize");
 
   if (event->command_type == CL_COMMAND_UNMAP_MEM_OBJECT)
     {
@@ -1149,9 +1245,63 @@ pocl_cuda_wait_event (cl_device_id device, cl_event event)
       pocl_mem_manager_free_command (event->command);
     }
 
-  // TODO: Fix timing info (use CUDA events)
+  // Retain this event temporarily, otherwise the call to
+  // POCL_UPDATE_EVENT_COMPLETE might release the event before we've
+  // dealt with the timing.
+  // TODO: Maybe better to handle update_event so we don't have to do this?
+  POname (clRetainEvent) (event);
+
   POCL_UPDATE_EVENT_RUNNING (&event);
   POCL_UPDATE_EVENT_COMPLETE (&event);
+
+  // Update timing info with CUDA event timers if profiling enabled
+  if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+    {
+      // CUDA doesn't provide a way to get event timestamps directly,
+      // only the elapsed time between two events. We use the elapsed
+      // time from the epoch event enqueued on device creation to get
+      // the actual timestamps.
+      //
+      // Since the CUDA timer resolution is lower than the host timer,
+      // this can sometimes result in the start time being before the
+      // submit time, so we use max() to ensure the timestamps are
+      // sane.
+
+      float diff;
+      cl_ulong epoch = ((pocl_cuda_device_data_t *)device->data)->epoch;
+
+      result = cuEventElapsedTime (
+          &diff, ((pocl_cuda_device_data_t *)device->data)->epoch_event,
+          event_data->start);
+      event->time_start = max (event->time_submit + 1, epoch + diff * 1e6);
+
+      result = cuEventElapsedTime (
+          &diff, ((pocl_cuda_device_data_t *)device->data)->epoch_event,
+          event_data->end);
+      event->time_end = max (event->time_start + 1, epoch + diff * 1e6);
+    }
+
+  POname (clReleaseEvent) (event);
+}
+
+void
+pocl_cuda_free_event_data (cl_event event)
+{
+  if (event->data)
+    {
+      pocl_cuda_event_data_t *event_data
+          = (pocl_cuda_event_data_t *)event->data;
+
+      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+        cuEventDestroy (event_data->start);
+      cuEventDestroy (event_data->end);
+      if (event_data->ext_event_flag)
+        {
+          CUresult result = cuMemFreeHost (event_data->ext_event_flag);
+          CUDA_CHECK (result, "cuMemFreeHost");
+        }
+      free (event->data);
+    }
 }
 
 void
