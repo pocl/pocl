@@ -21,6 +21,16 @@
    THE SOFTWARE.
 */
 
+/* NOTE: this file is NOT a generic implementation; it works with vectors
+   in a lot of places and requires that either device supports unaligned
+   vector operations, or that memory backing the images is properly aligned.
+   The maximum required alignment is 16bytes (4channels * 32bit color)
+
+   Not all CPUs support unaligned vector operations, but the pthread / basic
+   drivers allocate properly aligned memory for backing buffers; therefore
+   this should work for everything supported by pthread / basic.
+*/
+
 #include "templates.h"
 #include "pocl_image_rw_utils.h"
 
