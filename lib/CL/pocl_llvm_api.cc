@@ -1387,7 +1387,10 @@ static PassManager& kernel_compiler_passes
   passes.push_back("domtree");
   if (device->autolocals_to_args)
 	  passes.push_back("automatic-locals");
-  passes.push_back("flatten");
+  if (SPMDDevice)
+    passes.push_back("flatten-inline-all");
+  else
+    passes.push_back("flatten-globals");
   passes.push_back("always-inline");
   passes.push_back("globaldce");
   if (!SPMDDevice) {
