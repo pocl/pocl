@@ -2650,6 +2650,27 @@ int4 _CL_OVERLOADABLE read_imagei (IMG_RW_AQ image3d_t image,
 
 /******************************************************************************************/
 
+void _CL_OVERLOADABLE write_imagef (IMG_WO_AQ image1d_t image, int coord,
+                                    float4 color);
+void _CL_OVERLOADABLE write_imagei (IMG_WO_AQ image1d_t image, int coord,
+                                    int4 color);
+void _CL_OVERLOADABLE write_imageui (IMG_WO_AQ image1d_t image, int coord,
+                                     uint4 color);
+
+void _CL_OVERLOADABLE write_imagef (IMG_WO_AQ image1d_buffer_t image,
+                                    int coord, float4 color);
+void _CL_OVERLOADABLE write_imagei (IMG_WO_AQ image1d_buffer_t image,
+                                    int coord, int4 color);
+void _CL_OVERLOADABLE write_imageui (IMG_WO_AQ image1d_buffer_t image,
+                                     int coord, uint4 color);
+
+void _CL_OVERLOADABLE write_imagef (IMG_WO_AQ image1d_array_t image,
+                                    int2 coord, float4 color);
+void _CL_OVERLOADABLE write_imagei (IMG_WO_AQ image1d_array_t image,
+                                    int2 coord, int4 color);
+void _CL_OVERLOADABLE write_imageui (IMG_WO_AQ image1d_array_t image,
+                                     int2 coord, uint4 color);
+
 void _CL_OVERLOADABLE write_imagef (IMG_WO_AQ image2d_t image, int2 coord,
                                     float4 color);
 void _CL_OVERLOADABLE write_imagei (IMG_WO_AQ image2d_t image, int2 coord,
@@ -2682,6 +2703,27 @@ __IF_FP16 (void _CL_OVERLOADABLE write_imageh (IMG_WO_AQ image3d_t image,
 /* UNIMPLEMENTED: 1d / 1d array */
 
 #ifdef CLANG_HAS_RW_IMAGES
+
+void _CL_OVERLOADABLE write_imagef (IMG_RW_AQ image1d_t image, int coord,
+                                    float4 color);
+void _CL_OVERLOADABLE write_imagei (IMG_RW_AQ image1d_t image, int coord,
+                                    int4 color);
+void _CL_OVERLOADABLE write_imageui (IMG_RW_AQ image1d_t image, int coord,
+                                     uint4 color);
+
+void _CL_OVERLOADABLE write_imagef (IMG_RW_AQ image1d_buffer_t image,
+                                    int coord, float4 color);
+void _CL_OVERLOADABLE write_imagei (IMG_RW_AQ image1d_buffer_t image,
+                                    int coord, int4 color);
+void _CL_OVERLOADABLE write_imageui (IMG_RW_AQ image1d_buffer_t image,
+                                     int coord, uint4 color);
+
+void _CL_OVERLOADABLE write_imagef (IMG_RW_AQ image1d_array_t image,
+                                    int2 coord, float4 color);
+void _CL_OVERLOADABLE write_imagei (IMG_RW_AQ image1d_array_t image,
+                                    int2 coord, int4 color);
+void _CL_OVERLOADABLE write_imageui (IMG_RW_AQ image1d_array_t image,
+                                     int2 coord, uint4 color);
 
 void _CL_OVERLOADABLE write_imagef (IMG_RW_AQ image2d_t image, int2 coord,
                                     float4 color);

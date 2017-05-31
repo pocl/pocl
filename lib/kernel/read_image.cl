@@ -287,14 +287,12 @@ get_image_array_offset (global dev_image_t *img, int4 uvw_after_rint,
     {
       if (img->_height > 0)
         {
-          res.z = clamp (orig_coord.z, 0,
-                         convert_int_rte (img->_image_array_size - 1));
+          res.z = clamp (orig_coord.z, 0, (img->_image_array_size - 1));
           res.w = 0;
         }
       else
         {
-          res.y = clamp (orig_coord.y, 0,
-                         convert_int_rte (img->_image_array_size - 1));
+          res.y = clamp (orig_coord.y, 0, (img->_image_array_size - 1));
           res.z = 0;
           res.w = 0;
         }

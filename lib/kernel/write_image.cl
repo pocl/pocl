@@ -170,8 +170,9 @@ pocl_write_pixel_fast_ui (uint4 color, int4 coord, int width, int height,
   if (depth)
     base_index += (coord.z * height * width);
 
-  if (coord.x >= width || coord.x < 0 || coord.y >= height || coord.y < 0
-      || (depth != 0 && (coord.z >= depth || coord.z < 0)))
+  if ((coord.x >= width || coord.x < 0)
+      || ((height != 0) && (coord.y >= height || coord.y < 0))
+      || ((depth != 0) && (coord.z >= depth || coord.z < 0)))
     {
       return;
     }
@@ -199,6 +200,7 @@ pocl_write_pixel_fast_ui (uint4 color, int4 coord, int width, int height,
     {
       ((uint4 *)data)[base_index] = color;
     }
+
   return;
 }
 
@@ -213,8 +215,9 @@ pocl_write_pixel_fast_f (float4 color, int4 coord, int width, int height,
   if (depth)
     base_index += (coord.z * height * width);
 
-  if (coord.x >= width || coord.x < 0 || coord.y >= height || coord.y < 0
-      || (depth != 0 && (coord.z >= depth || coord.z < 0)))
+  if ((coord.x >= width || coord.x < 0)
+      || ((height != 0) && (coord.y >= height || coord.y < 0))
+      || ((depth != 0) && (coord.z >= depth || coord.z < 0)))
     {
       return;
     }
@@ -242,8 +245,9 @@ pocl_write_pixel_fast_i (int4 color, int4 coord, int width, int height,
   if (depth)
     base_index += (coord.z * height * width);
 
-  if (coord.x >= width || coord.x < 0 || coord.y >= height || coord.y < 0
-      || (depth != 0 && (coord.z >= depth || coord.z < 0)))
+  if ((coord.x >= width || coord.x < 0)
+      || ((height != 0) && (coord.y >= height || coord.y < 0))
+      || ((depth != 0) && (coord.z >= depth || coord.z < 0)))
     {
       return;
     }
@@ -342,6 +346,18 @@ IMPLEMENT_WRITE_IMAGE_INT_COORD ( IMG_WO_AQ image2d_t, i, int4, int4)
 IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image2d_t, f, int2, float4)
 IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image3d_t, f, int4, float4)
 
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image1d_t, ui, int, uint4)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image1d_buffer_t, ui, int, uint4)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image1d_array_t, ui, int2, uint4)
+
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image1d_t, i, int, int4)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image1d_buffer_t, i, int, int4)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image1d_array_t, i, int2, int4)
+
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image1d_t, f, int, float4)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image1d_buffer_t, f, int, float4)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image1d_array_t, f, int2, float4)
+
 #ifdef CLANG_HAS_RW_IMAGES
 
 IMPLEMENT_WRITE_IMAGE_INT_COORD ( IMG_RW_AQ image2d_t, ui, int2, uint4)
@@ -352,5 +368,17 @@ IMPLEMENT_WRITE_IMAGE_INT_COORD ( IMG_RW_AQ image2d_t, i, int4, int4)
 
 IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image2d_t, f, int2, float4)
 IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image3d_t, f, int4, float4)
+
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image1d_t, ui, int, uint4)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image1d_buffer_t, ui, int, uint4)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image1d_array_t, ui, int2, uint4)
+
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image1d_t, i, int, int4)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image1d_buffer_t, i, int, int4)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image1d_array_t, i, int2, int4)
+
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image1d_t, f, int, float4)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image1d_buffer_t, f, int, float4)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image1d_array_t, f, int2, float4)
 
 #endif
