@@ -543,7 +543,6 @@ struct _cl_command_queue {
   cl_command_queue_properties properties;
   /* implementation */
   cl_event events; /* events of the enqueued commands in enqueue order */
-  _cl_command_node * volatile root;
   struct _cl_event * volatile barrier;
   volatile int command_count; /* counter for unfinished command enqueued */
   volatile pocl_data_sync_item last_event;

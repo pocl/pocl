@@ -71,7 +71,6 @@ POname(clCreateCommandQueue)(cl_context context,
   command_queue->properties = properties;
   command_queue->barrier = NULL;
   command_queue->events = NULL;
-  command_queue->root = NULL;
   command_queue->command_count = 0;
   command_queue->last_event.event = NULL;
   command_queue->last_event.event_id = -1;
