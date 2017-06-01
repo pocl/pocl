@@ -709,27 +709,33 @@ else()
   endif()
 endif()
 
-######################################################################################
-# Test for presence of Clang calling convention patch from
-# https://github.com/pocl/pocl/issues/1
+if(LLVM_OLDER_THAN_5_0)
 
-execute_process(
-  COMMAND
+  ######################################################################################
+  # Test for presence of Clang calling convention patch from
+  # https://github.com/pocl/pocl/issues/1
+
+  execute_process(
+    COMMAND
     "${CLANG}" "-S" "-xcl" "-emit-llvm" "${CMAKE_SOURCE_DIR}/cmake/spir-cc-test-kernel.cl" "-o" "-"
     OUTPUT_VARIABLE SPIR_PATCH_TEST_IR
     ERROR_VARIABLE _DUMMY
     RESULT_VARIABLE SPIR_CC_RES)
 
-if(SPIR_CC_RES)
-  message(FATAL_ERROR "Clang exited with non-zero status when trying to compile calling convention test")
-endif()
+  if(SPIR_CC_RES)
+    message(FATAL_ERROR "Clang exited with non-zero status when trying to compile calling convention test")
+  endif()
 
-string(FIND "${SPIR_PATCH_TEST_IR}" "spir_kernel" SPIR_CC_RES)
-if("${SPIR_CC_RES}" MATCHES "-1")
-  set(CLANG_IS_PATCHED_FOR_SPIR_CC 0)
-  message(STATUS "Clang is NOT patched for SPIR CC")
+  string(FIND "${SPIR_PATCH_TEST_IR}" "spir_kernel" SPIR_CC_RES)
+  if("${SPIR_CC_RES}" MATCHES "-1")
+    set(CLANG_IS_PATCHED_FOR_SPIR_CC 0)
+    message(STATUS "Clang is NOT patched for SPIR CC")
+  else()
+    set(CLANG_IS_PATCHED_FOR_SPIR_CC 1)
+    set(POCL_KCACHE_SALT "${POCL_KCACHE_SALT}-spirccpatch")
+    message(STATUS "Clang IS patched for SPIR CC")
+  endif()
 else()
   set(CLANG_IS_PATCHED_FOR_SPIR_CC 1)
-  set(POCL_KCACHE_SALT "${POCL_KCACHE_SALT}-spirccpatch")
-  message(STATUS "Clang IS patched for SPIR CC")
+  message(STATUS "Clang 5.0+ use SPIR CC by default")
 endif()
