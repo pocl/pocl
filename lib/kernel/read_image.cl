@@ -694,6 +694,88 @@ read_pixel_linear_2d (float4 abc, float4 one_m, int4 ijk0, int4 ijk1, int array_
 
 /*************************************************************************/
 
+static float4
+read_pixel_linear_1d_float (float4 abc, float4 one_m, int ijk0, int ijk1,
+                            int array_coord, int width, int height, int depth,
+                            int channel_type, size_t row_pitch,
+                            size_t slice_pitch, int order, void *data)
+{
+  // 1d image
+  // T = (1 – a) * Ti0
+  return (one_m.x * pocl_read_pixel_fast_f (
+                        (int4) (ijk0, array_coord, 0, 0), width, height, depth,
+                        row_pitch, slice_pitch, channel_type, order, data)
+          // + a * Ti1
+          + abc.x * pocl_read_pixel_fast_f (
+                        (int4) (ijk1, array_coord, 0, 0), width, height, depth,
+                        row_pitch, slice_pitch, channel_type, order, data));
+}
+
+/* TODO: float * convert_flaot(UINT32) is imprecise, so reading from images
+ * with 32bit channel types may return quite bad results.
+ */
+
+static uint4
+read_pixel_linear_1d_uint (float4 abc, float4 one_m, int ijk0, int ijk1,
+                           int array_coord, int width, int height, int depth,
+                           size_t row_pitch, size_t slice_pitch, int order,
+                           int elem_size, void *data)
+{
+  // 1d image
+  // T = (1 – a) * Ti0
+  return convert_uint4 (
+      one_m.x * convert_float4 (pocl_read_pixel_fast_ui (
+                    (int4) (ijk0, array_coord, 0, 0), width, height, depth,
+                    row_pitch, slice_pitch, order, elem_size, data))
+      // + a * Ti1
+      + abc.x * convert_float4 (pocl_read_pixel_fast_ui (
+                    (int4) (ijk1, array_coord, 0, 0), width, height, depth,
+                    row_pitch, slice_pitch, order, elem_size, data)));
+}
+
+static int4
+read_pixel_linear_1d_int (float4 abc, float4 one_m, int ijk0, int ijk1,
+                          int array_coord, int width, int height, int depth,
+                          size_t row_pitch, size_t slice_pitch, int order,
+                          int elem_size, void *data)
+{
+  // 1d image
+  // T = (1 – a) * Ti0
+  return convert_int4 (
+      one_m.x * one_m.y
+          * convert_float4 (pocl_read_pixel_fast_i (
+                (int4) (ijk0, array_coord, 0, 0), width, height, depth,
+                row_pitch, slice_pitch, order, elem_size, data))
+      // + a * Ti1
+      + abc.x * convert_float4 (pocl_read_pixel_fast_i (
+                    (int4) (ijk1, array_coord, 0, 0), width, height, depth,
+                    row_pitch, slice_pitch, order, elem_size, data)));
+}
+
+static uint4
+read_pixel_linear_1d (float4 abc, float4 one_m, int ijk0, int ijk1,
+                      int array_coord, int width, int height, int depth,
+                      int channel_type, size_t row_pitch, size_t slice_pitch,
+                      int order, int elem_size, void *data)
+{
+  // TODO unsupported channel types
+  if ((channel_type == CL_SIGNED_INT8) || (channel_type == CL_SIGNED_INT16)
+      || (channel_type == CL_SIGNED_INT32))
+    return as_uint4 (read_pixel_linear_1d_int (
+        abc, one_m, ijk0, ijk1, array_coord, width, height, depth, row_pitch,
+        slice_pitch, order, elem_size, data));
+  if ((channel_type == CL_UNSIGNED_INT8) || (channel_type == CL_UNSIGNED_INT16)
+      || (channel_type == CL_UNSIGNED_INT32))
+    return read_pixel_linear_1d_uint (abc, one_m, ijk0, ijk1, array_coord,
+                                      width, height, depth, row_pitch,
+                                      slice_pitch, order, elem_size, data);
+  return as_uint4 (read_pixel_linear_1d_float (
+      abc, one_m, ijk0, ijk1, array_coord, width, height, depth, channel_type,
+      row_pitch, slice_pitch, order, data));
+}
+
+/*************************************************************************/
+
 /* These magic constant should be converted to some sort of
  * error signaling */
 #define INVALID_SAMPLER_ADDRMODE (uint4) (0x1111)
