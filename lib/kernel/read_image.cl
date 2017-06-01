@@ -577,7 +577,7 @@ read_pixel_linear_3d (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
 /*************************************************************************/
 
 static float4
-read_pixel_linear_2d_float (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
+read_pixel_linear_2d_float (float4 abc, float4 one_m, int4 ijk0, int4 ijk1, int array_coord,
                             int width, int height, int depth, int channel_type,
                             size_t row_pitch, size_t slice_pitch, int order,
                             void *data)
@@ -585,21 +585,23 @@ read_pixel_linear_2d_float (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
   // 2D image
   // T = (1 – a) * (1 – b) * Ti0j0
   return (
-      one_m.x * one_m.y * pocl_read_pixel_fast_f (ijk0, width, height, depth,
+      one_m.x * one_m.y * pocl_read_pixel_fast_f ((int4)(ijk0.x, ijk0.y, array_coord, 0),
+                                                  width, height, depth,
                                                   row_pitch, slice_pitch,
                                                   channel_type, order, data)
       // + a * (1 – b) * Ti1j0
       + abc.x * one_m.y
-            * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk0.y, 0, 0), width,
+            * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk0.y, array_coord, 0), width,
                                       height, depth, row_pitch, slice_pitch,
                                       channel_type, order, data)
       // + (1 – a) * b * Ti0j1
       + one_m.x * abc.y
-            * pocl_read_pixel_fast_f ((int4) (ijk0.x, ijk1.y, 0, 0), width,
+            * pocl_read_pixel_fast_f ((int4) (ijk0.x, ijk1.y, array_coord, 0), width,
                                       height, depth, row_pitch, slice_pitch,
                                       channel_type, order, data)
       // + a * b * Ti1j1
-      + abc.x * abc.y * pocl_read_pixel_fast_f (ijk1, width, height, depth,
+      + abc.x * abc.y * pocl_read_pixel_fast_f ((int4)(ijk1.x, ijk1.y, array_coord, 0),
+                                                width, height, depth,
                                                 row_pitch, slice_pitch,
                                                 channel_type, order, data));
 }
@@ -609,7 +611,7 @@ read_pixel_linear_2d_float (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
  */
 
 static uint4
-read_pixel_linear_2d_uint (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
+read_pixel_linear_2d_uint (float4 abc, float4 one_m, int4 ijk0, int4 ijk1, int array_coord,
                            int width, int height, int depth, size_t row_pitch,
                            size_t slice_pitch, int order, int elem_size,
                            void *data)
@@ -618,26 +620,28 @@ read_pixel_linear_2d_uint (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
   // T = (1 – a) * (1 – b) * Ti0j0
   return convert_uint4 (
       one_m.x * one_m.y * convert_float4 (pocl_read_pixel_fast_ui (
-                              ijk0, width, height, depth, row_pitch,
+                              (int4)(ijk0.x, ijk0.y, array_coord, 0),
+                              width, height, depth, row_pitch,
                               slice_pitch, order, elem_size, data))
       // + a * (1 – b) * Ti1j0
       + abc.x * one_m.y
             * convert_float4 (pocl_read_pixel_fast_ui (
-                  (int4) (ijk1.x, ijk0.y, 0, 0), width, height, depth,
+                  (int4) (ijk1.x, ijk0.y, array_coord, 0), width, height, depth,
                   row_pitch, slice_pitch, order, elem_size, data))
       // + (1 – a) * b * Ti0j1
       + one_m.x * abc.y
             * convert_float4 (pocl_read_pixel_fast_ui (
-                  (int4) (ijk0.x, ijk1.y, 0, 0), width, height, depth,
+                  (int4) (ijk0.x, ijk1.y, array_coord, 0), width, height, depth,
                   row_pitch, slice_pitch, order, elem_size, data))
       // + a * b * Ti1j1
       + abc.x * abc.y * convert_float4 (pocl_read_pixel_fast_ui (
-                            ijk1, width, height, depth, row_pitch, slice_pitch,
+                            (int4)(ijk1.x, ijk1.y, array_coord, 0),
+                            width, height, depth, row_pitch, slice_pitch,
                             order, elem_size, data)));
 }
 
 static int4
-read_pixel_linear_2d_int (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
+read_pixel_linear_2d_int (float4 abc, float4 one_m, int4 ijk0, int4 ijk1, int array_coord,
                           int width, int height, int depth, size_t row_pitch,
                           size_t slice_pitch, int order, int elem_size,
                           void *data)
@@ -646,26 +650,28 @@ read_pixel_linear_2d_int (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
   // T = (1 – a) * (1 – b) * Ti0j0
   return convert_int4 (
       one_m.x * one_m.y * convert_float4 (pocl_read_pixel_fast_i (
-                              ijk0, width, height, depth, row_pitch,
+                              (int4)(ijk0.x, ijk0.y, array_coord, 0),
+                              width, height, depth, row_pitch,
                               slice_pitch, order, elem_size, data))
       // + a * (1 – b) * Ti1j0
       + abc.x * one_m.y
             * convert_float4 (pocl_read_pixel_fast_i (
-                  (int4) (ijk1.x, ijk0.y, 0, 0), width, height, depth,
+                  (int4) (ijk1.x, ijk0.y, array_coord, 0), width, height, depth,
                   row_pitch, slice_pitch, order, elem_size, data))
       // + (1 – a) * b * Ti0j1
       + one_m.x * abc.y
             * convert_float4 (pocl_read_pixel_fast_i (
-                  (int4) (ijk0.x, ijk1.y, 0, 0), width, height, depth,
+                  (int4) (ijk0.x, ijk1.y, array_coord, 0), width, height, depth,
                   row_pitch, slice_pitch, order, elem_size, data))
       // + a * b * Ti1j1
       + abc.x * abc.y * convert_float4 (pocl_read_pixel_fast_i (
-                            ijk1, width, height, depth, row_pitch, slice_pitch,
+                            (int4)(ijk1.x, ijk1.y, array_coord, 0),
+                            width, height, depth, row_pitch, slice_pitch,
                             order, elem_size, data)));
 }
 
 static uint4
-read_pixel_linear_2d (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
+read_pixel_linear_2d (float4 abc, float4 one_m, int4 ijk0, int4 ijk1, int array_coord,
                       int width, int height, int depth, int channel_type,
                       size_t row_pitch, size_t slice_pitch, int order,
                       int elem_size, void *data)
@@ -674,15 +680,15 @@ read_pixel_linear_2d (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
   if ((channel_type == CL_SIGNED_INT8) || (channel_type == CL_SIGNED_INT16)
       || (channel_type == CL_SIGNED_INT32))
     return as_uint4 (read_pixel_linear_2d_int (
-        abc, one_m, ijk0, ijk1, width, height, depth, row_pitch, slice_pitch,
+        abc, one_m, ijk0, ijk1, array_coord, width, height, depth, row_pitch, slice_pitch,
         order, elem_size, data));
   if ((channel_type == CL_UNSIGNED_INT8) || (channel_type == CL_UNSIGNED_INT16)
       || (channel_type == CL_UNSIGNED_INT32))
-    return read_pixel_linear_2d_uint (abc, one_m, ijk0, ijk1, width, height,
+    return read_pixel_linear_2d_uint (abc, one_m, ijk0, ijk1, array_coord, width, height,
                                       depth, row_pitch, slice_pitch, order,
                                       elem_size, data);
   return as_uint4 (read_pixel_linear_2d_float (
-      abc, one_m, ijk0, ijk1, width, height, depth, channel_type, row_pitch,
+      abc, one_m, ijk0, ijk1, array_coord, width, height, depth, channel_type, row_pitch,
       slice_pitch, order, data));
 }
 
