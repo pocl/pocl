@@ -163,20 +163,9 @@ write_float_pixel (float color, void *data, size_t base_index, int type)
  * no channel mapping
  * no pointers to img metadata */
 static void
-pocl_write_pixel_fast_ui (uint4 color, int4 coord, int width, int height,
-                          int depth, int order, int elem_size, void *data)
+pocl_write_pixel_fast_ui (uint4 color, size_t base_index, int order,
+                          int elem_size, void *data)
 {
-  size_t base_index = coord.x + coord.y * width;
-  if (depth)
-    base_index += (coord.z * height * width);
-
-  if ((coord.x >= width || coord.x < 0)
-      || ((height != 0) && (coord.y >= height || coord.y < 0))
-      || ((depth != 0) && (coord.z >= depth || coord.z < 0)))
-    {
-      return;
-    }
-
   if (order == CL_A)
     {
       if (elem_size == 1)
@@ -208,20 +197,9 @@ pocl_write_pixel_fast_ui (uint4 color, int4 coord, int width, int height,
  * no channel mapping
  * no pointers to img metadata */
 static void
-pocl_write_pixel_fast_f (float4 color, int4 coord, int width, int height,
-                         int depth, int channel_type, int order, void *data)
+pocl_write_pixel_fast_f (float4 color, size_t base_index, int channel_type,
+                         int order, void *data)
 {
-  size_t base_index = coord.x + coord.y * width;
-  if (depth)
-    base_index += (coord.z * height * width);
-
-  if ((coord.x >= width || coord.x < 0)
-      || ((height != 0) && (coord.y >= height || coord.y < 0))
-      || ((depth != 0) && (coord.z >= depth || coord.z < 0)))
-    {
-      return;
-    }
-
   if (order == CL_A)
     {
       write_float_pixel (color.w, data, base_index, channel_type);
@@ -238,20 +216,9 @@ pocl_write_pixel_fast_f (float4 color, int4 coord, int width, int height,
  * no channel mapping
  * no pointers to img metadata */
 static void
-pocl_write_pixel_fast_i (int4 color, int4 coord, int width, int height,
-                         int depth, int order, int elem_size, void *data)
+pocl_write_pixel_fast_i (int4 color, size_t base_index, int order,
+                         int elem_size, void *data)
 {
-  size_t base_index = coord.x + coord.y * width;
-  if (depth)
-    base_index += (coord.z * height * width);
-
-  if ((coord.x >= width || coord.x < 0)
-      || ((height != 0) && (coord.y >= height || coord.y < 0))
-      || ((depth != 0) && (coord.z >= depth || coord.z < 0)))
-    {
-      return;
-    }
-
   if (order == CL_A)
     {
       if (elem_size == 1)
@@ -292,20 +259,31 @@ pocl_write_pixel (uint4 color, global dev_image_t *img, int4 coord)
   int channel_type = img->_data_type;
   void *data = img->_data;
 
+  if ((coord.x >= width || coord.x < 0)
+      || ((height != 0) && (coord.y >= height || coord.y < 0))
+      || ((depth != 0) && (coord.z >= depth || coord.z < 0)))
+    {
+      return;
+    }
+
+  size_t base_index = coord.x + coord.y * width;
+  if (depth)
+    base_index += (coord.z * height * width);
+
   color = map_channels (color, order);
 
   if ((channel_type == CL_SIGNED_INT8) || (channel_type == CL_SIGNED_INT16)
       || (channel_type == CL_SIGNED_INT32))
-    pocl_write_pixel_fast_i (as_int4 (color), coord, width, height, depth,
-                             order, elem_size, data);
+    pocl_write_pixel_fast_i (as_int4 (color), base_index, order, elem_size,
+                             data);
   else if ((channel_type == CL_UNSIGNED_INT8)
            || (channel_type == CL_UNSIGNED_INT16)
            || (channel_type == CL_UNSIGNED_INT32))
-    pocl_write_pixel_fast_ui (as_uint4 (color), coord, width, height, depth,
-                              order, elem_size, data);
+    pocl_write_pixel_fast_ui (as_uint4 (color), base_index, order, elem_size,
+                              data);
   else // TODO unsupported channel types
-    pocl_write_pixel_fast_f (as_float4 (color), coord, width, height, depth,
-                             channel_type, order, data);
+    pocl_write_pixel_fast_f (as_float4 (color), base_index, channel_type,
+                             order, data);
 }
 
 /*
