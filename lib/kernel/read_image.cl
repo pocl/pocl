@@ -280,19 +280,19 @@ pocl_read_pixel_fast_i (int4 coord, int width, int height, int depth,
 
 static int4
 get_image_array_offset (global dev_image_t *img, int4 uvw_after_rint,
-                        int4 orig_coord)
+                        int4 array_coord)
 {
   int4 res = uvw_after_rint;
   if (img->_image_array_size > 0)
     {
       if (img->_height > 0)
         {
-          res.z = clamp (orig_coord.z, 0, (img->_image_array_size - 1));
+          res.z = clamp (array_coord.z, 0, (img->_image_array_size - 1));
           res.w = 0;
         }
       else
         {
-          res.y = clamp (orig_coord.y, 0, (img->_image_array_size - 1));
+          res.y = clamp (array_coord.y, 0, (img->_image_array_size - 1));
           res.z = 0;
           res.w = 0;
         }
@@ -300,6 +300,45 @@ get_image_array_offset (global dev_image_t *img, int4 uvw_after_rint,
   return res;
 }
 
+/* array_coord must be unnormalized & repeats removed */
+static int4
+get_image_array_offset2 (global dev_image_t *img, int4 uvw_after_rint,
+                         float4 array_coord)
+{
+  int4 res = uvw_after_rint;
+  if (img->_image_array_size > 0)
+    {
+      if (img->_height > 0)
+        {
+          res.z = clamp (convert_int (floor (array_coord.z + 0.5f)), 0,
+                         (img->_image_array_size - 1));
+          res.w = 0;
+        }
+      else
+        {
+          res.y = clamp (convert_int (floor (array_coord.y + 0.5f)), 0,
+                         (img->_image_array_size - 1));
+          res.z = 0;
+          res.w = 0;
+        }
+    }
+  return res;
+}
+
+/* RET: (int4) (img.x{,y,z}, array_size, 0 {,0 ...} ) */
+static int4
+get_image_array_size (global dev_image_t *img)
+{
+  int4 imgsize = (int4) (img->_width, img->_height, img->_depth, 0);
+  if (img->_image_array_size > 0)
+    {
+      if (img->_height > 0)
+        imgsize.z = img->_image_array_size;
+      else
+        imgsize.y = img->_image_array_size;
+    }
+  return imgsize;
+}
 /*************************************************************************/
 
 /* full read with channel map conversion etc  */
