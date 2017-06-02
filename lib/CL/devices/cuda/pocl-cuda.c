@@ -197,7 +197,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
                             CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_Z, data->device);
       cuDeviceGetAttribute (
           (int *)&dev->local_mem_size,
-          CU_DEVICE_ATTRIBUTE_MAX_SHARED_MEMORY_PER_MULTIPROCESSOR, data->device);
+          CU_DEVICE_ATTRIBUTE_MAX_SHARED_MEMORY_PER_BLOCK, data->device);
       cuDeviceGetAttribute ((int *)&dev->max_compute_units,
                             CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT,
                             data->device);
