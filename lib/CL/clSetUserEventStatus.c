@@ -19,6 +19,7 @@ CL_API_SUFFIX__VERSION_1_1
   if (execution_status == CL_COMPLETE)
     {
       pocl_broadcast (event);
+      pocl_event_updated (event, CL_COMPLETE);
     }
   POCL_UNLOCK_OBJ (event);
   return CL_SUCCESS;
