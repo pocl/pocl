@@ -44,7 +44,6 @@ typedef struct pocl_cuda_device_data_s
 {
   CUdevice device;
   CUcontext context;
-  CUstream stream;
   CUevent epoch_event;
   cl_ulong epoch;
   char libdevice[PATH_MAX];
@@ -118,6 +117,8 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->probe = pocl_cuda_probe;
   ops->uninit = pocl_cuda_uninit;
   ops->init = pocl_cuda_init;
+  ops->init_queue = pocl_cuda_init_queue;
+  ops->free_queue = pocl_cuda_free_queue;
   ops->alloc_mem_obj = pocl_cuda_alloc_mem_obj;
   ops->free = pocl_cuda_free;
   ops->compile_kernel = pocl_cuda_compile_kernel;
@@ -257,14 +258,6 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
         ret = CL_INVALID_DEVICE;
     }
 
-  // Create stream
-  if (ret != CL_INVALID_DEVICE)
-    {
-      result = cuStreamCreate (&data->stream, CU_STREAM_NON_BLOCKING);
-      if (CUDA_CHECK_ERROR (result, "cuStreamCreate"))
-        ret = CL_INVALID_DEVICE;
-    }
-
   // Create epoch event for timing info
   if (ret != CL_INVALID_DEVICE)
     {
@@ -290,6 +283,26 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
 
   POCL_INIT_LOCK (data->compile_lock);
   return ret;
+}
+
+cl_int
+pocl_cuda_init_queue (cl_command_queue queue)
+{
+  cuCtxSetCurrent (((pocl_cuda_device_data_t *)queue->device->data)->context);
+
+  queue->data = calloc (1, sizeof (CUstream));
+  CUresult result = cuStreamCreate (queue->data, CU_STREAM_NON_BLOCKING);
+  if (CUDA_CHECK_ERROR (result, "cuStreamCreate"))
+    return CL_OUT_OF_RESOURCES;
+
+  return CL_SUCCESS;
+}
+
+void
+pocl_cuda_free_queue (cl_command_queue queue)
+{
+  cuCtxSetCurrent (((pocl_cuda_device_data_t *)queue->device->data)->context);
+  cuStreamDestroy (*(CUstream *)queue->data);
 }
 
 char *
@@ -357,10 +370,7 @@ pocl_cuda_uninit (cl_device_id device)
   pocl_cuda_device_data_t *data = device->data;
 
   if (device->available)
-    {
-      cuStreamDestroy (data->stream);
       cuCtxDestroy (data->context);
-    }
 
   POCL_MEM_FREE (data);
   device->data = NULL;
@@ -465,34 +475,31 @@ pocl_cuda_free (cl_device_id device, cl_mem mem_obj)
 }
 
 void
-pocl_cuda_submit_read (void *data, void *host_ptr, const void *device_ptr,
+pocl_cuda_submit_read (CUstream stream, void *host_ptr, const void *device_ptr,
                        size_t offset, size_t cb)
 {
-  CUstream stream = ((pocl_cuda_device_data_t *)data)->stream;
   CUresult result = cuMemcpyDtoHAsync (
       host_ptr, (CUdeviceptr) (device_ptr + offset), cb, stream);
   CUDA_CHECK (result, "cuMemcpyDtoHAsync");
 }
 
 void
-pocl_cuda_submit_write (void *data, const void *host_ptr, void *device_ptr,
-                        size_t offset, size_t cb)
+pocl_cuda_submit_write (CUstream stream, const void *host_ptr,
+                        void *device_ptr, size_t offset, size_t cb)
 {
-  CUstream stream = ((pocl_cuda_device_data_t *)data)->stream;
   CUresult result = cuMemcpyHtoDAsync ((CUdeviceptr) (device_ptr + offset),
                                        host_ptr, cb, stream);
   CUDA_CHECK (result, "cuMemcpyHtoDAsync");
 }
 
 void
-pocl_cuda_submit_copy (void *data, const void *src_ptr, size_t src_offset,
+pocl_cuda_submit_copy (CUstream stream, const void *src_ptr, size_t src_offset,
                        void *__restrict__ dst_ptr, size_t dst_offset,
                        size_t cb)
 {
   if (src_ptr == dst_ptr)
     return;
 
-  CUstream stream = ((pocl_cuda_device_data_t *)data)->stream;
   CUresult result
       = cuMemcpyDtoDAsync ((CUdeviceptr) (dst_ptr + dst_offset),
                            (CUdeviceptr) (src_ptr + src_offset), cb, stream);
@@ -500,7 +507,7 @@ pocl_cuda_submit_copy (void *data, const void *src_ptr, size_t src_offset,
 }
 
 void
-pocl_cuda_submit_read_rect (void *data, void *__restrict__ const host_ptr,
+pocl_cuda_submit_read_rect (CUstream stream, void *__restrict__ const host_ptr,
                             void *__restrict__ const device_ptr,
                             const size_t *__restrict__ const buffer_origin,
                             const size_t *__restrict__ const host_origin,
@@ -532,13 +539,12 @@ pocl_cuda_submit_read_rect (void *data, void *__restrict__ const host_ptr,
   params.srcPitch = buffer_row_pitch;
   params.srcHeight = buffer_slice_pitch / buffer_row_pitch;
 
-  CUstream stream = ((pocl_cuda_device_data_t *)data)->stream;
   CUresult result = cuMemcpy3DAsync (&params, stream);
   CUDA_CHECK (result, "cuMemcpy3DAsync");
 }
 
 void
-pocl_cuda_submit_write_rect (void *data,
+pocl_cuda_submit_write_rect (CUstream stream,
                              const void *__restrict__ const host_ptr,
                              void *__restrict__ const device_ptr,
                              const size_t *__restrict__ const buffer_origin,
@@ -571,13 +577,13 @@ pocl_cuda_submit_write_rect (void *data,
   params.dstPitch = buffer_row_pitch;
   params.dstHeight = buffer_slice_pitch / buffer_row_pitch;
 
-  CUstream stream = ((pocl_cuda_device_data_t *)data)->stream;
   CUresult result = cuMemcpy3DAsync (&params, stream);
   CUDA_CHECK (result, "cuMemcpy3DAsync");
 }
 
 void
-pocl_cuda_submit_copy_rect (void *data, const void *__restrict const src_ptr,
+pocl_cuda_submit_copy_rect (CUstream stream,
+                            const void *__restrict const src_ptr,
                             void *__restrict__ const dst_ptr,
                             const size_t *__restrict__ const src_origin,
                             const size_t *__restrict__ const dst_origin,
@@ -609,7 +615,6 @@ pocl_cuda_submit_copy_rect (void *data, const void *__restrict const src_ptr,
   params.dstPitch = dst_row_pitch;
   params.dstHeight = dst_slice_pitch / dst_row_pitch;
 
-  CUstream stream = ((pocl_cuda_device_data_t *)data)->stream;
   CUresult result = cuMemcpy3DAsync (&params, stream);
   CUDA_CHECK (result, "cuMemcpy3DAsync");
 }
@@ -618,26 +623,31 @@ void *
 pocl_cuda_map_mem (void *data, void *buf_ptr, size_t offset, size_t size,
                    void *host_ptr)
 {
-  if (host_ptr != NULL)
-    return host_ptr;
+  assert (host_ptr == NULL);
+
+  return malloc (size);
+}
+
+void
+pocl_cuda_submit_map_mem (CUstream stream, void *buf_ptr, size_t offset,
+                          size_t size, void *host_ptr)
+{
+  assert (host_ptr != NULL);
 
   // TODO: Map instead of copy?
-  void *ptr = malloc (size);
-  CUstream stream = ((pocl_cuda_device_data_t *)data)->stream;
-  CUresult result = cuMemcpyDtoHAsync (ptr, (CUdeviceptr) (buf_ptr + offset),
-                                       size, stream);
+  // TODO: don't copy if mapped as CL_MAP_WRITE_INVALIDATE_REGION
+  CUresult result = cuMemcpyDtoHAsync (
+      host_ptr, (CUdeviceptr) (buf_ptr + offset), size, stream);
   CUDA_CHECK (result, "cuMemcpyDtoHAsync");
-  return ptr;
 }
 
 void *
-pocl_cuda_unmap_mem (void *data, void *host_ptr, void *device_start_ptr,
-                     size_t offset, size_t size)
+pocl_cuda_submit_unmap_mem (CUstream stream, void *host_ptr,
+                            void *device_start_ptr, size_t offset, size_t size)
 {
   if (host_ptr)
     {
       // TODO: Only copy back if mapped for writing
-      CUstream stream = ((pocl_cuda_device_data_t *)data)->stream;
       CUresult result = cuMemcpyHtoDAsync (
           (CUdeviceptr) (device_start_ptr + offset), host_ptr, size, stream);
       CUDA_CHECK (result, "cuMemcpyHtoDAsync");
@@ -747,14 +757,12 @@ pocl_cuda_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
 }
 
 void
-pocl_cuda_submit_kernel (_cl_command_run run, cl_device_id device,
-                         cl_event event)
+pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
+                         cl_device_id device, cl_event event)
 {
   cl_kernel kernel = run.kernel;
   pocl_argument *arguments = run.arguments;
   struct pocl_context pc = run.pc;
-
-  CUstream stream = ((pocl_cuda_device_data_t *)device->data)->stream;
 
   // Check if we need to handle global work offsets
   int has_offsets = 0;
@@ -916,7 +924,7 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
   cuCtxSetCurrent (((pocl_cuda_device_data_t *)cq->device->data)->context);
 
   CUresult result;
-  CUstream stream = ((pocl_cuda_device_data_t *)cq->device->data)->stream;
+  CUstream stream = *(CUstream *)cq->data;
 
   POCL_LOCK_OBJ (node->event);
 
@@ -978,15 +986,14 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
   switch (node->type)
     {
     case CL_COMMAND_READ_BUFFER:
-      pocl_cuda_submit_read (node->device->data, node->command.read.host_ptr,
+      pocl_cuda_submit_read (stream, node->command.read.host_ptr,
                              node->command.read.device_ptr,
                              node->command.read.offset, node->command.read.cb);
       break;
     case CL_COMMAND_WRITE_BUFFER:
-      pocl_cuda_submit_write (node->device->data, node->command.write.host_ptr,
-                              node->command.write.device_ptr,
-                              node->command.write.offset,
-                              node->command.write.cb);
+      pocl_cuda_submit_write (
+          stream, node->command.write.host_ptr, node->command.write.device_ptr,
+          node->command.write.offset, node->command.write.cb);
       break;
     case CL_COMMAND_COPY_BUFFER:
       {
@@ -997,7 +1004,7 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
         if (!src_dev)
           src_dev = dst_dev;
         pocl_cuda_submit_copy (
-            node->device->data, src_buf->device_ptrs[src_dev->dev_id].mem_ptr,
+            stream, src_buf->device_ptrs[src_dev->dev_id].mem_ptr,
             node->command.copy.src_offset,
             dst_buf->device_ptrs[dst_dev->dev_id].mem_ptr,
             node->command.copy.dst_offset, node->command.copy.cb);
@@ -1005,7 +1012,7 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
       }
     case CL_COMMAND_READ_BUFFER_RECT:
       pocl_cuda_submit_read_rect (
-          node->device->data, node->command.read_image.host_ptr,
+          stream, node->command.read_image.host_ptr,
           node->command.read_image.device_ptr, node->command.read_image.origin,
           node->command.read_image.h_origin, node->command.read_image.region,
           node->command.read_image.b_rowpitch,
@@ -1014,15 +1021,15 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
           node->command.read_image.h_slicepitch);
       break;
     case CL_COMMAND_WRITE_BUFFER_RECT:
-      pocl_cuda_submit_write_rect (
-          node->device->data, node->command.write_image.host_ptr,
-          node->command.write_image.device_ptr,
-          node->command.write_image.origin, node->command.write_image.h_origin,
-          node->command.write_image.region,
-          node->command.write_image.b_rowpitch,
-          node->command.write_image.b_slicepitch,
-          node->command.write_image.h_rowpitch,
-          node->command.write_image.h_slicepitch);
+      pocl_cuda_submit_write_rect (stream, node->command.write_image.host_ptr,
+                                   node->command.write_image.device_ptr,
+                                   node->command.write_image.origin,
+                                   node->command.write_image.h_origin,
+                                   node->command.write_image.region,
+                                   node->command.write_image.b_rowpitch,
+                                   node->command.write_image.b_slicepitch,
+                                   node->command.write_image.h_rowpitch,
+                                   node->command.write_image.h_slicepitch);
       break;
     case CL_COMMAND_COPY_BUFFER_RECT:
       {
@@ -1033,7 +1040,7 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
         if (!src_dev)
           src_dev = dst_dev;
         pocl_cuda_submit_copy_rect (
-            node->device->data, src_buf->device_ptrs[src_dev->dev_id].mem_ptr,
+            stream, src_buf->device_ptrs[src_dev->dev_id].mem_ptr,
             dst_buf->device_ptrs[dst_dev->dev_id].mem_ptr,
             node->command.copy_image.src_origin,
             node->command.copy_image.dst_origin,
@@ -1048,10 +1055,12 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
       {
         cl_device_id device = node->device;
         cl_mem buffer = node->command.map.buffer;
-        pocl_cuda_map_mem (
-            node->device->data, buffer->device_ptrs[device->dev_id].mem_ptr,
-            node->command.map.mapping->offset, node->command.map.mapping->size,
-            node->command.map.mapping->host_ptr);
+        if (!(buffer->flags & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR)))
+          pocl_cuda_submit_map_mem (
+              stream, buffer->device_ptrs[device->dev_id].mem_ptr,
+              node->command.map.mapping->offset,
+              node->command.map.mapping->size,
+              node->command.map.mapping->host_ptr);
         POCL_LOCK_OBJ (buffer);
         buffer->map_count++;
         POCL_UNLOCK_OBJ (buffer);
@@ -1061,15 +1070,16 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
       {
         cl_device_id device = node->device;
         cl_mem buffer = node->command.unmap.memobj;
-        pocl_cuda_unmap_mem (node->device->data,
-                             node->command.unmap.mapping->host_ptr,
-                             buffer->device_ptrs[device->dev_id].mem_ptr,
-                             node->command.unmap.mapping->offset,
-                             node->command.unmap.mapping->size);
+        pocl_cuda_submit_unmap_mem (
+            stream, node->command.unmap.mapping->host_ptr,
+            buffer->device_ptrs[device->dev_id].mem_ptr,
+            node->command.unmap.mapping->offset,
+            node->command.unmap.mapping->size);
         break;
       }
     case CL_COMMAND_NDRANGE_KERNEL:
-      pocl_cuda_submit_kernel (node->command.run, node->device, node->event);
+      pocl_cuda_submit_kernel (stream, node->command.run, node->device,
+                               node->event);
       break;
 
     case CL_COMMAND_MARKER:
@@ -1102,8 +1112,7 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
   else
     result = cuEventCreate (&event_data->end, CU_EVENT_DISABLE_TIMING);
   CUDA_CHECK (result, "cuEventCreate");
-  result = cuEventRecord (
-      event_data->end, ((pocl_cuda_device_data_t *)cq->device->data)->stream);
+  result = cuEventRecord (event_data->end, stream);
   CUDA_CHECK (result, "cuEventRecord");
 }
 

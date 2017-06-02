@@ -80,8 +80,12 @@ POname(clCreateCommandQueue)(cl_context context,
   POCL_RETAIN_OBJECT(context);
   POCL_RETAIN_OBJECT(device);
 
+  errcode = CL_SUCCESS;
+  if (device->ops->init_queue)
+    errcode = device->ops->init_queue (command_queue);
+
   if (errcode_ret != NULL)
-    *errcode_ret = CL_SUCCESS;
+    *errcode_ret = errcode;
 
   pocl_queue_list_insert(command_queue);
   return command_queue;

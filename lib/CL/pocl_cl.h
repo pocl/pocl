@@ -269,6 +269,8 @@ struct pocl_device_ops {
    *  parameters : optional environment with device-specific parameters
    */
   cl_int (*init) (unsigned j, cl_device_id device, const char *parameters);
+  cl_int (*init_queue) (cl_command_queue queue);
+  void (*free_queue) (cl_command_queue queue);
   cl_int (*alloc_mem_obj) (cl_device_id device, cl_mem mem_obj, void* host_ptr);
   void *(*create_sub_buffer) (void *data, void* buffer, size_t origin, size_t size);
   void (*free) (cl_device_id device, cl_mem mem_obj);
@@ -545,6 +547,9 @@ struct _cl_command_queue {
   struct _cl_event * volatile barrier;
   volatile int command_count; /* counter for unfinished command enqueued */
   volatile pocl_data_sync_item last_event;
+
+  /* backend specific data */
+  void *data;
 };
 
 

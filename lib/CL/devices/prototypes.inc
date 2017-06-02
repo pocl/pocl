@@ -44,6 +44,8 @@
   void pocl_##__DRV__##_uninit (cl_device_id device);                   \
   cl_int pocl_##__DRV__##_init (unsigned j, cl_device_id device, const char* parameters); \
   unsigned int pocl_##__DRV__##_probe (struct pocl_device_ops *ops); \
+  cl_int pocl_##__DRV__##_init_queue (cl_command_queue queue); \
+  void pocl_##__DRV__##_free_queue (cl_command_queue queue); \
   cl_int pocl_##__DRV__##_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, \
                                          void* host_ptr); \
   void *pocl_##__DRV__##_create_sub_buffer (void *device_data, void* buffer, \
