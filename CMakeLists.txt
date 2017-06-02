@@ -645,7 +645,7 @@ set(HOST_DEVICE_CL_VERSION "120")
 set(HOST_DEVICE_CL_STD "1.2")
 
 # define it here, b/c we'll need these both at runtime and buildtime
-set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics")
+set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes")
 if((HOST_DEVICE_CL_VERSION GREATER 199) AND (CLANG_SPIR))
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_spir")
 endif()
