@@ -69,9 +69,9 @@ Building pocl with CUDA support
 CUDA backend status
 -------------------
 
-(last updated: 2017-04-21)
+(last updated: 2017-06-02)
 
-The CUDA backend currently passes 74 tests from pocl's internal testsuite, and
+The CUDA backend currently passes 73 tests from pocl's internal testsuite, and
 is capable of running various real OpenCL codes.
 Unlike NVIDIA's proprietary OpenCL implementation, pocl supports SPIR
 consumption, and so this backend has also been able to run (for example) SYCL
@@ -80,10 +80,30 @@ Since it uses CUDA under-the-hood, this backend also works with all of the
 NVIDIA CUDA profiling and debugging tools, many of which don't work with
 NVIDIA's own OpenCL implementation.
 
+Conformance status
+~~~~~~~~~~~~~~~~~~
+
+The Khronos OpenCL 1.2 conformance tests are
+`available here <https://github.com/KhronosGroup/OpenCL-CTS/tree/cl12_trunk>`_.
+The following test categories are known to pass on at least one NVIDIA GPU using
+pocl's CUDA backend:
+
+* allocations
+* api
+* atomics
+* basic
+* computeinfo
+* contractions
+* events
+* profiling
+* relationals
+* thread_dimensions
+* vec_step
+
 Tested platforms
 ~~~~~~~~~~~~~~~~
-The CUDA backend has been tested on Linux (CentOS 7.3) with SM_35, SM_52, and
-SM_61 capable NVIDIA GPUs.
+The CUDA backend has been tested on Linux (CentOS 7.3) with SM_35, SM_52,
+SM_60, and SM_61 capable NVIDIA GPUs.
 
 The backend is also functional on macOS, with just one additional test failure
 compared to Linux (``test_event_cycle``).
