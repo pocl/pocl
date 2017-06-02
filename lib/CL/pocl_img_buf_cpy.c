@@ -127,16 +127,25 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
       mod_dst_origin[0] *= dst->image_elem_size * dst->image_channels;
     }
 
+  /* NOTE: 1D image array has row_pitch == slice_pitch;
+   * need to zero it for bufferbound checks.
+   */
   if (src_is_image)
     {
       src_row_pitch = src->image_row_pitch;
-      src_slice_pitch = src->image_slice_pitch;
+      if (src->type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
+        src_slice_pitch = 0;
+      else
+        src_slice_pitch = src->image_slice_pitch;
     }
 
   if (dst_is_image)
     {
       dst_row_pitch = dst->image_row_pitch;
-      dst_slice_pitch = dst->image_slice_pitch;
+      if (dst->type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
+        dst_slice_pitch = 0;
+      else
+        dst_slice_pitch = dst->image_slice_pitch;
     }
 
   POCL_RETURN_ERROR_ON(((command_queue->context != src->context)
