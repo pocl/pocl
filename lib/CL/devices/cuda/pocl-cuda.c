@@ -1117,6 +1117,22 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq)
             node->command.copy_image.dst_slicepitch);
         break;
       }
+    case CL_COMMAND_MIGRATE_MEM_OBJECTS:
+      {
+        int i;
+        for (i = 0; i < node->command.migrate.num_mem_objects; i++)
+          {
+            cl_device_id src_dev = node->command.migrate.source_devices[i];
+            cl_device_id dst_dev = cq->device;
+            cl_mem buf = node->command.migrate.mem_objects[i];
+            if (!src_dev)
+              src_dev = dst_dev;
+            pocl_cuda_submit_copy (
+                stream, buf->device_ptrs[src_dev->dev_id].mem_ptr, 0,
+                buf->device_ptrs[dst_dev->dev_id].mem_ptr, 0, buf->size);
+          }
+        break;
+      }
     case CL_COMMAND_MAP_BUFFER:
       {
         cl_device_id device = node->device;
@@ -1153,7 +1169,6 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq)
       break;
 
     case CL_COMMAND_FILL_BUFFER:
-    case CL_COMMAND_MIGRATE_MEM_OBJECTS:
     case CL_COMMAND_READ_IMAGE:
     case CL_COMMAND_WRITE_IMAGE:
     case CL_COMMAND_COPY_IMAGE:
