@@ -53,6 +53,7 @@ typedef struct pocl_cuda_device_data_s
 typedef struct pocl_cuda_queue_data_s
 {
   CUstream stream;
+  int use_thread;
   pthread_t thread;
   pthread_mutex_t lock;
   _cl_command_node *volatile work_queue;
@@ -312,13 +313,19 @@ pocl_cuda_init_queue (cl_command_queue queue)
   if (CUDA_CHECK_ERROR (result, "cuStreamCreate"))
     return CL_OUT_OF_RESOURCES;
 
-  pthread_mutex_init (&queue_data->lock, NULL);
-  int err = pthread_create (&queue_data->thread, NULL, pocl_cuda_queue_thread,
-                            queue_data);
-  if (err)
+  queue_data->use_thread
+      = !pocl_get_bool_option ("POCL_CUDA_DISABLE_QUEUE_THREADS", 0);
+
+  if (queue_data->use_thread)
     {
-      POCL_MSG_ERR ("[CUDA] Error creating queue thread: %d\n", err);
-      return CL_OUT_OF_RESOURCES;
+      pthread_mutex_init (&queue_data->lock, NULL);
+      int err = pthread_create (&queue_data->thread, NULL,
+                                pocl_cuda_queue_thread, queue_data);
+      if (err)
+        {
+          POCL_MSG_ERR ("[CUDA] Error creating queue thread: %d\n", err);
+          return CL_OUT_OF_RESOURCES;
+        }
     }
 
   return CL_SUCCESS;
@@ -335,8 +342,11 @@ pocl_cuda_free_queue (cl_command_queue queue)
   assert (queue_data->work_queue == NULL);
 
   // Kill queue thread
-  queue_data->queue = NULL;
-  pthread_join (queue_data->thread, NULL);
+  if (queue_data->use_thread)
+    {
+      queue_data->queue = NULL;
+      pthread_join (queue_data->thread, NULL);
+    }
 }
 
 char *
@@ -953,27 +963,6 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
 }
 
 void
-pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
-{
-  // Retain event dependencies
-  event_node *dep = NULL;
-  LL_FOREACH (node->event->wait_list, dep)
-    {
-      POname (clRetainEvent) (dep->event);
-    }
-
-  // Allocate CUDA event data
-  node->event->data
-      = (pocl_cuda_event_data_t *)calloc (1, sizeof (pocl_cuda_event_data_t));
-
-  // Add command to work queue
-  pocl_cuda_queue_data_t *queue_data = (pocl_cuda_queue_data_t *)cq->data;
-  pthread_mutex_lock (&queue_data->lock);
-  DL_APPEND (queue_data->work_queue, node);
-  pthread_mutex_unlock (&queue_data->lock);
-}
-
-void
 pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq)
 {
   CUresult result;
@@ -1197,6 +1186,35 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq)
   CUDA_CHECK (result, "cuEventRecord");
 
   event_data->events_ready = 1;
+}
+
+void
+pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
+{
+  // Retain event dependencies
+  event_node *dep = NULL;
+  LL_FOREACH (node->event->wait_list, dep)
+    {
+      POname (clRetainEvent) (dep->event);
+    }
+
+  // Allocate CUDA event data
+  node->event->data
+      = (pocl_cuda_event_data_t *)calloc (1, sizeof (pocl_cuda_event_data_t));
+
+  if (((pocl_cuda_queue_data_t *)cq->data)->use_thread)
+    {
+      // Add command to work queue
+      pocl_cuda_queue_data_t *queue_data = (pocl_cuda_queue_data_t *)cq->data;
+      pthread_mutex_lock (&queue_data->lock);
+      DL_APPEND (queue_data->work_queue, node);
+      pthread_mutex_unlock (&queue_data->lock);
+    }
+  else
+    {
+      cuCtxSetCurrent (((pocl_cuda_device_data_t *)cq->device->data)->context);
+      pocl_cuda_submit_node (node, cq);
+    }
 }
 
 void
