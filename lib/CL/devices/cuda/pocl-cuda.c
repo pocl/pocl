@@ -172,7 +172,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   if (CUDA_CHECK_ERROR (result, "cuDeviceGet"))
     ret = CL_INVALID_DEVICE;
 
-  // Get specific device name
+  /* Get specific device name */
   dev->long_name = dev->short_name = calloc (256, sizeof (char));
 
   if (ret != CL_INVALID_DEVICE)
@@ -183,7 +183,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   SETUP_DEVICE_CL_VERSION (CUDA_DEVICE_CL_VERSION_MAJOR,
                            CUDA_DEVICE_CL_VERSION_MINOR);
 
-  // Get other device properties
+  /* Get other device properties */
   if (ret != CL_INVALID_DEVICE)
     {
       cuDeviceGetAttribute ((int *)&dev->max_work_group_size,
@@ -240,7 +240,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->local_mem_type = CL_LOCAL;
   dev->host_unified_memory = 0;
 
-  // Get GPU architecture name
+  /* Get GPU architecture name */
   int sm_maj = 0, sm_min = 0;
   if (ret != CL_INVALID_DEVICE)
     {
@@ -254,7 +254,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->llvm_cpu = pocl_get_string_option ("POCL_CUDA_GPU_ARCH", gpu_arch);
   POCL_MSG_PRINT_INFO ("[CUDA] GPU architecture = %s\n", dev->llvm_cpu);
 
-  // Find libdevice library
+  /* Find libdevice library */
   if (findLibDevice (data->libdevice, dev->llvm_cpu))
     {
       if (ret != CL_INVALID_DEVICE)
@@ -264,7 +264,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
         }
     }
 
-  // Create context
+  /* Create context */
   if (ret != CL_INVALID_DEVICE)
     {
       result = cuCtxCreate (&data->context, CU_CTX_MAP_HOST, data->device);
@@ -272,7 +272,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
         ret = CL_INVALID_DEVICE;
     }
 
-  // Create epoch event for timing info
+  /* Create epoch event for timing info */
   if (ret != CL_INVALID_DEVICE)
     {
       result = cuEventCreate (&data->epoch_event, CU_EVENT_DEFAULT);
@@ -286,7 +286,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
         ret = CL_INVALID_DEVICE;
     }
 
-  // Get global memory size
+  /* Get global memory size */
   size_t memfree = 0, memtotal = 0;
   if (ret != CL_INVALID_DEVICE)
     result = cuMemGetInfo (&memfree, &memtotal);
@@ -342,7 +342,7 @@ pocl_cuda_free_queue (cl_command_queue queue)
 
   assert (queue_data->work_queue == NULL);
 
-  // Kill queue thread
+  /* Kill queue thread */
   if (queue_data->use_thread)
     {
       queue_data->queue = NULL;
@@ -374,9 +374,9 @@ pocl_cuda_init_device_infos (unsigned j, struct _cl_device_id *dev)
   dev->local_as_id = 3;
   dev->constant_as_id = 1;
 
-  // TODO: Get images working
+  /* TODO: Get images working */
   dev->image_support = CL_FALSE;
-  // always enable 64bit ints
+
   dev->has_64bit_long = 1;
 }
 
@@ -431,7 +431,7 @@ pocl_cuda_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void *host_ptr)
   CUresult result;
   void *b = NULL;
 
-  /* if memory for this global memory is not yet allocated -> do it */
+  /* If memory for this global memory is not yet allocated -> do it */
   if (mem_obj->device_ptrs[device->global_mem_id].mem_ptr == NULL)
     {
       cl_mem_flags flags = mem_obj->flags;
@@ -439,9 +439,9 @@ pocl_cuda_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void *host_ptr)
       if (flags & CL_MEM_USE_HOST_PTR)
         {
 #if defined __arm__
-          // cuMemHostRegister is not supported on ARN
-          // Allocate device memory and perform explicit copies
-          // before and after running a kernel
+          /* cuMemHostRegister is not supported on ARM.
+           * Allocate device memory and perform explicit copies
+           * before and after running a kernel */
           result = cuMemAlloc ((CUdeviceptr *)&b, mem_obj->size);
           CUDA_CHECK (result, "cuMemAlloc");
 #else
@@ -490,7 +490,7 @@ pocl_cuda_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void *host_ptr)
           = device->global_mem_id;
     }
 
-  /* copy already allocated global mem info to devices own slot */
+  /* Copy allocated global mem info to devices own slot */
   mem_obj->device_ptrs[device->dev_id]
       = mem_obj->device_ptrs[device->global_mem_id];
 
@@ -679,8 +679,8 @@ pocl_cuda_submit_map_mem (CUstream stream, void *buf_ptr, size_t offset,
 {
   assert (host_ptr != NULL);
 
-  // TODO: Map instead of copy?
-  // TODO: don't copy if mapped as CL_MAP_WRITE_INVALIDATE_REGION
+  /* TODO: Map instead of copy? */
+  /* TODO: don't copy if mapped as CL_MAP_WRITE_INVALIDATE_REGION */
   CUresult result = cuMemcpyDtoHAsync (
       host_ptr, (CUdeviceptr) (buf_ptr + offset), size, stream);
   CUDA_CHECK (result, "cuMemcpyDtoHAsync");
@@ -692,7 +692,7 @@ pocl_cuda_submit_unmap_mem (CUstream stream, void *host_ptr,
 {
   if (host_ptr)
     {
-      // TODO: Only copy back if mapped for writing
+      /* TODO: Only copy back if mapped for writing */
       CUresult result = cuMemcpyHtoDAsync (
           (CUdeviceptr) (device_start_ptr + offset), host_ptr, size, stream);
       CUDA_CHECK (result, "cuMemcpyHtoDAsync");
@@ -706,7 +706,7 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
 {
   CUresult result;
 
-  // Check if we already have a compiled kernel function
+  /* Check if we already have a compiled kernel function */
   pocl_cuda_kernel_data_t *kdata = (pocl_cuda_kernel_data_t *)kernel->data;
   if (kdata)
     {
@@ -717,7 +717,7 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
     }
   else
     {
-      // TODO: when can we release this?
+      /* TODO: when can we release this? */
       kernel->data
           = calloc (pocl_num_devices, sizeof (pocl_cuda_kernel_data_t));
       kdata = kernel->data + device->dev_id;
@@ -728,7 +728,7 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
 
   POCL_LOCK(ddata->compile_lock);
 
-  // Generate the parallel bitcode file linked with the kernel library
+  /* Generate the parallel bitcode file linked with the kernel library */
   int error = pocl_llvm_generate_workgroup_function (device, kernel, 0, 0, 0);
   if (error)
     {
@@ -750,7 +750,7 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
 
   if (!pocl_exists (ptx_filename))
     {
-      // Generate PTX from LLVM bitcode
+      /* Generate PTX from LLVM bitcode */
       if (pocl_ptx_gen (bc_filename, ptx_filename, kernel->name,
                         device->llvm_cpu,
                         ((pocl_cuda_device_data_t *)device->data)->libdevice,
@@ -758,18 +758,18 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
         POCL_ABORT ("pocl-cuda: failed to generate PTX\n");
     }
 
-  // Load PTX module
-  // TODO: When can we unload the module?
+  /* Load PTX module */
+  /* TODO: When can we unload the module? */
   CUmodule module;
   result = cuModuleLoad (&module, ptx_filename);
   CUDA_CHECK (result, "cuModuleLoad");
 
-  // Get kernel function
+  /* Get kernel function */
   CUfunction function;
   result = cuModuleGetFunction (&function, module, kernel->name);
   CUDA_CHECK (result, "cuModuleGetFunction");
 
-  // Get pointer aligment
+  /* Get pointer aligment */
   if (!kdata->alignments)
     {
       kdata->alignments = calloc (kernel->num_args + kernel->num_locals + 4,
@@ -809,18 +809,18 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
   pocl_argument *arguments = run.arguments;
   struct pocl_context pc = run.pc;
 
-  // Check if we need to handle global work offsets
+  /* Check if we need to handle global work offsets */
   int has_offsets = 0;
   if (pc.global_offset[0] || pc.global_offset[1] || pc.global_offset[2])
     has_offsets = 1;
 
-  // Get kernel function
+  /* Get kernel function */
   pocl_cuda_kernel_data_t *kdata
       = load_or_generate_kernel (kernel, device, has_offsets);
   CUmodule module = has_offsets ? kdata->module_offsets : kdata->module;
   CUfunction function = has_offsets ? kdata->kernel_offsets : kdata->kernel;
 
-  // Prepare kernel arguments
+  /* Prepare kernel arguments */
   void *null = NULL;
   unsigned sharedMemBytes = 0;
   void *params[kernel->num_args + kernel->num_locals + 4];
@@ -829,7 +829,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
   unsigned constantMemOffsets[kernel->num_args];
   unsigned globalOffsets[3];
 
-  // Get handle to constant memory buffer
+  /* Get handle to constant memory buffer */
   size_t constant_mem_size;
   CUdeviceptr constant_mem_base = 0;
   cuModuleGetGlobal (&constant_mem_base, &constant_mem_size, module,
@@ -852,7 +852,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
                 size_t size = arguments[i].size;
                 size_t align = kdata->alignments[i];
 
-                // Pad offset to align memory
+                /* Pad offset to align memory */
                 if (sharedMemBytes % align)
                   sharedMemBytes += align - (sharedMemBytes % align);
 
@@ -866,7 +866,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
               {
                 assert (constant_mem_base);
 
-                // Get device pointer
+                /* Get device pointer */
                 cl_mem mem = *(void **)arguments[i].value;
                 CUdeviceptr src
                     = (CUdeviceptr)mem->device_ptrs[device->dev_id].mem_ptr;
@@ -877,7 +877,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
                     constantMemBytes += align - (constantMemBytes % align);
                   }
 
-                // Copy to constant buffer at current offset
+                /* Copy to constant buffer at current offset */
                 result
                     = cuMemcpyDtoDAsync (constant_mem_base + constantMemBytes,
                                          src, mem->size, stream);
@@ -896,8 +896,8 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
                     params[i] = &mem->device_ptrs[device->dev_id].mem_ptr;
 
 #if defined __arm__
-                    // On ARM with USE_HOST_PTR, perform explicit copy to
-                    // device
+                    /* On ARM with USE_HOST_PTR, perform explicit copy to
+                     * device */
                     if (mem->flags & CL_MEM_USE_HOST_PTR)
                       {
                         cuMemcpyHtoD (*(CUdeviceptr *)(params[i]),
@@ -926,14 +926,14 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
 
   unsigned arg_index = kernel->num_args;
 
-  // Deal with automatic local allocations
-  // TODO: Would be better to remove arguments and make these static GEPs
+  /* Deal with automatic local allocations */
+  /* TODO: Would be better to remove arguments and make these static GEPs */
   for (i = 0; i < kernel->num_locals; ++i, ++arg_index)
     {
       size_t size = arguments[arg_index].size;
       size_t align = kdata->alignments[arg_index];
 
-      // Pad offset to align memory
+      /* Pad offset to align memory */
       if (sharedMemBytes % align)
         sharedMemBytes += align - (sharedMemBytes % align);
 
@@ -942,10 +942,10 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
       params[arg_index] = sharedMemOffsets + arg_index;
     }
 
-  // Add global work dimensionality
+  /* Add global work dimensionality */
   params[arg_index++] = &pc.work_dim;
 
-  // Add global offsets if necessary
+  /* Add global offsets if necessary */
   if (has_offsets)
     {
       globalOffsets[0] = pc.global_offset[0];
@@ -956,7 +956,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
       params[arg_index++] = globalOffsets + 2;
     }
 
-  // Launch kernel
+  /* Launch kernel */
   result = cuLaunchKernel (function, pc.num_groups[0], pc.num_groups[1],
                            pc.num_groups[2], run.local_x, run.local_y,
                            run.local_z, sharedMemBytes, stream, params, NULL);
@@ -974,32 +974,32 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq)
   pocl_cuda_event_data_t *event_data
       = (pocl_cuda_event_data_t *)node->event->data;
 
-  // Process event dependencies
+  /* Process event dependencies */
   event_node *dep = NULL;
   LL_FOREACH (node->event->wait_list, dep)
     {
-      // Try and lock dependency event
+      /* Try and lock dependency event */
       int ret = 0;
       while ((ret = pthread_mutex_trylock (&dep->event->pocl_lock)))
         {
-          // If it is in the process of completing, just skip it
+          /* If it is in the process of completing, just skip it */
           if (dep->event->status == CL_COMPLETE)
               break;
         }
       if (ret)
         continue;
 
-      // Add CUDA event dependency
+      /* Add CUDA event dependency */
       if (dep->event->command_type != CL_COMMAND_USER
           && dep->event->queue->device->ops == cq->device->ops)
         {
-          // Block stream on event, but only for different queues
+          /* Block stream on event, but only for different queues */
           if (dep->event->queue != node->event->queue)
             {
               pocl_cuda_event_data_t *dep_data
                   = (pocl_cuda_event_data_t *)dep->event->data;
 
-              // Wait until dependency has finished being submitted
+              /* Wait until dependency has finished being submitted */
               while (!dep_data->events_ready)
                 ;
 
@@ -1013,7 +1013,7 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq)
       pthread_mutex_unlock (&dep->event->pocl_lock);
     }
 
-  // Wait on flag for external events
+  /* Wait on flag for external events */
   if (event_data->num_ext_events)
     {
       CUdeviceptr dev_ext_event_flag;
@@ -1031,7 +1031,7 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq)
       CUDA_CHECK (result, "cuStreamWaitValue32");
     }
 
-  // Create and record event for command start if profiling enabled
+  /* Create and record event for command start if profiling enabled */
   if (cq->properties & CL_QUEUE_PROFILING_ENABLE)
     {
       result = cuEventCreate (&event_data->start, CU_EVENT_DEFAULT);
@@ -1182,7 +1182,7 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq)
       break;
     }
 
-  // Create and record event for command end
+  /* Create and record event for command end */
   if (cq->properties & CL_QUEUE_PROFILING_ENABLE)
     result = cuEventCreate (&event_data->end, CU_EVENT_DEFAULT);
   else
@@ -1197,20 +1197,20 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq)
 void
 pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
 {
-  // Retain event dependencies
+  /* Retain event dependencies */
   event_node *dep = NULL;
   LL_FOREACH (node->event->wait_list, dep)
     {
       POname (clRetainEvent) (dep->event);
     }
 
-  // Allocate CUDA event data
+  /* Allocate CUDA event data */
   node->event->data
       = (pocl_cuda_event_data_t *)calloc (1, sizeof (pocl_cuda_event_data_t));
 
   if (((pocl_cuda_queue_data_t *)cq->data)->use_thread)
     {
-      // Add command to work queue
+      /* Add command to work queue */
       pocl_cuda_queue_data_t *queue_data = (pocl_cuda_queue_data_t *)cq->data;
       pthread_mutex_lock (&queue_data->lock);
       DL_APPEND (queue_data->work_queue, node);
@@ -1232,8 +1232,8 @@ pocl_cuda_notify (cl_device_id device, cl_event event)
   assert (event_data->num_ext_events > 0);
   assert (event_data->ext_event_flag);
 
-  // Decrement external event counter
-  // Trigger flag if none left
+  /* Decrement external event counter */
+  /* Trigger flag if none left */
   if (!--event_data->num_ext_events)
     *event_data->ext_event_flag = 1;
 }
@@ -1241,13 +1241,13 @@ pocl_cuda_notify (cl_device_id device, cl_event event)
 void
 pocl_cuda_broadcast (cl_event event)
 {
-  // TODO: call notify for each non-CUDA event in notify_list
+  /* TODO: call notify for each non-CUDA event in notify_list */
 }
 
 void
 pocl_cuda_flush (cl_device_id device, cl_command_queue cq)
 {
-  // TODO: Something here?
+  /* TODO: Something here? */
 }
 
 void
@@ -1256,13 +1256,13 @@ pocl_cuda_wait_event (cl_device_id device, cl_event event)
   if (event->status <= CL_COMPLETE)
     return;
 
-  // Wait for dependencies
+  /* Wait for dependencies */
   int dep_failed = 0;
   event_node *dep = NULL;
   POCL_LOCK_OBJ (event);
   LL_FOREACH (event->wait_list, dep)
     {
-      // Recurse for CUDA events, otherwise just spin-lock on status
+      /* Recurse for CUDA events, otherwise just spin-lock on status */
       if (dep->event->queue
           && dep->event->queue->device->ops == event->queue->device->ops)
         pocl_cuda_wait_event (event->queue->device, dep->event);
@@ -1275,19 +1275,19 @@ pocl_cuda_wait_event (cl_device_id device, cl_event event)
     }
   POCL_UNLOCK_OBJ (event);
 
-  // Make sure command has finished being submitted
+  /* Make sure command has finished being submitted */
   while (event->status > CL_SUBMITTED
          || !((pocl_cuda_event_data_t *)event->data)->events_ready)
     ;
 
-  // Clean up wait_list nodes
-  // Need to be careful - pocl_broadcast could modify wait_list while we're
-  // iterating through it
+  /* Clean up wait_list nodes.
+   * Need to be careful - pocl_broadcast could modify wait_list while we're
+   * iterating through it */
   while (1)
     {
       cl_event dep_event = NULL;
 
-      // Get the event at the head of the list
+      /* Get the event at the head of the list */
       POCL_LOCK_OBJ (event);
       dep = event->wait_list;
       if (dep)
@@ -1298,7 +1298,7 @@ pocl_cuda_wait_event (cl_device_id device, cl_event event)
         }
       POCL_UNLOCK_OBJ (event);
 
-      // No more events - we're done
+      /* No more events - we're done */
       if (!dep_event)
         break;
 
@@ -1307,7 +1307,7 @@ pocl_cuda_wait_event (cl_device_id device, cl_event event)
 
   pocl_cuda_event_data_t *event_data = (pocl_cuda_event_data_t *)event->data;
 
-  // If any dependencies failed, mark this event as failed too
+  /* If any dependencies failed, mark this event as failed too */
   if (dep_failed)
     {
       pocl_mem_manager_free_command (event->command);
@@ -1323,7 +1323,7 @@ pocl_cuda_wait_event (cl_device_id device, cl_event event)
       POCL_UPDATE_EVENT_RUNNING (&event);
       POCL_UPDATE_EVENT_COMPLETE (&event);
 
-      // Update start/end timestamps
+      /* Update start/end timestamps */
       if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
         {
           float diff;
@@ -1341,7 +1341,7 @@ pocl_cuda_wait_event (cl_device_id device, cl_event event)
       return;
     }
 
-  // Wait for command to finish
+  /* Wait for command to finish */
   cuCtxSetCurrent (((pocl_cuda_device_data_t *)device->data)->context);
 
   CUresult result = cuEventSynchronize (event_data->end);
@@ -1366,7 +1366,7 @@ pocl_cuda_wait_event (cl_device_id device, cl_event event)
       || event->command_type == CL_COMMAND_TASK)
     {
 #if defined __arm__
-      // On ARM with USE_HOST_PTR, perform explict copies back from device
+      /* On ARM with USE_HOST_PTR, perform explict copies back from device */
       cl_kernel kernel = event->command.run.kernel;
       pocl_argument *arguments = event->command.run.arguments;
       unsigned i;
@@ -1397,27 +1397,27 @@ pocl_cuda_wait_event (cl_device_id device, cl_event event)
       pocl_mem_manager_free_command (event->command);
     }
 
-  // Retain this event temporarily, otherwise the call to
-  // POCL_UPDATE_EVENT_COMPLETE might release the event before we've
-  // dealt with the timing.
-  // TODO: Maybe better to handle update_event so we don't have to do this?
+  /* Retain this event temporarily, otherwise the call to
+   * POCL_UPDATE_EVENT_COMPLETE might release the event before we've
+   * dealt with the timing.
+   * TODO: Maybe better to handle update_event so we don't have to do this? */
   POname (clRetainEvent) (event);
 
   POCL_UPDATE_EVENT_RUNNING (&event);
   POCL_UPDATE_EVENT_COMPLETE (&event);
 
-  // Update timing info with CUDA event timers if profiling enabled
+  /* Update timing info with CUDA event timers if profiling enabled */
   if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
     {
-      // CUDA doesn't provide a way to get event timestamps directly,
-      // only the elapsed time between two events. We use the elapsed
-      // time from the epoch event enqueued on device creation to get
-      // the actual timestamps.
-      //
-      // Since the CUDA timer resolution is lower than the host timer,
-      // this can sometimes result in the start time being before the
-      // submit time, so we use max() to ensure the timestamps are
-      // sane.
+      /* CUDA doesn't provide a way to get event timestamps directly,
+       * only the elapsed time between two events. We use the elapsed
+       * time from the epoch event enqueued on device creation to get
+       * the actual timestamps.
+       *
+       * Since the CUDA timer resolution is lower than the host timer,
+       * this can sometimes result in the start time being before the
+       * submit time, so we use max() to ensure the timestamps are
+       * sane. */
 
       float diff;
       cl_ulong epoch = ((pocl_cuda_device_data_t *)device->data)->epoch;
@@ -1477,12 +1477,12 @@ pocl_cuda_queue_thread (void *data)
     cuCtxSetCurrent (
         ((pocl_cuda_device_data_t *)queue->device->data)->context);
   else
-    // This queue has already been released
+    /* This queue has already been released */
     return NULL;
 
   do
     {
-      // Attempt to get next command from work queue
+      /* Attempt to get next command from work queue */
       _cl_command_node *node = NULL;
       pthread_mutex_lock (&queue_data->lock);
       if (queue_data->work_queue)
@@ -1492,7 +1492,7 @@ pocl_cuda_queue_thread (void *data)
         }
       pthread_mutex_unlock (&queue_data->lock);
 
-      // Submit command, if we found one
+      /* Submit command, if we found one */
       if (node)
         pocl_cuda_submit_node (node, queue_data->queue);
     }
