@@ -92,6 +92,7 @@ pocl's CUDA backend:
 * api
 * atomics
 * basic
+* commonfns
 * computeinfo
 * contractions
 * events

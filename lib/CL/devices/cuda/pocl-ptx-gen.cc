@@ -810,6 +810,9 @@ void mapLibDeviceCalls(llvm::Module *Module) {
     LDMAP("trunc")
 #undef LDMAP
 
+    {"llvm.copysign.f32", "__nv_copysignf"},
+    {"llvm.copysign.f64", "__nv_copysign"},
+
     {"llvm.pow.f32", "__nv_powf"},
     {"llvm.pow.f64", "__nv_pow"},
 
