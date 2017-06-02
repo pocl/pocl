@@ -50,6 +50,15 @@ typedef struct pocl_cuda_device_data_s
   pocl_lock_t compile_lock;
 } pocl_cuda_device_data_t;
 
+typedef struct pocl_cuda_queue_data_s
+{
+  CUstream stream;
+  pthread_t thread;
+  pthread_mutex_t lock;
+  _cl_command_node *volatile work_queue;
+  cl_command_queue queue;
+} pocl_cuda_queue_data_t;
+
 typedef struct pocl_cuda_kernel_data_s
 {
   CUmodule module;
@@ -63,11 +72,14 @@ typedef struct pocl_cuda_event_data_s
 {
   CUevent start;
   CUevent end;
+  volatile int events_ready;
   cl_int *ext_event_flag;
   unsigned num_ext_events;
 } pocl_cuda_event_data_t;
 
 extern unsigned int pocl_num_devices;
+
+void *pocl_cuda_queue_thread (void *);
 
 static void
 pocl_cuda_abort_on_error (CUresult result, unsigned line, const char *func,
@@ -290,10 +302,24 @@ pocl_cuda_init_queue (cl_command_queue queue)
 {
   cuCtxSetCurrent (((pocl_cuda_device_data_t *)queue->device->data)->context);
 
-  queue->data = calloc (1, sizeof (CUstream));
-  CUresult result = cuStreamCreate (queue->data, CU_STREAM_NON_BLOCKING);
+  pocl_cuda_queue_data_t *queue_data
+      = calloc (1, sizeof (pocl_cuda_queue_data_t));
+  queue->data = queue_data;
+  queue_data->queue = queue;
+
+  CUresult result
+      = cuStreamCreate (&queue_data->stream, CU_STREAM_NON_BLOCKING);
   if (CUDA_CHECK_ERROR (result, "cuStreamCreate"))
     return CL_OUT_OF_RESOURCES;
+
+  pthread_mutex_init (&queue_data->lock, NULL);
+  int err = pthread_create (&queue_data->thread, NULL, pocl_cuda_queue_thread,
+                            queue_data);
+  if (err)
+    {
+      POCL_MSG_ERR ("[CUDA] Error creating queue thread: %d\n", err);
+      return CL_OUT_OF_RESOURCES;
+    }
 
   return CL_SUCCESS;
 }
@@ -301,8 +327,16 @@ pocl_cuda_init_queue (cl_command_queue queue)
 void
 pocl_cuda_free_queue (cl_command_queue queue)
 {
+  pocl_cuda_queue_data_t *queue_data = (pocl_cuda_queue_data_t *)queue->data;
+
   cuCtxSetCurrent (((pocl_cuda_device_data_t *)queue->device->data)->context);
-  cuStreamDestroy (*(CUstream *)queue->data);
+  cuStreamDestroy (queue_data->stream);
+
+  assert (queue_data->work_queue == NULL);
+
+  // Kill queue thread
+  queue_data->queue = NULL;
+  pthread_join (queue_data->thread, NULL);
 }
 
 char *
@@ -744,7 +778,7 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
       kdata->kernel = function;
     }
 
-  POCL_UNLOCK(ddata->compile_lock);
+  POCL_UNLOCK (ddata->compile_lock);
 
   return kdata;
 }
@@ -921,22 +955,49 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
 void
 pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
 {
-  cuCtxSetCurrent (((pocl_cuda_device_data_t *)cq->device->data)->context);
+  // Retain event dependencies
+  event_node *dep = NULL;
+  LL_FOREACH (node->event->wait_list, dep)
+    {
+      POname (clRetainEvent) (dep->event);
+    }
 
+  // Allocate CUDA event data
+  node->event->data
+      = (pocl_cuda_event_data_t *)calloc (1, sizeof (pocl_cuda_event_data_t));
+
+  // Add command to work queue
+  pocl_cuda_queue_data_t *queue_data = (pocl_cuda_queue_data_t *)cq->data;
+  pthread_mutex_lock (&queue_data->lock);
+  DL_APPEND (queue_data->work_queue, node);
+  pthread_mutex_unlock (&queue_data->lock);
+}
+
+void
+pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq)
+{
   CUresult result;
-  CUstream stream = *(CUstream *)cq->data;
+  CUstream stream = ((pocl_cuda_queue_data_t *)cq->data)->stream;
 
   POCL_LOCK_OBJ (node->event);
 
   pocl_cuda_event_data_t *event_data
-      = (pocl_cuda_event_data_t *)calloc (1, sizeof (pocl_cuda_event_data_t));
-  node->event->data = event_data;
+      = (pocl_cuda_event_data_t *)node->event->data;
 
   // Process event dependencies
   event_node *dep = NULL;
   LL_FOREACH (node->event->wait_list, dep)
     {
-      POname (clRetainEvent) (dep->event);
+      // Try and lock dependency event
+      int ret = 0;
+      while ((ret = pthread_mutex_trylock (&dep->event->pocl_lock)))
+        {
+          // If it is in the process of completing, just skip it
+          if (dep->event->status == CL_COMPLETE)
+              break;
+        }
+      if (ret)
+        continue;
 
       // Add CUDA event dependency
       if (dep->event->command_type != CL_COMMAND_USER
@@ -950,6 +1011,8 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
         }
       else
         event_data->num_ext_events++;
+
+      pthread_mutex_unlock (&dep->event->pocl_lock);
     }
 
   // Wait on flag for external events
@@ -1114,6 +1177,8 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
   CUDA_CHECK (result, "cuEventCreate");
   result = cuEventRecord (event_data->end, stream);
   CUDA_CHECK (result, "cuEventRecord");
+
+  event_data->events_ready = 1;
 }
 
 void
@@ -1146,62 +1211,97 @@ pocl_cuda_flush (cl_device_id device, cl_command_queue cq)
 void
 pocl_cuda_wait_event (cl_device_id device, cl_event event)
 {
-  if (!event || event->status <= CL_COMPLETE)
+  if (event->status <= CL_COMPLETE)
     return;
-  if (event->command_type == CL_COMMAND_USER)
-    {
-      // TODO: Can get rid of this loop if we handle via CUDA event?
-      while (event->status > CL_COMPLETE)
-        {
-        };
-      return;
-    }
 
-  // Recursively wait for dependencies
+  // Wait for dependencies
   int dep_failed = 0;
   event_node *dep = NULL;
+  POCL_LOCK_OBJ (event);
   LL_FOREACH (event->wait_list, dep)
     {
-      // TODO: Use device->ops->wait_event for non-CUDA events
-      pocl_cuda_wait_event (event->queue->device, dep->event);
+      // Recurse for CUDA events, otherwise just spin-lock on status
+      if (dep->event->queue
+          && dep->event->queue->device->ops == event->queue->device->ops)
+        pocl_cuda_wait_event (event->queue->device, dep->event);
+      else
+        while (dep->event->status > CL_COMPLETE)
+          ;
 
       if (dep->event->status < 0)
         dep_failed = 1;
     }
+  POCL_UNLOCK_OBJ (event);
+
+  // Make sure command has finished being submitted
+  while (event->status > CL_SUBMITTED
+         || !((pocl_cuda_event_data_t *)event->data)->events_ready)
+    ;
 
   // Clean up wait_list nodes
-  dep = event->wait_list;
-  while (dep)
+  // Need to be careful - pocl_broadcast could modify wait_list while we're
+  // iterating through it
+  while (1)
     {
-      event_node *next = dep->next;
-      POname(clReleaseEvent) (dep->event);
-      pocl_mem_manager_free_event_node (dep);
-      dep = next;
+      cl_event dep_event = NULL;
+
+      // Get the event at the head of the list
+      POCL_LOCK_OBJ (event);
+      dep = event->wait_list;
+      if (dep)
+        {
+          dep_event = dep->event;
+          event->wait_list = dep->next;
+          pocl_mem_manager_free_event_node (dep);
+        }
+      POCL_UNLOCK_OBJ (event);
+
+      // No more events - we're done
+      if (!dep_event)
+        break;
+
+      POname (clReleaseEvent) (dep_event);
     }
 
-  if (event->status <= CL_COMPLETE)
-    return;
+  pocl_cuda_event_data_t *event_data = (pocl_cuda_event_data_t *)event->data;
 
+  // If any dependencies failed, mark this event as failed too
   if (dep_failed)
     {
       pocl_mem_manager_free_command (event->command);
       event->status = -1;
+      *event_data->ext_event_flag = 1;
       return;
     }
 
   if (event->command_type == CL_COMMAND_MARKER
       || event->command_type == CL_COMMAND_BARRIER)
     {
-      // TODO: set start/end time to CUDA event times
       pocl_mem_manager_free_command (event->command);
       POCL_UPDATE_EVENT_RUNNING (&event);
       POCL_UPDATE_EVENT_COMPLETE (&event);
+
+      // Update start/end timestamps
+      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+        {
+          float diff;
+          cl_ulong epoch = ((pocl_cuda_device_data_t *)device->data)->epoch;
+          CUresult result = cuEventElapsedTime (
+              &diff, ((pocl_cuda_device_data_t *)device->data)->epoch_event,
+              event_data->start);
+          CUDA_CHECK (result, "cuEventElapsedTime");
+          event->time_start = (cl_ulong) (epoch + diff * 1e6);
+          event->time_start
+              = max (event->time_start, event->time_submit + 1);
+          event->time_end = event->time_start;
+        }
+
       return;
     }
 
   // Wait for command to finish
   cuCtxSetCurrent (((pocl_cuda_device_data_t *)device->data)->context);
-  pocl_cuda_event_data_t *event_data = ((pocl_cuda_event_data_t *)event->data);
+
   CUresult result = cuEventSynchronize (event_data->end);
   CUDA_CHECK (result, "cuEventSynchronize");
 
@@ -1210,7 +1310,8 @@ pocl_cuda_wait_event (cl_device_id device, cl_event event)
       cl_mem buffer = event->command->command.unmap.memobj;
       mem_mapping_t *mapping = event->command->command.unmap.mapping;
       if (mapping->host_ptr
-          && !(buffer->flags & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR)))
+          && !(buffer->flags
+               & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR)))
         free (mapping->host_ptr);
 
       POCL_LOCK_OBJ (buffer);
@@ -1282,12 +1383,16 @@ pocl_cuda_wait_event (cl_device_id device, cl_event event)
       result = cuEventElapsedTime (
           &diff, ((pocl_cuda_device_data_t *)device->data)->epoch_event,
           event_data->start);
-      event->time_start = max (event->time_submit + 1, epoch + diff * 1e6);
+      CUDA_CHECK (result, "cuEventElapsedTime");
+      event->time_start = (cl_ulong) (epoch + diff * 1e6);
+      event->time_start = max (event->time_start, event->time_submit + 1);
 
       result = cuEventElapsedTime (
           &diff, ((pocl_cuda_device_data_t *)device->data)->epoch_event,
           event_data->end);
-      event->time_end = max (event->time_start + 1, epoch + diff * 1e6);
+      CUDA_CHECK (result, "cuEventElapsedTime");
+      event->time_end = (cl_ulong) (epoch + diff * 1e6);
+      event->time_end = max (event->time_end, event->time_start + 1);
     }
 
   POname (clReleaseEvent) (event);
@@ -1316,5 +1421,40 @@ pocl_cuda_free_event_data (cl_event event)
 void
 pocl_cuda_join (cl_device_id device, cl_command_queue cq)
 {
-  pocl_cuda_wait_event (device, cq->last_event.event);
+  if (cq->last_event.event)
+    pocl_cuda_wait_event (device, cq->last_event.event);
+}
+
+void *
+pocl_cuda_queue_thread (void *data)
+{
+  pocl_cuda_queue_data_t *queue_data = (pocl_cuda_queue_data_t *)data;
+
+  cl_command_queue queue = queue_data->queue;
+  if (queue)
+    cuCtxSetCurrent (
+        ((pocl_cuda_device_data_t *)queue->device->data)->context);
+  else
+    // This queue has already been released
+    return NULL;
+
+  do
+    {
+      // Attempt to get next command from work queue
+      _cl_command_node *node = NULL;
+      pthread_mutex_lock (&queue_data->lock);
+      if (queue_data->work_queue)
+        {
+          node = queue_data->work_queue;
+          DL_DELETE (queue_data->work_queue, node);
+        }
+      pthread_mutex_unlock (&queue_data->lock);
+
+      // Submit command, if we found one
+      if (node)
+        pocl_cuda_submit_node (node, queue_data->queue);
+    }
+  while (queue_data->queue);
+
+  return NULL;
 }
