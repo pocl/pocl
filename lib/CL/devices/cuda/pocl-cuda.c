@@ -213,6 +213,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
       dev->max_clock_frequency /= 1000;
     }
 
+  dev->mem_base_addr_align = 2048;
   dev->preferred_wg_size_multiple = 32;
   dev->preferred_vector_width_char = 1;
   dev->preferred_vector_width_short = 1;
