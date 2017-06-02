@@ -1165,7 +1165,7 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq)
     case CL_COMMAND_SVM_MEMCPY:
     case CL_COMMAND_SVM_MEMFILL:
     default:
-      POCL_ABORT_UNIMPLEMENTED ("Command type for CUDA devices");
+      POCL_ABORT_UNIMPLEMENTED (pocl_command_to_str (node->type));
       break;
     }
 
