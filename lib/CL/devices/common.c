@@ -885,9 +885,20 @@ pocl_free_dlhandle (_cl_command_node *cmd)
 /* accounting object for the main memory */
 static pocl_global_mem_t system_memory;
 
+static size_t
+next_larger_pow2 (size_t in)
+{
+  size_t out = 1;
+  while (in > out)
+    out <<= 1;
+  return out;
+}
+
 void
 pocl_setup_device_for_system_memory(cl_device_id device)
 {
+  int limit_memory_gb = pocl_get_int_option ("POCL_MEMORY_LIMIT", 0);
+
   /* set up system memory limits, if required */
   if (system_memory.total_alloc_limit == 0)
   {
@@ -910,6 +921,18 @@ pocl_setup_device_for_system_memory(cl_device_id device)
   }
 
   device->global_mem_size = system_memory.total_alloc_limit;
+
+  if (limit_memory_gb > 0)
+    {
+      size_t limited_memory = (size_t)limit_memory_gb << 30;
+      if (device->global_mem_size > limited_memory)
+        device->global_mem_size = limited_memory;
+      else
+        POCL_MSG_WARN ("requested POCL_MEMORY_LIMIT %i GBs is larger than "
+                       "physical memory size (%zu) GBs, ignoring\n",
+                       limit_memory_gb, (device->global_mem_size >> 30));
+    }
+
   if (device->global_mem_size < MIN_MAX_MEM_ALLOC_SIZE)
     POCL_ABORT("Not enough memory to run on this device.\n");
 
@@ -930,7 +953,9 @@ pocl_setup_device_for_system_memory(cl_device_id device)
     alloc_limit = MIN_MAX_MEM_ALLOC_SIZE;
 
   if (alloc_limit > device->global_mem_size)
-    alloc_limit = device->global_mem_size;
+    alloc_limit = next_larger_pow2 (device->global_mem_size / 4);
+  if (alloc_limit > (device->global_mem_size / 2))
+    alloc_limit >>= 1;
 
   if (alloc_limit < MIN_MAX_MEM_ALLOC_SIZE)
     alloc_limit = MIN_MAX_MEM_ALLOC_SIZE;
@@ -955,8 +980,8 @@ pocl_set_buffer_image_limits(cl_device_id device)
    * it's max mem alloc / 4 because some programs (conformance test)
    * try to allocate max size constant objects and run out of memory
    * while trying to fill them. */
-  device->local_mem_size = device->max_constant_buffer_size =
-      (device->max_mem_alloc_size / 4);
+  device->local_mem_size = device->max_constant_buffer_size
+      = next_larger_pow2 (device->global_mem_size / 256);
 
   /* We don't have hardware limitations on the buffer-backed image sizes,
    * so we set the maximum size in terms of the maximum amount of pixels

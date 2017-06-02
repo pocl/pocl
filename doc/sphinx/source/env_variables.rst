@@ -110,6 +110,13 @@ pocl.
  Forces the maximum WG size returned by the device or kernel work group queries
  to be at most this number.
 
+- **POCL_MEMORY_LIMIT**
+
+ Integer option, unit: gigabytes. Limits the total global memory size
+ reported by pocl for the pthread/basic devices (this will also affect
+ local/constant/max-alloc-size numbers, since these are derived from
+ global mem size).
+
 - **POCL_OFFLINE_COMPILE**
 
  Bool. When enabled(==1), some drivers will create virtual devices which are only
