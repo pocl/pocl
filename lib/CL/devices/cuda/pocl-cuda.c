@@ -1003,11 +1003,14 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq)
       if (dep->event->command_type != CL_COMMAND_USER
           && dep->event->queue->device->ops == cq->device->ops)
         {
-          // TODO: Don't bother if queue is the same
-          pocl_cuda_event_data_t *dep_data
-              = (pocl_cuda_event_data_t *)dep->event->data;
-          result = cuStreamWaitEvent (stream, dep_data->end, 0);
-          CUDA_CHECK (result, "cuStreamWaitEvent");
+          // Block stream on event, but only for different queues
+          if (dep->event->queue != node->event->queue)
+            {
+              pocl_cuda_event_data_t *dep_data
+                  = (pocl_cuda_event_data_t *)dep->event->data;
+              result = cuStreamWaitEvent (stream, dep_data->end, 0);
+              CUDA_CHECK (result, "cuStreamWaitEvent");
+            }
         }
       else
         event_data->num_ext_events++;
