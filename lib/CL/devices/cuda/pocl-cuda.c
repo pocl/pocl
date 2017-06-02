@@ -998,6 +998,11 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq)
             {
               pocl_cuda_event_data_t *dep_data
                   = (pocl_cuda_event_data_t *)dep->event->data;
+
+              // Wait until dependency has finished being submitted
+              while (!dep_data->events_ready)
+                ;
+
               result = cuStreamWaitEvent (stream, dep_data->end, 0);
               CUDA_CHECK (result, "cuStreamWaitEvent");
             }
