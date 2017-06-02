@@ -249,7 +249,9 @@ pocl_write_pixel_fast_i (int4 color, size_t base_index, int order,
  * Writes a four element pixel to an image pixel pointed by integer coords.
  */
 static void
-pocl_write_pixel (uint4 color, global dev_image_t *img, int4 coord)
+pocl_write_pixel (uint4 color, global dev_image_t *img, int4 coord,
+                  size_t array_offset_pixels, size_t row_pitch,
+                  size_t slice_pitch)
 {
   int width = img->_width;
   int height = img->_height;
@@ -266,9 +268,8 @@ pocl_write_pixel (uint4 color, global dev_image_t *img, int4 coord)
       return;
     }
 
-  size_t base_index = coord.x + coord.y * width;
-  if (depth)
-    base_index += (coord.z * height * width);
+  size_t base_index = array_offset_pixels + coord.x + (coord.y * row_pitch)
+                      + (coord.z * slice_pitch);
 
   color = map_channels (color, order);
 
@@ -312,51 +313,100 @@ CL_UNSIGNED_INT8, CL_UNSIGNED_INT16, or CL_UNSIGNED_INT32.
     INITCOORD##__COORD__ (coord4, coord);                                     \
     global dev_image_t *i_ptr                                                 \
         = __builtin_astype (image, global dev_image_t *);                     \
-    pocl_write_pixel (as_uint4 (color), i_ptr, coord4);                       \
+    int elem_size = i_ptr->_elem_size;                                        \
+    int num_channels = i_ptr->_num_channels;                                  \
+    size_t elem_bytes = num_channels * elem_size;                             \
+    size_t row_pitch = i_ptr->_row_pitch / elem_bytes;                        \
+    size_t slice_pitch = i_ptr->_slice_pitch / elem_bytes;                    \
+    pocl_write_pixel (as_uint4 (color), i_ptr, coord4, 0, row_pitch,          \
+                      slice_pitch);                                           \
   }
 
-IMPLEMENT_WRITE_IMAGE_INT_COORD ( IMG_WO_AQ image2d_t, ui, int2, uint4)
-IMPLEMENT_WRITE_IMAGE_INT_COORD ( IMG_WO_AQ image2d_t, ui, int4, uint4)
-
-IMPLEMENT_WRITE_IMAGE_INT_COORD ( IMG_WO_AQ image2d_t, i, int2, int4)
-IMPLEMENT_WRITE_IMAGE_INT_COORD ( IMG_WO_AQ image2d_t, i, int4, int4)
-
-IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image2d_t, f, int2, float4)
-IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image3d_t, f, int4, float4)
+#define IMPLEMENT_WRITE_ARRAY_INT_COORD(__IMGTYPE__, __POSTFIX__, __COORD__,  \
+                                        __DTYPE__)                            \
+  void _CL_OVERLOADABLE write_image##__POSTFIX__ (                            \
+      __IMGTYPE__ image, __COORD__ coord, __DTYPE__ color)                    \
+  {                                                                           \
+    int4 coord4;                                                              \
+    INITCOORD##__COORD__ (coord4, coord);                                     \
+    global dev_image_t *i_ptr                                                 \
+        = __builtin_astype (image, global dev_image_t *);                     \
+    int asize = i_ptr->_image_array_size - 1;                                 \
+    int elem_size = i_ptr->_elem_size;                                        \
+    int channel_type = i_ptr->_data_type;                                     \
+    int num_channels = i_ptr->_num_channels;                                  \
+    size_t elem_bytes = num_channels * elem_size;                             \
+    size_t slice_pitch_pixels = i_ptr->_slice_pitch / elem_bytes;             \
+    size_t row_pitch = i_ptr->_row_pitch / elem_bytes;                        \
+    size_t slice_pitch = i_ptr->_slice_pitch / elem_bytes;                    \
+    size_t array_offset_pixels = 0;                                           \
+    if (i_ptr->_height > 0)                                                   \
+      {                                                                       \
+        array_offset_pixels = clamp (coord4.z, 0, asize);                     \
+        coord4.z = 0;                                                         \
+      }                                                                       \
+    else                                                                      \
+      {                                                                       \
+        array_offset_pixels = clamp (coord4.y, 0, asize);                     \
+        coord4.y = 0;                                                         \
+      }                                                                       \
+    array_offset_pixels *= slice_pitch;                                       \
+    pocl_write_pixel (as_uint4 (color), i_ptr, coord4, array_offset_pixels,   \
+                      row_pitch, slice_pitch);                                \
+  }
 
 IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image1d_t, ui, int, uint4)
-IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image1d_buffer_t, ui, int, uint4)
-IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image1d_array_t, ui, int2, uint4)
-
 IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image1d_t, i, int, int4)
-IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image1d_buffer_t, i, int, int4)
-IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image1d_array_t, i, int2, int4)
-
 IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image1d_t, f, int, float4)
+
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image1d_buffer_t, ui, int, uint4)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image1d_buffer_t, i, int, int4)
 IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image1d_buffer_t, f, int, float4)
-IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image1d_array_t, f, int2, float4)
+
+IMPLEMENT_WRITE_ARRAY_INT_COORD (IMG_WO_AQ image1d_array_t, ui, int2, uint4)
+IMPLEMENT_WRITE_ARRAY_INT_COORD (IMG_WO_AQ image1d_array_t, i, int2, int4)
+IMPLEMENT_WRITE_ARRAY_INT_COORD (IMG_WO_AQ image1d_array_t, f, int2, float4)
+
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image2d_t, ui, int2, uint4)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image2d_t, i, int2, int4)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image2d_t, f, int2, float4)
+
+IMPLEMENT_WRITE_ARRAY_INT_COORD (IMG_WO_AQ image2d_array_t, ui, int4, uint4)
+IMPLEMENT_WRITE_ARRAY_INT_COORD (IMG_WO_AQ image2d_array_t, i, int4, int4)
+IMPLEMENT_WRITE_ARRAY_INT_COORD (IMG_WO_AQ image2d_array_t, f, int4, float4)
+
+#ifdef cl_khr_3d_image_writes
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image3d_t, ui, int4, uint4)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image3d_t, i, int4, int4)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_WO_AQ image3d_t, f, int4, float4)
+#endif
 
 #ifdef CLANG_HAS_RW_IMAGES
 
-IMPLEMENT_WRITE_IMAGE_INT_COORD ( IMG_RW_AQ image2d_t, ui, int2, uint4)
-IMPLEMENT_WRITE_IMAGE_INT_COORD ( IMG_RW_AQ image2d_t, ui, int4, uint4)
-
-IMPLEMENT_WRITE_IMAGE_INT_COORD ( IMG_RW_AQ image2d_t, i, int2, int4)
-IMPLEMENT_WRITE_IMAGE_INT_COORD ( IMG_RW_AQ image2d_t, i, int4, int4)
-
-IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image2d_t, f, int2, float4)
-IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image3d_t, f, int4, float4)
-
 IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image1d_t, ui, int, uint4)
-IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image1d_buffer_t, ui, int, uint4)
-IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image1d_array_t, ui, int2, uint4)
-
 IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image1d_t, i, int, int4)
-IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image1d_buffer_t, i, int, int4)
-IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image1d_array_t, i, int2, int4)
-
 IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image1d_t, f, int, float4)
+
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image1d_buffer_t, ui, int, uint4)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image1d_buffer_t, i, int, int4)
 IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image1d_buffer_t, f, int, float4)
-IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image1d_array_t, f, int2, float4)
+
+IMPLEMENT_WRITE_ARRAY_INT_COORD (IMG_RW_AQ image1d_array_t, ui, int2, uint4)
+IMPLEMENT_WRITE_ARRAY_INT_COORD (IMG_RW_AQ image1d_array_t, i, int2, int4)
+IMPLEMENT_WRITE_ARRAY_INT_COORD (IMG_RW_AQ image1d_array_t, f, int2, float4)
+
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image2d_t, ui, int2, uint4)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image2d_t, i, int2, int4)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image2d_t, f, int2, float4)
+
+IMPLEMENT_WRITE_ARRAY_INT_COORD (IMG_RW_AQ image2d_array_t, ui, int4, uint4)
+IMPLEMENT_WRITE_ARRAY_INT_COORD (IMG_RW_AQ image2d_array_t, i, int4, int4)
+IMPLEMENT_WRITE_ARRAY_INT_COORD (IMG_RW_AQ image2d_array_t, f, int4, float4)
+
+#ifdef cl_khr_3d_image_writes
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image3d_t, ui, int4, uint4)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image3d_t, i, int4, int4)
+IMPLEMENT_WRITE_IMAGE_INT_COORD (IMG_RW_AQ image3d_t, f, int4, float4)
+#endif
 
 #endif
