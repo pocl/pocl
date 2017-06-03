@@ -234,7 +234,7 @@ struct pocl_device_ops {
 
   /* notify is used to communicate to a device driver that an event, it has
      been waiting, has been completed. */
-  void (*notify) (cl_device_id device, cl_event event);
+  void (*notify) (cl_device_id device, cl_event event, cl_event finished);
 
   /* broadcast is(has to be) called by the device driver when a command is
      completed.

@@ -640,8 +640,8 @@ pocl_broadcast (cl_event brc_event)
       if (target->event->status == CL_SUBMITTED)
         {
           POCL_UNLOCK_OBJ (target->event);
-          target->event->command->device->ops->notify 
-            (target->event->command->device, target->event);
+          target->event->command->device->ops->notify
+            (target->event->command->device, target->event, brc_event);
         }
       else 
         POCL_UNLOCK_OBJ (target->event);

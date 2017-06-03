@@ -1261,7 +1261,7 @@ pocl_hsa_flush (cl_device_id device, cl_command_queue cq)
 }
 
 void
-pocl_hsa_notify (cl_device_id device, cl_event event)
+pocl_hsa_notify (cl_device_id device, cl_event event, cl_event finished)
 {
   pocl_hsa_device_data_t *d = device->data;
   POCL_LOCK_OBJ (event);

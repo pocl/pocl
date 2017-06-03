@@ -930,7 +930,7 @@ pocl_tce_join(cl_device_id device, cl_command_queue /*cq*/)
 }
 
 void
-pocl_tce_notify (cl_device_id device, cl_event event)
+pocl_tce_notify (cl_device_id device, cl_event event, cl_event finished)
 {
   TCEDevice *d = (TCEDevice*)device->data;
   _cl_command_node * volatile node = event->command;

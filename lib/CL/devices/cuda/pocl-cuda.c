@@ -1224,7 +1224,7 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
 }
 
 void
-pocl_cuda_notify (cl_device_id device, cl_event event)
+pocl_cuda_notify (cl_device_id device, cl_event event, cl_event finished)
 {
   pocl_cuda_event_data_t *event_data = (pocl_cuda_event_data_t *)event->data;
 

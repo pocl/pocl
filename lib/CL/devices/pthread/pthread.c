@@ -409,7 +409,7 @@ pocl_pthread_join(cl_device_id device, cl_command_queue cq)
 }
 
 void
-pocl_pthread_notify (cl_device_id device, cl_event event)
+pocl_pthread_notify (cl_device_id device, cl_event event, cl_event finished)
 {
   struct data *d = (struct data*)device->data;
    int wake_thread = 0;

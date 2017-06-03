@@ -34,7 +34,7 @@
   void pocl_##__DRV__##_submit (_cl_command_node *node, cl_command_queue cq); \
   void pocl_##__DRV__##_join (cl_device_id device, cl_command_queue cq); \
   void pocl_##__DRV__##_flush (cl_device_id device, cl_command_queue cq); \
-  void pocl_##__DRV__##_notify (cl_device_id device, cl_event event);  \
+  void pocl_##__DRV__##_notify (cl_device_id device, cl_event event, cl_event finished);  \
   void pocl_##__DRV__##_broadcast (cl_event event);                    \
   void pocl_##__DRV__##_wait_event (cl_device_id device, cl_event event); \
   void pocl_##__DRV__##_update_event (cl_device_id device, cl_event event, cl_int status); \

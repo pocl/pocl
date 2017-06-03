@@ -916,7 +916,7 @@ pocl_basic_join(cl_device_id device, cl_command_queue cq)
 }
 
 void
-pocl_basic_notify (cl_device_id device, cl_event event)
+pocl_basic_notify (cl_device_id device, cl_event event, cl_event finished)
 {
   struct data *d = (struct data*)device->data;
   _cl_command_node * volatile node = event->command;
