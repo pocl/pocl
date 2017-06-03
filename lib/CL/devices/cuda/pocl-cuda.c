@@ -928,13 +928,13 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
           }
         case POCL_ARG_TYPE_IMAGE:
         case POCL_ARG_TYPE_SAMPLER:
-          POCL_ABORT ("Unhandled argument type for CUDA");
+          POCL_ABORT ("Unhandled argument type for CUDA\n");
           break;
         }
     }
 
   if (constantMemBytes > constant_mem_size)
-    POCL_ABORT ("[CUDA] Total constant buffer size %u exceeds %lu allocated",
+    POCL_ABORT ("[CUDA] Total constant buffer size %u exceeds %lu allocated\n",
                 constantMemBytes, constant_mem_size);
 
   unsigned arg_index = kernel->num_args;
@@ -1021,7 +1021,13 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq)
             }
         }
       else
-        event_data->num_ext_events++;
+        {
+          if (!((pocl_cuda_queue_data_t *)cq->data)->use_threads)
+            POCL_ABORT (
+                "Can't handle non-CUDA dependencies without queue threads\n");
+
+          event_data->num_ext_events++;
+        }
 
       pthread_mutex_unlock (&dep->event->pocl_lock);
     }
@@ -1402,6 +1408,15 @@ pocl_cuda_update_event (cl_device_id device, cl_event event, cl_int status)
 }
 
 void
+pocl_cuda_wait_event_recurse (cl_device_id device, cl_event event)
+{
+  while (event->wait_list)
+    pocl_cuda_wait_event_recurse (device, event->wait_list->event);
+
+  pocl_cuda_finalize_command (device, event);
+}
+
+void
 pocl_cuda_wait_event (cl_device_id device, cl_event event)
 {
   if (((pocl_cuda_queue_data_t *)event->queue->data)->use_threads)
@@ -1412,8 +1427,8 @@ pocl_cuda_wait_event (cl_device_id device, cl_event event)
     }
   else
     {
-      /* Finalize command in this thread */
-      pocl_cuda_finalize_command (device, event);
+      /* Recursively finalize commands in this thread */
+      pocl_cuda_wait_event_recurse (device, event);
     }
 }
 
@@ -1440,23 +1455,18 @@ pocl_cuda_free_event_data (cl_event event)
 void
 pocl_cuda_join (cl_device_id device, cl_command_queue cq)
 {
-  cl_event event;
-
+  /* Grab event at end of queue */
   POCL_LOCK_OBJ (cq);
-
-  event = cq->last_event.event;
+  cl_event event = cq->last_event.event;
   if (!event)
     {
       POCL_UNLOCK_OBJ (cq);
       return;
     }
-
   POname (clRetainEvent) (event);
-
   POCL_UNLOCK_OBJ (cq);
 
-  while (event->status > CL_COMPLETE)
-    ;
+  pocl_cuda_wait_event (device, event);
 
   POname (clReleaseEvent) (event);
 }
