@@ -991,15 +991,8 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq)
   event_node *dep = NULL;
   LL_FOREACH (node->event->wait_list, dep)
     {
-      /* Try and lock dependency event */
-      int ret = 0;
-      while ((ret = pthread_mutex_trylock (&dep->event->pocl_lock)))
-        {
-          /* If it is in the process of completing, just skip it */
-          if (dep->event->status == CL_COMPLETE)
-              break;
-        }
-      if (ret)
+      /* If it is in the process of completing, just skip it */
+      if (dep->event->status <= CL_COMPLETE)
         continue;
 
       /* Add CUDA event dependency */
@@ -1028,8 +1021,6 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq)
 
           event_data->num_ext_events++;
         }
-
-      pthread_mutex_unlock (&dep->event->pocl_lock);
     }
 
   /* Wait on flag for external events */
