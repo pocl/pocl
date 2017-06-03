@@ -211,6 +211,7 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
       (*event)->callback_list = NULL;
       (*event)->id = event_id_counter++;
       (*event)->notify_list = NULL;
+      (*event)->wait_list = NULL;
       (*event)->data = NULL;
       (*event)->num_buffers = num_buffers;
       if (num_buffers > 0)
