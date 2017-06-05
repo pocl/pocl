@@ -74,24 +74,23 @@ CL_API_SUFFIX__VERSION_1_2
     }
 
   /* TODO: channel order, saturating data type conversion */
-  if (image->image_elem_size == 1)
-    {
-      ((cl_char4*)fill_pixel)->s[0] = ((cl_int4*)fill_color)->s[0];
-      ((cl_char4*)fill_pixel)->s[1] = ((cl_int4*)fill_color)->s[1];
-      ((cl_char4*)fill_pixel)->s[2] = ((cl_int4*)fill_color)->s[2];
-      ((cl_char4*)fill_pixel)->s[3] = ((cl_int4*)fill_color)->s[3];
-    }
-  if (image->image_elem_size == 2)
-    {
-      ((cl_short4*)fill_pixel)->s[0] = ((cl_int4*)fill_color)->s[0];
-      ((cl_short4*)fill_pixel)->s[1] = ((cl_int4*)fill_color)->s[1];
-      ((cl_short4*)fill_pixel)->s[2] = ((cl_int4*)fill_color)->s[2];
-      ((cl_short4*)fill_pixel)->s[3] = ((cl_int4*)fill_color)->s[3];
-    }
- if (image->image_elem_size == 4)
-    {
-      memcpy (fill_pixel, fill_color, sizeof (cl_int4));      
-    }
+  pocl_write_pixel_zero (fill_pixel, fill_color, image->image_channel_order,
+                         image->image_elem_size,
+                         image->image_channel_data_type);
+  /* The fill color is a four component RGBA floating-point color value
+   * if the image channel data type is not an unnormalized signed and unsigned
+   * integer type,
+   *
+   * is a four component signed integer value if the image channel data type
+   * is an unnormalized signed integer type and
+   *
+   * is a four component unsigned integer value if the image channel data type
+   * is
+   * an unormalized unsigned integer type.
+   *
+   * The fill color will be converted to the appropriate
+   * image channel format and order associated with image.
+   */
 
   /* POCL uses top-left corner as origin for images and AMD SDK ImageOverlap 
      test uses bottom-left corner as origin. Because of this we need to modify 

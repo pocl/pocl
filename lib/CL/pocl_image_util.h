@@ -45,6 +45,10 @@ extern cl_int pocl_check_device_supports_image (
     cl_device_id device, const cl_image_format *image_format,
     const cl_image_desc *image_desc, cl_image_format *supported_image_formats,
     cl_uint num_entries);
+
+void pocl_write_pixel_zero (void *data, const void *color_ptr, int order,
+                            int elem_size, int channel_type);
+
 #ifdef __GNUC__
 #pragma GCC visibility pop
 #endif

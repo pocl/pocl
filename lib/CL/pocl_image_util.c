@@ -21,9 +21,10 @@
    THE SOFTWARE.
 */
 
-#include "pocl_cl.h"
 #include "pocl_image_util.h"
 #include "assert.h"
+#include "pocl_cl.h"
+#include "pocl_util.h"
 
 static unsigned
 pocl_get_image_dim (const cl_mem image)
@@ -209,4 +210,408 @@ pocl_get_image_information (cl_channel_order ch_order,
     {
       *channels_out = 4;
     }
+}
+
+/****************************************************/
+
+#define FOR4 unsigned i; for (i = 0; i < 4; i++)
+
+cl_char4
+convert_char4_sat (cl_float4 x)
+{
+  cl_char4 r;
+  FOR4
+    r.s[i] = (cl_char)max (CL_CHAR_MIN, min ((cl_int) (x.s[i]), CL_CHAR_MAX));
+  return r;
+}
+
+cl_short4
+convert_short4_sat (cl_float4 x)
+{
+  cl_short4 r;
+  FOR4
+    r.s[i] = (cl_short)max (CL_SHRT_MIN, min ((cl_int) (x.s[i]), CL_SHRT_MAX));
+  return r;
+}
+
+cl_uchar4
+convert_uchar4_sat (cl_float4 x)
+{
+  cl_uchar4 r;
+  FOR4
+    r.s[i] = (cl_uchar)max (0, min ((cl_long) (x.s[i]), CL_UCHAR_MAX));
+  return r;
+}
+
+cl_ushort4
+convert_ushort4_sat (cl_float4 x)
+{
+  cl_ushort4 r;
+  FOR4
+    r.s[i] = (cl_ushort)max (0, min ((cl_long) (x.s[i]), CL_USHRT_MAX));
+  return r;
+}
+
+/****************************************************/
+
+cl_char
+convert_char_sat (cl_float x)
+{
+  cl_int y = (cl_int)x;
+  return (cl_char)max (CL_CHAR_MIN, min (y, CL_CHAR_MAX));
+}
+
+cl_short
+convert_short_sat (cl_float x)
+{
+  cl_int y = (cl_int)x;
+  return (cl_short)max (CL_SHRT_MIN, min (y, CL_SHRT_MAX));
+}
+
+cl_uchar
+convert_uchar_sat (cl_float x)
+{
+  cl_long y = (cl_long)x;
+  return (cl_uchar)max (0, min (y, CL_UCHAR_MAX));
+}
+
+cl_ushort
+convert_ushort_sat (cl_float x)
+{
+  cl_long y = (cl_long)x;
+  return (cl_ushort)max (0, min (y, CL_USHRT_MAX));
+}
+
+/****************************************************/
+
+cl_char4
+convert_char4_sat_int (cl_int4 x)
+{
+  cl_char4 r;
+  FOR4
+    r.s[i] = (cl_char)max (CL_CHAR_MIN, min ((cl_int) (x.s[i]), CL_CHAR_MAX));
+  return r;
+}
+
+cl_short4
+convert_short4_sat_int (cl_int4 x)
+{
+  cl_short4 r;
+  FOR4
+    r.s[i] = (cl_short)max (CL_SHRT_MIN, min ((cl_int) (x.s[i]), CL_SHRT_MAX));
+  return r;
+}
+
+cl_uchar4
+convert_uchar4_sat_int (cl_uint4 x)
+{
+  cl_uchar4 r;
+  FOR4
+    r.s[i] = (cl_uchar)min (x.s[i], CL_UCHAR_MAX);
+  return r;
+}
+
+cl_ushort4
+convert_ushort4_sat_int (cl_uint4 x)
+{
+  cl_ushort4 r;
+  FOR4
+    r.s[i] = (cl_ushort)min (x.s[i], CL_USHRT_MAX);
+  return r;
+}
+
+/****************************************************/
+
+cl_char
+convert_char_sat_int (cl_int x)
+{
+  return (cl_char)max (CL_CHAR_MIN, min (x, CL_CHAR_MAX));
+}
+
+cl_short
+convert_short_sat_int (cl_int x)
+{
+  return (cl_short)max (CL_SHRT_MIN, min (x, CL_SHRT_MAX));
+}
+
+cl_uchar
+convert_uchar_sat_int (cl_uint x)
+{
+  return (cl_uchar)min (x, CL_UCHAR_MAX);
+}
+
+cl_ushort
+convert_ushort_sat_int (cl_uint x)
+{
+  return (cl_ushort)min (x, CL_USHRT_MAX);
+}
+
+/****************************************************/
+
+static cl_uint4
+map_channels (cl_uint4 color, int order)
+{
+  switch (order)
+    {
+    case CL_ARGB:
+      {
+        // return color.wxyz;
+        cl_uint4 ret;
+        ret.s[0] = color.s[3];
+        ret.s[1] = color.s[0];
+        ret.s[2] = color.s[1];
+        ret.s[3] = color.s[2];
+        return ret;
+      }
+    case CL_BGRA:
+      {
+        // return color.zyxw;
+        cl_uint4 ret;
+        ret.s[0] = color.s[2];
+        ret.s[1] = color.s[1];
+        ret.s[2] = color.s[0];
+        ret.s[3] = color.s[3];
+        return ret;
+      }
+    case CL_RGBA:
+    default:
+      return color;
+    }
+}
+
+/* only for CL_FLOAT, CL_SNORM_INT8, CL_UNORM_INT8,
+ * CL_SNORM_INT16, CL_UNORM_INT16 channel types */
+static void
+write_float4_pixel (cl_float4 color, void *data, int type)
+{
+  if (type == CL_FLOAT)
+    {
+      cl_float4 *p = (cl_float4 *)data;
+      FOR4
+        p->s[i] = color.s[i];
+      return;
+    }
+  if (type == CL_HALF_FLOAT)
+    {
+      /* TODO: convert to builtins */
+      ((uint16_t *)data)[0] = float_to_half (color.s0);
+      ((uint16_t *)data)[1] = float_to_half (color.s1);
+      ((uint16_t *)data)[2] = float_to_half (color.s2);
+      ((uint16_t *)data)[3] = float_to_half (color.s3);
+      return;
+    }
+  const cl_float f127 = ((cl_float) (CL_CHAR_MAX));
+  const cl_float f32767 = ((cl_float) (CL_SHRT_MAX));
+  const cl_float f255 = ((cl_float) (CL_UCHAR_MAX));
+  const cl_float f65535 = ((cl_float) (CL_USHRT_MAX));
+  if (type == CL_SNORM_INT8)
+    {
+      /*  <-1.0, 1.0> to <I*_MIN, I*_MAX> */
+      cl_float4 colorf;
+      colorf.v4 = color.v4 * f127;
+      cl_char4 final_color = convert_char4_sat (colorf);
+      *((cl_char4 *)data) = final_color;
+      return;
+    }
+  if (type == CL_SNORM_INT16)
+    {
+      cl_float4 colorf;
+      colorf.v4 = color.v4 * f32767;
+      cl_short4 final_color = convert_short4_sat (colorf);
+      *((cl_short4 *)data) = final_color;
+      return;
+    }
+  if (type == CL_UNORM_INT8)
+    {
+      /* <0, I*_MAX> to <0.0, 1.0> */
+      /*  <-1.0, 1.0> to <I*_MIN, I*_MAX> */
+      cl_float4 colorf;
+      colorf.v4 = color.v4 * f255;
+      cl_uchar4 final_color = convert_uchar4_sat (colorf);
+      *((cl_uchar4 *)data) = final_color;
+      return;
+    }
+  if (type == CL_UNORM_INT16)
+    {
+      cl_float4 colorf;
+      colorf.v4 = color.v4 * f65535;
+      cl_ushort4 final_color = convert_ushort4_sat (colorf);
+      *((cl_ushort4 *)data) = final_color;
+      return;
+    }
+
+  return;
+}
+
+/* only for CL_FLOAT, CL_SNORM_INT8, CL_UNORM_INT8,
+ * CL_SNORM_INT16, CL_UNORM_INT16 channel types */
+static void
+write_float_pixel (cl_float color, void *data, int type)
+{
+  if (type == CL_FLOAT)
+    {
+      *((float *)data) = color;
+      return;
+    }
+  if (type == CL_HALF_FLOAT)
+    {
+      /* TODO: convert to builtins */
+      *((uint16_t *)data) = float_to_half (color);
+      return;
+    }
+  const cl_float f127 = ((cl_float)CL_CHAR_MAX);
+  const cl_float f32767 = ((cl_float)CL_SHRT_MAX);
+  const cl_float f255 = ((cl_float)CL_UCHAR_MAX);
+  const cl_float f65535 = ((cl_float)CL_USHRT_MAX);
+  if (type == CL_SNORM_INT8)
+    {
+      /*  <-1.0, 1.0> to <I*_MIN, I*_MAX> */
+      cl_float colorf = color * f127;
+      cl_char final_color = convert_char_sat (colorf);
+      *((cl_char *)data) = final_color;
+      return;
+    }
+  if (type == CL_SNORM_INT16)
+    {
+      cl_float colorf = color * f32767;
+      cl_short final_color = convert_short_sat (colorf);
+      *((cl_short *)data) = final_color;
+      return;
+    }
+  if (type == CL_UNORM_INT8)
+    {
+      /* <0, I*_MAX> to <0.0, 1.0> */
+      /*  <-1.0, 1.0> to <I*_MIN, I*_MAX> */
+      cl_float colorf = color * f255;
+      cl_uchar final_color = convert_uchar_sat (colorf);
+      *((cl_uchar *)data) = final_color;
+      return;
+    }
+  if (type == CL_UNORM_INT16)
+    {
+      cl_float colorf = color * f65535;
+      cl_ushort final_color = convert_ushort_sat (colorf);
+      *((cl_ushort *)data) = final_color;
+      return;
+    }
+
+  return;
+}
+
+/* for use inside filter functions
+ * no channel mapping
+ * no pointers to img metadata */
+static void
+pocl_write_pixel_fast_ui (cl_uint4 color, int order, int elem_size, void *data)
+{
+  if (order == CL_A)
+    {
+      if (elem_size == 1)
+        *((cl_uchar *)data) = convert_uchar_sat_int (color.s[3]);
+      else if (elem_size == 2)
+        *((cl_ushort *)data) = convert_ushort_sat_int (color.s[3]);
+      else if (elem_size == 4)
+        *((cl_uint *)data) = color.s[3];
+      return;
+    }
+
+  if (elem_size == 1)
+    {
+      *((cl_uchar4 *)data) = convert_uchar4_sat_int (color);
+    }
+  else if (elem_size == 2)
+    {
+      *((cl_ushort4 *)data) = convert_ushort4_sat_int (color);
+    }
+  else if (elem_size == 4)
+    {
+      *((cl_uint4 *)data) = color;
+    }
+
+  return;
+}
+
+/* for use inside filter functions
+ * no channel mapping
+ * no pointers to img metadata */
+static void
+pocl_write_pixel_fast_f (cl_float4 color, int channel_type, int order,
+                         void *data)
+{
+  if (order == CL_A)
+    {
+      write_float_pixel (color.s[3], data, channel_type);
+    }
+  else
+    {
+      write_float4_pixel (color, data, channel_type);
+    }
+
+  return;
+}
+
+/* for use inside filter functions
+ * no channel mapping
+ * no pointers to img metadata */
+static void
+pocl_write_pixel_fast_i (cl_int4 color, int order, int elem_size, void *data)
+{
+  if (order == CL_A)
+    {
+      if (elem_size == 1)
+        *((cl_char *)data) = convert_char_sat_int (color.s[3]);
+      else if (elem_size == 2)
+        *((cl_short *)data) = convert_short_sat_int (color.s[3]);
+      else if (elem_size == 4)
+        *((cl_int *)data) = color.s[3];
+      return;
+    }
+
+  if (elem_size == 1)
+    {
+      *((cl_char4 *)data) = convert_char4_sat_int (color);
+    }
+  else if (elem_size == 2)
+    {
+      *((cl_short4 *)data) = convert_short4_sat_int (color);
+    }
+  else if (elem_size == 4)
+    {
+      *((cl_int4 *)data) = color;
+    }
+  return;
+}
+
+/* full write with channel map conversion etc
+ * Writes a four element pixel to an image pixel pointed by integer coords.
+ */
+void
+pocl_write_pixel_zero (void *data, const void *color_ptr, int order,
+                       int elem_size, int channel_type)
+{
+  cl_uint4 color;
+  FOR4
+    color.s[i] = ((cl_uint4 *)color_ptr)->s[i];
+
+  color = map_channels (color, order);
+
+  typedef union
+  {
+    cl_uint4 ui;
+    cl_int4 i;
+    cl_float4 f;
+  } u;
+
+  u ucolor;
+  ucolor.ui = color;
+
+  if ((channel_type == CL_SIGNED_INT8) || (channel_type == CL_SIGNED_INT16)
+      || (channel_type == CL_SIGNED_INT32))
+    pocl_write_pixel_fast_i (ucolor.i, order, elem_size, data);
+  else if ((channel_type == CL_UNSIGNED_INT8)
+           || (channel_type == CL_UNSIGNED_INT16)
+           || (channel_type == CL_UNSIGNED_INT32))
+    pocl_write_pixel_fast_ui (ucolor.ui, order, elem_size, data);
+  else // TODO unsupported channel types
+    pocl_write_pixel_fast_f (ucolor.f, channel_type, order, data);
 }
