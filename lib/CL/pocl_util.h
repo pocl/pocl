@@ -153,6 +153,10 @@ pocl_command_to_str (cl_command_type cmd);
 int
 pocl_run_command(char * const *args);
 
+uint16_t float_to_half (float value);
+
+float half_to_float (uint16_t value);
+
 #ifdef __cplusplus
 }
 #endif
