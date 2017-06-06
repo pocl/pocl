@@ -32,6 +32,9 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
 
   errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
                                         event_wait_list);
+  if (errcode != CL_SUCCESS)
+    return errcode;
+
   if (image->buffer)
     POCL_RETURN_ERROR_ON (
         (image->buffer->flags
