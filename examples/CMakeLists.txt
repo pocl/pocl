@@ -60,11 +60,13 @@ include(ExternalProject)
 # invoke this to build all examples
 add_custom_target(prepare_examples)
 
+find_program(MAKE_PROGRAM NAMES "make")
+find_package(Git QUIET)
+set_expr(HAVE_GIT GIT_EXECUTABLE)
+
 if(ENABLE_TESTSUITES)
 
   unset(CMAKE_MODULE_PATH) # Use CMake builtin find module
-  find_package(Git QUIET)
-  set_expr(HAVE_GIT GIT_EXECUTABLE)
 
   message(STATUS "Trying to enable testsuites: ${ENABLE_TESTSUITES}")
 

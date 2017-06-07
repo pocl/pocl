@@ -30,7 +30,9 @@ set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
 set(RODINIA "rodinia_3.1")
 set(RODINIA_TGZ "${TS_SRCDIR}/${RODINIA}.tar.bz2")
 
-if (EXISTS "${RODINIA_TGZ}")
+if(NOT MAKE_COMMAND)
+  message(STATUS "Disabling testsuite ${TS_NAME}, requires make to build")
+elseif (EXISTS "${RODINIA_TGZ}")
 
   message(STATUS "Enabling testsuite ${TS_NAME}")
   list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
@@ -42,7 +44,7 @@ if (EXISTS "${RODINIA_TGZ}")
     DOWNLOAD_COMMAND test -d ${RODINIA} || /bin/bash -c "pwd && echo 'extracting rodinia tgz' && tar xjf '${RODINIA_TGZ}' && patch -p1 -r- -N -i '${CMAKE_CURRENT_SOURCE_DIR}/Rodinia.patch' && rmdir Rodinia && mv ${RODINIA} Rodinia"
     CONFIGURE_COMMAND /bin/true
     BUILD_IN_SOURCE 1
-    BUILD_COMMAND pwd && make OPENCL
+    BUILD_COMMAND pwd && ${MAKE_PROGRAM} OPENCL
       "CFLAGS=-Wno-unused-result -DCL_USE_DEPRECATED_OPENCL_1_2_APIS -DCL_USE_DEPRECATED_OPENCL_1_1_APIS"
       "OPENCL_INC=${CMAKE_SOURCE_DIR}/include"
     INSTALL_COMMAND /bin/true
