@@ -46,7 +46,7 @@ add_subdirectory("EinsteinToolkit")
 set(ALL_TESTSUITES
     AMD AMDSDK2.9 AMDSDK3.0
     ASL arrayfire clBLAS clFFT
-    CloverLeaf Halide IntelSVM
+    conformance CloverLeaf Halide IntelSVM
     opencl-book-samples OpenCV
     Parboil piglit PyOpenCL
     Rodinia VexCL ViennaCL)
