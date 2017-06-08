@@ -2757,6 +2757,18 @@ __IF_FP16 (void _CL_OVERLOADABLE write_imageh (IMG_RW_AQ image3d_t image,
 
 /******************************************************************************************/
 
+int _CL_OVERLOADABLE get_image_channel_data_type (IMG_RO_AQ image1d_t);
+int _CL_OVERLOADABLE get_image_channel_data_type (IMG_RO_AQ image1d_array_t);
+int _CL_OVERLOADABLE get_image_channel_data_type (IMG_RO_AQ image2d_array_t);
+int _CL_OVERLOADABLE get_image_channel_data_type (IMG_RO_AQ image2d_t);
+int _CL_OVERLOADABLE get_image_channel_data_type (IMG_RO_AQ image3d_t);
+
+int _CL_OVERLOADABLE get_image_channel_order (IMG_RO_AQ image1d_t);
+int _CL_OVERLOADABLE get_image_channel_order (IMG_RO_AQ image1d_array_t);
+int _CL_OVERLOADABLE get_image_channel_order (IMG_RO_AQ image2d_array_t);
+int _CL_OVERLOADABLE get_image_channel_order (IMG_RO_AQ image2d_t);
+int _CL_OVERLOADABLE get_image_channel_order (IMG_RO_AQ image3d_t);
+
 int _CL_OVERLOADABLE get_image_width (IMG_RO_AQ image1d_t image);
 int _CL_OVERLOADABLE get_image_width (IMG_RO_AQ image1d_array_t image);
 int _CL_OVERLOADABLE get_image_width (IMG_RO_AQ image2d_t image);
@@ -2776,6 +2788,18 @@ int2 _CL_OVERLOADABLE get_image_dim (IMG_RO_AQ image2d_array_t image);
 int4 _CL_OVERLOADABLE get_image_dim (IMG_RO_AQ image3d_t image);
 
 #ifdef CLANG_HAS_IMAGE_AS
+
+int _CL_OVERLOADABLE get_image_channel_order (IMG_WO_AQ image1d_t);
+int _CL_OVERLOADABLE get_image_channel_order (IMG_WO_AQ image1d_array_t);
+int _CL_OVERLOADABLE get_image_channel_order (IMG_WO_AQ image2d_array_t);
+int _CL_OVERLOADABLE get_image_channel_order (IMG_WO_AQ image2d_t);
+int _CL_OVERLOADABLE get_image_channel_order (IMG_WO_AQ image3d_t);
+
+int _CL_OVERLOADABLE get_image_channel_data_type (IMG_WO_AQ image1d_t);
+int _CL_OVERLOADABLE get_image_channel_data_type (IMG_WO_AQ image1d_array_t);
+int _CL_OVERLOADABLE get_image_channel_data_type (IMG_WO_AQ image2d_array_t);
+int _CL_OVERLOADABLE get_image_channel_data_type (IMG_WO_AQ image2d_t);
+int _CL_OVERLOADABLE get_image_channel_data_type (IMG_WO_AQ image3d_t);
 
 int _CL_OVERLOADABLE get_image_width (IMG_WO_AQ image1d_t image);
 int _CL_OVERLOADABLE get_image_width (IMG_WO_AQ image1d_array_t image);
@@ -2798,6 +2822,18 @@ int4 _CL_OVERLOADABLE get_image_dim (IMG_WO_AQ image3d_t image);
 #endif
 
 #ifdef CLANG_HAS_RW_IMAGES
+
+int _CL_OVERLOADABLE get_image_channel_order (IMG_RW_AQ image1d_t);
+int _CL_OVERLOADABLE get_image_channel_order (IMG_RW_AQ image1d_array_t);
+int _CL_OVERLOADABLE get_image_channel_order (IMG_RW_AQ image2d_array_t);
+int _CL_OVERLOADABLE get_image_channel_order (IMG_RW_AQ image2d_t);
+int _CL_OVERLOADABLE get_image_channel_order (IMG_RW_AQ image3d_t);
+
+int _CL_OVERLOADABLE get_image_channel_data_type (IMG_RW_AQ image1d_t);
+int _CL_OVERLOADABLE get_image_channel_data_type (IMG_RW_AQ image1d_array_t);
+int _CL_OVERLOADABLE get_image_channel_data_type (IMG_RW_AQ image2d_array_t);
+int _CL_OVERLOADABLE get_image_channel_data_type (IMG_RW_AQ image2d_t);
+int _CL_OVERLOADABLE get_image_channel_data_type (IMG_RW_AQ image3d_t);
 
 int _CL_OVERLOADABLE get_image_width (IMG_RW_AQ image1d_t image);
 int _CL_OVERLOADABLE get_image_width (IMG_RW_AQ image1d_array_t image);
