@@ -41,11 +41,11 @@ map_channels (uint4 color, int order)
 {
   switch (order)
     {
-    case CL_ARGB:
+    case CLK_ARGB:
       return color.yzwx;
-    case CL_BGRA:
+    case CLK_BGRA:
       return color.zyxw;
-    case CL_RGBA:
+    case CLK_RGBA:
     default:
       return color;
     }
@@ -53,14 +53,14 @@ map_channels (uint4 color, int order)
 
 /*************************************************************************/
 
-/* only for CL_FLOAT, CL_SNORM_INT8, CL_UNORM_INT8,
- * CL_SNORM_INT16, CL_UNORM_INT16 channel types */
+/* only for CLK_FLOAT, CLK_SNORM_INT8, CLK_UNORM_INT8,
+ * CLK_SNORM_INT16, CLK_UNORM_INT16 channel types */
 static float4
 get_float4_pixel (void *data, size_t base_index, int type)
 {
-  if (type == CL_FLOAT)
+  if (type == CLK_FLOAT)
     return ((float4 *)data)[base_index];
-  if (type == CL_HALF_FLOAT)
+  if (type == CLK_HALF_FLOAT)
     {
 #if !defined(LLVM_OLDER_THAN_3_9) && __has_builtin(__builtin_convertvector)
       typedef float  vector4float  __attribute__((__vector_size__(16)));
@@ -76,25 +76,25 @@ get_float4_pixel (void *data, size_t base_index, int type)
   const float4 one_32767th = (float4) (1.0f / 32767.0f);
   const float4 one_255th = ((float4) (1.0f / (float)UCHAR_MAX));
   const float4 one_65535th = ((float4) (1.0f / (float)USHRT_MAX));
-  if (type == CL_SNORM_INT8)
+  if (type == CLK_SNORM_INT8)
     {
       /*  <I*_MIN, I*_MAX> to <-1.0, 1.0> */
       int4 color = convert_int4 (((char4 *)data)[base_index]);
       float4 colorf = convert_float4 (color);
       return max ((float4) (-1.0f), (one_127th * colorf));
     }
-  if (type == CL_SNORM_INT16)
+  if (type == CLK_SNORM_INT16)
     {
       int4 color = convert_int4 (((short4 *)data)[base_index]);
       float4 colorf = convert_float4 (color);
       return max ((float4) (-1.0f), (one_32767th * colorf));
     }
-  if (type == CL_UNORM_INT8)
+  if (type == CLK_UNORM_INT8)
     {
       /* <0, I*_MAX> to <0.0, 1.0> */
       return convert_float4 (((uchar4 *)data)[base_index]) * one_255th;
     }
-  if (type == CL_UNORM_INT16)
+  if (type == CLK_UNORM_INT16)
     {
       /* <0, I*_MAX> to <0.0, 1.0> */
       return convert_float4 (((ushort4 *)data)[base_index]) * one_65535th;
@@ -102,36 +102,36 @@ get_float4_pixel (void *data, size_t base_index, int type)
   return (float4) (123.0f);
 }
 
-/* only for CL_FLOAT, CL_SNORM_INT8, CL_UNORM_INT8,
- * CL_SNORM_INT16, CL_UNORM_INT16 channel types */
+/* only for CLK_FLOAT, CLK_SNORM_INT8, CLK_UNORM_INT8,
+ * CLK_SNORM_INT16, CLK_UNORM_INT16 channel types */
 static float
 get_float_pixel (void *data, size_t base_index, int type)
 {
-  if (type == CL_FLOAT)
+  if (type == CLK_FLOAT)
     return ((float *)data)[base_index];
   const float one_127th = (float)(1.0f / 127.0f);
   const float one_32767th = (float)(1.0f / 32767.0f);
   const float one_255th = ((float)(1.0f / (float)UCHAR_MAX));
   const float one_65535th = ((float)(1.0f / (float)USHRT_MAX));
-  if (type == CL_SNORM_INT8)
+  if (type == CLK_SNORM_INT8)
     {
       /*  <I*_MIN, I*_MAX> to <-1.0, 1.0> */
       char color = ((char *)data)[base_index];
       float colorf = convert_float (color);
       return max ((-1.0f), (one_127th * colorf));
     }
-  if (type == CL_SNORM_INT16)
+  if (type == CLK_SNORM_INT16)
     {
       short color = ((short *)data)[base_index];
       float colorf = convert_float (color);
       return max ((-1.0f), (one_32767th * colorf));
     }
-  if (type == CL_UNORM_INT8)
+  if (type == CLK_UNORM_INT8)
     {
       /* <0, I*_MAX> to <0.0, 1.0> */
       return convert_float (((uchar *)data)[base_index]) * one_255th;
     }
-  if (type == CL_UNORM_INT16)
+  if (type == CLK_UNORM_INT16)
     {
       return convert_float (((ushort *)data)[base_index]) * one_65535th;
     }
@@ -153,7 +153,7 @@ pocl_read_pixel_fast_ui (size_t base_index, int order, int elem_size,
 {
   uint4 color;
 
-  if (order == CL_A)
+  if (order == CLK_A)
     {
       color = (uint4)0;
       if (elem_size == 1)
@@ -189,7 +189,7 @@ pocl_read_pixel_fast_f (size_t base_index, int channel_type, int order,
                         void *data)
 {
 
-  if (order == CL_A)
+  if (order == CLK_A)
     {
       float p = get_float_pixel (data, base_index, channel_type);
       return (float4) (0.0f, 0.0f, 0.0f, p);
@@ -209,7 +209,7 @@ pocl_read_pixel_fast_i (size_t base_index, int order, int elem_size,
 {
   int4 color;
 
-  if (order == CL_A)
+  if (order == CLK_A)
     {
       color = (int4)0;
       if (elem_size == 1)
@@ -327,13 +327,13 @@ pocl_read_pixel (global dev_image_t *img, int4 coord)
     {
       /* if out of bounds, return BORDER COLOR:
        * since pocl's basic/pthread device only
-       * supports CL_A + CL_{RGBA combos},
+       * supports CLK_A + CLK_{RGBA combos},
        * the border color is always zeroes. */
-      if ((channel_type == CL_SIGNED_INT8) || (channel_type == CL_SIGNED_INT16)
-          || (channel_type == CL_SIGNED_INT32)
-          || (channel_type == CL_UNSIGNED_INT8)
-          || (channel_type == CL_UNSIGNED_INT16)
-          || (channel_type == CL_UNSIGNED_INT32))
+      if ((channel_type == CLK_SIGNED_INT8) || (channel_type == CLK_SIGNED_INT16)
+          || (channel_type == CLK_SIGNED_INT32)
+          || (channel_type == CLK_UNSIGNED_INT8)
+          || (channel_type == CLK_UNSIGNED_INT16)
+          || (channel_type == CLK_UNSIGNED_INT32))
         return (uint4)BORDER_COLOR;
       else
         return as_uint4 ((float4)BORDER_COLOR_F);
@@ -342,13 +342,13 @@ pocl_read_pixel (global dev_image_t *img, int4 coord)
   size_t base_index
       = coord.x + (coord.y * row_pitch) + (coord.z * slice_pitch);
 
-  if ((channel_type == CL_SIGNED_INT8) || (channel_type == CL_SIGNED_INT16)
-      || (channel_type == CL_SIGNED_INT32))
+  if ((channel_type == CLK_SIGNED_INT8) || (channel_type == CLK_SIGNED_INT16)
+      || (channel_type == CLK_SIGNED_INT32))
     color = as_uint4 (
         pocl_read_pixel_fast_i (base_index, order, elem_size, data));
-  else if ((channel_type == CL_UNSIGNED_INT8)
-           || (channel_type == CL_UNSIGNED_INT16)
-           || (channel_type == CL_UNSIGNED_INT32))
+  else if ((channel_type == CLK_UNSIGNED_INT8)
+           || (channel_type == CLK_UNSIGNED_INT16)
+           || (channel_type == CLK_UNSIGNED_INT32))
     color = pocl_read_pixel_fast_ui (base_index, order, elem_size, data);
   else // TODO unsupported channel types
     color = as_uint4 (
@@ -957,13 +957,13 @@ read_pixel_linear_3d (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
                       int elem_size, void *data)
 {
   // TODO unsupported channel types
-  if ((channel_type == CL_SIGNED_INT8) || (channel_type == CL_SIGNED_INT16)
-      || (channel_type == CL_SIGNED_INT32))
+  if ((channel_type == CLK_SIGNED_INT8) || (channel_type == CLK_SIGNED_INT16)
+      || (channel_type == CLK_SIGNED_INT32))
     return as_uint4 (read_pixel_linear_3d_int (
         abc, one_m, ijk0, ijk1, width, height, depth, row_pitch, slice_pitch,
         order, elem_size, data));
-  if ((channel_type == CL_UNSIGNED_INT8) || (channel_type == CL_UNSIGNED_INT16)
-      || (channel_type == CL_UNSIGNED_INT32))
+  if ((channel_type == CLK_UNSIGNED_INT8) || (channel_type == CLK_UNSIGNED_INT16)
+      || (channel_type == CLK_UNSIGNED_INT32))
     return read_pixel_linear_3d_uint (abc, one_m, ijk0, ijk1, width, height,
                                       depth, row_pitch, slice_pitch, order,
                                       elem_size, data);
@@ -1269,13 +1269,13 @@ read_pixel_linear_2d (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
                       int elem_size, void *data)
 {
   // TODO unsupported channel types
-  if ((channel_type == CL_SIGNED_INT8) || (channel_type == CL_SIGNED_INT16)
-      || (channel_type == CL_SIGNED_INT32))
+  if ((channel_type == CLK_SIGNED_INT8) || (channel_type == CLK_SIGNED_INT16)
+      || (channel_type == CLK_SIGNED_INT32))
     return as_uint4 (read_pixel_linear_2d_int (
         abc, one_m, ijk0, ijk1, array_coord, width, height, row_pitch,
         slice_pitch, order, elem_size, data));
-  if ((channel_type == CL_UNSIGNED_INT8) || (channel_type == CL_UNSIGNED_INT16)
-      || (channel_type == CL_UNSIGNED_INT32))
+  if ((channel_type == CLK_UNSIGNED_INT8) || (channel_type == CLK_UNSIGNED_INT16)
+      || (channel_type == CLK_UNSIGNED_INT32))
     return read_pixel_linear_2d_uint (abc, one_m, ijk0, ijk1, array_coord,
                                       width, height, row_pitch, slice_pitch,
                                       order, elem_size, data);
@@ -1426,13 +1426,13 @@ read_pixel_linear_1d (float4 abc, float4 one_m, int ijk0, int ijk1,
                       int channel_type, int order, int elem_size, void *data)
 {
   // TODO unsupported channel types
-  if ((channel_type == CL_SIGNED_INT8) || (channel_type == CL_SIGNED_INT16)
-      || (channel_type == CL_SIGNED_INT32))
+  if ((channel_type == CLK_SIGNED_INT8) || (channel_type == CLK_SIGNED_INT16)
+      || (channel_type == CLK_SIGNED_INT32))
     return as_uint4 (read_pixel_linear_1d_int (abc, one_m, ijk0, ijk1,
                                                array_coord, width, slice_pitch,
                                                order, elem_size, data));
-  if ((channel_type == CL_UNSIGNED_INT8) || (channel_type == CL_UNSIGNED_INT16)
-      || (channel_type == CL_UNSIGNED_INT32))
+  if ((channel_type == CLK_UNSIGNED_INT8) || (channel_type == CLK_UNSIGNED_INT16)
+      || (channel_type == CLK_UNSIGNED_INT32))
     return read_pixel_linear_1d_uint (abc, one_m, ijk0, ijk1, array_coord,
                                       width, slice_pitch, order, elem_size,
                                       data);

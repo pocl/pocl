@@ -39,27 +39,27 @@ map_channels (uint4 color, int order)
 {
   switch (order)
     {
-    case CL_ARGB:
+    case CLK_ARGB:
       return color.wxyz;
-    case CL_BGRA:
+    case CLK_BGRA:
       return color.zyxw;
-    case CL_RGBA:
+    case CLK_RGBA:
     default:
       return color;
     }
 }
 
-/* only for CL_FLOAT, CL_SNORM_INT8, CL_UNORM_INT8,
- * CL_SNORM_INT16, CL_UNORM_INT16 channel types */
+/* only for CLK_FLOAT, CLK_SNORM_INT8, CLK_UNORM_INT8,
+ * CLK_SNORM_INT16, CLK_UNORM_INT16 channel types */
 static void
 write_float4_pixel (float4 color, void *data, size_t base_index, int type)
 {
-  if (type == CL_FLOAT)
+  if (type == CLK_FLOAT)
     {
       ((float4 *)data)[base_index] = color;
       return;
     }
-  if (type == CL_HALF_FLOAT)
+  if (type == CLK_HALF_FLOAT)
     {
 #if !defined(LLVM_OLDER_THAN_3_9) && __has_builtin(__builtin_convertvector)
       typedef float vector4float __attribute__ ((__vector_size__ (16)));
@@ -75,7 +75,7 @@ write_float4_pixel (float4 color, void *data, size_t base_index, int type)
   const float4 f32767 = ((float4) (SHRT_MAX));
   const float4 f255 = ((float4) (UCHAR_MAX));
   const float4 f65535 = ((float4) (USHRT_MAX));
-  if (type == CL_SNORM_INT8)
+  if (type == CLK_SNORM_INT8)
     {
       /*  <-1.0, 1.0> to <I*_MIN, I*_MAX> */
       float4 colorf = color * f127;
@@ -83,14 +83,14 @@ write_float4_pixel (float4 color, void *data, size_t base_index, int type)
       ((char4 *)data)[base_index] = final_color;
       return;
     }
-  if (type == CL_SNORM_INT16)
+  if (type == CLK_SNORM_INT16)
     {
       float4 colorf = color * f32767;
       short4 final_color = convert_short4_sat_rte (colorf);
       ((short4 *)data)[base_index] = final_color;
       return;
     }
-  if (type == CL_UNORM_INT8)
+  if (type == CLK_UNORM_INT8)
     {
       /* <0, I*_MAX> to <0.0, 1.0> */
       /*  <-1.0, 1.0> to <I*_MIN, I*_MAX> */
@@ -99,7 +99,7 @@ write_float4_pixel (float4 color, void *data, size_t base_index, int type)
       ((uchar4 *)data)[base_index] = final_color;
       return;
     }
-  if (type == CL_UNORM_INT16)
+  if (type == CLK_UNORM_INT16)
     {
       float4 colorf = color * f65535;
       ushort4 final_color = convert_ushort4_sat_rte (colorf);
@@ -110,12 +110,12 @@ write_float4_pixel (float4 color, void *data, size_t base_index, int type)
   return;
 }
 
-/* only for CL_FLOAT, CL_SNORM_INT8, CL_UNORM_INT8,
- * CL_SNORM_INT16, CL_UNORM_INT16 channel types */
+/* only for CLK_FLOAT, CLK_SNORM_INT8, CLK_UNORM_INT8,
+ * CLK_SNORM_INT16, CLK_UNORM_INT16 channel types */
 static void
 write_float_pixel (float color, void *data, size_t base_index, int type)
 {
-  if (type == CL_FLOAT)
+  if (type == CLK_FLOAT)
     {
       ((float *)data)[base_index] = color;
       return;
@@ -124,7 +124,7 @@ write_float_pixel (float color, void *data, size_t base_index, int type)
   const float f32767 = ((float)SHRT_MAX);
   const float f255 = ((float)UCHAR_MAX);
   const float f65535 = ((float)USHRT_MAX);
-  if (type == CL_SNORM_INT8)
+  if (type == CLK_SNORM_INT8)
     {
       /*  <-1.0, 1.0> to <I*_MIN, I*_MAX> */
       float colorf = color * f127;
@@ -132,14 +132,14 @@ write_float_pixel (float color, void *data, size_t base_index, int type)
       ((char *)data)[base_index] = final_color;
       return;
     }
-  if (type == CL_SNORM_INT16)
+  if (type == CLK_SNORM_INT16)
     {
       float colorf = color * f32767;
       short final_color = convert_short_sat_rte (colorf);
       ((short *)data)[base_index] = final_color;
       return;
     }
-  if (type == CL_UNORM_INT8)
+  if (type == CLK_UNORM_INT8)
     {
       /* <0, I*_MAX> to <0.0, 1.0> */
       /*  <-1.0, 1.0> to <I*_MIN, I*_MAX> */
@@ -148,7 +148,7 @@ write_float_pixel (float color, void *data, size_t base_index, int type)
       ((uchar *)data)[base_index] = final_color;
       return;
     }
-  if (type == CL_UNORM_INT16)
+  if (type == CLK_UNORM_INT16)
     {
       float colorf = color * f65535;
       ushort final_color = convert_ushort_sat_rte (colorf);
@@ -166,7 +166,7 @@ static void
 pocl_write_pixel_fast_ui (uint4 color, size_t base_index, int order,
                           int elem_size, void *data)
 {
-  if (order == CL_A)
+  if (order == CLK_A)
     {
       if (elem_size == 1)
         ((uchar *)data)[base_index] = convert_uchar_sat (color.w);
@@ -200,7 +200,7 @@ static void
 pocl_write_pixel_fast_f (float4 color, size_t base_index, int channel_type,
                          int order, void *data)
 {
-  if (order == CL_A)
+  if (order == CLK_A)
     {
       write_float_pixel (color.w, data, base_index, channel_type);
     }
@@ -219,7 +219,7 @@ static void
 pocl_write_pixel_fast_i (int4 color, size_t base_index, int order,
                          int elem_size, void *data)
 {
-  if (order == CL_A)
+  if (order == CLK_A)
     {
       if (elem_size == 1)
         ((char *)data)[base_index] = convert_char_sat (color.w);
@@ -273,13 +273,13 @@ pocl_write_pixel (uint4 color, global dev_image_t *img, int4 coord,
 
   color = map_channels (color, order);
 
-  if ((channel_type == CL_SIGNED_INT8) || (channel_type == CL_SIGNED_INT16)
-      || (channel_type == CL_SIGNED_INT32))
+  if ((channel_type == CLK_SIGNED_INT8) || (channel_type == CLK_SIGNED_INT16)
+      || (channel_type == CLK_SIGNED_INT32))
     pocl_write_pixel_fast_i (as_int4 (color), base_index, order, elem_size,
                              data);
-  else if ((channel_type == CL_UNSIGNED_INT8)
-           || (channel_type == CL_UNSIGNED_INT16)
-           || (channel_type == CL_UNSIGNED_INT32))
+  else if ((channel_type == CLK_UNSIGNED_INT8)
+           || (channel_type == CLK_UNSIGNED_INT16)
+           || (channel_type == CLK_UNSIGNED_INT32))
     pocl_write_pixel_fast_ui (as_uint4 (color), base_index, order, elem_size,
                               data);
   else // TODO unsupported channel types
@@ -290,18 +290,18 @@ pocl_write_pixel (uint4 color, global dev_image_t *img, int4 coord,
 /*
 write_imagei can only be used with image objects created with
 image_channel_data_type set to one of the following values:
-CL_SIGNED_INT8, CL_SIGNED_INT16, and CL_SIGNED_INT32.
+CLK_SIGNED_INT8, CLK_SIGNED_INT16, and CLK_SIGNED_INT32.
 
 write_imageui functions can only be used with image objects created with
 image_channel_data_type set to one of the following values:
-CL_UNSIGNED_INT8, CL_UNSIGNED_INT16, or CL_UNSIGNED_INT32.
+CLK_UNSIGNED_INT8, CLK_UNSIGNED_INT16, or CLK_UNSIGNED_INT32.
 */
 
 /*
  * write_imagef can only be used with image objects created with
  * image_channel_data_type set to one of the pre-defined packed formats,
- * or set to CL_SNORM_INT8, CL_UNORM_INT8, CL_SNORM_INT16,
- * CL_UNORM_INT16, CL_HALF_FLOAT or CL_FLOAT.
+ * or set to CLK_SNORM_INT8, CLK_UNORM_INT8, CLK_SNORM_INT16,
+ * CLK_UNORM_INT16, CLK_HALF_FLOAT or CLK_FLOAT.
 */
 
 #define IMPLEMENT_WRITE_IMAGE_INT_COORD(__IMGTYPE__, __POSTFIX__, __COORD__,  \
