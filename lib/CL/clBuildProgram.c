@@ -198,6 +198,7 @@ CL_API_SUFFIX__VERSION_1_0
 
   if (pfn_notify)
     {
+      POCL_MEM_FREE (program->buildprogram_callback);
       callback = (build_program_callback_t*) malloc (sizeof(build_program_callback_t));
       if (callback == NULL)
         {
@@ -340,6 +341,41 @@ CL_API_SUFFIX__VERSION_1_0
   POCL_MSG_PRINT_INFO("building program with options %s\n",
                        program->compiler_options);
 
+  /* if we're rebuilding the program, release the kernels and reset log/status
+   */
+  if ((program->build_status != CL_BUILD_NONE) || program->num_kernels > 0)
+    {
+      cl_kernel k;
+      for (k = program->kernels; k != NULL; k = k->next)
+        {
+          k->program = NULL;
+          --program->pocl_refcount;
+        }
+      program->kernels = NULL;
+      if (program->num_kernels)
+        {
+          program->operating_on_default_kernels = 1;
+          for (i = 0; i < program->num_kernels; i++)
+            {
+              if (program->kernel_names)
+                POCL_MEM_FREE (program->kernel_names[i]);
+              if (program->default_kernels && program->default_kernels[i])
+                POname (clReleaseKernel) (program->default_kernels[i]);
+            }
+          POCL_MEM_FREE (program->kernel_names);
+          POCL_MEM_FREE (program->default_kernels);
+          program->operating_on_default_kernels = 0;
+        }
+      program->num_kernels = 0;
+      program->build_status = CL_BUILD_NONE;
+      if (program->build_log)
+        for (i = 0; i < program->num_devices; ++i)
+          {
+            POCL_MEM_FREE (program->build_log[i]);
+            memset (program->build_hash[i], 0, sizeof (SHA1_digest_t));
+          }
+    }
+
   /* Build the fully linked non-parallel bitcode for all
          devices. */
   for (device_i = 0; device_i < program->num_devices; ++device_i)
@@ -460,7 +496,6 @@ CL_API_SUFFIX__VERSION_1_0
                      "Some of the devices on the argument-supplied list are"
                      "not available for the program, or do not exist\n");
 
-  /* TODO probably wrong to assume */
   assert(program->num_kernels == 0);
   for (i=0; i < program->num_devices; i++)
     {
