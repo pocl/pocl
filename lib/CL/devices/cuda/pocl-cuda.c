@@ -1230,6 +1230,10 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
 void
 pocl_cuda_notify (cl_device_id device, cl_event event, cl_event finished)
 {
+  /* Ignore CUDA device events, we've already handled these dependencies */
+  if (finished->queue && finished->queue->device->ops == device->ops)
+    return;
+
   pocl_cuda_event_data_t *event_data = (pocl_cuda_event_data_t *)event->data;
 
   assert (event_data);
