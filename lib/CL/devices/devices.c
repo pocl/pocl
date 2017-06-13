@@ -22,8 +22,19 @@
    THE SOFTWARE.
 */
 
+#define _GNU_SOURCE
+
 #include <string.h>
 #include <ctype.h>
+
+#ifdef __linux__
+#include <limits.h>
+#include <signal.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <ucontext.h>
+#endif
 
 #ifndef _MSC_VER
 #  include <unistd.h>
@@ -187,6 +198,116 @@ pocl_string_to_dirname(char *str)
     }
 }
 
+/* This ugly hack is required because:
+ *
+ * OpenCL 1.2 specification, 6.3 Operators :
+ *
+ * A divide by zero with integer types does not cause an exception
+ * but will result in an unspecified value. Division by zero for
+ * floating-point types will result in ±infinity or NaN as
+ * prescribed by the IEEE-754 standard.
+ *
+ * FPU exceptions are masked by default on x86 linux, but integer divide
+ * is not and there doesn't seem any sane way to mask it.
+ *
+ * TODO: this might be possible to do with a LLVM pass (either check divisor
+ * for 0, or perhaps some vector extension has a suitable instruction).
+ */
+
+#ifdef __linux__
+#ifdef __x86_64__
+
+#define DIV_OPCODE_SIZE 1
+#define DIV_OPCODE_MASK 0xf6
+
+/* F6 /6, F6 /7, F7 /6, F7 /7 */
+#define DIV_OPCODE_1 0xf6
+#define DIV_OPCODE_2 0xf7
+#define DIV_MODRM_OPCODE_EXT_1 0x38 //  /7
+#define DIV_MODRM_OPCODE_EXT_2 0x30 //  /6
+
+#define MODRM_SIZE 1
+#define MODRM_MASK 0xC0
+#define REG2_MASK 0x38
+#define REG1_MASK 0x07
+#define ADDR_MODE_INDIRECT_ONE_BYTE_OFFSET 0x40
+#define ADDR_MODE_INDIRECT_FOUR_BYTE_OFFSET 0x80
+#define ADDR_MODE_INDIRECT 0x0
+#define ADDR_MODE_REGISTER_ONLY 0xC0
+#define REG_SP 0x4
+#define REG_BP 0x5
+#define SIB_BYTE 1
+#define IP_RELATIVE_INDEXING 4
+
+static struct sigaction sigfpe_action, old_sigfpe_action;
+
+void
+sigfpe_signal_handler (int signo, siginfo_t *si, void *data)
+{
+  ucontext_t *uc;
+  uc = (ucontext_t *)data;
+  unsigned char *eip = (unsigned char *)(uc->uc_mcontext.gregs[REG_RIP]);
+
+  if ((signo == SIGFPE)
+      && ((si->si_code == FPE_INTDIV) || (si->si_code == FPE_INTOVF)))
+    {
+      /* Luckily for us, div-by-0 exceptions do NOT advance the IP register,
+       * so we have to disassemble the instruction (to know its length)
+       * and move IP past it. */
+      unsigned n = 0;
+
+      /* skip all prefixes */
+      while ((n < 4) && ((eip[n] & DIV_OPCODE_MASK) != DIV_OPCODE_MASK))
+        ++n;
+
+      /* too much prefixes = decoding failed */
+      if (n >= 4)
+        goto ORIGINAL_HANDLER;
+
+      /* check opcode */
+      unsigned opcode = eip[n];
+      if ((opcode != DIV_OPCODE_1) && (opcode != DIV_OPCODE_2))
+        goto ORIGINAL_HANDLER;
+      n += DIV_OPCODE_SIZE;
+
+      unsigned modrm = eip[n];
+      unsigned modmask = modrm & MODRM_MASK;
+      unsigned reg1mask = modrm & REG1_MASK;
+      unsigned reg2mask = modrm & REG2_MASK;
+      /* check opcode extension in ModR/M reg2 */
+      if ((reg2mask != DIV_MODRM_OPCODE_EXT_1)
+          && (reg2mask != DIV_MODRM_OPCODE_EXT_2))
+        goto ORIGINAL_HANDLER;
+      n += MODRM_SIZE;
+
+      /* handle immediates/registers */
+      if (modmask == ADDR_MODE_INDIRECT_ONE_BYTE_OFFSET)
+        n += 1;
+      if (modmask == ADDR_MODE_INDIRECT_FOUR_BYTE_OFFSET)
+        n += 4;
+      if (modmask == ADDR_MODE_INDIRECT)
+        n += 0;
+      if (modmask != ADDR_MODE_REGISTER_ONLY)
+        {
+          if (reg1mask == REG_SP)
+            n += SIB_BYTE;
+          if (reg1mask == REG_BP)
+            n += IP_RELATIVE_INDEXING;
+        }
+
+      uc->uc_mcontext.gregs[REG_RIP] += n;
+      return;
+    }
+  else
+    {
+    ORIGINAL_HANDLER:
+      (*old_sigfpe_action.sa_sigaction) (signo, si, data);
+    }
+}
+
+#endif
+#endif
+
 cl_int
 pocl_init_devices()
 {
@@ -224,6 +345,17 @@ pocl_init_devices()
   const char* debug = pocl_get_string_option ("POCL_DEBUG", "0");
   pocl_debug_messages_setup (debug);
   stderr_is_a_tty = isatty(fileno(stderr));
+#endif
+
+#ifdef __linux__
+#ifdef __x86_64__
+
+  sigfpe_action.sa_flags = SA_ONSTACK | SA_RESTART | SA_SIGINFO;
+  sigfpe_action.sa_sigaction = sigfpe_signal_handler;
+  int res = sigaction (SIGFPE, &sigfpe_action, &old_sigfpe_action);
+  assert (res == 0);
+
+#endif
 #endif
 
   pocl_aborting = 0;

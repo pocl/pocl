@@ -190,6 +190,8 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
 {
   static unsigned int event_id_counter = 0;
 
+  POCL_MSG_PRINT_EVENTS ("creating event\n");
+
   if (context == NULL || !(context->valid))
     return CL_INVALID_CONTEXT;
   if (event != NULL)
@@ -320,6 +322,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
      one reference for the host and one for the runtime/driver */
   if (event_p)
     {
+      POCL_MSG_PRINT_EVENTS ("event pointer provided\n");
       *event_p = *event;
       (*event)->implicit_event = 0;
       (*event)->pocl_refcount = 2;
