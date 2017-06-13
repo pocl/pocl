@@ -25,7 +25,7 @@
 %>
 %for (authors, title, link, place) in papers:
 <li>${authors}:<br />
-<span class='paperTitle'>"<a href="${link}">${title}</a>"</span> in<br />
+<span class='paperTitle'>"<a href="${link}">${title}</a>"</span><br />
 ${place}.
 </li>
 %endfor
