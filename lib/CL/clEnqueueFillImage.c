@@ -73,16 +73,16 @@ CL_API_SUFFIX__VERSION_1_2
       goto ERROR_CLEAN;
     }
 
-  /* The fill color is a four component RGBA floating-point color value
-   * if the image channel data type is not an unnormalized signed and unsigned
-   * integer type,
+  /* The fill color is:
    *
-   * is a four component signed integer value if the image channel data type
+   * a four component RGBA floating-point color value if the image channel
+   * data type is NOT an unnormalized signed and unsigned integer type,
+   *
+   * a four component signed integer value if the image channel data type
    * is an unnormalized signed integer type and
    *
-   * is a four component unsigned integer value if the image channel data type
-   * is
-   * an unormalized unsigned integer type.
+   * a four component unsigned integer value if the image channel data type
+   * is an unormalized unsigned integer type.
    *
    * The fill color will be converted to the appropriate
    * image channel format and order associated with image.
@@ -91,13 +91,6 @@ CL_API_SUFFIX__VERSION_1_2
                          image->image_elem_size,
                          image->image_channel_data_type);
 
-  /* POCL uses top-left corner as origin for images and AMD SDK ImageOverlap 
-     test uses bottom-left corner as origin. Because of this we need to modify 
-     y-coordinate so the fill goes in the right place.
-  tuned_origin[0] = origin[0];
-  tuned_origin[1] = image->image_height - region[1] - origin[1];
-  tuned_origin[2] = origin[2];
-  */
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_FILL_IMAGE, 
                                  event, num_events_in_wait_list, 
                                  event_wait_list, 1, &image);

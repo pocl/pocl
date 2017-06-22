@@ -415,13 +415,6 @@ read_pixel_linear_3d_float (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
             }
 
           // + a * (1 – b) * (1 – c) * Ti1j0k0
-          //      + abc.x * one_m.y * one_m.z
-          //            * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk0.y,
-          //            ijk0.z, 0),
-          //                                      width, height, depth,
-          //                                      row_pitch,
-          //                                      slice_pitch, channel_type,
-          //                                      order, data)
           if (ijk1_x_OK)
             {
               base_index += ijk1.x;
@@ -439,13 +432,6 @@ read_pixel_linear_3d_float (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
           base_index += (ijk1.y * row_pitch);
 
           // + (1 – a) * b * (1 – c) * Ti0j1k0
-          //      + one_m.x * abc.y * one_m.z
-          //            * pocl_read_pixel_fast_f ((int4) (ijk0.x, ijk1.y,
-          //            ijk0.z, 0),
-          //                                      width, height, depth,
-          //                                      row_pitch,
-          //                                      slice_pitch, channel_type,
-          //                                      order, data)
           if (ijk0_x_OK)
             {
               base_index += ijk0.x;
@@ -456,13 +442,6 @@ read_pixel_linear_3d_float (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
             }
 
           // + a * b * (1 – c) * Ti1j1k0
-          //      + abc.x * abc.y * one_m.z
-          //            * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk1.y,
-          //            ijk0.z, 0),
-          //                                      width, height, depth,
-          //                                      row_pitch,
-          //                                      slice_pitch, channel_type,
-          //                                      order, data)
           if (ijk1_x_OK)
             {
               base_index += ijk1.x;
@@ -487,13 +466,6 @@ read_pixel_linear_3d_float (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
           base_index += (ijk0.y * row_pitch);
 
           // + (1 – a) * (1 – b) * c * Ti0j0k1
-          //      + one_m.x * one_m.y * abc.z
-          //            * pocl_read_pixel_fast_f ((int4) (ijk0.x, ijk0.y,
-          //            ijk1.z, 0),
-          //                                      width, height, depth,
-          //                                      row_pitch,
-          //                                      slice_pitch, channel_type,
-          //                                      order, data)
           if (ijk0_x_OK)
             {
               base_index += ijk0.x;
@@ -504,13 +476,6 @@ read_pixel_linear_3d_float (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
             }
 
           // + a * (1 – b) * (1 – c) * Ti1j0k0
-          //      + abc.x * one_m.y * abc.z
-          //            * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk0.y,
-          //            ijk1.z, 0),
-          //                                      width, height, depth,
-          //                                      row_pitch,
-          //                                      slice_pitch, channel_type,
-          //                                      order, data)
           if (ijk1_x_OK)
             {
               base_index += ijk1.x;
@@ -528,13 +493,6 @@ read_pixel_linear_3d_float (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
           base_index += (ijk1.y * row_pitch);
 
           // + (1 – a) * b * (1 – c) * Ti0j1k0
-          //      + one_m.x * abc.y * abc.z
-          //            * pocl_read_pixel_fast_f ((int4) (ijk0.x, ijk1.y,
-          //            ijk1.z, 0),
-          //                                      width, height, depth,
-          //                                      row_pitch,
-          //                                      slice_pitch, channel_type,
-          //                                      order, data)
           if (ijk0_x_OK)
             {
               base_index += ijk0.x;
@@ -545,13 +503,6 @@ read_pixel_linear_3d_float (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
             }
 
           // + a * b * (1 – c) * Ti1j1k0
-          //      + abc.x * abc.y * abc.z
-          //            * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk1.y,
-          //            ijk1.z, 0),
-          //                                      width, height, depth,
-          //                                      row_pitch,
-          //                                      slice_pitch, channel_type,
-          //                                      order, data)
           if (ijk1_x_OK)
             {
               base_index += ijk1.x;
@@ -607,13 +558,6 @@ read_pixel_linear_3d_uint (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
             }
 
           // + a * (1 – b) * (1 – c) * Ti1j0k0
-          //      + abc.x * one_m.y * one_m.z
-          //            * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk0.y,
-          //            ijk0.z, 0),
-          //                                      width, height, depth,
-          //                                      row_pitch,
-          //                                      slice_pitch, channel_type,
-          //                                      order, data)
           if (ijk1_x_OK)
             {
               base_index += ijk1.x;
@@ -631,13 +575,6 @@ read_pixel_linear_3d_uint (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
           base_index += (ijk1.y * row_pitch);
 
           // + (1 – a) * b * (1 – c) * Ti0j1k0
-          //      + one_m.x * abc.y * one_m.z
-          //            * pocl_read_pixel_fast_f ((int4) (ijk0.x, ijk1.y,
-          //            ijk0.z, 0),
-          //                                      width, height, depth,
-          //                                      row_pitch,
-          //                                      slice_pitch, channel_type,
-          //                                      order, data)
           if (ijk0_x_OK)
             {
               base_index += ijk0.x;
@@ -648,13 +585,6 @@ read_pixel_linear_3d_uint (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
             }
 
           // + a * b * (1 – c) * Ti1j1k0
-          //      + abc.x * abc.y * one_m.z
-          //            * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk1.y,
-          //            ijk0.z, 0),
-          //                                      width, height, depth,
-          //                                      row_pitch,
-          //                                      slice_pitch, channel_type,
-          //                                      order, data)
           if (ijk1_x_OK)
             {
               base_index += ijk1.x;
@@ -679,13 +609,6 @@ read_pixel_linear_3d_uint (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
           base_index += (ijk0.y * row_pitch);
 
           // + (1 – a) * (1 – b) * c * Ti0j0k1
-          //      + one_m.x * one_m.y * abc.z
-          //            * pocl_read_pixel_fast_f ((int4) (ijk0.x, ijk0.y,
-          //            ijk1.z, 0),
-          //                                      width, height, depth,
-          //                                      row_pitch,
-          //                                      slice_pitch, channel_type,
-          //                                      order, data)
           if (ijk0_x_OK)
             {
               base_index += ijk0.x;
@@ -696,13 +619,6 @@ read_pixel_linear_3d_uint (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
             }
 
           // + a * (1 – b) * (1 – c) * Ti1j0k0
-          //      + abc.x * one_m.y * abc.z
-          //            * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk0.y,
-          //            ijk1.z, 0),
-          //                                      width, height, depth,
-          //                                      row_pitch,
-          //                                      slice_pitch, channel_type,
-          //                                      order, data)
           if (ijk1_x_OK)
             {
               base_index += ijk1.x;
@@ -720,13 +636,6 @@ read_pixel_linear_3d_uint (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
           base_index += (ijk1.y * row_pitch);
 
           // + (1 – a) * b * (1 – c) * Ti0j1k0
-          //      + one_m.x * abc.y * abc.z
-          //            * pocl_read_pixel_fast_f ((int4) (ijk0.x, ijk1.y,
-          //            ijk1.z, 0),
-          //                                      width, height, depth,
-          //                                      row_pitch,
-          //                                      slice_pitch, channel_type,
-          //                                      order, data)
           if (ijk0_x_OK)
             {
               base_index += ijk0.x;
@@ -737,13 +646,6 @@ read_pixel_linear_3d_uint (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
             }
 
           // + a * b * (1 – c) * Ti1j1k0
-          //      + abc.x * abc.y * abc.z
-          //            * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk1.y,
-          //            ijk1.z, 0),
-          //                                      width, height, depth,
-          //                                      row_pitch,
-          //                                      slice_pitch, channel_type,
-          //                                      order, data)
           if (ijk1_x_OK)
             {
               base_index += ijk1.x;
@@ -795,13 +697,6 @@ read_pixel_linear_3d_int (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
             }
 
           // + a * (1 – b) * (1 – c) * Ti1j0k0
-          //      + abc.x * one_m.y * one_m.z
-          //            * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk0.y,
-          //            ijk0.z, 0),
-          //                                      width, height, depth,
-          //                                      row_pitch,
-          //                                      slice_pitch, channel_type,
-          //                                      order, data)
           if (ijk1_x_OK)
             {
               base_index += ijk1.x;
@@ -819,13 +714,6 @@ read_pixel_linear_3d_int (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
           base_index += (ijk1.y * row_pitch);
 
           // + (1 – a) * b * (1 – c) * Ti0j1k0
-          //      + one_m.x * abc.y * one_m.z
-          //            * pocl_read_pixel_fast_f ((int4) (ijk0.x, ijk1.y,
-          //            ijk0.z, 0),
-          //                                      width, height, depth,
-          //                                      row_pitch,
-          //                                      slice_pitch, channel_type,
-          //                                      order, data)
           if (ijk0_x_OK)
             {
               base_index += ijk0.x;
@@ -836,13 +724,6 @@ read_pixel_linear_3d_int (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
             }
 
           // + a * b * (1 – c) * Ti1j1k0
-          //      + abc.x * abc.y * one_m.z
-          //            * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk1.y,
-          //            ijk0.z, 0),
-          //                                      width, height, depth,
-          //                                      row_pitch,
-          //                                      slice_pitch, channel_type,
-          //                                      order, data)
           if (ijk1_x_OK)
             {
               base_index += ijk1.x;
@@ -867,13 +748,6 @@ read_pixel_linear_3d_int (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
           base_index += (ijk0.y * row_pitch);
 
           // + (1 – a) * (1 – b) * c * Ti0j0k1
-          //      + one_m.x * one_m.y * abc.z
-          //            * pocl_read_pixel_fast_f ((int4) (ijk0.x, ijk0.y,
-          //            ijk1.z, 0),
-          //                                      width, height, depth,
-          //                                      row_pitch,
-          //                                      slice_pitch, channel_type,
-          //                                      order, data)
           if (ijk0_x_OK)
             {
               base_index += ijk0.x;
@@ -884,13 +758,6 @@ read_pixel_linear_3d_int (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
             }
 
           // + a * (1 – b) * (1 – c) * Ti1j0k0
-          //      + abc.x * one_m.y * abc.z
-          //            * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk0.y,
-          //            ijk1.z, 0),
-          //                                      width, height, depth,
-          //                                      row_pitch,
-          //                                      slice_pitch, channel_type,
-          //                                      order, data)
           if (ijk1_x_OK)
             {
               base_index += ijk1.x;
@@ -908,13 +775,6 @@ read_pixel_linear_3d_int (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
           base_index += (ijk1.y * row_pitch);
 
           // + (1 – a) * b * (1 – c) * Ti0j1k0
-          //      + one_m.x * abc.y * abc.z
-          //            * pocl_read_pixel_fast_f ((int4) (ijk0.x, ijk1.y,
-          //            ijk1.z, 0),
-          //                                      width, height, depth,
-          //                                      row_pitch,
-          //                                      slice_pitch, channel_type,
-          //                                      order, data)
           if (ijk0_x_OK)
             {
               base_index += ijk0.x;
@@ -925,13 +785,6 @@ read_pixel_linear_3d_int (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
             }
 
           // + a * b * (1 – c) * Ti1j1k0
-          //      + abc.x * abc.y * abc.z
-          //            * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk1.y,
-          //            ijk1.z, 0),
-          //                                      width, height, depth,
-          //                                      row_pitch,
-          //                                      slice_pitch, channel_type,
-          //                                      order, data)
           if (ijk1_x_OK)
             {
               base_index += ijk1.x;
@@ -994,13 +847,6 @@ read_pixel_linear_2d_float (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
       base_index += (ijk0.y * row_pitch);
 
       // T = (1 – a) * (1 – b) * Ti0j0
-      //      one_m.x * one_m.y * pocl_read_pixel_fast_f ((int4)(ijk0.x,
-      //      ijk0.y, array_coord, 0),
-      //                                                  width, height, depth,
-      //                                                  row_pitch,
-      //                                                  slice_pitch,
-      //                                                  channel_type, order,
-      //                                                  data)
       if (ijk0_x_OK)
         {
           base_index += ijk0.x;
@@ -1011,12 +857,6 @@ read_pixel_linear_2d_float (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
         }
 
       // + a * (1 – b) * Ti1j0
-      //      + abc.x * one_m.y
-      //            * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk0.y,
-      //            array_coord, 0), width,
-      //                                      height, depth, row_pitch,
-      //                                      slice_pitch,
-      //                                      channel_type, order, data)
       if (ijk1_x_OK)
         {
           base_index += ijk1.x;
@@ -1034,12 +874,6 @@ read_pixel_linear_2d_float (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
       base_index += (ijk1.y * row_pitch);
 
       // + (1 – a) * b * Ti0j1
-      //      + one_m.x * abc.y
-      //            * pocl_read_pixel_fast_f ((int4) (ijk0.x, ijk1.y,
-      //            array_coord, 0), width,
-      //                                      height, depth, row_pitch,
-      //                                      slice_pitch,
-      //                                      channel_type, order, data)
       if (ijk0_x_OK)
         {
           base_index += ijk0.x;
@@ -1050,12 +884,6 @@ read_pixel_linear_2d_float (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
         }
 
       // + a * b * Ti1j1
-      //      + abc.x * abc.y * pocl_read_pixel_fast_f ((int4)(ijk1.x, ijk1.y,
-      //      array_coord, 0),
-      //                                                width, height, depth,
-      //                                                row_pitch, slice_pitch,
-      //                                                channel_type, order,
-      //                                                data));
       if (ijk1_x_OK)
         {
           base_index += ijk1.x;
@@ -1094,13 +922,6 @@ read_pixel_linear_2d_uint (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
       base_index += (ijk0.y * row_pitch);
 
       // T = (1 – a) * (1 – b) * Ti0j0
-      //      one_m.x * one_m.y * pocl_read_pixel_fast_f ((int4)(ijk0.x,
-      //      ijk0.y, array_coord, 0),
-      //                                                  width, height, depth,
-      //                                                  row_pitch,
-      //                                                  slice_pitch,
-      //                                                  channel_type, order,
-      //                                                  data)
       if (ijk0_x_OK)
         {
           base_index += ijk0.x;
@@ -1111,12 +932,6 @@ read_pixel_linear_2d_uint (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
         }
 
       // + a * (1 – b) * Ti1j0
-      //      + abc.x * one_m.y
-      //            * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk0.y,
-      //            array_coord, 0), width,
-      //                                      height, depth, row_pitch,
-      //                                      slice_pitch,
-      //                                      channel_type, order, data)
       if (ijk1_x_OK)
         {
           base_index += ijk1.x;
@@ -1133,12 +948,6 @@ read_pixel_linear_2d_uint (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
       base_index += (ijk1.y * row_pitch);
 
       // + (1 – a) * b * Ti0j1
-      //      + one_m.x * abc.y
-      //            * pocl_read_pixel_fast_f ((int4) (ijk0.x, ijk1.y,
-      //            array_coord, 0), width,
-      //                                      height, depth, row_pitch,
-      //                                      slice_pitch,
-      //                                      channel_type, order, data)
       if (ijk0_x_OK)
         {
           base_index += ijk0.x;
@@ -1148,12 +957,6 @@ read_pixel_linear_2d_uint (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
         }
 
       // + a * b * Ti1j1
-      //      + abc.x * abc.y * pocl_read_pixel_fast_f ((int4)(ijk1.x, ijk1.y,
-      //      array_coord, 0),
-      //                                                width, height, depth,
-      //                                                row_pitch, slice_pitch,
-      //                                                channel_type, order,
-      //                                                data));
       if (ijk1_x_OK)
         {
           base_index += ijk1.x;
@@ -1188,13 +991,6 @@ read_pixel_linear_2d_int (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
       base_index += (ijk0.y * row_pitch);
 
       // T = (1 – a) * (1 – b) * Ti0j0
-      //      one_m.x * one_m.y * pocl_read_pixel_fast_f ((int4)(ijk0.x,
-      //      ijk0.y, array_coord, 0),
-      //                                                  width, height, depth,
-      //                                                  row_pitch,
-      //                                                  slice_pitch,
-      //                                                  channel_type, order,
-      //                                                  data)
       if (ijk0_x_OK)
         {
           base_index += ijk0.x;
@@ -1205,12 +1001,6 @@ read_pixel_linear_2d_int (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
         }
 
       // + a * (1 – b) * Ti1j0
-      //      + abc.x * one_m.y
-      //            * pocl_read_pixel_fast_f ((int4) (ijk1.x, ijk0.y,
-      //            array_coord, 0), width,
-      //                                      height, depth, row_pitch,
-      //                                      slice_pitch,
-      //                                      channel_type, order, data)
       if (ijk1_x_OK)
         {
           base_index += ijk1.x;
@@ -1227,12 +1017,6 @@ read_pixel_linear_2d_int (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
       base_index += (ijk1.y * row_pitch);
 
       // + (1 – a) * b * Ti0j1
-      //      + one_m.x * abc.y
-      //            * pocl_read_pixel_fast_f ((int4) (ijk0.x, ijk1.y,
-      //            array_coord, 0), width,
-      //                                      height, depth, row_pitch,
-      //                                      slice_pitch,
-      //                                      channel_type, order, data)
       if (ijk0_x_OK)
         {
           base_index += ijk0.x;
@@ -1242,12 +1026,6 @@ read_pixel_linear_2d_int (float4 abc, float4 one_m, int4 ijk0, int4 ijk1,
         }
 
       // + a * b * Ti1j1
-      //      + abc.x * abc.y * pocl_read_pixel_fast_f ((int4)(ijk1.x, ijk1.y,
-      //      array_coord, 0),
-      //                                                width, height, depth,
-      //                                                row_pitch, slice_pitch,
-      //                                                channel_type, order,
-      //                                                data));
       if (ijk1_x_OK)
         {
           base_index += ijk1.x;
@@ -1299,10 +1077,6 @@ read_pixel_linear_1d_float (float4 abc, float4 one_m, int ijk0, int ijk1,
     base_index += (array_coord * slice_pitch);
 
   // T = (1 – a) * Ti0
-  //      one_m.x * pocl_read_pixel_fast_f ((int4) (ijk0, array_coord, 0, 0),
-  //      width, height, depth,
-  //                                              row_pitch, slice_pitch,
-  //                                              channel_type, order, data)
   if (ijk0 >= 0 && ijk0 < width)
     {
       base_index += ijk0;
@@ -1312,12 +1086,6 @@ read_pixel_linear_1d_float (float4 abc, float4 one_m, int ijk0, int ijk1,
     }
 
   // + a * Ti1
-  //      + abc.x * pocl_read_pixel_fast_f ((int4) (ijk1, array_coord, 0, 0),
-  //      width,
-  //                                      height, depth, row_pitch,
-  //                                      slice_pitch,
-  //                                      channel_type, order, data));
-
   if (ijk1 >= 0 && ijk1 < width)
     {
       base_index += ijk1;
@@ -1347,10 +1115,6 @@ read_pixel_linear_1d_uint (float4 abc, float4 one_m, int ijk0, int ijk1,
     base_index += (array_coord * slice_pitch);
 
   // T = (1 – a) * Ti0
-  //      one_m.x * pocl_read_pixel_fast_f ((int4) (ijk0, array_coord, 0, 0),
-  //      width, height, depth,
-  //                                              row_pitch, slice_pitch,
-  //                                              channel_type, order, data)
   if (ijk0 >= 0 && ijk0 < width)
     {
       base_index += ijk0;
@@ -1360,12 +1124,6 @@ read_pixel_linear_1d_uint (float4 abc, float4 one_m, int ijk0, int ijk1,
     }
 
   // + a * Ti1
-  //      + abc.x * pocl_read_pixel_fast_f ((int4) (ijk1, array_coord, 0, 0),
-  //      width,
-  //                                      height, depth, row_pitch,
-  //                                      slice_pitch,
-  //                                      channel_type, order, data));
-
   if (ijk1 >= 0 && ijk1 < width)
     {
       base_index += ijk1;
@@ -1390,10 +1148,6 @@ read_pixel_linear_1d_int (float4 abc, float4 one_m, int ijk0, int ijk1,
     base_index += (array_coord * slice_pitch);
 
   // T = (1 – a) * Ti0
-  //      one_m.x * pocl_read_pixel_fast_f ((int4) (ijk0, array_coord, 0, 0),
-  //      width, height, depth,
-  //                                              row_pitch, slice_pitch,
-  //                                              channel_type, order, data)
   if (ijk0 >= 0 && ijk0 < width)
     {
       base_index += ijk0;
@@ -1403,12 +1157,6 @@ read_pixel_linear_1d_int (float4 abc, float4 one_m, int ijk0, int ijk1,
     }
 
   // + a * Ti1
-  //      + abc.x * pocl_read_pixel_fast_f ((int4) (ijk1, array_coord, 0, 0),
-  //      width,
-  //                                      height, depth, row_pitch,
-  //                                      slice_pitch,
-  //                                      channel_type, order, data));
-
   if (ijk1 >= 0 && ijk1 < width)
     {
       base_index += ijk1;
@@ -1745,6 +1493,7 @@ pocl_read_pixel_intc (global dev_image_t *img, int4 coord, dev_sampler_t samp)
 /******************* DONE *************************************************/
 /* read pixel with float coordinates, WITHOUT sampler
  * from Spec:
+ *
  * The samplerless read image functions behave exactly as the corresponding
  * read image functions that take integer coordinates and a sampler with
  * filter mode set to CLK_FILTER_NEAREST, normalized coordinates set to

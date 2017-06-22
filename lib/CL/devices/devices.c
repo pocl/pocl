@@ -210,8 +210,9 @@ pocl_string_to_dirname(char *str)
  * FPU exceptions are masked by default on x86 linux, but integer divide
  * is not and there doesn't seem any sane way to mask it.
  *
- * TODO: this might be possible to do with a LLVM pass (either check divisor
- * for 0, or perhaps some vector extension has a suitable instruction).
+ * This *might* be possible to fix with a LLVM pass (either check divisor
+ * for 0, or perhaps some vector extension has a suitable instruction), but
+ * it's likely to ruin the performance.
  */
 
 #ifdef __linux__
