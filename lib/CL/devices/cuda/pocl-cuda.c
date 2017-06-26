@@ -77,7 +77,7 @@ typedef struct pocl_cuda_event_data_s
   CUevent end;
   volatile int events_ready;
   cl_int *ext_event_flag;
-  unsigned num_ext_events;
+  volatile unsigned num_ext_events;
 } pocl_cuda_event_data_t;
 
 extern unsigned int pocl_num_devices;
