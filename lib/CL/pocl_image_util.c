@@ -417,7 +417,8 @@ write_float4_pixel (cl_float4 color, void *data, int type)
     {
       /*  <-1.0, 1.0> to <I*_MIN, I*_MAX> */
       cl_float4 colorf;
-      colorf.v4 = color.v4 * f127;
+      FOR4
+        colorf.s[i] = color.s[i] * f127;
       cl_char4 final_color = convert_char4_sat (colorf);
       *((cl_char4 *)data) = final_color;
       return;
@@ -425,7 +426,8 @@ write_float4_pixel (cl_float4 color, void *data, int type)
   if (type == CL_SNORM_INT16)
     {
       cl_float4 colorf;
-      colorf.v4 = color.v4 * f32767;
+      FOR4
+        colorf.s[i] = color.s[i] * f32767;
       cl_short4 final_color = convert_short4_sat (colorf);
       *((cl_short4 *)data) = final_color;
       return;
@@ -435,7 +437,8 @@ write_float4_pixel (cl_float4 color, void *data, int type)
       /* <0, I*_MAX> to <0.0, 1.0> */
       /*  <-1.0, 1.0> to <I*_MIN, I*_MAX> */
       cl_float4 colorf;
-      colorf.v4 = color.v4 * f255;
+      FOR4
+        colorf.s[i] = color.s[i] * f255;
       cl_uchar4 final_color = convert_uchar4_sat (colorf);
       *((cl_uchar4 *)data) = final_color;
       return;
@@ -443,7 +446,8 @@ write_float4_pixel (cl_float4 color, void *data, int type)
   if (type == CL_UNORM_INT16)
     {
       cl_float4 colorf;
-      colorf.v4 = color.v4 * f65535;
+      FOR4
+        colorf.s[i] = color.s[i] * f65535;
       cl_ushort4 final_color = convert_ushort4_sat (colorf);
       *((cl_ushort4 *)data) = final_color;
       return;
