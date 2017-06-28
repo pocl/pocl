@@ -848,7 +848,7 @@ set_tests_properties(
     "${TS_NAME}_vecstep"
   PROPERTIES
     LABELS "conformance_suite"
-    ENVIRONMENT "POCL_LIMIT_MEMORY=1")
+    ENVIRONMENT "POCL_MEMORY_LIMIT=1")
 
 
 set_tests_properties(
@@ -872,41 +872,21 @@ set_tests_properties(
     "${TS_NAME}_compiler"
     "${TS_NAME}_computeinfo"
     "${TS_NAME}_contractions"
-    "${TS_NAME}_conversion_ushort_uchar"
+
     "${TS_NAME}_conversion_uint_uchar"
-    "${TS_NAME}_conversion_float_uchar"
     "${TS_NAME}_conversion_short_char"
-    "${TS_NAME}_conversion_int_char"
-    "${TS_NAME}_conversion_float_char"
+
     "${TS_NAME}_conversion_uchar_ushort"
-    "${TS_NAME}_conversion_uint_ushort"
-    "${TS_NAME}_conversion_float_ushort"
-    "${TS_NAME}_conversion_char_short"
-    "${TS_NAME}_conversion_int_short"
-    "${TS_NAME}_conversion_float_short"
-    "${TS_NAME}_conversion_uchar_uint"
-    "${TS_NAME}_conversion_ushort_uint"
-    "${TS_NAME}_conversion_float_uint"
     "${TS_NAME}_conversion_char_int"
-    "${TS_NAME}_conversion_short_int"
-    "${TS_NAME}_conversion_float_int"
-    "${TS_NAME}_conversion_char_float"
-    "${TS_NAME}_conversion_short_float"
+
+    "${TS_NAME}_conversion_float_char"
+    "${TS_NAME}_conversion_float_ushort"
     "${TS_NAME}_conversion_int_float"
-    "${TS_NAME}_conversion_char_double"
-    "${TS_NAME}_conversion_short_double"
-    "${TS_NAME}_conversion_int_double"
-    "${TS_NAME}_conversion_long_double"
-    "${TS_NAME}_conversion_uchar_ulong"
-    "${TS_NAME}_conversion_ushort_ulong"
-    "${TS_NAME}_conversion_uint_ulong"
-    "${TS_NAME}_conversion_float_ulong"
+
+    "${TS_NAME}_conversion_double_short"
     "${TS_NAME}_conversion_double_ulong"
-    "${TS_NAME}_conversion_char_long"
-    "${TS_NAME}_conversion_short_long"
-    "${TS_NAME}_conversion_int_long"
-    "${TS_NAME}_conversion_float_long"
-    "${TS_NAME}_conversion_double_long"
+    "${TS_NAME}_conversion_long_double"
+
     "${TS_NAME}_device_partition"
     "${TS_NAME}_events"
     "${TS_NAME}_events_ooo"
@@ -949,6 +929,6 @@ set_tests_properties(
     "${TS_NAME}_vecstep"
   PROPERTIES
     LABELS "conformance_suite;conformance_suite_short"
-    ENVIRONMENT "POCL_LIMIT_MEMORY=1")
+    ENVIRONMENT "POCL_MEMORY_LIMIT=1")
 
 endif()
