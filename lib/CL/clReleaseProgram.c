@@ -97,10 +97,7 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
         }
 
       POCL_MEM_FREE(program->build_hash);
-      if (program->compiler_options)
-        {
-          POCL_MEM_FREE(program->compiler_options);
-        }
+      POCL_MEM_FREE(program->compiler_options);
       POCL_MEM_FREE(program->llvm_irs);
       POCL_MEM_FREE(program);
 
