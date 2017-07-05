@@ -596,7 +596,6 @@ ERROR:
   POCL_MEM_FREE(unique_devlist);
   pocl_cache_release_lock(write_cache_lock);
 ERROR_CLEAN_OPTIONS:
-  POCL_MEM_FREE(modded_options);
   program->build_status = CL_BUILD_ERROR;
 
   POCL_UNLOCK_OBJ(program);
