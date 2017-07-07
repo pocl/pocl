@@ -38,6 +38,8 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
   int errcode;
   unsigned i;
 
+  HANDLE_IMAGE1D_BUFFER (buffer);
+
   POCL_GOTO_ERROR_COND((buffer == NULL), CL_INVALID_MEM_OBJECT);
 
   POCL_GOTO_ERROR_ON((buffer->parent != NULL), CL_INVALID_MEM_OBJECT,

@@ -73,10 +73,6 @@ CL_API_SUFFIX__VERSION_1_2
       goto ERROR_CLEAN;
     }
 
-  /* TODO: channel order, saturating data type conversion */
-  pocl_write_pixel_zero (fill_pixel, fill_color, image->image_channel_order,
-                         image->image_elem_size,
-                         image->image_channel_data_type);
   /* The fill color is a four component RGBA floating-point color value
    * if the image channel data type is not an unnormalized signed and unsigned
    * integer type,
@@ -91,6 +87,9 @@ CL_API_SUFFIX__VERSION_1_2
    * The fill color will be converted to the appropriate
    * image channel format and order associated with image.
    */
+  pocl_write_pixel_zero (fill_pixel, fill_color, image->image_channel_order,
+                         image->image_elem_size,
+                         image->image_channel_data_type);
 
   /* POCL uses top-left corner as origin for images and AMD SDK ImageOverlap 
      test uses bottom-left corner as origin. Because of this we need to modify 
@@ -105,16 +104,20 @@ CL_API_SUFFIX__VERSION_1_2
   if (errcode != CL_SUCCESS)
     goto ERROR_CLEAN;
 
+  cmd->command.fill_image.rowpitch = image->image_row_pitch;
+  cmd->command.fill_image.slicepitch = image->image_slice_pitch;
+  cmd->command.fill_image.fill_pixel = fill_pixel;
+  cmd->command.fill_image.pixel_size
+      = image->image_elem_size * image->image_channels;
+
+  HANDLE_IMAGE1D_BUFFER (image);
+
   cmd->command.fill_image.data = command_queue->device->data;
   cmd->command.fill_image.device_ptr = 
     image->device_ptrs[command_queue->device->dev_id].mem_ptr;
   memcpy (&(cmd->command.fill_image.buffer_origin), origin, 
           3*sizeof(size_t));
   memcpy (&(cmd->command.fill_image.region), region, 3*sizeof(size_t));
-  cmd->command.fill_image.rowpitch = image->image_row_pitch;
-  cmd->command.fill_image.slicepitch = image->image_slice_pitch;
-  cmd->command.fill_image.fill_pixel = fill_pixel;
-  cmd->command.fill_image.pixel_size = image->image_elem_size * image->image_channels;
 
   POname(clRetainMemObject) (image);
   image->owning_device = command_queue->device;

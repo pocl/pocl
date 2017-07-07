@@ -153,6 +153,15 @@ pocl_check_device_supports_image (cl_device_id device,
                             "Image array size > device.max_array_size\n");
     }
 
+  if (image_desc->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER)
+    {
+      POname (clGetDeviceInfo (device, CL_DEVICE_IMAGE_MAX_BUFFER_SIZE,
+                               sizeof (m), &m, NULL));
+      POCL_RETURN_ERROR_ON (
+          (m < image_desc->image_width), CL_INVALID_IMAGE_SIZE,
+          "Image buffer size (width) > device.max_buffer_size\n");
+    }
+
   for (i = 0; i < num_entries; i++)
     {
       if (supported_image_formats[i].image_channel_order

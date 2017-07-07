@@ -62,9 +62,6 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
       return errcode;
     }  
 
-  cmd->command.write_image.device_ptr = 
-    image->device_ptrs[command_queue->device->dev_id].mem_ptr;
-  cmd->command.write_image.host_ptr = (void*) ptr;
   memcpy ((cmd->command.write_image.origin), tuned_origin, 3*sizeof (size_t));
   memcpy ((cmd->command.write_image.region), tuned_region, 3*sizeof (size_t));
   cmd->command.write_image.b_rowpitch = image->image_row_pitch;
@@ -74,7 +71,13 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
   cmd->command.write_image.h_slicepitch
       = (input_slice_pitch ? input_slice_pitch
                            : (tuned_region[0] * region[1]));
+
+  HANDLE_IMAGE1D_BUFFER (image);
+
   cmd->command.write_image.buffer = image;
+  cmd->command.write_image.device_ptr
+      = image->device_ptrs[command_queue->device->dev_id].mem_ptr;
+  cmd->command.write_image.host_ptr = (void *)ptr;
 
   POname(clRetainMemObject) (image);
   image->owning_device = command_queue->device;

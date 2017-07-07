@@ -22,6 +22,7 @@
 */
 #include "pocl_cl.h"
 #include "pocl_image_util.h"
+#include "pocl_util.h"
 
 extern CL_API_ENTRY cl_mem CL_API_CALL
 POname(clCreateImage) (cl_context              context,
@@ -156,7 +157,8 @@ CL_API_SUFFIX__VERSION_1_2
     if (image_desc->image_type == CL_MEM_OBJECT_IMAGE2D)
       size = row_pitch * image_desc->image_height;
 
-    if (image_desc->image_type == CL_MEM_OBJECT_IMAGE1D)
+    if (image_desc->image_type == CL_MEM_OBJECT_IMAGE1D
+        || image_desc->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER)
       size = row_pitch;
 
     if (image_desc->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY
@@ -166,10 +168,43 @@ CL_API_SUFFIX__VERSION_1_2
       }
 
     /* Create buffer and fill in missing parts */
-    mem = POname(clCreateBuffer) (context, flags, size, host_ptr, &errcode);
+    if (image_desc->image_type == CL_MEM_OBJECT_IMAGE1D_BUFFER)
+      {
+        POCL_GOTO_ERROR_COND ((image_desc->buffer == NULL),
+                              CL_INVALID_MEM_OBJECT);
+        POCL_GOTO_ERROR_COND ((image_desc->buffer->size < size),
+                              CL_INVALID_MEM_OBJECT);
 
-    POCL_GOTO_ERROR_ON((mem == NULL), CL_OUT_OF_HOST_MEMORY,
-      "clCreateBuffer (for backing the image) failed\n");
+        mem = (cl_mem)malloc (sizeof (struct _cl_mem));
+        POCL_GOTO_ERROR_COND ((mem == NULL), CL_OUT_OF_HOST_MEMORY);
+        memset (mem, 0, sizeof (struct _cl_mem));
+        POCL_INIT_OBJECT (mem);
+
+        cl_mem b = image_desc->buffer;
+        mem->buffer = b;
+
+        mem->size = size;
+        mem->origin = 0;
+
+        mem->context = context;
+        assert (mem->context == b->context);
+
+        pocl_cl_mem_inherit_flags (mem, b, flags);
+
+        /* Retain the buffer we're referencing */
+        POname (clRetainMemObject) (b);
+
+        POCL_MSG_PRINT_MEMORY ("CREATED IMAGE: %p REF BUFFER: %p \n\n", mem,
+                               b);
+      }
+    else
+      {
+        mem = POname (clCreateBuffer) (context, flags, size, host_ptr,
+                                       &errcode);
+        POCL_GOTO_ERROR_ON ((mem == NULL), CL_OUT_OF_HOST_MEMORY,
+                            "clCreateBuffer (for backing the image) failed\n");
+        mem->buffer = NULL;
+      }
 
     mem->type = image_desc->image_type;
     mem->is_image = CL_TRUE;
@@ -195,7 +230,6 @@ CL_API_SUFFIX__VERSION_1_2
     mem->image_channel_order = image_format->image_channel_order;
     mem->num_mip_levels = image_desc->num_mip_levels;
     mem->num_samples = image_desc->num_samples;
-    mem->buffer = image_desc->buffer;
     mem->image_channels = channels;
     mem->image_elem_size = elem_size;
 
@@ -211,7 +245,7 @@ CL_API_SUFFIX__VERSION_1_2
     printf("mem_image_channel_data_type %x \n",mem->image_channel_data_type);
     printf("device_ptrs[0] %x \n \n", mem->device_ptrs[0]);
 #endif
-    
+
     if (errcode_ret != NULL)
       *errcode_ret = CL_SUCCESS;
 

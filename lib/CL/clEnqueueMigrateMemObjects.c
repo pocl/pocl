@@ -66,16 +66,18 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
   cmd->command.migrate.data = command_queue->device->data;
   cmd->command.migrate.num_mem_objects = num_mem_objects;
   cmd->command.migrate.mem_objects = malloc (sizeof (cl_mem) * num_mem_objects);
+  cl_mem *new_mem_objects = cmd->command.migrate.mem_objects;
   cmd->command.migrate.source_devices = malloc
     (num_mem_objects * sizeof (cl_device_id));
-  memcpy (cmd->command.migrate.mem_objects, mem_objects,
-          num_mem_objects * sizeof (cl_mem));
+  memcpy (new_mem_objects, mem_objects, num_mem_objects * sizeof (cl_mem));
 
   for (i = 0; i < num_mem_objects; ++i)
     {
-      POname(clRetainMemObject) (mem_objects[i]);
-      cmd->command.migrate.source_devices[i] = mem_objects[i]->owning_device;
-      mem_objects[i]->owning_device = command_queue->device;
+      HANDLE_IMAGE1D_BUFFER (new_mem_objects[i]);
+      POname (clRetainMemObject) (new_mem_objects[i]);
+      cmd->command.migrate.source_devices[i]
+          = new_mem_objects[i]->owning_device;
+      new_mem_objects[i]->owning_device = command_queue->device;
     }
 
   pocl_command_enqueue (command_queue, cmd);

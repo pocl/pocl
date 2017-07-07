@@ -52,6 +52,8 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
   if (errcode != CL_SUCCESS)
     return errcode;
 
+  HANDLE_IMAGE1D_BUFFER (memobj);
+
   POCL_LOCK_OBJ (memobj);
   DL_FOREACH (memobj->mappings, mapping)
     {

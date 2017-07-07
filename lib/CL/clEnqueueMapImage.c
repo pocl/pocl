@@ -99,6 +99,12 @@ CL_API_SUFFIX__VERSION_1_0
       goto ERROR;
     }
 
+  *image_row_pitch = image->image_row_pitch;
+  if (image_slice_pitch)
+    *image_slice_pitch = image->image_slice_pitch;
+
+  HANDLE_IMAGE1D_BUFFER (image);
+
   if (image->flags & CL_MEM_USE_HOST_PTR)
     {
       /* In this case it should use the given host_ptr + offset as
@@ -145,18 +151,12 @@ CL_API_SUFFIX__VERSION_1_0
   cmd->command.map.mapping = mapping_info;
   POname(clRetainMemObject) (image);
   image->owning_device = command_queue->device;
-
-  image->owning_device = command_queue->device;
   pocl_command_enqueue(command_queue, cmd);
 
   if (blocking_map)
     {
       POname(clFinish) (command_queue);
     }
-
-  *image_row_pitch = image->image_row_pitch;
-  if (image_slice_pitch)
-    *image_slice_pitch = image->image_slice_pitch;
 
   if (errcode_ret != NULL)
     (*errcode_ret) = CL_SUCCESS;

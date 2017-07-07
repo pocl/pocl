@@ -110,6 +110,7 @@ POname(clCreateBuffer)(cl_context   context,
   mem->parent = NULL;
   mem->map_count = 0;
   mem->mappings = NULL;
+  mem->buffer = NULL;
   mem->destructor_callbacks = NULL;
   mem->type = CL_MEM_OBJECT_BUFFER;
   mem->flags = flags;

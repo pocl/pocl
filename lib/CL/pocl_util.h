@@ -219,4 +219,9 @@ float half_to_float (uint16_t value);
     }                                                                   \
   while (0)
 
+#define HANDLE_IMAGE1D_BUFFER(mem)                                            \
+  mem = ((mem->is_image && (mem->type == CL_MEM_OBJECT_IMAGE1D_BUFFER))       \
+             ? mem->buffer                                                    \
+             : mem);
+
 #endif

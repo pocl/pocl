@@ -197,6 +197,9 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
   if (errcode != CL_SUCCESS)
     return errcode;
 
+  HANDLE_IMAGE1D_BUFFER (src);
+  HANDLE_IMAGE1D_BUFFER (dst);
+
   cmd->command.copy_image.src_buffer = src;
   cmd->command.copy_image.src_device =
     (src->owning_device) ? src->owning_device : command_queue->device;
