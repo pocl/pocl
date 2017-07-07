@@ -231,21 +231,48 @@ static void get_build_log(cl_program program,
 int pocl_llvm_build_program(cl_program program, 
                             unsigned device_i,
                             const char* user_options_cstr,
-                            char* program_bc_path)
+                            char* program_bc_path,
+                            cl_uint num_input_headers,
+                            const cl_program *input_headers,
+                            const char **header_include_names)
 
 {
   void* write_lock = NULL;
   char tempfile[POCL_FILENAME_LENGTH];
   tempfile[0] = 0;
   llvm::Module **mod = NULL;
+  char temp_include_dir[POCL_FILENAME_LENGTH];
   std::string user_options(user_options_cstr ? user_options_cstr : "");
   std::string content;
   llvm::raw_string_ostream sos(content);
   size_t n = 0;
+  int error;
 
   llvm::MutexGuard lockHolder(kernelCompilerLock);
   InitializeLLVM();
 
+  if (num_input_headers > 0) {
+    error = pocl_cache_create_tempdir(temp_include_dir);
+    std::string tempdir(temp_include_dir);
+    assert(error == 0);
+
+    for (n = 0; n < num_input_headers; n++) {
+      char *input_header = input_headers[n]->source;
+      size_t input_header_size = strlen(input_header);
+      const char *header_name = header_include_names[n];
+      std::string header(header_name);
+      /* TODO this path stuff should be in utils */
+      std::string path(tempdir);
+      path.append("/");
+      path.append(header_name);
+      size_t last_slash = header.rfind('/');
+      if (last_slash != std::string::npos) {
+        std::string dir(path, 0, (tempdir.size() + 1 + last_slash));
+        pocl_mkdir_p(dir.c_str());
+      }
+      pocl_write_file(path.c_str(), input_header, input_header_size, 0, 1);
+    }
+  }
   // Use CompilerInvocation::CreateFromArgs to initialize
   // CompilerInvocation. This way we can reuse the Clang's
   // command line parsing.
@@ -292,6 +319,11 @@ int pocl_llvm_build_program(cl_program program,
 #endif
     }
   }
+
+  /* temp dir takes preference */
+  if (num_input_headers > 0)
+    ss << "-I" << temp_include_dir << " ";
+
   if (device->has_64bit_long)
     ss << "-Dcl_khr_int64 ";
   // This can cause illegal optimizations when unaware
@@ -482,8 +514,11 @@ int pocl_llvm_build_program(cl_program program,
     pocl_read_file(tempfile, &PreprocessedOut, &PreprocessedSize);
     fe.OutputFile = saved_output;
   }
-  if (pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0) == 0)
+  if (pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0) == 0) {
+    if (num_input_headers > 0)
+      pocl_rm_rf(temp_include_dir);
     pocl_remove(tempfile);
+  }
 
   if (PreprocessedOut == nullptr) {
     pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
@@ -530,7 +565,7 @@ int pocl_llvm_build_program(cl_program program,
   POCL_MSG_PRINT_INFO("Writing program.bc to %s.\n", program_bc_path);
 
   /* Always retain program.bc. Its required in clBuildProgram */
-  int error = pocl_write_module(*mod, program_bc_path, 0);
+  error = pocl_write_module(*mod, program_bc_path, 0);
   assert(error == 0);
 
   /* To avoid writing & reading the same back,

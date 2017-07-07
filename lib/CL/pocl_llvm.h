@@ -38,10 +38,13 @@ char* get_cpu_name();
 
 /* Compiles an .cl file into LLVM IR.
  */
-int pocl_llvm_build_program
-(cl_program program,
- unsigned device_i,
- const char* user_options_cstr, char *program_bc_path);
+int pocl_llvm_build_program(cl_program program,
+                            unsigned device_i,
+                            const char* user_options_cstr,
+                            char *program_bc_path,
+                            cl_uint num_input_headers,
+                            const cl_program *input_headers,
+                            const char **header_include_names);
 
 
 /* Retrieve metadata of the given kernel in the program to populate the

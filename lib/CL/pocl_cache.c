@@ -251,6 +251,26 @@ void pocl_cache_mk_temp_name(char* path) {
 #endif
 }
 
+int
+pocl_cache_create_tempdir (char *path)
+{
+  assert (cache_topdir_initialized);
+#if defined(_MSC_VER) || defined(__MINGW32__)
+  char *tmp = _tempnam (cache_topdir, "pocl_");
+  assert (tmp);
+  int bytes_written = snprintf (path, POCL_FILENAME_LENGTH, "%s", tmp);
+  free (tmp);
+  assert (bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
+  return 0;
+#else
+  int bytes_written = snprintf (path, POCL_FILENAME_LENGTH,
+                                "%s/tempdir_XXXXXX", cache_topdir);
+  assert (bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
+  /* TODO mkdtemp() might not be portable */
+  return (mkdtemp (path) != NULL);
+#endif
+}
+
 int pocl_cache_write_program_source(char *program_cl_path,
                                     cl_program program) {
     pocl_cache_mk_temp_name(program_cl_path);

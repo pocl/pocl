@@ -397,7 +397,7 @@ CL_API_SUFFIX__VERSION_1_0
 #ifdef OCS_AVAILABLE
           error = pocl_llvm_build_program(program, device_i,
                                           program->compiler_options,
-                                          program_bc_path);
+                                          program_bc_path, 0, NULL, NULL);
           POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
                              "pocl_llvm_build_program() failed\n");
 #else
