@@ -222,11 +222,22 @@ check_binary(cl_device_id device, const unsigned char *binary)
   pocl_binary b;
   unsigned char *p = read_header(&b, binary);
   if (b.version != POCLCC_VERSION)
-    return NULL;
+    {
+      POCL_MSG_WARN ("PoclBinary version %i different from the one "
+                     "recognized by this pocl version (%i)\n",
+                     b.version, POCLCC_VERSION);
+      return NULL;
+    }
   if (strncmp(b.pocl_id, POCLCC_STRING_ID, POCLCC_STRING_ID_LENGTH))
-    return NULL;
+    {
+      POCL_MSG_WARN ("File is not a pocl binary\n");
+      return NULL;
+    }
   if (pocl_binary_get_device_id(device) != b.device_id)
-    return NULL;
+    {
+      POCL_MSG_WARN ("PoclBinary device id mismatch\n");
+      return NULL;
+    }
   return p;
 }
 
@@ -345,9 +356,15 @@ serialize_kernel_cachedir (cl_kernel kernel,
   cl_program program = kernel->program;
   char path[POCL_FILENAME_LENGTH];
   char basedir[POCL_FILENAME_LENGTH];
+  char program_bc_path[POCL_FILENAME_LENGTH];
 
   pocl_cache_program_path (basedir, program, device_i);
   size_t basedir_len = strlen (basedir);
+
+  pocl_cache_program_bc_path (program_bc_path, program, device_i);
+  POCL_MSG_PRINT_INFO ("Kernel %s: serializing program.bc: %s\n",
+                        kernel->name, program_bc_path);
+  buffer = recursively_serialize_path (program_bc_path, basedir_len, buffer);
 
   pocl_cache_kernel_cachedir (path, program, device_i, kernel);
   POCL_MSG_PRINT_INFO ("Kernel %s: recur serializing cachedir %s\n",
