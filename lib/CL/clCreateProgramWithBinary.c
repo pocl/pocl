@@ -21,26 +21,29 @@
    THE SOFTWARE.
 */
 
-#include "pocl_cl.h"
-#include "pocl_util.h"
-#include <string.h>
 #include "pocl_binary.h"
 #include "pocl_cache.h"
+#include "pocl_cl.h"
+#include "pocl_file_util.h"
+#include "pocl_shared.h"
+#include "pocl_util.h"
+#include <string.h>
 
-CL_API_ENTRY cl_program CL_API_CALL
-POname(clCreateProgramWithBinary)(cl_context                     context,
-                          cl_uint                        num_devices,
-                          const cl_device_id *           device_list,
-                          const size_t *                 lengths,
-                          const unsigned char **         binaries,
-                          cl_int *                       binary_status,
-                          cl_int *                       errcode_ret)
-  CL_API_SUFFIX__VERSION_1_0
+/* creates either a program with binaries, or an empty program. The latter
+ * is useful for clLinkProgram() which needs an empty program to put the
+ * compiled results in.
+ */
+cl_program
+create_program_skeleton (cl_context context, cl_uint num_devices,
+                         const cl_device_id *device_list,
+                         const size_t *lengths, const unsigned char **binaries,
+                         cl_int *binary_status, cl_int *errcode_ret,
+                         int allow_empty_binaries)
 {
   cl_program program;
   unsigned i,j;
   int errcode;
-  cl_device_id * unique_devlist = NULL;
+  cl_device_id *unique_devlist = NULL;
 
   POCL_GOTO_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
 
@@ -48,14 +51,16 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
 
   POCL_GOTO_ERROR_COND((num_devices == 0), CL_INVALID_VALUE);
 
-  POCL_GOTO_ERROR_COND((lengths == NULL), CL_INVALID_VALUE);
-
-  POCL_MSG_PRINT_INFO("creating a program with binary\n");
-
-  for (i = 0; i < num_devices; ++i)
+  if (!allow_empty_binaries)
     {
-      POCL_GOTO_ERROR_ON((lengths[i] == 0 || binaries[i] == NULL), CL_INVALID_VALUE,
-        "%i-th binary is NULL or its length==0\n", i);
+      POCL_GOTO_ERROR_COND ((lengths == NULL), CL_INVALID_VALUE);
+
+      for (i = 0; i < num_devices; ++i)
+        {
+          POCL_GOTO_ERROR_ON ((lengths[i] == 0 || binaries[i] == NULL),
+                              CL_INVALID_VALUE,
+                              "%i-th binary is NULL or its length==0\n", i);
+        }
     }
 
   // check for duplicates in device_list[].
@@ -126,6 +131,9 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
   program->binary_type = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
   char program_bc_path[POCL_FILENAME_LENGTH];
 
+  if (allow_empty_binaries && (lengths == NULL) && (binaries == NULL))
+    goto SUCCESS;
+
   for (i = 0; i < num_devices; ++i)
     {
       /* LLVM IR */
@@ -154,6 +162,13 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
           POCL_GOTO_ERROR_ON(pocl_binary_deserialize (program, i),
                              CL_INVALID_BINARY,
                              "Could not unpack a pocl binary\n");
+          /* read program.bc, can be useful later */
+          if (pocl_exists (program_bc_path))
+            {
+              pocl_read_file (program_bc_path,
+                              (char **)(&program->binaries[i]),
+                              (uint64_t *)(&program->binary_sizes[i]));
+            }
           pocl_cache_release_lock (write_cache_lock);
 
           if (binary_status != NULL)
@@ -169,6 +184,7 @@ POname(clCreateProgramWithBinary)(cl_context                     context,
         }
     }
 
+SUCCESS:
   POCL_RETAIN_OBJECT(context);
 
   if (errcode_ret != NULL)
@@ -199,5 +215,14 @@ ERROR:
         *errcode_ret = errcode;
       }
     return NULL;
+}
+
+CL_API_ENTRY cl_program CL_API_CALL POname (clCreateProgramWithBinary) (
+    cl_context context, cl_uint num_devices, const cl_device_id *device_list,
+    const size_t *lengths, const unsigned char **binaries,
+    cl_int *binary_status, cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_0
+{
+  return create_program_skeleton (context, num_devices, device_list, lengths,
+                                  binaries, binary_status, errcode_ret, 0);
 }
 POsym(clCreateProgramWithBinary)

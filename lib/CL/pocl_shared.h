@@ -54,6 +54,12 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
 
 cl_int program_compile_dynamic_wg_binaries(cl_program program);
 
+cl_program create_program_skeleton (cl_context context, cl_uint num_devices,
+                                    const cl_device_id *device_list,
+                                    const size_t *lengths,
+                                    const unsigned char **binaries,
+                                    cl_int *binary_status, cl_int *errcode_ret,
+                                    int allow_empty_binaries);
 
 int context_set_properties(cl_context                    context,
                            const cl_context_properties * properties,
