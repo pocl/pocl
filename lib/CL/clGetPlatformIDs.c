@@ -144,7 +144,7 @@ struct _cl_icd_dispatch pocl_dispatch = {
   &POclEnqueueMigrateMemObjects,
   &POclEnqueueMarkerWithWaitList,
   &POclEnqueueBarrierWithWaitList,
-  NULL, /* &POclGetExtensionFunctionAddressForPlatform, */
+  &POclGetExtensionFunctionAddressForPlatform,
   NULL, /* &POclCreateFromGLTexture,     */
   NULL, /* &clUnknown109 */
   NULL, /* &clUnknown110 */
