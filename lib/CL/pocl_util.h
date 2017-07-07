@@ -116,6 +116,9 @@ pocl_command_is_ready(cl_event event)
 int
 pocl_update_command_queue (cl_event event);
 
+void pocl_cl_mem_inherit_flags (cl_mem mem, cl_mem from_buffer,
+                                cl_mem_flags flags);
+
 cl_int 
 pocl_update_mem_obj_sync (cl_command_queue cq, _cl_command_node *cmd, 
                           cl_mem mem, char operation);

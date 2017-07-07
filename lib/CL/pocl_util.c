@@ -463,6 +463,42 @@ int pocl_update_command_queue (cl_event event)
   return cq_ready;
 }
 
+void
+pocl_cl_mem_inherit_flags (cl_mem mem, cl_mem from_buffer, cl_mem_flags flags)
+{
+  if ((flags & CL_MEM_READ_WRITE) | (flags & CL_MEM_READ_ONLY)
+      | (flags & CL_MEM_WRITE_ONLY))
+    {
+      mem->flags = (flags & CL_MEM_READ_WRITE) | (flags & CL_MEM_READ_ONLY)
+                   | (flags & CL_MEM_WRITE_ONLY);
+    }
+  else
+    {
+      mem->flags = (from_buffer->flags & CL_MEM_READ_WRITE)
+                   | (from_buffer->flags & CL_MEM_READ_ONLY)
+                   | (from_buffer->flags & CL_MEM_WRITE_ONLY);
+    }
+
+  if ((flags & CL_MEM_HOST_NO_ACCESS) | (flags & CL_MEM_HOST_READ_ONLY)
+      | (flags & CL_MEM_HOST_WRITE_ONLY))
+    {
+      mem->flags = mem->flags | ((flags & CL_MEM_HOST_NO_ACCESS)
+                                 | (flags & CL_MEM_HOST_READ_ONLY)
+                                 | (flags & CL_MEM_HOST_WRITE_ONLY));
+    }
+  else
+    {
+      mem->flags
+          = mem->flags | ((from_buffer->flags & CL_MEM_HOST_NO_ACCESS)
+                          | (from_buffer->flags & CL_MEM_HOST_READ_ONLY)
+                          | (from_buffer->flags & CL_MEM_HOST_WRITE_ONLY));
+    }
+
+  mem->flags = mem->flags | (from_buffer->flags & CL_MEM_USE_HOST_PTR)
+               | (from_buffer->flags & CL_MEM_ALLOC_HOST_PTR)
+               | (from_buffer->flags & CL_MEM_COPY_HOST_PTR);
+}
+
 cl_int pocl_update_mem_obj_sync (cl_command_queue cq, _cl_command_node *cmd, 
                                  cl_mem mem, char operation)
 {

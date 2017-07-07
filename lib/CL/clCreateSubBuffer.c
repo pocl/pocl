@@ -21,8 +21,9 @@
    THE SOFTWARE.
 */
 
-#include "pocl_cl.h"
 #include "devices.h"
+#include "pocl_cl.h"
+#include "pocl_util.h"
 
 /* NOTE: this function is untested! */
 CL_API_ENTRY cl_mem CL_API_CALL
@@ -105,45 +106,7 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
        "Invalid flags: buffer is CL_MEM_HOST_NO_ACCESS, requested sub-buffer "
        "(CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_WRITE_ONLY)\n");
 
-  if ((flags & CL_MEM_READ_WRITE) |
-      (flags & CL_MEM_READ_ONLY) |
-      (flags & CL_MEM_WRITE_ONLY)) 
-    { 
-      mem->flags =
-        (flags & CL_MEM_READ_WRITE) |
-        (flags & CL_MEM_READ_ONLY) |
-        (flags & CL_MEM_WRITE_ONLY);
-    }
-  else
-    {
-      mem->flags =
-        (buffer->flags & CL_MEM_READ_WRITE) |
-        (buffer->flags & CL_MEM_READ_ONLY) |
-        (buffer->flags & CL_MEM_WRITE_ONLY);
-    }
-
-  if ((flags & CL_MEM_HOST_NO_ACCESS)
-      | (flags & CL_MEM_HOST_READ_ONLY)
-      | (flags & CL_MEM_HOST_WRITE_ONLY))
-    {
-      mem->flags = mem->flags |
-        ((flags & CL_MEM_HOST_NO_ACCESS)
-        | (flags & CL_MEM_HOST_READ_ONLY)
-        | (flags & CL_MEM_HOST_WRITE_ONLY));
-    }
-  else
-    {
-      mem->flags = mem->flags |
-        ((buffer->flags & CL_MEM_HOST_NO_ACCESS)
-        | (buffer->flags & CL_MEM_HOST_READ_ONLY)
-        | (buffer->flags & CL_MEM_HOST_WRITE_ONLY));
-    }
-
-
-  mem->flags = mem->flags |
-    (buffer->flags & CL_MEM_USE_HOST_PTR) |
-    (buffer->flags & CL_MEM_ALLOC_HOST_PTR) |
-    (buffer->flags & CL_MEM_COPY_HOST_PTR);
+  pocl_cl_mem_inherit_flags (mem, buffer, flags);
 
   if (mem->flags & CL_MEM_USE_HOST_PTR || mem->flags & CL_MEM_ALLOC_HOST_PTR)
     {
