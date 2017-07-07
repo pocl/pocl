@@ -362,15 +362,6 @@ pocl_pthread_run
   /* not used: this device will not be told when or what to run */
 }
 
-void *
-pocl_pthread_map_mem (void *data, void *buf_ptr, 
-                      size_t offset, size_t size, void* host_ptr) 
-{
-  /* All global pointers of the pthread/CPU device are in 
-     the host address space already, and up to date. */     
-  return (char*)buf_ptr + offset;
-}
-
 void
 pocl_pthread_submit (_cl_command_node *node, cl_command_queue cq)
 {

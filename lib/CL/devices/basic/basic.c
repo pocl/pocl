@@ -358,8 +358,7 @@ pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
   void *b = NULL;
   cl_mem_flags flags = mem_obj->flags;
   unsigned i;
-  POCL_MSG_PRINT_INFO("BASIC: alloc_mem_obj, mem %p, dev %d\n", 
-                      mem_obj, device->dev_id);
+  POCL_MSG_PRINT_MEMORY (" mem %p, dev %d\n", mem_obj, device->dev_id);
   /* check if some driver has already allocated memory for this mem_obj 
      in our global address space, and use that*/
   for (i = 0; i < mem_obj->context->num_devices; ++i)
@@ -372,7 +371,9 @@ pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
         {
           mem_obj->device_ptrs[device->dev_id].mem_ptr =
             mem_obj->device_ptrs[i].mem_ptr;
-          POCL_MSG_PRINT_INFO("BASIC: alloc_mem_obj %p dev %d, using already allocated mem\n", mem_obj, device->dev_id);
+          POCL_MSG_PRINT_MEMORY (
+              "mem %p dev %d, using already allocated mem\n", mem_obj,
+              device->dev_id);
           return CL_SUCCESS;
         }
     }
@@ -386,6 +387,7 @@ pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
     }
   else
     {
+      POCL_MSG_PRINT_MEMORY ("!USE_HOST_PTR\n");
       b = pocl_memalign_alloc_global_mem (device, MAX_EXTENDED_ALIGNMENT,
                                           mem_obj->size);
       if (b==NULL)
@@ -395,11 +397,12 @@ pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
     }
 
   /* use this dev mem allocation as host ptr */
-  if (flags & CL_MEM_ALLOC_HOST_PTR && (mem_obj->mem_host_ptr == NULL))
+  if ((flags & CL_MEM_ALLOC_HOST_PTR) && (mem_obj->mem_host_ptr == NULL))
     mem_obj->mem_host_ptr = b;
 
   if (flags & CL_MEM_COPY_HOST_PTR)
     {
+      POCL_MSG_PRINT_MEMORY ("COPY_HOST_PTR\n");
       // mem_host_ptr must be non-NULL
       assert(host_ptr != NULL);
       memcpy (b, host_ptr, mem_obj->size);
@@ -805,9 +808,17 @@ pocl_basic_map_mem (void *data, void *buf_ptr,
                       size_t offset, size_t size,
                       void *host_ptr) 
 {
-  /* All global pointers of the pthread/CPU device are in 
-     the host address space already, and up to date. */
-  if (host_ptr != NULL) return host_ptr;
+  /* If the buffer was allocated with CL_MEM_ALLOC_HOST_PTR |
+   * CL_MEM_COPY_HOST_PTR,
+   * the host_ptr is not the same memory as pocl's device_ptrs[], and we need
+   * to copy pocl's buffer content back to host_ptr. */
+  if ((host_ptr != NULL) && (host_ptr != (buf_ptr + offset)))
+    {
+      POCL_MSG_PRINT_MEMORY ("device: MAP memcpy() "
+                             "buf_ptr %p + offset %zu to host_ptr %p\n",
+                             buf_ptr, offset, host_ptr);
+      memcpy ((char *)host_ptr, (char *)buf_ptr + offset, size);
+    }
   return (char*)buf_ptr + offset;
 }
 
@@ -815,7 +826,18 @@ void* pocl_basic_unmap_mem(void *data, void *host_ptr,
                            void *device_start_ptr,
                            size_t offset, size_t size)
 {
-  return host_ptr;
+  /* If the buffer was allocated with CL_MEM_ALLOC_HOST_PTR |
+   * CL_MEM_COPY_HOST_PTR,
+   * the host_ptr is not the same memory as pocl's device_ptrs[], and we need
+   * to copy host_ptr content back to  pocl's device_ptrs[]. */
+  if ((host_ptr != NULL) && (host_ptr != (device_start_ptr + offset)))
+    {
+      POCL_MSG_PRINT_MEMORY ("device: UNMAP memcpy() "
+                             "host_ptr %p to buf_ptr %p + offset %zu\n",
+                             host_ptr, device_start_ptr, offset);
+      memcpy ((char *)device_start_ptr + offset, (char *)host_ptr, size);
+    }
+  return (char *)host_ptr;
 }
 
 

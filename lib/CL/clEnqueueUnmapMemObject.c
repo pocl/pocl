@@ -57,6 +57,10 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
   POCL_LOCK_OBJ (memobj);
   DL_FOREACH (memobj->mappings, mapping)
     {
+      POCL_MSG_PRINT_MEMORY (
+          "UnMap %p search Mapping: host_ptr %p offset %zu\n", mapped_ptr,
+          mapping->host_ptr, mapping->offset);
+
       if (mapping->host_ptr == mapped_ptr)
           break;
     }

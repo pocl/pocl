@@ -92,7 +92,6 @@ POname(clCreateBuffer)(cl_context   context,
         (~flags & CL_MEM_COPY_HOST_PTR)), CL_INVALID_HOST_PTR,
         "host_ptr is not NULL, but flags don't specify {COPY|USE}_HOST_PTR\n");
     }
-  
 
   for (i = 0; i < context->num_devices; ++i)
     {
@@ -179,7 +178,7 @@ POname(clCreateBuffer)(cl_context   context,
     }
 
   /* Some device driver may already have allocated host accessible memory */
-  if (flags & CL_MEM_ALLOC_HOST_PTR && mem->mem_host_ptr == NULL)
+  if ((flags & CL_MEM_ALLOC_HOST_PTR) && (mem->mem_host_ptr == NULL))
     {
       assert(mem->shared_mem_allocation_owner == NULL);
       mem->mem_host_ptr = pocl_memalign_alloc (MAX_EXTENDED_ALIGNMENT, size);
@@ -192,7 +191,9 @@ POname(clCreateBuffer)(cl_context   context,
 
   POCL_RETAIN_OBJECT(context);
 
-  POCL_MSG_PRINT_INFO ("Created Buffer %p\n", mem);
+  POCL_MSG_PRINT_MEMORY (
+      "Created Buffer %p, HOST_PTR: %p, DEVICE_PTR[0]: %p \n", mem,
+      mem->mem_host_ptr, mem->device_ptrs[0].mem_ptr);
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;

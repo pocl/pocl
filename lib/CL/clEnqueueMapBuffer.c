@@ -90,7 +90,8 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
       goto ERROR;
     }
 
-  if (buffer->flags & CL_MEM_USE_HOST_PTR || buffer->flags & CL_MEM_ALLOC_HOST_PTR)
+  if ((buffer->flags & CL_MEM_USE_HOST_PTR)
+      || (buffer->flags & CL_MEM_ALLOC_HOST_PTR))
     {
       /* In this case it should use the given host_ptr + offset as
          the mapping area in the host memory. */   
@@ -103,11 +104,10 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
          the mapping will be stored (the last argument is NULL) in
          the host memory. When the last argument is non-NULL, the
          buffer will be mapped there (assumed it will succeed).  */
-      
-      host_ptr = device->ops->map_mem 
-        (device->data, buffer->device_ptrs[device->dev_id].mem_ptr, offset, 
-         size, 
-         NULL);
+
+      host_ptr = device->ops->map_mem (
+          device->data, buffer->device_ptrs[device->dev_id].mem_ptr, offset,
+          size, NULL);
     }
 
   if (host_ptr == NULL)
@@ -130,8 +130,11 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   mapping_info->offset = offset;
   mapping_info->size = size;
   POCL_LOCK_OBJ (buffer);
-  DL_APPEND (buffer->mappings, mapping_info);  
+  DL_APPEND (buffer->mappings, mapping_info);
   POCL_UNLOCK_OBJ (buffer);
+
+  POCL_MSG_PRINT_MEMORY ("Buffer %p New Mapping: host_ptr %p offset %zu\n",
+                         buffer, mapping_info->host_ptr, mapping_info->offset);
 
   POname(clRetainMemObject) (buffer);
   buffer->owning_device = command_queue->device;
@@ -161,21 +164,3 @@ ERROR:
   return NULL;
 }
 POsym(clEnqueueMapBuffer)
-
-void*
-pocl_map_mem_cmd(cl_device_id device, 
-                 cl_mem buffer, 
-                 mem_mapping_t *mapping_info) {
-
-
-  
-  /* The second call ensures the memory is flushed/updated to the
-     host location. */
-  device->ops->map_mem 
-    (device->data, buffer->device_ptrs[device->dev_id].mem_ptr, 
-     mapping_info->offset, mapping_info->size, mapping_info->host_ptr);
-  
-  buffer->map_count++;
-  return mapping_info->host_ptr;
-
-}

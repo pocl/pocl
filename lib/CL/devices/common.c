@@ -340,8 +340,17 @@ pocl_exec_command (_cl_command_node * volatile node)
     case CL_COMMAND_MAP_IMAGE:
     case CL_COMMAND_MAP_BUFFER: 
       POCL_UPDATE_EVENT_RUNNING(event);
-      pocl_map_mem_cmd (node->device, node->command.map.buffer, 
-                        node->command.map.mapping);
+      POCL_LOCK_OBJ (node->command.map.buffer);
+      if (node->device->ops->map_mem != NULL)
+        node->device->ops->map_mem (node->device->data,
+                                    (node->command.map.buffer)
+                                        ->device_ptrs[node->device->dev_id]
+                                        .mem_ptr,
+                                    (node->command.map.mapping)->offset,
+                                    (node->command.map.mapping)->size,
+                                    (node->command.map.mapping)->host_ptr);
+      (node->command.map.buffer)->map_count++;
+      POCL_UNLOCK_OBJ (node->command.map.buffer);
       POCL_UPDATE_EVENT_COMPLETE(event);
       POCL_DEBUG_EVENT_TIME(event, "Map Image/Buffer      ");
       break;
@@ -480,26 +489,21 @@ pocl_exec_command (_cl_command_node * volatile node)
       break;
     case CL_COMMAND_UNMAP_MEM_OBJECT:
       POCL_UPDATE_EVENT_RUNNING(event);
-      if ((node->command.unmap.memobj)->flags & 
-          (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR))
-        {
-          /* TODO: should we ensure the device global region is updated from
-             the host memory? How does the specs define it,
-             can the host_ptr be assumed to point to the host and the
-             device accessible memory or just point there until the
-             kernel(s) get executed or similar? */
-          /* Assume the region is automatically up to date. */
-        } else 
-        {
-          if (node->device->ops->unmap_mem != NULL)        
-            node->device->ops->unmap_mem
-              (node->device->data, 
-               (node->command.unmap.mapping)->host_ptr, 
-               (node->command.unmap.memobj)->device_ptrs[node->device->dev_id].mem_ptr, 
-               (node->command.unmap.mapping)->offset,
-               (node->command.unmap.mapping)->size);
-        }
+      /* TODO: should we ensure the device global region is updated from
+         the host memory? How does the specs define it,
+         can the host_ptr be assumed to point to the host and the
+         device accessible memory or just point there until the
+         kernel(s) get executed or similar? */
+      /* Assume the region is automatically up to date. */
       POCL_LOCK_OBJ (node->command.unmap.memobj);
+      if (node->device->ops->unmap_mem != NULL)
+        node->device->ops->unmap_mem (node->device->data,
+                                      (node->command.unmap.mapping)->host_ptr,
+                                      (node->command.unmap.memobj)
+                                          ->device_ptrs[node->device->dev_id]
+                                          .mem_ptr,
+                                      (node->command.unmap.mapping)->offset,
+                                      (node->command.unmap.mapping)->size);
       DL_DELETE((node->command.unmap.memobj)->mappings, 
                 node->command.unmap.mapping);
       (node->command.unmap.memobj)->map_count--;

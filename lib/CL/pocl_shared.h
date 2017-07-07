@@ -35,13 +35,6 @@ extern "C" {
 #endif
 
 
-/* Function for performing the actual mapping, used both from the
-   clFinish() and the blocking call. */
-void*
-pocl_map_mem_cmd(cl_device_id device,
-                 cl_mem buffer,
-                 mem_mapping_t *mapping_info);
-
 cl_int pocl_rect_copy(cl_command_queue command_queue,
                       cl_command_type command_type,
                       cl_mem src,
