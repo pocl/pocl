@@ -45,6 +45,7 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 
 
 #include "llvm/LinkAllPasses.h"
+#include "llvm/Linker/Linker.h"
 #ifdef LLVM_OLDER_THAN_3_7
 #include "llvm/PassManager.h"
 #include "llvm/Target/TargetLibraryInfo.h"
@@ -580,6 +581,103 @@ int pocl_llvm_build_program(cl_program program,
   n = content.size();
   program->binary_sizes[device_i] = n;
   program->binaries[device_i] = (unsigned char *) malloc(n);
+  std::memcpy(program->binaries[device_i], content.c_str(), n);
+
+  pocl_cache_release_lock(write_lock);
+
+  return CL_SUCCESS;
+}
+
+
+int pocl_llvm_link_program(cl_program program,
+                           unsigned device_i,
+                           char *program_bc_path,
+                           cl_uint num_input_programs,
+                           unsigned char **cur_device_binaries,
+                           size_t *cur_device_binary_sizes,
+                           void **cur_llvm_irs) {
+
+  void *write_lock;
+  std::string content;
+  std::string concated_binaries;
+  llvm::raw_string_ostream sos(content);
+  size_t n = 0, i;
+  llvm::Module **modptr;
+  int error;
+
+  llvm::MutexGuard lockHolder(kernelCompilerLock);
+  InitializeLLVM();
+
+  LLVMContext *c = GlobalContext();
+#ifdef LLVM_OLDER_THAN_3_8
+  llvm::Module *mod = new llvm::Module(StringRef("linked_program"), *c);
+#else
+  std::unique_ptr<llvm::Module> mod(
+      new llvm::Module(StringRef("linked_program"), *c));
+#endif
+
+  for (i = 0; i < num_input_programs; i++) {
+    assert(cur_device_binaries[i]);
+    assert(cur_device_binary_sizes[i]);
+    concated_binaries.append(std::string((char *)cur_device_binaries[i],
+                                         cur_device_binary_sizes[i]));
+
+    llvm::Module *p = (llvm::Module *)cur_llvm_irs[i];
+    assert(p);
+
+#ifdef LLVM_OLDER_THAN_3_8
+    if (Linker::LinkModules(mod, llvm::CloneModule(p)))
+      return CL_LINK_PROGRAM_FAILURE;
+#else
+    if (Linker::linkModules(*mod, llvm::CloneModule(p)))
+      return CL_LINK_PROGRAM_FAILURE;
+#endif
+  }
+
+#ifdef LLVM_OLDER_THAN_3_8
+  llvm::Module *linked_module = mod;
+#else
+  llvm::Module *linked_module = mod.release();
+#endif
+
+  if (linked_module == nullptr)
+    return CL_LINK_PROGRAM_FAILURE;
+
+  /* TODO currently cached on concated binary contents (in undefined order),
+     this is not terribly useful (but we have to store it somewhere..) */
+  error = pocl_cache_create_program_cachedir(program, device_i,
+                                     concated_binaries.c_str(),
+                                     concated_binaries.size(),
+                                     program_bc_path);
+  assert(error == 0);
+
+  modptr = (llvm::Module **)&program->llvm_irs[device_i];
+  if (*modptr != nullptr)
+    delete (llvm::Module *)*modptr;
+
+  *modptr = linked_module;
+
+  write_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
+  assert(write_lock);
+
+  POCL_MSG_PRINT_INFO("Writing program.bc to %s.\n", program_bc_path);
+
+  /* Always retain program.bc. Its required in clBuildProgram */
+  error = pocl_write_module(linked_module, program_bc_path, 0);
+  assert(error == 0);
+
+  /* To avoid writing & reading the same back,
+   * save program->binaries[i]
+   */
+  WriteBitcodeToFile(linked_module, sos);
+  sos.str(); // flush
+
+  if (program->binaries[device_i])
+    POCL_MEM_FREE(program->binaries[device_i]);
+
+  n = content.size();
+  program->binary_sizes[device_i] = n;
+  program->binaries[device_i] = (unsigned char *)malloc(n);
   std::memcpy(program->binaries[device_i], content.c_str(), n);
 
   pocl_cache_release_lock(write_lock);

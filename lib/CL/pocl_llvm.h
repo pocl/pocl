@@ -118,6 +118,15 @@ pocl_update_program_llvm_irs(cl_program program, unsigned device_i,
                              cl_device_id device);
 
 
+int pocl_llvm_link_program(cl_program program,
+                           unsigned device_i,
+                           char *program_bc_path,
+                           cl_uint num_input_programs,
+                           unsigned char **cur_device_binaries,
+                           size_t *cur_device_binary_sizes,
+                           void **cur_llvm_irs);
+
+
 #ifdef __GNUC__
 #pragma GCC visibility pop
 #endif
