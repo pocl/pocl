@@ -123,7 +123,6 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
       goto ERROR_CLEAN_PROGRAM_AND_BINARIES;
     }
 
-  program->buildprogram_callback = NULL;
   program->context = context;
   program->num_devices = num_devices;
   program->devices = unique_devlist;

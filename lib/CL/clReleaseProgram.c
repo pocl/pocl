@@ -61,9 +61,6 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
           k->program = NULL;
         }
 
-      if (program->buildprogram_callback)
-        POCL_MEM_FREE(program->buildprogram_callback);
-
       if (program->devices != program->context->devices)
         POCL_MEM_FREE(program->devices);
 

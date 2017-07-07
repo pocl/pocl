@@ -61,6 +61,22 @@ cl_program create_program_skeleton (cl_context context, cl_uint num_devices,
                                     cl_int *binary_status, cl_int *errcode_ret,
                                     int allow_empty_binaries);
 
+cl_int
+compile_and_link_program(int compile_program,
+                         int link_program,
+                         cl_program program,
+                         cl_uint num_devices,
+                         const cl_device_id *device_list,
+                         const char *options,
+                         cl_uint num_input_headers,
+                         const cl_program *input_headers,
+                         const char **header_include_names,
+                         cl_uint num_input_programs,
+                         const cl_program *input_programs,
+                         void (CL_CALLBACK *pfn_notify) (cl_program program,
+                                                         void *user_data),
+                         void *user_data);
+
 int context_set_properties(cl_context                    context,
                            const cl_context_properties * properties,
                            cl_int *                      errcode);
