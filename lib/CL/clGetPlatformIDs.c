@@ -134,7 +134,7 @@ struct _cl_icd_dispatch pocl_dispatch = {
   &POclRetainDevice,
   &POclReleaseDevice,
   &POclCreateImage,
-  NULL, /* &POclCreateProgramWithBuiltInKernels, */
+  &POclCreateProgramWithBuiltInKernels,
   &POclCompileProgram,
   &POclLinkProgram,
   &POclUnloadPlatformCompiler, 
