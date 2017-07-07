@@ -621,16 +621,16 @@ int pocl_buffers_overlap(cl_mem src_buffer,
   /* sub buffers overlap check  */
   if (src_buffer->parent && dst_buffer->parent &&
         (src_buffer->parent == dst_buffer->parent)) {
-      src_offset = (char*)src_buffer->mem_host_ptr - (char*)src_buffer->parent->mem_host_ptr +
-        src_offset;
-      dst_offset = (char*)dst_buffer->mem_host_ptr - (char*)dst_buffer->parent->mem_host_ptr +
-        dst_offset;
+      src_offset = src_buffer->origin + src_offset;
+      dst_offset = dst_buffer->origin + dst_offset;
 
-    POCL_RETURN_ERROR_ON(((src_offset <= dst_offset) && (dst_offset <=
-      (src_offset + size - 1))), CL_MEM_COPY_OVERLAP, "dst_offset lies inside \
+      POCL_RETURN_ERROR_ON (((src_offset <= dst_offset)
+                             && (dst_offset <= (src_offset + size - 1))),
+                            CL_MEM_COPY_OVERLAP, "dst_offset lies inside \
       the src region and src_buffer + dst_buffer are subbuffers of the same buffer");
-    POCL_RETURN_ERROR_ON(((dst_offset <= src_offset) && (src_offset <=
-      (dst_offset + size - 1))), CL_MEM_COPY_OVERLAP, "src_offset lies inside \
+      POCL_RETURN_ERROR_ON (((dst_offset <= src_offset)
+                             && (src_offset <= (dst_offset + size - 1))),
+                            CL_MEM_COPY_OVERLAP, "src_offset lies inside \
       the dst region and src_buffer + dst_buffer are subbuffers of the same buffer");
 
   }
