@@ -29,6 +29,8 @@
 #endif
 
 POdeclsym(clBuildProgram)
+POdeclsym(clLinkProgram)
+POdeclsym(clCompileProgram)
 POdeclsym(clCreateBuffer)
 POdeclsym(clCreateCommandQueue)
 POdeclsym(clCreateContext)
