@@ -84,7 +84,6 @@ CL_API_SUFFIX__VERSION_1_0
        "image_slice_pitch must be a non-NULL value\n");
 
   /* TODO: more error checks */
-
   size_t tuned_origin[3]
       = { origin[0] * image->image_elem_size * image->image_channels,
           origin[1], origin[2] };
@@ -104,6 +103,25 @@ CL_API_SUFFIX__VERSION_1_0
     *image_slice_pitch = image->image_slice_pitch;
 
   HANDLE_IMAGE1D_BUFFER (image);
+
+  /* CL_INVALID_OPERATION if buffer has been created with
+   * CL_MEM_HOST_WRITE_ONLY
+   * or CL_MEM_HOST_NO_ACCESS and CL_MAP_READ is set in map_flags or
+   *
+   * if buffer has been created with CL_MEM_HOST_READ_ONL or
+   * CL_MEM_HOST_NO_ACCESS
+   * and CL_MAP_WRITE or CL_MAP_WRITE_INVALIDATE_REGION is set in map_flags.
+   */
+
+  POCL_GOTO_ERROR_COND (
+      ((map_flags & CL_MAP_READ)
+       && (image->flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS))),
+      CL_INVALID_OPERATION);
+
+  POCL_GOTO_ERROR_COND (
+      ((map_flags & CL_MAP_WRITE)
+       && (image->flags & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS))),
+      CL_INVALID_OPERATION);
 
   if (image->flags & CL_MEM_USE_HOST_PTR)
     {
@@ -140,6 +158,9 @@ CL_API_SUFFIX__VERSION_1_0
   POCL_LOCK_OBJ (image);
   DL_APPEND (image->mappings, mapping_info);
   POCL_UNLOCK_OBJ (image);
+
+  POCL_MSG_PRINT_MEMORY ("Image %p, Mapping: host_ptr %p offset %zu\n", image,
+                         mapping_info->host_ptr, mapping_info->offset);
 
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MAP_IMAGE, 
                                  event, num_events_in_wait_list, 

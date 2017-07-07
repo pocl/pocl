@@ -61,6 +61,12 @@ CL_API_SUFFIX__VERSION_1_0
   if (errcode != CL_SUCCESS)
     return errcode;
 
+  POCL_RETURN_ERROR_ON (
+      (image->flags & (CL_MEM_HOST_WRITE_ONLY | CL_MEM_HOST_NO_ACCESS)),
+      CL_INVALID_OPERATION,
+      "image buffer has been created with CL_MEM_HOST_READ_ONLY "
+      "or CL_MEM_HOST_NO_ACCESS\n");
+
   if (image->buffer)
     POCL_RETURN_ERROR_ON (
         (image->buffer->flags
