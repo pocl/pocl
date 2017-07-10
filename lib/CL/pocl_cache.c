@@ -267,7 +267,7 @@ pocl_cache_create_tempdir (char *path)
                                 "%s/tempdir_XXXXXX", cache_topdir);
   assert (bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
   /* TODO mkdtemp() might not be portable */
-  return (mkdtemp (path) != NULL);
+  return (mkdtemp (path) == NULL);
 #endif
 }
 
