@@ -52,7 +52,15 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
   if (errcode != CL_SUCCESS)
     return errcode;
 
+  POCL_CHECK_DEV_IN_CMDQ;
+
   HANDLE_IMAGE1D_BUFFER (memobj);
+
+  POCL_RETURN_ERROR_ON ((memobj->flags & CL_MEM_HOST_NO_ACCESS),
+                        CL_INVALID_OPERATION,
+                        "buffer has been created with "
+                        "CL_MEM_HOST_WRITE_ONLY or CL_MEM_HOST_NO_ACCESS and "
+                        "CL_MAP_READ is set in map_flags\n");
 
   POCL_LOCK_OBJ (memobj);
   DL_FOREACH (memobj->mappings, mapping)
@@ -67,9 +75,6 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
   POCL_UNLOCK_OBJ (memobj);
   POCL_RETURN_ERROR_ON((mapping == NULL), CL_INVALID_VALUE,
       "Could not find mapping of this memobj\n");
-
-  /* find the index of the device's ptr in the buffer */
-  POCL_CHECK_DEV_IN_CMDQ;
 
   errcode = pocl_create_command (&cmd, command_queue, 
                                  CL_COMMAND_UNMAP_MEM_OBJECT, 
