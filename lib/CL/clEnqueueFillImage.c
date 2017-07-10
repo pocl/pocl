@@ -57,10 +57,6 @@ CL_API_SUFFIX__VERSION_1_2
   POCL_RETURN_ERROR_ON((!image->is_image), CL_INVALID_MEM_OBJECT,
                                                 "image argument is not an image\n");
 
-  POCL_RETURN_ERROR_COND (
-      (image->flags & (CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_NO_ACCESS)),
-      CL_INVALID_OPERATION);
-
   errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
                                         event_wait_list);
   if (errcode != CL_SUCCESS)
