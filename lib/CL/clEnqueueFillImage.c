@@ -91,20 +91,20 @@ CL_API_SUFFIX__VERSION_1_2
                          image->image_elem_size,
                          image->image_channel_data_type);
 
-  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_FILL_IMAGE, 
-                                 event, num_events_in_wait_list, 
+  cl_mem saved_image = image;
+  HANDLE_IMAGE1D_BUFFER (image);
+
+  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_FILL_IMAGE,
+                                 event, num_events_in_wait_list,
                                  event_wait_list, 1, &image);
   if (errcode != CL_SUCCESS)
     goto ERROR_CLEAN;
 
-  cmd->command.fill_image.rowpitch = image->image_row_pitch;
-  cmd->command.fill_image.slicepitch = image->image_slice_pitch;
+  cmd->command.fill_image.rowpitch = saved_image->image_row_pitch;
+  cmd->command.fill_image.slicepitch = saved_image->image_slice_pitch;
   cmd->command.fill_image.fill_pixel = fill_pixel;
   cmd->command.fill_image.pixel_size
-      = image->image_elem_size * image->image_channels;
-
-  HANDLE_IMAGE1D_BUFFER (image);
-
+      = saved_image->image_elem_size * saved_image->image_channels;
   cmd->command.fill_image.data = command_queue->device->data;
   cmd->command.fill_image.device_ptr = 
     image->device_ptrs[command_queue->device->dev_id].mem_ptr;
