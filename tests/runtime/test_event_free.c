@@ -208,6 +208,10 @@ int main(int argc, char **argv)
     TEST_ASSERT(map_event == initial_value);
   }
 
+  clFinish (queue);
+  clReleaseMemObject (img);
+  clReleaseMemObject (buf);
+
   return EXIT_SUCCESS;
 
 }

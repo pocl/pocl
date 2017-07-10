@@ -67,15 +67,18 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
 
       POCL_MEM_FREE (kernel->name);
 
-      for (i = 0; i < kernel->num_args; i++)
-        {
-          struct pocl_argument *p = &(kernel->dyn_arguments[i]);
-          if (p->value != NULL)
-            {
-              pocl_aligned_free (p->value);
-              p->value = NULL;
-            }
-        }
+      if (kernel->arg_info)
+        for (i = 0; i < kernel->num_args; i++)
+          {
+            POCL_MEM_FREE (kernel->arg_info[i].name);
+            POCL_MEM_FREE (kernel->arg_info[i].type_name);
+          }
+
+      if (kernel->dyn_arguments)
+        for (i = 0; i < (kernel->num_args + kernel->num_locals); i++)
+          {
+            pocl_aligned_free (kernel->dyn_arguments[i].value);
+          }
 
       POCL_MEM_FREE (kernel->arg_info);
       POCL_MEM_FREE (kernel->dyn_arguments);

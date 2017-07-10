@@ -131,8 +131,10 @@ main (void)
       clReleaseCommandQueue(cmd_queue); 
       clReleaseContext(context); 
       return -1; 
-    } 
- 
+    }
+
+  free (source);
+
   err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL); 
   if (err != CL_SUCCESS) 
     { 

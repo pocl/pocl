@@ -103,6 +103,11 @@ main (void)
         }
     }
 
+  free (source);
+  free (srcA);
+  free (srcB);
+  free (dst);
+
   printf ("OK\n");
   return 0;
 }

@@ -48,6 +48,7 @@ POname(clCreateBuffer)(cl_context   context,
       errcode = CL_OUT_OF_HOST_MEMORY;
       goto ERROR;
     }
+  mem->device_ptrs = NULL;
 
   if (flags == 0)
     flags = CL_MEM_READ_WRITE;
@@ -185,7 +186,7 @@ POname(clCreateBuffer)(cl_context   context,
       if (mem->mem_host_ptr == NULL)
         {
           errcode = CL_OUT_OF_HOST_MEMORY;
-          goto ERROR;
+          goto ERROR_CLEAN_MEM_AND_DEVICE;
         }
     }
 
@@ -206,6 +207,8 @@ ERROR_CLEAN_MEM_AND_DEVICE:
       device->ops->free(device, mem);
     }
 ERROR:
+  if (mem)
+    POCL_MEM_FREE (mem->device_ptrs);
   POCL_MEM_FREE(mem);
   if(errcode_ret)
     {

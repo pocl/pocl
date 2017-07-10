@@ -816,7 +816,7 @@ static int pocl_get_kernel_arg_module_metadata(const char* kernel_name,
         } else if (meta_name == "kernel_arg_type") {
           assert(has_meta_for_every_arg && "kernel_arg_type meta incomplete");
           kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_TYPE_NAME;
-          current_arg->type_name = new char[val.size() + 1];
+          current_arg->type_name = (char *)malloc (val.size () + 1);
           std::strcpy(current_arg->type_name, val.c_str());
         } else if (meta_name == "kernel_arg_base_type") {
           // may or may not be present even in SPIR
@@ -833,7 +833,7 @@ static int pocl_get_kernel_arg_module_metadata(const char* kernel_name,
         } else if (meta_name == "kernel_arg_name") {
           assert(has_meta_for_every_arg && "kernel_arg_name meta incomplete");
           kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_NAME;
-          current_arg->name = new char[val.size() + 1];
+          current_arg->name = (char *)malloc (val.size () + 1);
           std::strcpy(current_arg->name, val.c_str());
         } else
           std::cout << "UNKNOWN opencl metadata name: " << meta_name << std::endl;
@@ -986,7 +986,7 @@ static int pocl_get_kernel_arg_function_metadata(const char* kernel_name,
 
     current_arg = &kernel->arg_info[j];
     kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_TYPE_NAME;
-    current_arg->type_name = new char[val.size() + 1];
+    current_arg->type_name = (char *)malloc (val.size () + 1);
     std::strcpy(current_arg->type_name, val.c_str());
   }
 
@@ -1026,7 +1026,7 @@ static int pocl_get_kernel_arg_function_metadata(const char* kernel_name,
 
     current_arg = &kernel->arg_info[j];
     kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_NAME;
-    current_arg->name = new char[val.size() + 1];
+    current_arg->name = (char *)malloc (val.size () + 1);
     std::strcpy(current_arg->name, val.c_str());
   }
 
@@ -1080,7 +1080,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
          kernel_name, program, input);
 #endif
 
-  DataLayout *TD = 0;
+  DataLayout *TD = nullptr;
 #ifdef LLVM_OLDER_THAN_3_7
   const std::string &ModuleDataLayout =
     input->getDataLayout()->getStringRepresentation();
@@ -1088,8 +1088,8 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   const std::string &ModuleDataLayout =
     input->getDataLayout().getStringRepresentation();
 #endif
-  if (!ModuleDataLayout.empty())
-    TD = new DataLayout(ModuleDataLayout);
+  assert (!ModuleDataLayout.empty ());
+  TD = new DataLayout (ModuleDataLayout);
 
   SmallVector<GlobalVariable *, 8> locals;
   for (llvm::Module::global_iterator i = input->global_begin(),
@@ -1251,6 +1251,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
                               content.str().size());
 #endif
 
+  delete TD;
   *errcode = CL_SUCCESS;
   return 0;
 }

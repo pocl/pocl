@@ -29,6 +29,7 @@
 #include "pocl_llvm.h"
 #endif
 #include "pocl_binary.h"
+#include "pocl_util.h"
 #include <string.h>
 #include <sys/stat.h>
 #ifndef _MSC_VER
@@ -46,7 +47,7 @@ POname(clCreateKernel)(cl_program program,
 {
   cl_kernel kernel = NULL;
   int errcode = CL_SUCCESS;
-  unsigned device_i;
+  unsigned device_i, i;
 
   POCL_GOTO_ERROR_COND((kernel_name == NULL), CL_INVALID_VALUE);
 
@@ -162,6 +163,18 @@ POname(clCreateKernel)(cl_program program,
 ERROR:
   if (kernel)
     {
+      if (kernel->arg_info)
+        for (i = 0; i < kernel->num_args; i++)
+          {
+            POCL_MEM_FREE (kernel->arg_info[i].name);
+            POCL_MEM_FREE (kernel->arg_info[i].type_name);
+          }
+
+      if (kernel->dyn_arguments)
+        for (i = 0; i < (kernel->num_args + kernel->num_locals); i++)
+          {
+            pocl_aligned_free (kernel->dyn_arguments[i].value);
+          }
       POCL_MEM_FREE(kernel->reqd_wg_size);
       POCL_MEM_FREE(kernel->dyn_arguments);
       POCL_MEM_FREE(kernel->arg_info);

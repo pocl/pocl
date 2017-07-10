@@ -177,6 +177,8 @@ pocl_pthread_init_device_infos(unsigned j, struct _cl_device_id* dev)
   pocl_basic_init_device_infos(j, dev);
 }
 
+static cl_device_partition_property pthread_partition_properties[2]
+    = { CL_DEVICE_PARTITION_EQUALLY, CL_DEVICE_PARTITION_BY_COUNTS };
 
 cl_int
 pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
@@ -251,10 +253,7 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   // pthread has elementary partitioning support
   device->max_sub_devices = device->max_compute_units;
   device->num_partition_properties = 2;
-  device->partition_properties = calloc(device->num_partition_properties,
-    sizeof(cl_device_partition_property));
-  device->partition_properties[0] = CL_DEVICE_PARTITION_EQUALLY;
-  device->partition_properties[1] = CL_DEVICE_PARTITION_BY_COUNTS;
+  device->partition_properties = pthread_partition_properties;
   device->num_partition_types = 0;
   device->partition_type = NULL;
 
