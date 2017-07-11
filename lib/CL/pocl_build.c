@@ -519,11 +519,12 @@ compile_and_link_program(int compile_program,
 #endif
         }
       /* clCreateProgramWithBinaries */
-      else if (program->binaries[device_i])
+      else if (program->binaries[device_i]
+               && (program->pocl_binaries[device_i] == NULL))
         {
-          POCL_MSG_PRINT_INFO("building from a BC binary for device %d\n", device_i);
-
 #ifdef OCS_AVAILABLE
+          POCL_MSG_PRINT_INFO ("building from a BC binary for device %d\n",
+                               device_i);
           error = pocl_cache_create_program_cachedir(program, device_i,
                                                      NULL, 0, program_bc_path);
           POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
@@ -535,24 +536,29 @@ compile_and_link_program(int compile_program,
           POCL_GOTO_ERROR_ON(errcode, CL_BUILD_PROGRAM_FAILURE,
                              "Failed to write binaries to program.bc\n");
 #else
-          if (!program->pocl_binaries[device_i])
-            {
-              strcpy(program->main_build_log,
-                     "Cannot build program from LLVM IR binaries with "
-                     "pocl that does not have online compiler support\n");
-              POCL_GOTO_ERROR_ON(1, CL_COMPILER_NOT_AVAILABLE,
-                                 "%s", program->main_build_log);
-            }
-          else
-            continue;
+          strcpy (program->main_build_log,
+                  "Cannot build program from LLVM IR binaries with "
+                  "pocl that does not have online compiler support\n");
+          POCL_GOTO_ERROR_ON (1, CL_COMPILER_NOT_AVAILABLE, "%s",
+                              program->main_build_log);
 #endif
         }
       else if (program->pocl_binaries[device_i])
         {
           POCL_MSG_PRINT_INFO("having a poclbinary for device %d\n", device_i);
-          /* TODO pocl_binaries[i] might contain program.bc */
+#ifdef OCS_AVAILABLE
+          if (program->binaries[device_i] == NULL)
+            {
+              POCL_MSG_WARN (
+                  "pocl-binary for this device doesn't contain "
+                  "program.bc - you won't be able to rebuild/link it\n");
+              /* do not try to read program.bc or LLVM IRs
+               * TODO maybe read LLVM IRs ?*/
+              continue;
+            }
+#else
           continue;
-          /* fail */
+#endif
         }
       else if (link_program && (num_input_programs > 0))
         {
