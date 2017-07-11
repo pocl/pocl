@@ -50,7 +50,8 @@
 /* pocl binary identifier */
 #define POCLCC_STRING_ID "poclbin"
 #define POCLCC_STRING_ID_LENGTH 8
-#define POCLCC_VERSION 1
+/* changes for version 2: added program.bc right after header */
+#define POCLCC_VERSION 2
 
 /* pocl binary structures */
 
@@ -356,15 +357,9 @@ serialize_kernel_cachedir (cl_kernel kernel,
   cl_program program = kernel->program;
   char path[POCL_FILENAME_LENGTH];
   char basedir[POCL_FILENAME_LENGTH];
-  char program_bc_path[POCL_FILENAME_LENGTH];
 
   pocl_cache_program_path (basedir, program, device_i);
   size_t basedir_len = strlen (basedir);
-
-  pocl_cache_program_bc_path (program_bc_path, program, device_i);
-  POCL_MSG_PRINT_INFO ("Kernel %s: serializing program.bc: %s\n",
-                        kernel->name, program_bc_path);
-  buffer = recursively_serialize_path (program_bc_path, basedir_len, buffer);
 
   pocl_cache_kernel_cachedir (path, program, device_i, kernel);
   POCL_MSG_PRINT_INFO ("Kernel %s: recur serializing cachedir %s\n",
@@ -581,6 +576,14 @@ pocl_binary_serialize(cl_program program, unsigned device_i, size_t *size)
 
   assert(buffer < end_of_buffer);
 
+  char basedir[POCL_FILENAME_LENGTH];
+  pocl_cache_program_path (basedir, program, device_i);
+  size_t basedir_len = strlen (basedir);
+  char program_bc_path[POCL_FILENAME_LENGTH];
+  pocl_cache_program_bc_path (program_bc_path, program, device_i);
+  POCL_MSG_PRINT_INFO ("serializing program.bc: %s\n", program_bc_path);
+  buffer = serialize_file (program_bc_path, basedir_len, buffer);
+
   unsigned i;
   for (i=0; i < num_kernels; i++)
     {
@@ -607,9 +610,12 @@ pocl_binary_deserialize(cl_program program, unsigned device_i)
   //assert(pocl_binary_check_binary_header(&b));
   assert (buffer < end_of_buffer);
 
-  pocl_binary_kernel k;
   char basedir[POCL_FILENAME_LENGTH];
+  pocl_cache_program_path (basedir, program, device_i);
+  size_t basedir_len = strlen (basedir);
+  buffer += deserialize_file (buffer, basedir, basedir_len);
 
+  pocl_binary_kernel k;
   unsigned i;
   for (i = 0; i < b.num_kernels; i++)
     {
