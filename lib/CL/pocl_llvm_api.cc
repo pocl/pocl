@@ -372,10 +372,18 @@ int pocl_llvm_build_program(cl_program program,
   int cl_std_i = cl_std_major * 100 + cl_std_minor * 10;
   ss << "-D__OPENCL_C_VERSION__=" << cl_std_i << " ";
 
-  /* With fp-contract we get calls to fma with processors which do not
-     have fma instructions. These ruin the performance. Better to have
-     the mul+add separated in the IR. */
-  ss << "-fno-builtin -ffp-contract=off ";
+  ss << "-fno-builtin ";
+  /* with fp-contract=on we get calls to fma with processors which do not
+   * have fma instructions. These ruin the performance.
+   *
+   * TODO find out which processors. Seems to be at least TCE
+   *
+   * default fp-contract is "on" which means "enable if enabled by a pragma".
+   */
+  llvm::Triple triple (device->llvm_target_triplet);
+  if (triple.getArch () == Triple::tce)
+    ss << "-ffp-contract=off ";
+
   // This is required otherwise the initialization fails with
   // unknown triple ''
   ss << "-triple=" << device->llvm_target_triplet << " ";
@@ -426,7 +434,6 @@ int pocl_llvm_build_program(cl_program program,
   pocl_build.setLangDefaults
     (*la, clang::IK_OpenCL, clang::LangStandard::lang_opencl12);
 #else
-  llvm::Triple triple(device->llvm_target_triplet);
   pocl_build.setLangDefaults
 #if LLVM_OLDER_THAN_5_0
       (*la, clang::IK_OpenCL, triple, po, clang::LangStandard::lang_opencl12);

@@ -50,6 +50,11 @@
 #include "devices.h"
 #include "pocl_runtime_config.h"
 
+/* required for setting SSE/AVX flush denorms to zero flag */
+#if defined(__x86_64__) && defined(__GNUC__)
+#include <x86intrin.h>
+#endif
+
 struct list_item;
 
 typedef struct list_item
@@ -57,6 +62,108 @@ typedef struct list_item
   void *value;
   struct list_item *next;
 } list_item;
+
+
+
+void
+pocl_restore_ftz (unsigned ftz)
+{
+#if defined(__x86_64__) && defined(__GNUC__)
+
+#ifdef _MM_FLUSH_ZERO_ON
+  if (ftz & _MM_FLUSH_ZERO_ON)
+    _MM_SET_FLUSH_ZERO_MODE (_MM_FLUSH_ZERO_ON);
+  else
+    _MM_SET_FLUSH_ZERO_MODE (_MM_FLUSH_ZERO_OFF);
+#endif
+#ifdef _MM_DENORMALS_ZERO_ON
+  if (ftz & _MM_DENORMALS_ZERO_ON)
+    _MM_SET_DENORMALS_ZERO_MODE (_MM_DENORMALS_ZERO_ON);
+  else
+    _MM_SET_DENORMALS_ZERO_MODE (_MM_DENORMALS_ZERO_OFF);
+#endif
+
+#endif
+}
+
+unsigned
+pocl_save_ftz ()
+{
+#if defined(__x86_64__) && defined(__GNUC__)
+
+  unsigned s = 0;
+#ifdef _MM_FLUSH_ZERO_ON
+  if (_MM_GET_FLUSH_ZERO_MODE ())
+    s |= _MM_FLUSH_ZERO_ON;
+  else
+    s &= (~_MM_FLUSH_ZERO_ON);
+#endif
+#ifdef _MM_DENORMALS_ZERO_ON
+  if (_MM_GET_DENORMALS_ZERO_MODE ())
+    s |= _MM_DENORMALS_ZERO_ON;
+  else
+    s &= (~_MM_DENORMALS_ZERO_ON);
+#endif
+  return s;
+
+#else
+  return 0;
+#endif
+}
+
+void
+pocl_set_ftz (unsigned ftz)
+{
+#if defined(__x86_64__) && defined(__GNUC__)
+  if (ftz)
+    {
+#ifdef _MM_FLUSH_ZERO_ON
+      _MM_SET_FLUSH_ZERO_MODE (_MM_FLUSH_ZERO_ON);
+#endif
+
+#ifdef _MM_DENORMALS_ZERO_ON
+      _MM_SET_DENORMALS_ZERO_MODE (_MM_DENORMALS_ZERO_ON);
+#endif
+    }
+  else
+    {
+#ifdef _MM_FLUSH_ZERO_OFF
+      _MM_SET_FLUSH_ZERO_MODE (_MM_FLUSH_ZERO_OFF);
+#endif
+
+#ifdef _MM_DENORMALS_ZERO_OFF
+      _MM_SET_DENORMALS_ZERO_MODE (_MM_DENORMALS_ZERO_OFF);
+#endif
+    }
+#endif
+}
+
+
+void
+pocl_set_default_rm ()
+{
+#if defined(__x86_64__) && defined(__GNUC__) && defined(_MM_ROUND_NEAREST)
+  _MM_SET_ROUNDING_MODE (_MM_ROUND_NEAREST);
+#endif
+}
+
+unsigned
+pocl_save_rm ()
+{
+#if defined(__x86_64__) && defined(__GNUC__) && defined(_MM_ROUND_NEAREST)
+  return _MM_GET_ROUNDING_MODE ();
+#else
+  return 0;
+#endif
+}
+
+void
+pocl_restore_rm (unsigned rm)
+{
+#if defined(__x86_64__) && defined(__GNUC__) && defined(_MM_ROUND_NEAREST)
+  _MM_SET_ROUNDING_MODE (rm);
+#endif
+}
 
 uint32_t
 byteswap_uint32_t (uint32_t word, char should_swap)

@@ -51,7 +51,8 @@
 #define POCLCC_STRING_ID "poclbin"
 #define POCLCC_STRING_ID_LENGTH 8
 /* changes for version 2: added program.bc right after header */
-#define POCLCC_VERSION 2
+/* changes for version 3: added flush_denorms flag into header */
+#define POCLCC_VERSION 3
 
 /* pocl binary structures */
 
@@ -103,10 +104,13 @@ typedef struct pocl_binary_s
   uint32_t version;
   /* number of kernels in the serialized pocl binary */
   uint32_t num_kernels;
+  /* various flags */
+  uint64_t flags;
   /* program->build_hash[device_i], required to restore files into pocl cache */
   SHA1_digest_t program_build_hash;
 } pocl_binary;
 
+#define POCL_BINARY_FLAG_FLUSH_DENORMS (1 << 0)
 
 #define TO_LE(x)                                \
   ((sizeof(x) == 8) ? htole64((uint64_t)x) :    \
@@ -191,6 +195,7 @@ read_header(pocl_binary *b, const unsigned char *buffer)
   BUFFER_READ(b->device_id, uint64_t);
   BUFFER_READ(b->version, uint32_t);
   BUFFER_READ(b->num_kernels, uint32_t);
+  BUFFER_READ (b->flags, uint64_t);
   memcpy(b->program_build_hash, buffer, sizeof(SHA1_digest_t));
   buffer += sizeof(SHA1_digest_t);
   return (unsigned char*)buffer;
@@ -571,6 +576,10 @@ pocl_binary_serialize(cl_program program, unsigned device_i, size_t *size)
   BUFFER_STORE(pocl_binary_get_device_id(program->devices[device_i]), uint64_t);
   BUFFER_STORE(POCLCC_VERSION, uint32_t);
   BUFFER_STORE(num_kernels, uint32_t);
+  uint64_t flags = 0;
+  if (program->flush_denorms)
+    flags |= POCL_BINARY_FLAG_FLUSH_DENORMS;
+  BUFFER_STORE (flags, uint64_t);
   memcpy(buffer, program->build_hash[device_i], sizeof(SHA1_digest_t));
   buffer += sizeof(SHA1_digest_t);
 
@@ -606,6 +615,7 @@ pocl_binary_deserialize(cl_program program, unsigned device_i)
 
   pocl_binary b;
   buffer = read_header(&b, buffer);
+  program->flush_denorms = (b.flags & POCL_BINARY_FLAG_FLUSH_DENORMS);
 
   //assert(pocl_binary_check_binary_header(&b));
   assert (buffer < end_of_buffer);

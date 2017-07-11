@@ -164,19 +164,20 @@ program_compile_dynamic_wg_binaries(cl_program program)
 
 #endif
 
-/* TODO error
- * options must be non-NULL.
-*/
+/* options must be non-NULL.
+ * modded_options[size] + link_options are preallocated outputs
+ */
 static cl_int
 process_options (const char *options, char *modded_options, char *link_options,
                  cl_program program, int compiling, int linking,
-                 int *create_library, size_t size)
+                 int *create_library, unsigned *flush_denorms, size_t size)
 {
   cl_int error;
   char *token = NULL;
   char *saveptr = NULL;
 
   *create_library = 0;
+  *flush_denorms = 0;
   int enable_link_options = 0;
   link_options[0] = 0;
 
@@ -211,6 +212,10 @@ process_options (const char *options, char *modded_options, char *link_options,
                       goto ERROR;
                     }
                   strcat (link_options, token);
+                }
+              if (strstr (token, "-cl-denorms-are-zero"))
+                {
+                  *flush_denorms = 1;
                 }
             }
           if (strstr (cl_parameters, token))
@@ -419,6 +424,7 @@ compile_and_link_program(int compile_program,
   char link_options[512];
   int errcode, error;
   int create_library = 0;
+  unsigned flush_denorms = 0;
   uint64_t fsize;
   cl_device_id *unique_devlist = NULL;
   char *binary = NULL;
@@ -458,12 +464,22 @@ compile_and_link_program(int compile_program,
       size_t size = i + 512; /* add some space for pocl-added options */
       program->compiler_options = (char *)malloc (size);
       program->compiler_options[0] = 0;
-      errcode = process_options (options, program->compiler_options,
-                                 link_options, program, compile_program,
-                                 link_program, &create_library, size);
+      errcode
+          = process_options (options, program->compiler_options, link_options,
+                             program, compile_program, link_program,
+                             &create_library, &flush_denorms, size);
       if (errcode != CL_SUCCESS)
         goto ERROR_CLEAN_OPTIONS;
     }
+  program->flush_denorms = flush_denorms;
+
+#if !(defined(__x86_64__) && defined(__GNUC__))
+  if (flush_denorms)
+    {
+      POCL_MSG_WARN ("flush to zero is currently only implemented for "
+                     "x86-64 & gcc/clang, ignoring flag\n");
+    }
+#endif
 
   /* DEVICE LIST */
   if (num_devices == 0)

@@ -548,7 +548,12 @@ pocl_basic_run
   pc->local_size[0] = cmd->command.run.local_x;
   pc->local_size[1] = cmd->command.run.local_y;
   pc->local_size[2] = cmd->command.run.local_z;
-  
+
+  unsigned rm = pocl_save_rm ();
+  pocl_set_default_rm ();
+  unsigned ftz = pocl_save_ftz ();
+  pocl_set_ftz (kernel->program->flush_denorms);
+
   for (z = 0; z < pc->num_groups[2]; ++z)
     {
       for (y = 0; y < pc->num_groups[1]; ++y)
@@ -564,6 +569,10 @@ pocl_basic_run
             }
         }
     }
+
+  pocl_restore_rm (rm);
+  pocl_restore_ftz (ftz);
+
   for (i = 0; i < kernel->num_args; ++i)
     {
       if (kernel->arg_info[i].is_local)

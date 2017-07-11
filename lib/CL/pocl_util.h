@@ -40,6 +40,20 @@ extern "C" {
 uint32_t byteswap_uint32_t (uint32_t word, char should_swap);
 float byteswap_float (float word, char should_swap);
 
+/* set rounding mode */
+void pocl_restore_rm (unsigned rm);
+/* get current rounding mode */
+unsigned pocl_save_rm ();
+/* set OpenCL's default (round to nearest) rounding mode */
+void pocl_set_default_rm ();
+
+/* sets the flush-denorms-to-zero flag on the CPU, if supported */
+void pocl_set_ftz (unsigned ftz);
+
+/* saves / restores cpu flags*/
+unsigned pocl_save_ftz ();
+void pocl_restore_ftz (unsigned ftz);
+
 /* Finds the next highest power of two of the given value. */
 size_t pocl_size_ceil2(size_t x);
 

@@ -633,6 +633,8 @@ struct _cl_program {
    * This code needs to be eventually fixed by introducing kernel_metadata
    * struct, see Issue #390 */
   int operating_on_default_kernels;
+  /* -cl-denorms-are-zero build option */
+  unsigned flush_denorms;
   cl_device_id *devices;
   /* all the program sources appended together, terminated with a zero */
   char *source;
