@@ -99,9 +99,6 @@ the performance in each release, so if you encounter performance
 regressions (an older pocl/LLVM version used to run an app faster), 
 please report a bug.
 
-Also you might want to try to set the `POCL_BBVECTORIZER` environment
-variable to 1. More info :doc:`here </env_variables>`.
-
 pocl source code
 ----------------
 

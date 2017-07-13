@@ -494,7 +494,6 @@ int pocl_llvm_build_program(cl_program program,
   // Lets leave vectorization to later compilation phase
   cg.VectorizeLoop = false;
   cg.VectorizeSLP = false;
-  cg.VectorizeBB = false;
   // This workarounds a Frontend codegen issues with an illegal address
   // space cast which is later flattened (and thus implicitly fixed) in
   // the TargetAddressSpaces. See:  https://github.com/pocl/pocl/issues/195
@@ -1652,16 +1651,6 @@ static PassManager& kernel_compiler_passes
           if (wg_method == "loopvec") {
             Builder.LoopVectorize = true;
             Builder.SLPVectorize = true;
-#ifdef LLVM_OLDER_THAN_3_7
-            Builder.BBVectorize = pocl_get_bool_option ("POCL_BBVECTORIZE", 1);
-#else
-            // In LLVM 3.7 the BB vectorizer crashes with some of the
-            // the shuffle tests, but gives performance improvements in
-            // some (see https://github.com/pocl/pocl/issues/251).
-            // Disable by default because of
-            // https://llvm.org/bugs/show_bug.cgi?id=25077
-            Builder.BBVectorize = pocl_get_bool_option ("POCL_BBVECTORIZE", 0);
-#endif
           }
           Builder.populateModulePassManager(*Passes);
           continue;

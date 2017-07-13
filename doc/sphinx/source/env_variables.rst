@@ -10,13 +10,6 @@ pocl.
  If  set, the pocl helper scripts, kernel library and headers are 
  searched first from the pocl build directory.
 
-- **POCL_BBVECTORIZE**
-
- If set to 1, makes the pocl kernel compiler execute the LLVM BBVectorizer in
- addition to the SLP vectorizer and the inner loop vectorizer. BBVectorizer
- has known stability issues, therefore it's disabled by default, but it can
- provide performance improvements. See: https://github.com/pocl/pocl/issues/251
-
 - **POCL_CACHE_DIR**
 
  If this is set to an existing directory, pocl uses it as the cache
