@@ -1,5 +1,7 @@
 #include <string.h>
 #include <pthread.h>
+#include <time.h>
+
 #include "pocl-pthread_scheduler.h"
 #include "pocl_cl.h"
 #include "pocl-pthread.h"
@@ -104,9 +106,14 @@ void pthread_scheduler_push_kernel (kernel_run_command *run_cmd)
 
 void pthread_scheduler_wait_cq (cl_command_queue cq)
 {
+  pthread_mutex_lock (&scheduler.cq_finished_lock);
+
+#ifdef HAVE_CLOCK_GETTIME
+  struct timespec timeout = {0, 0};
+#endif
+
   while (1)
     {
-      pthread_mutex_lock (&scheduler.cq_finished_lock);
       POCL_LOCK_OBJ (cq);
       if (cq->command_count == 0)
         {
@@ -115,17 +122,37 @@ void pthread_scheduler_wait_cq (cl_command_queue cq)
           return;
         }
       POCL_UNLOCK_OBJ (cq);
-      pthread_cond_wait (&scheduler.cq_finished_cond,
-                         &scheduler.cq_finished_lock);
-      pthread_mutex_unlock (&scheduler.cq_finished_lock);
+
+      /* pocl_cond_timedwait() is a workaround, the pthread driver sometimes
+       * gets stuck in the loop waiting for finished_cond while the CQ is
+       * actually empty. With timedwait() it eventually recovers.
+       */
+#ifdef HAVE_CLOCK_GETTIME
+      clock_gettime(CLOCK_REALTIME, &timeout);
+      timeout.tv_nsec += 100000000;
+      if (timeout.tv_nsec >= 1000000000)
+        {
+          timeout.tv_nsec -= 1000000000;
+          ++timeout.tv_sec;
+        }
+      pthread_cond_timedwait (&scheduler.cq_finished_cond,
+                              &scheduler.cq_finished_lock,
+                              &timeout);
+#else
+       pthread_cond_wait (&scheduler.cq_finished_cond,
+                          &scheduler.cq_finished_lock);
+#endif
+
     }
+
+  pthread_mutex_unlock (&scheduler.cq_finished_lock);
 }
 
 void pthread_scheduler_release_host ()
 {
-  PTHREAD_LOCK (&scheduler.cq_finished_lock, NULL);
+  pthread_mutex_lock (&scheduler.cq_finished_lock);
   pthread_cond_signal (&scheduler.cq_finished_cond);
-  PTHREAD_UNLOCK (&scheduler.cq_finished_lock);
+  pthread_mutex_unlock (&scheduler.cq_finished_lock);
 }
 
 static int
