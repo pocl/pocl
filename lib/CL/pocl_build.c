@@ -180,6 +180,7 @@ process_options (const char *options, char *modded_options, char *link_options,
   *flush_denorms = 0;
   int enable_link_options = 0;
   link_options[0] = 0;
+  modded_options[0] = 0;
 
   assert (options);
   assert (modded_options);
@@ -353,7 +354,7 @@ process_options (const char *options, char *modded_options, char *link_options,
 
   /* remove trailing whitespace */
   i = strlen (modded_options);
-  if (modded_options[i - 1] == ' ')
+  if ((i > 0) && (modded_options[i - 1] == ' '))
     modded_options[i - 1] = 0;
 ERROR:
   POCL_MEM_FREE (temp_options);
@@ -455,7 +456,6 @@ compile_and_link_program(int compile_program,
   program->main_build_log[0] = 0;
 
   /* TODO this should be somehow utilized at linking */
-  link_options[0] = 0;
   POCL_MEM_FREE (program->compiler_options);
 
   if (options)
@@ -463,7 +463,6 @@ compile_and_link_program(int compile_program,
       i = strlen (options);
       size_t size = i + 512; /* add some space for pocl-added options */
       program->compiler_options = (char *)malloc (size);
-      program->compiler_options[0] = 0;
       errcode
           = process_options (options, program->compiler_options, link_options,
                              program, compile_program, link_program,
