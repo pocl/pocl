@@ -58,8 +58,10 @@ option(DEVELOPER_MODE "This will SIGNIFICANTLY slow down pocl (but speed up its 
 # currently only works with gcc as host compiler
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
+  option(ENABLE_TSAN "Enable ThreadSanitizer" OFF)
 else()
-  set(ENABLE_ASAN 0)
+  set(ENABLE_ASAN OFF)
+  set(ENABLE_TSAN OFF)
 endif()
 
 ##################################################################################
