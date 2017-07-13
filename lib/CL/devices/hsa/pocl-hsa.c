@@ -274,7 +274,7 @@ pocl_hsa_abort_on_pthread_error(int status,
                                                             #code);
 
 static hsa_agent_t hsa_agents[MAX_HSA_AGENTS];
-static int found_hsa_agents = 0;
+static unsigned found_hsa_agents = 0;
 
 static hsa_status_t
 pocl_hsa_get_agents_callback(hsa_agent_t agent, void *data)
@@ -588,7 +588,7 @@ pocl_hsa_probe(struct pocl_device_ops *ops)
 
   POCL_MSG_PRINT_INFO("pocl-hsa: found %d agents.\n", found_hsa_agents);
 
-  return found_hsa_agents;
+  return (int)found_hsa_agents;
 }
 
 static void
@@ -1555,8 +1555,9 @@ pocl_hsa_driver_pthread (void * cldev)
   pocl_hsa_device_pthread_data_t* dd = &d->driver_data;
 
   /* timeout counter, resets with each new queued kernel to 1/8, then
-   * exponentially increases by 40% up to about 3/4 of d->timeout */
-  uint64_t kernel_timeout_ns = d->timeout >> 3;
+   * exponentially increases by 40% up to about 3/4 of d->timeout.
+   * disabled for now */
+  /* uint64_t kernel_timeout_ns = d->timeout >> 3; */
 
   dd->running_list_size = 0;
   dd->last_queue = 0;
@@ -1588,11 +1589,13 @@ pocl_hsa_driver_pthread (void * cldev)
 
   while (1)
     {
-      // reset the signal
-
+      /* reset the signal. Disabled for now; see below */
+#if 0
       if (pocl_hsa_run_ready_commands(d))
         kernel_timeout_ns = d->timeout >> 3;
-
+#else
+      pocl_hsa_run_ready_commands(d);
+#endif
       if (d->exit_driver_thread)
         goto EXIT_PTHREAD;
 
