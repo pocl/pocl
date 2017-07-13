@@ -81,6 +81,15 @@ limit_max = {'char'  : 'CHAR_MAX',
              'long'  : 'LONG_MAX',
              'ulong' : 'ULONG_MAX'}
 
+limit_max_float = {'char'  : '(0x1p+7)',
+             'uchar' : '(0x1p+8)',
+             'short' : '(0x1p+15)',
+             'ushort': '(0x1p+16)',
+             'int'   : '(0x1p+31)',
+             'uint'  : '(0x1p+32)',
+             'long'  : '(0x1p+63)',
+             'ulong' : '(0x1p+64)'}
+
 limit_min = {'char'  : 'CHAR_MIN',
              'uchar' : '0',
              'short' : 'SHRT_MIN',
@@ -88,6 +97,15 @@ limit_min = {'char'  : 'CHAR_MIN',
              'int'   : 'INT_MIN',
              'uint'  : '0',
              'long'  : 'LONG_MIN',
+             'ulong' : '0'}
+
+limit_min_float = {'char'  : '(-0x1p+7)',
+             'uchar' : '0',
+             'short' : '(-0x1p+15)',
+             'ushort': '0',
+             'int'   : '(-0x1p+31)',
+             'uint'  : '0',
+             'long'  : '(-0x1p+63)',
              'ulong' : '0'}
 
 def conditional_guard(src, dst):
@@ -260,10 +278,11 @@ def generate_saturated_conversion(src, dst, size):
 
     # Conversion from float to int
     print("""  {DST}{N} y = convert_{DST}{N}(x);
-  y = select(y, ({DST}{N}){DST_MIN}, {BP}(x < ({SRC}{N}){DST_MIN}){BS});
-  y = select(y, ({DST}{N}){DST_MAX}, {BP}(x > ({SRC}{N}){DST_MAX}){BS});
+  y = select(y, ({DST}{N}){DST_MIN}, {BP}(x < ({SRC}{N}){DST_MIN_FLT}){BS});
+  y = select(y, ({DST}{N}){DST_MAX}, {BP}(x >= ({SRC}{N}){DST_MAX_FLT}){BS});
   return y;""".format(SRC=src, DST=dst, N=size,
       DST_MIN=limit_min[dst], DST_MAX=limit_max[dst],
+      DST_MIN_FLT=limit_min_float[dst], DST_MAX_FLT=limit_max_float[dst],
       BP=bool_prefix, BS=bool_suffix))
 
   else:
