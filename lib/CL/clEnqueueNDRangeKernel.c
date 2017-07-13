@@ -110,9 +110,9 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   struct pocl_context pc;
   _cl_command_node *command_node;
   /* alloc from stack to avoid malloc. num_args is the absolute max needed */
-  cl_mem mem_list[kernel->num_args];
+  cl_mem mem_list[kernel->num_args + 1];
   /* reserve space for potential buffer migrate events */
-  cl_event new_event_wait_list[num_events_in_wait_list + kernel->num_args];
+  cl_event new_event_wait_list[num_events_in_wait_list + kernel->num_args + 1];
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 

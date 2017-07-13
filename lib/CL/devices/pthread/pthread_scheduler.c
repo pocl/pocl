@@ -227,7 +227,7 @@ static int
 work_group_scheduler (kernel_run_command *k,
                       struct pool_thread_data *thread_data)
 {
-  void *arguments[k->kernel->num_args + k->kernel->num_locals];
+  void *arguments[k->kernel->num_args + k->kernel->num_locals + 1];
   struct pocl_context pc;
   unsigned i;
   unsigned start_index;
