@@ -103,15 +103,15 @@ struct _cl_icd_dispatch pocl_dispatch = {
   &POclEnqueueWaitForEvents,
   &POclEnqueueBarrier,
   &POclGetExtensionFunctionAddress,
-  NULL, /* &POclCreateFromGLBuffer,      */
+  &POclCreateFromGLBuffer,
   &POclCreateFromGLTexture2D,
   &POclCreateFromGLTexture3D,
-  NULL, /* &POclCreateFromGLRenderbuffer, */
-  NULL, /* &POclGetGLObjectInfo,  70       */
-  NULL, /* &POclGetGLTextureInfo,        */
-  NULL, /* &POclEnqueueAcquireGLObjects, */
-  NULL, /* &POclEnqueueReleaseGLObjects, */
-  NULL, /* &POclGetGLContextInfoKHR,     */
+  &POclCreateFromGLRenderbuffer,
+  &POclGetGLObjectInfo,
+  &POclGetGLTextureInfo,
+  &POclEnqueueAcquireGLObjects,
+  &POclEnqueueReleaseGLObjects,
+  &POclGetGLContextInfoKHR,
   NULL, /* &clUnknown75 */
   NULL, /* &clUnknown76 */
   NULL, /* &clUnknown77 */
@@ -145,7 +145,7 @@ struct _cl_icd_dispatch pocl_dispatch = {
   &POclEnqueueMarkerWithWaitList,
   &POclEnqueueBarrierWithWaitList,
   &POclGetExtensionFunctionAddressForPlatform,
-  NULL, /* &POclCreateFromGLTexture,     */
+  &POclCreateFromGLTexture,
   NULL, /* &clUnknown109 */
   NULL, /* &clUnknown110 */
   NULL, /* &clUnknown111 */
