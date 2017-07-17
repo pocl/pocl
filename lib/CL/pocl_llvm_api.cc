@@ -308,6 +308,7 @@ int pocl_llvm_build_program(cl_program program,
 
   llvm::StringRef extensions(device->extensions);
 
+  std::string cl_ext;
   if (extensions.size() > 0) {
     size_t e_start = 0, e_end = 0;
     while (e_end < std::string::npos) {
@@ -316,11 +317,18 @@ int pocl_llvm_build_program(cl_program program,
       e_start = e_end + 1;
       ss << "-D" << tok.str() << " ";
 #ifndef LLVM_OLDER_THAN_4_0
-      ss << "-cl-ext=" << tok.str() << " ";
+      cl_ext += "+";
+      cl_ext += tok.str();
+      cl_ext += ",";
 #endif
     }
   }
-
+#ifndef LLVM_OLDER_THAN_4_0
+  if (!cl_ext.empty()) {
+    cl_ext.back() = ' '; // replace last "," with space
+    ss << "-cl-ext=-all," << cl_ext;
+  }
+#endif
   /* temp dir takes preference */
   if (num_input_headers > 0)
     ss << "-I" << temp_include_dir << " ";
