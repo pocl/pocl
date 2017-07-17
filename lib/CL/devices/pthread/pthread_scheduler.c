@@ -204,10 +204,10 @@ int pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
 static void
 pthread_scheduler_sleep()
 {
-  static struct timespec time_to_wait = {0, 0};
+  PTHREAD_LOCK (&scheduler.wq_lock, NULL);
+  struct timespec time_to_wait = {0, 0};
   time_to_wait.tv_sec = time(NULL) + 5;
 
-  PTHREAD_LOCK (&scheduler.wq_lock, NULL);
   if (scheduler.work_queue == NULL && scheduler.kernel_queue == 0)
     pthread_cond_timedwait (&scheduler.wake_pool, &scheduler.wq_lock, &time_to_wait);
   PTHREAD_UNLOCK (&scheduler.wq_lock);
