@@ -287,7 +287,7 @@ get_image_array_offset2 (global dev_image_t *img, int4 uvw_after_rint,
 
 /* RET: (int4) (img.x{,y,z}, array_size, 0 {,0 ...} ) */
 static int4
-get_image_array_size (global dev_image_t *img)
+pocl_get_image_array_size (global dev_image_t *img)
 {
   int4 imgsize = (int4) (img->_width, img->_height, img->_depth, 0);
   if (img->_image_array_size > 0)
@@ -1204,7 +1204,7 @@ nonrepeat_filter (global dev_image_t *img, float4 orig_coord,
   float4 coord = orig_coord;
   if (samp & CLK_NORMALIZED_COORDS_TRUE)
     {
-      float4 imgsize = convert_float4 (get_image_array_size (img));
+      float4 imgsize = convert_float4 (pocl_get_image_array_size (img));
       coord *= imgsize;
     }
 
@@ -1285,7 +1285,7 @@ repeat_filter (global dev_image_t *img, float4 coord, dev_sampler_t samp)
            ijk = ijk – whd
          ... same for 3 coords
       */
-      int4 maxcoord = get_image_array_size (img);
+      int4 maxcoord = pocl_get_image_array_size (img);
       float4 whd = convert_float4 (maxcoord);
       float4 uvw = (coord - floor (coord)) * whd;
       int4 ijk = convert_int4 (floor (uvw));
@@ -1380,7 +1380,7 @@ mirrored_repeat_filter (global dev_image_t *img, float4 coord,
 
       float4 ss = (float4) (2.0f) * rint ((float4) (0.5f) * coord);
       ss = fabs (coord - ss);
-      int4 maxcoord = get_image_array_size (img);
+      int4 maxcoord = pocl_get_image_array_size (img);
       float4 whd = convert_float4 (maxcoord);
       float4 uvw = ss * whd;
       int4 ijk = convert_int4 (floor (uvw));
