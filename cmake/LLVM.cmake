@@ -36,9 +36,11 @@ else()
   # search for any version
   find_program(LLVM_CONFIG
     NAMES "llvm-config"
+      "llvm-config-mp-5.0" "llvm-config-5.0" "llvm-config50"
+      "llvm-config-mp-4.0" "llvm-config-4.0" "llvm-config40"
+      "llvm-config-mp-3.9" "llvm-config-3.9" "llvm-config39"
       "llvm-config-mp-3.8" "llvm-config-3.8" "llvm-config38"
       "llvm-config-mp-3.7" "llvm-config-3.7" "llvm-config37"
-      "llvm-config-mp-3.9" "llvm-config-3.9" "llvm-config39"
     DOC "llvm-config executable")
 endif()
 
