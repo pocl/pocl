@@ -117,184 +117,184 @@ add_test(NAME "${TS_NAME}_contractions"
          COMMAND "${TS_BUILDDIR}/test_conformance/contractions/contractions" )
 
 add_test(NAME "${TS_NAME}_conversion_uchar_uchar"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uchar_uchar uchar_sat_uchar uchar_rte_uchar uchar_sat_rte_uchar uchar_rtp_uchar uchar_sat_rtp_uchar uchar_rtn_uchar uchar_sat_rtn_uchar uchar_rtz_uchar uchar_sat_rtz_uchar )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uchar_uchar uchar_sat_uchar )
 
 add_test(NAME "${TS_NAME}_conversion_char_uchar"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" char_uchar char_sat_uchar char_rte_uchar char_sat_rte_uchar char_rtp_uchar char_sat_rtp_uchar char_rtn_uchar char_sat_rtn_uchar char_rtz_uchar char_sat_rtz_uchar )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" char_uchar char_sat_uchar )
 
 add_test(NAME "${TS_NAME}_conversion_ushort_uchar"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ushort_uchar ushort_sat_uchar ushort_rte_uchar ushort_sat_rte_uchar ushort_rtp_uchar ushort_sat_rtp_uchar ushort_rtn_uchar ushort_sat_rtn_uchar ushort_rtz_uchar ushort_sat_rtz_uchar )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ushort_uchar ushort_sat_uchar )
 
 add_test(NAME "${TS_NAME}_conversion_short_uchar"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" short_uchar short_sat_uchar short_rte_uchar short_sat_rte_uchar short_rtp_uchar short_sat_rtp_uchar short_rtn_uchar short_sat_rtn_uchar short_rtz_uchar short_sat_rtz_uchar )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" short_uchar short_sat_uchar )
 
 add_test(NAME "${TS_NAME}_conversion_uint_uchar"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uint_uchar uint_sat_uchar uint_rte_uchar uint_sat_rte_uchar uint_rtp_uchar uint_sat_rtp_uchar uint_rtn_uchar uint_sat_rtn_uchar uint_rtz_uchar uint_sat_rtz_uchar )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uint_uchar uint_sat_uchar )
 
 add_test(NAME "${TS_NAME}_conversion_int_uchar"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" int_uchar int_sat_uchar int_rte_uchar int_sat_rte_uchar int_rtp_uchar int_sat_rtp_uchar int_rtn_uchar int_sat_rtn_uchar int_rtz_uchar int_sat_rtz_uchar )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" int_uchar int_sat_uchar )
 
 add_test(NAME "${TS_NAME}_conversion_float_uchar"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" float_uchar float_sat_uchar float_rte_uchar float_sat_rte_uchar float_rtp_uchar float_sat_rtp_uchar float_rtn_uchar float_sat_rtn_uchar float_rtz_uchar float_sat_rtz_uchar )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" float_uchar float_rte_uchar float_rtp_uchar float_rtn_uchar float_rtz_uchar )
 
 add_test(NAME "${TS_NAME}_conversion_double_uchar"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" double_uchar double_sat_uchar double_rte_uchar double_sat_rte_uchar double_rtp_uchar double_sat_rtp_uchar double_rtn_uchar double_sat_rtn_uchar double_rtz_uchar double_sat_rtz_uchar )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" double_uchar double_rte_uchar double_rtp_uchar double_rtn_uchar double_rtz_uchar )
 
 add_test(NAME "${TS_NAME}_conversion_ulong_uchar"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ulong_uchar ulong_sat_uchar ulong_rte_uchar ulong_sat_rte_uchar ulong_rtp_uchar ulong_sat_rtp_uchar ulong_rtn_uchar ulong_sat_rtn_uchar ulong_rtz_uchar ulong_sat_rtz_uchar )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ulong_uchar ulong_sat_uchar )
 
 add_test(NAME "${TS_NAME}_conversion_long_uchar"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" long_uchar long_sat_uchar long_rte_uchar long_sat_rte_uchar long_rtp_uchar long_sat_rtp_uchar long_rtn_uchar long_sat_rtn_uchar long_rtz_uchar long_sat_rtz_uchar )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" long_uchar long_sat_uchar )
 
 add_test(NAME "${TS_NAME}_conversion_uchar_char"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uchar_char uchar_sat_char uchar_rte_char uchar_sat_rte_char uchar_rtp_char uchar_sat_rtp_char uchar_rtn_char uchar_sat_rtn_char uchar_rtz_char uchar_sat_rtz_char )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uchar_char uchar_sat_char )
 
 add_test(NAME "${TS_NAME}_conversion_char_char"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" char_char char_sat_char char_rte_char char_sat_rte_char char_rtp_char char_sat_rtp_char char_rtn_char char_sat_rtn_char char_rtz_char char_sat_rtz_char )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" char_char char_sat_char )
 
 add_test(NAME "${TS_NAME}_conversion_ushort_char"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ushort_char ushort_sat_char ushort_rte_char ushort_sat_rte_char ushort_rtp_char ushort_sat_rtp_char ushort_rtn_char ushort_sat_rtn_char ushort_rtz_char ushort_sat_rtz_char )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ushort_char ushort_sat_char )
 
 add_test(NAME "${TS_NAME}_conversion_short_char"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" short_char short_sat_char short_rte_char short_sat_rte_char short_rtp_char short_sat_rtp_char short_rtn_char short_sat_rtn_char short_rtz_char short_sat_rtz_char )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" short_char short_sat_char )
 
 add_test(NAME "${TS_NAME}_conversion_uint_char"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uint_char uint_sat_char uint_rte_char uint_sat_rte_char uint_rtp_char uint_sat_rtp_char uint_rtn_char uint_sat_rtn_char uint_rtz_char uint_sat_rtz_char )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uint_char uint_sat_char )
 
 add_test(NAME "${TS_NAME}_conversion_int_char"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" int_char int_sat_char int_rte_char int_sat_rte_char int_rtp_char int_sat_rtp_char int_rtn_char int_sat_rtn_char int_rtz_char int_sat_rtz_char )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" int_char int_sat_char )
 
 add_test(NAME "${TS_NAME}_conversion_float_char"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" float_char float_sat_char float_rte_char float_sat_rte_char float_rtp_char float_sat_rtp_char float_rtn_char float_sat_rtn_char float_rtz_char float_sat_rtz_char )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" float_char float_rte_char float_rtp_char float_rtn_char float_rtz_char )
 
 add_test(NAME "${TS_NAME}_conversion_double_char"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" double_char double_sat_char double_rte_char double_sat_rte_char double_rtp_char double_sat_rtp_char double_rtn_char double_sat_rtn_char double_rtz_char double_sat_rtz_char )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" double_char double_rte_char double_rtp_char double_rtn_char double_rtz_char )
 
 add_test(NAME "${TS_NAME}_conversion_ulong_char"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ulong_char ulong_sat_char ulong_rte_char ulong_sat_rte_char ulong_rtp_char ulong_sat_rtp_char ulong_rtn_char ulong_sat_rtn_char ulong_rtz_char ulong_sat_rtz_char )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ulong_char ulong_sat_char )
 
 add_test(NAME "${TS_NAME}_conversion_long_char"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" long_char long_sat_char long_rte_char long_sat_rte_char long_rtp_char long_sat_rtp_char long_rtn_char long_sat_rtn_char long_rtz_char long_sat_rtz_char )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" long_char long_sat_char )
 
 add_test(NAME "${TS_NAME}_conversion_uchar_ushort"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uchar_ushort uchar_sat_ushort uchar_rte_ushort uchar_sat_rte_ushort uchar_rtp_ushort uchar_sat_rtp_ushort uchar_rtn_ushort uchar_sat_rtn_ushort uchar_rtz_ushort uchar_sat_rtz_ushort )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uchar_ushort uchar_sat_ushort )
 
 add_test(NAME "${TS_NAME}_conversion_char_ushort"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" char_ushort char_sat_ushort char_rte_ushort char_sat_rte_ushort char_rtp_ushort char_sat_rtp_ushort char_rtn_ushort char_sat_rtn_ushort char_rtz_ushort char_sat_rtz_ushort )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" char_ushort char_sat_ushort )
 
 add_test(NAME "${TS_NAME}_conversion_ushort_ushort"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ushort_ushort ushort_sat_ushort ushort_rte_ushort ushort_sat_rte_ushort ushort_rtp_ushort ushort_sat_rtp_ushort ushort_rtn_ushort ushort_sat_rtn_ushort ushort_rtz_ushort ushort_sat_rtz_ushort )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ushort_ushort ushort_sat_ushort )
 
 add_test(NAME "${TS_NAME}_conversion_short_ushort"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" short_ushort short_sat_ushort short_rte_ushort short_sat_rte_ushort short_rtp_ushort short_sat_rtp_ushort short_rtn_ushort short_sat_rtn_ushort short_rtz_ushort short_sat_rtz_ushort )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" short_ushort short_sat_ushort )
 
 add_test(NAME "${TS_NAME}_conversion_uint_ushort"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uint_ushort uint_sat_ushort uint_rte_ushort uint_sat_rte_ushort uint_rtp_ushort uint_sat_rtp_ushort uint_rtn_ushort uint_sat_rtn_ushort uint_rtz_ushort uint_sat_rtz_ushort )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uint_ushort uint_sat_ushort )
 
 add_test(NAME "${TS_NAME}_conversion_int_ushort"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" int_ushort int_sat_ushort int_rte_ushort int_sat_rte_ushort int_rtp_ushort int_sat_rtp_ushort int_rtn_ushort int_sat_rtn_ushort int_rtz_ushort int_sat_rtz_ushort )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" int_ushort int_sat_ushort )
 
 add_test(NAME "${TS_NAME}_conversion_float_ushort"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" float_ushort float_sat_ushort float_rte_ushort float_sat_rte_ushort float_rtp_ushort float_sat_rtp_ushort float_rtn_ushort float_sat_rtn_ushort float_rtz_ushort float_sat_rtz_ushort )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" float_ushort float_rte_ushort float_rtp_ushort float_rtn_ushort float_rtz_ushort )
 
 add_test(NAME "${TS_NAME}_conversion_double_ushort"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" double_ushort double_sat_ushort double_rte_ushort double_sat_rte_ushort double_rtp_ushort double_sat_rtp_ushort double_rtn_ushort double_sat_rtn_ushort double_rtz_ushort double_sat_rtz_ushort )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" double_ushort double_rte_ushort double_rtp_ushort double_rtn_ushort double_rtz_ushort )
 
 add_test(NAME "${TS_NAME}_conversion_ulong_ushort"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ulong_ushort ulong_sat_ushort ulong_rte_ushort ulong_sat_rte_ushort ulong_rtp_ushort ulong_sat_rtp_ushort ulong_rtn_ushort ulong_sat_rtn_ushort ulong_rtz_ushort ulong_sat_rtz_ushort )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ulong_ushort ulong_sat_ushort )
 
 add_test(NAME "${TS_NAME}_conversion_long_ushort"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" long_ushort long_sat_ushort long_rte_ushort long_sat_rte_ushort long_rtp_ushort long_sat_rtp_ushort long_rtn_ushort long_sat_rtn_ushort long_rtz_ushort long_sat_rtz_ushort )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" long_ushort long_sat_ushort )
 
 add_test(NAME "${TS_NAME}_conversion_uchar_short"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uchar_short uchar_sat_short uchar_rte_short uchar_sat_rte_short uchar_rtp_short uchar_sat_rtp_short uchar_rtn_short uchar_sat_rtn_short uchar_rtz_short uchar_sat_rtz_short )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uchar_short uchar_sat_short )
 
 add_test(NAME "${TS_NAME}_conversion_char_short"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" char_short char_sat_short char_rte_short char_sat_rte_short char_rtp_short char_sat_rtp_short char_rtn_short char_sat_rtn_short char_rtz_short char_sat_rtz_short )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" char_short char_sat_short )
 
 add_test(NAME "${TS_NAME}_conversion_ushort_short"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ushort_short ushort_sat_short ushort_rte_short ushort_sat_rte_short ushort_rtp_short ushort_sat_rtp_short ushort_rtn_short ushort_sat_rtn_short ushort_rtz_short ushort_sat_rtz_short )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ushort_short ushort_sat_short )
 
 add_test(NAME "${TS_NAME}_conversion_short_short"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" short_short short_sat_short short_rte_short short_sat_rte_short short_rtp_short short_sat_rtp_short short_rtn_short short_sat_rtn_short short_rtz_short short_sat_rtz_short )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" short_short short_sat_short )
 
 add_test(NAME "${TS_NAME}_conversion_uint_short"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uint_short uint_sat_short uint_rte_short uint_sat_rte_short uint_rtp_short uint_sat_rtp_short uint_rtn_short uint_sat_rtn_short uint_rtz_short uint_sat_rtz_short )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uint_short uint_sat_short )
 
 add_test(NAME "${TS_NAME}_conversion_int_short"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" int_short int_sat_short int_rte_short int_sat_rte_short int_rtp_short int_sat_rtp_short int_rtn_short int_sat_rtn_short int_rtz_short int_sat_rtz_short )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" int_short int_sat_short )
 
 add_test(NAME "${TS_NAME}_conversion_float_short"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" float_short float_sat_short float_rte_short float_sat_rte_short float_rtp_short float_sat_rtp_short float_rtn_short float_sat_rtn_short float_rtz_short float_sat_rtz_short )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" float_short float_rte_short float_rtp_short float_rtn_short float_rtz_short )
 
 add_test(NAME "${TS_NAME}_conversion_double_short"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" double_short double_sat_short double_rte_short double_sat_rte_short double_rtp_short double_sat_rtp_short double_rtn_short double_sat_rtn_short double_rtz_short double_sat_rtz_short )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" double_short double_rte_short double_rtp_short double_rtn_short double_rtz_short )
 
 add_test(NAME "${TS_NAME}_conversion_ulong_short"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ulong_short ulong_sat_short ulong_rte_short ulong_sat_rte_short ulong_rtp_short ulong_sat_rtp_short ulong_rtn_short ulong_sat_rtn_short ulong_rtz_short ulong_sat_rtz_short )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ulong_short ulong_sat_short )
 
 add_test(NAME "${TS_NAME}_conversion_long_short"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" long_short long_sat_short long_rte_short long_sat_rte_short long_rtp_short long_sat_rtp_short long_rtn_short long_sat_rtn_short long_rtz_short long_sat_rtz_short )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" long_short long_sat_short )
 
 add_test(NAME "${TS_NAME}_conversion_uchar_uint"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uchar_uint uchar_sat_uint uchar_rte_uint uchar_sat_rte_uint uchar_rtp_uint uchar_sat_rtp_uint uchar_rtn_uint uchar_sat_rtn_uint uchar_rtz_uint uchar_sat_rtz_uint )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uchar_uint uchar_sat_uint )
 
 add_test(NAME "${TS_NAME}_conversion_char_uint"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" char_uint char_sat_uint char_rte_uint char_sat_rte_uint char_rtp_uint char_sat_rtp_uint char_rtn_uint char_sat_rtn_uint char_rtz_uint char_sat_rtz_uint )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" char_uint char_sat_uint )
 
 add_test(NAME "${TS_NAME}_conversion_ushort_uint"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ushort_uint ushort_sat_uint ushort_rte_uint ushort_sat_rte_uint ushort_rtp_uint ushort_sat_rtp_uint ushort_rtn_uint ushort_sat_rtn_uint ushort_rtz_uint ushort_sat_rtz_uint )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ushort_uint ushort_sat_uint )
 
 add_test(NAME "${TS_NAME}_conversion_short_uint"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" short_uint short_sat_uint short_rte_uint short_sat_rte_uint short_rtp_uint short_sat_rtp_uint short_rtn_uint short_sat_rtn_uint short_rtz_uint short_sat_rtz_uint )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" short_uint short_sat_uint )
 
 add_test(NAME "${TS_NAME}_conversion_uint_uint"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uint_uint uint_sat_uint uint_rte_uint uint_sat_rte_uint uint_rtp_uint uint_sat_rtp_uint uint_rtn_uint uint_sat_rtn_uint uint_rtz_uint uint_sat_rtz_uint )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uint_uint uint_sat_uint )
 
 add_test(NAME "${TS_NAME}_conversion_int_uint"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" int_uint int_sat_uint int_rte_uint int_sat_rte_uint int_rtp_uint int_sat_rtp_uint int_rtn_uint int_sat_rtn_uint int_rtz_uint int_sat_rtz_uint )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" int_uint int_sat_uint )
 
 add_test(NAME "${TS_NAME}_conversion_float_uint"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" float_uint float_sat_uint float_rte_uint float_sat_rte_uint float_rtp_uint float_sat_rtp_uint float_rtn_uint float_sat_rtn_uint float_rtz_uint float_sat_rtz_uint )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" float_uint float_rte_uint float_rtp_uint float_rtn_uint float_rtz_uint )
 
 add_test(NAME "${TS_NAME}_conversion_double_uint"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" double_uint double_sat_uint double_rte_uint double_sat_rte_uint double_rtp_uint double_sat_rtp_uint double_rtn_uint double_sat_rtn_uint double_rtz_uint double_sat_rtz_uint )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" double_uint double_rte_uint double_rtp_uint double_rtn_uint double_rtz_uint )
 
 add_test(NAME "${TS_NAME}_conversion_ulong_uint"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ulong_uint ulong_sat_uint ulong_rte_uint ulong_sat_rte_uint ulong_rtp_uint ulong_sat_rtp_uint ulong_rtn_uint ulong_sat_rtn_uint ulong_rtz_uint ulong_sat_rtz_uint )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ulong_uint ulong_sat_uint )
 
 add_test(NAME "${TS_NAME}_conversion_long_uint"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" long_uint long_sat_uint long_rte_uint long_sat_rte_uint long_rtp_uint long_sat_rtp_uint long_rtn_uint long_sat_rtn_uint long_rtz_uint long_sat_rtz_uint )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" long_uint long_sat_uint )
 
 add_test(NAME "${TS_NAME}_conversion_uchar_int"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uchar_int uchar_sat_int uchar_rte_int uchar_sat_rte_int uchar_rtp_int uchar_sat_rtp_int uchar_rtn_int uchar_sat_rtn_int uchar_rtz_int uchar_sat_rtz_int )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uchar_int uchar_sat_int )
 
 add_test(NAME "${TS_NAME}_conversion_char_int"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" char_int char_sat_int char_rte_int char_sat_rte_int char_rtp_int char_sat_rtp_int char_rtn_int char_sat_rtn_int char_rtz_int char_sat_rtz_int )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" char_int char_sat_int )
 
 add_test(NAME "${TS_NAME}_conversion_ushort_int"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ushort_int ushort_sat_int ushort_rte_int ushort_sat_rte_int ushort_rtp_int ushort_sat_rtp_int ushort_rtn_int ushort_sat_rtn_int ushort_rtz_int ushort_sat_rtz_int )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ushort_int ushort_sat_int )
 
 add_test(NAME "${TS_NAME}_conversion_short_int"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" short_int short_sat_int short_rte_int short_sat_rte_int short_rtp_int short_sat_rtp_int short_rtn_int short_sat_rtn_int short_rtz_int short_sat_rtz_int )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" short_int short_sat_int )
 
 add_test(NAME "${TS_NAME}_conversion_uint_int"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uint_int uint_sat_int uint_rte_int uint_sat_rte_int uint_rtp_int uint_sat_rtp_int uint_rtn_int uint_sat_rtn_int uint_rtz_int uint_sat_rtz_int )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uint_int uint_sat_int )
 
 add_test(NAME "${TS_NAME}_conversion_int_int"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" int_int int_sat_int int_rte_int int_sat_rte_int int_rtp_int int_sat_rtp_int int_rtn_int int_sat_rtn_int int_rtz_int int_sat_rtz_int )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" int_int int_sat_int )
 
 add_test(NAME "${TS_NAME}_conversion_float_int"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" float_int float_sat_int float_rte_int float_sat_rte_int float_rtp_int float_sat_rtp_int float_rtn_int float_sat_rtn_int float_rtz_int float_sat_rtz_int )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" float_int float_rte_int float_rtp_int float_rtn_int float_rtz_int )
 
 add_test(NAME "${TS_NAME}_conversion_double_int"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" double_int double_sat_int double_rte_int double_sat_rte_int double_rtp_int double_sat_rtp_int double_rtn_int double_sat_rtn_int double_rtz_int double_sat_rtz_int )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" double_int double_rte_int double_rtp_int double_rtn_int double_rtz_int )
 
 add_test(NAME "${TS_NAME}_conversion_ulong_int"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ulong_int ulong_sat_int ulong_rte_int ulong_sat_rte_int ulong_rtp_int ulong_sat_rtp_int ulong_rtn_int ulong_sat_rtn_int ulong_rtz_int ulong_sat_rtz_int )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ulong_int ulong_sat_int )
 
 add_test(NAME "${TS_NAME}_conversion_long_int"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" long_int long_sat_int long_rte_int long_sat_rte_int long_rtp_int long_sat_rtp_int long_rtn_int long_sat_rtn_int long_rtz_int long_sat_rtz_int )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" long_int long_sat_int )
 
 add_test(NAME "${TS_NAME}_conversion_uchar_float"
          COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uchar_float uchar_sat_float uchar_rte_float uchar_sat_rte_float uchar_rtp_float uchar_sat_rtp_float uchar_rtn_float uchar_sat_rtn_float uchar_rtz_float uchar_sat_rtz_float )
@@ -315,10 +315,10 @@ add_test(NAME "${TS_NAME}_conversion_int_float"
          COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" int_float int_sat_float int_rte_float int_sat_rte_float int_rtp_float int_sat_rtp_float int_rtn_float int_sat_rtn_float int_rtz_float int_sat_rtz_float )
 
 add_test(NAME "${TS_NAME}_conversion_float_float"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" float_float float_sat_float float_rte_float float_sat_rte_float float_rtp_float float_sat_rtp_float float_rtn_float float_sat_rtn_float float_rtz_float float_sat_rtz_float )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" float_float float_rte_float float_rtp_float float_rtn_float float_rtz_float )
 
 add_test(NAME "${TS_NAME}_conversion_double_float"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" double_float double_sat_float double_rte_float double_sat_rte_float double_rtp_float double_sat_rtp_float double_rtn_float double_sat_rtn_float double_rtz_float double_sat_rtz_float )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" double_float double_rte_float double_rtp_float double_rtn_float double_rtz_float )
 
 add_test(NAME "${TS_NAME}_conversion_ulong_float"
          COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ulong_float ulong_sat_float ulong_rte_float ulong_sat_rte_float ulong_rtp_float ulong_sat_rtp_float ulong_rtn_float ulong_sat_rtn_float ulong_rtz_float ulong_sat_rtz_float )
@@ -345,10 +345,10 @@ add_test(NAME "${TS_NAME}_conversion_int_double"
          COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" int_double int_sat_double int_rte_double int_sat_rte_double int_rtp_double int_sat_rtp_double int_rtn_double int_sat_rtn_double int_rtz_double int_sat_rtz_double )
 
 add_test(NAME "${TS_NAME}_conversion_float_double"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" float_double float_sat_double float_rte_double float_sat_rte_double float_rtp_double float_sat_rtp_double float_rtn_double float_sat_rtn_double float_rtz_double float_sat_rtz_double )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" float_double float_rte_double float_rtp_double float_rtn_double float_rtz_double )
 
 add_test(NAME "${TS_NAME}_conversion_double_double"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" double_double double_sat_double double_rte_double double_sat_rte_double double_rtp_double double_sat_rtp_double double_rtn_double double_sat_rtn_double double_rtz_double double_sat_rtz_double )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" double_double double_rte_double double_rtp_double double_rtn_double double_rtz_double )
 
 add_test(NAME "${TS_NAME}_conversion_ulong_double"
          COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ulong_double ulong_sat_double ulong_rte_double ulong_sat_rte_double ulong_rtp_double ulong_sat_rtp_double ulong_rtn_double ulong_sat_rtn_double ulong_rtz_double ulong_sat_rtz_double )
@@ -357,64 +357,64 @@ add_test(NAME "${TS_NAME}_conversion_long_double"
          COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" long_double long_sat_double long_rte_double long_sat_rte_double long_rtp_double long_sat_rtp_double long_rtn_double long_sat_rtn_double long_rtz_double long_sat_rtz_double )
 
 add_test(NAME "${TS_NAME}_conversion_uchar_ulong"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uchar_ulong uchar_sat_ulong uchar_rte_ulong uchar_sat_rte_ulong uchar_rtp_ulong uchar_sat_rtp_ulong uchar_rtn_ulong uchar_sat_rtn_ulong uchar_rtz_ulong uchar_sat_rtz_ulong )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uchar_ulong uchar_sat_ulong )
 
 add_test(NAME "${TS_NAME}_conversion_char_ulong"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" char_ulong char_sat_ulong char_rte_ulong char_sat_rte_ulong char_rtp_ulong char_sat_rtp_ulong char_rtn_ulong char_sat_rtn_ulong char_rtz_ulong char_sat_rtz_ulong )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" char_ulong char_sat_ulong )
 
 add_test(NAME "${TS_NAME}_conversion_ushort_ulong"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ushort_ulong ushort_sat_ulong ushort_rte_ulong ushort_sat_rte_ulong ushort_rtp_ulong ushort_sat_rtp_ulong ushort_rtn_ulong ushort_sat_rtn_ulong ushort_rtz_ulong ushort_sat_rtz_ulong )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ushort_ulong ushort_sat_ulong )
 
 add_test(NAME "${TS_NAME}_conversion_short_ulong"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" short_ulong short_sat_ulong short_rte_ulong short_sat_rte_ulong short_rtp_ulong short_sat_rtp_ulong short_rtn_ulong short_sat_rtn_ulong short_rtz_ulong short_sat_rtz_ulong )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" short_ulong short_sat_ulong )
 
 add_test(NAME "${TS_NAME}_conversion_uint_ulong"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uint_ulong uint_sat_ulong uint_rte_ulong uint_sat_rte_ulong uint_rtp_ulong uint_sat_rtp_ulong uint_rtn_ulong uint_sat_rtn_ulong uint_rtz_ulong uint_sat_rtz_ulong )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uint_ulong uint_sat_ulong )
 
 add_test(NAME "${TS_NAME}_conversion_int_ulong"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" int_ulong int_sat_ulong int_rte_ulong int_sat_rte_ulong int_rtp_ulong int_sat_rtp_ulong int_rtn_ulong int_sat_rtn_ulong int_rtz_ulong int_sat_rtz_ulong )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" int_ulong int_sat_ulong )
 
 add_test(NAME "${TS_NAME}_conversion_float_ulong"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" float_ulong float_sat_ulong float_rte_ulong float_sat_rte_ulong float_rtp_ulong float_sat_rtp_ulong float_rtn_ulong float_sat_rtn_ulong float_rtz_ulong float_sat_rtz_ulong )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" float_ulong float_rte_ulong float_rtp_ulong float_rtn_ulong float_rtz_ulong )
 
 add_test(NAME "${TS_NAME}_conversion_double_ulong"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" double_ulong double_sat_ulong double_rte_ulong double_sat_rte_ulong double_rtp_ulong double_sat_rtp_ulong double_rtn_ulong double_sat_rtn_ulong double_rtz_ulong double_sat_rtz_ulong )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" double_ulong double_rte_ulong double_rtp_ulong double_rtn_ulong double_rtz_ulong )
 
 add_test(NAME "${TS_NAME}_conversion_ulong_ulong"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ulong_ulong ulong_sat_ulong ulong_rte_ulong ulong_sat_rte_ulong ulong_rtp_ulong ulong_sat_rtp_ulong ulong_rtn_ulong ulong_sat_rtn_ulong ulong_rtz_ulong ulong_sat_rtz_ulong )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ulong_ulong ulong_sat_ulong )
 
 add_test(NAME "${TS_NAME}_conversion_long_ulong"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" long_ulong long_sat_ulong long_rte_ulong long_sat_rte_ulong long_rtp_ulong long_sat_rtp_ulong long_rtn_ulong long_sat_rtn_ulong long_rtz_ulong long_sat_rtz_ulong )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" long_ulong long_sat_ulong )
 
 add_test(NAME "${TS_NAME}_conversion_uchar_long"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uchar_long uchar_sat_long uchar_rte_long uchar_sat_rte_long uchar_rtp_long uchar_sat_rtp_long uchar_rtn_long uchar_sat_rtn_long uchar_rtz_long uchar_sat_rtz_long )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uchar_long uchar_sat_long )
 
 add_test(NAME "${TS_NAME}_conversion_char_long"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" char_long char_sat_long char_rte_long char_sat_rte_long char_rtp_long char_sat_rtp_long char_rtn_long char_sat_rtn_long char_rtz_long char_sat_rtz_long )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" char_long char_sat_long )
 
 add_test(NAME "${TS_NAME}_conversion_ushort_long"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ushort_long ushort_sat_long ushort_rte_long ushort_sat_rte_long ushort_rtp_long ushort_sat_rtp_long ushort_rtn_long ushort_sat_rtn_long ushort_rtz_long ushort_sat_rtz_long )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ushort_long ushort_sat_long )
 
 add_test(NAME "${TS_NAME}_conversion_short_long"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" short_long short_sat_long short_rte_long short_sat_rte_long short_rtp_long short_sat_rtp_long short_rtn_long short_sat_rtn_long short_rtz_long short_sat_rtz_long )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" short_long short_sat_long )
 
 add_test(NAME "${TS_NAME}_conversion_uint_long"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uint_long uint_sat_long uint_rte_long uint_sat_rte_long uint_rtp_long uint_sat_rtp_long uint_rtn_long uint_sat_rtn_long uint_rtz_long uint_sat_rtz_long )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" uint_long uint_sat_long )
 
 add_test(NAME "${TS_NAME}_conversion_int_long"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" int_long int_sat_long int_rte_long int_sat_rte_long int_rtp_long int_sat_rtp_long int_rtn_long int_sat_rtn_long int_rtz_long int_sat_rtz_long )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" int_long int_sat_long )
 
 add_test(NAME "${TS_NAME}_conversion_float_long"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" float_long float_sat_long float_rte_long float_sat_rte_long float_rtp_long float_sat_rtp_long float_rtn_long float_sat_rtn_long float_rtz_long float_sat_rtz_long )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" float_long float_rte_long float_rtp_long float_rtn_long float_rtz_long )
 
 add_test(NAME "${TS_NAME}_conversion_double_long"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" double_long double_sat_long double_rte_long double_sat_rte_long double_rtp_long double_sat_rtp_long double_rtn_long double_sat_rtn_long double_rtz_long double_sat_rtz_long )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" double_long double_rte_long double_rtp_long double_rtn_long double_rtz_long )
 
 add_test(NAME "${TS_NAME}_conversion_ulong_long"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ulong_long ulong_sat_long ulong_rte_long ulong_sat_rte_long ulong_rtp_long ulong_sat_rtp_long ulong_rtn_long ulong_sat_rtn_long ulong_rtz_long ulong_sat_rtz_long )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" ulong_long ulong_sat_long )
 
 add_test(NAME "${TS_NAME}_conversion_long_long"
-         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" long_long long_sat_long long_rte_long long_sat_rte_long long_rtp_long long_sat_rtp_long long_rtn_long long_sat_rtn_long long_rtz_long long_sat_rtz_long )
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" long_long long_sat_long )
 
 add_test(NAME "${TS_NAME}_device_partition"
          COMMAND "${TS_BUILDDIR}/test_conformance/device_partition/test_device_partition" )
