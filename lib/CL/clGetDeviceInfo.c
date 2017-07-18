@@ -254,27 +254,38 @@ POname(clGetDeviceInfo)(cl_device_id   device,
    * that it is not actually supported */
   case CL_DEVICE_PARENT_DEVICE                     :
     POCL_RETURN_GETINFO(cl_device_id, device->parent_device);
+
   case CL_DEVICE_PARTITION_MAX_SUB_DEVICES         :
     POCL_RETURN_GETINFO(cl_uint, device->max_sub_devices);
+
   case CL_DEVICE_PARTITION_PROPERTIES              :
-    POCL_RETURN_GETINFO_ARRAY(cl_device_partition_property,
-      device->num_partition_properties, device->partition_properties);
+    if (device->num_partition_properties)
+      POCL_RETURN_GETINFO_ARRAY (cl_device_partition_property,
+                                 device->num_partition_properties,
+                                 device->partition_properties);
+    else
+      POCL_RETURN_GETINFO (cl_device_partition_property, 0);
+
   case CL_DEVICE_PARTITION_TYPE                    :
-    POCL_RETURN_GETINFO_ARRAY(cl_device_partition_property,
-      device->num_partition_types, device->partition_type);
+    if (device->num_partition_types)
+      POCL_RETURN_GETINFO_ARRAY (cl_device_partition_property,
+                                 device->num_partition_types,
+                                 device->partition_type);
+    else
+      POCL_RETURN_GETINFO (cl_device_partition_property, 0);
+
   case CL_DEVICE_PARTITION_AFFINITY_DOMAIN         :
     POCL_RETURN_GETINFO(cl_device_affinity_domain, 0);
 
   case CL_DEVICE_PREFERRED_INTEROP_USER_SYNC       :
     POCL_RETURN_GETINFO(cl_bool, CL_TRUE);
+
   case CL_DEVICE_PRINTF_BUFFER_SIZE                :
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->printf_buffer_size);
+
   case CL_DEVICE_REFERENCE_COUNT:
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, 
                                             (cl_uint)device->pocl_refcount)
-
-
-
 
   case CL_DEVICE_SVM_CAPABILITIES:
     POCL_RETURN_GETINFO(cl_device_svm_capabilities, device->svm_caps);

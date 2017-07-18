@@ -53,54 +53,75 @@ POname(clCreateSubDevices)(cl_device_id in_device,
    POCL_GOTO_ERROR_COND((num_devices && !out_devices), CL_INVALID_VALUE);
    POCL_GOTO_ERROR_COND((!num_devices && out_devices), CL_INVALID_VALUE);
 
+   POCL_GOTO_ERROR_ON (
+       (in_device->max_sub_devices == 0), CL_DEVICE_PARTITION_FAILED,
+       "Device %s cannot be further partitioned\n", in_device->short_name);
+
    /* check that the partition property is supported by the device */
-   errcode = CL_INVALID_VALUE;
+   POCL_GOTO_ERROR_ON ((in_device->num_partition_properties == 0),
+                       CL_INVALID_VALUE,
+                       "Device %s does not support any partition property\n",
+                       in_device->short_name);
+
    for (i = 0; i < in_device->num_partition_properties; ++i) {
      if (properties[0] == in_device->partition_properties[i]) {
-       errcode = CL_SUCCESS;
        break;
      }
    }
-   if (errcode != CL_SUCCESS)
-     goto ERROR;
+
+   POCL_GOTO_ERROR_ON (
+       (i == in_device->num_partition_properties), CL_INVALID_VALUE,
+       "Device %s does not support the requested partition property\n",
+       in_device->short_name);
 
    /* Ok, it's a supported partition property, count the number of devices; currently,
     * we only support EQUALLY and BY_COUNTS, which enumerate the number of devices
     * differently */
-   if (properties[0] == CL_DEVICE_PARTITION_EQUALLY) {
-     // error out if the number of CUs per device is 0 or bigger than the number of
-     // CUs of in_device
-     POCL_GOTO_ERROR_COND(
-       (properties[1] == 0 || (cl_uint)properties[1] > in_device->max_compute_units),
-       CL_INVALID_VALUE);
-     // error out if properties isn't zero-terminated
-     POCL_GOTO_ERROR_COND(properties[2] != 0, CL_INVALID_VALUE);
+   if (properties[0] == CL_DEVICE_PARTITION_EQUALLY)
+     {
+       /* error out if the number of CUs per device is 0 or bigger than the
+        * number of CUs of in_device */
+       POCL_GOTO_ERROR_COND (
+           (properties[1] == 0
+            || (cl_uint)properties[1] > in_device->max_compute_units),
+           CL_INVALID_VALUE);
+       // error out if properties isn't zero-terminated
+       POCL_GOTO_ERROR_COND (properties[2] != 0, CL_INVALID_VALUE);
 
-     count_devices = in_device->max_compute_units / properties[1];
-     num_props = 3; // partition type, CUs per device, terminating 0
-   } else if (properties[0] == CL_DEVICE_PARTITION_BY_COUNTS) {
-     cl_uint total_cus = 0;
-     i = 1;
-     while (properties[i] != 0) {
-       count_devices++;
-       total_cus += properties[i];
-       ++i;
+       count_devices = in_device->max_compute_units / properties[1];
+       num_props = 3; // partition type, CUs per device, terminating 0
      }
-     // error out if the total number of CUs surpasses the number of device CUs,
-     // or if we have to many subdevices
-     POCL_GOTO_ERROR_COND(
-       (total_cus == 0 || total_cus > in_device->max_compute_units ||
-        count_devices > in_device->max_sub_devices),
-       CL_INVALID_DEVICE_PARTITION_COUNT);
-     num_props = count_devices + 2; // partition type, one spec per device, terminating 0
-   } else {
-     // we end here if some of our devices claim to support a different
-     // partition type, but this function was not updated accordingly
+   else if (properties[0] == CL_DEVICE_PARTITION_BY_COUNTS)
+     {
+       cl_uint total_cus = 0;
+       i = 1;
+       while (properties[i] != 0)
+         {
+           count_devices++;
+           total_cus += properties[i];
+           ++i;
+         }
+       /* error out if the total number of CUs surpasses the number of device
+        * CUs, or if we have to many subdevices */
+       POCL_GOTO_ERROR_COND ((total_cus == 0),
+                             CL_INVALID_DEVICE_PARTITION_COUNT);
+       POCL_GOTO_ERROR_COND ((total_cus > in_device->max_compute_units),
+                             CL_INVALID_DEVICE_PARTITION_COUNT);
+       POCL_GOTO_ERROR_COND ((count_devices > in_device->max_sub_devices),
+                             CL_INVALID_DEVICE_PARTITION_COUNT);
+       num_props = count_devices
+                   + 2; /* partition type, one spec per device, terminating 0 */
+     }
+   else
+     {
+       /* we end here if some of our devices claim to support a different
+        * partition type, but this function was not updated accordingly */
 
-     char what[1024];
-     snprintf(what, 1024, "Device-reported partition type 0x%x", (unsigned int)properties[0]);
-     POCL_ABORT_UNIMPLEMENTED(what);
-   }
+       char what[1024];
+       snprintf (what, 1024, "Device-reported partition type 0x%x",
+                 (unsigned int)properties[0]);
+       POCL_ABORT_UNIMPLEMENTED (what);
+     }
 
    // num_devices must match count_devices if non-zero
    POCL_GOTO_ERROR_COND((num_devices && count_devices != num_devices), CL_INVALID_VALUE);
@@ -118,18 +139,29 @@ POname(clCreateSubDevices)(cl_device_id in_device,
        // clone in_device
        memcpy(new_devs[i], in_device, sizeof(struct _cl_device_id));
 
-       // override the fields: partition type, parent, max_compute_units,
-       // max_sub_devices
+       new_devs[i]->parent_device = in_device;
+
+       new_devs[i]->max_sub_devices = new_devs[i]->max_compute_units
+           = (properties[0] == CL_DEVICE_PARTITION_EQUALLY
+                  ? properties[1]
+                  : properties[i + 1]);
+
+       /* for devices with 1 CU, report zero subdevices and
+        * no partitioning support. */
+       if (new_devs[i]->max_compute_units == 1)
+         {
+           new_devs[i]->max_sub_devices = 0;
+           new_devs[i]->num_partition_properties = 0;
+           new_devs[i]->partition_properties = NULL;
+         }
+
+       /* copy the partition type argument, for clGetDeviceInfo() */
        new_devs[i]->partition_type = calloc(num_props, sizeof(*properties));
        POCL_GOTO_ERROR_COND((new_devs[i]->partition_type == NULL),
          CL_OUT_OF_HOST_MEMORY);
        memcpy(new_devs[i]->partition_type, properties, num_props*sizeof(*properties));
        new_devs[i]->num_partition_types = num_props;
 
-       new_devs[i]->parent_device = in_device;
-       new_devs[i]->max_sub_devices = new_devs[i]->max_compute_units =
-         (properties[0] == CL_DEVICE_PARTITION_EQUALLY ? properties[1] :
-          properties[i+1]);
      }
 
      memcpy(out_devices, new_devs, count_devices*sizeof(cl_device_id));
