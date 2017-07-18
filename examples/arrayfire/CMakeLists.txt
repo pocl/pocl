@@ -225,9 +225,10 @@ if(LAPACK_FOUND AND
   add_test(NAME arrayfire_tests_medfilt_opencl
            COMMAND "${TS_BUILDDIR}/test/medfilt_opencl"
            WORKING_DIRECTORY "${TS_BUILDDIR}/test")
-  add_test(NAME arrayfire_tests_median_opencl
-           COMMAND "${TS_BUILDDIR}/test/median_opencl"
-           WORKING_DIRECTORY "${TS_BUILDDIR}/test")
+# takes too long
+#  add_test(NAME arrayfire_tests_median_opencl
+#           COMMAND "${TS_BUILDDIR}/test/median_opencl"
+#           WORKING_DIRECTORY "${TS_BUILDDIR}/test")
   add_test(NAME arrayfire_tests_memory_lock_opencl
            COMMAND "${TS_BUILDDIR}/test/memory_lock_opencl"
            WORKING_DIRECTORY "${TS_BUILDDIR}/test")
@@ -371,33 +372,34 @@ if(LAPACK_FOUND AND
   add_test(NAME arrayfire_examples_filters_opencl
            COMMAND "${TS_BUILDDIR}/examples/image_processing/filters_opencl"
            WORKING_DIRECTORY "${TS_BUILDDIR}/examples/image_processing")
-  add_test(NAME arrayfire_examples_deep_belief_net_opencl
-           COMMAND "${TS_BUILDDIR}/examples/machine_learning/deep_belief_net_opencl"
-           WORKING_DIRECTORY "${TS_BUILDDIR}/examples/machine_learning")
-  add_test(NAME arrayfire_examples_kmeans_opencl
-           COMMAND "${TS_BUILDDIR}/examples/machine_learning/kmeans_opencl"
-           WORKING_DIRECTORY "${TS_BUILDDIR}/examples/machine_learning")
+# these tests are commented out b/c they take too much time on CPU.
+#  add_test(NAME arrayfire_examples_deep_belief_net_opencl
+#           COMMAND "${TS_BUILDDIR}/examples/machine_learning/deep_belief_net_opencl"
+#           WORKING_DIRECTORY "${TS_BUILDDIR}/examples/machine_learning")
+#  add_test(NAME arrayfire_examples_kmeans_opencl
+#           COMMAND "${TS_BUILDDIR}/examples/machine_learning/kmeans_opencl"
+#           WORKING_DIRECTORY "${TS_BUILDDIR}/examples/machine_learning")
   add_test(NAME arrayfire_examples_knn_opencl
            COMMAND "${TS_BUILDDIR}/examples/machine_learning/knn_opencl"
            WORKING_DIRECTORY "${TS_BUILDDIR}/examples/machine_learning")
-  add_test(NAME arrayfire_examples_logistic_regression_opencl
-           COMMAND "${TS_BUILDDIR}/examples/machine_learning/logistic_regression_opencl"
-           WORKING_DIRECTORY "${TS_BUILDDIR}/examples/machine_learning")
+#  add_test(NAME arrayfire_examples_logistic_regression_opencl
+#           COMMAND "${TS_BUILDDIR}/examples/machine_learning/logistic_regression_opencl"
+#           WORKING_DIRECTORY "${TS_BUILDDIR}/examples/machine_learning")
   add_test(NAME arrayfire_examples_naive_bayes_opencl
            COMMAND "${TS_BUILDDIR}/examples/machine_learning/naive_bayes_opencl"
            WORKING_DIRECTORY "${TS_BUILDDIR}/examples/machine_learning")
-  add_test(NAME arrayfire_examples_neural_network_opencl
-           COMMAND "${TS_BUILDDIR}/examples/machine_learning/neural_network_opencl"
-           WORKING_DIRECTORY "${TS_BUILDDIR}/examples/machine_learning")
-  add_test(NAME arrayfire_examples_perceptron_opencl
-           COMMAND "${TS_BUILDDIR}/examples/machine_learning/perceptron_opencl"
-           WORKING_DIRECTORY "${TS_BUILDDIR}/examples/machine_learning")
-  add_test(NAME arrayfire_examples_rbm_opencl
-           COMMAND "${TS_BUILDDIR}/examples/machine_learning/rbm_opencl"
-           WORKING_DIRECTORY "${TS_BUILDDIR}/examples/machine_learning")
-  add_test(NAME arrayfire_examples_softmax_regression_opencl
-           COMMAND "${TS_BUILDDIR}/examples/machine_learning/softmax_regression_opencl"
-           WORKING_DIRECTORY "${TS_BUILDDIR}/examples/machine_learning")
+#  add_test(NAME arrayfire_examples_neural_network_opencl
+#           COMMAND "${TS_BUILDDIR}/examples/machine_learning/neural_network_opencl"
+#           WORKING_DIRECTORY "${TS_BUILDDIR}/examples/machine_learning")
+#  add_test(NAME arrayfire_examples_perceptron_opencl
+#           COMMAND "${TS_BUILDDIR}/examples/machine_learning/perceptron_opencl"
+#           WORKING_DIRECTORY "${TS_BUILDDIR}/examples/machine_learning")
+#  add_test(NAME arrayfire_examples_rbm_opencl
+#           COMMAND "${TS_BUILDDIR}/examples/machine_learning/rbm_opencl"
+#           WORKING_DIRECTORY "${TS_BUILDDIR}/examples/machine_learning")
+#  add_test(NAME arrayfire_examples_softmax_regression_opencl
+#           COMMAND "${TS_BUILDDIR}/examples/machine_learning/softmax_regression_opencl"
+#           WORKING_DIRECTORY "${TS_BUILDDIR}/examples/machine_learning")
   add_test(NAME arrayfire_examples_basic_opencl
            COMMAND "${TS_BUILDDIR}/examples/unified/basic_opencl"
            WORKING_DIRECTORY "${TS_BUILDDIR}/examples/unified")
@@ -586,7 +588,7 @@ if(LAPACK_FOUND AND
     arrayfire_tests_mean_opencl
     arrayfire_tests_meanshift_opencl
     arrayfire_tests_medfilt_opencl
-    arrayfire_tests_median_opencl
+#    arrayfire_tests_median_opencl
     arrayfire_tests_memory_lock_opencl
     arrayfire_tests_memory_opencl
     arrayfire_tests_missing_opencl
@@ -643,15 +645,15 @@ if(LAPACK_FOUND AND
     arrayfire_examples_binary_thresholding_opencl
     arrayfire_examples_brain_segmentation_opencl
     arrayfire_examples_filters_opencl
-    arrayfire_examples_deep_belief_net_opencl
-    arrayfire_examples_kmeans_opencl
+#    arrayfire_examples_deep_belief_net_opencl
+#    arrayfire_examples_kmeans_opencl
     arrayfire_examples_knn_opencl
-    arrayfire_examples_logistic_regression_opencl
+#    arrayfire_examples_logistic_regression_opencl
     arrayfire_examples_naive_bayes_opencl
-    arrayfire_examples_neural_network_opencl
-    arrayfire_examples_perceptron_opencl
-    arrayfire_examples_rbm_opencl
-    arrayfire_examples_softmax_regression_opencl
+#    arrayfire_examples_neural_network_opencl
+#    arrayfire_examples_perceptron_opencl
+#    arrayfire_examples_rbm_opencl
+#    arrayfire_examples_softmax_regression_opencl
     arrayfire_examples_basic_opencl
     arrayfire_examples_black_scholes_options_opencl
     arrayfire_examples_heston_model_opencl

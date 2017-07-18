@@ -74,8 +74,9 @@ if ((NOT "${CMAKE_VERSION}" VERSION_LESS "3.0.2")
            COMMAND "${TS_BUILDDIR}/test/testACL/testOperators")
   add_test(NAME ASL_testKernelMerger
            COMMAND "${TS_BUILDDIR}/test/testACL/testKernelMerger")
-  add_test(NAME ASL_testPrivateVar
-           COMMAND "${TS_BUILDDIR}/test/testACL/testPrivateVar")
+# takes too long
+#  add_test(NAME ASL_testPrivateVar
+#           COMMAND "${TS_BUILDDIR}/test/testACL/testPrivateVar")
   add_test(NAME ASL_testASLData
            COMMAND "${TS_BUILDDIR}/test/testMath/testASLData")
   add_test(NAME ASL_testDistanceFunction
@@ -147,7 +148,7 @@ if ((NOT "${CMAKE_VERSION}" VERSION_LESS "3.0.2")
     ASL_testKernel
     ASL_testOperators
     ASL_testKernelMerger
-    ASL_testPrivateVar
+#    ASL_testPrivateVar
     ASL_testASLData
     ASL_testDistanceFunction
     ASL_testReductionFunction
