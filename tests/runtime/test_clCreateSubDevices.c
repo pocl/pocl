@@ -123,7 +123,7 @@ int main(int argc, char **argv)
     *eqdev = alldevs + 1,
     *countdev = alldevs + 3;
   cl_uint max_cus, max_subs;
-  cl_uint i;
+  cl_uint i, j;
 
   cl_int err = poclu_get_any_device(&ctx, &rootdev, &q);
   CHECK_OPENCL_ERROR_IN("poclu_get_any_device");
@@ -163,15 +163,16 @@ int main(int argc, char **argv)
     dev_pt_size, dev_pt, NULL);
   CHECK_OPENCL_ERROR_IN("CL_DEVICE_PARTITION_PROPERTIES");
 
-  dev_pt_size /= sizeof(*dev_pt); // number of partition types
+  j = dev_pt_size / sizeof (*dev_pt); // number of partition types
 
   // check that partition types EQUALLY and BY_COUNTS are supported
   int found = 0;
-  for (i = 0; i < dev_pt_size; ++i) {
-    if (dev_pt[i] == CL_DEVICE_PARTITION_EQUALLY ||
-        dev_pt[i] == CL_DEVICE_PARTITION_BY_COUNTS)
-      ++found;
-  }
+  for (i = 0; i < j; ++i)
+    {
+      if (dev_pt[i] == CL_DEVICE_PARTITION_EQUALLY
+          || dev_pt[i] == CL_DEVICE_PARTITION_BY_COUNTS)
+        ++found;
+    }
 
   TEST_ASSERT(found == 2);
 
@@ -371,6 +372,8 @@ int main(int argc, char **argv)
   CHECK_OPENCL_ERROR_IN("clCreateContext");
   TEST_ASSERT( test_context(ctx, prog_src_two, -1, NUMDEVS - 1, alldevs + 1)
     == CL_SUCCESS );
+
+  printf ("OK\n");
 
   return 0;
 }
