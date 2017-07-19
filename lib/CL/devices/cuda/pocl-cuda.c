@@ -1428,8 +1428,8 @@ pocl_cuda_update_event (cl_device_id device, cl_event event, cl_int status)
 
       POCL_LOCK_OBJ (event);
       event->status = CL_COMPLETE;
-      device->ops->broadcast (event);
       POCL_UNLOCK_OBJ (event);
+      device->ops->broadcast (event);
 
       pocl_update_command_queue (event);
 

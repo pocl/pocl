@@ -45,6 +45,7 @@ POname(clReleaseEvent)(cl_event event) CL_API_SUFFIX__VERSION_1_0
       if (event->queue)
         POname(clReleaseCommandQueue) (event->queue);
 
+      POCL_DESTROY_OBJECT (event);
       pocl_mem_manager_free_event (event);
     }
 

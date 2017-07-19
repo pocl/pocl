@@ -632,7 +632,7 @@ pocl_broadcast (cl_event brc_event)
   event_node *tmp;
   while ((target = brc_event->notify_list))
     {
-      POCL_LOCK_OBJ (target->event);
+      pocl_lock_events_inorder (brc_event, target->event);
       /* remove event from wait list */
       LL_FOREACH (target->event->wait_list, tmp)
         {
@@ -645,14 +645,12 @@ pocl_broadcast (cl_event brc_event)
         }
       if (target->event->status == CL_SUBMITTED)
         {
-          POCL_UNLOCK_OBJ (target->event);
           target->event->command->device->ops->notify
             (target->event->command->device, target->event, brc_event);
         }
-      else 
-        POCL_UNLOCK_OBJ (target->event);
       
       LL_DELETE (brc_event->notify_list, target);
+      pocl_unlock_events_inorder (brc_event, target->event);
       pocl_mem_manager_free_event_node (target);
     }
 }

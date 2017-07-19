@@ -405,7 +405,6 @@ pocl_pthread_notify (cl_device_id device, cl_event event, cl_event finished)
    int wake_thread = 0;
   _cl_command_node * volatile node = event->command;
 
-  POCL_LOCK_OBJ (event);
   /* this "ready" consept to ensure that command is pushed only once */
   if (!(node->ready) && pocl_command_is_ready(node->event))
     {
@@ -419,7 +418,6 @@ pocl_pthread_notify (cl_device_id device, cl_event event, cl_event finished)
           wake_thread = 1;
         }
     }
-  POCL_UNLOCK_OBJ (event);
 
   if (wake_thread)
     {
@@ -477,9 +475,9 @@ void pocl_pthread_update_event (cl_device_id device, cl_event event, cl_int stat
       pthread_cond_signal(&e_d->event_cond);
       if (cq_ready)
         pthread_scheduler_release_host ();
+      POCL_UNLOCK_OBJ (event);
 
       device->ops->broadcast (event);
-      POCL_UNLOCK_OBJ (event);
       break;
     default:
       assert("Invalid event status\n");

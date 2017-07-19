@@ -958,11 +958,9 @@ pocl_basic_notify (cl_device_id device, cl_event event, cl_event finished)
   struct data *d = (struct data*)device->data;
   _cl_command_node * volatile node = event->command;
   
-  POCL_LOCK_OBJ (event);
   if (!(node->ready) && pocl_command_is_ready(node->event))
     {
       node->ready = 1;
-      POCL_UNLOCK_OBJ (event);
       if (node->event->status == CL_SUBMITTED)
         {
           POCL_LOCK (d->cq_lock);
@@ -973,7 +971,6 @@ pocl_basic_notify (cl_device_id device, cl_event event, cl_event finished)
         }
       return;
     }
-  POCL_UNLOCK_OBJ (event);
 }
 
 void

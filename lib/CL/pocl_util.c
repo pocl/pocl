@@ -290,6 +290,35 @@ pocl_aligned_free (void *ptr)
 }
 #endif
 
+void
+pocl_lock_events_inorder (cl_event ev1, cl_event ev2)
+{
+  if (ev1->id < ev2->id)
+    {
+      POCL_LOCK_OBJ (ev1);
+      POCL_LOCK_OBJ (ev2);
+    }
+  else
+    {
+      POCL_LOCK_OBJ (ev2);
+      POCL_LOCK_OBJ (ev1);
+    }
+}
+
+void
+pocl_unlock_events_inorder (cl_event ev1, cl_event ev2)
+{
+  if (ev1->id < ev2->id)
+    {
+      POCL_UNLOCK_OBJ (ev1);
+      POCL_UNLOCK_OBJ (ev2);
+    }
+  else
+    {
+      POCL_UNLOCK_OBJ (ev2);
+      POCL_UNLOCK_OBJ (ev1);
+    }
+}
 
 cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue, 
                           cl_command_type command_type, int num_buffers,
@@ -349,6 +378,10 @@ pocl_create_event_sync(cl_event waiting_event,
 {
   event_node * volatile notify_target = NULL;
   event_node * volatile wait_list_item = NULL;
+
+  if (notifier_event == NULL)
+    return CL_SUCCESS;
+
   assert(notifier_event->pocl_refcount != 0);
   POCL_MSG_PRINT_INFO("create event sync: waiting %d, notifier %d\n", waiting_event->id, notifier_event->id);
   if (waiting_event == notifier_event)
@@ -357,19 +390,17 @@ pocl_create_event_sync(cl_event waiting_event,
              notifier_event->id);
       assert(waiting_event != notifier_event);
     }
+
+  pocl_lock_events_inorder (waiting_event, notifier_event);
+
   LL_FOREACH (waiting_event->wait_list, wait_list_item)
     {
       if (wait_list_item->event == notifier_event)
-        return CL_SUCCESS;
-    }
-  POCL_LOCK_OBJ (waiting_event);
-
-  if (notifier_event == NULL || notifier_event->status == CL_COMPLETE)
-    {
-      POCL_UNLOCK_OBJ (waiting_event);
-      return CL_SUCCESS;
+        goto FINISH;
     }
 
+  if (notifier_event->status == CL_COMPLETE)
+    goto FINISH;
   notify_target = pocl_mem_manager_new_event_node();
   wait_list_item = pocl_mem_manager_new_event_node();
   if (!notify_target || !wait_list_item)
@@ -379,8 +410,9 @@ pocl_create_event_sync(cl_event waiting_event,
   wait_list_item->event = notifier_event;
   LL_PREPEND (notifier_event->notify_list, notify_target);
   LL_PREPEND (waiting_event->wait_list, wait_list_item);
-  POCL_UNLOCK_OBJ (waiting_event);
 
+FINISH:
+  pocl_unlock_events_inorder (waiting_event, notifier_event);
   return CL_SUCCESS;
 }
 
@@ -453,11 +485,9 @@ cl_int pocl_create_command (_cl_command_node **cmd,
       POCL_LOCK_OBJ (command_queue);
       if (command_queue->last_event.event)
         {
-          POCL_LOCK_OBJ (command_queue->last_event.event);
           pocl_create_event_sync ((*cmd)->event,
                                   command_queue->last_event.event,
                                   NULL);
-          POCL_UNLOCK_OBJ (command_queue->last_event.event);
         }
       POCL_UNLOCK_OBJ (command_queue);
     }
@@ -465,9 +495,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
   for (i = 0; i < num_events; ++i)
     {
       cl_event wle = wait_list[i];
-      POCL_LOCK_OBJ (wle);
       pocl_create_event_sync ((*cmd)->event, wle, NULL);
-      POCL_UNLOCK_OBJ (wle);
     }
   POCL_MSG_PRINT_EVENTS ("Created command struct (event %d, type %X)\n",
                          (*cmd)->event->id, command_type);
@@ -492,9 +520,7 @@ void pocl_command_enqueue (cl_command_queue command_queue,
     {
       DL_FOREACH (command_queue->events, event)
         {
-          POCL_LOCK_OBJ(event);
           pocl_create_event_sync (node->event, event, NULL);
-          POCL_UNLOCK_OBJ (event);
         }
     }
   if (node->type == CL_COMMAND_BARRIER)
@@ -503,9 +529,7 @@ void pocl_command_enqueue (cl_command_queue command_queue,
     {
       if (command_queue->barrier)
         {
-          POCL_LOCK_OBJ(command_queue->barrier);
           pocl_create_event_sync (node->event, command_queue->barrier, NULL);
-          POCL_UNLOCK_OBJ (command_queue->barrier);
         }
     }
   DL_APPEND (command_queue->events, node->event);

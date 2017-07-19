@@ -114,6 +114,13 @@ typedef pthread_mutex_t pocl_lock_t;
       POCL_INIT_OBJECT_NO_ICD(__OBJ__)
 #endif
 
+#define POCL_DESTROY_OBJECT(__OBJ__)                                          \
+  do                                                                          \
+    {                                                                         \
+      POCL_DESTROY_LOCK ((__OBJ__)->pocl_lock);                               \
+    }                                                                         \
+  while (0);
+
 /* Declares the generic pocl object attributes inside a struct. */
 #define POCL_OBJECT \
   pocl_lock_t pocl_lock; \
