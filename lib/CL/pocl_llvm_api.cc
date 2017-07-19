@@ -1294,6 +1294,13 @@ char* get_cpu_name() {
   return cpu_name;
 }
 
+int cpu_has_fma() {
+  StringMap<bool> features;
+  bool res = llvm::sys::getHostCPUFeatures(features);
+  assert(res);
+  return ((features["fma"] || features["fma4"]) ? 1 : 0);
+}
+
 /* helpers copied from LLVM opt START */
 
 /* FIXME: these options should come from the cl_device, and
