@@ -473,9 +473,9 @@ void pocl_pthread_update_event (cl_device_id device, cl_event event, cl_int stat
       event->status = CL_COMPLETE;
 
       pthread_cond_signal(&e_d->event_cond);
+      POCL_UNLOCK_OBJ (event);
       if (cq_ready)
         pthread_scheduler_release_host ();
-      POCL_UNLOCK_OBJ (event);
 
       device->ops->broadcast (event);
       break;
