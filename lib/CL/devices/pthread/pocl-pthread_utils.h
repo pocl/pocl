@@ -4,15 +4,19 @@
 #include "pocl_cl.h"
 
 /* locking macros */
-#define PTHREAD_LOCK(__lock , __counter)        \
-  do {                                          \
-    if ((__counter))                            \
-      ++(*((unsigned*)(__counter)));            \
-  }while (pthread_mutex_trylock((__lock)))
+#define PTHREAD_LOCK(__lock)                                                  \
+  do                                                                          \
+    {                                                                         \
+      pthread_mutex_lock ((__lock));                                          \
+    }                                                                         \
+  while (0)
 
-//#define PTHREAD_LOCK(__lock, __counter) do {pthread_mutex_lock((__lock__));} while (0)
-
-#define PTHREAD_UNLOCK(__lock) do { pthread_mutex_unlock((__lock)); }while(0)
+#define PTHREAD_UNLOCK(__lock)                                                \
+  do                                                                          \
+    {                                                                         \
+      pthread_mutex_unlock ((__lock));                                        \
+    }                                                                         \
+  while (0)
 
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)

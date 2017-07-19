@@ -377,7 +377,7 @@ pocl_pthread_submit (_cl_command_node *node, cl_command_queue cq)
     }
   else
     {
-      PTHREAD_LOCK (&d->cq_lock, NULL);
+      PTHREAD_LOCK (&d->cq_lock);
       DL_PREPEND (d->command_list, node);
       PTHREAD_UNLOCK (&d->cq_lock);
     }
@@ -412,7 +412,7 @@ pocl_pthread_notify (cl_device_id device, cl_event event, cl_event finished)
       node->ready = 1;
       if (event->status == CL_SUBMITTED)
         {
-          PTHREAD_LOCK (&d->cq_lock, NULL);
+          PTHREAD_LOCK (&d->cq_lock);
           assert (d->command_list != NULL);
           DL_DELETE (d->command_list, node);
           PTHREAD_UNLOCK (&d->cq_lock);

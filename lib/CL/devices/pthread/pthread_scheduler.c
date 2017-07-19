@@ -78,9 +78,9 @@ void pthread_scheduler_uinit ()
   int i;
   scheduler.thread_pool_shutdown_requested = 1;
 
-  pthread_mutex_lock (&scheduler.wq_lock);
+  PTHREAD_LOCK (&scheduler.wq_lock);
   pthread_cond_broadcast (&scheduler.wake_pool);
-  pthread_mutex_unlock (&scheduler.wq_lock);
+  PTHREAD_UNLOCK (&scheduler.wq_lock);
 
   for (i = 0; i < scheduler.num_threads; ++i)
     {
@@ -90,7 +90,7 @@ void pthread_scheduler_uinit ()
 
 void pthread_scheduler_push_command (_cl_command_node *cmd)
 {
-  PTHREAD_LOCK (&scheduler.wq_lock, NULL);
+  PTHREAD_LOCK (&scheduler.wq_lock);
   DL_APPEND (scheduler.work_queue, cmd);
   pthread_cond_broadcast (&scheduler.wake_pool);
   PTHREAD_UNLOCK (&scheduler.wq_lock);
@@ -98,7 +98,7 @@ void pthread_scheduler_push_command (_cl_command_node *cmd)
 
 void pthread_scheduler_push_kernel (kernel_run_command *run_cmd)
 {
-  PTHREAD_LOCK (&scheduler.wq_lock, NULL);
+  PTHREAD_LOCK (&scheduler.wq_lock);
   LL_APPEND (scheduler.kernel_queue, run_cmd);
   pthread_cond_broadcast (&scheduler.wake_pool);
   PTHREAD_UNLOCK (&scheduler.wq_lock);
@@ -150,9 +150,9 @@ void pthread_scheduler_wait_cq (cl_command_queue cq)
 
 void pthread_scheduler_release_host ()
 {
-  pthread_mutex_lock (&scheduler.cq_finished_lock);
+  PTHREAD_LOCK (&scheduler.cq_finished_lock);
   pthread_cond_signal (&scheduler.cq_finished_cond);
-  pthread_mutex_unlock (&scheduler.cq_finished_lock);
+  PTHREAD_UNLOCK (&scheduler.cq_finished_lock);
 }
 
 static int
@@ -167,7 +167,7 @@ int pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
   _cl_command_node *cmd;
   kernel_run_command *run_cmd;
   // execute kernel if available
-  PTHREAD_LOCK (&scheduler.wq_lock, NULL);
+  PTHREAD_LOCK (&scheduler.wq_lock);
   if ((run_cmd = scheduler.kernel_queue))
     {
       ++run_cmd->ref_count;
@@ -175,7 +175,7 @@ int pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
 
       work_group_scheduler (run_cmd, td);
 
-      PTHREAD_LOCK (&scheduler.wq_lock, NULL);
+      PTHREAD_LOCK (&scheduler.wq_lock);
       if (!(--run_cmd->ref_count))
         {
           PTHREAD_UNLOCK (&scheduler.wq_lock);
@@ -188,7 +188,7 @@ int pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
     PTHREAD_UNLOCK (&scheduler.wq_lock);
 
   // execute a command if available
-  PTHREAD_LOCK (&scheduler.wq_lock, NULL);
+  PTHREAD_LOCK (&scheduler.wq_lock);
   if ((cmd = scheduler.work_queue))
     {
       DL_DELETE (scheduler.work_queue, cmd);
@@ -204,7 +204,7 @@ int pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
 static void
 pthread_scheduler_sleep()
 {
-  PTHREAD_LOCK (&scheduler.wq_lock, NULL);
+  PTHREAD_LOCK (&scheduler.wq_lock);
   struct timespec time_to_wait = {0, 0};
   time_to_wait.tv_sec = time(NULL) + 5;
 
@@ -219,7 +219,7 @@ static int get_wg_index_range (kernel_run_command *k, unsigned *start_index,
 {
   unsigned max_wgs;
   *last_wgs = 0;
-  PTHREAD_LOCK (&k->lock, NULL);
+  PTHREAD_LOCK (&k->lock);
   if (k->remaining_wgs == 0)
     {
       PTHREAD_UNLOCK (&k->lock);
@@ -270,7 +270,7 @@ work_group_scheduler (kernel_run_command *k,
     {
       if (last_wgs)
         {
-          PTHREAD_LOCK (&scheduler.wq_lock, NULL);
+          PTHREAD_LOCK (&scheduler.wq_lock);
           LL_DELETE (scheduler.kernel_queue, k);
           PTHREAD_UNLOCK (&scheduler.wq_lock);
         }
