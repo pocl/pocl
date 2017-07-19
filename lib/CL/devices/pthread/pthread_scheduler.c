@@ -283,15 +283,10 @@ work_group_scheduler (kernel_run_command *k,
                  pc.group_id[1], pc.group_id[2]);
 #endif
 
-          unsigned rm = pocl_save_rm ();
           pocl_set_default_rm ();
-          unsigned ftz = pocl_save_ftz ();
           pocl_set_ftz (k->kernel->program->flush_denorms);
 
           k->workgroup (arguments, &pc);
-
-          pocl_restore_rm (rm);
-          pocl_restore_ftz (ftz);
 
         }
 
