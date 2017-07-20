@@ -159,8 +159,8 @@ pocl_basic_init_device_infos(unsigned j, struct _cl_device_id* dev)
     the SIMD lanes times the vector units, but not more than
     that to avoid stack overflow and cache trashing.
   */
-  dev->max_work_item_sizes[0] = dev->max_work_item_sizes[1] =
-	  dev->max_work_item_sizes[2] = dev->max_work_group_size = 1024*4;
+  dev->max_work_item_sizes[0] = dev->max_work_item_sizes[1]
+      = dev->max_work_item_sizes[2] = dev->max_work_group_size = 1024 * 4;
 
   dev->preferred_wg_size_multiple = 8;
   dev->preferred_vector_width_char = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR;

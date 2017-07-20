@@ -29,22 +29,23 @@ struct pool_thread_data
   volatile uint64_t prev_wg_finish_time;
   pthread_mutex_t kernel_q_lock;
   volatile int kernel_counter;
-};
+  volatile unsigned current_ftz;
+} __attribute__ ((aligned (CACHELINE_SIZE)));
 
 typedef struct scheduler_data_
 {
   struct pool_thread_data *volatile thread_pool;
   _cl_command_node *volatile work_queue;
   kernel_run_command *volatile kernel_queue;
-  volatile int num_threads;
-  volatile int round_robin_index;
+  volatile unsigned num_threads;
+  volatile unsigned round_robin_index;
   pthread_cond_t cq_finished_cond;
   pthread_cond_t wake_pool;
   pthread_mutex_t wq_lock;
   pthread_mutex_t cq_finished_lock;
   volatile int thread_pool_shutdown_requested;
   cl_device_id *volatile pool_devices;
-} scheduler_data;
+} scheduler_data __attribute__ ((aligned (CACHELINE_SIZE)));
 
 static scheduler_data scheduler;
 
@@ -75,7 +76,7 @@ void pthread_scheduler_init (size_t num_worker_threads)
 
 void pthread_scheduler_uinit ()
 {
-  int i;
+  unsigned i;
   scheduler.thread_pool_shutdown_requested = 1;
 
   PTHREAD_LOCK (&scheduler.wq_lock);
@@ -214,6 +215,7 @@ pthread_scheduler_sleep()
 }
 
 #define POCL_PTHREAD_MAX_WGS 256
+
 static int get_wg_index_range (kernel_run_command *k, unsigned *start_index,
                                unsigned *end_index, char *last_wgs)
 {
@@ -225,8 +227,10 @@ static int get_wg_index_range (kernel_run_command *k, unsigned *start_index,
       PTHREAD_UNLOCK (&k->lock);
       return 0;
     }
+
   max_wgs = min (POCL_PTHREAD_MAX_WGS,
                  (1 + k->remaining_wgs / scheduler.num_threads));
+
   max_wgs = min (max_wgs, k->remaining_wgs);
 
   *start_index = k->wgs_dealt;
@@ -242,13 +246,15 @@ static int get_wg_index_range (kernel_run_command *k, unsigned *start_index,
 
 inline static void translate_wg_index_to_3d_index (kernel_run_command *k,
                                                    unsigned index,
-                                                   size_t *index_3d)
+                                                   size_t *index_3d,
+                                                   unsigned xy_slice,
+                                                   unsigned row_size)
 {
-  unsigned xy_slice = k->pc.num_groups[0] * k->pc.num_groups[1];
   index_3d[2] = index / xy_slice;
-  index_3d[1] = (index % xy_slice) / k->pc.num_groups[0];
-  index_3d[0] = (index % xy_slice) % k->pc.num_groups[0];
+  index_3d[1] = (index % xy_slice) / row_size;
+  index_3d[0] = (index % xy_slice) % row_size;
 }
+
 
 static int
 work_group_scheduler (kernel_run_command *k,
@@ -266,6 +272,17 @@ work_group_scheduler (kernel_run_command *k,
 
   setup_kernel_arg_array ((void**)&arguments, k);
   memcpy (&pc, &k->pc, sizeof (struct pocl_context));
+
+  unsigned flush = k->kernel->program->flush_denorms;
+  if (thread_data->current_ftz != flush)
+    {
+      pocl_set_ftz (flush);
+      thread_data->current_ftz = flush;
+    }
+
+  unsigned slice_size = k->pc.num_groups[0] * k->pc.num_groups[1];
+  unsigned row_size = k->pc.num_groups[0];
+
   do
     {
       if (last_wgs)
@@ -274,18 +291,18 @@ work_group_scheduler (kernel_run_command *k,
           LL_DELETE (scheduler.kernel_queue, k);
           PTHREAD_UNLOCK (&scheduler.wq_lock);
         }
+
       for (i = start_index; i <= end_index; ++i)
         {
-          translate_wg_index_to_3d_index (k, i, (size_t*)&pc.group_id);
+          translate_wg_index_to_3d_index (k, i, pc.group_id,
+                                          slice_size, row_size);
+
 #ifdef DEBUG_MT
-          printf("### exec_wg: gid_x %d, gid_y %d, gid_z %d\n",
+          printf("### exec_wg: gid_x %zu, gid_y %zu, gid_z %zu\n",
                  pc.group_id[0],
                  pc.group_id[1], pc.group_id[2]);
 #endif
-
           pocl_set_default_rm ();
-          pocl_set_ftz (k->kernel->program->flush_denorms);
-
           k->workgroup (arguments, &pc);
 
         }
@@ -382,6 +399,9 @@ pocl_pthread_driver_thread (void *p)
 {
   struct pool_thread_data *td = (struct pool_thread_data*)p;
   _cl_command_node *cmd = NULL;
+  /* some random value, doesn't matter as long as it's not a valid bool - to
+   * force a first FTZ setup */
+  td->current_ftz = 213;
 
   while (1)
     {

@@ -12,6 +12,8 @@
 /* "Build with ICD" */
 #cmakedefine BUILD_ICD
 
+#define CACHELINE_SIZE 64
+
 #cmakedefine CLANG_IS_PATCHED_FOR_SPIR_CC
 
 #define CLANG "@CLANG@"

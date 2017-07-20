@@ -143,7 +143,9 @@ void
 pocl_set_default_rm ()
 {
 #if defined(__x86_64__) && defined(__GNUC__) && defined(_MM_ROUND_NEAREST)
-  _MM_SET_ROUNDING_MODE (_MM_ROUND_NEAREST);
+  unsigned rm = _MM_GET_ROUNDING_MODE ();
+  if (rm != _MM_ROUND_NEAREST)
+    _MM_SET_ROUNDING_MODE (_MM_ROUND_NEAREST);
 #endif
 }
 

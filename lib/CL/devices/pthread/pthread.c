@@ -471,9 +471,9 @@ void pocl_pthread_update_event (cl_device_id device, cl_event event, cl_int stat
 
       POCL_LOCK_OBJ (event);
       event->status = CL_COMPLETE;
-
       pthread_cond_signal(&e_d->event_cond);
       POCL_UNLOCK_OBJ (event);
+
       if (cq_ready)
         pthread_scheduler_release_host ();
 
@@ -503,6 +503,5 @@ void pocl_pthread_free_event_data (cl_event event)
   assert(event->data != NULL);
   free(event->data);
   event->data = NULL;
-
 }
 
