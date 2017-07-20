@@ -77,7 +77,16 @@ set_tests_properties( "kernel/test_as_type" "kernel/test_bitselect"
     FAIL_REGULAR_EXPRESSION "FAIL"
     PASS_REGULAR_EXPRESSION "\nOK\n"
     PROCESSORS 1
-    DEPENDS "pocl_version_check")
+    DEPENDS "pocl_version_check"
+    LABELS "kernel")
+
+# convert_type_{4,8,16} on some machines takes >1 hour,
+# so only add convert_type_1/2 to internal tests to keep them reasonably fast.
+
+set_tests_properties( "kernel/test_as_type" "kernel/test_bitselect"
+  "kernel/test_convert_type_1" "kernel/test_convert_type_2"
+  PROPERTIES
+    LABELS "internal;kernel")
 
 set_tests_properties("kernel/test_hadd_loops"
   PROPERTIES ENVIRONMENT "POCL_WORK_GROUP_METHOD=loops")
