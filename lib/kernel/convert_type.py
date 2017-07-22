@@ -379,6 +379,26 @@ for src in int_types:
 # Only conversions to integers can have saturation.
 #
 
+dfli = [('double', 'long'), ('double', 'ulong'),
+                  ('float', 'long'), ('float', 'ulong'),
+                  ('float', 'int'), ('float', 'uint')]
+
+rtn_ret_constants = {
+                    ('double','long'): '0x1.fffffffffffffp+62',
+                    ('double','ulong'): '0x1.fffffffffffffp+63',
+                    ('float','long'): '0x1.fffffep+62',
+                    ('float','ulong'): '0x1.fffffep+63',
+                    ('float','int'): '0x1.fffffep+30',
+                    ('float','uint'): '0x1.fffffep+31',
+                  }
+
+rtn_thresholds = {
+                  'long': '0x7fffffffffffffffL',
+                  'ulong': '0xfffffffffffffffeUL',
+                  'int': '0x7ffffffc',
+                  'uint': '0xffffff80'
+                 }
+
 def generate_float_conversion(src, dst, size, mode, sat):
   # Header
   print()
@@ -406,7 +426,10 @@ def generate_float_conversion(src, dst, size, mode, sat):
     print("  return convert_{DST}{N}(x);".format(DST=dst, N=size))
   else:
     print("  {DST}{N} r = convert_{DST}{N}(x);".format(DST=dst, N=size))
-    print("  {SRC}{N} y = convert_{SRC}{N}(r);".format(SRC=src, N=size))
+    if (dst, src) in dfli:
+      print("  {SRC}{N} y = convert_{SRC}{N}_sat(r);".format(SRC=src, N=size))
+    else:
+      print("  {SRC}{N} y = convert_{SRC}{N}(r);".format(SRC=src, N=size))
     if mode == '_rtz':
       if src in int_types:
         print("  {USRC}{N} abs_x = abs(x);".format(USRC=unsigned_type[src], N=size))
@@ -414,15 +437,19 @@ def generate_float_conversion(src, dst, size, mode, sat):
       else:
         print("  {SRC}{N} abs_x = fabs(x);".format(SRC=src, N=size))
         print("  {SRC}{N} abs_y = fabs(y);".format(SRC=src, N=size))
-      print("  return select(r, nextafter(r, sign(r) * ({DST}{N})-INFINITY), convert_{BOOL}{N}(abs_y > abs_x));"
+      print("  {DST}{N} res = select(r, nextafter(r, sign(r) * ({DST}{N})-INFINITY), convert_{BOOL}{N}(abs_y > abs_x));"
         .format(DST=dst, N=size, BOOL=bool_type[dst]))
     if mode == '_rtp':
-      print("  return select(r, nextafter(r, ({DST}{N})INFINITY), convert_{BOOL}{N}(y < x));"
+      print("  {DST}{N} res = select(r, nextafter(r, ({DST}{N})INFINITY), convert_{BOOL}{N}(y < x));"
         .format(DST=dst, N=size, BOOL=bool_type[dst]))
     if mode == '_rtn':
-      print("  return select(r, nextafter(r, ({DST}{N})-INFINITY), convert_{BOOL}{N}(y > x));"
+      print("  {DST}{N} res = select(r, nextafter(r, ({DST}{N})-INFINITY), convert_{BOOL}{N}(y > x));"
         .format(DST=dst, N=size, BOOL=bool_type[dst]))
-
+    if (dst, src) in dfli and mode in ['_rtn','_rtz']:
+      print("  return select(res, ({DST}{N})({RETVAL}), convert_{BOOL}{N}(x >= {THRESH}));"
+        .format(DST=dst, N=size, BOOL=bool_type[dst], RETVAL=rtn_ret_constants[(dst,src)], THRESH=rtn_thresholds[src]))
+    else:
+      print("  return res;")
   # Footer
   print("}")
   if close_conditional:
