@@ -539,7 +539,7 @@ void pocl_command_enqueue (cl_command_queue command_queue,
   command_queue->last_event.event_id = node->event->id;
   POCL_UNLOCK_OBJ (command_queue);
 
-  POCL_UPDATE_EVENT_QUEUED (&node->event);
+  POCL_UPDATE_EVENT_QUEUED (node->event);
 
   command_queue->device->ops->submit(node, command_queue);
 #ifdef POCL_DEBUG_BUILD

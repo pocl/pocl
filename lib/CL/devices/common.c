@@ -294,7 +294,7 @@ pocl_exec_command (_cl_command_node * volatile node)
 {
   unsigned i;
   /* because of POCL_UPDATE_EVENT_ */
-  cl_event *event = &(node->event);
+  cl_event event = node->event;
   switch (node->type)
     {
     case CL_COMMAND_READ_BUFFER:
@@ -513,7 +513,7 @@ pocl_exec_command (_cl_command_node * volatile node)
       break;
     case CL_COMMAND_NDRANGE_KERNEL:
       POCL_UPDATE_EVENT_RUNNING(event);
-      assert (*event == node->event);
+      assert (event == node->event);
       node->device->ops->run(node->command.run.data, node);
       POCL_UPDATE_EVENT_COMPLETE(event);
       POCL_DEBUG_EVENT_TIME(event, "Enqueue NDRange       ");

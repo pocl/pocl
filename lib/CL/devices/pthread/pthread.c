@@ -368,7 +368,7 @@ pocl_pthread_submit (_cl_command_node *node, cl_command_queue cq)
   struct data *d = device->data;
 
   POCL_LOCK_OBJ (node->event);
-  POCL_UPDATE_EVENT_SUBMITTED(&node->event);
+  POCL_UPDATE_EVENT_SUBMITTED (node->event);
   /* this "ready" consept to ensure that command is pushed only once */
   if (!(node->ready) && pocl_command_is_ready(node->event))
     {

@@ -1093,7 +1093,7 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq)
       CUDA_CHECK (result, "cuEventRecord");
     }
 
-  POCL_UPDATE_EVENT_SUBMITTED (&node->event);
+  POCL_UPDATE_EVENT_SUBMITTED (node->event);
 
   POCL_UNLOCK_OBJ (node->event);
 
@@ -1366,8 +1366,8 @@ pocl_cuda_finalize_command (cl_device_id device, cl_event event)
       return;
     }
 
-  POCL_UPDATE_EVENT_RUNNING (&event);
-  POCL_UPDATE_EVENT_COMPLETE (&event);
+  POCL_UPDATE_EVENT_RUNNING (event);
+  POCL_UPDATE_EVENT_COMPLETE (event);
 }
 
 void

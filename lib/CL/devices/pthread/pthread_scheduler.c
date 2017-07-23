@@ -323,7 +323,7 @@ void finalize_kernel_command (struct pool_thread_data *thread_data,
 #endif
 
   pocl_ndrange_node_cleanup (k->cmd);
-  POCL_UPDATE_EVENT_COMPLETE (&k->cmd->event);
+  POCL_UPDATE_EVENT_COMPLETE (k->cmd->event);
 
   pocl_mem_manager_free_command (k->cmd);
 
@@ -383,7 +383,7 @@ pocl_pthread_exec_command (_cl_command_node * volatile cmd,
 {
   if(cmd->type == CL_COMMAND_NDRANGE_KERNEL)
     {
-      POCL_UPDATE_EVENT_RUNNING(&(cmd->event));
+      POCL_UPDATE_EVENT_RUNNING (cmd->event);
       pocl_pthread_prepare_kernel (cmd->command.run.data, cmd);
     }
   else

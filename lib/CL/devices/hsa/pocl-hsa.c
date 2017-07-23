@@ -1193,7 +1193,7 @@ pocl_hsa_submit (_cl_command_node *node, cl_command_queue cq)
 
   POCL_LOCK_OBJ (node->event);
   PTHREAD_CHECK(pthread_mutex_lock(&d->list_mutex));
-  POCL_UPDATE_EVENT_SUBMITTED(&node->event);
+  POCL_UPDATE_EVENT_SUBMITTED (node->event);
 
   /* this "ready" consept to ensure that command is pushed only once */
   if (!(node->ready) && pocl_command_is_ready(node->event))
@@ -1444,7 +1444,7 @@ pocl_hsa_launch(pocl_hsa_device_data_t *d, cl_event event)
     }
 
   POCL_UNLOCK_OBJ (event);
-  POCL_UPDATE_EVENT_RUNNING(&event);
+  POCL_UPDATE_EVENT_RUNNING (event);
 }
 
 static void
@@ -1478,7 +1478,7 @@ pocl_hsa_ndrange_event_finished (pocl_hsa_device_data_t *d, size_t i)
   hsa_memory_free(event_data->actual_kernargs);
 
   POCL_UNLOCK_OBJ (event);
-  POCL_UPDATE_EVENT_COMPLETE(&event);
+  POCL_UPDATE_EVENT_COMPLETE (event);
 
   uint64_t ns = event->time_end - event->time_start;
   pocl_debug_print_duration(__func__,__LINE__,
