@@ -105,10 +105,6 @@ struct data {
   cl_kernel current_kernel;
   /* Loaded kernel dynamic library handle. */
   lt_dlhandle current_dlhandle;
-
-  /* List of commands waiting to be enqueued */
-  _cl_command_node * volatile command_list;
-  pthread_mutex_t cq_lock;      /* Lock for command list related operations */
   volatile uint64_t total_cmd_exec_time;
 
 #ifdef CUSTOM_BUFFER_ALLOCATOR
@@ -117,6 +113,10 @@ struct data {
   mem_regions_management* mem_regions;
 #endif
 
+  /* Lock for command list related operations */
+  pthread_mutex_t cq_lock __attribute__ ((aligned (CACHELINE_SIZE)));
+  /* List of commands waiting to be enqueued */
+  _cl_command_node *volatile command_list;
 };
 
 static size_t get_max_thread_count();

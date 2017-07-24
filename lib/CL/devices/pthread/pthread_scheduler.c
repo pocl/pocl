@@ -15,36 +15,44 @@ static void* pocl_pthread_driver_thread (void *p);
 
 struct pool_thread_data
 {
-  pthread_t thread;
   size_t my_id;
-  struct shared_data * sd;
+  struct shared_data *sd;
   _cl_command_node *volatile work_queue;
   kernel_run_command *volatile kernel_queue;
-  pthread_cond_t wakeup_cond;
-  pthread_mutex_t lock;
+
+  pthread_cond_t wakeup_cond __attribute__ ((aligned (CACHELINE_SIZE)));
+  pthread_mutex_t lock __attribute__ ((aligned (CACHELINE_SIZE)));
+
+  pthread_t thread __attribute__ ((aligned (CACHELINE_SIZE)));
   volatile int executed_commands;
   volatile int stolen_commands;
+  volatile uint64_t prev_wg_finish_time;
   volatile int stolen_wgs;
   volatile unsigned lock_counter;
-  volatile uint64_t prev_wg_finish_time;
-  pthread_mutex_t kernel_q_lock;
   volatile int kernel_counter;
   volatile unsigned current_ftz;
+  volatile unsigned num_threads;
+
+  pthread_mutex_t kernel_q_lock __attribute__ ((aligned (CACHELINE_SIZE)));
+
 } __attribute__ ((aligned (CACHELINE_SIZE)));
 
 typedef struct scheduler_data_
 {
-  struct pool_thread_data *volatile thread_pool;
-  _cl_command_node *volatile work_queue;
-  kernel_run_command *volatile kernel_queue;
   volatile unsigned num_threads;
-  volatile unsigned round_robin_index;
-  pthread_cond_t cq_finished_cond;
-  pthread_cond_t wake_pool;
-  pthread_mutex_t wq_lock;
-  pthread_mutex_t cq_finished_lock;
   volatile int thread_pool_shutdown_requested;
-  cl_device_id *volatile pool_devices;
+  struct pool_thread_data *volatile thread_pool;
+
+  _cl_command_node *volatile work_queue
+      __attribute__ ((aligned (CACHELINE_SIZE)));
+  kernel_run_command *volatile kernel_queue;
+
+  pthread_cond_t wake_pool __attribute__ ((aligned (CACHELINE_SIZE)));
+  pthread_mutex_t wq_lock __attribute__ ((aligned (CACHELINE_SIZE)));
+
+  pthread_cond_t cq_finished_cond __attribute__ ((aligned (CACHELINE_SIZE)));
+  pthread_mutex_t cq_finished_lock __attribute__ ((aligned (CACHELINE_SIZE)));
+
 } scheduler_data __attribute__ ((aligned (CACHELINE_SIZE)));
 
 static scheduler_data scheduler;
@@ -216,11 +224,11 @@ pthread_scheduler_sleep()
 
 #define POCL_PTHREAD_MAX_WGS 256
 
-static int get_wg_index_range (kernel_run_command *k, unsigned *start_index,
-                               unsigned *end_index, char *last_wgs)
+static int
+get_wg_index_range (kernel_run_command *k, unsigned *start_index,
+                    unsigned *end_index, char *last_wgs, unsigned num_threads)
 {
   unsigned max_wgs;
-  *last_wgs = 0;
   PTHREAD_LOCK (&k->lock);
   if (k->remaining_wgs == 0)
     {
@@ -229,8 +237,7 @@ static int get_wg_index_range (kernel_run_command *k, unsigned *start_index,
     }
 
   max_wgs = min (POCL_PTHREAD_MAX_WGS,
-                 (1 + k->remaining_wgs / scheduler.num_threads));
-
+                 (1 + k->remaining_wgs / num_threads));
   max_wgs = min (max_wgs, k->remaining_wgs);
 
   *start_index = k->wgs_dealt;
@@ -267,7 +274,8 @@ work_group_scheduler (kernel_run_command *k,
   unsigned end_index;
   char last_wgs = 0;
 
-  if (!get_wg_index_range (k, &start_index, &end_index,  &last_wgs))
+  if (!get_wg_index_range (k, &start_index, &end_index, &last_wgs,
+                           thread_data->num_threads))
     return 0;
 
   setup_kernel_arg_array ((void**)&arguments, k);
@@ -304,11 +312,10 @@ work_group_scheduler (kernel_run_command *k,
 #endif
           pocl_set_default_rm ();
           k->workgroup (arguments, &pc);
-
         }
-
-    }while (get_wg_index_range (k, &start_index, &end_index,  &last_wgs));
-
+    }
+  while (get_wg_index_range (k, &start_index, &end_index, &last_wgs,
+                             thread_data->num_threads));
 
   free_kernel_arg_array (arguments, k);
 
@@ -402,6 +409,7 @@ pocl_pthread_driver_thread (void *p)
   /* some random value, doesn't matter as long as it's not a valid bool - to
    * force a first FTZ setup */
   td->current_ftz = 213;
+  td->num_threads = scheduler.num_threads;
 
   while (1)
     {

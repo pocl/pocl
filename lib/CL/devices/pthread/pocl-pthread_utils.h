@@ -28,21 +28,26 @@ struct kernel_run_command
   void *data;
   cl_kernel kernel;
   cl_device_id device;
-  struct pocl_context pc;
   _cl_command_node *cmd;
-  pthread_mutex_t lock;
   unsigned lock_counter;
   volatile unsigned group_idx[3];
-  volatile unsigned remaining_wgs;
-  volatile unsigned wgs_dealt;
   pocl_workgroup workgroup;
   struct pocl_argument *kernel_args;
-  volatile int ref_count;
   kernel_run_command *volatile next;
+  volatile int ref_count;
+
 #ifdef POCL_PTHREAD_CACHE_MONITORING
   pocl_cache_data cache_data;
 #endif
-};
+
+  pthread_mutex_t lock __attribute__ ((aligned (CACHELINE_SIZE)));
+
+  volatile unsigned remaining_wgs __attribute__ ((aligned (CACHELINE_SIZE)));
+  volatile unsigned wgs_dealt;
+
+  struct pocl_context pc __attribute__ ((aligned (CACHELINE_SIZE)));
+
+} __attribute__ ((aligned (CACHELINE_SIZE)));
 
 void pocl_init_kernel_run_command_manager (void);
 void pocl_init_thread_argument_manager ();
