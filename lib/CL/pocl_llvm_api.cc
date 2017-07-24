@@ -1430,6 +1430,25 @@ static void InitializeLLVM() {
   LLVMInitialized = true;
 }
 
+/* Check if a module references read_image{i,ui,f} or write_image{i,ui,f}
+ * from pocl kernel library */
+static bool moduleReferencesImages(llvm::Module *M) {
+  bool refs_images = false;
+  /* all of pocl's read/write pix functions use these internally */
+  const llvm::StringRef readpix("pocl_read_pixel");
+  const llvm::StringRef writepix("pocl_write_pixel");
+
+  for (llvm::Module::iterator i = M->begin(), e = M->end(); i != e; ++i) {
+    llvm::Function *f = &*i;
+    if (f->getName().equals(readpix) || f->getName().equals(writepix)) {
+      refs_images = true;
+      break;
+    }
+  }
+
+  return refs_images;
+}
+
 /**
  * Prepare the kernel compiler passes.
  *
@@ -1437,9 +1456,9 @@ static void InitializeLLVM() {
  * The returned pass manager should not be modified, only the Module
  * should be optimized using it.
  */
-static PassManager& kernel_compiler_passes
-(cl_device_id device, const std::string& module_data_layout)
-{
+static PassManager &
+kernel_compiler_passes(cl_device_id device, llvm::Module *input,
+                       const std::string &module_data_layout) {
   static std::map<cl_device_id, PassManager*> kernel_compiler_passes;
 
   bool SPMDDevice = device->spmd;
@@ -1542,10 +1561,37 @@ static PassManager& kernel_compiler_passes
   passes.push_back("domtree");
   if (device->autolocals_to_args)
 	  passes.push_back("automatic-locals");
+
   if (SPMDDevice)
     passes.push_back("flatten-inline-all");
-  else
-    passes.push_back("flatten-globals");
+  else {
+    /* LLVM is either still not intelligent enough to flatten,
+     * or we're missing some pass.
+     *
+     * The only reason we've reintroduced "global-only" flatten was that
+     * read/write image functions are very "heavy" and a conformance test
+     * that tests a kernel with 127 image arguments, would flatten 127
+     * write_image() calls, which compiled down to a several megabyte IR
+     *
+     * read/write images are the only "heavy" ones in pocl library,
+     * so if the module references images, we do global-only flatten,
+     * otherwise the normal flatten.
+     *
+     * TODO this still requires some solution. With flatten-globals-only,
+     * AMDSDK's BlackScholes and BinomialOption regress heavily. OTOH the
+     * performance of Mandelbrot is about 30% higher with flatten-globals
+     * compared to flatten-inline-all (likely because inline-all compiled
+     * Mandelbrot kernel exceeds L1 instruction cache size).
+     */
+    if (moduleReferencesImages(input)) {
+      POCL_MSG_PRINT_LLVM(
+          "Module references images, using flatten-globals-only\n");
+      passes.push_back("flatten-globals");
+      passes.push_back("inline");
+    } else {
+      passes.push_back("flatten-inline-all");
+    }
+  }
   passes.push_back("always-inline");
   passes.push_back("globaldce");
   if (!SPMDDevice) {
@@ -1907,13 +1953,12 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
   KernelName = kernel->name;
 
 #ifdef LLVM_OLDER_THAN_3_7
-  kernel_compiler_passes(
-      device,
-      input->getDataLayout()->getStringRepresentation()).run(*input);
+  kernel_compiler_passes(device, input,
+                         input->getDataLayout()->getStringRepresentation())
+      .run(*input);
 #else
-  kernel_compiler_passes(
-      device,
-      input->getDataLayout().getStringRepresentation())
+  kernel_compiler_passes(device, input,
+                         input->getDataLayout().getStringRepresentation())
       .run(*input);
 #endif
 
