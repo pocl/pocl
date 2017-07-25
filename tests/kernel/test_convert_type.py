@@ -251,10 +251,10 @@ for (src, dst, size) in generate_conversions(float_types, int_types):
     }}
     compare_{D}_elements_{S}("convert_{D}{N}{R}({S}{N})", i, &{S}_values[i], 0, expected.raw, actual.raw, {M});
     expected.value = ({D}{N})convert_{D}{R}(sat_input);
-    if (sat_input < min_expected) {{
+    if (sat_input <= ({S})min_expected) {{
        expected.value = ({D}{N})min_expected;
     }}
-    else if (sat_input > max_expected) {{
+    else if (sat_input >= ({S})max_expected) {{
        expected.value = ({D}{N})max_expected;
     }}
     actual.value = convert_{D}{N}_sat{R}(({S}{N})sat_input);

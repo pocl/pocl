@@ -2627,10 +2627,10 @@ kernel void test_convert_type_4()
     }
     compare_char_elements_float("convert_char4(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (char4)convert_char(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (char4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat((float4)sat_input);
@@ -2648,10 +2648,10 @@ kernel void test_convert_type_4()
     }
     compare_char_elements_float("convert_char4_rte(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (char4)convert_char_rte(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (char4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat_rte((float4)sat_input);
@@ -2669,10 +2669,10 @@ kernel void test_convert_type_4()
     }
     compare_char_elements_float("convert_char4_rtz(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (char4)convert_char_rtz(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (char4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat_rtz((float4)sat_input);
@@ -2690,10 +2690,10 @@ kernel void test_convert_type_4()
     }
     compare_char_elements_float("convert_char4_rtp(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (char4)convert_char_rtp(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (char4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat_rtp((float4)sat_input);
@@ -2711,10 +2711,10 @@ kernel void test_convert_type_4()
     }
     compare_char_elements_float("convert_char4_rtn(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (char4)convert_char_rtn(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (char4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat_rtn((float4)sat_input);
@@ -2741,10 +2741,10 @@ kernel void test_convert_type_4()
     }
     compare_uchar_elements_float("convert_uchar4(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uchar4)convert_uchar(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (uchar4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat((float4)sat_input);
@@ -2762,10 +2762,10 @@ kernel void test_convert_type_4()
     }
     compare_uchar_elements_float("convert_uchar4_rte(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uchar4)convert_uchar_rte(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (uchar4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat_rte((float4)sat_input);
@@ -2783,10 +2783,10 @@ kernel void test_convert_type_4()
     }
     compare_uchar_elements_float("convert_uchar4_rtz(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uchar4)convert_uchar_rtz(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (uchar4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat_rtz((float4)sat_input);
@@ -2804,10 +2804,10 @@ kernel void test_convert_type_4()
     }
     compare_uchar_elements_float("convert_uchar4_rtp(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uchar4)convert_uchar_rtp(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (uchar4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat_rtp((float4)sat_input);
@@ -2825,10 +2825,10 @@ kernel void test_convert_type_4()
     }
     compare_uchar_elements_float("convert_uchar4_rtn(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uchar4)convert_uchar_rtn(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (uchar4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat_rtn((float4)sat_input);
@@ -2855,10 +2855,10 @@ kernel void test_convert_type_4()
     }
     compare_short_elements_float("convert_short4(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (short4)convert_short(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (short4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat((float4)sat_input);
@@ -2876,10 +2876,10 @@ kernel void test_convert_type_4()
     }
     compare_short_elements_float("convert_short4_rte(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (short4)convert_short_rte(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (short4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat_rte((float4)sat_input);
@@ -2897,10 +2897,10 @@ kernel void test_convert_type_4()
     }
     compare_short_elements_float("convert_short4_rtz(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (short4)convert_short_rtz(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (short4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat_rtz((float4)sat_input);
@@ -2918,10 +2918,10 @@ kernel void test_convert_type_4()
     }
     compare_short_elements_float("convert_short4_rtp(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (short4)convert_short_rtp(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (short4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat_rtp((float4)sat_input);
@@ -2939,10 +2939,10 @@ kernel void test_convert_type_4()
     }
     compare_short_elements_float("convert_short4_rtn(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (short4)convert_short_rtn(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (short4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat_rtn((float4)sat_input);
@@ -2969,10 +2969,10 @@ kernel void test_convert_type_4()
     }
     compare_ushort_elements_float("convert_ushort4(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ushort4)convert_ushort(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (ushort4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat((float4)sat_input);
@@ -2990,10 +2990,10 @@ kernel void test_convert_type_4()
     }
     compare_ushort_elements_float("convert_ushort4_rte(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ushort4)convert_ushort_rte(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (ushort4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat_rte((float4)sat_input);
@@ -3011,10 +3011,10 @@ kernel void test_convert_type_4()
     }
     compare_ushort_elements_float("convert_ushort4_rtz(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ushort4)convert_ushort_rtz(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (ushort4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat_rtz((float4)sat_input);
@@ -3032,10 +3032,10 @@ kernel void test_convert_type_4()
     }
     compare_ushort_elements_float("convert_ushort4_rtp(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ushort4)convert_ushort_rtp(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (ushort4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat_rtp((float4)sat_input);
@@ -3053,10 +3053,10 @@ kernel void test_convert_type_4()
     }
     compare_ushort_elements_float("convert_ushort4_rtn(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ushort4)convert_ushort_rtn(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (ushort4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat_rtn((float4)sat_input);
@@ -3083,10 +3083,10 @@ kernel void test_convert_type_4()
     }
     compare_int_elements_float("convert_int4(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (int4)convert_int(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (int4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat((float4)sat_input);
@@ -3104,10 +3104,10 @@ kernel void test_convert_type_4()
     }
     compare_int_elements_float("convert_int4_rte(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (int4)convert_int_rte(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (int4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat_rte((float4)sat_input);
@@ -3125,10 +3125,10 @@ kernel void test_convert_type_4()
     }
     compare_int_elements_float("convert_int4_rtz(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (int4)convert_int_rtz(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (int4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat_rtz((float4)sat_input);
@@ -3146,10 +3146,10 @@ kernel void test_convert_type_4()
     }
     compare_int_elements_float("convert_int4_rtp(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (int4)convert_int_rtp(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (int4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat_rtp((float4)sat_input);
@@ -3167,10 +3167,10 @@ kernel void test_convert_type_4()
     }
     compare_int_elements_float("convert_int4_rtn(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (int4)convert_int_rtn(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (int4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat_rtn((float4)sat_input);
@@ -3197,10 +3197,10 @@ kernel void test_convert_type_4()
     }
     compare_uint_elements_float("convert_uint4(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uint4)convert_uint(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (uint4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat((float4)sat_input);
@@ -3218,10 +3218,10 @@ kernel void test_convert_type_4()
     }
     compare_uint_elements_float("convert_uint4_rte(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uint4)convert_uint_rte(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (uint4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat_rte((float4)sat_input);
@@ -3239,10 +3239,10 @@ kernel void test_convert_type_4()
     }
     compare_uint_elements_float("convert_uint4_rtz(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uint4)convert_uint_rtz(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (uint4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat_rtz((float4)sat_input);
@@ -3260,10 +3260,10 @@ kernel void test_convert_type_4()
     }
     compare_uint_elements_float("convert_uint4_rtp(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uint4)convert_uint_rtp(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (uint4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat_rtp((float4)sat_input);
@@ -3281,10 +3281,10 @@ kernel void test_convert_type_4()
     }
     compare_uint_elements_float("convert_uint4_rtn(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uint4)convert_uint_rtn(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (uint4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat_rtn((float4)sat_input);
@@ -3313,10 +3313,10 @@ kernel void test_convert_type_4()
     }
     compare_long_elements_float("convert_long4(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (long4)convert_long(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (long4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat((float4)sat_input);
@@ -3334,10 +3334,10 @@ kernel void test_convert_type_4()
     }
     compare_long_elements_float("convert_long4_rte(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (long4)convert_long_rte(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (long4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat_rte((float4)sat_input);
@@ -3355,10 +3355,10 @@ kernel void test_convert_type_4()
     }
     compare_long_elements_float("convert_long4_rtz(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (long4)convert_long_rtz(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (long4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat_rtz((float4)sat_input);
@@ -3376,10 +3376,10 @@ kernel void test_convert_type_4()
     }
     compare_long_elements_float("convert_long4_rtp(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (long4)convert_long_rtp(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (long4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat_rtp((float4)sat_input);
@@ -3397,10 +3397,10 @@ kernel void test_convert_type_4()
     }
     compare_long_elements_float("convert_long4_rtn(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (long4)convert_long_rtn(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (long4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat_rtn((float4)sat_input);
@@ -3431,10 +3431,10 @@ kernel void test_convert_type_4()
     }
     compare_ulong_elements_float("convert_ulong4(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ulong4)convert_ulong(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (ulong4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat((float4)sat_input);
@@ -3452,10 +3452,10 @@ kernel void test_convert_type_4()
     }
     compare_ulong_elements_float("convert_ulong4_rte(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ulong4)convert_ulong_rte(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (ulong4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat_rte((float4)sat_input);
@@ -3473,10 +3473,10 @@ kernel void test_convert_type_4()
     }
     compare_ulong_elements_float("convert_ulong4_rtz(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ulong4)convert_ulong_rtz(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (ulong4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat_rtz((float4)sat_input);
@@ -3494,10 +3494,10 @@ kernel void test_convert_type_4()
     }
     compare_ulong_elements_float("convert_ulong4_rtp(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ulong4)convert_ulong_rtp(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (ulong4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat_rtp((float4)sat_input);
@@ -3515,10 +3515,10 @@ kernel void test_convert_type_4()
     }
     compare_ulong_elements_float("convert_ulong4_rtn(float4)", i, &float_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ulong4)convert_ulong_rtn(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (float)min_expected) {
        expected.value = (ulong4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (float)max_expected) {
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat_rtn((float4)sat_input);
@@ -3549,10 +3549,10 @@ kernel void test_convert_type_4()
     }
     compare_char_elements_double("convert_char4(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (char4)convert_char(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (char4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat((double4)sat_input);
@@ -3570,10 +3570,10 @@ kernel void test_convert_type_4()
     }
     compare_char_elements_double("convert_char4_rte(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (char4)convert_char_rte(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (char4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat_rte((double4)sat_input);
@@ -3591,10 +3591,10 @@ kernel void test_convert_type_4()
     }
     compare_char_elements_double("convert_char4_rtz(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (char4)convert_char_rtz(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (char4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat_rtz((double4)sat_input);
@@ -3612,10 +3612,10 @@ kernel void test_convert_type_4()
     }
     compare_char_elements_double("convert_char4_rtp(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (char4)convert_char_rtp(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (char4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat_rtp((double4)sat_input);
@@ -3633,10 +3633,10 @@ kernel void test_convert_type_4()
     }
     compare_char_elements_double("convert_char4_rtn(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (char4)convert_char_rtn(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (char4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (char4)max_expected;
     }
     actual.value = convert_char4_sat_rtn((double4)sat_input);
@@ -3667,10 +3667,10 @@ kernel void test_convert_type_4()
     }
     compare_uchar_elements_double("convert_uchar4(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uchar4)convert_uchar(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (uchar4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat((double4)sat_input);
@@ -3688,10 +3688,10 @@ kernel void test_convert_type_4()
     }
     compare_uchar_elements_double("convert_uchar4_rte(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uchar4)convert_uchar_rte(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (uchar4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat_rte((double4)sat_input);
@@ -3709,10 +3709,10 @@ kernel void test_convert_type_4()
     }
     compare_uchar_elements_double("convert_uchar4_rtz(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uchar4)convert_uchar_rtz(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (uchar4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat_rtz((double4)sat_input);
@@ -3730,10 +3730,10 @@ kernel void test_convert_type_4()
     }
     compare_uchar_elements_double("convert_uchar4_rtp(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uchar4)convert_uchar_rtp(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (uchar4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat_rtp((double4)sat_input);
@@ -3751,10 +3751,10 @@ kernel void test_convert_type_4()
     }
     compare_uchar_elements_double("convert_uchar4_rtn(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uchar4)convert_uchar_rtn(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (uchar4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (uchar4)max_expected;
     }
     actual.value = convert_uchar4_sat_rtn((double4)sat_input);
@@ -3785,10 +3785,10 @@ kernel void test_convert_type_4()
     }
     compare_short_elements_double("convert_short4(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (short4)convert_short(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (short4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat((double4)sat_input);
@@ -3806,10 +3806,10 @@ kernel void test_convert_type_4()
     }
     compare_short_elements_double("convert_short4_rte(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (short4)convert_short_rte(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (short4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat_rte((double4)sat_input);
@@ -3827,10 +3827,10 @@ kernel void test_convert_type_4()
     }
     compare_short_elements_double("convert_short4_rtz(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (short4)convert_short_rtz(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (short4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat_rtz((double4)sat_input);
@@ -3848,10 +3848,10 @@ kernel void test_convert_type_4()
     }
     compare_short_elements_double("convert_short4_rtp(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (short4)convert_short_rtp(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (short4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat_rtp((double4)sat_input);
@@ -3869,10 +3869,10 @@ kernel void test_convert_type_4()
     }
     compare_short_elements_double("convert_short4_rtn(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (short4)convert_short_rtn(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (short4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (short4)max_expected;
     }
     actual.value = convert_short4_sat_rtn((double4)sat_input);
@@ -3903,10 +3903,10 @@ kernel void test_convert_type_4()
     }
     compare_ushort_elements_double("convert_ushort4(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ushort4)convert_ushort(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (ushort4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat((double4)sat_input);
@@ -3924,10 +3924,10 @@ kernel void test_convert_type_4()
     }
     compare_ushort_elements_double("convert_ushort4_rte(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ushort4)convert_ushort_rte(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (ushort4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat_rte((double4)sat_input);
@@ -3945,10 +3945,10 @@ kernel void test_convert_type_4()
     }
     compare_ushort_elements_double("convert_ushort4_rtz(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ushort4)convert_ushort_rtz(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (ushort4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat_rtz((double4)sat_input);
@@ -3966,10 +3966,10 @@ kernel void test_convert_type_4()
     }
     compare_ushort_elements_double("convert_ushort4_rtp(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ushort4)convert_ushort_rtp(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (ushort4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat_rtp((double4)sat_input);
@@ -3987,10 +3987,10 @@ kernel void test_convert_type_4()
     }
     compare_ushort_elements_double("convert_ushort4_rtn(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ushort4)convert_ushort_rtn(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (ushort4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (ushort4)max_expected;
     }
     actual.value = convert_ushort4_sat_rtn((double4)sat_input);
@@ -4021,10 +4021,10 @@ kernel void test_convert_type_4()
     }
     compare_int_elements_double("convert_int4(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (int4)convert_int(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (int4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat((double4)sat_input);
@@ -4042,10 +4042,10 @@ kernel void test_convert_type_4()
     }
     compare_int_elements_double("convert_int4_rte(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (int4)convert_int_rte(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (int4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat_rte((double4)sat_input);
@@ -4063,10 +4063,10 @@ kernel void test_convert_type_4()
     }
     compare_int_elements_double("convert_int4_rtz(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (int4)convert_int_rtz(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (int4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat_rtz((double4)sat_input);
@@ -4084,10 +4084,10 @@ kernel void test_convert_type_4()
     }
     compare_int_elements_double("convert_int4_rtp(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (int4)convert_int_rtp(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (int4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat_rtp((double4)sat_input);
@@ -4105,10 +4105,10 @@ kernel void test_convert_type_4()
     }
     compare_int_elements_double("convert_int4_rtn(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (int4)convert_int_rtn(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (int4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (int4)max_expected;
     }
     actual.value = convert_int4_sat_rtn((double4)sat_input);
@@ -4139,10 +4139,10 @@ kernel void test_convert_type_4()
     }
     compare_uint_elements_double("convert_uint4(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uint4)convert_uint(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (uint4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat((double4)sat_input);
@@ -4160,10 +4160,10 @@ kernel void test_convert_type_4()
     }
     compare_uint_elements_double("convert_uint4_rte(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uint4)convert_uint_rte(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (uint4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat_rte((double4)sat_input);
@@ -4181,10 +4181,10 @@ kernel void test_convert_type_4()
     }
     compare_uint_elements_double("convert_uint4_rtz(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uint4)convert_uint_rtz(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (uint4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat_rtz((double4)sat_input);
@@ -4202,10 +4202,10 @@ kernel void test_convert_type_4()
     }
     compare_uint_elements_double("convert_uint4_rtp(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uint4)convert_uint_rtp(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (uint4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat_rtp((double4)sat_input);
@@ -4223,10 +4223,10 @@ kernel void test_convert_type_4()
     }
     compare_uint_elements_double("convert_uint4_rtn(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (uint4)convert_uint_rtn(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (uint4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (uint4)max_expected;
     }
     actual.value = convert_uint4_sat_rtn((double4)sat_input);
@@ -4259,10 +4259,10 @@ kernel void test_convert_type_4()
     }
     compare_long_elements_double("convert_long4(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (long4)convert_long(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (long4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat((double4)sat_input);
@@ -4280,10 +4280,10 @@ kernel void test_convert_type_4()
     }
     compare_long_elements_double("convert_long4_rte(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (long4)convert_long_rte(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (long4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat_rte((double4)sat_input);
@@ -4301,10 +4301,10 @@ kernel void test_convert_type_4()
     }
     compare_long_elements_double("convert_long4_rtz(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (long4)convert_long_rtz(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (long4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat_rtz((double4)sat_input);
@@ -4322,10 +4322,10 @@ kernel void test_convert_type_4()
     }
     compare_long_elements_double("convert_long4_rtp(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (long4)convert_long_rtp(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (long4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat_rtp((double4)sat_input);
@@ -4343,10 +4343,10 @@ kernel void test_convert_type_4()
     }
     compare_long_elements_double("convert_long4_rtn(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (long4)convert_long_rtn(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (long4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (long4)max_expected;
     }
     actual.value = convert_long4_sat_rtn((double4)sat_input);
@@ -4381,10 +4381,10 @@ kernel void test_convert_type_4()
     }
     compare_ulong_elements_double("convert_ulong4(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ulong4)convert_ulong(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (ulong4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat((double4)sat_input);
@@ -4402,10 +4402,10 @@ kernel void test_convert_type_4()
     }
     compare_ulong_elements_double("convert_ulong4_rte(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ulong4)convert_ulong_rte(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (ulong4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat_rte((double4)sat_input);
@@ -4423,10 +4423,10 @@ kernel void test_convert_type_4()
     }
     compare_ulong_elements_double("convert_ulong4_rtz(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ulong4)convert_ulong_rtz(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (ulong4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat_rtz((double4)sat_input);
@@ -4444,10 +4444,10 @@ kernel void test_convert_type_4()
     }
     compare_ulong_elements_double("convert_ulong4_rtp(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ulong4)convert_ulong_rtp(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (ulong4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat_rtp((double4)sat_input);
@@ -4465,10 +4465,10 @@ kernel void test_convert_type_4()
     }
     compare_ulong_elements_double("convert_ulong4_rtn(double4)", i, &double_values[i], 0, expected.raw, actual.raw, 4);
     expected.value = (ulong4)convert_ulong_rtn(sat_input);
-    if (sat_input < min_expected) {
+    if (sat_input <= (double)min_expected) {
        expected.value = (ulong4)min_expected;
     }
-    else if (sat_input > max_expected) {
+    else if (sat_input >= (double)max_expected) {
        expected.value = (ulong4)max_expected;
     }
     actual.value = convert_ulong4_sat_rtn((double4)sat_input);
