@@ -398,7 +398,7 @@ int pocl_llvm_build_program(cl_program program,
   if (device->llvm_cpu != NULL)
     ss << "-target-cpu " << device->llvm_cpu << " ";
 
-  POCL_MSG_PRINT_INFO("all build options: %s\n", ss.str().c_str());
+  POCL_MSG_PRINT_LLVM("all build options: %s\n", ss.str().c_str());
 
   std::istream_iterator<std::string> begin(ss);
   std::istream_iterator<std::string> end;
@@ -577,7 +577,7 @@ int pocl_llvm_build_program(cl_program program,
   write_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
   assert(write_lock);
 
-  POCL_MSG_PRINT_INFO("Writing program.bc to %s.\n", program_bc_path);
+  POCL_MSG_PRINT_LLVM("Writing program.bc to %s.\n", program_bc_path);
 
   /* Always retain program.bc. Its required in clBuildProgram */
   error = pocl_write_module(*mod, program_bc_path, 0);
@@ -674,7 +674,7 @@ int pocl_llvm_link_program(cl_program program,
   write_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
   assert(write_lock);
 
-  POCL_MSG_PRINT_INFO("Writing program.bc to %s.\n", program_bc_path);
+  POCL_MSG_PRINT_LLVM("Writing program.bc to %s.\n", program_bc_path);
 
   /* Always retain program.bc. Its required in clBuildProgram */
   error = pocl_write_module(linked_module, program_bc_path, 0);
@@ -1112,7 +1112,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
     std::string funcName = "";
     funcName = KernelFunction->getName().str();
     if (pocl::isAutomaticLocal(funcName, *i)) {
-      POCL_MSG_PRINT_INFO("Automatic local detected: %s\n",
+      POCL_MSG_PRINT_LLVM("Automatic local detected: %s\n",
                           i->getName().str().c_str());
       locals.push_back(&*i);
     }
@@ -1838,7 +1838,7 @@ kernel_library
 
   if (pocl_exists(kernellib.c_str()))
     {
-      POCL_MSG_PRINT_INFO("Using %s as the built-in lib.\n", kernellib.c_str());
+      POCL_MSG_PRINT_LLVM("Using %s as the built-in lib.\n", kernellib.c_str());
       lib = ParseIRFile(kernellib.c_str(), Err, *GlobalContext());
     }
   else
@@ -2162,7 +2162,7 @@ pocl_llvm_codegen(cl_kernel kernel,
 
     PM.run(*input);
     std::string o = sos.str(); // flush
-    POCL_MSG_PRINT_INFO("Writing code gen output to %s.\n", outfilename);
+    POCL_MSG_PRINT_LLVM("Writing code gen output to %s.\n", outfilename);
 
     return pocl_write_file(outfilename, o.c_str(), o.size(), 0, 0);
 }
