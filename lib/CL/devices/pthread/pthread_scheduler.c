@@ -15,33 +15,20 @@ static void* pocl_pthread_driver_thread (void *p);
 
 struct pool_thread_data
 {
-  size_t my_id;
-  struct shared_data *sd;
-  _cl_command_node *volatile work_queue;
-  kernel_run_command *volatile kernel_queue;
-
   pthread_cond_t wakeup_cond __attribute__ ((aligned (CACHELINE_SIZE)));
   pthread_mutex_t lock __attribute__ ((aligned (CACHELINE_SIZE)));
 
   pthread_t thread __attribute__ ((aligned (CACHELINE_SIZE)));
-  volatile int executed_commands;
-  volatile int stolen_commands;
-  volatile uint64_t prev_wg_finish_time;
-  volatile int stolen_wgs;
-  volatile unsigned lock_counter;
-  volatile int kernel_counter;
+  volatile long executed_commands;
   volatile unsigned current_ftz;
-  volatile unsigned num_threads;
-
-  pthread_mutex_t kernel_q_lock __attribute__ ((aligned (CACHELINE_SIZE)));
+  unsigned num_threads;
 
 } __attribute__ ((aligned (CACHELINE_SIZE)));
 
 typedef struct scheduler_data_
 {
-  volatile unsigned num_threads;
-  volatile int thread_pool_shutdown_requested;
-  struct pool_thread_data *volatile thread_pool;
+  unsigned num_threads;
+  struct pool_thread_data *thread_pool;
 
   _cl_command_node *volatile work_queue
       __attribute__ ((aligned (CACHELINE_SIZE)));
@@ -53,6 +40,7 @@ typedef struct scheduler_data_
   pthread_cond_t cq_finished_cond __attribute__ ((aligned (CACHELINE_SIZE)));
   pthread_mutex_t cq_finished_lock __attribute__ ((aligned (CACHELINE_SIZE)));
 
+  volatile int thread_pool_shutdown_requested;
 } scheduler_data __attribute__ ((aligned (CACHELINE_SIZE)));
 
 static scheduler_data scheduler;
@@ -71,10 +59,8 @@ void pthread_scheduler_init (size_t num_worker_threads)
 
   for (i = 0; i < num_worker_threads; ++i)
     {
-      scheduler.thread_pool[i].my_id = i;
       pthread_cond_init (&scheduler.thread_pool[i].wakeup_cond, NULL);
       pthread_mutex_init (&scheduler.thread_pool[i].lock, NULL);
-      pthread_mutex_init (&scheduler.thread_pool[i].kernel_q_lock, NULL);
       pthread_create (&scheduler.thread_pool[i].thread, NULL,
                       pocl_pthread_driver_thread,
                       (void*)&scheduler.thread_pool[i]);
@@ -369,9 +355,6 @@ pocl_pthread_prepare_kernel
   run_cmd->device = device;
   run_cmd->pc = *pc;
   run_cmd->cmd = cmd;
-  run_cmd->group_idx[0] = 0;
-  run_cmd->group_idx[1] = 0;
-  run_cmd->group_idx[2] = 0;
   run_cmd->pc.local_size[0] = cmd->command.run.local_x;
   run_cmd->pc.local_size[1] = cmd->command.run.local_y;
   run_cmd->pc.local_size[2] = cmd->command.run.local_z;

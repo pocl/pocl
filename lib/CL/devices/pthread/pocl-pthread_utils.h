@@ -29,8 +29,6 @@ struct kernel_run_command
   cl_kernel kernel;
   cl_device_id device;
   _cl_command_node *cmd;
-  unsigned lock_counter;
-  volatile unsigned group_idx[3];
   pocl_workgroup workgroup;
   struct pocl_argument *kernel_args;
   kernel_run_command *volatile next;
