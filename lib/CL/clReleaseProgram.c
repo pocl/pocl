@@ -102,6 +102,7 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
       POCL_MEM_FREE(program->build_hash);
       POCL_MEM_FREE(program->compiler_options);
       POCL_MEM_FREE(program->llvm_irs);
+      POCL_DESTROY_OBJECT (program);
       POCL_MEM_FREE(program);
 
       POname(clReleaseContext)(context);

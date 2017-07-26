@@ -104,6 +104,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
         callback = next_callback;
       }
 
+      POCL_DESTROY_OBJECT (memobj);
       POCL_MEM_FREE(memobj);
 
       if (parent)

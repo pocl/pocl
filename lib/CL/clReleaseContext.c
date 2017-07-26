@@ -51,6 +51,7 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
         }   
       POCL_MEM_FREE(context->devices);
       POCL_MEM_FREE(context->properties);
+      POCL_DESTROY_OBJECT (context);
       POCL_MEM_FREE(context);
     }
   return CL_SUCCESS;

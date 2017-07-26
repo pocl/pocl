@@ -37,6 +37,7 @@ CL_API_SUFFIX__VERSION_1_0
   if (new_refcount == 0)
     {
       POname (clReleaseContext) (sampler->context);
+      POCL_DESTROY_OBJECT (sampler);
       POCL_MEM_FREE (sampler);
     }
 

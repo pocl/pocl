@@ -45,6 +45,7 @@ POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VER
       if (command_queue->device->ops->free_queue)
         command_queue->device->ops->free_queue (command_queue);
       pocl_queue_list_delete(command_queue);
+      POCL_DESTROY_OBJECT (command_queue);
       POCL_MEM_FREE(command_queue);
 
       POname(clReleaseContext)(context);
