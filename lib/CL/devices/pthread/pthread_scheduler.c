@@ -208,12 +208,19 @@ pthread_scheduler_sleep()
   PTHREAD_UNLOCK (&scheduler.wq_lock);
 }
 
+/* Maximum and minimum chunk sizes for get_wg_index_range().
+ * Each pthread driver's thread fetches work from a kernel's WG pool in
+ * chunks, this determines the limits (scaled up by # of threads). */
 #define POCL_PTHREAD_MAX_WGS 256
+#define POCL_PTHREAD_MIN_WGS 32
 
 static int
 get_wg_index_range (kernel_run_command *k, unsigned *start_index,
                     unsigned *end_index, char *last_wgs, unsigned num_threads)
 {
+  const unsigned scaled_max_wgs = POCL_PTHREAD_MAX_WGS * num_threads;
+  const unsigned scaled_min_wgs = POCL_PTHREAD_MIN_WGS * num_threads;
+
   unsigned max_wgs;
   PTHREAD_LOCK (&k->lock);
   if (k->remaining_wgs == 0)
@@ -222,8 +229,18 @@ get_wg_index_range (kernel_run_command *k, unsigned *start_index,
       return 0;
     }
 
-  max_wgs = min (POCL_PTHREAD_MAX_WGS,
-                 (1 + k->remaining_wgs / num_threads));
+  /* If the work is comprised of huge number of WGs of small WIs,
+   * then get_wg_index_range() becomes a problem on manycore CPUs
+   * because lock contention on k->lock.
+   *
+   * If we have enough workgroups, scale up the requests linearly by
+   * num_threads, otherwise fallback to smaller workgroups.
+   */
+  if (k->remaining_wgs <= (scaled_max_wgs * num_threads))
+    max_wgs = min (scaled_min_wgs, (1 + k->remaining_wgs / num_threads));
+  else
+    max_wgs = min (scaled_max_wgs, (1 + k->remaining_wgs / num_threads));
+
   max_wgs = min (max_wgs, k->remaining_wgs);
 
   *start_index = k->wgs_dealt;
@@ -267,6 +284,9 @@ work_group_scheduler (kernel_run_command *k,
   setup_kernel_arg_array ((void**)&arguments, k);
   memcpy (&pc, &k->pc, sizeof (struct pocl_context));
 
+  /* Flush to zero is only set once at start of kernel (because FTZ is
+   * a compilation option), but we need to reset rounding mode after every
+   * iteration (since it can be changed during kernel execution). */
   unsigned flush = k->kernel->program->flush_denorms;
   if (thread_data->current_ftz != flush)
     {
