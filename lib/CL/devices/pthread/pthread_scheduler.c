@@ -175,15 +175,11 @@ int pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
         {
           PTHREAD_UNLOCK (&scheduler.wq_lock);
           finalize_kernel_command (td, run_cmd);
+          PTHREAD_LOCK (&scheduler.wq_lock);
         }
-      else
-        PTHREAD_UNLOCK (&scheduler.wq_lock);
     }
-  else
-    PTHREAD_UNLOCK (&scheduler.wq_lock);
 
   // execute a command if available
-  PTHREAD_LOCK (&scheduler.wq_lock);
   if ((cmd = scheduler.work_queue))
     {
       DL_DELETE (scheduler.work_queue, cmd);
