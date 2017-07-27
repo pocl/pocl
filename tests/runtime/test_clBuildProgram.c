@@ -51,6 +51,10 @@ static const char invalid_kernel[] =
 static const char warning_kernel[] =
   "kernel void test_kernel(int j, k) { return; }\n";
 
+static const char missing_symbol_kernel[] = "kernel void test_kernel() { "
+                                            "one_does_not_simply_walk_into_"
+                                            "mordor(); }\n";
+
 /* kernel can have any name, except main() starting from OpenCL 2.0 */
 static const char valid_kernel[] =
   "kernel void init(global int *arg) { return; }\n";
@@ -65,9 +69,9 @@ void buildprogram_callback(cl_program program, void *user_data)
   fprintf(stderr, "cl_program callback (via pfn_notify)\n");
 
   if (user_data == (void*)FAKE_PTR)
-    fprintf(stderr, "OK\n");
+    fprintf (stderr, "build callback successful\n");
   else
-    fprintf(stderr, "FAIL\n");
+    fprintf (stderr, "build callback FAILED\n");
 }
 
 
@@ -431,6 +435,26 @@ main(void){
 
       CHECK_CL_ERROR(clReleaseProgram(program));
   }
+
+#if !(defined(LLVM_3_6) || defined(LLVM_3_7) ||  defined(LLVM_3_8))
+  /* TEST 13: missing symbols: kernel referring nonexistent function */
+  {
+    size_t kernel_size = strlen (missing_symbol_kernel);
+    const char *kernel_buffer = missing_symbol_kernel;
+
+    program = clCreateProgramWithSource (
+        context, 1, (const char **)&kernel_buffer, &kernel_size, &err);
+    // clCreateProgramWithSource for invalid kernel failed
+    CHECK_OPENCL_ERROR_IN ("clCreateProgramWithSource");
+
+    err = clBuildProgram (program, num_devices, devices, NULL, NULL, NULL);
+    TEST_ASSERT (err == CL_BUILD_PROGRAM_FAILURE);
+
+    CHECK_CL_ERROR (clReleaseProgram (program));
+  }
+#endif
+
+  printf ("OK\n");
 
   return EXIT_SUCCESS;
 }

@@ -520,9 +520,10 @@ compile_and_link_program(int compile_program,
         {
           POCL_MSG_PRINT_INFO("building from sources for device %d\n", device_i);
 #ifdef OCS_AVAILABLE
-          error = pocl_llvm_build_program (program, device_i,
-              program->compiler_options, program_bc_path,
-              num_input_headers, input_headers, header_include_names);
+          error = pocl_llvm_build_program(
+              program, device_i, program->compiler_options, program_bc_path,
+              num_input_headers, input_headers, header_include_names,
+              link_program);
           POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
                              "pocl_llvm_build_program() failed\n");
 #else
@@ -650,6 +651,7 @@ compile_and_link_program(int compile_program,
           pocl_cache_release_lock(write_cache_lock);
           write_cache_lock = NULL;
         }
+
 #endif
 
     }

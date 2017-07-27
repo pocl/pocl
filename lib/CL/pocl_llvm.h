@@ -42,12 +42,12 @@ int cpu_has_fma();
  */
 int pocl_llvm_build_program(cl_program program,
                             unsigned device_i,
-                            const char* user_options_cstr,
+                            const char *user_options_cstr,
                             char *program_bc_path,
                             cl_uint num_input_headers,
                             const cl_program *input_headers,
-                            const char **header_include_names);
-
+                            const char **header_include_names,
+                            int linking_program);
 
 /* Retrieve metadata of the given kernel in the program to populate the
  * cl_kernel object.
@@ -132,7 +132,6 @@ int pocl_llvm_link_program(cl_program program,
                            unsigned char **cur_device_binaries,
                            size_t *cur_device_binary_sizes,
                            void **cur_llvm_irs);
-
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

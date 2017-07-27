@@ -338,9 +338,6 @@ static void get_build_log(cl_program program,
                          clang::TextDiagnosticBuffer *diagsBuffer,
                          const SourceManager &sm)
 {
-    static const bool show_log = pocl_get_bool_option("POCL_VERBOSE", 0) ||
-      pocl_get_bool_option("POCL_DEBUG", 0);
-
     for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->err_begin(),
          e = diagsBuffer->err_end(); i != e; ++i)
       {
@@ -354,23 +351,25 @@ static void get_build_log(cl_program program,
                      << ": " << i->second << std::endl;
       }
 
-    pocl_cache_append_to_buildlog(program, device_i,
-                                  ss_build_log.str().c_str(),
-                                  ss_build_log.str().size());
-
-    if (show_log)
-      std::cerr << ss_build_log.str();
-
+    std::string log = ss_build_log.str();
+    if (log.size() > 0) {
+      POCL_MSG_ERR(log.c_str());
+      pocl_cache_append_to_buildlog(program, device_i,
+                                  log.c_str(),
+                                  log.size());
+    }
 }
 
+static llvm::Module *kernel_library(cl_device_id device);
 
-int pocl_llvm_build_program(cl_program program, 
+int pocl_llvm_build_program(cl_program program,
                             unsigned device_i,
-                            const char* user_options_cstr,
-                            char* program_bc_path,
+                            const char *user_options_cstr,
+                            char *program_bc_path,
                             cl_uint num_input_headers,
                             const cl_program *input_headers,
-                            const char **header_include_names)
+                            const char **header_include_names,
+                            int linking_program)
 
 {
   void* write_lock = NULL;
@@ -708,7 +707,7 @@ int pocl_llvm_build_program(cl_program program,
 
   mod = (llvm::Module **)&program->llvm_irs[device_i];
   if (*mod != NULL) {
-    delete (llvm::Module*)*mod;
+    delete *mod;
     --numberOfIRs;
   }
 
@@ -718,6 +717,24 @@ int pocl_llvm_build_program(cl_program program,
     return CL_BUILD_PROGRAM_FAILURE;
 
   ++numberOfIRs;
+
+  // link w kernel lib, but not if we're called from clCompileProgram()
+  // Later this should be replaced with indexed linking of source code
+  // and/or bitcode for each kernel.
+  if (linking_program) {
+    currentPoclDevice = device;
+    llvm::Module *libmodule = kernel_library(device);
+    assert(libmodule != NULL);
+    std::string log("Error(s) while linking: \n");
+    if (link(*mod, libmodule, log)) {
+      POCL_MSG_ERR(log.c_str());
+      pocl_cache_append_to_buildlog(program, device_i, log.c_str(), log.size());
+      delete *mod;
+      *mod = nullptr;
+      --numberOfIRs;
+      return CL_BUILD_PROGRAM_FAILURE;
+    }
+  }
 
   write_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
   assert(write_lock);
@@ -761,7 +778,8 @@ int pocl_llvm_link_program(cl_program program,
   std::string concated_binaries;
   llvm::raw_string_ostream sos(content);
   size_t n = 0, i;
-  llvm::Module **modptr;
+  cl_device_id device = program->devices[device_i];
+  llvm::Module **modptr = (llvm::Module **)&program->llvm_irs[device_i];
   int error;
 
   llvm::MutexGuard lockHolder(kernelCompilerLock);
@@ -805,6 +823,27 @@ int pocl_llvm_link_program(cl_program program,
   if (linked_module == nullptr)
     return CL_LINK_PROGRAM_FAILURE;
 
+  if (*modptr != nullptr) {
+    delete *modptr;
+    --numberOfIRs;
+  }
+  *modptr = nullptr;
+
+  // linked all the programs together, now link in the kernel library
+  currentPoclDevice = device;
+  llvm::Module *libmodule = kernel_library(device);
+  assert(libmodule != NULL);
+  std::string log("Error(s) while linking: \n");
+  if (link(linked_module, libmodule, log)) {
+    POCL_MSG_ERR(log.c_str());
+    pocl_cache_append_to_buildlog(program, device_i, log.c_str(), log.size());
+    delete linked_module;
+    return CL_BUILD_PROGRAM_FAILURE;
+  }
+
+  *modptr = linked_module;
+  ++numberOfIRs;
+
   /* TODO currently cached on concated binary contents (in undefined order),
      this is not terribly useful (but we have to store it somewhere..) */
   error = pocl_cache_create_program_cachedir(program, device_i,
@@ -813,14 +852,6 @@ int pocl_llvm_link_program(cl_program program,
                                      program_bc_path);
   assert(error == 0);
 
-  modptr = (llvm::Module **)&program->llvm_irs[device_i];
-  if (*modptr != nullptr) {
-    delete (llvm::Module *)*modptr;
-    --numberOfIRs;
-  }
-
-  *modptr = linked_module;
-  ++numberOfIRs;
 
   write_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
   assert(write_lock);
@@ -1916,9 +1947,6 @@ static llvm::Module*
 kernel_library
 (cl_device_id device)
 {
-  llvm::MutexGuard lockHolder(kernelCompilerLock);
-  InitializeLLVM();
-
   Triple triple(device->llvm_target_triplet);
 
   if (kernelLibraryMap.find(device) != kernelLibraryMap.end())
@@ -2086,12 +2114,6 @@ int pocl_llvm_generate_workgroup_function_nowrite(
           input->setDataLayout("e-m:e-p:32:32-i64:64-f80:32-n8:16:32-S32");
       }
   }
-
-  // Later this should be replaced with indexed linking of source code
-  // and/or bitcode for each kernel.
-  llvm::Module *libmodule = kernel_library(device);
-  assert (libmodule != NULL);
-  link(input, libmodule);
 
   /* Now finally run the set of passes assembled above */
   // TODO pass these as parameters instead, this is not thread safe!
