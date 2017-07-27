@@ -167,8 +167,6 @@ POname(clCreateBuffer)(cl_context   context,
       if (context->svm_allocdev == context->devices[i])
         continue;
 
-      if (i > 0)
-        POname(clRetainMemObject) (mem);
       device = context->devices[i];
       assert (device->ops->alloc_mem_obj != NULL);
       if (device->ops->alloc_mem_obj (device, mem, host_ptr) != CL_SUCCESS)
