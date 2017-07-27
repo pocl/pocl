@@ -201,6 +201,35 @@ message(STATUS "Hwloc_LDFLAGS ${Hwloc_LDFLAGS}")
 message(STATUS "Hwloc_CFLAGS ${Hwloc_CFLAGS}")
 
 ######################################################################################
+
+if(NOT CACHELINE_SIZE)
+
+  set(CL_SIZE 0)
+  if(UNIX)
+    find_program(GETCONF "getconf")
+    if(GETCONF)
+      execute_process(COMMAND "getconf" "LEVEL1_DCACHE_LINESIZE"
+                      RESULT_VARIABLE RES OUTPUT_VARIABLE CL_SIZE)
+      if(RES)
+        message(WARNING "getconf exited with nonzero status!")
+        set(CL_SIZE 0)
+      else()
+        # getconf sometimes just returns zero
+        if(NOT (CL_SIZE EQUAL 0))
+          message(STATUS "L1D Cacheline size detected: ${CL_SIZE}")
+          set(CACHELINE_SIZE "${CL_SIZE}" CACHE STRING "L1D Cacheline size")
+        endif()
+      endif()
+    endif()
+  endif()
+
+  if(CL_SIZE EQUAL 0)
+    message(WARNING "Unable to detect cacheline size - assuming 64byte cacheline, override with -DCACHELINE_SIZE=<number>")
+    set(CACHELINE_SIZE "64" CACHE STRING "L1D Cacheline size")
+  endif()
+endif()
+
+######################################################################################
 #
 # Find executables to few tools required during build 
 #
@@ -1203,3 +1232,4 @@ MESSAGE(STATUS "Kernel caching: ${KERNEL_CACHE_DEFAULT}")
 MESSAGE(STATUS "Kernel library CPU variants: ${KERNELLIB_HOST_CPU_VARIANTS}")
 MESSAGE(STATUS "Kernel library distro build: ${KERNELLIB_HOST_DISTRO_VARIANTS}")
 MESSAGE(STATUS "Use fake address space IDs: ${POCL_USE_FAKE_ADDR_SPACE_IDS}")
+MESSAGE(STATUS "L1d cacheline size: ${CACHELINE_SIZE}")
