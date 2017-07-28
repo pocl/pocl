@@ -1,6 +1,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <time.h>
+#include <signal.h>
 
 #include "pocl-pthread_scheduler.h"
 #include "pocl_cl.h"
@@ -57,6 +58,13 @@ void pthread_scheduler_init (size_t num_worker_threads)
     (num_worker_threads, sizeof (struct pool_thread_data));
   scheduler.num_threads = num_worker_threads;
 
+  /* let the main pocl thread handle SIGFPE */
+  sigset_t set, oldset;
+  sigemptyset (&set);
+  sigaddset (&set, SIGFPE);
+  int res = pthread_sigmask (SIG_BLOCK, &set, &oldset);
+  assert (res == 0);
+
   for (i = 0; i < num_worker_threads; ++i)
     {
       pthread_cond_init (&scheduler.thread_pool[i].wakeup_cond, NULL);
@@ -65,6 +73,9 @@ void pthread_scheduler_init (size_t num_worker_threads)
                       pocl_pthread_driver_thread,
                       (void*)&scheduler.thread_pool[i]);
     }
+
+  res = pthread_sigmask (SIG_SETMASK, &oldset, NULL);
+  assert (res == 0);
 
 }
 
