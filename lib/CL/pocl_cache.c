@@ -548,7 +548,8 @@ void pocl_cache_init_topdir() {
     const char *tmp_path = pocl_get_string_option("POCL_CACHE_DIR", NULL);
     int needed;
 
-    if (tmp_path && (pocl_exists(tmp_path))) {
+    if (tmp_path)
+      {
         needed = snprintf(cache_topdir, POCL_FILENAME_LENGTH, "%s", tmp_path);
     } else     {
 #ifdef POCL_ANDROID
@@ -594,8 +595,10 @@ void pocl_cache_init_topdir() {
     }
 
     assert(strlen(cache_topdir) > 0);
+
     if (pocl_mkdir_p(cache_topdir))
-        POCL_ABORT("Could not create topdir %s for cache\n", cache_topdir);
+      POCL_ABORT ("Could not create topdir %s for cache\n", cache_topdir);
+
     cache_topdir_initialized = 1;
 
 }
