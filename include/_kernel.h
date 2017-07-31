@@ -2082,6 +2082,7 @@ _CL_DECLARE_VSTORE(double, __private))
   float4  _CL_OVERLOADABLE vload_half4  (size_t offset, const MOD half *p); \
   float8  _CL_OVERLOADABLE vload_half8  (size_t offset, const MOD half *p); \
   float16 _CL_OVERLOADABLE vload_half16 (size_t offset, const MOD half *p); \
+  float   _CL_OVERLOADABLE vloada_half  (size_t offset, const MOD half *p); \
   float2  _CL_OVERLOADABLE vloada_half2 (size_t offset, const MOD half *p); \
   float3  _CL_OVERLOADABLE vloada_half3 (size_t offset, const MOD half *p); \
   float4  _CL_OVERLOADABLE vloada_half4 (size_t offset, const MOD half *p); \
@@ -2101,11 +2102,26 @@ _CL_DECLARE_VLOAD_HALF(__private)
   void _CL_OVERLOADABLE vstore_half4##SUFFIX  (float4  data, size_t offset, MOD half *p); \
   void _CL_OVERLOADABLE vstore_half8##SUFFIX  (float8  data, size_t offset, MOD half *p); \
   void _CL_OVERLOADABLE vstore_half16##SUFFIX (float16 data, size_t offset, MOD half *p); \
+  void _CL_OVERLOADABLE vstorea_half##SUFFIX  (float   data, size_t offset, MOD half *p); \
   void _CL_OVERLOADABLE vstorea_half2##SUFFIX (float2  data, size_t offset, MOD half *p); \
   void _CL_OVERLOADABLE vstorea_half3##SUFFIX (float3  data, size_t offset, MOD half *p); \
   void _CL_OVERLOADABLE vstorea_half4##SUFFIX (float4  data, size_t offset, MOD half *p); \
   void _CL_OVERLOADABLE vstorea_half8##SUFFIX (float8  data, size_t offset, MOD half *p); \
-  void _CL_OVERLOADABLE vstorea_half16##SUFFIX(float16 data, size_t offset, MOD half *p);
+  void _CL_OVERLOADABLE vstorea_half16##SUFFIX(float16 data, size_t offset, MOD half *p); \
+  __IF_FP64(                                                                              \
+  void _CL_OVERLOADABLE vstore_half##SUFFIX   (double   data, size_t offset, MOD half *p); \
+  void _CL_OVERLOADABLE vstore_half2##SUFFIX  (double2  data, size_t offset, MOD half *p); \
+  void _CL_OVERLOADABLE vstore_half3##SUFFIX  (double3  data, size_t offset, MOD half *p); \
+  void _CL_OVERLOADABLE vstore_half4##SUFFIX  (double4  data, size_t offset, MOD half *p); \
+  void _CL_OVERLOADABLE vstore_half8##SUFFIX  (double8  data, size_t offset, MOD half *p); \
+  void _CL_OVERLOADABLE vstore_half16##SUFFIX (double16 data, size_t offset, MOD half *p); \
+  void _CL_OVERLOADABLE vstorea_half##SUFFIX  (double   data, size_t offset, MOD half *p); \
+  void _CL_OVERLOADABLE vstorea_half2##SUFFIX (double2  data, size_t offset, MOD half *p); \
+  void _CL_OVERLOADABLE vstorea_half3##SUFFIX (double3  data, size_t offset, MOD half *p); \
+  void _CL_OVERLOADABLE vstorea_half4##SUFFIX (double4  data, size_t offset, MOD half *p); \
+  void _CL_OVERLOADABLE vstorea_half8##SUFFIX (double8  data, size_t offset, MOD half *p); \
+  void _CL_OVERLOADABLE vstorea_half16##SUFFIX(double16 data, size_t offset, MOD half *p); \
+  )
 
 _CL_DECLARE_VSTORE_HALF(__global  ,     )
 _CL_DECLARE_VSTORE_HALF(__global  , _rte)

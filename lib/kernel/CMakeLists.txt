@@ -185,6 +185,7 @@ vload.cl
 vload_half.cl
 vstore.cl
 vstore_half.cl
+vload_store_half_f16c.c
 wait_group_events.cl
 write_image.cl)
 
@@ -248,6 +249,7 @@ vload.cl
 vload_half.cl
 vstore.cl
 vstore_half.cl
+vload_store_half_f16c.c
 wait_group_events.cl
 write_image.cl
 vecmathlib-pocl/acos.cc
