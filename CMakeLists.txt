@@ -72,11 +72,17 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "mips")
   set(MIPS 1)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv7")
   set(ARMV7 1)
+  set(ARM32 1)
+  set(ARM 1)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "armv6")
   set(ARMV6 1)
+  set(ARM32 1)
+  set(ARM 1)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
   set(ARM64 1)
+  set(ARM 1)
 elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "(i.86|AMD64|x86_64)")
+  set(X86 1)
   if(POCL_DEVICE_ADDRESS_BITS MATCHES "32")
     set(I386 1)
   else()
@@ -274,7 +280,12 @@ if (OCS_AVAILABLE)
     set(HOST_DEVICE_BUILD_HASH "${LLC_TRIPLE}-${LLC_HOST_CPU}")
   endif()
 
+  if(ARM AND LLVM_3_9)
+    message(FATAL_ERROR "pocl does not build on ARM with LLVM 3.9 unless is was patched. Try LLVM 3.8 or (preferably) 4.0+")
+  endif()
+
 else()
+
   if(NOT DEFINED HOST_DEVICE_BUILD_HASH)
     message(FATAL_ERROR "For compiler-less builds, you must define HOST_DEVICE_BUILD_HASH")
   endif()
@@ -645,7 +656,12 @@ endif()
 set(DEFAULT_HOST_CLANG_FLAGS "${CLANG_TARGET_OPTION}${LLC_TRIPLE}")
 set(DEFAULT_HOST_LLC_FLAGS "-relocation-model=pic -mtriple=${LLC_TRIPLE}")
 
-if(LLC_TRIPLE MATCHES "^arm")
+if(ARM AND (NOT LLVM_OLDER_THAN_4_0))
+  #ARMs need to enable FP64 manually with 4.0
+  option(ENABLE_FP64 "Enable FP64" ON)
+endif()
+
+if(ARM32 OR (LLC_TRIPLE MATCHES "^arm"))
   if(LLC_TRIPLE MATCHES "gnueabihf")
     # hardfloat
     set(DEFAULT_HOST_LLC_FLAGS "${DEFAULT_HOST_LLC_FLAGS} -float-abi=hard")
@@ -658,11 +674,6 @@ if(LLC_TRIPLE MATCHES "^arm")
     set(DEFAULT_HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} -mfloat-abi=soft")
     set(DEFAULT_HOST_AS_FLAGS "${DEFAULT_HOST_AS_FLAGS} -mfloat-abi=soft")
   endif()
-  #This is very much a Q&D solution. We assume every modern ARM out there
-  #has the vfp4 floating point unit.
-  #This used to be implicitly assumed in clang < 3.9. With 3.9, we have to pass
-  #this flag, or intrinsics in vecmathlib are not defined.
-  set(DEFAULT_HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} -mfpu=vfp4")
 endif()
 
 if(CL_DISABLE_LONG)
@@ -676,25 +687,47 @@ set(HOST_DEVICE_CL_VERSION "120")
 set(HOST_DEVICE_CL_STD "1.2")
 
 # define it here, b/c we'll need these both at runtime and buildtime
-set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes")
+if(X86 OR ARM)
+  set(HOST_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_3d_image_writes")
+else()
+  # set some conservative defaults
+  set(HOST_DEVICE_EXTENSIONS "cl_khr_global_int32_base_atomics cl_khr_local_int32_base_atomics cl_khr_3d_image_writes")
+endif()
+
 if((HOST_DEVICE_CL_VERSION GREATER 199) AND (CLANG_SPIR))
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_spir")
 endif()
+
 if(NOT CL_DISABLE_HALF)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp16")
 endif()
+
 if(NOT CL_DISABLE_LONG)
-  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
   # must not be defined in HOST_DEVICE_EXTENSIONS list, because
   # this extension doesn't exist in official extension list
   set(HOST_DEVICE_EXTENSION_DEFINES "-Dcl_khr_int64")
+
+  # fp64 requires int64
+  if(X86)
+    set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
+  endif()
+  if(ENABLE_FP64 AND (NOT LLVM_OLDER_THAN_4_0))
+    # 32bit arm doesnt always uspport doubles
+    set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp64")
+  endif()
 endif()
 
 set(TEMP_EXT "${HOST_DEVICE_EXTENSIONS}")
 separate_arguments(TEMP_EXT)
+set(TEMP_CLEXT "-Xclang -cl-ext=")
 foreach(EXT ${TEMP_EXT})
   set(HOST_DEVICE_EXTENSION_DEFINES "${HOST_DEVICE_EXTENSION_DEFINES} -D${EXT}")
+  set(TEMP_CLEXT "${TEMP_CLEXT}+${EXT},")
 endforeach()
+
+if (NOT LLVM_OLDER_THAN_4_0)
+  set(HOST_DEVICE_EXTENSION_DEFINES "${HOST_DEVICE_EXTENSION_DEFINES} ${TEMP_CLEXT}")
+endif()
 
 if(NOT DEFINED KERNELLIB_HOST_CPU_VARIANTS)
   set(KERNELLIB_HOST_CPU_VARIANTS "native")
