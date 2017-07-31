@@ -2075,8 +2075,6 @@ _CL_DECLARE_VSTORE(float , __private)
 __IF_FP64(
 _CL_DECLARE_VSTORE(double, __private))
 
-#ifdef cl_khr_fp16
-
 #define _CL_DECLARE_VLOAD_HALF(MOD)                                     \
   float   _CL_OVERLOADABLE vload_half   (size_t offset, const MOD half *p); \
   float2  _CL_OVERLOADABLE vload_half2  (size_t offset, const MOD half *p); \
@@ -2124,9 +2122,6 @@ _CL_DECLARE_VSTORE_HALF(__private , _rte)
 _CL_DECLARE_VSTORE_HALF(__private , _rtz)
 _CL_DECLARE_VSTORE_HALF(__private , _rtp)
 _CL_DECLARE_VSTORE_HALF(__private , _rtn)
-
-#endif
-
 
 /* Atomic operations */
 

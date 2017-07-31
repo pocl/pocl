@@ -23,9 +23,6 @@
 
 
 
-#ifdef cl_khr_fp16
-
-
 
 /*
   half:        1 sign bit,  5 exponent bits,  10 mantissa bits, exponent offset 15
@@ -150,5 +147,3 @@ IMPLEMENT_VLOAD_HALF(__global)
 IMPLEMENT_VLOAD_HALF(__local)
 IMPLEMENT_VLOAD_HALF(__constant)
 IMPLEMENT_VLOAD_HALF(__private)
-
-#endif

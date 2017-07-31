@@ -23,10 +23,6 @@
 
 
 
-#ifdef cl_khr_fp16
-
-
-
 /*
   half:        1 sign bit,  5 exponent bits,  10 mantissa bits, exponent offset 15
   float:       1 sign bit,  8 exponent bits,  23 mantissa bits, exponent offset 127
@@ -179,5 +175,3 @@ IMPLEMENT_VSTORE_HALF(__private , _rte)
 IMPLEMENT_VSTORE_HALF(__private , _rtz)
 IMPLEMENT_VSTORE_HALF(__private , _rtp)
 IMPLEMENT_VSTORE_HALF(__private , _rtn)
-
-#endif

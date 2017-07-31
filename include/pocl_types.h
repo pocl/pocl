@@ -39,10 +39,12 @@ typedef struct error_undefined_type_ulong error_undefined_type_ulong;
 #  define ulong error_undefined_type_ulong
 #endif
 
+#ifdef __CBUILD__
 #ifndef cl_khr_fp16
-typedef struct error_undefined_type_half error_undefined_type_half;
-#  define half error_undefined_type_half
+typedef short half;
 #endif
+#endif
+
 
 #ifndef cl_khr_fp64
 typedef struct error_undefined_type_double error_undefined_type_double;
