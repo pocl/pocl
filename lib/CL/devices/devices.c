@@ -124,8 +124,17 @@ pocl_get_devices(cl_device_type device_type, struct _cl_device_id **devices, uns
 
   for (i = 0; i < pocl_num_devices; ++i)
     {
-      if ((pocl_devices[i].type & device_type) &&
-          (offline_compile || (pocl_devices[i].available == CL_TRUE)))
+      if (!offline_compile && (pocl_devices[i].available != CL_TRUE))
+        continue;
+
+      if (device_type == CL_DEVICE_TYPE_DEFAULT)
+        {
+          devices[dev_added] = &pocl_devices[i];
+          ++dev_added;
+          break;
+        }
+
+      if (pocl_devices[i].type & device_type)
         {
             if (dev_added < num_devices)
               {
@@ -151,12 +160,18 @@ pocl_get_device_type_count(cl_device_type device_type)
 
   for (i = 0; i < pocl_num_devices; ++i)
     {
-      if ((pocl_devices[i].type & device_type) &&
-          (offline_compile || (pocl_devices[i].available == CL_TRUE)))
+      if (!offline_compile && (pocl_devices[i].available != CL_TRUE))
+        continue;
+
+      if (device_type == CL_DEVICE_TYPE_DEFAULT)
+        return 1;
+
+      if (pocl_devices[i].type & device_type)
         {
            ++count;
         }
     }
+
   return count;
 }
 
@@ -430,9 +445,6 @@ pocl_init_devices()
           default:
             pocl_devices[dev_index].available = 0;
           }
-
-          if (dev_index == 0)
-            pocl_devices[dev_index].type |= CL_DEVICE_TYPE_DEFAULT;
 
           pocl_devices[dev_index].cache_dir_name = strdup(pocl_devices[dev_index].long_name);
           pocl_string_to_dirname(pocl_devices[dev_index].cache_dir_name);
