@@ -1,6 +1,7 @@
 /* OpenCL built-in library: write_image()
 
    Copyright (c) 2013 Ville Korhonen 
+   Copyright (c) 2017 Michal Babej / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -333,10 +334,8 @@ CLK_UNSIGNED_INT8, CLK_UNSIGNED_INT16, or CLK_UNSIGNED_INT32.
         = __builtin_astype (image, global dev_image_t *);                     \
     int asize = i_ptr->_image_array_size - 1;                                 \
     int elem_size = i_ptr->_elem_size;                                        \
-    int channel_type = i_ptr->_data_type;                                     \
     int num_channels = i_ptr->_num_channels;                                  \
     size_t elem_bytes = num_channels * elem_size;                             \
-    size_t slice_pitch_pixels = i_ptr->_slice_pitch / elem_bytes;             \
     size_t row_pitch = i_ptr->_row_pitch / elem_bytes;                        \
     size_t slice_pitch = i_ptr->_slice_pitch / elem_bytes;                    \
     size_t array_offset_pixels = 0;                                           \
