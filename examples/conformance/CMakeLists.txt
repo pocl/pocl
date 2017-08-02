@@ -633,7 +633,6 @@ add_test(NAME "${TS_NAME}_vecalign"
 add_test(NAME "${TS_NAME}_vecstep"
          COMMAND "${TS_BUILDDIR}/test_conformance/vec_step/test_vecstep" )
 
-
 set_tests_properties(
     "${TS_NAME}_allocations_buffer"
     "${TS_NAME}_allocations_image"
@@ -851,6 +850,39 @@ set_tests_properties(
     ENVIRONMENT "POCL_MEMORY_LIMIT=1")
 
 
+# conversions, for short version of conformance suite.
+# disables multithreading and only tests vectors of size 4
+
+add_test(NAME "${TS_NAME}_conversion_fast_uint_uchar"
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" -m -4 uint_uchar uint_sat_uchar )
+
+add_test(NAME "${TS_NAME}_conversion_fast_short_char"
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" -m -4 short_char short_sat_char )
+
+add_test(NAME "${TS_NAME}_conversion_fast_uchar_ushort"
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" -m -4 uchar_ushort uchar_sat_ushort )
+
+add_test(NAME "${TS_NAME}_conversion_fast_char_int"
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" -m -4 char_int char_sat_int )
+
+add_test(NAME "${TS_NAME}_conversion_fast_float_char"
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" -m -4 float_char float_rte_char float_rtp_char float_rtn_char float_rtz_char )
+
+add_test(NAME "${TS_NAME}_conversion_fast_float_ushort"
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" -m -4 float_ushort float_rte_ushort float_rtp_ushort float_rtn_ushort float_rtz_ushort )
+
+add_test(NAME "${TS_NAME}_conversion_fast_int_float"
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" -m -4 int_float int_sat_float int_rte_float int_sat_rte_float int_rtp_float int_sat_rtp_float int_rtn_float int_sat_rtn_float int_rtz_float int_sat_rtz_float )
+
+add_test(NAME "${TS_NAME}_conversion_fast_double_short"
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" -m -4 double_short double_rte_short double_rtp_short double_rtn_short double_rtz_short )
+
+add_test(NAME "${TS_NAME}_conversion_fast_double_ulong"
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" -m -4 double_ulong double_rte_ulong double_rtp_ulong double_rtn_ulong double_rtz_ulong )
+
+add_test(NAME "${TS_NAME}_conversion_fast_long_double"
+         COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" -m -4 long_double long_sat_double long_rte_double long_sat_rte_double long_rtp_double long_sat_rtp_double long_rtn_double long_sat_rtn_double long_rtz_double long_sat_rtz_double )
+
 set_tests_properties(
     "${TS_NAME}_allocations_buffer"
     "${TS_NAME}_allocations_image"
@@ -873,19 +905,19 @@ set_tests_properties(
     "${TS_NAME}_computeinfo"
     "${TS_NAME}_contractions"
 
-    "${TS_NAME}_conversion_uint_uchar"
-    "${TS_NAME}_conversion_short_char"
+    "${TS_NAME}_conversion_fast_uint_uchar"
+    "${TS_NAME}_conversion_fast_short_char"
 
-    "${TS_NAME}_conversion_uchar_ushort"
-    "${TS_NAME}_conversion_char_int"
+    "${TS_NAME}_conversion_fast_uchar_ushort"
+    "${TS_NAME}_conversion_fast_char_int"
 
-    "${TS_NAME}_conversion_float_char"
-    "${TS_NAME}_conversion_float_ushort"
-    "${TS_NAME}_conversion_int_float"
+    "${TS_NAME}_conversion_fast_float_char"
+    "${TS_NAME}_conversion_fast_float_ushort"
+    "${TS_NAME}_conversion_fast_int_float"
 
-    "${TS_NAME}_conversion_double_short"
-    "${TS_NAME}_conversion_double_ulong"
-    "${TS_NAME}_conversion_long_double"
+    "${TS_NAME}_conversion_fast_double_short"
+    "${TS_NAME}_conversion_fast_double_ulong"
+    "${TS_NAME}_conversion_fast_long_double"
 
     "${TS_NAME}_device_partition"
     "${TS_NAME}_events"
