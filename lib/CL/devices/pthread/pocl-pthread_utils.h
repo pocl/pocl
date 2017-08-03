@@ -38,14 +38,14 @@ struct kernel_run_command
   pocl_cache_data cache_data;
 #endif
 
-  pthread_mutex_t lock __attribute__ ((aligned (CACHELINE_SIZE)));
+  pthread_mutex_t lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
-  volatile unsigned remaining_wgs __attribute__ ((aligned (CACHELINE_SIZE)));
+  volatile unsigned remaining_wgs __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
   volatile unsigned wgs_dealt;
 
-  struct pocl_context pc __attribute__ ((aligned (CACHELINE_SIZE)));
+  struct pocl_context pc __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
-} __attribute__ ((aligned (CACHELINE_SIZE)));
+} __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
 void pocl_init_kernel_run_command_manager (void);
 void pocl_init_thread_argument_manager ();

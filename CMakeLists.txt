@@ -202,7 +202,7 @@ message(STATUS "Hwloc_CFLAGS ${Hwloc_CFLAGS}")
 
 ######################################################################################
 
-if(NOT CACHELINE_SIZE)
+if(NOT HOST_CPU_CACHELINE_SIZE)
 
   set(CL_SIZE 0)
   if(UNIX)
@@ -217,15 +217,15 @@ if(NOT CACHELINE_SIZE)
         # getconf sometimes just returns zero
         if(NOT (CL_SIZE EQUAL 0))
           message(STATUS "L1D Cacheline size detected: ${CL_SIZE}")
-          set(CACHELINE_SIZE "${CL_SIZE}" CACHE STRING "L1D Cacheline size")
+          set(HOST_CPU_CACHELINE_SIZE "${CL_SIZE}" CACHE STRING "L1D Cacheline size")
         endif()
       endif()
     endif()
   endif()
 
   if(CL_SIZE EQUAL 0)
-    message(WARNING "Unable to detect cacheline size - assuming 64byte cacheline, override with -DCACHELINE_SIZE=<number>")
-    set(CACHELINE_SIZE "64" CACHE STRING "L1D Cacheline size")
+    message(WARNING "Unable to detect cacheline size - assuming 64byte cacheline, override with -DHOST_CPU_CACHELINE_SIZE=<number>")
+    set(HOST_CPU_CACHELINE_SIZE "64" CACHE STRING "L1D Cacheline size")
   endif()
 endif()
 
@@ -1232,4 +1232,4 @@ MESSAGE(STATUS "Kernel caching: ${KERNEL_CACHE_DEFAULT}")
 MESSAGE(STATUS "Kernel library CPU variants: ${KERNELLIB_HOST_CPU_VARIANTS}")
 MESSAGE(STATUS "Kernel library distro build: ${KERNELLIB_HOST_DISTRO_VARIANTS}")
 MESSAGE(STATUS "Use fake address space IDs: ${POCL_USE_FAKE_ADDR_SPACE_IDS}")
-MESSAGE(STATUS "L1d cacheline size: ${CACHELINE_SIZE}")
+MESSAGE(STATUS "L1d cacheline size: ${HOST_CPU_CACHELINE_SIZE}")

@@ -16,15 +16,15 @@ static void* pocl_pthread_driver_thread (void *p);
 
 struct pool_thread_data
 {
-  pthread_cond_t wakeup_cond __attribute__ ((aligned (CACHELINE_SIZE)));
-  pthread_mutex_t lock __attribute__ ((aligned (CACHELINE_SIZE)));
+  pthread_cond_t wakeup_cond __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  pthread_mutex_t lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
-  pthread_t thread __attribute__ ((aligned (CACHELINE_SIZE)));
+  pthread_t thread __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
   volatile long executed_commands;
   volatile unsigned current_ftz;
   unsigned num_threads;
 
-} __attribute__ ((aligned (CACHELINE_SIZE)));
+} __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
 typedef struct scheduler_data_
 {
@@ -32,17 +32,17 @@ typedef struct scheduler_data_
   struct pool_thread_data *thread_pool;
 
   _cl_command_node *volatile work_queue
-      __attribute__ ((aligned (CACHELINE_SIZE)));
+      __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
   kernel_run_command *volatile kernel_queue;
 
-  pthread_cond_t wake_pool __attribute__ ((aligned (CACHELINE_SIZE)));
-  pthread_mutex_t wq_lock __attribute__ ((aligned (CACHELINE_SIZE)));
+  pthread_cond_t wake_pool __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  pthread_mutex_t wq_lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
-  pthread_cond_t cq_finished_cond __attribute__ ((aligned (CACHELINE_SIZE)));
-  pthread_mutex_t cq_finished_lock __attribute__ ((aligned (CACHELINE_SIZE)));
+  pthread_cond_t cq_finished_cond __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  pthread_mutex_t cq_finished_lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
   volatile int thread_pool_shutdown_requested;
-} scheduler_data __attribute__ ((aligned (CACHELINE_SIZE)));
+} scheduler_data __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
 static scheduler_data scheduler;
 

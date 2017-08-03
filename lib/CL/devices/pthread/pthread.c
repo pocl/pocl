@@ -114,7 +114,7 @@ struct data {
 #endif
 
   /* Lock for command list related operations */
-  pthread_mutex_t cq_lock __attribute__ ((aligned (CACHELINE_SIZE)));
+  pthread_mutex_t cq_lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
   /* List of commands waiting to be enqueued */
   _cl_command_node *volatile command_list;
 };

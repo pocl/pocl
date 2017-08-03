@@ -12,7 +12,7 @@
 /* "Build with ICD" */
 #cmakedefine BUILD_ICD
 
-#define CACHELINE_SIZE @CACHELINE_SIZE@
+#define HOST_CPU_CACHELINE_SIZE @HOST_CPU_CACHELINE_SIZE@
 
 #cmakedefine CLANG_IS_PATCHED_FOR_SPIR_CC
 
