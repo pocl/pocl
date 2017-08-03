@@ -137,6 +137,7 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->free_queue = pocl_cuda_free_queue;
   ops->alloc_mem_obj = pocl_cuda_alloc_mem_obj;
   ops->free = pocl_cuda_free;
+  ops->free_ptr = pocl_cuda_free_ptr;
   ops->compile_kernel = pocl_cuda_compile_kernel;
   ops->map_mem = pocl_cuda_map_mem;
   ops->submit = pocl_cuda_submit;
@@ -530,6 +531,14 @@ pocl_cuda_free (cl_device_id device, cl_mem mem_obj)
       void *ptr = mem_obj->device_ptrs[device->dev_id].mem_ptr;
       cuMemFree ((CUdeviceptr)ptr);
     }
+}
+
+void
+pocl_cuda_free_ptr (cl_device_id device, void *mem_ptr)
+{
+  cuCtxSetCurrent (((pocl_cuda_device_data_t *)device->data)->context);
+
+  cuMemFreeHost (mem_ptr);
 }
 
 void
