@@ -96,6 +96,7 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include <sstream>
 #include <string>
 #include <cstdio>
+#include <map>
 
 // Note - LLVM/Clang uses symbols defined in Khronos' headers in macros, 
 // causing compilation error if they are included before the LLVM headers.
@@ -1010,6 +1011,90 @@ static int pocl_get_kernel_arg_module_metadata(const char* kernel_name,
   return 0;
 }
 
+static std::map<std::string, unsigned> type_size_map = {
+  {std::string("char"), (1)},
+  {std::string("uchar"), (1)},
+  {std::string("short"), (2)},
+  {std::string("ushort"), (2)},
+  {std::string("int"), (4)},
+  {std::string("uint"), (4)},
+  {std::string("long"), (8)},
+  {std::string("ulong"), (8)},
+
+
+  {std::string("char2"), (1*2)},
+  {std::string("uchar2"), (1*2)},
+  {std::string("short2"), (2*2)},
+  {std::string("ushort2"), (2*2)},
+  {std::string("int2"), (4*2)},
+  {std::string("uint2"), (4*2)},
+  {std::string("long2"), (8*2)},
+  {std::string("ulong2"), (8*2)},
+
+
+  {std::string("char3"), (1*4)},
+  {std::string("uchar3"), (1*4)},
+  {std::string("short3"), (2*4)},
+  {std::string("ushort3"), (2*4)},
+  {std::string("int3"), (4*4)},
+  {std::string("uint3"), (4*4)},
+  {std::string("long3"), (8*4)},
+  {std::string("ulong3"), (8*4)},
+
+
+  {std::string("char4"), (1*4)},
+  {std::string("uchar4"), (1*4)},
+  {std::string("short4"), (2*4)},
+  {std::string("ushort4"), (2*4)},
+  {std::string("int4"), (4*4)},
+  {std::string("uint4"), (4*4)},
+  {std::string("long4"), (8*4)},
+  {std::string("ulong4"), (8*4)},
+
+
+  {std::string("char8"), (1*8)},
+  {std::string("uchar8"), (1*8)},
+  {std::string("short8"), (2*8)},
+  {std::string("ushort8"), (2*8)},
+  {std::string("int8"), (4*8)},
+  {std::string("uint8"), (4*8)},
+  {std::string("long8"), (8*8)},
+  {std::string("ulong8"), (8*8)},
+
+  {std::string("char16"), (1*16)},
+  {std::string("uchar16"), (1*16)},
+  {std::string("short16"), (2*16)},
+  {std::string("ushort16"), (2*16)},
+  {std::string("int16"), (4*16)},
+  {std::string("uint16"), (4*16)},
+  {std::string("long16"), (8*16)},
+  {std::string("ulong16"), (8*16)},
+
+  {std::string("half"), (2)},
+  {std::string("float"), (4)},
+  {std::string("double"), (8)},
+
+  {std::string("half2"), (2*2)},
+  {std::string("float2"), (4*2)},
+  {std::string("double2"), (8*2)},
+
+  {std::string("half3"), (2*4)},
+  {std::string("float3"), (4*4)},
+  {std::string("double3"), (8*4)},
+
+  {std::string("half4"), (2*4)},
+  {std::string("float4"), (4*4)},
+  {std::string("double4"), (8*4)},
+
+  {std::string("half8"), (2*8)},
+  {std::string("float8"), (4*8)},
+  {std::string("double8"), (8*8)},
+
+  {std::string("half16"), (2*16)},
+  {std::string("float16"), (4*16)},
+  {std::string("double16"), (8*16)}
+};
+
 #ifndef LLVM_OLDER_THAN_3_9
 // Clang 3.9 uses function metadata instead of module metadata for presenting
 // OpenCL kernel information.
@@ -1151,6 +1236,10 @@ static int pocl_get_kernel_arg_function_metadata(const char* kernel_name,
     current_arg = &kernel->arg_info[j];
     kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_TYPE_NAME;
     current_arg->type_name = (char *)malloc (val.size () + 1);
+    if (type_size_map.find(val) != type_size_map.end())
+      current_arg->type_size = type_size_map[val];
+    else
+      current_arg->type_size = 0;
     std::strcpy(current_arg->type_name, val.c_str());
   }
 

@@ -51,20 +51,49 @@ POname(clSetKernelArg)(cl_kernel kernel,
 
   pi = &(kernel->arg_info[arg_index]);
 
-  POCL_RETURN_ERROR_ON((arg_size == 0 && pi->is_local),
-    CL_INVALID_ARG_SIZE, "arg_size == 0 and arg %u is in local address space\n",
-    arg_index);
+  POCL_MSG_PRINT_INFO ("ARG TYPE: %s \n", pi->type_name);
 
-  POCL_RETURN_ERROR_ON(((pi->type == POCL_ARG_TYPE_POINTER
-    || pi->type == POCL_ARG_TYPE_IMAGE)
-    && (!pi->is_local) && (arg_size != sizeof(cl_mem))),
-    CL_INVALID_ARG_SIZE, "Arg %u is pointer/buffer/image, but arg_size is "
-    "not sizeof(cl_mem)", arg_index);
+  POCL_RETURN_ERROR_ON (
+      ((arg_value != NULL) && pi->is_local), CL_INVALID_ARG_VALUE,
+      "arg_value != NULl and arg %u is in local address space\n", arg_index);
 
-  POCL_RETURN_ERROR_ON((pi->type == POCL_ARG_TYPE_SAMPLER
-    && (arg_size != sizeof(cl_sampler))),
-    CL_INVALID_ARG_SIZE, "Arg %u is sampler, but arg_size is "
-    "not sizeof(cl_sampler)", arg_index);
+  /* Trigger CL_INVALID_ARG_VALUE if arg_value specified is NULL
+   * for an argument that is not declared with the __local qualifier. */
+  POCL_RETURN_ERROR_ON (
+      ((arg_value == NULL) && (!pi->is_local)
+       && (pi->type != POCL_ARG_TYPE_POINTER)),
+      CL_INVALID_ARG_VALUE,
+      "arg_value == NULL and arg %u is not in local address space\n",
+      arg_index);
+
+  /* Trigger CL_INVALID_ARG_SIZE if arg_size is zero
+   * and the argument is declared with the __local qualifier. */
+  POCL_RETURN_ERROR_ON (((arg_size == 0) && pi->is_local), CL_INVALID_ARG_SIZE,
+                        "arg_size == 0 and arg %u is in local address space\n",
+                        arg_index);
+
+  POCL_RETURN_ERROR_ON (
+      ((pi->type == POCL_ARG_TYPE_SAMPLER) && (arg_value == NULL)),
+      CL_INVALID_SAMPLER, "arg_value == NULL and arg is a cl_sampler\n");
+
+  if (pi->type == POCL_ARG_TYPE_POINTER || pi->type == POCL_ARG_TYPE_IMAGE
+      || pi->type == POCL_ARG_TYPE_SAMPLER)
+    POCL_RETURN_ERROR_ON (((!pi->is_local) && (arg_size != sizeof (cl_mem))),
+                          CL_INVALID_ARG_SIZE,
+                          "Arg %u is pointer/buffer/image, but arg_size is "
+                          "not sizeof(cl_mem)\n",
+                          arg_index);
+  else if (pi->type_size)
+    {
+      size_t as = arg_size;
+      /* handle <type>3 vectors, we accept both <type>3 and <type>4 sizes */
+      if (as % 3 == 0)
+        as = (as / 3) * 4;
+      POCL_RETURN_ERROR_ON (
+          (pi->type_size != as), CL_INVALID_ARG_SIZE,
+          "Arg %u is %s, but arg_size is not sizeof(%s) == %u\n", arg_index,
+          pi->type_name, pi->type_name, pi->type_size);
+    }
 
   p = &(kernel->dyn_arguments[arg_index]); 
   POCL_LOCK_OBJ (kernel);

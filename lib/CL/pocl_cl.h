@@ -213,6 +213,7 @@ typedef struct pocl_argument_info {
   pocl_argument_type type;
   char is_local;
   char is_set;
+  unsigned type_size;
 } pocl_argument_info;
 
 struct pocl_device_ops {
