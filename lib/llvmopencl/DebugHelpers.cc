@@ -38,6 +38,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "DebugHelpers.h"
 #include "Barrier.h"
 #include "Workgroup.h"
+#include "pocl_file_util.h"
 
 POP_COMPILER_DIAGS
 
@@ -137,6 +138,15 @@ void dumpCFG(
 
   if (fname == "")
     fname = std::string("pocl_cfg.") + F.getName().str() + ".dot";
+
+  std::string origName = fname;
+  int counter = 0;
+  while (pocl_exists (fname.c_str())) {
+    std::ostringstream ss;
+    ss << origName << "." << counter;
+    fname = ss.str();
+    ++counter;
+  }
 
   std::ofstream s;
   s.open(fname.c_str(), std::ios::trunc);
