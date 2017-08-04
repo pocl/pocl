@@ -30,7 +30,7 @@ set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
 set(RODINIA "rodinia_3.1")
 set(RODINIA_TGZ "${TS_SRCDIR}/${RODINIA}.tar.bz2")
 
-if(NOT MAKE_COMMAND)
+if(NOT MAKE_PROGRAM)
   message(STATUS "Disabling testsuite ${TS_NAME}, requires make to build")
 elseif (EXISTS "${RODINIA_TGZ}")
 

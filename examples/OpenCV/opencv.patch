@@ -11,3 +11,14 @@ diff --git a/opencv-3.0.0-beta/cmake/OpenCVDetectOpenCL.cmake b/opencv-3.0.0-bet
  endif(APPLE)
  
  if(OPENCL_FOUND)
+--- a/opencv-3.0.0-beta/cmake/OpenCVPCHSupport.cmake	2017-08-04 12:56:24.393300005 +0200
++++ b/opencv-3.0.0-beta/cmake/OpenCVPCHSupport.cmake	2017-08-04 12:56:08.969876062 +0200
+@@ -24,7 +24,7 @@
+     ENDIF()
+ 
+     SET(_PCH_include_prefix "-I")
+-    SET(_PCH_isystem_prefix "-isystem")
++    SET(_PCH_isystem_prefix "-I")
+     SET(_PCH_define_prefix "-D")
+ 
+ ELSEIF(CMAKE_GENERATOR MATCHES "^Visual.*$")

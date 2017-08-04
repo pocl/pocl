@@ -22,8 +22,9 @@
    THE SOFTWARE.
 */
 
-#include <stdio.h>
 #include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <CL/opencl.h>
 
 #define NB_WORK_GROUP 32
@@ -131,7 +132,7 @@ int main ()
             {
               printf("Error at %u %u : %u != %u\n", k, i,
                      output_buffer[k*vec_size+i], expected);
-              exit(1);
+              return 1;
             }
         }
     }

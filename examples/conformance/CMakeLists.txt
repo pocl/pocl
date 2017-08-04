@@ -33,7 +33,7 @@ if(NOT HAVE_GIT)
 elseif(NOT TESTS_USE_ICD)
   message(STATUS "Disabling testsuite ${TS_NAME}, requires ocl-icd")
 
-elseif(NOT MAKE_COMMAND)
+elseif(NOT MAKE_PROGRAM)
   message(STATUS "Disabling testsuite ${TS_NAME}, requires make to build")
 
 else()
