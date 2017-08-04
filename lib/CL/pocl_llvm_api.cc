@@ -1587,7 +1587,9 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
       POCL_MSG_PRINT_LLVM(
           "Module references images, using flatten-globals-only\n");
       passes.push_back("flatten-globals");
+#ifndef LLVM_3_9
       passes.push_back("inline");
+#endif
     } else {
       passes.push_back("flatten-inline-all");
     }
