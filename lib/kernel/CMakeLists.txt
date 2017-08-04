@@ -82,6 +82,7 @@ get_global_id.c
 get_global_offset.c
 get_global_size.c
 get_group_id.c
+get_image_array_size.cl
 get_image_channel_data_type.cl
 get_image_channel_order.cl
 get_image_depth.cl
@@ -208,6 +209,7 @@ get_global_id.c
 get_global_offset.c
 get_global_size.c
 get_group_id.c
+get_image_array_size.cl
 get_image_channel_data_type.cl
 get_image_channel_order.cl
 get_image_depth.cl

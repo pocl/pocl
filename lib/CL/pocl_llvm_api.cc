@@ -308,6 +308,7 @@ int pocl_llvm_build_program(cl_program program,
 
   llvm::StringRef extensions(device->extensions);
 
+  std::string cl_ext;
   if (extensions.size() > 0) {
     size_t e_start = 0, e_end = 0;
     while (e_end < std::string::npos) {
@@ -316,11 +317,18 @@ int pocl_llvm_build_program(cl_program program,
       e_start = e_end + 1;
       ss << "-D" << tok.str() << " ";
 #ifndef LLVM_OLDER_THAN_4_0
-      ss << "-cl-ext=" << tok.str() << " ";
+      cl_ext += "+";
+      cl_ext += tok.str();
+      cl_ext += ",";
 #endif
     }
   }
-
+#ifndef LLVM_OLDER_THAN_4_0
+  if (!cl_ext.empty()) {
+    cl_ext.back() = ' '; // replace last "," with space
+    ss << "-cl-ext=-all," << cl_ext;
+  }
+#endif
   /* temp dir takes preference */
   if (num_input_headers > 0)
     ss << "-I" << temp_include_dir << " ";
@@ -390,7 +398,7 @@ int pocl_llvm_build_program(cl_program program,
   if (device->llvm_cpu != NULL)
     ss << "-target-cpu " << device->llvm_cpu << " ";
 
-  POCL_MSG_PRINT_INFO("all build options: %s\n", ss.str().c_str());
+  POCL_MSG_PRINT_LLVM("all build options: %s\n", ss.str().c_str());
 
   std::istream_iterator<std::string> begin(ss);
   std::istream_iterator<std::string> end;
@@ -508,7 +516,7 @@ int pocl_llvm_build_program(cl_program program,
   poo.RewriteIncludes = 0;
 
   std::string saved_output(fe.OutputFile);
-  pocl_cache_mk_temp_name(tempfile);
+  pocl_cache_tempname(tempfile, ".cl", NULL);
   fe.OutputFile = tempfile;
 
   bool success = true;
@@ -569,7 +577,7 @@ int pocl_llvm_build_program(cl_program program,
   write_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
   assert(write_lock);
 
-  POCL_MSG_PRINT_INFO("Writing program.bc to %s.\n", program_bc_path);
+  POCL_MSG_PRINT_LLVM("Writing program.bc to %s.\n", program_bc_path);
 
   /* Always retain program.bc. Its required in clBuildProgram */
   error = pocl_write_module(*mod, program_bc_path, 0);
@@ -666,7 +674,7 @@ int pocl_llvm_link_program(cl_program program,
   write_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
   assert(write_lock);
 
-  POCL_MSG_PRINT_INFO("Writing program.bc to %s.\n", program_bc_path);
+  POCL_MSG_PRINT_LLVM("Writing program.bc to %s.\n", program_bc_path);
 
   /* Always retain program.bc. Its required in clBuildProgram */
   error = pocl_write_module(linked_module, program_bc_path, 0);
@@ -1104,7 +1112,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
     std::string funcName = "";
     funcName = KernelFunction->getName().str();
     if (pocl::isAutomaticLocal(funcName, *i)) {
-      POCL_MSG_PRINT_INFO("Automatic local detected: %s\n",
+      POCL_MSG_PRINT_LLVM("Automatic local detected: %s\n",
                           i->getName().str().c_str());
       locals.push_back(&*i);
     }
@@ -1286,6 +1294,13 @@ char* get_cpu_name() {
   return cpu_name;
 }
 
+int cpu_has_fma() {
+  StringMap<bool> features;
+  bool res = llvm::sys::getHostCPUFeatures(features);
+  assert(res);
+  return ((features["fma"] || features["fma4"]) ? 1 : 0);
+}
+
 /* helpers copied from LLVM opt START */
 
 /* FIXME: these options should come from the cl_device, and
@@ -1415,6 +1430,25 @@ static void InitializeLLVM() {
   LLVMInitialized = true;
 }
 
+/* Check if a module references read_image{i,ui,f} or write_image{i,ui,f}
+ * from pocl kernel library */
+static bool moduleReferencesImages(llvm::Module *M) {
+  bool refs_images = false;
+  /* all of pocl's read/write pix functions use these internally */
+  const llvm::StringRef readpix("pocl_read_pixel");
+  const llvm::StringRef writepix("pocl_write_pixel");
+
+  for (llvm::Module::iterator i = M->begin(), e = M->end(); i != e; ++i) {
+    llvm::Function *f = &*i;
+    if (f->getName().equals(readpix) || f->getName().equals(writepix)) {
+      refs_images = true;
+      break;
+    }
+  }
+
+  return refs_images;
+}
+
 /**
  * Prepare the kernel compiler passes.
  *
@@ -1422,9 +1456,9 @@ static void InitializeLLVM() {
  * The returned pass manager should not be modified, only the Module
  * should be optimized using it.
  */
-static PassManager& kernel_compiler_passes
-(cl_device_id device, const std::string& module_data_layout)
-{
+static PassManager &
+kernel_compiler_passes(cl_device_id device, llvm::Module *input,
+                       const std::string &module_data_layout) {
   static std::map<cl_device_id, PassManager*> kernel_compiler_passes;
 
   bool SPMDDevice = device->spmd;
@@ -1527,10 +1561,39 @@ static PassManager& kernel_compiler_passes
   passes.push_back("domtree");
   if (device->autolocals_to_args)
 	  passes.push_back("automatic-locals");
+
   if (SPMDDevice)
     passes.push_back("flatten-inline-all");
-  else
-    passes.push_back("flatten-globals");
+  else {
+    /* LLVM is either still not intelligent enough to flatten,
+     * or we're missing some pass.
+     *
+     * The only reason we've reintroduced "global-only" flatten was that
+     * read/write image functions are very "heavy" and a conformance test
+     * that tests a kernel with 127 image arguments, would flatten 127
+     * write_image() calls, which compiled down to a several megabyte IR
+     *
+     * read/write images are the only "heavy" ones in pocl library,
+     * so if the module references images, we do global-only flatten,
+     * otherwise the normal flatten.
+     *
+     * TODO this still requires some solution. With flatten-globals-only,
+     * AMDSDK's BlackScholes and BinomialOption regress heavily. OTOH the
+     * performance of Mandelbrot is about 30% higher with flatten-globals
+     * compared to flatten-inline-all (likely because inline-all compiled
+     * Mandelbrot kernel exceeds L1 instruction cache size).
+     */
+    if (moduleReferencesImages(input)) {
+      POCL_MSG_PRINT_LLVM(
+          "Module references images, using flatten-globals-only\n");
+      passes.push_back("flatten-globals");
+#ifndef LLVM_3_9
+      passes.push_back("inline");
+#endif
+    } else {
+      passes.push_back("flatten-inline-all");
+    }
+  }
   passes.push_back("always-inline");
   passes.push_back("globaldce");
   if (!SPMDDevice) {
@@ -1777,7 +1840,7 @@ kernel_library
 
   if (pocl_exists(kernellib.c_str()))
     {
-      POCL_MSG_PRINT_INFO("Using %s as the built-in lib.\n", kernellib.c_str());
+      POCL_MSG_PRINT_LLVM("Using %s as the built-in lib.\n", kernellib.c_str());
       lib = ParseIRFile(kernellib.c_str(), Err, *GlobalContext());
     }
   else
@@ -1800,29 +1863,16 @@ kernel_library
 /* This is used to control the kernel we want to process in the kernel compilation. */
 extern cl::opt<std::string> KernelName;
 
-int pocl_llvm_generate_workgroup_function(cl_device_id device,
-                                          cl_kernel kernel, size_t local_x,
-                                          size_t local_y, size_t local_z) {
+int pocl_llvm_generate_workgroup_function_nowrite(
+    cl_device_id device, cl_kernel kernel, size_t local_x, size_t local_y,
+    size_t local_z, void **output) {
+
+  int device_i = pocl_cl_device_to_index(kernel->program, device);
+  assert(device_i >= 0);
 
   pocl::WGDynamicLocalSize = (local_x == 0 && local_y == 0 && local_z == 0);
 
   currentPoclDevice = device;
-
-  cl_program program = kernel->program;
-  int device_i = pocl_cl_device_to_index(program, device);
-  assert(device_i >= 0);
-
-  char parallel_bc_path[POCL_FILENAME_LENGTH];
-  pocl_cache_work_group_function_path(parallel_bc_path, program, device_i, kernel, local_x, local_y, local_z);
-
-  if (pocl_exists(parallel_bc_path))
-    return CL_SUCCESS;
-
-  char final_binary_path[POCL_FILENAME_LENGTH];
-  pocl_cache_final_binary_path(final_binary_path, program, device_i, kernel, local_x, local_y, local_z);
-
-  if (pocl_exists(final_binary_path))
-    return CL_SUCCESS;
 
   llvm::MutexGuard lockHolder(kernelCompilerLock);
   InitializeLLVM();
@@ -1836,7 +1886,6 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
   Triple triple(device->llvm_target_triplet);
 
   SMDiagnostic Err;
-  std::string errmsg;
 
   // Link the kernel and runtime library
   llvm::Module *input = NULL;
@@ -1859,7 +1908,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
       printf("### loading the kernel bitcode from disk\n");
 #endif
       char program_bc_path[POCL_FILENAME_LENGTH];
-      pocl_cache_program_bc_path(program_bc_path, program, device_i);
+      pocl_cache_program_bc_path(program_bc_path, kernel->program, device_i);
       input = ParseIRFile(program_bc_path, Err, *GlobalContext());
     }
 
@@ -1892,24 +1941,59 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
   KernelName = kernel->name;
 
 #ifdef LLVM_OLDER_THAN_3_7
-  kernel_compiler_passes(
-      device,
-      input->getDataLayout()->getStringRepresentation()).run(*input);
+  kernel_compiler_passes(device, input,
+                         input->getDataLayout()->getStringRepresentation())
+      .run(*input);
 #else
-  kernel_compiler_passes(
-      device,
-      input->getDataLayout().getStringRepresentation())
+  kernel_compiler_passes(device, input,
+                         input->getDataLayout().getStringRepresentation())
       .run(*input);
 #endif
 
-  // TODO: don't write this once LLC is called via API, not system()
-  int error = pocl_cache_write_kernel_parallel_bc(input, program, device_i,
-                                  kernel, local_x, local_y, local_z);
-  assert(error == 0);
-
-  delete input;
+  assert(output != NULL);
+  *output = (void *)input;
   return 0;
 }
+
+int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
+                                          size_t local_x, size_t local_y,
+                                          size_t local_z) {
+
+  void *modp = NULL;
+
+  int device_i = pocl_cl_device_to_index(kernel->program, device);
+  assert(device_i >= 0);
+
+  char parallel_bc_path[POCL_FILENAME_LENGTH];
+  pocl_cache_work_group_function_path(parallel_bc_path, kernel->program,
+                                      device_i, kernel, local_x, local_y,
+                                      local_z);
+
+  if (pocl_exists(parallel_bc_path))
+    return CL_SUCCESS;
+
+  char final_binary_path[POCL_FILENAME_LENGTH];
+  pocl_cache_final_binary_path(final_binary_path, kernel->program, device_i,
+                               kernel, local_x, local_y, local_z);
+
+  if (pocl_exists(final_binary_path))
+    return CL_SUCCESS;
+
+  int error = pocl_llvm_generate_workgroup_function_nowrite(
+      device, kernel, local_x, local_y, local_z, &modp);
+  if (error)
+    return error;
+
+  error = pocl_cache_write_kernel_parallel_bc(
+      modp, kernel->program, device_i, kernel, local_x, local_y, local_z);
+
+  if (error)
+    return error;
+
+  pocl_destroy_llvm_module(modp);
+  return error;
+}
+
 
 int
 pocl_update_program_llvm_irs(cl_program program,
@@ -2048,29 +2132,28 @@ pocl_llvm_get_kernel_names(cl_program program, char **knames,
   return n;
 }
 
+void pocl_destroy_llvm_module(void *modp) {
+  llvm::Module *mod = (llvm::Module *)modp;
+  if (mod)
+    delete mod;
+}
+
 /* Run LLVM codegen on input file (parallel-optimized).
- *
- * Output native object file. */
-int
-pocl_llvm_codegen(cl_kernel kernel,
-                  cl_device_id device,
-                  const char *infilename,
-                  const char *outfilename)
-{
-    llvm::MutexGuard lockHolder(kernelCompilerLock);
+ * modp = llvm::Module* of parallel.bc
+ * Output native object file (<kernel>.so.o). */
+int pocl_llvm_codegen(cl_kernel kernel, cl_device_id device, void *modp,
+                      char **output, size_t *output_size) {
 
-    SMDiagnostic Err;
+  llvm::MutexGuard lockHolder(kernelCompilerLock);
 
-    if (pocl_exists(outfilename))
-      return 0;
+  llvm::Triple triple(device->llvm_target_triplet);
+  llvm::TargetMachine *target = GetTargetMachine(device);
 
-    llvm::Triple triple(device->llvm_target_triplet);
-    llvm::TargetMachine *target = GetTargetMachine(device);
+  llvm::Module *input = (llvm::Module *)modp;
+  assert(input);
+  *output = NULL;
 
-    llvm::Module *input = ParseIRFile(infilename, Err, *GlobalContext());
-    assert(input);
-
-    PassManager PM;
+  PassManager PM;
 #ifdef LLVM_OLDER_THAN_3_7
     llvm::TargetLibraryInfo *TLI = new TargetLibraryInfo(triple);
     PM.add(TLI);
@@ -2102,8 +2185,12 @@ pocl_llvm_codegen(cl_kernel kernel,
 
     PM.run(*input);
     std::string o = sos.str(); // flush
-    POCL_MSG_PRINT_INFO("Writing code gen output to %s.\n", outfilename);
+    const char *cstr = o.c_str();
+    size_t s = o.size();
+    *output = (char *)malloc(s);
+    *output_size = s;
 
-    return pocl_write_file(outfilename, o.c_str(), o.size(), 0, 0);
+    memcpy(*output, cstr, s);
+    return 0;
 }
 /* vim: set ts=4 expandtab: */

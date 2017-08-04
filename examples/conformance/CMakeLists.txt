@@ -925,7 +925,6 @@ set_tests_properties(
     "${TS_NAME}_select_long_long"
     "${TS_NAME}_thread_dimensions_quick"
     "${TS_NAME}_thread_dimensions_full"
-    "${TS_NAME}_vecalign"
     "${TS_NAME}_vecstep"
   PROPERTIES
     LABELS "conformance_suite;conformance_suite_short"

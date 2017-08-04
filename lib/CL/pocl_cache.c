@@ -21,6 +21,7 @@
    THE SOFTWARE.
 */
 
+#include <errno.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
@@ -230,24 +231,41 @@ void* pocl_cache_acquire_reader_lock(cl_program program,
 
 /******************************************************************************/
 
-void pocl_cache_mk_temp_name(char* path) {
-    assert(cache_topdir_initialized);
+static void
+pocl_cache_mk_temp_name (char *path_template, unsigned suffix_len, int *ret_fd)
+{
+  assert (cache_topdir_initialized);
 #if defined(_MSC_VER) || defined(__MINGW32__)
     char* tmp = _tempnam(cache_topdir, "pocl_");
     assert(tmp);
-    int bytes_written = snprintf(path, POCL_FILENAME_LENGTH, "%s", tmp);
+    int bytes_written
+        = snprintf (path_template, POCL_FILENAME_LENGTH, "%s", tmp);
     free(tmp);
     assert(bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
 #else
-    int bytes_written = snprintf(path, POCL_FILENAME_LENGTH,
-             "%s/temp_XXXXXX.cl", cache_topdir);
-    assert(bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
     /* using mkstemp() instead of tmpnam() has no real benefit
      * here, as we have to pass the filename to llvm,
      * but tmpnam() generates an annoying warning... */
-    int fd = mkstemps(path, 3);
-    assert(fd >= 0);
-    close(fd);
+    int fd;
+
+    if (suffix_len)
+      fd = mkstemps (path_template, suffix_len);
+    else
+      fd = mkstemp (path_template);
+
+    if (fd < 0)
+      {
+        char buf[512];
+        strerror_r (errno, buf, 512);
+        POCL_ABORT ("mkstemp failed: %s\n", buf);
+      }
+
+    if (ret_fd)
+      *ret_fd = fd;
+    else
+      close (fd);
+
+    return;
 #endif
 }
 
@@ -271,11 +289,25 @@ pocl_cache_create_tempdir (char *path)
 #endif
 }
 
-int pocl_cache_write_program_source(char *program_cl_path,
-                                    cl_program program) {
-    pocl_cache_mk_temp_name(program_cl_path);
-    return pocl_write_file(program_cl_path, program->source,
-                           strlen(program->source), 0, 0);
+void
+pocl_cache_tempname (char *path_template, const char *suffix, int *fd)
+{
+  assert (cache_topdir_initialized);
+  strcpy (path_template, cache_topdir);
+  size_t max = POCL_FILENAME_LENGTH - 16 - strlen (suffix);
+  assert (strlen (path_template) < max);
+  strcat (path_template, "/tempfile_XXXXXX");
+  strcat (path_template, suffix);
+
+  pocl_cache_mk_temp_name (path_template, strlen (suffix), fd);
+}
+
+int
+pocl_cache_write_program_source (char *program_cl_path, cl_program program)
+{
+  pocl_cache_tempname (program_cl_path, ".cl", NULL);
+  return pocl_write_file (program_cl_path, program->source,
+                          strlen (program->source), 0, 0);
 }
 
 /******************************************************************************/

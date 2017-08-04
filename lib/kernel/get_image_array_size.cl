@@ -1,4 +1,4 @@
-/* OpenCL runtime library: clReleaseSampler()
+/* OpenCL built-in library: get_image_array_size()
 
    Copyright (c) 2017 Michal Babej / Tampere University of Technology
 
@@ -21,26 +21,30 @@
    THE SOFTWARE.
 */
 
-#include "pocl_util.h"
+#include "templates.h"
 
-CL_API_ENTRY cl_int CL_API_CALL
-POname(clReleaseSampler)(cl_sampler sampler)
-CL_API_SUFFIX__VERSION_1_0
-{
-  POCL_RETURN_ERROR_COND ((sampler == NULL), CL_INVALID_SAMPLER);
+#ifndef LLVM_OLDER_THAN_3_8
 
-  int new_refcount;
-  POCL_RELEASE_OBJECT (sampler, new_refcount);
-  POCL_MSG_PRINT_REFCOUNTS ("RELEASE Sampler %p, REFCNT: %d\n", sampler,
-                            new_refcount);
-
-  if (new_refcount == 0)
-    {
-      POname (clReleaseContext) (sampler->context);
-      POCL_DESTROY_OBJECT (sampler);
-      POCL_MEM_FREE (sampler);
-    }
-
-  return CL_SUCCESS;
+#define IMPLEMENT_GET_IMAGE_ARRAY_SIZE(__IMGTYPE__)             \
+size_t _CL_OVERLOADABLE get_image_array_size(__IMGTYPE__ image) \
+{                                                               \
+  global dev_image_t* img =                                     \
+    __builtin_astype (image, global dev_image_t*);              \
+  return (size_t)(img->_image_array_size);                      \
 }
-POsym(clReleaseSampler)
+
+IMPLEMENT_GET_IMAGE_ARRAY_SIZE (IMG_RO_AQ image1d_array_t)
+IMPLEMENT_GET_IMAGE_ARRAY_SIZE (IMG_RO_AQ image2d_array_t)
+
+#ifdef CLANG_HAS_IMAGE_AS
+IMPLEMENT_GET_IMAGE_ARRAY_SIZE (IMG_WO_AQ image1d_array_t)
+IMPLEMENT_GET_IMAGE_ARRAY_SIZE (IMG_WO_AQ image2d_array_t)
+#endif
+
+#ifdef CLANG_HAS_RW_IMAGES
+IMPLEMENT_GET_IMAGE_ARRAY_SIZE (IMG_RW_AQ image1d_array_t)
+IMPLEMENT_GET_IMAGE_ARRAY_SIZE (IMG_RW_AQ image2d_array_t)
+#endif
+
+
+#endif

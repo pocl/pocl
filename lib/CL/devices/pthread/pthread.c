@@ -105,10 +105,6 @@ struct data {
   cl_kernel current_kernel;
   /* Loaded kernel dynamic library handle. */
   lt_dlhandle current_dlhandle;
-
-  /* List of commands waiting to be enqueued */
-  _cl_command_node * volatile command_list;
-  pthread_mutex_t cq_lock;      /* Lock for command list related operations */
   volatile uint64_t total_cmd_exec_time;
 
 #ifdef CUSTOM_BUFFER_ALLOCATOR
@@ -117,6 +113,10 @@ struct data {
   mem_regions_management* mem_regions;
 #endif
 
+  /* Lock for command list related operations */
+  pthread_mutex_t cq_lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  /* List of commands waiting to be enqueued */
+  _cl_command_node *volatile command_list;
 };
 
 static size_t get_max_thread_count();
@@ -368,7 +368,7 @@ pocl_pthread_submit (_cl_command_node *node, cl_command_queue cq)
   struct data *d = device->data;
 
   POCL_LOCK_OBJ (node->event);
-  POCL_UPDATE_EVENT_SUBMITTED(&node->event);
+  POCL_UPDATE_EVENT_SUBMITTED (node->event);
   /* this "ready" consept to ensure that command is pushed only once */
   if (!(node->ready) && pocl_command_is_ready(node->event))
     {
@@ -377,7 +377,7 @@ pocl_pthread_submit (_cl_command_node *node, cl_command_queue cq)
     }
   else
     {
-      PTHREAD_LOCK (&d->cq_lock, NULL);
+      PTHREAD_LOCK (&d->cq_lock);
       DL_PREPEND (d->command_list, node);
       PTHREAD_UNLOCK (&d->cq_lock);
     }
@@ -405,21 +405,19 @@ pocl_pthread_notify (cl_device_id device, cl_event event, cl_event finished)
    int wake_thread = 0;
   _cl_command_node * volatile node = event->command;
 
-  POCL_LOCK_OBJ (event);
   /* this "ready" consept to ensure that command is pushed only once */
   if (!(node->ready) && pocl_command_is_ready(node->event))
     {
       node->ready = 1;
       if (event->status == CL_SUBMITTED)
         {
-          PTHREAD_LOCK (&d->cq_lock, NULL);
+          PTHREAD_LOCK (&d->cq_lock);
           assert (d->command_list != NULL);
           DL_DELETE (d->command_list, node);
           PTHREAD_UNLOCK (&d->cq_lock);
           wake_thread = 1;
         }
     }
-  POCL_UNLOCK_OBJ (event);
 
   if (wake_thread)
     {
@@ -473,13 +471,13 @@ void pocl_pthread_update_event (cl_device_id device, cl_event event, cl_int stat
 
       POCL_LOCK_OBJ (event);
       event->status = CL_COMPLETE;
-
       pthread_cond_signal(&e_d->event_cond);
+      POCL_UNLOCK_OBJ (event);
+
       if (cq_ready)
         pthread_scheduler_release_host ();
 
       device->ops->broadcast (event);
-      POCL_UNLOCK_OBJ (event);
       break;
     default:
       assert("Invalid event status\n");
@@ -505,6 +503,5 @@ void pocl_pthread_free_event_data (cl_event event)
   assert(event->data != NULL);
   free(event->data);
   event->data = NULL;
-
 }
 

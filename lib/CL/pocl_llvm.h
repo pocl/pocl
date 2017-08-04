@@ -35,6 +35,8 @@ extern "C" {
 
 /* Returns the cpu name as reported by LLVM. */
 char* get_cpu_name();
+/* Returns if the cpu supports FMA instruction (uses LLVM). */
+int cpu_has_fma();
 
 /* Compiles an .cl file into LLVM IR.
  */
@@ -73,10 +75,16 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device,
                                           cl_kernel kernel, size_t local_x,
                                           size_t local_y, size_t local_z);
 
+int pocl_llvm_generate_workgroup_function_nowrite(
+    cl_device_id device, cl_kernel kernel, size_t local_x, size_t local_y,
+    size_t local_z, void **output);
 /**
  * Free the LLVM IR of a program for a given device
  */
 void pocl_free_llvm_irs(cl_program program, int device_i);
+
+/* calls delete on the module. */
+void pocl_destroy_llvm_module(void *modp);
 
 /**
  * Update the program->binaries[] representation of the kernels
@@ -107,10 +115,8 @@ unsigned pocl_llvm_get_kernel_names( cl_program program, char **knames, unsigned
 /** Compile the kernel in infile from LLVM bitcode to native object file for
  * device, into outfile.
  */
-int pocl_llvm_codegen ( cl_kernel kernel,
-                        cl_device_id device,
-                        const char *infile,
-                        const char *outfile);
+int pocl_llvm_codegen(cl_kernel kernel, cl_device_id device, void *modp,
+                      char **output, size_t *output_size);
 
 /* Parse program file and populate program's llvm_irs */
 int

@@ -886,10 +886,9 @@ void
 pocl_tce_submit (_cl_command_node *node, cl_command_queue /*cq*/)
 {
   TCEDevice *d = (TCEDevice*)node->device->data;
-  cl_event *event = &(node->event);
 
   POCL_LOCK (d->cq_lock);
-  POCL_UPDATE_EVENT_SUBMITTED(event);
+  POCL_UPDATE_EVENT_SUBMITTED (node->event);
   pocl_command_push(node, &d->ready_list, &d->command_list);
 
   tce_command_scheduler (d);

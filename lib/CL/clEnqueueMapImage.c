@@ -145,7 +145,7 @@ CL_API_SUFFIX__VERSION_1_0
 
   if (map == NULL)
     {
-      POCL_UPDATE_EVENT_COMPLETE(event);
+      POCL_UPDATE_EVENT_COMPLETE (*event);
       errcode = CL_MAP_FAILURE;
       goto ERROR;
     }

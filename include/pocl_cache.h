@@ -61,7 +61,7 @@ void pocl_cache_release_lock(void* lock);
 int pocl_cl_device_to_index(cl_program   program,
                             cl_device_id device);
 
-void pocl_cache_mk_temp_name(char* path);
+void pocl_cache_tempname (char *path_template, const char *suffix, int *fd);
 
 int pocl_cache_create_tempdir(char* path);
 

@@ -22,14 +22,17 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 */
+
+#define _GNU_SOURCE
+
 #include "common.h"
 #include "pocl_shared.h"
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <utlist.h>
-#include <assert.h>
 
 #ifndef _MSC_VER
 #  include <sys/time.h>
@@ -74,87 +77,152 @@ char*
 llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
               size_t local_x, size_t local_y, size_t local_z)
 {
+  int error = 0;
+  void *write_lock = NULL;
+  void *llvm_module = NULL;
 
-  char bytecode[POCL_FILENAME_LENGTH];
-  char objfile[POCL_FILENAME_LENGTH];
-  /* strlen of / .so 4+1 */
-  int file_name_alloc_size = 
-    min(POCL_FILENAME_LENGTH, strlen(tmpdir) + strlen(kernel->name) + 5);
-  char* module = (char*) malloc(file_name_alloc_size); 
-  /* To avoid corrupted .so files, create a tmp file first
-     and then rename it. */
-  char tmp_module[file_name_alloc_size + 4]; /* .tmp postfix */
-  int error;
+  char tmp_module[POCL_FILENAME_LENGTH];
 
-  error = snprintf(module, POCL_FILENAME_LENGTH,
-                   "%s/%s.so", tmpdir, kernel->name);
+  char objfile_path[POCL_FILENAME_LENGTH];
+  char *objfile = NULL;
+  size_t objfile_size = 0;
 
-  assert (error >= 0);
+  cl_program program = kernel->program;
 
-  error = snprintf(objfile, POCL_FILENAME_LENGTH,
-                   "%s/%s.so.o", tmpdir, kernel->name);
-  assert (error >= 0);
+  int device_i = pocl_cl_device_to_index (program, device);
+  assert (device_i >= 0);
 
-  if (pocl_exists(module))
-    return module;
+  /* $/parallel.bc */
+  char parallel_bc_path[POCL_FILENAME_LENGTH];
+  pocl_cache_work_group_function_path (parallel_bc_path, program, device_i,
+                                       kernel, local_x, local_y, local_z);
 
-  memcpy (tmp_module, module, file_name_alloc_size);
-  strcat (tmp_module, ".tmp");
+  /* $/kernel.so */
+  char final_binary_path[POCL_FILENAME_LENGTH];
+  pocl_cache_final_binary_path (final_binary_path, program, device_i, kernel,
+                                local_x, local_y, local_z);
 
-  void* write_lock = pocl_cache_acquire_writer_lock(kernel->program, device);
-  assert(write_lock);
+  if (pocl_exists (final_binary_path))
+    goto FINISH;
 
-  error = pocl_llvm_generate_workgroup_function (device, kernel,
-                                                 local_x, local_y, local_z);
+  /* $/kernel.so.o */
+  assert (strlen (final_binary_path) < (POCL_FILENAME_LENGTH - 3));
+  strcpy (objfile_path, final_binary_path);
+  strcat (objfile_path, ".o");
+
+  error = pocl_llvm_generate_workgroup_function_nowrite (
+      device, kernel, local_x, local_y, local_z, &llvm_module);
   if (error)
     {
       POCL_MSG_PRINT_GENERAL ("pocl_llvm_generate_workgroup_function() failed"
-                              " for kernel %s\n", kernel->name);
-      assert (error == 0);
+                              " for kernel %s\n",
+                              kernel->name);
+      goto FINISH;
+    }
+  assert (llvm_module != NULL);
+
+  /* may happen if another thread is building the same program & wins
+   * the llvm lock. */
+  if (pocl_exists (final_binary_path))
+    goto FINISH;
+
+  error = pocl_llvm_codegen (kernel, device, llvm_module, &objfile,
+                             &objfile_size);
+  if (error)
+    {
+      POCL_MSG_PRINT_GENERAL ("pocl_llvm_codegen() failed"
+                              " for kernel %s\n",
+                              kernel->name);
+      goto FINISH;
     }
 
-  error = snprintf (bytecode, POCL_FILENAME_LENGTH,
-		    "%s%s", tmpdir, POCL_PARALLEL_BC_FILENAME);
-  assert (error >= 0);
+  if (pocl_exists (final_binary_path))
+    goto FINISH;
 
-  error = pocl_llvm_codegen( kernel, device, bytecode, objfile);
-  assert (error == 0);
+  /**************************************************************************/
+  write_lock = pocl_cache_acquire_writer_lock (kernel->program, device);
+  assert (write_lock);
 
-  /* clang is used as the linker driver in LINK_CMD */
+  /* write parallel.bc only if we want to leave compiler files*/
+  if (pocl_get_bool_option ("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
+    {
+      POCL_MSG_PRINT_LLVM ("Writing parallel.bc to %s.\n", parallel_bc_path);
+      error = pocl_cache_write_kernel_parallel_bc (
+          llvm_module, program, device_i, kernel, local_x, local_y, local_z);
+    }
+  else
+    {
+      char kernel_parallel_path[POCL_FILENAME_LENGTH];
+      pocl_cache_kernel_cachedir_path (kernel_parallel_path, program, device_i,
+                                       kernel, "", local_x, local_y, local_z);
+      error = pocl_mkdir_p (kernel_parallel_path);
+    }
+  if (error)
+    {
+      POCL_MSG_PRINT_GENERAL ("writing parallel.bc failed"
+                              " for kernel %s\n",
+                              kernel->name);
+      goto FINISH;
+    }
 
+  /* write krenel.so.o always, required for linking step. */
+  POCL_MSG_PRINT_LLVM ("Writing code gen output to %s.\n", objfile_path);
+  error = pocl_write_file (objfile_path, objfile, objfile_size, 0, 0);
+  if (error)
+    {
+      POCL_MSG_PRINT_GENERAL ("writing kernel.so.o failed"
+                              " for kernel %s\n",
+                              kernel->name);
+      goto FINISH;
+    }
+  else
+    {
+      POCL_MSG_PRINT_GENERAL ("written kernel.so.o size %zu\n", objfile_size);
+    }
+
+  /* create a temporary filename */
+  pocl_cache_tempname (tmp_module, ".so", NULL);
+  assert (pocl_exists (tmp_module) > 0);
+
+  /* clang is used as the linker driver for ANDROID, otherwise GNU ld is used
+   */
   POCL_MSG_PRINT_INFO ("Linking final module\n");
   char *const args1[]
 #ifndef POCL_ANDROID
-      = { LINK_COMMAND,
-          HOST_LD_FLAGS_ARRAY,
-          "-o",
-          tmp_module,
-          objfile,
-          NULL };
+      = { LINK_COMMAND, HOST_LD_FLAGS_ARRAY, "-o",
+          tmp_module,   objfile_path,        NULL };
 #else
       = { POCL_ANDROID_PREFIX "/bin/ld",
           HOST_LD_FLAGS_ARRAY,
           "-o",
           tmp_module,
-          objfile,
+          objfile_path,
           NULL };
 #endif
   error = pocl_run_command (args1);
-  assert (error == 0);
+  if (error)
+    goto FINISH;
 
-  error = pocl_rename (tmp_module, module);
-  assert (error == 0);
+  error = pocl_rename (tmp_module, final_binary_path);
+  if (error)
+    goto FINISH;
 
   /* Save space in kernel cache */
   if (!pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
     {
-      pocl_remove(objfile);
-      pocl_remove(bytecode);
+      pocl_remove (objfile_path);
     }
 
-  pocl_cache_release_lock(write_lock);
+  pocl_cache_release_lock (write_lock);
 
-  return module;
+FINISH:
+  pocl_destroy_llvm_module (llvm_module);
+  POCL_MEM_FREE (objfile);
+
+  if (error)
+    return NULL;
+  else
+    return strdup (final_binary_path);
 }
 #endif
 
@@ -294,7 +362,7 @@ pocl_exec_command (_cl_command_node * volatile node)
 {
   unsigned i;
   /* because of POCL_UPDATE_EVENT_ */
-  cl_event *event = &(node->event);
+  cl_event event = node->event;
   switch (node->type)
     {
     case CL_COMMAND_READ_BUFFER:
@@ -513,7 +581,7 @@ pocl_exec_command (_cl_command_node * volatile node)
       break;
     case CL_COMMAND_NDRANGE_KERNEL:
       POCL_UPDATE_EVENT_RUNNING(event);
-      assert (*event == node->event);
+      assert (event == node->event);
       node->device->ops->run(node->command.run.data, node);
       POCL_UPDATE_EVENT_COMPLETE(event);
       POCL_DEBUG_EVENT_TIME(event, "Enqueue NDRange       ");
@@ -632,7 +700,7 @@ pocl_broadcast (cl_event brc_event)
   event_node *tmp;
   while ((target = brc_event->notify_list))
     {
-      POCL_LOCK_OBJ (target->event);
+      pocl_lock_events_inorder (brc_event, target->event);
       /* remove event from wait list */
       LL_FOREACH (target->event->wait_list, tmp)
         {
@@ -645,14 +713,12 @@ pocl_broadcast (cl_event brc_event)
         }
       if (target->event->status == CL_SUBMITTED)
         {
-          POCL_UNLOCK_OBJ (target->event);
           target->event->command->device->ops->notify
             (target->event->command->device, target->event, brc_event);
         }
-      else 
-        POCL_UNLOCK_OBJ (target->event);
       
       LL_DELETE (brc_event->notify_list, target);
+      pocl_unlock_events_inorder (brc_event, target->event);
       pocl_mem_manager_free_event_node (target);
     }
 }

@@ -1193,7 +1193,7 @@ pocl_hsa_submit (_cl_command_node *node, cl_command_queue cq)
 
   POCL_LOCK_OBJ (node->event);
   PTHREAD_CHECK(pthread_mutex_lock(&d->list_mutex));
-  POCL_UPDATE_EVENT_SUBMITTED(&node->event);
+  POCL_UPDATE_EVENT_SUBMITTED (node->event);
 
   /* this "ready" consept to ensure that command is pushed only once */
   if (!(node->ready) && pocl_command_is_ready(node->event))
@@ -1264,7 +1264,6 @@ void
 pocl_hsa_notify (cl_device_id device, cl_event event, cl_event finished)
 {
   pocl_hsa_device_data_t *d = device->data;
-  POCL_LOCK_OBJ (event);
   _cl_command_node *node = event->command;
   int added_to_readylist = 0;
   POCL_MSG_PRINT_INFO("pocl-hsa: notify on event %u \n", event->id);
@@ -1298,7 +1297,6 @@ pocl_hsa_notify (cl_device_id device, cl_event event, cl_event finished)
         POCL_MSG_WARN("node->ready was 0 but event %u is"
                       " not submitted!\n", event->id);
     }
-  POCL_UNLOCK_OBJ (event);
 
   if (added_to_readylist)
     hsa_signal_subtract_relaxed(d->nudge_driver_thread, 1);
@@ -1446,7 +1444,7 @@ pocl_hsa_launch(pocl_hsa_device_data_t *d, cl_event event)
     }
 
   POCL_UNLOCK_OBJ (event);
-  POCL_UPDATE_EVENT_RUNNING(&event);
+  POCL_UPDATE_EVENT_RUNNING (event);
 }
 
 static void
@@ -1480,7 +1478,7 @@ pocl_hsa_ndrange_event_finished (pocl_hsa_device_data_t *d, size_t i)
   hsa_memory_free(event_data->actual_kernargs);
 
   POCL_UNLOCK_OBJ (event);
-  POCL_UPDATE_EVENT_COMPLETE(&event);
+  POCL_UPDATE_EVENT_COMPLETE (event);
 
   uint64_t ns = event->time_end - event->time_start;
   pocl_debug_print_duration(__func__,__LINE__,
@@ -1698,11 +1696,10 @@ pocl_hsa_update_event (cl_device_id device, cl_event event, cl_int status)
 
       POCL_LOCK_OBJ (event);
       event->status = CL_COMPLETE;
-
       pthread_cond_signal(&e_d->event_cond);
+      POCL_UNLOCK_OBJ (event);
 
       device->ops->broadcast (event);
-      POCL_UNLOCK_OBJ (event);
       break;
     default:
       assert("Invalid event status\n");

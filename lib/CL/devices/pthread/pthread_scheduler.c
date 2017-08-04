@@ -1,6 +1,7 @@
 #include <string.h>
 #include <pthread.h>
 #include <time.h>
+#include <signal.h>
 
 #include "pocl-pthread_scheduler.h"
 #include "pocl_cl.h"
@@ -15,36 +16,33 @@ static void* pocl_pthread_driver_thread (void *p);
 
 struct pool_thread_data
 {
-  pthread_t thread;
-  size_t my_id;
-  struct shared_data * sd;
-  _cl_command_node *volatile work_queue;
-  kernel_run_command *volatile kernel_queue;
-  pthread_cond_t wakeup_cond;
-  pthread_mutex_t lock;
-  volatile int executed_commands;
-  volatile int stolen_commands;
-  volatile int stolen_wgs;
-  volatile unsigned lock_counter;
-  volatile uint64_t prev_wg_finish_time;
-  pthread_mutex_t kernel_q_lock;
-  volatile int kernel_counter;
-};
+  pthread_cond_t wakeup_cond __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  pthread_mutex_t lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+
+  pthread_t thread __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  volatile long executed_commands;
+  volatile unsigned current_ftz;
+  unsigned num_threads;
+
+} __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
 typedef struct scheduler_data_
 {
-  struct pool_thread_data *volatile thread_pool;
-  _cl_command_node *volatile work_queue;
+  unsigned num_threads;
+  struct pool_thread_data *thread_pool;
+
+  _cl_command_node *volatile work_queue
+      __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
   kernel_run_command *volatile kernel_queue;
-  volatile int num_threads;
-  volatile int round_robin_index;
-  pthread_cond_t cq_finished_cond;
-  pthread_cond_t wake_pool;
-  pthread_mutex_t wq_lock;
-  pthread_mutex_t cq_finished_lock;
+
+  pthread_cond_t wake_pool __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  pthread_mutex_t wq_lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+
+  pthread_cond_t cq_finished_cond __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  pthread_mutex_t cq_finished_lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+
   volatile int thread_pool_shutdown_requested;
-  cl_device_id *volatile pool_devices;
-} scheduler_data;
+} scheduler_data __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
 static scheduler_data scheduler;
 
@@ -60,27 +58,35 @@ void pthread_scheduler_init (size_t num_worker_threads)
     (num_worker_threads, sizeof (struct pool_thread_data));
   scheduler.num_threads = num_worker_threads;
 
+  /* let the main pocl thread handle SIGFPE */
+  sigset_t set, oldset;
+  sigemptyset (&set);
+  sigaddset (&set, SIGFPE);
+  int res = pthread_sigmask (SIG_BLOCK, &set, &oldset);
+  assert (res == 0);
+
   for (i = 0; i < num_worker_threads; ++i)
     {
-      scheduler.thread_pool[i].my_id = i;
       pthread_cond_init (&scheduler.thread_pool[i].wakeup_cond, NULL);
       pthread_mutex_init (&scheduler.thread_pool[i].lock, NULL);
-      pthread_mutex_init (&scheduler.thread_pool[i].kernel_q_lock, NULL);
       pthread_create (&scheduler.thread_pool[i].thread, NULL,
                       pocl_pthread_driver_thread,
                       (void*)&scheduler.thread_pool[i]);
     }
 
+  res = pthread_sigmask (SIG_SETMASK, &oldset, NULL);
+  assert (res == 0);
+
 }
 
 void pthread_scheduler_uinit ()
 {
-  int i;
+  unsigned i;
   scheduler.thread_pool_shutdown_requested = 1;
 
-  pthread_mutex_lock (&scheduler.wq_lock);
+  PTHREAD_LOCK (&scheduler.wq_lock);
   pthread_cond_broadcast (&scheduler.wake_pool);
-  pthread_mutex_unlock (&scheduler.wq_lock);
+  PTHREAD_UNLOCK (&scheduler.wq_lock);
 
   for (i = 0; i < scheduler.num_threads; ++i)
     {
@@ -90,7 +96,7 @@ void pthread_scheduler_uinit ()
 
 void pthread_scheduler_push_command (_cl_command_node *cmd)
 {
-  PTHREAD_LOCK (&scheduler.wq_lock, NULL);
+  PTHREAD_LOCK (&scheduler.wq_lock);
   DL_APPEND (scheduler.work_queue, cmd);
   pthread_cond_broadcast (&scheduler.wake_pool);
   PTHREAD_UNLOCK (&scheduler.wq_lock);
@@ -98,7 +104,7 @@ void pthread_scheduler_push_command (_cl_command_node *cmd)
 
 void pthread_scheduler_push_kernel (kernel_run_command *run_cmd)
 {
-  PTHREAD_LOCK (&scheduler.wq_lock, NULL);
+  PTHREAD_LOCK (&scheduler.wq_lock);
   LL_APPEND (scheduler.kernel_queue, run_cmd);
   pthread_cond_broadcast (&scheduler.wake_pool);
   PTHREAD_UNLOCK (&scheduler.wq_lock);
@@ -150,9 +156,9 @@ void pthread_scheduler_wait_cq (cl_command_queue cq)
 
 void pthread_scheduler_release_host ()
 {
-  pthread_mutex_lock (&scheduler.cq_finished_lock);
+  PTHREAD_LOCK (&scheduler.cq_finished_lock);
   pthread_cond_signal (&scheduler.cq_finished_cond);
-  pthread_mutex_unlock (&scheduler.cq_finished_lock);
+  PTHREAD_UNLOCK (&scheduler.cq_finished_lock);
 }
 
 static int
@@ -167,7 +173,7 @@ int pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
   _cl_command_node *cmd;
   kernel_run_command *run_cmd;
   // execute kernel if available
-  PTHREAD_LOCK (&scheduler.wq_lock, NULL);
+  PTHREAD_LOCK (&scheduler.wq_lock);
   if ((run_cmd = scheduler.kernel_queue))
     {
       ++run_cmd->ref_count;
@@ -175,20 +181,16 @@ int pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
 
       work_group_scheduler (run_cmd, td);
 
-      PTHREAD_LOCK (&scheduler.wq_lock, NULL);
+      PTHREAD_LOCK (&scheduler.wq_lock);
       if (!(--run_cmd->ref_count))
         {
           PTHREAD_UNLOCK (&scheduler.wq_lock);
           finalize_kernel_command (td, run_cmd);
+          PTHREAD_LOCK (&scheduler.wq_lock);
         }
-      else
-        PTHREAD_UNLOCK (&scheduler.wq_lock);
     }
-  else
-    PTHREAD_UNLOCK (&scheduler.wq_lock);
 
   // execute a command if available
-  PTHREAD_LOCK (&scheduler.wq_lock, NULL);
   if ((cmd = scheduler.work_queue))
     {
       DL_DELETE (scheduler.work_queue, cmd);
@@ -204,7 +206,7 @@ int pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
 static void
 pthread_scheduler_sleep()
 {
-  PTHREAD_LOCK (&scheduler.wq_lock, NULL);
+  PTHREAD_LOCK (&scheduler.wq_lock);
   struct timespec time_to_wait = {0, 0};
   time_to_wait.tv_sec = time(NULL) + 5;
 
@@ -213,20 +215,39 @@ pthread_scheduler_sleep()
   PTHREAD_UNLOCK (&scheduler.wq_lock);
 }
 
+/* Maximum and minimum chunk sizes for get_wg_index_range().
+ * Each pthread driver's thread fetches work from a kernel's WG pool in
+ * chunks, this determines the limits (scaled up by # of threads). */
 #define POCL_PTHREAD_MAX_WGS 256
-static int get_wg_index_range (kernel_run_command *k, unsigned *start_index,
-                               unsigned *end_index, char *last_wgs)
+#define POCL_PTHREAD_MIN_WGS 32
+
+static int
+get_wg_index_range (kernel_run_command *k, unsigned *start_index,
+                    unsigned *end_index, char *last_wgs, unsigned num_threads)
 {
+  const unsigned scaled_max_wgs = POCL_PTHREAD_MAX_WGS * num_threads;
+  const unsigned scaled_min_wgs = POCL_PTHREAD_MIN_WGS * num_threads;
+
   unsigned max_wgs;
-  *last_wgs = 0;
-  PTHREAD_LOCK (&k->lock, NULL);
+  PTHREAD_LOCK (&k->lock);
   if (k->remaining_wgs == 0)
     {
       PTHREAD_UNLOCK (&k->lock);
       return 0;
     }
-  max_wgs = min (POCL_PTHREAD_MAX_WGS,
-                 (1 + k->remaining_wgs / scheduler.num_threads));
+
+  /* If the work is comprised of huge number of WGs of small WIs,
+   * then get_wg_index_range() becomes a problem on manycore CPUs
+   * because lock contention on k->lock.
+   *
+   * If we have enough workgroups, scale up the requests linearly by
+   * num_threads, otherwise fallback to smaller workgroups.
+   */
+  if (k->remaining_wgs <= (scaled_max_wgs * num_threads))
+    max_wgs = min (scaled_min_wgs, (1 + k->remaining_wgs / num_threads));
+  else
+    max_wgs = min (scaled_max_wgs, (1 + k->remaining_wgs / num_threads));
+
   max_wgs = min (max_wgs, k->remaining_wgs);
 
   *start_index = k->wgs_dealt;
@@ -242,13 +263,15 @@ static int get_wg_index_range (kernel_run_command *k, unsigned *start_index,
 
 inline static void translate_wg_index_to_3d_index (kernel_run_command *k,
                                                    unsigned index,
-                                                   size_t *index_3d)
+                                                   size_t *index_3d,
+                                                   unsigned xy_slice,
+                                                   unsigned row_size)
 {
-  unsigned xy_slice = k->pc.num_groups[0] * k->pc.num_groups[1];
   index_3d[2] = index / xy_slice;
-  index_3d[1] = (index % xy_slice) / k->pc.num_groups[0];
-  index_3d[0] = (index % xy_slice) % k->pc.num_groups[0];
+  index_3d[1] = (index % xy_slice) / row_size;
+  index_3d[0] = (index % xy_slice) % row_size;
 }
+
 
 static int
 work_group_scheduler (kernel_run_command *k,
@@ -261,42 +284,51 @@ work_group_scheduler (kernel_run_command *k,
   unsigned end_index;
   char last_wgs = 0;
 
-  if (!get_wg_index_range (k, &start_index, &end_index,  &last_wgs))
+  if (!get_wg_index_range (k, &start_index, &end_index, &last_wgs,
+                           thread_data->num_threads))
     return 0;
 
   setup_kernel_arg_array ((void**)&arguments, k);
   memcpy (&pc, &k->pc, sizeof (struct pocl_context));
+
+  /* Flush to zero is only set once at start of kernel (because FTZ is
+   * a compilation option), but we need to reset rounding mode after every
+   * iteration (since it can be changed during kernel execution). */
+  unsigned flush = k->kernel->program->flush_denorms;
+  if (thread_data->current_ftz != flush)
+    {
+      pocl_set_ftz (flush);
+      thread_data->current_ftz = flush;
+    }
+
+  unsigned slice_size = k->pc.num_groups[0] * k->pc.num_groups[1];
+  unsigned row_size = k->pc.num_groups[0];
+
   do
     {
       if (last_wgs)
         {
-          PTHREAD_LOCK (&scheduler.wq_lock, NULL);
+          PTHREAD_LOCK (&scheduler.wq_lock);
           LL_DELETE (scheduler.kernel_queue, k);
           PTHREAD_UNLOCK (&scheduler.wq_lock);
         }
+
       for (i = start_index; i <= end_index; ++i)
         {
-          translate_wg_index_to_3d_index (k, i, (size_t*)&pc.group_id);
+          translate_wg_index_to_3d_index (k, i, pc.group_id,
+                                          slice_size, row_size);
+
 #ifdef DEBUG_MT
-          printf("### exec_wg: gid_x %d, gid_y %d, gid_z %d\n",
+          printf("### exec_wg: gid_x %zu, gid_y %zu, gid_z %zu\n",
                  pc.group_id[0],
                  pc.group_id[1], pc.group_id[2]);
 #endif
-
-          unsigned rm = pocl_save_rm ();
           pocl_set_default_rm ();
-          unsigned ftz = pocl_save_ftz ();
-          pocl_set_ftz (k->kernel->program->flush_denorms);
-
           k->workgroup (arguments, &pc);
-
-          pocl_restore_rm (rm);
-          pocl_restore_ftz (ftz);
-
         }
-
-    }while (get_wg_index_range (k, &start_index, &end_index,  &last_wgs));
-
+    }
+  while (get_wg_index_range (k, &start_index, &end_index, &last_wgs,
+                             thread_data->num_threads));
 
   free_kernel_arg_array (arguments, k);
 
@@ -311,7 +343,7 @@ void finalize_kernel_command (struct pool_thread_data *thread_data,
 #endif
 
   pocl_ndrange_node_cleanup (k->cmd);
-  POCL_UPDATE_EVENT_COMPLETE (&k->cmd->event);
+  POCL_UPDATE_EVENT_COMPLETE (k->cmd->event);
 
   pocl_mem_manager_free_command (k->cmd);
 
@@ -350,9 +382,6 @@ pocl_pthread_prepare_kernel
   run_cmd->device = device;
   run_cmd->pc = *pc;
   run_cmd->cmd = cmd;
-  run_cmd->group_idx[0] = 0;
-  run_cmd->group_idx[1] = 0;
-  run_cmd->group_idx[2] = 0;
   run_cmd->pc.local_size[0] = cmd->command.run.local_x;
   run_cmd->pc.local_size[1] = cmd->command.run.local_y;
   run_cmd->pc.local_size[2] = cmd->command.run.local_z;
@@ -371,7 +400,7 @@ pocl_pthread_exec_command (_cl_command_node * volatile cmd,
 {
   if(cmd->type == CL_COMMAND_NDRANGE_KERNEL)
     {
-      POCL_UPDATE_EVENT_RUNNING(&(cmd->event));
+      POCL_UPDATE_EVENT_RUNNING (cmd->event);
       pocl_pthread_prepare_kernel (cmd->command.run.data, cmd);
     }
   else
@@ -387,6 +416,10 @@ pocl_pthread_driver_thread (void *p)
 {
   struct pool_thread_data *td = (struct pool_thread_data*)p;
   _cl_command_node *cmd = NULL;
+  /* some random value, doesn't matter as long as it's not a valid bool - to
+   * force a first FTZ setup */
+  td->current_ftz = 213;
+  td->num_threads = scheduler.num_threads;
 
   while (1)
     {

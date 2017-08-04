@@ -159,8 +159,8 @@ pocl_basic_init_device_infos(unsigned j, struct _cl_device_id* dev)
     the SIMD lanes times the vector units, but not more than
     that to avoid stack overflow and cache trashing.
   */
-  dev->max_work_item_sizes[0] = dev->max_work_item_sizes[1] =
-	  dev->max_work_item_sizes[2] = dev->max_work_group_size = 1024*4;
+  dev->max_work_item_sizes[0] = dev->max_work_item_sizes[1]
+      = dev->max_work_item_sizes[2] = dev->max_work_group_size = 1024 * 4;
 
   dev->preferred_wg_size_multiple = 8;
   dev->preferred_vector_width_char = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR;
@@ -196,10 +196,13 @@ pocl_basic_init_device_infos(unsigned j, struct _cl_device_id* dev)
   dev->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT; // this is in bytes
   dev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT*8; // this is in bits
   dev->half_fp_config = 0;
-#ifdef __x86_64__
-  dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN | CL_FP_DENORM;
-#else
   dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
+#ifdef __x86_64__
+  dev->single_fp_config |= (CL_FP_DENORM | CL_FP_ROUND_TO_INF | CL_FP_ROUND_TO_ZERO);
+#ifdef OCS_AVAILABLE
+  if (cpu_has_fma())
+    dev->single_fp_config |= CL_FP_FMA;
+#endif
 #endif
   dev->double_fp_config = CL_FP_FMA | CL_FP_ROUND_TO_NEAREST
                           | CL_FP_ROUND_TO_ZERO | CL_FP_ROUND_TO_INF
@@ -907,11 +910,10 @@ void
 pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
 {
   struct data *d = node->device->data;
-  cl_event *event = &(node->event);
   
   node->device->ops->compile_kernel (node, NULL, NULL);
   POCL_LOCK (d->cq_lock);
-  POCL_UPDATE_EVENT_SUBMITTED(event);
+  POCL_UPDATE_EVENT_SUBMITTED (node->event);
   pocl_command_push(node, &d->ready_list, &d->command_list);
   
   basic_command_scheduler (d);
@@ -957,11 +959,9 @@ pocl_basic_notify (cl_device_id device, cl_event event, cl_event finished)
   struct data *d = (struct data*)device->data;
   _cl_command_node * volatile node = event->command;
   
-  POCL_LOCK_OBJ (event);
   if (!(node->ready) && pocl_command_is_ready(node->event))
     {
       node->ready = 1;
-      POCL_UNLOCK_OBJ (event);
       if (node->event->status == CL_SUBMITTED)
         {
           POCL_LOCK (d->cq_lock);
@@ -972,7 +972,6 @@ pocl_basic_notify (cl_device_id device, cl_event event, cl_event finished)
         }
       return;
     }
-  POCL_UNLOCK_OBJ (event);
 }
 
 void

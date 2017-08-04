@@ -83,6 +83,7 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
       POCL_MEM_FREE (kernel->arg_info);
       POCL_MEM_FREE (kernel->dyn_arguments);
       POCL_MEM_FREE (kernel->reqd_wg_size);
+      POCL_DESTROY_OBJECT (kernel);
       POCL_MEM_FREE (kernel);
     }
   

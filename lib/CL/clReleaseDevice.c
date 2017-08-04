@@ -34,6 +34,7 @@ POname(clReleaseDevice)(cl_device_id device) CL_API_SUFFIX__VERSION_1_2
 
   if (new_refcount == 0)
     {
+      POCL_DESTROY_OBJECT (device);
       POCL_MEM_FREE(device);
       POCL_MSG_PRINT_REFCOUNTS ("Free Device %p\n", device);
     }
