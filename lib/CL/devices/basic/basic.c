@@ -199,8 +199,10 @@ pocl_basic_init_device_infos(unsigned j, struct _cl_device_id* dev)
   dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
 #ifdef __x86_64__
   dev->single_fp_config |= (CL_FP_DENORM | CL_FP_ROUND_TO_INF | CL_FP_ROUND_TO_ZERO);
+#ifdef OCS_AVAILABLE
   if (cpu_has_fma())
     dev->single_fp_config |= CL_FP_FMA;
+#endif
 #endif
   dev->double_fp_config = CL_FP_FMA | CL_FP_ROUND_TO_NEAREST
                           | CL_FP_ROUND_TO_ZERO | CL_FP_ROUND_TO_INF

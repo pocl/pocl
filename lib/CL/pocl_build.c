@@ -577,6 +577,7 @@ compile_and_link_program(int compile_program,
         }
       else if (link_program && (num_input_programs > 0))
         {
+#ifdef OCS_AVAILABLE
           /* just link binaries. */
           unsigned char *cur_device_binaries[num_input_programs];
           size_t cur_device_binary_sizes[num_input_programs];
@@ -602,6 +603,12 @@ compile_and_link_program(int compile_program,
               cur_device_binaries, cur_device_binary_sizes, cur_llvm_irs);
           POCL_GOTO_ERROR_ON ((error != CL_SUCCESS), CL_LINK_PROGRAM_FAILURE,
                               "pocl_llvm_link_program() failed\n");
+#else
+          POCL_GOTO_ERROR_ON ((1), CL_LINK_PROGRAM_FAILURE,
+                              "clCompileProgram/clLinkProgram/clBuildProgram"
+                              " require a pocl built with LLVM\n");
+
+#endif
         }
       else
         {
