@@ -44,8 +44,10 @@ RemoveOptnoneFromWIFunc::RemoveOptnoneFromWIFunc() : FunctionPass(ID) {}
 
 bool RemoveOptnoneFromWIFunc::runOnFunction(Function &F) {
   /* Adding "optnone" to get_global_id() solves the problem
-   * that some pass in opt introduces switch tables.
-   * However having optnone later prevents some optimizations
+   * that some pass in opt introduces switch tables which the
+   * variable uniformity analysis cannot analyze.
+   *
+   * However having optnone prevents some later optimizations
    * and creates problems in certain workitem tests.
    */
   const char *name = "_Z13get_global_idj";
