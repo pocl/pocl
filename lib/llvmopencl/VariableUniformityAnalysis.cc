@@ -41,10 +41,15 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "Kernel.h"
 #include "VariableUniformityAnalysis.h"
 #include "Barrier.h"
+#include "Workgroup.h"
 
 POP_COMPILER_DIAGS
 
-//#define DEBUG_UNIFORMITY_ANALYSIS
+// #define DEBUG_UNIFORMITY_ANALYSIS
+
+#ifdef DEBUG_UNIFORMITY_ANALYSIS
+#include "DebugHelpers.h"
+#endif
 
 namespace pocl {
 
@@ -111,8 +116,13 @@ VariableUniformityAnalysis::markInductionVariables(Function &F, llvm::Loop &L) {
 bool
 VariableUniformityAnalysis::runOnFunction(Function &F) {
 
+  if (!Workgroup::isKernelToProcess(F))
+    return false;
+
 #ifdef DEBUG_UNIFORMITY_ANALYSIS
   std::cerr << "### refreshing VUA" << std::endl;
+  dumpCFG(F, F.getName().str() + ".vua.dot");
+  F.dump();
 #endif
 
   /* Do the actual analysis on-demand except for the basic block
@@ -184,45 +194,57 @@ VariableUniformityAnalysis::shouldBePrivatized
  * b) BBs that post-dominate at least one uniform BB (try the previously 
  *    found one), or
  * c) BBs that are branched to directly from a uniform BB using a uniform branch.
+ *    Note: This assumes the CFG is well-formed in a way that there cannot be a divergent
+ *    branch to the same BB in that case.
  *
  * Otherwise, assume divergent (might not be *proven* to be one!).
- * 
+ *
  */
 void
 VariableUniformityAnalysis::analyzeBBDivergence
 (llvm::Function *f, llvm::BasicBlock *bb, llvm::BasicBlock *previousUniformBB) {
 
 #ifdef DEBUG_UNIFORMITY_ANALYSIS
-  std::cerr << "### Analyzing BB divergence (bb=" << bb->getName().str() 
-            << ", prevUniform=" << previousUniformBB->getName().str() << ")" 
+  std::cerr << "### Analyzing BB divergence (bb=" << bb->getName().str()
+            << ", prevUniform=" << previousUniformBB->getName().str() << ")"
             << std::endl;
 #endif
- 
 
-  llvm::BasicBlock *newPreviousUniformBB = previousUniformBB;
-
-  llvm::BranchInst *br = 
-    dyn_cast<llvm::BranchInst>(previousUniformBB->getTerminator());  
-
-  if (br == NULL) {
+  llvm::TerminatorInst *Term = previousUniformBB->getTerminator();
+  if (Term == NULL) {
     // this is most likely a function with a single basic block, the entry node, which
     // ends with a ret
     return;
   }
 
+  llvm::BranchInst *BrInst = dyn_cast<llvm::BranchInst>(Term);
+  llvm::SwitchInst *SwInst = dyn_cast<llvm::SwitchInst>(Term);
+
+  if (BrInst == nullptr && SwInst == nullptr) {
+    // Can only handle branches and switches for now.
+    return;
+  }
+
+  // The BBs that were found uniform.
+  std::vector<llvm::BasicBlock *> FoundUniforms;
+
   // Condition c)
-  if ((!br->isConditional() || isUniform(f, br->getCondition()))) {
-    for (unsigned suc = 0, end = br->getNumSuccessors(); suc < end; ++suc) {
-      if (br->getSuccessor(suc) == bb) {
-        setUniform(f, bb, true);
-        newPreviousUniformBB = bb;
-        break;
-      }
+  if ((BrInst && (!BrInst->isConditional() ||
+                  isUniform(f, BrInst->getCondition()))) ||
+      (SwInst && isUniform(f, SwInst->getCondition()))) {
+    // This is a branch with a uniform condition, propagate the uniformity
+    // to the BB of interest.
+    for (unsigned suc = 0, end = Term->getNumSuccessors(); suc < end; ++suc) {
+      llvm::BasicBlock *Successor = Term->getSuccessor(suc);
+      // TODO: should we check that there are no divergent entries to this
+      // BB even though if the currently checked condition is uniform?
+      setUniform(f, Successor, true);
+      FoundUniforms.push_back(Successor);
     }
-  } 
+  }
 
   // Condition b)
-  if (newPreviousUniformBB != bb) {
+  if (FoundUniforms.size() == 0) {
 #ifdef LLVM_OLDER_THAN_3_9
     llvm::PostDominatorTree *PDT = &getAnalysis<PostDominatorTree>();
     if (PDT->dominates(bb, previousUniformBB)) {
@@ -231,23 +253,24 @@ VariableUniformityAnalysis::analyzeBBDivergence
     if (PDT->getPostDomTree().dominates(bb, previousUniformBB)) {
 #endif
       setUniform(f, bb, true);
-      newPreviousUniformBB = bb;
+      FoundUniforms.push_back(bb);
     }
-  } 
+  }
 
   /* Assume diverging. */
   if (!isUniformityAnalyzed(f, bb))
     setUniform(f, bb, false);
 
-  llvm::BranchInst *nextbr = dyn_cast<llvm::BranchInst>(bb->getTerminator());  
+  for (auto UniformBB : FoundUniforms) {
 
-  if (nextbr == NULL) return; /* ret */
+    // Propagate the Uniform BB data downwards.
+    llvm::TerminatorInst *NextTerm = UniformBB->getTerminator();
 
-  /* Propagate the data downward. */
-  for (unsigned suc = 0, end = nextbr->getNumSuccessors(); suc < end; ++suc) {
-    llvm::BasicBlock *nextbb = nextbr->getSuccessor(suc);
-    if (!isUniformityAnalyzed(f, nextbb)) {
-      analyzeBBDivergence(f, nextbb, newPreviousUniformBB);
+    for (unsigned suc = 0, end = NextTerm->getNumSuccessors(); suc < end; ++suc) {
+      llvm::BasicBlock *NextBB = NextTerm->getSuccessor(suc);
+      if (!isUniformityAnalyzed(f, NextBB)) {
+        analyzeBBDivergence(f, NextBB, UniformBB);
+      }
     }
   }
 }
