@@ -1570,12 +1570,16 @@ char* get_cpu_name() {
   return cpu_name;
 }
 
+// TODO this should be fixed to not require LLVM eventually,
+// so that LLVM-less builds also report flags correctly.
+#ifdef OCS_AVAILABLE
 int cpu_has_fma() {
   StringMap<bool> features;
   bool res = llvm::sys::getHostCPUFeatures(features);
   assert(res);
   return ((features["fma"] || features["fma4"]) ? 1 : 0);
 }
+#endif
 
 /* helpers copied from LLVM opt START */
 
