@@ -52,7 +52,10 @@
 #define POCLCC_STRING_ID_LENGTH 8
 /* changes for version 2: added program.bc right after header */
 /* changes for version 3: added flush_denorms flag into header */
-#define POCLCC_VERSION 3
+/* changes for version 4: kernel library is now linked into
+                          program.bc, so older binaries may fail
+                          to run with "undefined symbol" errors. */
+#define POCLCC_VERSION 4
 
 /* pocl binary structures */
 
