@@ -81,7 +81,9 @@ POname(clGetKernelWorkGroupInfo)
     }
       
     case CL_KERNEL_PRIVATE_MEM_SIZE:
-      POCL_ABORT_UNIMPLEMENTED("clGetKernelWorkGroupInfo: CL_KERNEL_PRIVATE_MEM_SIZE");
+      POCL_MSG_WARN ("clGetKernelWorkGroupInfo: CL_KERNEL_PRIVATE_MEM_SIZE "
+                     "implementation is incomplete\n");
+      POCL_RETURN_GETINFO (cl_ulong, sizeof (struct pocl_context));
 
     default:
       return CL_INVALID_VALUE;

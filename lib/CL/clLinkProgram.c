@@ -47,6 +47,11 @@ CL_API_SUFFIX__VERSION_1_2
 
   POCL_GOTO_ERROR_COND ((input_programs == NULL), CL_INVALID_VALUE);
 
+  POCL_GOTO_ERROR_COND ((num_devices > 0 && device_list == NULL),
+                        CL_INVALID_VALUE);
+  POCL_GOTO_ERROR_COND ((num_devices == 0 && device_list != NULL),
+                        CL_INVALID_VALUE);
+
   /* DEVICE LIST */
   if (num_devices == 0)
     {

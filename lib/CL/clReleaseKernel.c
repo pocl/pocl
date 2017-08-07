@@ -66,6 +66,7 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
         }
 
       POCL_MEM_FREE (kernel->name);
+      POCL_MEM_FREE (kernel->attributes);
 
       if (kernel->arg_info)
         for (i = 0; i < kernel->num_args; i++)

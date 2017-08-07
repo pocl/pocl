@@ -77,6 +77,7 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
   mem->latest_event = NULL;
   mem->owning_device = buffer->owning_device;
   mem->is_pipe = CL_FALSE;
+  mem->mem_host_ptr = NULL;
 
   POCL_GOTO_ERROR_ON((buffer->flags & CL_MEM_WRITE_ONLY &&
        flags & (CL_MEM_READ_WRITE | CL_MEM_READ_ONLY)), CL_INVALID_VALUE,
@@ -125,7 +126,7 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
 
   for (i = 0; i < pocl_num_devices; ++i)
     mem->device_ptrs[i].mem_ptr = NULL;
-  
+
   for (i = 0; i < mem->context->num_devices; ++i)
     {
       device = mem->context->devices[i];

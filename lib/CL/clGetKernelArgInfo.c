@@ -38,6 +38,15 @@ POname(clGetKernelArgInfo)(cl_kernel      kernel ,
     "This kernel has %u args, cannot getInfo on arg %u\n",
     (unsigned)kernel->num_args, (unsigned)arg_indx);
 
+  /* pocl always uses -cl-kernel-arg-info because it needs the arg metadata, but
+   * to the user programs we should report missing arg info in case they don't
+   * request it. Piglit tests this. */
+  if (kernel->program->compiler_options)
+    POCL_RETURN_ERROR_ON (
+        (!strstr (kernel->program->compiler_options, "cl-kernel-arg-info")),
+        CL_KERNEL_ARG_INFO_NOT_AVAILABLE,
+        "argument information is not available!\n");
+
   struct pocl_argument_info *arg = &kernel->arg_info[arg_indx];
   switch (param_name) {
     case CL_KERNEL_ARG_ADDRESS_QUALIFIER:

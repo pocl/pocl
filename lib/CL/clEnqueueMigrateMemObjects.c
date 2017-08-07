@@ -42,6 +42,12 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
   POCL_RETURN_ERROR_COND((num_mem_objects == 0), CL_INVALID_VALUE);
   POCL_RETURN_ERROR_COND((mem_objects == NULL), CL_INVALID_VALUE);
 
+  cl_mem_migration_flags invalid_flags =
+     ~(CL_MIGRATE_MEM_OBJECT_CONTENT_UNDEFINED | CL_MIGRATE_MEM_OBJECT_HOST);
+  POCL_RETURN_ERROR_COND (((flags != 0) && (flags & invalid_flags)),
+                          CL_INVALID_VALUE);
+  /* TODO check if it's OK to ignore flags. */
+
   errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
                                         event_wait_list);
   if (errcode != CL_SUCCESS)

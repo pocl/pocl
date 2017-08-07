@@ -181,6 +181,9 @@ process_options (const char *options, char *modded_options, char *link_options,
   int enable_link_options = 0;
   link_options[0] = 0;
   modded_options[0] = 0;
+  int ret_error = (linking ? (compiling ? CL_INVALID_BUILD_OPTIONS
+                                        : CL_INVALID_LINKER_OPTIONS)
+                           : CL_INVALID_COMPILER_OPTIONS);
 
   assert (options);
   assert (modded_options);
@@ -209,7 +212,7 @@ process_options (const char *options, char *modded_options, char *link_options,
                           "Not compiling but link options were not enabled, "
                           "therefore %s is an invalid option\n",
                           token);
-                      error = CL_INVALID_BUILD_OPTIONS;
+                      error = ret_error;
                       goto ERROR;
                     }
                   strcat (link_options, token);
@@ -248,7 +251,7 @@ process_options (const char *options, char *modded_options, char *link_options,
           else
             {
               APPEND_TO_MAIN_BUILD_LOG("Invalid build option: %s\n", token);
-              error = CL_INVALID_BUILD_OPTIONS;
+              error = ret_error;
               goto ERROR;
             }
         }
@@ -279,7 +282,7 @@ process_options (const char *options, char *modded_options, char *link_options,
             {
               APPEND_TO_MAIN_BUILD_LOG (
                   "Invalid parameter to -x build option\n");
-              error = CL_INVALID_BUILD_OPTIONS;
+              error = ret_error;
               goto ERROR;
             }
           /* "-x spir" is not valid if we are building from source */
@@ -287,7 +290,7 @@ process_options (const char *options, char *modded_options, char *link_options,
             {
               APPEND_TO_MAIN_BUILD_LOG (
                   "\"-x spir\" is not valid when building from source\n");
-              error = CL_INVALID_BUILD_OPTIONS;
+              error = ret_error;
               goto ERROR;
             }
           token = strtok_r (NULL, " ", &saveptr);
@@ -300,7 +303,7 @@ process_options (const char *options, char *modded_options, char *link_options,
             {
               APPEND_TO_MAIN_BUILD_LOG ("\"-spir-std=\" flag is not valid "
                                         "when building from source\n");
-              error = CL_INVALID_BUILD_OPTIONS;
+              error = ret_error;
               goto ERROR;
             }
           token = strtok_r (NULL, " ", &saveptr);
@@ -312,7 +315,7 @@ process_options (const char *options, char *modded_options, char *link_options,
             {
               APPEND_TO_MAIN_BUILD_LOG (
                   "\"-create-library\" flag is only valid when linking\n");
-              error = CL_INVALID_BUILD_OPTIONS;
+              error = ret_error;
               goto ERROR;
             }
           *create_library = 1;
@@ -325,7 +328,7 @@ process_options (const char *options, char *modded_options, char *link_options,
             {
               APPEND_TO_MAIN_BUILD_LOG ("\"-enable-link-options\" flag is "
                                         "only valid when linking\n");
-              error = CL_INVALID_BUILD_OPTIONS;
+              error = ret_error;
               goto ERROR;
             }
           if (!(*create_library))
@@ -333,7 +336,7 @@ process_options (const char *options, char *modded_options, char *link_options,
               APPEND_TO_MAIN_BUILD_LOG ("\"-enable-link-options\" flag is "
                                         "only valid when -create-library "
                                         "option was given\n");
-              error = CL_INVALID_BUILD_OPTIONS;
+              error = ret_error;
               goto ERROR;
             }
           enable_link_options = 1;
@@ -343,7 +346,7 @@ process_options (const char *options, char *modded_options, char *link_options,
       else
         {
           APPEND_TO_MAIN_BUILD_LOG ("Invalid build option: %s\n", token);
-          error = CL_INVALID_BUILD_OPTIONS;
+          error = ret_error;
           goto ERROR;
         }
       APPEND_TOKEN ();
@@ -432,7 +435,8 @@ compile_and_link_program(int compile_program,
   unsigned device_i = 0, actually_built = 0;
   size_t i, j;
   void *write_cache_lock = NULL;
-
+  int build_error_code
+      = (link_program ? CL_BUILD_PROGRAM_FAILURE : CL_COMPILE_PROGRAM_FAILURE);
   POCL_RETURN_ERROR_COND ((program == NULL), CL_INVALID_PROGRAM);
 
   POCL_RETURN_ERROR_COND ((num_devices > 0 && device_list == NULL),
@@ -524,8 +528,8 @@ compile_and_link_program(int compile_program,
               program, device_i, program->compiler_options, program_bc_path,
               num_input_headers, input_headers, header_include_names,
               link_program);
-          POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
-                             "pocl_llvm_build_program() failed\n");
+          POCL_GOTO_ERROR_ON ((error != 0), build_error_code,
+                              "pocl_llvm_build_program() failed\n");
 #else
           strcpy(program->main_build_log,
                  "Cannot build a program from sources with pocl "
@@ -656,9 +660,9 @@ compile_and_link_program(int compile_program,
 
     }
 
-  POCL_GOTO_ERROR_ON((actually_built < num_devices), CL_BUILD_PROGRAM_FAILURE,
-                     "Some of the devices on the argument-supplied list are"
-                     "not available for the program, or do not exist\n");
+  POCL_GOTO_ERROR_ON ((actually_built < num_devices), build_error_code,
+                      "Some of the devices on the argument-supplied list are"
+                      "not available for the program, or do not exist\n");
 
   program->build_status = CL_BUILD_SUCCESS;
 
@@ -709,7 +713,7 @@ compile_and_link_program(int compile_program,
     {
       program->default_kernels[i] =
           POname (clCreateKernel) (program, program->kernel_names[i], &errcode);
-      POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), CL_BUILD_PROGRAM_FAILURE,
+      POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), build_error_code,
                           "Failed to create default kernels\n");
     }
   program->operating_on_default_kernels = 0;

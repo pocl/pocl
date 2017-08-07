@@ -34,6 +34,7 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include "clang/Frontend/CompilerInvocation.h"
 #include "clang/Frontend/FrontendActions.h"
 #include "clang/Frontend/TextDiagnosticBuffer.h"
+#include "llvm/IR/DebugInfoMetadata.h"
 
 #ifndef LLVM_OLDER_THAN_4_0
 #include "clang/Lex/PreprocessorOptions.h"
@@ -1175,8 +1176,8 @@ static int pocl_get_kernel_arg_function_metadata(const char* kernel_name,
     current_arg = &kernel->arg_info[j];
     kernel->has_arg_metadata |= POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER;
     //std::cout << "is ConstantInt /  kernel_arg_addr_space" << std::endl;
-     meta_arg_value =
-          dyn_cast<ConstantAsMetadata>(meta_node->getOperand(j))->getValue();
+    meta_arg_value =
+        dyn_cast<ConstantAsMetadata>(meta_node->getOperand(j))->getValue();
     llvm::ConstantInt *m = llvm::cast<ConstantInt>(meta_arg_value);
     uint64_t val = m->getLimitedValue(UINT_MAX);
 
@@ -1456,6 +1457,9 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
     }
     i++;
   }
+
+  std::stringstream attrstr;
+  std::string vectypehint;
   // fill 'kernel->reqd_wg_size'
   kernel->reqd_wg_size = (size_t *)malloc(3 * sizeof(size_t));
 
@@ -1498,9 +1502,27 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   }
 #endif
 
+  // TODO: implement vec_type_hint / work_group_size_hint attributes
   kernel->reqd_wg_size[0] = reqdx;
   kernel->reqd_wg_size[1] = reqdy;
   kernel->reqd_wg_size[2] = reqdz;
+  if (reqdx || reqdy || reqdz)
+    attrstr << "__attribute__((reqd_work_group_size("
+            << reqdx << ", " << reqdy
+            << ", " << reqdz << " )))";
+  if (vectypehint.size() > 0) {
+    if (reqdx || reqdy || reqdz)
+      attrstr << " ";
+    attrstr << "__attribute__ ((vec_type_hint (" << vectypehint << ")))";
+  }
+
+  std::string r = attrstr.str();
+  if (r.size() > 0) {
+    kernel->attributes = (char *)malloc(r.size() + 1);
+    std::memcpy(kernel->attributes, r.c_str(), r.size());
+    kernel->attributes[r.size()] = 0;
+  } else
+    kernel->attributes = NULL;
 
 #ifndef POCL_ANDROID
   // Generate the kernel_obj.c file. This should be optional

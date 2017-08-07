@@ -46,6 +46,11 @@ POname(clGetKernelInfo)(cl_kernel      kernel ,
     POCL_RETURN_GETINFO(cl_context, kernel->context);
   case CL_KERNEL_PROGRAM:
     POCL_RETURN_GETINFO(cl_program, kernel->program);
+  case CL_KERNEL_ATTRIBUTES:
+    if (kernel->attributes)
+      POCL_RETURN_GETINFO_STR (kernel->attributes);
+    else
+      POCL_RETURN_GETINFO_STR ("");
   }
   return CL_INVALID_VALUE;
 }

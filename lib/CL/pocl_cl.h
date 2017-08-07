@@ -690,6 +690,7 @@ struct _cl_kernel {
   cl_program program;
   struct pocl_argument_info *arg_info;
   cl_bitfield has_arg_metadata;
+  char *attributes;
   cl_uint num_locals;
   size_t *reqd_wg_size;
   /* The kernel arguments that are set with clSetKernelArg().

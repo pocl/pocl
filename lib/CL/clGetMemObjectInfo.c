@@ -42,7 +42,10 @@ POname(clGetMemObjectInfo)(cl_mem      memobj ,
   case CL_MEM_SIZE:
     POCL_RETURN_GETINFO (size_t, memobj->size);
   case CL_MEM_HOST_PTR:
-    POCL_RETURN_GETINFO (void *, memobj->mem_host_ptr);
+    if (memobj->flags & CL_MEM_USE_HOST_PTR)
+      POCL_RETURN_GETINFO (void *, memobj->mem_host_ptr);
+    else
+      POCL_RETURN_GETINFO (void *, NULL);
   case CL_MEM_MAP_COUNT:
     POCL_RETURN_GETINFO (cl_uint, memobj->map_count);
   case CL_MEM_REFERENCE_COUNT:
