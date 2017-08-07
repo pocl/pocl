@@ -1595,7 +1595,18 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
     }
   }
   passes.push_back("always-inline");
+#ifndef LLVM_OLDER_THAN_4_0
+  // It should be now safe to run -O3 over the single work-item kernel
+  // as the barrier has the attributes preventing illegal motions and
+  // duplication. Let's do it to clean up the code for later passes.
+  // Especially the WI context structures get needlessly bloated in case there
+  // is dead code lying around.
+  passes.push_back("STANDARD_OPTS");
+#else
+  // Just clean up any unused globals.
   passes.push_back("globaldce");
+#endif
+
   if (!SPMDDevice) {
     passes.push_back("simplifycfg");
     passes.push_back("loop-simplify");

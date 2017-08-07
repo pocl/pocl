@@ -397,10 +397,10 @@ createLauncher(Module &M, Function *F) {
       if (!llvm::isa<CallInst>(Instr)) continue;
       CallInst *CallInstr = dyn_cast<CallInst>(Instr);
       if (CallInstr->getCalledFunction() != nullptr &&
-          (CallInstr->getCalledFunction()->getName() ==
-           "llvm.lifetime.end" ||
-           CallInstr->getCalledFunction()->getName() ==
-           "llvm.lifetime.start")) {
+          (CallInstr->getCalledFunction()->getName().
+	   startswith("llvm.lifetime.end") ||
+           CallInstr->getCalledFunction()->getName().
+	   startswith("llvm.lifetime.start"))) {
         Calls.insert(CallInstr);
       }
     }

@@ -69,6 +69,7 @@ namespace pocl {
         (M->getOrInsertFunction(BARRIER_FUNCTION_NAME,
                                 llvm::Type::getVoidTy(M->getContext())));
 #endif
+      F->addFnAttr(llvm::Attribute::NoDuplicate);
       F->setLinkage(llvm::GlobalValue::LinkOnceAnyLinkage);
       return llvm::cast<pocl::Barrier>
         (llvm::CallInst::Create(F, "", InsertBefore));

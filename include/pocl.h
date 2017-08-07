@@ -328,7 +328,6 @@ struct _cl_command_node
 #if (defined LLVM_3_9)
 # define LLVM_OLDER_THAN_4_0 1
 # define LLVM_OLDER_THAN_5_0 1
-# define LLVM_OLDER_THAN_5_0 1
 #endif
 
 #if (defined LLVM_4_0)
