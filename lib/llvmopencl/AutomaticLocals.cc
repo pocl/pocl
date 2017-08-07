@@ -195,7 +195,12 @@ AutomaticLocals::processAutomaticLocals(Function *F) {
   }
 
   SmallVector<ReturnInst *, 1> RI;
-  CloneFunctionInto(NewKernel, F, VV, false, RI);
+
+  // As of LLVM 5.0 we need to let CFI to make module level changes,
+  // otherwise there will be an assertion. The changes are likely
+  // additional debug info nodes added when cloning the function into
+  // the other.  For some reason it doesn't want to reuse the old ones.
+  CloneFunctionInto(NewKernel, F, VV, true, RI);
 
   return NewKernel;
 }
