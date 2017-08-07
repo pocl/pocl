@@ -52,7 +52,7 @@ else()
 endif()
 endif()
 
-set(KERNEL_CL_FLAGS "-Xclang" "-cl-std=CL${HOST_DEVICE_CL_STD}" "-D__OPENCL_C_VERSION__=${HOST_DEVICE_CL_VERSION}" ${KERNEL_CL_FLAGS})
+set(KERNEL_CL_FLAGS "-Wall" "-Wno-unused-local-typedef" "-Xclang" "-cl-std=CL${HOST_DEVICE_CL_STD}" "-D__OPENCL_C_VERSION__=${HOST_DEVICE_CL_VERSION}" ${KERNEL_CL_FLAGS})
 separate_arguments(HOST_CLANG_FLAGS)
 separate_arguments(HOST_LLC_FLAGS)
 set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=${HOST_DEVICE_CL_VERSION} ${HOST_DEVICE_EXTENSION_DEFINES}")

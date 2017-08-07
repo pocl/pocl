@@ -213,9 +213,9 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
       pocl_remove (objfile_path);
     }
 
-  pocl_cache_release_lock (write_lock);
 
 FINISH:
+  pocl_cache_release_lock (write_lock);
   pocl_destroy_llvm_module (llvm_module);
   POCL_MEM_FREE (objfile);
 
