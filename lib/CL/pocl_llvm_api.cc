@@ -1526,6 +1526,12 @@ char* get_cpu_name() {
   }
 #endif
 
+  if (r.str() == "generic") {
+    POCL_MSG_WARN("LLVM does not recognize your cpu, trying to use "
+                   HOST_CPU " for -target-cpu\n");
+    r = llvm::StringRef(HOST_CPU);
+  }
+
   assert(r.size() > 0);
   char* cpu_name = (char*) malloc (r.size()+1);
   strncpy(cpu_name, r.data(), r.size());
