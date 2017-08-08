@@ -1555,6 +1555,7 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
 
   std::vector<std::string> passes;
   passes.push_back("remove-optnone");
+  passes.push_back("optimize-wi-func-calls");
   passes.push_back("handle-samplers");
   passes.push_back("workitem-handler-chooser");
   passes.push_back("mem2reg");
