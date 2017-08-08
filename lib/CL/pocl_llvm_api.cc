@@ -191,11 +191,6 @@ unlink_source(FrontendOptions &fe)
 #define PassManager legacy::PassManager
 #endif
 
-static llvm::Module*
-ParseIRFile(const char* fname, SMDiagnostic &Err, llvm::LLVMContext &ctx)
-{
-    return parseIRFile(fname, Err, ctx).release();
-}
 
 static void get_build_log(cl_program program,
                          unsigned device_i,
@@ -1381,8 +1376,7 @@ static const char* getX86KernelLibName() {
 #endif
 
 // Returns the TargetMachine instance or zero if no triple is provided.
-static TargetMachine* GetTargetMachine(cl_device_id device,
- const std::vector<std::string>& MAttrs=std::vector<std::string>()) {
+static TargetMachine* GetTargetMachine(cl_device_id device) {
 
   std::string Error;
   Triple TheTriple(device->llvm_target_triplet);
@@ -1401,17 +1395,8 @@ static TargetMachine* GetTargetMachine(cl_device_id device,
     return 0;
   }
   
-  // Package up features to be passed to target/subtarget
-  std::string FeaturesStr;
-  if (MAttrs.size()) {
-    SubtargetFeatures Features;
-    for (unsigned i = 0; i != MAttrs.size(); ++i)
-      Features.AddFeature(MAttrs[i]);
-    FeaturesStr = Features.getString();
-  }
-
   TargetMachine* TM = TheTarget->createTargetMachine(TheTriple.getTriple(),
-                                                     MCPU, FeaturesStr, 
+                                                     MCPU, StringRef(""),
                                                      GetTargetOptions(),
                                                      Reloc::PIC_, 
                                                      CodeModel::Default,
@@ -1861,7 +1846,7 @@ kernel_library
   if (pocl_exists(kernellib.c_str()))
     {
       POCL_MSG_PRINT_LLVM("Using %s as the built-in lib.\n", kernellib.c_str());
-      lib = ParseIRFile(kernellib.c_str(), Err, *GlobalContext());
+      lib = parseIRFile(kernellib.c_str(), Err, *GlobalContext()).release();
     }
   else
     {
@@ -1869,7 +1854,7 @@ kernel_library
         {
           POCL_MSG_WARN("Using fallback %s as the built-in lib.\n",
                         kernellib_fallback.c_str());
-          lib = ParseIRFile(kernellib_fallback.c_str(), Err, *GlobalContext());
+          lib = parseIRFile(kernellib_fallback.c_str(), Err, *GlobalContext()).release();
         }
       else
         POCL_ABORT("Kernel library file %s doesn't exist.", kernellib.c_str());
@@ -1929,7 +1914,7 @@ int pocl_llvm_generate_workgroup_function_nowrite(
 #endif
       char program_bc_path[POCL_FILENAME_LENGTH];
       pocl_cache_program_bc_path(program_bc_path, kernel->program, device_i);
-      input = ParseIRFile(program_bc_path, Err, *GlobalContext());
+      input = parseIRFile(program_bc_path, Err, *GlobalContext()).release();
     }
 
   /* Note this is a hack to get SPIR working. We'll be linking the
@@ -2029,7 +2014,7 @@ pocl_update_program_llvm_irs(cl_program program,
     return -1;
 
   program->llvm_irs[device_i] =
-              ParseIRFile(program_bc_path, Err, *GlobalContext());
+              parseIRFile(program_bc_path, Err, *GlobalContext()).release();
   return 0;
 }
 
