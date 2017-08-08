@@ -48,7 +48,8 @@ set(LLVMPASSES_SOURCES "Barrier.h"
   "DebugHelpers.h" "DebugHelpers.cc"
   "RemoveBarrierCalls.h" "RemoveBarrierCalls.cc"
   "HandleSamplerInitialization.h" "HandleSamplerInitialization.cc"
-  "RemoveOptnoneFromWIFunc.h" "RemoveOptnoneFromWIFunc.cc")
+  "RemoveOptnoneFromWIFunc.h" "RemoveOptnoneFromWIFunc.cc"
+  "OptimizeWorkItemFuncCalls.h" "OptimizeWorkItemFuncCalls.cc")
 
 if(POCL_USE_FAKE_ADDR_SPACE_IDS)
 list(APPEND LLVMPASSES_SOURCES "TargetAddressSpaces.cc")
