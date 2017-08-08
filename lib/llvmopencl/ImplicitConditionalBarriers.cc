@@ -30,17 +30,18 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "pocl.h"
 
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/Instructions.h"
-#include "llvm/IR/Module.h"
+#include <llvm/Transforms/Utils/BasicBlockUtils.h>
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/Instructions.h>
+#include <llvm/IR/Module.h>
+
+POP_COMPILER_DIAGS
 
 #include "ImplicitConditionalBarriers.h"
 #include "Barrier.h"
 #include "Workgroup.h"
 #include "VariableUniformityAnalysis.h"
 
-POP_COMPILER_DIAGS
 
 //#define DEBUG_COND_BARRIERS
 

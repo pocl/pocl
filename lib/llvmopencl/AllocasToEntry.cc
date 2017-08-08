@@ -1,5 +1,4 @@
-// Header for AllocasToEntry, an LLVM pass to move allocas to the function 
-// entry node.
+// AllocasToEntry, an LLVM pass to move allocas to the function entry node.
 // 
 // Copyright (c) 2013 Pekka Jääskeläinen / TUT
 // 
