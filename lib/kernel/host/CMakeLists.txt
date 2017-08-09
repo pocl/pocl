@@ -77,6 +77,10 @@ function(x86_distro_variant_to_flags VARIANT OUT_LLC_FLAGS OUT_CLANG_FLAGS)
     set(CLANG_F "${CLANG_MARCH_FLAG}sandybridge")
     set(LLC_F "-mcpu=sandybridge")
 
+  elseif("${VARIANT}" STREQUAL "avx_f16c")
+    set(CLANG_F "${CLANG_MARCH_FLAG}ivybridge")
+    set(LLC_F "-mcpu=ivybridge")
+
   elseif("${VARIANT}" STREQUAL "avx_fma4")
     set(CLANG_F "${CLANG_MARCH_FLAG}bdver1")
     set(LLC_F "-mcpu=bdver1")

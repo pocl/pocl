@@ -1660,6 +1660,8 @@ static const char* getX86KernelLibName() {
     res = "sse41";
   if (Features["avx"] && Features["cx16"] && Features["popcnt"])
     res = "avx";
+  if (Features["avx"] && Features["cx16"] && Features["popcnt"] && Features["f16c"])
+    res = "avx_f16c";
   if (Features["avx"] && Features["cx16"] && Features["popcnt"]
       && Features["xop"] && Features["fma4"])
     res = "avx_fma4";
