@@ -62,31 +62,27 @@ POname(clGetProgramBuildInfo)(cl_program            program,
       POCL_RETURN_ERROR_ON((program->build_status == CL_BUILD_NONE),
                            CL_INVALID_PROGRAM,
                            "Program was not built");
-      char *build_log;
+      char *build_log = NULL;
       if (program->main_build_log[0])
+        {
           build_log = strdup(program->main_build_log);
+          POCL_RETURN_ERROR_ON ((build_log == NULL), CL_OUT_OF_HOST_MEMORY,
+                                "failed to read build log");
+        }
       else if (program->build_log[device_i])
+        {
           build_log = strdup(program->build_log[device_i]);
+          POCL_RETURN_ERROR_ON ((build_log == NULL), CL_OUT_OF_HOST_MEMORY,
+                                "failed to read build log");
+        }
       else
           build_log = pocl_cache_read_buildlog(program, device_i);
       if (program->build_status == CL_BUILD_NONE)
-          build_log = "";
-      POCL_RETURN_ERROR_ON((build_log==NULL), CL_OUT_OF_HOST_MEMORY, "failed to read build log");
-
-      size_t const value_size = strlen(build_log) + 1;
-      if (param_value)
-      {
-        if (param_value_size < value_size)
-        {
-            POCL_MEM_FREE(build_log);
-            return CL_INVALID_VALUE;
-        }
-        memcpy(param_value, build_log, value_size);
-      }
-      POCL_MEM_FREE(build_log);
-      if (param_value_size_ret)
-        *param_value_size_ret = value_size;
-      return CL_SUCCESS;
+        build_log = NULL;
+      if (build_log)
+        POCL_RETURN_GETINFO_STR (build_log);
+      else
+        POCL_RETURN_GETINFO_STR ("");
     }
   case CL_PROGRAM_BINARY_TYPE:
     {
