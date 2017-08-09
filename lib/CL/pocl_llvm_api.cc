@@ -2299,7 +2299,14 @@ pocl_llvm_get_kernel_count(cl_program program, char **knames,
 
   // TODO: is it safe to assume every device (i.e. the index 0 here)
   // has the same set of programs & kernels?
-  llvm::Module *mod = (llvm::Module *) program->llvm_irs[0];
+  // ..no, it isn't :)
+  llvm::Module *mod = NULL;
+  unsigned i;
+  for (i = 0; i < program->num_devices; i++)
+    if (program->llvm_irs[i]) {
+      mod = (llvm::Module *)program->llvm_irs[i];
+      break;
+    }
 
   llvm::NamedMDNode *md = mod->getNamedMetadata("opencl.kernels");
   if (md) {
