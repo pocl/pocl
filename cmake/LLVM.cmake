@@ -711,6 +711,9 @@ else()
   endif()
 endif()
 
+execute_process(COMMAND "${CLANG}" "--print-resource-dir" OUTPUT_VARIABLE CLANG_RESOURCE_DIR)
+string(STRIP "${CLANG_RESOURCE_DIR}" CLANG_RESOURCE_DIR)
+
 if(LLVM_OLDER_THAN_5_0)
 
   ######################################################################################

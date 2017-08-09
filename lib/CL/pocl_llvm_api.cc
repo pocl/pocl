@@ -350,7 +350,6 @@ int pocl_llvm_build_program(cl_program program,
   ss << "-Dinline= ";
   // The current directory is a standard search path.
   ss << "-I. ";
-
   // required for clGetKernelArgInfo()
   ss << "-cl-kernel-arg-info ";
 
@@ -410,6 +409,7 @@ int pocl_llvm_build_program(cl_program program,
       itemstrs.push_back(*i);
       ++i;
     }
+
   for (unsigned idx=0; idx<itemstrs.size(); idx++)
     {
       // note: if itemstrs is modified after this, itemcstrs will be full
@@ -468,15 +468,23 @@ int pocl_llvm_build_program(cl_program program,
   la->AsmBlocks = true;  // -fasm (?)
 
   std::string kernelh;
+  std::string BuiltinRenamesH;
+
   if (pocl_get_bool_option("POCL_BUILDING", 0)) {
     kernelh  = SRCDIR;
-    kernelh += "/include/_kernel.h";
   } else {
     kernelh = PKGDATADIR;
-    kernelh += "/include/_kernel.h";
   }
-  po.Includes.push_back(kernelh);
+  BuiltinRenamesH = kernelh;
+  kernelh += "/include/_kernel.h";
+  BuiltinRenamesH += "/include/_builtin_renames.h";
 
+  po.Includes.push_back(BuiltinRenamesH);
+#ifndef LLVM_OLDER_THAN_4_0
+  // Use Clang's opencl-c.h header.
+  po.Includes.push_back(CLANG_RESOURCE_DIR "/include/opencl-c.h");
+#endif
+  po.Includes.push_back(kernelh);
   clang::TargetOptions &ta = pocl_build.getTargetOpts();
   ta.Triple = device->llvm_target_triplet;
   if (device->llvm_cpu != NULL)

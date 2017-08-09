@@ -28,7 +28,7 @@ cl_command_queue queue;
 
 #define ERRCHECK()  if (check_cl_error(errcode, __LINE__, __FUNCTION__)) abort();
 
-static const unsigned vecelts[5]={2,3,4,8,16};
+static const unsigned vecelts[] = {2,4,8,16};
 static const int stimuli[] = {4, 2, 69, 4, 5, 0, 45, 16, 4, 6, 1, 18, 28, 14,
                  22, 16, 8, 2, 0, 31, 42, 11, 62, 88, 99, 23, 13};
 
@@ -71,8 +71,8 @@ private:
         mask_type = "UNKNOWN_MASK";
     }
 
-    for(unsigned n_loop=0; n_loop<5; n_loop++) {
-        for(unsigned m_loop=0; m_loop<5; m_loop++) {
+    for(unsigned n_loop=0; n_loop<4; n_loop++) {
+        for(unsigned m_loop=0; m_loop<4; m_loop++) {
 
             n = vecelts[n_loop];
             m = vecelts[m_loop];
@@ -296,8 +296,8 @@ public:
     ERRCHECK()
 
     unsigned errors = 0;
-    for(unsigned n_loop=0; n_loop<5; n_loop++) {
-          for(unsigned m_loop=0; m_loop<5; m_loop++) {
+    for(unsigned n_loop=0; n_loop<4; n_loop++) {
+          for(unsigned m_loop=0; m_loop<4; m_loop++) {
               unsigned m = vecelts[m_loop];
               for(unsigned i=0; i<m; i++) {
                 in2[i]=(D)(i+m);

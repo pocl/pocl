@@ -27,6 +27,8 @@
  * These map down to the corresponding SPIR/LLVM IR bitcast instruction.
  */
 
+#if (__clang_major__ < 4)
+
 #define DEFINE_AS_TYPE(SRC, DST)                                        \
   _CL_ALWAYSINLINE _CL_OVERLOADABLE                                     \
   DST as_##DST(SRC a)                                                   \
@@ -237,3 +239,5 @@ DEFINE_AS_TYPE_128(long16)
 DEFINE_AS_TYPE_128(ulong16))
 __IF_FP64(
 DEFINE_AS_TYPE_128(double16))
+
+#endif

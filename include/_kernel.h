@@ -51,16 +51,6 @@
 
 #include "_enable_all_exts.h"
 
-/* Language feature detection */
-/* must come after _enable_all_exts.h b/c of pocl_types.h*/
-#include "_kernel_c.h"
-
-/* required to be defined by the OpenCL standard, see:
-   https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/preprocessorDirectives.html */
-#define __kernel_exec(X, typen)                                               \
-  __kernel __attribute__ ((work_group_size_hint (X, 1, 1)))                   \
-      __attribute__ ((vec_type_hint (typen)))
-
 /* Enable double precision. This should really only be done when
    building the run-time library; when building application code, we
    should instead check a macro to see whether the application has
@@ -101,12 +91,107 @@
 #define __IF_EA64(x)
 #endif
 
+#include "_builtin_renames.h"
+
+/* 3.9 needs access qualifier */
+#if ((__clang_major__ < 4) && (__clang_minor__ < 9))
+
+#undef CLANG_HAS_IMAGE_AS
+#define IMG_WO_AQ
+#define IMG_RO_AQ
+#define IMG_RW_AQ
+
+#else
+
+#define CLANG_HAS_IMAGE_AS
+#define IMG_RO_AQ __read_only
+#define IMG_WO_AQ __write_only
+
+#if (__OPENCL_C_VERSION__ > 199)
+#define CLANG_HAS_RW_IMAGES
+#define IMG_RW_AQ __read_write
+#else
+#undef CLANG_HAS_RW_IMAGES
+#define IMG_RW_AQ __RW_IMAGES_UNSUPPORTED_BEFORE_CL_20
+#endif
+
+#endif
+
+/* Image types (implementation).
+ * Note: there is a duplicate definition in
+ * lib/CL/devices/dev_image.h - keep in sync?
+ */
+typedef int dev_sampler_t;
+
+typedef struct dev_image_t {
+  void* _data;
+  int _width;
+  int _height;
+  int _depth;
+  int _image_array_size;
+  int _row_pitch;
+  int _slice_pitch;
+  int _num_mip_levels; /* maybe not needed */
+  int _num_samples; /* maybe not needed */
+  int _order;
+  int _data_type;
+  int _num_channels;
+  int _elem_size;
+} dev_image_t;
+
+#include "_kernel_renames.h"
+
 /* A static assert statement to catch inconsistencies at build time */
 #if __has_extension(__c_static_assert__)
 #  define _CL_STATIC_ASSERT(_t, _x) _Static_assert(_x, #_t)
 #else
 #  define _CL_STATIC_ASSERT(_t, _x) typedef int __cl_ai##_t[(x) ? 1 : -1];
 #endif
+
+#if (__clang_major__ >= 4)
+
+#ifndef _OPENCL_H_
+/* Use the declarations shipped with Clang. */
+/* Check for _OPENCL_H already here because the kernel compiler loads the
+   header beforehand, but cannot find the file due to include paths not
+   set up. */
+#include <opencl-c.h>
+
+#endif
+
+/* GNU's libm seems to use INT_MIN here while the Clang's header uses
+   INT_MAX. Both are allowed by the OpenCL specs. */
+#undef FP_ILOGBNAN
+#define FP_ILOGBNAN INT_MIN
+
+/* Function/type attributes supported by Clang/SPIR */
+#if __has_attribute(__always_inline__)
+#  define _CL_ALWAYSINLINE __attribute__((__always_inline__))
+#else
+#  define _CL_ALWAYSINLINE
+#endif
+#if __has_attribute(__noinline__)
+#  define _CL_NOINLINE __attribute__((__noinline__))
+#else
+#  define _CL_NOINLINE
+#endif
+#if __has_attribute(__overloadable__)
+#  define _CL_OVERLOADABLE __attribute__((__overloadable__))
+#else
+#  define _CL_OVERLOADABLE
+#endif
+
+#else
+
+/* Language feature detection */
+/* must come after _enable_all_exts.h b/c of pocl_types.h*/
+#include "_kernel_c.h"
+
+/* required to be defined by the OpenCL standard, see:
+   https://www.khronos.org/registry/OpenCL/sdk/1.2/docs/man/xhtml/preprocessorDirectives.html */
+#define __kernel_exec(X, typen)                                               \
+  __kernel __attribute__ ((work_group_size_hint (X, 1, 1)))                   \
+      __attribute__ ((vec_type_hint (typen)))
 
 /* Ensure the data types have the right sizes */
 _CL_STATIC_ASSERT(char  , sizeof(char  ) == 1);
@@ -525,7 +610,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
 #define FLT_RADIX 2
 
 #define FP_ILOGB0   INT_MIN
-#define FP_ILOGBNAN INT_MIN
+#define FP_ILOGBNAN INT_MAX
 
 #define M_E_F        2.71828182845904523536028747135f
 #define M_LOG2E_F    1.44269504088896340735992468100f
@@ -1085,159 +1170,6 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
   float4   _CL_OVERLOADABLE NAME(float4  , float4  );   \
   float8   _CL_OVERLOADABLE NAME(float8  , float8  );   \
   float16  _CL_OVERLOADABLE NAME(float16 , float16 );
-
-/* Move built-in declarations and libm functions out of the way.
-  (There should be a better way of doing so. These functions are
-  either built-in math functions for OpenCL (see Clang's
-  "Builtins.def"), although the either should not be, or should have
-  the correct prototype. Functions defined in libc or libm may also
-  interfere with OpenCL's functions, since their prototypes will be
-  wrong. */
-#define abs            _cl_abs
-#define abs_diff       _cl_abs_diff
-#define acos           _cl_acos
-#define acosh          _cl_acosh
-#define acospi         _cl_acospi
-#define add_sat        _cl_add_sat
-#define all            _cl_all
-#define any            _cl_any
-#define asin           _cl_asin
-#define asinh          _cl_asinh
-#define asinpi         _cl_asinpi
-#define atan           _cl_atan
-#define atan2          _cl_atan2
-#define atan2pi        _cl_atan2pi
-#define atanh          _cl_atanh
-#define atanpi         _cl_atanpi
-#define bitselect      _cl_bitselect
-#define cbrt           _cl_cbrt
-#define ceil           _cl_ceil
-#define clamp          _cl_clamp
-#define clz            _cl_clz
-#define copysign       _cl_copysign
-#define cos            _cl_cos
-#define cosh           _cl_cosh
-#define cospi          _cl_cospi
-#define cross          _cl_cross
-#define degrees        _cl_degrees
-#define distance       _cl_distance
-#define dot            _cl_dot
-#define erf            _cl_erf
-#define erfc           _cl_erfc
-#define exp            _cl_exp
-#define exp10          _cl_exp10
-#define exp2           _cl_exp2
-#define expm1          _cl_expm1
-#define fabs           _cl_fabs
-#define fast_distance  _cl_fast_distance
-#define fast_length    _cl_fast_length
-#define fast_normalize _cl_fast_normalize
-#define fdim           _cl_fdim
-#define floor          _cl_floor
-#define fma            _cl_fma
-#define fmax           _cl_fmax
-#define fmin           _cl_fmin
-#define fmod           _cl_fmod
-#define fract          _cl_fract
-#define frexp          _cl_frexp
-#define hadd           _cl_hadd
-#define half_cos       _cl_half_cos
-#define half_divide    _cl_half_divide
-#define half_exp       _cl_half_exp
-#define half_exp10     _cl_half_exp10
-#define half_exp2      _cl_half_exp2
-#define half_log       _cl_half_log
-#define half_log10     _cl_half_log10
-#define half_log2      _cl_half_log2
-#define half_powr      _cl_half_powr
-#define half_recip     _cl_half_recip
-#define half_rsqrt     _cl_half_rsqrt
-#define half_sin       _cl_half_sin
-#define half_sqrt      _cl_half_sqrt
-#define half_tan       _cl_half_tan
-#define hypot          _cl_hypot
-#define ilogb          _cl_ilogb
-#define isequal        _cl_isequal
-#define isfinite       _cl_isfinite
-#define isgreater      _cl_isgreater
-#define isgreaterequal _cl_isgreaterequal
-#define isinf          _cl_isinf
-#define isless         _cl_isless
-#define islessequal    _cl_islessequal
-#define islessgreater  _cl_islessgreater
-#define isnan          _cl_isnan
-#define isnormal       _cl_isnormal
-#define isnotequal     _cl_isnotequal
-#define isordered      _cl_isordered
-#define isunordered    _cl_isunordered
-#define ldexp          _cl_ldexp
-#define length         _cl_length
-#define lgamma         _cl_lgamma
-#define lgamma_r       _cl_lgamma_r
-#define log            _cl_log
-#define log10          _cl_log10
-#define log1p          _cl_log1p
-#define log2           _cl_log2
-#define logb           _cl_logb
-#define mad            _cl_mad
-#define mad24          _cl_mad24
-#define mad_hi         _cl_mad_hi
-#define mad_sat        _cl_mad_sat
-#define max            _cl_max
-#define maxmag         _cl_maxmag
-#define min            _cl_min
-#define minmag         _cl_minmag
-#define mix            _cl_mix
-#define modf           _cl_modf
-#define mul24          _cl_mul24
-#define mul_hi         _cl_mul_hi
-#define nan            _cl_nan
-#define native_cos     _cl_native_cos
-#define native_divide  _cl_native_divide
-#define native_exp     _cl_native_exp
-#define native_exp10   _cl_native_exp10
-#define native_exp2    _cl_native_exp2
-#define native_log     _cl_native_log
-#define native_log10   _cl_native_log10
-#define native_log2    _cl_native_log2
-#define native_powr    _cl_native_powr
-#define native_recip   _cl_native_recip
-#define native_rsqrt   _cl_native_rsqrt
-#define native_sin     _cl_native_sin
-#define native_sqrt    _cl_native_sqrt
-#define native_tan     _cl_native_tan
-#define nextafter      _cl_nextafter
-#define normalize      _cl_normalize
-#define popcount       _cl_popcount
-#define pow            _cl_pow
-#define pown           _cl_pown
-#define powr           _cl_powr
-#define radians        _cl_radians
-#define remainder      _cl_remainder
-#define remquo         _cl_remquo
-#define rhadd          _cl_rhadd
-#define rint           _cl_rint
-#define rootn          _cl_rootn
-#define rotate         _cl_rotate
-#define round          _cl_round
-#define rsqrt          _cl_rsqrt
-#define select         _cl_select
-#define sign           _cl_sign
-#define signbit        _cl_signbit
-#define sin            _cl_sin
-#define sincos         _cl_sincos
-#define sinh           _cl_sinh
-#define sinpi          _cl_sinpi
-#define smoothstep     _cl_smoothstep
-#define sqrt           _cl_sqrt
-#define step           _cl_step
-#define sub_sat        _cl_sub_sat
-#define tan            _cl_tan
-#define tanh           _cl_tanh
-#define tanpi          _cl_tanpi
-#define tgamma         _cl_tgamma
-#define trunc          _cl_trunc
-#define upsample       _cl_upsample
 
 _CL_DECLARE_FUNC_V_V(acos)
 _CL_DECLARE_FUNC_V_V(acosh)
@@ -2306,14 +2238,6 @@ _CL_DECLARE_SHUFFLE_MN(ulong , ulong ))
 __IF_FP64(
 _CL_DECLARE_SHUFFLE_MN(double, ulong ))
 
-// We provide our own printf
-// Note: We declare our printf as taking a constant format string, but
-// we implement it in C using a const format string (i.e. a format
-// string living in a different address space). This works only if all
-// address spaces are actually the same, e.g. on CPUs.
-int __cl_printf(constant char* restrict format, ...);
-#define printf __cl_printf
-
 void wait_group_events (int num_events, event_t *event_list);
 
 /***************************************************************************/
@@ -2415,30 +2339,6 @@ __IF_FP16(_CL_DECLARE_PREFETCH_FUNCS(half));
 _CL_DECLARE_PREFETCH_FUNCS(float);
 __IF_FP64(_CL_DECLARE_PREFETCH_FUNCS(double));
 
-
-/* 3.9 needs access qualifier */
-#if ((__clang_major__ < 4) && (__clang_minor__ < 9))
-
-#undef CLANG_HAS_IMAGE_AS
-#define IMG_WO_AQ
-#define IMG_RO_AQ
-#define IMG_RW_AQ
-
-#else
-
-#define CLANG_HAS_IMAGE_AS
-#define IMG_RO_AQ __read_only
-#define IMG_WO_AQ __write_only
-
-#if (__OPENCL_C_VERSION__ > 199)
-#define CLANG_HAS_RW_IMAGES
-#define IMG_RW_AQ __read_write
-#else
-#undef CLANG_HAS_RW_IMAGES
-#define IMG_RW_AQ __RW_IMAGES_UNSUPPORTED_BEFORE_CL_20
-#endif
-
-#endif
 
 /* NO sampler */
 
@@ -2879,6 +2779,8 @@ int _CL_OVERLOADABLE get_image_depth (IMG_RW_AQ image3d_t image);
 int2 _CL_OVERLOADABLE get_image_dim (IMG_RW_AQ image2d_t image);
 int2 _CL_OVERLOADABLE get_image_dim (IMG_RW_AQ image2d_array_t image);
 int4 _CL_OVERLOADABLE get_image_dim (IMG_RW_AQ image3d_t image);
+
+#endif
 
 #endif
 
