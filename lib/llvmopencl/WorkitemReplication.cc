@@ -322,6 +322,16 @@ WorkitemReplication::ProcessFunction(Function &F)
 
   //pocl::dumpCFG(F, F.getName().str() + ".after_repl.dot", original_parallel_regions);
 
+  if (original_parallel_regions) {
+    for (auto i = original_parallel_regions->begin(),
+              e = original_parallel_regions->end();
+              i != e; ++i) {
+      ParallelRegion *p = *i;
+      delete p;
+    }
+  }
+  delete original_parallel_regions;
+  original_parallel_regions = nullptr;
 //  F.viewCFG();
 
   return true;

@@ -52,7 +52,8 @@ namespace pocl {
   public:
     static char ID;
 
-  WorkitemLoops() : pocl::WorkitemHandler(ID) {}
+  WorkitemLoops() : pocl::WorkitemHandler(ID),
+                    original_parallel_regions(nullptr) {}
 
     virtual void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
     virtual bool runOnFunction(llvm::Function &F);
@@ -87,6 +88,7 @@ namespace pocl {
 
     void FixMultiRegionVariables(ParallelRegion *region);
     void AddContextSaveRestore(llvm::Instruction *instruction);
+    void releaseParallelRegions();
 
     llvm::Value *GetLinearWiIndex(llvm::IRBuilder<> &builder, llvm::Module *M,
                                   ParallelRegion *region);

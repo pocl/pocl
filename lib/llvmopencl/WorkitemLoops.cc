@@ -143,6 +143,8 @@ WorkitemLoops::runOnFunction(Function &F)
   contextArrays.clear();
   tempInstructionIds.clear();
 
+  releaseParallelRegions();
+
   return changed;
 }
 
@@ -341,6 +343,20 @@ WorkitemLoops::RegionOfBlock(llvm::BasicBlock *bb)
   return NULL;
 }
 
+void WorkitemLoops::releaseParallelRegions() {
+  if (original_parallel_regions) {
+    for (auto i = original_parallel_regions->begin(),
+              e = original_parallel_regions->end();
+              i != e; ++i) {
+      ParallelRegion *p = *i;
+      delete p;
+    }
+
+    delete original_parallel_regions;
+    original_parallel_regions = nullptr;
+  }
+}
+
 bool
 WorkitemLoops::ProcessFunction(Function &F)
 {
@@ -357,6 +373,8 @@ WorkitemLoops::ProcessFunction(Function &F)
       ParallelRegion::insertLocalIdInit(&F.getEntryBlock(), 0, 0, 0);
       return true;
     }
+
+  releaseParallelRegions();
 
 #ifdef LLVM_OLDER_THAN_3_7
   original_parallel_regions = K->getParallelRegions(LI);
