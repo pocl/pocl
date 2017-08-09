@@ -18,6 +18,8 @@
 
 #define CLANG "@CLANG@"
 
+#define CLANG_RESOURCE_DIR "@CLANG_RESOURCE_DIR@"
+
 /* "Using a SPIR generator Clang from Khronos." */
 #cmakedefine CLANG_SPIR
 

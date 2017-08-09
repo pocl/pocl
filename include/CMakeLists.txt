@@ -25,7 +25,7 @@
 
 add_subdirectory("CL")
 
-set(PRIVATE_HEADERS _enable_all_exts.h _kernel.h _kernel_c.h _kernel_constants.h pocl_types.h pocl_device.h pocl.h)
+set(PRIVATE_HEADERS _enable_all_exts.h _builtin_renames.h _kernel.h _kernel_c.h _kernel_constants.h pocl_types.h pocl_device.h pocl.h)
 
 install(FILES ${PRIVATE_HEADERS}
         DESTINATION ${POCL_INSTALL_PRIVATE_HEADER_DIR})

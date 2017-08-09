@@ -712,6 +712,13 @@ else()
 endif()
 
 if(LLVM_OLDER_THAN_5_0)
+  set(CLANG_RESOURCE_DIR "${LLVM_PREFIX}/lib/clang/${LLVM_VERSION_FULL}")
+else()
+  execute_process(COMMAND "${CLANG}" "--print-resource-dir" OUTPUT_VARIABLE CLANG_RESOURCE_DIR)
+  string(STRIP "${CLANG_RESOURCE_DIR}" CLANG_RESOURCE_DIR)
+endif()
+
+if(LLVM_OLDER_THAN_5_0)
 
   ######################################################################################
   # Test for presence of Clang calling convention patch from

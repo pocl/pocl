@@ -2,7 +2,7 @@
    functions declarations for kernel builtin implementations using C.
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
-   Copyright (c) 2011-2013 Pekka Jääskeläinen / TUT
+   Copyright (c) 2011-2017 Pekka Jääskeläinen / TUT
    Copyright (c) 2011-2013 Erik Schnetter <eschnetter@perimeterinstitute.ca>
                            Perimeter Institute for Theoretical Physics
 
@@ -264,5 +264,7 @@ typedef struct _pocl_image1d_array_t { dev_image_t base; }* image1d_array_t;
 #endif
 
 typedef uint cl_mem_fence_flags;
+
+#include "_enable_all_exts.h"
 
 #endif

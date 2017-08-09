@@ -25,7 +25,8 @@
    blocking one which doesn't actually need events for 
    anything. The event waiting is therefore a dummy function. */
 
-void wait_group_events (int num_events,
-                        event_t *event_list) {
-    barrier(CLK_GLOBAL_MEM_FENCE);
+void _CL_OVERLOADABLE wait_group_events (int num_events,
+                                         event_t *event_list)
+{
+  barrier(CLK_GLOBAL_MEM_FENCE);
 }
