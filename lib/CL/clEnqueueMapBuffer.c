@@ -136,7 +136,6 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   POCL_MSG_PRINT_MEMORY ("Buffer %p New Mapping: host_ptr %p offset %zu\n",
                          buffer, mapping_info->host_ptr, mapping_info->offset);
 
-  POname(clRetainMemObject) (buffer);
   buffer->owning_device = command_queue->device;
   pocl_command_enqueue(command_queue, cmd);
 
