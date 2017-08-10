@@ -37,7 +37,7 @@ POname (clLinkProgram) (cl_context context,
                         cl_int *errcode_ret)
 CL_API_SUFFIX__VERSION_1_2
 {
-  int errcode;
+  int errcode; unsigned i;
   cl_program program = NULL;
   cl_device_id *unique_devlist = NULL;
 
@@ -52,7 +52,16 @@ CL_API_SUFFIX__VERSION_1_2
   POCL_GOTO_ERROR_COND ((num_devices == 0 && device_list != NULL),
                         CL_INVALID_VALUE);
 
-  /* DEVICE LIST */
+  for (i = 0; i < num_input_programs; i++)
+    {
+      cl_program p = input_programs[i];
+      POCL_GOTO_ERROR_ON (
+          ((p->binary_type != CL_PROGRAM_BINARY_TYPE_LIBRARY)
+           && (p->binary_type != CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT)),
+          CL_INVALID_OPERATION,
+          "clLinkProgram called for !library && !compiled_obj\n");
+    }
+
   if (num_devices == 0)
     {
       num_devices = context->num_devices;
@@ -60,7 +69,7 @@ CL_API_SUFFIX__VERSION_1_2
     }
   else
     {
-      // convert subdevices to devices and remove duplicates
+      /* convert subdevices to devices and remove duplicates */
       cl_uint real_num_devices = 0;
       unique_devlist = pocl_unique_device_list (device_list,
                                                 num_devices,

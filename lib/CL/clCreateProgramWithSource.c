@@ -99,15 +99,6 @@ POname(clCreateProgramWithSource)(cl_context context,
   program->num_devices = context->num_devices;
   program->devices = context->devices;
   program->build_status = CL_BUILD_NONE;
-  /* we set binary type to NONE here. Based on OCL1.2 spec
-     if program will be compiled using clCompileProgram its binary_type
-     will be set to CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT.
-     clCompileProgram is currently missing in pocl!
-     if program was created by clLinkProgram which is called
-     with the –createlibrary link option its binary_type will be set to
-     CL_PROGRAM_BINARY_TYPE_LIBRARY.
-     clLinkProgram is currently missing in pocl!
-   */
   program->binary_type = CL_PROGRAM_BINARY_TYPE_NONE;
 
   if ((program->binary_sizes =

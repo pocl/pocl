@@ -669,9 +669,18 @@ compile_and_link_program(int compile_program,
                       "not available for the program, or do not exist\n");
 
   program->build_status = CL_BUILD_SUCCESS;
-
+  program->binary_type = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
+  /* if program will be compiled using clCompileProgram its binary_type
+   * will be set to CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT.
+   *
+   * if program was created by clLinkProgram which is called
+   * with the –createlibrary link option its binary_type will be set to
+   * CL_PROGRAM_BINARY_TYPE_LIBRARY.
+   */
   if (create_library)
     program->binary_type = CL_PROGRAM_BINARY_TYPE_LIBRARY;
+  if (compile_program && !link_program)
+    program->binary_type = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
 
   assert(program->num_kernels == 0);
   for (i=0; i < program->num_devices; i++)
