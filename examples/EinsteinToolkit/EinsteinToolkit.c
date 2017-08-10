@@ -445,9 +445,25 @@ static void allocate(cGH const* const cctkGH,
   assert(ptr->mem);
 }
 
+static void deallocate(cGH const* const cctkGH,
+                     ptr_t* const ptr,
+                     CCTK_REAL const val)
+{
+  assert(ptr->ptr);
+  clReleaseMemObject(ptr->mem);
+  free(ptr->ptr);
+}
 
+static cl_mem mem_cctkGH;
+static cl_mem mem_cctk_parameters;
 
-void setup()
+static cl_program program1;
+static cl_kernel kernel1;
+
+static cl_program program2;
+static cl_kernel kernel2;
+
+void setup(const char* program_source1, const char* program_source2)
 {
   cl_int cerr;
   
@@ -538,9 +554,76 @@ void setup()
   
   cmd_queue = clCreateCommandQueue(context, device_id, 0, NULL);
   assert(cmd_queue);
+
+
+  char const* const options =
+    "-DVECTORISE_ALIGNED_ARRAYS=" STR(VECTORISE_ALIGNED_ARRAYS) " "
+    "-DVECTOR_SIZE_I=" STR(VECTOR_SIZE_I) " "
+    "-DVECTOR_SIZE_J=" STR(VECTOR_SIZE_J) " "
+    "-DVECTOR_SIZE_K=" STR(VECTOR_SIZE_K) " "
+    "-DUNROLL_SIZE_I=" STR(UNROLL_SIZE_I) " "
+    "-DUNROLL_SIZE_J=" STR(UNROLL_SIZE_J) " "
+    "-DUNROLL_SIZE_K=" STR(UNROLL_SIZE_K) " "
+    "-DGROUP_SIZE_I=" STR(GROUP_SIZE_I) " "
+    "-DGROUP_SIZE_J=" STR(GROUP_SIZE_J) " "
+    "-DGROUP_SIZE_K=" STR(GROUP_SIZE_K) " "
+    "-DTILE_SIZE_I=" STR(TILE_SIZE_I) " "
+    "-DTILE_SIZE_J=" STR(TILE_SIZE_J) " "
+    "-DTILE_SIZE_K=" STR(TILE_SIZE_K) " ";
+
+  int ierr;
+
+  program1 =
+    clCreateProgramWithSource(context, 1, (const char**)&program_source1,
+                              NULL, NULL);
+  assert(program1);
+
+  ierr = clBuildProgram(program1, 0, NULL, options, NULL, NULL);
+  if (ierr) {
+    size_t log_size;
+    ierr = clGetProgramBuildInfo(program1, device_id,
+                                 CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
+    assert(!ierr);
+    char build_log[log_size];
+    ierr = clGetProgramBuildInfo(program1, device_id,
+                                 CL_PROGRAM_BUILD_LOG,
+                                 log_size, build_log, NULL);
+    assert(!ierr);
+    printf("Build log:\n"
+           "********************************************************************************\n"
+           "%s\n"
+           "********************************************************************************\n", build_log);
+    assert(0);
+  }
+
+  kernel1 = clCreateKernel(program1, "ML_BSSN_CL_RHS1", NULL);
+  assert(kernel1);
+
+  program2 =
+    clCreateProgramWithSource(context, 1, (const char**)&program_source2,
+                              NULL, NULL);
+  assert(program2);
+
+  ierr = clBuildProgram(program2, 0, NULL, options, NULL, NULL);
+  assert(!ierr);
+
+  kernel2 = clCreateKernel(program2, "ML_BSSN_CL_RHS2", NULL);
+  assert(kernel2);
+
 }
 
+void cleanup() {
 
+  clReleaseKernel(kernel1);
+  clReleaseProgram(program1);
+
+  clReleaseKernel(kernel2);
+  clReleaseProgram(program2);
+
+  clReleaseCommandQueue(cmd_queue);
+  clUnloadPlatformCompiler(platform_id);
+  clReleaseContext(context);
+}
 
 void init(cGH              * const cctkGH,
           cctk_parameters_t* const cctk_parameters,
@@ -859,9 +942,132 @@ void init(cGH              * const cctkGH,
   allocate(cctkGH, &cctk_arguments->At22rhs, -1.0);
   allocate(cctkGH, &cctk_arguments->At23rhs, -1.0);
   allocate(cctkGH, &cctk_arguments->At33rhs, -1.0);
+
+  mem_cctkGH =
+    clCreateBuffer(context, CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY,
+                   sizeof *cctkGH, (cGH*)cctkGH, NULL);
+  assert(mem_cctkGH);
+
+  mem_cctk_parameters =
+    clCreateBuffer(context, CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY,
+                   sizeof *cctk_parameters, (cctk_parameters_t*)cctk_parameters, NULL);
+  assert(mem_cctk_parameters);
+
 }
 
+void deinit(cGH              * const cctkGH,
+          cctk_parameters_t* const cctk_parameters,
+          cctk_arguments_t * const cctk_arguments)
+{
 
+  clReleaseMemObject(mem_cctkGH);
+  clReleaseMemObject(mem_cctk_parameters);
+
+  deallocate(cctkGH, &cctk_arguments->x, 10.0);
+  deallocate(cctkGH, &cctk_arguments->y, 11.0);
+  deallocate(cctkGH, &cctk_arguments->z, 12.0);
+  deallocate(cctkGH, &cctk_arguments->r, 13.0);
+  deallocate(cctkGH, &cctk_arguments->At11, 0.0);
+  deallocate(cctkGH, &cctk_arguments->At11_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->At11_p_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->At12, 0.0);
+  deallocate(cctkGH, &cctk_arguments->At12_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->At12_p_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->At13, 0.0);
+  deallocate(cctkGH, &cctk_arguments->At13_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->At13_p_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->At22, 0.0);
+  deallocate(cctkGH, &cctk_arguments->At22_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->At22_p_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->At23, 0.0);
+  deallocate(cctkGH, &cctk_arguments->At23_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->At23_p_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->At33, 0.0);
+  deallocate(cctkGH, &cctk_arguments->At33_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->At33_p_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->A, 0.0);
+  deallocate(cctkGH, &cctk_arguments->A_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->A_p_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->Arhs, -1.0);
+  deallocate(cctkGH, &cctk_arguments->B1, 0.0);
+  deallocate(cctkGH, &cctk_arguments->B1_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->B1_p_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->B2, 0.0);
+  deallocate(cctkGH, &cctk_arguments->B2_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->B2_p_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->B3, 0.0);
+  deallocate(cctkGH, &cctk_arguments->B3_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->B3_p_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->B1rhs, -1.0);
+  deallocate(cctkGH, &cctk_arguments->B2rhs, -1.0);
+  deallocate(cctkGH, &cctk_arguments->B3rhs, -1.0);
+  deallocate(cctkGH, &cctk_arguments->Xt1, 0.0);
+  deallocate(cctkGH, &cctk_arguments->Xt1_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->Xt1_p_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->Xt2, 0.0);
+  deallocate(cctkGH, &cctk_arguments->Xt2_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->Xt2_p_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->Xt3, 0.0);
+  deallocate(cctkGH, &cctk_arguments->Xt3_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->Xt3_p_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->Xt1rhs, -1.0);
+  deallocate(cctkGH, &cctk_arguments->Xt2rhs, -1.0);
+  deallocate(cctkGH, &cctk_arguments->Xt3rhs, -1.0);
+  deallocate(cctkGH, &cctk_arguments->alpha, 1.0);
+  deallocate(cctkGH, &cctk_arguments->alpha_p, 1.0);
+  deallocate(cctkGH, &cctk_arguments->alpha_p_p, 1.0);
+  deallocate(cctkGH, &cctk_arguments->alpharhs, -1.0);
+  deallocate(cctkGH, &cctk_arguments->phi, 0.0);
+  deallocate(cctkGH, &cctk_arguments->phi_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->phi_p_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->phirhs, -1.0);
+  deallocate(cctkGH, &cctk_arguments->gt11, 1.0);
+  deallocate(cctkGH, &cctk_arguments->gt11_p, 1.0);
+  deallocate(cctkGH, &cctk_arguments->gt11_p_p, 1.0);
+  deallocate(cctkGH, &cctk_arguments->gt12, 0.0);
+  deallocate(cctkGH, &cctk_arguments->gt12_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->gt12_p_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->gt13, 0.0);
+  deallocate(cctkGH, &cctk_arguments->gt13_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->gt13_p_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->gt22, 1.0);
+  deallocate(cctkGH, &cctk_arguments->gt22_p, 1.0);
+  deallocate(cctkGH, &cctk_arguments->gt22_p_p, 1.0);
+  deallocate(cctkGH, &cctk_arguments->gt23, 0.0);
+  deallocate(cctkGH, &cctk_arguments->gt23_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->gt23_p_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->gt33, 1.0);
+  deallocate(cctkGH, &cctk_arguments->gt33_p, 1.0);
+  deallocate(cctkGH, &cctk_arguments->gt33_p_p, 1.0);
+  deallocate(cctkGH, &cctk_arguments->gt11rhs, -1.0);
+  deallocate(cctkGH, &cctk_arguments->gt12rhs, -1.0);
+  deallocate(cctkGH, &cctk_arguments->gt13rhs, -1.0);
+  deallocate(cctkGH, &cctk_arguments->gt22rhs, -1.0);
+  deallocate(cctkGH, &cctk_arguments->gt23rhs, -1.0);
+  deallocate(cctkGH, &cctk_arguments->gt33rhs, -1.0);
+  deallocate(cctkGH, &cctk_arguments->beta1, 0.0);
+  deallocate(cctkGH, &cctk_arguments->beta1_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->beta1_p_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->beta2, 0.0);
+  deallocate(cctkGH, &cctk_arguments->beta2_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->beta2_p_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->beta3, 0.0);
+  deallocate(cctkGH, &cctk_arguments->beta3_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->beta3_p_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->beta1rhs, -1.0);
+  deallocate(cctkGH, &cctk_arguments->beta2rhs, -1.0);
+  deallocate(cctkGH, &cctk_arguments->beta3rhs, -1.0);
+  deallocate(cctkGH, &cctk_arguments->trK, 0.0);
+  deallocate(cctkGH, &cctk_arguments->trK_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->trK_p_p, 0.0);
+  deallocate(cctkGH, &cctk_arguments->trKrhs, -1.0);
+  deallocate(cctkGH, &cctk_arguments->At11rhs, -1.0);
+  deallocate(cctkGH, &cctk_arguments->At12rhs, -1.0);
+  deallocate(cctkGH, &cctk_arguments->At13rhs, -1.0);
+  deallocate(cctkGH, &cctk_arguments->At22rhs, -1.0);
+  deallocate(cctkGH, &cctk_arguments->At23rhs, -1.0);
+  deallocate(cctkGH, &cctk_arguments->At33rhs, -1.0);
+}
 
 static void set_arg(cl_kernel kernel, int arg, cl_mem const* mem)
 {
@@ -871,175 +1077,114 @@ static void set_arg(cl_kernel kernel, int arg, cl_mem const* mem)
 
 
 
-int exec_ML_BSSN_CL_RHS1(char              const* const program_source,
-                         cGH               const* const cctkGH,
-                         cctk_parameters_t const* const cctk_parameters,
+int exec_ML_BSSN_CL_RHS1(cGH               const* const cctkGH,
                          cctk_arguments_t  const* const cctk_arguments)
 {
-  static int initialised = 0;
-  static cl_program program;
-  static cl_kernel kernel;
-  static cl_mem mem_cctkGH;
-  static cl_mem mem_cctk_parameters;
   
   int ierr;
-  
-  if (!initialised) {
-    initialised = 1;
-    
-    program =
-      clCreateProgramWithSource(context, 1, (const char**)&program_source,
-                                NULL, NULL);
-    assert(program);
-    
-    char const* const options =
-      "-DVECTORISE_ALIGNED_ARRAYS=" STR(VECTORISE_ALIGNED_ARRAYS) " "
-      "-DVECTOR_SIZE_I=" STR(VECTOR_SIZE_I) " "
-      "-DVECTOR_SIZE_J=" STR(VECTOR_SIZE_J) " "
-      "-DVECTOR_SIZE_K=" STR(VECTOR_SIZE_K) " "
-      "-DUNROLL_SIZE_I=" STR(UNROLL_SIZE_I) " "
-      "-DUNROLL_SIZE_J=" STR(UNROLL_SIZE_J) " "
-      "-DUNROLL_SIZE_K=" STR(UNROLL_SIZE_K) " "
-      "-DGROUP_SIZE_I=" STR(GROUP_SIZE_I) " "
-      "-DGROUP_SIZE_J=" STR(GROUP_SIZE_J) " "
-      "-DGROUP_SIZE_K=" STR(GROUP_SIZE_K) " "
-      "-DTILE_SIZE_I=" STR(TILE_SIZE_I) " "
-      "-DTILE_SIZE_J=" STR(TILE_SIZE_J) " "
-      "-DTILE_SIZE_K=" STR(TILE_SIZE_K) " ";
-    
-    ierr = clBuildProgram(program, 0, NULL, options, NULL, NULL);
-    if (ierr) {
-      size_t log_size;
-      ierr = clGetProgramBuildInfo(program, device_id,
-                                   CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
-      assert(!ierr);
-      char build_log[log_size];
-      ierr = clGetProgramBuildInfo(program, device_id,
-                                   CL_PROGRAM_BUILD_LOG,
-                                   log_size, build_log, NULL);
-      assert(!ierr);
-      printf("Build log:\n"
-             "********************************************************************************\n"
-             "%s\n"
-             "********************************************************************************\n", build_log);
-      assert(0);
-    }
-    
-    kernel = clCreateKernel(program, "ML_BSSN_CL_RHS1", NULL);
-    assert(kernel);
-    
-    mem_cctkGH =
-      clCreateBuffer(context, CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY,
-                     sizeof *cctkGH, (cGH*)cctkGH, NULL);
-    assert(mem_cctkGH);
-    
-    mem_cctk_parameters =
-      clCreateBuffer(context, CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY,
-                     sizeof *cctk_parameters, (cctk_parameters_t*)cctk_parameters, NULL);
-    assert(mem_cctk_parameters);
-  }
-  
+
+
   int nargs = 0;
-  set_arg(kernel, nargs++, &mem_cctkGH);
-  set_arg(kernel, nargs++, &mem_cctk_parameters);
-  set_arg(kernel, nargs++, &cctk_arguments->x.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->y.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->z.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->r.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At11.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At11_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At11_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At12.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At12_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At12_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At13.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At13_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At13_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At22.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At22_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At22_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At23.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At23_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At23_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At33.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At33_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At33_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->A.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->A_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->A_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->Arhs.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->B1.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->B1_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->B1_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->B2.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->B2_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->B2_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->B3.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->B3_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->B3_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->B1rhs.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->B2rhs.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->B3rhs.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->Xt1.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->Xt1_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->Xt1_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->Xt2.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->Xt2_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->Xt2_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->Xt3.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->Xt3_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->Xt3_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->Xt1rhs.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->Xt2rhs.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->Xt3rhs.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->alpha.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->alpha_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->alpha_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->alpharhs.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->phi.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->phi_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->phi_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->phirhs.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt11.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt11_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt11_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt12.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt12_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt12_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt13.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt13_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt13_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt22.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt22_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt22_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt23.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt23_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt23_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt33.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt33_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt33_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt11rhs.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt12rhs.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt13rhs.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt22rhs.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt23rhs.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt33rhs.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->beta1.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->beta1_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->beta1_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->beta2.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->beta2_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->beta2_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->beta3.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->beta3_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->beta3_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->beta1rhs.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->beta2rhs.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->beta3rhs.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->trK.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->trK_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->trK_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->trKrhs.mem);
+  set_arg(kernel1, nargs++, &mem_cctkGH);
+  set_arg(kernel1, nargs++, &mem_cctk_parameters);
+  set_arg(kernel1, nargs++, &cctk_arguments->x.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->y.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->z.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->r.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->At11.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->At11_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->At11_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->At12.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->At12_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->At12_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->At13.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->At13_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->At13_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->At22.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->At22_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->At22_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->At23.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->At23_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->At23_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->At33.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->At33_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->At33_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->A.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->A_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->A_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->Arhs.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->B1.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->B1_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->B1_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->B2.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->B2_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->B2_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->B3.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->B3_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->B3_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->B1rhs.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->B2rhs.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->B3rhs.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->Xt1.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->Xt1_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->Xt1_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->Xt2.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->Xt2_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->Xt2_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->Xt3.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->Xt3_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->Xt3_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->Xt1rhs.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->Xt2rhs.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->Xt3rhs.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->alpha.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->alpha_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->alpha_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->alpharhs.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->phi.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->phi_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->phi_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->phirhs.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->gt11.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->gt11_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->gt11_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->gt12.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->gt12_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->gt12_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->gt13.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->gt13_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->gt13_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->gt22.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->gt22_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->gt22_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->gt23.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->gt23_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->gt23_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->gt33.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->gt33_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->gt33_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->gt11rhs.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->gt12rhs.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->gt13rhs.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->gt22rhs.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->gt23rhs.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->gt33rhs.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->beta1.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->beta1_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->beta1_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->beta2.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->beta2_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->beta2_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->beta3.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->beta3_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->beta3_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->beta1rhs.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->beta2rhs.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->beta3rhs.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->trK.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->trK_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->trK_p_p.mem);
+  set_arg(kernel1, nargs++, &cctk_arguments->trKrhs.mem);
   
   size_t const local_work_size[3] =
     { GROUP_SIZE_I, GROUP_SIZE_J, GROUP_SIZE_K };
@@ -1070,158 +1215,112 @@ int exec_ML_BSSN_CL_RHS1(char              const* const program_source,
     }
   }
   
-  ierr = clEnqueueNDRangeKernel(cmd_queue, kernel, dim,
+  ierr = clEnqueueNDRangeKernel(cmd_queue, kernel1, dim,
                                 NULL, global_work_size, local_work_size,  
                                 0, NULL, NULL);
   assert(!ierr);
   
   ierr = clFinish(cmd_queue);
   assert(!ierr);
-  
+
   return 0;
 }
 
 
 
-int exec_ML_BSSN_CL_RHS2(char              const* const program_source,
-                         cGH               const* const cctkGH,
-                         cctk_parameters_t const* const cctk_parameters,
+int exec_ML_BSSN_CL_RHS2(cGH               const* const cctkGH,
                          cctk_arguments_t  const* const cctk_arguments)
 { 
-  static int initialised = 0;
-  static cl_program program;
-  static cl_kernel kernel;
-  static cl_mem mem_cctkGH;
-  static cl_mem mem_cctk_parameters;
   
   int ierr;
-  
-  if (!initialised) {
-    initialised = 1;
-    
-    program =
-      clCreateProgramWithSource(context, 1, (const char**)&program_source,
-                                NULL, NULL);
-    assert(program);
-    
-    char const* const options =
-      "-DVECTORISE_ALIGNED_ARRAYS=" STR(VECTORISE_ALIGNED_ARRAYS) " "
-      "-DVECTOR_SIZE_I=" STR(VECTOR_SIZE_I) " "
-      "-DVECTOR_SIZE_J=" STR(VECTOR_SIZE_J) " "
-      "-DVECTOR_SIZE_K=" STR(VECTOR_SIZE_K) " "
-      "-DUNROLL_SIZE_I=" STR(UNROLL_SIZE_I) " "
-      "-DUNROLL_SIZE_J=" STR(UNROLL_SIZE_J) " "
-      "-DUNROLL_SIZE_K=" STR(UNROLL_SIZE_K) " "
-      "-DGROUP_SIZE_I=" STR(GROUP_SIZE_I) " "
-      "-DGROUP_SIZE_J=" STR(GROUP_SIZE_J) " "
-      "-DGROUP_SIZE_K=" STR(GROUP_SIZE_K) " "
-      "-DTILE_SIZE_I=" STR(TILE_SIZE_I) " "
-      "-DTILE_SIZE_J=" STR(TILE_SIZE_J) " "
-      "-DTILE_SIZE_K=" STR(TILE_SIZE_K) " ";
-    
-    ierr = clBuildProgram(program, 0, NULL, options, NULL, NULL);
-    assert(!ierr);
-    
-    kernel = clCreateKernel(program, "ML_BSSN_CL_RHS2", NULL);
-    assert(kernel);
-    
-    mem_cctkGH =
-      clCreateBuffer(context, CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY,
-                     sizeof *cctkGH, (cGH*)cctkGH, NULL);
-    assert(mem_cctkGH);
-    
-    mem_cctk_parameters =
-      clCreateBuffer(context, CL_MEM_COPY_HOST_PTR | CL_MEM_READ_ONLY,
-                     sizeof *cctk_parameters, (cctk_parameters_t*)cctk_parameters, NULL);
-    assert(mem_cctk_parameters);
-  }
-  
+
   int nargs = 0;
-  set_arg(kernel, nargs++, &mem_cctkGH);
-  set_arg(kernel, nargs++, &mem_cctk_parameters);
-  set_arg(kernel, nargs++, &cctk_arguments->At11.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At11_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At11_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At12.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At12_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At12_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At13.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At13_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At13_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At22.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At22_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At22_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At23.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At23_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At23_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At33.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At33_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At33_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At11rhs.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At12rhs.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At13rhs.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At22rhs.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At23rhs.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->At33rhs.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->Xt1.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->Xt1_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->Xt1_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->Xt2.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->Xt2_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->Xt2_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->Xt3.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->Xt3_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->Xt3_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->alpha.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->alpha_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->alpha_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->phi.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->phi_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->phi_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt11.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt11_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt11_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt12.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt12_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt12_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt13.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt13_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt13_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt22.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt22_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt22_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt23.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt23_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt23_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt33.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt33_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->gt33_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->beta1.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->beta1_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->beta1_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->beta2.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->beta2_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->beta2_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->beta3.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->beta3_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->beta3_p_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->trK.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->trK_p.mem);
-  set_arg(kernel, nargs++, &cctk_arguments->trK_p_p.mem);
+  set_arg(kernel2, nargs++, &mem_cctkGH);
+  set_arg(kernel2, nargs++, &mem_cctk_parameters);
+  set_arg(kernel2, nargs++, &cctk_arguments->At11.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->At11_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->At11_p_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->At12.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->At12_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->At12_p_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->At13.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->At13_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->At13_p_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->At22.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->At22_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->At22_p_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->At23.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->At23_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->At23_p_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->At33.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->At33_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->At33_p_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->At11rhs.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->At12rhs.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->At13rhs.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->At22rhs.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->At23rhs.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->At33rhs.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->Xt1.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->Xt1_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->Xt1_p_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->Xt2.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->Xt2_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->Xt2_p_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->Xt3.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->Xt3_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->Xt3_p_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->alpha.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->alpha_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->alpha_p_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->phi.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->phi_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->phi_p_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->gt11.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->gt11_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->gt11_p_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->gt12.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->gt12_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->gt12_p_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->gt13.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->gt13_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->gt13_p_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->gt22.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->gt22_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->gt22_p_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->gt23.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->gt23_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->gt23_p_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->gt33.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->gt33_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->gt33_p_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->beta1.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->beta1_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->beta1_p_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->beta2.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->beta2_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->beta2_p_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->beta3.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->beta3_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->beta3_p_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->trK.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->trK_p.mem);
+  set_arg(kernel2, nargs++, &cctk_arguments->trK_p_p.mem);
   
   size_t const global_work_size[3] =
     { cctkGH->cctk_ash[0], cctkGH->cctk_ash[1], cctkGH->cctk_ash[2] };
   size_t const local_work_size[3] =
     { GROUP_SIZE_I, GROUP_SIZE_J, GROUP_SIZE_K };
   
-  ierr = clEnqueueNDRangeKernel(cmd_queue, kernel, dim,
+  ierr = clEnqueueNDRangeKernel(cmd_queue, kernel2, dim,
                                 NULL, global_work_size, local_work_size,  
                                 0, NULL, NULL);
+
   assert(!ierr);
   
   ierr = clFinish(cmd_queue);
   assert(!ierr);
-  
+
   return 0;
 }
 
@@ -1298,9 +1397,7 @@ void check(cGH              * const cctkGH,
 int main(int argc, char** argv)
 {
   printf("EinsteinToolkit test\n");
-  
-  
-  
+
   printf("Reading sources...\n");
   FILE *const source1_file = fopen(SRCDIR "/ML_BSSN_CL_RHS1.cl", "r");
   assert(source1_file != NULL && "ML_BSSN_CL_RHS1.cl not found!");
@@ -1322,32 +1419,27 @@ int main(int argc, char** argv)
   source2[source2_size] = '\0';
   fclose(source2_file);
   
-  
-  
   printf("Initialise...\n");
-  setup();
+  setup(source1, source2);
   cGH cctkGH;
   cctk_parameters_t cctk_parameters;
   cctk_arguments_t cctk_arguments;
   init(&cctkGH, &cctk_parameters, &cctk_arguments);
-  
+
   printf("RHS1...\n");
-  exec_ML_BSSN_CL_RHS1(source1, &cctkGH, &cctk_parameters, &cctk_arguments);
+  exec_ML_BSSN_CL_RHS1(&cctkGH, &cctk_arguments);
   printf("RHS2...\n");
-  exec_ML_BSSN_CL_RHS2(source2, &cctkGH, &cctk_parameters, &cctk_arguments);
-  
+  exec_ML_BSSN_CL_RHS2(&cctkGH, &cctk_arguments);
   check(&cctkGH, &cctk_parameters, &cctk_arguments);
-  
-  
-  
+
   printf("Begin timing %d iterations...\n", niters);
   double min_elapsed = HUGE_VAL;
   double avg_elapsed = 0.0;
   for (int n=0; n<niters; ++n) {
     struct timeval tv0;
     gettimeofday(&tv0, NULL);
-    exec_ML_BSSN_CL_RHS1(source1, &cctkGH, &cctk_parameters, &cctk_arguments);
-    exec_ML_BSSN_CL_RHS2(source2, &cctkGH, &cctk_parameters, &cctk_arguments);
+    exec_ML_BSSN_CL_RHS1(&cctkGH, &cctk_arguments);
+    exec_ML_BSSN_CL_RHS2(&cctkGH, &cctk_arguments);
     struct timeval tv1;
     gettimeofday(&tv1, NULL);
     double const elapsed =
@@ -1369,7 +1461,7 @@ int main(int argc, char** argv)
   double const flop_per_point = 3400.0;
   printf("        This corresponds to %g GFlop/s\n",
          1.0e-9 * flop_per_point / time_per_point);
-  
+
   printf("\n");
   // VECTOR_SIZE_I=1: 3388 FLop per gpu
   // VECTOR_SIZE_I=2: 3418 Flop per gpu
@@ -1378,7 +1470,8 @@ int main(int argc, char** argv)
   printf("      Smaller numbers are better.\n");
   printf("\n");
   
-  
+  deinit(&cctkGH, &cctk_parameters, &cctk_arguments);
+  cleanup();
   
   printf ("Done.\n");
   return 0;
