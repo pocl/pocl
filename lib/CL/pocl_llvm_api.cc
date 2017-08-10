@@ -53,7 +53,7 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include "llvm/Analysis/TargetLibraryInfo.h"
 #include "llvm/Analysis/TargetTransformInfo.h"
 #include "llvm/IR/LegacyPassManager.h"
-using llvm::legacy::PassManager;
+#define PassManager legacy::PassManager
 #endif
 
 #ifdef LLVM_OLDER_THAN_4_0
@@ -124,6 +124,8 @@ POP_COMPILER_DIAGS
  * work-around, allocate this from heap.
  */
 static LLVMContext *globalContext = NULL;
+static bool LLVMInitialized = false;
+
 static LLVMContext *GlobalContext() {
   if (globalContext == NULL) globalContext = new LLVMContext();
   return globalContext;
@@ -137,7 +139,99 @@ static llvm::sys::Mutex kernelCompilerLock;
 /* Global pocl device to be used by passes if needed */
 cl_device_id currentPoclDevice = NULL;
 
-static void InitializeLLVM();
+static std::map<cl_device_id, llvm::TargetMachine *> targetMachines;
+static std::map<cl_device_id, PassManager *> kernelPassesNoflatten;
+static std::map<cl_device_id, PassManager *> kernelPassesFlatten;
+static std::map<cl_device_id, llvm::Module *> kernelLibraryMap;
+static std::string currentWgMethod;
+
+/* must be called with kernelCompilerLock locked */
+static void InitializeLLVM() {
+
+  if (LLVMInitialized)
+    return;
+  // We have not initialized any pass managers for any device yet.
+  // Run the global LLVM pass initialization functions.
+  InitializeAllTargets();
+  InitializeAllTargetMCs();
+  InitializeAllAsmPrinters();
+  InitializeAllAsmParsers();
+
+  PassRegistry &Registry = *PassRegistry::getPassRegistry();
+
+  initializeCore(Registry);
+  initializeScalarOpts(Registry);
+  initializeVectorization(Registry);
+  initializeIPO(Registry);
+  initializeAnalysis(Registry);
+#ifdef LLVM_OLDER_THAN_3_8
+  initializeIPA(Registry);
+#endif
+  initializeTransformUtils(Registry);
+  initializeInstCombine(Registry);
+  initializeInstrumentation(Registry);
+  initializeTarget(Registry);
+
+// Set the options only once. TODO: fix it so that each
+// device can reset their own options. Now one cannot compile
+// with different options to different devices at one run.
+
+#ifdef LLVM_OLDER_THAN_3_7
+  StringMap<llvm::cl::Option *> opts;
+  llvm::cl::getRegisteredOptions(opts);
+#else
+  StringMap<llvm::cl::Option *> &opts = llvm::cl::getRegisteredOptions();
+#endif
+
+  llvm::cl::Option *O = nullptr;
+
+  currentWgMethod = pocl_get_string_option("POCL_WORK_GROUP_METHOD", "loopvec");
+
+  if (currentWgMethod == "loopvec") {
+
+    O = opts["scalarize-load-store"];
+    assert(O && "could not find LLVM option 'scalarize-load-store'");
+    O->addOccurrence(1, StringRef("scalarize-load-store"), StringRef("1"),
+                     false);
+
+    // LLVM inner loop vectorizer does not check whether the loop inside
+    // another loop, in which case even a small trip count loops might be
+    // worthwhile to vectorize.
+    O = opts["vectorizer-min-trip-count"];
+    assert(O && "could not find LLVM option 'vectorizer-min-trip-count'");
+    O->addOccurrence(1, StringRef("vectorizer-min-trip-count"), StringRef("2"),
+                     false);
+
+    if (pocl_get_bool_option("POCL_VECTORIZER_REMARKS", 0) == 1) {
+      // Enable diagnostics from the loop vectorizer.
+      O = opts["pass-remarks-missed"];
+      assert(O && "could not find LLVM option 'pass-remarks-missed'");
+      O->addOccurrence(1, StringRef("pass-remarks-missed"),
+                       StringRef("loop-vectorize"), false);
+
+      O = opts["pass-remarks-analysis"];
+      assert(O && "could not find LLVM option 'pass-remarks-analysis'");
+      O->addOccurrence(1, StringRef("pass-remarks-analysis"),
+                       StringRef("loop-vectorize"), false);
+
+      O = opts["pass-remarks"];
+      assert(O && "could not find LLVM option 'pass-remarks'");
+      O->addOccurrence(1, StringRef("pass-remarks"),
+                       StringRef("loop-vectorize"), false);
+    }
+  }
+  if (pocl_get_bool_option("POCL_DEBUG_LLVM_PASSES", 0) == 1) {
+    O = opts["debug"];
+    assert(O && "could not find LLVM option 'debug'");
+    O->addOccurrence(1, StringRef("debug"), StringRef("true"), false);
+  }
+
+  O = opts["unroll-threshold"];
+  assert(O && "could not find LLVM option 'unroll-threshold'");
+  O->addOccurrence(1, StringRef("unroll-threshold"), StringRef("1"), false);
+
+  LLVMInitialized = true;
+}
 
 //#define DEBUG_POCL_LLVM_API
 
@@ -186,10 +280,6 @@ unlink_source(FrontendOptions &fe)
   }
 
 }
-
-#ifndef LLVM_OLDER_THAN_3_8
-#define PassManager legacy::PassManager
-#endif
 
 
 static void get_build_log(cl_program program,
@@ -518,9 +608,8 @@ int pocl_llvm_build_program(cl_program program,
   poo.ShowMacros = 1;
   poo.RewriteIncludes = 0;
 
-  std::string saved_output(fe.OutputFile);
   pocl_cache_tempname(tempfile, ".cl", NULL);
-  fe.OutputFile = tempfile;
+  fe.OutputFile.assign(tempfile);
 
   bool success = true;
   clang::PrintPreprocessedAction Preprocess;
@@ -530,7 +619,6 @@ int pocl_llvm_build_program(cl_program program,
 
   if (success) {
     pocl_read_file(tempfile, &PreprocessedOut, &PreprocessedSize);
-    fe.OutputFile = saved_output;
   }
   if (pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0) == 0) {
     if (num_input_headers > 0)
@@ -1378,10 +1466,13 @@ static const char* getX86KernelLibName() {
 // Returns the TargetMachine instance or zero if no triple is provided.
 static TargetMachine* GetTargetMachine(cl_device_id device) {
 
+  if (targetMachines.find(device) != targetMachines.end())
+    return targetMachines[device];
+
   std::string Error;
   Triple TheTriple(device->llvm_target_triplet);
 
-  std::string MCPU =  device->llvm_cpu ? device->llvm_cpu : "";
+  std::string MCPU = device->llvm_cpu ? device->llvm_cpu : "";
 
   const Target *TheTarget = 
     TargetRegistry::lookupTarget("", TheTriple, Error);
@@ -1404,24 +1495,12 @@ static TargetMachine* GetTargetMachine(cl_device_id device) {
   assert (TM != NULL && "llvm target has no targetMachine constructor"); 
   if (device->ops->init_target_machine)
     device->ops->init_target_machine(device->data, TM);
+  targetMachines[device] = TM;
 
   return TM;
 }
 /* helpers copied from LLVM opt END */
 
-static void InitializeLLVM() {
-  
-  static bool LLVMInitialized = false;
-  if (LLVMInitialized) return;
-  // We have not initialized any pass managers for any device yet.
-  // Run the global LLVM pass initialization functions.
-  InitializeAllTargets();
-  InitializeAllTargetMCs();
-  InitializeAllAsmPrinters();
-  InitializeAllAsmParsers();
-
-  LLVMInitialized = true;
-}
 
 /* Check if a module references read_image{i,ui,f} or write_image{i,ui,f}
  * from pocl kernel library */
@@ -1452,60 +1531,39 @@ static bool moduleReferencesImages(llvm::Module *M) {
 static PassManager &
 kernel_compiler_passes(cl_device_id device, llvm::Module *input,
                        const std::string &module_data_layout) {
-  static std::map<cl_device_id, PassManager*> kernel_compiler_passes;
 
-  bool SPMDDevice = device->spmd;
+  PassManager *Passes = nullptr;
+  PassRegistry *Registry = nullptr;
 
-  if (kernel_compiler_passes.find(device) != 
-      kernel_compiler_passes.end())
-    {
-      return *kernel_compiler_passes[device];
+  bool refs_images = moduleReferencesImages(input);
+
+  std::map<cl_device_id, PassManager *> &kernel_pass_map =
+      (refs_images ? kernelPassesNoflatten : kernelPassesFlatten);
+
+  if (kernel_pass_map.find(device) != kernel_pass_map.end()) {
+    return *kernel_pass_map[device];
     }
-  
-  Triple triple(device->llvm_target_triplet);
 
-  PassRegistry &Registry = *PassRegistry::getPassRegistry();
+    bool SPMDDevice = device->spmd;
 
-  const bool first_initialization_call = kernel_compiler_passes.size() == 0;
+    Registry = PassRegistry::getPassRegistry();
 
-  if (first_initialization_call) {
-    // TODO: do this globally, and just once per program
-    initializeCore(Registry);
-    initializeScalarOpts(Registry);
-    initializeVectorization(Registry);
-    initializeIPO(Registry);
-    initializeAnalysis(Registry);
-#ifdef LLVM_OLDER_THAN_3_8
-    initializeIPA(Registry);
-#endif
-    initializeTransformUtils(Registry);
-    initializeInstCombine(Registry);
-    initializeInstrumentation(Registry);
-    initializeTarget(Registry);
-  }
+    Triple triple(device->llvm_target_triplet);
 
-# ifdef LLVM_OLDER_THAN_3_7
-  StringMap<llvm::cl::Option*> opts;
-  llvm::cl::getRegisteredOptions(opts);
-# else
-  StringMap<llvm::cl::Option *>& opts = llvm::cl::getRegisteredOptions();
-# endif
+    Passes = new PassManager();
 
-  PassManager *Passes = new PassManager();
+    // Need to setup the target info for target specific passes. */
+    TargetMachine *Machine = GetTargetMachine(device);
 
 #ifdef LLVM_OLDER_THAN_3_7
-  // Need to setup the target info for target specific passes. */
-  TargetMachine *Machine = GetTargetMachine(device);
-
-  // Add internal analysis passes from the target machine.
-  if (Machine != NULL)
-    Machine->addAnalysisPasses(*Passes);
-#else 
-  TargetMachine *Machine = GetTargetMachine(device);
-  if (Machine != NULL)
-    Passes->add(createTargetTransformInfoWrapperPass(Machine->getTargetIRAnalysis()));
+    // Add internal analysis passes from the target machine.
+    if (Machine)
+      Machine->addAnalysisPasses(*Passes);
+#else
+    if (Machine)
+      Passes->add(
+          createTargetTransformInfoWrapperPass(Machine->getTargetIRAnalysis()));
 #endif
-
 
   if (module_data_layout != "") {
 #if (defined LLVM_OLDER_THAN_3_7)
@@ -1577,7 +1635,7 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
      * compared to flatten-inline-all (likely because inline-all compiled
      * Mandelbrot kernel exceeds L1 instruction cache size).
      */
-    if (moduleReferencesImages(input)) {
+    if (refs_images) {
       POCL_MSG_PRINT_LLVM(
           "Module references images, using flatten-globals-only\n");
       passes.push_back("flatten-globals");
@@ -1645,61 +1703,8 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
   passes.push_back("dot-cfg");
 #endif
 
-  const std::string wg_method =
-    pocl_get_string_option("POCL_WORK_GROUP_METHOD", "loopvec");
-
-  if (kernel_compiler_passes.size() == 0) {
-    // Set the options only once. TODO: fix it so that each
-    // device can reset their own options. Now one cannot compile
-    // with different options to different devices at one run.
-
-    llvm::cl::Option *O = nullptr;
-    if (wg_method == "loopvec") {
-
-      passes.push_back("scalarizer");
-
-      O = opts["scalarize-load-store"];
-      assert(O && "could not find LLVM option 'scalarize-load-store'");
-      O->addOccurrence(1, StringRef("scalarize-load-store"),
-                       StringRef("1"), false);
-
-      // LLVM inner loop vectorizer does not check whether the loop inside
-      // another loop, in which case even a small trip count loops might be
-      // worthwhile to vectorize.
-      O = opts["vectorizer-min-trip-count"];
-      assert(O && "could not find LLVM option 'vectorizer-min-trip-count'");
-      O->addOccurrence(1, StringRef("vectorizer-min-trip-count"),
-                       StringRef("2"), false);
-
-      if (pocl_get_bool_option("POCL_VECTORIZER_REMARKS", 0) == 1) {
-        // Enable diagnostics from the loop vectorizer.
-        O = opts["pass-remarks-missed"];
-        assert(O && "could not find LLVM option 'pass-remarks-missed'");
-        O->addOccurrence(1, StringRef("pass-remarks-missed"),
-                         StringRef("loop-vectorize"), false);
-
-        O = opts["pass-remarks-analysis"];
-        assert(O && "could not find LLVM option 'pass-remarks-analysis'");
-        O->addOccurrence(1, StringRef("pass-remarks-analysis"),
-                         StringRef("loop-vectorize"), false);
-
-        O = opts["pass-remarks"];
-        assert(O && "could not find LLVM option 'pass-remarks'");
-        O->addOccurrence(1, StringRef("pass-remarks"),
-                         StringRef("loop-vectorize"), false);
-      }
-
-    }
-    if (pocl_get_bool_option("POCL_DEBUG_LLVM_PASSES", 0) == 1) {
-      O = opts["debug"];
-      assert(O && "could not find LLVM option 'debug'");
-      O->addOccurrence(1, StringRef("debug"), StringRef("true"), false);
-    }
-
-    O = opts["unroll-threshold"];
-    assert(O && "could not find LLVM option 'unroll-threshold'");
-    O->addOccurrence(1, StringRef("unroll-threshold"), StringRef("1"), false);
-  }
+  if (currentWgMethod == "loopvec")
+    passes.push_back("scalarizer");
 
   passes.push_back("instcombine");
   passes.push_back("STANDARD_OPTS");
@@ -1716,7 +1721,7 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
 
           // These need to be setup in addition to invoking the passes
           // to get the vectorizers initialized properly.
-          if (wg_method == "loopvec") {
+          if (currentWgMethod == "loopvec") {
             Builder.LoopVectorize = true;
             Builder.SLPVectorize = true;
           }
@@ -1724,9 +1729,8 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
           continue;
         }
 
-      const PassInfo *PIs = Registry.getPassInfo(StringRef(passes[i]));
-      if(PIs)
-        {
+        const PassInfo *PIs = Registry->getPassInfo(StringRef(passes[i]));
+        if (PIs) {
           //std::cout << "-"<<passes[i] << " ";
           Pass *thispass = PIs->createPass();
           Passes->add(thispass);
@@ -1738,9 +1742,8 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
         }
     }
 
-
-  kernel_compiler_passes[device] = Passes;
-  return *Passes;
+    kernel_pass_map[device] = Passes;
+    return *Passes;
 }
 
 // Defined in llvmopencl/WorkitemHandler.cc
@@ -1762,12 +1765,10 @@ kernel_library
   llvm::MutexGuard lockHolder(kernelCompilerLock);
   InitializeLLVM();
 
-  static std::map<cl_device_id, llvm::Module*> libs;
-
   Triple triple(device->llvm_target_triplet);
 
-  if (libs.find(device) != libs.end())
-    return libs[device];
+  if (kernelLibraryMap.find(device) != kernelLibraryMap.end())
+    return kernelLibraryMap[device];
 
   const char *subdir = "host";
   bool is_host = true;
@@ -1860,7 +1861,7 @@ kernel_library
         POCL_ABORT("Kernel library file %s doesn't exist.", kernellib.c_str());
     }
   assert (lib != NULL);
-  libs[device] = lib;
+  kernelLibraryMap[device] = lib;
 
   return lib;
 }
@@ -2194,8 +2195,8 @@ int pocl_llvm_codegen(cl_kernel kernel, cl_device_id device, void *modp,
     size_t s = o.size();
     *output = (char *)malloc(s);
     *output_size = s;
-
     memcpy(*output, cstr, s);
+
     return 0;
 }
 /* vim: set ts=4 expandtab: */
