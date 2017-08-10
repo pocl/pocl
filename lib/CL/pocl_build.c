@@ -455,6 +455,10 @@ compile_and_link_program(int compile_program,
                         "Program doesn't have sources or binaries! You need "
                         "to call clCreateProgramWith{Binary|Source} first\n");
 
+  POCL_RETURN_ERROR_ON (((program->source == NULL) && (link_program == 0)),
+                        CL_INVALID_OPERATION,
+                        "Cannot clCompileProgram when program has no source\n");
+
   POCL_LOCK_OBJ (program);
 
   program->main_build_log[0] = 0;
