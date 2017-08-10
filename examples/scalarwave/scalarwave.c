@@ -26,8 +26,12 @@ typedef struct grid_t {
   cl_int ni, nj, nk;            // used size
 } grid_t;
 
+static int initialised = 0;
+static cl_context context;
+static cl_command_queue cmd_queue;
+static cl_program program;
+static cl_kernel kernel;
 
- 
 int 
 exec_scalarwave_kernel(char      const *const program_source, 
                        cl_double       *const phi,
@@ -35,11 +39,6 @@ exec_scalarwave_kernel(char      const *const program_source,
                        cl_double const *const phi_p_p,
                        grid_t    const *const grid)
 { 
-  static int initialised = 0;
-  static cl_context context;
-  static cl_command_queue cmd_queue;
-  static cl_program program;
-  static cl_kernel kernel;
   
   if (!initialised) {
     initialised = 1;
@@ -123,10 +122,6 @@ exec_scalarwave_kernel(char      const *const program_source,
   clReleaseMemObject(mem_phi_p);
   clReleaseMemObject(mem_phi_p_p);
   clReleaseMemObject(mem_grid);
-  /* clReleaseKernel(kernel); */
-  /* clReleaseProgram(program); */
-  /* clReleaseCommandQueue(cmd_queue); */
-  /* clReleaseContext(context); */
  
   return 0;
 }
@@ -164,8 +159,6 @@ main(void)
   source[source_size] = '\0';
   
   fclose(source_file);
-
-
 
   grid_t grid;
   grid.dt = ALPHA/(NX-1);
@@ -220,7 +213,15 @@ main(void)
     assert(!ierr);
     
   } // for n
-  
+
+  clReleaseKernel (kernel);
+  clReleaseProgram (program);
+  clReleaseCommandQueue (cmd_queue);
+  cl_platform_id pocl;
+  clGetPlatformIDs (1, &pocl, NULL);
+  clUnloadPlatformCompiler (pocl);
+  clReleaseContext (context);
+
   for (int i=0; i<NX; ++i) {
     int const j = i;
     int const k = i;
@@ -231,9 +232,13 @@ main(void)
     
     printf ("phi(%-8g,%-8g,%-8g) = %g\n", x,y,z, phi[ind3d]);
   }
-  
+
   printf ("Done.\n");
 
+  free (phi);
+  free (phi_p);
+  free (phi_p_p);
   free(source);
+
   return 0;
 }

@@ -21,7 +21,8 @@ exec_dot_product_kernel(const char *program_source, size_t source_size,
   cl_context  context; 
   cl_command_queue cmd_queue; 
   cl_device_id  *devices; 
-  cl_program  program; 
+  cl_platform_id platform;
+  cl_program  program;
   cl_kernel  kernel; 
   cl_mem       memobjs[3]; 
   size_t       global_work_size[1]; 
@@ -29,6 +30,9 @@ exec_dot_product_kernel(const char *program_source, size_t source_size,
   size_t       cb; 
   cl_int       err; 
   int          i;
+
+  clGetPlatformIDs (1, &platform, NULL);
+
   context = poclu_create_any_context();
   if (context == (cl_context)0) 
     return -1; 
@@ -184,7 +188,8 @@ exec_dot_product_kernel(const char *program_source, size_t source_size,
   delete_memobjs(memobjs, 3); 
   clReleaseKernel(kernel); 
   clReleaseProgram(program); 
-  clReleaseCommandQueue(cmd_queue); 
+  clUnloadPlatformCompiler (platform);
+  clReleaseCommandQueue(cmd_queue);
   clReleaseContext(context); 
   return 0; // success... 
 }

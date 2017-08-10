@@ -48,14 +48,14 @@ main (void)
   int j;
   cl_context  context; 
   size_t cb;
-  cl_device_id *devices;
-  cl_command_queue cmd_queue;
-  cl_program program;
-  cl_int err;
-  cl_kernel kernel;
-  cl_mem memobjs[2];
-  size_t global_work_size[2];
-  size_t local_work_size[2];
+  cl_device_id *devices = NULL;
+  cl_command_queue cmd_queue = NULL;
+  cl_program program = NULL;
+  cl_int err = 0;
+  cl_kernel kernel = NULL;
+  cl_mem memobjs[2] = { 0 };
+  size_t global_work_size[2] = { 0 };
+  size_t local_work_size[2] = { 0 };
 
   source_file = fopen("example2.cl", "r");
   if (source_file == NULL) 
@@ -199,13 +199,16 @@ main (void)
       clReleaseProgram(program); 
       clReleaseCommandQueue(cmd_queue); 
       clReleaseContext(context); 
-      return -1; 
-    } 
- 
-  delete_memobjs(memobjs, 2); 
-  clReleaseKernel(kernel); 
-  clReleaseProgram(program); 
-  clReleaseCommandQueue(cmd_queue); 
+      return -1;
+    }
+
+  delete_memobjs (memobjs, 2);
+  clReleaseKernel (kernel);
+  clReleaseProgram (program);
+  clReleaseCommandQueue (cmd_queue);
+  cl_platform_id pocl;
+  clGetPlatformIDs (1, &pocl, NULL);
+  clUnloadPlatformCompiler (pocl);
   clReleaseContext(context); 
 
   for (i = 0; i < HEIGHT; ++i)
@@ -217,7 +220,10 @@ main (void)
 	}
       }
     }
-  
+
+  free (input);
+  free (output);
+
   printf ("OK\n");
   return 0;
 }

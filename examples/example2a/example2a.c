@@ -200,11 +200,14 @@ main (void)
       return -1; 
     } 
  
-  delete_memobjs(memobjs, 2); 
-  clReleaseKernel(kernel); 
-  clReleaseProgram(program); 
-  clReleaseCommandQueue(cmd_queue); 
-  clReleaseContext(context); 
+  delete_memobjs (memobjs, 2);
+  clReleaseKernel (kernel);
+  clReleaseProgram (program);
+  clReleaseCommandQueue (cmd_queue);
+  cl_platform_id pocl;
+  clGetPlatformIDs (1, &pocl, NULL);
+  clUnloadPlatformCompiler (pocl);
+  clReleaseContext (context);
 
   for (i = 0; i < HEIGHT; ++i)
     {
@@ -215,7 +218,10 @@ main (void)
 	}
       }
     }
-  
+
+  free (input);
+  free (output);
+
   printf ("OK\n");
   return 0;
 }
