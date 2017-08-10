@@ -111,7 +111,6 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 using namespace clang;
 using namespace llvm;
 
-
 POP_COMPILER_DIAGS
 
 /**
@@ -231,6 +230,56 @@ static void InitializeLLVM() {
   O->addOccurrence(1, StringRef("unroll-threshold"), StringRef("1"), false);
 
   LLVMInitialized = true;
+}
+
+// TODO FIXME currently pocl_llvm_release() only works when
+// there are zero programs with IRs, because
+// programs hold references to LLVM IRs
+static long numberOfIRs = 0;
+
+void pocl_llvm_release() {
+
+  llvm::MutexGuard lockHolder(kernelCompilerLock);
+
+  assert(numberOfIRs >= 0);
+
+  if (numberOfIRs > 0) {
+    POCL_MSG_PRINT_LLVM("still have references to IRs - not releasing LLVM\n");
+    return;
+  } else {
+    POCL_MSG_PRINT_LLVM("releasing LLVM\n");
+  }
+
+  for (auto i = kernelLibraryMap.begin(), e = kernelLibraryMap.end();
+       i != e; ++i) {
+    delete (llvm::Module *)i->second;
+  }
+
+  for (auto i = kernelPassesFlatten.begin(), e = kernelPassesFlatten.end();
+       i != e; ++i) {
+    PassManager *pm = (PassManager *)i->second;
+    delete pm;
+  }
+
+  for (auto i = kernelPassesNoflatten.begin(),
+            e = kernelPassesNoflatten.end();
+       i != e; ++i) {
+    PassManager *pm = (PassManager *)i->second;
+    delete pm;
+  }
+
+  for (auto i = targetMachines.begin(), e = targetMachines.end(); i != e;
+       ++i) {
+    delete (llvm::TargetMachine *)i->second;
+  }
+
+  targetMachines.clear();
+  kernelPassesFlatten.clear();
+  kernelPassesNoflatten.clear();
+  kernelLibraryMap.clear();
+  delete globalContext;
+  globalContext = nullptr;
+  LLVMInitialized = false;
 }
 
 //#define DEBUG_POCL_LLVM_API
@@ -657,13 +706,17 @@ int pocl_llvm_build_program(cl_program program,
     return CL_BUILD_PROGRAM_FAILURE;
 
   mod = (llvm::Module **)&program->llvm_irs[device_i];
-  if (*mod != NULL)
+  if (*mod != NULL) {
     delete (llvm::Module*)*mod;
+    --numberOfIRs;
+  }
 
   *mod = EmitLLVM.takeModule().release();
 
   if (*mod == NULL)
     return CL_BUILD_PROGRAM_FAILURE;
+
+  ++numberOfIRs;
 
   write_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
   assert(write_lock);
@@ -731,11 +784,14 @@ int pocl_llvm_link_program(cl_program program,
     assert(p);
 
 #ifdef LLVM_OLDER_THAN_3_8
-    if (Linker::LinkModules(mod, llvm::CloneModule(p)))
+    if (Linker::LinkModules(mod, llvm::CloneModule(p))) {
+      delete mod;
       return CL_LINK_PROGRAM_FAILURE;
+    }
 #else
-    if (Linker::linkModules(*mod, llvm::CloneModule(p)))
+    if (Linker::linkModules(*mod, llvm::CloneModule(p))) {
       return CL_LINK_PROGRAM_FAILURE;
+    }
 #endif
   }
 
@@ -757,10 +813,13 @@ int pocl_llvm_link_program(cl_program program,
   assert(error == 0);
 
   modptr = (llvm::Module **)&program->llvm_irs[device_i];
-  if (*modptr != nullptr)
+  if (*modptr != nullptr) {
     delete (llvm::Module *)*modptr;
+    --numberOfIRs;
+  }
 
   *modptr = linked_module;
+  ++numberOfIRs;
 
   write_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
   assert(write_lock);
@@ -1958,6 +2017,7 @@ int pocl_llvm_generate_workgroup_function_nowrite(
 
   assert(output != NULL);
   *output = (void *)input;
+  ++numberOfIRs;
   return 0;
 }
 
@@ -2014,8 +2074,10 @@ pocl_update_program_llvm_irs(cl_program program,
   if (!pocl_exists(program_bc_path))
     return -1;
 
+  assert(program->llvm_irs[device_i] == nullptr);
   program->llvm_irs[device_i] =
               parseIRFile(program_bc_path, Err, *GlobalContext()).release();
+  ++numberOfIRs;
   return 0;
 }
 
@@ -2024,6 +2086,7 @@ void pocl_free_llvm_irs(cl_program program, int device_i)
     if (program->llvm_irs[device_i]) {
         llvm::Module *mod = (llvm::Module *)program->llvm_irs[device_i];
         delete mod;
+        --numberOfIRs;
         program->llvm_irs[device_i] = NULL;
     }
 }
@@ -2140,8 +2203,10 @@ pocl_llvm_get_kernel_names(cl_program program, char **knames,
 
 void pocl_destroy_llvm_module(void *modp) {
   llvm::Module *mod = (llvm::Module *)modp;
-  if (mod)
+  if (mod) {
     delete mod;
+    --numberOfIRs;
+  }
 }
 
 /* Run LLVM codegen on input file (parallel-optimized).

@@ -33,6 +33,7 @@
 #include "pocl_cl.h"
 #include "pocl_util.h"
 #include "pocl_cache.h"
+#include "pocl_llvm.h"
 #include "devices.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
@@ -101,6 +102,13 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
 
       POCL_MEM_FREE(program->build_hash);
       POCL_MEM_FREE(program->compiler_options);
+
+#ifdef OCS_AVAILABLE
+      if (program->llvm_irs)
+        for (i = 0; i < program->num_devices; ++i)
+          pocl_free_llvm_irs (program, i);
+#endif
+
       POCL_MEM_FREE(program->llvm_irs);
       POCL_DESTROY_OBJECT (program);
       POCL_MEM_FREE(program);

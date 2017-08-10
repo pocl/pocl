@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <CL/opencl.h>
 #include <poclu.h>
+#include <assert.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -19,7 +20,8 @@ exec_dot_product_kernel(const char *program_source,
                         int n, cl_float4 *srcA, cl_float4 *srcB, cl_float *dst) 
 { 
   cl_context  context; 
-  cl_command_queue cmd_queue; 
+  cl_command_queue cmd_queue;
+  cl_platform_id platform;
   cl_device_id  *devices; 
   cl_program  program; 
   cl_kernel  kernel; 
@@ -29,6 +31,10 @@ exec_dot_product_kernel(const char *program_source,
   size_t       cb; 
   cl_int       err; 
   int          i;
+
+  clGetPlatformIDs (1, &platform, NULL);
+  assert (platform);
+
   context = poclu_create_any_context();
   if (context == (cl_context)0) 
     return -1; 
@@ -107,8 +113,8 @@ exec_dot_product_kernel(const char *program_source,
       clReleaseCommandQueue(cmd_queue); 
       clReleaseContext(context); 
       return -1; 
-    } 
- 
+    }
+
   // create the kernel 
   kernel = clCreateKernel(program, "dot_product", NULL); 
   if (kernel == (cl_kernel)0) 
@@ -182,7 +188,8 @@ exec_dot_product_kernel(const char *program_source,
   delete_memobjs(memobjs, 3); 
   clReleaseKernel(kernel); 
   clReleaseProgram(program); 
-  clReleaseCommandQueue(cmd_queue); 
+  clReleaseCommandQueue(cmd_queue);
+  clUnloadPlatformCompiler (platform);
   clReleaseContext(context); 
   return 0; // success... 
 }
