@@ -81,13 +81,22 @@ OptimizeWorkItemFuncCalls::runOnFunction(Function &F) {
       if (Call == nullptr) continue;
 
       if (Call->getCalledFunction() == nullptr) {
-	// The callee can be null in case of asm snippets (TCE).
-	continue;
+        // The callee can be null in case of asm snippets (TCE).
+        continue;
       }
       auto FuncNameI = WIFuncNames.find(Call->getCalledFunction()->getName().str());
       if (FuncNameI == WIFuncNames.end())
         continue;
 
+      bool Unsupported = false;
+      // Check that the argument list is something we can handle.
+      for (unsigned I = 0; I < Call->getNumArgOperands(); ++I) {
+        llvm::ConstantInt *CallOperand =
+          dyn_cast<llvm::ConstantInt>(Call->getArgOperand(I));
+        if (CallOperand == nullptr)
+          Unsupported = true;
+      }
+      if (Unsupported) continue;
       Calls[*FuncNameI].push_back(Call);
     }
   }
@@ -99,11 +108,6 @@ OptimizeWorkItemFuncCalls::runOnFunction(Function &F) {
     auto CallInsts = Call.second;
 
     for (auto CallInst : CallInsts) {
-
-      // Set to false in case the optimization is not applicable at
-      // all to this call.
-      bool Unsupported = false;
-
       // Try to find a previous call with the same parameters which
       // we can reuse.
       std::vector<llvm::CallInst*> &CallsMoved = CallsInEntry[FuncName];
@@ -122,15 +126,6 @@ OptimizeWorkItemFuncCalls::runOnFunction(Function &F) {
           llvm::ConstantInt *PrevCallOperand =
             dyn_cast<llvm::ConstantInt>(MovedCall->getArgOperand(I));
 
-          if (CallOperand == nullptr) {
-            // We do not support moving WI func calls with non-const
-            // arguments yet. It would require dflow analyzing whether
-            // the argument Value can be moved too.
-            CallInst->getArgOperand(I)->dump();
-            Unsupported = false;
-            break;
-          }
-
           assert (isa<llvm::ConstantInt>(PrevCallOperand));
 
           if (CallOperand->getValue() != PrevCallOperand->getValue()) {
@@ -138,14 +133,12 @@ OptimizeWorkItemFuncCalls::runOnFunction(Function &F) {
             break;
           }
         }
-        if (Unsupported) break;
         if (IsApplicable) {
           // Found a suitable previous call instruction we can reuse.
           PreviousCall = MovedCall;
           break;
         }
       }
-      if (Unsupported) continue;
 
       if (PreviousCall == nullptr) {
         CallInst->moveBefore(FirstInsnPt);
