@@ -182,7 +182,6 @@ half16 __ovld __cnfn fast_normalize(half16 p);
 
 half __ovld __cnfn dot(half8 p0, half8 p1);
 half __ovld __cnfn dot(half16 p0, half16 p1);
-
 #endif
 
 float __ovld __cnfn length(float8 p);
@@ -199,6 +198,30 @@ float16 __ovld __cnfn fast_normalize(float16 p);
 
 float __ovld __cnfn dot(float8 p0, float8 p1);
 float __ovld __cnfn dot(float16 p0, float16 p1);
+
+#ifdef cl_khr_fp64
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
+
+double __ovld __cnfn length(double8 p);
+double __ovld __cnfn length(double16 p);
+
+double __ovld __cnfn fast_length(double p);
+double __ovld __cnfn fast_length(double2 p);
+double __ovld __cnfn fast_length(double3 p);
+double __ovld __cnfn fast_length(double4 p);
+double __ovld __cnfn fast_length(double8 p);
+double __ovld __cnfn fast_length(double16 p);
+
+double8 __ovld __cnfn normalize(double8 p);
+double16 __ovld __cnfn normalize(double16 p);
+
+double8 __ovld __cnfn fast_normalize(double8 p);
+double16 __ovld __cnfn fast_normalize(double16 p);
+
+double __ovld __cnfn dot(double8 p0, double8 p1);
+double __ovld __cnfn dot(double16 p0, double16 p1);
+
+#endif
 
 #undef __ovld
 #undef __conv
