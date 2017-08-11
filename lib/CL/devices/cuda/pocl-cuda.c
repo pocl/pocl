@@ -57,6 +57,8 @@ typedef struct pocl_cuda_queue_data_s
   pthread_t submit_thread;
   pthread_t finalize_thread;
   pthread_mutex_t lock;
+  pthread_cond_t pending_cond;
+  pthread_cond_t running_cond;
   _cl_command_node *volatile pending_queue;
   _cl_command_node *volatile running_queue;
   cl_command_queue queue;
@@ -324,6 +326,8 @@ pocl_cuda_init_queue (cl_command_queue queue)
   if (queue_data->use_threads)
     {
       pthread_mutex_init (&queue_data->lock, NULL);
+      pthread_cond_init (&queue_data->pending_cond, NULL);
+      pthread_cond_init (&queue_data->running_cond, NULL);
       int err = pthread_create (&queue_data->submit_thread, NULL,
                                 pocl_cuda_submit_thread, queue_data);
       if (err)
@@ -359,6 +363,8 @@ pocl_cuda_free_queue (cl_command_queue queue)
   if (queue_data->use_threads)
     {
       queue_data->queue = NULL;
+      pthread_cond_signal (&queue_data->pending_cond);
+      pthread_cond_signal (&queue_data->running_cond);
       pthread_join (queue_data->submit_thread, NULL);
       pthread_join (queue_data->finalize_thread, NULL);
     }
@@ -1264,6 +1270,7 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
       pocl_cuda_queue_data_t *queue_data = (pocl_cuda_queue_data_t *)cq->data;
       pthread_mutex_lock (&queue_data->lock);
       DL_APPEND (queue_data->pending_queue, node);
+      pthread_cond_signal (&queue_data->pending_cond);
       pthread_mutex_unlock (&queue_data->lock);
     }
   else
@@ -1531,6 +1538,10 @@ pocl_cuda_submit_thread (void *data)
       /* Attempt to get next command from work queue */
       _cl_command_node *node = NULL;
       pthread_mutex_lock (&queue_data->lock);
+      if (!queue_data->pending_queue)
+        {
+          pthread_cond_wait (&queue_data->pending_cond, &queue_data->lock);
+        }
       if (queue_data->pending_queue)
         {
           node = queue_data->pending_queue;
@@ -1545,7 +1556,8 @@ pocl_cuda_submit_thread (void *data)
 
           /* Add command to running queue */
           pthread_mutex_lock (&queue_data->lock);
-          DL_APPEND (queue_data->running_queue, node)
+          DL_APPEND (queue_data->running_queue, node);
+          pthread_cond_signal (&queue_data->running_cond);
           pthread_mutex_unlock (&queue_data->lock);
         }
     }
@@ -1572,6 +1584,10 @@ pocl_cuda_finalize_thread (void *data)
       /* Attempt to get next node from running queue */
       _cl_command_node *node = NULL;
       pthread_mutex_lock (&queue_data->lock);
+      if (!queue_data->running_queue)
+        {
+          pthread_cond_wait (&queue_data->running_cond, &queue_data->lock);
+        }
       if (queue_data->running_queue)
         {
           node = queue_data->running_queue;
