@@ -422,20 +422,19 @@ void handleGetWorkDim(llvm::Module *Module, const char *KernelName) {
       NewFunctionType, Function->getLinkage(), Function->getName(), Module);
   NewFunction->takeName(Function);
 
-  // Take function body from old function.
-  NewFunction->getBasicBlockList().splice(NewFunction->begin(),
-                                          Function->getBasicBlockList());
-
-  // TODO: Copy attributes from old function?
-
-  // Update function body with the original arguments.
+  // Map function arguments.
+  llvm::ValueToValueMapTy VV;
   llvm::Function::arg_iterator OldArg;
   llvm::Function::arg_iterator NewArg;
   for (OldArg = Function->arg_begin(), NewArg = NewFunction->arg_begin();
        OldArg != Function->arg_end(); NewArg++, OldArg++) {
     NewArg->takeName(&*OldArg);
-    (&*OldArg)->replaceAllUsesWith(&*NewArg);
+    VV[&*OldArg] = &*NewArg;
   }
+
+  // Clone function.
+  llvm::SmallVector<llvm::ReturnInst *, 1> RI;
+  llvm::CloneFunctionInto(NewFunction, Function, VV, true, RI);
 
   Function->eraseFromParent();
 
@@ -484,20 +483,19 @@ void handleGlobalOffsets(llvm::Module *Module, const char *KernelName,
       NewFunctionType, Function->getLinkage(), Function->getName(), Module);
   NewFunction->takeName(Function);
 
-  // Take function body from old function.
-  NewFunction->getBasicBlockList().splice(NewFunction->begin(),
-                                          Function->getBasicBlockList());
-
-  // TODO: Copy attributes from old function?
-
-  // Update function body with the original arguments.
+  // Map function arguments.
+  llvm::ValueToValueMapTy VV;
   llvm::Function::arg_iterator OldArg;
   llvm::Function::arg_iterator NewArg;
   for (OldArg = Function->arg_begin(), NewArg = NewFunction->arg_begin();
        OldArg != Function->arg_end(); NewArg++, OldArg++) {
     NewArg->takeName(&*OldArg);
-    (&*OldArg)->replaceAllUsesWith(&*NewArg);
+    VV[&*OldArg] = &*NewArg;
   }
+
+  // Clone function.
+  llvm::SmallVector<llvm::ReturnInst *, 1> RI;
+  llvm::CloneFunctionInto(NewFunction, Function, VV, true, RI);
 
   // Replace uses of the global offset variables with the new arguments.
   NewArg->setName("global_offset_x");
@@ -651,6 +649,9 @@ void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
   std::vector<llvm::Argument *> Arguments;
   std::vector<llvm::Type *> ArgumentTypes;
 
+  llvm::ValueToValueMapTy VV;
+  std::vector<std::pair<llvm::Instruction *, llvm::Instruction *>> ToInsert;
+
   // Loop over arguments.
   bool NeedsArgOffsets = false;
   for (auto &Arg : Function->args()) {
@@ -671,14 +672,15 @@ void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
       llvm::Value *Zero = llvm::ConstantInt::getSigned(I32ty, 0);
       llvm::GetElementPtrInst *GEP =
           llvm::GetElementPtrInst::Create(nullptr, Base, {Zero, Offset});
-      GEP->insertBefore(&*Function->begin()->begin());
 
       // Cast pointer to correct type.
       llvm::BitCastInst *Cast = new llvm::BitCastInst(GEP, ArgType);
-      Cast->insertAfter(GEP);
 
-      Cast->takeName(&Arg);
-      Arg.replaceAllUsesWith(Cast);
+      // Save these instructions to insert into new function later.
+      ToInsert.push_back({GEP, Cast});
+
+      // Map the old local memory argument to the result of this cast.
+      VV[&Arg] = Cast;
     } else {
       // No change to other arguments.
       Arguments.push_back(&Arg);
@@ -696,22 +698,30 @@ void convertPtrArgsToOffsets(llvm::Module *Module, const char *KernelName,
       NewFunctionType, Function->getLinkage(), Function->getName(), Module);
   NewFunction->takeName(Function);
 
-  // Take function body from old function.
-  NewFunction->getBasicBlockList().splice(NewFunction->begin(),
-                                          Function->getBasicBlockList());
-
-  // TODO: Copy attributes from old function.
-
-  // Update function body with new arguments.
+  // Map function arguments.
   std::vector<llvm::Argument *>::iterator OldArg;
   llvm::Function::arg_iterator NewArg;
   for (OldArg = Arguments.begin(), NewArg = NewFunction->arg_begin();
        NewArg != NewFunction->arg_end(); NewArg++, OldArg++) {
     NewArg->takeName(*OldArg);
-    (*OldArg)->replaceAllUsesWith(&*NewArg);
+    if ((*OldArg)->getParent())
+      VV[*OldArg] = &*NewArg;
+    else {
+      // Manually replace new offset arguments.
+      (*OldArg)->replaceAllUsesWith(&*NewArg);
+      delete *OldArg;
+    }
   }
 
-  // TODO: Deal with calls to this kernel from other function?
+  // Clone function.
+  llvm::SmallVector<llvm::ReturnInst *, 1> RI;
+  llvm::CloneFunctionInto(NewFunction, Function, VV, true, RI);
+
+  // Insert offset instructions into new function.
+  for (auto Pair : ToInsert) {
+    Pair.first->insertBefore(&*NewFunction->begin()->begin());
+    Pair.second->insertAfter(Pair.first);
+  }
 
   Function->eraseFromParent();
 }
