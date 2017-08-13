@@ -362,9 +362,11 @@ pocl_cuda_free_queue (cl_command_queue queue)
   /* Kill queue threads */
   if (queue_data->use_threads)
     {
+      pthread_mutex_lock (&queue_data->lock);
       queue_data->queue = NULL;
       pthread_cond_signal (&queue_data->pending_cond);
       pthread_cond_signal (&queue_data->running_cond);
+      pthread_mutex_unlock (&queue_data->lock);
       pthread_join (queue_data->submit_thread, NULL);
       pthread_join (queue_data->finalize_thread, NULL);
     }
@@ -1533,11 +1535,16 @@ pocl_cuda_submit_thread (void *data)
     /* This queue has already been released */
     return NULL;
 
-  do
+  while (1)
     {
       /* Attempt to get next command from work queue */
       _cl_command_node *node = NULL;
       pthread_mutex_lock (&queue_data->lock);
+      if (!queue_data->queue)
+        {
+          pthread_mutex_unlock (&queue_data->lock);
+          break;
+        }
       if (!queue_data->pending_queue)
         {
           pthread_cond_wait (&queue_data->pending_cond, &queue_data->lock);
@@ -1561,7 +1568,6 @@ pocl_cuda_submit_thread (void *data)
           pthread_mutex_unlock (&queue_data->lock);
         }
     }
-  while (queue_data->queue);
 
   return NULL;
 }
@@ -1579,11 +1585,16 @@ pocl_cuda_finalize_thread (void *data)
     /* This queue has already been released */
     return NULL;
 
-  do
+  while (1)
     {
       /* Attempt to get next node from running queue */
       _cl_command_node *node = NULL;
       pthread_mutex_lock (&queue_data->lock);
+      if (!queue_data->queue)
+        {
+          pthread_mutex_unlock (&queue_data->lock);
+          break;
+        }
       if (!queue_data->running_queue)
         {
           pthread_cond_wait (&queue_data->running_cond, &queue_data->lock);
@@ -1599,7 +1610,6 @@ pocl_cuda_finalize_thread (void *data)
       if (node)
         pocl_cuda_finalize_command (queue->device, node->event);
     }
-  while (queue_data->queue);
 
   return NULL;
 }
