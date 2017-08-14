@@ -597,7 +597,13 @@ void pocl_cache_init_topdir() {
     assert(strlen(cache_topdir) > 0);
 
     if (pocl_mkdir_p(cache_topdir))
-      POCL_ABORT ("Could not create topdir %s for cache\n", cache_topdir);
+      POCL_ABORT ("Could not create top directory (%s) for cache. \n\nNote: if "
+                  "you have proper rights to create that directory, and still "
+                  "get the error, then most likely pocl and the program you're "
+                  "trying to run are linked to different versions of libstdc++ "
+                  "library. \nThis is not a bug in pocl and there's nothing we "
+                  "can do to fix it - you need both pocl and your program to be"
+                  " compiled for your system.\n", cache_topdir);
 
     cache_topdir_initialized = 1;
 
