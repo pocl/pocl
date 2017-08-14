@@ -151,12 +151,11 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
 
     # XFAILs as of 2016-05-17:
     # AMD_30_BuiltInScan: undefined symbol: work_group_scan_inclusive_add
-    # AMD_30_DeviceFission: Invalid device.
     # AMD_30_GaussianNoise, AMD_30_HDRToneMapping: Invalid platform.
     # AMD_30_ImageBinarization: work_group_barrier missing
     # AMD_30_HDRToneMapping: no output
     # AMD_30_UnsharpMask: clCreateContextFromType failed
-    set_tests_properties(AMD_30_BuiltInScan AMD_30_DeviceFission
+    set_tests_properties(AMD_30_BuiltInScan
       AMD_30_GaussianNoise AMD_30_HDRToneMapping
       AMD_30_ImageBinarization AMD_30_KernelLaunch
       AMD_30_UnsharpMask
