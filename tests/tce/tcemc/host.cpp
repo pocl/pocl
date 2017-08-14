@@ -36,7 +36,6 @@
 
 static char
 kernelSourceCode[] = 
-"int putchar(int c);\n"
 "kernel \n"
 "void test_kernel(constant char *input,\n"
 "                 __global char *output,\n"
@@ -44,7 +43,7 @@ kernelSourceCode[] =
 "                 int b) {\n"
 "    constant char* pos = input; \n"
 "    while (*pos) {\n"
-"        putchar (*pos);\n"
+"        printf (\"%c\", *pos);\n"
 "        ++pos;\n"
 "    }\n"
 "#ifdef cl_TCE_ABSF\n"

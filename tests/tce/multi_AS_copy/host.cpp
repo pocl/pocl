@@ -45,13 +45,12 @@
 
 static char
 kernelSourceCode[] =
-"int putchar(int c);\n"
 "kernel \n"
 "void test_kernel(__global char *buffer, __global char *reference) {\n"
 "    int i;\n"
 "    for (i = 0; i < 64; ++i) {\n"
 "        if(buffer[i] != reference[i])\n"
-"            putchar(buffer[i] + 48);\n"
+"            printf(\"%c\", (buffer[i] + 48));\n"
 "    }\n"
 "}\n";
 

@@ -38,7 +38,6 @@ static char
 kernelSourceCode[] = 
 "#pragma OPENCL EXTENSION cl_khr_fp16 : enable\n"
 //"#pragma OPENCL EXTENSION cl_khr_fp16 : disable\n"
-"int putchar(int c);\n"
 "kernel \n"
 "void test_kernel(float a) {\n"
 "   half h1 = (half)(a);\n"
