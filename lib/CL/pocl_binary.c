@@ -55,7 +55,8 @@
 /* changes for version 4: kernel library is now linked into
                           program.bc, so older binaries may fail
                           to run with "undefined symbol" errors. */
-#define POCLCC_VERSION 4
+/* changes for version 5: added program binary_type into header */
+#define POCLCC_VERSION 5
 
 /* pocl binary structures */
 
@@ -582,6 +583,7 @@ pocl_binary_serialize(cl_program program, unsigned device_i, size_t *size)
   uint64_t flags = 0;
   if (program->flush_denorms)
     flags |= POCL_BINARY_FLAG_FLUSH_DENORMS;
+  flags |= (program->binary_type << 1);
   BUFFER_STORE (flags, uint64_t);
   memcpy(buffer, program->build_hash[device_i], sizeof(SHA1_digest_t));
   buffer += sizeof(SHA1_digest_t);
@@ -619,6 +621,7 @@ pocl_binary_deserialize(cl_program program, unsigned device_i)
   pocl_binary b;
   buffer = read_header(&b, buffer);
   program->flush_denorms = (b.flags & POCL_BINARY_FLAG_FLUSH_DENORMS);
+  program->binary_type = (b.flags >> 1);
 
   //assert(pocl_binary_check_binary_header(&b));
   assert (buffer < end_of_buffer);
