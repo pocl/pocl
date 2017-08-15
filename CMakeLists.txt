@@ -1123,6 +1123,8 @@ message(STATUS "POCLU LINK OPTS: ${POCLU_LINK_OPTIONS}")
 # poclcc bin
 add_subdirectory("bin")
 
+include(add_test_pocl)
+
 if (OCS_AVAILABLE)
   add_subdirectory("tests")
   add_subdirectory("examples")
