@@ -24,17 +24,17 @@
 
 /* Empty implementation should work on CPU devices. */
 
-void
+void _CL_OVERLOADABLE
 read_mem_fence (cl_mem_fence_flags flags)
 {
 }
 
-void
+void _CL_OVERLOADABLE
 write_mem_fence (cl_mem_fence_flags flags)
 {
 }
 
-void
+void _CL_OVERLOADABLE
 mem_fence (cl_mem_fence_flags flags)
 {
 }

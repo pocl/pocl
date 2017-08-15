@@ -603,9 +603,9 @@ size_t _CL_OVERLOADABLE get_group_id(uint);
 size_t _CL_OVERLOADABLE get_global_offset(uint);
 
 #if (__OPENCL_C_VERSION__ < 121)
-void read_mem_fence (cl_mem_fence_flags flags);
-void write_mem_fence (cl_mem_fence_flags flags);
-void mem_fence (cl_mem_fence_flags flags);
+void _CL_OVERLOADABLE read_mem_fence (cl_mem_fence_flags flags);
+void _CL_OVERLOADABLE write_mem_fence (cl_mem_fence_flags flags);
+void _CL_OVERLOADABLE mem_fence (cl_mem_fence_flags flags);
 #endif
 
 #if __has_attribute(__noduplicate__)
