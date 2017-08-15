@@ -204,9 +204,15 @@ pocl_basic_init_device_infos(unsigned j, struct _cl_device_id* dev)
     dev->single_fp_config |= CL_FP_FMA;
 #endif
 #endif
+
+#ifdef _CL_DISABLE_DOUBLE
+  dev->double_fp_config = 0;
+#else
   dev->double_fp_config = CL_FP_FMA | CL_FP_ROUND_TO_NEAREST
                           | CL_FP_ROUND_TO_ZERO | CL_FP_ROUND_TO_INF
                           | CL_FP_INF_NAN | CL_FP_DENORM;
+#endif
+
   dev->global_mem_cache_type = CL_NONE;
   dev->global_mem_cacheline_size = 0;
   dev->global_mem_cache_size = 0;

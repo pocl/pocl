@@ -151,6 +151,9 @@
 /* Disable cl_khr_fp16 because fp16 is not supported */
 #cmakedefine _CL_DISABLE_HALF
 
+/* Disable cl_khr_fp64 because fp64 is not supported */
+#cmakedefine _CL_DISABLE_DOUBLE
+
 #define POCL_CL_VERSION "1.2"
 
 #define HSA_DEVICE_CL_VERSION_MAJOR 2
