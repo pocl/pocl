@@ -131,7 +131,7 @@ int pocl_llvm_link_program(cl_program program,
                            cl_uint num_input_programs,
                            unsigned char **cur_device_binaries,
                            size_t *cur_device_binary_sizes,
-                           void **cur_llvm_irs);
+                           void **cur_llvm_irs, int create_library);
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

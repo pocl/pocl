@@ -478,8 +478,11 @@ compile_and_link_program(int compile_program,
       if (errcode != CL_SUCCESS)
         goto ERROR_CLEAN_OPTIONS;
     }
-  program->flush_denorms = flush_denorms;
 
+  POCL_MSG_PRINT_INFO ("building program with options %s\n",
+                       program->compiler_options);
+
+  program->flush_denorms = flush_denorms;
 #if !(defined(__x86_64__) && defined(__GNUC__))
   if (flush_denorms)
     {
@@ -503,9 +506,6 @@ compile_and_link_program(int compile_program,
       num_devices = real_num_devices;
       device_list = unique_devlist;
     }
-
-  POCL_MSG_PRINT_INFO ("building program with options %s\n",
-                       program->compiler_options);
 
   clean_program_on_rebuild (program);
 
@@ -531,7 +531,7 @@ compile_and_link_program(int compile_program,
           error = pocl_llvm_build_program(
               program, device_i, program->compiler_options, program_bc_path,
               num_input_headers, input_headers, header_include_names,
-              link_program);
+              (create_library ? 0 : link_program));
           POCL_GOTO_ERROR_ON ((error != 0), build_error_code,
                               "pocl_llvm_build_program() failed\n");
 #else
@@ -609,7 +609,8 @@ compile_and_link_program(int compile_program,
             }
           error = pocl_llvm_link_program (program, device_i,
               program_bc_path, num_input_programs,
-              cur_device_binaries, cur_device_binary_sizes, cur_llvm_irs);
+              cur_device_binaries, cur_device_binary_sizes,
+              cur_llvm_irs, create_library);
           POCL_GOTO_ERROR_ON ((error != CL_SUCCESS), CL_LINK_PROGRAM_FAILURE,
                               "pocl_llvm_link_program() failed\n");
 #else

@@ -772,7 +772,8 @@ int pocl_llvm_link_program(cl_program program,
                            cl_uint num_input_programs,
                            unsigned char **cur_device_binaries,
                            size_t *cur_device_binary_sizes,
-                           void **cur_llvm_irs) {
+                           void **cur_llvm_irs,
+                           int create_library) {
 
   void *write_lock;
   std::string content;
@@ -827,19 +828,21 @@ int pocl_llvm_link_program(cl_program program,
   if (*modptr != nullptr) {
     delete *modptr;
     --numberOfIRs;
+    *modptr = nullptr;
   }
-  *modptr = nullptr;
 
-  // linked all the programs together, now link in the kernel library
-  currentPoclDevice = device;
-  llvm::Module *libmodule = kernel_library(device);
-  assert(libmodule != NULL);
-  std::string log("Error(s) while linking: \n");
-  if (link(linked_module, libmodule, log)) {
-    POCL_MSG_ERR(log.c_str());
-    pocl_cache_append_to_buildlog(program, device_i, log.c_str(), log.size());
-    delete linked_module;
-    return CL_BUILD_PROGRAM_FAILURE;
+  if (!create_library) {
+    // linked all the programs together, now link in the kernel library
+    currentPoclDevice = device;
+    llvm::Module *libmodule = kernel_library(device);
+    assert(libmodule != NULL);
+    std::string log("Error(s) while linking: \n");
+    if (link(linked_module, libmodule, log)) {
+      POCL_MSG_ERR(log.c_str());
+      pocl_cache_append_to_buildlog(program, device_i, log.c_str(), log.size());
+      delete linked_module;
+      return CL_BUILD_PROGRAM_FAILURE;
+    }
   }
 
   *modptr = linked_module;
