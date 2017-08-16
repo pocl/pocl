@@ -437,27 +437,29 @@ compile_and_link_program(int compile_program,
   void *write_cache_lock = NULL;
   int build_error_code
       = (link_program ? CL_BUILD_PROGRAM_FAILURE : CL_COMPILE_PROGRAM_FAILURE);
-  POCL_RETURN_ERROR_COND ((program == NULL), CL_INVALID_PROGRAM);
+  POCL_GOTO_LABEL_COND (PFN_NOTIFY, (program == NULL), CL_INVALID_PROGRAM);
 
-  POCL_RETURN_ERROR_COND ((num_devices > 0 && device_list == NULL),
-                          CL_INVALID_VALUE);
-  POCL_RETURN_ERROR_COND ((num_devices == 0 && device_list != NULL),
-                          CL_INVALID_VALUE);
+  POCL_GOTO_LABEL_COND (PFN_NOTIFY, (num_devices > 0 && device_list == NULL),
+                        CL_INVALID_VALUE);
+  POCL_GOTO_LABEL_COND (PFN_NOTIFY, (num_devices == 0 && device_list != NULL),
+                        CL_INVALID_VALUE);
 
-  POCL_RETURN_ERROR_COND ((pfn_notify == NULL && user_data != NULL),
-                          CL_INVALID_VALUE);
+  POCL_GOTO_LABEL_COND (PFN_NOTIFY, (pfn_notify == NULL && user_data != NULL),
+                        CL_INVALID_VALUE);
 
-  POCL_RETURN_ERROR_ON (program->kernels, CL_INVALID_OPERATION,
-                        "Program already has kernels\n");
+  POCL_GOTO_LABEL_ON (PFN_NOTIFY, program->kernels, CL_INVALID_OPERATION,
+                      "Program already has kernels\n");
 
-  POCL_RETURN_ERROR_ON ((program->source == NULL && program->binaries == NULL),
-                        CL_INVALID_PROGRAM,
-                        "Program doesn't have sources or binaries! You need "
-                        "to call clCreateProgramWith{Binary|Source} first\n");
+  POCL_GOTO_LABEL_ON (PFN_NOTIFY,
+                      (program->source == NULL && program->binaries == NULL),
+                      CL_INVALID_PROGRAM,
+                      "Program doesn't have sources or binaries! You need "
+                      "to call clCreateProgramWith{Binary|Source} first\n");
 
-  POCL_RETURN_ERROR_ON (((program->source == NULL) && (link_program == 0)),
-                        CL_INVALID_OPERATION,
-                        "Cannot clCompileProgram when program has no source\n");
+  POCL_GOTO_LABEL_ON (PFN_NOTIFY,
+                      ((program->source == NULL) && (link_program == 0)),
+                      CL_INVALID_OPERATION,
+                      "Cannot clCompileProgram when program has no source\n");
 
   POCL_LOCK_OBJ (program);
 
@@ -770,6 +772,7 @@ FINISH:
   POCL_UNLOCK_OBJ(program);
   POCL_MEM_FREE (unique_devlist);
 
+PFN_NOTIFY:
   if (pfn_notify)
     pfn_notify (program, user_data);
 

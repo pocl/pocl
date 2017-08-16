@@ -300,7 +300,29 @@ extern int pocl_aborting;
     }                                                                       \
   while (0)
 
+#define POCL_GOTO_LABEL_COND(label, cond, err_code)                           \
+  do                                                                          \
+    {                                                                         \
+      if (cond)                                                               \
+        {                                                                     \
+          POCL_MSG_ERR2 (#err_code, "%s\n", #cond);                           \
+          errcode = err_code;                                                 \
+          goto label;                                                         \
+        }                                                                     \
+    }                                                                         \
+  while (0)
 
+#define POCL_GOTO_LABEL_ON(label, cond, err_code, ...)                        \
+  do                                                                          \
+    {                                                                         \
+      if (cond)                                                               \
+        {                                                                     \
+          POCL_MSG_ERR2 (#err_code, __VA_ARGS__);                             \
+          errcode = err_code;                                                 \
+          goto label;                                                         \
+        }                                                                     \
+    }                                                                         \
+  while (0)
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

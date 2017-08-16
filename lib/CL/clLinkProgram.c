@@ -41,21 +41,24 @@ CL_API_SUFFIX__VERSION_1_2
   cl_program program = NULL;
   cl_device_id *unique_devlist = NULL;
 
-  POCL_GOTO_ERROR_COND ((context == NULL), CL_INVALID_CONTEXT);
+  POCL_GOTO_LABEL_COND (PFN_NOTIFY, (context == NULL), CL_INVALID_CONTEXT);
 
-  POCL_GOTO_ERROR_COND ((num_input_programs == 0), CL_INVALID_VALUE);
-
-  POCL_GOTO_ERROR_COND ((input_programs == NULL), CL_INVALID_VALUE);
-
-  POCL_GOTO_ERROR_COND ((num_devices > 0 && device_list == NULL),
+  POCL_GOTO_LABEL_COND (PFN_NOTIFY, (num_input_programs == 0),
                         CL_INVALID_VALUE);
-  POCL_GOTO_ERROR_COND ((num_devices == 0 && device_list != NULL),
+
+  POCL_GOTO_LABEL_COND (PFN_NOTIFY, (input_programs == NULL),
+                        CL_INVALID_VALUE);
+
+  POCL_GOTO_LABEL_COND (PFN_NOTIFY, (num_devices > 0 && device_list == NULL),
+                        CL_INVALID_VALUE);
+  POCL_GOTO_LABEL_COND (PFN_NOTIFY, (num_devices == 0 && device_list != NULL),
                         CL_INVALID_VALUE);
 
   for (i = 0; i < num_input_programs; i++)
     {
       cl_program p = input_programs[i];
-      POCL_GOTO_ERROR_ON (
+      POCL_GOTO_LABEL_ON (
+          PFN_NOTIFY,
           ((p->binary_type != CL_PROGRAM_BINARY_TYPE_LIBRARY)
            && (p->binary_type != CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT)),
           CL_INVALID_OPERATION,
@@ -81,7 +84,7 @@ CL_API_SUFFIX__VERSION_1_2
   program = create_program_skeleton (context, num_devices, device_list,
                                      NULL, NULL, NULL, &errcode, 1);
   if (errcode != CL_SUCCESS)
-    goto ERROR;
+    goto PFN_NOTIFY;
 
   assert (num_devices == program->num_devices);
 
@@ -91,6 +94,13 @@ CL_API_SUFFIX__VERSION_1_2
                                       0, NULL, NULL,
                                       num_input_programs, input_programs,
                                       pfn_notify, user_data);
+
+  /* compile_and_link_program already called the callback */
+  goto ERROR;
+
+PFN_NOTIFY:
+  if (pfn_notify)
+    pfn_notify (program, user_data);
 
 ERROR:
   POCL_MEM_FREE (unique_devlist);
