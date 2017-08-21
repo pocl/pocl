@@ -50,7 +50,6 @@
 #include "pocl_debug.h"
 #include "pocl_tracing.h"
 #include "pocl_cache.h"
-#include "pocl_queue_util.h"
 
 #if defined(TCE_AVAILABLE)
 #include "tce/ttasim/ttasim.h"
@@ -374,11 +373,8 @@ pocl_init_devices()
 #endif
 #endif
 
-  pocl_aborting = 0;
-
   pocl_cache_init_topdir();
   pocl_event_tracing_init();
-  pocl_init_queue_list();
 
   /* Init operations */
   for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
