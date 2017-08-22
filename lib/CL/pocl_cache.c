@@ -293,13 +293,16 @@ void
 pocl_cache_tempname (char *path_template, const char *suffix, int *fd)
 {
   assert (cache_topdir_initialized);
+  assert (path_template);
   strcpy (path_template, cache_topdir);
-  size_t max = POCL_FILENAME_LENGTH - 16 - strlen (suffix);
+  size_t suffixlen = (suffix ? strlen (suffix) : 0);
+  size_t max = POCL_FILENAME_LENGTH - 16 - suffixlen;
   assert (strlen (path_template) < max);
   strcat (path_template, "/tempfile_XXXXXX");
-  strcat (path_template, suffix);
+  if (suffix)
+    strcat (path_template, suffix);
 
-  pocl_cache_mk_temp_name (path_template, strlen (suffix), fd);
+  pocl_cache_mk_temp_name (path_template, suffixlen, fd);
 }
 
 int

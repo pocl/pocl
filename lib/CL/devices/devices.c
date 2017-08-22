@@ -51,6 +51,10 @@
 #include "pocl_tracing.h"
 #include "pocl_cache.h"
 
+#ifdef OCS_AVAILABLE
+#include "pocl_llvm.h"
+#endif
+
 #if defined(TCE_AVAILABLE)
 #include "tce/ttasim/ttasim.h"
 #endif
@@ -256,7 +260,7 @@ pocl_string_to_dirname(char *str)
 
 static struct sigaction sigfpe_action, old_sigfpe_action;
 
-void
+static void
 sigfpe_signal_handler (int signo, siginfo_t *si, void *data)
 {
   ucontext_t *uc;
@@ -362,19 +366,34 @@ pocl_init_devices()
   stderr_is_a_tty = isatty(fileno(stderr));
 #endif
 
+  pocl_cache_init_topdir ();
+  pocl_event_tracing_init ();
+
+#ifdef OCS_AVAILABLE
+  /* This is required to force LLVM to register its signal
+   * handlers, before pocl registers its own SIGFPE handler.
+   * LLVM otherwise calls this via
+   *    pocl_llvm_build_program ->
+   *    clang::PrintPreprocessedAction ->
+   *    CreateOutputFile -> RemoveFileOnSignal
+   * Registering our handlers before LLVM creates its sigaltstack
+   * leads to interesting crashes & bugs later.
+   */
+  char random_empty_file[POCL_FILENAME_LENGTH];
+  pocl_cache_tempname (random_empty_file, NULL, NULL);
+  pocl_llvm_remove_file_on_signal (random_empty_file);
+#endif
+
 #ifdef __linux__
 #ifdef __x86_64__
 
-  sigfpe_action.sa_flags = SA_ONSTACK | SA_RESTART | SA_SIGINFO;
+  sigfpe_action.sa_flags = SA_RESTART | SA_SIGINFO;
   sigfpe_action.sa_sigaction = sigfpe_signal_handler;
   int res = sigaction (SIGFPE, &sigfpe_action, &old_sigfpe_action);
   assert (res == 0);
 
 #endif
 #endif
-
-  pocl_cache_init_topdir();
-  pocl_event_tracing_init();
 
   /* Init operations */
   for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)

@@ -83,6 +83,8 @@ void pocl_free_llvm_irs(cl_program program, int device_i);
 /* calls delete on the module. */
 void pocl_destroy_llvm_module(void *modp);
 
+int pocl_llvm_remove_file_on_signal (const char *file);
+
 void pocl_llvm_release();
 /**
  * Update the program->binaries[] representation of the kernels

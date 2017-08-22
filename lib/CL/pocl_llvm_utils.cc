@@ -34,6 +34,7 @@
 #include <llvm/Support/Host.h>
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/Support/SourceMgr.h>
+#include <llvm/Support/Signals.h>
 
 #include <llvm/IR/Module.h>
 #include <llvm/IR/LLVMContext.h>
@@ -69,7 +70,6 @@ llvm::Module *parseModuleIR(const char *path) {
   SMDiagnostic Err;
   return parseIRFile(path, Err, GlobalContext()).release();
 }
-
 
 
 void writeModuleIR(const Module *mod, std::string &str) {
@@ -159,6 +159,10 @@ int cpu_has_fma() {
 }
 #endif
 
+int pocl_llvm_remove_file_on_signal(const char *file) {
+  return llvm::sys::RemoveFileOnSignal(
+            StringRef(file)) ? 0 : -1;
+}
 
 /*
  * Use one global LLVMContext across all LLVM bitcodes. This is because
