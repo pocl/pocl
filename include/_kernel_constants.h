@@ -31,6 +31,9 @@
 #ifndef _KERNEL_CONSTANTS_H
 #define _KERNEL_CONSTANTS_H
 
+/* clang's header defines these */
+#ifndef _OPENCL_H_
+
 /* cl_channel_order */
 #define CLK_R                                        0x10B0
 #define CLK_A                                        0x10B1
@@ -68,21 +71,23 @@
 
 /* cl_addressing _mode */
 #define CLK_ADDRESS_NONE                            0x00
-#define CLK_ADDRESS_MIRRORED_REPEAT                 0x01
-#define CLK_ADDRESS_REPEAT                          0x02
-#define CLK_ADDRESS_CLAMP_TO_EDGE                   0x20
-#define CLK_ADDRESS_CLAMP                           0x40
+#define CLK_ADDRESS_CLAMP_TO_EDGE                   0x02
+#define CLK_ADDRESS_CLAMP                           0x04
+#define CLK_ADDRESS_REPEAT                          0x06
+#define CLK_ADDRESS_MIRRORED_REPEAT                 0x08
 
 /* cl_sampler_info */
 #define CLK_NORMALIZED_COORDS_FALSE                 0x00
-#define CLK_NORMALIZED_COORDS_TRUE                  0x08
+#define CLK_NORMALIZED_COORDS_TRUE                  0x01
 
 /* filter_mode */
-#define CLK_FILTER_NEAREST                          0x80
-#define CLK_FILTER_LINEAR                           0x10
+#define CLK_FILTER_NEAREST                          0x10
+#define CLK_FILTER_LINEAR                           0x20
 
 /* barrier() flags */
 #define CLK_LOCAL_MEM_FENCE                         0x01
 #define CLK_GLOBAL_MEM_FENCE                        0x02
+
+#endif
 
 #endif

@@ -615,6 +615,9 @@ barrier (cl_mem_fence_flags flags);
 void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
 #endif
 
+/* clang's header defines these */
+#ifndef _OPENCL_H_
+
 /* Math Constants */
 
 /* half */
@@ -730,6 +733,7 @@ void _CL_OVERLOADABLE barrier (cl_mem_fence_flags flags);
 #define M_SQRT1_2  0.707106781186547524400844362105
 #endif
 
+#endif /* _OPENCL_H_ */
 
 /* Math Functions */
 
@@ -1358,6 +1362,9 @@ _CL_DECLARE_FUNC_V_V(_cl_native_sin)
 _CL_DECLARE_FUNC_V_V(_cl_native_sqrt)
 _CL_DECLARE_FUNC_V_V(_cl_native_tan)
 
+/* clang's header defines these */
+#ifndef _OPENCL_H_
+
 /* Integer Constants */
 
 #define CHAR_BIT  8
@@ -1380,6 +1387,7 @@ _CL_DECLARE_FUNC_V_V(_cl_native_tan)
 #define ULONG_MAX 0xffffffffffffffffUL
 #endif
 
+#endif
 
 /* Integer Functions */
 #define _CL_DECLARE_FUNC_G_G(NAME)              \
