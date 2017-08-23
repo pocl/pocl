@@ -109,9 +109,7 @@
 #else
 #  define _CL_OVERLOADABLE
 #endif
-#if (__clang_major__ == 3) && (__clang_minor__ >= 2)
-/* This causes an error with Clang 3.1: */
-/* #if __has_attribute(__const__) */
+#if __has_attribute(__const__)
 #  define _CL_READNONE __attribute__((__const__))
 #else
 #  define _CL_READNONE

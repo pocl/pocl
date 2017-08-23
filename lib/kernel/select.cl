@@ -40,7 +40,7 @@
    bit). */
 
 #define IMPLEMENT_SELECT_SCALAR(GTYPE, UIGTYPE) \
-  GTYPE __attribute__ ((overloadable))          \
+  GTYPE _CL_OVERLOADABLE _CL_READNONE           \
   select(GTYPE a, GTYPE b, UIGTYPE c)           \
   {                                             \
     return c ? b : a;                           \
@@ -72,7 +72,7 @@ IMPLEMENT_SELECT_SCALAR(double, ulong ))
 
 
 #define IMPLEMENT_SELECT_VECTOR(GTYPE, UIGTYPE, IGTYPE) \
-  GTYPE __attribute__ ((overloadable))                  \
+  GTYPE _CL_OVERLOADABLE _CL_READNONE                   \
   select(GTYPE a, GTYPE b, UIGTYPE c)                   \
   {                                                     \
     return *(IGTYPE*)&c < (IGTYPE)0 ? b : a;            \

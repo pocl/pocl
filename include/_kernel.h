@@ -253,6 +253,16 @@ double __ovld __cnfn dot(double16 p0, double16 p1);
 #else
 #  define _CL_OVERLOADABLE
 #endif
+#if __has_attribute(__pure__)
+#  define _CL_READONLY __attribute__((__pure__))
+#else
+#  define _CL_READONLY
+#endif
+#if __has_attribute(__const__)
+#  define _CL_READNONE __attribute__((__const__))
+#else
+#  define _CL_READNONE
+#endif
 
 #else
 
@@ -2419,119 +2429,121 @@ _CL_DECLARE_PREFETCH_FUNCS(float);
 __IF_FP64(_CL_DECLARE_PREFETCH_FUNCS(double));
 
 
+/***************************************************************************/
+
 /* NO sampler */
 
-float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image1d_t image, int coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image1d_buffer_t image,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RO_AQ image1d_t image, int coord);
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RO_AQ image1d_buffer_t image,
                                      int coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image1d_array_t image, int2 coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image2d_t image, int2 coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image2d_array_t image, int4 coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image3d_t image, int4 coord);
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RO_AQ image1d_array_t image, int2 coord);
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RO_AQ image2d_t image, int2 coord);
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RO_AQ image2d_array_t image, int4 coord);
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RO_AQ image3d_t image, int4 coord);
 
 
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RO_AQ image1d_t image, int coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RO_AQ image1d_t image, int coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RO_AQ image1d_buffer_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RO_AQ image1d_t image, int coord);
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RO_AQ image1d_t image, int coord);
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RO_AQ image1d_buffer_t image,
                                      int coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RO_AQ image1d_buffer_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RO_AQ image1d_buffer_t image,
                                    int coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RO_AQ image1d_array_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RO_AQ image1d_array_t image,
                                      int2 coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RO_AQ image1d_array_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RO_AQ image1d_array_t image,
                                    int2 coord);
 
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RO_AQ image2d_t image, int2 coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RO_AQ image2d_t image, int2 coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RO_AQ image2d_array_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RO_AQ image2d_t image, int2 coord);
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RO_AQ image2d_t image, int2 coord);
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RO_AQ image2d_array_t image,
                                      int4 coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RO_AQ image2d_array_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RO_AQ image2d_array_t image,
                                    int4 coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RO_AQ image3d_t image, int4 coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RO_AQ image3d_t image, int4 coord);
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RO_AQ image3d_t image, int4 coord);
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RO_AQ image3d_t image, int4 coord);
 
 /* float4 img + float coords + sampler */
 
-float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image1d_t image,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RO_AQ image1d_t image,
                                      sampler_t sampler, float coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image1d_buffer_t image,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RO_AQ image1d_buffer_t image,
                                      sampler_t sampler, float coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image1d_array_t image, sampler_t sampler,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RO_AQ image1d_array_t image, sampler_t sampler,
                                      float2 coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image2d_t image,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RO_AQ image2d_t image,
                                      sampler_t sampler, float2 coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image2d_array_t image, sampler_t sampler,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RO_AQ image2d_array_t image, sampler_t sampler,
                                      float4 coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image3d_t image,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RO_AQ image3d_t image,
                                      sampler_t sampler, float4 coord);
 
 /* float4 img + int coords + sampler */
 
-float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image1d_t image,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RO_AQ image1d_t image,
                                      sampler_t sampler, int coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image1d_buffer_t image,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RO_AQ image1d_buffer_t image,
                                      sampler_t sampler, int coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image1d_array_t image,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RO_AQ image1d_array_t image,
                                      sampler_t sampler, int2 coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image2d_t image,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RO_AQ image2d_t image,
                                      sampler_t sampler, int2 coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RO_AQ image2d_array_t image,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RO_AQ image2d_array_t image,
                                      sampler_t sampler, int4 coord);
-float4 _CL_OVERLOADABLE read_imagef ( IMG_RO_AQ image3d_t image, sampler_t sampler,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef ( IMG_RO_AQ image3d_t image, sampler_t sampler,
                                      int4 coord);
 
 /* int4 img + float coords + sampler */
 
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RO_AQ image1d_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RO_AQ image1d_t image,
                                      sampler_t sampler, float coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RO_AQ image1d_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RO_AQ image1d_t image,
                                    sampler_t sampler, float coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RO_AQ image1d_buffer_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RO_AQ image1d_buffer_t image,
                                      sampler_t sampler, float coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RO_AQ image1d_buffer_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RO_AQ image1d_buffer_t image,
                                    sampler_t sampler, float coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RO_AQ image1d_array_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RO_AQ image1d_array_t image,
                                      sampler_t sampler, float2 coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RO_AQ image1d_array_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RO_AQ image1d_array_t image,
                                    sampler_t sampler, float2 coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RO_AQ image2d_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RO_AQ image2d_t image,
                                      sampler_t sampler, float2 coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RO_AQ image2d_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RO_AQ image2d_t image,
                                    sampler_t sampler, float2 coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RO_AQ image2d_array_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RO_AQ image2d_array_t image,
                                      sampler_t sampler, float4 coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RO_AQ image2d_array_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RO_AQ image2d_array_t image,
                                    sampler_t sampler, float4 coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RO_AQ image3d_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RO_AQ image3d_t image,
                                      sampler_t sampler, float4 coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RO_AQ image3d_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RO_AQ image3d_t image,
                                    sampler_t sampler, float4 coord);
 
 /* int4 img + int coords + sampler */
 
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RO_AQ image1d_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RO_AQ image1d_t image,
                                      sampler_t sampler, int coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RO_AQ image1d_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RO_AQ image1d_t image,
                                    sampler_t sampler, int coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RO_AQ image1d_buffer_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RO_AQ image1d_buffer_t image,
                                      sampler_t sampler, int coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RO_AQ image1d_buffer_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RO_AQ image1d_buffer_t image,
                                    sampler_t sampler, int coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RO_AQ image1d_array_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RO_AQ image1d_array_t image,
                                      sampler_t sampler, int2 coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RO_AQ image1d_array_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RO_AQ image1d_array_t image,
                                    sampler_t sampler, int2 coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RO_AQ image2d_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RO_AQ image2d_t image,
                                      sampler_t sampler, int2 coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RO_AQ image2d_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RO_AQ image2d_t image,
                                    sampler_t sampler, int2 coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RO_AQ image2d_array_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RO_AQ image2d_array_t image,
                                      sampler_t sampler, int4 coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RO_AQ image2d_array_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RO_AQ image2d_array_t image,
                                    sampler_t sampler, int4 coord);
-uint4 _CL_OVERLOADABLE read_imageui ( IMG_RO_AQ image3d_t image, sampler_t sampler,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui ( IMG_RO_AQ image3d_t image, sampler_t sampler,
                                      int4 coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RO_AQ image3d_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RO_AQ image3d_t image,
                                    sampler_t sampler, int4 coord);
 
 /****************************************************************************/
@@ -2540,116 +2552,116 @@ int4 _CL_OVERLOADABLE read_imagei (IMG_RO_AQ image3d_t image,
 
 /* NO sampler */
 
-float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image1d_t image, int coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image1d_buffer_t image,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RW_AQ image1d_t image, int coord);
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RW_AQ image1d_buffer_t image,
                                      int coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image1d_array_t image, int2 coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image2d_t image, int2 coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image2d_array_t image, int4 coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image3d_t image, int4 coord);
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RW_AQ image1d_array_t image, int2 coord);
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RW_AQ image2d_t image, int2 coord);
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RW_AQ image2d_array_t image, int4 coord);
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RW_AQ image3d_t image, int4 coord);
 
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RW_AQ image1d_t image, int coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RW_AQ image1d_t image, int coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RW_AQ image1d_buffer_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RW_AQ image1d_t image, int coord);
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RW_AQ image1d_t image, int coord);
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RW_AQ image1d_buffer_t image,
                                      int coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RW_AQ image1d_buffer_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RW_AQ image1d_buffer_t image,
                                    int coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RW_AQ image1d_array_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RW_AQ image1d_array_t image,
                                      int2 coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RW_AQ image1d_array_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RW_AQ image1d_array_t image,
                                    int2 coord);
 
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RW_AQ image2d_t image, int2 coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RW_AQ image2d_t image, int2 coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RW_AQ image2d_array_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RW_AQ image2d_t image, int2 coord);
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RW_AQ image2d_t image, int2 coord);
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RW_AQ image2d_array_t image,
                                      int4 coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RW_AQ image2d_array_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RW_AQ image2d_array_t image,
                                    int4 coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RW_AQ image3d_t image, int4 coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RW_AQ image3d_t image, int4 coord);
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RW_AQ image3d_t image, int4 coord);
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RW_AQ image3d_t image, int4 coord);
 
 /* float4 img + float coords + sampler */
 
-float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image1d_t image,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RW_AQ image1d_t image,
                                      sampler_t sampler, float coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image1d_buffer_t image,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RW_AQ image1d_buffer_t image,
                                      sampler_t sampler, float coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image1d_array_t image, sampler_t sampler,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RW_AQ image1d_array_t image, sampler_t sampler,
                                      float2 coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image2d_t image,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RW_AQ image2d_t image,
                                      sampler_t sampler, float2 coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image2d_array_t image, sampler_t sampler,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RW_AQ image2d_array_t image, sampler_t sampler,
                                      float4 coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image3d_t image,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RW_AQ image3d_t image,
                                      sampler_t sampler, float4 coord);
 
 /* float4 img + int coords + sampler */
 
-float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image1d_t image,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RW_AQ image1d_t image,
                                      sampler_t sampler, int coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image1d_buffer_t image,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RW_AQ image1d_buffer_t image,
                                      sampler_t sampler, int coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image1d_array_t image,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RW_AQ image1d_array_t image,
                                      sampler_t sampler, int2 coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image2d_t image,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RW_AQ image2d_t image,
                                      sampler_t sampler, int2 coord);
-float4 _CL_OVERLOADABLE read_imagef (IMG_RW_AQ image2d_array_t image,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef (IMG_RW_AQ image2d_array_t image,
                                      sampler_t sampler, int4 coord);
-float4 _CL_OVERLOADABLE read_imagef ( IMG_RW_AQ image3d_t image, sampler_t sampler,
+float4 _CL_OVERLOADABLE _CL_READONLY read_imagef ( IMG_RW_AQ image3d_t image, sampler_t sampler,
                                      int4 coord);
 
 /* int4 img + float coords + sampler */
 
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RW_AQ image1d_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RW_AQ image1d_t image,
                                      sampler_t sampler, float coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RW_AQ image1d_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RW_AQ image1d_t image,
                                    sampler_t sampler, float coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RW_AQ image1d_buffer_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RW_AQ image1d_buffer_t image,
                                      sampler_t sampler, float coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RW_AQ image1d_buffer_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RW_AQ image1d_buffer_t image,
                                    sampler_t sampler, float coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RW_AQ image1d_array_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RW_AQ image1d_array_t image,
                                      sampler_t sampler, float2 coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RW_AQ image1d_array_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RW_AQ image1d_array_t image,
                                    sampler_t sampler, float2 coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RW_AQ image2d_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RW_AQ image2d_t image,
                                      sampler_t sampler, float2 coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RW_AQ image2d_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RW_AQ image2d_t image,
                                    sampler_t sampler, float2 coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RW_AQ image2d_array_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RW_AQ image2d_array_t image,
                                      sampler_t sampler, float4 coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RW_AQ image2d_array_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RW_AQ image2d_array_t image,
                                    sampler_t sampler, float4 coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RW_AQ image3d_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RW_AQ image3d_t image,
                                      sampler_t sampler, float4 coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RW_AQ image3d_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RW_AQ image3d_t image,
                                    sampler_t sampler, float4 coord);
 
 /* int4 img + int coords + sampler */
 
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RW_AQ image1d_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RW_AQ image1d_t image,
                                      sampler_t sampler, int coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RW_AQ image1d_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RW_AQ image1d_t image,
                                    sampler_t sampler, int coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RW_AQ image1d_buffer_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RW_AQ image1d_buffer_t image,
                                      sampler_t sampler, int coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RW_AQ image1d_buffer_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RW_AQ image1d_buffer_t image,
                                    sampler_t sampler, int coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RW_AQ image1d_array_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RW_AQ image1d_array_t image,
                                      sampler_t sampler, int2 coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RW_AQ image1d_array_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RW_AQ image1d_array_t image,
                                    sampler_t sampler, int2 coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RW_AQ image2d_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RW_AQ image2d_t image,
                                      sampler_t sampler, int2 coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RW_AQ image2d_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RW_AQ image2d_t image,
                                    sampler_t sampler, int2 coord);
-uint4 _CL_OVERLOADABLE read_imageui (IMG_RW_AQ image2d_array_t image,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui (IMG_RW_AQ image2d_array_t image,
                                      sampler_t sampler, int4 coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RW_AQ image2d_array_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RW_AQ image2d_array_t image,
                                    sampler_t sampler, int4 coord);
-uint4 _CL_OVERLOADABLE read_imageui ( IMG_RW_AQ image3d_t image, sampler_t sampler,
+uint4 _CL_OVERLOADABLE _CL_READONLY read_imageui ( IMG_RW_AQ image3d_t image, sampler_t sampler,
                                      int4 coord);
-int4 _CL_OVERLOADABLE read_imagei (IMG_RW_AQ image3d_t image,
+int4 _CL_OVERLOADABLE _CL_READONLY read_imagei (IMG_RW_AQ image3d_t image,
                                    sampler_t sampler, int4 coord);
 
 #endif
