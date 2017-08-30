@@ -81,9 +81,17 @@ HandleSamplerInitialization::runOnFunction(Function &F) {
     ConstantInt *SamplerValue = dyn_cast<ConstantInt>(C->arg_begin()->get());
 
     llvm::AllocaInst *Alloca = Builder.CreateAlloca(SamplerValue->getType());
+    /* Creates a volatile store. If the store is not volatile, it gets
+     * optimized out by DSE for some reason (possibly because opencl.sampler_t
+     * type is opaque).
+     *
+     * The proper solution would be to use the opencl.sampler_t directly
+     * for storing the sampler value, and not allocate storage at all,
+     * but this requires more changes - TODO.
+     */
     Builder.CreateStore(
       ConstantInt::get(SamplerValue->getType(), SamplerValue->getValue()),
-      Alloca);
+      Alloca, true);
     C->replaceAllUsesWith(Builder.CreateBitOrPointerCast(Alloca, C->getType()));
     C->eraseFromParent();
     Changed = true;
