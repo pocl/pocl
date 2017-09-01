@@ -173,7 +173,7 @@ int pocl_llvm_build_program(cl_program program,
   size_t n = 0;
   int error;
 
-  llvm::MutexGuard lockHolder(kernelCompilerLock);
+  PoclCompilerMutexGuard lockHolder(NULL);
   InitializeLLVM();
 
   if (num_input_headers > 0) {
@@ -571,7 +571,7 @@ int pocl_llvm_link_program(cl_program program,
   llvm::Module **modptr = (llvm::Module **)&program->llvm_irs[device_i];
   int error;
 
-  llvm::MutexGuard lockHolder(kernelCompilerLock);
+  PoclCompilerMutexGuard lockHolder(NULL);
   InitializeLLVM();
 
 #ifdef LLVM_OLDER_THAN_3_8

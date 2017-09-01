@@ -24,7 +24,6 @@
 
 #include "pocl_llvm.h"
 
-#include <llvm/Support/Mutex.h>
 #include <llvm/IR/Module.h>
 #include <map>
 #include <string>
@@ -33,7 +32,33 @@
 #pragma GCC visibility push(hidden)
 #endif
 
-extern llvm::sys::Mutex kernelCompilerLock;
+/* The LLVM API interface functions are not thread safe at the moment;
+ * Pocl needs to ensure only one thread is using this layer at the time.
+ *
+ * Pocl used a llvm::sys::Mutex class variable before, unfortunately,
+ * using llvm::sys::Mutex is not safe. Reason:
+ *
+ * if pocl is dlopened from a C++ program, pocl's C++ object destructors
+ * are called before the program's dtors. This causes the Mutex to be destroyed,
+ * and if the program's dtors call clReleaseProgram()
+ * -> pocl_free_llvm_irs() -> llvm::PoclMutexGuard guard_variable(Mutex)
+ * ... the program will freeze/segfault.
+ *
+ * This happens with many ViennaCL examples.
+ *
+ * This class is a replacement that uses a simple pthread lock
+ */
+
+class PoclCompilerMutexGuard {
+  PoclCompilerMutexGuard(const PoclCompilerMutexGuard &) = delete;
+  void operator=(const PoclCompilerMutexGuard &) = delete;
+
+public:
+  // an unused argument is required, otherwise compiler optimizes out the object
+  PoclCompilerMutexGuard(void *unused);
+  ~PoclCompilerMutexGuard();
+};
+
 
 typedef struct _cl_device_id *cl_device_id;
 extern cl_device_id currentPoclDevice;

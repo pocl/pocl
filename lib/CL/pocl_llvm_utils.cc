@@ -61,6 +61,8 @@
 #endif
 
 
+
+
 using namespace llvm;
 
 #include <string>
@@ -176,20 +178,26 @@ int pocl_llvm_remove_file_on_signal(const char *file) {
 static LLVMContext *globalContext = NULL;
 static bool LLVMInitialized = false;
 
-std::string currentWgMethod;
-/* The LLVM API interface functions are not at the moment not thread safe,
-   ensure only one thread is using this layer at the time with a mutex. */
-llvm::sys::Mutex kernelCompilerLock;
-
-
-
 llvm::LLVMContext &GlobalContext() {
   if (globalContext == NULL)
     globalContext = new LLVMContext();
   return *globalContext;
 }
 
+/* The LLVM API interface functions are not at the moment not thread safe,
+ * Pocl needs to ensure only one thread is using this layer at the time.
+ */
+static pocl_lock_t kernelCompilerLock = POCL_LOCK_INITIALIZER;
 
+PoclCompilerMutexGuard::PoclCompilerMutexGuard(void *unused) {
+  POCL_LOCK(kernelCompilerLock);
+}
+
+PoclCompilerMutexGuard::~PoclCompilerMutexGuard() {
+  POCL_UNLOCK(kernelCompilerLock);
+}
+
+std::string currentWgMethod;
 
 /* must be called with kernelCompilerLock locked */
 void InitializeLLVM() {
@@ -287,7 +295,7 @@ long numberOfIRs = 0;
 
 void pocl_llvm_release() {
 
-  llvm::MutexGuard lockHolder(kernelCompilerLock);
+  PoclCompilerMutexGuard lockHolder(NULL);
 
   assert(numberOfIRs >= 0);
 

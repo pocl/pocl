@@ -420,7 +420,7 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
 
 void pocl_destroy_llvm_module(void *modp) {
 
-  llvm::MutexGuard lockHolder(kernelCompilerLock);
+  PoclCompilerMutexGuard lockHolder(NULL);
   InitializeLLVM();
 
   llvm::Module *mod = (llvm::Module *)modp;
@@ -448,7 +448,7 @@ int pocl_llvm_generate_workgroup_function_nowrite(cl_device_id device,
 
   currentPoclDevice = device;
 
-  llvm::MutexGuard lockHolder(kernelCompilerLock);
+  PoclCompilerMutexGuard lockHolder(NULL);
   InitializeLLVM();
 
 #ifdef DEBUG_POCL_LLVM_API
@@ -564,7 +564,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
 int pocl_update_program_llvm_irs(cl_program program,
                                  unsigned device_i,
                                  cl_device_id device) {
-  llvm::MutexGuard lockHolder(kernelCompilerLock);
+  PoclCompilerMutexGuard lockHolder(NULL);
   InitializeLLVM();
 
   char program_bc_path[POCL_FILENAME_LENGTH];
@@ -581,7 +581,7 @@ int pocl_update_program_llvm_irs(cl_program program,
 
 void pocl_free_llvm_irs(cl_program program, int device_i) {
   if (program->llvm_irs[device_i]) {
-    llvm::MutexGuard lockHolder(kernelCompilerLock);
+    PoclCompilerMutexGuard lockHolder(NULL);
     InitializeLLVM();
     llvm::Module *mod = (llvm::Module *)program->llvm_irs[device_i];
     delete mod;
@@ -592,7 +592,7 @@ void pocl_free_llvm_irs(cl_program program, int device_i) {
 
 void pocl_llvm_update_binaries(cl_program program) {
 
-  llvm::MutexGuard lockHolder(kernelCompilerLock);
+  PoclCompilerMutexGuard lockHolder(NULL);
   InitializeLLVM();
 
   char program_bc_path[POCL_FILENAME_LENGTH];
@@ -646,7 +646,7 @@ void pocl_llvm_update_binaries(cl_program program) {
 int pocl_llvm_codegen(cl_kernel kernel, cl_device_id device, void *modp,
                       char **output, size_t *output_size) {
 
-  llvm::MutexGuard lockHolder(kernelCompilerLock);
+  PoclCompilerMutexGuard lockHolder(NULL);
   InitializeLLVM();
 
   llvm::Triple triple(device->llvm_target_triplet);

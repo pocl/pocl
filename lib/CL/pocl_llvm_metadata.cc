@@ -506,7 +506,7 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
                                   const char* kernel_name,
                                   int * errcode)
 {
-  llvm::MutexGuard lockHolder(kernelCompilerLock);
+  PoclCompilerMutexGuard lockHolder(NULL);
   InitializeLLVM();
 
   int i;
@@ -747,7 +747,7 @@ static unsigned pocl_llvm_get_kernel_count(cl_program program,
                                            char **knames,
                                            unsigned max_num_krn)
 {
-  llvm::MutexGuard lockHolder(kernelCompilerLock);
+  PoclCompilerMutexGuard lockHolder(NULL);
   InitializeLLVM();
 
   /* any device's module will do for metadata, just use first non-NULL */
