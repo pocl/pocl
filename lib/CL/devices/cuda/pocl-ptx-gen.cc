@@ -514,14 +514,14 @@ int findLibDevice(char LibDevicePath[PATH_MAX], const char *Arch) {
   // Extract numeric portion of SM version.
   char *End;
   unsigned long SM = strtoul(Arch + 3, &End, 10);
-  if (!SM || strlen(End))
-    {
-      POCL_MSG_ERR ("[CUDA] invalid GPU architecture %s\n", Arch);
-      return 1;
-    }
+  if (!SM || strlen(End)) {
+    POCL_MSG_ERR("[CUDA] invalid GPU architecture %s\n", Arch);
+    return 1;
+  }
 
   // This mapping from SM version to libdevice library version is given here:
   // http://docs.nvidia.com/cuda/libdevice-users-guide/basic-usage.html#version-selection
+  // This is no longer needed as of CUDA 9.
   int LibDeviceSM = 0;
   if (SM < 30)
     LibDeviceSM = 20;
@@ -551,19 +551,33 @@ int findLibDevice(char LibDevicePath[PATH_MAX], const char *Arch) {
     "",
   };
 
-  static const char *PathFormat = "%s%s/libdevice/libdevice.compute_%d.10.bc";
+  static const char *PathFormat = "%s%s/libdevice/libdevice.10.bc";
+  static const char *OldPathFormat =
+      "%s%s/libdevice/libdevice.compute_%d.10.bc";
 
   // Search combinations of paths for the libdevice library.
   for (auto bp : BasePath) {
     for (auto np : NVVMPath) {
-      size_t ps = snprintf(LibDevicePath, PATH_MAX - 1, PathFormat, bp, np,
-                           LibDeviceSM);
+      // Check for CUDA 9+ libdevice library.
+      size_t ps = snprintf(LibDevicePath, PATH_MAX - 1, PathFormat, bp, np);
       LibDevicePath[ps] = '\0';
-      POCL_MSG_PRINT2(CUDA, __FUNCTION__, __LINE__, "looking for libdevice at '%s'\n",
-                      LibDevicePath);
+      POCL_MSG_PRINT2(CUDA, __FUNCTION__, __LINE__,
+                      "looking for libdevice at '%s'\n", LibDevicePath);
       if (pocl_exists(LibDevicePath)) {
-        POCL_MSG_PRINT2(CUDA, __FUNCTION__, __LINE__, "found libdevice at '%s'\n",
-                        LibDevicePath);
+        POCL_MSG_PRINT2(CUDA, __FUNCTION__, __LINE__,
+                        "found libdevice at '%s'\n", LibDevicePath);
+        return 0;
+      }
+
+      // Check for pre CUDA 9 libdevice library.
+      ps = snprintf(LibDevicePath, PATH_MAX - 1, OldPathFormat, bp, np,
+                    LibDeviceSM);
+      LibDevicePath[ps] = '\0';
+      POCL_MSG_PRINT2(CUDA, __FUNCTION__, __LINE__,
+                      "looking for libdevice at '%s'\n", LibDevicePath);
+      if (pocl_exists(LibDevicePath)) {
+        POCL_MSG_PRINT2(CUDA, __FUNCTION__, __LINE__,
+                        "found libdevice at '%s'\n", LibDevicePath);
         return 0;
       }
     }
