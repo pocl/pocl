@@ -141,12 +141,17 @@ main(void){
               size_t log_size = 0;
               CHECK_CL_ERROR(clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
                       0, NULL, &log_size));
-              char *log = malloc(log_size);
-              CHECK_CL_ERROR(clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
-                      log_size, log, NULL));
-              log[log_size] = '\0';
-              fprintf(stderr, "preprocess failure log[%u]: %s\n", i, log);
-              free(log);
+              if (log_size)
+                {
+                  char *log = malloc (log_size + 1);
+                  fprintf (stderr, "log: %p\n", log);
+                  CHECK_CL_ERROR (clGetProgramBuildInfo (program, devices[i],
+                                                         CL_PROGRAM_BUILD_LOG,
+                                                         log_size, log, NULL));
+                  log[log_size] = '\0';
+                  fprintf (stderr, "preprocess failure log[%u]: %s\n", i, log);
+                  free (log);
+                }
       }
       /*Lets not release the program as we need it in the next test case*/
       /*CHECK_CL_ERROR(clReleaseProgram(program));*/
@@ -159,16 +164,19 @@ main(void){
 
       for (i = 0; i < num_devices; ++i) {
           size_t log_size = 0;
-          err = clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
-              0, NULL, &log_size);
-          CHECK_OPENCL_ERROR_IN("get build log size");
-          char *log = malloc(log_size);
-          err = clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
-              log_size, log, NULL);
-          CHECK_OPENCL_ERROR_IN("get build log");
-          log[log_size] = '\0';
-          fprintf(stderr, "preprocess failure log[%u]: %s\n", i, log);
-          free(log);
+          CHECK_CL_ERROR (clGetProgramBuildInfo (
+              program, devices[i], CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size));
+          if (log_size)
+            {
+              char *log = malloc (log_size + 1);
+              err = clGetProgramBuildInfo (program, devices[i],
+                                           CL_PROGRAM_BUILD_LOG, log_size, log,
+                                           NULL);
+              CHECK_OPENCL_ERROR_IN ("get build log");
+              log[log_size] = '\0';
+              fprintf (stderr, "preprocess failure log[%u]: %s\n", i, log);
+              free (log);
+            }
       }
 
       CHECK_CL_ERROR(clReleaseProgram(program));
@@ -264,19 +272,22 @@ main(void){
 
       for (i = 0; i < num_devices; ++i) {
           size_t log_size = 0;
-          err = clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
-                                      0, NULL, &log_size);
-          CHECK_OPENCL_ERROR_IN("get build log size");
-          char *log = malloc(log_size);
-          err = clGetProgramBuildInfo(program, devices[i], CL_PROGRAM_BUILD_LOG,
-                                      log_size, log, NULL);
-          CHECK_OPENCL_ERROR_IN("get build log");
-          log[log_size] = '\0';
-          /*As this build option deprecated after OCL1.0 we should see a warning here*/
-          fprintf(stderr, "Deprecated -cl-strict-aliasing log[%u]: %s\n", i, log);
-
-          free(log);
-
+          CHECK_CL_ERROR (clGetProgramBuildInfo (
+              program, devices[i], CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size));
+          if (log_size)
+            {
+              char *log = malloc (log_size + 1);
+              err = clGetProgramBuildInfo (program, devices[i],
+                                           CL_PROGRAM_BUILD_LOG,
+                                           log_size, log, NULL);
+              CHECK_OPENCL_ERROR_IN ("get build log");
+              log[log_size] = '\0';
+              /*As this build option deprecated after OCL1.0 we should see a
+               * warning here*/
+              fprintf (stderr, "Deprecated -cl-strict-aliasing log[%u]: %s\n",
+                       i, log);
+              free (log);
+            }
           cl_program_binary_type bin_type = 0;
           err = clGetProgramBuildInfo(program, devices[i],
                                       CL_PROGRAM_BINARY_TYPE,
