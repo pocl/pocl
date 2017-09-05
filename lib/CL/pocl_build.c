@@ -633,9 +633,6 @@ compile_and_link_program(int compile_program,
       /* Read binaries from program.bc to memory */
       if (program->binaries[device_i] == NULL)
         {
-          if (!write_cache_lock)
-            write_cache_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
-          assert(write_cache_lock);
           errcode = pocl_read_file(program_bc_path, &binary, &fsize);
           POCL_GOTO_ERROR_ON(errcode, CL_BUILD_ERROR,
                              "Failed to read binaries from program.bc to "
@@ -647,9 +644,6 @@ compile_and_link_program(int compile_program,
 
       if (program->llvm_irs[device_i] == NULL)
         {
-          if (!write_cache_lock)
-            write_cache_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
-          assert(write_cache_lock);
           pocl_update_program_llvm_irs(program, device_i, device);
         }
       /* Maintain a 'last_accessed' file in every program's

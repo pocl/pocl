@@ -941,13 +941,37 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
     }
   else
     {
-      /* 3D context array. */
-      llvm::Type *contextArrayType =
-        ArrayType::get(
-          ArrayType::get(
-            ArrayType::get(
-                           elementType, WGLocalSizeX),
-            WGLocalSizeY), WGLocalSizeZ);
+      /* 3D context array. In case the elementType itself is an array or struct,
+       * we must take into account it could be alloca-ed with alignment and loads
+       * or stores might use vectorized instructions expecting proper alignment.
+       * Because of that, we cannot simply allocate x*y*z*(size), we must
+       * enlarge the array type to fit the alignment. */
+      Type *allocType = elementType;
+      AllocaInst *allocaInst = dyn_cast<AllocaInst>(instruction);
+      if (allocaInst) {
+        unsigned alignment = allocaInst->getAlignment();
+
+        const DataLayout &dataLayout = M->getDataLayout();
+        uint64_t storeSize =
+          dataLayout.getTypeStoreSize(allocaInst->getAllocatedType());
+
+        if ((alignment > 1) && (storeSize & (alignment - 1))) {
+          uint64_t alignedSize = (storeSize & (~(alignment - 1))) + alignment;
+#ifdef DEBUG_WORK_ITEM_LOOPS
+        std::cerr << "### unaligned type found: aligning " << storeSize
+                  << " to " << alignedSize << "\n";
+#endif
+          if (isa<ArrayType>(elementType)) {
+            allocType =
+              ArrayType::get(elementType->getArrayElementType(), alignedSize);
+          } else if (isa<StructType>(elementType)) {
+          // TODO handle structs properly
+          }
+        }
+      }
+      llvm::Type *contextArrayType = ArrayType::get(
+          ArrayType::get(ArrayType::get(allocType, WGLocalSizeX), WGLocalSizeY),
+          WGLocalSizeZ);
 
       /* Allocate the context data array for the variable. */
       Alloca = builder.CreateAlloca(contextArrayType, 0, varName);

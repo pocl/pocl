@@ -91,7 +91,7 @@
   }
 #define DEFINE_BUILTIN_V_VV(NAME)                       \
   __IF_FP16(                                            \
-  half __attribute__ ((overloadable))                   \
+  half _CL_OVERLOADABLE _CL_READNONE                   \
   NAME(half a, half b)                                  \
   {                                                     \
     /* use float builtin */                             \
@@ -102,7 +102,7 @@
   IMPLEMENT_BUILTIN_V_VV(NAME, half4   , lo, hi)        \
   IMPLEMENT_BUILTIN_V_VV(NAME, half8   , lo, hi)        \
   IMPLEMENT_BUILTIN_V_VV(NAME, half16  , lo, hi))       \
-  float __attribute__ ((overloadable))                  \
+  float _CL_OVERLOADABLE _CL_READNONE                  \
   NAME(float a, float b)                                \
   {                                                     \
     return __builtin_##NAME##f(a, b);                   \
@@ -113,7 +113,7 @@
   IMPLEMENT_BUILTIN_V_VV(NAME, float8  , lo, hi)        \
   IMPLEMENT_BUILTIN_V_VV(NAME, float16 , lo, hi)        \
   __IF_FP64(                                            \
-  double __attribute__ ((overloadable))                 \
+  double _CL_OVERLOADABLE _CL_READNONE                 \
   NAME(double a, double b)                              \
   {                                                     \
     return __builtin_##NAME(a, b);                      \
@@ -554,7 +554,7 @@
   IMPLEMENT_EXPR_V_VV(NAME, EXPR, double16, double, long16 , long ))
 
 #define IMPLEMENT_EXPR_V_VVV(NAME, EXPR, VTYPE, STYPE, JTYPE, SJTYPE)   \
-  VTYPE __attribute__ ((overloadable))                                  \
+  VTYPE _CL_OVERLOADABLE _CL_READNONE                                  \
   NAME(VTYPE a, VTYPE b, VTYPE c)                                       \
   {                                                                     \
     typedef VTYPE vtype;                                                \
@@ -1466,7 +1466,7 @@
   IMPLEMENT_EXPR_G_GG(NAME, EXPR, ulong16 , ulong , ulong16 , ulong ))
 
 #define IMPLEMENT_EXPR_G_GGG(NAME, EXPR, GTYPE, SGTYPE, UGTYPE, SUGTYPE) \
-  GTYPE __attribute__ ((overloadable))                                  \
+  GTYPE _CL_OVERLOADABLE _CL_READNONE                                  \
   NAME(GTYPE a, GTYPE b, GTYPE c)                                       \
   {                                                                     \
     typedef GTYPE gtype;                                                \
@@ -1580,7 +1580,7 @@
   IMPLEMENT_EXPR_G_GS(NAME, EXPR, ulong16 , ulong , ulong16 , ulong ))
 
 #define IMPLEMENT_EXPR_G_GSS(NAME, EXPR, GTYPE, SGTYPE, UGTYPE, SUGTYPE) \
-  GTYPE __attribute__ ((overloadable))                                  \
+  GTYPE _CL_OVERLOADABLE _CL_READNONE                                  \
   NAME(GTYPE a, SGTYPE b, SGTYPE c)                                     \
   {                                                                     \
     typedef GTYPE gtype;                                                \

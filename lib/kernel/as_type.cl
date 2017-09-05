@@ -32,7 +32,7 @@
 /* Clang starting from 5 defines these as builtins in opencl-c.h */
 
 #define DEFINE_AS_TYPE(SRC, DST)                                        \
-  _CL_ALWAYSINLINE _CL_OVERLOADABLE                                     \
+  _CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE                                   \
   DST as_##DST(SRC a)                                                   \
   {                                                                     \
     union { SRC src; DST dst; } cvt;                                    \

@@ -22,7 +22,6 @@
 */
 
 #include "pocl_util.h"
-#include "pocl_queue_util.h"
 
 CL_API_ENTRY cl_command_queue CL_API_CALL
 POname(clCreateCommandQueueWithProperties)(cl_context context,

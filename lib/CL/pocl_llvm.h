@@ -2,17 +2,17 @@
 
    Copyright (c) 2013 Kalle Raiskila and
                       Pekka Jääskeläinen
-   
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights
    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
    copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -52,20 +52,17 @@ int pocl_llvm_build_program(cl_program program,
 /* Retrieve metadata of the given kernel in the program to populate the
  * cl_kernel object.
  */
-int pocl_llvm_get_kernel_metadata
-(cl_program program, 
- cl_kernel kernel,
- int device_i,     
- const char* kernel_name,
- int *errcode);
+int pocl_llvm_get_kernel_metadata(cl_program program, cl_kernel kernel,
+                                  int device_i, const char *kernel_name,
+                                  int *errcode);
 
 /* This function links the input kernel LLVM bitcode and the
  * OpenCL kernel runtime library into one LLVM module, then
- * runs pocl's kernel compiler passes on that module to produce 
+ * runs pocl's kernel compiler passes on that module to produce
  * a function that executes all work-items in a work-group.
  *
  * Output is a LLVM bitcode file that contains a work-group function
- * and its associated launchers. 
+ * and its associated launchers.
  *
  * TODO: this is not thread-safe, it changes the LLVM global options to
  * control the compilation. We should enforce only one compilations is done
@@ -85,6 +82,8 @@ void pocl_free_llvm_irs(cl_program program, int device_i);
 
 /* calls delete on the module. */
 void pocl_destroy_llvm_module(void *modp);
+
+int pocl_llvm_remove_file_on_signal (const char *file);
 
 void pocl_llvm_release();
 /**
