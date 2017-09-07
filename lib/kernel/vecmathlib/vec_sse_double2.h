@@ -10,19 +10,7 @@
 #include <cmath>
 
 // SSE2 intrinsics
-#include <emmintrin.h>
-#ifdef __SSE3__ // Intel's SSE 3
-#include <pmmintrin.h>
-#endif
-#ifdef __SSE4_1__ // Intel's SSE 4.1
-#include <smmintrin.h>
-#endif
-#ifdef __SSE4A__ // AMD's SSE 4a
-#include <ammintrin.h>
-#endif
-#if defined __AVX__ // Intel's AVX
-#include <immintrin.h>
-#endif
+#include <x86intrin.h>
 
 namespace vecmathlib {
 
@@ -473,10 +461,36 @@ template <> struct realvec<double, 2> : floatprops<double> {
 #endif
   }
   realvec_t fma(realvec_t y, realvec_t z) const {
+#if defined(__FMA4__)
+    realvec_t x = *this;
+    return _mm_macc_pd(x, y, z);
+#elif defined(__FMA__)
+    realvec_t x = *this;
+    return _mm_fmadd_pd(x, y, z);
+#else
     return MF::vml_fma(*this, y, z);
+#endif
   }
-  realvec_t fmax(realvec_t y) const { return _mm_max_pd(v, y.v); }
-  realvec_t fmin(realvec_t y) const { return _mm_min_pd(v, y.v); }
+  /* OpenCL spec: if one argument is NaN, return the second
+   * instructions: if any argument is NaN, return the second
+   * ... so we must take care of (x, NaN) arguments case
+   */
+  realvec_t fmax(realvec_t y) const {
+    realvec_t res = _mm_max_pd(v, y.v);
+#if defined VML_HAVE_NAN
+    return y.isnan().ifthen(v, res);
+#else
+    return res;
+#endif
+  }
+  realvec_t fmin(realvec_t y) const {
+    realvec_t res = _mm_min_pd(v, y.v);
+#if defined VML_HAVE_NAN
+    return y.isnan().ifthen(v, res);
+#else
+    return res;
+#endif
+  }
   realvec_t fmod(realvec_t y) const { return MF::vml_fmod(*this, y); }
   realvec_t frexp(intvec_t *r) const { return MF::vml_frexp(*this, r); }
   realvec_t hypot(realvec_t y) const { return MF::vml_hypot(*this, y); }

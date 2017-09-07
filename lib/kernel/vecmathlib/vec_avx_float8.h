@@ -10,7 +10,7 @@
 #include <cmath>
 
 // AVX intrinsics
-#include <immintrin.h>
+#include <x86intrin.h>
 
 namespace vecmathlib {
 
@@ -575,11 +575,35 @@ template <> struct realvec<float, 8> : floatprops<float> {
   realvec_t fabs() const { return MF::vml_fabs(*this); }
   realvec_t fdim(realvec_t y) const { return MF::vml_fdim(*this, y); }
   realvec_t floor() const { return _mm256_floor_ps(v); }
+
   realvec_t fma(realvec_t y, realvec_t z) const {
+#if defined(__FMA4__)
+    realvec_t x = *this;
+    return _mm256_macc_ps(x, y, z);
+#elif defined(__FMA__)
+    realvec_t x = *this;
+    return _mm256_fmadd_ps(x, y, z);
+#else
     return MF::vml_fma(*this, y, z);
+#endif
   }
-  realvec_t fmax(realvec_t y) const { return _mm256_max_ps(v, y.v); }
-  realvec_t fmin(realvec_t y) const { return _mm256_min_ps(v, y.v); }
+
+  realvec_t fmax(realvec_t y) const {
+    realvec_t res = _mm256_max_ps(v, y.v);
+#if defined VML_HAVE_NAN
+    return y.isnan().ifthen(v, res);
+#else
+    return res;
+#endif
+  }
+  realvec_t fmin(realvec_t y) const {
+    realvec_t res = _mm256_min_ps(v, y.v);
+#if defined VML_HAVE_NAN
+    return y.isnan().ifthen(v, res);
+#else
+    return res;
+#endif
+  }
   realvec_t fmod(realvec_t y) const { return MF::vml_fmod(*this, y); }
   realvec_t frexp(intvec_t *r) const { return MF::vml_frexp(*this, r); }
   realvec_t hypot(realvec_t y) const { return MF::vml_hypot(*this, y); }

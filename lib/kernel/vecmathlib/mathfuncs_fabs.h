@@ -39,12 +39,26 @@ realvec_t mathfuncs<realvec_t>::vml_fma(realvec_t x, realvec_t y, realvec_t z) {
 
 template <typename realvec_t>
 realvec_t mathfuncs<realvec_t>::vml_fmax(realvec_t x, realvec_t y) {
-  return ifthen(x < y, y, x);
+#if defined VML_HAVE_NAN
+  realvec_t notnan = ifthen(isnan(x), y, x);
+  notnan = ifthen(isnan(y), x, notnan);
+  realvec_t res = ifthen(x < y, y, x);
+  return ifthen(isnormal(res), res, notnan);
+#else
+  return ifthen(x > y, x, y);
+#endif
 }
 
 template <typename realvec_t>
 realvec_t mathfuncs<realvec_t>::vml_fmin(realvec_t x, realvec_t y) {
-  return ifthen(y < x, y, x);
+#if defined VML_HAVE_NAN
+  realvec_t notnan = ifthen(isnan(x), y, x);
+  notnan = ifthen(isnan(y), x, notnan);
+  realvec_t res = ifthen(x < y, x, y);
+  return ifthen(isnormal(res), res, notnan);
+#else
+  return ifthen(x < y, x, y);
+#endif
 }
 
 template <typename realvec_t>

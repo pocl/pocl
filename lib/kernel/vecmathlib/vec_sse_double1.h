@@ -10,20 +10,7 @@
 #include <cmath>
 #include <climits>
 
-// SSE2 intrinsics
-#include <emmintrin.h>
-#ifdef __SSE3__ // Intel's SSE 3
-#include <pmmintrin.h>
-#endif
-#ifdef __SSE4_1__ // Intel's SSE 4.1
-#include <smmintrin.h>
-#endif
-#ifdef __SSE4A__ // AMD's SSE 4a
-#include <ammintrin.h>
-#endif
-#if defined __AVX__ // Intel's AVX
-#include <immintrin.h>
-#endif
+#include <x86intrin.h>
 
 namespace vecmathlib {
 
@@ -360,13 +347,31 @@ public:
 #endif
   }
   realvec_t fma(realvec_t y, realvec_t z) const {
+#if defined(__FMA4__)
+    return to_double(
+        _mm_macc_sd(from_double(v), from_double(y.v), from_double(z.v)));
+#elif defined(__FMA__)
+    return to_double(
+        _mm_fmadd_sd(from_double(v), from_double(y.v), from_double(z.v)));
+#else
     return MF::vml_fma(*this, y, z);
+#endif
   }
   realvec_t fmax(realvec_t y) const {
-    return to_double(_mm_max_sd(from_double(v), from_double(y.v)));
+    realvec_t res = to_double(_mm_max_sd(from_double(v), from_double(y.v)));
+#if defined VML_HAVE_NAN
+    return y.isnan().ifthen(v, res);
+#else
+    return res;
+#endif
   }
   realvec_t fmin(realvec_t y) const {
-    return to_double(_mm_min_sd(from_double(v), from_double(y.v)));
+    realvec_t res = to_double(_mm_min_sd(from_double(v), from_double(y.v)));
+#if defined VML_HAVE_NAN
+    return y.isnan().ifthen(v, res);
+#else
+    return res;
+#endif
   }
   realvec_t fmod(realvec_t y) const { return vml_std::fmod(v, y.v); }
   realvec_t frexp(intvec_t *irp) const {
