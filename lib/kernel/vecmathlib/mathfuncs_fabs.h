@@ -24,7 +24,12 @@ realvec_t mathfuncs<realvec_t>::vml_fabs(realvec_t x) {
 template <typename realvec_t>
 realvec_t mathfuncs<realvec_t>::vml_fdim(realvec_t x, realvec_t y) {
   // return ifthen(x > y, x - y, RV(0.0));
-  return fmax(x - y, RV(0.0));
+  realvec_t res = fmax(x - y, RV(0.0));
+#if defined VML_HAVE_NAN
+  res = ifthen(isnan(x), RV(NAN), res);
+  res = ifthen(isnan(y), RV(NAN), res);
+#endif
+  return res;
 }
 
 template <typename realvec_t>
