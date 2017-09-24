@@ -28,6 +28,8 @@
 
 #define FORCED_CLFLAGS  "@FORCED_CLFLAGS@"
 
+#cmakedefine ENABLE_CONFORMANCE
+
 #cmakedefine HAVE_FORK
 
 #cmakedefine HAVE_VFORK
@@ -137,10 +139,6 @@
 #cmakedefine TCE_AVAILABLE
 
 #define TCE_DEVICE_EXTENSIONS "@TCE_DEVICE_EXTENSIONS@"
-
-/* "Use vecmathlib if available for the target." */
-#cmakedefine USE_VECMATHLIB
-
 
 /* Defined on big endian systems */
 #define WORDS_BIGENDIAN @WORDS_BIGENDIAN@

@@ -23,7 +23,6 @@
 #
 #=============================================================================
 
-# sources.mk
 set(SOURCES_WITHOUT_VML abs.cl
 abs_diff.cl
 acos.cl
@@ -189,7 +188,6 @@ vload_store_half_f16c.c
 wait_group_events.cl
 write_image.cl)
 
-# from sources-vml.mk
 set(SOURCES_WITH_VML abs.cl
 abs_diff.cl
 add_sat.cl
@@ -373,8 +371,215 @@ vecmathlib-pocl/tanh.cc
 vecmathlib-pocl/tanpi.cl
 vecmathlib-pocl/trunc.cc)
 
+
+set(SOURCES_WITH_SLEEF abs.cl
+abs_diff.cl
+add_sat.cl
+all.cl
+any.cl
+as_type.cl
+async_work_group_copy.cl
+async_work_group_strided_copy.cl
+atomics.cl
+barrier.ll
+bitselect.cl
+clamp.cl
+clamp_int.cl
+clz.cl
+convert_type.cl
+cross.cl
+degrees.cl
+distance.cl
+dot.cl
+fast_distance.cl
+fast_length.cl
+fast_normalize.cl
+fract.cl
+get_global_id.c
+get_global_offset.c
+get_global_size.c
+get_group_id.c
+get_image_array_size.cl
+get_image_channel_data_type.cl
+get_image_channel_order.cl
+get_image_depth.cl
+get_image_dim.cl
+get_image_height.cl
+get_image_width.cl
+get_local_id.c
+get_local_size.c
+get_num_groups.c
+get_work_dim.c
+hadd.cl
+#half_cos.cl
+#half_divide.cl
+#half_exp10.cl
+#half_exp2.cl
+#half_exp.cl
+#half_log10.cl
+#half_log2.cl
+#half_log.cl
+#half_powr.cl
+#half_recip.cl
+#half_rsqrt.cl
+#half_sin.cl
+#half_tan.cl
+isequal.cl
+isfinite.cl
+isgreater.cl
+isgreaterequal.cl
+isinf.cl
+isless.cl
+islessequal.cl
+islessgreater.cl
+isnan.cl
+isnormal.cl
+isnotequal.cl
+isordered.cl
+isunordered.cl
+length.cl
+log2.cl
+logb.cl
+mad24.cl
+mad.cl
+mad_hi.cl
+mad_sat.cl
+max.cl
+max_i.cl
+maxmag.cl
+min.cl
+min_i.cl
+minmag.cl
+mix.cl
+mul24.cl
+mul_hi.cl
+nan.cl
+native_cos.cl
+native_divide.cl
+native_exp10.cl
+native_exp2.cl
+native_exp.cl
+native_log10.cl
+native_log2.cl
+native_log.cl
+native_powr.cl
+native_recip.cl
+native_rsqrt.cl
+native_sin.cl
+native_sqrt.cl
+native_tan.cl
+normalize.cl
+popcount.cl
+prefetch.cl
+printf.c
+radians.cl
+read_image.cl
+remainder.cl
+rhadd.cl
+rotate.cl
+rsqrt.cl
+select.cl
+shuffle.cl
+signbit.cl
+sign.cl
+smoothstep.cl
+step.cl
+sub_sat.cl
+upsample.cl
+vload.cl
+vload_half.cl
+vload_store_half_f16c.c
+vstore.cl
+vstore_half.cl
+wait_group_events.cl
+write_image.cl
+
+###################################################################
+
+sleef/libm/sleef_glue.cl
+
+sleef-pocl/acos.cl
+sleef-pocl/asin.cl
+sleef-pocl/atan2.cl
+sleef-pocl/atan.cl
+sleef-pocl/ceil.cl
+sleef-pocl/copysign.cl
+sleef-pocl/erfc.cl
+sleef-pocl/erf.cl
+sleef-pocl/exp10.cl
+sleef-pocl/exp2.cl
+sleef-pocl/exp.cl
+sleef-pocl/expm1.cl
+sleef-pocl/fabs.cl
+sleef-pocl/fdim.cl
+sleef-pocl/floor.cl
+sleef-pocl/fma.cl
+sleef-pocl/fmax.cl
+sleef-pocl/fmin.cl
+sleef-pocl/expfrexp.cl
+sleef-pocl/frfrexp.cl
+sleef-pocl/frexp.cl
+sleef-pocl/hypot.cl
+sleef-pocl/ilogb.cl
+sleef-pocl/ldexp.cl
+sleef-pocl/lgamma.cl
+sleef-pocl/log10.cl
+sleef-pocl/log1p.cl
+sleef-pocl/log.cl
+sleef-pocl/modf.cl
+sleef-pocl/nextafter.cl
+sleef-pocl/rint.cl
+sleef-pocl/round.cl
+sleef-pocl/tgamma.cl
+sleef-pocl/trunc.cl
+
+sleef-pocl/scalars.cl
+)
+
+# these are non-conformant
+list(APPEND SOURCES_WITH_SLEEF
+sleef-pocl/acosh.cl
+sleef-pocl/asinh.cl
+sleef-pocl/atanh.cl
+sleef-pocl/cbrt.cl
+sleef-pocl/cos.cl
+sleef-pocl/cosh.cl
+sleef-pocl/cospi.cl
+sleef-pocl/fmod.cl
+sleef-pocl/pown.cl
+sleef-pocl/powr.cl
+sleef-pocl/pow.cl
+sleef-pocl/sin.cl
+sleef-pocl/sincos.cl
+sleef-pocl/sinh.cl
+sleef-pocl/sinpi.cl
+sleef-pocl/sqrt.cl
+sleef-pocl/tan.cl
+sleef-pocl/tanh.cl
+)
+
+
+set(SLEEF_CL_KERNEL_DEPEND_HEADERS "")
+foreach(HEADER helperadvsimd.h   helperavx2.h     helperavx.h     helperpurec.h  helpersse2.h    misc.h helperavx2_128.h  helperavx512f.h  helperneon32.h  helpers.h      helpervecext.h)
+  list(APPEND SLEEF_CL_KERNEL_DEPEND_HEADERS "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/arch/${HEADER}")
+endforeach()
+list(APPEND SLEEF_CL_KERNEL_DEPEND_HEADERS "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/include/sleef_cl.h")
+
+set(SLEEF_C_KERNEL_DEPEND_HEADERS ${SLEEF_CL_KERNEL_DEPEND_HEADERS})
+
+# only CL files depend on these
+foreach(SOURCE sleef_builtin.c  sleef_glue_auto.c  sleef_glue.cl)
+list(APPEND SLEEF_CL_KERNEL_DEPEND_HEADERS "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/libm/${SOURCE}")
+endforeach()
+
+# only C files depend on these
+foreach(SOURCE dd.h df.h rename.h rename_vec128.h rename_vec256.h rename_vec512.h )
+list(APPEND SLEEF_C_KERNEL_DEPEND_HEADERS "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/libm/${SOURCE}")
+endforeach()
+list(APPEND SLEEF_C_KERNEL_DEPEND_HEADERS "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/include/sleef.h")
+
 #LKERNEL_HDRS_EXTRA - headers that should be dependencies
-set(KERNEL_DEPEND_HEADERS
+set(VML_KERNEL_DEPEND_HEADERS
 "${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vec_test.h"
 "${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/mathfuncs.h"
 "${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/mathfuncs_fabs.h"

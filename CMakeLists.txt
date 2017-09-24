@@ -366,24 +366,95 @@ check_function_exists(vfork HAVE_VFORK)
 
 ######################################################################################
 
-if(NOT DEFINED DEFAULT_USE_VECMATHLIB)
-  if(CLANGXX_WORKS AND EXISTS "${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vecmathlib.h")
-    set(DEFAULT_USE_VECMATHLIB 1 CACHE INTERNAL "vecmathlib availability")
-  else()
-    set(DEFAULT_USE_VECMATHLIB 0 CACHE INTERNAL "vecmathlib availability")
+if((DEFINED ENABLE_VECMATHLIB) AND (DEFINED ENABLE_SLEEF))
+  if(ENABLE_SLEEF AND ENABLE_VECMATHLIB)
+    message(FATAL_ERROR "requested to use both Vecmathlib and SLEEF - pick one!")
+  endif()
+
+  if((NOT ENABLE_SLEEF) AND (NOT ENABLE_VECMATHLIB))
+    message(FATAL_ERROR "requested to use neither Vecmathlib nor SLEEF - pick one!")
   endif()
 endif()
 
-setup_cached_var(USE_VECMATHLIB "Vecmathlib use"
-  "Requested enabling vecmathlib use, but either clang++ doesnt work or vecmathlib sources are missing.. -> disabling vecmathlib use"
-  "Vecmathlib is usable, but requested disabling it")
+if(NOT DEFINED ENABLE_CONFORMANCE)
+  if(((DEFINED ENABLE_VECMATHLIB) AND ENABLE_VECMATHLIB) OR
+     ((DEFINED ENABLE_SLEEF) AND (NOT ENABLE_SLEEF)))
+    set(DEFAULT_CONF OFF)
+    set(DEFAULT_SLEEF OFF)
+    set(DEFAULT_VML ON)
+  else()
+    set(DEFAULT_CONF ON)
+    set(DEFAULT_SLEEF ON)
+    set(DEFAULT_VML OFF)
+  endif()
+else()
+  set(DEFAULT_CONF ${ENABLE_CONFORMANCE})
+  if (ENABLE_CONFORMANCE)
+    # requested conformant
+    if((DEFINED ENABLE_VECMATHLIB) AND ENABLE_VECMATHLIB)
+      message(FATAL_ERROR "requested to use Vecmathlib with enabled conformance")
+    endif()
+    if((DEFINED ENABLE_SLEEF) AND (NOT ENABLE_SLEEF))
+      message(FATAL_ERROR "conformance needs enabled SLEEF")
+    endif()
+    set(DEFAULT_SLEEF ON)
+    set(DEFAULT_VML OFF)
+  else()
+    # requested non-conformant
+    set(DEFAULT_SLEEF ${ENABLE_SLEEF})
+    set(DEFAULT_VML ${ENABLE_VECMATHLIB})
+    # at least one
+    if((NOT DEFAULT_SLEEF) AND (NOT DEFAULT_VML))
+      set(DEFAULT_VML ON)
+      set(DEFAULT_SLEEF OFF)
+    endif()
+  endif()
+
+endif()
+
+option(ENABLE_CONFORMANCE "Enable conformance to OpenCL standard. Disabling this may enable slightly faster kernel library functions (at a price of range/precision). Note that enabling this does not guarantee conformance (depends on hardware). Incompatible with Vecmathlib. Defaults to ON" ${DEFAULT_CONF})
+
+option(ENABLE_SLEEF "Use SLEEF for kernel library, mutually exclusive with ENABLE_VECMATHLIB" ${DEFAULT_SLEEF})
+
+option(ENABLE_VECMATHLIB "Use vecmathlib for kernel library, mutually exclusive with ENABLE_SLEEF" ${DEFAULT_VML})
+
+if((NOT CLANGXX_WORKS) AND ENABLE_VECMATHLIB)
+  message(WARNING "Disabling vecmathlib because clang++ doesn't seem to work!")
+  set(ENABLE_VECMATHLIB OFF)
+  set(ENABLE_VECMATHLIB OFF CACHE BOOL)
+  set(ENABLE_SLEEF ON)
+  set(ENABLE_SLEEF ON CACHE BOOL)
+endif()
 
 # vecmathlib does not compile with fp16 currently
-if(USE_VECMATHLIB AND (NOT CL_DISABLE_HALF))
+if(ENABLE_VECMATHLIB AND (NOT CL_DISABLE_HALF))
   message(STATUS "Half available, but disabling half support since vecmathlib is enabled.")
   set(CL_DISABLE_HALF 1)
   set(CL_DISABLE_HALF 1 CACHE BOOL "Disable cl_khr_fp16 because fp16 is not supported")
 endif()
+
+######################################################################################
+
+option(USE_VECMATHLIB_BUILTINS_ONLY "Use only __builtin_* functions in the kernel library." OFF)
+
+set(DEFAULT_KERNEL_CL_FLAGS "")
+
+if(ENABLE_VECMATHLIB)
+  set(DEFAULT_KERNEL_CLANGXX_FLAGS "-DVML_NO_IOSTREAM ${CLANGXX_STDLIB} ")
+  if(USE_VECMATHLIB_BUILTINS_ONLY)
+    set(DEFAULT_KERNEL_CL_FLAGS "${DEFAULT_KERNEL_CL_FLAGS} -DPOCL_VECMATHLIB_BUILTIN ")
+    set(DEFAULT_KERNEL_CLANGXX_FLAGS "${DEFAULT_KERNEL_CLANGXX_FLAGS} -DPOCL_VECMATHLIB_BUILTIN ")
+  endif()
+endif()
+
+set(EXTRA_KERNEL_CL_FLAGS "" CACHE STRING "Extra arguments to kernel CL compiler (defaults to empty)")
+set(EXTRA_KERNEL_CXX_FLAGS "" CACHE STRING "Extra arguments to kernel CXX compiler (defaults to empty)")
+
+set(KERNEL_CLANGXX_FLAGS "${DEFAULT_KERNEL_CLANGXX_FLAGS}${EXTRA_KERNEL_CXX_FLAGS}")
+set(KERNEL_CL_FLAGS "${DEFAULT_KERNEL_CL_FLAGS}${EXTRA_KERNEL_CL_FLAGS}")
+
+message(STATUS "Clang++ flags for compiling kernel library: ${KERNEL_CLANGXX_FLAGS}")
+message(STATUS "OpenCL flags for compiling kernel library: ${KERNEL_CL_FLAGS}")
 
 ######################################################################################
 
@@ -402,29 +473,6 @@ if(UNIX)
 elseif(WIN32)
   set(LIBMATH)
 endif()
-
-######################################################################################
-
-option(USE_VECMATHLIB_BUILTINS_ONLY "Use only __builtin_* functions in the kernel library." OFF)
-
-set(DEFAULT_KERNEL_CL_FLAGS "")
-if(USE_VECMATHLIB)
-  set(DEFAULT_KERNEL_CLANGXX_FLAGS "-DVML_NO_IOSTREAM ${CLANGXX_STDLIB}")
-  if(USE_VECMATHLIB_BUILTINS_ONLY)
-    set(DEFAULT_KERNEL_CL_FLAGS "${DEFAULT_KERNEL_CL_FLAGS} -DPOCL_VECMATHLIB_BUILTIN")
-    set(DEFAULT_KERNEL_CLANGXX_FLAGS "${DEFAULT_KERNEL_CLANGXX_FLAGS} -DPOCL_VECMATHLIB_BUILTIN")
-  endif()
-endif()
-
-set(EXTRA_KERNEL_CL_FLAGS "" CACHE STRING "Extra arguments to kernel CL compiler (defaults to empty)")
-set(EXTRA_KERNEL_CXX_FLAGS "" CACHE STRING "Extra arguments to kernel CXX compiler (defaults to empty)")
-
-set(KERNEL_CLANGXX_FLAGS "${DEFAULT_KERNEL_CLANGXX_FLAGS} ${EXTRA_KERNEL_CXX_FLAGS}")
-set(KERNEL_CL_FLAGS "${DEFAULT_KERNEL_CL_FLAGS} ${EXTRA_KERNEL_CL_FLAGS}")
-
-message(STATUS "Clang++ flags for compiling kernel library: ${KERNEL_CLANGXX_FLAGS}")
-message(STATUS "OpenCL flags for compiling kernel library: ${KERNEL_CL_FLAGS}")
-
 
 ######################################################################################
 
@@ -743,7 +791,10 @@ endif()
 set(KERNELLIB_HOST_DISTRO_VARIANTS 0)
 if(KERNELLIB_HOST_CPU_VARIANTS STREQUAL "distro")
   if(X86_64 OR I386)
-    set(KERNELLIB_HOST_CPU_VARIANTS sse2 ssse3 sse41 avx avx_f16c avx_fma4 avx2 avx512)
+    set(KERNELLIB_HOST_CPU_VARIANTS sse2 ssse3 sse41 avx avx_f16c avx_fma4 avx2)
+    if(NOT LLVM_OLDER_THAN_3_9)
+      list(APPEND KERNELLIB_HOST_CPU_VARIANTS avx512)
+    endif()
   else()
     message(FATAL_ERROR "Don't know what CPU variants to use for kernel library on this platform.")
   endif()
@@ -1253,19 +1304,21 @@ MESSAGE(STATUS "******* Enabled features:")
 MESSAGE(STATUS " ")
 
 MESSAGE(STATUS "CLANG_SPIR: ${CLANG_SPIR}")
+MESSAGE(STATUS "ENABLE_CONFORMANCE: ${ENABLE_CONFORMANCE}")
 MESSAGE(STATUS "ENABLE_ICD: ${ENABLE_ICD}")
 MESSAGE(STATUS "ENABLE_TCE: ${ENABLE_TCE}")
 MESSAGE(STATUS "ENABLE_TCEMC: ${ENABLE_TCEMC}")
 MESSAGE(STATUS "ENABLE_HSA: ${ENABLE_HSA}")
 MESSAGE(STATUS "ENABLE_CUDA: ${ENABLE_CUDA}")
 MESSAGE(STATUS "ENABLE_ASAN (address sanitizer): ${ENABLE_ASAN}")
+MESSAGE(STATUS "ENABLE_VECMATHLIB: ${ENABLE_VECMATHLIB}")
+MESSAGE(STATUS "ENABLE_SLEEF: ${ENABLE_SLEEF}")
 MESSAGE(STATUS "INSTALL_OPENCL_HEADERS (Install our headers): ${INSTALL_OPENCL_HEADERS}")
 MESSAGE(STATUS "OCL_DRIVERS (Drivers built): ${OCL_DRIVERS}")
 MESSAGE(STATUS "OCL_TARGETS (Targets built): ${OCL_TARGETS}")
 MESSAGE(STATUS "OCS_AVAILABLE: ${OCS_AVAILABLE}")
 MESSAGE(STATUS "SINGLE_LLVM_LIB: ${SINGLE_LLVM_LIB}")
 MESSAGE(STATUS "TESTS_USE_ICD: ${TESTS_USE_ICD}")
-MESSAGE(STATUS "USE_VECMATHLIB: ${USE_VECMATHLIB}")
 MESSAGE(STATUS "Available testsuites: ${ALL_TESTSUITES}")
 MESSAGE(STATUS "Enabled testsuites: ${ACTUALLY_ENABLED_TESTSUITES}")
 MESSAGE(STATUS "Disabled testsuites: ${DISABLED_TESTSUITES}")

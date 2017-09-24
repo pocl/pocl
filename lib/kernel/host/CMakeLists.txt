@@ -25,8 +25,10 @@
 
 include("bitcode_rules")
 
-if(USE_VECMATHLIB)
+if(ENABLE_VECMATHLIB)
   set(KERNEL_SOURCES ${SOURCES_WITH_VML})
+elseif(ENABLE_SLEEF)
+  set(KERNEL_SOURCES ${SOURCES_WITH_SLEEF})
 else()
   set(KERNEL_SOURCES ${SOURCES_WITHOUT_VML})
 endif()
@@ -52,12 +54,17 @@ else()
 endif()
 endif()
 
-set(KERNEL_CL_FLAGS "-Wall" "-Wno-unused-local-typedef" "-Xclang" "-cl-std=CL${HOST_DEVICE_CL_STD}" "-D__OPENCL_C_VERSION__=${HOST_DEVICE_CL_VERSION}" ${KERNEL_CL_FLAGS})
+set(KERNEL_CL_FLAGS
+      "-Wall" "-Wno-unused-local-typedef" "-Xclang"
+      "-cl-std=CL${HOST_DEVICE_CL_STD}"
+      "-D__OPENCL_C_VERSION__=${HOST_DEVICE_CL_VERSION}"
+      ${KERNEL_CL_FLAGS})
+
 separate_arguments(HOST_CLANG_FLAGS)
 separate_arguments(HOST_LLC_FLAGS)
-set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=${HOST_DEVICE_CL_VERSION} ${HOST_DEVICE_EXTENSION_DEFINES}")
+set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=${HOST_DEVICE_CL_VERSION}")
+set(DEVICE_CL_FLAGS "${DEVICE_CL_FLAGS} ${HOST_DEVICE_EXTENSION_DEFINES}")
 separate_arguments(DEVICE_CL_FLAGS)
-
 
 function(x86_distro_variant_to_flags VARIANT OUT_LLC_FLAGS OUT_CLANG_FLAGS)
 
@@ -90,8 +97,8 @@ function(x86_distro_variant_to_flags VARIANT OUT_LLC_FLAGS OUT_CLANG_FLAGS)
     set(LLC_F "-mcpu=haswell")
 
   elseif("${VARIANT}" STREQUAL "avx512")
-    set(CLANG_F "${CLANG_MARCH_FLAG}skylake")
-    set(LLC_F "-mcpu=skylake")
+    set(CLANG_F "${CLANG_MARCH_FLAG}skylake-avx512")
+    set(LLC_F "-mcpu=skylake-avx512")
 
   else()
     set(CLANG_F "${CLANG_MARCH_FLAG}${VARIANT}")
@@ -101,6 +108,89 @@ function(x86_distro_variant_to_flags VARIANT OUT_LLC_FLAGS OUT_CLANG_FLAGS)
 
   set(${OUT_LLC_FLAGS} "${LLC_F}" PARENT_SCOPE)
   set(${OUT_CLANG_FLAGS} "${CLANG_F}" PARENT_SCOPE)
+endfunction()
+
+###############################################################################
+
+function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
+
+  unset(BC_FILE_LIST)
+
+  set(EXTRA_FLAGS "-DDORENAME;-DPURE_C;-I${CMAKE_SOURCE_DIR}/lib/kernel/sleef/include")
+
+  if(ENABLE_CONFORMANCE)
+#    compile_sleef_c_to_bc("c" "sleef/libm/sleef_builtin.c"
+#                          "${VARIANT}" BC_FILE_LIST ${EXTRA_FLAGS})
+#  else()
+    # these may be faster than using libm, but not always precise
+    compile_sleef_c_to_bc("c" "sleef/libm/sleefsp.c"
+                          "${VARIANT}" BC_FILE_LIST ${EXTRA_FLAGS})
+    compile_sleef_c_to_bc("c" "sleef/libm/sleefdp.c"
+                          "${VARIANT}" BC_FILE_LIST ${EXTRA_FLAGS})
+  endif()
+
+  compile_sleef_c_to_bc("c" "sleef/libm/sleef_glue_auto.c"
+                        "${VARIANT}" BC_FILE_LIST "-include" "${SLEEF_CONFIG}")
+
+  file(READ "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/test.c" TEST_SRC)
+  file(READ "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/fma_test.c" FMA_TEST_SRC)
+
+  # current SLEEF code does not have code for
+  # ARM32 NEON double vectors (if they even exist)
+  if(NOT ARM32)
+    set(STR "#define SLEEF_DOUBLE_VEC_AVAILABLE\n")
+    file(APPEND "${SLEEF_CONFIG_NEW}" "${STR}")
+  endif()
+
+  foreach(VECSIZE "128" "256" "512")
+
+    set(EXTRA_FLAGS "-DDORENAME;-DVEC${VECSIZE}")
+    custom_try_compile_any(1 "${CLANG}" "c" "${TEST_SRC}" RES
+      ${CLANG_FLAGS} ${EXTRA_FLAGS} "-c")
+
+    if(${RES} EQUAL "0")
+      compile_sleef_c_to_bc("v${VECSIZE}" "sleef/libm/sleefsimdsp.c"
+                            "${VARIANT}" BC_FILE_LIST ${EXTRA_FLAGS})
+      if(NOT ARM32)
+      compile_sleef_c_to_bc("v${VECSIZE}" "sleef/libm/sleefsimddp.c"
+                            "${VARIANT}" BC_FILE_LIST ${EXTRA_FLAGS})
+      endif()
+      message(STATUS "${VARIANT} SLEEF: ${VECSIZE}bit vectors available.")
+
+      set(STR "#define SLEEF_VEC_${VECSIZE}_AVAILABLE\n")
+      file(APPEND "${SLEEF_CONFIG_NEW}" "${STR}")
+
+    else()
+      message(STATUS "${VARIANT} SLEEF: ${VECSIZE}bit vectors NOT available.")
+    endif()
+
+    custom_try_compile_any(1 "${CLANG}" "c" "${FMA_TEST_SRC}" RES
+      ${CLANG_FLAGS} ${EXTRA_FLAGS} "-c")
+    if(${RES} EQUAL "0")
+      unset(STR)
+      set(STR "#define HAVE_FMA32_${VECSIZE}\n")
+      set(STR "${STR}#define HAVE_FMA64_${VECSIZE}\n")
+      file(APPEND "${SLEEF_CONFIG_NEW}" "${STR}")
+      message(STATUS "${VARIANT} SLEEF: ${VECSIZE}bit hardware FMA available.")
+    endif()
+
+  endforeach()
+
+  file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${VARIANT}")
+  set(SLEEF_BC "${CMAKE_CURRENT_BINARY_DIR}/${VARIANT}/sleef.bc")
+  set(SLEEF_BC "${CMAKE_CURRENT_BINARY_DIR}/${VARIANT}/sleef.bc" PARENT_SCOPE)
+
+  message(STATUS "${VARIANT} SLEEF bc list: ${BC_FILE_LIST}")
+  message(STATUS "${VARIANT} SLEEF bc: ${SLEEF_BC}")
+
+  set(LINK_OPT_COMMAND COMMAND "${LLVM_LINK}" "-o" "${SLEEF_BC}" ${BC_FILE_LIST})
+
+  add_custom_command( OUTPUT "${SLEEF_BC}"
+    DEPENDS ${BC_FILE_LIST}
+    COMMAND ${LINK_OPT_COMMAND}
+    COMMENT "Linking & optimizing SLEEF for ${VARIANT}: ${SLEEF_BC}"
+    VERBATIM)
+
 endfunction()
 
 ###############################################################################
@@ -122,16 +212,38 @@ endif()
 
 separate_arguments(CLANG_CPUFLAGS)
 separate_arguments(LLC_CPUFLAGS)
-set(CLANG_FLAGS ${HOST_CLANG_FLAGS} ${CLANG_CPUFLAGS} "-emit-llvm" "-ffp-contract=off")
+set(CLANG_FLAGS ${HOST_CLANG_FLAGS} ${CLANG_CPUFLAGS}
+                "-emit-llvm" "-ffp-contract=off")
 
 if(POCL_USE_FAKE_ADDR_SPACE_IDS)
-list(APPEND CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-DPOCL_USE_FAKE_ADDR_SPACE_IDS")
+list(APPEND CLANG_FLAGS "-Xclang" "-ffake-address-space-map"
+                        "-DPOCL_USE_FAKE_ADDR_SPACE_IDS")
 endif()
 
 set(LLC_FLAGS ${HOST_LLC_FLAGS} ${LLC_CPUFLAGS})
 
-# KERNEL_TARGET = @OCL_KERNEL_TARGET@
-make_kernel_bc(KERNEL_BC "${OCL_KERNEL_TARGET}-${VARIANT}" "${VARIANT}" ${KERNEL_SOURCES})
+if(ENABLE_SLEEF)
+
+  # write SLEEF config for this CPU
+  set(SLEEF_CONFIG "${CMAKE_BINARY_DIR}/sleef_config_temp_${VARIANT}.h")
+  set(SLEEF_CONFIG_NEW "${SLEEF_CONFIG}.new")
+  set(STR "/* SLEEF library configuration for ${VARIANT} CPU */ \n")
+  file(WRITE "${SLEEF_CONFIG_NEW}" "${STR}")
+
+  # compile SLEEF library for the cpu variant
+  unset(SLEEF_BC)
+  compile_sleef("${VARIANT}" "${SLEEF_CONFIG}" "${SLEEF_CONFIG_NEW}" SLEEF_BC)
+
+  rename_if_different("${SLEEF_CONFIG_NEW}" "${SLEEF_CONFIG}")
+
+  # compile kernel
+  make_kernel_bc(KERNEL_BC "${OCL_KERNEL_TARGET}-${VARIANT}" "${VARIANT}"
+                 1 "${SLEEF_BC}" "${SLEEF_CONFIG}" ${KERNEL_SOURCES})
+
+else()
+  make_kernel_bc(KERNEL_BC "${OCL_KERNEL_TARGET}-${VARIANT}" "${VARIANT}"
+                 0 0 0 ${KERNEL_SOURCES})
+endif()
 
 # just debug
 message(STATUS "Host Kernel BC for \"${VARIANT}\": ${KERNEL_BC}")
