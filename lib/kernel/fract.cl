@@ -26,7 +26,25 @@
 
 
 #ifdef cl_khr_fp64
-DEFINE_EXPR_V_VPV(fract, fmin(a - floor(a), (vtype)(stype)(sizeof(stype)==4 ? 0x1.fffffep-1f : 0x1.fffffffffffffp-1)))
+DEFINE_EXPR_V_VPV (fract, ({
+                     vtype fl = select ((vtype)floor (a), (vtype)NAN,
+                                        (itype)isnan (a));
+                     fl = select ((vtype)fl, (vtype)a, (itype)isinf (a));
+                     *b = fl;
+                     vtype ret = fmin (a - floor (a),
+                                       (vtype) (sizeof (stype) == 4
+                                                    ? 0x1.fffffep-1f
+                                                    : 0x1.fffffffffffffp-1));
+                     ret = select ((vtype)ret, (vtype)0.0, (itype)isinf (a));
+                     select ((vtype)ret, (vtype) (NAN), (itype)isnan (a));
+                   }))
 #else
-DEFINE_EXPR_V_VPV(fract, fmin(a - floor(a), (vtype)(stype)0x1.fffffep-1f))
+DEFINE_EXPR_V_VPV (fract, ({
+                     vtype fl = select ((vtype)floor (a), (vtype)NAN,
+                                        (itype)isnan (a));
+                     fl = select ((vtype)fl, (vtype)0.0, (itype)isinf (a));
+                     *b = fl;
+                     vtype ret = fmin (a - floor (a), (vtype)0x1.fffffep-1f);
+                     select ((vtype)ret, (vtype)NAN, (itype)isnan (a));
+                   }))
 #endif
