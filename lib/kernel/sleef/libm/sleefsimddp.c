@@ -1880,6 +1880,9 @@ EXPORT CONST vmask xexpfrexp(vdouble x) {
 }
 
 EXPORT CONST vdouble xfma(vdouble x, vdouble y, vdouble z) {
+#ifdef ENABLE_FMA_DP
+  return vmla_vd_vd_vd_vd(x, y, z);
+#else
   vdouble h2 = vadd_vd_vd_vd(vmul_vd_vd_vd(x, y), z), q = vcast_vd_d(1);
   vopmask o = vlt_vo_vd_vd(vabs_vd_vd(h2), vcast_vd_d(1e-300));
   {
@@ -1910,6 +1913,7 @@ EXPORT CONST vdouble xfma(vdouble x, vdouble y, vdouble z) {
   o = vor_vo_vo_vo(visinf_vo_vd(h2), visnan_vo_vd(h2));
 
   return vsel_vd_vo_vd_vd(o, h2, vmul_vd_vd_vd(ret, q));
+#endif
 }
 
 EXPORT CONST vdouble xsqrt_u05(vdouble d) {

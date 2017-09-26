@@ -11,6 +11,9 @@
 
 #elif CONFIG == 4
 
+#define ENABLE_FMA_DP
+#define ENABLE_FMA_SP
+
 #if !defined(__AVX__) || !defined(__FMA4__)
 #error Please specify -mavx and -mfma4.
 #endif

@@ -1523,6 +1523,9 @@ EXPORT CONST vfloat xrintf(vfloat d) {
 }
 
 EXPORT CONST vfloat xfmaf(vfloat x, vfloat y, vfloat z) {
+#ifdef ENABLE_FMA_SP
+  return vmla_vf_vf_vf_vf(x, y, z);
+#else
   vfloat h2 = vadd_vf_vf_vf(vmul_vf_vf_vf(x, y), z), q = vcast_vf_f(1);
   vopmask o = vlt_vo_vf_vf(vabs_vf_vf(h2), vcast_vf_f(1e-38f));
   {
@@ -1553,6 +1556,7 @@ EXPORT CONST vfloat xfmaf(vfloat x, vfloat y, vfloat z) {
   o = vor_vo_vo_vo(visinf_vo_vf(h2), visnan_vo_vf(h2));
 
   return vsel_vf_vo_vf_vf(o, h2, vmul_vf_vf_vf(ret, q));
+#endif
 }
 
 static INLINE CONST vint2 vcast_vi2_i_i(int i0, int i1) { return vcast_vi2_vm(vcast_vm_i_i(i0, i1)); }
