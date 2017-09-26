@@ -125,3 +125,6 @@
 #define xtgammaf_u1 Sleef_tgammaf16_u10_intrin
 #define xerff_u1 Sleef_erff16_u10_intrin
 #define xerfcf_u15 Sleef_erfcf16_u15_intrin
+/***********************/
+#define xlog1p_fast Sleef_log1p_fast_d8_u10_intrin
+#define xlog1pf_fast Sleef_log1p_fast_f16_u10_intrin

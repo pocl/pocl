@@ -355,6 +355,24 @@ static INLINE vopmask vispinf_vo_vf(vfloat d) { return veq_vo_vf_vf(d, vcast_vf_
 static INLINE vopmask visminf_vo_vf(vfloat d) { return veq_vo_vf_vf(d, vcast_vf_f(-INFINITYf)); }
 static INLINE vopmask visnan_vo_vf(vfloat d) { return vneq_vo_vf_vf(d, d); }
 
+static INLINE int vall_lte64_i_vd_vd(vdouble x, vdouble lim) {
+#ifdef __SSE4_1__
+  vopmask gt = vgt_vo_vd_vd(x, lim);
+  return _mm_testz_si128(gt, gt);
+#else
+  return 0;
+#endif
+}
+
+static INLINE int vall_lte32_i_vf_vf(vfloat x, vfloat lim) {
+#ifdef __SSE4_1__
+  vopmask gt = vgt_vo_vf_vf(x, lim);
+  return _mm_testz_si128(gt, gt);
+#else
+  return 0;
+#endif
+}
+
 static INLINE vfloat vload_vf_p(const float *ptr) { return _mm_load_ps(ptr); }
 static INLINE vfloat vloadu_vf_p(const float *ptr) { return _mm_loadu_ps(ptr); }
 

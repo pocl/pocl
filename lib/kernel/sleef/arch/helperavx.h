@@ -441,6 +441,19 @@ static INLINE vopmask visnan_vo_vf(vfloat d) { return vneq_vo_vf_vf(d, d); }
 
 //
 
+static INLINE int vall_lte64_i_vd_vd(vdouble x, vdouble lim) {
+  vdouble gt = _mm256_cmp_pd(x, lim, _CMP_GT_OQ);
+  return _mm256_testz_pd(gt, gt);
+}
+
+static INLINE int vall_lte32_i_vf_vf(vfloat x, vfloat lim) {
+  vfloat gt = _mm256_cmp_ps(x, lim, _CMP_GT_OQ);
+  return _mm256_testz_ps(gt, gt);
+}
+
+
+//
+
 static INLINE vfloat vload_vf_p(const float *ptr) { return _mm256_load_ps(ptr); }
 static INLINE vfloat vloadu_vf_p(const float *ptr) { return _mm256_loadu_ps(ptr); }
 

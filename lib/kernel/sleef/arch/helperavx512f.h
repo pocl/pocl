@@ -374,6 +374,16 @@ static INLINE vopmask visnan_vo_vf(vfloat d) { return vneq_vo_vf_vf(d, d); }
 
 static INLINE vint2 vilogbk_vi2_vf(vfloat d) { return vrint_vi2_vf(_mm512_getexp_ps(d)); }
 
+
+static INLINE int vall_lte64_i_vd_vd(vdouble x, vdouble lim) {
+  return vgt_vo_vd_vd(x, lim) == 0;
+}
+
+static INLINE int vall_lte32_i_vf_vf(vfloat x, vfloat lim) {
+  return vgt_vo_vf_vf(x, lim) == 0;
+}
+
+
 #ifdef _MSC_VER
 // This function is needed when debugging on MSVC.
 static INLINE float vcast_f_vf(vfloat v) {

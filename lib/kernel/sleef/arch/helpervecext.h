@@ -853,3 +853,16 @@ static INLINE void vscatter2_v_p_i_i_vq(Sleef_quad *ptr, int offset, int step, v
 
 static INLINE void vsscatter2_v_p_i_i_vq(Sleef_quad *ptr, int offset, int step, vquad v) { vscatter2_v_p_i_i_vq(ptr, offset, step, v); }
 #endif
+
+
+// TODO
+
+static INLINE int vall_lte64_i_vd_vd(vdouble x, vdouble lim) {
+  return 0;
+}
+
+static INLINE int vall_lte32_i_vf_vf(vfloat x, vfloat lim) {
+  return 0;
+}
+
+// TODO SELECT

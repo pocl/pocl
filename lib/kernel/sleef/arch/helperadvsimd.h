@@ -650,3 +650,13 @@ static INLINE void vsscatter2_v_p_i_i_vf(float *ptr, int offset, int step, vfloa
   vst1_f32((float *)(ptr+(offset + step * 0)*2), vget_low_f32(v));
   vst1_f32((float *)(ptr+(offset + step * 1)*2), vget_high_f32(v));
 }
+
+// TODO
+
+static INLINE int vall_lte64_i_vd_vd(vdouble x, vdouble lim) {
+  return 0;
+}
+
+static INLINE int vall_lte32_i_vf_vf(vfloat x, vfloat lim) {
+  return 0;
+}

@@ -317,6 +317,16 @@ static INLINE vopmask vispinf_vo_vf(vfloat d) { return veq_vo_vf_vf(d, vcast_vf_
 static INLINE vopmask visminf_vo_vf(vfloat d) { return veq_vo_vf_vf(d, vcast_vf_f(-INFINITYf)); }
 static INLINE vopmask visnan_vo_vf(vfloat d) { return vneq_vo_vf_vf(d, d); }
 
+static INLINE int vall_lte64_i_vd_vd(vdouble x, vdouble lim) {
+  vdouble gt = _mm256_cmp_pd(x, lim, _CMP_GT_OQ);
+  return _mm256_testz_pd(gt, gt);
+}
+
+static INLINE int vall_lte32_i_vf_vf(vfloat x, vfloat lim) {
+  vfloat gt = _mm256_cmp_ps(x, lim, _CMP_GT_OQ);
+  return _mm256_testz_ps(gt, gt);
+}
+
 #ifdef _MSC_VER
 // This function is needed when debugging on MSVC.
 static INLINE float vcast_f_vf(vfloat v) {

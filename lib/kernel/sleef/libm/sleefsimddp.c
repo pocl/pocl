@@ -1705,7 +1705,7 @@ EXPORT CONST vdouble xlog10(vdouble a) {
   return x;
 }
 
-EXPORT CONST vdouble xlog1p(vdouble a) {
+EXPORT CONST vdouble xlog1p_fast(vdouble a) {
   vdouble2 d = logk2(ddadd2_vd2_vd_vd(a, vcast_vd_d(1)));
   vdouble x = vadd_vd_vd_vd(d.x, d.y);
 
@@ -1715,6 +1715,18 @@ EXPORT CONST vdouble xlog1p(vdouble a) {
   x = vsel_vd_vo_vd_vd(visnegzero_vo_vd(a), vcast_vd_d(-0.0), x);
 
   return x;
+}
+
+EXPORT CONST vdouble xlog1p(vdouble a) {
+  vdouble log1_small = xlog1p_fast(a);
+
+  vdouble cutoff = vcast_vd_d(1e52);
+  if (vall_lte64_i_vd_vd(a, cutoff))
+    return log1_small;
+
+  vopmask gt_cutoff = vgt_vo_vd_vd(a, cutoff);
+  vdouble log1_big = xlog(a);
+  return vsel_vd_vo_vd_vd(gt_cutoff, log1_big, log1_small);
 }
 
 //

@@ -1454,7 +1454,8 @@ EXPORT CONST vfloat xlog10f(vfloat a) {
   return x;
 }
 
-EXPORT CONST vfloat xlog1pf(vfloat a) {
+EXPORT CONST vfloat xlog1pf_fast(vfloat a) {
+
   vfloat2 d = logk2f(dfadd2_vf2_vf_vf(a, vcast_vf_f(1)));
   vfloat x = vadd_vf_vf_vf(d.x, d.y);
 
@@ -1466,6 +1467,17 @@ EXPORT CONST vfloat xlog1pf(vfloat a) {
   return x;
 }
 
+EXPORT CONST vfloat xlog1pf(vfloat a) {
+  vfloat log1_small = xlog1pf_fast(a);
+
+  vfloat cutoff = vcast_vf_f( (float)1.0e23 );
+  if (vall_lte32_i_vf_vf(a, cutoff))
+    return log1_small;
+
+  vopmask gt_cutoff = vgt_vo_vf_vf(a, cutoff);
+  vfloat log1_big = xlogf(a);
+  return vsel_vf_vo_vf_vf(gt_cutoff, log1_big, log1_small);
+}
 //
 
 EXPORT CONST vfloat xfabsf(vfloat x) { return vabs_vf_vf(x); }
