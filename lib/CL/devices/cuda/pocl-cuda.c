@@ -218,6 +218,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
       dev->max_clock_frequency /= 1000;
       GET_CU_PROP (TEXTURE_ALIGNMENT, dev->mem_base_addr_align);
       dev->mem_base_addr_align *= 8;
+      GET_CU_PROP (INTEGRATED, dev->host_unified_memory);
     }
   if (CUDA_CHECK_ERROR (result, "cuDeviceGetAttribute"))
     ret = CL_INVALID_DEVICE;
@@ -246,7 +247,6 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
                           | CL_FP_DENORM;
 
   dev->local_mem_type = CL_LOCAL;
-  dev->host_unified_memory = 0;
 
   /* Get GPU architecture name */
   int sm_maj = 0, sm_min = 0;
