@@ -216,11 +216,12 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
       GET_CU_PROP (TOTAL_CONSTANT_MEMORY, dev->max_constant_buffer_size);
       GET_CU_PROP (CLOCK_RATE, dev->max_clock_frequency);
       dev->max_clock_frequency /= 1000;
+      GET_CU_PROP (TEXTURE_ALIGNMENT, dev->mem_base_addr_align);
+      dev->mem_base_addr_align *= 8;
     }
   if (CUDA_CHECK_ERROR (result, "cuDeviceGetAttribute"))
     ret = CL_INVALID_DEVICE;
 
-  dev->mem_base_addr_align = 2048;
   dev->preferred_wg_size_multiple = 32;
   dev->preferred_vector_width_char = 1;
   dev->preferred_vector_width_short = 1;
