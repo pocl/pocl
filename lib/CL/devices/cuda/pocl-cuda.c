@@ -387,6 +387,9 @@ pocl_cuda_init_device_infos (unsigned j, struct _cl_device_id *dev)
 {
   pocl_basic_init_device_infos (j, dev);
 
+  dev->vendor = "NVIDIA Corporation";
+  dev->vendor_id = 0x10de; /* the PCIID for NVIDIA */
+
   dev->type = CL_DEVICE_TYPE_GPU;
   dev->address_bits = (sizeof (void *) * 8);
   dev->llvm_target_triplet = (sizeof (void *) == 8) ? "nvptx64" : "nvptx";
