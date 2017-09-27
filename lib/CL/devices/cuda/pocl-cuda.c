@@ -192,32 +192,33 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
   /* Get other device properties */
   if (ret != CL_INVALID_DEVICE)
     {
-      cuDeviceGetAttribute ((int *)&dev->max_work_group_size,
-                            CU_DEVICE_ATTRIBUTE_MAX_THREADS_PER_BLOCK,
-                            data->device);
-      cuDeviceGetAttribute ((int *)(dev->max_work_item_sizes + 0),
-                            CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_X, data->device);
-      cuDeviceGetAttribute ((int *)(dev->max_work_item_sizes + 1),
-                            CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_Y, data->device);
-      cuDeviceGetAttribute ((int *)(dev->max_work_item_sizes + 2),
-                            CU_DEVICE_ATTRIBUTE_MAX_BLOCK_DIM_Z, data->device);
-      cuDeviceGetAttribute (
-          (int *)&dev->local_mem_size,
-          CU_DEVICE_ATTRIBUTE_MAX_SHARED_MEMORY_PER_BLOCK, data->device);
-      cuDeviceGetAttribute ((int *)&dev->max_compute_units,
-                            CU_DEVICE_ATTRIBUTE_MULTIPROCESSOR_COUNT,
-                            data->device);
-      cuDeviceGetAttribute ((int *)&dev->error_correction_support,
-                            CU_DEVICE_ATTRIBUTE_ECC_ENABLED, data->device);
-      cuDeviceGetAttribute ((int *)&dev->host_unified_memory,
-                            CU_DEVICE_ATTRIBUTE_INTEGRATED, data->device);
-      cuDeviceGetAttribute ((int *)&dev->max_constant_buffer_size,
-                            CU_DEVICE_ATTRIBUTE_TOTAL_CONSTANT_MEMORY,
-                            data->device);
-      cuDeviceGetAttribute ((int *)&dev->max_clock_frequency,
-                            CU_DEVICE_ATTRIBUTE_CLOCK_RATE, data->device);
+      /* CUDA device attributes (as fetched by cuDeviceGetAttribute) are always (unsigned)
+       * integers, where the OpenCL counterparts are of a variety of (other) integer types.
+       * Fetch the values in an unsigned int and copy it over.
+       * We also OR all return values of cuDeviceGetAttribute, and at the end we will check
+       * if it's not CL_SUCCESS. We miss the exact line that failed this way, but it's
+       * faster than checking after each attribute fetch.
+       */
+      unsigned int value = 0;
+#define GET_CU_PROP(key, target) do { \
+  result |= cuDeviceGetAttribute (&value, CU_DEVICE_ATTRIBUTE_##key, data->device); \
+  target = value; \
+} while (0)
+
+      GET_CU_PROP (MAX_THREADS_PER_BLOCK, dev->max_work_group_size);
+      GET_CU_PROP (MAX_BLOCK_DIM_X, dev->max_work_item_sizes[0]);
+      GET_CU_PROP (MAX_BLOCK_DIM_Y, dev->max_work_item_sizes[1]);
+      GET_CU_PROP (MAX_BLOCK_DIM_Z, dev->max_work_item_sizes[2]);
+      GET_CU_PROP (MAX_SHARED_MEMORY_PER_BLOCK, dev->local_mem_size);
+      GET_CU_PROP (MULTIPROCESSOR_COUNT, dev->max_compute_units);
+      GET_CU_PROP (ECC_ENABLED, dev->error_correction_support);
+      GET_CU_PROP (INTEGRATED, dev->host_unified_memory);
+      GET_CU_PROP (TOTAL_CONSTANT_MEMORY, dev->max_constant_buffer_size);
+      GET_CU_PROP (CLOCK_RATE, dev->max_clock_frequency);
       dev->max_clock_frequency /= 1000;
     }
+  if (CUDA_CHECK_ERROR (result, "cuDeviceGetAttribute"))
+    ret = CL_INVALID_DEVICE;
 
   dev->mem_base_addr_align = 2048;
   dev->preferred_wg_size_multiple = 32;
