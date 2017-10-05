@@ -71,6 +71,7 @@ endfunction()
 # /usr/bin/clang --target=x86_64-pc-linux-gnu -march=bdver1 -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off -x cl -D__OPENCL_VERSION__=120 -DPOCL_VECMATHLIB_BUILTIN -fsigned-char -o atan2pi.bc -c ${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib-pocl/atan2pi.cl -include ${CMAKE_SOURCE_DIR}/include/_kernel.h
 function(compile_cl_to_bc FILENAME SUBDIR BC_FILE_LIST EXTRA_CONFIG)
     get_filename_component(FNAME "${FILENAME}" NAME)
+    get_filename_component(FNAME_WE "${FILENAME}" NAME_WE)
     set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}.bc")
     set(${BC_FILE_LIST} ${${BC_FILE_LIST}} ${BC_FILE} PARENT_SCOPE)
     set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
@@ -97,6 +98,23 @@ function(compile_cl_to_bc FILENAME SUBDIR BC_FILE_LIST EXTRA_CONFIG)
 
     if(FILENAME MATCHES "vecmathlib")
       list(APPEND DEPENDLIST ${VML_KERNEL_DEPEND_HEADERS})
+    endif()
+
+    if(FILENAME MATCHES "libclc")
+      list(APPEND DEPENDLIST ${LIBCLC_KERNEL_DEPEND_HEADERS})
+
+      set(I32 "${CMAKE_SOURCE_DIR}/lib/kernel/libclc/${FNAME_WE}_fp32.cl")
+      if(EXISTS "${I32}")
+        list(APPEND DEPENDLIST "${I32}")
+      endif()
+
+      set(I64 "${CMAKE_SOURCE_DIR}/lib/kernel/libclc/${FNAME_WE}_fp64.cl")
+      if(EXISTS "${I64}")
+        list(APPEND DEPENDLIST "${I64}")
+      endif()
+
+      list(APPEND INCLUDELIST
+        "-I" "${CMAKE_SOURCE_DIR}/lib/kernel/libclc")
     endif()
 
     add_custom_command( OUTPUT "${BC_FILE}"

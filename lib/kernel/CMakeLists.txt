@@ -388,7 +388,6 @@ clamp_int.cl
 clz.cl
 convert_type.cl
 cross.cl
-degrees.cl
 distance.cl
 dot.cl
 fast_distance.cl
@@ -438,9 +437,6 @@ isnormal.cl
 isnotequal.cl
 isordered.cl
 isunordered.cl
-length.cl
-log2.cl
-logb.cl
 mad24.cl
 mad.cl
 mad_hi.cl
@@ -455,7 +451,6 @@ mix.cl
 mul24.cl
 mul_hi.cl
 nan.cl
-native_cos.cl
 native_divide.cl
 native_exp10.cl
 native_exp2.cl
@@ -466,16 +461,11 @@ native_log.cl
 native_powr.cl
 native_recip.cl
 native_rsqrt.cl
-native_sin.cl
 native_sqrt.cl
-native_tan.cl
-normalize.cl
 popcount.cl
 prefetch.cl
 printf.c
-radians.cl
 read_image.cl
-remainder.cl
 rhadd.cl
 rotate.cl
 rsqrt.cl
@@ -497,12 +487,62 @@ write_image.cl
 
 ###################################################################
 
+# from libclc
+
+libclc-pocl/pocl_fma.cl
+libclc-pocl/acospi.cl
+libclc-pocl/asinpi.cl
+libclc-pocl/atan2pi.cl
+libclc-pocl/atanpi.cl
+libclc-pocl/sinpi.cl
+libclc-pocl/cospi.cl
+libclc-pocl/tanpi.cl
+libclc-pocl/cos.cl
+libclc-pocl/cosh.cl
+libclc-pocl/sin.cl
+libclc-pocl/sinh.cl
+libclc-pocl/tan.cl
+libclc-pocl/tanh.cl
+libclc-pocl/sincos.cl
+libclc-pocl/sincos_helpers.cl
+libclc-pocl/acosh.cl
+libclc-pocl/asinh.cl
+libclc-pocl/atanh.cl
+libclc-pocl/ep_log.cl
+libclc-pocl/radians.cl
+libclc-pocl/degrees.cl
+libclc-pocl/log2.cl
+libclc-pocl/logb.cl
+# currently unused
+#libclc/log1p.cl
+#libclc-pocl/frexp.cl
+#libclc-pocl/expfrexp.cl
+#libclc-pocl/frfrexp.cl
+libclc-pocl/pown.cl
+libclc-pocl/powr.cl
+libclc-pocl/pow.cl
+libclc-pocl/rootn.cl
+libclc-pocl/pow_helpers.cl
+libclc-pocl/fmod.cl
+libclc-pocl/remainder.cl
+libclc-pocl/remquo.cl
+libclc-pocl/ocml_helpers.cl
+
+libclc/vtables_fp32.cl
+libclc/vtables_fp64.cl
+libclc/normalize.cl
+libclc/length.cl
+
+###################################################################
+
 sleef/libm/sleef_glue.cl
 
+sleef-pocl/scalars.cl
 sleef-pocl/acos.cl
 sleef-pocl/asin.cl
 sleef-pocl/atan2.cl
 sleef-pocl/atan.cl
+sleef-pocl/cbrt.cl
 sleef-pocl/ceil.cl
 sleef-pocl/copysign.cl
 sleef-pocl/erfc.cl
@@ -529,37 +569,16 @@ sleef-pocl/log10.cl
 sleef-pocl/log1p.cl
 sleef-pocl/log.cl
 sleef-pocl/modf.cl
+sleef-pocl/native_cos.cl
+sleef-pocl/native_sin.cl
+sleef-pocl/native_tan.cl
 sleef-pocl/nextafter.cl
 sleef-pocl/rint.cl
 sleef-pocl/round.cl
+sleef-pocl/sqrt.cl
 sleef-pocl/tgamma.cl
 sleef-pocl/trunc.cl
-
-sleef-pocl/scalars.cl
 )
-
-# these are non-conformant
-list(APPEND SOURCES_WITH_SLEEF
-sleef-pocl/acosh.cl
-sleef-pocl/asinh.cl
-sleef-pocl/atanh.cl
-sleef-pocl/cbrt.cl
-sleef-pocl/cos.cl
-sleef-pocl/cosh.cl
-sleef-pocl/cospi.cl
-sleef-pocl/fmod.cl
-sleef-pocl/pown.cl
-sleef-pocl/powr.cl
-sleef-pocl/pow.cl
-sleef-pocl/sin.cl
-sleef-pocl/sincos.cl
-sleef-pocl/sinh.cl
-sleef-pocl/sinpi.cl
-sleef-pocl/sqrt.cl
-sleef-pocl/tan.cl
-sleef-pocl/tanh.cl
-)
-
 
 set(SLEEF_CL_KERNEL_DEPEND_HEADERS "")
 foreach(HEADER helperadvsimd.h   helperavx2.h     helperavx.h     helperpurec.h  helpersse2.h    misc.h helperavx2_128.h  helperavx512f.h  helperneon32.h  helpers.h      helpervecext.h)
@@ -580,7 +599,12 @@ list(APPEND SLEEF_C_KERNEL_DEPEND_HEADERS "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/
 endforeach()
 list(APPEND SLEEF_C_KERNEL_DEPEND_HEADERS "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/include/sleef.h")
 
-#LKERNEL_HDRS_EXTRA - headers that should be dependencies
+set(LIBCLC_KERNEL_DEPEND_HEADERS "")
+foreach(HEADER ep_log.h misc.h singlevec.h ocml_helpers.h sincos_helpers_fp32.h sincos_helpers_fp64.h vtables.h vtables_macros.h)
+  list(APPEND LIBCLC_KERNEL_DEPEND_HEADERS "${CMAKE_SOURCE_DIR}/lib/kernel/libclc/${HEADER}")
+endforeach()
+
+# vecmathlib headers that should be dependencies
 set(VML_KERNEL_DEPEND_HEADERS
 "${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/vec_test.h"
 "${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib/mathfuncs.h"
