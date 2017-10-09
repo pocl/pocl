@@ -49,6 +49,10 @@
     #define ENABLE_AVX2
     #include "helperavx2_128.h"
 
+  #elif defined(__AVX__) && defined(__FMA4__)
+    #define CONFIG 5
+    #include "helpersse2.h"
+
   #elif defined(__SSE4_1__)
     #define CONFIG 4
     #define ENABLE_SSE4

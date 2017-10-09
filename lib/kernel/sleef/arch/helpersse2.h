@@ -21,6 +21,16 @@
 #error Please specify -msse2, -msse3 and -msse4.1
 #endif
 
+#elif CONFIG == 5
+
+#define ENABLE_FMA_DP
+#define ENABLE_FMA_SP
+
+#if !defined(__SSE2__) || !defined(__SSE3__) || !defined(__SSE4_1__) || !defined(__FMA4__)
+#error Please specify -msse2, -msse3, -msse4.1 and -mfma4
+#endif
+
+
 #else
 #error CONFIG macro invalid or not defined
 #endif
@@ -135,8 +145,22 @@ static INLINE vdouble vrec_vd_vd(vdouble x) { return _mm_div_pd(_mm_set1_pd(1), 
 static INLINE vdouble vsqrt_vd_vd(vdouble x) { return _mm_sqrt_pd(x); }
 static INLINE vdouble vabs_vd_vd(vdouble d) { return _mm_andnot_pd(_mm_set1_pd(-0.0), d); }
 static INLINE vdouble vneg_vd_vd(vdouble d) { return _mm_xor_pd(_mm_set1_pd(-0.0), d); }
+
+#if CONFIG == 5
+static INLINE vdouble vmla_vd_vd_vd_vd(vdouble x, vdouble y, vdouble z) { return _mm_macc_pd(x, y, z); }
+static INLINE vdouble vmlapn_vd_vd_vd_vd(vdouble x, vdouble y, vdouble z) { return _mm_msub_pd(x, y, z); }
+static INLINE vdouble vmlanp_vd_vd_vd_vd(vdouble x, vdouble y, vdouble z) { return _mm_nmacc_pd(x, y, z); }
+static INLINE vdouble vfma_vd_vd_vd_vd(vdouble x, vdouble y, vdouble z) { return _mm_macc_pd(x, y, z); }
+static INLINE vdouble vfmapp_vd_vd_vd_vd(vdouble x, vdouble y, vdouble z) { return _mm_macc_pd(x, y, z); }
+static INLINE vdouble vfmapn_vd_vd_vd_vd(vdouble x, vdouble y, vdouble z) { return _mm_msub_pd(x, y, z); }
+static INLINE vdouble vfmanp_vd_vd_vd_vd(vdouble x, vdouble y, vdouble z) { return _mm_nmacc_pd(x, y, z); }
+static INLINE vdouble vfmann_vd_vd_vd_vd(vdouble x, vdouble y, vdouble z) { return _mm_nmsub_pd(x, y, z); }
+#else
 static INLINE vdouble vmla_vd_vd_vd_vd(vdouble x, vdouble y, vdouble z) { return vadd_vd_vd_vd(vmul_vd_vd_vd(x, y), z); }
 static INLINE vdouble vmlapn_vd_vd_vd_vd(vdouble x, vdouble y, vdouble z) { return vsub_vd_vd_vd(vmul_vd_vd_vd(x, y), z); }
+#endif
+
+
 static INLINE vdouble vmax_vd_vd_vd(vdouble x, vdouble y) { return _mm_max_pd(x, y); }
 static INLINE vdouble vmin_vd_vd_vd(vdouble x, vdouble y) { return _mm_min_pd(x, y); }
 
@@ -253,8 +277,22 @@ static INLINE vfloat vrec_vf_vf(vfloat x) { return vdiv_vf_vf_vf(vcast_vf_f(1.0f
 static INLINE vfloat vsqrt_vf_vf(vfloat x) { return _mm_sqrt_ps(x); }
 static INLINE vfloat vabs_vf_vf(vfloat f) { return vreinterpret_vf_vm(vandnot_vm_vm_vm(vreinterpret_vm_vf(vcast_vf_f(-0.0f)), vreinterpret_vm_vf(f))); }
 static INLINE vfloat vneg_vf_vf(vfloat d) { return vreinterpret_vf_vm(vxor_vm_vm_vm(vreinterpret_vm_vf(vcast_vf_f(-0.0f)), vreinterpret_vm_vf(d))); }
+
+#if CONFIG == 5
+static INLINE vfloat vmla_vf_vf_vf_vf(vfloat x, vfloat y, vfloat z) { return _mm_macc_ps(x, y, z); }
+static INLINE vfloat vmlapn_vf_vf_vf_vf(vfloat x, vfloat y, vfloat z) { return _mm_msub_ps(x, y, z); }
+static INLINE vfloat vmlanp_vf_vf_vf_vf(vfloat x, vfloat y, vfloat z) { return _mm_nmacc_ps(x, y, z); }
+static INLINE vfloat vfma_vf_vf_vf_vf(vfloat x, vfloat y, vfloat z) { return _mm_macc_ps(x, y, z); }
+static INLINE vfloat vfmapp_vf_vf_vf_vf(vfloat x, vfloat y, vfloat z) { return _mm_macc_ps(x, y, z); }
+static INLINE vfloat vfmapn_vf_vf_vf_vf(vfloat x, vfloat y, vfloat z) { return _mm_msub_ps(x, y, z); }
+static INLINE vfloat vfmanp_vf_vf_vf_vf(vfloat x, vfloat y, vfloat z) { return _mm_nmacc_ps(x, y, z); }
+static INLINE vfloat vfmann_vf_vf_vf_vf(vfloat x, vfloat y, vfloat z) { return _mm_nmsub_ps(x, y, z); }
+
+#else
 static INLINE vfloat vmla_vf_vf_vf_vf(vfloat x, vfloat y, vfloat z) { return vadd_vf_vf_vf(vmul_vf_vf_vf(x, y), z); }
 static INLINE vfloat vmlanp_vf_vf_vf_vf(vfloat x, vfloat y, vfloat z) { return vsub_vf_vf_vf(z, vmul_vf_vf_vf(x, y)); }
+#endif
+
 static INLINE vfloat vmax_vf_vf_vf(vfloat x, vfloat y) { return _mm_max_ps(x, y); }
 static INLINE vfloat vmin_vf_vf_vf(vfloat x, vfloat y) { return _mm_min_ps(x, y); }
 
