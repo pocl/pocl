@@ -719,7 +719,7 @@ endif()
 
 set(TEMP_EXT "${HOST_DEVICE_EXTENSIONS}")
 separate_arguments(TEMP_EXT)
-set(TEMP_CLEXT "-Xclang -cl-ext=")
+set(TEMP_CLEXT "-Xclang -cl-ext=-all,")
 foreach(EXT ${TEMP_EXT})
   set(HOST_DEVICE_EXTENSION_DEFINES "${HOST_DEVICE_EXTENSION_DEFINES} -D${EXT}")
   set(TEMP_CLEXT "${TEMP_CLEXT}+${EXT},")
