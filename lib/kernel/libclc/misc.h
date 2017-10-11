@@ -181,3 +181,29 @@ typedef struct { int16 s0, s1, s2, s3; } v4int16;
 
 #define MATH_PRIVATE(NAME) __pocl_ ## NAME
 #define MATH_MANGLE(NAME) _CL_OVERLOADABLE NAME
+
+#ifndef _CL_DECLARE_FUNC_V_VVV
+#define _CL_DECLARE_FUNC_V_VVV(NAME)                                    \
+  __IF_FP16(                                                            \
+  half     _CL_OVERLOADABLE NAME(half    , half    , half  );           \
+  half2    _CL_OVERLOADABLE NAME(half2   , half2   , half2 );           \
+  half3    _CL_OVERLOADABLE NAME(half3   , half3   , half3 );           \
+  half4    _CL_OVERLOADABLE NAME(half4   , half4   , half4 );           \
+  half8    _CL_OVERLOADABLE NAME(half8   , half8   , half8 );           \
+  half16   _CL_OVERLOADABLE NAME(half16  , half16  , half16);)          \
+  float    _CL_OVERLOADABLE NAME(float   , float   , float   );         \
+  float2   _CL_OVERLOADABLE NAME(float2  , float2  , float2  );         \
+  float3   _CL_OVERLOADABLE NAME(float3  , float3  , float3  );         \
+  float4   _CL_OVERLOADABLE NAME(float4  , float4  , float4  );         \
+  float8   _CL_OVERLOADABLE NAME(float8  , float8  , float8  );         \
+  float16  _CL_OVERLOADABLE NAME(float16 , float16 , float16 );         \
+  __IF_FP64(                                                            \
+  double   _CL_OVERLOADABLE NAME(double  , double  , double  );         \
+  double2  _CL_OVERLOADABLE NAME(double2 , double2 , double2 );         \
+  double3  _CL_OVERLOADABLE NAME(double3 , double3 , double3 );         \
+  double4  _CL_OVERLOADABLE NAME(double4 , double4 , double4 );         \
+  double8  _CL_OVERLOADABLE NAME(double8 , double8 , double8 );         \
+  double16 _CL_OVERLOADABLE NAME(double16, double16, double16);)
+#endif
+
+_CL_DECLARE_FUNC_V_VVV(pocl_fma)
