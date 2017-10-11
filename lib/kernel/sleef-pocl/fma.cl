@@ -38,7 +38,7 @@ float4
 _cl_fma (float4 x, float4 y, float4 z)
 {
 
-#if defined(SLEEF_VEC_128_AVAILABLE)
+#if defined(SLEEF_VEC_128_AVAILABLE) && defined(HAVE_FMA32_128)
   return Sleef_fmaf4 (x, y, z);
 #else
 
@@ -54,7 +54,7 @@ float8
 _cl_fma (float8 x, float8 y, float8 z)
 {
 
-#if defined(SLEEF_VEC_256_AVAILABLE)
+#if defined(SLEEF_VEC_256_AVAILABLE) && defined(HAVE_FMA32_256)
   return Sleef_fmaf8 (x, y, z);
 #else
 
@@ -70,7 +70,7 @@ float16
 _cl_fma (float16 x, float16 y, float16 z)
 {
 
-#if defined(SLEEF_VEC_512_AVAILABLE)
+#if defined(SLEEF_VEC_512_AVAILABLE) && defined(HAVE_FMA32_512)
   return Sleef_fmaf16 (x, y, z);
 #else
 
@@ -99,7 +99,7 @@ double2
 _cl_fma (double2 x, double2 y, double2 z)
 {
 
-#if defined(SLEEF_VEC_128_AVAILABLE) && defined(SLEEF_DOUBLE_VEC_AVAILABLE)
+#if defined(SLEEF_VEC_128_AVAILABLE) && defined(SLEEF_DOUBLE_VEC_AVAILABLE) && defined(HAVE_FMA64_128)
   return Sleef_fmad2 (x, y, z);
 #else
 
@@ -139,7 +139,7 @@ double4
 _cl_fma (double4 x, double4 y, double4 z)
 {
 
-#if defined(SLEEF_VEC_256_AVAILABLE) && defined(SLEEF_DOUBLE_VEC_AVAILABLE)
+#if defined(SLEEF_VEC_256_AVAILABLE) && defined(SLEEF_DOUBLE_VEC_AVAILABLE) && defined(HAVE_FMA64_256)
   return Sleef_fmad4 (x, y, z);
 #else
 
@@ -159,7 +159,7 @@ double8
 _cl_fma (double8 x, double8 y, double8 z)
 {
 
-#if defined(SLEEF_VEC_512_AVAILABLE) && defined(SLEEF_DOUBLE_VEC_AVAILABLE)
+#if defined(SLEEF_VEC_512_AVAILABLE) && defined(SLEEF_DOUBLE_VEC_AVAILABLE) && defined(HAVE_FMA64_512)
   return Sleef_fmad8 (x, y, z);
 #else
 

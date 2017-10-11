@@ -1738,6 +1738,10 @@ EXPORT CONST double xlog1p(double a) {
 //
 
 EXPORT CONST double xfma(double x, double y, double z) {
+#if __has_builtin(__builtin_fma)
+  return __builtin_fma(x, y, z);
+#else
+#warning Using software FMA
   double h2 = x * y + z, q = 1;
   if (fabsk(h2) < 1e-300) {
     const double c0 = 1ULL << 54, c1 = c0 * c0, c2 = c1 * c1;
@@ -1758,6 +1762,7 @@ EXPORT CONST double xfma(double x, double y, double z) {
   double ret = (x == 0 || y == 0) ? z : (d.x + d.y);
   if ((xisinf(z) && !xisinf(x) && !xisnan(x) && !xisinf(y) && !xisnan(y))) h2 = z;
   return (xisinf(h2) || xisnan(h2)) ? h2 : ret*q;
+#endif
 }
 
 EXPORT CONST double xsqrt_u05(double d) {

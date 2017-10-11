@@ -1692,6 +1692,10 @@ EXPORT CONST float xsqrtf_u35(float d) {
 }
 
 EXPORT CONST float xfmaf(float x, float y, float z) {
+#if __has_builtin(__builtin_fmaf)
+  return __builtin_fmaf(x, y, z);
+#else
+#warning Using software FMA
   float h2 = x * y + z, q = 1;
   if (fabsfk(h2) < 1e-38f) {
     const float c0 = 1 << 25, c1 = c0 * c0, c2 = c1 * c1;
@@ -1712,6 +1716,7 @@ EXPORT CONST float xfmaf(float x, float y, float z) {
   float ret = (x == 0 || y == 0) ? z : (d.x + d.y);
   if (xisinff(z) && !xisinff(x) && !xisnanf(x) && !xisinff(y) && !xisnanf(y)) h2 = z;
   return (xisinff(h2) || xisnanf(h2)) ? h2 : ret*q;
+#endif
 }
 
 //
