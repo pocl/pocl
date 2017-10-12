@@ -83,10 +83,10 @@ POname(clCreateKernel)(cl_program program,
 
   for (device_i = 0; device_i < program->num_devices; ++device_i)
     {
+#ifdef OCS_AVAILABLE
       if (program->binaries[device_i] &&
           pocl_cache_device_cachedir_exists(program, device_i))
         {
-#ifdef OCS_AVAILABLE
           pocl_llvm_get_kernel_metadata (program, kernel, device_i,
                                          kernel_name, &errcode);
           cl_device_id device = program->devices[device_i];
@@ -118,12 +118,14 @@ POname(clCreateKernel)(cl_program program,
 
               device->ops->compile_kernel (&cmd, kernel, device);
             }
-#endif
         }
       /* If the program was created with a pocl binary, we won't be able to
          get the metadata for the cl_kernel from an IR file, so we call pocl
          binary function to initialize the cl_kernel data */
       else if (program->pocl_binaries[device_i])
+#else
+      if (program->pocl_binaries[device_i])
+#endif
         {
           errcode
             = pocl_binary_get_kernel_metadata (program->pocl_binaries[device_i],

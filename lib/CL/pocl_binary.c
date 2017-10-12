@@ -291,6 +291,17 @@ pocl_binary_get_kernel_names(unsigned char *binary,
 
   unsigned char *orig_buffer;
   unsigned i, len;
+
+  // skip real path of program.bc
+  BUFFER_READ(len, uint32_t);
+  assert (len > 0);
+  buffer += len;
+
+  // skip content of program.bc
+  BUFFER_READ(len, uint32_t);
+  assert (len > 0);
+  buffer += len;
+
   for (i=0; i < num_kernels; i++)
   {
     orig_buffer = buffer;
@@ -701,6 +712,17 @@ pocl_binary_get_kernel_metadata (unsigned char *binary, const char *kernel_name,
                         CL_INVALID_PROGRAM,
                         "Deserialized a binary, but it doesn't seem to be "
                         "for this device.\n");
+
+  size_t len;
+  // skip real path of program.bc
+  BUFFER_READ(len, uint32_t);
+  assert (len > 0);
+  buffer += len;
+
+  // skip content of program.bc
+  BUFFER_READ(len, uint32_t);
+  assert (len > 0);
+  buffer += len;
 
   unsigned j;
   assert (b.num_kernels > 0);
