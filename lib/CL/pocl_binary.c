@@ -87,9 +87,9 @@ typedef struct pocl_binary_kernel_s
   /* kernel_name string */
   char *kernel_name;
 
-  // number of kernel arguments
+  /* number of kernel arguments */
   uint32_t num_args;
-  // number of kernel local variables
+  /* number of kernel local variables */
   uint32_t num_locals;
 
   /* arguments and argument metadata. Note that not everything is stored
@@ -292,12 +292,12 @@ pocl_binary_get_kernel_names(unsigned char *binary,
   unsigned char *orig_buffer;
   unsigned i, len;
 
-  // skip real path of program.bc
+  /* skip real path of program.bc */
   BUFFER_READ(len, uint32_t);
   assert (len > 0);
   buffer += len;
 
-  // skip content of program.bc
+  /* skip content of program.bc */
   BUFFER_READ(len, uint32_t);
   assert (len > 0);
   buffer += len;
@@ -306,7 +306,7 @@ pocl_binary_get_kernel_names(unsigned char *binary,
   {
     orig_buffer = buffer;
     BUFFER_READ(struct_size, uint64_t);
-    // skip binaries_size & arginfo_size
+    /* skip binaries_size & arginfo_size */
     buffer += sizeof(uint64_t) + sizeof(uint32_t);
     BUFFER_READ_STR2(kernel_names[i], len);
     kernel_names[i][len] = 0;
@@ -714,12 +714,12 @@ pocl_binary_get_kernel_metadata (unsigned char *binary, const char *kernel_name,
                         "for this device.\n");
 
   size_t len;
-  // skip real path of program.bc
+  /* skip real path of program.bc */
   BUFFER_READ(len, uint32_t);
   assert (len > 0);
   buffer += len;
 
-  // skip content of program.bc
+  /* skip content of program.bc */
   BUFFER_READ(len, uint32_t);
   assert (len > 0);
   buffer += len;
