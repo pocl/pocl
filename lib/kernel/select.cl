@@ -69,14 +69,19 @@ __IF_FP64(
 IMPLEMENT_SELECT_SCALAR(double, long  )
 IMPLEMENT_SELECT_SCALAR(double, ulong ))
 
-
-
+/* clang's ternary operator on extended vectors
+ * behaves suitably for OpenCL on x86-64 */
+#if defined(__x86_64__) && defined(__clang__)
+#define IMPLEMENT_SELECT_VECTOR(GTYPE, UIGTYPE, IGTYPE) \
+  IMPLEMENT_SELECT_SCALAR(GTYPE, UIGTYPE)
+#else
 #define IMPLEMENT_SELECT_VECTOR(GTYPE, UIGTYPE, IGTYPE) \
   GTYPE _CL_OVERLOADABLE _CL_READNONE                   \
   select(GTYPE a, GTYPE b, UIGTYPE c)                   \
   {                                                     \
     return *(IGTYPE*)&c < (IGTYPE)0 ? b : a;            \
   }
+#endif
 
 IMPLEMENT_SELECT_VECTOR(char2  , char2  , char2 )
 IMPLEMENT_SELECT_VECTOR(char2  , uchar2 , char2 )
