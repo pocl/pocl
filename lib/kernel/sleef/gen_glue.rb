@@ -40,6 +40,8 @@ FUNCS = {
 
   exp: {name: 'exp', args: ["x"], argtypes: [:fvec], ret: :fvec, prec: ["_u10"] },
   pow: {name: 'pow', args: ["x", "y"], argtypes: [:fvec, :fvec], ret: :fvec, prec: ["_u10"] },
+  pown: {name: 'pown', args: ["x", "y"], argtypes: [:fvec, :ivec], ret: :fvec, prec: ["_u10"] },
+  powr: {name: 'powr', args: ["x", "y"], argtypes: [:fvec, :fvec], ret: :fvec, prec: ["_u10"] },
 
   sinh: {name: 'sinh', args: ["x"], argtypes: [:fvec], ret: :fvec, prec: ["_u10"] },
   cosh: {name: 'cosh', args: ["x"], argtypes: [:fvec], ret: :fvec, prec: ["_u10"] },
@@ -182,7 +184,7 @@ class GenVecFunc
     @prec.each do |prec|
       sleef_suffix = SLEEF_TYPES[@vectype]
       callname = "Sleef_#{@name}#{sleef_suffix}#{prec}_intrin"
-      if @type == "double" and @vecsize == 2 and ["ldexp", "ilogb"].include? @name
+      if @type == "double" and @vecsize == 2 and ["ldexp", "ilogb", "pown"].include? @name
         basename = "Sleef_#{@name}#{sleef_suffix}#{prec}_long"
       else
         if @type == "double" and @name == "expfrexp"

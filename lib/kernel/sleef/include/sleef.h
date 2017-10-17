@@ -207,6 +207,11 @@ float Sleef_tgammaf_u10 (float);
 float Sleef_erff_u10 (float);
 float Sleef_erfcf_u15 (float);
 
+double Sleef_pown_u10 (double, int);
+float Sleef_pownf_u10 (float, int);
+double Sleef_powr_u10 (double, double);
+float Sleef_powrf_u10 (float, float);
+
 #ifdef __AVX512F__
 
 #define SLEEF_VEC_512_AVAILABLE
@@ -360,6 +365,12 @@ __m512 Sleef_lgammaf16_u10_intrin (__m512);
 __m512 Sleef_tgammaf16_u10_intrin (__m512);
 __m512 Sleef_erff16_u10_intrin (__m512);
 __m512 Sleef_erfcf16_u15_intrin (__m512);
+
+__m512d Sleef_pownd8_u10_intrin (__m512d, __m256i);
+__m512 Sleef_pownf16_u10_intrin (__m512, __m512i);
+__m512d Sleef_powrd8_u10_intrin (__m512d, __m512d);
+__m512 Sleef_powrf16_u10_intrin (__m512, __m512);
+
 #endif
 
 #if defined(__AVX2__) || defined(__AVX__)
@@ -526,6 +537,12 @@ __m256 Sleef_lgammaf8_u10_intrin (__m256);
 __m256 Sleef_tgammaf8_u10_intrin (__m256);
 __m256 Sleef_erff8_u10_intrin (__m256);
 __m256 Sleef_erfcf8_u15_intrin (__m256);
+
+__m256d Sleef_pownd4_u10_intrin (__m256d, __m128i);
+__m256 Sleef_pownf8_u10_intrin (__m256, __m256i);
+__m256d Sleef_powrd4_u10_intrin (__m256d, __m256d);
+__m256 Sleef_powrf8_u10_intrin (__m256, __m256);
+
 #endif
 
 #if defined(__SSE2__)
@@ -681,6 +698,12 @@ __m128 Sleef_lgammaf4_u10_intrin (__m128);
 __m128 Sleef_tgammaf4_u10_intrin (__m128);
 __m128 Sleef_erff4_u10_intrin (__m128);
 __m128 Sleef_erfcf4_u15_intrin (__m128);
+
+__m128d Sleef_pownd2_u10_intrin (__m128d, __m128i);
+__m128 Sleef_pownf4_u10_intrin (__m128, __m128i);
+__m128d Sleef_powrd2_u10_intrin (__m128d, __m128d);
+__m128 Sleef_powrf4_u10_intrin (__m128, __m128);
+
 #endif
 
 #ifdef __ARM_NEON
@@ -765,6 +788,9 @@ float32x4_t Sleef_tgammaf4_u10_intrin (float32x4_t);
 float32x4_t Sleef_erff4_u10_intrin (float32x4_t);
 float32x4_t Sleef_erfcf4_u15_intrin (float32x4_t);
 
+float32x4_t Sleef_pownf4_u10_intrin (float32x4_t, int32x4_t);
+float32x4_t Sleef_powrf4_u10_intrin (float32x4_t, float32x4_t);
+
 #ifdef SLEEF_DOUBLE_VEC_AVAILABLE
 typedef float64x2_t reg128d;
 
@@ -842,6 +868,9 @@ float64x2_t Sleef_lgammad2_u10_intrin (float64x2_t);
 float64x2_t Sleef_tgammad2_u10_intrin (float64x2_t);
 float64x2_t Sleef_erfd2_u10_intrin (float64x2_t);
 float64x2_t Sleef_erfcd2_u15_intrin (float64x2_t);
+
+float64x2_t Sleef_pownd2_u10_intrin (float64x2_t, int32x4_t);
+float64x2_t Sleef_powrd2_u10_intrin (float64x2_t, float64x2_t);
 
 #endif
 

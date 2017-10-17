@@ -1061,6 +1061,8 @@ EXPORT CONST vfloat xcbrtf(vfloat d) {
   y = vsel_vf_vo_vf_vf(veq_vo_vf_vf(s, vcast_vf_f(0)), vmulsign_vf_vf_vf(vcast_vf_f(0), s), y);
 #endif
 
+  y = vsel_vf_vo_vf_vf(visnan_vo_vf(d), d, y);
+
   return y;
 }
 
@@ -1271,6 +1273,131 @@ EXPORT CONST vfloat xpowf(vfloat x, vfloat y) {
   return expkf(dfmul_vf2_vf2_vf(logkf(x), y));
 #endif
 }
+
+EXPORT CONST vfloat xpownf(vfloat x, vmask ym) {
+    vint2 y = vcast_vi2_vm(ym);
+    vfloat res = xpowf(x, vcast_vf_vi2(y));
+
+    vint2 is_odd = vand_vi2_vi2_vi2(y, vcast_vi2_i(1));
+    vopmask is_odd_o = vgt_vo_vi2_vi2(is_odd, vcast_vi2_i(0));
+
+    // pown ( -x, odd y) == -res
+    vfloat neg = vcopysign_vf_vf_vf(res, vcast_vf_f(-0.0f));
+
+    res = vsel_vf_vo_vf_vf(
+              vand_vo_vo_vo(
+                vlt_vo_vf_vf(x, vcast_vf_f(0.0f)),
+                is_odd_o),
+              neg,
+              res);
+
+    //pown ( ±0, n ) is ±∞ for odd n < 0.
+    //pown ( ±0, n ) is +∞ for even n < 0.
+    //pown ( ±0, n ) is +0 for even n > 0.
+    //pown ( ±0, n ) is ±0 for odd n > 0.
+
+    vfloat xiszero = vsel_vf_vo_vf_vf(
+                  vgt_vo_vi2_vi2(y, vcast_vi2_i(0)),
+                  vcast_vf_f(0.0f),
+                  vcast_vf_f(INFINITYf));
+
+    vfloat with_sig = vcopysign_vf_vf_vf(xiszero, x);
+
+    xiszero = vsel_vf_vo_vf_vf(is_odd_o, with_sig, xiszero);
+
+    res = vsel_vf_vo_vf_vf(
+              veq_vo_vf_vf(vabs_vf_vf(x), vcast_vf_f(0.0f)),
+              xiszero,
+              res);
+
+    // pown ( x, 0 ) is 1 for any x
+    res = vsel_vf_vo_vf_vf(
+              veq_vo_vi2_vi2(y, vcast_vi2_i(0)),
+              vcast_vf_f(1.0f),
+              res);
+
+    return res;
+}
+
+EXPORT CONST vfloat xpowrf(vfloat x, vfloat y) {
+    vfloat res = xpowf(x, y);
+
+    vfloat ax = vabs_vf_vf(x);
+    vfloat ay = vabs_vf_vf(y);
+    vfloat zeroes = vcast_vf_f(0.0f);
+
+    //powr ( ±0, y ) is +0 for y > 0.
+    //powr ( ±0, y ) is +∞ for finite y < 0.
+    //powr ( ±0, -∞) is +∞.
+    vfloat r_Xzero = vsel_vf_vo_vf_vf(
+                       vlt_vo_vf_vf(y, zeroes),
+                       vcast_vf_f(INFINITYf),
+                       zeroes);
+    r_Xzero = vsel_vf_vo_vf_vf(
+                veq_vo_vf_vf(y, vcast_vf_f(-INFINITYf)),
+                vcast_vf_f(INFINITYf),
+                r_Xzero);
+
+    res = vsel_vf_vo_vf_vf(
+            veq_vo_vf_vf(ax, zeroes),
+            r_Xzero,
+            res);
+
+    //powr ( ±0, ±0 ) returns NaN.
+    vfloat r_Yzero = vsel_vf_vo_vf_vf(
+                        veq_vo_vf_vf(ax, zeroes),
+                        vcast_vf_f(NANf),
+                        zeroes);
+    //powr ( x, ±0 ) is 1 for finite x > 0.
+    r_Yzero = vsel_vf_vo_vf_vf(
+                vgt_vo_vf_vf(x, zeroes),
+                vcast_vf_f(1.0f),
+                r_Yzero);
+
+    //powr ( +∞, ±0 ) returns NaN.
+    r_Yzero = vsel_vf_vo_vf_vf(
+                veq_vo_vf_vf(x, vcast_vf_f(INFINITYf)),
+                vcast_vf_f(NANf),
+                r_Yzero);
+
+    res = vsel_vf_vo_vf_vf(
+            veq_vo_vf_vf(ay, zeroes),
+            r_Yzero,
+            res);
+
+    //powr ( +1, y ) is 1 for finite y.
+    //powr ( +1, ±∞ ) returns NaN.
+    vfloat r_Xone = vsel_vf_vo_vf_vf(
+                      veq_vo_vf_vf(ay, vcast_vf_f(INFINITYf)),
+                      vcast_vf_f(NANf),
+                      vcast_vf_f(1.0f));
+
+    res = vsel_vf_vo_vf_vf(
+            veq_vo_vf_vf(x, vcast_vf_f(1.0f)),
+            r_Xone,
+            res);
+
+    //powr ( x, y ) returns NaN for x < 0.
+    res = vsel_vf_vo_vf_vf(
+            vlt_vo_vf_vf(x, zeroes),
+            vcast_vf_f(NANf),
+            res);
+
+    //powr ( NaN, y ) returns the NaN
+    res = vsel_vf_vo_vf_vf(
+            visnan_vo_vf(x),
+            x,
+            res);
+
+    //powr ( x, NaN ) returns the NaN for x >= 0.
+    res = vsel_vf_vo_vf_vf(
+            visnan_vo_vf(y),
+            y,
+            res);
+    return res;
+
+}
+
 
 static INLINE CONST vfloat2 expk2f(vfloat2 d) {
   vfloat u = vmul_vf_vf_vf(vadd_vf_vf_vf(d.x, d.y), vcast_vf_f(R_LN2f));

@@ -421,6 +421,58 @@ _CL_ALWAYSINLINE double2 Sleef_powd2_u10(double2 x, double2 y)
 #endif
 
 
+_CL_ALWAYSINLINE float4 Sleef_pownf4_u10(float4 x, int4 y)
+{
+  union { float4 t; reg128f r; } x_in;
+  x_in.t = x;
+  union { int4 t; reg128i r; } y_in;
+  y_in.t = y;
+  union { float4 t; reg128f r; } ret;
+  ret.r = Sleef_pownf4_u10_intrin(x_in.r, y_in.r);
+  return ret.t;
+}
+
+#ifdef SLEEF_DOUBLE_VEC_AVAILABLE
+
+_CL_ALWAYSINLINE double2 Sleef_pownd2_u10_long(double2 x, long2 y)
+{
+  union { double2 t; reg128d r; } x_in;
+  x_in.t = x;
+  union { long2 t; reg128i r; } y_in;
+  y_in.t = y;
+  union { double2 t; reg128d r; } ret;
+  ret.r = Sleef_pownd2_u10_intrin(x_in.r, y_in.r);
+  return ret.t;
+}
+#endif
+
+
+_CL_ALWAYSINLINE float4 Sleef_powrf4_u10(float4 x, float4 y)
+{
+  union { float4 t; reg128f r; } x_in;
+  x_in.t = x;
+  union { float4 t; reg128f r; } y_in;
+  y_in.t = y;
+  union { float4 t; reg128f r; } ret;
+  ret.r = Sleef_powrf4_u10_intrin(x_in.r, y_in.r);
+  return ret.t;
+}
+
+#ifdef SLEEF_DOUBLE_VEC_AVAILABLE
+
+_CL_ALWAYSINLINE double2 Sleef_powrd2_u10(double2 x, double2 y)
+{
+  union { double2 t; reg128d r; } x_in;
+  x_in.t = x;
+  union { double2 t; reg128d r; } y_in;
+  y_in.t = y;
+  union { double2 t; reg128d r; } ret;
+  ret.r = Sleef_powrd2_u10_intrin(x_in.r, y_in.r);
+  return ret.t;
+}
+#endif
+
+
 _CL_ALWAYSINLINE float4 Sleef_sinhf4_u10(float4 x)
 {
   union { float4 t; reg128f r; } x_in;
@@ -1797,6 +1849,58 @@ _CL_ALWAYSINLINE double4 Sleef_powd4_u10(double4 x, double4 y)
 #endif
 
 
+_CL_ALWAYSINLINE float8 Sleef_pownf8_u10(float8 x, int8 y)
+{
+  union { float8 t; reg256f r; } x_in;
+  x_in.t = x;
+  union { int8 t; reg256i r; } y_in;
+  y_in.t = y;
+  union { float8 t; reg256f r; } ret;
+  ret.r = Sleef_pownf8_u10_intrin(x_in.r, y_in.r);
+  return ret.t;
+}
+
+#ifdef SLEEF_DOUBLE_VEC_AVAILABLE
+
+_CL_ALWAYSINLINE double4 Sleef_pownd4_u10(double4 x, int4 y)
+{
+  union { double4 t; reg256d r; } x_in;
+  x_in.t = x;
+  union { int4 t; reg128i r; } y_in;
+  y_in.t = y;
+  union { double4 t; reg256d r; } ret;
+  ret.r = Sleef_pownd4_u10_intrin(x_in.r, y_in.r);
+  return ret.t;
+}
+#endif
+
+
+_CL_ALWAYSINLINE float8 Sleef_powrf8_u10(float8 x, float8 y)
+{
+  union { float8 t; reg256f r; } x_in;
+  x_in.t = x;
+  union { float8 t; reg256f r; } y_in;
+  y_in.t = y;
+  union { float8 t; reg256f r; } ret;
+  ret.r = Sleef_powrf8_u10_intrin(x_in.r, y_in.r);
+  return ret.t;
+}
+
+#ifdef SLEEF_DOUBLE_VEC_AVAILABLE
+
+_CL_ALWAYSINLINE double4 Sleef_powrd4_u10(double4 x, double4 y)
+{
+  union { double4 t; reg256d r; } x_in;
+  x_in.t = x;
+  union { double4 t; reg256d r; } y_in;
+  y_in.t = y;
+  union { double4 t; reg256d r; } ret;
+  ret.r = Sleef_powrd4_u10_intrin(x_in.r, y_in.r);
+  return ret.t;
+}
+#endif
+
+
 _CL_ALWAYSINLINE float8 Sleef_sinhf8_u10(float8 x)
 {
   union { float8 t; reg256f r; } x_in;
@@ -3168,6 +3272,58 @@ _CL_ALWAYSINLINE double8 Sleef_powd8_u10(double8 x, double8 y)
   y_in.t = y;
   union { double8 t; reg512d r; } ret;
   ret.r = Sleef_powd8_u10_intrin(x_in.r, y_in.r);
+  return ret.t;
+}
+#endif
+
+
+_CL_ALWAYSINLINE float16 Sleef_pownf16_u10(float16 x, int16 y)
+{
+  union { float16 t; reg512f r; } x_in;
+  x_in.t = x;
+  union { int16 t; reg512i r; } y_in;
+  y_in.t = y;
+  union { float16 t; reg512f r; } ret;
+  ret.r = Sleef_pownf16_u10_intrin(x_in.r, y_in.r);
+  return ret.t;
+}
+
+#ifdef SLEEF_DOUBLE_VEC_AVAILABLE
+
+_CL_ALWAYSINLINE double8 Sleef_pownd8_u10(double8 x, int8 y)
+{
+  union { double8 t; reg512d r; } x_in;
+  x_in.t = x;
+  union { int8 t; reg256i r; } y_in;
+  y_in.t = y;
+  union { double8 t; reg512d r; } ret;
+  ret.r = Sleef_pownd8_u10_intrin(x_in.r, y_in.r);
+  return ret.t;
+}
+#endif
+
+
+_CL_ALWAYSINLINE float16 Sleef_powrf16_u10(float16 x, float16 y)
+{
+  union { float16 t; reg512f r; } x_in;
+  x_in.t = x;
+  union { float16 t; reg512f r; } y_in;
+  y_in.t = y;
+  union { float16 t; reg512f r; } ret;
+  ret.r = Sleef_powrf16_u10_intrin(x_in.r, y_in.r);
+  return ret.t;
+}
+
+#ifdef SLEEF_DOUBLE_VEC_AVAILABLE
+
+_CL_ALWAYSINLINE double8 Sleef_powrd8_u10(double8 x, double8 y)
+{
+  union { double8 t; reg512d r; } x_in;
+  x_in.t = x;
+  union { double8 t; reg512d r; } y_in;
+  y_in.t = y;
+  union { double8 t; reg512d r; } ret;
+  ret.r = Sleef_powrd8_u10_intrin(x_in.r, y_in.r);
   return ret.t;
 }
 #endif

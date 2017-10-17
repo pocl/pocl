@@ -212,6 +212,7 @@ xexp (double x)
 {
   return __builtin_exp (x);
 }
+
 double
 xpow (double x, double y)
 {
@@ -219,10 +220,28 @@ xpow (double x, double y)
 }
 
 double
+xpown (double x, int y)
+{
+  return __builtin_pow (x, (double)y);
+}
+
+double
+xpowr (double x, double y)
+{
+  if (x < 0.0)
+    return NAN;
+  if (isnan(y))
+    return y;
+  double res = __builtin_pow (x, y);
+  return res;
+}
+
+double
 xsinh (double x)
 {
   return __builtin_sinh (x);
 }
+
 double
 xcosh (double x)
 {
@@ -597,10 +616,27 @@ xexpf (float x)
 {
   return __builtin_expf (x);
 }
+
 float
 xpowf (float x, float y)
 {
-  return __builtin_powf (x, y);
+
+  return (float) __builtin_pow ((double)x, (double)y);
+}
+
+float
+xpownf (float x, int y)
+{
+  return (float) __builtin_pow ((double)x, (double)y);
+}
+
+float
+xpowrf (float x, float y)
+{
+  if (x < 0.0f)
+    return NAN;
+  float res = (float) __builtin_pow ((double)x, (double)y);
+  return res;
 }
 
 float

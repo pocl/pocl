@@ -190,6 +190,9 @@ static INLINE vint vsra_vi_vi_i(vint x, int c) { return _mm_srai_epi32(x, c); }
 static INLINE vint veq_vi_vi_vi(vint x, vint y) { return _mm_cmpeq_epi32(x, y); }
 static INLINE vint vgt_vi_vi_vi(vint x, vint y) { return _mm_cmpgt_epi32(x, y); }
 
+static INLINE vopmask veq_cvt_vo_vi_vi(vint x, vint y) { return _mm_shuffle_epi32(_mm_cmpeq_epi32(x, y), 0xf5); }
+static INLINE vopmask vgt_cvt_vo_vi_vi(vint x, vint y) { return _mm_shuffle_epi32(_mm_cmpgt_epi32(x, y), 0xf5); }
+
 static INLINE vopmask veq_vo_vi_vi(vint x, vint y) { return _mm_cmpeq_epi32(x, y); }
 static INLINE vopmask vgt_vo_vi_vi(vint x, vint y) { return _mm_cmpgt_epi32(x, y); }
 

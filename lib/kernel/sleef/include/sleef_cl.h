@@ -210,6 +210,12 @@ float Sleef_tgammaf_u10 (float);
 float Sleef_erff_u10 (float);
 float Sleef_erfcf_u15 (float);
 
+double Sleef_pown_u10 (double, int);
+float Sleef_pownf_u10 (float, int);
+double Sleef_powr_u10 (double, double);
+float Sleef_powrf_u10 (float, float);
+
+
 // #####################
 
 #ifdef SLEEF_VEC_512_AVAILABLE
@@ -357,6 +363,12 @@ float16 Sleef_lgammaf16_u10 (float16);
 float16 Sleef_tgammaf16_u10 (float16);
 float16 Sleef_erff16_u10 (float16);
 float16 Sleef_erfcf16_u15 (float16);
+
+
+double8 Sleef_pownd8_u10 (double8, int8);
+float16 Sleef_pownf16_u10 (float16, int16);
+double8 Sleef_powrd8_u10 (double8, double8);
+float16 Sleef_powrf16_u10 (float16, float16);
 
 #endif
 
@@ -507,6 +519,12 @@ float8 Sleef_lgammaf8_u10 (float8);
 float8 Sleef_tgammaf8_u10 (float8);
 float8 Sleef_erff8_u10 (float8);
 float8 Sleef_erfcf8_u15 (float8);
+
+double4 Sleef_pownd4_u10 (double4, int4);
+float8 Sleef_pownf8_u10 (float8, int8);
+double4 Sleef_powrd4_u10 (double4, double4);
+float8 Sleef_powrf8_u10 (float8, float8);
+
 #endif
 
 #ifdef SLEEF_VEC_128_AVAILABLE
@@ -654,6 +672,11 @@ float4 Sleef_lgammaf4_u10 (float4);
 float4 Sleef_tgammaf4_u10 (float4);
 float4 Sleef_erff4_u10 (float4);
 float4 Sleef_erfcf4_u15 (float4);
+
+double2 Sleef_pownd2_u10 (double2, int2);
+float4 Sleef_pownf4_u10 (float4, int4);
+double2 Sleef_powrd2_u10 (double2, double2);
+float4 Sleef_powrf4_u10 (float4, float4);
 
 #endif
 

@@ -1206,6 +1206,19 @@ EXPORT CONST float xpowf(float x, float y) {
   return result;
 }
 
+EXPORT CONST float xpownf(float x, int y) {
+  return xpowf(x, (float)y);
+}
+
+EXPORT CONST float xpowrf(float x, float y) {
+  if (x < 0.0f)
+    return NAN;
+  if (isnan(y))
+    return y;
+  return xpowf(x, y);
+}
+
+
 EXPORT CONST float xsinhf(float x) {
   float y = fabsfk(x);
   Sleef_float2 d = expk2f(df(y, 0));

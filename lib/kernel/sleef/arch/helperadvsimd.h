@@ -227,6 +227,14 @@ static INLINE vint2 vcast_vi2_i64(int64_t l) {
   return vreinterpretq_s32_s64(vdupq_n_s64(l));
 }
 
+static INLINE vmask vgt_cvt_vo_vi_vi(vint a, vint b) {
+  return vreinterpretq_u32_s64(vmovl_s32(vreinterpret_s32_u32(vcgt_s32(a, b))));
+}
+
+static INLINE vmask veq_cvt_vo_vi_vi(vint a, vint b) {
+  return vreinterpretq_u32_s64(vmovl_s32(vreinterpret_s32_u32(vceq_s32(a, b))));
+}
+
 #else
 static INLINE vint2 vsll_vi2_vi2_i(vint2 x, const int c) {
   return vshlq_n_s32(x, c);

@@ -1420,6 +1420,145 @@ EXPORT CONST vdouble xpow(vdouble x, vdouble y) {
 #endif
 }
 
+EXPORT CONST vdouble xpown(vdouble x, vint y) {
+    vdouble res = xpow(x, vcast_vd_vi(y));
+
+    vint is_odd = vand_vi_vi_vi(y, vcast_vi_i(1));
+
+    vopmask is_odd_o =
+      vgt_cvt_vo_vi_vi(is_odd, vcast_vi_i(0));
+
+    vopmask is_lt0_o = vlt_vo_vd_vd(x, vcast_vd_d(0.0));
+
+    res = vabs_vd_vd(res);
+    vdouble neg = vneg_vd_vd(res);
+
+    res = vsel_vd_vo_vd_vd(
+              vand_vo_vo_vo(is_lt0_o, is_odd_o),
+              neg,
+              res);
+
+    //pown ( ±0, n ) is ±∞ for odd n < 0.
+    //pown ( ±0, n ) is +∞ for even n < 0.
+    //pown ( ±0, n ) is +0 for even n > 0.
+    //pown ( ±0, n ) is ±0 for odd n > 0.
+
+    vdouble xiszero = vsel_vd_vo_vd_vd(
+                  vgt_cvt_vo_vi_vi(y, vcast_vi_i(0)),
+                  vcast_vd_d(0.0),
+                  vcast_vd_d(INFINITY));
+
+    vdouble with_sig = vcopysign_vd_vd_vd(xiszero, x);
+
+    xiszero = vsel_vd_vo_vd_vd(is_odd_o, with_sig, xiszero);
+
+    res = vsel_vd_vo_vd_vd(
+            veq_vo_vd_vd(vabs_vd_vd(x), vcast_vd_d(0.0)),
+            xiszero,
+            res);
+
+    // pown ( x, 0 ) is 1 for any x
+    res = vsel_vd_vo_vd_vd(
+            veq_cvt_vo_vi_vi(y, vcast_vi_i(0)),
+            vcast_vd_d(1.0),
+            res);
+
+    res = vsel_vd_vo_vd_vd(
+            veq_cvt_vo_vi_vi(y, vcast_vi_i(1)),
+            x,
+            res);
+
+    return res;
+}
+
+
+EXPORT CONST vdouble xpowr(vdouble x, vdouble y) {
+    vdouble res = xpow(x, y);
+
+    vdouble ax = vabs_vd_vd(x);
+    vdouble ay = vabs_vd_vd(y);
+    vdouble zeroes = vcast_vd_d(0.0);
+
+    //powr ( ±0, y ) is +0 for y > 0.
+    //powr ( ±0, y ) is +∞ for finite y < 0.
+    vdouble r_Xzero = vsel_vd_vo_vd_vd(
+                       vlt_vo_vd_vd(y, zeroes),
+                       vcast_vd_d(INFINITY),
+                       zeroes);
+
+    //powr ( ±0, -∞) is +∞.
+    r_Xzero = vsel_vd_vo_vd_vd(
+                veq_vo_vd_vd(y, vcast_vd_d(-INFINITY)),
+                vcast_vd_d(INFINITY),
+                r_Xzero);
+
+    res = vsel_vd_vo_vd_vd(
+            veq_vo_vd_vd(ax, zeroes),
+            r_Xzero,
+            res);
+
+    //powr ( ±0, ±0 ) returns NaN.
+    vdouble r_Yzero = vsel_vd_vo_vd_vd(
+                        veq_vo_vd_vd(ax, zeroes),
+                        vcast_vd_d(NAN),
+                        zeroes);
+    //powr ( x, ±0 ) is 1 for finite x > 0.
+    r_Yzero = vsel_vd_vo_vd_vd(
+                vgt_vo_vd_vd(x, zeroes),
+                vcast_vd_d(1.0),
+                r_Yzero);
+
+    //powr ( +∞, ±0 ) returns NaN.
+    r_Yzero = vsel_vd_vo_vd_vd(
+                veq_vo_vd_vd(x, vcast_vd_d(INFINITY)),
+                vcast_vd_d(NAN),
+                r_Yzero);
+
+    res = vsel_vd_vo_vd_vd(
+            veq_vo_vd_vd(ay, zeroes),
+            r_Yzero,
+            res);
+
+
+    //powr ( +1, y ) is 1 for finite y.
+    //powr ( +1, ±∞ ) returns NaN.
+    vdouble r_Xone = vsel_vd_vo_vd_vd(
+                      veq_vo_vd_vd(ay, vcast_vd_d(INFINITY)),
+                      vcast_vd_d(NAN),
+                      vcast_vd_d(1.0));
+
+    res = vsel_vd_vo_vd_vd(
+            veq_vo_vd_vd(ax, vcast_vd_d(1.0)),
+            r_Xone,
+            res);
+
+    // powr(x, 1) is x
+    res = vsel_vd_vo_vd_vd(
+            veq_vo_vd_vd(y, vcast_vd_d(1.0)),
+            x,
+            res);
+
+    //powr ( x, y ) returns NaN for x < 0.
+    res = vsel_vd_vo_vd_vd(
+            vlt_vo_vd_vd(x, zeroes),
+            vcast_vd_d(NAN),
+            res);
+
+    //powr ( NaN, y ) returns the NaN
+    res = vsel_vd_vo_vd_vd(
+            visnan_vo_vd(x),
+            x,
+            res);
+
+    //powr ( x, NaN ) returns the NaN for x >= 0.
+    res = vsel_vd_vo_vd_vd(
+            visnan_vo_vd(y),
+            y,
+            res);
+    return res;
+}
+
+
 static INLINE CONST vdouble2 expk2(vdouble2 d) {
   vdouble u = vmul_vd_vd_vd(vadd_vd_vd_vd(d.x, d.y), vcast_vd_d(R_LN2));
   vdouble dq = vrint_vd_vd(u);
@@ -1608,6 +1747,8 @@ EXPORT CONST vdouble xcbrt(vdouble d) {
   y = vsel_vd_vo_vd_vd(visinf_vo_vd(s), vmulsign_vd_vd_vd(vcast_vd_d(INFINITY), s), y);
   y = vsel_vd_vo_vd_vd(veq_vo_vd_vd(s, vcast_vd_d(0)), vmulsign_vd_vd_vd(vcast_vd_d(0), s), y);
 #endif
+
+  y = vsel_vd_vo_vd_vd(visnan_vo_vd(d), d, y);
 
   return y;
 }
@@ -1958,6 +2099,7 @@ EXPORT CONST vdouble xsqrt_u05(vdouble d) {
 
   x = vsel_vd_vo_vd_vd(vispinf_vo_vd(d), vcast_vd_d(INFINITY), x);
   x = vsel_vd_vo_vd_vd(veq_vo_vd_vd(d, vcast_vd_d(0)), d, x);
+  x = vsel_vd_vo_vd_vd(visnan_vo_vd(d), d, x);
 
   return x;
 #endif

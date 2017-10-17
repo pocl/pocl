@@ -40,6 +40,8 @@ FUNCS = {
 
   exp: {name: 'exp', args: ["x"], argtypes: [:fvec], ret: :fvec, prec: ["10"] },
   pow: {name: 'pow', args: ["x", "y"], argtypes: [:fvec, :fvec], ret: :fvec, prec: ["10"] },
+  pown: {name: 'pown', args: ["x", "y"], argtypes: [:fvec, :ivec], ret: :fvec, prec: ["10"] },
+  powr: {name: 'powr', args: ["x", "y"], argtypes: [:fvec, :fvec], ret: :fvec, prec: ["10"] },
 
   sinh: {name: 'sinh', args: ["x"], argtypes: [:fvec], ret: :fvec, prec: ["10"] },
   cosh: {name: 'cosh', args: ["x"], argtypes: [:fvec], ret: :fvec, prec: ["10"] },

@@ -1476,6 +1476,18 @@ EXPORT CONST double xpow(double x, double y) {
   return result;
 }
 
+EXPORT CONST double xpown(double x, int y) {
+  return xpow(x, (double)y);
+}
+
+EXPORT CONST double xpowr(double x, double y) {
+  if (x < 0.0)
+    return NAN;
+  if (isnan(y))
+    return y;
+  return xpow(x, y);
+}
+
 static INLINE CONST Sleef_double2 expk2(Sleef_double2 d) {
   int q = (int)rintk((d.x + d.y) * R_LN2);
   Sleef_double2 s, t;

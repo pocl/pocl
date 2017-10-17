@@ -26,6 +26,7 @@
 #ifdef SLEEF_VEC_128_AVAILABLE
 
 _CL_ALWAYSINLINE double2 Sleef_ldexpd2_long (double2 x, long2 k);
+_CL_ALWAYSINLINE double2 Sleef_pownd2_u10_long (double2 x, long2 k);
 _CL_ALWAYSINLINE long2 Sleef_ilogbd2_long (double2 x);
 
 _CL_ALWAYSINLINE double2
@@ -34,6 +35,14 @@ Sleef_ldexpd2 (double2 x, int2 k)
   int4 tmp = (int4) (k, k);
   return Sleef_ldexpd2_long (x, as_long2 (tmp));
 }
+
+_CL_ALWAYSINLINE double2
+Sleef_pownd2_u10 (double2 x, int2 k)
+{
+  int4 tmp = (int4) (k, k);
+  return Sleef_pownd2_u10_long (x, as_long2 (tmp));
+}
+
 
 _CL_ALWAYSINLINE int2
 Sleef_ilogbd2 (double2 x)

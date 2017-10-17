@@ -134,3 +134,8 @@
 /***********************/
 #define xlog1p_fast Sleef_log1p_fast_u10
 #define xlog1pf_fast Sleef_log1pf_fast_u10
+
+#define xpown Sleef_pown_u10
+#define xpownf Sleef_pownf_u10
+#define xpowr Sleef_powr_u10
+#define xpowrf Sleef_powrf_u10

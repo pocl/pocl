@@ -175,6 +175,13 @@ static INLINE vopmask vgt_vo_vi_vi(vint x, vint y) {
   return _mm512_cmp_epi32_mask(_mm512_castsi256_si512(y), _mm512_castsi256_si512(x), _MM_CMPINT_LT);
 }
 
+static INLINE vopmask veq_cvt_vo_vi_vi(vint x, vint y) {
+  return _mm512_cmp_epi64_mask(_mm512_cvtepi32_epi64(x), _mm512_cvtepi32_epi64(y), _MM_CMPINT_EQ);
+}
+static INLINE vopmask vgt_cvt_vo_vi_vi(vint x, vint y) {
+  return _mm512_cmp_epi64_mask(_mm512_cvtepi32_epi64(y), _mm512_cvtepi32_epi64(x), _MM_CMPINT_LT);
+}
+
 static INLINE vdouble vsel_vd_vo_vd_vd(vopmask mask, vdouble x, vdouble y) {
   return _mm512_mask_blend_pd(mask, y, x);
 }

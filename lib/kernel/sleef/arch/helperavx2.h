@@ -180,6 +180,9 @@ static INLINE vint vgt_vi_vi_vi(vint x, vint y) { return _mm_cmpgt_epi32(x, y); 
 static INLINE vopmask veq_vo_vi_vi(vint x, vint y) { return _mm256_castsi128_si256(_mm_cmpeq_epi32(x, y)); }
 static INLINE vopmask vgt_vo_vi_vi(vint x, vint y) { return _mm256_castsi128_si256(_mm_cmpgt_epi32(x, y)); }
 
+static INLINE vopmask veq_cvt_vo_vi_vi(vint x, vint y) { return _mm256_cvtepi32_epi64(_mm_cmpeq_epi32(x, y)); }
+static INLINE vopmask vgt_cvt_vo_vi_vi(vint x, vint y) { return _mm256_cvtepi32_epi64(_mm_cmpgt_epi32(x, y)); }
+
 static INLINE vint vsel_vi_vo_vi_vi(vopmask m, vint x, vint y) { return _mm_blendv_epi8(y, x, _mm256_castsi256_si128(m)); }
 
 static INLINE vdouble vsel_vd_vo_vd_vd(vopmask o, vdouble x, vdouble y) { return _mm256_blendv_pd(y, x, _mm256_castsi256_pd(o)); }
