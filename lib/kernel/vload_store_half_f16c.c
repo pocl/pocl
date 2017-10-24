@@ -47,19 +47,17 @@
 
 
 
-#include <x86intrin.h>
-
 /** FLOAT -> HALF vec4 ************************************************/
 
 typedef union
 {
-  __m128 i;
+  float4 i;
   float4 low, hi;
 } f2h4_i;
 
 typedef union
 {
-  __m128i o;
+  short8 o;
   ushort4 low, hi;
 } f2h4_o;
 
@@ -69,7 +67,7 @@ _cl_float2half4_rte (const float4 data)
   f2h4_i ui;
   f2h4_o uo;
   ui.low = data;
-  uo.o = _mm_cvtps_ph (ui.i, 0);
+  uo.o = __builtin_ia32_vcvtps2ph (ui.i, 0);
   return uo.low;
 }
 
@@ -79,7 +77,7 @@ _cl_float2half4_rtn (const float4 data)
   f2h4_i ui;
   f2h4_o uo;
   ui.low = data;
-  uo.o = _mm_cvtps_ph (ui.i, 1);
+  uo.o = __builtin_ia32_vcvtps2ph (ui.i, 1);
   return uo.low;
 }
 
@@ -89,7 +87,7 @@ _cl_float2half4_rtp (const float4 data)
   f2h4_i ui;
   f2h4_o uo;
   ui.low = data;
-  uo.o = _mm_cvtps_ph (ui.i, 2);
+  uo.o = __builtin_ia32_vcvtps2ph (ui.i, 2);
   return uo.low;
 }
 
@@ -99,7 +97,7 @@ _cl_float2half4_rtz (const float4 data)
   f2h4_i ui;
   f2h4_o uo;
   ui.low = data;
-  uo.o = _mm_cvtps_ph (ui.i, 3);
+  uo.o = __builtin_ia32_vcvtps2ph (ui.i, 3);
   return uo.low;
 }
 
@@ -113,13 +111,13 @@ _cl_float2half4 (const float4 data)
 
 typedef union
 {
-  __m256 i;
+  float8 i;
   float8 f;
 } f2h8_i;
 
 typedef union
 {
-  __m128i o;
+  ushort8 o;
   ushort8 f;
 } f2h8_o;
 
@@ -129,7 +127,7 @@ _cl_float2half8_rte (const float8 data)
   f2h8_i ui;
   f2h8_o uo;
   ui.f = data;
-  uo.o = _mm256_cvtps_ph (ui.i, 0);
+  uo.o = __builtin_ia32_vcvtps2ph256 (ui.i, 0);
   return uo.f;
 }
 
@@ -139,7 +137,7 @@ _cl_float2half8_rtn (const float8 data)
   f2h8_i ui;
   f2h8_o uo;
   ui.f = data;
-  uo.o = _mm256_cvtps_ph (ui.i, 1);
+  uo.o = __builtin_ia32_vcvtps2ph256 (ui.i, 1);
   return uo.f;
 }
 
@@ -149,7 +147,7 @@ _cl_float2half8_rtp (const float8 data)
   f2h8_i ui;
   f2h8_o uo;
   ui.f = data;
-  uo.o = _mm256_cvtps_ph (ui.i, 2);
+  uo.o = __builtin_ia32_vcvtps2ph256 (ui.i, 2);
   return uo.f;
 }
 
@@ -159,7 +157,7 @@ _cl_float2half8_rtz (const float8 data)
   f2h8_i ui;
   f2h8_o uo;
   ui.f = data;
-  uo.o = _mm256_cvtps_ph (ui.i, 3);
+  uo.o = __builtin_ia32_vcvtps2ph256 (ui.i, 3);
   return uo.f;
 }
 
@@ -173,13 +171,13 @@ _cl_float2half8 (const float8 data)
 
 typedef union
 {
-  __m128i i;
+  short8 i;
   ushort4 low, hi;
 } h2f4_i;
 
 typedef union
 {
-  __m128 o;
+  float4 o;
   float4 f;
 } h2f4_o;
 
@@ -189,7 +187,7 @@ _cl_half2float4 (const ushort4 data)
   h2f4_i ui;
   h2f4_o uo;
   ui.low = data;
-  uo.o = _mm_cvtph_ps (ui.i);
+  uo.o = __builtin_ia32_vcvtph2ps (ui.i);
   return uo.f;
 }
 
@@ -197,13 +195,13 @@ _cl_half2float4 (const ushort4 data)
 
 typedef union
 {
-  __m128i i;
+  short8 i;
   ushort8 u;
 } h2f8_i;
 
 typedef union
 {
-  __m256 o;
+  float8 o;
   float8 f;
 } h2f8_o;
 
@@ -213,7 +211,7 @@ _cl_half2float8 (const ushort8 data)
   h2f8_i ui;
   h2f8_o uo;
   ui.u = data;
-  uo.o = _mm256_cvtph_ps (ui.i);
+  uo.o = __builtin_ia32_vcvtph2ps256 (ui.i);
   return uo.f;
 }
 
