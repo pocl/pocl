@@ -198,7 +198,9 @@ pocl_basic_init_device_infos(unsigned j, struct _cl_device_id* dev)
   dev->half_fp_config = 0;
   dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
 #ifdef __x86_64__
-  dev->single_fp_config |= (CL_FP_DENORM | CL_FP_ROUND_TO_INF | CL_FP_ROUND_TO_ZERO);
+  dev->single_fp_config |= (CL_FP_DENORM | CL_FP_ROUND_TO_INF
+                            | CL_FP_ROUND_TO_ZERO
+                            | CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
 #ifdef OCS_AVAILABLE
   if (cpu_has_fma())
     dev->single_fp_config |= CL_FP_FMA;
@@ -208,6 +210,8 @@ pocl_basic_init_device_infos(unsigned j, struct _cl_device_id* dev)
 #ifdef _CL_DISABLE_DOUBLE
   dev->double_fp_config = 0;
 #else
+  /* TODO: all of these are the minimum mandated, but not all CPUs may actually
+   * support all of them. */
   dev->double_fp_config = CL_FP_FMA | CL_FP_ROUND_TO_NEAREST
                           | CL_FP_ROUND_TO_ZERO | CL_FP_ROUND_TO_INF
                           | CL_FP_INF_NAN | CL_FP_DENORM;
