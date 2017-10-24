@@ -46,6 +46,11 @@
 #include "pocl_binary.h"
 #include "pocl_shared.h"
 
+#define REQUIRES_CR_SQRT_DIV_ERR                                              \
+  "-cl-fp32-correctly-rounded-divide-sqrt build option "                      \
+  "was specified, but CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT "                   \
+  "is not set for device"
+
 /* supported compiler parameters which should pass to the frontend directly
    by using -Xclang */
 static const char cl_parameters[] =
@@ -170,7 +175,8 @@ program_compile_dynamic_wg_binaries(cl_program program)
 static cl_int
 process_options (const char *options, char *modded_options, char *link_options,
                  cl_program program, int compiling, int linking,
-                 int *create_library, unsigned *flush_denorms, size_t size)
+                 int *create_library, unsigned *flush_denorms,
+                 int *requires_correctly_rounded_sqrt_div, size_t size)
 {
   cl_int error;
   char *token = NULL;
@@ -178,6 +184,7 @@ process_options (const char *options, char *modded_options, char *link_options,
 
   *create_library = 0;
   *flush_denorms = 0;
+  *requires_correctly_rounded_sqrt_div = 0;
   int enable_link_options = 0;
   link_options[0] = 0;
   modded_options[0] = 0;
@@ -220,6 +227,10 @@ process_options (const char *options, char *modded_options, char *link_options,
               if (strstr (token, "-cl-denorms-are-zero"))
                 {
                   *flush_denorms = 1;
+                }
+              if (strstr (token, "-cl-fp32-correctly-rounded-divide-sqrt"))
+                {
+                  *requires_correctly_rounded_sqrt_div = 1;
                 }
             }
           if (strstr (cl_parameters, token))
@@ -428,6 +439,7 @@ compile_and_link_program(int compile_program,
   char link_options[512];
   int errcode, error;
   int create_library = 0;
+  int requires_cr_sqrt_div = 0;
   unsigned flush_denorms = 0;
   uint64_t fsize;
   cl_device_id *unique_devlist = NULL;
@@ -473,10 +485,10 @@ compile_and_link_program(int compile_program,
       i = strlen (options);
       size_t size = i + 512; /* add some space for pocl-added options */
       program->compiler_options = (char *)malloc (size);
-      errcode
-          = process_options (options, program->compiler_options, link_options,
-                             program, compile_program, link_program,
-                             &create_library, &flush_denorms, size);
+      errcode = process_options (options, program->compiler_options,
+                                 link_options, program, compile_program,
+                                 link_program, &create_library, &flush_denorms,
+                                 &requires_cr_sqrt_div, size);
       if (errcode != CL_SUCCESS)
         goto ERROR_CLEAN_OPTIONS;
     }
@@ -523,6 +535,14 @@ compile_and_link_program(int compile_program,
           if (device_list[i] == device) found = 1;
       if (!found) continue;
 
+      if (requires_cr_sqrt_div
+          && !(device->single_fp_config & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT))
+        {
+          APPEND_TO_MAIN_BUILD_LOG (REQUIRES_CR_SQRT_DIV_ERR);
+          POCL_GOTO_ERROR_ON (1, build_error_code,
+                              REQUIRES_CR_SQRT_DIV_ERR " %s\n",
+                              device->short_name);
+        }
       actually_built++;
 
       /* clCreateProgramWithSource */
