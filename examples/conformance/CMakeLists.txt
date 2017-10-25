@@ -561,13 +561,229 @@ add_test(NAME "${TS_NAME}_images_samplerless_reads_2Darray_pitch"
 
 add_test(NAME "${TS_NAME}_integer_ops_1"
          COMMAND "${TS_BUILDDIR}/test_conformance/integer_ops/test_integer_ops" integer_clz  integer_hadd  integer_rhadd  integer_mul_hi  integer_rotate  integer_clamp  integer_mad_sat  integer_mad_hi  integer_min  integer_max  integer_upsample  integer_abs  integer_abs_diff  integer_add_sat  integer_sub_sat  integer_addAssign  integer_subtractAssign  integer_multiplyAssign  integer_divideAssign  integer_moduloAssign  integer_andAssign  integer_orAssign  integer_exclusiveOrAssign)
+
 add_test(NAME "${TS_NAME}_integer_ops_2"
          COMMAND "${TS_BUILDDIR}/test_conformance/integer_ops/test_integer_ops" unary_ops_increment  unary_ops_decrement  unary_ops_full  integer_mul24  integer_mad24  long_math  long_logic  long_shift  long_compare  ulong_math  ulong_logic  ulong_shift  ulong_compare  int_math  int_logic  int_shift  int_compare  uint_math  uint_logic  uint_shift  uint_compare  short_math  short_logic  short_shift  short_compare  ushort_math  ushort_logic  ushort_shift  ushort_compare  char_math  char_logic  char_shift  char_compare  uchar_math  uchar_logic  uchar_shift  uchar_compare  popcount  vector_scalar)
+
 add_test(NAME "${TS_NAME}_integer_ops_3"
          COMMAND "${TS_BUILDDIR}/test_conformance/integer_ops/test_integer_ops" quick_long_math  quick_long_logic  quick_long_shift  quick_long_compare  quick_ulong_math  quick_ulong_logic  quick_ulong_shift  quick_ulong_compare  quick_int_math  quick_int_logic  quick_int_shift  quick_int_compare  quick_uint_math  quick_uint_logic  quick_uint_shift  quick_uint_compare  quick_short_math  quick_short_logic  quick_short_shift  quick_short_compare  quick_ushort_math  quick_ushort_logic  quick_ushort_shift  quick_ushort_compare  quick_char_math  quick_char_logic  quick_char_shift  quick_char_compare  quick_uchar_math  quick_uchar_logic  quick_uchar_shift  quick_uchar_compare)
 
-add_test(NAME "${TS_NAME}_bruteforce"
-         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" )
+#***************************************************************************
+
+add_test(NAME "${TS_NAME}_math_add"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" add)
+
+add_test(NAME "${TS_NAME}_math_assignment"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" assignment)
+
+add_test(NAME "${TS_NAME}_math_cbrt"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" cbrt)
+
+add_test(NAME "${TS_NAME}_math_ceil"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" ceil)
+
+add_test(NAME "${TS_NAME}_math_copysign"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" copysign)
+
+add_test(NAME "${TS_NAME}_math_cos"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" cos)
+
+add_test(NAME "${TS_NAME}_math_cosh"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" cosh)
+
+add_test(NAME "${TS_NAME}_math_cospi"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" cospi)
+
+add_test(NAME "${TS_NAME}_math_divide"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" divide)
+
+add_test(NAME "${TS_NAME}_math_exp"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" exp)
+
+add_test(NAME "${TS_NAME}_math_exp10"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" exp10)
+
+add_test(NAME "${TS_NAME}_math_exp2"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" exp2)
+
+add_test(NAME "${TS_NAME}_math_expm1"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" expm1)
+
+add_test(NAME "${TS_NAME}_math_fabs"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" fabs)
+
+add_test(NAME "${TS_NAME}_math_fdim"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" fdim)
+
+add_test(NAME "${TS_NAME}_math_floor"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" floor)
+
+add_test(NAME "${TS_NAME}_math_fma"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" fma)
+
+add_test(NAME "${TS_NAME}_math_fmax"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" fmax)
+
+add_test(NAME "${TS_NAME}_math_fmin"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" fmin)
+
+add_test(NAME "${TS_NAME}_math_fmod"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" fmod)
+
+add_test(NAME "${TS_NAME}_math_fract"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" fract)
+
+add_test(NAME "${TS_NAME}_math_frexp"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" frexp)
+
+add_test(NAME "${TS_NAME}_math_hypot"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" hypot)
+
+add_test(NAME "${TS_NAME}_math_ilogb"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" ilogb)
+
+add_test(NAME "${TS_NAME}_math_isequal"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" isequal)
+
+add_test(NAME "${TS_NAME}_math_isfinite"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" isfinite)
+
+add_test(NAME "${TS_NAME}_math_isgreater"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" isgreater)
+
+add_test(NAME "${TS_NAME}_math_isgreaterequal"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" isgreaterequal)
+
+add_test(NAME "${TS_NAME}_math_isinf"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" isinf)
+
+add_test(NAME "${TS_NAME}_math_isless"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" isless)
+
+add_test(NAME "${TS_NAME}_math_islessequal"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" islessequal)
+
+add_test(NAME "${TS_NAME}_math_islessgreater"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" islessgreater)
+
+add_test(NAME "${TS_NAME}_math_isnan"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" isnan)
+
+add_test(NAME "${TS_NAME}_math_isnormal"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" isnormal)
+
+add_test(NAME "${TS_NAME}_math_isnotequal"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" isnotequal)
+
+add_test(NAME "${TS_NAME}_math_isordered"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" isordered)
+
+add_test(NAME "${TS_NAME}_math_isunordered"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" isunordered)
+
+add_test(NAME "${TS_NAME}_math_ldexp"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" ldexp)
+
+add_test(NAME "${TS_NAME}_math_log"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" log)
+
+add_test(NAME "${TS_NAME}_math_log10"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" log10)
+
+add_test(NAME "${TS_NAME}_math_log1p"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" log1p)
+
+add_test(NAME "${TS_NAME}_math_log2"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" log2)
+
+add_test(NAME "${TS_NAME}_math_logb"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" logb)
+
+add_test(NAME "${TS_NAME}_math_mad"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" mad)
+
+add_test(NAME "${TS_NAME}_math_maxmag"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" maxmag)
+
+add_test(NAME "${TS_NAME}_math_minmag"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" minmag)
+
+add_test(NAME "${TS_NAME}_math_modf"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" modf)
+
+add_test(NAME "${TS_NAME}_math_multiply"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" multiply)
+
+add_test(NAME "${TS_NAME}_math_nan"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" nan)
+
+add_test(NAME "${TS_NAME}_math_nextafter"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" nextafter)
+
+add_test(NAME "${TS_NAME}_math_not"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" not)
+
+add_test(NAME "${TS_NAME}_math_pow"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" pow)
+
+add_test(NAME "${TS_NAME}_math_pown"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" pown)
+
+add_test(NAME "${TS_NAME}_math_powr"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" powr)
+
+add_test(NAME "${TS_NAME}_math_remainder"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" remainder)
+
+add_test(NAME "${TS_NAME}_math_remquo"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" remquo)
+
+add_test(NAME "${TS_NAME}_math_rint"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" rint)
+
+add_test(NAME "${TS_NAME}_math_rootn"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" rootn)
+
+add_test(NAME "${TS_NAME}_math_round"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" round)
+
+add_test(NAME "${TS_NAME}_math_rsqrt"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" rsqrt)
+
+add_test(NAME "${TS_NAME}_math_signbit"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" signbit)
+
+add_test(NAME "${TS_NAME}_math_sin"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" sin)
+
+add_test(NAME "${TS_NAME}_math_sincos"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" sincos)
+
+add_test(NAME "${TS_NAME}_math_sinh"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" sinh)
+
+add_test(NAME "${TS_NAME}_math_sinpi"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" sinpi)
+
+add_test(NAME "${TS_NAME}_math_sqrt"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" sqrt)
+
+add_test(NAME "${TS_NAME}_math_subtract"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" subtract)
+
+add_test(NAME "${TS_NAME}_math_tan"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" tan)
+
+add_test(NAME "${TS_NAME}_math_tanh"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" tanh)
+
+add_test(NAME "${TS_NAME}_math_tanpi"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" tanpi)
+
+add_test(NAME "${TS_NAME}_math_trunc"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce" trunc)
+
+#***************************************************************************
 
 add_test(NAME "${TS_NAME}_mem_host_flags"
          COMMAND "${TS_BUILDDIR}/test_conformance/mem_host_flags/test_mem_host_flags" )
@@ -818,7 +1034,79 @@ set_tests_properties(
     "${TS_NAME}_integer_ops_1"
     "${TS_NAME}_integer_ops_2"
     "${TS_NAME}_integer_ops_3"
-    "${TS_NAME}_bruteforce"
+
+    "${TS_NAME}_math_add"
+    "${TS_NAME}_math_assignment"
+    "${TS_NAME}_math_cbrt"
+    "${TS_NAME}_math_ceil"
+    "${TS_NAME}_math_copysign"
+    "${TS_NAME}_math_cos"
+    "${TS_NAME}_math_cosh"
+    "${TS_NAME}_math_cospi"
+    "${TS_NAME}_math_divide"
+    "${TS_NAME}_math_exp"
+    "${TS_NAME}_math_exp10"
+    "${TS_NAME}_math_exp2"
+    "${TS_NAME}_math_expm1"
+    "${TS_NAME}_math_fabs"
+    "${TS_NAME}_math_fdim"
+    "${TS_NAME}_math_floor"
+    "${TS_NAME}_math_fma"
+    "${TS_NAME}_math_fmax"
+    "${TS_NAME}_math_fmin"
+    "${TS_NAME}_math_fmod"
+    "${TS_NAME}_math_fract"
+    "${TS_NAME}_math_frexp"
+    "${TS_NAME}_math_hypot"
+    "${TS_NAME}_math_ilogb"
+    "${TS_NAME}_math_isequal"
+    "${TS_NAME}_math_isfinite"
+    "${TS_NAME}_math_isgreater"
+    "${TS_NAME}_math_isgreaterequal"
+    "${TS_NAME}_math_isinf"
+    "${TS_NAME}_math_isless"
+    "${TS_NAME}_math_islessequal"
+    "${TS_NAME}_math_islessgreater"
+    "${TS_NAME}_math_isnan"
+    "${TS_NAME}_math_isnormal"
+    "${TS_NAME}_math_isnotequal"
+    "${TS_NAME}_math_isordered"
+    "${TS_NAME}_math_isunordered"
+    "${TS_NAME}_math_ldexp"
+    "${TS_NAME}_math_log"
+    "${TS_NAME}_math_log10"
+    "${TS_NAME}_math_log1p"
+    "${TS_NAME}_math_log2"
+    "${TS_NAME}_math_logb"
+    "${TS_NAME}_math_mad"
+    "${TS_NAME}_math_maxmag"
+    "${TS_NAME}_math_minmag"
+    "${TS_NAME}_math_modf"
+    "${TS_NAME}_math_multiply"
+    "${TS_NAME}_math_nan"
+    "${TS_NAME}_math_nextafter"
+    "${TS_NAME}_math_not"
+    "${TS_NAME}_math_pow"
+    "${TS_NAME}_math_pown"
+    "${TS_NAME}_math_pow"
+    "${TS_NAME}_math_remquo"
+    "${TS_NAME}_math_remainder"
+    "${TS_NAME}_math_rint"
+    "${TS_NAME}_math_rootn"
+    "${TS_NAME}_math_round"
+    "${TS_NAME}_math_rsqrt"
+    "${TS_NAME}_math_signbit"
+    "${TS_NAME}_math_sin"
+    "${TS_NAME}_math_sincos"
+    "${TS_NAME}_math_sinh"
+    "${TS_NAME}_math_sinpi"
+    "${TS_NAME}_math_sqrt"
+    "${TS_NAME}_math_subtract"
+    "${TS_NAME}_math_tan"
+    "${TS_NAME}_math_tanh"
+    "${TS_NAME}_math_tanpi"
+    "${TS_NAME}_math_trunc"
+
     "${TS_NAME}_mem_host_flags"
     "${TS_NAME}_multiples"
     "${TS_NAME}_printf"
@@ -849,6 +1137,7 @@ set_tests_properties(
     LABELS "conformance_suite"
     ENVIRONMENT "POCL_MEMORY_LIMIT=1")
 
+#***************************************************************************
 
 # conversions, for short version of conformance suite.
 # disables multithreading and only tests vectors of size 4
@@ -883,6 +1172,201 @@ add_test(NAME "${TS_NAME}_conversion_fast_double_ulong"
 add_test(NAME "${TS_NAME}_conversion_fast_long_double"
          COMMAND "${TS_BUILDDIR}/test_conformance/conversions/test_conversions" -m -4 long_double long_sat_double long_rte_double long_sat_rte_double long_rtp_double long_sat_rtp_double long_rtn_double long_sat_rtn_double long_rtz_double long_sat_rtz_double )
 
+#***************************************************************************
+
+# tests math on vectors of 4 floats.
+# This is usually the fastest version on machines with AVX(2)
+
+add_test(NAME "${TS_NAME}_math_fast_add"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d add)
+
+add_test(NAME "${TS_NAME}_math_fast_assignment"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d assignment)
+
+add_test(NAME "${TS_NAME}_math_fast_cbrt"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d cbrt)
+
+add_test(NAME "${TS_NAME}_math_fast_ceil"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d ceil)
+
+add_test(NAME "${TS_NAME}_math_fast_copysign"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d copysign)
+
+add_test(NAME "${TS_NAME}_math_fast_cos"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d cos)
+
+add_test(NAME "${TS_NAME}_math_fast_cosh"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d cosh)
+
+add_test(NAME "${TS_NAME}_math_fast_cospi"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d cospi)
+
+add_test(NAME "${TS_NAME}_math_fast_divide"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d divide)
+
+add_test(NAME "${TS_NAME}_math_fast_exp"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d exp)
+
+add_test(NAME "${TS_NAME}_math_fast_expm1"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d expm1)
+
+add_test(NAME "${TS_NAME}_math_fast_fabs"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d fabs)
+
+add_test(NAME "${TS_NAME}_math_fast_fdim"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d fdim)
+
+add_test(NAME "${TS_NAME}_math_fast_floor"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d floor)
+
+add_test(NAME "${TS_NAME}_math_fast_fma"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d fma)
+
+add_test(NAME "${TS_NAME}_math_fast_fmax"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d fmax)
+
+add_test(NAME "${TS_NAME}_math_fast_fmin"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d fmin)
+
+add_test(NAME "${TS_NAME}_math_fast_fract"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d fract)
+
+add_test(NAME "${TS_NAME}_math_fast_frexp"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d frexp)
+
+add_test(NAME "${TS_NAME}_math_fast_hypot"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d hypot)
+
+add_test(NAME "${TS_NAME}_math_fast_ilogb"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d ilogb)
+
+add_test(NAME "${TS_NAME}_math_fast_isequal"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d isequal)
+
+add_test(NAME "${TS_NAME}_math_fast_isfinite"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d isfinite)
+
+add_test(NAME "${TS_NAME}_math_fast_isgreater"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d isgreater)
+
+add_test(NAME "${TS_NAME}_math_fast_isgreaterequal"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d isgreaterequal)
+
+add_test(NAME "${TS_NAME}_math_fast_isinf"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d isinf)
+
+add_test(NAME "${TS_NAME}_math_fast_isless"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d isless)
+
+add_test(NAME "${TS_NAME}_math_fast_islessequal"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d islessequal)
+
+add_test(NAME "${TS_NAME}_math_fast_islessgreater"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d islessgreater)
+
+add_test(NAME "${TS_NAME}_math_fast_isnan"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d isnan)
+
+add_test(NAME "${TS_NAME}_math_fast_isnormal"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d isnormal)
+
+add_test(NAME "${TS_NAME}_math_fast_isnotequal"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d isnotequal)
+
+add_test(NAME "${TS_NAME}_math_fast_isordered"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d isordered)
+
+add_test(NAME "${TS_NAME}_math_fast_isunordered"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d isunordered)
+
+add_test(NAME "${TS_NAME}_math_fast_ldexp"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d ldexp)
+
+add_test(NAME "${TS_NAME}_math_fast_log"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d log)
+
+add_test(NAME "${TS_NAME}_math_fast_log10"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d log10)
+
+add_test(NAME "${TS_NAME}_math_fast_log1p"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d log1p)
+
+add_test(NAME "${TS_NAME}_math_fast_log2"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d log2)
+
+add_test(NAME "${TS_NAME}_math_fast_logb"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d logb)
+
+add_test(NAME "${TS_NAME}_math_fast_mad"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d mad)
+
+add_test(NAME "${TS_NAME}_math_fast_maxmag"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d maxmag)
+
+add_test(NAME "${TS_NAME}_math_fast_minmag"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d minmag)
+
+add_test(NAME "${TS_NAME}_math_fast_modf"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d modf)
+
+add_test(NAME "${TS_NAME}_math_fast_multiply"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d multiply)
+
+add_test(NAME "${TS_NAME}_math_fast_nan"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d nan)
+
+add_test(NAME "${TS_NAME}_math_fast_nextafter"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d nextafter)
+
+add_test(NAME "${TS_NAME}_math_fast_not"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d not)
+
+add_test(NAME "${TS_NAME}_math_fast_pown"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d pown)
+
+add_test(NAME "${TS_NAME}_math_fast_rint"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d rint)
+
+add_test(NAME "${TS_NAME}_math_fast_rootn"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d rootn)
+
+add_test(NAME "${TS_NAME}_math_fast_round"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d round)
+
+add_test(NAME "${TS_NAME}_math_fast_rsqrt"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d rsqrt)
+
+add_test(NAME "${TS_NAME}_math_fast_signbit"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d signbit)
+
+add_test(NAME "${TS_NAME}_math_fast_sin"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d sin)
+
+add_test(NAME "${TS_NAME}_math_fast_sinh"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d sinh)
+
+add_test(NAME "${TS_NAME}_math_fast_sinpi"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d sinpi)
+
+add_test(NAME "${TS_NAME}_math_fast_sqrt"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d sqrt)
+
+add_test(NAME "${TS_NAME}_math_fast_subtract"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d subtract)
+
+add_test(NAME "${TS_NAME}_math_fast_tan"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d tan)
+
+add_test(NAME "${TS_NAME}_math_fast_tanh"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d tanh)
+
+add_test(NAME "${TS_NAME}_math_fast_tanpi"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d tanpi)
+
+add_test(NAME "${TS_NAME}_math_fast_trunc"
+         COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d trunc)
+
+
 set_tests_properties(
     "${TS_NAME}_allocations_buffer"
     "${TS_NAME}_allocations_image"
@@ -904,6 +1388,70 @@ set_tests_properties(
     "${TS_NAME}_compiler"
     "${TS_NAME}_computeinfo"
     "${TS_NAME}_contractions"
+
+    "${TS_NAME}_math_fast_add"
+    "${TS_NAME}_math_fast_assignment"
+    "${TS_NAME}_math_fast_cbrt"
+    "${TS_NAME}_math_fast_ceil"
+    "${TS_NAME}_math_fast_copysign"
+    "${TS_NAME}_math_fast_cos"
+    "${TS_NAME}_math_fast_cosh"
+    "${TS_NAME}_math_fast_cospi"
+    "${TS_NAME}_math_fast_divide"
+    "${TS_NAME}_math_fast_exp"
+    "${TS_NAME}_math_fast_expm1"
+    "${TS_NAME}_math_fast_fabs"
+    "${TS_NAME}_math_fast_fdim"
+    "${TS_NAME}_math_fast_floor"
+    "${TS_NAME}_math_fast_fma"
+    "${TS_NAME}_math_fast_fmax"
+    "${TS_NAME}_math_fast_fmin"
+    "${TS_NAME}_math_fast_fract"
+    "${TS_NAME}_math_fast_frexp"
+    "${TS_NAME}_math_fast_hypot"
+    "${TS_NAME}_math_fast_ilogb"
+    "${TS_NAME}_math_fast_isequal"
+    "${TS_NAME}_math_fast_isfinite"
+    "${TS_NAME}_math_fast_isgreater"
+    "${TS_NAME}_math_fast_isgreaterequal"
+    "${TS_NAME}_math_fast_isinf"
+    "${TS_NAME}_math_fast_isless"
+    "${TS_NAME}_math_fast_islessequal"
+    "${TS_NAME}_math_fast_islessgreater"
+    "${TS_NAME}_math_fast_isnan"
+    "${TS_NAME}_math_fast_isnormal"
+    "${TS_NAME}_math_fast_isnotequal"
+    "${TS_NAME}_math_fast_isordered"
+    "${TS_NAME}_math_fast_isunordered"
+    "${TS_NAME}_math_fast_ldexp"
+    "${TS_NAME}_math_fast_log"
+    "${TS_NAME}_math_fast_log10"
+    "${TS_NAME}_math_fast_log1p"
+    "${TS_NAME}_math_fast_log2"
+    "${TS_NAME}_math_fast_logb"
+    "${TS_NAME}_math_fast_mad"
+    "${TS_NAME}_math_fast_maxmag"
+    "${TS_NAME}_math_fast_minmag"
+    "${TS_NAME}_math_fast_modf"
+    "${TS_NAME}_math_fast_multiply"
+    "${TS_NAME}_math_fast_nan"
+    "${TS_NAME}_math_fast_nextafter"
+    "${TS_NAME}_math_fast_not"
+    "${TS_NAME}_math_fast_pown"
+    "${TS_NAME}_math_fast_rint"
+    "${TS_NAME}_math_fast_rootn"
+    "${TS_NAME}_math_fast_round"
+    "${TS_NAME}_math_fast_rsqrt"
+    "${TS_NAME}_math_fast_signbit"
+    "${TS_NAME}_math_fast_sin"
+    "${TS_NAME}_math_fast_sinh"
+    "${TS_NAME}_math_fast_sinpi"
+    "${TS_NAME}_math_fast_sqrt"
+    "${TS_NAME}_math_fast_subtract"
+    "${TS_NAME}_math_fast_tan"
+    "${TS_NAME}_math_fast_tanh"
+    "${TS_NAME}_math_fast_tanpi"
+    "${TS_NAME}_math_fast_trunc"
 
     "${TS_NAME}_conversion_fast_uint_uchar"
     "${TS_NAME}_conversion_fast_short_char"
