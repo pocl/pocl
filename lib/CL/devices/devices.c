@@ -387,10 +387,14 @@ pocl_init_devices()
 #ifdef __linux__
 #ifdef __x86_64__
 
-  sigfpe_action.sa_flags = SA_RESTART | SA_SIGINFO;
-  sigfpe_action.sa_sigaction = sigfpe_signal_handler;
-  int res = sigaction (SIGFPE, &sigfpe_action, &old_sigfpe_action);
-  assert (res == 0);
+  if (pocl_get_bool_option ("POCL_SIGFPE_HANDLER", 1))
+    {
+      POCL_MSG_PRINT_GENERAL ("Installing SIGFPE handler...\n");
+      sigfpe_action.sa_flags = SA_RESTART | SA_SIGINFO;
+      sigfpe_action.sa_sigaction = sigfpe_signal_handler;
+      int res = sigaction (SIGFPE, &sigfpe_action, &old_sigfpe_action);
+      assert (res == 0);
+    }
 
 #endif
 #endif
