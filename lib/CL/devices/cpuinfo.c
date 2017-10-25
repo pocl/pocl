@@ -48,9 +48,9 @@ static const char* cpufreq_file="/sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_ma
  #define DEFAULTVENDOR "AIM" // Apple-IBM-Motorola
  #define DEFAULTVENDORID 0x1014 // IBM
  #define VENDORSTRING "vendor"
-#elif defined __arm__
+#elif defined __arm__ || __aarch64__
  #define FREQSTRING " "
- #define MODELSTRING "Processor"
+ #define MODELSTRING "CPU part"
  #define DEFAULTVENDOR "ARM"
  #define DEFAULTVENDORID 0x13b5 // ARM
  #define VENDORSTRING "CPU implementer"
@@ -263,6 +263,62 @@ pocl_sysfs_detect_compute_unit_count()
 }
 #endif
 
+#if __arm__ || __aarch64__
+enum
+{
+  JEP106_ARM    = 0x41,
+  JEP106_BRDCOM = 0x42,
+  JEP106_CAVIUM = 0x43,
+  JEP106_APM    = 0x50,
+  JEP106_QCOM   = 0x51
+};
+
+const static struct
+{
+  unsigned id; /* JEDEC JEP106 code; /proc/cpuinfo, field "CPU implementer" */
+  char const *name;
+}
+vendor_list[] =
+{
+  { JEP106_ARM,    "ARM" },
+  { JEP106_BRDCOM, "Broadcom" },
+  { JEP106_CAVIUM, "Cavium" },
+  { JEP106_APM,    "Applied Micro" },
+  { JEP106_QCOM,   "Qualcomm" }
+};
+
+typedef struct
+{
+  unsigned id; /* part code; /proc/cpuinfo, field "CPU part" */
+  char const *name;
+} part_tuple_t;
+
+const static part_tuple_t part_list_arm[] =
+{
+  { 0xd0a, "cortex-a75" },
+  { 0xd09, "cortex-a73" },
+  { 0xd08, "cortex-a72" },
+  { 0xd07, "cortex-a57" },
+  { 0xd05, "cortex-a55" },
+  { 0xd04, "cortex-a35" },
+  { 0xd03, "cortex-a53" },
+  { 0xd01, "cortex-a32" },
+  { 0xc0f, "cortex-a15" },
+  { 0xc0e, "cortex-a17" },
+  { 0xc0d, "cortex-a12" }, /* Rockchip RK3288 */
+  { 0xc0c, "cortex-a12" },
+  { 0xc09, "cortex-a9" },
+  { 0xc08, "cortex-a8" },
+  { 0xc07, "cortex-a7" },
+  { 0xc05, "cortex-a5" }
+};
+
+const static part_tuple_t part_list_apm[] =
+{
+  { 0x0, "x-gene-1" }
+};
+#endif
+
 static void
 pocl_cpuinfo_get_cpu_name_and_vendor(cl_device_id device)
 {
@@ -284,8 +340,12 @@ pocl_cpuinfo_get_cpu_name_and_vendor(cl_device_id device)
   fclose(f);
   contents[num_read]='\0';
 
-  char *start, *end;
+  char const *start, *end;
   /* find the vendor_id string an put */
+
+#if __arm__ || __aarch64__
+  unsigned vendor_id = -1;
+#endif
 #ifdef VENDORSTRING
   do {
     start = strstr(contents, VENDORSTRING"\t: ");
@@ -295,6 +355,22 @@ pocl_cpuinfo_get_cpu_name_and_vendor(cl_device_id device)
     end = strchr(start, '\n');
     if (!end)
       break;
+
+#if __arm__ || __aarch64__
+    if (1 == sscanf (start, "%x", &vendor_id))
+      {
+        for (size_t i = 0; i < sizeof (vendor_list) / sizeof (vendor_list[0]); ++i)
+          {
+            if (vendor_id == vendor_list[i].id)
+              {
+                start = vendor_list[i].name;
+                end = start + strlen (vendor_list[i].name);
+                break;
+              }
+          }
+      }
+#endif
+
     char *_vendor = malloc(end-start + 1);
     if (!_vendor)
       break;
@@ -313,12 +389,42 @@ pocl_cpuinfo_get_cpu_name_and_vendor(cl_device_id device)
   if (end == NULL)
     return;
 
+#if __arm__ || __aarch64__
+  unsigned part_id;
+  if (1 == sscanf (start, "%x", &part_id))
+    {
+      part_tuple_t const *part_list = NULL;
+      size_t part_count = 0;
+
+      switch (vendor_id)
+      {
+        case JEP106_ARM:
+          part_list = part_list_arm;
+          part_count = sizeof (part_list_arm) / sizeof (part_list_arm[0]);
+          break;
+        case JEP106_APM:
+          part_list = part_list_apm;
+          part_count = sizeof (part_list_apm) / sizeof (part_list_apm[0]);
+          break;
+      }
+
+      for (size_t i = 0; i < part_count; ++i)
+        {
+          if (part_id == part_list[i].id)
+            {
+              start = part_list[i].name;
+              end = start + strlen (part_list[i].name);
+              break;
+            }
+        }
+    }
+#endif
+
   /* create the descriptive long_name for device */
   int len = strlen (device->short_name) + (end-start) + 2;
   char *new_name = (char*)malloc (len);
   snprintf (new_name, len, "%s-%s", device->short_name, start);
   device->long_name = new_name;
-
 }
 
 void
