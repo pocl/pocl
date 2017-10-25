@@ -220,6 +220,9 @@ pocl_basic_init_device_infos(unsigned j, struct _cl_device_id* dev)
   dev->double_fp_config = CL_FP_FMA | CL_FP_ROUND_TO_NEAREST
                           | CL_FP_ROUND_TO_ZERO | CL_FP_ROUND_TO_INF
                           | CL_FP_INF_NAN | CL_FP_DENORM;
+  /* this is a workaround for issue 28 in https://github.com/Oblomov/clinfo
+   * https://github.com/Oblomov/clinfo/issues/28 */
+  dev->double_fp_config |= CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT;
 #endif
 
   dev->global_mem_cache_type = CL_NONE;
