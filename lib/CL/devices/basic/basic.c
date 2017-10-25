@@ -163,6 +163,9 @@ pocl_basic_init_device_infos(unsigned j, struct _cl_device_id* dev)
       = dev->max_work_item_sizes[2] = dev->max_work_group_size = 1024 * 4;
 
   dev->preferred_wg_size_multiple = 8;
+#ifdef OCS_AVAILABLE
+  cpu_setup_vector_widths (dev);
+#else
   dev->preferred_vector_width_char = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR;
   dev->preferred_vector_width_short = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_SHORT;
   dev->preferred_vector_width_int = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_INT;
@@ -171,13 +174,15 @@ pocl_basic_init_device_infos(unsigned j, struct _cl_device_id* dev)
   dev->preferred_vector_width_double = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE;
   dev->preferred_vector_width_half = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF;
   /* TODO: figure out what the difference between preferred and native widths are */
-  dev->native_vector_width_char = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR;
-  dev->native_vector_width_short = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_SHORT;
-  dev->native_vector_width_int = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_INT;
-  dev->native_vector_width_long = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_LONG;
-  dev->native_vector_width_float = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_FLOAT;
-  dev->native_vector_width_double = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE;
-  dev->native_vector_width_half = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF;
+  dev->native_vector_width_char = POCL_DEVICES_NATIVE_VECTOR_WIDTH_CHAR;
+  dev->native_vector_width_short = POCL_DEVICES_NATIVE_VECTOR_WIDTH_SHORT;
+  dev->native_vector_width_int = POCL_DEVICES_NATIVE_VECTOR_WIDTH_INT;
+  dev->native_vector_width_long = POCL_DEVICES_NATIVE_VECTOR_WIDTH_LONG;
+  dev->native_vector_width_float = POCL_DEVICES_NATIVE_VECTOR_WIDTH_FLOAT;
+  dev->native_vector_width_double = POCL_DEVICES_NATIVE_VECTOR_WIDTH_DOUBLE;
+  dev->native_vector_width_half = POCL_DEVICES_NATIVE_VECTOR_WIDTH_HALF;
+#endif
+
   dev->max_clock_frequency = 0;
   dev->address_bits = POCL_DEVICE_ADDRESS_BITS;
   dev->image_support = CL_TRUE;

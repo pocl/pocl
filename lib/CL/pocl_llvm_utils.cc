@@ -152,14 +152,43 @@ char *get_cpu_name() {
 
 // TODO this should be fixed to not require LLVM eventually,
 // so that LLVM-less builds also report FMA correctly.
-#ifdef OCS_AVAILABLE
 int cpu_has_fma() {
   StringMap<bool> features;
   bool res = llvm::sys::getHostCPUFeatures(features);
   assert(res);
   return ((features["fma"] || features["fma4"]) ? 1 : 0);
 }
-#endif
+
+#define VECWIDTH(x)                                                            \
+  std::min(std::max((lane_width / (unsigned)(sizeof(x))), 1U), 16U)
+
+void cpu_setup_vector_widths(cl_device_id dev) {
+  StringMap<bool> features;
+  bool res = llvm::sys::getHostCPUFeatures(features);
+  assert(res);
+  unsigned lane_width = 1;
+  if ((features["sse"]) || (features["neon"]))
+    lane_width = 16;
+  if (features["avx"])
+    lane_width = 32;
+  if (features["avx512f"])
+    lane_width = 64;
+
+  dev->native_vector_width_char = dev->preferred_vector_width_char =
+      VECWIDTH(char);
+  dev->native_vector_width_short = dev->preferred_vector_width_short =
+      VECWIDTH(short);
+  dev->native_vector_width_int = dev->preferred_vector_width_int =
+      VECWIDTH(int);
+  dev->native_vector_width_long = dev->preferred_vector_width_long =
+      VECWIDTH(long);
+  dev->native_vector_width_float = dev->preferred_vector_width_float =
+      VECWIDTH(float);
+  dev->native_vector_width_double = dev->preferred_vector_width_double =
+      VECWIDTH(double);
+  dev->native_vector_width_half = dev->preferred_vector_width_half =
+      VECWIDTH(short);
+}
 
 int pocl_llvm_remove_file_on_signal(const char *file) {
   return llvm::sys::RemoveFileOnSignal(

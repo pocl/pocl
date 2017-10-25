@@ -38,6 +38,9 @@ char* get_cpu_name();
 /* Returns if the cpu supports FMA instruction (uses LLVM). */
 int cpu_has_fma();
 
+/* Sets up the native/preferred vector widths at runtime (using LLVM). */
+void cpu_setup_vector_widths(cl_device_id dev);
+
 /* Compiles an .cl file into LLVM IR.
  */
 int pocl_llvm_build_program(cl_program program,
