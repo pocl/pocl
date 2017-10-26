@@ -28,5 +28,4 @@
 void _CL_OVERLOADABLE wait_group_events (int num_events,
                                          event_t *event_list)
 {
-  barrier(CLK_GLOBAL_MEM_FENCE);
 }
