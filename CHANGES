@@ -7,7 +7,28 @@ Highlights
   into account standard constraints, SIMD width for vectorization as
   well as the number of compute units available on the device.
 - Support for NVIDIA GPUs via a new CUDA backend (currently experimental).
-- Removed support for BBVectorizer
+- Removed support for BBVectorizer.
+- LLVM 5.0 is now supported.
+- A few build options have been added for distribution builds,
+  see README.packaging.
+- Somewhat improved scalability in the CPU driver. CPUs with many cores
+  and programs using a lot of WIs with small kernels can run somewhat faster.
+- Full conformance with OpenCL 1.2 standard, enabled by default. There are
+  some caveats though - see the documentation.
+- When conformance is enabled, some kernel library functions might be
+  slower than in previous releases.
+- Pocl now reports OpenCL 1.2 instead of 2.0, except HSA enabled builds.
+- Updated format of pocl binaries, which is NOT backwards compatible.
+  You'll need to clean any kernel caches.
+- Fixed several memory leaks.
+- Unresolved symbols (missing/misspelled functions etc) in a kernel will
+  result in error in clBuildProgram() instead of pocl silently ignoring
+  them and then aborting at dlopen().
+- New env variable POCL_MEMORY_LIMIT=<num> limits the Global memory size
+  reported by pocl to <num> gigabytes.
+- Improved AVX512 support (with LLVM 5.0). Note that even with LLVM 5.0
+  there are still a few bugs (see pocl issue #555); AVX512 + LLVM 4.0 are
+  a lot more broken, and probably not worth trying.
 
 0.14 April 2017
 ===============
