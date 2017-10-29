@@ -26,9 +26,9 @@ DUAL_PREC = ["10", "35"].freeze
 DUAL_PREC_05 = ["05", "35"].freeze
 
 FUNCS = {
-  sin: {name: 'sin', args: ["x"], argtypes: [:fvec], ret: :fvec, prec: DUAL_PREC },
-  cos: {name: 'cos', args: ["x"], argtypes: [:fvec], ret: :fvec, prec: DUAL_PREC },
-  tan: {name: 'tan', args: ["x"], argtypes: [:fvec], ret: :fvec, prec: DUAL_PREC },
+  native_sin: {name: 'sin', args: ["x"], argtypes: [:fvec], ret: :fvec, prec: DUAL_PREC, native: true },
+  native_cos: {name: 'cos', args: ["x"], argtypes: [:fvec], ret: :fvec, prec: DUAL_PREC, native: true },
+  native_tan: {name: 'tan', args: ["x"], argtypes: [:fvec], ret: :fvec, prec: DUAL_PREC, native: true },
 
   asin: {name: 'asin', args: ["x"], argtypes: [:fvec], ret: :fvec, prec: DUAL_PREC },
   acos: {name: 'acos', args: ["x"], argtypes: [:fvec], ret: :fvec, prec: DUAL_PREC },
@@ -129,6 +129,8 @@ class GenVecFunc
     @args = @hash[:args].dup
     @ret = @hash[:ret]
     @prec = @hash[:prec]
+    @is_native = @hash[:native]
+    @native_prefix = @is_native ? "native_" : ""
 
     init_types()
 
@@ -155,14 +157,15 @@ class GenVecFunc
 
       # prototype for vec4
       argtypes3to4_str = @arg3types.join(", ")
-      write "\n_CL_OVERLOADABLE\n#{@rettype_3to4} _cl_#{@name}(#{argtypes3to4_str});\n"
+      write "\n_CL_OVERLOADABLE\n#{@rettype_3to4} _cl_#{@native_prefix}#{@name}(#{argtypes3to4_str});\n"
     end
 
     # START
-    write "\n_CL_OVERLOADABLE\n#{@rettype} _cl_#{@name}(#{@fullargs_str})\n{"
+    write "\n_CL_OVERLOADABLE\n#{@rettype} _cl_#{@native_prefix}#{@name}(#{@fullargs_str})\n{"
 
     sleef_suffix = SLEEF_SUFFIXES[@vectype]
     basename = "Sleef_#{@name}#{sleef_suffix}"
+    @name = @native_prefix + @name
 
     if sleef_suffix
       # call SLEEF function, fallback to divide-n-conquer
@@ -262,6 +265,9 @@ private
   end
 
   def maxprec(basename)
+    if @is_native
+      return "return #{basename}_u#{@prec[1]}(#{@args_str});"
+    end
     if @prec and @prec.size > 1
       return %Q@
       #ifdef MAX_PRECISION
