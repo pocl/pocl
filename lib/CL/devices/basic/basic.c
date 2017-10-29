@@ -47,9 +47,6 @@
 
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
-#define COMMAND_LENGTH 2048
-#define WORKGROUP_STRING_LENGTH 1024
-
 struct data {
   /* Currently loaded kernel. */
   cl_kernel current_kernel;

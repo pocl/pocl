@@ -39,9 +39,6 @@
 #include <errno.h>
 #include <string.h>
 
-#define COMMAND_LENGTH 1024
-#define ARGUMENT_STRING_LENGTH 32
-
 //#define DEBUG_NDRANGE
 
 /* Euclid's algorithm for the Greatest Common Divisor */

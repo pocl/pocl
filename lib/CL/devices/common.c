@@ -60,7 +60,7 @@
 #include "_kernel_constants.h"
 
 
-#define COMMAND_LENGTH 2048
+#define WORKGROUP_STRING_LENGTH 1024
 
 /**
  * Generate code from the final bitcode using the LLVM
@@ -819,7 +819,7 @@ static int handle_count = 0;
 void
 pocl_check_dlhandle_cache (_cl_command_node *cmd)
 {
-  char workgroup_string[256];
+  char workgroup_string[WORKGROUP_STRING_LENGTH];
   pocl_dlhandle_cache_item *ci = NULL;
 
   POCL_LOCK (pocl_dlhandle_cache_lock);
@@ -916,7 +916,8 @@ pocl_check_dlhandle_cache (_cl_command_node *cmd)
     }
   free(module_fn);
 
-  snprintf (workgroup_string, 256, "_pocl_launcher_%s_workgroup", 
+  snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
+            "_pocl_launcher_%s_workgroup",
             cmd->command.run.kernel->name);
 
   POCL_LOCK (pocl_dlhandle_lock);

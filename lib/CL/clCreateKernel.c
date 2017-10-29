@@ -38,8 +38,6 @@
 #  include "vccompat.hpp"
 #endif
 
-#define COMMAND_LENGTH 1024
-
 CL_API_ENTRY cl_kernel CL_API_CALL
 POname(clCreateKernel)(cl_program program,
                const char *kernel_name,

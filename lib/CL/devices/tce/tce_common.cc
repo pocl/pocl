@@ -57,9 +57,6 @@
 
 using namespace TTAMachine;
 
-#define COMMAND_LENGTH 256
-#define WORKGROUP_STRING_LENGTH 1024
-
 #include <algorithm>
 
 #define ALIGNMENT (std::max(ALIGNOF_FLOAT16, ALIGNOF_DOUBLE16))
