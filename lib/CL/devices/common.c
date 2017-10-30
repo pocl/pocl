@@ -698,9 +698,13 @@ pocl_broadcast (cl_event brc_event)
 {
   event_node *target;
   event_node *tmp;
+
   while ((target = brc_event->notify_list))
     {
-      pocl_lock_events_inorder (brc_event, target->event);
+      if (brc_event->command_type == CL_COMMAND_USER)
+        POCL_LOCK_OBJ (target->event);
+      else
+        pocl_lock_events_inorder (brc_event, target->event);
       /* remove event from wait list */
       LL_FOREACH (target->event->wait_list, tmp)
         {
@@ -711,15 +715,20 @@ pocl_broadcast (cl_event brc_event)
               break;
             }
         }
-      if (target->event->status == CL_SUBMITTED)
-        {
-          target->event->command->device->ops->notify
-            (target->event->command->device, target->event, brc_event);
-        }
-      
-      LL_DELETE (brc_event->notify_list, target);
-      pocl_unlock_events_inorder (brc_event, target->event);
-      pocl_mem_manager_free_event_node (target);
+        if (brc_event->command_type == CL_COMMAND_USER)
+          POCL_UNLOCK_OBJ (target->event);
+
+        if ((target->event->status == CL_SUBMITTED)
+            || (target->event->status == CL_QUEUED))
+          {
+            target->event->command->device->ops->notify (
+                target->event->command->device, target->event, brc_event);
+          }
+
+        LL_DELETE (brc_event->notify_list, target);
+        if (brc_event->command_type != CL_COMMAND_USER)
+          pocl_unlock_events_inorder (brc_event, target->event);
+        pocl_mem_manager_free_event_node (target);
     }
 }
 

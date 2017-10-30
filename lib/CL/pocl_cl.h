@@ -854,11 +854,42 @@ struct _cl_sampler {
                       = (__cq)->device->ops->get_timer_value (                \
                           (__cq)->device->data);                              \
                 }                                                             \
-              (__cq)->device->ops->broadcast (__event);                       \
               POCL_UNLOCK_OBJ (__event);                                      \
+              (__cq)->device->ops->broadcast (__event);                       \
               pocl_update_command_queue (__event);                            \
             }                                                                 \
           pocl_event_updated (__event, CL_COMPLETE);                          \
+          POname (clReleaseEvent) (__event);                                  \
+        }                                                                     \
+    }                                                                         \
+  while (0)
+
+#define CL_FAILED (-1)
+
+#define POCL_UPDATE_EVENT_FAILED(__event)                                     \
+  do                                                                          \
+    {                                                                         \
+      if ((__event) != NULL)                                                  \
+        {                                                                     \
+          cl_command_queue __cq = (__event)->queue;                           \
+          if ((__cq)->device->ops->update_event)                              \
+            (__cq)->device->ops->update_event ((__cq)->device, (__event),     \
+                                               CL_FAILED);                    \
+          else                                                                \
+            {                                                                 \
+              pocl_mem_objs_cleanup (__event);                                \
+              POCL_LOCK_OBJ (__event);                                        \
+              if ((__cq)->properties & CL_QUEUE_PROFILING_ENABLE)             \
+                {                                                             \
+                  (__event)->time_end                                         \
+                      = (__cq)->device->ops->get_timer_value (                \
+                          (__cq)->device->data);                              \
+                }                                                             \
+              POCL_UNLOCK_OBJ (__event);                                      \
+              (__cq)->device->ops->broadcast (__event);                       \
+              pocl_update_command_queue (__event);                            \
+            }                                                                 \
+          pocl_event_updated (__event, CL_FAILED);                            \
           POname (clReleaseEvent) (__event);                                  \
         }                                                                     \
     }                                                                         \
