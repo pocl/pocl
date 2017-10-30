@@ -900,15 +900,13 @@ static void basic_command_scheduler (struct data *d)
   while ((node = d->ready_list))
     {
       assert (pocl_command_is_ready(node->event));
-      CDL_DELETE (d->ready_list, node);
-
-      
-      pthread_mutex_unlock (&d->cq_lock);
       assert (node->event->status == CL_SUBMITTED);
+      CDL_DELETE (d->ready_list, node);
+      POCL_UNLOCK (d->cq_lock);
       pocl_exec_command(node);
-      pthread_mutex_lock (&d->cq_lock);
+      POCL_LOCK (d->cq_lock);
     }
-    
+
   return;
 }
 
@@ -918,12 +916,11 @@ pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
   struct data *d = node->device->data;
   
   node->device->ops->compile_kernel (node, NULL, NULL);
-  POCL_LOCK (d->cq_lock);
-  POCL_UPDATE_EVENT_SUBMITTED (node->event);
-  pocl_command_push(node, &d->ready_list, &d->command_list);
-  
-  basic_command_scheduler (d);
 
+  node->ready = 1;
+  POCL_LOCK (d->cq_lock);
+  pocl_command_push(node, &d->ready_list, &d->command_list);
+  basic_command_scheduler (d);
   POCL_UNLOCK (d->cq_lock);
 
   return;
@@ -937,16 +934,7 @@ void pocl_basic_flush (cl_device_id device, cl_command_queue cq)
   basic_command_scheduler (d);
   POCL_UNLOCK (d->cq_lock);
 }
-/*
-static void
-pocl_basic_push_command (_cl_command_node *node)
-{
-  struct data *d = (struct data*)node->device->data;
 
-  pocl_command_push(node, &d->ready_list, &d->command_list);
-
-}
-*/
 void
 pocl_basic_join(cl_device_id device, cl_command_queue cq)
 {
@@ -964,12 +952,21 @@ pocl_basic_notify (cl_device_id device, cl_event event, cl_event finished)
 {
   struct data *d = (struct data*)device->data;
   _cl_command_node * volatile node = event->command;
-  
-  if (!(node->ready) && pocl_command_is_ready(node->event))
+
+  if (finished->status < CL_COMPLETE)
     {
-      node->ready = 1;
-      if (node->event->status == CL_SUBMITTED)
+      POCL_UPDATE_EVENT_FAILED (event);
+      return;
+    }
+
+  if (!node->ready)
+    return;
+
+  if (pocl_command_is_ready (event))
+    {
+      if (event->status == CL_QUEUED)
         {
+          POCL_UPDATE_EVENT_SUBMITTED (event);
           POCL_LOCK (d->cq_lock);
           CDL_DELETE (d->command_list, node);
           CDL_PREPEND (d->ready_list, node);

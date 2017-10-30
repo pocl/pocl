@@ -567,6 +567,7 @@ pocl_command_push (_cl_command_node *node,
   POCL_LOCK_OBJ (node->event);
   if (pocl_command_is_ready(node->event))
     {
+      POCL_UPDATE_EVENT_SUBMITTED (node->event);
       CDL_PREPEND ((*ready_list), node);
     }
   else

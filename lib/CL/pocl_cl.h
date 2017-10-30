@@ -879,6 +879,8 @@ struct _cl_sampler {
             {                                                                 \
               pocl_mem_objs_cleanup (__event);                                \
               POCL_LOCK_OBJ (__event);                                        \
+              if ((__event)->status > CL_COMPLETE)                            \
+                (__event)->status = CL_FAILED;                                \
               if ((__cq)->properties & CL_QUEUE_PROFILING_ENABLE)             \
                 {                                                             \
                   (__event)->time_end                                         \
