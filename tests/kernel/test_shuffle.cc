@@ -403,6 +403,8 @@ int main( int argc, char *argv[])
 #if (__GNUC__ > 5)
 #pragma GCC diagnostic pop
 #endif
+	clReleaseCommandQueue(queue);
+	clReleaseContext(ctx);
 
 	if( num_errors == 0)
 		std::cout << "OK" << std::endl;
