@@ -870,13 +870,13 @@ static void tce_command_scheduler (TCEDevice *d)
   while ((node = d->ready_list))
     {
       assert (pocl_command_is_ready(node->event));
-      CDL_DELETE (d->ready_list, node); 
-      pthread_mutex_unlock (&d->cq_lock);
+      CDL_DELETE (d->ready_list, node);
+      POCL_UNLOCK(d->cq_lock);
       assert (node->event->status == CL_SUBMITTED);
       if (node->type == CL_COMMAND_NDRANGE_KERNEL)
         pocl_tce_compile_kernel(node, NULL, NULL);
       pocl_exec_command(node);
-      pthread_mutex_lock (&d->cq_lock);
+      POCL_LOCK(d->cq_lock);
     }
     
   return;
@@ -887,12 +887,11 @@ pocl_tce_submit (_cl_command_node *node, cl_command_queue /*cq*/)
 {
   TCEDevice *d = (TCEDevice*)node->device->data;
 
+  node->ready = 1;
+
   POCL_LOCK (d->cq_lock);
-  POCL_UPDATE_EVENT_SUBMITTED (node->event);
   pocl_command_push(node, &d->ready_list, &d->command_list);
-
   tce_command_scheduler (d);
-
   POCL_UNLOCK (d->cq_lock);
 
   return;
@@ -933,23 +932,26 @@ pocl_tce_notify (cl_device_id device, cl_event event, cl_event finished)
 {
   TCEDevice *d = (TCEDevice*)device->data;
   _cl_command_node * volatile node = event->command;
-  
-  POCL_LOCK_OBJ (event);
-  if (!(node->ready) && pocl_command_is_ready(node->event))
-    {
-      node->ready = 1;
-      POCL_UNLOCK_OBJ (event);
-      if (node->event->status == CL_SUBMITTED)
-        {
-          POCL_LOCK (d->cq_lock);
-          CDL_DELETE (d->command_list, node);
-          CDL_PREPEND (d->ready_list, node);
-          tce_command_scheduler (d);
-          POCL_UNLOCK (d->cq_lock);
-        }
-      return;
+
+  if (finished->status < CL_COMPLETE) {
+    POCL_UPDATE_EVENT_FAILED(event);
+    return;
+  }
+
+  if (!node->ready)
+    return;
+
+  if (pocl_command_is_ready(event)) {
+    if (event->status == CL_QUEUED) {
+      POCL_UPDATE_EVENT_SUBMITTED(event);
+      POCL_LOCK(d->cq_lock);
+      CDL_DELETE(d->command_list, node);
+      CDL_PREPEND(d->ready_list, node);
+      tce_command_scheduler(d);
+      POCL_UNLOCK(d->cq_lock);
     }
-  POCL_UNLOCK_OBJ (event);
+    return;
+    }
 }
 
 void
