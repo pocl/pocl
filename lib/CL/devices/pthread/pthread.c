@@ -86,9 +86,6 @@
 /* CUSTOM_BUFFER_ALLOCATOR */
 #endif
 
-#define COMMAND_LENGTH 2048
-#define WORKGROUP_STRING_LENGTH 1024
-
 /* The name of the environment variable used to force a certain max thread count
    for the thread execution. */
 #define THREAD_COUNT_ENV "POCL_MAX_PTHREAD_COUNT"
@@ -113,10 +110,6 @@ struct data {
   mem_regions_management* mem_regions;
 #endif
 
-  /* Lock for command list related operations */
-  pthread_mutex_t cq_lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-  /* List of commands waiting to be enqueued */
-  _cl_command_node *volatile command_list;
 };
 
 static size_t get_max_thread_count();
@@ -265,13 +258,11 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   device->has_64bit_long=0;
   #endif
 
-  pthread_mutex_init (&d->cq_lock, NULL);
   if (!scheduler_initialized)
     {
       scheduler_initialized = 1;
       pocl_init_dlhandle_cache();
       pocl_init_kernel_run_command_manager();
-
       pthread_scheduler_init (num_worker_threads);
     }
   /* system mem as global memory */
@@ -366,21 +357,15 @@ pocl_pthread_submit (_cl_command_node *node, cl_command_queue cq)
 {
   cl_device_id device = node->device;
   struct data *d = device->data;
-
   POCL_LOCK_OBJ (node->event);
-  POCL_UPDATE_EVENT_SUBMITTED (node->event);
-  /* this "ready" consept to ensure that command is pushed only once */
-  if (!(node->ready) && pocl_command_is_ready(node->event))
+
+  node->ready = 1;
+  if (pocl_command_is_ready (node->event))
     {
-      node->ready = 1;
+      POCL_UPDATE_EVENT_SUBMITTED (node->event);
       pthread_scheduler_push_command (node);
     }
-  else
-    {
-      PTHREAD_LOCK (&d->cq_lock);
-      DL_PREPEND (d->command_list, node);
-      PTHREAD_UNLOCK (&d->cq_lock);
-    }
+
   POCL_UNLOCK_OBJ (node->event);
   return;
 }
@@ -405,20 +390,23 @@ pocl_pthread_notify (cl_device_id device, cl_event event, cl_event finished)
    int wake_thread = 0;
   _cl_command_node * volatile node = event->command;
 
-  /* this "ready" consept to ensure that command is pushed only once */
-  if (!(node->ready) && pocl_command_is_ready(node->event))
+  if (finished->status < CL_COMPLETE)
     {
-      node->ready = 1;
-      if (event->status == CL_SUBMITTED)
+      POCL_UPDATE_EVENT_FAILED (event);
+      return;
+    }
+
+  if (!node->ready)
+    return;
+
+  if (pocl_command_is_ready (node->event))
+    {
+      if (event->status == CL_QUEUED)
         {
-          PTHREAD_LOCK (&d->cq_lock);
-          assert (d->command_list != NULL);
-          DL_DELETE (d->command_list, node);
-          PTHREAD_UNLOCK (&d->cq_lock);
+          POCL_UPDATE_EVENT_SUBMITTED (event);
           wake_thread = 1;
         }
     }
-
   if (wake_thread)
     {
       pthread_scheduler_push_command (node);
@@ -479,18 +467,36 @@ void pocl_pthread_update_event (cl_device_id device, cl_event event, cl_int stat
 
       device->ops->broadcast (event);
       break;
+
     default:
-      assert("Invalid event status\n");
+      POCL_MSG_PRINT_EVENTS ("setting FAIL status on event %u\n", event->id);
+
+      POCL_LOCK_OBJ (event);
+      event->status = CL_FAILED;
+      pthread_cond_signal (&e_d->event_cond);
+      POCL_UNLOCK_OBJ (event);
+
+      pocl_mem_objs_cleanup (event);
+      cq_ready = pocl_update_command_queue (event);
+
+      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+        event->time_end = device->ops->get_timer_value (device->data);
+
+      if (cq_ready)
+        pthread_scheduler_release_host ();
+
+      device->ops->broadcast (event);
       break;
     }
 }
 
 void pocl_pthread_wait_event (cl_device_id device, cl_event event)
 {
+
   struct event_data *e_d = event->data;
 
   POCL_LOCK_OBJ (event);
-  while (event->status != CL_COMPLETE)
+  while (event->status > CL_COMPLETE)
     {
       pthread_cond_wait(&e_d->event_cond, &event->pocl_lock);
     }
