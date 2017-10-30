@@ -887,12 +887,14 @@ pocl_tce_submit (_cl_command_node *node, cl_command_queue /*cq*/)
 {
   TCEDevice *d = (TCEDevice*)node->device->data;
 
+  POCL_LOCK_OBJ(node->event);
   node->ready = 1;
-
-  POCL_LOCK (d->cq_lock);
+  POCL_LOCK(d->cq_lock);
   pocl_command_push(node, &d->ready_list, &d->command_list);
+  POCL_UNLOCK_OBJ(node->event);
+
   tce_command_scheduler (d);
-  POCL_UNLOCK (d->cq_lock);
+  POCL_UNLOCK(d->cq_lock);
 
   return;
 }

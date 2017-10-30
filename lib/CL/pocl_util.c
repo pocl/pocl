@@ -564,7 +564,6 @@ pocl_command_push (_cl_command_node *node,
       CDL_PREPEND ((*pending_list), node);
       return;
     }
-  POCL_LOCK_OBJ (node->event);
   if (pocl_command_is_ready(node->event))
     {
       POCL_UPDATE_EVENT_SUBMITTED (node->event);
@@ -574,7 +573,6 @@ pocl_command_push (_cl_command_node *node,
     {
       CDL_PREPEND ((*pending_list), node);
     }
-  POCL_UNLOCK_OBJ (node->event);
 }
 
 int pocl_update_command_queue (cl_event event)
