@@ -1193,12 +1193,11 @@ pocl_hsa_submit (_cl_command_node *node, cl_command_queue cq)
 
   POCL_LOCK_OBJ (node->event);
   PTHREAD_CHECK(pthread_mutex_lock(&d->list_mutex));
-  POCL_UPDATE_EVENT_SUBMITTED (node->event);
 
-  /* this "ready" consept to ensure that command is pushed only once */
-  if (!(node->ready) && pocl_command_is_ready(node->event))
+  node->ready = 1;
+  if (pocl_command_is_ready (node->event))
     {
-      node->ready = 1;
+      POCL_UPDATE_EVENT_SUBMITTED (node->event);
       PN_ADD(d->ready_list, node->event);
       added_to_readylist = 1;
     }
@@ -1268,12 +1267,20 @@ pocl_hsa_notify (cl_device_id device, cl_event event, cl_event finished)
   int added_to_readylist = 0;
   POCL_MSG_PRINT_INFO("pocl-hsa: notify on event %u \n", event->id);
 
-  /* this "ready" consept to ensure that command is pushed only once */
-  if (!(node->ready) && pocl_command_is_ready(node->event))
+  if (finished->status < CL_COMPLETE)
     {
-      node->ready = 1;
-      if (event->status == CL_SUBMITTED)
+      POCL_UPDATE_EVENT_FAILED (event);
+      return;
+    }
+
+  if (!node->ready)
+    return;
+
+  if (pocl_command_is_ready (event))
+    {
+      if (event->status == CL_QUEUED)
         {
+          POCL_UPDATE_EVENT_SUBMITTED (event);
           PTHREAD_CHECK(pthread_mutex_lock(&d->list_mutex));
 
           size_t i = 0;
@@ -1294,8 +1301,9 @@ pocl_hsa_notify (cl_device_id device, cl_event event, cl_event finished)
           PTHREAD_CHECK(pthread_mutex_unlock(&d->list_mutex));
         }
       else
-        POCL_MSG_WARN("node->ready was 0 but event %u is"
-                      " not submitted!\n", event->id);
+        POCL_MSG_WARN ("node->ready was 1 but event %u is"
+                       " not queued: status %i!\n",
+                       event->id, event->status);
     }
 
   if (added_to_readylist)
@@ -1314,7 +1322,7 @@ pocl_hsa_wait_event(cl_device_id device, cl_event event)
 {
   POCL_MSG_PRINT_INFO("pocl-hsa: device->wait_event on event %u\n", event->id);
   POCL_LOCK_OBJ (event);
-  if (event->status == CL_COMPLETE)
+  if (event->status <= CL_COMPLETE)
     {
       POCL_MSG_PRINT_INFO("pocl-hsa: device->wain_event: last event"
                           " (%u) in queue exists, but is complete\n", 
@@ -1322,7 +1330,7 @@ pocl_hsa_wait_event(cl_device_id device, cl_event event)
       POCL_UNLOCK_OBJ(event);
       return;
     }
-  while (event->status != CL_COMPLETE)
+  while (event->status > CL_COMPLETE)
     {
       pocl_hsa_event_data_t *e_d = (pocl_hsa_event_data_t *)event->data;
       PTHREAD_CHECK(pthread_cond_wait(&(e_d->event_cond), &event->pocl_lock));
@@ -1330,7 +1338,7 @@ pocl_hsa_wait_event(cl_device_id device, cl_event event)
   POCL_UNLOCK_OBJ(event);
 
   POCL_MSG_PRINT_INFO("event wait finished with status: %i\n", event->status);
-  assert(event->status == CL_COMPLETE);
+  assert (event->status <= CL_COMPLETE);
 }
 
 /* DRIVER PTHREAD part */
@@ -1702,7 +1710,19 @@ pocl_hsa_update_event (cl_device_id device, cl_event event, cl_int status)
       device->ops->broadcast (event);
       break;
     default:
-      assert("Invalid event status\n");
+      POCL_MSG_PRINT_INFO ("HSA: EVENT FAILED, event %d\n", event->id);
+      pocl_mem_objs_cleanup (event);
+      pocl_update_command_queue (event);
+
+      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+        event->time_end = device->ops->get_timer_value (device->data);
+
+      POCL_LOCK_OBJ (event);
+      event->status = CL_FAILED;
+      pthread_cond_signal (&e_d->event_cond);
+      POCL_UNLOCK_OBJ (event);
+
+      device->ops->broadcast (event);
       break;
     }
 }
