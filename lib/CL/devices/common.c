@@ -931,35 +931,6 @@ pocl_check_dlhandle_cache (_cl_command_node *cmd)
   POCL_UNLOCK (pocl_dlhandle_cache_lock);
 }
 
-/*
-static void
-pocl_free_dlhandle (_cl_command_node *cmd)
-{
-  pocl_dlhandle_cache_item *ci = NULL;
-  POCL_LOCK (pocl_dlhandle_cache_lock);
-  DL_FOREACH (pocl_dlhandle_cache, ci)
-    {
-      if (strcmp (ci->tmp_dir, cmd->command.run.tmp_dir) == 0 &&
-          strcmp (ci->function_name, 
-                  cmd->command.run.kernel->name) == 0)
-        {
-          if ((--ci->ref_count))
-            break;
-          --handle_count;
-          DL_DELETE (pocl_dlhandle_cache, ci);
-          POCL_UNLOCK (pocl_dlhandle_cache_lock);
-          free (ci->tmp_dir);
-          free (ci->function_name);
-          POCL_LOCK (pocl_llvm_codegen_lock);
-          assert(!lt_dlclose (ci->dlhandle));
-          POCL_UNLOCK (pocl_llvm_codegen_lock);
-          free (ci);
-          return;
-        }
-    }
-  POCL_UNLOCK (pocl_dlhandle_cache_lock);
-}
-*/
 
 #define MIN_MAX_MEM_ALLOC_SIZE (128*1024*1024)
 

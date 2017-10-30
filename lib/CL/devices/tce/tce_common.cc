@@ -908,14 +908,6 @@ void pocl_tce_flush (cl_device_id device, cl_command_queue /*cq*/)
   POCL_UNLOCK (d->cq_lock);
 }
 
-void
-pocl_tce_push_command (_cl_command_node *node)
-{
-  TCEDevice *d = (TCEDevice*)node->device->data;
-
-  pocl_command_push(node, &d->ready_list, &d->command_list);
-
-}
 
 void
 pocl_tce_join(cl_device_id device, cl_command_queue /*cq*/)
