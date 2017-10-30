@@ -36,6 +36,14 @@ POname(clReleaseEvent)(cl_event event) CL_API_SUFFIX__VERSION_1_0
   
   if (new_refcount == 0)
     {
+      event_callback_item *cb_ptr = NULL;
+      event_callback_item *next = NULL;
+      for (cb_ptr = event->callback_list; cb_ptr; cb_ptr = next)
+        {
+          next = cb_ptr->next;
+          POCL_MEM_FREE (cb_ptr);
+        }
+
       POCL_MSG_PRINT_REFCOUNTS ("Free event %d\n", event->id);
       if (event->command_type != CL_COMMAND_USER &&
           event->queue->device->ops->free_event_data)
