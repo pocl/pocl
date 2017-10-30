@@ -56,7 +56,9 @@
                           program.bc, so older binaries may fail
                           to run with "undefined symbol" errors. */
 /* changes for version 5: added program binary_type into header */
-#define POCLCC_VERSION 5
+/* changes for version 6: added reqd_wg_size informations into
+                          pocl_binary_kernel structure */
+#define POCLCC_VERSION 6
 
 /* pocl binary structures */
 
@@ -66,6 +68,8 @@
  * 3) char* strings are written as: | uint32_t strlen | strlen bytes of content |
  * 4) files are written as two strings: | uint32_t | relative filename | uint32_t | content |
  */
+
+#define OPENCL_MAX_DIMENSION 3
 
 typedef struct pocl_binary_kernel_s
 {
@@ -91,6 +95,9 @@ typedef struct pocl_binary_kernel_s
   uint32_t num_args;
   /* number of kernel local variables */
   uint32_t num_locals;
+
+  /* required work-group size */
+  uint64_t reqd_wg_size[OPENCL_MAX_DIMENSION];
 
   /* arguments and argument metadata. Note that not everything is stored
    * in the serialized binary */
@@ -407,6 +414,21 @@ pocl_binary_serialize_kernel_to_buffer(cl_kernel kernel,
   BUFFER_STORE(kernel->num_args, uint32_t);
   BUFFER_STORE(kernel->num_locals, uint32_t);
 
+  if (kernel->reqd_wg_size != NULL)
+    {
+      for (i = 0; i < OPENCL_MAX_DIMENSION; i++)
+        {
+          BUFFER_STORE(kernel->reqd_wg_size[i], uint64_t);
+        }
+    }
+  else
+    {
+      for (i = 0; i < OPENCL_MAX_DIMENSION; i++)
+        {
+          BUFFER_STORE((uint64_t)0, uint64_t);
+        }
+    }
+
   for (i=0; i < (kernel->num_args + kernel->num_locals); i++)
     {
       BUFFER_STORE(kernel->dyn_arguments[i].size, uint64_t);
@@ -526,6 +548,11 @@ pocl_binary_deserialize_kernel_from_buffer (unsigned char **buf,
   BUFFER_READ_STR2(kernel->kernel_name, kernel->sizeof_kernel_name);
   BUFFER_READ(kernel->num_args, uint32_t);
   BUFFER_READ(kernel->num_locals, uint32_t);
+
+  for (i = 0; i < OPENCL_MAX_DIMENSION; i++)
+    {
+      BUFFER_READ(kernel->reqd_wg_size[i], uint64_t);
+    }
 
   if (name_len > 0 && name_match)
     {
@@ -744,9 +771,14 @@ pocl_binary_get_kernel_metadata (unsigned char *binary, const char *kernel_name,
   kernel->arg_info = k.arg_info;
   free (k.kernel_name);
 
-  POCL_RETURN_ERROR_COND ((kernel->reqd_wg_size = calloc (3, sizeof (size_t)))
+  POCL_RETURN_ERROR_COND ((kernel->reqd_wg_size = calloc (OPENCL_MAX_DIMENSION, sizeof (size_t)))
                               == NULL,
                           CL_OUT_OF_HOST_MEMORY);
+
+  for (j = 0; j < OPENCL_MAX_DIMENSION; j++)
+    {
+      kernel->reqd_wg_size[j] = k.reqd_wg_size[j];
+    }
 
   return CL_SUCCESS;
 }
