@@ -895,17 +895,15 @@ EXPORT CONST float xatan2f(float y, float x) {
 }
 
 EXPORT CONST float xasinf(float d) {
-  int o = fabsfk(d) < 0.707f;
+  int o = fabsfk(d) < 0.5f;
   float x2 = o ? (d*d) : ((1-fabsfk(d))*0.5f), x = o ? fabsfk(d) : sqrtf(x2), u;
 
-  u = +0.1083120629e+0;
-  u = mlaf(u, x2, -0.8821133524e-1);
-  u = mlaf(u, x2, +0.7465086877e-1);
-  u = mlaf(u, x2, +0.1687940583e-1);
-  u = mlaf(u, x2, +0.4648575932e-1);
-  u = mlaf(u, x2, +0.7487771660e-1);
-  u = mlaf(u, x2, +0.1666697413e+0);
-  u = mlaf(u * x, x2, x);
+  u = +0.4197454825e-1;
+  u = mlaf(u, x2, +0.2424046025e-1);
+  u = mlaf(u, x2, +0.4547423869e-1);
+  u = mlaf(u, x2, +0.7495029271e-1);
+  u = mlaf(u, x2, +0.1666677296e+0);
+  u = mlaf(u, x * x2, x);
 
   float r = o ? u : (M_PIf/2 - 2*u);
   r = mulsignf(r, d);
@@ -914,20 +912,25 @@ EXPORT CONST float xasinf(float d) {
 }
 
 EXPORT CONST float xacosf(float d) {
-  float x2 = (1-fabsfk(d))*0.5, x = sqrtf(x2), u;
+  int o = fabsfk(d) < 0.5f;
+  float x2 = o ? (d*d) : ((1-fabsfk(d))*0.5f), u;
+  float x = o ? fabsfk(d) : sqrtf(x2);
+  x = fabsfk(d) == 1.0 ? 0 : x;
 
-  u = +0.1083120629e+0;
-  u = mlaf(u, x2, -0.8821133524e-1);
-  u = mlaf(u, x2, +0.7465086877e-1);
-  u = mlaf(u, x2, +0.1687940583e-1);
-  u = mlaf(u, x2, +0.4648575932e-1);
-  u = mlaf(u, x2, +0.7487771660e-1);
-  u = mlaf(u, x2, +0.1666697413e+0);
-  u = mlaf(u * x, x2, x);
+  u = +0.4197454825e-1;
+  u = mlaf(u, x2, +0.2424046025e-1);
+  u = mlaf(u, x2, +0.4547423869e-1);
+  u = mlaf(u, x2, +0.7495029271e-1);
+  u = mlaf(u, x2, +0.1666677296e+0);
 
-  float r = 2*u;
+  u *= x * x2;
 
-  return d < 0 ? M_PIf - r : r;
+  float y = 3.1415926535897932f/2 - (mulsignf(x, d) + mulsignf(u, d));
+  x += u;
+  float r = o ? y : (x*2);
+  if (!o && d < 0) r = dfadd_f2_f2_f(df(3.1415927410125732422f,-8.7422776573475857731e-08f), -r).x;
+
+  return r;
 }
 
 static Sleef_float2 atan2kf_u1(Sleef_float2 y, Sleef_float2 x) {
@@ -972,19 +975,17 @@ EXPORT CONST float xatan2f_u1(float y, float x) {
 }
 
 EXPORT CONST float xasinf_u1(float d) {
-  int o = fabsfk(d) < 0.707f;
+  int o = fabsfk(d) < 0.5f;
   float x2 = o ? (d*d) : ((1-fabsfk(d))*0.5f), u;
   Sleef_float2 x = o ? df(fabsfk(d), 0) : dfsqrt_f2_f(x2);
   x = fabsfk(d) == 1.0f ? df(0, 0) : x;
 
-  u = +0.1083120629e+0;
-  u = mlaf(u, x2, -0.8821133524e-1);
-  u = mlaf(u, x2, +0.7465086877e-1);
-  u = mlaf(u, x2, +0.1687940583e-1);
-  u = mlaf(u, x2, +0.4648575932e-1);
-  u = mlaf(u, x2, +0.7487771660e-1);
-  u = mlaf(u, x2, +0.1666697413e+0);
-  u = u * x2 * x.x;
+  u = +0.4197454825e-1;
+  u = mlaf(u, x2, +0.2424046025e-1);
+  u = mlaf(u, x2, +0.4547423869e-1);
+  u = mlaf(u, x2, +0.7495029271e-1);
+  u = mlaf(u, x2, +0.1666677296e+0);
+  u *= x2 * x.x;
 
   Sleef_float2 y = dfadd_f2_f2_f(dfsub_f2_f2_f2(df(3.1415927410125732422f/4,-8.7422776573475857731e-08f/4), x), -u);
   float r = o ? (u + x.x) : ((y.x + y.y)*2);
@@ -994,26 +995,26 @@ EXPORT CONST float xasinf_u1(float d) {
 }
 
 EXPORT CONST float xacosf_u1(float d) {
-  int o = fabsfk(d) < 0.707f;
+  int o = fabsfk(d) < 0.5f;
   float x2 = o ? (d*d) : ((1-fabsfk(d))*0.5f), u;
   Sleef_float2 x = o ? df(fabsfk(d), 0) : dfsqrt_f2_f(x2);
   x = fabs(d) == 1.0 ? df(0, 0) : x;
 
-  u = +0.1083120629e+0;
-  u = mlaf(u, x2, -0.8821133524e-1);
-  u = mlaf(u, x2, +0.7465086877e-1);
-  u = mlaf(u, x2, +0.1687940583e-1);
-  u = mlaf(u, x2, +0.4648575932e-1);
-  u = mlaf(u, x2, +0.7487771660e-1);
-  u = mlaf(u, x2, +0.1666697413e+0);
+  u = +0.4197454825e-1;
+  u = mlaf(u, x2, +0.2424046025e-1);
+  u = mlaf(u, x2, +0.4547423869e-1);
+  u = mlaf(u, x2, +0.7495029271e-1);
+  u = mlaf(u, x2, +0.1666677296e+0);
+
   u = u * x.x * x2;
 
-  Sleef_float2 y = dfsub_f2_f2_f2(df(3.1415927410125732422f/2,-8.7422776573475857731e-08f/2), dfadd_f2_f_f(mulsignf(x.x, d), mulsignf(u, d)));
+  Sleef_float2 y = dfsub_f2_f2_f2(df(3.1415927410125732422f/2,-8.7422776573475857731e-08f/2),
+                                  dfadd_f2_f_f(mulsignf(x.x, d), mulsignf(u, d)));
   x = dfadd_f2_f2_f(x, u);
-  float r = o ? (y.x + y.y) : ((x.x + x.y)*2);
-  if (!o && d < 0) r = M_PIf - r;
+  y = o ? y : dfscale_f2_f2_f(x, 2);
+  if (!o && d < 0) y = dfsub_f2_f2_f2(df(3.1415927410125732422f,-8.7422776573475857731e-08f), y);
 
-  return r;
+  return y.x + y.y;
 }
 
 EXPORT CONST float xatanf_u1(float d) {
