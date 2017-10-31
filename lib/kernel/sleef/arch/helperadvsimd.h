@@ -598,13 +598,11 @@ static INLINE vmask vcast_vm_i_i(int i0, int i1) {
 }
 
 static INLINE vopmask veq64_vo_vm_vm(vmask x, vmask y) {
-  return vreinterpretq_u32_u64(
-      vceqq_s64(vreinterpretq_s64_u32(x), vreinterpretq_s64_u32(y)));
+  return vreinterpretq_u32_u64(vceqq_s64(vreinterpretq_s64_u32(x), vreinterpretq_s64_u32(y)));
 }
 
 static INLINE vmask vadd64_vm_vm_vm(vmask x, vmask y) {
-  return vreinterpretq_u32_u64(
-      vaddq_s64(vreinterpretq_s64_u32(x), vreinterpretq_s64_u32(y)));
+  return vreinterpretq_u32_s64(vaddq_s64(vreinterpretq_s64_u32(x), vreinterpretq_s64_u32(y)));
 }
 
 static INLINE vint vsel_vi_vo_vi_vi(vopmask m, vint x, vint y) {
