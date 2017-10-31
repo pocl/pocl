@@ -227,6 +227,7 @@ static INLINE vdouble vrint_vd_vd(vdouble vd) { return vcast_vd_vi(vrint_vi_vd(v
 static INLINE vint vcast_vi_i(int j) { vint ret; for(int i=0;i<VECTLENDP;i++) ret.i[i] = j; return ret; }
 
 static INLINE vopmask veq64_vo_vm_vm(vmask x, vmask y) { vopmask ret; for(int i=0;i<VECTLENDP;i++) ret.x[i] = x.x[i] == y.x[i] ? -1 : 0; return ret; }
+static INLINE vmask veq64_vo_vm_vm(vmask x, vmask y) { vmask ret; for(int i=0;i<VECTLENDP;i++) ret.x[i] = x.x[i] + y.x[i]; return ret; }
 
 //
 

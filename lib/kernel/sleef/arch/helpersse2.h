@@ -118,6 +118,7 @@ static INLINE vdouble vrint_vd_vd(vdouble vd) { return _mm_round_pd(vd, _MM_FROU
 static INLINE vfloat vtruncate_vf_vf(vfloat vf) { return _mm_round_ps(vf, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC); }
 static INLINE vfloat vrint_vf_vf(vfloat vd) { return _mm_round_ps(vd, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC); }
 static INLINE vopmask veq64_vo_vm_vm(vmask x, vmask y) { return _mm_cmpeq_epi64(x, y); }
+#define FULL_FP_ROUNDING
 #else
 static INLINE vdouble vtruncate_vd_vd(vdouble vd) { return vcast_vd_vi(vtruncate_vi_vd(vd)); }
 static INLINE vdouble vrint_vd_vd(vdouble vd) { return vcast_vd_vi(vrint_vi_vd(vd)); }
@@ -126,6 +127,8 @@ static INLINE vopmask veq64_vo_vm_vm(vmask x, vmask y) {
   return vand_vm_vm_vm(t, _mm_shuffle_epi32(t, 0xb1));
 }
 #endif
+
+static INLINE vmask vadd64_vm_vm_vm(vmask x, vmask y) { return _mm_add_epi64(x, y); }
 
 static INLINE vmask vcast_vm_i_i(int i0, int i1) { return _mm_set_epi32(i0, i1, i0, i1); }
 

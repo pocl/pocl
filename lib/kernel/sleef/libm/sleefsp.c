@@ -1612,31 +1612,31 @@ EXPORT CONST float xhypotf_u35(float x, float y) {
   return ret;
 }
 
-static INLINE CONST float nexttoward0f(float x) {
-  union {
-    float f;
-    int32_t u;
-  } cx;
-  cx.f = x;
-  cx.u--;
-  return x == 0 ? 0 : cx.f;
+static INLINE CONST float toward0f(float d) {
+  return d == 0 ? 0 : intBitsToFloat(floatToRawIntBits(d)-1);
+}
+
+static INLINE CONST float ptruncf(float x) {
+  return fabsfk(x) >= (float)(1LL << 23) ? x : (x - (x - (int32_t)x));
 }
 
 EXPORT CONST float xfmodf(float x, float y) {
-  float nu = fabsfk(x), de = fabsfk(y), s = 1;
+  float nu = fabsfk(x), de = fabsfk(y), s = 1, q;
   if (de < FLT_MIN) { nu *= 1ULL << 25; de *= 1ULL << 25; s = 1.0f / (1ULL << 25); }
-  Sleef_float2 q, r = df(nu, 0);
+  Sleef_float2 r = df(nu, 0);
+  float rde = toward0f(1.0f / de);
 
-  for(int i=0;i<6;i++) { // ceil(log2(FLT_MAX) / 23)
-    q = dfnormalize_f2_f2(dfdiv_f2_f2_f2(r, df(de, 0)));
-    r = dfnormalize_f2_f2(dfadd2_f2_f2_f2(r, dfmul_f2_f_f(-xtruncf(q.y < 0 ? nexttoward0f(q.x) : q.x), de)));
-    if (r.x < y) break;
+  for(int i=0;i<8;i++) { // ceil(log2(FLT_MAX) / 22)+1
+    q = (de+de > r.x && r.x >= de) ? 1.0f : (toward0f(r.x) * rde);
+    r = dfnormalize_f2_f2(dfadd2_f2_f2_f2(r, dfmul_f2_f_f(ptruncf(q), -de)));
+    if (r.x < de) break;
   }
 
   float ret = (r.x + r.y) * s;
   if (r.x + r.y == de) ret = 0;
   ret = mulsignf(ret, x);
-  if (fabsfk(x) < fabsfk(y)) ret = x;
+  if (nu < de) ret = x;
+  if (de == 0) ret = NANf;
 
   return ret;
 }

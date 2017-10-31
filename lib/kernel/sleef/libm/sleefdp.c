@@ -1963,38 +1963,40 @@ EXPORT CONST int xexpfrexp(double x) {
   return ret;
 }
 
-static INLINE CONST double nexttoward0(double x) {
-  union {
-    double f;
-    uint64_t u;
-  } cx;
-  cx.f = x;
-  cx.u--;
-  return x == 0 ? 0 : cx.f;
+static INLINE CONST double toward0(double d) {
+  return d == 0 ? 0 : longBitsToDouble(doubleToRawLongBits(d)-1);
 }
 
-static INLINE CONST double upper2(double d) {
+static INLINE CONST double removelsb(double d) {
   return longBitsToDouble(doubleToRawLongBits(d) & 0xfffffffffffffffeLL);
 }
 
-EXPORT CONST double xfmod(double x, double y) {
-  double nu = fabsk(x), de = fabsk(y), s = 1;
-  if (de < DBL_MIN) { nu *= 1ULL << 54; de *= 1ULL << 54; s = 1.0 / (1ULL << 54); }
-  Sleef_double2 q, r = dd(nu, 0);
+static INLINE CONST double ptrunc(double x) {
+  double fr = mla(-(double)(1LL << 31), (int32_t)(x * (1.0 / (1LL << 31))), x);
+  return fabsk(x) >= (double)(1LL << 52) ? x : (x - (fr - (int32_t)fr));
+}
 
-  for(int i=0;i < 20;i++) { // ceil(log2(DBL_MAX) / 52)
-    q = ddnormalize_d2_d2(dddiv_d2_d2_d2(r, dd(de, 0)));
-    r = ddnormalize_d2_d2(ddadd2_d2_d2_d2(r, ddmul_d2_d_d(upper2(xtrunc(q.y < 0 ? nexttoward0(q.x) : q.x)), -de)));
-    if (r.x < y) break;
+EXPORT CONST double xfmod(double x, double y) {
+  double nu = fabsk(x), de = fabsk(y), s = 1, q;
+  if (de < DBL_MIN) { nu *= 1ULL << 54; de *= 1ULL << 54; s = 1.0 / (1ULL << 54); }
+  Sleef_double2 r = dd(nu, 0);
+  double rde = toward0(1.0 / de);
+
+  for(int i=0;i < 21;i++) { // ceil(log2(DBL_MAX) / 51) + 1
+    q = (de+de > r.x && r.x >= de) ? 1 : (toward0(r.x) * rde);
+    r = ddnormalize_d2_d2(ddadd2_d2_d2_d2(r, ddmul_d2_d_d(removelsb(ptrunc(q)), -de)));
+    if (r.x < de) break;
   }
 
   double ret = r.x * s;
   if (r.x + r.y == de) ret = 0;
   ret = mulsign(ret, x);
-  if (fabsk(x) < fabsk(y)) ret = x;
+  if (nu < de) ret = x;
+  if (de == 0) ret = NAN;
 
   return ret;
 }
+
 
 EXPORT CONST Sleef_double2 xmodf(double x) {
   double fr = x - (double)(1LL << 31) * (int32_t)(x * (1.0 / (1LL << 31)));

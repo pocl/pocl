@@ -796,10 +796,10 @@ EXPORT CONST vdouble xtan(vdouble d) {
 
 #ifndef ENABLE_AVX512F
   u = vreinterpret_vd_vm(vor_vm_vo64_vm(visinf_vo_vd(d), vreinterpret_vm_vd(u)));
-  u = vsel_vd_vo_vd_vd(visnegzero_vo_vd(d), vcast_vd_d(-0.0), u);
 #else
   u = vfixup_vd_vd_vd_vi2_i(u, d, vcast_vi2_i((3 << (4*4)) | (3 << (5*4))), 0);
 #endif
+  u = vsel_vd_vo_vd_vd(visnegzero_vo_vd(d), vcast_vd_d(-0.0), u);
 
   return u;
 }
@@ -1878,22 +1878,6 @@ EXPORT CONST vdouble xlog1p(vdouble a) {
 static INLINE CONST vint2 vcast_vi2_i_i(int i0, int i1) { return vcast_vi2_vm(vcast_vm_i_i(i0, i1)); }
 static INLINE CONST vint2 vrev21_vi2_vi2(vint2 i) { return vreinterpret_vi2_vf(vrev21_vf_vf(vreinterpret_vf_vi2(i))); }
 
-static INLINE CONST vdouble vnexttoward0(vdouble x) {
-  vint2 xi2 = vreinterpret_vi2_vd(x);
-
-  xi2 = vsub_vi2_vi2_vi2(xi2, vcast_vi2_i_i(0, 1));
-  xi2 = vadd_vi2_vi2_vi2(xi2, vrev21_vi2_vi2(veq_vi2_vi2_vi2(xi2, vcast_vi2_i_i(-1, -1))));
-
-  vdouble ret = vreinterpret_vd_vi2(xi2);
-  ret = vsel_vd_vo_vd_vd(veq_vo_vd_vd(x, vcast_vd_d(0)), vcast_vd_d(0), ret);
-
-  return ret;
-}
-
-static INLINE CONST vdouble upper2(vdouble d) {
-  return vreinterpret_vd_vm(vand_vm_vm_vm(vreinterpret_vm_vd(d), vcast_vm_i_i(0xffffffff, 0xfffffffe)));
-}
-
 EXPORT CONST vdouble xfabs(vdouble x) { return vabs_vd_vd(x); }
 
 EXPORT CONST vdouble xcopysign(vdouble x, vdouble y) { return vcopysign_vd_vd_vd(x, y); }
@@ -2146,20 +2130,38 @@ EXPORT CONST vdouble xhypot_u35(vdouble x, vdouble y) {
   return ret;
 }
 
+static INLINE CONST vdouble vtoward0(vdouble x) { // returns nextafter(x, 0)
+  vdouble t = vreinterpret_vd_vm(vadd64_vm_vm_vm(vreinterpret_vm_vd(x), vcast_vm_i_i(-1, -1)));
+  return vsel_vd_vo_vd_vd(veq_vo_vd_vd(x, vcast_vd_d(0)), vcast_vd_d(0), t);
+}
+
+static INLINE CONST vdouble vptrunc(vdouble x) { // round to integer toward 0, positive argument only
+#ifdef FULL_FP_ROUNDING
+  return vtruncate_vd_vd(x);
+#else
+  vdouble fr = vmla_vd_vd_vd_vd(vcast_vd_d(-(double)(1LL << 31)), vcast_vd_vi(vtruncate_vi_vd(vmul_vd_vd_vd(x, vcast_vd_d(1.0 / (1LL << 31))))), x);
+  fr = vsub_vd_vd_vd(fr, vcast_vd_vi(vtruncate_vi_vd(fr)));
+  return vsel_vd_vo_vd_vd(vge_vo_vd_vd(vabs_vd_vd(x), vcast_vd_d(1LL << 52)), x, vsub_vd_vd_vd(x, fr));
+#endif
+}
+
 /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
 EXPORT CONST vdouble xfmod(vdouble x, vdouble y) {
-  vdouble nu = vabs_vd_vd(x), de = vabs_vd_vd(y), s = vcast_vd_d(1);
+  vdouble nu = vabs_vd_vd(x), de = vabs_vd_vd(y), s = vcast_vd_d(1), q;
   vopmask o = vlt_vo_vd_vd(de, vcast_vd_d(DBL_MIN));
   nu = vsel_vd_vo_vd_vd(o, vmul_vd_vd_vd(nu, vcast_vd_d(1ULL << 54)), nu);
   de = vsel_vd_vo_vd_vd(o, vmul_vd_vd_vd(de, vcast_vd_d(1ULL << 54)), de);
   s  = vsel_vd_vo_vd_vd(o, vmul_vd_vd_vd(s , vcast_vd_d(1.0 / (1ULL << 54))), s);
+  vdouble rde = vtoward0(vrec_vd_vd(de));
+  vdouble2 r = vcast_vd2_vd_vd(nu, vcast_vd_d(0));
 
-  vdouble2 q, r = vcast_vd2_vd_vd(nu, vcast_vd_d(0));
-
-  for(int i=0;i<20;i++) { // ceil(log2(DBL_MAX) / 52)
-    q = ddnormalize_vd2_vd2(dddiv_vd2_vd2_vd2(r, vcast_vd2_vd_vd(de, vcast_vd_d(0))));
-    r = ddnormalize_vd2_vd2(ddadd2_vd2_vd2_vd2(r, ddmul_vd2_vd_vd(upper2(xtrunc(vsel_vd_vo_vd_vd(vlt_vo_vd_vd(q.y, vcast_vd_d(0)), vnexttoward0(q.x), q.x))), vneg_vd_vd(de))));
-    if (vtestallones_i_vo64(vlt_vo_vd_vd(r.x, y))) break;
+  for(int i=0;i<21;i++) { // ceil(log2(DBL_MAX) / 51) + 1
+    q = vsel_vd_vo_vd_vd(vand_vo_vo_vo(vgt_vo_vd_vd(vadd_vd_vd_vd(de, de), r.x),
+				       vge_vo_vd_vd(r.x, de)),
+			 vcast_vd_d(1), vmul_vd_vd_vd(vtoward0(r.x), rde));
+    q = vreinterpret_vd_vm(vand_vm_vm_vm(vreinterpret_vm_vd(vptrunc(q)), vcast_vm_i_i(0xffffffff, 0xfffffffe)));
+    r = ddnormalize_vd2_vd2(ddadd2_vd2_vd2_vd2(r, ddmul_vd2_vd_vd(q, vneg_vd_vd(de))));
+    if (vtestallones_i_vo64(vlt_vo_vd_vd(r.x, de))) break;
   }
 
   vdouble ret = vmul_vd_vd_vd(r.x, s);
@@ -2167,7 +2169,8 @@ EXPORT CONST vdouble xfmod(vdouble x, vdouble y) {
 
   ret = vmulsign_vd_vd_vd(ret, x);
 
-  ret = vsel_vd_vo_vd_vd(vlt_vo_vd_vd(vabs_vd_vd(x), vabs_vd_vd(y)), x, ret);
+  ret = vsel_vd_vo_vd_vd(vlt_vo_vd_vd(nu, de), x, ret);
+  ret = vsel_vd_vo_vd_vd(veq_vo_vd_vd(de, vcast_vd_d(0)), vcast_vd_d(NAN), ret);
 
   return ret;
 }

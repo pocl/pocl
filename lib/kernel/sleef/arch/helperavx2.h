@@ -23,6 +23,8 @@
 #define VECTLENSP (1 << LOG2VECTLENSP)
 #define ENABLE_FMA_SP
 
+#define FULL_FP_ROUNDING
+
 #if defined(_MSC_VER)
 #include <intrin.h>
 #else
@@ -126,6 +128,7 @@ static INLINE vint2 vcast_vi2_i64(long x) { return _mm256_set1_epi64x(x); }
 
 
 static INLINE vopmask veq64_vo_vm_vm(vmask x, vmask y) { return _mm256_cmpeq_epi64(x, y); }
+static INLINE vmask vadd64_vm_vm_vm(vmask x, vmask y) { return _mm256_add_epi64(x, y); }
 
 //
 

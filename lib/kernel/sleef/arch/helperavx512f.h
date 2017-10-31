@@ -23,6 +23,8 @@
 #define VECTLENSP (1 << LOG2VECTLENSP)
 #define ENABLE_FMA_SP
 
+#define FULL_FP_ROUNDING
+
 #if defined(_MSC_VER)
 #include <intrin.h>
 #else
@@ -93,8 +95,19 @@ static INLINE vint vtruncate_vi_vd(vdouble vd) {
 static INLINE vdouble vcast_vd_vi(vint vi) { return _mm512_cvtepi32_pd(vi); }
 static INLINE vint vcast_vi_i(int i) { return _mm256_set1_epi32(i); }
 
-static INLINE vdouble vtruncate_vd_vd(vdouble vd) { return vcast_vd_vi(vtruncate_vi_vd(vd)); }
-static INLINE vdouble vrint_vd_vd(vdouble vd) { return vcast_vd_vi(vrint_vi_vd(vd)); }
+static INLINE vdouble vtruncate_vd_vd(vdouble vd) {
+  __m256d hi = _mm512_extractf64x4_pd(vd, 1), lo = _mm512_extractf64x4_pd(vd, 0);
+  hi = _mm256_round_pd(hi, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC);
+  lo = _mm256_round_pd(lo, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC);
+  return _mm512_insertf64x4(_mm512_castpd256_pd512(lo), hi, 1);
+}
+
+static INLINE vdouble vrint_vd_vd(vdouble vd) {
+  __m256d hi = _mm512_extractf64x4_pd(vd, 1), lo = _mm512_extractf64x4_pd(vd, 0);
+  hi = _mm256_round_pd(hi, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);
+  lo = _mm256_round_pd(lo, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);
+  return _mm512_insertf64x4(_mm512_castpd256_pd512(lo), hi, 1);
+}
 
 static INLINE vint2 vcastu_vi2_vi(vint vi) {
   return _mm512_maskz_permutexvar_epi32(0xaaaa, _mm512_set_epi32(7, 7, 6, 6, 5, 5, 4, 4, 3, 3, 2, 2, 1, 1, 0, 0), _mm512_castsi256_si512(vi));
@@ -107,6 +120,7 @@ static INLINE vint vcastu_vi_vi2(vint2 vi) {
 static INLINE vmask vcast_vm_i_i(int i0, int i1) { return _mm512_set_epi32(i0, i1, i0, i1, i0, i1, i0, i1, i0, i1, i0, i1, i0, i1, i0, i1); }
 
 static INLINE vopmask veq64_vo_vm_vm(vmask x, vmask y) { return _mm512_cmp_epi64_mask(x, y, _MM_CMPINT_EQ); }
+static INLINE vmask vadd64_vm_vm_vm(vmask x, vmask y) { return _mm512_add_epi64(x, y); }
 
 //
 
@@ -280,8 +294,19 @@ static INLINE vfloat vcast_vf_f(float f) { return _mm512_set1_ps(f); }
 static INLINE vint2 vcast_vi2_i(int i) { return _mm512_set1_epi32(i); }
 static INLINE vint2 vrint_vi2_vf(vfloat vf) { return vcast_vi2_vm((vmask)_mm512_cvtps_epi32(vf)); }
 static INLINE vint2 vtruncate_vi2_vf(vfloat vf) { return vcast_vi2_vm((vmask)_mm512_cvttps_epi32(vf)); }
-static INLINE vfloat vtruncate_vf_vf(vfloat vd) { return vcast_vf_vi2(vtruncate_vi2_vf(vd)); }
-static INLINE vfloat vrint_vf_vf(vfloat vd) { return vcast_vf_vi2(vrint_vi2_vf(vd)); }
+
+static INLINE vfloat vtruncate_vf_vf(vfloat vd) {
+  __m256 hi = (__m256)_mm512_extractf64x4_pd((__m512d)vd, 1), lo = (__m256)_mm512_extractf64x4_pd((__m512d)vd, 0);
+  hi = _mm256_round_ps(hi, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC);
+  lo = _mm256_round_ps(lo, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC);
+  return (__m512)_mm512_insertf64x4(_mm512_castpd256_pd512((__m256d)lo), (__m256d)hi, 1);
+}
+static INLINE vfloat vrint_vf_vf(vfloat vd) {
+  __m256 hi = (__m256)_mm512_extractf64x4_pd((__m512d)vd, 1), lo = (__m256)_mm512_extractf64x4_pd((__m512d)vd, 0);
+  hi = _mm256_round_ps(hi, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);
+  lo = _mm256_round_ps(lo, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);
+  return (__m512)_mm512_insertf64x4(_mm512_castpd256_pd512((__m256d)lo), (__m256d)hi, 1);
+}
 
 static INLINE vmask vreinterpret_vm_vf(vfloat vf) { return (vmask)vf; }
 static INLINE vfloat vreinterpret_vf_vm(vmask vm) { return (vfloat)vm; }

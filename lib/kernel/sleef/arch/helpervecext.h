@@ -509,6 +509,15 @@ static INLINE vopmask veq64_vo_vm_vm(vmask x, vmask y) {
   return (vopmask)((vi64)x == (vi64)y);
 }
 
+static INLINE vmask vadd64_vm_vm_vm(vmask x, vmask y) {
+#if defined(__clang__)
+  typedef int64_t vi64 __attribute__((ext_vector_type(VECTLENDP)));
+#else
+  typedef int64_t vi64 __attribute__((vector_size(sizeof(int64_t)*VECTLENDP)));
+#endif
+  return (vmask)((vi64)x + (vi64)y);
+}
+
 //
 
 static INLINE vmask vreinterpret_vm_vd(vdouble vd) { return (vmask)vd; }

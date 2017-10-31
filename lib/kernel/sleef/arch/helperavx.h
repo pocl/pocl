@@ -30,6 +30,8 @@
 #define LOG2VECTLENSP (LOG2VECTLENDP+1)
 #define VECTLENSP (1 << LOG2VECTLENSP)
 
+#define FULL_FP_ROUNDING
+
 #if defined(_MSC_VER)
 #include <intrin.h>
 #else
@@ -425,6 +427,13 @@ static INLINE vint2 vsel_vi2_vo_vi2_vi2(vopmask m, vint2 x, vint2 y) {
   vint2 n = vcast_vi2_vm(m);
   vint2 r = { _mm_blendv_epi8(y.x, x.x, n.x), _mm_blendv_epi8(y.y, x.y, n.y) };
   return r;
+}
+
+static INLINE vmask vadd64_vm_vm_vm(vmask x, vmask y) {
+  vint2 ix = vcast_vi2_vm(x), iy = vcast_vi2_vm(y), iz;
+  iz.x = _mm_add_epi64(ix.x, iy.x);
+  iz.y = _mm_add_epi64(ix.y, iy.y);
+  return vcast_vm_vi2(iz);
 }
 
 static INLINE vfloat vsel_vf_vo_vf_vf(vopmask o, vfloat x, vfloat y) { return _mm256_blendv_ps(y, x, _mm256_castsi256_ps(o)); }
