@@ -1104,7 +1104,7 @@ static INLINE CONST float expkf(Sleef_float2 d) {
 }
 
 static INLINE CONST Sleef_float2 logkf(float d) {
-  Sleef_float2 x, x2;
+  Sleef_float2 x, x2, s;
   float m, t;
   int e;
 
@@ -1124,14 +1124,15 @@ static INLINE CONST Sleef_float2 logkf(float d) {
   t = mlaf(t, x2.x, 0.400007992982864379882812);
   Sleef_float2 c = df(0.66666662693023681640625f, 3.69183861259614332084311e-09f);
 
-  return dfadd2_f2_f2_f2(dfmul_f2_f2_f(df(0.69314718246459960938f, -1.904654323148236017e-09f), e),
-       dfadd2_f2_f2_f2(dfscale_f2_f2_f(x, 2),
-           dfmul_f2_f2_f2(dfmul_f2_f2_f2(x2, x),
-              dfadd2_f2_f2_f2(dfmul_f2_f2_f(x2, t), c))));
+  s = dfmul_f2_f2_f(df(0.69314718246459960938f, -1.904654323148236017e-09f), e);
+  s = dfadd_f2_f2_f2(s, dfscale_f2_f2_f(x, 2));
+  s = dfadd_f2_f2_f2(s, dfmul_f2_f2_f2(dfmul_f2_f2_f2(x2, x),
+                                      dfadd2_f2_f2_f2(dfmul_f2_f2_f(x2, t), c)));
+  return s;
 }
 
 EXPORT CONST float xlogf_u1(float d) {
-  Sleef_float2 x;
+  Sleef_float2 x, s;
   float m, t, x2;
   int e;
 
@@ -1150,8 +1151,9 @@ EXPORT CONST float xlogf_u1(float d) {
   t = mlaf(t, x2, +0.3996108174e+0f);
   t = mlaf(t, x2, +0.6666694880e+0f);
 
-  Sleef_float2 s = dfadd2_f2_f2_f2(dfmul_f2_f2_f(df(0.69314718246459960938f, -1.904654323148236017e-09f), (float)e),
-            dfadd2_f2_f2_f(dfscale_f2_f2_f(x, 2), t * x2 * x.x));
+  s = dfmul_f2_f2_f(df(0.69314718246459960938f, -1.904654323148236017e-09f), (float)e);
+  s = dfadd_f2_f2_f2(s, dfscale_f2_f2_f(x, 2));
+  s = dfadd_f2_f2_f(s, t * x2 * x.x);
 
   float r = s.x + s.y;
 
@@ -1262,7 +1264,7 @@ EXPORT CONST float xtanhf(float x) {
 }
 
 static INLINE CONST Sleef_float2 logk2f(Sleef_float2 d) {
-  Sleef_float2 x, x2, m;
+  Sleef_float2 x, x2, m, s;
   float t;
   int e;
 
@@ -1277,8 +1279,11 @@ static INLINE CONST Sleef_float2 logk2f(Sleef_float2 d) {
   t = mlaf(t, x2.x, 0.400005877017974853515625f);
   t = mlaf(t, x2.x, 0.666666686534881591796875f);
 
-  return dfadd2_f2_f2_f2(dfmul_f2_f2_f(df(0.69314718246459960938f, -1.904654323148236017e-09f), e),
-       dfadd2_f2_f2_f2(dfscale_f2_f2_f(x, 2), dfmul_f2_f2_f(dfmul_f2_f2_f2(x2, x), t)));
+  s = dfmul_f2_f2_f(df(0.69314718246459960938f, -1.904654323148236017e-09f), e);
+  s = dfadd_f2_f2_f2(s, dfscale_f2_f2_f(x, 2));
+  s = dfadd_f2_f2_f2(s, dfmul_f2_f2_f(dfmul_f2_f2_f2(x2, x), t));
+
+  return s;
 }
 
 EXPORT CONST float xasinhf(float x) {

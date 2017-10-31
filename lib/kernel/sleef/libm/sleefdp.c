@@ -1356,7 +1356,7 @@ EXPORT CONST double xexp(double d) {
 }
 
 static INLINE CONST Sleef_double2 logk(double d) {
-  Sleef_double2 x, x2;
+  Sleef_double2 x, x2, s;
   double m, t;
   int e;
 
@@ -1382,14 +1382,15 @@ static INLINE CONST Sleef_double2 logk(double d) {
   t = mla(t, x2.x, 0.400000000000000077715612);
   Sleef_double2 c = dd(0.666666666666666629659233, 3.80554962542412056336616e-17);
 
-  return ddadd2_d2_d2_d2(ddmul_d2_d2_d(dd(0.693147180559945286226764, 2.319046813846299558417771e-17), e),
-       ddadd2_d2_d2_d2(ddscale_d2_d2_d(x, 2),
-           ddmul_d2_d2_d2(ddmul_d2_d2_d2(x2, x),
-              ddadd2_d2_d2_d2(ddmul_d2_d2_d(x2, t), c))));
+  s = ddmul_d2_d2_d(dd(0.693147180559945286226764, 2.319046813846299558417771e-17), e);
+  s = ddadd_d2_d2_d2(s, ddscale_d2_d2_d(x, 2));
+  s = ddadd_d2_d2_d2(s, ddmul_d2_d2_d2(ddmul_d2_d2_d2(x2, x),
+                                      ddadd2_d2_d2_d2(ddmul_d2_d2_d(x2, t), c)));
+  return s;
 }
 
 EXPORT CONST double xlog_u1(double d) {
-  Sleef_double2 x;
+  Sleef_double2 x, s;
   double m, t, x2;
   int e;
 
@@ -1412,8 +1413,9 @@ EXPORT CONST double xlog_u1(double d) {
   t = mla(t, x2, 0.3999999999635251990e+0);
   t = mla(t, x2, 0.6666666666667333541e+0);
 
-  Sleef_double2 s = ddadd2_d2_d2_d2(ddmul_d2_d2_d(dd(0.693147180559945286226764, 2.319046813846299558417771e-17), (double)e),
-            ddadd2_d2_d2_d(ddscale_d2_d2_d(x, 2), t * x2 * x.x));
+  s = ddmul_d2_d2_d(dd(0.693147180559945286226764, 2.319046813846299558417771e-17), (double)e);
+  s = ddadd_d2_d2_d2(s, ddscale_d2_d2_d(x, 2));
+  s = ddadd_d2_d2_d(s, x2 * x.x * t);
 
   double r = s.x + s.y;
 
@@ -1562,7 +1564,7 @@ EXPORT CONST double xtanh(double x) {
 }
 
 static INLINE CONST Sleef_double2 logk2(Sleef_double2 d) {
-  Sleef_double2 x, x2, m;
+  Sleef_double2 x, x2, m, s;
   double t;
   int e;
 
@@ -1583,8 +1585,11 @@ static INLINE CONST Sleef_double2 logk2(Sleef_double2 d) {
   t = mla(t, x2.x, 0.400000000000914013309483);
   t = mla(t, x2.x, 0.666666666666664853302393);
 
-  return ddadd2_d2_d2_d2(ddmul_d2_d2_d(dd(0.693147180559945286226764, 2.319046813846299558417771e-17), e),
-       ddadd2_d2_d2_d2(ddscale_d2_d2_d(x, 2), ddmul_d2_d2_d(ddmul_d2_d2_d2(x2, x), t)));
+  s = ddmul_d2_d2_d(dd(0.693147180559945286226764, 2.319046813846299558417771e-17), e);
+  s = ddadd_d2_d2_d2(s, ddscale_d2_d2_d(x, 2));
+  s = ddadd_d2_d2_d2(s, ddmul_d2_d2_d(ddmul_d2_d2_d2(x2, x), t));
+
+  return s;
 }
 
 EXPORT CONST double xasinh(double x) {
