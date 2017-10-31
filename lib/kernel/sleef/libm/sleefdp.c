@@ -1688,17 +1688,58 @@ EXPORT CONST double xcbrt_u1(double d) {
   return z;
 }
 
-EXPORT CONST double xexp2(double a) {
-  double u = expk(ddmul_d2_d2_d(dd(0.69314718055994528623, 2.3190468138462995584e-17), a));
-  if (a > 1024) u = INFINITY; // log2(DBL_MAX)
-  if (xisminf(a)) u = 0;
+EXPORT CONST double xexp2(double d) {
+  int q = (int)rintk(d);
+  double s, u;
+
+  s = d - q;
+
+  u = +0.4434359082926529454e-9;
+  u = mla(u, s, +0.7073164598085707425e-8);
+  u = mla(u, s, +0.1017819260921760451e-6);
+  u = mla(u, s, +0.1321543872511327615e-5);
+  u = mla(u, s, +0.1525273353517584730e-4);
+  u = mla(u, s, +0.1540353045101147808e-3);
+  u = mla(u, s, +0.1333355814670499073e-2);
+  u = mla(u, s, +0.9618129107597600536e-2);
+  u = mla(u, s, +0.5550410866482046596e-1);
+  u = mla(u, s, +0.2402265069591012214e+0);
+  u = mla(u, s, +0.6931471805599452862e+0);
+  u = ddnormalize_d2_d2(ddadd_d2_d_d2(1, ddmul_d2_d_d(u, s))).x;
+
+  u = ldexp2k(u, q);
+
+  if (d >= 1024) u = INFINITY;
+  if (d < -2000) u = 0;
+  
   return u;
 }
 
-EXPORT CONST double xexp10(double a) {
-  double u = expk(ddmul_d2_d2_d(dd(2.3025850929940459011, -2.1707562233822493508e-16), a));
-  if (a > 308.254715559916743850652254) u = INFINITY; // log10(DBL_MAX)
-  if (xisminf(a)) u = 0;
+EXPORT CONST double xexp10(double d) {
+  int q = (int)rintk(d * LOG10_2);
+  double s, u;
+  
+  s = mla(q, -L10U, d);
+  s = mla(q, -L10L, s);
+  
+  u = +0.2411463498334267652e-3;
+  u = mla(u, s, +0.1157488415217187375e-2);
+  u = mla(u, s, +0.5013975546789733659e-2);
+  u = mla(u, s, +0.1959762320720533080e-1);
+  u = mla(u, s, +0.6808936399446784138e-1);
+  u = mla(u, s, +0.2069958494722676234e+0);
+  u = mla(u, s, +0.5393829292058536229e+0);
+  u = mla(u, s, +0.1171255148908541655e+1);
+  u = mla(u, s, +0.2034678592293432953e+1);
+  u = mla(u, s, +0.2650949055239205876e+1);
+  u = mla(u, s, +0.2302585092994045901e+1);
+  u = ddnormalize_d2_d2(ddadd_d2_d_d2(1, ddmul_d2_d_d(u, s))).x;
+  
+  u = ldexp2k(u, q);
+  
+  if (d > 308.25471555991671) u = INFINITY; // log10(DBL_MAX)
+  if (d < -350) u = 0;
+  
   return u;
 }
 
@@ -1711,15 +1752,41 @@ EXPORT CONST double xexpm1(double a) {
   return x;
 }
 
-EXPORT CONST double xlog10(double a) {
-  Sleef_double2 d = ddmul_d2_d2_d2(logk(a), dd(0.43429448190325176116, 6.6494347733425473126e-17));
-  double x = d.x + d.y;
+EXPORT CONST double xlog10(double d) {
+  Sleef_double2 x, s;
+  double m, t, x2;
+  int e;
 
-  if (xisinf(a)) x = INFINITY;
-  if (a < 0 || xisnan(a)) x = NAN;
-  if (a == 0) x = -INFINITY;
+  int o = d < DBL_MIN;
+  if (o) d *= (double)(1LL << 32) * (double)(1LL << 32);
+      
+  e = ilogb2k(d * (1.0/0.75));
+  m = ldexp3k(d, -e);
 
-  return x;
+  if (o) e -= 64;
+
+  x = dddiv_d2_d2_d2(ddadd2_d2_d_d(-1, m), ddadd2_d2_d_d(1, m));
+  x2 = x.x * x.x;
+
+  t = +0.6653725819576758460e-1;
+  t = mla(t, x2, +0.6625722782820833712e-1);
+  t = mla(t, x2, +0.7898105214313944078e-1);
+  t = mla(t, x2, +0.9650955035715275132e-1);
+  t = mla(t, x2, +0.1240841409721444993e+0);
+  t = mla(t, x2, +0.1737177927454605086e+0);
+  t = mla(t, x2, +0.2895296546021972617e+0);
+  
+  s = ddmul_d2_d2_d(dd(0.30102999566398119802, -2.803728127785170339e-18), (double)e);
+  s = ddadd_d2_d2_d2(s, ddmul_d2_d2_d2(x, dd(0.86858896380650363334, 1.1430059694096389311e-17)));
+  s = ddadd_d2_d2_d(s, x2 * x.x * t);
+
+  double r = s.x + s.y;
+  
+  if (xisinf(d)) r = INFINITY;
+  if (d < 0 || xisnan(d)) r = NAN;
+  if (d == 0) r = -INFINITY;
+
+  return r;
 }
 
 EXPORT CONST double xlog1p(double a) {

@@ -1329,17 +1329,48 @@ EXPORT CONST float xatanhf(float x) {
   return y;
 }
 
-EXPORT CONST float xexp2f(float a) {
-  float u = expkf(dfmul_f2_f2_f(df(0.69314718246459960938f, -1.904654323148236017e-09f), a));
-  if (a >= 128) u = INFINITYf;
-  if (xisminff(a)) u = 0;
+EXPORT CONST float xexp2f(float d) {
+  int q = (int)rintfk(d);
+  float s, u;
+
+  s = d - q;
+
+  u = +0.1535920892e-3;
+  u = mlaf(u, s, +0.1339262701e-2);
+  u = mlaf(u, s, +0.9618384764e-2);
+  u = mlaf(u, s, +0.5550347269e-1);
+  u = mlaf(u, s, +0.2402264476e+0);
+  u = mlaf(u, s, +0.6931471825e+0);
+  u = dfnormalize_f2_f2(dfadd_f2_f_f2(1, dfmul_f2_f_f(u, s))).x;
+
+  u = ldexp2kf(u, q);
+
+  if (d >= 128) u = INFINITYf;
+  if (d < -150) u = 0;
+  
   return u;
 }
 
-EXPORT CONST float xexp10f(float a) {
-  float u = expkf(dfmul_f2_f2_f(df(2.3025851249694824219f, -3.1975436520781386207e-08f), a));
-  if (a > 38.531839419103626f) u = INFINITYf;
-  if (xisminff(a)) u = 0;
+EXPORT CONST float xexp10f(float d) {
+  int q = (int)rintfk(d * (float)LOG10_2);
+  float s, u;
+  
+  s = mlaf(q, -L10Uf, d);
+  s = mlaf(q, -L10Lf, s);
+  
+  u = +0.2064004987e+0;
+  u = mlaf(u, s, +0.5417877436e+0);
+  u = mlaf(u, s, +0.1171286821e+1);
+  u = mlaf(u, s, +0.2034656048e+1);
+  u = mlaf(u, s, +0.2650948763e+1);
+  u = mlaf(u, s, +0.2302585125e+1);
+  u = dfnormalize_f2_f2(dfadd_f2_f_f2(1, dfmul_f2_f_f(u, s))).x;
+
+  u = ldexp2kf(u, q);
+
+  if (d > 38.5318394191036238941387f) u = INFINITYf; // log10(FLT_MAX)
+  if (d < -50) u = 0;
+  
   return u;
 }
 
@@ -1352,15 +1383,37 @@ EXPORT CONST float xexpm1f(float a) {
   return x;
 }
 
-EXPORT CONST float xlog10f(float a) {
-  Sleef_float2 d = dfmul_f2_f2_f2(logkf(a), df(0.43429449200630187988f, -1.0103050118726031315e-08f));
-  float x = d.x + d.y;
+EXPORT CONST float xlog10f(float d) {
+  Sleef_float2 x, s;
+  float m, t, x2;
+  int e;
 
-  if (xisinff(a)) x = INFINITYf;
-  if (a < 0 || xisnanf(a)) x = NANf;
-  if (a == 0) x = -INFINITYf;
+  int o = d < FLT_MIN;
+  if (o) d *= (float)(1LL << 32) * (float)(1LL << 32);
+      
+  e = ilogb2kf(d * (1.0f/0.75f));
+  m = ldexp3kf(d, -e);
 
-  return x;
+  if (o) e -= 64;
+
+  x = dfdiv_f2_f2_f2(dfadd2_f2_f_f(-1, m), dfadd2_f2_f_f(1, m));
+  x2 = x.x * x.x;
+
+  t = +0.1314289868e+0;
+  t = mlaf(t, x2, +0.1735493541e+0);
+  t = mlaf(t, x2, +0.2895309627e+0);
+    
+  s = dfmul_f2_f2_f(df(0.30103001, -1.432098889e-08), (float)e);
+  s = dfadd_f2_f2_f2(s, dfmul_f2_f2_f2(x, df(0.868588984, -2.170757285e-08)));
+  s = dfadd_f2_f2_f(s, x2 * x.x * t);
+
+  float r = s.x + s.y;
+  
+  if (xisinff(d)) r = INFINITYf;
+  if (d < 0 || xisnanf(d)) r = NANf;
+  if (d == 0) r = -INFINITYf;
+
+  return r;
 }
 
 EXPORT CONST float xlog1pf(float a) {
