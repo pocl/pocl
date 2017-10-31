@@ -127,7 +127,7 @@ function(compile_sleef_c_to_bc EXT FILENAME SUBDIR BCLIST)
         "-I" "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/arch"
         "-I" "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/libm"
         "-I" "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/include"
-        "-xc" "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
+        "-O1" "-xc" "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
         COMMENT "Building SLEEF to LLVM bitcode ${BC_FILE}"
         VERBATIM)
 endfunction()
