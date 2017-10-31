@@ -132,6 +132,9 @@ add_test_pocl(NAME "workgroup/workgroup_sizes_work_items_get_wrong_ids_LOOPS"
               EXPECTED_OUTPUT "print_all_ids_114114.txt"
               COMMAND "run_kernel" "print_all_ids.cl" 1 1 1 4)
 
+add_test_pocl(NAME "workgroup/issue_548_convergent_propagation_LOOPS"
+              EXPECTED_OUTPUT "issue_548_1_2_1_1.stdout"
+              COMMAND "run_kernel" "issue_548.cl" 1 2 1 1)
 
 set_tests_properties( "workgroup/unconditional_barriers_LOOPS"
   "workgroup/unbarriered_for_loops_LOOPS"
@@ -142,6 +145,7 @@ set_tests_properties( "workgroup/unconditional_barriers_LOOPS"
   "workgroup/loop_with_two_paths_to_the_latch_LOOPS"
   "workgroup/b_loop_with_two_latches_LOOPS"
   "workgroup/workgroup_sizes_work_items_get_wrong_ids_LOOPS"
+  "workgroup/issue_548_convergent_propagation_LOOPS"
   PROPERTIES
     COST 2.0
     PROCESSORS 1
