@@ -223,18 +223,6 @@ static INLINE CONST vdouble2 dddiv_vd2_vd2_vd2(vdouble2 n, vdouble2 d) {
   return q;
 }
 
-static INLINE CONST vdouble2 dddiv_vd2_vd2_vd(vdouble2 n, vdouble d) {
-  vdouble2 q;
-  vdouble t = vrec_vd_vd(d), u;
-
-  q.x = vmul_vd_vd_vd(n.x, t);
-  u = vfmapn_vd_vd_vd_vd(t, n.x, q.x);
-  q.y = vfmanp_vd_vd_vd_vd(d, t, vcast_vd_d(1));
-  q.y = vfma_vd_vd_vd_vd(q.x, q.y, vfma_vd_vd_vd_vd(n.y, t, u));
-
-  return q;
-}
-
 static INLINE CONST vdouble2 ddmul_vd2_vd_vd(vdouble x, vdouble y) {
   vdouble2 r;
 
@@ -311,24 +299,6 @@ static INLINE CONST vdouble2 dddiv_vd2_vd2_vd2(vdouble2 n, vdouble2 d) {
 		    vmul_vd_vd_vd(q.x, vsub_vd_5vd(vcast_vd_d(1), vmul_vd_vd_vd(dh, th), vmul_vd_vd_vd(dh, tl), vmul_vd_vd_vd(dl, th), vmul_vd_vd_vd(dl, tl))));
 
   q.y = vmla_vd_vd_vd_vd(t, vsub_vd_vd_vd(n.y, vmul_vd_vd_vd(q.x, d.y)), u);
-
-  return q;
-}
-
-static INLINE CONST vdouble2 dddiv_vd2_vd2_vd(vdouble2 n, vdouble d) {
-  vdouble t = vrec_vd_vd(d);
-  vdouble dh  = vupper_vd_vd(d  ), dl  = vsub_vd_vd_vd(d  ,  dh);
-  vdouble th  = vupper_vd_vd(t  ), tl  = vsub_vd_vd_vd(t  ,  th);
-  vdouble nhh = vupper_vd_vd(n.x), nhl = vsub_vd_vd_vd(n.x, nhh);
-
-  vdouble2 q;
-
-  q.x = vmul_vd_vd_vd(n.x, t);
-
-  vdouble u = vadd_vd_5vd(vsub_vd_vd_vd(vmul_vd_vd_vd(nhh, th), q.x), vmul_vd_vd_vd(nhh, tl), vmul_vd_vd_vd(nhl, th), vmul_vd_vd_vd(nhl, tl),
-			  vmul_vd_vd_vd(q.x, vsub_vd_5vd(vcast_vd_d(1), vmul_vd_vd_vd(dh, th), vmul_vd_vd_vd(dh, tl), vmul_vd_vd_vd(dl, th), vmul_vd_vd_vd(dl, tl))));
-
-  q.y = vmla_vd_vd_vd_vd(t, n.y, u);
 
   return q;
 }
