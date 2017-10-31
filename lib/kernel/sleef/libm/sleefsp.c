@@ -1154,7 +1154,7 @@ EXPORT CONST float xlogf_u1(float d) {
 
   s = dfmul_f2_f2_f(df(0.69314718246459960938f, -1.904654323148236017e-09f), (float)e);
   s = dfadd_f2_f2_f2(s, dfscale_f2_f2_f(x, 2));
-  s = dfadd_f2_f2_f(s, t * x2 * x.x);
+  s = dfadd_f2_f2_f(s, x2 * x.x * t);
 
   float r = s.x + s.y;
 
@@ -1163,7 +1163,6 @@ EXPORT CONST float xlogf_u1(float d) {
   if (d == 0) r = -INFINITYf;
 
   return r;
-
 }
 
 static INLINE CONST Sleef_float2 expk2f(Sleef_float2 d) {
@@ -1416,23 +1415,53 @@ EXPORT CONST float xlog10f(float d) {
   return r;
 }
 
-EXPORT CONST float xlog1pf(float a) {
-  float x;
-  if (a > 0x1.0p+125)
-    x = xlogf(a);
-  else
-    {
-      Sleef_float2 d = logk2f(dfadd2_f2_f_f(a, 1));
-      x = d.x + d.y;
-    }
+static INLINE CONST float xlog1pf_fast(float d) {
+  Sleef_float2 x, s;
+  float m, t, x2;
+  int e;
 
-  if (a == INFINITYf) x = INFINITYf;
-  if (a < -1) x = NANf;
-  if (a == -1) x = -INFINITYf;
-  if (xisnegzerof(a)) x = -0.0f;
+  float dp1 = d + 1;
 
-  return x;
+  int o = dp1 < FLT_MIN;
+  if (o) dp1 *= (float)(1LL << 32) * (float)(1LL << 32);
+
+  e = ilogb2kf(dp1 * (1.0f/0.75f));
+
+  t = ldexp3kf(1, -e);
+  m = mlaf(d, t, t-1);
+
+  if (o) e -= 64;
+
+  x = dfdiv_f2_f2_f2(df(m, 0), dfadd_f2_f_f(2, m));
+  x2 = x.x * x.x;
+
+  t = +0.3027294874e+0f;
+  t = mlaf(t, x2, +0.3996108174e+0f);
+  t = mlaf(t, x2, +0.6666694880e+0f);
+
+  s = dfmul_f2_f2_f(df(0.69314718246459960938f, -1.904654323148236017e-09f), (float)e);
+  s = dfadd_f2_f2_f2(s, dfscale_f2_f2_f(x, 2));
+  s = dfadd_f2_f2_f(s, x2 * x.x * t);
+
+  float r = s.x + s.y;
+
+  if (d == INFINITYf) r = INFINITYf;
+  if (d < -1) r = NANf;
+  if (d == -1) r = -INFINITYf;
+  if (xisnegzerof(d)) r = -0.0f;
+  if (xisnanf(d)) r = d;
+
+  return r;
 }
+
+EXPORT CONST float xlog1pf(float a) {
+  if (a > 0x1.0p+125)
+    return xlogf(a);
+  else
+    return xlog1pf_fast(a);
+}
+
+//
 
 EXPORT CONST float xcbrtf(float d) {
   float x, y, q = 1.0f;
