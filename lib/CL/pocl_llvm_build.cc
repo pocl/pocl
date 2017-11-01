@@ -123,6 +123,19 @@ unlink_source(FrontendOptions &fe)
 
 }
 
+static void appendToProgramBuildLog(cl_program program, unsigned device_i,
+                                    std::string &s) {
+  if (!s.empty()) {
+    POCL_MSG_ERR(s.c_str());
+    /* TODO currently if there's no cachedir,
+     * it writes into topdir/build.log */
+    pocl_cache_append_to_buildlog(program, device_i, s.c_str(), s.size());
+    if (program->build_log[device_i])
+      strcat(program->build_log[device_i], s.c_str());
+    else
+      program->build_log[device_i] = strdup(s.c_str());
+  }
+}
 
 static void get_build_log(cl_program program,
                          unsigned device_i,
@@ -517,8 +530,9 @@ int pocl_llvm_build_program(cl_program program,
     assert(libmodule != NULL);
     std::string log("Error(s) while linking: \n");
     if (link(*mod, libmodule, log)) {
-      POCL_MSG_ERR(log.c_str());
-      pocl_cache_append_to_buildlog(program, device_i, log.c_str(), log.size());
+      appendToProgramBuildLog(program, device_i, log);
+      std::string msg = getDiagString();
+      appendToProgramBuildLog(program, device_i, msg);
       delete *mod;
       *mod = nullptr;
       --numberOfIRs;
@@ -594,13 +608,13 @@ int pocl_llvm_link_program(cl_program program,
 #ifdef LLVM_OLDER_THAN_3_8
     if (Linker::LinkModules(mod, llvm::CloneModule(p))) {
       delete mod;
-      return CL_LINK_PROGRAM_FAILURE;
-    }
 #else
     if (Linker::linkModules(*mod, llvm::CloneModule(p))) {
+#endif
+      std::string msg = getDiagString();
+      appendToProgramBuildLog(program, device_i, msg);
       return CL_LINK_PROGRAM_FAILURE;
     }
-#endif
   }
 
 #ifdef LLVM_OLDER_THAN_3_8
@@ -625,8 +639,9 @@ int pocl_llvm_link_program(cl_program program,
     assert(libmodule != NULL);
     std::string log("Error(s) while linking: \n");
     if (link(linked_module, libmodule, log)) {
-      POCL_MSG_ERR(log.c_str());
-      pocl_cache_append_to_buildlog(program, device_i, log.c_str(), log.size());
+      appendToProgramBuildLog(program, device_i, log);
+      std::string msg = getDiagString();
+      appendToProgramBuildLog(program, device_i, msg);
       delete linked_module;
       return CL_BUILD_PROGRAM_FAILURE;
     }
