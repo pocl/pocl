@@ -171,10 +171,6 @@ add_test(NAME piglit_cl_program_bitcoin_phatk
          COMMAND "${TS_BUILDDIR}/bin/cl-program-bitcoin-phatk")
 add_test(NAME piglit_cl_program_max_work_item_sizes
          COMMAND "${TS_BUILDDIR}/bin/cl-program-max-work-item-sizes")
-add_test(NAME piglit_cl_program_tester
-         COMMAND "${TS_BUILDDIR}/bin/cl-program-tester")
-
-
 
 
 set_tests_properties(
@@ -227,9 +223,16 @@ set_tests_properties(
   piglit_cl_custom_use_sub_buffer_in_kernel
   piglit_cl_program_bitcoin_phatk
   piglit_cl_program_max_work_item_sizes
-  piglit_cl_program_tester
 
   PROPERTIES
+    PASS_REGULAR_EXPRESSION "pass"
+    FAIL_REGULAR_EXPRESSION "fail"
     LABELS "piglit")
+
+set_tests_properties(
+  piglit_cl_api_create_program_with_binary
+
+  PROPERTIES
+    WILL_FAIL 1)
 
 endif()
