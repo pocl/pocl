@@ -36,8 +36,9 @@
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Support/Signals.h>
 
-#include <llvm/IR/Module.h>
+#include <llvm/IR/DiagnosticPrinter.h>
 #include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
 
 #include <llvm/Target/TargetMachine.h>
 
@@ -207,9 +208,26 @@ int pocl_llvm_remove_file_on_signal(const char *file) {
 static LLVMContext *globalContext = NULL;
 static bool LLVMInitialized = false;
 
+static std::string poclDiagString;
+static llvm::raw_string_ostream poclDiagStream(poclDiagString);
+static DiagnosticPrinterRawOStream poclDiagPrinter(poclDiagStream);
+
+static void diagHandler(const DiagnosticInfo &DI, void *Context) {
+  DI.print(poclDiagPrinter);
+}
+
+std::string getDiagString() {
+  poclDiagStream.flush();
+  std::string ret(std::move(poclDiagString));
+  poclDiagString.clear();
+  return ret;
+}
+
 llvm::LLVMContext &GlobalContext() {
-  if (globalContext == NULL)
+  if (globalContext == NULL) {
     globalContext = new LLVMContext();
+    globalContext->setDiagnosticHandler(diagHandler, globalContext);
+  }
   return *globalContext;
 }
 
