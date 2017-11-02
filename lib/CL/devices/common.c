@@ -575,6 +575,7 @@ pocl_exec_command (_cl_command_node * volatile node)
       DL_DELETE((node->command.unmap.memobj)->mappings, 
                 node->command.unmap.mapping);
       (node->command.unmap.memobj)->map_count--;
+      POCL_MEM_FREE (node->command.unmap.mapping);
       POCL_UNLOCK_OBJ (node->command.unmap.memobj);
       POCL_UPDATE_EVENT_COMPLETE(event);
       POCL_DEBUG_EVENT_TIME(event, "Unmap Mem obj         ");
