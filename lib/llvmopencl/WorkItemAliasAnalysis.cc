@@ -199,19 +199,6 @@ RegisterAnalysisGroup<AliasAnalysis> Y(X);
 RegisterAnalysisGroup<WorkItemAAResult> Y(X);
 #endif
 
-/*
-FunctionPass *createWorkItemAliasAnalysisPass() {
-    return new WorkItemAliasAnalysis();
-}
-*/
-
-extern "C" {                                
-    FunctionPass*
-    create_workitem_aa_plugin() {
-        return new WorkItemAliasAnalysis();
-    }
-}
-
 void
 WorkItemAliasAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();

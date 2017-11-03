@@ -49,6 +49,24 @@ extern cl_int pocl_check_device_supports_image (
 void pocl_write_pixel_zero (void *data, const void *color_ptr, int order,
                             int elem_size, int channel_type);
 
+cl_char4 convert_char4_sat (cl_float4 x);
+cl_char convert_char_sat (cl_float x);
+cl_char4 convert_char4_sat_int (cl_int4 x);
+cl_char convert_char_sat_int (cl_int x);
+cl_uchar4 convert_uchar4_sat (cl_float4 x);
+cl_uchar convert_uchar_sat (cl_float x);
+cl_uchar4 convert_uchar4_sat_int (cl_uint4 x);
+cl_uchar convert_uchar_sat_int (cl_uint x);
+
+cl_short4 convert_short4_sat (cl_float4 x);
+cl_short convert_short_sat (cl_float x);
+cl_short4 convert_short4_sat_int (cl_int4 x);
+cl_short convert_short_sat_int (cl_int x);
+cl_ushort4 convert_ushort4_sat (cl_float4 x);
+cl_ushort convert_ushort_sat (cl_float x);
+cl_ushort4 convert_ushort4_sat_int (cl_uint4 x);
+cl_ushort convert_ushort_sat_int (cl_uint x);
+
 #ifdef __GNUC__
 #pragma GCC visibility pop
 #endif
