@@ -61,9 +61,13 @@ option(POCL_ICD_ABSOLUTE_PATH "Use absolute path in pocl.icd" ON)
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
   option(ENABLE_TSAN "Enable ThreadSanitizer" OFF)
+  option(ENABLE_LSAN "Enable LeakSanitizer" OFF)
+  option(ENABLE_UBSAN "Enable UBSanitizer" OFF)
 else()
   set(ENABLE_ASAN OFF)
   set(ENABLE_TSAN OFF)
+  set(ENABLE_LSAN OFF)
+  set(ENABLE_UBSAN OFF)
 endif()
 
 ##################################################################################
@@ -1181,7 +1185,7 @@ message(STATUS "OPENCL_LIBS: ${OPENCL_LIBS}")
 message(STATUS "OPENCL_CFLAGS: ${OPENCL_CFLAGS}")
 
 # for tests / examples
-set(POCLU_LINK_OPTIONS ${LIBMATH} ${OPENCL_LIBS} "poclu")
+set(POCLU_LINK_OPTIONS ${OPENCL_LIBS} ${LIBMATH} "poclu")
 message(STATUS "POCLU LINK OPTS: ${POCLU_LINK_OPTIONS}")
 
 # poclcc bin
@@ -1318,6 +1322,9 @@ MESSAGE(STATUS "ENABLE_TCEMC: ${ENABLE_TCEMC}")
 MESSAGE(STATUS "ENABLE_HSA: ${ENABLE_HSA}")
 MESSAGE(STATUS "ENABLE_CUDA: ${ENABLE_CUDA}")
 MESSAGE(STATUS "ENABLE_ASAN (address sanitizer): ${ENABLE_ASAN}")
+MESSAGE(STATUS "ENABLE_LSAN (leak sanitizer): ${ENABLE_LSAN}")
+MESSAGE(STATUS "ENABLE_TSAN (thread sanitizer): ${ENABLE_TSAN}")
+MESSAGE(STATUS "ENABLE_UBSAN (UB sanitizer): ${ENABLE_UBSAN}")
 MESSAGE(STATUS "ENABLE_VECMATHLIB: ${ENABLE_VECMATHLIB}")
 MESSAGE(STATUS "ENABLE_SLEEF: ${ENABLE_SLEEF}")
 MESSAGE(STATUS "INSTALL_OPENCL_HEADERS (Install our headers): ${INSTALL_OPENCL_HEADERS}")

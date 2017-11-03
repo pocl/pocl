@@ -30,7 +30,7 @@ add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 #kernel_CFLAGS = -std=c99 @OPENCL_CFLAGS@
 #smapler_address_clamp_CFLAGS = -std=c99 @OPENCL_CFLAGS@
 #image_query_funcs_CFLAGS = -std=c99 @OPENCL_CFLAGS@
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 ${OPENCL_CFLAGS}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 ${OPENCL_CFLAGS_STR}")
 
 #kernel_LDADD = -lm @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
 #sampler_address_clamp_LDADD = -lm @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la

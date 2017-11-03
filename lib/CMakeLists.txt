@@ -31,6 +31,33 @@ if (OCS_AVAILABLE)
   add_subdirectory("llvmopencl")
 endif()
 
+set(SANITIZER_OPTIONS "")
+
+if(ENABLE_ASAN)
+  list(APPEND SANITIZER_OPTIONS "-fsanitize=address")
+  list(APPEND SANITIZER_LIBS "asan")
+endif()
+
+if(ENABLE_LSAN)
+  list(APPEND SANITIZER_OPTIONS "-fsanitize=leak")
+  list(APPEND SANITIZER_LIBS "lsan")
+endif()
+
+if(ENABLE_TSAN)
+  list(APPEND SANITIZER_OPTIONS "-fsanitize=thread")
+  list(APPEND SANITIZER_LIBS "tsan")
+endif()
+
+if(ENABLE_UBSAN)
+  list(APPEND SANITIZER_OPTIONS "-fsanitize=undefined")
+  list(APPEND SANITIZER_LIBS "ubsan")
+endif()
+
+if(SANITIZER_OPTIONS)
+  list(APPEND SANITIZER_OPTIONS "-fno-omit-frame-pointer")
+  string(REPLACE ";" " " SANITIZER_OPTIONS_STR "${SANITIZER_OPTIONS}")
+endif()
+
 add_subdirectory("CL")
 
 #############################################################
@@ -56,8 +83,22 @@ endif()
 
 set(OPENCL_CFLAGS "${PTHREAD_CFLAGS}")
 
+if(SANITIZER_OPTIONS)
+  list(INSERT OPENCL_LIBS 0 ${SANITIZER_LIBS})
+  set(OPENCL_CFLAGS "${OPENCL_CFLAGS} ${SANITIZER_OPTIONS_STR}")
+endif()
+
+set(OPENCL_CFLAGS_STR "${OPENCL_CFLAGS}")
+separate_arguments(OPENCL_CFLAGS)
+
+
 set(OPENCL_LIBS "${OPENCL_LIBS}" PARENT_SCOPE)
 set(OPENCL_CFLAGS "${OPENCL_CFLAGS}" PARENT_SCOPE)
+set(OPENCL_CFLAGS_STR "${OPENCL_CFLAGS_STR}" PARENT_SCOPE)
+
+set(SANITIZER_LIBS "${SANITIZER_LIBS}" PARENT_SCOPE)
+set(SANITIZER_OPTIONS "${SANITIZER_OPTIONS}" PARENT_SCOPE)
+set(SANITIZER_OPTIONS_STR "${SANITIZER_OPTIONS_STR}" PARENT_SCOPE)
 
 add_subdirectory("poclu")
 

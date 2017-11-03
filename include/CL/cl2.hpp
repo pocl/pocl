@@ -468,7 +468,7 @@
 #if defined(_MSC_VER)
 # define CL_HPP_DEFINE_STATIC_MEMBER_ __declspec(selectany)
 #else
-# define CL_HPP_DEFINE_STATIC_MEMBER_ __attribute__((weak))
+# define CL_HPP_DEFINE_STATIC_MEMBER_
 #endif // !_MSC_VER
 
 // Define deprecated prefixes and suffixes to ensure compilation
