@@ -425,15 +425,11 @@ half_sin.cl
 half_sqrt.cl
 half_tan.cl
 isequal.cl
-isfinite.cl
 isgreater.cl
 isgreaterequal.cl
-isinf.cl
 isless.cl
 islessequal.cl
 islessgreater.cl
-isnan.cl
-isnormal.cl
 isnotequal.cl
 isordered.cl
 isunordered.cl
@@ -527,6 +523,12 @@ libclc-pocl/fmod.cl
 libclc-pocl/remainder.cl
 libclc-pocl/remquo.cl
 libclc-pocl/ocml_helpers.cl
+
+libclc-pocl/isinf.cl
+libclc-pocl/isnan.cl
+libclc-pocl/isfinite.cl
+libclc-pocl/isnormal.cl
+
 
 libclc/vtables_fp32.cl
 libclc/vtables_fp64.cl
