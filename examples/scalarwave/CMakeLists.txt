@@ -61,7 +61,7 @@
 add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
 #scalarwave_CFLAGS = -std=c99 @OPENCL_CFLAGS@
-set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 ${OPENCL_CFLAGS}")
+add_compile_options(${OPENCL_CFLAGS} -std=c99)
 
 if (MSVC)
   set_source_files_properties( scalarwave.c PROPERTIES LANGUAGE CXX )
