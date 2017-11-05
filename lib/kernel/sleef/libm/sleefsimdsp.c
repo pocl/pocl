@@ -2189,6 +2189,28 @@ EXPORT CONST vfloat xlgammaf_u1(vfloat a) {
   return r;
 }
 
+EXPORT CONST vfloat2 xlgamma_rf_u1(vfloat a) {
+  df2 d = gammafk(a);
+  vfloat2 y = dfadd2_vf2_vf2_vf2(d.a, logk2f(dfabs_vf2_vf2(d.b)));
+  vfloat r = vadd_vf_vf_vf(y.x, y.y);
+  vopmask o;
+
+  o = vor_vo_vo_vo(visinf_vo_vf(a),
+       vor_vo_vo_vo(vand_vo_vo_vo(vle_vo_vf_vf(a, vcast_vf_f(0)), visint_vo_vf(a)),
+        vand_vo_vo_vo(visnumber_vo_vf(a), visnan_vo_vf(r))));
+  r = vsel_vf_vo_vf_vf(o, vcast_vf_f(INFINITYf), r);
+
+  vfloat2 ret;
+  ret.x = r;
+  ret.y = vreinterpret_vf_vm(vor_vm_vm_vm(
+                               vand_vm_vm_vm(vreinterpret_vm_vf(d.b.x),
+                                 vreinterpret_vm_vf(vcast_vf_f(-0.0f))),
+                               vreinterpret_vm_vf(vcast_vf_f(1.0f)))
+                            );
+
+  return ret;
+}
+
 /* TODO AArch64: potential optimization by using `vfmad_lane_f64` */
 EXPORT CONST vfloat xerff_u1(vfloat a) {
   vfloat s = a, t, u;

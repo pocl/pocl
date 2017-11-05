@@ -523,6 +523,7 @@ sleef-pocl/hypot.cl
 sleef-pocl/ilogb.cl
 sleef-pocl/ldexp.cl
 sleef-pocl/lgamma.cl
+sleef-pocl/lgamma_r.cl
 sleef-pocl/log10.cl
 sleef-pocl/log1p.cl
 sleef-pocl/log.cl

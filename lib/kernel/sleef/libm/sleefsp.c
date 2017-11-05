@@ -1986,6 +1986,17 @@ EXPORT CONST float xlgammaf_u1(float a) {
   return r;
 }
 
+EXPORT CONST Sleef_float2 xlgamma_rf_u1(float a) {
+  df2 d = gammafk(a);
+  Sleef_float2 y = dfadd2_f2_f2_f2(d.a, logk2f(dfabs_f2_f2(d.b)));
+  float r = y.x + y.y;
+  r = (xisinff(a) || (a <= 0 && xisintf(a)) || (xisnumberf(a) && xisnanf(r))) ? INFINITYf : r;
+  Sleef_float2 ret;
+  ret.x = r;
+  ret.y = intBitsToFloat((floatToRawIntBits(d.b.x) & (1 << 31)) | (0x3f800000));
+  return ret;
+}
+
 EXPORT CONST float xerff_u1(float a) {
   float s = a, t, u;
   Sleef_float2 d;

@@ -2383,6 +2383,28 @@ EXPORT CONST vdouble xtgamma_u1(vdouble a) {
   return r;
 }
 
+EXPORT CONST vdouble2 xlgamma_r_u1(vdouble a) {
+  dd2 d = gammak(a);
+  vdouble2 y = ddadd2_vd2_vd2_vd2(d.a, logk2(ddabs_vd2_vd2(d.b)));
+  vdouble r = vadd_vd_vd_vd(y.x, y.y);
+  vopmask o;
+
+  o = vor_vo_vo_vo(visinf_vo_vd(a),
+       vor_vo_vo_vo(vand_vo_vo_vo(vle_vo_vd_vd(a, vcast_vd_d(0)), visint_vo_vd(a)),
+        vand_vo_vo_vo(visnumber_vo_vd(a), visnan_vo_vd(r))));
+  r = vsel_vd_vo_vd_vd(o, vcast_vd_d(INFINITY), r);
+
+  vdouble2 ret;
+  ret.x = r;
+  ret.y = vreinterpret_vd_vm(vor_vm_vm_vm(
+                               vand_vm_vm_vm(vreinterpret_vm_vd(d.b.x),
+                                 vreinterpret_vm_vd(vcast_vd_d(-0.0))),
+                               vreinterpret_vm_vd(vcast_vd_d(1.0)))
+                            );
+
+  return ret;
+}
+
 EXPORT CONST vdouble xlgamma_u1(vdouble a) {
   dd2 d = gammak(a);
   vdouble2 y = ddadd2_vd2_vd2_vd2(d.a, logk2(ddabs_vd2_vd2(d.b)));

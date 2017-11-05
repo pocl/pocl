@@ -2191,6 +2191,18 @@ EXPORT CONST double xlgamma_u1(double a) {
   return r;
 }
 
+EXPORT CONST Sleef_double2 xlgamma_r_u1(double a) {
+  dd2 d = gammak(a);
+  Sleef_double2 y = ddadd2_d2_d2_d2(d.a, logk2(ddabs_d2_d2(d.b)));
+  double r = y.x + y.y;
+  r = (xisinf(a) || (a <= 0 && xisint(a)) || (xisnumber(a) && xisnan(r))) ? INFINITY : r;
+  Sleef_double2 ret;
+  ret.x = r;
+  ret.y = longBitsToDouble((doubleToRawLongBits(d.b.x) & (1L << 63)) | (0x3ff0000000000000L));
+  return ret;
+}
+
+
 EXPORT CONST double xerf_u1(double a) {
   double s = a, t, u;
   Sleef_double2 d;

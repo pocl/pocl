@@ -83,6 +83,7 @@ FUNCS = {
   fmod: {name: 'fmod', args: ["x", "y"], argtypes: [:fvec, :fvec], ret: :fvec },
 
   lgamma: {name: 'lgamma', args: ["x"], argtypes: [:fvec], ret: :fvec, prec: ["_u10"] },
+  lgamma_r: {name: 'lgamma_r', args: ["x"], argtypes: [:fvec], ret: :struct, prec: ["_u10"] },
   tgamma: {name: 'tgamma', args: ["x"], argtypes: [:fvec], ret: :fvec, prec: ["_u10"] },
   erf: {name: 'erf', args: ["x"], argtypes: [:fvec], ret: :fvec, prec: ["_u10"] },
   erfc: {name: 'erfc', args: ["x"], argtypes: [:fvec], ret: :fvec, prec: ["_u15"] },

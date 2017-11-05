@@ -498,6 +498,15 @@ xlgamma_u1 (double x)
 {
   return __builtin_lgamma (x);
 }
+Sleef_double2
+xlgamma_r_u1 (double x)
+{
+  Sleef_double2 ret;
+  int sign;
+  ret.x = lgamma_r (x, &sign);
+  ret.y = (sign > 0 ? 1.0 : -1.0);
+  return ret;
+}
 double
 xtgamma_u1 (double x)
 {
@@ -902,6 +911,16 @@ xlgammaf_u1 (float x)
 {
   return __builtin_lgammaf (x);
 }
+Sleef_float2
+xlgamma_rf_u1 (float x)
+{
+  Sleef_float2 ret;
+  int sign;
+  ret.x = lgammaf_r (x, &sign);
+  ret.y = (sign > 0 ? 1.0f : -1.0f);
+  return ret;
+}
+
 float
 xtgammaf_u1 (float x)
 {

@@ -1169,6 +1169,28 @@ _CL_ALWAYSINLINE double2 Sleef_lgammad2_u10(double2 x)
 #endif
 
 
+_CL_ALWAYSINLINE Sleef_float4_2 Sleef_lgamma_rf4_u10(float4 x)
+{
+  union { float4 t; reg128f r; } x_in;
+  x_in.t = x;
+  union { Sleef_float4_2 t; Sleef_reg128f_2 r; } ret;
+  ret.r = Sleef_lgamma_rf4_u10_intrin(x_in.r);
+  return ret.t;
+}
+
+#ifdef SLEEF_DOUBLE_VEC_AVAILABLE
+
+_CL_ALWAYSINLINE Sleef_double2_2 Sleef_lgamma_rd2_u10(double2 x)
+{
+  union { double2 t; reg128d r; } x_in;
+  x_in.t = x;
+  union { Sleef_double2_2 t; Sleef_reg128d_2 r; } ret;
+  ret.r = Sleef_lgamma_rd2_u10_intrin(x_in.r);
+  return ret.t;
+}
+#endif
+
+
 _CL_ALWAYSINLINE float4 Sleef_tgammaf4_u10(float4 x)
 {
   union { float4 t; reg128f r; } x_in;
@@ -2597,6 +2619,28 @@ _CL_ALWAYSINLINE double4 Sleef_lgammad4_u10(double4 x)
 #endif
 
 
+_CL_ALWAYSINLINE Sleef_float8_2 Sleef_lgamma_rf8_u10(float8 x)
+{
+  union { float8 t; reg256f r; } x_in;
+  x_in.t = x;
+  union { Sleef_float8_2 t; Sleef_reg256f_2 r; } ret;
+  ret.r = Sleef_lgamma_rf8_u10_intrin(x_in.r);
+  return ret.t;
+}
+
+#ifdef SLEEF_DOUBLE_VEC_AVAILABLE
+
+_CL_ALWAYSINLINE Sleef_double4_2 Sleef_lgamma_rd4_u10(double4 x)
+{
+  union { double4 t; reg256d r; } x_in;
+  x_in.t = x;
+  union { Sleef_double4_2 t; Sleef_reg256d_2 r; } ret;
+  ret.r = Sleef_lgamma_rd4_u10_intrin(x_in.r);
+  return ret.t;
+}
+#endif
+
+
 _CL_ALWAYSINLINE float8 Sleef_tgammaf8_u10(float8 x)
 {
   union { float8 t; reg256f r; } x_in;
@@ -4020,6 +4064,28 @@ _CL_ALWAYSINLINE double8 Sleef_lgammad8_u10(double8 x)
   x_in.t = x;
   union { double8 t; reg512d r; } ret;
   ret.r = Sleef_lgammad8_u10_intrin(x_in.r);
+  return ret.t;
+}
+#endif
+
+
+_CL_ALWAYSINLINE Sleef_float16_2 Sleef_lgamma_rf16_u10(float16 x)
+{
+  union { float16 t; reg512f r; } x_in;
+  x_in.t = x;
+  union { Sleef_float16_2 t; Sleef_reg512f_2 r; } ret;
+  ret.r = Sleef_lgamma_rf16_u10_intrin(x_in.r);
+  return ret.t;
+}
+
+#ifdef SLEEF_DOUBLE_VEC_AVAILABLE
+
+_CL_ALWAYSINLINE Sleef_double8_2 Sleef_lgamma_rd8_u10(double8 x)
+{
+  union { double8 t; reg512d r; } x_in;
+  x_in.t = x;
+  union { Sleef_double8_2 t; Sleef_reg512d_2 r; } ret;
+  ret.r = Sleef_lgamma_rd8_u10_intrin(x_in.r);
   return ret.t;
 }
 #endif

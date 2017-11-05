@@ -62,6 +62,7 @@
 #define xfmod Sleef_fmod
 #define xmodf Sleef_modf
 #define xlgamma_u1 Sleef_lgamma_u10
+#define xlgamma_r_u1 Sleef_lgamma_r_u10
 #define xtgamma_u1 Sleef_tgamma_u10
 #define xerf_u1 Sleef_erf_u10
 #define xerfc_u15 Sleef_erfc_u15
@@ -128,6 +129,7 @@
 #define xfmodf Sleef_fmodf
 #define xmodff Sleef_modff
 #define xlgammaf_u1 Sleef_lgammaf_u10
+#define xlgamma_rf_u1 Sleef_lgamma_rf_u10
 #define xtgammaf_u1 Sleef_tgammaf_u10
 #define xerff_u1 Sleef_erff_u10
 #define xerfcf_u15 Sleef_erfcf_u15
