@@ -6,11 +6,19 @@ Pocl should probably be built with ICD enabled for desktop
 distributions. Pocl does not have an ICD loader, so a dependancy
 on one would be beneficial.
 
-The pocl.icd file (which the ICD loader uses to load the pocl lib)
-has a full path to the installed libpocl.so file. When building
-for a multiarch, remove the "@libdir@/" from pocl.icd.in before
-building. This way the system library loader can pick up the correct
-architecture library.
+CMake options for a distribution build
+--------------------------------------
+- ``-DKERNELLIB_HOST_CPU_VARIANTS=distro``
+  Note: this note only works for x86(-64) platform currently,
+  on other platforms, it has zero effect.
+  Enables runtime detection of CPU and builds separate
+  kernel libraries for most common x86 CPUs.
+
+- ``-DPOCL_ICD_ABSOLUTE_PATH=OFF``
+  The pocl.icd file (which the ICD loader uses to load the pocl lib)
+  by default has a full path to the installed libpocl.so file.
+  Set this option to OFF and pocl will only put the dynamic library
+  name into pocl.icd.
 
 
 Target(host) CPU
