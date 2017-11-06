@@ -24,6 +24,7 @@ Contents:
    hsa_status
    cuda
    conformance
+   docker
 
 Back to `pocl home page <http://pocl.sourceforge.net>`_.
 
