@@ -158,9 +158,16 @@ static TargetMachine *GetTargetMachine(cl_device_id device) {
     return 0;
   }
 
+#ifdef LLVM_OLDER_THAN_6_0
   TargetMachine *TM = TheTarget->createTargetMachine(
       TheTriple.getTriple(), MCPU, StringRef(""), GetTargetOptions(),
       Reloc::PIC_, CodeModel::Default, CodeGenOpt::Aggressive);
+#else
+  TargetMachine *TM = TheTarget->createTargetMachine(
+      TheTriple.getTriple(), MCPU, StringRef(""), GetTargetOptions(),
+      Reloc::PIC_, CodeModel::Small, CodeGenOpt::Aggressive);
+#endif
+
   assert(TM != NULL && "llvm target has no targetMachine constructor");
   if (device->ops->init_target_machine)
     device->ops->init_target_machine(device->data, TM);

@@ -94,6 +94,9 @@
 /* "Using LLVM 5.0" */
 #cmakedefine LLVM_5_0
 
+/* "Using LLVM 6.0" */
+#cmakedefine LLVM_6_0
+
 #cmakedefine LLVM_BUILD_MODE_DEBUG
 
 #ifndef LLVM_VERSION

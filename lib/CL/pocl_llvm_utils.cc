@@ -36,9 +36,12 @@
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Support/Signals.h>
 
-#include <llvm/IR/DiagnosticPrinter.h>
-#include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/Module.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/DiagnosticPrinter.h>
+#ifndef LLVM_OLDER_THAN_6_0
+#include <llvm/IR/DiagnosticInfo.h>
+#endif
 
 #include <llvm/Target/TargetMachine.h>
 
@@ -233,7 +236,11 @@ std::string getDiagString() {
 llvm::LLVMContext &GlobalContext() {
   if (globalContext == NULL) {
     globalContext = new LLVMContext();
+#ifdef LLVM_OLDER_THAN_6_0
     globalContext->setDiagnosticHandler(diagHandler, globalContext);
+#else
+    globalContext->setDiagnosticHandlerCallBack(diagHandler, globalContext);
+#endif
   }
   return *globalContext;
 }
