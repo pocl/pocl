@@ -55,6 +55,8 @@ option(KERNEL_CACHE_DEFAULT "Default value for the kernel compile cache. If disa
 
 option(DEVELOPER_MODE "This will SIGNIFICANTLY slow down pocl (but speed up its compilation). Only turn on if you know what you're doing." OFF)
 
+option(POCL_ICD_ABSOLUTE_PATH "Use absolute path in pocl.icd" ON)
+
 # currently only works with gcc as host compiler
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
   option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
@@ -1139,7 +1141,12 @@ rename_if_different("${CMAKE_BINARY_DIR}/install-paths.h.new" "${CMAKE_BINARY_DI
 ##########################################################
 
 if(ENABLE_ICD)
-  file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/pocl.icd" CONTENT "${POCL_INSTALL_PUBLIC_LIBDIR}/$<TARGET_FILE_NAME:pocl>" CONDITION 1)
+  if(POCL_ICD_ABSOLUTE_PATH)
+    set(CONTENT "${POCL_INSTALL_PUBLIC_LIBDIR}/$<TARGET_FILE_NAME:pocl>")
+  else()
+    set(CONTENT "$<TARGET_FILE_NAME:pocl>")
+  endif()
+  file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/pocl.icd" CONTENT "${CONTENT}" CONDITION 1)
   install(FILES "${CMAKE_BINARY_DIR}/pocl.icd"
          DESTINATION "${POCL_INSTALL_ICD_VENDORDIR}")
 
