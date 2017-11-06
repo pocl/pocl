@@ -4,14 +4,9 @@ Version roadmap
 High priority (1.0 blockers):
     * make NVIDIA OpenCL SDK examples to work 
     * make Intel OpenCL SDK examples to work
-    * fix issues when calling kernels with struct or vector 
-      value parameters: https://github.com/pocl/pocl/issues/1
 
 Medium priority:
-    * complete the kernel runtime library.   
-    * complete the host runtime library.
     * device supporting AMD GPU cards.
-    * Check all the function pointers in the ICD dispatch struct.
 
 Known ambiguous OpenCL 1.2 features
 -----------------------------------
@@ -27,92 +22,25 @@ within a context that only holds their parent device, or not. This
 might even depend on whether the context was created "from type"
 or not.
 
-The experimental implementation in pocl currently assumes that
-sub-devices are to be treated independently from their parent
-device. This means, for example, that sub-devices cannot be used
-in a context that does not contain them (but contains their parent
-device). Note that this is different from the AMD behavior (which
-is tested in the DeviceFission AMD APP SDK example), but follows
-e.g. Intel's behavior. Clarification from the standard body is
-needed on which behavior is correct.
-
-There is room for optimizations in the current implementation,
-particularly for what concerns the program build system, since
-sub-devices share the bitcode with their parent device and
-building could be done only once. Such an optimization will
-actually become necessary if the other behavior (sub-devices as
-slaves of their parent device) is ever implemented in the future.
+The implementation of subdevices in pocl currently converts
+subdevices to their parents in most places, with the exception
+being clEnqueueNDRangeKernel. This means, for example, that
+sub-devices can be used in a context that does not contain
+them (but contains their parent device). Note this is equivalent
+to the AMD behavior (which is tested in the DeviceFission AMD APP
+SDK example), but differs from e.g. Intel's behavior. Clarification
+from the standard body is needed on which behavior is correct.
 
 Known missing OpenCL 1.2 features
 ---------------------------------
 
 Missing APIs used by the tested OpenCL example suites are
-entered here. This is not a complete list of unimplemented
-APIs in pocl, but one that has been updated whenever 
-missing APIs have been encountered in the test cases.
-
-(*) == Used by the opencl-book-samples. 
-(R) == Used by the Rodinia benchmark suite.
-(P) == Used by pyopencl
-(B) == Used by the Parboil benchmarks
-
-  4. THE OPENCL PLATFORM LAYER
-  
-* 4.1 Querying platform info (properly)
-* 4.3 Partitioning device
-* 4.4 Contexts
-  
-  5. THE OPENCL RUNTIME
-
-* 5.1 Command queues
-* 5.2.1 Creating buffer objects
-* 5.2.4 Mapping buffer objects
-* 5.3 Image objects
-* 5.3.3 Reading, Writing and Copying Image Objects
-* 5.4 Querying, Umapping, Migrating, ... Mem objects
-* 5.4.1 Retaining and Releasing Memory Objects
-* 5.4.2 Unmapping Mapped Memory Objects
-* 5.5 Sampler objects
-* 5.5.1 Creating Sampler Objects
-* 5.6.1 Creating Program Objects
-* 5.7.1 Creating Kernel Objects
-* 5.9 Event objects
-  * clWaitForEvents (*)
-* 5.10 Markers, Barriers and Waiting for Events
-  * clEnqueueMarker (deprecated in OpenCL 1.2) (*, B)
-* 5.12 Profiling 
-
-  6. THE OPENCL C PROGRAMMING LANGUAGE
-
-* 6.12.11 Atomic functions
-  * cl_khr_local_int32_base_atomics (Chapter_14/histogram)
-
-* 6.12.14.2 Built-in Image Read Functions
-  * read_imagef (R[particlefilter])
-  * read_imageui (B[sad])
+entered here.
 
   OpenCL 1.2 Extensions
 
 * 9.7 Sharing Memory Objects with OpenGL / OpenGL
   ES Buffer, Texture and Renderbuffer Objects
+
 * 9.7.6 Sharing memory objects that map to GL objects 
   between GL and CL contexts
-  * clEnqueueAcquireGLObjects (*)
-
-  Miscellaneous
-
-Other
------
-* configure should check for 'clang'
-* build system should use $(CXX) everywhere,
-  now some parts assume g++ and it fails if 
-  only c++ is installed
-
-Optimization opportunities
---------------------------
-* Even when using an in-order queue, schedule kernels
-  in parallel in case their input buffers are not depending
-  on the unfinished ones (should be legal per OpenCL 1.2 5.11).
-
-  
-  
