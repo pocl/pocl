@@ -1295,6 +1295,9 @@ pocl_cuda_notify (cl_device_id device, cl_event event, cl_event finished)
   if (finished->queue && finished->queue->device->ops == device->ops)
     return;
 
+  if (event->status == CL_QUEUED)
+    return;
+
   pocl_cuda_event_data_t *event_data = (pocl_cuda_event_data_t *)event->data;
 
   assert (event_data);
