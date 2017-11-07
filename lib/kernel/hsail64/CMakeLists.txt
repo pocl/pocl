@@ -73,7 +73,7 @@ foreach(EXT ${HSA_DEVICE_EXTENSIONS})
 endforeach()
 separate_arguments(DEVICE_CL_FLAGS)
 
-make_kernel_bc(KERNEL_BC "hsail64" "BCs" ${KERNEL_SOURCES})
+make_kernel_bc(KERNEL_BC "hsail64" "BCs" 0 0 0 ${KERNEL_SOURCES})
 
 # just debug
 message(STATUS "HSAIL64 Kernel BC: ${KERNEL_BC}")

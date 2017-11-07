@@ -97,6 +97,8 @@ realvec_t mathfuncs<realvec_t>::vml_asin(realvec_t d) {
 
 template <typename realvec_t>
 realvec_t mathfuncs<realvec_t>::vml_acos(realvec_t d) {
+  // negative zero has the same (positive) result as positive zero
+  d = ifthen(d == RV(-0.0), RV(0.0), d);
   // Algorithm taken from SLEEF 2.80
   return (mulsign(atan2k(sqrt((RV(1.0) + d) * (RV(1.0) - d)), fabs(d)), d) +
           ifthen(d < RV(0.0), RV(M_PI), RV(0.0)));

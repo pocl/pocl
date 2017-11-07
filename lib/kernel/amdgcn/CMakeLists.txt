@@ -45,7 +45,7 @@ endif()
 
 set(LLC_FLAGS "")
 
-make_kernel_bc(KERNEL_BC "amdgcn--amdhsa" "gcn" ${KERNEL_SOURCES})
+make_kernel_bc(KERNEL_BC "amdgcn--amdhsa" "gcn" 0 0 0 ${KERNEL_SOURCES})
 
 # just debug
 message(STATUS "AMDGCN Kernel BC: ${KERNEL_BC}")

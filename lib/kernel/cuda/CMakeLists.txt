@@ -71,7 +71,7 @@ foreach(EXT ${CUDA_DEVICE_EXTENSIONS})
 endforeach()
 separate_arguments(DEVICE_CL_FLAGS)
 
-make_kernel_bc(KERNEL_BC "${LLVM_TARGET}" "BCs" ${KERNEL_SOURCES})
+make_kernel_bc(KERNEL_BC "${LLVM_TARGET}" "BCs" 0 0 0 ${KERNEL_SOURCES})
 
 # just debug
 message(STATUS "${LLVM_TARGET} Kernel BC: ${KERNEL_BC}")

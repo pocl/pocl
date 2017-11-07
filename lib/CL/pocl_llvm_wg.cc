@@ -76,8 +76,7 @@ using namespace llvm;
  */
 
 static std::map<cl_device_id, llvm::TargetMachine *> targetMachines;
-static std::map<cl_device_id, PassManager *> kernelPassesNoflatten;
-static std::map<cl_device_id, PassManager *> kernelPassesFlatten;
+static std::map<cl_device_id, PassManager *> kernelPasses;
 
 // This is used to control the kernel we process in the kernel compilation.
 extern cl::opt<std::string> KernelName;
@@ -128,21 +127,13 @@ void clearTargetMachines() {
 }
 
 void clearKernelPasses() {
-  for (auto i = kernelPassesFlatten.begin(), e = kernelPassesFlatten.end();
+  for (auto i = kernelPasses.begin(), e = kernelPasses.end();
        i != e; ++i) {
     PassManager *pm = (PassManager *)i->second;
     delete pm;
   }
 
-  for (auto i = kernelPassesNoflatten.begin(),
-            e = kernelPassesNoflatten.end();
-       i != e; ++i) {
-    PassManager *pm = (PassManager *)i->second;
-    delete pm;
-  }
-
-  kernelPassesFlatten.clear();
-  kernelPassesNoflatten.clear();
+  kernelPasses.clear();
 }
 
 // Returns the TargetMachine instance or zero if no triple is provided.
@@ -179,26 +170,6 @@ static TargetMachine *GetTargetMachine(cl_device_id device) {
 }
 /* helpers copied from LLVM opt END */
 
-/* Check if a module references read_image{i,ui,f} or write_image{i,ui,f}
- * from pocl kernel library */
-static bool moduleReferencesImages(llvm::Module *M) {
-  bool refs_images = false;
-  /* all of pocl's read/write pix functions use these internally */
-  const llvm::StringRef readpix("pocl_read_pixel");
-  const llvm::StringRef writepix("pocl_write_pixel");
-
-  for (llvm::Module::iterator i = M->begin(), e = M->end(); i != e; ++i) {
-    llvm::Function *f = &*i;
-    if (f->getName().equals(readpix) || f->getName().equals(writepix)) {
-      refs_images = true;
-      break;
-    }
-  }
-
-  return refs_images;
-}
-
-
 static PassManager &
 kernel_compiler_passes(cl_device_id device, llvm::Module *input,
                        const std::string &module_data_layout) {
@@ -206,13 +177,8 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
   PassManager *Passes = nullptr;
   PassRegistry *Registry = nullptr;
 
-  bool refs_images = moduleReferencesImages(input);
-
-  std::map<cl_device_id, PassManager *> &kernel_pass_map =
-      (refs_images ? kernelPassesNoflatten : kernelPassesFlatten);
-
-  if (kernel_pass_map.find(device) != kernel_pass_map.end()) {
-    return *kernel_pass_map[device];
+  if (kernelPasses.find(device) != kernelPasses.end()) {
+    return *kernelPasses[device];
   }
 
   bool SPMDDevice = device->spmd;
@@ -288,39 +254,17 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
   if (device->autolocals_to_args)
     passes.push_back("automatic-locals");
 
-  if (SPMDDevice)
+  if (SPMDDevice) {
     passes.push_back("flatten-inline-all");
-  else {
-    /* LLVM is either still not intelligent enough to flatten,
-     * or we're missing some pass.
-     *
-     * The only reason we've reintroduced "global-only" flatten was that
-     * read/write image functions are very "heavy" and a conformance test
-     * that tests a kernel with 127 image arguments, would flatten 127
-     * write_image() calls, which compiled down to a several megabyte IR
-     *
-     * read/write images are the only "heavy" ones in pocl library,
-     * so if the module references images, we do global-only flatten,
-     * otherwise the normal flatten.
-     *
-     * TODO this still requires some solution. With flatten-globals-only,
-     * AMDSDK's BlackScholes and BinomialOption regress heavily. OTOH the
-     * performance of Mandelbrot is about 30% higher with flatten-globals
-     * compared to flatten-inline-all (likely because inline-all compiled
-     * Mandelbrot kernel exceeds L1 instruction cache size).
-     */
-    if (refs_images) {
-      POCL_MSG_PRINT_LLVM(
-          "Module references images, using flatten-globals-only\n");
-      passes.push_back("flatten-globals");
+    passes.push_back("always-inline");
+  }  else {
+    passes.push_back("flatten-globals");
+    passes.push_back("always-inline");
 #ifndef LLVM_3_9
-      passes.push_back("inline");
+    passes.push_back("inline");
 #endif
-    } else {
-      passes.push_back("flatten-inline-all");
-    }
   }
-  passes.push_back("always-inline");
+
 #ifndef LLVM_OLDER_THAN_4_0
   // It should be now safe to run -O3 over the single work-item kernel
   // as the barrier has the attributes preventing illegal motions and
@@ -414,7 +358,7 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
     }
   }
 
-  kernel_pass_map[device] = Passes;
+  kernelPasses[device] = Passes;
   return *Passes;
 }
 
