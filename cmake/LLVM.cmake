@@ -181,7 +181,7 @@ elseif(LLVM_VERSION MATCHES "5[.]0")
     set(LLVM_MAJOR 5)
     set(LLVM_5_0 1)
 else()
-  message(FATAL_ERROR "LLVM version 3.7+ required, found: ${LLVM_VERSION}")
+  message(FATAL_ERROR "LLVM version between 3.7 and 5.0 required, found: ${LLVM_VERSION}")
 endif()
 
 ####################################################################

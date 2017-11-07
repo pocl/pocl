@@ -26,9 +26,9 @@
 cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 
 project(pocl)
-set(MAJOR_VERSION 0)
-set(MINOR_VERSION 15)
-set(VERSION_SUFFIX "-pre")
+set(MAJOR_VERSION 1)
+set(MINOR_VERSION 0)
+set(VERSION_SUFFIX "")
 set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION}${VERSION_SUFFIX})
 set(POCL_VERSION ${VERSION_STRING})
 
@@ -1102,10 +1102,12 @@ endif()
 # 6:0:5 == 0.12 (currently backwards compatible with 0.7, thus age = 5).
 # 7:0:6 == 0.13 (currently backwards compatible with 0.7, thus age = 6).
 # 8:0:7 == 0.14 (currently backwards compatible with 0.7, thus age = 7).
+# pocl 1.0 bumped the API version:
+# 2:0:0 == 1.0 (the libpocl.so will be named libpocl.so.2.0.X )
 
-set(LIB_CURRENT_VERSION 8)
+set(LIB_CURRENT_VERSION 2)
 set(LIB_REVISION_VERSION 0)
-set(LIB_AGE_VERSION 7)
+set(LIB_AGE_VERSION 0)
 
 math(EXPR LIB_FIRST_VERSION "${LIB_CURRENT_VERSION} - ${LIB_AGE_VERSION}")
 
@@ -1120,7 +1122,8 @@ set(LIB_API_VERSION "${LIB_FIRST_VERSION}")
 # drastically. Let's try to follow the similar 'current' numbering as
 # the pocl host API library and perhaps tune the 'revision' and 'age' later.
 
-set(KERNEL_COMPILER_LIB_VERSION "${LIB_CURRENT_VERSION}.0.0")
+math(EXPR KER_LIB_CURRENT_VERSION "${LIB_CURRENT_VERSION} + 7")
+set(KERNEL_COMPILER_LIB_VERSION "${KER_LIB_CURRENT_VERSION}.0.0")
 
 ##########################################################
 
