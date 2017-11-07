@@ -44,6 +44,13 @@ POname(clReleaseEvent)(cl_event event) CL_API_SUFFIX__VERSION_1_0
           POCL_MEM_FREE (cb_ptr);
         }
 
+      if (event->command_type == CL_COMMAND_USER)
+        {
+          pocl_user_event_data *p = event->data;
+          pthread_cond_destroy (&p->wakeup_cond);
+          pthread_mutex_destroy (&p->lock);
+        }
+
       POCL_MSG_PRINT_REFCOUNTS ("Free event %d\n", event->id);
       if (event->command_type != CL_COMMAND_USER &&
           event->queue->device->ops->free_event_data)

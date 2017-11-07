@@ -29,6 +29,12 @@ CL_API_SUFFIX__VERSION_1_1
       pocl_broadcast (event);
       pocl_event_updated (event, execution_status);
     }
+
+  pocl_user_event_data *p = event->data;
+  POCL_LOCK (p->lock);
+  pthread_cond_broadcast (&p->wakeup_cond);
+  POCL_UNLOCK (p->lock);
+
   return CL_SUCCESS;
 
 ERROR:

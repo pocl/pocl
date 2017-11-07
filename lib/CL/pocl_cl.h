@@ -756,6 +756,11 @@ struct _cl_event {
   _cl_event * volatile prev;
 };
 
+typedef struct _pocl_user_event_data
+{
+  pthread_cond_t wakeup_cond;
+  pthread_mutex_t lock;
+} pocl_user_event_data;
 
 typedef struct _cl_sampler cl_sampler_t;
 struct _cl_sampler {

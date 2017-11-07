@@ -56,11 +56,17 @@ POname(clWaitForEvents)(cl_uint              num_events ,
         ret = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
     }
   /* brute force wait for user events */
+  struct timespec time_to_wait = { 0, 0 };
   for (event_i = 0; event_i < num_events; ++event_i)
     if (event_list[event_i]->command_type == CL_COMMAND_USER)
       {
         while (event_list[event_i]->status > CL_COMPLETE)
           {
+            pocl_user_event_data *p = event_list[event_i]->data;
+            POCL_LOCK (p->lock);
+            time_to_wait.tv_sec = time (NULL) + 1;
+            pthread_cond_timedwait (&p->wakeup_cond, &p->lock, &time_to_wait);
+            POCL_UNLOCK (p->lock);
           }
         if (event_list[event_i]->status < 0)
           ret = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
