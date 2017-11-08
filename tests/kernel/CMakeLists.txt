@@ -23,22 +23,13 @@
 #
 #=============================================================================
 
-#AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'
 add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
-
-#kernel_CFLAGS = -std=c99 @OPENCL_CFLAGS@
-#smapler_address_clamp_CFLAGS = -std=c99 @OPENCL_CFLAGS@
-#image_query_funcs_CFLAGS = -std=c99 @OPENCL_CFLAGS@
+#cannot use add_compile_options, because we need this only for C files
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 ${OPENCL_CFLAGS_STR}")
 
-#kernel_LDADD = -lm @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
-#sampler_address_clamp_LDADD = -lm @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
-#image_query_funcs_LDADD = -lm @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
-# -> POCLU_LINK_OPTIONS in toplevel cmake
-
 ######################################################################
-add_executable("kernel" "kernel.c") # test_as_type.cl test_bitselect.cl test_convert_sat_regression.cl test_convert_type_*.cl test_fabs.cl test_fmin_fmax_fma.cl test_hadd.cl test_min_max.cl test_length_distance.cl test_rotate.cl test_short16.cl test_sizeof.cl test_block.cl test_printf.cl
+add_executable("kernel" "kernel.c")
 target_link_libraries("kernel" ${POCLU_LINK_OPTIONS})
 
 add_test_pocl(NAME "kernel/test_as_type"
@@ -146,10 +137,10 @@ if(MSVC)
     test_shuffle.cc kernel.c PROPERTIES LANGUAGE CXX )
 endif(MSVC)
 
-add_executable("sampler_address_clamp" "sampler_address_clamp.c") #test_sampler_address_clamp.cl
+add_executable("sampler_address_clamp" "sampler_address_clamp.c")
 target_link_libraries("sampler_address_clamp" ${POCLU_LINK_OPTIONS})
 
-add_executable("image_query_funcs" "image_query_funcs.c") #test_image_query_funcs.cl
+add_executable("image_query_funcs" "image_query_funcs.c")
 target_link_libraries("image_query_funcs" ${POCLU_LINK_OPTIONS})
 
 add_test_pocl(NAME "kernel/test_sampler_address_clamp"

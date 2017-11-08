@@ -66,8 +66,6 @@ endforeach()
 
 ######################################################################
 
-#AT_SETUP([phi nodes not replicated (repl) - lp:927573])
-
 # repl
 
 add_test_pocl(NAME "regression/phi_nodes_not_replicated_REPL" COMMAND "test_loop_phi_replication")
@@ -190,7 +188,6 @@ add_test_pocl(NAME "regression/case_with_multiple_variable_length_loops_and_a_ba
 
 add_test_pocl(NAME "regression/autolocals_in_constexprs" COMMAND "test_autolocals_in_constexprs")
 
-# these 2 will fail
 add_test_pocl(NAME "regression/struct_kernel_arguments" COMMAND "test_structs_as_args")
 
 add_test_pocl(NAME "regression/vector_kernel_arguments" COMMAND "test_vectors_as_args")
@@ -250,13 +247,6 @@ set_property(TEST
   "regression/vector_kernel_arguments"
   "regression/autolocals_in_constexprs"
   APPEND PROPERTY LABELS "cuda")
-
-# The vector/struct kernel arguments are known to be flaky and
-# work by luck sometimes. Disable them for now.
-#if((LLVM_CXXFLAGS MATCHES "_DEBUG") OR (NOT LLVM_CXXFLAGS MATCHES "DNDEBUG"))
-#  set_tests_properties("regression/vector_kernel_arguments"
-#    PROPERTIES  WILL_FAIL 1)
-#endif()
 
 if (NOT CLANG_IS_PATCHED_FOR_SPIR_CC)
 set_tests_properties("regression/struct_kernel_arguments"

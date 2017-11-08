@@ -33,15 +33,6 @@ set(PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_enqueue_kernel_from_binary test_user_event
   test_clSetMemObjectDestructorCallback)
 
-#EXTRA_DIST= \
-# test_kernel_src_in_pwd.h \
-# test_clCreateKernelsInProgram.cl \
-# test_data/test_kernel_src_in_another_dir.h
-
-#AM_LDFLAGS = @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
-# POCLU_LINK_OPTIONS
-
-#AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include @OPENCL_CFLAGS@
 add_compile_options(${OPENCL_CFLAGS})
 
 foreach(PROG ${PROGRAMS_TO_BUILD})
@@ -75,8 +66,7 @@ add_test_pocl(NAME "runtime/clFinish" COMMAND "test_clFinish")
 
 add_test_pocl(NAME "runtime/test_event_cycle" COMMAND "test_event_cycle")
 
-# currently fails, see commit 13e5bc89a6b7675efbc
-#add_test("runtime/test_link_error" "test_link_error")
+add_test_pocl(NAME "runtime/test_link_error" COMMAND "test_link_error")
 
 add_test_pocl(NAME "runtime/test_read-copy-write-buffer" COMMAND "test_read-copy-write-buffer")
 
@@ -110,10 +100,10 @@ set_tests_properties( "runtime/clGetDeviceInfo" "runtime/clEnqueueNativeKernel"
   "runtime/clGetSupportedImageFormats" "runtime/clCreateKernelsInProgram"
   "runtime/clCreateKernel" "runtime/clGetKernelArgInfo"
   "runtime/test_kernel_cache_includes" "runtime/test_event_cycle"
-  "runtime/test_read-copy-write-buffer" "runtime/test_buffer-image-copy" #"runtime/test_link_error"
+  "runtime/test_read-copy-write-buffer" "runtime/test_buffer-image-copy"
   "runtime/test_event_free" "runtime/clCreateSubDevices"
   "runtime/test_enqueue_kernel_from_binary" "runtime/test_user_event"
-  "runtime/clSetMemObjectDestructorCallback"
+  "runtime/clSetMemObjectDestructorCallback" "runtime/test_link_error"
   PROPERTIES
     COST 2.0
     PROCESSORS 1
