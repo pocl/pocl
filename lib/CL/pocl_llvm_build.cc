@@ -59,7 +59,6 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 // causing compilation error if they are included before the LLVM headers.
 #include "pocl_llvm_api.h"
 #include "pocl_runtime_config.h"
-#include "install-paths.h"
 #include "linker.h"
 #include "pocl_file_util.h"
 #include "pocl_cache.h"
@@ -410,7 +409,7 @@ int pocl_llvm_build_program(cl_program program,
   if (pocl_get_bool_option("POCL_BUILDING", 0)) {
     kernelh  = SRCDIR;
   } else {
-    kernelh = PKGDATADIR;
+    kernelh = POCL_INSTALL_PRIVATE_DATADIR;
   }
   BuiltinRenamesH = kernelh;
   kernelh += "/include/_kernel.h";
@@ -790,7 +789,7 @@ kernel_library
         kernellib += device->llvm_cpu;
     }
   } else { // POCL_BUILDING == 0, use install dir
-    kernellib = PKGDATADIR;
+    kernellib = POCL_INSTALL_PRIVATE_DATADIR;
     kernellib += "/kernel-";
     kernellib += device->llvm_target_triplet;
     if (is_host) {

@@ -28,7 +28,6 @@
 #include "common.h"
 
 #include "config.h"
-#include "install-paths.h"
 #include "pocl_runtime_config.h"
 #include "pocl_hash.h"
 
@@ -222,9 +221,9 @@ TCEDevice::tceccCommandLine
     }
   else 
     {
-      deviceMainSrc = TCEString(PKGDATADIR) + "/" + mainC;
+      deviceMainSrc = TCEString(POCL_INSTALL_PRIVATE_DATADIR) + "/" + mainC;
       assert(access(deviceMainSrc.c_str(), R_OK) == 0);
-      poclIncludePathSwitch = " -I " PKGDATADIR "/include";
+      poclIncludePathSwitch = " -I " POCL_INSTALL_PRIVATE_DATADIR "/include";
     }
 
   TCEString extraFlags = extraParams;
