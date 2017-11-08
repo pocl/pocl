@@ -25,10 +25,11 @@ struct pool_thread_data
   pthread_mutex_t lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
   pthread_t thread __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-  long executed_commands;
+  unsigned long executed_commands;
   unsigned current_ftz;
   unsigned num_threads;
   unsigned index;
+  void *last_cmd_ignored;
 
 } __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
@@ -174,13 +175,35 @@ work_group_scheduler (kernel_run_command *k,
 static void finalize_kernel_command (thread_data *thread_data,
                               kernel_run_command *k);
 
-int pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
+static int
+shall_we_run_this (thread_data *td, cl_device_id subd, void *cmd)
+{
+  if (subd && subd->parent_device)
+    {
+      // subdevice, let's see if we're supposed to pick up work
+      if (!((td->index >= subd->core_start)
+            && (td->index < (subd->core_start + subd->core_count))))
+        {
+          td->last_cmd_ignored = cmd;
+          return 0;
+        }
+    }
+  td->last_cmd_ignored = NULL;
+  return 1;
+}
+
+void
+pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
 {
   _cl_command_node *cmd;
   kernel_run_command *run_cmd;
+
   // execute kernel if available
   pthread_spin_lock (&scheduler.wq_lock_fast);
-  if ((run_cmd = scheduler.kernel_queue))
+  run_cmd = scheduler.kernel_queue;
+
+  // execute kernel if available
+  if (run_cmd && shall_we_run_this (td, run_cmd->device, run_cmd))
     {
       ++run_cmd->ref_count;
       pthread_spin_unlock (&scheduler.wq_lock_fast);
@@ -197,26 +220,28 @@ int pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
     }
 
   // execute a command if available
-  if ((cmd = scheduler.work_queue))
+  *cmd_ptr = NULL;
+  cmd = scheduler.work_queue;
+  if (cmd && shall_we_run_this (td, cmd->device, cmd))
     {
       DL_DELETE (scheduler.work_queue, cmd);
-      pthread_spin_unlock (&scheduler.wq_lock_fast);
       *cmd_ptr = cmd;
-      return 0;
     }
   pthread_spin_unlock (&scheduler.wq_lock_fast);
-  *cmd_ptr = NULL;
-  return 1;
+  return;
 }
 
 static void
-pthread_scheduler_sleep()
+pthread_scheduler_sleep (thread_data *td)
 {
   struct timespec time_to_wait = {0, 0};
   time_to_wait.tv_sec = time(NULL) + 5;
 
   pthread_spin_lock (&scheduler.wq_lock_fast);
-  if (scheduler.work_queue == NULL && scheduler.kernel_queue == 0)
+  if ((scheduler.work_queue == NULL && scheduler.kernel_queue == NULL)
+      || (td->last_cmd_ignored
+          && (((void *)scheduler.kernel_queue == td->last_cmd_ignored)
+              || ((void *)scheduler.work_queue == td->last_cmd_ignored))))
     {
       pthread_spin_unlock (&scheduler.wq_lock_fast);
       PTHREAD_LOCK (&scheduler.wake_lock);
@@ -235,7 +260,7 @@ pthread_scheduler_sleep()
 
 static int
 get_wg_index_range (kernel_run_command *k, unsigned *start_index,
-                    unsigned *end_index, char *last_wgs, unsigned num_threads)
+                    unsigned *end_index, int *last_wgs, unsigned num_threads)
 {
   const unsigned scaled_max_wgs = POCL_PTHREAD_MAX_WGS * num_threads;
   const unsigned scaled_min_wgs = POCL_PTHREAD_MIN_WGS * num_threads;
@@ -261,6 +286,7 @@ get_wg_index_range (kernel_run_command *k, unsigned *start_index,
     max_wgs = min (scaled_max_wgs, (1 + k->remaining_wgs / num_threads));
 
   max_wgs = min (max_wgs, k->remaining_wgs);
+  assert (max_wgs > 0);
 
   *start_index = k->wgs_dealt;
   *end_index = k->wgs_dealt + max_wgs-1;
@@ -294,11 +320,13 @@ work_group_scheduler (kernel_run_command *k,
   unsigned i;
   unsigned start_index;
   unsigned end_index;
-  char last_wgs = 0;
+  int last_wgs = 0;
 
   if (!get_wg_index_range (k, &start_index, &end_index, &last_wgs,
                            thread_data->num_threads))
     return 0;
+
+  assert (end_index >= start_index);
 
   setup_kernel_arg_array ((void**)&arguments, k);
   memcpy (&pc, &k->pc, sizeof (struct pocl_context));
@@ -371,7 +399,6 @@ pocl_pthread_prepare_kernel
   unsigned i;
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
-  cl_device_id device = NULL;
 
   cmd->device->ops->compile_kernel (cmd, NULL, NULL);
 
@@ -422,6 +449,7 @@ pocl_pthread_driver_thread (void *p)
    * force a first FTZ setup */
   td->current_ftz = 213;
   td->num_threads = scheduler.num_threads;
+  td->last_cmd_ignored = NULL;
 
 #ifdef __linux__
   if (pocl_get_bool_option ("POCL_AFFINITY", 0))
@@ -450,6 +478,6 @@ pocl_pthread_driver_thread (void *p)
           ++td->executed_commands;
         }
       // check if its time to sleep
-      pthread_scheduler_sleep();
+      pthread_scheduler_sleep (td);
     }
 }

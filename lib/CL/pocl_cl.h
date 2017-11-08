@@ -372,6 +372,10 @@ struct _cl_device_id {
   cl_device_type type;
   cl_uint vendor_id;
   cl_uint max_compute_units;
+  // for subdevices
+  cl_device_id parent_device;
+  unsigned core_start;
+  unsigned core_count;
   cl_uint max_work_item_dimensions;
   size_t max_work_item_sizes[3];
   size_t max_work_group_size;
@@ -448,7 +452,6 @@ struct _cl_device_id {
   char *short_name;
   char *long_name;
   char *cache_dir_name;
-  cl_device_id parent_device;
 
   const char *vendor;
   const char *driver_version;
