@@ -965,7 +965,20 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
             allocType =
               ArrayType::get(elementType->getArrayElementType(), alignedSize);
           } else if (isa<StructType>(elementType)) {
-          // TODO handle structs properly
+            StructType *old_struct = dyn_cast<StructType>(elementType);
+
+            unsigned required_bytes = alignedSize - storeSize;
+            ArrayType *structPadding = ArrayType::get(
+                Type::getInt8Ty(M->getContext()), required_bytes);
+            std::vector<Type *> ary;
+            for (unsigned j = 0; j < old_struct->getNumElements(); j++)
+              ary.push_back(old_struct->getElementType(j));
+            ary.push_back(structPadding);
+            const ArrayRef<Type *> new_el(ary);
+            allocType = StructType::get(old_struct->getContext(), new_el,
+                                        old_struct->isPacked());
+            unsigned newStoreSize = dataLayout.getTypeStoreSize(allocType);
+            assert(newStoreSize == alignedSize);
           }
         }
       }
