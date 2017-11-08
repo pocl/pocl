@@ -5,6 +5,12 @@ The behavior of pocl can be controlled with multiple environment variables
 listed below. The variables are helpful both when using and when developing
 pocl.
 
+- **POCL_AFFINITY**
+ Linux-only. If set to 1, each thread of the pthread CPU driver sets its
+ affinity to its index. This may be useful with very long running kernels,
+ or when using subdevices (lets any idle cores enter deeper sleep). Defaults
+ to 0 (most people don't need this)
+
 - **POCL_BUILDING**
 
  If  set, the pocl helper scripts, kernel library and headers are 

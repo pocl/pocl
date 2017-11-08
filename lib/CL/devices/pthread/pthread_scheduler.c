@@ -1,3 +1,9 @@
+#define _GNU_SOURCE
+
+#ifdef __linux__
+#include <sched.h>
+#endif
+
 #include <string.h>
 #include <pthread.h>
 #include <time.h>
@@ -22,6 +28,7 @@ struct pool_thread_data
   volatile long executed_commands;
   volatile unsigned current_ftz;
   unsigned num_threads;
+  unsigned index;
 
 } __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
@@ -47,8 +54,9 @@ static scheduler_data scheduler;
 
 void pthread_scheduler_init (size_t num_worker_threads)
 {
-  size_t i;
+  unsigned i;
   pthread_mutex_init (&(scheduler.wq_lock), NULL);
+
   pthread_mutex_init (&(scheduler.cq_finished_lock), NULL);
   pthread_cond_init (&(scheduler.cq_finished_cond), NULL);
   pthread_cond_init (&(scheduler.wake_pool), NULL);
@@ -61,6 +69,7 @@ void pthread_scheduler_init (size_t num_worker_threads)
     {
       pthread_cond_init (&scheduler.thread_pool[i].wakeup_cond, NULL);
       pthread_mutex_init (&scheduler.thread_pool[i].lock, NULL);
+      scheduler.thread_pool[i].index = i;
       pthread_create (&scheduler.thread_pool[i].thread, NULL,
                       pocl_pthread_driver_thread,
                       (void*)&scheduler.thread_pool[i]);
@@ -409,6 +418,16 @@ pocl_pthread_driver_thread (void *p)
    * force a first FTZ setup */
   td->current_ftz = 213;
   td->num_threads = scheduler.num_threads;
+
+#ifdef __linux__
+  if (pocl_get_bool_option ("POCL_AFFINITY", 0))
+    {
+      cpu_set_t set;
+      CPU_ZERO (&set);
+      CPU_SET (td->index, &set);
+      pthread_setaffinity_np (td->thread, sizeof (cpu_set_t), &set);
+    }
+#endif
 
   while (1)
     {
