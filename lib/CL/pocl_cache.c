@@ -543,17 +543,19 @@ char* pocl_get_process_name()
 
 /******************************************************************************/
 
-void pocl_cache_init_topdir() {
+int
+pocl_cache_init_topdir ()
+{
 
-    if (cache_topdir_initialized)
-        return;
+  if (cache_topdir_initialized)
+    return 0;
 
-    const char *tmp_path = pocl_get_string_option("POCL_CACHE_DIR", NULL);
-    int needed;
+  const char *tmp_path = pocl_get_string_option ("POCL_CACHE_DIR", NULL);
+  int needed;
 
-    if (tmp_path)
-      {
-        needed = snprintf(cache_topdir, POCL_FILENAME_LENGTH, "%s", tmp_path);
+  if (tmp_path)
+    {
+      needed = snprintf (cache_topdir, POCL_FILENAME_LENGTH, "%s", tmp_path);
     } else     {
 #ifdef POCL_ANDROID
         char* process_name = pocl_get_process_name();
@@ -593,23 +595,33 @@ void pocl_cache_init_topdir() {
 #endif
     }
 
-    if (needed >= POCL_FILENAME_LENGTH) {
-        POCL_ABORT("pocl: cache path longer than maximum filename length\n");
+  if (needed >= POCL_FILENAME_LENGTH)
+    {
+      POCL_MSG_ERR ("pocl: cache path longer than maximum filename length\n");
+      return 1;
     }
 
     assert(strlen(cache_topdir) > 0);
 
     if (pocl_mkdir_p(cache_topdir))
-      POCL_ABORT ("Could not create top directory (%s) for cache. \n\nNote: if "
-                  "you have proper rights to create that directory, and still "
-                  "get the error, then most likely pocl and the program you're "
-                  "trying to run are linked to different versions of libstdc++ "
-                  "library. \nThis is not a bug in pocl and there's nothing we "
-                  "can do to fix it - you need both pocl and your program to be"
-                  " compiled for your system.\n", cache_topdir);
+      {
+        POCL_MSG_ERR (
+            "Could not create top directory (%s) for cache. \n\nNote: "
+            "if you have proper rights to create that directory, and still "
+            "get the error, then most likely pocl and the program you're "
+            "trying to run are linked to different versions of libstdc++ "
+            "library. \nThis is not a bug in pocl and there's nothing we "
+            "can do to fix it - you need both pocl and your program to be"
+            " compiled for your system. This is known to happen with "
+            "Luxmark benchmark binaries dowloaded from website; Luxmark "
+            "installed from your linux distribution's packages should "
+            "work.\n",
+            cache_topdir);
+        return 1;
+      }
 
     cache_topdir_initialized = 1;
-
+    return 0;
 }
 
 /* Create the new program cachedir, invalidating the old program

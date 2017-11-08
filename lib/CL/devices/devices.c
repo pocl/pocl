@@ -352,7 +352,7 @@ pocl_init_devices()
   if (init_done == 0)
     POCL_INIT_LOCK(pocl_init_lock);
   POCL_LOCK(pocl_init_lock);
-  if (init_done) 
+  if (init_done)
     {
       POCL_UNLOCK(pocl_init_lock);
       return pocl_num_devices ? CL_SUCCESS : CL_DEVICE_NOT_FOUND;
@@ -366,7 +366,13 @@ pocl_init_devices()
   stderr_is_a_tty = isatty(fileno(stderr));
 #endif
 
-  pocl_cache_init_topdir ();
+  if (pocl_cache_init_topdir ())
+    {
+      init_done = 1;
+      pocl_num_devices = 0;
+      POCL_UNLOCK (pocl_init_lock);
+      return CL_DEVICE_NOT_FOUND;
+    }
   pocl_event_tracing_init ();
 
 #ifdef OCS_AVAILABLE

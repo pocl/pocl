@@ -39,7 +39,7 @@ extern "C" {
 #pragma GCC visibility push(hidden)
 #endif
 
-void pocl_cache_init_topdir();
+int pocl_cache_init_topdir ();
 
 int
 pocl_cache_create_program_cachedir(cl_program program, unsigned device_i,
