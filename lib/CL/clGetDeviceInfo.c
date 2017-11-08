@@ -152,8 +152,8 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->mem_base_addr_align);
   case CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE          : 
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->min_data_type_align_size);
-  case CL_DEVICE_SINGLE_FP_CONFIG                  : 
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->single_fp_config);
+  case CL_DEVICE_SINGLE_FP_CONFIG                  :
+    POCL_RETURN_GETINFO (cl_ulong, device->single_fp_config);
   case CL_DEVICE_GLOBAL_MEM_CACHE_TYPE             :
     POCL_RETURN_GETINFO(cl_uint, device->global_mem_cache_type);
   case CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE         : 
@@ -223,9 +223,9 @@ POname(clGetDeviceInfo)(cl_device_id   device,
       POCL_RETURN_GETINFO(cl_platform_id, platform_id);
     }
   case CL_DEVICE_DOUBLE_FP_CONFIG                  :
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->double_fp_config);
+    POCL_RETURN_GETINFO (cl_ulong, device->double_fp_config);
   case CL_DEVICE_HALF_FP_CONFIG                    :
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->half_fp_config);
+    POCL_RETURN_GETINFO (cl_ulong, device->half_fp_config);
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_HALF       :
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->preferred_vector_width_half);
   case CL_DEVICE_HOST_UNIFIED_MEMORY               : 
@@ -249,9 +249,6 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_BUILT_IN_KERNELS                  :
     POCL_RETURN_GETINFO_STR("");
 
-  /* TODO proper device partition support. For the time being,
-   * the values returned only serve the purpose of indicating
-   * that it is not actually supported */
   case CL_DEVICE_PARENT_DEVICE                     :
     POCL_RETURN_GETINFO(cl_device_id, device->parent_device);
 
