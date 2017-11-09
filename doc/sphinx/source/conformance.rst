@@ -17,7 +17,12 @@ Conformance related CMake options
 How to run the conformance test suite on your hardware
 ------------------------------------------------------
 
-To run the shortened version, run: ``ctest -L conformance_suite_short``
+First you need to enable the suite in the pocl's external test suite set.
+This is done by adding switch ``-DENABLE_TESTSUITES=conformance``
+to the cmake command line. After this ``make prepare_examples`` fetches and
+prepares the conformance suite for testing.
+
+To run a shortened version of the conformance suite, run: ``ctest -L conformance_suite_short``
 This might take a few hours on slow hardware.
 
 To run the full conformance testsuite, run: ``ctest -L conformance_suite``
