@@ -38,7 +38,7 @@ struct kernel_run_command
   pocl_cache_data cache_data;
 #endif
 
-  pthread_mutex_t lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  pthread_spinlock_t lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
   volatile unsigned remaining_wgs __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
   volatile unsigned wgs_dealt;
