@@ -92,6 +92,10 @@ For multiple-item options, use ";" as separator (you'll have to escape it for ba
   with ``-DTESTSUITE_BASEDIR=/home/pocltest-build -DTESTSUITE_SOURCE_BASEDIR=/home/pocltest-src``,
   place the ``AMD-APP-SDK-v2.9-RC-lnx64.tgz`` file into ``/home/pocltest-src/AMDSDK2.9`` directory.
 
+- ``-DENABLE_CONFORMANCE=ON/OFF``
+  Builds Pocl as a fully conformant OpenCL implementation. Defaults to ON.
+  See :ref:`pocl-conformance` for details.
+
 
 LLVM-less build
 ---------------

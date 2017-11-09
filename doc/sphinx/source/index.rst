@@ -17,10 +17,13 @@ Contents:
    faq
    development
    releasing
+   maintainer-policy
    design
    features
    hsa
+   hsa_status
    cuda
+   conformance
 
 Back to `pocl home page <http://pocl.sourceforge.net>`_.
 

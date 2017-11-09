@@ -158,6 +158,11 @@ pocl.
               However, the code bloat is increased with larger
               WG sizes.
 
+- **POCL_SIGFPE_HANDLER**
+
+ Defaults to 1. If set to 0, pocl will not install the SIGFPE handler.
+ See :ref:`sigfpe-handler`
+
 - **POCL_TRACE_EVENT**, **POCL_TRACE_EVENT_OPT** and **POCL_TRACE_EVENT_FILTER**
 
  If POCL_TRACE_EVENT is set to some tracer name, then all events
