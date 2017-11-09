@@ -191,8 +191,9 @@ int pocl_llvm_build_program(cl_program program,
 
   if (num_input_headers > 0) {
     error = pocl_cache_create_tempdir(temp_include_dir);
+    if(error)
+      return error;
     std::string tempdir(temp_include_dir);
-    assert(error == 0);
 
     for (n = 0; n < num_input_headers; n++) {
       char *input_header = input_headers[n]->source;
@@ -547,7 +548,8 @@ int pocl_llvm_build_program(cl_program program,
 
   /* Always retain program.bc. Its required in clBuildProgram */
   error = pocl_write_module(*mod, program_bc_path, 0);
-  assert(error == 0);
+  if(error)
+    return error;
 
   /* To avoid writing & reading the same back,
    * save program->binaries[i]

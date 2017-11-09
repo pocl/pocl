@@ -273,7 +273,7 @@ enum
   JEP106_QCOM   = 0x51
 };
 
-const static struct
+static const struct
 {
   unsigned id; /* JEDEC JEP106 code; /proc/cpuinfo, field "CPU implementer" */
   char const *name;
@@ -293,7 +293,7 @@ typedef struct
   char const *name;
 } part_tuple_t;
 
-const static part_tuple_t part_list_arm[] =
+static const part_tuple_t part_list_arm[] =
 {
   { 0xd0a, "cortex-a75" },
   { 0xd09, "cortex-a73" },
@@ -313,7 +313,7 @@ const static part_tuple_t part_list_arm[] =
   { 0xc05, "cortex-a5" }
 };
 
-const static part_tuple_t part_list_apm[] =
+static const part_tuple_t part_list_apm[] =
 {
   { 0x0, "x-gene-1" }
 };
