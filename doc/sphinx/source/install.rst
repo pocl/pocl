@@ -62,10 +62,10 @@ For multiple-item options, use ";" as separator (you'll have to escape it for ba
   Note that you need LLVM built with static libs. This option might result
   in much longer build/link times and much larger pocl library, but the
   resulting libpocl will not require an LLVM installation to run.
-- ``-DENABLE_ICD`` and ``-DDIRECT_LINKAGE`` By default pocl's
-  buildsystem will try to find an ICD and build pocl as a dynamic library
-  named "libpocl". These options are useful if you want to avoid ICD and
-  build pocl directly as libOpenCL library. See also :ref:`linking-with-icd`
+- ``-DENABLE_ICD`` By default pocl's buildsystem will try to find an ICD
+  and build pocl as a dynamic library named "libpocl". This option is useful
+  if you want to avoid ICD and build pocl directly as libOpenCL library.
+  See also :ref:`linking-with-icd`
 - ``-DPOCL_INSTALL_<something>_DIR`` The equivalent of ``--bindir``,
   ``--sbindir`` etc fine-tuning of paths for autotools. See the beginning
   of toplevel CMakeLists.txt for all the variables.
