@@ -232,7 +232,7 @@ if(NOT HOST_CPU_CACHELINE_SIZE)
   endif()
 
   if(CL_SIZE EQUAL 0)
-    message(WARNING "Unable to detect cacheline size - assuming 64byte cacheline, override with -DHOST_CPU_CACHELINE_SIZE=<number>")
+    message(WARNING "Unable to detect cacheline size - assuming 64byte cacheline, override with -DHOST_CPU_CACHELINE_SIZE=<number> (Note: this is merely used for optimization, at worst pocl will be slightly slower)")
     set(HOST_CPU_CACHELINE_SIZE "64" CACHE STRING "L1D Cacheline size")
   endif()
 endif()
