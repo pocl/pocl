@@ -31,8 +31,8 @@ struct kernel_run_command
   _cl_command_node *cmd;
   pocl_workgroup workgroup;
   struct pocl_argument *kernel_args;
-  kernel_run_command *volatile next;
-  volatile int ref_count;
+  kernel_run_command *next;
+  int ref_count;
 
 #ifdef POCL_PTHREAD_CACHE_MONITORING
   pocl_cache_data cache_data;
@@ -40,8 +40,8 @@ struct kernel_run_command
 
   pthread_spinlock_t lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
-  volatile unsigned remaining_wgs __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-  volatile unsigned wgs_dealt;
+  unsigned remaining_wgs __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  unsigned wgs_dealt;
 
   struct pocl_context pc __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 

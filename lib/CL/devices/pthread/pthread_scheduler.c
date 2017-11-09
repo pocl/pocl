@@ -25,8 +25,8 @@ struct pool_thread_data
   pthread_mutex_t lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
   pthread_t thread __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-  volatile long executed_commands;
-  volatile unsigned current_ftz;
+  long executed_commands;
+  unsigned current_ftz;
   unsigned num_threads;
   unsigned index;
 
@@ -37,9 +37,9 @@ typedef struct scheduler_data_
   unsigned num_threads;
   struct pool_thread_data *thread_pool;
 
-  _cl_command_node *volatile work_queue
+  _cl_command_node *work_queue
       __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-  kernel_run_command *volatile kernel_queue;
+  kernel_run_command *kernel_queue;
 
   pthread_cond_t wake_pool __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
   pthread_mutex_t wake_lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
@@ -48,7 +48,7 @@ typedef struct scheduler_data_
   pthread_cond_t cq_finished_cond __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
   pthread_mutex_t cq_finished_lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
-  volatile int thread_pool_shutdown_requested;
+  int thread_pool_shutdown_requested;
 } scheduler_data __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
 static scheduler_data scheduler;
@@ -397,7 +397,7 @@ pocl_pthread_prepare_kernel
 }
 
 static void
-pocl_pthread_exec_command (_cl_command_node * volatile cmd,
+pocl_pthread_exec_command (_cl_command_node *cmd,
                            struct pool_thread_data *td)
 {
   if(cmd->type == CL_COMMAND_NDRANGE_KERNEL)
