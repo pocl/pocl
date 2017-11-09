@@ -361,23 +361,12 @@ pocl_pthread_prepare_kernel
 
   cmd->device->ops->compile_kernel (cmd, NULL, NULL);
 
-  /* Find which device number within the context correspond
-     to current device.  */
-  for (i = 0; i < kernel->context->num_devices; ++i)
-    {
-      if (kernel->context->devices[i]->data == data)
-        {
-          device = kernel->context->devices[i];
-          break;
-        }
-    }
-
   int num_groups = pc->num_groups[0] * pc->num_groups[1] * pc->num_groups[2];
 
   run_cmd = new_kernel_run_command ();
   run_cmd->data = data;
   run_cmd->kernel = kernel;
-  run_cmd->device = device;
+  run_cmd->device = cmd->device;
   run_cmd->pc = *pc;
   run_cmd->cmd = cmd;
   run_cmd->pc.local_size[0] = cmd->command.run.local_x;
