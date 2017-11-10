@@ -27,19 +27,15 @@
    a zero, assume the device info query hasn't been implemented 
    for the device driver at hand. Warns about an incomplete 
    implementation. */
-#define POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(__TYPE__, __VALUE__)    \
-  {                                                                 \
-    size_t const value_size = sizeof(__TYPE__);                     \
-    if (param_value)                                                \
-      {                                                             \
-        if (param_value_size < value_size) return CL_INVALID_VALUE; \
-        *(__TYPE__*)param_value = __VALUE__;                        \
-        if (__VALUE__ == 0) POCL_WARN_INCOMPLETE();                 \
-      }                                                             \
-    if (param_value_size_ret)                                       \
-      *param_value_size_ret = value_size;                           \
-    return CL_SUCCESS;                                              \
-  }
+#define POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(__TYPE__, __VALUE__)          \
+  if (__VALUE__ == (__TYPE__)0)                                               \
+    POCL_WARN_INCOMPLETE ();                                                  \
+  POCL_RETURN_GETINFO (__TYPE__, __VALUE__);
+
+#define POCL_RETURN_DEVICE_INFO_WITH_IMG_CHECK(__TYPE__, __VALUE__)           \
+  if ((device->image_support) && (__VALUE__ == (__TYPE__)0))                  \
+    POCL_WARN_INCOMPLETE ();                                                  \
+  POCL_RETURN_GETINFO (__TYPE__, __VALUE__);
 
 #define STRINGIFY_(x) #x
 #define STRINGIFY(x) STRINGIFY_ (x)
@@ -105,7 +101,9 @@ POname(clGetDeviceInfo)(cl_device_id   device,
       typedef struct { size_t size[3]; } size_t_3;
       POCL_RETURN_GETINFO(size_t_3, *(size_t_3 const *)device->max_work_item_sizes);
     }
-    
+  case CL_DEVICE_MAX_MEM_ALLOC_SIZE:
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK (cl_ulong,
+                                             device->max_mem_alloc_size);
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR:
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->preferred_vector_width_char);
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_SHORT:
@@ -122,32 +120,39 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->max_clock_frequency);
   case CL_DEVICE_ADDRESS_BITS                      :
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->address_bits);
-  case CL_DEVICE_MAX_READ_IMAGE_ARGS               : 
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->max_read_image_args);
+
+  case CL_DEVICE_MAX_READ_IMAGE_ARGS:
+    POCL_RETURN_DEVICE_INFO_WITH_IMG_CHECK (cl_uint,
+                                            device->max_read_image_args);
   case CL_DEVICE_MAX_WRITE_IMAGE_ARGS              :
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->max_write_image_args);
+    POCL_RETURN_DEVICE_INFO_WITH_IMG_CHECK (cl_uint,
+                                            device->max_write_image_args);
   case CL_DEVICE_MAX_READ_WRITE_IMAGE_ARGS         :
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->max_read_write_image_args);
-  case CL_DEVICE_MAX_MEM_ALLOC_SIZE:
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->max_mem_alloc_size);
-  case CL_DEVICE_IMAGE2D_MAX_WIDTH                 : 
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->image2d_max_width);
+    POCL_RETURN_DEVICE_INFO_WITH_IMG_CHECK (cl_uint,
+                                            device->max_read_write_image_args);
+  case CL_DEVICE_IMAGE2D_MAX_WIDTH:
+    POCL_RETURN_DEVICE_INFO_WITH_IMG_CHECK (size_t, device->image2d_max_width);
   case CL_DEVICE_IMAGE2D_MAX_HEIGHT                :
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->image2d_max_height);
-  case CL_DEVICE_IMAGE3D_MAX_WIDTH                 : 
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->image3d_max_width);
-  case CL_DEVICE_IMAGE3D_MAX_HEIGHT                : 
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->image3d_max_height);
+    POCL_RETURN_DEVICE_INFO_WITH_IMG_CHECK (size_t,
+                                            device->image2d_max_height);
+  case CL_DEVICE_IMAGE3D_MAX_WIDTH:
+    POCL_RETURN_DEVICE_INFO_WITH_IMG_CHECK (size_t, device->image3d_max_width);
+  case CL_DEVICE_IMAGE3D_MAX_HEIGHT:
+    POCL_RETURN_DEVICE_INFO_WITH_IMG_CHECK (size_t,
+                                            device->image3d_max_height);
   case CL_DEVICE_IMAGE3D_MAX_DEPTH                 :
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->image3d_max_depth);
+    POCL_RETURN_DEVICE_INFO_WITH_IMG_CHECK (size_t, device->image3d_max_depth);
   case CL_DEVICE_IMAGE_MAX_BUFFER_SIZE             :
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->image_max_buffer_size);
+    POCL_RETURN_DEVICE_INFO_WITH_IMG_CHECK (size_t,
+                                            device->image_max_buffer_size);
   case CL_DEVICE_IMAGE_MAX_ARRAY_SIZE              :
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->image_max_array_size);
-  case CL_DEVICE_MAX_PARAMETER_SIZE                : 
+    POCL_RETURN_DEVICE_INFO_WITH_IMG_CHECK (size_t,
+                                            device->image_max_array_size);
+  case CL_DEVICE_MAX_SAMPLERS:
+    POCL_RETURN_DEVICE_INFO_WITH_IMG_CHECK (cl_uint, device->max_samplers);
+
+  case CL_DEVICE_MAX_PARAMETER_SIZE:
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->max_parameter_size);
-  case CL_DEVICE_MAX_SAMPLERS                      : 
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->max_samplers);
   case CL_DEVICE_MEM_BASE_ADDR_ALIGN               : 
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->mem_base_addr_align);
   case CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE          : 
