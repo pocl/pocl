@@ -49,6 +49,7 @@ POname(clReleaseEvent)(cl_event event) CL_API_SUFFIX__VERSION_1_0
           pocl_user_event_data *p = event->data;
           pthread_cond_destroy (&p->wakeup_cond);
           pthread_mutex_destroy (&p->lock);
+          POCL_MEM_FREE (p);
         }
 
       POCL_MSG_PRINT_REFCOUNTS ("Free event %d\n", event->id);
