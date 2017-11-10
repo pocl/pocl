@@ -737,7 +737,9 @@ compile_and_link_program(int compile_program,
   /* Set up all program kernels.  */
   assert (program->default_kernels == NULL);
   program->operating_on_default_kernels = 1;
-  program->default_kernels = calloc(program->num_kernels, sizeof(cl_kernel));
+  if (program->num_kernels > 0)
+    program->default_kernels
+        = calloc (program->num_kernels, sizeof (cl_kernel));
 
   for (i=0; i < program->num_kernels; i++)
     {
