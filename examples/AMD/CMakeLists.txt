@@ -70,16 +70,17 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
     FloydWarshall
     HelloWorld
     Histogram
-    ImageBandwidth
     ImageOverlap
     KernelLaunch
     LUDecomposition
+    Mandelbrot
     MatrixMulImage
     MatrixMultiplication
     MatrixTranspose
     MemoryModel
     MonteCarloAsian
     MonteCarloAsianMultiGPU
+    NBody
     PrefixSum
     QuasiRandomSequence
     RadixSort
@@ -95,13 +96,13 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
     TransferOverlap
     URNG)
 
-    # disabled tests:  Mandelbrot NBody
+    # disabled tests:
     #   SimpleGL BoxFilterGL FluidSimulation2D GaussianNoiseGL
-    #   MonteCarloAsianDP AdvancedMultiGPU BasicDebug
+    #   MonteCarloAsianDP AdvancedMultiGPU BasicDebug ImageBandwidth
 
     foreach(SAMPLE IN LISTS AMD_SAMPLES)
       add_test(NAME "AMD_28_${SAMPLE}"
-        COMMAND "${TS_BASEDIR}/src/${TS_NAME}/AMD-APP-SDK-v2.8-RC-lnx64/samples/opencl/bin/x86_64/${SAMPLE}"
+        COMMAND "${TS_BASEDIR}/src/${TS_NAME}/AMD-APP-SDK-v2.8-RC-lnx64/samples/opencl/bin/x86_64/${SAMPLE}" "-q" "-t"
         WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/AMD-APP-SDK-v2.8-RC-lnx64/samples/opencl/bin/x86_64")
       set_tests_properties("AMD_28_${SAMPLE}" PROPERTIES LABELS "amdsdk_28")
     endforeach()
