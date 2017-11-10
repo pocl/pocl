@@ -837,7 +837,7 @@ struct _cl_sampler {
     }                                                                         \
   while (0)
 
-#define POCL_UPDATE_EVENT_COMPLETE(__event)                                   \
+#define POCL_UPDATE_EVENT_COMPLETE_INNER(__event, POST_EVENT)                 \
   do                                                                          \
     {                                                                         \
       if ((__event) != NULL)                                                  \
@@ -864,10 +864,18 @@ struct _cl_sampler {
               pocl_update_command_queue (__event);                            \
             }                                                                 \
           pocl_event_updated (__event, CL_COMPLETE);                          \
+          POST_EVENT;                                                         \
           POname (clReleaseEvent) (__event);                                  \
         }                                                                     \
     }                                                                         \
   while (0)
+
+#define POCL_UPDATE_EVENT_COMPLETE(__event)                                   \
+  POCL_UPDATE_EVENT_COMPLETE_INNER (__event, NULL)
+
+#define POCL_UPDATE_EVENT_COMPLETE_MSG(__event, msg)                          \
+  POCL_UPDATE_EVENT_COMPLETE_INNER (__event,                                  \
+                                    POCL_DEBUG_EVENT_TIME ((__event), msg))
 
 #define CL_FAILED (-1)
 
