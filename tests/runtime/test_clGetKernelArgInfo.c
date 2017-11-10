@@ -319,6 +319,9 @@ int test_program_nometa(cl_program program) {
                             BUF_LEN, &kernel_arg.string, &retsize);
   TEST_ASSERT(err == CL_KERNEL_ARG_INFO_NOT_AVAILABLE);
 
+  err = clReleaseKernel (test_kernel);
+  CHECK_OPENCL_ERROR_IN ("clReleaseKernel");
+
   return EXIT_SUCCESS;
 }
 
@@ -340,6 +343,8 @@ int spir_program(char * filename, cl_context ctx, cl_device_id did, cl_program* 
   TEST_ASSERT(program);
 
   CHECK_CL_ERROR(clBuildProgram (*program, 1, &did, NULL, NULL, NULL));
+
+  free (program_buffer);
 
   return EXIT_SUCCESS;
 }
@@ -396,6 +401,10 @@ int main()
   TEST_ASSERT(test_program_nometa(program) == EXIT_SUCCESS);
 
   CHECK_CL_ERROR(clReleaseProgram(program));
+
+  CHECK_CL_ERROR (clReleaseCommandQueue (queue));
+  CHECK_CL_ERROR (clReleaseContext (ctx));
+  CHECK_CL_ERROR (clUnloadCompiler ());
 
   printf("\nOK\n");
   return EXIT_SUCCESS;

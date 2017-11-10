@@ -75,5 +75,15 @@ int main(int argc, char **argv)
   err = clFinish(queue);
   CHECK_OPENCL_ERROR_IN("clFinish 2");
 
+  CHECK_CL_ERROR (clReleaseCommandQueue (queue));
+  CHECK_CL_ERROR (clReleaseKernel (kernel));
+  CHECK_CL_ERROR (clReleaseKernel (kernel2));
+  CHECK_CL_ERROR (clReleaseProgram (program));
+  CHECK_CL_ERROR (clReleaseProgram (program2));
+  CHECK_CL_ERROR (clReleaseContext (ctx));
+  CHECK_CL_ERROR (clUnloadCompiler ());
+
+  free ((void *)krn_src);
+
   return 0;
 }

@@ -177,6 +177,30 @@ int main()
   CHECK_OPENCL_ERROR_IN("clEnqueueNDRangeKernel");
 
   clFinish(queueC);
+  /* TODO some checks */
+
+  CHECK_CL_ERROR (clReleaseEvent (eventA1));
+  CHECK_CL_ERROR (clReleaseEvent (eventB2));
+  CHECK_CL_ERROR (clReleaseEvent (eventA3));
+  CHECK_CL_ERROR (clReleaseEvent (eventB4));
+
+  CHECK_CL_ERROR (clReleaseKernel (kernelA));
+  CHECK_CL_ERROR (clReleaseKernel (kernelB));
+  CHECK_CL_ERROR (clReleaseKernel (kernelC));
+
+  CHECK_CL_ERROR (clReleaseProgram (program));
+
+  CHECK_CL_ERROR (clReleaseCommandQueue (queueA));
+  CHECK_CL_ERROR (clReleaseCommandQueue (queueB));
+  CHECK_CL_ERROR (clReleaseCommandQueue (queueC));
+
+  CHECK_CL_ERROR (clReleaseMemObject (inputBufferA));
+  CHECK_CL_ERROR (clReleaseMemObject (inputBufferB));
+  CHECK_CL_ERROR (clReleaseMemObject (inputBufferC));
+
+  CHECK_CL_ERROR (clReleaseContext (context));
+  CHECK_CL_ERROR (clUnloadCompiler ());
+
   printf("\n");
   return EXIT_SUCCESS;
 

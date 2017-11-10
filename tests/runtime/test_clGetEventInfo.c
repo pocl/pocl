@@ -56,7 +56,11 @@ main(void)
           CHECK_CL_ERROR(clReleaseMemObject(buf));
 
           CHECK_CL_ERROR(clReleaseCommandQueue(queue));
+
+          CHECK_CL_ERROR (clReleaseContext (context));
         }
     }
+
+  printf ("OK\n");
   return EXIT_SUCCESS;
 }

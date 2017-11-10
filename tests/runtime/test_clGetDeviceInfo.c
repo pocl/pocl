@@ -49,5 +49,7 @@ main(void)
       TEST_ASSERT(max_mem_alloc_size >= min_max_mem_alloc_size);
     }
   }
+
+  printf ("OK\n");
   return EXIT_SUCCESS;
 }

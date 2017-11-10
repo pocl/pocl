@@ -125,12 +125,16 @@ main(void)
 
       free(host_buf2);
       free(host_buf1);
-      clReleaseEvent(buf2_event);
-      clReleaseEvent(bufcp_event);
-      clReleaseEvent(buf1_event);
-      clReleaseMemObject(buf2);
-      clReleaseMemObject(buf1);
-      clReleaseCommandQueue(queue);
+
+      CHECK_CL_ERROR (clReleaseEvent (buf2_event));
+      CHECK_CL_ERROR (clReleaseEvent (bufcp_event));
+      CHECK_CL_ERROR (clReleaseEvent (buf1_event));
+
+      CHECK_CL_ERROR (clReleaseMemObject (buf1));
+      CHECK_CL_ERROR (clReleaseMemObject (buf2));
+
+      CHECK_CL_ERROR (clReleaseCommandQueue (queue));
+      CHECK_CL_ERROR (clReleaseContext (context));
     }
   }
   return EXIT_SUCCESS;

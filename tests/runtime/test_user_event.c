@@ -52,8 +52,8 @@ int main()
 	  cl_command_queue queue;
 	  cl_device_id device;
 
-	  CHECK_CL_ERROR(poclu_get_any_device(&context, &device, &queue));
-	  TEST_ASSERT( context );
+          CHECK_CL_ERROR (poclu_get_any_device (&context, &device, &queue));
+          TEST_ASSERT( context );
 	  TEST_ASSERT( device );
 	  TEST_ASSERT( queue );
 
@@ -76,9 +76,9 @@ int main()
 		  sizeof(endtime), &endtime, NULL);
 	  TEST_ASSERT(err == CL_PROFILING_INFO_NOT_AVAILABLE);
 
-	  CHECK_CL_ERROR(clReleaseEvent(user_evt));
-	  CHECK_CL_ERROR(clReleaseCommandQueue(queue));
-	  CHECK_CL_ERROR(clReleaseContext(context));
+          CHECK_CL_ERROR (clReleaseEvent (user_evt));
+          CHECK_CL_ERROR (clReleaseCommandQueue (queue));
+          CHECK_CL_ERROR (clReleaseContext (context));
   }
 
   return EXIT_SUCCESS;

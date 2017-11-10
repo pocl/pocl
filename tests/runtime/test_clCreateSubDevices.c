@@ -197,6 +197,12 @@ int main(int argc, char **argv)
   err = clCreateSubDevices(rootdev, equal_splitter, 2, eqdev, NULL);
   CHECK_OPENCL_ERROR_IN("partition equally");
 
+  cl_uint refc;
+  err = clGetDeviceInfo (eqdev[0], CL_DEVICE_REFERENCE_COUNT, sizeof (refc),
+                         &refc, NULL);
+  CHECK_OPENCL_ERROR_IN ("get refcount");
+  TEST_ASSERT (refc == 1);
+
   /* First, check that the root device is untouched */
 
   err = clGetDeviceInfo(rootdev, CL_DEVICE_MAX_COMPUTE_UNITS,
@@ -372,6 +378,12 @@ int main(int argc, char **argv)
   CHECK_OPENCL_ERROR_IN("clCreateContext");
   TEST_ASSERT( test_context(ctx, prog_src_two, -1, NUMDEVS - 1, alldevs + 1)
     == CL_SUCCESS );
+
+  for (i = 0; i < NUMDEVS; i++)
+    clReleaseDevice (alldevs[i]);
+
+  CHECK_CL_ERROR (clUnloadCompiler ());
+  free (dev_pt);
 
   printf ("OK\n");
 

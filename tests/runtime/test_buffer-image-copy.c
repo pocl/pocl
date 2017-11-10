@@ -186,13 +186,15 @@ main(void)
 
       TEST_ASSERT(memcmp(buf_map, host_buf, buf_size) == 0);
 
-      CHECK_CL_ERROR(clEnqueueUnmapMemObject(queue, buf, buf_map, 0, NULL, NULL));
-      CHECK_CL_ERROR(clFinish(queue));
+      CHECK_CL_ERROR (
+          clEnqueueUnmapMemObject (queue, buf, buf_map, 0, NULL, NULL));
+      CHECK_CL_ERROR (clFinish (queue));
 
       free(host_buf);
-      CHECK_CL_ERROR(clReleaseMemObject(img));
-      CHECK_CL_ERROR(clReleaseMemObject(buf));
-      CHECK_CL_ERROR(clReleaseCommandQueue(queue));
+      CHECK_CL_ERROR (clReleaseMemObject (img));
+      CHECK_CL_ERROR (clReleaseMemObject (buf));
+      CHECK_CL_ERROR (clReleaseCommandQueue (queue));
+      CHECK_CL_ERROR (clReleaseContext (context));
     }
   }
   return EXIT_SUCCESS;

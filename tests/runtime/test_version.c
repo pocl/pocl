@@ -53,8 +53,11 @@ int main(void)
 		*needle=0;		
 	}
 	printf("%s\n", result);
-	
 
-	return 0;
+        CHECK_CL_ERROR (clReleaseCommandQueue (queue));
+        CHECK_CL_ERROR (clReleaseContext (context));
+        CHECK_CL_ERROR (clUnloadCompiler ());
+
+        return 0;
 }
 

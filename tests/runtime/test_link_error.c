@@ -61,5 +61,11 @@ main(void){
   err = clBuildProgram(program, 1, &did, NULL, NULL, NULL);
   TEST_ASSERT(err == CL_BUILD_PROGRAM_FAILURE);
 
+  CHECK_CL_ERROR (clReleaseCommandQueue (queue));
+  CHECK_CL_ERROR (clReleaseProgram (program));
+  CHECK_CL_ERROR (clReleaseContext (context));
+
+  CHECK_CL_ERROR (clUnloadCompiler ());
+
   return EXIT_SUCCESS;
 }

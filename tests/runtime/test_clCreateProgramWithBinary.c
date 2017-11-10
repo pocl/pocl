@@ -178,8 +178,13 @@ main(void){
   if (binaries) 
     free(binaries);
   if (program)
-    clReleaseProgram(program);  
+    CHECK_CL_ERROR (clReleaseProgram (program));
   if (program_with_binary)
-    clReleaseProgram(program_with_binary);
+    CHECK_CL_ERROR (clReleaseProgram (program_with_binary));
+  if (context)
+    CHECK_CL_ERROR (clReleaseContext (context));
+
+  CHECK_CL_ERROR (clUnloadCompiler ());
+
   return err == CL_SUCCESS ? EXIT_SUCCESS : EXIT_FAILURE;
 }

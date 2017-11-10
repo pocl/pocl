@@ -127,13 +127,13 @@ int main(int argc, char **argv) {
         printf("Fail to validate vector\n");
         goto error;
       }
-     
-  CHECK_CL_ERROR(clReleaseMemObject(d_a));
-  CHECK_CL_ERROR(clReleaseMemObject(d_b));
-  CHECK_CL_ERROR(clReleaseMemObject(d_c));
-  CHECK_CL_ERROR(clReleaseCommandQueue(queue));
-  CHECK_CL_ERROR(clReleaseContext(ctx));
- 
+
+  CHECK_CL_ERROR (clReleaseMemObject (d_a));
+  CHECK_CL_ERROR (clReleaseMemObject (d_b));
+  CHECK_CL_ERROR (clReleaseMemObject (d_c));
+  CHECK_CL_ERROR (clReleaseCommandQueue (queue));
+  CHECK_CL_ERROR (clReleaseContext (ctx));
+
   free(h_a);
   free(h_b);
   free(h_c);

@@ -113,15 +113,21 @@ main(void)
             2, evts, evts + 2));
         CHECK_CL_ERROR(clFinish(queue));
 
+        CHECK_CL_ERROR (clReleaseEvent (evts[2]));
+        CHECK_CL_ERROR (clReleaseEvent (evts[1]));
+        CHECK_CL_ERROR (clReleaseEvent (evts[0]));
+
         TEST_ASSERT(memcmp(host_buf2, host_buf1, buf_size) == 0);
       }
 
       free(host_buf2);
       free(host_buf1);
-      CHECK_CL_ERROR(clReleaseMemObject(buf2));
-      CHECK_CL_ERROR(clReleaseMemObject(buf1));
-      CHECK_CL_ERROR(clReleaseCommandQueue(queue));
+      CHECK_CL_ERROR (clReleaseMemObject (buf2));
+      CHECK_CL_ERROR (clReleaseMemObject (buf1));
+      CHECK_CL_ERROR (clReleaseCommandQueue (queue));
+      CHECK_CL_ERROR (clReleaseContext (context));
     }
   }
+
   return EXIT_SUCCESS;
 }

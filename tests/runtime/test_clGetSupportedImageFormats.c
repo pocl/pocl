@@ -41,5 +41,7 @@ main(void)
 
   TEST_ASSERT(num_entries != 0);
 
+  CHECK_CL_ERROR (clReleaseContext (context));
+
   return EXIT_SUCCESS;
 }

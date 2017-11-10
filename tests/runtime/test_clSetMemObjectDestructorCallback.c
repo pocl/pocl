@@ -42,8 +42,9 @@ main(void)
   err = clSetMemObjectDestructorCallback (mem, callback, (void*)FAKE_PTR);
   CHECK_OPENCL_ERROR_IN("clSetMemObjectDestructorCallback");
 
-  err = clReleaseMemObject (mem);
-  CHECK_OPENCL_ERROR_IN("clReleaseMemObject");
+  CHECK_CL_ERROR (clReleaseMemObject (mem));
+  CHECK_CL_ERROR (clReleaseContext (context));
+  CHECK_CL_ERROR (clUnloadCompiler ());
 
   return EXIT_SUCCESS;
 }

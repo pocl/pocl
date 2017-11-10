@@ -465,6 +465,9 @@ main(void){
   }
 #endif
 
+  CHECK_CL_ERROR (clReleaseContext (context));
+  CHECK_CL_ERROR (clUnloadCompiler ());
+
   printf ("OK\n");
 
   return EXIT_SUCCESS;

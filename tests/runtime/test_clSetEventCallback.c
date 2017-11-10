@@ -136,6 +136,18 @@ int main()
           return EXIT_FAILURE;
         }
     }
+
+  CHECK_CL_ERROR (clReleaseEvent (an_event));
+
+  CHECK_CL_ERROR (clReleaseCommandQueue (queue));
+  CHECK_CL_ERROR (clReleaseMemObject (inputBuffer));
+
+  CHECK_CL_ERROR (clReleaseKernel (kernel));
+  CHECK_CL_ERROR (clReleaseProgram (program));
+
+  CHECK_CL_ERROR (clReleaseContext (context));
+  CHECK_CL_ERROR (clUnloadCompiler ());
+
   return EXIT_SUCCESS;
 
 }

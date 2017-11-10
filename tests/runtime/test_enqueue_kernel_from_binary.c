@@ -395,24 +395,32 @@ int main(void)
         }
     }
 
-  CHECK_CL_ERROR(clReleaseMemObject(d_a));
-  CHECK_CL_ERROR(clReleaseMemObject(d_b));
-  CHECK_CL_ERROR(clReleaseMemObject(d_c1));
-  CHECK_CL_ERROR(clReleaseMemObject(d_c2));
-  CHECK_CL_ERROR(clReleaseMemObject(d_c3));
-  CHECK_CL_ERROR(clReleaseMemObject(barrier_buffer1));
-  CHECK_CL_ERROR(clReleaseMemObject(barrier_buffer2));
-  CHECK_CL_ERROR(clReleaseProgram(program1));
-  CHECK_CL_ERROR(clReleaseProgram(program2));
-  CHECK_CL_ERROR(clReleaseProgram(b_program1));
-  CHECK_CL_ERROR(clReleaseProgram(b_program2));
-  CHECK_CL_ERROR(clReleaseKernel(kernel1));
-  CHECK_CL_ERROR(clReleaseKernel(kernel2));
-  CHECK_CL_ERROR(clReleaseKernel(kernel3));
-  CHECK_CL_ERROR(clReleaseKernel(barrier_kernel1));
-  CHECK_CL_ERROR(clReleaseKernel(barrier_kernel2));
-  CHECK_CL_ERROR(clReleaseCommandQueue(queue));
-  CHECK_CL_ERROR(clReleaseContext(context));
+  CHECK_CL_ERROR (clReleaseMemObject (d_a));
+  CHECK_CL_ERROR (clReleaseMemObject (d_b));
+  CHECK_CL_ERROR (clReleaseMemObject (d_c1));
+  CHECK_CL_ERROR (clReleaseMemObject (d_c2));
+  CHECK_CL_ERROR (clReleaseMemObject (d_c3));
+  CHECK_CL_ERROR (clReleaseMemObject (barrier_buffer1));
+  CHECK_CL_ERROR (clReleaseMemObject (barrier_buffer2));
+  CHECK_CL_ERROR (clReleaseMemObject (static_wg_buffer));
+
+  CHECK_CL_ERROR (clReleaseKernel (kernel1));
+  CHECK_CL_ERROR (clReleaseKernel (kernel2));
+  CHECK_CL_ERROR (clReleaseKernel (kernel3));
+  CHECK_CL_ERROR (clReleaseKernel (barrier_kernel1));
+  CHECK_CL_ERROR (clReleaseKernel (barrier_kernel2));
+  CHECK_CL_ERROR (clReleaseKernel (static_wg_kernel));
+
+  CHECK_CL_ERROR (clReleaseProgram (program1));
+  CHECK_CL_ERROR (clReleaseProgram (program2));
+  CHECK_CL_ERROR (clReleaseProgram (b_program1));
+  CHECK_CL_ERROR (clReleaseProgram (b_program2));
+  CHECK_CL_ERROR (clReleaseProgram (static_wg_size_bin_program));
+  CHECK_CL_ERROR (clReleaseProgram (static_wg_size_program));
+
+  CHECK_CL_ERROR (clReleaseCommandQueue (queue));
+  CHECK_CL_ERROR (clReleaseContext (context));
+  CHECK_CL_ERROR (clUnloadCompiler ());
 
   free(bb1);
   free(bb2);
@@ -423,6 +431,8 @@ int main(void)
   free(h_c3);
   free(binary);
   free(barrier_binary);
+  free (static_wg_binary);
+  free (static_wg_buf);
 
   return 0;
 }

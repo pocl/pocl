@@ -37,6 +37,13 @@ int main(int argc, char **argv)
   TEST_ASSERT(err == CL_INVALID_KERNEL_NAME);
   TEST_ASSERT(kernel == NULL);
 
+  CHECK_CL_ERROR (clReleaseCommandQueue (queue));
+  CHECK_CL_ERROR (clReleaseProgram (program));
+  CHECK_CL_ERROR (clReleaseContext (ctx));
+  CHECK_CL_ERROR (clUnloadCompiler ());
+
+  free ((void *)krn_src);
+
   printf("OK\n");
 
   return 0;

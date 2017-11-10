@@ -212,6 +212,9 @@ int main(int argc, char **argv)
   clReleaseMemObject (img);
   clReleaseMemObject (buf);
 
+  CHECK_CL_ERROR (clReleaseCommandQueue (queue));
+  CHECK_CL_ERROR (clReleaseContext (ctx));
+
   return EXIT_SUCCESS;
 
 }
