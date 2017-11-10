@@ -557,10 +557,13 @@ pocl_binary_deserialize_kernel_from_buffer (unsigned char **buf,
   if (name_len > 0 && name_match)
     {
       *buf = *buf + kernel->struct_size;
-      if (kernel->sizeof_kernel_name != name_len)
+      if ((kernel->sizeof_kernel_name != name_len)
+          || (strncmp (kernel->kernel_name, name_match,
+                       kernel->sizeof_kernel_name)))
+        {
+          POCL_MEM_FREE (kernel->kernel_name);
           return CL_INVALID_KERNEL_NAME;
-      if (strncmp (kernel->kernel_name, name_match, kernel->sizeof_kernel_name))
-          return CL_INVALID_KERNEL_NAME;
+        }
 
       kernel->dyn_arguments = calloc ((kernel->num_args + kernel->num_locals),
                                       sizeof(struct pocl_argument));
@@ -597,6 +600,7 @@ pocl_binary_deserialize_kernel_from_buffer (unsigned char **buf,
     }
 
   *buf = buffer;
+  POCL_MEM_FREE (kernel->kernel_name);
   return CL_SUCCESS;
 
 }
@@ -769,7 +773,7 @@ pocl_binary_get_kernel_metadata (unsigned char *binary, const char *kernel_name,
   kernel->num_locals = k.num_locals;
   kernel->dyn_arguments = k.dyn_arguments;
   kernel->arg_info = k.arg_info;
-  free (k.kernel_name);
+  POCL_MEM_FREE (k.kernel_name);
 
   POCL_RETURN_ERROR_COND ((kernel->reqd_wg_size = calloc (OPENCL_MAX_DIMENSION, sizeof (size_t)))
                               == NULL,
