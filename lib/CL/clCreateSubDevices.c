@@ -134,10 +134,12 @@ POname(clCreateSubDevices)(cl_device_id in_device,
      for (i = 0; i < count_devices; ++i) {
        new_devs[i] = calloc(1, sizeof(struct _cl_device_id));
        POCL_GOTO_ERROR_COND((new_devs[i] == NULL), CL_OUT_OF_HOST_MEMORY);
-       POCL_INIT_OBJECT(new_devs[i]);
 
        // clone in_device
        memcpy(new_devs[i], in_device, sizeof(struct _cl_device_id));
+       /* this must be done AFTER the clone, otherwise we end up with
+        * lock states and refcounts copied from parent device */
+       POCL_INIT_OBJECT (new_devs[i]);
 
        new_devs[i]->parent_device = in_device;
 
@@ -182,12 +184,15 @@ ERROR:
       // with the ones we actually managed to allocate
       if (new_devs[i] == NULL)
         break;
-      POCL_RELEASE_OBJECT(new_devs[i], new_refcount);
+      POCL_RELEASE_OBJECT (new_devs[i], new_refcount);
       if (new_refcount == 0)
-        POCL_MEM_FREE(new_devs[i]);
+        {
+          POCL_MEM_FREE (new_devs[i]);
+          POCL_MEM_FREE (new_devs[i]->partition_type);
+        }
     }
 
-    free(new_devs);
+    POCL_MEM_FREE (new_devs);
   }
   return errcode;
 
