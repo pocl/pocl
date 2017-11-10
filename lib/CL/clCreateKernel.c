@@ -175,10 +175,11 @@ ERROR:
           {
             pocl_aligned_free (kernel->dyn_arguments[i].value);
           }
-      POCL_MEM_FREE(kernel->reqd_wg_size);
-      POCL_MEM_FREE(kernel->dyn_arguments);
-      POCL_MEM_FREE(kernel->arg_info);
-      POCL_MEM_FREE(kernel);
+      POCL_MEM_FREE (kernel->reqd_wg_size);
+      POCL_MEM_FREE (kernel->dyn_arguments);
+      POCL_MEM_FREE (kernel->arg_info);
+      POCL_MEM_FREE (kernel->name);
+      POCL_MEM_FREE (kernel);
     }
   kernel = NULL;
 
