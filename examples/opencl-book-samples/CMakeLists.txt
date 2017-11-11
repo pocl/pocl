@@ -80,16 +80,17 @@ add_test(NAME "opencl_book_samples_SimpleBufferSubBuffer"
 add_test(NAME "opencl_book_samples_vecadd"
          COMMAND "${TS_BUILDDIR}/src/Chapter_12/VectorAdd/vecadd"
          WORKING_DIRECTORY "${TS_SRCDIR}/src/Chapter_12/VectorAdd")
-add_test(NAME "opencl_book_samples_histogram"
-         COMMAND "${TS_BUILDDIR}/src/Chapter_14/histogram/histogram"
-         WORKING_DIRECTORY "${TS_SRCDIR}/src/Chapter_14/histogram")
+# requires a GPU
+#add_test(NAME "opencl_book_samples_histogram"
+#         COMMAND "${TS_BUILDDIR}/src/Chapter_14/histogram/histogram"
+#         WORKING_DIRECTORY "${TS_SRCDIR}/src/Chapter_14/histogram")
 add_test(NAME "opencl_book_samples_Dijkstra"
          COMMAND "${TS_BUILDDIR}/src/Chapter_16/Dijkstra/Dijkstra" --cpu
          WORKING_DIRECTORY "${TS_SRCDIR}/src/Chapter_16/Dijkstra")
 # doesn't work
-add_test(NAME "opencl_book_samples_spmv"
-         COMMAND "${TS_BUILDDIR}/src/Chapter_22/spmv"
-         WORKING_DIRECTORY "${TS_SRCDIR}/src/Chapter_22")
+#add_test(NAME "opencl_book_samples_spmv"
+#         COMMAND "${TS_BUILDDIR}/src/Chapter_22/spmv"
+#         WORKING_DIRECTORY "${TS_SRCDIR}/src/Chapter_22")
 
 
 
@@ -102,9 +103,9 @@ set_tests_properties(
   opencl_book_samples_SimpleBufferSubBuffer
 #  opencl_book_samples_ImageFilter2D
   opencl_book_samples_vecadd
-  opencl_book_samples_histogram
+#  opencl_book_samples_histogram
   opencl_book_samples_Dijkstra
-  opencl_book_samples_spmv
+#  opencl_book_samples_spmv
   PROPERTIES
     LABELS "opencl-book-samples")
 
