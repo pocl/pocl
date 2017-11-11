@@ -200,14 +200,14 @@ main (void)
       return -1; 
     } 
  
+  CHECK_CL_ERROR (clFinish (cmd_queue));
+
   delete_memobjs (memobjs, 2);
-  clReleaseKernel (kernel);
-  clReleaseProgram (program);
-  clReleaseCommandQueue (cmd_queue);
-  cl_platform_id pocl;
-  clGetPlatformIDs (1, &pocl, NULL);
-  clUnloadPlatformCompiler (pocl);
-  clReleaseContext (context);
+  CHECK_CL_ERROR (clReleaseKernel (kernel));
+  CHECK_CL_ERROR (clReleaseProgram (program));
+  CHECK_CL_ERROR (clReleaseCommandQueue (cmd_queue));
+  CHECK_CL_ERROR (clReleaseContext (context));
+  CHECK_CL_ERROR (clUnloadCompiler ());
 
   for (i = 0; i < HEIGHT; ++i)
     {
@@ -231,5 +231,5 @@ delete_memobjs(cl_mem *memobjs, int n)
 { 
   int i; 
   for (i=0; i<n; i++) 
-    clReleaseMemObject(memobjs[i]); 
+    CHECK_CL_ERROR (clReleaseMemObject(memobjs[i]));
 } 

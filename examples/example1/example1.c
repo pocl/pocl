@@ -108,6 +108,7 @@ main (void)
   free (srcB);
   free (dst);
 
+
   printf ("OK\n");
   return 0;
 }
