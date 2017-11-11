@@ -30,9 +30,13 @@ set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
 
 find_package(Boost 1.44 QUIET)
 
-if(NOT HAVE_GIT)
-  message(STATUS "Disabling testsuite ${TS_NAME}, requires git to checkout sources")
-elseif(NOT TESTS_USE_ICD)
+if(EXAMPLES_USE_GIT_MASTER)
+  set(FETCH_SOURCE GIT_REPOSITORY "https://github.com/clMathLibraries/clFFT.git")
+else()
+  set(FETCH_SOURCE URL "https://github.com/clMathLibraries/clFFT/archive/v2.12.2.tar.gz")
+endif()
+
+if(NOT TESTS_USE_ICD)
   message(STATUS "Disabling testsuite ${TS_NAME}, requires ocl-icd")
 elseif(NOT Boost_FOUND)
   message(STATUS "Disabling testsuite ${TS_NAME}, required Boost version not found" )
@@ -45,9 +49,9 @@ else()
   ExternalProject_Add(
     ${TS_NAME}
     PREFIX "${TS_BASEDIR}"
-    GIT_REPOSITORY "https://github.com/clMathLibraries/${TS_NAME}.git"
+    ${FETCH_SOURCE}
     #PATCH_COMMAND  pwd && sed -i "s/CL_DEVICE_TYPE_GPU/CL_DEVICE_TYPE_CPU/g" *.cpp
-    UPDATE_COMMAND /bin/true
+
     CONFIGURE_COMMAND ${CMAKE_COMMAND}
       -DBUILD_RUNTIME=ON
       -DBUILD_CLIENT=ON

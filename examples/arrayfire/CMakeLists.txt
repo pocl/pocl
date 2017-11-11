@@ -31,6 +31,12 @@ set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
 find_package(LAPACK QUIET)
 find_package(Boost QUIET)
 
+if(EXAMPLES_USE_GIT_MASTER)
+  set(FETCH_SOURCE GIT_REPOSITORY "https://github.com/arrayfire/arrayfire.git")
+else()
+  set(FETCH_SOURCE URL "http://arrayfire.com/arrayfire_source/arrayfire-full-3.5.1.tar.bz2")
+endif()
+
 if(HAVE_GIT)
 
 if(LAPACK_FOUND AND
@@ -43,7 +49,7 @@ if(LAPACK_FOUND AND
   ExternalProject_Add(
     ${TS_NAME}
     PREFIX "${TS_BASEDIR}"
-    GIT_REPOSITORY "https://github.com/arrayfire/${TS_NAME}.git"
+    ${FETCH_SOURCE}
     #PATCH_COMMAND  pwd && sed -i "s/CL_DEVICE_TYPE_GPU/CL_DEVICE_TYPE_CPU/g" *.cpp
     #UPDATE_COMMAND /bin/true
     CMAKE_ARGS

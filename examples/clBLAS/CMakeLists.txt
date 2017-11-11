@@ -30,9 +30,13 @@ set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
 
 find_package(Boost 1.44 QUIET)
 
-if(NOT HAVE_GIT)
-  message(STATUS "Disabling testsuite ${TS_NAME}, requires git to checkout sources")
-elseif(NOT Boost_FOUND)
+if(EXAMPLES_USE_GIT_MASTER)
+  set(FETCH_SOURCE GIT_REPOSITORY "https://github.com/clMathLibraries/clBLAS.git")
+else()
+  set(FETCH_SOURCE URL "https://github.com/clMathLibraries/clBLAS/archive/v2.12.tar.gz")
+endif()
+
+if(NOT Boost_FOUND)
   message(STATUS "Disabling testsuite ${TS_NAME}, required Boost version not found" )
 elseif(NOT TESTS_USE_ICD)
   message(STATUS "Disabling testsuite ${TS_NAME}, requires ocl-icd" )
@@ -45,10 +49,9 @@ else()
   ExternalProject_Add(
     ${TS_NAME}
     PREFIX "${TS_BASEDIR}"
-    GIT_REPOSITORY "https://github.com/clMathLibraries/${TS_NAME}.git"
+    ${FETCH_SOURCE}
     PATCH_COMMAND cd src && pwd && patch -p1 -i ${CMAKE_SOURCE_DIR}/examples/clBLAS/clBLAS_float_error.patch && patch -p1 -i ${CMAKE_SOURCE_DIR}/examples/clBLAS/clBLAS_link.patch
-    UPDATE_COMMAND pwd && find ./src/samples/ -type f -name *.c | xargs sed -i "s/CL_DEVICE_TYPE_GPU/CL_DEVICE_TYPE_CPU/g"
-    UPDATE_COMMAND pwd && find ./src/samples/ -type f -name *.cpp | xargs sed -i "s/CL_DEVICE_TYPE_GPU/CL_DEVICE_TYPE_CPU/g"
+    UPDATE_COMMAND pwd && find ./src/samples/ -type f -name *.c -o -name *.cpp  | xargs sed -i "s/CL_DEVICE_TYPE_GPU/CL_DEVICE_TYPE_CPU/g"
     CONFIGURE_COMMAND ${CMAKE_COMMAND}
       -DBUILD_RUNTIME=ON
       -DBUILD_TEST=OFF

@@ -53,11 +53,17 @@ option(ENABLE_CUDA "Enable the CUDA device driver for NVIDIA devices" OFF)
 
 option(KERNEL_CACHE_DEFAULT "Default value for the kernel compile cache. If disabled, pocl will still use the kernel cache, but will delete cachefiles on exit. You can still enable keeping the files it at runtime with an env var." ON)
 
+option(POCL_ICD_ABSOLUTE_PATH "Use absolute path in pocl.icd" ON)
+
+#### these are mostly useful for pocl developers
+
 option(DEVELOPER_MODE "This will SIGNIFICANTLY slow down pocl (but speed up its compilation). Only turn on if you know what you're doing." OFF)
 
 option(USE_POCL_MEMMANAGER "Enables custom memory manager. Except for special circumstances, this should be disabled." OFF)
 
-option(POCL_ICD_ABSOLUTE_PATH "Use absolute path in pocl.icd" ON)
+option(EXAMPLES_USE_GIT_MASTER "If enabled, some of the external testsuites in examples/ will try to use sources from Git master, instead of releases. This may result in failure to build or run the examples" OFF)
+
+####
 
 # currently only works with gcc as host compiler
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")

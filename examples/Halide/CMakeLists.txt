@@ -35,11 +35,16 @@ message(STATUS "Enabling testsuite ${TS_NAME}")
 list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
 set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
 
+if(EXAMPLES_USE_GIT_MASTER)
+  set(FETCH_SOURCE GIT_REPOSITORY "https://github.com/Halide/Halide.git")
+else()
+  set(FETCH_SOURCE URL "https://github.com/halide/Halide/archive/release_2017_10_30.tar.gz")
+endif()
+
 ExternalProject_Add(
   ${TS_NAME}
   PREFIX "${TS_BASEDIR}"
-  #DOWNLOAD_COMMAND "/bin/true"
-  GIT_REPOSITORY "https://github.com/Halide/Halide.git"
+  ${FETCH_SOURCE}
   #PATCH_COMMAND /bin/sh "${AMD_APP_SDK_TGZ}" --noexec --keep --target AMD-APP-SDK-3.0 &&
   #     patch -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/amdsdk3_0.patch
   CMAKE_ARGS

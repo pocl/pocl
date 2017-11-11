@@ -34,6 +34,12 @@ find_package(Boost 1.55 QUIET)
 find_package(VTK QUIET)
 set(VTK_VER "${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}")
 
+if(EXAMPLES_USE_GIT_MASTER)
+  set(FETCH_SOURCE GIT_REPOSITORY "https://github.com/AvtechScientific/ASL")
+else()
+  set(FETCH_SOURCE URL "https://github.com/AvtechScientific/ASL/archive/v0.1.6.tar.gz")
+endif()
+
 if ((NOT "${CMAKE_VERSION}" VERSION_LESS "3.0.2")
     AND VTK_FOUND AND (NOT VTK_VER VERSION_LESS "6.1")
     AND Boost_FOUND AND (NOT Boost_VERSION VERSION_LESS "1.55"))
@@ -45,8 +51,7 @@ if ((NOT "${CMAKE_VERSION}" VERSION_LESS "3.0.2")
   ExternalProject_Add(
     ${TS_NAME}
     PREFIX "${TS_BASEDIR}"
-    # GIT_REPOSITORY "https://github.com/AvtechScientific/ASL"
-    URL "https://github.com/AvtechScientific/ASL/archive/v0.1.6.tar.gz"
+    ${FETCH_SOURCE}
     PATCH_COMMAND pwd && patch -p1 -i ${CMAKE_SOURCE_DIR}/examples/ASL/asl.patch
     CMAKE_ARGS
       -DCMAKE_BUILD_TYPE=RelWithDebInfo
