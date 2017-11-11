@@ -223,7 +223,10 @@ struct _cl_icd_dispatch pocl_dispatch = {
 
 struct _cl_platform_id _platforms[1]  = {{&pocl_dispatch}};
 #else
-struct _cl_platform_id _platforms[1]  = {};
+
+struct _cl_platform_id fake_platform = { 1 };
+
+struct _cl_platform_id _platforms[1] = {{&fake_platform}};
 #endif
 
 #ifdef __GNUC__

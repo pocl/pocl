@@ -169,10 +169,12 @@ typedef pthread_mutex_t pocl_lock_t;
  * it is used (as the ICD loader assumes that)*/
 #ifdef BUILD_ICD
 #  define POCL_ICD_OBJECT struct _cl_icd_dispatch *dispatch;
+#  define POCL_ICD_OBJECT_PLATFORM_ID POCL_ICD_OBJECT
 #  define POsymICD(name) POsym(name)
 #  define POdeclsymICD(name) POdeclsym(name)
 #else
 #  define POCL_ICD_OBJECT
+#  define POCL_ICD_OBJECT_PLATFORM_ID unsigned long;
 #  define POsymICD(name)
 #  define POdeclsymICD(name)
 #endif
@@ -509,7 +511,7 @@ struct _cl_device_id {
 
 
 struct _cl_platform_id {
-  POCL_ICD_OBJECT
+  POCL_ICD_OBJECT_PLATFORM_ID
 }; 
 
 struct _cl_context {
