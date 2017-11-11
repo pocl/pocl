@@ -1366,29 +1366,7 @@ add_test(NAME "${TS_NAME}_math_fast_tanpi"
 add_test(NAME "${TS_NAME}_math_fast_trunc"
          COMMAND "${TS_BUILDDIR}/test_conformance/math_brute_force/bruteforce"  -4 -d trunc)
 
-
 set_tests_properties(
-    "${TS_NAME}_allocations_buffer"
-    "${TS_NAME}_allocations_image"
-    "${TS_NAME}_api"
-    "${TS_NAME}_atomics"
-    "${TS_NAME}_basic_math"
-    "${TS_NAME}_basic_s2v"
-    "${TS_NAME}_basic_memory"
-    "${TS_NAME}_basic_image"
-    "${TS_NAME}_basic_other"
-    "${TS_NAME}_buffers_read"
-    "${TS_NAME}_buffers_write"
-    "${TS_NAME}_buffers_fill"
-    "${TS_NAME}_buffers_var1"
-    "${TS_NAME}_buffers_var2"
-    "${TS_NAME}_buffers_map_read"
-    "${TS_NAME}_buffers_map_write"
-    "${TS_NAME}_commonfns"
-    "${TS_NAME}_compiler"
-    "${TS_NAME}_computeinfo"
-    "${TS_NAME}_contractions"
-
     "${TS_NAME}_math_fast_add"
     "${TS_NAME}_math_fast_assignment"
     "${TS_NAME}_math_fast_cbrt"
@@ -1455,17 +1433,39 @@ set_tests_properties(
 
     "${TS_NAME}_conversion_fast_uint_uchar"
     "${TS_NAME}_conversion_fast_short_char"
-
     "${TS_NAME}_conversion_fast_uchar_ushort"
     "${TS_NAME}_conversion_fast_char_int"
-
     "${TS_NAME}_conversion_fast_float_char"
     "${TS_NAME}_conversion_fast_float_ushort"
     "${TS_NAME}_conversion_fast_int_float"
-
     "${TS_NAME}_conversion_fast_double_short"
     "${TS_NAME}_conversion_fast_double_ulong"
     "${TS_NAME}_conversion_fast_long_double"
+  PROPERTIES
+    LABELS "conformance_suite_short"
+    ENVIRONMENT "POCL_MEMORY_LIMIT=1")
+
+set_tests_properties(
+    "${TS_NAME}_allocations_buffer"
+    "${TS_NAME}_allocations_image"
+    "${TS_NAME}_api"
+    "${TS_NAME}_atomics"
+    "${TS_NAME}_basic_math"
+    "${TS_NAME}_basic_s2v"
+    "${TS_NAME}_basic_memory"
+    "${TS_NAME}_basic_image"
+    "${TS_NAME}_basic_other"
+    "${TS_NAME}_buffers_read"
+    "${TS_NAME}_buffers_write"
+    "${TS_NAME}_buffers_fill"
+    "${TS_NAME}_buffers_var1"
+    "${TS_NAME}_buffers_var2"
+    "${TS_NAME}_buffers_map_read"
+    "${TS_NAME}_buffers_map_write"
+    "${TS_NAME}_commonfns"
+    "${TS_NAME}_compiler"
+    "${TS_NAME}_computeinfo"
+    "${TS_NAME}_contractions"
 
     "${TS_NAME}_device_partition"
     "${TS_NAME}_events"
