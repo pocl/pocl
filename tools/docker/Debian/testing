@@ -1,0 +1,11 @@
+FROM debian:testing
+ARG GIT_COMMIT=master
+LABEL git-commit=$GIT_COMMIT vendor=pocl distro=Debian version=1.0
+RUN apt update
+RUN apt upgrade -y
+RUN apt install -y build-essential ocl-icd-libopencl1 cmake git gcc g++ libhwloc5 pkg-config libclang-4.0-dev llvm-4.0-dev clang-4.0 llvm-4.0 make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo
+
+RUN cd /home ; git clone https://github.com/pocl/pocl.git ; cd /home/pocl ; git checkout $GIT_COMMIT
+RUN cd /home/pocl ; mkdir b ; cd b; cmake -G Ninja ..
+RUN cd /home/pocl/b ; ninja
+CMD cd /home/pocl/b ; clinfo ; ctest -j4 --output-on-failure -L internal

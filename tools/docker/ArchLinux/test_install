@@ -1,0 +1,10 @@
+FROM pritunl/archlinux:latest
+ARG GIT_COMMIT=master
+LABEL git-commit=$GIT_COMMIT vendor=pocl distro=Arch version=1.0
+RUN pacman --noconfirm -S gcc patch hwloc cmake git pkg-config make ninja ocl-icd clang llvm llvm-libs clinfo
+
+RUN cd /home ; git clone https://github.com/pocl/pocl.git ; cd /home/pocl ; git checkout $GIT_COMMIT
+RUN cd /home/pocl ; mkdir b ; cd b; cmake -DCMAKE_INSTALL_PREFIX=/usr -G Ninja ..
+RUN cd /home/pocl/b ; ninja
+RUN cd /home/pocl/b ; ninja install
+CMD cd /home/pocl/b ; rm CTestCustom.cmake ; clinfo ;  ctest -j4 --output-on-failure -L internal
