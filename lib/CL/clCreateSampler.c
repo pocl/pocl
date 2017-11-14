@@ -34,8 +34,8 @@ POname(clCreateSampler)(cl_context          context,
                 cl_int *            errcode_ret)
 CL_API_SUFFIX__VERSION_1_0
 {
-  int errcode;
-  cl_sampler sampler;
+  int errcode = CL_SUCCESS;
+  cl_sampler sampler = NULL;
 
   POCL_GOTO_ERROR_COND ((context == NULL), CL_INVALID_CONTEXT);
 
@@ -66,14 +66,12 @@ CL_API_SUFFIX__VERSION_1_0
   sampler->normalized_coords = normalized_coords;
   sampler->addressing_mode = addressing_mode;
   sampler->filter_mode = filter_mode;
-  
-  return sampler;
 
 ERROR:
   if(errcode_ret)
   {
     *errcode_ret = errcode;
   }
-  return NULL;
+  return sampler;
 }
 POsym(clCreateSampler)
