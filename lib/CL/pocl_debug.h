@@ -55,6 +55,8 @@ extern "C" {
 #define POCL_DEBUG_FLAG_HSA 0x100
 #define POCL_DEBUG_FLAG_TCE 0x200
 #define POCL_DEBUG_FLAG_CUDA 0x400
+#define POCL_DEBUG_FLAG_WARNING 0x800
+#define POCL_DEBUG_FLAG_ERROR 0x1000
 #define POCL_DEBUG_FLAG_ALL (uint64_t)(-1)
 
 #define POCL_FILTER_TYPE_INFO 1
@@ -165,19 +167,16 @@ extern "C" {
             }                                                               \
         } while (0)
 
-    #define POCL_MSG_PRINT(TYPE, ERRCODE, ...)                              \
-            POCL_MSG_PRINT_F(GENERAL, TYPE, ERRCODE, __VA_ARGS__)
-
     #define POCL_MSG_WARN2(errcode, ...) \
-              POCL_MSG_PRINT(WARN, errcode, __VA_ARGS__)
+              POCL_MSG_PRINT_F(WARNING, WARN, errcode, __VA_ARGS__)
     #define POCL_MSG_WARN(...)  POCL_MSG_WARN2("", __VA_ARGS__)
 
     #define POCL_MSG_ERR2(errcode, ...) \
-          POCL_MSG_PRINT(ERR, errcode, __VA_ARGS__)
+          POCL_MSG_PRINT_F(ERROR, ERR, errcode, __VA_ARGS__)
     #define POCL_MSG_ERR(...)  POCL_MSG_ERR2("", __VA_ARGS__)
 
     #define POCL_MSG_PRINT_INFO2(errcode, ...) \
-          POCL_MSG_PRINT(INFO, errcode, __VA_ARGS__)
+          POCL_MSG_PRINT_F(GENERAL, INFO, errcode, __VA_ARGS__)
     #define POCL_MSG_PRINT_INFO(...) POCL_MSG_PRINT_INFO2("", __VA_ARGS__)
 
     #define POCL_MSG_PRINT_INFO_F(filter, errcode, ...) \

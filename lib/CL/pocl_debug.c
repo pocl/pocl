@@ -23,12 +23,14 @@ static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
     int
     pocl_fprintf_err (const char* format, ...)
     {
+      pthread_mutex_lock (&console_mutex);
+
       va_list args;
       va_start (args, format);
-      pthread_mutex_lock (&console_mutex);
       int res = vfprintf (stderr, format, args);
-      pthread_mutex_unlock (&console_mutex);
       va_end (args);
+
+      pthread_mutex_unlock (&console_mutex);
       return res;
     }
 
@@ -39,7 +41,9 @@ static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
       if (strlen (debug) == 1)
         {
           if (debug[0] == '1')
-            pocl_debug_messages_filter = POCL_DEBUG_FLAG_GENERAL;
+            pocl_debug_messages_filter = POCL_DEBUG_FLAG_GENERAL
+                                         | POCL_DEBUG_FLAG_WARNING
+                                         | POCL_DEBUG_FLAG_ERROR;
           return;
         }
       /* else parse */
@@ -63,6 +67,8 @@ static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
           pocl_debug_messages_filter |= POCL_DEBUG_FLAG_LOCKING;
         else if (strncmp (ptr, "cuda", 4) == 0)
           pocl_debug_messages_filter |= POCL_DEBUG_FLAG_CUDA;
+        else if (strncmp (ptr, "warn", 4) == 0)
+          pocl_debug_messages_filter |= (POCL_DEBUG_FLAG_WARNING | POCL_DEBUG_FLAG_ERROR);
         else if (strncmp (ptr, "hsa", 3) == 0)
           pocl_debug_messages_filter |= POCL_DEBUG_FLAG_HSA;
         else if (strncmp (ptr, "tce", 3) == 0)
@@ -73,6 +79,8 @@ static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
           pocl_debug_messages_filter |= POCL_DEBUG_FLAG_TIMING;
         else if (strncmp (ptr, "all", 3) == 0)
           pocl_debug_messages_filter |= POCL_DEBUG_FLAG_ALL;
+        else if (strncmp (ptr, "err", 3) == 0)
+          pocl_debug_messages_filter |= POCL_DEBUG_FLAG_ERROR;
         else
           POCL_MSG_WARN ("Unknown token in POCL_DEBUG env var: %s", ptr);
 
