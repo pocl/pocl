@@ -6,6 +6,8 @@
 #include "pocl-pthread.h"
 #include "pocl_mem_management.h"
 
+#ifdef USE_POCL_MEMMANAGER
+
 static kernel_run_command *volatile kernel_pool = 0;
 static int kernel_pool_initialized = 0;
 static pocl_lock_t kernel_pool_lock;
@@ -55,6 +57,8 @@ void free_kernel_run_command (kernel_run_command *k)
   LL_PREPEND (kernel_pool, k);
   POCL_UNLOCK (kernel_pool_lock);
 }
+
+#endif
 
 void setup_kernel_arg_array(void **arguments, kernel_run_command *k)
 {
@@ -159,4 +163,3 @@ void free_kernel_arg_array (void **arguments, kernel_run_command *k)
       POCL_MEM_FREE(arguments[i]);
     }
 }
-

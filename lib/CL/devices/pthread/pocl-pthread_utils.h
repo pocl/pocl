@@ -47,10 +47,18 @@ struct kernel_run_command
 
 } __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
+#ifdef USE_POCL_MEMMANAGER
 void pocl_init_kernel_run_command_manager (void);
 void pocl_init_thread_argument_manager ();
 kernel_run_command* new_kernel_run_command ();
 void free_kernel_run_command (kernel_run_command *k);
+#else
+#define pocl_init_kernel_run_command_manager() NULL
+#define pocl_init_thread_argument_manager() NULL
+#define new_kernel_run_command() \
+  (kernel_run_command*) calloc (1, sizeof(kernel_run_command))
+#define free_kernel_run_command(k) free (k)
+#endif
 void setup_kernel_arg_array(void **arguments, kernel_run_command *k);
 void free_kernel_arg_array (void **arguments, kernel_run_command *k);
 

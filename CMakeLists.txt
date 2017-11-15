@@ -55,6 +55,8 @@ option(KERNEL_CACHE_DEFAULT "Default value for the kernel compile cache. If disa
 
 option(DEVELOPER_MODE "This will SIGNIFICANTLY slow down pocl (but speed up its compilation). Only turn on if you know what you're doing." OFF)
 
+option(USE_POCL_MEMMANAGER "Enables custom memory manager. Except for special circumstances, this should be disabled." OFF)
+
 option(POCL_ICD_ABSOLUTE_PATH "Use absolute path in pocl.icd" ON)
 
 # currently only works with gcc as host compiler
