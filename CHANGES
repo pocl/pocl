@@ -26,9 +26,16 @@ Highlights
   them and then aborting at dlopen().
 - New env variable POCL_MEMORY_LIMIT=<num> limits the Global memory size
   reported by pocl to <num> gigabytes.
+- New env variable POCL_AFFINITY (defaults to 0): if enabled, sets
+  the affinity of each CPU driver pthread to a single core.
 - Improved AVX512 support (with LLVM 5.0). Note that even with LLVM 5.0
   there are still a few bugs (see pocl issue #555); AVX512 + LLVM 4.0 are
   a lot more broken, and probably not worth trying.
+- POCL_DEBUG env var has been revamped. You can now limit debuginfo to
+  these categories (or their combination): all,error,warning,general
+  memory,llvm,events,cache,locking,refcounts,timing,hsa,tce,cuda
+  The old setting POCL_DEBUG=1 now equals error+warning+general.
+
 
 0.14 April 2017
 ===============
