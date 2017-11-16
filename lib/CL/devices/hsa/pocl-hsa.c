@@ -1227,29 +1227,32 @@ pocl_hsa_join (cl_device_id device, cl_command_queue cq)
     }
   cl_event event = cq->last_event.event;
   assert(event);
-  POCL_LOCK_OBJ(event);
+  POCL_LOCK_OBJ (event);
+  ++event->pocl_refcount;
   POCL_UNLOCK_OBJ (cq);
 
   POCL_MSG_PRINT_INFO("pocl-hsa: device->join on event %u\n", event->id);
 
-  if (event->status == CL_COMPLETE)
+  if (event->status <= CL_COMPLETE)
     {
       POCL_MSG_PRINT_INFO("pocl-hsa: device->join: last event (%u) in queue"
                           " exists, but is complete\n", event->id);
-      POCL_UNLOCK_OBJ(event);
+      --event->pocl_refcount;
+      POCL_UNLOCK_OBJ (event);
       return;
     }
 
-  while (event->status != CL_COMPLETE)
+  while (event->status > CL_COMPLETE)
     {
       pocl_hsa_event_data_t *e_d = (pocl_hsa_event_data_t *)event->data;
       PTHREAD_CHECK (pthread_cond_wait (&e_d->event_cond, &event->pocl_lock));
     }
-  POCL_UNLOCK_OBJ(event);
-
   POCL_MSG_PRINT_INFO("pocl-hsa: device->join on event %u finished"
                       " with status: %i\n", event->id, event->status);
-  assert(event->status == CL_COMPLETE);
+
+  assert (event->status <= CL_COMPLETE);
+  --event->pocl_refcount;
+  POCL_UNLOCK_OBJ (event);
 }
 
 void
@@ -1488,10 +1491,6 @@ pocl_hsa_ndrange_event_finished (pocl_hsa_device_data_t *d, size_t i)
   POCL_UNLOCK_OBJ (event);
   POCL_UPDATE_EVENT_COMPLETE (event);
 
-  uint64_t ns = event->time_end - event->time_start;
-  pocl_debug_print_duration(__func__,__LINE__,
-                            "HSA NDrange Kernel (host clock)", ns);
-
 }
 
 static void
@@ -1701,6 +1700,11 @@ pocl_hsa_update_event (cl_device_id device, cl_event event, cl_int status)
 
       if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
         event->time_end = device->ops->get_timer_value(device->data);
+
+      uint64_t ns = event->time_end - event->time_start;
+      pocl_debug_print_duration (__func__,__LINE__,
+                                 "HSA NDrange Kernel (host clock)", ns);
+
 
       POCL_LOCK_OBJ (event);
       event->status = CL_COMPLETE;
