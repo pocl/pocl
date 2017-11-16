@@ -69,7 +69,8 @@ if (EXISTS "${INTEL_ZIP}")
     set_tests_properties(intel_svm_coarse intel_svm_fine
       PROPERTIES  LABELS "IntelSVM;hsa")
     set_tests_properties(intel_svm_coarse intel_svm_fine
-      PROPERTIES  WILL_FAIL 1)
+      PROPERTIES  PASS_REGULAR_EXPRESSION "PASSED")
+
   endif()
 
 else()
