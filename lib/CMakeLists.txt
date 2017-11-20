@@ -68,7 +68,7 @@ add_subdirectory("CL")
 if(ENABLE_ICD)
 
   # -pthread makes gdb happier when debugging tests
-  set(OPENCL_LIBS "${PTHREAD_LDFLAGS};${OPENCL_LIBRARIES}")
+  set(OPENCL_LIBS "${PTHREAD_LIBRARY};${OPENCL_LIBRARIES}")
 
 else()
 
@@ -77,11 +77,11 @@ else()
   # executables (e.g. poclcc -> libOpenCL -> libLLVM)
   # and this must be specified on new systems,
   # otherwise linking fails.
-  set(OPENCL_LIBS "${PTHREAD_LDFLAGS};${POCL_LIBRARY_NAME};${POCL_TRANSITIVE_LIBS}")
+  set(OPENCL_LIBS "${PTHREAD_LIBRARY};${POCL_LIBRARY_NAME};${POCL_TRANSITIVE_LIBS}")
 
 endif()
 
-set(OPENCL_CFLAGS "${PTHREAD_CFLAGS}")
+set(OPENCL_CFLAGS "")
 
 if(SANITIZER_OPTIONS)
   list(INSERT OPENCL_LIBS 0 ${SANITIZER_LIBS})
