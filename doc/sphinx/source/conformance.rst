@@ -22,10 +22,11 @@ This is done by adding switch ``-DENABLE_TESTSUITES=conformance``
 to the cmake command line. After this ``make prepare_examples`` fetches and
 prepares the conformance suite for testing.
 
-To run a shortened version of the conformance suite, run: ``ctest -L conformance_suite_short``
-This might take a few hours on slow hardware.
+To run a shortened version of the conformance suite, run: ``ctest -L conformance_suite_mini``
+This might take a few hours on slow hardware. There is also a ``conformance_suite_micro``
+label, which takes about 20-30 minutes on slow hardware.
 
-To run the full conformance testsuite, run: ``ctest -L conformance_suite``
+To run the full conformance testsuite, run: ``ctest -L conformance_suite_full``
 Note that this can take a week to finish on slow hardware, and about a day
 on fast hardware (6C/12T Intel or equivalent).
 
