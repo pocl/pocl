@@ -791,7 +791,8 @@ add_test(NAME "${TS_NAME}_multiples"
          COMMAND "${TS_BUILDDIR}/multiple_device_context/test_multiples" )
 
 add_test(NAME "${TS_NAME}_printf"
-         COMMAND "${TS_BUILDDIR}/printf/test_printf" )
+         COMMAND "${TS_BUILDDIR}/printf/test_printf"
+	 WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/test_conformance/printf" )
 
 add_test(NAME "${TS_NAME}_profiling"
          COMMAND "${TS_BUILDDIR}/profiling/test_profiling" )
