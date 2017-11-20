@@ -72,13 +72,6 @@
 
 #cmakedefine KERNELLIB_HOST_DISTRO_VARIANTS
 
-/* clang++ compiler flags */
-/* TODO in sources */
-#define KERNEL_CLANGXX_FLAGS "@KERNEL_CLANGXX_FLAGS@"
-
-/* TODO in sources */
-#define KERNEL_CL_FLAGS  "@KERNEL_CL_FLAGS@"
-
 #define LLVM_LLC "@LLVM_LLC@"
 
 /* "Using LLVM 3.6" */
