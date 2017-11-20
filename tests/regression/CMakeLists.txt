@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014 pocl developers
+#   Copyright (c) 2014-2017 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -46,7 +46,7 @@ set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
   test_barrier_before_return test_infinite_loop test_constant_array
   test_undominated_variable test_setargs test_null_arg
   test_fors_with_var_iteration_counts test_issue_231 test_issue_445
-  test_autolocals_in_constexprs)
+  test_autolocals_in_constexprs test_issue_553)
 
 
 if (MSVC)
