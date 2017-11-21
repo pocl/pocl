@@ -32,7 +32,7 @@ struct kernel_run_command
   pocl_workgroup workgroup;
   struct pocl_argument *kernel_args;
   kernel_run_command *next;
-  int ref_count;
+  unsigned long ref_count;
 
 #ifdef POCL_PTHREAD_CACHE_MONITORING
   pocl_cache_data cache_data;
@@ -55,8 +55,9 @@ void free_kernel_run_command (kernel_run_command *k);
 #else
 #define pocl_init_kernel_run_command_manager() NULL
 #define pocl_init_thread_argument_manager() NULL
-#define new_kernel_run_command() \
-  (kernel_run_command*) calloc (1, sizeof(kernel_run_command))
+#define new_kernel_run_command()                                              \
+  (kernel_run_command *)pocl_aligned_malloc (HOST_CPU_CACHELINE_SIZE,         \
+                                             sizeof (kernel_run_command))
 #define free_kernel_run_command(k) free (k)
 #endif
 void setup_kernel_arg_array(void **arguments, kernel_run_command *k);

@@ -64,8 +64,11 @@ void pthread_scheduler_init (size_t num_worker_threads)
   pthread_cond_init (&(scheduler.cq_finished_cond), NULL);
   pthread_cond_init (&(scheduler.wake_pool), NULL);
 
-  scheduler.thread_pool = calloc
-    (num_worker_threads, sizeof (struct pool_thread_data));
+  scheduler.thread_pool = pocl_aligned_malloc (
+      HOST_CPU_CACHELINE_SIZE,
+      num_worker_threads * sizeof (struct pool_thread_data));
+  memset (scheduler.thread_pool, 0,
+          num_worker_threads * sizeof (struct pool_thread_data));
   scheduler.num_threads = num_worker_threads;
 
   for (i = 0; i < num_worker_threads; ++i)
@@ -414,13 +417,14 @@ pocl_pthread_prepare_kernel
   run_cmd->pc.local_size[1] = cmd->command.run.local_y;
   run_cmd->pc.local_size[2] = cmd->command.run.local_z;
   run_cmd->remaining_wgs = num_groups;
+  run_cmd->wgs_dealt = 0;
   run_cmd->workgroup = cmd->command.run.wg;
   run_cmd->kernel_args = cmd->command.run.arguments;
   run_cmd->next = NULL;
+  run_cmd->ref_count = 0;
   pthread_spin_init (&run_cmd->lock, PTHREAD_PROCESS_PRIVATE);
 
-  pthread_scheduler_push_kernel (run_cmd);  
-
+  pthread_scheduler_push_kernel (run_cmd);
 }
 
 static void
