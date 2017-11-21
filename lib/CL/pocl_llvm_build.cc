@@ -406,8 +406,12 @@ int pocl_llvm_build_program(cl_program program,
   std::string kernelh;
   std::string BuiltinRenamesH;
 
+#ifdef ENABLE_POCL_BUILDING
   if (pocl_get_bool_option("POCL_BUILDING", 0)) {
     kernelh  = SRCDIR;
+#else
+  if (0) {
+#endif
   } else {
     kernelh = POCL_INSTALL_PRIVATE_DATADIR;
   }
@@ -768,8 +772,12 @@ kernel_library
   // TODO sync with Nat Ferrus' indexed linking
   std::string kernellib;
   std::string kernellib_fallback;
+#ifdef ENABLE_POCL_BUILDING
   if (pocl_get_bool_option("POCL_BUILDING", 0)) {
     kernellib = BUILDDIR;
+#else
+  if (0) {
+#endif
     kernellib += "/lib/kernel/";
     kernellib += subdir;
     // TODO: get this from the TCE target triplet

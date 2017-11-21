@@ -30,6 +30,8 @@
 
 #cmakedefine ENABLE_CONFORMANCE
 
+#cmakedefine ENABLE_POCL_BUILDING
+
 #cmakedefine HAVE_FORK
 
 #cmakedefine HAVE_VFORK
