@@ -244,6 +244,8 @@ pocl_basic_init_device_infos(unsigned j, struct _cl_device_id* dev)
   dev->platform = 0;
 
   dev->parent_device = NULL;
+  dev->core_count = 0;
+  dev->core_start = 0;
   // basic does not support partitioning
   dev->max_sub_devices = 1;
   dev->num_partition_properties = 1;

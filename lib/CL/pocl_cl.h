@@ -448,7 +448,10 @@ struct _cl_device_id {
   char *short_name;
   char *long_name;
   char *cache_dir_name;
+  // for subdevices
   cl_device_id parent_device;
+  unsigned core_start;
+  unsigned core_count;
 
   const char *vendor;
   const char *driver_version;

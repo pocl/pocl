@@ -25,7 +25,7 @@ struct pool_thread_data
   pthread_mutex_t lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
   pthread_t thread __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-  long executed_commands;
+  unsigned long executed_commands;
   unsigned current_ftz;
   unsigned num_threads;
   unsigned index;
@@ -182,18 +182,29 @@ int pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
   pthread_spin_lock (&scheduler.wq_lock_fast);
   if ((run_cmd = scheduler.kernel_queue))
     {
-      ++run_cmd->ref_count;
-      pthread_spin_unlock (&scheduler.wq_lock_fast);
-
-      work_group_scheduler (run_cmd, td);
-
-      pthread_spin_lock (&scheduler.wq_lock_fast);
-      if ((--run_cmd->ref_count) == 0)
+      int should_ignore = 0;
+      cl_device_id subd;
+      if ((subd = run_cmd->device->parent_device))
         {
-          pthread_spin_unlock (&scheduler.wq_lock_fast);
-          finalize_kernel_command (td, run_cmd);
-          pthread_spin_lock (&scheduler.wq_lock_fast);
+          // subdevice
+          if (!((td->index >= subd->core_start)
+              || (td->index < (subd->core_start + subd->core_count))))
+              should_ignore = 1;
         }
+      if (!should_ignore) {
+        ++run_cmd->ref_count;
+        pthread_spin_unlock (&scheduler.wq_lock_fast);
+
+        work_group_scheduler (run_cmd, td);
+
+        pthread_spin_lock (&scheduler.wq_lock_fast);
+        if ((--run_cmd->ref_count) == 0)
+          {
+            pthread_spin_unlock (&scheduler.wq_lock_fast);
+            finalize_kernel_command (td, run_cmd);
+            pthread_spin_lock (&scheduler.wq_lock_fast);
+          }
+      }
     }
 
   // execute a command if available
