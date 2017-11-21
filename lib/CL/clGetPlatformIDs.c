@@ -221,12 +221,10 @@ struct _cl_icd_dispatch pocl_dispatch = {
 #endif
 };
 
-struct _cl_platform_id _platforms[1]  = {{&pocl_dispatch}};
+static struct _cl_platform_id _platforms[1]  = {{&pocl_dispatch}};
 #else
 
-struct _cl_platform_id fake_platform = { 1 };
-
-struct _cl_platform_id _platforms[1] = {{&fake_platform}};
+static struct _cl_platform_id _platforms[1] = {{ 1 }};
 #endif
 
 #ifdef __GNUC__
@@ -241,7 +239,7 @@ CL_API_ENTRY cl_int CL_API_CALL
 POname(clGetPlatformIDs)(cl_uint           num_entries,
                  cl_platform_id *  platforms,
                  cl_uint *         num_platforms) CL_API_SUFFIX__VERSION_1_0
-{	
+{
   const unsigned num = 1;
   unsigned i;
   

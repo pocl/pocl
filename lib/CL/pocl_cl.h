@@ -152,7 +152,7 @@ typedef pthread_mutex_t pocl_lock_t;
 /* Symbol aliases are supported */
 
 #  define POname(name) PO##name
-#  define POdeclsym(name)			\
+#  define POdeclsym(name)                      \
   __typeof__(name) PO##name __attribute__((visibility("hidden")));
 #  define POCL_ALIAS_OPENCL_SYMBOL(name)                                \
   __typeof__(name) name __attribute__((alias ("PO" #name), visibility("default")));
@@ -174,7 +174,7 @@ typedef pthread_mutex_t pocl_lock_t;
 #  define POdeclsymICD(name) POdeclsym(name)
 #else
 #  define POCL_ICD_OBJECT
-#  define POCL_ICD_OBJECT_PLATFORM_ID unsigned long;
+#  define POCL_ICD_OBJECT_PLATFORM_ID unsigned long id;
 #  define POsymICD(name)
 #  define POdeclsymICD(name)
 #endif
