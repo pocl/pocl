@@ -187,8 +187,8 @@ int pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
       if ((subd = run_cmd->device->parent_device))
         {
           // subdevice
-          if (!((td->index >= subd->core_start)
-              || (td->index < (subd->core_start + subd->core_count))))
+          if (!((td->index >= run_cmd->device->core_start)
+              && (td->index < (run_cmd->device->core_start + run_cmd->device->core_count))))
               should_ignore = 1;
         }
       if (!should_ignore) {
