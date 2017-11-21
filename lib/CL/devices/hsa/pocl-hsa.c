@@ -1454,8 +1454,8 @@ pocl_hsa_launch(pocl_hsa_device_data_t *d, cl_event event)
         = kernel_packet->completion_signal.handle;
     }
 
-  POCL_UNLOCK_OBJ (event);
   POCL_UPDATE_EVENT_RUNNING (event);
+  POCL_UNLOCK_OBJ (event);
 }
 
 static void
