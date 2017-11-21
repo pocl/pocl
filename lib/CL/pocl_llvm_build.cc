@@ -191,7 +191,11 @@ int pocl_llvm_build_program(cl_program program,
   if (num_input_headers > 0) {
     error = pocl_cache_create_tempdir(temp_include_dir);
     if(error)
-      return error;
+      {
+        POCL_MSG_ERR ("pocl_cache_create_tempdir (%s)"
+                      " failed with %i\n", temp_include_dir, error);
+        return error;
+      }
     std::string tempdir(temp_include_dir);
 
     for (n = 0; n < num_input_headers; n++) {
@@ -661,8 +665,12 @@ int pocl_llvm_link_program(cl_program program,
                                      concated_binaries.c_str(),
                                      concated_binaries.size(),
                                      program_bc_path);
-  assert(error == 0);
-
+  if (error)
+    {
+      POCL_MSG_ERR ("pocl_cache_create_program_cachedir(%s)"
+                    " failed with %i\n", program_bc_path, error);
+      return error;
+    }
 
   write_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
   assert(write_lock);
@@ -671,7 +679,8 @@ int pocl_llvm_link_program(cl_program program,
 
   /* Always retain program.bc. Its required in clBuildProgram */
   error = pocl_write_module(linked_module, program_bc_path, 0);
-  assert(error == 0);
+  if (error)
+    return error;
 
   /* To avoid writing & reading the same back,
    * save program->binaries[i]

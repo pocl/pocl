@@ -499,7 +499,11 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
       modp, kernel->program, device_i, kernel, local_x, local_y, local_z);
 
   if (error)
-    return error;
+    {
+      POCL_MSG_ERR ("pocl_cache_write_kernel_parallel_bc()"
+                    " failed with %i\n", error);
+      return error;
+    }
 
   pocl_destroy_llvm_module(modp);
   return error;
@@ -515,7 +519,11 @@ int pocl_update_program_llvm_irs(cl_program program,
   pocl_cache_program_bc_path(program_bc_path, program, device_i);
 
   if (!pocl_exists(program_bc_path))
-    return -1;
+    {
+      POCL_MSG_ERR ("%s does not exist!\n",
+                     program_bc_path);
+      return -1;
+    }
 
   assert(program->llvm_irs[device_i] == nullptr);
   program->llvm_irs[device_i] = parseModuleIR(program_bc_path);
@@ -561,6 +569,12 @@ void pocl_llvm_update_binaries(cl_program program) {
     error = pocl_write_module((llvm::Module *)program->llvm_irs[i],
                               program_bc_path, 1);
     assert(error == 0);
+    if (error)
+      {
+        POCL_MSG_ERR ("pocl_write_module(%s) failed!\n",
+                     program_bc_path);
+        continue;
+      }
 
     std::string content;
     writeModuleIR((llvm::Module *)program->llvm_irs[i], content);
