@@ -195,7 +195,14 @@ int main(int argc, char **argv)
     retval = 0;
 
 error:
-
+  if (image2)
+    {
+      clReleaseMemObject (image2);
+    }
+  if (image3)
+    {
+      clReleaseMemObject (image3);
+    }
   if (kernel) 
     {
       clReleaseKernel(kernel);

@@ -415,6 +415,8 @@ main(void){
     CHECK_CL_ERROR(clBuildProgram(program, num_devices, devices, NULL, NULL, NULL));
 
     CHECK_CL_ERROR(clReleaseProgram(program));
+
+    free (macro_kernel);
   }
 
   /* TEST 12: warning into error */
