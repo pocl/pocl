@@ -533,7 +533,7 @@ void setup(const char* program_source1, const char* program_source2)
       cl_device_id subdevs[128];
       cl_uint retval;
       int err
-          = clCreateSubDevices (main_device_id, props, 2, subdevs, &retval);
+          = clCreateSubDevices (main_device_id, props, 128, subdevs, &retval);
       assert (err == CL_SUCCESS);
       device_id = subdevs[0];
     }
