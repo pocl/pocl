@@ -44,7 +44,9 @@ Building pocl with CUDA support
 
 4) Configuration
 ~~~~~~~~~~~~~~~~
-  Use ``POCL_DEVICES=CUDA`` to select only CUDA devices.
+  Use ``POCL_DEVICES=CUDA`` to select only CUDA devices. If the system has more
+  than one GPU, specify the ``CUDA`` device multiple times (e.g.
+  ``POCL_DEVICES=CUDA,CUDA`` for two GPUs).
 
   The CUDA backend currently has a runtime dependency on the CUDA toolkit. If
   you receive errors regarding a failure to load ``libdevice``, you may need
@@ -56,6 +58,9 @@ Building pocl with CUDA support
   The ``POCL_CUDA_GPU_ARCH`` environment variable can be set to override the
   target GPU architecture (e.g. ``POCL_CUDA_GPU_ARCH=sm_35``), which may be
   necessary in cases where LLVM doesn't yet support the architecture.
+
+  The ``POCL_CUDA_VERIFY_MODULE`` environment variable can be set to ``1`` to
+  verify that the LLVM module produced by the CUDA backend is well formed.
 
   The ``POCL_CUDA_DUMP_NVVM`` environment variable can be set to ``1`` to
   dump the LLVM IR that is fed into the NVPTX backend for debugging purposes
