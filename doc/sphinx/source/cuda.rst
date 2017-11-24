@@ -44,7 +44,9 @@ Building pocl with CUDA support
 
 4) Configuration
 ~~~~~~~~~~~~~~~~
-  Use ``POCL_DEVICES=CUDA`` to select only CUDA devices.
+  Use ``POCL_DEVICES=CUDA`` to select only CUDA devices. If the system has more
+  than one GPU, specify the ``CUDA`` device multiple times (e.g.
+  ``POCL_DEVICES=CUDA,CUDA`` for two GPUs).
 
   The CUDA backend currently has a runtime dependency on the CUDA toolkit. If
   you receive errors regarding a failure to load ``libdevice``, you may need
