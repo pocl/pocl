@@ -122,8 +122,8 @@ POname(clCreateSubDevices)(cl_device_id in_device,
                            (unsigned int)properties[0]);
      }
 
-   // num_devices must match count_devices if non-zero
-   POCL_GOTO_ERROR_COND((num_devices && count_devices != num_devices), CL_INVALID_VALUE);
+   // num_devices must be greater than or equal to count_devices if non-zero
+   POCL_GOTO_ERROR_COND((num_devices && num_devices < count_devices), CL_INVALID_VALUE);
 
    if (out_devices) {
      // we allocate our own array of devices to simplify management
