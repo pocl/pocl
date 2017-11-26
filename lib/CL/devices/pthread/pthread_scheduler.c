@@ -25,7 +25,10 @@ struct pool_thread_data
   pthread_mutex_t lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
   pthread_t thread __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+
   unsigned long executed_commands;
+  /* per-CU (= per-thread) local memory */
+  void *local_mem;
   unsigned current_ftz;
   unsigned num_threads;
   unsigned index;
@@ -36,7 +39,10 @@ struct pool_thread_data
 typedef struct scheduler_data_
 {
   unsigned num_threads;
+
   struct pool_thread_data *thread_pool;
+  /* we need the device_id to get max local size */
+  cl_device_id device;
 
   _cl_command_node *work_queue
       __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
@@ -54,7 +60,8 @@ typedef struct scheduler_data_
 
 static scheduler_data scheduler;
 
-void pthread_scheduler_init (size_t num_worker_threads)
+void
+pthread_scheduler_init (size_t num_worker_threads, cl_device_id device)
 {
   unsigned i;
   PTHREAD_INIT_LOCK (&(scheduler.wake_lock));
@@ -69,7 +76,9 @@ void pthread_scheduler_init (size_t num_worker_threads)
       num_worker_threads * sizeof (struct pool_thread_data));
   memset (scheduler.thread_pool, 0,
           num_worker_threads * sizeof (struct pool_thread_data));
+
   scheduler.num_threads = num_worker_threads;
+  scheduler.device = device;
 
   for (i = 0; i < num_worker_threads; ++i)
     {
@@ -188,6 +197,7 @@ static void finalize_kernel_command (thread_data *thread_data,
 static int
 shall_we_run_this (thread_data *td, cl_device_id subd, void *cmd)
 {
+
   if (subd && subd->parent_device)
     {
       // subdevice, let's see if we're supposed to pick up work
@@ -320,12 +330,12 @@ inline static void translate_wg_index_to_3d_index (kernel_run_command *k,
   index_3d[0] = (index % xy_slice) % row_size;
 }
 
-
 static int
 work_group_scheduler (kernel_run_command *k,
                       struct pool_thread_data *thread_data)
 {
   void *arguments[k->kernel->num_args + k->kernel->num_locals + 1];
+  void *arguments2[k->kernel->num_args + k->kernel->num_locals + 1];
   struct pocl_context pc;
   unsigned i;
   unsigned start_index;
@@ -338,7 +348,9 @@ work_group_scheduler (kernel_run_command *k,
 
   assert (end_index >= start_index);
 
-  setup_kernel_arg_array ((void**)&arguments, k);
+  setup_kernel_arg_array_with_locals (
+      (void **)&arguments, (void **)&arguments2, k, thread_data->local_mem,
+      scheduler.device->local_mem_size);
   memcpy (&pc, &k->pc, sizeof (struct pocl_context));
 
   /* Flush to zero is only set once at start of kernel (because FTZ is
@@ -380,7 +392,8 @@ work_group_scheduler (kernel_run_command *k,
   while (get_wg_index_range (k, &start_index, &end_index, &last_wgs,
                              thread_data->num_threads));
 
-  free_kernel_arg_array (arguments, k);
+  free_kernel_arg_array_with_locals ((void **)&arguments, (void **)&arguments2,
+                                     k);
 
   return 1;
 }
@@ -391,6 +404,8 @@ void finalize_kernel_command (struct pool_thread_data *thread_data,
 #ifdef DEBUG_MT
   printf("### kernel %s finished\n", k->cmd->command.run.kernel->name);
 #endif
+
+  free_kernel_arg_array (k);
 
   pocl_ndrange_node_cleanup (k->cmd);
   POCL_UPDATE_EVENT_COMPLETE (k->cmd->event);
@@ -431,6 +446,8 @@ pocl_pthread_prepare_kernel
   run_cmd->ref_count = 0;
   PTHREAD_FAST_INIT (&run_cmd->lock);
 
+  setup_kernel_arg_array (run_cmd);
+
   pthread_scheduler_push_kernel (run_cmd);
 }
 
@@ -461,6 +478,10 @@ pocl_pthread_driver_thread (void *p)
   td->current_ftz = 213;
   td->num_threads = scheduler.num_threads;
   td->last_cmd_ignored = NULL;
+
+  assert (scheduler.device->local_mem_size > 0);
+  td->local_mem = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
+                                       scheduler.device->local_mem_size);
 
 #ifdef __linux__
   if (pocl_get_bool_option ("POCL_AFFINITY", 0))

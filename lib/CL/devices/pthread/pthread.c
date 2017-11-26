@@ -263,7 +263,7 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
       scheduler_initialized = 1;
       pocl_init_dlhandle_cache();
       pocl_init_kernel_run_command_manager();
-      pthread_scheduler_init (num_worker_threads);
+      pthread_scheduler_init (num_worker_threads, device);
     }
   /* system mem as global memory */
   device->global_mem_id = 0;

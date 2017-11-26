@@ -41,6 +41,12 @@ struct kernel_run_command
   kernel_run_command *next;
   unsigned long ref_count;
 
+  /* actual kernel arguments. these are setup once at the kernel setup
+   * phase, then each thread sets up the local arguments for itself. */
+  void **arguments;
+  /* this is required b/c there's an additional level of indirection */
+  void **arguments2;
+
 #ifdef POCL_PTHREAD_CACHE_MONITORING
   pocl_cache_data cache_data;
 #endif
@@ -67,8 +73,15 @@ void free_kernel_run_command (kernel_run_command *k);
                                              sizeof (kernel_run_command))
 #define free_kernel_run_command(k) free (k)
 #endif
-void setup_kernel_arg_array(void **arguments, kernel_run_command *k);
-void free_kernel_arg_array (void **arguments, kernel_run_command *k);
+
+void setup_kernel_arg_array (kernel_run_command *k);
+void setup_kernel_arg_array_with_locals (void **arguments, void **arguments2,
+                                         kernel_run_command *k,
+                                         char *local_mem,
+                                         size_t local_mem_size);
+void free_kernel_arg_array (kernel_run_command *k);
+void free_kernel_arg_array_with_locals (void **arguments, void **arguments2,
+                                        kernel_run_command *k);
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

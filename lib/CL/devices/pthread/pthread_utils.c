@@ -60,30 +60,53 @@ void free_kernel_run_command (kernel_run_command *k)
 
 #endif
 
-void setup_kernel_arg_array(void **arguments, kernel_run_command *k)
+#define ARGS_SIZE                                                             \
+  (sizeof (void *) * (kernel->num_args + kernel->num_locals + 1))
+
+static char *
+align_ptr (char *p)
 {
-  struct pocl_argument *al;  
+  uintptr_t r = (uintptr_t)p;
+  if (r & (MAX_EXTENDED_ALIGNMENT - 1))
+    {
+      r = r & (~(MAX_EXTENDED_ALIGNMENT - 1));
+      r += MAX_EXTENDED_ALIGNMENT;
+    }
+  return (char *)r;
+}
+
+/* called from kernel setup code.
+ * Sets up the actual arguments, except the local ones. */
+void
+setup_kernel_arg_array (kernel_run_command *k)
+{
+  struct pocl_argument *al;
   cl_kernel kernel = k->kernel;
   cl_uint i;
-
+  void **arguments;
+  void **arguments2;
+  k->arguments = arguments
+      = pocl_memalign_alloc (MAX_EXTENDED_ALIGNMENT, ARGS_SIZE);
+  k->arguments2 = arguments2
+      = pocl_memalign_alloc (MAX_EXTENDED_ALIGNMENT, ARGS_SIZE);
   for (i = 0; i < kernel->num_args; ++i)
     {
       al = &(k->kernel_args[i]);
       if (kernel->arg_info[i].is_local)
         {
-          arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, al->size);
+          arguments[i] = NULL;
+          arguments2[i] = NULL;
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
       {
-        /* It's legal to pass a NULL pointer to clSetKernelArguments. In 
+        /* It's legal to pass a NULL pointer to clSetKernelArguments. In
            that case we must pass the same NULL forward to the kernel.
            Otherwise, the user must have created a buffer with per device
            pointers stored in the cl_mem. */
-        if (al->value == NULL) 
+        if (al->value == NULL)
           {
-            arguments[i] = malloc (sizeof (void *));
-            *(void **)arguments[i] = NULL;
+            arguments[i] = &arguments2[i];
+            arguments2[i] = NULL;
           }
         else
           {
@@ -98,26 +121,58 @@ void setup_kernel_arg_array(void **arguments, kernel_run_command *k)
         {
           dev_image_t di;
           fill_dev_image_t(&di, al, k->device);
-          void* devptr = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, 
-                                             sizeof(dev_image_t));
-          arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = devptr;
-          pocl_pthread_write (k->data, &di, devptr, 0, sizeof(dev_image_t));
+          void *devptr = pocl_memalign_alloc (MAX_EXTENDED_ALIGNMENT,
+                                              sizeof (dev_image_t));
+          arguments[i] = &arguments2[i];
+          arguments2[i] = devptr;
+          memcpy (devptr, &di, sizeof (dev_image_t));
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
           dev_sampler_t ds;
           fill_dev_sampler_t(&ds, al);
 
-          void* devptr = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, 
-                                             sizeof(dev_sampler_t));
-          arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = devptr;
-          pocl_pthread_write (k->data, &ds, *(void**)arguments[i], 0,
-                              sizeof(dev_sampler_t));
+          void *devptr = pocl_memalign_alloc (MAX_EXTENDED_ALIGNMENT,
+                                              sizeof (dev_sampler_t));
+          arguments[i] = &arguments2[i];
+          arguments2[i] = devptr;
+          memcpy (devptr, &ds, sizeof (dev_sampler_t));
         }
       else
         arguments[i] = al->value;
+    }
+}
+
+/* called from each driver thread.
+ * "arguments" and "arguments2" are the output:
+ * driver-thread-local copies of kern args.
+ *
+ * they're set up by 1) memcpy from kernel_run_command, 2) all
+ * local args are set to thread-local "local memory" storage. */
+void
+setup_kernel_arg_array_with_locals (void **arguments, void **arguments2,
+                                    kernel_run_command *k, char *local_mem,
+                                    size_t local_mem_size)
+{
+  cl_kernel kernel = k->kernel;
+  cl_uint i;
+
+  memcpy (arguments2, k->arguments2, ARGS_SIZE);
+  memcpy (arguments, k->arguments, ARGS_SIZE);
+
+  char *start = local_mem;
+
+  for (i = 0; i < kernel->num_args; ++i)
+    {
+      if (kernel->arg_info[i].is_local)
+        {
+          size_t size = k->kernel_args[i].size;
+          arguments[i] = &arguments2[i];
+          arguments2[i] = start;
+          start += size;
+          start = align_ptr (start);
+          assert ((size_t) (start - local_mem) <= local_mem_size);
+        }
     }
 
   /* Allocate the automatic local buffers which are implemented as implicit
@@ -126,40 +181,66 @@ void setup_kernel_arg_array(void **arguments, kernel_run_command *k)
        i < kernel->num_args + kernel->num_locals;
        ++i)
     {
-      al = &(k->kernel_args[i]);
-      arguments[i] = malloc (sizeof (void *));
-      *(void **)(arguments[i]) = pocl_memalign_alloc (MAX_EXTENDED_ALIGNMENT, al->size);
+      size_t size = k->kernel_args[i].size;
+      arguments[i] = &arguments2[i];
+      arguments2[i] = start;
+      start += size;
+      start = align_ptr (start);
+      assert ((size_t) (start - local_mem) <= local_mem_size);
     }
-
 }
 
-void free_kernel_arg_array (void **arguments, kernel_run_command *k)
+/* called from kernel teardown code.
+ * frees the actual arguments, except the local ones. */
+void
+free_kernel_arg_array (kernel_run_command *k)
 {
   cl_uint i;
   cl_kernel kernel = k->kernel;
+  void **arguments = k->arguments;
+  void **arguments2 = k->arguments2;
+
   for (i = 0; i < kernel->num_args; ++i)
     {
-      if (kernel->arg_info[i].is_local )
+      if (kernel->arg_info[i].is_local)
         {
-          POCL_MEM_FREE(*(void **)(arguments[i]));
-          POCL_MEM_FREE(arguments[i]);
+          assert (arguments[i] == NULL);
+          assert (arguments2[i] == NULL);
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE ||
                 kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
-          POCL_MEM_FREE(*(void **)(arguments[i]));
-          POCL_MEM_FREE(arguments[i]);
-        }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && *(void**)arguments[i] == NULL)
-        {
-          POCL_MEM_FREE(arguments[i]);
+          POCL_MEM_FREE (arguments2[i]);
         }
     }
+
+  POCL_MEM_FREE (k->arguments);
+  POCL_MEM_FREE (k->arguments2);
+}
+
+/* called from each driver thread.
+ * frees the local arguments. */
+void
+free_kernel_arg_array_with_locals (void **arguments, void **arguments2,
+                                   kernel_run_command *k)
+{
+  cl_kernel kernel = k->kernel;
+  cl_uint i;
+
+  for (i = 0; i < kernel->num_args; ++i)
+    {
+      if (kernel->arg_info[i].is_local)
+        {
+          arguments[i] = NULL;
+          arguments2[i] = NULL;
+        }
+    }
+
   for (i = kernel->num_args;
        i < kernel->num_args + kernel->num_locals;
        ++i)
     {
-      POCL_MEM_FREE(*(void **)(arguments[i]));
-      POCL_MEM_FREE(arguments[i]);
+      arguments[i] = NULL;
+      arguments2[i] = NULL;
     }
 }
