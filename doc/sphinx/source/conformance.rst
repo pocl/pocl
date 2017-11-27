@@ -94,6 +94,12 @@ Known issues in pocl / things to be aware of
 - clUnloadCompiler() only actually unload LLVM after all programs & kernels
   have been released.
 
+- clSetUserEventStatus() called with negative status. The Spec leaves the behaviour
+  in this case as "implementation defined", and this part of pocl is
+  only very lightly tested by the conformance tests. clSetUserEventStatus()
+  called with CL_COMPLETE works as expected, and is heavily used by
+  the conversions conformance test.
+
 Conformance tests results (kernel library precision) on tested hardware
 -----------------------------------------------------------------------
 
