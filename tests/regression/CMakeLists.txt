@@ -46,8 +46,7 @@ set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
   test_barrier_before_return test_infinite_loop test_constant_array
   test_undominated_variable test_setargs test_null_arg
   test_fors_with_var_iteration_counts test_issue_231 test_issue_445
-  test_autolocals_in_constexprs test_issue_553)
-
+  test_autolocals_in_constexprs test_issue_553 test_issue_577)
 
 if (MSVC)
   add_compile_options(${OPENCL_CFLAGS})
@@ -65,6 +64,12 @@ endforeach()
 
 
 ######################################################################
+
+add_test_pocl(NAME "regression/test_issue_231" COMMAND "test_issue_231")
+add_test_pocl(NAME "regression/test_issue_445" COMMAND "test_issue_445")
+add_test_pocl(NAME "regression/test_issue_553" COMMAND "test_issue_553")
+add_test_pocl(NAME "regression/test_issue_577" COMMAND "test_issue_577")
+
 
 # repl
 
