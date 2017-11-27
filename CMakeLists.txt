@@ -106,6 +106,17 @@ elseif(CMAKE_SYSTEM_PROCESSOR MATCHES "(i.86|AMD64|x86_64)")
   endif()
 endif()
 
+if(CMAKE_MAJOR_VERSION GREATER 2)
+  include(ProcessorCount)
+  ProcessorCount(CORECOUNT)
+  if(CORECOUNT LESS 1)
+    set(CORECOUNT 1)
+  endif()
+else()
+  set(CORECOUNT 1)
+endif()
+message(STATUS "Host CPU cores: ${CORECOUNT}")
+
 ######################################################################################
 
 macro(set_expr VAR)
@@ -1200,7 +1211,10 @@ if (OCS_AVAILABLE)
   add_subdirectory("examples")
 endif()
 
-add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} ${COMMAND_USES_TERMINAL})
+# make check & make check_tier1
+
+add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
+add_custom_target(check_tier1 COMMAND ${CMAKE_CTEST_COMMAND} -L "'internal|amdsdk_30|piglit|PyOpenCL|conformance_suite_micro'" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
 
 ##########################################################
 
