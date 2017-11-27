@@ -757,7 +757,11 @@ ERROR:
   program->kernels = 0;
   for(i = 0; i < program->num_devices; i++)
   {
-    POCL_MEM_FREE(program->binaries[i]);
+    if (program->source)
+      {
+        POCL_MEM_FREE (program->binaries[i]);
+        program->binary_sizes[i] = 0;
+      }
     pocl_cache_release_lock(program->read_locks[i]);
     program->read_locks[i] = NULL;
   }
@@ -776,11 +780,9 @@ ERROR:
       program->operating_on_default_kernels = 0;
       POCL_MEM_FREE(program->default_kernels);
     }
-  POCL_MEM_FREE(program->binaries);
-  POCL_MEM_FREE (program->binaries);
-  POCL_MEM_FREE(program->binary_sizes);
-  POCL_MEM_FREE (program->compiler_options);
+
   pocl_cache_release_lock(write_cache_lock);
+
 ERROR_CLEAN_OPTIONS:
   program->build_status = CL_BUILD_ERROR;
 
