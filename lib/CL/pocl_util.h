@@ -221,6 +221,26 @@ float half_to_float (uint16_t value);
     }                                                                   \
   while (0)
 
+#define POCL_RETURN_GETINFO_STR_FREE(__STR__)                                 \
+  do                                                                          \
+    {                                                                         \
+      size_t const value_size = strlen (__STR__) + 1;                         \
+      if (param_value)                                                        \
+        {                                                                     \
+          if (param_value_size >= value_size)                                 \
+            memcpy (param_value, __STR__, value_size);                        \
+          POCL_MEM_FREE (__STR__);                                            \
+          if (param_value_size < value_size)                                  \
+            return CL_INVALID_VALUE;                                          \
+        }                                                                     \
+      else                                                                    \
+        POCL_MEM_FREE (__STR__);                                              \
+      if (param_value_size_ret)                                               \
+        *param_value_size_ret = value_size;                                   \
+      return CL_SUCCESS;                                                      \
+    }                                                                         \
+  while (0)
+
 #define POCL_RETURN_GETINFO(__TYPE__, __VALUE__)                        \
   do                                                                    \
     {                                                                   \
