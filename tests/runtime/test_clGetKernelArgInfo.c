@@ -386,6 +386,15 @@ int main()
 
   CHECK_CL_ERROR(clReleaseProgram(program));
 
+  char extensions[1024];
+  err = clGetDeviceInfo(did, CL_DEVICE_EXTENSIONS, 1024, extensions, NULL);
+  CHECK_OPENCL_ERROR_IN("clGetDeviceInfo");
+  if (strstr(extensions, "cl_khr_spir") == NULL)
+    {
+      printf ("SPIR not supported, skipping SPIR arg info tests\n");
+      goto FINISH;
+    }
+
   /* SPIR program */
 
   printf("\nSPIR with metadata\n");
@@ -402,6 +411,7 @@ int main()
 
   CHECK_CL_ERROR(clReleaseProgram(program));
 
+FINISH:
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));
   CHECK_CL_ERROR (clReleaseContext (ctx));
   CHECK_CL_ERROR (clUnloadCompiler ());

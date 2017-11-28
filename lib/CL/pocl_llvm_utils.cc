@@ -149,7 +149,14 @@ char *get_cpu_name() {
   return cpu_name;
 }
 
-
+int bitcode_is_spir(const char *bitcode, size_t size) {
+  std::string triple;
+  int err = getModuleTriple(bitcode, size, triple);
+  if (!err)
+    return triple.find("spir") == 0;
+  else
+    return 0;
+}
 
 // TODO this should be fixed to not require LLVM eventually,
 // so that LLVM-less builds also report FMA correctly.

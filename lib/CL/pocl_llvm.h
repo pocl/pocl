@@ -38,6 +38,8 @@ char* get_cpu_name();
 /* Returns if the cpu supports FMA instruction (uses LLVM). */
 int cpu_has_fma();
 
+int bitcode_is_spir(const char *bitcode, size_t size);
+
 /* Sets up the native/preferred vector widths at runtime (using LLVM). */
 void cpu_setup_vector_widths(cl_device_id dev);
 

@@ -51,6 +51,8 @@
   "was specified, but CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT "                   \
   "is not set for device"
 
+#define REQUIRES_SPIR_SUPPORT "SPIR support is not available for device "
+
 /* supported compiler parameters which should pass to the frontend directly
    by using -Xclang */
 static const char cl_parameters[] =
@@ -176,7 +178,8 @@ static cl_int
 process_options (const char *options, char *modded_options, char *link_options,
                  cl_program program, int compiling, int linking,
                  int *create_library, unsigned *flush_denorms,
-                 int *requires_correctly_rounded_sqrt_div, size_t size)
+                 int *requires_correctly_rounded_sqrt_div,
+                 int *spir_build, size_t size)
 {
   cl_int error;
   char *token = NULL;
@@ -185,6 +188,7 @@ process_options (const char *options, char *modded_options, char *link_options,
   *create_library = 0;
   *flush_denorms = 0;
   *requires_correctly_rounded_sqrt_div = 0;
+  *spir_build = 0;
   int enable_link_options = 0;
   link_options[0] = 0;
   modded_options[0] = 0;
@@ -304,6 +308,8 @@ process_options (const char *options, char *modded_options, char *link_options,
               error = ret_error;
               goto ERROR;
             }
+          else
+            *spir_build = 1;
           token = strtok_r (NULL, " ", &saveptr);
           continue;
         }
@@ -317,6 +323,8 @@ process_options (const char *options, char *modded_options, char *link_options,
               error = ret_error;
               goto ERROR;
             }
+          else
+            *spir_build = 1;
           token = strtok_r (NULL, " ", &saveptr);
           continue;
         }
@@ -440,6 +448,7 @@ compile_and_link_program(int compile_program,
   int errcode, error;
   int create_library = 0;
   int requires_cr_sqrt_div = 0;
+  int spir_build = 0;
   unsigned flush_denorms = 0;
   uint64_t fsize;
   cl_device_id *unique_devlist = NULL;
@@ -488,13 +497,14 @@ compile_and_link_program(int compile_program,
       errcode = process_options (options, program->compiler_options,
                                  link_options, program, compile_program,
                                  link_program, &create_library, &flush_denorms,
-                                 &requires_cr_sqrt_div, size);
+                                 &requires_cr_sqrt_div, &spir_build, size);
       if (errcode != CL_SUCCESS)
         goto ERROR_CLEAN_OPTIONS;
     }
 
   POCL_MSG_PRINT_INFO ("building program with options %s\n",
                        program->compiler_options);
+
 
   program->flush_denorms = flush_denorms;
 #if !(defined(__x86_64__) && defined(__GNUC__))
@@ -569,6 +579,17 @@ compile_and_link_program(int compile_program,
                && (program->pocl_binaries[device_i] == NULL))
         {
 #ifdef OCS_AVAILABLE
+          int spir_binary = bitcode_is_spir ((char*)program->binaries[device_i],
+                                             program->binary_sizes[device_i]);
+          if ((spir_binary || spir_build)
+              && (!strstr (device->extensions, "cl_khr_spir")))
+            {
+              APPEND_TO_MAIN_BUILD_LOG (REQUIRES_SPIR_SUPPORT);
+              POCL_GOTO_ERROR_ON (1, build_error_code,
+                                  REQUIRES_SPIR_SUPPORT " %s\n",
+                                  device->short_name);
+            }
+
           POCL_MSG_PRINT_INFO ("building from a BC binary for device %d\n",
                                device_i);
           error = pocl_cache_create_program_cachedir(program, device_i,

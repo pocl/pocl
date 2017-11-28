@@ -36,8 +36,18 @@ exec_dot_product_kernel(const char *program_source, size_t source_size,
   // get the list of GPU devices associated with context 
   clGetContextInfo(context, CL_CONTEXT_DEVICES, 0, NULL, &cb); 
   devices = (cl_device_id *) malloc(cb);
-  clGetContextInfo(context, CL_CONTEXT_DEVICES, cb, devices, NULL); 
- 
+  clGetContextInfo(context, CL_CONTEXT_DEVICES, cb, devices, NULL);
+
+  char extensions[1024];
+  err = clGetDeviceInfo (devices[0], CL_DEVICE_EXTENSIONS, 1024, extensions,
+                         NULL);
+  CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo");
+  if (strstr (extensions, "cl_khr_spir") == NULL)
+    {
+      printf ("SPIR not supported, cannot run the test\n");
+      return -1;
+    }
+
   // create a command-queue 
   cmd_queue = clCreateCommandQueue(context, devices[0], 0, NULL); 
   if (cmd_queue == (cl_command_queue)0) 
