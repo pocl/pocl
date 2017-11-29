@@ -96,6 +96,13 @@ void pthread_scheduler_uinit ()
     {
       pthread_join (scheduler.thread_pool[i].thread, NULL);
     }
+
+  PTHREAD_FAST_DESTROY (&scheduler.wq_lock_fast);
+  pthread_cond_destroy (&scheduler.wake_pool);
+  PTHREAD_DESTROY_LOCK (&scheduler.wake_lock);
+
+  pthread_cond_destroy (&scheduler.cq_finished_cond);
+  PTHREAD_DESTROY_LOCK (&scheduler.cq_finished_lock);
 }
 
 void pthread_scheduler_push_command (_cl_command_node *cmd)
@@ -469,6 +476,8 @@ pocl_pthread_driver_thread (void *p)
     {
       if (scheduler.thread_pool_shutdown_requested)
         {
+          pthread_cond_destroy (&td->wakeup_cond);
+          PTHREAD_DESTROY_LOCK (&td->lock);
           pthread_exit (NULL);
         }
 
