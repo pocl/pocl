@@ -45,4 +45,12 @@ if(NOT MIPS)
     PROPERTIES
     LABELS "EinsteinToolkit"
     DEPENDS "pocl_version_check")
+
+  add_test(NAME "EinsteinToolkit_SubDev" COMMAND "EinsteinToolkit" s)
+
+  set_tests_properties( "EinsteinToolkit_SubDev"
+    PROPERTIES
+    LABELS "EinsteinToolkit"
+    ENVIRONMENT "POCL_AFFINITY=1"
+    DEPENDS "pocl_version_check")
 endif()

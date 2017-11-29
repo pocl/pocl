@@ -707,8 +707,8 @@ void pocl_cache_cleanup_cachedir(cl_program program) {
             void* lock = acquire_program_lock(program, i, "_read", 0);
             if (!lock)
               {
-                POCL_MSG_PRINT (WARN, "", "Could not get an exclusive lock "
-                                          "to remove program cachedir\n");
+                POCL_MSG_WARN ("Could not get an exclusive lock "
+                               "to remove program cachedir\n");
                 continue;
               }
             char cachedir[POCL_FILENAME_LENGTH];

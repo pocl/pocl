@@ -25,11 +25,10 @@
 
 # cmake version of lib/kernel/rules.mk
 
+separate_arguments(KERNEL_C_FLAGS)
 separate_arguments(KERNEL_CL_FLAGS)
-separate_arguments(KERNEL_CLANGXX_FLAGS)
+separate_arguments(KERNEL_CXX_FLAGS)
 
-#/usr/bin/clang --target=x86_64-pc-linux-gnu -march=bdver1 -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off -D__OPENCL_VERSION__=120 -DPOCL_VECMATHLIB_BUILTIN -D__CBUILD__ -o get_local_id.bc -c ${CMAKE_SOURCE_DIR}/lib/kernel/get_local_id.c -include ${CMAKE_SOURCE_DIR}/include/_kernel_c.h
-#	  @CLANG@ ${CLANG_FLAGS} ${KERNEL_CL_FLAGS} -D__CBUILD__ -c -o $@ -include ${abs_top_srcdir}/include/_kernel_c.h $< 
 function(compile_c_to_bc FILENAME SUBDIR BC_FILE_LIST)
     get_filename_component(FNAME "${FILENAME}" NAME)
     set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}.bc")
@@ -42,40 +41,33 @@ function(compile_c_to_bc FILENAME SUBDIR BC_FILE_LIST)
         "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
         ${VML_KERNEL_DEPEND_HEADERS}
         COMMAND "${CLANG}" ${CLANG_FLAGS} ${DEVICE_CL_FLAGS}
-        "-xc" "-D__CBUILD__" "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
+        ${KERNEL_C_FLAGS} "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
         "-include" "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
         COMMENT "Building C to LLVM bitcode ${BC_FILE}"
         VERBATIM)
 endfunction()
 
-# /usr/bin/clang++ --target=x86_64-pc-linux-gnu -march=bdver1 -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off -DVML_NO_IOSTREAM -DPOCL_VECMATHLIB_BUILTIN -o trunc.bc -c ${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib-pocl/trunc.cc
-# 	@CLANGXX@ ${CLANG_FLAGS} ${KERNEL_CLANGXX_FLAGS} -c -o $@ $<
 function(compile_cc_to_bc FILENAME SUBDIR BC_FILE_LIST)
     get_filename_component(FNAME "${FILENAME}" NAME)
     set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}.bc")
     set(${BC_FILE_LIST} ${${BC_FILE_LIST}} ${BC_FILE} PARENT_SCOPE)
     set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
 
-    #MESSAGE(STATUS "BC_FILE: ${BC_FILE}")
-
     add_custom_command(OUTPUT "${BC_FILE}"
         DEPENDS "${FULL_F_PATH}"
           ${VML_KERNEL_DEPEND_HEADERS}
-        COMMAND  "${CLANGXX}" ${CLANG_FLAGS} ${KERNEL_CLANGXX_FLAGS}
-        ${DEVICE_CL_FLAGS} "-std=c++11" "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
+        COMMAND  "${CLANGXX}" ${CLANG_FLAGS} ${KERNEL_CXX_FLAGS}
+        ${DEVICE_CL_FLAGS} "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
         COMMENT "Building C++ to LLVM bitcode ${BC_FILE}"
         VERBATIM)
 endfunction()
 
-# EXTRA_CONFIG = <BUILDDIR>/sleef_config_<machine>.h for SLEEF vector size #defines (required for distro build)
-# /usr/bin/clang --target=x86_64-pc-linux-gnu -march=bdver1 -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off -x cl -D__OPENCL_VERSION__=120 -DPOCL_VECMATHLIB_BUILTIN -fsigned-char -o atan2pi.bc -c ${CMAKE_SOURCE_DIR}/lib/kernel/vecmathlib-pocl/atan2pi.cl -include ${CMAKE_SOURCE_DIR}/include/_kernel.h
 function(compile_cl_to_bc FILENAME SUBDIR BC_FILE_LIST EXTRA_CONFIG)
     get_filename_component(FNAME "${FILENAME}" NAME)
     get_filename_component(FNAME_WE "${FILENAME}" NAME_WE)
     set(BC_FILE "${CMAKE_CURRENT_BINARY_DIR}/${SUBDIR}/${FNAME}.bc")
     set(${BC_FILE_LIST} ${${BC_FILE_LIST}} ${BC_FILE} PARENT_SCOPE)
     set(FULL_F_PATH "${CMAKE_SOURCE_DIR}/lib/kernel/${FILENAME}")
-    #MESSAGE(STATUS "BC_FILE: ${BC_FILE}")
 
     set(DEPENDLIST
           "${CMAKE_SOURCE_DIR}/include/_kernel.h"
@@ -120,7 +112,7 @@ function(compile_cl_to_bc FILENAME SUBDIR BC_FILE_LIST EXTRA_CONFIG)
     add_custom_command( OUTPUT "${BC_FILE}"
         DEPENDS "${FULL_F_PATH}"
           ${DEPENDLIST}
-        COMMAND "${CLANG}" ${CLANG_FLAGS} "-x" "cl"
+        COMMAND "${CLANG}" ${CLANG_FLAGS}
         ${KERNEL_CL_FLAGS} ${DEVICE_CL_FLAGS}
         "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
         ${INCLUDELIST}
@@ -141,11 +133,11 @@ function(compile_sleef_c_to_bc EXT FILENAME SUBDIR BCLIST)
     add_custom_command( OUTPUT "${BC_FILE}"
         DEPENDS "${FULL_F_PATH}"
         ${SLEEF_C_KERNEL_DEPEND_HEADERS}
-        COMMAND "${CLANG}" ${CLANG_FLAGS} ${ARGN}
+        COMMAND "${CLANG}" ${CLANG_FLAGS} ${KERNEL_C_FLAGS} ${ARGN}
         "-I" "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/arch"
         "-I" "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/libm"
         "-I" "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/include"
-        "-O1" "-xc" "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
+        "-O1" "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
         COMMENT "Building SLEEF to LLVM bitcode ${BC_FILE}"
         VERBATIM)
 endfunction()
@@ -204,8 +196,6 @@ function(make_kernel_bc OUTPUT_VAR NAME SUBDIR USE_SLEEF EXTRA_BC EXTRA_CONFIG)
   endif()
   set(BC_LIST_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/kernel_${NAME}_linklist.txt")
   file(WRITE "${BC_LIST_FILE}" "${BC_LIST_FILE_TXT}")
-
-  # @LLVM_LINK@ $^ -o - | @LLVM_OPT@ ${LLC_FLAGS} ${KERNEL_LIB_OPT_FLAGS} -O3 -fp-contract=off -o $@
 
   # don't waste time optimizing the kernels IR when in developer mode
   if(DEVELOPER_MODE)

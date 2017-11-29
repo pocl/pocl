@@ -28,20 +28,27 @@ set(TS_BASEDIR "${TESTSUITE_BASEDIR}/${TS_NAME}")
 set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build")
 set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
 
-if(NOT HAVE_GIT)
-  message(STATUS "Disabling testsuite ${TS_NAME}, requires git to checkout sources")
-elseif(NOT TESTS_USE_ICD)
+if(EXAMPLES_USE_GIT_MASTER)
+  set(FETCH_SOURCE GIT_REPOSITORY "https://github.com/ddemidov/vexcl.git")
+else()
+  set(FETCH_SOURCE URL "https://github.com/ddemidov/vexcl/archive/1.4.1.tar.gz")
+endif()
+
+if(NOT TESTS_USE_ICD)
+
   message(STATUS "Disabling testsuite ${TS_NAME}, requires ocl-icd")
 
 else()
+
 message(STATUS "Enabling testsuite ${TS_NAME}")
 list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
 set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
 
 ExternalProject_Add(
   ${TS_NAME}
+  ${FETCH_SOURCE}
   PREFIX "${TS_BASEDIR}"
-  GIT_REPOSITORY "https://github.com/ddemidov/vexcl.git"
+
   CMAKE_ARGS
     -DVEXCL_CACHE_KERNELS=OFF
     -DCMAKE_BUILD_TYPE=RelWithDebInfo

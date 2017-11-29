@@ -27,6 +27,8 @@
 #pragma GCC visibility push(hidden)
 #endif
 
+#ifdef USE_POCL_MEMMANAGER
+
 void pocl_init_mem_manager (void);
 
 cl_event pocl_mem_manager_new_event (void);
@@ -40,6 +42,27 @@ void pocl_mem_manager_free_command (_cl_command_node *cmd_ptr);
 event_node* pocl_mem_manager_new_event_node ();
 
 void pocl_mem_manager_free_event_node (event_node *ed);
+
+#else
+
+#define pocl_init_mem_manager() NULL
+
+cl_event pocl_mem_manager_new_event ();
+
+#define pocl_mem_manager_free_event(event) POCL_MEM_FREE(event)
+
+#define pocl_mem_manager_new_command() \
+  (_cl_command_node*) calloc (1, sizeof (_cl_command_node))
+
+#define pocl_mem_manager_free_command(cmd) POCL_MEM_FREE(cmd)
+
+#define pocl_mem_manager_new_event_node() \
+  (event_node*) calloc (1, sizeof (event_node))
+
+#define pocl_mem_manager_free_event_node(en) POCL_MEM_FREE(en)
+
+
+#endif
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

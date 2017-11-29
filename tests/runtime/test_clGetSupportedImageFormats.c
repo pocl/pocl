@@ -43,5 +43,7 @@ main(void)
 
   CHECK_CL_ERROR (clReleaseContext (context));
 
+  free (img_formats);
+
   return EXIT_SUCCESS;
 }

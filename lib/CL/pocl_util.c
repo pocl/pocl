@@ -347,24 +347,14 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
         POname(clRetainCommandQueue) (command_queue);
 
       (*event)->command_type = command_type;
-      (*event)->command =  NULL;
-      (*event)->callback_list = NULL;
       (*event)->id = event_id_counter++;
-      (*event)->notify_list = NULL;
-      (*event)->wait_list = NULL;
-      (*event)->data = NULL;
       (*event)->num_buffers = num_buffers;
       if (num_buffers > 0)
         {
           (*event)->mem_objs = malloc (num_buffers * sizeof(cl_mem));
           memcpy ((*event)->mem_objs, buffers, num_buffers * sizeof(cl_mem));
         }
-      else
-        (*event)->mem_objs = NULL;
       (*event)->status = CL_QUEUED;
-      (*event)->implicit_event = 0;
-      (*event)->next = NULL;
-      (*event)->prev = NULL;
 
       /* user events do not have cq */
       if (!command_queue)
@@ -474,11 +464,8 @@ cl_int pocl_create_command (_cl_command_node **cmd,
       (*event)->pocl_refcount = 1;
     }
 
-  (*cmd)->next = NULL;
-  (*cmd)->prev = NULL;
   (*cmd)->device = command_queue->device;
   (*cmd)->event->command = (*cmd);
-  (*cmd)->ready = 0;
 
   /* in case of in-order queue, synchronize to previously enqueued command
      if available */
@@ -539,7 +526,9 @@ void pocl_command_enqueue (cl_command_queue command_queue,
   command_queue->last_event.event_id = node->event->id;
   POCL_UNLOCK_OBJ (command_queue);
 
+  POCL_LOCK_OBJ (node->event);
   POCL_UPDATE_EVENT_QUEUED (node->event);
+  POCL_UNLOCK_OBJ (node->event);
 
   command_queue->device->ops->submit(node, command_queue);
 #ifdef POCL_DEBUG_BUILD

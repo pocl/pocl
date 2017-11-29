@@ -58,7 +58,7 @@ if (EXISTS "${INTEL_ZIP}")
   # This seems to occur only with some LLVM built setups, so let's just skip
   # the tests completely.
 
-  if(!LLVM_3_8)
+  if(NOT LLVM_3_8)
     add_test(NAME intel_svm_coarse
       COMMAND "${TS_BUILDDIR}/coarse" -p 0 -t default
       WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/SVMBasicCoarseGrained")
@@ -69,7 +69,8 @@ if (EXISTS "${INTEL_ZIP}")
     set_tests_properties(intel_svm_coarse intel_svm_fine
       PROPERTIES  LABELS "IntelSVM;hsa")
     set_tests_properties(intel_svm_coarse intel_svm_fine
-      PROPERTIES  WILL_FAIL 1)
+      PROPERTIES  PASS_REGULAR_EXPRESSION "PASSED")
+
   endif()
 
 else()

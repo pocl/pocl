@@ -59,6 +59,7 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
     BlackScholes
     BlackScholesDP
     DCT
+    DeviceFission
     DwtHaar1D
     DynamicOpenCLDetection
     FastWalshTransform
@@ -69,11 +70,13 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
     HistogramAtomics
     ImageOverlap
     LUDecomposition
+    Mandelbrot
     MatrixMulImage
     MatrixMultiplication
     MatrixTranspose
     MemoryModel
     MonteCarloAsianMultiGPU
+    NBody
     PrefixSum
     QuasiRandomSequence
     RadixSort
@@ -88,17 +91,24 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
     Template
     TransferOverlap
     URNG
-    URNGNoiseGL)
+    )
 
-    # disabled c++ tests: DwtHaar1DCPPKernel EigenValue FFT IntroStaticCPPKernel MatrixMultiplicationCPPKernel MersenneTwister SoAversusAoS TransferOverlapCPP
-    # disabled but fixable: CplusplusWrapper DeviceFission FluidSimulation2D GaussianNoise HDRToneMapping ImageBandwidth KernelLaunch MatrixMulDouble MonteCarloAsian MonteCarloAsianDP SobelFilterImage UnsharpMask
+    # disabled c++ tests: DwtHaar1DCPPKernel EigenValue FFT IntroStaticCPPKernel
+    # MatrixMultiplicationCPPKernel MersenneTwister SoAversusAoS TransferOverlapCPP
+    #
+    # disabled but fixable: CplusplusWrapper FluidSimulation2D GaussianNoise HDRToneMapping
+    # ImageBandwidth KernelLaunch MatrixMulDouble MonteCarloAsian
+    # MonteCarloAsianDP SobelFilterImage UnsharpMask
+    #
     # disabled tests: NBody AtomicCounters BasicDebug DeviceFission11Ext
-    # disabled graphics tests: Mandelbrot  KmeansAutoclustering GaussianNoiseGL SimpleGL
+    #
+    # disabled graphics tests: KmeansAutoclustering GaussianNoiseGL SimpleGL
+    #
     # very slow: LDSBandwidth ConstantBandwidth MemoryOptimizations
 
     foreach(SAMPLE IN LISTS AMD_SAMPLES)
       add_test(NAME "AMD_29_${SAMPLE}"
-        COMMAND "${TS_BASEDIR}/src/${TS_NAME}/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/bin/x86_64/${SAMPLE}"
+        COMMAND "${TS_BASEDIR}/src/${TS_NAME}/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/bin/x86_64/${SAMPLE}" "-q" "-t"
         WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/bin/x86_64")
       set_tests_properties("AMD_29_${SAMPLE}" PROPERTIES LABELS "amdsdk_29")
     endforeach()

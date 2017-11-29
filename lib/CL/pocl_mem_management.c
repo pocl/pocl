@@ -26,6 +26,18 @@
 #include "utlist.h"
 #include <string.h>
 
+#ifndef USE_POCL_MEMMANAGER
+
+cl_event pocl_mem_manager_new_event ()
+{
+  cl_event ev = (cl_event) calloc (1, sizeof (struct _cl_event));
+  if (ev != NULL)
+    POCL_INIT_OBJECT(ev);
+  return ev;
+}
+
+#else
+
 typedef struct _mem_manager
 {
   pocl_lock_t event_lock;
@@ -76,7 +88,6 @@ cl_event pocl_mem_manager_new_event ()
 
   ev = (struct _cl_event*) calloc (1, sizeof (struct _cl_event));
   POCL_INIT_OBJECT(ev);
-  ev->pocl_refcount = 1;
   return ev;
 }
 
@@ -134,3 +145,5 @@ void pocl_mem_manager_free_event_node (event_node *ed)
   LL_PREPEND (mm->event_node_list, ed);
   POCL_UNLOCK (mm->event_node_lock);
 }
+
+#endif

@@ -69,6 +69,7 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
     DwtHaar1D
     FastWalshTransform
     FloydWarshall
+    FluidSimulation2D
     GaussianNoise
     HDRToneMapping
     HelloWorld
@@ -78,6 +79,7 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
     ImageOverlap
     KernelLaunch
     LUDecomposition
+    Mandelbrot
     MatrixMulImage
     MatrixMultiplication
     MatrixTranspose
@@ -105,7 +107,7 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
     #     IntroStaticCPPKernel FFT MatrixMultiplicationCPPKernel
     #     MersenneTwister SoAversusAoS TransferOverlapCPP
     # disabled but fixable: BuiltInScan CalcPie CplusplusWrapper
-    #     DeviceFission FluidSimulation2D GaussianNoise HDRToneMapping
+    #     GaussianNoise HDRToneMapping
     #     HeatPDE ImageBandwidth KernelLaunch MatrixMulDouble
     #     MonteCarloAsianDP SobelFilterImage UnsharpMask DynamicOpenCLDetection
     #     FineGrainSVMCAS RecursiveGaussian_ProgramScope SobelFilterImage
@@ -113,7 +115,7 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
     # disabled tests: AsyncDataTransfer AtomicCounters BasicDebug
     #     DeviceFission11Ext RangeMinimumQuery SimpleDepthImage
     #     SimpleGenericAddressSpace
-    # disabled graphics tests: Mandelbrot  KmeansAutoclustering
+    # disabled graphics tests: KmeansAutoclustering
     #     GaussianNoiseGL SimpleGL BoxFilterGL URNGNoiseGL
     # very slow: BufferBandwidth LDSBandwidth ConstantBandwidth
     #     MemoryOptimizations TransferOverlap
@@ -137,7 +139,7 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
 
     foreach(SAMPLE IN LISTS AMD_SAMPLES)
       add_test(NAME "AMD_30_${SAMPLE}"
-        COMMAND "${TS_BASEDIR}/src/${TS_NAME}/AMD-APP-SDK-3.0/samples/opencl/bin/x86_64/${SAMPLE}"
+        COMMAND "${TS_BASEDIR}/src/${TS_NAME}/AMD-APP-SDK-3.0/samples/opencl/bin/x86_64/${SAMPLE}" "-q" "-t"
         WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/AMD-APP-SDK-3.0/samples/opencl/bin/x86_64")
       set_tests_properties("AMD_30_${SAMPLE}" PROPERTIES LABELS "amdsdk_30")
     endforeach()

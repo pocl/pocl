@@ -99,12 +99,15 @@ int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
     POCL_MSG_PRINT_INFO("NVVM module:\n%s\n", ModuleString.c_str());
   }
 
-  // Verify module.
   std::string Error;
-  llvm::raw_string_ostream Errs(Error);
-  if (llvm::verifyModule(*Module->get(), &Errs)) {
-    POCL_MSG_ERR("\n%s\n", Error.c_str());
-    POCL_ABORT("[CUDA] ptx-gen: module verification failed\n");
+
+  // Verify module.
+  if (pocl_get_bool_option("POCL_CUDA_VERIFY_MODULE", 0)) {
+    llvm::raw_string_ostream Errs(Error);
+    if (llvm::verifyModule(*Module->get(), &Errs)) {
+      POCL_MSG_ERR("\n%s\n", Error.c_str());
+      POCL_ABORT("[CUDA] ptx-gen: module verification failed\n");
+    }
   }
 
   llvm::StringRef Triple =

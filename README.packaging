@@ -20,6 +20,10 @@ CMake options for a distribution build
   Set this option to OFF and pocl will only put the dynamic library
   name into pocl.icd.
 
+- ``-DENABLE_POCL_BUILDING=OFF``
+  When OFF, POCL_BUILDING option (which causes pocl to look for required
+  files in build / source directories) will be ignored
+  and pocl will always look in installed paths only.
 
 Target(host) CPU
 ----------------

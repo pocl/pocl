@@ -59,3 +59,19 @@ When passing buffer pointers to the kernel/work-group launchers, the memory addr
 passed as integer values. The values passed from the host are casted to the actual
 address-space qualified LLVM IR pointers for calling the kernels with correct types
 by the work-group function (see :ref:`wg-functions`).
+
+Custom memory management for pthread device
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Enabled by CMake option USE_POCL_MEMMANAGER. This is only useful for certain
+uncommon setups, where pocl is expected to allocate a huge number of queue or
+event objects. For most available OpenCL programs / tests / benchmarks, there
+is no measurable difference in speed.
+
+Advantages:
+* allocation of queues/events/command objects can be a lot faster
+
+Disadvantages:
+* memory allocated for those objects is never free()d;
+  it's only returned to allocation pool
+* debugging tools will not detect use-after-free bugs on said objects

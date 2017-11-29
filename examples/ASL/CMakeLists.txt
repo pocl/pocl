@@ -34,6 +34,12 @@ find_package(Boost 1.55 QUIET)
 find_package(VTK QUIET)
 set(VTK_VER "${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}")
 
+if(EXAMPLES_USE_GIT_MASTER)
+  set(FETCH_SOURCE GIT_REPOSITORY "https://github.com/AvtechScientific/ASL")
+else()
+  set(FETCH_SOURCE URL "https://github.com/AvtechScientific/ASL/archive/v0.1.6.tar.gz")
+endif()
+
 if ((NOT "${CMAKE_VERSION}" VERSION_LESS "3.0.2")
     AND VTK_FOUND AND (NOT VTK_VER VERSION_LESS "6.1")
     AND Boost_FOUND AND (NOT Boost_VERSION VERSION_LESS "1.55"))
@@ -45,8 +51,7 @@ if ((NOT "${CMAKE_VERSION}" VERSION_LESS "3.0.2")
   ExternalProject_Add(
     ${TS_NAME}
     PREFIX "${TS_BASEDIR}"
-    # GIT_REPOSITORY "https://github.com/AvtechScientific/ASL"
-    URL "https://github.com/AvtechScientific/ASL/archive/v0.1.6.tar.gz"
+    ${FETCH_SOURCE}
     PATCH_COMMAND pwd && patch -p1 -i ${CMAKE_SOURCE_DIR}/examples/ASL/asl.patch
     CMAKE_ARGS
       -DCMAKE_BUILD_TYPE=RelWithDebInfo
@@ -84,61 +89,64 @@ if ((NOT "${CMAKE_VERSION}" VERSION_LESS "3.0.2")
   add_test(NAME ASL_testReductionFunction
            COMMAND "${TS_BUILDDIR}/test/testMath/testReductionFunction")
 
-
-  add_test(NAME ASL_example_bus_wind
-           COMMAND "${TS_BUILDDIR}/examples/flow/bus_wind/asl-bus_wind")
-  add_test(NAME ASL_example_compressor
-           COMMAND "${TS_BUILDDIR}/examples/flow/compressor/asl-compressor")
-  add_test(NAME ASL_example_flow
-           COMMAND "${TS_BUILDDIR}/examples/flow/flow/asl-flow")
-  add_test(NAME ASL_example_flow2
-           COMMAND "${TS_BUILDDIR}/examples/flow/flow2/asl-flow2")
-  add_test(NAME ASL_example_flow3
-           COMMAND "${TS_BUILDDIR}/examples/flow/flow3/asl-flow3")
-  add_test(NAME ASL_example_flowKDPGrowth
-           COMMAND "${TS_BUILDDIR}/examples/flow/flowKDPGrowth/asl-flowKDPGrowth")
-  add_test(NAME ASL_example_flowRotatingCylinders
-           COMMAND "${TS_BUILDDIR}/examples/flow/flowRotatingCylinders/asl-flowRotatingCylinders")
-  add_test(NAME ASL_example_locomotive
-           COMMAND "${TS_BUILDDIR}/examples/flow/locomotive/asl-locomotive")
-  add_test(NAME ASL_example_locomotive_laminar
-           COMMAND "${TS_BUILDDIR}/examples/flow/locomotive_laminar/asl-locomotive_laminar")
-  add_test(NAME ASL_example_locomotive_stability
-           COMMAND "${TS_BUILDDIR}/examples/flow/locomotive_stability/asl-locomotive_stability")
-  add_test(NAME ASL_example_multicomponent_flow
-           COMMAND "${TS_BUILDDIR}/examples/flow/multicomponent_flow/asl-multicomponent_flow")
-  add_test(NAME ASL_example_multiphase_flow
-           COMMAND "${TS_BUILDDIR}/examples/flow/multiphase_flow/asl-multiphase_flow")
-  add_test(NAME ASL_example_pitot_tube_ice
-           COMMAND "${TS_BUILDDIR}/examples/flow/pitot_tube_ice/asl-pitot_tube_ice")
-  add_test(NAME ASL_example_acousticWaves
-           COMMAND "${TS_BUILDDIR}/examples/elastic/acousticWaves/asl-acousticWaves")
-  add_test(NAME ASL_example_cubeGravity
-           COMMAND "${TS_BUILDDIR}/examples/elastic/cubeGravity/asl-cubeGravity")
-  add_test(NAME ASL_example_cubeIncompressibleGravity
-           COMMAND "${TS_BUILDDIR}/examples/elastic/cubeIncompressibleGravity/asl-cubeIncompressibleGravity")
-  add_test(NAME ASL_example_cubePoroelasticGravity
-           COMMAND "${TS_BUILDDIR}/examples/elastic/cubePoroelasticGravity/asl-cubePoroelasticGravity")
-  add_test(NAME ASL_example_poroelastic
-           COMMAND "${TS_BUILDDIR}/examples/elastic/poroelastic/asl-poroelastic")
-  add_test(NAME ASL_example_levelSetBasic
-           COMMAND "${TS_BUILDDIR}/examples/levelSet/levelSetBasic/asl-levelSetBasic")
-  add_test(NAME ASL_example_levelSetFacetedGrowth
-           COMMAND "${TS_BUILDDIR}/examples/levelSet/levelSetFacetedGrowth/asl-levelSetFacetedGrowth")
-  add_test(NAME ASL_example_levelSetNormalGrowth
-           COMMAND "${TS_BUILDDIR}/examples/levelSet/levelSetNormalGrowth/asl-levelSetNormalGrowth")
-  add_test(NAME ASL_example_jumpingBox
-           COMMAND "${TS_BUILDDIR}/examples/jumpingObjects/jumpingBox/asl-jumpingBox")
-  add_test(NAME ASL_example_surfaceFlux
-           COMMAND "${TS_BUILDDIR}/examples/heatTransfer/surfaceFlux/asl-surfaceFlux")
-  add_test(NAME ASL_example_testSMDiff
-           COMMAND "${TS_BUILDDIR}/examples/massTransferSM/testSMDiff/asl-testSMDiff")
-  add_test(NAME ASL_example_testSMDiff3C
-           COMMAND "${TS_BUILDDIR}/examples/massTransferSM/testSMDiff3C/asl-testSMDiff3C")
-  add_test(NAME ASL_example_testSMPhi
-           COMMAND "${TS_BUILDDIR}/examples/massTransferSM/testSMPhi/asl-testSMPhi")
-  add_test(NAME ASL_example_testSMPhiBV
-           COMMAND "${TS_BUILDDIR}/examples/massTransferSM/testSMPhiBV/asl-testSMPhiBV")
+# Tests are disabled until ASL issue #31 is resolved.
+# https://github.com/AvtechScientific/ASL/issues/31
+#
+#
+#  add_test(NAME ASL_example_bus_wind
+#           COMMAND "${TS_BUILDDIR}/examples/flow/bus_wind/asl-bus_wind")
+#  add_test(NAME ASL_example_compressor
+#           COMMAND "${TS_BUILDDIR}/examples/flow/compressor/asl-compressor")
+#  add_test(NAME ASL_example_flow
+#           COMMAND "${TS_BUILDDIR}/examples/flow/flow/asl-flow")
+#  add_test(NAME ASL_example_flow2
+#           COMMAND "${TS_BUILDDIR}/examples/flow/flow2/asl-flow2")
+#  add_test(NAME ASL_example_flow3
+#           COMMAND "${TS_BUILDDIR}/examples/flow/flow3/asl-flow3")
+#  add_test(NAME ASL_example_flowKDPGrowth
+#           COMMAND "${TS_BUILDDIR}/examples/flow/flowKDPGrowth/asl-flowKDPGrowth")
+#  add_test(NAME ASL_example_flowRotatingCylinders
+#           COMMAND "${TS_BUILDDIR}/examples/flow/flowRotatingCylinders/asl-flowRotatingCylinders")
+#  add_test(NAME ASL_example_locomotive
+#           COMMAND "${TS_BUILDDIR}/examples/flow/locomotive/asl-locomotive")
+#  add_test(NAME ASL_example_locomotive_laminar
+#           COMMAND "${TS_BUILDDIR}/examples/flow/locomotive_laminar/asl-locomotive_laminar")
+#  add_test(NAME ASL_example_locomotive_stability
+#           COMMAND "${TS_BUILDDIR}/examples/flow/locomotive_stability/asl-locomotive_stability")
+#  add_test(NAME ASL_example_multicomponent_flow
+#           COMMAND "${TS_BUILDDIR}/examples/flow/multicomponent_flow/asl-multicomponent_flow")
+#  add_test(NAME ASL_example_multiphase_flow
+#           COMMAND "${TS_BUILDDIR}/examples/flow/multiphase_flow/asl-multiphase_flow")
+#  add_test(NAME ASL_example_pitot_tube_ice
+#           COMMAND "${TS_BUILDDIR}/examples/flow/pitot_tube_ice/asl-pitot_tube_ice")
+#  add_test(NAME ASL_example_acousticWaves
+#           COMMAND "${TS_BUILDDIR}/examples/elastic/acousticWaves/asl-acousticWaves")
+#  add_test(NAME ASL_example_cubeGravity
+#           COMMAND "${TS_BUILDDIR}/examples/elastic/cubeGravity/asl-cubeGravity")
+#  add_test(NAME ASL_example_cubeIncompressibleGravity
+#           COMMAND "${TS_BUILDDIR}/examples/elastic/cubeIncompressibleGravity/asl-cubeIncompressibleGravity")
+#  add_test(NAME ASL_example_cubePoroelasticGravity
+#           COMMAND "${TS_BUILDDIR}/examples/elastic/cubePoroelasticGravity/asl-cubePoroelasticGravity")
+#  add_test(NAME ASL_example_poroelastic
+#           COMMAND "${TS_BUILDDIR}/examples/elastic/poroelastic/asl-poroelastic")
+#  add_test(NAME ASL_example_levelSetBasic
+#           COMMAND "${TS_BUILDDIR}/examples/levelSet/levelSetBasic/asl-levelSetBasic")
+#  add_test(NAME ASL_example_levelSetFacetedGrowth
+#           COMMAND "${TS_BUILDDIR}/examples/levelSet/levelSetFacetedGrowth/asl-levelSetFacetedGrowth")
+#  add_test(NAME ASL_example_levelSetNormalGrowth
+#           COMMAND "${TS_BUILDDIR}/examples/levelSet/levelSetNormalGrowth/asl-levelSetNormalGrowth")
+#  add_test(NAME ASL_example_jumpingBox
+#           COMMAND "${TS_BUILDDIR}/examples/jumpingObjects/jumpingBox/asl-jumpingBox")
+#  add_test(NAME ASL_example_surfaceFlux
+#           COMMAND "${TS_BUILDDIR}/examples/heatTransfer/surfaceFlux/asl-surfaceFlux")
+#  add_test(NAME ASL_example_testSMDiff
+#           COMMAND "${TS_BUILDDIR}/examples/massTransferSM/testSMDiff/asl-testSMDiff")
+#  add_test(NAME ASL_example_testSMDiff3C
+#           COMMAND "${TS_BUILDDIR}/examples/massTransferSM/testSMDiff3C/asl-testSMDiff3C")
+#  add_test(NAME ASL_example_testSMPhi
+#           COMMAND "${TS_BUILDDIR}/examples/massTransferSM/testSMPhi/asl-testSMPhi")
+#  add_test(NAME ASL_example_testSMPhiBV
+#           COMMAND "${TS_BUILDDIR}/examples/massTransferSM/testSMPhiBV/asl-testSMPhiBV")
 
 
   set_tests_properties(
@@ -152,33 +160,33 @@ if ((NOT "${CMAKE_VERSION}" VERSION_LESS "3.0.2")
     ASL_testASLData
     ASL_testDistanceFunction
     ASL_testReductionFunction
-    ASL_example_bus_wind
-    ASL_example_compressor
-    ASL_example_flow
-    ASL_example_flow2
-    ASL_example_flow3
-    ASL_example_flowKDPGrowth
-    ASL_example_flowRotatingCylinders
-    ASL_example_locomotive
-    ASL_example_locomotive_laminar
-    ASL_example_locomotive_stability
-    ASL_example_multicomponent_flow
-    ASL_example_multiphase_flow
-    ASL_example_pitot_tube_ice
-    ASL_example_acousticWaves
-    ASL_example_cubeGravity
-    ASL_example_cubeIncompressibleGravity
-    ASL_example_cubePoroelasticGravity
-    ASL_example_poroelastic
-    ASL_example_levelSetBasic
-    ASL_example_levelSetFacetedGrowth
-    ASL_example_levelSetNormalGrowth
-    ASL_example_jumpingBox
-    ASL_example_surfaceFlux
-    ASL_example_testSMDiff
-    ASL_example_testSMDiff3C
-    ASL_example_testSMPhi
-    ASL_example_testSMPhiBV
+#    ASL_example_bus_wind
+#    ASL_example_compressor
+#    ASL_example_flow
+#    ASL_example_flow2
+#    ASL_example_flow3
+#    ASL_example_flowKDPGrowth
+#    ASL_example_flowRotatingCylinders
+#    ASL_example_locomotive
+#    ASL_example_locomotive_laminar
+#    ASL_example_locomotive_stability
+#    ASL_example_multicomponent_flow
+#    ASL_example_multiphase_flow
+#    ASL_example_pitot_tube_ice
+#    ASL_example_acousticWaves
+#    ASL_example_cubeGravity
+#    ASL_example_cubeIncompressibleGravity
+#    ASL_example_cubePoroelasticGravity
+#    ASL_example_poroelastic
+#    ASL_example_levelSetBasic
+#    ASL_example_levelSetFacetedGrowth
+#    ASL_example_levelSetNormalGrowth
+#    ASL_example_jumpingBox
+#    ASL_example_surfaceFlux
+#    ASL_example_testSMDiff
+#    ASL_example_testSMDiff3C
+#    ASL_example_testSMPhi
+#    ASL_example_testSMPhiBV
 
     PROPERTIES
       LABELS "ASL")

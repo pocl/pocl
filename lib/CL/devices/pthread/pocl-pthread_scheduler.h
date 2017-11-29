@@ -51,7 +51,7 @@ void pthread_scheduler_wait_cq (cl_command_queue cq);
 
 void pthread_scheduler_release_host ();
 
-int pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr);
+void pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr);
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

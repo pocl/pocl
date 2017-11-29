@@ -22,10 +22,11 @@ This is done by adding switch ``-DENABLE_TESTSUITES=conformance``
 to the cmake command line. After this ``make prepare_examples`` fetches and
 prepares the conformance suite for testing.
 
-To run a shortened version of the conformance suite, run: ``ctest -L conformance_suite_short``
-This might take a few hours on slow hardware.
+To run a shortened version of the conformance suite, run: ``ctest -L conformance_suite_mini``
+This might take a few hours on slow hardware. There is also a ``conformance_suite_micro``
+label, which takes about 20-30 minutes on slow hardware.
 
-To run the full conformance testsuite, run: ``ctest -L conformance_suite``
+To run the full conformance testsuite, run: ``ctest -L conformance_suite_full``
 Note that this can take a week to finish on slow hardware, and about a day
 on fast hardware (6C/12T Intel or equivalent).
 
@@ -40,9 +41,29 @@ Known issues with the conformance testsuite
 - a few tests from ``basic/test_basic`` may fail / segfault because they
   request a huge amount of memory for buffers.
 
+- a few tests from ``conversions/test_conversions`` may report failures. This
+  is likely a bug in the test or miscompilation; the same test from branch
+  cl20_trunk of CTS passes.
+
 - a few tests may run much faster if you limit the reported Global memory size
   with POCL_MEMORY_LIMIT env var. In particular, "kernel_image_methods" test
   with "max_images" argument.
+
+- two tests in ``api/test_api`` fail with LLVM 5.0 because of
+  LLVM commit 1c1154229a41b688f9:
+
+    ``[OpenCL] Do not generate "kernel_arg_type_qual" metadata for non-pointer args``
+
+  This is a bug in CTS, which tests for non-pointer type qualifiers, not in pocl.
+  See:
+
+  https://www.khronos.org/registry/OpenCL/specs/opencl-1.2.pdf page 169:
+
+  ``CL_KERNEL_ARG_TYPE_VOLATILE`` is returned if the **argument is a pointer**
+  and the referenced type is declared with the volatile qualifier.
+  Similarly, ``CL_KERNEL_ARG_TYPE_RESTRICT`` or ``CL_KERNEL_ARG_TYPE_CONST`` is
+  returned if the **argument is a pointer** and the referenced type is declared with
+  the restrict or const qualifier
 
 .. _sigfpe-handler:
 
@@ -69,6 +90,9 @@ Known issues in pocl / things to be aware of
   to the "full" variants.
 
 - the optional OpenGL / D3D / SPIR extensions are not supported
+
+- clUnloadCompiler() only actually unload LLVM after all programs & kernels
+  have been released.
 
 Conformance tests results (kernel library precision) on tested hardware
 -----------------------------------------------------------------------

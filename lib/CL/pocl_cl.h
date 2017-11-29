@@ -152,7 +152,7 @@ typedef pthread_mutex_t pocl_lock_t;
 /* Symbol aliases are supported */
 
 #  define POname(name) PO##name
-#  define POdeclsym(name)			\
+#  define POdeclsym(name)                      \
   __typeof__(name) PO##name __attribute__((visibility("hidden")));
 #  define POCL_ALIAS_OPENCL_SYMBOL(name)                                \
   __typeof__(name) name __attribute__((alias ("PO" #name), visibility("default")));
@@ -169,10 +169,12 @@ typedef pthread_mutex_t pocl_lock_t;
  * it is used (as the ICD loader assumes that)*/
 #ifdef BUILD_ICD
 #  define POCL_ICD_OBJECT struct _cl_icd_dispatch *dispatch;
+#  define POCL_ICD_OBJECT_PLATFORM_ID POCL_ICD_OBJECT
 #  define POsymICD(name) POsym(name)
 #  define POdeclsymICD(name) POdeclsym(name)
 #else
 #  define POCL_ICD_OBJECT
+#  define POCL_ICD_OBJECT_PLATFORM_ID unsigned long id;
 #  define POsymICD(name)
 #  define POdeclsymICD(name)
 #endif
@@ -370,6 +372,10 @@ struct _cl_device_id {
   cl_device_type type;
   cl_uint vendor_id;
   cl_uint max_compute_units;
+  // for subdevices
+  cl_device_id parent_device;
+  unsigned core_start;
+  unsigned core_count;
   cl_uint max_work_item_dimensions;
   size_t max_work_item_sizes[3];
   size_t max_work_group_size;
@@ -446,7 +452,6 @@ struct _cl_device_id {
   char *short_name;
   char *long_name;
   char *cache_dir_name;
-  cl_device_id parent_device;
 
   const char *vendor;
   const char *driver_version;
@@ -509,7 +514,7 @@ struct _cl_device_id {
 
 
 struct _cl_platform_id {
-  POCL_ICD_OBJECT
+  POCL_ICD_OBJECT_PLATFORM_ID
 }; 
 
 struct _cl_context {

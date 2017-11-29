@@ -30,6 +30,8 @@
 
 #cmakedefine ENABLE_CONFORMANCE
 
+#cmakedefine ENABLE_POCL_BUILDING
+
 #cmakedefine HAVE_FORK
 
 #cmakedefine HAVE_VFORK
@@ -71,13 +73,6 @@
 #define KERNELLIB_HOST_CPU_VARIANTS "@KERNELLIB_HOST_CPU_VARIANTS@"
 
 #cmakedefine KERNELLIB_HOST_DISTRO_VARIANTS
-
-/* clang++ compiler flags */
-/* TODO in sources */
-#define KERNEL_CLANGXX_FLAGS "@KERNEL_CLANGXX_FLAGS@"
-
-/* TODO in sources */
-#define KERNEL_CL_FLAGS  "@KERNEL_CL_FLAGS@"
 
 #define LLVM_LLC "@LLVM_LLC@"
 
@@ -168,3 +163,6 @@
 
 #define TCE_DEVICE_CL_VERSION_MAJOR 1
 #define TCE_DEVICE_CL_VERSION_MINOR 2
+
+
+#cmakedefine USE_POCL_MEMMANAGER

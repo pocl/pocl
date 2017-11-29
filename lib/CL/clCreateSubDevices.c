@@ -116,11 +116,10 @@ POname(clCreateSubDevices)(cl_device_id in_device,
      {
        /* we end here if some of our devices claim to support a different
         * partition type, but this function was not updated accordingly */
-
-       char what[1024];
-       snprintf (what, 1024, "Device-reported partition type 0x%x",
-                 (unsigned int)properties[0]);
-       POCL_ABORT_UNIMPLEMENTED (what);
+       POCL_GOTO_ERROR_ON (1, CL_INVALID_VALUE,
+                           "Device reported partition type 0x%x "
+                           "is not supported by Pocl\n",
+                           (unsigned int)properties[0]);
      }
 
    // num_devices must match count_devices if non-zero
@@ -130,6 +129,7 @@ POname(clCreateSubDevices)(cl_device_id in_device,
      // we allocate our own array of devices to simplify management
      new_devs = calloc(count_devices, sizeof(cl_device_id));
      POCL_GOTO_ERROR_COND((!new_devs), CL_OUT_OF_HOST_MEMORY);
+     unsigned sum = 0;
 
      for (i = 0; i < count_devices; ++i) {
        new_devs[i] = calloc(1, sizeof(struct _cl_device_id));
@@ -164,6 +164,12 @@ POname(clCreateSubDevices)(cl_device_id in_device,
        memcpy(new_devs[i]->partition_type, properties, num_props*sizeof(*properties));
        new_devs[i]->num_partition_types = num_props;
 
+       new_devs[i]->core_count = new_devs[i]->max_compute_units;
+       if (in_device->parent_device)
+         new_devs[i]->core_start = in_device->core_start + sum;
+       else
+         new_devs[i]->core_start = sum;
+       sum += new_devs[i]->core_count;
      }
 
      memcpy(out_devices, new_devs, count_devices*sizeof(cl_device_id));

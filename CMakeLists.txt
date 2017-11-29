@@ -53,9 +53,19 @@ option(ENABLE_CUDA "Enable the CUDA device driver for NVIDIA devices" OFF)
 
 option(KERNEL_CACHE_DEFAULT "Default value for the kernel compile cache. If disabled, pocl will still use the kernel cache, but will delete cachefiles on exit. You can still enable keeping the files it at runtime with an env var." ON)
 
+option(POCL_ICD_ABSOLUTE_PATH "Use absolute path in pocl.icd" ON)
+
+option(ENABLE_POCL_BUILDING "When OFF, env var POCL_BUILDING has no effect. Defaults to ON" ON)
+
+#### these are mostly useful for pocl developers
+
 option(DEVELOPER_MODE "This will SIGNIFICANTLY slow down pocl (but speed up its compilation). Only turn on if you know what you're doing." OFF)
 
-option(POCL_ICD_ABSOLUTE_PATH "Use absolute path in pocl.icd" ON)
+option(USE_POCL_MEMMANAGER "Enables custom memory manager. Except for special circumstances, this should be disabled." OFF)
+
+option(EXAMPLES_USE_GIT_MASTER "If enabled, some of the external testsuites in examples/ will try to use sources from Git master, instead of releases. This may result in failure to build or run the examples" OFF)
+
+####
 
 # currently only works with gcc as host compiler
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
@@ -443,24 +453,26 @@ endif()
 
 option(USE_VECMATHLIB_BUILTINS_ONLY "Use only __builtin_* functions in the kernel library." OFF)
 
-set(DEFAULT_KERNEL_CL_FLAGS "")
+set(DEFAULT_KERNEL_CL_FLAGS  "-x cl")
+set(DEFAULT_KERNEL_C_FLAGS "-xc -D__CBUILD__")
+set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11")
 
 if(ENABLE_VECMATHLIB)
-  set(DEFAULT_KERNEL_CLANGXX_FLAGS "-DVML_NO_IOSTREAM ${CLANGXX_STDLIB} ")
+  set(DEFAULT_KERNEL_CXX_FLAGS "${DEFAULT_KERNEL_CXX_FLAGS} -DVML_NO_IOSTREAM ${CLANGXX_STDLIB} ")
   if(USE_VECMATHLIB_BUILTINS_ONLY)
     set(DEFAULT_KERNEL_CL_FLAGS "${DEFAULT_KERNEL_CL_FLAGS} -DPOCL_VECMATHLIB_BUILTIN ")
-    set(DEFAULT_KERNEL_CLANGXX_FLAGS "${DEFAULT_KERNEL_CLANGXX_FLAGS} -DPOCL_VECMATHLIB_BUILTIN ")
+    set(DEFAULT_KERNEL_CXX_FLAGS "${DEFAULT_KERNEL_CXX_FLAGS} -DPOCL_VECMATHLIB_BUILTIN ")
   endif()
 endif()
 
+set(EXTRA_KERNEL_FLAGS "" CACHE STRING "Extra arguments to all kernel compilation commands (defaults to empty)")
 set(EXTRA_KERNEL_CL_FLAGS "" CACHE STRING "Extra arguments to kernel CL compiler (defaults to empty)")
 set(EXTRA_KERNEL_CXX_FLAGS "" CACHE STRING "Extra arguments to kernel CXX compiler (defaults to empty)")
+set(EXTRA_KERNEL_C_FLAGS "" CACHE STRING "Extra arguments to kernel C compiler (defaults to empty)")
 
-set(KERNEL_CLANGXX_FLAGS "${DEFAULT_KERNEL_CLANGXX_FLAGS}${EXTRA_KERNEL_CXX_FLAGS}")
-set(KERNEL_CL_FLAGS "${DEFAULT_KERNEL_CL_FLAGS}${EXTRA_KERNEL_CL_FLAGS}")
-
-message(STATUS "Clang++ flags for compiling kernel library: ${KERNEL_CLANGXX_FLAGS}")
-message(STATUS "OpenCL flags for compiling kernel library: ${KERNEL_CL_FLAGS}")
+set(KERNEL_CXX_FLAGS "${DEFAULT_KERNEL_CXX_FLAGS}${EXTRA_KERNEL_FLAGS}${EXTRA_KERNEL_CXX_FLAGS}")
+set(KERNEL_CL_FLAGS "${DEFAULT_KERNEL_CL_FLAGS}${EXTRA_KERNEL_FLAGS}${EXTRA_KERNEL_CL_FLAGS}")
+set(KERNEL_C_FLAGS "${DEFAULT_KERNEL_C_FLAGS}${EXTRA_KERNEL_FLAGS}${EXTRA_KERNEL_C_FLAGS}")
 
 ######################################################################################
 
@@ -537,20 +549,14 @@ endif()
 
 ######################################################################################
 
-if(MSVC)
-  find_package( PthreadsWin32 )
-  if(NOT Pthreads_FOUND)
-    message(FATAL_ERROR "Could not find pthreads-win32 libs!")
-  endif()
-  include_directories("${Pthreads_INCLUDE_DIRS}")
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
+set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+find_package(Threads REQUIRED)
+
+if(CMAKE_VERSION VERSION_GREATER "3.0.99")
+  set(PTHREAD_LIBRARY Threads::Threads)
 else()
-  include(FindThreads)
-  if(Threads_FOUND)
-    set(PTHREAD_LDFLAGS ${CMAKE_THREAD_LIBS_INIT})
-    set(PTHREAD_CFLAGS "")
-  else()
-    message(FATAL_ERROR "Could not find threading library for this system")
-  endif()
+  set(PTHREAD_LIBRARY ${CMAKE_THREAD_LIBS_INIT})
 endif()
 
 ######################################################################################
@@ -1252,13 +1258,19 @@ if (ENABLE_HSA)
   MESSAGE(STATUS "HSAIL_ASM: ${HSAIL_ASM}")
 endif()
 MESSAGE(STATUS "")
-MESSAGE(STATUS "ICD_LD_FLAGS: ${ICD_LD_FLAGS}")
-MESSAGE(STATUS "KERNEL_CLANGXX_FLAGS: ${KERNEL_CLANGXX_FLAGS}")
-MESSAGE(STATUS "KERNEL_CL_FLAGS: ${KERNEL_CL_FLAGS}")
-MESSAGE(STATUS "PTHREAD_LDFLAGS: ${PTHREAD_LDFLAGS}")
-MESSAGE(STATUS "PTHREAD_CFLAGS: ${PTHREAD_CFLAGS}")
 MESSAGE(STATUS "LIB_API_VERSION: ${LIB_API_VERSION}")
 MESSAGE(STATUS "LIB_BUILD_VERSION: ${LIB_BUILD_VERSION}")
+MESSAGE(STATUS "ICD_LD_FLAGS: ${ICD_LD_FLAGS}")
+
+MESSAGE(STATUS "EXTRA_KERNEL_FLAGS: ${EXTRA_KERNEL_FLAGS}")
+MESSAGE(STATUS "EXTRA_KERNEL_CXX_FLAGS: ${EXTRA_KERNEL_CXX_FLAGS}")
+MESSAGE(STATUS "EXTRA_KERNEL_CL_FLAGS: ${EXTRA_KERNEL_CL_FLAGS}")
+MESSAGE(STATUS "EXTRA_KERNEL_C_FLAGS: ${EXTRA_KERNEL_C_FLAGS}")
+
+MESSAGE(STATUS "final KERNEL_CXX_FLAGS: ${KERNEL_CXX_FLAGS}")
+MESSAGE(STATUS "final KERNEL_CL_FLAGS: ${KERNEL_CL_FLAGS}")
+MESSAGE(STATUS "final KERNEL_C_FLAGS: ${KERNEL_C_FLAGS}")
+
 if (OCS_AVAILABLE)
   MESSAGE(STATUS "")
   MESSAGE(STATUS "LLVM_VERSION: ${LLVM_VERSION}")
@@ -1311,6 +1323,7 @@ MESSAGE(STATUS "******* Enabled features:")
 MESSAGE(STATUS " ")
 
 MESSAGE(STATUS "CLANG_SPIR: ${CLANG_SPIR}")
+MESSAGE(STATUS "DEVELOPER_MODE: ${DEVELOPER_MODE}")
 MESSAGE(STATUS "ENABLE_CONFORMANCE: ${ENABLE_CONFORMANCE}")
 MESSAGE(STATUS "ENABLE_ICD: ${ENABLE_ICD}")
 MESSAGE(STATUS "ENABLE_TCE: ${ENABLE_TCE}")
@@ -1323,17 +1336,21 @@ MESSAGE(STATUS "ENABLE_TSAN (thread sanitizer): ${ENABLE_TSAN}")
 MESSAGE(STATUS "ENABLE_UBSAN (UB sanitizer): ${ENABLE_UBSAN}")
 MESSAGE(STATUS "ENABLE_VECMATHLIB: ${ENABLE_VECMATHLIB}")
 MESSAGE(STATUS "ENABLE_SLEEF: ${ENABLE_SLEEF}")
+MESSAGE(STATUS "ENABLE_POCL_BUILDING: ${ENABLE_POCL_BUILDING}")
 MESSAGE(STATUS "INSTALL_OPENCL_HEADERS (Install our headers): ${INSTALL_OPENCL_HEADERS}")
 MESSAGE(STATUS "OCL_DRIVERS (Drivers built): ${OCL_DRIVERS}")
 MESSAGE(STATUS "OCL_TARGETS (Targets built): ${OCL_TARGETS}")
 MESSAGE(STATUS "OCS_AVAILABLE: ${OCS_AVAILABLE}")
+MESSAGE(STATUS "POCL_ICD_ABSOLUTE_PATH: ${POCL_ICD_ABSOLUTE_PATH}")
 MESSAGE(STATUS "SINGLE_LLVM_LIB: ${SINGLE_LLVM_LIB}")
 MESSAGE(STATUS "TESTS_USE_ICD: ${TESTS_USE_ICD}")
 MESSAGE(STATUS "Available testsuites: ${ALL_TESTSUITES}")
 MESSAGE(STATUS "Enabled testsuites: ${ACTUALLY_ENABLED_TESTSUITES}")
 MESSAGE(STATUS "Disabled testsuites: ${DISABLED_TESTSUITES}")
+MESSAGE(STATUS "Testsuites are built from git master: ${EXAMPLES_USE_GIT_MASTER}")
 MESSAGE(STATUS "Kernel caching: ${KERNEL_CACHE_DEFAULT}")
 MESSAGE(STATUS "Kernel library CPU variants: ${KERNELLIB_HOST_CPU_VARIANTS}")
 MESSAGE(STATUS "Kernel library distro build: ${KERNELLIB_HOST_DISTRO_VARIANTS}")
 MESSAGE(STATUS "Use fake address space IDs: ${POCL_USE_FAKE_ADDR_SPACE_IDS}")
+MESSAGE(STATUS "Use pocl custom memory allocator: ${USE_POCL_MEMMANAGER}")
 MESSAGE(STATUS "L1d cacheline size: ${HOST_CPU_CACHELINE_SIZE}")

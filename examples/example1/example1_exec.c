@@ -181,17 +181,18 @@ exec_dot_product_kernel(const char *program_source,
       poclu_bswap_cl_float_array(devices[0], (cl_float*)&srcA[i], 4);
       poclu_bswap_cl_float_array(devices[0], (cl_float*)&srcB[i], 4);
     }
-  free(devices); 
 
+  CHECK_CL_ERROR (clFinish (cmd_queue));
+  free(devices);
 
   // release kernel, program, and memory objects 
-  delete_memobjs(memobjs, 3); 
-  clReleaseKernel(kernel); 
-  clReleaseProgram(program); 
-  clReleaseCommandQueue(cmd_queue);
-  clUnloadPlatformCompiler (platform);
-  clReleaseContext(context); 
-  return 0; // success... 
+  delete_memobjs (memobjs, 3);
+  CHECK_CL_ERROR (clReleaseKernel (kernel));
+  CHECK_CL_ERROR (clReleaseProgram (program));
+  CHECK_CL_ERROR (clReleaseCommandQueue (cmd_queue));
+  CHECK_CL_ERROR (clReleaseContext (context));
+  CHECK_CL_ERROR (clUnloadCompiler ());
+  return 0; // success...
 }
 
 #ifdef __cplusplus

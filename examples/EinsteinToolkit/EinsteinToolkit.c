@@ -51,9 +51,7 @@ int const niters = 10;
 #  include <OpenCL/opencl.h>
 #else
 #  include <CL/opencl.h>
-#endif	
-
-
+#endif
 
 // Stringify
 #define XSTR(x) #x
@@ -88,10 +86,10 @@ static inline size_t roundup(size_t const a, size_t const b)
 // Global OpenCL handles
 cl_platform_id platform_id;
 cl_device_id device_id;
+cl_device_id main_device_id;
 cl_context context;
 cl_command_queue cmd_queue;
-
-
+static int use_subdev;
 
 // Code generation choices:
 #define VECTORISE_ALIGNED_ARRAYS 0
@@ -526,8 +524,22 @@ void setup(const char* program_source1, const char* program_source2)
   clGetContextInfo(context, CL_CONTEXT_DEVICES,
                    ndevice_ids*sizeof(cl_device_id), device_ids, NULL);
   assert(ndevice_ids >= 1);
-  device_id = device_ids[0];
-  
+  main_device_id = device_ids[0];
+
+  if (use_subdev)
+    {
+      const cl_device_partition_property props[]
+          = { CL_DEVICE_PARTITION_EQUALLY, 2, 0 };
+      cl_device_id subdevs[128];
+      cl_uint retval;
+      int err
+          = clCreateSubDevices (main_device_id, props, 2, subdevs, &retval);
+      assert (err == CL_SUCCESS);
+      device_id = subdevs[0];
+    }
+  else
+    device_id = main_device_id;
+
   size_t device_name_length;
   clGetDeviceInfo(device_id, CL_DEVICE_NAME, 0, NULL, &device_name_length);
   char device_name[device_name_length];
@@ -1397,6 +1409,10 @@ void check(cGH              * const cctkGH,
 int main(int argc, char** argv)
 {
   printf("EinsteinToolkit test\n");
+
+  if (argc > 1)
+    if (argv[1][0] == 's')
+      use_subdev = 1;
 
   printf("Reading sources...\n");
   FILE *const source1_file = fopen(SRCDIR "/ML_BSSN_CL_RHS1.cl", "r");
