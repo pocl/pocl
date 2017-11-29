@@ -1,3 +1,5 @@
+.. _pocl-install:
+
 ============
 Installation
 ============
@@ -9,21 +11,28 @@ In order to build pocl, you need the following support libraries and
 tools:
 
   * Latest released version of LLVM & Clang
-  * GNU make
+  * GNU make or ninja
   * libtool dlopen wrapper files (e.g. libltdl3-dev in Debian)
   * pthread (should be installed by default)
   * hwloc v1.0 or newer (e.g. libhwloc-dev)
   * pkg-config
   * cmake
 
+
+There are Dockerfiles available for a few most common linux
+distributions in ``tools/docker``, looking into them might be helpful.
+
 Clang / LLVM Notes
 ------------------
 
-**IMPORTANT NOTE!** Some platforms (TCE and possibly HSA) require that
+**IMPORTANT NOTE!** Some targets (TCE and possibly HSA) require that
 you compile & build LLVM with RTTI on. It can be enabled on cmake command
 line, as follows:
 
-**Supported versions**
+    cmake .... -DLLVM_ENABLE_RTTI=ON -DLLVM_ENABLE_EH=ON ....
+
+Supported LLVM versions
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
   Note that pocl aims to support **the latest LLVM version** at the time
   of pocl release, **plus the previous** LLVM version. All older LLVM
@@ -47,38 +56,117 @@ The build+install is the usual CMake way::
 To see the default detected values, run ``cmake ..`` without any options,
 it will produce a summary.
 
+CMake variables
+===============
 
-CMake: important options & features
+Since pocl is a compiler, it both compiles (producing code) and is
+compiled (it consists of code). This distinction typically called
+"host" and "target": The host is where pocl is running, the target is
+where the OpenCL code will be running. These two systems can be wildly
+different.
+
+Host compiler used to compile pocl can be GCC or Clang; the target
+compiler is always Clang+LLVM since pocl uses Clang/LLVM internally.
+For host compiler, you should use the one which your LLVM was compiled
+with (because the LLVM-related parts of pocl take LLVM's CXXFLAGS from
+llvm-config and pass them to the host compiler).
+
+CMake host flags
+----------------
+
+Compile C:
+  CMAKE_C_FLAGS
+  CMAKE_C_FLAGS_<build-type>
+
+Compile C++:
+  CMAKE_CXX_FLAGS
+  CMAKE_CXX_FLAGS_<build-type>
+
+TODO
+   HOST_LLC_FLAGS
+
+Convert assembler to object file:
+   HOST_CLANG_FLAGS
+
+Post-process object file:
+   HOST_LD_FLAGS
+
+Building kernels and the kernel library, i.e. target flags
+------------------------------------------------------------
+
+EXTRA_KERNEL_FLAGS
+  is applied to all kernel library compilation commands, IOW it's for
+  language-independent options
+
+EXTRA_KERNEL_{C,CL,CXX}_FLAGS
+  cmake variables for per-language options for kernel library compilation
+
+
+CMake: other options & features
 -------------------------------------
 
-For multiple-item options, use ";" as separator (you'll have to escape it for bash).
+Note that there are a few more packaging-related options described
+in ``README.packaging``.
+
+For multiple-item options like KERNELLIB_HOST_CPU_VARIANTS,
+use ";" as separator (you'll have to escape it for bash).
 
 - ``-DWITH_LLVM_CONFIG=<path-to-llvm-config>``
   **IMPORTANT** Path to a llvm-config binary.
   This determines the LLVM installation used by pocl.
   If not specified, pocl will try to find and link against
   llvm-config in PATH env var (usually means your system LLVM).
+
 - ``-DSTATIC_LLVM`` enable this to link LLVM statically into pocl.
   Note that you need LLVM built with static libs. This option might result
   in much longer build/link times and much larger pocl library, but the
   resulting libpocl will not require an LLVM installation to run.
+
 - ``-DENABLE_ICD`` By default pocl's buildsystem will try to find an ICD
   and build pocl as a dynamic library named "libpocl". This option is useful
   if you want to avoid ICD and build pocl directly as libOpenCL library.
   See also :ref:`linking-with-icd`
+
 - ``-DPOCL_INSTALL_<something>_DIR`` The equivalent of ``--bindir``,
   ``--sbindir`` etc fine-tuning of paths for autotools. See the beginning
   of toplevel CMakeLists.txt for all the variables.
-- ``-DKERNELLIB_HOST_CPU_VARIANTS`` You can control which CPUs the
-  kernel library will be built for. Defaults to "native" which will be
-  converted to the build machine's CPU at buildtime. Available CPUs are
-  listed by ``llc -mcpu=help``; you can specify multiple CPUs, and pocl will
-  look for a kernel library for the runtime-detected CPU.
 
-  For x86(64) there is another possibility, ``distro``, which builds a few
-  preselected sse/avx variants covering 99.99% of x86 processors, and pocl
-  will use the most appropriate one at runtime, based on detected CPU features.
-  With ``distro``, the minimum requirement on CPU is SSE2.
+  Note that if ``CMAKE_INSTALL_PREFIX`` equals ``/usr`` then pocl.icd is
+  installed to ``/etc/OpenCL/vendors``, otherwise it's installed to
+  ``${CMAKE_INSTALL_PREFIX}/etc/OpenCL/vendors``.
+
+- ``-DLLC_HOST_CPU=<something>``
+  Defaults to auto-detection via ``llc``. Run ``llc -mcpu=help``
+  for valid values. The CPU type is required to compile
+  the "target" (kernel library) part of CPU backend.
+
+  This variable overrides LLVM's autodetected host CPU at configure time.
+  Useful when llc fails to detect the CPU (often happens on non-x86
+  platforms, or x86 with CPU newer than LLVM).
+
+  Note that when this is set (set by default) and the
+  KERNELLIB_HOST_CPU_VARIANTS variable is not ``distro``,
+  pocl will first try to find compiled kernel library
+  for runtime-detected CPU then fallback to LLC_HOST_CPU.
+  This works well if pocl is run where it was built,
+  or the actual CPU is in the KERNELLIB_HOST_CPU_VARIANTS list,
+  or the actual CPU is >= LLC_HOST_CPU feature-wise;
+  otherwise it will likely fail with illegal instruction at runtime.
+
+- ``-DKERNELLIB_HOST_CPU_VARIANTS`` You can control which CPUs the
+  "target" part of CPU backend will be built for.
+  Unlike LLC_HOST_CPU, this variable is useful if you plan
+  to build for multiple CPUs. Defaults to "native" which is
+  automagically replaced by LLC_HOST_CPU.
+  Available CPUs are listed by ``llc -mcpu=help``. See above for
+  runtime CPU detection rules.
+
+  Note that there's another valid value on x86(64) platforms.
+  If set to ``distro``, the KERNELLIB_HOST_CPU_VARIANTS variable will be
+  set up with a few preselected sse/avx variants covering 99.99% of x86
+  processors, and the runtime CPU detection is slightly altered: pocl
+  will find the suitable compiled library based on detected CPU features,
+  so it cannot fail (at worst it'll degrade to SSE2 library).
 
 - ``-DENABLE_TESTSUITES`` Which external (source outside pocl) testsuites to enable.
   For the list of testsuites, see examples/CMakeLists.txt or the ``examples``
@@ -96,19 +184,25 @@ For multiple-item options, use ";" as separator (you'll have to escape it for ba
   Builds Pocl as a fully conformant OpenCL implementation. Defaults to ON.
   See :ref:`pocl-conformance` for details.
 
+- ``-DENABLE_{A,L,T,UB}SAN`` - compiles pocl's host code (and tests
+  + examples) with various sanitizers. Using more than one sanitizer at
+  a time is untested. Using together with ``-DENABLE_ICD=OFF`` is highly
+  recommended to avoid issues with loading order of sanitizer libraries.
+
+- ``-DENABLE_{CUDA,TCE,HSA}=ON/OFF`` - enable various (non-CPU) backends.
+  Usually requires some extra setup; see their documentation.
+
+- ``-DPOCL_DEBUG_MESSAGES=ON`` - when disabled, pocl is compiled without
+  debug messages (POCL_DEBUG env var) support.
+
+- ``-DEXAMPLES_USE_GIT_MASTER=ON`` - when enabled, examples (external
+  programs in ``examples/`` directory) are built from their git branches
+  (if available), as opposed to default: building from release tars.
 
 LLVM-less build
 ---------------
  See :ref:`pocl-without-llvm`
 
-
-Building on Ubuntu 16.04 LTS
-----------------------------
-
-The Clang/LLVM 3.8 shipped with Ubuntu 16.04 should work with pocl.
-Be sure to install also the 'libclang-3.8-dev' package in addition
-to the 'clang-3.8 and llvm-3.8-dev' packages, otherwise cmake will
-fail.
 
 Known build-time issues
 -----------------------

@@ -2,9 +2,9 @@ This file contains notes for making distribution packages of pocl.
 
 ICD
 ---
-Pocl should probably be built with ICD enabled for desktop
-distributions. Pocl does not have an ICD loader, so a dependancy
-on one would be beneficial.
+Pocl should probably be built with ICD enabled (``-DENABLE_ICD=ON`` CMake
+option) for desktop distributions. Pocl does not have an ICD loader,
+so a dependancy on one would be beneficial.
 
 CMake options for a distribution build
 --------------------------------------
@@ -24,12 +24,6 @@ CMake options for a distribution build
   When OFF, POCL_BUILDING option (which causes pocl to look for required
   files in build / source directories) will be ignored
   and pocl will always look in installed paths only.
-
-Target(host) CPU
-----------------
-If not overridden, pocl uses LLVM (llc) to detect the host CPU, which
-is used to determine processor ISA extensions (like SSE and AVX).
-See: http://portablecl.org/docs/html/env_variables.html
 
 Mesa (OpenGL) interoperability
 ------------------------------

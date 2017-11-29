@@ -72,6 +72,5 @@ Advantages:
 * allocation of queues/events/command objects can be a lot faster
 
 Disadvantages:
-* memory allocated for those objects is never free()d;
-  it's only returned to allocation pool
+* memory allocated for those objects is never free()d; it's only returned to allocation pool
 * debugging tools will not detect use-after-free bugs on said objects

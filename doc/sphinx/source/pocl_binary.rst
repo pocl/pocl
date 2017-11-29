@@ -18,11 +18,7 @@ To do this
 The string after "HSTR:" is the device build hash.
 
 * now build the LLVM-less pocl. You will need the device build hash from
-  previous step
-
-  ``./configure --disable-ocs HOST_DEVICE_BUILD_HASH=<something> ...``
-
-  or cmake:
+  previous step:
 
   ``cmake -DOCS_AVAILABLE=0 -DHOST_DEVICE_BUILD_HASH=<something> ...``
 
@@ -47,7 +43,7 @@ As mentionned in the khronos_ documentation, the parameter ``binaries`` of
 ``clCreateProgramWithBinary`` can consist of either or both of device-specific
 code and/or implementation-specific intermediate representation.
 
-In POCL, both representations can be use.
+In POCL, both representations can be used.
 
 Implementation-specific intermediate representation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

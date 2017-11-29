@@ -18,8 +18,7 @@ Frontend/Clang
   * pipes (WIP)
   * device-side enqueue
 
-* cl_khr_f16: half precision float literals
-
+* cl_khr_f16: half precision support (with the exception of  vload_half / vstore_half)
 
 Unimplemented host side functions
 ---------------------------------

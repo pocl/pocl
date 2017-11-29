@@ -36,14 +36,9 @@ to have several OpenCL implementations concurrently on your computer, and
 select the one to use at runtime by selecting the corresponding cl_platform. 
 ICD support can be disabled by adding the flag::
 
-  --disable-icd
+  -DENABLE_ICD=OFF
 
-to the ./configure script.
-
-In case you also give the --prefix=$INSTALL option to ./configure, you need to 
-copy the icd file to where your ICD loader finds it, e.g.::
-
-  cp $INSTALL/etc/OpenCL/vendors/pocl.icd /etc/OpenCL/vendors/pocl.icd
+to the CMake invocation.
 
 The ocl-icd ICD loader allows to use the OCL_ICD_VENDORS environment variable
 to specify a (non-standard) replacement for the /etc/OpenCL/vendors directory.
@@ -61,13 +56,6 @@ Linking your program directly with pocl
 Passing the appropriate linker flags is enough to use pocl in your
 program. However, please bear in mind that:
 
-#. The current distribution only supports one device, "native",
-   which runs the kernels in the host system.
-#. Current implementation of both host and kernel runtime libraries
-   is not complete. If your program uses any of the unimplemented
-   API calls, it will not work. Please implement the mssing APIs
-   when you need them and submit us a patch :)
-
 The pkg-config tool is used to locate the libraries and headers in
 the installation directory. 
 
@@ -79,9 +67,6 @@ the pkg-config::
 In this link mode, your program will always require the pocl OpenCL library. It
 wont be able to run with another OpenCL implementation without recompilation.
 
-Pocl needs to be configured with the --enable-direct-linkage option (enabled
-by default)
-
 Using pocl on Android
 ---------------------
 
@@ -91,20 +76,6 @@ OpenCL function symbols from it.
 
 Refer examples/pocl-android-sample/ for hello-world android app that uses pocl.
 This app uses a third-party stub OpenCL library that does dlopen/dlsym on its behalf
-
-Vecmathlib
-----------
-
-Vecmathlib (aka VML)
-`<https://bitbucket.org/eschnett/vecmathlib/wiki/Home>`_ provides
-optimized implementations for math builtins such as sqrt, sin, cos,
-etc. These are highly recommended as they can be inlined to the call
-site and lead to better optimized kernels. A copy of Vecmathlib is
-distributed with pocl for convenience in the directory
-`lib/kernel/vecmathlib`.
-
-To use VML, you need to have a functional clang++ installed.
-Currently, VML is enabled only for x86_64.
 
 Wiki
 ----

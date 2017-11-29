@@ -6,10 +6,11 @@ listed below. The variables are helpful both when using and when developing
 pocl.
 
 - **POCL_AFFINITY**
- Linux-only. If set to 1, each thread of the pthread CPU driver sets its
- affinity to its index. This may be useful with very long running kernels,
- or when using subdevices (lets any idle cores enter deeper sleep). Defaults
- to 0 (most people don't need this)
+ Linux-only, specific to pthread driver. If set to 1, each thread of
+ the pthread CPU driver sets its affinity to its index. This may be
+ useful with very long running kernels, or when using subdevices
+ (lets any idle cores enter deeper sleep). Defaults to 0 (most
+ people don't need this).
 
 - **POCL_BUILDING**
 
@@ -34,8 +35,8 @@ pocl.
 
  The old way (setting POCL_DEBUG to 1) has been updated to support categories.
  Using this limits the amount of debug messages produced. Current options are:
- general,memory,llvm,events,cache,locking,refcounts,timing,hsa,tce,all.
- Note: setting POCL_DEBUG to 1 still works.
+ error,warning,general,memory,llvm,events,cache,locking,refcounts,timing,hsa,tce,all.
+ Note: setting POCL_DEBUG to 1 still works and equals error+warning+general.
 
 - **POCL_DEBUG_LLVM_PASSES**
 

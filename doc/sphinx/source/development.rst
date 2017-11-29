@@ -4,8 +4,10 @@ Information for Developers
 Using cmake to build & install pocl
 -----------------------------------
 
-Most of the important stuff on using cmake is in the INSTALL file. A few
-additional items:
+Most of the important stuff on using cmake is in the install document,
+see :ref:pocl-install
+
+A few additional items:
 
 The
 
@@ -14,15 +16,18 @@ The
 command must point to ocl-vendors in the  cmake *build* directory, not the
 pocl source directory.
 
-Testing is done using either "make test" or invoking "ctest" directly;
-"make check" does not work. Invoke ctest with -jX option to run X tests
-in parallel.
+You can run the tests or built examples using "ctest" directly;
+``ctest --print-labels`` prints the available labels (testsuites);
+Invoke ctest with -jX option to run X tests in parallel.
+
+"make check" will invoke ctest with tier-1 testsuites.
+See :ref:`maintenance-policy` for details.
 
 Testsuite
 ----------
 
 Before changes are committed to the mainline, all tests in the 'make
-check' suite should pass::
+check' tier-1 suite should pass::
 
    make check
 
@@ -140,10 +145,8 @@ By default, pocl build system compiles the kernel libraries for
 the host CPU architecture, to be used by 'basic' and 'pthread' devices.
 
 LLVM is used to detect the CPU variant to be used as target. This 
-can be overridden by passing LLC_HOST_CPU to './configure'.
-Valid options are best documented in the output of::
-
-  llvm-as /dev/null | llc -mcpu=help
+can be overridden by passing -DLLC_HOST_CPU=... to CMake. See the
+documentation for LLC_HOST_CPU build option.
 
 Cross-compilation where 'build' is different from 'host' has not been
 tested.
