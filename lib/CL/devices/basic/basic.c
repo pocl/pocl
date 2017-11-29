@@ -244,9 +244,15 @@ pocl_basic_init_device_infos(unsigned j, struct _cl_device_id* dev)
   dev->platform = 0;
 
   dev->parent_device = NULL;
-  dev->core_count = 0;
+  /* These two are only used for subdevices.
+   * Each subdevice has these two setup when created.
+   * The subdevice will then use these CUs:
+   *  [start, start+1, ..., start+count-1]
+   * this may not work with more complicated partitioning schemes,
+   * but is good enough for now. */
   dev->core_start = 0;
-  // basic does not support partitioning
+  dev->core_count = 0;
+  /* basic does not support partitioning */
   dev->max_sub_devices = 1;
   dev->num_partition_properties = 1;
   dev->partition_properties = basic_partition_properties;

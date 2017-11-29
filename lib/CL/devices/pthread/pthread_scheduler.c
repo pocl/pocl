@@ -31,6 +31,10 @@ struct pool_thread_data
   void *local_mem;
   unsigned current_ftz;
   unsigned num_threads;
+  /* index of this particular thread
+   * [0, num_threads-1]
+   * used for deciding whether a particular thread should run
+   * commands scheduled on a subdevice. */
   unsigned index;
   void *last_cmd_ignored;
 
@@ -194,13 +198,16 @@ work_group_scheduler (kernel_run_command *k,
 static void finalize_kernel_command (thread_data *thread_data,
                               kernel_run_command *k);
 
+/* if subd is not a subdevice, returns 1
+ * if subd is subdevice, takes a look at the subdevice CUs
+ * and if they match the current driver thread, returns 1
+ * otherwise set last ignored command to cmd and return 0 */
 static int
 shall_we_run_this (thread_data *td, cl_device_id subd, void *cmd)
 {
 
   if (subd && subd->parent_device)
     {
-      // subdevice, let's see if we're supposed to pick up work
       if (!((td->index >= subd->core_start)
             && (td->index < (subd->core_start + subd->core_count))))
         {
@@ -218,11 +225,11 @@ pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
   _cl_command_node *cmd;
   kernel_run_command *run_cmd;
 
-  // execute kernel if available
+  /* execute kernel if available */
   PTHREAD_FAST_LOCK (&scheduler.wq_lock_fast);
   run_cmd = scheduler.kernel_queue;
 
-  // execute kernel if available
+  /* execute kernel if available */
   if (run_cmd && shall_we_run_this (td, run_cmd->device, run_cmd))
     {
       ++run_cmd->ref_count;
@@ -239,7 +246,7 @@ pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
         }
     }
 
-  // execute a command if available
+  /* execute a command if available */
   *cmd_ptr = NULL;
   cmd = scheduler.work_queue;
   if (cmd && shall_we_run_this (td, cmd->device, cmd))
@@ -258,6 +265,10 @@ pthread_scheduler_sleep (thread_data *td)
   time_to_wait.tv_sec = time(NULL) + 5;
 
   PTHREAD_FAST_LOCK (&scheduler.wq_lock_fast);
+  /* if the queues are empty, go to sleep.
+   * if the queues are not empty, but this thread ignored the
+   * last command (because it's for different subdevice CUs),
+   * also go to sleep. */
   if ((scheduler.work_queue == NULL && scheduler.kernel_queue == NULL)
       || (td->last_cmd_ignored
           && (((void *)scheduler.kernel_queue == td->last_cmd_ignored)
