@@ -44,7 +44,7 @@ typedef struct scheduler_data_
 
   pthread_cond_t wake_pool __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
   pthread_mutex_t wake_lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-  pthread_spinlock_t wq_lock_fast __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  PTHREAD_FAST_LOCK_T wq_lock_fast __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
   pthread_cond_t cq_finished_cond __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
   pthread_mutex_t cq_finished_lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
@@ -57,10 +57,10 @@ static scheduler_data scheduler;
 void pthread_scheduler_init (size_t num_worker_threads)
 {
   unsigned i;
-  pthread_mutex_init (&(scheduler.wake_lock), NULL);
-  pthread_spin_init (&(scheduler.wq_lock_fast), PTHREAD_PROCESS_PRIVATE);
+  PTHREAD_INIT_LOCK (&(scheduler.wake_lock));
+  PTHREAD_FAST_INIT (&(scheduler.wq_lock_fast));
 
-  pthread_mutex_init (&(scheduler.cq_finished_lock), NULL);
+  PTHREAD_INIT_LOCK (&(scheduler.cq_finished_lock));
   pthread_cond_init (&(scheduler.cq_finished_cond), NULL);
   pthread_cond_init (&(scheduler.wake_pool), NULL);
 
@@ -74,7 +74,7 @@ void pthread_scheduler_init (size_t num_worker_threads)
   for (i = 0; i < num_worker_threads; ++i)
     {
       pthread_cond_init (&scheduler.thread_pool[i].wakeup_cond, NULL);
-      pthread_mutex_init (&scheduler.thread_pool[i].lock, NULL);
+      PTHREAD_INIT_LOCK (&scheduler.thread_pool[i].lock);
       scheduler.thread_pool[i].index = i;
       pthread_create (&scheduler.thread_pool[i].thread, NULL,
                       pocl_pthread_driver_thread,
@@ -100,9 +100,9 @@ void pthread_scheduler_uinit ()
 
 void pthread_scheduler_push_command (_cl_command_node *cmd)
 {
-  pthread_spin_lock (&scheduler.wq_lock_fast);
+  PTHREAD_FAST_LOCK (&scheduler.wq_lock_fast);
   DL_APPEND (scheduler.work_queue, cmd);
-  pthread_spin_unlock (&scheduler.wq_lock_fast);
+  PTHREAD_FAST_UNLOCK (&scheduler.wq_lock_fast);
 
   PTHREAD_LOCK (&scheduler.wake_lock);
   pthread_cond_broadcast (&scheduler.wake_pool);
@@ -111,9 +111,9 @@ void pthread_scheduler_push_command (_cl_command_node *cmd)
 
 void pthread_scheduler_push_kernel (kernel_run_command *run_cmd)
 {
-  pthread_spin_lock (&scheduler.wq_lock_fast);
+  PTHREAD_FAST_LOCK (&scheduler.wq_lock_fast);
   LL_APPEND (scheduler.kernel_queue, run_cmd);
-  pthread_spin_unlock (&scheduler.wq_lock_fast);
+  PTHREAD_FAST_UNLOCK (&scheduler.wq_lock_fast);
 
   PTHREAD_LOCK (&scheduler.wake_lock);
   pthread_cond_broadcast (&scheduler.wake_pool);
@@ -122,7 +122,7 @@ void pthread_scheduler_push_kernel (kernel_run_command *run_cmd)
 
 void pthread_scheduler_wait_cq (cl_command_queue cq)
 {
-  pthread_mutex_lock (&scheduler.cq_finished_lock);
+  PTHREAD_LOCK (&scheduler.cq_finished_lock);
 
 #ifdef HAVE_CLOCK_GETTIME
   struct timespec timeout = {0, 0};
@@ -134,7 +134,7 @@ void pthread_scheduler_wait_cq (cl_command_queue cq)
       if (cq->command_count == 0)
         {
           POCL_UNLOCK_OBJ (cq);
-          pthread_mutex_unlock (&scheduler.cq_finished_lock);
+          PTHREAD_UNLOCK (&scheduler.cq_finished_lock);
           return;
         }
       POCL_UNLOCK_OBJ (cq);
@@ -161,7 +161,7 @@ void pthread_scheduler_wait_cq (cl_command_queue cq)
 
     }
 
-  pthread_mutex_unlock (&scheduler.cq_finished_lock);
+  PTHREAD_UNLOCK (&scheduler.cq_finished_lock);
 }
 
 void pthread_scheduler_release_host ()
@@ -202,23 +202,23 @@ pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
   kernel_run_command *run_cmd;
 
   // execute kernel if available
-  pthread_spin_lock (&scheduler.wq_lock_fast);
+  PTHREAD_FAST_LOCK (&scheduler.wq_lock_fast);
   run_cmd = scheduler.kernel_queue;
 
   // execute kernel if available
   if (run_cmd && shall_we_run_this (td, run_cmd->device, run_cmd))
     {
       ++run_cmd->ref_count;
-      pthread_spin_unlock (&scheduler.wq_lock_fast);
+      PTHREAD_FAST_UNLOCK (&scheduler.wq_lock_fast);
 
       work_group_scheduler (run_cmd, td);
 
-      pthread_spin_lock (&scheduler.wq_lock_fast);
+      PTHREAD_FAST_LOCK (&scheduler.wq_lock_fast);
       if ((--run_cmd->ref_count) == 0)
         {
-          pthread_spin_unlock (&scheduler.wq_lock_fast);
+          PTHREAD_FAST_UNLOCK (&scheduler.wq_lock_fast);
           finalize_kernel_command (td, run_cmd);
-          pthread_spin_lock (&scheduler.wq_lock_fast);
+          PTHREAD_FAST_LOCK (&scheduler.wq_lock_fast);
         }
     }
 
@@ -230,7 +230,7 @@ pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
       DL_DELETE (scheduler.work_queue, cmd);
       *cmd_ptr = cmd;
     }
-  pthread_spin_unlock (&scheduler.wq_lock_fast);
+  PTHREAD_FAST_UNLOCK (&scheduler.wq_lock_fast);
   return;
 }
 
@@ -240,19 +240,19 @@ pthread_scheduler_sleep (thread_data *td)
   struct timespec time_to_wait = {0, 0};
   time_to_wait.tv_sec = time(NULL) + 5;
 
-  pthread_spin_lock (&scheduler.wq_lock_fast);
+  PTHREAD_FAST_LOCK (&scheduler.wq_lock_fast);
   if ((scheduler.work_queue == NULL && scheduler.kernel_queue == NULL)
       || (td->last_cmd_ignored
           && (((void *)scheduler.kernel_queue == td->last_cmd_ignored)
               || ((void *)scheduler.work_queue == td->last_cmd_ignored))))
     {
-      pthread_spin_unlock (&scheduler.wq_lock_fast);
+      PTHREAD_FAST_UNLOCK (&scheduler.wq_lock_fast);
       PTHREAD_LOCK (&scheduler.wake_lock);
       pthread_cond_timedwait (&scheduler.wake_pool, &scheduler.wake_lock, &time_to_wait);
       PTHREAD_UNLOCK (&scheduler.wake_lock);
     }
   else
-    pthread_spin_unlock (&scheduler.wq_lock_fast);
+    PTHREAD_FAST_UNLOCK (&scheduler.wq_lock_fast);
 }
 
 /* Maximum and minimum chunk sizes for get_wg_index_range().
@@ -269,10 +269,10 @@ get_wg_index_range (kernel_run_command *k, unsigned *start_index,
   const unsigned scaled_min_wgs = POCL_PTHREAD_MIN_WGS * num_threads;
 
   unsigned max_wgs;
-  pthread_spin_lock (&k->lock);
+  PTHREAD_FAST_LOCK (&k->lock);
   if (k->remaining_wgs == 0)
     {
-      pthread_spin_unlock (&k->lock);
+      PTHREAD_FAST_UNLOCK (&k->lock);
       return 0;
     }
 
@@ -297,7 +297,7 @@ get_wg_index_range (kernel_run_command *k, unsigned *start_index,
   k->wgs_dealt += max_wgs;
   if (k->remaining_wgs == 0)
     *last_wgs = 1;
-  pthread_spin_unlock (&k->lock);
+  PTHREAD_FAST_UNLOCK (&k->lock);
 
   return 1;
 }
@@ -351,9 +351,9 @@ work_group_scheduler (kernel_run_command *k,
     {
       if (last_wgs)
         {
-          pthread_spin_lock (&scheduler.wq_lock_fast);
+          PTHREAD_FAST_LOCK (&scheduler.wq_lock_fast);
           LL_DELETE (scheduler.kernel_queue, k);
-          pthread_spin_unlock (&scheduler.wq_lock_fast);
+          PTHREAD_FAST_UNLOCK (&scheduler.wq_lock_fast);
         }
 
       for (i = start_index; i <= end_index; ++i)
@@ -422,7 +422,7 @@ pocl_pthread_prepare_kernel
   run_cmd->kernel_args = cmd->command.run.arguments;
   run_cmd->next = NULL;
   run_cmd->ref_count = 0;
-  pthread_spin_init (&run_cmd->lock, PTHREAD_PROCESS_PRIVATE);
+  PTHREAD_FAST_INIT (&run_cmd->lock);
 
   pthread_scheduler_push_kernel (run_cmd);
 }

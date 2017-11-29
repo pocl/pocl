@@ -43,7 +43,6 @@ void pthread_scheduler_uinit ();
 /* Gives ready-to-execute command for scheduler */
 void pthread_scheduler_push_command (_cl_command_node *cmd);
 
-
 void pthread_scheduler_push_kernel (kernel_run_command *run_cmd);
 
 /* blocks until given command queue is empty == finished */

@@ -3,23 +3,30 @@
 
 #include "pocl_cl.h"
 
-/* locking macros */
-#define PTHREAD_LOCK(__lock)                                                  \
-  do                                                                          \
-    {                                                                         \
-      pthread_mutex_lock ((__lock));                                          \
-    }                                                                         \
-  while (0)
-
-#define PTHREAD_UNLOCK(__lock)                                                \
-  do                                                                          \
-    {                                                                         \
-      pthread_mutex_unlock ((__lock));                                        \
-    }                                                                         \
-  while (0)
-
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)
+#endif
+
+/* locking macros */
+#define PTHREAD_LOCK(__lock)  pthread_mutex_lock(__lock)
+#define PTHREAD_UNLOCK(__lock) pthread_mutex_unlock(__lock)
+#define PTHREAD_INIT_LOCK(__lock) pthread_mutex_init(__lock, NULL)
+#define PTHREAD_DESTROY_LOCK(__lock) pthread_mutex_destroy(__lock)
+
+/* Apparently Mac OS X does not have spinlock, despite having pthreads.
+ * for now only enable spinlocks on linux.*/
+#ifdef __linux__
+  #define PTHREAD_FAST_LOCK_T pthread_spinlock_t
+  #define PTHREAD_FAST_LOCK(l) pthread_spin_lock(l)
+  #define PTHREAD_FAST_UNLOCK(l) pthread_spin_unlock(l)
+  #define PTHREAD_FAST_INIT(l) pthread_spin_init(l, PTHREAD_PROCESS_PRIVATE)
+  #define PTHREAD_FAST_DESTROY(l) pthread_spin_destroy(l)
+#else
+  #define PTHREAD_FAST_LOCK_T pthread_mutex_t
+  #define PTHREAD_FAST_LOCK(l) pthread_mutex_lock(l)
+  #define PTHREAD_FAST_UNLOCK(l) pthread_mutex_unlock(l)
+  #define PTHREAD_FAST_INIT(l) pthread_mutex_init(l, NULL)
+  #define PTHREAD_FAST_DESTROY(l) pthread_mutex_destroy(l)
 #endif
 
 typedef struct kernel_run_command kernel_run_command;
