@@ -105,5 +105,10 @@ main (void)
     }
 
   printf ("OK\n");
+
+  free (srcA);
+  free (dst);
+  free (dstS);
+
   return 0;
 }
