@@ -286,6 +286,10 @@ if(NOT PATCH_EXEC)
   message(FATAL_ERROR "Could not find patch command.")
 endif()
 
+if(NOT XARGS_EXEC)
+  message(FATAL_ERROR "Could not find xargs command.")
+endif()
+
 ######################################################################################
 
 if (OCS_AVAILABLE)
@@ -526,6 +530,7 @@ if (OCS_AVAILABLE)
     else()
       message(STATUS "single big libLLVM library not found (Probably because LLVM is built with cmake). Falling back to linking libpocl to LLVM_LIBFILES")
       set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
+      set(SINGLE_LLVM_LIB OFF CACHE BOOL "single big libLLVM")
     endif()
   endif()
 
