@@ -145,8 +145,16 @@ add_test(NAME piglit_cl_api_retain_release_command_queue
          COMMAND "${TS_BUILDDIR}/bin/cl-api-retain_release-command-queue")
 add_test(NAME piglit_cl_api_retain_release_context
          COMMAND "${TS_BUILDDIR}/bin/cl-api-retain_release-context")
-add_test(NAME piglit_cl_api_retain_release_event
-         COMMAND "${TS_BUILDDIR}/bin/cl-api-retain_release-event")
+
+# disable retain-release event test.
+# has two issues:
+#   1) has a race condition (events sometime finish before
+#      it asks for status, sometimes after)
+#   2) it thinks CL_EVENT_REFERENCE_COUNT should be 1 after
+#      an API call clEnqueueXYZ(... , &event) - but pocl inits it to 2
+#      (one for pocl, one for user)
+#add_test(NAME piglit_cl_api_retain_release_event
+         #COMMAND "${TS_BUILDDIR}/bin/cl-api-retain_release-event")
 add_test(NAME piglit_cl_api_retain_release_kernel
          COMMAND "${TS_BUILDDIR}/bin/cl-api-retain_release-kernel")
 add_test(NAME piglit_cl_api_retain_release_mem_object
@@ -210,7 +218,7 @@ set_tests_properties(
   piglit_cl_api_link_program
   piglit_cl_api_retain_release_command_queue
   piglit_cl_api_retain_release_context
-  piglit_cl_api_retain_release_event
+#  piglit_cl_api_retain_release_event
   piglit_cl_api_retain_release_kernel
   piglit_cl_api_retain_release_mem_object
   piglit_cl_api_retain_release_program
