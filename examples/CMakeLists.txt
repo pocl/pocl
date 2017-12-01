@@ -59,6 +59,11 @@ if("${ENABLE_TESTSUITES}" STREQUAL "all")
   set(ENABLE_TESTSUITES ${ALL_TESTSUITES})
 endif()
 
+if("${ENABLE_TESTSUITES}" MATCHES "tier1")
+  list(REMOVE_ITEM ENABLE_TESTSUITES "tier1")
+  list(APPEND ENABLE_TESTSUITES "AMDSDK3.0" "piglit" "PyOpenCL" "conformance")
+endif()
+
 include(ExternalProject)
 
 # invoke this to build all examples
