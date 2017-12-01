@@ -385,6 +385,9 @@ int pocl_cache_append_to_buildlog(cl_program  program,
                                   unsigned    device_i,
                                   const char *content,
                                   size_t      size) {
+    if (!buildhash_is_valid (program, device_i))
+      return -1;
+
     char buildlog_path[POCL_FILENAME_LENGTH];
     program_device_dir(buildlog_path, program,
                        device_i, POCL_BUILDLOG_FILENAME);

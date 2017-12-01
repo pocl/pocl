@@ -126,12 +126,19 @@ static void appendToProgramBuildLog(cl_program program, unsigned device_i,
                                     std::string &s) {
   if (!s.empty()) {
     POCL_MSG_ERR(s.c_str());
-    /* TODO currently if there's no cachedir,
-     * it writes into topdir/build.log */
+    /* this may not actually write anything if the buildhash is invalid,
+     * but program->build_log still gets written.  */
     pocl_cache_append_to_buildlog(program, device_i, s.c_str(), s.size());
-    if (program->build_log[device_i])
-      strcat(program->build_log[device_i], s.c_str());
-    else
+    if (program->build_log[device_i]) {
+      size_t len = strlen(program->build_log[device_i]);
+      size_t len2 = strlen(s.c_str());
+      char *newlog = (char *)malloc(len + len2 + 1);
+      memcpy(newlog, program->build_log[device_i], len);
+      memcpy(newlog + len, s.c_str(), len2);
+      newlog[len + len2] = 0;
+      POCL_MEM_FREE(program->build_log[device_i]);
+      program->build_log[device_i] = newlog;
+    } else
       program->build_log[device_i] = strdup(s.c_str());
   }
 }
@@ -156,12 +163,7 @@ static void get_build_log(cl_program program,
       }
 
     std::string log = ss_build_log.str();
-    if (log.size() > 0) {
-      POCL_MSG_ERR(log.c_str());
-      pocl_cache_append_to_buildlog(program, device_i,
-                                  log.c_str(),
-                                  log.size());
-    }
+    appendToProgramBuildLog(program, device_i, log);
 }
 
 static llvm::Module *kernel_library(cl_device_id device);
