@@ -1,41 +1,46 @@
-examples/Rodinia/pathfinder.stdout	export-ignore
-doc/benchmark_results/			export-ignore
-doc/binary_format.txt			export-ignore
-doc/buildbot/				export-ignore
-doc/handling_loops.txt			export-ignore
-doc/LAUNDRY				export-ignore
-doc/notes*.txt				export-ignore
-doc/spir-todo.txt			export-ignore
-doc/ttasim_kernel_capturer.txt		export-ignore
-doc/www/				export-ignore
+doc/benchmark_results/                          export-ignore
+doc/buildbot/                                   export-ignore
+doc/luxmark.txt                                 export-ignore
+doc/handling_loops.txt                          export-ignore
+doc/LAUNDRY                                     export-ignore
+doc/notes*.txt                                  export-ignore
+doc/spir-todo.txt                               export-ignore
+doc/ttasim_kernel_capturer.txt                  export-ignore
+doc/www/                                        export-ignore
 
-examples/piglit/sorted_ref		export-ignore
-examples/piglit/sorted_ref_llvm_3.5	export-ignore
-
+examples/piglit/sorted_ref*                     export-ignore
 # this one is ~20M
-examples/Rodinia/pathfinder.stdout	export-ignore
+examples/Rodinia/pathfinder.stdout              export-ignore
 
-lib/kernel/amdgcn			export-ignore
-lib/kernel/convert_type.py		export-ignore
-lib/kernel/vecmathlib/bench.cc		export-ignore
-lib/kernel/vecmathlib/coeffs.out	export-ignore
-lib/kernel/vecmathlib/example.cc	export-ignore
-lib/kernel/vecmathlib/example_float.cc	export-ignore
-lib/kernel/vecmathlib/find-coeffs.m	export-ignore
-lib/kernel/vecmathlib/IDEAS		export-ignore
-lib/kernel/vecmathlib/instantiations.cc	export-ignore
-lib/kernel/vecmathlib/interp.cc		export-ignore
+lib/kernel/amdgcn                               export-ignore
+lib/kernel/convert_type.py                      export-ignore
+lib/kernel/vecmathlib/bench.cc                  export-ignore
+lib/kernel/vecmathlib/coeffs.out                export-ignore
+lib/kernel/vecmathlib/example.cc                export-ignore
+lib/kernel/vecmathlib/example_float.cc          export-ignore
+lib/kernel/vecmathlib/find-coeffs.m             export-ignore
+lib/kernel/vecmathlib/IDEAS                     export-ignore
+lib/kernel/vecmathlib/instantiations.cc         export-ignore
+lib/kernel/vecmathlib/interp.cc                 export-ignore
 
-scripts/pocl-build.in			export-ignore
-scripts/pocl-kernel.in			export-ignore
-scripts/pocl-workgroup.in		export-ignore
+lib/kernel/libclc-pocl/gen_vectorize.rb         export-ignore
+lib/kernel/sleef/gen*                           export-ignore
 
-tests/amdsdk.at				export-ignore
-tests/kernel/test_convert_type.py	export-ignore
-tests/kernel/test_convert_type.sh	export-ignore
+scripts/pocl-build.in                           export-ignore
+scripts/pocl-kernel.in                          export-ignore
+scripts/pocl-workgroup.in                       export-ignore
 
-tools/gdb-breakpoints			export-ignore
-tools/patches/clang-3.4-no-forced-64bit-doubles.patch		export-ignore
-tools/scripts/benchmark_barchart.py	export-ignore
-tools/scripts/benchmark.py		export-ignore
-tools/scripts/devel-configure		export-ignore
+tests/kernel/test_convert_type.py               export-ignore
+tests/kernel/test_convert_type.sh               export-ignore
+tests/testsuite*                                export-ignore
+tests/amdsdk.at                                 export-ignore
+tests/atlocal.in                                export-ignore
+
+tools/gdb-breakpoints                           export-ignore
+tools/scripts/benchmark_barchart.py             export-ignore
+tools/scripts/benchmark.py                      export-ignore
+tools/scripts/devel-configure                   export-ignore
+
+# should we include these ?
+android/      export-ignore
+windows/      export-ignore
