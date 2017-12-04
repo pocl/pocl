@@ -81,14 +81,14 @@ limit_max = {'char'  : 'CHAR_MAX',
              'long'  : 'LONG_MAX',
              'ulong' : 'ULONG_MAX'}
 
-limit_max_float = {'char'  : '(0x1p+7)',
-             'uchar' : '(0x1p+8)',
-             'short' : '(0x1p+15)',
-             'ushort': '(0x1p+16)',
-             'int'   : '(0x1p+31)',
-             'uint'  : '(0x1p+32)',
-             'long'  : '(0x1p+63)',
-             'ulong' : '(0x1p+64)'}
+limit_max_float = {'char'  : '(0x1p+7f)',
+             'uchar' : '(0x1p+8f)',
+             'short' : '(0x1p+15f)',
+             'ushort': '(0x1p+16f)',
+             'int'   : '(0x1p+31f)',
+             'uint'  : '(0x1p+32f)',
+             'long'  : '(0x1p+63f)',
+             'ulong' : '(0x1p+64f)'}
 
 limit_min = {'char'  : 'CHAR_MIN',
              'uchar' : '0',
@@ -99,14 +99,14 @@ limit_min = {'char'  : 'CHAR_MIN',
              'long'  : 'LONG_MIN',
              'ulong' : '0'}
 
-limit_min_float = {'char'  : '(-0x1p+7)',
-             'uchar' : '0',
-             'short' : '(-0x1p+15)',
-             'ushort': '0',
-             'int'   : '(-0x1p+31)',
-             'uint'  : '0',
-             'long'  : '(-0x1p+63)',
-             'ulong' : '0'}
+limit_min_float = {'char'  : '(-0x1p+7f)',
+             'uchar' : '0.0f',
+             'short' : '(-0x1p+15f)',
+             'ushort': '0.0f',
+             'int'   : '(-0x1p+31f)',
+             'uint'  : '0.0f',
+             'long'  : '(-0x1p+63f)',
+             'ulong' : '0.0f'}
 
 fits_in_float = { 'char', 'uchar', 'short', 'ushort' }
 fits_in_double = { 'char', 'uchar', 'short', 'ushort', 'int', 'uint', 'float' }
@@ -221,7 +221,7 @@ def generate_default_conversion(src, dst, mode):
   close_conditional = conditional_guard(src, dst)
 
   # scalar conversions
-  print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE
+  print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 {DST} convert_{DST}{M}({SRC} x)
 {{
   return ({DST})x;
@@ -230,7 +230,7 @@ def generate_default_conversion(src, dst, mode):
 
   # vector conversions, done through decomposition to components
   for size, half_size in half_sizes:
-    print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE
+    print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 {DST}{N} convert_{DST}{N}{M}({SRC}{N} x)
 {{
   return ({DST}{N})(convert_{DST}{H}(x.lo), convert_{DST}{H}(x.hi));
@@ -238,7 +238,7 @@ def generate_default_conversion(src, dst, mode):
 """.format(SRC=src, DST=dst, N=size, H=half_size, M=mode))
 
   # 3-component vector conversions
-  print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE
+  print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 {DST}3 convert_{DST}3{M}({SRC}3 x)
 {{
   return ({DST}3)(convert_{DST}2(x.s01), convert_{DST}(x.s2));
@@ -273,7 +273,7 @@ def generate_saturated_conversion(src, dst, size):
   # Header
   print()
   close_conditional = conditional_guard(src, dst)
-  print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE
+  print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 {DST}{N} convert_{DST}{N}_sat({SRC}{N} x)
 {{""".format(DST=dst, SRC=src, N=size))
 
@@ -347,7 +347,7 @@ def generate_saturated_conversion_with_rounding(src, dst, size, mode):
   close_conditional = conditional_guard(src, dst)
 
   # Body
-  print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE
+  print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 {DST}{N} convert_{DST}{N}_sat{M}({SRC}{N} x)
 {{
   return convert_{DST}{N}_sat(x);
@@ -388,8 +388,8 @@ rtn_ret_constants = {
                     ('double','ulong'): '0x1.fffffffffffffp+63',
                     ('float','long'): '0x1.fffffep+62',
                     ('float','ulong'): '0x1.fffffep+63',
-                    ('float','int'): '0x1.fffffep+30',
-                    ('float','uint'): '0x1.fffffep+31',
+                    ('float','int'): '0x1.fffffep+30f',
+                    ('float','uint'): '0x1.fffffep+31f',
                   }
 
 rtn_thresholds = {
@@ -403,7 +403,7 @@ def generate_float_conversion(src, dst, size, mode, sat):
   # Header
   print()
   close_conditional = conditional_guard(src, dst)
-  print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE
+  print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 {DST}{N} convert_{DST}{N}{S}{M}({SRC}{N} x)
 {{""".format(SRC=src, DST=dst, N=size, M=mode, S=sat))
 
