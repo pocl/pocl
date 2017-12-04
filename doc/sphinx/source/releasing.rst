@@ -23,18 +23,18 @@ A checklist and hints for testing and making a release successfully:
   release an approved release candidate tar ball by just renaming the tar
   ball file name.
 * Update the new dynamic library version in the *master* branch. This
-  can be done in configure.ac.
+  can be done in CMakeLists.txt.
   Search for "4:0:3" to see the place where it's set. It includes more info
   in comments.
 * Check that CHANGES has the most interesting updates done during the release
   cycle. Add missing notable changes from git log.
 * Disallow support for the unreleased LLVM version from the release branch
   because it will most likely stop working before the new LLVM is released
-  because LLVM API lives.  That is, modify configure.ac in the release branch to not
-  allow the currently unreleased development version of LLVM.
+  because LLVM API lives.  That is, modify cmake/LLVM.cmake in the release
+  branch to not allow the currently unreleased development version of LLVM.
 * Update the release notes in *doc/notes-VERNUM.txt*.
-* Add a git tag for the release candidate: 'git tag 0.14-rc1'
-* Create and test the tar ball package with command along the lines of 'git archive --format=tar.gz --prefix=pocl-0.14/ 0.14-rc1 -o pocl-0.14-rc1.tar.gz'.
+* Create a new release on Github. Mark it as pre-release. This should
+  create both a tarball and a git tag.
 * Upload the package to portablecl.org/downloads via SFTP or to the
   sourceforge file listing for the pocl project.
 * Request for testers in Twitter and/or mailing list. Point the testers to
@@ -42,9 +42,9 @@ A checklist and hints for testing and making a release successfully:
   A good way is to create a wiki page for the release schedule and a test
   log. See https://github.com/pocl/pocl/wiki/pocl-0.10-release-testing for
   an example.
-* To publish a release, after testing it thoroughly, rename the latest RC
-  tar ball to omit the rcX tag, e.g.,
-  pocl-0.10.tar.gz. Upload the tar ball to the sourceforge download page and
+* To publish a release, create a new release on Github without the
+  checking the pre-release checkbox.
+  Upload the tar ball to the sourceforge download page and
   to http://portablecl.org/downloads.
 * Update the CHANGES and ANNOUNCEMENT text files in these directories.
   ANNOUNCEMENT is a copy of the latest release notes. A direct link to it can
