@@ -1,6 +1,11 @@
-pocl now loads SPIR binaries via the clCreateProgramWithBinary interface.
-However, support for SPIR is not complete. At least the following needs to
-be done:
+
+Note: pocl's behaviour WRT linking has changed recently. Before, the
+linking of kernel library happened between program.bc and parallel.bc,
+but now linking happens before program.bc is finished. This breaks with
+SPIR binaries since they need to be linked. The solution will require
+either converting SPIR to LLVM BC on input, or building the kernel library
+for SPIR target. The text below is somewhat outdated since pocl doesn't
+use fake addr spaces by default anymore (only enabled for pre-3.9 LLVMs).
 
 bitcode linkage warning
 -----------------------
