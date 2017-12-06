@@ -27,8 +27,8 @@ cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 
 project(pocl)
 set(MAJOR_VERSION 1)
-set(MINOR_VERSION 0)
-set(VERSION_SUFFIX "")
+set(MINOR_VERSION 1)
+set(VERSION_SUFFIX "-pre")
 set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION}${VERSION_SUFFIX})
 set(POCL_VERSION ${VERSION_STRING})
 
@@ -1104,10 +1104,11 @@ endif()
 # 8:0:7 == 0.14 (currently backwards compatible with 0.7, thus age = 7).
 # pocl 1.0 bumped the API version:
 # 2:0:0 == 1.0 (the libpocl.so will be named libpocl.so.2.0.X )
+# 3:0:1 == 1.1
 
-set(LIB_CURRENT_VERSION 2)
+set(LIB_CURRENT_VERSION 3)
 set(LIB_REVISION_VERSION 0)
-set(LIB_AGE_VERSION 0)
+set(LIB_AGE_VERSION 1)
 
 math(EXPR LIB_FIRST_VERSION "${LIB_CURRENT_VERSION} - ${LIB_AGE_VERSION}")
 
