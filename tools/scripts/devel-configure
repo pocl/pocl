@@ -1,2 +1,0 @@
-./configure --enable-testsuites=all --disable-icd --enable-debug $*
-
