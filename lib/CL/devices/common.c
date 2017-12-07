@@ -189,14 +189,18 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
   POCL_MSG_PRINT_INFO ("Linking final module\n");
   char *const args1[]
 #ifndef POCL_ANDROID
-      = { LINK_COMMAND, HOST_LD_FLAGS_ARRAY, "-o",
-          tmp_module,   objfile_path,        NULL };
-#else
-      = { POCL_ANDROID_PREFIX "/bin/ld",
-          HOST_LD_FLAGS_ARRAY,
+      = { LINK_COMMAND,
           "-o",
           tmp_module,
           objfile_path,
+          HOST_LD_FLAGS_ARRAY,
+          NULL };
+#else
+      = { POCL_ANDROID_PREFIX "/bin/ld",
+          "-o",
+          tmp_module,
+          objfile_path,
+          HOST_LD_FLAGS_ARRAY,
           NULL };
 #endif
   error = pocl_run_command (args1);
