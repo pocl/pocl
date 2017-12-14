@@ -468,9 +468,16 @@ endif()
 
 option(USE_VECMATHLIB_BUILTINS_ONLY "Use only __builtin_* functions in the kernel library." OFF)
 
-set(DEFAULT_KERNEL_CL_FLAGS  "-x cl")
-set(DEFAULT_KERNEL_C_FLAGS "-xc -D__CBUILD__")
-set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11")
+# for kernel code, disable PIC & stack protector
+#
+# it seems PIC and stack-protector defaults somehow depend on
+# clang build type or environment. PIC causes problems with
+# constant addrspace variables, and stack protector likely slows
+# down the kernels, so it needs to be determined whether it's worth
+# the trouble.
+set(DEFAULT_KERNEL_CL_FLAGS  "-x cl -fno-stack-protector -fno-PIC")
+set(DEFAULT_KERNEL_C_FLAGS "-xc -D__CBUILD__ -fno-stack-protector -fno-PIC")
+set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector -fno-PIC")
 
 if(ENABLE_VECMATHLIB)
   set(DEFAULT_KERNEL_CXX_FLAGS "${DEFAULT_KERNEL_CXX_FLAGS} -DVML_NO_IOSTREAM ${CLANGXX_STDLIB} ")

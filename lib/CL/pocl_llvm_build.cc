@@ -408,6 +408,13 @@ int pocl_llvm_build_program(cl_program program,
   la->MathErrno = false; // -fno-math-errno
   la->NoBuiltin = true;  // -fno-builtin
   la->AsmBlocks = true;  // -fasm (?)
+  la->setStackProtector(LangOptions::StackProtectorMode::SSPOff);
+  la->PICLevel = 0;
+#ifdef LLVM_OLDER_THAN_3_9
+  la->PIELevel = 0;
+#else
+  la->PIE = 0;
+#endif
 
   std::string kernelh;
   std::string BuiltinRenamesH;
@@ -530,6 +537,18 @@ int pocl_llvm_build_program(cl_program program,
     return CL_BUILD_PROGRAM_FAILURE;
 
   ++numberOfIRs;
+
+  // a workaround for errors with PIC + variables in constant addrspace
+  // fails on the test_convert_type_X tests with this error:
+  //   relocation R_X86_64_PC32 against symbol `char_values' can not be used
+  //   when making a shared object; recompile with -fPIC
+#ifdef LLVM_OLDER_THAN_3_9
+  (*mod)->setPICLevel(PICLevel::Default);
+#else
+  (*mod)->setPICLevel(PICLevel::NotPIC);
+  (*mod)->setPIELevel(PIELevel::Default);
+#endif
+
 
   // link w kernel lib, but not if we're called from clCompileProgram()
   // Later this should be replaced with indexed linking of source code
