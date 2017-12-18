@@ -13,8 +13,8 @@ Release highlights
 
 * Support for LLVM/Clang 5.0 and 4.0.
 * Support for NVIDIA GPUs via a new CUDA backend (currently experimental)
-* Most of the OpenCL 1.2 standard conformance tests pass with the CPU
-  backend.  There are some caveats though - see the documentation.
+* The OpenCL 1.2 conformance tests now pass with selected CPUs. There are some
+  caveats though - see the documentation.
 
 Please note that there's now an official pocl "maintenance policy" in place.
 This text describes the policy and how you can get your favourite project
