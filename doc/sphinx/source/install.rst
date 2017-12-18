@@ -11,6 +11,8 @@ In order to build pocl, you need the following support libraries and
 tools:
 
   * Latest released version of LLVM & Clang
+  * development files for LLVM & Clang + their transitive dependencies
+    (e.g. libclang-dev, libllvm-dev, zlib1g-dev, libtinfo-dev...)
   * GNU make or ninja
   * libtool dlopen wrapper files (e.g. libltdl3-dev in Debian)
   * pthread (should be installed by default)
