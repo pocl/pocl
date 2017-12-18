@@ -119,7 +119,11 @@ static INLINE CONST vfloat vldexp3_vf_vf_vi2(vfloat d, vint2 q) {
 }
 
 EXPORT CONST vfloat xldexpf(vfloat x, vmask qm) {
-  vint2 q = vcast_vi2_vm(qm);
+  vint2 q1 = vcast_vi2_vm(qm);
+  vint2 min = vcast_vi2_i(-2000);
+  vint2 mask = vgt_vi2_vi2_vi2(min, q1);
+  vint2 q = vor_vi2_vi2_vi2(vand_vi2_vi2_vi2(mask, min),
+                                vandnot_vi2_vi2_vi2(mask, q1));
   vfloat res = vldexp_vf_vf_vi2(x, q);
 
   res = vsel_vf_vo_vf_vf(veq_vo_vf_vf(vabs_vf_vf(x), vcast_vf_f(0.0f)), x, res);
