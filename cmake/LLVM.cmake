@@ -191,6 +191,30 @@ else()
   message(FATAL_ERROR "LLVM version between 3.7 and 6.0 required, found: ${LLVM_VERSION}")
 endif()
 
+#############################################################
+
+if(NOT LLVM_OLDER_THAN_4_0)
+
+  run_llvm_config(LLVM_HAS_RTTI --has-rtti)
+
+  run_llvm_config(LLVM_LIB_IS_SHARED --shared-mode)
+
+  if(LLVM_LIB_IS_SHARED MATCHES "shared")
+    set(LLVM_LIB_MODE --link-shared)
+  else()
+    set(LLVM_LIB_MODE --link-static)
+  endif()
+
+  unset(LLVM_LIBS)
+  run_llvm_config(LLVM_LIBS --libs ${LLVM_LIB_MODE})
+  # Convert LLVM_LIBS from string -> list format to make handling them easier
+  separate_arguments(LLVM_LIBS)
+
+  run_llvm_config(LLVM_SYSLIBS --system-libs ${LLVM_LIB_MODE})
+  string(STRIP "${LLVM_SYSLIBS}" LLVM_SYSLIBS)
+
+endif()
+
 ####################################################################
 
 # A few work-arounds for llvm-config issues

@@ -62,12 +62,8 @@ write_float4_pixel (float4 color, void *data, size_t base_index, int type)
     }
   if (type == CLK_HALF_FLOAT)
     {
-#if !defined(LLVM_OLDER_THAN_3_9) && __has_builtin(__builtin_convertvector)
-      typedef float vector4float __attribute__ ((__vector_size__ (16)));
-      typedef half vector4half __attribute__ ((__vector_size__ (8)));
-      vector4half vh = __builtin_convertvector(color, vector4half);
-      ((vector4half *)data)[base_index] = vh;
-      return;
+#if !defined(LLVM_OLDER_THAN_3_8)
+      vstorea_half4(color, base_index, data);
 #else
       __builtin_trap ();
 #endif

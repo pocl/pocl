@@ -11,6 +11,8 @@ In order to build pocl, you need the following support libraries and
 tools:
 
   * Latest released version of LLVM & Clang
+  * development files for LLVM & Clang + their transitive dependencies
+    (e.g. libclang-dev, libllvm-dev, zlib1g-dev, libtinfo-dev...)
   * GNU make or ninja
   * libtool dlopen wrapper files (e.g. libltdl3-dev in Debian)
   * pthread (should be installed by default)
@@ -82,17 +84,21 @@ Compile C++:
   CMAKE_CXX_FLAGS
   CMAKE_CXX_FLAGS_<build-type>
 
-TODO
-   HOST_LLC_FLAGS
-
-Convert assembler to object file:
-   HOST_CLANG_FLAGS
-
-Post-process object file:
-   HOST_LD_FLAGS
-
 Building kernels and the kernel library, i.e. target flags
 ------------------------------------------------------------
+
+All of these empty by default. There are hardcoded defaults which may
+be overriden by setting these variables (rarely needed).
+
+Extra parameters to llc
+   EXTRA_HOST_LLC_FLAGS
+
+Extra parameters to clang
+   EXTRA_HOST_CLANG_FLAGS
+
+Extra parameters to linker (links kernel to shared library
+which is then dlopened):
+   EXTRA_HOST_LD_FLAGS
 
 EXTRA_KERNEL_FLAGS
   is applied to all kernel library compilation commands, IOW it's for
@@ -100,6 +106,7 @@ EXTRA_KERNEL_FLAGS
 
 EXTRA_KERNEL_{C,CL,CXX}_FLAGS
   cmake variables for per-language options for kernel library compilation
+
 
 
 CMake: other options & features

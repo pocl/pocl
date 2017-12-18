@@ -468,9 +468,16 @@ endif()
 
 option(USE_VECMATHLIB_BUILTINS_ONLY "Use only __builtin_* functions in the kernel library." OFF)
 
-set(DEFAULT_KERNEL_CL_FLAGS  "-x cl")
-set(DEFAULT_KERNEL_C_FLAGS "-xc -D__CBUILD__")
-set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11")
+# for kernel code, disable PIC & stack protector
+#
+# it seems PIC and stack-protector defaults somehow depend on
+# clang build type or environment. PIC causes problems with
+# constant addrspace variables, and stack protector likely slows
+# down the kernels, so it needs to be determined whether it's worth
+# the trouble.
+set(DEFAULT_KERNEL_CL_FLAGS  "-x cl -fno-stack-protector -fno-PIC")
+set(DEFAULT_KERNEL_C_FLAGS "-xc -D__CBUILD__ -fno-stack-protector -fno-PIC")
+set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector -fno-PIC")
 
 if(ENABLE_VECMATHLIB)
   set(DEFAULT_KERNEL_CXX_FLAGS "${DEFAULT_KERNEL_CXX_FLAGS} -DVML_NO_IOSTREAM ${CLANGXX_STDLIB} ")
@@ -1297,8 +1304,11 @@ MESSAGE(STATUS "final KERNEL_C_FLAGS: ${KERNEL_C_FLAGS}")
 if (OCS_AVAILABLE)
   MESSAGE(STATUS "")
   MESSAGE(STATUS "LLVM_VERSION: ${LLVM_VERSION}")
-  MESSAGE(STATUS "LLVM_ASSERTS_BUILD ${LLVM_ASSERTS_BUILD}")
-  MESSAGE(STATUS "LLVM_BUILD_MODE ${LLVM_BUILD_MODE}")
+  MESSAGE(STATUS "LLVM_LIB_IS_SHARED: ${LLVM_LIB_IS_SHARED}")
+  MESSAGE(STATUS "LLVM_HAS_RTTI: ${LLVM_HAS_RTTI}")
+  MESSAGE(STATUS "LLVM_LIB_MODE: ${LLVM_LIB_MODE}")
+  MESSAGE(STATUS "LLVM_ASSERTS_BUILD: ${LLVM_ASSERTS_BUILD}")
+  MESSAGE(STATUS "LLVM_BUILD_MODE: ${LLVM_BUILD_MODE}")
   MESSAGE(STATUS "LLVM_CFLAGS: ${LLVM_CFLAGS}")
   MESSAGE(STATUS "LLVM_CXXFLAGS: ${LLVM_CXXFLAGS}")
   MESSAGE(STATUS "LLVM_CPPFLAGS: ${LLVM_CPPFLAGS}")

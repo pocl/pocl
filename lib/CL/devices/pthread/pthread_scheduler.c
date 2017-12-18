@@ -45,8 +45,7 @@ typedef struct scheduler_data_
   unsigned num_threads;
 
   struct pool_thread_data *thread_pool;
-  /* we need the device_id to get max local size */
-  cl_device_id device;
+  size_t local_mem_size;
 
   _cl_command_node *work_queue
       __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
@@ -82,7 +81,10 @@ pthread_scheduler_init (size_t num_worker_threads, cl_device_id device)
           num_worker_threads * sizeof (struct pool_thread_data));
 
   scheduler.num_threads = num_worker_threads;
-  scheduler.device = device;
+  /* safety margin - aligning pointers later (in kernel arg setup)
+   * may require more local memory than actual local mem size.
+   * TODO fix this */
+  scheduler.local_mem_size = device->local_mem_size << 4;
 
   for (i = 0; i < num_worker_threads; ++i)
     {
@@ -361,7 +363,7 @@ work_group_scheduler (kernel_run_command *k,
 
   setup_kernel_arg_array_with_locals (
       (void **)&arguments, (void **)&arguments2, k, thread_data->local_mem,
-      scheduler.device->local_mem_size);
+      scheduler.local_mem_size);
   memcpy (&pc, &k->pc, sizeof (struct pocl_context));
 
   /* Flush to zero is only set once at start of kernel (because FTZ is
@@ -490,9 +492,9 @@ pocl_pthread_driver_thread (void *p)
   td->num_threads = scheduler.num_threads;
   td->last_cmd_ignored = NULL;
 
-  assert (scheduler.device->local_mem_size > 0);
+  assert (scheduler.local_mem_size > 0);
   td->local_mem = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
-                                       scheduler.device->local_mem_size);
+                                       scheduler.local_mem_size);
 
 #ifdef __linux__
   if (pocl_get_bool_option ("POCL_AFFINITY", 0))

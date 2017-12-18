@@ -47,7 +47,7 @@ ExternalProject_Add(
   PREFIX "${TS_BASEDIR}"
   GIT_REPOSITORY "https://github.com/franz/OpenCL-CTS"
   GIT_TAG "cl12_trunk"
-  CONFIGURE_COMMAND ${CMAKE_COMMAND}
+  CONFIGURE_COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Release
       "${TS_BASEDIR}/src/${TS_NAME}/test_conformance"
   INSTALL_COMMAND /bin/true
 )
