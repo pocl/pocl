@@ -19,6 +19,9 @@ platform for issues in parallel programming of heterogeneous platforms.</p>
 
 <h1>News</h1>
 
+<h2>2017-12-19: <a href="pocl-1.0.html">Portable Computing Language
+(pocl) v1.0 released</a></h2>
+
 <h2>2017-04-25: <a href="cuda-backend.html">NVIDIA GPU support via CUDA backend</a></h2>
 
 pocl now has experimental support for NVIDIA GPU devices via a new backend
