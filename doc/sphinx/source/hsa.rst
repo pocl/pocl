@@ -36,7 +36,8 @@ Installing prerequisite software
 
   Fetch the upstream Clang 3.7 branch::
 
-    cd tools; svn co http://llvm.org/svn/llvm-project/cfe/branches/release_37 clang
+    cd HLC-HSAIL-Development-LLVM/tools
+    svn co http://llvm.org/svn/llvm-project/cfe/branches/release_37 clang
 
   Patch it::
 
