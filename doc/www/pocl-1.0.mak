@@ -10,8 +10,8 @@
 <ul>
 <li>Support for LLVM/Clang 5.0 and 4.0.</li>
 <li>Support for NVIDIA GPUs via a new CUDA backend (currently experimental)</li>
-<li>Full conformance with OpenCL 1.2 standard on CPU backend (with some
-  limitations, see the documentation for details)</li>
+<li>Most of the OpenCL 1.2 standard conformance tests pass with the CPU
+  backend.  There are some caveats though - see the documentation.</li>
 </ul>
 </p>
 
@@ -27,11 +27,11 @@ platforms, please let us know!</p>
 <h2>Acknowledgements</h2>
 
 <p>Most of the code that landed to the pocl code base during this release
-cycle was produced while conducting research funded by various sources.
+cycle was produced for the needs of research funded by various sources.
 The Customized Parallel Computing research group of Tampere
-University of Technology (Finland) likes to thank the Finnish Funding
-Agency for Technology and Innovation (project "Parallel Acceleration 3",
-funding decision 1134/31/2015), ARTEMIS JU (grant agreement #621439, ALMARVI)
-and Academy of Finland (decision #297548, PLC).</p>
+University of Technology (Finland) likes to thank the Academy of Finland
+(funding decision 297548), Finnish Funding Agency for Technology and Innovation
+(funding decision 40142/14, FiDiPro-StreamPro), ARTEMIS joint undertaking
+under grant agreement no 621439 (ALMARVI) and HSA Foundation.</p>
 
 <p><a href="download.html">Download</a>.</p>

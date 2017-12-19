@@ -1,9 +1,9 @@
 Portable Computing Language (pocl) v1.0 released
 -------------------------------------------------
 
-Pocl's goal is to become a performance portable open source (MIT-licensed)
-implementation of the OpenCL standard. In addition to producing an easily
-portable open-source OpenCL implementation, another major goal of this
+Pocl is a portable open source (MIT-licensed) implementation of the OpenCL
+standard (1.2 with some 2.0 features supported). In addition to producing an
+easily portable open-source OpenCL implementation, another major goal of this
 project is improving performance portability of OpenCL programs with the
 kernel compiler and the task runtime, reducing the need for target-dependent
 manual optimizations.
@@ -13,10 +13,10 @@ Release highlights
 
 * Support for LLVM/Clang 5.0 and 4.0.
 * Support for NVIDIA GPUs via a new CUDA backend (currently experimental)
-* Full conformance with OpenCL 1.2 standard on CPU backend (with some
-  limitations, see the documentation for details)
+* The OpenCL 1.2 conformance tests now pass with selected CPUs. There are some
+  caveats though - see the documentation.
 
-Please note that there's now an official pocl maintenance policy in place.
+Please note that there's now an official pocl "maintenance policy" in place.
 This text describes the policy and how you can get your favourite project
 that uses OpenCL to remain regression free in the future pocl releases:
 
@@ -26,12 +26,12 @@ Acknowledgements
 ----------------
 
 Most of the code that landed to the pocl code base during this release
-cycle was produced while conducting research funded by various sources.
+cycle was produced for the needs of research funded by various sources.
 The Customized Parallel Computing research group of Tampere
-University of Technology (Finland) likes to thank the Finnish Funding
-Agency for Technology and Innovation (project "Parallel Acceleration 3",
-funding decision 1134/31/2015), ARTEMIS JU (grant agreement #621439, ALMARVI)
-and Academy of Finland (decision #297548, PLC).
+University of Technology (Finland) likes to thank the Academy of Finland
+(funding decision 297548), Finnish Funding Agency for Technology and Innovation
+(funding decision 40142/14, FiDiPro-StreamPro), ARTEMIS joint undertaking
+under grant agreement no 621439 (ALMARVI) and HSA Foundation.
 
 Links
 -----

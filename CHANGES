@@ -16,8 +16,8 @@ Highlights
   see README.packaging.
 - Somewhat improved scalability in the CPU driver. CPUs with many cores
   and programs using a lot of WIs with small kernels can run somewhat faster.
-- Full conformance with OpenCL 1.2 standard, enabled by default. There are
-  some caveats though - see the documentation.
+- The OpenCL 1.2 conformance tests now pass with selected CPUs. There are some
+  caveats though - see the documentation.
 - When conformance is enabled, some kernel library functions might be
   slower than in previous releases.
 - Pocl now reports OpenCL 1.2 instead of 2.0, except HSA enabled builds.
