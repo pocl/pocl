@@ -22,7 +22,7 @@ pocl.
  If this is set to an existing directory, pocl uses it as the cache
  directory for all compilation results. This allows reusing compilation
  results between pocl invocations. If this env is not set, then the
- default cache directory will be used, which is ``$XDG_CACHE_DIR/pocl/kcache``
+ default cache directory will be used, which is ``$XDG_CACHE_HOME/pocl/kcache``
  (if set) or ``$HOME/.cache/pocl/kcache/`` on Unix-like systems.
 
 - **POCL_DEBUG**
