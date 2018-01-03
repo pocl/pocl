@@ -1025,9 +1025,6 @@ DECLARE_VTABLE(double2, CBRT_REM_TBL, 5) = {
     (double2)(0x1.965fea0000000p+0, 0x1.4f5b8f20ac166p-26),
 };
 
-#endif // cl_khr_fp64
-
-
 VTABLE_FUNCTION(double, CBRT_INV_TBL, cbrt_inv_tbl);
 
 VTABLE_FUNCTION2(v2double, LN_TBL, ln_tbl);
@@ -1037,3 +1034,5 @@ VTABLE_FUNCTION2(v2double, SINH_TBL, sinh_tbl);
 VTABLE_FUNCTION2(v2double, COSH_TBL, cosh_tbl);
 VTABLE_FUNCTION2(v2double, CBRT_DBL_TBL, cbrt_dbl_tbl);
 VTABLE_FUNCTION2(v2double, CBRT_REM_TBL, cbrt_rem_tbl);
+
+#endif // cl_khr_fp64
