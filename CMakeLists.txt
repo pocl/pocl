@@ -744,9 +744,13 @@ endif()
 set(DEFAULT_HOST_CLANG_FLAGS "${CLANG_TARGET_OPTION}${LLC_TRIPLE}")
 set(DEFAULT_HOST_LLC_FLAGS "-relocation-model=pic -mtriple=${LLC_TRIPLE}")
 
-if(ARM AND (NOT LLVM_OLDER_THAN_4_0))
-  #ARMs need to enable FP64 manually with 4.0
-  option(ENABLE_FP64 "Enable FP64" ON)
+if(ARM)
+  #ARMs need to enable FP64 manually with LLVM < 4.0
+  if(LLVM_OLDER_THAN_4_0)
+    option(ENABLE_FP64 "Enable FP64 on ARM32 - disabled by default for LLVM < 4" OFF)
+  else()
+    option(ENABLE_FP64 "Enable FP64 on ARM32 - if you have at least VFP support for doubles, you can leave it ON" ON )
+  endif()
 endif()
 
 if(ARM32 OR (LLC_TRIPLE MATCHES "^arm"))
@@ -764,9 +768,6 @@ if(ARM32 OR (LLC_TRIPLE MATCHES "^arm"))
   endif()
 endif()
 
-if(CL_DISABLE_LONG)
-  set(DEFAULT_HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} -D_CL_DISABLE_LONG")
-endif()
 if(CL_DISABLE_HALF)
   set(DEFAULT_HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} -D_CL_DISABLE_HALF")
 endif()
@@ -790,19 +791,17 @@ if(NOT CL_DISABLE_HALF)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp16")
 endif()
 
-if(NOT CL_DISABLE_LONG)
-  # must not be defined in HOST_DEVICE_EXTENSIONS list, because
-  # this extension doesn't exist in official extension list
-  set(HOST_DEVICE_EXTENSION_DEFINES "-Dcl_khr_int64")
+# must not be defined in HOST_DEVICE_EXTENSIONS list, because
+# this extension doesn't exist in official extension list
+# there is "cles_khr_int64" which indicates int64 support for embedded profiles
+set(HOST_DEVICE_EXTENSION_DEFINES "-Dcl_khr_int64")
 
-  # fp64 requires int64
-  if(X86)
-    set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
-  endif()
-  if(ENABLE_FP64 AND (NOT LLVM_OLDER_THAN_4_0))
-    # 32bit arm doesnt always uspport doubles
-    set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp64")
-  endif()
+if(X86)
+  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
+endif()
+# 32bit arm doesnt always support doubles
+if(ENABLE_FP64 AND (NOT LLVM_OLDER_THAN_4_0))
+  set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp64")
 endif()
 
 set(TEMP_EXT "${HOST_DEVICE_EXTENSIONS}")
@@ -1145,7 +1144,6 @@ set(BUILD_ICD ${ENABLE_ICD})
 set(BUILD_HSA ${ENABLE_HSA})
 set(TCE_AVAILABLE ${ENABLE_TCE})
 set(TCEMC_AVAILABLE ${ENABLE_TCEMC})
-set(_CL_DISABLE_LONG ${CL_DISABLE_LONG})
 set(_CL_DISABLE_HALF ${CL_DISABLE_HALF})
 set(PACKAGE_VERSION "${POCL_VERSION}")
 
@@ -1277,7 +1275,6 @@ MESSAGE(STATUS " ")
 MESSAGE(STATUS "CLANG_MARCH_FLAG: ${CLANG_MARCH_FLAG}")
 MESSAGE(STATUS "CLANG_TARGET_OPTION: ${CLANG_TARGET_OPTION}")
 MESSAGE(STATUS "CL_DISABLE_HALF: ${CL_DISABLE_HALF}")
-MESSAGE(STATUS "CL_DISABLE_LONG: ${CL_DISABLE_LONG}")
 MESSAGE(STATUS "HAVE_CLOCK_GETTIME: ${HAVE_CLOCK_GETTIME}")
 MESSAGE(STATUS "HAVE_GLEW: ${HAVE_GLEW}")
 MESSAGE(STATUS "HAVE_LTTNG_UST: ${HAVE_LTTNG_UST}")
