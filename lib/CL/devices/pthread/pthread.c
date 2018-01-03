@@ -51,6 +51,10 @@
 #include "pocl_util.h"
 #include "pocl_mem_management.h"
 
+#ifdef OCS_AVAILABLE
+#include "pocl_llvm.h"
+#endif
+
 //#define DEBUG_MT
 
 #ifdef CUSTOM_BUFFER_ALLOCATOR
@@ -149,7 +153,13 @@ char *
 pocl_pthread_build_hash (cl_device_id device)
 {
   char* res = calloc(1000, sizeof(char));
-  snprintf(res, 1000, "pthread-%s", HOST_DEVICE_BUILD_HASH);
+#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
+  char *name = get_cpu_name ();
+  snprintf (res, 1000, "pthread-%s-%s", HOST_DEVICE_BUILD_HASH, name);
+  POCL_MEM_FREE (name);
+#else
+  snprintf (res, 1000, "pthread-%s", HOST_DEVICE_BUILD_HASH);
+#endif
   return res;
 }
 

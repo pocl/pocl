@@ -51,8 +51,47 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
 
     case CL_PLATFORM_VERSION:
 #ifdef OCS_AVAILABLE
-      POCL_RETURN_GETINFO_STR("OpenCL " POCL_CL_VERSION\
-                        " pocl " PACKAGE_VERSION ", LLVM " LLVM_VERSION);
+      POCL_RETURN_GETINFO_STR ("OpenCL " POCL_CL_VERSION
+                               " pocl " PACKAGE_VERSION ", LLVM " LLVM_VERSION
+#ifdef LLVM_BUILD_MODE_DEBUG
+                               " - debug"
+#endif
+
+#ifdef ENABLE_ASAN
+                               ", ASAN"
+#endif
+#ifdef ENABLE_TSAN
+                               ", TSAN"
+#endif
+#ifdef ENABLE_LSAN
+                               ", LSAN"
+#endif
+#ifdef ENABLE_UBSAN
+                               ", UBSAN"
+#endif
+
+#ifdef BUILD_CUDA
+                               ", CUDA"
+#endif
+#ifdef BUILD_HSA
+                               ", HSA"
+#endif
+#ifdef TCE_AVAILABLE
+                               ", TCE"
+#endif
+#ifdef HAVE_LTTNG_UST
+                               ", LTTNG"
+#endif
+#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
+                               ", DISTRO"
+#endif
+#ifdef POCL_DEBUG_MESSAGES
+                               ", POCL_DEBUG"
+#endif
+#ifndef _CL_DISABLE_HALF
+                               ", FP16"
+#endif
+      );
 #else
       POCL_RETURN_GETINFO_STR("OpenCL " POCL_CL_VERSION\
                         " pocl " PACKAGE_VERSION ", no online compiler support");

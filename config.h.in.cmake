@@ -28,6 +28,11 @@
 
 #define FORCED_CLFLAGS  "@FORCED_CLFLAGS@"
 
+#cmakedefine ENABLE_ASAN
+#cmakedefine ENABLE_LSAN
+#cmakedefine ENABLE_TSAN
+#cmakedefine ENABLE_UBSAN
+
 #cmakedefine ENABLE_CONFORMANCE
 
 #cmakedefine ENABLE_POCL_BUILDING

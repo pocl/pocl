@@ -33,11 +33,13 @@ int main(void)
 				sizeof(result), result, &rvs));
 
 	result[rvs]=0;	// spec doesn't say it is null-terminated.
-	if( strcmp( result, 
-	            "OpenCL " POCL_CL_VERSION " pocl " PACKAGE_VERSION ", LLVM " LLVM_VERSION) != 0 ) {
-		printf("Error: platform is: %s\n", result);
-		return 2;
-	}
+        const char *expected = "OpenCL " POCL_CL_VERSION
+                               " pocl " PACKAGE_VERSION ", LLVM " LLVM_VERSION;
+        if (strncmp (result, expected, strlen (expected)) != 0)
+          {
+            printf ("Error: platform is: %s\n", result);
+            return 2;
+          }
 
 
 	/* Pocl devices have the form 'type'-'details', if details are
