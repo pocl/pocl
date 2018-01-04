@@ -109,8 +109,7 @@ load_source(FrontendOptions &fe,
 static inline int
 unlink_source(FrontendOptions &fe)
 {
-  // don't unlink in debug mode
-  if (pocl_get_bool_option("POCL_DEBUG", 0))
+  if (pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0) != 0)
     return 0;
 
   FrontendInputFile const& file = fe.Inputs.front();
