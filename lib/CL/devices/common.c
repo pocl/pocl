@@ -1070,12 +1070,12 @@ pocl_memalign_alloc_global_mem(cl_device_id device, size_t align, size_t size)
   if (!ptr)
     return NULL;
 
-  POCL_LOCK_OBJ (mem);
+  POCL_LOCK (mem->pocl_lock);
   mem->currently_allocated += size;
   if (mem->max_ever_allocated < mem->currently_allocated)
     mem->max_ever_allocated = mem->currently_allocated;
   assert(mem->currently_allocated <= mem->total_alloc_limit);
-  POCL_UNLOCK_OBJ (mem);
+  POCL_UNLOCK (mem->pocl_lock);
 
   return ptr;
 }
@@ -1085,10 +1085,10 @@ pocl_free_global_mem(cl_device_id device, void* ptr, size_t size)
 {
   pocl_global_mem_t *mem = device->global_memory;
 
-  POCL_LOCK_OBJ (mem);
+  POCL_LOCK (mem->pocl_lock);
   assert(mem->currently_allocated >= size);
   mem->currently_allocated -= size;
-  POCL_UNLOCK_OBJ (mem);
+  POCL_UNLOCK (mem->pocl_lock);
 
   POCL_MEM_FREE(ptr);
 }

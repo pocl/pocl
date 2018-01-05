@@ -63,21 +63,56 @@ typedef pthread_mutex_t pocl_lock_t;
 /* Generic functionality for handling different types of 
    OpenCL (host) objects. */
 
-#define POCL_LOCK(__LOCK__) pthread_mutex_lock (&(__LOCK__))
-#define POCL_UNLOCK(__LOCK__) pthread_mutex_unlock (&(__LOCK__))
-#define POCL_INIT_LOCK(__LOCK__) pthread_mutex_init (&(__LOCK__), NULL)
+#define POCL_LOCK(__LOCK__)                                                   \
+  do                                                                          \
+    {                                                                         \
+      int r = pthread_mutex_lock (&(__LOCK__));                               \
+      assert (r == 0);                                                        \
+    }                                                                         \
+  while (0)
+#define POCL_UNLOCK(__LOCK__)                                                 \
+  do                                                                          \
+    {                                                                         \
+      int r = pthread_mutex_unlock (&(__LOCK__));                             \
+      assert (r == 0);                                                        \
+    }                                                                         \
+  while (0)
+#define POCL_INIT_LOCK(__LOCK__)                                              \
+  do                                                                          \
+    {                                                                         \
+      int r = pthread_mutex_init (&(__LOCK__), NULL);                         \
+      assert (r == 0);                                                        \
+    }                                                                         \
+  while (0)
 /* We recycle OpenCL objects by not actually freeing them until the
    very end. Thus, the lock should not be destoryed at the refcount 0. */
-#define POCL_DESTROY_LOCK(__LOCK__) pthread_mutex_destroy (&(__LOCK__)) 
+#define POCL_DESTROY_LOCK(__LOCK__)                                           \
+  do                                                                          \
+    {                                                                         \
+      int r = pthread_mutex_destroy (&(__LOCK__));                            \
+      assert (r == 0);                                                        \
+    }                                                                         \
+  while (0)
 
-#define POCL_LOCK_OBJ(__OBJ__) POCL_LOCK((__OBJ__)->pocl_lock)
-#define POCL_UNLOCK_OBJ(__OBJ__) POCL_UNLOCK((__OBJ__)->pocl_lock)
+#define POCL_LOCK_OBJ(__OBJ__)                                                \
+  do                                                                          \
+    {                                                                         \
+      POCL_LOCK ((__OBJ__)->pocl_lock);                                       \
+      assert ((__OBJ__)->pocl_refcount > 0);                                  \
+    }                                                                         \
+  while (0)
+#define POCL_UNLOCK_OBJ(__OBJ__)                                              \
+  do                                                                          \
+    {                                                                         \
+      assert ((__OBJ__)->pocl_refcount >= 0);                                 \
+      POCL_UNLOCK ((__OBJ__)->pocl_lock);                                     \
+    }                                                                         \
+  while (0)
 
 #define POCL_RELEASE_OBJECT(__OBJ__, __NEW_REFCOUNT__)                  \
   do {                                                                  \
     POCL_LOCK_OBJ (__OBJ__);                                            \
     __NEW_REFCOUNT__ = --(__OBJ__)->pocl_refcount;                      \
-    assert((__OBJ__)->pocl_refcount >= 0);                              \
     POCL_UNLOCK_OBJ (__OBJ__);                                          \
   } while (0)
 
