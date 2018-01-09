@@ -34,7 +34,7 @@ endif()
 set(SANITIZER_OPTIONS "")
 
 if(ENABLE_ASAN)
-  list(APPEND SANITIZER_OPTIONS "-fsanitize=address")
+  list(APPEND SANITIZER_OPTIONS "-fsanitize=address" "-fsanitize-recover=address")
   list(APPEND SANITIZER_LIBS "asan")
 endif()
 
