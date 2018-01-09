@@ -374,16 +374,12 @@ pocl_create_event_sync(cl_event waiting_event,
   if (notifier_event == NULL)
     return CL_SUCCESS;
 
-  assert(notifier_event->pocl_refcount != 0);
-  POCL_MSG_PRINT_INFO("create event sync: waiting %d, notifier %d\n", waiting_event->id, notifier_event->id);
-  if (waiting_event == notifier_event)
-    {
-      printf("waiting id %d, notifier id = %d\n", waiting_event->id, 
-             notifier_event->id);
-      assert(waiting_event != notifier_event);
-    }
-
   pocl_lock_events_inorder (waiting_event, notifier_event);
+
+  POCL_MSG_PRINT_INFO("create event sync: waiting %d, notifier %d\n", waiting_event->id, notifier_event->id);
+
+  assert (notifier_event->pocl_refcount != 0);
+  assert (waiting_event != notifier_event);
 
   LL_FOREACH (waiting_event->wait_list, wait_list_item)
     {
