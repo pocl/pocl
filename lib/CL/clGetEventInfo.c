@@ -9,19 +9,26 @@ POname(clGetEventInfo)(cl_event          event ,
 CL_API_SUFFIX__VERSION_1_0
 {
   POCL_RETURN_ERROR_COND((event == NULL), CL_INVALID_EVENT);
+  POCL_LOCK_OBJ (event);
+  cl_int s = event->status;
+  cl_command_queue q = event->queue;
+  cl_command_type t = event->command_type;
+  cl_uint r = event->pocl_refcount;
+  cl_context c = event->context;
+  POCL_UNLOCK_OBJ (event);
 
   switch (param_name)
     {
     case CL_EVENT_COMMAND_EXECUTION_STATUS:
-      POCL_RETURN_GETINFO (cl_int, event->status);
+      POCL_RETURN_GETINFO (cl_int, s);
     case CL_EVENT_COMMAND_QUEUE:
-      POCL_RETURN_GETINFO(cl_command_queue, event->queue);
+      POCL_RETURN_GETINFO (cl_command_queue, q);
     case CL_EVENT_COMMAND_TYPE:
-      POCL_RETURN_GETINFO(cl_command_type, event->command_type);
+      POCL_RETURN_GETINFO (cl_command_type, t);
     case CL_EVENT_REFERENCE_COUNT:
-      POCL_RETURN_GETINFO(cl_uint, event->pocl_refcount);
+      POCL_RETURN_GETINFO (cl_uint, r);
     case CL_EVENT_CONTEXT:
-      POCL_RETURN_GETINFO(cl_context, event->context);
+      POCL_RETURN_GETINFO (cl_context, c);
     default:
       break;
     }
