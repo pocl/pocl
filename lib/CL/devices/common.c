@@ -1063,21 +1063,25 @@ void*
 pocl_memalign_alloc_global_mem(cl_device_id device, size_t align, size_t size)
 {
   pocl_global_mem_t *mem = device->global_memory;
-  if ((mem->total_alloc_limit - mem->currently_allocated) < size)
-    return NULL;
-
-  void* ptr = pocl_memalign_alloc(align, size);
-  if (!ptr)
-    return NULL;
+  void *retval = NULL;
 
   POCL_LOCK (mem->pocl_lock);
+  if ((mem->total_alloc_limit - mem->currently_allocated) < size)
+    goto ERROR;
+
+  retval = pocl_memalign_alloc (align, size);
+  if (!retval)
+    goto ERROR;
+
   mem->currently_allocated += size;
   if (mem->max_ever_allocated < mem->currently_allocated)
     mem->max_ever_allocated = mem->currently_allocated;
   assert(mem->currently_allocated <= mem->total_alloc_limit);
+
+ERROR:
   POCL_UNLOCK (mem->pocl_lock);
 
-  return ptr;
+  return retval;
 }
 
 void
