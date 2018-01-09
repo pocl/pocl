@@ -39,8 +39,8 @@ POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VER
 
   if (new_refcount == 0)
     {
+      assert (command_queue->command_count == 0);
       POCL_MSG_PRINT_REFCOUNTS ("Free Command Queue %p\n", command_queue);
-      POname(clFinish)(command_queue);
       if (command_queue->device->ops->free_queue)
         command_queue->device->ops->free_queue (command_queue);
       POCL_DESTROY_OBJECT (command_queue);
