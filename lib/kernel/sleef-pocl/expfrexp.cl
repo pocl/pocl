@@ -1,10 +1,5 @@
 #include "sleef_cl.h"
 
-_CL_ALWAYSINLINE long2 Sleef_expfrexpd2_long (double2 x);
-_CL_ALWAYSINLINE long4 Sleef_expfrexpd4_long (double4 x);
-_CL_ALWAYSINLINE long8 Sleef_expfrexpd8_long (double8 x);
-
-
 _CL_OVERLOADABLE
 int
 _cl_expfrexp (float x)
@@ -90,6 +85,10 @@ _cl_expfrexp (float16 x)
 /******************************************************************/
 
 #ifdef cl_khr_fp64
+
+_CL_ALWAYSINLINE long2 Sleef_expfrexpd2_long (double2 x);
+_CL_ALWAYSINLINE long4 Sleef_expfrexpd4_long (double4 x);
+_CL_ALWAYSINLINE long8 Sleef_expfrexpd8_long (double8 x);
 
 _CL_OVERLOADABLE
 long

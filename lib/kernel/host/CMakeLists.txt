@@ -118,13 +118,13 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
 
   set(EXTRA_FLAGS "-DDORENAME;-DPURE_C;-I${CMAKE_SOURCE_DIR}/lib/kernel/sleef/include")
 
-  if(ENABLE_CONFORMANCE)
+# disabled - this code uses libm
 #    compile_sleef_c_to_bc("c" "sleef/libm/sleef_builtin.c"
 #                          "${VARIANT}" BC_FILE_LIST ${EXTRA_FLAGS})
-#  else()
-    # these may be faster than using libm, but not always precise
-    compile_sleef_c_to_bc("c" "sleef/libm/sleefsp.c"
-                          "${VARIANT}" BC_FILE_LIST ${EXTRA_FLAGS})
+  compile_sleef_c_to_bc("c" "sleef/libm/sleefsp.c"
+                        "${VARIANT}" BC_FILE_LIST ${EXTRA_FLAGS})
+
+  if(ENABLE_FP64)
     compile_sleef_c_to_bc("c" "sleef/libm/sleefdp.c"
                           "${VARIANT}" BC_FILE_LIST ${EXTRA_FLAGS})
   endif()
@@ -135,6 +135,10 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
   file(READ "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/test.c" TEST_SRC)
   file(READ "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/fma_test.c" FMA_TEST_SRC)
 
+  if(ENABLE_FP64)
+    set(STR "#define SLEEF_DOUBLE_AVAILABLE\n")
+    file(APPEND "${SLEEF_CONFIG_NEW}" "${STR}")
+  endif()
   # current SLEEF code does not have code for
   # ARM32 NEON double vectors (if they even exist)
   if(NOT ARM32)

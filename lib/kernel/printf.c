@@ -25,10 +25,16 @@
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wformat-security"
 
-#include <limits.h>
+#ifdef cl_khr_fp64
+#define LARGEST_FLOAT_TYPE double
+#define NAN __builtin_nan("1")
+#else
+#define LARGEST_FLOAT_TYPE float
+#define NAN __builtin_nanf("1")
+#endif
+
 #include <stdarg.h>
-#include <stdbool.h>
-#include <math.h>
+#include <limits.h>
 
 // We implement the OpenCL printf by calling the C99 printf. This is
 // not very efficient, but is easy to implement.
@@ -48,14 +54,12 @@ int snprintf(OCL_C_AS char* restrict str, size_t size,
 
 // Conversion flags
 typedef struct {
-  bool left;
-  bool plus;
-  bool space;
-  bool alt;
-  bool zero;
+  int left:1;
+  int plus:1;
+  int space:1;
+  int alt:1;
+  int zero:1;
 } flags_t;
-
-
 
 // Helper routines to output integers
 
@@ -139,9 +143,9 @@ float __attribute__((overloadable)) vload_half(size_t offset,
       DEBUG_PRINTF(("[printf:floats:d=%d]\n", d));                      \
       if (d != 0) printf(comma);                                        \
       WIDTH val = (FLOAT_GET_##WIDTH((OCL_C_AS const WIDTH*)vals+d));   \
-      if (isnan (val))                                                  \
+      if (val != val)                                                   \
         val = NAN;                                                      \
-      printf(outfmt, (double)val);                                      \
+      printf (outfmt, (LARGEST_FLOAT_TYPE)val);                         \
     }                                                                   \
     DEBUG_PRINTF(("[printf:floats:done]\n"));                           \
   }
@@ -249,18 +253,18 @@ int __cl_printf(const OCL_CONSTANT_AS char* restrict format, ...)
         DEBUG_PRINTF(("[printf:arg]\n"));
         // Flags
         flags_t flags;
-        flags.left = false;
-        flags.plus = false;
-        flags.space = false;
-        flags.alt = false;
-        flags.zero = false;
+        flags.left = 0;
+        flags.plus = 0;
+        flags.space = 0;
+        flags.alt = 0;
+        flags.zero = 0;
         for (;;) {
           switch (ch) {
-          case '-': if (flags.left) goto error; flags.left = true; break;
-          case '+': if (flags.plus) goto error; flags.plus = true; break;
-          case ' ': if (flags.space) goto error; flags.space = true; break;
-          case '#': if (flags.alt) goto error; flags.alt = true; break;
-          case '0': if (flags.zero) goto error; flags.zero = true; break;
+          case '-': if (flags.left) goto error; flags.left = 1; break;
+          case '+': if (flags.plus) goto error; flags.plus = 1; break;
+          case ' ': if (flags.space) goto error; flags.space = 1; break;
+          case '#': if (flags.alt) goto error; flags.alt = 1; break;
+          case '0': if (flags.zero) goto error; flags.zero = 1; break;
           default: goto flags_done;
           }
           ch = *++format;

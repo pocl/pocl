@@ -751,6 +751,8 @@ if(ARM)
   else()
     option(ENABLE_FP64 "Enable FP64 on ARM32 - if you have at least VFP support for doubles, you can leave it ON" ON )
   endif()
+else()
+  set(ENABLE_FP64 ON CACHE INTERNAL "FP64, always on except ARM")
 endif()
 
 if(ARM32 OR (LLC_TRIPLE MATCHES "^arm"))
@@ -800,7 +802,7 @@ if(X86)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
 endif()
 # 32bit arm doesnt always support doubles
-if(ENABLE_FP64 AND (NOT LLVM_OLDER_THAN_4_0))
+if(ARM AND ENABLE_FP64)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp64")
 endif()
 

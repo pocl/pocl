@@ -59,13 +59,20 @@ typedef float float4 __attribute__ ((__ext_vector_type__ (4)));
 typedef float float8 __attribute__ ((__ext_vector_type__ (8)));
 typedef float float16 __attribute__ ((__ext_vector_type__ (16)));
 
+#ifdef SLEEF_DOUBLE_AVAILABLE
 typedef double double2 __attribute__ ((__ext_vector_type__ (2)));
 typedef double double3 __attribute__ ((__ext_vector_type__ (3)));
 typedef double double4 __attribute__ ((__ext_vector_type__ (4)));
 typedef double double8 __attribute__ ((__ext_vector_type__ (8)));
 typedef double double16 __attribute__ ((__ext_vector_type__ (16)));
 
+#define cl_khr_fp64
+
 #endif
+
+#endif
+
+#ifdef cl_khr_fp64
 
 #ifndef Sleef_double2_DEFINED
 #define Sleef_double2_DEFINED
@@ -73,14 +80,6 @@ typedef struct
 {
   double x, y;
 } Sleef_double2;
-#endif
-
-#ifndef Sleef_float2_DEFINED
-#define Sleef_float2_DEFINED
-typedef struct
-{
-  float x, y;
-} Sleef_float2;
 #endif
 
 double Sleef_sin_u35 (double);
@@ -147,6 +146,19 @@ double Sleef_tgamma_u10 (double);
 double Sleef_erf_u10 (double);
 double Sleef_erfc_u15 (double);
 
+double Sleef_pown_u10 (double, int);
+double Sleef_powr_u10 (double, double);
+
+#endif
+
+#ifndef Sleef_float2_DEFINED
+#define Sleef_float2_DEFINED
+typedef struct
+{
+  float x, y;
+} Sleef_float2;
+#endif
+
 float Sleef_sinf_u35 (float);
 float Sleef_cosf_u35 (float);
 Sleef_float2 Sleef_sincosf_u35 (float);
@@ -212,15 +224,15 @@ float Sleef_tgammaf_u10 (float);
 float Sleef_erff_u10 (float);
 float Sleef_erfcf_u15 (float);
 
-double Sleef_pown_u10 (double, int);
 float Sleef_pownf_u10 (float, int);
-double Sleef_powr_u10 (double, double);
 float Sleef_powrf_u10 (float, float);
 
 
 // #####################
 
 #ifdef SLEEF_VEC_512_AVAILABLE
+
+#ifdef cl_khr_fp64
 
 #ifndef Sleef_double8_2_DEFINED
 typedef struct
@@ -294,6 +306,8 @@ Sleef_double8_2 Sleef_lgamma_rd8_u10 (double8);
 double8 Sleef_tgammad8_u10 (double8);
 double8 Sleef_erfd8_u10 (double8);
 double8 Sleef_erfcd8_u15 (double8);
+
+#endif
 
 #ifndef Sleef_float16_2_DEFINED
 typedef struct
@@ -380,6 +394,8 @@ float16 Sleef_powrf16_u10 (float16, float16);
 
 #ifdef SLEEF_VEC_256_AVAILABLE
 
+#ifdef cl_khr_fp64
+
 #ifndef Sleef_double4_2_DEFINED
 typedef struct
 {
@@ -452,6 +468,8 @@ Sleef_double4_2 Sleef_lgamma_rd4_u10 (double4);
 double4 Sleef_tgammad4_u10 (double4);
 double4 Sleef_erfd4_u10 (double4);
 double4 Sleef_erfcd4_u15 (double4);
+
+#endif
 
 #ifndef Sleef_float8_2_DEFINED
 typedef struct
@@ -535,6 +553,8 @@ float8 Sleef_powrf8_u10 (float8, float8);
 
 #ifdef SLEEF_VEC_128_AVAILABLE
 
+#ifdef cl_khr_fp64
+
 #ifndef Sleef_double2_2_DEFINED
 typedef struct
 {
@@ -607,6 +627,11 @@ Sleef_double2_2 Sleef_lgamma_rd2_u10 (double2);
 double2 Sleef_tgammad2_u10 (double2);
 double2 Sleef_erfd2_u10 (double2);
 double2 Sleef_erfcd2_u15 (double2);
+
+double2 Sleef_pownd2_u10 (double2, int2);
+double2 Sleef_powrd2_u10 (double2, double2);
+
+#endif
 
 #ifndef Sleef_float4_2_DEFINED
 typedef struct
@@ -681,9 +706,7 @@ float4 Sleef_tgammaf4_u10 (float4);
 float4 Sleef_erff4_u10 (float4);
 float4 Sleef_erfcf4_u15 (float4);
 
-double2 Sleef_pownd2_u10 (double2, int2);
 float4 Sleef_pownf4_u10 (float4, int4);
-double2 Sleef_powrd2_u10 (double2, double2);
 float4 Sleef_powrf4_u10 (float4, float4);
 
 #endif

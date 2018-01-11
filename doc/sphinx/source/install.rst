@@ -134,6 +134,10 @@ use ";" as separator (you'll have to escape it for bash).
   if you want to avoid ICD and build pocl directly as libOpenCL library.
   See also :ref:`linking-with-icd`
 
+- ``-DENABLE_FP64`` - for ARM platform only. If your CPU doesn't support any
+  doubles (VFP is enough), disable this. Defaults to OFF when LLVM is older
+  than 4.0, otherwise defaults to ON.
+
 - ``-DPOCL_INSTALL_<something>_DIR`` The equivalent of ``--bindir``,
   ``--sbindir`` etc fine-tuning of paths for autotools. See the beginning
   of toplevel CMakeLists.txt for all the variables.
