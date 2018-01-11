@@ -62,7 +62,7 @@ static env_data* find_env (env_data* cache, const char* key)
       ed->env = strdup (key);
       ed->value = strdup (value);
       ed->next = NULL;
-      LL_PREPEND(env_cache, ed);
+      LL_APPEND(env_cache, ed);
       POCL_UNLOCK(lock);
       return ed;
     }
