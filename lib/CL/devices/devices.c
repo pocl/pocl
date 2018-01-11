@@ -71,7 +71,6 @@
 static struct _cl_device_id* pocl_devices = NULL;
 unsigned int pocl_num_devices = 0;
 
-
 /* Init function prototype */
 typedef void (*init_device_ops)(struct pocl_device_ops*);
 
@@ -375,26 +374,27 @@ pocl_init_devices()
     }
   pocl_event_tracing_init ();
 
-#ifdef OCS_AVAILABLE
-  /* This is required to force LLVM to register its signal
-   * handlers, before pocl registers its own SIGFPE handler.
-   * LLVM otherwise calls this via
-   *    pocl_llvm_build_program ->
-   *    clang::PrintPreprocessedAction ->
-   *    CreateOutputFile -> RemoveFileOnSignal
-   * Registering our handlers before LLVM creates its sigaltstack
-   * leads to interesting crashes & bugs later.
-   */
-  char random_empty_file[POCL_FILENAME_LENGTH];
-  pocl_cache_tempname (random_empty_file, NULL, NULL);
-  pocl_llvm_remove_file_on_signal (random_empty_file);
-#endif
-
 #ifdef __linux__
 #ifdef __x86_64__
 
   if (pocl_get_bool_option ("POCL_SIGFPE_HANDLER", 1))
     {
+
+#ifdef OCS_AVAILABLE
+      /* This is required to force LLVM to register its signal
+       * handlers, before pocl registers its own SIGFPE handler.
+       * LLVM otherwise calls this via
+       *    pocl_llvm_build_program ->
+       *    clang::PrintPreprocessedAction ->
+       *    CreateOutputFile -> RemoveFileOnSignal
+       * Registering our handlers before LLVM creates its sigaltstack
+       * leads to interesting crashes & bugs later.
+       */
+      char random_empty_file[POCL_FILENAME_LENGTH];
+      pocl_cache_tempname (random_empty_file, NULL, NULL);
+      pocl_llvm_remove_file_on_signal (random_empty_file);
+#endif
+
       POCL_MSG_PRINT_GENERAL ("Installing SIGFPE handler...\n");
       sigfpe_action.sa_flags = SA_RESTART | SA_SIGINFO;
       sigfpe_action.sa_sigaction = sigfpe_signal_handler;

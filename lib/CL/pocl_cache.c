@@ -52,6 +52,7 @@
 
 static char cache_topdir[POCL_FILENAME_LENGTH];
 static int cache_topdir_initialized = 0;
+static int use_kernel_cache = 0;
 
 /* sanity check on SHA1 digest emptiness */
 static unsigned buildhash_is_valid(cl_program   program, unsigned     device_i)
@@ -188,47 +189,6 @@ void pocl_cache_final_binary_path(char* final_binary_path, cl_program program,
 }
 
 /******************************************************************************/
-
-static void* acquire_program_lock(cl_program program,
-                                  unsigned device_i,
-                                  const char* lock_type,
-                                  int shared) {
-    char lock_path[POCL_FILENAME_LENGTH];
-    program_device_dir(lock_path, program, device_i, lock_type);
-
-    return acquire_lock(lock_path, shared);
-}
-
-// EXCLUSIVE writer lock
-void* pocl_cache_acquire_writer_lock_i(cl_program program,
-                                       unsigned device_i) {
-    return acquire_program_lock(program, device_i, "_write", 0);
-}
-
-// SHARED reader lock (on clReleaseProgram, request EXCLUSIVE reader..)
-void* pocl_cache_acquire_reader_lock_i(cl_program program,
-                                       unsigned device_i) {
-    return acquire_program_lock(program, device_i, "_read", 1);
-}
-
-void pocl_cache_release_lock(void* lock) {
-    return release_lock(lock);
-}
-
-void* pocl_cache_acquire_writer_lock(cl_program program,
-                                     cl_device_id device) {
-    int index = pocl_cl_device_to_index(program, device);
-    assert(index >= 0);
-    return pocl_cache_acquire_writer_lock_i(program, (unsigned)index);
-}
-
-void* pocl_cache_acquire_reader_lock(cl_program program,
-                                     cl_device_id device) {
-    int index = pocl_cl_device_to_index(program, device);
-    assert(index >= 0);
-    return pocl_cache_acquire_reader_lock_i(program, (unsigned)index);
-}
-
 /******************************************************************************/
 
 static void
@@ -281,9 +241,19 @@ pocl_cache_create_tempdir (char *path)
   assert (bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
   return 0;
 #else
-  int bytes_written = snprintf (path, POCL_FILENAME_LENGTH,
+  int bytes_written;
+  if (use_kernel_cache)
+    {
+      bytes_written = snprintf (path, POCL_FILENAME_LENGTH,
                                 "%s/tempdir_XXXXXX", cache_topdir);
-  assert (bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
+      assert (bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
+    }
+  else
+    {
+      bytes_written = snprintf (path, POCL_FILENAME_LENGTH,
+                                "%s/_UNCACHED_XXXXXX", cache_topdir);
+      assert (bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
+    }
   /* TODO mkdtemp() might not be portable */
   return (mkdtemp (path) == NULL);
 #endif
@@ -317,11 +287,14 @@ pocl_cache_write_program_source (char *program_cl_path, cl_program program)
 
 int pocl_cache_update_program_last_access(cl_program program,
                                           unsigned device_i) {
-    char last_accessed_path[POCL_FILENAME_LENGTH];
-    program_device_dir(last_accessed_path, program,
-                       device_i, POCL_LAST_ACCESSED_FILENAME);
+  if (!use_kernel_cache)
+    return 0;
 
-    return pocl_touch_file(last_accessed_path);
+  char last_accessed_path[POCL_FILENAME_LENGTH];
+  program_device_dir (last_accessed_path, program, device_i,
+                      POCL_LAST_ACCESSED_FILENAME);
+
+  return pocl_touch_file (last_accessed_path);
 }
 
 /******************************************************************************/
@@ -361,7 +334,6 @@ int pocl_cache_write_descriptor(cl_program   program,
 
 /******************************************************************************/
 
-
 char* pocl_cache_read_buildlog(cl_program program,
                                unsigned device_i) {
     char buildlog_path[POCL_FILENAME_LENGTH];
@@ -371,7 +343,7 @@ char* pocl_cache_read_buildlog(cl_program program,
                        device_i, POCL_BUILDLOG_FILENAME);
 
     if (!pocl_exists(buildlog_path))
-      return strdup("");
+      return NULL;
 
     char* res=NULL;
     uint64_t filesize;
@@ -379,7 +351,6 @@ char* pocl_cache_read_buildlog(cl_program program,
         return NULL;
     return res;
 }
-
 
 int pocl_cache_append_to_buildlog(cl_program  program,
                                   unsigned    device_i,
@@ -543,15 +514,16 @@ char* pocl_get_process_name()
 }
 #endif
 
-
 /******************************************************************************/
 
 int
 pocl_cache_init_topdir ()
 {
-
   if (cache_topdir_initialized)
     return 0;
+
+  use_kernel_cache
+      = pocl_get_bool_option ("POCL_KERNEL_CACHE", POCL_KERNEL_CACHE_DEFAULT);
 
   const char *tmp_path = pocl_get_string_option ("POCL_CACHE_DIR", NULL);
   int needed;
@@ -582,18 +554,23 @@ pocl_cache_init_topdir ()
         // $HOME/.cache should be used."
         // http://standards.freedesktop.org/basedir-spec/latest/
         tmp_path = getenv("XDG_CACHE_HOME");
+        const char *p;
+        if (use_kernel_cache)
+          p = "pocl/kcache";
+        else
+          p = "pocl/uncached";
 
         if (tmp_path && tmp_path[0] != '\0') {
-            needed = snprintf(cache_topdir, POCL_FILENAME_LENGTH,
-                              "%s/pocl/kcache", tmp_path);
+            needed = snprintf (cache_topdir, POCL_FILENAME_LENGTH, "%s/%s",
+                               tmp_path, p);
         }
         else if ((tmp_path = getenv("HOME")) != NULL) {
-            needed = snprintf(cache_topdir, POCL_FILENAME_LENGTH,
-                              "%s/.cache/pocl/kcache", tmp_path);
+            needed = snprintf (cache_topdir, POCL_FILENAME_LENGTH,
+                               "%s/.cache/%s", tmp_path, p);
         }
         else {
-            needed = snprintf(cache_topdir, POCL_FILENAME_LENGTH,
-                              "/tmp/pocl/kcache");
+            needed
+                = snprintf (cache_topdir, POCL_FILENAME_LENGTH, "/tmp/%s", p);
         }
 #endif
     }
@@ -624,6 +601,7 @@ pocl_cache_init_topdir ()
       }
 
     cache_topdir_initialized = 1;
+
     return 0;
 }
 
@@ -644,6 +622,8 @@ pocl_cache_create_program_cachedir(cl_program program,
 {
     assert(cache_topdir_initialized);
 
+    if (use_kernel_cache)
+      {
 #ifdef OCS_AVAILABLE
     const char *hash_source = NULL;
     uint8_t old_build_hash[SHA1_DIGEST_SIZE] = {0};
@@ -672,53 +652,48 @@ pocl_cache_create_program_cachedir(cl_program program,
             program->binary_sizes[device_i] = 0;
         }
         pocl_free_llvm_irs(program, device_i);
-        pocl_cache_release_lock(program->read_locks[device_i]);
-        program->read_locks[device_i] = NULL;
     }
 #else
     assert(buildhash_is_valid(program, device_i));
-    assert(program->read_locks[device_i] == NULL);
 #endif
 
     program_device_dir(program_bc_path, program, device_i, "");
 
     if (pocl_mkdir_p(program_bc_path))
         return 1;
+      }
+    else
+      {
+        /* if kernel cache is disabled, use a random dir. */
+        char random_dir[POCL_FILENAME_LENGTH];
+        if (pocl_cache_create_tempdir (random_dir))
+          return 1;
+        size_t s = strlen (cache_topdir) + 1;
+        assert (strlen (random_dir) == (s + 16));
+        memcpy (program->build_hash[device_i], random_dir + s, 16);
+      }
 
-    pocl_cache_program_bc_path(program_bc_path, program, device_i);
-
-    program->read_locks[device_i] = pocl_cache_acquire_reader_lock_i(program, device_i);
-    assert(program->read_locks[device_i]);
+    pocl_cache_program_bc_path (program_bc_path, program, device_i);
 
     return 0;
 }
 
 void pocl_cache_cleanup_cachedir(cl_program program) {
 
-    unsigned i;
+  /* only rm -rf if kernel cache is disabled */
+  if (use_kernel_cache)
+    return;
 
-    for (i = 0; i < program->num_devices; ++i)
-      pocl_cache_release_lock(program->read_locks[i]);
-    POCL_MEM_FREE(program->read_locks);
+  unsigned i;
 
-    if (!pocl_get_bool_option("POCL_KERNEL_CACHE", POCL_KERNEL_CACHE_DEFAULT)) {
+  for (i = 0; i < program->num_devices; i++)
+    {
+      if (!buildhash_is_valid (program, i))
+        continue;
 
-        for (i=0; i< program->num_devices; i++) {
-            if (program->build_hash[i][0] == 0)
-                continue;
-
-            void* lock = acquire_program_lock(program, i, "_read", 0);
-            if (!lock)
-              {
-                POCL_MSG_WARN ("Could not get an exclusive lock "
-                               "to remove program cachedir\n");
-                continue;
-              }
-            char cachedir[POCL_FILENAME_LENGTH];
-            program_device_dir(cachedir, program, i, "");
-            pocl_rm_rf(cachedir);
-            release_lock(lock);
-        }
+      char cachedir[POCL_FILENAME_LENGTH];
+      program_device_dir (cachedir, program, i, "");
+      pocl_rm_rf (cachedir);
     }
 }
 

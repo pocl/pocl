@@ -78,12 +78,11 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
               size_t local_x, size_t local_y, size_t local_z)
 {
   int error = 0;
-  void *write_lock = NULL;
   void *llvm_module = NULL;
 
   char tmp_module[POCL_FILENAME_LENGTH];
+  char tmp_objfile[POCL_FILENAME_LENGTH];
 
-  char objfile_path[POCL_FILENAME_LENGTH];
   char *objfile = NULL;
   size_t objfile_size = 0;
 
@@ -105,10 +104,7 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
   if (pocl_exists (final_binary_path))
     goto FINISH;
 
-  /* $/kernel.so.o */
   assert (strlen (final_binary_path) < (POCL_FILENAME_LENGTH - 3));
-  strcpy (objfile_path, final_binary_path);
-  strcat (objfile_path, ".o");
 
   error = pocl_llvm_generate_workgroup_function_nowrite (
       device, kernel, local_x, local_y, local_z, &llvm_module);
@@ -140,8 +136,6 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
     goto FINISH;
 
   /**************************************************************************/
-  write_lock = pocl_cache_acquire_writer_lock (kernel->program, device);
-  assert (write_lock);
 
   /* write parallel.bc only if we want to leave compiler files*/
   if (pocl_get_bool_option ("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
@@ -165,9 +159,13 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
       goto FINISH;
     }
 
-  /* write krenel.so.o always, required for linking step. */
-  POCL_MSG_PRINT_LLVM ("Writing code gen output to %s.\n", objfile_path);
-  error = pocl_write_file (objfile_path, objfile, objfile_size, 0, 0);
+  /* always write temporary kernel.so.o, required for linking step. */
+  pocl_cache_tempname (tmp_objfile, ".so.o", NULL);
+  assert (pocl_exists (tmp_objfile) > 0);
+  POCL_MSG_PRINT_LLVM ("Writing code gen output to %s.\n", tmp_objfile);
+  /* use append-write because tmp_objfile is already temporary,
+   * we don't need to create another temporary... */
+  error = pocl_write_file (tmp_objfile, objfile, objfile_size, 1, 1);
   if (error)
     {
       POCL_MSG_PRINT_GENERAL ("writing kernel.so.o failed"
@@ -180,26 +178,24 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
       POCL_MSG_PRINT_GENERAL ("written kernel.so.o size %zu\n", objfile_size);
     }
 
-  /* create a temporary filename */
+  /* temporary filename for kernel.so */
   pocl_cache_tempname (tmp_module, ".so", NULL);
   assert (pocl_exists (tmp_module) > 0);
 
-  /* clang is used as the linker driver for ANDROID, otherwise GNU ld is used
-   */
   POCL_MSG_PRINT_INFO ("Linking final module\n");
   char *const args1[]
 #ifndef POCL_ANDROID
       = { LINK_COMMAND,
           "-o",
           tmp_module,
-          objfile_path,
+          tmp_objfile,
           HOST_LD_FLAGS_ARRAY,
           NULL };
 #else
       = { POCL_ANDROID_PREFIX "/bin/ld",
           "-o",
           tmp_module,
-          objfile_path,
+          tmp_objfile,
           HOST_LD_FLAGS_ARRAY,
           NULL };
 #endif
@@ -207,19 +203,25 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
   if (error)
     goto FINISH;
 
+  /* rename temporary kernel.so */
   error = pocl_rename (tmp_module, final_binary_path);
   if (error)
     goto FINISH;
 
-  /* Save space in kernel cache */
-  if (!pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
+  /* if LEAVE_COMPILER_FILES, rename temporary kernel.so.o, else delete it */
+  if (pocl_get_bool_option ("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
     {
-      pocl_remove (objfile_path);
+      char objfile_path[POCL_FILENAME_LENGTH];
+      strcpy (objfile_path, final_binary_path);
+      strcat (objfile_path, ".o");
+      error = pocl_rename (tmp_objfile, objfile_path);
+    }
+  else
+    {
+      pocl_remove (tmp_objfile);
     }
 
-
 FINISH:
-  pocl_cache_release_lock (write_lock);
   pocl_destroy_llvm_module (llvm_module);
   POCL_MEM_FREE (objfile);
 

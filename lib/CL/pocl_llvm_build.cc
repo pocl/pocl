@@ -177,7 +177,6 @@ int pocl_llvm_build_program(cl_program program,
                             int linking_program)
 
 {
-  void* write_lock = NULL;
   char tempfile[POCL_FILENAME_LENGTH];
   tempfile[0] = 0;
   llvm::Module **mod = NULL;
@@ -568,9 +567,6 @@ int pocl_llvm_build_program(cl_program program,
     }
   }
 
-  write_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
-  assert(write_lock);
-
   POCL_MSG_PRINT_LLVM("Writing program.bc to %s.\n", program_bc_path);
 
   /* Always retain program.bc. Its required in clBuildProgram */
@@ -592,8 +588,6 @@ int pocl_llvm_build_program(cl_program program,
   program->binaries[device_i] = (unsigned char *) malloc(n);
   std::memcpy(program->binaries[device_i], content.c_str(), n);
 
-  pocl_cache_release_lock(write_lock);
-
   return CL_SUCCESS;
 }
 
@@ -607,7 +601,6 @@ int pocl_llvm_link_program(cl_program program,
                            void **cur_llvm_irs,
                            int create_library) {
 
-  void *write_lock;
   std::string concated_binaries;
   size_t n = 0, i;
   cl_device_id device = program->devices[device_i];
@@ -692,9 +685,6 @@ int pocl_llvm_link_program(cl_program program,
       return error;
     }
 
-  write_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
-  assert(write_lock);
-
   POCL_MSG_PRINT_LLVM("Writing program.bc to %s.\n", program_bc_path);
 
   /* Always retain program.bc. Its required in clBuildProgram */
@@ -715,8 +705,6 @@ int pocl_llvm_link_program(cl_program program,
   program->binary_sizes[device_i] = n;
   program->binaries[device_i] = (unsigned char *)malloc(n);
   std::memcpy(program->binaries[device_i], content.c_str(), n);
-
-  pocl_cache_release_lock(write_lock);
 
   return CL_SUCCESS;
 }

@@ -715,8 +715,6 @@ struct _cl_program {
   char main_build_log[640];
   /* Used to store the llvm IR of the build to save disk I/O. */
   void **llvm_irs;
-  /* Read locks */
-  void** read_locks;
   /* Use to store build status */
   cl_build_status build_status;
   /* Use to store binary type */

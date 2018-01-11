@@ -455,7 +455,6 @@ compile_and_link_program(int compile_program,
   char *binary = NULL;
   unsigned device_i = 0, actually_built = 0;
   size_t i, j;
-  void *write_cache_lock = NULL;
   int build_error_code
       = (link_program ? CL_BUILD_PROGRAM_FAILURE : CL_COMPILE_PROGRAM_FAILURE);
   POCL_GOTO_LABEL_COND (PFN_NOTIFY, (program == NULL), CL_INVALID_PROGRAM);
@@ -596,8 +595,6 @@ compile_and_link_program(int compile_program,
                                                      NULL, 0, program_bc_path);
           POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
                              "Could not create program cachedir");
-          write_cache_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
-          assert(write_cache_lock);
           errcode = pocl_write_file(program_bc_path, (char*)program->binaries[device_i],
                           (uint64_t)program->binary_sizes[device_i], 0, 0);
           POCL_GOTO_ERROR_ON(errcode, CL_BUILD_PROGRAM_FAILURE,
@@ -692,12 +689,6 @@ compile_and_link_program(int compile_program,
        * that flushes old directories based on LRU */
       pocl_cache_update_program_last_access(program, device_i);
 
-      if (write_cache_lock)
-        {
-          pocl_cache_release_lock(write_cache_lock);
-          write_cache_lock = NULL;
-        }
-
 #endif
 
     }
@@ -783,8 +774,6 @@ ERROR:
         POCL_MEM_FREE (program->binaries[i]);
         program->binary_sizes[i] = 0;
       }
-    pocl_cache_release_lock(program->read_locks[i]);
-    program->read_locks[i] = NULL;
   }
   if (program->num_kernels && program->kernel_names)
     {
@@ -802,7 +791,6 @@ ERROR:
       POCL_MEM_FREE(program->default_kernels);
     }
 
-  pocl_cache_release_lock(write_cache_lock);
 
 ERROR_CLEAN_OPTIONS:
   program->build_status = CL_BUILD_ERROR;

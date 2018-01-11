@@ -113,8 +113,6 @@ POname(clCreateProgramWithSource)(cl_context context,
        calloc (program->num_devices, sizeof(char*))) == NULL ||
       ((program->llvm_irs =
         (void**) calloc (program->num_devices, sizeof(void*))) == NULL) ||
-      ((program->read_locks =
-        (void**) calloc (program->num_devices, sizeof(void*))) == NULL) ||
       ((program->build_hash = (SHA1_digest_t*)
         calloc (program->num_devices, sizeof(SHA1_digest_t))) == NULL))
     {

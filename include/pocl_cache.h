@@ -48,16 +48,6 @@ pocl_cache_create_program_cachedir(cl_program program, unsigned device_i,
 
 void pocl_cache_cleanup_cachedir(cl_program program);
 
-void* pocl_cache_acquire_writer_lock_i(cl_program program, unsigned device_i);
-
-void* pocl_cache_acquire_writer_lock(cl_program program, cl_device_id device);
-
-void* pocl_cache_acquire_reader_lock_i(cl_program program, unsigned device_i);
-
-void* pocl_cache_acquire_reader_lock(cl_program program, cl_device_id device);
-
-void pocl_cache_release_lock(void* lock);
-
 int pocl_cl_device_to_index(cl_program   program,
                             cl_device_id device);
 
