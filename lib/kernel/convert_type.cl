@@ -38567,7 +38567,7 @@ float convert_float_rtz(long x)
   ulong abs_x = abs(x);
   ulong abs_y = abs(y);
   float res = select(r, nextafter(r, sign(r) * (float)-INFINITY), convert_int(abs_y > abs_x));
-  return select(res, (float)(0x1.fffffep+62), convert_int(x >= 0x7fffffffffffffffL));
+  return select(res, (float)(0x1.fffffep+62f), convert_int(x >= 0x7fffffffffffffffL));
 }
 #endif
 
@@ -38597,7 +38597,7 @@ float convert_float_rtn(long x)
   float r = convert_float(x);
   long y = convert_long_sat(r);
   float res = select(r, nextafter(r, (float)-INFINITY), convert_int(y > x));
-  return select(res, (float)(0x1.fffffep+62), convert_int(x >= 0x7fffffffffffffffL));
+  return select(res, (float)(0x1.fffffep+62f), convert_int(x >= 0x7fffffffffffffffL));
 }
 #endif
 
@@ -38610,7 +38610,7 @@ float2 convert_float2_rtz(long2 x)
   ulong2 abs_x = abs(x);
   ulong2 abs_y = abs(y);
   float2 res = select(r, nextafter(r, sign(r) * (float2)-INFINITY), convert_int2(abs_y > abs_x));
-  return select(res, (float2)(0x1.fffffep+62), convert_int2(x >= 0x7fffffffffffffffL));
+  return select(res, (float2)(0x1.fffffep+62f), convert_int2(x >= 0x7fffffffffffffffL));
 }
 #endif
 
@@ -38640,7 +38640,7 @@ float2 convert_float2_rtn(long2 x)
   float2 r = convert_float2(x);
   long2 y = convert_long2_sat(r);
   float2 res = select(r, nextafter(r, (float2)-INFINITY), convert_int2(y > x));
-  return select(res, (float2)(0x1.fffffep+62), convert_int2(x >= 0x7fffffffffffffffL));
+  return select(res, (float2)(0x1.fffffep+62f), convert_int2(x >= 0x7fffffffffffffffL));
 }
 #endif
 
@@ -38653,7 +38653,7 @@ float3 convert_float3_rtz(long3 x)
   ulong3 abs_x = abs(x);
   ulong3 abs_y = abs(y);
   float3 res = select(r, nextafter(r, sign(r) * (float3)-INFINITY), convert_int3(abs_y > abs_x));
-  return select(res, (float3)(0x1.fffffep+62), convert_int3(x >= 0x7fffffffffffffffL));
+  return select(res, (float3)(0x1.fffffep+62f), convert_int3(x >= 0x7fffffffffffffffL));
 }
 #endif
 
@@ -38683,7 +38683,7 @@ float3 convert_float3_rtn(long3 x)
   float3 r = convert_float3(x);
   long3 y = convert_long3_sat(r);
   float3 res = select(r, nextafter(r, (float3)-INFINITY), convert_int3(y > x));
-  return select(res, (float3)(0x1.fffffep+62), convert_int3(x >= 0x7fffffffffffffffL));
+  return select(res, (float3)(0x1.fffffep+62f), convert_int3(x >= 0x7fffffffffffffffL));
 }
 #endif
 
@@ -38696,7 +38696,7 @@ float4 convert_float4_rtz(long4 x)
   ulong4 abs_x = abs(x);
   ulong4 abs_y = abs(y);
   float4 res = select(r, nextafter(r, sign(r) * (float4)-INFINITY), convert_int4(abs_y > abs_x));
-  return select(res, (float4)(0x1.fffffep+62), convert_int4(x >= 0x7fffffffffffffffL));
+  return select(res, (float4)(0x1.fffffep+62f), convert_int4(x >= 0x7fffffffffffffffL));
 }
 #endif
 
@@ -38726,7 +38726,7 @@ float4 convert_float4_rtn(long4 x)
   float4 r = convert_float4(x);
   long4 y = convert_long4_sat(r);
   float4 res = select(r, nextafter(r, (float4)-INFINITY), convert_int4(y > x));
-  return select(res, (float4)(0x1.fffffep+62), convert_int4(x >= 0x7fffffffffffffffL));
+  return select(res, (float4)(0x1.fffffep+62f), convert_int4(x >= 0x7fffffffffffffffL));
 }
 #endif
 
@@ -38739,7 +38739,7 @@ float8 convert_float8_rtz(long8 x)
   ulong8 abs_x = abs(x);
   ulong8 abs_y = abs(y);
   float8 res = select(r, nextafter(r, sign(r) * (float8)-INFINITY), convert_int8(abs_y > abs_x));
-  return select(res, (float8)(0x1.fffffep+62), convert_int8(x >= 0x7fffffffffffffffL));
+  return select(res, (float8)(0x1.fffffep+62f), convert_int8(x >= 0x7fffffffffffffffL));
 }
 #endif
 
@@ -38769,7 +38769,7 @@ float8 convert_float8_rtn(long8 x)
   float8 r = convert_float8(x);
   long8 y = convert_long8_sat(r);
   float8 res = select(r, nextafter(r, (float8)-INFINITY), convert_int8(y > x));
-  return select(res, (float8)(0x1.fffffep+62), convert_int8(x >= 0x7fffffffffffffffL));
+  return select(res, (float8)(0x1.fffffep+62f), convert_int8(x >= 0x7fffffffffffffffL));
 }
 #endif
 
@@ -38782,7 +38782,7 @@ float16 convert_float16_rtz(long16 x)
   ulong16 abs_x = abs(x);
   ulong16 abs_y = abs(y);
   float16 res = select(r, nextafter(r, sign(r) * (float16)-INFINITY), convert_int16(abs_y > abs_x));
-  return select(res, (float16)(0x1.fffffep+62), convert_int16(x >= 0x7fffffffffffffffL));
+  return select(res, (float16)(0x1.fffffep+62f), convert_int16(x >= 0x7fffffffffffffffL));
 }
 #endif
 
@@ -38812,7 +38812,7 @@ float16 convert_float16_rtn(long16 x)
   float16 r = convert_float16(x);
   long16 y = convert_long16_sat(r);
   float16 res = select(r, nextafter(r, (float16)-INFINITY), convert_int16(y > x));
-  return select(res, (float16)(0x1.fffffep+62), convert_int16(x >= 0x7fffffffffffffffL));
+  return select(res, (float16)(0x1.fffffep+62f), convert_int16(x >= 0x7fffffffffffffffL));
 }
 #endif
 
@@ -39083,7 +39083,7 @@ float convert_float_rtz(ulong x)
   ulong abs_x = abs(x);
   ulong abs_y = abs(y);
   float res = select(r, nextafter(r, sign(r) * (float)-INFINITY), convert_int(abs_y > abs_x));
-  return select(res, (float)(0x1.fffffep+63), convert_int(x >= 0xfffffffffffffffeUL));
+  return select(res, (float)(0x1.fffffep+63f), convert_int(x >= 0xfffffffffffffffeUL));
 }
 #endif
 
@@ -39113,7 +39113,7 @@ float convert_float_rtn(ulong x)
   float r = convert_float(x);
   ulong y = convert_ulong_sat(r);
   float res = select(r, nextafter(r, (float)-INFINITY), convert_int(y > x));
-  return select(res, (float)(0x1.fffffep+63), convert_int(x >= 0xfffffffffffffffeUL));
+  return select(res, (float)(0x1.fffffep+63f), convert_int(x >= 0xfffffffffffffffeUL));
 }
 #endif
 
@@ -39126,7 +39126,7 @@ float2 convert_float2_rtz(ulong2 x)
   ulong2 abs_x = abs(x);
   ulong2 abs_y = abs(y);
   float2 res = select(r, nextafter(r, sign(r) * (float2)-INFINITY), convert_int2(abs_y > abs_x));
-  return select(res, (float2)(0x1.fffffep+63), convert_int2(x >= 0xfffffffffffffffeUL));
+  return select(res, (float2)(0x1.fffffep+63f), convert_int2(x >= 0xfffffffffffffffeUL));
 }
 #endif
 
@@ -39156,7 +39156,7 @@ float2 convert_float2_rtn(ulong2 x)
   float2 r = convert_float2(x);
   ulong2 y = convert_ulong2_sat(r);
   float2 res = select(r, nextafter(r, (float2)-INFINITY), convert_int2(y > x));
-  return select(res, (float2)(0x1.fffffep+63), convert_int2(x >= 0xfffffffffffffffeUL));
+  return select(res, (float2)(0x1.fffffep+63f), convert_int2(x >= 0xfffffffffffffffeUL));
 }
 #endif
 
@@ -39169,7 +39169,7 @@ float3 convert_float3_rtz(ulong3 x)
   ulong3 abs_x = abs(x);
   ulong3 abs_y = abs(y);
   float3 res = select(r, nextafter(r, sign(r) * (float3)-INFINITY), convert_int3(abs_y > abs_x));
-  return select(res, (float3)(0x1.fffffep+63), convert_int3(x >= 0xfffffffffffffffeUL));
+  return select(res, (float3)(0x1.fffffep+63f), convert_int3(x >= 0xfffffffffffffffeUL));
 }
 #endif
 
@@ -39199,7 +39199,7 @@ float3 convert_float3_rtn(ulong3 x)
   float3 r = convert_float3(x);
   ulong3 y = convert_ulong3_sat(r);
   float3 res = select(r, nextafter(r, (float3)-INFINITY), convert_int3(y > x));
-  return select(res, (float3)(0x1.fffffep+63), convert_int3(x >= 0xfffffffffffffffeUL));
+  return select(res, (float3)(0x1.fffffep+63f), convert_int3(x >= 0xfffffffffffffffeUL));
 }
 #endif
 
@@ -39212,7 +39212,7 @@ float4 convert_float4_rtz(ulong4 x)
   ulong4 abs_x = abs(x);
   ulong4 abs_y = abs(y);
   float4 res = select(r, nextafter(r, sign(r) * (float4)-INFINITY), convert_int4(abs_y > abs_x));
-  return select(res, (float4)(0x1.fffffep+63), convert_int4(x >= 0xfffffffffffffffeUL));
+  return select(res, (float4)(0x1.fffffep+63f), convert_int4(x >= 0xfffffffffffffffeUL));
 }
 #endif
 
@@ -39242,7 +39242,7 @@ float4 convert_float4_rtn(ulong4 x)
   float4 r = convert_float4(x);
   ulong4 y = convert_ulong4_sat(r);
   float4 res = select(r, nextafter(r, (float4)-INFINITY), convert_int4(y > x));
-  return select(res, (float4)(0x1.fffffep+63), convert_int4(x >= 0xfffffffffffffffeUL));
+  return select(res, (float4)(0x1.fffffep+63f), convert_int4(x >= 0xfffffffffffffffeUL));
 }
 #endif
 
@@ -39255,7 +39255,7 @@ float8 convert_float8_rtz(ulong8 x)
   ulong8 abs_x = abs(x);
   ulong8 abs_y = abs(y);
   float8 res = select(r, nextafter(r, sign(r) * (float8)-INFINITY), convert_int8(abs_y > abs_x));
-  return select(res, (float8)(0x1.fffffep+63), convert_int8(x >= 0xfffffffffffffffeUL));
+  return select(res, (float8)(0x1.fffffep+63f), convert_int8(x >= 0xfffffffffffffffeUL));
 }
 #endif
 
@@ -39285,7 +39285,7 @@ float8 convert_float8_rtn(ulong8 x)
   float8 r = convert_float8(x);
   ulong8 y = convert_ulong8_sat(r);
   float8 res = select(r, nextafter(r, (float8)-INFINITY), convert_int8(y > x));
-  return select(res, (float8)(0x1.fffffep+63), convert_int8(x >= 0xfffffffffffffffeUL));
+  return select(res, (float8)(0x1.fffffep+63f), convert_int8(x >= 0xfffffffffffffffeUL));
 }
 #endif
 
@@ -39298,7 +39298,7 @@ float16 convert_float16_rtz(ulong16 x)
   ulong16 abs_x = abs(x);
   ulong16 abs_y = abs(y);
   float16 res = select(r, nextafter(r, sign(r) * (float16)-INFINITY), convert_int16(abs_y > abs_x));
-  return select(res, (float16)(0x1.fffffep+63), convert_int16(x >= 0xfffffffffffffffeUL));
+  return select(res, (float16)(0x1.fffffep+63f), convert_int16(x >= 0xfffffffffffffffeUL));
 }
 #endif
 
@@ -39328,7 +39328,7 @@ float16 convert_float16_rtn(ulong16 x)
   float16 r = convert_float16(x);
   ulong16 y = convert_ulong16_sat(r);
   float16 res = select(r, nextafter(r, (float16)-INFINITY), convert_int16(y > x));
-  return select(res, (float16)(0x1.fffffep+63), convert_int16(x >= 0xfffffffffffffffeUL));
+  return select(res, (float16)(0x1.fffffep+63f), convert_int16(x >= 0xfffffffffffffffeUL));
 }
 #endif
 

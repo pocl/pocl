@@ -386,8 +386,8 @@ dfli = [('double', 'long'), ('double', 'ulong'),
 rtn_ret_constants = {
                     ('double','long'): '0x1.fffffffffffffp+62',
                     ('double','ulong'): '0x1.fffffffffffffp+63',
-                    ('float','long'): '0x1.fffffep+62',
-                    ('float','ulong'): '0x1.fffffep+63',
+                    ('float','long'): '0x1.fffffep+62f',
+                    ('float','ulong'): '0x1.fffffep+63f',
                     ('float','int'): '0x1.fffffep+30f',
                     ('float','uint'): '0x1.fffffep+31f',
                   }
