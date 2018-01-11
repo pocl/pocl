@@ -12,8 +12,6 @@
 /* "Build with ICD" */
 #cmakedefine BUILD_ICD
 
-#define HOST_CPU_CACHELINE_SIZE @HOST_CPU_CACHELINE_SIZE@
-
 #cmakedefine CLANG_IS_PATCHED_FOR_SPIR_CC
 
 #define CLANG "@CLANG@"
@@ -26,6 +24,8 @@
 /* clang++ executable */
 #define CLANGXX "@CLANGXX@"
 
+#define CMAKE_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
+
 #define FORCED_CLFLAGS  "@FORCED_CLFLAGS@"
 
 #cmakedefine ENABLE_ASAN
@@ -36,6 +36,10 @@
 #cmakedefine ENABLE_CONFORMANCE
 
 #cmakedefine ENABLE_POCL_BUILDING
+
+#cmakedefine ENABLE_SLEEF
+
+#cmakedefine ENABLE_VECMATHLIB
 
 #cmakedefine HAVE_FORK
 
@@ -62,6 +66,8 @@
 
 #define HOST_CPU  "@LLC_HOST_CPU@"
 
+#define HOST_CPU_CACHELINE_SIZE @HOST_CPU_CACHELINE_SIZE@
+
 #define HOST_LD_FLAGS  "@HOST_LD_FLAGS@"
 
 #define HOST_LLC_FLAGS  "@HOST_LLC_FLAGS@"
@@ -73,7 +79,6 @@
 #define HSA_DEVICE_EXTENSIONS "@HSA_DEVICE_EXTENSIONS@"
 
 #define HSAIL_ASM "@HSAIL_ASM@"
-
 
 #define KERNELLIB_HOST_CPU_VARIANTS "@KERNELLIB_HOST_CPU_VARIANTS@"
 
@@ -134,6 +139,8 @@
 #define POCL_INSTALL_PRIVATE_DATADIR "@POCL_INSTALL_PRIVATE_DATADIR@"
 
 #cmakedefine POCL_USE_FAKE_ADDR_SPACE_IDS
+
+#cmakedefine POCL_ASSERTS_BUILD
 
 /* these are *host* values */
 
