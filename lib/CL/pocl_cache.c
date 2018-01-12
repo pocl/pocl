@@ -51,6 +51,8 @@
 #define POCL_PROGRAM_BC_FILENAME "/program.bc"
 
 static char cache_topdir[POCL_FILENAME_LENGTH];
+static char tempfile_pattern[POCL_FILENAME_LENGTH];
+static char tempdir_pattern[POCL_FILENAME_LENGTH];
 static int cache_topdir_initialized = 0;
 static int use_kernel_cache = 0;
 
@@ -191,88 +193,19 @@ void pocl_cache_final_binary_path(char* final_binary_path, cl_program program,
 /******************************************************************************/
 /******************************************************************************/
 
-static void
-pocl_cache_mk_temp_name (char *path_template, unsigned suffix_len, int *ret_fd)
-{
-  assert (cache_topdir_initialized);
-#if defined(_MSC_VER) || defined(__MINGW32__)
-    char* tmp = _tempnam(cache_topdir, "pocl_");
-    assert(tmp);
-    int bytes_written
-        = snprintf (path_template, POCL_FILENAME_LENGTH, "%s", tmp);
-    free(tmp);
-    assert(bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
-#else
-    /* using mkstemp() instead of tmpnam() has no real benefit
-     * here, as we have to pass the filename to llvm,
-     * but tmpnam() generates an annoying warning... */
-    int fd;
-
-    if (suffix_len)
-      fd = mkstemps (path_template, suffix_len);
-    else
-      fd = mkstemp (path_template);
-
-    if (fd < 0)
-      {
-        char buf[512];
-        strerror_r (errno, buf, 512);
-        POCL_ABORT ("mkstemp failed: %s\n", buf);
-      }
-
-    if (ret_fd)
-      *ret_fd = fd;
-    else
-      close (fd);
-
-    return;
-#endif
-}
-
 int
 pocl_cache_create_tempdir (char *path)
 {
-  assert (cache_topdir_initialized);
-#if defined(_MSC_VER) || defined(__MINGW32__)
-  char *tmp = _tempnam (cache_topdir, "pocl_");
-  assert (tmp);
-  int bytes_written = snprintf (path, POCL_FILENAME_LENGTH, "%s", tmp);
-  free (tmp);
-  assert (bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
-  return 0;
-#else
-  int bytes_written;
-  if (use_kernel_cache)
-    {
-      bytes_written = snprintf (path, POCL_FILENAME_LENGTH,
-                                "%s/tempdir_XXXXXX", cache_topdir);
-      assert (bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
-    }
-  else
-    {
-      bytes_written = snprintf (path, POCL_FILENAME_LENGTH,
-                                "%s/_UNCACHED_XXXXXX", cache_topdir);
-      assert (bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
-    }
-  /* TODO mkdtemp() might not be portable */
-  return (mkdtemp (path) == NULL);
-#endif
+  return pocl_mk_tempdir (path, tempdir_pattern);
 }
 
-void
-pocl_cache_tempname (char *path_template, const char *suffix, int *fd)
+int
+pocl_cache_tempname (char *path, const char *suffix, int *fd)
 {
   assert (cache_topdir_initialized);
-  assert (path_template);
-  strcpy (path_template, cache_topdir);
-  size_t suffixlen = (suffix ? strlen (suffix) : 0);
-  size_t max = POCL_FILENAME_LENGTH - 16 - suffixlen;
-  assert (strlen (path_template) < max);
-  strcat (path_template, "/tempfile_XXXXXX");
-  if (suffix)
-    strcat (path_template, suffix);
+  assert (path);
 
-  pocl_cache_mk_temp_name (path_template, suffixlen, fd);
+  return pocl_mk_tempname (path, tempfile_pattern, suffix, fd);
 }
 
 int
@@ -598,6 +531,27 @@ pocl_cache_init_topdir ()
             "work.\n",
             cache_topdir);
         return 1;
+      }
+
+    strncpy (tempfile_pattern, cache_topdir, POCL_FILENAME_LENGTH);
+    size_t len = strlen (tempfile_pattern);
+    strncpy (tempfile_pattern + len, "/tempfile",
+             (POCL_FILENAME_LENGTH - len));
+    tempfile_pattern[POCL_FILENAME_LENGTH - 1] = 0;
+    assert (strlen (tempfile_pattern) < POCL_FILENAME_LENGTH);
+
+    int bytes_written;
+    if (use_kernel_cache)
+      {
+        bytes_written = snprintf (tempdir_pattern, POCL_FILENAME_LENGTH,
+                                  "%s/tempdir", cache_topdir);
+        assert (bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
+      }
+    else
+      {
+        bytes_written = snprintf (tempdir_pattern, POCL_FILENAME_LENGTH,
+                                  "%s/_UNCACHED", cache_topdir);
+        assert (bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
       }
 
     cache_topdir_initialized = 1;

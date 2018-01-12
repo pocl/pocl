@@ -71,12 +71,15 @@ POP_COMPILER_DIAGS
 #define RETURN_IF_EC if (ec) return ec.default_error_condition().value()
 #define OPEN_FOR_READ ec = sys::fs::openFileForRead(p, fd)
 #define OPEN_CREATE ec = sys::fs::openFileForWrite(p, fd, sys::fs::F_RW)
-#define CREATE_UNIQUE_FILE  ec = sys::fs::createUniqueFile((p+model), fd, TmpPath);
+#define CREATE_UNIQUE_FILE(S)                                                  \
+  ec = sys::fs::createUniqueFile((p + S), fd, TmpPath,                         \
+                                 sys::fs::perms::owner_read |                  \
+                                     sys::fs::perms::owner_write);
 #define OPEN_FOR_APPEND ec = sys::fs::openFileForWrite(p, fd, sys::fs::F_RW | sys::fs::F_Append)
 
 using namespace llvm;
 
-static const Twine model("-%%-%%-%%-%%-%%");
+static const Twine random_pattern("-%%-%%-%%-%%-%%");
 
 /*****************************************************************************/
 
@@ -182,6 +185,42 @@ int pocl_rename2(Twine &op, Twine &np) {
   return ec.default_error_condition().value();
 }
 
+int pocl_mk_tempdir(char *output, const char *prefix) {
+  Twine p(prefix);
+  SmallString<512> TmpPath;
+
+  std::error_code ec = sys::fs::createUniqueDirectory(p, TmpPath);
+  RETURN_IF_EC;
+
+  strncpy(output, TmpPath.c_str(), POCL_FILENAME_LENGTH);
+  return 0;
+}
+
+int pocl_mk_tempname(char *output, const char *prefix, const char *suffix,
+                     int *ret_fd) {
+  Twine p(prefix);
+  if (suffix == NULL)
+    suffix = "";
+  Twine suf(suffix);
+
+  SmallString<512> TmpPath;
+  int fd, err;
+  std::error_code ec;
+
+  CREATE_UNIQUE_FILE(random_pattern + suf);
+  RETURN_IF_EC;
+
+  if (ret_fd)
+    *ret_fd = fd;
+  else {
+    if (close(fd))
+      return errno ? -errno : -1;
+  }
+
+  strncpy(output, TmpPath.c_str(), POCL_FILENAME_LENGTH);
+  return 0;
+}
+
 /****************************************************************************/
 
 int
@@ -250,7 +289,7 @@ int pocl_write_file(const char *path, const char *content, uint64_t count,
         OPEN_FOR_APPEND;
         assert(fd >= 0);
     } else {
-      CREATE_UNIQUE_FILE;
+      CREATE_UNIQUE_FILE(random_pattern);
       assert(fd >= 0);
     }
 
@@ -292,7 +331,7 @@ int pocl_write_module(void *module, const char* path, int dont_rewrite) {
     /* To avoid corrupted .bc files, create a tmp file first and
        then rename it */
     SmallVector<char, 128> TmpPath;
-    CREATE_UNIQUE_FILE;
+    CREATE_UNIQUE_FILE(random_pattern);
     assert(fd >= 0);
 
     raw_fd_ostream os(fd, 1, sys::fs::F_RW | sys::fs::F_Excl);
