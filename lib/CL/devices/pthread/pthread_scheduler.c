@@ -434,7 +434,6 @@ pocl_pthread_prepare_kernel
  _cl_command_node* cmd)
 {
   kernel_run_command *run_cmd;
-  unsigned i;
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
 

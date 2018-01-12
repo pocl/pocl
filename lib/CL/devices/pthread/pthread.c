@@ -360,8 +360,6 @@ pocl_pthread_run
 void
 pocl_pthread_submit (_cl_command_node *node, cl_command_queue cq)
 {
-  cl_device_id device = node->device;
-  struct data *d = device->data;
   POCL_LOCK_OBJ (node->event);
 
   node->ready = 1;
@@ -391,7 +389,6 @@ pocl_pthread_join(cl_device_id device, cl_command_queue cq)
 void
 pocl_pthread_notify (cl_device_id device, cl_event event, cl_event finished)
 {
-  struct data *d = (struct data*)device->data;
    int wake_thread = 0;
   _cl_command_node * volatile node = event->command;
 
