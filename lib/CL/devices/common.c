@@ -110,9 +110,9 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
       device, kernel, local_x, local_y, local_z, &llvm_module);
   if (error)
     {
-      POCL_MSG_PRINT_GENERAL ("pocl_llvm_generate_workgroup_function() failed"
-                              " for kernel %s\n",
-                              kernel->name);
+      POCL_MSG_PRINT_LLVM ("pocl_llvm_generate_workgroup_function() failed"
+                           " for kernel %s\n",
+                           kernel->name);
       goto FINISH;
     }
   assert (llvm_module != NULL);
@@ -126,9 +126,9 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
                              &objfile_size);
   if (error)
     {
-      POCL_MSG_PRINT_GENERAL ("pocl_llvm_codegen() failed"
-                              " for kernel %s\n",
-                              kernel->name);
+      POCL_MSG_PRINT_LLVM ("pocl_llvm_codegen() failed"
+                           " for kernel %s\n",
+                           kernel->name);
       goto FINISH;
     }
 
@@ -153,7 +153,7 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
     }
   if (error)
     {
-      POCL_MSG_PRINT_GENERAL ("writing parallel.bc failed"
+      POCL_MSG_PRINT_LLVM ("writing parallel.bc failed"
                               " for kernel %s\n",
                               kernel->name);
       goto FINISH;
@@ -166,14 +166,14 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
   POCL_MSG_PRINT_LLVM ("Writing code gen output to %s.\n", tmp_objfile);
   if (error)
     {
-      POCL_MSG_PRINT_GENERAL ("writing kernel.so.o failed"
+      POCL_MSG_PRINT_LLVM ("writing kernel.so.o failed"
                               " for kernel %s\n",
                               kernel->name);
       goto FINISH;
     }
   else
     {
-      POCL_MSG_PRINT_GENERAL ("written kernel.so.o size %zu\n", objfile_size);
+      POCL_MSG_PRINT_LLVM ("written kernel.so.o size %zu\n", objfile_size);
     }
 
   /* temporary filename for kernel.so */
@@ -208,12 +208,18 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
 #endif
   error = pocl_run_command (args1);
   if (error)
-    goto FINISH;
+    {
+      POCL_MSG_PRINT_LLVM ("Linking kernel.so.o -> kernel.so has failed\n");
+      goto FINISH;
+    }
 
   /* rename temporary kernel.so */
   error = pocl_rename (tmp_module, final_binary_path);
   if (error)
-    goto FINISH;
+    {
+      POCL_MSG_PRINT_LLVM ("Renaming temporary kernel.so to final has failed.\n");
+      goto FINISH;
+    }
 
   /* if LEAVE_COMPILER_FILES, rename temporary kernel.so.o, else delete it */
   if (pocl_get_bool_option ("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
@@ -222,10 +228,14 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
       strcpy (objfile_path, final_binary_path);
       strcat (objfile_path, ".o");
       error = pocl_rename (tmp_objfile, objfile_path);
+      if (error)
+        POCL_MSG_PRINT_LLVM ("Renaming temporary kernel.so.o to final .o has failed.\n");
     }
   else
     {
-      pocl_remove (tmp_objfile);
+      error = pocl_remove (tmp_objfile);
+      if (error)
+        POCL_MSG_PRINT_LLVM ("Removing temporary kernel.so.o has failed.\n");
     }
 
 FINISH:
