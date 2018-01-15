@@ -93,6 +93,16 @@ static init_device_ops pocl_devices_init_ops[] = {
 
 static struct pocl_device_ops pocl_device_ops[POCL_NUM_DEVICE_TYPES];
 
+// first setup
+static unsigned first_init_done = 0;
+static unsigned init_in_progress = 0;
+static unsigned device_count[POCL_NUM_DEVICE_TYPES];
+
+// after calling drivers uninit, we may have to re-init the devices.
+static unsigned devices_active = 0;
+
+static pocl_lock_t pocl_init_lock = POCL_LOCK_INITIALIZER;
+
 /**
  * Get the number of specified devices from environnement
  */
@@ -327,16 +337,104 @@ sigfpe_signal_handler (int signo, siginfo_t *si, void *data)
 #endif
 
 cl_int
-pocl_init_devices()
+pocl_uninit_devices ()
 {
-  static unsigned int init_done = 0;
-  static unsigned int init_in_progress = 0;
-  static pocl_lock_t pocl_init_lock = POCL_LOCK_INITIALIZER;
+  assert (first_init_done);
+  cl_int retval = CL_SUCCESS;
+
+  if (!devices_active)
+    return retval;
+
+  if (pocl_num_devices == 0)
+    return CL_DEVICE_NOT_FOUND;
+
+  POCL_LOCK (pocl_init_lock);
+  POCL_MSG_PRINT_GENERAL ("UNINIT all devices\n");
 
   unsigned i, j, dev_index;
-  char env_name[1024];
-  char dev_name[MAX_DEV_NAME_LEN] = {0};
-  unsigned int device_count[POCL_NUM_DEVICE_TYPES];
+
+  dev_index = 0;
+  cl_device_id d;
+  for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
+    {
+      assert (pocl_device_ops[i].init);
+      for (j = 0; j < device_count[i]; ++j)
+        {
+          d = &pocl_devices[dev_index];
+          if (d->available == 0)
+            continue;
+          if (d->ops->reinit == NULL || d->ops->uninit == NULL)
+            continue;
+          cl_int ret = d->ops->uninit (d);
+          if (ret != CL_SUCCESS)
+            {
+              retval = ret;
+              goto FINISH;
+            }
+
+          ++dev_index;
+        }
+    }
+
+FINISH:
+  devices_active = 0;
+  POCL_UNLOCK (pocl_init_lock);
+
+  return retval;
+}
+
+static cl_int
+pocl_reinit_devices ()
+{
+  assert (first_init_done);
+  cl_int retval = CL_SUCCESS;
+
+  if (devices_active)
+    return retval;
+
+  if (pocl_num_devices == 0)
+    return CL_DEVICE_NOT_FOUND;
+
+  POCL_LOCK (pocl_init_lock);
+  POCL_MSG_WARN ("REINIT all devices\n");
+
+  unsigned i, j, dev_index;
+
+  dev_index = 0;
+  cl_device_id d;
+  /* Init infos for each probed devices */
+  for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
+    {
+      assert (pocl_device_ops[i].init);
+      for (j = 0; j < device_count[i]; ++j)
+        {
+          d = &pocl_devices[dev_index];
+          if (d->available == 0)
+            continue;
+          if (d->ops->reinit == NULL || d->ops->uninit == NULL)
+            continue;
+          cl_int ret = d->ops->reinit (d);
+          if (ret != CL_SUCCESS)
+            {
+              retval = ret;
+              goto FINISH;
+            }
+
+          ++dev_index;
+        }
+    }
+
+FINISH:
+
+  devices_active = 1;
+  POCL_UNLOCK (pocl_init_lock);
+
+  return retval;
+}
+
+cl_int
+pocl_init_devices ()
+{
 
   /* This is a workaround to a nasty problem with libhwloc: When
      initializing basic, it calls libhwloc to query device info.
@@ -344,18 +442,31 @@ pocl_init_devices()
      it and it leads to initializing pocl again which leads to an
      infinite loop. */
 
-  if (init_in_progress)
-      return CL_SUCCESS; /* debatable, but what else can we do ? */
-  init_in_progress = 1;
+  if (!first_init_done)
+    {
+      if (init_in_progress)
+        return CL_SUCCESS; /* debatable, but what else can we do ? */
+      init_in_progress = 1;
+      POCL_INIT_LOCK (pocl_init_lock);
+    }
 
-  if (init_done == 0)
-    POCL_INIT_LOCK(pocl_init_lock);
   POCL_LOCK(pocl_init_lock);
-  if (init_done)
+
+  if (first_init_done)
     {
       POCL_UNLOCK(pocl_init_lock);
+      POCL_MSG_PRINT_GENERAL ("FIRST INIT done; REINIT all devices\n");
+      if (!devices_active)
+        pocl_reinit_devices (); // TODO err check
       return pocl_num_devices ? CL_SUCCESS : CL_DEVICE_NOT_FOUND;
     }
+
+  /* first time initialization */
+
+  unsigned i, j, dev_index;
+  char env_name[1024];
+  char dev_name[MAX_DEV_NAME_LEN] = { 0 };
+  static unsigned int device_count[POCL_NUM_DEVICE_TYPES];
 
   /* Set a global debug flag, so we don't have to call pocl_get_bool_option
    * everytime we use the debug macros */
@@ -367,7 +478,7 @@ pocl_init_devices()
 
   if (pocl_cache_init_topdir ())
     {
-      init_done = 1;
+      first_init_done = 1;
       pocl_num_devices = 0;
       POCL_UNLOCK (pocl_init_lock);
       return CL_DEVICE_NOT_FOUND;
@@ -419,9 +530,8 @@ pocl_init_devices()
 
   if (pocl_num_devices == 0)
     {
-      const char *dev_env = getenv (POCL_DEVICES_ENV);
-      if (dev_env)
-        POCL_MSG_WARN ("no devices found. %s=%s\n", POCL_DEVICES_ENV, dev_env);
+      const char *dev_env = pocl_get_string_option ("POCL_DEVICES", NULL);
+      POCL_MSG_WARN ("no devices found. POCL_DEVICES=%s\n", dev_env);
       return CL_DEVICE_NOT_FOUND;
     }
 
@@ -443,7 +553,7 @@ pocl_init_devices()
           pocl_devices[dev_index].ops = &pocl_device_ops[i];
           pocl_devices[dev_index].dev_id = dev_index;
           /* The default value for the global memory space identifier is
-             the same as the device id. The device instance can then override 
+             the same as the device id. The device instance can then override
              it to point to some other device's global memory id in case of
              a shared global memory. */
           pocl_devices[dev_index].global_mem_id = dev_index;
@@ -471,14 +581,13 @@ pocl_init_devices()
             pocl_devices[dev_index].available = 0;
           }
 
-          pocl_devices[dev_index].cache_dir_name = strdup(pocl_devices[dev_index].long_name);
-          pocl_string_to_dirname(pocl_devices[dev_index].cache_dir_name);
-
           ++dev_index;
         }
     }
 
-  init_done = 1;
+  first_init_done = 1;
+  devices_active = 1;
+  init_in_progress = 0;
   POCL_UNLOCK(pocl_init_lock);
   return CL_SUCCESS;
 }

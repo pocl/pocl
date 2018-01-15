@@ -134,6 +134,7 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->build_hash = pocl_cuda_build_hash;
   ops->probe = pocl_cuda_probe;
   ops->uninit = pocl_cuda_uninit;
+  ops->reinit = NULL;
   ops->init = pocl_cuda_init;
   ops->init_queue = pocl_cuda_init_queue;
   ops->free_queue = pocl_cuda_free_queue;
@@ -436,7 +437,7 @@ pocl_cuda_probe (struct pocl_device_ops *ops)
   return probe_count;
 }
 
-void
+cl_int
 pocl_cuda_uninit (cl_device_id device)
 {
   pocl_cuda_device_data_t *data = device->data;
@@ -448,6 +449,7 @@ pocl_cuda_uninit (cl_device_id device)
   device->data = NULL;
 
   POCL_MEM_FREE (device->long_name);
+  return CL_SUCCESS;
 }
 
 cl_int

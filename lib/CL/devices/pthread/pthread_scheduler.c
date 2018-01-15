@@ -64,9 +64,10 @@ typedef struct scheduler_data_
 static scheduler_data scheduler;
 
 void
-pthread_scheduler_init (size_t num_worker_threads, cl_device_id device)
+pthread_scheduler_init (cl_device_id device)
 {
   unsigned i;
+  size_t num_worker_threads = device->max_compute_units;
   PTHREAD_INIT_LOCK (&(scheduler.wake_lock));
   PTHREAD_FAST_INIT (&(scheduler.wq_lock_fast));
 
@@ -98,7 +99,8 @@ pthread_scheduler_init (size_t num_worker_threads, cl_device_id device)
 
 }
 
-void pthread_scheduler_uinit ()
+void
+pthread_scheduler_uninit ()
 {
   unsigned i;
   scheduler.thread_pool_shutdown_requested = 1;
@@ -110,8 +112,11 @@ void pthread_scheduler_uinit ()
   for (i = 0; i < scheduler.num_threads; ++i)
     {
       pthread_join (scheduler.thread_pool[i].thread, NULL);
+      PTHREAD_DESTROY_LOCK (&scheduler.thread_pool[i].lock);
+      pthread_cond_destroy (&scheduler.thread_pool[i].wakeup_cond);
     }
 
+  pocl_aligned_free (scheduler.thread_pool);
   PTHREAD_FAST_DESTROY (&scheduler.wq_lock_fast);
   pthread_cond_destroy (&scheduler.wake_pool);
   PTHREAD_DESTROY_LOCK (&scheduler.wake_lock);

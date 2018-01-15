@@ -29,6 +29,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+extern unsigned cl_context_count;
+extern pocl_lock_t pocl_context_handling_lock;
+
 /* in clCreateContext.c */
 int context_set_properties(cl_context                    ctx,
                            const cl_context_properties * properties,
@@ -46,11 +49,16 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
   int i;
   cl_device_id device_ptr;
 
+  POCL_LOCK (pocl_context_handling_lock);
+
   POCL_GOTO_ERROR_COND((pfn_notify == NULL && user_data != NULL), CL_INVALID_VALUE);
 
   /* initialize libtool here, LT will be needed when loading the kernels */     
   lt_dlinit();
   errcode = pocl_init_devices();
+  /* see clCreateContext.c for explanation */
+  POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), errcode,
+                      "Could not initialize devices\n");
 
   if (errcode)
     goto ERROR;
@@ -83,6 +91,7 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
          works. This fixes AMD SDK OpenCL samples to work (as of 2012-12-05). */
       POCL_MSG_WARN("Couldn't find any device of type %lu; returning "
                     "a dummy context with 0 devices\n", (unsigned long)device_type);
+      POCL_UNLOCK (pocl_context_handling_lock);
       return context;
     }
 
@@ -114,8 +123,11 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;
   context->valid = 1;
-  return context;
 
+  cl_context_count += 1;
+  POCL_UNLOCK (pocl_context_handling_lock);
+
+  return context;
 
 ERROR_CLEAN_CONTEXT_AND_PROPERTIES:
   POCL_MEM_FREE(context->properties);
@@ -125,6 +137,7 @@ ERROR:
   {
     *errcode_ret = errcode;
   }
+  POCL_UNLOCK (pocl_context_handling_lock);
   return NULL;
 }
 POsym(clCreateContextFromType)

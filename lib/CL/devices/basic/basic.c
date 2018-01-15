@@ -103,6 +103,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->init_device_infos = pocl_basic_init_device_infos;
   ops->probe = pocl_basic_probe;
   ops->uninit = pocl_basic_uninit;
+  ops->reinit = pocl_basic_reinit;
   ops->init = pocl_basic_init;
   ops->alloc_mem_obj = pocl_basic_alloc_mem_obj;
   ops->free = pocl_basic_free;
@@ -881,13 +882,28 @@ void* pocl_basic_unmap_mem(void *data, void *host_ptr,
   return (char *)host_ptr;
 }
 
-
-void
+cl_int
 pocl_basic_uninit (cl_device_id device)
 {
   struct data *d = (struct data*)device->data;
+  POCL_DESTROY_LOCK (d->cq_lock);
   POCL_MEM_FREE(d);
   device->data = NULL;
+  return CL_SUCCESS;
+}
+
+cl_int
+pocl_basic_reinit (cl_device_id device)
+{
+  struct data *d = (struct data *)calloc (1, sizeof (struct data));
+  if (d == NULL)
+    return CL_OUT_OF_HOST_MEMORY;
+
+  d->current_kernel = NULL;
+  d->current_dlhandle = 0;
+  POCL_INIT_LOCK (d->cq_lock);
+  device->data = d;
+  return CL_SUCCESS;
 }
 
 cl_ulong

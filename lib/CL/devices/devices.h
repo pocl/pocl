@@ -47,6 +47,8 @@ extern unsigned int pocl_num_devices;
  */
 cl_int pocl_init_devices();
 
+cl_int pocl_uninit_devices ();
+
 /**
  * \brief Get the count of devices for a specific type
  * \param device_type the device type for which we want the count of devices

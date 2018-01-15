@@ -201,6 +201,7 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->init_device_infos = pocl_hsa_init_device_infos;
   ops->probe = pocl_hsa_probe;
   ops->uninit = pocl_hsa_uninit;
+  ops->reinit = NULL;
   ops->init = pocl_hsa_init;
   ops->alloc_mem_obj = pocl_hsa_alloc_mem_obj;
   ops->free = pocl_hsa_free;
@@ -1124,7 +1125,7 @@ pocl_hsa_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
   POCL_UNLOCK (d->pocl_hsa_compilation_lock);
 }
 
-void
+cl_int
 pocl_hsa_uninit (cl_device_id device)
 {
   pocl_hsa_device_data_t *d = (pocl_hsa_device_data_t*)device->data;
@@ -1155,6 +1156,8 @@ pocl_hsa_uninit (cl_device_id device)
 
   POCL_MEM_FREE(d);
   device->data = NULL;
+
+  return CL_SUCCESS;
 }
 
 
