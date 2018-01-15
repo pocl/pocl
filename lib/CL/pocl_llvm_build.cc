@@ -474,7 +474,7 @@ int pocl_llvm_build_program(cl_program program,
   poo.ShowMacros = 1;
   poo.RewriteIncludes = 0;
 
-  pocl_cache_tempname(tempfile, ".cl", NULL);
+  pocl_cache_tempname(tempfile, ".preproc.cl", NULL);
   fe.OutputFile.assign(tempfile);
 
   bool success = true;
@@ -486,10 +486,12 @@ int pocl_llvm_build_program(cl_program program,
   if (success) {
     pocl_read_file(tempfile, &PreprocessedOut, &PreprocessedSize);
   }
+  /* always remove preprocessed output - the sources are in different files */
+  pocl_remove(tempfile);
+
   if (pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0) == 0) {
     if (num_input_headers > 0)
       pocl_rm_rf(temp_include_dir);
-    pocl_remove(tempfile);
   }
 
   if (PreprocessedOut == nullptr) {
@@ -504,10 +506,10 @@ int pocl_llvm_build_program(cl_program program,
 
   POCL_MEM_FREE(PreprocessedOut);
 
-  if (pocl_exists(program_bc_path)) {
-    unlink_source(fe);
+  unlink_source(fe);
+
+  if (pocl_exists(program_bc_path))
     return CL_SUCCESS;
-  }
 
   // TODO: use pch: it is possible to disable the strict checking for
   // the compilation flags used to compile it and the current translation
@@ -515,8 +517,6 @@ int pocl_llvm_build_program(cl_program program,
   llvm::LLVMContext &c = GlobalContext();
   clang::EmitLLVMOnlyAction EmitLLVM(&c);
   success = CI.ExecuteAction(EmitLLVM);
-
-  unlink_source(fe);
 
   get_build_log(program, device_i, ss_build_log, diagsBuffer, CI.getSourceManager());
 
