@@ -211,9 +211,18 @@ pocl_cache_tempname (char *path, const char *suffix, int *fd)
 int
 pocl_cache_write_program_source (char *program_cl_path, cl_program program)
 {
-  pocl_cache_tempname (program_cl_path, ".cl", NULL);
-  return pocl_write_file (program_cl_path, program->source,
-                          strlen (program->source), 0, 0);
+  return pocl_write_tempfile (program_cl_path, tempfile_pattern,
+                              ".cl", program->source,
+                              strlen (program->source), NULL);
+}
+
+int
+pocl_cache_write_kernel_objfile (char *objfile_path,
+                                 char *objfile_content,
+                                 size_t objfile_size)
+{
+  return pocl_write_tempfile (objfile_path, tempfile_pattern, ".so.o",
+                              objfile_content, objfile_size, NULL);
 }
 
 /******************************************************************************/

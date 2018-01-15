@@ -58,10 +58,13 @@ int pocl_touch_file(const char* path);
 int pocl_write_file(const char* path, const char* content,
                     uint64_t count, int append, int dont_rewrite);
 
+int pocl_write_tempfile (char *output_path, const char *prefix,
+                         const char *suffix, const char *content,
+                         uint64_t count, int *ret_fd);
+
 /* Allocates memory and places file contents in it.
  * Returns negative errno on error, zero otherwise. */
 int pocl_read_file(const char* path, char** content, uint64_t *filesize);
-
 
 int pocl_write_module(void *module, const char* path, int dont_rewrite);
 

@@ -309,6 +309,38 @@ int pocl_write_file(const char *path, const char *content, uint64_t count,
     }
 }
 
+/* write content[count] into a temporary file, and return the tempfile name in
+ * output_path */
+int pocl_write_tempfile(char *output_path, const char *prefix,
+                        const char *suffix, const char *content,
+                        uint64_t count, int *ret_fd) {
+  int fd;
+  std::error_code ec;
+
+  assert(output_path);
+  assert(content);
+  Twine p(prefix);
+  if (suffix == NULL)
+    suffix = "";
+  Twine suf(suffix);
+  SmallString<512> TmpPath;
+
+  CREATE_UNIQUE_FILE(random_pattern + suf);
+  RETURN_IF_EC;
+  assert(fd >= 0);
+
+  if (write(fd, content, (ssize_t)count) < (ssize_t)count)
+    return errno ? -errno : -1;
+
+  if (ret_fd)
+    *ret_fd = fd;
+  else
+    close(fd);
+
+  strncpy(output_path, TmpPath.c_str(), POCL_FILENAME_LENGTH);
+  return 0;
+}
+
 /* Atomic write of IR - with rename() */
 int pocl_write_module(void *module, const char* path, int dont_rewrite) {
 

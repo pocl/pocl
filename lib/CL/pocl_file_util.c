@@ -1,4 +1,5 @@
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
+#define _DEFAULT_SOURCE
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -249,4 +250,38 @@ pocl_mk_tempdir (char *output, const char *prefix)
   strncpy (output + len, "_XXXXXX", (POCL_FILENAME_LENGTH - len));
   return (mkdtemp (output) == NULL);
 #endif
+}
+
+/* write content[count] into a temporary file, and return the tempfile name in
+ * output_path */
+int
+pocl_write_tempfile (char *output_path, const char *prefix, const char *suffix,
+                     const char *content, uint64_t count, int *ret_fd)
+{
+  assert (output_path);
+  assert (prefix);
+  assert (suffix);
+  assert (content);
+  assert (count > 0);
+
+  int fd, err;
+
+  err = pocl_mk_tempname (output_path, prefix, suffix, &fd);
+  if (err)
+    return err;
+
+  size_t bytes = (size_t)count;
+  ssize_t res = write (fd, content, bytes);
+  if (res < 0)
+    return errno;
+
+  if ((size_t)res < bytes)
+    return -1;
+
+  if (ret_fd)
+    *ret_fd = fd;
+  else
+    close (fd);
+
+  return errno;
 }

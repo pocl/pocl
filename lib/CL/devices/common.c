@@ -160,12 +160,10 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
     }
 
   /* always write temporary kernel.so.o, required for linking step. */
-  pocl_cache_tempname (tmp_objfile, ".so.o", NULL);
-  assert (pocl_exists (tmp_objfile) > 0);
-  POCL_MSG_PRINT_LLVM ("Writing code gen output to %s.\n", tmp_objfile);
   /* use append-write because tmp_objfile is already temporary,
    * we don't need to create another temporary... */
-  error = pocl_write_file (tmp_objfile, objfile, objfile_size, 1, 1);
+  error = pocl_cache_write_kernel_objfile (tmp_objfile, objfile, objfile_size);
+  POCL_MSG_PRINT_LLVM ("Writing code gen output to %s.\n", tmp_objfile);
   if (error)
     {
       POCL_MSG_PRINT_GENERAL ("writing kernel.so.o failed"
@@ -179,8 +177,17 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
     }
 
   /* temporary filename for kernel.so */
-  pocl_cache_tempname (tmp_module, ".so", NULL);
-  assert (pocl_exists (tmp_module) > 0);
+  if (pocl_cache_tempname (tmp_module, ".so", NULL))
+    {
+      POCL_MSG_PRINT_LLVM ("Creating temporary kernel.so file "
+                           " for kernel %s FAILED\n",
+                           kernel->name);
+      goto FINISH;
+    }
+  else
+    POCL_MSG_PRINT_LLVM ("Temporary kernel.so file "
+                         " for kernel %s : %s\n",
+                         kernel->name, tmp_module);
 
   POCL_MSG_PRINT_INFO ("Linking final module\n");
   char *const args1[]
