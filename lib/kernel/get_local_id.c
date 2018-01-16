@@ -26,7 +26,7 @@ extern size_t _local_id_y;
 extern size_t _local_id_z;
 
 size_t _CL_OVERLOADABLE
-get_local_id(unsigned int dimindx)
+get_local_id(unsigned int dimindx) __attribute__ ((noinline))
 {
   switch(dimindx)
     {

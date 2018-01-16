@@ -26,7 +26,7 @@ extern size_t _local_size_y;
 extern size_t _local_size_z;
 
 size_t _CL_OVERLOADABLE
-get_local_size(unsigned int dimindx)
+get_local_size(unsigned int dimindx) __attribute__ ((noinline))
 {
   switch(dimindx)
     {

@@ -52,7 +52,7 @@ get_local_id(unsigned int dimindx);
 
 
 size_t _CL_OVERLOADABLE
-get_global_id(unsigned int dimindx) __attribute__ ((optnone))
+get_global_id(unsigned int dimindx) __attribute__ ((optnone, noinline))
 {
   switch(dimindx)
     {
