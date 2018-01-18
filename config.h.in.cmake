@@ -1,8 +1,3 @@
-/* The normal alignment of `double16', in bytes. */
-#define ALIGNOF_DOUBLE16 @ALIGNOF_DOUBLE16@
-
-/* The normal alignment of `float16', in bytes. */
-#define ALIGNOF_FLOAT16 @ALIGNOF_FLOAT16@
 
 #cmakedefine BUILD_HSA
 #cmakedefine BUILD_CUDA

@@ -58,7 +58,7 @@ using namespace TTAMachine;
 
 #include <algorithm>
 
-#define ALIGNMENT (std::max(ALIGNOF_FLOAT16, ALIGNOF_DOUBLE16))
+#define ALIGNMENT MAX_EXTENDED_ALIGNMENT
 
 //#define DEBUG_TTA_DRIVER
 

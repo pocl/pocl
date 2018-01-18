@@ -1056,23 +1056,16 @@ endif()
 ##########################################################
 
 if (OCS_AVAILABLE)
-
-  CHECK_ALIGNOF("float16" "typedef float float16  __attribute__((__ext_vector_type__(16)));" ALIGNOF_FLOAT16 ${LLC_TRIPLE})
   CHECK_ALIGNOF("double16" "typedef double double16  __attribute__((__ext_vector_type__(16)));" ALIGNOF_DOUBLE16 ${LLC_TRIPLE})
-
 else()
-
-  set(ALIGNOF_FLOAT16 64)
   set(ALIGNOF_DOUBLE16 128)
-
 endif()
 
-if(ALIGNOF_FLOAT16 GREATER ALIGNOF_DOUBLE16)
-  set(MAX_EXTENDED_ALIGNMENT "${ALIGNOF_FLOAT16}")
-else()
-  set(MAX_EXTENDED_ALIGNMENT "${ALIGNOF_DOUBLE16}")
+if(ALIGNOF_DOUBLE16 LESS 128)
+  set(ALIGNOF_DOUBLE16 128)
 endif()
 
+set(MAX_EXTENDED_ALIGNMENT "${ALIGNOF_DOUBLE16}")
 
 ##########################################################
 
