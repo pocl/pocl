@@ -627,6 +627,8 @@ pocl_basic_run
       POCL_MEM_FREE(arguments[i]);
     }
   free(arguments);
+
+  pocl_release_dlhandle_cache (cmd);
 }
 
 void
@@ -948,8 +950,9 @@ void
 pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
 {
   struct data *d = node->device->data;
-  
-  node->device->ops->compile_kernel (node, NULL, NULL);
+
+  if (node != NULL && node->type == CL_COMMAND_NDRANGE_KERNEL)
+    pocl_check_dlhandle_cache (node, 1);
 
   POCL_LOCK_OBJ (node->event);
   node->ready = 1;
@@ -1024,5 +1027,5 @@ void
 pocl_basic_compile_kernel (_cl_command_node *cmd, cl_kernel kernel, cl_device_id device)
 {
   if (cmd != NULL && cmd->type == CL_COMMAND_NDRANGE_KERNEL)
-    pocl_check_dlhandle_cache (cmd);
+    pocl_check_dlhandle_cache (cmd, 0);
 }

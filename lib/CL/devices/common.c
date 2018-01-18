@@ -797,11 +797,10 @@ struct pocl_dlhandle_cache_item
   lt_dlhandle dlhandle;
   pocl_dlhandle_cache_item *next;
   pocl_dlhandle_cache_item *prev;
-  volatile int ref_count;
+  unsigned ref_count;
 };
 
 static pocl_dlhandle_cache_item *pocl_dlhandle_cache;
-static pocl_lock_t pocl_dlhandle_cache_lock;
 static pocl_lock_t pocl_llvm_codegen_lock;
 static pocl_lock_t pocl_dlhandle_lock;
 static int pocl_dlhandle_cache_initialized;
@@ -812,55 +811,102 @@ pocl_init_dlhandle_cache ()
 {
   if (!pocl_dlhandle_cache_initialized)
     {
-      POCL_INIT_LOCK (pocl_dlhandle_cache_lock);
       POCL_INIT_LOCK (pocl_llvm_codegen_lock);
       POCL_INIT_LOCK (pocl_dlhandle_lock);
       pocl_dlhandle_cache_initialized = 1;
    }
 }
 
-static int handle_count = 0;
-void
-pocl_check_dlhandle_cache (_cl_command_node *cmd)
-{
-  char workgroup_string[WORKGROUP_STRING_LENGTH];
-  pocl_dlhandle_cache_item *ci = NULL;
+static unsigned handle_count = 0;
+#define MAX_CACHE_ITEMS 128
 
-  POCL_LOCK (pocl_dlhandle_cache_lock);
-  DL_FOREACH (pocl_dlhandle_cache, ci)
-    {
-      if (strcmp (ci->tmp_dir, cmd->command.run.tmp_dir) == 0 &&
-          strcmp (ci->function_name,
-                  cmd->command.run.kernel->name) == 0)
-        {
-          /* move to the front of the line */
-          DL_DELETE (pocl_dlhandle_cache, ci);
-          DL_PREPEND (pocl_dlhandle_cache, ci);
-          ++ci->ref_count;
-          POCL_UNLOCK (pocl_dlhandle_cache_lock);
-          cmd->command.run.wg = ci->wg;
-          return;
-        }
-    }
-  if (handle_count == 128)
+/* must be called with pocl_dlhandle_lock LOCKED */
+static pocl_dlhandle_cache_item *
+get_new_dlhandle_cache_item ()
+{
+  pocl_dlhandle_cache_item *ci = NULL;
+  const char *dl_error = NULL;
+
+  if (pocl_dlhandle_cache)
     {
       ci = pocl_dlhandle_cache->prev;
-      //assert (ci->ref_count == 0);
+      while (ci->ref_count > 0 && ci != pocl_dlhandle_cache)
+        ci = ci->prev;
+    }
+
+  if ((handle_count >= MAX_CACHE_ITEMS) && ci && (ci != pocl_dlhandle_cache))
+    {
       DL_DELETE (pocl_dlhandle_cache, ci);
       free (ci->tmp_dir);
       free (ci->function_name);
-      assert(!lt_dlclose (ci->dlhandle));
+      lt_dlclose (ci->dlhandle);
+      dl_error = lt_dlerror ();
+      if (dl_error != NULL)
+        POCL_ABORT ("lt_dlclose() failed with error: %s\n", dl_error);
+      memset (ci, 0, sizeof (pocl_dlhandle_cache_item));
     }
   else
     {
       ++handle_count;
-      ci = (pocl_dlhandle_cache_item*) malloc (sizeof (pocl_dlhandle_cache_item));
+      ci = (pocl_dlhandle_cache_item *)calloc (
+          1, sizeof (pocl_dlhandle_cache_item));
     }
-  POCL_UNLOCK (pocl_dlhandle_cache_lock);
-  ci->next = NULL;
+
+  return ci;
+}
+
+void
+pocl_release_dlhandle_cache (_cl_command_node *cmd)
+{
+  pocl_dlhandle_cache_item *ci = NULL, *found = NULL;
+
+  POCL_LOCK (pocl_dlhandle_lock);
+  DL_FOREACH (pocl_dlhandle_cache, ci)
+  {
+    if (strcmp (ci->tmp_dir, cmd->command.run.tmp_dir) == 0
+        && strcmp (ci->function_name, cmd->command.run.kernel->name) == 0)
+      {
+        found = ci;
+        break;
+      }
+  }
+
+  assert (found != NULL);
+  --found->ref_count;
+  POCL_UNLOCK (pocl_dlhandle_lock);
+}
+
+/* The initial refcount may be 0, in case we're just pre-compiling kernels
+ * (or compiling them for binaries), and not actually need them immediately. */
+void
+pocl_check_dlhandle_cache (_cl_command_node *cmd, unsigned initial_refcount)
+{
+  char workgroup_string[WORKGROUP_STRING_LENGTH];
+  pocl_dlhandle_cache_item *ci = NULL, *tmp = NULL;
+  const char *dl_error = NULL;
+
+  POCL_LOCK (pocl_dlhandle_lock);
+  DL_FOREACH_SAFE (pocl_dlhandle_cache, ci, tmp)
+  {
+    if (strcmp (ci->tmp_dir, cmd->command.run.tmp_dir) == 0
+        && strcmp (ci->function_name, cmd->command.run.kernel->name) == 0)
+      {
+        /* move to the front of the line */
+        DL_DELETE (pocl_dlhandle_cache, ci);
+        DL_PREPEND (pocl_dlhandle_cache, ci);
+        ++ci->ref_count;
+        POCL_UNLOCK (pocl_dlhandle_lock);
+        cmd->command.run.wg = ci->wg;
+        return;
+      }
+  }
+
+  ci = get_new_dlhandle_cache_item ();
+  POCL_UNLOCK (pocl_dlhandle_lock);
+
   ci->tmp_dir = strdup (cmd->command.run.tmp_dir);
   ci->function_name = strdup (cmd->command.run.kernel->name);
-  ci->ref_count = 1;
+  ci->ref_count = initial_refcount;
 
   char *module_fn = NULL;
   cl_kernel k = cmd->command.run.kernel;
@@ -880,6 +926,10 @@ pocl_check_dlhandle_cache (_cl_command_node *cmd)
                                         cmd->command.run.local_z);
       POCL_UNLOCK (pocl_llvm_codegen_lock);
       POCL_MSG_PRINT_INFO("Using static WG size binary: %s\n", module_fn);
+      if (module_fn == NULL)
+        {
+          POCL_ABORT ("Final linking of kernel %s failed.\n", k->name);
+        }
 #else
       POCL_ABORT("pocl built without online compiler support "
                  "cannot compile LLVM IRs to machine code\n");
@@ -906,35 +956,63 @@ pocl_check_dlhandle_cache (_cl_command_node *cmd)
         POCL_MSG_PRINT_INFO("Using static local size binary: %s\n", module_fn);
     }
 
+  /***************************************************************************/
   POCL_LOCK (pocl_dlhandle_lock);
-  ci->dlhandle = lt_dlopen (module_fn);
-  POCL_UNLOCK (pocl_dlhandle_lock);
-  
-  if (ci->dlhandle == NULL)
-    {
-      printf ("pocl error: lt_dlopen(\"%s\") failed with '%s'.\n", 
-              module_fn, lt_dlerror());
-      printf ("note: missing symbols in the kernel binary might be" 
-              " reported as 'file not found' errors.\n");
-      abort();
+
+  pocl_dlhandle_cache_item *ci2 = NULL;
+  DL_FOREACH_SAFE (pocl_dlhandle_cache, ci2, tmp)
+  {
+    if (strcmp (ci2->tmp_dir, ci->tmp_dir) == 0
+        && strcmp (ci2->function_name, ci->function_name) == 0)
+      {
+        /* move to the front of the line */
+        if (pocl_dlhandle_cache != ci2)
+          {
+            DL_DELETE (pocl_dlhandle_cache, ci2);
+            DL_PREPEND (pocl_dlhandle_cache, ci2);
+          }
+        ++ci2->ref_count;
+        cmd->command.run.wg = ci2->wg;
+
+        POCL_MEM_FREE (ci->tmp_dir);
+        POCL_MEM_FREE (ci->function_name);
+        POCL_MEM_FREE (ci);
+        POCL_UNLOCK (pocl_dlhandle_lock);
+        POCL_MEM_FREE (module_fn);
+        return;
+      }
     }
-  free(module_fn);
 
-  snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
-            "_pocl_launcher_%s_workgroup",
-            cmd->command.run.kernel->name);
+    ci->dlhandle = lt_dlopen (module_fn);
+    dl_error = lt_dlerror ();
 
-  POCL_LOCK (pocl_dlhandle_lock);
-  cmd->command.run.wg = ci->wg =
-    (pocl_workgroup) lt_dlsym (ci->dlhandle, workgroup_string);
-  POCL_UNLOCK (pocl_dlhandle_lock);
+    if (ci->dlhandle != NULL && dl_error == NULL)
+      {
+        snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
+                  "_pocl_launcher_%s_workgroup", k->name);
+        ci->wg = (pocl_workgroup)lt_dlsym (ci->dlhandle, workgroup_string);
+        dl_error = lt_dlerror ();
 
-  assert (cmd->command.run.wg != NULL);
+        if (ci->wg != NULL && dl_error == NULL)
+          {
+            cmd->command.run.wg = ci->wg;
+            DL_PREPEND (pocl_dlhandle_cache, ci);
+          }
+      }
 
-  POCL_LOCK (pocl_dlhandle_cache_lock);
-  assert (handle_count <= 128);
-  DL_PREPEND (pocl_dlhandle_cache, ci);
-  POCL_UNLOCK (pocl_dlhandle_cache_lock);
+    POCL_UNLOCK (pocl_dlhandle_lock);
+    /***************************************************************************/
+
+    POCL_MEM_FREE (module_fn);
+
+    if (ci->dlhandle == NULL || ci->wg == NULL || dl_error != NULL)
+      {
+        POCL_ABORT (
+            "pocl error: lt_dlopen(\"%s\") or lt_dlsym() failed with '%s'.\n"
+            "note: missing symbols in the kernel binary might be"
+            " reported as 'file not found' errors.\n",
+            module_fn, dl_error);
+      }
 }
 
 
