@@ -18,8 +18,8 @@
     <meta property="og:title" content="pocl home page"/> 
     <meta property="og:site_name" content="pocl"/> 
     <meta property="og:type" content="website"/>
-    <meta property="og:description" content="pocl: aiming towards a performance portable open source OpenCL implementation"/>
-    <meta property="og:url" content="http://pocl.sourceforge.net"/>    
+    <meta property="og:description" content="pocl: a performance portable open source OpenCL implementation"/>
+    <meta property="og:url" content="http://portablecl.org"/>
     <meta property="fb:admins" content="pekka.jaaskelainen"/>
 
     <title>pocl - Portable Computing Language${sub_page}</title>

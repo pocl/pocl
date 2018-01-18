@@ -1,8 +1,10 @@
 <%inherit file="basic_page.makt" />
-<p>Portable Computing Language (pocl) aims to become a MIT-licensed
-open source implementation of the OpenCL
-standard which can be easily adapted for new targets and devices, both for homogeneous
-CPU and heterogeneous GPUs/accelerators.</p>
+<p>Pocl is a portable open source (MIT-licensed) implementation of the OpenCL
+standard (1.2 with some 2.0 features supported). In addition to producing an
+easily portable open-source OpenCL implementation, another major goal of this
+project is improving performance portability of OpenCL programs with the
+kernel compiler and the task runtime, reducing the need for target-dependent
+manual optimizations.</p>
 
 <p>pocl uses  <a href="http://clang.llvm.org">Clang</a> as an OpenCL C frontend and
 <a href="http://llvm.org">LLVM</a> for kernel compiler implementation,
