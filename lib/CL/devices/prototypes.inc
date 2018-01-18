@@ -41,7 +41,8 @@
   void pocl_##__DRV__##_free_event_data (cl_event event); \
   void pocl_##__DRV__##_init_device_infos(unsigned j, struct _cl_device_id* dev);  \
   void pocl_##__DRV__##_init_device_ops(struct pocl_device_ops* ops);  \
-  void pocl_##__DRV__##_uninit (cl_device_id device);                   \
+  cl_int pocl_##__DRV__##_uninit (cl_device_id device);                   \
+  cl_int pocl_##__DRV__##_reinit (cl_device_id device);                   \
   cl_int pocl_##__DRV__##_init (unsigned j, cl_device_id device, const char* parameters); \
   unsigned int pocl_##__DRV__##_probe (struct pocl_device_ops *ops); \
   cl_int pocl_##__DRV__##_init_queue (cl_command_queue queue); \

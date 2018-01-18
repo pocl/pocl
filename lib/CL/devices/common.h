@@ -93,7 +93,10 @@ void pocl_broadcast (cl_event event);
 
 void pocl_init_dlhandle_cache ();
 
-void pocl_check_dlhandle_cache (_cl_command_node *cmd);
+void pocl_check_dlhandle_cache (_cl_command_node *cmd,
+                                unsigned initial_refcount);
+
+void pocl_release_dlhandle_cache (_cl_command_node *cmd);
 
 void pocl_setup_device_for_system_memory(cl_device_id device);
 

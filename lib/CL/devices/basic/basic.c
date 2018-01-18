@@ -103,6 +103,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->init_device_infos = pocl_basic_init_device_infos;
   ops->probe = pocl_basic_probe;
   ops->uninit = pocl_basic_uninit;
+  ops->reinit = pocl_basic_reinit;
   ops->init = pocl_basic_init;
   ops->alloc_mem_obj = pocl_basic_alloc_mem_obj;
   ops->free = pocl_basic_free;
@@ -626,6 +627,8 @@ pocl_basic_run
       POCL_MEM_FREE(arguments[i]);
     }
   free(arguments);
+
+  pocl_release_dlhandle_cache (cmd);
 }
 
 void
@@ -881,13 +884,28 @@ void* pocl_basic_unmap_mem(void *data, void *host_ptr,
   return (char *)host_ptr;
 }
 
-
-void
+cl_int
 pocl_basic_uninit (cl_device_id device)
 {
   struct data *d = (struct data*)device->data;
+  POCL_DESTROY_LOCK (d->cq_lock);
   POCL_MEM_FREE(d);
   device->data = NULL;
+  return CL_SUCCESS;
+}
+
+cl_int
+pocl_basic_reinit (cl_device_id device)
+{
+  struct data *d = (struct data *)calloc (1, sizeof (struct data));
+  if (d == NULL)
+    return CL_OUT_OF_HOST_MEMORY;
+
+  d->current_kernel = NULL;
+  d->current_dlhandle = 0;
+  POCL_INIT_LOCK (d->cq_lock);
+  device->data = d;
+  return CL_SUCCESS;
 }
 
 cl_ulong
@@ -932,8 +950,9 @@ void
 pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
 {
   struct data *d = node->device->data;
-  
-  node->device->ops->compile_kernel (node, NULL, NULL);
+
+  if (node != NULL && node->type == CL_COMMAND_NDRANGE_KERNEL)
+    pocl_check_dlhandle_cache (node, 1);
 
   POCL_LOCK_OBJ (node->event);
   node->ready = 1;
@@ -1008,5 +1027,5 @@ void
 pocl_basic_compile_kernel (_cl_command_node *cmd, cl_kernel kernel, cl_device_id device)
 {
   if (cmd != NULL && cmd->type == CL_COMMAND_NDRANGE_KERNEL)
-    pocl_check_dlhandle_cache (cmd);
+    pocl_check_dlhandle_cache (cmd, 0);
 }

@@ -1,4 +1,5 @@
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
+#define _DEFAULT_SOURCE
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -198,25 +199,89 @@ pocl_write_file(const char *path, const char* content,
   return fclose(f);
 }
 
-
 /****************************************************************************/
 
-static void* 
-acquire_lock_internal(const char* path, int shared) 
+int
+pocl_mk_tempname (char *output, const char *prefix, const char *suffix,
+                  int *ret_fd)
 {
-  /* Can't return value that compares equal to NULL */
-  return (void*)4096;
+#if defined(_MSC_VER) || defined(__MINGW32__)
+  assert (0);
+#else
+  /* using mkstemp() instead of tmpnam() has no real benefit
+   * here, as we have to pass the filename to llvm,
+   * but tmpnam() generates an annoying warning... */
+  int fd;
+
+  strncpy (output, prefix, POCL_FILENAME_LENGTH);
+  size_t len = strlen (prefix);
+  strncpy (output + len, "_XXXXXX", (POCL_FILENAME_LENGTH - len));
+
+  if (suffix)
+    {
+      len += 7;
+      strncpy (output + len, suffix, (POCL_FILENAME_LENGTH - len));
+      fd = mkostemps (output, strlen (suffix), O_CLOEXEC);
+    }
+  else
+    fd = mkostemp (output, O_CLOEXEC);
+
+  if (fd < 0)
+    return errno;
+
+  if (ret_fd)
+    *ret_fd = fd;
+  else
+    close (fd);
+
+  return errno;
+#endif
 }
 
-
-void* 
-acquire_lock(const char *path, int shared) 
+int
+pocl_mk_tempdir (char *output, const char *prefix)
 {
-    return acquire_lock_internal(path, shared);
+#if defined(_MSC_VER) || defined(__MINGW32__)
+  assert (0);
+#else
+  /* TODO mkdtemp() might not be portable outside Linux */
+  strncpy (output, prefix, POCL_FILENAME_LENGTH);
+  size_t len = strlen (prefix);
+  strncpy (output + len, "_XXXXXX", (POCL_FILENAME_LENGTH - len));
+  return (mkdtemp (output) == NULL);
+#endif
 }
 
-
-void release_lock(void* lock) 
+/* write content[count] into a temporary file, and return the tempfile name in
+ * output_path */
+int
+pocl_write_tempfile (char *output_path, const char *prefix, const char *suffix,
+                     const char *content, uint64_t count, int *ret_fd)
 {
-    return;
+  assert (output_path);
+  assert (prefix);
+  assert (suffix);
+  assert (content);
+  assert (count > 0);
+
+  int fd, err;
+
+  err = pocl_mk_tempname (output_path, prefix, suffix, &fd);
+  if (err)
+    return err;
+
+  size_t bytes = (size_t)count;
+  ssize_t res = write (fd, content, bytes);
+  if (res < 0)
+    return errno;
+
+  if ((size_t)res < bytes)
+    return -1;
+
+  if (ret_fd)
+    *ret_fd = fd;
+  else
+    close (fd);
+
+  return errno;
 }

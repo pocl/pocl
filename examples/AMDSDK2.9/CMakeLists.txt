@@ -108,7 +108,7 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" AND X86_64)
 
     foreach(SAMPLE IN LISTS AMD_SAMPLES)
       add_test(NAME "AMD_29_${SAMPLE}"
-        COMMAND "${TS_BASEDIR}/src/${TS_NAME}/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/bin/x86_64/${SAMPLE}" "-q" "-t"
+        COMMAND "${TS_BASEDIR}/src/${TS_NAME}/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/bin/x86_64/${SAMPLE}" "-q" "-t" "-e"
         WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/AMD-APP-SDK-v2.9-RC-lnx64/samples/opencl/bin/x86_64")
       set_tests_properties("AMD_29_${SAMPLE}" PROPERTIES LABELS "amdsdk_29")
     endforeach()

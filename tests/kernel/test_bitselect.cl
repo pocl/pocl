@@ -5,11 +5,7 @@
 // TESTING: min
 // TESTING: popcount
 
-#if __clang_major__ == 3 && __clang_minor__ < 4
-typedef const char* string;     /* for backward compatibility */
-#else
 typedef constant char* string;
-#endif
 
 #define IMPLEMENT_BODY_G(NAME, BODY, SIZE, GTYPE, SGTYPE, UGTYPE, SUGTYPE) \
   void NAME##_##GTYPE()                                                    \
@@ -125,14 +121,14 @@ typedef constant char* string;
   NAME##_ulong16 ();)
 
 
-#if __has_extension(c_generic_selections)
+#if __has_extension(c_generic_selections) && (__clang_major__ < 6)
  #ifdef cl_khr_fp64
  # define is_floating(T) _Generic((T)0, float: 1, double: 1, default: 0)
  #else
  # define is_floating(T) _Generic((T)0, float: 1, default: 0)
  #endif 
 #else
-# define is_floating(T) ((T)0.1f > (T)0.0f)
+# define is_floating(T) 0
 #endif
 #define is_signed(T)   ((T)-1 < (T)+1)
 #define count_bits(T)  (CHAR_BIT * sizeof(T))

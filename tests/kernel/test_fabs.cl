@@ -58,14 +58,14 @@ typedef constant char* string;
   NAME##_double8 ();                            \
   NAME##_double16();)
 
-#if __has_extension(c_generic_selections)
+#if __has_extension(c_generic_selections) && (__clang_major__ < 6)
  #ifdef cl_khr_fp64
  # define is_floating(T) _Generic((T)0, float: 1, double: 1, default: 0)
  #else
  # define is_floating(T) _Generic((T)0, float: 1, default: 0)
  #endif 
 #else
-# define is_floating(T) ((T)0.1f > (T)0.0f)
+# define is_floating(T) 1
 #endif
 #define is_signed(T)   ((T)-1 < (T)+1)
 #define count_bits(T)  (CHAR_BIT * sizeof(T))

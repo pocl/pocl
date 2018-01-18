@@ -1099,7 +1099,7 @@ set_tests_properties(
     "${TS_NAME}_math_not"
     "${TS_NAME}_math_pow"
     "${TS_NAME}_math_pown"
-    "${TS_NAME}_math_pow"
+    "${TS_NAME}_math_powr"
     "${TS_NAME}_math_remquo"
     "${TS_NAME}_math_remainder"
     "${TS_NAME}_math_rint"

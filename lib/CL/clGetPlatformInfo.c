@@ -52,9 +52,21 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
     case CL_PLATFORM_VERSION:
 #ifdef OCS_AVAILABLE
       POCL_RETURN_GETINFO_STR ("OpenCL " POCL_CL_VERSION
-                               " pocl " PACKAGE_VERSION ", LLVM " LLVM_VERSION
+                               " pocl " PACKAGE_VERSION " " CMAKE_BUILD_TYPE
+#ifdef POCL_ASSERTS_BUILD
+                               "+Asserts"
+#endif
+                               ", LLVM " LLVM_VERSION
 #ifdef LLVM_BUILD_MODE_DEBUG
                                " - debug"
+#endif
+
+#ifdef ENABLE_VECMATHLIB
+                               ", VML"
+#endif
+
+#ifdef ENABLE_SLEEF
+                               ", SLEEF"
 #endif
 
 #ifdef ENABLE_ASAN

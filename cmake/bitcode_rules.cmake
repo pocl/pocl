@@ -40,7 +40,7 @@ function(compile_c_to_bc FILENAME SUBDIR BC_FILE_LIST)
         "${CMAKE_SOURCE_DIR}/include/pocl_types.h"
         "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
         ${VML_KERNEL_DEPEND_HEADERS}
-        COMMAND "${CLANG}" ${CLANG_FLAGS} ${DEVICE_CL_FLAGS}
+        COMMAND "${CLANG}" ${CLANG_FLAGS} ${DEVICE_CL_FLAGS} "-O1"
         ${KERNEL_C_FLAGS} "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
         "-include" "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
         COMMENT "Building C to LLVM bitcode ${BC_FILE}"
@@ -57,7 +57,7 @@ function(compile_cc_to_bc FILENAME SUBDIR BC_FILE_LIST)
         DEPENDS "${FULL_F_PATH}"
           ${VML_KERNEL_DEPEND_HEADERS}
         COMMAND  "${CLANGXX}" ${CLANG_FLAGS} ${KERNEL_CXX_FLAGS}
-        ${DEVICE_CL_FLAGS} "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
+        ${DEVICE_CL_FLAGS} "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}" "-O1"
         COMMENT "Building C++ to LLVM bitcode ${BC_FILE}"
         VERBATIM)
 endfunction()

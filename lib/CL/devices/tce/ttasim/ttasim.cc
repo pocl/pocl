@@ -76,6 +76,7 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
   ops->probe = pocl_ttasim_probe;
   ops->init_device_infos = pocl_ttasim_init_device_infos;
   ops->uninit = pocl_ttasim_uninit;
+  ops->reinit = NULL;
   ops->init = pocl_ttasim_init;
   ops->alloc_mem_obj = pocl_tce_alloc_mem_obj;
   ops->create_sub_buffer = pocl_tce_create_sub_buffer;
@@ -541,10 +542,11 @@ pocl_ttasim_init (unsigned j, cl_device_id device, const char* parameters)
   return CL_SUCCESS;
 }
 
-void
+cl_int
 pocl_ttasim_uninit (cl_device_id device)
 {
   delete (TTASimDevice*)device->data;
+  return CL_SUCCESS;
 }
 
 

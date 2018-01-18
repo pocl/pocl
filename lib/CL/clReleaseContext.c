@@ -22,6 +22,10 @@
 */
 
 #include "pocl_cl.h"
+#include "devices/devices.h"
+
+extern unsigned cl_context_count;
+extern pocl_lock_t pocl_context_handling_lock;
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
@@ -33,6 +37,8 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
       POCL_MEM_FREE(context);
       return CL_SUCCESS;
     }
+
+  POCL_LOCK (pocl_context_handling_lock);
 
   POCL_MSG_PRINT_REFCOUNTS ("Release Context \n");
   POCL_RELEASE_OBJECT(context, new_refcount);
@@ -53,7 +59,19 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
       POCL_MEM_FREE(context->properties);
       POCL_DESTROY_OBJECT (context);
       POCL_MEM_FREE(context);
+
+      --cl_context_count;
+      if (cl_context_count == 0)
+        {
+          POCL_MSG_PRINT_REFCOUNTS (
+              "Zero contexts left, calling pocl_uninit_devices\n");
+          pocl_uninit_devices ();
+          pocl_print_system_memory_stats ();
+        }
     }
+
+  POCL_UNLOCK (pocl_context_handling_lock);
+
   return CL_SUCCESS;
 }
 POsym(clReleaseContext)

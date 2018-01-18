@@ -177,7 +177,6 @@ int pocl_llvm_build_program(cl_program program,
                             int linking_program)
 
 {
-  void* write_lock = NULL;
   char tempfile[POCL_FILENAME_LENGTH];
   tempfile[0] = 0;
   llvm::Module **mod = NULL;
@@ -475,7 +474,7 @@ int pocl_llvm_build_program(cl_program program,
   poo.ShowMacros = 1;
   poo.RewriteIncludes = 0;
 
-  pocl_cache_tempname(tempfile, ".cl", NULL);
+  pocl_cache_tempname(tempfile, ".preproc.cl", NULL);
   fe.OutputFile.assign(tempfile);
 
   bool success = true;
@@ -487,10 +486,12 @@ int pocl_llvm_build_program(cl_program program,
   if (success) {
     pocl_read_file(tempfile, &PreprocessedOut, &PreprocessedSize);
   }
+  /* always remove preprocessed output - the sources are in different files */
+  pocl_remove(tempfile);
+
   if (pocl_get_bool_option("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0) == 0) {
     if (num_input_headers > 0)
       pocl_rm_rf(temp_include_dir);
-    pocl_remove(tempfile);
   }
 
   if (PreprocessedOut == nullptr) {
@@ -505,10 +506,10 @@ int pocl_llvm_build_program(cl_program program,
 
   POCL_MEM_FREE(PreprocessedOut);
 
-  if (pocl_exists(program_bc_path)) {
-    unlink_source(fe);
+  unlink_source(fe);
+
+  if (pocl_exists(program_bc_path))
     return CL_SUCCESS;
-  }
 
   // TODO: use pch: it is possible to disable the strict checking for
   // the compilation flags used to compile it and the current translation
@@ -516,8 +517,6 @@ int pocl_llvm_build_program(cl_program program,
   llvm::LLVMContext &c = GlobalContext();
   clang::EmitLLVMOnlyAction EmitLLVM(&c);
   success = CI.ExecuteAction(EmitLLVM);
-
-  unlink_source(fe);
 
   get_build_log(program, device_i, ss_build_log, diagsBuffer, CI.getSourceManager());
 
@@ -568,9 +567,6 @@ int pocl_llvm_build_program(cl_program program,
     }
   }
 
-  write_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
-  assert(write_lock);
-
   POCL_MSG_PRINT_LLVM("Writing program.bc to %s.\n", program_bc_path);
 
   /* Always retain program.bc. Its required in clBuildProgram */
@@ -592,8 +588,6 @@ int pocl_llvm_build_program(cl_program program,
   program->binaries[device_i] = (unsigned char *) malloc(n);
   std::memcpy(program->binaries[device_i], content.c_str(), n);
 
-  pocl_cache_release_lock(write_lock);
-
   return CL_SUCCESS;
 }
 
@@ -607,7 +601,6 @@ int pocl_llvm_link_program(cl_program program,
                            void **cur_llvm_irs,
                            int create_library) {
 
-  void *write_lock;
   std::string concated_binaries;
   size_t n = 0, i;
   cl_device_id device = program->devices[device_i];
@@ -692,9 +685,6 @@ int pocl_llvm_link_program(cl_program program,
       return error;
     }
 
-  write_lock = pocl_cache_acquire_writer_lock_i(program, device_i);
-  assert(write_lock);
-
   POCL_MSG_PRINT_LLVM("Writing program.bc to %s.\n", program_bc_path);
 
   /* Always retain program.bc. Its required in clBuildProgram */
@@ -715,8 +705,6 @@ int pocl_llvm_link_program(cl_program program,
   program->binary_sizes[device_i] = n;
   program->binaries[device_i] = (unsigned char *)malloc(n);
   std::memcpy(program->binaries[device_i], content.c_str(), n);
-
-  pocl_cache_release_lock(write_lock);
 
   return CL_SUCCESS;
 }

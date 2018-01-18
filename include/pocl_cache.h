@@ -48,29 +48,22 @@ pocl_cache_create_program_cachedir(cl_program program, unsigned device_i,
 
 void pocl_cache_cleanup_cachedir(cl_program program);
 
-void* pocl_cache_acquire_writer_lock_i(cl_program program, unsigned device_i);
-
-void* pocl_cache_acquire_writer_lock(cl_program program, cl_device_id device);
-
-void* pocl_cache_acquire_reader_lock_i(cl_program program, unsigned device_i);
-
-void* pocl_cache_acquire_reader_lock(cl_program program, cl_device_id device);
-
-void pocl_cache_release_lock(void* lock);
-
 int pocl_cl_device_to_index(cl_program   program,
                             cl_device_id device);
 
-void pocl_cache_tempname (char *path_template, const char *suffix, int *fd);
+int pocl_cache_tempname (char *path_template, const char *suffix, int *fd);
 
 int pocl_cache_create_tempdir(char* path);
 
 int pocl_cache_write_program_source(char *program_cl_path,
                                     cl_program program);
 
+int pocl_cache_write_kernel_objfile (char *objfile_path,
+                                     char *objfile_content,
+                                     size_t objfile_size);
+
 int pocl_cache_update_program_last_access(cl_program program,
                                           unsigned device_i);
-
 
 
 char* pocl_cache_read_buildlog(cl_program program, unsigned device_i);

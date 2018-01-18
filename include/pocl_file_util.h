@@ -35,14 +35,6 @@ extern "C" {
 #pragma GCC visibility push(hidden)
 #endif
 
-#define LOCK_ACQUIRE_FAIL 3210
-
-void* acquire_lock(const char* path, int shared);
-
-void release_lock(void* lock);
-
-
-
 /* Remove a directory, recursively */
 int pocl_rm_rf(const char* path);
 
@@ -66,14 +58,20 @@ int pocl_touch_file(const char* path);
 int pocl_write_file(const char* path, const char* content,
                     uint64_t count, int append, int dont_rewrite);
 
+int pocl_write_tempfile (char *output_path, const char *prefix,
+                         const char *suffix, const char *content,
+                         uint64_t count, int *ret_fd);
+
 /* Allocates memory and places file contents in it.
  * Returns negative errno on error, zero otherwise. */
 int pocl_read_file(const char* path, char** content, uint64_t *filesize);
 
-
 int pocl_write_module(void *module, const char* path, int dont_rewrite);
 
-int pocl_remove_locked(const char* path);
+int pocl_mk_tempdir (char *output, const char *prefix);
+
+int pocl_mk_tempname (char *output, const char *prefix, const char *suffix,
+                      int *ret_fd);
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

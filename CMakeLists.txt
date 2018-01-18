@@ -35,6 +35,21 @@ set(POCL_VERSION ${VERSION_STRING})
 # required b/c SHARED libs defaults to ON while OBJECT defaults to OFF
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
+  set(DEFAULT_BUILD_TYPE "Debug")
+else()
+  set(DEFAULT_BUILD_TYPE "RelWithDebInfo")
+endif()
+
+if(NOT CMAKE_BUILD_TYPE)
+  message(STATUS "Setting build type to '${DEFAULT_BUILD_TYPE}' as none was specified.")
+  set(CMAKE_BUILD_TYPE "${DEFAULT_BUILD_TYPE}" CACHE
+      STRING "Choose the type of build." FORCE)
+  # Set the possible values of build type for cmake-gui
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+    "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+endif()
+
 enable_testing()
 
 ##################################################################################
@@ -1041,23 +1056,16 @@ endif()
 ##########################################################
 
 if (OCS_AVAILABLE)
-
-  CHECK_ALIGNOF("float16" "typedef float float16  __attribute__((__ext_vector_type__(16)));" ALIGNOF_FLOAT16 ${LLC_TRIPLE})
   CHECK_ALIGNOF("double16" "typedef double double16  __attribute__((__ext_vector_type__(16)));" ALIGNOF_DOUBLE16 ${LLC_TRIPLE})
-
 else()
-
-  set(ALIGNOF_FLOAT16 64)
   set(ALIGNOF_DOUBLE16 128)
-
 endif()
 
-if(ALIGNOF_FLOAT16 GREATER ALIGNOF_DOUBLE16)
-  set(MAX_EXTENDED_ALIGNMENT "${ALIGNOF_FLOAT16}")
-else()
-  set(MAX_EXTENDED_ALIGNMENT "${ALIGNOF_DOUBLE16}")
+if(ALIGNOF_DOUBLE16 LESS 128)
+  set(ALIGNOF_DOUBLE16 128)
 endif()
 
+set(MAX_EXTENDED_ALIGNMENT "${ALIGNOF_DOUBLE16}")
 
 ##########################################################
 
@@ -1071,6 +1079,15 @@ else()
   message(FATAL_ERROR "Cannot figure out POCL_DEVICE_ADDRESS_BITS")
 endif()
 
+##########################################################
+
+
+string(TOUPPER "${CMAKE_BUILD_TYPE}" BTYPE)
+if("${CMAKE_C_FLAGS_${BTYPE}}" MATCHES "DNDEBUG")
+  set(POCL_ASSERTS_BUILD 0)
+else()
+  set(POCL_ASSERTS_BUILD 1)
+endif()
 
 ##########################################################
 
@@ -1361,6 +1378,9 @@ MESSAGE(STATUS " ")
 MESSAGE(STATUS "CLANG_SPIR: ${CLANG_SPIR}")
 MESSAGE(STATUS "DEVELOPER_MODE: ${DEVELOPER_MODE}")
 MESSAGE(STATUS "ENABLE_CONFORMANCE: ${ENABLE_CONFORMANCE}")
+if(ARM)
+MESSAGE(STATUS "ENABLE_FP64: ${ENABLE_FP64}")
+endif()
 MESSAGE(STATUS "ENABLE_ICD: ${ENABLE_ICD}")
 MESSAGE(STATUS "ENABLE_TCE: ${ENABLE_TCE}")
 MESSAGE(STATUS "ENABLE_TCEMC: ${ENABLE_TCEMC}")
@@ -1378,6 +1398,7 @@ MESSAGE(STATUS "OCL_DRIVERS (Drivers built): ${OCL_DRIVERS}")
 MESSAGE(STATUS "OCL_TARGETS (Targets built): ${OCL_TARGETS}")
 MESSAGE(STATUS "OCS_AVAILABLE: ${OCS_AVAILABLE}")
 MESSAGE(STATUS "POCL_ICD_ABSOLUTE_PATH: ${POCL_ICD_ABSOLUTE_PATH}")
+MESSAGE(STATUS "POCL_ASSERTS_BUILD: ${POCL_ASSERTS_BUILD}")
 MESSAGE(STATUS "SINGLE_LLVM_LIB: ${SINGLE_LLVM_LIB}")
 MESSAGE(STATUS "TESTS_USE_ICD: ${TESTS_USE_ICD}")
 MESSAGE(STATUS "Available testsuites: ${ALL_TESTSUITES}")

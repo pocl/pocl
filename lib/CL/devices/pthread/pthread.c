@@ -129,6 +129,7 @@ pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
   ops->probe = pocl_pthread_probe;
   ops->init_device_infos = pocl_pthread_init_device_infos;
   ops->uninit = pocl_pthread_uninit;
+  ops->reinit = pocl_pthread_reinit;
   ops->init = pocl_pthread_init;
   ops->alloc_mem_obj = pocl_basic_alloc_mem_obj;
   ops->free = pocl_basic_free;
@@ -183,6 +184,26 @@ pocl_pthread_init_device_infos(unsigned j, struct _cl_device_id* dev)
 static cl_device_partition_property pthread_partition_properties[2]
     = { CL_DEVICE_PARTITION_EQUALLY, CL_DEVICE_PARTITION_BY_COUNTS };
 
+#ifdef CUSTOM_BUFFER_ALLOCATOR
+#define INIT_MEM_REGIONS                                                      \
+  do                                                                          \
+    {                                                                         \
+      mem_regions_management *mrm;                                            \
+      mrm = malloc (sizeof (mem_regions_management));                         \
+      if (mrm == NULL)                                                        \
+        {                                                                     \
+          free (d);                                                           \
+          return CL_OUT_OF_HOST_MEMORY;                                       \
+        }                                                                     \
+      BA_INIT_LOCK (mrm->mem_regions_lock);                                   \
+      mrm->mem_regions = NULL;                                                \
+      d->mem_regions = mrm;                                                   \
+    }                                                                         \
+  while (0)
+#else
+#define INIT_MEM_REGIONS NULL
+#endif
+
 cl_int
 pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 {
@@ -190,35 +211,12 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   cl_int ret = CL_SUCCESS;
   int err;
   static char scheduler_initialized = 0;
-#ifdef CUSTOM_BUFFER_ALLOCATOR
-  static mem_regions_management* mrm = NULL;
-#endif
-  unsigned num_worker_threads;
-
-  // TODO: this checks if the device was already initialized previously.
-  // Should we instead have a separate bool field in device, or do the
-  // initialization at library startup time with __attribute__((constructor))?
-  if (device->data!=NULL)
-    return CL_SUCCESS;
 
   d = (struct data *) calloc (1, sizeof (struct data));
   if (d == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 
-#ifdef CUSTOM_BUFFER_ALLOCATOR
-  if (mrm == NULL)
-    {
-      mrm = malloc (sizeof (mem_regions_management));
-      if (mrm == NULL)
-        {
-          free (d);
-          return CL_OUT_OF_HOST_MEMORY;
-        }
-      BA_INIT_LOCK (mrm->mem_regions_lock);
-      mrm->mem_regions = NULL;
-    }
-  d->mem_regions = mrm;
-#endif
+  INIT_MEM_REGIONS;
 
   d->current_kernel = NULL;
   d->current_dlhandle = 0;
@@ -238,8 +236,12 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   err = pocl_topology_detect_device_info (device);
   if (err)
     ret = CL_INVALID_DEVICE;
-  num_worker_threads = max (get_max_thread_count (device), 
-                            (unsigned)pocl_get_int_option("POCL_PTHREAD_MIN_THREADS", 1));
+
+  /* device->max_compute_units was set up by topology_detect,
+   * but if the user requests, lower it */
+  device->max_compute_units
+      = max (get_max_thread_count (device),
+             (unsigned)pocl_get_int_option ("POCL_PTHREAD_MIN_THREADS", 1));
 
   pocl_cpuinfo_detect_device_info(device);
   pocl_set_buffer_image_limits(device);
@@ -268,17 +270,18 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
       scheduler_initialized = 1;
       pocl_init_dlhandle_cache();
       pocl_init_kernel_run_command_manager();
-      pthread_scheduler_init (num_worker_threads, device);
+      pthread_scheduler_init (device);
     }
   /* system mem as global memory */
   device->global_mem_id = 0;
   return ret;
 }
 
-void
+cl_int
 pocl_pthread_uninit (cl_device_id device)
 {
   struct data *d = (struct data*)device->data;
+
 #ifdef CUSTOM_BUFFER_ALLOCATOR
   memory_region_t *region, *temp;
   DL_FOREACH_SAFE(d->mem_regions->mem_regions, region, temp)
@@ -289,18 +292,37 @@ pocl_pthread_uninit (cl_device_id device)
       POCL_MEM_FREE(region);
     }
   d->mem_regions->mem_regions = NULL;
-#endif  
+#endif
 
-  pthread_scheduler_uinit ();
+  pthread_scheduler_uninit ();
 
-  device->ops->shared_data = NULL;
   POCL_MEM_FREE(d);
   device->data = NULL;
+  return CL_SUCCESS;
 }
 
+cl_int
+pocl_pthread_reinit (cl_device_id device)
+{
+  struct data *d;
+
+  d = (struct data *)calloc (1, sizeof (struct data));
+  if (d == NULL)
+    return CL_OUT_OF_HOST_MEMORY;
+
+  INIT_MEM_REGIONS;
+
+  d->current_kernel = NULL;
+  d->current_dlhandle = 0;
+  device->data = d;
+
+  pthread_scheduler_init (device);
+
+  return CL_SUCCESS;
+}
 
 void
-pocl_pthread_read (void *data, void *host_ptr, const void *device_ptr, 
+pocl_pthread_read (void *data, void *host_ptr, const void *device_ptr,
                    size_t offset, size_t cb)
 {
   if (host_ptr == device_ptr)
@@ -310,22 +332,22 @@ pocl_pthread_read (void *data, void *host_ptr, const void *device_ptr,
 }
 
 void
-pocl_pthread_write (void *data, const void *host_ptr, void *device_ptr, 
+pocl_pthread_write (void *data, const void *host_ptr, void *device_ptr,
                     size_t offset, size_t cb)
 {
   if (host_ptr == device_ptr)
     return;
-  
+
   memcpy ((char*)device_ptr + offset, host_ptr, cb);
 }
 
 void
-pocl_pthread_copy (void *data, const void *src_ptr, size_t src_offset, 
+pocl_pthread_copy (void *data, const void *src_ptr, size_t src_offset,
                    void *__restrict__ dst_ptr, size_t dst_offset, size_t cb)
 {
   if (src_ptr == dst_ptr)
     return;
-  
+
   memcpy ((char*)dst_ptr + dst_offset, (char*)src_ptr + src_offset, cb);
 }
 
@@ -336,23 +358,20 @@ pocl_pthread_copy (void *data, const void *src_ptr, size_t src_offset,
  * Return an estimate for the maximum thread count that should produce
  * the maximum parallelism without extra threading overheads.
  */
-static
-size_t
-get_max_thread_count(cl_device_id device) 
+static size_t
+get_max_thread_count (cl_device_id device)
 {
-  /* if return THREAD_COUNT_ENV if set, 
+  /* if return THREAD_COUNT_ENV if set,
      else return fallback or max_compute_units */
   if (device->max_compute_units == 0)
     return pocl_get_int_option (THREAD_COUNT_ENV, FALLBACK_MAX_THREAD_COUNT);
   else
     return pocl_get_int_option (THREAD_COUNT_ENV,
-                                pocl_real_dev (device)->max_compute_units);
+                                (pocl_real_dev (device))->max_compute_units);
 }
 
 void
-pocl_pthread_run 
-(void *data, 
- _cl_command_node* cmd)
+pocl_pthread_run (void *data, _cl_command_node *cmd)
 {
   /* not used: this device will not be told when or what to run */
 }
@@ -360,8 +379,6 @@ pocl_pthread_run
 void
 pocl_pthread_submit (_cl_command_node *node, cl_command_queue cq)
 {
-  cl_device_id device = node->device;
-  struct data *d = device->data;
   POCL_LOCK_OBJ (node->event);
 
   node->ready = 1;
@@ -391,7 +408,6 @@ pocl_pthread_join(cl_device_id device, cl_command_queue cq)
 void
 pocl_pthread_notify (cl_device_id device, cl_event event, cl_event finished)
 {
-  struct data *d = (struct data*)device->data;
    int wake_thread = 0;
   _cl_command_node * volatile node = event->command;
 

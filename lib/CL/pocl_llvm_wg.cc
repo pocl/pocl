@@ -555,7 +555,6 @@ void pocl_llvm_update_binaries(cl_program program) {
   InitializeLLVM();
 
   char program_bc_path[POCL_FILENAME_LENGTH];
-  void *cache_lock = NULL;
   int error;
 
   // Dump the LLVM IR Modules to memory buffers.
@@ -568,9 +567,6 @@ void pocl_llvm_update_binaries(cl_program program) {
     assert(program->llvm_irs[i] != NULL);
     if (program->binaries[i])
       continue;
-
-    cache_lock = pocl_cache_acquire_writer_lock_i(program, i);
-    assert(cache_lock);
 
     pocl_cache_program_bc_path(program_bc_path, program, i);
     error = pocl_write_module((llvm::Module *)program->llvm_irs[i],
@@ -593,9 +589,6 @@ void pocl_llvm_update_binaries(cl_program program) {
       POCL_MEM_FREE(program->binaries[i]);
     program->binaries[i] = (unsigned char *)malloc(n);
     std::memcpy(program->binaries[i], content.c_str(), n);
-
-    pocl_cache_release_lock(cache_lock);
-    cache_lock = NULL;
 
 #ifdef DEBUG_POCL_LLVM_API
     printf("### binary for device %zi was of size %zu\n", i,

@@ -114,8 +114,6 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
        calloc (num_devices, sizeof(char*))) == NULL ||
       ((program->llvm_irs =
         (void**) calloc (num_devices, sizeof(void*))) == NULL) ||
-      ((program->read_locks =
-        (void**) calloc (num_devices, sizeof(void*))) == NULL) ||
       ((program->build_hash = (SHA1_digest_t*)
         calloc (num_devices, sizeof(SHA1_digest_t))) == NULL))
     {
@@ -156,8 +154,6 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
             (program, i, NULL, 0, program_bc_path);
           POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
                              "Could not create program cachedir");
-          void* write_cache_lock = pocl_cache_acquire_writer_lock_i (program, i);
-          assert (write_cache_lock);
           POCL_GOTO_ERROR_ON(pocl_binary_deserialize (program, i),
                              CL_INVALID_BINARY,
                              "Could not unpack a pocl binary\n");
@@ -168,7 +164,6 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
                               (char **)(&program->binaries[i]),
                               (uint64_t *)(&program->binary_sizes[i]));
             }
-          pocl_cache_release_lock (write_cache_lock);
 
           if (binary_status != NULL)
             binary_status[i] = CL_SUCCESS;

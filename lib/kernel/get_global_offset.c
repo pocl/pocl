@@ -26,7 +26,7 @@ extern size_t _global_offset_y;
 extern size_t _global_offset_z;
 
 size_t _CL_OVERLOADABLE
-get_global_offset(unsigned int dimindx)
+get_global_offset(unsigned int dimindx) __attribute__ ((noinline))
 {
   switch(dimindx)
     {

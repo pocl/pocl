@@ -116,6 +116,9 @@ int context_set_properties(cl_context                    context,
     }
 }
 
+unsigned cl_context_count = 0;
+pocl_lock_t pocl_context_handling_lock = POCL_LOCK_INITIALIZER;
+
 CL_API_ENTRY cl_context CL_API_CALL
 POname(clCreateContext)(const cl_context_properties * properties,
                 cl_uint                       num_devices,
@@ -128,6 +131,8 @@ POname(clCreateContext)(const cl_context_properties * properties,
   cl_device_id device_ptr;
   cl_int errcode = 0;
   cl_context context = NULL;
+
+  POCL_LOCK (pocl_context_handling_lock);
 
   POCL_GOTO_ERROR_COND((devices == NULL || num_devices == 0), CL_INVALID_VALUE);
 
@@ -145,10 +150,10 @@ POname(clCreateContext)(const cl_context_properties * properties,
    * CL_DEVICE_NOT_FOUND already from clGetDeviceIDs. Still, no reason
    * not to handle it.
    */
-  POCL_GOTO_ERROR_COND (errcode == CL_DEVICE_NOT_FOUND, CL_INVALID_DEVICE);
-  /* Other error conditions (e.g. CL_OUT_OF_HOST_MEMORY) */
-  if (errcode)
-    goto ERROR;
+  if (errcode == CL_DEVICE_NOT_FOUND)
+    errcode = CL_INVALID_DEVICE;
+  POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), errcode,
+                      "Could not initialize devices\n");
 
   context = (cl_context) malloc(sizeof(struct _cl_context));
   if (context == NULL)
@@ -212,6 +217,10 @@ POname(clCreateContext)(const cl_context_properties * properties,
   if (errcode_ret)
     *errcode_ret = CL_SUCCESS;
   context->valid = 1;
+
+  cl_context_count += 1;
+  POCL_UNLOCK (pocl_context_handling_lock);
+
   return context;
   
 ERROR_CLEAN_CONTEXT_AND_DEVICES:
@@ -224,6 +233,8 @@ ERROR:
     {
       *errcode_ret = errcode;
     }
+
+  POCL_UNLOCK (pocl_context_handling_lock);
   return NULL;
 }
 POsym(clCreateContext)

@@ -346,7 +346,8 @@ int __cl_printf(const OCL_CONSTANT_AS char* restrict format, ...)
         case 'u':
         case 'x':
         case 'X':
-          
+
+/* TODO: 3-size vector va-arg crashes LLVM when compiled with -O > 0 */
 #define CALL_PRINT_INTS(WIDTH, PROMOTED_WIDTH)                          \
           {                                                             \
             WIDTH##16 val;                                              \
@@ -354,7 +355,7 @@ int __cl_printf(const OCL_CONSTANT_AS char* restrict format, ...)
             default: __builtin_unreachable();                           \
             case 1: val.s0 = va_arg(ap, PROMOTED_WIDTH); break;         \
             case 2: val.s01 = va_arg(ap, WIDTH##2); break;              \
-            case 3: val.s012 = va_arg(ap, WIDTH##3); break;             \
+            case 3:                                                     \
             case 4: val.s0123 = va_arg(ap, WIDTH##4); break;            \
             case 8: val.lo = va_arg(ap, WIDTH##8); break;               \
             case 16: val = va_arg(ap, WIDTH##16); break;                \
@@ -388,7 +389,8 @@ int __cl_printf(const OCL_CONSTANT_AS char* restrict format, ...)
         case 'G':
         case 'a':
         case 'A':
-          
+
+/* TODO: 3-size vector va-arg crashes LLVM when compiled with -O > 0 */
 #define CALL_PRINT_FLOATS(WIDTH, PROMOTED_WIDTH)                        \
           {                                                             \
             WIDTH##16 val;                                              \
@@ -396,7 +398,7 @@ int __cl_printf(const OCL_CONSTANT_AS char* restrict format, ...)
             default: __builtin_unreachable();                           \
             case 1: val.s0 = va_arg(ap, PROMOTED_WIDTH); break;         \
             case 2: val.s01 = va_arg(ap, WIDTH##2); break;              \
-            case 3: val.s012 = va_arg(ap, WIDTH##3); break;             \
+            case 3:                                                     \
             case 4: val.s0123 = va_arg(ap, WIDTH##4); break;            \
             case 8: val.lo = va_arg(ap, WIDTH##8); break;               \
             case 16: val = va_arg(ap, WIDTH##16); break;                \

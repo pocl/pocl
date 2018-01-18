@@ -34,7 +34,7 @@ int main(void)
 
 	result[rvs]=0;	// spec doesn't say it is null-terminated.
         const char *expected = "OpenCL " POCL_CL_VERSION
-                               " pocl " PACKAGE_VERSION ", LLVM " LLVM_VERSION;
+                               " pocl " PACKAGE_VERSION;
         if (strncmp (result, expected, strlen (expected)) != 0)
           {
             printf ("Error: platform is: %s\n", result);

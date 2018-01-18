@@ -26,7 +26,7 @@ extern size_t _num_groups_y;
 extern size_t _num_groups_z;
 
 size_t _CL_OVERLOADABLE
-get_num_groups(unsigned int dimindx)
+get_num_groups(unsigned int dimindx) __attribute__ ((noinline))
 {
   switch(dimindx)
     {
