@@ -6,7 +6,7 @@ POname(clSetUserEventStatus)(cl_event event ,
                              cl_int   execution_status ) 
 CL_API_SUFFIX__VERSION_1_1
 {
-  int errcode;
+  int errcode = CL_SUCCESS;
   /* Must be a valid user event */
   POCL_RETURN_ERROR_COND ((event == NULL), CL_INVALID_EVENT);
   /* Can only be set to CL_COMPLETE (0) or negative values */
@@ -27,15 +27,13 @@ CL_API_SUFFIX__VERSION_1_1
       POCL_MSG_PRINT_EVENTS ("User event %u completed with status: %i\n",
                              event->id, execution_status);
       pocl_broadcast (event);
-      pocl_event_updated (event, execution_status);
     }
 
+  POCL_LOCK_OBJ (event);
+  pocl_event_updated (event, execution_status);
   pocl_user_event_data *p = event->data;
-  POCL_LOCK (p->lock);
-  pthread_cond_broadcast (&p->wakeup_cond);
-  POCL_UNLOCK (p->lock);
-
-  return CL_SUCCESS;
+  if (execution_status <= CL_COMPLETE)
+    pthread_cond_broadcast (&p->wakeup_cond);
 
 ERROR:
   POCL_UNLOCK_OBJ (event);

@@ -939,7 +939,7 @@ static void basic_command_scheduler (struct data *d)
       assert (node->event->status == CL_SUBMITTED);
       CDL_DELETE (d->ready_list, node);
       POCL_UNLOCK (d->cq_lock);
-      pocl_exec_command(node);
+      pocl_exec_command (node);
       POCL_LOCK (d->cq_lock);
     }
 
@@ -954,12 +954,11 @@ pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
   if (node != NULL && node->type == CL_COMMAND_NDRANGE_KERNEL)
     pocl_check_dlhandle_cache (node, 1);
 
-  POCL_LOCK_OBJ (node->event);
   node->ready = 1;
   POCL_LOCK (d->cq_lock);
   pocl_command_push(node, &d->ready_list, &d->command_list);
-  POCL_UNLOCK_OBJ (node->event);
 
+  POCL_UNLOCK_OBJ (node->event);
   basic_command_scheduler (d);
   POCL_UNLOCK (d->cq_lock);
 

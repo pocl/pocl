@@ -801,7 +801,6 @@ struct _cl_event {
 typedef struct _pocl_user_event_data
 {
   pthread_cond_t wakeup_cond;
-  pthread_mutex_t lock;
 } pocl_user_event_data;
 
 typedef struct _cl_sampler cl_sampler_t;
@@ -857,7 +856,7 @@ struct _cl_sampler {
     }                                                                         \
   while (0)
 
-#define POCL_UPDATE_EVENT_RUNNING(__event)                                    \
+#define POCL_UPDATE_EVENT_RUNNING_UNLOCKED(__event)                           \
   do                                                                          \
     {                                                                         \
       if (__event != NULL)                                                    \
@@ -879,21 +878,25 @@ struct _cl_sampler {
     }                                                                         \
   while (0)
 
+#define POCL_UPDATE_EVENT_RUNNING(__event)                                    \
+  POCL_LOCK_OBJ (__event);                                                    \
+  POCL_UPDATE_EVENT_RUNNING_UNLOCKED (__event);                               \
+  POCL_UNLOCK_OBJ (__event);
+
 #define POCL_UPDATE_EVENT_COMPLETE_INNER(__event, POST_EVENT)                 \
   do                                                                          \
     {                                                                         \
       if ((__event) != NULL)                                                  \
         {                                                                     \
           assert ((__event)->status == CL_RUNNING);                           \
+          POCL_LOCK_OBJ (__event);                                            \
           cl_command_queue __cq = (__event)->queue;                           \
-          assert ((__event)->status == CL_RUNNING);                           \
           if ((__cq)->device->ops->update_event)                              \
             (__cq)->device->ops->update_event ((__cq)->device, (__event),     \
                                                CL_COMPLETE);                  \
           else                                                                \
             {                                                                 \
               pocl_mem_objs_cleanup (__event);                                \
-              POCL_LOCK_OBJ (__event);                                        \
               (__event)->status = CL_COMPLETE;                                \
               if ((__cq)->properties & CL_QUEUE_PROFILING_ENABLE)             \
                 {                                                             \
@@ -902,11 +905,13 @@ struct _cl_sampler {
                           (__cq)->device->data);                              \
                 }                                                             \
               POCL_UNLOCK_OBJ (__event);                                      \
-              (__cq)->device->ops->broadcast (__event);                       \
               pocl_update_command_queue (__event);                            \
+              (__cq)->device->ops->broadcast (__event);                       \
+              POCL_LOCK_OBJ (__event);                                        \
             }                                                                 \
           pocl_event_updated (__event, CL_COMPLETE);                          \
           POST_EVENT;                                                         \
+          POCL_UNLOCK_OBJ (__event);                                          \
           POname (clReleaseEvent) (__event);                                  \
         }                                                                     \
     }                                                                         \
@@ -933,7 +938,6 @@ struct _cl_sampler {
           else                                                                \
             {                                                                 \
               pocl_mem_objs_cleanup (__event);                                \
-              POCL_LOCK_OBJ (__event);                                        \
               if ((__event)->status > CL_COMPLETE)                            \
                 (__event)->status = CL_FAILED;                                \
               if ((__cq)->properties & CL_QUEUE_PROFILING_ENABLE)             \
@@ -943,11 +947,14 @@ struct _cl_sampler {
                           (__cq)->device->data);                              \
                 }                                                             \
               POCL_UNLOCK_OBJ (__event);                                      \
-              (__cq)->device->ops->broadcast (__event);                       \
               pocl_update_command_queue (__event);                            \
+              (__cq)->device->ops->broadcast (__event);                       \
+              POCL_LOCK_OBJ (__event);                                        \
             }                                                                 \
           pocl_event_updated (__event, CL_FAILED);                            \
+          POCL_UNLOCK_OBJ (__event);                                          \
           POname (clReleaseEvent) (__event);                                  \
+          POCL_LOCK_OBJ (__event);                                            \
         }                                                                     \
     }                                                                         \
   while (0)

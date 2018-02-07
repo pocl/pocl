@@ -23,7 +23,6 @@ POname(clCreateUserEvent)(cl_context     context ,
       pocl_user_event_data *p = malloc (sizeof (pocl_user_event_data));
       assert (p);
       pthread_cond_init (&p->wakeup_cond, NULL);
-      pthread_mutex_init (&p->lock, NULL);
       event->data = p;
     }
 

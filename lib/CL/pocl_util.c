@@ -496,10 +496,9 @@ void pocl_command_enqueue (cl_command_queue command_queue,
   cl_event event;
 
   POCL_LOCK_OBJ (node->event);
-  assert(node->event->status == CL_QUEUED);
-  POCL_UNLOCK_OBJ (node->event);
-
+  assert (node->event->status == CL_QUEUED);
   assert (command_queue == node->event->queue);
+  POCL_UNLOCK_OBJ (node->event);
 
   POCL_LOCK_OBJ (command_queue);
   ++command_queue->command_count;
@@ -527,13 +526,11 @@ void pocl_command_enqueue (cl_command_queue command_queue,
 
   POCL_LOCK_OBJ (node->event);
   POCL_UPDATE_EVENT_QUEUED (node->event);
-  POCL_UNLOCK_OBJ (node->event);
-
   command_queue->device->ops->submit(node, command_queue);
-#ifdef POCL_DEBUG_BUILD
+  /* node->event is unlocked by device_ops->submit */
+
   if (pocl_is_option_set("POCL_IMPLICIT_FINISH"))
     POclFinish (command_queue);
-#endif
 }
 
 
@@ -568,6 +565,7 @@ int pocl_update_command_queue (cl_event event)
   int cq_ready;
 
   POCL_LOCK_OBJ (event->queue);
+  POCL_LOCK_OBJ (event);
   --event->queue->command_count;
   if (event->queue->barrier == event)
     event->queue->barrier = NULL;
@@ -580,6 +578,7 @@ int pocl_update_command_queue (cl_event event)
 
   cq_ready = (event->queue->command_count) ? 0: 1;
   POCL_UNLOCK_OBJ (event->queue);
+  POCL_UNLOCK_OBJ (event);
   return cq_ready;
 }
 

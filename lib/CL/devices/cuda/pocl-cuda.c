@@ -200,7 +200,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
        * if it's not CL_SUCCESS. We miss the exact line that failed this way, but it's
        * faster than checking after each attribute fetch.
        */
-      unsigned int value = 0;
+      int value = 0;
 #define GET_CU_PROP(key, target) do { \
   result |= cuDeviceGetAttribute (&value, CU_DEVICE_ATTRIBUTE_##key, data->device); \
   target = value; \
@@ -1044,11 +1044,12 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
 }
 
 void
-pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq)
+pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
 {
   CUresult result;
   CUstream stream = ((pocl_cuda_queue_data_t *)cq->data)->stream;
 
+  if (!locked)
   POCL_LOCK_OBJ (node->event);
 
   pocl_cuda_event_data_t *event_data
@@ -1101,7 +1102,7 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq)
       *event_data->ext_event_flag = 0;
 
       result = cuMemHostGetDevicePointer (&dev_ext_event_flag,
-                                          event_data->ext_event_flag, 0);
+                                           event_data->ext_event_flag, 0);
       CUDA_CHECK (result, "cuMemHostGetDevicePointer");
       result = cuStreamWaitValue32 (stream, dev_ext_event_flag, 1,
                                     CU_STREAM_WAIT_VALUE_GEQ);
@@ -1187,7 +1188,7 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq)
       }
     case CL_COMMAND_MIGRATE_MEM_OBJECTS:
       {
-        int i;
+        size_t i;
         for (i = 0; i < node->command.migrate.num_mem_objects; i++)
           {
             cl_device_id src_dev = node->command.migrate.source_devices[i];
@@ -1276,6 +1277,7 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
   if (((pocl_cuda_queue_data_t *)cq->data)->use_threads)
     {
       /* Add command to work queue */
+      POCL_UNLOCK_OBJ (node->event);
       pocl_cuda_queue_data_t *queue_data = (pocl_cuda_queue_data_t *)cq->data;
       pthread_mutex_lock (&queue_data->lock);
       DL_APPEND (queue_data->pending_queue, node);
@@ -1286,7 +1288,7 @@ pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
     {
       /* Submit command in this thread */
       cuCtxSetCurrent (((pocl_cuda_device_data_t *)cq->device->data)->context);
-      pocl_cuda_submit_node (node, cq);
+      pocl_cuda_submit_node (node, cq, 1);
     }
 }
 
@@ -1454,16 +1456,16 @@ pocl_cuda_update_event (cl_device_id device, cl_event event, cl_int status)
           event->time_end = max (event->time_end, event->time_start + 1);
         }
 
-      POCL_LOCK_OBJ (event);
       event->status = CL_COMPLETE;
+
       POCL_UNLOCK_OBJ (event);
       device->ops->broadcast (event);
-
       pocl_update_command_queue (event);
+      POCL_LOCK_OBJ (event);
 
       break;
     default:
-      assert ("Invalid event status\n");
+      assert (0 && "Invalid event status\n");
       break;
     }
 }
@@ -1569,7 +1571,7 @@ pocl_cuda_submit_thread (void *data)
       /* Submit command, if we found one */
       if (node)
         {
-          pocl_cuda_submit_node (node, queue_data->queue);
+          pocl_cuda_submit_node (node, queue_data->queue, 0);
 
           /* Add command to running queue */
           pthread_mutex_lock (&queue_data->lock);
