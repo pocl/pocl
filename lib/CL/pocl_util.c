@@ -351,7 +351,7 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
         POname(clRetainCommandQueue) (command_queue);
 
       (*event)->command_type = command_type;
-      (*event)->id = event_id_counter++;
+      (*event)->id = ATOMIC_INC(event_id_counter);
       (*event)->num_buffers = num_buffers;
       if (num_buffers > 0)
         {
