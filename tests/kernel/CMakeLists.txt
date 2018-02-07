@@ -208,16 +208,6 @@ set_tests_properties("kernel/test_shuffle_char" "kernel/test_shuffle_short"
     DEPENDS "pocl_version_check"
     LABELS "internal;kernel")
 
-# interestingly, long/ulong/double do not fail
-if(ARM64)
-  set_tests_properties("kernel/test_shuffle_char"
-    "kernel/test_shuffle_short" "kernel/test_shuffle_ushort"
-    "kernel/test_shuffle_uint" "kernel/test_shuffle_int"
-    "kernel/test_shuffle_float" ${HALF_TEST}
-  PROPERTIES
-    WILL_FAIL 1)
-endif()
-
 ######################################################################
 
 
