@@ -295,6 +295,8 @@ pocl_aligned_free (void *ptr)
 void
 pocl_lock_events_inorder (cl_event ev1, cl_event ev2)
 {
+  assert (ev1 != ev2);
+  assert (ev1->id != ev2->id);
   if (ev1->id < ev2->id)
     {
       POCL_LOCK_OBJ (ev1);
@@ -310,6 +312,8 @@ pocl_lock_events_inorder (cl_event ev1, cl_event ev2)
 void
 pocl_unlock_events_inorder (cl_event ev1, cl_event ev2)
 {
+  assert (ev1 != ev2);
+  assert (ev1->id != ev2->id);
   if (ev1->id < ev2->id)
     {
       POCL_UNLOCK_OBJ (ev1);
@@ -366,7 +370,7 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
 
 static int
 pocl_create_event_sync(cl_event waiting_event,
-                       cl_event notifier_event, cl_mem mem)
+                       cl_event notifier_event)
 {
   event_node * volatile notify_target = NULL;
   event_node * volatile wait_list_item = NULL;
@@ -471,8 +475,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
       if (command_queue->last_event.event)
         {
           pocl_create_event_sync ((*cmd)->event,
-                                  command_queue->last_event.event,
-                                  NULL);
+                                  command_queue->last_event.event);
         }
       POCL_UNLOCK_OBJ (command_queue);
     }
@@ -480,7 +483,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
   for (i = 0; i < num_events; ++i)
     {
       cl_event wle = wait_list[i];
-      pocl_create_event_sync ((*cmd)->event, wle, NULL);
+      pocl_create_event_sync ((*cmd)->event, wle);
     }
   POCL_MSG_PRINT_EVENTS ("Created command struct (event %d, type %X)\n",
                          (*cmd)->event->id, command_type);
@@ -505,7 +508,7 @@ void pocl_command_enqueue (cl_command_queue command_queue,
     {
       DL_FOREACH (command_queue->events, event)
         {
-          pocl_create_event_sync (node->event, event, NULL);
+          pocl_create_event_sync (node->event, event);
         }
     }
   if (node->type == CL_COMMAND_BARRIER)
@@ -514,7 +517,7 @@ void pocl_command_enqueue (cl_command_queue command_queue,
     {
       if (command_queue->barrier)
         {
-          pocl_create_event_sync (node->event, command_queue->barrier, NULL);
+          pocl_create_event_sync (node->event, command_queue->barrier);
         }
     }
   DL_APPEND (command_queue->events, node->event);
