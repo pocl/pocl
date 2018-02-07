@@ -23,8 +23,9 @@
 
 extern unsigned int _work_dim;
 
+__attribute__ ((noinline))
 uint _CL_OVERLOADABLE
-get_work_dim(void) __attribute__ ((noinline))
+get_work_dim(void)
 {
   return _work_dim;
 }

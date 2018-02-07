@@ -25,8 +25,9 @@ extern size_t _group_id_x;
 extern size_t _group_id_y;
 extern size_t _group_id_z;
 
+__attribute__ ((noinline))
 size_t _CL_OVERLOADABLE
-get_group_id(unsigned int dimindx) __attribute__ ((noinline))
+get_group_id(unsigned int dimindx)
 {
   switch(dimindx)
     {
