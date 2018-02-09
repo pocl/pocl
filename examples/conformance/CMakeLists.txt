@@ -30,8 +30,6 @@ set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
 
 if(NOT HAVE_GIT)
   message(STATUS "Disabling testsuite ${TS_NAME}, requires git to checkout sources")
-elseif(NOT TESTS_USE_ICD)
-  message(STATUS "Disabling testsuite ${TS_NAME}, requires ocl-icd")
 
 elseif(NOT MAKE_PROGRAM)
   message(STATUS "Disabling testsuite ${TS_NAME}, requires make to build")
@@ -48,6 +46,9 @@ ExternalProject_Add(
   GIT_REPOSITORY "https://github.com/franz/OpenCL-CTS"
   GIT_TAG "cl12_trunk"
   CONFIGURE_COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Release
+    -DENABLE_ASAN=${ENABLE_ASAN}
+    -DENABLE_TSAN=${ENABLE_TSAN}
+    "-DPOCL=$<TARGET_FILE:${POCL_LIBRARY_NAME}>"
       "${TS_BASEDIR}/src/${TS_NAME}/test_conformance"
   INSTALL_COMMAND /bin/true
 )

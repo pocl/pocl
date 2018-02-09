@@ -37,8 +37,6 @@ elseif(NOT GLUT_FOUND)
   message(STATUS "Disabling testsuite ${TS_NAME}, requires glut library")
 elseif(NOT PNG_FOUND)
   message(STATUS "Disabling testsuite ${TS_NAME}, requires PNG library")
-elseif(NOT TESTS_USE_ICD)
-  message(STATUS "Disabling testsuite ${TS_NAME}, requires ocl-icd")
 
 else()
 message(STATUS "Enabling testsuite ${TS_NAME}")
@@ -50,13 +48,28 @@ set(ACTUALLY_ENABLED_TESTSUITES ${ACTUALLY_ENABLED_TESTSUITES} PARENT_SCOPE)
 #-- Found PythonMako: success (found suitable version "1.0.3", minimum required is "0.8.0")
 #-- Found PythonSix: success (found suitable version "1.10.0", minimum required is "1.4.0")
 
+set(OCL_LIBRARY "OpenCL")
+unset(EXTRA_CFLAGS)
+unset(EXTRA_ARGS)
+set(POCL_DIR "${CMAKE_BINARY_DIR}/lib/CL")
+if(ENABLE_ASAN)
+  set(EXTRA_CFLAGS "-fsanitize=address")
+  set(EXTRA_ARGS "-DCMAKE_EXE_LINKER_FLAGS=-lasan -Wl,-rpath,${POCL_DIR}")
+  set(OCL_LIBRARY "$<TARGET_FILE:${POCL_LIBRARY_NAME}>")
+endif()
+if(ENABLE_TSAN)
+  set(EXTRA_CFLAGS "-fsanitize=thread")
+  set(EXTRA_ARGS "-DCMAKE_EXE_LINKER_FLAGS=-ltsan -Wl,-rpath,${POCL_DIR}")
+  set(OCL_LIBRARY "$<TARGET_FILE:${POCL_LIBRARY_NAME}>")
+endif()
+
 ExternalProject_Add(
   ${TS_NAME}
   PREFIX "${TS_BASEDIR}"
   GIT_REPOSITORY "git://anongit.freedesktop.org/piglit"
   CMAKE_ARGS
     -DCMAKE_BUILD_TYPE=RelWithDebInfo
-    "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=-O2 -g -DCL_USE_DEPRECATED_OPENCL_1_2_APIS"
+    "-DCMAKE_CXX_FLAGS_RELWITHDEBINFO=-O2 -g -DCL_USE_DEPRECATED_OPENCL_1_2_APIS ${EXTRA_CFLAGS}"
     -DPIGLIT_BUILD_CL_TESTS=ON
     -DPIGLIT_BUILD_DMA_BUF_TESTS:BOOL=OFF
     -DPIGLIT_BUILD_GL_TESTS=OFF
@@ -66,7 +79,8 @@ ExternalProject_Add(
     -DPIGLIT_USE_WAFFLE=OFF
     -DPIGLIT_BUILD_GLX_TESTS=OFF
     "-DOPENCL_INCLUDE_PATH=${CMAKE_SOURCE_DIR}/include/"
-    "-DOPENCL_opencl_LIBRARY:LIST=OpenCL"
+    "-DOPENCL_opencl_LIBRARY:STRING=${OCL_LIBRARY}"
+    ${EXTRA_ARGS}
   INSTALL_COMMAND ""
 )
 
