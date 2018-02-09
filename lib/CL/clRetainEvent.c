@@ -28,8 +28,9 @@ POname(clRetainEvent)(cl_event  event ) CL_API_SUFFIX__VERSION_1_0
 {
   POCL_RETURN_ERROR_COND((event == NULL), CL_INVALID_EVENT);
 
-  POCL_RETAIN_OBJECT(event);
-  POCL_MSG_PRINT_REFCOUNTS ("Retain Event %p  : %d\n", event, event->pocl_refcount);
+  int refc;
+  POCL_RETAIN_OBJECT_REFCOUNT (event, refc);
+  POCL_MSG_PRINT_REFCOUNTS ("Retain Event %p  : %d\n", event, refc);
 
   return CL_SUCCESS;
 }

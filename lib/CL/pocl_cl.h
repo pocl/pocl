@@ -119,6 +119,13 @@ typedef pthread_mutex_t pocl_lock_t;
 #define POCL_RETAIN_OBJECT_UNLOCKED(__OBJ__)    \
     ++((__OBJ__)->pocl_refcount);
 
+#define POCL_RETAIN_OBJECT_REFCOUNT(__OBJ__, R) \
+  do {                                          \
+    POCL_LOCK_OBJ (__OBJ__);                    \
+    R = POCL_RETAIN_OBJECT_UNLOCKED (__OBJ__);  \
+    POCL_UNLOCK_OBJ (__OBJ__);                  \
+  } while (0)
+
 #define POCL_RETAIN_OBJECT(__OBJ__)             \
   do {                                          \
     POCL_LOCK_OBJ (__OBJ__);                    \
