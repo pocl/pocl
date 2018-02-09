@@ -210,6 +210,9 @@ use ";" as separator (you'll have to escape it for bash).
   programs in ``examples/`` directory) are built from their git branches
   (if available), as opposed to default: building from release tars.
 
+- ``-DHOST_DEVICE_EXTENSION_SPIR_SUPPORT=ON`` - enable the SPIR support.
+  Defaults to OFF.
+
 LLVM-less build
 ---------------
  See :ref:`pocl-without-llvm`
