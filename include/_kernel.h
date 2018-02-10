@@ -235,7 +235,10 @@ double __ovld __cnfn dot(double16 p0, double16 p1);
 /* GNU's libm seems to use INT_MIN here while the Clang's header uses
    INT_MAX. Both are allowed by the OpenCL specs. */
 #undef FP_ILOGBNAN
+#undef FP_ILOGB0
 #define FP_ILOGBNAN INT_MIN
+#define FP_ILOGB0 INT_MIN
+
 
 /* Function/type attributes supported by Clang/SPIR */
 #if __has_attribute(__always_inline__)

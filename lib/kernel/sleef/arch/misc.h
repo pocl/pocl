@@ -32,6 +32,13 @@
 #define M_2_PIl 0.636619772367581343075535053490057448L
 #endif
 
+#undef FP_ILOGB0
+#undef FP_ILOGBNAN
+
+#define FP_ILOGB0   INT_MIN
+#define FP_ILOGBNAN INT_MIN
+
+
 //
 
 /*
