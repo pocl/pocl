@@ -328,7 +328,7 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
   passes.push_back("dot-cfg");
 #endif
 
-  if (currentWgMethod == "loopvec")
+  if (currentWgMethod == "loopvec" && SPMDDevice)
     passes.push_back("scalarizer");
 
   passes.push_back("instcombine");
