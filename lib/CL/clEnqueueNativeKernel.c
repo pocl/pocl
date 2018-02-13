@@ -120,8 +120,6 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
   command_node->command.native.args = args_copy;
   command_node->command.native.cb_args = cb_args;
 
-  POname(clRetainCommandQueue) (command_queue);
-
   pocl_command_enqueue (command_queue, command_node);
 
   return CL_SUCCESS;
