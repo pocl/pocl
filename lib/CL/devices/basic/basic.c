@@ -45,7 +45,9 @@
 #include "pocl_llvm.h"
 #endif
 
-#define max(a,b) (((a) > (b)) ? (a) : (b))
+/* default WG size in each dimension & total WG size.
+ * this should be reasonable for CPU */
+#define DEFAULT_WG_SIZE 4096
 
 struct data {
   /* Currently loaded kernel. */
@@ -163,8 +165,15 @@ pocl_basic_init_device_infos(unsigned j, struct _cl_device_id* dev)
     the SIMD lanes times the vector units, but not more than
     that to avoid stack overflow and cache trashing.
   */
+  int max_wg
+      = pocl_get_int_option ("POCL_MAX_WORK_GROUP_SIZE", DEFAULT_WG_SIZE);
+  assert (max_wg > 0);
+  max_wg = min (max_wg, DEFAULT_WG_SIZE);
+  if (max_wg < 0)
+    max_wg = DEFAULT_WG_SIZE;
+
   dev->max_work_item_sizes[0] = dev->max_work_item_sizes[1]
-      = dev->max_work_item_sizes[2] = dev->max_work_group_size = 1024 * 4;
+      = dev->max_work_item_sizes[2] = dev->max_work_group_size = max_wg;
 
   dev->preferred_wg_size_multiple = 8;
 #ifdef OCS_AVAILABLE

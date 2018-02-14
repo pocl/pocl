@@ -493,7 +493,16 @@ pocl_hsa_init_device_infos(unsigned j, struct _cl_device_id* dev)
   uint16_t wg_sizes[3];
   HSA_CHECK(hsa_agent_get_info(agent, HSA_AGENT_INFO_WORKGROUP_MAX_DIM,
                                &wg_sizes));
-  dev->max_work_item_sizes[0] = wg_sizes[0];
+
+  int max_wg = pocl_get_int_option ("POCL_MAX_WORK_GROUP_SIZE", 0);
+  if (max_wg > 0)
+    {
+      wg_sizes[0] = min (wg_sizes[0], max_wg);
+      wg_sizes[1] = min (wg_sizes[1], max_wg);
+      wg_sizes[2] = min (wg_sizes[2], max_wg);
+    }
+
+  dev->max_work_group_size = dev->max_work_item_sizes[0] = wg_sizes[0];
   dev->max_work_item_sizes[1] = wg_sizes[1];
   dev->max_work_item_sizes[2] = wg_sizes[2];
 
