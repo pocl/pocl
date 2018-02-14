@@ -30,4 +30,5 @@ Luxmark
   an OpenCL device. This requires editing scenes/<name>/render.cfg,
   you must add ``opencl.cpu.use = 0`` and ``film.opencl.device = 0``
 
-* Microphone and Luxball scenes work, Hotel scene fails to compile
+* Microphone and Luxball scenes work with LLVM 5 and later.
+  Hotel scene fails to compile with LLVM 5 but works with LLVM 6.

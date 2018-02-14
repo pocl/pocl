@@ -88,11 +88,6 @@ pocl.
  interacting with LLVM via on-disk files, so pocl requires some disk space at
  least temporarily (at runtime).
 
-- **POCL_KERNEL_COMPILER_OPT_SWITCH**
-
- Override the default "-O3" that is passed to the LLVM opt as a final
- optimization switch.
-
 - **POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES**
 
  If this is set to 1, the kernel compiler cache/temporary directory that
@@ -108,7 +103,8 @@ pocl.
 - **POCL_MAX_WORK_GROUP_SIZE**
 
  Forces the maximum WG size returned by the device or kernel work group queries
- to be at most this number.
+ to be at most this number. For certain devices, this is can only be lower than
+ their hardware limits.
 
 - **POCL_MEMORY_LIMIT**
 
@@ -127,11 +123,6 @@ pocl.
 
  When set to 1, prints out remarks produced by the loop vectorizer of LLVM
  during kernel compilation.
-
-- **POCL_VERBOSE**
-
- If set to 1, output the LLVM commands as they are executed to compile
- and run kernels.
 
 - **POCL_WORK_GROUP_METHOD**
 
