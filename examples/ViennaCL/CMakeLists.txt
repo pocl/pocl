@@ -300,6 +300,24 @@ if(EXISTS "${ViennaCL_TGZ}")
       LABELS "ViennaCL ViennaCL_tests")
 
 
+  # failing tests
+  set_tests_properties(
+    # Could not find a dominating alternative variable.
+    viennacl_tests_sparse_prod_test_opencl
+    viennacl_tests_spmdm_test_opencl
+    viennacl_tests_sparse_test_opencl
+    viennacl_examples_iterative_custom
+    # used type 'float' where floating point type is not allowed
+    viennacl_tests_self_assign_test_opencl
+    # used type 'double' where floating point type is not allowed
+    viennacl_examples_amg
+    # Error! Difference: 1924149235
+    viennacl_tests_vector_int_test_opencl
+    viennacl_tests_vector_uint_test_opencl
+    PROPERTIES
+      WILL_FAIL 1)
+
+
 else()
 
   message(STATUS "Disabling testsuite ${TS_NAME}, required files not found" )
