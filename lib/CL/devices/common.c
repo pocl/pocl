@@ -585,6 +585,7 @@ pocl_exec_command (_cl_command_node * volatile node)
                                           .mem_ptr,
                                       (node->command.unmap.mapping)->offset,
                                       (node->command.unmap.mapping)->size);
+      assert ((node->command.unmap.mapping)->unmap_requested > 0);
       DL_DELETE((node->command.unmap.memobj)->mappings, 
                 node->command.unmap.mapping);
       (node->command.unmap.memobj)->map_count--;
