@@ -218,12 +218,22 @@ pocl_cache_write_program_source (char *program_cl_path, cl_program program)
 
 int
 pocl_cache_write_kernel_objfile (char *objfile_path,
-                                 char *objfile_content,
+                                 const char *objfile_content,
                                  size_t objfile_size)
 {
   return pocl_write_tempfile (objfile_path, tempfile_pattern, ".so.o",
                               objfile_content, objfile_size, NULL);
 }
+
+int
+pocl_cache_write_spirv (char *spirv_path,
+                        const char *spirv_content,
+                        size_t file_size)
+{
+  return pocl_write_tempfile (spirv_path, tempfile_pattern, ".spirv",
+                              spirv_content, file_size, NULL);
+}
+
 
 /******************************************************************************/
 

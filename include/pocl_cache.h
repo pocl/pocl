@@ -59,8 +59,12 @@ int pocl_cache_write_program_source(char *program_cl_path,
                                     cl_program program);
 
 int pocl_cache_write_kernel_objfile (char *objfile_path,
-                                     char *objfile_content,
+                                     const char *objfile_content,
                                      size_t objfile_size);
+
+int pocl_cache_write_spirv (char *spirv_path,
+                            const char *spirv_content,
+                            size_t file_size);
 
 int pocl_cache_update_program_last_access(cl_program program,
                                           unsigned device_i);

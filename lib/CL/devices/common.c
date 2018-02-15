@@ -122,8 +122,7 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
   if (pocl_exists (final_binary_path))
     goto FINISH;
 
-  error = pocl_llvm_codegen (kernel, device, llvm_module, &objfile,
-                             &objfile_size);
+  error = pocl_llvm_codegen (device, llvm_module, &objfile, &objfile_size);
   if (error)
     {
       POCL_MSG_PRINT_LLVM ("pocl_llvm_codegen() failed"

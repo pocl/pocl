@@ -7,14 +7,9 @@
 /* "Build with ICD" */
 #cmakedefine BUILD_ICD
 
-#cmakedefine CLANG_IS_PATCHED_FOR_SPIR_CC
-
 #define CLANG "@CLANG@"
 
 #define CLANG_RESOURCE_DIR "@CLANG_RESOURCE_DIR@"
-
-/* "Using a SPIR generator Clang from Khronos." */
-#cmakedefine CLANG_SPIR
 
 /* clang++ executable */
 #define CLANGXX "@CLANGXX@"
@@ -35,6 +30,10 @@
 #cmakedefine ENABLE_SLEEF
 
 #cmakedefine ENABLE_VECMATHLIB
+
+#cmakedefine ENABLE_SPIR
+
+#cmakedefine ENABLE_SPIRV
 
 #cmakedefine HAVE_FORK
 
@@ -80,6 +79,8 @@
 #cmakedefine KERNELLIB_HOST_DISTRO_VARIANTS
 
 #define LLVM_LLC "@LLVM_LLC@"
+
+#define LLVM_SPIRV "@LLVM_SPIRV@"
 
 /* "Using LLVM 3.6" */
 #cmakedefine LLVM_3_6
@@ -141,6 +142,10 @@
 
 /* used in tce_common.c & pocl_llvm_api.cc  */
 #define SRCDIR  "@SRCDIR@"
+
+#define SPIR_TARGET_TRIPLE "@SPIR_TARGET_TRIPLE@"
+
+#define SPIR_TARGET_DATALAYOUT "@SPIR_TARGET_DATALAYOUT@"
 
 #cmakedefine TCEMC_AVAILABLE
 

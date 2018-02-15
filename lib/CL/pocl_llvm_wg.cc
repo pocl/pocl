@@ -137,17 +137,17 @@ void clearKernelPasses() {
 }
 
 // Returns the TargetMachine instance or zero if no triple is provided.
-static TargetMachine *GetTargetMachine(cl_device_id device) {
+static TargetMachine *GetTargetMachine(cl_device_id device, Triple &triple) {
 
   if (targetMachines.find(device) != targetMachines.end())
     return targetMachines[device];
 
   std::string Error;
-  Triple TheTriple(device->llvm_target_triplet);
+  // Triple TheTriple(device->llvm_target_triplet);
 
   std::string MCPU = device->llvm_cpu ? device->llvm_cpu : "";
 
-  const Target *TheTarget = TargetRegistry::lookupTarget("", TheTriple, Error);
+  const Target *TheTarget = TargetRegistry::lookupTarget("", triple, Error);
 
   // In LLVM 3.4 and earlier, the target registry falls back to
   // the cpp backend in case a proper match was not found. In
@@ -160,12 +160,12 @@ static TargetMachine *GetTargetMachine(cl_device_id device) {
 
 #ifdef LLVM_OLDER_THAN_6_0
   TargetMachine *TM = TheTarget->createTargetMachine(
-      TheTriple.getTriple(), MCPU, StringRef(""), GetTargetOptions(),
-      Reloc::PIC_, CodeModel::Default, CodeGenOpt::Aggressive);
+      triple.getTriple(), MCPU, StringRef(""), GetTargetOptions(), Reloc::PIC_,
+      CodeModel::Default, CodeGenOpt::Aggressive);
 #else
   TargetMachine *TM = TheTarget->createTargetMachine(
-      TheTriple.getTriple(), MCPU, StringRef(""), GetTargetOptions(),
-      Reloc::PIC_, CodeModel::Small, CodeGenOpt::Aggressive);
+      triple.getTriple(), MCPU, StringRef(""), GetTargetOptions(), Reloc::PIC_,
+      CodeModel::Small, CodeGenOpt::Aggressive);
 #endif
 
   assert(TM != NULL && "llvm target has no targetMachine constructor");
@@ -192,12 +192,11 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
 
   Registry = PassRegistry::getPassRegistry();
 
-  Triple triple(device->llvm_target_triplet);
-
   Passes = new PassManager();
 
   // Need to setup the target info for target specific passes. */
-  TargetMachine *Machine = GetTargetMachine(device);
+  Triple triple(device->llvm_target_triplet);
+  TargetMachine *Machine = GetTargetMachine(device, triple);
 
 #ifdef LLVM_OLDER_THAN_3_7
   // Add internal analysis passes from the target machine.
@@ -580,18 +579,18 @@ void pocl_llvm_update_binaries(cl_program program) {
 /* Run LLVM codegen on input file (parallel-optimized).
  * modp = llvm::Module* of parallel.bc
  * Output native object file (<kernel>.so.o). */
-int pocl_llvm_codegen(cl_kernel kernel, cl_device_id device, void *modp,
-                      char **output, size_t *output_size) {
+int pocl_llvm_codegen(cl_device_id device, void *modp, char **output,
+                      size_t *output_size) {
 
   PoclCompilerMutexGuard lockHolder(NULL);
   InitializeLLVM();
 
-  llvm::Triple triple(device->llvm_target_triplet);
-  llvm::TargetMachine *target = GetTargetMachine(device);
-
   llvm::Module *input = (llvm::Module *)modp;
   assert(input);
   *output = NULL;
+
+  llvm::Triple triple(device->llvm_target_triplet);
+  llvm::TargetMachine *target = GetTargetMachine(device, triple);
 
   PassManager PM;
 #ifdef LLVM_OLDER_THAN_3_7

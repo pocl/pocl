@@ -584,17 +584,14 @@ int pocl_llvm_build_program(cl_program program,
   return CL_SUCCESS;
 }
 
-
-int pocl_llvm_link_program(cl_program program,
-                           unsigned device_i,
-                           char *program_bc_path,
-                           cl_uint num_input_programs,
+int pocl_llvm_link_program(cl_program program, unsigned device_i,
+                           char *program_bc_path, cl_uint num_input_programs,
                            unsigned char **cur_device_binaries,
-                           size_t *cur_device_binary_sizes,
-                           void **cur_llvm_irs,
-                           int create_library) {
+                           size_t *cur_device_binary_sizes, void **cur_llvm_irs,
+                           int create_library, int spir) {
 
   std::string concated_binaries;
+  llvm::Module *linked_module = nullptr;
   size_t n = 0, i;
   cl_device_id device = program->devices[device_i];
   llvm::Module **modptr = (llvm::Module **)&program->llvm_irs[device_i];
@@ -602,6 +599,36 @@ int pocl_llvm_link_program(cl_program program,
 
   PoclCompilerMutexGuard lockHolder(NULL);
   InitializeLLVM();
+
+  if (spir) {
+#ifdef ENABLE_SPIR
+    linked_module = parseModuleIRMem((char *)program->binaries[device_i],
+                                     program->binary_sizes[device_i]);
+
+    Triple triple(device->llvm_target_triplet);
+
+    /* Note this is a hack to get SPIR working. We'll be linking the
+     * host kernel library (plain LLVM IR) to the SPIR program.bc,
+     * so LLVM complains about incompatible DataLayouts.
+     */
+    if (triple.getArch() == Triple::x86 || triple.getArch() == Triple::x86_64) {
+      if (linked_module->getTargetTriple() == std::string(SPIR_TARGET_TRIPLE)) {
+        linked_module->setTargetTriple(triple.getTriple());
+        linked_module->setDataLayout(SPIR_TARGET_DATALAYOUT);
+      } else {
+        POCL_MSG_ERR("Invalid SPIR binary triple\n");
+        return CL_LINK_PROGRAM_FAILURE;
+      }
+    } else {
+      POCL_MSG_ERR("SPIR is currently only supported on x86(-64)\n");
+      return CL_LINK_PROGRAM_FAILURE;
+    }
+
+#else
+    POCL_MSG_ERR("SPIR not supported\n");
+    return CL_LINK_PROGRAM_FAILURE;
+#endif
+  } else {
 
 #ifdef LLVM_OLDER_THAN_3_8
   llvm::Module *mod =
@@ -633,10 +660,11 @@ int pocl_llvm_link_program(cl_program program,
   }
 
 #ifdef LLVM_OLDER_THAN_3_8
-  llvm::Module *linked_module = mod;
+  linked_module = mod;
 #else
-  llvm::Module *linked_module = mod.release();
+  linked_module = mod.release();
 #endif
+  }
 
   if (linked_module == nullptr)
     return CL_LINK_PROGRAM_FAILURE;

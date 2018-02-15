@@ -25,6 +25,7 @@
 #include "pocl_cache.h"
 #include "pocl_cl.h"
 #include "pocl_file_util.h"
+#include "pocl_llvm.h"
 #include "pocl_shared.h"
 #include "pocl_util.h"
 #include <string.h>
@@ -142,6 +143,45 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
           if (binary_status != NULL)
             binary_status[i] = CL_SUCCESS;
         }
+      /* SPIR-V binary needs to be converted, and requires
+       * linking of the converted BC */
+#ifdef OCS_AVAILABLE
+      else if (bitcode_is_spirv ((const char *)binaries[i], lengths[i]))
+        {
+          int no_spir
+              = strstr (device_list[i]->extensions, "cl_khr_spir") == NULL;
+          POCL_GOTO_ERROR_ON (
+              no_spir, CL_BUILD_PROGRAM_FAILURE,
+              "SPIR binary provided, but device has no SPIR support");
+#ifdef ENABLE_SPIRV
+          POCL_MSG_PRINT_LLVM (
+              "SPIR-V binary detected, converting to LLVM SPIR\n");
+          char program_bc_spirv[POCL_FILENAME_LENGTH];
+          char program_bc_temp[POCL_FILENAME_LENGTH];
+          pocl_cache_write_spirv (program_bc_spirv, (const char *)binaries[i],
+                                  lengths[i]);
+          pocl_cache_tempname (program_bc_temp, ".bc", NULL);
+
+          char *args[] = { LLVM_SPIRV,       "-r", "-o", program_bc_temp,
+                           program_bc_spirv, NULL };
+
+          errcode = pocl_run_command (args);
+          assert (errcode == 0);
+          /* load LLVM SPIR binary. */
+          uint64_t fsize;
+          char *content;
+          pocl_read_file (program_bc_temp, &content, &fsize);
+          program->binary_sizes[i] = fsize;
+          program->binaries[i] = (unsigned char *)content;
+          pocl_remove (program_bc_temp);
+#else
+          POCL_GOTO_ERROR_ON (
+              1, CL_BUILD_PROGRAM_FAILURE,
+              "SPIR binary provided, but this pocl has no SPIR-V support."
+              "SPIR-V support requires llvm-spirv converter binary.\n");
+#endif
+        }
+#endif
       /* Poclcc binary */
       else if (pocl_binary_check_binary(device_list[i], binaries[i]))
         {
@@ -171,6 +211,7 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
       /* Unknown binary */
       else
         {
+          POCL_MSG_WARN ("Could not recognize binary\n");
           if (binary_status != NULL)
             binary_status[i] = CL_INVALID_BINARY;
           errcode = CL_INVALID_BINARY;
