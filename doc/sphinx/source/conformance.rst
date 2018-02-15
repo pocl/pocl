@@ -92,7 +92,8 @@ Known issues in pocl / things to be aware of
 - Many of ``native_`` and ``half_`` variants of kernel library functions are mapped
   to the "full" variants.
 
-- the optional OpenGL / D3D / SPIR extensions are not supported
+- the optional OpenGL / D3D extensions are not supported. There is experimental
+  support for SPIR
 
 - clUnloadCompiler() only actually unload LLVM after all programs & kernels
   have been released.
