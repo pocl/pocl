@@ -10,9 +10,6 @@
 #endif
 
 #include <arm_neon.h>
-#include <stdint.h>
-
-#include "misc.h"
 
 #define ENABLE_DP
 #define LOG2VECTLENDP 1
