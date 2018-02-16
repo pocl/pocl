@@ -1,4 +1,5 @@
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
+#define _GNU_SOURCE
 #define _DEFAULT_SOURCE
 #include <unistd.h>
 #include <sys/types.h>
