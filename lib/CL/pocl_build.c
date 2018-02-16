@@ -414,12 +414,18 @@ clean_program_on_rebuild (cl_program program)
         }
       program->num_kernels = 0;
       program->build_status = CL_BUILD_NONE;
-      if (program->build_log)
-        for (i = 0; i < program->num_devices; ++i)
-          {
-            POCL_MEM_FREE (program->build_log[i]);
-            memset (program->build_hash[i], 0, sizeof (SHA1_digest_t));
-          }
+      for (i = 0; i < program->num_devices; ++i)
+        {
+          POCL_MEM_FREE (program->build_log[i]);
+          memset (program->build_hash[i], 0, sizeof (SHA1_digest_t));
+          if (program->source)
+            {
+              POCL_MEM_FREE (program->binaries[i]);
+              program->binary_sizes[i] = 0;
+              POCL_MEM_FREE (program->llvm_irs[i]);
+            }
+        }
+      program->main_build_log[0] = 0;
     }
 }
 
@@ -641,8 +647,7 @@ compile_and_link_program(int compile_program,
                   = input_programs[j]->binary_sizes[device_i];
 
               if (input_programs[j]->llvm_irs[device_i] == NULL)
-                pocl_update_program_llvm_irs (input_programs[j], device_i,
-                                              device);
+                pocl_update_program_llvm_irs (input_programs[j], device_i);
 
               cur_llvm_irs[j] = input_programs[j]->llvm_irs[device_i];
               assert (cur_llvm_irs[j]);
@@ -682,7 +687,7 @@ compile_and_link_program(int compile_program,
 
       if (program->llvm_irs[device_i] == NULL)
         {
-          pocl_update_program_llvm_irs(program, device_i, device);
+          pocl_update_program_llvm_irs(program, device_i);
         }
       /* Maintain a 'last_accessed' file in every program's
        * cache directory. Will be useful for cache pruning script

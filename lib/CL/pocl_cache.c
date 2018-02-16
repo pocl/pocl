@@ -588,42 +588,27 @@ pocl_cache_create_program_cachedir(cl_program program,
     if (use_kernel_cache)
       {
 #ifdef OCS_AVAILABLE
-    const char *hash_source = NULL;
-    uint8_t old_build_hash[SHA1_DIGEST_SIZE] = {0};
-    size_t hs_len = 0;
+        const char *hash_source = NULL;
+        size_t hs_len = 0;
 
-    if (program->source && preprocessed_source==NULL) {
-        hash_source = program->source;
-        hs_len = strlen(program->source);
-    } else {
-        hash_source = preprocessed_source;
-        hs_len = source_len;
-    }
-
-    if (program->build_hash[device_i])
-        memcpy(old_build_hash, program->build_hash[device_i], SHA1_DIGEST_SIZE);
-
-    build_program_compute_hash(program, device_i, hash_source, hs_len);
-
-    /* if the old hash is nonzero and different, we must free the built binaries
-       before returning, so that they get loaded from the new location */
-    if (old_build_hash[0] && memcmp(old_build_hash, program->build_hash[device_i],
-            SHA1_DIGEST_SIZE))
-    {
-        if (program->binaries[device_i]) {
-            POCL_MEM_FREE(program->binaries[device_i]);
-            program->binary_sizes[device_i] = 0;
+        if (program->source && preprocessed_source==NULL) {
+            hash_source = program->source;
+            hs_len = strlen(program->source);
+        } else {
+            hash_source = preprocessed_source;
+            hs_len = source_len;
         }
-        pocl_free_llvm_irs(program, device_i);
-    }
+
+        build_program_compute_hash(program, device_i, hash_source, hs_len);
+
 #else
-    assert(buildhash_is_valid(program, device_i));
+        assert(buildhash_is_valid(program, device_i));
 #endif
 
-    program_device_dir(program_bc_path, program, device_i, "");
+        program_device_dir(program_bc_path, program, device_i, "");
 
-    if (pocl_mkdir_p(program_bc_path))
-        return 1;
+        if (pocl_mkdir_p(program_bc_path))
+            return 1;
       }
     else
       {

@@ -497,8 +497,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
 }
 
 int pocl_update_program_llvm_irs(cl_program program,
-                                 unsigned device_i,
-                                 cl_device_id device) {
+                                 unsigned device_i) {
   PoclCompilerMutexGuard lockHolder(NULL);
   InitializeLLVM();
 

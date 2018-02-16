@@ -125,8 +125,7 @@ int pocl_llvm_codegen(cl_kernel kernel, cl_device_id device, void *modp,
 
 /* Parse program file and populate program's llvm_irs */
 int
-pocl_update_program_llvm_irs(cl_program program, unsigned device_i,
-                             cl_device_id device);
+pocl_update_program_llvm_irs(cl_program program, unsigned device_i);
 
 
 int pocl_llvm_link_program(cl_program program,
