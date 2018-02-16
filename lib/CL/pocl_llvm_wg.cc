@@ -408,11 +408,6 @@ int pocl_llvm_generate_workgroup_function_nowrite(cl_device_id device,
          kernel->name, local_x, local_y, local_z, parallel_bc_path);
 #endif
 
-  Triple triple(device->llvm_target_triplet);
-
-  SMDiagnostic Err;
-
-  // Link the kernel and runtime library
   llvm::Module *input = NULL;
   if (kernel->program->llvm_irs != NULL &&
       kernel->program->llvm_irs[device_i] != NULL) {
@@ -432,21 +427,6 @@ int pocl_llvm_generate_workgroup_function_nowrite(cl_device_id device,
     char program_bc_path[POCL_FILENAME_LENGTH];
     pocl_cache_program_bc_path(program_bc_path, kernel->program, device_i);
     input = parseModuleIR(program_bc_path);
-  }
-
-  /* Note this is a hack to get SPIR working. We'll be linking the
-   * host kernel library (plain LLVM IR) to the SPIR program.bc,
-   * so LLVM complains about incompatible DataLayouts. The proper solution
-   * would be to generate a SPIR kernel library
-   */
-  if (triple.getArch() == Triple::x86 || triple.getArch() == Triple::x86_64) {
-    if (input->getTargetTriple().substr(0, 6) == std::string("spir64")) {
-      input->setTargetTriple(triple.getTriple());
-      input->setDataLayout("e-m:e-i64:64-f80:128-n8:16:32:64-S128");
-    } else if (input->getTargetTriple().substr(0, 4) == std::string("spir")) {
-      input->setTargetTriple(triple.getTriple());
-      input->setDataLayout("e-m:e-p:32:32-i64:64-f80:32-n8:16:32-S32");
-    }
   }
 
   /* Now finally run the set of passes assembled above */

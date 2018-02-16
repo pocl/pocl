@@ -276,13 +276,6 @@ int pocl_llvm_build_program(cl_program program,
 
   if (device->has_64bit_long)
     ss << "-Dcl_khr_int64 ";
-  // This can cause illegal optimizations when unaware
-  // of the barrier semantics. -O2 is the default opt level in
-  // Clang for OpenCL C and seems to affect the performance
-  // of the end result, even if we optimize the final WG
-  // func. TODO: There should be 'noduplicate' etc. flags in
-  // the 'barrier' function to prevent them.
-  // ss << "-O2 ";
 
   ss << "-x cl ";
   // Remove the inline keywords to force the user functions
