@@ -476,7 +476,7 @@ void pocl_pthread_update_event (cl_device_id device, cl_event event, cl_int stat
       if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
         event->time_end = device->ops->get_timer_value(device->data);
 
-
+      POCL_DEBUG_EVENT_TIME (event, "NDRange Kernel        ");
       POCL_UNLOCK_OBJ (event);
       device->ops->broadcast (event);
       cq_ready = pocl_update_command_queue (event);
