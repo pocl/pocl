@@ -23,9 +23,9 @@
 #
 #=============================================================================
 
-add_executable(poclcc poclcc.c)
+add_executable(poclcc poclcc.c "${CMAKE_SOURCE_DIR}/lib/poclu/misc.c")
 
-target_link_libraries(poclcc ${POCLU_LINK_OPTIONS})
+target_link_libraries(poclcc ${OPENCL_LIBS})
 
 install(TARGETS "poclcc" RUNTIME
         DESTINATION "${POCL_INSTALL_PUBLIC_BINDIR}")
