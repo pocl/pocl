@@ -56,7 +56,7 @@ endif()
 
 set(POCL_DEVICES_SOURCES
   devices.h  devices.c
-  bufalloc.c  dev_image.h
+  bufalloc.c
   common.h common.c
   bufalloc.h  cpuinfo.c cpuinfo.h)
 

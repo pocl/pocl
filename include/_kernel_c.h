@@ -33,78 +33,6 @@
 
 #include "pocl_types.h"
 
-#if (__clang_major__ == 3)
-# if (__clang_minor__ == 7)
-# undef LLVM_3_7
-# define LLVM_3_7
-#elif (__clang_minor__ == 8)
-# undef LLVM_3_8
-# define LLVM_3_8
-#elif (__clang_minor__ == 9)
-# undef LLVM_3_9
-# define LLVM_3_9
-#endif
-
-#elif (__clang_major__ == 4)
-
-# undef LLVM_4_0
-# define LLVM_4_0
-
-#elif (__clang_major__ == 5)
-
-# undef LLVM_5_0
-# define LLVM_5_0
-
-#elif (__clang_major__ == 6)
-
-# undef LLVM_6_0
-# define LLVM_6_0
-
-#elif (__clang_major__ == 7)
-
-# undef LLVM_7_0
-# define LLVM_7_0
-
-#else
-
-#error Unsupported Clang/LLVM version.
-
-#endif
-
-#ifndef LLVM_7_0
-#define LLVM_OLDER_THAN_7_0 1
-
-#ifndef LLVM_6_0
-#define LLVM_OLDER_THAN_6_0 1
-
-#ifndef LLVM_5_0
-#define LLVM_OLDER_THAN_5_0 1
-
-#ifndef LLVM_4_0
-#define LLVM_OLDER_THAN_4_0 1
-
-#ifndef LLVM_3_9
-#define LLVM_OLDER_THAN_3_9 1
-
-#ifndef LLVM_3_8
-#define LLVM_OLDER_THAN_3_8 1
-
-#ifndef LLVM_3_7
-#define LLVM_OLDER_THAN_3_7 1
-
-#ifndef LLVM_3_6
-#define LLVM_OLDER_THAN_3_6 1
-
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
-
-
 #include "_kernel_constants.h"
 
 /* Function/type attributes supported by Clang/SPIR */
@@ -123,21 +51,22 @@
 #else
 #  define _CL_OVERLOADABLE
 #endif
-#if __has_attribute(__const__)
-#  define _CL_READNONE __attribute__((__const__))
-#else
-#  define _CL_READNONE
-#endif
 #if __has_attribute(__pure__)
 #  define _CL_READONLY __attribute__((__pure__))
 #else
 #  define _CL_READONLY
 #endif
-#if __has_attribute(__unavailable__)
-#  define _CL_UNAVAILABLE __attribute__((__unavailable__))
+#if __has_attribute(__const__)
+#  define _CL_READNONE __attribute__((__const__))
 #else
-#  define _CL_UNAVAILABLE
+#  define _CL_READNONE
 #endif
+#if __has_attribute(convergent)
+#  define _CL_CONVERGENT __attribute__((convergent))
+#else
+#  define _CL_CONVERGENT
+#endif
+
 
 typedef char char2  __attribute__((__ext_vector_type__(2)));
 typedef char char3  __attribute__((__ext_vector_type__(3)));
@@ -226,7 +155,7 @@ typedef ulong ulong16 __attribute__((__ext_vector_type__(16)));
    the default builtins we use C functions which require
    the typedefs to the actual underlying types.
 */
-#if defined(__CBUILD__) && defined(CLANG_OLDER_THAN_3_9)
+#if defined(__CBUILD__) && defined(LLVM_OLDER_THAN_3_9)
 typedef int sampler_t;
 
 /* Since some built-ins have different return types
@@ -274,7 +203,5 @@ typedef struct _pocl_image1d_array_t { dev_image_t base; }* image1d_array_t;
 #endif
 
 typedef uint cl_mem_fence_flags;
-
-#include "_enable_all_exts.h"
 
 #endif

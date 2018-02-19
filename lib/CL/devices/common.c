@@ -267,20 +267,20 @@ fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg,
                   cl_device_id device)
 {
   cl_mem mem = *(cl_mem *)parg->value;
-  di->width = mem->image_width;
-  di->height = mem->image_height;
-  di->depth = mem->image_depth;
-  di->row_pitch = mem->image_row_pitch;
-  di->slice_pitch = mem->image_slice_pitch;
-  di->order = mem->image_channel_order;
-  di->image_array_size = mem->image_array_size;
-  di->data_type = mem->image_channel_data_type;
+  di->_width = mem->image_width;
+  di->_height = mem->image_height;
+  di->_depth = mem->image_depth;
+  di->_row_pitch = mem->image_row_pitch;
+  di->_slice_pitch = mem->image_slice_pitch;
+  di->_order = mem->image_channel_order;
+  di->_image_array_size = mem->image_array_size;
+  di->_data_type = mem->image_channel_data_type;
   pocl_get_image_information (mem->image_channel_order,
-                              mem->image_channel_data_type, &(di->num_channels),
-                              &(di->elem_size));
+                              mem->image_channel_data_type,
+                              &(di->_num_channels), &(di->_elem_size));
 
   HANDLE_IMAGE1D_BUFFER (mem);
-  di->data = (mem->device_ptrs[device->dev_id].mem_ptr);
+  di->_data = (mem->device_ptrs[device->dev_id].mem_ptr);
 }
 
 void

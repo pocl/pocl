@@ -26,8 +26,11 @@
 #define POCL_COMMON_H
 
 #include "pocl_cl.h"
-#include "dev_image.h"
 #include "utlist.h"
+
+#define __CBUILD__
+#include "pocl_image_types.h"
+#undef __CBUILD__
 
 #define XSETUP_DEVICE_CL_VERSION(A, B)             \
   dev->cl_version_major = A;                      \

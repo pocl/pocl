@@ -1,11 +1,10 @@
-
 /* Enable all extensions known to pocl, which a device supports.
  * This is required at the start of include/_kernel.h for prototypes,
  * then at kernel lib compilation phase (because _kernel.h disables
  * everything at the end).
  */
 
-// OpenCL 1.0-only extensions
+/* OpenCL 1.0-only extensions */
 
 #if (__OPENCL_C_VERSION__ < 110)
 
