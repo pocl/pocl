@@ -213,9 +213,6 @@ Workgroup::runOnModule(Module &M)
     if (!isKernelToProcess(*i)) continue;
     Function *L = createLauncher(M, &*i);
 
-    L->addFnAttr(Attribute::NoInline);
-    L->removeFnAttr(Attribute::AlwaysInline);
-
     privatizeContext(M, L);
 
     if (!currentPoclDevice->spmd) {
@@ -635,8 +632,6 @@ createWorkgroupFast(Module &M, Function *F)
   Function *workgroup =
     dyn_cast<Function>(M.getOrInsertFunction(funcName + "_workgroup_fast", ft));
   assert(workgroup != NULL);
-
-  workgroup->addFnAttr(Attribute::NoInline);
 
   builder.SetInsertPoint(BasicBlock::Create(M.getContext(), "", workgroup));
 
