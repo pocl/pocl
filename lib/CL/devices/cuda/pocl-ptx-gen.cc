@@ -102,7 +102,7 @@ int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
   std::string Error;
 
   // Verify module.
-  if (pocl_get_bool_option("POCL_CUDA_VERIFY_MODULE", 0)) {
+  if (pocl_get_bool_option("POCL_CUDA_VERIFY_MODULE", 1)) {
     llvm::raw_string_ostream Errs(Error);
     if (llvm::verifyModule(*Module->get(), &Errs)) {
       POCL_MSG_ERR("\n%s\n", Error.c_str());
@@ -770,7 +770,7 @@ void fixConstantMemArgs(llvm::Module *Module, const char *KernelName) {
 
 // CUDA doesn't allow multiple local memory arguments or automatic variables, so
 // we have to create a single global variable for local memory allocations, and
-// then manually add offsets to it to get each individual local memory
+// then manually add offsets to it to get each individual local memory
 // allocation.
 void fixLocalMemArgs(llvm::Module *Module, const char *KernelName) {
 

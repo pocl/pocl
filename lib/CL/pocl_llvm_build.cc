@@ -457,7 +457,11 @@ int pocl_llvm_build_program(cl_program program,
   // This workarounds a Frontend codegen issues with an illegal address
   // space cast which is later flattened (and thus implicitly fixed) in
   // the TargetAddressSpaces. See:  https://github.com/pocl/pocl/issues/195
+#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
   cg.VerifyModule = false;
+#else
+  cg.VerifyModule = true;
+#endif
 
   PreprocessorOutputOptions &poo = pocl_build.getPreprocessorOutputOpts();
   poo.ShowCPP = 1;
