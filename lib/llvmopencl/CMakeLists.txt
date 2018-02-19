@@ -23,36 +23,63 @@
 #
 #=============================================================================
 
-set(LLVMPASSES_SOURCES "Barrier.h"
-  "Kernel.h" "Kernel.cc"
-  "ParallelRegion.h" "ParallelRegion.cc"
-  "CanonicalizeBarriers.h" "CanonicalizeBarriers.cc"
-  "LoopBarriers.h" "LoopBarriers.cc"
-  "Workgroup.h" "Workgroup.cc"
-  "BarrierTailReplication.h" "BarrierTailReplication.cc"
-  "Flatten.cc" "FlattenGlobals.cc"
-  "IsolateRegions.h" "IsolateRegions.cc"
-  "WorkitemReplication.h" "WorkitemReplication.cc"
-  "ImplicitLoopBarriers.h" "ImplicitLoopBarriers.cc"
-  "WorkItemAliasAnalysis.cc"
-  "WorkitemHandler.h" "WorkitemHandler.cc"
-  "WorkitemLoops.h" "WorkitemLoops.cc"
-  "PHIsToAllocas.h" "PHIsToAllocas.cc"
-  "BreakConstantGEPs.h" "BreakConstantGEPs.cpp"
-  "WorkitemHandlerChooser.h" "WorkitemHandlerChooser.cc"
-  "AllocasToEntry.h" "AllocasToEntry.cc"
-  "LLVMUtils.cc" "LLVMUtils.h" "LLVMFileUtils.cc"
-  "VariableUniformityAnalysis.h" "VariableUniformityAnalysis.cc"
-  "AutomaticLocals.cc" "ImplicitConditionalBarriers.cc"
-  "ImplicitConditionalBarriers.h"
-  "DebugHelpers.h" "DebugHelpers.cc"
-  "RemoveBarrierCalls.h" "RemoveBarrierCalls.cc"
-  "HandleSamplerInitialization.h" "HandleSamplerInitialization.cc"
-  "RemoveOptnoneFromWIFunc.h" "RemoveOptnoneFromWIFunc.cc"
-  "OptimizeWorkItemFuncCalls.h" "OptimizeWorkItemFuncCalls.cc")
+set(LLVMPASSES_SOURCES "AllocasToEntry.cc"
+                       "AllocasToEntry.h"
+                       "AutomaticLocals.cc"
+                       "Barrier.h"
+                       "BarrierTailReplication.cc"
+                       "BarrierTailReplication.h"
+                       "BreakConstantGEPs.cpp"
+                       "BreakConstantGEPs.h"
+                       "CanonicalizeBarriers.cc"
+                       "CanonicalizeBarriers.h"
+                       "DebugHelpers.cc"
+                       "DebugHelpers.h"
+                       "Flatten.cc"
+                       "FlattenGlobals.cc"
+                       "HandleSamplerInitialization.cc"
+                       "HandleSamplerInitialization.h"
+                       "ImplicitConditionalBarriers.cc"
+                       "ImplicitConditionalBarriers.h"
+                       "ImplicitLoopBarriers.cc"
+                       "ImplicitLoopBarriers.h"
+                       "IsolateRegions.cc"
+                       "IsolateRegions.h"
+                       "Kernel.cc"
+                       "Kernel.h"
+                       "linker.cpp"
+                       "linker.h"
+                       "LLVMFileUtils.cc"
+                       "LLVMUtils.cc"
+                       "LLVMUtils.h"
+                       "LoopBarriers.cc"
+                       "LoopBarriers.h"
+                       "OptimizeWorkItemFuncCalls.cc"
+                       "OptimizeWorkItemFuncCalls.h"
+                       "PHIsToAllocas.cc"
+                       "PHIsToAllocas.h"
+                       "ParallelRegion.cc"
+                       "ParallelRegion.h"
+                       "RemoveBarrierCalls.cc"
+                       "RemoveBarrierCalls.h"
+                       "RemoveOptnoneFromWIFunc.cc"
+                       "RemoveOptnoneFromWIFunc.h"
+                       "VariableUniformityAnalysis.cc"
+                       "VariableUniformityAnalysis.h"
+                       "WorkItemAliasAnalysis.cc"
+                       "Workgroup.cc"
+                       "Workgroup.h"
+                       "WorkitemHandler.cc"
+                       "WorkitemHandler.h"
+                       "WorkitemHandlerChooser.cc"
+                       "WorkitemHandlerChooser.h"
+                       "WorkitemLoops.cc"
+                       "WorkitemLoops.h"
+                       "WorkitemReplication.cc"
+                       "WorkitemReplication.h")
 
 if(POCL_USE_FAKE_ADDR_SPACE_IDS)
-list(APPEND LLVMPASSES_SOURCES "TargetAddressSpaces.cc")
+list(APPEND LLVMPASSES_SOURCES "TargetAddressSpaces.cc" "TargetAddressSpaces.h")
 endif()
 
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LLVM_CFLAGS}")
@@ -69,7 +96,7 @@ endif(MSVC)
 # This library (just a bunch of objects really) is linked against libpocl
 # to call the kernel compiler passes directly from the host library.
 #noinst_LTLIBRARIES = libllvmpasses.la
-add_library("llvmpasses" OBJECT ${LLVMPASSES_SOURCES} "linker.cpp" "linker.h")
+add_library("llvmpasses" OBJECT ${LLVMPASSES_SOURCES})
 
 # This creates a separate llvmopencl.so that is loaded to 'opt'
 # for the pocl-workgroup version.
