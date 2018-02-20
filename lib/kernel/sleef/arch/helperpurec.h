@@ -3,10 +3,6 @@
 //    (See accompanying file LICENSE.txt or copy at
 //          http://www.boost.org/LICENSE_1_0.txt)
 
-#include <stdint.h>
-#include <math.h>
-#include "misc.h"
-
 #ifndef CONFIG
 #error CONFIG macro not defined
 #endif

@@ -270,4 +270,20 @@ else()
       LABELS "${TS_NAME}"
       ENVIRONMENT "LD_LIBRARY_PATH=${TS_BUILDDIR}/library")
 
+  if(NOT LLVM_OLDER_THAN_6_0)
+    # error: variables in the local address space can only be declared in the outermost scope of a kernel function
+    set_tests_properties(
+      clBLAS_samples_example_snrm2
+      clBLAS_samples_example_chpmv
+      clBLAS_samples_example_dtrmv
+      clBLAS_samples_example_sspmv
+      clBLAS_samples_example_stpmv
+      clBLAS_samples_example_stpsv
+      clBLAS_samples_example_strmv
+      clBLAS_samples_example_strsv
+      clBLAS_samples_example_zhemv
+      PROPERTIES
+        WILL_FAIL 1)
+  endif()
+
 endif()

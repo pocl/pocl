@@ -41,9 +41,12 @@ Known issues with the conformance testsuite
 - a few tests from ``basic/test_basic`` may fail / segfault because they
   request a huge amount of memory for buffers.
 
-- a few tests from ``conversions/test_conversions`` may report failures. This
-  is likely a bug in the test or miscompilation; the same test from branch
+- a few tests from ``conversions/test_conversions`` may report failures when
+  compiled with -O2. This is likely a bug in the test; the same test from branch
   cl20_trunk of CTS passes.
+
+- math_brute_force tests may occasionally fail with an empty build log,
+  see pocl issue #614.
 
 - a few tests may run much faster if you limit the reported Global memory size
   with POCL_MEMORY_LIMIT env var. In particular, "kernel_image_methods" test
@@ -89,7 +92,8 @@ Known issues in pocl / things to be aware of
 - Many of ``native_`` and ``half_`` variants of kernel library functions are mapped
   to the "full" variants.
 
-- the optional OpenGL / D3D / SPIR extensions are not supported
+- the optional OpenGL / D3D extensions are not supported. There is experimental
+  support for SPIR
 
 - clUnloadCompiler() only actually unload LLVM after all programs & kernels
   have been released.

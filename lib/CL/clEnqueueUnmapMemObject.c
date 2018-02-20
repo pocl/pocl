@@ -66,12 +66,14 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
   DL_FOREACH (memobj->mappings, mapping)
     {
       POCL_MSG_PRINT_MEMORY (
-          "UnMap %p search Mapping: host_ptr %p offset %zu\n", mapped_ptr,
-          mapping->host_ptr, mapping->offset);
+          "UnMap %p search Mapping: host_ptr %p offset %zu requested: %lu\n", mapped_ptr,
+          mapping->host_ptr, mapping->offset, mapping->unmap_requested);
 
-      if (mapping->host_ptr == mapped_ptr)
+      if (mapping->host_ptr == mapped_ptr && mapping->unmap_requested == 0)
           break;
     }
+  if (mapping)
+    mapping->unmap_requested = 1;
   POCL_UNLOCK_OBJ (memobj);
   POCL_RETURN_ERROR_ON((mapping == NULL), CL_INVALID_VALUE,
       "Could not find mapping of this memobj\n");

@@ -161,6 +161,11 @@ int bitcode_is_spir(const char *bitcode, size_t size) {
     return 0;
 }
 
+int bitcode_is_spirv(const char *bitcode, size_t size) {
+  uint32_t magic = htole32(((uint32_t *)bitcode)[0]);
+  return (size > 20) && (magic == 0x07230203U);
+}
+
 // TODO this should be fixed to not require LLVM eventually,
 // so that LLVM-less builds also report FMA correctly.
 int cpu_has_fma() {

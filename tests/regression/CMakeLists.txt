@@ -197,12 +197,20 @@ add_test_pocl(NAME "regression/struct_kernel_arguments" COMMAND "test_structs_as
 
 add_test_pocl(NAME "regression/vector_kernel_arguments" COMMAND "test_vectors_as_args")
 
+set(TCE_TESTS "regression/barrier_between_two_for_loops_LOOPS"
+  "regression/barrier_between_two_for_loops_REPL"
+  "regression/for-loop_with_computation_after_the_brexit_REPL"
+  "regression/for-loop_with_computation_after_the_brexit_LOOPS"
+  "regression/early_return_before_a_barrier_region_REPL"
+  "regression/early_return_before_a_barrier_region_LOOPS")
+
 set_tests_properties("regression/setting_a_buffer_argument_to_NULL_causes_a_segfault"
   "regression/clSetKernelArg_overwriting_the_previous_kernel's_args"
   "regression/passing_a_constant_array_as_an_arg"
   "regression/case_with_multiple_variable_length_loops_and_a_barrier_in_one"
   "regression/struct_kernel_arguments" "regression/vector_kernel_arguments"
   "regression/autolocals_in_constexprs"
+  ${TCE_TESTS}
   PROPERTIES
     COST 1.5
     PROCESSORS 1
@@ -211,14 +219,13 @@ set_tests_properties("regression/setting_a_buffer_argument_to_NULL_causes_a_segf
 
 # Label tests that also work with TCE
 
-set_tests_properties("regression/barrier_between_two_for_loops_LOOPS"
-  "regression/barrier_between_two_for_loops_REPL"
-  "regression/for-loop_with_computation_after_the_brexit_REPL"
-  "regression/for-loop_with_computation_after_the_brexit_LOOPS"
-  "regression/early_return_before_a_barrier_region_REPL"
-  "regression/early_return_before_a_barrier_region_LOOPS"
-  PROPERTIES
-    LABELS "internal;regression;tce")
+# TODO fails with TCE + LLVM 6, issue #609
+if(NOT LLVM_OLDER_THAN_6_0)
+list(REMOVE_ITEM TCE_TESTS
+  "regression/barrier_between_two_for_loops_LOOPS" )
+endif()
+
+set_property(TEST ${TCE_TESTS} APPEND PROPERTY LABELS "tce")
 
 # Label tests that work with CUDA backend
 set_property(TEST

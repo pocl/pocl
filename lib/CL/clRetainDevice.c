@@ -28,8 +28,9 @@ POname(clRetainDevice)(cl_device_id device) CL_API_SUFFIX__VERSION_1_2
   if (device->parent_device == NULL)
     return CL_SUCCESS;
 
-  POCL_RETAIN_OBJECT (device);
-  POCL_MSG_PRINT_REFCOUNTS ("Retain Device %p  : %d\n", device, device->pocl_refcount);
+  int refc;
+  POCL_RETAIN_OBJECT_REFCOUNT (device, refc);
+  POCL_MSG_PRINT_REFCOUNTS ("Retain Device %p  : %d\n", device, refc);
   return CL_SUCCESS;
 }
 POsym(clRetainDevice)

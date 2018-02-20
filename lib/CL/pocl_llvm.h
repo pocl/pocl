@@ -40,6 +40,8 @@ int cpu_has_fma();
 
 int bitcode_is_spir(const char *bitcode, size_t size);
 
+int bitcode_is_spirv(const char *bitcode, size_t size);
+
 /* Sets up the native/preferred vector widths at runtime (using LLVM). */
 void cpu_setup_vector_widths(cl_device_id dev);
 
@@ -120,13 +122,12 @@ unsigned pocl_llvm_get_kernel_names( cl_program program, char **knames, unsigned
 /** Compile the kernel in infile from LLVM bitcode to native object file for
  * device, into outfile.
  */
-int pocl_llvm_codegen(cl_kernel kernel, cl_device_id device, void *modp,
+int pocl_llvm_codegen(cl_device_id device, void *modp,
                       char **output, size_t *output_size);
 
 /* Parse program file and populate program's llvm_irs */
 int
-pocl_update_program_llvm_irs(cl_program program, unsigned device_i,
-                             cl_device_id device);
+pocl_update_program_llvm_irs(cl_program program, unsigned device_i);
 
 
 int pocl_llvm_link_program(cl_program program,
@@ -135,7 +136,7 @@ int pocl_llvm_link_program(cl_program program,
                            cl_uint num_input_programs,
                            unsigned char **cur_device_binaries,
                            size_t *cur_device_binary_sizes,
-                           void **cur_llvm_irs, int create_library);
+                           void **cur_llvm_irs, int create_library, int spir);
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

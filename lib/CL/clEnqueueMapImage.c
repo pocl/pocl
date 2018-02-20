@@ -91,7 +91,7 @@ CL_API_SUFFIX__VERSION_1_0
   offset = tuned_origin[0] + tuned_origin[1] * image->image_row_pitch
            + tuned_origin[2] * image->image_slice_pitch;
 
-  mapping_info = (mem_mapping_t*) malloc (sizeof (mem_mapping_t));
+  mapping_info = (mem_mapping_t*) calloc (1, sizeof (mem_mapping_t));
   if (mapping_info == NULL)
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
@@ -145,7 +145,6 @@ CL_API_SUFFIX__VERSION_1_0
 
   if (map == NULL)
     {
-      POCL_UPDATE_EVENT_COMPLETE (*event);
       errcode = CL_MAP_FAILURE;
       goto ERROR;
     }

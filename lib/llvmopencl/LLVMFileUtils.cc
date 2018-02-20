@@ -140,7 +140,9 @@ int pocl_remove2(Twine &p) {
   return ec.default_error_condition().value();
 }
 
-int pocl_exists2(Twine &p) { return (sys::fs::exists(p) ? 1 : 0); }
+int pocl_exists2(Twine &p) {
+  return (sys::fs::exists(p) ? 1 : 0);
+}
 
 int
 pocl_exists(const char* path) {
@@ -298,6 +300,9 @@ int pocl_write_file(const char *path, const char *content, uint64_t count,
     if (write(fd, content, (ssize_t)count) < (ssize_t)count)
       return errno ? -errno : -1;
 
+    if (fdatasync(fd))
+      return errno ? -errno : -1;
+
     if (close(fd))
       return -errno;
 
@@ -330,6 +335,9 @@ int pocl_write_tempfile(char *output_path, const char *prefix,
   assert(fd >= 0);
 
   if (write(fd, content, (ssize_t)count) < (ssize_t)count)
+    return errno ? -errno : -1;
+
+  if (fdatasync(fd))
     return errno ? -errno : -1;
 
   if (ret_fd)
@@ -370,6 +378,10 @@ int pocl_write_module(void *module, const char* path, int dont_rewrite) {
     RETURN_IF_EC;
 
     WriteBitcodeToFile((llvm::Module*)module, os);
+
+    os.flush();
+    if (fdatasync(fd))
+      return errno ? -errno : -1;
 
     os.close();
     if (os.has_error())

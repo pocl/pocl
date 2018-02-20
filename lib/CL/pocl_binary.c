@@ -35,18 +35,6 @@
 #include <dirent.h>
 #include <libgen.h>
 
-#ifndef __APPLE__
-  #include <endian.h>
-#else
-  #include <libkern/OSByteOrder.h>
-  #define htole16(x) OSSwapHostToLittleInt16(x)
-  #define le16toh(x) OSSwapLittleToHostInt16(x)
-  #define htole32(x) OSSwapHostToLittleInt32(x)
-  #define le32toh(x) OSSwapLittleToHostInt32(x)
-  #define htole64(x) OSSwapHostToLittleInt64(x)
-  #define le64toh(x) OSSwapLittleToHostInt64(x)
-#endif
-
 /* pocl binary identifier */
 #define POCLCC_STRING_ID "poclbin"
 #define POCLCC_STRING_ID_LENGTH 8
@@ -238,16 +226,16 @@ check_binary(cl_device_id device, const unsigned char *binary)
 {
   pocl_binary b;
   unsigned char *p = read_header(&b, binary);
+  if (strncmp (b.pocl_id, POCLCC_STRING_ID, POCLCC_STRING_ID_LENGTH))
+    {
+      POCL_MSG_WARN ("File is not a pocl binary\n");
+      return NULL;
+    }
   if (b.version != POCLCC_VERSION)
     {
       POCL_MSG_WARN ("PoclBinary version %i different from the one "
                      "recognized by this pocl version (%i)\n",
                      b.version, POCLCC_VERSION);
-      return NULL;
-    }
-  if (strncmp(b.pocl_id, POCLCC_STRING_ID, POCLCC_STRING_ID_LENGTH))
-    {
-      POCL_MSG_WARN ("File is not a pocl binary\n");
       return NULL;
     }
   if (pocl_binary_get_device_id(device) != b.device_id)

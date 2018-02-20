@@ -85,14 +85,6 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     */
     {
       size_t max_wg_size = device->max_work_group_size;
-      /* Allow overriding the max WG size to reduce compilation time
-         for cases which use the maximum. This is needed until pocl has
-         the WI loops.  */
-      if (getenv ("POCL_MAX_WORK_GROUP_SIZE") != NULL)
-        {
-          size_t from_env = atoi (getenv ("POCL_MAX_WORK_GROUP_SIZE"));
-          if (from_env < max_wg_size) max_wg_size = from_env;
-        }
       POCL_RETURN_GETINFO(size_t, max_wg_size);
     }
   case CL_DEVICE_MAX_WORK_ITEM_SIZES:

@@ -137,17 +137,17 @@ void clearKernelPasses() {
 }
 
 // Returns the TargetMachine instance or zero if no triple is provided.
-static TargetMachine *GetTargetMachine(cl_device_id device) {
+static TargetMachine *GetTargetMachine(cl_device_id device, Triple &triple) {
 
   if (targetMachines.find(device) != targetMachines.end())
     return targetMachines[device];
 
   std::string Error;
-  Triple TheTriple(device->llvm_target_triplet);
+  // Triple TheTriple(device->llvm_target_triplet);
 
   std::string MCPU = device->llvm_cpu ? device->llvm_cpu : "";
 
-  const Target *TheTarget = TargetRegistry::lookupTarget("", TheTriple, Error);
+  const Target *TheTarget = TargetRegistry::lookupTarget("", triple, Error);
 
   // In LLVM 3.4 and earlier, the target registry falls back to
   // the cpp backend in case a proper match was not found. In
@@ -160,12 +160,12 @@ static TargetMachine *GetTargetMachine(cl_device_id device) {
 
 #ifdef LLVM_OLDER_THAN_6_0
   TargetMachine *TM = TheTarget->createTargetMachine(
-      TheTriple.getTriple(), MCPU, StringRef(""), GetTargetOptions(),
-      Reloc::PIC_, CodeModel::Default, CodeGenOpt::Aggressive);
+      triple.getTriple(), MCPU, StringRef(""), GetTargetOptions(), Reloc::PIC_,
+      CodeModel::Default, CodeGenOpt::Aggressive);
 #else
   TargetMachine *TM = TheTarget->createTargetMachine(
-      TheTriple.getTriple(), MCPU, StringRef(""), GetTargetOptions(),
-      Reloc::PIC_, CodeModel::Small, CodeGenOpt::Aggressive);
+      triple.getTriple(), MCPU, StringRef(""), GetTargetOptions(), Reloc::PIC_,
+      CodeModel::Small, CodeGenOpt::Aggressive);
 #endif
 
   assert(TM != NULL && "llvm target has no targetMachine constructor");
@@ -192,12 +192,11 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
 
   Registry = PassRegistry::getPassRegistry();
 
-  Triple triple(device->llvm_target_triplet);
-
   Passes = new PassManager();
 
   // Need to setup the target info for target specific passes. */
-  TargetMachine *Machine = GetTargetMachine(device);
+  Triple triple(device->llvm_target_triplet);
+  TargetMachine *Machine = GetTargetMachine(device, triple);
 
 #ifdef LLVM_OLDER_THAN_3_7
   // Add internal analysis passes from the target machine.
@@ -328,7 +327,7 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
   passes.push_back("dot-cfg");
 #endif
 
-  if (currentWgMethod == "loopvec")
+  if (currentWgMethod == "loopvec" && SPMDDevice)
     passes.push_back("scalarizer");
 
   passes.push_back("instcombine");
@@ -408,11 +407,6 @@ int pocl_llvm_generate_workgroup_function_nowrite(cl_device_id device,
          kernel->name, local_x, local_y, local_z, parallel_bc_path);
 #endif
 
-  Triple triple(device->llvm_target_triplet);
-
-  SMDiagnostic Err;
-
-  // Link the kernel and runtime library
   llvm::Module *input = NULL;
   if (kernel->program->llvm_irs != NULL &&
       kernel->program->llvm_irs[device_i] != NULL) {
@@ -432,21 +426,6 @@ int pocl_llvm_generate_workgroup_function_nowrite(cl_device_id device,
     char program_bc_path[POCL_FILENAME_LENGTH];
     pocl_cache_program_bc_path(program_bc_path, kernel->program, device_i);
     input = parseModuleIR(program_bc_path);
-  }
-
-  /* Note this is a hack to get SPIR working. We'll be linking the
-   * host kernel library (plain LLVM IR) to the SPIR program.bc,
-   * so LLVM complains about incompatible DataLayouts. The proper solution
-   * would be to generate a SPIR kernel library
-   */
-  if (triple.getArch() == Triple::x86 || triple.getArch() == Triple::x86_64) {
-    if (input->getTargetTriple().substr(0, 6) == std::string("spir64")) {
-      input->setTargetTriple(triple.getTriple());
-      input->setDataLayout("e-m:e-i64:64-f80:128-n8:16:32:64-S128");
-    } else if (input->getTargetTriple().substr(0, 4) == std::string("spir")) {
-      input->setTargetTriple(triple.getTriple());
-      input->setDataLayout("e-m:e-p:32:32-i64:64-f80:32-n8:16:32-S32");
-    }
   }
 
   /* Now finally run the set of passes assembled above */
@@ -517,8 +496,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
 }
 
 int pocl_update_program_llvm_irs(cl_program program,
-                                 unsigned device_i,
-                                 cl_device_id device) {
+                                 unsigned device_i) {
   PoclCompilerMutexGuard lockHolder(NULL);
   InitializeLLVM();
 
@@ -601,18 +579,18 @@ void pocl_llvm_update_binaries(cl_program program) {
 /* Run LLVM codegen on input file (parallel-optimized).
  * modp = llvm::Module* of parallel.bc
  * Output native object file (<kernel>.so.o). */
-int pocl_llvm_codegen(cl_kernel kernel, cl_device_id device, void *modp,
-                      char **output, size_t *output_size) {
+int pocl_llvm_codegen(cl_device_id device, void *modp, char **output,
+                      size_t *output_size) {
 
   PoclCompilerMutexGuard lockHolder(NULL);
   InitializeLLVM();
 
-  llvm::Triple triple(device->llvm_target_triplet);
-  llvm::TargetMachine *target = GetTargetMachine(device);
-
   llvm::Module *input = (llvm::Module *)modp;
   assert(input);
   *output = NULL;
+
+  llvm::Triple triple(device->llvm_target_triplet);
+  llvm::TargetMachine *target = GetTargetMachine(device, triple);
 
   PassManager PM;
 #ifdef LLVM_OLDER_THAN_3_7

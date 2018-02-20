@@ -295,6 +295,8 @@ pocl_aligned_free (void *ptr)
 void
 pocl_lock_events_inorder (cl_event ev1, cl_event ev2)
 {
+  assert (ev1 != ev2);
+  assert (ev1->id != ev2->id);
   if (ev1->id < ev2->id)
     {
       POCL_LOCK_OBJ (ev1);
@@ -310,6 +312,8 @@ pocl_lock_events_inorder (cl_event ev1, cl_event ev2)
 void
 pocl_unlock_events_inorder (cl_event ev1, cl_event ev2)
 {
+  assert (ev1 != ev2);
+  assert (ev1->id != ev2->id);
   if (ev1->id < ev2->id)
     {
       POCL_UNLOCK_OBJ (ev1);
@@ -347,7 +351,7 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
         POname(clRetainCommandQueue) (command_queue);
 
       (*event)->command_type = command_type;
-      (*event)->id = event_id_counter++;
+      (*event)->id = ATOMIC_INC(event_id_counter);
       (*event)->num_buffers = num_buffers;
       if (num_buffers > 0)
         {
@@ -366,7 +370,7 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
 
 static int
 pocl_create_event_sync(cl_event waiting_event,
-                       cl_event notifier_event, cl_mem mem)
+                       cl_event notifier_event)
 {
   event_node * volatile notify_target = NULL;
   event_node * volatile wait_list_item = NULL;
@@ -471,8 +475,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
       if (command_queue->last_event.event)
         {
           pocl_create_event_sync ((*cmd)->event,
-                                  command_queue->last_event.event,
-                                  NULL);
+                                  command_queue->last_event.event);
         }
       POCL_UNLOCK_OBJ (command_queue);
     }
@@ -480,7 +483,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
   for (i = 0; i < num_events; ++i)
     {
       cl_event wle = wait_list[i];
-      pocl_create_event_sync ((*cmd)->event, wle, NULL);
+      pocl_create_event_sync ((*cmd)->event, wle);
     }
   POCL_MSG_PRINT_EVENTS ("Created command struct (event %d, type %X)\n",
                          (*cmd)->event->id, command_type);
@@ -493,10 +496,9 @@ void pocl_command_enqueue (cl_command_queue command_queue,
   cl_event event;
 
   POCL_LOCK_OBJ (node->event);
-  assert(node->event->status == CL_QUEUED);
-  POCL_UNLOCK_OBJ (node->event);
-
+  assert (node->event->status == CL_QUEUED);
   assert (command_queue == node->event->queue);
+  POCL_UNLOCK_OBJ (node->event);
 
   POCL_LOCK_OBJ (command_queue);
   ++command_queue->command_count;
@@ -505,7 +507,7 @@ void pocl_command_enqueue (cl_command_queue command_queue,
     {
       DL_FOREACH (command_queue->events, event)
         {
-          pocl_create_event_sync (node->event, event, NULL);
+          pocl_create_event_sync (node->event, event);
         }
     }
   if (node->type == CL_COMMAND_BARRIER)
@@ -514,7 +516,7 @@ void pocl_command_enqueue (cl_command_queue command_queue,
     {
       if (command_queue->barrier)
         {
-          pocl_create_event_sync (node->event, command_queue->barrier, NULL);
+          pocl_create_event_sync (node->event, command_queue->barrier);
         }
     }
   DL_APPEND (command_queue->events, node->event);
@@ -524,13 +526,11 @@ void pocl_command_enqueue (cl_command_queue command_queue,
 
   POCL_LOCK_OBJ (node->event);
   POCL_UPDATE_EVENT_QUEUED (node->event);
-  POCL_UNLOCK_OBJ (node->event);
-
   command_queue->device->ops->submit(node, command_queue);
-#ifdef POCL_DEBUG_BUILD
+  /* node->event is unlocked by device_ops->submit */
+
   if (pocl_is_option_set("POCL_IMPLICIT_FINISH"))
     POclFinish (command_queue);
-#endif
 }
 
 
@@ -565,6 +565,7 @@ int pocl_update_command_queue (cl_event event)
   int cq_ready;
 
   POCL_LOCK_OBJ (event->queue);
+  POCL_LOCK_OBJ (event);
   --event->queue->command_count;
   if (event->queue->barrier == event)
     event->queue->barrier = NULL;
@@ -577,6 +578,7 @@ int pocl_update_command_queue (cl_event event)
 
   cq_ready = (event->queue->command_count) ? 0: 1;
   POCL_UNLOCK_OBJ (event->queue);
+  POCL_UNLOCK_OBJ (event);
   return cq_ready;
 }
 

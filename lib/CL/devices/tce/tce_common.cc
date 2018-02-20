@@ -883,7 +883,6 @@ pocl_tce_submit (_cl_command_node *node, cl_command_queue /*cq*/)
 {
   TCEDevice *d = (TCEDevice*)node->device->data;
 
-  POCL_LOCK_OBJ(node->event);
   node->ready = 1;
   POCL_LOCK(d->cq_lock);
   pocl_command_push(node, &d->ready_list, &d->command_list);
@@ -937,11 +936,9 @@ pocl_tce_notify (cl_device_id device, cl_event event, cl_event finished)
       POCL_LOCK(d->cq_lock);
       CDL_DELETE(d->command_list, node);
       CDL_PREPEND(d->ready_list, node);
-      tce_command_scheduler(d);
       POCL_UNLOCK(d->cq_lock);
     }
-    return;
-    }
+  }
 }
 
 void

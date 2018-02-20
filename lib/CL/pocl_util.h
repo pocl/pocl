@@ -37,6 +37,12 @@
 extern "C" {
 #endif
 
+#if defined(__GNUC__) || defined(__clang__)
+#define ATOMIC_INC(x) __sync_add_and_fetch(&x, 1)
+#else
+#error Need atomic_inc() builtin for this compiler
+#endif
+
 uint32_t byteswap_uint32_t (uint32_t word, char should_swap);
 float byteswap_float (float word, char should_swap);
 

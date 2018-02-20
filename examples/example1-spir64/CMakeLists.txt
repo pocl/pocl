@@ -44,7 +44,7 @@ set_tests_properties( "spec_tests/example1_dot_product_spir64"
   PROPERTIES
     COST 3.0
     PROCESSORS 1
-    LABELS "internal;spir;cuda"
+    LABELS "internal;spir"
     DEPENDS "pocl_version_check")
 
 # fails on older LLVMs because SPIR bitcode was generated with LLVM 4.0

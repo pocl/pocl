@@ -314,14 +314,6 @@ if (OCS_AVAILABLE)
     message(FATAL_ERROR "Could not load LLVM.cmake")
   endif()
 
-  if("${LLVM_CLANG_VERSION}" MATCHES "SPIR")
-    set(CLANG_SPIR 1)
-    message(STATUS "Using a SPIR generator Clang from Khronos.")
-  else()
-    set(CLANG_SPIR 0)
-    message(STATUS "NOT using SPIR")
-  endif()
-
   if(NOT DEFINED HOST_DEVICE_BUILD_HASH)
     if(KERNELLIB_HOST_CPU_VARIANTS STREQUAL "distro")
       set(HOST_DEVICE_BUILD_HASH "${LLC_TRIPLE}")
@@ -350,7 +342,6 @@ if(ENABLE_HSA)
     message(FATAL_ERROR "Could not load HSA.cmake")
   endif()
 endif()
-
 
 ######################################################################################
 
@@ -481,6 +472,38 @@ if(ENABLE_VECMATHLIB AND (NOT CL_DISABLE_HALF))
   message(STATUS "Half available, but disabling half support since vecmathlib is enabled.")
   set(CL_DISABLE_HALF 1)
   set(CL_DISABLE_HALF 1 CACHE BOOL "Disable cl_khr_fp16 because fp16 is not supported")
+endif()
+
+######################################################################################
+
+if((NOT LLVM_OLDER_THAN_5_0) AND CLANG_IS_PATCHED_FOR_SPIR_CC AND X86)
+
+  option(ENABLE_SPIR "Enable SPIR support (default ON when available)" ON)
+  set(ENABLE_SPIRV OFF)
+
+  if(ENABLE_SPIR)
+
+    message(WARNING "SPIR support is available but highly experimental; use at your own risk.")
+
+    if(EXISTS "${LLVM_SPIRV}")
+      message(WARNING "SPIR-V support enabled but highly experimental; you must use a llvm-spirv "
+                      "converter that produces bitcode FOR YOUR LLVM VERSION. "
+                      "E.g. if you're compiling pocl against LLVM 5 then using Khronos' "
+                      "official llvm-spirv (based on LLVM 3.6) WILL NOT WORK.")
+      set(ENABLE_SPIRV ON)
+    endif()
+
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+      set(SPIR_TARGET_TRIPLE "spir64-unknown-unknown")
+      set(SPIR_TARGET_DATALAYOUT "e-m:e-i64:64-f80:128-n8:16:32:64-S128")
+    elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+      set(SPIR_TARGET_TRIPLE "spir-unknown-unknown")
+      set(SPIR_TARGET_DATALAYOUT "e-m:e-p:32:32-i64:64-f80:32-n8:16:32-S32")
+    else()
+      message(FATAL_ERROR "Cannot figure out POCL_DEVICE_ADDRESS_BITS")
+    endif()
+  endif()
+
 endif()
 
 ######################################################################################
@@ -800,7 +823,7 @@ else()
   set(HOST_DEVICE_EXTENSIONS "cl_khr_global_int32_base_atomics cl_khr_local_int32_base_atomics cl_khr_3d_image_writes")
 endif()
 
-if((HOST_DEVICE_CL_VERSION GREATER 199) AND (CLANG_SPIR))
+if(ENABLE_SPIR)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_spir")
 endif()
 
@@ -1375,7 +1398,6 @@ endif()
 MESSAGE(STATUS "******* Enabled features:")
 MESSAGE(STATUS " ")
 
-MESSAGE(STATUS "CLANG_SPIR: ${CLANG_SPIR}")
 MESSAGE(STATUS "DEVELOPER_MODE: ${DEVELOPER_MODE}")
 MESSAGE(STATUS "ENABLE_CONFORMANCE: ${ENABLE_CONFORMANCE}")
 if(ARM)
@@ -1392,6 +1414,8 @@ MESSAGE(STATUS "ENABLE_TSAN (thread sanitizer): ${ENABLE_TSAN}")
 MESSAGE(STATUS "ENABLE_UBSAN (UB sanitizer): ${ENABLE_UBSAN}")
 MESSAGE(STATUS "ENABLE_VECMATHLIB: ${ENABLE_VECMATHLIB}")
 MESSAGE(STATUS "ENABLE_SLEEF: ${ENABLE_SLEEF}")
+MESSAGE(STATUS "ENABLE_SPIR: ${ENABLE_SPIR}")
+MESSAGE(STATUS "ENABLE_SPIRV: ${ENABLE_SPIRV}")
 MESSAGE(STATUS "ENABLE_POCL_BUILDING: ${ENABLE_POCL_BUILDING}")
 MESSAGE(STATUS "INSTALL_OPENCL_HEADERS (Install our headers): ${INSTALL_OPENCL_HEADERS}")
 MESSAGE(STATUS "OCL_DRIVERS (Drivers built): ${OCL_DRIVERS}")

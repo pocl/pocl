@@ -75,6 +75,7 @@
 #include "pocl_cache.h"
 #include "pocl_llvm.h"
 #include "pocl_util.h"
+#include "pocl_mem_management.h"
 
 #include <assert.h>
 #include <string.h>
@@ -492,7 +493,16 @@ pocl_hsa_init_device_infos(unsigned j, struct _cl_device_id* dev)
   uint16_t wg_sizes[3];
   HSA_CHECK(hsa_agent_get_info(agent, HSA_AGENT_INFO_WORKGROUP_MAX_DIM,
                                &wg_sizes));
-  dev->max_work_item_sizes[0] = wg_sizes[0];
+
+  int max_wg = pocl_get_int_option ("POCL_MAX_WORK_GROUP_SIZE", 0);
+  if (max_wg > 0)
+    {
+      wg_sizes[0] = min (wg_sizes[0], max_wg);
+      wg_sizes[1] = min (wg_sizes[1], max_wg);
+      wg_sizes[2] = min (wg_sizes[2], max_wg);
+    }
+
+  dev->max_work_group_size = dev->max_work_item_sizes[0] = wg_sizes[0];
   dev->max_work_item_sizes[1] = wg_sizes[1];
   dev->max_work_item_sizes[2] = wg_sizes[2];
 
@@ -1194,7 +1204,6 @@ pocl_hsa_submit (_cl_command_node *node, cl_command_queue cq)
   pocl_hsa_device_data_t *d = device->data;
   unsigned added_to_readylist = 0;
 
-  POCL_LOCK_OBJ (node->event);
   PTHREAD_CHECK(pthread_mutex_lock(&d->list_mutex));
 
   node->ready = 1;
@@ -1210,8 +1219,9 @@ pocl_hsa_submit (_cl_command_node *node, cl_command_queue cq)
   POCL_MSG_PRINT_INFO("After Event %u submit: WL : %li, RL: %li\n",
                       node->event->id, d->wait_list_size, d->ready_list_size);
 
-  PTHREAD_CHECK(pthread_mutex_unlock(&d->list_mutex));
   POCL_UNLOCK_OBJ (node->event);
+
+  PTHREAD_CHECK(pthread_mutex_unlock(&d->list_mutex));
 
   if (added_to_readylist)
     hsa_signal_subtract_relaxed(d->nudge_driver_thread, 1);
@@ -1457,7 +1467,7 @@ pocl_hsa_launch(pocl_hsa_device_data_t *d, cl_event event)
         = kernel_packet->completion_signal.handle;
     }
 
-  POCL_UPDATE_EVENT_RUNNING (event);
+  POCL_UPDATE_EVENT_RUNNING_UNLOCKED (event);
   POCL_UNLOCK_OBJ (event);
 }
 
@@ -1490,6 +1500,8 @@ pocl_hsa_ndrange_event_finished (pocl_hsa_device_data_t *d, size_t i)
   dd->running_signals[i] = dd->running_signals[dd->running_list_size];
 
   hsa_memory_free(event_data->actual_kernargs);
+
+  pocl_mem_manager_free_command (event->command);
 
   POCL_UNLOCK_OBJ (event);
   POCL_UPDATE_EVENT_COMPLETE (event);
@@ -1698,8 +1710,9 @@ pocl_hsa_update_event (cl_device_id device, cl_event event, cl_int status)
       break;
     case CL_COMPLETE:
       POCL_MSG_PRINT_INFO("HSA: Command complete, event %d\n", event->id);
+      event->status = CL_COMPLETE;
+
       pocl_mem_objs_cleanup (event);
-      pocl_update_command_queue (event);
 
       if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
         event->time_end = device->ops->get_timer_value(device->data);
@@ -1708,28 +1721,28 @@ pocl_hsa_update_event (cl_device_id device, cl_event event, cl_int status)
       pocl_debug_print_duration (__func__,__LINE__,
                                  "HSA NDrange Kernel (host clock)", ns);
 
-
-      POCL_LOCK_OBJ (event);
-      event->status = CL_COMPLETE;
-      pthread_cond_signal(&e_d->event_cond);
       POCL_UNLOCK_OBJ (event);
-
       device->ops->broadcast (event);
+      pocl_update_command_queue (event);
+      POCL_LOCK_OBJ (event);
+
+      pthread_cond_signal(&e_d->event_cond);
       break;
     default:
       POCL_MSG_PRINT_INFO ("HSA: EVENT FAILED, event %d\n", event->id);
+      event->status = CL_FAILED;
+
       pocl_mem_objs_cleanup (event);
-      pocl_update_command_queue (event);
 
       if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
         event->time_end = device->ops->get_timer_value (device->data);
 
-      POCL_LOCK_OBJ (event);
-      event->status = CL_FAILED;
-      pthread_cond_signal (&e_d->event_cond);
       POCL_UNLOCK_OBJ (event);
-
       device->ops->broadcast (event);
+      pocl_update_command_queue (event);
+      POCL_LOCK_OBJ (event);
+
+      pthread_cond_signal(&e_d->event_cond);
       break;
     }
 }

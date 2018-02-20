@@ -55,22 +55,31 @@ POname(clWaitForEvents)(cl_uint              num_events ,
       if (event_list[event_i]->status < 0)
         ret = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
     }
-  /* brute force wait for user events */
+
+  if (ret != CL_SUCCESS)
+    return ret;
+
+  /* wait for user events */
   struct timespec time_to_wait = { 0, 0 };
+
   for (event_i = 0; event_i < num_events; ++event_i)
-    if (event_list[event_i]->command_type == CL_COMMAND_USER)
-      {
-        while (event_list[event_i]->status > CL_COMPLETE)
-          {
-            pocl_user_event_data *p = event_list[event_i]->data;
-            POCL_LOCK (p->lock);
-            time_to_wait.tv_sec = time (NULL) + 1;
-            pthread_cond_timedwait (&p->wakeup_cond, &p->lock, &time_to_wait);
-            POCL_UNLOCK (p->lock);
-          }
-        if (event_list[event_i]->status < 0)
-          ret = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
-      }
+    {
+      cl_event e = event_list[event_i];
+      POCL_LOCK_OBJ (e);
+      pocl_user_event_data *p = e->data;
+      if (e->command_type == CL_COMMAND_USER)
+        {
+          while (e->status > CL_COMPLETE)
+            {
+              time_to_wait.tv_sec = time (NULL) + 1;
+              pthread_cond_timedwait (&p->wakeup_cond, &e->pocl_lock,
+                                      &time_to_wait);
+            }
+          if (e->status < 0)
+            ret = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;
+        }
+      POCL_UNLOCK_OBJ (e);
+    }
 
   return ret;
 }

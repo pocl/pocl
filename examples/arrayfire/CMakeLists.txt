@@ -391,9 +391,10 @@ if(LAPACK_FOUND AND
   add_test(NAME arrayfire_examples_monte_carlo_options_opencl
            COMMAND "${TS_BUILDDIR}/examples/financial/monte_carlo_options_opencl"
            WORKING_DIRECTORY "${TS_BUILDDIR}/examples/financial")
-  add_test(NAME arrayfire_examples_blas_opencl
-           COMMAND "${TS_BUILDDIR}/examples/benchmarks/blas_opencl"
-           WORKING_DIRECTORY "${TS_BUILDDIR}/examples/benchmarks")
+# works but too slow
+#  add_test(NAME arrayfire_examples_blas_opencl
+#           COMMAND "${TS_BUILDDIR}/examples/benchmarks/blas_opencl"
+#           WORKING_DIRECTORY "${TS_BUILDDIR}/examples/benchmarks")
   add_test(NAME arrayfire_examples_fft_opencl
            COMMAND "${TS_BUILDDIR}/examples/benchmarks/fft_opencl"
            WORKING_DIRECTORY "${TS_BUILDDIR}/examples/benchmarks")
@@ -647,7 +648,7 @@ if(LAPACK_FOUND AND
     arrayfire_examples_black_scholes_options_opencl
     arrayfire_examples_heston_model_opencl
     arrayfire_examples_monte_carlo_options_opencl
-    arrayfire_examples_blas_opencl
+#    arrayfire_examples_blas_opencl
     arrayfire_examples_fft_opencl
     arrayfire_examples_pi_opencl
     arrayfire_examples_cholesky_opencl

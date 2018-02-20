@@ -414,12 +414,18 @@ clean_program_on_rebuild (cl_program program)
         }
       program->num_kernels = 0;
       program->build_status = CL_BUILD_NONE;
-      if (program->build_log)
-        for (i = 0; i < program->num_devices; ++i)
-          {
-            POCL_MEM_FREE (program->build_log[i]);
-            memset (program->build_hash[i], 0, sizeof (SHA1_digest_t));
-          }
+      for (i = 0; i < program->num_devices; ++i)
+        {
+          POCL_MEM_FREE (program->build_log[i]);
+          memset (program->build_hash[i], 0, sizeof (SHA1_digest_t));
+          if (program->source)
+            {
+              POCL_MEM_FREE (program->binaries[i]);
+              program->binary_sizes[i] = 0;
+              POCL_MEM_FREE (program->llvm_irs[i]);
+            }
+        }
+      program->main_build_log[0] = 0;
     }
 }
 
@@ -566,9 +572,9 @@ compile_and_link_program(int compile_program,
           POCL_GOTO_ERROR_ON ((error != 0), build_error_code,
                               "pocl_llvm_build_program() failed\n");
 #else
-          strcpy(program->main_build_log,
-                 "Cannot build a program from sources with pocl "
-                 "that does not have online compiler support\n");
+          APPEND_TO_MAIN_BUILD_LOG (
+              "Cannot build a program from sources with pocl "
+              "that does not have online compiler support\n");
           POCL_GOTO_ERROR_ON(1, CL_COMPILER_NOT_AVAILABLE,
                              "%s", program->main_build_log);
 #endif
@@ -578,31 +584,49 @@ compile_and_link_program(int compile_program,
                && (program->pocl_binaries[device_i] == NULL))
         {
 #ifdef OCS_AVAILABLE
+          /* bitcode is now either plain LLVM IR or SPIR IR */
           int spir_binary = bitcode_is_spir ((char*)program->binaries[device_i],
                                              program->binary_sizes[device_i]);
-          if ((spir_binary || spir_build)
-              && (!strstr (device->extensions, "cl_khr_spir")))
+          if (spir_binary)
+            POCL_MSG_PRINT_LLVM ("LLVM-SPIR binary detected\n");
+          else
+            POCL_MSG_PRINT_LLVM ("building from a BC binary for device %d\n",
+                                 device_i);
+
+          if (spir_binary)
             {
+#ifdef ENABLE_SPIR
+              if (!strstr (device->extensions, "cl_khr_spir"))
+                {
+                  APPEND_TO_MAIN_BUILD_LOG (REQUIRES_SPIR_SUPPORT);
+                  POCL_GOTO_ERROR_ON (1, build_error_code,
+                                      REQUIRES_SPIR_SUPPORT " %s\n",
+                                      device->short_name);
+                }
+              if (!spir_build)
+                POCL_MSG_WARN (
+                    "SPIR binary provided, but no spir in build options\n");
+              /* SPIR binaries need to be explicitly linked to the kernel
+               * library. for non-SPIR binaries this happens as part of build
+               * process when program.bc is generated. */
+              error
+                  = pocl_llvm_link_program (program, device_i, program_bc_path,
+                                            0, NULL, NULL, NULL, 0, 1);
+
+              POCL_GOTO_ERROR_ON (error, CL_LINK_PROGRAM_FAILURE,
+                                  "Failed to link SPIR program.bc\n");
+#else
               APPEND_TO_MAIN_BUILD_LOG (REQUIRES_SPIR_SUPPORT);
               POCL_GOTO_ERROR_ON (1, build_error_code,
                                   REQUIRES_SPIR_SUPPORT " %s\n",
                                   device->short_name);
+#endif
             }
 
-          POCL_MSG_PRINT_INFO ("building from a BC binary for device %d\n",
-                               device_i);
-          error = pocl_cache_create_program_cachedir(program, device_i,
-                                                     NULL, 0, program_bc_path);
-          POCL_GOTO_ERROR_ON((error != 0), CL_BUILD_PROGRAM_FAILURE,
-                             "Could not create program cachedir");
-          errcode = pocl_write_file(program_bc_path, (char*)program->binaries[device_i],
-                          (uint64_t)program->binary_sizes[device_i], 0, 0);
-          POCL_GOTO_ERROR_ON(errcode, CL_BUILD_PROGRAM_FAILURE,
-                             "Failed to write binaries to program.bc\n");
 #else
-          strcpy (program->main_build_log,
-                  "Cannot build program from LLVM IR binaries with "
-                  "pocl that does not have online compiler support\n");
+          APPEND_TO_MAIN_BUILD_LOG (
+              "Cannot build program from LLVM IR binaries with "
+              "pocl that does not have online compiler support\n");
           POCL_GOTO_ERROR_ON (1, CL_COMPILER_NOT_AVAILABLE, "%s",
                               program->main_build_log);
 #endif
@@ -641,16 +665,15 @@ compile_and_link_program(int compile_program,
                   = input_programs[j]->binary_sizes[device_i];
 
               if (input_programs[j]->llvm_irs[device_i] == NULL)
-                pocl_update_program_llvm_irs (input_programs[j], device_i,
-                                              device);
+                pocl_update_program_llvm_irs (input_programs[j], device_i);
 
               cur_llvm_irs[j] = input_programs[j]->llvm_irs[device_i];
               assert (cur_llvm_irs[j]);
             }
-          error = pocl_llvm_link_program (program, device_i,
-              program_bc_path, num_input_programs,
-              cur_device_binaries, cur_device_binary_sizes,
-              cur_llvm_irs, create_library);
+          error = pocl_llvm_link_program (
+              program, device_i, program_bc_path, num_input_programs,
+              cur_device_binaries, cur_device_binary_sizes, cur_llvm_irs,
+              create_library, 0);
           POCL_GOTO_ERROR_ON ((error != CL_SUCCESS), CL_LINK_PROGRAM_FAILURE,
                               "pocl_llvm_link_program() failed\n");
 #else
@@ -682,7 +705,7 @@ compile_and_link_program(int compile_program,
 
       if (program->llvm_irs[device_i] == NULL)
         {
-          pocl_update_program_llvm_irs(program, device_i, device);
+          pocl_update_program_llvm_irs(program, device_i);
         }
       /* Maintain a 'last_accessed' file in every program's
        * cache directory. Will be useful for cache pruning script

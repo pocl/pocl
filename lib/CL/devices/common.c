@@ -122,8 +122,7 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
   if (pocl_exists (final_binary_path))
     goto FINISH;
 
-  error = pocl_llvm_codegen (kernel, device, llvm_module, &objfile,
-                             &objfile_size);
+  error = pocl_llvm_codegen (device, llvm_module, &objfile, &objfile_size);
   if (error)
     {
       POCL_MSG_PRINT_LLVM ("pocl_llvm_codegen() failed"
@@ -586,6 +585,7 @@ pocl_exec_command (_cl_command_node * volatile node)
                                           .mem_ptr,
                                       (node->command.unmap.mapping)->offset,
                                       (node->command.unmap.mapping)->size);
+      assert ((node->command.unmap.mapping)->unmap_requested > 0);
       DL_DELETE((node->command.unmap.memobj)->mappings, 
                 node->command.unmap.mapping);
       (node->command.unmap.memobj)->map_count--;
@@ -706,10 +706,7 @@ pocl_broadcast (cl_event brc_event)
 
   while ((target = brc_event->notify_list))
     {
-      if (brc_event->command_type == CL_COMMAND_USER)
-        POCL_LOCK_OBJ (target->event);
-      else
-        pocl_lock_events_inorder (brc_event, target->event);
+      pocl_lock_events_inorder (brc_event, target->event);
       /* remove event from wait list */
       LL_FOREACH (target->event->wait_list, tmp)
         {
@@ -720,8 +717,6 @@ pocl_broadcast (cl_event brc_event)
               break;
             }
         }
-        if (brc_event->command_type == CL_COMMAND_USER)
-          POCL_UNLOCK_OBJ (target->event);
 
         if ((target->event->status == CL_SUBMITTED)
             || (target->event->status == CL_QUEUED))
@@ -731,8 +726,7 @@ pocl_broadcast (cl_event brc_event)
           }
 
         LL_DELETE (brc_event->notify_list, target);
-        if (brc_event->command_type != CL_COMMAND_USER)
-          pocl_unlock_events_inorder (brc_event, target->event);
+        pocl_unlock_events_inorder (brc_event, target->event);
         pocl_mem_manager_free_event_node (target);
     }
 }

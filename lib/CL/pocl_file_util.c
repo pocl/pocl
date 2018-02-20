@@ -1,4 +1,5 @@
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
+#define _GNU_SOURCE
 #define _DEFAULT_SOURCE
 #include <unistd.h>
 #include <sys/types.h>
@@ -195,7 +196,13 @@ pocl_write_file(const char *path, const char* content,
   
   if (fwrite(content, 1, (size_t)count, f) < (size_t)count)
     return -1;
-  
+
+  if (fflush (f))
+    return errno;
+
+  if (fdatasync (fileno (f)))
+    return errno;
+
   return fclose(f);
 }
 
@@ -277,6 +284,9 @@ pocl_write_tempfile (char *output_path, const char *prefix, const char *suffix,
 
   if ((size_t)res < bytes)
     return -1;
+
+  if (fdatasync (fd))
+    return errno;
 
   if (ret_fd)
     *ret_fd = fd;

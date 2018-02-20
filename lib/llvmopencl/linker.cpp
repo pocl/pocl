@@ -418,6 +418,8 @@ int link(llvm::Module *program, const llvm::Module *lib, std::string &log) {
   for (mi=lib->named_metadata_begin(), me=lib->named_metadata_end();
        mi != me; mi++) {
       const NamedMDNode &NMD=*mi;
+      if (NMD.getName() == StringRef("llvm.module.flags"))
+        continue;
       DB_PRINT(" %s:\n", NMD.getName().data());
       NamedMDNode *NewNMD=program->getOrInsertNamedMetadata(NMD.getName());
       for (unsigned i=0, e=NMD.getNumOperands(); i != e; ++i)

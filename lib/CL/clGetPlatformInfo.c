@@ -61,6 +61,14 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
                                " - debug"
 #endif
 
+#ifdef ENABLE_SPIR
+                               ", SPIR"
+#endif
+
+#ifdef ENABLE_SPIRV
+                               ", SPIR-V"
+#endif
+
 #ifdef ENABLE_VECMATHLIB
                                ", VML"
 #endif

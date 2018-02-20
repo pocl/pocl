@@ -24,6 +24,5 @@
 
 #include "templates.h"
 
-// half_sqrt is not supported yet
 // DEFINE_EXPR_S_VV(fast_length, half_sqrt(dot(a, a)))
-DEFINE_EXPR_S_V(fast_length, length(a))
+DEFINE_EXPR_S_V(fast_length, sqrt(dot(a, a)))

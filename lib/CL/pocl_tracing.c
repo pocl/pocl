@@ -60,8 +60,12 @@ pocl_event_updated (cl_event event, int status)
   for (cb_ptr = event->callback_list; cb_ptr; cb_ptr = cb_ptr->next)
     {
       if (cb_ptr->trigger_status == status)
-       cb_ptr->callback_function (event, cb_ptr->trigger_status,
-                               cb_ptr->user_data);
+        {
+          POCL_UNLOCK_OBJ (event);
+          cb_ptr->callback_function (event, cb_ptr->trigger_status,
+                                     cb_ptr->user_data);
+          POCL_LOCK_OBJ (event);
+        }
     }
 
   if (event_tracer && ((1 << status) & event_trace_filter))

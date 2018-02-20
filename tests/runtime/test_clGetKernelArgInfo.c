@@ -285,6 +285,7 @@ int test_program(cl_program program, int is_spir) {
 
 }
 
+/*
 int test_program_nometa(cl_program program) {
 
   cl_int err;
@@ -301,8 +302,6 @@ int test_program_nometa(cl_program program) {
   CHECK_OPENCL_ERROR_IN("clCreateKernel");
 
 
-  /* ADDR SPACE QUALIFIER tests */
-  // constant char* msg, global volatile float* in, global float* out, const float j, local int* c
   err = clGetKernelArgInfo(test_kernel, 0, CL_KERNEL_ARG_ADDRESS_QUALIFIER,
                             BUF_LEN, &kernel_arg.address, &retsize);
   TEST_ASSERT(err == CL_KERNEL_ARG_INFO_NOT_AVAILABLE);
@@ -324,6 +323,7 @@ int test_program_nometa(cl_program program) {
 
   return EXIT_SUCCESS;
 }
+*/
 
 int spir_program(char * filename, cl_context ctx, cl_device_id did, cl_program* program) {
   cl_int err;
@@ -404,12 +404,16 @@ int main()
 
   CHECK_CL_ERROR(clReleaseProgram(program));
 
+  /* SPIR program without metadata - currently disabled since Clang seems to
+   * always generate metadata. */
+/*
   printf("\nSPIR WITHOUT metadata\n");
   TEST_ASSERT(spir_program(SPIR_FILE(POCL_DEVICE_ADDRESS_BITS, "_nometa"), ctx, did, &program) == EXIT_SUCCESS);
 
   TEST_ASSERT(test_program_nometa(program) == EXIT_SUCCESS);
 
   CHECK_CL_ERROR(clReleaseProgram(program));
+*/
 
 FINISH:
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));

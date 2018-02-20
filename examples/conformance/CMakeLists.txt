@@ -30,8 +30,6 @@ set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
 
 if(NOT HAVE_GIT)
   message(STATUS "Disabling testsuite ${TS_NAME}, requires git to checkout sources")
-elseif(NOT TESTS_USE_ICD)
-  message(STATUS "Disabling testsuite ${TS_NAME}, requires ocl-icd")
 
 elseif(NOT MAKE_PROGRAM)
   message(STATUS "Disabling testsuite ${TS_NAME}, requires make to build")
@@ -48,6 +46,9 @@ ExternalProject_Add(
   GIT_REPOSITORY "https://github.com/franz/OpenCL-CTS"
   GIT_TAG "cl12_trunk"
   CONFIGURE_COMMAND ${CMAKE_COMMAND} -DCMAKE_BUILD_TYPE=Release
+    -DENABLE_ASAN=${ENABLE_ASAN}
+    -DENABLE_TSAN=${ENABLE_TSAN}
+    "-DPOCL=$<TARGET_FILE:${POCL_LIBRARY_NAME}>"
       "${TS_BASEDIR}/src/${TS_NAME}/test_conformance"
   INSTALL_COMMAND /bin/true
 )
@@ -1572,8 +1573,10 @@ add_test(NAME "${TS_NAME}_basic_micro_other"
 add_test(NAME "${TS_NAME}_basic_micro_memory"
          COMMAND "${TS_BUILDDIR}/basic/test_basic" vload_global  vload_local  vstore_global  vstore_local   bufferreadwriterect  arrayreadwrite  arraycopy  enqueue_map_buffer   kernel_memory_alignment_local  kernel_memory_alignment_global)
 
+# compiler_defines_for_extensions is DISABLED because of SPIR:
+# FAIL: Extension cl_khr_spir is not in the list of approved Khronos extensions!
 add_test(NAME "${TS_NAME}_compiler_micro"
-         COMMAND "${TS_BUILDDIR}/compiler/test_compiler" load_program_source  load_multistring_source  load_two_kernel_source  load_null_terminated_source  load_null_terminated_multi_line_source  load_null_terminated_partial_multi_line_source  load_discreet_length_source  get_program_source  get_program_build_info  get_program_info   async_build  options_build_optimizations  options_build_macro  options_build_macro_existence  options_include_directory  options_denorm_cache  preprocessor_define_udef  preprocessor_include  preprocessor_line_error  preprocessor_pragma  compiler_defines_for_extensions  image_macro  simple_compile_only  simple_static_compile_only  simple_extern_compile_only  simple_compile_with_callback  simple_embedded_header_compile  simple_link_only  two_file_regular_variable_access  two_file_regular_struct_access  two_file_regular_function_access  simple_link_with_callback  simple_embedded_header_link  execute_after_simple_compile_and_link  execute_after_simple_compile_and_link_no_device_info  execute_after_simple_compile_and_link_with_defines  execute_after_simple_compile_and_link_with_callbacks  execute_after_simple_library_with_link  execute_after_two_file_link  execute_after_embedded_header_link  execute_after_included_header_link  execute_after_serialize_reload_object  execute_after_serialize_reload_library  simple_library_only  simple_library_with_callback  simple_library_with_link  two_file_link     multiple_files_multiple_libraries  program_binary_type  compile_and_link_status_options_log
+         COMMAND "${TS_BUILDDIR}/compiler/test_compiler" load_program_source  load_multistring_source  load_two_kernel_source  load_null_terminated_source  load_null_terminated_multi_line_source  load_null_terminated_partial_multi_line_source  load_discreet_length_source  get_program_source  get_program_build_info  get_program_info   async_build  options_build_optimizations  options_build_macro  options_build_macro_existence  options_include_directory  options_denorm_cache  preprocessor_define_udef  preprocessor_include  preprocessor_line_error  preprocessor_pragma  image_macro  simple_compile_only  simple_static_compile_only  simple_extern_compile_only  simple_compile_with_callback  simple_embedded_header_compile  simple_link_only  two_file_regular_variable_access  two_file_regular_struct_access  two_file_regular_function_access  simple_link_with_callback  simple_embedded_header_link  execute_after_simple_compile_and_link  execute_after_simple_compile_and_link_no_device_info  execute_after_simple_compile_and_link_with_defines  execute_after_simple_compile_and_link_with_callbacks  execute_after_simple_library_with_link  execute_after_two_file_link  execute_after_embedded_header_link  execute_after_included_header_link  execute_after_serialize_reload_object  execute_after_serialize_reload_library  simple_library_only  simple_library_with_callback  simple_library_with_link  two_file_link     multiple_files_multiple_libraries  program_binary_type  compile_and_link_status_options_log
          WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/test_conformance/compiler")
 
 # with wimpy mode

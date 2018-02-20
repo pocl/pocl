@@ -50,6 +50,12 @@ struct _mem_mapping {
   size_t offset; /* offset to the beginning of the buffer */
   size_t size;
   mem_mapping_t *prev, *next;
+  /* This is required, because two clEnqueueMap() with the same buffer+size+offset,
+     will create two identical mappings in the buffer->mappings LL.
+     Without this flag, both corresponding clEnqUnmap()s will find
+     the same mapping (the first one in mappings LL), which will lead
+     to memory double-free corruption later. */
+  long unmap_requested;
 };
 
 typedef struct _mem_destructor_callback mem_destructor_callback_t;
