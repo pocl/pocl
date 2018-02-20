@@ -191,7 +191,12 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
   POCL_MSG_PRINT_INFO ("Linking final module\n");
   char *const args1[]
 #ifndef POCL_ANDROID
+/* on non-X86, use Clang because we need it for compiler-rt builtins library*/
+#if defined(__x86_64__) || defined(__i386__)
       = { LINK_COMMAND,
+#else
+      = { CLANG,
+#endif
           "-o",
           tmp_module,
           tmp_objfile,
