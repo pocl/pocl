@@ -65,6 +65,8 @@
 #define PassManager legacy::PassManager
 #endif
 
+#include "linker.h"
+
 using namespace llvm;
 
 /**
@@ -388,10 +390,14 @@ extern size_t WGLocalSizeZ;
 extern bool WGDynamicLocalSize;
 }
 
+int pocl_update_program_llvm_irs_unlocked(cl_program program,
+                                          unsigned device_i);
+
 int pocl_llvm_generate_workgroup_function_nowrite(cl_device_id device,
   cl_kernel kernel, size_t local_x, size_t local_y, size_t local_z, void **output) {
 
-  int device_i = pocl_cl_device_to_index(kernel->program, device);
+  cl_program program = kernel->program;
+  int device_i = pocl_cl_device_to_index(program, device);
   assert(device_i >= 0);
 
   pocl::WGDynamicLocalSize = (local_x == 0 && local_y == 0 && local_z == 0);
@@ -407,46 +413,40 @@ int pocl_llvm_generate_workgroup_function_nowrite(cl_device_id device,
          kernel->name, local_x, local_y, local_z, parallel_bc_path);
 #endif
 
-  llvm::Module *input = NULL;
-  if (kernel->program->llvm_irs != NULL &&
-      kernel->program->llvm_irs[device_i] != NULL) {
-#ifdef DEBUG_POCL_LLVM_API
-    printf("### cloning the preloaded LLVM IR\n");
-#endif
-    llvm::Module *p = (llvm::Module *)kernel->program->llvm_irs[device_i];
-#ifdef LLVM_OLDER_THAN_3_8
-    input = llvm::CloneModule(p);
-#else
-    input = (llvm::CloneModule(p)).release();
-#endif
-  } else {
-#ifdef DEBUG_POCL_LLVM_API
-    printf("### loading the kernel bitcode from disk\n");
-#endif
-    char program_bc_path[POCL_FILENAME_LENGTH];
-    pocl_cache_program_bc_path(program_bc_path, kernel->program, device_i);
-    input = parseModuleIR(program_bc_path);
-  }
+  if (program->llvm_irs[device_i] == NULL)
+    pocl_update_program_llvm_irs_unlocked(program, device_i);
 
-  /* Now finally run the set of passes assembled above */
-  // TODO pass these as parameters instead, this is not thread safe!
+  llvm::Module *program_bc = (llvm::Module *)program->llvm_irs[device_i];
+
+  /* Create an empty Module and copy
+   * only the kernel+callgraph from program.bc */
+  llvm::Module *parallel_bc =
+      new llvm::Module(StringRef("parallel_bc"), GlobalContext());
+
+  parallel_bc->setTargetTriple(program_bc->getTargetTriple());
+  parallel_bc->setDataLayout(program_bc->getDataLayout());
+
+  copyKernelFromBitcode(kernel->name, parallel_bc, program_bc);
+
+  /* Now finally run the set of passes assembled above
+   * TODO pass these as parameters instead, this is not thread safe! */
   pocl::WGLocalSizeX = local_x;
   pocl::WGLocalSizeY = local_y;
   pocl::WGLocalSizeZ = local_z;
   KernelName = kernel->name;
 
 #ifdef LLVM_OLDER_THAN_3_7
-  kernel_compiler_passes(device, input,
-                         input->getDataLayout()->getStringRepresentation())
-      .run(*input);
+  kernel_compiler_passes(device, parallel_bc,
+                         parallel_bc->getDataLayout()->getStringRepresentation())
+      .run(*parallel_bc);
 #else
-  kernel_compiler_passes(device, input,
-                         input->getDataLayout().getStringRepresentation())
-      .run(*input);
+  kernel_compiler_passes(device, parallel_bc,
+                         parallel_bc->getDataLayout().getStringRepresentation())
+      .run(*parallel_bc);
 #endif
 
   assert(output != NULL);
-  *output = (void *)input;
+  *output = (void *)parallel_bc;
   ++numberOfIRs;
   return 0;
 }
@@ -495,10 +495,8 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
   return error;
 }
 
-int pocl_update_program_llvm_irs(cl_program program,
-                                 unsigned device_i) {
-  PoclCompilerMutexGuard lockHolder(NULL);
-  InitializeLLVM();
+int pocl_update_program_llvm_irs_unlocked(cl_program program,
+                                          unsigned device_i) {
 
   char program_bc_path[POCL_FILENAME_LENGTH];
   pocl_cache_program_bc_path(program_bc_path, program, device_i);
@@ -514,6 +512,14 @@ int pocl_update_program_llvm_irs(cl_program program,
   program->llvm_irs[device_i] = parseModuleIR(program_bc_path);
   ++numberOfIRs;
   return 0;
+}
+
+int pocl_update_program_llvm_irs(cl_program program,
+                                 unsigned device_i) {
+  PoclCompilerMutexGuard lockHolder(NULL);
+  InitializeLLVM();
+
+  return pocl_update_program_llvm_irs_unlocked(program, device_i);
 }
 
 void pocl_free_llvm_irs(cl_program program, int device_i) {
