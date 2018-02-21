@@ -1,0 +1,40 @@
+Portable Computing Language (pocl) v1.1 released
+-------------------------------------------------
+
+Pocl is a portable open source (MIT-licensed) implementation of the OpenCL
+standard (1.2 with some 2.0 features supported). In addition to producing an
+easily portable open-source OpenCL implementation, another major goal of this
+project is improving performance portability of OpenCL programs with the
+kernel compiler and the task runtime, reducing the need for target-dependent
+manual optimizations.
+
+Release highlights
+------------------
+
+* Support for LLVM/Clang 6.0 and 5.0.
+* Experimental SPIR support
+* Improved kernel compilation speed
+
+Please note that there's now an official pocl "maintenance policy" in place.
+This text describes the policy and how you can get your favourite project
+that uses OpenCL to remain regression free in the future pocl releases:
+
+  http://portablecl.org/docs/html/maintainer-policy.html
+
+Acknowledgements
+----------------
+
+Most of the code that landed to the pocl code base during this release
+cycle was produced for the needs of research funded by various sources.
+The Customized Parallel Computing research group of Tampere
+University of Technology (Finland) likes to thank the Academy of Finland
+(funding decision 297548), Finnish Funding Agency for Technology and Innovation
+(funding decision 40142/14, FiDiPro-StreamPro), ARTEMIS joint undertaking
+under grant agreement no 621439 (ALMARVI) and HSA Foundation.
+
+Links
+-----
+Home page:         http://portablecl.org/
+This announcement: http://portablecl.org/downloads/ANNOUNCEMENT
+Change log:        http://portablecl.org/downloads/CHANGES
+Download:          http://portablecl.org/downloads
