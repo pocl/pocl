@@ -387,18 +387,73 @@ endmacro()
 
 if(UNIX)
   include(CheckCSourceCompiles)
+  include(CheckSymbolExists)
+
+  # don't allow implicit function declarations
+  set(CMAKE_REQUIRED_FLAGS "-std=c99")
   set(CMAKE_REQUIRED_LIBRARIES "rt")
+
+  set(CMAKE_REQUIRED_DEFINITIONS "-D_POSIX_C_SOURCE=200112L")
+  CHECK_SYMBOL_EXISTS("posix_memalign"
+                      "stdlib.h"
+                      HAVE_POSIX_MEMALIGN)
+
+  set(CMAKE_REQUIRED_DEFINITIONS "-D_POSIX_C_SOURCE=199309L")
+  CHECK_SYMBOL_EXISTS("clock_gettime"
+                      "time.h"
+                      HAVE_CLOCK_GETTIME)
+
+  set(CMAKE_REQUIRED_DEFINITIONS "-D_BSD_SOURCE")
+  CHECK_SYMBOL_EXISTS("mkdtemp"
+                      "stdlib.h"
+                      HAVE_MKDTEMP)
+
   CHECK_C_SOURCE_COMPILES("
-#include <time.h>
-int main() {
-  struct timespec pocl_debug_timespec;
-  clock_gettime(CLOCK_REALTIME, &pocl_debug_timespec);
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdio.h>
+
+int main(int argc, char** argv) {
+  int fd = open(argv[1], O_RDWR);
+  fdatasync(fd);
+  close(fd);
   return 0;
 }
-  " HAVE_CLOCK_GETTIME)
-  unset(CMAKE_REQUIRED_LIBRARIES)
+  " HAVE_FDATASYNC)
+
+  CHECK_C_SOURCE_COMPILES("
+#define _GNU_SOURCE
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdio.h>
+int main(int argc, char** argv) {
+  int res = mkostemps(\"/tmp/blabla_XXXXXX.cc\", 3, O_CLOEXEC);
+  return 0;
+}
+  " HAVE_MKOSTEMPS)
+
+  CHECK_C_SOURCE_COMPILES("
+#define _BSD_SOURCE
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdio.h>
+int main(int argc, char** argv) {
+  int res = mkstemps(\"/tmp/blabla_XXXXXX.cc\", 3);
+  return 0;
+}
+  " HAVE_MKSTEMPS)
+
 else()
   set(HAVE_CLOCK_GETTIME 0)
+  set(HAVE_FDATASYNC 0)
+  set(HAVE_MKOSTEMPS 0)
+  set(HAVE_MKDTEMP 0)
 endif()
 
 include(CheckFunctionExists)
@@ -1067,9 +1122,6 @@ set(SRCDIR "${CMAKE_SOURCE_DIR}")
 ##########################################################
 
 # Checks for library features.
-
-include(CheckSymbolExists)
-CHECK_SYMBOL_EXISTS("posix_memalign" "stdlib.h" HAVE_POSIX_MEMALIGN)
 
 if(NOT CMAKE_CROSSCOMPILING)
   # AC_C_BIGENDIAN

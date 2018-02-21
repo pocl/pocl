@@ -41,6 +41,14 @@
 
 #cmakedefine HAVE_CLOCK_GETTIME
 
+#cmakedefine HAVE_FDATASYNC
+
+#cmakedefine HAVE_MKOSTEMPS
+
+#cmakedefine HAVE_MKSTEMPS
+
+#cmakedefine HAVE_MKDTEMP
+
 #cmakedefine HAVE_LTTNG_UST
 
 #cmakedefine HAVE_OCL_ICD

@@ -24,8 +24,9 @@
 #include "config.h"
 
 #ifndef _MSC_VER
-#  ifndef __STDC_FORMAT_MACROS
-#    define __STDC_FORMAT_MACROS
+#  define _DEFAULT_SOURCE
+#  ifndef _POSIX_C_SOURCE
+#    define _POSIX_C_SOURCE 199309L
 #  endif
 #  include <inttypes.h>
 #  ifdef HAVE_CLOCK_GETTIME

@@ -300,8 +300,10 @@ int pocl_write_file(const char *path, const char *content, uint64_t count,
     if (write(fd, content, (ssize_t)count) < (ssize_t)count)
       return errno ? -errno : -1;
 
+#ifdef HAVE_FDATASYNC
     if (fdatasync(fd))
       return errno ? -errno : -1;
+#endif
 
     if (close(fd))
       return -errno;
@@ -337,8 +339,10 @@ int pocl_write_tempfile(char *output_path, const char *prefix,
   if (write(fd, content, (ssize_t)count) < (ssize_t)count)
     return errno ? -errno : -1;
 
+#ifdef HAVE_FDATASYNC
   if (fdatasync(fd))
     return errno ? -errno : -1;
+#endif
 
   if (ret_fd)
     *ret_fd = fd;
@@ -380,8 +384,10 @@ int pocl_write_module(void *module, const char* path, int dont_rewrite) {
     WriteBitcodeToFile((llvm::Module*)module, os);
 
     os.flush();
+#ifdef HAVE_FDATASYNC
     if (fdatasync(fd))
       return errno ? -errno : -1;
+#endif
 
     os.close();
     if (os.has_error())

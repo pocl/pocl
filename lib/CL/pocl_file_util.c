@@ -1,6 +1,7 @@
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
 #define _GNU_SOURCE
 #define _DEFAULT_SOURCE
+#define _BSD_SOURCE
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -200,8 +201,10 @@ pocl_write_file(const char *path, const char* content,
   if (fflush (f))
     return errno;
 
+#ifdef HAVE_FDATASYNC
   if (fdatasync (fileno (f)))
     return errno;
+#endif
 
   return fclose(f);
 }
@@ -214,7 +217,7 @@ pocl_mk_tempname (char *output, const char *prefix, const char *suffix,
 {
 #if defined(_MSC_VER) || defined(__MINGW32__)
   assert (0);
-#else
+#elif defined(HAVE_MKOSTEMPS) || defined(HAVE_MKSTEMPS)
   /* using mkstemp() instead of tmpnam() has no real benefit
    * here, as we have to pass the filename to llvm,
    * but tmpnam() generates an annoying warning... */
@@ -228,10 +231,18 @@ pocl_mk_tempname (char *output, const char *prefix, const char *suffix,
     {
       len += 7;
       strncpy (output + len, suffix, (POCL_FILENAME_LENGTH - len));
+#ifdef HAVE_MKOSTEMPS
       fd = mkostemps (output, strlen (suffix), O_CLOEXEC);
+#else
+      fd = mkstemps (output, strlen (suffix));
+#endif
     }
   else
+#ifdef HAVE_MKOSTEMPS
     fd = mkostemp (output, O_CLOEXEC);
+#else
+    fd = mkstemp (output);
+#endif
 
   if (fd < 0)
     return errno;
@@ -242,6 +253,8 @@ pocl_mk_tempname (char *output, const char *prefix, const char *suffix,
     close (fd);
 
   return errno;
+#else
+#error mkostemps() / mkstemps() both unavailable
 #endif
 }
 
@@ -250,12 +263,14 @@ pocl_mk_tempdir (char *output, const char *prefix)
 {
 #if defined(_MSC_VER) || defined(__MINGW32__)
   assert (0);
-#else
+#elif defined(HAVE_MKDTEMP)
   /* TODO mkdtemp() might not be portable outside Linux */
   strncpy (output, prefix, POCL_FILENAME_LENGTH);
   size_t len = strlen (prefix);
   strncpy (output + len, "_XXXXXX", (POCL_FILENAME_LENGTH - len));
   return (mkdtemp (output) == NULL);
+#else
+#error mkdtemp() not available
 #endif
 }
 
@@ -285,8 +300,10 @@ pocl_write_tempfile (char *output_path, const char *prefix, const char *suffix,
   if ((size_t)res < bytes)
     return -1;
 
+#ifdef HAVE_FDATASYNC
   if (fdatasync (fd))
     return errno;
+#endif
 
   if (ret_fd)
     *ret_fd = fd;

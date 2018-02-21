@@ -23,7 +23,9 @@
    THE SOFTWARE.
 */
 
-#define _GNU_SOURCE
+/* for posix_memalign */
+#define _DEFAULT_SOURCE
+#define _POSIX_C_SOURCE 200112L
 
 #include "common.h"
 #include "pocl_shared.h"
