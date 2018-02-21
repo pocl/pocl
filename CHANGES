@@ -1,5 +1,45 @@
-1.1 unreleased
-===============
+1.1 February 2018
+=================
+
+Highlights
+----------
+
+- LLVM 6.0 is now supported
+
+- Reintroduced experimental SPIR LLVM bitcode support to pocl.
+  Requires LLVM 5 or newer.
+
+- Refactored pocl cache now does away with locking and relies
+  entirely on system calls for proper synchronization. Additionally,
+  cache file writes are now fdatasync()ed.
+
+- Improved kernel compilation time (with cold cache). Improvement
+  depends on sources - it's bigger for large programs with many kernels.
+  Luxmark now compiles in seconds instead of dozens of seconds;
+  internal pocl tests run in 30-50% less time.
+
+- LLVM Scalarizer pass is now only called for SPMD devices. Performance
+  change varies across tests, but positive seems to outweigh negative.
+
+- Implemented uninitialization callback for device drivers. This is
+  triggered when the last cl_context is released. Currently only the
+  CPU driver implements the callback.
+
+- removed libpoclu from installed files; this library contains helpers
+  for pocl's internal tests, and from installed files was only used by
+  poclcc, which has been updated to not rely on it.
+
+- POCL_MAX_WORK_GROUP_SIZE is now respected by all devices. This variable
+  limits the reported maximum WG sizes & dimensions; tuning max WG size
+  may improve performance due to cache locality improvement.
+
+- CL_PLATFORM_VERSION now contains much more information about how
+  pocl was built.
+
+- for users still building with Vecmathlib, performance should be back
+  to levels of pocl 0.14 (there was a huge drop caused by a change
+  in -O0 optimization level of LLVM 5.0)
+
 
 1.0 December 2017
 =================
