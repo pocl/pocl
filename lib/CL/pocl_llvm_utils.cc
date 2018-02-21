@@ -191,19 +191,19 @@ void cpu_setup_vector_widths(cl_device_id dev) {
     lane_width = 64;
 
   dev->native_vector_width_char = dev->preferred_vector_width_char =
-      VECWIDTH(char);
+      VECWIDTH(cl_char);
   dev->native_vector_width_short = dev->preferred_vector_width_short =
-      VECWIDTH(short);
+      VECWIDTH(cl_short);
   dev->native_vector_width_int = dev->preferred_vector_width_int =
-      VECWIDTH(int);
+      VECWIDTH(cl_int);
   dev->native_vector_width_long = dev->preferred_vector_width_long =
-      VECWIDTH(long);
+      VECWIDTH(cl_long);
   dev->native_vector_width_float = dev->preferred_vector_width_float =
       VECWIDTH(float);
   dev->native_vector_width_double = dev->preferred_vector_width_double =
       VECWIDTH(double);
   dev->native_vector_width_half = dev->preferred_vector_width_half =
-      VECWIDTH(short);
+      VECWIDTH(cl_short);
 }
 
 int pocl_llvm_remove_file_on_signal(const char *file) {

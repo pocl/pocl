@@ -78,7 +78,7 @@ uint64_t pocl_gettimemono_ns() {
 # warning Using clock_gettime with CLOCK_REALTIME for monotonic clocks
   clock_gettime(CLOCK_REALTIME, &timespec);
 # endif
-  return ((timespec.tv_sec * 1000000000UL) + timespec.tv_nsec);
+  return (((uint64_t)timespec.tv_sec * 1000000000UL) + timespec.tv_nsec);
 
 
 #elif defined(__APPLE__)
