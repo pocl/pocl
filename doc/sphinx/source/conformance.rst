@@ -8,8 +8,12 @@ Conformance related CMake options
 ---------------------------------
 
 - ``-DENABLE_CONFORMANCE=ON/OFF``
-  This is mostly related to the kernel library (the runtime is always conformant
-  on x86). Defaults to ON.
+  This is mostly related to the kernel library (the runtime is always built to
+  be conformant on x86). Defaults to ON. This option merely ensures that build
+  options which would result in non-conformant kernel library (-DENABLE_VECMATHLIB)
+  stay disabled, and the option that enables conformant kernel library (currently
+  -DENABLE_SLEEF, this may change in future) is enabled.
+
   Non-conformant kernel library might be somewhat faster, at the expense of
   precision and/or range. Note that conformance was tested **only** on certain
   hardware and software (Linux, x86-64, CPU with AVX & FMA instructions).
@@ -67,6 +71,10 @@ Known issues with the conformance testsuite
   Similarly, ``CL_KERNEL_ARG_TYPE_RESTRICT`` or ``CL_KERNEL_ARG_TYPE_CONST`` is
   returned if the **argument is a pointer** and the referenced type is declared with
   the restrict or const qualifier
+
+- the compiler test may fail with pocl-1.1 when it's built with SPIR support,
+  because cl_khr_spir extension is not recognized with OpenCL 1.2 - officially
+  it's only recognized since OpenCL 2.0.
 
 .. _sigfpe-handler:
 

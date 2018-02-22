@@ -20,7 +20,7 @@ You can run the tests or built examples using "ctest" directly;
 ``ctest --print-labels`` prints the available labels (testsuites);
 Invoke ctest with -jX option to run X tests in parallel.
 
-"make check" will invoke ctest with tier-1 testsuites.
+"make check_tier1" will invoke ctest with tier-1 testsuites.
 See :ref:`maintenance-policy` for details.
 
 Testsuite
@@ -29,15 +29,15 @@ Testsuite
 Before changes are committed to the mainline, all tests in the 'make
 check' tier-1 suite should pass::
 
-   make check
+   make check_tier1
 
 Under the 'examples' directory there are placeholder directories for
 external OpenCL application projects which are used as test suites for
 pocl (e.g. ViennaCL). These test suites can be enabled for cmake
 with -DENABLE_TESTSUITES (you can specify a list of test suites
 if you do not want to enabled all of them, see configure help for the
-available list).  Note that these additionnal test suites require
-additionnal software (tools and libraries). The configure script checks
+available list).  Note that these additional test suites require
+additional software (tools and libraries). The configure script checks
 some of them but the check is not exhautive. Test suites are disabled if
 their requirement files are not available.
 
@@ -59,7 +59,9 @@ Debugging a Failed Test
 If there are failing tests in the suite, the usual way to start
 debugging is to look what was printed to the logs for the failing
 cases. After running the test suite, the logs are stored under
-``Testing/Temporary/*.log``
+``Testing/Temporary/*.log`` Or one could re-run the test with more
+verbose output. Useful ctest options are "-V" and "--output-on-failure";
+to make pocl more chatty, use the POCL_DEBUG env variable.
 
 Ocl-icd
 -------
