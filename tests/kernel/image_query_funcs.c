@@ -217,7 +217,8 @@ error:
     }
   if (context) 
     {
-      clReleaseContext(context);
+      clUnloadCompiler ();
+      clReleaseContext (context);
     }
   if (source_file) 
     {

@@ -135,7 +135,8 @@ error:
     clReleaseCommandQueue(queue);
   }
   if (context) {
-    clReleaseContext(context);
+    clUnloadCompiler ();
+    clReleaseContext (context);
   }
   if (source_file) {
     fclose(source_file);

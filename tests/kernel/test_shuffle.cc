@@ -404,6 +404,7 @@ int main( int argc, char *argv[])
 #pragma GCC diagnostic pop
 #endif
 	clReleaseCommandQueue(queue);
+	clUnloadCompiler();
 	clReleaseContext(ctx);
 
 	if( num_errors == 0)

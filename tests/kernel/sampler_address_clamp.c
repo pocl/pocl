@@ -173,6 +173,11 @@ int main(int argc, char **argv)
 
 error:
 
+  if (image)
+    {
+      clReleaseMemObject (image);
+    }
+
   if (kernel) 
     {
       clReleaseKernel(kernel);
@@ -187,7 +192,8 @@ error:
     }
   if (context) 
     {
-      clReleaseContext(context);
+      clUnloadCompiler ();
+      clReleaseContext (context);
     }
   if (source_file) 
     {
