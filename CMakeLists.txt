@@ -83,17 +83,29 @@ option(EXAMPLES_USE_GIT_MASTER "If enabled, some of the external testsuites in e
 ####
 
 # currently only works with gcc as host compiler
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
-  option(ENABLE_TSAN "Enable ThreadSanitizer" OFF)
-  option(ENABLE_LSAN "Enable LeakSanitizer" OFF)
-  option(ENABLE_UBSAN "Enable UBSanitizer" OFF)
-else()
-  set(ENABLE_ASAN OFF)
-  set(ENABLE_TSAN OFF)
-  set(ENABLE_LSAN OFF)
-  set(ENABLE_UBSAN OFF)
+if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
+  if (CMAKE_C_COMPILER_VERSION VERSION_GREATER "4.7.99")
+    option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
+    option(ENABLE_TSAN "Enable ThreadSanitizer" OFF)
+  else()
+    set(ENABLE_ASAN OFF CACHE INTERNAL "Enable AddressSanitizer")
+    set(ENABLE_TSAN OFF CACHE INTERNAL "Enable ThreadSanitizer")
+  endif()
+
+  if (CMAKE_C_COMPILER_VERSION VERSION_GREATER "4.8.99")
+    option(ENABLE_UBSAN "Enable UBSanitizer" OFF)
+  else()
+    set(ENABLE_UBSAN OFF CACHE INTERNAL "Enable UBSanitizer")
+  endif()
+
+  if (CMAKE_C_COMPILER_VERSION VERSION_GREATER "5.0.99")
+    option(ENABLE_LSAN "Enable LeakSanitizer" OFF)
+  else()
+    set(ENABLE_LSAN OFF CACHE INTERNAL "Enable LeakSanitizer")
+  endif()
+
 endif()
+
 
 ##################################################################################
 
@@ -289,11 +301,6 @@ find_program(PATCH_EXEC
 
 find_program(XARGS_EXEC
   NAMES xargs${CMAKE_EXECUTABLE_SUFFIX}
-  HINTS ENV PATH
-)
-
-find_program(CAT_EXEC
-  NAMES cat${CMAKE_EXECUTABLE_SUFFIX}
   HINTS ENV PATH
 )
 
@@ -517,9 +524,9 @@ option(ENABLE_VECMATHLIB "Use vecmathlib for kernel library, mutually exclusive 
 if((NOT CLANGXX_WORKS) AND ENABLE_VECMATHLIB)
   message(WARNING "Disabling vecmathlib because clang++ doesn't seem to work!")
   set(ENABLE_VECMATHLIB OFF)
-  set(ENABLE_VECMATHLIB OFF CACHE BOOL)
+  set(ENABLE_VECMATHLIB OFF CACHE BOOL "VML" FORCE)
   set(ENABLE_SLEEF ON)
-  set(ENABLE_SLEEF ON CACHE BOOL)
+  set(ENABLE_SLEEF ON CACHE BOOL "SLEEF" FORCE)
 endif()
 
 # vecmathlib does not compile with fp16 currently
@@ -623,7 +630,6 @@ if (OCS_AVAILABLE)
 
   if (DEFINED STATIC_LLVM)
     message(AUTHOR_WARNING "STATIC_LLVM option was renamed, it wasn't really ensuring anything was static. Please see the SINGLE_LLVM_LIB option")
-    set_expr(SINGLE_LLVM_LIB ${STATIC_LLVM})
   endif()
 
   if(NOT SINGLE_LLVM_LIB)
@@ -1068,13 +1074,6 @@ if(ENABLE_TCE)
   endif()
 
 else()
-
-  # - '-fno-rtti' is a work-around for llvm bug 14200
-  # Which according to bug report has been fixed in llvm 3.7
-  # sadly, that bugreport is mistaken, it's not fixed in 3.7
-  if (NOT MSVC)
-    set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -fno-rtti")
-  endif()
 
   set(ENABLE_TCEMC 0)
 endif()
