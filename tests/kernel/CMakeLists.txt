@@ -243,11 +243,6 @@ OK"
     PROCESSORS 1
     DEPENDS "pocl_version_check")
 
-if(I386)
-  set_tests_properties("kernel/test_printf"
-    PROPERTIES WILL_FAIL 1)
-endif()
-
 ######################################################################
 
 add_test_pocl(NAME "kernel/test_sizeof_uint"
