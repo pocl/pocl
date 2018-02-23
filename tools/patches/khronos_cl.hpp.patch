@@ -15,7 +15,7 @@
  #endif
 
 -#if defined(linux) || defined(__APPLE__) || defined(__MACOSX)
-+#if defined(linux) || defined(__APPLE__) || defined(__MACOSX) || defined(__ANDROID__)
++#if defined(linux) || defined(__APPLE__) || defined(__MACOSX) || defined(__ANDROID__) || defined(__FreeBSD_kernel__) || defined(__GNU__)
  #include <alloca.h>
  
 -#include <emmintrin.h>
