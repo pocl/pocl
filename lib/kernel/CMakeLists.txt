@@ -151,7 +151,6 @@ pow.cl
 pown.cl
 powr.cl
 prefetch.cl
-printf.c
 radians.cl
 read_image.cl
 recip.cl
@@ -234,6 +233,7 @@ nextafter.cl
 popcount.cl
 prefetch.cl
 printf.c
+printf_base.c
 read_image.cl
 rhadd.cl
 rotate.cl
@@ -461,6 +461,7 @@ native_sqrt.cl
 popcount.cl
 prefetch.cl
 printf.c
+printf_base.c
 read_image.cl
 rhadd.cl
 rotate.cl

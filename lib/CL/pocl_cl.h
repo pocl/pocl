@@ -424,6 +424,7 @@ struct _cl_device_id {
   unsigned core_start;
   unsigned core_count;
   cl_uint max_work_item_dimensions;
+  int deviceSidePrintf;
   size_t max_work_item_sizes[3];
   size_t max_work_group_size;
   size_t preferred_wg_size_multiple;

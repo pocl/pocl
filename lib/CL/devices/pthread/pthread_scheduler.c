@@ -4,9 +4,10 @@
 #include <sched.h>
 #endif
 
-#include <string.h>
 #include <pthread.h>
+#include <string.h>
 #include <time.h>
+#include <unistd.h>
 
 #include "pocl-pthread_scheduler.h"
 #include "pocl_cl.h"
@@ -37,12 +38,14 @@ struct pool_thread_data
    * commands scheduled on a subdevice. */
   unsigned index;
   void *last_cmd_ignored;
-
+  /* printf buffer*/
+  void *printf_buffer;
 } __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
 typedef struct scheduler_data_
 {
   unsigned num_threads;
+  unsigned printf_buf_size;
 
   struct pool_thread_data *thread_pool;
   size_t local_mem_size;
@@ -82,6 +85,10 @@ pthread_scheduler_init (cl_device_id device)
           num_worker_threads * sizeof (struct pool_thread_data));
 
   scheduler.num_threads = num_worker_threads;
+  assert (num_worker_threads > 0);
+  scheduler.printf_buf_size = device->printf_buffer_size;
+  assert (device->printf_buffer_size > 0);
+
   /* safety margin - aligning pointers later (in kernel arg setup)
    * may require more local memory than actual local mem size.
    * TODO fix this */
@@ -371,6 +378,14 @@ work_group_scheduler (kernel_run_command *k,
       scheduler.local_mem_size);
   memcpy (&pc, &k->pc, sizeof (struct pocl_context));
 
+  // capacity and position already set up
+  pc.printf_buffer = thread_data->printf_buffer;
+  size_t position = 0;
+  pc.printf_buffer_position = &position;
+  assert (pc.printf_buffer != NULL);
+  assert (pc.printf_buffer_capacity > 0);
+  assert (pc.printf_buffer_position != NULL);
+
   /* Flush to zero is only set once at start of kernel (because FTZ is
    * a compilation option), but we need to reset rounding mode after every
    * iteration (since it can be changed during kernel execution). */
@@ -409,6 +424,11 @@ work_group_scheduler (kernel_run_command *k,
     }
   while (get_wg_index_range (k, &start_index, &end_index, &last_wgs,
                              thread_data->num_threads));
+
+  if (position > 0)
+    {
+      write (STDOUT_FILENO, pc.printf_buffer, position);
+    }
 
   free_kernel_arg_array_with_locals ((void **)&arguments, (void **)&arguments2,
                                      k);
@@ -458,6 +478,9 @@ pocl_pthread_prepare_kernel
   run_cmd->pc.local_size[0] = cmd->command.run.local_x;
   run_cmd->pc.local_size[1] = cmd->command.run.local_y;
   run_cmd->pc.local_size[2] = cmd->command.run.local_z;
+  run_cmd->pc.printf_buffer = NULL;
+  run_cmd->pc.printf_buffer_capacity = scheduler.printf_buf_size;
+  run_cmd->pc.printf_buffer_position = NULL;
   run_cmd->remaining_wgs = num_groups;
   run_cmd->wgs_dealt = 0;
   run_cmd->workgroup = cmd->command.run.wg;
@@ -500,6 +523,9 @@ pocl_pthread_driver_thread (void *p)
   td->current_ftz = 213;
   td->num_threads = scheduler.num_threads;
   td->last_cmd_ignored = NULL;
+  td->printf_buffer = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
+                                           scheduler.printf_buf_size);
+  assert (td->printf_buffer != NULL);
 
   assert (scheduler.local_mem_size > 0);
   td->local_mem = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
@@ -521,6 +547,7 @@ pocl_pthread_driver_thread (void *p)
         {
           pthread_cond_destroy (&td->wakeup_cond);
           PTHREAD_DESTROY_LOCK (&td->lock);
+          pocl_aligned_free (td->printf_buffer);
           pthread_exit (NULL);
         }
 

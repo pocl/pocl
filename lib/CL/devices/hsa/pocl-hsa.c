@@ -412,6 +412,7 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
     {
       if (strcmp(dev_name, supported_hsa_devices[i].long_name) == 0)
         {
+          dev->deviceSidePrintf = 0;
           COPY_ATTR (llvm_cpu);
           COPY_ATTR (llvm_target_triplet);
           COPY_ATTR (has_64bit_long);

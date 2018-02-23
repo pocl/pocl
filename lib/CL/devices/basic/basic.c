@@ -31,11 +31,12 @@
 #include "devices.h"
 #include "pocl_util.h"
 
-#include <pthread.h>
-#include <utlist.h>
 #include <assert.h>
-#include <string.h>
+#include <pthread.h>
 #include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+#include <utlist.h>
 
 #include "pocl_cache.h"
 #include "pocl_timing.h"
@@ -59,7 +60,10 @@ struct data {
   _cl_command_node * volatile ready_list;
   /* List of commands not yet ready to be executed */
   _cl_command_node * volatile command_list;
-  pocl_lock_t cq_lock;      /* Lock for command list related operations */
+  /* Lock for command list related operations */
+  pocl_lock_t cq_lock;
+  /* printf buffer */
+  void *printf_buffer;
 };
 
 static const cl_image_format supported_image_formats[] = {
@@ -287,9 +291,7 @@ pocl_basic_init_device_infos(unsigned j, struct _cl_device_id* dev)
   dev->num_partition_types = 0;
   dev->partition_type = NULL;
 
-  /* printf buffer size is meaningless for pocl, so just set it to
-   * the minimum value required by the spec
-   */
+  dev->deviceSidePrintf = 1;
   dev->printf_buffer_size = 1024*1024 ;
   dev->vendor = "pocl";
   dev->profile = "FULL_PROFILE";
@@ -387,6 +389,12 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
     ret = CL_INVALID_DEVICE;
 
   POCL_INIT_LOCK (d->cq_lock);
+
+  assert (device->printf_buffer_size > 0);
+  d->printf_buffer = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
+                                          device->printf_buffer_size);
+  assert (d->printf_buffer != NULL);
+
   pocl_cpuinfo_detect_device_info(device);
   pocl_set_buffer_image_limits(device);
 
@@ -600,6 +608,13 @@ pocl_basic_run
   pc->local_size[1] = cmd->command.run.local_y;
   pc->local_size[2] = cmd->command.run.local_z;
 
+  pc->printf_buffer = d->printf_buffer;
+  assert (pc->printf_buffer != NULL);
+  pc->printf_buffer_capacity = cmd->device->printf_buffer_size;
+  assert (pc->printf_buffer_capacity > 0);
+  size_t position = 0;
+  pc->printf_buffer_position = &position;
+
   unsigned rm = pocl_save_rm ();
   pocl_set_default_rm ();
   unsigned ftz = pocl_save_ftz ();
@@ -623,6 +638,12 @@ pocl_basic_run
 
   pocl_restore_rm (rm);
   pocl_restore_ftz (ftz);
+
+  if (position > 0)
+    {
+      write (STDOUT_FILENO, pc->printf_buffer, position);
+      position = 0;
+    }
 
   for (i = 0; i < kernel->num_args; ++i)
     {
@@ -912,6 +933,7 @@ pocl_basic_uninit (cl_device_id device)
 {
   struct data *d = (struct data*)device->data;
   POCL_DESTROY_LOCK (d->cq_lock);
+  pocl_aligned_free (d->printf_buffer);
   POCL_MEM_FREE(d);
   device->data = NULL;
   return CL_SUCCESS;
@@ -926,6 +948,12 @@ pocl_basic_reinit (cl_device_id device)
 
   d->current_kernel = NULL;
   d->current_dlhandle = 0;
+
+  assert (device->printf_buffer_size > 0);
+  d->printf_buffer = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
+                                          device->printf_buffer_size);
+  assert (d->printf_buffer != NULL);
+
   POCL_INIT_LOCK (d->cq_lock);
   device->data = d;
   return CL_SUCCESS;
@@ -944,7 +972,7 @@ pocl_basic_get_supported_image_formats (cl_mem_flags flags,
 {
     if (num_img_formats == NULL || image_formats == NULL)
       return CL_INVALID_VALUE;
-  
+
     *num_img_formats = sizeof(supported_image_formats)/sizeof(cl_image_format);
     *image_formats = supported_image_formats;
     
