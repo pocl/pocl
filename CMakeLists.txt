@@ -106,6 +106,17 @@ if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
 
 endif()
 
+##########################################################
+
+# POCL_DEVICE_ADDRESS_BITS
+# TODO rename to HOST addess bits
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+  set(POCL_DEVICE_ADDRESS_BITS 64)
+elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+  set(POCL_DEVICE_ADDRESS_BITS 32)
+else()
+  message(FATAL_ERROR "Cannot figure out POCL_DEVICE_ADDRESS_BITS")
+endif()
 
 ##################################################################################
 
@@ -1144,18 +1155,6 @@ if(ALIGNOF_DOUBLE16 LESS 128)
 endif()
 
 set(MAX_EXTENDED_ALIGNMENT "${ALIGNOF_DOUBLE16}")
-
-##########################################################
-
-# POCL_DEVICE_ADDRESS_BITS
-# TODO rename to HOST addess bits
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-  set(POCL_DEVICE_ADDRESS_BITS 64)
-elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
-  set(POCL_DEVICE_ADDRESS_BITS 32)
-else()
-  message(FATAL_ERROR "Cannot figure out POCL_DEVICE_ADDRESS_BITS")
-endif()
 
 ##########################################################
 
