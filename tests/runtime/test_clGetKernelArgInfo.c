@@ -125,31 +125,34 @@ int test_program(cl_program program, int is_spir) {
   err = clGetKernelArgInfo(test_kernel, 0, CL_KERNEL_ARG_TYPE_NAME,
                             BUF_LEN, &kernel_arg.string, &retsize);
   CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
-  TEST_ASSERT((retsize==6) && " arg type name size of test_kernel doesnt fit");
-  TEST_ASSERT((strncmp(kernel_arg.string, "char*", 6)==0) &&
-	      " arg type name of test_kernel doesnt compare");
-
+  TEST_ASSERT ((retsize == 6)
+               && " arg type name size of test_kernel doesn't fit");
+  TEST_ASSERT ((strncmp (kernel_arg.string, "char*", 6) == 0)
+               && " arg type name of test_kernel doesn't compare");
 
   err = clGetKernelArgInfo(test_kernel, 1, CL_KERNEL_ARG_TYPE_NAME,
                             BUF_LEN, &kernel_arg.string, &retsize);
   CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
-  TEST_ASSERT((retsize==7) && " arg type name size of test_kernel doesnt fit");
-  TEST_ASSERT((strncmp(kernel_arg.string, "float*", 7)==0) &&
-	      " arg type name of test_kernel doesnt compare");
+  TEST_ASSERT ((retsize == 7)
+               && " arg type name size of test_kernel doesn't fit");
+  TEST_ASSERT ((strncmp (kernel_arg.string, "float*", 7) == 0)
+               && " arg type name of test_kernel doesn't compare");
 
   err = clGetKernelArgInfo(test_kernel, 3, CL_KERNEL_ARG_TYPE_NAME,
                             BUF_LEN, &kernel_arg.string, &retsize);
   CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
-  TEST_ASSERT((retsize==6) && " arg type name size of test_kernel doesnt fit");
-  TEST_ASSERT((strncmp(kernel_arg.string, "float", 6)==0) &&
-	      " arg type name of test_kernel doesnt compare");
+  TEST_ASSERT ((retsize == 6)
+               && " arg type name size of test_kernel doesn't fit");
+  TEST_ASSERT ((strncmp (kernel_arg.string, "float", 6) == 0)
+               && " arg type name of test_kernel doesn't compare");
 
   err = clGetKernelArgInfo(test_kernel, 4, CL_KERNEL_ARG_TYPE_NAME,
                             BUF_LEN, &kernel_arg.string, &retsize);
   CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
-  TEST_ASSERT((retsize==5) && " arg type name size of test_kernel doesnt fit");
-  TEST_ASSERT((strncmp(kernel_arg.string, "int*", 5)==0) &&
-	      " arg type name of test_kernel doesnt compare");
+  TEST_ASSERT ((retsize == 5)
+               && " arg type name size of test_kernel doesn't fit");
+  TEST_ASSERT ((strncmp (kernel_arg.string, "int*", 5) == 0)
+               && " arg type name of test_kernel doesn't compare");
 
   /* TYPE QUALIFIER tests */
   // constant char* msg, global volatile float* in, global float* out, const float j, local int* c
@@ -218,8 +221,10 @@ int test_program(cl_program program, int is_spir) {
     printf("arg name not available (this is normal for SPIR)\n");
   } else {
     CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
-    TEST_ASSERT((retsize==4) && " arg name size of test_kernel doesnt fit");
-    TEST_ASSERT((strncmp(kernel_arg.string, "msg", 4)==0) && " arg name of test_kernel doesnt compare");
+    TEST_ASSERT ((retsize == 4)
+                 && " arg name size of test_kernel doesn't fit");
+    TEST_ASSERT ((strncmp (kernel_arg.string, "msg", 4) == 0)
+                 && " arg name of test_kernel doesn't compare");
   }
 
   err = clGetKernelArgInfo(test_kernel, 1, CL_KERNEL_ARG_NAME,
@@ -228,8 +233,10 @@ int test_program(cl_program program, int is_spir) {
     printf("arg name not available (this is normal for SPIR)\n");
   } else {
     CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
-    TEST_ASSERT((retsize==3) && " arg name size of test_kernel doesnt fit");
-    TEST_ASSERT((strncmp(kernel_arg.string, "in", 3)==0) && " arg name of test_kernel doesnt compare");
+    TEST_ASSERT ((retsize == 3)
+                 && " arg name size of test_kernel doesn't fit");
+    TEST_ASSERT ((strncmp (kernel_arg.string, "in", 3) == 0)
+                 && " arg name of test_kernel doesn't compare");
   }
 
   err = clGetKernelArgInfo(test_kernel, 2, CL_KERNEL_ARG_NAME,
@@ -238,8 +245,10 @@ int test_program(cl_program program, int is_spir) {
     printf("arg name not available (this is normal for SPIR)\n");
   } else {
     CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
-    TEST_ASSERT((retsize==4) && " arg name size of test_kernel doesnt fit");
-    TEST_ASSERT((strncmp(kernel_arg.string, "out", 4)==0) && " arg name of test_kernel doesnt compare");
+    TEST_ASSERT ((retsize == 4)
+                 && " arg name size of test_kernel doesn't fit");
+    TEST_ASSERT ((strncmp (kernel_arg.string, "out", 4) == 0)
+                 && " arg name of test_kernel doesn't compare");
   }
 
   err = clGetKernelArgInfo(test_kernel, 3, CL_KERNEL_ARG_NAME,
@@ -248,8 +257,10 @@ int test_program(cl_program program, int is_spir) {
     printf("arg name not available (this is normal for SPIR)\n");
   } else {
     CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
-    TEST_ASSERT((retsize==2) && " arg name size of test_kernel doesnt fit");
-    TEST_ASSERT((strncmp(kernel_arg.string, "j", 2)==0) && " arg name of test_kernel doesnt compare");
+    TEST_ASSERT ((retsize == 2)
+                 && " arg name size of test_kernel doesn't fit");
+    TEST_ASSERT ((strncmp (kernel_arg.string, "j", 2) == 0)
+                 && " arg name of test_kernel doesn't compare");
   }
 
   /* ACCESS QUALIFIER tests for test_kernel2 */
@@ -274,8 +285,10 @@ int test_program(cl_program program, int is_spir) {
   err = clGetKernelArgInfo(test_kernel2, 0, CL_KERNEL_ARG_TYPE_NAME,
                             BUF_LEN, &kernel_arg.string, &retsize);
   CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
-  TEST_ASSERT((retsize==12) && " arg type name size of test_kernel doesnt fit");
-  TEST_ASSERT((strncmp(kernel_arg.string, "tasty_float", 12)==0) && " arg type name of test_kernel2 doesnt compare");
+  TEST_ASSERT ((retsize == 12)
+               && " arg type name size of test_kernel doesn't fit");
+  TEST_ASSERT ((strncmp (kernel_arg.string, "tasty_float", 12) == 0)
+               && " arg type name of test_kernel2 doesn't compare");
 
   err = clReleaseKernel(test_kernel);
   CHECK_OPENCL_ERROR_IN("clReleaseKernel");

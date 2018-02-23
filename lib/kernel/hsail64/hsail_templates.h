@@ -224,7 +224,7 @@
 
 /**********************************************************************/
 
-// ldexp, doesnt work yet
+// ldexp, doesn't work yet
 
 #define DEFINE_LLVM_INTRIN_V_VI_FP32_FP64(NAME, BUILTIN)                \
   IMPLEMENT_LLVM_INTRIN_V_VI_ALL(NAME, float, int, BUILTIN, .f32)                          \

@@ -109,7 +109,7 @@ endif()
 ##########################################################
 
 # POCL_DEVICE_ADDRESS_BITS
-# TODO rename to HOST addess bits
+# TODO rename to HOST address bits
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
   set(POCL_DEVICE_ADDRESS_BITS 64)
 elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
@@ -374,7 +374,7 @@ endif()
 
 ######################################################################################
 
-# if variable FEATURE_X isnt defined, sets it to DEFAULT_FEATURE_X;
+# if variable FEATURE_X isn't defined, sets it to DEFAULT_FEATURE_X;
 # also, if DEFAULT_FEATURE_X is 0, prevents FEATURE_X being 1
 # since it takes DEFAULT_FEATURE_X=0 to mean "FEATURE_X is unavailable"
 macro(setup_cached_var VARNAME DESCRIPTION DOCS_FEATURE_IS_UNAVAILABLE DOCS_REQUESTED_DISABLING_FEATURE)
@@ -743,7 +743,7 @@ else()
 
     set(HAVE_OCL_ICD 1 CACHE INTERNAL "ICL library is ocl-icd")
     set(OPENCL_FOUND 1 CACHE INTERNAL "opencl ICD/library found")
-    # duh, why doesnt ocl-icd set this in it's .pc file ??
+    # duh, why doesn't ocl-icd set this in its .pc file ??
     if (CMAKE_CROSSCOMPILING)
       set(OPENCL_LIBRARIES "${OCL_ICD_LIBRARIES}" CACHE INTERNAL "opencl ICD/library paths")
     else()
@@ -915,7 +915,7 @@ set(HOST_DEVICE_EXTENSION_DEFINES "-Dcl_khr_int64")
 if(X86)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
 endif()
-# 32bit arm doesnt always support doubles
+# 32bit arm doesn't always support doubles
 if(ARM AND ENABLE_FP64)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp64")
 endif()
@@ -1194,7 +1194,7 @@ endif()
 # libpocl.so should get only API additions as we are implementing a standard.
 #
 # The library version encodings into the library file name are platform
-# dependant. Therefore we need to be a bit verbose here for the pocl.icd file
+# dependent. Therefore we need to be a bit verbose here for the pocl.icd file
 # creation to succeed (see Makefile.am).
 # Chiefly, GNU differs from BSD, and others are untested. See e.g.
 # http://en.opensuse.org/openSUSE%3aShared_library_packaging_policy#Versioning_schemes

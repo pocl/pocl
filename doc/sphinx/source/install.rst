@@ -88,7 +88,7 @@ Building kernels and the kernel library, i.e. target flags
 ------------------------------------------------------------
 
 All of these empty by default. There are hardcoded defaults which may
-be overriden by setting these variables (rarely needed).
+be overridden by setting these variables (rarely needed).
 
 Extra parameters to llc
    EXTRA_HOST_LLC_FLAGS

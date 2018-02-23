@@ -1397,7 +1397,7 @@ pocl_hsa_launch(pocl_hsa_device_data_t *d, cl_event event)
   while ((packet_id - hsa_queue_load_read_index_acquire(last_queue))
          >= last_queue->size)
     {
-      /* device queue is full. TODO this isnt the optimal solution */
+      /* device queue is full. TODO this isn't the optimal solution */
       POCL_MSG_WARN("pocl-hsa: queue %" PRIuS " overloaded\n", dd->last_queue);
       usleep(2000);
     }
