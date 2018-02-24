@@ -2198,7 +2198,7 @@ EXPORT CONST Sleef_double2 xlgamma_r_u1(double a) {
   r = (xisinf(a) || (a <= 0 && xisint(a)) || (xisnumber(a) && xisnan(r))) ? INFINITY : r;
   Sleef_double2 ret;
   ret.x = r;
-  ret.y = longBitsToDouble((doubleToRawLongBits(d.b.x) & (1L << 63)) | (0x3ff0000000000000L));
+  ret.y = longBitsToDouble((doubleToRawLongBits(d.b.x) & (1LL << 63)) | (0x3ff0000000000000LL));
   return ret;
 }
 
