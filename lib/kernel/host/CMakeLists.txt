@@ -145,6 +145,16 @@ function(compile_sleef VARIANT SLEEF_CONFIG SLEEF_CONFIG_NEW SLEEF_BC)
     set(STR "#define SLEEF_DOUBLE_VEC_AVAILABLE\n")
     file(APPEND "${SLEEF_CONFIG_NEW}" "${STR}")
   endif()
+  # this is workaround for an inconsistency problem in SLEEF.
+  # certain functions (ldexp, ilogb, pown) with double2 type argument
+  # take/return int2 types. There are no int2 vectors on x86(-64)
+  # but there are on ARM, and the vint type definition in SLEEF is
+  # different - on x86 it's defined to be 128bit int32 vector,
+  # but that's not the case on ARM where it is a 64bit int32 vector.
+  if(X86)
+    set(STR "#define SLEEF_VINT_IS_VLONG\n")
+    file(APPEND "${SLEEF_CONFIG_NEW}" "${STR}")
+  endif()
 
   foreach(VECSIZE "128" "256" "512")
 
