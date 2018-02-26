@@ -1022,15 +1022,6 @@ pocl_check_dlhandle_cache (_cl_command_node *cmd, unsigned initial_refcount)
 /* accounting object for the main memory */
 static pocl_global_mem_t system_memory;
 
-static size_t
-next_larger_pow2 (size_t in)
-{
-  size_t out = 1;
-  while (in > out)
-    out <<= 1;
-  return out;
-}
-
 void
 pocl_setup_device_for_system_memory(cl_device_id device)
 {
@@ -1090,7 +1081,7 @@ pocl_setup_device_for_system_memory(cl_device_id device)
     alloc_limit = MIN_MAX_MEM_ALLOC_SIZE;
 
   if (alloc_limit > device->global_mem_size)
-    alloc_limit = next_larger_pow2 (device->global_mem_size / 4);
+    alloc_limit = pocl_size_ceil2 (device->global_mem_size / 4);
   if (alloc_limit > (device->global_mem_size / 2))
     alloc_limit >>= 1;
 
@@ -1117,8 +1108,14 @@ pocl_set_buffer_image_limits(cl_device_id device)
    * it's max mem alloc / 4 because some programs (conformance test)
    * try to allocate max size constant objects and run out of memory
    * while trying to fill them. */
-  device->local_mem_size = device->max_constant_buffer_size
-      = next_larger_pow2 (device->global_mem_size / 256);
+
+  size_t s;
+  if (device->global_mem_cache_size > 0)
+    s = pocl_size_ceil2 (device->global_mem_cache_size / 2);
+  else
+    s = pocl_size_ceil2 (device->global_mem_size / 256);
+
+  device->local_mem_size = device->max_constant_buffer_size = s;
 
   /* We don't have hardware limitations on the buffer-backed image sizes,
    * so we set the maximum size in terms of the maximum amount of pixels
