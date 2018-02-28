@@ -129,6 +129,10 @@ if(LLVM_ASSERTS_BUILD AND POCL_USE_FAKE_ADDR_SPACE_IDS)
     PROPERTIES WILL_FAIL 1)
 endif()
 
+if(I386)
+  set_tests_properties("kernel/test_fabs"
+    PROPERTIES WILL_FAIL 1)
+endif()
 
 ######################################################################
 if(MSVC)
@@ -242,11 +246,6 @@ set_tests_properties("kernel/test_printf"
 OK"
     PROCESSORS 1
     DEPENDS "pocl_version_check")
-
-if(I386)
-  set_tests_properties("kernel/test_printf"
-    PROPERTIES WILL_FAIL 1)
-endif()
 
 ######################################################################
 

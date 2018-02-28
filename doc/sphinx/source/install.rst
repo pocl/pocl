@@ -88,7 +88,7 @@ Building kernels and the kernel library, i.e. target flags
 ------------------------------------------------------------
 
 All of these empty by default. There are hardcoded defaults which may
-be overriden by setting these variables (rarely needed).
+be overridden by setting these variables (rarely needed).
 
 Extra parameters to llc
    EXTRA_HOST_LLC_FLAGS
@@ -124,10 +124,12 @@ use ";" as separator (you'll have to escape it for bash).
   If not specified, pocl will try to find and link against
   llvm-config in PATH env var (usually means your system LLVM).
 
-- ``-DSTATIC_LLVM`` enable this to link LLVM statically into pocl.
-  Note that you need LLVM built with static libs. This option might result
-  in much longer build/link times and much larger pocl library, but the
-  resulting libpocl will not require an LLVM installation to run.
+- ``-DSTATIC_LLVM`` this option is deprecated and currently has no effect. See
+  the SINGLE_LLVM_LIB option.
+
+- ``-DSINGLE_LLVM_LIB`` when this option is enabled (default), pocl tries to
+  link to a single big LLVM library (libLLVM-<VERSION>.suffix). If this fails,
+  it fallbacks to linking LLVM libraries provided by ``llvm-config --libfiles``.
 
 - ``-DENABLE_ICD`` By default pocl's buildsystem will try to find an ICD
   and build pocl as a dynamic library named "libpocl". This option is useful
@@ -192,8 +194,9 @@ use ";" as separator (you'll have to escape it for bash).
   place the ``AMD-APP-SDK-v2.9-RC-lnx64.tgz`` file into ``/home/pocltest-src/AMDSDK2.9`` directory.
 
 - ``-DENABLE_CONFORMANCE=ON/OFF``
-  Builds Pocl as a fully conformant OpenCL implementation. Defaults to ON.
-  See :ref:`pocl-conformance` for details.
+  Ensures that certain build options which would result in non-conformant pocl
+  build stay disabled. Defaults to ON. Note that this does not quarantee a
+  fully conformant build of pocl by itself. See :ref:`pocl-conformance` for details.
 
 - ``-DENABLE_{A,L,T,UB}SAN`` - compiles pocl's host code (and tests
   + examples) with various sanitizers. Using more than one sanitizer at

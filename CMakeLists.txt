@@ -83,16 +83,39 @@ option(EXAMPLES_USE_GIT_MASTER "If enabled, some of the external testsuites in e
 ####
 
 # currently only works with gcc as host compiler
-if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-  option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
-  option(ENABLE_TSAN "Enable ThreadSanitizer" OFF)
-  option(ENABLE_LSAN "Enable LeakSanitizer" OFF)
-  option(ENABLE_UBSAN "Enable UBSanitizer" OFF)
+if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
+  if (CMAKE_C_COMPILER_VERSION VERSION_GREATER "4.7.99")
+    option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
+    option(ENABLE_TSAN "Enable ThreadSanitizer" OFF)
+  else()
+    set(ENABLE_ASAN OFF CACHE INTERNAL "Enable AddressSanitizer")
+    set(ENABLE_TSAN OFF CACHE INTERNAL "Enable ThreadSanitizer")
+  endif()
+
+  if (CMAKE_C_COMPILER_VERSION VERSION_GREATER "4.8.99")
+    option(ENABLE_UBSAN "Enable UBSanitizer" OFF)
+  else()
+    set(ENABLE_UBSAN OFF CACHE INTERNAL "Enable UBSanitizer")
+  endif()
+
+  if (CMAKE_C_COMPILER_VERSION VERSION_GREATER "5.0.99")
+    option(ENABLE_LSAN "Enable LeakSanitizer" OFF)
+  else()
+    set(ENABLE_LSAN OFF CACHE INTERNAL "Enable LeakSanitizer")
+  endif()
+
+endif()
+
+##########################################################
+
+# POCL_DEVICE_ADDRESS_BITS
+# TODO rename to HOST address bits
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+  set(POCL_DEVICE_ADDRESS_BITS 64)
+elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
+  set(POCL_DEVICE_ADDRESS_BITS 32)
 else()
-  set(ENABLE_ASAN OFF)
-  set(ENABLE_TSAN OFF)
-  set(ENABLE_LSAN OFF)
-  set(ENABLE_UBSAN OFF)
+  message(FATAL_ERROR "Cannot figure out POCL_DEVICE_ADDRESS_BITS")
 endif()
 
 ##################################################################################
@@ -292,11 +315,6 @@ find_program(XARGS_EXEC
   HINTS ENV PATH
 )
 
-find_program(CAT_EXEC
-  NAMES cat${CMAKE_EXECUTABLE_SUFFIX}
-  HINTS ENV PATH
-)
-
 if(NOT PATCH_EXEC)
   message(FATAL_ERROR "Could not find patch command.")
 endif()
@@ -356,7 +374,7 @@ endif()
 
 ######################################################################################
 
-# if variable FEATURE_X isnt defined, sets it to DEFAULT_FEATURE_X;
+# if variable FEATURE_X isn't defined, sets it to DEFAULT_FEATURE_X;
 # also, if DEFAULT_FEATURE_X is 0, prevents FEATURE_X being 1
 # since it takes DEFAULT_FEATURE_X=0 to mean "FEATURE_X is unavailable"
 macro(setup_cached_var VARNAME DESCRIPTION DOCS_FEATURE_IS_UNAVAILABLE DOCS_REQUESTED_DISABLING_FEATURE)
@@ -517,9 +535,9 @@ option(ENABLE_VECMATHLIB "Use vecmathlib for kernel library, mutually exclusive 
 if((NOT CLANGXX_WORKS) AND ENABLE_VECMATHLIB)
   message(WARNING "Disabling vecmathlib because clang++ doesn't seem to work!")
   set(ENABLE_VECMATHLIB OFF)
-  set(ENABLE_VECMATHLIB OFF CACHE BOOL)
+  set(ENABLE_VECMATHLIB OFF CACHE BOOL "VML" FORCE)
   set(ENABLE_SLEEF ON)
-  set(ENABLE_SLEEF ON CACHE BOOL)
+  set(ENABLE_SLEEF ON CACHE BOOL "SLEEF" FORCE)
 endif()
 
 # vecmathlib does not compile with fp16 currently
@@ -623,7 +641,6 @@ if (OCS_AVAILABLE)
 
   if (DEFINED STATIC_LLVM)
     message(AUTHOR_WARNING "STATIC_LLVM option was renamed, it wasn't really ensuring anything was static. Please see the SINGLE_LLVM_LIB option")
-    set_expr(SINGLE_LLVM_LIB ${STATIC_LLVM})
   endif()
 
   if(NOT SINGLE_LLVM_LIB)
@@ -726,7 +743,7 @@ else()
 
     set(HAVE_OCL_ICD 1 CACHE INTERNAL "ICL library is ocl-icd")
     set(OPENCL_FOUND 1 CACHE INTERNAL "opencl ICD/library found")
-    # duh, why doesnt ocl-icd set this in it's .pc file ??
+    # duh, why doesn't ocl-icd set this in its .pc file ??
     if (CMAKE_CROSSCOMPILING)
       set(OPENCL_LIBRARIES "${OCL_ICD_LIBRARIES}" CACHE INTERNAL "opencl ICD/library paths")
     else()
@@ -898,7 +915,7 @@ set(HOST_DEVICE_EXTENSION_DEFINES "-Dcl_khr_int64")
 if(X86)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
 endif()
-# 32bit arm doesnt always support doubles
+# 32bit arm doesn't always support doubles
 if(ARM AND ENABLE_FP64)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp64")
 endif()
@@ -1069,13 +1086,6 @@ if(ENABLE_TCE)
 
 else()
 
-  # - '-fno-rtti' is a work-around for llvm bug 14200
-  # Which according to bug report has been fixed in llvm 3.7
-  # sadly, that bugreport is mistaken, it's not fixed in 3.7
-  if (NOT MSVC)
-    set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -fno-rtti")
-  endif()
-
   set(ENABLE_TCEMC 0)
 endif()
 
@@ -1148,18 +1158,6 @@ set(MAX_EXTENDED_ALIGNMENT "${ALIGNOF_DOUBLE16}")
 
 ##########################################################
 
-# POCL_DEVICE_ADDRESS_BITS
-# TODO rename to HOST addess bits
-if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-  set(POCL_DEVICE_ADDRESS_BITS 64)
-elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
-  set(POCL_DEVICE_ADDRESS_BITS 32)
-else()
-  message(FATAL_ERROR "Cannot figure out POCL_DEVICE_ADDRESS_BITS")
-endif()
-
-##########################################################
-
 
 string(TOUPPER "${CMAKE_BUILD_TYPE}" BTYPE)
 if("${CMAKE_C_FLAGS_${BTYPE}}" MATCHES "DNDEBUG")
@@ -1196,7 +1194,7 @@ endif()
 # libpocl.so should get only API additions as we are implementing a standard.
 #
 # The library version encodings into the library file name are platform
-# dependant. Therefore we need to be a bit verbose here for the pocl.icd file
+# dependent. Therefore we need to be a bit verbose here for the pocl.icd file
 # creation to succeed (see Makefile.am).
 # Chiefly, GNU differs from BSD, and others are untested. See e.g.
 # http://en.opensuse.org/openSUSE%3aShared_library_packaging_policy#Versioning_schemes

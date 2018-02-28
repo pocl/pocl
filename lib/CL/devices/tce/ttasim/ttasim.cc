@@ -200,7 +200,7 @@ public:
     const char *adf = strrchr(adfName, '/');
     if (adf != NULL) adf++;
     if (snprintf (dev_name, 256, "ttasim-%s", adf) < 0)
-      POCL_ABORT("Unable to generate the device name string.");
+      POCL_ABORT("Unable to generate the device name string.\n");
     dev->long_name = strdup(dev_name);  
     ++device_count;
 
@@ -502,7 +502,7 @@ pocl_ttasim_thread (void *p)
 
         if (d->simulator.hadRuntimeError()) {
             d->simulatorCLI.run();
-            POCL_ABORT("Runtime error in a ttasim device.");
+            POCL_ABORT("Runtime error in a ttasim device.\n");
         }
     } while (false);
   } while (true);

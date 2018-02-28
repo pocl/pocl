@@ -247,7 +247,7 @@ pocl_hsa_abort_on_hsa_error(hsa_status_t status,
     {
       hsa_status_string(status, &str);
       POCL_MSG_PRINT2(HSA, func, line, "Error from HSA Runtime call:\n");
-      POCL_ABORT("%s", str);
+      POCL_ABORT ("%s\n", str);
     }
 }
 
@@ -266,7 +266,7 @@ pocl_hsa_abort_on_pthread_error(int status,
   if (status != 0)
     {
       POCL_MSG_PRINT2(HSA, func, line, "Error from pthread call:\n");
-      POCL_ABORT("%s", strerror(status));
+      POCL_ABORT ("%s\n", strerror (status));
     }
 }
 
@@ -436,12 +436,12 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
     {
       POCL_MSG_PRINT_INFO("pocl-hsa: found unknown HSA devices '%s'.\n",
 			  dev_name);
-      POCL_ABORT("We found a device for which we don't have device "
-		 "OpenCL attribute information (compute unit count, "
-		 "constant buffer size etc), and there's no way to get all "
-		 "the required info from HSA API. Please create a "
-		 "new entry with the information in supported_hsa_devices, "
-		 "and send a note/patch to pocl developers. Thanks!");
+      POCL_ABORT ("We found a device for which we don't have device "
+                  "OpenCL attribute information (compute unit count, "
+                  "constant buffer size etc), and there's no way to get all "
+                  "the required info from HSA API. Please create a "
+                  "new entry with the information in supported_hsa_devices, "
+                  "and send a note/patch to pocl developers. Thanks!\n");
     }
 }
 
@@ -1088,7 +1088,7 @@ pocl_hsa_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
       d->kernel_cache_lastptr++;
     }
   else
-    POCL_ABORT("kernel cache full");
+    POCL_ABORT ("kernel cache full\n");
 
   hsa_executable_symbol_t kernel_symbol;
 
@@ -1397,7 +1397,7 @@ pocl_hsa_launch(pocl_hsa_device_data_t *d, cl_event event)
   while ((packet_id - hsa_queue_load_read_index_acquire(last_queue))
          >= last_queue->size)
     {
-      /* device queue is full. TODO this isnt the optimal solution */
+      /* device queue is full. TODO this isn't the optimal solution */
       POCL_MSG_WARN("pocl-hsa: queue %" PRIuS " overloaded\n", dd->last_queue);
       usleep(2000);
     }

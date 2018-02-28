@@ -744,7 +744,7 @@ const char *getX86KernelLibName() {
   if (Features["sse2"])
     res = "sse2";
   else
-    POCL_ABORT("Pocl on x86_64 requires at least SSE2");
+    POCL_ABORT("Pocl on x86_64 requires at least SSE2\n");
   if (Features["ssse3"] && Features["cx16"])
     res = "ssse3";
   if (Features["sse4.1"] && Features["cx16"])
@@ -875,7 +875,7 @@ kernel_library
           lib = parseModuleIR(kernellib_fallback.c_str());
         }
       else
-        POCL_ABORT("Kernel library file %s doesn't exist.", kernellib.c_str());
+        POCL_ABORT("Kernel library file %s doesn't exist.\n", kernellib.c_str());
     }
   assert (lib != NULL);
   kernelLibraryMap[device] = lib;

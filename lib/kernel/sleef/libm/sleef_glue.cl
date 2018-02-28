@@ -26,9 +26,12 @@
 #ifdef cl_khr_fp64
 #ifdef SLEEF_VEC_128_AVAILABLE
 
+#ifdef SLEEF_VINT_IS_VLONG
+
 _CL_ALWAYSINLINE double2 Sleef_ldexpd2_long (double2 x, long2 k);
 _CL_ALWAYSINLINE double2 Sleef_pownd2_u10_long (double2 x, long2 k);
 _CL_ALWAYSINLINE long2 Sleef_ilogbd2_long (double2 x);
+
 
 _CL_ALWAYSINLINE double2
 Sleef_ldexpd2 (double2 x, int2 k)
@@ -51,6 +54,9 @@ Sleef_ilogbd2 (double2 x)
   int4 r = as_int4 (Sleef_ilogbd2_long (x));
   return r.xy;
 }
+
+#endif
+
 
 _CL_ALWAYSINLINE long2 Sleef_expfrexpd2_long (double2 x);
 

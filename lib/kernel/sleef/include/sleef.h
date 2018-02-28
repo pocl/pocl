@@ -802,6 +802,7 @@ float32x4_t Sleef_powrf4_u10_intrin (float32x4_t, float32x4_t);
 
 #ifdef SLEEF_DOUBLE_VEC_AVAILABLE
 typedef float64x2_t reg128d;
+typedef int32x2_t reg64i;
 
 #ifndef Sleef_float64x2_t_2_DEFINED
 typedef struct
@@ -849,8 +850,8 @@ Sleef_float64x2_t_2 Sleef_sincospid2_u05_intrin (float64x2_t);
 Sleef_float64x2_t_2 Sleef_sincospid2_u35_intrin (float64x2_t);
 float64x2_t Sleef_sinpid2_u05_intrin (float64x2_t);
 float64x2_t Sleef_cospid2_u05_intrin (float64x2_t);
-float64x2_t Sleef_ldexpd2_intrin (float64x2_t, int32x4_t);
-int32x4_t Sleef_ilogbd2_intrin (float64x2_t);
+float64x2_t Sleef_ldexpd2_intrin (float64x2_t, int32x2_t);
+int32x2_t Sleef_ilogbd2_intrin (float64x2_t);
 
 float64x2_t Sleef_fmad2_intrin (float64x2_t, float64x2_t, float64x2_t);
 float64x2_t Sleef_sqrtd2_u05_intrin (float64x2_t);
@@ -879,7 +880,7 @@ float64x2_t Sleef_tgammad2_u10_intrin (float64x2_t);
 float64x2_t Sleef_erfd2_u10_intrin (float64x2_t);
 float64x2_t Sleef_erfcd2_u15_intrin (float64x2_t);
 
-float64x2_t Sleef_pownd2_u10_intrin (float64x2_t, int32x4_t);
+float64x2_t Sleef_pownd2_u10_intrin (float64x2_t, int32x2_t);
 float64x2_t Sleef_powrd2_u10_intrin (float64x2_t, float64x2_t);
 
 #endif

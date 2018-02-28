@@ -279,6 +279,10 @@ Some of them are listed in the following:
 
 * ``TargetAddressSpaces``
 
+ Note: TargetAddressSpaces are now disabled by default when LLVM is >= 4.0,
+ and pocl uses Clang's address spaces directly (see last paragraph).
+ The following two paragraphs are therefore outdated.
+
  Internally pocl uses fixed address space ids to denote the different OpenCL
  address spaces.  That is, Clang generates LLVM IR that uses these address space
  ids, even with targets that have a single flat address space in reality.

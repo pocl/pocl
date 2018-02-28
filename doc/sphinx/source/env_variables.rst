@@ -15,7 +15,8 @@ pocl.
 - **POCL_BUILDING**
 
  If  set, the pocl helper scripts, kernel library and headers are 
- searched first from the pocl build directory.
+ searched first from the pocl build directory. Only has effect if
+ ENABLE_POCL_BUILDING was enabled at build (by default it is).
 
 - **POCL_CACHE_DIR**
 

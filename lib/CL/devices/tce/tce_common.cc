@@ -446,7 +446,7 @@ pocl_tce_compile_kernel(_cl_command_node *cmd,
 #endif
       error = system(buildCmd.c_str());
       if (error != 0)
-        POCL_ABORT("Error while running tcecc.");
+        POCL_ABORT("Error while running tcecc.\n");
       }
   }
 
@@ -479,7 +479,7 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
       d->restartProgram();
     } catch (Exception &e) {
       std::cerr << "error: " << e.errorMessage() << std::endl;
-      POCL_ABORT("error: Failed to load program to the TTA.");
+      POCL_ABORT("error: Failed to load program to the TTA.\n");
     }
 
     const TTAProgram::Program* prog = d->currentProgram;
@@ -490,7 +490,7 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
     try {
       kernelAddr = globalScope.dataLabel(kernelMdSymbolName).address().location();
     } catch (const KeyNotFound& e) {
-      POCL_ABORT ("Could not find the shared data structures from the device binary.");
+      POCL_ABORT("Could not find the shared data structures from the device binary.\n");
     }
     // cache the currently device loaded kernel info 
     d->updateCurrentKernel(&(cmd->command.run), kernelAddr);
@@ -655,7 +655,7 @@ pocl_tce_map_mem (void *data, void *buf_ptr,
     {
         if (posix_memalign (&target, ALIGNMENT, size) != 0)
         {
-            POCL_ABORT ("Could not allocate memory.");
+            POCL_ABORT("Could not allocate memory.\n");
         }
     }
 
@@ -719,7 +719,7 @@ pocl_tce_build_hash (cl_device_id device)
   fseek (adf_file, 0, SEEK_SET);
   adf_data = (uint8_t*)malloc (size);
   if (fread (adf_data, 1, size, adf_file) == 0)
-      POCL_ABORT ("Could not read ADF.");
+      POCL_ABORT("Could not read ADF.\n");
 
   SHA1_CTX ctx;
   uint8_t bin_dig[SHA1_DIGEST_SIZE];

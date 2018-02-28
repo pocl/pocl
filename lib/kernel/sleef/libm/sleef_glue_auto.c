@@ -434,6 +434,8 @@ _CL_ALWAYSINLINE float4 Sleef_pownf4_u10(float4 x, int4 y)
 
 #ifdef SLEEF_DOUBLE_VEC_AVAILABLE
 
+#ifdef  SLEEF_VINT_IS_VLONG
+
 _CL_ALWAYSINLINE double2 Sleef_pownd2_u10_long(double2 x, long2 y)
 {
   union { double2 t; reg128d r; } x_in;
@@ -444,6 +446,22 @@ _CL_ALWAYSINLINE double2 Sleef_pownd2_u10_long(double2 x, long2 y)
   ret.r = Sleef_pownd2_u10_intrin(x_in.r, y_in.r);
   return ret.t;
 }
+
+#else
+
+_CL_ALWAYSINLINE double2 Sleef_pownd2_u10(double2 x, int2 y)
+{
+  union { double2 t; reg128d r; } x_in;
+  x_in.t = x;
+  union { int2 t; reg64i r; } y_in;
+  y_in.t = y;
+  union { double2 t; reg128d r; } ret;
+  ret.r = Sleef_pownd2_u10_intrin(x_in.r, y_in.r);
+  return ret.t;
+}
+
+#endif
+
 #endif
 
 
@@ -1394,6 +1412,7 @@ _CL_ALWAYSINLINE float4 Sleef_ldexpf4(float4 x, int4 k)
 
 #ifdef SLEEF_DOUBLE_VEC_AVAILABLE
 
+#ifdef  SLEEF_VINT_IS_VLONG
 _CL_ALWAYSINLINE double2 Sleef_ldexpd2_long(double2 x, long2 k)
 {
   union { double2 t; reg128d r; } x_in;
@@ -1404,6 +1423,21 @@ _CL_ALWAYSINLINE double2 Sleef_ldexpd2_long(double2 x, long2 k)
   ret.r = Sleef_ldexpd2_intrin(x_in.r, k_in.r);
   return ret.t;
 }
+#else
+
+_CL_ALWAYSINLINE double2 Sleef_ldexpd2(double2 x, int2 k)
+{
+  union { double2 t; reg128d r; } x_in;
+  x_in.t = x;
+  union { int2 t; reg64i r; } k_in;
+  k_in.t = k;
+  union { double2 t; reg128d r; } ret;
+  ret.r = Sleef_ldexpd2_intrin(x_in.r, k_in.r);
+  return ret.t;
+}
+
+#endif
+
 #endif
 
 
@@ -1440,6 +1474,8 @@ _CL_ALWAYSINLINE int4 Sleef_ilogbf4(float4 x)
 
 #ifdef SLEEF_DOUBLE_VEC_AVAILABLE
 
+#ifdef  SLEEF_VINT_IS_VLONG
+
 _CL_ALWAYSINLINE long2 Sleef_ilogbd2_long(double2 x)
 {
   union { double2 t; reg128d r; } x_in;
@@ -1448,9 +1484,24 @@ _CL_ALWAYSINLINE long2 Sleef_ilogbd2_long(double2 x)
   ret.r = Sleef_ilogbd2_intrin(x_in.r);
   return ret.t;
 }
+
+#else
+
+_CL_ALWAYSINLINE int2 Sleef_ilogbd2(double2 x)
+{
+  union { double2 t; reg128d r; } x_in;
+  x_in.t = x;
+  union { int2 t; reg64i r; } ret;
+  ret.r = Sleef_ilogbd2_intrin(x_in.r);
+  return ret.t;
+}
+
 #endif
 
 #endif
+
+#endif
+
 
 
 #ifdef SLEEF_VEC_256_AVAILABLE

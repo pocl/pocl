@@ -366,7 +366,7 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
     } else {
       std::cerr << "Failed to create kernel compiler pass " << passes[i]
                 << std::endl;
-      POCL_ABORT("FAIL");
+      POCL_ABORT("FAIL\n");
     }
   }
 
@@ -572,7 +572,7 @@ void pocl_llvm_update_binaries(cl_program program) {
 
     size_t n = content.size();
     if (n < program->binary_sizes[i])
-      POCL_ABORT("binary size doesn't match the expected value");
+      POCL_ABORT("binary size doesn't match the expected value\n");
     if (program->binaries[i])
       POCL_MEM_FREE(program->binaries[i]);
     program->binaries[i] = (unsigned char *)malloc(n);

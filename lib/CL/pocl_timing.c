@@ -73,7 +73,7 @@ uint64_t pocl_gettimemono_ns() {
 #   warning Using clock_gettime with CLOCK_MONOTONIC for monotonic clocks
   clock_gettime(CLOCK_MONOTONIC, &timespec);
 #  endif
-# elif defined(__DragonFly__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__)
+# elif defined(__DragonFly__) || defined(__FreeBSD__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__FreeBSD_kernel__)
   clock_gettime(CLOCK_UPTIME_FAST, &timespec);
 # else
 # warning Using clock_gettime with CLOCK_REALTIME for monotonic clocks

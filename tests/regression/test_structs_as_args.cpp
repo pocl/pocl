@@ -41,23 +41,23 @@
 // the origin of the problem.
 
 struct int_single {
-    int a; 
+    cl_int a;
 };
 
 struct int_pair {
-    long int a;
-    long int b;
+    cl_long a;
+    cl_long b;
 };
 
 struct test_struct {
-    int elementA;
-    int elementB;
-    long long elementC;
-    char elementD;
-    long long elementE;
-    float elementF;
-    short elementG;
-    double elementH;
+    cl_int elementA;
+    cl_int elementB;
+    cl_long elementC;
+    cl_char elementD;
+    cl_long elementE;
+    cl_float elementF;
+    cl_short elementG;
+    cl_double elementH;
 };
 
 static char

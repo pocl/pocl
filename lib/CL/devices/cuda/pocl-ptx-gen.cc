@@ -616,7 +616,7 @@ void linkLibDevice(llvm::Module *Module, const char *KernelName,
   // Link libdevice into module.
   llvm::Linker Linker(*Module);
   if (Linker.linkInModule(std::move(LibDeviceModule.get()))) {
-    POCL_ABORT("[CUDA] failed to link to libdevice");
+    POCL_ABORT("[CUDA] failed to link to libdevice\n");
   }
 
   llvm::legacy::PassManager Passes;
