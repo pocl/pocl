@@ -32,6 +32,8 @@ set(VERSION_SUFFIX "-pre")
 set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION}${VERSION_SUFFIX})
 set(POCL_VERSION ${VERSION_STRING})
 
+#####################################################
+
 # required b/c SHARED libs defaults to ON while OBJECT defaults to OFF
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
@@ -51,6 +53,51 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 enable_testing()
+
+##################################################################################
+
+macro(set_expr VAR)
+  if(${ARGN})
+    set(${VAR} 1)
+  else()
+    set(${VAR} 0)
+  endif()
+endmacro()
+
+find_program(BASH "bash")
+find_program(MAKE_PROGRAM NAMES "make")
+find_program(GIT_CMD "git")
+set_expr(HAVE_GIT GIT_CMD)
+
+if(HAVE_GIT AND (VERSION_SUFFIX MATCHES "pre"))
+  execute_process(COMMAND "${GIT_CMD}" "rev-parse" "HEAD"
+                  OUTPUT_VARIABLE GIT_COMMIT
+                  RESULT_VARIABLE EXITCODE
+                  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  message(STATUS "Pocl source Git commit: ${GIT_COMMIT}")
+
+  execute_process(COMMAND "${GIT_CMD}" "branch" "--contains" "${GIT_COMMIT}"
+                  OUTPUT_VARIABLE GIT_BRANCH
+                  RESULT_VARIABLE EXITCODE
+                  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  message(STATUS "Pocl source Git branch: ${GIT_BRANCH}")
+
+  execute_process(COMMAND "${GIT_CMD}" describe "--always" "--long" "--all" "${GIT_COMMIT}"
+                  OUTPUT_VARIABLE GIT_DESCRIBE
+                  RESULT_VARIABLE EXITCODE
+                  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+  string(REPLACE "heads/" "" GIT_DESCRIBE "${GIT_DESCRIBE}")
+  message(STATUS "Pocl source Git describe: ${GIT_DESCRIBE}")
+  set(VERSION_SUFFIX "-pre/${GIT_DESCRIBE}")
+  set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION}${VERSION_SUFFIX})
+  set(POCL_VERSION ${VERSION_STRING})
+else()
+  message(STATUS "No git and/or not a prerelease -> not adding git commit to version.")
+endif()
 
 ##################################################################################
 
@@ -156,14 +203,6 @@ endif()
 message(STATUS "Host CPU cores: ${CORECOUNT}")
 
 ######################################################################################
-
-macro(set_expr VAR)
-  if(${ARGN})
-    set(${VAR} 1)
-  else()
-    set(${VAR} 0)
-  endif()
-endmacro()
 
 function(rename_if_different SRC DST)
   if(EXISTS "${DST}")
