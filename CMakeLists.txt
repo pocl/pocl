@@ -979,9 +979,6 @@ set(OCL_DRIVERS "basic pthreads")
 
 # TODO OCL_KERNEL_TARGET -> CPU_TARGET_TRIPLE
 # TODO OCL_KERNEL_TARGET_CPU -> OCL_KERNEL_TARGET_CPU
-# these are used here:
-#lib/CL/devices/basic/basic.c:  dev->llvm_target_triplet = OCL_KERNEL_TARGET;
-#lib/CL/devices/basic/basic.c:  dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
 set(OCL_KERNEL_TARGET "${LLC_TRIPLE}") #The kernel target triplet.
 set(OCL_KERNEL_TARGET_CPU "${LLC_HOST_CPU}") #The kernel target CPU variant.
 

@@ -262,9 +262,6 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   device->num_partition_types = 0;
   device->partition_type = NULL;
 
-  if(device->llvm_cpu && (!strcmp(device->llvm_cpu, "(unknown)")))
-    device->llvm_cpu = NULL;
-
   if (!scheduler_initialized)
     {
       scheduler_initialized = 1;

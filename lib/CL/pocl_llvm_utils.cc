@@ -121,16 +121,8 @@ int getModuleTriple(const char *input_stream, size_t size,
 }
 
 char *get_cpu_name() {
-#ifdef __mips__
-  // TODO test: this may be handled by the if-"generic"-then-"HOST_CPU" below.
-  //
-  // The MIPS backend isn't able to automatically detect the host yet and the
-  // value returned by llvm::sys::getHostCPUName() isn't usable in the
-  // -target-cpu option so we must use the CPU detected by CMake.
-  StringRef r = OCL_KERNEL_TARGET_CPU;
-#else
+
   StringRef r = llvm::sys::getHostCPUName();
-#endif
 
 #ifdef LLVM_3_8
   // https://github.com/pocl/pocl/issues/413
@@ -141,8 +133,8 @@ char *get_cpu_name() {
 
   if (r.str() == "generic") {
     POCL_MSG_WARN("LLVM does not recognize your cpu, trying to use "
-                   HOST_CPU " for -target-cpu\n");
-    r = llvm::StringRef(HOST_CPU);
+                   OCL_KERNEL_TARGET_CPU " for -target-cpu\n");
+    r = llvm::StringRef(OCL_KERNEL_TARGET_CPU);
   }
 
   assert(r.size() > 0);
