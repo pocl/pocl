@@ -37,10 +37,13 @@ SPIR support
 ------------
 
 There is some experimental support available for SPIR, with LLVM 5 and newer.
-There is some even more experimental support available for SPIR-V, but this
-depends on functional llvm-spirv converter. The Khronos official llvm-spirv
-is currently unusable for pocl (because it produces LLVM 3.6 bitcode and pocl
-requires LLVM 5+ for SPIR, and LLVM 5 refuses to load LLVM 3.6 bitcode).
+There is some even more experimental support available for loading SPIR-V
+binaries, but this depends on functional llvm-spirv converter. The converter
+must produce LLVM IR in format which pocl's LLVM can consume, so e.g. using
+llvm-spirv builf from branch "spirv-3.6.1" against pocl built with LLVM 5 is
+unlikely to work. However, here is now a "spirv-6.0" branch in the official
+SPIRV-LLVM Khronos repository, and its llvm-spirv + pocl + LLVM 6 seem to
+pass some quick tests.
 
 Compiling from OpenCL sources to SPIR:
 
