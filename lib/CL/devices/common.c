@@ -79,6 +79,7 @@ char*
 llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
               size_t local_x, size_t local_y, size_t local_z)
 {
+  POCL_MEASURE_START (llvm_codegen);
   int error = 0;
   void *llvm_module = NULL;
 
@@ -247,6 +248,7 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
 FINISH:
   pocl_destroy_llvm_module (llvm_module);
   POCL_MEM_FREE (objfile);
+  POCL_MEASURE_FINISH (llvm_codegen);
 
   if (error)
     return NULL;
