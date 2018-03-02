@@ -238,7 +238,9 @@ set(CLANG_LIBNAMES clangFrontendTool clangFrontend clangDriver clangSerializatio
 foreach(LIBNAME ${CLANG_LIBNAMES})
   find_library(C_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
   list(APPEND CLANG_LIBFILES "${C_LIBFILE_${LIBNAME}}")
-  set(LLVM_LDFLAGS "${LLVM_LDFLAGS} -Wl,--exclude-libs,lib${LIBNAME}")
+  if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+    set(LLVM_LDFLAGS "${LLVM_LDFLAGS} -Wl,--exclude-libs,lib${LIBNAME}")
+  endif()
 endforeach()
 
 # With Visual Studio llvm-config gives invalid list of static libs (libXXXX.a instead of XXXX.lib)
