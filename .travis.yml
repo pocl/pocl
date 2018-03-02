@@ -1,0 +1,49 @@
+sudo: false
+
+language: c++
+
+os:
+  - linux
+  - osx
+
+compiler:
+  - gcc
+  - clang
+
+matrix:
+  exclude:
+    - os: linux
+      compiler: clang
+  allow_failures:
+    - os: osx
+      compiler: clang
+    - os: osx
+      compiler: gcc
+
+addons:
+  apt:
+    sources:
+    - ubuntu-toolchain-r-test
+    packages:
+    - gcc-7
+    - clang
+    - hwloc
+    - libhwloc-dev
+
+before_install:
+  - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then brew install hwloc ; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then brew install llvm ; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then export LLVM_CONFIG=`brew ls llvm | grep "bin/llvm-config"` ; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then export MY_CMAKE_LLVM_CONFIG="-DLLVM_CONFIG=$LLVM_CONFIG" ; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then export MY_CMAKE_ICD_OFF="-DENABLE_ICD=OFF" ; fi
+  - if [ "$CXX" = "clang++" ] ; then MY_CMAKE_LIBCXX="-DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++" ; fi
+
+script:
+  - mkdir build && cd build
+  - cmake .. -DCMAKE_INSTALL_PREFIX=/tmp $MY_CMAKE_LLVM_CONFIG $MY_CMAKE_LIBCXX $MY_CMAKE_ICD_OFF
+  - make
+  - make check
+  - make install
+
+notifications:
+      email: false
