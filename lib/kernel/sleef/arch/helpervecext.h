@@ -588,9 +588,9 @@ static INLINE vint vsel_vi_vo_vi_vi(vopmask m, vint x, vint y) {
           vandnot_vi_vi_vi(vreinterpretFirstHalf_vi_vi2((vint2)m), y));
 }
 
-static INLINE vopmask visinf_vo_vd(vdouble d) { return (vopmask)(vabs_vd_vd(d) == INFINITY); }
-static INLINE vopmask vispinf_vo_vd(vdouble d) { return (vopmask)(d == INFINITY); }
-static INLINE vopmask visminf_vo_vd(vdouble d) { return (vopmask)(d == -INFINITY); }
+static INLINE vopmask visinf_vo_vd(vdouble d) { return (vopmask)(vabs_vd_vd(d) == SLEEF_INFINITY); }
+static INLINE vopmask vispinf_vo_vd(vdouble d) { return (vopmask)(d == SLEEF_INFINITY); }
+static INLINE vopmask visminf_vo_vd(vdouble d) { return (vopmask)(d == -SLEEF_INFINITY); }
 static INLINE vopmask visnan_vo_vd(vdouble d) { return (vopmask)(d != d); }
 
 static INLINE vdouble vsqrt_vd_vd(vdouble d) {
@@ -750,9 +750,9 @@ static INLINE vopmask vgt_vo_vi2_vi2(vint2 x, vint2 y) { return (vopmask)(x > y)
 static INLINE vint2 veq_vi2_vi2_vi2(vint2 x, vint2 y) { return x == y; }
 static INLINE vint2 vgt_vi2_vi2_vi2(vint2 x, vint2 y) { return x > y; }
 
-static INLINE vopmask visinf_vo_vf(vfloat d) { return (vopmask)(vabs_vf_vf(d) == INFINITYf); }
-static INLINE vopmask vispinf_vo_vf(vfloat d) { return (vopmask)(d == INFINITYf); }
-static INLINE vopmask visminf_vo_vf(vfloat d) { return (vopmask)(d == -INFINITYf); }
+static INLINE vopmask visinf_vo_vf(vfloat d) { return (vopmask)(vabs_vf_vf(d) == SLEEF_INFINITYf); }
+static INLINE vopmask vispinf_vo_vf(vfloat d) { return (vopmask)(d == SLEEF_INFINITYf); }
+static INLINE vopmask visminf_vo_vf(vfloat d) { return (vopmask)(d == -SLEEF_INFINITYf); }
 static INLINE vopmask visnan_vo_vf(vfloat d) { return (vopmask)(d != d); }
 
 static INLINE vfloat vsqrt_vf_vf(vfloat d) {

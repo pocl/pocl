@@ -60,9 +60,9 @@ static INLINE CONST float fmaxfk(float x, float y) { return x > y ? x : y; }
 static INLINE CONST int xisintf(float x) { return (x == (int)x); }
 
 static INLINE CONST int xisnanf(float x) { return x != x; }
-static INLINE CONST int xisinff(float x) { return x == INFINITYf || x == -INFINITYf; }
-static INLINE CONST int xisminff(float x) { return x == -INFINITYf; }
-static INLINE CONST int xispinff(float x) { return x == INFINITYf; }
+static INLINE CONST int xisinff(float x) { return x == SLEEF_INFINITYf || x == -SLEEF_INFINITYf; }
+static INLINE CONST int xisminff(float x) { return x == -SLEEF_INFINITYf; }
+static INLINE CONST int xispinff(float x) { return x == SLEEF_INFINITYf; }
 static INLINE CONST int xisnegzerof(float x) { return floatToRawIntBits(x) == floatToRawIntBits(-0.0); }
 static INLINE CONST int xisnumberf(double x) { return !xisinff(x) && !xisnanf(x); }
 
@@ -82,8 +82,8 @@ static INLINE CONST int ilogb2kf(float d) {
 
 EXPORT CONST int xilogbf(float d) {
   int e = ilogbkf(fabsfk(d));
-  e = d == 0.0f  ? FP_ILOGB0 : e;
-  e = xisnanf(d) ? FP_ILOGBNAN : e;
+  e = d == 0.0f  ? SLEEF_FP_ILOGB0 : e;
+  e = xisnanf(d) ? SLEEF_FP_ILOGBNAN : e;
   e = xisinff(d) ? INT_MAX : e;
   return e;
 }
@@ -427,7 +427,7 @@ EXPORT CONST float xsinf(float d) {
   u = mlaf(s, u * d, d);
 
   if (xisnegzerof(t) || fabsfk(t) > TRIGRANGEMAXf) u = -0.0f;
-  if (xisinff(t)) u = NANf;
+  if (xisinff(t)) u = SLEEF_NANf;
 
   return u;
 }
@@ -502,7 +502,7 @@ EXPORT CONST float xcosf(float d) {
   u = mlaf(s, u * d, d);
 
   if (fabsfk(t) > TRIGRANGEMAXf) u = 1.0f;
-  if (xisinff(t)) u = NANf;
+  if (xisinff(t)) u = SLEEF_NANf;
 
   return u;
 }
@@ -596,7 +596,7 @@ EXPORT CONST Sleef_float2 xsincosf(float d) {
   if (((q+1) & 2) != 0) { r.y = -r.y; }
 
   if (fabsfk(d) > TRIGRANGEMAXf) { r.x = 0; r.y = 1; }
-  if (xisinff(d)) { r.x = r.y = NANf; }
+  if (xisinff(d)) { r.x = r.y = SLEEF_NANf; }
 
   return r;
 }
@@ -658,7 +658,7 @@ EXPORT CONST Sleef_float2 xsincosf_u1(float d) {
   if (((q+1) & 2) != 0) { r.y = -r.y; }
 
   if (fabsfk(d) > TRIGRANGEMAX3f) { r.x = 0; r.y = 1; }
-  if (xisinff(d)) { r.x = r.y = NAN; }
+  if (xisinff(d)) { r.x = r.y = SLEEF_NAN; }
 
   return r;
 }
@@ -701,7 +701,7 @@ EXPORT CONST Sleef_float2 xsincospif_u05(float d) {
   if (((q+2) & 4) != 0) { r.y = -r.y; }
 
   if (fabsfk(d) > TRIGRANGEMAXf/4) { r.x = 0; r.y = 1; }
-  if (xisinff(d)) { r.x = r.y = NANf; }
+  if (xisinff(d)) { r.x = r.y = SLEEF_NANf; }
 
   return r;
 }
@@ -739,7 +739,7 @@ EXPORT CONST Sleef_float2 xsincospif_u35(float d) {
   if (((q+2) & 4) != 0) { r.y = -r.y; }
 
   if (fabsfk(d) > TRIGRANGEMAXf/4) { r.x = 0; r.y = 1; }
-  if (xisinff(d)) { r.x = r.y = NANf; }
+  if (xisinff(d)) { r.x = r.y = SLEEF_NANf; }
 
   return r;
 }
@@ -772,7 +772,7 @@ EXPORT CONST float xtanf(float d) {
 
   if ((q & 1) != 0) u = 1.0f / u;
 
-  if (xisinff(d)) u = NANf;
+  if (xisinff(d)) u = SLEEF_NANf;
 
   return u;
 }
@@ -891,7 +891,7 @@ EXPORT CONST float xatan2f(float y, float x) {
   if (xisinff(y)          ) r = M_PIf/2 - (xisinff(x) ? (signf(x) * (float)(M_PI*1/4)) : 0);
   if (              y == 0) r = (signf(x) == -1 ? M_PIf : 0);
 
-  return xisnanf(x) || xisnanf(y) ? NANf : mulsignf(r, y);
+  return xisnanf(x) || xisnanf(y) ? SLEEF_NANf : mulsignf(r, y);
 }
 
 EXPORT CONST float xasinf(float d) {
@@ -971,7 +971,7 @@ EXPORT CONST float xatan2f_u1(float y, float x) {
   if (xisinff(y)          ) r = (float)M_PI/2 - (xisinff(x) ? (signf(x) * (float)(M_PI*1/4)) : 0.0f);
   if (              y == 0) r = (signf(x) == -1 ? (float)M_PI : 0.0f);
 
-  return xisnanf(x) || xisnanf(y) ? NANf : mulsignf(r, y);
+  return xisnanf(x) || xisnanf(y) ? SLEEF_NANf : mulsignf(r, y);
 }
 
 EXPORT CONST float xasinf_u1(float d) {
@@ -1047,9 +1047,9 @@ EXPORT CONST float xlogf(float d) {
 
   x = x * t + 0.693147180559945286226764f * e;
 
-  if (xisinff(d)) x = INFINITYf;
-  if (d < 0 || xisnanf(d)) x = NANf;
-  if (d == 0) x = -INFINITYf;
+  if (xisinff(d)) x = SLEEF_INFINITYf;
+  if (d < 0 || xisnanf(d)) x = SLEEF_NANf;
+  if (d == 0) x = -SLEEF_INFINITYf;
 
   return x;
 }
@@ -1072,7 +1072,7 @@ EXPORT CONST float xexpf(float d) {
   u = ldexp2kf(u, q);
 
   if (d < -104) u = 0;
-  if (d >  104) u = INFINITYf;
+  if (d >  104) u = SLEEF_INFINITYf;
 
   return u;
 }
@@ -1158,9 +1158,9 @@ EXPORT CONST float xlogf_u1(float d) {
 
   float r = s.x + s.y;
 
-  if (xisinff(d)) r = INFINITYf;
-  if (d < 0 || xisnanf(d)) r = NANf;
-  if (d == 0) r = -INFINITYf;
+  if (xisinff(d)) r = SLEEF_INFINITYf;
+  if (d < 0 || xisnanf(d)) r = SLEEF_NANf;
+  if (d == 0) r = -SLEEF_INFINITYf;
 
   return r;
 }
@@ -1196,13 +1196,13 @@ EXPORT CONST float xpowf(float x, float y) {
 
   float result = expkf(dfmul_f2_f2_f(logkf(fabsfk(x)), y));
 
-  result = xisnanf(result) ? INFINITYf : result;
-  result *=  (x >= 0 ? 1 : (!yisint ? NANf : (yisodd ? -1 : 1)));
+  result = xisnanf(result) ? SLEEF_INFINITYf : result;
+  result *=  (x >= 0 ? 1 : (!yisint ? SLEEF_NANf : (yisodd ? -1 : 1)));
 
   float efx = mulsignf(fabsfk(x) - 1, y);
-  if (xisinff(y)) result = efx < 0 ? 0.0f : (efx == 0 ? 1.0f : INFINITYf);
-  if (xisinff(x) || x == 0) result = (yisodd ? signf(x) : 1) * ((x == 0 ? -y : y) < 0 ? 0 : INFINITYf);
-  if (xisnanf(x) || xisnanf(y)) result = NANf;
+  if (xisinff(y)) result = efx < 0 ? 0.0f : (efx == 0 ? 1.0f : SLEEF_INFINITYf);
+  if (xisinff(x) || x == 0) result = (yisodd ? signf(x) : 1) * ((x == 0 ? -y : y) < 0 ? 0 : SLEEF_INFINITYf);
+  if (xisnanf(x) || xisnanf(y)) result = SLEEF_NANf;
   if (y == 0 || x == 1) result = 1;
 
   return result;
@@ -1214,7 +1214,7 @@ EXPORT CONST float xpownf(float x, int y) {
 
 EXPORT CONST float xpowrf(float x, float y) {
   if (x < 0.0f)
-    return NAN;
+    return SLEEF_NAN;
   if (isnan(y))
     return y;
   return xpowf(x, y);
@@ -1227,10 +1227,10 @@ EXPORT CONST float xsinhf(float x) {
   d = dfsub_f2_f2_f2(d, dfrec_f2_f2(d));
   y = (d.x + d.y) * 0.5f;
 
-  y = fabsfk(x) > 89 ? INFINITYf : y;
-  y = xisnanf(y) ? INFINITYf : y;
+  y = fabsfk(x) > 89 ? SLEEF_INFINITYf : y;
+  y = xisnanf(y) ? SLEEF_INFINITYf : y;
   y = mulsignf(y, x);
-  y = xisnanf(x) ? NANf : y;
+  y = xisnanf(x) ? SLEEF_NANf : y;
 
   return y;
 }
@@ -1241,9 +1241,9 @@ EXPORT CONST float xcoshf(float x) {
   d = dfadd_f2_f2_f2(d, dfrec_f2_f2(d));
   y = (d.x + d.y) * 0.5f;
 
-  y = fabsfk(x) > 89 ? INFINITYf : y;
-  y = xisnanf(y) ? INFINITYf : y;
-  y = xisnanf(x) ? NANf : y;
+  y = fabsfk(x) > 89 ? SLEEF_INFINITYf : y;
+  y = xisnanf(y) ? SLEEF_INFINITYf : y;
+  y = xisnanf(x) ? SLEEF_NANf : y;
 
   return y;
 }
@@ -1258,7 +1258,7 @@ EXPORT CONST float xtanhf(float x) {
   y = fabsfk(x) > 18.714973875f ? 1.0f : y;
   y = xisnanf(y) ? 1.0f : y;
   y = mulsignf(y, x);
-  y = xisnanf(x) ? NANf : y;
+  y = xisnanf(x) ? SLEEF_NANf : y;
 
   return y;
 }
@@ -1297,8 +1297,8 @@ EXPORT CONST float xasinhf(float x) {
   d = logk2f(dfnormalize_f2_f2(dfadd_f2_f2_f(d, x)));
   y = d.x + d.y;
 
-  y = (fabsfk(x) > SQRT_FLT_MAX || xisnanf(y)) ? mulsignf(INFINITYf, x) : y;
-  y = xisnanf(x) ? NANf : y;
+  y = (fabsfk(x) > SQRT_FLT_MAX || xisnanf(y)) ? mulsignf(SLEEF_INFINITYf, x) : y;
+  y = xisnanf(x) ? SLEEF_NANf : y;
   y = xisnegzerof(x) ? -0.0f : y;
 
   return y;
@@ -1308,10 +1308,10 @@ EXPORT CONST float xacoshf(float x) {
   Sleef_float2 d = logk2f(dfadd2_f2_f2_f(dfmul_f2_f2_f2(dfsqrt_f2_f2(dfadd2_f2_f_f(x, 1)), dfsqrt_f2_f2(dfadd2_f2_f_f(x, -1))), x));
   float y = d.x + d.y;
 
-  y = (x > SQRT_FLT_MAX || xisnanf(y)) ? INFINITYf : y;
+  y = (x > SQRT_FLT_MAX || xisnanf(y)) ? SLEEF_INFINITYf : y;
   y = x == 1.0f ? 0.0f : y;
-  y = x < 1.0f ? NANf : y;
-  y = xisnanf(x) ? NANf : y;
+  y = x < 1.0f ? SLEEF_NANf : y;
+  y = xisnanf(x) ? SLEEF_NANf : y;
 
   return y;
 }
@@ -1319,11 +1319,11 @@ EXPORT CONST float xacoshf(float x) {
 EXPORT CONST float xatanhf(float x) {
   float y = fabsfk(x);
   Sleef_float2 d = logk2f(dfdiv_f2_f2_f2(dfadd2_f2_f_f(1, y), dfadd2_f2_f_f(1, -y)));
-  y = y > 1.0f ? NANf : (y == 1.0f ? INFINITYf : (d.x + d.y) * 0.5f);
+  y = y > 1.0f ? SLEEF_NANf : (y == 1.0f ? SLEEF_INFINITYf : (d.x + d.y) * 0.5f);
 
-  y = xisinff(x) || xisnanf(y) ? NANf : y;
+  y = xisinff(x) || xisnanf(y) ? SLEEF_NANf : y;
   y = mulsignf(y, x);
-  y = xisnanf(x) ? NANf : y;
+  y = xisnanf(x) ? SLEEF_NANf : y;
 
   return y;
 }
@@ -1344,7 +1344,7 @@ EXPORT CONST float xexp2f(float d) {
 
   u = ldexp2kf(u, q);
 
-  if (d >= 128) u = INFINITYf;
+  if (d >= 128) u = SLEEF_INFINITYf;
   if (d < -150) u = 0;
   
   return u;
@@ -1367,7 +1367,7 @@ EXPORT CONST float xexp10f(float d) {
 
   u = ldexp2kf(u, q);
 
-  if (d > 38.5318394191036238941387f) u = INFINITYf; // log10(FLT_MAX)
+  if (d > 38.5318394191036238941387f) u = SLEEF_INFINITYf; // log10(FLT_MAX)
   if (d < -50) u = 0;
   
   return u;
@@ -1376,7 +1376,7 @@ EXPORT CONST float xexp10f(float d) {
 EXPORT CONST float xexpm1f(float a) {
   Sleef_float2 d = dfadd2_f2_f2_f(expk2f(df(a, 0)), -1.0f);
   float x = d.x + d.y;
-  if (a > 88.72283172607421875f) x = INFINITYf;
+  if (a > 88.72283172607421875f) x = SLEEF_INFINITYf;
   if (a < -16.635532333438687426013570f) x = -1;
   if (xisnegzerof(a)) x = -0.0f;
   return x;
@@ -1408,9 +1408,9 @@ EXPORT CONST float xlog10f(float d) {
 
   float r = s.x + s.y;
   
-  if (xisinff(d)) r = INFINITYf;
-  if (d < 0 || xisnanf(d)) r = NANf;
-  if (d == 0) r = -INFINITYf;
+  if (xisinff(d)) r = SLEEF_INFINITYf;
+  if (d < 0 || xisnanf(d)) r = SLEEF_NANf;
+  if (d == 0) r = -SLEEF_INFINITYf;
 
   return r;
 }
@@ -1440,9 +1440,9 @@ EXPORT CONST float xlog2f(float d) {
 
   float r = s.x + s.y;
 
-  if (xisinff(d)) r = INFINITYf;
-  if (d < 0 || xisnanf(d)) r = NANf;
-  if (d == 0) r = -INFINITYf;
+  if (xisinff(d)) r = SLEEF_INFINITYf;
+  if (d < 0 || xisnanf(d)) r = SLEEF_NANf;
+  if (d == 0) r = -SLEEF_INFINITYf;
 
   return r;
 }
@@ -1477,9 +1477,9 @@ static INLINE CONST float xlog1pf_fast(float d) {
 
   float r = s.x + s.y;
 
-  if (d == INFINITYf) r = INFINITYf;
-  if (d < -1) r = NANf;
-  if (d == -1) r = -INFINITYf;
+  if (d == SLEEF_INFINITYf) r = SLEEF_INFINITYf;
+  if (d < -1) r = SLEEF_NANf;
+  if (d == -1) r = -SLEEF_INFINITYf;
   if (xisnegzerof(d)) r = -0.0f;
   if (xisnanf(d)) r = d;
 
@@ -1559,7 +1559,7 @@ EXPORT CONST float xcbrtf_u1(float d) {
   v = dfmul_f2_f2_f2(v, q2);
   z = ldexp2kf(v.x + v.y, (e + 6144) / 3 - 2048);
 
-  if (xisinff(d)) { z = mulsignf(INFINITYf, q2.x); }
+  if (xisinff(d)) { z = mulsignf(SLEEF_INFINITYf, q2.x); }
   if (d == 0) { z = mulsignf(0, q2.x); }
 
   return z;
@@ -1658,7 +1658,7 @@ EXPORT CONST float xnextafterf(float x, float y) {
 
   if (cx.f == 0 && x != 0) cx.f = mulsignf(0, x);
   if (x == 0 && y == 0) cx.f = y;
-  if (xisnanf(x) || xisnanf(y)) cx.f = NANf;
+  if (xisnanf(x) || xisnanf(y)) cx.f = SLEEF_NANf;
 
   return cx.f;
 }
@@ -1677,7 +1677,7 @@ EXPORT CONST float xfrfrexpf(float x) {
   cx.u &= ~0x7f800000U;
   cx.u |=  0x3f000000U;
 
-  if (xisinff(x)) cx.f = mulsignf(INFINITYf, x);
+  if (xisinff(x)) cx.f = mulsignf(SLEEF_INFINITYf, x);
   if (x == 0) cx.f = x;
 
   return cx.f;
@@ -1711,10 +1711,10 @@ EXPORT CONST float xhypotf_u05(float x, float y) {
   Sleef_float2 t = dfdiv_f2_f2_f2(df(n, 0), df(d, 0));
   t = dfmul_f2_f2_f(dfsqrt_f2_f2(dfadd2_f2_f2_f(dfsqu_f2_f2(t), 1)), max);
   float ret = t.x + t.y;
-  if (xisnanf(ret)) ret = INFINITYf;
+  if (xisnanf(ret)) ret = SLEEF_INFINITYf;
   if (min == 0) ret = max;
-  if (xisnanf(x) || xisnanf(y)) ret = NANf;
-  if (x == INFINITYf || y == INFINITYf) ret = INFINITYf;
+  if (xisnanf(x) || xisnanf(y)) ret = SLEEF_NANf;
+  if (x == SLEEF_INFINITYf || y == SLEEF_INFINITYf) ret = SLEEF_INFINITYf;
   return ret;
 }
 
@@ -1725,10 +1725,10 @@ EXPORT CONST float xhypotf_u35(float x, float y) {
   float max = fmaxfk(x, y);
 
   float t = min / max;
-  float ret = max * sqrtf(1 + t*t);
+  float ret = max * SQRTF(1 + t*t);
   if (min == 0) ret = max;
-  if (xisnanf(x) || xisnanf(y)) ret = NANf;
-  if (x == INFINITYf || y == INFINITYf) ret = INFINITYf;
+  if (xisnanf(x) || xisnanf(y)) ret = SLEEF_NANf;
+  if (x == SLEEF_INFINITYf || y == SLEEF_INFINITYf) ret = SLEEF_INFINITYf;
   return ret;
 }
 
@@ -1756,7 +1756,7 @@ EXPORT CONST float xfmodf(float x, float y) {
   if (r.x + r.y == de) ret = 0;
   ret = mulsignf(ret, x);
   if (nu < de) ret = x;
-  if (de == 0) ret = NANf;
+  if (de == 0) ret = SLEEF_NANf;
 
   return ret;
 }
@@ -1768,7 +1768,7 @@ EXPORT CONST float xsqrtf_u05(float d) {
 #warning Using software SQRT
   float q = 0.5f;
 
-  d = d < 0 ? NANf : d;
+  d = d < 0 ? SLEEF_NANf : d;
 
   if (d < 5.2939559203393770e-23f) {
     d *= 1.8889465931478580e+22f;
@@ -1791,7 +1791,7 @@ EXPORT CONST float xsqrtf_u05(float d) {
 
   float ret = (d2.x + d2.y) * q;
 
-  ret = d == INFINITYf ? INFINITYf : ret;
+  ret = d == SLEEF_INFINITYf ? SLEEF_INFINITYf : ret;
   ret = d == 0 ? d : ret;
 
   return ret;
@@ -1801,7 +1801,7 @@ EXPORT CONST float xsqrtf_u05(float d) {
 EXPORT CONST float xsqrtf_u35(float d) {
   float q = 1.0f;
 
-  d = d < 0 ? NANf : d;
+  d = d < 0 ? SLEEF_NANf : d;
 
   if (d < 5.2939559203393770e-23f) {
     d *= 1.8889465931478580e+22f;
@@ -1821,7 +1821,7 @@ EXPORT CONST float xsqrtf_u35(float d) {
   x = x * (1.5f - 0.5f * d * x * x);
   x = x * (1.5f - 0.5f * d * x * x);
 
-  return d == INFINITYf ? INFINITYf : (x * d * q);
+  return d == SLEEF_INFINITYf ? SLEEF_INFINITYf : (x * d * q);
 }
 
 EXPORT CONST float xfmaf(float x, float y, float z) {
@@ -1893,7 +1893,7 @@ EXPORT CONST float xsinpif_u05(float d) {
 
   if (xisnegzerof(d)) r = -0.0;
   if (fabsfk(d) > TRIGRANGEMAX4f) r = 0;
-  if (xisinff(d)) r = NANf;
+  if (xisinff(d)) r = SLEEF_NANf;
 
   return r;
 }
@@ -1936,7 +1936,7 @@ EXPORT CONST float xcospif_u05(float d) {
   float r = x.x + x.y;
 
   if (fabsfk(d) > TRIGRANGEMAX4f) r = 1;
-  if (xisinff(d)) r = NANf;
+  if (xisinff(d)) r = SLEEF_NANf;
 
   return r;
 }
@@ -2005,8 +2005,8 @@ EXPORT CONST float xtgammaf_u1(float a) {
   df2 d = gammafk(a);
   Sleef_float2 y = dfmul_f2_f2_f2(expk2f(d.a), d.b);
   float r = y.x + y.y;
-  r = (a == -INFINITYf || (a < 0 && xisintf(a)) || (xisnumberf(a) && a < 0 && xisnanf(r))) ? NANf : r;
-  r = ((a == INFINITYf || xisnumberf(a)) && a >= -FLT_MIN && (a == 0 || a > 36 || xisnanf(r))) ? mulsignf(INFINITYf, a) : r;
+  r = (a == -SLEEF_INFINITYf || (a < 0 && xisintf(a)) || (xisnumberf(a) && a < 0 && xisnanf(r))) ? SLEEF_NANf : r;
+  r = ((a == SLEEF_INFINITYf || xisnumberf(a)) && a >= -FLT_MIN && (a == 0 || a > 36 || xisnanf(r))) ? mulsignf(SLEEF_INFINITYf, a) : r;
   return r;
 }
 
@@ -2014,7 +2014,7 @@ EXPORT CONST float xlgammaf_u1(float a) {
   df2 d = gammafk(a);
   Sleef_float2 y = dfadd2_f2_f2_f2(d.a, logk2f(dfabs_f2_f2(d.b)));
   float r = y.x + y.y;
-  r = (xisinff(a) || (a <= 0 && xisintf(a)) || (xisnumberf(a) && xisnanf(r))) ? INFINITYf : r;
+  r = (xisinff(a) || (a <= 0 && xisintf(a)) || (xisnumberf(a) && xisnanf(r))) ? SLEEF_INFINITYf : r;
   return r;
 }
 
@@ -2022,7 +2022,7 @@ EXPORT CONST Sleef_float2 xlgamma_rf_u1(float a) {
   df2 d = gammafk(a);
   Sleef_float2 y = dfadd2_f2_f2_f2(d.a, logk2f(dfabs_f2_f2(d.b)));
   float r = y.x + y.y;
-  r = (xisinff(a) || (a <= 0 && xisintf(a)) || (xisnumberf(a) && xisnanf(r))) ? INFINITYf : r;
+  r = (xisinff(a) || (a <= 0 && xisintf(a)) || (xisnumberf(a) && xisnanf(r))) ? SLEEF_INFINITYf : r;
   Sleef_float2 ret;
   ret.x = r;
   ret.y = intBitsToFloat((floatToRawIntBits(d.b.x) & (1 << 31)) | (0x3f800000));
@@ -2053,7 +2053,7 @@ EXPORT CONST float xerff_u1(float a) {
   d = dfmul_f2_f2_f(d, a);
   d = o0 ? d : dfadd_f2_f_f2(1.0, dfneg_f2_f2(expk2f(d)));
   u = mulsignf(o2 ? (d.x + d.y) : 1, s);
-  u = xisnanf(a) ? NANf : u;
+  u = xisnanf(a) ? SLEEF_NANf : u;
   return u;
 }
 
@@ -2094,7 +2094,7 @@ EXPORT CONST float xerfcf_u15(float a) {
 
   r = o3 ? (x.x + x.y) : 0;
   if (s < 0) r = 2 - r;
-  r = xisnanf(s) ? NANf : r;
+  r = xisnanf(s) ? SLEEF_NANf : r;
   return r;
 }
 

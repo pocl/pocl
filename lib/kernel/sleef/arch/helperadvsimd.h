@@ -488,8 +488,8 @@ static INLINE vint vsel_vi_vm_vi_vi(vmask m, vint x, vint y) {
 /* Predicates                          */
 /***************************************/
 static INLINE vopmask visinf_vo_vd(vdouble d) {
-  const float64x2_t inf = vdupq_n_f64(INFINITY);
-  const float64x2_t neg_inf = vdupq_n_f64(-INFINITY);
+  const float64x2_t inf = vdupq_n_f64(SLEEF_INFINITY);
+  const float64x2_t neg_inf = vdupq_n_f64(-SLEEF_INFINITY);
   uint64x2_t cmp = vorrq_u64(vceqq_f64(d, inf), vceqq_f64(d, neg_inf));
   return vreinterpretq_u32_u64(cmp);
 }
@@ -499,11 +499,11 @@ static INLINE vopmask visnan_vo_vd(vdouble d) {
 }
 
 static INLINE vopmask vispinf_vo_vd(vdouble d) {
-  return vreinterpretq_u32_u64(vceqq_f64(d, vdupq_n_f64(INFINITY)));
+  return vreinterpretq_u32_u64(vceqq_f64(d, vdupq_n_f64(SLEEF_INFINITY)));
 }
 
 static INLINE vopmask visminf_vo_vd(vdouble d) {
-  return vreinterpretq_u32_u64(vceqq_f64(d, vdupq_n_f64(-INFINITY)));
+  return vreinterpretq_u32_u64(vceqq_f64(d, vdupq_n_f64(-SLEEF_INFINITY)));
 }
 
 static INLINE vfloat vsel_vf_vo_vf_vf(vopmask mask, vfloat x, vfloat y) {
@@ -551,13 +551,13 @@ static INLINE vopmask vgt_vo_vi_vi(vint x, vint y) {
   return vcombine_u32(vcge_s32(x, y), vdup_n_u32(0));
 }
 static INLINE vopmask visinf_vo_vf(vfloat d) {
-  return veq_vo_vf_vf(vabs_vf_vf(d), vcast_vf_f(INFINITYf));
+  return veq_vo_vf_vf(vabs_vf_vf(d), vcast_vf_f(SLEEF_INFINITYf));
 }
 static INLINE vopmask vispinf_vo_vf(vfloat d) {
-  return veq_vo_vf_vf(d, vcast_vf_f(INFINITYf));
+  return veq_vo_vf_vf(d, vcast_vf_f(SLEEF_INFINITYf));
 }
 static INLINE vopmask visminf_vo_vf(vfloat d) {
-  return veq_vo_vf_vf(d, vcast_vf_f(-INFINITYf));
+  return veq_vo_vf_vf(d, vcast_vf_f(-SLEEF_INFINITYf));
 }
 static INLINE vopmask visnan_vo_vf(vfloat d) { return vneq_vo_vf_vf(d, d); }
 

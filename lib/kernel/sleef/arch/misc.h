@@ -174,6 +174,14 @@ typedef struct {
 } Sleef_quad2;
 #endif
 
+#ifndef SLEEF_FP_ILOGB0
+#define SLEEF_FP_ILOGB0 FP_ILOGB0
+#endif
+
+#ifndef SLEEF_FP_ILOGBNAN
+#define SLEEF_FP_ILOGBNAN FP_ILOGBNAN
+#endif
+
 //
 
 #if defined (__GNUC__) || defined (__clang__) || defined(__INTEL_COMPILER)
@@ -200,19 +208,19 @@ typedef struct {
 #undef NAN
 #endif
 
-#define NAN __builtin_nan("")
-#define NANf __builtin_nanf("")
-#define NANl __builtin_nanl("")
-#define INFINITY __builtin_inf()
-#define INFINITYf __builtin_inff()
-#define INFINITYl __builtin_infl()
+#define SLEEF_NAN __builtin_nan("")
+#define SLEEF_NANf __builtin_nanf("")
+#define SLEEF_NANl __builtin_nanl("")
+#define SLEEF_INFINITY __builtin_inf()
+#define SLEEF_INFINITYf __builtin_inff()
+#define SLEEF_INFINITYl __builtin_infl()
 
-#if defined(__INTEL_COMPILER)
-#define INFINITYq __builtin_inf()
-#define NANq __builtin_nan("")
+#if defined(__INTEL_COMPILER) || defined (__clang__)
+#define SLEEF_INFINITYq __builtin_inf()
+#define SLEEF_NANq __builtin_nan("")
 #else
-#define INFINITYq __builtin_infq()
-#define NANq (INFINITYq - INFINITYq)
+#define SLEEF_INFINITYq __builtin_infq()
+#define SLEEF_NANq (INFINITYq - INFINITYq)
 #endif
 
 #elif defined(_MSC_VER)
@@ -225,10 +233,12 @@ typedef struct {
 #include <x86intrin.h>
 #endif
 
-#define INFINITYf ((float)INFINITY)
-#define NANf ((float)NAN)
-#define INFINITYl ((long double)INFINITY)
-#define NANl ((long double)NAN)
+#define SLEEF_INFINITY (1e+300 * 1e+300)
+#define SLEEF_NAN (SLEEF_INFINITY - SLEEF_INFINITY)
+#define SLEEF_INFINITYf ((float)SLEEF_INFINITY)
+#define SLEEF_NANf ((float)SLEEF_NAN)
+#define SLEEF_INFINITYl ((long double)SLEEF_INFINITY)
+#define SLEEF_NANl ((long double)SLEEF_NAN)
 
 #if (defined(_M_AMD64) || defined(_M_X64))
 #ifndef __SSE2__
@@ -248,16 +258,16 @@ typedef struct {
 #endif
 #endif
 
-static INLINE CONST int isinff(float x) { return x == INFINITYf || x == -INFINITYf; }
-static INLINE CONST int isinfl(long double x) { return x == INFINITYl || x == -INFINITYl; }
+static INLINE CONST int isinff(float x) { return x == SLEEF_INFINITYf || x == -SLEEF_INFINITYf; }
+static INLINE CONST int isinfl(long double x) { return x == SLEEF_INFINITYl || x == -SLEEF_INFINITYl; }
 static INLINE CONST int isnanf(float x) { return x != x; }
 static INLINE CONST int isnanl(long double x) { return x != x; }
 
 #endif // defined(_MSC_VER)
 
 #ifdef __APPLE__
-static INLINE CONST int isinff(float x) { return x == INFINITYf || x == -INFINITYf; }
-static INLINE CONST int isinfl(long double x) { return x == INFINITYl || x == -INFINITYl; }
+static INLINE CONST int isinff(float x) { return x == SLEEF_INFINITYf || x == -SLEEF_INFINITYf; }
+static INLINE CONST int isinfl(long double x) { return x == SLEEF_INFINITYl || x == -SLEEF_INFINITYl; }
 static INLINE CONST int isnanf(float x) { return x != x; }
 static INLINE CONST int isnanl(long double x) { return x != x; }
 #endif

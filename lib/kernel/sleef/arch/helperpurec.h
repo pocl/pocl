@@ -283,9 +283,9 @@ static INLINE vint vsel_vi_vo_vi_vi(vopmask m, vint x, vint y) {
 		      vandnot_vi_vi_vi(vreinterpretFirstHalf_vi_vi2(cnv.vi2), y));
 }
 
-static INLINE vopmask visinf_vo_vd(vdouble d)  { vopmask ret; for(int i=0;i<VECTLENDP;i++) ret.x[i] = (d.d[i] == INFINITY || d.d[i] == -INFINITY) ? -1 : 0; return ret; }
-static INLINE vopmask vispinf_vo_vd(vdouble d) { vopmask ret; for(int i=0;i<VECTLENDP;i++) ret.x[i] = d.d[i] == INFINITY ? -1 : 0; return ret; }
-static INLINE vopmask visminf_vo_vd(vdouble d) { vopmask ret; for(int i=0;i<VECTLENDP;i++) ret.x[i] = d.d[i] == -INFINITY ? -1 : 0; return ret; }
+static INLINE vopmask visinf_vo_vd(vdouble d)  { vopmask ret; for(int i=0;i<VECTLENDP;i++) ret.x[i] = (d.d[i] == SLEEF_INFINITY || d.d[i] == -SLEEF_INFINITY) ? -1 : 0; return ret; }
+static INLINE vopmask vispinf_vo_vd(vdouble d) { vopmask ret; for(int i=0;i<VECTLENDP;i++) ret.x[i] = d.d[i] == SLEEF_INFINITY ? -1 : 0; return ret; }
+static INLINE vopmask visminf_vo_vd(vdouble d) { vopmask ret; for(int i=0;i<VECTLENDP;i++) ret.x[i] = d.d[i] == -SLEEF_INFINITY ? -1 : 0; return ret; }
 static INLINE vopmask visnan_vo_vd(vdouble d)  { vopmask ret; for(int i=0;i<VECTLENDP;i++) ret.x[i] = d.d[i] != d.d[i] ? -1 : 0; return ret; }
 
 static INLINE vdouble vsqrt_vd_vd(vdouble d) { vdouble ret; for(int i=0;i<VECTLENDP;i++) ret.d[i] = sqrt(d.d[i]); return ret; }
@@ -388,9 +388,9 @@ static INLINE vint2 vsll_vi2_vi2_i(vint2 x, int c) { vint2 ret; for(int i=0;i<VE
 static INLINE vint2 vsrl_vi2_vi2_i(vint2 x, int c) { vint2 ret; for(int i=0;i<VECTLENSP;i++) ret.i[i] = ((uint32_t)x.i[i]) >> c; return ret; }
 static INLINE vint2 vsra_vi2_vi2_i(vint2 x, int c) { vint2 ret; for(int i=0;i<VECTLENSP;i++) ret.i[i] = x.i[i] >> c; return ret; }
 
-static INLINE vopmask visinf_vo_vf (vfloat d) { vopmask ret; for(int i=0;i<VECTLENSP;i++) ret.u[i] = (d.f[i] == INFINITYf || d.f[i] == -INFINITYf) ? -1 : 0; return ret; }
-static INLINE vopmask vispinf_vo_vf(vfloat d) { vopmask ret; for(int i=0;i<VECTLENSP;i++) ret.u[i] = d.f[i] == INFINITYf ? -1 : 0; return ret; }
-static INLINE vopmask visminf_vo_vf(vfloat d) { vopmask ret; for(int i=0;i<VECTLENSP;i++) ret.u[i] = d.f[i] == -INFINITYf ? -1 : 0; return ret; }
+static INLINE vopmask visinf_vo_vf (vfloat d) { vopmask ret; for(int i=0;i<VECTLENSP;i++) ret.u[i] = (d.f[i] == SLEEF_INFINITYf || d.f[i] == -SLEEF_INFINITYf) ? -1 : 0; return ret; }
+static INLINE vopmask vispinf_vo_vf(vfloat d) { vopmask ret; for(int i=0;i<VECTLENSP;i++) ret.u[i] = d.f[i] == SLEEF_INFINITYf ? -1 : 0; return ret; }
+static INLINE vopmask visminf_vo_vf(vfloat d) { vopmask ret; for(int i=0;i<VECTLENSP;i++) ret.u[i] = d.f[i] == -SLEEF_INFINITYf ? -1 : 0; return ret; }
 static INLINE vopmask visnan_vo_vf (vfloat d) { vopmask ret; for(int i=0;i<VECTLENSP;i++) ret.u[i] = d.f[i] != d.f[i] ? -1 : 0; return ret; }
 
 static INLINE vopmask veq_vo_vi2_vi2 (vint2 x, vint2 y) { vopmask ret; for(int i=0;i<VECTLENSP;i++) ret.u[i] = x.i[i] == y.i[i] ? -1 : 0; return ret; }
