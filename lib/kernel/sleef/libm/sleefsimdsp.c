@@ -1715,21 +1715,9 @@ EXPORT CONST vfloat xfabsf(vfloat x) { return vabs_vf_vf(x); }
 
 EXPORT CONST vfloat xcopysignf(vfloat x, vfloat y) { return vcopysign_vf_vf_vf(x, y); }
 
-EXPORT CONST vfloat xfmaxf(vfloat x, vfloat y) {
-#if SLEEF_SINGLE_MINMAXNUM_AVAILABLE
-  return vmaxnum_vf_vf_vf(x, y);
-#else
-  return vsel_vf_vo_vf_vf(visnan_vo_vf(y), x, vsel_vf_vo_vf_vf(vgt_vo_vf_vf(x, y), x, y));
-#endif
-}
+EXPORT CONST vfloat xfmaxf(vfloat x, vfloat y) { return vmaxnum_vf_vf_vf(x, y); }
 
-EXPORT CONST vfloat xfminf(vfloat x, vfloat y) {
-#if SLEEF_SINGLE_MINMAXNUM_AVAILABLE
-  return vminnum_vf_vf_vf(x, y);
-#else
-  return vsel_vf_vo_vf_vf(visnan_vo_vf(y), x, vsel_vf_vo_vf_vf(vgt_vo_vf_vf(y, x), x, y));
-#endif
-}
+EXPORT CONST vfloat xfminf(vfloat x, vfloat y) { return vminnum_vf_vf_vf(x, y); }
 
 EXPORT CONST vfloat xfdimf(vfloat x, vfloat y) {
   vfloat ret = vsub_vf_vf_vf(x, y);

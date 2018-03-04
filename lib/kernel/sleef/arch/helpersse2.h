@@ -43,6 +43,16 @@
 #define LOG2VECTLENSP (LOG2VECTLENDP+1)
 #define VECTLENSP (1 << LOG2VECTLENSP)
 
+#ifdef SLEEF_SINGLE_MINMAXNUM_AVAILABLE
+#error prior definition of SLEEF_SINGLE_MINMAXNUM_AVAILABLE
+#endif
+#define SLEEF_SINGLE_MINMAXNUM_AVAILABLE 1
+
+#ifdef SLEEF_DOUBLE_MINMAXNUM_AVAILABLE
+#error prior definition of SLEEF_DOUBLE_MINMAXNUM_AVAILABLE
+#endif
+#define SLEEF_DOUBLE_MINMAXNUM_AVAILABLE 1
+
 #if defined(_MSC_VER)
 #include <intrin.h>
 #else
@@ -239,6 +249,9 @@ static INLINE vopmask visnan_vo_vd(vdouble d) {
   return vreinterpret_vm_vd(_mm_cmpneq_pd(d, d));
 }
 
+static INLINE vdouble vmaxnum_vd_vd_vd(vdouble x, vdouble y) { return vsel_vd_vo_vd_vd(visnan_vo_vd(y), x, vmax_vd_vd_vd(x, y)); }
+static INLINE vdouble vminnum_vd_vd_vd(vdouble x, vdouble y) { return vsel_vd_vo_vd_vd(visnan_vo_vd(y), x, vmin_vd_vd_vd(x, y)); }
+
 //
 
 static INLINE vdouble vload_vd_p(const double *ptr) { return _mm_load_pd(ptr); }
@@ -378,6 +391,9 @@ static INLINE int vall_lte32_i_vf_vf(vfloat x, vfloat lim) {
   return 0;
 #endif
 }
+
+static INLINE vfloat vmaxnum_vf_vf_vf(vfloat x, vfloat y) { return vsel_vf_vo_vf_vf(visnan_vo_vf(y), x, vmax_vf_vf_vf(x, y)); }
+static INLINE vfloat vminnum_vf_vf_vf(vfloat x, vfloat y) { return vsel_vf_vo_vf_vf(visnan_vo_vf(y), x, vmin_vf_vf_vf(x, y)); }
 
 static INLINE vfloat vload_vf_p(const float *ptr) { return _mm_load_ps(ptr); }
 static INLINE vfloat vloadu_vf_p(const float *ptr) { return _mm_loadu_ps(ptr); }

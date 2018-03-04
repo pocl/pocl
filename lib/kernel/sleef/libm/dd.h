@@ -393,3 +393,13 @@ static INLINE CONST vdouble2 ddsqrt_vd2_vd(vdouble d) {
   vdouble t = vsqrt_vd_vd(d);
   return ddscale_vd2_vd2_vd(ddmul_vd2_vd2_vd2(ddadd2_vd2_vd_vd2(d, ddmul_vd2_vd_vd(t, t)), ddrec_vd2_vd(t)), vcast_vd_d(0.5));
 }
+
+#ifndef SLEEF_DOUBLE_MINMAXNUM_AVAILABLE
+static INLINE CONST vdouble vmaxnum_vd_vd_vd(vdouble x, vdouble y) {
+  return vsel_vd_vo_vd_vd(visnan_vo_vd(y), x, vsel_vd_vo_vd_vd(vgt_vo_vd_vd(x, y), x, y));
+}
+
+static INLINE CONST vdouble vminnum_vd_vd_vd(vdouble x, vdouble y) {
+  return vsel_vd_vo_vd_vd(visnan_vo_vd(y), x, vsel_vd_vo_vd_vd(vgt_vo_vd_vd(y, x), x, y));
+}
+#endif

@@ -464,3 +464,13 @@ static INLINE CONST vfloat2 dfsqrt_vf2_vf(vfloat d) {
   vfloat t = vsqrt_vf_vf(d);
   return dfscale_vf2_vf2_vf(dfmul_vf2_vf2_vf2(dfadd2_vf2_vf_vf2(d, dfmul_vf2_vf_vf(t, t)), dfrec_vf2_vf(t)), vcast_vf_f(0.5f));
 }
+
+#ifndef SLEEF_SINGLE_MINMAXNUM_AVAILABLE
+static INLINE CONST vfloat vmaxnum_vf_vf_vf(vfloat x, vfloat y) {
+  return vsel_vf_vo_vf_vf(visnan_vo_vf(y), x, vsel_vf_vo_vf_vf(vgt_vo_vf_vf(x, y), x, y));
+}
+
+static INLINE CONST vfloat vminnum_vf_vf_vf(vfloat x, vfloat y) {
+  return vsel_vf_vo_vf_vf(visnan_vo_vf(y), x, vsel_vf_vo_vf_vf(vgt_vo_vf_vf(y, x), x, y));
+}
+#endif
