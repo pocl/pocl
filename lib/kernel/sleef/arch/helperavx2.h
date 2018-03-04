@@ -24,6 +24,7 @@
 #define ENABLE_FMA_SP
 
 #define FULL_FP_ROUNDING
+#define SPLIT_KERNEL
 
 #if defined(_MSC_VER)
 #include <intrin.h>

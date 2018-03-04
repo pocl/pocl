@@ -22,6 +22,7 @@
 #define ENABLE_FMA_SP
 
 #define FULL_FP_ROUNDING
+#define SPLIT_KERNEL
 
 #define ISANAME "AArch64 AdvSIMD"
 

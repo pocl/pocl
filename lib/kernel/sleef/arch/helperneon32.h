@@ -19,6 +19,7 @@
 #define DFTPRIORITY 10
 
 #define ENABLE_RECSQRT_SP
+#define SPLIT_KERNEL
 
 #include <arm_neon.h>
 
