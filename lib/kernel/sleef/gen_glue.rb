@@ -56,6 +56,7 @@ FUNCS = {
   expm1: {name: 'expm1', args: ["x"], argtypes: [:fvec], ret: :fvec, prec: ["_u10"] },
 
   log10: {name: 'log10', args: ["x"], argtypes: [:fvec], ret: :fvec, prec: ["_u10"] },
+  log2: {name: 'log2', args: ["x"], argtypes: [:fvec], ret: :fvec, prec: ["_u10"] },
   log1p: {name: 'log1p', args: ["x"], argtypes: [:fvec], ret: :fvec, prec: ["_u10"] },
 
   sinpi: {name: 'sinpi', args: ["x"], argtypes: [:fvec], ret: :fvec, prec: ["_u05"] },

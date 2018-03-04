@@ -2190,6 +2190,57 @@ EXPORT CONST vdouble xlog10(vdouble d) {
   return r;
 }
 
+EXPORT CONST vdouble xlog2(vdouble d) {
+  vdouble2 x;
+  vdouble t, m, x2;
+
+#ifndef ENABLE_AVX512F
+  vopmask o = vlt_vo_vd_vd(d, vcast_vd_d(DBL_MIN));
+  d = vsel_vd_vo_vd_vd(o, vmul_vd_vd_vd(d, vcast_vd_d((double)(1LL << 32) * (double)(1LL << 32))), d);
+  vint e = vilogb2k_vi_vd(vmul_vd_vd_vd(d, vcast_vd_d(1.0/0.75)));
+  m = vldexp3_vd_vd_vi(d, vneg_vi_vi(e));
+  e = vsel_vi_vo_vi_vi(vcast_vo32_vo64(o), vsub_vi_vi_vi(e, vcast_vi_i(64)), e);
+#else
+  vdouble e = vgetexp_vd_vd(vmul_vd_vd_vd(d, vcast_vd_d(1.0/0.75)));
+  e = vsel_vd_vo_vd_vd(vispinf_vo_vd(e), vcast_vd_d(1024.0), e);
+  m = vgetmant_vd_vd(d);
+#endif
+
+  x = dddiv_vd2_vd2_vd2(ddadd2_vd2_vd_vd(vcast_vd_d(-1), m), ddadd2_vd2_vd_vd(vcast_vd_d(1), m));
+  x2 = vmul_vd_vd_vd(x.x, x.x);
+
+  t = vcast_vd_d(+0.2211941750456081490e+0);
+  t = vmla_vd_vd_vd_vd(t, x2, vcast_vd_d(+0.2200768693152277689e+0));
+  t = vmla_vd_vd_vd_vd(t, x2, vcast_vd_d(+0.2623708057488514656e+0));
+  t = vmla_vd_vd_vd_vd(t, x2, vcast_vd_d(+0.3205977477944495502e+0));
+  t = vmla_vd_vd_vd_vd(t, x2, vcast_vd_d(+0.4121985945485324709e+0));
+  t = vmla_vd_vd_vd_vd(t, x2, vcast_vd_d(+0.5770780162997058982e+0));
+  t = vmla_vd_vd_vd_vd(t, x2, vcast_vd_d(+0.96179669392608091449  ));
+
+#ifndef ENABLE_AVX512F
+  vdouble2 s = ddadd2_vd2_vd_vd2(vcast_vd_vi(e),
+                                 ddmul_vd2_vd2_vd2(x, vcast_vd2_d_d(2.885390081777926774, 6.0561604995516736434e-18)));
+#else
+  vdouble2 s = ddadd2_vd2_vd_vd2(e,
+                                 ddmul_vd2_vd2_vd2(x, vcast_vd2_d_d(2.885390081777926774, 6.0561604995516736434e-18)));
+#endif
+
+  s = ddadd2_vd2_vd2_vd(s, vmul_vd_vd_vd(vmul_vd_vd_vd(x2, x.x), t));
+
+  vdouble r = vadd_vd_vd_vd(s.x, s.y);
+
+#ifndef ENABLE_AVX512F
+  r = vsel_vd_vo_vd_vd(vispinf_vo_vd(d), vcast_vd_d(INFINITY), r);
+  r = vsel_vd_vo_vd_vd(vor_vo_vo_vo(vlt_vo_vd_vd(d, vcast_vd_d(0)), visnan_vo_vd(d)), vcast_vd_d(NAN), r);
+  r = vsel_vd_vo_vd_vd(veq_vo_vd_vd(d, vcast_vd_d(0)), vcast_vd_d(-INFINITY), r);
+#else
+  r = vfixup_vd_vd_vd_vi2_i(r, d, vcast_vi2_i((4 << (2*4)) | (3 << (4*4)) | (5 << (5*4)) | (2 << (6*4))), 0);
+#endif
+
+  return r;
+}
+
+
 EXPORT CONST vdouble xlog1p_fast(vdouble d) {
   vdouble2 x;
   vdouble t, m, x2;

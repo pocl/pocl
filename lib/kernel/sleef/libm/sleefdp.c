@@ -1832,6 +1832,41 @@ static INLINE CONST double xlog1p_fast(double d) {
   return r;
 }
 
+EXPORT CONST double xlog2(double d) {
+  Sleef_double2 x, s;
+  double m, t, x2;
+  int e;
+
+  int o = d < DBL_MIN;
+  if (o) d *= (double)(1LL << 32) * (double)(1LL << 32);
+      
+  e = ilogb2k(d * (1.0/0.75));
+  m = ldexp3k(d, -e);
+
+  if (o) e -= 64;
+
+  x = dddiv_d2_d2_d2(ddadd2_d2_d_d(-1, m), ddadd2_d2_d_d(1, m));
+  x2 = x.x * x.x;
+  
+  t = +0.2211941750456081490e+0;
+  t = mla(t, x2, +0.2200768693152277689e+0);
+  t = mla(t, x2, +0.2623708057488514656e+0);
+  t = mla(t, x2, +0.3205977477944495502e+0);
+  t = mla(t, x2, +0.4121985945485324709e+0);
+  t = mla(t, x2, +0.5770780162997058982e+0);
+  t = mla(t, x2, +0.96179669392608091449  );
+  s = ddadd2_d2_d_d2(e, ddmul_d2_d2_d2(x, dd(2.885390081777926774, 6.0561604995516736434e-18)));
+  s = ddadd2_d2_d2_d(s, x2 * x.x * t);
+  
+  double r = s.x + s.y;
+  
+  if (xisinf(d)) r = INFINITY;
+  if (d < 0 || xisnan(d)) r = NAN;
+  if (d == 0) r = -INFINITY;
+
+  return r;
+}
+
 EXPORT CONST double xlog1p(double d) {
   if (d > 0x1.0p+1000)
     return xlog(d);

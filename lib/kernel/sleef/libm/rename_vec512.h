@@ -30,6 +30,7 @@
 #define xexp10 Sleef_exp10d8_u10_intrin
 #define xexpm1 Sleef_expm1d8_u10_intrin
 #define xlog10 Sleef_log10d8_u10_intrin
+#define xlog2 Sleef_log2d8_u10_intrin
 #define xlog1p Sleef_log1pd8_u10_intrin
 #define xsincospi_u05 Sleef_sincospid8_u05_intrin
 #define xsincospi_u35 Sleef_sincospid8_u35_intrin
@@ -95,6 +96,7 @@
 #define xexp10f Sleef_exp10f16_u10_intrin
 #define xexpm1f Sleef_expm1f16_u10_intrin
 #define xlog10f Sleef_log10f16_u10_intrin
+#define xlog2f Sleef_log2f16_u10_intrin
 #define xlog1pf Sleef_log1pf16_u10_intrin
 #define xsincospif_u05 Sleef_sincospif16_u05_intrin
 #define xsincospif_u35 Sleef_sincospif16_u35_intrin

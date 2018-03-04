@@ -1415,6 +1415,38 @@ EXPORT CONST float xlog10f(float d) {
   return r;
 }
 
+EXPORT CONST float xlog2f(float d) {
+  Sleef_float2 x, s;
+  float m, t, x2;
+  int e;
+
+  int o = d < FLT_MIN;
+  if (o) d *= (float)(1LL << 32) * (float)(1LL << 32);
+
+  e = ilogb2kf(d * (1.0f/0.75f));
+  m = ldexp3kf(d, -e);
+
+  if (o) e -= 64;
+
+  x = dfdiv_f2_f2_f2(dfadd2_f2_f_f(-1, m), dfadd2_f2_f_f(1, m));
+  x2 = x.x * x.x;
+
+  t = +0.4374550283e+0f;
+  t = mlaf(t, x2, +0.5764790177e+0f);
+  t = mlaf(t, x2, +0.9618012905120f);
+
+  s = dfadd2_f2_f_f2(e, dfmul_f2_f2_f2(x, df(2.8853900432586669922, 3.2734474483568488616e-08)));
+  s = dfadd2_f2_f2_f(s, x2 * x.x * t);
+
+  float r = s.x + s.y;
+
+  if (xisinff(d)) r = INFINITYf;
+  if (d < 0 || xisnanf(d)) r = NANf;
+  if (d == 0) r = -INFINITYf;
+
+  return r;
+}
+
 static INLINE CONST float xlog1pf_fast(float d) {
   Sleef_float2 x, s;
   float m, t, x2;
