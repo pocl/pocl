@@ -323,6 +323,7 @@ EXPORT CONST vdouble xcos_u1(vdouble d) {
 #ifdef ENABLE_GNUABI
 #define TYPE2_FUNCATR static INLINE CONST
 #define TYPE6_FUNCATR static INLINE CONST
+#define SQRTU05_FUNCATR static INLINE CONST
 #define XSINCOS sincosk
 #define XSINCOS_U1 sincosk_u1
 #define XSINCOSPI_U05 sincospik_u05
@@ -331,6 +332,7 @@ EXPORT CONST vdouble xcos_u1(vdouble d) {
 #else
 #define TYPE2_FUNCATR EXPORT
 #define TYPE6_FUNCATR EXPORT CONST
+#define SQRTU05_FUNCATR EXPORT CONST
 #define XSINCOS xsincos
 #define XSINCOS_U1 xsincos_u1
 #define XSINCOSPI_U05 xsincospi_u05
@@ -2478,7 +2480,7 @@ EXPORT CONST vdouble xfma(vdouble x, vdouble y, vdouble z) {
 #endif
 }
 
-EXPORT CONST vdouble xsqrt_u05(vdouble d) {
+SQRTU05_FUNCATR vdouble xsqrt_u05(vdouble d) {
 #if 1
   return vsqrt_vd_vd(d);
 #else
@@ -2511,6 +2513,15 @@ EXPORT CONST vdouble xsqrt_u05(vdouble d) {
   x = vsel_vd_vo_vd_vd(visnan_vo_vd(d), d, x);
 
   return x;
+#endif
+}
+
+SQRTU05_FUNCATR vdouble xsqrt(vdouble d) {
+#ifdef ACCURATE_SQRT
+  return vsqrt_vd_vd(d);
+#else
+  // fall back to approximation if ACCURATE_SQRT is undefined
+  return xsqrt_u05(d);
 #endif
 }
 

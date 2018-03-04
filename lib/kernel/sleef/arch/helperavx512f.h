@@ -25,6 +25,7 @@
 
 #define FULL_FP_ROUNDING
 #define SPLIT_KERNEL
+#define ACCURATE_SQRT
 
 #if defined(_MSC_VER)
 #include <intrin.h>

@@ -39,6 +39,7 @@
 #define xldexp Sleef_ldexpd8_intrin
 #define xilogb Sleef_ilogbd8_intrin
 #define xfma Sleef_fmad8_intrin
+#define xsqrt Sleef_sqrtd8_intrin
 #define xsqrt_u05 Sleef_sqrtd8_u05_intrin
 #define xsqrt_u35 Sleef_sqrtd8_u35_intrin
 #define xhypot_u05 Sleef_hypotd8_u05_intrin
@@ -105,6 +106,7 @@
 #define xldexpf Sleef_ldexpf16_intrin
 #define xilogbf Sleef_ilogbf16_intrin
 #define xfmaf Sleef_fmaf16_intrin
+#define xsqrtf Sleef_sqrtf16_intrin
 #define xsqrtf_u05 Sleef_sqrtf16_u05_intrin
 #define xsqrtf_u35 Sleef_sqrtf16_u35_intrin
 #define xhypotf_u05 Sleef_hypotf16_u05_intrin

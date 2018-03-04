@@ -339,6 +339,7 @@ EXPORT CONST vfloat xcosf_u1(vfloat d) {
 #ifdef ENABLE_GNUABI
 #define TYPE2_FUNCATR static INLINE CONST
 #define TYPE6_FUNCATR static INLINE CONST
+#define SQRTFU05_FUNCATR static INLINE CONST
 #define XSINCOSF sincosfk
 #define XSINCOSF_U1 sincosfk_u1
 #define XSINCOSPIF_U05 sincospifk_u05
@@ -347,6 +348,7 @@ EXPORT CONST vfloat xcosf_u1(vfloat d) {
 #else
 #define TYPE2_FUNCATR EXPORT CONST
 #define TYPE6_FUNCATR EXPORT
+#define SQRTFU05_FUNCATR EXPORT CONST
 #define XSINCOSF xsincosf
 #define XSINCOSF_U1 xsincosf_u1
 #define XSINCOSPIF_U05 xsincospif_u05
@@ -1003,7 +1005,7 @@ EXPORT CONST vfloat xexpf(vfloat d) {
 }
 
 #ifdef ENABLE_NEON32
-EXPORT CONST vfloat xsqrtf_u35(vfloat d) {
+SQRTFU05_FUNCATR vfloat xsqrtf_u35(vfloat d) {
   vfloat e = vreinterpret_vf_vi2(vadd_vi2_vi2_vi2(vcast_vi2_i(0x20000000), vand_vi2_vi2_vi2(vcast_vi2_i(0x7f000000), vsrl_vi2_vi2_i(vreinterpret_vi2_vf(d), 1))));
   vfloat m = vreinterpret_vf_vi2(vadd_vi2_vi2_vi2(vcast_vi2_i(0x3f000000), vand_vi2_vi2_vi2(vcast_vi2_i(0x01ffffff), vreinterpret_vi2_vf(d))));
   float32x4_t x = vrsqrteq_f32(m);
@@ -1020,13 +1022,13 @@ EXPORT CONST vfloat xsqrtf_u35(vfloat d) {
   return u;
 }
 #elif defined(ENABLE_VECEXT)
-EXPORT CONST vfloat xsqrtf_u35(vfloat d) {
+SQRTFU05_FUNCATR vfloat xsqrtf_u35(vfloat d) {
   vfloat q = vsqrt_vf_vf(d);
   q = vsel_vf_vo_vf_vf(visnegzero_vo_vf(d), vcast_vf_f(-0.0), q);
   return vsel_vf_vo_vf_vf(vispinf_vo_vf(d), vcast_vf_f(SLEEF_INFINITYf), q);
 }
 #else
-EXPORT CONST vfloat xsqrtf_u35(vfloat d) { return vsqrt_vf_vf(d); }
+SQRTFU05_FUNCATR vfloat xsqrtf_u35(vfloat d) { return vsqrt_vf_vf(d); }
 #endif
 
 EXPORT CONST vfloat xcbrtf(vfloat d) {
@@ -1845,7 +1847,7 @@ EXPORT CONST vfloat xfmaf(vfloat x, vfloat y, vfloat z) {
 
 static INLINE CONST vint2 vcast_vi2_i_i(int i0, int i1) { return vcast_vi2_vm(vcast_vm_i_i(i0, i1)); }
 
-EXPORT CONST vfloat xsqrtf_u05(vfloat d) {
+SQRTFU05_FUNCATR vfloat xsqrtf_u05(vfloat d) {
 #if 1
   return vsqrt_vf_vf(d);
 #else
@@ -1877,6 +1879,15 @@ EXPORT CONST vfloat xsqrtf_u05(vfloat d) {
   x = vsel_vf_vo_vf_vf(veq_vo_vf_vf(d, vcast_vf_f(0)), d, x);
 
   return x;
+#endif
+}
+
+SQRTFU05_FUNCATR vfloat xsqrtf(vfloat d) {
+#ifdef ACCURATE_SQRT
+  return vsqrt_vf_vf(d);
+#else
+  // fall back to approximation if ACCURATE_SQRT is undefined
+  return xsqrtf_u05(d);
 #endif
 }
 

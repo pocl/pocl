@@ -6,9 +6,15 @@
 // Always use -ffp-contract=off option to compile SLEEF.
 
 #include <stdint.h>
-#include <math.h>
 #include <limits.h>
 #include <float.h>
+
+#ifndef ENABLE_BUILTIN_MATH
+#include <math.h>
+#define SQRTF sqrtf
+#else
+#define SQRTF __builtin_sqrtf
+#endif
 
 #include "misc.h"
 
@@ -392,12 +398,12 @@ static INLINE CONST Sleef_float2 dfrec_f2_f2(Sleef_float2 d) {
 }
 
 static INLINE CONST Sleef_float2 dfsqrt_f2_f2(Sleef_float2 d) {
-  float t = sqrtf(d.x + d.y);
+  float t = SQRTF(d.x + d.y);
   return dfscale_f2_f2_f(dfmul_f2_f2_f2(dfadd2_f2_f2_f2(d, dfmul_f2_f_f(t, t)), dfrec_f2_f(t)), 0.5f);
 }
 
 static INLINE CONST Sleef_float2 dfsqrt_f2_f(float d) {
-  float t = sqrtf(d);
+  float t = SQRTF(d);
   return dfscale_f2_f2_f(dfmul_f2_f2_f2(dfadd2_f2_f_f2(d, dfmul_f2_f_f(t, t)), dfrec_f2_f(t)), 0.5);
 }
 
@@ -896,7 +902,7 @@ EXPORT CONST float xatan2f(float y, float x) {
 
 EXPORT CONST float xasinf(float d) {
   int o = fabsfk(d) < 0.5f;
-  float x2 = o ? (d*d) : ((1-fabsfk(d))*0.5f), x = o ? fabsfk(d) : sqrtf(x2), u;
+  float x2 = o ? (d*d) : ((1-fabsfk(d))*0.5f), x = o ? fabsfk(d) : SQRTF(x2), u;
 
   u = +0.4197454825e-1;
   u = mlaf(u, x2, +0.2424046025e-1);
@@ -914,7 +920,7 @@ EXPORT CONST float xasinf(float d) {
 EXPORT CONST float xacosf(float d) {
   int o = fabsfk(d) < 0.5f;
   float x2 = o ? (d*d) : ((1-fabsfk(d))*0.5f), u;
-  float x = o ? fabsfk(d) : sqrtf(x2);
+  float x = o ? fabsfk(d) : SQRTF(x2);
   x = fabsfk(d) == 1.0 ? 0 : x;
 
   u = +0.4197454825e-1;
@@ -1823,6 +1829,8 @@ EXPORT CONST float xsqrtf_u35(float d) {
 
   return d == SLEEF_INFINITYf ? SLEEF_INFINITYf : (x * d * q);
 }
+
+EXPORT CONST float xsqrtf(float d) { return SQRTF(d); }
 
 EXPORT CONST float xfmaf(float x, float y, float z) {
 #if __has_builtin(__builtin_fmaf)

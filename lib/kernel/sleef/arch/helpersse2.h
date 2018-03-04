@@ -53,6 +53,8 @@
 #endif
 #define SLEEF_DOUBLE_MINMAXNUM_AVAILABLE 1
 
+#define ACCURATE_SQRT
+
 #if defined(_MSC_VER)
 #include <intrin.h>
 #else

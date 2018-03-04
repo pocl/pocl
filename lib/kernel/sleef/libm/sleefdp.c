@@ -6,9 +6,15 @@
 // Always use -ffp-contract=off option to compile SLEEF.
 
 #include <stdint.h>
-#include <math.h>
 #include <limits.h>
 #include <float.h>
+
+#ifndef ENABLE_BUILTIN_MATH
+#include <math.h>
+#define SQRT sqrt
+#else
+#define SQRT __builtin_sqrt
+#endif
 
 #include "misc.h"
 
@@ -441,12 +447,12 @@ static INLINE CONST Sleef_double2 ddrec_d2_d2(Sleef_double2 d) {
 }
 
 static INLINE CONST Sleef_double2 ddsqrt_d2_d2(Sleef_double2 d) {
-  double t = sqrt(d.x + d.y);
+  double t = SQRT(d.x + d.y);
   return ddscale_d2_d2_d(ddmul_d2_d2_d2(ddadd2_d2_d2_d2(d, ddmul_d2_d_d(t, t)), ddrec_d2_d(t)), 0.5);
 }
 
 static INLINE CONST Sleef_double2 ddsqrt_d2_d(double d) {
-  double t = sqrt(d);
+  double t = SQRT(d);
   return ddscale_d2_d2_d(ddmul_d2_d2_d2(ddadd2_d2_d_d2(d, ddmul_d2_d_d(t, t)), ddrec_d2_d(t)), 0.5);
 }
 
@@ -501,7 +507,7 @@ EXPORT CONST double xatan2(double y, double x) {
 
 EXPORT CONST double xasin(double d) {
   int o = fabsk(d) < 0.5;
-  double x2 = o ? (d*d) : ((1-fabsk(d))*0.5), x = o ? fabsk(d) : sqrt(x2), u;
+  double x2 = o ? (d*d) : ((1-fabsk(d))*0.5), x = o ? fabsk(d) : SQRT(x2), u;
 
   u = +0.3161587650653934628e-1;
   u = mla(u, x2, -0.1581918243329996643e-1);
@@ -526,7 +532,7 @@ EXPORT CONST double xasin(double d) {
 EXPORT CONST double xacos(double d) {
   int o = fabsk(d) < 0.5;
   double x2 = o ? (d*d) : ((1-fabsk(d))*0.5), u;
-  double x = o ? fabsk(d) : sqrt(x2);
+  double x = o ? fabsk(d) : SQRT(x2);
   x = fabsk(d) == 1.0 ? 0 : x;
 
   u = +0.3161587650653934628e-1;
@@ -1940,6 +1946,9 @@ EXPORT CONST double xsqrt_u05(double d) {
   return ret;
 #endif
 }
+
+EXPORT CONST double xsqrt_u35(double d) { return xsqrt_u05(d); }
+EXPORT CONST double xsqrt(double d) { return SQRT(d); }
 
 EXPORT CONST double xfabs(double x) { return fabsk(x); }
 
