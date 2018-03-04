@@ -56,9 +56,9 @@ static INLINE int vtestallones_i_vo32(vopmask g) { return g == 0xffff; }
 //
 
 static vint2 vloadu_vi2_p(int32_t *p) { return _mm512_loadu_si512((__m512i const *)p); }
-static void vstoreu_v_p_vi2(int32_t *p, vint2 v) { return _mm512_storeu_si512((__m512i *)p, v); }
+static void vstoreu_v_p_vi2(int32_t *p, vint2 v) { _mm512_storeu_si512((__m512i *)p, v); }
 static vint vloadu_vi_p(int32_t *p) { return _mm256_loadu_si256((__m256i const *)p); }
-static void vstoreu_v_p_vi(int32_t *p, vint v) { return _mm256_storeu_si256((__m256i *)p, v); }
+static void vstoreu_v_p_vi(int32_t *p, vint v) { _mm256_storeu_si256((__m256i *)p, v); }
 
 //
 
@@ -126,10 +126,10 @@ static INLINE vmask vadd64_vm_vm_vm(vmask x, vmask y) { return _mm512_add_epi64(
 //
 
 static INLINE vdouble vcast_vd_d(double d) { return _mm512_set1_pd(d); }
-static INLINE vmask vreinterpret_vm_vd(vdouble vd) { return (__m512i)vd; }
-static INLINE vdouble vreinterpret_vd_vm(vmask vm) { return (__m512d)vm; }
-static INLINE vint2 vreinterpret_vi2_vd(vdouble vd) { return (__m512i)vd; }
-static INLINE vdouble vreinterpret_vd_vi2(vint2 vi) { return (__m512d)vi; }
+static INLINE vmask vreinterpret_vm_vd(vdouble vd) { return _mm512_castpd_si512(vd); }
+static INLINE vdouble vreinterpret_vd_vm(vmask vm) { return _mm512_castsi512_pd(vm); }
+static INLINE vint2 vreinterpret_vi2_vd(vdouble vd) { return _mm512_castpd_si512(vd); }
+static INLINE vdouble vreinterpret_vd_vi2(vint2 vi) { return _mm512_castsi512_pd(vi); }
 
 static INLINE vdouble vadd_vd_vd_vd(vdouble x, vdouble y) { return _mm512_add_pd(x, y); }
 static INLINE vdouble vsub_vd_vd_vd(vdouble x, vdouble y) { return _mm512_sub_pd(x, y); }
@@ -137,8 +137,8 @@ static INLINE vdouble vmul_vd_vd_vd(vdouble x, vdouble y) { return _mm512_mul_pd
 static INLINE vdouble vdiv_vd_vd_vd(vdouble x, vdouble y) { return _mm512_div_pd(x, y); }
 static INLINE vdouble vrec_vd_vd(vdouble x) { return _mm512_div_pd(_mm512_set1_pd(1), x); }
 static INLINE vdouble vsqrt_vd_vd(vdouble x) { return _mm512_sqrt_pd(x); }
-static INLINE vdouble vabs_vd_vd(vdouble d) { return (__m512d)_mm512_andnot_si512((__m512i)_mm512_set1_pd(-0.0), (__m512i)d); }
-static INLINE vdouble vneg_vd_vd(vdouble d) { return (__m512d)_mm512_xor_si512((__m512i)_mm512_set1_pd(-0.0), (__m512i)d); }
+static INLINE vdouble vabs_vd_vd(vdouble d) { return vreinterpret_vd_vm(_mm512_andnot_si512(vreinterpret_vm_vd(_mm512_set1_pd(-0.0)), vreinterpret_vm_vd(d))); }
+static INLINE vdouble vneg_vd_vd(vdouble d) { return vreinterpret_vd_vm(_mm512_xor_si512(vreinterpret_vm_vd(_mm512_set1_pd(-0.0)), vreinterpret_vm_vd(d))); }
 static INLINE vdouble vmla_vd_vd_vd_vd(vdouble x, vdouble y, vdouble z) { return _mm512_fmadd_pd(x, y, z); }
 static INLINE vdouble vmlapn_vd_vd_vd_vd(vdouble x, vdouble y, vdouble z) { return _mm512_fmsub_pd(x, y, z); }
 static INLINE vdouble vmlanp_vd_vd_vd_vd(vdouble x, vdouble y, vdouble z) { return _mm512_fnmadd_pd(x, y, z); }
@@ -287,33 +287,38 @@ static INLINE vint vsel_vi_vo_vi_vi(vopmask m, vint x, vint y) {
 
 //
 
+static INLINE vmask vreinterpret_vm_vf(vfloat vf) { return _mm512_castps_si512(vf); }
+static INLINE vfloat vreinterpret_vf_vm(vmask vm) { return _mm512_castsi512_ps(vm); }
+static INLINE vfloat vreinterpret_vf_vi2(vint2 vi) { return _mm512_castsi512_ps(vi); }
+static INLINE vint2 vreinterpret_vi2_vf(vfloat vf) { return _mm512_castps_si512(vf); }
+
+static INLINE vdouble vreinterpret_vd_vf(vfloat vf) { return _mm512_castps_pd(vf); }
+static INLINE vfloat vreinterpret_vf_vd(vdouble vd) { return _mm512_castpd_ps(vd); }
+
 static INLINE vint2 vcast_vi2_vm(vmask vm) { return vm; }
 static INLINE vmask vcast_vm_vi2(vint2 vi) { return vi; }
-
-static INLINE vfloat vcast_vf_vi2(vint2 vi) { return _mm512_cvtepi32_ps((vmask)vcast_vm_vi2(vi)); }
+ 
+static INLINE vfloat vcast_vf_vi2(vint2 vi) { return _mm512_cvtepi32_ps(vcast_vm_vi2(vi)); }
 static INLINE vfloat vcast_vf_f(float f) { return _mm512_set1_ps(f); }
 static INLINE vint2 vcast_vi2_i(int i) { return _mm512_set1_epi32(i); }
-static INLINE vint2 vrint_vi2_vf(vfloat vf) { return vcast_vi2_vm((vmask)_mm512_cvtps_epi32(vf)); }
-static INLINE vint2 vtruncate_vi2_vf(vfloat vf) { return vcast_vi2_vm((vmask)_mm512_cvttps_epi32(vf)); }
+static INLINE vint2 vrint_vi2_vf(vfloat vf) { return vcast_vi2_vm(_mm512_cvtps_epi32(vf)); }
+static INLINE vint2 vtruncate_vi2_vf(vfloat vf) { return vcast_vi2_vm(_mm512_cvttps_epi32(vf)); }
 
 static INLINE vfloat vtruncate_vf_vf(vfloat vd) {
-  __m256 hi = (__m256)_mm512_extractf64x4_pd((__m512d)vd, 1), lo = (__m256)_mm512_extractf64x4_pd((__m512d)vd, 0);
+  __m256 hi = _mm256_castpd_ps(_mm512_extractf64x4_pd(vreinterpret_vd_vf(vd), 1));
+  __m256 lo = _mm256_castpd_ps(_mm512_extractf64x4_pd(vreinterpret_vd_vf(vd), 0));
   hi = _mm256_round_ps(hi, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC);
   lo = _mm256_round_ps(lo, _MM_FROUND_TO_ZERO |_MM_FROUND_NO_EXC);
-  return (__m512)_mm512_insertf64x4(_mm512_castpd256_pd512((__m256d)lo), (__m256d)hi, 1);
+  return vreinterpret_vf_vd(_mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_castps_pd(lo)), _mm256_castps_pd(hi), 1));
 }
+ 
 static INLINE vfloat vrint_vf_vf(vfloat vd) {
-  __m256 hi = (__m256)_mm512_extractf64x4_pd((__m512d)vd, 1), lo = (__m256)_mm512_extractf64x4_pd((__m512d)vd, 0);
+  __m256 hi = _mm256_castpd_ps(_mm512_extractf64x4_pd(vreinterpret_vd_vf(vd), 1));
+  __m256 lo = _mm256_castpd_ps(_mm512_extractf64x4_pd(vreinterpret_vd_vf(vd), 0));
   hi = _mm256_round_ps(hi, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);
   lo = _mm256_round_ps(lo, _MM_FROUND_TO_NEAREST_INT |_MM_FROUND_NO_EXC);
-  return (__m512)_mm512_insertf64x4(_mm512_castpd256_pd512((__m256d)lo), (__m256d)hi, 1);
+  return vreinterpret_vf_vd(_mm512_insertf64x4(_mm512_castpd256_pd512(_mm256_castps_pd(lo)), _mm256_castps_pd(hi), 1));
 }
-
-static INLINE vmask vreinterpret_vm_vf(vfloat vf) { return (vmask)vf; }
-static INLINE vfloat vreinterpret_vf_vm(vmask vm) { return (vfloat)vm; }
-
-static INLINE vfloat vreinterpret_vf_vi2(vint2 vi) { return (vfloat)vi; }
-static INLINE vint2 vreinterpret_vi2_vf(vfloat vf) { return (vint2)vf; }
 
 static INLINE vfloat vadd_vf_vf_vf(vfloat x, vfloat y) { return _mm512_add_ps(x, y); }
 static INLINE vfloat vsub_vf_vf_vf(vfloat x, vfloat y) { return _mm512_sub_ps(x, y); }
@@ -321,8 +326,8 @@ static INLINE vfloat vmul_vf_vf_vf(vfloat x, vfloat y) { return _mm512_mul_ps(x,
 static INLINE vfloat vdiv_vf_vf_vf(vfloat x, vfloat y) { return _mm512_div_ps(x, y); }
 static INLINE vfloat vrec_vf_vf(vfloat x) { return vdiv_vf_vf_vf(vcast_vf_f(1.0f), x); }
 static INLINE vfloat vsqrt_vf_vf(vfloat x) { return _mm512_sqrt_ps(x); }
-static INLINE vfloat vabs_vf_vf(vfloat f) { return (vfloat)vandnot_vm_vm_vm((vmask)vcast_vf_f(-0.0f), (vmask)f); }
-static INLINE vfloat vneg_vf_vf(vfloat d) { return (vfloat)vxor_vm_vm_vm((vmask)vcast_vf_f(-0.0f), (vmask)d); }
+static INLINE vfloat vabs_vf_vf(vfloat f) { return vreinterpret_vf_vm(vandnot_vm_vm_vm(vreinterpret_vm_vf(vcast_vf_f(-0.0f)), vreinterpret_vm_vf(f))); }
+static INLINE vfloat vneg_vf_vf(vfloat d) { return vreinterpret_vf_vm(vxor_vm_vm_vm(vreinterpret_vm_vf(vcast_vf_f(-0.0f)), vreinterpret_vm_vf(d))); }
 static INLINE vfloat vmla_vf_vf_vf_vf(vfloat x, vfloat y, vfloat z) { return _mm512_fmadd_ps(x, y, z); }
 static INLINE vfloat vmlapn_vf_vf_vf_vf(vfloat x, vfloat y, vfloat z) { return _mm512_fmsub_ps(x, y, z); }
 static INLINE vfloat vmlanp_vf_vf_vf_vf(vfloat x, vfloat y, vfloat z) { return _mm512_fnmadd_ps(x, y, z); }
@@ -439,10 +444,10 @@ static INLINE void vstoreu_v_p_vf(float *ptr, vfloat v) { _mm512_storeu_ps(ptr, 
 #define PNMASKf ((vfloat) { +0.0f, -0.0f, +0.0f, -0.0f, +0.0f, -0.0f, +0.0f, -0.0f, +0.0f, -0.0f, +0.0f, -0.0f, +0.0f, -0.0f, +0.0f, -0.0f })
 #define NPMASKf ((vfloat) { -0.0f, +0.0f, -0.0f, +0.0f, -0.0f, +0.0f, -0.0f, +0.0f, -0.0f, +0.0f, -0.0f, +0.0f, -0.0f, +0.0f, -0.0f, +0.0f })
 
-static INLINE vdouble vposneg_vd_vd(vdouble d) { return (vdouble)vxor_vm_vm_vm((vmask)d, (vmask)PNMASK); }
-static INLINE vdouble vnegpos_vd_vd(vdouble d) { return (vdouble)vxor_vm_vm_vm((vmask)d, (vmask)NPMASK); }
-static INLINE vfloat vposneg_vf_vf(vfloat d) { return (vfloat)vxor_vm_vm_vm((vmask)d, (vmask)PNMASKf); }
-static INLINE vfloat vnegpos_vf_vf(vfloat d) { return (vfloat)vxor_vm_vm_vm((vmask)d, (vmask)NPMASKf); }
+static INLINE vdouble vposneg_vd_vd(vdouble d) { return vreinterpret_vd_vm(vxor_vm_vm_vm(vreinterpret_vm_vd(d), vreinterpret_vm_vd(PNMASK))); }
+static INLINE vdouble vnegpos_vd_vd(vdouble d) { return vreinterpret_vd_vm(vxor_vm_vm_vm(vreinterpret_vm_vd(d), vreinterpret_vm_vd(NPMASK))); }
+static INLINE vfloat vposneg_vf_vf(vfloat d) { return vreinterpret_vf_vm(vxor_vm_vm_vm(vreinterpret_vm_vf(d), vreinterpret_vm_vf(PNMASKf))); }
+static INLINE vfloat vnegpos_vf_vf(vfloat d) { return vreinterpret_vf_vm(vxor_vm_vm_vm(vreinterpret_vm_vf(d), vreinterpret_vm_vf(NPMASKf))); }
 
 static INLINE vdouble vsubadd_vd_vd_vd(vdouble x, vdouble y) { return vadd_vd_vd_vd(x, vnegpos_vd_vd(y)); }
 static INLINE vfloat vsubadd_vf_vf_vf(vfloat x, vfloat y) { return vadd_vf_vf_vf(x, vnegpos_vf_vf(y)); }
@@ -451,50 +456,50 @@ static INLINE vdouble vmlsubadd_vd_vd_vd_vd(vdouble x, vdouble y, vdouble z) { r
 static INLINE vfloat vmlsubadd_vf_vf_vf_vf(vfloat x, vfloat y, vfloat z) { return _mm512_fmaddsub_ps(x, y, z); }
 
 static INLINE vdouble vrev21_vd_vd(vdouble vd) {
-  return (vdouble)_mm512_permutexvar_epi32(_mm512_set_epi32(13, 12, 15, 14, 9, 8, 11, 10, 5, 4, 7, 6, 1, 0, 3, 2), (__m512i)vd);
+  return vreinterpret_vd_vm(_mm512_permutexvar_epi32(_mm512_set_epi32(13, 12, 15, 14, 9, 8, 11, 10, 5, 4, 7, 6, 1, 0, 3, 2), vreinterpret_vm_vd(vd)));
 }
 
 static INLINE vdouble vreva2_vd_vd(vdouble vd) {
-  return (vdouble)_mm512_permutexvar_epi32(_mm512_set_epi32(3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12), (__m512i)vd);
+  return vreinterpret_vd_vm(_mm512_permutexvar_epi32(_mm512_set_epi32(3, 2, 1, 0, 7, 6, 5, 4, 11, 10, 9, 8, 15, 14, 13, 12), vreinterpret_vm_vd(vd)));
 }
 
 static INLINE void vstream_v_p_vd(double *ptr, vdouble v) { _mm512_stream_pd(ptr, v); }
 
 static INLINE void vscatter2_v_p_i_i_vd(double *ptr, int offset, int step, vdouble v) {
-  _mm_store_pd(&ptr[(offset + step * 0)*2], (__m128d)_mm512_extractf32x4_ps((__m512)v, 0));
-  _mm_store_pd(&ptr[(offset + step * 1)*2], (__m128d)_mm512_extractf32x4_ps((__m512)v, 1));
-  _mm_store_pd(&ptr[(offset + step * 2)*2], (__m128d)_mm512_extractf32x4_ps((__m512)v, 2));
-  _mm_store_pd(&ptr[(offset + step * 3)*2], (__m128d)_mm512_extractf32x4_ps((__m512)v, 3));
+  _mm_store_pd(&ptr[(offset + step * 0)*2], _mm_castps_pd(_mm512_extractf32x4_ps(vreinterpret_vf_vd(v), 0)));
+  _mm_store_pd(&ptr[(offset + step * 1)*2], _mm_castps_pd(_mm512_extractf32x4_ps(vreinterpret_vf_vd(v), 1)));
+  _mm_store_pd(&ptr[(offset + step * 2)*2], _mm_castps_pd(_mm512_extractf32x4_ps(vreinterpret_vf_vd(v), 2)));
+  _mm_store_pd(&ptr[(offset + step * 3)*2], _mm_castps_pd(_mm512_extractf32x4_ps(vreinterpret_vf_vd(v), 3)));
 }
 
 static INLINE void vsscatter2_v_p_i_i_vd(double *ptr, int offset, int step, vdouble v) {
-  _mm_stream_pd(&ptr[(offset + step * 0)*2], (__m128d)_mm512_extractf32x4_ps((__m512)v, 0));
-  _mm_stream_pd(&ptr[(offset + step * 1)*2], (__m128d)_mm512_extractf32x4_ps((__m512)v, 1));
-  _mm_stream_pd(&ptr[(offset + step * 2)*2], (__m128d)_mm512_extractf32x4_ps((__m512)v, 2));
-  _mm_stream_pd(&ptr[(offset + step * 3)*2], (__m128d)_mm512_extractf32x4_ps((__m512)v, 3));
+  _mm_stream_pd(&ptr[(offset + step * 0)*2], _mm_castps_pd(_mm512_extractf32x4_ps(vreinterpret_vf_vd(v), 0)));
+  _mm_stream_pd(&ptr[(offset + step * 1)*2], _mm_castps_pd(_mm512_extractf32x4_ps(vreinterpret_vf_vd(v), 1)));
+  _mm_stream_pd(&ptr[(offset + step * 2)*2], _mm_castps_pd(_mm512_extractf32x4_ps(vreinterpret_vf_vd(v), 2)));
+  _mm_stream_pd(&ptr[(offset + step * 3)*2], _mm_castps_pd(_mm512_extractf32x4_ps(vreinterpret_vf_vd(v), 3)));
 }
 
 //
 
 static INLINE vfloat vrev21_vf_vf(vfloat vf) {
-  return (vfloat)_mm512_permutexvar_epi32(_mm512_set_epi32(14, 15, 12, 13, 10, 11, 8, 9, 6, 7, 4, 5, 2, 3, 0, 1), (__m512i)vf);
+  return vreinterpret_vf_vm(_mm512_permutexvar_epi32(_mm512_set_epi32(14, 15, 12, 13, 10, 11, 8, 9, 6, 7, 4, 5, 2, 3, 0, 1), vreinterpret_vm_vf(vf)));
 }
 
 static INLINE vfloat vreva2_vf_vf(vfloat vf) {
-  return (vfloat)_mm512_permutexvar_epi32(_mm512_set_epi32(1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14), (__m512i)vf);
+  return vreinterpret_vf_vm(_mm512_permutexvar_epi32(_mm512_set_epi32(1, 0, 3, 2, 5, 4, 7, 6, 9, 8, 11, 10, 13, 12, 15, 14), vreinterpret_vm_vf(vf)));
 }
 
 static INLINE void vstream_v_p_vf(float *ptr, vfloat v) { _mm512_stream_ps(ptr, v); }
 
 static INLINE void vscatter2_v_p_i_i_vf(float *ptr, int offset, int step, vfloat v) {
-  _mm_storel_pd((double *)(ptr+(offset + step * 0)*2), (__m128d)_mm512_extractf32x4_ps(v, 0));
-  _mm_storeh_pd((double *)(ptr+(offset + step * 1)*2), (__m128d)_mm512_extractf32x4_ps(v, 0));
-  _mm_storel_pd((double *)(ptr+(offset + step * 2)*2), (__m128d)_mm512_extractf32x4_ps(v, 1));
-  _mm_storeh_pd((double *)(ptr+(offset + step * 3)*2), (__m128d)_mm512_extractf32x4_ps(v, 1));
-  _mm_storel_pd((double *)(ptr+(offset + step * 4)*2), (__m128d)_mm512_extractf32x4_ps(v, 2));
-  _mm_storeh_pd((double *)(ptr+(offset + step * 5)*2), (__m128d)_mm512_extractf32x4_ps(v, 2));
-  _mm_storel_pd((double *)(ptr+(offset + step * 6)*2), (__m128d)_mm512_extractf32x4_ps(v, 3));
-  _mm_storeh_pd((double *)(ptr+(offset + step * 7)*2), (__m128d)_mm512_extractf32x4_ps(v, 3));
+  _mm_storel_pd((double *)(ptr+(offset + step * 0)*2), _mm_castps_pd(_mm512_extractf32x4_ps(v, 0)));
+  _mm_storeh_pd((double *)(ptr+(offset + step * 1)*2), _mm_castps_pd(_mm512_extractf32x4_ps(v, 0)));
+  _mm_storel_pd((double *)(ptr+(offset + step * 2)*2), _mm_castps_pd(_mm512_extractf32x4_ps(v, 1)));
+  _mm_storeh_pd((double *)(ptr+(offset + step * 3)*2), _mm_castps_pd(_mm512_extractf32x4_ps(v, 1)));
+  _mm_storel_pd((double *)(ptr+(offset + step * 4)*2), _mm_castps_pd(_mm512_extractf32x4_ps(v, 2)));
+  _mm_storeh_pd((double *)(ptr+(offset + step * 5)*2), _mm_castps_pd(_mm512_extractf32x4_ps(v, 2)));
+  _mm_storel_pd((double *)(ptr+(offset + step * 6)*2), _mm_castps_pd(_mm512_extractf32x4_ps(v, 3)));
+  _mm_storeh_pd((double *)(ptr+(offset + step * 7)*2), _mm_castps_pd(_mm512_extractf32x4_ps(v, 3)));
 }
 
 static INLINE void vsscatter2_v_p_i_i_vf(float *ptr, int offset, int step, vfloat v) { vscatter2_v_p_i_i_vf(ptr, offset, step, v); }
