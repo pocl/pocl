@@ -305,7 +305,7 @@ DEFINE_BODY_V
            } else if (isinf(val.s[n])) {
              goodres.s[n] = val.s[n];
            } else {
-             goodres.s[n] = val.s[n] * pow(2.0, ival2.s[n]);
+             goodres.s[n] = val.s[n] * (stype)(16.0);
            }
            equal = equal && ISEQ(res.s[n], goodres.s[n]);
          }

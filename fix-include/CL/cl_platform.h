@@ -50,3 +50,12 @@
 #define AVAILABLE_MAC_OS_X_VERSION_10_7_AND_LATER
 #undef  AVAILABLE_MAC_OS_X_VERSION_10_8_AND_LATER
 #define AVAILABLE_MAC_OS_X_VERSION_10_8_AND_LATER
+
+#if defined(__VEC__) || defined(__ALTIVEC__)
+// altivec.h defines conflicting macros
+#ifdef __cplusplus
+#undef vector
+#undef pixel
+#undef bool
+#endif
+#endif

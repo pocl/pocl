@@ -238,7 +238,9 @@ set(CLANG_LIBNAMES clangFrontendTool clangFrontend clangDriver clangSerializatio
 foreach(LIBNAME ${CLANG_LIBNAMES})
   find_library(C_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
   list(APPEND CLANG_LIBFILES "${C_LIBFILE_${LIBNAME}}")
-  set(LLVM_LDFLAGS "${LLVM_LDFLAGS} -Wl,--exclude-libs,lib${LIBNAME}")
+  if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+    set(LLVM_LDFLAGS "${LLVM_LDFLAGS} -Wl,--exclude-libs,lib${LIBNAME}")
+  endif()
 endforeach()
 
 # With Visual Studio llvm-config gives invalid list of static libs (libXXXX.a instead of XXXX.lib)
@@ -605,7 +607,7 @@ set_cache_var(LLC_TRIPLE "LLC_TRIPLE")
 # targeted if ypu pass -mcpu=native to llc, so we could replace this auto-detection
 # with just: set(LLC_HOST_CPU "native"), however, we can't do this at the moment
 # because of the work-around for arm1176jz-s.
-if(NOT DEFINED LLC_HOST_CPU AND NOT CMAKE_CROSSCOMPILING)
+if(NOT DEFINED LLC_HOST_CPU_AUTO)
   message(STATUS "Find out LLC host CPU with ${LLVM_LLC}")
   execute_process(COMMAND ${LLVM_LLC} "--version" RESULT_VARIABLE RES_VAR OUTPUT_VARIABLE OUTPUT_VAR)
   # WTF, ^^ has return value 1
@@ -615,22 +617,33 @@ if(NOT DEFINED LLC_HOST_CPU AND NOT CMAKE_CROSSCOMPILING)
 
   if(OUTPUT_VAR MATCHES "Host CPU: ([^ ]*)")
     # sigh... STRING(STRIP is to workaround regexp bug in cmake
-    string(STRIP "${CMAKE_MATCH_1}" LLC_HOST_CPU)
+    string(STRIP "${CMAKE_MATCH_1}" LLC_HOST_CPU_AUTO)
   else()
     message(FATAL_ERROR "Couldnt determine host CPU from llc output")
   endif()
 
   #TODO better
-  if(CMAKE_LIBRARY_ARCHITECTURE MATCHES "gnueabihf" AND LLC_HOST_CPU MATCHES "arm1176jz-s")
-    set(LLC_HOST_CPU "arm1176jzf-s")
+  if(CMAKE_LIBRARY_ARCHITECTURE MATCHES "gnueabihf" AND LLC_HOST_CPU_AUTO MATCHES "arm1176jz-s")
+    set(LLC_HOST_CPU_AUTO "arm1176jzf-s")
   endif()
 endif()
 
-if(LLC_HOST_CPU MATCHES "unknown")
+
+
+if((LLC_HOST_CPU_AUTO MATCHES "unknown") AND (NOT LLC_HOST_CPU))
   message(FATAL_ERROR "LLVM could not recognize your CPU model automatically. Please run CMake with -DLLC_HOST_CPU=<cpu> (you can find valid names with: llc -mcpu=help)")
+else()
+  set(LLC_HOST_CPU_AUTO "${LLC_HOST_CPU_AUTO}" CACHE INTERNAL "Autodetected CPU")
 endif()
 
-set(LLC_HOST_CPU "${LLC_HOST_CPU}" CACHE STRING "The Host CPU to use with llc")
+if((DEFINED LLC_HOST_CPU) AND (NOT LLC_HOST_CPU STREQUAL LLC_HOST_CPU_AUTO))
+  message(STATUS "Autodetected CPU ${LLC_HOST_CPU_AUTO} overriden by user to ${LLC_HOST_CPU}")
+  set(HOST_CPU_FORCED 1 CACHE INTERNAL "CPU is forced by user")
+else()
+  set(LLC_HOST_CPU "${LLC_HOST_CPU_AUTO}" CACHE STRING "The Host CPU to use with llc")
+  set(HOST_CPU_FORCED 0 CACHE INTERNAL "CPU is forced by user")
+endif()
+
 
 ####################################################################
 

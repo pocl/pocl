@@ -305,22 +305,27 @@ pocl_basic_init_device_infos(unsigned j, struct _cl_device_id* dev)
   dev->on_dev_queue_props = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE
                                | CL_QUEUE_PROFILING_ENABLE;
   dev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
-
-
   dev->extensions = HOST_DEVICE_EXTENSIONS;
+  dev->has_64bit_long = 1;
+  dev->autolocals_to_args = 1;
 
 #ifdef OCS_AVAILABLE
 
   dev->llvm_target_triplet = OCL_KERNEL_TARGET;
-  dev->llvm_cpu = get_cpu_name();
-
+#ifdef HOST_CPU_FORCED
+  dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
 #else
+  dev->llvm_cpu = get_cpu_name();
+#endif
+
+  if(dev->llvm_cpu && (!strcmp(dev->llvm_cpu, "(unknown)")))
+    dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
+
+#else /* No compiler, no CPU info */
   dev->llvm_cpu = NULL;
   dev->llvm_target_triplet = "";
 #endif
 
-  dev->has_64bit_long = 1;
-  dev->autolocals_to_args = 1;
 }
 
 unsigned int
@@ -387,9 +392,6 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
      basic devices can be still used for task level parallelism 
      using multiple OpenCL devices. */
   device->max_compute_units = 1;
-
-  if(device->llvm_cpu && (!strcmp(device->llvm_cpu, "(unknown)")))
-    device->llvm_cpu = NULL;
 
   return ret;
 }

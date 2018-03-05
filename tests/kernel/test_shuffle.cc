@@ -93,8 +93,8 @@ private:
     }
   }
 
-  #define nsize (n==3?4:n)
-  #define msize (m==3?4:m)
+  #define nsize n
+  #define msize m
   // assume out is filled with 'shuffle(in, mask)'	// return true if ok
   bool output_matches_1(unsigned n, unsigned m)
   {

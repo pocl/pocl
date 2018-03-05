@@ -412,7 +412,13 @@ main(void){
                                         &s, &err);
     CHECK_OPENCL_ERROR_IN("clCreateProgramWithSource");
 
-    CHECK_CL_ERROR(clBuildProgram(program, num_devices, devices, NULL, NULL, NULL));
+#ifdef _CL_DISABLE_DOUBLE
+    const char *options = NULL;
+#else
+    const char *options = "-DTEST_DOUBLES";
+#endif
+
+    CHECK_CL_ERROR(clBuildProgram(program, num_devices, devices, options, NULL, NULL));
 
     CHECK_CL_ERROR(clReleaseProgram(program));
 

@@ -1,0 +1,31 @@
+FROM amd64/ubuntu:16.04
+
+ARG GIT_COMMIT=master
+ARG TCE_COMMIT=master
+LABEL git-commit=$GIT_COMMIT tce-commit=$TCE_COMMIT vendor=pocl distro=Ubuntu version=1.0
+
+ENV TERM dumb
+RUN apt update
+RUN apt upgrade -y
+RUN apt install -y build-essential ocl-icd-libopencl1 autoconf automake cmake git pkg-config make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo texinfo
+
+ENV LD_LIBRARY_PATH=/home/LLVM_600/lib:/home/TCE_60/lib
+ENV PATH=/home/TCE_60/bin:/home/LLVM_600/bin:${PATH}
+
+########### build LLVM 6.0 with suitable flags
+
+RUN mkdir -p /home/LLVM_600/build ; mkdir -p /home/LLVM_600/source
+
+RUN cd /home/LLVM_600/source ; git clone -b release_60 https://github.com/llvm-mirror/llvm.git
+
+RUN cd /home/LLVM_600/source/llvm/tools ; git clone -b release_60 https://github.com/llvm-mirror/clang.git
+
+RUN apt install -y python python-dev
+
+RUN cd /home/LLVM_600/build ; cmake -G Ninja -DLLVM_PARALLEL_LINK_JOBS=2 -DCMAKE_INSTALL_PREFIX=/home/LLVM_600 -DLLVM_TARGETS_TO_BUILD=X86 -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_ASSERTIONS=ON -DLLVM_ENABLE_RTTI=ON -DLLVM_ENABLE_EH=ON -DLLVM_BUILD_LLVM_DYLIB:BOOL=ON -DLLVM_LINK_LLVM_DYLIB:BOOL=ON /home/LLVM_600/source/llvm
+
+RUN cd /home/LLVM_600/build ; ninja
+
+RUN cd /home/LLVM_600/build ; ninja install
+
+CMD /bin/bash

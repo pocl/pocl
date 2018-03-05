@@ -16,6 +16,8 @@
 #include <CL/opencl.h>
 #include "poclu.h"
 
+#undef SRCDIR
+#include "config.h"
 
 #define GRID_GRANULARITY 2
 
@@ -31,6 +33,11 @@ static cl_context context;
 static cl_command_queue cmd_queue;
 static cl_program program;
 static cl_kernel kernel;
+
+
+#ifdef _CL_DISABLE_DOUBLE
+#error Scalarwave test requires cl_khr_fp64 support.
+#endif
 
 int 
 exec_scalarwave_kernel(char      const *const program_source, 
@@ -140,14 +147,11 @@ static int roundup(int const nx)
   return (nx + GRID_GRANULARITY-1) / GRID_GRANULARITY * GRID_GRANULARITY;
 }
 
-#ifndef SRCDIR
-#  define SRCDIR "."
-#endif
 
 int
 main(void)
 {
-  FILE *const source_file = fopen(SRCDIR "/scalarwave.cl", "r");
+  FILE *const source_file = fopen(SRCDIR "/examples/scalarwave/scalarwave.cl", "r");
   assert(source_file != NULL && "scalarwave.cl not found!");
   
   fseek(source_file, 0, SEEK_END);

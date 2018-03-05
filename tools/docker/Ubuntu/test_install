@@ -1,13 +1,4 @@
-FROM amd64/ubuntu:latest
-ARG GIT_COMMIT=master
-LABEL git-commit=$GIT_COMMIT vendor=pocl distro=Ubuntu version=1.0
-ENV TERM dumb
-RUN apt update
-RUN apt upgrade -y
-RUN apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-dev clang llvm make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo
+FROM ubuntu_default64
 
-RUN cd /home ; git clone https://github.com/pocl/pocl.git ; cd /home/pocl ; git checkout $GIT_COMMIT
-RUN cd /home/pocl ; mkdir b ; cd b; cmake -DCMAKE_INSTALL_PREFIX=/usr -G Ninja ..
-RUN cd /home/pocl/b ; ninja
 RUN cd /home/pocl/b ; ninja install
 CMD cd /home/pocl/b ; rm CTestCustom.cmake ; clinfo ; ctest -j4 --output-on-failure -L internal

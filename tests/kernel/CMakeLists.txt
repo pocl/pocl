@@ -129,11 +129,6 @@ if(LLVM_ASSERTS_BUILD AND POCL_USE_FAKE_ADDR_SPACE_IDS)
     PROPERTIES WILL_FAIL 1)
 endif()
 
-if(I386)
-  set_tests_properties("kernel/test_fabs"
-    PROPERTIES WILL_FAIL 1)
-endif()
-
 ######################################################################
 if(MSVC)
   set_source_files_properties( 
@@ -167,6 +162,7 @@ set_tests_properties( "kernel/test_sampler_address_clamp"
 add_executable("test_shuffle" "test_shuffle.cc")
 target_link_libraries("test_shuffle" ${POCLU_LINK_OPTIONS})
 
+set(EXTRA_TESTS "")
 add_test_pocl(NAME "kernel/test_shuffle_char"
               COMMAND "test_shuffle" "char")
 
@@ -179,7 +175,7 @@ add_test_pocl(NAME "kernel/test_shuffle_ushort"
 if(NOT CL_DISABLE_HALF)
   add_test_pocl(NAME "kernel/test_shuffle_half"
               COMMAND "test_shuffle" "half")
-  set(HALF_TEST "kernel/test_shuffle_half")
+  list(APPEND EXTRA_TESTS "kernel/test_shuffle_half")
 endif()
 
 add_test_pocl(NAME "kernel/test_shuffle_int"
@@ -197,14 +193,17 @@ add_test_pocl(NAME "kernel/test_shuffle_long"
 add_test_pocl(NAME "kernel/test_shuffle_ulong"
               COMMAND "test_shuffle" "ulong")
 
-add_test_pocl(NAME "kernel/test_shuffle_double"
-              COMMAND "test_shuffle" "double")
+if(ENABLE_FP64)
+  add_test_pocl(NAME "kernel/test_shuffle_double"
+                COMMAND "test_shuffle" "double")
+  list(APPEND EXTRA_TESTS "kernel/test_shuffle_double")
+endif()
 
-set_tests_properties("kernel/test_shuffle_char" "kernel/test_shuffle_short"
-  "kernel/test_shuffle_ushort"   ${HALF_TEST}
-  "kernel/test_shuffle_int"   "kernel/test_shuffle_uint"
-  "kernel/test_shuffle_float"   "kernel/test_shuffle_long"
-  "kernel/test_shuffle_ulong"  "kernel/test_shuffle_double"
+set_tests_properties("kernel/test_shuffle_char"
+  "kernel/test_shuffle_short" "kernel/test_shuffle_ushort"
+  "kernel/test_shuffle_int" "kernel/test_shuffle_uint"
+  "kernel/test_shuffle_long" "kernel/test_shuffle_ulong"
+  "kernel/test_shuffle_float"  ${EXTRA_TESTS}
   PROPERTIES
     COST 77
     PASS_REGULAR_EXPRESSION "OK\n"
@@ -274,6 +273,7 @@ add_test_pocl(NAME "kernel/test_sizeof_uint"
 #    DEPENDS "pocl_version_check")
 
 # Label tests that work with CUDA backend
+if(ENABLE_CUDA)
 set_property(TEST
   "kernel/test_min_max"
   "kernel/test_length_distance"
@@ -299,3 +299,4 @@ set_property(TEST
   "kernel/test_as_type"
   "kernel/test_sizeof_uint"
   APPEND PROPERTY LABELS "cuda")
+endif()

@@ -428,7 +428,8 @@ void finalize_kernel_command (struct pool_thread_data *thread_data,
   pocl_release_dlhandle_cache (k->cmd);
 
   pocl_ndrange_node_cleanup (k->cmd);
-  POCL_UPDATE_EVENT_COMPLETE (k->cmd->event);
+
+  POCL_UPDATE_EVENT_COMPLETE_MSG (k->cmd->event, "NDRange Kernel        ");
 
   pocl_mem_manager_free_command (k->cmd);
 

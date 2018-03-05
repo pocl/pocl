@@ -12,7 +12,7 @@ Release highlights
 ------------------
 
 * Support for LLVM/Clang 6.0 and 5.0.
-* Experimental SPIR support
+* Experimental SPIR and SPIR-V support
 * Improved kernel compilation speed
 
 Please note that there's now an official pocl "maintenance policy" in place.

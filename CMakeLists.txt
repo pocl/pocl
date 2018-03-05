@@ -859,7 +859,8 @@ set(DEFAULT_HOST_CLANG_FLAGS "${CLANG_TARGET_OPTION}${LLC_TRIPLE}")
 set(DEFAULT_HOST_LLC_FLAGS "-relocation-model=pic -mtriple=${LLC_TRIPLE}")
 
 if(ARM)
-  #ARMs need to enable FP64 manually with LLVM < 4.0
+  # 32bit arm doesn't always support doubles,
+  # need to enable FP64 manually with LLVM < 4.0
   if(LLVM_OLDER_THAN_4_0)
     option(ENABLE_FP64 "Enable FP64 on ARM32 - disabled by default for LLVM < 4" OFF)
   else()
@@ -915,9 +916,12 @@ set(HOST_DEVICE_EXTENSION_DEFINES "-Dcl_khr_int64")
 if(X86)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
 endif()
-# 32bit arm doesn't always support doubles
-if(ARM AND ENABLE_FP64)
+
+if(ENABLE_FP64)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp64")
+  set(_CL_DISABLE_DOUBLE 0)
+else()
+  set(_CL_DISABLE_DOUBLE 1)
 endif()
 
 set(TEMP_EXT "${HOST_DEVICE_EXTENSIONS}")
@@ -932,12 +936,6 @@ if (NOT LLVM_OLDER_THAN_4_0)
   set(HOST_DEVICE_EXTENSION_DEFINES "${HOST_DEVICE_EXTENSION_DEFINES} ${TEMP_CLEXT}")
 endif()
 
-if (HOST_DEVICE_EXTENSION_DEFINES MATCHES "cl_khr_fp64")
-  set(_CL_DISABLE_DOUBLE 0)
-else()
-  set(_CL_DISABLE_DOUBLE 1)
-endif()
-
 if(NOT DEFINED KERNELLIB_HOST_CPU_VARIANTS)
   set(KERNELLIB_HOST_CPU_VARIANTS "native")
 # else TODO test cpu list for unknown values
@@ -946,6 +944,9 @@ endif()
 set(KERNELLIB_HOST_DISTRO_VARIANTS 0)
 if(KERNELLIB_HOST_CPU_VARIANTS STREQUAL "distro")
   if(X86_64 OR I386)
+    if(HOST_CPU_FORCED)
+      message(FATAL_ERROR "Cannot build with CPU autodetection distro variants build, and enforce LLC_HOST_CPU at the same time. Please pick one")
+    endif()
     set(KERNELLIB_HOST_CPU_VARIANTS sse2 ssse3 sse41 avx avx_f16c avx_fma4 avx2)
     if(NOT LLVM_OLDER_THAN_3_9)
       list(APPEND KERNELLIB_HOST_CPU_VARIANTS avx512)
@@ -979,9 +980,6 @@ set(OCL_DRIVERS "basic pthreads")
 
 # TODO OCL_KERNEL_TARGET -> CPU_TARGET_TRIPLE
 # TODO OCL_KERNEL_TARGET_CPU -> OCL_KERNEL_TARGET_CPU
-# these are used here:
-#lib/CL/devices/basic/basic.c:  dev->llvm_target_triplet = OCL_KERNEL_TARGET;
-#lib/CL/devices/basic/basic.c:  dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
 set(OCL_KERNEL_TARGET "${LLC_TRIPLE}") #The kernel target triplet.
 set(OCL_KERNEL_TARGET_CPU "${LLC_HOST_CPU}") #The kernel target CPU variant.
 
@@ -1287,7 +1285,13 @@ if(ENABLE_ICD)
   file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/ocl-vendors/pocl-tests.icd" CONTENT "$<TARGET_FILE:pocl>" CONDITION 1)
 endif()
 
+if(ENABLE_ASAN OR ENABLE_LSAN)
+  file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/lsan.supp" CONTENT "leak:${LLVM_SRC_ROOT}/lib/Support/Unix/Signals.inc")
+  set(SAN_EXTRA "set(ENV{LSAN_OPTIONS} \"suppressions=${CMAKE_BINARY_DIR}/lsan.supp\")")
+endif()
+
 file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/CTestCustom.cmake" CONTENT "
+  ${SAN_EXTRA}
   set(ENV{POCL_BUILDING} \"1\")
   set(ENV{OCL_ICD_VENDORS} \"${CMAKE_BINARY_DIR}/ocl-vendors\")
 ")

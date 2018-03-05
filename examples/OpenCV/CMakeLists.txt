@@ -28,7 +28,7 @@ set(TS_BASEDIR "${TESTSUITE_BASEDIR}/${TS_NAME}")
 set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build")
 set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
 
-set(OPENCV "opencv-3.0.0-beta")
+set(OPENCV "opencv-3.4.1")
 set(OPENCV_ZIP "${TS_SRCDIR}/${OPENCV}.zip")
 
 if(EXISTS "${OPENCV_ZIP}")
@@ -43,7 +43,6 @@ if(EXISTS "${OPENCV_ZIP}")
     # Download URL is "https://github.com/Itseez/opencv/archive/${OPENCV_ZIP}"
     # but for some reason it doesn't work from cmake.
     DOWNLOAD_COMMAND pwd && unzip "${OPENCV_ZIP}"
-      && patch -p1 -i "${CMAKE_CURRENT_SOURCE_DIR}/opencv.patch"
       && rmdir OpenCV && mv ${OPENCV} OpenCV
 
     # TODO this should be optimized to only build
@@ -56,7 +55,7 @@ if(EXISTS "${OPENCV_ZIP}")
       -DBUILD_PERF_TESTS=ON
       -DBUILD_EXAMPLES=ON
       -DBUILD_DOCS=OFF
-
+      -DWITH_IPP=OFF
     INSTALL_COMMAND /bin/true
   )
 
@@ -322,6 +321,7 @@ if(EXISTS "${OPENCV_ZIP}")
     test_OCL_MatrixOperation_UMatExpr
 
     PROPERTIES
+      ENVIRONMENT "OPENCV_OPENCL_DEVICE=:CPU:0"
       LABELS "OpenCV")
 
 

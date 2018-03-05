@@ -1,0 +1,29 @@
+FROM tce_llvm6
+
+ARG GIT_COMMIT=master
+ARG TCE_COMMIT=master
+
+ENV LD_LIBRARY_PATH=/home/LLVM_600/lib:/home/TCE_60/lib
+ENV PATH=/home/TCE_60/bin:/home/LLVM_600/bin:${PATH}
+
+################ BUILD TCE
+
+RUN apt install -y tk-dev tcl-dev libxerces-c-dev libsqlite3-dev libboost-all-dev
+
+RUN cd /home ; git clone https://github.com/cpc/tce -b $TCE_COMMIT
+
+# TODO patch tce configure.ac
+
+RUN cd /home/tce/tce ; git clean -f -d -x
+
+RUN cd /home/tce/tce ; ./autogen.sh
+
+RUN cd /home/tce/tce ; ./configure --prefix=/home/TCE_60
+
+RUN cd /home/tce/tce ; make -j4
+
+RUN cd /home/tce/tce ; make install
+
+RUN cd /home/tce/tce/newlib-1.17.0/tce-llvm/ ; make install
+
+CMD /bin/bash

@@ -9,7 +9,7 @@
 
 <ul>
 <li>Support for LLVM/Clang 6.0 and 5.0.</li>
-<li>Experimental SPIR support</li>
+<li>Experimental SPIR and SPIR-V support</li>
 <li>Improved kernel compilation speed</li>
 </ul>
 </p>

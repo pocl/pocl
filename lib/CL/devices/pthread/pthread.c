@@ -262,9 +262,6 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   device->num_partition_types = 0;
   device->partition_type = NULL;
 
-  if(device->llvm_cpu && (!strcmp(device->llvm_cpu, "(unknown)")))
-    device->llvm_cpu = NULL;
-
   if (!scheduler_initialized)
     {
       scheduler_initialized = 1;
@@ -476,7 +473,6 @@ void pocl_pthread_update_event (cl_device_id device, cl_event event, cl_int stat
       if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
         event->time_end = device->ops->get_timer_value(device->data);
 
-      POCL_DEBUG_EVENT_TIME (event, "NDRange Kernel        ");
       POCL_UNLOCK_OBJ (event);
       device->ops->broadcast (event);
       cq_ready = pocl_update_command_queue (event);

@@ -1,4 +1,4 @@
-FROM arch_base
+FROM ubuntu_base64
 
 RUN cd /home/pocl ; mkdir b ; cd b; \
    cmake -DCMAKE_INSTALL_PREFIX=/usr \

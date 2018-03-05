@@ -11,9 +11,12 @@ Highlights
 - LLVM 6.0 is now supported
 
 - Reintroduced experimental SPIR LLVM bitcode support to pocl.
-  Requires LLVM 5 or newer.
+  Requires LLVM 5 or newer. New experimental feature: SPIR-V support;
+  requires a working llvm-spirv converter. Currently only loading
+  of SPIR-V binaries by pocl is supported, not output.
+  See docs/features.rst for more details.
 
-- Refactored pocl cache now does away with locking and relies
+- Refactored pocl cache now does away with LLVM file locks and relies
   entirely on system calls for proper synchronization. Additionally,
   cache file writes are now fdatasync()ed.
 
@@ -43,6 +46,10 @@ Highlights
 - for users still building with Vecmathlib, performance should be back
   to levels of pocl 0.14 (there was a huge drop caused by a change
   in -O0 optimization level of LLVM 5.0)
+
+- improved support for ARM and ARM64 architectures. All internal tests
+  now pass (on Cortex-A53 and Cortex-A15), although it's still far
+  from full conformance.
 
 
 1.0 December 2017
