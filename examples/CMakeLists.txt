@@ -42,7 +42,9 @@ if(HOST_DEVICE_EXTENSIONS MATCHES "spir")
 endif()
 
 add_subdirectory("poclcc")
-add_subdirectory("scalarwave")
+if(ENABLE_FP64)
+  add_subdirectory("scalarwave")
+endif()
 add_subdirectory("trig")
 add_subdirectory("EinsteinToolkit")
 

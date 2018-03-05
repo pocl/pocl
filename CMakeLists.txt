@@ -859,7 +859,8 @@ set(DEFAULT_HOST_CLANG_FLAGS "${CLANG_TARGET_OPTION}${LLC_TRIPLE}")
 set(DEFAULT_HOST_LLC_FLAGS "-relocation-model=pic -mtriple=${LLC_TRIPLE}")
 
 if(ARM)
-  #ARMs need to enable FP64 manually with LLVM < 4.0
+  # 32bit arm doesn't always support doubles,
+  # need to enable FP64 manually with LLVM < 4.0
   if(LLVM_OLDER_THAN_4_0)
     option(ENABLE_FP64 "Enable FP64 on ARM32 - disabled by default for LLVM < 4" OFF)
   else()
@@ -915,9 +916,12 @@ set(HOST_DEVICE_EXTENSION_DEFINES "-Dcl_khr_int64")
 if(X86)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
 endif()
-# 32bit arm doesn't always support doubles
-if(ARM AND ENABLE_FP64)
+
+if(ENABLE_FP64)
   set(HOST_DEVICE_EXTENSIONS "${HOST_DEVICE_EXTENSIONS} cl_khr_fp64")
+  set(_CL_DISABLE_DOUBLE 0)
+else()
+  set(_CL_DISABLE_DOUBLE 1)
 endif()
 
 set(TEMP_EXT "${HOST_DEVICE_EXTENSIONS}")
@@ -930,12 +934,6 @@ endforeach()
 
 if (NOT LLVM_OLDER_THAN_4_0)
   set(HOST_DEVICE_EXTENSION_DEFINES "${HOST_DEVICE_EXTENSION_DEFINES} ${TEMP_CLEXT}")
-endif()
-
-if (HOST_DEVICE_EXTENSION_DEFINES MATCHES "cl_khr_fp64")
-  set(_CL_DISABLE_DOUBLE 0)
-else()
-  set(_CL_DISABLE_DOUBLE 1)
 endif()
 
 if(NOT DEFINED KERNELLIB_HOST_CPU_VARIANTS)
