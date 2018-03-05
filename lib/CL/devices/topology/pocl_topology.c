@@ -101,6 +101,15 @@ pocl_topology_detect_device_info(cl_device_id device)
     return ret;
   }
 
+#if HWLOC_API_VERSION >= 0x00020000
+  hwloc_topology_set_io_types_filter(pocl_topology, HWLOC_TYPE_FILTER_KEEP_NONE);
+  hwloc_topology_set_type_filter (pocl_topology, HWLOC_OBJ_SYSTEM, HWLOC_TYPE_FILTER_KEEP_NONE);
+  hwloc_topology_set_type_filter (pocl_topology, HWLOC_OBJ_GROUP, HWLOC_TYPE_FILTER_KEEP_NONE);
+  hwloc_topology_set_type_filter (pocl_topology, HWLOC_OBJ_BRIDGE, HWLOC_TYPE_FILTER_KEEP_NONE);
+  hwloc_topology_set_type_filter (pocl_topology, HWLOC_OBJ_MISC, HWLOC_TYPE_FILTER_KEEP_NONE);
+  hwloc_topology_set_type_filter (pocl_topology, HWLOC_OBJ_PCI_DEVICE, HWLOC_TYPE_FILTER_KEEP_NONE);
+  hwloc_topology_set_type_filter (pocl_topology, HWLOC_OBJ_OS_DEVICE, HWLOC_TYPE_FILTER_KEEP_NONE);
+#else
   hwloc_topology_ignore_type (pocl_topology, HWLOC_TOPOLOGY_FLAG_WHOLE_IO);
   hwloc_topology_ignore_type (pocl_topology, HWLOC_OBJ_SYSTEM);
   hwloc_topology_ignore_type (pocl_topology, HWLOC_OBJ_GROUP);
@@ -108,6 +117,7 @@ pocl_topology_detect_device_info(cl_device_id device)
   hwloc_topology_ignore_type (pocl_topology, HWLOC_OBJ_MISC);
   hwloc_topology_ignore_type (pocl_topology, HWLOC_OBJ_PCI_DEVICE);
   hwloc_topology_ignore_type (pocl_topology, HWLOC_OBJ_OS_DEVICE);
+#endif
 
   ret = hwloc_topology_load (pocl_topology);
   if (ret == -1)
@@ -116,8 +126,13 @@ pocl_topology_detect_device_info(cl_device_id device)
     goto exit_destroy;
   }
 
+#if HWLOC_API_VERSION >= 0x00020000
+  device->global_mem_size =
+      hwloc_get_root_obj(pocl_topology)->total_memory;
+#else
   device->global_mem_size =
       hwloc_get_root_obj(pocl_topology)->memory.total_memory;
+#endif
 
   // Try to get the number of CPU cores from topology
   int depth = hwloc_get_type_depth(pocl_topology, HWLOC_OBJ_PU);
