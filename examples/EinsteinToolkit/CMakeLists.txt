@@ -43,6 +43,7 @@ if(NOT MIPS)
 
   set_tests_properties( "EinsteinToolkit"
     PROPERTIES
+    COST 15.0
     LABELS "EinsteinToolkit"
     DEPENDS "pocl_version_check")
 
@@ -50,6 +51,7 @@ if(NOT MIPS)
 
   set_tests_properties( "EinsteinToolkit_SubDev"
     PROPERTIES
+    COST 15.0
     LABELS "EinsteinToolkit"
     ENVIRONMENT "POCL_AFFINITY=1"
     DEPENDS "pocl_version_check")
