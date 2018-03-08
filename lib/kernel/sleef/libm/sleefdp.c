@@ -1475,7 +1475,7 @@ EXPORT CONST double xpown(double x, int y) {
 EXPORT CONST double xpowr(double x, double y) {
   if (x < 0.0)
     return SLEEF_NAN;
-  if (isnan(y))
+  if (xisnan(y))
     return y;
   return xpow(x, y);
 }

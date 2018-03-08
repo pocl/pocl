@@ -1006,7 +1006,7 @@ EXPORT CONST float xacosf_u1(float d) {
   int o = fabsfk(d) < 0.5f;
   float x2 = o ? (d*d) : ((1-fabsfk(d))*0.5f), u;
   Sleef_float2 x = o ? df(fabsfk(d), 0) : dfsqrt_f2_f(x2);
-  x = fabs(d) == 1.0 ? df(0, 0) : x;
+  x = (fabsfk(d) == 1.0f) ? df(0, 0) : x;
 
   u = +0.4197454825e-1;
   u = mlaf(u, x2, +0.2424046025e-1);
@@ -1223,7 +1223,7 @@ EXPORT CONST float xpownf(float x, int y) {
 EXPORT CONST float xpowrf(float x, float y) {
   if (x < 0.0f)
     return SLEEF_NAN;
-  if (isnan(y))
+  if (xisnanf(y))
     return y;
   return xpowf(x, y);
 }
