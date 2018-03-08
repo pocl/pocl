@@ -432,7 +432,7 @@ pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
   else
     {
       POCL_MSG_PRINT_MEMORY ("!USE_HOST_PTR\n");
-      b = pocl_memalign_alloc_global_mem (device, MAX_EXTENDED_ALIGNMENT,
+      b = pocl_aligned_malloc_global_mem (device, MAX_EXTENDED_ALIGNMENT,
                                           mem_obj->size);
       if (b==NULL)
         return CL_MEM_OBJECT_ALLOCATION_FAILURE;
@@ -534,7 +534,7 @@ pocl_basic_run
       if (kernel->arg_info[i].is_local)
         {
           arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, al->size);
+          *(void **)(arguments[i]) = pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, al->size);
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
         {
@@ -555,7 +555,7 @@ pocl_basic_run
           dev_image_t di;
           fill_dev_image_t (&di, al, cmd->device);
 
-          void* devptr = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT,  sizeof(dev_image_t));
+          void* devptr = pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT,  sizeof(dev_image_t));
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = devptr; 
           pocl_basic_write (data, &di, devptr, 0, sizeof(dev_image_t));
@@ -565,7 +565,7 @@ pocl_basic_run
           dev_sampler_t ds;
           fill_dev_sampler_t(&ds, al);
           
-          void* devptr = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, sizeof(dev_sampler_t));
+          void* devptr = pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, sizeof(dev_sampler_t));
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = devptr;
           pocl_basic_write (data, &ds, devptr, 0, sizeof(dev_sampler_t));
@@ -581,7 +581,7 @@ pocl_basic_run
     {
       al = &(cmd->command.run.arguments[i]);
       arguments[i] = malloc (sizeof (void *));
-      *(void **)(arguments[i]) = pocl_memalign_alloc(MAX_EXTENDED_ALIGNMENT, al->size);
+      *(void **)(arguments[i]) = pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, al->size);
     }
 
   pc->local_size[0] = cmd->command.run.local_x;

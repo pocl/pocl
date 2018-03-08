@@ -775,21 +775,6 @@ fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg)
   }
 }
 
-void*
-pocl_memalign_alloc(size_t align_width, size_t size)
-{
-  void *ptr;
-  int status;
-
-#ifndef POCL_ANDROID
-  status = posix_memalign(&ptr, align_width, size);
-  return ((status == 0)? ptr: (void*)NULL);
-#else
-  ptr = memalign(align_width, size);
-  return ptr;
-#endif
-}
-
 /* CPU driver stuff */
 typedef struct pocl_dlhandle_cache_item pocl_dlhandle_cache_item;
 struct pocl_dlhandle_cache_item
@@ -1165,7 +1150,7 @@ pocl_set_buffer_image_limits(cl_device_id device)
 }
 
 void*
-pocl_memalign_alloc_global_mem(cl_device_id device, size_t align, size_t size)
+pocl_aligned_malloc_global_mem(cl_device_id device, size_t align, size_t size)
 {
   pocl_global_mem_t *mem = device->global_memory;
   void *retval = NULL;
@@ -1174,7 +1159,7 @@ pocl_memalign_alloc_global_mem(cl_device_id device, size_t align, size_t size)
   if ((mem->total_alloc_limit - mem->currently_allocated) < size)
     goto ERROR;
 
-  retval = pocl_memalign_alloc (align, size);
+  retval = pocl_aligned_malloc (align, size);
   if (!retval)
     goto ERROR;
 
@@ -1201,6 +1186,7 @@ pocl_free_global_mem(cl_device_id device, void* ptr, size_t size)
 
   POCL_MEM_FREE(ptr);
 }
+
 
 void
 pocl_print_system_memory_stats()

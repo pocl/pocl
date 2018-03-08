@@ -63,8 +63,6 @@ typedef struct list_item
   struct list_item *next;
 } list_item;
 
-
-
 void
 pocl_restore_ftz (unsigned ftz)
 {
@@ -222,18 +220,36 @@ pocl_size_ceil2(size_t x) {
   return ++x;
 }
 
-#ifndef HAVE_ALIGNED_ALLOC
+static void*
+pocl_memalign_alloc(size_t align_width, size_t size)
+{
+  void *ptr;
+  int status;
+
+#ifdef POCL_ANDROID
+  ptr = memalign (align_width, size);
+  return ptr;
+#elif defined(HAVE_POSIX_MEMALIGN)
+  status = posix_memalign (&ptr, align_width, size);
+  return ((status == 0) ? ptr : NULL);
+#elif (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L))
+  return aligned_alloc (align_width, size);
+#else
+#error Cannot find aligned malloc
+#endif
+}
+
 void *
 pocl_aligned_malloc (size_t alignment, size_t size)
 {
-# ifdef HAVE_POSIX_MEMALIGN
+#ifdef HAVE_ALIGNED_ALLOC
 
   /* make sure that size is a multiple of alignment, as posix_memalign
    * does not perform this test, whereas aligned_alloc does */
   if ((size & (alignment - 1)) != 0)
     {
-      errno = EINVAL;
-      return NULL;
+      size = size | (alignment - 1);
+      size += 1;
     }
 
   /* posix_memalign requires alignment to be at least sizeof(void *) */
@@ -251,8 +267,14 @@ pocl_aligned_malloc (size_t alignment, size_t size)
 
   return result;
 
-# else
+#else
+#error Cannot find aligned malloc
+#endif
 
+#if 0
+  /* this code works in theory, but there many places in pocl
+   * where aligned memory is used in the same pointers
+   * as memory allocated by other means */
   /* allow zero-sized allocations, force alignment to 1 */
   if (!size)
     alignment = 1;
@@ -280,15 +302,19 @@ pocl_aligned_malloc (size_t alignment, size_t size)
 
 #endif
 }
-#endif
 
-#if !defined HAVE_ALIGNED_ALLOC && !defined HAVE_POSIX_MEMALIGN
+#if 0
 void
 pocl_aligned_free (void *ptr)
 {
+#ifdef HAVE_ALIGNED_ALLOC
+  POCL_MEM_FREE (ptr);
+#else
+#error Cannot find aligned malloc
   /* extract pointer from original allocation and free it */
   if (ptr)
     free(*(void **)((uintptr_t)ptr - sizeof(void *)));
+#endif
 }
 #endif
 

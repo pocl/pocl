@@ -493,6 +493,7 @@ void*
 pocl_pthread_driver_thread (void *p)
 {
   struct pool_thread_data *td = (struct pool_thread_data*)p;
+  assert (td);
   _cl_command_node *cmd = NULL;
   /* some random value, doesn't matter as long as it's not a valid bool - to
    * force a first FTZ setup */
@@ -503,7 +504,7 @@ pocl_pthread_driver_thread (void *p)
   assert (scheduler.local_mem_size > 0);
   td->local_mem = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
                                        scheduler.local_mem_size);
-
+  assert (td->local_mem);
 #ifdef __linux__
   if (pocl_get_bool_option ("POCL_AFFINITY", 0))
     {
