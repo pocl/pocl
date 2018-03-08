@@ -123,7 +123,11 @@ DEFINE_BODY_V
        for (int sign=-1; sign<=+1; sign+=2) {
          typedef union {
            vtype v;
-           stype s[16];
+           volatile stype s[16];
+           /* s is declared as volatile to force all accesses through memory,
+            * avoiding excess precision from x87 fpu registers
+            * see https://github.com/pocl/pocl/issues/621, https://gcc.gnu.org/wiki/x87note
+            */
          } Tvec;
          Tvec val, good, val2;
          for (int n=0; n<vecsize; ++n) {
