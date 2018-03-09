@@ -3,7 +3,7 @@
 %>
 <%inherit file="basic_page.makt" />
 
-<h1>February 2018: pocl v1.1 released</h2>
+<h1>March 9 2018: pocl v1.1 released</h2>
 
 <h2>Release highlights</h2>
 
