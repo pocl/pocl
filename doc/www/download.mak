@@ -18,7 +18,7 @@ the version control system:</p>
 <ul>
 
 <li><b>Version 1.1:</b> Supports LLVM 5.0 and 6.0.
-            <a href="/downloads/pocl-1.1.tar.gz">pocl-1.1.tar.gz (1.5M)</a>,
+            <a href="https://github.com/pocl/pocl/archive/v1.1.tar.gz">pocl-1.1.tar.gz (1.5M)</a>,
             <a href="/downloads/CHANGES">change log</a>,
             <a href="pocl-1.1.html">release notes</a></li>
 
