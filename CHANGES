@@ -1,14 +1,14 @@
 1.2 unreleased
-=================
+==============
 
 
-1.1 February 2018
-=================
+1.1 March 2018
+==============
 
 Highlights
 ----------
 
-- LLVM 6.0 is now supported
+- LLVM 6.0 is now supported.
 
 - Reintroduced experimental SPIR LLVM bitcode support to pocl.
   Requires LLVM 5 or newer. New experimental feature: SPIR-V support;
@@ -32,7 +32,7 @@ Highlights
   triggered when the last cl_context is released. Currently only the
   CPU driver implements the callback.
 
-- removed libpoclu from installed files; this library contains helpers
+- Removed libpoclu from installed files; this library contains helpers
   for pocl's internal tests, and from installed files was only used by
   poclcc, which has been updated to not rely on it.
 
@@ -43,11 +43,11 @@ Highlights
 - CL_PLATFORM_VERSION now contains much more information about how
   pocl was built.
 
-- for users still building with Vecmathlib, performance should be back
+- For users still building with Vecmathlib, performance should be back
   to levels of pocl 0.14 (there was a huge drop caused by a change
-  in -O0 optimization level of LLVM 5.0)
+  in -O0 optimization level of LLVM 5.0).
 
-- improved support for ARM and ARM64 architectures. All internal tests
+- Improved support for ARM and ARM64 architectures. All internal tests
   now pass (on Cortex-A53 and Cortex-A15), although it's still far
   from full conformance.
 
