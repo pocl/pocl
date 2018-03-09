@@ -36,4 +36,5 @@ Links
 Home page:         http://portablecl.org/
 This announcement: http://portablecl.org/downloads/ANNOUNCEMENT
 Change log:        http://portablecl.org/downloads/CHANGES
-Download:          http://portablecl.org/downloads
+Download:          http://portablecl.org/download.html
+
