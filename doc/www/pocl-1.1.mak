@@ -14,7 +14,7 @@
 </ul>
 </p>
 
-<p>Please note that there's now an official pocl maintenance policy in place.
+<p>Please note that there's an official pocl maintenance policy in place.
 <a href="http://portablecl.org/docs/html/maintainer-policy.html">This text</a>
 describes the policy and how you can get your favourite project
 that uses OpenCL to remain regression free in the future pocl releases.</p>
@@ -29,8 +29,7 @@ platforms, please let us know!</p>
 cycle was produced for the needs of research funded by various sources.
 The Customized Parallel Computing research group of Tampere
 University of Technology (Finland) likes to thank the Academy of Finland
-(funding decision 297548), Finnish Funding Agency for Technology and Innovation
-(funding decision 40142/14, FiDiPro-StreamPro), ARTEMIS joint undertaking
-under grant agreement no 621439 (ALMARVI) and HSA Foundation.</p>
+(funding decision 297548), Business Finland (FiDiPro project StreamPro,
+1846/31/2014) and HSA Foundation.</p>
 
 <p><a href="download.html">Download</a>.</p>

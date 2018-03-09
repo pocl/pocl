@@ -15,7 +15,7 @@ Release highlights
 * Experimental SPIR and SPIR-V support
 * Improved kernel compilation speed
 
-Please note that there's now an official pocl "maintenance policy" in place.
+Please note that there's an official pocl "maintenance policy" in place.
 This text describes the policy and how you can get your favourite project
 that uses OpenCL to remain regression free in the future pocl releases:
 
@@ -26,11 +26,10 @@ Acknowledgements
 
 Most of the code that landed to the pocl code base during this release
 cycle was produced for the needs of research funded by various sources.
-The Customized Parallel Computing research group of Tampere
-University of Technology (Finland) likes to thank the Academy of Finland
-(funding decision 297548), Finnish Funding Agency for Technology and Innovation
-(funding decision 40142/14, FiDiPro-StreamPro), ARTEMIS joint undertaking
-under grant agreement no 621439 (ALMARVI) and HSA Foundation.
+The Customized Parallel Computing research group of Tampere University of
+Technology (Finland) likes to thank the Academy of Finland (funding
+decision 297548), Business Finland (FiDiPro project StreamPro,
+1846/31/2014) and HSA Foundation.
 
 Links
 -----
