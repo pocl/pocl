@@ -31,17 +31,26 @@ addons:
     - libhwloc-dev
 
 before_install:
-  - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then brew install hwloc ; fi
-  - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then brew install llvm ; fi
-  - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then export LLVM_CONFIG=`brew ls llvm | grep "bin/llvm-config"` ; fi
-  - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then export MY_CMAKE_LLVM_CONFIG="-DLLVM_CONFIG=$LLVM_CONFIG" ; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then
+      echo "Installing a fresh version of Miniconda.";
+      MINICONDA_URL="https://repo.continuum.io/miniconda";
+      MINICONDA_FILE="Miniconda3-latest-MacOSX-x86_64.sh";
+      curl -L -O "${MINICONDA_URL}/${MINICONDA_FILE}";
+      bash $MINICONDA_FILE -b;
+      source $HOME/miniconda3/bin/activate root;
+      conda config --add channels conda-forge;
+      conda install --yes --quiet llvmdev=6.0.0 clangdev=6.0.0 libcxx=6.0.0 libhwloc=1.*;
+    fi
+
+  - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then export MY_CMAKE_PREFIX_PATH="-DCMAKE_PREFIX_PATH=$HOME/miniconda3" ; fi
   - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then export MY_CMAKE_ICD_OFF="-DENABLE_ICD=OFF" ; fi
+
   - if [ "$CXX" = "clang++" ] ; then MY_CMAKE_LIBCXX="-DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++" ; fi
 
 script:
   - mkdir build && cd build
   - cmake .. -DCMAKE_INSTALL_PREFIX=/tmp $MY_CMAKE_LLVM_CONFIG $MY_CMAKE_LIBCXX $MY_CMAKE_ICD_OFF
-  - make
+  - make -j2 -k
   - make check
   - make install
 
