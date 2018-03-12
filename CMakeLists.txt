@@ -476,11 +476,20 @@ int main(int argc, char** argv) {
 }
   " HAVE_MKSTEMPS)
 
+  set(CMAKE_REQUIRED_DEFINITIONS "-D_POSIX_C_SOURCE=200809L")
+  CHECK_SYMBOL_EXISTS("futimens"
+                      "fcntl.h;sys/stat.h"
+                      HAVE_FUTIMENS)
+
+  unset(CMAKE_REQUIRED_DEFINITIONS)
+  unset(CMAKE_REQUIRED_FLAGS)
+
 else()
   set(HAVE_CLOCK_GETTIME 0)
   set(HAVE_FDATASYNC 0)
   set(HAVE_MKOSTEMPS 0)
   set(HAVE_MKDTEMP 0)
+  set(HAVE_FUTIMENS 0)
 endif()
 
 include(CheckFunctionExists)
