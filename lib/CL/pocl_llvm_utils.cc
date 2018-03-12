@@ -64,6 +64,9 @@
 #define PassManager legacy::PassManager
 #endif
 
+#ifdef __APPLE__
+#include <libkern/OSByteOrder.h>
+#endif
 
 
 
@@ -154,7 +157,11 @@ int bitcode_is_spir(const char *bitcode, size_t size) {
 }
 
 int bitcode_is_spirv(const char *bitcode, size_t size) {
+#ifdef __APPLE__
+  uint32_t magic = OSSwapHostToLittleInt32(((uint32_t *)bitcode)[0]);
+#else
   uint32_t magic = htole32(((uint32_t *)bitcode)[0]);
+#endif
   return (size > 20) && (magic == 0x07230203U);
 }
 
