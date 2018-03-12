@@ -419,9 +419,16 @@ if(UNIX)
                       HAVE_POSIX_MEMALIGN)
 
   set(CMAKE_REQUIRED_DEFINITIONS "-D_POSIX_C_SOURCE=199309L")
-  CHECK_SYMBOL_EXISTS("clock_gettime"
-                      "time.h"
-                      HAVE_CLOCK_GETTIME)
+
+  CHECK_C_SOURCE_COMPILES("
+#include <time.h>
+
+int main(int argc, char** argv) {
+  struct timespec timeout = {0, 0};
+  clock_gettime(CLOCK_REALTIME, &timeout);
+  return 0;
+}
+  " HAVE_CLOCK_GETTIME)
 
   set(CMAKE_REQUIRED_DEFINITIONS "-D_BSD_SOURCE")
   CHECK_SYMBOL_EXISTS("mkdtemp"
