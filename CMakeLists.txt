@@ -26,6 +26,27 @@
 cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 
 project(pocl)
+
+# Fix behavior of CMAKE_CXX_STANDARD when targeting macOS.
+if(POLICY CMP0025)
+  cmake_policy(SET CMP0025 NEW)
+endif()
+
+# don't allow implicit function declarations
+if(UNIX)
+  if((CMAKE_C_COMPILER_ID STREQUAL "GNU") OR
+     (CMAKE_C_COMPILER_ID STREQUAL "Clang"))
+
+    set(FORBIT_IMPLICIT_FUNCTIONS "-Werror=implicit-function-declaration")
+    add_compile_options("${FORBIT_IMPLICIT_FUNCTIONS}")
+
+  else()
+    message(WARNING "Don't know how to forbid this compiler from allowing implicit function declarations.")
+  endif()
+
+endif()
+
+
 set(MAJOR_VERSION 1)
 set(MINOR_VERSION 2)
 set(VERSION_SUFFIX "-pre")
@@ -447,7 +468,7 @@ if(UNIX)
   include(CheckSymbolExists)
 
   # don't allow implicit function declarations
-  set(CMAKE_REQUIRED_FLAGS "-std=c99 -Werror=implicit-function-declaration")
+  set(CMAKE_REQUIRED_FLAGS "-std=c99 ${FORBIT_IMPLICIT_FUNCTIONS}")
   if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(CMAKE_REQUIRED_LIBRARIES "rt")
   endif ()
