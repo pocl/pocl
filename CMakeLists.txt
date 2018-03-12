@@ -408,7 +408,7 @@ if(UNIX)
   include(CheckSymbolExists)
 
   # don't allow implicit function declarations
-  set(CMAKE_REQUIRED_FLAGS "-std=c99")
+  set(CMAKE_REQUIRED_FLAGS "-std=c99 -Werror=implicit-function-declaration")
   if (NOT APPLE)
     set(CMAKE_REQUIRED_LIBRARIES "rt")
   endif ()
