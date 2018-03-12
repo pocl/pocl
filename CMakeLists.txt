@@ -409,7 +409,9 @@ if(UNIX)
 
   # don't allow implicit function declarations
   set(CMAKE_REQUIRED_FLAGS "-std=c99")
-  set(CMAKE_REQUIRED_LIBRARIES "rt")
+  if (NOT APPLE)
+    set(CMAKE_REQUIRED_LIBRARIES "rt")
+  endif ()
 
   set(CMAKE_REQUIRED_DEFINITIONS "-D_POSIX_C_SOURCE=200112L")
   CHECK_SYMBOL_EXISTS("posix_memalign"
