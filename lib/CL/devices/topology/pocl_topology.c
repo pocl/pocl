@@ -25,6 +25,12 @@
 #include <hwloc.h>
 #include <stdlib.h>
 
+#if HWLOC_API_VERSION >= 0x00020000
+#define HWLOC_API_2
+#else
+#undef HWLOC_API_2
+#endif
+
 #include "pocl_topology.h"
 
 #if defined(__x86_64__) || defined(__i386__)
@@ -82,6 +88,16 @@ pocl_topology_detect_device_info(cl_device_id device)
   hwloc_topology_t pocl_topology;
   int ret = 0;
 
+#ifdef HWLOC_API_2
+  if (hwloc_get_api_version () < 0x20000)
+    POCL_MSG_ERR ("pocl was compiled against libhwloc 2.x but is"
+                  "actually running against libhwloc 1.x \n");
+#else
+  if (hwloc_get_api_version () >= 0x20000)
+    POCL_MSG_ERR ("pocl was compiled against libhwloc 1.x but is"
+                  "actually running against libhwloc 2.x \n");
+#endif
+
   /*
    * hwloc's OpenCL backend causes problems at the initialization stage
    * because it reloads libpocl.so via the ICD loader.
@@ -101,7 +117,7 @@ pocl_topology_detect_device_info(cl_device_id device)
     return ret;
   }
 
-#if HWLOC_API_VERSION >= 0x00020000
+#ifdef HWLOC_API_2
   hwloc_topology_set_io_types_filter(pocl_topology, HWLOC_TYPE_FILTER_KEEP_NONE);
   hwloc_topology_set_type_filter (pocl_topology, HWLOC_OBJ_SYSTEM, HWLOC_TYPE_FILTER_KEEP_NONE);
   hwloc_topology_set_type_filter (pocl_topology, HWLOC_OBJ_GROUP, HWLOC_TYPE_FILTER_KEEP_NONE);
@@ -126,7 +142,7 @@ pocl_topology_detect_device_info(cl_device_id device)
     goto exit_destroy;
   }
 
-#if HWLOC_API_VERSION >= 0x00020000
+#ifdef HWLOC_API_2
   device->global_mem_size =
       hwloc_get_root_obj(pocl_topology)->total_memory;
 #else
