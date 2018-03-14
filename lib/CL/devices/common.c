@@ -1028,7 +1028,7 @@ pocl_check_dlhandle_cache (_cl_command_node *cmd, unsigned initial_refcount)
 #define MIN_MAX_MEM_ALLOC_SIZE (128*1024*1024)
 
 /* accounting object for the main memory */
-static pocl_global_mem_t system_memory;
+static pocl_global_mem_t system_memory = POCL_LOCK_INITIALIZER;
 
 void
 pocl_setup_device_for_system_memory(cl_device_id device)
