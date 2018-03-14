@@ -14,11 +14,6 @@ matrix:
   exclude:
     - os: linux
       compiler: clang
-  allow_failures:
-    - os: osx
-      compiler: clang
-    - os: osx
-      compiler: gcc
 
 addons:
   apt:
