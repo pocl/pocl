@@ -26,6 +26,8 @@
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseDevice)(cl_device_id device) CL_API_SUFFIX__VERSION_1_2 
 {
+  POCL_RETURN_ERROR_COND ((device == NULL), CL_INVALID_DEVICE);
+
   if (device->parent_device == NULL)
     return CL_SUCCESS;
 
