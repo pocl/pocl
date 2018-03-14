@@ -294,8 +294,6 @@ set_property(TEST
   "kernel/test_convert_type_1"
   "kernel/test_convert_type_2"
   "kernel/test_convert_type_4"
-  "kernel/test_convert_type_8"
-  "kernel/test_convert_type_16"
   "kernel/test_as_type"
   "kernel/test_sizeof_uint"
   APPEND PROPERTY LABELS "cuda")
