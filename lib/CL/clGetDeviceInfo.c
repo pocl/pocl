@@ -112,7 +112,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_FLOAT:
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->preferred_vector_width_float);
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_DOUBLE:
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->preferred_vector_width_double);
+    POCL_RETURN_DEVICE_INFO_WITH_EXT_CHECK(cl_uint, device->preferred_vector_width_double, cl_khr_fp64);
   case CL_DEVICE_MAX_CLOCK_FREQUENCY               :
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->max_clock_frequency);
   case CL_DEVICE_ADDRESS_BITS                      :
@@ -243,7 +243,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_FLOAT         : 
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->native_vector_width_float);
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_DOUBLE        : 
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->native_vector_width_double);
+    POCL_RETURN_DEVICE_INFO_WITH_EXT_CHECK(cl_uint, device->native_vector_width_double, cl_khr_fp64);
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF          : 
     POCL_RETURN_DEVICE_INFO_WITH_EXT_CHECK(cl_uint, device->native_vector_width_half, cl_khr_fp16);
   case CL_DEVICE_OPENCL_C_VERSION                  :
