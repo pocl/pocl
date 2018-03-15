@@ -1,0 +1,27 @@
+sudo: false
+
+language: c++
+
+os:
+  - osx
+
+compiler:
+  - gcc
+  - clang
+
+before_install:
+  - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then brew install hwloc ; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then brew install llvm ; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then export LLVM_CONFIG=`brew ls llvm | grep "bin/llvm-config"` ; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then export CMAKE_LLVM_CONFIG="-DWITH_LLVM_CONFIG=$LLVM_CONFIG" ; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then export CMAKE_ICD_OFF="-DENABLE_ICD=OFF" ; fi
+
+script:
+  - mkdir build && cd build
+  - cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=/tmp $CMAKE_LLVM_CONFIG $CMAKE_ICD_OFF
+  - make
+  - make check
+  - make install
+
+notifications:
+  email: false
