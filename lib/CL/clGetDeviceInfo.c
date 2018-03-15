@@ -37,6 +37,11 @@
     POCL_WARN_INCOMPLETE ();                                                  \
   POCL_RETURN_GETINFO (__TYPE__, __VALUE__);
 
+#define POCL_RETURN_DEVICE_INFO_WITH_EXT_CHECK(__TYPE__, __VALUE__, __EXT__)  \
+  if ((strstr(#__EXT__, device->extensions)) && (__VALUE__ == (__TYPE__)0))     \
+    POCL_WARN_INCOMPLETE ();                                                  \
+  POCL_RETURN_GETINFO (__TYPE__, __VALUE__);
+
 #define STRINGIFY_(x) #x
 #define STRINGIFY(x) STRINGIFY_ (x)
 #define HOST_DEVICE_CL_VERSION_MAJOR_STR                                      \
@@ -224,7 +229,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_HALF_FP_CONFIG                    :
     POCL_RETURN_GETINFO (cl_ulong, device->half_fp_config);
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_HALF       :
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->preferred_vector_width_half);
+    POCL_RETURN_DEVICE_INFO_WITH_EXT_CHECK(cl_uint, device->preferred_vector_width_half, cl_khr_fp16);
   case CL_DEVICE_HOST_UNIFIED_MEMORY               : 
     POCL_RETURN_GETINFO(cl_bool, device->host_unified_memory);
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_CHAR          : 
@@ -240,7 +245,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_DOUBLE        : 
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->native_vector_width_double);
   case CL_DEVICE_NATIVE_VECTOR_WIDTH_HALF          : 
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->native_vector_width_half);
+    POCL_RETURN_DEVICE_INFO_WITH_EXT_CHECK(cl_uint, device->native_vector_width_half, cl_khr_fp16);
   case CL_DEVICE_OPENCL_C_VERSION                  :
     POCL_RETURN_GETINFO_STR (HOST_CL_VERSION);
   case CL_DEVICE_BUILT_IN_KERNELS                  :
