@@ -445,8 +445,7 @@ pocl_pthread_prepare_kernel
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
 
-  if (cmd != NULL && cmd->type == CL_COMMAND_NDRANGE_KERNEL)
-    pocl_check_dlhandle_cache (cmd, 1);
+  pocl_check_dlhandle_cache (cmd, 1);
 
   int num_groups = pc->num_groups[0] * pc->num_groups[1] * pc->num_groups[2];
 
@@ -469,6 +468,8 @@ pocl_pthread_prepare_kernel
 
   setup_kernel_arg_array (run_cmd);
 
+  POCL_UPDATE_EVENT_RUNNING (cmd->event);
+
   pthread_scheduler_push_kernel (run_cmd);
 }
 
@@ -478,7 +479,6 @@ pocl_pthread_exec_command (_cl_command_node *cmd,
 {
   if(cmd->type == CL_COMMAND_NDRANGE_KERNEL)
     {
-      POCL_UPDATE_EVENT_RUNNING (cmd->event);
       pocl_pthread_prepare_kernel (cmd->command.run.data, cmd);
     }
   else
