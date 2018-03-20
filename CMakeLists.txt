@@ -477,6 +477,10 @@ if(UNIX)
                       "sys/types.h;unistd.h"
                       HAVE_FORK)
 
+  CHECK_SYMBOL_EXISTS("fsync"
+                      "unistd.h"
+                      HAVE_FSYNC)
+
   set(CMAKE_REQUIRED_DEFINITIONS "-D_POSIX_C_SOURCE=200809L")
   CHECK_SYMBOL_EXISTS("futimens"
                       "fcntl.h;sys/stat.h"
@@ -520,6 +524,7 @@ if(UNIX)
 else()
   set(HAVE_CLOCK_GETTIME 0)
   set(HAVE_FDATASYNC 0)
+  set(HAVE_FSYNC 0)
   set(HAVE_MKOSTEMPS 0)
   set(HAVE_MKSTEMPS 0)
   set(HAVE_MKDTEMP 0)

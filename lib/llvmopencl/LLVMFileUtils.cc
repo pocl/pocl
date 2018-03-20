@@ -304,6 +304,9 @@ int pocl_write_file(const char *path, const char *content, uint64_t count,
 #ifdef HAVE_FDATASYNC
     if (fdatasync(fd))
       return errno ? -errno : -1;
+#elif defined(HAVE_FSYNC)
+    if (fsync(fd))
+      return errno ? -errno : -1;
 #endif
 
     if (close(fd))
@@ -342,6 +345,9 @@ int pocl_write_tempfile(char *output_path, const char *prefix,
 
 #ifdef HAVE_FDATASYNC
   if (fdatasync(fd))
+    return errno ? -errno : -1;
+#elif defined(HAVE_FSYNC)
+  if (fsync(fd))
     return errno ? -errno : -1;
 #endif
 
@@ -387,6 +393,9 @@ int pocl_write_module(void *module, const char* path, int dont_rewrite) {
     os.flush();
 #ifdef HAVE_FDATASYNC
     if (fdatasync(fd))
+      return errno ? -errno : -1;
+#elif defined(HAVE_FSYNC)
+    if (fsync(fd))
       return errno ? -errno : -1;
 #endif
 

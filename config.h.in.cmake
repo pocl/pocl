@@ -41,6 +41,8 @@
 
 #cmakedefine HAVE_FDATASYNC
 
+#cmakedefine HAVE_FSYNC
+
 #cmakedefine HAVE_MKOSTEMPS
 
 #cmakedefine HAVE_MKSTEMPS
