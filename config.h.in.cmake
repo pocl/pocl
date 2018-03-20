@@ -49,6 +49,8 @@
 
 #cmakedefine HAVE_MKDTEMP
 
+#cmakedefine HAVE_FUTIMENS
+
 #cmakedefine HAVE_LTTNG_UST
 
 #cmakedefine HAVE_OCL_ICD

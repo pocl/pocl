@@ -408,8 +408,10 @@ if(UNIX)
   include(CheckSymbolExists)
 
   # don't allow implicit function declarations
-  set(CMAKE_REQUIRED_FLAGS "-std=c99")
-  set(CMAKE_REQUIRED_LIBRARIES "rt")
+  set(CMAKE_REQUIRED_FLAGS "-std=c99 -Werror=implicit-function-declaration")
+  if (CMAKE_SYSTEM_NAME MATCHES "Linux")
+    set(CMAKE_REQUIRED_LIBRARIES "rt")
+  endif ()
 
   set(CMAKE_REQUIRED_DEFINITIONS "-D_POSIX_C_SOURCE=200112L")
   CHECK_SYMBOL_EXISTS("posix_memalign"
@@ -417,9 +419,16 @@ if(UNIX)
                       HAVE_POSIX_MEMALIGN)
 
   set(CMAKE_REQUIRED_DEFINITIONS "-D_POSIX_C_SOURCE=199309L")
-  CHECK_SYMBOL_EXISTS("clock_gettime"
-                      "time.h"
-                      HAVE_CLOCK_GETTIME)
+
+  CHECK_C_SOURCE_COMPILES("
+#include <time.h>
+
+int main(int argc, char** argv) {
+  struct timespec timeout = {0, 0};
+  clock_gettime(CLOCK_REALTIME, &timeout);
+  return 0;
+}
+  " HAVE_CLOCK_GETTIME)
 
   set(CMAKE_REQUIRED_DEFINITIONS "-D_BSD_SOURCE")
   CHECK_SYMBOL_EXISTS("mkdtemp"
@@ -467,11 +476,20 @@ int main(int argc, char** argv) {
 }
   " HAVE_MKSTEMPS)
 
+  set(CMAKE_REQUIRED_DEFINITIONS "-D_POSIX_C_SOURCE=200809L")
+  CHECK_SYMBOL_EXISTS("futimens"
+                      "fcntl.h;sys/stat.h"
+                      HAVE_FUTIMENS)
+
+  unset(CMAKE_REQUIRED_DEFINITIONS)
+  unset(CMAKE_REQUIRED_FLAGS)
+
 else()
   set(HAVE_CLOCK_GETTIME 0)
   set(HAVE_FDATASYNC 0)
   set(HAVE_MKOSTEMPS 0)
   set(HAVE_MKDTEMP 0)
+  set(HAVE_FUTIMENS 0)
 endif()
 
 include(CheckFunctionExists)

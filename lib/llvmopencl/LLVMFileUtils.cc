@@ -166,9 +166,8 @@ int pocl_touch_file(const char* path) {
     OPEN_CREATE;
     RETURN_IF_EC;
 
-#ifdef HAVE_CLOCK_GETTIME
+#ifdef HAVE_FUTIMENS
     futimens(fd, NULL);
-#else
 #endif
 
     return (close(fd) ? (-errno) : 0);

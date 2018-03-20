@@ -993,6 +993,14 @@ pocl_check_dlhandle_cache (_cl_command_node *cmd, unsigned initial_refcount)
                   "_pocl_launcher_%s_workgroup", k->name);
         ci->wg = (pocl_workgroup)lt_dlsym (ci->dlhandle, workgroup_string);
         dl_error = lt_dlerror ();
+        if (ci->wg == NULL)
+          {
+            // Older osx dyld APIs need the name without the underscore
+            snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
+                      "pocl_launcher_%s_workgroup", k->name);
+            ci->wg = (pocl_workgroup)lt_dlsym (ci->dlhandle, workgroup_string);
+            dl_error = lt_dlerror ();
+          }
 
         if (ci->wg != NULL && dl_error == NULL)
           {
@@ -1020,7 +1028,7 @@ pocl_check_dlhandle_cache (_cl_command_node *cmd, unsigned initial_refcount)
 #define MIN_MAX_MEM_ALLOC_SIZE (128*1024*1024)
 
 /* accounting object for the main memory */
-static pocl_global_mem_t system_memory;
+static pocl_global_mem_t system_memory = {POCL_LOCK_INITIALIZER, 0, 0, 0};
 
 void
 pocl_setup_device_for_system_memory(cl_device_id device)

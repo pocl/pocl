@@ -29,7 +29,7 @@
 #    define _POSIX_C_SOURCE 199309L
 #  endif
 #  include <inttypes.h>
-#  ifdef HAVE_CLOCK_GETTIME
+#  if defined(HAVE_CLOCK_GETTIME) || defined(__APPLE__)
 #    include <time.h>
 #  else
 #    include <sys/time.h>
