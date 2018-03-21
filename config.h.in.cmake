@@ -57,6 +57,8 @@
 
 #cmakedefine HAVE_POSIX_MEMALIGN
 
+#cmakedefine HAVE_UTIME
+
 #cmakedefine HAVE_HSA_EXT_AMD_H
 
 #define HOST  "@HOST@"

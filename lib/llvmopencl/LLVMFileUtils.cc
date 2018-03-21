@@ -34,6 +34,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#ifdef HAVE_UTIME
+#include <utime.h>
+#endif
 #else
 #include <io.h>
 #endif
@@ -161,18 +164,23 @@ pocl_filesize(const char* path, uint64_t* res) {
 }
 
 int pocl_touch_file(const char* path) {
+#ifdef HAVE_UTIME
+    int res = utime(path, NULL);
+    return (res ? errno : 0);
+#elif defined(HAVE_FUTIMENS)
     Twine p(path);
     int fd;
     std::error_code ec;
 
     OPEN_CREATE;
     RETURN_IF_EC;
-
-#ifdef HAVE_FUTIMENS
     futimens(fd, NULL);
-#endif
 
-    return (close(fd) ? (-errno) : 0);
+    return (close(fd) ? errno : 0);
+#else
+#warning No utime or futimens found, pocl will not update cache timestamps
+    return 0;
+#endif
 }
 
 int pocl_rename(const char *oldpath, const char *newpath) {
