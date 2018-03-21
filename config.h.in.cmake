@@ -16,8 +16,6 @@
 
 #define CMAKE_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
 
-#define FORCED_CLFLAGS  "@FORCED_CLFLAGS@"
-
 #cmakedefine ENABLE_ASAN
 #cmakedefine ENABLE_LSAN
 #cmakedefine ENABLE_TSAN
@@ -55,7 +53,6 @@
 
 #cmakedefine HAVE_OCL_ICD
 
-/* Defined if posix_memalign is available. */
 #cmakedefine HAVE_POSIX_MEMALIGN
 
 #cmakedefine HAVE_HSA_EXT_AMD_H

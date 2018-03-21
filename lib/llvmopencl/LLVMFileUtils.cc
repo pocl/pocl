@@ -27,6 +27,8 @@
  * @author Michal Babej 2016. 2017
  */
 
+#include "config.h"
+
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
 #include <unistd.h>
 #include <sys/types.h>
