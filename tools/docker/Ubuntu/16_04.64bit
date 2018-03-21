@@ -7,7 +7,7 @@ LABEL git-commit=$GIT_COMMIT vendor=pocl distro=Ubuntu version=1.0
 ENV TERM dumb
 RUN apt update
 RUN apt upgrade -y
-RUN wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add -
+RUN curl -L https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
 RUN apt install -y software-properties-common && add-apt-repository "deb http://apt.llvm.org/xenial/ llvm-toolchain-xenial-${LLVM_VERSION} main" && apt update
 RUN apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-${LLVM_VERSION}-dev clang-${LLVM_VERSION} llvm-${LLVM_VERSION} make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils
 
