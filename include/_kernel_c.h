@@ -60,11 +60,19 @@
 # undef LLVM_6_0
 # define LLVM_6_0
 
+#elif (__clang_major__ == 7)
+
+# undef LLVM_7_0
+# define LLVM_7_0
+
 #else
 
 #error Unsupported Clang/LLVM version.
 
 #endif
+
+#ifndef LLVM_7_0
+#define LLVM_OLDER_THAN_7_0 1
 
 #ifndef LLVM_6_0
 #define LLVM_OLDER_THAN_6_0 1
@@ -87,6 +95,7 @@
 #ifndef LLVM_3_6
 #define LLVM_OLDER_THAN_3_6 1
 
+#endif
 #endif
 #endif
 #endif

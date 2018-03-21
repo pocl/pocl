@@ -36,6 +36,7 @@ else()
   # search for any version
   find_program(LLVM_CONFIG
     NAMES "llvm-config"
+      "llvm-config-mp-7.0" "llvm-config-7.0" "llvm-config70"
       "llvm-config-mp-6.0" "llvm-config-6.0" "llvm-config60"
       "llvm-config-mp-5.0" "llvm-config-5.0" "llvm-config50"
       "llvm-config-mp-4.0" "llvm-config-4.0" "llvm-config40"
@@ -175,18 +176,25 @@ if(LLVM_VERSION MATCHES "3[.]([0-9]+)")
   set(LLVM_OLDER_THAN_4_0 1)
   set(LLVM_OLDER_THAN_5_0 1)
   set(LLVM_OLDER_THAN_6_0 1)
+  set(LLVM_OLDER_THAN_7_0 1)
 elseif(LLVM_VERSION MATCHES "4[.]0")
   set(LLVM_MAJOR 4)
   set(LLVM_4_0 1)
   set(LLVM_OLDER_THAN_5_0 1)
   set(LLVM_OLDER_THAN_6_0 1)
+  set(LLVM_OLDER_THAN_7_0 1)
 elseif(LLVM_VERSION MATCHES "5[.]0")
   set(LLVM_MAJOR 5)
-  set(LLVM_OLDER_THAN_6_0 1)
   set(LLVM_5_0 1)
+  set(LLVM_OLDER_THAN_6_0 1)
+  set(LLVM_OLDER_THAN_7_0 1)
 elseif(LLVM_VERSION MATCHES "6[.]0")
   set(LLVM_MAJOR 6)
   set(LLVM_6_0 1)
+  set(LLVM_OLDER_THAN_7_0 1)
+elseif(LLVM_VERSION MATCHES "7[.]0")
+  set(LLVM_MAJOR 7)
+  set(LLVM_7_0 1)
 else()
   message(FATAL_ERROR "LLVM version between 3.7 and 6.0 required, found: ${LLVM_VERSION}")
 endif()

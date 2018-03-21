@@ -396,7 +396,11 @@ int pocl_write_module(void *module, const char* path, int dont_rewrite) {
     raw_fd_ostream os(fd, 1, sys::fs::F_RW | sys::fs::F_Excl);
     RETURN_IF_EC;
 
+#ifdef LLVM_OLDER_THAN_7_0
     WriteBitcodeToFile((llvm::Module*)module, os);
+#else
+    WriteBitcodeToFile(*(llvm::Module*)module, os);
+#endif
 
     os.flush();
 #ifdef HAVE_FDATASYNC
