@@ -58,7 +58,7 @@ before_install:
 script:
   - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then
       mkdir build && cd build;
-      cmake .. -DCMAKE_INSTALL_PREFIX=/tmp $MY_CMAKE_LIBCXX $MY_CMAKE_ICD_OFF;
+      cmake .. -DCMAKE_INSTALL_PREFIX=/tmp $MY_CMAKE_PREFIX_PATH $MY_CMAKE_LIBCXX $MY_CMAKE_ICD_OFF;
       make -j2 -k;
       make check;
       make install;
