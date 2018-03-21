@@ -36,6 +36,7 @@ else()
   # search for any version
   find_program(LLVM_CONFIG
     NAMES "llvm-config"
+      "llvm-config-mp-7.0" "llvm-config-7.0" "llvm-config70"
       "llvm-config-mp-6.0" "llvm-config-6.0" "llvm-config60"
       "llvm-config-mp-5.0" "llvm-config-5.0" "llvm-config50"
       "llvm-config-mp-4.0" "llvm-config-4.0" "llvm-config40"
@@ -124,7 +125,7 @@ run_llvm_config(LLVM_ASSERTS_BUILD --assertion-mode)
 run_llvm_config(LLVM_SYSLIBS --system-libs)
 string(STRIP "${LLVM_SYSLIBS}" LLVM_SYSLIBS)
 
-if (MSVC)
+if(MSVC)
   string(REPLACE "-L${LLVM_LIBDIR}" "" LLVM_LDFLAGS "${LLVM_LDFLAGS}")
   string(STRIP "${LLVM_LDFLAGS}" LLVM_LDFLAGS)
 endif()
@@ -175,18 +176,25 @@ if(LLVM_VERSION MATCHES "3[.]([0-9]+)")
   set(LLVM_OLDER_THAN_4_0 1)
   set(LLVM_OLDER_THAN_5_0 1)
   set(LLVM_OLDER_THAN_6_0 1)
+  set(LLVM_OLDER_THAN_7_0 1)
 elseif(LLVM_VERSION MATCHES "4[.]0")
   set(LLVM_MAJOR 4)
   set(LLVM_4_0 1)
   set(LLVM_OLDER_THAN_5_0 1)
   set(LLVM_OLDER_THAN_6_0 1)
+  set(LLVM_OLDER_THAN_7_0 1)
 elseif(LLVM_VERSION MATCHES "5[.]0")
   set(LLVM_MAJOR 5)
-  set(LLVM_OLDER_THAN_6_0 1)
   set(LLVM_5_0 1)
+  set(LLVM_OLDER_THAN_6_0 1)
+  set(LLVM_OLDER_THAN_7_0 1)
 elseif(LLVM_VERSION MATCHES "6[.]0")
   set(LLVM_MAJOR 6)
   set(LLVM_6_0 1)
+  set(LLVM_OLDER_THAN_7_0 1)
+elseif(LLVM_VERSION MATCHES "7[.]0")
+  set(LLVM_MAJOR 7)
+  set(LLVM_7_0 1)
 else()
   message(FATAL_ERROR "LLVM version between 3.7 and 6.0 required, found: ${LLVM_VERSION}")
 endif()
@@ -276,11 +284,11 @@ if(CLANGXX_RES OR CLANG_RES)
   message(FATAL_ERROR "Failed running clang/clang++ --version")
 endif()
 
-find_program_or_die(LLVM_OPT "opt" "LLVM optimizer")
-find_program_or_die(LLVM_LLC "llc" "LLVM static compiler")
-find_program_or_die(LLVM_AS "llvm-as" "LLVM assembler")
+find_program_or_die(LLVM_OPT  "opt"       "LLVM optimizer")
+find_program_or_die(LLVM_LLC  "llc"       "LLVM static compiler")
+find_program_or_die(LLVM_AS   "llvm-as"   "LLVM assembler")
 find_program_or_die(LLVM_LINK "llvm-link" "LLVM IR linker")
-find_program_or_die(LLVM_LLI "lli" "LLVM interpreter")
+find_program_or_die(LLVM_LLI  "lli"       "LLVM interpreter")
 
 ####################################################################
 
@@ -401,57 +409,44 @@ macro(custom_try_run_lli SILENT SOURCE1 SOURCE2 OUTPUT_VAR RES_VAR)
 endmacro()
 
 ####################################################################
-
-# helpers for caching variables, with cache dependent on supplied string
-
-macro(setup_cache_var_name VARNAME DEP_STRING)
-  string(MD5 ${VARNAME}_MD5 "${DEP_STRING}")
-  set(CACHE_VAR_NAME "${VARNAME}_CACHE_${${VARNAME}_MD5}")
-endmacro()
-
-macro(set_cache_var VARNAME VAR_DOCS)
-  if(DEFINED ${CACHE_VAR_NAME})
-    set(${VARNAME} "${${CACHE_VAR_NAME}}")
-    message(STATUS "${VAR_DOCS} (cached) : ${${CACHE_VAR_NAME}}")
-  else()
-    set(${CACHE_VAR_NAME} ${${VARNAME}} CACHE INTERNAL "${VAR_DOCS}")
-    message(STATUS "${VAR_DOCS} : ${${CACHE_VAR_NAME}}")
-  endif()
-endmacro()
-
 ####################################################################
 
 # The option for specifying the target changed; try the modern syntax
 # first, and fall back to the old-style syntax if this failed
 
-setup_cache_var_name(CLANG_TARGET_OPTION "${LLVM_HOST_TARGET}-${CLANG}-${LLVM_CLANG_VERSION}")
-
-if(NOT DEFINED ${CACHE_VAR_NAME})
+if(NOT DEFINED CLANG_TARGET_OPTION)
 
   custom_try_compile_clangxx("" "return 0;" RES "--target=${LLVM_HOST_TARGET}")
   if(NOT RES)
-    set(CLANG_TARGET_OPTION "--target=")
+    set(CLANG_TGT "--target=")
   else()
     #EXECUTE_PROCESS(COMMAND "${CLANG}" "-target ${LLVM_HOST_TARGET}" "-x" "c" "/dev/null" "-S" RESULT_VARIABLE RES)
     custom_try_compile_clangxx("" "return 0;" RES "-target ${LLVM_HOST_TARGET}")
     if(NOT RES)
-      set(CLANG_TARGET_OPTION "-target ")
+      set(CLANG_TGT "-target ")
     else()
       message(FATAL_ERROR "Cannot determine Clang option to specify the target")
     endif()
   endif()
 
+  set(CLANG_TARGET_OPTION ${CLANG_TGT} CACHE INTERNAL "Clang option used to specify the target" )
+
 endif()
 
-set_cache_var(CLANG_TARGET_OPTION "Clang option used to specify the target" )
+####################################################################
+#X86 has -march and -mcpu reversed, for clang
 
+if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "(powerpc|armv7|aarch64)")
+  set(CLANG_MARCH_FLAG "-mcpu=")
+else()
+  set(CLANG_MARCH_FLAG "-march=")
+endif()
 
 ####################################################################
 
-macro(CHECK_ALIGNOF TYPE TYPEDEF RES_VAR TRIPLE)
-  setup_cache_var_name(ALIGNOF "${TYPE}-${TYPEDEF}-${TRIPLE}-${CLANG}")
+macro(CHECK_ALIGNOF TYPE TYPEDEF OUT_VAR)
 
-  if(NOT DEFINED ${CACHE_VAR_NAME})
+  if(NOT DEFINED "${OUT_VAR}")
 
     custom_try_run_lli(TRUE "
 #ifndef offsetof
@@ -460,14 +455,16 @@ macro(CHECK_ALIGNOF TYPE TYPEDEF RES_VAR TRIPLE)
 
 ${TYPEDEF}" "typedef struct { char x; ${TYPE} y; } ac__type_alignof_;
     int r = offsetof(ac__type_alignof_, y);
-    return r;" SIZEOF_STDOUT ${RES_VAR} "${CLANG_TARGET_OPTION}${TRIPLE}")
+    return r;" SIZEOF_STDOUT RESULT "${CLANG_TARGET_OPTION}${LLC_TRIPLE}")
 
-    if(NOT ${RES_VAR})
+    #message(FATAL_ERROR "SIZEOF: ${SIZEOF_STDOUT} RES: ${RESULT}")
+    if(NOT ${RESULT})
       message(SEND_ERROR "Could not determine align of(${TYPE})")
     endif()
-  endif()
 
-  set_cache_var(${RES_VAR} "Align of ${TYPE}")
+    set(${OUT_VAR} "${RESULT}" CACHE INTERNAL "Align of ${TYPE}")
+
+  endif()
 
 endmacro()
 
@@ -477,40 +474,37 @@ endmacro()
 #
 
 # TODO clang + vecmathlib doesn't work on Windows yet...
-if(CLANGXX AND (NOT WIN32))
+if(CLANGXX AND ENABLE_VECMATHLIB AND (NOT WIN32))
 
   message(STATUS "Checking if clang++ works (required by vecmathlib)")
 
-  setup_cache_var_name(CLANGXX_WORKS "${LLVM_HOST_TARGET}-${CLANGXX}-${LLVM_CLANGXX_VERSION}")
+  set(CXX_WORKS 0)
+  set(CXX_STDLIB "")
 
-  if(NOT DEFINED ${CACHE_VAR_NAME})
-    set(CLANGXX_WORKS 0)
+  if(NOT DEFINED CLANGXX_WORKS)
 
     custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream> \n  #include <type_traits>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL "-std=c++11")
 
     if(NOT _STATUS_FAIL)
-      set(CLANGXX_STDLIB "")
-      set(CLANGXX_WORKS 1)
+      set(CXX_WORKS 1)
     else()
       custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream> \n  #include <type_traits>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL "-stdlib=libstdc++" "-std=c++11")
       if (NOT _STATUS_FAIL)
-        set(CLANGXX_STDLIB "-stdlib=libstdc++")
-        set(CLANGXX_WORKS 1)
+        set(CXX_STDLIB "-stdlib=libstdc++")
+        set(CXX_WORKS 1)
       else()
         custom_try_compile_clangxx("namespace std { class type_info; } \n  #include <iostream> \n  #include <type_traits>" "std::cout << \"Hello clang++ world!\" << std::endl;" _STATUS_FAIL "-stdlib=libc++" "-std=c++11")
         if(NOT _STATUS_FAIL)
-          set(CLANGXX_STDLIB "-stdlib=libc++")
-          set(CLANGXX_WORKS 1)
+          set(CXX_STDLIB "-stdlib=libc++")
+          set(CXX_WORKS 1)
         endif()
       endif()
     endif()
+
+    set(CLANGXX_WORKS ${CXX_WORKS} CACHE INTERNAL "Clang++ ")
+    set(CLANGXX_STDLIB ${CXX_STDLIB} CACHE INTERNAL "Clang++ stdlib")
   endif()
 
-  set_cache_var(CLANGXX_WORKS "Clang++ works with ${CLANGXX_STDLIB}")
-
-else()
-
-  set(CLANGXX_WORKS 0)
 
 endif()
 
@@ -527,7 +521,7 @@ endif()
 # (see LLVM bug 18253). If LLVM and the pocl passes are built with
 # different NDEBUG settings, problems arise
 
-if(NOT LLVM_CXXFLAGS MATCHES "-DNDEBUG")
+if(NOT DEFINED LLVM_NDEBUG_BUILD)
 
   message(STATUS "Checking if LLVM is a DEBUG build")
   separate_arguments(_FLAGS UNIX_COMMAND "${LLVM_CXXFLAGS}")
@@ -556,12 +550,19 @@ if(NOT LLVM_CXXFLAGS MATCHES "-DNDEBUG")
 
   if(_TRY_SUCCESS)
     message(STATUS "DEBUG build")
+    set(LLVM_NDEBUG_BUILD 0 CACHE INTERNAL "DNDEBUG")
   else()
-    message(STATUS "Not a DEBUG build, adding -DNDEBUG explicitly")
-    set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -DNDEBUG")
+    message(STATUS "Not a DEBUG build")
+    set(LLVM_NDEBUG_BUILD 1 CACHE INTERNAL "DNDEBUG")
   endif()
 
 endif()
+
+if((NOT LLVM_CXXFLAGS MATCHES "-DNDEBUG") AND LLVM_NDEBUG_BUILD)
+  message(STATUS "adding -DNDEBUG explicitly")
+  set(LLVM_CXXFLAGS "${LLVM_CXXFLAGS} -DNDEBUG")
+endif()
+
 
 ####################################################################
 
@@ -579,9 +580,8 @@ endif()
 # depending on whether they are generated via clang or directly
 # via llc.
 
-setup_cache_var_name(LLC_TRIPLE "LLC_TRIPLE-${LLVM_HOST_TARGET}-${CLANG}")
 
-if(NOT DEFINED ${CACHE_VAR_NAME})
+if(NOT DEFINED LLC_TRIPLE)
   message(STATUS "Find out LLC target triple (for host ${LLVM_HOST_TARGET})")
   set(_EMPTY_C_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/tripletfind.c")
   file(WRITE "${_EMPTY_C_FILE}" "")
@@ -599,9 +599,10 @@ if(NOT DEFINED ${CACHE_VAR_NAME})
   # TODO the armv7hl normalize
   string(REPLACE "armv7l-" "armv7-" LLC_TRIPLE "${LLC_TRIPLE}")
 
+  set(LLC_TRIPLE "${LLC_TRIPLE}" CACHE INTERNAL "LLC_TRIPLE")
+
 endif()
 
-set_cache_var(LLC_TRIPLE "LLC_TRIPLE")
 
 # FIXME: The cpu name printed by llc --version is the same cpu that will be
 # targeted if ypu pass -mcpu=native to llc, so we could replace this auto-detection
@@ -650,9 +651,7 @@ endif()
 # This tests that we can actually link to the llvm libraries.
 # Mostly to catch issues like #295 - cannot find -ledit
 
-setup_cache_var_name(LLVM_LINK_TEST "LLVM_LINK_TEST-${LLVM_HOST_TARGET}-${CLANG}")
-
-if(NOT DEFINED ${CACHE_VAR_NAME})
+if(NOT DEFINED LLVM_LINK_TEST)
 
   set(LLVM_LINK_TEST_SOURCE "
     #include <stdio.h>
@@ -691,6 +690,7 @@ if(NOT DEFINED ${CACHE_VAR_NAME})
 
   if (LLVM_LINK_TEST)
     message(STATUS "LLVM link test OK")
+    set(LLVM_LINK_TEST 1 CACHE INTERNAL "LLVM link test result")
   else()
     message(STATUS "LLVM link test output: ${_TRY_COMPILE_OUTPUT}")
     message(FATAL_ERROR "LLVM link test FAILED. This mostly happens when your LLVM installation does not have all dependencies installed.")
@@ -698,16 +698,6 @@ if(NOT DEFINED ${CACHE_VAR_NAME})
 
 endif()
 
-set_cache_var(LLVM_LINK_TEST "LLVM link test result")
-
-####################################################################
-#X86 has -march and -mcpu reversed, for clang
-
-if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "(powerpc|armv7|aarch64)")
-  set(CLANG_MARCH_FLAG "-mcpu=")
-else()
-  set(CLANG_MARCH_FLAG "-march=")
-endif()
 
 ####################################################################
 
@@ -720,8 +710,8 @@ if(NOT DEFINED ${CL_DISABLE_HALF})
   endif()
 endif()
 
-set(CL_DISABLE_HALF "${CL_DISABLE_HALF}" CACHE BOOL "Disable cl_khr_fp16 because fp16 is not supported")
-message(STATUS "fp16 disabled: ${CL_DISABLE_HALF}")
+set(CL_DISABLE_HALF "${CL_DISABLE_HALF}" CACHE INTERNAL "Disable cl_khr_fp16 because fp16 is not supported")
+message(STATUS "FP16 is disabled: ${CL_DISABLE_HALF}")
 
 #####################################################################
 
@@ -735,60 +725,80 @@ message(STATUS "fp16 disabled: ${CL_DISABLE_HALF}")
 # The patch is also available in
 # tools/patches/clang-4.0-kernel_arg_addr_space-always-spir-ids.patch
 
-set(FILENAME "${CMAKE_BINARY_DIR}/compile_test_clang_as_check.cl")
-file(WRITE "${FILENAME}" "kernel void K(global int *G, constant int* C, local int* L) {}")
+if(NOT DEFINED POCL_USE_FAKE_ADDR_SPACE_IDS)
 
-execute_process(COMMAND "${CLANG}" "-target" "x86_64-unknown-unknown" "${FILENAME}" "-emit-llvm" "-c" "-S" "-o" "-"
-  OUTPUT_VARIABLE AS_CHECK_RESULT)
+  set(FILENAME "${CMAKE_BINARY_DIR}/compile_test_clang_as_check.cl")
+  file(WRITE "${FILENAME}" "kernel void K(global int *G, constant int* C, local int* L) {}")
 
-if(LLVM_OLDER_THAN_3_9)
-  if(NOT AS_CHECK_RESULT MATCHES "!1 = !{!\"kernel_arg_addr_space\", i32 1, i32 2, i32 3}")
-    set(POCL_USE_FAKE_ADDR_SPACE_IDS 1)
+  execute_process(COMMAND "${CLANG}" "-target" "x86_64-unknown-unknown" "${FILENAME}" "-emit-llvm" "-c" "-S" "-o" "-"
+    OUTPUT_VARIABLE AS_CHECK_RESULT)
+
+  set(FAKEADDR 0)
+  if(LLVM_OLDER_THAN_3_9)
+    if(NOT AS_CHECK_RESULT MATCHES "!1 = !{!\"kernel_arg_addr_space\", i32 1, i32 2, i32 3}")
+      set(FAKEADDR 1)
+    else()
+      message(FATAL_ERROR "Detected a Clang <3.9 patched with the SPIR address space arg metadata. Unsupported mode. ")
+    endif()
   else()
-    message(FATAL_ERROR "Detected a Clang <3.9 patched with the SPIR address space arg metadata. Unsupported mode. ")
+    if(NOT AS_CHECK_RESULT MATCHES "= !{i32 1, i32 2, i32 3}")
+      set(FAKEADDR 1)
+    else()
+      set(FAKEADDR 0)
+    endif()
   endif()
-else()
-  if(NOT AS_CHECK_RESULT MATCHES "= !{i32 1, i32 2, i32 3}")
-    set(POCL_USE_FAKE_ADDR_SPACE_IDS 1)
-  else()
-    set(POCL_USE_FAKE_ADDR_SPACE_IDS 0)
-  endif()
+
+  set(POCL_USE_FAKE_ADDR_SPACE_IDS ${FAKEADDR} CACHE INTERNAL "use fake address space IDs")
+  message(STATUS "Use fake address space IDs: ${POCL_USE_FAKE_ADDR_SPACE_IDS}")
+#else()
+#  message(STATUS "Use fake address space IDs (cached): ${POCL_USE_FAKE_ADDR_SPACE_IDS}")
 endif()
 
-if(LLVM_OLDER_THAN_5_0)
-  set(CLANG_RESOURCE_DIR "${LLVM_LIBDIR}/clang/${LLVM_VERSION_FULL}")
-else()
-  execute_process(COMMAND "${CLANG}" "--print-resource-dir" OUTPUT_VARIABLE CLANG_RESOURCE_DIR)
-  string(STRIP "${CLANG_RESOURCE_DIR}" CLANG_RESOURCE_DIR)
-endif()
 
-if(LLVM_OLDER_THAN_5_0)
 
-  ######################################################################################
-  # Test for presence of Clang calling convention patch from
-  # https://github.com/pocl/pocl/issues/1
+if(NOT DEFINED CLANG_IS_PATCHED_FOR_SPIR_CC)
 
-  execute_process(
-    COMMAND
-    "${CLANG}" "-S" "-xcl" "-emit-llvm" "${CMAKE_SOURCE_DIR}/cmake/spir-cc-test-kernel.cl" "-o" "-"
-    OUTPUT_VARIABLE SPIR_PATCH_TEST_IR
-    ERROR_VARIABLE _DUMMY
-    RESULT_VARIABLE SPIR_CC_RES)
-
-  if(SPIR_CC_RES)
-    message(FATAL_ERROR "Clang exited with non-zero status when trying to compile calling convention test")
-  endif()
-
-  string(FIND "${SPIR_PATCH_TEST_IR}" "spir_kernel" SPIR_CC_RES)
-  if("${SPIR_CC_RES}" MATCHES "-1")
-    set(CLANG_IS_PATCHED_FOR_SPIR_CC 0)
-    message(STATUS "Clang is NOT patched for SPIR CC")
+  if(LLVM_OLDER_THAN_5_0)
+    set(RESOURCE_DIR "${LLVM_LIBDIR}/clang/${LLVM_VERSION_FULL}")
   else()
-    set(CLANG_IS_PATCHED_FOR_SPIR_CC 1)
-    set(POCL_KCACHE_SALT "${POCL_KCACHE_SALT}-spirccpatch")
-    message(STATUS "Clang IS patched for SPIR CC")
+    execute_process(COMMAND "${CLANG}" "--print-resource-dir" OUTPUT_VARIABLE RESOURCE_DIR)
+    string(STRIP "${RESOURCE_DIR}" RESOURCE_DIR)
   endif()
-else()
-  set(CLANG_IS_PATCHED_FOR_SPIR_CC 1)
-  message(STATUS "Clang 5.0+ uses SPIR CC by default")
+
+  set(CLANG_RESOURCE_DIR "${RESOURCE_DIR}" CACHE INTERNAL "Clang resource dir")
+  if(LLVM_OLDER_THAN_5_0)
+
+    ######################################################################################
+    # Test for presence of Clang calling convention patch from
+    # https://github.com/pocl/pocl/issues/1
+
+    execute_process(
+      COMMAND
+      "${CLANG}" "-S" "-xcl" "-emit-llvm" "${CMAKE_SOURCE_DIR}/cmake/spir-cc-test-kernel.cl" "-o" "-"
+      OUTPUT_VARIABLE SPIR_PATCH_TEST_IR
+      ERROR_VARIABLE _DUMMY
+      RESULT_VARIABLE SPIR_CC_RES)
+
+    if(SPIR_CC_RES)
+      message(FATAL_ERROR "Clang exited with non-zero status when trying to compile calling convention test")
+    endif()
+
+    string(FIND "${SPIR_PATCH_TEST_IR}" "spir_kernel" SPIR_CC_RES)
+    if("${SPIR_CC_RES}" MATCHES "-1")
+      set(SPIRCC 0)
+      message(STATUS "Clang is NOT patched for SPIR CC")
+    else()
+      set(SPIRCC 1)
+      set(POCL_KCACHE_SALT "${POCL_KCACHE_SALT}-spirccpatch")
+      message(STATUS "Clang IS patched for SPIR CC")
+    endif()
+  else()
+    set(SPIRCC 1)
+    message(STATUS "Clang 5.0+ uses SPIR CC by default")
+  endif()
+
+  set(CLANG_IS_PATCHED_FOR_SPIR_CC ${SPIRCC} CACHE INTERNAL "Clang patched for SPIR CC")
+  message(STATUS "Clang patched for SPIR CC: ${CLANG_IS_PATCHED_FOR_SPIR_CC}")
+#else()
+#  message(STATUS "Clang patched for SPIR CC (cached): ${CLANG_IS_PATCHED_FOR_SPIR_CC}")
 endif()

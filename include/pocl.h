@@ -309,6 +309,9 @@ struct _cl_command_node
   volatile cl_int ready;
 };
 
+#ifndef LLVM_7_0
+#define LLVM_OLDER_THAN_7_0 1
+
 #ifndef LLVM_6_0
 #define LLVM_OLDER_THAN_6_0 1
 
@@ -330,6 +333,7 @@ struct _cl_command_node
 #ifndef LLVM_3_6
 #define LLVM_OLDER_THAN_3_6 1
 
+#endif
 #endif
 #endif
 #endif

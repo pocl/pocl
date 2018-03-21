@@ -26,6 +26,27 @@
 cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 
 project(pocl)
+
+# Fix behavior of CMAKE_CXX_STANDARD when targeting macOS.
+if(POLICY CMP0025)
+  cmake_policy(SET CMP0025 NEW)
+endif()
+
+# don't allow implicit function declarations
+if(UNIX)
+  if((CMAKE_C_COMPILER_ID STREQUAL "GNU") OR
+     (CMAKE_C_COMPILER_ID STREQUAL "Clang"))
+
+    set(FORBIT_IMPLICIT_FUNCTIONS "-Werror=implicit-function-declaration")
+    add_compile_options("${FORBIT_IMPLICIT_FUNCTIONS}")
+
+  else()
+    message(WARNING "Don't know how to forbid this compiler from allowing implicit function declarations.")
+  endif()
+
+endif()
+
+
 set(MAJOR_VERSION 1)
 set(MINOR_VERSION 2)
 set(VERSION_SUFFIX "-pre")
@@ -34,6 +55,10 @@ set(POCL_VERSION ${VERSION_STRING})
 
 # required b/c SHARED libs defaults to ON while OBJECT defaults to OFF
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+enable_testing()
+
+#####################################################
 
 if(EXISTS "${CMAKE_SOURCE_DIR}/.git")
   set(DEFAULT_BUILD_TYPE "Debug")
@@ -50,7 +75,50 @@ if(NOT CMAKE_BUILD_TYPE)
     "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
 endif()
 
-enable_testing()
+##################################################################################
+
+macro(set_expr VAR)
+  if(${ARGN})
+    set(${VAR} 1)
+  else()
+    set(${VAR} 0)
+  endif()
+endmacro()
+
+find_program(BASH "bash")
+find_program(MAKE_PROGRAM NAMES "make")
+find_program(GIT_CMD "git")
+set_expr(HAVE_GIT GIT_CMD)
+
+if(HAVE_GIT AND (VERSION_SUFFIX MATCHES "pre"))
+  execute_process(COMMAND "${GIT_CMD}" "rev-parse" "HEAD"
+                  OUTPUT_VARIABLE GIT_COMMIT
+                  RESULT_VARIABLE EXITCODE
+                  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  message(STATUS "Pocl source Git commit: ${GIT_COMMIT}")
+
+  execute_process(COMMAND "${GIT_CMD}" "branch" "--contains" "${GIT_COMMIT}"
+                  OUTPUT_VARIABLE GIT_BRANCH
+                  RESULT_VARIABLE EXITCODE
+                  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+  message(STATUS "Pocl source Git branch: ${GIT_BRANCH}")
+
+  execute_process(COMMAND "${GIT_CMD}" describe "--always" "--long" "--all" "${GIT_COMMIT}"
+                  OUTPUT_VARIABLE GIT_DESCRIBE
+                  RESULT_VARIABLE EXITCODE
+                  WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+                  OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+  string(REPLACE "heads/" "" GIT_DESCRIBE "${GIT_DESCRIBE}")
+  message(STATUS "Pocl source Git describe: ${GIT_DESCRIBE}")
+  set(VERSION_SUFFIX "-pre/${GIT_DESCRIBE}")
+  set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION}${VERSION_SUFFIX})
+  set(POCL_VERSION ${VERSION_STRING})
+else()
+  message(STATUS "No git and/or not a prerelease -> not adding git commit to version.")
+endif()
 
 ##################################################################################
 
@@ -156,14 +224,6 @@ endif()
 message(STATUS "Host CPU cores: ${CORECOUNT}")
 
 ######################################################################################
-
-macro(set_expr VAR)
-  if(${ARGN})
-    set(${VAR} 1)
-  else()
-    set(${VAR} 0)
-  endif()
-endmacro()
 
 function(rename_if_different SRC DST)
   if(EXISTS "${DST}")
@@ -408,10 +468,27 @@ if(UNIX)
   include(CheckSymbolExists)
 
   # don't allow implicit function declarations
-  set(CMAKE_REQUIRED_FLAGS "-std=c99 -Werror=implicit-function-declaration")
+  set(CMAKE_REQUIRED_FLAGS "-std=c99 ${FORBIT_IMPLICIT_FUNCTIONS}")
   if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(CMAKE_REQUIRED_LIBRARIES "rt")
   endif ()
+
+  CHECK_SYMBOL_EXISTS("fork"
+                      "sys/types.h;unistd.h"
+                      HAVE_FORK)
+
+  CHECK_SYMBOL_EXISTS("fsync"
+                      "unistd.h"
+                      HAVE_FSYNC)
+
+  CHECK_SYMBOL_EXISTS("utime"
+                      "sys/types.h;utime.h"
+                      HAVE_UTIME)
+
+  set(CMAKE_REQUIRED_DEFINITIONS "-D_POSIX_C_SOURCE=200809L")
+  CHECK_SYMBOL_EXISTS("futimens"
+                      "fcntl.h;sys/stat.h"
+                      HAVE_FUTIMENS)
 
   set(CMAKE_REQUIRED_DEFINITIONS "-D_POSIX_C_SOURCE=200112L")
   CHECK_SYMBOL_EXISTS("posix_memalign"
@@ -419,67 +496,31 @@ if(UNIX)
                       HAVE_POSIX_MEMALIGN)
 
   set(CMAKE_REQUIRED_DEFINITIONS "-D_POSIX_C_SOURCE=199309L")
+  CHECK_SYMBOL_EXISTS("clock_gettime"
+                      "time.h"
+                      HAVE_CLOCK_GETTIME)
 
-  CHECK_C_SOURCE_COMPILES("
-#include <time.h>
+  CHECK_SYMBOL_EXISTS("fdatasync"
+                      "unistd.h"
+                      HAVE_FDATASYNC)
 
-int main(int argc, char** argv) {
-  struct timespec timeout = {0, 0};
-  clock_gettime(CLOCK_REALTIME, &timeout);
-  return 0;
-}
-  " HAVE_CLOCK_GETTIME)
-
-  set(CMAKE_REQUIRED_DEFINITIONS "-D_BSD_SOURCE")
+  set(CMAKE_REQUIRED_DEFINITIONS "-D_BSD_SOURCE" "-D_DEFAULT_SOURCE")
   CHECK_SYMBOL_EXISTS("mkdtemp"
-                      "stdlib.h"
+                      "stdlib.h;unistd.h"
                       HAVE_MKDTEMP)
 
-  CHECK_C_SOURCE_COMPILES("
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdio.h>
+  CHECK_SYMBOL_EXISTS("mkstemps"
+                      "stdlib.h;unistd.h"
+                      HAVE_MKSTEMPS)
 
-int main(int argc, char** argv) {
-  int fd = open(argv[1], O_RDWR);
-  fdatasync(fd);
-  close(fd);
-  return 0;
-}
-  " HAVE_FDATASYNC)
+  CHECK_SYMBOL_EXISTS("vfork"
+                      "sys/types.h;unistd.h"
+                      HAVE_VFORK)
 
-  CHECK_C_SOURCE_COMPILES("
-#define _GNU_SOURCE
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdio.h>
-int main(int argc, char** argv) {
-  int res = mkostemps(\"/tmp/blabla_XXXXXX.cc\", 3, O_CLOEXEC);
-  return 0;
-}
-  " HAVE_MKOSTEMPS)
-
-  CHECK_C_SOURCE_COMPILES("
-#define _BSD_SOURCE
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <stdio.h>
-int main(int argc, char** argv) {
-  int res = mkstemps(\"/tmp/blabla_XXXXXX.cc\", 3);
-  return 0;
-}
-  " HAVE_MKSTEMPS)
-
-  set(CMAKE_REQUIRED_DEFINITIONS "-D_POSIX_C_SOURCE=200809L")
-  CHECK_SYMBOL_EXISTS("futimens"
-                      "fcntl.h;sys/stat.h"
-                      HAVE_FUTIMENS)
+  set(CMAKE_REQUIRED_DEFINITIONS "-D_GNU_SOURCE")
+  CHECK_SYMBOL_EXISTS("mkostemps"
+                      "stdlib.h"
+                      HAVE_MKOSTEMPS)
 
   unset(CMAKE_REQUIRED_DEFINITIONS)
   unset(CMAKE_REQUIRED_FLAGS)
@@ -487,14 +528,16 @@ int main(int argc, char** argv) {
 else()
   set(HAVE_CLOCK_GETTIME 0)
   set(HAVE_FDATASYNC 0)
+  set(HAVE_FSYNC 0)
   set(HAVE_MKOSTEMPS 0)
+  set(HAVE_MKSTEMPS 0)
   set(HAVE_MKDTEMP 0)
   set(HAVE_FUTIMENS 0)
+  set(HAVE_FORK 0)
+  set(HAVE_VFORK 0)
+  set(HAVE_UTIME 0)
 endif()
 
-include(CheckFunctionExists)
-check_function_exists(fork HAVE_FORK)
-check_function_exists(vfork HAVE_VFORK)
 
 ######################################################################################
 
@@ -599,8 +642,6 @@ endif()
 
 ######################################################################################
 
-option(USE_VECMATHLIB_BUILTINS_ONLY "Use only __builtin_* functions in the kernel library." OFF)
-
 # for kernel code, disable PIC & stack protector
 #
 # it seems PIC and stack-protector defaults somehow depend on
@@ -613,6 +654,7 @@ set(DEFAULT_KERNEL_C_FLAGS "-xc -D__CBUILD__ -fno-stack-protector -fno-PIC")
 set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector -fno-PIC")
 
 if(ENABLE_VECMATHLIB)
+  option(USE_VECMATHLIB_BUILTINS_ONLY "Use only __builtin_* functions in the kernel library." OFF)
   set(DEFAULT_KERNEL_CXX_FLAGS "${DEFAULT_KERNEL_CXX_FLAGS} -DVML_NO_IOSTREAM ${CLANGXX_STDLIB} ")
   if(USE_VECMATHLIB_BUILTINS_ONLY)
     set(DEFAULT_KERNEL_CL_FLAGS "${DEFAULT_KERNEL_CL_FLAGS} -DPOCL_VECMATHLIB_BUILTIN ")
@@ -649,6 +691,17 @@ if(UNIX)
   set(LIBMATH "-lm")
 elseif(WIN32)
   set(LIBMATH)
+endif()
+
+######################################################################################
+
+if(UNIX)
+  if(APPLE)
+    # TODO MACOSX_BUNDLE target prop
+    set(ICD_LD_FLAGS "-single_module")
+  else()
+    set(ICD_LD_FLAGS "-Wl,-Bsymbolic")
+  endif()
 endif()
 
 ######################################################################################
@@ -834,7 +887,6 @@ else() # Undefined = auto -> check
 endif()
 
 ######################################################################################
-# TODO check if this works!
 
 option(PEDANTIC "Compile host library with stricter compiler flags." OFF)
 if(PEDANTIC)
@@ -847,27 +899,6 @@ set_expr(POCL_KERNEL_CACHE_DEFAULT KERNEL_CACHE_DEFAULT)
 
 string(TIMESTAMP POCL_BUILD_TIMESTAMP "%d%m%Y%H%M%S")
 file(WRITE "${CMAKE_BINARY_DIR}/pocl_build_timestamp.h" "#define POCL_BUILD_TIMESTAMP \"${POCL_BUILD_TIMESTAMP}\"")
-
-######################################################################################
-
-# The Clang flags that are used always when compiling OpenCL C code.
-# Note: We use -Wno-format to avoid warnings for printf, where we
-# currently have to use %lld for long arguments (to handle 32-bit
-# architectures).
-set(FORCED_CLFLAGS "-Xclang -ffake-address-space-map -fno-math-errno -fblocks -fno-builtin -fasm -Wno-format")
-
-####################################################################
-
-# line 620
-
-if(UNIX)
-  if(APPLE)
-    # TODO MACOSX_BUNDLE target prop
-    set(ICD_LD_FLAGS "-single_module")
-  else()
-    set(ICD_LD_FLAGS "-Wl,-Bsymbolic")
-  endif()
-endif()
 
 ####################################################################
 
@@ -1161,7 +1192,7 @@ endif()
 ##########################################################
 
 if (OCS_AVAILABLE)
-  CHECK_ALIGNOF("double16" "typedef double double16  __attribute__((__ext_vector_type__(16)));" ALIGNOF_DOUBLE16 ${LLC_TRIPLE})
+  CHECK_ALIGNOF("double16" "typedef double double16  __attribute__((__ext_vector_type__(16)));" ALIGNOF_DOUBLE16)
 else()
   set(ALIGNOF_DOUBLE16 128)
 endif()

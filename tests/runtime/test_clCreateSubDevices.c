@@ -115,14 +115,14 @@ int main(int argc, char **argv)
   cl_context ctx;
   cl_command_queue q;
   // root device, all devices
-#define NUMDEVS 5
+#define NUMDEVS 6
   cl_device_id rootdev, alldevs[NUMDEVS];
   // pointers to the sub devices of the partitions EQUALLY and BY_COUNTS
   // respectively
   cl_device_id
     *eqdev = alldevs + 1,
-    *countdev = alldevs + 3;
-  cl_uint max_cus, max_subs;
+    *countdev = alldevs + 4;
+  cl_uint max_cus, max_subs, split;
   cl_uint i, j;
 
   cl_int err = poclu_get_any_device(&ctx, &rootdev, &q);
@@ -184,18 +184,27 @@ int main(int argc, char **argv)
   cl_device_id parent;
   cl_uint sub_cus;
 
-
   /* CL_DEVICE_PARTITION_EQUALLY */
 
+  printf("Max CUs: %u\n", max_cus);
+
+  /* if the device has 3 CUs, 3 subdevices will be created, otherwise 2. */
+  if (max_cus == 3)
+    split = 3;
+  else
+    split = 2;
+
   const cl_device_partition_property equal_splitter[] = {
-    CL_DEVICE_PARTITION_EQUALLY, max_cus/2, 0 };
+    CL_DEVICE_PARTITION_EQUALLY, max_cus/split, 0 };
 
   err = clCreateSubDevices(rootdev, equal_splitter, 0, NULL, &numdevs);
   CHECK_OPENCL_ERROR_IN("count sub devices");
-  TEST_ASSERT(numdevs == 2);
+  TEST_ASSERT(numdevs == split);
 
-  err = clCreateSubDevices(rootdev, equal_splitter, 2, eqdev, NULL);
+  err = clCreateSubDevices(rootdev, equal_splitter, split, eqdev, NULL);
   CHECK_OPENCL_ERROR_IN("partition equally");
+  if (split == 2)
+     eqdev[2] = NULL;
 
   cl_uint refc;
   err = clGetDeviceInfo (eqdev[0], CL_DEVICE_REFERENCE_COUNT, sizeof (refc),
@@ -231,11 +240,11 @@ int main(int argc, char **argv)
   }
 
   /* now test the subdevices */
-  for (i = 0; i < 2; ++i) {
+  for (i = 0; i < split; ++i) {
     err = clGetDeviceInfo(eqdev[i], CL_DEVICE_MAX_COMPUTE_UNITS,
       sizeof(sub_cus), &sub_cus, NULL);
     CHECK_OPENCL_ERROR_IN("sub CU");
-    TEST_ASSERT(sub_cus == max_cus/2);
+    TEST_ASSERT(sub_cus == max_cus/split);
 
     err = clGetDeviceInfo(eqdev[i], CL_DEVICE_PARENT_DEVICE,
       sizeof(parent), &parent, NULL);
@@ -370,6 +379,11 @@ int main(int argc, char **argv)
   err = clReleaseContext(ctx);
   CHECK_OPENCL_ERROR_IN("clReleaseContext");
 
+  /* if we split into 2 equal parts, third pointer is NULL. Let's copy the
+   * previous device to it */
+  if (split == 2)
+    eqdev[2] = eqdev[1];
+
   ctx = clCreateContext(NULL, NUMDEVS, alldevs, NULL, NULL, &err);
   CHECK_OPENCL_ERROR_IN("clCreateContext");
   TEST_ASSERT( test_context(ctx, prog_src_all, 1, NUMDEVS, alldevs) == CL_SUCCESS );
@@ -378,6 +392,11 @@ int main(int argc, char **argv)
   CHECK_OPENCL_ERROR_IN("clCreateContext");
   TEST_ASSERT( test_context(ctx, prog_src_two, -1, NUMDEVS - 1, alldevs + 1)
     == CL_SUCCESS );
+
+  /* Don't release the same device twice. clReleaseDevice(NULL) should return
+   * an error but not crash. */
+  if (split == 2)
+    eqdev[2] = NULL;
 
   for (i = 0; i < NUMDEVS; i++)
     clReleaseDevice (alldevs[i]);

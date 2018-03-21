@@ -971,6 +971,8 @@ struct _cl_sampler {
 #define min(a,b) (((a) < (b)) ? (a) : (b))
 #define max(a,b) (((a) > (b)) ? (a) : (b))
 
+#endif
+
 #ifndef __APPLE__
   #include <endian.h>
 #else
@@ -981,8 +983,6 @@ struct _cl_sampler {
   #define le32toh(x) OSSwapLittleToHostInt32(x)
   #define htole64(x) OSSwapHostToLittleInt64(x)
   #define le64toh(x) OSSwapLittleToHostInt64(x)
-#endif
-
 #endif
 
 #endif /* POCL_CL_H */

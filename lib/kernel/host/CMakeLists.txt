@@ -248,7 +248,19 @@ if(ENABLE_SLEEF)
   unset(SLEEF_BC)
   compile_sleef("${VARIANT}" "${SLEEF_CONFIG}" "${SLEEF_CONFIG_NEW}" SLEEF_BC)
 
-  rename_if_different("${SLEEF_CONFIG_NEW}" "${SLEEF_CONFIG}")
+  unset(EXTRA_PARAMS)
+  if(CMAKE_VERSION VERSION_GREATER "3.2")
+    set(EXTRA_PARAMS BYPRODUCTS "${SLEEF_CONFIG}")
+  endif()
+
+  add_custom_command(
+    OUTPUT "${SLEEF_CONFIG}.witness"
+    ${EXTRA_PARAMS}
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+          "${SLEEF_CONFIG_NEW}" "${SLEEF_CONFIG}"
+    COMMAND ${CMAKE_COMMAND} -E touch "${SLEEF_CONFIG}.witness"
+  )
+  add_custom_target("sleef_config_${VARIANT}" DEPENDS "${SLEEF_CONFIG}.witness")
 
   # compile kernel
   make_kernel_bc(KERNEL_BC "${OCL_KERNEL_TARGET}-${VARIANT}" "${VARIANT}"

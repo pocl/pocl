@@ -27,11 +27,16 @@
  * @author Michal Babej 2016. 2017
  */
 
+#include "config.h"
+
 #if !defined(_MSC_VER) && !defined(__MINGW32__)
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#ifdef HAVE_UTIME
+#include <utime.h>
+#endif
 #else
 #include <io.h>
 #endif
@@ -159,18 +164,23 @@ pocl_filesize(const char* path, uint64_t* res) {
 }
 
 int pocl_touch_file(const char* path) {
+#ifdef HAVE_UTIME
+    int res = utime(path, NULL);
+    return (res ? errno : 0);
+#elif defined(HAVE_FUTIMENS)
     Twine p(path);
     int fd;
     std::error_code ec;
 
     OPEN_CREATE;
     RETURN_IF_EC;
-
-#ifdef HAVE_FUTIMENS
     futimens(fd, NULL);
-#endif
 
-    return (close(fd) ? (-errno) : 0);
+    return (close(fd) ? errno : 0);
+#else
+#warning No utime or futimens found, pocl will not update cache timestamps
+    return 0;
+#endif
 }
 
 int pocl_rename(const char *oldpath, const char *newpath) {
@@ -302,6 +312,9 @@ int pocl_write_file(const char *path, const char *content, uint64_t count,
 #ifdef HAVE_FDATASYNC
     if (fdatasync(fd))
       return errno ? -errno : -1;
+#elif defined(HAVE_FSYNC)
+    if (fsync(fd))
+      return errno ? -errno : -1;
 #endif
 
     if (close(fd))
@@ -340,6 +353,9 @@ int pocl_write_tempfile(char *output_path, const char *prefix,
 
 #ifdef HAVE_FDATASYNC
   if (fdatasync(fd))
+    return errno ? -errno : -1;
+#elif defined(HAVE_FSYNC)
+  if (fsync(fd))
     return errno ? -errno : -1;
 #endif
 
@@ -380,11 +396,18 @@ int pocl_write_module(void *module, const char* path, int dont_rewrite) {
     raw_fd_ostream os(fd, 1, sys::fs::F_RW | sys::fs::F_Excl);
     RETURN_IF_EC;
 
+#ifdef LLVM_OLDER_THAN_7_0
     WriteBitcodeToFile((llvm::Module*)module, os);
+#else
+    WriteBitcodeToFile(*(llvm::Module*)module, os);
+#endif
 
     os.flush();
 #ifdef HAVE_FDATASYNC
     if (fdatasync(fd))
+      return errno ? -errno : -1;
+#elif defined(HAVE_FSYNC)
+    if (fsync(fd))
       return errno ? -errno : -1;
 #endif
 

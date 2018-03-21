@@ -71,8 +71,6 @@ void fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg,
 
 void fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg);
 
-void* pocl_memalign_alloc(size_t align_width, size_t size);
-
 void pocl_copy_mem_object (cl_device_id dest_dev, cl_mem dest, 
                            size_t dest_offset,
                            cl_device_id source_dev, cl_mem source,
@@ -102,7 +100,7 @@ void pocl_setup_device_for_system_memory(cl_device_id device);
 
 void pocl_set_buffer_image_limits(cl_device_id device);
 
-void* pocl_memalign_alloc_global_mem(cl_device_id device, size_t align, size_t size);
+void* pocl_aligned_malloc_global_mem(cl_device_id device, size_t align, size_t size);
 
 void pocl_free_global_mem(cl_device_id device, void *ptr, size_t size);
 

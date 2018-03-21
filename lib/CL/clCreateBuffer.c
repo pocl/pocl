@@ -25,6 +25,7 @@
 #include "pocl_cl.h"
 #include "devices.h"
 #include "common.h"
+#include "pocl_util.h"
 
 CL_API_ENTRY cl_mem CL_API_CALL
 POname(clCreateBuffer)(cl_context   context,
@@ -180,7 +181,7 @@ POname(clCreateBuffer)(cl_context   context,
   if ((flags & CL_MEM_ALLOC_HOST_PTR) && (mem->mem_host_ptr == NULL))
     {
       assert(mem->shared_mem_allocation_owner == NULL);
-      mem->mem_host_ptr = pocl_memalign_alloc (MAX_EXTENDED_ALIGNMENT, size);
+      mem->mem_host_ptr = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, size);
       if (mem->mem_host_ptr == NULL)
         {
           errcode = CL_OUT_OF_HOST_MEMORY;

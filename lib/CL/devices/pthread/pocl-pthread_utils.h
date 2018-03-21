@@ -2,6 +2,7 @@
 #define POCL_PTHREAD_UTILS_H
 
 #include "pocl_cl.h"
+#include "pocl_util.h"
 
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)

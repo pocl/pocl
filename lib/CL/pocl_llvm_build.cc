@@ -654,8 +654,10 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
 #ifdef LLVM_OLDER_THAN_3_8
     if (Linker::LinkModules(mod, llvm::CloneModule(p))) {
       delete mod;
-#else
+#elif LLVM_OLDER_THAN_7_0
     if (Linker::linkModules(*mod, llvm::CloneModule(p))) {
+#else
+    if (Linker::linkModules(*mod, llvm::CloneModule(*p))) {
 #endif
       std::string msg = getDiagString();
       appendToProgramBuildLog(program, device_i, msg);

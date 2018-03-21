@@ -16,8 +16,6 @@
 
 #define CMAKE_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
 
-#define FORCED_CLFLAGS  "@FORCED_CLFLAGS@"
-
 #cmakedefine ENABLE_ASAN
 #cmakedefine ENABLE_LSAN
 #cmakedefine ENABLE_TSAN
@@ -43,6 +41,8 @@
 
 #cmakedefine HAVE_FDATASYNC
 
+#cmakedefine HAVE_FSYNC
+
 #cmakedefine HAVE_MKOSTEMPS
 
 #cmakedefine HAVE_MKSTEMPS
@@ -55,8 +55,9 @@
 
 #cmakedefine HAVE_OCL_ICD
 
-/* Defined if posix_memalign is available. */
 #cmakedefine HAVE_POSIX_MEMALIGN
+
+#cmakedefine HAVE_UTIME
 
 #cmakedefine HAVE_HSA_EXT_AMD_H
 
@@ -112,6 +113,9 @@
 
 /* "Using LLVM 6.0" */
 #cmakedefine LLVM_6_0
+
+/* "Using LLVM 7.0" */
+#cmakedefine LLVM_7_0
 
 #cmakedefine LLVM_BUILD_MODE_DEBUG
 

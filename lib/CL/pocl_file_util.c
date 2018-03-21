@@ -204,6 +204,9 @@ pocl_write_file(const char *path, const char* content,
 #ifdef HAVE_FDATASYNC
   if (fdatasync (fileno (f)))
     return errno;
+#elif defined(HAVE_FSYNC)
+  if (fsync (fileno (f)))
+    return errno;
 #endif
 
   return fclose(f);
@@ -302,6 +305,9 @@ pocl_write_tempfile (char *output_path, const char *prefix, const char *suffix,
 
 #ifdef HAVE_FDATASYNC
   if (fdatasync (fd))
+    return errno;
+#elif defined(HAVE_FSYNC)
+  if (fsync (fd))
     return errno;
 #endif
 

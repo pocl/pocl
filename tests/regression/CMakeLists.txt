@@ -220,10 +220,8 @@ set_tests_properties("regression/setting_a_buffer_argument_to_NULL_causes_a_segf
 # Label tests that also work with TCE
 
 # TODO fails with TCE + LLVM 6, issue #609
-if(NOT LLVM_OLDER_THAN_6_0)
 list(REMOVE_ITEM TCE_TESTS
   "regression/barrier_between_two_for_loops_LOOPS" )
-endif()
 
 set_property(TEST ${TCE_TESTS} APPEND PROPERTY LABELS "tce")
 

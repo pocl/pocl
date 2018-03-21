@@ -29,6 +29,14 @@
 #include <string.h>
 #include "pocl_cl.h"
 
+#if defined(HAVE_POSIX_MEMALIGN) || defined(POCL_ANDROID) \
+     || (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L))
+#define HAVE_ALIGNED_ALLOC
+#else
+#error aligned malloc unavailable
+#endif
+
+
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)
 #endif
@@ -71,13 +79,9 @@ size_t pocl_size_ceil2(size_t x);
  * pointer must be freed with a call to pocl_aligned_free. Alignment
  * must be a non-zero power of 2.
  */
-#if defined HAVE_POSIX_MEMALIGN
+
 void *pocl_aligned_malloc(size_t alignment, size_t size);
-# define pocl_aligned_free free
-#else
-void *pocl_aligned_malloc(size_t alignment, size_t size);
-void pocl_aligned_free(void* ptr);
-#endif
+#define pocl_aligned_free(x) POCL_MEM_FREE(x)
 
 /* locks / unlocks two events in order of their event-id.
  * This avoids any potential deadlocks of threads should
