@@ -12,12 +12,12 @@ matrix:
     - os: linux
       docker: true
       compiler: gcc
-      env: LLVM_VERSION=4.0 HWLOC_VERSION=1.11
+      env: LLVM_VERSION=4.0 HWLOC_VERSION=1.11 DOCKERFILE=Ubuntu/16_04.64bit
 
     - os: linux
       docker: true
       compiler: gcc
-      env: LLVM_VERSION=6.0 HWLOC_VERSION=1.11
+      env: LLVM_VERSION=6.0 HWLOC_VERSION=1.11 DOCKERFILE=Ubuntu/16_04.32bit
 
     - os: osx
       compiler: clang
@@ -61,7 +61,7 @@ script:
     fi
 
   - if [ "$TRAVIS_OS_NAME" = "linux" ] ; then
-      docker build -f tools/docker/Ubuntu/16_04.32bit . --build-arg GH_PR=$GH_PR --build-arg GH_SLUG=$TRAVIS_REPO_SLUG --build-arg GH_COMMIT=$GIT_COMMIT;
+      docker build -f tools/docker/$DOCKERFILE . --build-arg GH_PR=$GH_PR --build-arg GH_SLUG=$TRAVIS_REPO_SLUG --build-arg GH_COMMIT=$GIT_COMMIT;
     fi
 
 notifications:
