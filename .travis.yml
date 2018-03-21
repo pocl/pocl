@@ -4,26 +4,29 @@ language: c++
 
 os:
   - linux
-  - osx
-
-compiler:
-  - gcc
-  - clang
 
 matrix:
   exclude:
     - os: linux
-      compiler: clang
+  include:
+    - os: linux
+      docker: true
+      compiler: gcc
+      env: LLVM_VERSION=4.0 HWLOC_VERSION=1.11
 
-addons:
-  apt:
-    sources:
-    - ubuntu-toolchain-r-test
-    packages:
-    - gcc-7
-    - clang
-    - hwloc
-    - libhwloc-dev
+    - os: linux
+      docker: true
+      compiler: gcc
+      env: LLVM_VERSION=6.0 HWLOC_VERSION=1.11
+
+    - os: osx
+      compiler: clang
+      env: LLVM_VERSION=6.0 HWLOC_VERSION=1.11
+
+    - os: osx
+      compiler: gcc
+      env: LLVM_VERSION=4.0 HWLOC_VERSION=1.11
+
 
 before_install:
   - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then
@@ -34,20 +37,33 @@ before_install:
       bash $MINICONDA_FILE -b;
       source $HOME/miniconda3/bin/activate root;
       conda config --add channels conda-forge;
-      conda install --yes --quiet llvmdev=6.0.0 clangdev=6.0.0 libcxx=6.0.0 libhwloc=1.*;
+      conda install --yes --quiet llvmdev=${LLVM_VERSION}.* clangdev=${LLVM_VERSION}.* libcxx=${LLVM_VERSION}.* libhwloc=${HWLOC_VERSION}.*;
     fi
 
   - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then export MY_CMAKE_PREFIX_PATH="-DCMAKE_PREFIX_PATH=$HOME/miniconda3" ; fi
   - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then export MY_CMAKE_ICD_OFF="-DENABLE_ICD=OFF" ; fi
 
-  - if [ "$CXX" = "clang++" ] ; then MY_CMAKE_LIBCXX="-DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++" ; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ] && [ "$CXX" = "clang++" ] ; then MY_CMAKE_LIBCXX="-DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++" ; fi
 
 script:
-  - mkdir build && cd build
-  - cmake .. -DCMAKE_INSTALL_PREFIX=/tmp $MY_CMAKE_LLVM_CONFIG $MY_CMAKE_LIBCXX $MY_CMAKE_ICD_OFF
-  - make -j2 -k
-  - make check
-  - make install
+  - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then
+      mkdir build && cd build;
+      cmake .. -DCMAKE_INSTALL_PREFIX=/tmp $MY_CMAKE_LIBCXX $MY_CMAKE_ICD_OFF;
+      make -j2 -k;
+      make check;
+      make install;
+    fi
+
+  - if [ "$TRAVIS_PULL_REQUEST" = "false"]; then
+      export GH_PR=$TRAVIS_PULL_REQUEST;
+    else
+      export GIT_COMMIT="$TRAVIS_COMMIT";
+    fi
+
+  - if [ "$TRAVIS_OS_NAME" = "linux" ] ; then
+      docker build -f tools/docker/Ubuntu/16_04.32bit . --build-arg GH_PR=$GH_PR --build-arg GH_SLUG=$TRAVIS_REPO_SLUG --build-arg GH_COMMIT=$GIT_COMMIT;
+    fi
 
 notifications:
-      email: false
+  email: false
+
