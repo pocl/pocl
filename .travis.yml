@@ -61,6 +61,7 @@ before_install:
       source $HOME/miniconda3/bin/activate root;
       conda config --add channels conda-forge;
       conda install --yes --quiet llvmdev=${LLVM_VERSION}.* clangdev=${LLVM_VERSION}.* libcxx=${LLVM_VERSION}.* libhwloc=${HWLOC_VERSION}.*;
+      export LD_LIBRARY_PATH=$HOME/miniconda3/lib:$LD_LIBRARY_PATH;
     fi
 
   - if [ "$CONDA" = "True" ] ; then export MY_CMAKE_PREFIX_PATH="-DCMAKE_PREFIX_PATH=$HOME/miniconda3" ; fi
@@ -76,6 +77,7 @@ before_install:
 
 script:
   - if [ "$CONDA" = "True" ] ; then
+      set -e;
       mkdir build && cd build;
       cmake .. -DCMAKE_INSTALL_PREFIX=/tmp $MY_CMAKE_PREFIX_PATH $MY_CMAKE_LIBCXX $MY_CMAKE_ICD_OFF;
       make -j2 -k;
