@@ -69,20 +69,17 @@ before_install:
 
   - if [ "$TRAVIS_OS_NAME" = "osx" ] && [ "$CXX" = "clang++" ] ; then MY_CMAKE_LIBCXX="-DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++" ; fi
 
-  - if [ "$TRAVIS_PULL_REQUEST" = "false"]; then
-      export GH_PR=$TRAVIS_PULL_REQUEST;
-    else
+  - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
       export GIT_COMMIT="$TRAVIS_COMMIT";
+    else
+      export GH_PR=$TRAVIS_PULL_REQUEST;
     fi
 
 script:
   - if [ "$CONDA" = "True" ] ; then
-      set -e;
       mkdir build && cd build;
       cmake .. -DCMAKE_INSTALL_PREFIX=/tmp $MY_CMAKE_PREFIX_PATH $MY_CMAKE_LIBCXX $MY_CMAKE_ICD_OFF;
-      make -j2 -k;
-      make check;
-      make install;
+      make -j2 && make check && make install;
     fi
 
   - if [ ! "$DOCKERFILE" = "" ] ; then
