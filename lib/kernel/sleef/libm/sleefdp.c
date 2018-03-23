@@ -9,6 +9,8 @@
 #include <limits.h>
 #include <float.h>
 
+#define ENABLE_BUILTIN_MATH
+
 #ifndef ENABLE_BUILTIN_MATH
 #include <math.h>
 #define SQRT sqrt
