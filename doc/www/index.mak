@@ -119,6 +119,7 @@ unimplemented OpenCL APIs. These will be added gradually as needed by new tested
   OpenCL samples (most of them)</a>
   <li><a href="http://www.luxrender.net/wiki/LuxMark">Luxmark v2.0</a>
   <li><a href="http://piglit.freedesktop.org/">piglit (97%+ of the tests pass)</a>
+  <li><a href="https://github.com/ThoughtWorksInc/Compute.scala/">Compute.scala</a> v0.3.2
 </ul>
  
 <h1>Feature highlights</h1>
