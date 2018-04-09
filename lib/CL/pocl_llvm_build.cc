@@ -623,6 +623,8 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
         POCL_MSG_ERR("Invalid SPIR binary triple\n");
         return CL_LINK_PROGRAM_FAILURE;
       }
+    } else if(triple.getArch() == Triple::nvptx || triple.getArch() == Triple::nvptx64) {
+      POCL_MSG_WARN("Experimental SPIR -> PTX conversion\n");
     } else {
       POCL_MSG_ERR("SPIR is currently only supported on x86(-64)\n");
       return CL_LINK_PROGRAM_FAILURE;
