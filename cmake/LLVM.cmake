@@ -345,9 +345,19 @@ endmacro()
 
 # clang++ try-compile macro
 macro(custom_try_compile_clangxx SOURCE1 SOURCE2 RES_VAR)
-  # this is wrong
-  #separate_arguments(FLAGS UNIX_COMMAND "${LLVM_CXXFLAGS}")
   custom_try_compile_c_cxx("${CLANGXX}" "cc" "${SOURCE1}" "${SOURCE2}" ${RES_VAR}  "-c" ${ARGN})
+endmacro()
+
+# clang++ try-compile macro
+macro(custom_try_compile_clang SOURCE1 SOURCE2 RES_VAR)
+  custom_try_compile_c_cxx("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" ${RES_VAR}  "-c" ${ARGN})
+endmacro()
+
+# clang++ try-link macro
+macro(custom_try_link_clang SOURCE1 SOURCE2 RES_VAR)
+  set(RANDOM_FILENAME "${CMAKE_BINARY_DIR}/compile_test_${RNDNAME}.${SUFFIX}")
+  custom_try_compile_c_cxx_silent("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" ${RES_VAR}  "-o" "${RANDOM_FILENAME}" ${ARGN})
+  file(REMOVE "${RANDOM_FILENAME}")
 endmacro()
 
 # clang try-compile-run macro, running via native executable
@@ -430,6 +440,42 @@ if(NOT DEFINED CLANG_TARGET_OPTION)
   endif()
 
   set(CLANG_TARGET_OPTION ${CLANG_TGT} CACHE INTERNAL "Clang option used to specify the target" )
+
+endif()
+
+####################################################################
+####################################################################
+
+if(NOT DEFINED CLANG_HAS_RTLIB)
+
+  set(RT128 OFF)
+  set(RT64 OFF)
+
+  # on 32bit systems, we need 64bit emulation
+  if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    set(INC "#include <stdint.h>\n#include <stddef.h>")
+    set(SRC "int64_t a = argc; int64_t b = argc-1; int64_t c = a / b; return (int)c; ")
+    custom_try_link_clang("${INC}" "${SRC}" RES "--rtlib=compiler-rt")
+    if(NOT RES)
+      message(STATUS "compiler-rt available")
+      set(RT64 ON)
+    endif()
+
+  else()
+    # on 64bit systems, we need 128bit integers for Errol
+    set(INC "extern __uint128_t __udivmodti4(__uint128_t a, __uint128_t b, __uint128_t* rem);")
+    set(SRC "__uint128_t low, mid, tmp1, pow19 = (__uint128_t)1000000000; mid = __udivmodti4(low, pow19, &tmp1); return 0;")
+    custom_try_link_clang("${INC}" "${SRC}" RES "--rtlib=compiler-rt")
+
+    if(NOT RES)
+      message(STATUS "compiler-rt available with 128bit types")
+      set(RT128 ON)
+    endif()
+
+  endif()
+
+  set(CLANG_HAS_RTLIB ${RT64} CACHE INTERNAL "Clang's compiler-rt available with 64bit types")
+  set(CLANG_HAS_RTLIB_128 ${RT128} CACHE INTERNAL "Clang's compiler-rt available with 128bit types")
 
 endif()
 

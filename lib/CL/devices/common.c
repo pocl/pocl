@@ -61,6 +61,9 @@
 
 #include "_kernel_constants.h"
 
+#if defined(__x86_64__) || defined(__i386__)
+#define CPU_IS_X86 1
+#endif
 
 #define WORKGROUP_STRING_LENGTH 1024
 
@@ -194,11 +197,11 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
   POCL_MSG_PRINT_INFO ("Linking final module\n");
   char *const args1[]
 #ifndef POCL_ANDROID
-/* on non-X86, use Clang because we need it for compiler-rt builtins library*/
-#if defined(__x86_64__) || defined(__i386__)
-      = { LINK_COMMAND,
-#else
+/* use Clang as linker, when compiler-rt is available and needed */
+#if defined(ENABLE_POCL_FLOAT_CONVERSION) || defined(CLANG_HAS_RTLIB)
       = { CLANG,
+#else
+      = { LINK_COMMAND,
 #endif
           "-o",
           tmp_module,
