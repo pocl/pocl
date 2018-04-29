@@ -193,6 +193,16 @@ add_test_pocl(NAME "kernel/test_shuffle_long"
 add_test_pocl(NAME "kernel/test_shuffle_ulong"
               COMMAND "test_shuffle" "ulong")
 
+######################################################################
+
+add_test_pocl(NAME "kernel/test_printf"
+              EXPECTED_OUTPUT "test_printf_expout.txt"
+              COMMAND "kernel" "test_printf")
+
+add_test_pocl(NAME "kernel/test_sizeof_uint"
+              EXPECTED_OUTPUT "test_sizeof_expout.txt"
+              COMMAND "kernel" "test_sizeof")
+
 if(ENABLE_FP64)
   add_test_pocl(NAME "kernel/test_shuffle_double"
                 COMMAND "test_shuffle" "double")
@@ -203,7 +213,9 @@ set_tests_properties("kernel/test_shuffle_char"
   "kernel/test_shuffle_short" "kernel/test_shuffle_ushort"
   "kernel/test_shuffle_int" "kernel/test_shuffle_uint"
   "kernel/test_shuffle_long" "kernel/test_shuffle_ulong"
-  "kernel/test_shuffle_float"  ${EXTRA_TESTS}
+  "kernel/test_shuffle_float" ${EXTRA_TESTS}
+  "kernel/test_printf" "kernel/test_sizeof_uint"
+
   PROPERTIES
     COST 77
     PASS_REGULAR_EXPRESSION "OK\n"
@@ -212,45 +224,6 @@ set_tests_properties("kernel/test_shuffle_char"
     LABELS "internal;kernel")
 
 ######################################################################
-
-
-add_test_pocl(NAME "kernel/test_printf"
-              COMMAND "kernel" "test_printf")
-
-set_tests_properties("kernel/test_printf"
-  PROPERTIES
-    COST 2.0
-    PASS_REGULAR_EXPRESSION "Running test test_printf...
-1
-2
-3
-4
-5
-         6
-0000000007
-0000000008
-9,9,9,9
-1[.]0
-2[.]000000
-3[.]000000
-4
-5
-  6[.]000000
-7[.]0000000000
-8[.]0000000000
-9[.]000000,9[.]000000,9[.]000000,9[.]000000
-[|]a[|]   b[|]c   [|]
-[|]aa[|]  bb[|]cc  [|]dddddddddd[|]
-[|]0x1[|] 0x2[|]0x3 [|]
-OK"
-    PROCESSORS 1
-    DEPENDS "pocl_version_check")
-
-######################################################################
-
-add_test_pocl(NAME "kernel/test_sizeof_uint"
-              EXPECTED_OUTPUT "test_sizeof_expout.txt"
-              COMMAND "kernel" "test_sizeof")
 
 
 ######################################################################
