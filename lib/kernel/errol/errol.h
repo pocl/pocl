@@ -30,18 +30,18 @@ int errol_fixed(double val, char *buf);
 
 struct errol_err_t {
         double val;
-        cl_char str[18];
-        cl_int exp;
+        char str[18];
+        int32_t exp;
 };
 
 struct errol_slab_t {
         char str[18];
-        cl_int exp;
+        int32_t exp;
 };
 
 typedef union {
         double d;
-        cl_long i;
+        int64_t i;
 } errol_bits_t;
 
 #ifdef __cplusplus

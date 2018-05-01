@@ -111,7 +111,7 @@ pocl_ttasim_init_device_infos(unsigned j, struct _cl_device_id* dev)
   dev->type = CL_DEVICE_TYPE_GPU;
   dev->max_compute_units = 1;
   dev->max_work_item_dimensions = 3;
-  dev->deviceSidePrintf = 0;
+  dev->device_side_printf = 0;
 
   int max_wg
       = pocl_get_int_option("POCL_MAX_WORK_GROUP_SIZE", DEFAULT_WG_SIZE);

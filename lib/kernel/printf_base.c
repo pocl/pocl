@@ -59,12 +59,6 @@ __pocl_generate_float_digits (FLOAT_T f, char *buffer)
 
 #endif
 
-/* printing largest double with %f formatter requires about ~1024 digits for
- * integral part, plus precision digits for decimal part, plus some space for
- * modifiers. */
-#define BUFSIZE 1200
-#define SMALL_BUF_SIZE 64
-
 void
 __pocl_printf_putcf (param_t *p, char c)
 {
@@ -811,9 +805,6 @@ __pocl_printf_float (param_t *p, FLOAT_T f)
 #ifdef BUILD_WITH_LIBC
   __pocl_printf_float_libc (p, f);
 #else
-
-  char buf[BUFSIZE];
-  p->bf = buf;
 
   int print_dec = 0;
   if (p->precision == 0)

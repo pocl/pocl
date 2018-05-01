@@ -1,4 +1,4 @@
-/* OpenCL built-in library: prinf_base.h
+/* OpenCL built-in library: printf_base.h
 
    Copyright (c) 2018 Michal Babej / Tampere University of Technology
 
@@ -22,6 +22,12 @@
 */
 
 #include <stdint.h>
+
+/* printing largest double with %f formatter requires about ~1024 digits for
+ * integral part, plus precision digits for decimal part, plus some space for
+ * modifiers. */
+#define BUFSIZE 1200
+#define SMALL_BUF_SIZE 64
 
 #define NULL ((void*)0)
 

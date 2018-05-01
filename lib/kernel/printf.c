@@ -65,11 +65,11 @@ int printf(const char *format, ...);
     DEBUG_PRINTF (("[printf:ints:done]\n"));                                  \
   }
 
-DEFINE_PRINT_INTS (char, int8_t, uint8_t)
-DEFINE_PRINT_INTS (short, int16_t, uint16_t)
-DEFINE_PRINT_INTS (int, int32_t, uint32_t)
+DEFINE_PRINT_INTS (uchar, int8_t, uint8_t)
+DEFINE_PRINT_INTS (ushort, int16_t, uint16_t)
+DEFINE_PRINT_INTS (uint, int32_t, uint32_t)
 #ifdef cl_khr_int64
-DEFINE_PRINT_INTS (long, int64_t, uint64_t)
+DEFINE_PRINT_INTS (ulong, int64_t, uint64_t)
 #endif
 
 #undef DEFINE_PRINT_INTS
@@ -167,7 +167,7 @@ __pocl_printf_format_full (const OCL_CONSTANT_AS char *restrict format,
                            param_t *p, va_list ap)
 {
   DEBUG_PRINTF (("[printf:format=%s]\n", format));
-  char bf[1024];
+  char bf[BUFSIZE];
   p->bf = bf;
   char ch;
   unsigned errcode;
@@ -430,18 +430,18 @@ __pocl_printf_format_full (const OCL_CONSTANT_AS char *restrict format,
                     switch (length)
                       {
                       case 1:
-                        CALL_PRINT_INTS (char, int);
+                        CALL_PRINT_INTS (uchar, uint);
                         break;
                       case 2:
-                        CALL_PRINT_INTS (short, int);
+                        CALL_PRINT_INTS (ushort, uint);
                         break;
                       case 0:
                       case 4:
-                        CALL_PRINT_INTS (int, int);
+                        CALL_PRINT_INTS (uint, uint);
                         break;
 #ifdef cl_khr_int64
                       case 8:
-                        CALL_PRINT_INTS (long, long);
+                        CALL_PRINT_INTS (ulong, uint64_t);
                         break;
 #endif
                       default:

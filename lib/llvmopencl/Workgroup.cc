@@ -258,12 +258,6 @@ Workgroup::runOnModule(Module &M)
       }
   }
 
-    // remove functions which were replaced by their printf-augmented variants
-    //  for (auto it : printfCache) {
-    //    Function *oldF = it.first;
-    //    oldF->eraseFromParent();
-    //  }
-
 #if LLVM_OLDER_THAN_5_0
   Function *barrier = cast<Function>
     (M.getOrInsertFunction(BARRIER_FUNCTION_NAME,
@@ -421,6 +415,10 @@ static Function *cloneFunctionWithPrintfArgs(Value *pb, Value *pbp, Value *pbc,
 static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
                                Function *poclPrintf, Module &M, Function *L,
                                FunctionMapping &printfCache) {
+
+  // if none of the kernels use printf(), it will not be linked into the module
+  if (poclPrintf == nullptr)
+    return;
 
   /* for kernel function, we are provided with proper printf arguments;
    * for non-kernel functions, we assume the function was replaced with
@@ -620,7 +618,7 @@ static Function *createLauncher(Module &M, Function *F,
           "_global_offset_%c");
 
   Value *pb, *pbp, *pbc;
-  if (currentPoclDevice->deviceSidePrintf) {
+  if (currentPoclDevice->device_side_printf) {
     pb = addGEP1(M, builder, a, size_t_width,
                  TypeBuilder<PoclContext, true>::PRINTF_BUFFER,
                  "_printf_buffer");
@@ -674,7 +672,7 @@ static Function *createLauncher(Module &M, Function *F,
   InlineFunctionInfo IFI;
   InlineFunction(c, IFI);
 
-  if (currentPoclDevice->deviceSidePrintf) {
+  if (currentPoclDevice->device_side_printf) {
     Function *poclPrintf = M.getFunction("__pocl_printf");
     replacePrintfCalls(pb, pbp, pbc, true, poclPrintf, M, L, printfCache);
   }
@@ -813,7 +811,7 @@ privatizeContext(Module &M, Function *F)
     }
   }
 
-  if (currentPoclDevice->deviceSidePrintf) {
+  if (currentPoclDevice->device_side_printf) {
     // Privatize _printf_buffer
     gv[0] = M.getGlobalVariable("_printf_buffer");
     if (gv[0] != NULL) {
