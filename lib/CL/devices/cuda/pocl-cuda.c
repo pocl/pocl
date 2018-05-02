@@ -395,7 +395,9 @@ pocl_cuda_init_device_infos (unsigned j, struct _cl_device_id *dev)
 
   dev->type = CL_DEVICE_TYPE_GPU;
   dev->address_bits = (sizeof (void *) * 8);
+
   dev->llvm_target_triplet = (sizeof (void *) == 8) ? "nvptx64" : "nvptx";
+
   dev->spmd = CL_TRUE;
   dev->workgroup_pass = CL_FALSE;
   dev->execution_capabilities = CL_EXEC_KERNEL;

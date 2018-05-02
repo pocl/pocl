@@ -192,8 +192,8 @@ POname(clCreateBuffer)(cl_context   context,
   POCL_RETAIN_OBJECT(context);
 
   POCL_MSG_PRINT_MEMORY (
-      "Created Buffer %p, HOST_PTR: %p, DEVICE_PTR[0]: %p \n", mem,
-      mem->mem_host_ptr, mem->device_ptrs[0].mem_ptr);
+      "Created Buffer %p, HOST_PTR: %p, DEVICE_PTR[0]: %p SIZE %zu \n", mem,
+      mem->mem_host_ptr, mem->device_ptrs[0].mem_ptr, size);
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;

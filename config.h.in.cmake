@@ -162,9 +162,7 @@
 /* used in tce_common.c & pocl_llvm_api.cc  */
 #define SRCDIR  "@SRCDIR@"
 
-#define SPIR_TARGET_TRIPLE "@SPIR_TARGET_TRIPLE@"
-
-#define SPIR_TARGET_DATALAYOUT "@SPIR_TARGET_DATALAYOUT@"
+#define SPIR_HOST_TARGET_TRIPLE "@SPIR_HOST_TARGET_TRIPLE@"
 
 #cmakedefine TCEMC_AVAILABLE
 

@@ -69,7 +69,6 @@ using namespace llvm;
 
 POP_COMPILER_DIAGS
 
-
 /* Global pocl device to be used by passes if needed */
 cl_device_id currentPoclDevice = NULL;
 
@@ -601,32 +600,40 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
   llvm::Module **modptr = (llvm::Module **)&program->llvm_irs[device_i];
   int error;
 
+  currentPoclDevice = device;
+  llvm::Module *libmodule = kernel_library(device);
+  assert(libmodule != NULL);
+
   PoclCompilerMutexGuard lockHolder(NULL);
   InitializeLLVM();
 
   if (spir) {
 #ifdef ENABLE_SPIR
+
+    POCL_RETURN_ERROR_ON ((device->endian_little == CL_FALSE),
+                         CL_LINK_PROGRAM_FAILURE,
+                         "SPIR is only supported on little-endian devices\n");
+
     linked_module = parseModuleIRMem((char *)program->binaries[device_i],
                                      program->binary_sizes[device_i]);
 
-    Triple triple(device->llvm_target_triplet);
+    const std::string &spir_triple = linked_module->getTargetTriple();
+    size_t spir_addrbits = Triple(spir_triple).isArch64Bit() ? 64 : 32;
+
+    if (device->address_bits != spir_addrbits) {
+        delete linked_module;
+        POCL_RETURN_ERROR_ON (1, CL_LINK_PROGRAM_FAILURE,
+                       "Device address bits != SPIR binary triple address "
+                       "bits, device: %s / module: %s\n",
+                       device->llvm_target_triplet, spir_triple.c_str());
+    }
 
     /* Note this is a hack to get SPIR working. We'll be linking the
      * host kernel library (plain LLVM IR) to the SPIR program.bc,
      * so LLVM complains about incompatible DataLayouts.
      */
-    if (triple.getArch() == Triple::x86 || triple.getArch() == Triple::x86_64) {
-      if (linked_module->getTargetTriple() == std::string(SPIR_TARGET_TRIPLE)) {
-        linked_module->setTargetTriple(triple.getTriple());
-        linked_module->setDataLayout(SPIR_TARGET_DATALAYOUT);
-      } else {
-        POCL_MSG_ERR("Invalid SPIR binary triple\n");
-        return CL_LINK_PROGRAM_FAILURE;
-      }
-    } else {
-      POCL_MSG_ERR("SPIR is currently only supported on x86(-64)\n");
-      return CL_LINK_PROGRAM_FAILURE;
-    }
+    linked_module->setTargetTriple(libmodule->getTargetTriple());
+    linked_module->setDataLayout(libmodule->getDataLayout());
 
 #else
     POCL_MSG_ERR("SPIR not supported\n");
@@ -683,9 +690,6 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
 
   if (!create_library) {
     // linked all the programs together, now link in the kernel library
-    currentPoclDevice = device;
-    llvm::Module *libmodule = kernel_library(device);
-    assert(libmodule != NULL);
     std::string log("Error(s) while linking: \n");
     if (link(linked_module, libmodule, log)) {
       appendToProgramBuildLog(program, device_i, log);
@@ -788,7 +792,7 @@ kernel_library
   const char *subdir = "host";
   bool is_host = true;
 #ifdef TCE_AVAILABLE
-  if (triple.getArch() == Triple::tce) {
+  if (triple.getArch() == Triple::tce || triple.getArch() == Triple::tcele) {
     subdir = "tce";
     is_host = false;
   }

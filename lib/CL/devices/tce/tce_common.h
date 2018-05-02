@@ -131,9 +131,9 @@ class TCEDevice {
 
 /* The address space ids in the ADFs. */
 #define TTA_ASID_PRIVATE  0
-#define TTA_ASID_GLOBAL   3
-#define TTA_ASID_LOCAL    4
-#define TTA_ASID_CONSTANT 5
+#define TTA_ASID_GLOBAL   1
+#define TTA_ASID_LOCAL    3
+#define TTA_ASID_CONSTANT 2
 
 #define TTA_UNALLOCATED_LOCAL_SPACE (1*1024)
 /* The space to preserve for the command queue etc. in the

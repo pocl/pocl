@@ -195,9 +195,9 @@ typedef struct _pocl_image1d_array_t { dev_image_t base; }* image1d_array_t;
 #elif defined(__TCE__)
 
 #define POCL_ADDRESS_SPACE_PRIVATE 0
-#define POCL_ADDRESS_SPACE_GLOBAL 3
-#define POCL_ADDRESS_SPACE_LOCAL 4
-#define POCL_ADDRESS_SPACE_CONSTANT 5
+#define POCL_ADDRESS_SPACE_GLOBAL 1
+#define POCL_ADDRESS_SPACE_LOCAL 3
+#define POCL_ADDRESS_SPACE_CONSTANT 2
 #define POCL_ADDRESS_SPACE_GENERIC 6
 
 #endif

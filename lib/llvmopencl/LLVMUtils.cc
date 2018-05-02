@@ -70,23 +70,28 @@ regenerate_kernel_metadata(llvm::Module &M, FunctionMapping &kernels)
               }
               MDNode *new_wg_md = MDNode::get(M.getContext(), operands);
               wg_sizes->addOperand(new_wg_md);
-            } 
+            }
         }
     }
 
-  // reproduce the opencl.kernels metadata
+  // reproduce the opencl.kernels metadata, if it exists
+  // unconditionally adding opencl.kernels confuses the
+  // metadata parser in pocl_llvm_metadata.cc, which uses
+  // "opencl.kernels" to distinguish old SPIR format from new
   NamedMDNode *nmd = M.getNamedMetadata("opencl.kernels");
-  if (nmd)
+  if (nmd) {
     M.eraseNamedMetadata(nmd);
 
-  nmd = M.getOrInsertNamedMetadata("opencl.kernels");
-  for (FunctionMapping::const_iterator i = kernels.begin(),
+    nmd = M.getOrInsertNamedMetadata("opencl.kernels");
+    for (FunctionMapping::const_iterator i = kernels.begin(),
          e = kernels.end();
        i != e; ++i) {
-    MDNode *md = MDNode::get(M.getContext(), ArrayRef<Metadata *>(
-      llvm::ValueAsMetadata::get((*i).second)));
-    nmd->addOperand(md);
+      MDNode *md = MDNode::get(M.getContext(), ArrayRef<Metadata *>(
+        llvm::ValueAsMetadata::get((*i).second)));
+      nmd->addOperand(md);
+    }
   }
+
 }
 
 void eraseFunctionAndCallers(llvm::Function *Function) {

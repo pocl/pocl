@@ -293,6 +293,7 @@ pocl_basic_init_device_infos(unsigned j, struct _cl_device_id* dev)
 
   dev->device_side_printf = 1;
   dev->printf_buffer_size = 16 * 1024 * 1024;
+
   dev->vendor = "pocl";
   dev->profile = "FULL_PROFILE";
   /* Note: The specification describes identifiers being delimited by

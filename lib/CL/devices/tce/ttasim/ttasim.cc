@@ -147,7 +147,7 @@ pocl_ttasim_init_device_infos(unsigned j, struct _cl_device_id* dev)
   dev->local_mem_type = CL_GLOBAL;
   dev->error_correction_support = CL_FALSE;
   dev->host_unified_memory = CL_FALSE;
-  dev->endian_little = CL_FALSE;
+
   dev->available = CL_TRUE;
   dev->compiler_available = CL_TRUE;
   dev->spmd = CL_FALSE;
@@ -157,13 +157,13 @@ pocl_ttasim_init_device_infos(unsigned j, struct _cl_device_id* dev)
   dev->vendor = "TTA-Based Co-design Environment";
   dev->profile = "EMBEDDED_PROFILE";
   dev->extensions = TCE_DEVICE_EXTENSIONS;
-  dev->llvm_target_triplet = "tce-tut-llvm";
+
   dev->has_64bit_long = 1;
   dev->autolocals_to_args = 1;
 
-  dev->global_as_id = 3;
-  dev->local_as_id = 4;
-  dev->constant_as_id = 5;
+  dev->global_as_id = TTA_ASID_GLOBAL;
+  dev->local_as_id = TTA_ASID_LOCAL;
+  dev->constant_as_id = TTA_ASID_CONSTANT;
 
   SETUP_DEVICE_CL_VERSION(TCE_DEVICE_CL_VERSION_MAJOR, TCE_DEVICE_CL_VERSION_MINOR);
 
@@ -209,6 +209,19 @@ public:
     Application::setSignalHandler(SIGINT, *ctrlcHandler);
 
     setMachine(simulator.machine());
+    if (machine_->isLittleEndian()) {
+      dev->endian_little = CL_TRUE;
+      dev->llvm_target_triplet = "tcele-tut-llvm";
+    } else {
+      dev->endian_little = CL_FALSE;
+      dev->llvm_target_triplet = "tce-tut-llvm";
+    }
+
+#if defined(WORDS_BIGENDIAN) && WORDS_BIGENDIAN == 1
+    needsByteSwap = ((dev->endian_little == CL_TRUE) ? true : false);
+#else
+    needsByteSwap = ((dev->endian_little == CL_TRUE) ? false : true);
+#endif
 
     initMemoryManagement(simulator.machine());
 
@@ -286,12 +299,12 @@ public:
 
     std::ofstream out(fname.c_str());
 
-    out << "#include <lwpr.h>" << std::endl;
+    out << " <lwpr.h>" << std::endl;
     out << "#include <pocl_device.h>" << std::endl << std::endl;
 
-    out << "#define __local__ __attribute__((address_space(0)))" << std::endl;
-    out << "#define __global__ __attribute__((address_space(3)))" << std::endl;
-    out << "#define __constant__ __attribute__((address_space(3)))" << std::endl << std::endl;
+    out << "#define __local__ __attribute__((address_space(" <<  TTA_ASID_LOCAL<< ")))" << std::endl;
+    out << "#define __global__ __attribute__((address_space(" << TTA_ASID_GLOBAL << ")))" << std::endl;
+    out << "#define __constant__ __attribute__((address_space( " << TTA_ASID_CONSTANT << " )))" << std::endl << std::endl;
     out << "typedef volatile __global__ __kernel_exec_cmd kernel_exec_cmd;" << std::endl;
 
     /* Need to byteswap back as we are writing C code. */

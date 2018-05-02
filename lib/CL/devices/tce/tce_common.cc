@@ -71,11 +71,14 @@ TCEDevice::TCEDevice(cl_device_id dev, const char* adfName) :
   POCL_INIT_LOCK(tce_compile_lock);
   dev->address_bits = 32;
   dev->autolocals_to_args = 1;
+  /* This assumes TCE is always Little-endian;
+   * needsByteSwap is set up again in TTASimDevice
+   * after we know whether ADF is big- or little-endian. */
 #if defined(WORDS_BIGENDIAN) && WORDS_BIGENDIAN == 1
-  needsByteSwap = false;
-#else
   needsByteSwap = true;
-#endif  
+#else
+  needsByteSwap = false;
+#endif
 }
 
 TCEDevice::~TCEDevice() {
@@ -241,6 +244,9 @@ TCEDevice::tceccCommandLine
   if (pocl_is_option_set("POCL_TCECC_EXTRA_FLAGS"))
     extraFlags += " " + 
       TCEString(pocl_get_string_option("POCL_TCECC_EXTRA_FLAGS", ""));
+  if (parent->endian_little) {
+    extraFlags += " --little-endian";
+  }
 
   std::string kernelMdSymbolName = "_";
   kernelMdSymbolName += run_cmd->kernel->name;

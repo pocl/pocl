@@ -33,41 +33,36 @@ list(REMOVE_ITEM SOURCES_WITHOUT_VML "printf.c" "atomics.cl")
 list(APPEND SOURCES_WITHOUT_VML "printf_constant.c")
 
 set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=${TCE_DEVICE_CL_VERSION} ${TCE_DEVICE_EXTENSION_DEFINES}")
+
 separate_arguments(DEVICE_CL_FLAGS)
-
-# Use TARGET flags:
-# with some additional CLANG_FLAGS
-#CLANG_FLAGS = @TARGET_CLANG_FLAGS@ -Xclang -ffake-address-space-map -emit-llvm -ffp-contract=off
 separate_arguments(TCE_TARGET_CLANG_FLAGS)
-set(CLANG_FLAGS ${TCE_TARGET_CLANG_FLAGS} "-emit-llvm" "-ffp-contract=off" "-target" "tce-tut-llvm" "-isystem" "${TCE_PREFIX}/tce-llvm/include")
-
-if(POCL_USE_FAKE_ADDR_SPACE_IDS)
-list(APPEND CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-DPOCL_USE_FAKE_ADDR_SPACE_IDS")
-endif()
-
-#LLC_FLAGS   = @TARGET_LLC_FLAGS@
 separate_arguments(TCE_TARGET_LLC_FLAGS)
+
 set(LLC_FLAGS ${TCE_TARGET_LLC_FLAGS})
 
-set(KERNEL_CL_FLAGS "-D__OPENCL_C_VERSION__=${TCE_DEVICE_CL_VERSION}" "-Xclang" "-cl-std=CL${TCE_DEVICE_CL_STD}")
+unset(EXTRA_TCE_CLANG_FLAGS)
+if(POCL_USE_FAKE_ADDR_SPACE_IDS)
+set(EXTRA_TCE_CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-DPOCL_USE_FAKE_ADDR_SPACE_IDS")
+endif()
 
+set(KERNEL_CL_FLAGS "-D__OPENCL_C_VERSION__=${TCE_DEVICE_CL_VERSION}" "-Xclang" "-cl-std=CL${TCE_DEVICE_CL_STD}")
 if(NOT LLVM_OLDER_THAN_4_0)
 list(APPEND KERNEL_CL_FLAGS "-Xclang" "-cl-ext=all,-cl_khr_fp64")
 endif()
 
-# TODO LLC_flags is used by kernel.bc target, but ld is unused
-#LD_FLAGS    = @TARGET_LD_FLAGS@
+########### TCE big endian kernel library
 
-#KERNEL_TARGET = tce (WRONG)
-make_kernel_bc(KERNEL_BC "tce-tut-llvm" "tta" 0 0 0 ${SOURCES_WITHOUT_VML})
+set(TCE_TARGET_TRIPLE "tce-tut-llvm")
 
-# just debug
+set(CLANG_FLAGS ${TCE_TARGET_CLANG_FLAGS} "-emit-llvm" "-ffp-contract=off" "-target" ${TCE_TARGET_TRIPLE} "-isystem" "${TCE_PREFIX}/tce-llvm/include" ${EXTRA_TCE_CLANG_FLAGS})
+
+make_kernel_bc(KERNEL_BC ${TCE_TARGET_TRIPLE} "tta" 0 0 0 ${SOURCES_WITHOUT_VML})
+
 message(STATUS "TCE Kernel BC: ${KERNEL_BC}")
 
 list(APPEND KERNEL_BC_LIST "${KERNEL_BC}")
 set(KERNEL_BC_LIST "${KERNEL_BC_LIST}" PARENT_SCOPE)
 
-# a target is needed...
 add_custom_target("kernel_tce" DEPENDS ${KERNEL_BC})
 
 list(APPEND KERNEL_TARGET_LIST "kernel_tce")
@@ -76,6 +71,23 @@ set(KERNEL_TARGET_LIST "${KERNEL_TARGET_LIST}" PARENT_SCOPE)
 install(FILES "${KERNEL_BC}"
         DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}")
 
+########### TCE little endian kernel library
 
+set(TCE_TARGET_TRIPLE "tcele-tut-llvm")
 
+set(CLANG_FLAGS ${TCE_TARGET_CLANG_FLAGS} "-emit-llvm" "-ffp-contract=off" "-target" ${TCE_TARGET_TRIPLE} "-isystem" "${TCE_PREFIX}/tce-llvm/include" ${EXTRA_TCE_CLANG_FLAGS})
 
+make_kernel_bc(KERNEL_BC_LE ${TCE_TARGET_TRIPLE} "tta-le" 0 0 0 ${SOURCES_WITHOUT_VML})
+
+message(STATUS "TCE-LE Kernel BC: ${KERNEL_BC_LE}")
+
+list(APPEND KERNEL_BC_LIST "${KERNEL_BC_LE}")
+set(KERNEL_BC_LIST "${KERNEL_BC_LIST}" PARENT_SCOPE)
+
+add_custom_target("kernel_tcele" DEPENDS ${KERNEL_BC_LE})
+
+list(APPEND KERNEL_TARGET_LIST "kernel_tcele")
+set(KERNEL_TARGET_LIST "${KERNEL_TARGET_LIST}" PARENT_SCOPE)
+
+install(FILES "${KERNEL_BC_LE}"
+        DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}")
