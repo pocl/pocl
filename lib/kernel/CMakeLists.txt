@@ -151,7 +151,6 @@ pow.cl
 pown.cl
 powr.cl
 prefetch.cl
-printf.c
 radians.cl
 read_image.cl
 recip.cl
@@ -234,6 +233,7 @@ nextafter.cl
 popcount.cl
 prefetch.cl
 printf.c
+printf_base.c
 read_image.cl
 rhadd.cl
 rotate.cl
@@ -461,6 +461,7 @@ native_sqrt.cl
 popcount.cl
 prefetch.cl
 printf.c
+printf_base.c
 read_image.cl
 rhadd.cl
 rotate.cl
@@ -581,6 +582,11 @@ sleef-pocl/sqrt.cl
 sleef-pocl/tgamma.cl
 sleef-pocl/trunc.cl
 )
+
+if(ENABLE_POCL_FLOAT_CONVERSION)
+  list(APPEND SOURCES_WITH_VML "errol/errol.c")
+  list(APPEND SOURCES_WITH_SLEEF "errol/errol.c")
+endif()
 
 set(SLEEF_CL_KERNEL_DEPEND_HEADERS "")
 foreach(HEADER helperadvsimd.h   helperavx2.h     helperavx.h     helperpurec.h  helpersse2.h    misc.h helperavx2_128.h  helperavx512f.h  helperneon32.h  helpers.h      helpervecext.h)

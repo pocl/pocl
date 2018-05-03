@@ -9,6 +9,9 @@
 
 #define CLANG "@CLANG@"
 
+#cmakedefine CLANG_HAS_RTLIB
+#cmakedefine CLANG_HAS_RTLIB_128
+
 #define CLANG_RESOURCE_DIR "@CLANG_RESOURCE_DIR@"
 
 /* clang++ executable */
@@ -24,6 +27,8 @@
 #cmakedefine ENABLE_CONFORMANCE
 
 #cmakedefine ENABLE_POCL_BUILDING
+
+#cmakedefine ENABLE_POCL_FLOAT_CONVERSION
 
 #cmakedefine ENABLE_SLEEF
 

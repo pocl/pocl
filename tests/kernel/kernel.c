@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <CL/opencl.h>
+
 #include "poclu.h"
 
 #ifdef _MSC_VER
@@ -172,23 +173,28 @@ int main(int argc, char **argv)
     /* Run all tests */
     for (i = 0; i < num_all_tests; ++i) {
       printf("Running test #%d %s...\n", i, all_tests[i]);
+      fflush(stdout);
+      fflush(stderr);
       retval = call_test(all_tests[i]);
-      if (retval) {
-        printf("FAIL\n");
-        return 1;
-      }
+      fflush(stdout);
+      fflush(stderr);
     }
   } else {
     /* Run one test */
     printf("Running test %s...\n", argv[1]);
+    fflush(stdout);
+    fflush(stderr);
     retval = call_test(argv[1]);
-    if (retval) {
-      printf("FAIL\n");
-      return 1;
-    }
+    fflush(stdout);
+    fflush(stderr);
   }
   
-  printf("OK\n");
-  return 0;
+  if (retval)
+    printf("FAIL\n");
+  else
+    printf("OK\n");
+  fflush(stdout);
+  fflush(stderr);
+  return (retval ? 1 : 0);
 }
 

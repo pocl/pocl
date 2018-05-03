@@ -13,14 +13,9 @@
 typedef unsigned char uchar;
 typedef unsigned short ushort;
 typedef unsigned int uint;
+typedef unsigned long long ulong;
 
-#ifdef cl_khr_int64
-typedef unsigned long ulong;
-#else
-typedef unsigned int ulong;
-#endif
-
-typedef ulong size_t;
+typedef __SIZE_TYPE__ size_t;
 
 #endif
 

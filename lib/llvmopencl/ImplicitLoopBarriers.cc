@@ -143,8 +143,9 @@ bool ImplicitLoopBarriers::AddInnerLoopBarrier(
   if (!VUA.isUniform(f, loopEntry)) {
 #ifdef DEBUG_ILOOP_BARRIERS
     std::cerr << "### the loop is not uniform because loop entry '"
-              << loopEntry->getName().str() << "' is not uniform" << std::endl;
-    
+              << loopEntry->getName().str() << "' is not uniform; LOOP: \n"
+              << std::endl;
+    L->dump();
 #endif
     return false;
   }

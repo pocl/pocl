@@ -273,6 +273,8 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
         }
     }
 
+  dev->device_side_printf = 0;
+
   /* Create context */
   if (ret != CL_INVALID_DEVICE)
     {

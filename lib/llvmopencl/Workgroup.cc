@@ -29,19 +29,23 @@
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
+#include "config.h"
 #include "pocl.h"
+#include "pocl_cl.h"
 
 #include "llvm/Analysis/ConstantFolding.h"
-#include "llvm/Pass.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/TypeBuilder.h"
 #include "llvm/IR/BasicBlock.h"
+#include "llvm/IR/CallSite.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InstrTypes.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/TypeBuilder.h"
+#include "llvm/Pass.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/Local.h"
 
@@ -55,10 +59,6 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <cstdio>
 #include <map>
 #include <iostream>
-
-#include "pocl.h"
-#include "pocl_cl.h"
-#include "config.h"
 
 #include "TargetAddressSpaces.h"
 
@@ -76,7 +76,8 @@ using namespace std;
 using namespace llvm;
 using namespace pocl;
 
-static Function *createLauncher(Module &M, Function *F);
+static Function *createLauncher(Module &M, Function *F,
+                                FunctionMapping &printfCache);
 static void privatizeContext(Module &M, Function *F);
 static void createWorkgroup(Module &M, Function *F);
 static void createWorkgroupFast(Module &M, Function *F);
@@ -98,40 +99,47 @@ namespace llvm {
       if (size_t_width == 64)
         {
 #ifdef LLVM_OLDER_THAN_5_0
-          return StructType::get
-            (TypeBuilder<types::i<32>, xcompile>::get(Context),
-             TypeBuilder<types::i<64>[3], xcompile>::get(Context),
-             TypeBuilder<types::i<64>[3], xcompile>::get(Context),
-             TypeBuilder<types::i<64>[3], xcompile>::get(Context),
-             TypeBuilder<types::i<64>[3], xcompile>::get(Context),
-             NULL);
+        return StructType::get(
+            TypeBuilder<types::i<32>, xcompile>::get(Context),
+            TypeBuilder<types::i<64>[3], xcompile>::get(Context),
+            TypeBuilder<types::i<64>[3], xcompile>::get(Context),
+            TypeBuilder<types::i<64>[3], xcompile>::get(Context),
+            TypeBuilder<types::i<64>[3], xcompile>::get(Context),
+            TypeBuilder<types::i<8> *, xcompile>::get(Context),
+            TypeBuilder<types::i<64> *, xcompile>::get(Context),
+            TypeBuilder<types::i<64>, xcompile>::get(Context), NULL);
 #else
-          SmallVector<Type*, 8> Elements;
-          Elements.push_back(
-            TypeBuilder<types::i<32>, xcompile>::get(Context));
-          Elements.push_back(
+        SmallVector<Type *, 10> Elements;
+        Elements.push_back(TypeBuilder<types::i<32>, xcompile>::get(Context));
+        Elements.push_back(
             TypeBuilder<types::i<64>[3], xcompile>::get(Context));
-          Elements.push_back(
+        Elements.push_back(
             TypeBuilder<types::i<64>[3], xcompile>::get(Context));
-          Elements.push_back(
+        Elements.push_back(
             TypeBuilder<types::i<64>[3], xcompile>::get(Context));
-          Elements.push_back(
+        Elements.push_back(
             TypeBuilder<types::i<64>[3], xcompile>::get(Context));
-          return StructType::get(Context, Elements);
+        Elements.push_back(TypeBuilder<types::i<8> *, xcompile>::get(Context));
+        Elements.push_back(TypeBuilder<types::i<64> *, xcompile>::get(Context));
+        Elements.push_back(TypeBuilder<types::i<64>, xcompile>::get(Context));
+
+        return StructType::get(Context, Elements);
 #endif
         }
       else if (size_t_width == 32)
         {
 #ifdef LLVM_OLDER_THAN_5_0
-          return StructType::get
-            (TypeBuilder<types::i<32>, xcompile>::get(Context),
-             TypeBuilder<types::i<32>[3], xcompile>::get(Context),
-             TypeBuilder<types::i<32>[3], xcompile>::get(Context),
-             TypeBuilder<types::i<32>[3], xcompile>::get(Context),
-             TypeBuilder<types::i<32>[3], xcompile>::get(Context),
-             NULL);
+          return StructType::get(
+              TypeBuilder<types::i<32>, xcompile>::get(Context),
+              TypeBuilder<types::i<32>[3], xcompile>::get(Context),
+              TypeBuilder<types::i<32>[3], xcompile>::get(Context),
+              TypeBuilder<types::i<32>[3], xcompile>::get(Context),
+              TypeBuilder<types::i<32>[3], xcompile>::get(Context),
+              TypeBuilder<types::i<8> *, xcompile>::get(Context),
+              TypeBuilder<types::i<32> *, xcompile>::get(Context),
+              TypeBuilder<types::i<32>, xcompile>::get(Context), NULL);
 #else
-          SmallVector<Type*, 8> Elements;
+          SmallVector<Type *, 10> Elements;
           Elements.push_back(
             TypeBuilder<types::i<32>, xcompile>::get(Context));
           Elements.push_back(
@@ -142,6 +150,12 @@ namespace llvm {
             TypeBuilder<types::i<32>[3], xcompile>::get(Context));
           Elements.push_back(
             TypeBuilder<types::i<32>[3], xcompile>::get(Context));
+          Elements.push_back(
+              TypeBuilder<types::i<8> *, xcompile>::get(Context));
+          Elements.push_back(
+              TypeBuilder<types::i<32> *, xcompile>::get(Context));
+          Elements.push_back(TypeBuilder<types::i<32>, xcompile>::get(Context));
+
           return StructType::get(Context, Elements);
 #endif
         }
@@ -162,15 +176,19 @@ namespace llvm {
      * a same process with multiple threads. */
     static void setSizeTWidth(int width) {
       size_t_width = width;
-    }    
-  
+    }
+
     enum Fields {
       WORK_DIM,
       NUM_GROUPS,
       GROUP_ID,
       GLOBAL_OFFSET,
-      LOCAL_SIZE
+      LOCAL_SIZE,
+      PRINTF_BUFFER,
+      PRINTF_BUFFER_POSITION,
+      PRINTF_BUFFER_CAPACITY
     };
+
   private:
     static int size_t_width;
   };
@@ -209,9 +227,13 @@ Workgroup::runOnModule(Module &M)
   // kernels
   FunctionMapping kernels;
 
+  // mapping of all functions which have been transformed to take
+  // extra printf arguments.
+  FunctionMapping printfCache;
+
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     if (!isKernelToProcess(*i)) continue;
-    Function *L = createLauncher(M, &*i);
+    Function *L = createLauncher(M, &*i, printfCache);
 
     privatizeContext(M, L);
 
@@ -289,8 +311,228 @@ static void addGEPs(llvm::Module &M,
     }
 }
 
-static Function *
-createLauncher(Module &M, Function *F) {
+static Value *addGEP1(llvm::Module &M, IRBuilder<> &builder, llvm::Argument *a,
+                      int size_t_width, int llvmtype, const char *name) {
+
+  Value *ptr, *v = nullptr;
+  GlobalVariable *gv;
+
+  gv = M.getGlobalVariable(name);
+
+  if (gv != NULL) {
+#ifdef LLVM_OLDER_THAN_3_7
+    ptr = builder.CreateStructGEP(a, llvmtype);
+#else
+    ptr = builder.CreateStructGEP(a->getType()->getPointerElementType(), a,
+                                  llvmtype);
+#endif
+    if (size_t_width == 64) {
+      v = builder.CreateLoad(builder.CreateConstGEP1_64(ptr, 0));
+    } else {
+#ifdef LLVM_OLDER_THAN_3_7
+      v = builder.CreateLoad(builder.CreateConstGEP1_32(ptr, 0));
+#else
+      v = builder.CreateLoad(builder.CreateConstGEP1_32(
+          ptr->getType()->getPointerElementType(), ptr, 0));
+#endif
+    }
+    builder.CreateStore(v, gv);
+  }
+  return v;
+}
+
+/* TODO we should use __cl_printf users instead of searching the call tree */
+static bool callsPrintf(Function *F) {
+  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
+    for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE; ++BI) {
+      Instruction *Instr = dyn_cast<Instruction>(BI);
+      if (!llvm::isa<CallInst>(Instr))
+        continue;
+      CallInst *CallInstr = dyn_cast<CallInst>(Instr);
+      Function *callee = CallInstr->getCalledFunction();
+
+      if (callee->getName().startswith("llvm."))
+        continue;
+      if (callee->getName().equals("__cl_printf"))
+        return true;
+      if (callee->getName().equals("__pocl_printf"))
+        return true;
+      if (callsPrintf(callee))
+        return true;
+    }
+  }
+  return false;
+}
+
+/* clones a function while adding 3 new arguments for printf calls. */
+static Function *cloneFunctionWithPrintfArgs(Value *pb, Value *pbp, Value *pbc,
+                                             Function *F, Module *M) {
+
+  SmallVector<Type *, 8> Parameters;
+
+  Parameters.push_back(pb->getType());
+  Parameters.push_back(pbp->getType());
+  Parameters.push_back(pbc->getType());
+
+  for (Function::const_arg_iterator i = F->arg_begin(), e = F->arg_end();
+       i != e; ++i)
+    Parameters.push_back(i->getType());
+
+  // Create the new function.
+  FunctionType *FT =
+      FunctionType::get(F->getReturnType(), Parameters, F->isVarArg());
+  Function *NewF = Function::Create(FT, F->getLinkage(), "", M);
+  NewF->takeName(F);
+
+  ValueToValueMapTy VV;
+  Function::arg_iterator j = NewF->arg_begin();
+  j->setName("print_buffer");
+  ++j;
+  j->setName("print_buffer_position");
+  ++j;
+  j->setName("print_buffer_capacity");
+  ++j;
+  for (Function::const_arg_iterator i = F->arg_begin(), e = F->arg_end();
+       i != e; ++i) {
+    j->setName(i->getName());
+    VV[&*i] = &*j;
+    ++j;
+  }
+
+  SmallVector<ReturnInst *, 1> RI;
+
+  // As of LLVM 5.0 we need to let CFI to make module level changes,
+  // otherwise there will be an assertion. The changes are likely
+  // additional debug info nodes added when cloning the function into
+  // the other.  For some reason it doesn't want to reuse the old ones.
+  CloneFunctionInto(NewF, F, VV, true, RI);
+
+  return NewF;
+}
+
+/* recursively replace _cl_printf calls with _pocl_printf calls, while
+ * propagating the required pocl_context->printf_buffer arguments. */
+static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
+                               Function *poclPrintf, Module &M, Function *L,
+                               FunctionMapping &printfCache) {
+
+  // if none of the kernels use printf(), it will not be linked into the module
+  if (poclPrintf == nullptr)
+    return;
+
+  /* for kernel function, we are provided with proper printf arguments;
+   * for non-kernel functions, we assume the function was replaced with
+   * cloneFunctionWithPrintfArgs() and use the first three arguments. */
+  if (!isKernel) {
+    auto i = L->arg_begin();
+    pb = &*i;
+    ++i;
+    pbp = &*i;
+    ++i;
+    pbc = &*i;
+  }
+
+  SmallDenseMap<CallInst *, CallInst *> replaceCIMap(16);
+  SmallVector<Value *, 8> ops;
+  SmallVector<CallInst *, 32> callsToCheck;
+
+  // first, replace printf calls in body of L
+  for (Function::iterator I = L->begin(), E = L->end(); I != E; ++I) {
+    for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE; ++BI) {
+      Instruction *Instr = dyn_cast<Instruction>(BI);
+      if (!llvm::isa<CallInst>(Instr))
+        continue;
+      CallInst *CallInstr = dyn_cast<CallInst>(Instr);
+      Function *oldF = CallInstr->getCalledFunction();
+
+      if (oldF->getName().equals("__cl_printf")) {
+        ops.clear();
+        ops.push_back(pb);
+        ops.push_back(pbp);
+        ops.push_back(pbc);
+
+        unsigned j = CallInstr->getNumOperands() - 1;
+        for (unsigned i = 0; i < j; ++i)
+          ops.push_back(CallInstr->getOperand(i));
+
+        CallSite CS(CallInstr);
+        CallInst *NewCI = CallInst::Create(poclPrintf, ops);
+        NewCI->setCallingConv(poclPrintf->getCallingConv());
+        NewCI->setTailCall(CS.isTailCall());
+
+        replaceCIMap.insert(
+            std::pair<CallInst *, CallInst *>(CallInstr, NewCI));
+      } else {
+        if (!oldF->getName().startswith("llvm."))
+          callsToCheck.push_back(CallInstr);
+      }
+    }
+  }
+
+  // replace printf calls
+  for (auto it : replaceCIMap) {
+    CallInst *CI = it.first;
+    CallInst *newCI = it.second;
+
+    CI->replaceAllUsesWith(newCI);
+    ReplaceInstWithInst(CI, newCI);
+  }
+
+  replaceCIMap.clear();
+
+  // check each called function recursively
+  for (auto it : callsToCheck) {
+    CallInst *CI = it;
+    CallInst *NewCI = nullptr;
+    Function *oldF = CI->getCalledFunction();
+    Function *newF = nullptr;
+    bool needsPrintf = false;
+    auto i = printfCache.find(oldF);
+    if (i != printfCache.end()) {
+      // function was already cloned
+      needsPrintf = true;
+      newF = i->second;
+    } else {
+      // create new clone
+      needsPrintf = callsPrintf(oldF);
+      if (needsPrintf) {
+        newF = cloneFunctionWithPrintfArgs(pb, pbp, pbc, oldF, &M);
+        replacePrintfCalls(nullptr, nullptr, nullptr, false, poclPrintf, M,
+                           newF, printfCache);
+
+        printfCache.insert(
+            std::pair<llvm::Function *, llvm::Function *>(oldF, newF));
+      }
+    }
+
+    // if the called function calls Printf, replace with newF and add arguments
+    if (needsPrintf) {
+      ops.clear();
+      ops.push_back(pb);
+      ops.push_back(pbp);
+      ops.push_back(pbc);
+      unsigned j = CI->getNumOperands() - 1;
+      for (unsigned i = 0; i < j; ++i)
+        ops.push_back(CI->getOperand(i));
+
+      NewCI = CallInst::Create(newF, ops);
+      replaceCIMap.insert(std::pair<CallInst *, CallInst *>(CI, NewCI));
+    }
+  }
+
+  for (auto it : replaceCIMap) {
+    CallInst *CI = it.first;
+    CallInst *newCI = it.second;
+
+    CI->replaceAllUsesWith(newCI);
+    ReplaceInstWithInst(CI, newCI);
+  }
+}
+
+//########################################################################
+
+static Function *createLauncher(Module &M, Function *F,
+                                FunctionMapping &printfCache) {
 
   SmallVector<Type *, 8> sv;
 
@@ -375,6 +617,24 @@ createLauncher(Module &M, Function *F) {
   addGEPs(M, builder, a, size_t_width, TypeBuilder<PoclContext, true>::GLOBAL_OFFSET,
           "_global_offset_%c");
 
+  Value *pb, *pbp, *pbc;
+  if (currentPoclDevice->device_side_printf) {
+    pb = addGEP1(M, builder, a, size_t_width,
+                 TypeBuilder<PoclContext, true>::PRINTF_BUFFER,
+                 "_printf_buffer");
+
+    pbp = addGEP1(M, builder, a, size_t_width,
+                  TypeBuilder<PoclContext, true>::PRINTF_BUFFER_POSITION,
+                  "_printf_buffer_position");
+
+    pbc = addGEP1(M, builder, a, size_t_width,
+                  TypeBuilder<PoclContext, true>::PRINTF_BUFFER_CAPACITY,
+                  "_printf_buffer_capacity");
+  } else {
+    pb = pbp = pbc = nullptr;
+  }
+
+
   CallInst *c = builder.CreateCall(F, ArrayRef<Value*>(arguments));
   builder.CreateRetVoid();
 
@@ -393,11 +653,10 @@ createLauncher(Module &M, Function *F) {
       Instruction *Instr = dyn_cast<Instruction>(BI);
       if (!llvm::isa<CallInst>(Instr)) continue;
       CallInst *CallInstr = dyn_cast<CallInst>(Instr);
-      if (CallInstr->getCalledFunction() != nullptr &&
-          (CallInstr->getCalledFunction()->getName().
-	   startswith("llvm.lifetime.end") ||
-           CallInstr->getCalledFunction()->getName().
-	   startswith("llvm.lifetime.start"))) {
+      Function *oldF = CallInstr->getCalledFunction();
+      if (oldF != nullptr &&
+          (oldF->getName().startswith("llvm.lifetime.end") ||
+           oldF->getName().startswith("llvm.lifetime.start"))) {
         Calls.insert(CallInstr);
       }
     }
@@ -406,14 +665,17 @@ createLauncher(Module &M, Function *F) {
   for (auto C : Calls) {
     C->eraseFromParent();
   }
+
 #endif
 
-
-  // TODO: Get rid of this step as inlining takes surprisingly long
-  // with large functions and the effect to total kernel runtime
-  // is meaningless.
+  // needed for printf
   InlineFunctionInfo IFI;
   InlineFunction(c, IFI);
+
+  if (currentPoclDevice->device_side_printf) {
+    Function *poclPrintf = M.getFunction("__pocl_printf");
+    replacePrintfCalls(pb, pbp, pbc, true, poclPrintf, M, L, printfCache);
+  }
 
   return L;
 }
@@ -546,6 +808,48 @@ privatizeContext(Module &M, Function *F)
          ii != ee; ++ii) {
       for (int j = 0; j < 3; ++j)
         ii->replaceUsesOfWith(gv[j], ai[j]);
+    }
+  }
+
+  if (currentPoclDevice->device_side_printf) {
+    // Privatize _printf_buffer
+    gv[0] = M.getGlobalVariable("_printf_buffer");
+    if (gv[0] != NULL) {
+      ai[0] = builder.CreateAlloca(gv[0]->getType()->getElementType(), 0,
+                                   "_printf_buffer");
+      if (gv[0]->hasInitializer()) {
+        Constant *c = gv[0]->getInitializer();
+        builder.CreateStore(c, ai[0]);
+      }
+    }
+
+    // Privatize _printf_buffer_position
+    gv[1] = M.getGlobalVariable("_printf_buffer_position");
+    if (gv[1] != NULL) {
+      ai[1] = builder.CreateAlloca(gv[1]->getType()->getElementType(), 0,
+                                   "_printf_buffer_position");
+      if (gv[1]->hasInitializer()) {
+        Constant *c = gv[1]->getInitializer();
+        builder.CreateStore(c, ai[1]);
+      }
+    }
+
+    // Privatize _printf_buffer_capacity
+    gv[2] = M.getGlobalVariable("_printf_buffer_capacity");
+    if (gv[2] != NULL) {
+      ai[2] = builder.CreateAlloca(gv[2]->getType()->getElementType(), 0,
+                                   "_printf_buffer_capacity");
+      if (gv[2]->hasInitializer()) {
+        Constant *c = gv[2]->getInitializer();
+        builder.CreateStore(c, ai[2]);
+      }
+    }
+
+    for (Function::iterator i = F->begin(), e = F->end(); i != e; ++i) {
+      for (BasicBlock::iterator ii = i->begin(), ee = i->end(); ii != ee; ++ii) {
+        for (int j = 0; j < 3; ++j)
+          ii->replaceUsesOfWith(gv[j], ai[j]);
+      }
     }
   }
 }

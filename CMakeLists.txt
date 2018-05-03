@@ -642,6 +642,19 @@ endif()
 
 ######################################################################################
 
+if(CLANG_HAS_RTLIB_128)
+  option(ENABLE_POCL_FLOAT_CONVERSION "Enable use of pocl's own float-to-decimal conversion code in OpenCL printf(). Defaults to OFF (uses snprintf from C library). Requires compiler-rt." OFF)
+else()
+  set(ENABLE_POCL_FLOAT_CONVERSION OFF CACHE INTERNAL "rtlib")
+endif()
+
+unset(RTLIB_FLAG)
+if(ENABLE_POCL_FLOAT_CONVERSION)
+  set(RTLIB_FLAG "-DENABLE_POCL_FLOAT_CONVERSION")
+endif()
+
+######################################################################################
+
 # for kernel code, disable PIC & stack protector
 #
 # it seems PIC and stack-protector defaults somehow depend on
@@ -649,9 +662,9 @@ endif()
 # constant addrspace variables, and stack protector likely slows
 # down the kernels, so it needs to be determined whether it's worth
 # the trouble.
-set(DEFAULT_KERNEL_CL_FLAGS  "-x cl -fno-stack-protector -fno-PIC")
-set(DEFAULT_KERNEL_C_FLAGS "-xc -std=c11 -D__CBUILD__ -fno-math-errno -fno-stack-protector -fno-PIC")
-set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector -fno-PIC")
+set(DEFAULT_KERNEL_CL_FLAGS  "-x cl -fno-stack-protector -fno-PIC ${RTLIB_FLAG}")
+set(DEFAULT_KERNEL_C_FLAGS "-xc -std=c11 -D__CBUILD__ -fno-math-errno -fno-stack-protector -fno-PIC ${RTLIB_FLAG}")
+set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector -fno-PIC ${RTLIB_FLAG}")
 
 if(ENABLE_VECMATHLIB)
   option(USE_VECMATHLIB_BUILTINS_ONLY "Use only __builtin_* functions in the kernel library." OFF)
@@ -682,10 +695,10 @@ if(UNIX)
   elseif(ANDROID_COMPILER)
     set(DEFAULT_HOST_LD_FLAGS "-L/system/lib/ -shared -ldl -lc -lm /system/lib/crtbegin_so.o /system/lib/crtend_so.o")
   else()
-    if(X86)
-      set(DEFAULT_HOST_LD_FLAGS "-shared -lm")
-    else()
+    if(ENABLE_POCL_FLOAT_CONVERSION)
       set(DEFAULT_HOST_LD_FLAGS "-shared -lm --rtlib=compiler-rt")
+    else()
+      set(DEFAULT_HOST_LD_FLAGS "-shared -lm")
     endif()
   endif()
   set(LIBMATH "-lm")
@@ -1422,8 +1435,6 @@ MESSAGE(STATUS " ")
 MESSAGE(STATUS "******* Various Flags:")
 MESSAGE(STATUS " ")
 
-MESSAGE(STATUS "CLANG_MARCH_FLAG: ${CLANG_MARCH_FLAG}")
-MESSAGE(STATUS "CLANG_TARGET_OPTION: ${CLANG_TARGET_OPTION}")
 MESSAGE(STATUS "CL_DISABLE_HALF: ${CL_DISABLE_HALF}")
 MESSAGE(STATUS "HAVE_CLOCK_GETTIME: ${HAVE_CLOCK_GETTIME}")
 MESSAGE(STATUS "HAVE_GLEW: ${HAVE_GLEW}")
@@ -1454,6 +1465,10 @@ MESSAGE(STATUS "final KERNEL_C_FLAGS: ${KERNEL_C_FLAGS}")
 
 if (OCS_AVAILABLE)
   MESSAGE(STATUS "")
+  MESSAGE(STATUS "CLANG_HAS_RTLIB: ${CLANG_HAS_RTLIB}")
+  MESSAGE(STATUS "CLANG_HAS_RTLIB_128: ${CLANG_HAS_RTLIB_128}")
+  MESSAGE(STATUS "CLANG_MARCH_FLAG: ${CLANG_MARCH_FLAG}")
+  MESSAGE(STATUS "CLANG_TARGET_OPTION: ${CLANG_TARGET_OPTION}")
   MESSAGE(STATUS "LLVM_VERSION: ${LLVM_VERSION}")
   MESSAGE(STATUS "LLVM_LIB_IS_SHARED: ${LLVM_LIB_IS_SHARED}")
   MESSAGE(STATUS "LLVM_HAS_RTTI: ${LLVM_HAS_RTTI}")
@@ -1473,6 +1488,7 @@ if (OCS_AVAILABLE)
   MESSAGE(STATUS "LLVM_HOST_TARGET: ${LLVM_HOST_TARGET}")
   MESSAGE(STATUS "LLC_TRIPLE: ${LLC_TRIPLE}")
   MESSAGE(STATUS "LLC_HOST_CPU: ${LLC_HOST_CPU}")
+  MESSAGE(STATUS "")
 endif()
 MESSAGE(STATUS "MAX_EXTENDED_ALIGNMENT: ${MAX_EXTENDED_ALIGNMENT}")
 MESSAGE(STATUS "OCL_KERNEL_TARGET: ${OCL_KERNEL_TARGET}")
@@ -1520,6 +1536,7 @@ MESSAGE(STATUS "ENABLE_ASAN (address sanitizer): ${ENABLE_ASAN}")
 MESSAGE(STATUS "ENABLE_LSAN (leak sanitizer): ${ENABLE_LSAN}")
 MESSAGE(STATUS "ENABLE_TSAN (thread sanitizer): ${ENABLE_TSAN}")
 MESSAGE(STATUS "ENABLE_UBSAN (UB sanitizer): ${ENABLE_UBSAN}")
+MESSAGE(STATUS "ENABLE_POCL_FLOAT_CONVERSION: ${ENABLE_POCL_FLOAT_CONVERSION}")
 MESSAGE(STATUS "ENABLE_VECMATHLIB: ${ENABLE_VECMATHLIB}")
 MESSAGE(STATUS "ENABLE_SLEEF: ${ENABLE_SLEEF}")
 MESSAGE(STATUS "ENABLE_SPIR: ${ENABLE_SPIR}")
