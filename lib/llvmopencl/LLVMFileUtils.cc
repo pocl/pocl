@@ -215,7 +215,7 @@ int pocl_mk_tempname(char *output, const char *prefix, const char *suffix,
   Twine suf(suffix);
 
   SmallString<512> TmpPath;
-  int fd, err;
+  int fd;
   std::error_code ec;
 
   CREATE_UNIQUE_FILE(random_pattern + suf);

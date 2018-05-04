@@ -70,8 +70,6 @@ main(void)
     cl::Program::Sources sources({kernelSourceCode});
     cl::Program program(context, sources);
 
-    cl_device_id dev_id = devices.at(0)();
-
     for (int i = 0; i < 3; ++i)
       A[i] = 0;
 

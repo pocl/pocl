@@ -47,7 +47,7 @@ MATH_PRIVATE(expep)(v2type x)
                   (vtype)0x1.fffff8p-2f);
 
     v2type r = fadd(t, mul(sqr(t), p));
-    vtype z = (vtype)1.0 + r.hi;
+    vtype z = (vtype)1.0f + r.hi;
 
     z = BUILTIN_FLDEXP_F32(z, convert_inttype(fn));
 
