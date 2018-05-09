@@ -24,8 +24,10 @@
 
 #include "poclu.h"
 #include <CL/opencl.h>
-#include <stdlib.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
 #include "config.h"
 
 cl_context
@@ -55,19 +57,27 @@ cl_int
 poclu_get_any_device (cl_context *context, cl_device_id *device,
                       cl_command_queue *queue)
 {
+  cl_platform_id temp;
+  return poclu_get_any_device2 (context, device, queue, &temp);
+}
+
+cl_int
+poclu_get_any_device2 (cl_context *context, cl_device_id *device,
+                       cl_command_queue *queue, cl_platform_id *platform)
+{
   cl_int err;
-  cl_platform_id platform;
 
   if (context == NULL ||
       device  == NULL ||
-      queue   == NULL)
+      queue   == NULL ||
+      platform == NULL)
     return CL_INVALID_VALUE;
 
-  err = clGetPlatformIDs (1, &platform, NULL);
+  err = clGetPlatformIDs (1, platform, NULL);
   if (err != CL_SUCCESS)
     return err;
 
-  err = clGetDeviceIDs (platform, CL_DEVICE_TYPE_ALL, 1, device, NULL);
+  err = clGetDeviceIDs (*platform, CL_DEVICE_TYPE_ALL, 1, device, NULL);
   if (err != CL_SUCCESS)
     return err;
 
@@ -81,6 +91,7 @@ poclu_get_any_device (cl_context *context, cl_device_id *device,
 
   return CL_SUCCESS;
 }
+
 
 char *
 poclu_read_binfile (char *filename, size_t *len)
@@ -216,4 +227,110 @@ check_cl_error (cl_int cl_err, int line, const char* func_name) {
               line);
       return 1;
     }
+}
+
+int
+poclu_load_program (cl_context context, cl_device_id device,
+                    const char *basename, int spir, cl_program *p)
+{
+  cl_bool little_endian = 0;
+  cl_uint address_bits = 0;
+  char extensions[1024];
+  char path[1024];
+  const char *ext;
+  size_t spir_size = 0;
+  char *spir_bc = NULL;
+  cl_program program;
+  cl_int err = CL_SUCCESS;
+
+  *p = NULL;
+
+  if (spir)
+    {
+      err = clGetDeviceInfo (device, CL_DEVICE_EXTENSIONS, 1024, extensions,
+                             NULL);
+      CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo extensions");
+
+      if (strstr (extensions, "cl_khr_spir") == NULL)
+        {
+          printf ("SPIR not supported, cannot run the test\n");
+          return -1;
+        }
+
+      err = clGetDeviceInfo (device, CL_DEVICE_ENDIAN_LITTLE, sizeof (cl_bool),
+                             &little_endian, NULL);
+      CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo endianness");
+
+      if (little_endian == CL_FALSE)
+        {
+          fprintf (stderr,
+                   "SPIR can only be tested on little-endian devices\n");
+          return 1;
+        }
+
+      err = clGetDeviceInfo (device, CL_DEVICE_ADDRESS_BITS, sizeof (cl_uint),
+                             &address_bits, NULL);
+      CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo addr bits");
+
+      if (address_bits < 64)
+        ext = ".spir32";
+      else
+        ext = ".spir64";
+
+      snprintf (path, 1024, "%s%s", basename, ext);
+
+      if (access (path, F_OK))
+        {
+          snprintf (path, 1024, "%s/examples/%s/%s%s", SRCDIR, basename,
+                    basename, ext);
+          if (access (path, F_OK))
+            {
+              fprintf (stderr, "Can't find %s SPIR bitcode file anywhere\n",
+                       basename);
+              return 1;
+            }
+        }
+
+      spir_bc = poclu_read_binfile (path, &spir_size);
+      TEST_ASSERT (spir_bc != NULL);
+      TEST_ASSERT (spir_size > 16);
+
+      program = clCreateProgramWithBinary (context, 1, &device, &spir_size,
+                                           (const unsigned char **)&spir_bc,
+                                           NULL, &err);
+      CHECK_OPENCL_ERROR_IN ("clCreateProgramWithBinary SPIR");
+
+      err = clBuildProgram (program, 0, NULL, "-x spir -spir-std=1.2", NULL,
+                            NULL);
+      CHECK_OPENCL_ERROR_IN ("clBuildProgram SPIR");
+    }
+  else
+    {
+      snprintf (path, 1024, "%s.cl", basename);
+
+      if (access (path, F_OK))
+        {
+          snprintf (path, 1024, "%s/examples/%s/%s.cl", SRCDIR, basename,
+                    basename);
+          if (access (path, F_OK))
+            {
+              fprintf (stderr, "Can't find %s source file anywhere\n",
+                       basename);
+              return 1;
+            }
+        }
+
+      char *src = poclu_read_file (path);
+      TEST_ASSERT (src != NULL);
+
+      program = clCreateProgramWithSource (context, 1, (const char **)&src,
+                                           NULL, &err);
+      CHECK_OPENCL_ERROR_IN ("clCreateProgramWithSource");
+
+      err = clBuildProgram (program, 0, NULL, NULL, NULL, NULL);
+      CHECK_OPENCL_ERROR_IN ("clBuildProgram");
+    }
+
+  *p = program;
+  return err;
 }
