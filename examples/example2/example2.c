@@ -35,45 +35,31 @@
 #define HEIGHT 4096
 #define PADDING 32
 
-static void delete_memobjs(cl_mem *memobjs, int n) ;
-
 int
-main (void)
+main (int argc, char **argv)
 {
-  FILE *source_file;
-  char *source;
-  int source_size;
-  cl_float *input, *output;
-  int i;
-  int j;
-  cl_context  context; 
-  size_t cb;
-  cl_device_id *devices = NULL;
-  cl_command_queue cmd_queue = NULL;
-  cl_program program = NULL;
-  cl_int err = 0;
-  cl_kernel kernel = NULL;
+  cl_float *input = NULL, *output = NULL;
+  int i, j, err, testing_spir;
   cl_mem memobjs[2] = { 0 };
   size_t global_work_size[2] = { 0 };
   size_t local_work_size[2] = { 0 };
 
-  source_file = fopen("example2.cl", "r");
-  if (source_file == NULL) 
-    source_file = fopen (SRCDIR "/example2.cl", "r");
+  cl_context context = NULL;
+  cl_device_id device = NULL;
+  cl_platform_id platform = NULL;
+  cl_command_queue queue = NULL;
+  cl_program program = NULL;
+  cl_kernel kernel = NULL;
 
-  assert(source_file != NULL && "example2.cl not found!");
+  err = poclu_get_any_device2 (&context, &device, &queue, &platform);
+  CHECK_OPENCL_ERROR_IN ("clCreateContext");
 
-  fseek (source_file, 0, SEEK_END);
-  source_size = ftell (source_file);
-  fseek (source_file, 0, SEEK_SET);
+  testing_spir = (argc > 1 && argv[1][0] == 's');
 
-  source = (char *) malloc (source_size + 1);
-  assert (source != NULL);
-
-  fread (source, source_size, 1, source_file);
-  source[source_size] = '\0';
-
-  fclose (source_file);
+  const char *basename = "example2";
+  err = poclu_load_program (context, device, basename, testing_spir, &program);
+  if (err != CL_SUCCESS)
+    goto ERROR;
 
   input = (cl_float *) malloc (WIDTH * HEIGHT * sizeof (cl_float));
   output = (cl_float *) malloc (WIDTH * (HEIGHT + PADDING) * sizeof (cl_float));
@@ -84,154 +70,73 @@ main (void)
       for (j = 0; j < WIDTH; ++j)
       input[i * WIDTH + j] = (cl_float)drand48();
     }
-  
-  context = poclu_create_any_context();
 
-  if (context == (cl_context)0) 
-    return -1; 
-
-  clGetContextInfo(context, CL_CONTEXT_DEVICES, 0, NULL, &cb); 
-  devices = (cl_device_id *) malloc(cb);
-  clGetContextInfo(context, CL_CONTEXT_DEVICES, cb, devices, NULL); 
- 
-  cmd_queue = clCreateCommandQueue(context, devices[0], 0, NULL); 
-  if (cmd_queue == (cl_command_queue)0) 
-    { 
-      clReleaseContext(context); 
-      free(devices); 
-      return -1; 
-    } 
-  free(devices); 
+  queue = clCreateCommandQueue (context, device, 0, NULL);
+  CHECK_CL_ERROR2 (err);
 
   memobjs[0] = clCreateBuffer(context,
 			      CL_MEM_READ_WRITE,
 			      sizeof(cl_float) * WIDTH * (HEIGHT + PADDING), NULL, NULL);
-  if (memobjs[0] == (cl_mem)0) 
-    { 
-      clReleaseCommandQueue(cmd_queue); 
-      clReleaseContext(context); 
-      return -1; 
-    } 
+  CHECK_CL_ERROR2 (err);
 
   memobjs[1] = clCreateBuffer(context,
 			      CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
 			      sizeof(cl_float) * WIDTH * HEIGHT, input, NULL);
-  if (memobjs[1] == (cl_mem)0) 
-    { 
-      delete_memobjs(memobjs, 1);
-      clReleaseCommandQueue(cmd_queue); 
-      clReleaseContext(context); 
-      return -1; 
-    } 
+  CHECK_CL_ERROR2 (err);
 
-  program = clCreateProgramWithSource(context, 
-				      1, (const char**)&source, NULL, NULL); 
-  if (program == (cl_program)0) 
-    { 
-      clReleaseCommandQueue(cmd_queue); 
-      clReleaseContext(context); 
-      return -1; 
-    }
+  kernel = clCreateKernel(program, "matrix_transpose", NULL);
+  CHECK_CL_ERROR2 (err);
 
-  free (source);
+  err = clSetKernelArg (kernel, 0, sizeof (cl_mem), (void *)&memobjs[0]);
+  CHECK_CL_ERROR2 (err);
 
-  err = clBuildProgram(program, 0, NULL, NULL, NULL, NULL); 
-  if (err != CL_SUCCESS) 
-    { 
-      clReleaseProgram(program); 
-      clReleaseCommandQueue(cmd_queue); 
-      clReleaseContext(context); 
-      return -1; 
-    } 
- 
-  kernel = clCreateKernel(program, "matrix_transpose", NULL); 
-  if (kernel == (cl_kernel)0) 
-    { 
-      clReleaseProgram(program); 
-      clReleaseCommandQueue(cmd_queue); 
-      clReleaseContext(context); 
-      return -1; 
-    } 
+  err = clSetKernelArg (kernel, 1, sizeof (cl_mem), (void *)&memobjs[1]);
+  CHECK_CL_ERROR2 (err);
 
-  err = clSetKernelArg(kernel,  0,  
-		       sizeof(cl_mem), (void *) &memobjs[0]); 
-  err |= clSetKernelArg(kernel, 1,  
-			sizeof(cl_mem), (void *) &memobjs[1]); 
-  err |= clSetKernelArg(kernel, 2,
-			(32 + 1) * 32 * sizeof(float), NULL);
- 
-  if (err != CL_SUCCESS) 
-    { 
-      delete_memobjs(memobjs, 2); 
-      clReleaseKernel(kernel); 
-      clReleaseProgram(program); 
-      clReleaseCommandQueue(cmd_queue); 
-      clReleaseContext(context); 
-      return -1; 
-    } 
+  err = clSetKernelArg (kernel, 2, (32 + 1) * 32 * sizeof (float), NULL);
+  CHECK_CL_ERROR2 (err);
 
   global_work_size[0] = 2 * WIDTH; 
   global_work_size[1] = HEIGHT / 32; 
   local_work_size[0]= 64; 
-  local_work_size[1]= 1; 
+  local_work_size[1]= 1;
 
-  err = clEnqueueNDRangeKernel(cmd_queue, kernel, 2, NULL, 
-			       global_work_size, local_work_size,  
-			       0, NULL, NULL); 
+  err = clEnqueueNDRangeKernel (queue, kernel, 2, NULL, global_work_size,
+                                local_work_size, 0, NULL, NULL);
 
-  if (err != CL_SUCCESS) 
-    { 
-      delete_memobjs(memobjs, 2); 
-      clReleaseKernel(kernel); 
-      clReleaseProgram(program); 
-      clReleaseCommandQueue(cmd_queue); 
-      clReleaseContext(context); 
-      return -1; 
-    } 
- 
-  err = clEnqueueReadBuffer(cmd_queue, memobjs[0], CL_TRUE, 
-			    0, WIDTH * (HEIGHT + PADDING) * sizeof(cl_float), output, 
-			    0, NULL, NULL); 
-  if (err != CL_SUCCESS) 
-    { 
-      delete_memobjs(memobjs, 2); 
-      clReleaseKernel(kernel); 
-      clReleaseProgram(program); 
-      clReleaseCommandQueue(cmd_queue); 
-      clReleaseContext(context); 
-      return -1;
-    }
+  CHECK_CL_ERROR2 (err);
 
-  CHECK_CL_ERROR (clFinish (cmd_queue));
+  err = clEnqueueReadBuffer (queue, memobjs[0], CL_TRUE, 0,
+                             WIDTH * (HEIGHT + PADDING) * sizeof (cl_float),
+                             output, 0, NULL, NULL);
+  CHECK_CL_ERROR2 (err);
 
-  delete_memobjs (memobjs, 2);
-  CHECK_CL_ERROR (clReleaseKernel (kernel));
-  CHECK_CL_ERROR (clReleaseProgram (program));
-  CHECK_CL_ERROR (clReleaseCommandQueue (cmd_queue));
-  CHECK_CL_ERROR (clReleaseContext (context));
-  CHECK_CL_ERROR (clUnloadCompiler ());
+  err = clFinish (queue);
+  CHECK_CL_ERROR2 (err);
 
   for (i = 0; i < HEIGHT; ++i)
     {
       for (j = 0; j < WIDTH; ++j) {
 	if (input[i * WIDTH + j] != output[j * (HEIGHT + PADDING) + i]) {
 	  printf ("FAIL\n");
-	  return -1;
-	}
+          err = 1;
+          goto ERROR;
+        }
       }
     }
 
+  printf ("OK\n");
+
+ERROR:
+  CHECK_CL_ERROR (clReleaseMemObject (memobjs[0]));
+  CHECK_CL_ERROR (clReleaseMemObject (memobjs[1]));
+  CHECK_CL_ERROR (clReleaseKernel (kernel));
+  CHECK_CL_ERROR (clReleaseProgram (program));
+  CHECK_CL_ERROR (clReleaseCommandQueue (queue));
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
+  CHECK_CL_ERROR (clReleaseContext (context));
   free (input);
   free (output);
 
-  printf ("OK\n");
-  return 0;
+  return err;
 }
-
-static void 
-delete_memobjs(cl_mem *memobjs, int n) 
-{ 
-  int i; 
-  for (i=0; i<n; i++) 
-    CHECK_CL_ERROR (clReleaseMemObject(memobjs[i]));
-} 
