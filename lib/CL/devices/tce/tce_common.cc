@@ -734,8 +734,9 @@ pocl_tce_build_hash (cl_device_id device)
   pocl_SHA1_Final(&ctx, bin_dig);
 
   char *result = (char *)calloc(1000, sizeof(char));
-  strcpy(result, "tce-");
-  char *temp = result + 4;
+  strcpy(result, device->llvm_target_triplet);
+  char *temp = result + strlen(result);
+  *temp++ = '-';
   unsigned i;
   for (i=0; i < SHA1_DIGEST_SIZE; i++)
     {
