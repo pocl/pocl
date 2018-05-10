@@ -33,6 +33,8 @@ add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
 add_test_pocl(NAME "tce/tcemc" COMMAND "tcemc_host" run)
 
+add_test_pocl(NAME "tcele/tcemc" COMMAND "tcemc_host" run)
+
 #AT_SETUP([A basic TCEMC test])
 set_tests_properties( "tce/tcemc"
   PROPERTIES
@@ -41,4 +43,13 @@ set_tests_properties( "tce/tcemc"
     PASS_REGULAR_EXPRESSION "PING23456.000000 2000001OK"
     LABELS "tce;tta;ttasim;tcemc"
     ENVIRONMENT "POCL_DEVICES=ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine.adf"
+    DEPENDS "pocl_version_check")
+
+set_tests_properties( "tcele/tcemc"
+  PROPERTIES
+    COST 40.0
+    PROCESSORS 1
+    PASS_REGULAR_EXPRESSION "PING23456.000000 2000001OK"
+    LABELS "tce;tta;ttasim;tcemc"
+    ENVIRONMENT "POCL_DEVICES=ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE.adf"
     DEPENDS "pocl_version_check")

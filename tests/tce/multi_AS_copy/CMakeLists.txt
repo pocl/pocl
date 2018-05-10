@@ -33,6 +33,8 @@ add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
 add_test_pocl(NAME "tce/multi_AS_copy" COMMAND "multi_AS_copy")
 
+add_test_pocl(NAME "tcele/multi_AS_copy" COMMAND "multi_AS_copy")
+
 set_tests_properties( "tce/multi_AS_copy"
   PROPERTIES
     COST 40.0
@@ -40,4 +42,13 @@ set_tests_properties( "tce/multi_AS_copy"
     PASS_REGULAR_EXPRESSION "OK"
     LABELS "tce;tta;ttasim"
     ENVIRONMENT "POCL_DEVICES=pthread ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine.adf"
+    DEPENDS "pocl_version_check")
+
+set_tests_properties( "tcele/multi_AS_copy"
+  PROPERTIES
+    COST 40.0
+    PROCESSORS 1
+    PASS_REGULAR_EXPRESSION "OK"
+    LABELS "tce;tta;ttasim"
+    ENVIRONMENT "POCL_DEVICES=pthread ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE.adf"
     DEPENDS "pocl_version_check")
