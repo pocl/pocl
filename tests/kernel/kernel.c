@@ -99,7 +99,7 @@ int call_test(const char *name)
     goto error;
   }
 
-  result = clBuildProgram(program, 0, NULL, NULL, NULL, NULL); 
+  result = clBuildProgram(program, 0, NULL, "-I" SRCDIR, NULL, NULL);
   if (result != CL_SUCCESS) {
     puts("clBuildProgram call failed\n");
     goto error;

@@ -94,6 +94,9 @@ add_test_pocl(NAME "kernel/test_length_distance"
 add_test_pocl(NAME "kernel/test_fmin_fmax_fma"
               COMMAND "kernel" "test_fmin_fmax_fma")
 
+add_test_pocl(NAME "kernel/test_local_struct_array"
+              COMMAND "kernel" "test_local_struct_array")
+
 add_test_pocl(NAME "kernel/test_convert_sat_regression"
               COMMAND "kernel" "test_convert_sat_regression")
 
@@ -103,19 +106,30 @@ add_test_pocl(NAME "kernel/test_rotate"
 add_test_pocl(NAME "kernel/test_fabs"
               COMMAND "kernel" "test_fabs")
 
+add_test_pocl(NAME "kernel/test_copy_signbit"
+              COMMAND "kernel" "test_copy_signbit")
+
+add_test_pocl(NAME "kernel/test_ilogb"
+              COMMAND "kernel" "test_ilogb")
+
+add_test_pocl(NAME "kernel/test_ldexp"
+              COMMAND "kernel" "test_ldexp")
+
+add_test_pocl(NAME "kernel/test_isnan"
+              COMMAND "kernel" "test_isnan")
+
 add_test_pocl(NAME "kernel/test_short16"
               COMMAND "kernel" "test_short16")
 
 add_test_pocl(NAME "kernel/test_frexp_modf"
               COMMAND "kernel" "test_frexp_modf")
 
-add_test_pocl(NAME "kernel/test_local_struct_array"
-              COMMAND "kernel" "test_local_struct_array")
-
 set_tests_properties("kernel/test_min_max" "kernel/test_length_distance"
   "kernel/test_fmin_fmax_fma" "kernel/test_local_struct_array"
   "kernel/test_convert_sat_regression"   "kernel/test_fabs"
-  "kernel/test_rotate" "kernel/test_short16" "kernel/test_frexp_modf"
+  "kernel/test_rotate" "kernel/test_copy_signbit" "kernel/test_ilogb"
+  "kernel/test_ldexp" "kernel/test_isnan" "kernel/test_short16"
+  "kernel/test_frexp_modf"
   PROPERTIES
     COST 4.0
     FAIL_REGULAR_EXPRESSION "FAIL"
