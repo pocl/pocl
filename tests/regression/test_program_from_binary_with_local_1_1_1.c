@@ -22,10 +22,10 @@
    THE SOFTWARE.
 */
 
-#include <assert.h>
+#include "poclu.h"
+#include <CL/opencl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <CL/opencl.h>
 
 #define NB_WORK_GROUP 32
 #define VEC_SIZE 32
@@ -83,45 +83,45 @@ int main ()
     }
 
   err = clGetPlatformIDs(1, &platform, NULL);
-  assert(!err);
+  CHECK_CL_ERROR (err);
   err = clGetDeviceIDs(platform, CL_DEVICE_TYPE_DEFAULT, 1, &device, NULL);
-  assert(!err);
+  CHECK_CL_ERROR (err);
   context = clCreateContext(0, 1, &device, NULL, NULL, &err);
-  assert(!err);
+  CHECK_CL_ERROR (err);
   queue = clCreateCommandQueue(context, device, 0, &err);
-  assert(!err);
+  CHECK_CL_ERROR (err);
 
   program_source = clCreateProgramWithSource(context, 1, &kernelSource, NULL, &err);
-  assert(!err);
+  CHECK_CL_ERROR (err);
   err = clBuildProgram(program_source, 0, NULL, NULL, NULL, NULL);
-  assert(!err);
+  CHECK_CL_ERROR (err);
   err = clGetProgramInfo(program_source, CL_PROGRAM_BINARY_SIZES, sizeof(size_t), &binary_size, NULL);
-  assert(!err);
+  CHECK_CL_ERROR (err);
   binary = (char *)malloc(sizeof(char)*binary_size);
-  assert(binary);
+  TEST_ASSERT (binary);
   err = clGetProgramInfo(program_source, CL_PROGRAM_BINARIES, sizeof(char*), &binary, NULL);
-  assert(!err);
+  CHECK_CL_ERROR (err);
 
   program_binary = clCreateProgramWithBinary(context, 1, &device, &binary_size,
                                              (const unsigned char **)&binary, NULL, &err);
-  assert(!err);
+  CHECK_CL_ERROR (err);
   err = clBuildProgram(program_binary, 0, NULL, NULL, NULL, NULL);
-  assert(!err);
+  CHECK_CL_ERROR (err);
   kernel = clCreateKernel(program_binary, "test", &err);
-  assert(!err);
+  CHECK_CL_ERROR (err);
   buffer = clCreateBuffer(context, CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR, sizeof_buffer, &input_buffer, &err);
-  assert(!err);
+  CHECK_CL_ERROR (err);
   err = clSetKernelArg(kernel, 0, sizeof (cl_mem), &buffer);
-  assert(!err);
+  CHECK_CL_ERROR (err);
   err = clSetKernelArg(kernel, 1, sizeof (unsigned) * vec_size, NULL);
-  assert(!err);
+  CHECK_CL_ERROR (err);
   err = clSetKernelArg(kernel, 2, sizeof (cl_uint), &vec_size);
-  assert(!err);
+  CHECK_CL_ERROR (err);
   err = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, &global_size, &local_size, 0, NULL, NULL);
-  assert(!err);
+  CHECK_CL_ERROR (err);
   clFinish(queue);
   err = clEnqueueReadBuffer(queue, buffer, CL_TRUE, 0, sizeof_buffer, output_buffer, 0, NULL, NULL);
-  assert(!err);
+  CHECK_CL_ERROR (err);
 
   for (k=0; k<global_size; k++)
     {
