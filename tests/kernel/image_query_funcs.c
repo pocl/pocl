@@ -14,25 +14,19 @@ int main(int argc, char **argv)
   char name[] = "test_image_query_funcs";
   size_t global_work_size[1] = { 1 }, local_work_size[1]= { 1 };
   size_t srcdir_length, name_length, filename_size;
-  size_t source_size, source_read;
-  char const *sources[1];
   char *filename = NULL;
   char *source = NULL;
-  FILE *source_file = NULL;
   cl_device_id devices[1];
   cl_context context = NULL;
   cl_command_queue queue = NULL;
   cl_program program = NULL;
   cl_kernel kernel = NULL;
-  cl_int result;
-  int retval = -1;
+  cl_int err;
 
   /* image parameters */
   cl_uchar4 *imageData;
   cl_image_format image_format;
   cl_image_desc image2_desc, image3_desc;
-
-  
 
   printf("Running test %s...\n", name);
 
@@ -50,12 +44,8 @@ int main(int argc, char **argv)
   image_format.image_channel_order = CL_RGBA;
   image_format.image_channel_data_type = CL_UNSIGNED_INT8;
   imageData = (cl_uchar4*)malloc (4 * 4 * sizeof(cl_uchar4));
-  
-  if (imageData == NULL)
-    {
-      puts("out of host memory\n");
-      goto error;
-    }
+
+  TEST_ASSERT (imageData != NULL && "out of host memory\n");
   memset (imageData, 1, 4*4*sizeof(cl_uchar4));
 
   /* determine file name of kernel source to load */
@@ -63,185 +53,85 @@ int main(int argc, char **argv)
   name_length = strlen(name);
   filename_size = srcdir_length + name_length + 16;
   filename = (char *)malloc(filename_size + 1);
-  if (!filename) 
-    {
-      puts("out of memory");
-      goto error;
-    }
-  
+  TEST_ASSERT (filename != NULL && "out of host memory\n");
+
   snprintf(filename, filename_size, "%s/%s.cl", SRCDIR, name);
-  
+
   /* read source code */
-  source_file = fopen(filename, "r");
-  if (!source_file) 
-    {
-      puts("source file not found\n");
-      goto error;
-    }
-  
-  fseek(source_file, 0, SEEK_END);
-  source_size = ftell(source_file);
-  fseek(source_file, 0, SEEK_SET);
-  
-  source = (char *)malloc(source_size + 1);
-  if (!source) 
-    {
-      puts("out of memory\n");
-      goto error;
-    }
-  
-  source_read = fread(source, 1, source_size, source_file);
-  if (source_read != source_size) 
-    {
-      puts("error reading from file\n");
-      goto error;
-    }
-  
-  source[source_size] = '\0';
-  fclose(source_file);
-  source_file = NULL;
-  
+  source = poclu_read_file (filename);
+  TEST_ASSERT (source != NULL && "Kernel .cl not found.");
+
   /* setup an OpenCL context and command queue using default device */
   context = poclu_create_any_context();
-  if (!context) 
-    {
-      puts("clCreateContextFromType call failed\n");
-      goto error;
-    }
+  TEST_ASSERT (context != NULL && "clCreateContextFromType call failed\n");
 
-  result = clGetContextInfo(context, CL_CONTEXT_DEVICES,
-                            sizeof(cl_device_id), devices, NULL);
-  if (result != CL_SUCCESS) 
-    {
-      puts("clGetContextInfo call failed\n");
-      goto error;
-    }
+  cl_sampler external_sampler = clCreateSampler (
+      context, CL_FALSE, CL_ADDRESS_NONE, CL_FILTER_NEAREST, &err);
+  CHECK_OPENCL_ERROR_IN ("clCreateSampler");
 
-  queue = clCreateCommandQueue(context, devices[0], 0, NULL); 
-  if (!queue) 
-    {
-      puts("clCreateCommandQueue call failed\n");
-      goto error;
-    }
+  CHECK_CL_ERROR (clGetContextInfo (context, CL_CONTEXT_DEVICES,
+                                    sizeof (cl_device_id), devices, NULL));
+
+  queue = clCreateCommandQueue (context, devices[0], 0, &err);
+  CHECK_OPENCL_ERROR_IN ("clCreateCommandQueue");
 
   /* Create image */
+  cl_mem image2
+      = clCreateImage (context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                       &image_format, &image2_desc, imageData, &err);
+  CHECK_OPENCL_ERROR_IN ("clCreateImage image2");
 
-  cl_mem image2 = clCreateImage (context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                &image_format, &image2_desc, imageData, &result);
-  if (result != CL_SUCCESS)
-    {
-      puts("image2 creation failed\n");
-      goto error;
-    }
+  cl_mem image3
+      = clCreateImage (context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                       &image_format, &image3_desc, imageData, &err);
+  CHECK_OPENCL_ERROR_IN ("clCreateImage image3");
 
-  cl_mem image3 = clCreateImage (context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                &image_format, &image3_desc, imageData, &result);
-  if (result != CL_SUCCESS)
-    {
-      puts("image3 creation failed\n");
-      goto error;
-    }
-
+  unsigned color[4] = { 2, 9, 11, 7 };
+  size_t orig[3] = { 0, 0, 0 };
+  size_t reg[3] = { 2, 4, 1 };
+  err = clEnqueueFillImage (queue, image2, color, orig, reg, 0, NULL, NULL);
+  CHECK_OPENCL_ERROR_IN ("clCreateImage image3");
 
   /* create and build program */
-  sources[0] = source;
-  program = clCreateProgramWithSource(context, 1, sources, NULL, NULL); 
-  if (!program) 
-    {
-      puts("clCreateProgramWithSource call failed\n");
-      goto error;
-    }
+  program = clCreateProgramWithSource (context, 1, (const char **)&source,
+                                       NULL, &err);
+  CHECK_OPENCL_ERROR_IN ("clCreateProgramWithSource");
 
-  result = clBuildProgram(program, 0, NULL, NULL, NULL, NULL); 
-  if (result != CL_SUCCESS) 
-    {
-      puts("clBuildProgram call failed\n");
-      goto error;
-    }
+  err = clBuildProgram (program, 0, NULL, NULL, NULL, NULL);
+  CHECK_OPENCL_ERROR_IN ("clBuildProgram");
 
   /* execute the kernel with give name */
-  kernel = clCreateKernel(program, name, NULL); 
-  if (!kernel) 
-    {
-      puts("clCreateKernel call failed\n");
-      goto error;
-    }
+  kernel = clCreateKernel (program, name, NULL);
+  CHECK_OPENCL_ERROR_IN ("clCreateKernel");
 
-   result = clSetKernelArg( kernel, 0, sizeof(cl_mem), &image2);
-   if (result)
-     {
-       puts("clSetKernelArg 0 failed\n");
-       goto error;
-     }
+  err = clSetKernelArg (kernel, 0, sizeof (cl_mem), &image2);
+  CHECK_OPENCL_ERROR_IN ("clSetKernelArg 0");
 
-   result = clSetKernelArg( kernel, 1, sizeof(cl_mem), &image3);
-   if (result)
-     {
-       puts("clSetKernelArg 1 failed\n");
-       goto error;
-     }
+  err = clSetKernelArg (kernel, 1, sizeof (cl_mem), &image3);
+  CHECK_OPENCL_ERROR_IN ("clSetKernelArg 1");
 
-  result = clEnqueueNDRangeKernel(queue, kernel, 1, NULL, global_work_size, 
-                                  local_work_size, 0, NULL, NULL); 
-  if (result != CL_SUCCESS) 
-    {
-      puts("clEnqueueNDRangeKernel call failed\n");
-      goto error;
-    }
+  err = clSetKernelArg (kernel, 2, sizeof (cl_sampler), &external_sampler);
+  CHECK_OPENCL_ERROR_IN ("clSetKernelArg 2");
 
-  result = clFinish(queue);
-  if (result == CL_SUCCESS)
-    retval = 0;
+  err = clEnqueueNDRangeKernel (queue, kernel, 1, NULL, global_work_size,
+                                local_work_size, 0, NULL, NULL);
+  CHECK_OPENCL_ERROR_IN ("clEnqueueNDRangeKernel");
 
-error:
-  if (image2)
-    {
-      clReleaseMemObject (image2);
-    }
-  if (image3)
-    {
-      clReleaseMemObject (image3);
-    }
-  if (kernel) 
-    {
-      clReleaseKernel(kernel);
-    }
-  if (program) 
-    {
-      clReleaseProgram(program);
-    }
-  if (queue) 
-    {
-      clReleaseCommandQueue(queue);
-    }
-  if (context) 
-    {
-      clUnloadCompiler ();
-      clReleaseContext (context);
-    }
-  if (source_file) 
-    {
-      fclose(source_file);
-    }
-  if (source) 
-    {
-      free(source);
-    }
-  if (filename)
-    {
-      free(filename);
-    }
-  if (imageData)
-    {
-      free(imageData);
-    }
+  err = clFinish (queue);
+  CHECK_OPENCL_ERROR_IN ("clFinish");
 
-  if (retval) 
-    {
-      printf("FAIL\n");
-      return 1;
-    }
- 
+  clReleaseMemObject (image2);
+  clReleaseMemObject (image3);
+  clReleaseKernel (kernel);
+  clReleaseProgram (program);
+  clReleaseCommandQueue (queue);
+  clReleaseSampler (external_sampler);
+  clUnloadCompiler ();
+  clReleaseContext (context);
+  free (source);
+  free (filename);
+  free (imageData);
+
   printf("OK\n");
   return 0;
 }

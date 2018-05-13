@@ -162,11 +162,19 @@ add_test_pocl(NAME "kernel/test_sampler_address_clamp"
 add_test_pocl(NAME "kernel/test_image_query_funcs"
               COMMAND "image_query_funcs")
 
+
 set_tests_properties( "kernel/test_sampler_address_clamp"
-  "kernel/test_image_query_funcs"
   PROPERTIES
     COST 4.0
     PASS_REGULAR_EXPRESSION "\nOK\n"
+    PROCESSORS 1
+    DEPENDS "pocl_version_check"
+    LABELS "internal;kernel")
+
+set_tests_properties( "kernel/test_image_query_funcs"
+  PROPERTIES
+    COST 4.0
+    PASS_REGULAR_EXPRESSION "read imag1: 2,9,11,7\nread imag2: 2,9,11,7\n.*OK\n"
     PROCESSORS 1
     DEPENDS "pocl_version_check"
     LABELS "internal;kernel")

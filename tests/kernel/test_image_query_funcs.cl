@@ -1,7 +1,10 @@
+constant sampler_t immediate_sampler
+    = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;
 
-
-kernel
-void test_image_query_funcs(__read_only image2d_t image2, __read_only image3d_t image3)
+kernel void
+test_image_query_funcs (__read_only image2d_t image2,
+                        __read_only image3d_t image3,
+                        sampler_t external_sampler)
 {
   int h = get_image_height (image3);
   int w = get_image_width (image3);
@@ -35,4 +38,9 @@ void test_image_query_funcs(__read_only image2d_t image2, __read_only image3d_t 
     printf("get_image_dim failed expected (%d,%d), got %v2d\n",
       w, h, dim2);
 
+  uint4 j = read_imageui (image2, immediate_sampler, (int2) (0, 0));
+  printf ("read imag1: %v4hlu\n", j);
+
+  uint4 i = read_imageui (image2, external_sampler, (int2) (1, 1));
+  printf ("read imag2: %v4hlu\n", i);
 }
