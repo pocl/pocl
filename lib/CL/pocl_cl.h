@@ -316,9 +316,7 @@ struct pocl_device_ops {
 
   /* /New driver api extension */
 
-  cl_int (*uninit) (cl_device_id device);
-  cl_int (*reinit) (cl_device_id device);
-
+  /* Detects & returns the number of available devices the driver finds on the system. */
   unsigned int (*probe) (struct pocl_device_ops *ops);
   /* Device initialization. Parameters:
    *  j : progressive index for the devices of the same type
@@ -326,8 +324,16 @@ struct pocl_device_ops {
    *  parameters : optional environment with device-specific parameters
    */
   cl_int (*init) (unsigned j, cl_device_id device, const char *parameters);
+  /* uninitializes the driver for a particular device. May free hardware resources. */
+  cl_int (*uninit) (cl_device_id device);
+  /* reinitializes the driver for a particular device. Called after uninit;
+   * the first initialization is done by 'init'. May be NULL */
+  cl_int (*reinit) (cl_device_id device);
+
+  /* if the driver needs to use hardware resources for command queues, use this */
   cl_int (*init_queue) (cl_command_queue queue);
   void (*free_queue) (cl_command_queue queue);
+
   cl_int (*alloc_mem_obj) (cl_device_id device, cl_mem mem_obj, void* host_ptr);
   void *(*create_sub_buffer) (void *data, void* buffer, size_t origin, size_t size);
   void (*free) (cl_device_id device, cl_mem mem_obj);
@@ -382,21 +388,29 @@ struct pocl_device_ops {
      host-accessible memory. This might or might not involve copying 
      the block from the device. */
   void* (*map_mem) (void *data, void *buf_ptr, size_t offset, size_t size, void *host_ptr);
+  /* reverse operation to map - this might need copying mem back to device */
   void* (*unmap_mem) (void *data, void *host_ptr, void *device_start_ptr, size_t offset, size_t size);
 
+  /* compile the fully linked LLVM IR to target-specific binaries. */
   void (*compile_kernel) (_cl_command_node* cmd, cl_kernel kernel, cl_device_id device);
+
   void (*run) (void *data, _cl_command_node* cmd);
+  /* for clEnqueueNativeKernel. may be NULL */
   void (*run_native) (void *data, _cl_command_node* cmd);
 
-  cl_ulong (*get_timer_value) (void *data); /* The current device timer value in nanoseconds. */
+  /* The current device timer value in nanoseconds. */
+  cl_ulong (*get_timer_value) (void *data);
 
   /* Perform initialization steps and can return additional
      build options that are required for the device. The caller
-     owns the returned string. */
+     owns the returned string. may be NULL */
   char* (*init_build) (void *data);
 
+  /* may be NULL */
   void (*init_target_machine) (void *data, void *target_machine);
 
+  /* returns a hash string that should identify the device. This string
+   * is used when writing/loading pocl binaries to decide compatibility. */
   char* (*build_hash) (cl_device_id device);
 
     /* return supported image formats */
