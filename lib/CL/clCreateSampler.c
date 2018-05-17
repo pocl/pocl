@@ -21,10 +21,9 @@
    THE SOFTWARE.
 */
 
-
+#include "devices.h"
 #include "pocl_cl.h"
 #include "pocl_icd.h"
-
 
 extern CL_API_ENTRY cl_sampler CL_API_CALL
 POname(clCreateSampler)(cl_context          context,
@@ -66,6 +65,14 @@ CL_API_SUFFIX__VERSION_1_0
   sampler->normalized_coords = normalized_coords;
   sampler->addressing_mode = addressing_mode;
   sampler->filter_mode = filter_mode;
+  sampler->device_data = (void **)calloc (pocl_num_devices, sizeof (void *));
+  for (i = 0; i < context->num_devices; ++i)
+    {
+      cl_device_id dev = context->devices[i];
+      if (dev->image_support == CL_TRUE && dev->ops->create_sampler)
+        sampler->device_data[dev->dev_id]
+            = dev->ops->create_sampler (dev->data, sampler, &errcode);
+    }
 
 ERROR:
   if(errcode_ret)

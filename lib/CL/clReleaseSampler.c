@@ -27,6 +27,8 @@ CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseSampler)(cl_sampler sampler)
 CL_API_SUFFIX__VERSION_1_0
 {
+  unsigned i;
+  cl_int errcode;
   POCL_RETURN_ERROR_COND ((sampler == NULL), CL_INVALID_SAMPLER);
 
   int new_refcount;
@@ -36,9 +38,21 @@ CL_API_SUFFIX__VERSION_1_0
 
   if (new_refcount == 0)
     {
-      POname (clReleaseContext) (sampler->context);
+      cl_context context = sampler->context;
+      for (i = 0; i < context->num_devices; ++i)
+        {
+          cl_device_id dev = context->devices[i];
+          if (dev->image_support == CL_TRUE && dev->ops->free_sampler)
+            {
+              errcode = dev->ops->free_sampler (
+                  dev->data, sampler, sampler->device_data[dev->dev_id]);
+              sampler->device_data[dev->dev_id] = NULL;
+            }
+        }
+      POCL_MEM_FREE (sampler->device_data);
       POCL_DESTROY_OBJECT (sampler);
       POCL_MEM_FREE (sampler);
+      POname (clReleaseContext) (context);
     }
 
   return CL_SUCCESS;
