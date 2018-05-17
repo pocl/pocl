@@ -3,25 +3,88 @@ sudo: false
 language: c++
 
 os:
-  - osx
+  - linux
 
-compiler:
-  - gcc
-  - clang
+matrix:
+  exclude:
+    - os: linux
+  include:
+    - os: linux
+      docker: true
+      compiler: gcc
+      env: LLVM_VERSION=6.0 HWLOC_VERSION=1.11 DOCKERFILE=Ubuntu/16_04.64bit
+
+    - os: linux
+      docker: true
+      compiler: gcc
+      env: LLVM_VERSION=6.0 HWLOC_VERSION=1.11 DOCKERFILE=Ubuntu/16_04.32bit
+
+    - os: linux
+      docker: true
+      compiler: gcc
+      env: LLVM_VERSION=4.0 HWLOC_VERSION=1.11 DOCKERFILE=Ubuntu/16_04.64bit
+
+    - os: linux
+      docker: true
+      compiler: gcc
+      env: LLVM_VERSION=4.0 HWLOC_VERSION=1.11 DOCKERFILE=Ubuntu/16_04.32bit
+
+    - os: linux
+      compiler: gcc
+      env: LLVM_VERSION=6.0 HWLOC_VERSION=1.11 CONDA=True
+
+    - os: linux
+      compiler: gcc
+      env: LLVM_VERSION=4.0 HWLOC_VERSION=2.0 CONDA=True
+
+    - os: osx
+      compiler: clang
+      env: LLVM_VERSION=6.0 HWLOC_VERSION=1.11 CONDA=True
+
+    - os: osx
+      compiler: gcc
+      env: LLVM_VERSION=4.0 HWLOC_VERSION=1.11 CONDA=True
+
 
 before_install:
-  - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then brew install hwloc ; fi
-  - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then brew install llvm ; fi
-  - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then export LLVM_CONFIG=`brew ls llvm | grep "bin/llvm-config"` ; fi
-  - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then export CMAKE_LLVM_CONFIG="-DWITH_LLVM_CONFIG=$LLVM_CONFIG" ; fi
-  - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then export CMAKE_ICD_OFF="-DENABLE_ICD=OFF" ; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then
+      export MINICONDA_FILE="Miniconda3-latest-MacOSX-x86_64.sh";
+    else
+      export MINICONDA_FILE="Miniconda3-latest-Linux-x86_64.sh";
+    fi
+
+  - if [ "$CONDA" = "True" ] ; then
+      echo "Installing a fresh version of Miniconda.";
+      MINICONDA_URL="https://repo.continuum.io/miniconda";
+      curl -L -O "${MINICONDA_URL}/${MINICONDA_FILE}";
+      bash $MINICONDA_FILE -b;
+      source $HOME/miniconda3/bin/activate root;
+      conda config --add channels conda-forge;
+      conda install --yes --quiet llvmdev=${LLVM_VERSION}.* clangdev=${LLVM_VERSION}.* libcxx=${LLVM_VERSION}.* libhwloc=${HWLOC_VERSION}.*;
+      export LD_LIBRARY_PATH=$HOME/miniconda3/lib:$LD_LIBRARY_PATH;
+    fi
+
+  - if [ "$CONDA" = "True" ] ; then export MY_CMAKE_PREFIX_PATH="-DCMAKE_PREFIX_PATH=$HOME/miniconda3" ; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then export MY_CMAKE_ICD_OFF="-DENABLE_ICD=OFF" ; fi
+
+  - if [ "$TRAVIS_OS_NAME" = "osx" ] && [ "$CXX" = "clang++" ] ; then MY_CMAKE_LIBCXX="-DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++" ; fi
+
+  - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
+      export GIT_COMMIT="$TRAVIS_COMMIT";
+    else
+      export GH_PR=$TRAVIS_PULL_REQUEST;
+    fi
 
 script:
-  - mkdir build && cd build
-  - cmake .. -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_INSTALL_PREFIX=/tmp $CMAKE_LLVM_CONFIG $CMAKE_ICD_OFF
-  - make
-  - make check
-  - make install
+  - if [ "$CONDA" = "True" ] ; then
+      mkdir build && cd build;
+      cmake .. -DCMAKE_INSTALL_PREFIX=/tmp $MY_CMAKE_PREFIX_PATH $MY_CMAKE_LIBCXX $MY_CMAKE_ICD_OFF;
+      make -j2 && make check && make install;
+    fi
+
+  - if [ ! "$DOCKERFILE" = "" ] ; then
+      docker build -f tools/docker/$DOCKERFILE . --build-arg GH_PR=$GH_PR --build-arg GH_SLUG=$TRAVIS_REPO_SLUG --build-arg GH_COMMIT=$GIT_COMMIT --build-arg LLVM_VERSION=$LLVM_VERSION;
+    fi
 
 notifications:
   email: false
