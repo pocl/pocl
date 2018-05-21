@@ -60,9 +60,11 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
           /* Remove the kernel from the program's linked list of
              kernels */
           *pk = (*pk)->next;
+          POCL_RELEASE_OBJECT_UNLOCKED (program, new_refcount);
+          POCL_MSG_PRINT_REFCOUNTS ("Released non-default kernel kernel %p, "
+                                    "program %p now has refs: %d \n",
+                                    kernel, kernel->program, new_refcount);
           POCL_UNLOCK_OBJ (program);
-          POname (clReleaseProgram) (program);
-          POCL_MSG_PRINT_REFCOUNTS ("Released non-default kernel kernel %p, program %p now has refs: %d \n", kernel, kernel->program, kernel->program->pocl_refcount);
         }
 
       POCL_MEM_FREE (kernel->name);
