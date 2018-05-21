@@ -48,9 +48,7 @@
 int
 main (int argc, char **argv)
 {
-  FILE *source_file;
   char *source;
-  int source_size;
   cl_context context;
   size_t cb;
   cl_device_id *devices;
@@ -63,20 +61,9 @@ main (int argc, char **argv)
   char kernel_path[2048];
 
   snprintf (kernel_path, 2048,  "%s/%s", SRCDIR, argv[1]);
-  source_file = fopen(kernel_path, "r");
-  TEST_ASSERT (source_file != NULL && "Kernel .cl not found.");
 
-  fseek (source_file, 0, SEEK_END);
-  source_size = ftell (source_file);
-  fseek (source_file, 0, SEEK_SET);
-
-  source = (char *) malloc (source_size + 1);
-  TEST_ASSERT (source != NULL);
-
-  fread (source, source_size, 1, source_file);
-  source[source_size] = '\0';
-
-  fclose(source_file);
+  source = poclu_read_file (kernel_path);
+  TEST_ASSERT (source != NULL && "Kernel .cl not found.");
 
   local_work_size[0] = atoi(argv[3]);
   local_work_size[1] = atoi(argv[4]);

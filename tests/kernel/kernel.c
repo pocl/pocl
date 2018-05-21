@@ -17,11 +17,8 @@ int call_test(const char *name)
 {
   size_t global_work_size[1] = { 1 }, local_work_size[1]= { 1 };
   size_t srcdir_length, name_length, filename_size;
-  size_t source_size, source_read;
-  char const *sources[1];
   char *filename = NULL;
   char *source = NULL;
-  FILE *source_file = NULL;
   cl_device_id devices[1];
   cl_context context = NULL;
   cl_command_queue queue = NULL;
@@ -45,31 +42,8 @@ int call_test(const char *name)
   snprintf(filename, filename_size, "%s/%s.cl", SRCDIR, name);
 
   /* read source code */
-  source_file = fopen(filename, "r");
-  if (!source_file) {
-     puts("source file not found\n");
-     goto error;
-  }
-
-  fseek(source_file, 0, SEEK_END);
-  source_size = ftell(source_file);
-  fseek(source_file, 0, SEEK_SET);
-  
-  source = (char *)malloc(source_size + 1);
-  if (!source) {
-    puts("out of memory\n");
-    goto error;
-  }
-
-  source_read = fread(source, 1, source_size, source_file);
-  if (source_read != source_size) {
-    puts("error reading from file\n");
-    goto error;
-  }
-
-  source[source_size] = '\0';
-  fclose(source_file);
-  source_file = NULL;
+  source = poclu_read_file (filename);
+  TEST_ASSERT (source != NULL && "Kernel .cl not found.");
 
   /* setup an OpenCL context and command queue using default device */
   context = poclu_create_any_context();
@@ -92,8 +66,8 @@ int call_test(const char *name)
   }
 
   /* create and build program */
-  sources[0] = source;
-  program = clCreateProgramWithSource(context, 1, sources, NULL, NULL); 
+  program = clCreateProgramWithSource (context, 1, (const char **)&source,
+                                       NULL, NULL);
   if (!program) {
     puts("clCreateProgramWithSource call failed\n");
     goto error;
@@ -137,9 +111,6 @@ error:
   if (context) {
     clUnloadCompiler ();
     clReleaseContext (context);
-  }
-  if (source_file) {
-    fclose(source_file);
   }
   if (source) {
     free(source);
