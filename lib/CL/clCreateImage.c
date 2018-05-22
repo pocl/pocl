@@ -203,6 +203,22 @@ CL_API_SUFFIX__VERSION_1_2
                                        &errcode);
         POCL_GOTO_ERROR_ON ((mem == NULL), CL_OUT_OF_HOST_MEMORY,
                             "clCreateBuffer (for backing the image) failed\n");
+
+        for (i = 0; i < context->num_devices; i++)
+          {
+            cl_device_id dev = context->devices[i];
+            if (!dev->image_support)
+              {
+                continue;
+              } // image_data[i] = NULL
+            if (dev->ops->create_image)
+              mem->device_ptrs[dev->dev_id].image_data
+                  = dev->ops->create_image (dev, image_format, image_desc, mem,
+                                            &errcode);
+            if (errcode)
+              goto ERROR;
+          }
+
         mem->buffer = NULL;
       }
 
