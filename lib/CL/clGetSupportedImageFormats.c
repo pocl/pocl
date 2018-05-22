@@ -79,12 +79,15 @@ CL_API_SUFFIX__VERSION_1_0
   for (i = 0; i < context->num_devices; ++i)
     {    
       device_id = context->devices[i];
-      errcode = device_id->ops->get_supported_image_formats 
-        (flags, dev_image_formats+i, (cl_uint*)(dev_num_image_formats + i));
-      
-      if (errcode != CL_SUCCESS)
-        goto CLEAN_MEM_AND_RETURN;
-      
+      if (device_id->image_support == CL_TRUE)
+        {
+          errcode = device_id->ops->get_supported_image_formats (
+              flags, dev_image_formats + i,
+              (cl_uint *)(dev_num_image_formats + i));
+          if (errcode != CL_SUCCESS)
+            goto CLEAN_MEM_AND_RETURN;
+        }
+
       if (dev_num_image_formats[i] == 0) {
         /* this device supports no image formats. since we have to
          * present the intersection of all supported image formats
