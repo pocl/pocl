@@ -86,19 +86,20 @@ CL_API_SUFFIX__VERSION_1_2
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  cmd->command.memfill.buffer = buffer;
-  cmd->command.memfill.ptr =
-      buffer->device_ptrs[command_queue->device->dev_id].mem_ptr;
+  cmd->command.memfill.device_ptr
+      = buffer->device_ptrs[command_queue->device->dev_id].mem_ptr;
   cmd->command.memfill.size = size;
   cmd->command.memfill.offset = offset;
   void *p = pocl_aligned_malloc(pattern_size, pattern_size);
   memcpy(p, pattern, pattern_size);
   cmd->command.memfill.pattern = p;
   cmd->command.memfill.pattern_size = pattern_size;
+  // cmd->command.memfill.buffer = buffer;
 
   POname(clRetainMemObject) (buffer);
+  // TODO
   buffer->owning_device = command_queue->device;
-  
+
   pocl_command_enqueue(command_queue, cmd);
 
   return CL_SUCCESS;

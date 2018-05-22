@@ -56,7 +56,23 @@ struct _mem_mapping {
      the same mapping (the first one in mappings LL), which will lead
      to memory double-free corruption later. */
   long unmap_requested;
+  cl_map_flags map_flags;
+  /* image mapping data */
+  size_t origin[3];
+  size_t region[3];
+  size_t row_pitch;
+  size_t slice_pitch;
 };
+
+/* memory identifier: id to point the global memory where memory resides
+                      + pointer to actual data */
+typedef struct _pocl_mem_identifier
+{
+  int available; /* ... in this mem objs context */
+  int global_mem_id;
+  void *mem_ptr;
+  void *image_data;
+} pocl_mem_identifier;
 
 typedef struct _mem_destructor_callback mem_destructor_callback_t;
 /* represents a memory object destructor callback */
@@ -79,7 +95,6 @@ struct _build_program_callback
 // clEnqueueNDRangeKernel
 typedef struct
 {
-  void *data;
   char *tmp_dir; 
   pocl_workgroup wg;
   cl_kernel kernel;
@@ -95,7 +110,6 @@ typedef struct
 // clEnqueueNativeKernel
 typedef struct
 {
-  void *data;
   void *args;
   size_t cb_args;
   void (*user_func)(void *);
@@ -106,120 +120,147 @@ typedef struct
 // clEnqueueReadBuffer
 typedef struct
 {
-  void *host_ptr;
-  const void *device_ptr;
+  void *__restrict__ dst_host_ptr;
+  void *__restrict__ src_device_ptr;
   size_t offset;
-  size_t cb;
-  cl_mem buffer;
+  size_t size;
 } _cl_command_read;
 
 // clEnqueueWriteBuffer
 typedef struct
 {
-  const void *host_ptr;
-  void *device_ptr;
+  const void *__restrict__ src_host_ptr;
+  void *__restrict__ dst_device_ptr;
   size_t offset;
-  size_t cb;
-  cl_mem buffer;
+  size_t size;
 } _cl_command_write;
 
 // clEnqueueCopyBuffer
 typedef struct
 {
-  void *data;
-  void *src_ptr;
+  void *__restrict__ src_device_ptr;
+  void *__restrict__ dst_device_ptr;
   size_t src_offset;
-  void *dst_ptr;
   size_t dst_offset;
-  size_t cb;
-  cl_device_id src_dev;
-  cl_device_id dst_dev;
-  cl_mem src_buffer;
-  cl_mem dst_buffer;
+  size_t size;
 } _cl_command_copy;
+
+// clEnqueueReadBufferRect
+typedef struct
+{
+  void *__restrict__ dst_host_ptr;
+  void *__restrict__ src_device_ptr;
+  size_t buffer_origin[3];
+  size_t host_origin[3];
+  size_t region[3];
+  size_t buffer_row_pitch;
+  size_t buffer_slice_pitch;
+  size_t host_row_pitch;
+  size_t host_slice_pitch;
+} _cl_command_read_rect;
+
+// clEnqueueWriteBufferRect
+typedef struct
+{
+  const void *__restrict__ src_host_ptr;
+  void *__restrict__ dst_device_ptr;
+  size_t buffer_origin[3];
+  size_t host_origin[3];
+  size_t region[3];
+  size_t buffer_row_pitch;
+  size_t buffer_slice_pitch;
+  size_t host_row_pitch;
+  size_t host_slice_pitch;
+} _cl_command_write_rect;
+
+// clEnqueueCopyBufferRect
+typedef struct
+{
+  void *__restrict__ src_device_ptr;
+  void *__restrict__ dst_device_ptr;
+  size_t dst_origin[3];
+  size_t src_origin[3];
+  size_t region[3];
+  size_t src_row_pitch;
+  size_t src_slice_pitch;
+  size_t dst_row_pitch;
+  size_t dst_slice_pitch;
+} _cl_command_copy_rect;
 
 // clEnqueueMapBuffer
 typedef struct
 {
-  cl_mem buffer;
+  cl_mem memobj;
+  pocl_mem_identifier *mem_id;
   mem_mapping_t *mapping;
 } _cl_command_map;
-
-/* clEnqueue(Write/Read)Image */
-typedef struct
-{
-  void *device_ptr;
-  void *host_ptr;
-  size_t origin[3];
-  size_t h_origin[3];
-  size_t region[3];
-  size_t h_rowpitch;
-  size_t h_slicepitch;
-  size_t b_rowpitch;
-  size_t b_slicepitch;
-  cl_mem buffer;
-} _cl_command_read_image;
-
-typedef struct
-{
-  void *device_ptr;
-  const void *host_ptr;
-  size_t origin[3];
-  size_t h_origin[3];
-  size_t region[3];
-  size_t h_rowpitch;
-  size_t h_slicepitch;
-  size_t b_rowpitch;
-  size_t b_slicepitch;
-  cl_mem buffer;
-} _cl_command_write_image;
-
-typedef struct
-{
-  cl_device_id dst_device;
-  cl_mem dst_buffer;
-  cl_device_id src_device;
-  cl_mem src_buffer;
-  size_t dst_origin[3];
-  size_t src_origin[3];
-  size_t region[3];
-  size_t dst_rowpitch;
-  size_t dst_slicepitch;
-  size_t src_rowpitch;
-  size_t src_slicepitch;
-} _cl_command_copy_image;
 
 /* clEnqueueUnMapMemObject */
 typedef struct
 {
-  void *data;
   cl_mem memobj;
+  pocl_mem_identifier *mem_id;
   mem_mapping_t *mapping;
 } _cl_command_unmap;
-
-/* clEnqueueFillImage */
-typedef struct
-{
-  void *data;
-  void *device_ptr;
-  size_t buffer_origin[3];
-  size_t region[3];
-  size_t rowpitch;
-  size_t slicepitch;
-  void *fill_pixel;
-  size_t pixel_size;
-  cl_mem buffer;
-} _cl_command_fill_image;
 
 /* clEnqueueFillBuffer */
 typedef struct
 {
-  cl_mem buffer;
-  void* ptr;
-  size_t size, offset;
-  void* pattern;
+  void *__restrict__ device_ptr;
+  size_t size;
+  size_t offset;
+  void *__restrict__ pattern;
   size_t pattern_size;
-} _cl_command_fill;
+} _cl_command_fill_mem;
+
+/* clEnqueue(Write/Read)Image */
+typedef struct
+{
+  cl_mem src_image;
+  pocl_mem_identifier *src_mem_id;
+  void *__restrict__ dst_host_ptr;
+  pocl_mem_identifier *dst_mem_id;
+  size_t dst_offset;
+  size_t origin[3];
+  size_t region[3];
+  size_t dst_row_pitch;
+  size_t dst_slice_pitch;
+} _cl_command_read_image;
+
+typedef struct
+{
+  cl_mem dst_image;
+  pocl_mem_identifier *dst_mem_id;
+  const void *__restrict__ src_host_ptr;
+  pocl_mem_identifier *src_mem_id;
+  size_t src_offset;
+  size_t origin[3];
+  size_t region[3];
+  size_t src_row_pitch;
+  size_t src_slice_pitch;
+} _cl_command_write_image;
+
+typedef struct
+{
+  cl_mem src_image;
+  cl_mem dst_image;
+  pocl_mem_identifier *src_mem_id;
+  pocl_mem_identifier *dst_mem_id;
+  size_t dst_origin[3];
+  size_t src_origin[3];
+  size_t region[3];
+} _cl_command_copy_image;
+
+/* clEnqueueFillImage */
+typedef struct
+{
+  cl_mem image;
+  pocl_mem_identifier *mem_id;
+  size_t origin[3];
+  size_t region[3];
+  void *__restrict__ fill_pixel;
+  size_t pixel_size;
+} _cl_command_fill_image;
 
 /* clEnqueueMarkerWithWaitlist */
 typedef struct
@@ -266,7 +307,7 @@ typedef struct
 
 typedef struct
 {
-  const void* src;
+  void *src;
   void* dst;
   size_t size;
 } _cl_command_svm_cpy;
@@ -275,19 +316,26 @@ typedef union
 {
   _cl_command_run run;
   _cl_command_native native;
+
   _cl_command_read read;
   _cl_command_write write;
   _cl_command_copy copy;
-  _cl_command_map map;
-  _cl_command_fill_image fill_image;
+  _cl_command_read_rect read_rect;
+  _cl_command_write_rect write_rect;
+  _cl_command_copy_rect copy_rect;
+  _cl_command_fill_mem memfill;
+
   _cl_command_read_image read_image;
   _cl_command_write_image write_image;
   _cl_command_copy_image copy_image;
+  _cl_command_fill_image fill_image;
+
+  _cl_command_map map;
+  _cl_command_unmap unmap;
+
   _cl_command_marker marker;
   _cl_command_barrier barrier;
-  _cl_command_unmap unmap;
   _cl_command_migrate migrate;
-  _cl_command_fill memfill;
 
   _cl_command_svm_free svm_free;
   _cl_command_svm_map svm_map;

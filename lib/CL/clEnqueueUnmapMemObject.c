@@ -79,16 +79,16 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
       "Could not find mapping of this memobj\n");
 
   errcode = pocl_create_command (&cmd, command_queue, 
-                                 CL_COMMAND_UNMAP_MEM_OBJECT, 
+                                 CL_COMMAND_UNMAP_MEM_OBJECT,
                                  event, num_events_in_wait_list, 
                                  event_wait_list, 1, &memobj);
 
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
-  cmd->command.unmap.data = command_queue->device->data;
   cmd->command.unmap.memobj = memobj;
   cmd->command.unmap.mapping = mapping;
+  cmd->command.unmap.mem_id = &memobj->device_ptrs[device->dev_id];
 
   POname(clRetainMemObject) (memobj);
   memobj->owning_device = command_queue->device;

@@ -502,7 +502,7 @@ pocl_pthread_exec_command (_cl_command_node *cmd,
 {
   if(cmd->type == CL_COMMAND_NDRANGE_KERNEL)
     {
-      pocl_pthread_prepare_kernel (cmd->command.run.data, cmd);
+      pocl_pthread_prepare_kernel (cmd->device->data, cmd);
     }
   else
     {

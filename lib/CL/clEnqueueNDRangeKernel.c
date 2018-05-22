@@ -525,7 +525,6 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
   pc.global_offset[2] = offset_z;
 
   command_node->type = CL_COMMAND_NDRANGE_KERNEL;
-  command_node->command.run.data = command_queue->device->data;
   command_node->command.run.tmp_dir = strdup (cachedir);
   command_node->command.run.kernel = kernel;
   command_node->command.run.pc = pc;

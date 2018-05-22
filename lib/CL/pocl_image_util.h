@@ -30,6 +30,8 @@
 #pragma GCC visibility push(hidden)
 #endif
 
+void origin_to_bytes (cl_mem mem, const size_t *origin, size_t *byte_offset);
+
 extern cl_int 
 pocl_check_image_origin_region (const cl_mem image, 
                                 const size_t *origin, 

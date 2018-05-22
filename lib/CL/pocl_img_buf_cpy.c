@@ -48,15 +48,30 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
                       size_t dst_slice_pitch,
                       cl_uint num_events_in_wait_list,
                       const cl_event *event_wait_list,
-                      cl_event *event)
+                      cl_event *event,
+                      _cl_command_node **cmd)
 {
   cl_int errcode;
   cl_device_id device;
-  _cl_command_node *cmd = NULL;
   unsigned i;
   cl_mem buffers[2] = {src, dst};
+  _cl_command_node *c;
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+
+  POCL_RETURN_ERROR_ON (
+      ((command_queue->context != src->context)
+       || (command_queue->context != dst->context)),
+      CL_INVALID_CONTEXT,
+      "src, dst and command_queue are not from the same context\n");
+
+  POCL_RETURN_ERROR_COND (
+      (event_wait_list == NULL && num_events_in_wait_list > 0),
+      CL_INVALID_EVENT_WAIT_LIST);
+
+  POCL_RETURN_ERROR_COND (
+      (event_wait_list != NULL && num_events_in_wait_list == 0),
+      CL_INVALID_EVENT_WAIT_LIST);
 
   if (src_is_image || dst_is_image)
     {
@@ -108,39 +123,30 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
         CL_INVALID_VALUE, "for any 2D image copy, region[2] must be 1\n");
    }
 
-
-  /* Images need to recompute the regions in bytes before copying */
+  /* Images need to recompute the regions in bytes for checking */
   size_t mod_region[3], mod_src_origin[3], mod_dst_origin[3];
   memcpy(mod_region, region, 3*sizeof(size_t));
   memcpy(mod_src_origin, src_origin, 3*sizeof(size_t));
   memcpy(mod_dst_origin, dst_origin, 3*sizeof(size_t));
-
-  if (src_is_image)
-    {
-      mod_region[0] *= src->image_elem_size * src->image_channels;
-      mod_src_origin[0] *= src->image_elem_size * src->image_channels;
-    }
-  if (dst_is_image)
-    {
-      if (!src_is_image)
-        mod_region[0] *= dst->image_elem_size * dst->image_channels;
-      mod_dst_origin[0] *= dst->image_elem_size * dst->image_channels;
-    }
 
   /* NOTE: 1D image array has row_pitch == slice_pitch;
    * need to zero it for bufferbound checks.
    */
   if (src_is_image)
     {
+      mod_region[0] *= src->image_elem_size * src->image_channels;
+      mod_src_origin[0] *= src->image_elem_size * src->image_channels;
       src_row_pitch = src->image_row_pitch;
       if (src->type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
         src_slice_pitch = 0;
       else
         src_slice_pitch = src->image_slice_pitch;
     }
-
   if (dst_is_image)
     {
+      if (!src_is_image)
+        mod_region[0] *= dst->image_elem_size * dst->image_channels;
+      mod_dst_origin[0] *= dst->image_elem_size * dst->image_channels;
       dst_row_pitch = dst->image_row_pitch;
       if (dst->type == CL_MEM_OBJECT_IMAGE1D_ARRAY)
         dst_slice_pitch = 0;
@@ -148,19 +154,6 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
         dst_slice_pitch = dst->image_slice_pitch;
     }
 
-  POCL_RETURN_ERROR_ON(((command_queue->context != src->context)
-      || (command_queue->context != dst->context)),
-    CL_INVALID_CONTEXT,
-      "src, dst and command_queue are not from the same context\n");
-
-  POCL_RETURN_ERROR_COND((event_wait_list == NULL && num_events_in_wait_list > 0),
-    CL_INVALID_EVENT_WAIT_LIST);
-
-  POCL_RETURN_ERROR_COND((event_wait_list != NULL && num_events_in_wait_list == 0),
-    CL_INVALID_EVENT_WAIT_LIST);
-
-  size_t region_bytes = mod_region[0] * mod_region[1] * mod_region[2];
-  POCL_RETURN_ERROR_ON((region_bytes <= 0), CL_INVALID_VALUE, "All items in region must be >0\n");
 
   if (pocl_buffer_boundcheck_3d(src->size, mod_src_origin, mod_region,
       &src_row_pitch, &src_slice_pitch, "src_") != CL_SUCCESS)
@@ -179,7 +172,7 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
       POCL_RETURN_ERROR_ON((src_row_pitch != dst_row_pitch),
         CL_INVALID_VALUE, "src and dst are the same object,"
         " but the given dst & src row pitch differ\n");
-
+      // TODO
       POCL_RETURN_ERROR_ON(
         (check_copy_overlap(mod_src_origin, mod_dst_origin, mod_region,
           src_row_pitch, src_slice_pitch)),
@@ -190,40 +183,20 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
 
   POCL_CHECK_DEV_IN_CMDQ;
 
-  errcode = pocl_create_command (&cmd, command_queue, command_type,
+  errcode = pocl_create_command (cmd, command_queue, command_type,
                                  event, num_events_in_wait_list,
                                  event_wait_list, 2, buffers);
 
-  if (errcode != CL_SUCCESS)
-    return errcode;
+  /* for CL_COMMAND_COPY_BUFFER_RECT, we also need to setup
+   * the output row/slice pitch parameters. */
+  if (errcode == CL_SUCCESS && command_type == CL_COMMAND_COPY_BUFFER_RECT)
+    {
+      c = *cmd;
+      c->command.copy_rect.src_row_pitch = src_row_pitch;
+      c->command.copy_rect.src_slice_pitch = src_slice_pitch;
+      c->command.copy_rect.dst_row_pitch = dst_row_pitch;
+      c->command.copy_rect.dst_slice_pitch = dst_slice_pitch;
+    }
 
-  HANDLE_IMAGE1D_BUFFER (src);
-  HANDLE_IMAGE1D_BUFFER (dst);
-
-  cmd->command.copy_image.src_buffer = src;
-  cmd->command.copy_image.src_device =
-    (src->owning_device) ? src->owning_device : command_queue->device;
-  cmd->command.copy_image.dst_buffer = dst;
-  cmd->command.copy_image.dst_device =
-    (dst->owning_device) ? dst->owning_device : command_queue->device;
-  cmd->command.copy_image.src_origin[0] = mod_src_origin[0];
-  cmd->command.copy_image.src_origin[1] = mod_src_origin[1];
-  cmd->command.copy_image.src_origin[2] = mod_src_origin[2];
-  cmd->command.copy_image.dst_origin[0] = mod_dst_origin[0];
-  cmd->command.copy_image.dst_origin[1] = mod_dst_origin[1];
-  cmd->command.copy_image.dst_origin[2] = mod_dst_origin[2];
-  cmd->command.copy_image.region[0] = mod_region[0];
-  cmd->command.copy_image.region[1] = mod_region[1];
-  cmd->command.copy_image.region[2] = mod_region[2];
-  cmd->command.copy_image.src_rowpitch = src_row_pitch;
-  cmd->command.copy_image.src_slicepitch = src_slice_pitch;
-  cmd->command.copy_image.dst_rowpitch = dst_row_pitch;
-  cmd->command.copy_image.dst_slicepitch = dst_slice_pitch;
-
-  POname(clRetainMemObject) (src);
-  POname(clRetainMemObject) (dst);
-
-  pocl_command_enqueue(command_queue, cmd);
-
-  return CL_SUCCESS;
+  return errcode;
 }

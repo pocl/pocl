@@ -26,6 +26,7 @@
 #define POCL_CL_H
 
 #include "config.h"
+
 #include <assert.h>
 #include <stdio.h>
 #ifndef _MSC_VER
@@ -268,6 +269,7 @@ typedef struct pocl_argument_info {
   unsigned type_size;
 } pocl_argument_info;
 
+
 struct pocl_device_ops {
   const char *device_name;
 
@@ -336,13 +338,28 @@ struct pocl_device_ops {
   cl_int (*init_queue) (cl_command_queue queue);
   void (*free_queue) (cl_command_queue queue);
 
+  /* allocate a buffer in device memory */
   cl_int (*alloc_mem_obj) (cl_device_id device, cl_mem mem_obj, void* host_ptr);
   void *(*create_sub_buffer) (void *data, void* buffer, size_t origin, size_t size);
+  /* free a device buffer */
   void (*free) (cl_device_id device, cl_mem mem_obj);
+  /* clEnqueSVMfree - free a SVM memory pointer. May be NULL if device doesn't
+   * support SVM. */
   void (*free_ptr) (cl_device_id device, void* mem_ptr);
-  void (*read) (void *data, void *host_ptr, const void *device_ptr,
-                size_t offset, size_t cb);
-  void (*read_rect) (void *data, void *host_ptr, void *device_ptr,
+
+  /* the following callbacks only deal with buffers (and IMAGE1D_BUFFER which
+   * is backed by a buffer), not images.  */
+
+  /* clEnqReadBuffer */
+  void (*read) (void *data,
+                void *__restrict__  dst_host_ptr,
+                void *__restrict__ src_device_ptr,
+                size_t offset,
+                size_t size);
+  /* clEnqReadBufferRect */
+  void (*read_rect) (void *data,
+                     void *__restrict__ dst_host_ptr,
+                     void *__restrict__ src_device_ptr,
                      const size_t *buffer_origin,
                      const size_t *host_origin, 
                      const size_t *region,
@@ -350,9 +367,16 @@ struct pocl_device_ops {
                      size_t buffer_slice_pitch,
                      size_t host_row_pitch,
                      size_t host_slice_pitch);
-  void (*write) (void *data, const void *host_ptr, void *device_ptr, 
-                 size_t offset, size_t cb);
-  void (*write_rect) (void *data, const void *host_ptr, void *device_ptr,
+  /* clEnqWriteBuffer */
+  void (*write) (void *data,
+                 const void *__restrict__  src_host_ptr,
+                 void *__restrict__  dst_device_ptr,
+                 size_t offset,
+                 size_t size);
+  /* clEnqWriteBufferRect */
+  void (*write_rect) (void *data,
+                      const void *__restrict__ src_host_ptr,
+                      void *__restrict__ dst_device_ptr,
                       const size_t *buffer_origin,
                       const size_t *host_origin, 
                       const size_t *region,
@@ -360,42 +384,46 @@ struct pocl_device_ops {
                       size_t buffer_slice_pitch,
                       size_t host_row_pitch,
                       size_t host_slice_pitch);
-  void (*copy) (void *data, const void *src_ptr, size_t src_offset, 
-                void *__restrict__ dst_ptr, size_t dst_offset, size_t cb);
-  void (*copy_rect) (void *data, const void *src_ptr, void *dst_ptr,
+  /* clEnqCopyBuffer */
+  void (*copy) (void *data,
+                void *__restrict__ dst_device_ptr,
+                void *__restrict__ src_device_ptr,
+                size_t dst_offset,
+                size_t src_offset,
+                size_t size);
+  /* clEnqCopyBufferRect */
+  void (*copy_rect) (void *data,
+                     void *__restrict__ dst_device_ptr,
+                     void *__restrict__ src_device_ptr,
+                     const size_t *dst_origin,
                      const size_t *src_origin,
-                     const size_t *dst_origin, 
                      const size_t *region,
-                     size_t src_row_pitch,
-                     size_t src_slice_pitch,
                      size_t dst_row_pitch,
-                     size_t dst_slice_pitch);
+                     size_t dst_slice_pitch,
+                     size_t src_row_pitch,
+                     size_t src_slice_pitch);
 
-  void (*fill_rect) (void *data,
-                   void *__restrict__ const device_ptr,
-                   const size_t *__restrict__ const buffer_origin,
-                   const size_t *__restrict__ const region,
-                   size_t const buffer_row_pitch,
-                   size_t const buffer_slice_pitch,
-                   void *fill_pixel,
-                   size_t pixel_size);
-
-  void (*memfill) (void *ptr,
+  /* clEnqFillBuffer */
+  void (*memfill) (void *data,
+                   void *__restrict__ device_ptr,
                    size_t size,
                    size_t offset,
-                   const void* pattern,
+                   const void *__restrict__  pattern,
                    size_t pattern_size);
 
-  /* Maps 'size' bytes of device global memory at buf_ptr + offset to 
+  /* Maps 'size' bytes of device global memory at  + offset to
      host-accessible memory. This might or might not involve copying 
      the block from the device. */
-  void* (*map_mem) (void *data, void *buf_ptr, size_t offset, size_t size, void *host_ptr);
-  /* reverse operation to map - this might need copying mem back to device */
-  void* (*unmap_mem) (void *data, void *host_ptr, void *device_start_ptr, size_t offset, size_t size);
+  cl_int (*map_mem) (void *data,
+                    void *__restrict__ src_device_ptr,
+                    mem_mapping_t *map);
+  cl_int (*unmap_mem) (void *data,
+                      void *__restrict__ dst_device_ptr,
+                      mem_mapping_t *map);
 
   /* compile the fully linked LLVM IR to target-specific binaries. */
   void (*compile_kernel) (_cl_command_node* cmd, cl_kernel kernel, cl_device_id device);
-
+  /* clEnqueueNDRangeKernel */
   void (*run) (void *data, _cl_command_node* cmd);
   /* for clEnqueueNativeKernel. may be NULL */
   void (*run_native) (void *data, _cl_command_node* cmd);
@@ -415,10 +443,100 @@ struct pocl_device_ops {
    * is used when writing/loading pocl binaries to decide compatibility. */
   char* (*build_hash) (cl_device_id device);
 
-    /* return supported image formats */
+  /* the following callbacks deal with images ONLY, with the exception of
+   * IMAGE1D_BUFFER type (which is implemented as a buffer).
+   * If the device does not support images, all of these may be NULL. */
+
+  /* return supported image formats */
   cl_int (*get_supported_image_formats) (cl_mem_flags flags,
                                          const cl_image_format **image_formats,
                                          cl_uint *num_image_formats);
+
+  /* returns a device specific pointer which may reference
+   * a hardware resource. May be NULL */
+  void* (*create_image) (void *data,
+                         const cl_image_format * image_format,
+                         const cl_image_desc *   image_desc,
+                         cl_mem image,
+                         cl_int *err);
+  /* free the device-specific pointer (image_data) from create_image() */
+  cl_int (*free_image) (void *data,
+                        cl_mem image,
+                        void *image_data);
+
+  /* creates a device-specific hardware resource for sampler. May be NULL */
+  void* (*create_sampler) (void *data,
+                           cl_sampler samp,
+                           cl_int *err);
+  cl_int (*free_sampler) (void *data,
+                          cl_sampler samp,
+                          void *sampler_data);
+
+  /* copies image to image, on the same device (or same global memory). */
+  cl_int (*copy_image_rect) (void *data,
+                             cl_mem src_image,
+                             cl_mem dst_image,
+                             pocl_mem_identifier *src_mem_id,
+                             pocl_mem_identifier *dst_mem_id,
+                             const size_t *src_origin,
+                             const size_t *dst_origin,
+                             const size_t *region);
+
+  /* copies a region from host OR device buffer to device image.
+   * clEnqueueCopyImageToBuffer: src_mem_id = buffer,
+   *     src_host_ptr = NULL, src_row_pitch = src_slice_pitch = 0
+   * clEnqueueWriteImage: src_mem_id = NULL,
+   *     src_host_ptr = host pointer, src_offset = 0
+   */
+  cl_int (*write_image_rect ) (void *data,
+                               cl_mem dst_image,
+                               pocl_mem_identifier *dst_mem_id,
+                               const void *__restrict__ src_host_ptr,
+                               pocl_mem_identifier *src_mem_id,
+                               const size_t *origin,
+                               const size_t *region,
+                               size_t src_row_pitch,
+                               size_t src_slice_pitch,
+                               size_t src_offset);
+
+  /* copies a region from device image to host or device buffer
+   * clEnqueueCopyBufferToImage: dst_mem_id = buffer,
+   *     dst_host_ptr = NULL, dst_row_pitch = dst_slice_pitch = 0
+   * clEnqueueReadImage: dst_mem_id = NULL,
+   *     dst_host_ptr = host pointer, dst_offset = 0
+   */
+  cl_int (*read_image_rect) (void *data,
+                             cl_mem src_image,
+                             pocl_mem_identifier *src_mem_id,
+                             void *__restrict__ dst_host_ptr,
+                             pocl_mem_identifier *dst_mem_id,
+                             const size_t *origin,
+                             const size_t *region,
+                             size_t dst_row_pitch,
+                             size_t dst_slice_pitch,
+                             size_t dst_offset);
+
+  /* maps the entire image from device to host */
+  cl_int (*map_image) (void *data,
+                       cl_mem src_image,
+                       pocl_mem_identifier *mem_id,
+                       mem_mapping_t *map);
+
+  /* unmaps the entire image from host to device */
+  cl_int (*unmap_image) (void *data,
+                         cl_mem dst_image,
+                         pocl_mem_identifier *mem_id,
+                         mem_mapping_t *map);
+
+  /* fill image with pattern */
+  cl_int (*fill_image)(void *data,
+                       cl_mem image,
+                       pocl_mem_identifier *mem_id,
+                       const size_t *origin,
+                       const size_t *region,
+                       const void *__restrict__ fill_pixel,
+                       size_t pixel_size);
+
 };
 
 typedef struct pocl_global_mem_t {
@@ -526,10 +644,8 @@ struct _cl_device_id {
   const char *profile;
   const char *version;
   const char *extensions;
-  cl_uint cl_version_major;    // 2
-  cl_uint cl_version_minor;    // 0
   const char *cl_version_std;  // "CL2.0"
-  cl_uint cl_version_int;      // 200
+  cl_ulong cl_version_int;     // 200
 
   void *data;
   const char* llvm_target_triplet; /* the llvm target triplet to use */
@@ -633,14 +749,6 @@ struct _cl_command_queue {
   void *data;
 };
 
-
-/* memory identifier: id to point the global memory where memory resides 
-                      + pointer to actual data */
-typedef struct _pocl_mem_identifier {
-  int available; /* ... in this mem objs context */
-  int global_mem_id;
-  void* mem_ptr;
-} pocl_mem_identifier;
 
 typedef struct _cl_mem cl_mem_t;
 struct _cl_mem {
@@ -838,6 +946,7 @@ struct _cl_sampler {
   cl_bool             normalized_coords;
   cl_addressing_mode  addressing_mode;
   cl_filter_mode      filter_mode;
+  void**              device_data;
 };
 
 #define POCL_UPDATE_EVENT_QUEUED(__event)                                     \

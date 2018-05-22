@@ -27,6 +27,7 @@
 
 #include "common.h"
 #include "devices.h"
+#include "pocl.h"
 #include "pocl-cuda.h"
 #include "pocl-ptx-gen.h"
 #include "pocl_cache.h"
@@ -141,7 +142,6 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->free = pocl_cuda_free;
   ops->free_ptr = pocl_cuda_free_ptr;
   ops->compile_kernel = pocl_cuda_compile_kernel;
-  ops->map_mem = pocl_cuda_map_mem;
   ops->submit = pocl_cuda_submit;
   ops->notify = pocl_cuda_notify;
   ops->wait_event = pocl_cuda_wait_event;
@@ -149,6 +149,8 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->free_event_data = pocl_cuda_free_event_data;
   ops->join = pocl_cuda_join;
   ops->flush = pocl_cuda_flush;
+  // TODO
+  ops->map_mem = pocl_cuda_map_mem;
 
   ops->read = NULL;
   ops->read_rect = NULL;
@@ -574,47 +576,21 @@ pocl_cuda_submit_write (CUstream stream, const void *host_ptr,
 }
 
 void
-pocl_cuda_submit_copy (CUstream stream, cl_device_id src_dev, cl_mem src_buf,
-                       size_t src_offset, cl_device_id dst_dev, cl_mem dst_buf,
+pocl_cuda_submit_copy (CUstream stream, void*__restrict__ src_mem_ptr,
+                       size_t src_offset,  void *__restrict__ dst_mem_ptr,
                        size_t dst_offset, size_t cb)
 {
-  void *src_ptr = src_buf->device_ptrs[src_dev->dev_id].mem_ptr + src_offset;
-  void *dst_ptr = dst_buf->device_ptrs[dst_dev->dev_id].mem_ptr + dst_offset;
-
-  int src_is_cuda = !strcmp (src_dev->ops->device_name, "CUDA");
-  int dst_is_cuda = !strcmp (dst_dev->ops->device_name, "CUDA");
-  if (!src_is_cuda && src_dev->global_mem_id)
-    POCL_ABORT_UNIMPLEMENTED ("[CUDA] copy from non-host memory");
-  if (!dst_is_cuda && dst_dev->global_mem_id)
-    POCL_ABORT_UNIMPLEMENTED ("[CUDA] copy to non-host memory");
+  void *src_ptr = src_mem_ptr + src_offset;
+  void *dst_ptr = dst_mem_ptr + dst_offset;
 
   if (src_ptr == dst_ptr)
     return;
 
   CUresult result;
-  if (src_is_cuda && dst_is_cuda)
-    {
-      result = cuMemcpyDtoDAsync ((CUdeviceptr)dst_ptr, (CUdeviceptr)src_ptr,
-                                  cb, stream);
-      CUDA_CHECK (result, "cuMemcpyDtoDAsync");
-    }
-  else if (src_is_cuda)
-    {
-      result = cuMemcpyDtoHAsync (dst_ptr, (CUdeviceptr)src_ptr, cb, stream);
-      CUDA_CHECK (result, "cuMemcpyDtoHAsync");
-    }
-  else if (dst_is_cuda)
-    {
-      result = cuMemcpyHtoDAsync ((CUdeviceptr)dst_ptr, src_ptr, cb, stream);
-      CUDA_CHECK (result, "cuMemcpyHtoDAsync");
-    }
-  else
-    {
-      /* This should infer a host->host copy via UVA */
-      result = cuMemcpyAsync ((CUdeviceptr)dst_ptr, (CUdeviceptr)src_ptr, cb,
-                              stream);
-      CUDA_CHECK (result, "cuMemcpyAsync");
-    }
+  POCL_MSG_PRINT_CUDA ("cuMemcpyDtoDAsync %p / %zu B \n", src_ptr, cb);
+  result = cuMemcpyDtoDAsync ((CUdeviceptr)dst_ptr, (CUdeviceptr)src_ptr,
+                                cb, stream);
+  CUDA_CHECK (result, "cuMemcpyDtoDAsync");
 }
 
 void
@@ -693,9 +669,10 @@ pocl_cuda_submit_write_rect (CUstream stream,
 }
 
 void
-pocl_cuda_submit_copy_rect (CUstream stream, cl_device_id src_dev,
-                            cl_mem src_buf, cl_device_id dst_dev,
-                            cl_mem dst_buf,
+pocl_cuda_submit_copy_rect (CUstream stream,
+                            cl_device_id dev,
+                            void* src_ptr,
+                            void* dst_ptr,
                             const size_t *__restrict__ const src_origin,
                             const size_t *__restrict__ const dst_origin,
                             const size_t *__restrict__ const region,
@@ -704,9 +681,6 @@ pocl_cuda_submit_copy_rect (CUstream stream, cl_device_id src_dev,
                             size_t const dst_row_pitch,
                             size_t const dst_slice_pitch)
 {
-  void *src_ptr = src_buf->device_ptrs[src_dev->dev_id].mem_ptr;
-  void *dst_ptr = dst_buf->device_ptrs[dst_dev->dev_id].mem_ptr;
-
   CUDA_MEMCPY3D params = { 0 };
 
   params.WidthInBytes = region[0];
@@ -727,17 +701,7 @@ pocl_cuda_submit_copy_rect (CUstream stream, cl_device_id src_dev,
   params.dstPitch = dst_row_pitch;
   params.dstHeight = dst_slice_pitch / dst_row_pitch;
 
-  int src_is_cuda = !strcmp (src_dev->ops->device_name, "CUDA");
-  int dst_is_cuda = !strcmp (dst_dev->ops->device_name, "CUDA");
-  if (!src_is_cuda && src_dev->global_mem_id)
-    POCL_ABORT_UNIMPLEMENTED ("[CUDA] copy from non-host memory");
-  if (!dst_is_cuda && dst_dev->global_mem_id)
-    POCL_ABORT_UNIMPLEMENTED ("[CUDA] copy to non-host memory");
-
-  params.srcMemoryType
-      = src_is_cuda ? CU_MEMORYTYPE_DEVICE : CU_MEMORYTYPE_HOST;
-  params.dstMemoryType
-      = dst_is_cuda ? CU_MEMORYTYPE_DEVICE : CU_MEMORYTYPE_HOST;
+  params.srcMemoryType = params.dstMemoryType = CU_MEMORYTYPE_DEVICE;
 
   CUresult result = cuMemcpy3DAsync (&params, stream);
   CUDA_CHECK (result, "cuMemcpy3DAsync");
@@ -753,21 +717,26 @@ pocl_cuda_map_mem (void *data, void *buf_ptr, size_t offset, size_t size,
 }
 
 void
-pocl_cuda_submit_map_mem (CUstream stream, void *buf_ptr, size_t offset,
-                          size_t size, void *host_ptr)
+pocl_cuda_submit_map_mem (CUstream stream, pocl_mem_identifier *mem,
+                          size_t offset, size_t size, void *host_ptr)
 {
   assert (host_ptr != NULL);
 
   /* TODO: Map instead of copy? */
   /* TODO: don't copy if mapped as CL_MAP_WRITE_INVALIDATE_REGION */
+
+  POCL_MSG_PRINT_CUDA ("cuMemcpyDtoHAsync %p / %zu B \n", host_ptr, size);
+
+  void *buf_ptr = mem->mem_ptr;
+
   CUresult result = cuMemcpyDtoHAsync (
       host_ptr, (CUdeviceptr) (buf_ptr + offset), size, stream);
   CUDA_CHECK (result, "cuMemcpyDtoHAsync");
 }
 
 void *
-pocl_cuda_submit_unmap_mem (CUstream stream, void *host_ptr,
-                            void *device_start_ptr, size_t offset, size_t size)
+pocl_cuda_submit_unmap_mem (CUstream stream, pocl_mem_identifier *mem,
+                            size_t offset, size_t size, void *host_ptr)
 {
   if (host_ptr)
     {
@@ -1121,95 +1090,94 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
 
   POCL_UNLOCK_OBJ (node->event);
 
+  cl_event event = node->event;
+  cl_device_id dev = node->device;
+  _cl_command_t *cmd = &node->command;
+
   switch (node->type)
     {
     case CL_COMMAND_READ_BUFFER:
-      pocl_cuda_submit_read (stream, node->command.read.host_ptr,
-                             node->command.read.device_ptr,
-                             node->command.read.offset, node->command.read.cb);
+      pocl_cuda_submit_read (
+          stream, cmd->read.dst_host_ptr, cmd->read.src_device_ptr,
+          node->command.read.offset, node->command.read.size);
       break;
     case CL_COMMAND_WRITE_BUFFER:
       pocl_cuda_submit_write (
-          stream, node->command.write.host_ptr, node->command.write.device_ptr,
-          node->command.write.offset, node->command.write.cb);
+          stream, cmd->write.src_host_ptr, cmd->write.dst_device_ptr,
+          node->command.write.offset, node->command.write.size);
       break;
     case CL_COMMAND_COPY_BUFFER:
       {
-        cl_device_id src_dev = node->command.copy.src_dev;
-        cl_mem src_buf = node->command.copy.src_buffer;
-        cl_device_id dst_dev = node->command.copy.dst_dev;
-        cl_mem dst_buf = node->command.copy.dst_buffer;
-        if (!src_dev)
-          src_dev = dst_dev;
         pocl_cuda_submit_copy (
-            stream, src_dev, src_buf, node->command.copy.src_offset, dst_dev,
-            dst_buf, node->command.copy.dst_offset, node->command.copy.cb);
+            stream, cmd->copy.src_device_ptr, cmd->copy.src_offset,
+            cmd->copy.dst_device_ptr, cmd->copy.dst_offset, cmd->copy.size);
         break;
       }
     case CL_COMMAND_READ_BUFFER_RECT:
       pocl_cuda_submit_read_rect (
-          stream, node->command.read_image.host_ptr,
-          node->command.read_image.device_ptr, node->command.read_image.origin,
-          node->command.read_image.h_origin, node->command.read_image.region,
-          node->command.read_image.b_rowpitch,
-          node->command.read_image.b_slicepitch,
-          node->command.read_image.h_rowpitch,
-          node->command.read_image.h_slicepitch);
+          stream,
+          cmd->read_rect.dst_host_ptr,
+          cmd->read_rect.src_device_ptr,
+          cmd->read_rect.buffer_origin,
+          cmd->read_rect.host_origin,
+          cmd->read_rect.region,
+          cmd->read_rect.buffer_row_pitch,
+          cmd->read_rect.buffer_slice_pitch,
+          cmd->read_rect.host_row_pitch,
+          cmd->read_rect.host_slice_pitch);
       break;
     case CL_COMMAND_WRITE_BUFFER_RECT:
-      pocl_cuda_submit_write_rect (stream, node->command.write_image.host_ptr,
-                                   node->command.write_image.device_ptr,
-                                   node->command.write_image.origin,
-                                   node->command.write_image.h_origin,
-                                   node->command.write_image.region,
-                                   node->command.write_image.b_rowpitch,
-                                   node->command.write_image.b_slicepitch,
-                                   node->command.write_image.h_rowpitch,
-                                   node->command.write_image.h_slicepitch);
+      pocl_cuda_submit_write_rect (
+          stream, cmd->write_image.src_host_ptr,
+          cmd->write_rect.dst_device_ptr,
+          cmd->write_rect.buffer_origin,
+          cmd->write_rect.host_origin,
+          cmd->write_rect.region,
+          cmd->read_rect.buffer_row_pitch,
+          cmd->read_rect.buffer_slice_pitch,
+          cmd->read_rect.host_row_pitch,
+          cmd->read_rect.host_slice_pitch);
       break;
     case CL_COMMAND_COPY_BUFFER_RECT:
       {
-        cl_device_id src_dev = node->command.copy_image.src_device;
-        cl_mem src_buf = node->command.copy_image.src_buffer;
-        cl_device_id dst_dev = node->command.copy_image.dst_device;
-        cl_mem dst_buf = node->command.copy_image.dst_buffer;
-        if (!src_dev)
-          src_dev = dst_dev;
-        pocl_cuda_submit_copy_rect (stream, src_dev, src_buf, dst_dev, dst_buf,
-                                    node->command.copy_image.src_origin,
-                                    node->command.copy_image.dst_origin,
-                                    node->command.copy_image.region,
-                                    node->command.copy_image.src_rowpitch,
-                                    node->command.copy_image.src_slicepitch,
-                                    node->command.copy_image.dst_rowpitch,
-                                    node->command.copy_image.dst_slicepitch);
+        pocl_cuda_submit_copy_rect (
+              stream, dev,
+              cmd->copy_rect.src_device_ptr,
+              cmd->copy_rect.dst_device_ptr,
+              cmd->copy_rect.src_origin,
+              cmd->copy_rect.dst_origin,
+              cmd->copy_rect.region,
+              cmd->copy_rect.src_row_pitch,
+              cmd->copy_rect.src_slice_pitch,
+              cmd->copy_rect.dst_row_pitch,
+              cmd->copy_rect.dst_slice_pitch);
         break;
       }
     case CL_COMMAND_MIGRATE_MEM_OBJECTS:
       {
         size_t i;
-        for (i = 0; i < node->command.migrate.num_mem_objects; i++)
+        for (i = 0; i < cmd->migrate.num_mem_objects; i++)
           {
-            cl_device_id src_dev = node->command.migrate.source_devices[i];
-            cl_device_id dst_dev = cq->device;
-            cl_mem buf = node->command.migrate.mem_objects[i];
-            if (!src_dev)
-              src_dev = dst_dev;
-            pocl_cuda_submit_copy (stream, src_dev, buf, 0, dst_dev, buf, 0,
-                                   buf->size);
+//            cl_device_id src_dev = cmd->migrate.source_devices[i];
+//            cl_device_id dst_dev = cq->device;
+            cl_mem buf = cmd->migrate.mem_objects[i];
+//            if (!src_dev)
+//              src_dev = dst_dev;
+            // TODO
+            void *ptr = buf->device_ptrs[dev->dev_id].mem_ptr;
+            pocl_cuda_submit_copy (stream, ptr, 0, ptr, 0, buf->size);
           }
         break;
       }
     case CL_COMMAND_MAP_BUFFER:
       {
-        cl_device_id device = node->device;
-        cl_mem buffer = node->command.map.buffer;
-        if (!(buffer->flags & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR)))
-          pocl_cuda_submit_map_mem (
-              stream, buffer->device_ptrs[device->dev_id].mem_ptr,
-              node->command.map.mapping->offset,
-              node->command.map.mapping->size,
-              node->command.map.mapping->host_ptr);
+        cl_mem buffer = cmd->map.memobj;
+        assert (!(buffer->flags & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR)));
+        pocl_cuda_submit_map_mem (
+            stream, cmd->map.mem_id,
+            cmd->map.mapping->offset,
+            cmd->map.mapping->size,
+            cmd->map.mapping->host_ptr);
         POCL_LOCK_OBJ (buffer);
         buffer->map_count++;
         POCL_UNLOCK_OBJ (buffer);
@@ -1217,18 +1185,17 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
       }
     case CL_COMMAND_UNMAP_MEM_OBJECT:
       {
-        cl_device_id device = node->device;
-        cl_mem buffer = node->command.unmap.memobj;
+        cl_mem buffer = cmd->unmap.memobj;
+        assert (buffer->is_image == CL_FALSE);
         pocl_cuda_submit_unmap_mem (
-            stream, node->command.unmap.mapping->host_ptr,
-            buffer->device_ptrs[device->dev_id].mem_ptr,
-            node->command.unmap.mapping->offset,
-            node->command.unmap.mapping->size);
+            stream, cmd->unmap.mem_id,
+            cmd->unmap.mapping->offset,
+            cmd->unmap.mapping->size,
+            cmd->unmap.mapping->host_ptr);
         break;
       }
     case CL_COMMAND_NDRANGE_KERNEL:
-      pocl_cuda_submit_kernel (stream, node->command.run, node->device,
-                               node->event);
+      pocl_cuda_submit_kernel (stream, cmd->run, node->device, node->event);
       break;
 
     case CL_COMMAND_MARKER:

@@ -205,13 +205,13 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->init = pocl_hsa_init;
   ops->alloc_mem_obj = pocl_hsa_alloc_mem_obj;
   ops->free = pocl_hsa_free;
-  //ops->run = pocl_hsa_run;
-  ops->read = pocl_basic_read;
-  ops->read_rect = pocl_basic_read_rect;
-  ops->write = pocl_basic_write;
-  ops->write_rect = pocl_basic_write_rect;
+  ops->run = NULL;
+  //  ops->read = pocl_basic_read;
+  //  ops->read_rect = pocl_basic_read_rect;
+  //  ops->write = pocl_basic_write;
+  //  ops->write_rect = pocl_basic_write_rect;
   ops->copy = pocl_hsa_copy;
-  ops->copy_rect = pocl_basic_copy_rect;
+  //  ops->copy_rect = pocl_basic_copy_rect;
   ops->get_timer_value = pocl_hsa_get_timer_value;
 
   // new driver api (out-of-order)
@@ -225,11 +225,8 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->update_event = pocl_hsa_update_event;
   ops->free_event_data = pocl_hsa_free_event_data;
   ops->init_target_machine = NULL;
-  ops->run = NULL;
   ops->wait_event = pocl_hsa_wait_event;
   ops->update_event = pocl_hsa_update_event;
-  ops->free_event_data = NULL;
-
   ops->build_hash = pocl_hsa_build_hash;
 }
 
@@ -778,12 +775,16 @@ pocl_hsa_free (cl_device_id device, cl_mem memobj)
 }
 
 void
-pocl_hsa_copy (void *data, const void *src_ptr, size_t src_offset,
-               void *__restrict__ dst_ptr, size_t dst_offset, size_t cb)
+pocl_hsa_copy (void *data,
+               void *__restrict__ dst_ptr,
+               void *__restrict__ src_ptr,
+               size_t dst_offset,
+               size_t src_offset,
+               size_t size)
 {
   assert(src_offset == 0);
   assert(dst_offset == 0);
-  HSA_CHECK(hsa_memory_copy(dst_ptr, src_ptr, cb));
+  HSA_CHECK (hsa_memory_copy (dst_ptr, src_ptr, size));
 }
 
 cl_int

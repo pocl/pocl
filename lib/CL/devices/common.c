@@ -300,8 +300,9 @@ pocl_copy_mem_object (cl_device_id dest_dev, cl_mem dest,
     {
       src_dev->ops->copy 
         (dest_dev->data, 
-         source->device_ptrs[src_dev->dev_id].mem_ptr, source_offset,
-         dest->device_ptrs[dest_dev->dev_id].mem_ptr, dest_offset, 
+         dest->device_ptrs[dest_dev->dev_id].mem_ptr,
+         source->device_ptrs[src_dev->dev_id].mem_ptr,
+         dest_offset, source_offset,
          cb);
     }
   else
@@ -383,7 +384,6 @@ pocl_mem_objs_cleanup (cl_event event)
   event->mem_objs = NULL;
 }
 
-static const size_t zero_origin[] = { 0, 0, 0 };
 /**
  * executes given command.
  */
@@ -393,312 +393,351 @@ pocl_exec_command (_cl_command_node * volatile node)
   unsigned i;
   /* because of POCL_UPDATE_EVENT_ */
   cl_event event = node->event;
+  cl_device_id dev = node->device;
+  _cl_command_t *cmd = &node->command;
   switch (node->type)
     {
     case CL_COMMAND_READ_BUFFER:
       POCL_UPDATE_EVENT_RUNNING(event);
-      node->device->ops->read
-        (node->device->data, 
-         node->command.read.host_ptr, 
-         node->command.read.device_ptr,
-         node->command.read.offset,
-         node->command.read.cb);
+      assert (dev->ops->read);
+      dev->ops->read
+        (dev->data,
+         cmd->read.dst_host_ptr,
+         cmd->read.src_device_ptr,
+         cmd->read.offset,
+         cmd->read.size);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Read Buffer           ");
       break;
+
     case CL_COMMAND_WRITE_BUFFER:
       POCL_UPDATE_EVENT_RUNNING(event);
-      node->device->ops->write
-        (node->device->data, 
-         node->command.write.host_ptr, 
-         node->command.write.device_ptr,
-         node->command.write.offset, 
-         node->command.write.cb);
+      assert (dev->ops->write);
+      dev->ops->write
+        (dev->data,
+         cmd->write.src_host_ptr,
+         cmd->write.dst_device_ptr,
+         cmd->write.offset,
+         cmd->write.size);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Write Buffer          ");
       break;
+
     case CL_COMMAND_COPY_BUFFER:
       POCL_UPDATE_EVENT_RUNNING(event);
-      pocl_copy_mem_object (node->command.copy.dst_dev, 
-                            node->command.copy.dst_buffer,
-                            node->command.copy.dst_offset,
-                            node->command.copy.src_dev,
-                            node->command.copy.src_buffer,
-                            node->command.copy.src_offset, 
-                            node->command.copy.cb);
+      assert (dev->ops->copy);
+      dev->ops->copy
+        (dev->data,
+         cmd->copy.dst_device_ptr,
+         cmd->copy.src_device_ptr,
+         cmd->copy.dst_offset,
+         cmd->copy.src_offset,
+         cmd->copy.size);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Copy Buffer           ");
       break;
-    case CL_COMMAND_MIGRATE_MEM_OBJECTS:
+
+    case CL_COMMAND_FILL_BUFFER:
       POCL_UPDATE_EVENT_RUNNING(event);
+      assert (dev->ops->memfill);
+      dev->ops->memfill
+        (dev->data,
+         cmd->memfill.device_ptr,
+         cmd->memfill.size,
+         cmd->memfill.offset,
+         cmd->memfill.pattern,
+         cmd->memfill.pattern_size);
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Fill Buffer           ");
+      pocl_aligned_free (cmd->memfill.pattern);
+      break;
+
+    case CL_COMMAND_READ_BUFFER_RECT:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      assert (dev->ops->read_rect);
+      dev->ops->read_rect
+        (dev->data,
+         cmd->read_rect.dst_host_ptr,
+         cmd->read_rect.src_device_ptr,
+         cmd->read_rect.buffer_origin,
+         cmd->read_rect.host_origin,
+         cmd->read_rect.region,
+         cmd->read_rect.buffer_row_pitch,
+         cmd->read_rect.buffer_slice_pitch,
+         cmd->read_rect.host_row_pitch,
+         cmd->read_rect.host_slice_pitch);
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Read Buffer Rect      ");
+      break;
+
+    case CL_COMMAND_COPY_BUFFER_RECT:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      assert (dev->ops->copy_rect);
+      dev->ops->copy_rect
+        (dev->data,
+         cmd->copy_rect.dst_device_ptr,
+         cmd->copy_rect.src_device_ptr,
+         cmd->copy_rect.dst_origin,
+         cmd->copy_rect.src_origin,
+         cmd->copy_rect.region,
+         cmd->copy_rect.dst_row_pitch,
+         cmd->copy_rect.dst_slice_pitch,
+         cmd->copy_rect.src_row_pitch,
+         cmd->copy_rect.src_slice_pitch);
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Copy Buffer Rect      ");
+      break;
+
+    case CL_COMMAND_WRITE_BUFFER_RECT:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      assert (dev->ops->write_rect);
+      dev->ops->write_rect
+        (dev->data,
+         cmd->write_rect.src_host_ptr,
+         cmd->write_rect.dst_device_ptr,
+         cmd->write_rect.buffer_origin,
+         cmd->write_rect.host_origin,
+         cmd->write_rect.region,
+         cmd->write_rect.buffer_row_pitch,
+         cmd->write_rect.buffer_slice_pitch,
+         cmd->write_rect.host_row_pitch,
+         cmd->write_rect.host_slice_pitch);
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Write Buffer Rect     ");
+      break;
+
+    case CL_COMMAND_MIGRATE_MEM_OBJECTS:
+      POCL_UPDATE_EVENT_RUNNING (event);
       pocl_migrate_mem_objects (node);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Migrate Buffer        ");
       break;
-    case CL_COMMAND_MAP_IMAGE:
-    case CL_COMMAND_MAP_BUFFER: 
-      POCL_UPDATE_EVENT_RUNNING(event);
-      POCL_LOCK_OBJ (node->command.map.buffer);
-      if (node->device->ops->map_mem != NULL)
-        node->device->ops->map_mem (node->device->data,
-                                    (node->command.map.buffer)
-                                        ->device_ptrs[node->device->dev_id]
-                                        .mem_ptr,
-                                    (node->command.map.mapping)->offset,
-                                    (node->command.map.mapping)->size,
-                                    (node->command.map.mapping)->host_ptr);
-      (node->command.map.buffer)->map_count++;
-      POCL_UNLOCK_OBJ (node->command.map.buffer);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Map Image/Buffer      ");
+
+    case CL_COMMAND_MAP_BUFFER:
+      POCL_UPDATE_EVENT_RUNNING (event);
+      assert (dev->ops->map_mem);
+      POCL_LOCK_OBJ (cmd->map.memobj);
+        dev->ops->map_mem (dev->data,
+                           cmd->map.mem_id->mem_ptr,
+                           cmd->map.mapping);
+      (cmd->map.memobj)->map_count++;
+      POCL_UNLOCK_OBJ (cmd->map.memobj);
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Map Buffer            ");
       break;
-    case CL_COMMAND_WRITE_IMAGE:
-      POCL_UPDATE_EVENT_RUNNING(event);
-      node->device->ops->write_rect (
-         node->device->data,
-         node->command.write_image.host_ptr,
-         node->command.write_image.device_ptr,
-         node->command.write_image.origin,
-         zero_origin,
-         node->command.write_image.region,
-         node->command.write_image.b_rowpitch,
-         node->command.write_image.b_slicepitch,
-         node->command.write_image.h_rowpitch,
-         node->command.write_image.h_slicepitch);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Write Image           ");
+
+    case CL_COMMAND_COPY_IMAGE_TO_BUFFER:
+      POCL_UPDATE_EVENT_RUNNING (event);
+      assert (dev->ops->read_image_rect);
+      dev->ops->read_image_rect (
+          dev->data,
+          cmd->read_image.src_image,
+          cmd->read_image.src_mem_id,
+          NULL,
+          cmd->read_image.dst_mem_id,
+          cmd->read_image.origin,
+          cmd->read_image.region,
+          cmd->read_image.dst_row_pitch,
+          cmd->read_image.dst_slice_pitch,
+          cmd->read_image.dst_offset);
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "CopyImageToBuffer       ");
       break;
-    case CL_COMMAND_WRITE_BUFFER_RECT:
-      POCL_UPDATE_EVENT_RUNNING(event);
-      node->device->ops->write_rect
-        (node->device->data,
-         node->command.write_image.host_ptr,
-         node->command.write_image.device_ptr,
-         node->command.write_image.origin,
-         node->command.write_image.h_origin,
-         node->command.write_image.region,
-         node->command.write_image.b_rowpitch,
-         node->command.write_image.b_slicepitch,
-         node->command.write_image.h_rowpitch,
-         node->command.write_image.h_slicepitch);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Write Image           ");
-      break;
+
     case CL_COMMAND_READ_IMAGE:
       POCL_UPDATE_EVENT_RUNNING(event);
-      node->device->ops->read_rect (
-         node->device->data,
-         node->command.read_image.host_ptr,
-         node->command.read_image.device_ptr,
-         node->command.read_image.origin,
-         zero_origin,
-         node->command.read_image.region,
-         node->command.read_image.b_rowpitch,
-         node->command.read_image.b_slicepitch,
-         node->command.read_image.h_rowpitch,
-         node->command.read_image.h_slicepitch);
+      assert (dev->ops->read_image_rect);
+      dev->ops->read_image_rect (
+          dev->data,
+          cmd->read_image.src_image,
+          cmd->read_image.src_mem_id,
+          cmd->read_image.dst_host_ptr,
+          NULL,
+          cmd->read_image.origin,
+          cmd->read_image.region,
+          cmd->read_image.dst_row_pitch,
+          cmd->read_image.dst_slice_pitch,
+          cmd->read_image.dst_offset);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Read Image            ");
       break;
-    case CL_COMMAND_READ_BUFFER_RECT:
-      POCL_UPDATE_EVENT_RUNNING(event);
-      node->device->ops->read_rect
-        (node->device->data, node->command.read_image.host_ptr,
-         node->command.read_image.device_ptr,
-         node->command.read_image.origin,
-         node->command.read_image.h_origin,
-         node->command.read_image.region,
-         node->command.read_image.b_rowpitch,
-         node->command.read_image.b_slicepitch,
-         node->command.read_image.h_rowpitch,
-         node->command.read_image.h_slicepitch);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Read Buffer Rect      ");
-      break;
-    case CL_COMMAND_COPY_BUFFER_RECT:
-    case CL_COMMAND_COPY_BUFFER_TO_IMAGE:
-    case CL_COMMAND_COPY_IMAGE_TO_BUFFER:
-    case CL_COMMAND_COPY_IMAGE:
-      POCL_UPDATE_EVENT_RUNNING(event);
-      cl_device_id src_dev = node->command.copy_image.src_device;
-      cl_mem src_buf = node->command.copy_image.src_buffer;
-      cl_device_id dst_dev = node->command.copy_image.dst_device;
-      cl_mem dst_buf = node->command.copy_image.dst_buffer;
 
-      /* if source and destination are in the same global mem  */
-      if (src_dev->global_mem_id == dst_dev->global_mem_id)
+    case CL_COMMAND_COPY_BUFFER_TO_IMAGE:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      assert (dev->ops->write_image_rect);
+      dev->ops->write_image_rect (
+          dev->data,
+          cmd->write_image.dst_image,
+          cmd->write_image.dst_mem_id,
+          NULL,
+          cmd->write_image.src_mem_id,
+          cmd->write_image.origin,
+          cmd->write_image.region,
+          cmd->write_image.src_row_pitch,
+          cmd->write_image.src_slice_pitch,
+          cmd->write_image.src_offset);
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "CopyBufferToImage       ");
+      break;
+
+    case CL_COMMAND_WRITE_IMAGE:
+        POCL_UPDATE_EVENT_RUNNING(event);
+        assert (dev->ops->write_image_rect);
+        dev->ops->write_image_rect (
+            dev->data,
+            cmd->write_image.dst_image,
+            cmd->write_image.dst_mem_id,
+            cmd->write_image.src_host_ptr,
+            NULL,
+            cmd->write_image.origin,
+            cmd->write_image.region,
+            cmd->write_image.src_row_pitch,
+            cmd->write_image.src_slice_pitch,
+            cmd->write_image.src_offset);
+        POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Write Image           ");
+        break;
+
+    case CL_COMMAND_COPY_IMAGE:
+        POCL_UPDATE_EVENT_RUNNING(event);
+        assert (dev->ops->copy_image_rect);
+        dev->ops->copy_image_rect(
+              dev->data,
+              cmd->copy_image.src_image,
+              cmd->copy_image.dst_image,
+              cmd->copy_image.src_mem_id,
+              cmd->copy_image.dst_mem_id,
+              cmd->copy_image.src_origin,
+              cmd->copy_image.dst_origin,
+              cmd->copy_image.region);
+        POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Copy Image            ");
+        break;
+
+    case CL_COMMAND_FILL_IMAGE:
+      POCL_UPDATE_EVENT_RUNNING (event);
+      assert (dev->ops->fill_image);
+      dev->ops->fill_image
+        (dev->data,
+         cmd->fill_image.image,
+         cmd->fill_image.mem_id,
+         cmd->fill_image.origin,
+         cmd->fill_image.region,
+         cmd->fill_image.fill_pixel,
+         cmd->fill_image.pixel_size);
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Fill Image            ");
+      POCL_MEM_FREE (cmd->fill_image.fill_pixel);
+      break;
+
+    case CL_COMMAND_MAP_IMAGE:
+      POCL_UPDATE_EVENT_RUNNING(event);
+      POCL_LOCK_OBJ (cmd->map.memobj);
+      assert (dev->ops->map_image != NULL);
+      dev->ops->map_image (dev->data,
+                           cmd->map.memobj,
+                           cmd->map.mem_id,
+                           cmd->map.mapping);
+      (cmd->map.memobj)->map_count++;
+      POCL_UNLOCK_OBJ (cmd->map.memobj);
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Map Image             ");
+      break;
+
+    case CL_COMMAND_UNMAP_MEM_OBJECT:
+      POCL_UPDATE_EVENT_RUNNING (event);
+      POCL_LOCK_OBJ (cmd->unmap.memobj);
+      if (cmd->unmap.memobj->is_image == CL_FALSE) // TODO handle 1d-buffer
         {
-          node->device->ops->copy_rect
-            (node->device->data,
-             src_buf->device_ptrs[src_dev->dev_id].mem_ptr,
-             dst_buf->device_ptrs[dst_dev->dev_id].mem_ptr,
-             node->command.copy_image.src_origin,
-             node->command.copy_image.dst_origin,
-             node->command.copy_image.region,
-             node->command.copy_image.src_rowpitch,
-             node->command.copy_image.src_slicepitch,
-             node->command.copy_image.dst_rowpitch,
-             node->command.copy_image.dst_slicepitch);
+          assert (dev->ops->unmap_mem != NULL);
+          dev->ops->unmap_mem (dev->data,
+                               cmd->unmap.mem_id->mem_ptr,
+                               cmd->unmap.mapping);
         }
-      /* if source and destination are in different global mem
-         data needs to be read to the host memory and then written to
-         destination device */
       else
         {
-          size_t size = node->command.copy_image.region[0]
-            * node->command.copy_image.region[1]
-            * node->command.copy_image.region[2];
-          void *tmp = malloc (size);
-
-          /* origin and slice pitch for tmp buffer */
-          const size_t null_origin[3] = {0, 0, 0};
-          size_t tmp_rowpitch =
-            node->command.copy_image.region[0];
-          size_t tmp_slicepitch =
-            node->command.copy_image.region[0]
-            * node->command.copy_image.region[1];
-
-          src_dev->ops->read_rect
-            (src_dev->data,
-             tmp,
-             src_buf->device_ptrs[src_dev->dev_id].mem_ptr,
-             node->command.copy_image.src_origin,
-             null_origin,
-             node->command.copy_image.region,
-             node->command.copy_image.src_rowpitch,
-             node->command.copy_image.src_slicepitch,
-             tmp_rowpitch,
-             tmp_slicepitch);
-
-          dst_dev->ops->write_rect
-            (dst_dev->data,
-             tmp,
-             dst_buf->device_ptrs[dst_dev->dev_id].mem_ptr,
-             node->command.copy_image.dst_origin,
-             null_origin,
-             node->command.copy_image.region,
-             node->command.copy_image.dst_rowpitch,
-             node->command.copy_image.dst_slicepitch,
-             tmp_rowpitch,
-             tmp_slicepitch);
-          free (tmp);
+          assert (dev->ops->unmap_image != NULL);
+          dev->ops->unmap_image (dev->data,
+                                 cmd->unmap.memobj,
+                                 cmd->unmap.mem_id,
+                                 cmd->unmap.mapping);
         }
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Copy Buffer Rect      ");
-      break;
-    case CL_COMMAND_UNMAP_MEM_OBJECT:
-      POCL_UPDATE_EVENT_RUNNING(event);
-      /* TODO: should we ensure the device global region is updated from
-         the host memory? How does the specs define it,
-         can the host_ptr be assumed to point to the host and the
-         device accessible memory or just point there until the
-         kernel(s) get executed or similar? */
-      /* Assume the region is automatically up to date. */
-      POCL_LOCK_OBJ (node->command.unmap.memobj);
-      if (node->device->ops->unmap_mem != NULL)
-        node->device->ops->unmap_mem (node->device->data,
-                                      (node->command.unmap.mapping)->host_ptr,
-                                      (node->command.unmap.memobj)
-                                          ->device_ptrs[node->device->dev_id]
-                                          .mem_ptr,
-                                      (node->command.unmap.mapping)->offset,
-                                      (node->command.unmap.mapping)->size);
-      assert ((node->command.unmap.mapping)->unmap_requested > 0);
-      DL_DELETE((node->command.unmap.memobj)->mappings, 
-                node->command.unmap.mapping);
-      (node->command.unmap.memobj)->map_count--;
-      POCL_MEM_FREE (node->command.unmap.mapping);
-      POCL_UNLOCK_OBJ (node->command.unmap.memobj);
+      assert ((cmd->unmap.mapping)->unmap_requested > 0);
+      DL_DELETE ((cmd->unmap.memobj)->mappings, cmd->unmap.mapping);
+      (cmd->unmap.memobj)->map_count--;
+      POCL_MEM_FREE (cmd->unmap.mapping);
+      POCL_UNLOCK_OBJ (cmd->unmap.memobj);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Unmap Mem obj         ");
       break;
+
     case CL_COMMAND_NDRANGE_KERNEL:
       POCL_UPDATE_EVENT_RUNNING(event);
       assert (event == node->event);
-      node->device->ops->run(node->command.run.data, node);
+      assert (dev->ops->run);
+      dev->ops->run (dev->data, node);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Enqueue NDRange       ");
       pocl_ndrange_node_cleanup(node);
       break;
+
     case CL_COMMAND_NATIVE_KERNEL:
       POCL_UPDATE_EVENT_RUNNING(event);
-      node->device->ops->run_native(node->command.native.data, node);
+      assert (dev->ops->run_native);
+      dev->ops->run_native (dev->data, node);
       pocl_native_kernel_cleanup(node);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Native Kernel         ");
       break;
-    case CL_COMMAND_FILL_IMAGE:
-      POCL_UPDATE_EVENT_RUNNING(event);
-      node->device->ops->fill_rect 
-        (node->command.fill_image.data, 
-         node->command.fill_image.device_ptr,
-         node->command.fill_image.buffer_origin,
-         node->command.fill_image.region,
-         node->command.fill_image.rowpitch, 
-         node->command.fill_image.slicepitch,
-         node->command.fill_image.fill_pixel,
-         node->command.fill_image.pixel_size);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Fill Image            ");
-      free(node->command.fill_image.fill_pixel);
-      break;
-    case CL_COMMAND_FILL_BUFFER:
-      POCL_UPDATE_EVENT_RUNNING(event);
-      node->device->ops->memfill
-        (node->command.memfill.ptr,
-         node->command.memfill.size,
-         node->command.memfill.offset,
-         node->command.memfill.pattern,
-         node->command.memfill.pattern_size);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Fill Buffer           ");
-      pocl_aligned_free(node->command.memfill.pattern);
-      break;
+
     case CL_COMMAND_MARKER:
       POCL_UPDATE_EVENT_RUNNING(event);
       POCL_UPDATE_EVENT_COMPLETE(event);
       break;
+
     case CL_COMMAND_BARRIER:
       POCL_UPDATE_EVENT_RUNNING(event);
       POCL_UPDATE_EVENT_COMPLETE(event);
       break;
+
     case CL_COMMAND_SVM_FREE:
       POCL_UPDATE_EVENT_RUNNING(event);
-      if (node->command.svm_free.pfn_free_func)
-        node->command.svm_free.pfn_free_func(
-           node->command.svm_free.queue,
-           node->command.svm_free.num_svm_pointers,
-           node->command.svm_free.svm_pointers,
-           node->command.svm_free.data);
+      if (cmd->svm_free.pfn_free_func)
+        cmd->svm_free.pfn_free_func(
+           cmd->svm_free.queue,
+           cmd->svm_free.num_svm_pointers,
+           cmd->svm_free.svm_pointers,
+           cmd->svm_free.data);
       else
-        for (i=0; i < node->command.svm_free.num_svm_pointers; i++)
-          node->device->ops->free_ptr(node->device,
-                                      node->command.svm_free.svm_pointers[i]);
+        for (i = 0; i < cmd->svm_free.num_svm_pointers; i++)
+          dev->ops->free_ptr (dev, cmd->svm_free.svm_pointers[i]);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "SVM Free              ");
       break;
+
     case CL_COMMAND_SVM_MAP:
       POCL_UPDATE_EVENT_RUNNING(event);
-      if (DEVICE_MMAP_IS_NOP(node->device))
+      if (DEVICE_MMAP_IS_NOP (dev))
         ; // no-op
       else
-        node->device->ops->map_mem
-          (node->device->data, node->command.svm_map.svm_ptr,
-           0, node->command.svm_map.size, NULL);
+        // TODO
+        assert (dev->ops->map_mem);
+      dev->ops->map_mem (dev->data, cmd->svm_map.svm_ptr, NULL);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "SVM Map              ");
       break;
+
     case CL_COMMAND_SVM_UNMAP:
       POCL_UPDATE_EVENT_RUNNING(event);
-      if (DEVICE_MMAP_IS_NOP(node->device))
+      if (DEVICE_MMAP_IS_NOP (dev))
         ; // no-op
       else
-        node->device->ops->unmap_mem
-          (node->device->data, NULL,
-           node->command.svm_unmap.svm_ptr, 0, 0);
+        // TODO check
+        assert (dev->ops->unmap_mem);
+      dev->ops->unmap_mem (dev->data, cmd->svm_unmap.svm_ptr, NULL);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "SVM Unmap             ");
       break;
+
     case CL_COMMAND_SVM_MEMCPY:
       POCL_UPDATE_EVENT_RUNNING(event);
-      node->device->ops->copy(NULL,
-                              node->command.svm_memcpy.src, 0,
-                              node->command.svm_memcpy.dst, 0,
-                              node->command.svm_memcpy.size);
+      assert (dev->ops->copy);
+      dev->ops->copy (dev->data,
+                      cmd->svm_memcpy.dst, cmd->svm_memcpy.src, 0, 0,
+                      cmd->svm_memcpy.size);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "SVM Memcpy            ");
       break;
+
     case CL_COMMAND_SVM_MEMFILL:
       POCL_UPDATE_EVENT_RUNNING(event);
-      node->device->ops->memfill(
-                                 node->command.memfill.ptr,
-                                 node->command.memfill.size, 0,
-                                 node->command.memfill.pattern,
-                                 node->command.memfill.pattern_size);
+      assert (dev->ops->memfill);
+      dev->ops->memfill(dev->data,
+                                 cmd->memfill.device_ptr,
+                                 cmd->memfill.size, 0,
+                                 cmd->memfill.pattern,
+                                 cmd->memfill.pattern_size);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "SVM MemFill           ");
-      pocl_aligned_free(node->command.memfill.pattern);
+      pocl_aligned_free (cmd->memfill.pattern);
       break;
+
     default:
       POCL_ABORT_UNIMPLEMENTED("");
       break;

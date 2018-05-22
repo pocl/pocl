@@ -41,13 +41,46 @@ POname(clEnqueueCopyBufferRect)(cl_command_queue command_queue,
                                 const cl_event *event_wait_list,
                                 cl_event *event) CL_API_SUFFIX__VERSION_1_1
 {
-  return pocl_rect_copy(command_queue, CL_COMMAND_COPY_BUFFER_RECT,
+  _cl_command_node *cmd = NULL;
+
+  cl_int err = pocl_rect_copy (
+    command_queue,
+    CL_COMMAND_COPY_BUFFER_RECT,
     src_buffer, CL_FALSE,
     dst_buffer, CL_FALSE,
     src_origin, dst_origin, region,
     src_row_pitch, src_slice_pitch,
     dst_row_pitch, dst_slice_pitch,
     num_events_in_wait_list, event_wait_list,
-    event);
+    event,
+    &cmd);
+
+  if (err != CL_SUCCESS)
+    return err;
+
+  cl_device_id dev = command_queue->device;
+  cmd->command.copy_rect.src_device_ptr
+      = src_buffer->device_ptrs[dev->dev_id].mem_ptr;
+  cmd->command.copy_rect.dst_device_ptr
+      = dst_buffer->device_ptrs[dev->dev_id].mem_ptr;
+
+  cmd->command.copy_rect.src_origin[0] = src_origin[0];
+  cmd->command.copy_rect.src_origin[1] = src_origin[1];
+  cmd->command.copy_rect.src_origin[2] = src_origin[2];
+  cmd->command.copy_rect.dst_origin[0] = dst_origin[0];
+  cmd->command.copy_rect.dst_origin[1] = dst_origin[1];
+  cmd->command.copy_rect.dst_origin[2] = dst_origin[2];
+  cmd->command.copy_rect.region[0] = region[0];
+  cmd->command.copy_rect.region[1] = region[1];
+  cmd->command.copy_rect.region[2] = region[2];
+
+  POname (clRetainMemObject) (src_buffer);
+  src_buffer->owning_device = dev;
+  POname (clRetainMemObject) (dst_buffer);
+  dst_buffer->owning_device = dev;
+
+  pocl_command_enqueue (command_queue, cmd);
+
+  return CL_SUCCESS;
 }
 POsym(clEnqueueCopyBufferRect)

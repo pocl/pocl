@@ -90,8 +90,8 @@ CL_API_SUFFIX__VERSION_1_2
   pocl_write_pixel_zero (fill_pixel, fill_color, image->image_channel_order,
                          image->image_elem_size,
                          image->image_channel_data_type);
-
-  cl_mem saved_image = image;
+  // TODO
+  // cl_mem saved_image = image;
   HANDLE_IMAGE1D_BUFFER (image);
 
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_FILL_IMAGE,
@@ -100,22 +100,25 @@ CL_API_SUFFIX__VERSION_1_2
   if (errcode != CL_SUCCESS)
     goto ERROR_CLEAN;
 
-  cmd->command.fill_image.rowpitch = saved_image->image_row_pitch;
-  cmd->command.fill_image.slicepitch = saved_image->image_slice_pitch;
   cmd->command.fill_image.fill_pixel = fill_pixel;
   cmd->command.fill_image.pixel_size
-      = saved_image->image_elem_size * saved_image->image_channels;
-  cmd->command.fill_image.data = command_queue->device->data;
-  cmd->command.fill_image.device_ptr = 
-    image->device_ptrs[command_queue->device->dev_id].mem_ptr;
-  memcpy (&(cmd->command.fill_image.buffer_origin), origin, 
-          3*sizeof(size_t));
-  memcpy (&(cmd->command.fill_image.region), region, 3*sizeof(size_t));
+      = image->image_elem_size * image->image_channels;
+
+  cmd->command.fill_image.image = image;
+  cmd->command.fill_image.mem_id
+      = &image->device_ptrs[command_queue->device->dev_id];
+
+  cmd->command.fill_image.origin[0] = origin[0];
+  cmd->command.fill_image.origin[1] = origin[1];
+  cmd->command.fill_image.origin[2] = origin[2];
+  cmd->command.fill_image.region[0] = region[0];
+  cmd->command.fill_image.region[1] = region[1];
+  cmd->command.fill_image.region[2] = region[2];
 
   POname(clRetainMemObject) (image);
   image->owning_device = command_queue->device;
   pocl_command_enqueue(command_queue, cmd);
-  
+
   return errcode;
   
  ERROR_CLEAN:

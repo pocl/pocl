@@ -26,6 +26,14 @@
 #include "pocl_cl.h"
 #include "pocl_util.h"
 
+void
+origin_to_bytes (cl_mem mem, const size_t *origin, size_t *byte_offset)
+{
+  *byte_offset = origin[0] + origin[1] * mem->image_row_pitch
+                 + origin[2] * mem->image_slice_pitch;
+  *byte_offset *= (mem->image_elem_size * mem->image_channels);
+}
+
 static unsigned
 pocl_get_image_dim (const cl_mem image)
 {

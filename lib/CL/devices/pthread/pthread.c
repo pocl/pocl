@@ -117,21 +117,14 @@ pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
 
   ops->device_name = "pthread";
 
-  /* implementation */
+  /* implementation that differs from basic */
   ops->probe = pocl_pthread_probe;
   ops->uninit = pocl_pthread_uninit;
   ops->reinit = pocl_pthread_reinit;
   ops->init = pocl_pthread_init;
-  ops->alloc_mem_obj = pocl_basic_alloc_mem_obj;
-  ops->free = pocl_basic_free;
-  ops->read = pocl_pthread_read;
-  ops->write = pocl_pthread_write;
-  ops->copy = pocl_pthread_copy;
-  ops->copy_rect = pocl_basic_copy_rect;
   ops->run = pocl_pthread_run;
   ops->join = pocl_pthread_join;
   ops->submit = pocl_pthread_submit;
-  ops->compile_kernel = pocl_basic_compile_kernel;
   ops->notify = pocl_pthread_notify;
   ops->broadcast = pocl_broadcast;
   ops->flush = pocl_pthread_flush;
@@ -304,36 +297,6 @@ pocl_pthread_reinit (cl_device_id device)
   pthread_scheduler_init (device);
 
   return CL_SUCCESS;
-}
-
-void
-pocl_pthread_read (void *data, void *host_ptr, const void *device_ptr,
-                   size_t offset, size_t cb)
-{
-  if (host_ptr == device_ptr)
-    return;
-
-  memcpy (host_ptr, (char*)device_ptr + offset, cb);
-}
-
-void
-pocl_pthread_write (void *data, const void *host_ptr, void *device_ptr,
-                    size_t offset, size_t cb)
-{
-  if (host_ptr == device_ptr)
-    return;
-
-  memcpy ((char*)device_ptr + offset, host_ptr, cb);
-}
-
-void
-pocl_pthread_copy (void *data, const void *src_ptr, size_t src_offset,
-                   void *__restrict__ dst_ptr, size_t dst_offset, size_t cb)
-{
-  if (src_ptr == dst_ptr)
-    return;
-
-  memcpy ((char*)dst_ptr + dst_offset, (char*)src_ptr + src_offset, cb);
 }
 
 void

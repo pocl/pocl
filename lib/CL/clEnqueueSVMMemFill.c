@@ -79,7 +79,7 @@ POname(clEnqueueSVMMemFill) (cl_command_queue command_queue,
       return errcode;
     }
 
-  cmd->command.memfill.ptr = svm_ptr;
+  cmd->command.memfill.device_ptr = svm_ptr;
   cmd->command.memfill.offset = 0;
   cmd->command.memfill.size = size;
   void *p = pocl_aligned_malloc(pattern_size, pattern_size);

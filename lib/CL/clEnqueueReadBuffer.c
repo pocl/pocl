@@ -31,7 +31,7 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
                     cl_mem buffer,
                     cl_bool blocking_read,
                     size_t offset,
-                    size_t cb, 
+                    size_t size,
                     void *ptr,
                     cl_uint num_events_in_wait_list,
                     const cl_event *event_wait_list,
@@ -56,7 +56,7 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
       "or CL_MEM_HOST_NO_ACCESS\n");
 
   POCL_RETURN_ERROR_COND((ptr == NULL), CL_INVALID_VALUE);
-  if (pocl_buffer_boundcheck(buffer, offset, cb) != CL_SUCCESS)
+  if (pocl_buffer_boundcheck (buffer, offset, size) != CL_SUCCESS)
     return CL_INVALID_VALUE;
 
   errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
@@ -71,15 +71,16 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
                                  event_wait_list, 1, &buffer);
   if (errcode != CL_SUCCESS)
     return errcode;
-  
-  cmd->command.read.host_ptr = ptr;
-  cmd->command.read.device_ptr = (char*)
-    buffer->device_ptrs[device->dev_id].mem_ptr;
+
+  cmd->command.read.dst_host_ptr = ptr;
+  cmd->command.read.src_device_ptr
+      = buffer->device_ptrs[device->dev_id].mem_ptr;
   cmd->command.read.offset = offset;
-  cmd->command.read.cb = cb;
-  cmd->command.read.buffer = buffer;
+  cmd->command.read.size = size;
+
   POname(clRetainMemObject) (buffer);
   buffer->owning_device = command_queue->device;
+
   pocl_command_enqueue(command_queue, cmd);
 
   if (blocking_read)

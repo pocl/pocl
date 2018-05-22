@@ -57,7 +57,6 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  command_node->command.native.data = command_queue->device->data;
   command_node->command.native.num_mem_objects = num_mem_objects;
   command_node->command.native.user_func = user_func;
 

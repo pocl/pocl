@@ -33,8 +33,6 @@
 #undef __CBUILD__
 
 #define XSETUP_DEVICE_CL_VERSION(A, B)             \
-  dev->cl_version_major = A;                      \
-  dev->cl_version_minor = B;                      \
   dev->cl_version_int = (A * 100) + (B * 10);     \
   dev->cl_version_std = "CL" # A "." # B;         \
   dev->version = "OpenCL " # A "." # B " pocl";
@@ -76,7 +74,7 @@ void fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg,
 
 void fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg);
 
-void pocl_copy_mem_object (cl_device_id dest_dev, cl_mem dest, 
+void pocl_copy_mem_object (cl_device_id dest_dev, cl_mem dest,
                            size_t dest_offset,
                            cl_device_id source_dev, cl_mem source,
                            size_t source_offset, size_t cb);

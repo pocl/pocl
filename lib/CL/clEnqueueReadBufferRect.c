@@ -92,25 +92,32 @@ POname(clEnqueueReadBufferRect)(cl_command_queue command_queue,
                       (unsigned long)buffer_row_pitch, (unsigned long)buffer_slice_pitch, 
                       (unsigned long)host_row_pitch, (unsigned long)host_slice_pitch);
   
-  POname(clRetainMemObject) (buffer);
-  
   pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_BUFFER_RECT,
                        event, num_events_in_wait_list, event_wait_list, 1, 
                        &buffer);
 
-  cmd->command.read_image.device_ptr = 
-    buffer->device_ptrs[device->dev_id].mem_ptr;
-  cmd->command.read_image.host_ptr = ptr;
-  memcpy (&cmd->command.read_image.origin, buffer_origin, sizeof (size_t) * 3);
-  memcpy (&cmd->command.read_image.h_origin, host_origin, sizeof (size_t) * 3);
-  memcpy (&cmd->command.read_image.region, region, sizeof (size_t) * 3);
-  cmd->command.read_image.h_rowpitch = host_row_pitch;
-  cmd->command.read_image.h_slicepitch = host_slice_pitch;
-  cmd->command.read_image.b_rowpitch = buffer_row_pitch;
-  cmd->command.read_image.b_slicepitch = buffer_slice_pitch;
-  cmd->command.read_image.buffer = buffer;
+  cmd->command.read_rect.src_device_ptr
+      = buffer->device_ptrs[device->dev_id].mem_ptr;
+  cmd->command.read_rect.dst_host_ptr = ptr;
 
-  buffer->owning_device = command_queue->device;
+  cmd->command.read_rect.host_origin[0] = host_origin[0];
+  cmd->command.read_rect.host_origin[1] = host_origin[1];
+  cmd->command.read_rect.host_origin[2] = host_origin[2];
+  cmd->command.read_rect.buffer_origin[0] = buffer_origin[0];
+  cmd->command.read_rect.buffer_origin[1] = buffer_origin[1];
+  cmd->command.read_rect.buffer_origin[2] = buffer_origin[2];
+  cmd->command.read_rect.region[0] = region[0];
+  cmd->command.read_rect.region[1] = region[1];
+  cmd->command.read_rect.region[2] = region[2];
+
+  cmd->command.read_rect.host_row_pitch = host_row_pitch;
+  cmd->command.read_rect.host_slice_pitch = host_slice_pitch;
+  cmd->command.read_rect.buffer_row_pitch = buffer_row_pitch;
+  cmd->command.read_rect.buffer_slice_pitch = buffer_slice_pitch;
+
+  POname (clRetainMemObject) (buffer);
+  buffer->owning_device = device;
+
   pocl_command_enqueue (command_queue, cmd);
 
   if (blocking_read)

@@ -81,27 +81,32 @@ POname(clEnqueueWriteBufferRect)(cl_command_queue command_queue,
 
   POCL_CHECK_DEV_IN_CMDQ;
 
-  POname(clRetainMemObject) (buffer);
-
   pocl_create_command (&cmd, command_queue, CL_COMMAND_WRITE_BUFFER_RECT,
                        event, num_events_in_wait_list, event_wait_list, 1,
                        &buffer);
 
-  cmd->command.write_image.device_ptr =
-    buffer->device_ptrs[device->dev_id].mem_ptr;
-  cmd->command.write_image.host_ptr = ptr;
-  memcpy (&cmd->command.write_image.origin,
-          buffer_origin, sizeof (size_t) * 3);
-  memcpy (&cmd->command.write_image.h_origin,
-          host_origin, sizeof (size_t) * 3);
-  memcpy (&cmd->command.write_image.region, region, sizeof (size_t) * 3);
-  cmd->command.write_image.h_rowpitch = host_row_pitch;
-  cmd->command.write_image.h_slicepitch = host_slice_pitch;
-  cmd->command.write_image.b_rowpitch = buffer_row_pitch;
-  cmd->command.write_image.b_slicepitch = buffer_slice_pitch;
-  cmd->command.write_image.buffer = buffer;
+  cmd->command.write_rect.dst_device_ptr
+      = buffer->device_ptrs[device->dev_id].mem_ptr;
+  cmd->command.write_rect.src_host_ptr = ptr;
 
-  buffer->owning_device = command_queue->device;
+  cmd->command.write_rect.host_origin[0] = host_origin[0];
+  cmd->command.write_rect.host_origin[1] = host_origin[1];
+  cmd->command.write_rect.host_origin[2] = host_origin[2];
+  cmd->command.write_rect.buffer_origin[0] = buffer_origin[0];
+  cmd->command.write_rect.buffer_origin[1] = buffer_origin[1];
+  cmd->command.write_rect.buffer_origin[2] = buffer_origin[2];
+  cmd->command.write_rect.region[0] = region[0];
+  cmd->command.write_rect.region[1] = region[1];
+  cmd->command.write_rect.region[2] = region[2];
+
+  cmd->command.write_rect.host_row_pitch = host_row_pitch;
+  cmd->command.write_rect.host_slice_pitch = host_slice_pitch;
+  cmd->command.write_rect.buffer_row_pitch = buffer_row_pitch;
+  cmd->command.write_rect.buffer_slice_pitch = buffer_slice_pitch;
+
+  POname (clRetainMemObject) (buffer);
+  buffer->owning_device = device;
+
   pocl_command_enqueue (command_queue, cmd);
 
   if (blocking_write)

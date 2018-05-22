@@ -50,7 +50,8 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
                       size_t dst_slice_pitch,
                       cl_uint num_events_in_wait_list,
                       const cl_event *event_wait_list,
-                      cl_event *event);
+                      cl_event *event,
+                      _cl_command_node **cmd);
 
 cl_int program_compile_dynamic_wg_binaries(cl_program program);
 

@@ -81,31 +81,18 @@ CL_API_SUFFIX__VERSION_1_0
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  cmd->command.copy.src_buffer = src_buffer;
-  cmd->command.copy.src_offset = src_offset;
-  cmd->command.copy.src_dev = src_buffer->owning_device;
-
-  cmd->command.copy.dst_buffer = dst_buffer;
-  cmd->command.copy.dst_offset = dst_offset;
-  if (dst_buffer->owning_device)
-    cmd->command.copy.dst_dev = dst_buffer->owning_device;
-  else
-    cmd->command.copy.dst_dev = device;
-
-  cmd->command.copy.data = device->data;
-
-  cmd->command.copy.src_ptr = 
-    (char*)src_buffer->device_ptrs[device->dev_id].mem_ptr;
+  cmd->command.copy.src_device_ptr
+      = src_buffer->device_ptrs[device->dev_id].mem_ptr;
   cmd->command.copy.src_offset = src_offset;
 
-  cmd->command.copy.dst_ptr = 
-    (char*)dst_buffer->device_ptrs[device->dev_id].mem_ptr;
+  cmd->command.copy.dst_device_ptr
+      = dst_buffer->device_ptrs[device->dev_id].mem_ptr;
   cmd->command.copy.dst_offset = dst_offset;
-  cmd->command.copy.cb = size;
+  cmd->command.copy.size = size;
 
   POname(clRetainMemObject)(src_buffer);
+  src_buffer->owning_device = command_queue->device;
   POname(clRetainMemObject)(dst_buffer);
-
   dst_buffer->owning_device = command_queue->device;
   
   pocl_command_enqueue(command_queue, cmd);

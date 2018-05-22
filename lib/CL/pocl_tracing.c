@@ -182,17 +182,18 @@ text_tracer_event_updated (cl_event event, int status)
   switch (event->command_type)
     {
     case CL_COMMAND_READ_BUFFER:
-      text_size += sprintf (cur_buf, "size=%"PRIuS", host_ptr=%p\n",
-                            node->command.read.cb,
-                            node->command.read.host_ptr);
+      text_size += sprintf (cur_buf, "size=%" PRIuS ", host_ptr=%p\n",
+                            node->command.read.size,
+                            node->command.read.dst_host_ptr);
       break;
     case CL_COMMAND_WRITE_BUFFER:
-      text_size += sprintf (cur_buf, "size=%"PRIuS", host_ptr=%p\n\n",
-                            node->command.write.cb,
-                            node->command.write.host_ptr);
+      text_size += sprintf (cur_buf, "size=%" PRIuS ", host_ptr=%p\n\n",
+                            node->command.write.size,
+                            node->command.write.src_host_ptr);
       break;
     case CL_COMMAND_COPY_BUFFER:
-      text_size += sprintf (cur_buf, "size=%"PRIuS"\n", node->command.copy.cb);
+      text_size
+          += sprintf (cur_buf, "size=%" PRIuS "\n", node->command.copy.size);
       break;
     case CL_COMMAND_NDRANGE_KERNEL:
       text_size += sprintf (cur_buf, "name=%s\n",

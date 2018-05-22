@@ -39,10 +39,12 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
                    cl_event *       event,
                    cl_int *         errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
+  cl_int errcode = CL_SUCCESS;
   cl_device_id device;
   void *host_ptr = NULL;
+  cl_int mapping_result = CL_FAILED;
   mem_mapping_t *mapping_info = NULL;
-  int errcode; unsigned i;
+  unsigned i;
   _cl_command_node *cmd = NULL;
   /* need to release the memobject before returning? */
   int must_release = 0;
@@ -84,12 +86,14 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   must_release = 1;
 
   mapping_info = (mem_mapping_t*) calloc (1, sizeof (mem_mapping_t));
-  if (mapping_info == NULL)
-    {
-      errcode = CL_OUT_OF_HOST_MEMORY;
-      goto ERROR;
-    }
+  POCL_GOTO_ERROR_COND ((mapping_info == NULL), CL_OUT_OF_HOST_MEMORY);
 
+  mapping_info->host_ptr = NULL;
+  mapping_info->map_flags = map_flags;
+  mapping_info->offset = offset;
+  mapping_info->size = size;
+
+  // TODO COPY_HOST_PTR
   if ((buffer->flags & CL_MEM_USE_HOST_PTR)
       || (buffer->flags & CL_MEM_ALLOC_HOST_PTR))
     {
@@ -97,24 +101,23 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
          the mapping area in the host memory. */   
       assert (buffer->mem_host_ptr != NULL);
       host_ptr = (char*)buffer->mem_host_ptr + offset;
+      mapping_info->host_ptr = host_ptr;
     }
   else
     {
       /* The first call to the device driver's map mem tells where
-         the mapping will be stored (the last argument is NULL) in
-         the host memory. When the last argument is non-NULL, the
+         the mapping will be stored in the host memory.
+         When return value (mapping_info->host_ptr) is non-NULL, the
          buffer will be mapped there (assumed it will succeed).  */
-
-      host_ptr = device->ops->map_mem (
-          device->data, buffer->device_ptrs[device->dev_id].mem_ptr, offset,
-          size, NULL);
+      mapping_info->host_ptr = NULL;
+      mapping_result = device->ops->map_mem (
+          device->data,
+          buffer->device_ptrs[device->dev_id].mem_ptr,
+          mapping_info);
     }
 
-  if (host_ptr == NULL)
-    {
-      errcode = CL_MAP_FAILURE;
-      goto ERROR;
-    }
+  POCL_GOTO_ERROR_ON ((mapping_info->host_ptr == NULL), CL_MAP_FAILURE,
+                      "device map failed\n");
 
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_MAP_BUFFER, 
                                  event, num_events_in_wait_list, 
@@ -123,12 +126,10 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   if (errcode != CL_SUCCESS)
       goto ERROR;
 
-  cmd->command.map.buffer = buffer;
+  cmd->command.map.memobj = buffer;
+  cmd->command.map.mem_id = &buffer->device_ptrs[device->dev_id];
   cmd->command.map.mapping = mapping_info;
 
-  mapping_info->host_ptr = host_ptr;
-  mapping_info->offset = offset;
-  mapping_info->size = size;
   POCL_LOCK_OBJ (buffer);
   DL_APPEND (buffer->mappings, mapping_info);
   POCL_UNLOCK_OBJ (buffer);
@@ -139,27 +140,29 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   buffer->owning_device = command_queue->device;
   pocl_command_enqueue(command_queue, cmd);
 
-  if (blocking_map != CL_TRUE)
+  if (blocking_map)
     {
-      POCL_SUCCESS ();
-      return mapping_info->host_ptr;
+      POname (clFinish) (command_queue);
     }
-  else
-    errcode = POname(clFinish) (command_queue);
 
   if (errcode_ret)
     *errcode_ret = errcode;
 
   POCL_SUCCESS ();
-  return host_ptr;
+  return mapping_info->host_ptr;
 
 ERROR:
   if (must_release)
     POname(clReleaseMemObject)(buffer);
-  POCL_MEM_FREE(cmd);
+  if (mapping_result == CL_SUCCESS)
+    device->ops->unmap_mem (device->data,
+                            buffer->device_ptrs[device->dev_id].mem_ptr,
+                            mapping_info);
   POCL_MEM_FREE(mapping_info);
+  POCL_MEM_FREE (cmd);
   if (errcode_ret)
     *errcode_ret = errcode;
+
   return NULL;
 }
 POsym(clEnqueueMapBuffer)

@@ -119,7 +119,6 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->write_rect = pocl_basic_write_rect;
   ops->copy = pocl_basic_copy;
   ops->copy_rect = pocl_basic_copy_rect;
-  ops->fill_rect = pocl_basic_fill_rect;
   ops->memfill = pocl_basic_memfill;
   ops->map_mem = pocl_basic_map_mem;
   ops->compile_kernel = pocl_basic_compile_kernel;
@@ -127,13 +126,28 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->run = pocl_basic_run;
   ops->run_native = pocl_basic_run_native;
   ops->get_timer_value = pocl_basic_get_timer_value;
-  ops->get_supported_image_formats = pocl_basic_get_supported_image_formats;
   ops->join = pocl_basic_join;
   ops->submit = pocl_basic_submit;
   ops->broadcast = pocl_basic_broadcast;
   ops->notify = pocl_basic_notify;
   ops->flush = pocl_basic_flush;
   ops->build_hash = pocl_basic_build_hash;
+
+  ops->get_supported_image_formats = pocl_basic_get_supported_image_formats;
+
+  ops->create_image = NULL;
+  ops->free_image = NULL;
+  ops->create_sampler = NULL;
+  ops->free_sampler = NULL;
+
+  ops->copy_image_rect = pocl_basic_copy_image_rect;
+  ops->write_image_rect = pocl_basic_write_image_rect;
+  ops->read_image_rect = pocl_basic_read_image_rect;
+
+  ops->map_image = pocl_basic_map_image;
+  ops->unmap_image = pocl_basic_unmap_image;
+
+  ops->fill_image = pocl_basic_fill_image;
 }
 
 char *
@@ -503,23 +517,27 @@ void pocl_basic_free_ptr (cl_device_id device, void* mem_ptr)
 }
 
 void
-pocl_basic_read (void *data, void *host_ptr, const void *device_ptr, 
-                 size_t offset, size_t cb)
+pocl_basic_read (void *data,
+                 void *__restrict__ host_ptr,
+                 void *__restrict__ device_ptr,
+                 size_t offset, size_t size)
 {
   if (host_ptr == device_ptr)
     return;
 
-  memcpy (host_ptr, (char*)device_ptr + offset, cb);
+  memcpy (host_ptr, (char *)device_ptr + offset, size);
 }
 
 void
-pocl_basic_write (void *data, const void *host_ptr, void *device_ptr, 
-                  size_t offset, size_t cb)
+pocl_basic_write (void *data,
+                  const void *__restrict__  host_ptr,
+                  void *__restrict__  device_ptr,
+                  size_t offset, size_t size)
 {
   if (host_ptr == device_ptr)
     return;
 
-  memcpy ((char*)device_ptr + offset, host_ptr, cb);
+  memcpy ((char *)device_ptr + offset, host_ptr, size);
 }
 
 
@@ -681,43 +699,72 @@ pocl_basic_run_native
 }
 
 void
-pocl_basic_copy (void *data, const void *src_ptr, size_t src_offset, 
-                 void *__restrict__ dst_ptr, size_t dst_offset, size_t cb)
+pocl_basic_copy (void *data,
+                 void *__restrict__ dst_ptr,
+                 void *__restrict__ src_ptr,
+                 size_t dst_offset,
+                 size_t src_offset,
+                 size_t size)
 {
   if (src_ptr == dst_ptr)
     return;
-  
-  memcpy ((char*)dst_ptr + dst_offset, (char*)src_ptr + src_offset, cb);
+
+  memcpy ((char *)dst_ptr + dst_offset, (char *)src_ptr + src_offset, size);
 }
 
 void
 pocl_basic_copy_rect (void *data,
-                      const void *__restrict const src_ptr,
                       void *__restrict__ const dst_ptr,
+                      void *__restrict__ const src_ptr,
+                      const size_t *__restrict__ const dst_origin,
                       const size_t *__restrict__ const src_origin,
-                      const size_t *__restrict__ const dst_origin, 
                       const size_t *__restrict__ const region,
-                      size_t const src_row_pitch,
-                      size_t const src_slice_pitch,
                       size_t const dst_row_pitch,
-                      size_t const dst_slice_pitch)
+                      size_t const dst_slice_pitch,
+                      size_t const src_row_pitch,
+                      size_t const src_slice_pitch)
 {
+
   char const *__restrict const adjusted_src_ptr = 
     (char const*)src_ptr +
     src_origin[0] + src_row_pitch * src_origin[1] + src_slice_pitch * src_origin[2];
   char *__restrict__ const adjusted_dst_ptr = 
     (char*)dst_ptr +
     dst_origin[0] + dst_row_pitch * dst_origin[1] + dst_slice_pitch * dst_origin[2];
-  
+
+  POCL_MSG_PRINT_MEMORY (
+      "BASIC COPY RECT \n"
+      "SRC %p DST %p SIZE %zu\n"
+      "src origin %u %u %u dst origin %u %u %u \n"
+      "src_row_pitch %lu src_slice pitch %lu\n"
+      "dst_row_pitch %lu dst_slice_pitch %lu\n"
+      "reg[0] %lu reg[1] %lu reg[2] %lu\n",
+      adjusted_src_ptr, adjusted_dst_ptr,
+      region[0] * region[1] * region[2],
+      (unsigned)src_origin[0], (unsigned)src_origin[1],
+      (unsigned)src_origin[2], (unsigned)dst_origin[0],
+      (unsigned)dst_origin[1], (unsigned)dst_origin[2],
+      (unsigned long)src_row_pitch, (unsigned long)src_slice_pitch,
+      (unsigned long)dst_row_pitch, (unsigned long)dst_slice_pitch,
+      region[0], region[1], region[2]);
+
   size_t j, k;
 
   /* TODO: handle overlaping regions */
-  
-  for (k = 0; k < region[2]; ++k)
-    for (j = 0; j < region[1]; ++j)
-      memcpy (adjusted_dst_ptr + dst_row_pitch * j + dst_slice_pitch * k,
-              adjusted_src_ptr + src_row_pitch * j + src_slice_pitch * k,
-              region[0]);
+  if ((src_row_pitch == dst_row_pitch && dst_row_pitch == region[0])
+      && (src_slice_pitch == dst_slice_pitch && dst_slice_pitch == (region[1]*region[0])))
+    {
+      memcpy (adjusted_dst_ptr, adjusted_src_ptr,
+              region[2] * region[1] * region[0]);
+    }
+  else
+    {
+      for (k = 0; k < region[2]; ++k)
+        for (j = 0; j < region[1]; ++j)
+          memcpy (adjusted_dst_ptr + dst_row_pitch * j + dst_slice_pitch * k,
+                  adjusted_src_ptr + src_row_pitch * j + src_slice_pitch * k,
+                  region[0]);
+    }
 }
 
 void
@@ -732,22 +779,54 @@ pocl_basic_write_rect (void *data,
                        size_t const host_row_pitch,
                        size_t const host_slice_pitch)
 {
+
   char *__restrict const adjusted_device_ptr = 
     (char*)device_ptr +
     buffer_origin[0] + buffer_row_pitch * buffer_origin[1] + buffer_slice_pitch * buffer_origin[2];
   char const *__restrict__ const adjusted_host_ptr = 
     (char const*)host_ptr +
     host_origin[0] + host_row_pitch * host_origin[1] + host_slice_pitch * host_origin[2];
-  
+
+  POCL_MSG_PRINT_MEMORY (
+      "BASIC WRITE RECT \n"
+      "SRC HOST %p DST DEV %p SIZE %zu\n"
+      "borigin %u %u %u horigin %u %u %u \n"
+      "row_pitch %lu slice pitch \n"
+      "%lu host_row_pitch %lu host_slice_pitch %lu\n"
+      "reg[0] %lu reg[1] %lu reg[2] %lu\n",
+      adjusted_host_ptr, adjusted_device_ptr,
+      region[0] * region[1] * region[2],
+      (unsigned)buffer_origin[0], (unsigned)buffer_origin[1],
+      (unsigned)buffer_origin[2], (unsigned)host_origin[0],
+      (unsigned)host_origin[1], (unsigned)host_origin[2],
+      (unsigned long)buffer_row_pitch, (unsigned long)buffer_slice_pitch,
+      (unsigned long)host_row_pitch, (unsigned long)host_slice_pitch,
+      region[0], region[1], region[2]);
+
   size_t j, k;
 
   /* TODO: handle overlaping regions */
-  
-  for (k = 0; k < region[2]; ++k)
-    for (j = 0; j < region[1]; ++j)
-      memcpy (adjusted_device_ptr + buffer_row_pitch * j + buffer_slice_pitch * k,
-              adjusted_host_ptr + host_row_pitch * j + host_slice_pitch * k,
-              region[0]);
+  if ((buffer_row_pitch == host_row_pitch
+            && host_row_pitch == region[0])
+      && (buffer_slice_pitch == host_slice_pitch
+            && host_slice_pitch == (region[1]*region[0])))
+    {
+      memcpy (adjusted_device_ptr,
+              adjusted_host_ptr,
+              region[2] * region[1] * region[0]);
+    }
+  else
+    {
+      for (k = 0; k < region[2]; ++k)
+        for (j = 0; j < region[1]; ++j)
+          memcpy (adjusted_device_ptr
+                    + buffer_row_pitch * j
+                    + buffer_slice_pitch * k,
+                  adjusted_host_ptr
+                    + host_row_pitch * j
+                    + host_slice_pitch * k,
+                  region[0]);
+    }
 }
 
 void
@@ -762,55 +841,61 @@ pocl_basic_read_rect (void *data,
                       size_t const host_row_pitch,
                       size_t const host_slice_pitch)
 {
+
   char const *__restrict const adjusted_device_ptr = 
     (char const*)device_ptr +
     buffer_origin[2] * buffer_slice_pitch + buffer_origin[1] * buffer_row_pitch + buffer_origin[0];
   char *__restrict__ const adjusted_host_ptr = 
     (char*)host_ptr +
     host_origin[2] * host_slice_pitch + host_origin[1] * host_row_pitch + host_origin[0];
-  
+
+  POCL_MSG_PRINT_MEMORY (
+      "BASIC READ RECT \n"
+      "SRC DEV %p DST HOST %p SIZE %zu\n"
+      "borigin %u %u %u horigin %u %u %u row_pitch %lu slice pitch "
+      "%lu host_row_pitch %lu host_slice_pitch %lu\n"
+      "reg[0] %lu reg[1] %lu reg[2] %lu\n",
+      adjusted_device_ptr, adjusted_host_ptr,
+      region[0] * region[1] * region[2],
+      (unsigned)buffer_origin[0], (unsigned)buffer_origin[1],
+      (unsigned)buffer_origin[2], (unsigned)host_origin[0],
+      (unsigned)host_origin[1], (unsigned)host_origin[2],
+      (unsigned long)buffer_row_pitch, (unsigned long)buffer_slice_pitch,
+      (unsigned long)host_row_pitch, (unsigned long)host_slice_pitch,
+      region[0], region[1], region[2]);
+
   size_t j, k;
-  
+
   /* TODO: handle overlaping regions */
-  
-  for (k = 0; k < region[2]; ++k)
-    for (j = 0; j < region[1]; ++j)
-      memcpy (adjusted_host_ptr + host_row_pitch * j + host_slice_pitch * k,
-              adjusted_device_ptr + buffer_row_pitch * j + buffer_slice_pitch * k,
-              region[0]);
+  if ((buffer_row_pitch == host_row_pitch
+            && host_row_pitch == region[0])
+      && (buffer_slice_pitch == host_slice_pitch
+            && host_slice_pitch == (region[1]*region[0])))
+    {
+      memcpy (adjusted_host_ptr,
+              adjusted_device_ptr,
+              region[2] * region[1] * region[0]);
+    }
+  else
+    {
+      for (k = 0; k < region[2]; ++k)
+        for (j = 0; j < region[1]; ++j)
+          memcpy (adjusted_host_ptr
+                    + host_row_pitch * j
+                    + host_slice_pitch * k,
+                  adjusted_device_ptr
+                    + buffer_row_pitch * j
+                    + buffer_slice_pitch * k,
+                  region[0]);
+    }
 }
 
-/* origin and region must be in original shape unlike in copy/read/write_rect()
- */
-void
-pocl_basic_fill_rect (void *data,
-                      void *__restrict__ const device_ptr,
-                      const size_t *__restrict__ const buffer_origin,
-                      const size_t *__restrict__ const region,
-                      size_t const buffer_row_pitch,
-                      size_t const buffer_slice_pitch,
-                      void *fill_pixel,
-                      size_t pixel_size)                    
-{
-  char *__restrict const adjusted_device_ptr = (char*)device_ptr 
-    + buffer_origin[0] * pixel_size 
-    + buffer_row_pitch * buffer_origin[1] 
-    + buffer_slice_pitch * buffer_origin[2];
-    
-  size_t i, j, k;
 
-  for (k = 0; k < region[2]; ++k)
-    for (j = 0; j < region[1]; ++j)
-      for (i = 0; i < region[0]; ++i)
-        memcpy (adjusted_device_ptr + pixel_size * i 
-                + buffer_row_pitch * j 
-                + buffer_slice_pitch * k, fill_pixel, pixel_size);
-}
-
-void pocl_basic_memfill(void *ptr,
+void pocl_basic_memfill(void *data,
+                        void *__restrict__ ptr,
                         size_t size,
                         size_t offset,
-                        const void* pattern,
+                        const void *__restrict__  pattern,
                         size_t pattern_size)
 {
   size_t i;
@@ -888,41 +973,66 @@ void pocl_basic_memfill(void *ptr,
     }
 }
 
-void *
-pocl_basic_map_mem (void *data, void *buf_ptr, 
-                      size_t offset, size_t size,
-                      void *host_ptr) 
+cl_int
+pocl_basic_map_mem (void *data,
+                    void *__restrict__ src_device_ptr,
+                    mem_mapping_t *map)
 {
+  void *host_ptr = map->host_ptr;
+  size_t offset = map->offset;
+  size_t size = map->size;
+
+  if (host_ptr == NULL)
+    {
+      map->host_ptr = ((char *)src_device_ptr + offset);
+      return CL_SUCCESS;
+    }
+
+  if (map->map_flags & CL_MAP_WRITE_INVALIDATE_REGION)
+    return CL_SUCCESS;
+
   /* If the buffer was allocated with CL_MEM_ALLOC_HOST_PTR |
    * CL_MEM_COPY_HOST_PTR,
-   * the host_ptr is not the same memory as pocl's device_ptrs[], and we need
-   * to copy pocl's buffer content back to host_ptr. */
-  if ((host_ptr != NULL) && (host_ptr != (buf_ptr + offset)))
+   * the dst_host_ptr is not the same memory as pocl's device_ptrs[], and we
+   * need to copy pocl's buffer content back to dst_host_ptr. */
+  if (host_ptr != (src_device_ptr + offset))
     {
       POCL_MSG_PRINT_MEMORY ("device: MAP memcpy() "
-                             "buf_ptr %p + offset %zu to host_ptr %p\n",
-                             buf_ptr, offset, host_ptr);
-      memcpy ((char *)host_ptr, (char *)buf_ptr + offset, size);
+                             "src_device_ptr %p + offset %zu"
+                             "to dst_host_ptr %p\n",
+                             src_device_ptr, offset, host_ptr);
+      memcpy ((char *)host_ptr, (char *)src_device_ptr + offset, size);
     }
-  return (char*)buf_ptr + offset;
+  return CL_SUCCESS;
 }
 
-void* pocl_basic_unmap_mem(void *data, void *host_ptr,
-                           void *device_start_ptr,
-                           size_t offset, size_t size)
+cl_int
+pocl_basic_unmap_mem(void *data,
+                     void *__restrict__ dst_device_ptr,
+                     mem_mapping_t *map)
 {
-  /* If the buffer was allocated with CL_MEM_ALLOC_HOST_PTR |
-   * CL_MEM_COPY_HOST_PTR,
-   * the host_ptr is not the same memory as pocl's device_ptrs[], and we need
-   * to copy host_ptr content back to  pocl's device_ptrs[]. */
-  if ((host_ptr != NULL) && (host_ptr != (device_start_ptr + offset)))
+  /* it could be CL_MAP_READ | CL_MAP_WRITE(..invalidate) which has to be
+   * handled like a write */
+  if (map->map_flags == CL_MAP_READ)
+    return CL_SUCCESS;
+
+  void *host_ptr = map->host_ptr;
+  assert (host_ptr != NULL);
+  size_t offset = map->offset;
+  size_t size = map->size;
+
+  /* If the buffer was allocated with CL_MEM_ALLOC_src_host_ptr |
+   * CL_MEM_COPY_src_host_ptr,
+   * the src_host_ptr is not the same memory as pocl's device_ptrs[], and we
+   * need to copy src_host_ptr content back to  pocl's device_ptrs[]. */
+  if (host_ptr != (dst_device_ptr + offset))
     {
       POCL_MSG_PRINT_MEMORY ("device: UNMAP memcpy() "
                              "host_ptr %p to buf_ptr %p + offset %zu\n",
-                             host_ptr, device_start_ptr, offset);
-      memcpy ((char *)device_start_ptr + offset, (char *)host_ptr, size);
+                             host_ptr, dst_device_ptr, offset);
+      memcpy ((char *)dst_device_ptr + offset, (char *)host_ptr, size);
     }
-  return (char *)host_ptr;
+  return CL_SUCCESS;
 }
 
 cl_int
@@ -1075,4 +1185,234 @@ pocl_basic_compile_kernel (_cl_command_node *cmd, cl_kernel kernel, cl_device_id
 {
   if (cmd != NULL && cmd->type == CL_COMMAND_NDRANGE_KERNEL)
     pocl_check_dlhandle_cache (cmd, 0);
+}
+
+/*********************** IMAGES ********************************/
+
+cl_int pocl_basic_copy_image_rect( void *data,
+                                   cl_mem src_image,
+                                   cl_mem dst_image,
+                                   pocl_mem_identifier *src_mem_id,
+                                   pocl_mem_identifier *dst_mem_id,
+                                   const size_t *src_origin,
+                                   const size_t *dst_origin,
+                                   const size_t *region)
+{
+
+  size_t px = src_image->image_elem_size * src_image->image_channels;
+  const size_t adj_src_origin[3]
+      = { src_origin[0] * px, src_origin[1], src_origin[2] };
+  const size_t adj_dst_origin[3]
+      = { dst_origin[0] * px, dst_origin[1], dst_origin[2] };
+  const size_t adj_region[3] = { region[0] * px, region[1], region[2] };
+
+  POCL_MSG_PRINT_MEMORY (
+      " BASIC COPY IMAGE RECT \n"
+      "dst_image %p dst_mem_id %p \n"
+      "src_image %p src_mem_id %p \n"
+      "dst_origin [0,1,2] %zu %zu %zu \n"
+      "src_origin [0,1,2] %zu %zu %zu \n"
+      "region [0,1,2] %zu %zu %zu \n"
+      "px %zu\n",
+      dst_image, dst_mem_id,
+      src_image, src_mem_id,
+      dst_origin[0], dst_origin[1], dst_origin[2],
+      src_origin[0], src_origin[1], src_origin[2],
+      region[0], region[1], region[2],
+      px);
+
+  pocl_basic_copy_rect(data,
+                       dst_mem_id,
+                       NULL,
+                       src_mem_id,
+                       NULL,
+                       adj_dst_origin,
+                       adj_src_origin,
+                       adj_region,
+                       dst_image->image_row_pitch,
+                       dst_image->image_slice_pitch,
+                       src_image->image_row_pitch,
+                       src_image->image_slice_pitch);
+
+  return CL_SUCCESS;
+}
+
+/* copies a region from host or device buffer to device image */
+cl_int pocl_basic_write_image_rect (  void *data,
+                                      cl_mem dst_image,
+                                      pocl_mem_identifier *dst_mem_id,
+                                      const void *__restrict__ src_host_ptr,
+                                      pocl_mem_identifier *src_mem_id,
+                                      const size_t *origin,
+                                      const size_t *region,
+                                      size_t src_row_pitch,
+                                      size_t src_slice_pitch,
+                                      size_t src_offset)
+{
+  POCL_MSG_PRINT_MEMORY (
+      "BASIC WRITE IMAGE RECT \n"
+      "dst_image %p dst_mem_id %p \n"
+      "src_hostptr %p src_mem_id %p \n"
+      "origin [0,1,2] %zu %zu %zu \n"
+      "region [0,1,2] %zu %zu %zu \n"
+      "row %zu slice %zu offset %zu \n",
+      dst_image, dst_mem_id,
+      src_host_ptr, src_mem_id,
+      origin[0], origin[1], origin[2],
+      region[0], region[1], region[2],
+      src_row_pitch, src_slice_pitch, src_offset);
+
+  const void *__restrict__ ptr
+      = src_host_ptr ? src_host_ptr : src_mem_id->mem_ptr;
+  ptr += src_offset;
+  const size_t zero_origin[3] = { 0 };
+  size_t px = dst_image->image_elem_size * dst_image->image_channels;
+  if (src_row_pitch == 0)
+    src_row_pitch = px * region[0];
+  if (src_slice_pitch == 0)
+    src_slice_pitch = src_row_pitch * region[1];
+
+  const size_t adj_origin[3] = { origin[0] * px, origin[1], origin[2] };
+  const size_t adj_region[3] = { region[0] * px, region[1], region[2] };
+
+  pocl_basic_write_rect (data,
+                         ptr,
+                         dst_mem_id,
+                         NULL,
+                         adj_origin,
+                         zero_origin,
+                         adj_region,
+                         dst_image->image_row_pitch,
+                         dst_image->image_slice_pitch,
+                         src_row_pitch,
+                         src_slice_pitch);
+  return CL_SUCCESS;
+}
+
+/* copies a region from device image to host or device buffer */
+cl_int pocl_basic_read_image_rect(  void *data,
+                                    cl_mem src_image,
+                                    pocl_mem_identifier *src_mem_id,
+                                    void *__restrict__ dst_host_ptr,
+                                    pocl_mem_identifier *dst_mem_id,
+                                    const size_t *origin,
+                                    const size_t *region,
+                                    size_t dst_row_pitch,
+                                    size_t dst_slice_pitch,
+                                    size_t dst_offset)
+{
+  POCL_MSG_PRINT_MEMORY (
+      "BASIC READ IMAGE RECT \n"
+      "src_image %p src_mem_id %p \n"
+      "dst_hostptr %p dst_mem_id %p \n"
+      "origin [0,1,2] %zu %zu %zu \n"
+      "region [0,1,2] %zu %zu %zu \n"
+      "row %zu slice %zu offset %zu \n",
+      src_image, src_mem_id,
+      dst_host_ptr, dst_mem_id,
+      origin[0], origin[1], origin[2],
+      region[0], region[1], region[2],
+      dst_row_pitch, dst_slice_pitch, dst_offset);
+
+  void *__restrict__ ptr = dst_host_ptr ? dst_host_ptr : dst_mem_id->mem_ptr;
+  ptr += dst_offset;
+  const size_t zero_origin[3] = { 0 };
+  size_t px = src_image->image_elem_size * src_image->image_channels;
+  if (dst_row_pitch == 0)
+    dst_row_pitch = px * region[0];
+  if (dst_slice_pitch == 0)
+    dst_slice_pitch = dst_row_pitch * region[1];
+  const size_t adj_origin[3] = { origin[0] * px, origin[1], origin[2] };
+  const size_t adj_region[3] = { region[0] * px, region[1], region[2] };
+
+  pocl_basic_read_rect (data,
+                        ptr,
+                        src_mem_id,
+                        NULL,
+                        adj_origin,
+                        zero_origin,
+                        adj_region,
+                        src_image->image_row_pitch,
+                        src_image->image_slice_pitch,
+                        dst_row_pitch,
+                        dst_slice_pitch);
+  return CL_SUCCESS;
+}
+
+
+cl_int pocl_basic_map_image (void *data,
+                             cl_mem src_image,
+                             pocl_mem_identifier * image_data,
+                             mem_mapping_t *map)
+{
+  if (map->host_ptr == NULL)
+    {
+      map->host_ptr = (char *)image_data->mem_ptr + map->offset;
+      return CL_SUCCESS;
+    }
+
+  if (map->map_flags & CL_MAP_WRITE_INVALIDATE_REGION)
+    return CL_SUCCESS;
+
+  if (map->host_ptr != ((char *)image_data->mem_ptr + map->offset))
+    {
+      pocl_basic_read_image_rect (data, src_image, image_data, map->host_ptr,
+                                  NULL, map->origin, map->region,
+                                  map->row_pitch, map->slice_pitch, 0);
+    }
+  return CL_SUCCESS;
+}
+
+cl_int
+pocl_basic_unmap_image (void *data, cl_mem dst_image,
+                        pocl_mem_identifier *image_data, mem_mapping_t *map)
+{
+  if (map->map_flags == CL_MAP_READ)
+    return CL_SUCCESS;
+
+  if (map->host_ptr != ((char *)image_data->mem_ptr + map->offset))
+    {
+      pocl_basic_write_image_rect (data, dst_image, image_data, map->host_ptr,
+                                   NULL, map->origin, map->region,
+                                   map->row_pitch, map->slice_pitch, 0);
+    }
+  return CL_SUCCESS;
+}
+
+cl_int
+pocl_basic_fill_image (void *data, cl_mem image,
+                       pocl_mem_identifier *image_data, const size_t *origin,
+                       const size_t *region,
+                       const void *__restrict__ fill_pixel, size_t pixel_size)
+{
+   POCL_MSG_PRINT_MEMORY ("BASIC / FILL IMAGE \n"
+                          "image %p data %p \n"
+                          "origin [0,1,2] %zu %zu %zu \n"
+                          "region [0,1,2] %zu %zu %zu \n"
+                          "pixel %p size %zu \n",
+                          image, image_data,
+                          origin[0], origin[1], origin[2],
+                          region[0], region[1], region[2],
+                          fill_pixel, pixel_size);
+
+  size_t row_pitch = image->image_row_pitch;
+  size_t slice_pitch = image->image_slice_pitch;
+  char *__restrict const adjusted_device_ptr
+      = (char *)image_data->mem_ptr
+        + origin[0] * pixel_size
+        + row_pitch * origin[1]
+        + slice_pitch * origin[2];
+
+  size_t i, j, k;
+
+  for (k = 0; k < region[2]; ++k)
+    for (j = 0; j < region[1]; ++j)
+      for (i = 0; i < region[0]; ++i)
+        memcpy (adjusted_device_ptr
+                  + pixel_size * i
+                  + row_pitch * j
+                  + slice_pitch * k,
+                fill_pixel,
+                pixel_size);
+  return CL_SUCCESS;
 }
