@@ -34,7 +34,7 @@ endif()
 set(SANITIZER_OPTIONS "")
 
 if(ENABLE_ASAN)
-  if("${CMAKE_C_COMPILER_VERSION}" VERSION_LESS "5.1.0")
+  if("${CMAKE_C_COMPILER_VERSION}" VERSION_LESS "6.0.0")
     list(APPEND SANITIZER_OPTIONS "-fsanitize=address")
   else()
     list(APPEND SANITIZER_OPTIONS "-fsanitize=address" "-fsanitize-recover=address")
