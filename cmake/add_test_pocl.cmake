@@ -55,6 +55,10 @@ function(add_test_pocl)
   endif()
 
   list(APPEND POCL_TEST_ARGLIST "COMMAND" "${CMAKE_COMMAND}" "-Dtest_cmd=${RUN_CMD}")
+  if(INTEL_SDE_AVX512)
+    list(APPEND POCL_TEST_ARGLIST "-DSDE=${INTEL_SDE_AVX512}")
+  endif()
+
   if(POCL_TEST_EXPECTED_OUTPUT)
     list(APPEND POCL_TEST_ARGLIST
       "-Doutput_blessed=${CMAKE_CURRENT_SOURCE_DIR}/${POCL_TEST_EXPECTED_OUTPUT}")

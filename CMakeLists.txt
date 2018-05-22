@@ -407,6 +407,11 @@ if (OCS_AVAILABLE)
     message(FATAL_ERROR "pocl does not build on ARM with LLVM 3.9 unless is was patched. Try LLVM 3.8 or (preferably) 4.0+")
   endif()
 
+  if(INTEL_SDE_AVX512)
+    set(HOST_CPU_FORCED 1 CACHE INTERNAL "CPU is forced by user" FORCE)
+    set(LLC_HOST_CPU "skylake-avx512" CACHE STRING "The Host CPU to use with llc" FORCE)
+  endif()
+
 else()
 
   if(NOT DEFINED HOST_DEVICE_BUILD_HASH)

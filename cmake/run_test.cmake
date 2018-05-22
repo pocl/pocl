@@ -18,6 +18,18 @@ execute_process(
   ERROR_VARIABLE stderr
 )
 
+# the first run would fail, but still pre-compile the kernels
+# for the 2nd run through SDE
+if(SDE)
+execute_process(
+  COMMAND "${SDE}" -skx -- ${test_cmd_separated}
+  RESULT_VARIABLE test_not_successful
+  OUTPUT_VARIABLE stdout
+  ERROR_VARIABLE stderr
+)
+endif()
+
+
 if( test_not_successful )
   message( SEND_ERROR "FAIL: Test exited with nonzero code: ${test_cmd_separated}\nSTDOUT:\n${stdout}\nSTDERR:\n${stderr}" )
 else()
