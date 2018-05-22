@@ -19,6 +19,20 @@ POname(clEnqueueCopyImageToBuffer)(cl_command_queue  command_queue ,
 
   POCL_RETURN_ERROR_COND ((src_image == NULL), CL_INVALID_MEM_OBJECT);
 
+  if (IS_IMAGE1D_BUFFER (src_image))
+    {
+      /* If src_image is a 1D image or 1D image buffer object, src_origin[1]
+       * and src_origin[2] must be 0 If src_image is a 1D image or 1D image
+       * buffer object, region[1] and region[2] must be 1. */
+      IMAGE1D_ORIG_REG_TO_BYTES (src_image, src_origin, region);
+      return POname (clEnqueueCopyBufferRect (
+          command_queue, src_image->buffer, dst_buffer,
+          i1d_origin, dst_origin, i1d_region,
+          src_image->image_row_pitch, 0,
+          src_image->image_row_pitch, 0,
+          num_events_in_wait_list, event_wait_list, event));
+    }
+
   cl_int err = pocl_rect_copy(
     command_queue,
     CL_COMMAND_COPY_IMAGE_TO_BUFFER,

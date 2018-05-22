@@ -265,9 +265,17 @@ float half_to_float (uint16_t value);
     }                                                                   \
   while (0)
 
-#define HANDLE_IMAGE1D_BUFFER(mem)                                            \
+#define IMAGE1D_TO_BUFFER(mem)                                                \
   mem = ((mem->is_image && (mem->type == CL_MEM_OBJECT_IMAGE1D_BUFFER))       \
              ? mem->buffer                                                    \
              : mem);
+
+#define IS_IMAGE1D_BUFFER(mem)                                                \
+  (mem->is_image && (mem->type == CL_MEM_OBJECT_IMAGE1D_BUFFER))
+
+#define IMAGE1D_ORIG_REG_TO_BYTES(mem, o, r)                                  \
+  size_t px = (mem->image_elem_size * mem->image_channels);                   \
+  size_t i1d_origin[3] = { o[0] * px, o[1], o[2] };                           \
+  size_t i1d_region[3] = { r[0] * px, r[1], r[2] };
 
 #endif

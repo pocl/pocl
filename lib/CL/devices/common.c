@@ -282,7 +282,7 @@ fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg,
                               mem->image_channel_data_type,
                               &(di->_num_channels), &(di->_elem_size));
 
-  HANDLE_IMAGE1D_BUFFER (mem);
+  IMAGE1D_TO_BUFFER (mem);
   di->_data = (mem->device_ptrs[device->dev_id].mem_ptr);
 }
 
@@ -638,7 +638,8 @@ pocl_exec_command (_cl_command_node * volatile node)
     case CL_COMMAND_UNMAP_MEM_OBJECT:
       POCL_UPDATE_EVENT_RUNNING(event);
       POCL_LOCK_OBJ (event->mem_objs[0]);
-      if (event->mem_objs[0]->is_image == CL_FALSE) // TODO handle 1d-buffer
+      if (event->mem_objs[0]->is_image == CL_FALSE
+          || IS_IMAGE1D_BUFFER (event->mem_objs[0]))
         {
           assert (dev->ops->unmap_mem != NULL);
           dev->ops->unmap_mem (dev->data,

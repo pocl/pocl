@@ -65,6 +65,17 @@ CL_API_SUFFIX__VERSION_1_0
 
   POCL_GOTO_ERROR_COND((image == NULL), CL_INVALID_MEM_OBJECT);
 
+  if (IS_IMAGE1D_BUFFER (image))
+    {
+      IMAGE1D_ORIG_REG_TO_BYTES (image, origin, region)
+      return POname (clEnqueueMapBuffer) (
+          command_queue, image,
+          blocking_map, map_flags,
+          i1d_origin[0], i1d_region[0],
+          num_events_in_wait_list, event_wait_list, event,
+          errcode_ret);
+    }
+
   POCL_GOTO_ERROR_ON((!image->is_image), CL_INVALID_MEM_OBJECT,
     "image argument is not an image type cl_mem\n");
 
@@ -113,8 +124,6 @@ CL_API_SUFFIX__VERSION_1_0
   mapping_info->offset = origin[2] * mapping_info->slice_pitch
                          + origin[1] * mapping_info->row_pitch
                          + origin[0] * px;
-
-  HANDLE_IMAGE1D_BUFFER (image);
 
   /* CL_INVALID_OPERATION if buffer has been created with
    * CL_MEM_HOST_WRITE_ONLY

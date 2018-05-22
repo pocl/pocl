@@ -79,7 +79,7 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
 
   for (i = 0; i < num_mem_objects; ++i)
     {
-      HANDLE_IMAGE1D_BUFFER (new_mem_objects[i]);
+      IMAGE1D_TO_BUFFER (new_mem_objects[i]);
       POname (clRetainMemObject) (new_mem_objects[i]);
       cmd->command.migrate.source_devices[i]
           = new_mem_objects[i]->owning_device;

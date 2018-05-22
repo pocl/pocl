@@ -20,6 +20,13 @@ POname(clEnqueueCopyImage)(cl_command_queue      command_queue ,
   POCL_RETURN_ERROR_COND ((src_image == NULL), CL_INVALID_MEM_OBJECT);
   POCL_RETURN_ERROR_COND ((dst_image == NULL), CL_INVALID_MEM_OBJECT);
 
+  /* src_image, dst_image: Can be 1D, 2D, 3D image or a 1D, 2D image array
+   * objects allowing us to perform the following actions */
+  POCL_RETURN_ERROR_ON (
+      (IS_IMAGE1D_BUFFER (src_image) || IS_IMAGE1D_BUFFER (dst_image)),
+      CL_INVALID_MEM_OBJECT,
+      "clEnqueueCopyImage cannot be called on image 1D buffers!\n");
+
   POCL_CHECK_DEV_IN_CMDQ;
 
   cl_int err = pocl_rect_copy(

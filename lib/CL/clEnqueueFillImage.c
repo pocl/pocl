@@ -90,9 +90,19 @@ CL_API_SUFFIX__VERSION_1_2
   pocl_write_pixel_zero (fill_pixel, fill_color, image->image_channel_order,
                          image->image_elem_size,
                          image->image_channel_data_type);
-  // TODO
-  // cl_mem saved_image = image;
-  HANDLE_IMAGE1D_BUFFER (image);
+
+  size_t px = image->image_elem_size * image->image_channels;
+
+  if (IS_IMAGE1D_BUFFER (image))
+    {
+      return POname (clEnqueueFillBuffer) (
+          command_queue,
+          image->buffer,
+          fill_pixel, 16,
+          origin[0] * px,
+          region[0] * px,
+          num_events_in_wait_list, event_wait_list, event);
+    }
 
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_FILL_IMAGE,
                                  event, num_events_in_wait_list,
@@ -101,8 +111,7 @@ CL_API_SUFFIX__VERSION_1_2
     goto ERROR_CLEAN;
 
   cmd->command.fill_image.fill_pixel = fill_pixel;
-  cmd->command.fill_image.pixel_size
-      = image->image_elem_size * image->image_channels;
+  cmd->command.fill_image.pixel_size = px;
 
   cmd->command.fill_image.mem_id
       = &image->device_ptrs[command_queue->device->dev_id];

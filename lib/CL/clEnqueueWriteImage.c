@@ -23,6 +23,17 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
 
   POCL_RETURN_ERROR_COND((ptr == NULL), CL_INVALID_VALUE);
 
+  if (IS_IMAGE1D_BUFFER (image))
+    {
+      IMAGE1D_ORIG_REG_TO_BYTES (image, origin, region);
+      return POname (clEnqueueWriteBuffer) (
+          command_queue, image,
+          blocking_write,
+          i1d_origin[0], i1d_region[0],
+          ptr,
+          num_events_in_wait_list, event_wait_list, event);
+    }
+
   POCL_RETURN_ERROR_ON((command_queue->context != image->context),
     CL_INVALID_CONTEXT, "image and command_queue are not from the same context\n");
 
@@ -61,7 +72,6 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
       return errcode;
     }  
 
-  HANDLE_IMAGE1D_BUFFER (image);
 
   cl_device_id dev = command_queue->device;
 

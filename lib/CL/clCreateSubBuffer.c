@@ -38,9 +38,11 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
   int errcode;
   unsigned i;
 
-  HANDLE_IMAGE1D_BUFFER (buffer);
-
   POCL_GOTO_ERROR_COND((buffer == NULL), CL_INVALID_MEM_OBJECT);
+
+  POCL_GOTO_ERROR_ON ((buffer->is_image || IS_IMAGE1D_BUFFER (buffer)),
+                      CL_INVALID_MEM_OBJECT,
+                      "subbuffers on images not supported\n");
 
   POCL_GOTO_ERROR_ON((buffer->parent != NULL), CL_INVALID_MEM_OBJECT,
     "buffer is already a sub-buffer\n");

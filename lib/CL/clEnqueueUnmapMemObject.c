@@ -54,8 +54,6 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
 
   POCL_CHECK_DEV_IN_CMDQ;
 
-  HANDLE_IMAGE1D_BUFFER (memobj);
-
   POCL_RETURN_ERROR_ON ((memobj->flags & CL_MEM_HOST_NO_ACCESS),
                         CL_INVALID_OPERATION,
                         "buffer has been created with "
