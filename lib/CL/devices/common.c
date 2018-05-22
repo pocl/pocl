@@ -382,7 +382,7 @@ pocl_mem_objs_cleanup (cl_event event)
 }
 
 /**
- * executes given command.
+ * executes given command. Call with node->event UNLOCKED.
  */
 void
 pocl_exec_command (_cl_command_node * volatile node)
@@ -757,6 +757,7 @@ pocl_exec_command (_cl_command_node * volatile node)
   pocl_mem_manager_free_command (node);
 }
 
+/* call with brc_event UNLOCKED. */
 void
 pocl_broadcast (cl_event brc_event)
 {

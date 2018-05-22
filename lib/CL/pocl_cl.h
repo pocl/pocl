@@ -279,7 +279,8 @@ struct pocl_device_ops {
      See basic and pthread driver for reference. */
 
   /* submit gives the command for the device. The command may be left in the cq
-     or stored to the device driver owning the cq. */
+     or stored to the device driver owning the cq. submit is called
+     with node->event locked, and must return with it unlocked. */
   void (*submit) (_cl_command_node *node, cl_command_queue cq);
 
   /* join is called by clFinish and this function blocks until all the enqueued
@@ -288,11 +289,12 @@ struct pocl_device_ops {
 
   /* flush is called when clFlush is called. This function ensures that
      commands will be eventually executed. It is up to the device what happens
-     here, if anything. See basic and pthread for reference. */
+     here, if anything. See basic and pthread for reference.*/
   void (*flush) (cl_device_id device, cl_command_queue cq);
 
   /* notify is used to communicate to a device driver that an event, it has
-     been waiting, has been completed. */
+     been waiting, has been completed. Upon call, both events are locked, and
+     must be locked also on return.*/
   void (*notify) (cl_device_id device, cl_event event, cl_event finished);
 
   /* broadcast is(has to be) called by the device driver when a command is
@@ -300,17 +302,22 @@ struct pocl_device_ops {
      It is used to broadcast notifications to device drivers waiting
      this event to complete.
      There is a default implementation for this. Use it if there is no need
-     to do anything special here. */
+     to do anything special here.
+     The default implementation calls notify(event, target_event) for the
+     list of events waiting on 'event'. */
   void (*broadcast) (cl_event event);
 
-  /* wait_event is blocking the execution until the waited event is complete.*/
+  /* wait_event is blocking the execution until the waited event is complete.
+     Called (and must return) with unlocked event. */
   void (*wait_event) (cl_device_id device, cl_event event);
 
   /* update_event is an alternative way of handling event status changes if
-     something device spesific needs to be done when the status of the event
+     something device specific needs to be done when the status of the event
      changes.
-     this function is called POCL_UPDATE_EVENT_* macros if available.
-     may be NULL, no need to implement if not needed. */
+     This function is called via POCL_UPDATE_EVENT_* macros if available.
+     All POCL_UPDATE_EVENT_ (except COMPLETE) must be called with LOCKED event.
+     may be NULL, no need to implement if not needed.
+     Called (and must return) with locked event. */
   void (*update_event) (cl_device_id device, cl_event event, cl_int status);
 
   /* free_event_data may be called when event is freed. Event data may only be

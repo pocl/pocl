@@ -516,6 +516,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
   return CL_SUCCESS;
 }
 
+/* call with node->event UNLOCKED */
 void pocl_command_enqueue (cl_command_queue command_queue,
                           _cl_command_node *node)
 {
@@ -559,7 +560,7 @@ void pocl_command_enqueue (cl_command_queue command_queue,
     POname(clFinish) (command_queue);
 }
 
-
+/* call (and return) with node->event locked */
 void
 pocl_command_push (_cl_command_node *node, 
                    _cl_command_node *volatile *ready_list, 
@@ -586,6 +587,7 @@ pocl_command_push (_cl_command_node *node,
     }
 }
 
+/* call with both event->queue and event UNLOCKED */
 int pocl_update_command_queue (cl_event event)
 {
   int cq_ready;

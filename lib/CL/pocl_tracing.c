@@ -50,6 +50,7 @@ static const struct pocl_event_tracer *pocl_event_tracers[] = {
 
 static const struct pocl_event_tracer *event_tracer = NULL;
 
+/* called with event locked, and must also return with locked event */
 void
 pocl_event_updated (cl_event event, int status)
 {
