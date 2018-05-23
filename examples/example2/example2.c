@@ -39,7 +39,7 @@ int
 main (int argc, char **argv)
 {
   cl_float *input = NULL, *output = NULL;
-  int i, j, err, testing_spir;
+  int i, j, err, spir, spirv;
   cl_mem memobjs[2] = { 0 };
   size_t global_work_size[2] = { 0 };
   size_t local_work_size[2] = { 0 };
@@ -54,10 +54,11 @@ main (int argc, char **argv)
   err = poclu_get_any_device2 (&context, &device, &queue, &platform);
   CHECK_OPENCL_ERROR_IN ("clCreateContext");
 
-  testing_spir = (argc > 1 && argv[1][0] == 's');
+  spir = (argc > 1 && argv[1][0] == 's');
+  spirv = (argc > 1 && argv[1][0] == 'v');
 
   const char *basename = "example2";
-  err = poclu_load_program (context, device, basename, testing_spir, &program);
+  err = poclu_load_program (context, device, basename, spir, spirv, &program);
   if (err != CL_SUCCESS)
     goto ERROR;
 

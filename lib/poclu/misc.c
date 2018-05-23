@@ -231,7 +231,7 @@ check_cl_error (cl_int cl_err, int line, const char* func_name) {
 
 int
 poclu_load_program (cl_context context, cl_device_id device,
-                    const char *basename, int spir, cl_program *p)
+                    const char *basename, int spir, int spirv, cl_program *p)
 {
   cl_bool little_endian = 0;
   cl_uint address_bits = 0;
@@ -245,7 +245,7 @@ poclu_load_program (cl_context context, cl_device_id device,
 
   *p = NULL;
 
-  if (spir)
+  if (spir || spirv)
     {
       err = clGetDeviceInfo (device, CL_DEVICE_EXTENSIONS, 1024, extensions,
                              NULL);
@@ -272,10 +272,20 @@ poclu_load_program (cl_context context, cl_device_id device,
                              &address_bits, NULL);
       CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo addr bits");
 
-      if (address_bits < 64)
-        ext = ".spir32";
+      if (spirv)
+      {
+        if (address_bits < 64)
+          ext = ".spirv32";
+        else
+          ext = ".spirv64";
+      }
       else
-        ext = ".spir64";
+      {
+        if (address_bits < 64)
+          ext = ".spir32";
+        else
+          ext = ".spir64";
+      }
 
       snprintf (path, 1024, "%s%s", basename, ext);
 

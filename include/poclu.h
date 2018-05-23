@@ -112,7 +112,7 @@ POCLU_API int POCLU_CALL
 poclu_write_file(char* filemane, char* content, size_t size);
 
 int poclu_load_program (cl_context context, cl_device_id device,
-                        const char *basename, int spir, cl_program *p);
+                        const char *basename, int spir, int spirv, cl_program *p);
 /* In case cl_err != CL_SUCCESS, prints out the error + function : line to stderr,
  * and returns 1, otherwise returns 0
  */

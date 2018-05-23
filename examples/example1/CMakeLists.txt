@@ -36,7 +36,12 @@ add_test("examples/example1_dot_product" "example1")
 
 if (ENABLE_SPIR)
   add_test("examples/example1_spir" "example1" "s")
-  set(SPIREX "examples/example1_spir")
+  list(APPEND SPIREX "examples/example1_spir")
+endif()
+
+if (ENABLE_SPIRV)
+  add_test("examples/example1_spirv" "example1" "v")
+  list(APPEND SPIREX "examples/example1_spirv")
 endif()
 
 set_tests_properties( "examples/example1_dot_product" ${SPIREX}
