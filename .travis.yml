@@ -71,7 +71,8 @@ script:
     fi
 
   - if [ ! "$DOCKERFILE" = "" ] ; then
-      docker build -f tools/docker/$DOCKERFILE . --build-arg GH_PR=$GH_PR --build-arg GH_SLUG=$TRAVIS_REPO_SLUG --build-arg GH_COMMIT=$GIT_COMMIT --build-arg LLVM_VERSION=$LLVM_VERSION;
+      docker build -f tools/docker/$DOCKERFILE . --build-arg GH_PR=$GH_PR --build-arg GH_SLUG=$TRAVIS_REPO_SLUG --build-arg GH_COMMIT=$GIT_COMMIT --build-arg LLVM_VERSION=$LLVM_VERSION -t travis_ci_pocl_test;
+      docker run `docker images -q travis_ci_pocl_test`;
     fi
 
 notifications:
