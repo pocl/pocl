@@ -172,6 +172,9 @@ if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     set(ENABLE_LSAN OFF CACHE INTERNAL "Enable LeakSanitizer")
   endif()
 
+else()
+  set(ENABLE_ASAN OFF CACHE INTERNAL "Enable AddressSanitizer")
+  set(ENABLE_TSAN OFF CACHE INTERNAL "Enable ThreadSanitizer")
 endif()
 
 ##########################################################
@@ -1392,8 +1395,8 @@ endif()
 
 # make check & make check_tier1
 
-add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
-add_custom_target(check_tier1 COMMAND ${CMAKE_CTEST_COMMAND} -L "'internal|amdsdk_30|piglit|PyOpenCL|conformance_suite_micro'" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
+add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
+add_custom_target(check_tier1 COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -L "'internal|amdsdk_30|piglit|PyOpenCL|conformance_suite_micro'" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
 
 ##########################################################
 
