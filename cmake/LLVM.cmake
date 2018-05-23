@@ -290,6 +290,12 @@ find_program_or_die(LLVM_AS   "llvm-as"   "LLVM assembler")
 find_program_or_die(LLVM_LINK "llvm-link" "LLVM IR linker")
 find_program_or_die(LLVM_LLI  "lli"       "LLVM interpreter")
 
+if(NOT DEFINED LLVM_SPIRV)
+  find_program(LLVM_SPIRV NAMES "llvm-spirv${LLVM_BINARY_SUFFIX}${CMAKE_EXECUTABLE_SUFFIX}" "llvm-spirv${CMAKE_EXECUTABLE_SUFFIX}" HINTS "${LLVM_BINDIR}" "${LLVM_CONFIG_LOCATION}" "${LLVM_PREFIX}" "${LLVM_PREFIX_BIN}")
+  if(LLVM_SPIRV)
+    message(STATUS "Found llvm-spirv: ${LLVM_SPIRV}")
+  endif()
+endif()
 ####################################################################
 
 # try compile with any compiler (supplied as argument)

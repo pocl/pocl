@@ -613,21 +613,22 @@ endif()
 
 ######################################################################################
 
-if((NOT LLVM_OLDER_THAN_5_0) AND CLANG_IS_PATCHED_FOR_SPIR_CC AND X86)
+set(SPIRV OFF)
+
+if((NOT LLVM_OLDER_THAN_5_0) AND CLANG_IS_PATCHED_FOR_SPIR_CC AND X86 AND (NOT KERNELLIB_HOST_CPU_VARIANTS STREQUAL "distro"))
 
   option(ENABLE_SPIR "Enable SPIR support (default ON when available)" ON)
-  set(ENABLE_SPIRV OFF)
 
   if(ENABLE_SPIR)
 
     message(WARNING "SPIR support is available but highly experimental; use at your own risk.")
 
-    if(EXISTS "${LLVM_SPIRV}")
+    if(LLVM_SPIRV AND (EXISTS "${LLVM_SPIRV}"))
       message(WARNING "SPIR-V support enabled but highly experimental; you must use a llvm-spirv "
                       "converter that produces bitcode FOR YOUR LLVM VERSION. "
                       "E.g. if you're compiling pocl against LLVM 5 then using Khronos' "
-                      "official llvm-spirv (based on LLVM 3.6) WILL NOT WORK.")
-      set(ENABLE_SPIRV ON)
+                      "llvm-spirv based on LLVM 3.6 branch WILL NOT WORK.")
+      set(SPIRV ON)
     endif()
 
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -639,7 +640,11 @@ if((NOT LLVM_OLDER_THAN_5_0) AND CLANG_IS_PATCHED_FOR_SPIR_CC AND X86)
     endif()
   endif()
 
+else()
+  set(ENABLE_SPIR OFF CACHE INTERNAL "SPIR enabled" FORCE)
 endif()
+
+set(ENABLE_SPIRV ${SPIRV} CACHE INTERNAL "SPIR-V enabled" FORCE)
 
 ######################################################################################
 

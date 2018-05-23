@@ -34,7 +34,7 @@ target_link_libraries("example2" ${POCLU_LINK_OPTIONS})
 
 add_test("examples/example2" "example2")
 
-if (ENABLE_SPIR AND NOT (KERNELLIB_HOST_DISTRO_VARIANTS))
+if (ENABLE_SPIR)
   add_test("examples/example2_spir" "example2" "s")
   set(SPIREX "examples/example2_spir")
 endif()
