@@ -398,11 +398,14 @@ int pocl_llvm_build_program(cl_program program,
   la->MathErrno = false; // -fno-math-errno
   la->NoBuiltin = true;  // -fno-builtin
   la->AsmBlocks = true;  // -fasm (?)
+
   la->setStackProtector(LangOptions::StackProtectorMode::SSPOff);
-  la->PICLevel = 0;
+
 #ifdef LLVM_OLDER_THAN_3_9
-  la->PIELevel = 0;
+  la->PICLevel = PICLevel::Large;
+  la->PIELevel = PICLevel::Large;
 #else
+  la->PICLevel = PICLevel::BigPIC;
   la->PIE = 0;
 #endif
 
@@ -532,15 +535,11 @@ int pocl_llvm_build_program(cl_program program,
 
   ++numberOfIRs;
 
-  // a workaround for errors with PIC + variables in constant addrspace
-  // fails on the test_convert_type_X tests with this error:
-  //   relocation R_X86_64_PC32 against symbol `char_values' can not be used
-  //   when making a shared object; recompile with -fPIC
 #ifdef LLVM_OLDER_THAN_3_9
-  (*mod)->setPICLevel(PICLevel::Default);
+  (*mod)->setPICLevel(PICLevel::Large);
 #else
-  (*mod)->setPICLevel(PICLevel::NotPIC);
-  (*mod)->setPIELevel(PIELevel::Default);
+  (*mod)->setPICLevel(PICLevel::BigPIC);
+  (*mod)->setPIELevel(PIELevel::Large);
 #endif
 
 
@@ -634,6 +633,12 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
      */
     linked_module->setTargetTriple(libmodule->getTargetTriple());
     linked_module->setDataLayout(libmodule->getDataLayout());
+#ifdef LLVM_OLDER_THAN_3_9
+    linked_module->setPICLevel(PICLevel::Large);
+#else
+    linked_module->setPICLevel(PICLevel::BigPIC);
+    linked_module->setPIELevel(PIELevel::Large);
+#endif
 
 #else
     POCL_MSG_ERR("SPIR not supported\n");

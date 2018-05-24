@@ -666,9 +666,9 @@ endif()
 # constant addrspace variables, and stack protector likely slows
 # down the kernels, so it needs to be determined whether it's worth
 # the trouble.
-set(DEFAULT_KERNEL_CL_FLAGS  "-x cl -fno-stack-protector -fno-PIC ${RTLIB_FLAG}")
-set(DEFAULT_KERNEL_C_FLAGS "-xc -std=c11 -D__CBUILD__ -fno-math-errno -fno-stack-protector -fno-PIC ${RTLIB_FLAG}")
-set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector -fno-PIC ${RTLIB_FLAG}")
+set(DEFAULT_KERNEL_CL_FLAGS  "-x cl -fno-stack-protector -fPIC ${RTLIB_FLAG}")
+set(DEFAULT_KERNEL_C_FLAGS "-xc -std=c11 -D__CBUILD__ -fno-math-errno -fno-stack-protector -fPIC ${RTLIB_FLAG}")
+set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector -fPIC ${RTLIB_FLAG}")
 
 if(ENABLE_VECMATHLIB)
   option(USE_VECMATHLIB_BUILTINS_ONLY "Use only __builtin_* functions in the kernel library." OFF)
