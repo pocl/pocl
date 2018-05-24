@@ -23,28 +23,27 @@
 #
 #=============================================================================
 
-#AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'
-add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
-
-# example1_CFLAGS = @OPENCL_CFLAGS@
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 ${OPENCL_CFLAGS}")
 add_compile_options(${OPENCL_CFLAGS})
-
 
 if (MSVC)
   set_source_files_properties( example2a.c PROPERTIES LANGUAGE CXX )
 endif(MSVC)
 add_executable("example2a" example2a.c example2a.cl)
 
-# example1_LDADD = @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
 target_link_libraries("example2a" ${POCLU_LINK_OPTIONS})
 
-add_test("examples/example2_matrix_transpose_alocals" "example2a")
+add_test("examples/example2a" "example2a")
 
-set_tests_properties( "examples/example2_matrix_transpose_alocals"
+if (ENABLE_SPIR)
+  add_test("examples/example2a_spir" "example2a" "s")
+  set(SPIREX "examples/example2a_spir")
+endif()
+
+set_tests_properties( "examples/example2a" ${SPIREX}
   PROPERTIES
     COST 3.0
     PASS_REGULAR_EXPRESSION "OK\n"
     PROCESSORS 1
+    ENVIRONMENT "POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE.adf"
     LABELS "internal;hsa;tce;cuda"
     DEPENDS "pocl_version_check")

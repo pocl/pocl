@@ -1747,7 +1747,7 @@
     <min-address>0</min-address>
     <max-address>65535</max-address>
     <numerical-id>0</numerical-id>
-    <numerical-id>4</numerical-id>
+    <numerical-id>3</numerical-id>
   </address-space>
 
   <address-space name="instructions">
@@ -1760,8 +1760,8 @@
     <width>8</width>
     <min-address>0</min-address>
     <max-address>268435455</max-address>
-    <numerical-id>3</numerical-id>
-    <numerical-id>5</numerical-id>
+    <numerical-id>1</numerical-id>
+    <numerical-id>2</numerical-id>
   </address-space>
 
   <global-control-unit name="gcu">

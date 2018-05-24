@@ -22,12 +22,10 @@ int main(void)
 
 	/* Check that the default platform we get from the ICD loader
 	 * matches the pocl version string this binary was built against. */
-	CHECK_CL_ERROR(poclu_get_any_device(&context, &did, &queue));
-	TEST_ASSERT( context );
+	CHECK_CL_ERROR (poclu_get_any_device2 (&context, &did, &queue, &pid));
+        TEST_ASSERT( context );
 	TEST_ASSERT( did );
 	TEST_ASSERT( queue );
-	CHECK_CL_ERROR(clGetDeviceInfo( did, CL_DEVICE_PLATFORM,
-			      sizeof(cl_platform_id), &pid, NULL));
 
 	CHECK_CL_ERROR(clGetPlatformInfo( pid, CL_PLATFORM_VERSION,
 				sizeof(result), result, &rvs));

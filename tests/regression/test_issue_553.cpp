@@ -63,7 +63,6 @@ int main(int argc, char *argv[])
 
   auto kernel = cl::KernelFunctor<cl_int, cl_int>(program, "pocltest");
 
-  cl_int i = 0;
   cl::Buffer buffer;
   kernel(cl::EnqueueArgs(queue, cl::NDRange(2), cl::NDRange(2)), 1, 2);
 

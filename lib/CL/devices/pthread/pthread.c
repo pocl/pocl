@@ -222,7 +222,7 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   d->current_dlhandle = 0;
   device->data = d;
 
-  device->address_bits = sizeof(void*) * 8;
+  device->address_bits = POCL_DEVICE_ADDRESS_BITS;
 
   device->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT; // this is in bytes
   device->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT*8; // this is in bits

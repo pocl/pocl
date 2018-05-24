@@ -23,11 +23,6 @@
 #
 #=============================================================================
 
-#AM_CPPFLAGS = -I$(top_srcdir)/fix-include -I$(top_srcdir)/include -DSRCDIR='"$(abs_srcdir)"'
-add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
-
-# example1_CFLAGS = @OPENCL_CFLAGS@
-#set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -std=c99 ${OPENCL_CFLAGS}")
 add_compile_options(${OPENCL_CFLAGS})
 
 if (MSVC)
@@ -35,12 +30,21 @@ if (MSVC)
 endif(MSVC)
 add_executable("example1" example1.c example1_exec.c example1.cl)
 
-# example1_LDADD = @OPENCL_LIBS@ ../../lib/poclu/libpoclu.la
 target_link_libraries("example1" ${POCLU_LINK_OPTIONS})
 
 add_test("examples/example1_dot_product" "example1")
 
-set_tests_properties( "examples/example1_dot_product"
+if (ENABLE_SPIR)
+  add_test("examples/example1_spir" "example1" "s")
+  list(APPEND SPIREX "examples/example1_spir")
+endif()
+
+if (ENABLE_SPIRV)
+  add_test("examples/example1_spirv" "example1" "v")
+  list(APPEND SPIREX "examples/example1_spirv")
+endif()
+
+set_tests_properties( "examples/example1_dot_product" ${SPIREX}
   PROPERTIES
     COST 3.0
     PASS_REGULAR_EXPRESSION "[(]0[.]000000, 0[.]000000, 0[.]000000, 0[.]000000[)] [.] [(]0[.]000000, 0[.]000000, 0[.]000000, 0[.]000000[)] = 0[.]000000
@@ -49,5 +53,6 @@ set_tests_properties( "examples/example1_dot_product"
 [(]3[.]000000, 3[.]000000, 3[.]000000, 3[.]000000[)] [.] [(]3[.]000000, 3[.]000000, 3[.]000000, 3[.]000000[)] = 36[.]000000
 OK"
     PROCESSORS 1
+    ENVIRONMENT "POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE.adf"
     LABELS "internal;hsa;tce;cuda"
     DEPENDS "pocl_version_check")

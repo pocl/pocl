@@ -11,6 +11,8 @@ endif()
 
 string(REPLACE "####" ";" test_cmd_separated "${test_cmd}")
 
+execute_process(COMMAND printenv)
+
 execute_process(
   COMMAND ${test_cmd_separated}
   RESULT_VARIABLE test_not_successful

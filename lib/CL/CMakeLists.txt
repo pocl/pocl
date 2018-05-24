@@ -124,7 +124,7 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "clReleaseDevice.c"
                    "clRetainDevice.c"
                    "clCreateSubDevices.c"
-				           "clUnloadPlatformCompiler.c"
+                   "clUnloadPlatformCompiler.c"
                    "pocl_cl.h" "pocl_util.h" "pocl_util.c"
                    "pocl_image_util.c" "pocl_image_util.h"
                    "pocl_img_buf_cpy.c"
@@ -149,9 +149,15 @@ add_library("pocl_cache" OBJECT "pocl_cache.c")
 if (OCS_AVAILABLE)
   include_directories(${LLVM_INCLUDE_DIRS})
   set(LLVM_API_SOURCES "pocl_llvm_build.cc" "pocl_llvm_metadata.cc" "pocl_llvm_utils.cc" "pocl_llvm_wg.cc")
-  list(APPEND POCL_LIB_SOURCES ${LLVM_API_SOURCES})
   set_source_files_properties(${LLVM_API_SOURCES} PROPERTIES COMPILE_FLAGS "${LLVM_CXXFLAGS} -I\"${CMAKE_CURRENT_SOURCE_DIR}/../llvmopencl\"")
+
+  add_library("lib_cl_llvm" OBJECT ${LLVM_API_SOURCES})
+
+
   list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:llvmpasses>")
+  list(APPEND LIBPOCL_OBJS "$<TARGET_OBJECTS:lib_cl_llvm>")
+
+
   # pocl_cache.c depends on a SHA1 hash of all built kernel-<target>.bc
   add_dependencies("pocl_cache" "kernellib_hash")
 else()

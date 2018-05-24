@@ -36,9 +36,9 @@
 
 #include "pocl_device.h"
 
-#define __local__ __attribute__((address_space(0)))
-#define __global__ __attribute__((address_space(3)))
-#define __constant__ __attribute__((address_space(3)))
+#define __local__ __attribute__((address_space(3)))
+#define __global__ __attribute__((address_space(1)))
+#define __constant__ __attribute__((address_space(2)))
 
 typedef volatile __global__ __kernel_exec_cmd kernel_exec_cmd;
 typedef __global__ __kernel_metadata kernel_metadata;

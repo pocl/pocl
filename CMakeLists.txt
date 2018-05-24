@@ -172,6 +172,9 @@ if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
     set(ENABLE_LSAN OFF CACHE INTERNAL "Enable LeakSanitizer")
   endif()
 
+else()
+  set(ENABLE_ASAN OFF CACHE INTERNAL "Enable AddressSanitizer")
+  set(ENABLE_TSAN OFF CACHE INTERNAL "Enable ThreadSanitizer")
 endif()
 
 ##########################################################
@@ -610,35 +613,38 @@ endif()
 
 ######################################################################################
 
-if((NOT LLVM_OLDER_THAN_5_0) AND CLANG_IS_PATCHED_FOR_SPIR_CC AND X86)
+set(SPIRV OFF)
+
+if((NOT LLVM_OLDER_THAN_5_0) AND CLANG_IS_PATCHED_FOR_SPIR_CC AND X86 AND (NOT KERNELLIB_HOST_CPU_VARIANTS STREQUAL "distro"))
 
   option(ENABLE_SPIR "Enable SPIR support (default ON when available)" ON)
-  set(ENABLE_SPIRV OFF)
 
   if(ENABLE_SPIR)
 
     message(WARNING "SPIR support is available but highly experimental; use at your own risk.")
 
-    if(EXISTS "${LLVM_SPIRV}")
+    if(LLVM_SPIRV AND (EXISTS "${LLVM_SPIRV}"))
       message(WARNING "SPIR-V support enabled but highly experimental; you must use a llvm-spirv "
                       "converter that produces bitcode FOR YOUR LLVM VERSION. "
                       "E.g. if you're compiling pocl against LLVM 5 then using Khronos' "
-                      "official llvm-spirv (based on LLVM 3.6) WILL NOT WORK.")
-      set(ENABLE_SPIRV ON)
+                      "llvm-spirv based on LLVM 3.6 branch WILL NOT WORK.")
+      set(SPIRV ON)
     endif()
 
     if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-      set(SPIR_TARGET_TRIPLE "spir64-unknown-unknown")
-      set(SPIR_TARGET_DATALAYOUT "e-m:e-i64:64-f80:128-n8:16:32:64-S128")
+      set(SPIR_HOST_TARGET_TRIPLE "spir64-unknown-unknown")
     elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
-      set(SPIR_TARGET_TRIPLE "spir-unknown-unknown")
-      set(SPIR_TARGET_DATALAYOUT "e-m:e-p:32:32-i64:64-f80:32-n8:16:32-S32")
+      set(SPIR_HOST_TARGET_TRIPLE "spir-unknown-unknown")
     else()
       message(FATAL_ERROR "Cannot figure out POCL_DEVICE_ADDRESS_BITS")
     endif()
   endif()
 
+else()
+  set(ENABLE_SPIR OFF CACHE INTERNAL "SPIR enabled" FORCE)
 endif()
+
+set(ENABLE_SPIRV ${SPIRV} CACHE INTERNAL "SPIR-V enabled" FORCE)
 
 ######################################################################################
 
@@ -1129,7 +1135,7 @@ if(ENABLE_TCE)
     set(ENABLE_TCEMC 1)
     set(OCL_DRIVERS "${OCL_DRIVERS} tcemc") # TCEMC is a "superset" of TCE (lp:tce) features.
   endif()
-  set(TCE_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_fp16")
+  set(TCE_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_fp16 cl_khr_spir")
   set(TEMP_EXT "${TCE_DEVICE_EXTENSIONS}")
   set(TCE_DEVICE_EXTENSION_DEFINES "")
   separate_arguments(TEMP_EXT)
@@ -1394,8 +1400,8 @@ endif()
 
 # make check & make check_tier1
 
-add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
-add_custom_target(check_tier1 COMMAND ${CMAKE_CTEST_COMMAND} -L "'internal|amdsdk_30|piglit|PyOpenCL|conformance_suite_micro'" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
+add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
+add_custom_target(check_tier1 COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -L "'internal|amdsdk_30|piglit|PyOpenCL|conformance_suite_micro'" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
 
 ##########################################################
 

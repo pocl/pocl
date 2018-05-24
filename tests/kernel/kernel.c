@@ -1,4 +1,3 @@
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -30,8 +29,8 @@ int call_test(const char *name)
   cl_kernel kernel = NULL;
   cl_int result;
   int retval = -1;
-  
-  assert(name);
+
+  TEST_ASSERT (name != NULL);
 
   /* determine file name of kernel source to load */
   srcdir_length = strlen(SRCDIR);
@@ -100,7 +99,7 @@ int call_test(const char *name)
     goto error;
   }
 
-  result = clBuildProgram(program, 0, NULL, NULL, NULL, NULL); 
+  result = clBuildProgram(program, 0, NULL, "-I" SRCDIR, NULL, NULL);
   if (result != CL_SUCCESS) {
     puts("clBuildProgram call failed\n");
     goto error;

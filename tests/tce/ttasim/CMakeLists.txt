@@ -33,6 +33,8 @@ add_definitions("-DSRCDIR=\"${CMAKE_CURRENT_SOURCE_DIR}\"")
 
 add_test_pocl(NAME "tce/ttasim" COMMAND "ttasim_host")
 
+add_test_pocl(NAME "tcele/ttasim" COMMAND "ttasim_host")
+
 set_tests_properties( "tce/ttasim"
   PROPERTIES
     COST 40.0
@@ -41,3 +43,14 @@ set_tests_properties( "tce/ttasim"
     LABELS "tce;tta;ttasim"
     ENVIRONMENT "POCL_DEVICES=ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine.adf"
     DEPENDS "pocl_version_check")
+
+# TODO little-endian version is currently broken, needs more investigation.
+#
+#set_tests_properties( "tcele/ttasim"
+#  PROPERTIES
+#    COST 40.0
+#    PROCESSORS 1
+#    PASS_REGULAR_EXPRESSION "PING23456.000000 2000001OK"
+#    LABELS "tce;tta;ttasim"
+#    ENVIRONMENT "POCL_DEVICES=ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE.adf"
+#    DEPENDS "pocl_version_check")

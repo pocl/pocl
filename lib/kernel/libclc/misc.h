@@ -146,7 +146,7 @@ typedef struct { int16 s0, s1, s2, s3; } v4int16;
 #define CONSTATTR __attribute__((const))
 
 #define FMA fma
-#define RCP(X) ((vtype)(1.0) / X)
+#define RCP(X) ((vtype)(1.0f) / X)
 #define DIV(X,Y) (X / Y)
 
 #define LDEXP ldexp

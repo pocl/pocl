@@ -21,7 +21,6 @@
    THE SOFTWARE.
 */
 
-#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <CL/opencl.h>
@@ -65,14 +64,14 @@ main (int argc, char **argv)
 
   snprintf (kernel_path, 2048,  "%s/%s", SRCDIR, argv[1]);
   source_file = fopen(kernel_path, "r");
-  assert(source_file != NULL && "Kernel .cl not found.");
+  TEST_ASSERT (source_file != NULL && "Kernel .cl not found.");
 
   fseek (source_file, 0, SEEK_END);
   source_size = ftell (source_file);
   fseek (source_file, 0, SEEK_SET);
 
   source = (char *) malloc (source_size + 1);
-  assert (source != NULL);
+  TEST_ASSERT (source != NULL);
 
   fread (source, source_size, 1, source_file);
   source[source_size] = '\0';

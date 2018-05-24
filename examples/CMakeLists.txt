@@ -36,11 +36,6 @@ add_subdirectory("example1")
 add_subdirectory("example2")
 add_subdirectory("example2a")
 
-if(HOST_DEVICE_EXTENSIONS MATCHES "spir")
-  add_subdirectory("example1-spir32")
-  add_subdirectory("example1-spir64")
-endif()
-
 add_subdirectory("poclcc")
 if(ENABLE_FP64)
   add_subdirectory("scalarwave")

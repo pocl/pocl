@@ -1,17 +1,19 @@
-/* example1 - Simple example from OpenCL specification.
+/* example1 - Simple example from OpenCL 1.0 specification, modified
+
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
-   
+                 2014 Pekka Jääskeläinen
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights
    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
    copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -25,6 +27,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <CL/opencl.h>
+#include <poclu.h>
 
 #define N 128
 
@@ -34,36 +37,34 @@
 #  define CALLAPI
 #endif
 
-extern CALLAPI int exec_dot_product_kernel (const char *program_source, 
-            int n, void *srcA, void *srcB, void *dst);
+extern CALLAPI int
+exec_dot_product_kernel (cl_context context, cl_device_id device,
+                         cl_command_queue cmd_queue, cl_program program, int n,
+                         cl_float4 *srcA, cl_float4 *srcB, cl_float *dst);
 
 int
-main (void)
+main (int argc, char **argv)
 {
-  FILE *source_file;
-  char *source;
-  int source_size;
   cl_float4 *srcA, *srcB;
   cl_float *dst;
-  int i;
+  int i, err, spir, spirv;
 
-  source_file = fopen("example1.cl", "r");
-  if (source_file == NULL) 
-    source_file = fopen (SRCDIR "/example1.cl", "r");
+  cl_context context = NULL;
+  cl_device_id device = NULL;
+  cl_platform_id platform = NULL;
+  cl_command_queue queue = NULL;
+  cl_program program = NULL;
 
-  assert(source_file != NULL && "example1.cl not found!");
+  err = poclu_get_any_device2 (&context, &device, &queue, &platform);
+  CHECK_OPENCL_ERROR_IN ("clCreateContext");
 
-  fseek (source_file, 0, SEEK_END);
-  source_size = ftell (source_file);
-  fseek (source_file, 0, SEEK_SET);
+  spir = (argc > 1 && argv[1][0] == 's');
+  spirv = (argc > 1 && argv[1][0] == 'v');
 
-  source = (char *) malloc (source_size +1 );
-  assert (source != NULL);
-
-  fread (source, source_size, 1, source_file);
-  source[source_size] = '\0';
-
-  fclose (source_file);
+  const char *basename = "example1";
+  err = poclu_load_program (context, device, basename, spir, spirv, &program);
+  if (err != CL_SUCCESS)
+    goto FINISH;
 
   srcA = (cl_float4 *) malloc (N * sizeof (cl_float4));
   srcB = (cl_float4 *) malloc (N * sizeof (cl_float4));
@@ -79,12 +80,17 @@ main (void)
       srcB[i].s[1] = (cl_float)i;
       srcB[i].s[2] = (cl_float)i;
       srcB[i].s[3] = (cl_float)i;
+      dst[i] = (cl_float)i;
     }
 
-  if (exec_dot_product_kernel (source, N, srcA, srcB, dst))
+  err = 0;
+
+  if (exec_dot_product_kernel (context, device, queue, program, N, srcA, srcB,
+                               dst))
     {
       printf ("Error running the tests\n");
-      return -1;
+      err = 1;
+      goto FINISH;
     }
 
   for (i = 0; i < 4; ++i)
@@ -99,16 +105,18 @@ main (void)
           srcA[i].s[3] * srcB[i].s[3] != dst[i])
         {
           printf ("FAIL\n");
-          return -1;
+          err = 1;
+          goto FINISH;
         }
     }
 
-  free (source);
-  free (srcA);
-  free (srcB);
-  free (dst);
-
-
   printf ("OK\n");
-  return 0;
+
+FINISH:
+  CHECK_CL_ERROR (clReleaseProgram (program));
+  CHECK_CL_ERROR (clReleaseCommandQueue (queue));
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
+  CHECK_CL_ERROR (clReleaseContext (context));
+
+  return err;
 }

@@ -24,7 +24,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 #include <CL/opencl.h>
 
 #include "poclu.h"
@@ -140,7 +139,7 @@ int main(void)
                          sizeof(size_t), &binary_sizes, NULL));
 
   binary = malloc(sizeof(unsigned char)*binary_sizes);
-  assert(binary);
+  TEST_ASSERT (binary);
 
   CHECK_CL_ERROR (clGetProgramInfo (program1, CL_PROGRAM_BINARIES,
                                     sizeof(unsigned char*), &binary, NULL));
@@ -180,7 +179,7 @@ int main(void)
                          sizeof(size_t), &barrier_binary_sizes, NULL));
 
   barrier_binary = malloc(sizeof(unsigned char)*barrier_binary_sizes);
-  assert(barrier_binary);
+  TEST_ASSERT (barrier_binary);
 
   CHECK_CL_ERROR(clGetProgramInfo(b_program1, CL_PROGRAM_BINARIES,
                          sizeof(unsigned char*), &barrier_binary, NULL));
@@ -200,7 +199,7 @@ int main(void)
                                     NULL));
 
   static_wg_binary = malloc (sizeof (unsigned char)*static_wg_binary_sizes);
-  assert (static_wg_binary);
+  TEST_ASSERT (static_wg_binary);
 
   CHECK_CL_ERROR (clGetProgramInfo (static_wg_size_program, CL_PROGRAM_BINARIES,
                                     sizeof (unsigned char*), &static_wg_binary,
@@ -318,7 +317,7 @@ int main(void)
   globalSize[1] = 64;
   CHECK_CL_ERROR(clEnqueueNDRangeKernel(queue, kernel3, 2, NULL, globalSize, localSize,
                                0, NULL, NULL));
-  assert(!err);
+  TEST_ASSERT (!err);
 
   localSize[0] = 6;
   globalSize[0] = 6;
