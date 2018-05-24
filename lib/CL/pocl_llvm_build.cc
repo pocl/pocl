@@ -828,49 +828,29 @@ kernel_library
 #ifdef ENABLE_POCL_BUILDING
   if (pocl_get_bool_option("POCL_BUILDING", 0)) {
     kernellib = BUILDDIR;
-#else
-  if (0) {
-#endif
     kernellib += "/lib/kernel/";
     kernellib += subdir;
-    // TODO: get this from the TCE target triplet
-    kernellib += "/kernel-";
-    kernellib += device->llvm_target_triplet;
-    if (is_host) {
-      kernellib += '-';
-      kernellib_fallback = kernellib;
-      kernellib_fallback += OCL_KERNEL_TARGET_CPU;
-      kernellib_fallback += ".bc";
-#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-      if (triple.getArch() == Triple::x86_64 ||
-          triple.getArch() == Triple::x86)
-        kernellib += getX86KernelLibName();
-      else
+  } else // POCL_BUILDING == 0, use install dir
 #endif
-        kernellib += device->llvm_cpu;
-    }
-  } else { // POCL_BUILDING == 0, use install dir
-    kernellib = POCL_INSTALL_PRIVATE_DATADIR;
-    kernellib += "/kernel-";
-    kernellib += device->llvm_target_triplet;
-    if (is_host) {
-      kernellib += '-';
-      kernellib_fallback = kernellib;
-      kernellib_fallback += OCL_KERNEL_TARGET_CPU;
-      kernellib_fallback += ".bc";
+  kernellib = POCL_INSTALL_PRIVATE_DATADIR;
+  kernellib += "/kernel-";
+  kernellib += device->llvm_target_triplet;
+  if (is_host) {
+    kernellib += '-';
+    kernellib_fallback = kernellib;
+    kernellib_fallback += OCL_KERNEL_TARGET_CPU;
+    kernellib_fallback += ".bc";
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-      if (triple.getArch() == Triple::x86_64 ||
-          triple.getArch() == Triple::x86)
-        kernellib += getX86KernelLibName();
-      else
+    if (triple.getArch() == Triple::x86_64 ||
+        triple.getArch() == Triple::x86)
+      kernellib += getX86KernelLibName();
+    else
 #endif
-        kernellib += device->llvm_cpu;
-    }
+      kernellib += device->llvm_cpu;
   }
   kernellib += ".bc";
 
   llvm::Module *lib;
-  SMDiagnostic Err;
 
   if (pocl_exists(kernellib.c_str()))
     {
