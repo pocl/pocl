@@ -162,8 +162,6 @@
 /* used in tce_common.c & pocl_llvm_api.cc  */
 #define SRCDIR  "@SRCDIR@"
 
-#define SPIR_HOST_TARGET_TRIPLE "@SPIR_HOST_TARGET_TRIPLE@"
-
 #cmakedefine TCEMC_AVAILABLE
 
 #cmakedefine TCE_AVAILABLE

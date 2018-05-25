@@ -631,13 +631,6 @@ if((NOT LLVM_OLDER_THAN_5_0) AND CLANG_IS_PATCHED_FOR_SPIR_CC AND X86 AND (NOT K
       set(SPIRV ON)
     endif()
 
-    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
-      set(SPIR_HOST_TARGET_TRIPLE "spir64-unknown-unknown")
-    elseif(CMAKE_SIZEOF_VOID_P EQUAL 4)
-      set(SPIR_HOST_TARGET_TRIPLE "spir-unknown-unknown")
-    else()
-      message(FATAL_ERROR "Cannot figure out POCL_DEVICE_ADDRESS_BITS")
-    endif()
   endif()
 
 else()
