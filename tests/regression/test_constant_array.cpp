@@ -126,7 +126,7 @@ main(void)
            by replacing the process with a dummy process. */
         execlp("true", "true", NULL);
     } 
-    catch (cl::Error err) {
+    catch (cl::Error &err) {
          std::cerr
              << "ERROR: "
              << err.what()

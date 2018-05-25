@@ -160,7 +160,7 @@ main(void)
         // or release any objects as this all happens implicitly with
         // the C++ Wrapper API.
     } 
-    catch (cl::Error err) {
+    catch (cl::Error &err) {
          std::cerr
              << "ERROR: "
              << err.what()

@@ -141,7 +141,7 @@ main(void)
           return EXIT_FAILURE;
 
     }
-    catch (cl::Error err) {
+    catch (cl::Error &err) {
          std::cerr
              << "ERROR: "
              << err.what()

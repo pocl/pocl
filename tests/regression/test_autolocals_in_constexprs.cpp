@@ -97,7 +97,7 @@ main(void)
 
     // We don't actually care about the result.
   }
-  catch (cl::Error err) {
+  catch (cl::Error &err) {
     std::cerr
       << "ERROR: "
       << err.what()

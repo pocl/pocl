@@ -345,7 +345,7 @@ recursively_serialize_path (char* path,
       struct dirent *entry;
       char subpath[POCL_FILENAME_LENGTH];
 
-      strncpy (subpath, path, POCL_FILENAME_LENGTH);
+      strncpy (subpath, path, POCL_FILENAME_LENGTH-1);
       char* p = subpath + strlen(subpath);
       *p++ = '/';
       d = opendir (path);

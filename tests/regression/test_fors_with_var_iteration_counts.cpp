@@ -138,7 +138,7 @@ main(void)
         // If the kernel compiler succeeds, we are happy for now.
         return EXIT_SUCCESS;
     } 
-    catch (cl::Error err) {
+    catch (cl::Error &err) {
          std::cerr
              << "ERROR: "
              << err.what()
