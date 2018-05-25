@@ -81,13 +81,6 @@ get_global_id.c
 get_global_offset.c
 get_global_size.c
 get_group_id.c
-get_image_array_size.cl
-get_image_channel_data_type.cl
-get_image_channel_order.cl
-get_image_depth.cl
-get_image_height.cl
-get_image_width.cl
-get_image_dim.cl
 get_local_id.c
 get_local_size.c
 get_num_groups.c
@@ -152,7 +145,6 @@ pown.cl
 powr.cl
 prefetch.cl
 radians.cl
-read_image.cl
 recip.cl
 remainder.cl
 rhadd.cl
@@ -184,8 +176,7 @@ vload_half.cl
 vstore.cl
 vstore_half.cl
 vload_store_half_f16c.c
-wait_group_events.cl
-write_image.cl)
+wait_group_events.cl)
 
 set(SOURCES_WITH_VML abs.cl
 abs_diff.cl
