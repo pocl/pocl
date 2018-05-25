@@ -22,6 +22,7 @@
 // THE SOFTWARE.
 
 #include <set>
+#include <iostream>
 
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
@@ -78,24 +79,31 @@ HandleSamplerInitialization::runOnFunction(Function &F) {
   bool Changed = false;
   for (auto C : Calls) {
     llvm::IRBuilder<> Builder(C);
+
+    // get the type of the return value of __translate_sampler
+    // this may not always be opencl.sampler_t, it could be a remapped type.
+    Type *type = C->getCalledValue()->getType();
+    PointerType *pt = dyn_cast<PointerType>(type);
+    FunctionType *ft = dyn_cast<FunctionType>(pt->getPointerElementType());
+    Type *rettype = ft->getReturnType();
+
     ConstantInt *SamplerValue = dyn_cast<ConstantInt>(C->arg_begin()->get());
 
-    llvm::AllocaInst *Alloca = Builder.CreateAlloca(SamplerValue->getType());
-    /* Creates a volatile store. If the store is not volatile, it gets
-     * optimized out by DSE for some reason (possibly because opencl.sampler_t
-     * type is opaque).
-     *
-     * The proper solution would be to use the opencl.sampler_t directly
-     * for storing the sampler value, and not allocate storage at all,
-     * but this requires more changes - TODO.
-     */
-    Builder.CreateStore(
-      ConstantInt::get(SamplerValue->getType(), SamplerValue->getValue()),
-      Alloca, true);
-    C->replaceAllUsesWith(Builder.CreateBitOrPointerCast(Alloca, C->getType()));
+    IntegerType *it;
+    if (F.getParent()->getDataLayout().getPointerSizeInBits() == 64)
+      it = Builder.getInt64Ty();
+    else
+      it = Builder.getInt32Ty();
+    // cast the sampler value to intptr_t
+    Constant *sampler = ConstantInt::get(it, SamplerValue->getZExtValue());
+    // then bitcast it to return value (opencl.sampler_t*)
+    Value *val = Builder.CreateBitOrPointerCast(sampler, rettype);
+
+    C->replaceAllUsesWith(val);
     C->eraseFromParent();
     Changed = true;
   }
+
   return Changed;
 #endif
 }

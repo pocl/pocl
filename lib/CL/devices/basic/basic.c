@@ -585,11 +585,8 @@ pocl_basic_run
         {
           dev_sampler_t ds;
           fill_dev_sampler_t(&ds, al);
-          
-          void* devptr = pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, sizeof(dev_sampler_t));
-          arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = devptr;
-          pocl_basic_write (data, &ds, devptr, 0, sizeof(dev_sampler_t));
+
+          *(void **)(arguments[i]) = (void *)ds;
         }
       else
         {
@@ -656,7 +653,8 @@ pocl_basic_run
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE ||
                 kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
-          POCL_MEM_FREE(*(void **)(arguments[i]));
+          if (kernel->arg_info[i].type != POCL_ARG_TYPE_SAMPLER)
+            POCL_MEM_FREE (*(void **)(arguments[i]));
           POCL_MEM_FREE(arguments[i]);
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && *(void**)arguments[i] == NULL)

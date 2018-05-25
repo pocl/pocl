@@ -31,7 +31,7 @@
 #define INTTYPE int
 #endif
 
-typedef INTTYPE dev_sampler_t;
+typedef uintptr_t dev_sampler_t;
 
 typedef struct dev_image_t {
   void *_data;

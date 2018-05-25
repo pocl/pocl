@@ -133,11 +133,8 @@ setup_kernel_arg_array (kernel_run_command *k)
           dev_sampler_t ds;
           fill_dev_sampler_t(&ds, al);
 
-          void *devptr = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
-                                              sizeof (dev_sampler_t));
           arguments[i] = &arguments2[i];
-          arguments2[i] = devptr;
-          memcpy (devptr, &ds, sizeof (dev_sampler_t));
+          arguments2[i] = (void *)ds;
         }
       else
         arguments[i] = al->value;
@@ -208,8 +205,7 @@ free_kernel_arg_array (kernel_run_command *k)
           assert (arguments[i] == NULL);
           assert (arguments2[i] == NULL);
         }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE ||
-                kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
         {
           POCL_MEM_FREE (arguments2[i]);
         }

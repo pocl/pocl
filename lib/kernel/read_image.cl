@@ -361,7 +361,7 @@ pocl_read_pixel (global dev_image_t *img, int4 coord)
 /* Transforms coords based on image addressing mode */
 _CL_READONLY static int4
 pocl_address_mode (global dev_image_t *img, int4 input_coord,
-                   dev_sampler_t samp)
+                   const dev_sampler_t samp)
 {
   if ((samp & CLK_ADDRESS_MASK) == CLK_ADDRESS_CLAMP_TO_EDGE)
     {
@@ -1199,7 +1199,7 @@ read_pixel_linear_1d (float4 abc, float4 one_m, int ijk0, int ijk1,
 
 _CL_READONLY static uint4
 nonrepeat_filter (global dev_image_t *img, float4 orig_coord,
-                  dev_sampler_t samp)
+                  const dev_sampler_t samp)
 {
   float4 coord = orig_coord;
   if (samp & CLK_NORMALIZED_COORDS_TRUE)
@@ -1268,7 +1268,7 @@ nonrepeat_filter (global dev_image_t *img, float4 orig_coord,
 }
 
 _CL_READONLY static uint4
-repeat_filter (global dev_image_t *img, float4 coord, dev_sampler_t samp)
+repeat_filter (global dev_image_t *img, float4 coord, const dev_sampler_t samp)
 {
   int array_size = img->_image_array_size;
   int num_channels = img->_num_channels;
@@ -1360,7 +1360,7 @@ repeat_filter (global dev_image_t *img, float4 coord, dev_sampler_t samp)
 
 _CL_READONLY static uint4
 mirrored_repeat_filter (global dev_image_t *img, float4 coord,
-                        dev_sampler_t samp)
+                        const dev_sampler_t samp)
 {
   int array_size = img->_image_array_size;
   int num_channels = img->_num_channels;
@@ -1456,7 +1456,7 @@ mirrored_repeat_filter (global dev_image_t *img, float4 coord,
 /* read pixel with float coordinates */
 _CL_READONLY static uint4
 pocl_read_pixel_floatc (global dev_image_t *img, float4 coord,
-                        dev_sampler_t samp)
+                        const dev_sampler_t samp)
 {
   if ((samp & CLK_ADDRESS_MASK) == CLK_ADDRESS_REPEAT)
     return repeat_filter (img, coord, samp);
@@ -1478,7 +1478,8 @@ pocl_read_pixel_floatc (global dev_image_t *img, float4 coord,
 */
 
 _CL_READONLY static uint4
-pocl_read_pixel_intc (global dev_image_t *img, int4 coord, dev_sampler_t samp)
+pocl_read_pixel_intc (global dev_image_t *img, int4 coord,
+                      const dev_sampler_t samp)
 {
   if (samp & CLK_NORMALIZED_COORDS_TRUE)
     return INVALID_SAMPLER_NORMAL;
@@ -1504,7 +1505,7 @@ pocl_read_pixel_intc (global dev_image_t *img, int4 coord, dev_sampler_t samp)
 _CL_READONLY static uint4
 pocl_read_pixel_intc_samplerless (global dev_image_t *img, int4 coord)
 {
-  dev_sampler_t samp
+  const dev_sampler_t samp
       = CLK_FILTER_NEAREST | CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE;
 
   int4 final_coord = pocl_address_mode (img, coord, samp);
@@ -1517,12 +1518,13 @@ pocl_read_pixel_intc_samplerless (global dev_image_t *img, int4 coord)
 #if __clang_major__ > 3
 /* After Clang 4.0, the sampler_t is passed as an opaque struct (ptr)
  which we convert to int32 with the LLVM pass HandleSamplerInitialization. */
-#define READ_SAMPLER                                                    \
-    dev_sampler_t s = *__builtin_astype(sampler, dev_sampler_t*);
+#define READ_SAMPLER                                                          \
+  const dev_sampler_t s                                                       \
+      = (dev_sampler_t) (__builtin_astype (sampler, uintptr_t));
 #else
 /* Before Clang 4.0, the sampler_t was passed as an int32. */
-#define READ_SAMPLER                                                    \
-    dev_sampler_t s = __builtin_astype(sampler, dev_sampler_t);
+#define READ_SAMPLER                                                          \
+  const dev_sampler_t s = (dev_sampler_t) (__builtin_astype (sampler, int));
 #endif
 
 /* Implementation for read_image with any image data type and int coordinates
