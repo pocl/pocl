@@ -12,14 +12,7 @@ matrix:
     - os: linux
       docker: true
       compiler: gcc
-      # Only hwloc=1.11 is supported in this dockerfile
       env: LLVM_VERSION=6.0 HWLOC_VERSION=1.11 DOCKERFILE=Ubuntu/16_04.64bit
-
-    - os: linux-ppc64le
-      docker: true
-      compiler: gcc
-      # Only hwloc=1.11 and llvm=4.0 is supported in this dockerfile
-      env: LLVM_VERSION=4.0 HWLOC_VERSION=1.11 DOCKERFILE=Ubuntu/16_04.64bit
 
     - os: linux
       compiler: gcc

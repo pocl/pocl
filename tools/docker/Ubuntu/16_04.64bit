@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM amd64/ubuntu:16.04
 ARG GIT_COMMIT=master
 ARG GH_PR
 ARG GH_SLUG=pocl/pocl
