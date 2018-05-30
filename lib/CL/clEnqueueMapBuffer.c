@@ -41,7 +41,6 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
 {
   cl_int errcode = CL_SUCCESS;
   cl_device_id device;
-  void *host_ptr = NULL;
   cl_int mapping_result = CL_FAILED;
   mem_mapping_t *mapping_info = NULL;
   unsigned i;
@@ -100,8 +99,7 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
       /* In this case it should use the given host_ptr + offset as
          the mapping area in the host memory. */   
       assert (buffer->mem_host_ptr != NULL);
-      host_ptr = (char*)buffer->mem_host_ptr + offset;
-      mapping_info->host_ptr = host_ptr;
+      mapping_info->host_ptr = (char*)buffer->mem_host_ptr + offset;
     }
   else
     {

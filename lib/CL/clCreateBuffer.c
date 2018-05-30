@@ -127,11 +127,7 @@ POname(clCreateBuffer)(cl_context   context,
   mem->device_ptrs =
     (pocl_mem_identifier*) calloc(pocl_num_devices,
                                   sizeof(pocl_mem_identifier));
-  if (mem->device_ptrs == NULL)
-    {
-      errcode = CL_OUT_OF_HOST_MEMORY;
-      goto ERROR;
-    }
+  POCL_GOTO_ERROR_COND((mem->device_ptrs == NULL), CL_OUT_OF_HOST_MEMORY);
 
   /* init dev pointer structure to ease inter device pointer sharing
      in ops->alloc_mem_obj */
