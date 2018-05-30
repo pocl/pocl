@@ -95,18 +95,12 @@ POname(clCreateBuffer)(cl_context   context,
         "host_ptr is not NULL, but flags don't specify {COPY|USE}_HOST_PTR\n");
     }
 
-  for (i = 0; i < context->num_devices; ++i)
-    {
-      cl_ulong max_alloc;
-      
-      POname(clGetDeviceInfo) (context->devices[i], 
-                               CL_DEVICE_MAX_MEM_ALLOC_SIZE, sizeof(cl_ulong), 
-                               &max_alloc, NULL);
-      POCL_GOTO_ERROR_ON((size > max_alloc), CL_INVALID_BUFFER_SIZE,
-        "Size (%lu) is bigger than CL_DEVICE_MAX_MEM_ALLOC_SIZE(%lu) of device %s\n",
-        (unsigned long)size, (unsigned long)max_alloc, context->devices[i]->long_name);
-    }
-  
+  POCL_GOTO_ERROR_ON ((size > context->max_mem_alloc_size),
+                      CL_INVALID_BUFFER_SIZE,
+                      "Size (%zu) is bigger than max mem alloc size (%zu) "
+                      "of all devices in context\n",
+                      size, context->max_mem_alloc_size);
+
   POCL_INIT_OBJECT(mem);
   mem->parent = NULL;
   mem->map_count = 0;

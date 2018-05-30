@@ -903,14 +903,15 @@ cl_device_id * pocl_unique_device_list(const cl_device_id * in, cl_uint num, cl_
 void pocl_setup_context(cl_context context)
 {
   unsigned i;
-  context->min_max_mem_alloc_size = SIZE_MAX;
+  context->max_mem_alloc_size = 0;
   context->svm_allocdev = NULL;
   for(i=0; i<context->num_devices; i++)
     {
       if (context->devices[i]->should_allocate_svm)
         context->svm_allocdev = context->devices[i];
-      if (context->devices[i]->max_mem_alloc_size < context->min_max_mem_alloc_size)
-        context->min_max_mem_alloc_size =
+      if (context->devices[i]->max_mem_alloc_size
+          > context->max_mem_alloc_size)
+        context->max_mem_alloc_size =
             context->devices[i]->max_mem_alloc_size;
     }
   if (context->svm_allocdev == NULL)

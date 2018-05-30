@@ -797,7 +797,7 @@ struct _cl_context {
   char valid;
 
   /* The minimal value of max_mem_alloc_size of all devices in context */
-  size_t min_max_mem_alloc_size;
+  size_t max_mem_alloc_size;
   /* The device that should allocate SVM (might be == host)
    * NULL if none of devices in the context is SVM capable */
   cl_device_id svm_allocdev;
