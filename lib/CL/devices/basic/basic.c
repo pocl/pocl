@@ -106,7 +106,6 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
 {
   ops->device_name = "basic";
 
-  ops->init_device_infos = pocl_basic_init_device_infos;
   ops->probe = pocl_basic_probe;
   ops->uninit = pocl_basic_uninit;
   ops->reinit = pocl_basic_reinit;
@@ -142,7 +141,7 @@ pocl_basic_build_hash (cl_device_id device)
 {
   char* res = calloc(1000, sizeof(char));
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-  char *name = get_cpu_name ();
+  char *name = get_llvm_cpu_name ();
   snprintf (res, 1000, "basic-%s-%s", HOST_DEVICE_BUILD_HASH, name);
   POCL_MEM_FREE (name);
 #else
@@ -154,11 +153,9 @@ pocl_basic_build_hash (cl_device_id device)
 static cl_device_partition_property basic_partition_properties[1] = { 0 };
 
 void
-pocl_basic_init_device_infos(unsigned j, struct _cl_device_id* dev)
+pocl_init_cpu_device_infos (cl_device_id dev)
 {
   dev->type = CL_DEVICE_TYPE_CPU;
-  dev->vendor_id = 0;
-  dev->max_compute_units = 0;
   dev->max_work_item_dimensions = 3;
 
   SETUP_DEVICE_CL_VERSION(HOST_DEVICE_CL_VERSION_MAJOR, HOST_DEVICE_CL_VERSION_MINOR)
@@ -212,7 +209,6 @@ pocl_basic_init_device_infos(unsigned j, struct _cl_device_id* dev)
 
 #endif
 
-  dev->max_clock_frequency = 0;
   dev->address_bits = POCL_DEVICE_ADDRESS_BITS;
   dev->image_support = CL_TRUE;
   /* Use the minimum values until we get a more sensible upper limit from
@@ -330,7 +326,7 @@ pocl_basic_init_device_infos(unsigned j, struct _cl_device_id* dev)
 #ifdef HOST_CPU_FORCED
   dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
 #else
-  dev->llvm_cpu = get_cpu_name();
+  dev->llvm_cpu = get_llvm_cpu_name ();
 #endif
 
   if(dev->llvm_cpu && (!strcmp(dev->llvm_cpu, "(unknown)")))
@@ -355,8 +351,6 @@ pocl_basic_probe(struct pocl_device_ops *ops)
   return env_count;
 }
 
-
-
 cl_int
 pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 {
@@ -367,6 +361,7 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 
   if (first_basic_init)
     {
+      POCL_MSG_WARN ("INIT dlcache DOTO delete\n");
       pocl_init_dlhandle_cache();
       first_basic_init = 0;
     }
@@ -379,6 +374,9 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
   d->current_kernel = NULL;
   d->current_dlhandle = 0;
   device->data = d;
+
+  pocl_init_cpu_device_infos (device);
+
   /* hwloc probes OpenCL device info at its initialization in case
      the OpenCL extension is enabled. This causes to printout 
      an unimplemented property error because hwloc is used to

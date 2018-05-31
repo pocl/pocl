@@ -76,7 +76,6 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
   ops->device_name = "ttasim";
 
   ops->probe = pocl_ttasim_probe;
-  ops->init_device_infos = pocl_ttasim_init_device_infos;
   ops->uninit = pocl_ttasim_uninit;
   ops->reinit = NULL;
   ops->init = pocl_ttasim_init;
@@ -104,79 +103,6 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
 
 }
 
-
-void
-pocl_ttasim_init_device_infos(unsigned j, struct _cl_device_id* dev)
-{
-  dev->type = CL_DEVICE_TYPE_GPU;
-  dev->max_compute_units = 1;
-  dev->max_work_item_dimensions = 3;
-  dev->device_side_printf = 0;
-
-  int max_wg
-      = pocl_get_int_option("POCL_MAX_WORK_GROUP_SIZE", DEFAULT_WG_SIZE);
-  assert(max_wg > 0);
-  max_wg = std::min(max_wg, DEFAULT_WG_SIZE);
-  if (max_wg < 0)
-    max_wg = DEFAULT_WG_SIZE;
-
-  dev->max_work_item_sizes[0] = dev->max_work_item_sizes[1]
-      = dev->max_work_item_sizes[2] = dev->max_work_group_size = max_wg;
-
-  dev->preferred_wg_size_multiple = 8;
-  dev->preferred_vector_width_char = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR;
-  dev->preferred_vector_width_short = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_SHORT;
-  dev->preferred_vector_width_int = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_INT;
-  dev->preferred_vector_width_long = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_LONG;
-  dev->preferred_vector_width_float = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_FLOAT;
-  dev->preferred_vector_width_double = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE;
-  dev->preferred_vector_width_half = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF;
-  /* TODO: figure out what the difference between preferred and native widths are. */
-  dev->native_vector_width_char = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR;
-  dev->native_vector_width_short = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_SHORT;
-  dev->native_vector_width_int = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_INT;
-  dev->native_vector_width_long = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_LONG;
-  dev->native_vector_width_float = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_FLOAT;
-  dev->native_vector_width_double = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE;
-  dev->native_vector_width_half = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF;
-  dev->max_clock_frequency = 100;
-  dev->image_support = CL_FALSE;
-  dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
-  dev->double_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
-  dev->global_mem_cache_type = CL_NONE;
-  dev->local_mem_type = CL_GLOBAL;
-  dev->error_correction_support = CL_FALSE;
-  dev->host_unified_memory = CL_FALSE;
-
-  dev->available = CL_TRUE;
-  dev->compiler_available = CL_TRUE;
-  dev->spmd = CL_FALSE;
-  dev->workgroup_pass = CL_TRUE;
-  dev->execution_capabilities = CL_EXEC_KERNEL;
-  dev->queue_properties = CL_QUEUE_PROFILING_ENABLE;
-  dev->vendor = "TTA-Based Co-design Environment";
-  dev->profile = "EMBEDDED_PROFILE";
-  dev->extensions = TCE_DEVICE_EXTENSIONS;
-
-  dev->has_64bit_long = 1;
-  dev->autolocals_to_args = 1;
-
-  dev->global_as_id = TTA_ASID_GLOBAL;
-  dev->local_as_id = TTA_ASID_LOCAL;
-  dev->constant_as_id = TTA_ASID_CONSTANT;
-
-  SETUP_DEVICE_CL_VERSION(TCE_DEVICE_CL_VERSION_MAJOR, TCE_DEVICE_CL_VERSION_MINOR);
-
-  dev->parent_device = NULL;
-  // ttasim does not support partitioning
-  dev->max_sub_devices = 1;
-  dev->num_partition_properties = 1;
-  dev->partition_properties = (cl_device_partition_property*)calloc(dev->num_partition_properties,
-    sizeof(cl_device_partition_property));
-  dev->num_partition_types = 0;
-  dev->partition_type = NULL;
-
-}
 
 unsigned int
 pocl_ttasim_probe(struct pocl_device_ops *ops)
@@ -557,13 +483,86 @@ private:
 
 
 cl_int
-pocl_ttasim_init (unsigned j, cl_device_id device, const char* parameters)
+pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
 {
   if (parameters == NULL)
     POCL_ABORT("The tta device requires the adf file as a device parameter.\n"
                "Set it with POCL_TTASIMn_PARAMETERS=\"path/to/themachine.adf\".\n");
 
-  new TTASimDevice(device, parameters);
+  dev->type = CL_DEVICE_TYPE_GPU;
+  dev->max_compute_units = 1;
+  dev->max_work_item_dimensions = 3;
+  dev->device_side_printf = 0;
+
+  int max_wg
+      = pocl_get_int_option ("POCL_MAX_WORK_GROUP_SIZE", DEFAULT_WG_SIZE);
+  assert (max_wg > 0);
+  max_wg = std::min (max_wg, DEFAULT_WG_SIZE);
+  if (max_wg < 0)
+    max_wg = DEFAULT_WG_SIZE;
+
+  dev->max_work_item_sizes[0] = dev->max_work_item_sizes[1]
+      = dev->max_work_item_sizes[2] = dev->max_work_group_size = max_wg;
+
+  dev->preferred_wg_size_multiple = 8;
+  dev->preferred_vector_width_char = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR;
+  dev->preferred_vector_width_short
+      = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_SHORT;
+  dev->preferred_vector_width_int = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_INT;
+  dev->preferred_vector_width_long = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_LONG;
+  dev->preferred_vector_width_float
+      = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_FLOAT;
+  dev->preferred_vector_width_double
+      = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE;
+  dev->preferred_vector_width_half = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF;
+  /* TODO: figure out what the difference between preferred and native widths
+   * are. */
+  dev->native_vector_width_char = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR;
+  dev->native_vector_width_short = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_SHORT;
+  dev->native_vector_width_int = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_INT;
+  dev->native_vector_width_long = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_LONG;
+  dev->native_vector_width_float = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_FLOAT;
+  dev->native_vector_width_double = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_DOUBLE;
+  dev->native_vector_width_half = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_HALF;
+  dev->max_clock_frequency = 100;
+  dev->image_support = CL_FALSE;
+  dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
+  dev->double_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
+  dev->global_mem_cache_type = CL_NONE;
+  dev->local_mem_type = CL_GLOBAL;
+  dev->error_correction_support = CL_FALSE;
+  dev->host_unified_memory = CL_FALSE;
+
+  dev->available = CL_TRUE;
+  dev->compiler_available = CL_TRUE;
+  dev->spmd = CL_FALSE;
+  dev->workgroup_pass = CL_TRUE;
+  dev->execution_capabilities = CL_EXEC_KERNEL;
+  dev->queue_properties = CL_QUEUE_PROFILING_ENABLE;
+  dev->vendor = "TTA-Based Co-design Environment";
+  dev->profile = "EMBEDDED_PROFILE";
+  dev->extensions = TCE_DEVICE_EXTENSIONS;
+
+  dev->has_64bit_long = 1;
+  dev->autolocals_to_args = 1;
+
+  dev->global_as_id = TTA_ASID_GLOBAL;
+  dev->local_as_id = TTA_ASID_LOCAL;
+  dev->constant_as_id = TTA_ASID_CONSTANT;
+
+  SETUP_DEVICE_CL_VERSION (TCE_DEVICE_CL_VERSION_MAJOR,
+                           TCE_DEVICE_CL_VERSION_MINOR);
+
+  dev->parent_device = NULL;
+  // ttasim does not support partitioning
+  dev->max_sub_devices = 1;
+  dev->num_partition_properties = 1;
+  dev->partition_properties = (cl_device_partition_property *)calloc (
+      dev->num_partition_properties, sizeof (cl_device_partition_property));
+  dev->num_partition_types = 0;
+  dev->partition_type = NULL;
+
+  new TTASimDevice(dev, parameters);
   return CL_SUCCESS;
 }
 

@@ -130,7 +130,6 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   pocl_basic_init_device_ops (ops);
 
   ops->device_name = "CUDA";
-  ops->init_device_infos = pocl_cuda_init_device_infos;
   ops->build_hash = pocl_cuda_build_hash;
   ops->probe = pocl_cuda_probe;
   ops->uninit = pocl_cuda_uninit;
@@ -173,6 +172,29 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
 
   if (dev->data)
     return ret;
+
+  pocl_init_cpu_device_infos (dev);
+
+  dev->vendor = "NVIDIA Corporation";
+  dev->vendor_id = 0x10de; /* the PCIID for NVIDIA */
+
+  dev->type = CL_DEVICE_TYPE_GPU;
+  dev->address_bits = (sizeof (void *) * 8);
+
+  dev->llvm_target_triplet = (sizeof (void *) == 8) ? "nvptx64" : "nvptx";
+
+  dev->spmd = CL_TRUE;
+  dev->workgroup_pass = CL_FALSE;
+  dev->execution_capabilities = CL_EXEC_KERNEL;
+
+  dev->global_as_id = 1;
+  dev->local_as_id = 3;
+  dev->constant_as_id = 1;
+
+  /* TODO: Get images working */
+  dev->image_support = CL_FALSE;
+
+  dev->has_64bit_long = 1;
 
   pocl_cuda_device_data_t *data = calloc (1, sizeof (pocl_cuda_device_data_t));
   result = cuDeviceGet (&data->device, j);
@@ -383,33 +405,6 @@ pocl_cuda_build_hash (cl_device_id device)
   char *res = calloc (1000, sizeof (char));
   snprintf (res, 1000, "CUDA-%s", device->llvm_cpu);
   return res;
-}
-
-void
-pocl_cuda_init_device_infos (unsigned j, struct _cl_device_id *dev)
-{
-  pocl_basic_init_device_infos (j, dev);
-
-  dev->vendor = "NVIDIA Corporation";
-  dev->vendor_id = 0x10de; /* the PCIID for NVIDIA */
-
-  dev->type = CL_DEVICE_TYPE_GPU;
-  dev->address_bits = (sizeof (void *) * 8);
-
-  dev->llvm_target_triplet = (sizeof (void *) == 8) ? "nvptx64" : "nvptx";
-
-  dev->spmd = CL_TRUE;
-  dev->workgroup_pass = CL_FALSE;
-  dev->execution_capabilities = CL_EXEC_KERNEL;
-
-  dev->global_as_id = 1;
-  dev->local_as_id = 3;
-  dev->constant_as_id = 1;
-
-  /* TODO: Get images working */
-  dev->image_support = CL_FALSE;
-
-  dev->has_64bit_long = 1;
 }
 
 unsigned int

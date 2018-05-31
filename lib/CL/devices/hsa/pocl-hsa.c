@@ -199,7 +199,6 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
 
   /* TODO: more descriptive name from HSA probing the device */
   ops->device_name = "hsa";
-  ops->init_device_infos = pocl_hsa_init_device_infos;
   ops->probe = pocl_hsa_probe;
   ops->uninit = pocl_hsa_uninit;
   ops->reinit = NULL;
@@ -446,10 +445,40 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
     }
 }
 
-void
-pocl_hsa_init_device_infos(unsigned j, struct _cl_device_id* dev)
+unsigned int
+pocl_hsa_probe (struct pocl_device_ops *ops)
 {
-  pocl_basic_init_device_infos (j, dev);
+  int env_count = pocl_device_get_env_count (ops->device_name);
+
+  POCL_MSG_PRINT_INFO ("pocl-hsa: found %d env devices with %s.\n", env_count,
+                       ops->device_name);
+
+  /* No hsa env specified, the user did not request for HSA agents. */
+  if (env_count <= 0)
+    return 0;
+
+  HSA_CHECK (hsa_init ());
+
+  HSA_CHECK (hsa_iterate_agents (pocl_hsa_get_agents_callback, NULL));
+
+  POCL_MSG_PRINT_INFO ("pocl-hsa: found %d agents.\n", found_hsa_agents);
+
+  return (int)found_hsa_agents;
+}
+
+static void
+hsa_queue_callback (hsa_status_t status, hsa_queue_t *q, void *data)
+{
+  HSA_CHECK (status);
+}
+
+/* driver pthread prototype */
+void *pocl_hsa_driver_pthread (void *cldev);
+
+cl_int
+pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
+{
+  pocl_init_cpu_device_infos (dev);
 
   SETUP_DEVICE_CL_VERSION(HSA_DEVICE_CL_VERSION_MAJOR,
                           HSA_DEVICE_CL_VERSION_MINOR)
@@ -535,32 +564,29 @@ pocl_hsa_init_device_infos(unsigned j, struct _cl_device_id* dev)
   if (dev->image_support == CL_TRUE)
     {
       hsa_dim3_t image_size;
-      HSA_CHECK(hsa_agent_get_info (agent,
-				    HSA_EXT_AGENT_INFO_IMAGE_1D_MAX_ELEMENTS,
-				    &image_size));
+      HSA_CHECK (hsa_agent_get_info (
+          agent, HSA_EXT_AGENT_INFO_IMAGE_1D_MAX_ELEMENTS, &image_size));
       dev->image_max_buffer_size = image_size.x;
-      HSA_CHECK(hsa_agent_get_info (agent,
-				    HSA_EXT_AGENT_INFO_IMAGE_2D_MAX_ELEMENTS,
-				    &image_size));
+      HSA_CHECK (hsa_agent_get_info (
+          agent, HSA_EXT_AGENT_INFO_IMAGE_2D_MAX_ELEMENTS, &image_size));
       dev->image2d_max_height = image_size.x;
       dev->image2d_max_width = image_size.y;
-      HSA_CHECK(hsa_agent_get_info (agent,
-				    HSA_EXT_AGENT_INFO_IMAGE_3D_MAX_ELEMENTS,
-				    &image_size));
+      HSA_CHECK (hsa_agent_get_info (
+          agent, HSA_EXT_AGENT_INFO_IMAGE_3D_MAX_ELEMENTS, &image_size));
       dev->image3d_max_height = image_size.x;
       dev->image3d_max_width = image_size.y;
       dev->image3d_max_depth = image_size.z;
       // is this directly the product of the dimensions?
       //stat = hsa_agent_get_info(agent, ??, &dev->image_max_array_size);
-      HSA_CHECK(hsa_agent_get_info
-		(agent, HSA_EXT_AGENT_INFO_MAX_IMAGE_RD_HANDLES,
-		 &dev->max_read_image_args));
-      HSA_CHECK(hsa_agent_get_info
-		(agent, HSA_EXT_AGENT_INFO_MAX_IMAGE_RORW_HANDLES,
-		 &dev->max_read_write_image_args));
+      HSA_CHECK (hsa_agent_get_info (agent,
+                                     HSA_EXT_AGENT_INFO_MAX_IMAGE_RD_HANDLES,
+                                     &dev->max_read_image_args));
+      HSA_CHECK (hsa_agent_get_info (agent,
+                                     HSA_EXT_AGENT_INFO_MAX_IMAGE_RORW_HANDLES,
+                                     &dev->max_read_write_image_args));
       dev->max_write_image_args = dev->max_read_write_image_args;
-      HSA_CHECK(hsa_agent_get_info
-		(agent, HSA_EXT_AGENT_INFO_MAX_SAMPLER_HANDLERS, &dev->max_samplers));
+      HSA_CHECK (hsa_agent_get_info (
+          agent, HSA_EXT_AGENT_INFO_MAX_SAMPLER_HANDLERS, &dev->max_samplers));
     }
 
   dev->should_allocate_svm = 1;
@@ -580,51 +606,17 @@ pocl_hsa_init_device_infos(unsigned j, struct _cl_device_id* dev)
                                | CL_QUEUE_PROFILING_ENABLE;
   dev->on_host_queue_props = CL_QUEUE_PROFILING_ENABLE;
 
-}
-
-unsigned int
-pocl_hsa_probe(struct pocl_device_ops *ops)
-{
-  int env_count = pocl_device_get_env_count(ops->device_name);
-
-  POCL_MSG_PRINT_INFO("pocl-hsa: found %d env devices with %s.\n",
-                      env_count, ops->device_name);
-
-  /* No hsa env specified, the user did not request for HSA agents. */
-  if (env_count <= 0)
-    return 0;
-
-  HSA_CHECK(hsa_init());
-
-  HSA_CHECK(hsa_iterate_agents(pocl_hsa_get_agents_callback, NULL));
-
-  POCL_MSG_PRINT_INFO("pocl-hsa: found %d agents.\n", found_hsa_agents);
-
-  return (int)found_hsa_agents;
-}
-
-static void
-hsa_queue_callback(hsa_status_t status, hsa_queue_t *q, void* data) {
-  HSA_CHECK(status);
-}
-
-/* driver pthread prototype */
-void * pocl_hsa_driver_pthread (void *cldev);
-
-cl_int
-pocl_hsa_init (unsigned j, cl_device_id device, const char* parameters)
-{
   pocl_hsa_device_data_t *d;
 
-  device->global_mem_id = 0;
+  dev->global_mem_id = 0;
 
   d = (pocl_hsa_device_data_t *) calloc (1, sizeof(pocl_hsa_device_data_t));
 
   POCL_INIT_LOCK (d->pocl_hsa_compilation_lock);
 
-  intptr_t agent_index = (intptr_t)device->data;
+  intptr_t agent_index = (intptr_t)dev->data;
   d->agent.handle = hsa_agents[agent_index].handle;
-  device->data = d;
+  dev->data = d;
 
   HSA_CHECK(hsa_agent_iterate_regions (d->agent,
                                        setup_agent_memory_regions_callback,
@@ -647,7 +639,7 @@ pocl_hsa_init (unsigned j, cl_device_id device, const char* parameters)
   size_t sizearg;
   HSA_CHECK(hsa_region_get_info(d->global_region,
 				HSA_REGION_INFO_ALLOC_MAX_SIZE, &sizearg));
-  device->max_mem_alloc_size = sizearg;
+  dev->max_mem_alloc_size = sizearg;
 
   /* For some reason, the global region size returned is 128 Terabytes...
    * for now, use the max alloc size, it seems to be a much more reasonable
@@ -657,27 +649,25 @@ pocl_hsa_init (unsigned j, cl_device_id device, const char* parameters)
    */
   HSA_CHECK(hsa_region_get_info(d->global_region,
                                HSA_REGION_INFO_SIZE, &sizearg));
-  device->global_mem_size = sizearg;
-	if (device->global_mem_size > 16*1024*1024*(uint64_t)1024)
-		device->global_mem_size = device->max_mem_alloc_size;
+  dev->global_mem_size = sizearg;
+  if (dev->global_mem_size > 16 * 1024 * 1024 * (uint64_t)1024)
+    dev->global_mem_size = dev->max_mem_alloc_size;
 
-  pocl_setup_device_for_system_memory(device);
+  pocl_setup_device_for_system_memory (dev);
 
   HSA_CHECK(hsa_region_get_info(d->group_region, HSA_REGION_INFO_SIZE,
                                 &sizearg));
-  device->local_mem_size = sizearg;
+  dev->local_mem_size = sizearg;
 
   HSA_CHECK(hsa_region_get_info(d->global_region,
 				HSA_REGION_INFO_RUNTIME_ALLOC_ALIGNMENT,
                                 &sizearg));
-  device->mem_base_addr_align = sizearg * 8;
+  dev->mem_base_addr_align = sizearg * 8;
 
   HSA_CHECK(hsa_agent_get_info(d->agent, HSA_AGENT_INFO_PROFILE,
                                &d->agent_profile));
-  device->profile = (
-      (d->agent_profile == HSA_PROFILE_FULL) ?
-      "FULL_PROFILE" : "EMBEDDED_PROFILE");
-
+  dev->profile = ((d->agent_profile == HSA_PROFILE_FULL) ? "FULL_PROFILE"
+                                                         : "EMBEDDED_PROFILE");
 
   uint64_t hsa_freq;
   HSA_CHECK(hsa_system_get_info(HSA_SYSTEM_INFO_TIMESTAMP_FREQUENCY,
@@ -688,7 +678,7 @@ pocl_hsa_init (unsigned j, cl_device_id device, const char* parameters)
   POCL_MSG_PRINT_INFO("HSA timeout: %" PRIu64 "\n", d->timeout);
   POCL_MSG_PRINT_INFO("HSA timestamp unit: %g\n", d->timestamp_unit);
 
-  device->profiling_timer_resolution = (size_t)(d->timestamp_unit) || 1;
+  dev->profiling_timer_resolution = (size_t) (d->timestamp_unit) || 1;
 
   /* TODO proper setup */
   d->hw_schedulers = 3;
@@ -706,8 +696,8 @@ pocl_hsa_init (unsigned j, cl_device_id device, const char* parameters)
   PTHREAD_CHECK(pthread_mutex_init(&d->list_mutex, &mattr));
 
   d->exit_driver_thread = 0;
-  PTHREAD_CHECK(pthread_create(&d->driver_pthread_id, NULL,
-                 &pocl_hsa_driver_pthread, device));
+  PTHREAD_CHECK (pthread_create (&d->driver_pthread_id, NULL,
+                                 &pocl_hsa_driver_pthread, dev));
   return CL_SUCCESS;
 }
 

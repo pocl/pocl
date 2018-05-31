@@ -33,54 +33,14 @@
 
 #include "pocl_topology.h"
 
-#if defined(__x86_64__) || defined(__i386__)
-
-enum VendorSignatures
-{
-  SIG_INTEL = 0x756e6547 /* Genu */,
-  SIG_AMD = 0x68747541 /* Auth */
-};
-
-/// getX86CpuIDAndInfo - Execute the specified cpuid and return the 4 values in
-/// the specified arguments.  If we can't run cpuid on the host, return true.
-static int
-getX86CpuIDAndInfo (unsigned value, unsigned *rEAX, unsigned *rEBX,
-                    unsigned *rECX, unsigned *rEDX)
-{
-#if defined(__GNUC__) || defined(__clang__)
-#if defined(__x86_64__)
-  // gcc doesn't know cpuid would clobber ebx/rbx. Preserve it manually.
-  __asm__("movq\t%%rbx, %%rsi\n\t"
-          "cpuid\n\t"
-          "xchgq\t%%rbx, %%rsi\n\t"
-          : "=a"(*rEAX), "=S"(*rEBX), "=c"(*rECX), "=d"(*rEDX)
-          : "a"(value));
-  return 0;
-#elif defined(__i386__)
-  __asm__("movl\t%%ebx, %%esi\n\t"
-          "cpuid\n\t"
-          "xchgl\t%%ebx, %%esi\n\t"
-          : "=a"(*rEAX), "=S"(*rEBX), "=c"(*rECX), "=d"(*rEDX)
-          : "a"(value));
-  return 0;
-#else
-  return 1;
-#endif
-#elif defined(_MSC_VER)
-  // The MSVC intrinsic is portable across x86 and x64.
-  int registers[4];
-  __cpuid (registers, value);
-  *rEAX = registers[0];
-  *rEBX = registers[1];
-  *rECX = registers[2];
-  *rEDX = registers[3];
-  return 0;
-#else
-  return 1;
-#endif
-}
-
-#endif
+/*
+ * Sets up:
+ *  max_compute_units
+ *  global_mem_size
+ *  global_mem_cache_type
+ *  global_mem_cacheline_size
+ *  global_mem_cache_size
+ */
 
 int
 pocl_topology_detect_device_info(cl_device_id device)
@@ -154,28 +114,6 @@ pocl_topology_detect_device_info(cl_device_id device)
   int depth = hwloc_get_type_depth(pocl_topology, HWLOC_OBJ_PU);
   if(depth != HWLOC_TYPE_DEPTH_UNKNOWN)
     device->max_compute_units = hwloc_get_nbobjs_by_depth(pocl_topology, depth);
-
-#if defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER)
-#if defined(__x86_64__) || defined(__i386__)
-  unsigned Vendor, EAX, ECX, EDX;
-  if (getX86CpuIDAndInfo (0, &EAX, &Vendor, &ECX, &EDX))
-    device->vendor_id = 0x0086;
-  else
-    {
-      if (Vendor == SIG_INTEL)
-        device->vendor_id = 0x8086;
-      else if (Vendor == SIG_AMD)
-        device->vendor_id = 0x1022;
-      else
-        /* unknown x86 */
-        device->vendor_id = 0x0086;
-    }
-#else
-  device->vendor_id = 0x0000;
-#endif
-#else
-  device->vendor_id = 0x0000;
-#endif
 
   /* Find information about global memory cache by looking at the first
    * cache covering the first PU */

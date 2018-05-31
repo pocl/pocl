@@ -66,6 +66,8 @@ extern "C" {
 #pragma GCC visibility push(hidden)
 #endif
 
+void pocl_init_cpu_device_infos (cl_device_id dev);
+
 char *llvm_codegen (const char *tmpdir, cl_kernel kernel, cl_device_id device,
                     size_t local_x, size_t local_y, size_t local_z);
 

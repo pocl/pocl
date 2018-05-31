@@ -265,9 +265,6 @@ typedef struct pocl_argument_info {
 
 struct pocl_device_ops {
   const char *device_name;
-  void *shared_data; /* data to be shared by a devices of same type */
-  void (*init_device_infos) (unsigned j, struct _cl_device_id*);
-  /* implementation */
 
   /* New driver api extension for out-of-order execution and
      asynchronous devices.

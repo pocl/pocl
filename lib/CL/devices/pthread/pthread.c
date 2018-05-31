@@ -55,8 +55,6 @@
 #include "pocl_llvm.h"
 #endif
 
-//#define DEBUG_MT
-
 #ifdef CUSTOM_BUFFER_ALLOCATOR
 
 #include "bufalloc.h"
@@ -90,10 +88,6 @@
 /* CUSTOM_BUFFER_ALLOCATOR */
 #endif
 
-/* The name of the environment variable used to force a certain max thread count
-   for the thread execution. */
-#define THREAD_COUNT_ENV "POCL_MAX_PTHREAD_COUNT"
-
 /**
  * Per event data.
  */
@@ -116,8 +110,6 @@ struct data {
 
 };
 
-static size_t get_max_thread_count();
-
 void
 pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
 {
@@ -127,7 +119,6 @@ pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
 
   /* implementation */
   ops->probe = pocl_pthread_probe;
-  ops->init_device_infos = pocl_pthread_init_device_infos;
   ops->uninit = pocl_pthread_uninit;
   ops->reinit = pocl_pthread_reinit;
   ops->init = pocl_pthread_init;
@@ -155,7 +146,7 @@ pocl_pthread_build_hash (cl_device_id device)
 {
   char* res = calloc(1000, sizeof(char));
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-  char *name = get_cpu_name ();
+  char *name = get_llvm_cpu_name ();
   snprintf (res, 1000, "pthread-%s-%s", HOST_DEVICE_BUILD_HASH, name);
   POCL_MEM_FREE (name);
 #else
@@ -173,12 +164,6 @@ pocl_pthread_probe(struct pocl_device_ops *ops)
     return 1;
 
   return env_count;
-}
-
-void
-pocl_pthread_init_device_infos(unsigned j, struct _cl_device_id* dev)
-{
-  pocl_basic_init_device_infos(j, dev);
 }
 
 static cl_device_partition_property pthread_partition_properties[2]
@@ -204,6 +189,8 @@ static cl_device_partition_property pthread_partition_properties[2]
 #define INIT_MEM_REGIONS NULL
 #endif
 
+#define FALLBACK_MAX_THREAD_COUNT 8
+
 cl_int
 pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 {
@@ -222,10 +209,7 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   d->current_dlhandle = 0;
   device->data = d;
 
-  device->address_bits = POCL_DEVICE_ADDRESS_BITS;
-
-  device->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT; // this is in bytes
-  device->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT*8; // this is in bits
+  pocl_init_cpu_device_infos (device);
 
   /* hwloc probes OpenCL device info at its initialization in case
      the OpenCL extension is enabled. This causes to printout 
@@ -239,8 +223,12 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 
   /* device->max_compute_units was set up by topology_detect,
    * but if the user requests, lower it */
+  int fallback = (device->max_compute_units == 0) ? FALLBACK_MAX_THREAD_COUNT
+                                                  : device->max_compute_units;
+  int max_thr = pocl_get_int_option ("POCL_MAX_PTHREAD_COUNT", fallback);
+
   device->max_compute_units
-      = max (get_max_thread_count (device),
+      = max ((unsigned)max_thr,
              (unsigned)pocl_get_int_option ("POCL_PTHREAD_MIN_THREADS", 1));
 
   pocl_cpuinfo_detect_device_info(device);
@@ -346,25 +334,6 @@ pocl_pthread_copy (void *data, const void *src_ptr, size_t src_offset,
     return;
 
   memcpy ((char*)dst_ptr + dst_offset, (char*)src_ptr + src_offset, cb);
-}
-
-#define FALLBACK_MAX_THREAD_COUNT 8
-//#define DEBUG_MT
-//#define DEBUG_MAX_THREAD_COUNT
-/**
- * Return an estimate for the maximum thread count that should produce
- * the maximum parallelism without extra threading overheads.
- */
-static size_t
-get_max_thread_count (cl_device_id device)
-{
-  /* if return THREAD_COUNT_ENV if set,
-     else return fallback or max_compute_units */
-  if (device->max_compute_units == 0)
-    return pocl_get_int_option (THREAD_COUNT_ENV, FALLBACK_MAX_THREAD_COUNT);
-  else
-    return pocl_get_int_option (THREAD_COUNT_ENV,
-                                (pocl_real_dev (device))->max_compute_units);
 }
 
 void

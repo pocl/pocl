@@ -39,7 +39,6 @@
   void pocl_##__DRV__##_wait_event (cl_device_id device, cl_event event); \
   void pocl_##__DRV__##_update_event (cl_device_id device, cl_event event, cl_int status); \
   void pocl_##__DRV__##_free_event_data (cl_event event); \
-  void pocl_##__DRV__##_init_device_infos(unsigned j, struct _cl_device_id* dev);  \
   void pocl_##__DRV__##_init_device_ops(struct pocl_device_ops* ops);  \
   cl_int pocl_##__DRV__##_uninit (cl_device_id device);                   \
   cl_int pocl_##__DRV__##_reinit (cl_device_id device);                   \
@@ -117,4 +116,5 @@
   cl_int pocl_##__DRV__##_get_supported_image_formats (cl_mem_flags flags,\
                                          const cl_image_format **image_formats,\
                                          cl_uint *num_image_formats);\
+
 POP_VISIBILITY_HIDDEN

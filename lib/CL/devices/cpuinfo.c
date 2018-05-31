@@ -427,6 +427,19 @@ pocl_cpuinfo_get_cpu_name_and_vendor(cl_device_id device)
   device->long_name = new_name;
 }
 
+/*
+ * Expects:
+ *   short name
+ *
+ * Sets up:
+ *   vendor_id
+ *   vendor (name)
+ *   long name
+ *
+ *   max compute units IF NOT SET ALREADY
+ *   max clock freq
+ */
+
 void
 pocl_cpuinfo_detect_device_info(cl_device_id device) 
 {

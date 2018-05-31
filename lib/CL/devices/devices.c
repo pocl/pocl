@@ -189,19 +189,6 @@ pocl_get_device_type_count(cl_device_type device_type)
 
 
 static inline void
-pocl_device_common_init(struct _cl_device_id* dev)
-{
-  POCL_INIT_OBJECT(dev);
-  dev->driver_version = PACKAGE_VERSION;
-  if(dev->version == NULL)
-    dev->version = "OpenCL 2.0 pocl";
-
-  dev->short_name = strdup(dev->ops->device_name);
-  if(dev->long_name == NULL)
-    dev->long_name = dev->short_name;
-}
-
-static inline void
 str_toupper(char *out, const char *in)
 {
   int i;
@@ -536,40 +523,38 @@ pocl_init_devices ()
     }
 
   pocl_devices = (struct _cl_device_id*) calloc(pocl_num_devices, sizeof(struct _cl_device_id));
-  if (pocl_devices == NULL)
-    {
-      POCL_MSG_ERR ("Can not allocate memory for devices\n");
-      return CL_OUT_OF_HOST_MEMORY;
-    }
+  POCL_RETURN_ERROR_ON ((pocl_devices == NULL), CL_OUT_OF_HOST_MEMORY,
+                        "Can not allocate memory for devices\n");
 
   dev_index = 0;
   /* Init infos for each probed devices */
   for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
     {
+      str_toupper (dev_name, pocl_device_ops[i].device_name);
       assert(pocl_device_ops[i].init);
       for (j = 0; j < device_count[i]; ++j)
         {
           cl_int ret = CL_SUCCESS;
-          pocl_devices[dev_index].ops = &pocl_device_ops[i];
-          pocl_devices[dev_index].dev_id = dev_index;
+          cl_device_id dev = &pocl_devices[dev_index];
+          dev->ops = &pocl_device_ops[i];
+          dev->dev_id = dev_index;
+          POCL_INIT_OBJECT (dev);
+          dev->driver_version = PACKAGE_VERSION;
+          if (dev->version == NULL)
+            dev->version = "OpenCL 2.0 pocl";
+          dev->short_name = strdup (dev->ops->device_name);
           /* The default value for the global memory space identifier is
              the same as the device id. The device instance can then override
              it to point to some other device's global memory id in case of
              a shared global memory. */
           pocl_devices[dev_index].global_mem_id = dev_index;
 
-          pocl_device_ops[i].init_device_infos(j, &pocl_devices[dev_index]);
-
-          pocl_device_common_init(&pocl_devices[dev_index]);
-
-          str_toupper(dev_name, pocl_device_ops[i].device_name);
           /* Check if there are device-specific parameters set in the
              POCL_DEVICEn_PARAMETERS env. */
-          if (snprintf (env_name, 1024, "POCL_%s%d_PARAMETERS", dev_name, j) < 0)
-            {
-              POCL_MSG_ERR("Unable to generate the env string.");
-              return CL_OUT_OF_HOST_MEMORY;
-            }
+          POCL_RETURN_ERROR_ON (
+              (snprintf (env_name, 1024, "POCL_%s%d_PARAMETERS", dev_name, j)
+               < 0),
+              CL_OUT_OF_HOST_MEMORY, "Unable to generate the env string.");
           ret = pocl_devices[dev_index].ops->init (j, &pocl_devices[dev_index], getenv(env_name));
           switch (ret)
           {
