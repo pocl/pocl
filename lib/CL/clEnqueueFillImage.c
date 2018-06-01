@@ -104,7 +104,6 @@ CL_API_SUFFIX__VERSION_1_2
   cmd->command.fill_image.pixel_size
       = image->image_elem_size * image->image_channels;
 
-  cmd->command.fill_image.image = image;
   cmd->command.fill_image.mem_id
       = &image->device_ptrs[command_queue->device->dev_id];
 

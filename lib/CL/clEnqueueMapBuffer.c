@@ -112,7 +112,8 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
       mapping_info->host_ptr = NULL;
       mapping_result = device->ops->map_mem (
           device->data,
-          buffer->device_ptrs[device->dev_id].mem_ptr,
+          &buffer->device_ptrs[device->dev_id],
+          buffer,
           mapping_info);
     }
 
@@ -126,7 +127,6 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   if (errcode != CL_SUCCESS)
       goto ERROR;
 
-  cmd->command.map.memobj = buffer;
   cmd->command.map.mem_id = &buffer->device_ptrs[device->dev_id];
   cmd->command.map.mapping = mapping_info;
 
@@ -156,7 +156,8 @@ ERROR:
     POname(clReleaseMemObject)(buffer);
   if (mapping_result == CL_SUCCESS)
     device->ops->unmap_mem (device->data,
-                            buffer->device_ptrs[device->dev_id].mem_ptr,
+                            &buffer->device_ptrs[device->dev_id],
+                            buffer,
                             mapping_info);
   POCL_MEM_FREE(mapping_info);
   POCL_MEM_FREE (cmd);

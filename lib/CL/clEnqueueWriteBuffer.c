@@ -75,8 +75,7 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
     return errcode;
 
   cmd->command.write.src_host_ptr = ptr;
-  cmd->command.write.dst_device_ptr
-      = buffer->device_ptrs[device->dev_id].mem_ptr;
+  cmd->command.write.dst_mem_id = &buffer->device_ptrs[device->dev_id];
   cmd->command.write.offset = offset;
   cmd->command.write.size = size;
 

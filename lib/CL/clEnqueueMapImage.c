@@ -150,9 +150,11 @@ CL_API_SUFFIX__VERSION_1_0
          When return value (mapping_info->host_ptr) is non-NULL, the
          buffer will be mapped there (assumed it will succeed).  */
       mapping_info->host_ptr = NULL;
-      mapping_result = device->ops->map_image (
-          device->data, image, &image->device_ptrs[device->dev_id],
-          mapping_info);
+      mapping_result = device->ops->map_image
+        (device->data,
+         &image->device_ptrs[device->dev_id],
+         image,
+         mapping_info);
     }
 
   retval = mapping_info->host_ptr;
@@ -164,7 +166,6 @@ CL_API_SUFFIX__VERSION_1_0
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
-  cmd->command.map.memobj = image;
   cmd->command.map.mem_id = &image->device_ptrs[device->dev_id];
   cmd->command.map.mapping = mapping_info;
 

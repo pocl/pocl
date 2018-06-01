@@ -56,43 +56,50 @@
   void pocl_##__DRV__##_free (cl_device_id device, cl_mem mem_obj);           \
   void pocl_##__DRV__##_free_ptr (cl_device_id device, void *mem_ptr);        \
   void pocl_##__DRV__##_read (void *data, void *__restrict__ dst_host_ptr,    \
-                              void *__restrict__ src_device_ptr,              \
-                              size_t offset, size_t size);                    \
+                              pocl_mem_identifier *src_mem_id,                \
+                              cl_mem src_buf, size_t offset, size_t size);    \
   void pocl_##__DRV__##_read_rect (                                           \
       void *data, void *__restrict__ dst_host_ptr,                            \
-      void *__restrict__ src_device_ptr, const size_t *buffer_origin,         \
-      const size_t *host_origin, const size_t *region,                        \
-      size_t buffer_row_pitch, size_t buffer_slice_pitch,                     \
-      size_t host_row_pitch, size_t host_slice_pitch);                        \
-  void pocl_##__DRV__##_write (                                               \
-      void *data, const void *__restrict__ src_host_ptr,                      \
-      void *__restrict__ dst_device_ptr, size_t offset, size_t size);         \
+      pocl_mem_identifier *src_mem_id, cl_mem src_buf,                        \
+      const size_t *buffer_origin, const size_t *host_origin,                 \
+      const size_t *region, size_t buffer_row_pitch,                          \
+      size_t buffer_slice_pitch, size_t host_row_pitch,                       \
+      size_t host_slice_pitch);                                               \
+  void pocl_##__DRV__##_write (void *data,                                    \
+                               const void *__restrict__ src_host_ptr,         \
+                               pocl_mem_identifier *dst_mem_id,               \
+                               cl_mem dst_buf, size_t offset, size_t size);   \
   void pocl_##__DRV__##_write_rect (                                          \
       void *data, const void *__restrict__ src_host_ptr,                      \
-      void *__restrict__ dst_device_ptr, const size_t *buffer_origin,         \
-      const size_t *host_origin, const size_t *region,                        \
-      size_t buffer_row_pitch, size_t buffer_slice_pitch,                     \
-      size_t host_row_pitch, size_t host_slice_pitch);                        \
-  void pocl_##__DRV__##_copy (void *data, void *__restrict__ dst_device_ptr,  \
-                              void *__restrict__ src_device_ptr,              \
-                              size_t dst_offset, size_t src_offset,           \
-                              size_t size);                                   \
+      pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,                        \
+      const size_t *buffer_origin, const size_t *host_origin,                 \
+      const size_t *region, size_t buffer_row_pitch,                          \
+      size_t buffer_slice_pitch, size_t host_row_pitch,                       \
+      size_t host_slice_pitch);                                               \
+  void pocl_##__DRV__##_copy (                                                \
+      void *data, pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,            \
+      pocl_mem_identifier *src_mem_id, cl_mem src_buf, size_t dst_offset,     \
+      size_t src_offset, size_t size);                                        \
   void pocl_##__DRV__##_copy_rect (                                           \
-      void *data, void *__restrict__ dst_device_ptr,                          \
-      void *__restrict__ src_device_ptr, const size_t *dst_origin,            \
-      const size_t *src_origin, const size_t *region, size_t dst_row_pitch,   \
-      size_t dst_slice_pitch, size_t src_row_pitch, size_t src_slice_pitch);  \
+      void *data, pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,            \
+      pocl_mem_identifier *src_mem_id, cl_mem src_buf,                        \
+      const size_t *dst_origin, const size_t *src_origin,                     \
+      const size_t *region, size_t dst_row_pitch, size_t dst_slice_pitch,     \
+      size_t src_row_pitch, size_t src_slice_pitch);                          \
   void pocl_##__DRV__##_compile_kernel (                                      \
       _cl_command_node *node, cl_kernel kernel, cl_device_id device);         \
-  void pocl_##__DRV__##_memfill (                                             \
-      void *data, void *__restrict__ device_ptr, size_t size, size_t offset,  \
-      const void *__restrict__ pattern, size_t pattern_size);                 \
+  void pocl_##__DRV__##_memfill (void *data, pocl_mem_identifier *dst_mem_id, \
+                                 cl_mem dst_buf, size_t size, size_t offset,  \
+                                 const void *__restrict__ pattern,            \
+                                 size_t pattern_size);                        \
   void pocl_##__DRV__##_run (void *data, _cl_command_node *cmd);              \
   void pocl_##__DRV__##_run_native (void *data, _cl_command_node *cmd);       \
-  cl_int pocl_##__DRV__##_map_mem (                                           \
-      void *data, void *__restrict__ src_device_ptr, mem_mapping_t *map);     \
-  cl_int pocl_##__DRV__##_unmap_mem (                                         \
-      void *data, void *__restrict__ dst_device_ptr, mem_mapping_t *map);     \
+  cl_int pocl_##__DRV__##_map_mem (void *data,                                \
+                                   pocl_mem_identifier *src_mem_id,           \
+                                   cl_mem src_buf, mem_mapping_t *map);       \
+  cl_int pocl_##__DRV__##_unmap_mem (void *data,                              \
+                                     pocl_mem_identifier *dst_mem_id,         \
+                                     cl_mem dst_buf, mem_mapping_t *map);     \
   cl_ulong pocl_##__DRV__##_get_timer_value (void *data);                     \
   char *pocl_##__DRV__##_init_build (void *data);                             \
   char *pocl_##__DRV__##_build_hash (cl_device_id device);                    \
@@ -125,12 +132,11 @@
       void *__restrict__ dst_host_ptr, pocl_mem_identifier *dst_mem_id,       \
       const size_t *origin, const size_t *region, size_t dst_row_pitch,       \
       size_t dst_slice_pitch, size_t dst_offset);                             \
-  cl_int pocl_##__DRV__##_map_image (void *data, cl_mem src_image,            \
-                                     pocl_mem_identifier *mem_id,             \
-                                     mem_mapping_t *map);                     \
-  cl_int pocl_##__DRV__##_unmap_image (void *data, cl_mem dst_image,          \
+  cl_int pocl_##__DRV__##_map_image (void *data, pocl_mem_identifier *mem_id, \
+                                     cl_mem src_image, mem_mapping_t *map);   \
+  cl_int pocl_##__DRV__##_unmap_image (void *data,                            \
                                        pocl_mem_identifier *mem_id,           \
-                                       mem_mapping_t *map);                   \
+                                       cl_mem dst_image, mem_mapping_t *map); \
   cl_int pocl_##__DRV__##_fill_image (                                        \
       void *data, cl_mem image, pocl_mem_identifier *mem_id,                  \
       const size_t *origin, const size_t *region,                             \

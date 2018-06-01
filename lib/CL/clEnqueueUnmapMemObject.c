@@ -86,7 +86,6 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
-  cmd->command.unmap.memobj = memobj;
   cmd->command.unmap.mapping = mapping;
   cmd->command.unmap.mem_id = &memobj->device_ptrs[device->dev_id];
 

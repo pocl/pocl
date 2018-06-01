@@ -353,13 +353,15 @@ struct pocl_device_ops {
   /* clEnqReadBuffer */
   void (*read) (void *data,
                 void *__restrict__  dst_host_ptr,
-                void *__restrict__ src_device_ptr,
+                pocl_mem_identifier * src_mem_id,
+                cl_mem src_buf,
                 size_t offset,
                 size_t size);
   /* clEnqReadBufferRect */
   void (*read_rect) (void *data,
                      void *__restrict__ dst_host_ptr,
-                     void *__restrict__ src_device_ptr,
+                     pocl_mem_identifier * src_mem_id,
+                     cl_mem src_buf,
                      const size_t *buffer_origin,
                      const size_t *host_origin, 
                      const size_t *region,
@@ -370,13 +372,15 @@ struct pocl_device_ops {
   /* clEnqWriteBuffer */
   void (*write) (void *data,
                  const void *__restrict__  src_host_ptr,
-                 void *__restrict__  dst_device_ptr,
+                 pocl_mem_identifier * dst_mem_id,
+                 cl_mem dst_buf,
                  size_t offset,
                  size_t size);
   /* clEnqWriteBufferRect */
   void (*write_rect) (void *data,
                       const void *__restrict__ src_host_ptr,
-                      void *__restrict__ dst_device_ptr,
+                      pocl_mem_identifier * dst_mem_id,
+                      cl_mem dst_buf,
                       const size_t *buffer_origin,
                       const size_t *host_origin, 
                       const size_t *region,
@@ -386,15 +390,19 @@ struct pocl_device_ops {
                       size_t host_slice_pitch);
   /* clEnqCopyBuffer */
   void (*copy) (void *data,
-                void *__restrict__ dst_device_ptr,
-                void *__restrict__ src_device_ptr,
+                pocl_mem_identifier * dst_mem_id,
+                cl_mem dst_buf,
+                pocl_mem_identifier * src_mem_id,
+                cl_mem src_buf,
                 size_t dst_offset,
                 size_t src_offset,
                 size_t size);
   /* clEnqCopyBufferRect */
   void (*copy_rect) (void *data,
-                     void *__restrict__ dst_device_ptr,
-                     void *__restrict__ src_device_ptr,
+                     pocl_mem_identifier * dst_mem_id,
+                     cl_mem dst_buf,
+                     pocl_mem_identifier * src_mem_id,
+                     cl_mem src_buf,
                      const size_t *dst_origin,
                      const size_t *src_origin,
                      const size_t *region,
@@ -405,7 +413,8 @@ struct pocl_device_ops {
 
   /* clEnqFillBuffer */
   void (*memfill) (void *data,
-                   void *__restrict__ device_ptr,
+                   pocl_mem_identifier * dst_mem_id,
+                   cl_mem dst_buf,
                    size_t size,
                    size_t offset,
                    const void *__restrict__  pattern,
@@ -415,11 +424,13 @@ struct pocl_device_ops {
      host-accessible memory. This might or might not involve copying 
      the block from the device. */
   cl_int (*map_mem) (void *data,
-                    void *__restrict__ src_device_ptr,
-                    mem_mapping_t *map);
+                     pocl_mem_identifier * src_mem_id,
+                     cl_mem src_buf,
+                     mem_mapping_t *map);
   cl_int (*unmap_mem) (void *data,
-                      void *__restrict__ dst_device_ptr,
-                      mem_mapping_t *map);
+                       pocl_mem_identifier * dst_mem_id,
+                       cl_mem dst_buf,
+                       mem_mapping_t *map);
 
   /* compile the fully linked LLVM IR to target-specific binaries. */
   void (*compile_kernel) (_cl_command_node* cmd, cl_kernel kernel, cl_device_id device);
@@ -518,14 +529,14 @@ struct pocl_device_ops {
 
   /* maps the entire image from device to host */
   cl_int (*map_image) (void *data,
-                       cl_mem src_image,
                        pocl_mem_identifier *mem_id,
+                       cl_mem src_image,
                        mem_mapping_t *map);
 
   /* unmaps the entire image from host to device */
   cl_int (*unmap_image) (void *data,
-                         cl_mem dst_image,
                          pocl_mem_identifier *mem_id,
+                         cl_mem dst_image,
                          mem_mapping_t *map);
 
   /* fill image with pattern */

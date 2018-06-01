@@ -113,15 +113,13 @@ typedef struct
   void *args;
   size_t cb_args;
   void (*user_func)(void *);
-  cl_mem *mem_list;
-  unsigned num_mem_objects;
 } _cl_command_native;
 
 // clEnqueueReadBuffer
 typedef struct
 {
   void *__restrict__ dst_host_ptr;
-  void *__restrict__ src_device_ptr;
+  pocl_mem_identifier *src_mem_id;
   size_t offset;
   size_t size;
 } _cl_command_read;
@@ -130,7 +128,7 @@ typedef struct
 typedef struct
 {
   const void *__restrict__ src_host_ptr;
-  void *__restrict__ dst_device_ptr;
+  pocl_mem_identifier *dst_mem_id;
   size_t offset;
   size_t size;
 } _cl_command_write;
@@ -138,8 +136,8 @@ typedef struct
 // clEnqueueCopyBuffer
 typedef struct
 {
-  void *__restrict__ src_device_ptr;
-  void *__restrict__ dst_device_ptr;
+  pocl_mem_identifier *src_mem_id;
+  pocl_mem_identifier *dst_mem_id;
   size_t src_offset;
   size_t dst_offset;
   size_t size;
@@ -149,7 +147,7 @@ typedef struct
 typedef struct
 {
   void *__restrict__ dst_host_ptr;
-  void *__restrict__ src_device_ptr;
+  pocl_mem_identifier *src_mem_id;
   size_t buffer_origin[3];
   size_t host_origin[3];
   size_t region[3];
@@ -163,7 +161,7 @@ typedef struct
 typedef struct
 {
   const void *__restrict__ src_host_ptr;
-  void *__restrict__ dst_device_ptr;
+  pocl_mem_identifier *dst_mem_id;
   size_t buffer_origin[3];
   size_t host_origin[3];
   size_t region[3];
@@ -176,8 +174,8 @@ typedef struct
 // clEnqueueCopyBufferRect
 typedef struct
 {
-  void *__restrict__ src_device_ptr;
-  void *__restrict__ dst_device_ptr;
+  pocl_mem_identifier *src_mem_id;
+  pocl_mem_identifier *dst_mem_id;
   size_t dst_origin[3];
   size_t src_origin[3];
   size_t region[3];
@@ -190,7 +188,6 @@ typedef struct
 // clEnqueueMapBuffer
 typedef struct
 {
-  cl_mem memobj;
   pocl_mem_identifier *mem_id;
   mem_mapping_t *mapping;
 } _cl_command_map;
@@ -198,7 +195,6 @@ typedef struct
 /* clEnqueueUnMapMemObject */
 typedef struct
 {
-  cl_mem memobj;
   pocl_mem_identifier *mem_id;
   mem_mapping_t *mapping;
 } _cl_command_unmap;
@@ -206,7 +202,7 @@ typedef struct
 /* clEnqueueFillBuffer */
 typedef struct
 {
-  void *__restrict__ device_ptr;
+  pocl_mem_identifier *dst_mem_id;
   size_t size;
   size_t offset;
   void *__restrict__ pattern;
@@ -216,7 +212,6 @@ typedef struct
 /* clEnqueue(Write/Read)Image */
 typedef struct
 {
-  cl_mem src_image;
   pocl_mem_identifier *src_mem_id;
   void *__restrict__ dst_host_ptr;
   pocl_mem_identifier *dst_mem_id;
@@ -229,7 +224,6 @@ typedef struct
 
 typedef struct
 {
-  cl_mem dst_image;
   pocl_mem_identifier *dst_mem_id;
   const void *__restrict__ src_host_ptr;
   pocl_mem_identifier *src_mem_id;
@@ -242,8 +236,6 @@ typedef struct
 
 typedef struct
 {
-  cl_mem src_image;
-  cl_mem dst_image;
   pocl_mem_identifier *src_mem_id;
   pocl_mem_identifier *dst_mem_id;
   size_t dst_origin[3];
@@ -254,7 +246,6 @@ typedef struct
 /* clEnqueueFillImage */
 typedef struct
 {
-  cl_mem image;
   pocl_mem_identifier *mem_id;
   size_t origin[3];
   size_t region[3];
@@ -307,7 +298,7 @@ typedef struct
 
 typedef struct
 {
-  void *src;
+  const void *src;
   void* dst;
   size_t size;
 } _cl_command_svm_cpy;

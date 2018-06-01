@@ -96,8 +96,7 @@ POname(clEnqueueReadBufferRect)(cl_command_queue command_queue,
                        event, num_events_in_wait_list, event_wait_list, 1, 
                        &buffer);
 
-  cmd->command.read_rect.src_device_ptr
-      = buffer->device_ptrs[device->dev_id].mem_ptr;
+  cmd->command.read_rect.src_mem_id = &buffer->device_ptrs[device->dev_id];
   cmd->command.read_rect.dst_host_ptr = ptr;
 
   cmd->command.read_rect.host_origin[0] = host_origin[0];

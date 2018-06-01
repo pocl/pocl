@@ -36,9 +36,8 @@ CL_API_SUFFIX__VERSION_1_0
     return err;
 
   cl_device_id dev = command_queue->device;
-  cmd->command.write_image.dst_image = dst_image;
-  cmd->command.write_image.dst_mem_id = &dst_image->device_ptrs[dev->dev_id];
 
+  cmd->command.write_image.dst_mem_id = &dst_image->device_ptrs[dev->dev_id];
   cmd->command.write_image.src_host_ptr = NULL;
   cmd->command.write_image.src_mem_id = &src_buffer->device_ptrs[dev->dev_id];
 

@@ -81,12 +81,10 @@ CL_API_SUFFIX__VERSION_1_0
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  cmd->command.copy.src_device_ptr
-      = src_buffer->device_ptrs[device->dev_id].mem_ptr;
+  cmd->command.copy.src_mem_id = &src_buffer->device_ptrs[device->dev_id];
   cmd->command.copy.src_offset = src_offset;
 
-  cmd->command.copy.dst_device_ptr
-      = dst_buffer->device_ptrs[device->dev_id].mem_ptr;
+  cmd->command.copy.dst_mem_id = &dst_buffer->device_ptrs[device->dev_id];
   cmd->command.copy.dst_offset = dst_offset;
   cmd->command.copy.size = size;
 

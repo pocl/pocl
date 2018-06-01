@@ -36,9 +36,7 @@ POname(clEnqueueCopyImageToBuffer)(cl_command_queue  command_queue ,
 
   cl_device_id dev = command_queue->device;
 
-  cmd->command.read_image.src_image = src_image;
   cmd->command.read_image.src_mem_id = &src_image->device_ptrs[dev->dev_id];
-
   cmd->command.read_image.dst_host_ptr = NULL;
   cmd->command.read_image.dst_mem_id = &dst_buffer->device_ptrs[dev->dev_id];
 

@@ -519,9 +519,11 @@ void pocl_basic_free_ptr (cl_device_id device, void* mem_ptr)
 void
 pocl_basic_read (void *data,
                  void *__restrict__ host_ptr,
-                 void *__restrict__ device_ptr,
+                 pocl_mem_identifier * src_mem_id,
+                 cl_mem src_buf,
                  size_t offset, size_t size)
 {
+  void *__restrict__ device_ptr = src_mem_id->mem_ptr;
   if (host_ptr == device_ptr)
     return;
 
@@ -531,9 +533,11 @@ pocl_basic_read (void *data,
 void
 pocl_basic_write (void *data,
                   const void *__restrict__  host_ptr,
-                  void *__restrict__  device_ptr,
+                  pocl_mem_identifier * dst_mem_id,
+                  cl_mem dst_buf,
                   size_t offset, size_t size)
 {
+  void *__restrict__ device_ptr = dst_mem_id->mem_ptr;
   if (host_ptr == device_ptr)
     return;
 
@@ -594,8 +598,8 @@ pocl_basic_run
 
           void* devptr = pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT,  sizeof(dev_image_t));
           arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = devptr; 
-          pocl_basic_write (data, &di, devptr, 0, sizeof(dev_image_t));
+          *(void **)(arguments[i]) = devptr;
+          memcpy (&di, devptr, sizeof (dev_image_t));
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
@@ -700,12 +704,16 @@ pocl_basic_run_native
 
 void
 pocl_basic_copy (void *data,
-                 void *__restrict__ dst_ptr,
-                 void *__restrict__ src_ptr,
+                 pocl_mem_identifier * dst_mem_id,
+                 cl_mem dst_buf,
+                 pocl_mem_identifier * src_mem_id,
+                 cl_mem src_buf,
                  size_t dst_offset,
                  size_t src_offset,
                  size_t size)
 {
+  void *__restrict__ src_ptr = src_mem_id->mem_ptr;
+  void *__restrict__ dst_ptr = dst_mem_id->mem_ptr;
   if (src_ptr == dst_ptr)
     return;
 
@@ -714,8 +722,10 @@ pocl_basic_copy (void *data,
 
 void
 pocl_basic_copy_rect (void *data,
-                      void *__restrict__ const dst_ptr,
-                      void *__restrict__ const src_ptr,
+                      pocl_mem_identifier * dst_mem_id,
+                      cl_mem dst_buf,
+                      pocl_mem_identifier * src_mem_id,
+                      cl_mem src_buf,
                       const size_t *__restrict__ const dst_origin,
                       const size_t *__restrict__ const src_origin,
                       const size_t *__restrict__ const region,
@@ -725,6 +735,8 @@ pocl_basic_copy_rect (void *data,
                       size_t const src_slice_pitch)
 {
 
+  void *__restrict__ src_ptr = src_mem_id->mem_ptr;
+  void *__restrict__ dst_ptr = dst_mem_id->mem_ptr;
   char const *__restrict const adjusted_src_ptr = 
     (char const*)src_ptr +
     src_origin[0] + src_row_pitch * src_origin[1] + src_slice_pitch * src_origin[2];
@@ -770,7 +782,8 @@ pocl_basic_copy_rect (void *data,
 void
 pocl_basic_write_rect (void *data,
                        const void *__restrict__ const host_ptr,
-                       void *__restrict__ const device_ptr,
+                       pocl_mem_identifier * dst_mem_id,
+                       cl_mem dst_buf,
                        const size_t *__restrict__ const buffer_origin,
                        const size_t *__restrict__ const host_origin, 
                        const size_t *__restrict__ const region,
@@ -779,10 +792,12 @@ pocl_basic_write_rect (void *data,
                        size_t const host_row_pitch,
                        size_t const host_slice_pitch)
 {
+  void *__restrict__ device_ptr = dst_mem_id->mem_ptr;
 
-  char *__restrict const adjusted_device_ptr = 
-    (char*)device_ptr +
-    buffer_origin[0] + buffer_row_pitch * buffer_origin[1] + buffer_slice_pitch * buffer_origin[2];
+  char *__restrict const adjusted_device_ptr
+      = (char *)device_ptr + buffer_origin[0]
+        + buffer_row_pitch * buffer_origin[1]
+        + buffer_slice_pitch * buffer_origin[2];
   char const *__restrict__ const adjusted_host_ptr = 
     (char const*)host_ptr +
     host_origin[0] + host_row_pitch * host_origin[1] + host_slice_pitch * host_origin[2];
@@ -832,7 +847,8 @@ pocl_basic_write_rect (void *data,
 void
 pocl_basic_read_rect (void *data,
                       void *__restrict__ const host_ptr,
-                      void *__restrict__ const device_ptr,
+                      pocl_mem_identifier * src_mem_id,
+                      cl_mem src_buf,
                       const size_t *__restrict__ const buffer_origin,
                       const size_t *__restrict__ const host_origin, 
                       const size_t *__restrict__ const region,
@@ -841,6 +857,7 @@ pocl_basic_read_rect (void *data,
                       size_t const host_row_pitch,
                       size_t const host_slice_pitch)
 {
+  void *__restrict__ device_ptr = src_mem_id->mem_ptr;
 
   char const *__restrict const adjusted_device_ptr = 
     (char const*)device_ptr +
@@ -892,12 +909,14 @@ pocl_basic_read_rect (void *data,
 
 
 void pocl_basic_memfill(void *data,
-                        void *__restrict__ ptr,
+                        pocl_mem_identifier * dst_mem_id,
+                        cl_mem dst_buf,
                         size_t size,
                         size_t offset,
                         const void *__restrict__  pattern,
                         size_t pattern_size)
 {
+  void *__restrict__ ptr = dst_mem_id->mem_ptr;
   size_t i;
   unsigned j;
 
@@ -975,9 +994,11 @@ void pocl_basic_memfill(void *data,
 
 cl_int
 pocl_basic_map_mem (void *data,
-                    void *__restrict__ src_device_ptr,
+                    pocl_mem_identifier * src_mem_id,
+                    cl_mem src_buf,
                     mem_mapping_t *map)
 {
+  void *__restrict__ src_device_ptr = src_mem_id->mem_ptr;
   void *host_ptr = map->host_ptr;
   size_t offset = map->offset;
   size_t size = map->size;
@@ -1008,9 +1029,11 @@ pocl_basic_map_mem (void *data,
 
 cl_int
 pocl_basic_unmap_mem(void *data,
-                     void *__restrict__ dst_device_ptr,
+                     pocl_mem_identifier * dst_mem_id,
+                     cl_mem dst_buf,
                      mem_mapping_t *map)
 {
+  void *__restrict__ dst_device_ptr = dst_mem_id->mem_ptr;
   /* it could be CL_MAP_READ | CL_MAP_WRITE(..invalidate) which has to be
    * handled like a write */
   if (map->map_flags == CL_MAP_READ)
@@ -1341,38 +1364,39 @@ cl_int pocl_basic_read_image_rect(  void *data,
 
 
 cl_int pocl_basic_map_image (void *data,
+                             pocl_mem_identifier *mem_id,
                              cl_mem src_image,
-                             pocl_mem_identifier * image_data,
                              mem_mapping_t *map)
 {
   if (map->host_ptr == NULL)
     {
-      map->host_ptr = (char *)image_data->mem_ptr + map->offset;
+      map->host_ptr = (char *)mem_id->mem_ptr + map->offset;
       return CL_SUCCESS;
     }
 
   if (map->map_flags & CL_MAP_WRITE_INVALIDATE_REGION)
     return CL_SUCCESS;
 
-  if (map->host_ptr != ((char *)image_data->mem_ptr + map->offset))
+  if (map->host_ptr != ((char *)mem_id->mem_ptr + map->offset))
     {
-      pocl_basic_read_image_rect (data, src_image, image_data, map->host_ptr,
+      pocl_basic_read_image_rect (data, src_image, mem_id, map->host_ptr,
                                   NULL, map->origin, map->region,
                                   map->row_pitch, map->slice_pitch, 0);
     }
   return CL_SUCCESS;
 }
 
-cl_int
-pocl_basic_unmap_image (void *data, cl_mem dst_image,
-                        pocl_mem_identifier *image_data, mem_mapping_t *map)
+cl_int pocl_basic_unmap_image(void *data,
+                              pocl_mem_identifier *mem_id,
+                              cl_mem dst_image,
+                              mem_mapping_t *map)
 {
   if (map->map_flags == CL_MAP_READ)
     return CL_SUCCESS;
 
-  if (map->host_ptr != ((char *)image_data->mem_ptr + map->offset))
+  if (map->host_ptr != ((char *)mem_id->mem_ptr + map->offset))
     {
-      pocl_basic_write_image_rect (data, dst_image, image_data, map->host_ptr,
+      pocl_basic_write_image_rect (data, dst_image, mem_id, map->host_ptr,
                                    NULL, map->origin, map->region,
                                    map->row_pitch, map->slice_pitch, 0);
     }

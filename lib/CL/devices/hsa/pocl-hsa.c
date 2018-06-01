@@ -776,12 +776,16 @@ pocl_hsa_free (cl_device_id device, cl_mem memobj)
 
 void
 pocl_hsa_copy (void *data,
-               void *__restrict__ dst_ptr,
-               void *__restrict__ src_ptr,
+               pocl_mem_identifier * dst_mem_id,
+               cl_mem dst_buf,
+               pocl_mem_identifier * src_mem_id,
+               cl_mem src_buf,
                size_t dst_offset,
                size_t src_offset,
                size_t size)
 {
+  void *__restrict__ dst_ptr = dst_mem_id->mem_ptr;
+  void *__restrict__ src_ptr = src_mem_id->mem_ptr;
   assert(src_offset == 0);
   assert(dst_offset == 0);
   HSA_CHECK (hsa_memory_copy (dst_ptr, src_ptr, size));

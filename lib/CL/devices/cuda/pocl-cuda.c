@@ -561,6 +561,7 @@ void
 pocl_cuda_submit_read (CUstream stream, void *host_ptr, const void *device_ptr,
                        size_t offset, size_t cb)
 {
+  POCL_MSG_PRINT_CUDA ("cuMemcpyDtoHAsync %p -> %p / %zu B \n", device_ptr, host_ptr, cb);
   CUresult result = cuMemcpyDtoHAsync (
       host_ptr, (CUdeviceptr) (device_ptr + offset), cb, stream);
   CUDA_CHECK (result, "cuMemcpyDtoHAsync");
@@ -570,6 +571,7 @@ void
 pocl_cuda_submit_write (CUstream stream, const void *host_ptr,
                         void *device_ptr, size_t offset, size_t cb)
 {
+  POCL_MSG_PRINT_CUDA ("cuMemcpyHtoDAsync %p -> %p / %zu B \n", host_ptr, device_ptr, cb);
   CUresult result = cuMemcpyHtoDAsync ((CUdeviceptr) (device_ptr + offset),
                                        host_ptr, cb, stream);
   CUDA_CHECK (result, "cuMemcpyHtoDAsync");
@@ -587,7 +589,7 @@ pocl_cuda_submit_copy (CUstream stream, void*__restrict__ src_mem_ptr,
     return;
 
   CUresult result;
-  POCL_MSG_PRINT_CUDA ("cuMemcpyDtoDAsync %p / %zu B \n", src_ptr, cb);
+  POCL_MSG_PRINT_CUDA ("cuMemcpyDtoDAsync %p -> %p / %zu B \n", src_ptr, dst_ptr, cb);
   result = cuMemcpyDtoDAsync ((CUdeviceptr)dst_ptr, (CUdeviceptr)src_ptr,
                                 cb, stream);
   CUDA_CHECK (result, "cuMemcpyDtoDAsync");
@@ -605,6 +607,8 @@ pocl_cuda_submit_read_rect (CUstream stream, void *__restrict__ const host_ptr,
                             size_t const host_slice_pitch)
 {
   CUDA_MEMCPY3D params = { 0 };
+
+  POCL_MSG_PRINT_CUDA ("cuMemcpy3D / READ_RECT %p -> %p \n", device_ptr, host_ptr);
 
   params.WidthInBytes = region[0];
   params.Height = region[1];
@@ -643,6 +647,8 @@ pocl_cuda_submit_write_rect (CUstream stream,
                              size_t const host_slice_pitch)
 {
   CUDA_MEMCPY3D params = { 0 };
+
+  POCL_MSG_PRINT_CUDA ("cuMemcpy3D / WRITE_RECT %p -> %p \n", host_ptr, device_ptr);
 
   params.WidthInBytes = region[0];
   params.Height = region[1];
@@ -683,6 +689,8 @@ pocl_cuda_submit_copy_rect (CUstream stream,
 {
   CUDA_MEMCPY3D params = { 0 };
 
+  POCL_MSG_PRINT_CUDA ("cuMemcpy3D / COPY_RECT %p -> %p \n", src_ptr, dst_ptr);
+
   params.WidthInBytes = region[0];
   params.Height = region[1];
   params.Depth = region[2];
@@ -707,13 +715,18 @@ pocl_cuda_submit_copy_rect (CUstream stream,
   CUDA_CHECK (result, "cuMemcpy3DAsync");
 }
 
-void *
-pocl_cuda_map_mem (void *data, void *buf_ptr, size_t offset, size_t size,
-                   void *host_ptr)
+cl_int
+pocl_cuda_map_mem (void *data,
+                    pocl_mem_identifier *src_mem_id,
+                    cl_mem src_buf,
+                    mem_mapping_t *map)
 {
+  void *host_ptr = map->host_ptr;
+
   assert (host_ptr == NULL);
 
-  return malloc (size);
+  map->host_ptr = (char *)malloc (map->size);
+  return CL_SUCCESS;
 }
 
 void
@@ -735,14 +748,14 @@ pocl_cuda_submit_map_mem (CUstream stream, pocl_mem_identifier *mem,
 }
 
 void *
-pocl_cuda_submit_unmap_mem (CUstream stream, pocl_mem_identifier *mem,
+pocl_cuda_submit_unmap_mem (CUstream stream, pocl_mem_identifier *dst_mem_id,
                             size_t offset, size_t size, void *host_ptr)
 {
   if (host_ptr)
     {
       /* TODO: Only copy back if mapped for writing */
       CUresult result = cuMemcpyHtoDAsync (
-          (CUdeviceptr) (device_start_ptr + offset), host_ptr, size, stream);
+          (CUdeviceptr) (dst_mem_id->mem_ptr + offset), host_ptr, size, stream);
       CUDA_CHECK (result, "cuMemcpyHtoDAsync");
     }
   return NULL;
@@ -1098,26 +1111,26 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
     {
     case CL_COMMAND_READ_BUFFER:
       pocl_cuda_submit_read (
-          stream, cmd->read.dst_host_ptr, cmd->read.src_device_ptr,
+          stream, cmd->read.dst_host_ptr, cmd->read.src_mem_id->mem_ptr,
           node->command.read.offset, node->command.read.size);
       break;
     case CL_COMMAND_WRITE_BUFFER:
       pocl_cuda_submit_write (
-          stream, cmd->write.src_host_ptr, cmd->write.dst_device_ptr,
+          stream, cmd->write.src_host_ptr, cmd->write.dst_mem_id->mem_ptr,
           node->command.write.offset, node->command.write.size);
       break;
     case CL_COMMAND_COPY_BUFFER:
       {
         pocl_cuda_submit_copy (
-            stream, cmd->copy.src_device_ptr, cmd->copy.src_offset,
-            cmd->copy.dst_device_ptr, cmd->copy.dst_offset, cmd->copy.size);
+            stream, cmd->copy.src_mem_id->mem_ptr, cmd->copy.src_offset,
+            cmd->copy.dst_mem_id->mem_ptr, cmd->copy.dst_offset, cmd->copy.size);
         break;
       }
     case CL_COMMAND_READ_BUFFER_RECT:
       pocl_cuda_submit_read_rect (
           stream,
           cmd->read_rect.dst_host_ptr,
-          cmd->read_rect.src_device_ptr,
+          cmd->read_rect.src_mem_id->mem_ptr,
           cmd->read_rect.buffer_origin,
           cmd->read_rect.host_origin,
           cmd->read_rect.region,
@@ -1128,8 +1141,9 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
       break;
     case CL_COMMAND_WRITE_BUFFER_RECT:
       pocl_cuda_submit_write_rect (
-          stream, cmd->write_image.src_host_ptr,
-          cmd->write_rect.dst_device_ptr,
+          stream,
+          cmd->write_rect.src_host_ptr,
+          cmd->write_rect.dst_mem_id->mem_ptr,
           cmd->write_rect.buffer_origin,
           cmd->write_rect.host_origin,
           cmd->write_rect.region,
@@ -1141,16 +1155,16 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
     case CL_COMMAND_COPY_BUFFER_RECT:
       {
         pocl_cuda_submit_copy_rect (
-              stream, dev,
-              cmd->copy_rect.src_device_ptr,
-              cmd->copy_rect.dst_device_ptr,
-              cmd->copy_rect.src_origin,
-              cmd->copy_rect.dst_origin,
-              cmd->copy_rect.region,
-              cmd->copy_rect.src_row_pitch,
-              cmd->copy_rect.src_slice_pitch,
-              cmd->copy_rect.dst_row_pitch,
-              cmd->copy_rect.dst_slice_pitch);
+          stream, dev,
+          cmd->copy_rect.src_mem_id->mem_ptr,
+          cmd->copy_rect.dst_mem_id->mem_ptr,
+          cmd->copy_rect.src_origin,
+          cmd->copy_rect.dst_origin,
+          cmd->copy_rect.region,
+          cmd->copy_rect.src_row_pitch,
+          cmd->copy_rect.src_slice_pitch,
+          cmd->copy_rect.dst_row_pitch,
+          cmd->copy_rect.dst_slice_pitch);
         break;
       }
     case CL_COMMAND_MIGRATE_MEM_OBJECTS:
@@ -1171,10 +1185,11 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
       }
     case CL_COMMAND_MAP_BUFFER:
       {
-        cl_mem buffer = cmd->map.memobj;
-        assert (!(buffer->flags & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR)));
-        pocl_cuda_submit_map_mem (
-            stream, cmd->map.mem_id,
+        cl_mem buffer = event->mem_objs[0];
+        if (!(buffer->flags & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR)))
+          pocl_cuda_submit_map_mem (
+            stream,
+            cmd->map.mem_id,
             cmd->map.mapping->offset,
             cmd->map.mapping->size,
             cmd->map.mapping->host_ptr);
@@ -1185,10 +1200,11 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
       }
     case CL_COMMAND_UNMAP_MEM_OBJECT:
       {
-        cl_mem buffer = cmd->unmap.memobj;
+        cl_mem buffer = event->mem_objs[0];
         assert (buffer->is_image == CL_FALSE);
         pocl_cuda_submit_unmap_mem (
-            stream, cmd->unmap.mem_id,
+            stream,
+            cmd->unmap.mem_id,
             cmd->unmap.mapping->offset,
             cmd->unmap.mapping->size,
             cmd->unmap.mapping->host_ptr);
@@ -1305,7 +1321,7 @@ pocl_cuda_finalize_command (cl_device_id device, cl_event event)
   /* Clean up mapped memory allocations */
   if (event->command_type == CL_COMMAND_UNMAP_MEM_OBJECT)
     {
-      cl_mem buffer = event->command->command.unmap.memobj;
+      cl_mem buffer = event->mem_objs[0];
       mem_mapping_t *mapping = event->command->command.unmap.mapping;
       if (mapping->host_ptr
           && !(buffer->flags
