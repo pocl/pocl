@@ -669,8 +669,6 @@ struct _cl_mem {
   cl_device_id shared_mem_allocation_owner;
   /* device where this mem obj resides */
   volatile cl_device_id owning_device;
-  /* latest event assosiated with the buffer, set NULL when event completed */
-  volatile cl_event latest_event;
   /* A linked list of regions of the buffer mapped to the 
      host memory */
   mem_mapping_t *mappings;

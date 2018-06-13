@@ -493,10 +493,8 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
                      buf->owning_device->global_mem_id,
                      command_queue->device->global_mem_id);
 #endif
-              cl_event mem_event = buf->latest_event;
               POname(clEnqueueMigrateMemObjects)
-                (command_queue, 1, &buf, 0, (mem_event ? 1 : 0),
-                 (mem_event ? &mem_event : NULL),
+                (command_queue, 1, &buf, 0, 0, NULL,
                  &new_event_wait_list[b_migrate_count++]);
             }
           buf->owning_device = realdev;

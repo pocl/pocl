@@ -45,7 +45,6 @@ POname(clSetKernelArgSVMPointer)(cl_kernel kernel,
   mem->type = CL_MEM_OBJECT_BUFFER;
   mem->flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE;
   mem->device_ptrs = NULL;
-  mem->latest_event = NULL;
   mem->owning_device = NULL;
   mem->is_image = CL_FALSE;
   mem->is_pipe = 0;

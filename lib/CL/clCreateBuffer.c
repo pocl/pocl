@@ -116,7 +116,6 @@ POname(clCreateBuffer)(cl_context   context,
   mem->type = CL_MEM_OBJECT_BUFFER;
   mem->flags = flags;
   mem->is_image = CL_FALSE;
-  mem->latest_event = NULL;
   mem->owning_device = NULL;
   mem->is_pipe = 0;
   mem->pipe_packet_size = 0;

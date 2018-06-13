@@ -377,10 +377,6 @@ pocl_mem_objs_cleanup (cl_event event)
   for (i = 0; i < event->num_buffers; ++i)
     {
       assert(event->mem_objs[i] != NULL);
-      POCL_LOCK_OBJ (event->mem_objs[i]);
-      if (event->mem_objs[i]->latest_event == event)
-        event->mem_objs[i]->latest_event = NULL;
-      POCL_UNLOCK_OBJ (event->mem_objs[i]);
       POname(clReleaseMemObject) (event->mem_objs[i]);
     }
   free (event->mem_objs);
