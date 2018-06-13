@@ -644,26 +644,6 @@ pocl_cl_mem_inherit_flags (cl_mem mem, cl_mem from_buffer, cl_mem_flags flags)
                | (from_buffer->flags & CL_MEM_COPY_HOST_PTR);
 }
 
-cl_int pocl_update_mem_obj_sync (cl_command_queue cq, _cl_command_node *cmd, 
-                                 cl_mem mem, char operation)
-{
-  int i;
-  POCL_LOCK_OBJ (mem);
-  mem->owning_device = cmd->device;
-  mem->latest_event = cmd->event;
-  POCL_UNLOCK_OBJ (mem);
-
-  for (i = 0; i < cmd->event->num_buffers; ++i)
-    {
-      if (cmd->event->mem_objs[i] == NULL)
-        {
-          cmd->event->mem_objs[i] = mem;
-          break;
-        }
-    }
-  return CL_SUCCESS;
-}
-
 int pocl_buffer_boundcheck(cl_mem buffer, size_t offset, size_t size) {
   POCL_RETURN_ERROR_ON ((offset > buffer->size), CL_INVALID_VALUE,
                         "offset(%zu) > buffer->size(%zu)\n", offset,
