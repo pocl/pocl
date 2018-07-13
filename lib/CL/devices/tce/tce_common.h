@@ -55,6 +55,9 @@ class TCEDevice {
   virtual void copyDeviceToHost
     (uint32_t src_addr, const void *host_ptr, size_t count) = 0;
 
+  virtual void copyDeviceToDevice
+    (uint32_t src_addr, uint32_t dst_addr, size_t count) = 0;
+
   virtual void loadProgramToDevice(const std::string& asmFileName) = 0;
   /* Restarts the device to start the program from the beginning. */
   virtual void restartProgram() = 0;

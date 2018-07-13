@@ -89,6 +89,7 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
   ops->copy = pocl_tce_copy;
   ops->copy_rect = pocl_tce_copy_rect;
   ops->map_mem = pocl_tce_map_mem;
+  ops->unmap_mem = pocl_tce_unmap_mem;
   ops->run = pocl_tce_run;
   ops->get_timer_value = pocl_ttasim_get_timer_value;
   ops->init_build = pocl_tce_init_build;
@@ -170,7 +171,15 @@ public:
       unsigned char val = ((char*)host_ptr)[i];
       globalMem->write (dest_addr + i, (Memory::MAU)(val));
     }
+  }
 
+  virtual void copyDeviceToDevice(uint32_t src_addr, uint32_t dest_addr, size_t count) {
+    MemorySystem &mems = simulator.memorySystem();
+    MemorySystem::MemoryPtr globalMem = mems.memory (*global_as);
+    for (std::size_t i = 0; i < count; ++i) {
+      unsigned char val =  globalMem->read (src_addr + i);
+      globalMem->write (dest_addr + i, (Memory::MAU)(val));
+    }
   }
 
   virtual void copyDeviceToHost(uint32_t src_addr, const void *host_ptr, 
