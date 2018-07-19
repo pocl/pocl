@@ -629,7 +629,12 @@ int pocl_llvm_codegen(cl_device_id device, void *modp, char **output,
   SmallVector<char, 4096> data;
   llvm::raw_svector_ostream sos(data);
   if (target &&
+#ifdef LLVM_OLDER_THAN_7_0
       target->addPassesToEmitFile(PM, sos, TargetMachine::CGFT_ObjectFile))
+#else
+      target->addPassesToEmitFile(PM, sos, nullptr,
+                                  TargetMachine::CGFT_ObjectFile))
+#endif
     return 1;
 #endif
 

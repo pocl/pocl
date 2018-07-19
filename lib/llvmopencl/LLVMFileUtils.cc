@@ -75,12 +75,23 @@ POP_COMPILER_DIAGS
 
 #define RETURN_IF_EC if (ec) return ec.default_error_condition().value()
 #define OPEN_FOR_READ ec = sys::fs::openFileForRead(p, fd)
-#define OPEN_CREATE ec = sys::fs::openFileForWrite(p, fd, sys::fs::F_RW)
 #define CREATE_UNIQUE_FILE(S)                                                  \
   ec = sys::fs::createUniqueFile((p + S), fd, TmpPath,                         \
                                  sys::fs::perms::owner_read |                  \
                                      sys::fs::perms::owner_write);
-#define OPEN_FOR_APPEND ec = sys::fs::openFileForWrite(p, fd, sys::fs::F_RW | sys::fs::F_Append)
+
+#ifdef LLVM_OLDER_THAN_7_0
+#define OPEN_CREATE ec = sys::fs::openFileForWrite(p, fd, sys::fs::F_RW)
+#define OPEN_FOR_APPEND                                                        \
+  ec = sys::fs::openFileForWrite(p, fd, sys::fs::F_RW | sys::fs::F_Append)
+#else
+#define OPEN_CREATE                                                            \
+  ec = sys::fs::openFileForWrite(p, fd, sys::fs::CD_CreateAlways,              \
+                                 sys::fs::OF_None)
+#define OPEN_FOR_APPEND                                                        \
+  ec = sys::fs::openFileForWrite(p, fd, sys::fs::CD_CreateAlways,              \
+                                 sys::fs::OF_Append)
+#endif
 
 using namespace llvm;
 
@@ -393,12 +404,13 @@ int pocl_write_module(void *module, const char* path, int dont_rewrite) {
     CREATE_UNIQUE_FILE(random_pattern);
     assert(fd >= 0);
 
+#ifdef LLVM_OLDER_THAN_7_0
     raw_fd_ostream os(fd, 1, sys::fs::F_RW | sys::fs::F_Excl);
     RETURN_IF_EC;
-
-#ifdef LLVM_OLDER_THAN_7_0
     WriteBitcodeToFile((llvm::Module*)module, os);
 #else
+    raw_fd_ostream os(fd, true);
+    RETURN_IF_EC;
     WriteBitcodeToFile(*(llvm::Module*)module, os);
 #endif
 
