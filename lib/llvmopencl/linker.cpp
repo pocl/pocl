@@ -365,6 +365,14 @@ int link(llvm::Module *program, const llvm::Module *lib, std::string &log) {
   ValueToValueMapTy vvm;
   std::list<llvm::StringRef> declared;
 
+  // Functions that need to be included always because work-group functions
+  // might call them. TODO: we should include these only for devices that
+  // need them, change this to some "aux function list" API in the device
+  // interface.
+  declared.push_back("_pocl_run_all_wgs");
+  declared.push_back("_pocl_finish_all_wgs");
+  declared.push_back("_pocl_spawn_wg");
+
   llvm::Module::iterator fi, fe;
 
   // Find and fix opencl.imageX_t arguments
@@ -464,6 +472,9 @@ int copyKernelFromBitcode(const char* name, llvm::Module *parallel_bc,
 
   const StringRef kernel_name(name);
   copy_func_callgraph(kernel_name, program, parallel_bc, vvm);
+  copy_func_callgraph("_pocl_run_all_wgs", program, parallel_bc, vvm);
+  copy_func_callgraph("_pocl_finish_all_wgs", program, parallel_bc, vvm);
+  copy_func_callgraph("_pocl_spawn_wg", program, parallel_bc, vvm);
 
   std::string log;
   shared_copy(parallel_bc, program, log, vvm);

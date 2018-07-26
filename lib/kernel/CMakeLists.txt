@@ -579,6 +579,15 @@ if(ENABLE_POCL_FLOAT_CONVERSION)
   list(APPEND SOURCES_WITH_SLEEF "errol/errol.c")
 endif()
 
+list(APPEND SOURCES_WITH_VML "pocl_spawn_wg.c")
+list(APPEND SOURCES_WITH_VML "pocl_run_all_wgs.c")
+
+list(APPEND SOURCES_WITHOUT_VML "pocl_spawn_wg.c")
+list(APPEND SOURCES_WITHOUT_VML "pocl_run_all_wgs.c")
+
+list(APPEND SOURCES_WITH_SLEEF "pocl_spawn_wg.c")
+list(APPEND SOURCES_WITH_SLEEF "pocl_run_all_wgs.c")
+
 set(SLEEF_CL_KERNEL_DEPEND_HEADERS "")
 foreach(HEADER helperadvsimd.h   helperavx2.h     helperavx.h     helperpurec.h  helpersse2.h    misc.h helperavx2_128.h  helperavx512f.h  helperneon32.h  helpers.h      helpervecext.h)
   list(APPEND SLEEF_CL_KERNEL_DEPEND_HEADERS "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/arch/${HEADER}")

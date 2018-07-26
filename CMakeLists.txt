@@ -130,7 +130,7 @@ option(POCL_DEBUG_MESSAGES
   "Enable debug messages from pocl (useful for OpenCL developers), must be enabled at runtime, with env var POCL_DEBUG"
   ON)
 
-option(ENABLE_HSA "Enable the HSA device driver for AMD GCN devices" OFF)
+option(ENABLE_HSA "Enable the HSA base profile runtime device driver" OFF)
 
 option(ENABLE_CUDA "Enable the CUDA device driver for NVIDIA devices" OFF)
 
@@ -1160,7 +1160,9 @@ endif()
 
 if(ENABLE_HSA)
   set(OCL_DRIVERS "${OCL_DRIVERS} hsa")
-  set(OCL_TARGETS "${OCL_TARGETS} hsail64")
+  if (ENABLE_HSAIL)
+    set(OCL_TARGETS "${OCL_TARGETS} hsail64")
+  endif()
   # this is for config.h
 
   set(HSA_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")

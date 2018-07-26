@@ -51,6 +51,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Transforms/Utils/Local.h>
 #endif
 
+#include <llvm-c/Core.h>
+#include <llvm-c/Target.h>
 
 #include "CanonicalizeBarriers.h"
 #include "BarrierTailReplication.h"
@@ -62,6 +64,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <cstdio>
 #include <map>
 #include <iostream>
+#include <sstream>
 
 #include "TargetAddressSpaces.h"
 
@@ -186,7 +189,6 @@ namespace llvm {
     enum Fields {
       WORK_DIM,
       NUM_GROUPS,
-      GROUP_ID,
       GLOBAL_OFFSET,
       LOCAL_SIZE,
       PRINTF_BUFFER,
@@ -247,6 +249,10 @@ Workgroup::runOnModule(Module &M)
       // For SPMD machines there is no need for a WG launcher, the device will
       // call/handle the single-WI kernel function directly.
       kernels[&OrigKernel] = L;
+    } if (currentPoclDevice->arg_buffer_launcher) {
+      Function *WGLauncher =
+        createArgBufferWorkgroupLauncher(M, L, OrigKernel.getName().str());
+      createGridLauncher(M, L, WGLauncher, OrigKernel.getName().str());
     } else {
       createDefaultWorkgroupLauncher(M, L);
       // This is used only by TCE anymore. TODO: Replace all with the
@@ -902,8 +908,8 @@ privatizeContext(Module &M, Function *F)
  * actual buffers and that scalar data is loaded from the default memory.
  */
 static void
-createDefaultWorkgroupLauncher(Module &M, Function *F)
-{
+createDefaultWorkgroupLauncher(Module &M, Function *F) {
+
   IRBuilder<> builder(M.getContext());
 
   FunctionType *ft =
@@ -1210,7 +1216,7 @@ createFastWorkgroupLauncher(Module &M, Function *F)
     Value *gep = builder.CreateGEP(&*ai,
             ConstantInt::get(IntegerType::get(M.getContext(), 32), i));
     Value *pointer = builder.CreateLoad(gep);
-     
+
     if (t->isPointerTy()) {
       if (!ii->hasByValAttr()) {
         /* Assume the pointer is directly in the arg array. */
