@@ -1126,7 +1126,7 @@ pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
   struct data *d = node->device->data;
 
   if (node != NULL && node->type == CL_COMMAND_NDRANGE_KERNEL)
-    pocl_check_dlhandle_cache (node, 1);
+    pocl_check_kernel_dlhandle_cache (node, 1);
 
   node->ready = 1;
   POCL_LOCK (d->cq_lock);
@@ -1200,7 +1200,7 @@ void
 pocl_basic_compile_kernel (_cl_command_node *cmd, cl_kernel kernel, cl_device_id device)
 {
   if (cmd != NULL && cmd->type == CL_COMMAND_NDRANGE_KERNEL)
-    pocl_check_dlhandle_cache (cmd, 0);
+    pocl_check_kernel_dlhandle_cache (cmd, 0);
 }
 
 /*********************** IMAGES ********************************/

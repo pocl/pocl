@@ -1,9 +1,9 @@
 /* pocl-hsa.c - driver for HSA supported devices.
 
-   Copyright (c) 2015-2016 Pekka Jääskeläinen <pekka.jaaskelainen@tut.fi>
+   Copyright (c) 2015-2018 Pekka Jääskeläinen <pekka.jaaskelainen@tut.fi>
                  2015 Charles Chen <ccchen@pllab.cs.nthu.edu.tw>
                       Shao-chung Wang <scwang@pllab.cs.nthu.edu.tw>
-                 2015-2016 Michal Babej <michal.babej@tut.fi>
+                 2015-2018 Michal Babej <michal.babej@tut.fi>
 
    Short snippets borrowed from the MatrixMultiplication example in
    the HSA runtime library sources (c) 2014 HSA Foundation Inc.
@@ -206,6 +206,10 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->alloc_mem_obj = pocl_hsa_alloc_mem_obj;
   ops->free = pocl_hsa_free;
   ops->run = NULL;
+  ops->read = pocl_basic_read;
+  ops->read_rect = pocl_basic_read_rect;
+  ops->write = pocl_basic_write;
+  ops->write_rect = pocl_basic_write_rect;
   ops->copy = pocl_hsa_copy;
   ops->get_timer_value = pocl_hsa_get_timer_value;
 
@@ -318,11 +322,12 @@ setup_agent_memory_regions_callback(hsa_region_t region, void* data)
   return HSA_STATUS_SUCCESS;
 }
 
-// Get hsa-unsupported device features from hsa device list.
-static unsigned num_hsa_device = 2;
+/* HSA unsupported device features are hard coded in a known Agent
+   list and detected by the advertised agent name string. */
+#define HSA_NUM_KNOWN_HSA_AGENTS 2
 
 static struct _cl_device_id
-supported_hsa_devices[MAX_HSA_AGENTS] =
+supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS] =
 {
   [0] =
   {
@@ -362,9 +367,9 @@ supported_hsa_devices[MAX_HSA_AGENTS] =
     .endian_little = !(WORDS_BIGENDIAN),
     .extensions = HSA_DEVICE_EXTENSIONS,
     .preferred_wg_size_multiple = 1,
-    // We want to exploit the widest vector types in HSAIL
-    // for the CPUs assuming they have some sort of SIMD ISE
-    // which the finalizer than can more readily utilize.
+    /* We want to exploit the widest vector types in HSAIL
+       for the CPUs assuming they have some sort of SIMD ISE
+       which the finalizer than can more readily utilize.  */
     .preferred_vector_width_char = 16,
     .preferred_vector_width_short = 16,
     .preferred_vector_width_int = 16,
@@ -403,7 +408,7 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
 
   int found = 0;
   unsigned i;
-  for(i = 0; i < num_hsa_device; i++)
+  for(i = 0; i < HSA_NUM_KNOWN_HSA_AGENTS; i++)
     {
       if (strcmp(dev_name, supported_hsa_devices[i].long_name) == 0)
         {
@@ -547,7 +552,8 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->max_clock_frequency = temp;
 
 #else
-#warning "Could not use AMD headers to find out CU/frequency of your device. Using some default values which are probably wrong..."
+  /* Could not use AMD headers to find out CU/frequency of the device.
+     Using dummy values. */
   dev->global_mem_cacheline_size = 64;
   dev->max_compute_units = 4;
   dev->max_clock_frequency = 700;
@@ -860,9 +866,9 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
       if (cmd->command.run.kernel->arg_info[i].is_local)
         {
           CHECK_AND_ALIGN_SPACE(sizeof (uint32_t));
-          memcpy(write_pos, total_group_size, sizeof(uint32_t));
+          memcpy (write_pos, total_group_size, sizeof (uint32_t));
           *total_group_size += (uint32_t)al->size;
-          write_pos += sizeof(uint32_t);
+          write_pos += sizeof (uint32_t);
         }
       else if (cmd->command.run.kernel->arg_info[i].type
                == POCL_ARG_TYPE_POINTER)
@@ -953,16 +959,16 @@ compile_parallel_bc_to_brig(char* brigfile, cl_kernel kernel,
   char hsailfile[POCL_FILENAME_LENGTH];
   char parallel_bc_path[POCL_FILENAME_LENGTH];
 
-  unsigned device_i = pocl_cl_device_to_index(kernel->program, device);
-  pocl_cache_work_group_function_path(parallel_bc_path, kernel->program,
-                                      device_i, kernel, 0, 0, 0);
+  unsigned device_i = pocl_cl_device_to_index (kernel->program, device);
+  pocl_cache_work_group_function_path (parallel_bc_path, kernel->program,
+				       device_i, kernel, 0, 0, 0);
 
-  strcpy(brigfile, parallel_bc_path);
-  strncat(brigfile, ".brig", POCL_FILENAME_LENGTH-1);
-  strcpy(hsailfile, parallel_bc_path);
-  strncat(hsailfile, ".hsail", POCL_FILENAME_LENGTH-1);
+  strcpy (brigfile, parallel_bc_path);
+  strncat (brigfile, ".brig", POCL_FILENAME_LENGTH-1);
+  strcpy (hsailfile, parallel_bc_path);
+  strncat (hsailfile, ".hsail", POCL_FILENAME_LENGTH-1);
 
-  if (pocl_exists(brigfile))
+  if (pocl_exists (brigfile))
     POCL_MSG_PRINT_INFO("pocl-hsa: using existing BRIG file: \n%s\n",
                         brigfile);
   else
@@ -992,6 +998,27 @@ compile_parallel_bc_to_brig(char* brigfile, cl_kernel kernel,
   return 0;
 }
 
+static pocl_hsa_kernel_cache_t *
+pocl_hsa_find_mem_cached_kernel (pocl_hsa_device_data_t *d,
+				 _cl_command_node *cmd)
+{
+  pocl_hsa_kernel_cache_t *cached_data = NULL;
+  for (int i = 0; i < HSA_KERNEL_CACHE_SIZE; i++)
+    {
+      if (d->kernel_cache[i].kernel != cmd->command.run.kernel)
+	continue;
+
+      if (d->device->spmd)
+	return &d->kernel_cache[i];
+      else
+	if (d->kernel_cache[i].local_x == cmd->command.run.local_x &&
+	    d->kernel_cache[i].local_y == cmd->command.run.local_y &&
+	    d->kernel_cache[i].local_z == cmd->command.run.local_z)
+	  return &d->kernel_cache[i];
+    }
+  return NULL;
+}
+
 void
 pocl_hsa_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
                          cl_device_id device)
@@ -1018,14 +1045,12 @@ pocl_hsa_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
     }
 
   unsigned i;
-  for (i = 0; i<HSA_KERNEL_CACHE_SIZE; i++)
-    if (d->kernel_cache[i].kernel == kernel)
-      {
-        POCL_MSG_PRINT_INFO("kernel.hsa_exe found in"
-                            " kernel cache, returning\n");
+  if (pocl_hsa_find_mem_cached_kernel (d, cmd) != NULL)
+    {
+        POCL_MSG_PRINT_INFO("built kernel found in mem cache\n");
         POCL_UNLOCK (d->pocl_hsa_compilation_lock);
         return;
-      }
+    }
 
   if (compile_parallel_bc_to_brig(brigfile, kernel, device))
     POCL_ABORT("Compiling LLVM IR -> HSAIL -> BRIG failed.\n");
@@ -1440,10 +1465,10 @@ pocl_hsa_launch(pocl_hsa_device_data_t *d, cl_event event)
 
   dd->last_queue = (dd->last_queue + 1) % dd->num_queues;
   hsa_queue_t* last_queue = dd->queues[dd->last_queue];
-  const uint64_t queueMask = last_queue->size - 1;
+  const uint64_t queue_mask = last_queue->size - 1;
 
-  uint64_t packet_id = hsa_queue_add_write_index_relaxed(last_queue, 1);
-  while ((packet_id - hsa_queue_load_read_index_acquire(last_queue))
+  uint64_t packet_id = hsa_queue_add_write_index_relaxed (last_queue, 1);
+  while ((packet_id - hsa_queue_load_read_index_acquire (last_queue))
          >= last_queue->size)
     {
       /* device queue is full. TODO this isn't the optimal solution */
@@ -1453,7 +1478,7 @@ pocl_hsa_launch(pocl_hsa_device_data_t *d, cl_event event)
 
   kernel_packet =
       &(((hsa_kernel_dispatch_packet_t*)(last_queue->base_address))
-        [packet_id & queueMask]);
+        [packet_id & queue_mask]);
 
   kernel_packet->workgroup_size_x = cmd->command.run.local_x;
   kernel_packet->workgroup_size_y = cmd->command.run.local_y;
@@ -1461,9 +1486,12 @@ pocl_hsa_launch(pocl_hsa_device_data_t *d, cl_event event)
 
   kernel_packet->grid_size_x = kernel_packet->grid_size_y
     = kernel_packet->grid_size_z = 1;
-  kernel_packet->grid_size_x = pc->num_groups[0] * cmd->command.run.local_x;
-  kernel_packet->grid_size_y = pc->num_groups[1] * cmd->command.run.local_y;
-  kernel_packet->grid_size_z = pc->num_groups[2] * cmd->command.run.local_z;
+  kernel_packet->grid_size_x =
+    pc->num_groups[0] * kernel_packet->workgroup_size_x;
+  kernel_packet->grid_size_y =
+    pc->num_groups[1] * kernel_packet->workgroup_size_y;
+  kernel_packet->grid_size_z =
+    pc->num_groups[2] * kernel_packet->workgroup_size_z;
 
   kernel_packet->kernel_object = cached_data->code_handle;
   kernel_packet->private_segment_size = cached_data->private_size;
@@ -1584,9 +1612,9 @@ static int pocl_hsa_run_ready_commands(pocl_hsa_device_data_t *d)
       PTHREAD_CHECK(pthread_mutex_unlock(&d->list_mutex));
       if (e->command->type == CL_COMMAND_NDRANGE_KERNEL)
         {
-          pocl_hsa_compile_kernel (e->command,
-                                   e->command->command.run.kernel,
-                                   e->queue->device);
+          d->device->ops->compile_kernel (e->command,
+					  e->command->command.run.kernel,
+					  e->queue->device);
           pocl_hsa_launch(d, e);
           enqueued_ndrange = 1;
           POCL_MSG_PRINT_INFO("NDrange event %u launched, remove"

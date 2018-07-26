@@ -2,7 +2,7 @@
    producing program.bc
 
    Copyright (c) 2013 Kalle Raiskila
-                 2013-2017 Pekka Jääskeläinen
+                 2013-2018 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -164,7 +164,7 @@ static void get_build_log(cl_program program,
     appendToProgramBuildLog(program, device_i, log);
 }
 
-static llvm::Module *kernel_library(cl_device_id device);
+static llvm::Module *getKernelLibrary(cl_device_id device);
 
 int pocl_llvm_build_program(cl_program program,
                             unsigned device_i,
@@ -548,7 +548,7 @@ int pocl_llvm_build_program(cl_program program,
   // and/or bitcode for each kernel.
   if (linking_program) {
     currentPoclDevice = device;
-    llvm::Module *libmodule = kernel_library(device);
+    llvm::Module *libmodule = getKernelLibrary(device);
     assert(libmodule != NULL);
     std::string log("Error(s) while linking: \n");
     if (link(*mod, libmodule, log)) {
@@ -600,7 +600,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
   int error;
 
   currentPoclDevice = device;
-  llvm::Module *libmodule = kernel_library(device);
+  llvm::Module *libmodule = getKernelLibrary(device);
   assert(libmodule != NULL);
 
   PoclCompilerMutexGuard lockHolder(NULL);
@@ -785,9 +785,7 @@ static std::map<cl_device_id, llvm::Module *> kernelLibraryMap;
  * Return the OpenCL C built-in function library bitcode
  * for the given device.
  */
-static llvm::Module*
-kernel_library
-(cl_device_id device)
+static llvm::Module* getKernelLibrary(cl_device_id device)
 {
   Triple triple(device->llvm_target_triplet);
 
@@ -796,6 +794,8 @@ kernel_library
 
   const char *subdir = "host";
   bool is_host = true;
+  // TODO: move this to the device layer, a property to ask for
+  // the kernel builtin bitcode library name, including its subdir
 #ifdef TCE_AVAILABLE
   if (triple.getArch() == Triple::tce || triple.getArch() == Triple::tcele) {
     subdir = "tce";
@@ -822,7 +822,6 @@ kernel_library
   }
 #endif
 
-  // TODO sync with Nat Ferrus' indexed linking
   std::string kernellib;
   std::string kernellib_fallback;
 #ifdef ENABLE_POCL_BUILDING

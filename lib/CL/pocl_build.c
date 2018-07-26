@@ -1,7 +1,7 @@
 /* OpenCL runtime library: compile_and_link_program()
 
    Copyright (c) 2011-2013 Universidad Rey Juan Carlos,
-                 2011-2014 Pekka Jääskeläinen / Tampere Univ. of Technology
+                 2011-2018 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -433,18 +433,14 @@ cl_int
 compile_and_link_program(int compile_program,
                          int link_program,
                          cl_program program,
-
                          cl_uint num_devices,
                          const cl_device_id *device_list,
                          const char *options,
-
                          cl_uint num_input_headers,
                          const cl_program *input_headers,
                          const char **header_include_names,
-
                          cl_uint num_input_programs,
                          const cl_program *input_programs,
-
                          void (CL_CALLBACK *pfn_notify) (cl_program program,
                                                          void *user_data),
                          void *user_data)
@@ -740,10 +736,10 @@ compile_and_link_program(int compile_program,
 #ifdef OCS_AVAILABLE
       if (program->binaries[i])
         {
-          program->num_kernels = pocl_llvm_get_kernel_count(program);
+          program->num_kernels = pocl_llvm_get_kernel_count (program);
           if (program->num_kernels)
             {
-              program->kernel_names = calloc(program->num_kernels, sizeof(char*));
+              program->kernel_names = calloc (program->num_kernels, sizeof(char*));
               pocl_llvm_get_kernel_names(program,
                                          program->kernel_names,
                                          program->num_kernels);

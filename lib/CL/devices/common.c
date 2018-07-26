@@ -1,19 +1,19 @@
-/* common.c - common code that can be reused between device driver 
+/* common.c - common code that can be reused between device driver
               implementations
 
-   Copyright (c) 2011-2013 Universidad Rey Juan Carlos and
-                           Pekka Jääskeläinen / Tampere Univ. of Technology
-   
+   Copyright (c) 2011-2013 Universidad Rey Juan Carlos
+                 2011-2018 Pekka Jääskeläinen
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights
    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
    copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -123,16 +123,15 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
     }
   assert (llvm_module != NULL);
 
-  /* may happen if another thread is building the same program & wins
-   * the llvm lock. */
+  /* May happen if another thread is building the same program & wins the llvm
+     lock. */
   if (pocl_exists (final_binary_path))
     goto FINISH;
 
   error = pocl_llvm_codegen (device, llvm_module, &objfile, &objfile_size);
   if (error)
     {
-      POCL_MSG_PRINT_LLVM ("pocl_llvm_codegen() failed"
-                           " for kernel %s\n",
+      POCL_MSG_PRINT_LLVM ("pocl_llvm_codegen() failed for kernel %s\n",
                            kernel->name);
       goto FINISH;
     }
@@ -142,7 +141,6 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
 
   /**************************************************************************/
 
-  /* write parallel.bc only if we want to leave compiler files*/
   if (pocl_get_bool_option ("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
     {
       POCL_MSG_PRINT_LLVM ("Writing parallel.bc to %s.\n", parallel_bc_path);
@@ -158,22 +156,20 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
     }
   if (error)
     {
-      POCL_MSG_PRINT_LLVM ("writing parallel.bc failed"
-                              " for kernel %s\n",
-                              kernel->name);
+      POCL_MSG_PRINT_LLVM ("writing parallel.bc failed for kernel %s\n",
+                           kernel->name);
       goto FINISH;
     }
 
-  /* always write temporary kernel.so.o, required for linking step. */
-  /* use append-write because tmp_objfile is already temporary,
-   * we don't need to create another temporary... */
-  error = pocl_cache_write_kernel_objfile (tmp_objfile, objfile, objfile_size);
+  /* Write temporary kernel.so.o, required for the final linking step.
+     Use append-write because tmp_objfile is already temporary, thus
+     we don't need to create new temporary... */
   POCL_MSG_PRINT_LLVM ("Writing code gen output to %s.\n", tmp_objfile);
+  error = pocl_cache_write_kernel_objfile (tmp_objfile, objfile, objfile_size);
   if (error)
     {
-      POCL_MSG_PRINT_LLVM ("writing kernel.so.o failed"
-                              " for kernel %s\n",
-                              kernel->name);
+      POCL_MSG_PRINT_LLVM ("writing kernel.so.o failed for kernel %s\n",
+                           kernel->name);
       goto FINISH;
     }
   else
@@ -184,39 +180,29 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
   /* temporary filename for kernel.so */
   if (pocl_cache_tempname (tmp_module, ".so", NULL))
     {
-      POCL_MSG_PRINT_LLVM ("Creating temporary kernel.so file "
-                           " for kernel %s FAILED\n",
-                           kernel->name);
+      POCL_MSG_PRINT_LLVM ("Creating temporary kernel.so file for kernel %s "
+                           "FAILED\n", kernel->name);
       goto FINISH;
     }
   else
-    POCL_MSG_PRINT_LLVM ("Temporary kernel.so file "
-                         " for kernel %s : %s\n",
+    POCL_MSG_PRINT_LLVM ("Temporary kernel.so file for kernel %s : %s\n",
                          kernel->name, tmp_module);
 
   POCL_MSG_PRINT_INFO ("Linking final module\n");
-  char *const args1[]
-#ifndef POCL_ANDROID
-/* use Clang as linker, when compiler-rt is available and needed */
-#if defined(ENABLE_POCL_FLOAT_CONVERSION) || defined(CLANG_HAS_RTLIB)
-      = { CLANG,
-#else
-      = { LINK_COMMAND,
+
+  /* Link through Clang driver interface who knows the correct toolchains
+     for all of its targets.  */
+
+  /* TODO: HOST_LD_FLAGS_ARRAY to a device interface */
+  const char *cmd_line[] =
+    {CLANG, "-o", tmp_module, tmp_objfile, "-lm", "-nostartfiles",
+#if 0
+     "-nostartfiles", "-Wl,-Ttext", "-Wl,0x1080000000",
+     "-Wl,--oformat", "-Wl,elf64-gptx",
 #endif
-          "-o",
-          tmp_module,
-          tmp_objfile,
-          HOST_LD_FLAGS_ARRAY,
-          NULL };
-#else
-      = { POCL_ANDROID_PREFIX "/bin/ld",
-          "-o",
-          tmp_module,
-          tmp_objfile,
-          HOST_LD_FLAGS_ARRAY,
-          NULL };
-#endif
-  error = pocl_run_command (args1);
+     HOST_LD_FLAGS_ARRAY, "-v", NULL};
+  error = pocl_invoke_clang (device, cmd_line);
+
   if (error)
     {
       POCL_MSG_PRINT_LLVM ("Linking kernel.so.o -> kernel.so has failed\n");
@@ -916,10 +902,79 @@ pocl_release_dlhandle_cache (_cl_command_node *cmd)
   POCL_UNLOCK (pocl_dlhandle_lock);
 }
 
-/* The initial refcount may be 0, in case we're just pre-compiling kernels
+/**
+ * Checks if a built binary is found in the disk for the given kernel command,
+ * if not, builds the kernel, caches it, and returns the file name of the
+ * end result.
+ *
+ * @param cmd The kernel command.
+ * @returns The filename of the built binary in the disk.
+ */
+char *
+pocl_check_kernel_disk_cache (_cl_command_node *cmd)
+{
+  char *module_fn = NULL;
+  cl_kernel k = cmd->command.run.kernel;
+  cl_program p = k->program;
+  cl_device_id dev = cmd->device;
+  int dev_i = pocl_cl_device_to_index (p, dev);
+
+  if (p->binaries[dev_i] && !p->pocl_binaries[dev_i])
+    {
+#ifdef OCS_AVAILABLE
+      POCL_LOCK (pocl_llvm_codegen_lock);
+      module_fn = (char *)llvm_codegen (cmd->command.run.tmp_dir,
+                                        cmd->command.run.kernel,
+                                        cmd->device,
+                                        cmd->command.run.local_x,
+                                        cmd->command.run.local_y,
+                                        cmd->command.run.local_z);
+      POCL_UNLOCK (pocl_llvm_codegen_lock);
+      if (module_fn == NULL)
+        {
+          POCL_ABORT ("Final linking of kernel %s failed.\n", k->name);
+        }
+      POCL_MSG_PRINT_INFO("Using static WG size binary: %s\n", module_fn);
+#else
+      POCL_ABORT("pocl built without online compiler support "
+                 "cannot compile LLVM IRs to machine code\n");
+#endif
+    }
+  else
+    {
+      module_fn = malloc (POCL_FILENAME_LENGTH);
+      /* First try to find a static WG binary for the local size as they
+         are always more efficient than the dynamic ones.  Also, in case
+         of reqd_wg_size, there might not be a dynamic sized one at all.  */
+      pocl_cache_final_binary_path (module_fn, p, dev_i, k,
+                                    cmd->command.run.local_x,
+                                    cmd->command.run.local_y,
+                                    cmd->command.run.local_z);
+      if (!pocl_exists (module_fn))
+        {
+          pocl_cache_final_binary_path (module_fn, p, dev_i, k, 0, 0, 0);
+          if (!pocl_exists (module_fn))
+            POCL_ABORT("Dynamic WG size binary does not exist\n");
+          POCL_MSG_PRINT_INFO("Using dynamic local size binary: %s\n",
+			      module_fn);
+        }
+      else
+        POCL_MSG_PRINT_INFO("Using static local size binary: %s\n", module_fn);
+    }
+  return module_fn;
+}
+
+/**
+ * Checks if the kernel command has been built and has been loaded with
+ * dlopen, and reuses its handle. If not, checks if a built binary is found
+ * in the disk, if not, builds the kernel and puts it to respective
+ * caches.
+ *
+ * The initial refcount may be 0, in case we're just pre-compiling kernels
  * (or compiling them for binaries), and not actually need them immediately. */
 void
-pocl_check_dlhandle_cache (_cl_command_node *cmd, unsigned initial_refcount)
+pocl_check_kernel_dlhandle_cache (_cl_command_node *cmd,
+				  unsigned initial_refcount)
 {
   char workgroup_string[WORKGROUP_STRING_LENGTH];
   pocl_dlhandle_cache_item *ci = NULL, *tmp = NULL;
@@ -948,55 +1003,8 @@ pocl_check_dlhandle_cache (_cl_command_node *cmd, unsigned initial_refcount)
   ci->function_name = strdup (cmd->command.run.kernel->name);
   ci->ref_count = initial_refcount;
 
-  char *module_fn = NULL;
-  cl_kernel k = cmd->command.run.kernel;
-  cl_program p = k->program;
-  cl_device_id dev = cmd->device;
-  int dev_i = pocl_cl_device_to_index(p, dev);
+  char *module_fn = pocl_check_kernel_disk_cache (cmd);
 
-  if (p->binaries[dev_i] && !p->pocl_binaries[dev_i])
-    {
-#ifdef OCS_AVAILABLE
-      POCL_LOCK (pocl_llvm_codegen_lock);
-      module_fn = (char *)llvm_codegen (cmd->command.run.tmp_dir,
-                                        cmd->command.run.kernel,
-                                        cmd->device,
-                                        cmd->command.run.local_x,
-                                        cmd->command.run.local_y,
-                                        cmd->command.run.local_z);
-      POCL_UNLOCK (pocl_llvm_codegen_lock);
-      POCL_MSG_PRINT_INFO("Using static WG size binary: %s\n", module_fn);
-      if (module_fn == NULL)
-        {
-          POCL_ABORT ("Final linking of kernel %s failed.\n", k->name);
-        }
-#else
-      POCL_ABORT("pocl built without online compiler support "
-                 "cannot compile LLVM IRs to machine code\n");
-#endif
-    }
-  else
-    {
-      module_fn = malloc (POCL_FILENAME_LENGTH);
-      /* First try to find a static WG binary for the local size as they
-         are always more efficient than the dynamic ones.  Also, in case
-         of reqd_wg_size, there might not be a dynamic sized one at all.  */
-      pocl_cache_final_binary_path (module_fn, p, dev_i, k,
-                                    cmd->command.run.local_x,
-                                    cmd->command.run.local_y,
-                                    cmd->command.run.local_z);
-      if (!pocl_exists (module_fn))
-        {
-          pocl_cache_final_binary_path (module_fn, p, dev_i, k, 0, 0, 0);
-          if (!pocl_exists (module_fn))
-            POCL_ABORT("Dynamic WG size binary does not exist\n");
-          POCL_MSG_PRINT_INFO("Using dynamic local size binary: %s\n", module_fn);
-        }
-      else
-        POCL_MSG_PRINT_INFO("Using static local size binary: %s\n", module_fn);
-    }
-
-  /***************************************************************************/
   POCL_LOCK (pocl_dlhandle_lock);
 
   pocl_dlhandle_cache_item *ci2 = NULL;
@@ -1029,14 +1037,16 @@ pocl_check_dlhandle_cache (_cl_command_node *cmd, unsigned initial_refcount)
     if (ci->dlhandle != NULL && dl_error == NULL)
       {
         snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
-                  "_pocl_launcher_%s_workgroup", k->name);
+                  "_pocl_launcher_%s_workgroup",
+		  cmd->command.run.kernel->name);
         ci->wg = (pocl_workgroup)lt_dlsym (ci->dlhandle, workgroup_string);
         dl_error = lt_dlerror ();
         if (ci->wg == NULL)
           {
             // Older osx dyld APIs need the name without the underscore
             snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
-                      "pocl_launcher_%s_workgroup", k->name);
+                      "pocl_launcher_%s_workgroup",
+		      cmd->command.run.kernel->name);
             ci->wg = (pocl_workgroup)lt_dlsym (ci->dlhandle, workgroup_string);
             dl_error = lt_dlerror ();
           }

@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014 pocl developers
+#   Copyright (c) 2014-2018 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -66,7 +66,7 @@ endif()
 
 find_library(HSALIB NAMES "hsa-runtime64" "hsa-runtime" "phsa-runtime64" PATHS "${HSA_LIBDIR}")
 if(NOT HSALIB)
-  message(FATAL_ERROR "libhsa-runtime not found (use -DHSA_RUNTIME_DIR=... to specify path to HSA runtime)")
+  message(FATAL_ERROR "libhsa-runtime not found (use -DWITH_HSA_RUNTIME_DIR=... to specify path to HSA runtime) ${HSA_LIBDIR}")
 endif()
 
 if(DEFINED WITH_HSAILASM_PATH)

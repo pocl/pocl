@@ -1,7 +1,7 @@
 /* pocl_cl.h - local runtime library declarations.
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
-                 2011-2012 Pekka Jääskeläinen
+                 2011-2018 Pekka Jääskeläinen
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -581,10 +581,12 @@ struct _cl_device_id {
   cl_device_type type;
   cl_uint vendor_id;
   cl_uint max_compute_units;
-  // for subdevices
+
+  /* for subdevice support */
   cl_device_id parent_device;
   unsigned core_start;
   unsigned core_count;
+
   cl_uint max_work_item_dimensions;
   /* when enabled, Workgroup LLVM pass will replace all printf() calls
    * with calls to __pocl_printf and recursively change functions to
@@ -648,7 +650,7 @@ struct _cl_device_id {
   cl_bool compiler_available;
   /* Is the target a Single Program Multiple Data machine? If not,
      we need to generate work-item loops to execute all the work-items
-     in the WG, otherwise the hardware spawns the WIs. */
+     in the WG. For SPMD machines, the hardware spawns the WIs. */
   cl_bool spmd;
   /* The Workgroup pass creates launcher functions and replaces work-item
      placeholder global variables (e.g. _local_size_, _global_offset_ etc) with
@@ -709,8 +711,8 @@ struct _cl_device_id {
   cl_command_queue_properties on_dev_queue_props;
   cl_command_queue_properties on_host_queue_props;
 
-  struct pocl_device_ops *ops; /* Device operations, shared amongst same devices */
-
+  /* Device operations, shared among devices of the same type */
+  struct pocl_device_ops *ops;
 };
 
 #define DEVICE_SVM_FINEGR(dev) (dev->svm_caps & (CL_DEVICE_SVM_FINE_GRAIN_BUFFER \

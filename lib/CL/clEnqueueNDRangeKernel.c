@@ -1,7 +1,7 @@
 /* OpenCL runtime library: clEnqueueNDRangeKernel()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos and
-                 2012-2013 Pekka Jääskeläinen / Tampere University of Technology
+                 2012-2018 Pekka Jääskeläinen / Tampere University of Technology
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal

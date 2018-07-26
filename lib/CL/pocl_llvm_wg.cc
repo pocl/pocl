@@ -2,7 +2,7 @@
    optimization passes and codegen.
 
    Copyright (c) 2013 Kalle Raiskila
-                 2013-2017 Pekka Jääskeläinen
+                 2013-2018 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -94,29 +94,6 @@ static llvm::TargetOptions GetTargetOptions() {
   Options.FloatABIType = FloatABI::Soft;
 #else
   Options.FloatABIType = FloatABI::Hard;
-#endif
-#if 0
-  Options.LessPreciseFPMADOption = EnableFPMAD;
-  Options.NoFramePointerElim = DisableFPElim;
-  Options.NoFramePointerElimNonLeaf = DisableFPElimNonLeaf;
-  Options.AllowFPOpFusion = FuseFPOps;
-  Options.UnsafeFPMath = EnableUnsafeFPMath;
-  Options.NoInfsFPMath = EnableNoInfsFPMath;
-  Options.NoNaNsFPMath = EnableNoNaNsFPMath;
-  Options.HonorSignDependentRoundingFPMathOption =
-  EnableHonorSignDependentRoundingFPMath;
-  Options.UseSoftFloat = GenerateSoftFloatCalls;
-  if (FloatABIForCalls != FloatABI::Default)
-    Options.FloatABIType = FloatABIForCalls;
-  Options.NoZerosInBSS = DontPlaceZerosInBSS;
-  Options.GuaranteedTailCallOpt = EnableGuaranteedTailCallOpt;
-  Options.DisableTailCalls = DisableTailCalls;
-  Options.StackAlignmentOverride = OverrideStackAlignment;
-  Options.RealignStack = EnableRealignStack;
-  Options.TrapFuncName = TrapFuncName;
-  Options.EnableSegmentedStacks = SegmentedStacks;
-  Options.UseInitArray = UseInitArray;
-  Options.SSPBufferSize = SSPBufferSize;
 #endif
   return Options;
 }
@@ -265,7 +242,7 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
   if (SPMDDevice) {
     passes.push_back("flatten-inline-all");
     passes.push_back("always-inline");
-  }  else {
+  } else {
     passes.push_back("flatten-globals");
     passes.push_back("always-inline");
 #ifndef LLVM_3_9
@@ -305,8 +282,13 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
     // work-item loop control taking care of them.
     passes.push_back("remove-barriers");
   }
+
   // Add the work group launcher functions and privatize the pseudo variable
-  // (local id) accesses.
+  // (local id) accesses. We have to do this late because we rely on aggressive
+  // inlining to expose the _{local,group}_id accesses which will be replaced
+  // with context struct accesses. TODO: A cleaner and a more robust way would
+  // be to add hidden context struct parameters to the builtins that need the
+  // context data and fix the calls early.
   if (device->workgroup_pass)
     passes.push_back("workgroup");
 
@@ -425,7 +407,7 @@ int pocl_llvm_generate_workgroup_function_nowrite(cl_device_id device,
   /* Create an empty Module and copy
    * only the kernel+callgraph from program.bc */
   llvm::Module *parallel_bc =
-      new llvm::Module(StringRef("parallel_bc"), GlobalContext());
+    new llvm::Module(StringRef("parallel_bc"), GlobalContext());
 
   parallel_bc->setTargetTriple(program_bc->getTargetTriple());
   parallel_bc->setDataLayout(program_bc->getDataLayout());

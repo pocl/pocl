@@ -2,7 +2,7 @@
 // and parallelized kernel for an OpenCL workgroup.
 //
 // Copyright (c) 2011 Universidad Rey Juan Carlos
-//               2012-2015 Pekka Jääskeläinen
+//               2012-2018 Pekka Jääskeläinen
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -33,21 +33,24 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "pocl.h"
 #include "pocl_cl.h"
 
-#include "llvm/Analysis/ConstantFolding.h"
-#include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/CallSite.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/InstrTypes.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/TypeBuilder.h"
-#include "llvm/Pass.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/Transforms/Utils/Local.h"
+#include <llvm/Analysis/ConstantFolding.h>
+#include <llvm/IR/BasicBlock.h>
+#include <llvm/IR/CallSite.h>
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/DerivedTypes.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/InstrTypes.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/TypeBuilder.h>
+#include <llvm/Pass.h>
+#include <llvm/Support/CommandLine.h>
+#include <llvm/Support/raw_ostream.h>
+#include <llvm/Transforms/Utils/BasicBlockUtils.h>
+#include <llvm/Transforms/Utils/Cloning.h>
+#ifdef LLVM_OLDER_THAN_7
+#include <llvm/Transforms/Utils/Local.h>
+#endif
+
 
 #include "CanonicalizeBarriers.h"
 #include "BarrierTailReplication.h"
@@ -76,10 +79,10 @@ using namespace std;
 using namespace llvm;
 using namespace pocl;
 
-static Function *createLauncher(Module &M, Function *F,
-                                FunctionMapping &printfCache);
+static Function *createWrapper(Module &M, Function *F,
+                               FunctionMapping &printfCache);
 static void privatizeContext(Module &M, Function *F);
-static void createWorkgroup(Module &M, Function *F);
+static void createDefaultWorkgroupLauncher(Module &M, Function *F);
 static void createWorkgroupFast(Module &M, Function *F);
 
 /* The kernel to process in this kernel compiler launch. */
@@ -232,17 +235,19 @@ Workgroup::runOnModule(Module &M)
   FunctionMapping printfCache;
 
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
-    if (!isKernelToProcess(*i)) continue;
-    Function *L = createLauncher(M, &*i, printfCache);
+    Function &OrigKernel = *i;
+    if (!isKernelToProcess(OrigKernel)) continue;
+    Function *L = createWrapper(M, &OrigKernel, printfCache);
 
     privatizeContext(M, L);
 
-    if (!currentPoclDevice->spmd) {
-      createWorkgroup(M, L);
-      createWorkgroupFast(M, L);
+    if (currentPoclDevice->spmd) {
+      // For SPMD machines there is no need for a WG launcher, the device will
+      // call/handle the single-WI kernel function directly.
+      kernels[&OrigKernel] = L;
+    } else {
+      createDefaultWorkgroupLauncher(M, L);
     }
-    else
-      kernels[&*i] = L;
   }
 
   if (currentPoclDevice->spmd) {
@@ -529,10 +534,13 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
   }
 }
 
-//########################################################################
-
-static Function *createLauncher(Module &M, Function *F,
-                                FunctionMapping &printfCache) {
+/**
+ * Create a wrapper for the kernel and add pocl-specific hidden arguments.
+ *
+ * Also inlines the wrapped function to the wrapper.
+ */
+static Function *createWrapper(Module &M, Function *F,
+                               FunctionMapping &printfCache) {
 
   SmallVector<Type *, 8> sv;
 
@@ -860,7 +868,7 @@ privatizeContext(Module &M, Function *F)
  * actual buffers and that scalar data is loaded from the default memory.
  */
 static void
-createWorkgroup(Module &M, Function *F)
+createDefaultWorkgroupLauncher(Module &M, Function *F)
 {
   IRBuilder<> builder(M.getContext());
 
