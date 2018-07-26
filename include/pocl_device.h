@@ -1,18 +1,18 @@
 /* pocl_device.h - global pocl declarations to be used in the device binaries in
                    case applicable by the target
 
-   Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
-   
+   Copyright (c) 2012-2018 Pekka Jääskeläinen / Tampere University of Technology
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights
    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
    copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -34,7 +34,6 @@
 struct pocl_context {
   uint32_t work_dim;
   size_t num_groups[3];
-  size_t group_id[3];
   size_t global_offset[3];
   size_t local_size[3];
   char *printf_buffer;
@@ -42,7 +41,11 @@ struct pocl_context {
   size_t printf_buffer_capacity;
 };
 
-typedef void (*pocl_workgroup) (void **, struct pocl_context *);
+typedef void (*pocl_workgroup) (uint8_t * /* args */,
+				uint8_t * /* pocl_context */,
+				uint32_t /* group_x */,
+				uint32_t /* group_y */,
+				uint32_t /* group_z */);
 
 #define MAX_KERNEL_ARGS 64
 #define MAX_KERNEL_NAME_LENGTH 64
@@ -52,11 +55,6 @@ typedef struct {
     const char name[MAX_KERNEL_NAME_LENGTH];
     unsigned short num_args;
     unsigned short num_locals;
-#if 0
-    /* TODO: remove these if no (private) branch needs them
-       anymore. Also from pocl_llvm_api.cc */
-    unsigned short alocal_sizes[MAX_KERNEL_ARGS];
-#endif
     pocl_workgroup work_group_func;
 } __kernel_metadata;
 

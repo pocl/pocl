@@ -69,9 +69,6 @@ static void tta_opencl_wg_execute(
     for (unsigned gid_x = first_gidx; gid_x <= last_gidx; gid_x++) { 
         for (unsigned gid_y = 0; gid_y < num_groups_y; gid_y++) { 
             for (unsigned gid_z = 0; gid_z < num_groups_z; gid_z++) {
-                context.group_id[0] = gid_x;
-                context.group_id[1] = gid_y;
-                context.group_id[2] = gid_z;
 #ifdef DEBUG_TTA_DEVICE
                 lwpr_print_str("tta: ------------------- launching WG ");
                 lwpr_print_int(gid_x); lwpr_print_str("-");
@@ -80,7 +77,8 @@ static void tta_opencl_wg_execute(
                 lwpr_print_int((unsigned)kernel->work_group_func);
                 lwpr_newline();
 #endif
-                kernel->work_group_func (args, &context);
+                kernel->work_group_func ((uint8_t*)args, (uint8_t*)&context,
+                                         gid_x, gid_y, gid_z);
             } 
         }
     }

@@ -636,20 +636,9 @@ pocl_basic_run
   pocl_set_ftz (kernel->program->flush_denorms);
 
   for (z = 0; z < pc->num_groups[2]; ++z)
-    {
-      for (y = 0; y < pc->num_groups[1]; ++y)
-        {
-          for (x = 0; x < pc->num_groups[0]; ++x)
-            {
-              pc->group_id[0] = x;
-              pc->group_id[1] = y;
-              pc->group_id[2] = z;
-
-              cmd->command.run.wg (arguments, pc);
-
-            }
-        }
-    }
+    for (y = 0; y < pc->num_groups[1]; ++y)
+      for (x = 0; x < pc->num_groups[0]; ++x)
+	cmd->command.run.wg ((uint8_t*)arguments, (uint8_t*)pc, x, y, z);
 
   pocl_restore_rm (rm);
   pocl_restore_ftz (ftz);
@@ -674,7 +663,8 @@ pocl_basic_run
             POCL_MEM_FREE (*(void **)(arguments[i]));
           POCL_MEM_FREE(arguments[i]);
         }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && *(void**)arguments[i] == NULL)
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER &&
+	       *(void**)arguments[i] == NULL)
         {
           POCL_MEM_FREE(arguments[i]);
         }

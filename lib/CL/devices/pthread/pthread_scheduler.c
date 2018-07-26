@@ -434,16 +434,17 @@ work_group_scheduler (kernel_run_command *k,
 
       for (i = start_index; i <= end_index; ++i)
         {
-          translate_wg_index_to_3d_index (k, i, pc.group_id,
+	  size_t gids[3];
+          translate_wg_index_to_3d_index (k, i, gids,
                                           slice_size, row_size);
 
 #ifdef DEBUG_MT
           printf("### exec_wg: gid_x %zu, gid_y %zu, gid_z %zu\n",
-                 pc.group_id[0],
-                 pc.group_id[1], pc.group_id[2]);
+                 gids[0], gids[1], gids[2]);
 #endif
           pocl_set_default_rm ();
-          k->workgroup (arguments, &pc);
+          k->workgroup ((uint8_t*)arguments, (uint8_t*)&pc,
+			gids[0], gids[1], gids[2]);
         }
     }
   while (get_wg_index_range (k, &start_index, &end_index, &last_wgs,
