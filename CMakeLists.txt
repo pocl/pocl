@@ -1061,6 +1061,10 @@ if(ENABLE_HOST_CPU_DEVICES)
   set(ADD_HOST_CPU_DEVICES 1)
 endif()
 
+if(DEFINED EXTRA_OCL_TARGETS)
+  set(OCL_TARGETS "${OCL_TARGETS} ${EXTRA_OCL_TARGETS}")
+endif()
+
 
 ####################################################################
 
