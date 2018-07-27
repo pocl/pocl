@@ -1,6 +1,10 @@
 
 #cmakedefine BUILD_HSA
 #cmakedefine BUILD_CUDA
+#cmakedefine BUILD_BASIC
+#cmakedefine BUILD_PTHREAD
+
+#cmakedefine ADD_HOST_CPU_DEVICES
 
 #define BUILDDIR "@BUILDDIR@"
 

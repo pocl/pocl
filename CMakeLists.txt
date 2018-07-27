@@ -148,6 +148,8 @@ option(USE_POCL_MEMMANAGER "Enables custom memory manager. Except for special ci
 
 option(EXAMPLES_USE_GIT_MASTER "If enabled, some of the external testsuites in examples/ will try to use sources from Git master, instead of releases. This may result in failure to build or run the examples" OFF)
 
+option(ENABLE_HOST_CPU_DEVICES "Add host CPUs as OpenCL devices (basic and pthread)." ON)
+
 ####
 
 # currently only works with gcc as host compiler
@@ -1044,13 +1046,21 @@ string(REGEX REPLACE "[\r\n\t ]+" "\", \"" HOST_LD_FLAGS_ARRAY "${HOST_LD_FLAGS_
 set(HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} ${EXTRA_HOST_CLANG_FLAGS}")
 set(HOST_LLC_FLAGS "${DEFAULT_HOST_LLC_FLAGS} ${EXTRA_HOST_LLC_FLAGS}")
 
-set(OCL_TARGETS "host")
-set(OCL_DRIVERS "basic pthreads")
+# basic device is always built as it contains default implementations for
+# device layer APIs which many devices delegate to
+set(BUILD_BASIC 1)
 
-# TODO OCL_KERNEL_TARGET -> CPU_TARGET_TRIPLE
-# TODO OCL_KERNEL_TARGET_CPU -> OCL_KERNEL_TARGET_CPU
-set(OCL_KERNEL_TARGET "${LLC_TRIPLE}") #The kernel target triplet.
-set(OCL_KERNEL_TARGET_CPU "${LLC_HOST_CPU}") #The kernel target CPU variant.
+if(ENABLE_HOST_CPU_DEVICES)
+  set(OCL_TARGETS "host")
+  set(OCL_DRIVERS "basic pthreads")
+  # TODO OCL_KERNEL_TARGET -> CPU_TARGET_TRIPLE
+  # TODO OCL_KERNEL_TARGET_CPU -> OCL_KERNEL_TARGET_CPU
+  set(OCL_KERNEL_TARGET "${LLC_TRIPLE}") #The kernel target triplet.
+  set(OCL_KERNEL_TARGET_CPU "${LLC_HOST_CPU}") #The kernel target CPU variant.
+  set(BUILD_PTHREAD 1)
+  set(ADD_HOST_CPU_DEVICES 1)
+endif()
+
 
 ####################################################################
 
