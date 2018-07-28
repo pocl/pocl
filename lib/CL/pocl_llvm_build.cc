@@ -145,23 +145,25 @@ static void get_build_log(cl_program program,
                          unsigned device_i,
                          std::stringstream &ss_build_log,
                          clang::TextDiagnosticBuffer *diagsBuffer,
-                         const SourceManager &sm)
+                         const SourceManager *SM)
 {
-    for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->err_begin(),
+  for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->err_begin(),
          e = diagsBuffer->err_end(); i != e; ++i)
-      {
-        ss_build_log << "error: " << i->first.printToString(sm)
-                     << ": " << i->second << std::endl;
-      }
-    for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->warn_begin(),
+  {
+    ss_build_log << "error: "
+                 << (SM == nullptr ? "" : (i->first.printToString(*SM) + ": "))
+                 << i->second << std::endl;
+  }
+  for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->warn_begin(),
          e = diagsBuffer->warn_end(); i != e; ++i)
-      {
-        ss_build_log << "warning: " << i->first.printToString(sm)
-                     << ": " << i->second << std::endl;
-      }
+  {
+    ss_build_log << "warning: "
+                 << (SM == nullptr ? "" : (i->first.printToString(*SM) + ": "))
+                 << i->second << std::endl;
+  }
 
-    std::string log = ss_build_log.str();
-    appendToProgramBuildLog(program, device_i, log);
+  std::string log = ss_build_log.str();
+  appendToProgramBuildLog(program, device_i, log);
 }
 
 static llvm::Module *getKernelLibrary(cl_device_id device);
@@ -343,9 +345,9 @@ int pocl_llvm_build_program(cl_program program,
   }
 
   for (unsigned idx = 0; idx < itemstrs.size(); idx++) {
-      // note: if itemstrs is modified after this, itemcstrs will be full
-      // of invalid pointers! Could make copies, but would have to clean up then...
-      itemcstrs.push_back(itemstrs[idx].c_str());
+    // note: if itemstrs is modified after this, itemcstrs will be full
+    // of invalid pointers! Could make copies, but would have to clean up then...
+    itemcstrs.push_back(itemstrs[idx].c_str());
   }
 
 #ifdef DEBUG_POCL_LLVM_API
@@ -363,7 +365,8 @@ int pocl_llvm_build_program(cl_program program,
        diags)) {
     pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
                                        program_bc_path);
-    get_build_log(program, device_i, ss_build_log, diagsBuffer, CI.getSourceManager());
+    get_build_log(program, device_i, ss_build_log, diagsBuffer,
+                  CI.hasSourceManager() ? &CI.getSourceManager() : nullptr);
     return CL_INVALID_BUILD_OPTIONS;
   }
 
@@ -496,7 +499,8 @@ int pocl_llvm_build_program(cl_program program,
   if (PreprocessedOut == nullptr) {
     pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
                                        program_bc_path);
-    get_build_log(program, device_i, ss_build_log, diagsBuffer, CI.getSourceManager());
+    get_build_log(program, device_i, ss_build_log, diagsBuffer,
+                  CI.hasSourceManager() ? &CI.getSourceManager() : nullptr);
     return CL_BUILD_PROGRAM_FAILURE;
   }
 
@@ -517,7 +521,7 @@ int pocl_llvm_build_program(cl_program program,
   clang::EmitLLVMOnlyAction EmitLLVM(&c);
   success = CI.ExecuteAction(EmitLLVM);
 
-  get_build_log(program, device_i, ss_build_log, diagsBuffer, CI.getSourceManager());
+  get_build_log(program, device_i, ss_build_log, diagsBuffer, &CI.getSourceManager());
 
   if (!success)
     return CL_BUILD_PROGRAM_FAILURE;
