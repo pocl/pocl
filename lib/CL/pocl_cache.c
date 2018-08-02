@@ -111,7 +111,7 @@ void pocl_cache_program_bc_path(char*        program_bc_path,
 */
 void
 pocl_cache_kernel_cachedir_path (char *kernel_cachedir_path,
-                                 cl_program program, unsigned device_i,
+                                 cl_program program, unsigned program_device_i,
                                  cl_kernel kernel, const char *append_str,
                                  _cl_command_node *command, int specialized)
 {
@@ -137,7 +137,7 @@ pocl_cache_kernel_cachedir_path (char *kernel_cachedir_path,
       append_str);
   assert (bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
 
-  program_device_dir (kernel_cachedir_path, program, device_i, tempstring);
+  program_device_dir (kernel_cachedir_path, program, program_device_i, tempstring);
 }
 
 void
@@ -283,13 +283,13 @@ pocl_cache_write_descriptor (_cl_command_node *command, cl_kernel kernel,
 {
   char dirr[POCL_FILENAME_LENGTH];
 
-  pocl_cache_kernel_cachedir_path (dirr, kernel->program, command->device_i,
+  pocl_cache_kernel_cachedir_path (dirr, kernel->program, command->program_device_i,
                                    kernel, "", command, specialize);
 
   char descriptor[POCL_FILENAME_LENGTH];
 
   pocl_cache_kernel_cachedir_path (
-      descriptor, kernel->program, command->device_i, kernel,
+      descriptor, kernel->program, command->program_device_i, kernel,
       "/../descriptor.so.kernel_obj.c", command, specialize);
 
   if (pocl_exists (descriptor))

@@ -309,7 +309,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
         program_dev_i = i;
     }
   assert (program_dev_i < CL_UINT_MAX);
-  command_node->device_i = program_dev_i;
+  command_node->program_device_i = program_dev_i;
   command_node->command.run.hash = kernel->meta->build_hash[program_dev_i];
 
   /* Copy the currently set kernel arguments because the same kernel

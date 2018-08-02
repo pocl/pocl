@@ -151,7 +151,7 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   else
     {
       char kernel_parallel_path[POCL_FILENAME_LENGTH];
-      pocl_cache_kernel_cachedir_path (kernel_parallel_path, program, device_i,
+      pocl_cache_kernel_cachedir_path (kernel_parallel_path, program, device,
                                        kernel, "", command, specialize);
       error = pocl_mkdir_p (kernel_parallel_path);
     }
@@ -900,7 +900,7 @@ pocl_check_kernel_disk_cache (_cl_command_node *command, int specialized)
   _cl_command_run *run_cmd = &command->command.run;
   cl_kernel k = run_cmd->kernel;
   cl_program p = k->program;
-  unsigned dev_i = command->device_i;
+  unsigned dev_i = command->program_device_i;
 
   /* First try to find a static WG binary for the local size as they
      are always more efficient than the dynamic ones.  Also, in case

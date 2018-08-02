@@ -104,6 +104,14 @@ if(ENABLE_HSA)
   endif()
 endif()
 
+if(ENABLE_VULKAN)
+  include_directories(AFTER "${Vulkan_INCLUDE_DIR}")
+  add_subdirectory("vulkan")
+  if(NOT ENABLE_LOADABLE_DRIVERS)
+    list(APPEND POCL_DEVICES_LINK_LIST ${Vulkan_LIBRARY})
+  endif()
+endif()
+
 if(ENABLE_CUDA)
   add_subdirectory("cuda")
   set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"

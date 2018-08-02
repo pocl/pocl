@@ -460,7 +460,7 @@ void pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
 
   POCL_LOCK(Dev->tce_compile_lock);
   int Error = pocl_llvm_generate_workgroup_function(
-      Command->device_i, Device, Kernel, Command, Specialize);
+      Command->program_device_i, Device, Kernel, Command, Specialize);
 
   if (Error) {
     POCL_UNLOCK(Dev->tce_compile_lock);
@@ -477,7 +477,8 @@ void pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
   assert(Command->command.run.kernel);
 
   char CacheDir[POCL_FILENAME_LENGTH];
-  pocl_cache_kernel_cachedir_path(CacheDir, Kernel->program, Command->device_i,
+  pocl_cache_kernel_cachedir_path(CacheDir, Kernel->program,
+                                  Command->program_device_i,
                                   Kernel, "", Command, Specialize);
   RunCommand->device_data = strdup(CacheDir);
 

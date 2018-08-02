@@ -106,6 +106,8 @@ typedef struct pocl_mem_identifier
    */
   void *extra_ptr;
 
+  uint64_t extra;
+
 } pocl_mem_identifier;
 
 typedef char pixel_t[16];
@@ -415,8 +417,8 @@ struct _cl_command_node
   cl_event event;
   const cl_event *event_wait_list;
   cl_device_id device;
-  /* The index of the targeted device in the platform's device list. */
-  unsigned device_i;
+  /* The index of the targeted device in the **program** device list. */
+  unsigned program_device_i;
   cl_int ready;
 };
 

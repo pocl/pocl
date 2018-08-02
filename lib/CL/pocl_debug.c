@@ -48,6 +48,8 @@ static pocl_lock_t console_mutex;
       {
         if (strncmp (ptr, "general", 7) == 0)
           pocl_debug_messages_filter |= POCL_DEBUG_FLAG_GENERAL;
+        else if (strncmp (ptr, "vulkan", 6) == 0)
+          pocl_debug_messages_filter |= POCL_DEBUG_FLAG_VULKAN;
         else if (strncmp (ptr, "event", 5) == 0)
           pocl_debug_messages_filter |= POCL_DEBUG_FLAG_EVENTS;
         else if (strncmp (ptr, "cache", 5) == 0)

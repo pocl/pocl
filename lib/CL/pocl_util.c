@@ -2091,6 +2091,8 @@ float_to_half (float value)
 #define OpCapab 0x00020011
 /* execution model = Kernel is used by OpenCL SPIR-V modules */
 #define KernelExecModel 0x6
+/* execution model = Shader is used by Vulkan SPIR-V modules */
+#define ShaderExecModel 0x1
 
 int
 bitcode_is_spirv_kernel (const char *bitcode, size_t size)
@@ -2123,4 +2125,37 @@ bitcode_is_spirv_kernel (const char *bitcode, size_t size)
     }
 
   return is_opencl;
+}
+
+int
+bitcode_is_vulkan_spirv (const char *bitcode, size_t size)
+{
+  const uint32_t *bc32 = (const uint32_t *)bitcode;
+  unsigned location = 0;
+  uint32_t header_magic = htole32 (bc32[location++]);
+
+  if ((size < 20) || (header_magic != SPIRV_MAGIC))
+    return 0;
+
+  // skip version, generator, bound, schema
+  location += 4;
+  int is_shader = 0;
+  uint32_t instruction, value;
+  do
+    {
+      instruction = htole32 (bc32[location++]);
+      value = htole32 (bc32[location++]);
+      if (value == ShaderExecModel)
+        is_shader = 1;
+    }
+  while (instruction == OpCapab);
+
+  /* SPIR-V but not OpenCL-type. */
+  if (!is_shader)
+    {
+      POCL_MSG_ERR ("SPIR-V binary provided, but is not using Shader mode."
+                    "Pocl-vulkan can't process this binary.\n");
+    }
+
+  return is_shader;
 }
