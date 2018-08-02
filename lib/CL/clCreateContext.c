@@ -205,7 +205,7 @@ POname(clCreateContext)(const cl_context_properties * properties,
 
   if (context->num_devices == 0)
     {
-      POCL_MSG_PRINT_INFO("Zero devices after dropping the unavailable ones\n");
+      POCL_MSG_ERR ("Zero devices after dropping the unavailable ones\n");
       errcode = CL_INVALID_DEVICE;
       goto ERROR_CLEAN_CONTEXT_AND_DEVICES;
     }

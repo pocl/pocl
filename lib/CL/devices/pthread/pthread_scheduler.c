@@ -412,7 +412,7 @@ pocl_pthread_prepare_kernel
 
   pocl_check_kernel_dlhandle_cache (cmd, 1);
 
-  int num_groups = pc->num_groups[0] * pc->num_groups[1] * pc->num_groups[2];
+  size_t num_groups = pc->num_groups[0] * pc->num_groups[1] * pc->num_groups[2];
 
   run_cmd = new_kernel_run_command ();
   run_cmd->data = data;
