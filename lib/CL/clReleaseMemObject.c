@@ -33,9 +33,10 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
   unsigned i;
   mem_mapping_t *mapping, *temp;
   mem_destructor_callback_t *callback, *next_callback;
-  cl_context context = memobj->context;
 
   POCL_RETURN_ERROR_COND((memobj == NULL), CL_INVALID_MEM_OBJECT);
+
+  cl_context context = memobj->context;
 
   POCL_RELEASE_OBJECT(memobj, new_refcount);
 
@@ -66,12 +67,12 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
           cl_device_id shared_mem_owner_dev =
             memobj->shared_mem_allocation_owner;
 
-          for (i = 0; i < memobj->context->num_devices; ++i)
+          for (i = 0; i < context->num_devices; ++i)
             {
               /* owner is called last */
               if (shared_mem_owner_dev == context->devices[i])
                  continue;
-              dev = memobj->context->devices[i];
+              dev = context->devices[i];
               if (memobj->is_image && dev->image_support
                   && dev->ops->free_image)
                 dev->ops->free_image (
