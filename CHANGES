@@ -1,7 +1,11 @@
 1.2 unreleased
 ==============
 
+- LLVM 7.0 is now supported.
+
 - Version 2.0 of hwloc library is supported.
+
+- device-side printf; more consistent printf output.
 
 1.1 March 2018
 ==============
