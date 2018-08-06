@@ -196,7 +196,7 @@ elseif(LLVM_VERSION MATCHES "7[.]0")
   set(LLVM_MAJOR 7)
   set(LLVM_7_0 1)
 else()
-  message(FATAL_ERROR "LLVM version between 3.7 and 6.0 required, found: ${LLVM_VERSION}")
+  message(FATAL_ERROR "LLVM version between 3.7 and 7.0 required, found: ${LLVM_VERSION}")
 endif()
 
 #############################################################
