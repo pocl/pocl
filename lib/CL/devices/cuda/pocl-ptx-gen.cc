@@ -135,6 +135,9 @@ int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
   llvm::SmallVector<char, 4096> Data;
   llvm::raw_svector_ostream PTXStream(Data);
   if (Machine->addPassesToEmitFile(Passes, PTXStream,
+#if ! LLVM_OLDER_THAN_7_0
+                                   nullptr,
+#endif
                                    llvm::TargetMachine::CGFT_AssemblyFile)) {
     POCL_MSG_ERR("[CUDA] ptx-gen: failed to add passes\n");
     return 1;
@@ -795,8 +798,10 @@ void mapLibDeviceCalls(llvm::Module *Module) {
 
 // clang-format off
 #define LDMAP(name) \
-  {name "f", "__nv_" name "f"}, \
-  {name,     "__nv_" name},
+  {        name "f",    "__nv_" name "f"}, \
+  {        name,        "__nv_" name}, \
+  {"llvm." name ".f32", "__nv_" name "f"}, \
+  {"llvm." name ".f64", "__nv_" name},
 
     LDMAP("acos")
     LDMAP("acosh")
