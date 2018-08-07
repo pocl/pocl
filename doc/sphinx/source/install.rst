@@ -218,6 +218,12 @@ use ";" as separator (you'll have to escape it for bash).
   When disabled (default), these are handled by system C library. Can only
   be enabled when Clang's compiler-rt library is present.
 
+- ``-DINTEL_SDE_AVX512=<PATH>``
+  Path to Intel® Software Development Emulator. When this option is given,
+  the LLVM host CPU is forcibly set to 'skylake-avx512', and the internal
+  tests are run through the Emulator. Mostly useful to test AVX512.
+
+
 LLVM-less build
 ---------------
  See :ref:`pocl-without-llvm`
