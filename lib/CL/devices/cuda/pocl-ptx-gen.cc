@@ -798,8 +798,10 @@ void mapLibDeviceCalls(llvm::Module *Module) {
 
 // clang-format off
 #define LDMAP(name) \
-  {name "f", "__nv_" name "f"}, \
-  {name,     "__nv_" name},
+  {        name "f",    "__nv_" name "f"}, \
+  {        name,        "__nv_" name}, \
+  {"llvm." name ".f32", "__nv_" name "f"}, \
+  {"llvm." name ".f64", "__nv_" name},
 
     LDMAP("acos")
     LDMAP("acosh")
