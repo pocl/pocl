@@ -54,7 +54,6 @@
   void *pocl_##__DRV__##_create_sub_buffer (void *device_data, void *buffer,  \
                                             size_t origin, size_t size);      \
   void pocl_##__DRV__##_free (cl_device_id device, cl_mem mem_obj);           \
-  void pocl_##__DRV__##_free_ptr (cl_device_id device, void *mem_ptr);        \
   void pocl_##__DRV__##_read (void *data, void *__restrict__ dst_host_ptr,    \
                               pocl_mem_identifier *src_mem_id,                \
                               cl_mem src_buf, size_t offset, size_t size);    \
@@ -141,4 +140,14 @@
       void *data, cl_mem image, pocl_mem_identifier *mem_id,                  \
       const size_t *origin, const size_t *region,                             \
       const void *__restrict__ fill_pixel, size_t pixel_size);                \
+  void pocl_##__DRV__##_svm_free (cl_device_id dev, void *svm_ptr);           \
+  void *pocl_##__DRV__##_svm_alloc (cl_device_id dev, cl_svm_mem_flags flags, \
+                                    size_t size);                             \
+  void pocl_##__DRV__##_svm_map (cl_device_id dev, void *svm_ptr);            \
+  void pocl_##__DRV__##_svm_unmap (cl_device_id dev, void *svm_ptr);          \
+  void pocl_##__DRV__##_svm_copy (cl_device_id dev, void *__restrict__ dst,   \
+                                  const void *__restrict__ src, size_t size); \
+  void pocl_##__DRV__##_svm_fill (                                            \
+      cl_device_id dev, void *__restrict__ svm_ptr, size_t size,              \
+      void *__restrict__ pattern, size_t pattern_size);                       \
   POP_VISIBILITY_HIDDEN

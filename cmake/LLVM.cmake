@@ -238,8 +238,8 @@ string(REPLACE " -pedantic" "" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
 string(REGEX REPLACE "-W[^ ]*" "" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
 
 # Llvm-config does not include clang libs
-set(CLANG_LIBNAMES clangFrontendTool clangFrontend clangDriver clangSerialization
-    clangCodeGen clangParse clangSema clangRewrite clangRewriteFrontend
+set(CLANG_LIBNAMES clangCodeGen clangFrontendTool clangFrontend clangDriver clangSerialization
+    clangParse clangSema clangRewrite clangRewriteFrontend
     clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers
     clangStaticAnalyzerCore clangAnalysis clangEdit clangAST clangLex clangBasic)
 

@@ -79,17 +79,17 @@ POname(clEnqueueSVMMemFill) (cl_command_queue command_queue,
       return errcode;
     }
 
-  // TODO FIX
-  cmd->command.memfill.dst_mem_id = (pocl_mem_identifier *)svm_ptr;
-  cmd->command.memfill.offset = 0;
-  cmd->command.memfill.size = size;
-  void *p = pocl_aligned_malloc(pattern_size, pattern_size);
-  memcpy(p, pattern, pattern_size);
-  cmd->command.memfill.pattern = p;
-  cmd->command.memfill.pattern_size = pattern_size;
+  void *p = pocl_aligned_malloc (pattern_size, pattern_size);
+  assert (p);
+  memcpy (p, pattern, pattern_size);
+
+  cmd->command.svm_fill.svm_ptr = svm_ptr;
+  cmd->command.svm_fill.size = size;
+  cmd->command.svm_fill.pattern = p;
+  cmd->command.svm_fill.pattern_size = pattern_size;
+
   pocl_command_enqueue(command_queue, cmd);
 
   return CL_SUCCESS;
 }
-POsym(clEnqueueSVMMemFill);
-
+POsym(clEnqueueSVMMemFill)

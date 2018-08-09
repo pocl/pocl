@@ -27,7 +27,7 @@ set(TS_NAME "ASL")
 set(TS_BASEDIR "${TESTSUITE_BASEDIR}/${TS_NAME}")
 set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build")
 set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
-set(ASL_TGZ "${TS_SRCDIR}/v0.1.6.tar.gz")
+set(ASL_TGZ "${TS_SRCDIR}/v0.1.7.tar.gz")
 
 # find required libs - boost & vtk
 find_package(Boost 1.55 QUIET)
@@ -37,7 +37,7 @@ set(VTK_VER "${VTK_MAJOR_VERSION}.${VTK_MINOR_VERSION}")
 if(EXAMPLES_USE_GIT_MASTER)
   set(FETCH_SOURCE GIT_REPOSITORY "https://github.com/AvtechScientific/ASL")
 else()
-  set(FETCH_SOURCE URL "https://github.com/AvtechScientific/ASL/archive/v0.1.6.tar.gz")
+  set(FETCH_SOURCE URL "https://github.com/AvtechScientific/ASL/archive/v0.1.7.tar.gz")
 endif()
 
 if ((NOT "${CMAKE_VERSION}" VERSION_LESS "3.0.2")
@@ -52,7 +52,6 @@ if ((NOT "${CMAKE_VERSION}" VERSION_LESS "3.0.2")
     ${TS_NAME}
     PREFIX "${TS_BASEDIR}"
     ${FETCH_SOURCE}
-    PATCH_COMMAND pwd && patch -p1 -i ${CMAKE_SOURCE_DIR}/examples/ASL/asl.patch
     CMAKE_ARGS
       -DCMAKE_BUILD_TYPE=RelWithDebInfo
       -DWITH_API_DOC:BOOL=OFF

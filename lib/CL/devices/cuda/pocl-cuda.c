@@ -140,7 +140,6 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->free_queue = pocl_cuda_free_queue;
   ops->alloc_mem_obj = pocl_cuda_alloc_mem_obj;
   ops->free = pocl_cuda_free;
-  ops->free_ptr = pocl_cuda_free_ptr;
   ops->compile_kernel = pocl_cuda_compile_kernel;
   ops->submit = pocl_cuda_submit;
   ops->notify = pocl_cuda_notify;

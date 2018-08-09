@@ -206,13 +206,12 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->alloc_mem_obj = pocl_hsa_alloc_mem_obj;
   ops->free = pocl_hsa_free;
   ops->run = NULL;
-  //  ops->read = pocl_basic_read;
-  //  ops->read_rect = pocl_basic_read_rect;
-  //  ops->write = pocl_basic_write;
-  //  ops->write_rect = pocl_basic_write_rect;
   ops->copy = pocl_hsa_copy;
-  //  ops->copy_rect = pocl_basic_copy_rect;
   ops->get_timer_value = pocl_hsa_get_timer_value;
+
+  ops->svm_free = pocl_hsa_svm_free;
+  ops->svm_alloc = pocl_hsa_svm_alloc;
+  ops->svm_copy = pocl_hsa_svm_copy;
 
   // new driver api (out-of-order)
   ops->submit = pocl_hsa_submit;
@@ -1748,4 +1747,39 @@ void pocl_hsa_free_event_data (cl_event event)
   assert(event->data != NULL);
   free(event->data);
   event->data = NULL;
+}
+
+/****** SVM callbacks *****/
+
+void
+pocl_hsa_svm_free (cl_device_id dev, void *svm_ptr)
+{
+  /* TODO we should somehow figure out the size argument
+   * and call pocl_free_global_mem */
+  HSA_CHECK (hsa_memory_free (svm_ptr));
+}
+
+void *
+pocl_hsa_svm_alloc (cl_device_id dev, cl_svm_mem_flags flags, size_t size)
+{
+  POCL_RETURN_ERROR_ON (((flags & CL_MEM_SVM_ATOMICS)
+                         && ((dev->svm_caps & CL_DEVICE_SVM_ATOMICS) == 0)),
+                        NULL, "This device doesn't have SVM Atomics");
+
+  POCL_RETURN_ERROR_ON (
+      ((flags & CL_MEM_SVM_FINE_GRAIN_BUFFER)
+       && ((dev->svm_caps & CL_DEVICE_SVM_FINE_GRAIN_BUFFER) == 0)),
+      NULL, "This device doesn't have SVM Atomics");
+
+  pocl_hsa_device_data_t *d = (pocl_hsa_device_data_t *)dev->data;
+  void *b = NULL;
+  HSA_CHECK (hsa_memory_allocate (d->global_region, size, &b));
+  return b;
+}
+
+void
+pocl_hsa_svm_copy (cl_device_id dev, void *__restrict__ dst,
+                   const void *__restrict__ src, size_t size)
+{
+  HSA_CHECK (hsa_memory_copy (dst, src, size));
 }

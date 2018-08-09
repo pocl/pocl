@@ -34,7 +34,7 @@ find_package(Boost QUIET)
 if(EXAMPLES_USE_GIT_MASTER)
   set(FETCH_SOURCE GIT_REPOSITORY "https://github.com/arrayfire/arrayfire.git")
 else()
-  set(FETCH_SOURCE URL "http://arrayfire.com/arrayfire_source/arrayfire-full-3.5.1.tar.bz2")
+  set(FETCH_SOURCE URL "https://github.com/arrayfire/arrayfire/archive/v3.6.1.tar.gz")
 endif()
 
 if(HAVE_GIT)

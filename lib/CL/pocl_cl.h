@@ -350,9 +350,19 @@ struct pocl_device_ops {
   void *(*create_sub_buffer) (void *data, void* buffer, size_t origin, size_t size);
   /* free a device buffer */
   void (*free) (cl_device_id device, cl_mem mem_obj);
+
   /* clEnqueSVMfree - free a SVM memory pointer. May be NULL if device doesn't
    * support SVM. */
-  void (*free_ptr) (cl_device_id device, void* mem_ptr);
+  void (*svm_free) (cl_device_id dev, void *svm_ptr);
+  void *(*svm_alloc) (cl_device_id dev, cl_svm_mem_flags flags, size_t size);
+  void (*svm_map) (cl_device_id dev, void *svm_ptr);
+  void (*svm_unmap) (cl_device_id dev, void *svm_ptr);
+  /* we can use restrict here, because Spec says overlapping copy should return
+   * with CL_MEM_COPY_OVERLAP error. */
+  void (*svm_copy) (cl_device_id dev, void *__restrict__ dst,
+                    const void *__restrict__ src, size_t size);
+  void (*svm_fill) (cl_device_id dev, void *__restrict__ svm_ptr, size_t size,
+                    void *__restrict__ pattern, size_t pattern_size);
 
   /* the following callbacks only deal with buffers (and IMAGE1D_BUFFER which
    * is backed by a buffer), not images.  */
@@ -739,7 +749,6 @@ struct _cl_context {
   /* The device that should allocate SVM (might be == host)
    * NULL if none of devices in the context is SVM capable */
   cl_device_id svm_allocdev;
-
 };
 
 typedef struct _pocl_data_sync_item pocl_data_sync_item;
