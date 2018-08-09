@@ -32,6 +32,7 @@ foreach(FILE atomics.cl)
 endforeach()
 
 foreach(FILE
+  async_work_group_copy.cl async_work_group_strided_copy.cl
   atomic_add.ll atomic_and.ll atomic_cmpxchg.ll atomic_dec.ll atomic_inc.ll
   atomic_min.ll atomic_max.ll atomic_or.ll atomic_sub.ll atomic_xchg.ll
   atomic_xor.ll barrier.ll
@@ -39,6 +40,7 @@ foreach(FILE
   get_local_id.c get_local_size.c get_num_groups.c
   get_global_offset.c
   printf.c
+  wait_group_events.cl
   )
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
   list(APPEND KERNEL_SOURCES "cuda/${FILE}")
