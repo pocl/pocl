@@ -88,5 +88,5 @@ POname(clEnqueueSVMMap) (cl_command_queue command_queue,
     return CL_SUCCESS;
 
 }
-POsym(clEnqueueSVMMap);
+POsym(clEnqueueSVMMap)
 

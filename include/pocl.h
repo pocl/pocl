@@ -298,10 +298,18 @@ typedef struct
 
 typedef struct
 {
-  const void *src;
-  void* dst;
+  const void *__restrict__ src;
+  void *__restrict__ dst;
   size_t size;
 } _cl_command_svm_cpy;
+
+typedef struct
+{
+  void *__restrict__ svm_ptr;
+  size_t size;
+  void *__restrict__ pattern;
+  size_t pattern_size;
+} _cl_command_svm_fill;
 
 typedef union
 {
@@ -332,6 +340,7 @@ typedef union
   _cl_command_svm_map svm_map;
   _cl_command_svm_unmap svm_unmap;
   _cl_command_svm_cpy svm_memcpy;
+  _cl_command_svm_fill svm_fill;
 } _cl_command_t;
 
 // one item in the command queue

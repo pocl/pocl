@@ -701,7 +701,7 @@ pocl_exec_command (_cl_command_node * volatile node)
            cmd->svm_free.data);
       else
         for (i = 0; i < cmd->svm_free.num_svm_pointers; i++)
-          dev->ops->free_ptr (dev, cmd->svm_free.svm_pointers[i]);
+          dev->ops->svm_free (dev, cmd->svm_free.svm_pointers[i]);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "SVM Free              ");
       break;
 
@@ -710,10 +710,10 @@ pocl_exec_command (_cl_command_node * volatile node)
       if (DEVICE_MMAP_IS_NOP (dev))
         ; // no-op
       else
-        // TODO FIXME
-        assert (dev->ops->map_mem);
-//        dev->ops->map_mem
-//          (dev->data, cmd->svm_map.svm_ptr, NULL);
+        {
+          assert (dev->ops->svm_map);
+          dev->ops->svm_map (dev, cmd->svm_map.svm_ptr);
+        }
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "SVM Map              ");
       break;
 
@@ -722,33 +722,33 @@ pocl_exec_command (_cl_command_node * volatile node)
       if (DEVICE_MMAP_IS_NOP (dev))
         ; // no-op
       else
-        // TODO figure out
-        assert (dev->ops->unmap_mem);
-//        dev->ops->unmap_mem
-//          (dev->data, cmd->svm_unmap.svm_ptr, NULL);
+        {
+          assert (dev->ops->svm_unmap);
+          dev->ops->svm_unmap (dev, cmd->svm_unmap.svm_ptr);
+        }
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "SVM Unmap             ");
       break;
 
     case CL_COMMAND_SVM_MEMCPY:
       POCL_UPDATE_EVENT_RUNNING(event);
-      assert (dev->ops->copy);
-//      dev->ops->copy(dev->data, // WAS null instead of devdata, WTF
-//                      cmd->svm_memcpy.dst, cmd->svm_memcpy.src, 0, 0,
-//                      cmd->svm_memcpy.size);
+      assert (dev->ops->svm_copy);
+      dev->ops->svm_copy (dev,
+                          cmd->svm_memcpy.dst,
+                          cmd->svm_memcpy.src,
+                          cmd->svm_memcpy.size);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "SVM Memcpy            ");
       break;
 
     case CL_COMMAND_SVM_MEMFILL:
       POCL_UPDATE_EVENT_RUNNING(event);
-      assert (dev->ops->memfill);
-      dev->ops->memfill(dev->data,
-                                 cmd->memfill.dst_mem_id,
-                                 event->mem_objs[0],
-                                 cmd->memfill.size, 0,
-                                 cmd->memfill.pattern,
-                                 cmd->memfill.pattern_size);
+      assert (dev->ops->svm_fill);
+      dev->ops->svm_fill (dev,
+                          cmd->svm_fill.svm_ptr,
+                          cmd->svm_fill.size,
+                          cmd->svm_fill.pattern,
+                          cmd->svm_fill.pattern_size);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "SVM MemFill           ");
-      pocl_aligned_free (cmd->memfill.pattern);
+      pocl_aligned_free (cmd->svm_fill.pattern);
       break;
 
     default:

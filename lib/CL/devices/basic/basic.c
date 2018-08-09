@@ -112,7 +112,6 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->init = pocl_basic_init;
   ops->alloc_mem_obj = pocl_basic_alloc_mem_obj;
   ops->free = pocl_basic_free;
-  ops->free_ptr = pocl_basic_free_ptr;
   ops->read = pocl_basic_read;
   ops->read_rect = pocl_basic_read_rect;
   ops->write = pocl_basic_write;
@@ -133,20 +132,25 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->flush = pocl_basic_flush;
   ops->build_hash = pocl_basic_build_hash;
 
-  ops->get_supported_image_formats = pocl_basic_get_supported_image_formats;
+  ops->svm_free = pocl_basic_svm_free;
+  ops->svm_alloc = pocl_basic_svm_alloc;
+  /* no need to implement these two as they're noop
+   * and pocl_exec_command takes care of it */
+  ops->svm_map = NULL;
+  ops->svm_unmap = NULL;
+  ops->svm_copy = pocl_basic_svm_copy;
+  ops->svm_fill = pocl_basic_svm_fill;
 
+  ops->get_supported_image_formats = pocl_basic_get_supported_image_formats;
   ops->create_image = NULL;
   ops->free_image = NULL;
   ops->create_sampler = NULL;
   ops->free_sampler = NULL;
-
   ops->copy_image_rect = pocl_basic_copy_image_rect;
   ops->write_image_rect = pocl_basic_write_image_rect;
   ops->read_image_rect = pocl_basic_read_image_rect;
-
   ops->map_image = pocl_basic_map_image;
   ops->unmap_image = pocl_basic_unmap_image;
-
   ops->fill_image = pocl_basic_fill_image;
 }
 
@@ -507,13 +511,6 @@ pocl_basic_free (cl_device_id device, cl_mem memobj)
   if (memobj->flags | CL_MEM_ALLOC_HOST_PTR)
     memobj->mem_host_ptr = NULL;
   pocl_free_global_mem(device, ptr, size);
-}
-
-void pocl_basic_free_ptr (cl_device_id device, void* mem_ptr)
-{
-  /* TODO we should somehow figure out the size argument
-   * and call pocl_free_global_mem */
-  POCL_MEM_FREE(mem_ptr);
 }
 
 void
@@ -907,14 +904,10 @@ pocl_basic_read_rect (void *data,
     }
 }
 
-
-void pocl_basic_memfill(void *data,
-                        pocl_mem_identifier * dst_mem_id,
-                        cl_mem dst_buf,
-                        size_t size,
-                        size_t offset,
-                        const void *__restrict__  pattern,
-                        size_t pattern_size)
+void
+pocl_basic_memfill (void *data, pocl_mem_identifier *dst_mem_id,
+                    cl_mem dst_buf, size_t size, size_t offset,
+                    const void *__restrict__ pattern, size_t pattern_size)
 {
   void *__restrict__ ptr = dst_mem_id->mem_ptr;
   size_t i;
@@ -1439,4 +1432,34 @@ pocl_basic_fill_image (void *data, cl_mem image,
                 fill_pixel,
                 pixel_size);
   return CL_SUCCESS;
+}
+
+void
+pocl_basic_svm_free (cl_device_id dev, void *svm_ptr)
+{
+  /* TODO we should somehow figure out the size argument
+   * and call pocl_free_global_mem */
+  pocl_aligned_free (svm_ptr);
+}
+
+void *
+pocl_basic_svm_alloc (cl_device_id dev, cl_svm_mem_flags flags, size_t size)
+{
+  return pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, size);
+}
+
+void
+pocl_basic_svm_copy (cl_device_id dev, void *__restrict__ dst,
+                     const void *__restrict__ src, size_t size)
+{
+  memcpy (dst, src, size);
+}
+
+void
+pocl_basic_svm_fill (cl_device_id dev, void *__restrict__ svm_ptr, size_t size,
+                     void *__restrict__ pattern, size_t pattern_size)
+{
+  pocl_mem_identifier temp;
+  temp.mem_ptr = svm_ptr;
+  pocl_basic_memfill (dev->data, &temp, NULL, size, 0, pattern, pattern_size);
 }

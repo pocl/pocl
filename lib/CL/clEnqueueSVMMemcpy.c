@@ -65,6 +65,11 @@ POname(clEnqueueSVMMemcpy) (cl_command_queue command_queue,
                                      event, num_events_in_wait_list,
                                      event_wait_list, 0, NULL);
 
+  const char *s = (const char *)src_ptr;
+  char *d = (char *)dst_ptr;
+  if (((s <= d) && (s + size > d)) || ((d <= s) && (d + size > s)))
+    POCL_RETURN_ERROR_ON (1, CL_MEM_COPY_OVERLAP, "overlapping copy \n");
+
   if (errcode != CL_SUCCESS)
     {
       POCL_MEM_FREE(cmd);
@@ -72,13 +77,13 @@ POname(clEnqueueSVMMemcpy) (cl_command_queue command_queue,
     }
 
   cmd->command.svm_memcpy.src = src_ptr;
-  cmd->command.svm_memcpy.size = size;
   cmd->command.svm_memcpy.dst = dst_ptr;
+  cmd->command.svm_memcpy.size = size;
 
   pocl_command_enqueue(command_queue, cmd);
 
   return CL_SUCCESS;
 
 }
-POsym(clEnqueueSVMMemcpy);
+POsym(clEnqueueSVMMemcpy)
 

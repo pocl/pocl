@@ -67,13 +67,11 @@ POname(clEnqueueSVMUnmap) (cl_command_queue command_queue,
     }
 
   cmd->command.svm_unmap.svm_ptr = svm_ptr;
-  //cmd->command.svm_unmap.size = size;
-  //cmd->command.svm_map.flags = map_flags;
 
   pocl_command_enqueue(command_queue, cmd);
 
   return CL_SUCCESS;
 
 }
-POsym(clEnqueueSVMUnmap);
+POsym(clEnqueueSVMUnmap)
 
