@@ -201,7 +201,7 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->device_name = "hsa";
   ops->probe = pocl_hsa_probe;
   ops->uninit = pocl_hsa_uninit;
-  ops->reinit = NULL;
+  ops->reinit = pocl_hsa_reinit;
   ops->init = pocl_hsa_init;
   ops->alloc_mem_obj = pocl_hsa_alloc_mem_obj;
   ops->free = pocl_hsa_free;
@@ -1133,6 +1133,7 @@ pocl_hsa_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
 cl_int
 pocl_hsa_uninit (unsigned j, cl_device_id device)
 {
+  assert (found_hsa_agents > 0);
   pocl_hsa_device_data_t *d = (pocl_hsa_device_data_t*)device->data;
 
   if (d->driver_pthread_id)
@@ -1161,6 +1162,59 @@ pocl_hsa_uninit (unsigned j, cl_device_id device)
 
   POCL_MEM_FREE(d);
   device->data = NULL;
+
+  // after last device, call HSA runtime shutdown
+  if (j == (found_hsa_agents-1))
+    {
+      HSA_CHECK (hsa_shut_down());
+      found_hsa_agents = 0;
+    }
+
+  return CL_SUCCESS;
+}
+
+cl_int
+pocl_hsa_reinit (unsigned j, cl_device_id device)
+{
+  assert (device->data == NULL);
+  cl_device_id dev = device;
+
+  // before first HSA device, re-init the runtime
+  if (j == 0)
+    {
+      assert (found_hsa_agents == 0);
+      HSA_CHECK (hsa_init ());
+      HSA_CHECK (hsa_iterate_agents (pocl_hsa_get_agents_callback, NULL));
+    }
+
+  assert (found_hsa_agents > 0);
+  assert (j < found_hsa_agents);
+
+  pocl_hsa_device_data_t *d;
+  d = (pocl_hsa_device_data_t *) calloc (1, sizeof(pocl_hsa_device_data_t));
+  dev->data = d;
+
+  POCL_INIT_LOCK (d->pocl_hsa_compilation_lock);
+
+  d->agent.handle = hsa_agents[j].handle;
+
+  HSA_CHECK(hsa_agent_iterate_regions (d->agent,
+                                       setup_agent_memory_regions_callback,
+                                       d));
+
+  pocl_reinit_system_memory ();
+
+  HSA_CHECK(hsa_signal_create(1, 1, &d->agent,
+                              &d->nudge_driver_thread));
+
+  pthread_mutexattr_t mattr;
+  PTHREAD_CHECK(pthread_mutexattr_init(&mattr));
+  PTHREAD_CHECK(pthread_mutexattr_settype(&mattr, PTHREAD_MUTEX_ERRORCHECK));
+  PTHREAD_CHECK(pthread_mutex_init(&d->list_mutex, &mattr));
+
+  d->exit_driver_thread = 0;
+  PTHREAD_CHECK (pthread_create (&d->driver_pthread_id, NULL,
+                                 &pocl_hsa_driver_pthread, dev));
 
   return CL_SUCCESS;
 }

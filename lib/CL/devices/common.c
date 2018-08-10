@@ -1143,6 +1143,12 @@ pocl_setup_device_for_system_memory(cl_device_id device)
   // we should try and setrlimit to alloc_limit, or allocations might fail
 }
 
+void
+pocl_reinit_system_memory()
+{
+  system_memory.currently_allocated = 0;
+  system_memory.max_ever_allocated = 0;
+}
 
 /* set maximum allocation sizes for buffers and images */
 void

@@ -100,6 +100,8 @@ void pocl_release_dlhandle_cache (_cl_command_node *cmd);
 
 void pocl_setup_device_for_system_memory(cl_device_id device);
 
+void pocl_reinit_system_memory();
+
 void pocl_set_buffer_image_limits(cl_device_id device);
 
 void* pocl_aligned_malloc_global_mem(cl_device_id device, size_t align, size_t size);
