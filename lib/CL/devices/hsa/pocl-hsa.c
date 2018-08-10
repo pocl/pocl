@@ -1131,7 +1131,7 @@ pocl_hsa_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
 }
 
 cl_int
-pocl_hsa_uninit (cl_device_id device)
+pocl_hsa_uninit (unsigned j, cl_device_id device)
 {
   pocl_hsa_device_data_t *d = (pocl_hsa_device_data_t*)device->data;
 

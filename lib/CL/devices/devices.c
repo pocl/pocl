@@ -352,7 +352,7 @@ pocl_uninit_devices ()
             continue;
           if (d->ops->reinit == NULL || d->ops->uninit == NULL)
             continue;
-          cl_int ret = d->ops->uninit (d);
+          cl_int ret = d->ops->uninit (j, d);
           if (ret != CL_SUCCESS)
             {
               retval = ret;
@@ -400,7 +400,7 @@ pocl_reinit_devices ()
             continue;
           if (d->ops->reinit == NULL || d->ops->uninit == NULL)
             continue;
-          cl_int ret = d->ops->reinit (d);
+          cl_int ret = d->ops->reinit (j, d);
           if (ret != CL_SUCCESS)
             {
               retval = ret;

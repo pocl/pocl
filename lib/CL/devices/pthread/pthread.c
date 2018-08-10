@@ -256,7 +256,7 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 }
 
 cl_int
-pocl_pthread_uninit (cl_device_id device)
+pocl_pthread_uninit (unsigned j, cl_device_id device)
 {
   struct data *d = (struct data*)device->data;
 
@@ -280,7 +280,7 @@ pocl_pthread_uninit (cl_device_id device)
 }
 
 cl_int
-pocl_pthread_reinit (cl_device_id device)
+pocl_pthread_reinit (unsigned j, cl_device_id device)
 {
   struct data *d;
 

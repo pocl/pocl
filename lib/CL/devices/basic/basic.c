@@ -1052,7 +1052,7 @@ pocl_basic_unmap_mem(void *data,
 }
 
 cl_int
-pocl_basic_uninit (cl_device_id device)
+pocl_basic_uninit (unsigned j, cl_device_id device)
 {
   struct data *d = (struct data*)device->data;
   POCL_DESTROY_LOCK (d->cq_lock);
@@ -1063,7 +1063,7 @@ pocl_basic_uninit (cl_device_id device)
 }
 
 cl_int
-pocl_basic_reinit (cl_device_id device)
+pocl_basic_reinit (unsigned j, cl_device_id device)
 {
   struct data *d = (struct data *)calloc (1, sizeof (struct data));
   if (d == NULL)

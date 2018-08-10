@@ -576,7 +576,7 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
 }
 
 cl_int
-pocl_ttasim_uninit (cl_device_id device)
+pocl_ttasim_uninit (unsigned j, cl_device_id device)
 {
   delete (TTASimDevice*)device->data;
   return CL_SUCCESS;

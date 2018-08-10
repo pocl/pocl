@@ -438,7 +438,7 @@ pocl_cuda_probe (struct pocl_device_ops *ops)
 }
 
 cl_int
-pocl_cuda_uninit (cl_device_id device)
+pocl_cuda_uninit (unsigned j, cl_device_id device)
 {
   pocl_cuda_device_data_t *data = device->data;
 

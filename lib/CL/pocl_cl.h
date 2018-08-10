@@ -336,10 +336,10 @@ struct pocl_device_ops {
    */
   cl_int (*init) (unsigned j, cl_device_id device, const char *parameters);
   /* uninitializes the driver for a particular device. May free hardware resources. */
-  cl_int (*uninit) (cl_device_id device);
+  cl_int (*uninit) (unsigned j, cl_device_id device);
   /* reinitializes the driver for a particular device. Called after uninit;
    * the first initialization is done by 'init'. May be NULL */
-  cl_int (*reinit) (cl_device_id device);
+  cl_int (*reinit) (unsigned j, cl_device_id device);
 
   /* if the driver needs to use hardware resources for command queues, use this */
   cl_int (*init_queue) (cl_command_queue queue);
