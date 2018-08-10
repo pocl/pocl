@@ -567,67 +567,128 @@ void pocl_llvm_update_binaries(cl_program program) {
   }
 }
 
+static void initPassManagerForCodeGen(PassManager& PM, cl_device_id Device) {
+
+  llvm::Triple Triple(Device->llvm_target_triplet);
+  llvm::TargetMachine *Target = GetTargetMachine(Device, Triple);
+
+#ifdef LLVM_OLDER_THAN_3_7
+  llvm::TargetLibraryInfo *TLI = new TargetLibraryInfo(Triple);
+  PM.add(TLI);
+#else
+  llvm::TargetLibraryInfoWrapperPass *TLIPass =
+      new TargetLibraryInfoWrapperPass(Triple);
+  PM.add(TLIPass);
+#endif
+#ifdef LLVM_OLDER_THAN_3_7
+  if (Target != NULL)
+    Target->addAnalysisPasses(PM);
+#endif
+}
 
 /* Run LLVM codegen on input file (parallel-optimized).
  * modp = llvm::Module* of parallel.bc
  * Output native object file (<kernel>.so.o). */
-int pocl_llvm_codegen(cl_device_id device, void *modp, char **output,
-                      size_t *output_size) {
+int pocl_llvm_codegen(cl_device_id Device, void *Modp, char **Output,
+                      size_t *OutputSize) {
 
-  PoclCompilerMutexGuard lockHolder(NULL);
+  PoclCompilerMutexGuard LockHolder(NULL);
   InitializeLLVM();
 
-  llvm::Module *input = (llvm::Module *)modp;
-  assert(input);
-  *output = NULL;
+  llvm::Module *Input = (llvm::Module *)Modp;
+  assert(Input);
+  *Output = NULL;
 
-  llvm::Triple triple(device->llvm_target_triplet);
-  llvm::TargetMachine *target = GetTargetMachine(device, triple);
+  PassManager PMObj;
+  initPassManagerForCodeGen(PMObj, Device);
 
-  PassManager PM;
+  llvm::Triple Triple(Device->llvm_target_triplet);
+  llvm::TargetMachine *Target = GetTargetMachine(Device, Triple);
+
+  // First try direct object code generation from LLVM, if supported by the
+  // LLVM backend for the target.
+  bool LLVMGeneratesObjectFiles = true;
 #ifdef LLVM_OLDER_THAN_3_7
-  llvm::TargetLibraryInfo *TLI = new TargetLibraryInfo(triple);
-  PM.add(TLI);
+  std::string Data;
+  llvm::raw_string_ostream SOS(Data);
+  llvm::MCContext *MCC;
+  if (Target->addPassesToEmitMC(PMObj, MCC, SOS))
+    LLVMGeneratesObjectFiles = false;
 #else
-  llvm::TargetLibraryInfoWrapperPass *TLIPass =
-      new TargetLibraryInfoWrapperPass(triple);
-  PM.add(TLIPass);
+  SmallVector<char, 4096> Data;
+  llvm::raw_svector_ostream SOS(Data);
+#ifdef LLVM_OLDER_THAN_7_0
+  if (Target->addPassesToEmitFile(PMObj, SOS,
+                                  TargetMachine::CGFT_ObjectFile))
+    LLVMGeneratesObjectFiles = false;
+#else
+  if (Target->addPassesToEmitFile(PMObj, SOS, nullptr,
+                                  TargetMachine::CGFT_ObjectFile))
+    LLVMGeneratesObjectFiles = false;
 #endif
+
+#endif
+
+  if (LLVMGeneratesObjectFiles) {
+    POCL_MSG_PRINT_LLVM("Generating an object file directly.\n");
+    PMObj.run(*Input);
+    std::string O = SOS.str(); // flush
+    const char *Cstr = O.c_str();
+    size_t S = O.size();
+    *Output = (char *)malloc(S);
+    *OutputSize = S;
+    memcpy(*Output, Cstr, S);
+    return 0;
+  }
+
+  PassManager PMAsm;
+  initPassManagerForCodeGen(PMAsm, Device);
+
+  POCL_MSG_PRINT_LLVM("Generating assembly text.\n");
+
+  // The LLVM target does not implement support for emitting object file directly.
+  // Have to emit the text first and then call the assembler from the command line
+  // to produce the binary.
 #ifdef LLVM_OLDER_THAN_3_7
-  if (target != NULL) {
-    target->addAnalysisPasses(PM);
+  POCL_ABORT("Assembly text output support not implemented for LLVM < 3.7.");
+#else
+#ifdef LLVM_OLDER_THAN_7_0
+  if (Target->addPassesToEmitFile(PMAsm, SOS,
+                                  TargetMachine::CGFT_AssemblyFile)) {
+    POCL_ABORT("The target supports neither obj nor asm emission!");
+  }
+#else
+  if (Target->addPassesToEmitFile(PMAsm, SOS, nullptr,
+                                  TargetMachine::CGFT_AssemblyFile)) {
+    POCL_ABORT("The target supports neither obj nor asm emission!");
   }
 #endif
-
-  // TODO: get DataLayout from the 'device'
-  // TODO: better error check
-#ifdef LLVM_OLDER_THAN_3_7
-  std::string data;
-  llvm::raw_string_ostream sos(data);
-  llvm::MCContext *mcc;
-  if (target && target->addPassesToEmitMC(PM, mcc, sos))
-    return 1;
-#else
-  SmallVector<char, 4096> data;
-  llvm::raw_svector_ostream sos(data);
-  if (target &&
-#ifdef LLVM_OLDER_THAN_7_0
-      target->addPassesToEmitFile(PM, sos, TargetMachine::CGFT_ObjectFile))
-#else
-      target->addPassesToEmitFile(PM, sos, nullptr,
-                                  TargetMachine::CGFT_ObjectFile))
-#endif
-    return 1;
 #endif
 
-  PM.run(*input);
-  std::string o = sos.str(); // flush
-  const char *cstr = o.c_str();
-  size_t s = o.size();
-  *output = (char *)malloc(s);
-  *output_size = s;
-  memcpy(*output, cstr, s);
+  // This produces the assembly text:
+  PMAsm.run(*Input);
 
-  return 0;
+  // Next call the target's assembler via the Toolchain API indirectly through
+  // the Driver API.
+
+  char AsmFileName[POCL_FILENAME_LENGTH];
+  char ObjFileName[POCL_FILENAME_LENGTH];
+
+  std::string AsmStr = SOS.str().str();
+  pocl_write_tempfile(AsmFileName, "/tmp/pocl-asm", ".s", AsmStr.c_str(),
+                      AsmStr.size(), nullptr);
+  pocl_mk_tempname(ObjFileName, "/tmp/pocl-obj", ".o", nullptr);
+
+  const char *Args[] = {CLANG, AsmFileName, "-c", "-o", ObjFileName, NULL};
+  int Res = pocl_invoke_clang(Device, Args);
+
+  if (Res == 0) {
+    if (pocl_read_file(ObjFileName, Output, OutputSize))
+      POCL_ABORT("Could not read the object file.");
+  }
+
+  pocl_remove(AsmFileName);
+  pocl_remove(ObjFileName);
+  return Res;
 }
 /* vim: set ts=4 expandtab: */
