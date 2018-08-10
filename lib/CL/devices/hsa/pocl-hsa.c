@@ -1236,7 +1236,7 @@ pocl_hsa_join (cl_device_id device, cl_command_queue cq)
   cl_event event = cq->last_event.event;
   assert(event);
   POCL_LOCK_OBJ (event);
-  ++event->pocl_refcount;
+  POCL_RETAIN_OBJECT_UNLOCKED (event);
   POCL_UNLOCK_OBJ (cq);
 
   POCL_MSG_PRINT_INFO("pocl-hsa: device->join on event %u\n", event->id);
@@ -1259,8 +1259,9 @@ pocl_hsa_join (cl_device_id device, cl_command_queue cq)
                       " with status: %i\n", event->id, event->status);
 
   assert (event->status <= CL_COMPLETE);
-  --event->pocl_refcount;
   POCL_UNLOCK_OBJ (event);
+
+  POname (clReleaseEvent) (event);
 }
 
 void
@@ -1473,6 +1474,7 @@ pocl_hsa_ndrange_event_finished (pocl_hsa_device_data_t *d, size_t i)
 
   assert(i < dd->running_list_size);
   cl_event event = dd->running_events[i];
+  _cl_command_node *node = event->command;
 
   POCL_LOCK_OBJ (event);
   pocl_hsa_event_data_t *event_data = (pocl_hsa_event_data_t *)event->data;
@@ -1496,11 +1498,12 @@ pocl_hsa_ndrange_event_finished (pocl_hsa_device_data_t *d, size_t i)
 
   hsa_memory_free(event_data->actual_kernargs);
 
-  pocl_mem_manager_free_command (event->command);
-
   POCL_UNLOCK_OBJ (event);
+
   POCL_UPDATE_EVENT_COMPLETE (event);
 
+  pocl_ndrange_node_cleanup (node);
+  pocl_mem_manager_free_command (node);
 }
 
 static void
