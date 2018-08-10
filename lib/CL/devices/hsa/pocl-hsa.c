@@ -63,6 +63,7 @@
 #include "hsa_ext_image.h"
 
 #include "config.h"
+#include "config2.h"
 
 #ifdef HAVE_HSA_EXT_AMD_H
 #include "hsa_ext_amd.h"
@@ -345,6 +346,9 @@ setup_agent_memory_regions_callback(hsa_region_t region, void* data)
    list and detected by the advertised agent name string. */
 #define HSA_NUM_KNOWN_HSA_AGENTS 2
 
+static const char *default_native_final_linkage_flags[] =
+  {"-lm", "-nostartfiles", HOST_LD_FLAGS_ARRAY, NULL};
+
 static struct _cl_device_id
 supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS] =
 {
@@ -454,6 +458,7 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
           COPY_ATTR (endian_little);
           COPY_ATTR (preferred_wg_size_multiple);
           COPY_ATTR (extensions);
+	  COPY_ATTR (final_linkage_flags);
           COPY_VECWIDTH (char);
           COPY_VECWIDTH (short);
           COPY_VECWIDTH (int);

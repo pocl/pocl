@@ -192,15 +192,12 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
 
   /* Link through Clang driver interface who knows the correct toolchains
      for all of its targets.  */
+  const char *cmd_line[64] =
+    {CLANG, "-o", tmp_module, tmp_objfile};
+  const char **device_ld_arg = device->final_linkage_flags;
+  const char **pos = &cmd_line[4];
+  while ((*pos++ = *device_ld_arg++)) {}
 
-  /* TODO: HOST_LD_FLAGS_ARRAY to a device interface */
-  const char *cmd_line[] =
-    {CLANG, "-o", tmp_module, tmp_objfile, "-lm", "-nostartfiles",
-#if 0
-     "-nostartfiles", "-Wl,-Ttext", "-Wl,0x1080000000",
-     "-Wl,--oformat", "-Wl,elf64-gptx",
-#endif
-     HOST_LD_FLAGS_ARRAY, "-v", NULL};
   error = pocl_invoke_clang (device, cmd_line);
 
   if (error)

@@ -29,11 +29,16 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 
 #include "config.h"
 
-#include "clang/CodeGen/CodeGenAction.h"
-#include "clang/Frontend/CompilerInstance.h"
-#include "clang/Frontend/CompilerInvocation.h"
-#include "clang/Frontend/FrontendActions.h"
-#include "clang/Frontend/TextDiagnosticBuffer.h"
+#include <clang/Basic/Diagnostic.h>
+#include <clang/Basic/VirtualFileSystem.h>
+#include <clang/Driver/Compilation.h>
+#include <clang/Driver/Driver.h>
+#include <clang/CodeGen/CodeGenAction.h>
+#include <clang/Frontend/CompilerInstance.h>
+#include <clang/Frontend/CompilerInvocation.h>
+#include <clang/Frontend/FrontendActions.h>
+#include <clang/Frontend/TextDiagnosticBuffer.h>
+#include <clang/Frontend/TextDiagnosticPrinter.h>
 
 #ifndef LLVM_OLDER_THAN_4_0
 #include "clang/Lex/PreprocessorOptions.h"
@@ -883,4 +888,45 @@ void cleanKernelLibrary() {
     delete (llvm::Module *)i->second;
   }
   kernelLibraryMap.clear();
+}
+
+/**
+ * Invoke the Clang compiler through its Driver API.
+ *
+ * @param Device the device of which toolchain to use.
+ * @param Args the command line arguments that would be passed to Clang
+ *             (a NULL terminated list). Args[0] should be the path to
+ *             the Clang binary.
+ * @return 0 on success, error code otherwise.
+ */
+int pocl_invoke_clang(cl_device_id Device, const char** Args) {
+
+  // Borrowed from driver.cpp (clang driver). We do not really care about
+  // diagnostics, but just want to get the compilation command invoked with
+  // the target's toolchain as defined in Clang.
+  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions;
+
+  TextDiagnosticPrinter *DiagClient =
+    new TextDiagnosticPrinter(llvm::errs(), &*DiagOpts);
+
+  IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
+
+  DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
+
+  driver::Driver TheDriver(CLANG, Device->llvm_target_triplet, Diags);
+
+  const char **ArgsEnd = Args;
+  while (*ArgsEnd++ != nullptr) {}
+
+  llvm::ArrayRef<const char*> ArgsArray(Args, ArgsEnd);
+
+  std::unique_ptr<driver::Compilation> C(
+    TheDriver.BuildCompilation(ArgsArray));
+  int Res = 0;
+  if (C && !C->containsError()) {
+    SmallVector<std::pair<int, const driver::Command *>, 4> FailingCommands;
+    return TheDriver.ExecuteCompilation(*C, FailingCommands);
+  } else {
+    return -1;
+  }
 }

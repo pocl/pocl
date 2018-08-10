@@ -23,6 +23,7 @@
 */
 
 #include "config.h"
+#include "config2.h"
 #include "basic.h"
 #include "cpuinfo.h"
 #include "topology/pocl_topology.h"
@@ -170,11 +171,16 @@ pocl_basic_build_hash (cl_device_id device)
 
 static cl_device_partition_property basic_partition_properties[1] = { 0 };
 
+
+static const char *final_ld_flags[] =
+  {"-lm", "-nostartfiles", HOST_LD_FLAGS_ARRAY, NULL};
+
 void
 pocl_init_cpu_device_infos (cl_device_id dev)
 {
   dev->type = CL_DEVICE_TYPE_CPU;
   dev->max_work_item_dimensions = 3;
+  dev->final_linkage_flags = final_ld_flags;
 
   SETUP_DEVICE_CL_VERSION(HOST_DEVICE_CL_VERSION_MAJOR, HOST_DEVICE_CL_VERSION_MINOR)
   /*

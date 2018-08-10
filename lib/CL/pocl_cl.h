@@ -694,6 +694,17 @@ struct _cl_device_id {
   /* Convert automatic local variables to kernel arguments? */
   int autolocals_to_args;
 
+  /* Device-specific linker flags that should be appended to the clang's
+     argument list for a final linkage call when producing the final binary
+     that can be uploaded to the device using the default LLVM-based
+     codegen. The final entry in the list must be NULL.
+
+     The flags will be added after the following command line:
+     clang -o final.bin input.obj [flags]
+  */
+
+  const char **final_linkage_flags;
+
   /* The target specific IDs for the different OpenCL address spaces. */
   unsigned global_as_id;
   unsigned local_as_id;
