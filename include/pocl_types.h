@@ -6,18 +6,38 @@
 
 #ifdef __CBUILD__
 
-/* Define the required OpenCL C fixed size types in a C compatible way.
-   The C-based kernel library implementations need these. Avoid using
-   stdint.h types as it might not be available for Clang during
-   kernel compilation. */
+#ifndef _TCE__
+/* Define the fixed width OpenCL data types using the target-specified ones
+   from stdint.h. */
+#include <stdint.h>
+
+typedef uint8_t uchar;
+typedef uint16_t ushort;
+typedef uint32_t uint;
+
+#ifdef __TCE__
+/* TCE's 64b support and proper stdint.h is a WiP. Workarounds here. */
+typedef unsigned ulong;
+typedef unsigned int size_t;
+/* #define double float  */
+
+#else
+typedef uint64_t ulong;
+typedef __SIZE_TYPE__ size_t;
+#endif
+
+#else
+
 typedef unsigned char uchar;
 typedef unsigned short ushort;
-typedef unsigned int uint;
-typedef unsigned long long ulong;
-
-typedef __SIZE_TYPE__ size_t;
+typedef unsigned uint;
+typedef unsigned ulong;
+typedef unsigned int size_t;
 
 #endif
+
+#endif
+
 
 
 /* Disable undefined datatypes */
@@ -27,11 +47,15 @@ typedef __SIZE_TYPE__ size_t;
    accidentally using them if the compiler does not disable these
    types, but only e.g. defines them with an incorrect size.*/
 
+#ifndef __CBUILD__
+
 #ifndef cl_khr_int64
 typedef struct error_undefined_type_long error_undefined_type_long;
 #  define long error_undefined_type_long
 typedef struct error_undefined_type_ulong error_undefined_type_ulong;
 #  define ulong error_undefined_type_ulong
+#endif
+
 #endif
 
 #ifdef __CBUILD__
@@ -40,10 +64,11 @@ typedef short half;
 #endif
 #endif
 
-
+#ifndef __CBUILD__
 #ifndef cl_khr_fp64
 typedef struct error_undefined_type_double error_undefined_type_double;
 #  define double error_undefined_type_double
+#endif
 #endif
 
 #ifndef __CBUILD__
