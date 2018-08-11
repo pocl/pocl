@@ -349,6 +349,9 @@ setup_agent_memory_regions_callback(hsa_region_t region, void* data)
 static const char *default_native_final_linkage_flags[] =
   {"-lm", "-nostartfiles", HOST_LD_FLAGS_ARRAY, NULL};
 
+static const char *phsa_native_device_aux_funcs[] =
+  {"_pocl_run_all_wgs", "_pocl_finish_all_wgs", "_pocl_spawn_wg", NULL};
+
 static struct _cl_device_id
 supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS] =
 {
@@ -406,7 +409,11 @@ supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS] =
     .native_vector_width_int = 16,
     .native_vector_width_long = 16,
     .native_vector_width_float = 16,
-    .native_vector_width_double = 16
+    .native_vector_width_double = 16,
+    .final_linkage_flags = default_native_final_linkage_flags,
+    .device_aux_functions =
+    (HSAIL_ENABLED ? NULL : phsa_native_device_aux_funcs),
+  }
   }
 };
 
@@ -459,6 +466,7 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
           COPY_ATTR (preferred_wg_size_multiple);
           COPY_ATTR (extensions);
 	  COPY_ATTR (final_linkage_flags);
+	  COPY_ATTR (device_aux_functions);
           COPY_VECWIDTH (char);
           COPY_VECWIDTH (short);
           COPY_VECWIDTH (int);

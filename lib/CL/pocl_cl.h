@@ -705,6 +705,11 @@ struct _cl_device_id {
 
   const char **final_linkage_flags;
 
+  /* Auxiliary functions required by the device binary which should
+     be retained across the kernel compilation unused code pruning
+     process. */
+  const char **device_aux_functions;
+
   /* The target specific IDs for the different OpenCL address spaces. */
   unsigned global_as_id;
   unsigned local_as_id;
