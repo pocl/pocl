@@ -25,8 +25,9 @@
 
 #ifndef _MSC_VER
 #  define _DEFAULT_SOURCE
+#  define __POSIX_VISIBLE 200112L
 #  ifndef _POSIX_C_SOURCE
-#    define _POSIX_C_SOURCE 199309L
+#    define _POSIX_C_SOURCE 200112L
 #  endif
 #  include <inttypes.h>
 #  if defined(HAVE_CLOCK_GETTIME) || defined(__APPLE__)

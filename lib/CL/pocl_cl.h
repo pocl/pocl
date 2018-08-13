@@ -1129,9 +1129,7 @@ struct _cl_sampler {
 
 #endif
 
-#ifndef __APPLE__
-  #include <endian.h>
-#else
+#ifdef __APPLE__
   #include <libkern/OSByteOrder.h>
   #define htole16(x) OSSwapHostToLittleInt16(x)
   #define le16toh(x) OSSwapLittleToHostInt16(x)
@@ -1139,6 +1137,10 @@ struct _cl_sampler {
   #define le32toh(x) OSSwapLittleToHostInt32(x)
   #define htole64(x) OSSwapHostToLittleInt64(x)
   #define le64toh(x) OSSwapLittleToHostInt64(x)
+#elif defined(__FreeBSD__)
+  #include <sys/endian.h>
+#else
+  #include <endian.h>
 #endif
 
 #endif /* POCL_CL_H */
