@@ -74,6 +74,9 @@ IMPLEMENT_VLOAD(float , __global)
 #if defined(cl_khr_fp64)
 IMPLEMENT_VLOAD(double, __global)
 #endif
+#if defined(cl_khr_fp16)
+IMPLEMENT_VLOAD(half, __global)
+#endif
 
 IMPLEMENT_VLOAD(char  , __local)
 IMPLEMENT_VLOAD(short , __local)
@@ -89,6 +92,9 @@ IMPLEMENT_VLOAD(float , __local)
 #if defined(cl_khr_fp64)
 IMPLEMENT_VLOAD(double, __local)
 #endif
+#if defined(cl_khr_fp16)
+IMPLEMENT_VLOAD(half, __local)
+#endif
 
 IMPLEMENT_VLOAD(char  , __constant)
 IMPLEMENT_VLOAD(short , __constant)
@@ -103,6 +109,9 @@ IMPLEMENT_VLOAD(uint  , __constant)
 IMPLEMENT_VLOAD(float , __constant)
 #if defined(cl_khr_fp64)
 IMPLEMENT_VLOAD(double, __constant)
+#endif
+#if defined(cl_khr_fp16)
+IMPLEMENT_VLOAD(half, __constant)
 #endif
 
 IMPLEMENT_VLOAD(char  , __private)
@@ -120,4 +129,7 @@ IMPLEMENT_VLOAD(ulong , __private)
 IMPLEMENT_VLOAD(float , __private)
 #if defined(cl_khr_fp64)
 IMPLEMENT_VLOAD(double, __private)
+#endif
+#if defined(cl_khr_fp16)
+IMPLEMENT_VLOAD(half, __private)
 #endif
