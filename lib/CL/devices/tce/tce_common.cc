@@ -683,7 +683,7 @@ pocl_tce_unmap_mem (void *data,
     /* Synch the device global region to the host memory. */
     pocl_tce_write (data, map->host_ptr, dst_mem_id, dst_buf, map->offset, map->size);
 
-  if (map->host_ptr != (dst_buf->mem_host_ptr + map->offset))
+  if (map->host_ptr != ((char *)dst_buf->mem_host_ptr + map->offset))
     {
       pocl_aligned_free (map->host_ptr);
     }
