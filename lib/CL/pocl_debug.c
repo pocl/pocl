@@ -88,8 +88,9 @@ static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
       }
 
       free (tokenize);
-      pocl_fprintf_err ("** Final POCL_DEBUG flags: %" PRIX64 " \n",
-                        pocl_debug_messages_filter);
+      if (pocl_debug_messages_filter)
+	pocl_fprintf_err ("** Final POCL_DEBUG flags: %" PRIX64 " \n",
+			  pocl_debug_messages_filter);
     }
 
     void
