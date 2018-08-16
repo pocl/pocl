@@ -596,13 +596,13 @@ pocl_basic_run
           void* devptr = pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT,  sizeof(dev_image_t));
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = devptr;
-          memcpy (&di, devptr, sizeof (dev_image_t));
+          memcpy (devptr, &di, sizeof (dev_image_t));
         }
       else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
           dev_sampler_t ds;
           fill_dev_sampler_t(&ds, al);
-
+          arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = (void *)ds;
         }
       else
