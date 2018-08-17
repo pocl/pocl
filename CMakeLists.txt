@@ -350,6 +350,7 @@ if(NOT HOST_CPU_CACHELINE_SIZE)
       else()
         # getconf sometimes just returns zero
         if(NOT (CL_SIZE EQUAL 0))
+          string(STRIP "${CL_SIZE}" CL_SIZE)
           message(STATUS "L1D Cacheline size detected: ${CL_SIZE}")
           set(HOST_CPU_CACHELINE_SIZE "${CL_SIZE}" CACHE STRING "L1D Cacheline size")
         endif()
