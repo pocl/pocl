@@ -231,22 +231,30 @@ check_cl_error (cl_int cl_err, int line, const char* func_name) {
 
 int
 poclu_load_program (cl_context context, cl_device_id device,
-                    const char *basename, int spir, int spirv, cl_program *p)
+                    const char *basename, int spir, int spirv, int poclbin,
+                    const char *explicit_binary, const char *extra_build_opts, cl_program *p)
 {
   cl_bool little_endian = 0;
   cl_uint address_bits = 0;
   char extensions[1024];
   char path[1024];
   const char *ext;
-  size_t spir_size = 0;
-  char *spir_bc = NULL;
+  char final_opts[2048];
+  size_t binary_size = 0;
+  char *binary = NULL;
   cl_program program;
   cl_int err = CL_SUCCESS;
 
+  int from_source = (!spir && !spirv && !poclbin);
+
   *p = NULL;
+  final_opts[0] = 0;
+  if (extra_build_opts != NULL)
+    strcat(final_opts, extra_build_opts);
 
   if (spir || spirv)
     {
+      strcat (final_opts, "-x spir -spir-std=1.2");
       err = clGetDeviceInfo (device, CL_DEVICE_EXTENSIONS, 1024, extensions,
                              NULL);
       CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo extensions");
@@ -286,7 +294,22 @@ poclu_load_program (cl_context context, cl_device_id device,
         else
           ext = ".spir64";
       }
+    }
 
+  if (poclbin)
+    {
+      ext = ".poclbin";
+    }
+
+  if (from_source)
+    {
+      ext = ".cl";
+    }
+
+  if (explicit_binary)
+    snprintf (path, 1024, "%s", explicit_binary);
+  else
+    {
       snprintf (path, 1024, "%s%s", basename, ext);
 
       if (access (path, F_OK))
@@ -295,41 +318,15 @@ poclu_load_program (cl_context context, cl_device_id device,
                     basename, ext);
           if (access (path, F_OK))
             {
-              fprintf (stderr, "Can't find %s SPIR bitcode file anywhere\n",
-                       basename);
+              fprintf (stderr, "Can't find %s%s SPIR / POCLBIN file anywhere\n",
+                       basename, ext);
               return 1;
             }
         }
-
-      spir_bc = poclu_read_binfile (path, &spir_size);
-      TEST_ASSERT (spir_bc != NULL);
-      TEST_ASSERT (spir_size > 16);
-
-      program = clCreateProgramWithBinary (context, 1, &device, &spir_size,
-                                           (const unsigned char **)&spir_bc,
-                                           NULL, &err);
-      CHECK_OPENCL_ERROR_IN ("clCreateProgramWithBinary SPIR");
-
-      err = clBuildProgram (program, 0, NULL, "-x spir -spir-std=1.2", NULL,
-                            NULL);
-      CHECK_OPENCL_ERROR_IN ("clBuildProgram SPIR");
     }
-  else
+
+  if (from_source)
     {
-      snprintf (path, 1024, "%s.cl", basename);
-
-      if (access (path, F_OK))
-        {
-          snprintf (path, 1024, "%s/examples/%s/%s.cl", SRCDIR, basename,
-                    basename);
-          if (access (path, F_OK))
-            {
-              fprintf (stderr, "Can't find %s source file anywhere\n",
-                       basename);
-              return 1;
-            }
-        }
-
       char *src = poclu_read_file (path);
       TEST_ASSERT (src != NULL);
 
@@ -337,7 +334,20 @@ poclu_load_program (cl_context context, cl_device_id device,
                                            NULL, &err);
       CHECK_OPENCL_ERROR_IN ("clCreateProgramWithSource");
 
-      err = clBuildProgram (program, 0, NULL, NULL, NULL, NULL);
+      err = clBuildProgram (program, 0, NULL, final_opts, NULL, NULL);
+      CHECK_OPENCL_ERROR_IN ("clBuildProgram");
+    }
+  else
+    {
+      binary = poclu_read_binfile (path, &binary_size);
+      TEST_ASSERT (binary != NULL);
+
+      program = clCreateProgramWithBinary (context, 1, &device, &binary_size,
+                                           (const unsigned char **)&binary,
+                                           NULL, &err);
+      CHECK_OPENCL_ERROR_IN ("clCreateProgramWithBinary");
+
+      err = clBuildProgram (program, 0, NULL, final_opts, NULL, NULL);
       CHECK_OPENCL_ERROR_IN ("clBuildProgram");
     }
 
