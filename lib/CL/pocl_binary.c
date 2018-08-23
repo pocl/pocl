@@ -46,7 +46,15 @@
 /* changes for version 5: added program binary_type into header */
 /* changes for version 6: added reqd_wg_size informations into
                           pocl_binary_kernel structure */
-#define POCLCC_VERSION 6
+/* changes for version 7: removed dyn_arguments from storage, instead added
+                          arg_info[i]->type_size; removed is_local and is_set
+                          from storage, no need to store these (is_set makes
+                          no sense in binary, and whether argument is local
+                          is already in cl_kernel_arg_address_qualifier);
+                          add has_arg_metadata & kernel attributes */
+
+#define FIRST_SUPPORTED_POCLCC_VERSION 6
+#define POCLCC_VERSION 7
 
 /* pocl binary structures */
 
@@ -86,6 +94,11 @@ typedef struct pocl_binary_kernel_s
 
   /* required work-group size */
   uint64_t reqd_wg_size[OPENCL_MAX_DIMENSION];
+
+  uint64_t has_arg_metadata;
+
+  uint32_t sizeof_attributes;
+  char* attributes;
 
   /* arguments and argument metadata. Note that not everything is stored
    * in the serialized binary */
@@ -231,11 +244,11 @@ check_binary(cl_device_id device, const unsigned char *binary)
       POCL_MSG_WARN ("File is not a pocl binary\n");
       return NULL;
     }
-  if (b.version != POCLCC_VERSION)
+  if (b.version < FIRST_SUPPORTED_POCLCC_VERSION)
     {
-      POCL_MSG_WARN ("PoclBinary version %i different from the one "
-                     "recognized by this pocl version (%i)\n",
-                     b.version, POCLCC_VERSION);
+      POCL_MSG_WARN ("PoclBinary version %i is not supported by "
+                     "this pocl (the minimal is: %i)\n",
+                     b.version, FIRST_SUPPORTED_POCLCC_VERSION);
       return NULL;
     }
   if (pocl_binary_get_device_id(device) != b.device_id)
@@ -417,11 +430,17 @@ pocl_binary_serialize_kernel_to_buffer(cl_kernel kernel,
         }
     }
 
-  for (i=0; i < (kernel->num_args + kernel->num_locals); i++)
+  for (i = 0; i < kernel->num_locals; i++)
     {
-      BUFFER_STORE(kernel->dyn_arguments[i].size, uint64_t);
+      BUFFER_STORE (kernel->dyn_arguments[kernel->num_args + i].size,
+                    uint64_t);
     }
 
+  uint32_t attrlen = kernel->attributes ? strlen (kernel->attributes) : 0;
+  BUFFER_STORE_STR2(kernel->attributes, attrlen);
+  BUFFER_STORE(kernel->has_arg_metadata, uint64_t);
+
+  /***********************************************************************/
   unsigned char *start = buffer;
   for (i=0; i < kernel->num_args; i++)
     {
@@ -429,12 +448,12 @@ pocl_binary_serialize_kernel_to_buffer(cl_kernel kernel,
       BUFFER_STORE(ai->access_qualifier, cl_kernel_arg_access_qualifier);
       BUFFER_STORE(ai->address_qualifier, cl_kernel_arg_address_qualifier);
       BUFFER_STORE(ai->type_qualifier, cl_kernel_arg_type_qualifier);
-      BUFFER_STORE(ai->is_local, char);
-      BUFFER_STORE(ai->is_set, char);
       BUFFER_STORE(ai->type, uint32_t);
+      BUFFER_STORE (ai->type_size, uint32_t);
       BUFFER_STORE_STR(ai->name);
       BUFFER_STORE_STR(ai->type_name);
     }
+  /***********************************************************************/
 
   uint32_t arginfo_size = buffer - start;
 
@@ -520,11 +539,11 @@ deserialize_kernel_cachedir (char* basedir, unsigned char* buffer, size_t bytes)
    pocl_binary_deserialize()
  */
 static int
-pocl_binary_deserialize_kernel_from_buffer (unsigned char **buf,
+pocl_binary_deserialize_kernel_from_buffer (pocl_binary *b,
+                                            unsigned char **buf,
                                             pocl_binary_kernel *kernel,
-                                            const char* name_match,
-                                            size_t name_len,
-                                            char* basedir)
+                                            const char *name_match,
+                                            size_t name_len, char *basedir)
 {
   unsigned i;
   unsigned char *buffer = *buf;
@@ -557,10 +576,29 @@ pocl_binary_deserialize_kernel_from_buffer (unsigned char **buf,
                                       sizeof(struct pocl_argument));
       POCL_RETURN_ERROR_COND ((!kernel->dyn_arguments), CL_OUT_OF_HOST_MEMORY);
 
-      for (i=0; i < (kernel->num_args + kernel->num_locals); i++)
+      if (b->version < 7)
         {
-          BUFFER_READ (kernel->dyn_arguments[i].size, uint64_t);
-          kernel->dyn_arguments[i].value = NULL;
+          for (i = 0; i < kernel->num_args; i++)
+            {
+              BUFFER_READ (kernel->dyn_arguments[i].size, uint64_t);
+            }
+        }
+
+      for (i = 0; i < kernel->num_locals; i++)
+        {
+          BUFFER_READ (kernel->dyn_arguments[kernel->num_args + i].size,
+                       uint64_t);
+        }
+
+      if (b->version >= 7)
+        {
+          BUFFER_READ_STR2(kernel->attributes, kernel->sizeof_attributes);
+          BUFFER_READ(kernel->has_arg_metadata, uint64_t);
+        }
+      else
+        {
+          kernel->attributes = NULL;
+          kernel->has_arg_metadata = (-1);
         }
 
       kernel->arg_info = calloc (kernel->num_args, sizeof (struct pocl_argument_info));
@@ -572,17 +610,26 @@ pocl_binary_deserialize_kernel_from_buffer (unsigned char **buf,
           BUFFER_READ (ai->access_qualifier, cl_kernel_arg_access_qualifier);
           BUFFER_READ (ai->address_qualifier, cl_kernel_arg_address_qualifier);
           BUFFER_READ (ai->type_qualifier, cl_kernel_arg_type_qualifier);
-          BUFFER_READ (ai->is_local, char);
-          BUFFER_READ (ai->is_set, char);
+          if (b->version < 7)
+            {
+              char t1, t2;
+              BUFFER_READ (t1, char);
+              BUFFER_READ (t2, char);
+            }
+
           BUFFER_READ (ai->type, uint32_t);
+          if (b->version >= 7)
+            {
+              BUFFER_READ (ai->type_size, uint32_t);
+            }
           BUFFER_READ_STR (ai->name);
           BUFFER_READ_STR (ai->type_name);
         }
     }
   else
     {
-      buffer += ((kernel->num_args + kernel->num_locals) * sizeof (uint64_t));
-      buffer += kernel->arginfo_size;
+      /* skip the arg_info and all kernel metadata */
+      buffer = *buf + (kernel->struct_size - kernel->binaries_size);
       buffer =
         deserialize_kernel_cachedir (basedir, buffer, kernel->binaries_size);
     }
@@ -666,8 +713,9 @@ pocl_binary_deserialize(cl_program program, unsigned device_i)
   for (i = 0; i < b.num_kernels; i++)
     {
       pocl_cache_program_path (basedir, program, device_i);
-      if (pocl_binary_deserialize_kernel_from_buffer
-          (&buffer, &k, 0, 0, basedir) != CL_SUCCESS)
+      if (pocl_binary_deserialize_kernel_from_buffer (&b, &buffer, &k, 0, 0,
+                                                      basedir)
+          != CL_SUCCESS)
         goto ERROR;
       assert (buffer <= end_of_buffer);
     }
@@ -748,7 +796,8 @@ pocl_binary_get_kernel_metadata (unsigned char *binary, const char *kernel_name,
   for (j = 0; j < b.num_kernels; j++)
     {
       if (pocl_binary_deserialize_kernel_from_buffer (
-            &buffer, &k, kernel_name, name_len, NULL) == CL_SUCCESS)
+              &b, &buffer, &k, kernel_name, name_len, NULL)
+          == CL_SUCCESS)
         {
           found = 1;
           break;
@@ -761,6 +810,8 @@ pocl_binary_get_kernel_metadata (unsigned char *binary, const char *kernel_name,
   kernel->num_locals = k.num_locals;
   kernel->dyn_arguments = k.dyn_arguments;
   kernel->arg_info = k.arg_info;
+  kernel->attributes = k.attributes;
+  kernel->has_arg_metadata = k.has_arg_metadata;
   POCL_MEM_FREE (k.kernel_name);
 
   POCL_RETURN_ERROR_COND ((kernel->reqd_wg_size = calloc (OPENCL_MAX_DIMENSION, sizeof (size_t)))
