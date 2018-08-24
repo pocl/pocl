@@ -179,7 +179,16 @@ static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
           PRINT_DURATION (func, line, formatstring, a, b, "ms", msg);
         }
       else
+        {
+          if (stderr_is_a_tty)
+            formatstring = "      >>>  " POCL_COLOR_MAGENTA "     %3" PRIu64
+                           ".%09" PRIu64 " " POCL_COLOR_RESET " %s    %s\n";
+          else
+            formatstring = "      >>>       %3" PRIu64 ".%09"
+                           PRIu64 "  %s    %s\n";
+
           PRINT_DURATION (func, line, formatstring, sec, nsec, "s", msg);
+        }
 
     }
 

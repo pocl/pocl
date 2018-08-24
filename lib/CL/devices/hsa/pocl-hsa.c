@@ -1299,9 +1299,7 @@ pocl_hsa_join (cl_device_id device, cl_command_queue cq)
     {
       POCL_MSG_PRINT_INFO("pocl-hsa: device->join: last event (%u) in queue"
                           " exists, but is complete\n", event->id);
-      --event->pocl_refcount;
-      POCL_UNLOCK_OBJ (event);
-      return;
+      goto RETURN;
     }
 
   while (event->status > CL_COMPLETE)
@@ -1312,6 +1310,7 @@ pocl_hsa_join (cl_device_id device, cl_command_queue cq)
   POCL_MSG_PRINT_INFO("pocl-hsa: device->join on event %u finished"
                       " with status: %i\n", event->id, event->status);
 
+RETURN:
   assert (event->status <= CL_COMPLETE);
   POCL_UNLOCK_OBJ (event);
 
