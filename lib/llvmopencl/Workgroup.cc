@@ -142,7 +142,6 @@ namespace llvm {
               TypeBuilder<types::i<32>[3], xcompile>::get(Context),
               TypeBuilder<types::i<32>[3], xcompile>::get(Context),
               TypeBuilder<types::i<32>[3], xcompile>::get(Context),
-              TypeBuilder<types::i<32>[3], xcompile>::get(Context),
               TypeBuilder<types::i<8> *, xcompile>::get(Context),
               TypeBuilder<types::i<32> *, xcompile>::get(Context),
               TypeBuilder<types::i<32>, xcompile>::get(Context), NULL);
@@ -150,8 +149,6 @@ namespace llvm {
           SmallVector<Type *, 10> Elements;
           Elements.push_back(
             TypeBuilder<types::i<32>, xcompile>::get(Context));
-          Elements.push_back(
-            TypeBuilder<types::i<32>[3], xcompile>::get(Context));
           Elements.push_back(
             TypeBuilder<types::i<32>[3], xcompile>::get(Context));
           Elements.push_back(
@@ -249,7 +246,7 @@ Workgroup::runOnModule(Module &M)
       // For SPMD machines there is no need for a WG launcher, the device will
       // call/handle the single-WI kernel function directly.
       kernels[&OrigKernel] = L;
-    } if (currentPoclDevice->arg_buffer_launcher) {
+    } else if (currentPoclDevice->arg_buffer_launcher) {
       Function *WGLauncher =
         createArgBufferWorkgroupLauncher(M, L, OrigKernel.getName().str());
       createGridLauncher(M, L, WGLauncher, OrigKernel.getName().str());
@@ -328,14 +325,14 @@ static void addGEPs(llvm::Module &M,
 }
 
 static Value *addGEP1(llvm::Module &M, IRBuilder<> &builder, llvm::Argument *a,
-                      int size_t_width, int llvmtype, const char *name) {
+                      unsigned size_t_width, unsigned llvmtype, const char *name) {
 
   Value *ptr, *v = nullptr;
   GlobalVariable *gv;
 
   gv = M.getGlobalVariable(name);
 
-  if (gv != NULL) {
+  if (gv != nullptr) {
 #ifdef LLVM_OLDER_THAN_3_7
     ptr = builder.CreateStructGEP(a, llvmtype);
 #else
@@ -924,7 +921,7 @@ createDefaultWorkgroupLauncher(Module &M, Function *F) {
 
   Function *workgroup =
     dyn_cast<Function>(M.getOrInsertFunction(funcName + "_workgroup", ft));
-  assert(workgroup != NULL);
+  assert(workgroup != nullptr);
 
   builder.SetInsertPoint(BasicBlock::Create(M.getContext(), "", workgroup));
 
@@ -958,10 +955,14 @@ createDefaultWorkgroupLauncher(Module &M, Function *F) {
     ++i;
   }
 
-  arguments.push_back(++ai);
-  arguments.push_back(++ai);
-  arguments.push_back(++ai);
-  arguments.push_back(++ai);
+  ++ai;
+  arguments.push_back(&*ai);
+  ++ai;
+  arguments.push_back(&*ai);
+  ++ai;
+  arguments.push_back(&*ai);
+  ++ai;
+  arguments.push_back(&*ai);
 
   builder.CreateCall(F, ArrayRef<Value*>(arguments));
   builder.CreateRetVoid();
@@ -979,7 +980,13 @@ computeArgBufferOffsets(LLVMValueRef F, uint64_t *ArgBufferOffsets) {
   uint64_t Offset = 0;
   uint64_t ArgCount = LLVMCountParams(F);
   LLVMModuleRef M = LLVMGetGlobalParent(F);
+
+#ifdef LLVM_OLDER_THAN_3_9
+  const char *str = LLVMGetDataLayout(M);
+  LLVMTargetDataRef DataLayout = LLVMCreateTargetData(str);
+#else
   LLVMTargetDataRef DataLayout = LLVMGetModuleDataLayout(M);
+#endif
 
   // Compute the byte offsets of arguments in the arg buffer.
   for (size_t i = 0; i < ArgCount; i++) {
@@ -1000,7 +1007,7 @@ computeArgBufferOffsets(LLVMValueRef F, uint64_t *ArgBufferOffsets) {
 static LLVMValueRef
 createArgBufferLoad(LLVMBuilderRef Builder, LLVMValueRef ArgBufferPtr,
                     uint64_t *ArgBufferOffsets, LLVMValueRef F,
-                    int ParamIndex) {
+                    unsigned ParamIndex) {
 
   LLVMValueRef Param = LLVMGetParam(F, ParamIndex);
   LLVMTypeRef ParamType = LLVMTypeOf(Param);
@@ -1251,10 +1258,14 @@ createFastWorkgroupLauncher(Module &M, Function *F)
     arguments.push_back(value);
   }
 
-  arguments.push_back(++ai);
-  arguments.push_back(++ai);
-  arguments.push_back(++ai);
-  arguments.push_back(++ai);
+  ++ai;
+  arguments.push_back(&*ai);
+  ++ai;
+  arguments.push_back(&*ai);
+  ++ai;
+  arguments.push_back(&*ai);
+  ++ai;
+  arguments.push_back(&*ai);
 
   builder.CreateCall(F, ArrayRef<Value*>(arguments));
   builder.CreateRetVoid();

@@ -4,7 +4,7 @@
 #cmakedefine BUILD_BASIC
 #cmakedefine BUILD_PTHREAD
 
-#cmakedefine ADD_HOST_CPU_DEVICES
+#cmakedefine ENABLE_HOST_CPU_DEVICES
 
 #define BUILDDIR "@BUILDDIR@"
 

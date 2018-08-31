@@ -139,6 +139,8 @@ native_sqrt.cl
 native_tan.cl
 nextafter.cl
 normalize.cl
+pocl_spawn_wg.c
+pocl_run_all_wgs.c
 popcount.cl
 pow.cl
 pown.cl
@@ -221,6 +223,8 @@ min_i.cl
 mul24.cl
 mul_hi.cl
 nextafter.cl
+pocl_spawn_wg.c
+pocl_run_all_wgs.c
 popcount.cl
 prefetch.cl
 printf.c
@@ -449,6 +453,8 @@ native_powr.cl
 native_recip.cl
 native_rsqrt.cl
 native_sqrt.cl
+pocl_spawn_wg.c
+pocl_run_all_wgs.c
 popcount.cl
 prefetch.cl
 printf.c
@@ -578,15 +584,6 @@ if(ENABLE_POCL_FLOAT_CONVERSION)
   list(APPEND SOURCES_WITH_VML "errol/errol.c")
   list(APPEND SOURCES_WITH_SLEEF "errol/errol.c")
 endif()
-
-list(APPEND SOURCES_WITH_VML "pocl_spawn_wg.c")
-list(APPEND SOURCES_WITH_VML "pocl_run_all_wgs.c")
-
-list(APPEND SOURCES_WITHOUT_VML "pocl_spawn_wg.c")
-list(APPEND SOURCES_WITHOUT_VML "pocl_run_all_wgs.c")
-
-list(APPEND SOURCES_WITH_SLEEF "pocl_spawn_wg.c")
-list(APPEND SOURCES_WITH_SLEEF "pocl_run_all_wgs.c")
 
 set(SLEEF_CL_KERNEL_DEPEND_HEADERS "")
 foreach(HEADER helperadvsimd.h   helperavx2.h     helperavx.h     helperpurec.h  helpersse2.h    misc.h helperavx2_128.h  helperavx512f.h  helperneon32.h  helpers.h      helpervecext.h)

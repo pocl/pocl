@@ -570,34 +570,24 @@ void pocl_llvm_update_binaries(cl_program program) {
 static void initPassManagerForCodeGen(PassManager& PM, cl_device_id Device) {
 
   llvm::Triple Triple(Device->llvm_target_triplet);
-  llvm::TargetMachine *Target = GetTargetMachine(Device, Triple);
 
-#ifdef LLVM_OLDER_THAN_3_7
-  llvm::TargetLibraryInfo *TLI = new TargetLibraryInfo(Triple);
-  PM.add(TLI);
-#else
   llvm::TargetLibraryInfoWrapperPass *TLIPass =
       new TargetLibraryInfoWrapperPass(Triple);
   PM.add(TLIPass);
-#endif
-#ifdef LLVM_OLDER_THAN_3_7
-  if (Target != NULL)
-    Target->addAnalysisPasses(PM);
-#endif
 }
 
 /* Run LLVM codegen on input file (parallel-optimized).
  * modp = llvm::Module* of parallel.bc
  * Output native object file (<kernel>.so.o). */
 int pocl_llvm_codegen(cl_device_id Device, void *Modp, char **Output,
-                      size_t *OutputSize) {
+                      uint64_t *OutputSize) {
 
-  PoclCompilerMutexGuard LockHolder(NULL);
+  PoclCompilerMutexGuard LockHolder(nullptr);
   InitializeLLVM();
 
   llvm::Module *Input = (llvm::Module *)Modp;
   assert(Input);
-  *Output = NULL;
+  *Output = nullptr;
 
   PassManager PMObj;
   initPassManagerForCodeGen(PMObj, Device);
@@ -608,25 +598,23 @@ int pocl_llvm_codegen(cl_device_id Device, void *Modp, char **Output,
   // First try direct object code generation from LLVM, if supported by the
   // LLVM backend for the target.
   bool LLVMGeneratesObjectFiles = true;
-#ifdef LLVM_OLDER_THAN_3_7
-  std::string Data;
-  llvm::raw_string_ostream SOS(Data);
-  llvm::MCContext *MCC;
-  if (Target->addPassesToEmitMC(PMObj, MCC, SOS))
-    LLVMGeneratesObjectFiles = false;
-#else
+
   SmallVector<char, 4096> Data;
   llvm::raw_svector_ostream SOS(Data);
+  bool cannotEmitFile;
+
 #ifdef LLVM_OLDER_THAN_7_0
-  if (Target->addPassesToEmitFile(PMObj, SOS,
-                                  TargetMachine::CGFT_ObjectFile))
-    LLVMGeneratesObjectFiles = false;
+  cannotEmitFile = Target->addPassesToEmitFile(PMObj, SOS,
+                                  TargetMachine::CGFT_ObjectFile);
 #else
-  if (Target->addPassesToEmitFile(PMObj, SOS, nullptr,
-                                  TargetMachine::CGFT_ObjectFile))
-    LLVMGeneratesObjectFiles = false;
+  cannotEmitFile = Target->addPassesToEmitFile(PMObj, SOS, nullptr,
+                                  TargetMachine::CGFT_ObjectFile);
 #endif
 
+#ifdef LLVM_OLDER_THAN_5_0
+  LLVMGeneratesObjectFiles = true;
+#else
+  LLVMGeneratesObjectFiles = !cannotEmitFile;
 #endif
 
   if (LLVMGeneratesObjectFiles) {
@@ -640,6 +628,10 @@ int pocl_llvm_codegen(cl_device_id Device, void *Modp, char **Output,
     memcpy(*Output, Cstr, S);
     return 0;
   }
+
+#ifdef LLVM_OLDER_THAN_5_0
+  return 0;
+#else
 
   PassManager PMAsm;
   initPassManagerForCodeGen(PMAsm, Device);
@@ -679,7 +671,7 @@ int pocl_llvm_codegen(cl_device_id Device, void *Modp, char **Output,
                       AsmStr.size(), nullptr);
   pocl_mk_tempname(ObjFileName, "/tmp/pocl-obj", ".o", nullptr);
 
-  const char *Args[] = {CLANG, AsmFileName, "-c", "-o", ObjFileName, NULL};
+  const char *Args[] = {CLANG, AsmFileName, "-c", "-o", ObjFileName, nullptr};
   int Res = pocl_invoke_clang(Device, Args);
 
   if (Res == 0) {
@@ -690,5 +682,7 @@ int pocl_llvm_codegen(cl_device_id Device, void *Modp, char **Output,
   pocl_remove(AsmFileName);
   pocl_remove(ObjFileName);
   return Res;
+
+#endif
 }
 /* vim: set ts=4 expandtab: */

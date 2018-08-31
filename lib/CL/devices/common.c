@@ -90,7 +90,7 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
   char tmp_objfile[POCL_FILENAME_LENGTH];
 
   char *objfile = NULL;
-  size_t objfile_size = 0;
+  uint64_t objfile_size = 0;
 
   cl_program program = kernel->program;
 
@@ -190,6 +190,22 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
 
   POCL_MSG_PRINT_INFO ("Linking final module\n");
 
+#ifdef LLVM_OLDER_THAN_5_0
+  /* with older LLVMs, link by invoking ld or clang */
+  char *const args1[]
+#if defined(ENABLE_POCL_FLOAT_CONVERSION) || defined(CLANG_HAS_RTLIB)
+      = { CLANG,
+#else
+      = { LINK_COMMAND,
+#endif
+          "-o",
+          tmp_module,
+          tmp_objfile,
+          HOST_LD_FLAGS_ARRAY,
+          NULL };
+  error = pocl_run_command (args1);
+
+#else
   /* Link through Clang driver interface who knows the correct toolchains
      for all of its targets.  */
   const char *cmd_line[64] =
@@ -199,6 +215,7 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
   while ((*pos++ = *device_ld_arg++)) {}
 
   error = pocl_invoke_clang (device, cmd_line);
+#endif
 
   if (error)
     {

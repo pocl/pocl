@@ -1058,7 +1058,6 @@ if(ENABLE_HOST_CPU_DEVICES)
   set(OCL_KERNEL_TARGET "${LLC_TRIPLE}") #The kernel target triplet.
   set(OCL_KERNEL_TARGET_CPU "${LLC_HOST_CPU}") #The kernel target CPU variant.
   set(BUILD_PTHREAD 1)
-  set(ADD_HOST_CPU_DEVICES 1)
 endif()
 
 if(DEFINED EXTRA_OCL_TARGETS)
@@ -1174,7 +1173,7 @@ endif()
 
 if(ENABLE_HSA)
   set(OCL_DRIVERS "${OCL_DRIVERS} hsa")
-  if (ENABLE_HSAIL)
+  if (HSAIL_ENABLED)
     set(OCL_TARGETS "${OCL_TARGETS} hsail64")
   endif()
   # this is for config.h

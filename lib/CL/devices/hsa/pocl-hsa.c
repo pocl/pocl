@@ -412,8 +412,7 @@ supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS] =
     .native_vector_width_double = 16,
     .final_linkage_flags = default_native_final_linkage_flags,
     .device_aux_functions =
-    (HSAIL_ENABLED ? NULL : phsa_native_device_aux_funcs),
-  }
+    (HSAIL_ENABLED ? NULL : phsa_native_device_aux_funcs)
   }
 };
 
@@ -1076,7 +1075,8 @@ pocl_hsa_find_mem_cached_kernel (pocl_hsa_device_data_t *d,
 				 _cl_command_node *cmd)
 {
   pocl_hsa_kernel_cache_t *cached_data = NULL;
-  for (int i = 0; i < HSA_KERNEL_CACHE_SIZE; i++)
+  size_t i;
+  for (i = 0; i < HSA_KERNEL_CACHE_SIZE; i++)
     {
       if (d->kernel_cache[i].kernel != cmd->command.run.kernel)
 	continue;

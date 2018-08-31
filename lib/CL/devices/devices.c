@@ -76,7 +76,7 @@ typedef void (*init_device_ops)(struct pocl_device_ops*);
 
 /* All init function for device operations available to pocl */
 static init_device_ops pocl_devices_init_ops[] = {
-#if defined(ADD_HOST_CPU_DEVICES)
+#ifdef ENABLE_HOST_CPU_DEVICES
   pocl_pthread_init_device_ops,
   pocl_basic_init_device_ops,
 #endif

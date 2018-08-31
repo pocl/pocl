@@ -124,7 +124,7 @@ unsigned pocl_llvm_get_kernel_names(cl_program program, char **knames,
  * device, into outfile.
  */
 int pocl_llvm_codegen(cl_device_id device, void *modp,
-                      char **output, size_t *output_size);
+                      char **output, uint64_t *output_size);
 
 /* Parse program file and populate program's llvm_irs */
 int
@@ -139,7 +139,9 @@ int pocl_llvm_link_program(cl_program program,
                            size_t *cur_device_binary_sizes,
                            void **cur_llvm_irs, int create_library, int spir);
 
+#ifndef LLVM_OLDER_THAN_5_0
 int pocl_invoke_clang(cl_device_id Device, const char** Args);
+#endif
 
 #ifdef __GNUC__
 #pragma GCC visibility pop
