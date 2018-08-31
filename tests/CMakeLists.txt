@@ -25,11 +25,16 @@
 
 add_test("pocl_version_check" "runtime/test_version")
 
-set_tests_properties("pocl_version_check"
-  PROPERTIES
-  ENVIRONMENT "POCL_DEVICES=basic"
-  PASS_REGULAR_EXPRESSION "basic"
-  LABELS "internal;cuda")
+if(ENABLE_HOST_CPU_DEVICES)
+    # If basic OpenCL device is not included, we assume the device is chosen using
+    # the POCL_DEVICES env. Otherwise, use the basic dev to check that we are using
+    # pocl.
+    set_tests_properties("pocl_version_check"
+      PROPERTIES
+      ENVIRONMENT "POCL_DEVICES=basic"
+      PASS_REGULAR_EXPRESSION "basic"
+      LABELS "internal;cuda")
+endif()
 
 #######################################################################
 
