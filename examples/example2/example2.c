@@ -72,7 +72,6 @@ main (int argc, char **argv)
       input[i * WIDTH + j] = (cl_float)drand48();
     }
 
-  queue = clCreateCommandQueue (context, device, 0, NULL);
   CHECK_CL_ERROR2 (err);
 
   memobjs[0] = clCreateBuffer(context,

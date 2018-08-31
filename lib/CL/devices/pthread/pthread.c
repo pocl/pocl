@@ -184,13 +184,14 @@ static cl_device_partition_property pthread_partition_properties[2]
 
 #define FALLBACK_MAX_THREAD_COUNT 8
 
+char scheduler_initialized = 0;
+
 cl_int
 pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 {
   struct data *d;
   cl_int ret = CL_SUCCESS;
   int err;
-  static char scheduler_initialized = 0;
 
   d = (struct data *) calloc (1, sizeof (struct data));
   if (d == NULL)
@@ -272,7 +273,11 @@ pocl_pthread_uninit (unsigned j, cl_device_id device)
   d->mem_regions->mem_regions = NULL;
 #endif
 
-  pthread_scheduler_uninit ();
+  if (scheduler_initialized)
+    {
+      pthread_scheduler_uninit ();
+      scheduler_initialized = 0;
+    }
 
   POCL_MEM_FREE(d);
   device->data = NULL;
@@ -294,7 +299,11 @@ pocl_pthread_reinit (unsigned j, cl_device_id device)
   d->current_dlhandle = 0;
   device->data = d;
 
-  pthread_scheduler_init (device);
+  if (!scheduler_initialized)
+    {
+      pthread_scheduler_init (device);
+      scheduler_initialized = 1;
+    }
 
   return CL_SUCCESS;
 }

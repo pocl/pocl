@@ -111,7 +111,7 @@ int pocl_device_get_env_count(const char *dev_type)
   const char *dev_env = getenv(POCL_DEVICES_ENV);
   char *ptr, *saveptr = NULL, *tofree, *token;
   unsigned int dev_count = 0;
-  if (dev_env == NULL) 
+  if (dev_env == NULL)
     {
       return -1;
     }
@@ -196,20 +196,6 @@ str_toupper(char *out, const char *in)
   for (i = 0; in[i] != '\0'; i++)
     out[i] = toupper(in[i]);
   out[i] = '\0';
-}
-
-static inline void
-pocl_string_to_dirname(char *str)
-{
-  char *s_ptr;
-  if (!str) return;
-
-  // Replace special characters with '_'
-  for (s_ptr = str; (*s_ptr); s_ptr++)
-    {
-      if (!isalnum(*s_ptr))
-        *s_ptr = '_';
-    }
 }
 
 /* This ugly hack is required because:
@@ -453,7 +439,6 @@ pocl_init_devices ()
   unsigned i, j, dev_index;
   char env_name[1024];
   char dev_name[MAX_DEV_NAME_LEN] = { 0 };
-  static unsigned int device_count[POCL_NUM_DEVICE_TYPES];
 
   /* Set a global debug flag, so we don't have to call pocl_get_bool_option
    * everytime we use the debug macros */
