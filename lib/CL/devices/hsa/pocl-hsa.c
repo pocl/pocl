@@ -911,19 +911,29 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
       struct pocl_argument *al = &(cmd->command.run.arguments[i]);
       if (cmd->command.run.kernel->arg_info[i].is_local)
         {
-#ifndef HSAIL_ENABLED
-          CHECK_AND_ALIGN_SPACE(sizeof (uint32_t));
-          memcpy (write_pos, total_group_size, sizeof (uint32_t));
-          *total_group_size += (uint32_t)al->size;
-          write_pos += sizeof (uint32_t);
-#else
-          CHECK_AND_ALIGN_SPACE(sizeof (uint64_t));
+	  if (HSAIL_ENABLED)
+	    {
+	      CHECK_AND_ALIGN_SPACE(sizeof (uint32_t));
+	      memcpy (write_pos, total_group_size, sizeof (uint32_t));
+	      *total_group_size += (uint32_t)al->size;
+	      write_pos += sizeof (uint32_t);
+	    }
+	  else
+	    {
+	      CHECK_AND_ALIGN_SPACE(sizeof (uint64_t));
 
-	  void *ptr = pocl_hsa_malloc_account (d->device->global_memory,
-					       al->size, d->global_region);
-	  memcpy (write_pos, &ptr, sizeof (void*));
-	  /* TODO: Free the buffer. */
-#endif
+	      /* FIXME: We need to pass a flat pointer and there is no API to
+		 convert from local to flat, thus need to allocate the local
+		 from the global region. In fact the device runtime should
+		 allocate this to enable multiple work-group parallelization
+		 with different local bases. */
+	      uint64_t ptr =
+		(uint64_t)pocl_hsa_malloc_account
+		(d->device->global_memory, al->size, d->global_region);
+	      memcpy (write_pos, &ptr, sizeof (ptr));
+	      write_pos += sizeof (ptr);
+	      /* TODO: Free the buffer. */
+	    }
         }
       else if (cmd->command.run.kernel->arg_info[i].type
                == POCL_ARG_TYPE_POINTER)
