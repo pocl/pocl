@@ -121,6 +121,13 @@ typedef struct pocl_hsa_event_data_s {
 /* for caching kernel dispatch data, binaries etc */
 typedef struct pocl_hsa_kernel_cache_s {
   cl_kernel kernel;
+
+  /* Use tmp_dir and kernel_name as the cache key to uniquely identify a
+     built kernel. cl_kernel object address cannot be used one as they can be
+     freed and malloc can return the same one for new kernels.  */
+  char *tmp_dir;
+  char *kernel_name;
+
   hsa_executable_t hsa_exe;
   uint64_t code_handle;
 
@@ -1063,7 +1070,10 @@ pocl_hsa_find_mem_cached_kernel (pocl_hsa_device_data_t *d,
   size_t i;
   for (i = 0; i < HSA_KERNEL_CACHE_SIZE; i++)
     {
-      if (d->kernel_cache[i].kernel != cmd->command.run.kernel)
+      if (d->kernel_cache[i].kernel == NULL
+	  || strcmp (d->kernel_cache[i].tmp_dir, cmd->command.run.tmp_dir) != 0
+	  || strcmp (d->kernel_cache[i].kernel_name,
+		     cmd->command.run.kernel->name) != 0)
 	continue;
 
       if (d->device->spmd)
@@ -1083,6 +1093,7 @@ pocl_hsa_compile_kernel_native (_cl_command_node *cmd, cl_kernel kernel,
 {
   pocl_hsa_device_data_t *d = (pocl_hsa_device_data_t*)device->data;
 
+  POCL_LOCK (d->pocl_hsa_compilation_lock);
   assert (cmd->command.run.kernel == kernel);
   char *binary_fn = pocl_check_kernel_disk_cache (cmd);
   if (pocl_hsa_find_mem_cached_kernel (d, cmd) != NULL)
@@ -1154,10 +1165,12 @@ pocl_hsa_compile_kernel_native (_cl_command_node *cmd, cl_kernel kernel,
   if (i < HSA_KERNEL_CACHE_SIZE)
     {
       d->kernel_cache[i].kernel = kernel;
+      d->kernel_cache[i].kernel_name = strdup (kernel->name);
+      d->kernel_cache[i].tmp_dir = strdup (cmd->command.run.tmp_dir);
       d->kernel_cache[i].local_x = cmd->command.run.local_x;
       d->kernel_cache[i].local_y = cmd->command.run.local_y;
       d->kernel_cache[i].local_z = cmd->command.run.local_z;
-      d->kernel_cache[i].hsa_exe = exe;
+      d->kernel_cache[i].hsa_exe.handle = exe.handle;
       d->kernel_cache_lastptr++;
     }
   else
@@ -1182,7 +1195,7 @@ pocl_hsa_compile_kernel_native (_cl_command_node *cmd, cl_kernel kernel,
   hsa_symbol_kind_t symtype;
   HSA_CHECK(hsa_executable_symbol_get_info
     (kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_TYPE, &symtype));
-  if(symtype != HSA_SYMBOL_KIND_KERNEL)
+  if (symtype != HSA_SYMBOL_KIND_KERNEL)
     POCL_ABORT ("pocl-hsa: the kernel function symbol resolves "
                 "to something else than a function\n");
 
@@ -1287,6 +1300,8 @@ pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
   if (i < HSA_KERNEL_CACHE_SIZE)
     {
       d->kernel_cache[i].kernel = kernel;
+      d->kernel_cache[i].kernel_name = strdup (kernel->name);
+      d->kernel_cache[i].tmp_dir = strdup (cmd->command.run.tmp_dir);
       d->kernel_cache[i].hsa_exe.handle = final_obj.handle;
       d->kernel_cache_lastptr++;
     }
@@ -1357,7 +1372,11 @@ pocl_hsa_uninit (unsigned j, cl_device_id device)
   unsigned i;
   for (i = 0; i < HSA_KERNEL_CACHE_SIZE; i++)
     if (d->kernel_cache[i].kernel)
-      HSA_CHECK(hsa_executable_destroy(d->kernel_cache[i].hsa_exe));
+      {
+	HSA_CHECK(hsa_executable_destroy(d->kernel_cache[i].hsa_exe));
+	free (d->kernel_cache[i].kernel_name);
+	free (d->kernel_cache[i].tmp_dir);
+      }
 
   // TODO: destroy the executables that didn't fit to the kernel
   // cache. Also code objects are not destroyed at the moment.
