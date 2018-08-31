@@ -64,12 +64,14 @@ else()
 endif()
 
 
-find_path(HSA_INCLUDES "hsa.h" PATHS "${HSA_INCLUDEDIR}")
+find_path(HSA_INCLUDES "hsa.h" PATHS "${HSA_INCLUDEDIR}" NO_DEFAULT_PATH)
+find_path(HSA_INCLUDES "hsa.h")
 if(NOT HSA_INCLUDES)
   message(FATAL_ERROR "hsa.h header not found (use -DHSA_RUNTIME_DIR=... to specify path to HSA runtime)")
 endif()
 
-find_library(HSALIB NAMES "hsa-runtime64" "hsa-runtime" "phsa-runtime64" PATHS "${HSA_LIBDIR}")
+find_library(HSALIB NAMES "hsa-runtime64" "hsa-runtime" "phsa-runtime64" PATHS "${HSA_LIBDIR}" NO_DEFAULT_PATH)
+find_library(HSALIB NAMES "hsa-runtime64" "hsa-runtime" "phsa-runtime64")
 if(NOT HSALIB)
   message(FATAL_ERROR "libhsa-runtime not found (use -DWITH_HSA_RUNTIME_DIR=... to specify path to HSA runtime) ${HSA_LIBDIR}")
 endif()
