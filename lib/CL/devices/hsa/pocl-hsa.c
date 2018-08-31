@@ -720,8 +720,7 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
 
   HSA_CHECK(hsa_agent_get_info(d->agent, HSA_AGENT_INFO_PROFILE,
                                &d->agent_profile));
-  dev->profile = ((d->agent_profile == HSA_PROFILE_FULL) ? "FULL_PROFILE"
-                                                         : "EMBEDDED_PROFILE");
+  dev->profile = "FULL_PROFILE";
 
   uint64_t hsa_freq;
   HSA_CHECK(hsa_system_get_info(HSA_SYSTEM_INFO_TIMESTAMP_FREQUENCY,
@@ -786,11 +785,21 @@ pocl_hsa_malloc (cl_device_id device, cl_mem_flags flags, size_t size,
 
   if (flags & CL_MEM_USE_HOST_PTR)
     {
-      POCL_MSG_PRINT_INFO("HSA: hsa_memory_register (CL_MEM_USE_HOST_PTR)\n");
       assert(host_ptr != NULL);
-      // TODO bookkeeping of mem registrations
-      hsa_memory_register(host_ptr, size);
-      return host_ptr;
+      if (d->agent_profile == HSA_PROFILE_FULL)
+	{
+	  POCL_MSG_PRINT_INFO
+	    ("HSA: CL_MEM_USE_HOST_PTR FULL profile: hsa_memory_register()\n");
+	  /* TODO bookkeeping of mem registrations. */
+	  hsa_memory_register(host_ptr, size);
+	  return host_ptr;
+	}
+      else
+	{
+	  POCL_MSG_PRINT_INFO
+	    ("HSA: CL_MEM_USE_HOST_PTR BASE profile: cached device copy\n");
+	  return pocl_hsa_malloc_account(mem, size, d->global_region);
+	}
     }
 
   if (flags & CL_MEM_COPY_HOST_PTR)
@@ -956,12 +965,23 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
           else
             {
               cl_mem m = *(cl_mem *)al->value;
-              uint64_t temp = 0;
+              uint64_t dev_ptr = 0;
               if (m->device_ptrs)
-                temp = (uint64_t)m->device_ptrs[cmd->device->dev_id].mem_ptr;
+		{
+		  dev_ptr = (uint64_t)m->device_ptrs[cmd->device->dev_id].mem_ptr;
+		  if (m->flags & CL_MEM_USE_HOST_PTR &&
+		      d->agent_profile == HSA_PROFILE_BASE)
+		    {
+		      POCL_MSG_PRINT_INFO
+			("HSA: Copy HOST_PTR allocated %lu byte buffer "
+			 "from %p to %p due to having a BASE profile agent.\n",
+			 m->size, m->mem_host_ptr, dev_ptr);
+		      hsa_memory_copy((void*)dev_ptr, m->mem_host_ptr, m->size);
+		    }
+		}
               else
-                temp = (uint64_t)m->mem_host_ptr;
-              memcpy (write_pos, &temp, sizeof(uint64_t));
+		dev_ptr = (uint64_t)m->mem_host_ptr;
+              memcpy (write_pos, &dev_ptr, sizeof(uint64_t));
             }
           write_pos += sizeof(uint64_t);
         }
