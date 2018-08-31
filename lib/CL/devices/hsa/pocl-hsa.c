@@ -848,8 +848,8 @@ pocl_hsa_alloc_mem_obj(cl_device_id device, cl_mem mem_obj, void* host_ptr)
   cl_mem_flags flags = mem_obj->flags;
   unsigned i;
 
-  /* check if some driver has already allocated memory for this mem_obj 
-     in our global address space, and use that*/
+  /* Check if some driver has already allocated memory for this mem_obj
+     in our global address space, and use that. */
   for (i = 0; i < mem_obj->context->num_devices; ++i)
     {
       if (!mem_obj->device_ptrs[i].available)
@@ -860,20 +860,20 @@ pocl_hsa_alloc_mem_obj(cl_device_id device, cl_mem mem_obj, void* host_ptr)
         {
           mem_obj->device_ptrs[device->dev_id].mem_ptr =
             mem_obj->device_ptrs[i].mem_ptr;
-          hsa_memory_register(mem_obj->device_ptrs[device->dev_id].mem_ptr,
-                              mem_obj->size);
+          hsa_memory_register (mem_obj->device_ptrs[device->dev_id].mem_ptr,
+			       mem_obj->size);
           POCL_MSG_PRINT_INFO ("HSA: alloc_mem_obj, use already"
                                " allocated memory\n");
           return CL_SUCCESS;
         }
     }
 
-  /* memory for this global memory is not yet allocated -> do it */
-  b = pocl_hsa_malloc(device, flags, mem_obj->size, host_ptr);
+  /* Memory for this global memory is not yet allocated -> we'll allocate it. */
+  b = pocl_hsa_malloc (device, flags, mem_obj->size, host_ptr);
   if (b == NULL)
     return CL_MEM_OBJECT_ALLOCATION_FAILURE;
 
-  /* take ownership if not USE_HOST_PTR */
+  /* Take ownership if not USE_HOST_PTR. */
   if (~flags & CL_MEM_USE_HOST_PTR)
     mem_obj->shared_mem_allocation_owner = device;
 
@@ -957,21 +957,6 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
               memcpy (write_pos, &temp, sizeof(uint64_t));
             }
           write_pos += sizeof(uint64_t);
-#if 0
-          /* TODO: It's legal to pass a NULL pointer to clSetKernelArguments.
-             In that case we must pass the same NULL forward to the kernel.
-             Otherwise, the user must have created a buffer with per device
-             pointers stored in the cl_mem. */
-          if (al->value == NULL)
-            {
-              arguments[i] = malloc (sizeof (void *));
-              *(void **)arguments[i] = NULL;
-            }
-          else
-            arguments[i] =
-              &((*(cl_mem *) (al->value))->device_ptrs[cmd->device->dev_id]
-                .mem_ptr);
-#endif
         }
       else if (cmd->command.run.kernel->arg_info[i].type
                == POCL_ARG_TYPE_IMAGE)
@@ -1296,7 +1281,7 @@ pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
 
   HSA_CHECK(hsa_ext_program_destroy(hsa_program));
 
-  free(brig_blob);
+  free (brig_blob);
 
   i = d->kernel_cache_lastptr;
   if (i < HSA_KERNEL_CACHE_SIZE)
@@ -1637,7 +1622,7 @@ static hsa_signal_condition_t less_than_sigcond_array[EVENT_LIST_SIZE+1];
 static int signal_array_initialized = 0;
 
 static void
-pocl_hsa_launch(pocl_hsa_device_data_t *d, cl_event event)
+pocl_hsa_launch (pocl_hsa_device_data_t *d, cl_event event)
 {
   POCL_LOCK_OBJ (event);
   _cl_command_node *cmd = event->command;
@@ -1803,14 +1788,14 @@ pocl_hsa_ndrange_event_finished (pocl_hsa_device_data_t *d, size_t i)
 }
 
 static void
-check_running_signals(pocl_hsa_device_data_t *d)
+check_running_signals (pocl_hsa_device_data_t *d)
 {
   unsigned i;
-  pocl_hsa_device_pthread_data_t* dd = &d->driver_data;
+  pocl_hsa_device_pthread_data_t *dd = &d->driver_data;
   for (i = 0; i < dd->running_list_size; i++)
     {
-      if (hsa_signal_load_acquire(dd->running_signals[i]) < 1)
-        pocl_hsa_ndrange_event_finished(d, i);
+      if (hsa_signal_load_acquire (dd->running_signals[i]) < 1)
+        pocl_hsa_ndrange_event_finished (d, i);
     }
 }
 
@@ -1823,28 +1808,28 @@ static int pocl_hsa_run_ready_commands(pocl_hsa_device_data_t *d)
   while(d->ready_list_size)
     {
       cl_event e = d->ready_list[0];
-      PN_REMOVE(d->ready_list, 0);
-      PTHREAD_CHECK(pthread_mutex_unlock(&d->list_mutex));
+      PN_REMOVE (d->ready_list, 0);
+      PTHREAD_CHECK (pthread_mutex_unlock(&d->list_mutex));
       if (e->command->type == CL_COMMAND_NDRANGE_KERNEL)
         {
           d->device->ops->compile_kernel (e->command,
 					  e->command->command.run.kernel,
 					  e->queue->device);
-          pocl_hsa_launch(d, e);
+          pocl_hsa_launch (d, e);
           enqueued_ndrange = 1;
-          POCL_MSG_PRINT_INFO("NDrange event %u launched, remove"
-                              " from readylist\n", e->id);
+          POCL_MSG_PRINT_INFO ("NDrange event %u launched, remove"
+                               " from readylist\n", e->id);
         }
       else
         {
-          POCL_MSG_PRINT_INFO("running non-NDrange event %u,"
-                              " remove from readylist\n", e->id);
-          pocl_exec_command(e->command);
+          POCL_MSG_PRINT_INFO ("running non-NDrange event %u,"
+                               " remove from readylist\n", e->id);
+          pocl_exec_command (e->command);
         }
-      check_running_signals(d);
-      PTHREAD_CHECK(pthread_mutex_lock(&d->list_mutex));
+      check_running_signals (d);
+      PTHREAD_CHECK (pthread_mutex_lock(&d->list_mutex));
     }
-  PTHREAD_CHECK(pthread_mutex_unlock(&d->list_mutex));
+  PTHREAD_CHECK (pthread_mutex_unlock(&d->list_mutex));
   return enqueued_ndrange;
 }
 
