@@ -300,3 +300,16 @@ if(LLVM_3_7)
   "kernel/test_printf"
     PROPERTIES WILL_FAIL 1)
 endif()
+
+set_property(TEST
+  "kernel/test_shuffle_char"
+  "kernel/test_shuffle_short"
+  "kernel/test_shuffle_ushort"
+  "kernel/test_shuffle_int"
+  "kernel/test_shuffle_uint"
+  "kernel/test_shuffle_float"
+  "kernel/test_shuffle_long"
+  "kernel/test_shuffle_ulong"
+  "kernel/test_shuffle_double"
+  "kernel/test_local_struct_array"
+  APPEND PROPERTY LABELS "hsa-native")

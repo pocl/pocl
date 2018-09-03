@@ -45,5 +45,5 @@ set_tests_properties(
     COST 3.0
     PASS_REGULAR_EXPRESSION "OK\n"
     PROCESSORS 1
-    LABELS "internal;cuda"
+    LABELS "internal;cuda;hsa-native"
     DEPENDS "pocl_version_check")

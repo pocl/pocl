@@ -158,3 +158,25 @@ if(LLVM_OLDER_THAN_4_0)
   set_tests_properties("workgroup/issue_548_convergent_propagation_LOOPS"
     PROPERTIES WILL_FAIL 1)
 endif()
+
+set_property(TEST
+  "workgroup/unconditional_barriers_REPL"
+  "workgroup/unbarriered_for_loops_REPL"
+  "workgroup/barriered_for_loops_REPL"
+  "workgroup/conditional_barrier_REPL"
+  "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier_REPL"
+  "workgroup/forcing_horizontal_parallelization_to_some_outer_loops_REPL"
+  "workgroup/loop_with_two_paths_to_the_latch_REPL"
+  "workgroup/b_loop_with_two_latches_REPL"
+  "workgroup/workgroup_sizes_work_items_get_wrong_ids_REPL"
+  "workgroup/unconditional_barriers_LOOPS"
+  "workgroup/unbarriered_for_loops_LOOPS"
+  "workgroup/barriered_for_loops_LOOPS"
+  "workgroup/conditional_barrier_LOOPS"
+  "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier_LOOPS"
+  "workgroup/forcing_horizontal_parallelization_to_some_outer_loops_LOOPS"
+  "workgroup/loop_with_two_paths_to_the_latch_LOOPS"
+  "workgroup/b_loop_with_two_latches_LOOPS"
+  "workgroup/workgroup_sizes_work_items_get_wrong_ids_LOOPS"
+  "workgroup/issue_548_convergent_propagation_LOOPS"
+  APPEND PROPERTY LABELS "hsa-native")

@@ -150,3 +150,16 @@ set_property(TEST
   "runtime/clSetMemObjectDestructorCallback"
   "runtime/test_enqueue_kernel_from_binary"
   APPEND PROPERTY LABELS "cuda")
+
+set_property(TEST
+  "runtime/clEnqueueNativeKernel"
+  "runtime/clGetEventInfo"
+  "runtime/clCreateProgramWithBinary"
+  "runtime/test_event_cycle"
+  "runtime/test_link_error"
+  "runtime/test_read-copy-write-buffer"
+  "runtime/clCreateKernel"
+  "runtime/test_enqueue_kernel_from_binary"
+  "runtime/test_user_event"
+  "runtime/clSetMemObjectDestructorCallback"
+  APPEND PROPERTY LABELS "hsa-native")

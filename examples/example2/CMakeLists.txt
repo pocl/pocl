@@ -47,3 +47,9 @@ set_tests_properties( "examples/example2" ${SPIREX}
     ENVIRONMENT "POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE.adf"
     LABELS "internal;hsa;tce;cuda"
     DEPENDS "pocl_version_check")
+
+set_tests_properties( "examples/example2"
+  PROPERTIES
+    LABELS "hsa-native"
+    DEPENDS "pocl_version_check")
+
