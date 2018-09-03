@@ -173,8 +173,8 @@ void pthread_scheduler_wait_cq (cl_command_queue cq)
         }
       POCL_UNLOCK_OBJ (cq);
 
-      /* pocl_cond_timedwait() is a workaround, the pthread driver sometimes
-       * gets stuck in the loop waiting for finished_cond while the CQ is
+      /* pthread_cond_timedwait() is a workaround, the pthread driver sometimes
+       * got stuck in the loop waiting for finished_cond while the CQ is
        * actually empty. With timedwait() it eventually recovers.
        */
 #ifdef HAVE_CLOCK_GETTIME
@@ -189,8 +189,8 @@ void pthread_scheduler_wait_cq (cl_command_queue cq)
                               &scheduler.cq_finished_lock,
                               &timeout);
 #else
-       pthread_cond_wait (&scheduler.cq_finished_cond,
-                          &scheduler.cq_finished_lock);
+      pthread_cond_wait (&scheduler.cq_finished_cond,
+			 &scheduler.cq_finished_lock);
 #endif
 
     }

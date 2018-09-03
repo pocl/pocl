@@ -31,10 +31,9 @@ CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
 {
   int new_refcount;
-  // if context is invalid, return immediately
   if (!context->valid)
     {
-      POCL_MEM_FREE(context);
+      POCL_MEM_FREE (context);
       return CL_SUCCESS;
     }
 
@@ -51,10 +50,10 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
       /* TODO: call the corresponding clRelease* functions
          for all the referred objects. */
       unsigned i;
-      for (i = 0; i < context->num_devices; ++i) 
+      for (i = 0; i < context->num_devices; ++i)
         {
           POname(clReleaseDevice) (context->devices[i]);
-        }   
+        }
       POCL_MEM_FREE(context->devices);
       POCL_MEM_FREE(context->properties);
       POCL_DESTROY_OBJECT (context);

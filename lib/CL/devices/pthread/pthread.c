@@ -149,11 +149,11 @@ pocl_pthread_build_hash (cl_device_id device)
 }
 
 unsigned int
-pocl_pthread_probe(struct pocl_device_ops *ops)
+pocl_pthread_probe (struct pocl_device_ops *ops)
 {
   int env_count = pocl_device_get_env_count(ops->device_name);
   /* Env was not specified, default behavior was to use 1 pthread device */
-  if(env_count < 0)
+  if (env_count < 0)
     return 1;
 
   return env_count;
