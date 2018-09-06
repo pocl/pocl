@@ -293,3 +293,10 @@ set_property(TEST
   "kernel/test_sizeof_uint"
   APPEND PROPERTY LABELS "cuda")
 endif()
+
+if(LLVM_3_7)
+  set_tests_properties(
+  "kernel/test_rotate"
+  "kernel/test_printf"
+    PROPERTIES WILL_FAIL 1)
+endif()
