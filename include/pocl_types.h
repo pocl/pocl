@@ -6,7 +6,7 @@
 
 #ifdef __CBUILD__
 
-#ifndef _TCE__
+#ifndef __TCE__
 /* Define the fixed width OpenCL data types using the target-specified ones
    from stdint.h. */
 #include <stdint.h>
@@ -14,17 +14,8 @@
 typedef uint8_t uchar;
 typedef uint16_t ushort;
 typedef uint32_t uint;
-
-#ifdef __TCE__
-/* TCE's 64b support and proper stdint.h is a WiP. Workarounds here. */
-typedef unsigned ulong;
-typedef unsigned int size_t;
-/* #define double float  */
-
-#else
 typedef uint64_t ulong;
 typedef __SIZE_TYPE__ size_t;
-#endif
 
 #else
 
@@ -36,8 +27,11 @@ typedef unsigned int size_t;
 
 #endif
 
+#ifndef cl_khr_fp16
+typedef short half;
 #endif
 
+#endif
 
 
 /* Disable undefined datatypes */
@@ -56,22 +50,10 @@ typedef struct error_undefined_type_ulong error_undefined_type_ulong;
 #  define ulong error_undefined_type_ulong
 #endif
 
-#endif
-
-#ifdef __CBUILD__
-#ifndef cl_khr_fp16
-typedef short half;
-#endif
-#endif
-
-#ifndef __CBUILD__
 #ifndef cl_khr_fp64
 typedef struct error_undefined_type_double error_undefined_type_double;
 #  define double error_undefined_type_double
 #endif
-#endif
-
-#ifndef __CBUILD__
 
 /* Define unsigned datatypes */
 
