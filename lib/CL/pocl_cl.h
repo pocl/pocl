@@ -1,7 +1,7 @@
 /* pocl_cl.h - local runtime library declarations.
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
-                 2011-2012 Pekka Jääskeläinen
+                 2011-2018 Pekka Jääskeläinen
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -581,10 +581,12 @@ struct _cl_device_id {
   cl_device_type type;
   cl_uint vendor_id;
   cl_uint max_compute_units;
-  // for subdevices
+
+  /* for subdevice support */
   cl_device_id parent_device;
   unsigned core_start;
   unsigned core_count;
+
   cl_uint max_work_item_dimensions;
   /* when enabled, Workgroup LLVM pass will replace all printf() calls
    * with calls to __pocl_printf and recursively change functions to
@@ -648,8 +650,11 @@ struct _cl_device_id {
   cl_bool compiler_available;
   /* Is the target a Single Program Multiple Data machine? If not,
      we need to generate work-item loops to execute all the work-items
-     in the WG, otherwise the hardware spawns the WIs. */
+     in the WG. For SPMD machines, the hardware spawns the WIs. */
   cl_bool spmd;
+  /* The device uses an HSA-like kernel ABI with a single argument buffer as
+     an input. */
+  cl_bool arg_buffer_launcher;
   /* The Workgroup pass creates launcher functions and replaces work-item
      placeholder global variables (e.g. _local_size_, _global_offset_ etc) with
      loads from the context struct passed as a kernel argument. This flag
@@ -689,6 +694,22 @@ struct _cl_device_id {
   /* Convert automatic local variables to kernel arguments? */
   int autolocals_to_args;
 
+  /* Device-specific linker flags that should be appended to the clang's
+     argument list for a final linkage call when producing the final binary
+     that can be uploaded to the device using the default LLVM-based
+     codegen. The final entry in the list must be NULL.
+
+     The flags will be added after the following command line:
+     clang -o final.bin input.obj [flags]
+  */
+
+  const char **final_linkage_flags;
+
+  /* Auxiliary functions required by the device binary which should
+     be retained across the kernel compilation unused code pruning
+     process. */
+  const char **device_aux_functions;
+
   /* The target specific IDs for the different OpenCL address spaces. */
   unsigned global_as_id;
   unsigned local_as_id;
@@ -709,8 +730,8 @@ struct _cl_device_id {
   cl_command_queue_properties on_dev_queue_props;
   cl_command_queue_properties on_host_queue_props;
 
-  struct pocl_device_ops *ops; /* Device operations, shared amongst same devices */
-
+  /* Device operations, shared among devices of the same type */
+  struct pocl_device_ops *ops;
 };
 
 #define DEVICE_SVM_FINEGR(dev) (dev->svm_caps & (CL_DEVICE_SVM_FINE_GRAIN_BUFFER \

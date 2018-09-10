@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014 pocl developers
+#   Copyright (c) 2014-2018 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -23,11 +23,16 @@
 #
 #=============================================================================
 
-message(STATUS "Trying HSA support in LLVM")
-# test that Clang supports the amdgcn--amdhsa target
-custom_try_compile_clangxx("" "return 0;" RESULT "-target" "amdgcn--amdhsa" "-emit-llvm" "-S")
-if(RESULT)
-  message(FATAL_ERROR "LLVM support for amdgcn--amdhsa target is required")
+if (DEFINED ENABLE_HSAIL AND NOT ENABLE_HSAIL)
+  set(HSAIL_ENABLED 0)
+else()
+  message(STATUS "Trying HSA support in LLVM")
+  # test that Clang supports the amdgcn--amdhsa target
+  custom_try_compile_clangxx("" "return 0;" RESULT "-target" "amdgcn--amdhsa" "-emit-llvm" "-S")
+  if(RESULT)
+    message(FATAL_ERROR "LLVM support for amdgcn--amdhsa target is required")
+  endif()
+  set(HSAIL_ENABLED 1)
 endif()
 
 # find the headers & the library
@@ -66,23 +71,29 @@ endif()
 
 find_library(HSALIB NAMES "hsa-runtime64" "hsa-runtime" "phsa-runtime64" PATHS "${HSA_LIBDIR}")
 if(NOT HSALIB)
-  message(FATAL_ERROR "libhsa-runtime not found (use -DHSA_RUNTIME_DIR=... to specify path to HSA runtime)")
+  message(FATAL_ERROR "libhsa-runtime not found (use -DWITH_HSA_RUNTIME_DIR=... to specify path to HSA runtime) ${HSA_LIBDIR}")
 endif()
 
-if(DEFINED WITH_HSAILASM_PATH)
-  set(HSAILASM_SEARCH_PATH "${WITH_HSAILASM_PATH}")
+if (HSAIL_ENABLED)
+  if(DEFINED WITH_HSAILASM_PATH)
+    set(HSAILASM_SEARCH_PATH "${WITH_HSAILASM_PATH}")
+  else()
+    set(HSAILASM_SEARCH_PATH "${HSA_RUNTIME_DIR}")
+  endif()
+
+  if((EXISTS "${HSAILASM_SEARCH_PATH}") AND
+      (NOT IS_DIRECTORY "${HSAILASM_SEARCH_PATH}"))
+    set(HSAIL_ASM "${HSAILASM_SEARCH_PATH}")
+  else()
+    find_program(HSAIL_ASM "HSAILasm${CMAKE_EXECUTABLE_SUFFIX}" PATHS "${HSAILASM_SEARCH_PATH}" "${HSAILASM_SEARCH_PATH}/bin")
+  endif()
+  if(NOT HSAIL_ASM)
+    message(FATAL_ERROR "HSAILasm executable not found (use -DWITH_HSAILASM_PATH=... to specify)")
+  endif()
+endif()
+
+if (HSAIL_ENABLED)
+  message(STATUS "OK, building HSA with HSAIL")
 else()
-  set(HSAILASM_SEARCH_PATH "${HSA_RUNTIME_DIR}")
+  message(STATUS "OK, building HSA with native code generation")
 endif()
-
-if((EXISTS "${HSAILASM_SEARCH_PATH}") AND
-    (NOT IS_DIRECTORY "${HSAILASM_SEARCH_PATH}"))
-  set(HSAIL_ASM "${HSAILASM_SEARCH_PATH}")
-else()
-  find_program(HSAIL_ASM "HSAILasm${CMAKE_EXECUTABLE_SUFFIX}" PATHS "${HSAILASM_SEARCH_PATH}" "${HSAILASM_SEARCH_PATH}/bin")
-endif()
-if(NOT HSAIL_ASM)
-  message(FATAL_ERROR "HSAILasm executable not found (use -DWITH_HSAILASM_PATH=... to specify)")
-endif()
-
-message(STATUS "OK, building HSA")

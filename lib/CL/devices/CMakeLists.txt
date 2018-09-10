@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014 pocl developers
+#   Copyright (c) 2014-2018 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +23,14 @@
 #
 #=============================================================================
 
-add_subdirectory("pthread")
-add_subdirectory("basic")
+if(BUILD_BASIC)
+  add_subdirectory("basic")
+endif()
+
+if(BUILD_PTHREAD)
+  add_subdirectory("pthread")
+endif()
+
 add_subdirectory("topology")
 if(Hwloc_LDFLAGS)
   set(POCL_DEVICES_LINK_LIST ${Hwloc_LDFLAGS})
@@ -33,9 +39,17 @@ else()
 endif()
 
 set(POCL_DEVICES_OBJS "$<TARGET_OBJECTS:pocl-devices>"
-      "$<TARGET_OBJECTS:pocl-devices-pthread>"
-      "$<TARGET_OBJECTS:pocl-devices-basic>"
-      "$<TARGET_OBJECTS:pocl-devices-topology>")
+  "$<TARGET_OBJECTS:pocl-devices-topology>")
+
+if(BUILD_BASIC)
+  set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
+    "$<TARGET_OBJECTS:pocl-devices-basic>")
+endif()
+
+if(BUILD_PTHREAD)
+  set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
+    "$<TARGET_OBJECTS:pocl-devices-pthread>")
+endif()
 
 if(ENABLE_TCE)
   include_directories(AFTER "tce")

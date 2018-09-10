@@ -159,7 +159,7 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
           char program_bc_spirv[POCL_FILENAME_LENGTH];
           char program_bc_temp[POCL_FILENAME_LENGTH];
           pocl_cache_write_spirv (program_bc_spirv, (const char *)binaries[i],
-                                  lengths[i]);
+                                  (uint64_t)lengths[i]);
           pocl_cache_tempname (program_bc_temp, ".bc", NULL);
 
           char *args[] = { LLVM_SPIRV,       "-r", "-o", program_bc_temp,

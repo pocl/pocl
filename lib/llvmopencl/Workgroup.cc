@@ -2,7 +2,7 @@
 // and parallelized kernel for an OpenCL workgroup.
 //
 // Copyright (c) 2011 Universidad Rey Juan Carlos
-//               2012-2015 Pekka Jääskeläinen
+//               2012-2018 Pekka Jääskeläinen
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -33,21 +33,26 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "pocl.h"
 #include "pocl_cl.h"
 
-#include "llvm/Analysis/ConstantFolding.h"
-#include "llvm/IR/BasicBlock.h"
-#include "llvm/IR/CallSite.h"
-#include "llvm/IR/Constants.h"
-#include "llvm/IR/DerivedTypes.h"
-#include "llvm/IR/IRBuilder.h"
-#include "llvm/IR/InstrTypes.h"
-#include "llvm/IR/Module.h"
-#include "llvm/IR/TypeBuilder.h"
-#include "llvm/Pass.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Support/raw_ostream.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
-#include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/Transforms/Utils/Local.h"
+#include <llvm/Analysis/ConstantFolding.h>
+#include <llvm/IR/BasicBlock.h>
+#include <llvm/IR/CallSite.h>
+#include <llvm/IR/Constants.h>
+#include <llvm/IR/DerivedTypes.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/InstrTypes.h>
+#include <llvm/IR/Module.h>
+#include <llvm/IR/TypeBuilder.h>
+#include <llvm/Pass.h>
+#include <llvm/Support/CommandLine.h>
+#include <llvm/Support/raw_ostream.h>
+#include <llvm/Transforms/Utils/BasicBlockUtils.h>
+#include <llvm/Transforms/Utils/Cloning.h>
+#ifdef LLVM_OLDER_THAN_7
+#include <llvm/Transforms/Utils/Local.h>
+#endif
+
+#include <llvm-c/Core.h>
+#include <llvm-c/Target.h>
 
 #include "CanonicalizeBarriers.h"
 #include "BarrierTailReplication.h"
@@ -59,6 +64,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <cstdio>
 #include <map>
 #include <iostream>
+#include <sstream>
 
 #include "TargetAddressSpaces.h"
 
@@ -76,11 +82,16 @@ using namespace std;
 using namespace llvm;
 using namespace pocl;
 
-static Function *createLauncher(Module &M, Function *F,
-                                FunctionMapping &printfCache);
+static Function *createWrapper(Module &M, Function *F,
+                               FunctionMapping &printfCache);
 static void privatizeContext(Module &M, Function *F);
-static void createWorkgroup(Module &M, Function *F);
-static void createWorkgroupFast(Module &M, Function *F);
+static void createDefaultWorkgroupLauncher(Module &M, Function *F);
+static Function *createArgBufferWorkgroupLauncher(Module &M, Function *F,
+                                             std::string KernName);
+static void createGridLauncher(Module &Mod, Function *KernFunc,
+                               Function *WGFunc, std::string KernName);
+
+static void createFastWorkgroupLauncher(Module &M, Function *F);
 
 /* The kernel to process in this kernel compiler launch. */
 cl::opt<string>
@@ -104,15 +115,12 @@ namespace llvm {
             TypeBuilder<types::i<64>[3], xcompile>::get(Context),
             TypeBuilder<types::i<64>[3], xcompile>::get(Context),
             TypeBuilder<types::i<64>[3], xcompile>::get(Context),
-            TypeBuilder<types::i<64>[3], xcompile>::get(Context),
             TypeBuilder<types::i<8> *, xcompile>::get(Context),
             TypeBuilder<types::i<64> *, xcompile>::get(Context),
             TypeBuilder<types::i<64>, xcompile>::get(Context), NULL);
 #else
         SmallVector<Type *, 10> Elements;
         Elements.push_back(TypeBuilder<types::i<32>, xcompile>::get(Context));
-        Elements.push_back(
-            TypeBuilder<types::i<64>[3], xcompile>::get(Context));
         Elements.push_back(
             TypeBuilder<types::i<64>[3], xcompile>::get(Context));
         Elements.push_back(
@@ -134,7 +142,6 @@ namespace llvm {
               TypeBuilder<types::i<32>[3], xcompile>::get(Context),
               TypeBuilder<types::i<32>[3], xcompile>::get(Context),
               TypeBuilder<types::i<32>[3], xcompile>::get(Context),
-              TypeBuilder<types::i<32>[3], xcompile>::get(Context),
               TypeBuilder<types::i<8> *, xcompile>::get(Context),
               TypeBuilder<types::i<32> *, xcompile>::get(Context),
               TypeBuilder<types::i<32>, xcompile>::get(Context), NULL);
@@ -142,8 +149,6 @@ namespace llvm {
           SmallVector<Type *, 10> Elements;
           Elements.push_back(
             TypeBuilder<types::i<32>, xcompile>::get(Context));
-          Elements.push_back(
-            TypeBuilder<types::i<32>[3], xcompile>::get(Context));
           Elements.push_back(
             TypeBuilder<types::i<32>[3], xcompile>::get(Context));
           Elements.push_back(
@@ -181,7 +186,6 @@ namespace llvm {
     enum Fields {
       WORK_DIM,
       NUM_GROUPS,
-      GROUP_ID,
       GLOBAL_OFFSET,
       LOCAL_SIZE,
       PRINTF_BUFFER,
@@ -232,17 +236,26 @@ Workgroup::runOnModule(Module &M)
   FunctionMapping printfCache;
 
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
-    if (!isKernelToProcess(*i)) continue;
-    Function *L = createLauncher(M, &*i, printfCache);
+    Function &OrigKernel = *i;
+    if (!isKernelToProcess(OrigKernel)) continue;
+    Function *L = createWrapper(M, &OrigKernel, printfCache);
 
     privatizeContext(M, L);
 
-    if (!currentPoclDevice->spmd) {
-      createWorkgroup(M, L);
-      createWorkgroupFast(M, L);
+    if (currentPoclDevice->spmd) {
+      // For SPMD machines there is no need for a WG launcher, the device will
+      // call/handle the single-WI kernel function directly.
+      kernels[&OrigKernel] = L;
+    } else if (currentPoclDevice->arg_buffer_launcher) {
+      Function *WGLauncher =
+        createArgBufferWorkgroupLauncher(M, L, OrigKernel.getName().str());
+      createGridLauncher(M, L, WGLauncher, OrigKernel.getName().str());
+    } else {
+      createDefaultWorkgroupLauncher(M, L);
+      // This is used only by TCE anymore. TODO: Replace all with the
+      // ArgBuffer one.
+      createFastWorkgroupLauncher(M, L);
     }
-    else
-      kernels[&*i] = L;
   }
 
   if (currentPoclDevice->spmd) {
@@ -312,14 +325,14 @@ static void addGEPs(llvm::Module &M,
 }
 
 static Value *addGEP1(llvm::Module &M, IRBuilder<> &builder, llvm::Argument *a,
-                      int size_t_width, int llvmtype, const char *name) {
+                      unsigned size_t_width, unsigned llvmtype, const char *name) {
 
   Value *ptr, *v = nullptr;
   GlobalVariable *gv;
 
   gv = M.getGlobalVariable(name);
 
-  if (gv != NULL) {
+  if (gv != nullptr) {
 #ifdef LLVM_OLDER_THAN_3_7
     ptr = builder.CreateStructGEP(a, llvmtype);
 #else
@@ -529,10 +542,13 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
   }
 }
 
-//########################################################################
-
-static Function *createLauncher(Module &M, Function *F,
-                                FunctionMapping &printfCache) {
+/**
+ * Create a wrapper for the kernel and add pocl-specific hidden arguments.
+ *
+ * Also inlines the wrapped function to the wrapper.
+ */
+static Function *createWrapper(Module &M, Function *F,
+                               FunctionMapping &printfCache) {
 
   SmallVector<Type *, 8> sv;
 
@@ -543,8 +559,16 @@ static Function *createLauncher(Module &M, Function *F,
     PointerType* g_pc_ptr =
       PointerType::get(TypeBuilder<PoclContext, true>::get(M.getContext()), 1);
     sv.push_back(g_pc_ptr);
-  } else
+  } else {
+    // pocl_context
     sv.push_back(TypeBuilder<PoclContext*, true>::get(M.getContext()));
+    // group_x
+    sv.push_back(TypeBuilder<types::i<32>, true>::get(M.getContext()));
+    // group_y
+    sv.push_back(TypeBuilder<types::i<32>, true>::get(M.getContext()));
+    // group_z
+    sv.push_back(TypeBuilder<types::i<32>, true>::get(M.getContext()));
+  }
 
   FunctionType *ft = FunctionType::get(Type::getVoidTy(M.getContext()),
                                        ArrayRef<Type *> (sv),
@@ -573,6 +597,14 @@ static Function *createLauncher(Module &M, Function *F,
     ++ai;
   }
 
+#ifdef LLVM_OLDER_THAN_3_7
+  llvm::Argument *ContextArg = ai++;
+  llvm::Argument *GroupIdArgs[] = {ai++, ai++, ai};
+#else
+  llvm::Argument *ContextArg = &*(ai++);
+  llvm::Argument *GroupIdArgs[] = {&*(ai++), &*(ai++), &*ai};
+#endif
+
   // Copy the function attributes to transfer noalias etc. from the
   // original kernel which will be inlined into the launcher.
   L->setAttributes(F->getAttributes());
@@ -584,10 +616,12 @@ static Function *createLauncher(Module &M, Function *F,
     Value *ptr;
 #ifdef LLVM_OLDER_THAN_3_7
     ptr =
-      builder.CreateStructGEP(ai, TypeBuilder<PoclContext, true>::WORK_DIM);
+      builder.CreateStructGEP(ContextArg,
+                              TypeBuilder<PoclContext, true>::WORK_DIM);
 #else
     ptr =
-      builder.CreateStructGEP(ai->getType()->getPointerElementType(), &*ai,
+      builder.CreateStructGEP(ContextArg->getType()->getPointerElementType(),
+                              ContextArg,
                               TypeBuilder<PoclContext, true>::WORK_DIM);
 #endif
     Value *v = builder.CreateLoad(builder.CreateConstGEP1_32(ptr, 0));
@@ -598,36 +632,47 @@ static Function *createLauncher(Module &M, Function *F,
   if (currentPoclDevice->address_bits == 64)
     size_t_width = 64;
 
-#ifdef LLVM_OLDER_THAN_3_7
-  llvm::Argument *a = ai;
-#else
-  llvm::Argument *a = &*ai;
-#endif
 
-  addGEPs(M, builder, a, size_t_width, TypeBuilder<PoclContext, true>::GROUP_ID,
-          "_group_id_%c");
+  // Group ids are passed as hidden function arguments.
+  for (int Dim = 0; Dim < 3; ++Dim) {
+    std::ostringstream NameStrStr("_group_id_", std::ios::ate);
+    NameStrStr << (char)('x' + Dim);
+    std::string VarName = NameStrStr.str();
+    GlobalVariable *gv = M.getGlobalVariable(VarName);
+    if (gv != NULL) {
+      builder.CreateStore(
+        builder.CreateZExt(
+          GroupIdArgs[Dim], gv->getType()->getPointerElementType()), gv);
+    }
 
+  }
+
+  // The rest of the execution context / id data is passed in the pocl_context
+  // struct.
   if (WGDynamicLocalSize)
-    addGEPs(M, builder, a, size_t_width, TypeBuilder<PoclContext, true>::LOCAL_SIZE,
+    addGEPs(M, builder, ContextArg, size_t_width,
+            TypeBuilder<PoclContext, true>::LOCAL_SIZE,
             "_local_size_%c");
 
-  addGEPs(M, builder, a, size_t_width, TypeBuilder<PoclContext, true>::NUM_GROUPS,
+  addGEPs(M, builder, ContextArg, size_t_width,
+          TypeBuilder<PoclContext, true>::NUM_GROUPS,
           "_num_groups_%c");
 
-  addGEPs(M, builder, a, size_t_width, TypeBuilder<PoclContext, true>::GLOBAL_OFFSET,
+  addGEPs(M, builder, ContextArg, size_t_width,
+          TypeBuilder<PoclContext, true>::GLOBAL_OFFSET,
           "_global_offset_%c");
 
   Value *pb, *pbp, *pbc;
   if (currentPoclDevice->device_side_printf) {
-    pb = addGEP1(M, builder, a, size_t_width,
+    pb = addGEP1(M, builder, ContextArg, size_t_width,
                  TypeBuilder<PoclContext, true>::PRINTF_BUFFER,
                  "_printf_buffer");
 
-    pbp = addGEP1(M, builder, a, size_t_width,
+    pbp = addGEP1(M, builder, ContextArg, size_t_width,
                   TypeBuilder<PoclContext, true>::PRINTF_BUFFER_POSITION,
                   "_printf_buffer_position");
 
-    pbc = addGEP1(M, builder, a, size_t_width,
+    pbc = addGEP1(M, builder, ContextArg, size_t_width,
                   TypeBuilder<PoclContext, true>::PRINTF_BUFFER_CAPACITY,
                   "_printf_buffer_capacity");
   } else {
@@ -860,29 +905,36 @@ privatizeContext(Module &M, Function *F)
  * actual buffers and that scalar data is loaded from the default memory.
  */
 static void
-createWorkgroup(Module &M, Function *F)
-{
+createDefaultWorkgroupLauncher(Module &M, Function *F) {
+
   IRBuilder<> builder(M.getContext());
 
   FunctionType *ft =
     TypeBuilder<void(types::i<8>*[],
-		     PoclContext*), true>::get(M.getContext());
+		     PoclContext*,
+		     types::i<32>,
+		     types::i<32>,
+		     types::i<32>), true>::get(M.getContext());
 
   std::string funcName = "";
   funcName = F->getName().str();
 
   Function *workgroup =
     dyn_cast<Function>(M.getOrInsertFunction(funcName + "_workgroup", ft));
-  assert(workgroup != NULL);
+  assert(workgroup != nullptr);
 
   builder.SetInsertPoint(BasicBlock::Create(M.getContext(), "", workgroup));
 
   Function::arg_iterator ai = workgroup->arg_begin();
 
   SmallVector<Value*, 8> arguments;
-  int i = 0;
+  size_t i = 0;
   for (Function::const_arg_iterator ii = F->arg_begin(), ee = F->arg_end();
        ii != ee; ++ii) {
+
+    if (i == F->arg_size() - 4)
+      break;
+
     Type *t = ii->getType();
 
     Value *gep = builder.CreateGEP(&*ai,
@@ -903,10 +955,225 @@ createWorkgroup(Module &M, Function *F)
     ++i;
   }
 
-  arguments.back() = &*(++ai);
+  ++ai;
+  arguments.push_back(&*ai);
+  ++ai;
+  arguments.push_back(&*ai);
+  ++ai;
+  arguments.push_back(&*ai);
+  ++ai;
+  arguments.push_back(&*ai);
 
   builder.CreateCall(F, ArrayRef<Value*>(arguments));
   builder.CreateRetVoid();
+}
+
+static inline uint64_t
+align64(uint64_t value, unsigned alignment)
+{
+   return (value + alignment - 1) & ~((uint64_t)alignment - 1);
+}
+
+static void
+computeArgBufferOffsets(LLVMValueRef F, uint64_t *ArgBufferOffsets) {
+
+  uint64_t Offset = 0;
+  uint64_t ArgCount = LLVMCountParams(F);
+  LLVMModuleRef M = LLVMGetGlobalParent(F);
+
+#ifdef LLVM_OLDER_THAN_3_9
+  const char *str = LLVMGetDataLayout(M);
+  LLVMTargetDataRef DataLayout = LLVMCreateTargetData(str);
+#else
+  LLVMTargetDataRef DataLayout = LLVMGetModuleDataLayout(M);
+#endif
+
+  // Compute the byte offsets of arguments in the arg buffer.
+  for (size_t i = 0; i < ArgCount; i++) {
+    LLVMValueRef Param = LLVMGetParam(F, i);
+    LLVMTypeRef ParamType = LLVMTypeOf(Param);
+    // TODO: This is a target specific type? We would like to get the
+    // natural size or the "packed size" instead...
+    uint64_t ByteSize = LLVMStoreSizeOfType(DataLayout, ParamType);
+    uint64_t Alignment = ByteSize;
+
+    assert (ByteSize && "Arg type size is zero?");
+    Offset = align64(Offset, Alignment);
+    ArgBufferOffsets[i] = Offset;
+    Offset += ByteSize;
+  }
+}
+
+static LLVMValueRef
+createArgBufferLoad(LLVMBuilderRef Builder, LLVMValueRef ArgBufferPtr,
+                    uint64_t *ArgBufferOffsets, LLVMValueRef F,
+                    unsigned ParamIndex) {
+
+  LLVMValueRef Param = LLVMGetParam(F, ParamIndex);
+  LLVMTypeRef ParamType = LLVMTypeOf(Param);
+
+  LLVMModuleRef M = LLVMGetGlobalParent(F);
+  LLVMContextRef LLVMContext = LLVMGetModuleContext(M);
+
+  uint64_t ArgPos = ArgBufferOffsets[ParamIndex];
+  LLVMValueRef Offs =
+    LLVMConstInt(LLVMInt32TypeInContext(LLVMContext), ArgPos, 0);
+  LLVMValueRef ArgByteOffset =
+    LLVMBuildGEP(Builder, ArgBufferPtr, &Offs, 1, "arg_byte_offset");
+  LLVMValueRef ArgOffsetBitcast =
+    LLVMBuildPointerCast(Builder, ArgByteOffset,
+                         LLVMPointerType(ParamType, 0), "arg_ptr");
+  return LLVMBuildLoad(Builder, ArgOffsetBitcast, "");
+}
+
+/**
+ * Creates a work group launcher with all the argument data passed
+ * in a single argument buffer.
+ *
+ * All argument values, including pointers are stored directly in the
+ * argument buffer with natural alignment. The rules for populating the
+ * buffer are those of the HSA kernel calling convention. The name of
+ * the generated function is KERNELNAME_workgroup_argbuffer.
+ */
+static Function*
+createArgBufferWorkgroupLauncher(Module &Mod, Function *Func,
+                                 std::string KernName) {
+
+  LLVMValueRef F = wrap(Func);
+  uint64_t ArgCount = LLVMCountParams(F);
+  uint64_t ArgBufferOffsets[ArgCount];
+  LLVMModuleRef M = wrap(&Mod);
+
+  computeArgBufferOffsets(F, ArgBufferOffsets);
+
+  LLVMContextRef LLVMContext = LLVMGetModuleContext(M);
+
+  LLVMTypeRef Int8Type = LLVMInt8TypeInContext(LLVMContext);
+  LLVMTypeRef Int32Type = LLVMInt32TypeInContext(LLVMContext);
+
+  LLVMTypeRef Int8PtrType = LLVMPointerType(Int8Type, 0);
+
+  std::ostringstream StrStr;
+  StrStr << KernName;
+  StrStr << "_workgroup_argbuffer";
+
+  std::string FName = StrStr.str();
+  const char *FunctionName = FName.c_str();
+
+  LLVMTypeRef LauncherArgTypes[] = {
+    Int8PtrType /* args */,
+    Int8PtrType /* pocl_ctx */,
+    Int32Type /* group_x */,
+    Int32Type /* group_y */,
+    Int32Type /* group_z */};
+
+  LLVMTypeRef VoidType = LLVMVoidTypeInContext(LLVMContext);
+  LLVMTypeRef LauncherFuncType =
+    LLVMFunctionType(VoidType, LauncherArgTypes, 5, 0);
+
+  LLVMValueRef WrapperKernel =
+    LLVMAddFunction(M, FunctionName, LauncherFuncType);
+
+  LLVMBasicBlockRef Block =
+    LLVMAppendBasicBlockInContext(LLVMContext, WrapperKernel, "entry");
+
+  LLVMBuilderRef Builder = LLVMCreateBuilderInContext(LLVMContext);
+  assert(Builder);
+
+  LLVMPositionBuilderAtEnd(Builder, Block);
+
+  LLVMValueRef Args[ArgCount];
+  LLVMValueRef ArgBuffer = LLVMGetParam(WrapperKernel, 0);
+  size_t i = 0;
+  for (; i < ArgCount - 3; ++i)
+    Args[i] = createArgBufferLoad(Builder, ArgBuffer, ArgBufferOffsets, F, i);
+
+  // Pass the group ids.
+  Args[i++] = LLVMGetParam(WrapperKernel, 2);
+  Args[i++] = LLVMGetParam(WrapperKernel, 3);
+  Args[i++] = LLVMGetParam(WrapperKernel, 4);
+
+  assert (i == ArgCount);
+
+  // Pass the context object.
+  LLVMBuildCall(Builder, F, Args, ArgCount, "");
+  LLVMBuildRetVoid(Builder);
+
+  return llvm::dyn_cast<llvm::Function>(llvm::unwrap(WrapperKernel));
+}
+
+/**
+ * Creates a launcher function that executes all work-items in the grid by
+ * launching a given work-group function for all work-group ids.
+ *
+ * The function adheres to the PHSA calling convention where the first two
+ * arguments are for PHSA's context data, and the third one is the argument
+ * buffer. The name will be phsa_kernel.KERNELNAME_grid_launcher.
+ */
+static void
+createGridLauncher(Module &Mod, Function *KernFunc, Function *WGFunc,
+                   std::string KernName) {
+
+  LLVMValueRef Kernel = llvm::wrap(KernFunc);
+  LLVMValueRef WGF = llvm::wrap(WGFunc);
+  LLVMModuleRef M = llvm::wrap(&Mod);
+  LLVMContextRef LLVMContext = LLVMGetModuleContext(M);
+
+  LLVMTypeRef Int8Type = LLVMInt8TypeInContext(LLVMContext);
+  LLVMTypeRef Int8PtrType = LLVMPointerType(Int8Type, 0);
+
+  std::ostringstream StrStr("phsa_kernel.", std::ios::ate);
+  StrStr << KernName;
+  StrStr << "_grid_launcher";
+
+  std::string FName = StrStr.str();
+  const char *FunctionName = FName.c_str();
+
+  LLVMTypeRef LauncherArgTypes[] =
+    {Int8PtrType /*phsactx0*/,
+     Int8PtrType /*phsactx1*/,
+     Int8PtrType /*args*/};
+
+  LLVMTypeRef VoidType = LLVMVoidTypeInContext(LLVMContext);
+  LLVMTypeRef LauncherFuncType = LLVMFunctionType(VoidType, LauncherArgTypes,
+                                                  3, 0);
+
+  LLVMValueRef Launcher =
+    LLVMAddFunction(M, FunctionName, LauncherFuncType);
+
+  LLVMBasicBlockRef Block =
+    LLVMAppendBasicBlockInContext(LLVMContext, Launcher, "entry");
+
+  LLVMBuilderRef Builder = LLVMCreateBuilderInContext(LLVMContext);
+  assert(Builder);
+
+  LLVMPositionBuilderAtEnd(Builder, Block);
+
+  LLVMValueRef RunnerFunc = LLVMGetNamedFunction(M, "_pocl_run_all_wgs");
+  assert (RunnerFunc != nullptr);
+
+  LLVMTypeRef ArgTypes[] = {
+    LLVMTypeOf(LLVMGetParam(RunnerFunc, 0)),
+    LLVMTypeOf(LLVMGetParam(RunnerFunc, 1)),
+    LLVMTypeOf(LLVMGetParam(RunnerFunc, 2))};
+
+  uint64_t KernArgCount = LLVMCountParams(Kernel);
+  uint64_t KernArgBufferOffsets[KernArgCount];
+  computeArgBufferOffsets(Kernel, KernArgBufferOffsets);
+
+  LLVMValueRef ArgBuffer = LLVMGetParam(Launcher, 2);
+  // Load the pointer to the pocl context (in global memory),
+  // assuming it is stored as the 4th last argument in the kernel.
+  LLVMValueRef PoclCtx =
+    createArgBufferLoad(Builder, ArgBuffer, KernArgBufferOffsets, Kernel,
+                        KernArgCount - 4);
+
+  LLVMValueRef Args[3] = {
+    LLVMBuildPointerCast(Builder, WGF, ArgTypes[0], "wg_func"),
+    LLVMBuildPointerCast(Builder, ArgBuffer, ArgTypes[1], "args"),
+    LLVMBuildPointerCast(Builder, PoclCtx, ArgTypes[2], "ctx")};
+  LLVMBuildCall(Builder, RunnerFunc, Args, 3, "");
+  LLVMBuildRetVoid(Builder);
 }
 
 /**
@@ -923,13 +1190,16 @@ createWorkgroup(Module &M, Function *F)
  * at the device.
  */
 static void
-createWorkgroupFast(Module &M, Function *F)
+createFastWorkgroupLauncher(Module &M, Function *F)
 {
   IRBuilder<> builder(M.getContext());
 
   FunctionType *ft =
     TypeBuilder<void(types::i<8>*[],
-		     PoclContext*), true>::get(M.getContext());
+                     PoclContext*,
+                     types::i<32>,
+                     types::i<32>,
+                     types::i<32>), true>::get(M.getContext());
 
   std::string funcName = "";
   funcName = F->getName().str();
@@ -942,14 +1212,18 @@ createWorkgroupFast(Module &M, Function *F)
   Function::arg_iterator ai = workgroup->arg_begin();
 
   SmallVector<Value*, 8> arguments;
-  int i = 0;
+  size_t i = 0;
   for (Function::const_arg_iterator ii = F->arg_begin(), ee = F->arg_end();
-       ii != ee; ++i, ++ii) {
+       ii != ee; ++ii, ++i) {
+
+    if (i == F->arg_size() - 4)
+      break;
+
     Type *t = ii->getType();
     Value *gep = builder.CreateGEP(&*ai,
             ConstantInt::get(IntegerType::get(M.getContext(), 32), i));
     Value *pointer = builder.CreateLoad(gep);
-     
+
     if (t->isPointerTy()) {
       if (!ii->hasByValAttr()) {
         /* Assume the pointer is directly in the arg array. */
@@ -984,12 +1258,18 @@ createWorkgroupFast(Module &M, Function *F)
     arguments.push_back(value);
   }
 
-  arguments.back() = &*(++ai);
-  
+  ++ai;
+  arguments.push_back(&*ai);
+  ++ai;
+  arguments.push_back(&*ai);
+  ++ai;
+  arguments.push_back(&*ai);
+  ++ai;
+  arguments.push_back(&*ai);
+
   builder.CreateCall(F, ArrayRef<Value*>(arguments));
   builder.CreateRetVoid();
 }
-
 
 /**
  * Returns true in case the given function is a kernel that

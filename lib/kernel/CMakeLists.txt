@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014-2016 pocl developers
+#   Copyright (c) 2014-2018 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -139,6 +139,8 @@ native_sqrt.cl
 native_tan.cl
 nextafter.cl
 normalize.cl
+pocl_spawn_wg.c
+pocl_run_all_wgs.c
 popcount.cl
 pow.cl
 pown.cl
@@ -221,6 +223,8 @@ min_i.cl
 mul24.cl
 mul_hi.cl
 nextafter.cl
+pocl_spawn_wg.c
+pocl_run_all_wgs.c
 popcount.cl
 prefetch.cl
 printf.c
@@ -449,6 +453,8 @@ native_powr.cl
 native_recip.cl
 native_rsqrt.cl
 native_sqrt.cl
+pocl_spawn_wg.c
+pocl_run_all_wgs.c
 popcount.cl
 prefetch.cl
 printf.c

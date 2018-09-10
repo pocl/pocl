@@ -29,7 +29,7 @@
 #include <CL/opencl.h>
 #include <poclu.h>
 
-#define N 128
+#define N 4
 
 #ifdef __cplusplus
 #  define CALLAPI "C"

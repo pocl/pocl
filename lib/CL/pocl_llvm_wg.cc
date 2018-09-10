@@ -2,7 +2,7 @@
    optimization passes and codegen.
 
    Copyright (c) 2013 Kalle Raiskila
-                 2013-2017 Pekka Jääskeläinen
+                 2013-2018 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -94,29 +94,6 @@ static llvm::TargetOptions GetTargetOptions() {
   Options.FloatABIType = FloatABI::Soft;
 #else
   Options.FloatABIType = FloatABI::Hard;
-#endif
-#if 0
-  Options.LessPreciseFPMADOption = EnableFPMAD;
-  Options.NoFramePointerElim = DisableFPElim;
-  Options.NoFramePointerElimNonLeaf = DisableFPElimNonLeaf;
-  Options.AllowFPOpFusion = FuseFPOps;
-  Options.UnsafeFPMath = EnableUnsafeFPMath;
-  Options.NoInfsFPMath = EnableNoInfsFPMath;
-  Options.NoNaNsFPMath = EnableNoNaNsFPMath;
-  Options.HonorSignDependentRoundingFPMathOption =
-  EnableHonorSignDependentRoundingFPMath;
-  Options.UseSoftFloat = GenerateSoftFloatCalls;
-  if (FloatABIForCalls != FloatABI::Default)
-    Options.FloatABIType = FloatABIForCalls;
-  Options.NoZerosInBSS = DontPlaceZerosInBSS;
-  Options.GuaranteedTailCallOpt = EnableGuaranteedTailCallOpt;
-  Options.DisableTailCalls = DisableTailCalls;
-  Options.StackAlignmentOverride = OverrideStackAlignment;
-  Options.RealignStack = EnableRealignStack;
-  Options.TrapFuncName = TrapFuncName;
-  Options.EnableSegmentedStacks = SegmentedStacks;
-  Options.UseInitArray = UseInitArray;
-  Options.SSPBufferSize = SSPBufferSize;
 #endif
   return Options;
 }
@@ -265,7 +242,7 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
   if (SPMDDevice) {
     passes.push_back("flatten-inline-all");
     passes.push_back("always-inline");
-  }  else {
+  } else {
     passes.push_back("flatten-globals");
     passes.push_back("always-inline");
 #ifndef LLVM_3_9
@@ -305,8 +282,13 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
     // work-item loop control taking care of them.
     passes.push_back("remove-barriers");
   }
+
   // Add the work group launcher functions and privatize the pseudo variable
-  // (local id) accesses.
+  // (local id) accesses. We have to do this late because we rely on aggressive
+  // inlining to expose the _{local,group}_id accesses which will be replaced
+  // with context struct accesses. TODO: A cleaner and a more robust way would
+  // be to add hidden context struct parameters to the builtins that need the
+  // context data and fix the calls early.
   if (device->workgroup_pass)
     passes.push_back("workgroup");
 
@@ -425,7 +407,7 @@ int pocl_llvm_generate_workgroup_function_nowrite(cl_device_id device,
   /* Create an empty Module and copy
    * only the kernel+callgraph from program.bc */
   llvm::Module *parallel_bc =
-      new llvm::Module(StringRef("parallel_bc"), GlobalContext());
+    new llvm::Module(StringRef("parallel_bc"), GlobalContext());
 
   parallel_bc->setTargetTriple(program_bc->getTargetTriple());
   parallel_bc->setDataLayout(program_bc->getDataLayout());
@@ -585,67 +567,122 @@ void pocl_llvm_update_binaries(cl_program program) {
   }
 }
 
+static void initPassManagerForCodeGen(PassManager& PM, cl_device_id Device) {
+
+  llvm::Triple Triple(Device->llvm_target_triplet);
+
+  llvm::TargetLibraryInfoWrapperPass *TLIPass =
+      new TargetLibraryInfoWrapperPass(Triple);
+  PM.add(TLIPass);
+}
 
 /* Run LLVM codegen on input file (parallel-optimized).
  * modp = llvm::Module* of parallel.bc
  * Output native object file (<kernel>.so.o). */
-int pocl_llvm_codegen(cl_device_id device, void *modp, char **output,
-                      size_t *output_size) {
+int pocl_llvm_codegen(cl_device_id Device, void *Modp, char **Output,
+                      uint64_t *OutputSize) {
 
-  PoclCompilerMutexGuard lockHolder(NULL);
+  PoclCompilerMutexGuard LockHolder(nullptr);
   InitializeLLVM();
 
-  llvm::Module *input = (llvm::Module *)modp;
-  assert(input);
-  *output = NULL;
+  llvm::Module *Input = (llvm::Module *)Modp;
+  assert(Input);
+  *Output = nullptr;
 
-  llvm::Triple triple(device->llvm_target_triplet);
-  llvm::TargetMachine *target = GetTargetMachine(device, triple);
+  PassManager PMObj;
+  initPassManagerForCodeGen(PMObj, Device);
 
-  PassManager PM;
-#ifdef LLVM_OLDER_THAN_3_7
-  llvm::TargetLibraryInfo *TLI = new TargetLibraryInfo(triple);
-  PM.add(TLI);
+  llvm::Triple Triple(Device->llvm_target_triplet);
+  llvm::TargetMachine *Target = GetTargetMachine(Device, Triple);
+
+  // First try direct object code generation from LLVM, if supported by the
+  // LLVM backend for the target.
+  bool LLVMGeneratesObjectFiles = true;
+
+  SmallVector<char, 4096> Data;
+  llvm::raw_svector_ostream SOS(Data);
+  bool cannotEmitFile;
+
+#ifdef LLVM_OLDER_THAN_7_0
+  cannotEmitFile = Target->addPassesToEmitFile(PMObj, SOS,
+                                  TargetMachine::CGFT_ObjectFile);
 #else
-  llvm::TargetLibraryInfoWrapperPass *TLIPass =
-      new TargetLibraryInfoWrapperPass(triple);
-  PM.add(TLIPass);
+  cannotEmitFile = Target->addPassesToEmitFile(PMObj, SOS, nullptr,
+                                  TargetMachine::CGFT_ObjectFile);
 #endif
+
+#ifdef LLVM_OLDER_THAN_5_0
+  LLVMGeneratesObjectFiles = true;
+#else
+  LLVMGeneratesObjectFiles = !cannotEmitFile;
+#endif
+
+  if (LLVMGeneratesObjectFiles) {
+    POCL_MSG_PRINT_LLVM("Generating an object file directly.\n");
+    PMObj.run(*Input);
+    std::string O = SOS.str(); // flush
+    const char *Cstr = O.c_str();
+    size_t S = O.size();
+    *Output = (char *)malloc(S);
+    *OutputSize = S;
+    memcpy(*Output, Cstr, S);
+    return 0;
+  }
+
+#ifdef LLVM_OLDER_THAN_5_0
+  return 0;
+#else
+
+  PassManager PMAsm;
+  initPassManagerForCodeGen(PMAsm, Device);
+
+  POCL_MSG_PRINT_LLVM("Generating assembly text.\n");
+
+  // The LLVM target does not implement support for emitting object file directly.
+  // Have to emit the text first and then call the assembler from the command line
+  // to produce the binary.
 #ifdef LLVM_OLDER_THAN_3_7
-  if (target != NULL) {
-    target->addAnalysisPasses(PM);
+  POCL_ABORT("Assembly text output support not implemented for LLVM < 3.7.");
+#else
+#ifdef LLVM_OLDER_THAN_7_0
+  if (Target->addPassesToEmitFile(PMAsm, SOS,
+                                  TargetMachine::CGFT_AssemblyFile)) {
+    POCL_ABORT("The target supports neither obj nor asm emission!");
+  }
+#else
+  if (Target->addPassesToEmitFile(PMAsm, SOS, nullptr,
+                                  TargetMachine::CGFT_AssemblyFile)) {
+    POCL_ABORT("The target supports neither obj nor asm emission!");
   }
 #endif
-
-  // TODO: get DataLayout from the 'device'
-  // TODO: better error check
-#ifdef LLVM_OLDER_THAN_3_7
-  std::string data;
-  llvm::raw_string_ostream sos(data);
-  llvm::MCContext *mcc;
-  if (target && target->addPassesToEmitMC(PM, mcc, sos))
-    return 1;
-#else
-  SmallVector<char, 4096> data;
-  llvm::raw_svector_ostream sos(data);
-  if (target &&
-#ifdef LLVM_OLDER_THAN_7_0
-      target->addPassesToEmitFile(PM, sos, TargetMachine::CGFT_ObjectFile))
-#else
-      target->addPassesToEmitFile(PM, sos, nullptr,
-                                  TargetMachine::CGFT_ObjectFile))
-#endif
-    return 1;
 #endif
 
-  PM.run(*input);
-  std::string o = sos.str(); // flush
-  const char *cstr = o.c_str();
-  size_t s = o.size();
-  *output = (char *)malloc(s);
-  *output_size = s;
-  memcpy(*output, cstr, s);
+  // This produces the assembly text:
+  PMAsm.run(*Input);
 
-  return 0;
+  // Next call the target's assembler via the Toolchain API indirectly through
+  // the Driver API.
+
+  char AsmFileName[POCL_FILENAME_LENGTH];
+  char ObjFileName[POCL_FILENAME_LENGTH];
+
+  std::string AsmStr = SOS.str().str();
+  pocl_write_tempfile(AsmFileName, "/tmp/pocl-asm", ".s", AsmStr.c_str(),
+                      AsmStr.size(), nullptr);
+  pocl_mk_tempname(ObjFileName, "/tmp/pocl-obj", ".o", nullptr);
+
+  const char *Args[] = {CLANG, AsmFileName, "-c", "-o", ObjFileName, nullptr};
+  int Res = pocl_invoke_clang(Device, Args);
+
+  if (Res == 0) {
+    if (pocl_read_file(ObjFileName, Output, OutputSize))
+      POCL_ABORT("Could not read the object file.");
+  }
+
+  pocl_remove(AsmFileName);
+  pocl_remove(ObjFileName);
+  return Res;
+
+#endif
 }
 /* vim: set ts=4 expandtab: */

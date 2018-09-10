@@ -2,7 +2,7 @@
    producing program.bc
 
    Copyright (c) 2013 Kalle Raiskila
-                 2013-2017 Pekka Jääskeläinen
+                 2013-2018 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -29,11 +29,16 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 
 #include "config.h"
 
-#include "clang/CodeGen/CodeGenAction.h"
-#include "clang/Frontend/CompilerInstance.h"
-#include "clang/Frontend/CompilerInvocation.h"
-#include "clang/Frontend/FrontendActions.h"
-#include "clang/Frontend/TextDiagnosticBuffer.h"
+#include <clang/Basic/Diagnostic.h>
+#include <clang/Basic/VirtualFileSystem.h>
+#include <clang/Driver/Compilation.h>
+#include <clang/Driver/Driver.h>
+#include <clang/CodeGen/CodeGenAction.h>
+#include <clang/Frontend/CompilerInstance.h>
+#include <clang/Frontend/CompilerInvocation.h>
+#include <clang/Frontend/FrontendActions.h>
+#include <clang/Frontend/TextDiagnosticBuffer.h>
+#include <clang/Frontend/TextDiagnosticPrinter.h>
 
 #ifndef LLVM_OLDER_THAN_4_0
 #include "clang/Lex/PreprocessorOptions.h"
@@ -145,26 +150,28 @@ static void get_build_log(cl_program program,
                          unsigned device_i,
                          std::stringstream &ss_build_log,
                          clang::TextDiagnosticBuffer *diagsBuffer,
-                         const SourceManager &sm)
+                         const SourceManager *SM)
 {
-    for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->err_begin(),
+  for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->err_begin(),
          e = diagsBuffer->err_end(); i != e; ++i)
-      {
-        ss_build_log << "error: " << i->first.printToString(sm)
-                     << ": " << i->second << std::endl;
-      }
-    for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->warn_begin(),
+  {
+    ss_build_log << "error: "
+                 << (SM == nullptr ? "" : (i->first.printToString(*SM) + ": "))
+                 << i->second << std::endl;
+  }
+  for (TextDiagnosticBuffer::const_iterator i = diagsBuffer->warn_begin(),
          e = diagsBuffer->warn_end(); i != e; ++i)
-      {
-        ss_build_log << "warning: " << i->first.printToString(sm)
-                     << ": " << i->second << std::endl;
-      }
+  {
+    ss_build_log << "warning: "
+                 << (SM == nullptr ? "" : (i->first.printToString(*SM) + ": "))
+                 << i->second << std::endl;
+  }
 
-    std::string log = ss_build_log.str();
-    appendToProgramBuildLog(program, device_i, log);
+  std::string log = ss_build_log.str();
+  appendToProgramBuildLog(program, device_i, log);
 }
 
-static llvm::Module *kernel_library(cl_device_id device);
+static llvm::Module *getKernelLibrary(cl_device_id device);
 
 int pocl_llvm_build_program(cl_program program,
                             unsigned device_i,
@@ -343,9 +350,9 @@ int pocl_llvm_build_program(cl_program program,
   }
 
   for (unsigned idx = 0; idx < itemstrs.size(); idx++) {
-      // note: if itemstrs is modified after this, itemcstrs will be full
-      // of invalid pointers! Could make copies, but would have to clean up then...
-      itemcstrs.push_back(itemstrs[idx].c_str());
+    // note: if itemstrs is modified after this, itemcstrs will be full
+    // of invalid pointers! Could make copies, but would have to clean up then...
+    itemcstrs.push_back(itemstrs[idx].c_str());
   }
 
 #ifdef DEBUG_POCL_LLVM_API
@@ -363,7 +370,8 @@ int pocl_llvm_build_program(cl_program program,
        diags)) {
     pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
                                        program_bc_path);
-    get_build_log(program, device_i, ss_build_log, diagsBuffer, CI.getSourceManager());
+    get_build_log(program, device_i, ss_build_log, diagsBuffer,
+                  CI.hasSourceManager() ? &CI.getSourceManager() : nullptr);
     return CL_INVALID_BUILD_OPTIONS;
   }
 
@@ -496,7 +504,8 @@ int pocl_llvm_build_program(cl_program program,
   if (PreprocessedOut == nullptr) {
     pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
                                        program_bc_path);
-    get_build_log(program, device_i, ss_build_log, diagsBuffer, CI.getSourceManager());
+    get_build_log(program, device_i, ss_build_log, diagsBuffer,
+                  CI.hasSourceManager() ? &CI.getSourceManager() : nullptr);
     return CL_BUILD_PROGRAM_FAILURE;
   }
 
@@ -517,7 +526,7 @@ int pocl_llvm_build_program(cl_program program,
   clang::EmitLLVMOnlyAction EmitLLVM(&c);
   success = CI.ExecuteAction(EmitLLVM);
 
-  get_build_log(program, device_i, ss_build_log, diagsBuffer, CI.getSourceManager());
+  get_build_log(program, device_i, ss_build_log, diagsBuffer, &CI.getSourceManager());
 
   if (!success)
     return CL_BUILD_PROGRAM_FAILURE;
@@ -548,7 +557,7 @@ int pocl_llvm_build_program(cl_program program,
   // and/or bitcode for each kernel.
   if (linking_program) {
     currentPoclDevice = device;
-    llvm::Module *libmodule = kernel_library(device);
+    llvm::Module *libmodule = getKernelLibrary(device);
     assert(libmodule != NULL);
     std::string log("Error(s) while linking: \n");
     if (link(*mod, libmodule, log)) {
@@ -600,7 +609,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
   int error;
 
   currentPoclDevice = device;
-  llvm::Module *libmodule = kernel_library(device);
+  llvm::Module *libmodule = getKernelLibrary(device);
   assert(libmodule != NULL);
 
   PoclCompilerMutexGuard lockHolder(NULL);
@@ -785,9 +794,7 @@ static std::map<cl_device_id, llvm::Module *> kernelLibraryMap;
  * Return the OpenCL C built-in function library bitcode
  * for the given device.
  */
-static llvm::Module*
-kernel_library
-(cl_device_id device)
+static llvm::Module* getKernelLibrary(cl_device_id device)
 {
   Triple triple(device->llvm_target_triplet);
 
@@ -796,6 +803,8 @@ kernel_library
 
   const char *subdir = "host";
   bool is_host = true;
+  // TODO: move this to the device layer, a property to ask for
+  // the kernel builtin bitcode library name, including its subdir
 #ifdef TCE_AVAILABLE
   if (triple.getArch() == Triple::tce || triple.getArch() == Triple::tcele) {
     subdir = "tce";
@@ -822,7 +831,6 @@ kernel_library
   }
 #endif
 
-  // TODO sync with Nat Ferrus' indexed linking
   std::string kernellib;
   std::string kernellib_fallback;
 #ifdef ENABLE_POCL_BUILDING
@@ -881,3 +889,48 @@ void cleanKernelLibrary() {
   }
   kernelLibraryMap.clear();
 }
+
+#ifndef LLVM_OLDER_THAN_5_0
+/**
+ * Invoke the Clang compiler through its Driver API.
+ *
+ * @param Device the device of which toolchain to use.
+ * @param Args the command line arguments that would be passed to Clang
+ *             (a NULL terminated list). Args[0] should be the path to
+ *             the Clang binary.
+ * @return 0 on success, error code otherwise.
+ */
+int pocl_invoke_clang(cl_device_id Device, const char** Args) {
+
+  // Borrowed from driver.cpp (clang driver). We do not really care about
+  // diagnostics, but just want to get the compilation command invoked with
+  // the target's toolchain as defined in Clang.
+  IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions;
+
+  TextDiagnosticPrinter *DiagClient =
+    new TextDiagnosticPrinter(llvm::errs(), &*DiagOpts);
+
+  IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
+
+  DiagnosticsEngine Diags(DiagID, &*DiagOpts, DiagClient);
+
+  driver::Driver TheDriver(CLANG, Device->llvm_target_triplet, Diags);
+
+  const char **ArgsEnd = Args;
+  while (*ArgsEnd++ != nullptr) {}
+
+  llvm::ArrayRef<const char*> ArgsArray(Args, ArgsEnd);
+
+  std::unique_ptr<driver::Compilation> C(
+    TheDriver.BuildCompilation(ArgsArray));
+  int Res = 0;
+
+  if (C && !C->containsError()) {
+    SmallVector<std::pair<int, const driver::Command *>, 4> FailingCommands;
+    return TheDriver.ExecuteCompilation(*C, FailingCommands);
+  } else {
+    return -1;
+  }
+
+}
+#endif

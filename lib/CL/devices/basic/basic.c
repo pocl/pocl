@@ -23,6 +23,7 @@
 */
 
 #include "config.h"
+#include "config2.h"
 #include "basic.h"
 #include "cpuinfo.h"
 #include "topology/pocl_topology.h"
@@ -170,11 +171,16 @@ pocl_basic_build_hash (cl_device_id device)
 
 static cl_device_partition_property basic_partition_properties[1] = { 0 };
 
+
+static const char *final_ld_flags[] =
+  {"-lm", "-nostartfiles", HOST_LD_FLAGS_ARRAY, NULL};
+
 void
 pocl_init_cpu_device_infos (cl_device_id dev)
 {
   dev->type = CL_DEVICE_TYPE_CPU;
   dev->max_work_item_dimensions = 3;
+  dev->final_linkage_flags = final_ld_flags;
 
   SETUP_DEVICE_CL_VERSION(HOST_DEVICE_CL_VERSION_MAJOR, HOST_DEVICE_CL_VERSION_MINOR)
   /*
@@ -285,6 +291,7 @@ pocl_init_cpu_device_infos (cl_device_id dev)
   dev->available = CL_TRUE;
   dev->compiler_available = CL_TRUE;
   dev->spmd = CL_FALSE;
+  dev->arg_buffer_launcher = CL_FALSE;
   dev->workgroup_pass = CL_TRUE;
   dev->execution_capabilities = CL_EXEC_KERNEL | CL_EXEC_NATIVE_KERNEL;
   dev->platform = 0;
@@ -636,20 +643,9 @@ pocl_basic_run
   pocl_set_ftz (kernel->program->flush_denorms);
 
   for (z = 0; z < pc->num_groups[2]; ++z)
-    {
-      for (y = 0; y < pc->num_groups[1]; ++y)
-        {
-          for (x = 0; x < pc->num_groups[0]; ++x)
-            {
-              pc->group_id[0] = x;
-              pc->group_id[1] = y;
-              pc->group_id[2] = z;
-
-              cmd->command.run.wg (arguments, pc);
-
-            }
-        }
-    }
+    for (y = 0; y < pc->num_groups[1]; ++y)
+      for (x = 0; x < pc->num_groups[0]; ++x)
+	cmd->command.run.wg ((uint8_t*)arguments, (uint8_t*)pc, x, y, z);
 
   pocl_restore_rm (rm);
   pocl_restore_ftz (ftz);
@@ -674,7 +670,8 @@ pocl_basic_run
             POCL_MEM_FREE (*(void **)(arguments[i]));
           POCL_MEM_FREE(arguments[i]);
         }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER && *(void**)arguments[i] == NULL)
+      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER &&
+	       *(void**)arguments[i] == NULL)
         {
           POCL_MEM_FREE(arguments[i]);
         }
@@ -1126,7 +1123,7 @@ pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
   struct data *d = node->device->data;
 
   if (node != NULL && node->type == CL_COMMAND_NDRANGE_KERNEL)
-    pocl_check_dlhandle_cache (node, 1);
+    pocl_check_kernel_dlhandle_cache (node, 1);
 
   node->ready = 1;
   POCL_LOCK (d->cq_lock);
@@ -1200,7 +1197,7 @@ void
 pocl_basic_compile_kernel (_cl_command_node *cmd, cl_kernel kernel, cl_device_id device)
 {
   if (cmd != NULL && cmd->type == CL_COMMAND_NDRANGE_KERNEL)
-    pocl_check_dlhandle_cache (cmd, 0);
+    pocl_check_kernel_dlhandle_cache (cmd, 0);
 }
 
 /*********************** IMAGES ********************************/

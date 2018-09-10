@@ -1,4 +1,5 @@
-// LLVM module pass to inline ALL called functions into the kernel.
+// LLVM module pass that setups inline attributes so ALL called functions
+// will be inlined into the kernel.
 //
 // Copyright (c) 2011 Universidad Rey Juan Carlos
 //               2012-2015 Pekka Jääskeläinen
@@ -91,7 +92,7 @@ Flatten::runOnModule(Module &M)
 #ifdef DEBUG_FLATTEN
       std::cerr << "### NoInline for " << f->getName().str() << std::endl;
 #endif
-      } else {
+    } else {
 #if LLVM_OLDER_THAN_5_0
       AttributeSet Attrs;
       f->removeAttributes(AttributeSet::FunctionIndex,
@@ -111,8 +112,8 @@ Flatten::runOnModule(Module &M)
 #ifdef DEBUG_FLATTEN
       std::cerr << "### AlwaysInline for " << f->getName().str() << std::endl;
 #endif
-      }
     }
+  }
   return changed;
 }
 

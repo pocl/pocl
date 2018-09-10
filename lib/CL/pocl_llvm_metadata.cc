@@ -732,9 +732,11 @@ int pocl_llvm_get_kernel_metadata(cl_program program,
   content << std::endl
           << "#include <pocl_device.h>" << std::endl
           << "void _pocl_launcher_" << kernel_name
-          << "_workgroup(void** args, struct pocl_context*);" << std::endl
+          << "_workgroup(uint8_t* args, uint8_t*, "
+          << "uint32_t, uint32_t, uint32_t);" << std::endl
           << "void _pocl_launcher_" << kernel_name
-          << "_workgroup_fast(void** args, struct pocl_context*);" << std::endl;
+          << "_workgroup_fast(uint8_t* args, uint8_t*, "
+          << "uint32_t, uint32_t, uint32_t);" << std::endl;
 
   if (Device->global_as_id != 0)
     content << "__attribute__((address_space(" << Device->global_as_id << ")))"

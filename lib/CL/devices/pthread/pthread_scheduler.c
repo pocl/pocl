@@ -1,3 +1,26 @@
+/* OpenCL native pthreaded device implementation.
+
+   Copyright (c) 2011-2018 pocl developers
+
+   Permission is hereby granted, free of charge, to any person obtaining a copy
+   of this software and associated documentation files (the "Software"), to deal
+   in the Software without restriction, including without limitation the rights
+   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+   copies of the Software, and to permit persons to whom the Software is
+   furnished to do so, subject to the following conditions:
+
+   The above copyright notice and this permission notice shall be included in
+   all copies or substantial portions of the Software.
+
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+   AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+   THE SOFTWARE.
+*/
+
 #define _GNU_SOURCE
 
 #ifdef __linux__
@@ -16,13 +39,14 @@
 #include "utlist.h"
 #include "pocl_util.h"
 #include "common.h"
-#include "pocl_mem_management.h" 
+#include "pocl_mem_management.h"
 
 static void* pocl_pthread_driver_thread (void *p);
 
 struct pool_thread_data
 {
-  pthread_cond_t wakeup_cond __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  pthread_cond_t wakeup_cond
+  __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
   pthread_mutex_t lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
   pthread_t thread __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
@@ -410,16 +434,17 @@ work_group_scheduler (kernel_run_command *k,
 
       for (i = start_index; i <= end_index; ++i)
         {
-          translate_wg_index_to_3d_index (k, i, pc.group_id,
+	  size_t gids[3];
+          translate_wg_index_to_3d_index (k, i, gids,
                                           slice_size, row_size);
 
 #ifdef DEBUG_MT
           printf("### exec_wg: gid_x %zu, gid_y %zu, gid_z %zu\n",
-                 pc.group_id[0],
-                 pc.group_id[1], pc.group_id[2]);
+                 gids[0], gids[1], gids[2]);
 #endif
           pocl_set_default_rm ();
-          k->workgroup (arguments, &pc);
+          k->workgroup ((uint8_t*)arguments, (uint8_t*)&pc,
+			gids[0], gids[1], gids[2]);
         }
     }
   while (get_wg_index_range (k, &start_index, &end_index, &last_wgs,
@@ -465,7 +490,7 @@ pocl_pthread_prepare_kernel
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
 
-  pocl_check_dlhandle_cache (cmd, 1);
+  pocl_check_kernel_dlhandle_cache (cmd, 1);
 
   int num_groups = pc->num_groups[0] * pc->num_groups[1] * pc->num_groups[2];
 

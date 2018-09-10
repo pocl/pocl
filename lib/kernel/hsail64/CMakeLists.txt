@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2015 pocl developers
+#   Copyright (c) 2015-2018 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal

@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files for detecting Clang and LLVM
 #
-#   Copyright (c) 2014-2016 pocl developers
+#   Copyright (c) 2014-2018 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -430,7 +430,7 @@ endmacro()
 # The option for specifying the target changed; try the modern syntax
 # first, and fall back to the old-style syntax if this failed
 
-if(NOT DEFINED CLANG_TARGET_OPTION)
+if(NOT DEFINED CLANG_TARGET_OPTION AND ENABLE_HOST_CPU_DEVICES)
 
   custom_try_compile_clangxx("" "return 0;" RES "--target=${LLVM_HOST_TARGET}")
   if(NOT RES)
@@ -526,7 +526,7 @@ endmacro()
 #
 
 # TODO clang + vecmathlib doesn't work on Windows yet...
-if(CLANGXX AND ENABLE_VECMATHLIB AND (NOT WIN32))
+if(CLANGXX AND ENABLE_VECMATHLIB AND (NOT WIN32) AND ENABLE_HOST_CPU_DEVICES)
 
   message(STATUS "Checking if clang++ works (required by vecmathlib)")
 
@@ -633,7 +633,7 @@ endif()
 # via llc.
 
 
-if(NOT DEFINED LLC_TRIPLE)
+if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED LLC_TRIPLE)
   message(STATUS "Find out LLC target triple (for host ${LLVM_HOST_TARGET})")
   set(_EMPTY_C_FILE "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/tripletfind.c")
   file(WRITE "${_EMPTY_C_FILE}" "")
@@ -660,7 +660,7 @@ endif()
 # targeted if ypu pass -mcpu=native to llc, so we could replace this auto-detection
 # with just: set(LLC_HOST_CPU "native"), however, we can't do this at the moment
 # because of the work-around for arm1176jz-s.
-if(NOT DEFINED LLC_HOST_CPU_AUTO)
+if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED LLC_HOST_CPU_AUTO)
   message(STATUS "Find out LLC host CPU with ${LLVM_LLC}")
   execute_process(COMMAND ${LLVM_LLC} "--version" RESULT_VARIABLE RES_VAR OUTPUT_VARIABLE OUTPUT_VAR)
   # WTF, ^^ has return value 1
@@ -753,7 +753,7 @@ endif()
 
 ####################################################################
 
-if(NOT DEFINED ${CL_DISABLE_HALF})
+if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED ${CL_DISABLE_HALF})
   set(CL_DISABLE_HALF 0)
   message(STATUS "Checking fp16 support")
   custom_try_compile_c_cxx_silent("${CLANG}" "c" "__fp16 callfp16(__fp16 a) { return a * (__fp16)1.8; };" "__fp16 x=callfp16((__fp16)argc);" RESV -c ${CLANG_TARGET_OPTION}${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${LLC_HOST_CPU})

@@ -2,7 +2,7 @@
 // desired format
 //
 // Copyright (c) 2014 Kalle Raiskila
-//               2016-2017 Pekka Jääskeläinen / Tampere University of Technology
+//               2016-2018 Pekka Jääskeläinen / Tampere University of Technology
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -365,6 +365,14 @@ int link(llvm::Module *program, const llvm::Module *lib, std::string &log) {
   ValueToValueMapTy vvm;
   std::list<llvm::StringRef> declared;
 
+  // Include auxiliary functions required by the device at hand.
+  if (const char **DevAuxFuncs = currentPoclDevice->device_aux_functions) {
+    const char **Func = DevAuxFuncs;
+    while (*Func != nullptr) {
+      declared.push_back(*Func++);
+    }
+  }
+
   llvm::Module::iterator fi, fe;
 
   // Find and fix opencl.imageX_t arguments
@@ -464,6 +472,13 @@ int copyKernelFromBitcode(const char* name, llvm::Module *parallel_bc,
 
   const StringRef kernel_name(name);
   copy_func_callgraph(kernel_name, program, parallel_bc, vvm);
+
+  if (const char **DevAuxFuncs = currentPoclDevice->device_aux_functions) {
+    const char **Func = DevAuxFuncs;
+    while (*Func != nullptr) {
+      copy_func_callgraph(*Func++, program, parallel_bc, vvm);
+    }
+  }
 
   std::string log;
   shared_copy(parallel_bc, program, log, vvm);

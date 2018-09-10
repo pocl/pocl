@@ -1,7 +1,7 @@
 /* pocl_llvm.h: interface to call LLVM and Clang.
 
    Copyright (c) 2013 Kalle Raiskila and
-                      Pekka Jääskeläinen
+                 2013-2018 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -117,13 +117,14 @@ unsigned pocl_llvm_get_kernel_count(cl_program program);
  * Returns the number of kernels found in the program (may be greater than
  * 'max_num_krn')
  */
-unsigned pocl_llvm_get_kernel_names( cl_program program, char **knames, unsigned max_num_krn);
+unsigned pocl_llvm_get_kernel_names(cl_program program, char **knames,
+                                    unsigned max_num_krn);
 
 /** Compile the kernel in infile from LLVM bitcode to native object file for
  * device, into outfile.
  */
 int pocl_llvm_codegen(cl_device_id device, void *modp,
-                      char **output, size_t *output_size);
+                      char **output, uint64_t *output_size);
 
 /* Parse program file and populate program's llvm_irs */
 int
@@ -137,6 +138,10 @@ int pocl_llvm_link_program(cl_program program,
                            unsigned char **cur_device_binaries,
                            size_t *cur_device_binary_sizes,
                            void **cur_llvm_irs, int create_library, int spir);
+
+#ifndef LLVM_OLDER_THAN_5_0
+int pocl_invoke_clang(cl_device_id Device, const char** Args);
+#endif
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

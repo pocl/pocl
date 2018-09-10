@@ -42,6 +42,7 @@ function(compile_c_to_bc FILENAME SUBDIR BC_FILE_LIST)
         ${VML_KERNEL_DEPEND_HEADERS}
         COMMAND "${CLANG}" ${CLANG_FLAGS} ${DEVICE_CL_FLAGS} "-O1"
         ${KERNEL_C_FLAGS} "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
+        "-I${CMAKE_SOURCE_DIR}/include"
         "-include" "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
         COMMENT "Building C to LLVM bitcode ${BC_FILE}"
         VERBATIM)

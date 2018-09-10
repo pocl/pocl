@@ -93,8 +93,10 @@ void pocl_broadcast (cl_event event);
 
 void pocl_init_dlhandle_cache ();
 
-void pocl_check_dlhandle_cache (_cl_command_node *cmd,
-                                unsigned initial_refcount);
+char *pocl_check_kernel_disk_cache (_cl_command_node *cmd);
+
+void pocl_check_kernel_dlhandle_cache (_cl_command_node *cmd,
+				       unsigned initial_refcount);
 
 void pocl_release_dlhandle_cache (_cl_command_node *cmd);
 

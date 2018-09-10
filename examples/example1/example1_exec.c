@@ -51,7 +51,7 @@ extern "C" {
     CHECK_CL_ERROR2 (err);
 
     global_work_size[0] = n;
-    local_work_size[0] = 128;
+    local_work_size[0] = 2;
 
     err = clEnqueueNDRangeKernel (cmd_queue, kernel, 1, NULL, global_work_size,
                                   local_work_size, 0, NULL, NULL);

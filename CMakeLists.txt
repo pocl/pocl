@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014-2017 pocl developers
+#   Copyright (c) 2014-2018 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -130,7 +130,7 @@ option(POCL_DEBUG_MESSAGES
   "Enable debug messages from pocl (useful for OpenCL developers), must be enabled at runtime, with env var POCL_DEBUG"
   ON)
 
-option(ENABLE_HSA "Enable the HSA device driver for AMD GCN devices" OFF)
+option(ENABLE_HSA "Enable the HSA base profile runtime device driver" OFF)
 
 option(ENABLE_CUDA "Enable the CUDA device driver for NVIDIA devices" OFF)
 
@@ -147,6 +147,8 @@ option(DEVELOPER_MODE "This will SIGNIFICANTLY slow down pocl (but speed up its 
 option(USE_POCL_MEMMANAGER "Enables custom memory manager. Except for special circumstances, this should be disabled." OFF)
 
 option(EXAMPLES_USE_GIT_MASTER "If enabled, some of the external testsuites in examples/ will try to use sources from Git master, instead of releases. This may result in failure to build or run the examples" OFF)
+
+option(ENABLE_HOST_CPU_DEVICES "Add host CPUs as OpenCL devices (basic and pthread)." ON)
 
 ####
 
@@ -1044,13 +1046,24 @@ string(REGEX REPLACE "[\r\n\t ]+" "\", \"" HOST_LD_FLAGS_ARRAY "${HOST_LD_FLAGS_
 set(HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} ${EXTRA_HOST_CLANG_FLAGS}")
 set(HOST_LLC_FLAGS "${DEFAULT_HOST_LLC_FLAGS} ${EXTRA_HOST_LLC_FLAGS}")
 
-set(OCL_TARGETS "host")
-set(OCL_DRIVERS "basic pthreads")
+# basic device is always built as it contains default implementations for
+# device layer APIs which many devices delegate to
+set(BUILD_BASIC 1)
 
-# TODO OCL_KERNEL_TARGET -> CPU_TARGET_TRIPLE
-# TODO OCL_KERNEL_TARGET_CPU -> OCL_KERNEL_TARGET_CPU
-set(OCL_KERNEL_TARGET "${LLC_TRIPLE}") #The kernel target triplet.
-set(OCL_KERNEL_TARGET_CPU "${LLC_HOST_CPU}") #The kernel target CPU variant.
+if(ENABLE_HOST_CPU_DEVICES)
+  set(OCL_TARGETS "host")
+  set(OCL_DRIVERS "basic pthreads")
+  # TODO OCL_KERNEL_TARGET -> CPU_TARGET_TRIPLE
+  # TODO OCL_KERNEL_TARGET_CPU -> OCL_KERNEL_TARGET_CPU
+  set(OCL_KERNEL_TARGET "${LLC_TRIPLE}") #The kernel target triplet.
+  set(OCL_KERNEL_TARGET_CPU "${LLC_HOST_CPU}") #The kernel target CPU variant.
+  set(BUILD_PTHREAD 1)
+endif()
+
+if(DEFINED EXTRA_OCL_TARGETS)
+  set(OCL_TARGETS "${OCL_TARGETS} ${EXTRA_OCL_TARGETS}")
+endif()
+
 
 ####################################################################
 
@@ -1160,7 +1173,9 @@ endif()
 
 if(ENABLE_HSA)
   set(OCL_DRIVERS "${OCL_DRIVERS} hsa")
-  set(OCL_TARGETS "${OCL_TARGETS} hsail64")
+  if (HSAIL_ENABLED)
+    set(OCL_TARGETS "${OCL_TARGETS} hsail64")
+  endif()
   # this is for config.h
 
   set(HSA_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_fp64 cl_khr_int64_base_atomics cl_khr_int64_extended_atomics")
