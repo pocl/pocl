@@ -134,9 +134,9 @@ void
 pthread_scheduler_uninit ()
 {
   unsigned i;
-  scheduler.thread_pool_shutdown_requested = 1;
 
   PTHREAD_LOCK (&scheduler.wake_lock);
+  scheduler.thread_pool_shutdown_requested = 1;
   pthread_cond_broadcast (&scheduler.wake_pool);
   PTHREAD_UNLOCK (&scheduler.wake_lock);
 
@@ -145,7 +145,6 @@ pthread_scheduler_uninit ()
       pthread_join (scheduler.thread_pool[i].thread, NULL);
       PTHREAD_DESTROY_LOCK (&scheduler.thread_pool[i].lock);
     }
-  scheduler.thread_pool_shutdown_requested = 0;
 
   pocl_aligned_free (scheduler.thread_pool);
   PTHREAD_FAST_DESTROY (&scheduler.wq_lock_fast);
@@ -154,6 +153,8 @@ pthread_scheduler_uninit ()
 
   pthread_cond_destroy (&scheduler.cq_finished_cond);
   PTHREAD_DESTROY_LOCK (&scheduler.cq_finished_lock);
+
+  scheduler.thread_pool_shutdown_requested = 0;
 }
 
 void pthread_scheduler_push_command (_cl_command_node *cmd)
@@ -541,6 +542,7 @@ void*
 pocl_pthread_driver_thread (void *p)
 {
   struct pool_thread_data *td = (struct pool_thread_data*)p;
+  int do_exit = 0;
   assert (td);
   _cl_command_node *cmd = NULL;
   /* some random value, doesn't matter as long as it's not a valid bool - to
@@ -568,11 +570,15 @@ pocl_pthread_driver_thread (void *p)
 
   while (1)
     {
-      if (scheduler.thread_pool_shutdown_requested)
+      PTHREAD_LOCK (&scheduler.wake_lock);
+      do_exit = scheduler.thread_pool_shutdown_requested;
+      PTHREAD_UNLOCK (&scheduler.wake_lock);
+      if (do_exit)
         {
           pthread_cond_destroy (&td->wakeup_cond);
           PTHREAD_DESTROY_LOCK (&td->lock);
           pocl_aligned_free (td->printf_buffer);
+          pocl_aligned_free (td->local_mem);
           pthread_exit (NULL);
         }
 
