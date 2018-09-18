@@ -21,6 +21,12 @@ platform for issues in parallel programming of heterogeneous platforms.</p>
 
 <h1>News</h1>
 
+<h2>2018-09-18: Matrix-2000 and pocl</h2>
+
+<p>Dr. Jianbin Fang from NUDT sent us <a href="nudt-pocl-use-case.html">a nice
+description</a> of how they benefitted from pocl for adding OpenCL support on
+their Matrix-2000 accelerator.</p>
+
 <h2>2018-03-09: <a href="pocl-1.1.html">Portable Computing Language
 (pocl) v1.1 released</a></h2>
 
