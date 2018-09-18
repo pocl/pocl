@@ -1,5 +1,5 @@
 <%!
-        sub_page = "Kernel De-SPMD Compilation for Texas Instruments' DSPs"
+        sub_page = "pocl and the Matrix-2000 co-processor"
 %>
 
 <%inherit file="basic_page.makt" />
