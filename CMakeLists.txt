@@ -1413,6 +1413,10 @@ include(add_test_pocl)
 if (OCS_AVAILABLE)
   add_subdirectory("tests")
   add_subdirectory("examples")
+else()
+  add_subdirectory("examples/example1")
+  add_subdirectory("examples/example2")
+  add_subdirectory("examples/example2a")
 endif()
 
 # make check & make check_tier1
