@@ -1,0 +1,11 @@
+To run the CLBlast tests using pocl:
+
+1) git clone git@github.com:CNugteren/CLBlast.git to this
+directory
+
+2) Install a BLAS that the CLBlast's tests can compare the
+runs against, e.g. "apt install libblas-dev".
+
+3) Reconfigure pocl. It should autodetect the CLBlast cloned
+repository and enable it as a test suite (see the final
+messages printed.

@@ -46,7 +46,7 @@ add_subdirectory("EinsteinToolkit")
 # TODO:   opencl-book-samples
 set(ALL_TESTSUITES
     AMD AMDSDK2.9 AMDSDK3.0
-    ASL arrayfire clBLAS clFFT
+    ASL arrayfire clBLAS CLBlast clFFT
     conformance CloverLeaf Halide IntelSVM
     opencl-book-samples OpenCV
     Parboil piglit PyOpenCL
@@ -58,7 +58,7 @@ endif()
 
 if("${ENABLE_TESTSUITES}" MATCHES "tier1")
   list(REMOVE_ITEM ENABLE_TESTSUITES "tier1")
-  list(APPEND ENABLE_TESTSUITES "AMDSDK3.0" "piglit" "conformance")
+  list(APPEND ENABLE_TESTSUITES "AMDSDK3.0" "piglit" "conformance" "CLBlast")
 endif()
 
 include(ExternalProject)
