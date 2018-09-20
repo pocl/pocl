@@ -10,6 +10,8 @@
 <ul>
 <li>Support for LLVM/Clang 7.0 and 6.0.</li>
 <li>HWLOC 2.0 support</li>
+<li>pocl 1.2 build on 64bit ARM with LLVM 7.0 is broken (it works with previous LLVM versions). This is a regression in LLVM.</li>
+<li>Vecmathlib support is deprecated and will likely be removed in the next release, unless some users come forward.</li>
 </ul>
 </p>
 
