@@ -184,13 +184,13 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
   /* temporary filename for kernel.so */
   if (pocl_cache_tempname (tmp_module, ".so", NULL))
     {
-      POCL_MSG_PRINT_LLVM ("Creating temporary kernel.so file "
+      POCL_MSG_PRINT_LLVM ("Creating temporary kernel.so file"
                            " for kernel %s FAILED\n",
                            kernel->name);
       goto FINISH;
     }
   else
-    POCL_MSG_PRINT_LLVM ("Temporary kernel.so file "
+    POCL_MSG_PRINT_LLVM ("Temporary kernel.so file"
                          " for kernel %s : %s\n",
                          kernel->name, tmp_module);
 
@@ -971,8 +971,8 @@ pocl_check_dlhandle_cache (_cl_command_node *cmd, unsigned initial_refcount)
           POCL_ABORT ("Final linking of kernel %s failed.\n", k->name);
         }
 #else
-      POCL_ABORT("pocl built without online compiler support "
-                 "cannot compile LLVM IRs to machine code\n");
+      POCL_ABORT("pocl built without online compiler support"
+                 " cannot compile LLVM IRs to machine code\n");
 #endif
     }
   else
@@ -1103,8 +1103,8 @@ pocl_setup_device_for_system_memory(cl_device_id device)
       if (device->global_mem_size > limited_memory)
         device->global_mem_size = limited_memory;
       else
-        POCL_MSG_WARN ("requested POCL_MEMORY_LIMIT %i GBs is larger than "
-                       "physical memory size (%zu) GBs, ignoring\n",
+        POCL_MSG_WARN ("requested POCL_MEMORY_LIMIT %i GBs is larger than"
+                       " physical memory size (%zu) GBs, ignoring\n",
                        limit_memory_gb, (device->global_mem_size >> 30));
     }
 
