@@ -31,7 +31,7 @@ endif()
 
 
 if( test_not_successful )
-  message( SEND_ERROR "FAIL: Test exited with nonzero code: ${test_cmd_separated}\nSTDOUT:\n${stdout}\nSTDERR:\n${stderr}" )
+  message( SEND_ERROR "FAIL: Test exited with nonzero code (${test_not_successful}): ${test_cmd_separated}\nSTDOUT:\n${stdout}\nSTDERR:\n${stderr}" )
 else()
   message("${stdout}")
   message("${stderr}")
