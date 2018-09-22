@@ -42,6 +42,8 @@ ExternalProject_Add(
   CMAKE_ARGS
     -DTESTS=ON
     -DCLIENTS=ON
+    # This is needed with some drivers due to https://gcc.gnu.org/bugzilla/show_bug.cgi?id=67791
+    -DCMAKE_CXX_FLAGS=-pthread
   INSTALL_COMMAND /bin/true
 )
 
