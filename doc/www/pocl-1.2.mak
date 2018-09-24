@@ -3,7 +3,7 @@
 %>
 <%inherit file="basic_page.makt" />
 
-<h1>September 2018: pocl v1.2 released</h2>
+<h1>September 24th 2018: pocl v1.2 released</h2>
 
 <h2>Release highlights</h2>
 
@@ -26,9 +26,12 @@ platforms, please let us know!</p>
 
 <p>Most of the code that landed to the pocl code base during this release
 cycle was produced for the needs of research funded by various sources.
-The Customized Parallel Computing research group of Tampere
-University of Technology (Finland) likes to thank the Academy of Finland
-(funding decision 297548), Business Finland (FiDiPro project StreamPro,
-1846/31/2014) and HSA Foundation.</p>
+The Customized Parallel Computing research group of Tampere University of
+Technology (Finland) likes to thank the Academy of Finland (funding
+decision 297548), Business Finland (FiDiPro project StreamPro,
+1846/31/2014), ECSEL JU project FitOptiVis (project number 783162) and
+HSA Foundation for funding most of the development work in this release.
+Much appreciated!
+</p>
 
 <p><a href="download.html">Download</a>.</p>

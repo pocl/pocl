@@ -26,7 +26,7 @@
 # You need an SF account and to be an admin in the pocl project.
 
 generated_htmls=$(patsubst %.mak,%.html,$(wildcard *.mak))
-static_files=pocl-paper.bib img/pocl-80x60.png
+static_files=pocl-paper.bib img/pocl-80x60.png downloads
 
 all: $(generated_htmls)
 

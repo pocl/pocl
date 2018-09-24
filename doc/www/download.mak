@@ -2,11 +2,11 @@
         sub_page = "Download"
 %>
 <%inherit file="basic_page.makt" />
-<p>pocl uses the <a href="http://git-scm.com/">git</a> version control system and 
+<p>pocl uses the <a href="http://git-scm.com/">git</a> version control system and
 <a href="http://github.com/pocl/pocl">GitHub</a> for code hosting and issue tracking.</p>
 
-<p>The main development branch is kept stable (should pass all tests all the time), 
-thus the best starting point for using and developing pocl is to check it out from 
+<p>The main development branch is kept stable (should pass all tests all the time),
+thus the best starting point for using and developing pocl is to check it out from
 the version control system:</p>
 
 <pre>
@@ -82,6 +82,4 @@ the version control system:</p>
 
 <p>All releases are also available on <a
 href="http://sourceforge.net/projects/pocl/files/">SourceForge</a>.
-
-<p>Operating system binaries for Fedora 19 and later are <a href="rpm.html">available</a>.</p>
 

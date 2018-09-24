@@ -1,0 +1,583 @@
+1.2  September
+==============
+
+- LLVM 7.0 is now supported.
+
+- Version 2.0 of hwloc library is supported.
+
+- device-side printf; more consistent printf output.
+
+1.1 March 2018
+==============
+
+Highlights
+----------
+
+- LLVM 6.0 is now supported.
+
+- Reintroduced experimental SPIR LLVM bitcode support to pocl.
+  Requires LLVM 5 or newer. New experimental feature: SPIR-V support;
+  requires a working llvm-spirv converter. Currently only loading
+  of SPIR-V binaries by pocl is supported, not output.
+  See docs/features.rst for more details.
+
+- Refactored pocl cache now does away with LLVM file locks and relies
+  entirely on system calls for proper synchronization. Additionally,
+  cache file writes are now fdatasync()ed.
+
+- Improved kernel compilation time (with cold cache). Improvement
+  depends on sources - it's bigger for large programs with many kernels.
+  Luxmark now compiles in seconds instead of dozens of seconds;
+  internal pocl tests run in 30-50% less time.
+
+- LLVM Scalarizer pass is now only called for SPMD devices. Performance
+  change varies across tests, but positive seems to outweigh negative.
+
+- Implemented uninitialization callback for device drivers. This is
+  triggered when the last cl_context is released. Currently only the
+  CPU driver implements the callback.
+
+- Removed libpoclu from installed files; this library contains helpers
+  for pocl's internal tests, and from installed files was only used by
+  poclcc, which has been updated to not rely on it.
+
+- POCL_MAX_WORK_GROUP_SIZE is now respected by all devices. This variable
+  limits the reported maximum WG sizes & dimensions; tuning max WG size
+  may improve performance due to cache locality improvement.
+
+- CL_PLATFORM_VERSION now contains much more information about how
+  pocl was built.
+
+- For users still building with Vecmathlib, performance should be back
+  to levels of pocl 0.14 (there was a huge drop caused by a change
+  in -O0 optimization level of LLVM 5.0).
+
+- Improved support for ARM and ARM64 architectures. All internal tests
+  now pass (on Cortex-A53 and Cortex-A15), although it's still far
+  from full conformance.
+
+
+1.0 December 2017
+=================
+
+Highlights
+----------
+- Improved automatic local work-group sizing on kernel enqueue, taking
+  into account standard constraints, SIMD width for vectorization as
+  well as the number of compute units available on the device.
+- Support for NVIDIA GPUs via a new CUDA backend (currently experimental).
+- Removed support for BBVectorizer.
+- LLVM 5.0 is now supported.
+- A few build options have been added for distribution builds,
+  see README.packaging.
+- Somewhat improved scalability in the CPU driver. CPUs with many cores
+  and programs using a lot of WIs with small kernels can run somewhat faster.
+- The OpenCL 1.2 conformance tests now pass with selected CPUs. There are some
+  caveats though - see the documentation.
+- When conformance is enabled, some kernel library functions might be
+  slower than in previous releases.
+- Pocl now reports OpenCL 1.2 instead of 2.0, except HSA enabled builds.
+- Updated format of pocl binaries, which is NOT backwards compatible.
+  You'll need to clean any kernel caches.
+- Fixed several memory leaks.
+- Unresolved symbols (missing/misspelled functions etc) in a kernel will
+  result in error in clBuildProgram() instead of pocl silently ignoring
+  them and then aborting at dlopen().
+- New env variable POCL_MEMORY_LIMIT=<num> limits the Global memory size
+  reported by pocl to <num> gigabytes.
+- New env variable POCL_AFFINITY (defaults to 0): if enabled, sets
+  the affinity of each CPU driver pthread to a single core.
+- Improved AVX512 support (with LLVM 5.0). Note that even with LLVM 5.0
+  there are still a few bugs (see pocl issue #555); AVX512 + LLVM 4.0 are
+  a lot more broken, and probably not worth trying.
+- POCL_DEBUG env var has been revamped. You can now limit debuginfo to
+  these categories (or their combination): all,error,warning,general
+  memory,llvm,events,cache,locking,refcounts,timing,hsa,tce,cuda
+  The old setting POCL_DEBUG=1 now equals error+warning+general.
+
+
+0.14 April 2017
+===============
+
+Highlights
+----------
+- Support for LLVM/Clang versions 3.9 and 4.0. Version 3.9 was the first
+  release to include all frontend features for OpenCL 2.0.
+- Ability to build pocl in a mode where online compilation is not
+  supported to run in hosts without LLVM and binaries compiled offline
+  e.g. using poclcc.
+- pocl's binary format now can contain all the necessary bits to
+  execute the programs on a host without online compiler support.
+- Initial support for out-of-order execution execution of command queues.
+- It's now possible to cross-compile pocl when building an offline
+  compiler build.
+- New driver api extension to support out-of-order and asynchronous
+  devices/drivers.
+- Pthread and HSA drivers are now fully asynchronous.
+- CMake now the only supported build system, autotools removed.
+- LTTng tracing support
+
+OpenCL Runtime/Platform API support
+-----------------------------------
+- implemented clEnqueueBarrierWithWaitList
+- implemented clEnqueueMigrateMemObjects
+
+Other
+-----
+- Support for reqd_work_group_size attribute in the binary format and poclcc:
+  Generates a static sized work-group function to help optimizations
+  such as autovectorization.
+- HSA: added support for phsa (https://github.com/HSAFoundation/phsa)
+- A lot of bug and memory leak fixes. Some notable ones:
+  - Issue #1, passing aggregates as kernel value parameters, can be
+    now fixed with an LLVM patch.
+  - Now it's possible to build pocl without using the fake address
+    space ids, which were a source of many annoying issues.
+
+0.13 April 2016
+===============
+
+Highlights
+-----------
+- Support for LLVM/Clang 3.8
+- initial (partial) OpenCL 2.0 support
+  (only Shared Virtual Memory and Atomics are supported ATM)
+- CMake build system almost on parity with autotools
+  (TCE, all external testsuites)
+- CMake build is now able to build multiple kernel libraries
+  for different CPUs and let pocl select a suitable one at runtime
+
+Bugfixes
+---------
+- clEnqueueCopyImage() now works properly
+- improved file locking (much less disk access to kernel cache)
+- Address spaces of structs are handled properly
+
+Other
+------
+- removed custom buffer alloc from pthread device
+- removed IBM Cell support
+- removed support for older LLVM versions (before 3.7)
+- significantly higher performance with a lot of small kernel enqueues
+  (due to improved file locking)
+- vecmathlib now supports AVX2
+- a few more HSA kernel library implementations: l/tgamma, erf(c), hypot
+- implemented OpenCL 2.0 API calls: clEnqueueSVM*, clSVMalloc/free,
+  clEnqueueFillBuffer, clSetKernelExecInfo, clSetKernelArgSVMPointer,
+  clCreateCommandQueueWithProperties - no device side queues yet
+- OpenCL 2.0 atomics (C11 atomics subset) for x86-64 and HSA
+- new testsuites: AMD SDK 3.0, Intel SVM
+- New CMake-only testsuites: ASL, clBLAS, clFFT, arrayfire
+- more debugging info (timing, mem stats)
+- ansi colors with POCL_DEBUG=1 if the output is a terminal
+
+
+0.12 October 2015
+===============
+
+Highlights
+----------
+- Support for HSA-compliant devices (kernel agents). The GPU of AMD Kaveri
+  now works through pocl with a bunch of test cases in the AMD SDK 2.9 example
+  suite.
+- New and improved kernel cache system that enables caching
+  kernels with #includes.
+- Support for LLVM/Clang 3.7.
+- Little endian MIPS32 now passes almost all pocl testsuite tests.
+
+OpenCL Runtime/Platform API support
+-----------------------------------
+- Transferred buffer read/write/copy offset calculation to device driver side.
+  - these driver api functions have changed; got offset as a new argument.
+- Maximum allocation is not limited to 1/4th of total memory size.
+- Maximum image dimensions grow to fit maximum allocation.
+- clGetDeviceInfo() reports better information about CPU vendor and cache.
+- experimental clCreateSubDevices() for pthread CPU device.
+
+OpenCL C Builtin Function Implementations
+-----------------------------------------
+- Implemented get_image_dim().
+
+Bugfixes
+--------
+- Avoid infinite loops when users recycle an event waiting list.
+- Correctly report the base address alignment.
+- Lots of others.
+
+Misc
+----
+- Tests now using new cl2.hpp, removing dependency on OpenGL headers
+
+
+0.11 March 2015
+===============
+
+Highlights
+----------
+- Support for LLVM/Clang 3.6
+- Kernel compiler cache.
+- Android support.
+
+Kernel compiler
+---------------
+- Do not add implicit barriers to kernels without WG barriers
+  to avoid WI context data overheads.
+- Setting the POCL_VECTORIZER_REMARKS env to 1 prints out LLVM vectorizer 
+  remarks during kernel compilation.
+- Implicit work-group vectorizer improvements.
+- POCL_VECTORIZER_REMARKS: When set to 1, prints out remarks produced by 
+  the loop vectorizer of LLVM during kernel compilation.
+
+OpenCL Runtime/Platform API support
+-----------------------------------
+- Minimal initial implementation for clCreateSubDevices()
+
+Bugfixes
+--------
+- Fix falsely detecting operations with side-effects (especially atomic
+  operations) as uniform. This caused deadlock/race situations due to 
+  illegal implicit barrier injection.
+- Fix several reference counting issues.
+- Memory leak fixes.
+- ARM/openSUSE build fixes.
+- Plenty of CMake fixes.
+
+New test/example cases
+----------------------
+- Several Halide examples using its OpenCL backend added.
+- CloverLeaf
+
+Misc.
+-----
+- The old BBVectorizer forked WIVectorizer removed due to bit rot and 
+  the general hackiness of it.
+- Experimental Windows/Visual Studio support (in progress).
+- Initial support for MIPS architecture (with known issues).
+- Runtime debug printouts that can be enabled via POCL_DEBUG=1.
+- Streamlined the buffer allocation and fixed several issues with it.
+
+ 
+0.10 September 2014
+===================
+
+This lists only the most interesting changes. Please
+refer to the version control log for a full listing.
+
+Highlights
+----------
+- Support for LLVM/Clang 3.5 
+- Support for building using CMake (experimental with known issues).
+
+Bugfixes
+--------
+- TCE: kernel building was broken when running pocl
+  from install location 
+- thread-safety (as required since OpenCL 1.1) improved
+
+Kernel compiler
+---------------
+- Final code generation now done via LLVM API calls instead of
+  calling the llc binary.
+- Sensible linking of functions from the monolithic kernel built-in
+  library. Major compilation speedup for smaller kernels.
+
+OpenCL C Builtin Function Implementations
+-----------------------------------------
+- Improved support for halfN functions.
+- ilogb and ldexp available with vecmathlib
+
+OpenCL Runtime/Platform API support
+-----------------------------------
+- Implement clCreateKernelsInProgram()
+- OpenCL-C shuffle() and shuffle2() implementation added
+- Device probing modified to allow for device driver to detect device during
+  runtime. POCL_DEVICES still supported.
+- Checks in clSetKernelArgs() for argument validity
+- Checks in clEnqueueNDRange() for arguments to be all set
+- Implement clGetKernelArgInfo()
+- clEnqueueCopyImage() 
+
+Misc
+----
+- ViennaCL testsuite updated to 1.5.1
+
+0.9 January 2014
+================
+
+This lists only the most interesting changes. Please
+refer to the version control log for a full listing.
+
+Highlights
+----------
+- Major improvements to the kernel compiler's vectorization 
+  performance. Twofold speedups in some benchmarks
+- Support for most of the piglit CL tests
+
+OpenCL Runtime/Platform API support
+-----------------------------------
+- clCreateImage2D() and clCreateImage3D() implementation moved to 
+  clCreateImage()
+- Image creation now uses clCreateBuffer() 
+- clBuildProgram: Propagate the supported -cl* compiler options to Clang's 
+  OpenCL frontend. 
+- clFinish: works with commands with event wait lists.
+- Preliminary support for OpenCL 2.0 blocks
+- Added support for clEnqueueNativeKernel()
+
+Builtin Function Implementations (OpenCL 1.2 Section 6.12)
+----------------------------------------------------------
+- Refactored read/write_image()-functions to support refactored device image 
+  object. (Only functions used by SimpleImage test)
+- Introduced new macro based implementation for read/write_image()-functions
+- Added sampler implementation for CLK_ADDRESS_CLAMP and 
+  CLK_ADDRESS_CLAMP_TO_EDGE (Only integer coords supported)
+- Most of the printf() format strings now works. Missing features:
+  - long on 32-bit architectures
+
+Performance Improvements
+------------------------
+- Kernel compiler now tries to avoid replicating uniform variables,
+  this leads to less context data to be saved per work-item and cleaner
+  kernel bitcode for later optimizations
+- Use a precompiled header for OpenCL C builtin declarations to speed up
+  the kernel compilation
+- Kernel compiler vectorization optimizations:
+  - Inject implicit barriers both to loop starts and ends to
+    horizontally vectorize the inner loop.
+  - Reduce "peeling" by minimizing the conditional barrier region
+    by injecting implicit barrier close to the branch points for
+    conditional barrier cases.
+  - Breaking of vector datatypes for more efficient loop 
+    vectorization.
+  - Support LLVM 3.4 parallel loop metadata.
+
+Misc
+----
+- Explicitly specify the target architecture/CPU for the 
+  kernel complier.
+- Kernel compiler frontend defaults to implementation using LLVM API
+  directly instead of the scripts. 
+- __OPENCL_VERSION__ defined to 120
+- poclu: helpers for converting between the C float and OpenCL cl_half
+  types
+- clEnqueueNativeKernel implemented
+- Static and cmake-builds of LLVM can now be used. 
+
+Bugfixes
+--------
+- Correct isequal, isnan, and similar routines
+
+0.8  August 2013
+================
+
+This lists only the most interesting changes. Please
+refer to the version control log for a full listing.
+
+Overall
+-------
+
+- Added support for LLVM/Clang 3.3.
+- Dropped support for LLVM/Clang v3.1.
+- Removed the depedency on llvm-ld (which was copied to
+  pocl-llvm-ld to pocl tree). Now uses llvm-link instead.
+- Project renamed to Portable Computing Language (pocl).
+- Luxmark v2.0 now works.
+- x86_64 can now use efficient math built-in function
+  implementations from the vecmathlib project to avoid libm 
+  calls and to exploit the SIMD instructions more efficiently
+  in case of vector datatypes in the kernel.
+- Parallelize kernel inner loops "horizontally", if possible.
+  This converts possibly sequential inner kernel loops to parallel 
+  loops by effectively performing "loop interchange" of the
+  work-item loop and the kernel's inner loop.
+- Added VexCL tests to the test suite. All but one of them
+  work with pocl.
+
+Major bugfixes
+--------------
+- Fixed passing NULL as a buffer argument to clSetKernelArg
+  (this time with a regression test added).
+- Constant BitCast expressions broken to variables to avoid
+  crashing when copying a kernel with casts on automatic
+  local pointers.
+- Fixes for i386/i686. Tested on Pentium4/Ubuntu 10.04 LTS.
+- Lots of API error checking added (found by the Piglit testing suite).
+- Fixed bug in select producing incorrect results when the third
+  conditional argument is an unsigned scalar or vector.
+- Replaced deprecated SSE 4.1 assembly mneunomics in x86-64 min/max
+  kernel functions that have since been removed in more recent
+  versions of gas and llvm-as.
+- SPIR/LLVM IR 'byval' attributes are now handled correctly on
+  kernel function arguments, allowing for structs and oversized
+  vectors to be passed in with value semantics.
+- Fixed to work with the latest Khronos OpenCL headers for 1.2.
+  Some issues fixed with the new cl.hpp.
+- The ICD dispatch table was too small which might have caused
+  "interesting" behavior when calling the later functions in
+  the table and not using ocl-icd as the dispatcher.
+- Several kernel compiler bugs fixed.
+- A multithreaded host application could free the same object
+  multiple times due to a race issue.
+
+Platform Layer implementations (OpenCL 1.2 Chapter 4)
+-----------------------------------------------------
+- Return correctly formatted CL_DEVICE_VERSION and
+  CL_DEVICE_OPENCL_C_VERSION.
+- clGetDeviceInfo: Use the 'cpufreq' sys interface of Linux for 
+  querying the CPU clock frequency, if available.
+
+The OpenCL Runtime (OpenCL 1.2 Chapter 5)
+-----------------------------------------
+- clGetEventInfo: Querying the command type, command queue,
+  and the reference count of the event.
+
+Builtin Function Implementations (OpenCL 1.2 Section 6.12)
+----------------------------------------------------------
+- convert_type* builtins now generated with a Python script by
+  Victor Oliveira.
+- length() fingerprint was assuming two arguments instead of one.
+- The kernel bitcode library is now optimized when built in pocl. Speeds
+  up kernel optimization for cases which use the kernel functions
+  a lot.
+- Fix mul_hi() implementation
+
+ICD
+---
+- Fixed pocl tests to work when executed through the Khronos 
+  supplied icd loader (needs a patch applied to the loader be able to
+  override the .icd search path).
+
+Misc.
+-----
+- Fix to the helper script search logic:
+  Search from the BUILDDIR only if env POCL_BUILDING is defined.
+  Otherwise search from PKGDATADIR first, then from the PATH.
+- Fixed memory leaks in clCreateContext* and clCreateKernel
+- Ensured that stored arguments are adequately aligned in
+  clSetKernelArg and clEnqueueNDRangeKernel.
+
+0.7  January 2013
+=================
+
+This lists only the most interesting changes. Please
+refer to the version control log for a full listing.
+
+Overall
+-------
+- Support for LLVM 3.2.
+- Multi-WI work group functions can be now generated
+  using loops which are only partially unrolled. Reduces
+  code size explosion with large WGs in comparison to
+  the full replication method.
+- PowerPC 64 support (tested on Cell/Debian Sid/PS3).
+- PowerPC 32 support (tested on Cell/Debian Sid/PS3).
+- ARM v7 support (on Linux)
+- Beginning of Cell SPU support (very experimental!).
+- Most of the AMD APP SDK OpenCL examples now work and have been
+  added to the pocl test suite.
+- Most of the Parboil benchmark cases added to the test
+  suite.
+
+Kernel Compiler Passes
+----------------------
+- Several miscompilations and compiler crashes fixed.
+- Multiple bugs fixed from the work group vectorizer.
+- Updated metadata format pocl uses to pass information
+  to vectorization and TCE backend to simplify debuging.
+- Kernel pointer arguments are not always marked 'noalias' (restricted).
+  Doing this previously was a specs misunderstanding.
+- ConstantGEPs to static variables generated from automated
+  locals caused problems. Now converting them to normal GEPs
+  using a pass from the SAFECode project.
+
+OpenCL Platform Layer implementations (OpenCL 1.2 Chapter 4)
+-------------------------------------------------------
+- clGetDeviceInfo now uses the hwloc lib for device property
+  queries. Many new queries implemented.
+- clGetKernelInfo (initial implementation)
+- clGetMemObjectInfo (initial implementation)
+- clGetCommandQueueInfo (initial implementation)
+- clReleaseDevice
+- clRetainDevice
+- Proper freeing of devices in clReleaseContext
+
+The OpenCL Runtime Implementations (OpenCL 1.2 Chapter 5)
+---------------------------------------------------------
+- clBuildProgram: support for passing options to the compiler.
+- clEnqueueMarker
+
+OpenCL C Builtin Function Implementations (OpenCL 1.2 Section 6.12)
+-------------------------------------------------------------------
+- Atomic Functions (6.12.11)
+- get_global_offset() was not linked correctly
+
+Framework
+---------
+
+- Made it possible to override the .cl -> .bc build command
+  called by clBuildProgram per device.
+
+Device Drivers
+--------------
+
+- pthread/basic:
+  * extract CPU clock frequency from /proc/cpuinfo, if available
+  * return cl_khr_fp64 if doubles supported by the CPU
+- ttasim: support for explicitly calling custom/special operations
+  through the vendor extensions API
+
+Misc.
+-----
+
+- Fixes for MacOSX builds.
+- Fixed passing NULL as a buffer argument to clSetKernelArguments
+- Fixed a major bug when launching the same kernel multiple times:
+  the arguments very not copied to the command object.
+- Fixed several issues with ICD, it is now considered stable to be
+  used by default.
+
+0.6   August 2012
+=================
+
+Kernel library
+--------------
+
+- Added initial optimized kernel library for X86_64/SSE.
+- Preliminary support for ARM architectures on Linux
+  (briefly tested on MeeGo/Nokia N9).
+
+Pthread device driver
+---------------------
+
+- Multithreading at the work group granularity using pthreads.
+- Tries to figure out the optimal maximum number of
+  threads for the system based on the available hardware
+  threads. Currently works only in Linux using the
+  /proc/cpuinfo interface.
+- Region-based customized memory allocator for speeding up buffer
+  allocations.
+
+Kernel compiler
+---------------
+
+- Most of the tricky work group barrier cases (barriers inside
+  for-loops etc) now supported.
+- Support for local variables, also automatic locals.
+- Reuse previous compilation results, if available.
+- Automatic vectorization of work groups (multiple work items
+  in parallel).
+
+Miscellaneous
+-------------
+- Installable Client Driver (icd) support.
+- Event profiling support (incomplete, works only for kernel and
+  buffer read/write/map/unmap events).
+
+Known issues
+------------
+
+- Non-pointer struct kernel arguments fail due to varying ABIs
+  * https://bugs.launchpad.net/pocl/+bug/987905
+- Produces always "fully unrolled" chains of work items for
+  work groups causing code size explosion for large WGs.
+
