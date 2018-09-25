@@ -3,13 +3,19 @@
 %>
 <%inherit file="basic_page.makt" />
 
-<h1>September 24th 2018: pocl v1.2 released</h2>
+<h1>September 25th 2018: pocl v1.2 released</h2>
 
-<h2>Release highlights</h2>
+<h2>Release Highlights</h2>
 
 <ul>
 <li>Support for LLVM/Clang 7.0 and 6.0.</li>
 <li>HWLOC 2.0 support</li>
+</ul>
+
+<h2>Notes</h2>
+<ul>
+<li>Build on 64bit ARM with LLVM 7.0 is broken (it works with previous LLVM versions). This is a regression in LLVM.</li>
+<li>Vecmathlib support is deprecated and will likely be removed in the next release, unless some users come forward.</li>
 </ul>
 </p>
 

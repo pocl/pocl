@@ -138,7 +138,7 @@ int main(int argc, char **argv)
   CHECK_OPENCL_ERROR_IN("CL_DEVICE_MAX_COMPUTE_UNITS");
   if (max_cus < 2)
     {
-      printf("This test requires a cl device with at least 2 compute units "
+      printf("This test requires a cl device with at least 2 compute units"
              " (a dual-core or better CPU)\n");
       return 1;
     }

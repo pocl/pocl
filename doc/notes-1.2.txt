@@ -8,11 +8,19 @@ project is improving performance portability of OpenCL programs with the
 kernel compiler and the task runtime, reducing the need for target-dependent
 manual optimizations.
 
-Release highlights
+Feature Highlights
 ------------------
 
 * Support for LLVM/Clang 7.0 and 6.0.
 * HWLOC 2.0 support
+
+Notes
+-----
+
+* pocl 1.2 build on 64bit ARM with LLVM 7.0 is broken (it works with previous
+  LLVM versions). This is a regression in LLVM.
+* Vecmathlib support is deprecated and will likely be removed in the
+  next release, unless some users come forward.
 
 Please note that there's an official pocl "maintenance policy" in place.
 This text describes the policy and how you can get your favourite project

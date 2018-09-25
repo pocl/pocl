@@ -21,7 +21,7 @@ platform for issues in parallel programming of heterogeneous platforms.</p>
 
 <h1>News</h1>
 
-<h2>2018-09-24: <a href="pocl-1.2.html">Portable Computing Language (pocl) v1.2 released</a></h2>
+<h2>2018-09-25: <a href="pocl-1.2.html">Portable Computing Language (pocl) v1.2 released</a></h2>
 
 <h2>2018-09-18: Matrix-2000 and pocl</h2>
 

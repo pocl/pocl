@@ -283,7 +283,7 @@ int pocl_llvm_build_program(cl_program program,
   if (device->has_64bit_long)
     ss << "-Dcl_khr_int64 ";
 
-  ss << "-x cl ";
+  ss << "-xcl ";
   // Remove the inline keywords to force the user functions
   // to be included in the program. Otherwise they will
   // be removed and not inlined due to -O0.

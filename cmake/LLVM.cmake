@@ -657,7 +657,7 @@ endif()
 
 
 # FIXME: The cpu name printed by llc --version is the same cpu that will be
-# targeted if ypu pass -mcpu=native to llc, so we could replace this auto-detection
+# targeted if you pass -mcpu=native to llc, so we could replace this auto-detection
 # with just: set(LLC_HOST_CPU "native"), however, we can't do this at the moment
 # because of the work-around for arm1176jz-s.
 if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED LLC_HOST_CPU_AUTO)
