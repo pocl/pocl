@@ -219,8 +219,8 @@ set_tests_properties(clblast_test_xswap clblast_test_xscal clblast_test_xcopy
   PROPERTIES
     LABELS "CLBlast")
 
-set_property(TEST
-  clblast_test_xswap clblast_test_xscal clblast_test_xcopy
+
+set_tests_properties(clblast_test_xswap clblast_test_xscal clblast_test_xcopy
   clblast_test_xdot clblast_test_xdotu clblast_test_xdotc
   clblast_test_xnrm2 clblast_test_xasum clblast_test_xamax clblast_test_xgemv
   clblast_test_xhemv clblast_test_xhpmv
@@ -231,7 +231,8 @@ set_property(TEST
   clblast_test_xsyr2 clblast_test_xspr2
   clblast_test_xim2col clblast_test_xaxpybatched
   clblast_test_retrieve_parameters clblast_test_preprocessor
-  APPEND PROPERTY LABELS "hsa-native")
+  PROPERTIES
+  LABELS "CLBlast hsa-native")
 
 # These produce wrong some results with hsa and native compilation (but not
 # with straight pthread, which is a bit weird):
@@ -250,3 +251,11 @@ set_property(TEST
   clblast_test_xgemmbatched clblast_test_xgemmstridedbatched
   clblast_test_override_parameters
   APPEND PROPERTY LABELS "hsa-nat-slow")
+
+# Skipped some of the slowest test cases:
+# clblast_test_xtbmv clblast_test_xtpmv clblast_test_xgemm
+# clblast_test_xgbmv clblast_test_xhbmv clblast_test_xsbmv
+# clblast_test_xtrmv clblast_test_xsymm clblast_test_xhemm
+# clblast_test_xtrmm clblast_test_xtrsm clblast_test_xhad
+# clblast_test_xgemmbatched clblast_test_xgemmstridedbatched
+# clblast_test_override_parameters
