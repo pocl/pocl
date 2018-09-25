@@ -108,7 +108,10 @@
    - etc. etc.
 */
 
-#define HSA_KERNEL_CACHE_SIZE 64
+/* TODO: The kernel cache is never shrunk. We need a hook that is called back
+   when clReleaseKernel is called to get a safe point where to release the
+   kernel entry from the inmemory cache. */
+#define HSA_KERNEL_CACHE_SIZE 4096
 #define COMMAND_LIST_SIZE 4096
 #define EVENT_LIST_SIZE 511
 
