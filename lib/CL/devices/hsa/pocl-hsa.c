@@ -931,6 +931,8 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
   cl_kernel kernel = cmd->command.run.kernel;
   pocl_kernel_metadata_t *meta = kernel->meta;
 
+  POCL_MSG_PRINT_INFO ("setup_kernel_args for %s\n",
+		       cmd->command.run.kernel->name);
 #define CHECK_AND_ALIGN_SPACE(DSIZE)                         \
   do {                                                       \
     if (write_pos + (DSIZE) > last_pos)                      \
@@ -965,6 +967,8 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
 		(uint64_t)pocl_hsa_malloc_account
 		(d->device->global_memory, al->size, d->global_region);
 	      memcpy (write_pos, &ptr, sizeof (ptr));
+	      POCL_MSG_PRINT_INFO ("arg %lu (local) written to %lx\n",
+				   i, ptr);
 	      write_pos += sizeof (ptr);
 	      /* TODO: Free the buffer. */
 	    }
@@ -1006,6 +1010,8 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
               dev_ptr += al->offset;
               memcpy (write_pos, &dev_ptr, sizeof(uint64_t));
             }
+	  POCL_MSG_PRINT_INFO ("arg %lu (global ptr) written to %lx val %lx\n",
+			       i, (uint64_t)write_pos, *(uint64_t*)write_pos);
           write_pos += sizeof(uint64_t);
         }
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
@@ -1023,6 +1029,8 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
           // Scalars.
           CHECK_AND_ALIGN_SPACE(al->size);
           memcpy (write_pos, al->value, al->size);
+	  POCL_MSG_PRINT_INFO("arg %lu (scalar) written to %lx val %x\n", i,
+			      (uint64_t)write_pos, *(uint32_t*)al->value);
           write_pos += al->size;
         }
     }
@@ -1038,7 +1046,7 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
 
   memcpy (ctx_ptr, &cmd->command.run.pc, sizeof (struct pocl_context));
   memcpy (write_pos, &ctx_ptr, sizeof(ctx_ptr));
-  POCL_MSG_PRINT_INFO("The ctx is at %p\n", ctx_ptr);
+  POCL_MSG_PRINT_INFO("the context object was written at %p\n", ctx_ptr);
   write_pos += sizeof(uint64_t);
 
   /* MUST TODO: free the ctx obj after launching. */
