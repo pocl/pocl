@@ -361,6 +361,7 @@ supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS] =
     .llvm_cpu = (HSAIL_ENABLED ? NULL : "kaveri"),
     .llvm_target_triplet = (HSAIL_ENABLED ? "hsail64" : "amdgcn--amdhsa"),
     .spmd = CL_TRUE,
+    .autolocals_to_args = false,
     .has_64bit_long = 1,
     .vendor_id = 0x1002,
     .global_mem_cache_type = CL_READ_WRITE_CACHE,
@@ -389,6 +390,7 @@ supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS] =
     .llvm_cpu = NULL,
     .llvm_target_triplet = (HSAIL_ENABLED ? "hsail64" : NULL),
     .spmd = CL_FALSE,
+    .autolocals_to_args = !HSAIL_ENABLED,
     .has_64bit_long = 1,
     .vendor_id = 0xffff,
     .global_mem_cache_type = CL_READ_WRITE_CACHE,
@@ -450,6 +452,7 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
 	  COPY_ATTR (llvm_cpu);
 	  COPY_ATTR (llvm_target_triplet);
 	  COPY_ATTR (spmd);
+	  COPY_ATTR (autolocals_to_args);
 	  if (!HSAIL_ENABLED) {
 	    /* TODO: Add a CMake variable or HSA description string
 	       autodetection to control these. */
@@ -942,10 +945,12 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
   } while (0)
 
   size_t i;
-  for (i = 0; i < meta->num_args; ++i)
+  for (i = 0; i < cmd->command.run.kernel->num_args +
+	 cmd->command.run.kernel->num_locals; ++i)
     {
       struct pocl_argument *al = &(cmd->command.run.arguments[i]);
-      if (ARG_IS_LOCAL (meta->arg_info[i]))
+      if (cmd->command.run.kernel->arg_info[i].is_local
+	  || i >= cmd->command.run.kernel->num_args)
         {
 	  if (HSAIL_ENABLED)
 	    {
@@ -1049,17 +1054,7 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
   POCL_MSG_PRINT_INFO("the context object was written at %p\n", ctx_ptr);
   write_pos += sizeof(uint64_t);
 
-  /* MUST TODO: free the ctx obj after launching. */
-#if 0
-  for (size_t i = meta->num_args; i < kernel->total_args; ++i)
-    {
-      POCL_ABORT_UNIMPLEMENTED("hsa: automatic local buffers"
-                               " not implemented.");
-      al = &(cmd->command.run.arguments[i]);
-      arguments[i] = malloc (sizeof (void *));
-      *(void **)(arguments[i]) = pocl_hsa_malloc (data, 0, al->size, NULL);
-    }
-#endif
+  /* MUST TODO: free the local buffers and ctx obj after finishing the kernel! */
 }
 
 static int
