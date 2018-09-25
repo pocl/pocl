@@ -780,7 +780,14 @@ pocl_hsa_malloc_account(pocl_global_mem_t *mem, size_t size, hsa_region_t r)
   assert(mem->currently_allocated <= mem->total_alloc_limit);
 
   if (b)
-    POCL_MSG_PRINT_INFO("HSA malloc'ed : size %" PRIuS "\n", size);
+    POCL_MSG_PRINT_INFO("HSA malloc'ed : size %" PRIuS " @ %p\n", size, b);
+
+  /* TODO: Due to lack of align parameter to the HSA allocation function, we
+     should align the buffer here ourselves.  For now, let's just hope that
+     the called HSA implementation wide aligns (currently to 128).  */
+  if ((uint64_t)b % MAX_EXTENDED_ALIGNMENT > 0)
+    POCL_MSG_WARN("HSA runtime returned a buffer with smaller alignment "
+		  "than %d", MAX_EXTENDED_ALIGNMENT);
 
   return b;
 }
