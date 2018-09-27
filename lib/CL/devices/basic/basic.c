@@ -559,6 +559,7 @@ pocl_basic_run
   size_t x, y, z;
   unsigned i;
   cl_kernel kernel = cmd->command.run.kernel;
+  pocl_kernel_metadata_t *meta = kernel->meta;
   struct pocl_context *pc = &cmd->command.run.pc;
 
   assert (data != NULL);
@@ -566,22 +567,21 @@ pocl_basic_run
 
   d->current_kernel = kernel;
 
-  void **arguments = (void**)malloc(
-      sizeof(void*) * (kernel->num_args + kernel->num_locals)
-    );
+  void **arguments = (void **)malloc (sizeof (void *)
+                                      * (meta->num_args + meta->num_locals));
 
   /* Process the kernel arguments. Convert the opaque buffer
      pointers to real device pointers, allocate dynamic local 
      memory buffers, etc. */
-  for (i = 0; i < kernel->num_args; ++i)
+  for (i = 0; i < meta->num_args; ++i)
     {
       al = &(cmd->command.run.arguments[i]);
-      if (kernel->arg_info[i].is_local)
+      if (ARG_IS_LOCAL (meta->arg_info[i]))
         {
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, al->size);
         }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
+      else if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
         {
           /* It's legal to pass a NULL pointer to clSetKernelArguments. In 
              that case we must pass the same NULL forward to the kernel.
@@ -595,7 +595,7 @@ pocl_basic_run
           else
             arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[cmd->device->dev_id].mem_ptr);
         }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
+      else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
         {
           dev_image_t di;
           fill_dev_image_t (&di, al, cmd->device);
@@ -605,7 +605,7 @@ pocl_basic_run
           *(void **)(arguments[i]) = devptr;
           memcpy (devptr, &di, sizeof (dev_image_t));
         }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
+      else if (meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
           dev_sampler_t ds;
           fill_dev_sampler_t(&ds, al);
@@ -617,13 +617,14 @@ pocl_basic_run
           arguments[i] = al->value;
         }
     }
-  for (i = kernel->num_args;
-       i < kernel->num_args + kernel->num_locals;
-       ++i)
+
+  for (i = 0; i < meta->num_locals; ++i)
     {
-      al = &(cmd->command.run.arguments[i]);
-      arguments[i] = malloc (sizeof (void *));
-      *(void **)(arguments[i]) = pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, al->size);
+      size_t s = meta->local_sizes[i];
+      size_t j = meta->num_args + i;
+      arguments[j] = malloc (sizeof (void *));
+      void *pp = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, s);
+      *(void **)(arguments[j]) = pp;
     }
 
   pc->local_size[0] = cmd->command.run.local_x;
@@ -645,7 +646,7 @@ pocl_basic_run
   for (z = 0; z < pc->num_groups[2]; ++z)
     for (y = 0; y < pc->num_groups[1]; ++y)
       for (x = 0; x < pc->num_groups[0]; ++x)
-	cmd->command.run.wg ((uint8_t*)arguments, (uint8_t*)pc, x, y, z);
+        cmd->command.run.wg ((uint8_t *)arguments, (uint8_t *)pc, x, y, z);
 
   pocl_restore_rm (rm);
   pocl_restore_ftz (ftz);
@@ -656,32 +657,30 @@ pocl_basic_run
       position = 0;
     }
 
-  for (i = 0; i < kernel->num_args; ++i)
+  for (i = 0; i < meta->num_args; ++i)
     {
-      if (kernel->arg_info[i].is_local)
+      if (ARG_IS_LOCAL (meta->arg_info[i]))
         {
           POCL_MEM_FREE(*(void **)(arguments[i]));
           POCL_MEM_FREE(arguments[i]);
         }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE ||
-                kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
+      else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE
+               || meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
-          if (kernel->arg_info[i].type != POCL_ARG_TYPE_SAMPLER)
+          if (meta->arg_info[i].type != POCL_ARG_TYPE_SAMPLER)
             POCL_MEM_FREE (*(void **)(arguments[i]));
           POCL_MEM_FREE(arguments[i]);
         }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER &&
-	       *(void**)arguments[i] == NULL)
+      else if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER
+               && *(void **)arguments[i] == NULL)
         {
           POCL_MEM_FREE(arguments[i]);
         }
     }
-  for (i = kernel->num_args;
-       i < kernel->num_args + kernel->num_locals;
-       ++i)
+  for (i = 0; i < meta->num_locals; ++i)
     {
-      POCL_MEM_FREE(*(void **)(arguments[i]));
-      POCL_MEM_FREE(arguments[i]);
+      POCL_MEM_FREE (*(void **)(arguments[meta->num_args + i]));
+      POCL_MEM_FREE (arguments[meta->num_args + i]);
     }
   free(arguments);
 

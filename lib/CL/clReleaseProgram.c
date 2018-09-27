@@ -40,8 +40,7 @@ CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
 {
   int new_refcount;
-  cl_kernel k;
-  unsigned i;
+  unsigned i, j;
 
   POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
 
@@ -53,14 +52,8 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
       cl_context context = program->context;
       POCL_MSG_PRINT_REFCOUNTS ("Free program %p\n", program);
 
-      /* Mark all kernels as having no program.
-         FIXME: this should not be needed if the kernels
-         retain the parent program (and release when the kernel
-         is released). */
-      for (k = program->kernels; k != NULL; k = k->next)
-        {
-          k->program = NULL;
-        }
+      /* there should be no kernels left when we're releasing the program */
+      assert (program->kernels == NULL);
 
       if (program->devices != program->context->devices)
         POCL_MEM_FREE(program->devices);
@@ -86,18 +79,26 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
           POCL_MEM_FREE(program->build_log[i]);
       POCL_MEM_FREE(program->build_log);
 
-      program->operating_on_default_kernels = 1;
       if (program->num_kernels)
         {
           for (i = 0; i < program->num_kernels; i++)
             {
-              if (program->kernel_names)
-                POCL_MEM_FREE(program->kernel_names[i]);
-              if (program->default_kernels && program->default_kernels[i])
-                POname(clReleaseKernel)(program->default_kernels[i]);
+              pocl_kernel_metadata_t *meta = &program->kernel_meta[i];
+              POCL_MEM_FREE (meta->attributes);
+              POCL_MEM_FREE (meta->name);
+              for (j = 0; j < meta->num_args; ++j)
+                {
+                  POCL_MEM_FREE (meta->arg_info[j].name);
+                  POCL_MEM_FREE (meta->arg_info[j].type_name);
+                }
+              POCL_MEM_FREE (meta->arg_info);
+              for (j = 0; j < program->num_devices; ++j)
+                if (meta->data[j] != NULL)
+                  meta->data[j] = NULL; // TODO free data in driver callback
+              POCL_MEM_FREE (meta->data);
+              POCL_MEM_FREE (meta->local_sizes);
             }
-          POCL_MEM_FREE(program->kernel_names);
-          POCL_MEM_FREE(program->default_kernels);
+          POCL_MEM_FREE (program->kernel_meta);
         }
 
       POCL_MEM_FREE(program->build_hash);

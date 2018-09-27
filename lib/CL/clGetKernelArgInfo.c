@@ -34,9 +34,10 @@ POname(clGetKernelArgInfo)(cl_kernel      kernel ,
 {
   POCL_RETURN_ERROR_COND((kernel == NULL), CL_INVALID_KERNEL);
 
-  POCL_RETURN_ERROR_ON((arg_indx >= kernel->num_args), CL_INVALID_ARG_INDEX,
-    "This kernel has %u args, cannot getInfo on arg %u\n",
-    (unsigned)kernel->num_args, (unsigned)arg_indx);
+  POCL_RETURN_ERROR_ON ((arg_indx >= kernel->meta->num_args),
+                        CL_INVALID_ARG_INDEX,
+                        "This kernel has %u args, cannot getInfo on arg %u\n",
+                        (unsigned)kernel->meta->num_args, (unsigned)arg_indx);
 
   /* pocl always uses -cl-kernel-arg-info because it needs the arg metadata, but
    * to the user programs we should report missing arg info in case they don't
@@ -47,26 +48,27 @@ POname(clGetKernelArgInfo)(cl_kernel      kernel ,
         CL_KERNEL_ARG_INFO_NOT_AVAILABLE,
         "argument information is not available!\n");
 
-  struct pocl_argument_info *arg = &kernel->arg_info[arg_indx];
+  struct pocl_argument_info *arg = &kernel->meta->arg_info[arg_indx];
+  cl_bitfield am = kernel->meta->has_arg_metadata;
   switch (param_name) {
     case CL_KERNEL_ARG_ADDRESS_QUALIFIER:
-      if (!(kernel->has_arg_metadata & POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER))
+      if (!(am & POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER))
         return CL_KERNEL_ARG_INFO_NOT_AVAILABLE;
       POCL_RETURN_GETINFO(cl_kernel_arg_address_qualifier, arg->address_qualifier);
     case CL_KERNEL_ARG_ACCESS_QUALIFIER:
-      if (!(kernel->has_arg_metadata & POCL_HAS_KERNEL_ARG_ACCESS_QUALIFIER))
+      if (!(am & POCL_HAS_KERNEL_ARG_ACCESS_QUALIFIER))
         return CL_KERNEL_ARG_INFO_NOT_AVAILABLE;
       POCL_RETURN_GETINFO(cl_kernel_arg_access_qualifier, arg->access_qualifier);
     case CL_KERNEL_ARG_TYPE_NAME:
-      if (!(kernel->has_arg_metadata & POCL_HAS_KERNEL_ARG_TYPE_NAME))
+      if (!(am & POCL_HAS_KERNEL_ARG_TYPE_NAME))
         return CL_KERNEL_ARG_INFO_NOT_AVAILABLE;
       POCL_RETURN_GETINFO_STR(arg->type_name);
     case CL_KERNEL_ARG_TYPE_QUALIFIER:
-      if (!(kernel->has_arg_metadata & POCL_HAS_KERNEL_ARG_TYPE_QUALIFIER))
+      if (!(am & POCL_HAS_KERNEL_ARG_TYPE_QUALIFIER))
         return CL_KERNEL_ARG_INFO_NOT_AVAILABLE;
       POCL_RETURN_GETINFO(cl_kernel_arg_type_qualifier, arg->type_qualifier);
     case CL_KERNEL_ARG_NAME:
-      if (!(kernel->has_arg_metadata & POCL_HAS_KERNEL_ARG_NAME))
+      if (!(am & POCL_HAS_KERNEL_ARG_NAME))
         return CL_KERNEL_ARG_INFO_NOT_AVAILABLE;
       POCL_RETURN_GETINFO_STR(arg->name);
   }

@@ -59,9 +59,7 @@ int pocl_llvm_build_program(cl_program program,
 /* Retrieve metadata of the given kernel in the program to populate the
  * cl_kernel object.
  */
-int pocl_llvm_get_kernel_metadata(cl_program program, cl_kernel kernel,
-                                  int device_i, const char *kernel_name,
-                                  int *errcode);
+int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i);
 
 /* This function links the input kernel LLVM bitcode and the
  * OpenCL kernel runtime library into one LLVM module, then
@@ -85,7 +83,7 @@ int pocl_llvm_generate_workgroup_function_nowrite(
 /**
  * Free the LLVM IR of a program for a given device
  */
-void pocl_free_llvm_irs(cl_program program, int device_i);
+void pocl_free_llvm_irs(cl_program program, unsigned device_i);
 
 /* calls delete on the module. */
 void pocl_destroy_llvm_module(void *modp);
@@ -105,20 +103,7 @@ void pocl_llvm_update_binaries (cl_program program);
  *
  * Results are valid as long as program binary is not modified.
  */
-unsigned pocl_llvm_get_kernel_count(cl_program program);
-
-/**
- * Find the "__kernel" function names in 'program',
- * filling the callee-allocated array with pointer to the program binary.
- * No more than 'max_num_krn' are written.
- *
- * Results are valid as long as program binary is not modified.
- *
- * Returns the number of kernels found in the program (may be greater than
- * 'max_num_krn')
- */
-unsigned pocl_llvm_get_kernel_names(cl_program program, char **knames,
-                                    unsigned max_num_krn);
+unsigned pocl_llvm_get_kernel_count(cl_program program, unsigned device_i);
 
 /** Compile the kernel in infile from LLVM bitcode to native object file for
  * device, into outfile.

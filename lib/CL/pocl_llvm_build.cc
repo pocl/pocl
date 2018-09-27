@@ -917,7 +917,6 @@ int pocl_invoke_clang(cl_device_id Device, const char** Args) {
 
   std::unique_ptr<driver::Compilation> C(
     TheDriver.BuildCompilation(ArgsArray));
-  int Res = 0;
 
   if (C && !C->containsError()) {
     SmallVector<std::pair<int, const driver::Command *>, 4> FailingCommands;

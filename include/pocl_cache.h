@@ -113,7 +113,7 @@ void pocl_cache_program_path(char*        path,
                              unsigned     device_i);
 
 void pocl_cache_kernel_cachedir(char* kernel_cachedir_path, cl_program   program,
-                                unsigned device_i, cl_kernel kernel);
+                                unsigned device_i, const char* kernel_name);
 
 // these two required by llvm API
 

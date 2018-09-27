@@ -524,10 +524,13 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
   /* Chunks to be freed after the kernel finishes. */
   ChunkVector tempChunks;
 
-  for (i = 0; i < cmd->command.run.kernel->num_args; ++i)
+  cl_kernel kernel = cmd->command.run.kernel;
+  pocl_kernel_metadata_t *meta = kernel->meta;
+
+  for (i = 0; i < meta->num_args; ++i)
     {
       al = &(cmd->command.run.arguments[i]);
-      if (cmd->command.run.kernel->arg_info[i].is_local)
+      if (ARG_IS_LOCAL (meta->arg_info[i]))
         {
           chunk_info_t* local_chunk = pocl_tce_malloc_local (d, al->size);
           if (local_chunk == NULL)
@@ -540,7 +543,7 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
 #endif
           tempChunks.push_back(local_chunk);
         }
-      else if (cmd->command.run.kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
+      else if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
         {
           /* It's legal to pass a NULL pointer to clSetKernelArguments. In 
              that case we must pass the same NULL forward to the kernel.
@@ -568,19 +571,17 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
     }
 
   /* Allocate the automatic local buffers. */
-  for (std::size_t i = cmd->command.run.kernel->num_args;
-       i < cmd->command.run.kernel->num_args + cmd->command.run.kernel->num_locals;
-       ++i) 
+  for (i = 0; i < meta->num_locals; ++i)
     {
-      al = &(cmd->command.run.arguments[i]);
-      chunk_info_t* local_chunk = pocl_tce_malloc_local (d, al->size);
+      size_t s = meta->local_sizes[i];
+      chunk_info_t* local_chunk = pocl_tce_malloc_local (d, s);
       if (local_chunk == NULL)
         POCL_ABORT ("Could not allocate memory for an automatic local argument. Out of local mem?\n");
 
-      dev_cmd.args[i] = byteswap_uint32_t (local_chunk->start_address, d->needsByteSwap);
+      dev_cmd.args[meta->num_args + i] = byteswap_uint32_t (local_chunk->start_address, d->needsByteSwap);
 #ifdef DEBUG_TTA_DRIVER
-      printf ("host: allocated %d bytes of local memory for automated local arg %d @ %d\n", 
-              al->size, i, local_chunk->start_address);
+      printf ("host: allocated %zu bytes of local memory for automated local arg %u @ %lu\n",
+              s, (meta->num_args + i), local_chunk->start_address);
 #endif      
       tempChunks.push_back(local_chunk);
     }

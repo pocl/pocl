@@ -94,6 +94,8 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
 
   cl_program program = kernel->program;
 
+  const char *kernel_name = kernel->name;
+
   int device_i = pocl_cl_device_to_index (program, device);
   assert (device_i >= 0);
 
@@ -118,7 +120,7 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
     {
       POCL_MSG_PRINT_LLVM ("pocl_llvm_generate_workgroup_function() failed"
                            " for kernel %s\n",
-                           kernel->name);
+                           kernel_name);
       goto FINISH;
     }
   assert (llvm_module != NULL);
@@ -132,7 +134,7 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
   if (error)
     {
       POCL_MSG_PRINT_LLVM ("pocl_llvm_codegen() failed for kernel %s\n",
-                           kernel->name);
+                           kernel_name);
       goto FINISH;
     }
 
@@ -157,7 +159,7 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
   if (error)
     {
       POCL_MSG_PRINT_LLVM ("writing parallel.bc failed for kernel %s\n",
-                           kernel->name);
+                           kernel_name);
       goto FINISH;
     }
 
@@ -169,7 +171,7 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
   if (error)
     {
       POCL_MSG_PRINT_LLVM ("writing kernel.so.o failed for kernel %s\n",
-                           kernel->name);
+                           kernel_name);
       goto FINISH;
     }
   else
@@ -182,13 +184,13 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
     {
       POCL_MSG_PRINT_LLVM ("Creating temporary kernel.so file"
                            " for kernel %s FAILED\n",
-                           kernel->name);
+                           kernel_name);
       goto FINISH;
     }
   else
     POCL_MSG_PRINT_LLVM ("Temporary kernel.so file"
                          " for kernel %s : %s\n",
-                         kernel->name, tmp_module);
+                         kernel_name, tmp_module);
 
   POCL_MSG_PRINT_INFO ("Linking final module\n");
 
@@ -360,8 +362,7 @@ pocl_ndrange_node_cleanup(_cl_command_node *node)
 {
   cl_uint i;
   free (node->command.run.tmp_dir);
-  for (i = 0; i < node->command.run.kernel->num_args + 
-       node->command.run.kernel->num_locals; ++i)
+  for (i = 0; i < node->command.run.kernel->meta->num_args; ++i)
     {
       pocl_aligned_free (node->command.run.arguments[i].value);
     }
@@ -1054,7 +1055,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *cmd,
       {
         snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
                   "_pocl_launcher_%s_workgroup",
-		  cmd->command.run.kernel->name);
+                  cmd->command.run.kernel->name);
         ci->wg = (pocl_workgroup)lt_dlsym (ci->dlhandle, workgroup_string);
         dl_error = lt_dlerror ();
         if (ci->wg == NULL)
@@ -1062,7 +1063,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *cmd,
             // Older osx dyld APIs need the name without the underscore
             snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
                       "pocl_launcher_%s_workgroup",
-		      cmd->command.run.kernel->name);
+                      cmd->command.run.kernel->name);
             ci->wg = (pocl_workgroup)lt_dlsym (ci->dlhandle, workgroup_string);
             dl_error = lt_dlerror ();
           }

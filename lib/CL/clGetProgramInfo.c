@@ -183,13 +183,12 @@ POname(clGetProgramInfo)(cl_program program,
          --- guicho271828
       */
       size_t num_kernels = program->num_kernels;
-      char ** kernel_names = program->kernel_names;
       size_t size = 0;
 
       /* optimized for clarity */
       for (i = 0; i < num_kernels; ++i)
         {
-          size += strlen (kernel_names[i]) ;
+          size += strlen (program->kernel_meta[i].name);
           if (i != num_kernels - 1)
             size += 1;          /* a semicolon */
         }
@@ -206,9 +205,9 @@ POname(clGetProgramInfo)(cl_program program,
           for (i = 0; i < num_kernels; ++i)
             {
               if (i == 0)
-                strcpy (param_value, kernel_names[i]); /* copy including NULL */
+                strcpy (param_value, program->kernel_meta[i].name); /* copy including NULL */
               else
-                strcat ((char*)param_value, kernel_names[i]);
+                strcat ((char*)param_value, program->kernel_meta[i].name);
               if (i != num_kernels - 1)
                 strcat ((char*)param_value, ";");
             }

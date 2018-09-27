@@ -508,7 +508,7 @@ int pocl_update_program_llvm_irs(cl_program program,
   return pocl_update_program_llvm_irs_unlocked(program, device_i);
 }
 
-void pocl_free_llvm_irs(cl_program program, int device_i) {
+void pocl_free_llvm_irs(cl_program program, unsigned device_i) {
   if (program->llvm_irs[device_i]) {
     PoclCompilerMutexGuard lockHolder(NULL);
     InitializeLLVM();

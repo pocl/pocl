@@ -911,6 +911,8 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
 {
   char *write_pos = arg_space;
   const char *last_pos = arg_space + max_args_size;
+  cl_kernel kernel = cmd->command.run.kernel;
+  pocl_kernel_metadata_t *meta = kernel->meta;
 
 #define CHECK_AND_ALIGN_SPACE(DSIZE)                         \
   do {                                                       \
@@ -921,10 +923,10 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
   } while (0)
 
   size_t i;
-  for (i = 0; i < cmd->command.run.kernel->num_args; ++i)
+  for (i = 0; i < meta->num_args; ++i)
     {
       struct pocl_argument *al = &(cmd->command.run.arguments[i]);
-      if (cmd->command.run.kernel->arg_info[i].is_local)
+      if (ARG_IS_LOCAL (meta->arg_info[i]))
         {
 	  if (HSAIL_ENABLED)
 	    {
@@ -950,8 +952,7 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
 	      /* TODO: Free the buffer. */
 	    }
         }
-      else if (cmd->command.run.kernel->arg_info[i].type
-               == POCL_ARG_TYPE_POINTER)
+      else if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
         {
           CHECK_AND_ALIGN_SPACE(sizeof (uint64_t));
           /* Assuming the pointers are 64b (or actually the same as in
@@ -985,14 +986,12 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
             }
           write_pos += sizeof(uint64_t);
         }
-      else if (cmd->command.run.kernel->arg_info[i].type
-               == POCL_ARG_TYPE_IMAGE)
+      else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
         {
           POCL_ABORT_UNIMPLEMENTED("pocl-hsa: image arguments"
                                    " not implemented.\n");
         }
-      else if (cmd->command.run.kernel->arg_info[i].type
-               == POCL_ARG_TYPE_SAMPLER)
+      else if (meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
           POCL_ABORT_UNIMPLEMENTED("pocl-hsa: sampler arguments"
                                    " not implemented.\n");
@@ -1022,10 +1021,7 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
 
   /* MUST TODO: free the ctx obj after launching. */
 #if 0
-  for (size_t i = cmd->command.run.kernel->num_args;
-       i < cmd->command.run.kernel->num_args
-         + cmd->command.run.kernel->num_locals;
-       ++i)
+  for (size_t i = meta->num_args; i < kernel->total_args; ++i)
     {
       POCL_ABORT_UNIMPLEMENTED("hsa: automatic local buffers"
                                " not implemented.");

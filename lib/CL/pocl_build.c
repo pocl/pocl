@@ -142,25 +142,37 @@ program_compile_dynamic_wg_binaries(cl_program program)
 
       cmd.device = device;
 
+      struct _cl_kernel fake_k;
+      memset (&fake_k, 0, sizeof (fake_k));
+      fake_k.context = program->context;
+      fake_k.program = program;
+      fake_k.next = NULL;
+      cl_kernel kernel = &fake_k;
+
       for (i=0; i < program->num_kernels; i++)
         {
-          cl_kernel kernel = program->default_kernels[i];
+          fake_k.meta = &program->kernel_meta[i];
+          fake_k.name = fake_k.meta->name;
+
           size_t local_x = 0, local_y = 0, local_z = 0;
-          if (kernel->reqd_wg_size != NULL &&
-              kernel->reqd_wg_size[0] > 0 &&
-              kernel->reqd_wg_size[1] > 0 &&
-              kernel->reqd_wg_size[2] > 0)
+
+          if (kernel->meta->reqd_wg_size[0] > 0
+              && kernel->meta->reqd_wg_size[1] > 0
+              && kernel->meta->reqd_wg_size[2] > 0)
             {
-              local_x = kernel->reqd_wg_size[0];
-              local_y = kernel->reqd_wg_size[1];
-              local_z = kernel->reqd_wg_size[2];
+              local_x = kernel->meta->reqd_wg_size[0];
+              local_y = kernel->meta->reqd_wg_size[1];
+              local_z = kernel->meta->reqd_wg_size[2];
             }
+
           cmd.command.run.local_x = local_x;
           cmd.command.run.local_y = local_y;
           cmd.command.run.local_z = local_z;
           cmd.command.run.kernel = kernel;
+
           pocl_cache_kernel_cachedir_path (cachedir, program, device_i, kernel,
                                            "", local_x, local_y, local_z);
+
           device->ops->compile_kernel (&cmd, kernel, device);
         }
     }
@@ -388,6 +400,32 @@ ERROR:
   return error;
 }
 
+/*****************************************************************************/
+
+static void
+free_meta (cl_program program)
+{
+  size_t i;
+  unsigned j;
+
+  if (program->num_kernels)
+    {
+      for (i = 0; i < program->num_kernels; i++)
+        {
+          pocl_kernel_metadata_t *meta = &program->kernel_meta[i];
+          POCL_MEM_FREE (meta->attributes);
+          POCL_MEM_FREE (meta->name);
+          POCL_MEM_FREE (meta->arg_info);
+          for (j = 0; j < program->num_devices; ++j)
+            if (meta->data[j] != NULL)
+              meta->data[j] = NULL; // TODO free data in driver callback
+          POCL_MEM_FREE (meta->data);
+          POCL_MEM_FREE (meta->local_sizes);
+        }
+      POCL_MEM_FREE (program->kernel_meta);
+    }
+}
+
 static void
 clean_program_on_rebuild (cl_program program)
 {
@@ -396,29 +434,17 @@ clean_program_on_rebuild (cl_program program)
   size_t i;
   if ((program->build_status != CL_BUILD_NONE) || program->num_kernels > 0)
     {
-      cl_kernel k;
-      for (k = program->kernels; k != NULL; k = k->next)
-        {
-          k->program = NULL;
-          --program->pocl_refcount;
-        }
-      program->kernels = NULL;
-      if (program->num_kernels)
-        {
-          program->operating_on_default_kernels = 1;
-          for (i = 0; i < program->num_kernels; i++)
-            {
-              if (program->kernel_names)
-                POCL_MEM_FREE (program->kernel_names[i]);
-              if (program->default_kernels && program->default_kernels[i])
-                POname (clReleaseKernel) (program->default_kernels[i]);
-            }
-          POCL_MEM_FREE (program->kernel_names);
-          POCL_MEM_FREE (program->default_kernels);
-          program->operating_on_default_kernels = 0;
-        }
+      /* Spec says:
+         CL_INVALID_OPERATION if there are kernel objects attached to program.
+         ...and we check for that earlier.
+       */
+      assert (program->kernels == NULL);
+
+      free_meta (program);
+
       program->num_kernels = 0;
       program->build_status = CL_BUILD_NONE;
+
       for (i = 0; i < program->num_devices; ++i)
         {
           POCL_MEM_FREE (program->build_log[i]);
@@ -433,6 +459,7 @@ clean_program_on_rebuild (cl_program program)
       program->main_build_log[0] = 0;
     }
 }
+
 
 cl_int
 compile_and_link_program(int compile_program,
@@ -508,7 +535,7 @@ compile_and_link_program(int compile_program,
         goto ERROR_CLEAN_OPTIONS;
     }
 
-  POCL_MSG_PRINT_INFO ("building program with options %s\n",
+  POCL_MSG_PRINT_LLVM ("building program with options %s\n",
                        program->compiler_options);
 
 
@@ -736,91 +763,62 @@ compile_and_link_program(int compile_program,
     program->binary_type = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
 
   assert(program->num_kernels == 0);
-  for (i=0; i < program->num_devices; i++)
+
+  for (device_i = 0; device_i < program->num_devices; device_i++)
     {
 #ifdef OCS_AVAILABLE
-      if (program->binaries[i])
+      if (program->binaries[device_i])
         {
-          program->num_kernels = pocl_llvm_get_kernel_count (program);
+          program->num_kernels
+              = pocl_llvm_get_kernel_count (program, device_i);
           if (program->num_kernels)
             {
-              program->kernel_names = calloc (program->num_kernels, sizeof(char*));
-              pocl_llvm_get_kernel_names(program,
-                                         program->kernel_names,
-                                         program->num_kernels);
+              program->kernel_meta = calloc (program->num_kernels,
+                                             sizeof (pocl_kernel_metadata_t));
+              pocl_llvm_get_kernels_metadata (program, device_i);
             }
           break;
         }
 #endif
-      if (program->pocl_binaries[i])
+      if (program->pocl_binaries[device_i])
         {
-          program->num_kernels =
-              pocl_binary_get_kernel_count(program->pocl_binaries[i]);
+          program->num_kernels
+              = pocl_binary_get_kernel_count (program, device_i);
           if (program->num_kernels)
             {
-              program->kernel_names = calloc(program->num_kernels, sizeof(char*));
-              pocl_binary_get_kernel_names(program->pocl_binaries[i],
-                                           program->kernel_names,
-                                           program->num_kernels);
+              program->kernel_meta = calloc (program->num_kernels,
+                                             sizeof (pocl_kernel_metadata_t));
+              pocl_binary_get_kernels_metadata (program, device_i);
             }
           break;
         }
     }
-  POCL_GOTO_ERROR_ON((i >= program->num_devices),
-                     CL_INVALID_BINARY,
-                     "Could not set kernel number / names from the binary\n");
 
-  /* Set up all program kernels.  */
-  assert (program->default_kernels == NULL);
-  program->operating_on_default_kernels = 1;
-  if (program->num_kernels > 0)
-    program->default_kernels
-        = calloc (program->num_kernels, sizeof (cl_kernel));
-
-  for (i=0; i < program->num_kernels; i++)
-    {
-      program->default_kernels[i] =
-          POname (clCreateKernel) (program, program->kernel_names[i], &errcode);
-      POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), build_error_code,
-                          "Failed to create default kernels\n");
-    }
-  program->operating_on_default_kernels = 0;
+  POCL_GOTO_ERROR_ON ((device_i >= program->num_devices), CL_INVALID_BINARY,
+                      "Could find kernel metadata in the built program\n");
 
   errcode = CL_SUCCESS;
   goto FINISH;
 
 ERROR:
-  program->kernels = 0;
-  for(i = 0; i < program->num_devices; i++)
-  {
-    if (program->source)
-      {
-        POCL_MEM_FREE (program->binaries[i]);
-        program->binary_sizes[i] = 0;
-      }
-  }
-  if (program->num_kernels && program->kernel_names)
-    {
-      for (i=0; i < program->num_kernels; i++)
-        POCL_MEM_FREE(program->kernel_names[i]);
-      POCL_MEM_FREE(program->kernel_names);
-    }
-  if (program->default_kernels)
-    {
-      program->operating_on_default_kernels = 1;
-      for (i=0; i < program->num_kernels; i++)
-        if (program->default_kernels[i])
-          POname(clReleaseKernel)(program->default_kernels[i]);
-      program->operating_on_default_kernels = 0;
-      POCL_MEM_FREE(program->default_kernels);
-    }
+  free_meta (program);
 
+  program->kernels = NULL;
+
+  for (device_i = 0; device_i < program->num_devices; device_i++)
+    {
+      if (program->source)
+        {
+          POCL_MEM_FREE (program->binaries[device_i]);
+          program->binary_sizes[device_i] = 0;
+        }
+    }
 
 ERROR_CLEAN_OPTIONS:
   program->build_status = CL_BUILD_ERROR;
 
 FINISH:
-  POCL_UNLOCK_OBJ(program);
+  POCL_UNLOCK_OBJ (program);
   POCL_MEM_FREE (unique_devlist);
 
 PFN_NOTIFY:
