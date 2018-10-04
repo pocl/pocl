@@ -303,7 +303,7 @@ pocl_tce_malloc (void *device_data, cl_mem_flags flags,
   if (chunk == NULL) return NULL;
 
 #ifdef DEBUG_TTA_DRIVER
-  printf("host: malloc %x (host) %d (device) size: %u\n", host_ptr, chunk->start_address, size);
+  printf("host: malloc %p : %lu / %zu\n", host_ptr, chunk->start_address, size);
 #endif
 
   if ((flags & CL_MEM_COPY_HOST_PTR) ||  
@@ -363,7 +363,7 @@ pocl_tce_write (void *data,
   TCEDevice *d = (TCEDevice*)data;
   chunk_info_t *chunk = (chunk_info_t*)device_ptr;
 #ifdef DEBUG_TTA_DRIVER
-  printf ("host: write %x %x %u\n", host_ptr, chunk->start_address + offset,
+  printf ("host: write %p <- %lx / %zu\n", src_host_ptr, chunk->start_address + offset,
           size);
 #endif
   d->copyHostToDevice (src_host_ptr, chunk->start_address + offset, size);
@@ -381,7 +381,7 @@ pocl_tce_read (void *data,
   TCEDevice* d = (TCEDevice*)data;
   chunk_info_t *chunk = (chunk_info_t*)device_ptr;
 #ifdef DEBUG_TTA_DRIVER
-  printf ("host: read to %x (host) from %d (device) %u\n", host_ptr,
+  printf ("host: read %p -> %lx / %zu\n", dst_host_ptr,
           chunk->start_address + offset, size);
 #endif
   d->copyDeviceToHost (chunk->start_address + offset, dst_host_ptr, size);
@@ -391,7 +391,7 @@ void *
 pocl_tce_create_sub_buffer (void */*device_data*/, void* buffer, size_t origin, size_t size)
 {
 #ifdef DEBUG_TTA_DRIVER
-  printf("host: create sub buffer %d (buf start) + %d size: %d\n", 
+  printf("host: create sub buffer %lu (buf start) + %zu size: %zu\n",
          ((chunk_info_t*)buffer)->start_address, origin, size);
 #endif
 
@@ -545,7 +545,7 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
 
           dev_cmd.args[i] = byteswap_uint32_t (local_chunk->start_address, d->needsByteSwap);
 #ifdef DEBUG_TTA_DRIVER
-          printf ("host: allocated %d bytes of local memory for arg %d @ %d\n", 
+          printf ("host: allocated %zu bytes of local memory for arg %u @ %lu\n",
                   al->size, i, local_chunk->start_address);
 #endif
           tempChunks.push_back(local_chunk);
@@ -570,7 +570,7 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
           if (arg_space == NULL)
             POCL_ABORT ("Could not allocate memory from the device argument space. Out of global mem?\n");
 #ifdef DEBUG_TTA_DRIVER
-          printf ("host: copied value from %x to global argument memory\n", al->value);
+          printf ("host: copied value from %p to global argument memory\n", al->value);
 #endif
           dev_cmd.args[i] = byteswap_uint32_t (arg_space->start_address, d->needsByteSwap);
           tempChunks.push_back(arg_space);
