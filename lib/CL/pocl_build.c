@@ -202,7 +202,11 @@ process_options (const char *options, char *modded_options, char *link_options,
 
   size_t i = 1; /* terminating char */
   size_t needed = 0;
-  char *temp_options = strdup (options);
+  char *temp_options = (char*) malloc (strlen (options) + strlen ("-g ") + 1);
+  temp_options[0] = 0;
+  if (pocl_get_bool_option ("POCL_FORCE_KERNEL_DEBUG", 0))
+    strcat (temp_options, "-g ");
+  strcat (temp_options, options);
 
   token = strtok_r (temp_options, " ", &saveptr);
   while (token != NULL)
@@ -273,7 +277,8 @@ process_options (const char *options, char *modded_options, char *link_options,
       else if (memcmp (token, "-g", 2) == 0)
         {
 #ifndef LLVM_OLDER_THAN_3_8
-          token = "-debug-info-kind=line-tables-only";
+          token = "-dwarf-column-info -debug-info-kind=limited " \
+	    "-dwarf-version=4 -debugger-tuning=gdb";
 #endif
         }
       else if (memcmp (token, "-D", 2) == 0 || memcmp (token, "-I", 2) == 0)

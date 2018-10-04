@@ -7,11 +7,6 @@ Highlights
   runtime. Tested and works currently only on phsa-runtime. Can be enabled
   with ENABLE_HSAIL=off cmake option.
 
-Notable Internal Changes
-------------------------
-- Device (driver) init/reinit was completely broken. Now the (re)init routines
-  get actually called.
-
 Misc.
 -----
 - Allow building pocl without host CPU devices. Useful for constrained
@@ -19,6 +14,12 @@ Misc.
   via ENABLE_HOST_CPU_DEVICES=off cmake option.
 - Build logs are now produced also for illegal options passed to the kernel
   build e.g. via the options parameter of clBuildProgram().
+- POCL_FORCE_KERNEL_DEBUG=1 can be used to force add '-g' to all
+  clBuildProgram() calls.
+
+Notable Bug Fixes
+-----------------
+- Fixed kernel debug symbol generation.
 
 Notable Internal Changes
 ------------------------

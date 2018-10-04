@@ -76,6 +76,12 @@ pocl.
  POCL_TTASIM0_PARAMETERS will be passed to the first ttasim driver instantiated
  and POCL_TTASIM1_PARAMETERS to the second one.
 
+- **POCL_FORCE_KERNEL_DEBUG**
+
+  This adds a '-g' option to all clBuildProgram() calls. It results in debug
+  symbols to be added to the kernel binary, which can help debugging kernel
+  problems using tools such as gdb or valgrind.
+
 - **POCL_IMPLICIT_FINISH**
 
  Add an implicit call to clFinish afer every clEnqueue* call. Useful mostly for

@@ -546,9 +546,6 @@ int pocl_llvm_build_program(cl_program program,
 
 #ifdef LLVM_OLDER_THAN_3_9
   (*mod)->setPICLevel(PICLevel::Large);
-#else
-  (*mod)->setPICLevel(PICLevel::BigPIC);
-  (*mod)->setPIELevel(PIELevel::Large);
 #endif
 
 
@@ -644,9 +641,6 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
     linked_module->setDataLayout(libmodule->getDataLayout());
 #ifdef LLVM_OLDER_THAN_3_9
     linked_module->setPICLevel(PICLevel::Large);
-#else
-    linked_module->setPICLevel(PICLevel::BigPIC);
-    linked_module->setPIELevel(PIELevel::Large);
 #endif
 
 #else

@@ -722,6 +722,8 @@ static Function *createWrapper(Module &M, Function *F,
     replacePrintfCalls(pb, pbp, pbc, true, poclPrintf, M, L, printfCache);
   }
 
+  L->setSubprogram(F->getSubprogram());
+
   return L;
 }
 
