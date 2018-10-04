@@ -90,9 +90,10 @@ class TCEDevice {
 
   /* Generates the command line string to execute tcecc to produce the
      kernel binary. */
-  TCEString tceccCommandLine
-    (_cl_command_run *run_cmd, const TCEString& inputSrc, 
-     const TCEString& outputTpef, const TCEString extraParams=TCEString(""));
+  TCEString tceccCommandLine(_cl_command_run *run_cmd, const TCEString &tempDir,
+                             const TCEString &inputSrc,
+                             const TCEString &outputTpef,
+                             const TCEString extraParams = TCEString(""));
 
   bool isMultiCoreMachine() const;
 

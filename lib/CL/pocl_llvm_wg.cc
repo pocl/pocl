@@ -379,12 +379,10 @@ extern bool WGDynamicLocalSize;
 int pocl_update_program_llvm_irs_unlocked(cl_program program,
                                           unsigned device_i);
 
-int pocl_llvm_generate_workgroup_function_nowrite(cl_device_id device,
+int pocl_llvm_generate_workgroup_function_nowrite(unsigned device_i, cl_device_id device,
   cl_kernel kernel, size_t local_x, size_t local_y, size_t local_z, void **output) {
 
   cl_program program = kernel->program;
-  int device_i = pocl_cl_device_to_index(program, device);
-  assert(device_i >= 0);
 
   pocl::WGDynamicLocalSize = (local_x == 0 && local_y == 0 && local_z == 0);
 
@@ -438,14 +436,11 @@ int pocl_llvm_generate_workgroup_function_nowrite(cl_device_id device,
 }
 
 
-int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
+int pocl_llvm_generate_workgroup_function(unsigned device_i, cl_device_id device, cl_kernel kernel,
                                           size_t local_x, size_t local_y,
                                           size_t local_z) {
 
   void *modp = NULL;
-
-  int device_i = pocl_cl_device_to_index(kernel->program, device);
-  assert(device_i >= 0);
 
   char parallel_bc_path[POCL_FILENAME_LENGTH];
   pocl_cache_work_group_function_path(parallel_bc_path, kernel->program,
@@ -463,7 +458,7 @@ int pocl_llvm_generate_workgroup_function(cl_device_id device, cl_kernel kernel,
     return CL_SUCCESS;
 
   int error = pocl_llvm_generate_workgroup_function_nowrite(
-      device, kernel, local_x, local_y, local_z, &modp);
+      device_i, device, kernel, local_x, local_y, local_z, &modp);
   if (error)
     return error;
 

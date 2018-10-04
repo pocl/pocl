@@ -127,7 +127,6 @@ program_compile_dynamic_wg_binaries(cl_program program)
   memset(&cmd, 0, sizeof(_cl_command_node));
   cmd.type = CL_COMMAND_NDRANGE_KERNEL;
   char cachedir[POCL_FILENAME_LENGTH];
-  cmd.command.run.tmp_dir = cachedir;
   POCL_LOCK_OBJ(program);
 
   /* Build the dynamic WG sized parallel.bc and device specific code,
@@ -141,6 +140,7 @@ program_compile_dynamic_wg_binaries(cl_program program)
         continue;
 
       cmd.device = device;
+      cmd.command.run.device_i = device_i;
 
       struct _cl_kernel fake_k;
       memset (&fake_k, 0, sizeof (fake_k));
@@ -149,10 +149,12 @@ program_compile_dynamic_wg_binaries(cl_program program)
       fake_k.next = NULL;
       cl_kernel kernel = &fake_k;
 
+
       for (i=0; i < program->num_kernels; i++)
         {
           fake_k.meta = &program->kernel_meta[i];
           fake_k.name = fake_k.meta->name;
+          cmd.command.run.hash = fake_k.meta->build_hash[device_i];
 
           size_t local_x = 0, local_y = 0, local_z = 0;
 
@@ -168,6 +170,7 @@ program_compile_dynamic_wg_binaries(cl_program program)
           cmd.command.run.local_x = local_x;
           cmd.command.run.local_y = local_y;
           cmd.command.run.local_z = local_z;
+
           cmd.command.run.kernel = kernel;
 
           pocl_cache_kernel_cachedir_path (cachedir, program, device_i, kernel,
@@ -421,6 +424,7 @@ free_meta (cl_program program)
               meta->data[j] = NULL; // TODO free data in driver callback
           POCL_MEM_FREE (meta->data);
           POCL_MEM_FREE (meta->local_sizes);
+          POCL_MEM_FREE (meta->build_hash);
         }
       POCL_MEM_FREE (program->kernel_meta);
     }
@@ -764,6 +768,8 @@ compile_and_link_program(int compile_program,
 
   assert(program->num_kernels == 0);
 
+  /* get non-device-specific kernel metadata. We can stop after finding
+   * the first method that works.*/
   for (device_i = 0; device_i < program->num_devices; device_i++)
     {
 #ifdef OCS_AVAILABLE
@@ -796,6 +802,18 @@ compile_and_link_program(int compile_program,
 
   POCL_GOTO_ERROR_ON ((device_i >= program->num_devices), CL_INVALID_BINARY,
                       "Could find kernel metadata in the built program\n");
+
+  /* calculate device-specific kernel hashes. */
+  for (j = 0; j < program->num_kernels; ++j)
+    {
+      program->kernel_meta[j].build_hash
+          = calloc (program->num_devices, sizeof (pocl_kernel_hash_t));
+
+      for (device_i = 0; device_i < program->num_devices; device_i++)
+        {
+          pocl_calculate_kernel_hash (program, j, device_i);
+        }
+    }
 
   errcode = CL_SUCCESS;
   goto FINISH;

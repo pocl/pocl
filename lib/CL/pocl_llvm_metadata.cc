@@ -586,7 +586,7 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
     meta->name = strdup(KernelFunction->getName().str().c_str());
 
 #if defined(LLVM_OLDER_THAN_3_9)
-    if (pocl_get_kernel_arg_module_metadata(KernelFunction, input, kernel_meta)) {
+    if (pocl_get_kernel_arg_module_metadata(KernelFunction, input, meta)) {
       return CL_INVALID_KERNEL;
     }
 #else

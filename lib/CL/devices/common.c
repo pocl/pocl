@@ -78,8 +78,8 @@
  */
 
 #ifdef OCS_AVAILABLE
-char*
-llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
+char *
+llvm_codegen (unsigned device_i, cl_kernel kernel, cl_device_id device,
               size_t local_x, size_t local_y, size_t local_z)
 {
   POCL_MEASURE_START (llvm_codegen);
@@ -95,9 +95,6 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
   cl_program program = kernel->program;
 
   const char *kernel_name = kernel->name;
-
-  int device_i = pocl_cl_device_to_index (program, device);
-  assert (device_i >= 0);
 
   /* $/parallel.bc */
   char parallel_bc_path[POCL_FILENAME_LENGTH];
@@ -115,7 +112,7 @@ llvm_codegen (const char* tmpdir, cl_kernel kernel, cl_device_id device,
   assert (strlen (final_binary_path) < (POCL_FILENAME_LENGTH - 3));
 
   error = pocl_llvm_generate_workgroup_function_nowrite (
-      device, kernel, local_x, local_y, local_z, &llvm_module);
+      device_i, device, kernel, local_x, local_y, local_z, &llvm_module);
   if (error)
     {
       POCL_MSG_PRINT_LLVM ("pocl_llvm_generate_workgroup_function() failed"
@@ -361,7 +358,6 @@ void
 pocl_ndrange_node_cleanup(_cl_command_node *node)
 {
   cl_uint i;
-  free (node->command.run.tmp_dir);
   for (i = 0; i < node->command.run.kernel->meta->num_args; ++i)
     {
       pocl_aligned_free (node->command.run.arguments[i].value);
@@ -834,8 +830,8 @@ fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg)
 typedef struct pocl_dlhandle_cache_item pocl_dlhandle_cache_item;
 struct pocl_dlhandle_cache_item
 {
-  char *tmp_dir;
-  char *function_name;
+  pocl_kernel_hash_t hash;
+  size_t local_wgs[3];
   pocl_workgroup wg;
   lt_dlhandle dlhandle;
   pocl_dlhandle_cache_item *next;
@@ -880,8 +876,6 @@ get_new_dlhandle_cache_item ()
   if ((handle_count >= MAX_CACHE_ITEMS) && ci && (ci != pocl_dlhandle_cache))
     {
       DL_DELETE (pocl_dlhandle_cache, ci);
-      free (ci->tmp_dir);
-      free (ci->function_name);
       lt_dlclose (ci->dlhandle);
       dl_error = lt_dlerror ();
       if (dl_error != NULL)
@@ -906,8 +900,11 @@ pocl_release_dlhandle_cache (_cl_command_node *cmd)
   POCL_LOCK (pocl_dlhandle_lock);
   DL_FOREACH (pocl_dlhandle_cache, ci)
   {
-    if (strcmp (ci->tmp_dir, cmd->command.run.tmp_dir) == 0
-        && strcmp (ci->function_name, cmd->command.run.kernel->name) == 0)
+    if ((memcmp (ci->hash, cmd->command.run.hash, sizeof (pocl_kernel_hash_t))
+         == 0)
+        && (ci->local_wgs[0] == cmd->command.run.local_x)
+        && (ci->local_wgs[1] == cmd->command.run.local_y)
+        && (ci->local_wgs[2] == cmd->command.run.local_z))
       {
         found = ci;
         break;
@@ -915,6 +912,7 @@ pocl_release_dlhandle_cache (_cl_command_node *cmd)
   }
 
   assert (found != NULL);
+  assert (found->ref_count > 0);
   --found->ref_count;
   POCL_UNLOCK (pocl_dlhandle_lock);
 }
@@ -933,14 +931,13 @@ pocl_check_kernel_disk_cache (_cl_command_node *cmd)
   char *module_fn = NULL;
   cl_kernel k = cmd->command.run.kernel;
   cl_program p = k->program;
-  cl_device_id dev = cmd->device;
-  int dev_i = pocl_cl_device_to_index (p, dev);
+  unsigned dev_i = cmd->command.run.device_i;
 
   if (p->binaries[dev_i] && !p->pocl_binaries[dev_i])
     {
 #ifdef OCS_AVAILABLE
       POCL_LOCK (pocl_llvm_codegen_lock);
-      module_fn = (char *)llvm_codegen (cmd->command.run.tmp_dir,
+      module_fn = (char *)llvm_codegen (dev_i,
                                         cmd->command.run.kernel,
                                         cmd->device,
                                         cmd->command.run.local_x,
@@ -1000,8 +997,11 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *cmd,
   POCL_LOCK (pocl_dlhandle_lock);
   DL_FOREACH_SAFE (pocl_dlhandle_cache, ci, tmp)
   {
-    if (strcmp (ci->tmp_dir, cmd->command.run.tmp_dir) == 0
-        && strcmp (ci->function_name, cmd->command.run.kernel->name) == 0)
+    if ((memcmp (ci->hash, cmd->command.run.hash, sizeof (pocl_kernel_hash_t))
+         == 0)
+        && (ci->local_wgs[0] == cmd->command.run.local_x)
+        && (ci->local_wgs[1] == cmd->command.run.local_y)
+        && (ci->local_wgs[2] == cmd->command.run.local_z))
       {
         /* move to the front of the line */
         DL_DELETE (pocl_dlhandle_cache, ci);
@@ -1016,8 +1016,10 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *cmd,
   ci = get_new_dlhandle_cache_item ();
   POCL_UNLOCK (pocl_dlhandle_lock);
 
-  ci->tmp_dir = strdup (cmd->command.run.tmp_dir);
-  ci->function_name = strdup (cmd->command.run.kernel->name);
+  memcpy (ci->hash, cmd->command.run.hash, sizeof (pocl_kernel_hash_t));
+  ci->local_wgs[0] = cmd->command.run.local_x;
+  ci->local_wgs[1] = cmd->command.run.local_y;
+  ci->local_wgs[2] = cmd->command.run.local_z;
   ci->ref_count = initial_refcount;
 
   char *module_fn = pocl_check_kernel_disk_cache (cmd);
@@ -1027,8 +1029,10 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *cmd,
   pocl_dlhandle_cache_item *ci2 = NULL;
   DL_FOREACH_SAFE (pocl_dlhandle_cache, ci2, tmp)
   {
-    if (strcmp (ci2->tmp_dir, ci->tmp_dir) == 0
-        && strcmp (ci2->function_name, ci->function_name) == 0)
+    if ((memcmp (ci->hash, ci2->hash, sizeof (pocl_kernel_hash_t)) == 0)
+        && (ci->local_wgs[0] == ci2->local_wgs[0])
+        && (ci->local_wgs[1] == ci2->local_wgs[1])
+        && (ci->local_wgs[2] == ci2->local_wgs[2]))
       {
         /* move to the front of the line */
         if (pocl_dlhandle_cache != ci2)
@@ -1039,8 +1043,6 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *cmd,
         ++ci2->ref_count;
         cmd->command.run.wg = ci2->wg;
 
-        POCL_MEM_FREE (ci->tmp_dir);
-        POCL_MEM_FREE (ci->function_name);
         POCL_MEM_FREE (ci);
         POCL_UNLOCK (pocl_dlhandle_lock);
         POCL_MEM_FREE (module_fn);
@@ -1077,7 +1079,6 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *cmd,
 
     POCL_UNLOCK (pocl_dlhandle_lock);
     /***************************************************************************/
-
     POCL_MEM_FREE (module_fn);
 
     if (ci->dlhandle == NULL || ci->wg == NULL || dl_error != NULL)
@@ -1283,4 +1284,25 @@ pocl_print_system_memory_stats()
   system_memory.total_alloc_limit >> 10,
   system_memory.currently_allocated >> 10,
   system_memory.max_ever_allocated >> 10);
+}
+
+/* Unique hash for a device + program build + kernel name combination.
+ * NOTE: this does NOT take into account the local WG sizes. */
+void
+pocl_calculate_kernel_hash (cl_program program, unsigned kernel_i,
+                            unsigned device_i)
+{
+  SHA1_CTX hash_ctx;
+  pocl_SHA1_Init (&hash_ctx);
+
+  char *n = program->kernel_meta[kernel_i].name;
+  pocl_SHA1_Update (&hash_ctx, (uint8_t *)program->build_hash[device_i],
+                    sizeof (SHA1_digest_t));
+  pocl_SHA1_Update (&hash_ctx, (uint8_t *)n, strlen (n));
+
+  uint8_t digest[SHA1_DIGEST_SIZE];
+  pocl_SHA1_Final (&hash_ctx, digest);
+
+  memcpy (program->kernel_meta[kernel_i].build_hash[device_i], digest,
+          sizeof (pocl_kernel_hash_t));
 }

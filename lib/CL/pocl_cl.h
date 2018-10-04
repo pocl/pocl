@@ -873,6 +873,9 @@ typedef struct pocl_kernel_metadata_s
   cl_bitfield has_arg_metadata;
   size_t reqd_wg_size[OPENCL_MAX_DIMENSION];
 
+  /* array[program->num_devices] */
+  pocl_kernel_hash_t *build_hash;
+
   /* device-specific data, void* array[program->num_devices] */
   void **data;
 } pocl_kernel_metadata_t;

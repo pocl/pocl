@@ -762,11 +762,10 @@ pocl_cuda_submit_unmap_mem (CUstream stream, pocl_mem_identifier *dst_mem_id,
 
 static pocl_cuda_kernel_data_t *
 load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
-                         int has_offsets)
+                         int has_offsets, unsigned device_i)
 {
   CUresult result;
   pocl_kernel_metadata_t *meta = kernel->meta;
-  unsigned device_i = pocl_cl_device_to_index (kernel->program, device);
   /* Check if we already have a compiled kernel function */
   pocl_cuda_kernel_data_t *kdata
       = (pocl_cuda_kernel_data_t *)meta->data[device_i];
@@ -789,7 +788,8 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
   POCL_LOCK(ddata->compile_lock);
 
   /* Generate the parallel bitcode file linked with the kernel library */
-  int error = pocl_llvm_generate_workgroup_function (device, kernel, 0, 0, 0);
+  int error = pocl_llvm_generate_workgroup_function (device_i, device, kernel,
+                                                     0, 0, 0);
   if (error)
     {
       POCL_MSG_PRINT_GENERAL ("pocl_llvm_generate_workgroup_function() failed"
@@ -857,7 +857,7 @@ void
 pocl_cuda_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
                           cl_device_id device)
 {
-  load_or_generate_kernel (kernel, device, 0);
+  load_or_generate_kernel (kernel, device, 0, cmd->command.run.device_i);
 }
 
 void
@@ -876,7 +876,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
 
   /* Get kernel function */
   pocl_cuda_kernel_data_t *kdata
-      = load_or_generate_kernel (kernel, device, has_offsets);
+      = load_or_generate_kernel (kernel, device, has_offsets, run.device_i);
   CUmodule module = has_offsets ? kdata->module_offsets : kdata->module;
   CUfunction function = has_offsets ? kdata->kernel_offsets : kdata->kernel;
 

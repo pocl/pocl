@@ -456,13 +456,6 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
   assert (global_y % local_y == 0);
   assert (global_z % local_z == 0);
 
-  char cachedir[POCL_FILENAME_LENGTH];
-  int realdev_i = pocl_cl_device_to_index (kernel->program, realdev);
-  assert (realdev_i >= 0);
-  pocl_cache_kernel_cachedir_path (cachedir, kernel->program,
-                                   realdev_i, kernel, "",
-                                   local_x, local_y, local_z);
-
   b_migrate_count = 0;
   buffer_count = 0;
 
@@ -526,12 +519,16 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
   pc.global_offset[2] = offset_z;
 
   command_node->type = CL_COMMAND_NDRANGE_KERNEL;
-  command_node->command.run.tmp_dir = strdup (cachedir);
   command_node->command.run.kernel = kernel;
   command_node->command.run.pc = pc;
   command_node->command.run.local_x = local_x;
   command_node->command.run.local_y = local_y;
   command_node->command.run.local_z = local_z;
+
+  int realdev_i = pocl_cl_device_to_index (kernel->program, realdev);
+  assert (realdev_i >= 0);
+  command_node->command.run.device_i = (unsigned)realdev_i;
+  command_node->command.run.hash = kernel->meta->build_hash[realdev_i];
 
   /* Copy the currently set kernel arguments because the same kernel
      object can be reused for new launches with different arguments. */

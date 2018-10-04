@@ -112,7 +112,7 @@ void pocl_cache_kernel_cachedir_path (char* kernel_cachedir_path,
                                              cl_program program,
                                              unsigned device_i,
                                              cl_kernel kernel,
-                                             char* append_str,
+                                             const char* append_str,
                                              size_t local_x,
                                              size_t local_y,
                                              size_t local_z)

@@ -97,6 +97,7 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
                   meta->data[j] = NULL; // TODO free data in driver callback
               POCL_MEM_FREE (meta->data);
               POCL_MEM_FREE (meta->local_sizes);
+              POCL_MEM_FREE (meta->build_hash);
             }
           POCL_MEM_FREE (program->kernel_meta);
         }

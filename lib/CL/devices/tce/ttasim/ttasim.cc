@@ -225,7 +225,7 @@ public:
     if (!produceStandAloneProgram_) return;
 
     static int runCounter = 0;
-    TCEString tempDir = run_cmd->tmp_dir;
+    TCEString tempDir((const char*)run_cmd->device_data);
     TCEString baseFname = tempDir + "/";
     baseFname << "standalone_" << runCounter;
 

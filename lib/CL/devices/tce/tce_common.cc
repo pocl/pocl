@@ -30,6 +30,7 @@
 #include "config.h"
 #include "pocl_runtime_config.h"
 #include "pocl_hash.h"
+#include "pocl_cache.h"
 
 #ifndef _MSC_VER
 #  include <unistd.h>
@@ -203,11 +204,11 @@ TCEDevice::initMemoryManagement(const TTAMachine::Machine& mach) {
 #define SUBST(x) "  -DKERNEL_EXE_CMD_OFFSET=" # x
 #define OFFSET_ARG(c) SUBST(c)
 
-TCEString
-TCEDevice::tceccCommandLine
-(_cl_command_run *run_cmd, const TCEString& inputSrc, 
- const TCEString& outputTpef, const TCEString extraParams) 
-{
+TCEString TCEDevice::tceccCommandLine(_cl_command_run *run_cmd,
+                                      const TCEString &tempDir,
+                                      const TCEString &inputSrc,
+                                      const TCEString &outputTpef,
+                                      const TCEString extraParams) {
 
   TCEString mainC;
   if (isMultiCoreMachine()) 
@@ -234,8 +235,6 @@ TCEDevice::tceccCommandLine
     extraFlags += " -ldthread -lsync-lu -llockunit";
 
   extraFlags += OFFSET_ARG(TTA_UNALLOCATED_GLOBAL_SPACE);
-
-  TCEString tempDir = run_cmd->tmp_dir;
 
   std::string kernelObjSrc = "";
   kernelObjSrc += tempDir;
@@ -429,9 +428,9 @@ pocl_tce_compile_kernel(_cl_command_node *cmd,
     device = cmd->device;
 
   POCL_LOCK(d->tce_compile_lock);
-  int error = pocl_llvm_generate_workgroup_function(device, kernel,
-      cmd->command.run.local_x, cmd->command.run.local_y,
-      cmd->command.run.local_z);
+  int error = pocl_llvm_generate_workgroup_function(
+      cmd->command.run.device_i, device, kernel, cmd->command.run.local_x,
+      cmd->command.run.local_y, cmd->command.run.local_z);
 
   if (error) {
     POCL_UNLOCK(d->tce_compile_lock);
@@ -444,18 +443,26 @@ pocl_tce_compile_kernel(_cl_command_node *cmd,
 
   assert(d != NULL);
   assert(cmd->command.run.kernel);
-  assert(cmd->command.run.tmp_dir);
+
+  char cachedir[POCL_FILENAME_LENGTH];
+  pocl_cache_kernel_cachedir_path(cachedir, kernel->program,
+                                  cmd->command.run.device_i, kernel, "",
+                                  cmd->command.run.local_x,
+                                  cmd->command.run.local_y,
+                                  cmd->command.run.local_z);
+  cmd->command.run.device_data = strdup(cachedir);
 
   if (d->isNewKernel(&(cmd->command.run))) {
-    std::string assemblyFileName(cmd->command.run.tmp_dir);
+    std::string assemblyFileName(cachedir);
+    TCEString tempDir(cachedir);
     assemblyFileName += "/parallel.tpef";
 
     if (access (assemblyFileName.c_str(), F_OK) != 0)
       {
-        error = snprintf (bytecode, POCL_FILENAME_LENGTH,
-                          "%s%s", cmd->command.run.tmp_dir, POCL_PARALLEL_BC_FILENAME);
-        TCEString buildCmd =
-          d->tceccCommandLine(&cmd->command.run, bytecode, assemblyFileName);
+      error = snprintf(bytecode, POCL_FILENAME_LENGTH, "%s%s", cachedir,
+                       POCL_PARALLEL_BC_FILENAME);
+      TCEString buildCmd = d->tceccCommandLine(&cmd->command.run, tempDir,
+                                               bytecode, assemblyFileName);
 
 #ifdef DEBUG_TTA_DRIVER
       std::cerr << "CMD: " << buildCmd << std::endl;
@@ -480,10 +487,10 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
 
   assert(d != NULL);
   assert(cmd->command.run.kernel);
-  assert(cmd->command.run.tmp_dir);
+  assert(cmd->command.run.device_data);
 
   if (d->isNewKernel(&(cmd->command.run))) {
-    std::string assemblyFileName(cmd->command.run.tmp_dir);
+    std::string assemblyFileName((const char*)cmd->command.run.device_data);
     assemblyFileName += "/parallel.tpef";
 
     std::string kernelMdSymbolName = "_";
@@ -647,6 +654,8 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
   for (ChunkVector::iterator i = tempChunks.begin(); 
        i != tempChunks.end(); ++i) 
     free_chunk (*i);
+
+  POCL_MEM_FREE(cmd->command.run.device_data);
 
 #ifdef DEBUG_TTA_DRIVER
   printf("host: local memory allocations:\n");

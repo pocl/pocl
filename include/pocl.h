@@ -92,10 +92,13 @@ struct _build_program_callback
 
 // Command Queue datatypes
 
+#define POCL_KERNEL_DIGEST_SIZE 16
+typedef uint8_t pocl_kernel_hash_t[POCL_KERNEL_DIGEST_SIZE];
+
 // clEnqueueNDRangeKernel
 typedef struct
 {
-  char *tmp_dir; 
+  void *hash;
   pocl_workgroup wg;
   cl_kernel kernel;
   size_t local_x;
@@ -104,7 +107,8 @@ typedef struct
   struct pocl_context pc;
   struct pocl_argument *arguments;
   /* Can be used to store/cache device-specific data. */
-  void **device_data;
+  unsigned device_i;
+  void *device_data;
 } _cl_command_run;
 
 // clEnqueueNativeKernel
