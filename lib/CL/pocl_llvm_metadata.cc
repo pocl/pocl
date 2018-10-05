@@ -510,9 +510,6 @@ static int pocl_get_kernel_arg_function_metadata(llvm::Function *Kernel,
 #endif
 
 /*****************************************************************************/
-/*****************************************************************************/
-/*****************************************************************************/
-/*****************************************************************************/
 
 int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
 
@@ -541,9 +538,6 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
 #endif
   assert(!ModuleDataLayout.empty());
   TD = new DataLayout(ModuleDataLayout);
-
-
-/**************************************************************************/
 
   std::vector<llvm::Function *> kernels;
 
@@ -619,7 +613,6 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
     meta->local_sizes = (size_t*)calloc(locals.size(), sizeof(size_t));
 
     /* Fill up automatic local arguments. */
-
     for (unsigned i = 0; i < meta->num_locals; ++i) {
       unsigned auto_local_size =
           TD->getTypeAllocSize(locals[i]->getInitializer()->getType());
@@ -715,64 +708,12 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
     } else
       meta->attributes = nullptr;
 
-#ifndef POCL_ANDROID
-    // Generate the kernel_obj.c file. This should be optional
-    // and generated only for the heterogeneous standalone devices which
-    // need the definitions to accompany the kernels, for the launcher
-    // code.
-    // TODO: the scripts use a generated kernel.h header file that
-    // gets added to this file. No checks seem to fail if that file
-    // is missing though, so it is left out from there for now
-
-    std::stringstream content;
-
-    content << std::endl
-            << "#include <pocl_device.h>" << std::endl
-            << "void _pocl_launcher_" << meta->name
-            << "_workgroup(uint8_t* args, uint8_t*, "
-            << "uint32_t, uint32_t, uint32_t);" << std::endl
-            << "void _pocl_launcher_" << meta->name
-            << "_workgroup_fast(uint8_t* args, uint8_t*, "
-            << "uint32_t, uint32_t, uint32_t);" << std::endl;
-
-    if (Device->global_as_id != 0)
-      content << "__attribute__((address_space(" << Device->global_as_id << ")))"
-              << std::endl;
-
-    content << "__kernel_metadata _" << meta->name << "_md = {" << std::endl
-            << "     \"" << meta->name << "\"," << std::endl
-            << "     " << meta->num_args << "," << std::endl
-            << "     " << meta->num_locals << "," << std::endl
-            << "     _pocl_launcher_" << meta->name << "_workgroup_fast"
-            << std::endl
-            << " };" << std::endl;
-
-    pocl_cache_write_descriptor(program, device_i, meta->name,
-                                content.str().c_str(), content.str().size());
-#endif
-
   } // for each kernel
 
   delete TD;
 
   return CL_SUCCESS;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 unsigned pocl_llvm_get_kernel_count(cl_program program, unsigned device_i) {

@@ -58,6 +58,7 @@
 using namespace TTAMachine;
 
 #include <algorithm>
+#include <sstream>
 
 #define ALIGNMENT MAX_EXTENDED_ALIGNMENT
 
@@ -412,6 +413,45 @@ pocl_tce_free (cl_device_id device, cl_mem mem_obj)
   free_chunk ((chunk_info_t*) ptr);
 }
 
+static void pocl_tce_write_kernel_descriptor(cl_device_id device,
+                                             unsigned device_i,
+                                             cl_kernel kernel) {
+  // Generate the kernel_obj.c file. This should be optional
+  // and generated only for the heterogeneous standalone devices which
+  // need the definitions to accompany the kernels, for the launcher
+  // code.
+  // TODO: the scripts use a generated kernel.h header file that
+  // gets added to this file. No checks seem to fail if that file
+  // is missing though, so it is left out from there for now
+
+  std::stringstream content;
+  pocl_kernel_metadata_t *meta = kernel->meta;
+
+  content << std::endl
+          << "#include <pocl_device.h>" << std::endl
+          << "void _pocl_launcher_" << meta->name
+          << "_workgroup(uint8_t* args, uint8_t*, "
+          << "uint32_t, uint32_t, uint32_t);" << std::endl
+          << "void _pocl_launcher_" << meta->name
+          << "_workgroup_fast(uint8_t* args, uint8_t*, "
+          << "uint32_t, uint32_t, uint32_t);" << std::endl;
+
+  if (device->global_as_id != 0)
+    content << "__attribute__((address_space(" << device->global_as_id << ")))"
+            << std::endl;
+
+  content << "__kernel_metadata _" << meta->name << "_md = {" << std::endl
+          << "     \"" << meta->name << "\"," << std::endl
+          << "     " << meta->num_args << "," << std::endl
+          << "     " << meta->num_locals << "," << std::endl
+          << "     _pocl_launcher_" << meta->name << "_workgroup_fast"
+          << std::endl
+          << " };" << std::endl;
+
+  pocl_cache_write_descriptor(kernel->program, device_i, meta->name,
+                              content.str().c_str(), content.str().size());
+}
+
 void
 pocl_tce_compile_kernel(_cl_command_node *cmd,
                         cl_kernel kernel, cl_device_id device)
@@ -439,7 +479,8 @@ pocl_tce_compile_kernel(_cl_command_node *cmd,
     assert(error == 0);
   }
 
-  char bytecode[POCL_FILENAME_LENGTH];
+  // 12 == strlen (POCL_PARALLEL_BC_FILENAME)
+  char bytecode[POCL_FILENAME_LENGTH + 13];
 
   assert(d != NULL);
   assert(cmd->command.run.kernel);
@@ -453,6 +494,8 @@ pocl_tce_compile_kernel(_cl_command_node *cmd,
   cmd->command.run.device_data = strdup(cachedir);
 
   if (d->isNewKernel(&(cmd->command.run))) {
+    pocl_tce_write_kernel_descriptor(device, cmd->command.run.device_i, kernel);
+
     std::string assemblyFileName(cachedir);
     TCEString tempDir(cachedir);
     assemblyFileName += "/parallel.tpef";
