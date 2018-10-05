@@ -48,7 +48,7 @@ before_install:
   - if [ "$CONDA" = "True" ] ; then export MY_CMAKE_PREFIX_PATH="-DCMAKE_PREFIX_PATH=$HOME/miniconda3" ; fi
   - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then export MY_CMAKE_ICD_OFF="-DENABLE_ICD=OFF" ; fi
 
-  - if [ "$TRAVIS_OS_NAME" = "osx" ] && [ "$CXX" = "clang++" ] ; then MY_CMAKE_LIBCXX="-DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++" ; fi
+  - if [ "$TRAVIS_OS_NAME" = "osx" ] && [ "$CXX" = "clang++" ] ; then MY_CMAKE_LIBCXX="-DCMAKE_CXX_FLAGS=-stdlib=libc++ -DCMAKE_EXE_LINKER_FLAGS=-Wl,-rpath,$HOME/miniconda3/lib" ; fi
 
   - if [ "$TRAVIS_PULL_REQUEST" = "false" ]; then
       export GIT_COMMIT="$TRAVIS_COMMIT";
