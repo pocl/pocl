@@ -1430,6 +1430,7 @@ else()
   add_subdirectory("examples/example1")
   add_subdirectory("examples/example2")
   add_subdirectory("examples/example2a")
+  add_subdirectory("examples/matrix1")
 endif()
 
 # make check & make check_tier1

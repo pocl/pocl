@@ -255,7 +255,7 @@ poclu_load_program (cl_context context, cl_device_id device,
 
   if (spir || spirv)
     {
-      strcat (final_opts, "-x spir -spir-std=1.2");
+      strcat (final_opts, " -x spir -spir-std=1.2");
       err = clGetDeviceInfo (device, CL_DEVICE_EXTENSIONS, 1024, extensions,
                              NULL);
       CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo extensions");
@@ -337,6 +337,7 @@ poclu_load_program (cl_context context, cl_device_id device,
 
       err = clBuildProgram (program, 0, NULL, final_opts, NULL, NULL);
       CHECK_OPENCL_ERROR_IN ("clBuildProgram");
+      free (src);
     }
   else
     {
@@ -350,6 +351,7 @@ poclu_load_program (cl_context context, cl_device_id device,
 
       err = clBuildProgram (program, 0, NULL, final_opts, NULL, NULL);
       CHECK_OPENCL_ERROR_IN ("clBuildProgram");
+      free (binary);
     }
 
   *p = program;
