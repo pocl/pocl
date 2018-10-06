@@ -85,7 +85,8 @@ poclu_get_any_device2 (cl_context *context, cl_device_id *device,
   if (err != CL_SUCCESS)
     return err;
 
-  *queue = clCreateCommandQueue (*context, *device, 0, &err);
+  *queue = clCreateCommandQueue (*context, *device,
+                                  CL_QUEUE_PROFILING_ENABLE, &err);
   if (err != CL_SUCCESS)
     return err;
 
