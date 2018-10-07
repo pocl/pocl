@@ -9,13 +9,16 @@ Highlights
 
 Misc.
 -----
-- Allow building pocl without host CPU devices. Useful for constrained
-  builds as it avoids the need for an LLVM with host backend. Controllable
-  via ENABLE_HOST_CPU_DEVICES=off cmake option.
+- Allow building pocl without CPU backend drivers. When set to off,
+  CPU will not appear in the list of OpenCL devices reported by pocl.
+  Controllable via ENABLE_HOST_CPU_DEVICES=off cmake option.
 - Build logs are now produced also for illegal options passed to the kernel
   build e.g. via the options parameter of clBuildProgram().
 - POCL_FORCE_KERNEL_DEBUG=1 can be used to force add '-g' to all
   clBuildProgram() calls.
+- pocl's binary format has been slightly updated (changes are listed in
+  the top of pocl_binary.c file) to version 7, but pocl can still read
+  also the previous version 6 format.
 
 Notable Bug Fixes
 -----------------
@@ -34,6 +37,9 @@ Notable Internal Changes
 - Add 'device_aux_functions' to the driver layer attributes. This can be used
   to retain device-specific functions required by the target across the
   pruning of unused globals.
+- The "default kernels" hack which was used to store kernel metadata, has
+  been removed. Kernel metadata are now stored only once, in cl_program
+  struct; every new cl_kernel structs holds only a pointer.
 
 1.2 unreleased
 ==============
