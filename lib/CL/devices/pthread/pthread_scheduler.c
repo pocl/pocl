@@ -45,10 +45,6 @@ static void* pocl_pthread_driver_thread (void *p);
 
 struct pool_thread_data
 {
-  pthread_cond_t wakeup_cond
-  __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-  pthread_mutex_t lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-
   pthread_t thread __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
   unsigned long executed_commands;
@@ -120,8 +116,6 @@ pthread_scheduler_init (cl_device_id device)
 
   for (i = 0; i < num_worker_threads; ++i)
     {
-      pthread_cond_init (&scheduler.thread_pool[i].wakeup_cond, NULL);
-      PTHREAD_INIT_LOCK (&scheduler.thread_pool[i].lock);
       scheduler.thread_pool[i].index = i;
       pthread_create (&scheduler.thread_pool[i].thread, NULL,
                       pocl_pthread_driver_thread,
@@ -143,7 +137,6 @@ pthread_scheduler_uninit ()
   for (i = 0; i < scheduler.num_threads; ++i)
     {
       pthread_join (scheduler.thread_pool[i].thread, NULL);
-      PTHREAD_DESTROY_LOCK (&scheduler.thread_pool[i].lock);
     }
 
   pocl_aligned_free (scheduler.thread_pool);
@@ -577,8 +570,6 @@ pocl_pthread_driver_thread (void *p)
       PTHREAD_UNLOCK (&scheduler.wake_lock);
       if (do_exit)
         {
-          pthread_cond_destroy (&td->wakeup_cond);
-          PTHREAD_DESTROY_LOCK (&td->lock);
           pocl_aligned_free (td->printf_buffer);
           pocl_aligned_free (td->local_mem);
           pthread_exit (NULL);
