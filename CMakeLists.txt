@@ -400,10 +400,9 @@ if (OCS_AVAILABLE)
 
   if(NOT DEFINED HOST_DEVICE_BUILD_HASH)
     if(KERNELLIB_HOST_CPU_VARIANTS STREQUAL "distro")
-      set(HOST_DEVICE_BUILD_HASH "${LLC_TRIPLE}")
-    else()
-      set(HOST_DEVICE_BUILD_HASH "${LLC_TRIPLE}-${LLC_HOST_CPU}")
+      set(LLC_HOST_CPU "generic")
     endif()
+    set(HOST_DEVICE_BUILD_HASH "${LLC_TRIPLE}-${LLC_HOST_CPU}")
   endif()
 
   if(ARM AND LLVM_3_9)
