@@ -89,10 +89,10 @@ CL_API_SUFFIX__VERSION_1_2
           continue;
         else
           ++devices_supporting_images;
-        if (pocl_check_device_supports_image (dev, image_format, image_desc,
+        errcode = pocl_check_device_supports_image (dev, image_format, image_desc,
                                               supported_image_formats,
-                                              num_entries)
-            != CL_SUCCESS)
+                                              num_entries);
+        if (errcode != CL_SUCCESS)
           goto ERROR;
       }
     POCL_GOTO_ERROR_ON (
