@@ -354,9 +354,6 @@ pocl_init_cpu_device_infos (cl_device_id dev)
   dev->llvm_cpu = get_llvm_cpu_name ();
 #endif
 
-  if(dev->llvm_cpu && (!strcmp(dev->llvm_cpu, "(unknown)")))
-    dev->llvm_cpu = OCL_KERNEL_TARGET_CPU;
-
 #else /* No compiler, no CPU info */
   dev->llvm_cpu = NULL;
   dev->llvm_target_triplet = "";

@@ -839,16 +839,14 @@ static llvm::Module* getKernelLibrary(cl_device_id device)
   kernellib += device->llvm_target_triplet;
   if (is_host) {
     kernellib += '-';
+#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
+    kernellib += getX86KernelLibName();
+#else
     kernellib_fallback = kernellib;
     kernellib_fallback += OCL_KERNEL_TARGET_CPU;
     kernellib_fallback += ".bc";
-#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-    if (triple.getArch() == Triple::x86_64 ||
-        triple.getArch() == Triple::x86)
-      kernellib += getX86KernelLibName();
-    else
+    kernellib += device->llvm_cpu;
 #endif
-      kernellib += device->llvm_cpu;
   }
   kernellib += ".bc";
 
@@ -861,6 +859,7 @@ static llvm::Module* getKernelLibrary(cl_device_id device)
     }
   else
     {
+#ifndef KERNELLIB_HOST_DISTRO_VARIANTS
       if (is_host && pocl_exists(kernellib_fallback.c_str()))
         {
           POCL_MSG_WARN("Using fallback %s as the built-in lib.\n",
@@ -868,6 +867,7 @@ static llvm::Module* getKernelLibrary(cl_device_id device)
           lib = parseModuleIR(kernellib_fallback.c_str());
         }
       else
+#endif
         POCL_ABORT("Kernel library file %s doesn't exist.\n", kernellib.c_str());
     }
   assert (lib != NULL);

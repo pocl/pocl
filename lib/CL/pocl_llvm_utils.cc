@@ -134,11 +134,13 @@ get_llvm_cpu_name ()
   }
 #endif
 
+#ifndef KERNELLIB_HOST_DISTRO_VARIANTS
   if (r.str() == "generic") {
     POCL_MSG_WARN("LLVM does not recognize your cpu, trying to use "
                    OCL_KERNEL_TARGET_CPU " for -target-cpu\n");
     r = llvm::StringRef(OCL_KERNEL_TARGET_CPU);
   }
+#endif
 
   assert(r.size() > 0);
   char *cpu_name = (char *)malloc(r.size() + 1);
