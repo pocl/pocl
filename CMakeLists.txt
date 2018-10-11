@@ -398,6 +398,7 @@ if (OCS_AVAILABLE)
     message(FATAL_ERROR "Could not load LLVM.cmake")
   endif()
 
+  if(ENABLE_HOST_CPU_DEVICES)
   if(NOT DEFINED HOST_DEVICE_BUILD_HASH)
     if(KERNELLIB_HOST_CPU_VARIANTS STREQUAL "distro")
       set(HOST_DEVICE_BUILD_HASH "${LLC_TRIPLE}")
@@ -414,11 +415,12 @@ if (OCS_AVAILABLE)
     set(HOST_CPU_FORCED 1 CACHE INTERNAL "CPU is forced by user" FORCE)
     set(LLC_HOST_CPU "skylake-avx512" CACHE STRING "The Host CPU to use with llc" FORCE)
   endif()
+  endif()
 
 else()
 
-  if(NOT DEFINED HOST_DEVICE_BUILD_HASH)
-    message(FATAL_ERROR "For compiler-less builds, you must define HOST_DEVICE_BUILD_HASH")
+  if(ENABLE_HOST_CPU_DEVICES AND (NOT DEFINED HOST_DEVICE_BUILD_HASH))
+    message(FATAL_ERROR "For compiler-less builds of CPU backend, you must define HOST_DEVICE_BUILD_HASH")
   endif()
 
 endif()
