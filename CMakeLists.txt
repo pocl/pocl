@@ -650,14 +650,20 @@ set(ENABLE_SPIRV ${SPIRV} CACHE INTERNAL "SPIR-V enabled" FORCE)
 
 ######################################################################################
 
+# fully device-side printf on devices which support it (only CPU backend ATM), disabled by default.
+# this requires 128bit integer support because of the code in "errol" float-to-string conversion routine
+# the output is not 100% compatible with glibc's printf (%f with large argument prints zeroes after
+# last significant digit - 16-18th digit or so, unlike glibc which prints digits up to decimal point).
 if(CLANG_HAS_RTLIB_128)
   option(ENABLE_POCL_FLOAT_CONVERSION "Enable use of pocl's own float-to-decimal conversion code in OpenCL printf(). Defaults to OFF (uses snprintf from C library). Requires compiler-rt." OFF)
 else()
-  set(ENABLE_POCL_FLOAT_CONVERSION OFF CACHE INTERNAL "rtlib")
+  set(ENABLE_POCL_FLOAT_CONVERSION OFF CACHE INTERNAL "pocl's own float-to-decimal conversion code")
 endif()
 
 unset(RTLIB_FLAG)
 if(ENABLE_POCL_FLOAT_CONVERSION)
+  # force link with Clang; otherwise not needed on x86 but in this case we need rtlib
+  set(LINK_WITH_CLANG ON CACHE INTERNAL "Link using Clang")
   set(RTLIB_FLAG "-DENABLE_POCL_FLOAT_CONVERSION")
 endif()
 
@@ -699,19 +705,23 @@ if(UNIX)
     # MacOS ld outputs useless warnings like
     # ld: warning: -macosx_version_min not specificed, assuming 10.7
     # suppress them with -w.
-    set(DEFAULT_HOST_LD_FLAGS "-dylib -w -lm")
+    if(LINK_WITH_CLANG)
+      set(DEFAULT_HOST_LD_FLAGS "-dynamiclib -w -lm")
+    else()
+      set(DEFAULT_HOST_LD_FLAGS "-dylib -w -lm")
+    endif()
   elseif(ANDROID_COMPILER)
     set(DEFAULT_HOST_LD_FLAGS "-L/system/lib/ -shared -ldl -lc -lm /system/lib/crtbegin_so.o /system/lib/crtend_so.o")
   else()
-    if(ENABLE_POCL_FLOAT_CONVERSION)
-      set(DEFAULT_HOST_LD_FLAGS "-shared -lm --rtlib=compiler-rt")
-    else()
-      set(DEFAULT_HOST_LD_FLAGS "-shared -lm")
-    endif()
+    set(DEFAULT_HOST_LD_FLAGS "-shared -lm")
   endif()
   set(LIBMATH "-lm")
 elseif(WIN32)
   set(LIBMATH)
+endif()
+
+if(LINK_WITH_CLANG AND (CLANG_HAS_RTLIB_128 OR CLANG_HAS_RTLIB))
+  set(DEFAULT_HOST_LD_FLAGS "${DEFAULT_HOST_LD_FLAGS} --rtlib=compiler-rt")
 endif()
 
 ######################################################################################
@@ -1495,6 +1505,7 @@ if (OCS_AVAILABLE)
   MESSAGE(STATUS "")
   MESSAGE(STATUS "CLANG_HAS_RTLIB: ${CLANG_HAS_RTLIB}")
   MESSAGE(STATUS "CLANG_HAS_RTLIB_128: ${CLANG_HAS_RTLIB_128}")
+  MESSAGE(STATUS "LINK_WITH_CLANG: ${LINK_WITH_CLANG}")
   MESSAGE(STATUS "CLANG_MARCH_FLAG: ${CLANG_MARCH_FLAG}")
   MESSAGE(STATUS "CLANG_TARGET_OPTION: ${CLANG_TARGET_OPTION}")
   MESSAGE(STATUS "LLVM_VERSION: ${LLVM_VERSION}")

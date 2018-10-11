@@ -194,7 +194,7 @@ llvm_codegen (unsigned device_i, cl_kernel kernel, cl_device_id device,
 #ifdef LLVM_OLDER_THAN_5_0
   /* with older LLVMs, link by invoking ld or clang */
   char *const args1[]
-#if defined(ENABLE_POCL_FLOAT_CONVERSION) || defined(CLANG_HAS_RTLIB)
+#if defined(LINK_WITH_CLANG)
       = { CLANG,
 #else
       = { LINK_COMMAND,
