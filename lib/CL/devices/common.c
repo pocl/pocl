@@ -163,17 +163,17 @@ llvm_codegen (unsigned device_i, cl_kernel kernel, cl_device_id device,
   /* Write temporary kernel.so.o, required for the final linking step.
      Use append-write because tmp_objfile is already temporary, thus
      we don't need to create new temporary... */
-  POCL_MSG_PRINT_LLVM ("Writing code gen output to %s.\n", tmp_objfile);
   error = pocl_cache_write_kernel_objfile (tmp_objfile, objfile, objfile_size);
   if (error)
     {
-      POCL_MSG_PRINT_LLVM ("writing kernel.so.o failed for kernel %s\n",
-                           kernel_name);
+      POCL_MSG_PRINT_LLVM ("writing %s failed for kernel %s\n",
+                           tmp_objfile, kernel_name);
       goto FINISH;
     }
   else
     {
-      POCL_MSG_PRINT_LLVM ("written kernel.so.o size %zu\n", objfile_size);
+      POCL_MSG_PRINT_LLVM ("written %s size %zu\n",
+                          tmp_objfile, objfile_size);
     }
 
   /* temporary filename for kernel.so */
