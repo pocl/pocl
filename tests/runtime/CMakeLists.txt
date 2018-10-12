@@ -152,13 +152,22 @@ set_property(TEST
   APPEND PROPERTY LABELS "cuda")
 
 set_property(TEST
+  "runtime/clGetDeviceInfo"
   "runtime/clEnqueueNativeKernel"
   "runtime/clGetEventInfo"
   "runtime/clCreateProgramWithBinary"
+  "runtime/clBuildProgram"
+  "runtime/test_kernel_cache_includes"
   "runtime/test_event_cycle"
   "runtime/test_link_error"
   "runtime/test_read-copy-write-buffer"
+  "runtime/test_buffer-image-copy"
   "runtime/clCreateKernel"
+  "runtime/clGetKernelArgInfo"
+  "runtime/clGetSupportedImageFormats"
+  "runtime/clSetEventCallback"
+  "runtime/clCreateKernelsInProgram"
+  "runtime/clFinish"
   "runtime/test_enqueue_kernel_from_binary"
   "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback"

@@ -258,6 +258,35 @@ set_property(TEST
   "regression/autolocals_in_constexprs"
   APPEND PROPERTY LABELS "cuda")
 
+# Label tests that work with HSA runtime with native kernel compilation
+set_property(TEST
+  "regression/phi_nodes_not_replicated_REPL"
+  "regression/issues_with_local_pointers_REPL"
+  "regression/barrier_between_two_for_loops_REPL"
+  "regression/simple_for-loop_with_a_barrier_inside_REPL"
+  "regression/id-dependent_computation_before_kernel_exit_REPL"
+  "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_REPL"
+  "regression/phi_nodes_not_replicated_LOOPS"
+  "regression/issues_with_local_pointers_LOOPS"
+  "regression/barrier_between_two_for_loops_LOOPS"
+  "regression/simple_for-loop_with_a_barrier_inside_LOOPS"
+  "regression/for-loop_with_computation_after_the_brexit_LOOPS"
+  "regression/for-loop_with_computation_after_the_brexit_REPL"
+  "regression/for-loop_with_a_variable_iteration_count_LOOPS"
+  "regression/for-loop_with_a_variable_iteration_count_REPL"
+  "regression/id-dependent_computation_before_kernel_exit_LOOPS"
+  "regression/barrier_just_before_return_LOOPS"
+  "regression/undominated_variable_from_conditional_barrier_handling_LOOPS"
+  "regression/assigning_a_loop_iterator_variable_to_a_private_makes_it_local_LOOPS"
+  "regression/setting_a_buffer_argument_to_NULL_causes_a_segfault"
+  "regression/early_return_before_a_barrier_region_LOOPS"
+  "regression/autolocals_in_constexprs"
+  "regression/test_issue_445"
+  "regression/test_issue_553"
+  "regression/test_issue_577"
+  APPEND PROPERTY LABELS "hsa-native")
+
+
 if (NOT CLANG_IS_PATCHED_FOR_SPIR_CC)
 set_tests_properties("regression/struct_kernel_arguments"
                       PROPERTIES  WILL_FAIL 1)

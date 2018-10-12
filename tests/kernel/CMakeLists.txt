@@ -294,14 +294,9 @@ set_property(TEST
   APPEND PROPERTY LABELS "cuda")
 endif()
 
-if(LLVM_3_7)
-  set_tests_properties(
-  "kernel/test_rotate"
-  "kernel/test_printf"
-    PROPERTIES WILL_FAIL 1)
-endif()
-
 set_property(TEST
+  "kernel/test_local_struct_array"
+  "kernel/test_printf"
   "kernel/test_shuffle_char"
   "kernel/test_shuffle_short"
   "kernel/test_shuffle_ushort"
@@ -311,5 +306,43 @@ set_property(TEST
   "kernel/test_shuffle_long"
   "kernel/test_shuffle_ulong"
   "kernel/test_shuffle_double"
-  "kernel/test_local_struct_array"
+  "kernel/test_as_type"
+  "kernel/test_convert_type_1"
+  "kernel/test_convert_type_2"
+  "kernel/test_convert_type_4"
+  "kernel/test_convert_type_8"
+  "kernel/test_convert_type_16"
+  "kernel/test_bitselect"
+  "kernel/test_hadd_loopvec"
+  "kernel/test_hadd_loops"
+  "kernel/test_min_max"
+  "kernel/test_length_distance"
+  "kernel/test_fmin_fmax_fma"
+  "kernel/test_convert_sat_regression"
+  "kernel/test_rotate"
+  "kernel/test_fabs"
+  "kernel/test_copy_signbit"
+  "kernel/test_ldexp"
+  "kernel/test_isnan"
+  "kernel/test_short16"
   APPEND PROPERTY LABELS "hsa-native")
+
+set_property(TEST
+  "kernel/test_local_struct_array"
+  "kernel/test_shuffle_char"
+  "kernel/test_shuffle_short"
+  "kernel/test_shuffle_ushort"
+  "kernel/test_shuffle_int"
+  "kernel/test_shuffle_uint"
+  "kernel/test_shuffle_float"
+  "kernel/test_shuffle_long"
+  "kernel/test_shuffle_ulong"
+  "kernel/test_shuffle_double"
+  APPEND PROPERTY LABELS "hsa-unity")
+
+if(LLVM_3_7)
+  set_tests_properties(
+  "kernel/test_rotate"
+  "kernel/test_printf"
+    PROPERTIES WILL_FAIL 1)
+endif()

@@ -179,4 +179,5 @@ set_property(TEST
   "workgroup/b_loop_with_two_latches_LOOPS"
   "workgroup/workgroup_sizes_work_items_get_wrong_ids_LOOPS"
   "workgroup/issue_548_convergent_propagation_LOOPS"
+  "workgroup/different_implicit_barrier_injection_scenarios_LOOPS"
   APPEND PROPERTY LABELS "hsa-native")
