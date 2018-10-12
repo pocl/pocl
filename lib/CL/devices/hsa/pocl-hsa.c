@@ -205,6 +205,10 @@ typedef struct pocl_hsa_device_data_s {
   /* compilation lock */
   pocl_lock_t pocl_hsa_compilation_lock;
 
+  /* printf buffer */
+  void *printf_buffer;
+  size_t *printf_write_pos;
+
 } pocl_hsa_device_data_t;
 
 void
@@ -214,6 +218,9 @@ pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
 void
 pocl_hsa_compile_kernel_native (_cl_command_node *cmd, cl_kernel kernel,
 				cl_device_id device);
+
+static void*
+pocl_hsa_malloc_account(pocl_global_mem_t *mem, size_t size, hsa_region_t r);
 
 void
 pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
@@ -375,6 +382,8 @@ supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS] =
     .local_mem_type = CL_LOCAL,
     .endian_little = CL_TRUE,
     .extensions = HSA_DEVICE_EXTENSIONS,
+    .device_side_printf = !HSAIL_ENABLED,
+    .printf_buffer_size = 16 * 1024 * 1024,
     .preferred_wg_size_multiple = 64, // wavefront size on Kaveri
     .preferred_vector_width_char = 4,
     .preferred_vector_width_short = 2,
@@ -401,6 +410,8 @@ supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS] =
     .local_mem_type = CL_LOCAL,
     .endian_little = !(WORDS_BIGENDIAN),
     .extensions = HSA_DEVICE_EXTENSIONS,
+    .device_side_printf = !HSAIL_ENABLED,
+    .printf_buffer_size = 16 * 1024 * 1024,
     .preferred_wg_size_multiple = 1,
     /* We want to exploit the widest vector types in HSAIL
        for the CPUs assuming they have some sort of SIMD ISE
@@ -450,7 +461,6 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
     {
       if (strcmp(dev_name, supported_hsa_devices[i].long_name) == 0)
         {
-          dev->device_side_printf = 0;
 	  COPY_ATTR (llvm_cpu);
 	  COPY_ATTR (llvm_target_triplet);
 	  COPY_ATTR (spmd);
@@ -473,6 +483,8 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
           COPY_ATTR (extensions);
 	  COPY_ATTR (final_linkage_flags);
 	  COPY_ATTR (device_aux_functions);
+	  COPY_ATTR (device_side_printf);
+	  COPY_ATTR (printf_buffer_size);
           COPY_VECWIDTH (char);
           COPY_VECWIDTH (short);
           COPY_VECWIDTH (int);
@@ -751,6 +763,18 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
   d->exit_driver_thread = 0;
   PTHREAD_CHECK (pthread_create (&d->driver_pthread_id, NULL,
                                  &pocl_hsa_driver_pthread, dev));
+
+
+  if (dev->device_side_printf)
+    {
+      d->printf_buffer =
+	pocl_hsa_malloc_account (dev->global_memory, dev->printf_buffer_size,
+				 d->global_region);
+      d->printf_write_pos =
+	pocl_hsa_malloc_account (dev->global_memory, sizeof (size_t),
+				 d->global_region);
+    }
+
   return CL_SUCCESS;
 }
 
@@ -1379,6 +1403,9 @@ pocl_hsa_uninit (unsigned j, cl_device_id device)
   assert (found_hsa_agents > 0);
   pocl_hsa_device_data_t *d = (pocl_hsa_device_data_t*)device->data;
 
+  if (device->device_side_printf)
+    hsa_memory_free (d->printf_buffer);
+
   if (d->driver_pthread_id)
     {
       POCL_MSG_PRINT_INFO("waiting for HSA device pthread"
@@ -1713,6 +1740,14 @@ pocl_hsa_launch (pocl_hsa_device_data_t *d, cl_event event)
       pc->local_size[0] = cmd->command.run.local_x;
       pc->local_size[1] = cmd->command.run.local_y;
       pc->local_size[2] = cmd->command.run.local_z;
+
+      if (d->device->device_side_printf)
+	{
+	  pc->printf_buffer = d->printf_buffer;
+	  pc->printf_buffer_capacity = d->device->printf_buffer_size;
+	  bzero (d->printf_write_pos, sizeof (size_t));
+	  pc->printf_buffer_position = d->printf_write_pos;
+	}
     }
   else
     {
@@ -1819,6 +1854,12 @@ pocl_hsa_ndrange_event_finished (pocl_hsa_device_data_t *d, size_t i)
   hsa_memory_free(event_data->actual_kernargs);
 
   POCL_UNLOCK_OBJ (event);
+
+  if (d->device->device_side_printf && *d->printf_write_pos > 0)
+    {
+      write (STDOUT_FILENO, d->printf_buffer, *d->printf_write_pos);
+      bzero (d->printf_write_pos, sizeof (size_t));
+    }
 
   POCL_UPDATE_EVENT_COMPLETE (event);
 
