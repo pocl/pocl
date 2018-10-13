@@ -221,6 +221,10 @@ add_test_pocl(NAME "kernel/test_printf"
               EXPECTED_OUTPUT "test_printf_expout.txt"
               COMMAND "kernel" "test_printf")
 
+add_test_pocl(NAME "kernel/test_c99_printf"
+              EXPECTED_OUTPUT "test_c99_printf_expout.txt"
+              COMMAND "kernel" "test_c99_printf")
+
 add_test_pocl(NAME "kernel/test_sizeof_uint"
               EXPECTED_OUTPUT "test_sizeof_expout.txt"
               COMMAND "kernel" "test_sizeof")

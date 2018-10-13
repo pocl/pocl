@@ -265,6 +265,7 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->wait_event = pocl_hsa_wait_event;
   ops->update_event = pocl_hsa_update_event;
   ops->build_hash = pocl_hsa_build_hash;
+  ops->init_build = pocl_hsa_init_build;
 }
 
 #define MAX_HSA_AGENTS 16
@@ -2146,4 +2147,13 @@ pocl_hsa_svm_copy (cl_device_id dev, void *__restrict__ dst,
                    const void *__restrict__ src, size_t size)
 {
   HSA_CHECK (hsa_memory_copy (dst, src, size));
+}
+
+char*
+pocl_hsa_init_build (void *data)
+{
+  if (!((pocl_hsa_device_data_t*)data)->device->device_side_printf)
+    return strdup ("-DC99_PRINTF");
+  else
+    return NULL;
 }

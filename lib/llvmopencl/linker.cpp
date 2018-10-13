@@ -434,6 +434,9 @@ int link(llvm::Module *program, const llvm::Module *lib, std::string &log) {
         Function *f = program->getFunction(r);
         if ((f == NULL) ||
             (f->isDeclaration() &&
+             // A target might want to expose the C99 printf in case not supporting
+             // the OpenCL 1.2 printf.
+             !f->getName().equals("printf") &&
              !f->getName().equals(pocl_sampler_handler) &&
              !f->getName().startswith(llvm_intrins))
            ) {
