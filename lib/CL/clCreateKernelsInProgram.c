@@ -56,7 +56,7 @@ POname(clCreateKernelsInProgram)(cl_program      program ,
       for (idx = 0; idx < num_kernels; idx++)
         {
           kernels[idx] = POname(clCreateKernel) (program,
-                                                 program->kernel_names[idx],
+                                                 program->kernel_meta[idx].name,
                                                  &error_ret);
 
           /* Check for errors, clean up & bail.

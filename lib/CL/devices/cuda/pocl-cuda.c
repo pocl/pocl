@@ -762,15 +762,15 @@ pocl_cuda_submit_unmap_mem (CUstream stream, pocl_mem_identifier *dst_mem_id,
 
 static pocl_cuda_kernel_data_t *
 load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
-                         int has_offsets)
+                         int has_offsets, unsigned device_i)
 {
   CUresult result;
-
+  pocl_kernel_metadata_t *meta = kernel->meta;
   /* Check if we already have a compiled kernel function */
-  pocl_cuda_kernel_data_t *kdata = (pocl_cuda_kernel_data_t *)kernel->data;
+  pocl_cuda_kernel_data_t *kdata
+      = (pocl_cuda_kernel_data_t *)meta->data[device_i];
   if (kdata)
     {
-      kdata += device->dev_id;
       if ((has_offsets && kdata->kernel_offsets)
           || (!has_offsets && kdata->kernel))
         return kdata;
@@ -778,9 +778,8 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
   else
     {
       /* TODO: when can we release this? */
-      kernel->data
-          = calloc (pocl_num_devices, sizeof (pocl_cuda_kernel_data_t));
-      kdata = kernel->data + device->dev_id;
+      kdata = meta->data[device_i]
+          = (void *)calloc (1, sizeof (pocl_cuda_kernel_data_t));
     }
 
   pocl_cuda_device_data_t *ddata = (pocl_cuda_device_data_t *)device->data;
@@ -789,7 +788,8 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
   POCL_LOCK(ddata->compile_lock);
 
   /* Generate the parallel bitcode file linked with the kernel library */
-  int error = pocl_llvm_generate_workgroup_function (device, kernel, 0, 0, 0);
+  int error = pocl_llvm_generate_workgroup_function (device_i, device, kernel,
+                                                     0, 0, 0);
   if (error)
     {
       POCL_MSG_PRINT_GENERAL ("pocl_llvm_generate_workgroup_function() failed"
@@ -798,7 +798,6 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
     }
 
   char bc_filename[POCL_FILENAME_LENGTH];
-  unsigned device_i = pocl_cl_device_to_index (kernel->program, device);
   pocl_cache_work_group_function_path (bc_filename, kernel->program, device_i,
                                        kernel, 0, 0, 0);
 
@@ -832,8 +831,8 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
   /* Get pointer aligment */
   if (!kdata->alignments)
     {
-      kdata->alignments = calloc (kernel->num_args + kernel->num_locals + 4,
-                                  sizeof (size_t));
+      kdata->alignments
+          = calloc (meta->num_args + meta->num_locals + 4, sizeof (size_t));
       pocl_cuda_get_ptr_arg_alignment (bc_filename, kernel->name,
                                        kdata->alignments);
     }
@@ -858,7 +857,7 @@ void
 pocl_cuda_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
                           cl_device_id device)
 {
-  load_or_generate_kernel (kernel, device, 0);
+  load_or_generate_kernel (kernel, device, 0, cmd->command.run.device_i);
 }
 
 void
@@ -868,6 +867,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
   cl_kernel kernel = run.kernel;
   pocl_argument *arguments = run.arguments;
   struct pocl_context pc = run.pc;
+  pocl_kernel_metadata_t *meta = kernel->meta;
 
   /* Check if we need to handle global work offsets */
   int has_offsets = 0;
@@ -876,17 +876,17 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
 
   /* Get kernel function */
   pocl_cuda_kernel_data_t *kdata
-      = load_or_generate_kernel (kernel, device, has_offsets);
+      = load_or_generate_kernel (kernel, device, has_offsets, run.device_i);
   CUmodule module = has_offsets ? kdata->module_offsets : kdata->module;
   CUfunction function = has_offsets ? kdata->kernel_offsets : kdata->kernel;
 
   /* Prepare kernel arguments */
   void *null = NULL;
   unsigned sharedMemBytes = 0;
-  void *params[kernel->num_args + kernel->num_locals + 4];
-  unsigned sharedMemOffsets[kernel->num_args + kernel->num_locals];
+  void *params[meta->num_args + meta->num_locals + 4];
+  unsigned sharedMemOffsets[meta->num_args + meta->num_locals];
   unsigned constantMemBytes = 0;
-  unsigned constantMemOffsets[kernel->num_args];
+  unsigned constantMemOffsets[meta->num_args];
   unsigned globalOffsets[3];
 
   /* Get handle to constant memory buffer */
@@ -897,9 +897,9 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
 
   CUresult result;
   unsigned i;
-  for (i = 0; i < kernel->num_args; i++)
+  for (i = 0; i < meta->num_args; i++)
     {
-      pocl_argument_type type = kernel->arg_info[i].type;
+      pocl_argument_type type = meta->arg_info[i].type;
       switch (type)
         {
         case POCL_ARG_TYPE_NONE:
@@ -907,7 +907,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
           break;
         case POCL_ARG_TYPE_POINTER:
           {
-            if (kernel->arg_info[i].is_local)
+            if (ARG_IS_LOCAL (meta->arg_info[i]))
               {
                 size_t size = arguments[i].size;
                 size_t align = kdata->alignments[i];
@@ -921,7 +921,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
 
                 sharedMemBytes += size;
               }
-            else if (kernel->arg_info[i].address_qualifier
+            else if (meta->arg_info[i].address_qualifier
                      == CL_KERNEL_ARG_ADDRESS_CONSTANT)
               {
                 assert (constant_mem_base);
@@ -984,13 +984,13 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
     POCL_ABORT ("[CUDA] Total constant buffer size %u exceeds %lu allocated\n",
                 constantMemBytes, constant_mem_size);
 
-  unsigned arg_index = kernel->num_args;
+  unsigned arg_index = meta->num_args;
 
   /* Deal with automatic local allocations */
   /* TODO: Would be better to remove arguments and make these static GEPs */
-  for (i = 0; i < kernel->num_locals; ++i, ++arg_index)
+  for (i = 0; i < meta->num_locals; ++i, ++arg_index)
     {
-      size_t size = arguments[arg_index].size;
+      size_t size = meta->local_sizes[i];
       size_t align = kdata->alignments[arg_index];
 
       /* Pad offset to align memory */
@@ -1341,11 +1341,11 @@ pocl_cuda_finalize_command (cl_device_id device, cl_event event)
       cl_kernel kernel = event->command.run.kernel;
       pocl_argument *arguments = event->command.run.arguments;
       unsigned i;
-      for (i = 0; i < kernel->num_args; i++)
+      for (i = 0; i < meta->num_args; i++)
         {
-          if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
+          if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
             {
-              if (!kernel->arg_info[i].is_local && arguments[i].value)
+              if (!ARG_IS_LOCAL (meta->arg_info[i]) && arguments[i].value)
                 {
                   cl_mem mem = *(void **)arguments[i].value;
                   if (mem->flags & CL_MEM_USE_HOST_PTR)

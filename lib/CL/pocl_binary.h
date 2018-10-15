@@ -56,18 +56,11 @@ void pocl_binary_set_program_buildhash(cl_program program,
                                        const unsigned char *binary);
 
 /* returns the number of kernels without unpacking the binary */
-cl_uint pocl_binary_get_kernel_count(unsigned char *binary);
-
-/* returns the kernel names without unpacking the binary */
-cl_int pocl_binary_get_kernel_names(unsigned char *binary,
-                                    char **kernel_names,
-                                    size_t num_kernels);
+cl_uint pocl_binary_get_kernel_count (cl_program program, unsigned device_i);
 
 /* sets up cl_kernel's metadata, without unpacking the binary in pocl kcache */
-cl_int pocl_binary_get_kernel_metadata(unsigned char *binary,
-                                       const char *kernel_name,
-                                       cl_kernel kernel, cl_device_id device);
-
+cl_int pocl_binary_get_kernels_metadata (cl_program program,
+                                         unsigned device_i);
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

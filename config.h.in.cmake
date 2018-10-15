@@ -13,9 +13,6 @@
 
 #define CLANG "@CLANG@"
 
-#cmakedefine CLANG_HAS_RTLIB
-#cmakedefine CLANG_HAS_RTLIB_128
-
 #define CLANG_RESOURCE_DIR "@CLANG_RESOURCE_DIR@"
 
 /* clang++ executable */
@@ -135,6 +132,8 @@
 #endif
 
 #define LINK_COMMAND "@LINK_COMMAND@"
+
+#cmakedefine LINK_WITH_CLANG
 
 /* Defined to greatest expected alignment for extended types, in bytes. */
 #define MAX_EXTENDED_ALIGNMENT @MAX_EXTENDED_ALIGNMENT@

@@ -42,25 +42,27 @@ POname(clSetKernelArg)(cl_kernel kernel,
 
   POCL_RETURN_ERROR_COND((kernel == NULL), CL_INVALID_KERNEL);
 
-  POCL_RETURN_ERROR_ON((arg_index >= kernel->num_args), CL_INVALID_ARG_INDEX,
-    "This kernel has %u args, cannot set arg %u\n",
-    (unsigned)kernel->num_args, (unsigned)arg_index);
+  POCL_RETURN_ERROR_ON ((arg_index >= kernel->meta->num_args),
+                        CL_INVALID_ARG_INDEX,
+                        "This kernel has %u args, cannot set arg %u\n",
+                        (unsigned)kernel->meta->num_args, (unsigned)arg_index);
 
   POCL_RETURN_ERROR_ON((kernel->dyn_arguments == NULL), CL_INVALID_KERNEL,
     "This kernel has no arguments that could be set\n");
 
-  pi = &(kernel->arg_info[arg_index]);
+  pi = &(kernel->meta->arg_info[arg_index]);
+  int is_local = ARGP_IS_LOCAL (pi);
 
   POCL_MSG_PRINT_INFO ("ARG TYPE: %s \n", pi->type_name);
 
   POCL_RETURN_ERROR_ON (
-      ((arg_value != NULL) && pi->is_local), CL_INVALID_ARG_VALUE,
+      ((arg_value != NULL) && is_local), CL_INVALID_ARG_VALUE,
       "arg_value != NULl and arg %u is in local address space\n", arg_index);
 
   /* Trigger CL_INVALID_ARG_VALUE if arg_value specified is NULL
    * for an argument that is not declared with the __local qualifier. */
   POCL_RETURN_ERROR_ON (
-      ((arg_value == NULL) && (!pi->is_local)
+      ((arg_value == NULL) && (!is_local)
        && (pi->type != POCL_ARG_TYPE_POINTER)),
       CL_INVALID_ARG_VALUE,
       "arg_value == NULL and arg %u is not in local address space\n",
@@ -68,7 +70,7 @@ POname(clSetKernelArg)(cl_kernel kernel,
 
   /* Trigger CL_INVALID_ARG_SIZE if arg_size is zero
    * and the argument is declared with the __local qualifier. */
-  POCL_RETURN_ERROR_ON (((arg_size == 0) && pi->is_local), CL_INVALID_ARG_SIZE,
+  POCL_RETURN_ERROR_ON (((arg_size == 0) && is_local), CL_INVALID_ARG_SIZE,
                         "arg_size == 0 and arg %u is in local address space\n",
                         arg_index);
 
@@ -78,7 +80,7 @@ POname(clSetKernelArg)(cl_kernel kernel,
 
   if (pi->type == POCL_ARG_TYPE_POINTER || pi->type == POCL_ARG_TYPE_IMAGE
       || pi->type == POCL_ARG_TYPE_SAMPLER)
-    POCL_RETURN_ERROR_ON (((!pi->is_local) && (arg_size != sizeof (cl_mem))),
+    POCL_RETURN_ERROR_ON (((!is_local) && (arg_size != sizeof (cl_mem))),
                           CL_INVALID_ARG_SIZE,
                           "Arg %u is pointer/buffer/image, but arg_size is "
                           "not sizeof(cl_mem)\n",
@@ -97,8 +99,8 @@ POname(clSetKernelArg)(cl_kernel kernel,
 
   p = &(kernel->dyn_arguments[arg_index]); 
   POCL_LOCK_OBJ (kernel);
-  pi->is_set = 0;
-  
+  p->is_set = 0;
+
   if (arg_value != NULL && 
       !(pi->type == POCL_ARG_TYPE_POINTER &&
         *(const int*)arg_value == 0))
@@ -140,7 +142,7 @@ POname(clSetKernelArg)(cl_kernel kernel,
 #endif
 
   p->size = arg_size;
-  pi->is_set = 1;
+  p->is_set = 1;
 
   POCL_UNLOCK_OBJ (kernel);
   return CL_SUCCESS;

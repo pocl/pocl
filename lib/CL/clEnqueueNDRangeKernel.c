@@ -107,9 +107,9 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   struct pocl_context pc;
   _cl_command_node *command_node;
   /* alloc from stack to avoid malloc. num_args is the absolute max needed */
-  cl_mem mem_list[kernel->num_args + 1];
+  cl_mem mem_list[kernel->meta->num_args + 1];
   /* reserve space for potential buffer migrate events */
-  cl_event new_event_wait_list[num_events_in_wait_list + kernel->num_args + 1];
+  cl_event new_event_wait_list[num_events_in_wait_list + kernel->meta->num_args + 1];
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
@@ -154,10 +154,11 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   POCL_RETURN_ERROR_COND((global_x == 0 || global_y == 0 || global_z == 0),
     CL_INVALID_GLOBAL_WORK_SIZE);
 
-  for (i = 0; i < kernel->num_args; i++)
+  for (i = 0; i < kernel->meta->num_args; i++)
     {
-      POCL_RETURN_ERROR_ON((!kernel->arg_info[i].is_set),
-        CL_INVALID_KERNEL_ARGS, "The %i-th kernel argument is not set!\n", i);
+      POCL_RETURN_ERROR_ON ((!kernel->dyn_arguments[i].is_set),
+                            CL_INVALID_KERNEL_ARGS,
+                            "The %i-th kernel argument is not set!\n", i);
     }
 
   max_local_x = command_queue->device->max_work_item_sizes[0];
@@ -206,15 +207,15 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
    * work size _must_ be specified, and it _must_ match the attribute
    * specification
    */
-  if (kernel->reqd_wg_size != NULL &&
-      kernel->reqd_wg_size[0] > 0 &&
-      kernel->reqd_wg_size[1] > 0 &&
-      kernel->reqd_wg_size[2] > 0)
+  if (kernel->meta->reqd_wg_size[0] > 0 &&
+      kernel->meta->reqd_wg_size[1] > 0 &&
+      kernel->meta->reqd_wg_size[2] > 0)
     {
-      POCL_RETURN_ERROR_COND((local_work_size == NULL ||
-          local_x != kernel->reqd_wg_size[0] ||
-          local_y != kernel->reqd_wg_size[1] ||
-          local_z != kernel->reqd_wg_size[2]), CL_INVALID_WORK_GROUP_SIZE);
+      POCL_RETURN_ERROR_COND ((local_work_size == NULL
+                               || local_x != kernel->meta->reqd_wg_size[0]
+                               || local_y != kernel->meta->reqd_wg_size[1]
+                               || local_z != kernel->meta->reqd_wg_size[2]),
+                              CL_INVALID_WORK_GROUP_SIZE);
     }
   /* otherwise, if the local work size was not specified find the optimal one.
    * Note that at some point we also checked for local > global. This doesn't
@@ -455,24 +456,17 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
   assert (global_y % local_y == 0);
   assert (global_z % local_z == 0);
 
-  char cachedir[POCL_FILENAME_LENGTH];
-  int realdev_i = pocl_cl_device_to_index (kernel->program, realdev);
-  assert (realdev_i >= 0);
-  pocl_cache_kernel_cachedir_path (cachedir, kernel->program,
-                                   realdev_i, kernel, "",
-                                   local_x, local_y, local_z);
-
   b_migrate_count = 0;
   buffer_count = 0;
 
   /* count mem objects and enqueue needed mem migrations */
-  for (i = 0; i < kernel->num_args; ++i)
+  for (i = 0; i < kernel->meta->num_args; ++i)
     {
+      struct pocl_argument_info *a = &kernel->meta->arg_info[i];
       struct pocl_argument *al = &(kernel->dyn_arguments[i]);
-      if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE ||
-          (!kernel->arg_info[i].is_local
-           && kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER
-           && al->value != NULL))
+      if (a->type == POCL_ARG_TYPE_IMAGE
+          || (!ARGP_IS_LOCAL (a) && a->type == POCL_ARG_TYPE_POINTER
+              && al->value != NULL))
         {
           cl_mem buf = *(cl_mem *) (al->value);
           mem_list[buffer_count++] = buf;
@@ -525,20 +519,24 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
   pc.global_offset[2] = offset_z;
 
   command_node->type = CL_COMMAND_NDRANGE_KERNEL;
-  command_node->command.run.tmp_dir = strdup (cachedir);
   command_node->command.run.kernel = kernel;
   command_node->command.run.pc = pc;
   command_node->command.run.local_x = local_x;
   command_node->command.run.local_y = local_y;
   command_node->command.run.local_z = local_z;
 
+  int realdev_i = pocl_cl_device_to_index (kernel->program, realdev);
+  assert (realdev_i >= 0);
+  command_node->command.run.device_i = (unsigned)realdev_i;
+  command_node->command.run.hash = kernel->meta->build_hash[realdev_i];
+
   /* Copy the currently set kernel arguments because the same kernel
      object can be reused for new launches with different arguments. */
   command_node->command.run.arguments =
-    (struct pocl_argument *) malloc ((kernel->num_args + kernel->num_locals) *
+    (struct pocl_argument *) malloc ((kernel->meta->num_args) *
                                      sizeof (struct pocl_argument));
 
-  for (i = 0; i < kernel->num_args + kernel->num_locals; ++i)
+  for (i = 0; i < kernel->meta->num_args; ++i)
     {
       struct pocl_argument *arg = &command_node->command.run.arguments[i];
       size_t arg_alloc_size = kernel->dyn_arguments[i].size;

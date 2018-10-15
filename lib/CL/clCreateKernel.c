@@ -71,22 +71,30 @@ POname(clCreateKernel)(cl_program program,
 
   POCL_INIT_OBJECT (kernel);
 
-  kernel->name = strdup(kernel_name);
-  POCL_GOTO_ERROR_ON((kernel->name == NULL), CL_OUT_OF_HOST_MEMORY,
-                     "clCreateKernel couldn't allocate memory");
+  for (i = 0; i < program->num_kernels; ++i)
+    if (strcmp (program->kernel_meta[i].name, kernel_name) == 0)
+      break;
 
+  POCL_GOTO_ERROR_ON ((i >= program->num_kernels), CL_INVALID_KERNEL_NAME,
+                      "Can't find a the kernel with name %s in this program\n",
+                      kernel_name);
+
+  kernel->meta = &program->kernel_meta[i];
+  kernel->name = kernel->meta->name;
   kernel->context = program->context;
   kernel->program = program;
-  kernel->next = NULL;
 
+  kernel->dyn_arguments
+      = calloc ((kernel->meta->num_args), sizeof (struct pocl_argument));
+  POCL_GOTO_ERROR_COND ((kernel->dyn_arguments == NULL),
+                        CL_OUT_OF_HOST_MEMORY);
+
+#ifdef OCS_AVAILABLE
   for (device_i = 0; device_i < program->num_devices; ++device_i)
     {
-#ifdef OCS_AVAILABLE
       if (program->binaries[device_i] &&
           pocl_cache_device_cachedir_exists(program, device_i))
         {
-          pocl_llvm_get_kernel_metadata (program, kernel, device_i,
-                                         kernel_name, &errcode);
           cl_device_id device = program->devices[device_i];
           if (device->spmd)
             {
@@ -94,18 +102,19 @@ POname(clCreateKernel)(cl_program program,
               _cl_command_node cmd;
               memset (&cmd, 0, sizeof(_cl_command_node));
               cmd.type = CL_COMMAND_NDRANGE_KERNEL;
-              cmd.command.run.tmp_dir = cachedir;
+              cmd.command.run.device_i = device_i;
               cmd.command.run.kernel = kernel;
+              assert (kernel->meta);
+              cmd.command.run.hash = kernel->meta->build_hash[device_i];
               cmd.device = device;
               size_t local_x = 0, local_y = 0, local_z = 0;
-              if (kernel->reqd_wg_size != NULL &&
-                  kernel->reqd_wg_size[0] > 0 &&
-                  kernel->reqd_wg_size[1] > 0 &&
-                  kernel->reqd_wg_size[2] > 0)
+              if (kernel->meta->reqd_wg_size[0] > 0
+                  && kernel->meta->reqd_wg_size[1] > 0
+                  && kernel->meta->reqd_wg_size[2] > 0)
                 {
-                  local_x = kernel->reqd_wg_size[0];
-                  local_y = kernel->reqd_wg_size[1];
-                  local_z = kernel->reqd_wg_size[2];
+                  local_x = kernel->meta->reqd_wg_size[0];
+                  local_y = kernel->meta->reqd_wg_size[1];
+                  local_z = kernel->meta->reqd_wg_size[2];
                 }
               cmd.command.run.local_x = local_x;
               cmd.command.run.local_y = local_y;
@@ -117,70 +126,23 @@ POname(clCreateKernel)(cl_program program,
               device->ops->compile_kernel (&cmd, kernel, device);
             }
         }
-      /* If the program was created with a pocl binary, we won't be able to
-         get the metadata for the cl_kernel from an IR file, so we call pocl
-         binary function to initialize the cl_kernel data */
-      else if (program->pocl_binaries[device_i])
-#else
-      if (program->pocl_binaries[device_i])
+    }
 #endif
-        {
-          errcode
-            = pocl_binary_get_kernel_metadata (program->pocl_binaries[device_i],
-                                               kernel_name, kernel,
-                                               program->devices[device_i]);
-        }
-      else
-        /* If there is no device dir for this device, the program was
-           not built for that device in clBuildProgram. This seems to
-           be OK by the standard. */
-        continue;
 
-      if (errcode != CL_SUCCESS)
-        {
-          POCL_MSG_ERR( "Failed to get kernel metadata "
-                        "for kernel %s on device %s\n", kernel_name,
-                        program->devices[device_i]->short_name);
-          goto ERROR;
-        }
-    }
-
-  /* default kernels don't go on the program-kernels linked list,
-   * and they don't increase the program refcount. */
-  if (!program->operating_on_default_kernels)
-    {
-      POCL_LOCK_OBJ (program);
-      cl_kernel k = program->kernels;
-      program->kernels = kernel;
-      kernel->next = k;
-      POCL_RETAIN_OBJECT_UNLOCKED (program);
-      POCL_UNLOCK_OBJ (program);
-    }
+  POCL_LOCK_OBJ (program);
+  cl_kernel k = program->kernels;
+  program->kernels = kernel;
+  kernel->next = k;
+  POCL_RETAIN_OBJECT_UNLOCKED (program);
+  POCL_UNLOCK_OBJ (program);
 
   errcode = CL_SUCCESS;
   goto SUCCESS;
 
 ERROR:
   if (kernel)
-    {
-      if (kernel->arg_info)
-        for (i = 0; i < kernel->num_args; i++)
-          {
-            POCL_MEM_FREE (kernel->arg_info[i].name);
-            POCL_MEM_FREE (kernel->arg_info[i].type_name);
-          }
-
-      if (kernel->dyn_arguments)
-        for (i = 0; i < (kernel->num_args + kernel->num_locals); i++)
-          {
-            pocl_aligned_free (kernel->dyn_arguments[i].value);
-          }
-      POCL_MEM_FREE (kernel->reqd_wg_size);
-      POCL_MEM_FREE (kernel->dyn_arguments);
-      POCL_MEM_FREE (kernel->arg_info);
-      POCL_MEM_FREE (kernel->name);
-      POCL_MEM_FREE (kernel);
-    }
+    POCL_MEM_FREE (kernel->dyn_arguments);
+  POCL_MEM_FREE (kernel);
   kernel = NULL;
 
 SUCCESS:

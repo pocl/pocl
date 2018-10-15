@@ -66,7 +66,7 @@ extern "C" {
 
 void pocl_init_cpu_device_infos (cl_device_id dev);
 
-char *llvm_codegen (const char *tmpdir, cl_kernel kernel, cl_device_id device,
+char *llvm_codegen (unsigned device_i, cl_kernel kernel, cl_device_id device,
                     size_t local_x, size_t local_y, size_t local_z);
 
 void fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg, 
@@ -96,7 +96,7 @@ void pocl_init_dlhandle_cache ();
 char *pocl_check_kernel_disk_cache (_cl_command_node *cmd);
 
 void pocl_check_kernel_dlhandle_cache (_cl_command_node *cmd,
-				       unsigned initial_refcount);
+                                       unsigned initial_refcount);
 
 void pocl_release_dlhandle_cache (_cl_command_node *cmd);
 
@@ -111,6 +111,9 @@ void* pocl_aligned_malloc_global_mem(cl_device_id device, size_t align, size_t s
 void pocl_free_global_mem(cl_device_id device, void *ptr, size_t size);
 
 void pocl_print_system_memory_stats();
+
+void pocl_calculate_kernel_hash (cl_program program, unsigned kernel_i,
+                                 unsigned device_i);
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

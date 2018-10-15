@@ -225,7 +225,7 @@ public:
     if (!produceStandAloneProgram_) return;
 
     static int runCounter = 0;
-    TCEString tempDir = run_cmd->tmp_dir;
+    TCEString tempDir((const char*)run_cmd->device_data);
     TCEString baseFname = tempDir + "/";
     baseFname << "standalone_" << runCounter;
 
@@ -253,10 +253,12 @@ public:
        the original one. */
 
     /* Create the global buffers along with their initialization data. */
-    for (size_t i = 0; i < run_cmd->kernel->num_args; ++i)
+    cl_kernel kernel = run_cmd->kernel;
+    pocl_kernel_metadata_t *meta = kernel->meta;
+    for (size_t i = 0; i < meta->num_args; ++i)
       {
         struct pocl_argument *al = &(run_cmd->arguments[i]);
-        if (run_cmd->kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
+        if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
           {
             if (al->value == NULL) continue;
             unsigned start_addr = 
@@ -276,8 +278,8 @@ public:
               if (c % 32 == 31) out << std::endl << "\t";
             }
             out << std::endl << "}; " << std::endl << std::endl;
-          } 
-        else if (!run_cmd->kernel->arg_info[i].is_local)
+          }
+        else if (!ARG_IS_LOCAL (meta->arg_info[i]))
           {
             /* Scalars are stored to global buffers automatically. Dump them to buffers. */
             unsigned start_addr = BSWAP(dev_cmd.args[i]);
@@ -329,18 +331,18 @@ public:
 
     out << "\tkernel_command.kernel = (uint32_t)&" << kernelMdSymbolName << ";" << std::endl;
     size_t a = 0;
-    for (; a < run_cmd->kernel->num_args + run_cmd->kernel->num_locals; ++a)
+    for (; a < meta->num_args; ++a)
       {
         struct pocl_argument *al = &(run_cmd->arguments[a]);
         out << "\tkernel_command.args[" << std::dec << a << "] = ";
-        
-        if (run_cmd->kernel->arg_info[a].is_local || a >= run_cmd->kernel->num_args)
+
+        if (ARG_IS_LOCAL (meta->arg_info[a]))
           {
             /* Local buffers are managed by the host so the local
                addresses are already valid. */
             out << "(uint32_t)" << "0x" << std::hex << BSWAP(dev_cmd.args[a]);
           }
-        else if (run_cmd->kernel->arg_info[a].type == POCL_ARG_TYPE_POINTER && dev_cmd.args[a] != 0)
+        else if (meta->arg_info[a].type == POCL_ARG_TYPE_POINTER && dev_cmd.args[a] != 0)
           {
             unsigned start_addr = 
               ((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[parent->dev_id].mem_ptr))->start_address;
@@ -357,6 +359,13 @@ public:
         out << ";" << std::endl;
     }   
     
+    for (; a < meta->num_locals; ++a)
+      {
+        out << "\tkernel_command.args[" << std::dec << (meta->num_args + a) << "] = ";
+        out << "(uint32_t)" << "0x" << std::hex << BSWAP(dev_cmd.args[meta->num_args + a]);
+        out << ";" << std::endl;
+      }
+
     //    out << "\tlwpr_print_str(\"tta: initialized the standalone kernel lauch\\n\");" << std::endl;
     out << "}" << std::endl;     
     out.close();

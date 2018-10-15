@@ -30,6 +30,7 @@
 #include "config.h"
 #include "pocl_runtime_config.h"
 #include "pocl_hash.h"
+#include "pocl_cache.h"
 
 #ifndef _MSC_VER
 #  include <unistd.h>
@@ -57,6 +58,7 @@
 using namespace TTAMachine;
 
 #include <algorithm>
+#include <sstream>
 
 #define ALIGNMENT MAX_EXTENDED_ALIGNMENT
 
@@ -203,11 +205,11 @@ TCEDevice::initMemoryManagement(const TTAMachine::Machine& mach) {
 #define SUBST(x) "  -DKERNEL_EXE_CMD_OFFSET=" # x
 #define OFFSET_ARG(c) SUBST(c)
 
-TCEString
-TCEDevice::tceccCommandLine
-(_cl_command_run *run_cmd, const TCEString& inputSrc, 
- const TCEString& outputTpef, const TCEString extraParams) 
-{
+TCEString TCEDevice::tceccCommandLine(_cl_command_run *run_cmd,
+                                      const TCEString &tempDir,
+                                      const TCEString &inputSrc,
+                                      const TCEString &outputTpef,
+                                      const TCEString extraParams) {
 
   TCEString mainC;
   if (isMultiCoreMachine()) 
@@ -234,8 +236,6 @@ TCEDevice::tceccCommandLine
     extraFlags += " -ldthread -lsync-lu -llockunit";
 
   extraFlags += OFFSET_ARG(TTA_UNALLOCATED_GLOBAL_SPACE);
-
-  TCEString tempDir = run_cmd->tmp_dir;
 
   std::string kernelObjSrc = "";
   kernelObjSrc += tempDir;
@@ -304,7 +304,7 @@ pocl_tce_malloc (void *device_data, cl_mem_flags flags,
   if (chunk == NULL) return NULL;
 
 #ifdef DEBUG_TTA_DRIVER
-  printf("host: malloc %x (host) %d (device) size: %u\n", host_ptr, chunk->start_address, size);
+  printf("host: malloc %p : %lu / %zu\n", host_ptr, chunk->start_address, size);
 #endif
 
   if ((flags & CL_MEM_COPY_HOST_PTR) ||  
@@ -364,7 +364,7 @@ pocl_tce_write (void *data,
   TCEDevice *d = (TCEDevice*)data;
   chunk_info_t *chunk = (chunk_info_t*)device_ptr;
 #ifdef DEBUG_TTA_DRIVER
-  printf ("host: write %x %x %u\n", host_ptr, chunk->start_address + offset,
+  printf ("host: write %p <- %lx / %zu\n", src_host_ptr, chunk->start_address + offset,
           size);
 #endif
   d->copyHostToDevice (src_host_ptr, chunk->start_address + offset, size);
@@ -382,7 +382,7 @@ pocl_tce_read (void *data,
   TCEDevice* d = (TCEDevice*)data;
   chunk_info_t *chunk = (chunk_info_t*)device_ptr;
 #ifdef DEBUG_TTA_DRIVER
-  printf ("host: read to %x (host) from %d (device) %u\n", host_ptr,
+  printf ("host: read %p -> %lx / %zu\n", dst_host_ptr,
           chunk->start_address + offset, size);
 #endif
   d->copyDeviceToHost (chunk->start_address + offset, dst_host_ptr, size);
@@ -392,7 +392,7 @@ void *
 pocl_tce_create_sub_buffer (void */*device_data*/, void* buffer, size_t origin, size_t size)
 {
 #ifdef DEBUG_TTA_DRIVER
-  printf("host: create sub buffer %d (buf start) + %d size: %d\n", 
+  printf("host: create sub buffer %lu (buf start) + %zu size: %zu\n",
          ((chunk_info_t*)buffer)->start_address, origin, size);
 #endif
 
@@ -413,6 +413,45 @@ pocl_tce_free (cl_device_id device, cl_mem mem_obj)
   free_chunk ((chunk_info_t*) ptr);
 }
 
+static void pocl_tce_write_kernel_descriptor(cl_device_id device,
+                                             unsigned device_i,
+                                             cl_kernel kernel) {
+  // Generate the kernel_obj.c file. This should be optional
+  // and generated only for the heterogeneous standalone devices which
+  // need the definitions to accompany the kernels, for the launcher
+  // code.
+  // TODO: the scripts use a generated kernel.h header file that
+  // gets added to this file. No checks seem to fail if that file
+  // is missing though, so it is left out from there for now
+
+  std::stringstream content;
+  pocl_kernel_metadata_t *meta = kernel->meta;
+
+  content << std::endl
+          << "#include <pocl_device.h>" << std::endl
+          << "void _pocl_launcher_" << meta->name
+          << "_workgroup(uint8_t* args, uint8_t*, "
+          << "uint32_t, uint32_t, uint32_t);" << std::endl
+          << "void _pocl_launcher_" << meta->name
+          << "_workgroup_fast(uint8_t* args, uint8_t*, "
+          << "uint32_t, uint32_t, uint32_t);" << std::endl;
+
+  if (device->global_as_id != 0)
+    content << "__attribute__((address_space(" << device->global_as_id << ")))"
+            << std::endl;
+
+  content << "__kernel_metadata _" << meta->name << "_md = {" << std::endl
+          << "     \"" << meta->name << "\"," << std::endl
+          << "     " << meta->num_args << "," << std::endl
+          << "     " << meta->num_locals << "," << std::endl
+          << "     _pocl_launcher_" << meta->name << "_workgroup_fast"
+          << std::endl
+          << " };" << std::endl;
+
+  pocl_cache_write_descriptor(kernel->program, device_i, meta->name,
+                              content.str().c_str(), content.str().size());
+}
+
 void
 pocl_tce_compile_kernel(_cl_command_node *cmd,
                         cl_kernel kernel, cl_device_id device)
@@ -429,9 +468,9 @@ pocl_tce_compile_kernel(_cl_command_node *cmd,
     device = cmd->device;
 
   POCL_LOCK(d->tce_compile_lock);
-  int error = pocl_llvm_generate_workgroup_function(device, kernel,
-      cmd->command.run.local_x, cmd->command.run.local_y,
-      cmd->command.run.local_z);
+  int error = pocl_llvm_generate_workgroup_function(
+      cmd->command.run.device_i, device, kernel, cmd->command.run.local_x,
+      cmd->command.run.local_y, cmd->command.run.local_z);
 
   if (error) {
     POCL_UNLOCK(d->tce_compile_lock);
@@ -440,22 +479,33 @@ pocl_tce_compile_kernel(_cl_command_node *cmd,
     assert(error == 0);
   }
 
-  char bytecode[POCL_FILENAME_LENGTH];
+  // 12 == strlen (POCL_PARALLEL_BC_FILENAME)
+  char bytecode[POCL_FILENAME_LENGTH + 13];
 
   assert(d != NULL);
   assert(cmd->command.run.kernel);
-  assert(cmd->command.run.tmp_dir);
+
+  char cachedir[POCL_FILENAME_LENGTH];
+  pocl_cache_kernel_cachedir_path(cachedir, kernel->program,
+                                  cmd->command.run.device_i, kernel, "",
+                                  cmd->command.run.local_x,
+                                  cmd->command.run.local_y,
+                                  cmd->command.run.local_z);
+  cmd->command.run.device_data = strdup(cachedir);
 
   if (d->isNewKernel(&(cmd->command.run))) {
-    std::string assemblyFileName(cmd->command.run.tmp_dir);
+    pocl_tce_write_kernel_descriptor(device, cmd->command.run.device_i, kernel);
+
+    std::string assemblyFileName(cachedir);
+    TCEString tempDir(cachedir);
     assemblyFileName += "/parallel.tpef";
 
     if (access (assemblyFileName.c_str(), F_OK) != 0)
       {
-        error = snprintf (bytecode, POCL_FILENAME_LENGTH,
-                          "%s%s", cmd->command.run.tmp_dir, POCL_PARALLEL_BC_FILENAME);
-        TCEString buildCmd =
-          d->tceccCommandLine(&cmd->command.run, bytecode, assemblyFileName);
+      error = snprintf(bytecode, POCL_FILENAME_LENGTH, "%s%s", cachedir,
+                       POCL_PARALLEL_BC_FILENAME);
+      TCEString buildCmd = d->tceccCommandLine(&cmd->command.run, tempDir,
+                                               bytecode, assemblyFileName);
 
 #ifdef DEBUG_TTA_DRIVER
       std::cerr << "CMD: " << buildCmd << std::endl;
@@ -480,10 +530,10 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
 
   assert(d != NULL);
   assert(cmd->command.run.kernel);
-  assert(cmd->command.run.tmp_dir);
+  assert(cmd->command.run.device_data);
 
   if (d->isNewKernel(&(cmd->command.run))) {
-    std::string assemblyFileName(cmd->command.run.tmp_dir);
+    std::string assemblyFileName((const char*)cmd->command.run.device_data);
     assemblyFileName += "/parallel.tpef";
 
     std::string kernelMdSymbolName = "_";
@@ -524,10 +574,13 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
   /* Chunks to be freed after the kernel finishes. */
   ChunkVector tempChunks;
 
-  for (i = 0; i < cmd->command.run.kernel->num_args; ++i)
+  cl_kernel kernel = cmd->command.run.kernel;
+  pocl_kernel_metadata_t *meta = kernel->meta;
+
+  for (i = 0; i < meta->num_args; ++i)
     {
       al = &(cmd->command.run.arguments[i]);
-      if (cmd->command.run.kernel->arg_info[i].is_local)
+      if (ARG_IS_LOCAL (meta->arg_info[i]))
         {
           chunk_info_t* local_chunk = pocl_tce_malloc_local (d, al->size);
           if (local_chunk == NULL)
@@ -535,12 +588,12 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
 
           dev_cmd.args[i] = byteswap_uint32_t (local_chunk->start_address, d->needsByteSwap);
 #ifdef DEBUG_TTA_DRIVER
-          printf ("host: allocated %d bytes of local memory for arg %d @ %d\n", 
+          printf ("host: allocated %zu bytes of local memory for arg %u @ %lu\n",
                   al->size, i, local_chunk->start_address);
 #endif
           tempChunks.push_back(local_chunk);
         }
-      else if (cmd->command.run.kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
+      else if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
         {
           /* It's legal to pass a NULL pointer to clSetKernelArguments. In 
              that case we must pass the same NULL forward to the kernel.
@@ -560,7 +613,7 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
           if (arg_space == NULL)
             POCL_ABORT ("Could not allocate memory from the device argument space. Out of global mem?\n");
 #ifdef DEBUG_TTA_DRIVER
-          printf ("host: copied value from %x to global argument memory\n", al->value);
+          printf ("host: copied value from %p to global argument memory\n", al->value);
 #endif
           dev_cmd.args[i] = byteswap_uint32_t (arg_space->start_address, d->needsByteSwap);
           tempChunks.push_back(arg_space);
@@ -568,19 +621,17 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
     }
 
   /* Allocate the automatic local buffers. */
-  for (std::size_t i = cmd->command.run.kernel->num_args;
-       i < cmd->command.run.kernel->num_args + cmd->command.run.kernel->num_locals;
-       ++i) 
+  for (i = 0; i < meta->num_locals; ++i)
     {
-      al = &(cmd->command.run.arguments[i]);
-      chunk_info_t* local_chunk = pocl_tce_malloc_local (d, al->size);
+      size_t s = meta->local_sizes[i];
+      chunk_info_t* local_chunk = pocl_tce_malloc_local (d, s);
       if (local_chunk == NULL)
         POCL_ABORT ("Could not allocate memory for an automatic local argument. Out of local mem?\n");
 
-      dev_cmd.args[i] = byteswap_uint32_t (local_chunk->start_address, d->needsByteSwap);
+      dev_cmd.args[meta->num_args + i] = byteswap_uint32_t (local_chunk->start_address, d->needsByteSwap);
 #ifdef DEBUG_TTA_DRIVER
-      printf ("host: allocated %d bytes of local memory for automated local arg %d @ %d\n", 
-              al->size, i, local_chunk->start_address);
+      printf ("host: allocated %zu bytes of local memory for automated local arg %u @ %lu\n",
+              s, (meta->num_args + i), local_chunk->start_address);
 #endif      
       tempChunks.push_back(local_chunk);
     }
@@ -646,6 +697,8 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
   for (ChunkVector::iterator i = tempChunks.begin(); 
        i != tempChunks.end(); ++i) 
     free_chunk (*i);
+
+  POCL_MEM_FREE(cmd->command.run.device_data);
 
 #ifdef DEBUG_TTA_DRIVER
   printf("host: local memory allocations:\n");

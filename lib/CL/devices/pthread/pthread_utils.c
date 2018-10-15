@@ -60,8 +60,7 @@ void free_kernel_run_command (kernel_run_command *k)
 
 #endif
 
-#define ARGS_SIZE                                                             \
-  (sizeof (void *) * (kernel->num_args + kernel->num_locals + 1))
+#define ARGS_SIZE (sizeof (void *) * (meta->num_args + meta->num_locals + 1))
 
 static char *
 align_ptr (char *p)
@@ -81,7 +80,8 @@ void
 setup_kernel_arg_array (kernel_run_command *k)
 {
   struct pocl_argument *al;
-  cl_kernel kernel = k->kernel;
+
+  pocl_kernel_metadata_t *meta = k->kernel->meta;
   cl_uint i;
   void **arguments;
   void **arguments2;
@@ -90,35 +90,35 @@ setup_kernel_arg_array (kernel_run_command *k)
   k->arguments2 = arguments2
       = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, ARGS_SIZE);
 
-  for (i = 0; i < kernel->num_args; ++i)
+  for (i = 0; i < meta->num_args; ++i)
     {
       al = &(k->kernel_args[i]);
-      if (kernel->arg_info[i].is_local)
+      if (ARG_IS_LOCAL (meta->arg_info[i]))
         {
           arguments[i] = NULL;
           arguments2[i] = NULL;
         }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_POINTER)
-      {
-        /* It's legal to pass a NULL pointer to clSetKernelArguments. In
-           that case we must pass the same NULL forward to the kernel.
-           Otherwise, the user must have created a buffer with per device
-           pointers stored in the cl_mem. */
-        if (al->value == NULL)
-          {
-            arguments[i] = &arguments2[i];
-            arguments2[i] = NULL;
-          }
-        else
-          {
-            cl_mem m = *(cl_mem *)al->value;
-            if (m->device_ptrs)
-              arguments[i] = &(m->device_ptrs[k->device->dev_id].mem_ptr);
-            else
-              arguments[i] = &(m->mem_host_ptr);
-          }
-      }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
+      else if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
+        {
+          /* It's legal to pass a NULL pointer to clSetKernelArguments. In
+             that case we must pass the same NULL forward to the kernel.
+             Otherwise, the user must have created a buffer with per device
+             pointers stored in the cl_mem. */
+          if (al->value == NULL)
+            {
+              arguments[i] = &arguments2[i];
+              arguments2[i] = NULL;
+            }
+          else
+            {
+              cl_mem m = *(cl_mem *)al->value;
+              if (m->device_ptrs)
+                arguments[i] = &(m->device_ptrs[k->device->dev_id].mem_ptr);
+              else
+                arguments[i] = &(m->mem_host_ptr);
+            }
+        }
+      else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
         {
           dev_image_t di;
           fill_dev_image_t(&di, al, k->device);
@@ -128,7 +128,7 @@ setup_kernel_arg_array (kernel_run_command *k)
           arguments2[i] = devptr;
           memcpy (devptr, &di, sizeof (dev_image_t));
         }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
+      else if (meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
           dev_sampler_t ds;
           fill_dev_sampler_t(&ds, al);
@@ -152,7 +152,7 @@ setup_kernel_arg_array_with_locals (void **arguments, void **arguments2,
                                     kernel_run_command *k, char *local_mem,
                                     size_t local_mem_size)
 {
-  cl_kernel kernel = k->kernel;
+  pocl_kernel_metadata_t *meta = k->kernel->meta;
   cl_uint i;
 
   memcpy (arguments2, k->arguments2, ARGS_SIZE);
@@ -160,9 +160,9 @@ setup_kernel_arg_array_with_locals (void **arguments, void **arguments2,
 
   char *start = local_mem;
 
-  for (i = 0; i < kernel->num_args; ++i)
+  for (i = 0; i < meta->num_args; ++i)
     {
-      if (kernel->arg_info[i].is_local)
+      if (ARG_IS_LOCAL (meta->arg_info[i]))
         {
           size_t size = k->kernel_args[i].size;
           arguments[i] = &arguments2[i];
@@ -173,15 +173,14 @@ setup_kernel_arg_array_with_locals (void **arguments, void **arguments2,
         }
     }
 
-  /* Allocate the automatic local buffers which are implemented as implicit
+  /* Allometahe automatic local buffers which are implemented as implicit
      extra arguments at the end of the kernel argument list. */
-  for (i = kernel->num_args;
-       i < kernel->num_args + kernel->num_locals;
-       ++i)
+  for (i = 0; i < meta->num_locals; ++i)
     {
-      size_t size = k->kernel_args[i].size;
-      arguments[i] = &arguments2[i];
-      arguments2[i] = start;
+      cl_uint j = meta->num_args + i;
+      size_t size = meta->local_sizes[i];
+      arguments[j] = &arguments2[j];
+      arguments2[j] = start;
       start += size;
       start = align_ptr (start);
       assert ((size_t) (start - local_mem) <= local_mem_size);
@@ -194,18 +193,18 @@ void
 free_kernel_arg_array (kernel_run_command *k)
 {
   cl_uint i;
-  cl_kernel kernel = k->kernel;
+  pocl_kernel_metadata_t *meta = k->kernel->meta;
   void **arguments = k->arguments;
   void **arguments2 = k->arguments2;
 
-  for (i = 0; i < kernel->num_args; ++i)
+  for (i = 0; i < meta->num_args; ++i)
     {
-      if (kernel->arg_info[i].is_local)
+      if (ARG_IS_LOCAL (meta->arg_info[i]))
         {
           assert (arguments[i] == NULL);
           assert (arguments2[i] == NULL);
         }
-      else if (kernel->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
+      else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
         {
           POCL_MEM_FREE (arguments2[i]);
         }
@@ -221,23 +220,21 @@ void
 free_kernel_arg_array_with_locals (void **arguments, void **arguments2,
                                    kernel_run_command *k)
 {
-  cl_kernel kernel = k->kernel;
+  pocl_kernel_metadata_t *meta = k->kernel->meta;
   cl_uint i;
 
-  for (i = 0; i < kernel->num_args; ++i)
+  for (i = 0; i < meta->num_args; ++i)
     {
-      if (kernel->arg_info[i].is_local)
+      if (ARG_IS_LOCAL (meta->arg_info[i]))
         {
           arguments[i] = NULL;
           arguments2[i] = NULL;
         }
     }
 
-  for (i = kernel->num_args;
-       i < kernel->num_args + kernel->num_locals;
-       ++i)
+  for (i = 0; i < meta->num_locals; ++i)
     {
-      arguments[i] = NULL;
-      arguments2[i] = NULL;
+      arguments[meta->num_args + i] = NULL;
+      arguments2[meta->num_args + i] = NULL;
     }
 }

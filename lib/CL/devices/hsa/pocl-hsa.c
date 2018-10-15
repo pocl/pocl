@@ -122,11 +122,8 @@ typedef struct pocl_hsa_event_data_s {
 typedef struct pocl_hsa_kernel_cache_s {
   cl_kernel kernel;
 
-  /* Use tmp_dir and kernel_name as the cache key to uniquely identify a
-     built kernel. cl_kernel object address cannot be used one as they can be
-     freed and malloc can return the same one for new kernels.  */
-  char *tmp_dir;
-  char *kernel_name;
+  /* use kernel hash as key */
+  pocl_kernel_hash_t kernel_hash;
 
   hsa_executable_t hsa_exe;
   uint64_t code_handle;
@@ -936,6 +933,8 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
 {
   char *write_pos = arg_space;
   const char *last_pos = arg_space + max_args_size;
+  cl_kernel kernel = cmd->command.run.kernel;
+  pocl_kernel_metadata_t *meta = kernel->meta;
 
 #define CHECK_AND_ALIGN_SPACE(DSIZE)                         \
   do {                                                       \
@@ -946,10 +945,10 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
   } while (0)
 
   size_t i;
-  for (i = 0; i < cmd->command.run.kernel->num_args; ++i)
+  for (i = 0; i < meta->num_args; ++i)
     {
       struct pocl_argument *al = &(cmd->command.run.arguments[i]);
-      if (cmd->command.run.kernel->arg_info[i].is_local)
+      if (ARG_IS_LOCAL (meta->arg_info[i]))
         {
 	  if (HSAIL_ENABLED)
 	    {
@@ -975,8 +974,7 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
 	      /* TODO: Free the buffer. */
 	    }
         }
-      else if (cmd->command.run.kernel->arg_info[i].type
-               == POCL_ARG_TYPE_POINTER)
+      else if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
         {
           CHECK_AND_ALIGN_SPACE(sizeof (uint64_t));
           /* Assuming the pointers are 64b (or actually the same as in
@@ -1010,14 +1008,12 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
             }
           write_pos += sizeof(uint64_t);
         }
-      else if (cmd->command.run.kernel->arg_info[i].type
-               == POCL_ARG_TYPE_IMAGE)
+      else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
         {
           POCL_ABORT_UNIMPLEMENTED("pocl-hsa: image arguments"
                                    " not implemented.\n");
         }
-      else if (cmd->command.run.kernel->arg_info[i].type
-               == POCL_ARG_TYPE_SAMPLER)
+      else if (meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
         {
           POCL_ABORT_UNIMPLEMENTED("pocl-hsa: sampler arguments"
                                    " not implemented.\n");
@@ -1047,10 +1043,7 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
 
   /* MUST TODO: free the ctx obj after launching. */
 #if 0
-  for (size_t i = cmd->command.run.kernel->num_args;
-       i < cmd->command.run.kernel->num_args
-         + cmd->command.run.kernel->num_locals;
-       ++i)
+  for (size_t i = meta->num_args; i < kernel->total_args; ++i)
     {
       POCL_ABORT_UNIMPLEMENTED("hsa: automatic local buffers"
                                " not implemented.");
@@ -1062,13 +1055,13 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
 }
 
 static int
-compile_parallel_bc_to_brig(char* brigfile, cl_kernel kernel,
-                            cl_device_id device) {
+compile_parallel_bc_to_brig (char *brigfile, cl_kernel kernel,
+                             cl_device_id device, unsigned device_i)
+{
   int error;
   char hsailfile[POCL_FILENAME_LENGTH];
   char parallel_bc_path[POCL_FILENAME_LENGTH];
 
-  unsigned device_i = pocl_cl_device_to_index (kernel->program, device);
   pocl_cache_work_group_function_path (parallel_bc_path, kernel->program,
 				       device_i, kernel, 0, 0, 0);
 
@@ -1111,23 +1104,21 @@ static pocl_hsa_kernel_cache_t *
 pocl_hsa_find_mem_cached_kernel (pocl_hsa_device_data_t *d,
 				 _cl_command_node *cmd)
 {
-  pocl_hsa_kernel_cache_t *cached_data = NULL;
   size_t i;
   for (i = 0; i < HSA_KERNEL_CACHE_SIZE; i++)
     {
-      if (d->kernel_cache[i].kernel == NULL
-	  || strcmp (d->kernel_cache[i].tmp_dir, cmd->command.run.tmp_dir) != 0
-	  || strcmp (d->kernel_cache[i].kernel_name,
-		     cmd->command.run.kernel->name) != 0)
-	continue;
+      if (((d->kernel_cache[i].kernel == NULL)
+           || (memcmp (d->kernel_cache[i].kernel_hash, cmd->command.run.hash,
+                       sizeof (pocl_kernel_hash_t))
+               != 0)))
+        continue;
 
       if (d->device->spmd)
-	return &d->kernel_cache[i];
-      else
-	if (d->kernel_cache[i].local_x == cmd->command.run.local_x &&
-	    d->kernel_cache[i].local_y == cmd->command.run.local_y &&
-	    d->kernel_cache[i].local_z == cmd->command.run.local_z)
-	  return &d->kernel_cache[i];
+        return &d->kernel_cache[i];
+      else if (d->kernel_cache[i].local_x == cmd->command.run.local_x
+               && d->kernel_cache[i].local_y == cmd->command.run.local_y
+               && d->kernel_cache[i].local_z == cmd->command.run.local_z)
+        return &d->kernel_cache[i];
     }
   return NULL;
 }
@@ -1210,8 +1201,8 @@ pocl_hsa_compile_kernel_native (_cl_command_node *cmd, cl_kernel kernel,
   if (i < HSA_KERNEL_CACHE_SIZE)
     {
       d->kernel_cache[i].kernel = kernel;
-      d->kernel_cache[i].kernel_name = strdup (kernel->name);
-      d->kernel_cache[i].tmp_dir = strdup (cmd->command.run.tmp_dir);
+      memcpy (d->kernel_cache[i].kernel_hash, cmd->command.run.hash,
+              sizeof (pocl_kernel_hash_t));
       d->kernel_cache[i].local_x = cmd->command.run.local_x;
       d->kernel_cache[i].local_y = cmd->command.run.local_y;
       d->kernel_cache[i].local_z = cmd->command.run.local_z;
@@ -1274,10 +1265,9 @@ pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
 
   POCL_LOCK (d->pocl_hsa_compilation_lock);
 
-  int error = pocl_llvm_generate_workgroup_function (device, kernel,
-                                        cmd->command.run.local_x,
-                                        cmd->command.run.local_y,
-                                        cmd->command.run.local_z);
+  int error = pocl_llvm_generate_workgroup_function (
+      cmd->command.run.device_i, device, kernel, cmd->command.run.local_x,
+      cmd->command.run.local_y, cmd->command.run.local_z);
   if (error)
     {
       POCL_MSG_PRINT_GENERAL ("HSA: pocl_llvm_generate_workgroup_function()"
@@ -1293,7 +1283,8 @@ pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
         return;
     }
 
-  if (compile_parallel_bc_to_brig(brigfile, kernel, device))
+  if (compile_parallel_bc_to_brig (brigfile, kernel, device,
+                                   cmd->command.run.device_i))
     POCL_ABORT("Compiling LLVM IR -> HSAIL -> BRIG failed.\n");
 
   POCL_MSG_PRINT_INFO("pocl-hsa: loading binary from file %s.\n", brigfile);
@@ -1345,8 +1336,8 @@ pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
   if (i < HSA_KERNEL_CACHE_SIZE)
     {
       d->kernel_cache[i].kernel = kernel;
-      d->kernel_cache[i].kernel_name = strdup (kernel->name);
-      d->kernel_cache[i].tmp_dir = strdup (cmd->command.run.tmp_dir);
+      memcpy (d->kernel_cache[i].kernel_hash, cmd->command.run.hash,
+              sizeof (pocl_kernel_hash_t));
       d->kernel_cache[i].hsa_exe.handle = final_obj.handle;
       d->kernel_cache_lastptr++;
     }
@@ -1421,9 +1412,7 @@ pocl_hsa_uninit (unsigned j, cl_device_id device)
   for (i = 0; i < HSA_KERNEL_CACHE_SIZE; i++)
     if (d->kernel_cache[i].kernel)
       {
-	HSA_CHECK(hsa_executable_destroy(d->kernel_cache[i].hsa_exe));
-	free (d->kernel_cache[i].kernel_name);
-	free (d->kernel_cache[i].tmp_dir);
+        HSA_CHECK (hsa_executable_destroy (d->kernel_cache[i].hsa_exe));
       }
 
   // TODO: destroy the executables that didn't fit to the kernel

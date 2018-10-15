@@ -296,6 +296,7 @@ if(NOT DEFINED LLVM_SPIRV)
     message(STATUS "Found llvm-spirv: ${LLVM_SPIRV}")
   endif()
 endif()
+
 ####################################################################
 
 # try compile with any compiler (supplied as argument)
@@ -452,7 +453,7 @@ endif()
 ####################################################################
 ####################################################################
 
-if(NOT DEFINED CLANG_HAS_RTLIB)
+if(NOT DEFINED LINK_WITH_CLANG)
 
   set(RT128 OFF)
   set(RT64 OFF)
@@ -482,6 +483,17 @@ if(NOT DEFINED CLANG_HAS_RTLIB)
 
   set(CLANG_HAS_RTLIB ${RT64} CACHE INTERNAL "Clang's compiler-rt available with 64bit types")
   set(CLANG_HAS_RTLIB_128 ${RT128} CACHE INTERNAL "Clang's compiler-rt available with 128bit types")
+
+  if(LLVM_OLDER_THAN_5_0)
+    if(X86)
+      set(LINK_WITH_CLANG OFF CACHE INTERNAL "Link using Clang")
+    else()
+      set(LINK_WITH_CLANG ON CACHE INTERNAL "Link using Clang")
+    endif()
+  else()
+    # on LLVM 5.0+ we use the library API directly instead of forking
+    set(LINK_WITH_CLANG ON CACHE INTERNAL "Link using Clang")
+  endif()
 
 endif()
 

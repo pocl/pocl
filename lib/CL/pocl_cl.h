@@ -242,6 +242,8 @@ typedef pthread_mutex_t pocl_lock_t;
 typedef struct pocl_argument {
   uint64_t size;
   void *value;
+  /* 1 if this argument has been set by clSetKernelArg */
+  int is_set;
 } pocl_argument;
 
 
@@ -257,6 +259,9 @@ typedef enum {
   POCL_ARG_TYPE_SAMPLER = 3,
 } pocl_argument_type;
 
+#define ARG_IS_LOCAL(a) (a.address_qualifier == CL_KERNEL_ARG_ADDRESS_LOCAL)
+#define ARGP_IS_LOCAL(a) (a->address_qualifier == CL_KERNEL_ARG_ADDRESS_LOCAL)
+
 typedef struct pocl_argument_info {
   char* type_name;
   char* name;
@@ -264,8 +269,6 @@ typedef struct pocl_argument_info {
   cl_kernel_arg_access_qualifier access_qualifier;
   cl_kernel_arg_type_qualifier type_qualifier;
   pocl_argument_type type;
-  char is_local;
-  char is_set;
   unsigned type_size;
 } pocl_argument_info;
 
@@ -745,6 +748,7 @@ struct _cl_device_id {
 #define CHECK_DEVICE_AVAIL_RET(dev) if(!dev->available) { POCL_MSG_ERR("This cl_device is not available.\n"); return CL_INVALID_DEVICE; }
 #define CHECK_DEVICE_AVAIL_RETV(dev) if(!dev->available) { POCL_MSG_ERR("This cl_device is not available.\n"); return; }
 
+#define OPENCL_MAX_DIMENSION 3
 
 struct _cl_platform_id {
   POCL_ICD_OBJECT_PLATFORM_ID
@@ -858,16 +862,30 @@ struct _cl_mem {
 
 typedef uint8_t SHA1_digest_t[SHA1_DIGEST_SIZE * 2 + 1];
 
+typedef struct pocl_kernel_metadata_s
+{
+  cl_uint num_args;
+  cl_uint num_locals;
+  size_t *local_sizes;
+  char *name;
+  char *attributes;
+  struct pocl_argument_info *arg_info;
+  cl_bitfield has_arg_metadata;
+  size_t reqd_wg_size[OPENCL_MAX_DIMENSION];
+
+  /* array[program->num_devices] */
+  pocl_kernel_hash_t *build_hash;
+
+  /* device-specific data, void* array[program->num_devices] */
+  void **data;
+} pocl_kernel_metadata_t;
+
 struct _cl_program {
   POCL_ICD_OBJECT
   POCL_OBJECT;
   /* queries */
   cl_context context;
   cl_uint num_devices;
-  /* bool flag, set to 1 when removing/adding default kernels to a program
-   * This code needs to be eventually fixed by introducing kernel_metadata
-   * struct, see Issue #390 */
-  int operating_on_default_kernels;
   /* -cl-denorms-are-zero build option */
   unsigned flush_denorms;
   cl_device_id *devices;
@@ -884,10 +902,9 @@ struct _cl_program {
   size_t *pocl_binary_sizes;
   unsigned char **pocl_binaries;
 
-  /* "Default" kernels. See: https://github.com/pocl/pocl/issues/390  */
+  /* kernel number and the metadata for each kernel */
   size_t num_kernels;
-  char **kernel_names;
-  cl_kernel *default_kernels;
+  pocl_kernel_metadata_t *kernel_meta;
 
   /* implementation */
   cl_kernel kernels;
@@ -908,23 +925,17 @@ struct _cl_program {
 struct _cl_kernel {
   POCL_ICD_OBJECT
   POCL_OBJECT;
-  /* queries */
-  char *name;
-  cl_uint num_args;
+  /* -------- */
   cl_context context;
   cl_program program;
-  struct pocl_argument_info *arg_info;
-  cl_bitfield has_arg_metadata;
-  char *attributes;
-  cl_uint num_locals;
-  size_t *reqd_wg_size;
+  pocl_kernel_metadata_t *meta;
+  /* just a convenience pointer to meta->name */
+  const char *name;
+
   /* The kernel arguments that are set with clSetKernelArg().
      These are copied to the command queue command at enqueue. */
   struct pocl_argument *dyn_arguments;
   struct _cl_kernel *next;
-
-  /* backend specific data */
-  void *data;
 };
 
 typedef struct event_callback_item event_callback_item;

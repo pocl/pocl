@@ -47,7 +47,7 @@ main (int argc, char **argv)
 {
   cl_float4 *srcA, *srcB;
   cl_float *dst;
-  int i, err, spir, spirv;
+  int i, err, spir, spirv, poclbin;
 
   cl_context context = NULL;
   cl_device_id device = NULL;
@@ -60,9 +60,12 @@ main (int argc, char **argv)
 
   spir = (argc > 1 && argv[1][0] == 's');
   spirv = (argc > 1 && argv[1][0] == 'v');
+  poclbin = (argc > 1 && argv[1][0] == 'b');
+  const char *explicit_binary_path = (poclbin && (argc > 2)) ? argv[2] : NULL;
 
   const char *basename = "example1";
-  err = poclu_load_program (context, device, basename, spir, spirv, &program);
+  err = poclu_load_program (context, device, basename, spir, spirv, poclbin,
+                            explicit_binary_path, NULL, &program);
   if (err != CL_SUCCESS)
     goto FINISH;
 

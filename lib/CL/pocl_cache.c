@@ -112,7 +112,7 @@ void pocl_cache_kernel_cachedir_path (char* kernel_cachedir_path,
                                              cl_program program,
                                              unsigned device_i,
                                              cl_kernel kernel,
-                                             char* append_str,
+                                             const char* append_str,
                                              size_t local_x,
                                              size_t local_y,
                                              size_t local_z)
@@ -138,17 +138,17 @@ void pocl_cache_kernel_cachedir_path (char* kernel_cachedir_path,
 
 }
 
-void pocl_cache_kernel_cachedir(char* kernel_cachedir_path, cl_program   program,
-                                unsigned device_i, cl_kernel kernel)
+void
+pocl_cache_kernel_cachedir (char *kernel_cachedir_path, cl_program program,
+                            unsigned device_i, const char *kernel_name)
 {
   int bytes_written;
   char tempstring[POCL_FILENAME_LENGTH];
-  bytes_written = snprintf(tempstring, POCL_FILENAME_LENGTH,
-                           "/%s", kernel->name);
+  bytes_written
+      = snprintf (tempstring, POCL_FILENAME_LENGTH, "/%s", kernel_name);
   assert(bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
   program_device_dir(kernel_cachedir_path, program, device_i, tempstring);
 }
-
 
 // required in llvm API
 void pocl_cache_work_group_function_path(char* parallel_bc_path, cl_program program,
