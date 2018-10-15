@@ -173,7 +173,7 @@ setup_kernel_arg_array_with_locals (void **arguments, void **arguments2,
         }
     }
 
-  /* Allometahe automatic local buffers which are implemented as implicit
+  /* Allocate the automatic local buffers which are implemented as implicit
      extra arguments at the end of the kernel argument list. */
   for (i = 0; i < meta->num_locals; ++i)
     {
