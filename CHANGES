@@ -16,6 +16,8 @@ Misc.
   build e.g. via the options parameter of clBuildProgram().
 - POCL_FORCE_KERNEL_DEBUG=1 can be used to force add '-g' to all
   clBuildProgram() calls.
+- hsa-native: Device side printf-support and alternative < 1.2 non-standard
+  C99 printf exposing support.
 
 Notable Bug Fixes
 -----------------
