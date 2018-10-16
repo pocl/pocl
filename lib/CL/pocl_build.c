@@ -528,11 +528,11 @@ compile_and_link_program(int compile_program,
     {
       temp_options =
 	(char*) malloc (options != NULL ? strlen (options) : 0
-			+ strlen ("-g ") + 1);
+			+ strlen (" -g ") + 1);
       temp_options[0] = 0;
       if (options != NULL)
 	strcpy (temp_options, options);
-      strcat (temp_options, "-g ");
+      strcat (temp_options, " -g ");
     }
   else
     temp_options = (char*) options;
