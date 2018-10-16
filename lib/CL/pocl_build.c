@@ -217,11 +217,8 @@ process_options (const char *options, char *modded_options, char *link_options,
 
   size_t i = 1; /* terminating char */
   size_t needed = 0;
-  char *temp_options = (char*) malloc (strlen (options) + strlen ("-g ") + 1);
-  temp_options[0] = 0;
-  if (pocl_get_bool_option ("POCL_FORCE_KERNEL_DEBUG", 0))
-    strcat (temp_options, "-g ");
-  strcat (temp_options, options);
+  char *temp_options = (char*) malloc (strlen (options) + 1);
+  strcpy (temp_options, options);
 
   token = strtok_r (temp_options, " ", &saveptr);
   while (token != NULL)
@@ -493,6 +490,7 @@ compile_and_link_program(int compile_program,
   char *binary = NULL;
   unsigned device_i = 0, actually_built = 0;
   size_t i, j;
+  char *temp_options = NULL;
   int build_error_code
       = (link_program ? CL_BUILD_PROGRAM_FAILURE : CL_COMPILE_PROGRAM_FAILURE);
   POCL_GOTO_LABEL_COND (PFN_NOTIFY, (program == NULL), CL_INVALID_PROGRAM);
@@ -526,12 +524,25 @@ compile_and_link_program(int compile_program,
   /* TODO this should be somehow utilized at linking */
   POCL_MEM_FREE (program->compiler_options);
 
-  if (options)
+  if (pocl_get_bool_option ("POCL_FORCE_KERNEL_DEBUG", 0))
     {
-      i = strlen (options);
+      temp_options =
+	(char*) malloc (options != NULL ? strlen (options) : 0
+			+ strlen ("-g ") + 1);
+      temp_options[0] = 0;
+      if (options != NULL)
+	strcpy (temp_options, options);
+      strcat (temp_options, "-g ");
+    }
+  else
+    temp_options = (char*) options;
+
+  if (temp_options)
+    {
+      i = strlen (temp_options);
       size_t size = i + 512; /* add some space for pocl-added options */
       program->compiler_options = (char *)malloc (size);
-      errcode = process_options (options, program->compiler_options,
+      errcode = process_options (temp_options, program->compiler_options,
                                  link_options, program, compile_program,
                                  link_program, &create_library, &flush_denorms,
                                  &requires_cr_sqrt_div, &spir_build, size);
@@ -833,6 +844,9 @@ ERROR:
     }
 
 ERROR_CLEAN_OPTIONS:
+  if (temp_options != options)
+    free (temp_options);
+
   program->build_status = CL_BUILD_ERROR;
 
 FINISH:
