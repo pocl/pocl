@@ -349,7 +349,7 @@ static void shared_copy(llvm::Module *program, const llvm::Module *lib,
     if (NMD.getName() == StringRef("nvvm.annotations"))
       continue;
     DB_PRINT(" %s:\n", NMD.getName().data());
-    if (NamedMDNode *Old = program->getNamedMetadata(NMD.getName())) {
+    if (program->getNamedMetadata(NMD.getName())) {
       // Let's not overwrite existing metadata such as llvm.module.flags and
       // opencl.ocl.version.
       continue;
