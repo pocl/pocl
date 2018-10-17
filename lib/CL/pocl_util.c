@@ -588,10 +588,8 @@ pocl_command_push (_cl_command_node *node,
 }
 
 /* call with both event->queue and event UNLOCKED */
-int pocl_update_command_queue (cl_event event)
+void pocl_update_command_queue (cl_event event, empty_queue_callback callback)
 {
-  int cq_ready;
-
   POCL_LOCK_OBJ (event->queue);
   POCL_LOCK_OBJ (event);
   --event->queue->command_count;
@@ -604,10 +602,11 @@ int pocl_update_command_queue (cl_event event)
 
   DL_DELETE (event->queue->events, event);
 
-  cq_ready = (event->queue->command_count) ? 0: 1;
-  POCL_UNLOCK_OBJ (event->queue);
+  if (callback && (event->queue->command_count == 0))
+    callback (event->queue);
+
   POCL_UNLOCK_OBJ (event);
-  return cq_ready;
+  POCL_UNLOCK_OBJ (event->queue);
 }
 
 void

@@ -143,8 +143,9 @@ pocl_command_is_ready(cl_event event)
   return event->wait_list == NULL;
 }
 
-int
-pocl_update_command_queue (cl_event event);
+typedef void (*empty_queue_callback) (cl_command_queue cq);
+
+void pocl_update_command_queue (cl_event event, empty_queue_callback p);
 
 void pocl_cl_mem_inherit_flags (cl_mem mem, cl_mem from_buffer,
                                 cl_mem_flags flags);

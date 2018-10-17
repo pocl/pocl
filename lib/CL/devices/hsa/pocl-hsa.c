@@ -2072,7 +2072,7 @@ pocl_hsa_update_event (cl_device_id device, cl_event event, cl_int status)
 
       POCL_UNLOCK_OBJ (event);
       device->ops->broadcast (event);
-      pocl_update_command_queue (event);
+      pocl_update_command_queue (event, NULL);
       POCL_LOCK_OBJ (event);
 
       pthread_cond_signal(&e_d->event_cond);
@@ -2088,7 +2088,7 @@ pocl_hsa_update_event (cl_device_id device, cl_event event, cl_int status)
 
       POCL_UNLOCK_OBJ (event);
       device->ops->broadcast (event);
-      pocl_update_command_queue (event);
+      pocl_update_command_queue (event, NULL);
       POCL_LOCK_OBJ (event);
 
       pthread_cond_signal(&e_d->event_cond);

@@ -34,6 +34,10 @@
 #else
 #  include "vccompat.hpp"
 #endif
+/* To get adaptive mutex type */
+#ifndef __USE_GNU
+#define __USE_GNU
+#endif
 #include <pthread.h>
 #ifdef HAVE_CLOCK_GETTIME
 #include <time.h>
@@ -1100,7 +1104,7 @@ struct _cl_sampler {
                           (__cq)->device->data);                              \
                 }                                                             \
               POCL_UNLOCK_OBJ (__event);                                      \
-              pocl_update_command_queue (__event);                            \
+              pocl_update_command_queue (__event, NULL);                      \
               (__cq)->device->ops->broadcast (__event);                       \
               POCL_LOCK_OBJ (__event);                                        \
             }                                                                 \
@@ -1142,7 +1146,7 @@ struct _cl_sampler {
                           (__cq)->device->data);                              \
                 }                                                             \
               POCL_UNLOCK_OBJ (__event);                                      \
-              pocl_update_command_queue (__event);                            \
+              pocl_update_command_queue (__event, NULL);                      \
               (__cq)->device->ops->broadcast (__event);                       \
               POCL_LOCK_OBJ (__event);                                        \
             }                                                                 \

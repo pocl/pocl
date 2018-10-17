@@ -57,7 +57,6 @@ struct pool_thread_data
    * used for deciding whether a particular thread should run
    * commands scheduled on a subdevice. */
   unsigned index;
-  void *last_cmd_ignored;
   /* printf buffer*/
   void *printf_buffer;
 } __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
@@ -75,11 +74,7 @@ typedef struct scheduler_data_
   kernel_run_command *kernel_queue;
 
   pthread_cond_t wake_pool __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-  pthread_mutex_t wake_lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
   PTHREAD_FAST_LOCK_T wq_lock_fast __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-
-  pthread_cond_t cq_finished_cond __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-  pthread_mutex_t cq_finished_lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
   int thread_pool_shutdown_requested;
 } scheduler_data __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
@@ -91,11 +86,8 @@ pthread_scheduler_init (cl_device_id device)
 {
   unsigned i;
   size_t num_worker_threads = device->max_compute_units;
-  PTHREAD_INIT_LOCK (&(scheduler.wake_lock));
-  PTHREAD_FAST_INIT (&(scheduler.wq_lock_fast));
+  PTHREAD_FAST_INIT (scheduler.wq_lock_fast);
 
-  PTHREAD_INIT_LOCK (&(scheduler.cq_finished_lock));
-  pthread_cond_init (&(scheduler.cq_finished_cond), NULL);
   pthread_cond_init (&(scheduler.wake_pool), NULL);
 
   scheduler.thread_pool = pocl_aligned_malloc (
@@ -129,10 +121,10 @@ pthread_scheduler_uninit ()
 {
   unsigned i;
 
-  PTHREAD_LOCK (&scheduler.wake_lock);
+  PTHREAD_FAST_LOCK (&scheduler.wq_lock_fast);
   scheduler.thread_pool_shutdown_requested = 1;
   pthread_cond_broadcast (&scheduler.wake_pool);
-  PTHREAD_UNLOCK (&scheduler.wake_lock);
+  PTHREAD_FAST_UNLOCK (&scheduler.wq_lock_fast);
 
   for (i = 0; i < scheduler.num_threads; ++i)
     {
@@ -142,10 +134,6 @@ pthread_scheduler_uninit ()
   pocl_aligned_free (scheduler.thread_pool);
   PTHREAD_FAST_DESTROY (&scheduler.wq_lock_fast);
   pthread_cond_destroy (&scheduler.wake_pool);
-  PTHREAD_DESTROY_LOCK (&scheduler.wake_lock);
-
-  pthread_cond_destroy (&scheduler.cq_finished_cond);
-  PTHREAD_DESTROY_LOCK (&scheduler.cq_finished_lock);
 
   scheduler.thread_pool_shutdown_requested = 0;
 }
@@ -154,73 +142,17 @@ void pthread_scheduler_push_command (_cl_command_node *cmd)
 {
   PTHREAD_FAST_LOCK (&scheduler.wq_lock_fast);
   DL_APPEND (scheduler.work_queue, cmd);
-  PTHREAD_FAST_UNLOCK (&scheduler.wq_lock_fast);
-
-  PTHREAD_LOCK (&scheduler.wake_lock);
   pthread_cond_broadcast (&scheduler.wake_pool);
-  PTHREAD_UNLOCK (&scheduler.wake_lock);
+  PTHREAD_FAST_UNLOCK (&scheduler.wq_lock_fast);
 }
 
-void pthread_scheduler_push_kernel (kernel_run_command *run_cmd)
+static void
+pthread_scheduler_push_kernel (kernel_run_command *run_cmd)
 {
   PTHREAD_FAST_LOCK (&scheduler.wq_lock_fast);
   LL_APPEND (scheduler.kernel_queue, run_cmd);
-  PTHREAD_FAST_UNLOCK (&scheduler.wq_lock_fast);
-
-  PTHREAD_LOCK (&scheduler.wake_lock);
   pthread_cond_broadcast (&scheduler.wake_pool);
-  PTHREAD_UNLOCK (&scheduler.wake_lock);
-}
-
-void pthread_scheduler_wait_cq (cl_command_queue cq)
-{
-  PTHREAD_LOCK (&scheduler.cq_finished_lock);
-
-#ifdef HAVE_CLOCK_GETTIME
-  struct timespec timeout = {0, 0};
-#endif
-
-  while (1)
-    {
-      POCL_LOCK_OBJ (cq);
-      if (cq->command_count == 0)
-        {
-          POCL_UNLOCK_OBJ (cq);
-          PTHREAD_UNLOCK (&scheduler.cq_finished_lock);
-          return;
-        }
-      POCL_UNLOCK_OBJ (cq);
-
-      /* pthread_cond_timedwait() is a workaround, the pthread driver sometimes
-       * got stuck in the loop waiting for finished_cond while the CQ is
-       * actually empty. With timedwait() it eventually recovers.
-       */
-#ifdef HAVE_CLOCK_GETTIME
-      clock_gettime(CLOCK_REALTIME, &timeout);
-      timeout.tv_nsec += 100000000;
-      if (timeout.tv_nsec >= 1000000000)
-        {
-          timeout.tv_nsec -= 1000000000;
-          ++timeout.tv_sec;
-        }
-      pthread_cond_timedwait (&scheduler.cq_finished_cond,
-                              &scheduler.cq_finished_lock,
-                              &timeout);
-#else
-      pthread_cond_wait (&scheduler.cq_finished_cond,
-			 &scheduler.cq_finished_lock);
-#endif
-
-    }
-
-  PTHREAD_UNLOCK (&scheduler.cq_finished_lock);
-}
-
-void pthread_scheduler_release_host ()
-{
-  PTHREAD_LOCK (&scheduler.cq_finished_lock);
-  pthread_cond_signal (&scheduler.cq_finished_cond);
-  PTHREAD_UNLOCK (&scheduler.cq_finished_lock);
+  PTHREAD_FAST_UNLOCK (&scheduler.wq_lock_fast);
 }
 
 static int
@@ -243,15 +175,13 @@ shall_we_run_this (thread_data *td, cl_device_id subd, void *cmd)
       if (!((td->index >= subd->core_start)
             && (td->index < (subd->core_start + subd->core_count))))
         {
-          td->last_cmd_ignored = cmd;
           return 0;
         }
     }
-  td->last_cmd_ignored = NULL;
   return 1;
 }
 
-void
+static int
 pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
 {
   _cl_command_node *cmd;
@@ -259,8 +189,12 @@ pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
 
   /* execute kernel if available */
   PTHREAD_FAST_LOCK (&scheduler.wq_lock_fast);
-  run_cmd = scheduler.kernel_queue;
+  int do_exit = 0;
 
+RETRY:
+  do_exit = scheduler.thread_pool_shutdown_requested;
+
+  run_cmd = scheduler.kernel_queue;
   /* execute kernel if available */
   if (run_cmd && shall_we_run_this (td, run_cmd->device, run_cmd))
     {
@@ -277,6 +211,8 @@ pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
           PTHREAD_FAST_LOCK (&scheduler.wq_lock_fast);
         }
     }
+  else
+    run_cmd = NULL;
 
   /* execute a command if available */
   *cmd_ptr = NULL;
@@ -286,34 +222,21 @@ pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
       DL_DELETE (scheduler.work_queue, cmd);
       *cmd_ptr = cmd;
     }
-  PTHREAD_FAST_UNLOCK (&scheduler.wq_lock_fast);
-  return;
-}
-
-static void
-pthread_scheduler_sleep (thread_data *td)
-{
-  struct timespec time_to_wait = {0, 0};
-  time_to_wait.tv_sec = time(NULL) + 5;
-
-  PTHREAD_FAST_LOCK (&scheduler.wq_lock_fast);
-  /* if the queues are empty, go to sleep.
-   * if the queues are not empty, but this thread ignored the
-   * last command (because it's for different subdevice CUs),
-   * also go to sleep. */
-  if ((scheduler.work_queue == NULL && scheduler.kernel_queue == NULL)
-      || (td->last_cmd_ignored
-          && (((void *)scheduler.kernel_queue == td->last_cmd_ignored)
-              || ((void *)scheduler.work_queue == td->last_cmd_ignored))))
-    {
-      PTHREAD_FAST_UNLOCK (&scheduler.wq_lock_fast);
-      PTHREAD_LOCK (&scheduler.wake_lock);
-      pthread_cond_timedwait (&scheduler.wake_pool, &scheduler.wake_lock, &time_to_wait);
-      PTHREAD_UNLOCK (&scheduler.wake_lock);
-    }
   else
-    PTHREAD_FAST_UNLOCK (&scheduler.wq_lock_fast);
+    cmd = NULL;
+
+  /* if neither a command nor a kernel was available, sleep */
+  if ((cmd == NULL) && (run_cmd == NULL) && (do_exit == 0))
+  {
+    pthread_cond_wait (&scheduler.wake_pool, &scheduler.wq_lock_fast);
+    goto RETRY;
+  }
+
+  PTHREAD_FAST_UNLOCK (&scheduler.wq_lock_fast);
+
+  return do_exit;
 }
+
 
 /* Maximum and minimum chunk sizes for get_wg_index_range().
  * Each pthread driver's thread fetches work from a kernel's WG pool in
@@ -457,8 +380,9 @@ work_group_scheduler (kernel_run_command *k,
   return 1;
 }
 
-void finalize_kernel_command (struct pool_thread_data *thread_data,
-                                     kernel_run_command *k)
+static void
+finalize_kernel_command (struct pool_thread_data *thread_data,
+                         kernel_run_command *k)
 {
 #ifdef DEBUG_MT
   printf("### kernel %s finished\n", k->cmd->command.run.kernel->name);
@@ -473,7 +397,7 @@ void finalize_kernel_command (struct pool_thread_data *thread_data,
   POCL_UPDATE_EVENT_COMPLETE_MSG (k->cmd->event, "NDRange Kernel        ");
 
   pocl_mem_manager_free_command (k->cmd);
-
+  PTHREAD_FAST_DESTROY (&k->lock);
   free_kernel_run_command (k);
 }
 
@@ -508,7 +432,7 @@ pocl_pthread_prepare_kernel
   run_cmd->kernel_args = cmd->command.run.arguments;
   run_cmd->next = NULL;
   run_cmd->ref_count = 0;
-  PTHREAD_FAST_INIT (&run_cmd->lock);
+  PTHREAD_FAST_INIT (run_cmd->lock);
 
   setup_kernel_arg_array (run_cmd);
 
@@ -544,7 +468,6 @@ pocl_pthread_driver_thread (void *p)
    * force a first FTZ setup */
   td->current_ftz = 213;
   td->num_threads = scheduler.num_threads;
-  td->last_cmd_ignored = NULL;
   td->printf_buffer = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
                                            scheduler.printf_buf_size);
   assert (td->printf_buffer != NULL);
@@ -565,17 +488,7 @@ pocl_pthread_driver_thread (void *p)
 
   while (1)
     {
-      PTHREAD_LOCK (&scheduler.wake_lock);
-      do_exit = scheduler.thread_pool_shutdown_requested;
-      PTHREAD_UNLOCK (&scheduler.wake_lock);
-      if (do_exit)
-        {
-          pocl_aligned_free (td->printf_buffer);
-          pocl_aligned_free (td->local_mem);
-          pthread_exit (NULL);
-        }
-
-      pthread_scheduler_get_work (td, &cmd);
+      do_exit = pthread_scheduler_get_work (td, &cmd);
       if (cmd)
         {
           assert (pocl_command_is_ready(cmd->event));
@@ -584,7 +497,11 @@ pocl_pthread_driver_thread (void *p)
           cmd = NULL;
           ++td->executed_commands;
         }
-      // check if its time to sleep
-      pthread_scheduler_sleep (td);
+      if (do_exit)
+        {
+          pocl_aligned_free (td->printf_buffer);
+          pocl_aligned_free (td->local_mem);
+          pthread_exit (NULL);
+        }
     }
 }

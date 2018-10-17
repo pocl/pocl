@@ -132,6 +132,9 @@ pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
   ops->update_event = pocl_pthread_update_event;
   ops->free_event_data = pocl_pthread_free_event_data;
   ops->build_hash = pocl_pthread_build_hash;
+
+  ops->init_queue = pocl_pthread_init_queue;
+  ops->free_queue = pocl_pthread_free_queue;
 }
 
 char *
@@ -336,7 +339,21 @@ pocl_pthread_flush(cl_device_id device, cl_command_queue cq)
 void
 pocl_pthread_join(cl_device_id device, cl_command_queue cq)
 {
-  pthread_scheduler_wait_cq (cq);
+  POCL_LOCK_OBJ (cq);
+  pthread_cond_t *cq_cond = (pthread_cond_t *)cq->data;
+  while (1)
+    {
+      if (cq->command_count == 0)
+        {
+          POCL_UNLOCK_OBJ (cq);
+          return;
+        }
+      else
+        {
+          int r = pthread_cond_wait (cq_cond, &cq->pocl_lock);
+          assert (r == 0);
+        }
+    }
   return;
 }
 
@@ -370,10 +387,21 @@ pocl_pthread_notify (cl_device_id device, cl_event event, cl_event finished)
   return;
 }
 
+static void
+pthread_scheduler_release_host (cl_command_queue cq)
+{
+  /* must be called with CQ already locked.
+   * this must be a broadcast since there could be multiple
+   * user threads waiting on the same command queue
+   * in pthread_scheduler_wait_cq(). */
+  pthread_cond_t *cq_cond = (pthread_cond_t *)cq->data;
+  int r = pthread_cond_broadcast (cq_cond);
+  assert (r == 0);
+}
+
 void pocl_pthread_update_event (cl_device_id device, cl_event event, cl_int status)
 {
   struct event_data *e_d = NULL;
-  int cq_ready = 0;
 
   if(event->data == NULL && status == CL_QUEUED)
     {
@@ -416,9 +444,7 @@ void pocl_pthread_update_event (cl_device_id device, cl_event event, cl_int stat
 
       POCL_UNLOCK_OBJ (event);
       device->ops->broadcast (event);
-      cq_ready = pocl_update_command_queue (event);
-      if (cq_ready)
-        pthread_scheduler_release_host ();
+      pocl_update_command_queue (event, pthread_scheduler_release_host);
       POCL_LOCK_OBJ (event);
 
       pthread_cond_signal(&e_d->event_cond);
@@ -436,9 +462,7 @@ void pocl_pthread_update_event (cl_device_id device, cl_event event, cl_int stat
 
       POCL_UNLOCK_OBJ (event);
       device->ops->broadcast (event);
-      cq_ready = pocl_update_command_queue (event);
-      if (cq_ready)
-        pthread_scheduler_release_host ();
+      pocl_update_command_queue (event, pthread_scheduler_release_host);
       POCL_LOCK_OBJ (event);
 
       pthread_cond_signal (&e_d->event_cond);
@@ -467,3 +491,22 @@ void pocl_pthread_free_event_data (cl_event event)
   event->data = NULL;
 }
 
+cl_int
+pocl_pthread_init_queue (cl_command_queue queue)
+{
+  queue->data
+      = pocl_aligned_malloc (HOST_CPU_CACHELINE_SIZE, sizeof (pthread_cond_t));
+  pthread_cond_t *cond = (pthread_cond_t *)queue->data;
+  int r = pthread_cond_init (cond, NULL);
+  assert (r == 0);
+  return CL_BUILD_SUCCESS;
+}
+
+void
+pocl_pthread_free_queue (cl_command_queue queue)
+{
+  pthread_cond_t *cond = (pthread_cond_t *)queue->data;
+  int r = pthread_cond_destroy (cond);
+  assert (r == 0);
+  POCL_MEM_FREE (queue->data);
+}

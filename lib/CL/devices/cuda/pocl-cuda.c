@@ -1372,7 +1372,7 @@ pocl_cuda_finalize_command (cl_device_id device, cl_event event)
   if (event->status < 0)
     {
       pocl_broadcast (event);
-      pocl_update_command_queue (event);
+      pocl_update_command_queue (event, NULL);
       POname (clReleaseEvent) (event);
       return;
     }
@@ -1441,7 +1441,7 @@ pocl_cuda_update_event (cl_device_id device, cl_event event, cl_int status)
 
       POCL_UNLOCK_OBJ (event);
       device->ops->broadcast (event);
-      pocl_update_command_queue (event);
+      pocl_update_command_queue (event, NULL);
       POCL_LOCK_OBJ (event);
 
       break;
