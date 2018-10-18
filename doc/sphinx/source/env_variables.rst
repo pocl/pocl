@@ -76,11 +76,12 @@ pocl.
  POCL_TTASIM0_PARAMETERS will be passed to the first ttasim driver instantiated
  and POCL_TTASIM1_PARAMETERS to the second one.
 
-- **POCL_FORCE_KERNEL_DEBUG**
+- **POCL_EXTRA_BUILD_FLAGS**
 
-  This adds a '-g' option to all clBuildProgram() calls. It results in debug
-  symbols to be added to the kernel binary, which can help debugging kernel
-  problems using tools such as gdb or valgrind.
+ Adds the contents of the environment variable to all clBuildProgram() calls.
+ E.g. POCL_EXTRA_BUILD_FLAGS="-g -cl-opt-disable" can be useful for force
+ adding debug data all the built kernels to help debugging kernel issues
+ with tools such as gdb or valgrind.
 
 - **POCL_IMPLICIT_FINISH**
 

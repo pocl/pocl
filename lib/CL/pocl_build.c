@@ -491,8 +491,11 @@ compile_and_link_program(int compile_program,
   unsigned device_i = 0, actually_built = 0;
   size_t i, j;
   char *temp_options = NULL;
+  const char *extra_build_options =
+    pocl_get_string_option ("POCL_EXTRA_BUILD_FLAGS", NULL);
   int build_error_code
       = (link_program ? CL_BUILD_PROGRAM_FAILURE : CL_COMPILE_PROGRAM_FAILURE);
+
   POCL_GOTO_LABEL_COND (PFN_NOTIFY, (program == NULL), CL_INVALID_PROGRAM);
 
   POCL_GOTO_LABEL_COND (PFN_NOTIFY, (num_devices > 0 && device_list == NULL),
@@ -524,15 +527,18 @@ compile_and_link_program(int compile_program,
   /* TODO this should be somehow utilized at linking */
   POCL_MEM_FREE (program->compiler_options);
 
-  if (pocl_get_bool_option ("POCL_FORCE_KERNEL_DEBUG", 0))
+  if (extra_build_options)
     {
       temp_options =
 	(char*) malloc (options != NULL ? strlen (options) : 0
-			+ strlen (" -g ") + 1);
+			+ strlen (extra_build_options) + 2);
       temp_options[0] = 0;
       if (options != NULL)
-	strcpy (temp_options, options);
-      strcat (temp_options, " -g ");
+	{
+	  strcpy (temp_options, options);
+	  strcat (temp_options, " ");
+	}
+      strcat (temp_options, extra_build_options);
     }
   else
     temp_options = (char*) options;
