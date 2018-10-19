@@ -65,6 +65,8 @@
 
 #cmakedefine HAVE_HSA_EXT_AMD_H
 
+#define AMD_HSA @AMD_HSA@
+
 #define HOST  "@HOST@"
 
 #define HOST_AS_FLAGS  "@HOST_AS_FLAGS@"
