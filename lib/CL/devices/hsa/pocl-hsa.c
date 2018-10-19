@@ -65,8 +65,10 @@
 #include "config.h"
 #include "config2.h"
 
-#ifdef HAVE_HSA_EXT_AMD_H
+#if defined(HAVE_HSA_EXT_AMD_H) && AMD_HSA == 1
+
 #include "hsa_ext_amd.h"
+
 #endif
 
 #include "pocl-hsa.h"
@@ -352,6 +354,8 @@ static const char *default_native_final_linkage_flags[] =
 static const char *phsa_native_device_aux_funcs[] =
   {"_pocl_run_all_wgs", "_pocl_finish_all_wgs", "_pocl_spawn_wg", NULL};
 
+#define AMD_VENDOR_ID 0x1002
+
 static struct _cl_device_id
 supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS] =
 {
@@ -363,7 +367,7 @@ supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS] =
     .spmd = CL_TRUE,
     .autolocals_to_args = false,
     .has_64bit_long = 1,
-    .vendor_id = 0x1002,
+    .vendor_id = AMD_VENDOR_ID,
     .global_mem_cache_type = CL_READ_WRITE_CACHE,
     .max_constant_buffer_size = 65536,
     .local_mem_type = CL_LOCAL,
@@ -589,27 +593,31 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->max_work_item_sizes[1] = wg_sizes[1];
   dev->max_work_item_sizes[2] = wg_sizes[2];
 
-#ifdef HAVE_HSA_EXT_AMD_H
-  uint32_t temp;
-  HSA_CHECK(hsa_agent_get_info(agent, HSA_AMD_AGENT_INFO_CACHELINE_SIZE,
-                               &temp));
-  dev->global_mem_cacheline_size = temp;
+  if (AMD_HSA && dev->vendor_id == AMD_VENDOR_ID)
+    {
+#if AMD_HSA == 1
+      uint32_t temp;
+      HSA_CHECK(hsa_agent_get_info(agent, HSA_AMD_AGENT_INFO_CACHELINE_SIZE,
+				   &temp));
+      dev->global_mem_cacheline_size = temp;
 
-  HSA_CHECK(hsa_agent_get_info(agent, HSA_AMD_AGENT_INFO_COMPUTE_UNIT_COUNT,
-                               &temp));
-  dev->max_compute_units = temp;
+      HSA_CHECK(hsa_agent_get_info(agent, HSA_AMD_AGENT_INFO_COMPUTE_UNIT_COUNT,
+				   &temp));
+      dev->max_compute_units = temp;
 
-  HSA_CHECK(hsa_agent_get_info(agent, HSA_AMD_AGENT_INFO_MAX_CLOCK_FREQUENCY,
-                               &temp));
-  dev->max_clock_frequency = temp;
-
-#else
-  /* Could not use AMD headers to find out CU/frequency of the device.
-     Using dummy values. */
-  dev->global_mem_cacheline_size = 64;
-  dev->max_compute_units = 4;
-  dev->max_clock_frequency = 700;
+      HSA_CHECK(hsa_agent_get_info(agent, HSA_AMD_AGENT_INFO_MAX_CLOCK_FREQUENCY,
+				   &temp));
+      dev->max_clock_frequency = temp;
 #endif
+    }
+  else
+    {
+      /* Could not use AMD extensions to find out CU/frequency of the device.
+	 Using dummy values. */
+      dev->global_mem_cacheline_size = 64;
+      dev->max_compute_units = 4;
+      dev->max_clock_frequency = 700;
+    }
 
   HSA_CHECK(hsa_agent_get_info
     (agent, HSA_AGENT_INFO_WORKGROUP_MAX_SIZE, &dev->max_work_group_size));
@@ -683,12 +691,15 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
                                 &boolarg));
   assert(boolarg != 0);
 
-#ifdef HAVE_HSA_EXT_AMD_H
-  char booltest = 0;
-  HSA_CHECK(hsa_region_get_info(d->global_region,
-				HSA_AMD_REGION_INFO_HOST_ACCESSIBLE,
-                                &booltest));
-  assert(booltest != 0);
+#if AMD_HSA == 1
+  if (dev->vendor_id == AMD_VENDOR_ID)
+    {
+      char booltest = 0;
+      HSA_CHECK(hsa_region_get_info(d->global_region,
+				    HSA_AMD_REGION_INFO_HOST_ACCESSIBLE,
+				    &booltest));
+      assert(booltest != 0);
+    }
 #endif
 
   size_t sizearg;
@@ -737,7 +748,7 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
   /* TODO proper setup */
   d->hw_schedulers = 3;
 
-#ifdef HAVE_HSA_EXT_AMD_H
+#if AMD_HSA == 1
   /* TODO check at runtime */
   d->have_wait_any = 1;
 #endif
@@ -1831,7 +1842,7 @@ pocl_hsa_ndrange_event_finished (pocl_hsa_device_data_t *d, size_t i)
                       event->id);
   dd->running_events[i] = dd->running_events[--dd->running_list_size];
 
-#ifdef HAVE_HSA_EXT_AMD_H
+#if AMD_HSA == 1
   /* TODO Times are reported as ticks in the domain of the HSA system clock. */
   hsa_amd_profiling_dispatch_time_t t;
   HSA_CHECK(hsa_amd_profiling_get_dispatch_time(d->agent,
@@ -1954,7 +1965,7 @@ pocl_hsa_driver_pthread (void * cldev)
                                  HSA_QUEUE_TYPE_SINGLE,
                                  hsa_queue_callback, device,
                                  -1, -1, &dd->queues[i]));
-#ifdef HAVE_HSA_EXT_AMD_H
+#if AMD_HSA == 1
       HSA_CHECK(hsa_amd_profiling_set_profiler_enabled(dd->queues[i], 1));
 #endif
     }
@@ -1972,7 +1983,7 @@ pocl_hsa_driver_pthread (void * cldev)
         goto EXIT_PTHREAD;
 
       // wait for anything to happen or timeout
-#ifdef HAVE_HSA_EXT_AMD_H
+#if AMD_HSA == 1
       // FIXME: An ABA race condition here. If there was (another) submit after
       // the previous wait returned, but before this reset, we miss the
       // notification decrement and get stuck if there are no further submits
@@ -2002,7 +2013,7 @@ pocl_hsa_driver_pthread (void * cldev)
                                   kernel_timeout_ns, HSA_WAIT_STATE_BLOCKED);
 #endif
 
-#ifdef HAVE_HSA_EXT_AMD_H
+#if AMD_HSA == 1
         }
 #endif
 

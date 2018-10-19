@@ -35,6 +35,10 @@ else()
   set(HSAIL_ENABLED 1)
 endif()
 
+if (NOT DEFINED AMD_HSA)
+  set(AMD_HSA 1)
+endif()
+
 # find the headers & the library
 if(DEFINED WITH_HSA_RUNTIME_DIR AND WITH_HSA_RUNTIME_DIR)
   set(HSA_RUNTIME_DIR "${WITH_HSA_RUNTIME_DIR}")
