@@ -70,8 +70,7 @@ Flatten::runOnModule(Module &M)
   for (llvm::Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     llvm::Function *f = &*i;
     if (f->isDeclaration()) continue;
-    if (KernelName == f->getName() ||
-        (KernelName == "" && pocl::Workgroup::isKernelToProcess(*f))) {
+    if (KernelName == f->getName() || pocl::Workgroup::isKernelToProcess(*f)) {
 #if LLVM_OLDER_THAN_5_0
       AttributeSet Attrs;
       f->removeAttributes(AttributeSet::FunctionIndex,

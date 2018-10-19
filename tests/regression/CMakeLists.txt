@@ -46,7 +46,8 @@ set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
   test_barrier_before_return test_infinite_loop test_constant_array
   test_undominated_variable test_setargs test_null_arg
   test_fors_with_var_iteration_counts test_issue_231 test_issue_445
-  test_autolocals_in_constexprs test_issue_553 test_issue_577)
+  test_autolocals_in_constexprs test_issue_553 test_issue_577
+  test_flatten_barrier_subs)
 
 if (MSVC)
   add_compile_options(${OPENCL_CFLAGS})
@@ -66,10 +67,14 @@ endforeach()
 ######################################################################
 
 add_test_pocl(NAME "regression/test_issue_231" COMMAND "test_issue_231")
+
 add_test_pocl(NAME "regression/test_issue_445" COMMAND "test_issue_445")
+
 add_test_pocl(NAME "regression/test_issue_553" COMMAND "test_issue_553")
+
 add_test_pocl(NAME "regression/test_issue_577" COMMAND "test_issue_577")
 
+add_test_pocl(NAME "regression/test_flatten_barrier_subs" COMMAND "test_flatten_barrier_subs" EXPECTED_OUTPUT "test_flatten_barrier_subs.output")
 
 # repl
 
@@ -209,7 +214,9 @@ set_tests_properties("regression/setting_a_buffer_argument_to_NULL_causes_a_segf
   "regression/passing_a_constant_array_as_an_arg"
   "regression/case_with_multiple_variable_length_loops_and_a_barrier_in_one"
   "regression/struct_kernel_arguments" "regression/vector_kernel_arguments"
-  "regression/autolocals_in_constexprs"
+  "regression/autolocals_in_constexprs" "regression/test_issue_231"
+  "regression/test_issue_445" "regression/test_issue_553"
+  "regression/test_issue_577" "regression/test_flatten_barrier_subs"
   ${TCE_TESTS}
   PROPERTIES
     COST 1.5

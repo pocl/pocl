@@ -244,6 +244,7 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
     passes.push_back("always-inline");
   } else {
     passes.push_back("flatten-globals");
+    passes.push_back("flatten-barrier-subs");
     passes.push_back("always-inline");
 #ifndef LLVM_3_9
     passes.push_back("inline");
