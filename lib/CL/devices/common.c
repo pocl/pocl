@@ -122,6 +122,13 @@ llvm_codegen (unsigned device_i, cl_kernel kernel, cl_device_id device,
     }
   assert (llvm_module != NULL);
 
+  if (pocl_get_bool_option ("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
+    {
+      POCL_MSG_PRINT_LLVM ("Writing parallel.bc to %s.\n", parallel_bc_path);
+      error = pocl_cache_write_kernel_parallel_bc (
+          llvm_module, program, device_i, kernel, local_x, local_y, local_z);
+    }
+
   /* May happen if another thread is building the same program & wins the llvm
      lock. */
   if (pocl_exists (final_binary_path))
@@ -140,13 +147,7 @@ llvm_codegen (unsigned device_i, cl_kernel kernel, cl_device_id device,
 
   /**************************************************************************/
 
-  if (pocl_get_bool_option ("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
-    {
-      POCL_MSG_PRINT_LLVM ("Writing parallel.bc to %s.\n", parallel_bc_path);
-      error = pocl_cache_write_kernel_parallel_bc (
-          llvm_module, program, device_i, kernel, local_x, local_y, local_z);
-    }
-  else
+  if (!pocl_get_bool_option ("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
     {
       char kernel_parallel_path[POCL_FILENAME_LENGTH];
       pocl_cache_kernel_cachedir_path (kernel_parallel_path, program, device_i,
