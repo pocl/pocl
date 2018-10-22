@@ -1,9 +1,0 @@
-Some ideas for improving accuracy or speed:
-
-implement cosh, sinh via expansion, similar to asin
-   <https://en.wikipedia.org/wiki/Hyperbolic_function>
-
-implement exp via cosh, sinh
-
-implement acosh, asinh via expansion, similar to asin
-   <https://en.wikipedia.org/wiki/Inverse_hyperbolic_function>
