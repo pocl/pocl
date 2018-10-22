@@ -1,9 +1,0 @@
-AT_BANNER([Piglit OpenCL tests])
-
-AT_SETUP([Piglit testsuite with LLVM 3.5])
-AT_KEYWORDS([piglit long])
-AT_SKIP_IF([AS_CASE([" $POAT_TESTSUITES "],[*" piglit "*],[false],[:])])
-AT_SKIP_IF([! grep -q "#define LLVM_3_5" $abs_top_builddir/config.h])
-AT_CHECK([cd $abs_top_builddir/examples/piglit/; ./produce_results.sh ], ignore, ignore, ignore)
-AT_CHECK([cd $abs_top_builddir/examples/piglit/; LC_ALL=C comm -23 sorted_ref_llvm_3.5 sorted_result])
-AT_CLEANUP

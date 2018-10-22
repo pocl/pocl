@@ -1,7 +1,0 @@
-# short-cut to run only the ViennaCL tests.
-# run with 'make TESTUITE=viennacl check'
-
-AT_INIT()
-AT_COLOR_TESTS
-m4_include(testsuite-viennacl.at)
-

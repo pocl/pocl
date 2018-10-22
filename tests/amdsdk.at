@@ -1,7 +1,0 @@
-# short-cut to run only the AMDSDK tests.
-# run with 'make TESTUITE=amdsdk check'
-
-AT_INIT()
-AT_COLOR_TESTS
-m4_include(testsuite-amd.at)
-
