@@ -29,8 +29,8 @@ include("bitcode_rules")
 # fails in TCE code gen:
 # SplitVectorResult #0: 0x24c5ae0: v8i16,ch = vaarg 0x20628e8, 0x2423ed0, 0x24c59e0, 0x24c4fe0 [ORD=223] [ID=0]
 # LLVM ERROR: Do not know how to split the result of this operator!
-list(REMOVE_ITEM SOURCES_WITHOUT_VML "printf.c" "atomics.cl")
-list(APPEND SOURCES_WITHOUT_VML "printf_constant.c")
+list(REMOVE_ITEM SOURCES_GENERIC "printf.c" "printf_base.c" "atomics.cl")
+list(APPEND SOURCES_GENERIC "printf_constant.c")
 
 set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=${TCE_DEVICE_CL_VERSION} ${TCE_DEVICE_EXTENSION_DEFINES}")
 
@@ -56,7 +56,7 @@ set(TCE_TARGET_TRIPLE "tce-tut-llvm")
 
 set(CLANG_FLAGS ${TCE_TARGET_CLANG_FLAGS} "-emit-llvm" "-ffp-contract=off" "-target" ${TCE_TARGET_TRIPLE} "-isystem" "${TCE_PREFIX}/tce-llvm/include" ${EXTRA_TCE_CLANG_FLAGS})
 
-make_kernel_bc(KERNEL_BC ${TCE_TARGET_TRIPLE} "tta" 0 0 0 ${SOURCES_WITHOUT_VML})
+make_kernel_bc(KERNEL_BC ${TCE_TARGET_TRIPLE} "tta" 0 0 0 ${SOURCES_GENERIC})
 
 message(STATUS "TCE Kernel BC: ${KERNEL_BC}")
 
@@ -77,7 +77,7 @@ set(TCE_TARGET_TRIPLE "tcele-tut-llvm")
 
 set(CLANG_FLAGS ${TCE_TARGET_CLANG_FLAGS} "-emit-llvm" "-ffp-contract=off" "-target" ${TCE_TARGET_TRIPLE} "-isystem" "${TCE_PREFIX}/tce-llvm/include" ${EXTRA_TCE_CLANG_FLAGS})
 
-make_kernel_bc(KERNEL_BC_LE ${TCE_TARGET_TRIPLE} "tta-le" 0 0 0 ${SOURCES_WITHOUT_VML})
+make_kernel_bc(KERNEL_BC_LE ${TCE_TARGET_TRIPLE} "tta-le" 0 0 0 ${SOURCES_GENERIC})
 
 message(STATUS "TCE-LE Kernel BC: ${KERNEL_BC_LE}")
 

@@ -555,71 +555,13 @@ endif()
 
 ######################################################################################
 
-if((DEFINED ENABLE_VECMATHLIB) AND (DEFINED ENABLE_SLEEF))
-  if(ENABLE_SLEEF AND ENABLE_VECMATHLIB)
-    message(FATAL_ERROR "requested to use both Vecmathlib and SLEEF - pick one!")
-  endif()
+option(ENABLE_SLEEF "Use SLEEF for kernel library" ON)
 
-  if((NOT ENABLE_SLEEF) AND (NOT ENABLE_VECMATHLIB))
-    message(FATAL_ERROR "requested to use neither Vecmathlib nor SLEEF - pick one!")
-  endif()
-endif()
+option(ENABLE_CONFORMANCE "Enable conformance to OpenCL standard. Disabling this may enable slightly faster kernel library functions (at a price of range/precision). Note that enabling this does not guarantee conformance (depends on hardware)" ON)
 
-if(NOT DEFINED ENABLE_CONFORMANCE)
-  if(((DEFINED ENABLE_VECMATHLIB) AND ENABLE_VECMATHLIB) OR
-     ((DEFINED ENABLE_SLEEF) AND (NOT ENABLE_SLEEF)))
-    set(DEFAULT_CONF OFF)
-    set(DEFAULT_SLEEF OFF)
-    set(DEFAULT_VML ON)
-  else()
-    set(DEFAULT_CONF ON)
-    set(DEFAULT_SLEEF ON)
-    set(DEFAULT_VML OFF)
-  endif()
-else()
-  set(DEFAULT_CONF ${ENABLE_CONFORMANCE})
-  if (ENABLE_CONFORMANCE)
-    # requested conformant
-    if((DEFINED ENABLE_VECMATHLIB) AND ENABLE_VECMATHLIB)
-      message(FATAL_ERROR "requested to use Vecmathlib with enabled conformance")
-    endif()
-    if((DEFINED ENABLE_SLEEF) AND (NOT ENABLE_SLEEF))
-      message(FATAL_ERROR "conformance needs enabled SLEEF")
-    endif()
-    set(DEFAULT_SLEEF ON)
-    set(DEFAULT_VML OFF)
-  else()
-    # requested non-conformant
-    set(DEFAULT_SLEEF ${ENABLE_SLEEF})
-    set(DEFAULT_VML ${ENABLE_VECMATHLIB})
-    # at least one
-    if((NOT DEFAULT_SLEEF) AND (NOT DEFAULT_VML))
-      set(DEFAULT_VML ON)
-      set(DEFAULT_SLEEF OFF)
-    endif()
-  endif()
 
-endif()
-
-option(ENABLE_CONFORMANCE "Enable conformance to OpenCL standard. Disabling this may enable slightly faster kernel library functions (at a price of range/precision). Note that enabling this does not guarantee conformance (depends on hardware). Incompatible with Vecmathlib. Defaults to ON" ${DEFAULT_CONF})
-
-option(ENABLE_SLEEF "Use SLEEF for kernel library, mutually exclusive with ENABLE_VECMATHLIB" ${DEFAULT_SLEEF})
-
-option(ENABLE_VECMATHLIB "Use vecmathlib for kernel library, mutually exclusive with ENABLE_SLEEF" ${DEFAULT_VML})
-
-if((NOT CLANGXX_WORKS) AND ENABLE_VECMATHLIB)
-  message(WARNING "Disabling vecmathlib because clang++ doesn't seem to work!")
-  set(ENABLE_VECMATHLIB OFF)
-  set(ENABLE_VECMATHLIB OFF CACHE BOOL "VML" FORCE)
-  set(ENABLE_SLEEF ON)
-  set(ENABLE_SLEEF ON CACHE BOOL "SLEEF" FORCE)
-endif()
-
-# vecmathlib does not compile with fp16 currently
-if(ENABLE_VECMATHLIB AND (NOT CL_DISABLE_HALF))
-  message(STATUS "Half available, but disabling half support since vecmathlib is enabled.")
-  set(CL_DISABLE_HALF 1)
-  set(CL_DISABLE_HALF 1 CACHE BOOL "Disable cl_khr_fp16 because fp16 is not supported")
+if(ENABLE_CONFORMANCE AND (NOT ENABLE_SLEEF))
+  message(FATAL_ERROR "conformance needs enabled SLEEF")
 endif()
 
 ######################################################################################
@@ -681,15 +623,6 @@ endif()
 set(DEFAULT_KERNEL_CL_FLAGS  "-xcl -fno-stack-protector -fPIC ${RTLIB_FLAG}")
 set(DEFAULT_KERNEL_C_FLAGS "-xc -std=c11 -D__CBUILD__ -fno-math-errno -fno-stack-protector -fPIC ${RTLIB_FLAG}")
 set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector -fPIC ${RTLIB_FLAG}")
-
-if(ENABLE_VECMATHLIB)
-  option(USE_VECMATHLIB_BUILTINS_ONLY "Use only __builtin_* functions in the kernel library." OFF)
-  set(DEFAULT_KERNEL_CXX_FLAGS "${DEFAULT_KERNEL_CXX_FLAGS} -DVML_NO_IOSTREAM ${CLANGXX_STDLIB} ")
-  if(USE_VECMATHLIB_BUILTINS_ONLY)
-    set(DEFAULT_KERNEL_CL_FLAGS "${DEFAULT_KERNEL_CL_FLAGS} -DPOCL_VECMATHLIB_BUILTIN ")
-    set(DEFAULT_KERNEL_CXX_FLAGS "${DEFAULT_KERNEL_CXX_FLAGS} -DPOCL_VECMATHLIB_BUILTIN ")
-  endif()
-endif()
 
 set(EXTRA_KERNEL_FLAGS "" CACHE STRING "Extra arguments to all kernel compilation commands (defaults to empty)")
 set(EXTRA_KERNEL_CL_FLAGS "" CACHE STRING "Extra arguments to kernel CL compiler (defaults to empty)")
@@ -1579,7 +1512,6 @@ MESSAGE(STATUS "ENABLE_LSAN (leak sanitizer): ${ENABLE_LSAN}")
 MESSAGE(STATUS "ENABLE_TSAN (thread sanitizer): ${ENABLE_TSAN}")
 MESSAGE(STATUS "ENABLE_UBSAN (UB sanitizer): ${ENABLE_UBSAN}")
 MESSAGE(STATUS "ENABLE_POCL_FLOAT_CONVERSION: ${ENABLE_POCL_FLOAT_CONVERSION}")
-MESSAGE(STATUS "ENABLE_VECMATHLIB: ${ENABLE_VECMATHLIB}")
 MESSAGE(STATUS "ENABLE_SLEEF: ${ENABLE_SLEEF}")
 MESSAGE(STATUS "ENABLE_SPIR: ${ENABLE_SPIR}")
 MESSAGE(STATUS "ENABLE_SPIRV: ${ENABLE_SPIRV}")

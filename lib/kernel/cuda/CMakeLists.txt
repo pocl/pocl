@@ -25,9 +25,9 @@
 
 include("bitcode_rules")
 
-set(KERNEL_SOURCES ${SOURCES_WITHOUT_VML})
+set(KERNEL_SOURCES ${SOURCES_GENERIC})
 
-foreach(FILE atomics.cl)
+foreach(FILE printf_base.c atomics.cl)
   list(REMOVE_ITEM KERNEL_SOURCES "${FILE}")
 endforeach()
 
@@ -54,7 +54,6 @@ if( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
   set(LLVM_TARGET nvptx)
 endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
-
 
 set(CLANG_FLAGS "-emit-llvm" "-target" "${LLVM_TARGET}" "-D_CL_DISABLE_HALF")
 

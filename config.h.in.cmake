@@ -33,8 +33,6 @@
 
 #cmakedefine ENABLE_SLEEF
 
-#cmakedefine ENABLE_VECMATHLIB
-
 #cmakedefine ENABLE_SPIR
 
 #cmakedefine ENABLE_SPIRV

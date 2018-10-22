@@ -9,10 +9,10 @@ Conformance related CMake options
 
 - ``-DENABLE_CONFORMANCE=ON/OFF``
   This is mostly related to the kernel library (the runtime is always built to
-  be conformant on x86). Defaults to ON. This option merely ensures that build
-  options which would result in non-conformant kernel library (-DENABLE_VECMATHLIB)
-  stay disabled, and the option that enables conformant kernel library (currently
-  -DENABLE_SLEEF, this may change in future) is enabled.
+  be conformant on x86). Defaults to ON. This option by itself does not
+  guarantee OpenCL-conformant build; it merely ensures that a build fails
+  if some options which would result in non-conformant kernel library
+  (-DENABLE_SLEEF=OFF) are given.
 
   Non-conformant kernel library might be somewhat faster, at the expense of
   precision and/or range. Note that conformance was tested **only** on certain

@@ -69,10 +69,6 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
                                ", SPIR-V"
 #endif
 
-#ifdef ENABLE_VECMATHLIB
-                               ", VML"
-#endif
-
 #ifdef ENABLE_SLEEF
                                ", SLEEF"
 #endif

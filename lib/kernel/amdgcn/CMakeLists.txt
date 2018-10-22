@@ -25,7 +25,7 @@
 
 include("bitcode_rules")
 
-set(KERNEL_SOURCES ${SOURCES_WITHOUT_VML})
+set(KERNEL_SOURCES ${SOURCES_GENERIC})
 
 foreach(FILE printf.c get_local_id.c get_local_size.c get_group_id.c get_global_size.c
     get_num_groups.c get_work_dim.c get_global_id.c barrier.ll)

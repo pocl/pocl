@@ -14,14 +14,6 @@ examples/Rodinia/pathfinder.stdout              export-ignore
 
 lib/kernel/amdgcn                               export-ignore
 lib/kernel/convert_type.py                      export-ignore
-lib/kernel/vecmathlib/bench.cc                  export-ignore
-lib/kernel/vecmathlib/coeffs.out                export-ignore
-lib/kernel/vecmathlib/example.cc                export-ignore
-lib/kernel/vecmathlib/example_float.cc          export-ignore
-lib/kernel/vecmathlib/find-coeffs.m             export-ignore
-lib/kernel/vecmathlib/IDEAS                     export-ignore
-lib/kernel/vecmathlib/instantiations.cc         export-ignore
-lib/kernel/vecmathlib/interp.cc                 export-ignore
 
 lib/kernel/libclc-pocl/gen_vectorize.rb         export-ignore
 lib/kernel/sleef/gen*                           export-ignore

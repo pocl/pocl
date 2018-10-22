@@ -39,7 +39,6 @@ function(compile_c_to_bc FILENAME SUBDIR BC_FILE_LIST)
         DEPENDS "${FULL_F_PATH}"
         "${CMAKE_SOURCE_DIR}/include/pocl_types.h"
         "${CMAKE_SOURCE_DIR}/include/_kernel_c.h"
-        ${VML_KERNEL_DEPEND_HEADERS}
         COMMAND "${CLANG}" ${CLANG_FLAGS} ${DEVICE_CL_FLAGS} "-O1"
         ${KERNEL_C_FLAGS} "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}"
         "-I${CMAKE_SOURCE_DIR}/include"
@@ -56,7 +55,6 @@ function(compile_cc_to_bc FILENAME SUBDIR BC_FILE_LIST)
 
     add_custom_command(OUTPUT "${BC_FILE}"
         DEPENDS "${FULL_F_PATH}"
-          ${VML_KERNEL_DEPEND_HEADERS}
         COMMAND  "${CLANGXX}" ${CLANG_FLAGS} ${KERNEL_CXX_FLAGS}
         ${DEVICE_CL_FLAGS} "-o" "${BC_FILE}" "-c" "${FULL_F_PATH}" "-O1"
         COMMENT "Building C++ to LLVM bitcode ${BC_FILE}"
@@ -87,10 +85,6 @@ function(compile_cl_to_bc FILENAME SUBDIR BC_FILE_LIST EXTRA_CONFIG)
         "-DMAX_PRECISION"
         "-I" "${CMAKE_SOURCE_DIR}/lib/kernel/sleef/include" # for sleef_cl.h
         "-include" "${EXTRA_CONFIG}")
-    endif()
-
-    if(FILENAME MATCHES "vecmathlib")
-      list(APPEND DEPENDLIST ${VML_KERNEL_DEPEND_HEADERS})
     endif()
 
     if(FILENAME MATCHES "libclc")

@@ -538,7 +538,7 @@ endmacro()
 #
 
 # TODO clang + vecmathlib doesn't work on Windows yet...
-if(CLANGXX AND ENABLE_VECMATHLIB AND (NOT WIN32) AND ENABLE_HOST_CPU_DEVICES)
+if(CLANGXX AND (NOT WIN32) AND ENABLE_HOST_CPU_DEVICES)
 
   message(STATUS "Checking if clang++ works (required by vecmathlib)")
 
