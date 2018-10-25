@@ -89,46 +89,6 @@ POname(clCreateKernel)(cl_program program,
   POCL_GOTO_ERROR_COND ((kernel->dyn_arguments == NULL),
                         CL_OUT_OF_HOST_MEMORY);
 
-#ifdef OCS_AVAILABLE
-  for (device_i = 0; device_i < program->num_devices; ++device_i)
-    {
-      if (program->binaries[device_i] &&
-          pocl_cache_device_cachedir_exists(program, device_i))
-        {
-          cl_device_id device = program->devices[device_i];
-          if (device->spmd)
-            {
-              char cachedir[POCL_FILENAME_LENGTH];
-              _cl_command_node cmd;
-              memset (&cmd, 0, sizeof(_cl_command_node));
-              cmd.type = CL_COMMAND_NDRANGE_KERNEL;
-              cmd.command.run.device_i = device_i;
-              cmd.command.run.kernel = kernel;
-              assert (kernel->meta);
-              cmd.command.run.hash = kernel->meta->build_hash[device_i];
-              cmd.device = device;
-              size_t local_x = 0, local_y = 0, local_z = 0;
-              if (kernel->meta->reqd_wg_size[0] > 0
-                  && kernel->meta->reqd_wg_size[1] > 0
-                  && kernel->meta->reqd_wg_size[2] > 0)
-                {
-                  local_x = kernel->meta->reqd_wg_size[0];
-                  local_y = kernel->meta->reqd_wg_size[1];
-                  local_z = kernel->meta->reqd_wg_size[2];
-                }
-              cmd.command.run.local_x = local_x;
-              cmd.command.run.local_y = local_y;
-              cmd.command.run.local_z = local_z;
-              pocl_cache_kernel_cachedir_path (cachedir, program, device_i,
-                                               kernel, "", local_x,
-                                               local_y, local_z);
-
-              device->ops->compile_kernel (&cmd, kernel, device);
-            }
-        }
-    }
-#endif
-
   POCL_LOCK_OBJ (program);
   cl_kernel k = program->kernels;
   program->kernels = kernel;

@@ -114,20 +114,24 @@ static const char cl_parameters_not_yet_supported_by_clang[] =
   }
 
 #ifdef OCS_AVAILABLE
+/* if 'only_spmd_devices' is set, prebuild the kernel binaries only for the
+ * SPMD devices in the context, otherwise build binaries for all devices.
+ * The former is useful for clBuildProgram(), the latter for
+ * clGetProgramInfo(CL_PROGRAM_BINARIES). */
 cl_int
-program_compile_dynamic_wg_binaries(cl_program program)
+program_compile_dynamic_wg_binaries (cl_program program, int only_spmd_devices)
 {
   unsigned i, device_i;
-  cl_int errcode = CL_SUCCESS;
   _cl_command_node cmd;
 
-  assert(program->num_kernels);
   assert(program->build_status == CL_BUILD_SUCCESS);
+  if (program->num_kernels == 0)
+    return CL_SUCCESS;
 
   memset(&cmd, 0, sizeof(_cl_command_node));
   cmd.type = CL_COMMAND_NDRANGE_KERNEL;
-  char cachedir[POCL_FILENAME_LENGTH];
-  POCL_LOCK_OBJ(program);
+
+  POCL_LOCK_OBJ (program);
 
   /* Build the dynamic WG sized parallel.bc and device specific code,
      for each kernel & device combo.  */
@@ -139,6 +143,9 @@ program_compile_dynamic_wg_binaries(cl_program program)
       if (program->pocl_binaries[device_i] || (!program->binaries[device_i]))
         continue;
 
+      if (only_spmd_devices && (device->spmd == CL_FALSE))
+        continue;
+
       cmd.device = device;
       cmd.command.run.device_i = device_i;
 
@@ -148,7 +155,6 @@ program_compile_dynamic_wg_binaries(cl_program program)
       fake_k.program = program;
       fake_k.next = NULL;
       cl_kernel kernel = &fake_k;
-
 
       for (i=0; i < program->num_kernels; i++)
         {
@@ -173,15 +179,13 @@ program_compile_dynamic_wg_binaries(cl_program program)
 
           cmd.command.run.kernel = kernel;
 
-          pocl_cache_kernel_cachedir_path (cachedir, program, device_i, kernel,
-                                           "", local_x, local_y, local_z);
-
           device->ops->compile_kernel (&cmd, kernel, device);
         }
     }
 
-  POCL_UNLOCK_OBJ(program);
-  return errcode;
+  POCL_UNLOCK_OBJ (program);
+
+  return CL_SUCCESS;
 }
 
 #endif
@@ -760,7 +764,6 @@ compile_and_link_program(int compile_program,
        * cache directory. Will be useful for cache pruning script
        * that flushes old directories based on LRU */
       pocl_cache_update_program_last_access(program, device_i);
-
 #endif
 
     }
@@ -831,6 +834,15 @@ compile_and_link_program(int compile_program,
           pocl_calculate_kernel_hash (program, j, device_i);
         }
     }
+
+#ifdef OCS_AVAILABLE
+  /* for SPMD devices, prebuild the kernel binaries here. */
+  if (program->binary_type == CL_PROGRAM_BINARY_TYPE_EXECUTABLE) {
+    POCL_UNLOCK_OBJ (program);
+    program_compile_dynamic_wg_binaries (program, 1);
+    POCL_LOCK_OBJ (program);
+  }
+#endif
 
   errcode = CL_SUCCESS;
   goto FINISH;

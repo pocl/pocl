@@ -28,15 +28,15 @@
 #include "pocl_binary.h"
 #include "pocl_shared.h"
 
-cl_int
-program_compile_dynamic_wg_binaries(cl_program program);
+cl_int program_compile_dynamic_wg_binaries (cl_program program,
+                                            int only_spmd_devices);
 
 /******************************************************************************/
 
 static void get_binary_sizes(cl_program program, size_t *sizes)
 {
 #ifdef OCS_AVAILABLE
-  if (program_compile_dynamic_wg_binaries(program) != CL_SUCCESS)
+  if (program_compile_dynamic_wg_binaries (program, 0) != CL_SUCCESS)
     {
       memset(sizes, 0, program->num_devices * sizeof(size_t));
       return;
@@ -57,7 +57,7 @@ static void get_binary_sizes(cl_program program, size_t *sizes)
 static void get_binaries(cl_program program, unsigned char **binaries)
 {
 #ifdef OCS_AVAILABLE
-  if (program_compile_dynamic_wg_binaries(program) != CL_SUCCESS)
+  if (program_compile_dynamic_wg_binaries (program, 0) != CL_SUCCESS)
     {
       memset(binaries, 0, program->num_devices * sizeof(unsigned char*));
       return;
