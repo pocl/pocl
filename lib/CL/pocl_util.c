@@ -960,8 +960,17 @@ pocl_status_to_str (int status)
   "submitted",
   "queued"};
   return status_to_str[status];
-};
+}
 
+void
+pocl_abort_on_pthread_error (int status, unsigned line, const char *func)
+{
+  if (status != 0)
+    {
+      POCL_MSG_PRINT2 (HSA, func, line, "Error from pthread call:\n");
+      POCL_ABORT ("%s\n", strerror (status));
+    }
+}
 
 /* Convert a command type to its representation string
  */

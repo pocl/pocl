@@ -290,23 +290,6 @@ pocl_hsa_abort_on_hsa_error(hsa_status_t status,
                                                     __FUNCTION__, \
                                                     #code);
 
-static void
-pocl_hsa_abort_on_pthread_error(int status,
-                                unsigned line,
-                                const char* func,
-                                const char* code)
-{
-  if (status != 0)
-    {
-      POCL_MSG_PRINT2(HSA, func, line, "Error from pthread call:\n");
-      POCL_ABORT ("%s\n", strerror (status));
-    }
-}
-
-#define PTHREAD_CHECK(code) pocl_hsa_abort_on_pthread_error(code,         \
-                                                            __LINE__,     \
-                                                            __FUNCTION__, \
-                                                            #code);
 
 static hsa_agent_t hsa_agents[MAX_HSA_AGENTS];
 static unsigned found_hsa_agents = 0;
