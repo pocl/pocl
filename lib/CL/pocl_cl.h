@@ -102,11 +102,11 @@ typedef pthread_mutex_t pocl_lock_t;
 
 /* If available, use an Adaptive mutex for locking in the pthread driver,
    otherwise fallback to simple mutexes */
-#define PTHREAD_FAST_LOCK_T pthread_mutex_t
-#define PTHREAD_FAST_LOCK(l) PTHREAD_LOCK(l)
-#define PTHREAD_FAST_UNLOCK(l) PTHREAD_UNLOCK(l)
+#define POCL_FAST_LOCK_T pthread_mutex_t
+#define POCL_FAST_LOCK(l) POCL_LOCK(l)
+#define POCL_FAST_UNLOCK(l) POCL_UNLOCK(l)
 #ifdef PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
-  #define PTHREAD_FAST_INIT(l) \
+  #define POCL_FAST_INIT(l) \
     do { \
       pthread_mutexattr_t attrs; \
       pthread_mutexattr_init (&attrs); \
@@ -116,9 +116,9 @@ typedef pthread_mutex_t pocl_lock_t;
       pthread_mutexattr_destroy(&attrs);\
     } while (0)
 #else
-  #define PTHREAD_FAST_INIT(l) pthread_mutex_init(&l, NULL);
+  #define POCL_FAST_INIT(l) pthread_mutex_init(&l, NULL);
 #endif
-#define PTHREAD_FAST_DESTROY(l) PTHREAD_DESTROY_LOCK(l)
+#define POCL_FAST_DESTROY(l) POCL_DESTROY_LOCK(l)
 
 
 

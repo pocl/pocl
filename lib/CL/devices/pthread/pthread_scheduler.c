@@ -74,7 +74,7 @@ typedef struct scheduler_data_
   kernel_run_command *kernel_queue;
 
   pthread_cond_t wake_pool __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-  PTHREAD_FAST_LOCK_T wq_lock_fast __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  POCL_FAST_LOCK_T wq_lock_fast __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
   int thread_pool_shutdown_requested;
 } scheduler_data __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
@@ -86,7 +86,7 @@ pthread_scheduler_init (cl_device_id device)
 {
   unsigned i;
   size_t num_worker_threads = device->max_compute_units;
-  PTHREAD_FAST_INIT (scheduler.wq_lock_fast);
+  POCL_FAST_INIT (scheduler.wq_lock_fast);
 
   pthread_cond_init (&(scheduler.wake_pool), NULL);
 
@@ -121,10 +121,10 @@ pthread_scheduler_uninit ()
 {
   unsigned i;
 
-  PTHREAD_FAST_LOCK (&scheduler.wq_lock_fast);
+  POCL_FAST_LOCK (scheduler.wq_lock_fast);
   scheduler.thread_pool_shutdown_requested = 1;
   pthread_cond_broadcast (&scheduler.wake_pool);
-  PTHREAD_FAST_UNLOCK (&scheduler.wq_lock_fast);
+  POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
 
   for (i = 0; i < scheduler.num_threads; ++i)
     {
@@ -132,7 +132,7 @@ pthread_scheduler_uninit ()
     }
 
   pocl_aligned_free (scheduler.thread_pool);
-  PTHREAD_FAST_DESTROY (&scheduler.wq_lock_fast);
+  POCL_FAST_DESTROY (scheduler.wq_lock_fast);
   pthread_cond_destroy (&scheduler.wake_pool);
 
   scheduler.thread_pool_shutdown_requested = 0;
@@ -140,19 +140,19 @@ pthread_scheduler_uninit ()
 
 void pthread_scheduler_push_command (_cl_command_node *cmd)
 {
-  PTHREAD_FAST_LOCK (&scheduler.wq_lock_fast);
+  POCL_FAST_LOCK (scheduler.wq_lock_fast);
   DL_APPEND (scheduler.work_queue, cmd);
   pthread_cond_broadcast (&scheduler.wake_pool);
-  PTHREAD_FAST_UNLOCK (&scheduler.wq_lock_fast);
+  POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
 }
 
 static void
 pthread_scheduler_push_kernel (kernel_run_command *run_cmd)
 {
-  PTHREAD_FAST_LOCK (&scheduler.wq_lock_fast);
+  POCL_FAST_LOCK (scheduler.wq_lock_fast);
   LL_APPEND (scheduler.kernel_queue, run_cmd);
   pthread_cond_broadcast (&scheduler.wake_pool);
-  PTHREAD_FAST_UNLOCK (&scheduler.wq_lock_fast);
+  POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
 }
 
 static int
@@ -188,7 +188,7 @@ pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
   kernel_run_command *run_cmd;
 
   /* execute kernel if available */
-  PTHREAD_FAST_LOCK (&scheduler.wq_lock_fast);
+  POCL_FAST_LOCK (scheduler.wq_lock_fast);
   int do_exit = 0;
 
 RETRY:
@@ -199,16 +199,16 @@ RETRY:
   if (run_cmd && shall_we_run_this (td, run_cmd->device, run_cmd))
     {
       ++run_cmd->ref_count;
-      PTHREAD_FAST_UNLOCK (&scheduler.wq_lock_fast);
+      POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
 
       work_group_scheduler (run_cmd, td);
 
-      PTHREAD_FAST_LOCK (&scheduler.wq_lock_fast);
+      POCL_FAST_LOCK (scheduler.wq_lock_fast);
       if ((--run_cmd->ref_count) == 0)
         {
-          PTHREAD_FAST_UNLOCK (&scheduler.wq_lock_fast);
+          POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
           finalize_kernel_command (td, run_cmd);
-          PTHREAD_FAST_LOCK (&scheduler.wq_lock_fast);
+          POCL_FAST_LOCK (scheduler.wq_lock_fast);
         }
     }
   else
@@ -232,7 +232,7 @@ RETRY:
     goto RETRY;
   }
 
-  PTHREAD_FAST_UNLOCK (&scheduler.wq_lock_fast);
+  POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
 
   return do_exit;
 }
@@ -252,10 +252,10 @@ get_wg_index_range (kernel_run_command *k, unsigned *start_index,
   const unsigned scaled_min_wgs = POCL_PTHREAD_MIN_WGS * num_threads;
 
   unsigned max_wgs;
-  PTHREAD_FAST_LOCK (&k->lock);
+  POCL_FAST_LOCK (k->lock);
   if (k->remaining_wgs == 0)
     {
-      PTHREAD_FAST_UNLOCK (&k->lock);
+      POCL_FAST_UNLOCK (k->lock);
       return 0;
     }
 
@@ -280,7 +280,7 @@ get_wg_index_range (kernel_run_command *k, unsigned *start_index,
   k->wgs_dealt += max_wgs;
   if (k->remaining_wgs == 0)
     *last_wgs = 1;
-  PTHREAD_FAST_UNLOCK (&k->lock);
+  POCL_FAST_UNLOCK (k->lock);
 
   return 1;
 }
@@ -346,9 +346,9 @@ work_group_scheduler (kernel_run_command *k,
     {
       if (last_wgs)
         {
-          PTHREAD_FAST_LOCK (&scheduler.wq_lock_fast);
+          POCL_FAST_LOCK (scheduler.wq_lock_fast);
           LL_DELETE (scheduler.kernel_queue, k);
-          PTHREAD_FAST_UNLOCK (&scheduler.wq_lock_fast);
+          POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
         }
 
       for (i = start_index; i <= end_index; ++i)
@@ -397,7 +397,7 @@ finalize_kernel_command (struct pool_thread_data *thread_data,
   POCL_UPDATE_EVENT_COMPLETE_MSG (k->cmd->event, "NDRange Kernel        ");
 
   pocl_mem_manager_free_command (k->cmd);
-  PTHREAD_FAST_DESTROY (&k->lock);
+  POCL_FAST_DESTROY (k->lock);
   free_kernel_run_command (k);
 }
 
@@ -432,7 +432,7 @@ pocl_pthread_prepare_kernel
   run_cmd->kernel_args = cmd->command.run.arguments;
   run_cmd->next = NULL;
   run_cmd->ref_count = 0;
-  PTHREAD_FAST_INIT (run_cmd->lock);
+  POCL_FAST_INIT (run_cmd->lock);
 
   setup_kernel_arg_array (run_cmd);
 
