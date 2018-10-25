@@ -125,7 +125,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->unmap_mem = pocl_basic_unmap_mem;
   ops->run = pocl_basic_run;
   ops->run_native = pocl_basic_run_native;
-  ops->get_timer_value = pocl_basic_get_timer_value;
+  ops->get_timer_value = pocl_gettimemono_ns;;
   ops->join = pocl_basic_join;
   ops->submit = pocl_basic_submit;
   ops->broadcast = pocl_basic_broadcast;
@@ -1075,11 +1075,6 @@ pocl_basic_reinit (unsigned j, cl_device_id device)
   return CL_SUCCESS;
 }
 
-cl_ulong
-pocl_basic_get_timer_value (void *data) 
-{
-  return pocl_gettimemono_ns();
-}
 
 cl_int 
 pocl_basic_get_supported_image_formats (cl_mem_flags flags,

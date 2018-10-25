@@ -222,8 +222,6 @@ pocl_hsa_malloc_account(pocl_global_mem_t *mem, size_t size, hsa_region_t r);
 void
 pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
 {
-  pocl_basic_init_device_ops (ops);
-
   /* TODO: more descriptive name from HSA probing the device */
   ops->device_name = "hsa";
   ops->probe = pocl_hsa_probe;
@@ -237,12 +235,16 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->read_rect = pocl_basic_read_rect;
   ops->write = pocl_basic_write;
   ops->write_rect = pocl_basic_write_rect;
+  ops->map_mem = pocl_basic_map_mem;
+  ops->unmap_mem = pocl_basic_unmap_mem;
+  ops->memfill = pocl_basic_memfill;
   ops->copy = pocl_hsa_copy;
   ops->get_timer_value = pocl_hsa_get_timer_value;
 
   ops->svm_free = pocl_hsa_svm_free;
   ops->svm_alloc = pocl_hsa_svm_alloc;
   ops->svm_copy = pocl_hsa_svm_copy;
+  ops->svm_fill = pocl_basic_svm_fill;
 
   // new driver api (out-of-order)
   ops->submit = pocl_hsa_submit;

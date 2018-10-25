@@ -35,6 +35,7 @@
 #include "pocl_llvm.h"
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
+#include "pocl_timing.h"
 #include "pocl_util.h"
 
 #include <string.h>
@@ -128,8 +129,6 @@ pocl_cuda_error (CUresult result, unsigned line, const char *func,
 void
 pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
 {
-  pocl_basic_init_device_ops (ops);
-
   ops->device_name = "CUDA";
   ops->build_hash = pocl_cuda_build_hash;
   ops->probe = pocl_cuda_probe;
@@ -143,6 +142,7 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->compile_kernel = pocl_cuda_compile_kernel;
   ops->submit = pocl_cuda_submit;
   ops->notify = pocl_cuda_notify;
+  ops->broadcast = pocl_broadcast;
   ops->wait_event = pocl_cuda_wait_event;
   ops->update_event = pocl_cuda_update_event;
   ops->free_event_data = pocl_cuda_free_event_data;
@@ -150,6 +150,8 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->flush = pocl_cuda_flush;
   // TODO
   ops->map_mem = pocl_cuda_map_mem;
+  // TODO return cuda event times
+  ops->get_timer_value = pocl_gettimemono_ns;;
 
   ops->read = NULL;
   ops->read_rect = NULL;
@@ -159,10 +161,6 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->copy_rect = NULL;
   ops->unmap_mem = NULL;
   ops->run = NULL;
-
-  /* TODO: implement remaining ops functions if needed: */
-  /* broadcast */
-  /* get_timer_value */
 }
 
 cl_int
