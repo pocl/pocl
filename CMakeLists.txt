@@ -992,9 +992,10 @@ string(REGEX REPLACE "[\r\n\t ]+" "\", \"" HOST_LD_FLAGS_ARRAY "${HOST_LD_FLAGS_
 set(HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} ${EXTRA_HOST_CLANG_FLAGS}")
 set(HOST_LLC_FLAGS "${DEFAULT_HOST_LLC_FLAGS} ${EXTRA_HOST_LLC_FLAGS}")
 
-# basic device is always built as it contains default implementations for
-# device layer APIs which many devices delegate to
-set(BUILD_BASIC 1)
+# HSA and pthread drivers require basic driver
+if(ENABLE_HSA OR ENABLE_HOST_CPU_DEVICES)
+  set(BUILD_BASIC 1)
+endif()
 
 if(ENABLE_HOST_CPU_DEVICES)
   set(OCL_TARGETS "host")
