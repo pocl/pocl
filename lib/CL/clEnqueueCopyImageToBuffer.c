@@ -33,6 +33,8 @@ POname(clEnqueueCopyImageToBuffer)(cl_command_queue  command_queue ,
           num_events_in_wait_list, event_wait_list, event));
     }
 
+  POCL_RETURN_ON_SUB_MISALIGN (dst_buffer, command_queue);
+
   cl_int err = pocl_rect_copy(
     command_queue,
     CL_COMMAND_COPY_IMAGE_TO_BUFFER,

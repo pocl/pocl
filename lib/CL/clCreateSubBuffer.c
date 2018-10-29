@@ -110,6 +110,13 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
        "Invalid flags: buffer is CL_MEM_HOST_NO_ACCESS, requested sub-buffer "
        "(CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_WRITE_ONLY)\n");
 
+  POCL_GOTO_ERROR_ON (
+      ((info->origin % buffer->context->min_buffer_alignment) != 0),
+      CL_MISALIGNED_SUB_BUFFER_OFFSET,
+      "no devices for which the origin value (%zu) is "
+      "aligned to the CL_DEVICE_MEM_BASE_ADDR_ALIGN value (%zu)\n",
+              info->origin, buffer->context->min_buffer_alignment);
+
   pocl_cl_mem_inherit_flags (mem, buffer, flags);
 
   if (mem->flags & CL_MEM_USE_HOST_PTR || mem->flags & CL_MEM_ALLOC_HOST_PTR)

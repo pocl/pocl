@@ -30,7 +30,7 @@
 CL_API_ENTRY void * CL_API_CALL
 POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
                    cl_mem           buffer,
-                   cl_bool          blocking_map, 
+                   cl_bool          blocking_map,
                    cl_map_flags     map_flags,
                    size_t           offset,
                    size_t           size,
@@ -51,6 +51,8 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   POCL_GOTO_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
   POCL_GOTO_ERROR_COND((buffer == NULL), CL_INVALID_MEM_OBJECT);
+
+  POCL_GOTO_ON_SUB_MISALIGN (buffer, command_queue);
 
   POCL_GOTO_ERROR_COND((size == 0), CL_INVALID_VALUE);
 

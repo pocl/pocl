@@ -46,6 +46,8 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
 
   POCL_RETURN_ERROR_COND((buffer == NULL), CL_INVALID_MEM_OBJECT);
 
+  POCL_RETURN_ON_SUB_MISALIGN (buffer, command_queue);
+
   POCL_RETURN_ERROR_ON((command_queue->context != buffer->context),
     CL_INVALID_CONTEXT, "buffer and command_queue are not from the same context\n");
 

@@ -34,6 +34,8 @@ CL_API_SUFFIX__VERSION_1_0
           num_events_in_wait_list, event_wait_list, event));
     }
 
+  POCL_RETURN_ON_SUB_MISALIGN (src_buffer, command_queue);
+
   cl_int err = pocl_rect_copy(
     command_queue,
     CL_COMMAND_COPY_BUFFER_TO_IMAGE,

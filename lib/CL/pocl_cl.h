@@ -836,6 +836,25 @@ struct _cl_command_queue {
   void *data;
 };
 
+#define POCL_ON_SUB_MISALIGN(mem, que, operation)                             \
+  do                                                                          \
+    {                                                                         \
+      if (mem->parent != NULL)  {                                             \
+        operation (                                                           \
+            (mem->origin % que->device->mem_base_addr_align != 0),            \
+            CL_MISALIGNED_SUB_BUFFER_OFFSET,                                  \
+            "SubBuffer is not "                                               \
+            "properly aligned for this device");                              \
+        }                                                                     \
+    }                                                                         \
+  while (0)
+
+#define POCL_RETURN_ON_SUB_MISALIGN(mem, que)                                 \
+  POCL_ON_SUB_MISALIGN(mem, que, POCL_RETURN_ERROR_ON)
+
+#define POCL_GOTO_ON_SUB_MISALIGN(mem, que)                                   \
+  POCL_ON_SUB_MISALIGN(mem, que, POCL_GOTO_ERROR_ON)
+
 
 typedef struct _cl_mem cl_mem_t;
 struct _cl_mem {

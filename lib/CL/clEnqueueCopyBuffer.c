@@ -56,6 +56,10 @@ CL_API_SUFFIX__VERSION_1_0
   POCL_RETURN_ERROR_ON((dst_buffer->type != CL_MEM_OBJECT_BUFFER),
       CL_INVALID_MEM_OBJECT, "dst_buffer is not a CL_MEM_OBJECT_BUFFER\n");
 
+  POCL_RETURN_ON_SUB_MISALIGN (src_buffer, command_queue);
+
+  POCL_RETURN_ON_SUB_MISALIGN (dst_buffer, command_queue);
+
   POCL_RETURN_ERROR_ON(((command_queue->context != src_buffer->context) ||
       (command_queue->context != dst_buffer->context)), CL_INVALID_CONTEXT,
       "src_buffer, dst_buffer and command_queue are not from the same context\n");

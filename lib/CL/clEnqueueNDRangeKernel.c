@@ -154,13 +154,6 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   POCL_RETURN_ERROR_COND((global_x == 0 || global_y == 0 || global_z == 0),
     CL_INVALID_GLOBAL_WORK_SIZE);
 
-  for (i = 0; i < kernel->meta->num_args; i++)
-    {
-      POCL_RETURN_ERROR_ON ((!kernel->dyn_arguments[i].is_set),
-                            CL_INVALID_KERNEL_ARGS,
-                            "The %i-th kernel argument is not set!\n", i);
-    }
-
   max_local_x = command_queue->device->max_work_item_sizes[0];
   max_local_y = command_queue->device->max_work_item_sizes[1];
   max_local_z = command_queue->device->max_work_item_sizes[2];
@@ -464,11 +457,29 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
     {
       struct pocl_argument_info *a = &kernel->meta->arg_info[i];
       struct pocl_argument *al = &(kernel->dyn_arguments[i]);
+
+      POCL_GOTO_ERROR_ON ((!al->is_set),
+                            CL_INVALID_KERNEL_ARGS,
+                            "The %i-th kernel argument is not set!\n", i);
+
+
       if (a->type == POCL_ARG_TYPE_IMAGE
           || (!ARGP_IS_LOCAL (a) && a->type == POCL_ARG_TYPE_POINTER
               && al->value != NULL))
         {
           cl_mem buf = *(cl_mem *) (al->value);
+
+
+          POCL_GOTO_ON_SUB_MISALIGN (buf, command_queue);
+
+          if (buf->parent != NULL)
+          {
+            *(cl_mem *)(al->value) = buf->parent;
+            al->offset = buf->origin;
+          }
+          else
+            al->offset = 0;
+
           mem_list[buffer_count++] = buf;
           POname(clRetainMemObject) (buf);
           /* if buffer has no owner,

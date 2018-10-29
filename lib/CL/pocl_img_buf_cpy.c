@@ -96,6 +96,7 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
     {
       POCL_RETURN_ERROR_ON((src->type != CL_MEM_OBJECT_BUFFER),
         CL_INVALID_MEM_OBJECT, "src is not a CL_MEM_OBJECT_BUFFER\n");
+      POCL_RETURN_ON_SUB_MISALIGN (src, command_queue);
     }
 
   if (dst_is_image)
@@ -109,6 +110,7 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
     {
       POCL_RETURN_ERROR_ON((dst->type != CL_MEM_OBJECT_BUFFER),
         CL_INVALID_MEM_OBJECT, "dst is not a CL_MEM_OBJECT_BUFFER\n");
+      POCL_RETURN_ON_SUB_MISALIGN (dst, command_queue);
     }
 
   if (src_is_image && dst_is_image)
