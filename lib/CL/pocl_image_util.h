@@ -32,6 +32,8 @@
 
 void origin_to_bytes (cl_mem mem, const size_t *origin, size_t *byte_offset);
 
+cl_int opencl_image_type_to_index (cl_mem_object_type  image_type);
+
 extern cl_int 
 pocl_check_image_origin_region (const cl_mem image, 
                                 const size_t *origin, 
@@ -40,13 +42,14 @@ pocl_check_image_origin_region (const cl_mem image,
 extern void
 pocl_get_image_information (cl_channel_order  ch_order, 
                             cl_channel_type   ch_type,
-                            cl_int*           host_channels,
-                            cl_int*           host_elem_size);
+                            int*           host_channels,
+                            int*           host_elem_size);
 
-extern cl_int pocl_check_device_supports_image (
-    cl_device_id device, const cl_image_format *image_format,
-    const cl_image_desc *image_desc, cl_image_format *supported_image_formats,
-    cl_uint num_entries);
+extern cl_int
+pocl_check_device_supports_image (cl_device_id device,
+                                  const cl_image_format *image_format,
+                                  const cl_image_desc *image_desc,
+                                  cl_uint image_type_idx, int *device_support);
 
 void pocl_write_pixel_zero (void *data, const void *color_ptr, int order,
                             int elem_size, int channel_type);

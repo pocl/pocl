@@ -505,11 +505,6 @@ struct pocl_device_ops {
    * IMAGE1D_BUFFER type (which is implemented as a buffer).
    * If the device does not support images, all of these may be NULL. */
 
-  /* return supported image formats */
-  cl_int (*get_supported_image_formats) (cl_mem_flags flags,
-                                         const cl_image_format **image_formats,
-                                         cl_uint *num_image_formats);
-
   /* returns a device specific pointer which may reference
    * a hardware resource. May be NULL */
   void* (*create_image) (void *data,
@@ -603,6 +598,8 @@ typedef struct pocl_global_mem_t {
   size_t currently_allocated;
   size_t total_alloc_limit;
 } pocl_global_mem_t;
+
+#define NUM_OPENCL_IMAGE_TYPES 6
 
 struct _cl_device_id {
   POCL_ICD_OBJECT
@@ -760,6 +757,10 @@ struct _cl_device_id {
   cl_command_queue_properties on_dev_queue_props;
   cl_command_queue_properties on_host_queue_props;
 
+  /* image formats supported by the device, per image type */
+  const cl_image_format *image_formats[NUM_OPENCL_IMAGE_TYPES];
+  cl_uint num_image_formats[NUM_OPENCL_IMAGE_TYPES];
+
   /* Device operations, shared among devices of the same type */
   struct pocl_device_ops *ops;
 };
@@ -796,8 +797,20 @@ struct _cl_context {
      Returns a valid = 0 context in that case.  */
   char valid;
 
-  /* The minimal value of max_mem_alloc_size of all devices in context */
+  /*********************************************************************/
+  /* these values depend on which devices are in context;
+   * they're calculated by pocl_setup_context() */
+
+  /* The largest of max_mem_alloc_size of all devices in context */
   size_t max_mem_alloc_size;
+
+  /* union of image formats supported by all of the devices in context,
+   * per image-type (there are 6 image types)
+     TODO the getSupportedImageFormats is supposed to also respect flags,
+     but for now we ignore that. */
+  cl_image_format *image_formats[NUM_OPENCL_IMAGE_TYPES];
+  cl_uint num_image_formats[NUM_OPENCL_IMAGE_TYPES];
+
   /* The device that should allocate SVM (might be == host)
    * NULL if none of devices in the context is SVM capable */
   cl_device_id svm_allocdev;
@@ -862,6 +875,48 @@ struct _cl_command_queue {
       mem = mem->parent;                                                      \
     }
 
+#define DEVICE_IMAGE_SIZE_SUPPORT 1
+#define DEVICE_IMAGE_FORMAT_SUPPORT 2
+
+#define DEVICE_DOESNT_SUPPORT_IMAGE(mem, dev_i)                               \
+  (mem->device_supports_this_image[dev_i] == 0)
+
+#define POCL_ON_UNSUPPORTED_IMAGE(mem, dev, operation)                        \
+  do                                                                          \
+    {                                                                         \
+      unsigned dev_i;                                                         \
+      for (dev_i = 0; dev_i < mem->context->num_devices; ++dev_i)             \
+        if (mem->context->devices[dev_i] == dev)                              \
+          break;                                                              \
+      assert (dev_i < mem->context->num_devices);                             \
+      operation (                                                  \
+          (mem->context->devices[dev_i]->image_support == CL_FALSE),          \
+          CL_INVALID_OPERATION, "Device %s does not support images\n",        \
+          mem->context->devices[dev_i]->long_name);                           \
+      operation (                                                  \
+          ((mem->device_supports_this_image[dev_i]                            \
+            & DEVICE_IMAGE_FORMAT_SUPPORT)                                    \
+           == 0),                                                             \
+          CL_IMAGE_FORMAT_NOT_SUPPORTED,                                      \
+          "The image type is not supported by this device\n");                \
+      operation (                                                  \
+          ((mem->device_supports_this_image[dev_i]                            \
+            & DEVICE_IMAGE_SIZE_SUPPORT)                                      \
+           == 0),                                                             \
+          CL_INVALID_IMAGE_SIZE,                                              \
+          "The image size is not supported by this device\n");                \
+    }                                                                         \
+  while (0)
+
+
+#define POCL_RETURN_ON_UNSUPPORTED_IMAGE(mem, dev)                            \
+  POCL_ON_UNSUPPORTED_IMAGE(mem, dev, POCL_RETURN_ERROR_ON)
+
+#define POCL_GOTO_ON_UNSUPPORTED_IMAGE(mem, dev)                              \
+  POCL_ON_UNSUPPORTED_IMAGE(mem, dev, POCL_GOTO_ERROR_ON)
+
+
+
 typedef struct _cl_mem cl_mem_t;
 struct _cl_mem {
   POCL_ICD_OBJECT
@@ -897,6 +952,10 @@ struct _cl_mem {
   cl_mem_t *parent;
   /* A linked list of destructor callbacks */
   mem_destructor_callback_t *destructor_callbacks;
+
+  /* for images, a flag for each device in context,
+   * whether that device supports this */
+  int *device_supports_this_image;
 
   /* Image flags */
   cl_bool                 is_image;

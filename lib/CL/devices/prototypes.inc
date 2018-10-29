@@ -102,9 +102,6 @@
   char *pocl_##__DRV__##_build_hash (cl_device_id device);                    \
   void pocl_##__DRV__##_init_target_machine (void *data,                      \
                                              void *target_machine);           \
-  cl_int pocl_##__DRV__##_get_supported_image_formats (                       \
-      cl_mem_flags flags, const cl_image_format **image_formats,              \
-      cl_uint *num_image_formats);                                            \
   void *pocl_##__DRV__##_create_image (                                       \
       void *data, const cl_image_format *image_format,                        \
       const cl_image_desc *image_desc, cl_mem image, cl_int *err);            \

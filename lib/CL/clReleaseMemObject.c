@@ -93,7 +93,7 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
       parent = memobj->parent;
 
       /* Free host mem allocated by the runtime (not for sub buffers) */
-      if (memobj->parent == NULL && memobj->flags & CL_MEM_ALLOC_HOST_PTR
+      if (memobj->parent == NULL && (memobj->flags & CL_MEM_ALLOC_HOST_PTR)
           && memobj->mem_host_ptr != NULL)
         {
           POCL_MEM_FREE(memobj->mem_host_ptr);
@@ -109,6 +109,9 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
         free (callback);
         callback = next_callback;
       }
+
+      if (memobj->is_image)
+        POCL_MEM_FREE (memobj->device_supports_this_image);
 
       POCL_DESTROY_OBJECT (memobj);
       POCL_MEM_FREE(memobj);

@@ -142,7 +142,6 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->svm_copy = pocl_basic_svm_copy;
   ops->svm_fill = pocl_basic_svm_fill;
 
-  ops->get_supported_image_formats = pocl_basic_get_supported_image_formats;
   ops->create_image = NULL;
   ops->free_image = NULL;
   ops->create_sampler = NULL;
@@ -178,6 +177,7 @@ static const char *final_ld_flags[] =
 void
 pocl_init_cpu_device_infos (cl_device_id dev)
 {
+  size_t i;
   dev->type = CL_DEVICE_TYPE_CPU;
   dev->max_work_item_dimensions = 3;
   dev->final_linkage_flags = final_ld_flags;
@@ -240,11 +240,18 @@ pocl_init_cpu_device_infos (cl_device_id dev)
   dev->max_read_image_args = dev->max_write_image_args = dev->max_read_write_image_args = 128;
   dev->image2d_max_width = dev->image2d_max_height = 8192;
   dev->image3d_max_width = dev->image3d_max_height = dev->image3d_max_depth = 2048;
+  dev->max_samplers = 16;
+
+  for (i = 0; i < NUM_OPENCL_IMAGE_TYPES; ++i)
+    {
+      dev->num_image_formats[i]
+          = sizeof (supported_image_formats) / sizeof (cl_image_format);
+      dev->image_formats[i] = supported_image_formats;
+    }
+
   dev->image_max_buffer_size = 65536;
   dev->image_max_array_size = 2048;
-  dev->max_samplers = 16;
   dev->max_constant_args = 8;
-
   dev->max_mem_alloc_size = 0;
   dev->max_parameter_size = 1024;
   dev->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT;
@@ -1078,20 +1085,6 @@ pocl_basic_reinit (unsigned j, cl_device_id device)
   return CL_SUCCESS;
 }
 
-
-cl_int 
-pocl_basic_get_supported_image_formats (cl_mem_flags flags,
-                                        const cl_image_format **image_formats,
-                                        cl_uint *num_img_formats)
-{
-    if (num_img_formats == NULL || image_formats == NULL)
-      return CL_INVALID_VALUE;
-
-    *num_img_formats = sizeof(supported_image_formats)/sizeof(cl_image_format);
-    *image_formats = supported_image_formats;
-    
-    return CL_SUCCESS; 
-}
 
 static void basic_command_scheduler (struct data *d) 
 {

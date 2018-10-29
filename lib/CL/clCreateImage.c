@@ -22,28 +22,30 @@
 */
 #include "pocl_cl.h"
 #include "pocl_image_util.h"
+#include "pocl_shared.h"
 #include "pocl_util.h"
 
 extern CL_API_ENTRY cl_mem CL_API_CALL
 POname(clCreateImage) (cl_context              context,
                        cl_mem_flags            flags,
                        const cl_image_format * image_format,
-                       const cl_image_desc *   image_desc, 
+                       const cl_image_desc *   image_desc,
                        void *                  host_ptr,
-                       cl_int *                errcode_ret) 
+                       cl_int *                errcode_ret)
 CL_API_SUFFIX__VERSION_1_2
 {
     cl_mem mem = NULL;
-    unsigned i, devices_supporting_images = 0;
-    cl_uint num_entries = 0;
-    cl_image_format *supported_image_formats = NULL;
+    unsigned i, num_devices_supporting_image = 0;
     size_t size = 0;
-    int errcode;
+    int errcode = CL_SUCCESS;
+    int *device_image_support = NULL;
     size_t row_pitch;
     size_t slice_pitch;
     int elem_size;
     int channels;
     size_t elem_bytes;
+    cl_int image_type_idx;
+    cl_mem_object_type image_type;
 
     POCL_GOTO_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
 
@@ -56,53 +58,43 @@ CL_API_SUFFIX__VERSION_1_2
       " || image_desc->num_samples != 0 ");
     }
 
-    errcode = POname(clGetSupportedImageFormats)
-      (context, flags, image_desc->image_type, 0, NULL, &num_entries);
-
-    POCL_GOTO_ERROR_ON((errcode != CL_SUCCESS || num_entries == 0),
-      CL_INVALID_VALUE, "Couldn't find any supported image formats\n");
-
-    supported_image_formats = (cl_image_format*) malloc (num_entries * sizeof(cl_image_format));
-    if (supported_image_formats == NULL)
-      {
-        errcode = CL_OUT_OF_HOST_MEMORY;
-        goto ERROR;
-      }
-
-    errcode = POname (clGetSupportedImageFormats) (
-        context, flags, image_desc->image_type, num_entries,
-        supported_image_formats, NULL);
-
-    if (errcode != CL_SUCCESS){
-      POCL_MSG_ERR("Couldn't get the supported image formats\n");
-      goto ERROR;
-    }
+    image_type = image_desc->image_type;
+    image_type_idx = opencl_image_type_to_index (image_type);
+    POCL_GOTO_ERROR_ON ((image_type_idx < 0),
+                        CL_INVALID_VALUE, "unknown image type\n");
 
     /* CL_INVALID_IMAGE_SIZE if image dimensions specified in image_desc exceed
      * the minimum maximum image dimensions described in the table of allowed
      * values for param_name for clGetDeviceInfo FOR ALL DEVICES IN CONTEXT.
      */
+    device_image_support = calloc (context->num_devices, sizeof (int));
     for (i = 0; i < context->num_devices; i++)
       {
         cl_device_id dev = context->devices[i];
         if (!dev->image_support)
           continue;
         else
-          ++devices_supporting_images;
-        errcode = pocl_check_device_supports_image (dev, image_format, image_desc,
-                                              supported_image_formats,
-                                              num_entries);
-        if (errcode != CL_SUCCESS)
-          goto ERROR;
+          {
+            if (pocl_check_device_supports_image (dev, image_format,
+                                                  image_desc, image_type_idx,
+                                                  &device_image_support[i])
+                == CL_SUCCESS)
+              {
+                /* can't break here as we need device_image_support[]
+                 * for all devices */
+                ++num_devices_supporting_image;
+              }
+          }
       }
-    POCL_GOTO_ERROR_ON (
-        (devices_supporting_images == 0), CL_INVALID_OPERATION,
-        "There are no devices in context that support images\n");
+    POCL_GOTO_ERROR_ON ((num_devices_supporting_image == 0),
+                        CL_INVALID_OPERATION,
+                        "There are no devices in context that support this "
+                        "image type + size \n");
 
     pocl_get_image_information (image_format->image_channel_order,
-                                image_format->image_channel_data_type, 
+                                image_format->image_channel_data_type,
                                 &channels, &elem_size);
-    elem_bytes = elem_size * channels;
+    elem_bytes = (size_t)elem_size * (size_t)channels;
 
     row_pitch = image_desc->image_row_pitch;
     slice_pitch = image_desc->image_slice_pitch;
@@ -175,9 +167,8 @@ CL_API_SUFFIX__VERSION_1_2
         POCL_GOTO_ERROR_COND ((image_desc->buffer->size < size),
                               CL_INVALID_MEM_OBJECT);
 
-        mem = (cl_mem)malloc (sizeof (struct _cl_mem));
+        mem = (cl_mem) calloc (1, sizeof (struct _cl_mem));
         POCL_GOTO_ERROR_COND ((mem == NULL), CL_OUT_OF_HOST_MEMORY);
-        memset (mem, 0, sizeof (struct _cl_mem));
         POCL_INIT_OBJECT (mem);
 
         cl_mem b = image_desc->buffer;
@@ -223,6 +214,7 @@ CL_API_SUFFIX__VERSION_1_2
       }
 
     mem->type = image_desc->image_type;
+    mem->device_supports_this_image = device_image_support;
     mem->is_image = CL_TRUE;
     mem->image_width = image_desc->image_width;
     if (image_desc->image_type == CL_MEM_OBJECT_IMAGE2D
@@ -265,11 +257,10 @@ CL_API_SUFFIX__VERSION_1_2
     if (errcode_ret != NULL)
       *errcode_ret = CL_SUCCESS;
 
-    POCL_MEM_FREE (supported_image_formats);
     return mem;
     
  ERROR:
-   POCL_MEM_FREE (supported_image_formats);
+   POCL_MEM_FREE (device_image_support);
    if (errcode_ret)
      {
        *errcode_ret = errcode;

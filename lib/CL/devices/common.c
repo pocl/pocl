@@ -370,7 +370,7 @@ pocl_ndrange_node_cleanup(_cl_command_node *node)
 void
 pocl_mem_objs_cleanup (cl_event event)
 {
-  int i;
+  size_t i;
   for (i = 0; i < event->num_buffers; ++i)
     {
       assert(event->mem_objs[i] != NULL);
