@@ -18,6 +18,8 @@ CL_API_SUFFIX__VERSION_1_0
   /* pass src_origin through in a format pocl_rect_copy understands */
   const size_t src_origin[3] = { src_offset, 0, 0};
 
+  POCL_RETURN_ERROR_COND ((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+
   POCL_RETURN_ERROR_COND ((dst_image == NULL), CL_INVALID_MEM_OBJECT);
 
   if (IS_IMAGE1D_BUFFER (dst_image))

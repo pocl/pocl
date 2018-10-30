@@ -43,6 +43,8 @@ POname(clEnqueueCopyBufferRect)(cl_command_queue command_queue,
 {
   _cl_command_node *cmd = NULL;
 
+  POCL_RETURN_ERROR_COND ((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+
   cl_int err = pocl_rect_copy (
     command_queue,
     CL_COMMAND_COPY_BUFFER_RECT,
