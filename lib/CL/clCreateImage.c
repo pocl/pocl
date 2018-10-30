@@ -164,6 +164,12 @@ CL_API_SUFFIX__VERSION_1_2
       {
         POCL_GOTO_ERROR_COND ((image_desc->buffer == NULL),
                               CL_INVALID_MEM_OBJECT);
+
+        POCL_GOTO_ERROR_ON   ((image_desc->buffer->parent != NULL),
+                              CL_INVALID_MEM_OBJECT,
+                              "pocl does not support Image 1D"
+                              " Buffer over SubBuffers\n");
+
         POCL_GOTO_ERROR_COND ((image_desc->buffer->size < size),
                               CL_INVALID_MEM_OBJECT);
 
