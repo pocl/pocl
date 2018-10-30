@@ -469,17 +469,23 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
         {
           cl_mem buf = *(cl_mem *) (al->value);
 
-
-          POCL_GOTO_ON_SUB_MISALIGN (buf, command_queue);
-
-          if (buf->parent != NULL)
-          {
-            *(cl_mem *)(al->value) = buf->parent;
-            al->offset = buf->origin;
-            buf = buf->parent;
-          }
+          if (a->type == POCL_ARG_TYPE_IMAGE)
+            {
+              POCL_GOTO_ON_UNSUPPORTED_IMAGE (buf, command_queue->device);
+            }
           else
-            al->offset = 0;
+            {
+              POCL_GOTO_ON_SUB_MISALIGN (buf, command_queue);
+
+              if (buf->parent != NULL)
+              {
+                  *(cl_mem *)(al->value) = buf->parent;
+                  al->offset = buf->origin;
+                  buf = buf->parent;
+              }
+              else
+                al->offset = 0;
+            }
 
           mem_list[buffer_count++] = buf;
           POname(clRetainMemObject) (buf);
