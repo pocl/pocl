@@ -123,9 +123,10 @@ extern "C" {
     #define __func__ __FUNCTION__
     #endif
 
-        int pocl_fprintf_err (const char* format, ...);
         #define POCL_DEBUG_HEADER(FILTER, FILTER_TYPE) \
             pocl_debug_print_header (__func__, __LINE__, #FILTER, FILTER_TYPE);
+        extern void pocl_debug_output_lock ();
+        extern void pocl_debug_output_unlock ();
         extern void pocl_debug_messages_setup (const char *debug);
         extern void pocl_debug_print_header (const char * func, unsigned line,
                                              const char* filter, int filter_type);
@@ -141,31 +142,36 @@ extern "C" {
           pocl_debug_measure_start(&pocl_time_start_ ## SUFFIX);
 
         #define POCL_MEASURE_FINISH(SUFFIX) \
-          pocl_debug_measure_finish(&pocl_time_start_ ## SUFFIX, \
-                         &pocl_time_finish_ ## SUFFIX, "API: " #SUFFIX, \
+          pocl_debug_measure_finish (&pocl_time_start_ ## SUFFIX,           \
+                         &pocl_time_finish_ ## SUFFIX, "API: " #SUFFIX,     \
                          __func__, __LINE__);
 
     #define POCL_MSG_PRINT_F(FILTER, TYPE, ERRCODE, ...)                    \
         do {                                                                \
+          pocl_debug_output_lock ();                                        \
             if (pocl_debug_messages_filter & POCL_DEBUG_FLAG_ ## FILTER) {  \
                 POCL_DEBUG_HEADER(FILTER, POCL_FILTER_TYPE_ ## TYPE)        \
                 if (stderr_is_a_tty)                                        \
-                  pocl_fprintf_err ("%s", POCL_COLOR_BOLDRED                \
+                  fprintf (stderr, "%s", POCL_COLOR_BOLDRED                 \
                                     ERRCODE " "  POCL_COLOR_RESET);         \
                 else                                                        \
-                  pocl_fprintf_err ("%s", ERRCODE " ");                     \
-                pocl_fprintf_err (__VA_ARGS__);                             \
+                  fprintf (stderr, "%s", ERRCODE " ");                      \
+                fprintf (stderr, __VA_ARGS__);                              \
             }                                                               \
+          pocl_debug_output_unlock ();                                      \
         } while (0)
 
     #define POCL_MSG_PRINT2(FILTER, func, line, ...)                        \
         do {                                                                \
+          pocl_debug_output_lock ();                                        \
             if (pocl_debug_messages_filter & POCL_DEBUG_FLAG_ ## FILTER) {  \
                 pocl_debug_print_header (func, line,                        \
                                  #FILTER, POCL_FILTER_TYPE_INFO);           \
-                pocl_fprintf_err (__VA_ARGS__);                             \
+                fprintf  (stderr, __VA_ARGS__);                             \
             }                                                               \
+          pocl_debug_output_unlock ();                                      \
         } while (0)
+
 
     #define POCL_MSG_WARN2(errcode, ...) \
               POCL_MSG_PRINT_F(WARNING, WARN, errcode, __VA_ARGS__)
