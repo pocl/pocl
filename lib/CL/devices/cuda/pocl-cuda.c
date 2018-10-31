@@ -926,7 +926,8 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
                 /* Get device pointer */
                 cl_mem mem = *(void **)arguments[i].value;
                 CUdeviceptr src
-                    = (CUdeviceptr)mem->device_ptrs[device->dev_id].mem_ptr;
+                    = (CUdeviceptr)mem->device_ptrs[device->dev_id].mem_ptr
+                      + arguments[i].offset;
 
                 size_t align = kdata->alignments[i];
                 if (constantMemBytes % align)
@@ -950,7 +951,8 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
                 if (arguments[i].value)
                   {
                     cl_mem mem = *(void **)arguments[i].value;
-                    params[i] = &mem->device_ptrs[device->dev_id].mem_ptr;
+                    params[i] = &mem->device_ptrs[device->dev_id].mem_ptr
+                                + arguments[i].offset;
 
 #if defined __arm__
                     /* On ARM with USE_HOST_PTR, perform explicit copy to

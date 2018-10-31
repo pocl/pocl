@@ -62,6 +62,8 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
   if (pocl_buffer_boundcheck (buffer, offset, size) != CL_SUCCESS)
     return CL_INVALID_VALUE;
 
+  POCL_CONVERT_SUBBUFFER_OFFSET (buffer, offset);
+
   errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
                                         event_wait_list);
   if (errcode != CL_SUCCESS)

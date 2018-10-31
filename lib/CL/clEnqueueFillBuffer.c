@@ -77,6 +77,8 @@ CL_API_SUFFIX__VERSION_1_2
 
   POCL_RETURN_ON_SUB_MISALIGN (buffer, command_queue);
 
+  POCL_CONVERT_SUBBUFFER_OFFSET (buffer, offset);
+
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_FILL_BUFFER,
                                  event, num_events_in_wait_list,
                                  event_wait_list, 1, &buffer);

@@ -584,13 +584,17 @@ pocl_basic_run
              that case we must pass the same NULL forward to the kernel.
              Otherwise, the user must have created a buffer with per device
              pointers stored in the cl_mem. */
+          arguments[i] = malloc (sizeof (void *));
           if (al->value == NULL)
             {
-              arguments[i] = malloc (sizeof (void *));
               *(void **)arguments[i] = NULL;
             }
           else
-            arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[cmd->device->dev_id].mem_ptr);
+            {
+              cl_mem m = (*(cl_mem *)(al->value));
+              void *ptr = m->device_ptrs[cmd->device->dev_id].mem_ptr;
+              *(void **)arguments[i] = (char *)ptr + al->offset;
+            }
         }
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
         {
@@ -668,8 +672,7 @@ pocl_basic_run
             POCL_MEM_FREE (*(void **)(arguments[i]));
           POCL_MEM_FREE(arguments[i]);
         }
-      else if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER
-               && *(void **)arguments[i] == NULL)
+      else if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
         {
           POCL_MEM_FREE(arguments[i]);
         }

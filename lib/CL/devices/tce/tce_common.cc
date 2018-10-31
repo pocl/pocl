@@ -388,17 +388,6 @@ pocl_tce_read (void *data,
   d->copyDeviceToHost (chunk->start_address + offset, dst_host_ptr, size);
 }
 
-void *
-pocl_tce_create_sub_buffer (void */*device_data*/, void* buffer, size_t origin, size_t size)
-{
-#ifdef DEBUG_TTA_DRIVER
-  printf("host: create sub buffer %lu (buf start) + %zu size: %zu\n",
-         ((chunk_info_t*)buffer)->start_address, origin, size);
-#endif
-
-  return create_sub_chunk ((chunk_info_t*)buffer, origin, size);
-}
-
 chunk_info_t*
 pocl_tce_malloc_local (void *device_data, size_t size) 
 {
@@ -602,8 +591,13 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
           if (al->value == NULL)
             dev_cmd.args[i] = 0;
           else
-            dev_cmd.args[i] = byteswap_uint32_t 
-              (((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[d->parent->dev_id].mem_ptr))->start_address, d->needsByteSwap);
+            {
+              cl_mem m = (*(cl_mem *)(al->value));
+              void *p = m->device_ptrs[d->parent->dev_id].mem_ptr;
+              dev_cmd.args[i] = byteswap_uint32_t (
+                  ((chunk_info_t *)p)->start_address + al->offset,
+                  d->needsByteSwap);
+            }
         }
       else /* The scalar values should be byteswapped by the user. */
         {

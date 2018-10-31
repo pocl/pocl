@@ -83,6 +83,9 @@ POname(clEnqueueWriteBufferRect)(cl_command_queue command_queue,
 
   POCL_CHECK_DEV_IN_CMDQ;
 
+  size_t dst_offset = 0;
+  POCL_CONVERT_SUBBUFFER_OFFSET (buffer, dst_offset);
+
   pocl_create_command (&cmd, command_queue, CL_COMMAND_WRITE_BUFFER_RECT,
                        event, num_events_in_wait_list, event_wait_list, 1,
                        &buffer);
@@ -93,7 +96,7 @@ POname(clEnqueueWriteBufferRect)(cl_command_queue command_queue,
   cmd->command.write_rect.host_origin[0] = host_origin[0];
   cmd->command.write_rect.host_origin[1] = host_origin[1];
   cmd->command.write_rect.host_origin[2] = host_origin[2];
-  cmd->command.write_rect.buffer_origin[0] = buffer_origin[0];
+  cmd->command.write_rect.buffer_origin[0] = dst_offset + buffer_origin[0];
   cmd->command.write_rect.buffer_origin[1] = buffer_origin[1];
   cmd->command.write_rect.buffer_origin[2] = buffer_origin[2];
   cmd->command.write_rect.region[0] = region[0];

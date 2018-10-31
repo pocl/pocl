@@ -58,8 +58,11 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
       "or CL_MEM_HOST_NO_ACCESS\n");
 
   POCL_RETURN_ERROR_COND((ptr == NULL), CL_INVALID_VALUE);
+
   if (pocl_buffer_boundcheck (buffer, offset, size) != CL_SUCCESS)
     return CL_INVALID_VALUE;
+
+  POCL_CONVERT_SUBBUFFER_OFFSET (buffer, offset);
 
   errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
                                         event_wait_list);
@@ -68,7 +71,8 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
 
   POCL_CHECK_DEV_IN_CMDQ;
 
-  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_BUFFER, 
+  errcode = pocl_create_command (&cmd, command_queue,
+                                 CL_COMMAND_READ_BUFFER,
                                  event, num_events_in_wait_list, 
                                  event_wait_list, 1, &buffer);
   if (errcode != CL_SUCCESS)

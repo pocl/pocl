@@ -51,8 +51,6 @@
   void pocl_##__DRV__##_free_queue (cl_command_queue queue);                  \
   cl_int pocl_##__DRV__##_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, \
                                          void *host_ptr);                     \
-  void *pocl_##__DRV__##_create_sub_buffer (void *device_data, void *buffer,  \
-                                            size_t origin, size_t size);      \
   void pocl_##__DRV__##_free (cl_device_id device, cl_mem mem_obj);           \
   void pocl_##__DRV__##_read (void *data, void *__restrict__ dst_host_ptr,    \
                               pocl_mem_identifier *src_mem_id,                \

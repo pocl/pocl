@@ -82,6 +82,8 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
 
   POCL_CHECK_DEV_IN_CMDQ;
 
+  POCL_CONVERT_SUBBUFFER_OFFSET (buffer, offset);
+
   /* Ensure the parent buffer is not freed prematurely. */
   POname(clRetainMemObject) (buffer);
   must_release = 1;

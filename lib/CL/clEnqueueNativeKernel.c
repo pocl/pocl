@@ -84,10 +84,14 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
           return CL_INVALID_MEM_OBJECT;
         }
 
+      cl_mem m = mem_list[i];
+      if (m->parent != NULL)
+        m = m->parent;
+
       /* put the device ptr of the clmem in the argument */
-      buf = mem_list[i]->device_ptrs[command_queue->device->dev_id].mem_ptr;
-      mem_list[i]->owning_device = command_queue->device;
-      POname(clRetainMemObject) (mem_list[i]);
+      buf = m->device_ptrs[command_queue->device->dev_id].mem_ptr;
+      m->owning_device = command_queue->device;
+      POname (clRetainMemObject) (m);
       /* args_mem_loc is a pointer relative to the original args, since we
        * recopy them, we must do some relocation */
       ptrdiff_t offset = (uintptr_t) loc - (uintptr_t) args;

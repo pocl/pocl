@@ -476,6 +476,7 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
           {
             *(cl_mem *)(al->value) = buf->parent;
             al->offset = buf->origin;
+            buf = buf->parent;
           }
           else
             al->offset = 0;
@@ -552,6 +553,7 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
       struct pocl_argument *arg = &command_node->command.run.arguments[i];
       size_t arg_alloc_size = kernel->dyn_arguments[i].size;
       arg->size = arg_alloc_size;
+      arg->offset = kernel->dyn_arguments[i].offset;
 
       if (kernel->dyn_arguments[i].value == NULL)
         {

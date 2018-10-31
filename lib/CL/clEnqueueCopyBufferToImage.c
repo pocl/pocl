@@ -51,6 +51,8 @@ CL_API_SUFFIX__VERSION_1_0
   if (err != CL_SUCCESS)
     return err;
 
+  POCL_CONVERT_SUBBUFFER_OFFSET (src_buffer, src_offset);
+
   cl_device_id dev = command_queue->device;
 
   cmd->command.write_image.dst_mem_id = &dst_image->device_ptrs[dev->dev_id];

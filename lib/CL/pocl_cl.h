@@ -268,6 +268,7 @@ typedef pthread_mutex_t pocl_lock_t;
 
 typedef struct pocl_argument {
   uint64_t size;
+  uint64_t offset;
   void *value;
   /* 1 if this argument has been set by clSetKernelArg */
   int is_set;
@@ -377,7 +378,6 @@ struct pocl_device_ops {
 
   /* allocate a buffer in device memory */
   cl_int (*alloc_mem_obj) (cl_device_id device, cl_mem mem_obj, void* host_ptr);
-  void *(*create_sub_buffer) (void *data, void* buffer, size_t origin, size_t size);
   /* free a device buffer */
   void (*free) (cl_device_id device, cl_mem mem_obj);
 
@@ -855,6 +855,12 @@ struct _cl_command_queue {
 #define POCL_GOTO_ON_SUB_MISALIGN(mem, que)                                   \
   POCL_ON_SUB_MISALIGN(mem, que, POCL_GOTO_ERROR_ON)
 
+#define POCL_CONVERT_SUBBUFFER_OFFSET(mem, offset)                            \
+  if (mem->parent != NULL)                                                    \
+    {                                                                         \
+      offset += mem->origin;                                                  \
+      mem = mem->parent;                                                      \
+    }
 
 typedef struct _cl_mem cl_mem_t;
 struct _cl_mem {

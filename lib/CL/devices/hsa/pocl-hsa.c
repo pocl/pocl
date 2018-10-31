@@ -975,20 +975,25 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
               cl_mem m = *(cl_mem *)al->value;
               uint64_t dev_ptr = 0;
               if (m->device_ptrs)
-		{
-		  dev_ptr = (uint64_t)m->device_ptrs[cmd->device->dev_id].mem_ptr;
-		  if (m->flags & CL_MEM_USE_HOST_PTR &&
-		      d->agent_profile == HSA_PROFILE_BASE)
-		    {
-		      POCL_MSG_PRINT_INFO
-			("HSA: Copy HOST_PTR allocated %lu byte buffer "
-			 "from %p to %p due to having a BASE profile agent.\n",
-			 m->size, m->mem_host_ptr, dev_ptr);
-		      hsa_memory_copy((void*)dev_ptr, m->mem_host_ptr, m->size);
-		    }
-		}
+                {
+                  dev_ptr
+                      = (uint64_t)m->device_ptrs[cmd->device->dev_id].mem_ptr;
+                  if (m->flags & CL_MEM_USE_HOST_PTR
+                      && d->agent_profile == HSA_PROFILE_BASE)
+                    {
+                      POCL_MSG_PRINT_INFO (
+                          "HSA: Copy HOST_PTR allocated %lu byte buffer "
+                          "from %p to %p due to having a BASE profile "
+                          "agent.\n",
+                          m->size, m->mem_host_ptr, dev_ptr);
+                      hsa_memory_copy ((void *)dev_ptr, m->mem_host_ptr,
+                                       m->size);
+                    }
+                }
               else
-		dev_ptr = (uint64_t)m->mem_host_ptr;
+                dev_ptr = (uint64_t)m->mem_host_ptr;
+
+              dev_ptr += al->offset;
               memcpy (write_pos, &dev_ptr, sizeof(uint64_t));
             }
           write_pos += sizeof(uint64_t);

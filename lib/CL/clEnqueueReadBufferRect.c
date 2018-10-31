@@ -85,15 +85,9 @@ POname(clEnqueueReadBufferRect)(cl_command_queue command_queue,
 
   POCL_CHECK_DEV_IN_CMDQ;
 
-  POCL_MSG_PRINT_INFO("borigin %u %u %u horigin %u %u %u row_pitch %lu slice pitch "
-                      "%lu host_row_pitch %lu host_slice_pitch %lu\n",
-                      (unsigned)buffer_origin[0], (unsigned)buffer_origin[1], 
-                      (unsigned)buffer_origin[2], 
-                      (unsigned)host_origin[0], (unsigned)host_origin[1], 
-                      (unsigned)host_origin[2], 
-                      (unsigned long)buffer_row_pitch, (unsigned long)buffer_slice_pitch, 
-                      (unsigned long)host_row_pitch, (unsigned long)host_slice_pitch);
-  
+  size_t src_offset = 0;
+  POCL_CONVERT_SUBBUFFER_OFFSET (buffer, src_offset);
+
   pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_BUFFER_RECT,
                        event, num_events_in_wait_list, event_wait_list, 1, 
                        &buffer);
@@ -104,7 +98,7 @@ POname(clEnqueueReadBufferRect)(cl_command_queue command_queue,
   cmd->command.read_rect.host_origin[0] = host_origin[0];
   cmd->command.read_rect.host_origin[1] = host_origin[1];
   cmd->command.read_rect.host_origin[2] = host_origin[2];
-  cmd->command.read_rect.buffer_origin[0] = buffer_origin[0];
+  cmd->command.read_rect.buffer_origin[0] = src_offset + buffer_origin[0];
   cmd->command.read_rect.buffer_origin[1] = buffer_origin[1];
   cmd->command.read_rect.buffer_origin[2] = buffer_origin[2];
   cmd->command.read_rect.region[0] = region[0];

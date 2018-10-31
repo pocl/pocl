@@ -50,6 +50,8 @@ POname(clEnqueueCopyImageToBuffer)(cl_command_queue  command_queue ,
   if (err != CL_SUCCESS)
     return err;
 
+  POCL_CONVERT_SUBBUFFER_OFFSET (dst_buffer, dst_offset);
+
   cl_device_id dev = command_queue->device;
 
   cmd->command.read_image.src_mem_id = &src_image->device_ptrs[dev->dev_id];
