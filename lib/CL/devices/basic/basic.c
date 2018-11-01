@@ -712,12 +712,12 @@ pocl_basic_copy (void *data,
                  size_t src_offset,
                  size_t size)
 {
-  void *__restrict__ src_ptr = src_mem_id->mem_ptr;
-  void *__restrict__ dst_ptr = dst_mem_id->mem_ptr;
-  if (src_ptr == dst_ptr)
+  char *__restrict__ src_ptr = src_mem_id->mem_ptr;
+  char *__restrict__ dst_ptr = dst_mem_id->mem_ptr;
+  if ((src_ptr + src_offset) == (dst_ptr + dst_offset))
     return;
 
-  memcpy ((char *)dst_ptr + dst_offset, (char *)src_ptr + src_offset, size);
+  memcpy (dst_ptr + dst_offset, src_ptr + src_offset, size);
 }
 
 void
