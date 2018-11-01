@@ -8,56 +8,6 @@
 #pragma GCC visibility push(hidden)
 #endif
 
-/* locking macros */
-#define PTHREAD_LOCK(__lock)                                                  \
-  do                                                                          \
-    {                                                                         \
-      int r = pthread_mutex_lock (__lock);                                    \
-      assert (r == 0);                                                        \
-    }                                                                         \
-  while (0)
-#define PTHREAD_UNLOCK(__lock)                                                \
-  do                                                                          \
-    {                                                                         \
-      int r = pthread_mutex_unlock (__lock);                                  \
-      assert (r == 0);                                                        \
-    }                                                                         \
-  while (0)
-#define PTHREAD_INIT_LOCK(__lock)                                             \
-  do                                                                          \
-    {                                                                         \
-      int r = pthread_mutex_init (__lock, NULL);                              \
-      assert (r == 0);                                                        \
-    }                                                                         \
-  while (0)
-#define PTHREAD_DESTROY_LOCK(__lock)                                          \
-  do                                                                          \
-    {                                                                         \
-      int r = pthread_mutex_destroy (__lock);                                 \
-      assert (r == 0);                                                        \
-    }                                                                         \
-  while (0)
-
-/* If available, use an Adaptive mutex for locking in the pthread driver,
-   otherwise fallback to simple mutexes */
-#define PTHREAD_FAST_LOCK_T pthread_mutex_t
-#define PTHREAD_FAST_LOCK(l) PTHREAD_LOCK(l)
-#define PTHREAD_FAST_UNLOCK(l) PTHREAD_UNLOCK(l)
-#ifdef PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
-  #define PTHREAD_FAST_INIT(l) \
-    do { \
-      pthread_mutexattr_t attrs; \
-      pthread_mutexattr_init (&attrs); \
-      int r = pthread_mutexattr_settype (&attrs, PTHREAD_MUTEX_ADAPTIVE_NP); \
-      assert (r == 0); \
-      pthread_mutex_init(&l, &attrs); \
-      pthread_mutexattr_destroy(&attrs);\
-    } while (0)
-#else
-  #define PTHREAD_FAST_INIT(l) pthread_mutex_init(&l, NULL);
-#endif
-#define PTHREAD_FAST_DESTROY(l) PTHREAD_DESTROY_LOCK(l)
-
 typedef struct kernel_run_command kernel_run_command;
 struct kernel_run_command
 {
