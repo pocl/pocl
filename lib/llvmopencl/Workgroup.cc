@@ -1174,8 +1174,11 @@ createGridLauncher(Module &Mod, Function *KernFunc, Function *WGFunc,
     LLVMBuildPointerCast(Builder, WGF, ArgTypes[0], "wg_func"),
     LLVMBuildPointerCast(Builder, ArgBuffer, ArgTypes[1], "args"),
     LLVMBuildPointerCast(Builder, PoclCtx, ArgTypes[2], "ctx")};
-  LLVMBuildCall(Builder, RunnerFunc, Args, 3, "");
+  LLVMValueRef Call = LLVMBuildCall(Builder, RunnerFunc, Args, 3, "");
   LLVMBuildRetVoid(Builder);
+
+  InlineFunctionInfo IFI;
+  InlineFunction(dyn_cast<CallInst>(llvm::unwrap(Call)), IFI);
 }
 
 /**
