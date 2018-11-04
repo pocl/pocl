@@ -616,21 +616,27 @@ compile_and_link_program(int compile_program,
       /* clCreateProgramWithSource */
       if (program->source)
         {
-          POCL_MSG_PRINT_INFO("building from sources for device %d\n", device_i);
 #ifdef OCS_AVAILABLE
-          error = pocl_llvm_build_program(
-              program, device_i, program->compiler_options, program_bc_path,
-              num_input_headers, input_headers, header_include_names,
-              (create_library ? 0 : link_program));
-          POCL_GOTO_ERROR_ON ((error != 0), build_error_code,
-                              "pocl_llvm_build_program() failed\n");
-#else
-          APPEND_TO_MAIN_BUILD_LOG (
-              "Cannot build a program from sources with pocl "
-              "that does not have online compiler support\n");
-          POCL_GOTO_ERROR_ON(1, CL_COMPILER_NOT_AVAILABLE,
-                             "%s", program->main_build_log);
+          if (device->compiler_available == CL_TRUE)
+            {
+              POCL_MSG_PRINT_INFO ("building from sources for device %d\n",
+                                   device_i);
+              error = pocl_llvm_build_program (
+                  program, device_i, program->compiler_options,
+                  program_bc_path, num_input_headers, input_headers,
+                  header_include_names, (create_library ? 0 : link_program));
+              POCL_GOTO_ERROR_ON ((error != 0), build_error_code,
+                                  "pocl_llvm_build_program() failed\n");
+            }
+          else
 #endif
+            {
+              APPEND_TO_MAIN_BUILD_LOG (
+                  "Cannot build a program from sources with pocl "
+                  "that does not have online compiler support\n");
+              POCL_GOTO_ERROR_ON (1, CL_COMPILER_NOT_AVAILABLE, "%s",
+                                  program->main_build_log);
+            }
         }
       /* clCreateProgramWithBinaries */
       else if (program->binaries[device_i]
