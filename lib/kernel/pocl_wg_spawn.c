@@ -34,7 +34,8 @@ _pocl_finish_all_wgs (struct pocl_context *);
    @param args The flat argument buffer.
    @param pc The context struct for getting the dimensions etc.  */
 void
-_pocl_run_all_wgs (void *wg_func_ptr, uint8_t *args, struct pocl_context *pc)
+_pocl_run_all_wgs (void *restrict wg_func_ptr, uint8_t *restrict args,
+		   struct pocl_context *restrict pc)
 {
   for (int gz = 0; gx < pc->num_groups[2]; ++gz)
     for (int gy = 0; gy < pc->num_groups[1]; ++gy)
