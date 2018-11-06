@@ -249,6 +249,9 @@ Workgroup::runOnModule(Module &M)
     } else if (currentPoclDevice->arg_buffer_launcher) {
       Function *WGLauncher =
         createArgBufferWorkgroupLauncher(M, L, OrigKernel.getName().str());
+      L->addFnAttr(Attribute::NoInline);
+      L->removeFnAttr(Attribute::AlwaysInline);
+      WGLauncher->addFnAttr(Attribute::AlwaysInline);
       createGridLauncher(M, L, WGLauncher, OrigKernel.getName().str());
     } else {
       createDefaultWorkgroupLauncher(M, L);
@@ -587,7 +590,7 @@ static Function *createWrapper(Module &M, Function *F,
   } else
     L = Function::Create(ft,
                          Function::ExternalLinkage,
-                         "_pocl_launcher_" + funcName,
+                         "_pocl_kernel_" + funcName,
                          &M);
 
   SmallVector<Value *, 8> arguments;

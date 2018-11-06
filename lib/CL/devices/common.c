@@ -1057,16 +1057,16 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *cmd,
     if (ci->dlhandle != NULL && dl_error == NULL)
       {
         snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
-                  "_pocl_launcher_%s_workgroup",
-                  cmd->command.run.kernel->name);
+                  "_pocl_kernel_%s_workgroup",
+		  cmd->command.run.kernel->name);
         ci->wg = (pocl_workgroup)lt_dlsym (ci->dlhandle, workgroup_string);
         dl_error = lt_dlerror ();
         if (ci->wg == NULL)
           {
             // Older osx dyld APIs need the name without the underscore
             snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
-                      "pocl_launcher_%s_workgroup",
-                      cmd->command.run.kernel->name);
+                      "pocl_kernel_%s_workgroup",
+		      cmd->command.run.kernel->name);
             ci->wg = (pocl_workgroup)lt_dlsym (ci->dlhandle, workgroup_string);
             dl_error = lt_dlerror ();
           }
