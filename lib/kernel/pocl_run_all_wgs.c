@@ -29,8 +29,9 @@ void
 _pocl_finish_all_wgs (struct pocl_context *);
 
 void
-_pocl_spawn_wg (void *wg_func_ptr, uint8_t *args, uint8_t *ctx,
-                uint32_t group_x, uint32_t group_y, uint32_t group_z);
+_pocl_spawn_wg (void *restrict wg_func_ptr, uint8_t *restrict args,
+		uint8_t *restrict ctx,
+		uint32_t group_x, uint32_t group_y, uint32_t group_z);
 
 /* Launches all the work-groups in the grid using the given work group function.
    Blocks until all WGs have been executed to the end.
@@ -39,7 +40,8 @@ _pocl_spawn_wg (void *wg_func_ptr, uint8_t *args, uint8_t *ctx,
    @param args The flat argument buffer.
    @param pc The context struct for getting the dimensions etc.  */
 void
-_pocl_run_all_wgs (void *wg_func_ptr, uint8_t *args, struct pocl_context *pc)
+_pocl_run_all_wgs (void *restrict wg_func_ptr, uint8_t *restrict args,
+		   struct pocl_context *restrict pc)
 {
   for (uint32_t gz = 0; gz < pc->num_groups[2]; ++gz)
     for (uint32_t gy = 0; gy < pc->num_groups[1]; ++gy)
