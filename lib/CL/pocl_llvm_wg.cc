@@ -290,8 +290,10 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
   // with context struct accesses. TODO: A cleaner and a more robust way would
   // be to add hidden context struct parameters to the builtins that need the
   // context data and fix the calls early.
-  if (device->workgroup_pass)
+  if (device->workgroup_pass) {
     passes.push_back("workgroup");
+    passes.push_back("always-inline");
+  }
 
   // Attempt to move all allocas to the entry block to avoid the need for
   // dynamic stack which is problematic for some architectures.
