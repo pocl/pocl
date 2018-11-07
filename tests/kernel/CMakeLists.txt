@@ -305,7 +305,7 @@ set_property(TEST
   "kernel/test_shuffle_float"
   "kernel/test_shuffle_long"
   "kernel/test_shuffle_ulong"
-  "kernel/test_shuffle_double"
+  ${EXTRA_TESTS}
   "kernel/test_as_type"
   "kernel/test_convert_type_1"
   "kernel/test_convert_type_2"
@@ -337,7 +337,7 @@ set_property(TEST
   "kernel/test_shuffle_float"
   "kernel/test_shuffle_long"
   "kernel/test_shuffle_ulong"
-  "kernel/test_shuffle_double"
+  ${EXTRA_TESTS}
   APPEND PROPERTY LABELS "hsa-unity")
 
 if(LLVM_3_7)
