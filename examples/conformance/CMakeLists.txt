@@ -569,14 +569,31 @@ add_test(NAME "${TS_NAME}_images_samplerless_reads_2Darray_pitch"
 
 #***************************************************************************
 
-add_test(NAME "${TS_NAME}_integer_ops_1"
+add_test(NAME "${TS_NAME}_integer_ops_basic"
          COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops" integer_clz  integer_hadd  integer_rhadd  integer_mul_hi  integer_rotate  integer_clamp  integer_mad_sat  integer_mad_hi  integer_min  integer_max  integer_upsample  integer_abs  integer_abs_diff  integer_add_sat  integer_sub_sat  integer_addAssign  integer_subtractAssign  integer_multiplyAssign  integer_divideAssign  integer_moduloAssign  integer_andAssign  integer_orAssign  integer_exclusiveOrAssign)
 
-add_test(NAME "${TS_NAME}_integer_ops_2"
-         COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops" unary_ops_increment  unary_ops_decrement  unary_ops_full  integer_mul24  integer_mad24  long_math  long_logic  long_shift  long_compare  ulong_math  ulong_logic  ulong_shift  ulong_compare  int_math  int_logic  int_shift  int_compare  uint_math  uint_logic  uint_shift  uint_compare  short_math  short_logic  short_shift  short_compare  ushort_math  ushort_logic  ushort_shift  ushort_compare  char_math  char_logic  char_shift  char_compare  uchar_math  uchar_logic  uchar_shift  uchar_compare  popcount  vector_scalar)
-
-add_test(NAME "${TS_NAME}_integer_ops_3"
-         COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops" quick_long_math  quick_long_logic  quick_long_shift  quick_long_compare  quick_ulong_math  quick_ulong_logic  quick_ulong_shift  quick_ulong_compare  quick_int_math  quick_int_logic  quick_int_shift  quick_int_compare  quick_uint_math  quick_uint_logic  quick_uint_shift  quick_uint_compare  quick_short_math  quick_short_logic  quick_short_shift  quick_short_compare  quick_ushort_math  quick_ushort_logic  quick_ushort_shift  quick_ushort_compare  quick_char_math  quick_char_logic  quick_char_shift  quick_char_compare  quick_uchar_math  quick_uchar_logic  quick_uchar_shift  quick_uchar_compare)
+add_test(NAME "${TS_NAME}_integer_ops_unary"
+         COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops"  unary_ops_increment  unary_ops_decrement  unary_ops_full)
+add_test(NAME "${TS_NAME}_integer_ops_i24"
+         COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops"  integer_mul24  integer_mad24 )
+add_test(NAME "${TS_NAME}_integer_ops_long"
+         COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops"  long_math  long_logic long_shift  long_compare  )
+add_test(NAME "${TS_NAME}_integer_ops_ulong"
+         COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops"  ulong_math  ulong_logic  ulong_shift  ulong_compare )
+add_test(NAME "${TS_NAME}_integer_ops_int"
+         COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops"  int_math  int_logic  int_shift  int_compare )
+add_test(NAME "${TS_NAME}_integer_ops_uint"
+         COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops"  uint_math  uint_logic  uint_shift  uint_compare )
+add_test(NAME "${TS_NAME}_integer_ops_short"
+         COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops"  short_math  short_logic  short_shift  short_compare )
+add_test(NAME "${TS_NAME}_integer_ops_ushort"
+         COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops"  ushort_math  ushort_logic  ushort_shift  ushort_compare )
+add_test(NAME "${TS_NAME}_integer_ops_char"
+         COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops"  char_math  char_logic  char_shift  char_compare  )
+add_test(NAME "${TS_NAME}_integer_ops_uchar"
+         COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops"  uchar_math  uchar_logic  uchar_shift  uchar_compare )
+add_test(NAME "${TS_NAME}_integer_ops_other"
+         COMMAND "${TS_BUILDDIR}/integer_ops/test_integer_ops"  popcount  vector_scalar )
 
 #***************************************************************************
 
@@ -851,8 +868,15 @@ add_test(NAME "${TS_NAME}_select_long_long"
 
 add_test(NAME "${TS_NAME}_thread_dimensions_quick"
          COMMAND "${TS_BUILDDIR}/thread_dimensions/test_thread_dimensions" quick_1d_explicit_local  quick_2d_explicit_local  quick_3d_explicit_local  quick_1d_implicit_local  quick_2d_implicit_local  quick_3d_implicit_local)
-add_test(NAME "${TS_NAME}_thread_dimensions_full"
-         COMMAND "${TS_BUILDDIR}/thread_dimensions/test_thread_dimensions" full_1d_explicit_local  full_2d_explicit_local  full_3d_explicit_local  full_1d_implicit_local  full_2d_implicit_local  full_3d_implicit_local)
+
+add_test(NAME "${TS_NAME}_thread_dimensions_full_12_im"
+         COMMAND "${TS_BUILDDIR}/thread_dimensions/test_thread_dimensions" full_1d_implicit_local  full_2d_implicit_local)
+add_test(NAME "${TS_NAME}_thread_dimensions_full_3_im"
+         COMMAND "${TS_BUILDDIR}/thread_dimensions/test_thread_dimensions" full_3d_implicit_local)
+add_test(NAME "${TS_NAME}_thread_dimensions_full_12_ex"
+         COMMAND "${TS_BUILDDIR}/thread_dimensions/test_thread_dimensions" full_1d_explicit_local  full_2d_explicit_local)
+add_test(NAME "${TS_NAME}_thread_dimensions_full_3_ex"
+         COMMAND "${TS_BUILDDIR}/thread_dimensions/test_thread_dimensions" full_3d_explicit_local)
 
 add_test(NAME "${TS_NAME}_vecalign"
          COMMAND "${TS_BUILDDIR}/vec_align/test_vecalign" )
@@ -1043,9 +1067,18 @@ set_tests_properties(
     "${TS_NAME}_images_samplerless_reads_3D_pitch"
     "${TS_NAME}_images_samplerless_reads_1Darray_pitch"
     "${TS_NAME}_images_samplerless_reads_2Darray_pitch"
-    "${TS_NAME}_integer_ops_1"
-    "${TS_NAME}_integer_ops_2"
-    "${TS_NAME}_integer_ops_3"
+    "${TS_NAME}_integer_ops_basic"
+    "${TS_NAME}_integer_ops_unary"
+    "${TS_NAME}_integer_ops_i24"
+    "${TS_NAME}_integer_ops_long"
+    "${TS_NAME}_integer_ops_ulong"
+    "${TS_NAME}_integer_ops_int"
+    "${TS_NAME}_integer_ops_uint"
+    "${TS_NAME}_integer_ops_short"
+    "${TS_NAME}_integer_ops_ushort"
+    "${TS_NAME}_integer_ops_char"
+    "${TS_NAME}_integer_ops_uchar"
+    "${TS_NAME}_integer_ops_other"
 
     "${TS_NAME}_math_add"
     "${TS_NAME}_math_assignment"
@@ -1142,7 +1175,10 @@ set_tests_properties(
     "${TS_NAME}_select_long_ulong"
     "${TS_NAME}_select_long_long"
     "${TS_NAME}_thread_dimensions_quick"
-    "${TS_NAME}_thread_dimensions_full"
+    "${TS_NAME}_thread_dimensions_full_12_im"
+    "${TS_NAME}_thread_dimensions_full_12_ex"
+    "${TS_NAME}_thread_dimensions_full_3_im"
+    "${TS_NAME}_thread_dimensions_full_3_ex"
     "${TS_NAME}_vecalign"
     "${TS_NAME}_vecstep"
   PROPERTIES
@@ -1506,9 +1542,18 @@ set_tests_properties(
     "${TS_NAME}_images_samplerless_reads_1D"
     "${TS_NAME}_images_samplerless_reads_2D"
     "${TS_NAME}_images_samplerless_reads_1Darray"
-    "${TS_NAME}_integer_ops_1"
-    "${TS_NAME}_integer_ops_2"
-    "${TS_NAME}_integer_ops_3"
+    "${TS_NAME}_integer_ops_basic"
+    "${TS_NAME}_integer_ops_unary"
+    "${TS_NAME}_integer_ops_i24"
+    "${TS_NAME}_integer_ops_long"
+    "${TS_NAME}_integer_ops_ulong"
+    "${TS_NAME}_integer_ops_int"
+    "${TS_NAME}_integer_ops_uint"
+    "${TS_NAME}_integer_ops_short"
+    "${TS_NAME}_integer_ops_ushort"
+    "${TS_NAME}_integer_ops_char"
+    "${TS_NAME}_integer_ops_uchar"
+    "${TS_NAME}_integer_ops_other"
     "${TS_NAME}_mem_host_flags"
     "${TS_NAME}_multiples"
     "${TS_NAME}_printf"
@@ -1520,7 +1565,10 @@ set_tests_properties(
     "${TS_NAME}_select_int_int"
     "${TS_NAME}_select_long_long"
     "${TS_NAME}_thread_dimensions_quick"
-    "${TS_NAME}_thread_dimensions_full"
+    "${TS_NAME}_thread_dimensions_full_12_im"
+    "${TS_NAME}_thread_dimensions_full_12_ex"
+    "${TS_NAME}_thread_dimensions_full_3_im"
+    "${TS_NAME}_thread_dimensions_full_3_ex"
     "${TS_NAME}_vecstep"
   PROPERTIES
     LABELS "conformance_suite_full;conformance_suite_mini"
