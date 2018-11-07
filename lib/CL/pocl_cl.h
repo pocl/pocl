@@ -1092,7 +1092,7 @@ struct _cl_event {
 
   /* OoO doesn't use sync points -> put used buffers here */
   cl_mem *mem_objs;
-  int num_buffers;
+  size_t num_buffers;
 
   /* The execution status of the command this event is monitoring. */
   volatile cl_int status;

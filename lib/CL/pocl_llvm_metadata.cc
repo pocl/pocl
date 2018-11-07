@@ -120,7 +120,7 @@ static int pocl_get_kernel_arg_module_metadata(llvm::Function *Kernel,
         kernel_meta->has_arg_metadata |= POCL_HAS_KERNEL_ARG_ADDRESS_QUALIFIER;
         // std::cout << "is ConstantInt /  kernel_arg_addr_space" << std::endl;
         llvm::ConstantInt *m = llvm::cast<ConstantInt>(meta_arg_value);
-        uint64_t val = m->getLimitedValue(UINT_MAX);
+        unsigned long val = (unsigned long)m->getLimitedValue(UINT_MAX);
         bool SPIRAddressSpaceIDs;
 #ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
         SPIRAddressSpaceIDs = BitcodeIsSPIR;
@@ -351,7 +351,7 @@ static int pocl_get_kernel_arg_function_metadata(llvm::Function *Kernel,
     meta_arg_value =
         dyn_cast<ConstantAsMetadata>(meta_node->getOperand(j))->getValue();
     llvm::ConstantInt *m = llvm::cast<ConstantInt>(meta_arg_value);
-    uint64_t val = m->getLimitedValue(UINT_MAX);
+    unsigned long val = (unsigned long)m->getLimitedValue(UINT_MAX);
 
     bool SPIRAddressSpaceIDs;
 #ifdef POCL_USE_FAKE_ADDR_SPACE_IDS

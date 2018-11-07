@@ -173,7 +173,7 @@ llvm_codegen (unsigned device_i, cl_kernel kernel, cl_device_id device,
   else
     {
       POCL_MSG_PRINT_LLVM ("written %s size %zu\n",
-                          tmp_objfile, objfile_size);
+                          tmp_objfile, (size_t)objfile_size);
     }
 
   /* temporary filename for kernel.so */

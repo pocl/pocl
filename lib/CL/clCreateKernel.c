@@ -45,7 +45,7 @@ POname(clCreateKernel)(cl_program program,
 {
   cl_kernel kernel = NULL;
   int errcode = CL_SUCCESS;
-  unsigned device_i, i;
+  size_t i;
 
   POCL_GOTO_ERROR_COND((kernel_name == NULL), CL_INVALID_VALUE);
 

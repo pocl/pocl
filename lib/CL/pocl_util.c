@@ -353,7 +353,7 @@ pocl_unlock_events_inorder (cl_event ev1, cl_event ev2)
 }
 
 cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue, 
-                          cl_command_type command_type, int num_buffers,
+                          cl_command_type command_type, size_t num_buffers,
                           const cl_mem *buffers, cl_context context)
 {
   static unsigned int event_id_counter = 0;
@@ -438,7 +438,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
                             cl_command_queue command_queue,
                             cl_command_type command_type, cl_event *event_p,
                             cl_int num_events, const cl_event *wait_list,
-                            int num_buffers, const cl_mem *buffers)
+                            size_t num_buffers, const cl_mem *buffers)
 {
   int i;
   int err;

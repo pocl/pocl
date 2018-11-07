@@ -40,7 +40,7 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
                    cl_int *         errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
   cl_int errcode = CL_SUCCESS;
-  cl_device_id device;
+  cl_device_id device = NULL;
   cl_int mapping_result = CL_FAILED;
   mem_mapping_t *mapping_info = NULL;
   unsigned i;

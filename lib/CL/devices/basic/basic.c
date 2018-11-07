@@ -758,7 +758,7 @@ pocl_basic_copy_rect (void *data,
       (unsigned)dst_origin[1], (unsigned)dst_origin[2],
       (unsigned long)src_row_pitch, (unsigned long)src_slice_pitch,
       (unsigned long)dst_row_pitch, (unsigned long)dst_slice_pitch,
-      region[0], region[1], region[2]);
+      (unsigned long)region[0], (unsigned long)region[1], (unsigned long)region[2]);
 
   size_t j, k;
 
@@ -816,7 +816,7 @@ pocl_basic_write_rect (void *data,
       (unsigned)host_origin[1], (unsigned)host_origin[2],
       (unsigned long)buffer_row_pitch, (unsigned long)buffer_slice_pitch,
       (unsigned long)host_row_pitch, (unsigned long)host_slice_pitch,
-      region[0], region[1], region[2]);
+      (unsigned long)region[0], (unsigned long)region[1], (unsigned long)region[2]);
 
   size_t j, k;
 
@@ -879,7 +879,7 @@ pocl_basic_read_rect (void *data,
       (unsigned)host_origin[1], (unsigned)host_origin[2],
       (unsigned long)buffer_row_pitch, (unsigned long)buffer_slice_pitch,
       (unsigned long)host_row_pitch, (unsigned long)host_slice_pitch,
-      region[0], region[1], region[2]);
+      (unsigned long)region[0], (unsigned long)region[1], (unsigned long)region[2]);
 
   size_t j, k;
 
