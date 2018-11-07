@@ -55,7 +55,8 @@ else( CMAKE_SIZEOF_VOID_P EQUAL 8 )
   set(LLVM_TARGET nvptx)
 endif( CMAKE_SIZEOF_VOID_P EQUAL 8 )
 
-set(CLANG_FLAGS "-emit-llvm" "-target" "${LLVM_TARGET}" "-D_CL_DISABLE_HALF")
+
+set(CLANG_FLAGS "-ffreestanding" "-emit-llvm" "-target" "${LLVM_TARGET}" "-D_CL_DISABLE_HALF")
 
 if(POCL_USE_FAKE_ADDR_SPACE_IDS)
   list(APPEND CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-DPOCL_USE_FAKE_ADDR_SPACE_IDS")
