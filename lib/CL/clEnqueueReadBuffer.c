@@ -64,6 +64,10 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
 
   POCL_CONVERT_SUBBUFFER_OFFSET (buffer, offset);
 
+  POCL_RETURN_ERROR_ON((buffer->size > command_queue->device->max_mem_alloc_size),
+                        CL_OUT_OF_RESOURCES,
+                        "buffer is larger than device's MAX_MEM_ALLOC_SIZE\n");
+
   errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
                                         event_wait_list);
   if (errcode != CL_SUCCESS)

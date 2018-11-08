@@ -66,6 +66,14 @@ POname(clEnqueueCopyBufferRect)(cl_command_queue command_queue,
   size_t dst_offset = 0;
   POCL_CONVERT_SUBBUFFER_OFFSET (dst_buffer, dst_offset);
 
+  POCL_RETURN_ERROR_ON((src_buffer->size > command_queue->device->max_mem_alloc_size),
+                        CL_OUT_OF_RESOURCES,
+                        "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
+
+  POCL_RETURN_ERROR_ON((dst_buffer->size > command_queue->device->max_mem_alloc_size),
+                        CL_OUT_OF_RESOURCES,
+                        "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
+
   cl_device_id dev = command_queue->device;
   cmd->command.copy_rect.src_mem_id = &src_buffer->device_ptrs[dev->dev_id];
   cmd->command.copy_rect.dst_mem_id = &dst_buffer->device_ptrs[dev->dev_id];

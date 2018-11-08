@@ -84,6 +84,10 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
 
   POCL_CONVERT_SUBBUFFER_OFFSET (buffer, offset);
 
+  POCL_GOTO_ERROR_ON((buffer->size > command_queue->device->max_mem_alloc_size),
+                        CL_OUT_OF_RESOURCES,
+                        "buffer is larger than device's MAX_MEM_ALLOC_SIZE\n");
+
   /* Ensure the parent buffer is not freed prematurely. */
   POname(clRetainMemObject) (buffer);
   must_release = 1;

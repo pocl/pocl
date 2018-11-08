@@ -79,6 +79,10 @@ CL_API_SUFFIX__VERSION_1_2
 
   POCL_CONVERT_SUBBUFFER_OFFSET (buffer, offset);
 
+  POCL_RETURN_ERROR_ON((buffer->size > command_queue->device->max_mem_alloc_size),
+                        CL_OUT_OF_RESOURCES,
+                        "buffer is larger than device's MAX_MEM_ALLOC_SIZE\n");
+
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_FILL_BUFFER,
                                  event, num_events_in_wait_list,
                                  event_wait_list, 1, &buffer);

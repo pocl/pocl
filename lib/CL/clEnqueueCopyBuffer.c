@@ -63,6 +63,14 @@ CL_API_SUFFIX__VERSION_1_0
 
   POCL_CONVERT_SUBBUFFER_OFFSET (dst_buffer, dst_offset);
 
+  POCL_RETURN_ERROR_ON((src_buffer->size > command_queue->device->max_mem_alloc_size),
+                        CL_OUT_OF_RESOURCES,
+                        "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
+
+  POCL_RETURN_ERROR_ON((dst_buffer->size > command_queue->device->max_mem_alloc_size),
+                        CL_OUT_OF_RESOURCES,
+                        "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
+
   POCL_RETURN_ERROR_ON(((command_queue->context != src_buffer->context) ||
       (command_queue->context != dst_buffer->context)), CL_INVALID_CONTEXT,
       "src_buffer, dst_buffer and command_queue are not from the same context\n");
