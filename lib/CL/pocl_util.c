@@ -243,7 +243,7 @@ void *
 pocl_aligned_malloc (size_t alignment, size_t size)
 {
 #ifdef HAVE_ALIGNED_ALLOC
-
+  assert (alignment > 0);
   /* make sure that size is a multiple of alignment, as posix_memalign
    * does not perform this test, whereas aligned_alloc does */
   if ((size & (alignment - 1)) != 0)
@@ -903,17 +903,23 @@ cl_device_id * pocl_unique_device_list(const cl_device_id * in, cl_uint num, cl_
 void pocl_setup_context(cl_context context)
 {
   unsigned i;
+  size_t alignment = context->devices[0]->mem_base_addr_align;
   context->max_mem_alloc_size = 0;
   context->svm_allocdev = NULL;
   for(i=0; i<context->num_devices; i++)
     {
       if (context->devices[i]->should_allocate_svm)
         context->svm_allocdev = context->devices[i];
+
+      if (context->devices[i]->mem_base_addr_align < alignment)
+        alignment = context->devices[i]->mem_base_addr_align;
+
       if (context->devices[i]->max_mem_alloc_size
           > context->max_mem_alloc_size)
         context->max_mem_alloc_size =
             context->devices[i]->max_mem_alloc_size;
     }
+
   if (context->svm_allocdev == NULL)
     for(i=0; i<context->num_devices; i++)
       if (DEVICE_IS_SVM_CAPABLE(context->devices[i]))
@@ -921,6 +927,8 @@ void pocl_setup_context(cl_context context)
           context->svm_allocdev = context->devices[i];
           break;
         }
+
+  context->min_buffer_alignment = alignment;
 }
 
 int

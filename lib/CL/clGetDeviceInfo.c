@@ -150,8 +150,9 @@ POname(clGetDeviceInfo)(cl_device_id   device,
 
   case CL_DEVICE_MAX_PARAMETER_SIZE:
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(size_t, device->max_parameter_size);
-  case CL_DEVICE_MEM_BASE_ADDR_ALIGN               : 
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->mem_base_addr_align);
+  case CL_DEVICE_MEM_BASE_ADDR_ALIGN               :
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK (
+        cl_uint, (device->mem_base_addr_align * 8));
   case CL_DEVICE_MIN_DATA_TYPE_ALIGN_SIZE          : 
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->min_data_type_align_size);
   case CL_DEVICE_SINGLE_FP_CONFIG                  :

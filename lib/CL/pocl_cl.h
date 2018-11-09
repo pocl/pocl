@@ -801,6 +801,14 @@ struct _cl_context {
   /* The device that should allocate SVM (might be == host)
    * NULL if none of devices in the context is SVM capable */
   cl_device_id svm_allocdev;
+
+  /* The minimal required buffer alignment for all devices in the context.
+   * E.g. for clCreateSubBuffer:
+   * CL_MISALIGNED_SUB_BUFFER_OFFSET is returned in errcode_ret if there are no
+   * devices in context associated with buffer for which the origin value
+   * is aligned to the CL_DEVICE_MEM_BASE_ADDR_ALIGN value.
+   */
+  size_t min_buffer_alignment;
 };
 
 typedef struct _pocl_data_sync_item pocl_data_sync_item;

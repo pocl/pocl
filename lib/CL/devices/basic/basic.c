@@ -247,8 +247,8 @@ pocl_init_cpu_device_infos (cl_device_id dev)
 
   dev->max_mem_alloc_size = 0;
   dev->max_parameter_size = 1024;
-  dev->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT; // this is in bytes
-  dev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT*8; // this is in bits
+  dev->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT;
+  dev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT;
   dev->half_fp_config = 0;
   dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
 #ifdef __x86_64__

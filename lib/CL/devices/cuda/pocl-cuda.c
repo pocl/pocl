@@ -239,7 +239,6 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
       GET_CU_PROP (CLOCK_RATE, dev->max_clock_frequency);
       dev->max_clock_frequency /= 1000;
       GET_CU_PROP (TEXTURE_ALIGNMENT, dev->mem_base_addr_align);
-      dev->mem_base_addr_align *= 8;
       GET_CU_PROP (INTEGRATED, dev->host_unified_memory);
     }
   if (CUDA_CHECK_ERROR (result, "cuDeviceGetAttribute"))

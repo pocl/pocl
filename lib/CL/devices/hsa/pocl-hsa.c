@@ -711,7 +711,7 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
   HSA_CHECK(hsa_region_get_info(d->global_region,
 				HSA_REGION_INFO_RUNTIME_ALLOC_ALIGNMENT,
                                 &sizearg));
-  dev->mem_base_addr_align = sizearg * 8;
+  dev->mem_base_addr_align = sizearg;
 
   HSA_CHECK(hsa_agent_get_info(d->agent, HSA_AGENT_INFO_PROFILE,
                                &d->agent_profile));
