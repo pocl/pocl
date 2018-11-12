@@ -187,8 +187,14 @@ add_test(NAME piglit_cl_custom_r600_create_release_buffer_bug
          COMMAND "${TS_BUILDDIR}/bin/cl-custom-r600-create-release-buffer-bug")
 add_test(NAME piglit_cl_custom_run_simple_kernel
          COMMAND "${TS_BUILDDIR}/bin/cl-custom-run-simple-kernel")
-add_test(NAME piglit_cl_custom_use_sub_buffer_in_kernel
-         COMMAND "${TS_BUILDDIR}/bin/cl-custom-use-sub-buffer-in-kernel")
+
+
+# disabled due to having hardcoded subbuffer alignment,
+# which is not compatible with pocl's basic/pthread
+# subbuffer alignment requirements
+#add_test(NAME piglit_cl_custom_use_sub_buffer_in_kernel
+#         COMMAND "${TS_BUILDDIR}/bin/cl-custom-use-sub-buffer-in-kernel")
+
 add_test(NAME piglit_cl_program_bitcoin_phatk
          COMMAND "${TS_BUILDDIR}/bin/cl-program-bitcoin-phatk")
 add_test(NAME piglit_cl_program_max_work_item_sizes
@@ -242,7 +248,7 @@ set_tests_properties(
   piglit_cl_custom_flush_after_enqueue_kernel
   piglit_cl_custom_r600_create_release_buffer_bug
   piglit_cl_custom_run_simple_kernel
-  piglit_cl_custom_use_sub_buffer_in_kernel
+#  piglit_cl_custom_use_sub_buffer_in_kernel
   piglit_cl_program_bitcoin_phatk
   piglit_cl_program_max_work_item_sizes
 
