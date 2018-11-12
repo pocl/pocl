@@ -26,14 +26,10 @@ struct kernel_run_command
   /* this is required b/c there's an additional level of indirection */
   void **arguments2;
 
-#ifdef POCL_PTHREAD_CACHE_MONITORING
-  pocl_cache_data cache_data;
-#endif
-
   POCL_FAST_LOCK_T lock __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 
-  unsigned remaining_wgs __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
-  unsigned wgs_dealt;
+  size_t remaining_wgs __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
+  size_t wgs_dealt;
 
   struct pocl_context pc __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)));
 

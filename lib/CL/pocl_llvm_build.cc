@@ -128,7 +128,7 @@ unlink_source(FrontendOptions &fe)
 static void appendToProgramBuildLog(cl_program program, unsigned device_i,
                                     std::string &s) {
   if (!s.empty()) {
-    POCL_MSG_ERR(s.c_str());
+    POCL_MSG_ERR("%s", s.c_str());
     /* this may not actually write anything if the buildhash is invalid,
      * but program->build_log still gets written.  */
     pocl_cache_append_to_buildlog(program, device_i, s.c_str(), s.size());

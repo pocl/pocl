@@ -43,6 +43,8 @@ POname(clEnqueueCopyBufferRect)(cl_command_queue command_queue,
 {
   _cl_command_node *cmd = NULL;
 
+  POCL_RETURN_ERROR_COND ((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+
   cl_int err = pocl_rect_copy (
     command_queue,
     CL_COMMAND_COPY_BUFFER_RECT,
@@ -58,14 +60,28 @@ POname(clEnqueueCopyBufferRect)(cl_command_queue command_queue,
   if (err != CL_SUCCESS)
     return err;
 
+  size_t src_offset = 0;
+  POCL_CONVERT_SUBBUFFER_OFFSET (src_buffer, src_offset);
+
+  size_t dst_offset = 0;
+  POCL_CONVERT_SUBBUFFER_OFFSET (dst_buffer, dst_offset);
+
+  POCL_RETURN_ERROR_ON((src_buffer->size > command_queue->device->max_mem_alloc_size),
+                        CL_OUT_OF_RESOURCES,
+                        "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
+
+  POCL_RETURN_ERROR_ON((dst_buffer->size > command_queue->device->max_mem_alloc_size),
+                        CL_OUT_OF_RESOURCES,
+                        "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
+
   cl_device_id dev = command_queue->device;
   cmd->command.copy_rect.src_mem_id = &src_buffer->device_ptrs[dev->dev_id];
   cmd->command.copy_rect.dst_mem_id = &dst_buffer->device_ptrs[dev->dev_id];
 
-  cmd->command.copy_rect.src_origin[0] = src_origin[0];
+  cmd->command.copy_rect.src_origin[0] = src_offset + src_origin[0];
   cmd->command.copy_rect.src_origin[1] = src_origin[1];
   cmd->command.copy_rect.src_origin[2] = src_origin[2];
-  cmd->command.copy_rect.dst_origin[0] = dst_origin[0];
+  cmd->command.copy_rect.dst_origin[0] = dst_offset + dst_origin[0];
   cmd->command.copy_rect.dst_origin[1] = dst_origin[1];
   cmd->command.copy_rect.dst_origin[2] = dst_origin[2];
   cmd->command.copy_rect.region[0] = region[0];

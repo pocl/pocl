@@ -17,21 +17,16 @@ static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
 
   #if !defined(_MSC_VER) && !defined(__MINGW32__)
 
-    /* The same as fprintf(stderr,..), except it's protected by mutex
-     * helps to keep the debug output correct when >1 thread
-     * is doing fprintf() */
-    int
-    pocl_fprintf_err (const char* format, ...)
+    void
+    pocl_debug_output_lock ()
     {
       pthread_mutex_lock (&console_mutex);
+    }
 
-      va_list args;
-      va_start (args, format);
-      int res = vfprintf (stderr, format, args);
-      va_end (args);
-
+    void
+    pocl_debug_output_unlock ()
+    {
       pthread_mutex_unlock (&console_mutex);
-      return res;
     }
 
     void
@@ -89,8 +84,8 @@ static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
 
       free (tokenize);
       if (pocl_debug_messages_filter)
-	pocl_fprintf_err ("** Final POCL_DEBUG flags: %" PRIX64 " \n",
-			  pocl_debug_messages_filter);
+        fprintf (stderr, "** Final POCL_DEBUG flags: %" PRIX64 " \n",
+                 pocl_debug_messages_filter);
     }
 
     void
@@ -122,8 +117,8 @@ static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
           formatstring = "[%04i-%02i-%02i %02i:%02i:%02i.%09i] "
               "POCL: in fn %s at line %u:\n %s | %9s | ";
 
-        pocl_fprintf_err (formatstring, year, mon, day, hour, min, sec,
-                          nanosec, func, line, filter_type_str, filter);
+        fprintf (stderr, formatstring, year, mon, day, hour, min, sec,
+                 nanosec, func, line, filter_type_str, filter);
     }
 
     void pocl_debug_measure_start(uint64_t *start) {
@@ -133,9 +128,11 @@ static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
     #define PRINT_DURATION(func, line, ...)                                   \
       do                                                                      \
         {                                                                     \
+          pocl_debug_output_lock ();                                          \
           pocl_debug_print_header (func, line,                                \
                                    "TIMING", POCL_FILTER_TYPE_INFO);          \
-          pocl_fprintf_err (__VA_ARGS__);                                     \
+          fprintf (stderr, __VA_ARGS__);                                      \
+          pocl_debug_output_unlock ();                                        \
         }                                                                     \
       while (0)
 

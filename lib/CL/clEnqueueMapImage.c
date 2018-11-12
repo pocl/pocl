@@ -57,9 +57,6 @@ CL_API_SUFFIX__VERSION_1_0
 
   device = command_queue->device;
 
-  POCL_GOTO_ERROR_ON((!command_queue->device->image_support), CL_INVALID_OPERATION,
-    "Device %s does not support images\n", command_queue->device->long_name);
-
   POCL_GOTO_ERROR_ON((command_queue->context != image->context),
     CL_INVALID_CONTEXT, "image and command_queue are not from the same context\n");
 
@@ -76,8 +73,10 @@ CL_API_SUFFIX__VERSION_1_0
           errcode_ret);
     }
 
-  POCL_GOTO_ERROR_ON((!image->is_image), CL_INVALID_MEM_OBJECT,
-    "image argument is not an image type cl_mem\n");
+  POCL_GOTO_ERROR_ON ((!image->is_image), CL_INVALID_MEM_OBJECT,
+                      "image argument is not an image\n");
+
+  POCL_GOTO_ON_UNSUPPORTED_IMAGE (image, command_queue->device);
 
   errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
                                         event_wait_list);

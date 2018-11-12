@@ -46,6 +46,8 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
 
   POCL_RETURN_ERROR_COND((buffer == NULL), CL_INVALID_MEM_OBJECT);
 
+  POCL_RETURN_ON_SUB_MISALIGN (buffer, command_queue);
+
   POCL_RETURN_ERROR_ON((command_queue->context != buffer->context),
     CL_INVALID_CONTEXT, "buffer and command_queue are not from the same context\n");
 
@@ -56,8 +58,15 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
       "or CL_MEM_HOST_NO_ACCESS\n");
 
   POCL_RETURN_ERROR_COND((ptr == NULL), CL_INVALID_VALUE);
+
   if (pocl_buffer_boundcheck (buffer, offset, size) != CL_SUCCESS)
     return CL_INVALID_VALUE;
+
+  POCL_CONVERT_SUBBUFFER_OFFSET (buffer, offset);
+
+  POCL_RETURN_ERROR_ON((buffer->size > command_queue->device->max_mem_alloc_size),
+                        CL_OUT_OF_RESOURCES,
+                        "buffer is larger than device's MAX_MEM_ALLOC_SIZE\n");
 
   errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
                                         event_wait_list);
@@ -66,7 +75,8 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
 
   POCL_CHECK_DEV_IN_CMDQ;
 
-  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_BUFFER, 
+  errcode = pocl_create_command (&cmd, command_queue,
+                                 CL_COMMAND_READ_BUFFER,
                                  event, num_events_in_wait_list, 
                                  event_wait_list, 1, &buffer);
   if (errcode != CL_SUCCESS)

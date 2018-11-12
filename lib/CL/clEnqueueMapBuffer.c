@@ -30,7 +30,7 @@
 CL_API_ENTRY void * CL_API_CALL
 POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
                    cl_mem           buffer,
-                   cl_bool          blocking_map, 
+                   cl_bool          blocking_map,
                    cl_map_flags     map_flags,
                    size_t           offset,
                    size_t           size,
@@ -40,7 +40,7 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
                    cl_int *         errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
   cl_int errcode = CL_SUCCESS;
-  cl_device_id device;
+  cl_device_id device = NULL;
   cl_int mapping_result = CL_FAILED;
   mem_mapping_t *mapping_info = NULL;
   unsigned i;
@@ -51,6 +51,8 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   POCL_GOTO_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
   POCL_GOTO_ERROR_COND((buffer == NULL), CL_INVALID_MEM_OBJECT);
+
+  POCL_GOTO_ON_SUB_MISALIGN (buffer, command_queue);
 
   POCL_GOTO_ERROR_COND((size == 0), CL_INVALID_VALUE);
 
@@ -79,6 +81,12 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
       "and CL_MAP_WRITE or CL_MAP_WRITE_INVALIDATE_REGION is set in map_flags\n");
 
   POCL_CHECK_DEV_IN_CMDQ;
+
+  POCL_CONVERT_SUBBUFFER_OFFSET (buffer, offset);
+
+  POCL_GOTO_ERROR_ON((buffer->size > command_queue->device->max_mem_alloc_size),
+                        CL_OUT_OF_RESOURCES,
+                        "buffer is larger than device's MAX_MEM_ALLOC_SIZE\n");
 
   /* Ensure the parent buffer is not freed prematurely. */
   POname(clRetainMemObject) (buffer);

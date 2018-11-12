@@ -154,13 +154,6 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   POCL_RETURN_ERROR_COND((global_x == 0 || global_y == 0 || global_z == 0),
     CL_INVALID_GLOBAL_WORK_SIZE);
 
-  for (i = 0; i < kernel->meta->num_args; i++)
-    {
-      POCL_RETURN_ERROR_ON ((!kernel->dyn_arguments[i].is_set),
-                            CL_INVALID_KERNEL_ARGS,
-                            "The %i-th kernel argument is not set!\n", i);
-    }
-
   max_local_x = command_queue->device->max_work_item_sizes[0];
   max_local_y = command_queue->device->max_work_item_sizes[1];
   max_local_z = command_queue->device->max_work_item_sizes[2];
@@ -464,11 +457,41 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
     {
       struct pocl_argument_info *a = &kernel->meta->arg_info[i];
       struct pocl_argument *al = &(kernel->dyn_arguments[i]);
+
+      POCL_GOTO_ERROR_ON ((!al->is_set),
+                            CL_INVALID_KERNEL_ARGS,
+                            "The %i-th kernel argument is not set!\n", i);
+
+
       if (a->type == POCL_ARG_TYPE_IMAGE
           || (!ARGP_IS_LOCAL (a) && a->type == POCL_ARG_TYPE_POINTER
               && al->value != NULL))
         {
           cl_mem buf = *(cl_mem *) (al->value);
+
+          if (a->type == POCL_ARG_TYPE_IMAGE)
+            {
+              POCL_GOTO_ON_UNSUPPORTED_IMAGE (buf, command_queue->device);
+            }
+          else
+            {
+              POCL_GOTO_ON_SUB_MISALIGN (buf, command_queue);
+
+              if (buf->parent != NULL)
+              {
+                  *(cl_mem *)(al->value) = buf->parent;
+                  al->offset = buf->origin;
+                  buf = buf->parent;
+              }
+              else
+                al->offset = 0;
+
+              POCL_GOTO_ERROR_ON ((buf->size > command_queue->device->max_mem_alloc_size),
+                                    CL_OUT_OF_RESOURCES,
+                                    "ARG %u: buffer is larger than "
+                                    "device's MAX_MEM_ALLOC_SIZE\n", i);
+            }
+
           mem_list[buffer_count++] = buf;
           POname(clRetainMemObject) (buf);
           /* if buffer has no owner,
@@ -541,6 +564,7 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
       struct pocl_argument *arg = &command_node->command.run.arguments[i];
       size_t arg_alloc_size = kernel->dyn_arguments[i].size;
       arg->size = arg_alloc_size;
+      arg->offset = kernel->dyn_arguments[i].offset;
 
       if (kernel->dyn_arguments[i].value == NULL)
         {

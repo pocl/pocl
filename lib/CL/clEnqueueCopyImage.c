@@ -17,6 +17,8 @@ POname(clEnqueueCopyImage)(cl_command_queue      command_queue ,
   cl_device_id device;
   unsigned i;
 
+  POCL_RETURN_ERROR_COND ((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+
   POCL_RETURN_ERROR_COND ((src_image == NULL), CL_INVALID_MEM_OBJECT);
   POCL_RETURN_ERROR_COND ((dst_image == NULL), CL_INVALID_MEM_OBJECT);
 

@@ -52,6 +52,8 @@ POname(clEnqueueReadBufferRect)(cl_command_queue command_queue,
 
   POCL_RETURN_ERROR_COND((buffer == NULL), CL_INVALID_MEM_OBJECT);
 
+  POCL_RETURN_ON_SUB_MISALIGN (buffer, command_queue);
+
   POCL_RETURN_ERROR_ON((buffer->type != CL_MEM_OBJECT_BUFFER),
       CL_INVALID_MEM_OBJECT, "buffer is not a CL_MEM_OBJECT_BUFFER\n");
 
@@ -83,15 +85,13 @@ POname(clEnqueueReadBufferRect)(cl_command_queue command_queue,
 
   POCL_CHECK_DEV_IN_CMDQ;
 
-  POCL_MSG_PRINT_INFO("borigin %u %u %u horigin %u %u %u row_pitch %lu slice pitch "
-                      "%lu host_row_pitch %lu host_slice_pitch %lu\n",
-                      (unsigned)buffer_origin[0], (unsigned)buffer_origin[1], 
-                      (unsigned)buffer_origin[2], 
-                      (unsigned)host_origin[0], (unsigned)host_origin[1], 
-                      (unsigned)host_origin[2], 
-                      (unsigned long)buffer_row_pitch, (unsigned long)buffer_slice_pitch, 
-                      (unsigned long)host_row_pitch, (unsigned long)host_slice_pitch);
-  
+  size_t src_offset = 0;
+  POCL_CONVERT_SUBBUFFER_OFFSET (buffer, src_offset);
+
+  POCL_RETURN_ERROR_ON((buffer->size > command_queue->device->max_mem_alloc_size),
+                        CL_OUT_OF_RESOURCES,
+                        "buffer is larger than device's MAX_MEM_ALLOC_SIZE\n");
+
   pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_BUFFER_RECT,
                        event, num_events_in_wait_list, event_wait_list, 1, 
                        &buffer);
@@ -102,7 +102,7 @@ POname(clEnqueueReadBufferRect)(cl_command_queue command_queue,
   cmd->command.read_rect.host_origin[0] = host_origin[0];
   cmd->command.read_rect.host_origin[1] = host_origin[1];
   cmd->command.read_rect.host_origin[2] = host_origin[2];
-  cmd->command.read_rect.buffer_origin[0] = buffer_origin[0];
+  cmd->command.read_rect.buffer_origin[0] = src_offset + buffer_origin[0];
   cmd->command.read_rect.buffer_origin[1] = buffer_origin[1];
   cmd->command.read_rect.buffer_origin[2] = buffer_origin[2];
   cmd->command.read_rect.region[0] = region[0];

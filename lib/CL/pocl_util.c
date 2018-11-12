@@ -243,7 +243,7 @@ void *
 pocl_aligned_malloc (size_t alignment, size_t size)
 {
 #ifdef HAVE_ALIGNED_ALLOC
-
+  assert (alignment > 0);
   /* make sure that size is a multiple of alignment, as posix_memalign
    * does not perform this test, whereas aligned_alloc does */
   if ((size & (alignment - 1)) != 0)
@@ -353,7 +353,7 @@ pocl_unlock_events_inorder (cl_event ev1, cl_event ev2)
 }
 
 cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue, 
-                          cl_command_type command_type, int num_buffers,
+                          cl_command_type command_type, size_t num_buffers,
                           const cl_mem *buffers, cl_context context)
 {
   static unsigned int event_id_counter = 0;
@@ -438,7 +438,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
                             cl_command_queue command_queue,
                             cl_command_type command_type, cl_event *event_p,
                             cl_int num_events, const cl_event *wait_list,
-                            int num_buffers, const cl_mem *buffers)
+                            size_t num_buffers, const cl_mem *buffers)
 {
   int i;
   int err;
@@ -899,20 +899,90 @@ cl_device_id * pocl_unique_device_list(const cl_device_id * in, cl_uint num, cl_
   return out;
 }
 
-/* Setup certain info about context that comes up later in API calls */
-void pocl_setup_context(cl_context context)
+static void
+image_format_union (const cl_image_format *dev_formats,
+                    cl_uint               num_dev_formats,
+                    cl_image_format       **context_formats,
+                    cl_uint               *num_context_formats)
 {
-  unsigned i;
-  context->min_max_mem_alloc_size = SIZE_MAX;
+  if ((dev_formats == NULL) || (num_dev_formats == 0))
+    return;
+
+  if ((*num_context_formats == 0) || (*context_formats == NULL))
+    {
+      // alloc & copy
+      *context_formats = malloc (sizeof (cl_image_format) * num_dev_formats);
+      memcpy (*context_formats, dev_formats,
+              sizeof (cl_image_format) * num_dev_formats);
+      *num_context_formats = num_dev_formats;
+    }
+  else
+    {
+      // realloc & merge
+      cl_uint i, j;
+      cl_uint ncf = *num_context_formats;
+      size_t size = sizeof (cl_image_format) * (num_dev_formats + ncf);
+      cl_image_format *ctf
+          = realloc (*context_formats, size );
+      assert (ctf);
+      for (i = 0; i < num_dev_formats; ++i)
+        {
+          for (j = 0; j < ncf; ++j)
+            if (memcmp (ctf + j, dev_formats + i, sizeof (cl_image_format))
+                == 0)
+              break;
+          if (j < ncf)
+            {
+              // format already in context, skip
+              continue;
+            }
+          else
+            {
+              memcpy (ctf + ncf, dev_formats + i, sizeof (cl_image_format));
+              ++ncf;
+            }
+        }
+      *context_formats = ctf;
+      *num_context_formats = ncf;
+    }
+}
+
+/* Setup certain info about context that comes up later in API calls */
+void
+pocl_setup_context (cl_context context)
+{
+  unsigned i, j;
+  size_t alignment = context->devices[0]->mem_base_addr_align;
+  context->max_mem_alloc_size = 0;
   context->svm_allocdev = NULL;
+
+  memset (context->image_formats, 0, sizeof (void *) * NUM_OPENCL_IMAGE_TYPES);
+  memset (context->num_image_formats, 0,
+          sizeof (cl_uint) * NUM_OPENCL_IMAGE_TYPES);
+
   for(i=0; i<context->num_devices; i++)
     {
       if (context->devices[i]->should_allocate_svm)
         context->svm_allocdev = context->devices[i];
-      if (context->devices[i]->max_mem_alloc_size < context->min_max_mem_alloc_size)
-        context->min_max_mem_alloc_size =
+
+      if (context->devices[i]->mem_base_addr_align < alignment)
+        alignment = context->devices[i]->mem_base_addr_align;
+
+      if (context->devices[i]->max_mem_alloc_size
+          > context->max_mem_alloc_size)
+        context->max_mem_alloc_size =
             context->devices[i]->max_mem_alloc_size;
+
+      if (context->devices[i]->image_support == CL_TRUE)
+        {
+          for (j = 0; j < NUM_OPENCL_IMAGE_TYPES; ++j)
+            image_format_union (
+                context->devices[i]->image_formats[j],
+                context->devices[i]->num_image_formats[j],
+                &context->image_formats[j], &context->num_image_formats[j]);
+        }
     }
+
   if (context->svm_allocdev == NULL)
     for(i=0; i<context->num_devices; i++)
       if (DEVICE_IS_SVM_CAPABLE(context->devices[i]))
@@ -920,6 +990,8 @@ void pocl_setup_context(cl_context context)
           context->svm_allocdev = context->devices[i];
           break;
         }
+
+  context->min_buffer_alignment = alignment;
 }
 
 int

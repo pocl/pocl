@@ -60,6 +60,9 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
                         "CL_MEM_HOST_WRITE_ONLY or CL_MEM_HOST_NO_ACCESS and "
                         "CL_MAP_READ is set in map_flags\n");
 
+  if (memobj->parent)
+    memobj = memobj->parent;
+
   POCL_LOCK_OBJ (memobj);
   DL_FOREACH (memobj->mappings, mapping)
     {

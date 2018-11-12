@@ -50,7 +50,7 @@ POname(clGetKernelWorkGroupInfo)
     {
         typedef struct { size_t size[3]; } size_t_3;
         POCL_MSG_PRINT_GENERAL (
-            "### reqd wg sizes %d %d %d\n", kernel->meta->reqd_wg_size[0],
+            "### reqd wg sizes %zu %zu %zu\n", kernel->meta->reqd_wg_size[0],
             kernel->meta->reqd_wg_size[1], kernel->meta->reqd_wg_size[2]);
         POCL_RETURN_GETINFO (size_t_3,
                              *(size_t_3 *)kernel->meta->reqd_wg_size);

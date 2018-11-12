@@ -33,10 +33,8 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
                   const void *             buffer_create_info,
                   cl_int *                 errcode_ret) CL_API_SUFFIX__VERSION_1_1 
 {
-  cl_device_id device;
   cl_mem mem = NULL;
   int errcode;
-  unsigned i;
 
   POCL_GOTO_ERROR_COND((buffer == NULL), CL_INVALID_MEM_OBJECT);
 
@@ -52,33 +50,13 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
   POCL_GOTO_ERROR_COND((buffer_create_type != CL_BUFFER_CREATE_TYPE_REGION),
     CL_INVALID_VALUE);
 
-  cl_buffer_region* info = 
-    (cl_buffer_region*)buffer_create_info;
+  cl_buffer_region *info = (cl_buffer_region *)buffer_create_info;
 
   POCL_GOTO_ERROR_ON((info->size == 0), CL_INVALID_BUFFER_SIZE,
     "buffer_create_info->size == 0\n");
-  
+
   POCL_GOTO_ERROR_ON((info->size + info->origin > buffer->size), CL_INVALID_VALUE,
     "buffer_create_info->size+origin > buffer size\n");
-
-  mem = (cl_mem) malloc(sizeof(struct _cl_mem));
-  if (mem == NULL)
-  {
-    errcode = CL_OUT_OF_HOST_MEMORY;
-    goto ERROR;
-  }
-
-  POCL_INIT_OBJECT(mem);
-  mem->mappings = NULL;
-  mem->destructor_callbacks = NULL;
-  mem->parent = buffer;
-  mem->type = CL_MEM_OBJECT_BUFFER;
-  mem->size = info->size;
-  mem->origin = info->origin;
-  mem->context = buffer->context;
-  mem->owning_device = buffer->owning_device;
-  mem->is_pipe = CL_FALSE;
-  mem->mem_host_ptr = NULL;
 
   POCL_GOTO_ERROR_ON((buffer->flags & CL_MEM_WRITE_ONLY &&
        flags & (CL_MEM_READ_WRITE | CL_MEM_READ_ONLY)), CL_INVALID_VALUE,
@@ -110,41 +88,24 @@ POname(clCreateSubBuffer)(cl_mem                   buffer,
        "Invalid flags: buffer is CL_MEM_HOST_NO_ACCESS, requested sub-buffer "
        "(CL_MEM_HOST_READ_ONLY | CL_MEM_HOST_WRITE_ONLY)\n");
 
+  POCL_GOTO_ERROR_ON (
+      ((info->origin % buffer->context->min_buffer_alignment) != 0),
+      CL_MISALIGNED_SUB_BUFFER_OFFSET,
+      "no devices for which the origin value (%zu) is "
+      "aligned to the CL_DEVICE_MEM_BASE_ADDR_ALIGN value (%zu)\n",
+              info->origin, buffer->context->min_buffer_alignment);
+
+  mem = (cl_mem) calloc (1, sizeof (struct _cl_mem));
+  POCL_GOTO_ERROR_COND ((mem == NULL), CL_OUT_OF_HOST_MEMORY);
+
+  POCL_INIT_OBJECT (mem);
+  mem->context = buffer->context;
+  mem->parent = buffer;
+  mem->type = CL_MEM_OBJECT_BUFFER;
+  mem->size = info->size;
+  mem->origin = info->origin;
   pocl_cl_mem_inherit_flags (mem, buffer, flags);
-
-  if (mem->flags & CL_MEM_USE_HOST_PTR || mem->flags & CL_MEM_ALLOC_HOST_PTR)
-    {
-      mem->mem_host_ptr = (char*)buffer->mem_host_ptr + info->origin;
-    }
-
-  mem->device_ptrs = (pocl_mem_identifier*)
-    malloc(buffer->context->num_devices * sizeof(pocl_mem_identifier));
-  if (mem->device_ptrs == NULL)
-    {
-        errcode = CL_OUT_OF_HOST_MEMORY;
-        goto ERROR;
-    }
-
-  for (i = 0; i < pocl_num_devices; ++i)
-    mem->device_ptrs[i].mem_ptr = NULL;
-
-  for (i = 0; i < mem->context->num_devices; ++i)
-    {
-      device = mem->context->devices[i];
-
-      /* device_ptrs can contain a pointer to a book keeping
-         structure instead of the actual buffer in memory, therefore
-         call the device driver layer to produce the sub buffer
-         reference */
-      if (device->ops->create_sub_buffer != NULL)
-        mem->device_ptrs[device->dev_id].mem_ptr = 
-          device->ops->create_sub_buffer
-          (device->data, buffer->device_ptrs[device->dev_id].mem_ptr, 
-           info->origin, info->size);
-      else
-        mem->device_ptrs[device->dev_id].mem_ptr = (char*)
-          buffer->device_ptrs[device->dev_id].mem_ptr + info->origin;
-    }
+  /* all other struct members are NULL (not valid) */
 
   POCL_RETAIN_OBJECT(mem->parent);
   POCL_RETAIN_OBJECT(mem->context);

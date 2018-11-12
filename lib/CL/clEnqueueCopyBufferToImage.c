@@ -18,6 +18,8 @@ CL_API_SUFFIX__VERSION_1_0
   /* pass src_origin through in a format pocl_rect_copy understands */
   const size_t src_origin[3] = { src_offset, 0, 0};
 
+  POCL_RETURN_ERROR_COND ((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+
   POCL_RETURN_ERROR_COND ((dst_image == NULL), CL_INVALID_MEM_OBJECT);
 
   if (IS_IMAGE1D_BUFFER (dst_image))
@@ -34,6 +36,8 @@ CL_API_SUFFIX__VERSION_1_0
           num_events_in_wait_list, event_wait_list, event));
     }
 
+  POCL_RETURN_ON_SUB_MISALIGN (src_buffer, command_queue);
+
   cl_int err = pocl_rect_copy(
     command_queue,
     CL_COMMAND_COPY_BUFFER_TO_IMAGE,
@@ -48,6 +52,12 @@ CL_API_SUFFIX__VERSION_1_0
 
   if (err != CL_SUCCESS)
     return err;
+
+  POCL_CONVERT_SUBBUFFER_OFFSET (src_buffer, src_offset);
+
+  POCL_RETURN_ERROR_ON((src_buffer->size > command_queue->device->max_mem_alloc_size),
+                        CL_OUT_OF_RESOURCES,
+                        "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
 
   cl_device_id dev = command_queue->device;
 

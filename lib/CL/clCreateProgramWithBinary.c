@@ -43,7 +43,7 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
 {
   cl_program program;
   unsigned i,j;
-  int errcode;
+  int errcode, is_spirv_opencl;
   cl_device_id *unique_devlist = NULL;
 
   POCL_GOTO_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
@@ -94,7 +94,7 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
       POCL_GOTO_ERROR_ON((!found), CL_INVALID_DEVICE,
         "device not found in the device list of the context\n");
     }
-  
+
   if ((program = (cl_program) calloc (1, sizeof (struct _cl_program))) == NULL)
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
@@ -146,8 +146,16 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
       /* SPIR-V binary needs to be converted, and requires
        * linking of the converted BC */
 #ifdef OCS_AVAILABLE
-      else if (bitcode_is_spirv ((const char *)binaries[i], lengths[i]))
+      else if (bitcode_is_spirv ((const char *)binaries[i], lengths[i], &is_spirv_opencl))
         {
+          if (is_spirv_opencl == 0) {
+            // SPIR-V but not OpenCL-type.
+            POCL_GOTO_ERROR_ON (
+                1, CL_BUILD_PROGRAM_FAILURE,
+                "SPIR-V binary provided, but is not using Kernel mode."
+                "Pocl can't process this binary.\n");
+          }
+
           int no_spir
               = strstr (device_list[i]->extensions, "cl_khr_spir") == NULL;
           POCL_GOTO_ERROR_ON (

@@ -42,9 +42,10 @@ POname(clSVMAlloc)(cl_context context,
 
   POCL_RETURN_ERROR_COND((size == 0), NULL);
 
-  POCL_RETURN_ERROR_ON((size > context->min_max_mem_alloc_size), NULL,
-                       "size(%zu) > CL_DEVICE_MAX_MEM_ALLOC_SIZE value "
-                       "for some device in context\n", size);
+  POCL_RETURN_ERROR_ON ((size > context->max_mem_alloc_size), NULL,
+                        "size(%zu) > CL_DEVICE_MAX_MEM_ALLOC_SIZE value "
+                        "for some device in context\n",
+                        size);
 
   /* flags does not contain CL_MEM_SVM_FINE_GRAIN_BUFFER
    * but does contain CL_MEM_SVM_ATOMICS. */

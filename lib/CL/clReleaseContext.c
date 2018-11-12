@@ -56,6 +56,10 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
         }
       POCL_MEM_FREE(context->devices);
       POCL_MEM_FREE(context->properties);
+
+      for (i = 0; i < NUM_OPENCL_IMAGE_TYPES; ++i)
+        POCL_MEM_FREE (context->image_formats[i]);
+
       POCL_DESTROY_OBJECT (context);
       POCL_MEM_FREE(context);
 

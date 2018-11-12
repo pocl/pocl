@@ -104,18 +104,20 @@ setup_kernel_arg_array (kernel_run_command *k)
              that case we must pass the same NULL forward to the kernel.
              Otherwise, the user must have created a buffer with per device
              pointers stored in the cl_mem. */
+          arguments[i] = &arguments2[i];
           if (al->value == NULL)
             {
-              arguments[i] = &arguments2[i];
               arguments2[i] = NULL;
             }
           else
             {
               cl_mem m = *(cl_mem *)al->value;
               if (m->device_ptrs)
-                arguments[i] = &(m->device_ptrs[k->device->dev_id].mem_ptr);
+                arguments2[i] = m->device_ptrs[k->device->dev_id].mem_ptr;
               else
-                arguments[i] = &(m->mem_host_ptr);
+                arguments2[i] = m->mem_host_ptr;
+
+              arguments2[i] += al->offset;
             }
         }
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)

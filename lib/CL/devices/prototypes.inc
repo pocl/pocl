@@ -51,8 +51,6 @@
   void pocl_##__DRV__##_free_queue (cl_command_queue queue);                  \
   cl_int pocl_##__DRV__##_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, \
                                          void *host_ptr);                     \
-  void *pocl_##__DRV__##_create_sub_buffer (void *device_data, void *buffer,  \
-                                            size_t origin, size_t size);      \
   void pocl_##__DRV__##_free (cl_device_id device, cl_mem mem_obj);           \
   void pocl_##__DRV__##_read (void *data, void *__restrict__ dst_host_ptr,    \
                               pocl_mem_identifier *src_mem_id,                \
@@ -104,9 +102,6 @@
   char *pocl_##__DRV__##_build_hash (cl_device_id device);                    \
   void pocl_##__DRV__##_init_target_machine (void *data,                      \
                                              void *target_machine);           \
-  cl_int pocl_##__DRV__##_get_supported_image_formats (                       \
-      cl_mem_flags flags, const cl_image_format **image_formats,              \
-      cl_uint *num_image_formats);                                            \
   void *pocl_##__DRV__##_create_image (                                       \
       void *data, const cl_image_format *image_format,                        \
       const cl_image_desc *image_desc, cl_mem image, cl_int *err);            \

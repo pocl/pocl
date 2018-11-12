@@ -142,7 +142,6 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->svm_copy = pocl_basic_svm_copy;
   ops->svm_fill = pocl_basic_svm_fill;
 
-  ops->get_supported_image_formats = pocl_basic_get_supported_image_formats;
   ops->create_image = NULL;
   ops->free_image = NULL;
   ops->create_sampler = NULL;
@@ -178,6 +177,7 @@ static const char *final_ld_flags[] =
 void
 pocl_init_cpu_device_infos (cl_device_id dev)
 {
+  size_t i;
   dev->type = CL_DEVICE_TYPE_CPU;
   dev->max_work_item_dimensions = 3;
   dev->final_linkage_flags = final_ld_flags;
@@ -240,15 +240,22 @@ pocl_init_cpu_device_infos (cl_device_id dev)
   dev->max_read_image_args = dev->max_write_image_args = dev->max_read_write_image_args = 128;
   dev->image2d_max_width = dev->image2d_max_height = 8192;
   dev->image3d_max_width = dev->image3d_max_height = dev->image3d_max_depth = 2048;
+  dev->max_samplers = 16;
+
+  for (i = 0; i < NUM_OPENCL_IMAGE_TYPES; ++i)
+    {
+      dev->num_image_formats[i]
+          = sizeof (supported_image_formats) / sizeof (cl_image_format);
+      dev->image_formats[i] = supported_image_formats;
+    }
+
   dev->image_max_buffer_size = 65536;
   dev->image_max_array_size = 2048;
-  dev->max_samplers = 16;
   dev->max_constant_args = 8;
-
   dev->max_mem_alloc_size = 0;
   dev->max_parameter_size = 1024;
-  dev->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT; // this is in bytes
-  dev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT*8; // this is in bits
+  dev->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT;
+  dev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT;
   dev->half_fp_config = 0;
   dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
 #ifdef __x86_64__
@@ -584,13 +591,17 @@ pocl_basic_run
              that case we must pass the same NULL forward to the kernel.
              Otherwise, the user must have created a buffer with per device
              pointers stored in the cl_mem. */
+          arguments[i] = malloc (sizeof (void *));
           if (al->value == NULL)
             {
-              arguments[i] = malloc (sizeof (void *));
               *(void **)arguments[i] = NULL;
             }
           else
-            arguments[i] = &((*(cl_mem *) (al->value))->device_ptrs[cmd->device->dev_id].mem_ptr);
+            {
+              cl_mem m = (*(cl_mem *)(al->value));
+              void *ptr = m->device_ptrs[cmd->device->dev_id].mem_ptr;
+              *(void **)arguments[i] = (char *)ptr + al->offset;
+            }
         }
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
         {
@@ -668,8 +679,7 @@ pocl_basic_run
             POCL_MEM_FREE (*(void **)(arguments[i]));
           POCL_MEM_FREE(arguments[i]);
         }
-      else if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER
-               && *(void **)arguments[i] == NULL)
+      else if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
         {
           POCL_MEM_FREE(arguments[i]);
         }
@@ -702,12 +712,12 @@ pocl_basic_copy (void *data,
                  size_t src_offset,
                  size_t size)
 {
-  void *__restrict__ src_ptr = src_mem_id->mem_ptr;
-  void *__restrict__ dst_ptr = dst_mem_id->mem_ptr;
-  if (src_ptr == dst_ptr)
+  char *__restrict__ src_ptr = src_mem_id->mem_ptr;
+  char *__restrict__ dst_ptr = dst_mem_id->mem_ptr;
+  if ((src_ptr + src_offset) == (dst_ptr + dst_offset))
     return;
 
-  memcpy ((char *)dst_ptr + dst_offset, (char *)src_ptr + src_offset, size);
+  memcpy (dst_ptr + dst_offset, src_ptr + src_offset, size);
 }
 
 void
@@ -748,7 +758,7 @@ pocl_basic_copy_rect (void *data,
       (unsigned)dst_origin[1], (unsigned)dst_origin[2],
       (unsigned long)src_row_pitch, (unsigned long)src_slice_pitch,
       (unsigned long)dst_row_pitch, (unsigned long)dst_slice_pitch,
-      region[0], region[1], region[2]);
+      (unsigned long)region[0], (unsigned long)region[1], (unsigned long)region[2]);
 
   size_t j, k;
 
@@ -806,7 +816,7 @@ pocl_basic_write_rect (void *data,
       (unsigned)host_origin[1], (unsigned)host_origin[2],
       (unsigned long)buffer_row_pitch, (unsigned long)buffer_slice_pitch,
       (unsigned long)host_row_pitch, (unsigned long)host_slice_pitch,
-      region[0], region[1], region[2]);
+      (unsigned long)region[0], (unsigned long)region[1], (unsigned long)region[2]);
 
   size_t j, k;
 
@@ -869,7 +879,7 @@ pocl_basic_read_rect (void *data,
       (unsigned)host_origin[1], (unsigned)host_origin[2],
       (unsigned long)buffer_row_pitch, (unsigned long)buffer_slice_pitch,
       (unsigned long)host_row_pitch, (unsigned long)host_slice_pitch,
-      region[0], region[1], region[2]);
+      (unsigned long)region[0], (unsigned long)region[1], (unsigned long)region[2]);
 
   size_t j, k;
 
@@ -1075,20 +1085,6 @@ pocl_basic_reinit (unsigned j, cl_device_id device)
   return CL_SUCCESS;
 }
 
-
-cl_int 
-pocl_basic_get_supported_image_formats (cl_mem_flags flags,
-                                        const cl_image_format **image_formats,
-                                        cl_uint *num_img_formats)
-{
-    if (num_img_formats == NULL || image_formats == NULL)
-      return CL_INVALID_VALUE;
-
-    *num_img_formats = sizeof(supported_image_formats)/sizeof(cl_image_format);
-    *image_formats = supported_image_formats;
-    
-    return CL_SUCCESS; 
-}
 
 static void basic_command_scheduler (struct data *d) 
 {

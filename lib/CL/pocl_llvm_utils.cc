@@ -158,9 +158,30 @@ int bitcode_is_spir(const char *bitcode, size_t size) {
     return 0;
 }
 
-int bitcode_is_spirv(const char *bitcode, size_t size) {
-  uint32_t magic = htole32(((uint32_t *)bitcode)[0]);
-  return (size > 20) && (magic == 0x07230203U);
+#define SPIRV_MAGIC 0x07230203U
+#define OpCapab 0x00020011
+#define KernelExecModel 0x6
+
+int bitcode_is_spirv(const char *bitcode, size_t size, int *is_opencl) {
+  const uint32_t *bc32 = (const uint32_t *)bitcode;
+  unsigned loc = 0;
+  uint32_t magic = htole32(bc32[loc++]);
+
+  if ((size < 20) || (magic != SPIRV_MAGIC))
+    return 0;
+
+  // skip version, generator, bound, schema
+  loc += 4;
+  *is_opencl = 0;
+  uint32_t ins, val;
+  do {
+    ins = htole32(bc32[loc++]);
+    val = htole32(bc32[loc++]);
+    if (val == KernelExecModel)
+      *is_opencl = 1;
+  } while (ins == OpCapab);
+
+  return 1;
 }
 
 // TODO this should be fixed to not require LLVM eventually,

@@ -173,7 +173,7 @@ llvm_codegen (unsigned device_i, cl_kernel kernel, cl_device_id device,
   else
     {
       POCL_MSG_PRINT_LLVM ("written %s size %zu\n",
-                          tmp_objfile, objfile_size);
+                          tmp_objfile, (size_t)objfile_size);
     }
 
   /* temporary filename for kernel.so */
@@ -370,7 +370,7 @@ pocl_ndrange_node_cleanup(_cl_command_node *node)
 void
 pocl_mem_objs_cleanup (cl_event event)
 {
-  int i;
+  size_t i;
   for (i = 0; i < event->num_buffers; ++i)
     {
       assert(event->mem_objs[i] != NULL);

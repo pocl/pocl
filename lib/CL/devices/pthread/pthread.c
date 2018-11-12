@@ -472,7 +472,6 @@ void pocl_pthread_update_event (cl_device_id device, cl_event event, cl_int stat
 
 void pocl_pthread_wait_event (cl_device_id device, cl_event event)
 {
-
   struct event_data *e_d = event->data;
 
   POCL_LOCK_OBJ (event);

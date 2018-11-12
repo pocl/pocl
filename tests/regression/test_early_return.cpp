@@ -126,7 +126,7 @@ main(void)
         for (int i = 0; i < WORK_ITEMS; i++) {
             int correct = i;
             if ((int)R[i] != correct) {
-                std::cout 
+                std::cerr
                     << "F(" << i << ": " << R[i] << " != " << correct 
                     << ") ";
                 ok = false;

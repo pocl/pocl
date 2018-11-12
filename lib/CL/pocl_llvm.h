@@ -40,7 +40,7 @@ int cpu_has_fma();
 
 int bitcode_is_spir(const char *bitcode, size_t size);
 
-int bitcode_is_spirv(const char *bitcode, size_t size);
+int bitcode_is_spirv(const char *bitcode, size_t size, int *is_opencl);
 
 /* Sets up the native/preferred vector widths at runtime (using LLVM). */
 void cpu_setup_vector_widths(cl_device_id dev);

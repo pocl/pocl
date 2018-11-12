@@ -50,7 +50,7 @@ POname(clSetKernelArgSVMPointer)(cl_kernel kernel,
   mem->is_pipe = 0;
   mem->pipe_packet_size = 0;
   mem->pipe_max_packets = 0;
-  //mem->size = size;  TODO
+  mem->size = MAX_EXTENDED_ALIGNMENT;
   mem->context = kernel->context;
 
   POCL_MSG_PRINT_INFO("Setting kernel ARG %i to SVM %p using cl_mem: %p\n", arg_index, arg_value, mem);
