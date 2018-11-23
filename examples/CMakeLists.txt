@@ -43,6 +43,7 @@ if(ENABLE_FP64)
   add_subdirectory("scalarwave")
 endif()
 add_subdirectory("trig")
+add_subdirectory("vecadd")
 add_subdirectory("EinsteinToolkit")
 
 # TODO:   opencl-book-samples
