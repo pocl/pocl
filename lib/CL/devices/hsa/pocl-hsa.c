@@ -1736,15 +1736,6 @@ pocl_hsa_launch (pocl_hsa_device_data_t *d, cl_event event)
       kernel_packet->workgroup_size_x = kernel_packet->workgroup_size_y =
 	kernel_packet->workgroup_size_z = 1;
 
-      struct pocl_context *pc = &cmd->command.run.pc;
-
-      /* For SPMD devices we let the processor control the grid execution. */
-
-      /* TODO: Dynamic WG sizes. */
-      pc->local_size[0] = cmd->command.run.local_x;
-      pc->local_size[1] = cmd->command.run.local_y;
-      pc->local_size[2] = cmd->command.run.local_z;
-
       if (d->device->device_side_printf)
 	{
 	  pc->printf_buffer = d->printf_buffer;
@@ -1760,6 +1751,19 @@ pocl_hsa_launch (pocl_hsa_device_data_t *d, cl_event event)
       kernel_packet->workgroup_size_x = cmd->command.run.local_x;
       kernel_packet->workgroup_size_y = cmd->command.run.local_y;
       kernel_packet->workgroup_size_z = cmd->command.run.local_z;
+    }
+
+
+  /* TODO: Dynamic WG sizes. */
+
+  /* For SPMD devices we let the processor (HSA runtime) control the
+     grid execution unless we are using our own WG launcher that
+     uses the context struct. */
+  if (!d->device->spmd || d->device->arg_buffer_launcher)
+    {
+      pc->local_size[0] = cmd->command.run.local_x;
+      pc->local_size[1] = cmd->command.run.local_y;
+      pc->local_size[2] = cmd->command.run.local_z;
     }
 
   kernel_packet->grid_size_x = kernel_packet->grid_size_y
