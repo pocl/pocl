@@ -40,6 +40,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/IRBuilder.h>
 #include <llvm/IR/InstrTypes.h>
+#include <llvm/IR/InlineAsm.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/TypeBuilder.h>
 #include <llvm/Pass.h>
@@ -73,6 +74,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #endif
 
 #define STRING_LENGTH 32
+// Number of hidden arguments in the "argbuffer calling convention".
+#define ARGBUFFER_HIDDEN_ARGS 4
 
 POP_COMPILER_DIAGS
 
@@ -242,17 +245,17 @@ Workgroup::runOnModule(Module &M)
 
     privatizeContext(M, L);
 
-    if (currentPoclDevice->spmd) {
-      // For SPMD machines there is no need for a WG launcher, the device will
-      // call/handle the single-WI kernel function directly.
-      kernels[&OrigKernel] = L;
-    } else if (currentPoclDevice->arg_buffer_launcher) {
+    if (currentPoclDevice->arg_buffer_launcher) {
       Function *WGLauncher =
         createArgBufferWorkgroupLauncher(M, L, OrigKernel.getName().str());
       L->addFnAttr(Attribute::NoInline);
       L->removeFnAttr(Attribute::AlwaysInline);
       WGLauncher->addFnAttr(Attribute::AlwaysInline);
       createGridLauncher(M, L, WGLauncher, OrigKernel.getName().str());
+    } else if (currentPoclDevice->spmd) {
+      // For SPMD machines there is no need for a WG launcher, the device will
+      // call/handle the single-WI kernel function directly.
+      kernels[&OrigKernel] = L;
     } else {
       createDefaultWorkgroupLauncher(M, L);
       // This is used only by TCE anymore. TODO: Replace all with the
@@ -261,7 +264,7 @@ Workgroup::runOnModule(Module &M)
     }
   }
 
-  if (currentPoclDevice->spmd) {
+  if (!currentPoclDevice->arg_buffer_launcher && currentPoclDevice->spmd) {
     regenerate_kernel_metadata(M, kernels);
 
     // Delete the old kernels.
@@ -271,7 +274,7 @@ Workgroup::runOnModule(Module &M)
         Function *new_kernel = (*i).second;
         if (old_kernel == new_kernel) continue;
         old_kernel->eraseFromParent();
-      }
+    }
   }
 
 #if LLVM_OLDER_THAN_5_0
@@ -461,6 +464,10 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
       CallInst *CallInstr = dyn_cast<CallInst>(Instr);
       Function *oldF = CallInstr->getCalledFunction();
 
+      // Skip inline asm blocks.
+      if (oldF == nullptr)
+	continue;
+
       if (oldF->getName().equals("__cl_printf")) {
         ops.clear();
         ops.push_back(pb);
@@ -558,7 +565,8 @@ static Function *createWrapper(Module &M, Function *F,
   for (Function::const_arg_iterator i = F->arg_begin(), e = F->arg_end();
        i != e; ++i)
     sv.push_back (i->getType());
-  if (currentPoclDevice->spmd) {
+
+  if (!currentPoclDevice->arg_buffer_launcher && currentPoclDevice->spmd) {
     PointerType* g_pc_ptr =
       PointerType::get(TypeBuilder<PoclContext, true>::get(M.getContext()), 1);
     sv.push_back(g_pc_ptr);
@@ -580,7 +588,7 @@ static Function *createWrapper(Module &M, Function *F,
   std::string funcName = "";
   funcName = F->getName().str();
   Function *L = NULL;
-  if (currentPoclDevice->spmd) {
+  if (!currentPoclDevice->arg_buffer_launcher && currentPoclDevice->spmd) {
     Function *F = M.getFunction(funcName);
     F->setName(funcName + "_original");
     L = Function::Create(ft,
@@ -613,6 +621,18 @@ static Function *createWrapper(Module &M, Function *F,
   L->setAttributes(F->getAttributes());
 
   IRBuilder<> builder(BasicBlock::Create(M.getContext(), "", L));
+
+  // Add a dummy inline asm that reads the context pointer so it
+  // does not get optimized away by the dead argument optimizer.
+  // It might be used only by the backend in case accessed via
+  // intrinsics, and then it's not referred to by any LLVM IR.
+  FunctionType *DummyIAType =
+    FunctionType::get(Type::getVoidTy(M.getContext()),
+		      ContextArg->getType(), false);
+
+  llvm::InlineAsm *DummyIA =
+    llvm::InlineAsm::get(DummyIAType, "", "r", false, false);
+  llvm::CallInst *Result = builder.CreateCall(DummyIA, ContextArg);
 
   GlobalVariable *gv = M.getGlobalVariable("_work_dim");
   if (gv != NULL) {
@@ -726,6 +746,13 @@ static Function *createWrapper(Module &M, Function *F,
   }
 
   L->setSubprogram(F->getSubprogram());
+
+  // SPMD machines might need a special calling convention to mark the
+  // kernels that should be executed in SPMD fashion. For MIMD/CPU,
+  // we want to use the default calling convention for the work group
+  // function.
+  if (currentPoclDevice->spmd)
+    L->setCallingConv(F->getCallingConv());
 
   return L;
 }
@@ -1074,7 +1101,7 @@ createArgBufferWorkgroupLauncher(Module &Mod, Function *Func,
 
   LLVMTypeRef VoidType = LLVMVoidTypeInContext(LLVMContext);
   LLVMTypeRef LauncherFuncType =
-    LLVMFunctionType(VoidType, LauncherArgTypes, 5, 0);
+    LLVMFunctionType(VoidType, LauncherArgTypes, 1 + ARGBUFFER_HIDDEN_ARGS, 0);
 
   LLVMValueRef WrapperKernel =
     LLVMAddFunction(M, FunctionName, LauncherFuncType);
@@ -1090,7 +1117,7 @@ createArgBufferWorkgroupLauncher(Module &Mod, Function *Func,
   LLVMValueRef Args[ArgCount];
   LLVMValueRef ArgBuffer = LLVMGetParam(WrapperKernel, 0);
   size_t i = 0;
-  for (; i < ArgCount - 3; ++i)
+  for (; i < ArgCount - ARGBUFFER_HIDDEN_ARGS + 1; ++i)
     Args[i] = createArgBufferLoad(Builder, ArgBuffer, ArgBufferOffsets, F, i);
 
   // Pass the group ids.
@@ -1101,8 +1128,11 @@ createArgBufferWorkgroupLauncher(Module &Mod, Function *Func,
   assert (i == ArgCount);
 
   // Pass the context object.
-  LLVMBuildCall(Builder, F, Args, ArgCount, "");
+  LLVMValueRef Call = LLVMBuildCall(Builder, F, Args, ArgCount, "");
   LLVMBuildRetVoid(Builder);
+
+  llvm::CallInst *CallI = llvm::dyn_cast<llvm::CallInst>(llvm::unwrap(Call));
+  CallI->setCallingConv(Func->getCallingConv());
 
   return llvm::dyn_cast<llvm::Function>(llvm::unwrap(WrapperKernel));
 }
@@ -1140,8 +1170,8 @@ createGridLauncher(Module &Mod, Function *KernFunc, Function *WGFunc,
      Int8PtrType /*args*/};
 
   LLVMTypeRef VoidType = LLVMVoidTypeInContext(LLVMContext);
-  LLVMTypeRef LauncherFuncType = LLVMFunctionType(VoidType, LauncherArgTypes,
-                                                  3, 0);
+  LLVMTypeRef LauncherFuncType =
+    LLVMFunctionType(VoidType, LauncherArgTypes, 3, 0);
 
   LLVMValueRef Launcher =
     LLVMAddFunction(M, FunctionName, LauncherFuncType);
@@ -1171,7 +1201,7 @@ createGridLauncher(Module &Mod, Function *KernFunc, Function *WGFunc,
   // assuming it is stored as the 4th last argument in the kernel.
   LLVMValueRef PoclCtx =
     createArgBufferLoad(Builder, ArgBuffer, KernArgBufferOffsets, Kernel,
-                        KernArgCount - 4);
+                        KernArgCount - ARGBUFFER_HIDDEN_ARGS);
 
   LLVMValueRef Args[3] = {
     LLVMBuildPointerCast(Builder, WGF, ArgTypes[0], "wg_func"),
