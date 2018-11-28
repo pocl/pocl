@@ -783,10 +783,16 @@ pocl_hsa_malloc_account(pocl_global_mem_t *mem, size_t size, hsa_region_t r)
 {
   void *b = NULL;
   if ((mem->total_alloc_limit - mem->currently_allocated) < size)
-    return NULL;
+    {
+      POCL_MSG_PRINT_INFO ("total alloc limit reached!");
+      return NULL;
+    }
 
   if (hsa_memory_allocate(r, size, &b) != HSA_STATUS_SUCCESS)
-    return NULL;
+    {
+      POCL_MSG_PRINT_INFO ("hsa_memory_allocate failed");
+      return NULL;
+    }
 
   mem->currently_allocated += size;
   if (mem->max_ever_allocated < mem->currently_allocated)
@@ -956,18 +962,19 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
   } while (0)
 
   size_t i;
-  for (i = 0; i < cmd->command.run.kernel->num_args +
-	 cmd->command.run.kernel->num_locals; ++i)
+  for (i = 0; i < meta->num_args + meta->num_locals; ++i)
     {
       struct pocl_argument *al = &(cmd->command.run.arguments[i]);
-      if (cmd->command.run.kernel->arg_info[i].is_local
-	  || i >= cmd->command.run.kernel->num_args)
+
+      if (i >= meta->num_args || ARG_IS_LOCAL (meta->arg_info[i]))
         {
+	  size_t buf_size = ARG_IS_LOCAL (meta->arg_info[i]) ?
+	    al->size : meta->local_sizes[i - meta->num_args];
 	  if (HSAIL_ENABLED)
 	    {
 	      CHECK_AND_ALIGN_SPACE(sizeof (uint32_t));
 	      memcpy (write_pos, total_group_size, sizeof (uint32_t));
-	      *total_group_size += (uint32_t)al->size;
+	      *total_group_size += (uint32_t)buf_size;
 	      write_pos += sizeof (uint32_t);
 	    }
 	  else
@@ -981,10 +988,10 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
 		 with different local bases. */
 	      uint64_t ptr =
 		(uint64_t)pocl_hsa_malloc_account
-		(d->device->global_memory, al->size, d->global_region);
+		(d->device->global_memory, buf_size, d->global_region);
 	      memcpy (write_pos, &ptr, sizeof (ptr));
-	      POCL_MSG_PRINT_INFO ("arg %lu (local) written to %lx\n",
-				   i, ptr);
+	      POCL_MSG_PRINT_INFO ("arg %lu (local) size %lu written to %lx\n",
+				   i, buf_size, ptr);
 	      write_pos += sizeof (ptr);
 	      /* TODO: Free the buffer. */
 	    }
