@@ -153,14 +153,12 @@ set_property(TEST
 
 set_property(TEST
   "runtime/clGetDeviceInfo"
-  "runtime/clEnqueueNativeKernel"
   "runtime/clGetEventInfo"
   "runtime/clCreateProgramWithBinary"
   "runtime/clBuildProgram"
   "runtime/test_kernel_cache_includes"
   "runtime/test_event_cycle"
   "runtime/test_link_error"
-  "runtime/test_read-copy-write-buffer"
   "runtime/test_buffer-image-copy"
   "runtime/clCreateKernel"
   "runtime/clGetKernelArgInfo"

@@ -230,7 +230,7 @@ set_tests_properties(clblast_test_xswap clblast_test_xscal clblast_test_xcopy
   clblast_test_xher2 clblast_test_xhpr2 clblast_test_xsyr clblast_test_xspr
   clblast_test_xsyr2 clblast_test_xspr2
   clblast_test_xim2col clblast_test_xaxpybatched
-  clblast_test_retrieve_parameters clblast_test_preprocessor
+  clblast_test_retrieve_parameters
   PROPERTIES
   LABELS "CLBlast hsa-native")
 
