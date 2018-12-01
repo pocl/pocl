@@ -55,7 +55,7 @@ namespace pocl {
     virtual void Initialize(pocl::Kernel *K);
 
   protected:
-    
+
     void movePhiNodes(llvm::BasicBlock* src, llvm::BasicBlock* dst);
     bool fixUndominatedVariableUses(llvm::DominatorTreeWrapperPass *DT, llvm::Function &F);
     bool dominatesUse(llvm::DominatorTreeWrapperPass *DT, llvm::Instruction &I, unsigned i);

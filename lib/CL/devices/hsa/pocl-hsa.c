@@ -1020,7 +1020,7 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
                     {
                       POCL_MSG_PRINT_INFO (
                           "HSA: Copy HOST_PTR allocated %lu byte buffer "
-                          "from %p to %p due to having a BASE profile "
+                          "from %p to %lx due to having a BASE profile "
                           "agent.\n",
                           m->size, m->mem_host_ptr, dev_ptr);
                       hsa_memory_copy ((void *)dev_ptr, m->mem_host_ptr,
