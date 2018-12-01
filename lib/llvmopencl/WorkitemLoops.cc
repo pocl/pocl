@@ -1,18 +1,18 @@
-// LLVM function pass to create loops that run all the work items 
+// LLVM function pass to create loops that run all the work items
 // in a work group while respecting barrier synchronization points.
-// 
-// Copyright (c) 2012-2013 Pekka Jääskeläinen / Tampere University of Technology
-// 
+//
+// Copyright (c) 2012-2018 Pekka Jääskeläinen / Tampere University of Technology
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -384,7 +384,7 @@ WorkitemLoops::ProcessFunction(Function &F)
 
 #ifdef DUMP_CFGS
   F.dump();
-  dumpCFG(F, F.getName().str() + "_before_wiloops.dot", 
+  dumpCFG(F, F.getName().str() + "_before_wiloops.dot",
           original_parallel_regions);
 #endif
 
@@ -402,7 +402,7 @@ WorkitemLoops::ProcessFunction(Function &F)
 
 #if 0
   for (ParallelRegion::ParallelRegionVector::iterator
-           i = original_parallel_regions->begin(), 
+           i = original_parallel_regions->begin(),
            e = original_parallel_regions->end();
        i != e; ++i) 
   {
@@ -524,9 +524,9 @@ WorkitemLoops::ProcessFunction(Function &F)
             if (AddWIMetadata)
                 original->AddIDMetadata(F.getContext(), 0);
 
-            for (unsigned c = 1; c < unrollCount; ++c) 
+            for (unsigned c = 1; c < unrollCount; ++c)
             {
-                ParallelRegion *unrolled = 
+                ParallelRegion *unrolled =
                     original->replicate(reference_map, ".unrolled_wi");
                 unrolled->chainAfter(prev);
                 prev = unrolled;
@@ -545,7 +545,7 @@ WorkitemLoops::ProcessFunction(Function &F)
       GlobalVariable *gv;
       gv = M->getGlobalVariable("_local_size_x");
       auto *SizeT_Ty = Type::getIntNTy(M->getContext(), size_t_width);
-      if (gv == NULL) 
+      if (gv == NULL)
         gv = new GlobalVariable(*M, SizeT_Ty, true, GlobalValue::CommonLinkage,
                                 NULL, "_local_size_x", NULL,
                                 GlobalValue::ThreadLocalMode::NotThreadLocal,
@@ -555,7 +555,7 @@ WorkitemLoops::ProcessFunction(Function &F)
                            localIdX, WGLocalSizeX, !unrolled, gv);
 
       gv = M->getGlobalVariable("_local_size_y");
-      if (gv == NULL) 
+      if (gv == NULL)
         gv = new GlobalVariable(*M, SizeT_Ty, false, GlobalValue::CommonLinkage,
                                 NULL, "_local_size_y");
 
@@ -563,7 +563,7 @@ WorkitemLoops::ProcessFunction(Function &F)
                            false, localIdY, WGLocalSizeY, !unrolled, gv);
 
       gv = M->getGlobalVariable("_local_size_z");
-      if (gv == NULL) 
+      if (gv == NULL)
         gv = new GlobalVariable(*M, SizeT_Ty, true, GlobalValue::CommonLinkage,
                                 NULL, "_local_size_z", NULL,
                                 GlobalValue::ThreadLocalMode::NotThreadLocal,
@@ -612,7 +612,7 @@ WorkitemLoops::ProcessFunction(Function &F)
   for (ParallelRegion::ParallelRegionVector::iterator
            i = original_parallel_regions->begin(), 
            e = original_parallel_regions->end();
-       i != e; ++i) 
+       i != e; ++i)
   {
     ParallelRegion *pr = (*i);
 
@@ -620,8 +620,8 @@ WorkitemLoops::ProcessFunction(Function &F)
     pr->insertPrologue(0, 0, 0);
     builder.SetInsertPoint(&*(pr->entryBB()->getFirstInsertionPt()));
     builder.CreateStore
-      (ConstantInt::get(IntegerType::get(F.getContext(), size_t_width), 1), 
-       localIdXFirstVar);       
+      (ConstantInt::get(IntegerType::get(F.getContext(), size_t_width), 1),
+       localIdXFirstVar);
   }
 
   if (!WGDynamicLocalSize)
@@ -1115,7 +1115,7 @@ WorkitemLoops::ShouldNotBeContextSaved(llvm::Instruction *instr)
       problems in conditional branch case where the header node
       of the region is shared across the branches and thus the
       header node's ID loads might get context saved which leads
-      to egg-chicken problems. 
+      to egg-chicken problems.
     */
   if (isa<BranchInst>(instr)) return true;
 
@@ -1126,30 +1126,30 @@ WorkitemLoops::ShouldNotBeContextSaved(llvm::Instruction *instr)
          load->getPointerOperand() == localIdX))
       return true;
 
-    VariableUniformityAnalysis &VUA = 
+    VariableUniformityAnalysis &VUA =
       getAnalysis<VariableUniformityAnalysis>();
 
     /* In case of uniform variables (same for all work-items),
        there is no point to create a context array slot for them,
-       but just use the original value everywhere. 
+       but just use the original value everywhere.
 
        Allocas are problematic: they include the de-phi induction
-       variables of the b-loops. In those case each work item 
+       variables of the b-loops. In those case each work item
        has a separate loop iteration variable in the LLVM IR but
        which is really a parallel region loop invariant. But
        because we cannot separate such loop invariant variables
        at this point sensibly, let's just replicate the iteration
        variable to each work item and hope the latter optimizations
        reduce them back to a single induction variable outside the
-       parallel loop.   
+       parallel loop.
     */
     if (!VUA.shouldBePrivatized(instr->getParent()->getParent(), instr)) {
 #ifdef DEBUG_WORK_ITEM_LOOPS
       std::cerr << "### based on VUA, not context saving:";
       instr->dump();
-#endif     
+#endif
       return true;
-    } 
+    }
 
     return false;
 }
@@ -1163,7 +1163,7 @@ WorkitemLoops::AppendIncBlock
   llvm::BasicBlock *oldExit = after->getTerminator()->getSuccessor(0);
   assert (oldExit != NULL);
 
-  llvm::BasicBlock *forIncBB = 
+  llvm::BasicBlock *forIncBB =
     BasicBlock::Create(C, "pregion_for_inc", after->getParent());
 
   after->getTerminator()->replaceUsesOfWith(oldExit, forIncBB);
