@@ -46,9 +46,14 @@ extern "C" {
 #endif
 
 #if defined(__GNUC__) || defined(__clang__)
-#define ATOMIC_INC(x) __sync_add_and_fetch(&x, 1)
+
+/* These return the new value. */
+/* See: https://gcc.gnu.org/onlinedocs/gcc-4.1.2/gcc/Atomic-Builtins.html */
+#define POCL_ATOMIC_INC(x) __sync_add_and_fetch (&x, 1)
+#define POCL_ATOMIC_DEC(x) __sync_sub_and_fetch (&x, 1)
+
 #else
-#error Need atomic_inc() builtin for this compiler
+#error Need basic atomics builtin support in the compiler.
 #endif
 
 uint32_t byteswap_uint32_t (uint32_t word, char should_swap);

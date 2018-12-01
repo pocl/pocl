@@ -54,7 +54,7 @@ using namespace llvm;
 /* These are used to communicate the work-group function specialization
    properites of the currently compiled kernel command.
 
-   TODO: Something cleaner than a global value. */
+   TODO: Something cleaner than global values. */
 
 bool WGDynamicLocalSize = false;
 size_t WGLocalSizeX = 1;
