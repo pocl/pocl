@@ -255,8 +255,7 @@ WorkitemLoops::CreateLoopAround
 
   if (peeledFirst) {
     builder.CreateStore(builder.CreateLoad(localIdXFirstVar), localIdVar);
-    builder.CreateStore
-      (ConstantInt::get(IntegerType::get(C, size_t_width), 0), localIdXFirstVar);
+    builder.CreateStore(ConstantInt::get(SizeT, 0), localIdXFirstVar);
 
     if (WGDynamicLocalSize) {
       llvm::Value *cmpResult;
@@ -268,8 +267,7 @@ WorkitemLoops::CreateLoopAround
       builder.CreateBr(loopBodyEntryBB);
     }
   } else {
-    builder.CreateStore
-      (ConstantInt::get(IntegerType::get(C, size_t_width), 0), localIdVar);
+    builder.CreateStore(ConstantInt::get(SizeT, 0), localIdVar);
 
     builder.CreateBr(loopBodyEntryBB);
   }
@@ -286,9 +284,7 @@ WorkitemLoops::CreateLoopAround
   if (!WGDynamicLocalSize)
     cmpResult = builder.CreateICmpULT(
                   builder.CreateLoad(localIdVar),
-                    ConstantInt::get(
-                      IntegerType::get(C, size_t_width),
-                      LocalSizeForDim));
+                    ConstantInt::get(SizeT, LocalSizeForDim));
   else
     cmpResult = builder.CreateICmpULT(
                   builder.CreateLoad(localIdVar),
@@ -389,9 +385,7 @@ WorkitemLoops::ProcessFunction(Function &F)
 #endif
 
   IRBuilder<> builder(&*(F.getEntryBlock().getFirstInsertionPt()));
-  localIdXFirstVar = 
-    builder.CreateAlloca
-    (IntegerType::get(F.getContext(), size_t_width), 0, ".pocl.local_id_x_init");
+  localIdXFirstVar = builder.CreateAlloca(SizeT, 0, ".pocl.local_id_x_init");
 
   //  F.viewCFGOnly();
 
@@ -516,8 +510,8 @@ WorkitemLoops::ProcessFunction(Function &F)
 
         if (unrollCount > 1) {
             ParallelRegion *prev = original;
-            llvm::BasicBlock *lastBB = 
-                AppendIncBlock(original->exitBB(), localIdX);
+            llvm::BasicBlock *lastBB =
+                AppendIncBlock(original->exitBB(), LocalIdXGlobal);
             original->AddBlockAfter(lastBB, original->exitBB());
             original->SetExitBB(lastBB);
 
@@ -544,49 +538,48 @@ WorkitemLoops::ProcessFunction(Function &F)
     if (WGDynamicLocalSize) {
       GlobalVariable *gv;
       gv = M->getGlobalVariable("_local_size_x");
-      auto *SizeT_Ty = Type::getIntNTy(M->getContext(), size_t_width);
       if (gv == NULL)
-        gv = new GlobalVariable(*M, SizeT_Ty, true, GlobalValue::CommonLinkage,
+        gv = new GlobalVariable(*M, SizeT, true, GlobalValue::CommonLinkage,
                                 NULL, "_local_size_x", NULL,
                                 GlobalValue::ThreadLocalMode::NotThreadLocal,
                                 0, true);
 
       l = CreateLoopAround(*original, l.first, l.second, peelFirst,
-                           localIdX, WGLocalSizeX, !unrolled, gv);
+                           LocalIdXGlobal, WGLocalSizeX, !unrolled, gv);
 
       gv = M->getGlobalVariable("_local_size_y");
       if (gv == NULL)
-        gv = new GlobalVariable(*M, SizeT_Ty, false, GlobalValue::CommonLinkage,
+        gv = new GlobalVariable(*M, SizeT, false, GlobalValue::CommonLinkage,
                                 NULL, "_local_size_y");
 
       l = CreateLoopAround(*original, l.first, l.second,
-                           false, localIdY, WGLocalSizeY, !unrolled, gv);
+                           false, LocalIdYGlobal, WGLocalSizeY, !unrolled, gv);
 
       gv = M->getGlobalVariable("_local_size_z");
       if (gv == NULL)
-        gv = new GlobalVariable(*M, SizeT_Ty, true, GlobalValue::CommonLinkage,
+        gv = new GlobalVariable(*M, SizeT, true, GlobalValue::CommonLinkage,
                                 NULL, "_local_size_z", NULL,
                                 GlobalValue::ThreadLocalMode::NotThreadLocal,
                                 0, true);
 
       l = CreateLoopAround(*original, l.first, l.second,
-                           false, localIdZ, WGLocalSizeZ, !unrolled, gv);
+                           false, LocalIdZGlobal, WGLocalSizeZ, !unrolled, gv);
 
     } else {
       if (WGLocalSizeX > 1) {
-          l = CreateLoopAround(*original, l.first, l.second, peelFirst,
-                               localIdX, WGLocalSizeX, !unrolled);
-        }
+        l = CreateLoopAround(*original, l.first, l.second, peelFirst,
+                             LocalIdXGlobal, WGLocalSizeX, !unrolled);
+      }
 
       if (WGLocalSizeY > 1) {
-          l = CreateLoopAround(*original, l.first, l.second, false,
-                               localIdY, WGLocalSizeY);
-        }
+        l = CreateLoopAround(*original, l.first, l.second, false,
+                             LocalIdYGlobal, WGLocalSizeY);
+      }
 
       if (WGLocalSizeZ > 1) {
-          l = CreateLoopAround(*original, l.first, l.second, false,
-                               localIdZ, WGLocalSizeZ);
-        }
+        l = CreateLoopAround(*original, l.first, l.second, false,
+                             LocalIdZGlobal, WGLocalSizeZ);
+      }
     }
 
     /* Loop edges coming from another region mean B-loops which means 
@@ -619,9 +612,7 @@ WorkitemLoops::ProcessFunction(Function &F)
     if (!peeledRegion[pr]) continue;
     pr->insertPrologue(0, 0, 0);
     builder.SetInsertPoint(&*(pr->entryBB()->getFirstInsertionPt()));
-    builder.CreateStore
-      (ConstantInt::get(IntegerType::get(F.getContext(), size_t_width), 1),
-       localIdXFirstVar);
+    builder.CreateStore(ConstantInt::get(SizeT, 1), localIdXFirstVar);
   }
 
   if (!WGDynamicLocalSize)
@@ -718,11 +709,10 @@ llvm::Value *
 WorkitemLoops::GetLinearWiIndex(llvm::IRBuilder<> &builder, llvm::Module *M,
                                ParallelRegion *region)
 {
-  auto *SizeTType = Type::getIntNTy(M->getContext(), size_t_width);
   GlobalVariable *LocalSizeXPtr =
-    cast<GlobalVariable>(M->getOrInsertGlobal("_local_size_x", SizeTType));
+    cast<GlobalVariable>(M->getOrInsertGlobal("_local_size_x", SizeT));
   GlobalVariable *LocalSizeYPtr =
-    cast<GlobalVariable>(M->getOrInsertGlobal("_local_size_y", SizeTType));
+    cast<GlobalVariable>(M->getOrInsertGlobal("_local_size_y", SizeT));
 
   assert(LocalSizeXPtr != NULL && LocalSizeYPtr != NULL);
 
@@ -793,7 +783,7 @@ WorkitemLoops::AddContextSave
     }
   else
     {
-      gepArgs.push_back(ConstantInt::get(IntegerType::get(instruction->getContext(), size_t_width), 0));
+      gepArgs.push_back(ConstantInt::get(SizeT, 0));
       gepArgs.push_back(region->LocalIDZLoad());
       gepArgs.push_back(region->LocalIDYLoad());
       gepArgs.push_back(region->LocalIDXLoad());
@@ -840,8 +830,7 @@ WorkitemLoops::AddContextRestore
     }
   else
     {
-      gepArgs.push_back(ConstantInt::get(IntegerType::get(val->getContext(),
-                                                          size_t_width), 0));
+      gepArgs.push_back(ConstantInt::get(SizeT, 0));
       gepArgs.push_back(region->LocalIDZLoad());
       gepArgs.push_back(region->LocalIDYLoad());
       gepArgs.push_back(region->LocalIDXLoad());
@@ -922,11 +911,10 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
       char GlobalName[32];
       GlobalVariable* LocalSize;
       LoadInst* LocalSizeLoad[3];
-      auto *SizeT_Ty = Type::getIntNTy(M->getContext(), size_t_width);
       for (int i = 0; i < 3; ++i) {
         snprintf(GlobalName, 32, "_local_size_%c", 'x' + i);
         LocalSize =
-          cast<GlobalVariable>(M->getOrInsertGlobal(GlobalName, SizeT_Ty));
+          cast<GlobalVariable>(M->getOrInsertGlobal(GlobalName, SizeT));
         LocalSizeLoad[i] = builder.CreateLoad(LocalSize);
       }
 
@@ -1121,9 +1109,9 @@ WorkitemLoops::ShouldNotBeContextSaved(llvm::Instruction *instr)
 
     llvm::LoadInst *load = dyn_cast<llvm::LoadInst>(instr);
     if (load != NULL &&
-        (load->getPointerOperand() == localIdZ ||
-         load->getPointerOperand() == localIdY ||
-         load->getPointerOperand() == localIdX))
+        (load->getPointerOperand() == LocalIdZGlobal ||
+         load->getPointerOperand() == LocalIdYGlobal ||
+         load->getPointerOperand() == LocalIdXGlobal))
       return true;
 
     VariableUniformityAnalysis &VUA =
@@ -1172,11 +1160,10 @@ WorkitemLoops::AppendIncBlock
 
   builder.SetInsertPoint(forIncBB);
   /* Create the iteration variable increment */
-  builder.CreateStore
-    (builder.CreateAdd
-     (builder.CreateLoad(localIdVar),
-      ConstantInt::get(IntegerType::get(C, size_t_width), 1)),
-     localIdVar);
+  builder.CreateStore(builder.CreateAdd(
+                        builder.CreateLoad(localIdVar),
+                        ConstantInt::get(SizeT, 1)),
+                      localIdVar);
 
   builder.CreateBr(oldExit);
 

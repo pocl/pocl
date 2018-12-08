@@ -682,8 +682,8 @@ error:;
  * after the external (buffer) variables are handled in a LLVM pass. */
 
 int
-__pocl_printf (char *restrict __buffer, size_t *__buffer_index,
-               size_t __buffer_capacity,
+__pocl_printf (char *restrict __buffer, uint32_t *__buffer_index,
+               uint32_t __buffer_capacity,
                const OCL_CONSTANT_AS char *restrict fmt, ...)
 {
   param_t p = { 0 };
@@ -705,8 +705,8 @@ __pocl_printf (char *restrict __buffer, size_t *__buffer_index,
 /**************************************************************************/
 
 extern char *_printf_buffer;
-extern size_t *_printf_buffer_position;
-extern size_t _printf_buffer_capacity;
+extern uint32_t *_printf_buffer_position;
+extern uint32_t _printf_buffer_capacity;
 
 /* This is a placeholder printf function that will be replaced by calls
  * to __pocl_printf(), after a LLVM pass handles the hidden arguments.
