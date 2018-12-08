@@ -29,6 +29,8 @@
 #include "pocl_cache.h"
 #include "utlist.h"
 #include "pocl_binary.h"
+#include "pocl_context.h"
+
 #ifndef _MSC_VER
 #  include <unistd.h>
 #else

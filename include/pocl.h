@@ -35,8 +35,9 @@
 
 #include <CL/opencl.h>
 
-#include "pocl_device.h"
 #include "config.h"
+
+#include "pocl_context.h"
 
 /* detects restrict, variadic macros etc */
 #include "pocl_compiler_features.h"
@@ -99,7 +100,7 @@ typedef uint8_t pocl_kernel_hash_t[POCL_KERNEL_DIGEST_SIZE];
 typedef struct
 {
   void *hash;
-  pocl_workgroup wg;
+  void *wg; /* The work group function ptr. Device specific. */
   cl_kernel kernel;
   size_t local_x;
   size_t local_y;

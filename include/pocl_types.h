@@ -21,32 +21,78 @@
    THE SOFTWARE.
 */
 
+/* This header is designed to be included both from the device and the host.
+   In case compiling OpenCL C sources, __OPENCL_VERSION__ should be set.
+   In case compiling in the host, all but the device-specific types are
+   defined (size_t and others). Devices should avoid including the C
+   stdint.h instead of this one as OpenCL C size_t et al. is allowed to
+   be of different width than when targeting C.
+
+   TODO: replace this header (partially) with Clang's opencl-c.h */
+
+#ifndef POCL_DEVICE_TYPES_H
+#define POCL_DEVICE_TYPES_H
+
+#ifdef __OPENCL_VERSION__
+
+#ifdef __USE_CLANG_OPENCL_C_H
+
+/* Minimal definitions, only the target specific macro overrides,
+   just in case Clang export the C ones which might differ for
+   OpenCL C. */
+
+#ifdef __INTPTR_TYPE__
+#undef __INTPTR_TYPE__
+#endif
+
+#ifdef __UINTPTR_TYPE__
+#undef __UINTPTR_TYPE__
+#endif
+
+#ifdef __SIZE_TYPE__
+#undef __SIZE_TYPE__
+#endif
+
+#ifdef __SIZE_MAX__
+#undef __SIZE_MAX__
+#endif
+
+#if defined(CL_DEVICE_ADDRESS_BITS) && CL_DEVICE_ADDRESS_BITS == 32
+#define __SIZE_TYPE__ uint
+#define __SIZE_MAX__ UINT_MAX
+#else
+#define __SIZE_TYPE__ ulong
+#define __SIZE_MAX__ ULONG_MAX
+#endif
+
+#define __INTPTR_TYPE__ __SIZE_TYPE__
+#define __UINTPTR_TYPE__ __INTPTR_TYPE__
+
+
+#else
+
+/* Compiling Device-specific OpenCL C or builtin library C. */
+
 #if defined cl_khr_fp64 && !defined cl_khr_int64
 #  error "cl_khr_fp64 requires cl_khr_int64"
 #endif
 
 #ifdef __CBUILD__
 
-#ifndef __TCE__
-/* Define the fixed width OpenCL data types using the target-specified ones
-   from stdint.h. */
+/* Builtin library C code definitions. */
+
+#define size_t csize_t
+#define uintptr_t cuintptr_t
+
 #include <stdint.h>
+
+#undef size_t
+#undef uintptr_t
 
 typedef uint8_t uchar;
 typedef uint16_t ushort;
 typedef uint32_t uint;
 typedef uint64_t ulong;
-typedef __SIZE_TYPE__ size_t;
-
-#else
-
-typedef unsigned char uchar;
-typedef unsigned short ushort;
-typedef unsigned uint;
-typedef unsigned ulong;
-typedef unsigned int size_t;
-
-#endif
 
 #ifndef cl_khr_fp16
 typedef short half;
@@ -54,42 +100,52 @@ typedef short half;
 
 #endif
 
-
-/* Disable undefined datatypes */
-
 /* The definitions below intentionally lead to errors if these types
    are used when they are not available in the language. This prevents
    accidentally using them if the compiler does not disable these
    types, but only e.g. defines them with an incorrect size.*/
-
-#ifndef __CBUILD__
-
-#ifndef cl_khr_int64
-typedef struct error_undefined_type_long error_undefined_type_long;
-#  define long error_undefined_type_long
-typedef struct error_undefined_type_ulong error_undefined_type_ulong;
-#  define ulong error_undefined_type_ulong
-#endif
 
 #ifndef cl_khr_fp64
 typedef struct error_undefined_type_double error_undefined_type_double;
 #  define double error_undefined_type_double
 #endif
 
-/* Define unsigned datatypes */
-
-typedef unsigned char uchar;
-typedef unsigned short ushort;
-typedef unsigned int uint;
-#ifdef cl_khr_int64
-typedef unsigned long ulong;
+#ifdef __SIZE_TYPE__
+#undef __SIZE_TYPE__
 #endif
 
-/* Define pointer helper types */
+#ifdef __SIZE_MAX__
+#undef __SIZE_MAX__
+#endif
+
+#if defined(CL_DEVICE_ADDRESS_BITS) && CL_DEVICE_ADDRESS_BITS == 32
+#define __SIZE_TYPE__ uint
+#define __SIZE_MAX__ UINT_MAX
+#else
+#define __SIZE_TYPE__ ulong
+#define __SIZE_MAX__ ULONG_MAX
+#endif
 
 typedef __SIZE_TYPE__ size_t;
 typedef __PTRDIFF_TYPE__ ptrdiff_t;
 typedef ptrdiff_t intptr_t;
 typedef size_t uintptr_t;
+
+#endif /* #ifdef __USE_CLANG_OPENCL_C_H */
+
+#else /* #ifdef __OPENCL_VERSION__ */
+
+/* Including from a host source (runtime API implementation). Introduce
+   the fixed width datatypes, but do not override C's size_t and other
+   target specific datatypes. */
+
+#include <stdint.h>
+
+typedef uint8_t uchar;
+typedef uint16_t ushort;
+typedef uint32_t uint;
+typedef uint64_t ulong;
+
+#endif
 
 #endif

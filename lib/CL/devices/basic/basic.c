@@ -42,6 +42,7 @@
 #include "pocl_cache.h"
 #include "pocl_timing.h"
 #include "pocl_file_util.h"
+#include "pocl_workgroup_func.h"
 
 #ifdef OCS_AVAILABLE
 #include "pocl_llvm.h"
@@ -643,7 +644,7 @@ pocl_basic_run
   assert (pc->printf_buffer != NULL);
   pc->printf_buffer_capacity = cmd->device->printf_buffer_size;
   assert (pc->printf_buffer_capacity > 0);
-  size_t position = 0;
+  uint32_t position = 0;
   pc->printf_buffer_position = &position;
 
   unsigned rm = pocl_save_rm ();
@@ -654,7 +655,8 @@ pocl_basic_run
   for (z = 0; z < pc->num_groups[2]; ++z)
     for (y = 0; y < pc->num_groups[1]; ++y)
       for (x = 0; x < pc->num_groups[0]; ++x)
-        cmd->command.run.wg ((uint8_t *)arguments, (uint8_t *)pc, x, y, z);
+        ((pocl_workgroup_func) cmd->command.run.wg)
+	  ((uint8_t *)arguments, (uint8_t *)pc, x, y, z);
 
   pocl_restore_rm (rm);
   pocl_restore_ftz (ftz);

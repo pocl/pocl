@@ -22,16 +22,17 @@
    THE SOFTWARE.
 */
 
-#include <stdint.h>
 #include "pocl_device.h"
+#include "pocl_context.h"
+#include "pocl_types.h"
 
 void
-_pocl_finish_all_wgs (struct pocl_context *);
+_pocl_finish_all_wgs (uchar *);
 
 void
-_pocl_spawn_wg (void *restrict wg_func_ptr, uint8_t *restrict args,
-		uint8_t *restrict ctx,
-		uint32_t group_x, uint32_t group_y, uint32_t group_z);
+_pocl_spawn_wg (void *restrict wg_func_ptr, uchar *restrict args,
+		uchar *restrict ctx,
+		size_t group_x, size_t group_y, size_t group_z);
 
 /* Launches all the work-groups in the grid using the given work group function.
    Blocks until all WGs have been executed to the end.
@@ -40,13 +41,14 @@ _pocl_spawn_wg (void *restrict wg_func_ptr, uint8_t *restrict args,
    @param args The flat argument buffer.
    @param pc The context struct for getting the dimensions etc.  */
 void
-_pocl_run_all_wgs (void *restrict wg_func_ptr, uint8_t *restrict args,
-		   struct pocl_context *restrict pc)
+_pocl_run_all_wgs (void *restrict wg_func_ptr, uchar *restrict args,
+		   uchar *restrict pcptr)
 {
-  for (uint32_t gz = 0; gz < pc->num_groups[2]; ++gz)
-    for (uint32_t gy = 0; gy < pc->num_groups[1]; ++gy)
-      for (uint32_t gx = 0; gx < pc->num_groups[0]; ++gx)
-	_pocl_spawn_wg (wg_func_ptr, args, (uint8_t*) pc, gx, gy, gz);
+  struct pocl_context *pc = (struct pocl_context*)pcptr;
+  for (size_t gz = 0; gz < pc->num_groups[2]; ++gz)
+    for (size_t gy = 0; gy < pc->num_groups[1]; ++gy)
+      for (size_t gx = 0; gx < pc->num_groups[0]; ++gx)
+	_pocl_spawn_wg (wg_func_ptr, args, pcptr, gx, gy, gz);
 
-  _pocl_finish_all_wgs (pc);
+  _pocl_finish_all_wgs (pcptr);
 }

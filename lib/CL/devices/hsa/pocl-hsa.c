@@ -79,6 +79,7 @@
 #include "pocl_llvm.h"
 #include "pocl_util.h"
 #include "pocl_mem_management.h"
+#include "pocl_context.h"
 
 #include <assert.h>
 #include <string.h>
@@ -209,7 +210,7 @@ typedef struct pocl_hsa_device_data_s {
 
   /* printf buffer */
   void *printf_buffer;
-  size_t *printf_write_pos;
+  uint32_t *printf_write_pos;
 
 } pocl_hsa_device_data_t;
 
@@ -1063,13 +1064,18 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
   /* Need to copy the context object to HSA allocated global memory
      to ensure Base profile agents can access it. */
 
-  struct pocl_context *ctx_ptr = (struct pocl_context *)pocl_hsa_malloc_account
-    (d->device->global_memory, sizeof (struct pocl_context),
+  void *ctx_ptr = pocl_hsa_malloc_account
+    (d->device->global_memory, POCL_CONTEXT_SIZE (d->device->address_bits),
      d->global_region);
 
-  memcpy (ctx_ptr, &cmd->command.run.pc, sizeof (struct pocl_context));
+  if (d->device->address_bits == 64)
+    memcpy (ctx_ptr, &cmd->command.run.pc, sizeof (struct pocl_context));
+  else
+    POCL_CONTEXT_COPY64TO32(ctx_ptr, &cmd->command.run.pc);
+
   memcpy (write_pos, &ctx_ptr, sizeof(ctx_ptr));
-  POCL_MSG_PRINT_INFO("the context object was written at %p\n", ctx_ptr);
+  POCL_MSG_PRINT_INFO("A %d-bit context object was written at %p\n",
+		      d->device->address_bits, ctx_ptr);
   write_pos += sizeof(uint64_t);
 
   /* MUST TODO: free the local buffers and ctx obj after finishing the kernel! */

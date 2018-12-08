@@ -27,6 +27,8 @@
 
 #include "pocl_cl.h"
 #include "pocl_util.h"
+#include "pocl_context.h"
+#include "pocl_workgroup_func.h"
 
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)
@@ -39,7 +41,7 @@ struct kernel_run_command
   cl_kernel kernel;
   cl_device_id device;
   _cl_command_node *cmd;
-  pocl_workgroup workgroup;
+  pocl_workgroup_func workgroup;
   struct pocl_argument *kernel_args;
   kernel_run_command *next;
   unsigned long ref_count;

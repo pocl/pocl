@@ -21,7 +21,7 @@
    THE SOFTWARE.
 */
 
-#include <stdint.h>
+#include "pocl_types.h"
 
 /* printing largest double with %f formatter requires about ~1024 digits for
  * integral part, plus precision digits for decimal part, plus some space for
@@ -45,25 +45,25 @@ typedef intptr_t ssize_t;
 
 #ifdef cl_khr_int64
 
-#define INT_T int64_t
-#define UINT_T uint64_t
-#define INT_T_MIN INT64_MIN
-#define INT_T_MAX INT64_MAX
+#define INT_T long
+#define UINT_T ulong
+#define INT_T_MIN LONG_MIN
+#define INT_T_MAX LONG_MAX
 
 #else
 
-#define INT_T int32_t
-#define UINT_T uint32_t
-#define INT_T_MIN INT32_MIN
-#define INT_T_MAX INT32_MAX
+#define INT_T int
+#define UINT_T uint
+#define INT_T_MIN INT_MIN
+#define INT_T_MAX INT_MAX
 
 #endif
 
 
 #ifdef cl_khr_fp64
 #define FLOAT_T double
-#define FLOAT_INT_T int64_t
-#define FLOAT_UINT_T uint64_t
+#define FLOAT_INT_T long
+#define FLOAT_UINT_T ulong
 
 #define NAN __builtin_nan ("1")
 #define INFINITY (__builtin_inf())
@@ -85,8 +85,8 @@ typedef intptr_t ssize_t;
 #else
 
 #define FLOAT_T float
-#define FLOAT_INT_T int32_t
-#define FLOAT_UINT_T uint32_t
+#define FLOAT_INT_T int
+#define FLOAT_UINT_T uint
 
 #define NAN __builtin_nanf ("1")
 #define INFINITY (__builtin_inff())
@@ -125,8 +125,8 @@ typedef struct
 {
   char *bf;             /**  Buffer to output */
   char *restrict printf_buffer;
-  size_t printf_buffer_index;
-  size_t printf_buffer_capacity;
+  uint printf_buffer_index;
+  uint printf_buffer_capacity;
   int precision;       /**  field precision */
   unsigned width;      /**  field width */
   unsigned base;
