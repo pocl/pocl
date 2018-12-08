@@ -60,11 +60,14 @@ namespace pocl {
     bool fixUndominatedVariableUses(llvm::DominatorTreeWrapperPass *DT, llvm::Function &F);
     bool dominatesUse(llvm::DominatorTreeWrapperPass *DT, llvm::Instruction &I, unsigned i);
 
-    unsigned size_t_width;
+    // The type of size_t for the current target.
+    llvm::Type *SizeT;
+    // The width of size_t for the current target.
+    int SizeTWidth;
 
-    /* The global variables that store the current local id. */
-    llvm::Value *localIdZ, *localIdY, *localIdX;
-
+    // The Module global variables that hold the place of the current local
+    // id until privatized.
+    llvm::Value *LocalIdZGlobal, *LocalIdYGlobal, *LocalIdXGlobal;
   };
 
   extern llvm::cl::opt<bool> AddWIMetadata;

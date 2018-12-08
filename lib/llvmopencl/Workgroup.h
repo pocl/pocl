@@ -25,12 +25,14 @@
 #define _POCL_WORKGROUP_H
 
 #include "config.h"
+#include "LLVMUtils.h"
 
-#include "llvm/IR/Module.h"
-#include "llvm/Pass.h"
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/IR/Module.h>
+#include <llvm/Pass.h>
 
 namespace pocl {
-  class Workgroup : public llvm::ModulePass {  
+  class Workgroup : public llvm::ModulePass {
   public:
     static char ID;
 
@@ -38,14 +40,61 @@ namespace pocl {
 
     virtual bool runOnModule(llvm::Module &M);
 
-
     void getAnalysisUsage(llvm::AnalysisUsage &AU) const {
         AU.setPreservesAll();
     }
 
     static bool isKernelToProcess(const llvm::Function &F);
     static bool hasWorkgroupBarriers(const llvm::Function &F);
+  private:
+    llvm::Function *createWrapper(
+      llvm::Function *F, FunctionMapping &printfCache);
 
+    void createGridLauncher(
+      llvm::Function *KernFunc, llvm::Function *WGFunc, std::string KernName);
+
+    llvm::Function*
+      createArgBufferWorkgroupLauncher(llvm::Function *Func,
+                                       std::string KernName);
+
+    void createDefaultWorkgroupLauncher(llvm::Function *F);
+    void createFastWorkgroupLauncher(llvm::Function *F);
+
+    std::vector<llvm::Value*>
+      globalHandlesToContextStructLoads(
+        llvm::IRBuilder<> &Builder,
+        const std::vector<std::string> &&GlobalHandleNames,
+        int StructFieldIndex);
+
+    void addPlaceHolder(llvm::IRBuilder<> &Builder, llvm::Value *Value,
+                        const std::string TypeStr);
+
+    void privatizeGlobals(llvm::Function *F, llvm::IRBuilder<> &Builder,
+                          const std::vector<std::string> &&GlobalHandleNames,
+                          std::vector<llvm::Value*> PrivateValues);
+
+    void privatizeContext(llvm::Function *F);
+
+    llvm::Value *createLoadFromContext(
+      llvm::IRBuilder<> &Builder, int StructFieldIndex, int FieldIndex);
+
+    void addGEPs(llvm::IRBuilder<> &Builder, int StructFieldIndex,
+                 const char* FormatStr);
+
+    llvm::Module *M;
+
+    // Set to the hidden context argument.
+    llvm::Argument *ContextArg;
+
+    // Set to the hidden group_id_* kernel args.
+    std::vector<llvm::Value*> GroupIdArgs;
+
+    // Number of hidden args added to the work-group function.
+    unsigned HiddenArgs = 0;
+
+    // The width of the size_t data type in the current target.
+    int SizeTWidth = 64;
+    llvm::Type *SizeT = nullptr;
   };
 }
 

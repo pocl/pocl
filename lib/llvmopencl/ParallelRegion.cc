@@ -28,6 +28,7 @@
 #include <algorithm>
 
 #include "pocl.h"
+#include "pocl_cl.h"
 
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/ValueSymbolTable.h"
@@ -51,6 +52,7 @@ using namespace pocl;
 
 int ParallelRegion::idGen = 0;
 
+extern cl_device_id currentPoclDevice;
 
 ParallelRegion::ParallelRegion(int forcedRegionId) : 
   std::vector<llvm::BasicBlock *>(), 
@@ -292,43 +294,27 @@ ParallelRegion::purge()
 }
 
 void
-ParallelRegion::insertLocalIdInit(llvm::BasicBlock* entry,
-                                  unsigned x,
-                                  unsigned y,
-                                  unsigned z)
-{
-  IRBuilder<> builder(entry, entry->getFirstInsertionPt());
+ParallelRegion::insertLocalIdInit(llvm::BasicBlock* Entry,
+                                  unsigned X, unsigned Y, unsigned Z) {
 
-  Module *M = entry->getParent()->getParent();
+  IRBuilder<> Builder(Entry, Entry->getFirstInsertionPt());
 
-  int size_t_width = 32;
-#ifdef LLVM_OLDER_THAN_3_7
-  // This breaks (?) if _local_size_x is not stored in AS0,
-  // but it always will be as it's just a pseudo variable that
-  // will be scalarized.
-  if (M->getDataLayout()->getPointerSize(0) == 8)
-#else
-  if (M->getDataLayout().getPointerSize(0) == 8)
-#endif
-    size_t_width = 64;
+  Module *M = Entry->getParent()->getParent();
 
-  GlobalVariable *gvx = M->getGlobalVariable(POCL_LOCAL_ID_X_GLOBAL);
-  if (gvx != NULL)
-      builder.CreateStore(ConstantInt::get(IntegerType::
-                                           get(M->getContext(), size_t_width), 
-                                           x), gvx);
+  llvm::Type *SizeT =
+    IntegerType::get(M->getContext(), currentPoclDevice->address_bits);
 
-  GlobalVariable *gvy = M->getGlobalVariable(POCL_LOCAL_ID_Y_GLOBAL);
-  if (gvy != NULL)
-    builder.CreateStore(ConstantInt::get(IntegerType::
-                                         get(M->getContext(), size_t_width),
-                                         y), gvy);
+  GlobalVariable *GVX = M->getGlobalVariable(POCL_LOCAL_ID_X_GLOBAL);
+  if (GVX != NULL)
+      Builder.CreateStore(ConstantInt::get(SizeT, X), GVX);
 
-  GlobalVariable *gvz = M->getGlobalVariable(POCL_LOCAL_ID_Z_GLOBAL);
-  if (gvz != NULL)
-    builder.CreateStore(ConstantInt::get(IntegerType::
-                                         get(M->getContext(), size_t_width),
-                                         z), gvz);
+  GlobalVariable *GVY = M->getGlobalVariable(POCL_LOCAL_ID_Y_GLOBAL);
+  if (GVY != NULL)
+      Builder.CreateStore(ConstantInt::get(SizeT, Y), GVY);
+
+  GlobalVariable *GVZ = M->getGlobalVariable(POCL_LOCAL_ID_Z_GLOBAL);
+  if (GVZ != NULL)
+      Builder.CreateStore(ConstantInt::get(SizeT, Z), GVZ);
 }
 
 void

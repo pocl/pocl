@@ -1,7 +1,7 @@
 // Class for kernels, llvm::Functions that represent OpenCL C kernels.
 // 
 // Copyright (c) 2011 Universidad Rey Juan Carlos and
-//               2012-2015 Pekka Jääskeläinen / TUT
+//               2012-2018 Pekka Jääskeläinen / TUT
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -27,6 +27,7 @@
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "pocl.h"
+#include "pocl_cl.h"
 
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/InlineAsm.h"
@@ -39,6 +40,8 @@ POP_COMPILER_DIAGS
 
 using namespace llvm;
 using namespace pocl;
+
+extern cl_device_id currentPoclDevice;
 
 static void add_predecessors(SmallVectorImpl<BasicBlock *> &v,
                              BasicBlock *b);
@@ -271,44 +274,26 @@ Kernel::getParallelRegions(llvm::LoopInfo *LI) {
 
 void
 Kernel::addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY, size_t LocalSizeZ) {
-  
-  IRBuilder<> builder(getEntryBlock().getFirstNonPHI());
 
-  GlobalVariable *gv;
+  IRBuilder<> Builder(getEntryBlock().getFirstNonPHI());
+
+  GlobalVariable *GV;
 
   llvm::Module* M = getParent();
 
-  int size_t_width = 32;
-#ifdef LLVM_OLDER_THAN_3_7
-  // This breaks (?) if _local_size_x is not stored in AS0,
-  // but it always will be as it's just a pseudo variable that
-  // will be scalarized.
-  if (M->getDataLayout()->getPointerSize(0) == 8)
-#else
-  if (M->getDataLayout().getPointerSize(0) == 8)
-#endif
-    size_t_width = 64;
+  llvm::Type *SizeT =
+    IntegerType::get(M->getContext(), currentPoclDevice->address_bits);
 
-  gv = M->getGlobalVariable("_local_size_x");
-  if (gv != NULL)
-    builder.CreateStore
-      (ConstantInt::get
-       (IntegerType::get(M->getContext(), size_t_width),
-        LocalSizeX), gv);
-  gv = M->getGlobalVariable("_local_size_y");
+  GV = M->getGlobalVariable("_local_size_x");
+  if (GV != NULL)
+    Builder.CreateStore(ConstantInt::get(SizeT, LocalSizeX), GV);
 
-  if (gv != NULL)
-    builder.CreateStore
-      (ConstantInt::get
-       (IntegerType::get(M->getContext(), size_t_width),
-        LocalSizeY), gv);
-  gv = M->getGlobalVariable("_local_size_z");
+  GV = M->getGlobalVariable("_local_size_y");
+  if (GV != NULL)
+    Builder.CreateStore(ConstantInt::get(SizeT, LocalSizeY), GV);
 
-  if (gv != NULL)
-    builder.CreateStore
-      (ConstantInt::get
-       (IntegerType::get(M->getContext(), size_t_width),
-        LocalSizeZ), gv);
-
+  GV = M->getGlobalVariable("_local_size_z");
+  if (GV != NULL)
+    Builder.CreateStore(ConstantInt::get(SizeT, LocalSizeZ), GV);
 }
 
