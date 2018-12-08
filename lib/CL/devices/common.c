@@ -833,7 +833,7 @@ struct pocl_dlhandle_cache_item
 {
   pocl_kernel_hash_t hash;
   size_t local_wgs[3];
-  pocl_workgroup wg;
+  void *wg;
   lt_dlhandle dlhandle;
   pocl_dlhandle_cache_item *next;
   pocl_dlhandle_cache_item *prev;
@@ -1059,7 +1059,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *cmd,
         snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
                   "_pocl_kernel_%s_workgroup",
 		  cmd->command.run.kernel->name);
-        ci->wg = (pocl_workgroup)lt_dlsym (ci->dlhandle, workgroup_string);
+        ci->wg = lt_dlsym (ci->dlhandle, workgroup_string);
         dl_error = lt_dlerror ();
         if (ci->wg == NULL)
           {
@@ -1067,7 +1067,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *cmd,
             snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
                       "pocl_kernel_%s_workgroup",
 		      cmd->command.run.kernel->name);
-            ci->wg = (pocl_workgroup)lt_dlsym (ci->dlhandle, workgroup_string);
+            ci->wg = lt_dlsym (ci->dlhandle, workgroup_string);
             dl_error = lt_dlerror ();
           }
 

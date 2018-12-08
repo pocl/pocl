@@ -65,11 +65,11 @@ int printf(const char *format, ...);
     DEBUG_PRINTF (("[printf:ints:done]\n"));                                  \
   }
 
-DEFINE_PRINT_INTS (uchar, int8_t, uint8_t)
-DEFINE_PRINT_INTS (ushort, int16_t, uint16_t)
-DEFINE_PRINT_INTS (uint, int32_t, uint32_t)
+DEFINE_PRINT_INTS (uchar, char, uchar)
+DEFINE_PRINT_INTS (ushort, short, ushort)
+DEFINE_PRINT_INTS (uint, int, uint)
 #ifdef cl_khr_int64
-DEFINE_PRINT_INTS (ulong, int64_t, uint64_t)
+DEFINE_PRINT_INTS (ulong, long, ulong)
 #endif
 
 #undef DEFINE_PRINT_INTS
@@ -441,7 +441,7 @@ __pocl_printf_format_full (const OCL_CONSTANT_AS char *restrict format,
                         break;
 #ifdef cl_khr_int64
                       case 8:
-                        CALL_PRINT_INTS (ulong, uint64_t);
+                        CALL_PRINT_INTS (ulong, ulong);
                         break;
 #endif
                       default:
