@@ -44,6 +44,7 @@ if(ENABLE_FP64)
 endif()
 add_subdirectory("trig")
 add_subdirectory("vecadd")
+add_subdirectory("matadd")
 add_subdirectory("EinsteinToolkit")
 
 # TODO:   opencl-book-samples

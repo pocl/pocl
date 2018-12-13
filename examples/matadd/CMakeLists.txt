@@ -26,15 +26,15 @@
 add_compile_options(${OPENCL_CFLAGS})
 
 if (MSVC)
-  set_source_files_properties( vecadd.c vecadd_exec.c PROPERTIES LANGUAGE CXX )
+  set_source_files_properties( matadd.c matadd_exec.c PROPERTIES LANGUAGE CXX )
 endif(MSVC)
-add_executable("vecadd" vecadd.c vecadd_exec.c vecadd.cl)
+add_executable("matadd" matadd.c matadd_exec.c matadd.cl)
 
-target_link_libraries("vecadd" ${POCLU_LINK_OPTIONS})
+target_link_libraries("matadd" ${POCLU_LINK_OPTIONS})
 
-add_test("examples/vecadd" "vecadd")
+add_test("examples/matadd" "matadd")
 
-set_tests_properties( "examples/vecadd"
+set_tests_properties( "examples/matadd"
   PROPERTIES
     COST 3.0
     PASS_REGULAR_EXPRESSION "OK"
