@@ -590,10 +590,15 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
       wg_sizes[2] = min (wg_sizes[2], max_wg);
     }
 
-  dev->max_work_group_size = dev->max_work_item_sizes[0] = wg_sizes[0];
+  dev->max_work_item_sizes[0] = wg_sizes[0];
   dev->max_work_item_sizes[1] = wg_sizes[1];
   dev->max_work_item_sizes[2] = wg_sizes[2];
 
+  HSA_CHECK(hsa_agent_get_info
+    (agent, HSA_AGENT_INFO_WORKGROUP_MAX_SIZE, &dev->max_work_group_size));
+
+  if (max_wg > 0)
+    dev->max_work_group_size = max_wg;
   if (AMD_HSA && dev->vendor_id == AMD_VENDOR_ID)
     {
 #if AMD_HSA == 1
