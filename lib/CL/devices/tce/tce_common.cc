@@ -457,10 +457,14 @@ pocl_tce_compile_kernel(_cl_command_node *cmd,
   if (!device)
     device = cmd->device;
 
+  int goffs_is_zero =
+      cmd->command.run.pc.global_offset[0] == 0 &&
+      cmd->command.run.pc.global_offset[1] == 0 &&
+      cmd->command.run.pc.global_offset[2] == 0;
   POCL_LOCK(d->tce_compile_lock);
   int error = pocl_llvm_generate_workgroup_function(
       cmd->command.run.device_i, device, kernel, cmd->command.run.local_x,
-      cmd->command.run.local_y, cmd->command.run.local_z);
+      cmd->command.run.local_y, cmd->command.run.local_z, goffs_is_zero);
 
   if (error) {
     POCL_UNLOCK(d->tce_compile_lock);
@@ -480,7 +484,8 @@ pocl_tce_compile_kernel(_cl_command_node *cmd,
                                   cmd->command.run.device_i, kernel, "",
                                   cmd->command.run.local_x,
                                   cmd->command.run.local_y,
-                                  cmd->command.run.local_z);
+                                  cmd->command.run.local_z,
+                                  goffs_is_zero);
   cmd->command.run.device_data = strdup(cachedir);
 
   if (d->isNewKernel(&(cmd->command.run))) {

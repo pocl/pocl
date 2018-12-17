@@ -849,12 +849,20 @@ Workgroup::privatizeContext(Function *F)
   privatizeGlobals(
     F, Builder, {"_group_id_x", "_group_id_y", "_group_id_z"}, GroupIdArgs);
 
-  privatizeGlobals(
-    F, Builder,
-    {"_global_offset_x", "_global_offset_y", "_global_offset_z"},
+  if (WGAssumeZeroGlobalOffset) {
+    privatizeGlobals(
+      F, Builder,
+      {"_global_offset_x", "_global_offset_y", "_global_offset_z"},
+      {ConstantInt::get(SizeT, 0), ConstantInt::get(SizeT, 0),
+          ConstantInt::get(SizeT, 0)});
+  } else {
+    privatizeGlobals(
+      F, Builder,
+      {"_global_offset_x", "_global_offset_y", "_global_offset_z"},
     globalHandlesToContextStructLoads(
       Builder, {"_global_offset_x", "_global_offset_y", "_global_offset_z"},
       PC_GLOBAL_OFFSET));
+  }
 
   privatizeGlobals(
     F, Builder, {"_work_dim"},
