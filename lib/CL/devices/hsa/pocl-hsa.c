@@ -1096,7 +1096,7 @@ compile_parallel_bc_to_brig (char *brigfile, cl_kernel kernel,
   char parallel_bc_path[POCL_FILENAME_LENGTH];
 
   pocl_cache_work_group_function_path (parallel_bc_path, kernel->program,
-				       device_i, kernel, 0, 0, 0);
+                                       device_i, kernel, 0, 0, 0, 0);
 
   strcpy (brigfile, parallel_bc_path);
   strncat (brigfile, ".brig", POCL_FILENAME_LENGTH-1);
@@ -1300,7 +1300,7 @@ pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
 
   int error = pocl_llvm_generate_workgroup_function (
       cmd->command.run.device_i, device, kernel, cmd->command.run.local_x,
-      cmd->command.run.local_y, cmd->command.run.local_z);
+      cmd->command.run.local_y, cmd->command.run.local_z, 0);
   if (error)
     {
       POCL_MSG_PRINT_GENERAL ("HSA: pocl_llvm_generate_workgroup_function()"

@@ -52,8 +52,7 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
                       cl_event *event,
                       _cl_command_node **cmd);
 
-cl_int program_compile_dynamic_wg_binaries (cl_program program,
-                                            int only_spmd_devices);
+cl_int program_compile_dynamic_wg_binaries (cl_program program);
 
 cl_program create_program_skeleton (cl_context context, cl_uint num_devices,
                                     const cl_device_id *device_list,

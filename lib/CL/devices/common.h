@@ -1,25 +1,25 @@
-/* common.h - common code that can be reused between device driver 
+/* common.h - common code that can be reused between device driver
               implementations
 
-   Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
-   
+   Copyright (c) 2012-2018 Pekka Jääskeläinen
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 
 #ifndef POCL_COMMON_H
@@ -68,7 +68,7 @@ void pocl_init_cpu_device_infos (cl_device_id dev);
 
 int llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
                   cl_device_id device, size_t local_x, size_t local_y,
-                  size_t local_z);
+                  size_t local_z, int assume_zero_global_offset);
 
 void fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg, 
                        cl_device_id device);

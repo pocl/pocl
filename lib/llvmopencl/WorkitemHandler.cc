@@ -52,13 +52,10 @@ namespace pocl {
 
 using namespace llvm;
 
-/* This is used to communicate the work-group dimensions of the currently
-   compiled kernel command to the workitem loop.
-
-   TODO: Something cleaner than a global value. */
 size_t WGLocalSizeX = 1;
 size_t WGLocalSizeY = 1;
 size_t WGLocalSizeZ = 1;
+bool WGAssumeZeroGlobalOffset = false;
 bool WGDynamicLocalSize = false;
 
 cl::opt<bool>
