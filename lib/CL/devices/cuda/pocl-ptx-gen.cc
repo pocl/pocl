@@ -58,8 +58,6 @@ static void fixConstantMemArgs(llvm::Module *Module, const char *KernelName);
 static void fixLocalMemArgs(llvm::Module *Module, const char *KernelName);
 static void fixPrintF(llvm::Module *Module);
 static void handleGetWorkDim(llvm::Module *Module, const char *KernelName);
-static void handleGlobalOffsets(llvm::Module *Module, const char *KernelName,
-                                bool HasOffsets);
 static void linkLibDevice(llvm::Module *Module, const char *KernelName,
                           const char *LibDevicePath);
 static void mapLibDeviceCalls(llvm::Module *Module);
@@ -88,7 +86,6 @@ int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
   fixConstantMemArgs(Module->get(), KernelName);
   fixLocalMemArgs(Module->get(), KernelName);
   handleGetWorkDim(Module->get(), KernelName);
-  handleGlobalOffsets(Module->get(), KernelName, HasOffsets);
   addKernelAnnotations(Module->get(), KernelName);
   mapLibDeviceCalls(Module->get());
   linkLibDevice(Module->get(), KernelName, LibDevicePath);
@@ -462,67 +459,6 @@ void handleGetWorkDim(llvm::Module *Module, const char *KernelName) {
   replaceScalarGlobalVar(Module, "_work_dim", (&*NewArg++));
 
   // TODO: What if get_work_dim() is called from a non-kernel function?
-}
-
-// If we don't need to handle offsets, just replaces uses of the offset
-// variables with constant zero. Otherwise, add additional kernel arguments for
-// the offsets and use those instead.
-void handleGlobalOffsets(llvm::Module *Module, const char *KernelName,
-                         bool HasOffsets) {
-  if (!HasOffsets) {
-    llvm::Type *I32 = llvm::Type::getInt32Ty(Module->getContext());
-    llvm::Value *Zero = llvm::ConstantInt::getSigned(I32, 0);
-    replaceScalarGlobalVar(Module, "_global_offset_x", Zero);
-    replaceScalarGlobalVar(Module, "_global_offset_y", Zero);
-    replaceScalarGlobalVar(Module, "_global_offset_z", Zero);
-    return;
-  }
-
-  llvm::Function *Function = Module->getFunction(KernelName);
-  if (!Function)
-    POCL_ABORT("[CUDA] ptx-gen: kernel function not found in module\n");
-
-  // Add additional arguments for the global offsets.
-  llvm::FunctionType *FunctionType = Function->getFunctionType();
-  std::vector<llvm::Type *> ArgumentTypes(FunctionType->param_begin(),
-                                          FunctionType->param_end());
-  llvm::Type *I32 = llvm::Type::getInt32Ty(Module->getContext());
-  ArgumentTypes.push_back(I32);
-  ArgumentTypes.push_back(I32);
-  ArgumentTypes.push_back(I32);
-
-  // Create new function.
-  llvm::FunctionType *NewFunctionType =
-      llvm::FunctionType::get(Function->getReturnType(), ArgumentTypes, false);
-  llvm::Function *NewFunction = llvm::Function::Create(
-      NewFunctionType, Function->getLinkage(), Function->getName(), Module);
-  NewFunction->takeName(Function);
-
-  // Map function arguments.
-  llvm::ValueToValueMapTy VV;
-  llvm::Function::arg_iterator OldArg;
-  llvm::Function::arg_iterator NewArg;
-  for (OldArg = Function->arg_begin(), NewArg = NewFunction->arg_begin();
-       OldArg != Function->arg_end(); NewArg++, OldArg++) {
-    NewArg->takeName(&*OldArg);
-    VV[&*OldArg] = &*NewArg;
-  }
-
-  // Clone function.
-  llvm::SmallVector<llvm::ReturnInst *, 1> RI;
-  llvm::CloneFunctionInto(NewFunction, Function, VV, true, RI);
-
-  // Replace uses of the global offset variables with the new arguments.
-  NewArg->setName("global_offset_x");
-  replaceScalarGlobalVar(Module, "_global_offset_x", (&*NewArg++));
-  NewArg->setName("global_offset_y");
-  replaceScalarGlobalVar(Module, "_global_offset_y", (&*NewArg++));
-  NewArg->setName("global_offset_z");
-  replaceScalarGlobalVar(Module, "_global_offset_z", (&*NewArg++));
-
-  // TODO: What if the offsets are in a function that isn't the kernel?
-
-  Function->eraseFromParent();
 }
 
 int findLibDevice(char LibDevicePath[PATH_MAX], const char *Arch) {

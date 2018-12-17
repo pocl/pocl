@@ -3,6 +3,10 @@ Changes updated until commit 8cb33c3399a (April 4 2019).
 1.4 unreleased
 ==============
 
+Kernel Compiler
+---------------
+- Specialize work-group functions for global offset (0,0,0).
+
 1.3 April 2019
 ==============
 
