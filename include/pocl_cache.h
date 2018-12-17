@@ -94,7 +94,8 @@ void pocl_cache_kernel_cachedir_path (char* kernel_cachedir_path,
                                       const char* append_str,
                                       size_t local_x,
                                       size_t local_y,
-                                      size_t local_z);
+                                      size_t local_z,
+				      int assume_zero_global_offset);
 
 
 int pocl_cache_write_kernel_parallel_bc(void*        bc,
@@ -103,7 +104,8 @@ int pocl_cache_write_kernel_parallel_bc(void*        bc,
                                         cl_kernel    kernel,
                                         size_t       local_x,
                                         size_t       local_y,
-                                        size_t       local_z);
+                                        size_t       local_z,
+					int assume_zero_global_offset);
 
 
 // required by pocl_binary.c
@@ -121,14 +123,20 @@ void pocl_cache_program_bc_path(char*       program_bc_path,
                                cl_program   program,
                                unsigned     device_i);
 
-void pocl_cache_work_group_function_path(char* parallel_bc_path, cl_program program,
-                              unsigned device_i, cl_kernel kernel,
-                              size_t local_x, size_t local_y, size_t local_z);
+void pocl_cache_work_group_function_path(char* parallel_bc_path,
+					 cl_program program,
+					 unsigned device_i,
+					 cl_kernel kernel,
+					 size_t local_x, size_t local_y,
+					 size_t local_z,
+					 int assume_zero_global_offset);
 
-void pocl_cache_final_binary_path(char* final_binary_path, cl_program program,
-                               unsigned device_i, cl_kernel kernel,
-                               size_t local_x, size_t local_y,
-                               size_t local_z);
+void pocl_cache_final_binary_path(char* final_binary_path,
+				  cl_program program,
+				  unsigned device_i, cl_kernel kernel,
+				  size_t local_x, size_t local_y,
+				  size_t local_z,
+				  int assume_zero_global_offset);
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

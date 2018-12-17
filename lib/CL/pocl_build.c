@@ -114,12 +114,8 @@ static const char cl_parameters_not_yet_supported_by_clang[] =
   }
 
 #ifdef OCS_AVAILABLE
-/* if 'only_spmd_devices' is set, prebuild the kernel binaries only for the
- * SPMD devices in the context, otherwise build binaries for all devices.
- * The former is useful for clBuildProgram(), the latter for
- * clGetProgramInfo(CL_PROGRAM_BINARIES). */
 cl_int
-program_compile_dynamic_wg_binaries (cl_program program, int only_spmd_devices)
+program_compile_dynamic_wg_binaries (cl_program program)
 {
   unsigned i, device_i;
   _cl_command_node cmd;
@@ -141,9 +137,6 @@ program_compile_dynamic_wg_binaries (cl_program program, int only_spmd_devices)
 
       /* program may not be built for some of its devices */
       if (program->pocl_binaries[device_i] || (!program->binaries[device_i]))
-        continue;
-
-      if (only_spmd_devices && (device->spmd == CL_FALSE))
         continue;
 
       cmd.device = device;
@@ -179,6 +172,15 @@ program_compile_dynamic_wg_binaries (cl_program program, int only_spmd_devices)
 
           cmd.command.run.kernel = kernel;
 
+	  /* First force generate a WG function with a dynamic global
+	     offset to ensure generality. */
+	  cmd.command.run.pc.global_offset[0] = 1;
+          device->ops->compile_kernel (&cmd, kernel, device);
+
+	  /* Then generate a specialized one with goffset 0. */
+	  cmd.command.run.pc.global_offset[0] =
+	    cmd.command.run.pc.global_offset[1] =
+	    cmd.command.run.pc.global_offset[2] = 0;
           device->ops->compile_kernel (&cmd, kernel, device);
         }
     }

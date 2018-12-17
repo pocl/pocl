@@ -1,8 +1,8 @@
-/* common.h - common code that can be reused between device driver 
+/* common.h - common code that can be reused between device driver
               implementations
 
-   Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
-   
+   Copyright (c) 2012-2018 Pekka Jääskeläinen
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights
@@ -68,7 +68,7 @@ void pocl_init_cpu_device_infos (cl_device_id dev);
 
 int llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
                   cl_device_id device, size_t local_x, size_t local_y,
-                  size_t local_z);
+                  size_t local_z, int assume_zero_global_offset);
 
 void fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg, 
                        cl_device_id device);

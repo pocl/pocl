@@ -1,7 +1,7 @@
 // Header for WorkitemHandler, a parent class for all implementations of
 // work item handling.
 // 
-// Copyright (c) 2012 Pekka Jääskeläinen / TUT
+// Copyright (c) 2012-2018 Pekka Jääskeläinen
 // 
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -73,9 +73,14 @@ namespace pocl {
   extern llvm::cl::opt<bool> AddWIMetadata;
   extern llvm::cl::opt<int> LockStepSIMDWidth;
 
+  // Used to communicate the work-group dimensions of the currently
+  // compiled kernel command to the workitem loop.
+  // TODO: Something cleaner than a global value.
   extern size_t WGLocalSizeX;
   extern size_t WGLocalSizeY;
   extern size_t WGLocalSizeZ;
+  // Set to true to generate a global offset 0 specialized WG function.
+  extern bool WGAssumeZeroGlobalOffset;
   extern bool WGDynamicLocalSize;
 }
 
