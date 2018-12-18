@@ -92,7 +92,14 @@
 typedef uint8_t uchar;
 typedef uint16_t ushort;
 typedef uint32_t uint;
+
+#ifdef __TCE__
+/* TODO: Latest TCE supports uint64_t, but not all ADFs are 64b.
+   What to do here? */
+typedef uint32_t ulong;
+#else
 typedef uint64_t ulong;
+#endif
 
 #ifndef cl_khr_fp16
 typedef short half;
@@ -144,7 +151,14 @@ typedef size_t uintptr_t;
 typedef uint8_t uchar;
 typedef uint16_t ushort;
 typedef uint32_t uint;
+
+#ifdef __TCE__
+/* TODO: Latest TCE supports uint64_t, but not all ADFs are 64b.
+   What to do here? */
+typedef uint32_t ulong;
+#else
 typedef uint64_t ulong;
+#endif
 
 #endif
 

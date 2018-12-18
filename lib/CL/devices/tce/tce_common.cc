@@ -24,6 +24,7 @@
 #include "pocl_util.h"
 #include "pocl_cache.h"
 #include "pocl_llvm.h"
+#include "pocl_device.h"
 #include "utlist.h"
 #include "common.h"
 
@@ -418,10 +419,10 @@ static void pocl_tce_write_kernel_descriptor(cl_device_id device,
 
   content << std::endl
           << "#include <pocl_device.h>" << std::endl
-          << "void _pocl_launcher_" << meta->name
+          << "void _pocl_kernel_" << meta->name
           << "_workgroup(uint8_t* args, uint8_t*, "
           << "uint32_t, uint32_t, uint32_t);" << std::endl
-          << "void _pocl_launcher_" << meta->name
+          << "void _pocl_kernel_" << meta->name
           << "_workgroup_fast(uint8_t* args, uint8_t*, "
           << "uint32_t, uint32_t, uint32_t);" << std::endl;
 
@@ -433,7 +434,7 @@ static void pocl_tce_write_kernel_descriptor(cl_device_id device,
           << "     \"" << meta->name << "\"," << std::endl
           << "     " << meta->num_args << "," << std::endl
           << "     " << meta->num_locals << "," << std::endl
-          << "     _pocl_launcher_" << meta->name << "_workgroup_fast"
+          << "     _pocl_kernel_" << meta->name << "_workgroup_fast"
           << std::endl
           << " };" << std::endl;
 

@@ -25,6 +25,7 @@
 #define POCL_TTASIM_H
 
 #include "pocl_cl.h"
+#include "pocl_device.h"
 #include "pocl_icd.h"
 #include "bufalloc.h"
 
