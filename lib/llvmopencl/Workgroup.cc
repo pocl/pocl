@@ -555,7 +555,7 @@ Function *
 Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
 
   SmallVector<Type *, 8> sv;
-
+  LLVMContext &C = M->getContext();
   for (Function::const_arg_iterator i = F->arg_begin(), e = F->arg_end();
        i != e; ++i)
     sv.push_back(i->getType());
@@ -580,7 +580,7 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
 
   }
 
-  FunctionType *ft = FunctionType::get(Type::getVoidTy(M->getContext()),
+  FunctionType *ft = FunctionType::get(Type::getVoidTy(C),
                                        ArrayRef<Type *> (sv),
                                        false);
 
@@ -590,15 +590,10 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
   if (!currentPoclDevice->arg_buffer_launcher && currentPoclDevice->spmd) {
     Function *F = M->getFunction(funcName);
     F->setName(funcName + "_original");
-    L = Function::Create(ft,
-                         Function::ExternalLinkage,
-                         funcName,
-                         M);
+    L = Function::Create(ft, Function::ExternalLinkage, funcName, M);
   } else
-    L = Function::Create(ft,
-                         Function::ExternalLinkage,
-                         "_pocl_kernel_" + funcName,
-                         M);
+    L = Function::Create(
+      ft, Function::ExternalLinkage, "_pocl_kernel_" + funcName, M);
 
   SmallVector<Value *, 8> arguments;
   Function::arg_iterator ai = L->arg_begin();
@@ -628,7 +623,8 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
   // original kernel which will be inlined into the launcher.
   L->setAttributes(F->getAttributes());
 
-  IRBuilder<> Builder(BasicBlock::Create(M->getContext(), "", L));
+
+  IRBuilder<> Builder(BasicBlock::Create(C, "", L));
 
   Value *pb, *pbp, *pbc;
   if (currentPoclDevice->device_side_printf) {
@@ -924,8 +920,9 @@ Workgroup::createDefaultWorkgroupLauncher(llvm::Function *F) {
 
     Type *t = ii->getType();
 
-    Value *gep = builder.CreateGEP(&*ai,
-            ConstantInt::get(IntegerType::get(M->getContext(), 32), i));
+    Value *gep =
+      builder.CreateGEP(
+        &*ai, ConstantInt::get(IntegerType::get(M.getContext(), 32), i));
     Value *pointer = builder.CreateLoad(gep);
 
     // If it's a pass by value pointer argument, we just pass the pointer
@@ -1290,8 +1287,8 @@ Workgroup::createFastWorkgroupLauncher(llvm::Function *F) {
 // Returns true in case the given function is a kernel that
 // should be processed by the kernel compiler.
 bool
-Workgroup::isKernelToProcess(const Function &F)
-{
+Workgroup::isKernelToProcess(const Function &F) {
+
   const Module *m = F.getParent();
 
   if (F.getMetadata("kernel_arg_access_qual"))

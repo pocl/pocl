@@ -161,6 +161,7 @@ AutomaticLocals::processAutomaticLocals(Function *F) {
     FuncName = F->getName().str();
     if (isAutomaticLocal(FuncName, *i)) {
       Locals.push_back(&*i);
+
       // Add the parameters to the end of the function parameter list.
       Parameters.push_back(i->getType());
 

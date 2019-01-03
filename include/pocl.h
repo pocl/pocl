@@ -44,6 +44,12 @@
 
 #define POCL_FILENAME_LENGTH 1024
 
+#define SPIR_ADDRESS_SPACE_PRIVATE 0
+#define SPIR_ADDRESS_SPACE_GLOBAL 1
+#define SPIR_ADDRESS_SPACE_CONSTANT 2
+#define SPIR_ADDRESS_SPACE_LOCAL 3
+#define SPIR_ADDRESS_SPACE_GENERIC 4
+
 typedef struct _mem_mapping mem_mapping_t;
 /* represents a single buffer to host memory mapping */
 struct _mem_mapping {
