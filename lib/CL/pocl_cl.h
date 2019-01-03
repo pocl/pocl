@@ -717,6 +717,10 @@ struct _cl_device_id {
   int has_64bit_long;  /* Does the device have 64bit longs */
   /* Convert automatic local variables to kernel arguments? */
   int autolocals_to_args;
+  /* Allocate local buffers device side in the work-group launcher instead of
+     having a disjoint physical local memory per work-group or having the
+     runtime/driver allocate the local space. */
+  int device_alloca_locals;
 
   /* Device-specific linker flags that should be appended to the clang's
      argument list for a final linkage call when producing the final binary

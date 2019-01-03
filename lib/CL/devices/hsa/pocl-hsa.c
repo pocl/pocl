@@ -366,7 +366,8 @@ supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS] =
     .llvm_cpu = (HSAIL_ENABLED ? NULL : "kaveri"),
     .llvm_target_triplet = (HSAIL_ENABLED ? "hsail64" : "amdgcn--amdhsa"),
     .spmd = CL_TRUE,
-    .autolocals_to_args = false,
+    .autolocals_to_args = CL_FALSE,
+    .device_alloca_locals = CL_FALSE,
     .has_64bit_long = 1,
     .vendor_id = AMD_VENDOR_ID,
     .global_mem_cache_type = CL_READ_WRITE_CACHE,
@@ -396,6 +397,7 @@ supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS] =
     .llvm_target_triplet = (HSAIL_ENABLED ? "hsail64" : NULL),
     .spmd = CL_FALSE,
     .autolocals_to_args = !HSAIL_ENABLED,
+    .device_alloca_locals = CL_TRUE,
     .has_64bit_long = 1,
     .vendor_id = 0xffff,
     .global_mem_cache_type = CL_READ_WRITE_CACHE,
@@ -458,6 +460,7 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
 	  COPY_ATTR (llvm_target_triplet);
 	  COPY_ATTR (spmd);
 	  COPY_ATTR (autolocals_to_args);
+	  COPY_ATTR (device_alloca_locals);
 	  if (!HSAIL_ENABLED) {
 	    /* TODO: Add a CMake variable or HSA description string
 	       autodetection to control these. */
@@ -652,11 +655,12 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
 
   dev->spmd = CL_TRUE;
   dev->arg_buffer_launcher = CL_FALSE;
-  dev->autolocals_to_args = 0;
+  dev->autolocals_to_args = CL_FALSE;
+  dev->device_alloca_locals = CL_FALSE;
 
-  dev->global_as_id = 1;
-  dev->local_as_id = 3;
-  dev->constant_as_id = 2;
+  dev->global_as_id = SPIR_ADDRESS_SPACE_GLOBAL;
+  dev->local_as_id = SPIR_ADDRESS_SPACE_LOCAL;
+  dev->constant_as_id = SPIR_ADDRESS_SPACE_CONSTANT;
 
   assert (found_hsa_agents > 0);
   assert (j < found_hsa_agents);
@@ -983,7 +987,17 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
         {
 	  size_t buf_size = ARG_IS_LOCAL (meta->arg_info[i]) ?
 	    al->size : meta->local_sizes[i - meta->num_args];
-	  if (HSAIL_ENABLED)
+	  if (d->device->device_alloca_locals)
+	    {
+	      /* Local buffers are allocated in the device side work-group
+		 launcher. Let's pass only the sizes of the local args in
+		 the arg buffer. */
+	      assert(sizeof (size_t) == 8);
+	      CHECK_AND_ALIGN_SPACE(sizeof (size_t));
+	      memcpy (write_pos, &buf_size, sizeof (size_t));
+	      write_pos += sizeof (size_t);
+	    }
+	  else if (HSAIL_ENABLED)
 	    {
 	      CHECK_AND_ALIGN_SPACE(sizeof (uint32_t));
 	      memcpy (write_pos, total_group_size, sizeof (uint32_t));
@@ -991,23 +1005,7 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
 	      write_pos += sizeof (uint32_t);
 	    }
 	  else
-	    {
-	      CHECK_AND_ALIGN_SPACE(sizeof (uint64_t));
-
-	      /* FIXME: We need to pass a flat pointer and there is no API to
-		 convert from local to flat, thus need to allocate the local
-		 from the global region. In fact the device runtime should
-		 allocate this to enable multiple work-group parallelization
-		 with different local bases. */
-	      uint64_t ptr =
-		(uint64_t)pocl_hsa_malloc_account
-		(d->device->global_memory, buf_size, d->global_region);
-	      memcpy (write_pos, &ptr, sizeof (ptr));
-	      POCL_MSG_PRINT_INFO ("arg %lu (local) size %lu written to %lx\n",
-				   i, buf_size, ptr);
-	      write_pos += sizeof (ptr);
-	      /* TODO: Free the buffer. */
-	    }
+	    assert (0 && "Unsupported local mem allocation scheme.");
         }
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
         {

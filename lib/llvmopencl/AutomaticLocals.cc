@@ -204,6 +204,10 @@ AutomaticLocals::processAutomaticLocals(Function *F) {
   // the other.  For some reason it doesn't want to reuse the old ones.
   CloneFunctionInto(NewKernel, F, VV, true, RI);
 
+  for (size_t i = 0; i < Locals.size(); ++i) {
+    setFuncArgAddressSpaceMD(
+      NewKernel, F->arg_size() + i, SPIR_ADDRESS_SPACE_LOCAL);
+  }
   return NewKernel;
 }
 

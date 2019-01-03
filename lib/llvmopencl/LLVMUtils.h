@@ -93,6 +93,20 @@ is_sampler_type(const llvm::Type& t)
   return false;
 }
 
+// Checks if the given argument of Func is a local buffer.
+bool
+isLocalMemFunctionArg(llvm::Function *Func, unsigned ArgIndex);
+
+// Sets the address space metadata of the given function argument.
+// Note: The address space ids must be SPIR ids. If it encounters
+// argument indices without address space ids in the list, sets
+// them to globals.
+void
+setFuncArgAddressSpaceMD(llvm::Function *Func, unsigned ArgIndex, unsigned AS);
+
+llvm::Metadata *
+createConstantIntMD(llvm::LLVMContext &C, int32_t Val);
+
 }
 
 #endif

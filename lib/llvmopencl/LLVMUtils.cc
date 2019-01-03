@@ -109,4 +109,50 @@ void eraseFunctionAndCallers(llvm::Function *Function) {
   Function->eraseFromParent();
 }
 
+int
+getConstantIntMDValue(Metadata *MD) {
+  ConstantInt *CI = mdconst::extract<ConstantInt>(MD);
+  return CI->getLimitedValue();
+}
+
+llvm::Metadata*
+createConstantIntMD(llvm::LLVMContext &C, int32_t Val) {
+  IntegerType *I32Type = IntegerType::get(C, 32);
+  return ConstantAsMetadata::get(ConstantInt::get(I32Type, Val));
+}
+
+bool
+isLocalMemFunctionArg(llvm::Function *F, unsigned ArgIndex) {
+
+  MDNode *MD = F->getMetadata("kernel_arg_addr_space");
+
+  if (MD == nullptr || MD->getNumOperands() <= ArgIndex)
+    return false;
+  else
+    return getConstantIntMDValue(MD->getOperand(ArgIndex)) ==
+      SPIR_ADDRESS_SPACE_LOCAL;
+}
+
+void
+setFuncArgAddressSpaceMD(
+  llvm::Function *F, unsigned ArgIndex, unsigned AS) {
+
+  unsigned MDKind = F->getContext().getMDKindID("kernel_arg_addr_space");
+  MDNode *OldMD = F->getMetadata(MDKind);
+
+  assert (OldMD == nullptr || OldMD->getNumOperands() >= ArgIndex);
+
+  LLVMContext &C = F->getContext();
+
+  llvm::SmallVector<llvm::Metadata *, 8> AddressQuals;
+  for (unsigned i = 0; i < ArgIndex; ++i) {
+    AddressQuals.push_back(
+      createConstantIntMD(C, OldMD != nullptr ?
+                          getConstantIntMDValue(OldMD->getOperand(i)) :
+                          SPIR_ADDRESS_SPACE_GLOBAL));
+  }
+  AddressQuals.push_back(createConstantIntMD(C, AS));
+  F->setMetadata(MDKind, MDNode::get(F->getContext(), AddressQuals));
+}
+
 }

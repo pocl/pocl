@@ -623,6 +623,15 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
   // original kernel which will be inlined into the launcher.
   L->setAttributes(F->getAttributes());
 
+  // At least the argument address space metadata is useful. The argument
+  // indices should still hold even though we appended the hidden args.
+  L->copyMetadata(F, 0);
+  // We need to mark the generated function to avoid it being considered a
+  // new kernel to process (which results in infinite recursion). This is
+  // because kernels are detected by the presense of the argument metadata
+  // we just copied from the original kernel function.
+  L->setMetadata(
+    "pocl_generated", MDNode::get(C, {createConstantIntMD(C, 1)}));
 
   IRBuilder<> Builder(BasicBlock::Create(C, "", L));
 
@@ -1061,6 +1070,9 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
   LLVMContextRef LLVMContext = LLVMGetModuleContext(M);
 
   LLVMTypeRef Int8Type = LLVMInt8TypeInContext(LLVMContext);
+  LLVMTypeRef Int32Type = LLVMInt32TypeInContext(LLVMContext);
+  LLVMTypeRef Int64Type = LLVMInt64TypeInContext(LLVMContext);
+
   LLVMTypeRef Int8PtrType = LLVMPointerType(Int8Type, 0);
 
   std::ostringstream StrStr;
@@ -1096,8 +1108,71 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
   LLVMValueRef Args[ArgCount];
   LLVMValueRef ArgBuffer = LLVMGetParam(WrapperKernel, 0);
   size_t i = 0;
-  for (; i < ArgCount - HiddenArgs + 1; ++i)
-    Args[i] = createArgBufferLoad(Builder, ArgBuffer, ArgBufferOffsets, F, i);
+  for (; i < ArgCount - HiddenArgs + 1; ++i) {
+
+    if (currentPoclDevice->device_alloca_locals &&
+        isLocalMemFunctionArg(Func, i)) {
+
+      // Generate allocas for the local buffer arguments.
+
+      LLVMValueRef Param = LLVMGetParam(F, i);
+      LLVMTypeRef ParamType = LLVMTypeOf(Param);
+
+      LLVMTargetDataRef DataLayout = LLVMGetModuleDataLayout(M);
+
+      LLVMTypeRef ArgElementType = LLVMGetElementType(ParamType);
+      LLVMValueRef LocalArgAlloca = nullptr;
+
+      if (LLVMGetTypeKind(ArgElementType) == LLVMArrayTypeKind) {
+
+        // Known static local size (converted automatic local).
+        LocalArgAlloca =
+          wrap(new llvm::AllocaInst(
+                 unwrap(ArgElementType),
+                 LLVMGetPointerAddressSpace(ParamType),
+                 unwrap(LLVMConstInt(Int32Type, 1, 0)),
+                 MAX_EXTENDED_ALIGNMENT,
+                 "local_auto",
+                 unwrap(Block)));
+      } else {
+
+        // Dynamic (runtime-set) size local argument.
+
+        uint64_t ParamByteSize = LLVMStoreSizeOfType(DataLayout, ParamType);
+        LLVMTypeRef ParamIntType =
+          ParamByteSize == 4 ? Int32Type : Int64Type;
+
+        uint64_t ArgPos = ArgBufferOffsets[i];
+        LLVMValueRef Offs = LLVMConstInt(Int32Type, ArgPos, 0);
+        LLVMValueRef SizeByteOffset =
+          LLVMBuildGEP(Builder, ArgBuffer, &Offs, 1, "size_byte_offset");
+        LLVMValueRef SizeOffsetBitcast =
+          LLVMBuildPointerCast(
+            Builder, SizeByteOffset, LLVMPointerType(ParamIntType, 0),
+            "size_ptr");
+
+        // The buffer size passed from the runtime is a byte size, we
+        // need to convert it to an element count for the alloca.
+        LLVMValueRef LocalArgByteSize =
+          LLVMBuildLoad(Builder, SizeOffsetBitcast, "byte_size");
+        uint64_t ElementSize =
+          LLVMStoreSizeOfType(DataLayout, ArgElementType);
+        LLVMValueRef ElementCount =
+          LLVMBuildUDiv(
+            Builder, LocalArgByteSize,
+            LLVMConstInt(ParamIntType, ElementSize, 0), "");
+        LocalArgAlloca =
+          wrap(new llvm::AllocaInst(
+                 unwrap(LLVMGetElementType(ParamType)),
+                 LLVMGetPointerAddressSpace(ParamType),
+                 unwrap(ElementCount), MAX_EXTENDED_ALIGNMENT,
+                 "local_arg", unwrap(Block)));
+      }
+      Args[i] = LocalArgAlloca;
+    } else {
+      Args[i] = createArgBufferLoad(Builder, ArgBuffer, ArgBufferOffsets, F, i);
+    }
+  }
 
   size_t Arg = 2;
   // Pass the group ids.
@@ -1291,7 +1366,8 @@ Workgroup::isKernelToProcess(const Function &F) {
 
   const Module *m = F.getParent();
 
-  if (F.getMetadata("kernel_arg_access_qual"))
+  if (F.getMetadata("kernel_arg_access_qual") &&
+      F.getMetadata("pocl_generated") == nullptr)
     return true;
 
   NamedMDNode *kernels = m->getNamedMetadata("opencl.kernels");
