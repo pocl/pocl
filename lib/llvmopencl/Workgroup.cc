@@ -935,12 +935,34 @@ Workgroup::createDefaultWorkgroupLauncher(llvm::Function *F) {
       &*ai, ConstantInt::get(IntegerType::get(M->getContext(), 32), i));
     Value *Pointer = Builder.CreateLoad(GEP);
 
-    // If it's a pass by value pointer argument, we just pass the pointer
-    // as is to the function, no need to load form it first.
-    Value *value;
-    if (ii->hasByValAttr()) {
-        value = builder.CreatePointerCast(pointer, t);
     Value *Arg;
+    if (currentPoclDevice->device_alloca_locals &&
+        isLocalMemFunctionArg(F, i)) {
+      // Generate allocas for the local buffer arguments.
+      PointerType *ParamType = dyn_cast<PointerType>(ArgType);
+      Type *ArgElementType = ParamType->getElementType();
+      if (ArgElementType->isArrayTy()) {
+        // Known static local size (converted automatic local).
+        Arg = new llvm::AllocaInst(
+          ArgElementType, ParamType->getAddressSpace(),
+          ConstantInt::get(IntegerType::get(*C, 32), 1),
+          MAX_EXTENDED_ALIGNMENT, "local_auto", Block);
+      } else {
+        // Dynamic (runtime-set) size local argument.
+
+        const DataLayout &DL = M->getDataLayout();
+        // The size is passed directly instead of the pointer.
+        uint64_t ParamByteSize = DL.getTypeStoreSize(ParamType);
+        uint64_t ElementSize = DL.getTypeStoreSize(ArgElementType);
+        Type *SizeIntType = IntegerType::get(*C, ParamByteSize * 8);
+        Value *LocalArgByteSize = Builder.CreatePointerCast(Pointer, SizeIntType);
+        Value *ElementCount =
+          Builder.CreateUDiv(
+            LocalArgByteSize, ConstantInt::get(SizeIntType, ElementSize));
+        Arg = new llvm::AllocaInst(
+          ArgElementType, ParamType->getAddressSpace(), ElementCount,
+          MAX_EXTENDED_ALIGNMENT, "local_arg", Block);
+      }
     } else {
       // If it's a pass by value pointer argument, we just pass the pointer
       // as is to the function, no need to load from it first.

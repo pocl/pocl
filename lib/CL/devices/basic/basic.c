@@ -352,6 +352,7 @@ pocl_init_cpu_device_infos (cl_device_id dev)
   dev->extensions = HOST_DEVICE_EXTENSIONS;
   dev->has_64bit_long = 1;
   dev->autolocals_to_args = 1;
+  dev->device_alloca_locals = 0;
 
 #ifdef OCS_AVAILABLE
 
@@ -582,8 +583,20 @@ pocl_basic_run (void *data,
       al = &(cmd->command.run.arguments[i]);
       if (ARG_IS_LOCAL (meta->arg_info[i]))
         {
-          arguments[i] = malloc (sizeof (void *));
-          *(void **)(arguments[i]) = pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, al->size);
+          if (cmd->device->device_alloca_locals)
+            {
+              /* Local buffers are allocated in the device side work-group
+                 launcher. Let's pass only the sizes of the local args in
+                 the arg buffer. */
+              assert (sizeof (size_t) == sizeof (void *));
+              arguments[i] = (void *)al->size;
+            }
+          else
+            {
+              arguments[i] = malloc (sizeof (void *));
+              *(void **)(arguments[i]) =
+                pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, al->size);
+            }
         }
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
         {
@@ -608,7 +621,8 @@ pocl_basic_run (void *data,
           dev_image_t di;
           fill_dev_image_t (&di, al, cmd->device);
 
-          void* devptr = pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT,  sizeof(dev_image_t));
+          void* devptr =
+	    pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, sizeof(dev_image_t));
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = devptr;
           memcpy (devptr, &di, sizeof (dev_image_t));
@@ -626,14 +640,15 @@ pocl_basic_run (void *data,
         }
     }
 
-  for (i = 0; i < meta->num_locals; ++i)
-    {
-      size_t s = meta->local_sizes[i];
-      size_t j = meta->num_args + i;
-      arguments[j] = malloc (sizeof (void *));
-      void *pp = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, s);
-      *(void **)(arguments[j]) = pp;
-    }
+  if (!cmd->device->device_alloca_locals)
+    for (i = 0; i < meta->num_locals; ++i)
+      {
+        size_t s = meta->local_sizes[i];
+        size_t j = meta->num_args + i;
+        arguments[j] = malloc (sizeof (void *));
+        void *pp = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, s);
+        *(void **)(arguments[j]) = pp;
+      }
 
   pc->local_size[0] = cmd->command.run.local_x;
   pc->local_size[1] = cmd->command.run.local_y;
@@ -670,8 +685,16 @@ pocl_basic_run (void *data,
     {
       if (ARG_IS_LOCAL (meta->arg_info[i]))
         {
-          POCL_MEM_FREE(*(void **)(arguments[i]));
-          POCL_MEM_FREE(arguments[i]);
+          if (!cmd->device->device_alloca_locals)
+            {
+              POCL_MEM_FREE(*(void **)(arguments[i]));
+              POCL_MEM_FREE(arguments[i]);
+            }
+          else
+            {
+              /* Device side local space allocation has deallocation via stack
+                 unwind. */
+            }
         }
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE
                || meta->arg_info[i].type == POCL_ARG_TYPE_SAMPLER)
@@ -685,11 +708,13 @@ pocl_basic_run (void *data,
           POCL_MEM_FREE(arguments[i]);
         }
     }
-  for (i = 0; i < meta->num_locals; ++i)
-    {
-      POCL_MEM_FREE (*(void **)(arguments[meta->num_args + i]));
-      POCL_MEM_FREE (arguments[meta->num_args + i]);
-    }
+
+  if (!cmd->device->device_alloca_locals)
+    for (i = 0; i < meta->num_locals; ++i)
+      {
+        POCL_MEM_FREE (*(void **)(arguments[meta->num_args + i]));
+        POCL_MEM_FREE (arguments[meta->num_args + i]);
+      }
   free(arguments);
 
   pocl_release_dlhandle_cache (cmd);

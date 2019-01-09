@@ -167,26 +167,37 @@ setup_kernel_arg_array_with_locals (void **arguments, void **arguments2,
       if (ARG_IS_LOCAL (meta->arg_info[i]))
         {
           size_t size = k->kernel_args[i].size;
-          arguments[i] = &arguments2[i];
-          arguments2[i] = start;
-          start += size;
-          start = align_ptr (start);
-          assert ((size_t) (start - local_mem) <= local_mem_size);
+          if (!k->device->device_alloca_locals)
+            {
+              arguments[i] = &arguments2[i];
+              arguments2[i] = start;
+              start += size;
+              start = align_ptr (start);
+              assert ((size_t) (start - local_mem) <= local_mem_size);
+            }
+          else
+            {
+              /* Local buffers are allocated in the device side work-group
+                 launcher. Let's pass only the sizes of the local args in
+                 the arg buffer. */
+              assert (sizeof (size_t) == sizeof (void *));
+              arguments[i] = (void *)size;
+            }
         }
     }
-
-  /* Allocate the automatic local buffers which are implemented as implicit
-     extra arguments at the end of the kernel argument list. */
-  for (i = 0; i < meta->num_locals; ++i)
-    {
-      cl_uint j = meta->num_args + i;
-      size_t size = meta->local_sizes[i];
-      arguments[j] = &arguments2[j];
-      arguments2[j] = start;
-      start += size;
-      start = align_ptr (start);
-      assert ((size_t) (start - local_mem) <= local_mem_size);
-    }
+  if (!k->device->device_alloca_locals)
+    /* Allocate the automatic local buffers which are implemented as implicit
+       extra arguments at the end of the kernel argument list. */
+    for (i = 0; i < meta->num_locals; ++i)
+      {
+        cl_uint j = meta->num_args + i;
+        size_t size = meta->local_sizes[i];
+        arguments[j] = &arguments2[j];
+        arguments2[j] = start;
+        start += size;
+        start = align_ptr (start);
+        assert ((size_t) (start - local_mem) <= local_mem_size);
+      }
 }
 
 /* called from kernel teardown code.
@@ -203,8 +214,16 @@ free_kernel_arg_array (kernel_run_command *k)
     {
       if (ARG_IS_LOCAL (meta->arg_info[i]))
         {
-          assert (arguments[i] == NULL);
-          assert (arguments2[i] == NULL);
+          if (!k->device->device_alloca_locals)
+            {
+              assert (arguments[i] == NULL);
+              assert (arguments2[i] == NULL);
+            }
+          else
+            {
+              /* Device side local space allocation has deallocation via stack
+                 unwind. */
+            }
         }
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
         {

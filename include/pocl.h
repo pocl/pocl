@@ -1,7 +1,7 @@
 /* pocl.h - global pocl declarations for the host side runtime.
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
-                 2011-2018 Pekka Jääskeläinen / Tampere University of Technology
+                 2011-2019 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -43,12 +43,6 @@
 #include "pocl_compiler_features.h"
 
 #define POCL_FILENAME_LENGTH 1024
-
-#define SPIR_ADDRESS_SPACE_PRIVATE 0
-#define SPIR_ADDRESS_SPACE_GLOBAL 1
-#define SPIR_ADDRESS_SPACE_CONSTANT 2
-#define SPIR_ADDRESS_SPACE_LOCAL 3
-#define SPIR_ADDRESS_SPACE_GENERIC 4
 
 typedef struct _mem_mapping mem_mapping_t;
 /* represents a single buffer to host memory mapping */
