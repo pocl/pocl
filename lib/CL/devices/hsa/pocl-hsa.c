@@ -1,6 +1,6 @@
 /* pocl-hsa.c - driver for HSA supported devices.
 
-   Copyright (c) 2015-2018 Pekka Jääskeläinen <pekka.jaaskelainen@tut.fi>
+   Copyright (c) 2015-2019 Pekka Jääskeläinen
                  2015 Charles Chen <ccchen@pllab.cs.nthu.edu.tw>
                       Shao-chung Wang <scwang@pllab.cs.nthu.edu.tw>
                  2015-2018 Michal Babej <michal.babej@tut.fi>

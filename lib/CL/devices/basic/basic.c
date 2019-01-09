@@ -1,7 +1,7 @@
 /* basic.c - a minimalistic pocl device driver layer implementation
 
    Copyright (c) 2011-2013 Universidad Rey Juan Carlos and
-                 2011-2018 Pekka Jääskeläinen / Tampere University of Technology
+                 2011-2019 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -57,7 +57,7 @@ struct data {
   cl_kernel current_kernel;
   /* Loaded kernel dynamic library handle. */
   lt_dlhandle current_dlhandle;
-  
+
   /* List of commands ready to be executed */
   _cl_command_node * volatile ready_list;
   /* List of commands not yet ready to be executed */
@@ -555,9 +555,8 @@ pocl_basic_write (void *data,
 
 
 void
-pocl_basic_run 
-(void *data, 
- _cl_command_node* cmd)
+pocl_basic_run (void *data,
+		_cl_command_node* cmd)
 {
   struct data *d;
   struct pocl_argument *al;
@@ -576,7 +575,7 @@ pocl_basic_run
                                       * (meta->num_args + meta->num_locals));
 
   /* Process the kernel arguments. Convert the opaque buffer
-     pointers to real device pointers, allocate dynamic local 
+     pointers to real device pointers, allocate dynamic local
      memory buffers, etc. */
   for (i = 0; i < meta->num_args; ++i)
     {
@@ -588,7 +587,7 @@ pocl_basic_run
         }
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
         {
-          /* It's legal to pass a NULL pointer to clSetKernelArguments. In 
+          /* It's legal to pass a NULL pointer to clSetKernelArguments. In
              that case we must pass the same NULL forward to the kernel.
              Otherwise, the user must have created a buffer with per device
              pointers stored in the cl_mem. */
@@ -697,9 +696,8 @@ pocl_basic_run
 }
 
 void
-pocl_basic_run_native 
-(void *data, 
- _cl_command_node* cmd)
+pocl_basic_run_native (void *data,
+		       _cl_command_node* cmd)
 {
   cmd->command.native.user_func(cmd->command.native.args);
 }

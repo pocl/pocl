@@ -2,7 +2,7 @@
 // and parallelized kernel for an OpenCL workgroup.
 //
 // Copyright (c) 2011 Universidad Rey Juan Carlos
-//               2012-2018 Pekka Jääskeläinen
+//               2012-2019 Pekka Jääskeläinen
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -85,10 +85,8 @@ using namespace pocl;
 
 /* The kernel to process in this kernel compiler launch. */
 cl::opt<string>
-KernelName("kernel",
-       cl::desc("Kernel function name"),
-       cl::value_desc("kernel"),
-       cl::init(""));
+KernelName("kernel", cl::desc("Kernel function name"),
+           cl::value_desc("kernel"), cl::init(""));
 
 #ifdef LLVM_OLDER_THAN_7_0
 namespace llvm {
@@ -201,14 +199,15 @@ Workgroup::runOnModule(Module &M) {
 #ifdef LLVM_OLDER_THAN_7_0
   TypeBuilder<PoclContext, true>::setSizeTWidth(SizeTWidth);
   PoclContextT = TypeBuilder<PoclContext, true>::get(*C);
-  LauncherFuncT =
-      SizeTWidth == 32
-          ? TypeBuilder<void(types::i<8> *[], PoclContext *, types::i<32>,
-                             types::i<32>, types::i<32>),
-                        true>::get(M.getContext())
-          : TypeBuilder<void(types::i<8> *[], PoclContext *, types::i<64>,
-                             types::i<64>, types::i<64>),
-                        true>::get(M.getContext());
+  LauncherFuncT = SizeTWidth == 32 ?
+    TypeBuilder<void(types::i<8>*[],
+                     PoclContext*,
+                     types::i<32>, types::i<32>, types::i<32>),
+                true>::get(M->getContext()) :
+    TypeBuilder<void(types::i<8>*[],
+                     PoclContext*,
+                     types::i<64>, types::i<64>, types::i<64>),
+                true>::get(M->getContext());
 #else
   // LLVM 8.0 dropped the TypeBuilder API. This is a cleaner version
   // anyways as it builds the context type using the SizeT directly.
@@ -566,7 +565,8 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
     HiddenArgs = 1;
   } else {
     // pocl_context
-    sv.push_back(PointerType::get(PoclContextT, 0));
+    sv.push_back(
+        PointerType::get(PoclContextT, currentPoclDevice->global_as_id));
     // group_x
     sv.push_back(SizeT);
     // group_y
@@ -905,21 +905,22 @@ Workgroup::privatizeContext(Function *F)
 void
 Workgroup::createDefaultWorkgroupLauncher(llvm::Function *F) {
 
-  IRBuilder<> builder(M->getContext());
+  IRBuilder<> Builder(M->getContext());
 
   std::string FuncName = "";
   FuncName = F->getName().str();
 
-  Function *workgroup =
+  Function *WorkGroup =
     dyn_cast<Function>(M->getOrInsertFunction(FuncName + "_workgroup",
                                               LauncherFuncT));
-  assert(workgroup != nullptr);
+  assert(WorkGroup != nullptr);
 
-  builder.SetInsertPoint(BasicBlock::Create(M->getContext(), "", workgroup));
+  BasicBlock *Block = BasicBlock::Create(M->getContext(), "", WorkGroup);
+  Builder.SetInsertPoint(Block);
 
-  Function::arg_iterator ai = workgroup->arg_begin();
+  Function::arg_iterator ai = WorkGroup->arg_begin();
 
-  SmallVector<Value*, 8> arguments;
+  SmallVector<Value*, 8> Arguments;
   size_t i = 0;
   for (Function::const_arg_iterator ii = F->arg_begin(), ee = F->arg_end();
        ii != ee; ++ii) {
@@ -927,38 +928,44 @@ Workgroup::createDefaultWorkgroupLauncher(llvm::Function *F) {
     if (i == F->arg_size() - 4)
       break;
 
-    Type *t = ii->getType();
+    Type *ArgType = ii->getType();
 
-    Value *gep =
-      builder.CreateGEP(
-        &*ai, ConstantInt::get(IntegerType::get(M.getContext(), 32), i));
-    Value *pointer = builder.CreateLoad(gep);
+    Value *GEP = Builder.CreateGEP(
+      &*ai, ConstantInt::get(IntegerType::get(M->getContext(), 32), i));
+    Value *Pointer = Builder.CreateLoad(GEP);
 
     // If it's a pass by value pointer argument, we just pass the pointer
     // as is to the function, no need to load form it first.
     Value *value;
     if (ii->hasByValAttr()) {
         value = builder.CreatePointerCast(pointer, t);
+    Value *Arg;
     } else {
-        value = builder.CreatePointerCast(pointer, t->getPointerTo());
-        value = builder.CreateLoad(value);
+      // If it's a pass by value pointer argument, we just pass the pointer
+      // as is to the function, no need to load from it first.
+      if (ii->hasByValAttr()) {
+        Arg = Builder.CreatePointerCast(Pointer, ArgType);
+      } else {
+        Arg = Builder.CreatePointerCast(Pointer, ArgType->getPointerTo());
+        Arg = Builder.CreateLoad(Arg);
+      }
     }
 
-    arguments.push_back(value);
+    Arguments.push_back(Arg);
     ++i;
   }
 
   ++ai;
-  arguments.push_back(&*ai);
+  Arguments.push_back(&*ai);
   ++ai;
-  arguments.push_back(&*ai);
+  Arguments.push_back(&*ai);
   ++ai;
-  arguments.push_back(&*ai);
+  Arguments.push_back(&*ai);
   ++ai;
-  arguments.push_back(&*ai);
+  Arguments.push_back(&*ai);
 
-  builder.CreateCall(F, ArrayRef<Value*>(arguments));
-  builder.CreateRetVoid();
+  Builder.CreateCall(F, ArrayRef<Value*>(Arguments));
+  Builder.CreateRetVoid();
 }
 
 static inline uint64_t
@@ -1139,8 +1146,7 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
         // Dynamic (runtime-set) size local argument.
 
         uint64_t ParamByteSize = LLVMStoreSizeOfType(DataLayout, ParamType);
-        LLVMTypeRef ParamIntType =
-          ParamByteSize == 4 ? Int32Type : Int64Type;
+        LLVMTypeRef ParamIntType = ParamByteSize == 4 ? Int32Type : Int64Type;
 
         uint64_t ArgPos = ArgBufferOffsets[i];
         LLVMValueRef Offs = LLVMConstInt(Int32Type, ArgPos, 0);
