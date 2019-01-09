@@ -8,5 +8,8 @@ Portable OpenCL Out-of-Order Execution Framework for Heterogeneous Platforms
 https://dspace.cc.tut.fi/dpub/handle/123456789/22636?locale-attribute=en
 Master's thesis. Tampere University of Technology. December 2014.
 
-
+Pekka J&auml;&auml;skel&auml;inen, Ville Korhonen, Matias Koskela, Jarmo Takala, Karen Egiazarian, Aram Danielyan, Cristo&#769;va&#771;o Cruz, James Price, Simon McIntosh-Smith
+Exploiting Task Parallelism with OpenCL: A Case Study
+https://link.springer.com/article/10.1007%2Fs11265-018-1416-1
+Journal of Signal Processing Systems, Springer. January 2019, Volume 91, Issue 1.
 
