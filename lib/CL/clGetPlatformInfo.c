@@ -50,9 +50,11 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
       POCL_RETURN_GETINFO_STR("FULL_PROFILE");
 
     case CL_PLATFORM_VERSION:
-#ifdef OCS_AVAILABLE
+
       POCL_RETURN_GETINFO_STR ("OpenCL " POCL_CL_VERSION
-                               " pocl " PACKAGE_VERSION " " CMAKE_BUILD_TYPE
+                               " pocl " PACKAGE_VERSION
+#ifdef OCS_AVAILABLE
+                               ", " CMAKE_BUILD_TYPE
 #ifdef POCL_ASSERTS_BUILD
                                "+Asserts"
 #endif
@@ -77,6 +79,14 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
                                ", SLEEF"
 #endif
 
+#ifndef _CL_DISABLE_HALF
+                               ", FP16"
+#endif
+
+#else
+                               ", no online compiler support"
+#endif
+
 #ifdef ENABLE_ASAN
                                ", ASAN"
 #endif
@@ -93,29 +103,27 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
 #ifdef BUILD_CUDA
                                ", CUDA"
 #endif
+
 #ifdef BUILD_HSA
                                ", HSA"
 #endif
+
 #ifdef TCE_AVAILABLE
                                ", TCE"
 #endif
+
 #ifdef HAVE_LTTNG_UST
                                ", LTTNG"
 #endif
+
 #ifdef KERNELLIB_HOST_DISTRO_VARIANTS
                                ", DISTRO"
 #endif
+
 #ifdef POCL_DEBUG_MESSAGES
                                ", POCL_DEBUG"
 #endif
-#ifndef _CL_DISABLE_HALF
-                               ", FP16"
-#endif
       );
-#else
-      POCL_RETURN_GETINFO_STR("OpenCL " POCL_CL_VERSION\
-                        " pocl " PACKAGE_VERSION ", no online compiler support");
-#endif
 
     case CL_PLATFORM_NAME:
       POCL_RETURN_GETINFO_STR("Portable Computing Language");

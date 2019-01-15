@@ -184,11 +184,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_AVAILABLE                         :
     POCL_RETURN_GETINFO(cl_bool, device->available);
   case CL_DEVICE_COMPILER_AVAILABLE                :
-#ifdef OCS_AVAILABLE
     POCL_RETURN_GETINFO(cl_bool, device->compiler_available);
-#else
-    POCL_RETURN_GETINFO(cl_bool, CL_FALSE);
-#endif
   case CL_DEVICE_LINKER_AVAILABLE                  :
     /* TODO currently we return the same availability as the compiler,
      * since if the compiler is available the linker MUST be available
