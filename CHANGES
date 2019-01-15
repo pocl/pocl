@@ -1,6 +1,8 @@
 1.3 unreleased
 ==============
 
+Changes updated until 2a2699821560f69a3a (Jan 9 2019).
+
 Highlights
 ----------
 - HSA: Initial experimental support for native-ISA compilation on top of HSA
@@ -9,13 +11,13 @@ Highlights
 
 Misc.
 -----
+- POCL_EXTRA_BUILD_FLAGS can be used to force add extra build flags such as
+  '-g' to all clBuildProgram() calls.
 - Allow building pocl without CPU backend drivers. When set to off,
   CPU will not appear in the list of OpenCL devices reported by pocl.
   Controllable via ENABLE_HOST_CPU_DEVICES=off cmake option.
 - Build logs are now produced also for illegal options passed to the kernel
   build e.g. via the options parameter of clBuildProgram().
-- POCL_EXTRA_BUILD_FLAGS can be used to force add extra build flags such as
-  '-g' to all clBuildProgram() calls.
 - hsa-native: Device side printf-support and alternative < 1.2 non-standard
   C99 printf exposing support.
 - pocl's binary format has been slightly updated (changes are listed in
@@ -25,6 +27,11 @@ Misc.
 Notable Bug Fixes
 -----------------
 - Fixed kernel debug symbol generation.
+- HSA: fix kernel caching.
+- Fix issue #661: clCreateImage doesn't fail with unsupported image type
+- Fix issue #668: handle non-kernel functions with barriers properly
+- Fix issue #671: Unable to build pocl with CUDA support with LLVM 7 and host GCC 8.2
+- Fix image format/size handling with multiple devices in context
 
 Notable Internal Changes
 ------------------------
@@ -42,6 +49,7 @@ Notable Internal Changes
 - The "default kernels" hack which was used to store kernel metadata, has
   been removed. Kernel metadata are now stored only once, in cl_program
   struct; every new cl_kernel structs holds only a pointer.
+- Major 'pthread' CPU driver cleanup.
 
 1.2 unreleased
 ==============
