@@ -40,13 +40,11 @@ examples/scalarwave/scalarwave
 examples/standalone/standalone.h
 examples/trig/trig
 
-include/CL/cl.hpp
 include/arm/types.h
 include/cellspu/types.h
 include/powerpc/types.h
 include/powerpc64/types.h
 include/x86_64/types.h
-include/CL/cl.hpp.patched
 
 install-paths.h
 
