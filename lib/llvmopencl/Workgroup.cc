@@ -1258,18 +1258,25 @@ Workgroup::createGridLauncher(Function *KernFunc, Function *WGFunc,
   uint64_t KernArgBufferOffsets[KernArgCount];
   computeArgBufferOffsets(Kernel, KernArgBufferOffsets);
 
+  // The second argument in the native phsa interface is auxiliary
+  // driver-specific data that is passed as the last argument to
+  // the grid launcher.
+  LLVMValueRef AuxParam = LLVMGetParam(Launcher, 1);
   LLVMValueRef ArgBuffer = LLVMGetParam(Launcher, 2);
+
   // Load the pointer to the pocl context (in global memory),
   // assuming it is stored as the 4th last argument in the kernel.
   LLVMValueRef PoclCtx =
     createArgBufferLoad(Builder, ArgBuffer, KernArgBufferOffsets, Kernel,
                         KernArgCount - HiddenArgs);
 
-  LLVMValueRef Args[3] = {
+  LLVMValueRef Args[4] = {
     LLVMBuildPointerCast(Builder, WGF, ArgTypes[0], "wg_func"),
     LLVMBuildPointerCast(Builder, ArgBuffer, ArgTypes[1], "args"),
-    LLVMBuildPointerCast(Builder, PoclCtx, ArgTypes[2], "ctx")};
-  LLVMValueRef Call = LLVMBuildCall(Builder, RunnerFunc, Args, 3, "");
+    LLVMBuildPointerCast(Builder, PoclCtx, ArgTypes[2], "ctx"),
+    LLVMBuildPointerCast(Builder, AuxParam, ArgTypes[1], "aux")};
+
+  LLVMValueRef Call = LLVMBuildCall(Builder, RunnerFunc, Args, 4, "");
   LLVMBuildRetVoid(Builder);
 
   InlineFunctionInfo IFI;

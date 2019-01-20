@@ -42,7 +42,7 @@ _pocl_spawn_wg (void *restrict wg_func_ptr, uchar *restrict args,
    @param pc The context struct for getting the dimensions etc.  */
 void
 _pocl_run_all_wgs (void *restrict wg_func_ptr, uchar *restrict args,
-		   uchar *restrict pcptr)
+		   uchar *restrict pcptr, void *d)
 {
   struct pocl_context *pc = (struct pocl_context*)pcptr;
   for (size_t gz = 0; gz < pc->num_groups[2]; ++gz)
