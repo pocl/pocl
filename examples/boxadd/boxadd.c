@@ -1,6 +1,6 @@
 /* boxadd - 3D box value addition using work-items.
 
-   Copyright (c) 2018 Pekka Jääskeläinen
+   Copyright (c) 2018-2019 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@
 
 #define N (4*16)
 #define M (8*16)
-#define O (4*16)
+#define O (4*16*16)
 
 #ifdef __cplusplus
 #  define CALLAPI "C"
