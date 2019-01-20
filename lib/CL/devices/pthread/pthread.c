@@ -447,7 +447,7 @@ void pocl_pthread_update_event (cl_device_id device, cl_event event, cl_int stat
       pocl_update_command_queue (event, pthread_scheduler_release_host);
       POCL_LOCK_OBJ (event);
 
-      pthread_cond_signal(&e_d->event_cond);
+      pthread_cond_broadcast(&e_d->event_cond);
       break;
 
     default:
@@ -465,7 +465,7 @@ void pocl_pthread_update_event (cl_device_id device, cl_event event, cl_int stat
       pocl_update_command_queue (event, pthread_scheduler_release_host);
       POCL_LOCK_OBJ (event);
 
-      pthread_cond_signal (&e_d->event_cond);
+      pthread_cond_broadcast (&e_d->event_cond);
       break;
     }
 }
