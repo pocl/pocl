@@ -15,6 +15,7 @@ aclocal.m4
 autom4te.cache
 
 config.h
+config2.h
 config.h.in
 config.log
 config.status
