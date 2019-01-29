@@ -210,7 +210,7 @@ VariableUniformityAnalysis::analyzeBBDivergence
             << std::endl;
 #endif
 
-  llvm::TerminatorInst *Term = previousUniformBB->getTerminator();
+  auto Term = previousUniformBB->getTerminator();
   if (Term == NULL) {
     // this is most likely a function with a single basic block, the entry
     // node, which ends with a ret
@@ -264,7 +264,7 @@ VariableUniformityAnalysis::analyzeBBDivergence
   for (auto UniformBB : FoundUniforms) {
 
     // Propagate the Uniform BB data downwards.
-    llvm::TerminatorInst *NextTerm = UniformBB->getTerminator();
+    auto NextTerm = UniformBB->getTerminator();
 
     for (unsigned suc = 0, end = NextTerm->getNumSuccessors(); suc < end;
          ++suc) {

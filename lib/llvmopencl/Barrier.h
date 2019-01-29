@@ -36,7 +36,7 @@
 #define BARRIER_FUNCTION_NAME "pocl.barrier"
 
 namespace pocl {
-  
+
   class Barrier : public llvm::CallInst {
 
   public:
@@ -121,7 +121,7 @@ namespace pocl {
     // Returns true in case the given basic block ends with a barrier,
     // that is, contains only a branch instruction after a barrier call.
     static bool endsWithBarrier(const llvm::BasicBlock *bb) {
-      const llvm::TerminatorInst *t = bb->getTerminator();
+      const llvm::Instruction *t = bb->getTerminator();
       if (t == NULL) 
         return false;
       return bb->size() > 1 && t->getPrevNode() != NULL && 

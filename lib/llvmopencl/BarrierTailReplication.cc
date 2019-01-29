@@ -149,7 +149,7 @@ BarrierTailReplication::FindBarriersDFS(BasicBlock *bb,
     changed = ReplicateJoinedSubgraphs(bb, bb, processed_bbs_rjs);
   }
 
-  TerminatorInst *t = bb->getTerminator();
+  auto t = bb->getTerminator();
 
   // Find barriers in the successors (depth first).
   for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i)
@@ -173,7 +173,7 @@ BarrierTailReplication::ReplicateJoinedSubgraphs(BasicBlock *dominator,
 
   Function *f = dominator->getParent();
 
-  TerminatorInst *t = subgraph_entry->getTerminator();
+  auto t = subgraph_entry->getTerminator();
   for (int i = 0, e = t->getNumSuccessors(); i != e; ++i) {
     BasicBlock *b = t->getSuccessor(i);
 #ifdef DEBUG_BARRIER_REPL
@@ -324,7 +324,7 @@ BarrierTailReplication::FindSubgraph(BasicBlockVector &subgraph,
 
   subgraph.push_back(entry);
 
-  const TerminatorInst *t = entry->getTerminator();
+  auto t = entry->getTerminator();
   for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i) {
     BasicBlock *successor = t->getSuccessor(i);
     const bool isBackedge = DT->dominates(successor, entry);
@@ -366,7 +366,7 @@ BarrierTailReplication::ReplicateBasicBlocks(BasicBlockVector &new_graph,
 
     // Add predicates to PHINodes of basic blocks the replicated
     // block jumps to (backedges).
-    TerminatorInst *t = new_b->getTerminator();
+    auto t = new_b->getTerminator();
     for (unsigned i = 0, e = t->getNumSuccessors(); i != e; ++i) {
       BasicBlock *successor = t->getSuccessor(i);
       if (std::count(graph.begin(), graph.end(), successor) == 0) {

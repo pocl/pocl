@@ -39,10 +39,12 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/DerivedTypes.h>
 #include <llvm/IR/IRBuilder.h>
+#ifdef LLVM_OLDER_THAN_7_0
+#include <llvm/IR/TypeBuilder.h>
+#endif
 #include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/InstrTypes.h>
 #include <llvm/IR/InlineAsm.h>
-#include <llvm/IR/TypeBuilder.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
@@ -88,6 +90,7 @@ KernelName("kernel",
        cl::value_desc("kernel"),
        cl::init(""));
 
+#ifdef LLVM_OLDER_THAN_7_0
 namespace llvm {
 
   typedef struct _pocl_context PoclContext;
@@ -162,37 +165,75 @@ namespace llvm {
       size_t_width = width;
     }
 
-    enum Fields {
-      WORK_DIM,
-      NUM_GROUPS,
-      GLOBAL_OFFSET,
-      LOCAL_SIZE,
-      PRINTF_BUFFER,
-      PRINTF_BUFFER_POSITION,
-      PRINTF_BUFFER_CAPACITY
-    };
-
   private:
     static int size_t_width;
   };
 
   template<bool xcompile>
   int TypeBuilder<PoclContext, xcompile>::size_t_width = 0;
-
 }  // namespace llvm
+
+#endif
+
+enum PoclContextStructFields {
+  PC_WORK_DIM,
+  PC_NUM_GROUPS,
+  PC_GLOBAL_OFFSET,
+  PC_LOCAL_SIZE,
+  PC_PRINTF_BUFFER,
+  PC_PRINTF_BUFFER_POSITION,
+  PC_PRINTF_BUFFER_CAPACITY
+};
 
 char Workgroup::ID = 0;
 static RegisterPass<Workgroup> X("workgroup", "Workgroup creation pass");
 
-
 bool
-Workgroup::runOnModule(Module &M)
-{
+Workgroup::runOnModule(Module &M) {
+
   this->M = &M;
+  this->C = &M.getContext();
+
   HiddenArgs = 0;
   SizeTWidth = currentPoclDevice->address_bits;
-  SizeT = IntegerType::get(M.getContext(), SizeTWidth);
+  SizeT = IntegerType::get(*C, SizeTWidth);
+
+#ifdef LLVM_OLDER_THAN_7_0
   TypeBuilder<PoclContext, true>::setSizeTWidth(SizeTWidth);
+  PoclContextT = TypeBuilder<PoclContext, true>::get(*C);
+  LauncherFuncT = SizeTWidth == 32 ?
+    TypeBuilder<void(types::i<8>*[],
+                     PoclContext*,
+                     types::i<32>, types::i<32>, types::i<32>),
+                true>::get(M->getContext()) :
+    TypeBuilder<void(types::i<8>*[],
+                     PoclContext*,
+                     types::i<64>, types::i<64>, types::i<64>),
+                true>::get(M->getContext());
+#else
+  // LLVM 8.0 dropped the TypeBuilder API. This is a cleaner version
+  // anyways as it builds the context type using the SizeT directly.
+  llvm::Type *Int32T = Type::getInt32Ty(*C);
+  llvm::Type *Int8T = Type::getInt8Ty(*C);
+  PoclContextT =
+    StructType::get(
+      Int32T, // WORK_DIM
+      ArrayType::get(SizeT, 3), // NUM_GROUPS
+      ArrayType::get(SizeT, 3), // GLOBAL_OFFSET
+      ArrayType::get(SizeT, 3), // LOCAL_SIZE
+      PointerType::get(Int8T, 0), // PRINTF_BUFFER
+      PointerType::get(Int32T, 0), // PRINTF_BUFFER_POSITION
+      Int32T); // PRINTF_BUFFER_CAPACITY
+
+  LauncherFuncT =
+    FunctionType::get(
+      Type::getVoidTy(*C),
+      {PointerType::get(
+          PointerType::get(Type::getInt8Ty(*C), 0), 0),
+          PointerType::get(PoclContextT, 0),
+          SizeT, SizeT, SizeT}, false);
+#endif
+
   assert ((SizeTWidth == 64 || SizeTWidth == 32) &&
           "Target has an unsupported pointer width.");
 
@@ -521,14 +562,12 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
     sv.push_back(i->getType());
 
   if (!currentPoclDevice->arg_buffer_launcher && currentPoclDevice->spmd) {
-    PointerType* g_pc_ptr =
-      PointerType::get(TypeBuilder<PoclContext, true>::get(
-                         M->getContext()), 1);
-    sv.push_back(g_pc_ptr);
+    sv.push_back(
+      PointerType::get(PoclContextT, currentPoclDevice->global_as_id));
     HiddenArgs = 1;
   } else {
     // pocl_context
-    sv.push_back(TypeBuilder<PoclContext*, true>::get(M->getContext()));
+    sv.push_back(PointerType::get(PoclContextT, 0));
     // group_x
     sv.push_back(SizeT);
     // group_y
@@ -536,9 +575,8 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
     // group_z
     sv.push_back(SizeT);
 
-    // we might not have all of the globals anymore in the module in
-    // case the kernel does not refer to them and they are optimized
-    // away
+    // we might not have all of the globals anymore in the module in case the
+    // kernel does not refer to them and they are optimized away
     HiddenArgs = 4;
 
   }
@@ -595,12 +633,9 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
 
   Value *pb, *pbp, *pbc;
   if (currentPoclDevice->device_side_printf) {
-    pb = createLoadFromContext(
-      Builder, TypeBuilder<PoclContext, true>::PRINTF_BUFFER);
-    pbp = createLoadFromContext(
-      Builder, TypeBuilder<PoclContext, true>::PRINTF_BUFFER_POSITION);
-    pbc = createLoadFromContext(
-      Builder, TypeBuilder<PoclContext, true>::PRINTF_BUFFER_CAPACITY);
+    pb = createLoadFromContext(Builder, PC_PRINTF_BUFFER);
+    pbp = createLoadFromContext(Builder, PC_PRINTF_BUFFER_POSITION);
+    pbc = createLoadFromContext(Builder, PC_PRINTF_BUFFER_CAPACITY);
   } else {
     pb = pbp = pbc = nullptr;
   }
@@ -780,20 +815,17 @@ Workgroup::privatizeContext(Function *F)
   if (WGDynamicLocalSize) {
     if (LocalSizeAllocas[0] != nullptr)
       Builder.CreateStore(
-        createLoadFromContext(
-          Builder, TypeBuilder<PoclContext, true>::LOCAL_SIZE, 0),
+        createLoadFromContext(Builder, PC_LOCAL_SIZE, 0),
         LocalSizeAllocas[0]);
 
     if (LocalSizeAllocas[1] != nullptr)
       Builder.CreateStore(
-        createLoadFromContext(
-          Builder, TypeBuilder<PoclContext, true>::LOCAL_SIZE, 1),
+        createLoadFromContext(Builder, PC_LOCAL_SIZE, 1),
         LocalSizeAllocas[1]);
 
     if (LocalSizeAllocas[2] != nullptr)
       Builder.CreateStore(
-        createLoadFromContext(
-          Builder, TypeBuilder<PoclContext, true>::LOCAL_SIZE, 2),
+        createLoadFromContext(Builder, PC_LOCAL_SIZE, 2),
       LocalSizeAllocas[2]);
   } else {
     if (LocalSizeAllocas[0] != nullptr)
@@ -823,35 +855,34 @@ Workgroup::privatizeContext(Function *F)
     {"_global_offset_x", "_global_offset_y", "_global_offset_z"},
     globalHandlesToContextStructLoads(
       Builder, {"_global_offset_x", "_global_offset_y", "_global_offset_z"},
-      TypeBuilder<PoclContext, true>::GLOBAL_OFFSET));
+      PC_GLOBAL_OFFSET));
 
   privatizeGlobals(
     F, Builder, {"_work_dim"},
-    globalHandlesToContextStructLoads(
-      Builder, {"_work_dim"}, TypeBuilder<PoclContext, true>::WORK_DIM));
+    globalHandlesToContextStructLoads(Builder, {"_work_dim"}, PC_WORK_DIM));
 
   privatizeGlobals(
     F, Builder, {"_num_groups_x", "_num_groups_y", "_num_groups_z"},
     globalHandlesToContextStructLoads(
       Builder, {"_num_groups_x", "_num_groups_y", "_num_groups_z"},
-      TypeBuilder<PoclContext, true>::NUM_GROUPS));
+      PC_NUM_GROUPS));
 
   if (currentPoclDevice->device_side_printf) {
     // Privatize _printf_buffer
     privatizeGlobals(
       F, Builder, {"_printf_buffer"}, {
         createLoadFromContext(
-          Builder, TypeBuilder<PoclContext, true>::PRINTF_BUFFER)});
+          Builder, PC_PRINTF_BUFFER)});
 
     privatizeGlobals(
       F, Builder, {"_printf_buffer_position"}, {
         createLoadFromContext(
-          Builder, TypeBuilder<PoclContext, true>::PRINTF_BUFFER_POSITION)});
+          Builder, PC_PRINTF_BUFFER_POSITION)});
 
     privatizeGlobals(
       F, Builder, {"_printf_buffer_capacity"}, {
         createLoadFromContext(
-          Builder, TypeBuilder<PoclContext, true>::PRINTF_BUFFER_CAPACITY)});
+          Builder, PC_PRINTF_BUFFER_CAPACITY)});
   }
 }
 
@@ -863,21 +894,12 @@ Workgroup::createDefaultWorkgroupLauncher(llvm::Function *F) {
 
   IRBuilder<> builder(M->getContext());
 
-  FunctionType *ft = SizeTWidth == 32 ?
-    TypeBuilder<void(types::i<8>*[],
-                     PoclContext*,
-                     types::i<32>, types::i<32>, types::i<32>),
-                true>::get(M->getContext()) :
-    TypeBuilder<void(types::i<8>*[],
-                     PoclContext*,
-                     types::i<64>, types::i<64>, types::i<64>),
-                true>::get(M->getContext());
-
-  std::string funcName = "";
-  funcName = F->getName().str();
+  std::string FuncName = "";
+  FuncName = F->getName().str();
 
   Function *workgroup =
-    dyn_cast<Function>(M->getOrInsertFunction(funcName + "_workgroup", ft));
+    dyn_cast<Function>(M->getOrInsertFunction(FuncName + "_workgroup",
+                                              LauncherFuncT));
   assert(workgroup != nullptr);
 
   builder.SetInsertPoint(BasicBlock::Create(M->getContext(), "", workgroup));
@@ -1158,21 +1180,11 @@ Workgroup::createFastWorkgroupLauncher(llvm::Function *F) {
 
   IRBuilder<> builder(M->getContext());
 
-  FunctionType *ft = SizeTWidth == 32 ?
-    TypeBuilder<void(types::i<8>*[],
-                     PoclContext*,
-                     types::i<32>, types::i<32>, types::i<32>),
-                true>::get(M->getContext()) :
-    TypeBuilder<void(types::i<8>*[],
-                     PoclContext*,
-                     types::i<64>, types::i<64>, types::i<64>),
-                true>::get(M->getContext());
-
   std::string funcName = "";
   funcName = F->getName().str();
   Function *workgroup =
     dyn_cast<Function>(M->getOrInsertFunction(
-                         funcName + "_workgroup_fast", ft));
+                         funcName + "_workgroup_fast", LauncherFuncT));
   assert(workgroup != NULL);
 
   builder.SetInsertPoint(BasicBlock::Create(M->getContext(), "", workgroup));

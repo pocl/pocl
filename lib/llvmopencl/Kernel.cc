@@ -51,7 +51,7 @@ void
 Kernel::getExitBlocks(SmallVectorImpl<llvm::BasicBlock *> &B)
 {
   for (iterator i = begin(), e = end(); i != e; ++i) {
-    const TerminatorInst *t = i->getTerminator();
+    auto t = i->getTerminator();
     if (t->getNumSuccessors() == 0) {
       // All exits must be barrier blocks.
       llvm::BasicBlock *BB = cast<BasicBlock>(i);
