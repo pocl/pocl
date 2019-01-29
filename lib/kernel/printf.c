@@ -85,7 +85,7 @@ const char *INFs[2] = { "inf", "INF" };
   void __pocl_print_floats_##FLOAT_TYPE (param_t *p,                          \
                                          OCL_C_AS const void *vals, int n)    \
   {                                                                           \
-    DEBUG_PRINTF (("[printf:floats:n=%dd]\n", n));                            \
+    DEBUG_PRINTF (("[printf:floats:n=%d]\n", n));                            \
     flags_t saved_user_flags = p->flags;                                      \
     for (int d = 0; d < n; ++d)                                               \
       {                                                                       \

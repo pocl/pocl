@@ -118,7 +118,6 @@ namespace llvm {
         Elements.push_back(TypeBuilder<types::i<8> *, xcompile>::get(Context));
         Elements.push_back(TypeBuilder<types::i<32> *, xcompile>::get(Context));
         Elements.push_back(TypeBuilder<types::i<32>, xcompile>::get(Context));
-
         return StructType::get(Context, Elements);
 #endif
         }

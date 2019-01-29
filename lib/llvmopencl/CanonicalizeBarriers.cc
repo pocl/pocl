@@ -92,8 +92,8 @@ CanonicalizeBarriers::runOnFunction(Function &F)
       /* In case the bb is already terminated with a barrier,
          split before the barrier so we don't create an empty
          parallel region.
-         
-         This is because the assumptions of the other passes in the 
+
+         This is because the assumptions of the other passes in the
          compilation that are 
          a) exit node is a barrier block 
          b) there are no empty parallel regions (which would be formed 
@@ -202,8 +202,8 @@ CanonicalizeBarriers::ProcessFunction(Function &F) {
   }
 
   // Prune empty regions. That is, if there are two successive
-  // pure barrier blocks without side branches, remove the other one. 
-  bool emptyRegionDeleted = false;  
+  // pure barrier blocks without side branches, remove the other one.
+  bool emptyRegionDeleted = false;
   do {
     emptyRegionDeleted = false;
     for (Function::iterator i = F.begin(), e = F.end();

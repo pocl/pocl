@@ -1,19 +1,19 @@
 // Class definition for parallel regions, a group of BasicBlocks that
 // each kernel should run in parallel.
-// 
+//
 // Copyright (c) 2011 Universidad Rey Juan Carlos and
-//               2012-2015 Pekka Jääskeläinen / TUT
-// 
+//               2012-2019 Pekka Jääskeläinen
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -184,14 +184,12 @@ ParallelRegion::remap(ValueToValueMapTy &map)
 void
 ParallelRegion::chainAfter(ParallelRegion *region)
 {
-  /* If we are replicating a conditional barrier
-     region, the last block can be an unreachable 
-     block to mark the impossible path. Skip
-     it and choose the correct branch instead. 
+  /* If we are replicating a conditional barrier region, the last block can be
+     an unreachable block to mark the impossible path. Skip it and choose the
+     correct branch instead.
 
-     TODO: why have the unreachable block there the
-     first place? Could we just not add it and fix
-     the branch? */
+     TODO: why have the unreachable block there the first place? Could we just
+     not add it and fix the branch? */
   BasicBlock *tail = region->exitBB();
   TerminatorInst *t = tail->getTerminator();
   if (isa<UnreachableInst>(t))

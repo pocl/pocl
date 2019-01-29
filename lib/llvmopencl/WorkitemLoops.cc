@@ -1,7 +1,7 @@
 // LLVM function pass to create loops that run all the work items
 // in a work group while respecting barrier synchronization points.
 //
-// Copyright (c) 2012-2018 Pekka Jääskeläinen / Tampere University of Technology
+// Copyright (c) 2012-2019 Pekka Jääskeläinen
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal

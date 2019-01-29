@@ -1,17 +1,17 @@
 // Helpers for debugging the kernel compiler.
-// 
-// Copyright (c) 2013 Pekka Jääskeläinen / Tampere University of Technology
-// 
+//
+// Copyright (c) 2013-2019 Pekka Jääskeläinen
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -62,7 +62,7 @@ static void printBranches(
       s << getDotBasicBlockID(b) << " -> " << getDotBasicBlockID(succ) << ";"
         << std::endl;
     }
-  s << std::endl;   
+  s << std::endl;
 }
 
 static void printBasicBlock(
@@ -70,11 +70,11 @@ static void printBasicBlock(
   //      if (!Barrier::hasBarrier(b)) continue;
   s << getDotBasicBlockID(b);
   s << "[shape=rect,style=";
-  if (Barrier::hasBarrier(b)) 
+  if (Barrier::hasBarrier(b))
     s << "dotted";
-  else 
+  else
     s << "solid";
-  
+
   if (highlighted) {
     s << ",color=red,style=filled";
   }
@@ -94,7 +94,7 @@ static void printBasicBlock(
     int previousNonBarriers = 0;
     for (llvm::BasicBlock::iterator instr = b->begin();
          instr != b->end(); ++instr) {
-      
+
         if (isa<Barrier>(instr)) {
           s << "BARRIER\\n";
           previousNonBarriers = 0;
@@ -111,7 +111,7 @@ static void printBasicBlock(
           s << "UNREACHABLE\\n";
           previousNonBarriers = 0;
         } else {
-          if (previousNonBarriers == 0) 
+          if (previousNonBarriers == 0)
             s << "...program instructions...\\n";
           previousNonBarriers++;
         }
@@ -132,7 +132,7 @@ static void printBasicBlock(
  * @param highlights highlight these basic blocks in the graph
  */
 void dumpCFG(
-  llvm::Function &F, std::string fname, 
+  llvm::Function &F, std::string fname,
   ParallelRegion::ParallelRegionVector *regions,
   std::set<llvm::BasicBlock*> *highlights) {
 

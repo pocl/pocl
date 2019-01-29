@@ -80,6 +80,7 @@
 #include "pocl_util.h"
 #include "pocl_mem_management.h"
 #include "pocl_context.h"
+#include "pocl_spir.h"
 
 #include <assert.h>
 #include <string.h>

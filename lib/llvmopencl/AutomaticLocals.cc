@@ -1,6 +1,7 @@
 // LLVM module pass to process automatic locals.
 //
 // Copyright (c) 2011 Universidad Rey Juan Carlos
+//               2012-2019 Pekka Jääskeläinen
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +24,7 @@
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
-#include "pocl.h"
+#include "pocl_spir.h"
 
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
