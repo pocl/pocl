@@ -191,7 +191,7 @@ ParallelRegion::chainAfter(ParallelRegion *region)
      TODO: why have the unreachable block there the first place? Could we just
      not add it and fix the branch? */
   BasicBlock *tail = region->exitBB();
-  TerminatorInst *t = tail->getTerminator();
+  auto t = tail->getTerminator();
   if (isa<UnreachableInst>(t))
     {
       tail = region->at(region->size() - 2);
@@ -257,7 +257,7 @@ ParallelRegion::purge()
     std::cerr << "### block before purge:" << std::endl;
     (*i)->dump();
 #endif
-    TerminatorInst *t = (*i)->getTerminator();
+    auto t = (*i)->getTerminator();
     for (unsigned ii = 0, ee = t->getNumSuccessors(); ii != ee; ++ii) {
       BasicBlock *successor = t->getSuccessor(ii);
       if (count(begin(), end(), successor) == 0) {

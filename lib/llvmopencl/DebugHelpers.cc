@@ -55,8 +55,8 @@ static std::string getDotBasicBlockID(llvm::BasicBlock* bb) {
 static void printBranches(
   llvm::BasicBlock* b, std::ostream& s, bool /*highlighted*/) {
 
-  llvm::TerminatorInst *term = b->getTerminator();
-  for (unsigned i = 0; i < term->getNumSuccessors(); ++i) 
+  auto term = b->getTerminator();
+  for (unsigned i = 0; i < term->getNumSuccessors(); ++i)
     {
       BasicBlock *succ = term->getSuccessor(i);
       s << getDotBasicBlockID(b) << " -> " << getDotBasicBlockID(succ) << ";"

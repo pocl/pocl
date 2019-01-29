@@ -178,7 +178,7 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &) {
   BasicBlock *preheader = L->getLoopPreheader();
   assert((preheader != NULL) && "Non-canonicalized loop found!\n");
 
-  TerminatorInst *t = preheader->getTerminator();
+  Instruction *t = preheader->getTerminator();
   Instruction *prev = NULL;
   if (&preheader->front() != t)
     prev = t->getPrevNode();

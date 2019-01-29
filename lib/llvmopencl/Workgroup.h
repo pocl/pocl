@@ -82,6 +82,7 @@ namespace pocl {
                  const char* FormatStr);
 
     llvm::Module *M;
+    llvm::LLVMContext *C;
 
     // Set to the hidden context argument.
     llvm::Argument *ContextArg;
@@ -95,6 +96,9 @@ namespace pocl {
     // The width of the size_t data type in the current target.
     int SizeTWidth = 64;
     llvm::Type *SizeT = nullptr;
+    llvm::Type *PoclContextT = nullptr;
+    llvm::FunctionType *LauncherFuncT = nullptr;
+
   };
 }
 
