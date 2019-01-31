@@ -234,7 +234,7 @@ pocl_init_cpu_device_infos (cl_device_id dev)
 
 #endif
 
-  dev->address_bits = POCL_DEVICE_ADDRESS_BITS;
+  dev->address_bits = HOST_DEVICE_ADDRESS_BITS;
   dev->image_support = CL_TRUE;
   /* Use the minimum values until we get a more sensible upper limit from
      somewhere. */

@@ -22,9 +22,9 @@
    THE SOFTWARE.
 */
 
+#include "pocl_context.h"
 #include "pocl_device.h"
 #include "pocl_workgroup_func.h"
-#include "pocl_context.h"
 
 /**
    Launches a work-group. Does not necessarily block, thus can spawn a separate

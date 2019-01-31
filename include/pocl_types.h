@@ -28,7 +28,8 @@
    stdint.h instead of this one as OpenCL C size_t et al. is allowed to
    be of different width than when targeting C.
 
-   TODO: replace this header (partially) with Clang's opencl-c.h */
+   TODO: replace this header (partially) with Clang's opencl-c.h
+*/
 
 #ifndef POCL_DEVICE_TYPES_H
 #define POCL_DEVICE_TYPES_H
@@ -57,7 +58,7 @@
 #undef __SIZE_MAX__
 #endif
 
-#if defined(CL_DEVICE_ADDRESS_BITS) && CL_DEVICE_ADDRESS_BITS == 32
+#if defined(POCL_DEVICE_ADDRESS_BITS) && POCL_DEVICE_ADDRESS_BITS == 32
 #define __SIZE_TYPE__ uint
 #define __SIZE_MAX__ UINT_MAX
 #else
@@ -68,14 +69,20 @@
 #define __INTPTR_TYPE__ __SIZE_TYPE__
 #define __UINTPTR_TYPE__ __INTPTR_TYPE__
 
-
 #else
 
 /* Compiling Device-specific OpenCL C or builtin library C. */
 
 #if defined cl_khr_fp64 && !defined cl_khr_int64
-#  error "cl_khr_fp64 requires cl_khr_int64"
+#error "cl_khr_fp64 requires cl_khr_int64"
 #endif
+
+/* TODO FIXME We should not use these in OpenCL library's C code at all.
+ * The problem is that 1) these are predefined by glibc, 2) while we can
+ * re-define "ulong", we cannot control the size of "long" at all.
+ * which can lead to "ulong" being 64bit and "long" 32bit, resulting in
+ * mysterious errors and bugs. Therefore OpenCL library's C code should
+ * use the fixed size C types where integer size matters. */
 
 #ifdef __CBUILD__
 
@@ -93,12 +100,10 @@ typedef uint8_t uchar;
 typedef uint16_t ushort;
 typedef uint32_t uint;
 
-#ifdef __TCE__
-/* TODO: Latest TCE supports uint64_t, but not all ADFs are 64b.
-   What to do here? */
-typedef uint32_t ulong;
-#else
+#ifdef cl_khr_int64
 typedef uint64_t ulong;
+#else
+typedef uint32_t ulong;
 #endif
 
 #ifndef cl_khr_fp16
@@ -114,7 +119,7 @@ typedef short half;
 
 #ifndef cl_khr_fp64
 typedef struct error_undefined_type_double error_undefined_type_double;
-#  define double error_undefined_type_double
+#define double error_undefined_type_double
 #endif
 
 #ifdef __SIZE_TYPE__
@@ -125,7 +130,7 @@ typedef struct error_undefined_type_double error_undefined_type_double;
 #undef __SIZE_MAX__
 #endif
 
-#if defined(CL_DEVICE_ADDRESS_BITS) && CL_DEVICE_ADDRESS_BITS == 32
+#if defined(POCL_DEVICE_ADDRESS_BITS) && POCL_DEVICE_ADDRESS_BITS == 32
 #define __SIZE_TYPE__ uint
 #define __SIZE_MAX__ UINT_MAX
 #else
@@ -146,19 +151,20 @@ typedef size_t uintptr_t;
    the fixed width datatypes, but do not override C's size_t and other
    target specific datatypes. */
 
-#include <stdint.h>
+typedef unsigned char uchar;
 
-typedef uint8_t uchar;
-typedef uint16_t ushort;
-typedef uint32_t uint;
+/* FIXME see the above TODO about these types. */
 
-#ifdef __TCE__
-/* TODO: Latest TCE supports uint64_t, but not all ADFs are 64b.
-   What to do here? */
-typedef uint32_t ulong;
-#else
-typedef uint64_t ulong;
+#if !(defined(_SYS_TYPES_H) && defined(__USE_MISC))
+/* glibc, when including sys/types.h, typedefs these. */
+
+typedef unsigned long int ulong;
+typedef unsigned short int ushort;
+typedef unsigned int uint;
+
 #endif
+
+#include <stdint.h>
 
 #endif
 

@@ -36,7 +36,7 @@
 /********************************************/
 
 #ifdef BUILD_WITH_LIBC
-int snprintf (char *str, unsigned long size, const char *format, ...);
+int snprintf (char *str, size_t size, const char *format, ...);
 #else
 
 #include "errol/errol.h"

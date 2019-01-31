@@ -20,11 +20,12 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 */
+#include "poclu.h"
 #include <CL/cl.h>
-#include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "poclu.h"
+#include <string.h>
+
 #include "config.h"
 #include "pocl.h"
 
@@ -48,10 +49,17 @@ char kernelSourceCode[] =
 
 #define BUF_LEN 2000
 
-#define SPIR_FILE(NUM, SUFFIX) SPIR_FILE_2(NUM) SUFFIX
-#define SPIR_FILE_2(NUM) SRCDIR "/tests/runtime/clGetKernelArgInfo.spir" #NUM
+static const char *nometa_files[]
+    = { SRCDIR "/tests/runtime/clGetKernelArgInfo.spir32_nometa",
+        SRCDIR "/tests/runtime/clGetKernelArgInfo.spir64_nometa" };
 
-int test_program(cl_program program, int is_spir) {
+static const char *meta_files[]
+    = { SRCDIR "/tests/runtime/clGetKernelArgInfo.spir32_meta",
+        SRCDIR "/tests/runtime/clGetKernelArgInfo.spir64_meta" };
+
+int
+test_program (cl_program program, int is_spir)
+{
 
   cl_int err;
   size_t retsize;
@@ -294,7 +302,6 @@ int test_program(cl_program program, int is_spir) {
   err = clReleaseKernel(test_kernel2);
   CHECK_OPENCL_ERROR_IN("clReleaseKernel");
   return EXIT_SUCCESS;
-
 }
 
 /*
@@ -337,7 +344,10 @@ int test_program_nometa(cl_program program) {
 }
 */
 
-int spir_program(char * filename, cl_context ctx, cl_device_id did, cl_program* program) {
+int
+spir_program (const char *filename, cl_context ctx, cl_device_id did,
+              cl_program *program)
+{
   cl_int err;
 
   size_t program_size;
@@ -384,8 +394,12 @@ int main()
   program_size = strlen (kernelSourceCode);
   program_buffer = kernelSourceCode;
 
-  program = clCreateProgramWithSource (ctx, 1,
-                                       (const char**)&program_buffer,
+  cl_uint address_bits;
+  err = clGetDeviceInfo (did, CL_DEVICE_ADDRESS_BITS, sizeof (address_bits),
+                         &address_bits, NULL);
+  CHECK_OPENCL_ERROR_IN ("clGetDeviceInfo");
+
+  program = clCreateProgramWithSource (ctx, 1, (const char **)&program_buffer,
                                        &program_size, &err);
   CHECK_OPENCL_ERROR_IN("clCreateProgramWithBinary");
   TEST_ASSERT(program);
@@ -409,23 +423,26 @@ int main()
 
   /* SPIR program */
 
-  printf("\nSPIR with metadata\n");
-  TEST_ASSERT(spir_program(SPIR_FILE(POCL_DEVICE_ADDRESS_BITS, "_meta"), ctx, did, &program) == EXIT_SUCCESS);
+  printf ("\nSPIR with metadata\n");
 
-  TEST_ASSERT(test_program(program, 1) == EXIT_SUCCESS);
+  const char *filename = (address_bits == 32 ? meta_files[0] : meta_files[1]);
+  TEST_ASSERT (spir_program (filename, ctx, did, &program) == EXIT_SUCCESS);
+
+  TEST_ASSERT (test_program (program, 1) == EXIT_SUCCESS);
 
   CHECK_CL_ERROR(clReleaseProgram(program));
 
   /* SPIR program without metadata - currently disabled since Clang seems to
    * always generate metadata. */
-/*
-  printf("\nSPIR WITHOUT metadata\n");
-  TEST_ASSERT(spir_program(SPIR_FILE(POCL_DEVICE_ADDRESS_BITS, "_nometa"), ctx, did, &program) == EXIT_SUCCESS);
+  /*
+    printf("\nSPIR WITHOUT metadata\n");
+    filename = (address_bits == 32 ? nometa_files[0] : nometa_files[1]);
+    TEST_ASSERT(spir_program(filename, ctx, did, &program) == EXIT_SUCCESS);
 
-  TEST_ASSERT(test_program_nometa(program) == EXIT_SUCCESS);
+    TEST_ASSERT(test_program_nometa(program) == EXIT_SUCCESS);
 
-  CHECK_CL_ERROR(clReleaseProgram(program));
-*/
+    CHECK_CL_ERROR(clReleaseProgram(program));
+  */
 
 FINISH:
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));

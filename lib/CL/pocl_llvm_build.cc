@@ -282,7 +282,7 @@ int pocl_llvm_build_program(cl_program program,
   if (device->has_64bit_long)
     ss << "-Dcl_khr_int64 ";
 
-  ss << "-DCL_DEVICE_ADDRESS_BITS=" << device->address_bits << " ";
+  ss << "-DPOCL_DEVICE_ADDRESS_BITS=" << device->address_bits << " ";
 #ifndef LLVM_OLDER_THAN_4_0
   ss << "-D__USE_CLANG_OPENCL_C_H ";
 #endif

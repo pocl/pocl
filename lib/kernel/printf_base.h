@@ -45,15 +45,15 @@ typedef intptr_t ssize_t;
 
 #ifdef cl_khr_int64
 
-#define INT_T long
-#define UINT_T ulong
+#define INT_T int64_t
+#define UINT_T uint64_t
 #define INT_T_MIN LONG_MIN
 #define INT_T_MAX LONG_MAX
 
 #else
 
-#define INT_T int
-#define UINT_T uint
+#define INT_T int32_t
+#define UINT_T uint32_t
 #define INT_T_MIN INT_MIN
 #define INT_T_MAX INT_MAX
 

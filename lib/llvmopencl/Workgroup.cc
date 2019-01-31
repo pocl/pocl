@@ -201,15 +201,14 @@ Workgroup::runOnModule(Module &M) {
 #ifdef LLVM_OLDER_THAN_7_0
   TypeBuilder<PoclContext, true>::setSizeTWidth(SizeTWidth);
   PoclContextT = TypeBuilder<PoclContext, true>::get(*C);
-  LauncherFuncT = SizeTWidth == 32 ?
-    TypeBuilder<void(types::i<8>*[],
-                     PoclContext*,
-                     types::i<32>, types::i<32>, types::i<32>),
-                true>::get(M->getContext()) :
-    TypeBuilder<void(types::i<8>*[],
-                     PoclContext*,
-                     types::i<64>, types::i<64>, types::i<64>),
-                true>::get(M->getContext());
+  LauncherFuncT =
+      SizeTWidth == 32
+          ? TypeBuilder<void(types::i<8> *[], PoclContext *, types::i<32>,
+                             types::i<32>, types::i<32>),
+                        true>::get(M.getContext())
+          : TypeBuilder<void(types::i<8> *[], PoclContext *, types::i<64>,
+                             types::i<64>, types::i<64>),
+                        true>::get(M.getContext());
 #else
   // LLVM 8.0 dropped the TypeBuilder API. This is a cleaner version
   // anyways as it builds the context type using the SizeT directly.

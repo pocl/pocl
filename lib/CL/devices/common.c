@@ -128,6 +128,20 @@ llvm_codegen (unsigned device_i, cl_kernel kernel, cl_device_id device,
       error = pocl_cache_write_kernel_parallel_bc (
           llvm_module, program, device_i, kernel, local_x, local_y, local_z);
     }
+  else
+    {
+      char kernel_parallel_path[POCL_FILENAME_LENGTH];
+      pocl_cache_kernel_cachedir_path (kernel_parallel_path, program, device_i,
+                                       kernel, "", local_x, local_y, local_z);
+      error = pocl_mkdir_p (kernel_parallel_path);
+    }
+  if (error)
+    {
+      POCL_MSG_PRINT_GENERAL ("writing parallel.bc failed"
+                              " for kernel %s\n",
+                              kernel->name);
+      goto FINISH;
+    }
 
   /* May happen if another thread is building the same program & wins the llvm
      lock. */
@@ -144,22 +158,6 @@ llvm_codegen (unsigned device_i, cl_kernel kernel, cl_device_id device,
 
   if (pocl_exists (final_binary_path))
     goto FINISH;
-
-  /**************************************************************************/
-
-  if (!pocl_get_bool_option ("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
-    {
-      char kernel_parallel_path[POCL_FILENAME_LENGTH];
-      pocl_cache_kernel_cachedir_path (kernel_parallel_path, program, device_i,
-                                       kernel, "", local_x, local_y, local_z);
-      error = pocl_mkdir_p (kernel_parallel_path);
-    }
-  if (error)
-    {
-      POCL_MSG_PRINT_LLVM ("writing parallel.bc failed for kernel %s\n",
-                           kernel_name);
-      goto FINISH;
-    }
 
   /* Write temporary kernel.so.o, required for the final linking step.
      Use append-write because tmp_objfile is already temporary, thus
@@ -1134,7 +1132,8 @@ pocl_setup_device_for_system_memory(cl_device_id device)
       else
         POCL_MSG_WARN ("requested POCL_MEMORY_LIMIT %i GBs is larger than"
                        " physical memory size (%zu) GBs, ignoring\n",
-                       limit_memory_gb, (device->global_mem_size >> 30));
+                       limit_memory_gb,
+                       (size_t) (device->global_mem_size >> 30));
     }
 
   if (device->global_mem_size < MIN_MAX_MEM_ALLOC_SIZE)

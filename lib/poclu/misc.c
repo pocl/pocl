@@ -93,12 +93,11 @@ poclu_get_any_device2 (cl_context *context, cl_device_id *device,
   return CL_SUCCESS;
 }
 
-
 char *
-poclu_read_binfile (char *filename, size_t *len)
+poclu_read_binfile (const char *filename, size_t *len)
 {
   FILE *file;
-  char* src;
+  char *src;
 
   file = fopen (filename, "r");
   if (file == NULL)
@@ -121,7 +120,7 @@ poclu_read_binfile (char *filename, size_t *len)
 }
 
 char *
-poclu_read_file (char *filename)
+poclu_read_file (const char *filename)
 {
   size_t size;
   char *res = poclu_read_binfile (filename, &size);
@@ -130,9 +129,8 @@ poclu_read_file (char *filename)
   return res;
 }
 
-
 int
-poclu_write_file (char* filemane, char* content, size_t size)
+poclu_write_file (const char *filemane, char *content, size_t size)
 {
   FILE *file;
 

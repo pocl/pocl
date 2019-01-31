@@ -45,7 +45,7 @@ int printf(const char *format, ...);
 
 #define DEFINE_PRINT_INTS(NAME, INT_TYPE, UINT_TYPE)                          \
   void __pocl_print_ints_##NAME (param_t *p, OCL_C_AS const void *vals,       \
-                                     int n, int is_unsigned)                  \
+                                 int n, int is_unsigned)                      \
   {                                                                           \
     DEBUG_PRINTF (("[printf:ints:n=%df]\n", n));                              \
     flags_t saved_user_flags = p->flags;                                      \
@@ -65,11 +65,11 @@ int printf(const char *format, ...);
     DEBUG_PRINTF (("[printf:ints:done]\n"));                                  \
   }
 
-DEFINE_PRINT_INTS (uchar, char, uchar)
-DEFINE_PRINT_INTS (ushort, short, ushort)
-DEFINE_PRINT_INTS (uint, int, uint)
+DEFINE_PRINT_INTS (uchar, int8_t, uint8_t)
+DEFINE_PRINT_INTS (ushort, int16_t, uint16_t)
+DEFINE_PRINT_INTS (uint, int32_t, uint32_t)
 #ifdef cl_khr_int64
-DEFINE_PRINT_INTS (ulong, long, ulong)
+DEFINE_PRINT_INTS (ulong, int64_t, uint64_t)
 #endif
 
 #undef DEFINE_PRINT_INTS
