@@ -27,9 +27,10 @@
 #include <CL/opencl.h>
 #include <poclu.h>
 
-#define N (4*16)
-#define M (8*16)
-#define O (4*16*16)
+#define SIZEX (1230)
+#define SIZEY (412)
+#define SIZEZ (8)
+#define DATA_SIZE (SIZEX*SIZEY*SIZEZ)
 
 #ifdef __cplusplus
 #  define CALLAPI "C"
@@ -40,8 +41,8 @@
 extern CALLAPI int
 exec_matadd_kernel (cl_context context, cl_device_id device,
 		    cl_command_queue cmd_queue, cl_program program,
-		    int n, int m, int o, cl_float *srcA, cl_float *srcB,
-		    cl_float *dst);
+		    int sizeX, int sizeY, int sizeZ,
+		    cl_float *srcA, cl_float *srcB, cl_float *dst);
 
 int
 main (int argc, char **argv)
@@ -65,23 +66,24 @@ main (int argc, char **argv)
   if (err != CL_SUCCESS)
     goto FINISH;
 
-  srcA = (cl_float *) malloc (N * M * O * sizeof (cl_float));
-  srcB = (cl_float *) malloc (N * M * O * sizeof (cl_float));
-  dst = (cl_float *) malloc (N * M * O * sizeof (cl_float));
+  srcA = (cl_float *) malloc (DATA_SIZE * sizeof (cl_float));
+  srcB = (cl_float *) malloc (DATA_SIZE * sizeof (cl_float));
+  dst = (cl_float *) malloc (DATA_SIZE * sizeof (cl_float));
 
-  for (i = 0; i < N; ++i)
-    for (j = 0; j < M; ++j)
-      for (k = 0; k < O; ++k)
+  for (k = 0; k < SIZEZ; ++k)
+    for (j = 0; j < SIZEY; ++j)
+      for (i = 0; i < SIZEX; ++i)
 	{
-	  int indx = i*M*O + j*O + k;
+	  int indx = k*SIZEX*SIZEY + j*SIZEX + i;
 	  srcA[indx] = (cl_float)indx;
-	  srcB[indx] = (cl_float)(N * M * O - indx);
+	  srcB[indx] = (cl_float)(DATA_SIZE - indx);
 	  dst[indx] = (cl_float)-1;
 	}
 
   err = 0;
 
-  if (exec_matadd_kernel (context, device, queue, program, N, M, O,
+  if (exec_matadd_kernel (context, device, queue, program,
+			  SIZEX, SIZEY, SIZEZ,
 			  srcA, srcB, dst))
     {
       printf ("Error running the tests\n");
@@ -89,11 +91,11 @@ main (int argc, char **argv)
       goto FINISH;
     }
 
-  for (i = 0; i < N; ++i)
-    for (j = 0; j < M; ++j)
-      for (k = 0; k < O; ++k)
+  for (k = 0; k < SIZEZ; ++k)
+    for (j = 0; j < SIZEY; ++j)
+      for (i = 0; i < SIZEX; ++i)
 	{
-	  int indx = i*M*O + j*O + k;
+	  int indx = k*SIZEX*SIZEY + j*SIZEX + i;
 	  if ((int)srcA[indx] + (int)srcB[indx] != (int)dst[indx])
 	    {
 	      printf ("%d FAIL: %f + %f != %f\n", indx,
