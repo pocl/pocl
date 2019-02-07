@@ -1,18 +1,18 @@
-/* pocl.h - global pocl declarations.
+/* pocl.h - global pocl declarations for the host side runtime.
 
    Copyright (c) 2011 Universidad Rey Juan Carlos
-                 2011-2013 Pekka Jääskeläinen / Tampere University of Technology
-  
+                 2011-2018 Pekka Jääskeläinen / Tampere University of Technology
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights
    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
    copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -24,10 +24,10 @@
 
 /**
  * @file pocl.h
- * 
+ *
  * The declarations in this file are such that are used both in the
  * libpocl implementation CL and the kernel compiler. Others should be
- * moved to pocl_cl.h of lib/CL or under the kernel compiler dir. 
+ * moved to pocl_cl.h of lib/CL or under the kernel compiler dir.
  * @todo Check if there are extra declarations here that could be moved.
  */
 #ifndef POCL_H
@@ -35,8 +35,9 @@
 
 #include <CL/opencl.h>
 
-#include "pocl_device.h"
 #include "config.h"
+
+#include "pocl_context.h"
 
 /* detects restrict, variadic macros etc */
 #include "pocl_compiler_features.h"
@@ -99,15 +100,15 @@ typedef uint8_t pocl_kernel_hash_t[POCL_KERNEL_DIGEST_SIZE];
 typedef struct
 {
   void *hash;
-  pocl_workgroup wg;
+  void *wg; /* The work group function ptr. Device specific. */
   cl_kernel kernel;
   size_t local_x;
   size_t local_y;
   size_t local_z;
   struct pocl_context pc;
   struct pocl_argument *arguments;
-  /* Can be used to store/cache device-specific data. */
   unsigned device_i;
+  /* Can be used to store/cache arbitrary device-specific data. */
   void *device_data;
 } _cl_command_run;
 
@@ -361,6 +362,9 @@ struct _cl_command_node
   volatile cl_int ready;
 };
 
+#ifndef LLVM_8_0
+#define LLVM_OLDER_THAN_8_0 1
+
 #ifndef LLVM_7_0
 #define LLVM_OLDER_THAN_7_0 1
 
@@ -393,7 +397,7 @@ struct _cl_command_node
 #endif
 #endif
 #endif
-
+#endif
 
 #if (defined LLVM_4_0)
 # define LLVM_OLDER_THAN_5_0 1

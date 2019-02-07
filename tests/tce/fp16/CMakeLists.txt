@@ -42,20 +42,20 @@ set_tests_properties( "tce/fp16/repl"
     ENVIRONMENT "POCL_DEVICES=ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_fp16.adf;POCL_WORK_GROUP_METHOD=repl"
     DEPENDS "pocl_version_check")
 
-add_test_pocl(NAME "tce/fp16/loopvec" COMMAND "fp16_host" EXPECTED_OUTPUT "expected_out.txt")
+# add_test_pocl(NAME "tce/fp16/loopvec" COMMAND "fp16_host" EXPECTED_OUTPUT "expected_out.txt")
 
 
-set_tests_properties( "tce/fp16/loopvec"
-  PROPERTIES
-    COST 40.0
-    PROCESSORS 1
-    LABELS "tce;tta;ttasim;half"
-    ENVIRONMENT "POCL_DEVICES=ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_fp16.adf;POCL_WORK_GROUP_METHOD=loopvec"
-    DEPENDS "pocl_version_check")
+#set_tests_properties( "tce/fp16/loopvec"
+#  PROPERTIES
+#    COST 40.0
+#    PROCESSORS 1
+#    LABELS "tce;tta;ttasim;half"
+#    ENVIRONMENT "POCL_DEVICES=ttasim;POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_fp16.adf;POCL_WORK_GROUP_METHOD=loopvec"
+#    DEPENDS "pocl_version_check")
 
 #if(LLVM_OLDER_THAN_6_0)
 # TODO: Produces wrong results also with LLVM 7 now. It seems to be very
 # fragile to IR changes.
-  set_property(TEST "tce/fp16/loopvec"
-  APPEND PROPERTY WILL_FAIL 1)
+#  set_property(TEST "tce/fp16/loopvec"
+#  APPEND PROPERTY WILL_FAIL 1)
 #endif()

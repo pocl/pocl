@@ -24,12 +24,14 @@
 
 #include <iostream>
 #include <string>
+#include <set>
 
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "config.h"
 #include "pocl.h"
+#include "pocl_cl.h"
 
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -55,6 +57,7 @@ namespace {
 }
 
 extern cl::opt<std::string> KernelName;
+extern cl_device_id currentPoclDevice;
 
 char Flatten::ID = 0;
 static RegisterPass<Flatten>
@@ -67,10 +70,21 @@ bool
 Flatten::runOnModule(Module &M)
 {
   bool changed = false;
+
+  std::set<std::string> AuxFuncs;
+  if (const char **DevAuxFuncs = currentPoclDevice->device_aux_functions) {
+    const char **Func = DevAuxFuncs;
+    while (*Func != nullptr) {
+      AuxFuncs.insert(*Func++);
+    }
+  }
+
   for (llvm::Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     llvm::Function *f = &*i;
-    if (f->isDeclaration()) continue;
-    if (KernelName == f->getName() || pocl::Workgroup::isKernelToProcess(*f)) {
+    if (f->isDeclaration() ||
+        AuxFuncs.find(f->getName().str()) != AuxFuncs.end()) continue;
+    if (KernelName == f->getName() ||
+        pocl::Workgroup::isKernelToProcess(*f)) {
 #if LLVM_OLDER_THAN_5_0
       AttributeSet Attrs;
       f->removeAttributes(AttributeSet::FunctionIndex,

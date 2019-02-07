@@ -1,19 +1,19 @@
-// LLVM function pass to replicate the kernel body for all work items 
+// LLVM function pass to replicate the kernel body for all work items
 // in a work group.
-// 
+//
 // Copyright (c) 2011-2012 Carlos Sánchez de La Lama / URJC and
-//               2012-2015 Pekka Jääskeläinen / TUT
-// 
+//               2012-2018 Pekka Jääskeläinen / TUT
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -29,6 +29,7 @@
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "pocl.h"
+#include "pocl_cl.h"
 
 #include "llvm/IR/Metadata.h"
 #include "llvm/IR/Constants.h"
@@ -45,12 +46,14 @@ POP_COMPILER_DIAGS
 
 //#define DEBUG_REFERENCE_FIXING
 
+extern cl_device_id currentPoclDevice;
+
 namespace pocl {
 
 using namespace llvm;
 
 /* This is used to communicate the work-group dimensions of the currently
-   compiled kernel command to the workitem loop. 
+   compiled kernel command to the workitem loop.
 
    TODO: Something cleaner than a global value. */
 size_t WGLocalSizeX = 1;
@@ -76,29 +79,16 @@ WorkitemHandler::Initialize(Kernel *K) {
 
   llvm::Module *M = K->getParent();
 
-  llvm::Type *localIdType;
-  size_t_width = 0;
-#ifdef LLVM_OLDER_THAN_3_7
-  if (M->getDataLayout()->getPointerSize(0) == 8)
-    size_t_width = 64;
-  else if (M->getDataLayout()->getPointerSize(0) == 4)
-    size_t_width = 32;
-  else
-    assert (false && "Only 32 and 64 bit size_t widths supported.");
-#else
-  if (M->getDataLayout().getPointerSize(0) == 8)
-    size_t_width = 64;
-  else if (M->getDataLayout().getPointerSize(0) == 4)
-    size_t_width = 32;
-  else
-    assert (false && "Only 32 and 64 bit size_t widths supported.");
-#endif
+  SizeTWidth = currentPoclDevice->address_bits;
+  SizeT = IntegerType::get(M->getContext(), SizeTWidth);
 
-  localIdType = IntegerType::get(K->getContext(), size_t_width);
+  assert ((SizeTWidth == 32 || SizeTWidth == 64) &&
+          "Only 32 and 64 bit size_t widths supported.");
 
-  localIdZ = M->getOrInsertGlobal(POCL_LOCAL_ID_Z_GLOBAL, localIdType);
-  localIdY = M->getOrInsertGlobal(POCL_LOCAL_ID_Y_GLOBAL, localIdType);
-  localIdX = M->getOrInsertGlobal(POCL_LOCAL_ID_X_GLOBAL, localIdType);
+  llvm::Type *LocalIdType = SizeT;
+  LocalIdZGlobal = M->getOrInsertGlobal(POCL_LOCAL_ID_Z_GLOBAL, LocalIdType);
+  LocalIdYGlobal = M->getOrInsertGlobal(POCL_LOCAL_ID_Y_GLOBAL, LocalIdType);
+  LocalIdXGlobal = M->getOrInsertGlobal(POCL_LOCAL_ID_X_GLOBAL, LocalIdType);
 }
 
 

@@ -32,7 +32,7 @@ include("bitcode_rules")
 list(REMOVE_ITEM SOURCES_GENERIC "printf.c" "printf_base.c" "atomics.cl")
 list(APPEND SOURCES_GENERIC "printf_constant.c")
 
-set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=${TCE_DEVICE_CL_VERSION} ${TCE_DEVICE_EXTENSION_DEFINES}")
+set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=${TCE_DEVICE_CL_VERSION} ${TCE_DEVICE_EXTENSION_DEFINES}" "-DPOCL_DEVICE_ADDRESS_BITS=32")
 
 separate_arguments(DEVICE_CL_FLAGS)
 separate_arguments(TCE_TARGET_CLANG_FLAGS)
@@ -75,7 +75,7 @@ install(FILES "${KERNEL_BC}"
 
 set(TCE_TARGET_TRIPLE "tcele-tut-llvm")
 
-set(CLANG_FLAGS ${TCE_TARGET_CLANG_FLAGS} "-emit-llvm" "-ffp-contract=off" "-target" ${TCE_TARGET_TRIPLE} "-isystem" "${TCE_PREFIX}/tce-llvm/include" ${EXTRA_TCE_CLANG_FLAGS})
+set(CLANG_FLAGS ${TCE_TARGET_CLANG_FLAGS} "-emit-llvm" "-ffp-contract=off" "-target" ${TCE_TARGET_TRIPLE} "-isystem" "${TCE_PREFIX}/tce-llvm/include" ${EXTRA_TCE_CLANG_FLAGS} "-DCL_DEVICE_ADDRESS_BITS=32")
 
 make_kernel_bc(KERNEL_BC_LE ${TCE_TARGET_TRIPLE} "tta-le" 0 0 0 ${SOURCES_GENERIC})
 

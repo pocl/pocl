@@ -35,8 +35,8 @@ namespace pocl {
   public:
     void getExitBlocks(llvm::SmallVectorImpl<llvm::BasicBlock *> &B);
     ParallelRegion *createParallelRegionBefore(llvm::BasicBlock *B);
-    
-    ParallelRegion::ParallelRegionVector* 
+
+    ParallelRegion::ParallelRegionVector*
       getParallelRegions(llvm::LoopInfo *LI);
 
     void addLocalSizeInitCode(size_t LocalSizeX, size_t LocalSizeY, size_t LocalSizeZ);

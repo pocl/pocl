@@ -46,6 +46,8 @@ CL_API_SUFFIX__VERSION_1_0
 
   if (image_formats != NULL)
     {
+      if (num_entries > context->num_image_formats[idx])
+          num_entries = context->num_image_formats[idx];
       memcpy (image_formats, context->image_formats[idx],
               sizeof (cl_image_format) * num_entries);
     }

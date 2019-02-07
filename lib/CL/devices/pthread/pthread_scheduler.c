@@ -323,7 +323,7 @@ work_group_scheduler (kernel_run_command *k,
 
   // capacity and position already set up
   pc.printf_buffer = thread_data->printf_buffer;
-  size_t position = 0;
+  uint32_t position = 0;
   pc.printf_buffer_position = &position;
   assert (pc.printf_buffer != NULL);
   assert (pc.printf_buffer_capacity > 0);

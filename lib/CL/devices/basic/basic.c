@@ -1,18 +1,18 @@
 /* basic.c - a minimalistic pocl device driver layer implementation
 
    Copyright (c) 2011-2013 Universidad Rey Juan Carlos and
-                 2011-2014 Pekka Jääskeläinen / Tampere University of Technology
-   
+                 2011-2018 Pekka Jääskeläinen / Tampere University of Technology
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights
    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
    copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -42,6 +42,7 @@
 #include "pocl_cache.h"
 #include "pocl_timing.h"
 #include "pocl_file_util.h"
+#include "pocl_workgroup_func.h"
 
 #ifdef OCS_AVAILABLE
 #include "pocl_llvm.h"
@@ -233,7 +234,7 @@ pocl_init_cpu_device_infos (cl_device_id dev)
 
 #endif
 
-  dev->address_bits = POCL_DEVICE_ADDRESS_BITS;
+  dev->address_bits = HOST_DEVICE_ADDRESS_BITS;
   dev->image_support = CL_TRUE;
   /* Use the minimum values until we get a more sensible upper limit from
      somewhere. */
@@ -643,7 +644,7 @@ pocl_basic_run
   assert (pc->printf_buffer != NULL);
   pc->printf_buffer_capacity = cmd->device->printf_buffer_size;
   assert (pc->printf_buffer_capacity > 0);
-  size_t position = 0;
+  uint32_t position = 0;
   pc->printf_buffer_position = &position;
 
   unsigned rm = pocl_save_rm ();
@@ -654,7 +655,8 @@ pocl_basic_run
   for (z = 0; z < pc->num_groups[2]; ++z)
     for (y = 0; y < pc->num_groups[1]; ++y)
       for (x = 0; x < pc->num_groups[0]; ++x)
-        cmd->command.run.wg ((uint8_t *)arguments, (uint8_t *)pc, x, y, z);
+        ((pocl_workgroup_func) cmd->command.run.wg)
+	  ((uint8_t *)arguments, (uint8_t *)pc, x, y, z);
 
   pocl_restore_rm (rm);
   pocl_restore_ftz (ftz);

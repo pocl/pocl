@@ -1,17 +1,17 @@
 // Implementation for VariableUniformityAnalysis function pass.
-// 
-// Copyright (c) 2013-2014 Pekka Jääskeläinen / Tampere University of Technology
-// 
+//
+// Copyright (c) 2013-2019 Pekka Jääskeläinen
+//
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
 // in the Software without restriction, including without limitation the rights
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -210,10 +210,10 @@ VariableUniformityAnalysis::analyzeBBDivergence
             << std::endl;
 #endif
 
-  llvm::TerminatorInst *Term = previousUniformBB->getTerminator();
+  auto Term = previousUniformBB->getTerminator();
   if (Term == NULL) {
-    // this is most likely a function with a single basic block, the entry node, which
-    // ends with a ret
+    // this is most likely a function with a single basic block, the entry
+    // node, which ends with a ret
     return;
   }
 
@@ -264,9 +264,10 @@ VariableUniformityAnalysis::analyzeBBDivergence
   for (auto UniformBB : FoundUniforms) {
 
     // Propagate the Uniform BB data downwards.
-    llvm::TerminatorInst *NextTerm = UniformBB->getTerminator();
+    auto NextTerm = UniformBB->getTerminator();
 
-    for (unsigned suc = 0, end = NextTerm->getNumSuccessors(); suc < end; ++suc) {
+    for (unsigned suc = 0, end = NextTerm->getNumSuccessors(); suc < end;
+         ++suc) {
       llvm::BasicBlock *NextBB = NextTerm->getSuccessor(suc);
       if (!isUniformityAnalyzed(f, NextBB)) {
         analyzeBBDivergence(f, NextBB, UniformBB);

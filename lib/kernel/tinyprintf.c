@@ -266,8 +266,8 @@ __pocl_printf (char *restrict __buffer, size_t *__buffer_index,
 }
 
 extern char *_printf_buffer;
-extern size_t *_printf_buffer_position;
-extern size_t _printf_buffer_capacity;
+extern uint32_t *_printf_buffer_position;
+extern uint32_t _printf_buffer_capacity;
 
 /* This is a placeholder printf function that will be replaced by calls
  * to __pocl_printf(), after a LLVM pass handles the hidden arguments.

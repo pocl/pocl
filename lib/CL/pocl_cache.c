@@ -1,6 +1,6 @@
 /* OpenCL runtime library: caching functions
 
-   Copyright (c) 2015 pocl developers
+   Copyright (c) 2015-2018 pocl developers
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -119,19 +119,9 @@ void pocl_cache_kernel_cachedir_path (char* kernel_cachedir_path,
 {
   int bytes_written;
   char tempstring[POCL_FILENAME_LENGTH];
-
-  if (program->devices[device_i]->spmd)
-    {
-      bytes_written = snprintf(tempstring, POCL_FILENAME_LENGTH,
-                               "/%s/SPMD%s", kernel->name, append_str);
-    }
-  else
-    {
-      bytes_written = snprintf(tempstring, POCL_FILENAME_LENGTH,
-                               "/%s/%zu-%zu-%zu%s", kernel->name,
-                               local_x, local_y, local_z, append_str);
-    }
-
+  bytes_written = snprintf(tempstring, POCL_FILENAME_LENGTH,
+			   "/%s/%zu-%zu-%zu%s", kernel->name,
+			   local_x, local_y, local_z, append_str);
   assert(bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
 
   program_device_dir(kernel_cachedir_path, program, device_i, tempstring);
@@ -176,6 +166,7 @@ void pocl_cache_final_binary_path(char* final_binary_path, cl_program program,
     int bytes_written;
     char final_binary_name[POCL_FILENAME_LENGTH];
 
+    /* FIXME: Why different naming for SPMD and why the .brig suffix? */
     if (program->devices[device_i]->spmd)
         bytes_written = snprintf(final_binary_name, POCL_FILENAME_LENGTH,
                                  "%s.brig", POCL_PARALLEL_BC_FILENAME);

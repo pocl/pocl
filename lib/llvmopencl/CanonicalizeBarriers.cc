@@ -81,10 +81,11 @@ CanonicalizeBarriers::runOnFunction(Function &F)
   }
 
   for (Function::iterator i = F.begin(), e = F.end(); i != e; ++i) {
-    BasicBlock *b = &*i;
-    TerminatorInst *t = b->getTerminator();
 
-    const bool isExitNode = 
+    BasicBlock *b = &*i;
+    auto t = b->getTerminator();
+
+    const bool isExitNode =
       (t->getNumSuccessors() == 0) && (!Barrier::hasOnlyBarrier(b));
 
     // The function exits should have barriers.
@@ -92,8 +93,8 @@ CanonicalizeBarriers::runOnFunction(Function &F)
       /* In case the bb is already terminated with a barrier,
          split before the barrier so we don't create an empty
          parallel region.
-         
-         This is because the assumptions of the other passes in the 
+
+         This is because the assumptions of the other passes in the
          compilation that are 
          a) exit node is a barrier block 
          b) there are no empty parallel regions (which would be formed 
@@ -151,7 +152,7 @@ CanonicalizeBarriers::ProcessFunction(Function &F) {
 
     // Split post barrier first cause it does not make the barrier
     // to belong to another basic block.
-    TerminatorInst  *t = b->getTerminator();
+    Instruction *t = b->getTerminator();
     // if ((t->getNumSuccessors() > 1) ||
     //     (t->getPrevNode() != *i)) {
     // Change: barriers with several successors are all right
@@ -173,7 +174,7 @@ CanonicalizeBarriers::ProcessFunction(Function &F) {
 
     BasicBlock *predecessor = b->getSinglePredecessor();
     if (predecessor != NULL) {
-      TerminatorInst *pt = predecessor->getTerminator();
+      auto pt = predecessor->getTerminator();
       if ((pt->getNumSuccessors() == 1) &&
           (&b->front() == (*i))) {
         // Barrier is at the beginning of the BB,
@@ -202,15 +203,15 @@ CanonicalizeBarriers::ProcessFunction(Function &F) {
   }
 
   // Prune empty regions. That is, if there are two successive
-  // pure barrier blocks without side branches, remove the other one. 
-  bool emptyRegionDeleted = false;  
+  // pure barrier blocks without side branches, remove the other one.
+  bool emptyRegionDeleted = false;
   do {
     emptyRegionDeleted = false;
     for (Function::iterator i = F.begin(), e = F.end();
          i != e; ++i) {
         BasicBlock *b = &*i;
-        llvm::TerminatorInst *t = b->getTerminator();
-        if (!Barrier::endsWithBarrier(b) || t->getNumSuccessors() != 1) 
+        auto t = b->getTerminator();
+        if (!Barrier::endsWithBarrier(b) || t->getNumSuccessors() != 1)
           continue;
 
         BasicBlock *successor = t->getSuccessor(0);

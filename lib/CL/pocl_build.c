@@ -841,15 +841,6 @@ compile_and_link_program(int compile_program,
         }
     }
 
-#ifdef OCS_AVAILABLE
-  /* for SPMD devices, prebuild the kernel binaries here. */
-  if (program->binary_type == CL_PROGRAM_BINARY_TYPE_EXECUTABLE) {
-    POCL_UNLOCK_OBJ (program);
-    program_compile_dynamic_wg_binaries (program, 1);
-    POCL_LOCK_OBJ (program);
-  }
-#endif
-
   errcode = CL_SUCCESS;
   goto FINISH;
 

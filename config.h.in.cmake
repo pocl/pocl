@@ -65,6 +65,8 @@
 
 #cmakedefine HAVE_HSA_EXT_AMD_H
 
+#define AMD_HSA @AMD_HSA@
+
 #define HOST  "@HOST@"
 
 #define HOST_AS_FLAGS  "@HOST_AS_FLAGS@"
@@ -123,6 +125,9 @@
 /* "Using LLVM 7.0" */
 #cmakedefine LLVM_7_0
 
+/* "Using LLVM 8.0" */
+#cmakedefine LLVM_8_0
+
 #cmakedefine LLVM_BUILD_MODE_DEBUG
 
 #ifndef LLVM_VERSION
@@ -148,7 +153,7 @@
 
 #define POCL_KERNEL_CACHE_DEFAULT @POCL_KERNEL_CACHE_DEFAULT@
 
-#define POCL_DEVICE_ADDRESS_BITS @POCL_DEVICE_ADDRESS_BITS@
+#define HOST_DEVICE_ADDRESS_BITS @HOST_DEVICE_ADDRESS_BITS@
 
 #cmakedefine POCL_DEBUG_MESSAGES
 

@@ -65,8 +65,10 @@
 #include "config.h"
 #include "config2.h"
 
-#ifdef HAVE_HSA_EXT_AMD_H
+#if defined(HAVE_HSA_EXT_AMD_H) && AMD_HSA == 1
+
 #include "hsa_ext_amd.h"
+
 #endif
 
 #include "pocl-hsa.h"
@@ -77,6 +79,8 @@
 #include "pocl_llvm.h"
 #include "pocl_util.h"
 #include "pocl_mem_management.h"
+#include "pocl_context.h"
+#include "pocl_spir.h"
 
 #include <assert.h>
 #include <string.h>
@@ -108,7 +112,10 @@
    - etc. etc.
 */
 
-#define HSA_KERNEL_CACHE_SIZE 64
+/* TODO: The kernel cache is never shrunk. We need a hook that is called back
+   when clReleaseKernel is called to get a safe point where to release the
+   kernel entry from the inmemory cache. */
+#define HSA_KERNEL_CACHE_SIZE 4096
 #define COMMAND_LIST_SIZE 4096
 #define EVENT_LIST_SIZE 511
 
@@ -204,7 +211,7 @@ typedef struct pocl_hsa_device_data_s {
 
   /* printf buffer */
   void *printf_buffer;
-  size_t *printf_write_pos;
+  uint32_t *printf_write_pos;
 
 } pocl_hsa_device_data_t;
 
@@ -349,6 +356,8 @@ static const char *default_native_final_linkage_flags[] =
 static const char *phsa_native_device_aux_funcs[] =
   {"_pocl_run_all_wgs", "_pocl_finish_all_wgs", "_pocl_spawn_wg", NULL};
 
+#define AMD_VENDOR_ID 0x1002
+
 static struct _cl_device_id
 supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS] =
 {
@@ -358,8 +367,9 @@ supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS] =
     .llvm_cpu = (HSAIL_ENABLED ? NULL : "kaveri"),
     .llvm_target_triplet = (HSAIL_ENABLED ? "hsail64" : "amdgcn--amdhsa"),
     .spmd = CL_TRUE,
+    .autolocals_to_args = false,
     .has_64bit_long = 1,
-    .vendor_id = 0x1002,
+    .vendor_id = AMD_VENDOR_ID,
     .global_mem_cache_type = CL_READ_WRITE_CACHE,
     .max_constant_buffer_size = 65536,
     .local_mem_type = CL_LOCAL,
@@ -386,6 +396,7 @@ supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS] =
     .llvm_cpu = NULL,
     .llvm_target_triplet = (HSAIL_ENABLED ? "hsail64" : NULL),
     .spmd = CL_FALSE,
+    .autolocals_to_args = !HSAIL_ENABLED,
     .has_64bit_long = 1,
     .vendor_id = 0xffff,
     .global_mem_cache_type = CL_READ_WRITE_CACHE,
@@ -447,6 +458,7 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
 	  COPY_ATTR (llvm_cpu);
 	  COPY_ATTR (llvm_target_triplet);
 	  COPY_ATTR (spmd);
+	  COPY_ATTR (autolocals_to_args);
 	  if (!HSAIL_ENABLED) {
 	    /* TODO: Add a CMake variable or HSA description string
 	       autodetection to control these. */
@@ -579,31 +591,40 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
       wg_sizes[2] = min (wg_sizes[2], max_wg);
     }
 
-  dev->max_work_group_size = dev->max_work_item_sizes[0] = wg_sizes[0];
+  dev->max_work_item_sizes[0] = wg_sizes[0];
   dev->max_work_item_sizes[1] = wg_sizes[1];
   dev->max_work_item_sizes[2] = wg_sizes[2];
 
-#ifdef HAVE_HSA_EXT_AMD_H
-  uint32_t temp;
-  HSA_CHECK(hsa_agent_get_info(agent, HSA_AMD_AGENT_INFO_CACHELINE_SIZE,
-                               &temp));
-  dev->global_mem_cacheline_size = temp;
+  HSA_CHECK(hsa_agent_get_info
+    (agent, HSA_AGENT_INFO_WORKGROUP_MAX_SIZE, &dev->max_work_group_size));
 
-  HSA_CHECK(hsa_agent_get_info(agent, HSA_AMD_AGENT_INFO_COMPUTE_UNIT_COUNT,
-                               &temp));
-  dev->max_compute_units = temp;
+  if (max_wg > 0)
+    dev->max_work_group_size = max_wg;
+  if (AMD_HSA && dev->vendor_id == AMD_VENDOR_ID)
+    {
+#if AMD_HSA == 1
+      uint32_t temp;
+      HSA_CHECK(hsa_agent_get_info(agent, HSA_AMD_AGENT_INFO_CACHELINE_SIZE,
+				   &temp));
+      dev->global_mem_cacheline_size = temp;
 
-  HSA_CHECK(hsa_agent_get_info(agent, HSA_AMD_AGENT_INFO_MAX_CLOCK_FREQUENCY,
-                               &temp));
-  dev->max_clock_frequency = temp;
+      HSA_CHECK(hsa_agent_get_info(agent, HSA_AMD_AGENT_INFO_COMPUTE_UNIT_COUNT,
+				   &temp));
+      dev->max_compute_units = temp;
 
-#else
-  /* Could not use AMD headers to find out CU/frequency of the device.
-     Using dummy values. */
-  dev->global_mem_cacheline_size = 64;
-  dev->max_compute_units = 4;
-  dev->max_clock_frequency = 700;
+      HSA_CHECK(hsa_agent_get_info(agent, HSA_AMD_AGENT_INFO_MAX_CLOCK_FREQUENCY,
+				   &temp));
+      dev->max_clock_frequency = temp;
 #endif
+    }
+  else
+    {
+      /* Could not use AMD extensions to find out CU/frequency of the device.
+	 Using dummy values. */
+      dev->global_mem_cacheline_size = 64;
+      dev->max_compute_units = 4;
+      dev->max_clock_frequency = 700;
+    }
 
   HSA_CHECK(hsa_agent_get_info
     (agent, HSA_AGENT_INFO_WORKGROUP_MAX_SIZE, &dev->max_work_group_size));
@@ -677,12 +698,15 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
                                 &boolarg));
   assert(boolarg != 0);
 
-#ifdef HAVE_HSA_EXT_AMD_H
-  char booltest = 0;
-  HSA_CHECK(hsa_region_get_info(d->global_region,
-				HSA_AMD_REGION_INFO_HOST_ACCESSIBLE,
-                                &booltest));
-  assert(booltest != 0);
+#if AMD_HSA == 1
+  if (dev->vendor_id == AMD_VENDOR_ID)
+    {
+      char booltest = 0;
+      HSA_CHECK(hsa_region_get_info(d->global_region,
+				    HSA_AMD_REGION_INFO_HOST_ACCESSIBLE,
+				    &booltest));
+      assert(booltest != 0);
+    }
 #endif
 
   size_t sizearg;
@@ -731,7 +755,7 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
   /* TODO proper setup */
   d->hw_schedulers = 3;
 
-#ifdef HAVE_HSA_EXT_AMD_H
+#if AMD_HSA == 1
   /* TODO check at runtime */
   d->have_wait_any = 1;
 #endif
@@ -766,10 +790,16 @@ pocl_hsa_malloc_account(pocl_global_mem_t *mem, size_t size, hsa_region_t r)
 {
   void *b = NULL;
   if ((mem->total_alloc_limit - mem->currently_allocated) < size)
-    return NULL;
+    {
+      POCL_MSG_PRINT_INFO ("total alloc limit reached!");
+      return NULL;
+    }
 
   if (hsa_memory_allocate(r, size, &b) != HSA_STATUS_SUCCESS)
-    return NULL;
+    {
+      POCL_MSG_PRINT_INFO ("hsa_memory_allocate failed");
+      return NULL;
+    }
 
   mem->currently_allocated += size;
   if (mem->max_ever_allocated < mem->currently_allocated)
@@ -777,7 +807,14 @@ pocl_hsa_malloc_account(pocl_global_mem_t *mem, size_t size, hsa_region_t r)
   assert(mem->currently_allocated <= mem->total_alloc_limit);
 
   if (b)
-    POCL_MSG_PRINT_INFO("HSA malloc'ed : size %" PRIuS "\n", size);
+    POCL_MSG_PRINT_INFO("HSA malloc'ed : size %" PRIuS " @ %p\n", size, b);
+
+  /* TODO: Due to lack of align parameter to the HSA allocation function, we
+     should align the buffer here ourselves.  For now, let's just hope that
+     the called HSA implementation wide aligns (currently to 128).  */
+  if ((uint64_t)b % MAX_EXTENDED_ALIGNMENT > 0)
+    POCL_MSG_WARN("HSA runtime returned a buffer with smaller alignment "
+		  "than %d", MAX_EXTENDED_ALIGNMENT);
 
   return b;
 }
@@ -921,6 +958,8 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
   cl_kernel kernel = cmd->command.run.kernel;
   pocl_kernel_metadata_t *meta = kernel->meta;
 
+  POCL_MSG_PRINT_INFO ("setup_kernel_args for %s\n",
+		       cmd->command.run.kernel->name);
 #define CHECK_AND_ALIGN_SPACE(DSIZE)                         \
   do {                                                       \
     if (write_pos + (DSIZE) > last_pos)                      \
@@ -930,16 +969,19 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
   } while (0)
 
   size_t i;
-  for (i = 0; i < meta->num_args; ++i)
+  for (i = 0; i < meta->num_args + meta->num_locals; ++i)
     {
       struct pocl_argument *al = &(cmd->command.run.arguments[i]);
-      if (ARG_IS_LOCAL (meta->arg_info[i]))
+
+      if (i >= meta->num_args || ARG_IS_LOCAL (meta->arg_info[i]))
         {
+	  size_t buf_size = ARG_IS_LOCAL (meta->arg_info[i]) ?
+	    al->size : meta->local_sizes[i - meta->num_args];
 	  if (HSAIL_ENABLED)
 	    {
 	      CHECK_AND_ALIGN_SPACE(sizeof (uint32_t));
 	      memcpy (write_pos, total_group_size, sizeof (uint32_t));
-	      *total_group_size += (uint32_t)al->size;
+	      *total_group_size += (uint32_t)buf_size;
 	      write_pos += sizeof (uint32_t);
 	    }
 	  else
@@ -953,8 +995,10 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
 		 with different local bases. */
 	      uint64_t ptr =
 		(uint64_t)pocl_hsa_malloc_account
-		(d->device->global_memory, al->size, d->global_region);
+		(d->device->global_memory, buf_size, d->global_region);
 	      memcpy (write_pos, &ptr, sizeof (ptr));
+	      POCL_MSG_PRINT_INFO ("arg %lu (local) size %lu written to %lx\n",
+				   i, buf_size, ptr);
 	      write_pos += sizeof (ptr);
 	      /* TODO: Free the buffer. */
 	    }
@@ -983,7 +1027,7 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
                     {
                       POCL_MSG_PRINT_INFO (
                           "HSA: Copy HOST_PTR allocated %lu byte buffer "
-                          "from %p to %p due to having a BASE profile "
+                          "from %p to %lx due to having a BASE profile "
                           "agent.\n",
                           m->size, m->mem_host_ptr, dev_ptr);
                       hsa_memory_copy ((void *)dev_ptr, m->mem_host_ptr,
@@ -996,6 +1040,8 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
               dev_ptr += al->offset;
               memcpy (write_pos, &dev_ptr, sizeof(uint64_t));
             }
+	  POCL_MSG_PRINT_INFO ("arg %lu (global ptr) written to %lx val %lx\n",
+			       i, (uint64_t)write_pos, *(uint64_t*)write_pos);
           write_pos += sizeof(uint64_t);
         }
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
@@ -1013,6 +1059,8 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
           // Scalars.
           CHECK_AND_ALIGN_SPACE(al->size);
           memcpy (write_pos, al->value, al->size);
+	  POCL_MSG_PRINT_INFO("arg %lu (scalar) written to %lx val %x\n", i,
+			      (uint64_t)write_pos, *(uint32_t*)al->value);
           write_pos += al->size;
         }
     }
@@ -1022,26 +1070,21 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
   /* Need to copy the context object to HSA allocated global memory
      to ensure Base profile agents can access it. */
 
-  struct pocl_context *ctx_ptr = (struct pocl_context *)pocl_hsa_malloc_account
-    (d->device->global_memory, sizeof (struct pocl_context),
+  void *ctx_ptr = pocl_hsa_malloc_account
+    (d->device->global_memory, POCL_CONTEXT_SIZE (d->device->address_bits),
      d->global_region);
 
-  memcpy (ctx_ptr, &cmd->command.run.pc, sizeof (struct pocl_context));
+  if (d->device->address_bits == 64)
+    memcpy (ctx_ptr, &cmd->command.run.pc, sizeof (struct pocl_context));
+  else
+    POCL_CONTEXT_COPY64TO32(ctx_ptr, &cmd->command.run.pc);
+
   memcpy (write_pos, &ctx_ptr, sizeof(ctx_ptr));
-  POCL_MSG_PRINT_INFO("The ctx is at %p\n", ctx_ptr);
+  POCL_MSG_PRINT_INFO("A %d-bit context object was written at %p\n",
+		      d->device->address_bits, ctx_ptr);
   write_pos += sizeof(uint64_t);
 
-  /* MUST TODO: free the ctx obj after launching. */
-#if 0
-  for (size_t i = meta->num_args; i < kernel->total_args; ++i)
-    {
-      POCL_ABORT_UNIMPLEMENTED("hsa: automatic local buffers"
-                               " not implemented.");
-      al = &(cmd->command.run.arguments[i]);
-      arguments[i] = malloc (sizeof (void *));
-      *(void **)(arguments[i]) = pocl_hsa_malloc (data, 0, al->size, NULL);
-    }
-#endif
+  /* MUST TODO: free the local buffers and ctx obj after finishing the kernel! */
 }
 
 static int
@@ -1712,15 +1755,6 @@ pocl_hsa_launch (pocl_hsa_device_data_t *d, cl_event event)
       kernel_packet->workgroup_size_x = kernel_packet->workgroup_size_y =
 	kernel_packet->workgroup_size_z = 1;
 
-      struct pocl_context *pc = &cmd->command.run.pc;
-
-      /* For SPMD devices we let the processor control the grid execution. */
-
-      /* TODO: Dynamic WG sizes. */
-      pc->local_size[0] = cmd->command.run.local_x;
-      pc->local_size[1] = cmd->command.run.local_y;
-      pc->local_size[2] = cmd->command.run.local_z;
-
       if (d->device->device_side_printf)
 	{
 	  pc->printf_buffer = d->printf_buffer;
@@ -1736,6 +1770,19 @@ pocl_hsa_launch (pocl_hsa_device_data_t *d, cl_event event)
       kernel_packet->workgroup_size_x = cmd->command.run.local_x;
       kernel_packet->workgroup_size_y = cmd->command.run.local_y;
       kernel_packet->workgroup_size_z = cmd->command.run.local_z;
+    }
+
+
+  /* TODO: Dynamic WG sizes. */
+
+  /* For SPMD devices we let the processor (HSA runtime) control the
+     grid execution unless we are using our own WG launcher that
+     uses the context struct. */
+  if (!d->device->spmd || d->device->arg_buffer_launcher)
+    {
+      pc->local_size[0] = cmd->command.run.local_x;
+      pc->local_size[1] = cmd->command.run.local_y;
+      pc->local_size[2] = cmd->command.run.local_z;
     }
 
   kernel_packet->grid_size_x = kernel_packet->grid_size_y
@@ -1818,7 +1865,7 @@ pocl_hsa_ndrange_event_finished (pocl_hsa_device_data_t *d, size_t i)
                       event->id);
   dd->running_events[i] = dd->running_events[--dd->running_list_size];
 
-#ifdef HAVE_HSA_EXT_AMD_H
+#if AMD_HSA == 1
   /* TODO Times are reported as ticks in the domain of the HSA system clock. */
   hsa_amd_profiling_dispatch_time_t t;
   HSA_CHECK(hsa_amd_profiling_get_dispatch_time(d->agent,
@@ -1941,7 +1988,7 @@ pocl_hsa_driver_pthread (void * cldev)
                                  HSA_QUEUE_TYPE_SINGLE,
                                  hsa_queue_callback, device,
                                  -1, -1, &dd->queues[i]));
-#ifdef HAVE_HSA_EXT_AMD_H
+#if AMD_HSA == 1
       HSA_CHECK(hsa_amd_profiling_set_profiler_enabled(dd->queues[i], 1));
 #endif
     }
@@ -1959,7 +2006,7 @@ pocl_hsa_driver_pthread (void * cldev)
         goto EXIT_PTHREAD;
 
       // wait for anything to happen or timeout
-#ifdef HAVE_HSA_EXT_AMD_H
+#if AMD_HSA == 1
       // FIXME: An ABA race condition here. If there was (another) submit after
       // the previous wait returned, but before this reset, we miss the
       // notification decrement and get stuck if there are no further submits
@@ -1989,7 +2036,7 @@ pocl_hsa_driver_pthread (void * cldev)
                                   kernel_timeout_ns, HSA_WAIT_STATE_BLOCKED);
 #endif
 
-#ifdef HAVE_HSA_EXT_AMD_H
+#if AMD_HSA == 1
         }
 #endif
 

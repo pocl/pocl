@@ -706,7 +706,7 @@ __pocl_printf_puts_ljust (param_t *p, const char *string, size_t width,
   char c;
   size_t written = 0;
   if (max_width < 0)
-    max_width = (SIZE_MAX >> 1);
+    max_width = (__SIZE_MAX__ >> 1);
   while ((c = *string++))
     {
       if (written < max_width)
@@ -728,7 +728,7 @@ __pocl_printf_puts_rjust (param_t *p, const char *string, size_t width,
   char c;
   size_t i, strleng = 0, written = 0;
   if (max_width < 0)
-    max_width = (SIZE_MAX >> 1);
+    max_width = (__SIZE_MAX__ >> 1);
 
   const char *tmp = string;
   while ((c = *tmp++))

@@ -22,8 +22,9 @@
    THE SOFTWARE.
 */
 
-#include <stdint.h>
+#include "pocl_context.h"
 #include "pocl_device.h"
+#include "pocl_workgroup_func.h"
 
 /**
    Launches a work-group. Does not necessarily block, thus can spawn a separate
@@ -37,10 +38,10 @@
    @param group_x, group_y, group_z The group id of this launch.
    @param pc The execution context struct. */
 void
-_pocl_spawn_wg (void *wg_func_ptr, uint8_t *args, uint8_t *ctx,
-		uint32_t group_x, uint32_t group_y, uint32_t group_z)
+_pocl_spawn_wg (void *wg_func_ptr, uchar *args, uchar *ctx,
+		size_t group_x, size_t group_y, size_t group_z)
 {
-  ((pocl_workgroup)wg_func_ptr)(args, ctx, group_x, group_y, group_z);
+  ((pocl_workgroup_func)wg_func_ptr)(args, ctx, group_x, group_y, group_z);
 }
 
 /* Blocks until all currently launched WGs have finished.
@@ -49,6 +50,6 @@ _pocl_spawn_wg (void *wg_func_ptr, uint8_t *args, uint8_t *ctx,
    synchronously.
 */
 void
-_pocl_finish_all_wgs (struct pocl_context *pc)
+_pocl_finish_all_wgs (uchar *pc)
 {
 }

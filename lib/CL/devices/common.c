@@ -122,24 +122,6 @@ llvm_codegen (unsigned device_i, cl_kernel kernel, cl_device_id device,
     }
   assert (llvm_module != NULL);
 
-  /* May happen if another thread is building the same program & wins the llvm
-     lock. */
-  if (pocl_exists (final_binary_path))
-    goto FINISH;
-
-  error = pocl_llvm_codegen (device, llvm_module, &objfile, &objfile_size);
-  if (error)
-    {
-      POCL_MSG_PRINT_LLVM ("pocl_llvm_codegen() failed for kernel %s\n",
-                           kernel_name);
-      goto FINISH;
-    }
-
-  if (pocl_exists (final_binary_path))
-    goto FINISH;
-
-  /**************************************************************************/
-
   if (pocl_get_bool_option ("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
     {
       POCL_MSG_PRINT_LLVM ("Writing parallel.bc to %s.\n", parallel_bc_path);
@@ -155,10 +137,27 @@ llvm_codegen (unsigned device_i, cl_kernel kernel, cl_device_id device,
     }
   if (error)
     {
-      POCL_MSG_PRINT_LLVM ("writing parallel.bc failed for kernel %s\n",
+      POCL_MSG_PRINT_GENERAL ("writing parallel.bc failed"
+                              " for kernel %s\n",
+                              kernel->name);
+      goto FINISH;
+    }
+
+  /* May happen if another thread is building the same program & wins the llvm
+     lock. */
+  if (pocl_exists (final_binary_path))
+    goto FINISH;
+
+  error = pocl_llvm_codegen (device, llvm_module, &objfile, &objfile_size);
+  if (error)
+    {
+      POCL_MSG_PRINT_LLVM ("pocl_llvm_codegen() failed for kernel %s\n",
                            kernel_name);
       goto FINISH;
     }
+
+  if (pocl_exists (final_binary_path))
+    goto FINISH;
 
   /* Write temporary kernel.so.o, required for the final linking step.
      Use append-write because tmp_objfile is already temporary, thus
@@ -832,7 +831,7 @@ struct pocl_dlhandle_cache_item
 {
   pocl_kernel_hash_t hash;
   size_t local_wgs[3];
-  pocl_workgroup wg;
+  void *wg;
   lt_dlhandle dlhandle;
   pocl_dlhandle_cache_item *next;
   pocl_dlhandle_cache_item *prev;
@@ -1056,17 +1055,17 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *cmd,
     if (ci->dlhandle != NULL && dl_error == NULL)
       {
         snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
-                  "_pocl_launcher_%s_workgroup",
-                  cmd->command.run.kernel->name);
-        ci->wg = (pocl_workgroup)lt_dlsym (ci->dlhandle, workgroup_string);
+                  "_pocl_kernel_%s_workgroup",
+		  cmd->command.run.kernel->name);
+        ci->wg = lt_dlsym (ci->dlhandle, workgroup_string);
         dl_error = lt_dlerror ();
         if (ci->wg == NULL)
           {
             // Older osx dyld APIs need the name without the underscore
             snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
-                      "pocl_launcher_%s_workgroup",
-                      cmd->command.run.kernel->name);
-            ci->wg = (pocl_workgroup)lt_dlsym (ci->dlhandle, workgroup_string);
+                      "pocl_kernel_%s_workgroup",
+		      cmd->command.run.kernel->name);
+            ci->wg = lt_dlsym (ci->dlhandle, workgroup_string);
             dl_error = lt_dlerror ();
           }
 
@@ -1133,7 +1132,8 @@ pocl_setup_device_for_system_memory(cl_device_id device)
       else
         POCL_MSG_WARN ("requested POCL_MEMORY_LIMIT %i GBs is larger than"
                        " physical memory size (%zu) GBs, ignoring\n",
-                       limit_memory_gb, (device->global_mem_size >> 30));
+                       limit_memory_gb,
+                       (size_t) (device->global_mem_size >> 30));
     }
 
   if (device->global_mem_size < MIN_MAX_MEM_ALLOC_SIZE)

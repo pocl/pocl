@@ -2,7 +2,7 @@
    producing program.bc
 
    Copyright (c) 2013 Kalle Raiskila
-                 2013-2018 Pekka Jääskeläinen
+                 2013-2019 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,6 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include "config.h"
 
 #include <clang/Basic/Diagnostic.h>
-#include <clang/Basic/VirtualFileSystem.h>
 #include <clang/Driver/Compilation.h>
 #include <clang/Driver/Driver.h>
 #include <clang/CodeGen/CodeGenAction.h>
@@ -283,6 +282,11 @@ int pocl_llvm_build_program(cl_program program,
   if (device->has_64bit_long)
     ss << "-Dcl_khr_int64 ";
 
+  ss << "-DPOCL_DEVICE_ADDRESS_BITS=" << device->address_bits << " ";
+#ifndef LLVM_OLDER_THAN_4_0
+  ss << "-D__USE_CLANG_OPENCL_C_H ";
+#endif
+
   ss << "-xcl ";
   // Remove the inline keywords to force the user functions
   // to be included in the program. Otherwise they will
@@ -417,28 +421,31 @@ int pocl_llvm_build_program(cl_program program,
   la->PIE = 0;
 #endif
 
-  std::string kernelh;
+  std::string IncludeRoot;
+  std::string KernelH;
   std::string BuiltinRenamesH;
+  std::string PoclTypesH;
 
 #ifdef ENABLE_POCL_BUILDING
   if (pocl_get_bool_option("POCL_BUILDING", 0)) {
-    kernelh  = SRCDIR;
+    IncludeRoot = SRCDIR;
 #else
   if (0) {
 #endif
   } else {
-    kernelh = POCL_INSTALL_PRIVATE_DATADIR;
+    IncludeRoot = POCL_INSTALL_PRIVATE_DATADIR;
   }
-  BuiltinRenamesH = kernelh;
-  kernelh += "/include/_kernel.h";
-  BuiltinRenamesH += "/include/_builtin_renames.h";
+  KernelH = IncludeRoot + "/include/_kernel.h";
+  BuiltinRenamesH = IncludeRoot + "/include/_builtin_renames.h";
+  PoclTypesH = IncludeRoot + "/include/pocl_types.h";
 
+  po.Includes.push_back(PoclTypesH);
   po.Includes.push_back(BuiltinRenamesH);
 #ifndef LLVM_OLDER_THAN_4_0
   // Use Clang's opencl-c.h header.
   po.Includes.push_back(CLANG_RESOURCE_DIR "/include/opencl-c.h");
 #endif
-  po.Includes.push_back(kernelh);
+  po.Includes.push_back(KernelH);
   clang::TargetOptions &ta = pocl_build.getTargetOpts();
   ta.Triple = device->llvm_target_triplet;
   if (device->llvm_cpu != NULL)

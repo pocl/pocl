@@ -22,7 +22,7 @@
 
 #include "LLVMUtils.h"
 
-#include "pocl.h"
+#include "pocl_spir.h"
 
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Module.h>

@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014 pocl developers
+#   Copyright (c) 2018 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -43,6 +43,9 @@ if(ENABLE_FP64)
   add_subdirectory("scalarwave")
 endif()
 add_subdirectory("trig")
+add_subdirectory("vecadd")
+add_subdirectory("matadd")
+add_subdirectory("boxadd")
 add_subdirectory("EinsteinToolkit")
 
 # TODO:   opencl-book-samples

@@ -31,6 +31,7 @@
 #include <string>
 
 #include "TCEString.hh"
+#include "pocl_device.h"
 
 namespace TTAMachine {
   class AddressSpace;
