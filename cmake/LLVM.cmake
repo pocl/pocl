@@ -487,7 +487,7 @@ endif()
 ####################################################################
 #X86 has -march and -mcpu reversed, for clang
 
-if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "(powerpc|armv7|aarch64)")
+if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "(powerpc|arm|aarch64)")
   set(CLANG_MARCH_FLAG "-mcpu=")
 else()
   set(CLANG_MARCH_FLAG "-march=")
