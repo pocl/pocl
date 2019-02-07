@@ -1,9 +1,12 @@
 FROM debian:stretch
 ARG GIT_COMMIT=master
+ARG LLVM_VERSION=6.0
 LABEL git-commit=$GIT_COMMIT vendor=pocl distro=Debian version=1.0
+
+RUN echo 'deb http://ftp.debian.org/debian stretch-backports main' >/etc/apt/sources.list.d/backports.list
 RUN apt update
 RUN apt upgrade -y
-RUN apt install -y build-essential ocl-icd-libopencl1 cmake git gcc g++ libhwloc5 pkg-config libclang-3.9-dev  clang-3.9 llvm-3.9 make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo
+RUN apt install -y build-essential ocl-icd-libopencl1 cmake git gcc g++ libhwloc5 pkg-config libclang-${LLVM_VERSION}-dev  clang-${LLVM_VERSION} llvm-${LLVM_VERSION}-dev make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo
 
 RUN cd /home ; git clone https://github.com/pocl/pocl.git ; cd /home/pocl ; git checkout $GIT_COMMIT
 RUN cd /home/pocl ; mkdir b ; cd b; cmake -G Ninja ..
