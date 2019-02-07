@@ -80,12 +80,12 @@ private:
             buf[0] = 0;
             rv=sprintf(buf,
                            "__kernel void test_shuffle_%d_%d("
-                           "__global %s%d *in, __global %s%d *mask, __global %s%d *out) {\n"
+                           "__global const %s%d *in, __global const %s%d *mask, __global %s%d *out) {\n"
                            "*out = shuffle( *in, *mask);\n}\n",
                            m, n, ocl_type, m, mask_type, n, ocl_type, n);
             rv+=sprintf(buf+rv,
                            "__kernel void test_shuffle2_%d_%d("
-                           "__global %s%d *in1, __global %s%d *in2, __global %s%d *mask, __global %s%d *out) {\n"
+                           "__global const %s%d *in1, __global const %s%d *in2, __global const %s%d *mask, __global %s%d *out) {\n"
                            "*out = shuffle2( *in1, *in2, *mask);\n}\n",
                            m, n, ocl_type, m, ocl_type, m, mask_type, n, ocl_type, n);
             src.append(buf);
@@ -200,10 +200,9 @@ private:
         std::cout << ");" << std::endl;
         rv=false;
       }
-
-    // Now test shuffle2()
     clReleaseKernel(krn);
 
+    // Now test shuffle2()
     snprintf(kern_name2, 128, "test_shuffle2_%d_%d", m, n);
     krn2 = clCreateKernel(prog, kern_name2, &errcode);
     ERRCHECK()
@@ -252,10 +251,19 @@ public:
       mask1[i] = (M)stimuli[i];
       mask2[i] = (M)stimuli[i];
     }
+
+    for (unsigned n_loop = 0; n_loop < 4; n_loop++) {
+      for (unsigned m_loop = 0; m_loop < 4; m_loop++) {
+        unsigned m = vecelts[m_loop];
+        for (unsigned i = 0; i < m; i++) {
+          in2[i] = (D)(i + m);
+          in1[i] = (D)i;
+        }
+      }
+    }
   }
 
-  unsigned run()
-  {
+  unsigned run() {
 
     // Fixed pseudorandom stimuli to make the test deterministic.
     // Random stimuli leads to randomly appearing/disappearing
@@ -296,16 +304,11 @@ public:
     ERRCHECK()
 
     unsigned errors = 0;
-    for(unsigned n_loop=0; n_loop<4; n_loop++) {
-          for(unsigned m_loop=0; m_loop<4; m_loop++) {
-              unsigned m = vecelts[m_loop];
-              for(unsigned i=0; i<m; i++) {
-                in2[i]=(D)(i+m);
-                in1[i] = (D)i;
-              }
-              if (!run_single_test(vecelts[n_loop], vecelts[m_loop]))
-                errors++;
-          }
+    for (unsigned n_loop = 0; n_loop < 4; n_loop++) {
+      for (unsigned m_loop = 0; m_loop < 4; m_loop++) {
+        if (!run_single_test(vecelts[n_loop], vecelts[m_loop]))
+          errors++;
+      }
     }
 
     clReleaseMemObject(mem_in1);
@@ -317,7 +320,6 @@ public:
 
     return errors;
   }
-
 };
 
 

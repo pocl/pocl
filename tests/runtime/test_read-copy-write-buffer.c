@@ -76,8 +76,8 @@ main(void)
       cl_int *host_buf2 = malloc(buf_size);
       TEST_ASSERT(host_buf2);
 
-      memset(host_buf1, 1, buf_size);
-      memset(host_buf2, 2, buf_size);
+      memset (host_buf1, 1, buf_size);
+      memset (host_buf2, 2, buf_size);
 
       cl_mem buf1 = clCreateBuffer(context, CL_MEM_READ_WRITE, buf_size, NULL, &err);
       CHECK_OPENCL_ERROR_IN("clCreateBuffer");
@@ -93,6 +93,9 @@ main(void)
       CHECK_CL_ERROR(clFinish(queue));
 
       TEST_ASSERT(memcmp(host_buf2, host_buf1, buf_size) == 0);
+
+      memset (host_buf1, 3, buf_size);
+      memset (host_buf2, 4, buf_size);
 
       { /* pretend the buffers are linearized buffers with 2 rows and nels/2 columns, and
            do a rectangular copy of the two rows */
