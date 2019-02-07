@@ -1,16 +1,17 @@
-FROM tce_tce6
+FROM tce_tce
 
 ARG GIT_COMMIT=master
 ARG TCE_COMMIT=master
+ARG LLVM_VERSION=80
 
-ENV LD_LIBRARY_PATH=/home/LLVM_600/lib:/home/TCE_60/lib
-ENV PATH=/home/TCE_60/bin:/home/LLVM_600/bin:${PATH}
+ENV LD_LIBRARY_PATH=/home/LLVM_$LLVM_VERSION/lib:/home/TCE_$LLVM_VERSION/lib
+ENV PATH=/home/TCE_$LLVM_VERSION/bin:/home/LLVM_$LLVM_VERSION/bin:${PATH}
 
 ################## build POCL
 
 RUN cd /home ; git clone https://github.com/pocl/pocl.git ; cd /home/pocl ; git checkout $GIT_COMMIT
 
-RUN cd /home/pocl ; mkdir b ; cd b; cmake -G Ninja -DWITH_LLVM_CONFIG=/home/LLVM_600/bin/llvm-config -DENABLE_TCE=1 ..
+RUN cd /home/pocl ; mkdir b ; cd b; cmake -G Ninja -DWITH_LLVM_CONFIG=/home/LLVM_$LLVM_VERSION/bin/llvm-config -DENABLE_TCE=1 ..
 
 RUN cd /home/pocl/b ; ninja
 

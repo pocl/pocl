@@ -1,10 +1,11 @@
-FROM tce_llvm6
+FROM tce_llvm
 
 ARG GIT_COMMIT=master
 ARG TCE_COMMIT=master
+ARG LLVM_VERSION=80
 
-ENV LD_LIBRARY_PATH=/home/LLVM_600/lib:/home/TCE_60/lib
-ENV PATH=/home/TCE_60/bin:/home/LLVM_600/bin:${PATH}
+ENV LD_LIBRARY_PATH=/home/LLVM_$LLVM_VERSION/lib:/home/TCE_$LLVM_VERSION/lib
+ENV PATH=/home/TCE_$LLVM_VERSION/bin:/home/LLVM_$LLVM_VERSION/bin:${PATH}
 
 ################ BUILD TCE
 
@@ -18,12 +19,12 @@ RUN cd /home/tce/tce ; git clean -f -d -x
 
 RUN cd /home/tce/tce ; ./autogen.sh
 
-RUN cd /home/tce/tce ; ./configure --prefix=/home/TCE_60
+RUN cd /home/tce/tce ; ./configure --prefix=/home/TCE_$LLVM_VERSION
 
 RUN cd /home/tce/tce ; make -j4
 
 RUN cd /home/tce/tce ; make install
 
-RUN cd /home/tce/tce/newlib-1.17.0/tce-llvm/ ; make install
+RUN cd /home/tce/tce/newlib-*/tce-llvm/ ; make install
 
 CMD /bin/bash
