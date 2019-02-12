@@ -210,9 +210,6 @@ typedef pthread_mutex_t pocl_lock_t;
 #ifdef __APPLE__
 /* Note: OSX doesn't support aliases because it doesn't use ELF */
 
-#  ifdef BUILD_ICD
-#    error "ICD not supported on OSX"
-#  endif
 #  define POname(name) name
 #  define POdeclsym(name)
 #  define POsym(name)
