@@ -559,8 +559,6 @@ void pocl_command_enqueue (cl_command_queue command_queue,
   command_queue->device->ops->submit(node, command_queue);
   /* node->event is unlocked by device_ops->submit */
 
-  if (pocl_is_option_set("POCL_IMPLICIT_FINISH"))
-    POname(clFinish) (command_queue);
 }
 
 /* call (and return) with node->event locked */

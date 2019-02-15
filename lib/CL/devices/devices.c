@@ -450,7 +450,6 @@ pocl_init_devices ()
 #endif
 
   /* first time initialization */
-
   unsigned i, j, dev_index;
   char env_name[1024];
   char dev_name[MAX_DEV_NAME_LEN] = { 0 };
