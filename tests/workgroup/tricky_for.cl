@@ -1,21 +1,21 @@
 __kernel void
-test_kernel (void)
+test_kernel (global int *output)
 {
   int gid_x = get_global_id (0);
-  int gid_y = get_global_id (1);
-  int gid_z = get_global_id (2);
 
   for (int i = 0; i < INT_MAX; ++i) {
       if (i == 1 && gid_x == 0) {
-          printf ("I am 0 and I break out from the loop.\n");
+          output[gid_x] = i * 1000;
           break;
       }
+      output[gid_x] = -1;
       if (i == 1 && gid_x == 1) {
-          printf ("I am 1 and I also break out from the loop.\n");
+          output[gid_x] = i * 2000;
           break;
       }
       /* None of the two WIs reach the barrier, it should be fine! */
+      output[gid_x] = -2;
       barrier(CLK_LOCAL_MEM_FENCE);
-      printf ("gid_x %u after barrier at iteration %d\n", gid_x, i);
+      output[gid_x] = -3;
   }
 }

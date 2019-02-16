@@ -1,7 +1,7 @@
 #=============================================================================
 #   CMake build system files
 #
-#   Copyright (c) 2014 pocl developers
+#   Copyright (c) 2014-2019 pocl developers
 #
 #   Permission is hereby granted, free of charge, to any person obtaining a copy
 #   of this software and associated documentation files (the "Software"), to deal
@@ -83,12 +83,11 @@ add_test_pocl(NAME "workgroup/issue_548_convergent_propagation"
               EXPECTED_OUTPUT "issue_548_1_2_1_1.stdout"
               COMMAND "run_kernel" "issue_548.cl" 1 2 1 1)
 
-# These tests are now always ran with the basic with a predefined
+# These tests are now always ran with the basic device with a predefined
 # work-group execution order. Their printout verification depends
 # on it.
 set_tests_properties( "workgroup/unconditional_barriers"
   "workgroup/conditional_barrier"
-  "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier"
   "workgroup/forcing_horizontal_parallelization_to_some_outer_loops"
   "workgroup/loop_with_two_paths_to_the_latch"
   "workgroup/b_loop_with_two_latches"
@@ -108,6 +107,7 @@ set_tests_properties( "workgroup/unconditional_barriers"
 set_tests_properties("workgroup/unbarriered_for_loops"
   "workgroup/barriered_for_loops"
   "workgroup/switch_case"
+  "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier"
   PROPERTIES
     COST 2.0
     PROCESSORS 1
