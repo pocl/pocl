@@ -321,6 +321,11 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
   passes.push_back("STANDARD_OPTS");
   passes.push_back("instcombine");
 
+  // Due to unfortunate phase-ordering problems with store sinking,
+  // loop deletion does not always apply when executing -O3 only
+  // once. Cherry pick the optimization to rerun here.
+  passes.push_back("loop-deletion");
+
   // Now actually add the listed passes to the PassManager.
   for (unsigned i = 0; i < passes.size(); ++i) {
     // This is (more or less) -O3.
