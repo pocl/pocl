@@ -62,6 +62,10 @@ add_test_pocl(NAME "workgroup/b_loop_with_none_of_the_WIs_reaching_the_barrier"
               EXPECTED_OUTPUT "tricky_for_1_2_1_1.stdout"
               COMMAND "run_kernel" "tricky_for.cl" 1 2 1 1)
 
+add_test_pocl(NAME "workgroup/for_with_divergent_return"
+              EXPECTED_OUTPUT "for_with_divergent_return_1_6_1_1.stdout"
+              COMMAND "run_kernel" "for_with_divergent_return.cl" 1 6 1 1)
+
 add_test_pocl(NAME "workgroup/forcing_horizontal_parallelization_to_some_outer_loops"
               EXPECTED_OUTPUT "outerlooppar_2_2_1_1.stdout"
               COMMAND "run_kernel" "outerlooppar.cl" 2 2 1 1)
