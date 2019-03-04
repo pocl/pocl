@@ -1,4 +1,4 @@
-FROM amd64/ubuntu:latest
+FROM amd64/ubuntu:rolling
 
 ARG GIT_COMMIT=master
 LABEL git-commit=$GIT_COMMIT vendor=pocl distro=Ubuntu version=1.0
