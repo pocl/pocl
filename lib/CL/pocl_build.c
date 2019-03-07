@@ -533,15 +533,16 @@ compile_and_link_program(int compile_program,
 
   if (extra_build_options)
     {
-      temp_options =
-	(char*) malloc (options != NULL ? strlen (options) : 0
-			+ strlen (extra_build_options) + 2);
+      size_t len = (options != NULL) ? strlen (options) : 0;
+      len += strlen (extra_build_options) + 2;
+      temp_options = (char *)malloc (len);
+
       temp_options[0] = 0;
       if (options != NULL)
-	{
-	  strcpy (temp_options, options);
-	  strcat (temp_options, " ");
-	}
+        {
+          strcpy (temp_options, options);
+          strcat (temp_options, " ");
+        }
       strcat (temp_options, extra_build_options);
     }
   else
