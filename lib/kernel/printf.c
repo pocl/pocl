@@ -76,8 +76,8 @@ DEFINE_PRINT_INTS (ulong, int64_t, uint64_t)
 
 /**************************************************************************/
 
-const char *NANs[2] = { "nan", "NAN" };
-const char *INFs[2] = { "inf", "INF" };
+static const char *NANs[2] = { "nan", "NAN" };
+static const char *INFs[2] = { "inf", "INF" };
 
 /* Note: NANs are printed always positive.
  * This is required to pass 1.2 conformance test. */

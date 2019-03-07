@@ -41,6 +41,7 @@
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
+#include "llvm/IR/GlobalValue.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
 #include "pocl_cl.h"
@@ -299,6 +300,7 @@ stringref_equal(llvm::StringRef a, llvm::StringRef b)
 {
     return a.equals(b);
 }
+
 static inline bool
 stringref_cmp(llvm::StringRef a, llvm::StringRef b)
 {
@@ -401,6 +403,17 @@ int link(llvm::Module *program, const llvm::Module *lib, std::string &log) {
   }
   declared.sort(stringref_cmp);
   declared.unique(stringref_equal);
+
+  // some global variables can have external linkage. Set it to private
+  // otherwise these end up in ELF relocation tables and cause link
+  // failures when linking with -fPIC/PIE
+  llvm::Module::global_iterator gi1, ge1;
+  for (gi1 = program->global_begin(), ge1 = program->global_end(); gi1 != ge1;
+       gi1++) {
+    GlobalValue::LinkageTypes linkage = gi1->getLinkage();
+    if (linkage == GlobalValue::LinkageTypes::ExternalLinkage)
+      gi1->setLinkage(GlobalValue::LinkageTypes::PrivateLinkage);
+  }
 
   // Copy all the globals from lib to program.
   // It probably is faster to just copy them all, than to inspect

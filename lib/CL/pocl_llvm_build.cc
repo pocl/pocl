@@ -413,13 +413,8 @@ int pocl_llvm_build_program(cl_program program,
 
   la->setStackProtector(LangOptions::StackProtectorMode::SSPOff);
 
-#ifdef LLVM_OLDER_THAN_3_9
-  la->PICLevel = PICLevel::Large;
-  la->PIELevel = PICLevel::Large;
-#else
   la->PICLevel = PICLevel::BigPIC;
-  la->PIE = 0;
-#endif
+  la->PIE = 1;
 
   std::string IncludeRoot;
   std::string KernelH;
@@ -551,10 +546,10 @@ int pocl_llvm_build_program(cl_program program,
 
   ++numberOfIRs;
 
-#ifdef LLVM_OLDER_THAN_3_9
-  (*mod)->setPICLevel(PICLevel::Large);
-#endif
-
+  if ((*mod)->getModuleFlag("PIC Level") == nullptr)
+    (*mod)->setPICLevel(PICLevel::BigPIC);
+  if ((*mod)->getModuleFlag("PIE Level") == nullptr)
+    (*mod)->setPIELevel(PIELevel::Large);
 
   // link w kernel lib, but not if we're called from clCompileProgram()
   // Later this should be replaced with indexed linking of source code
@@ -646,9 +641,10 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
      */
     linked_module->setTargetTriple(libmodule->getTargetTriple());
     linked_module->setDataLayout(libmodule->getDataLayout());
-#ifdef LLVM_OLDER_THAN_3_9
-    linked_module->setPICLevel(PICLevel::Large);
-#endif
+    if (linked_module->getModuleFlag("PIC Level") == nullptr)
+      linked_module->setPICLevel(PICLevel::BigPIC);
+    if (linked_module->getModuleFlag("PIE Level") == nullptr)
+      linked_module->setPIELevel(PIELevel::Large);
 
 #else
     POCL_MSG_ERR("SPIR not supported\n");

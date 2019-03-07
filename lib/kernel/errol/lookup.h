@@ -1,5 +1,5 @@
 #define LOOKUP_TABLE_LEN (sizeof(lookup_table) / (2 * sizeof(double)))
-const struct hp_t lookup_table[] = {
+static const struct hp_t lookup_table[] = {
 	{ 1.000000e+308,	-1.097906362944045488e+291 },
 	{ 1.000000e+307,	1.396894023974354241e+290 },
 	{ 1.000000e+306,	-1.721606459673645508e+289 },
