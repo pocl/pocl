@@ -471,20 +471,26 @@ ParallelRegion::Verify()
  * !1 { metadata !1 }
  * !2 { metadata !2 }
  */
-void
-ParallelRegion::AddParallelLoopMetadata(llvm::MDNode *identifier) {
 
+#ifdef LLVM_OLDER_THAN_8_0
+#define PARALLEL_MD_NAME "llvm.mem.parallel_loop_access"
+#else
+#define PARALLEL_MD_NAME "llvm.access.group"
+#endif
+
+void ParallelRegion::AddParallelLoopMetadata(llvm::MDNode *Identifier) {
   for (iterator i = begin(), e = end(); i != e; ++i) {
     BasicBlock* bb = *i;      
     for (BasicBlock::iterator ii = bb->begin(), ee = bb->end();
          ii != ee; ii++) {
+
       if (ii->mayReadOrWriteMemory()) {
-        MDNode *newMD = MDNode::get(bb->getContext(), identifier);
-        MDNode *oldMD = ii->getMetadata("llvm.mem.parallel_loop_access");
-        if (oldMD != NULL) {
-          newMD = llvm::MDNode::concatenate(oldMD, newMD);
+        MDNode *NewMD = MDNode::get(bb->getContext(), Identifier);
+        MDNode *OldMD = ii->getMetadata(PARALLEL_MD_NAME);
+        if (OldMD != nullptr) {
+          NewMD = llvm::MDNode::concatenate(OldMD, NewMD);
         }
-        ii->setMetadata("llvm.mem.parallel_loop_access", newMD);
+        ii->setMetadata(PARALLEL_MD_NAME, NewMD);
       }
     }
   }

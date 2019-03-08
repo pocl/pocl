@@ -34,6 +34,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/MDBuilder.h"
 #include "llvm/IR/DataLayout.h"
 #include "llvm/IR/Instructions.h"
 #include "llvm/IR/Module.h"
@@ -298,13 +299,18 @@ WorkitemLoops::CreateLoopAround
 
   /* This creation of the identifier metadata is copied from
      LLVM's MDBuilder::createAnonymousTBAARoot(). */
-#ifdef LLVM_OLDER_THAN_3_7
-  MDNode *Dummy = MDNode::getTemporary(C, ArrayRef<Metadata*>());
-#else
+
   MDNode *Dummy = MDNode::getTemporary(C, ArrayRef<Metadata*>()).release();
+#ifdef LLVM_OLDER_THAN_8_0
+  MDNode *Root = MDNode::get(C, Dummy);
+#else
+  MDNode *AccessGroupMD = MDNode::getDistinct(C, {});
+  MDNode *ParallelAccessMD = MDNode::get(
+      C, {MDString::get(C, "llvm.loop.parallel_accesses"), AccessGroupMD});
+
+  MDNode *Root = MDNode::get(C, {Dummy, ParallelAccessMD});
 #endif
 
-  MDNode *Root = MDNode::get(C, Dummy);
   // At this point we have
   //   !0 = metadata !{}            <- dummy
   //   !1 = metadata !{metadata !0} <- root
@@ -313,10 +319,13 @@ WorkitemLoops::CreateLoopAround
   MDNode::deleteTemporary(Dummy);
   // We now have
   //   !1 = metadata !{metadata !1} <- self-referential root
-
   loopBranch->setMetadata("llvm.loop", Root);
-  region.AddParallelLoopMetadata(Root);
 
+#ifdef LLVM_OLDER_THAN_8_0
+  region.AddParallelLoopMetadata(Root);
+#else
+  region.AddParallelLoopMetadata(AccessGroupMD);
+#endif
 
   builder.SetInsertPoint(loopEndBB);
   builder.CreateBr(oldExit);

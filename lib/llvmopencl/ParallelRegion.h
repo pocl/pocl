@@ -79,7 +79,7 @@ class Kernel;
                        std::size_t y = 0, 
                        std::size_t z = 0);
 
-    void AddParallelLoopMetadata(llvm::MDNode *identifier);
+    void AddParallelLoopMetadata(llvm::MDNode *Identifier);
 
     bool HasBlock(llvm::BasicBlock *bb);
 
