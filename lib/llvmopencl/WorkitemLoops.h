@@ -115,6 +115,11 @@ namespace pocl {
 
     bool ShouldNotBeContextSaved(llvm::Instruction *instr);
 
+    llvm::Type *RecursivelyAlignArrayType(llvm::Type *ArrayType,
+                                          llvm::Type *ElementType,
+                                          size_t Alignment,
+                                          const llvm::DataLayout &Layout);
+
     std::map<llvm::Instruction*, unsigned> tempInstructionIds;
     size_t tempInstructionIndex;
     // An alloca in the kernel which stores the first iteration to execute

@@ -846,6 +846,35 @@ WorkitemLoops::AddContextRestore
   return builder.CreateLoad(gep);
 }
 
+llvm::Type *WorkitemLoops::RecursivelyAlignArrayType(
+    llvm::Type *ArrayType, llvm::Type *ElementType, size_t Alignment,
+    const llvm::DataLayout &Layout) {
+
+  size_t Count = ArrayType->getArrayNumElements();
+  size_t ElementSize, ArraySize;
+
+  if (ElementType->isArrayTy()) {
+    ElementType = RecursivelyAlignArrayType(
+        ElementType, ElementType->getArrayElementType(), Alignment, Layout);
+    ArrayType = ArrayType::get(ElementType, Count);
+  } else {
+    ArraySize = Layout.getTypeStoreSize(ArrayType);
+    while (ArraySize % Alignment) {
+      Count += 1;
+      ArrayType = ArrayType::get(ElementType, Count);
+      ArraySize = Layout.getTypeStoreSize(ArrayType);
+    }
+  }
+
+  ElementSize = Layout.getTypeStoreSize(ElementType);
+  ArraySize = Layout.getTypeStoreSize(ArrayType);
+#ifdef DEBUG_WORK_ITEM_LOOPS
+  std::cerr << "Element size: " << ElementSize << " Array size: " << ArraySize
+            << "  count : " << Count << "\n";
+#endif
+  return ArrayType;
+}
+
 /**
  * Returns the context array (alloca) for the given Value, creates it if not
  * found.
@@ -903,8 +932,57 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
       elementType = instruction->getType();
     }
 
-  llvm::AllocaInst *Alloca;
   Module* M = instruction->getParent()->getParent()->getParent();
+  const llvm::DataLayout &Layout = M->getDataLayout();
+
+  /* 3D context array. In case the elementType itself is an array or struct,
+   * we must take into account it could be alloca-ed with alignment and loads
+   * or stores might use vectorized instructions expecting proper alignment.
+   * Because of that, we cannot simply allocate x*y*z*(size), we must
+   * enlarge the array type to fit the alignment. */
+  Type *AllocType = elementType;
+  AllocaInst *InstCast = dyn_cast<AllocaInst>(instruction);
+  if (InstCast) {
+    unsigned Alignment = InstCast->getAlignment();
+
+    uint64_t StoreSize =
+        Layout.getTypeStoreSize(InstCast->getAllocatedType());
+
+    if ((Alignment > 1) && (StoreSize & (Alignment - 1))) {
+      uint64_t AlignedSize = (StoreSize & (~(Alignment - 1))) + Alignment;
+#ifdef DEBUG_WORK_ITEM_LOOPS
+      std::cerr << "### unaligned type found: aligning " << StoreSize << " to "
+                << AlignedSize << "\n";
+#endif
+      if (isa<ArrayType>(elementType)) {
+
+        AllocType = RecursivelyAlignArrayType(
+            elementType, elementType->getArrayElementType(), Alignment,
+            Layout);
+#ifdef DEBUG_WORK_ITEM_LOOPS
+        std::cerr << "Recursive alignment result: \n";
+        AllocType->dump();
+#endif
+      } else if (isa<StructType>(elementType)) {
+        StructType *OldStruct = dyn_cast<StructType>(elementType);
+
+        uint64_t RequiredExtraBytes = AlignedSize - StoreSize;
+        ArrayType *StructPadding =
+            ArrayType::get(Type::getInt8Ty(M->getContext()), RequiredExtraBytes);
+        std::vector<Type *> PaddedStructElements;
+        for (unsigned j = 0; j < OldStruct->getNumElements(); j++)
+          PaddedStructElements.push_back(OldStruct->getElementType(j));
+        PaddedStructElements.push_back(StructPadding);
+        const ArrayRef<Type *> NewStructElements(PaddedStructElements);
+        AllocType = StructType::get(OldStruct->getContext(), NewStructElements,
+                                    OldStruct->isPacked());
+        uint64_t NewStoreSize = Layout.getTypeStoreSize(AllocType);
+        assert(NewStoreSize == AlignedSize);
+      }
+    }
+  }
+
+  llvm::AllocaInst *Alloca = nullptr;
   if (WGDynamicLocalSize)
     {
       char GlobalName[32];
@@ -924,57 +1002,16 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
         builder.CreateBinOp(Instruction::Mul, LocalXTimesY,
                             LocalSizeLoad[2], "num_wi");
 
-      Alloca = builder.CreateAlloca(elementType, NumberOfWorkItems, varName);
+      Alloca = builder.CreateAlloca(AllocType, NumberOfWorkItems, varName);
     }
   else
     {
-      /* 3D context array. In case the elementType itself is an array or struct,
-       * we must take into account it could be alloca-ed with alignment and loads
-       * or stores might use vectorized instructions expecting proper alignment.
-       * Because of that, we cannot simply allocate x*y*z*(size), we must
-       * enlarge the array type to fit the alignment. */
-      Type *allocType = elementType;
-      AllocaInst *allocaInst = dyn_cast<AllocaInst>(instruction);
-      if (allocaInst) {
-        unsigned alignment = allocaInst->getAlignment();
-
-        const DataLayout &dataLayout = M->getDataLayout();
-        uint64_t storeSize =
-          dataLayout.getTypeStoreSize(allocaInst->getAllocatedType());
-
-        if ((alignment > 1) && (storeSize & (alignment - 1))) {
-          uint64_t alignedSize = (storeSize & (~(alignment - 1))) + alignment;
-#ifdef DEBUG_WORK_ITEM_LOOPS
-        std::cerr << "### unaligned type found: aligning " << storeSize
-                  << " to " << alignedSize << "\n";
-#endif
-          if (isa<ArrayType>(elementType)) {
-            allocType =
-              ArrayType::get(elementType->getArrayElementType(), alignedSize);
-          } else if (isa<StructType>(elementType)) {
-            StructType *old_struct = dyn_cast<StructType>(elementType);
-
-            unsigned required_bytes = alignedSize - storeSize;
-            ArrayType *structPadding = ArrayType::get(
-                Type::getInt8Ty(M->getContext()), required_bytes);
-            std::vector<Type *> ary;
-            for (unsigned j = 0; j < old_struct->getNumElements(); j++)
-              ary.push_back(old_struct->getElementType(j));
-            ary.push_back(structPadding);
-            const ArrayRef<Type *> new_el(ary);
-            allocType = StructType::get(old_struct->getContext(), new_el,
-                                        old_struct->isPacked());
-            unsigned newStoreSize = dataLayout.getTypeStoreSize(allocType);
-            assert(newStoreSize == alignedSize);
-          }
-        }
-      }
       llvm::Type *contextArrayType = ArrayType::get(
-          ArrayType::get(ArrayType::get(allocType, WGLocalSizeX), WGLocalSizeY),
+          ArrayType::get(ArrayType::get(AllocType, WGLocalSizeX), WGLocalSizeY),
           WGLocalSizeZ);
 
       /* Allocate the context data array for the variable. */
-      Alloca = builder.CreateAlloca(contextArrayType, 0, varName);
+      Alloca = builder.CreateAlloca(contextArrayType, nullptr, varName);
     }
 
   /* Align the context arrays to stack to enable wide vectors
@@ -1087,6 +1124,28 @@ WorkitemLoops::AddContextSaveRestore
         AddContextRestore
         (user, alloca, contextRestoreLocation, isa<AllocaInst>(instruction));
       user->replaceUsesOfWith(instruction, loadedValue);
+
+      // for GEP inst, we also need to replace the SourceElementType
+      GetElementPtrInst *gepInst = dyn_cast<GetElementPtrInst>(user);
+      if (gepInst) {
+#ifdef DEBUG_WORK_ITEM_LOOPS
+        Type *srcType = gepInst->getSourceElementType();
+        std::cerr << "GEP source elem type:\n";
+        srcType->dump();
+#endif
+        PointerType *ptrType =
+            cast<PointerType>(gepInst->getPointerOperandType());
+        Type *elemType = ptrType->getElementType();
+
+        gepInst->setSourceElementType(elemType);
+#ifdef DEBUG_WORK_ITEM_LOOPS
+        std::cerr << "GEP ptr elem type:\n";
+        elemType->dump();
+        std::cerr << "GEP with source elem type replaced:\n";
+        gepInst->dump();
+#endif
+      }
+
 #ifdef DEBUG_WORK_ITEM_LOOPS
       std::cerr << "### done, the user was converted to:" << std::endl;
       user->dump();
