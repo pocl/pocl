@@ -23,6 +23,9 @@
    THE SOFTWARE.
 */
 
+// for exp2
+#define _ISOC99_SOURCE
+
 #include <math.h>
 #include "poclu.h"
 #include <CL/opencl.h>

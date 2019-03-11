@@ -1289,6 +1289,28 @@ struct _cl_sampler {
   #include <sys/endian.h>
 #else
   #include <endian.h>
+  #if defined(__GLIBC__) && __GLIBC__ == 2 && \
+      defined(__GLIBC_MINOR__) && __GLIBC_MINOR__ < 9 && \
+      defined(__x86_64__)
+    #ifndef htole64
+      #define htole64(x) (x)
+    #endif
+    #ifndef htole32
+      #define htole32(x) (x)
+    #endif
+    #ifndef htole16
+      #define htole16(x) (x)
+    #endif
+    #ifndef le64toh
+      #define le64toh(x) (x)
+    #endif
+    #ifndef le32toh
+      #define le32toh(x) (x)
+    #endif
+    #ifndef le16toh
+      #define le16toh(x) (x)
+    #endif
+  #endif
 #endif
 
 #endif /* POCL_CL_H */
