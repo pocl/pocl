@@ -837,7 +837,7 @@ message(STATUS "Run tests with ICD: ${TESTS_USE_ICD}")
 if(INSTALL_OPENCL_HEADERS)
   message(STATUS "Install POCL's OpenCL headers: ${INSTALL_OPENCL_HEADERS}")
 elseif(DEFINED INSTALL_OPENCL_HEADERS AND NOT INSTALL_OPENCL_HEADERS)
-  message(STATUS "Not install POCL's OpenCL headers: ${INSTALL_OPENCL_HEADERS}")
+  message(STATUS "Not installing OpenCL headers.")
 else() # Undefined = auto -> check
   find_file(OPENCL_H opencl.h PATH_SUFFIXES CL OpenCL)
   if(OPENCL_H)
