@@ -155,7 +155,7 @@ POname(clCreateContext)(const cl_context_properties * properties,
   POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), errcode,
                       "Could not initialize devices\n");
 
-  context = (cl_context) malloc(sizeof(struct _cl_context));
+  context = (cl_context)calloc (1, sizeof (struct _cl_context));
   if (context == NULL)
     {
       errcode = CL_OUT_OF_HOST_MEMORY;

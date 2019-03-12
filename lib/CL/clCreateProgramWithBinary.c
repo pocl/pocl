@@ -234,10 +234,6 @@ SUCCESS:
     *errcode_ret = CL_SUCCESS;
   return program;
 
-#if 0
-ERROR_CLEAN_PROGRAM_BINARIES_AND_DEVICES:
-  POCL_MEM_FREE(program->devices);
-#endif
 ERROR_CLEAN_PROGRAM_AND_BINARIES:
   if (program->binaries)
     for (i = 0; i < num_devices; ++i)

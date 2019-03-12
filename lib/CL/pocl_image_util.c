@@ -232,7 +232,9 @@ pocl_get_image_information (cl_channel_order ch_order,
     {
       *elem_size_out = 2; /* 16bit -> 2 bytes */
     }
-  
+  else
+    *elem_size_out = 0;
+
   /* channels TODO: verify num of channels*/
   if (ch_order == CL_RGB || ch_order == CL_RGBx || ch_order == CL_R || 
       ch_order == CL_Rx || ch_order == CL_A)

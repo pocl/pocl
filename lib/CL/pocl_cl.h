@@ -533,7 +533,7 @@ struct pocl_device_ops {
                              const size_t *region);
 
   /* copies a region from host OR device buffer to device image.
-   * clEnqueueCopyImageToBuffer: src_mem_id = buffer,
+   * clEnqueueCopyBufferToImage: src_mem_id = buffer,
    *     src_host_ptr = NULL, src_row_pitch = src_slice_pitch = 0
    * clEnqueueWriteImage: src_mem_id = NULL,
    *     src_host_ptr = host pointer, src_offset = 0
@@ -550,7 +550,7 @@ struct pocl_device_ops {
                                size_t src_offset);
 
   /* copies a region from device image to host or device buffer
-   * clEnqueueCopyBufferToImage: dst_mem_id = buffer,
+   * clEnqueueCopyImageToBuffer: dst_mem_id = buffer,
    *     dst_host_ptr = NULL, dst_row_pitch = dst_slice_pitch = 0
    * clEnqueueReadImage: dst_mem_id = NULL,
    *     dst_host_ptr = host pointer, dst_offset = 0
