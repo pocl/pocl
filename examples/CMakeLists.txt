@@ -29,7 +29,7 @@
 #    pacman -S blas cblas lapack lapacke openmpi svn  freeimage  python-numpy python2-numpy  python-mako python2-mako
 #
 # on Ubuntu:
-#    apt-get install libblas-dev liblapack-dev  liblapacke-dev  libopenmpi-dev   subversion python-numpy python-mako
+#    apt-get install libblas-dev liblapack-dev  liblapacke-dev  libatlas-base-dev libopenmpi-dev   subversion python-numpy python-mako
 #
 
 add_subdirectory("example1")

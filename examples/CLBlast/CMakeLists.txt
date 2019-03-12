@@ -28,7 +28,7 @@ set(TS_BASEDIR "${TESTSUITE_BASEDIR}/${TS_NAME}")
 set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build")
 set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
 
-set(FETCH_SOURCE GIT_REPOSITORY "git@github.com:CNugteren/CLBlast.git")
+set(FETCH_SOURCE GIT_REPOSITORY "https://github.com/CNugteren/CLBlast.git")
 
 message(STATUS "Enabling testsuite ${TS_NAME}")
 list(APPEND ACTUALLY_ENABLED_TESTSUITES "${TS_NAME}")
