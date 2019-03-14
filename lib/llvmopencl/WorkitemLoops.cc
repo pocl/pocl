@@ -801,11 +801,11 @@ WorkitemLoops::AddContextSave
                                                             gepArgs));
 }
 
-llvm::Instruction *
-WorkitemLoops::AddContextRestore
-(llvm::Value *val, llvm::Instruction *alloca, llvm::Instruction *before, 
- bool isAlloca)
-{
+llvm::Instruction *WorkitemLoops::AddContextRestore(llvm::Value *val,
+                                                    llvm::Instruction *alloca,
+                                                    bool PoclWrapperStructAdded,
+                                                    llvm::Instruction *before,
+                                                    bool isAlloca) {
   assert (val != NULL);
   assert (alloca != NULL);
   IRBuilder<> builder(alloca);
@@ -844,44 +844,19 @@ WorkitemLoops::AddContextRestore
       gepArgs.push_back(region->LocalIDXLoad());
     }
 
-  llvm::Instruction *gep =
-    dyn_cast<Instruction>(builder.CreateGEP(alloca, gepArgs));
-  if (isAlloca) {
-    /* In case the context saved instruction was an alloca, we created a
-       context array with pointed-to elements, and now want to return a pointer 
-       to the elements to emulate the original alloca. */
-    return gep;
+    if (PoclWrapperStructAdded)
+      gepArgs.push_back(
+          ConstantInt::get(Type::getInt32Ty(alloca->getContext()), 0));
+
+    llvm::Instruction *gep =
+        dyn_cast<Instruction>(builder.CreateGEP(alloca, gepArgs));
+    if (isAlloca) {
+      /* In case the context saved instruction was an alloca, we created a
+         context array with pointed-to elements, and now want to return a
+         pointer to the elements to emulate the original alloca. */
+      return gep;
   }
   return builder.CreateLoad(gep);
-}
-
-llvm::Type *WorkitemLoops::RecursivelyAlignArrayType(
-    llvm::Type *ArrayType, llvm::Type *ElementType, size_t Alignment,
-    const llvm::DataLayout &Layout) {
-
-  size_t Count = ArrayType->getArrayNumElements();
-  size_t ElementSize, ArraySize;
-
-  if (ElementType->isArrayTy()) {
-    ElementType = RecursivelyAlignArrayType(
-        ElementType, ElementType->getArrayElementType(), Alignment, Layout);
-    ArrayType = ArrayType::get(ElementType, Count);
-  } else {
-    ArraySize = Layout.getTypeStoreSize(ArrayType);
-    while (ArraySize % Alignment) {
-      Count += 1;
-      ArrayType = ArrayType::get(ElementType, Count);
-      ArraySize = Layout.getTypeStoreSize(ArrayType);
-    }
-  }
-
-  ElementSize = Layout.getTypeStoreSize(ElementType);
-  ArraySize = Layout.getTypeStoreSize(ArrayType);
-#ifdef DEBUG_WORK_ITEM_LOOPS
-  std::cerr << "Element size: " << ElementSize << " Array size: " << ArraySize
-            << "  count : " << Count << "\n";
-#endif
-  return ArrayType;
 }
 
 /**
@@ -889,9 +864,9 @@ llvm::Type *WorkitemLoops::RecursivelyAlignArrayType(
  * found.
  */
 llvm::Instruction *
-WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
-{
-  
+WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
+                               bool &PoclWrapperStructAdded) {
+  PoclWrapperStructAdded = false;
   /*
    * Unnamed temp instructions need a generated name for the
    * context array. Create one using a running integer.
@@ -948,7 +923,7 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
    * we must take into account it could be alloca-ed with alignment and loads
    * or stores might use vectorized instructions expecting proper alignment.
    * Because of that, we cannot simply allocate x*y*z*(size), we must
-   * enlarge the array type to fit the alignment. */
+   * enlarge the type to fit the alignment. */
   Type *AllocType = elementType;
   AllocaInst *InstCast = dyn_cast<AllocaInst>(instruction);
   if (InstCast) {
@@ -963,19 +938,26 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
       std::cerr << "### unaligned type found: aligning " << StoreSize << " to "
                 << AlignedSize << "\n";
 #endif
+      assert(AlignedSize > StoreSize);
+      uint64_t RequiredExtraBytes = AlignedSize - StoreSize;
+
       if (isa<ArrayType>(elementType)) {
 
-        AllocType = RecursivelyAlignArrayType(
-            elementType, elementType->getArrayElementType(), Alignment,
-            Layout);
-#ifdef DEBUG_WORK_ITEM_LOOPS
-        std::cerr << "Recursive alignment result: \n";
-        AllocType->dump();
-#endif
+        ArrayType *StructPadding = ArrayType::get(
+            Type::getInt8Ty(M->getContext()), RequiredExtraBytes);
+
+        std::vector<Type *> PaddedStructElements;
+        PaddedStructElements.push_back(elementType);
+        PaddedStructElements.push_back(StructPadding);
+        const ArrayRef<Type *> NewStructElements(PaddedStructElements);
+        AllocType = StructType::get(M->getContext(), NewStructElements, true);
+        PoclWrapperStructAdded = true;
+        uint64_t NewStoreSize = Layout.getTypeStoreSize(AllocType);
+        assert(NewStoreSize == AlignedSize);
+
       } else if (isa<StructType>(elementType)) {
         StructType *OldStruct = dyn_cast<StructType>(elementType);
 
-        uint64_t RequiredExtraBytes = AlignedSize - StoreSize;
         ArrayType *StructPadding =
             ArrayType::get(Type::getInt8Ty(M->getContext()), RequiredExtraBytes);
         std::vector<Type *> PaddedStructElements;
@@ -1033,7 +1015,6 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction)
   return Alloca;
 }
 
-
 /**
  * Adds context save/restore code for the value produced by the
  * given instruction.
@@ -1054,7 +1035,9 @@ WorkitemLoops::AddContextSaveRestore
 (llvm::Instruction *instruction) {
 
   /* Allocate the context data array for the variable. */
-  llvm::Instruction *alloca = GetContextArray(instruction);
+  bool PoclWrapperStructAdded = false;
+  llvm::Instruction *alloca =
+      GetContextArray(instruction, PoclWrapperStructAdded);
   llvm::Instruction *theStore = AddContextSave(instruction, alloca);
 
   InstructionVec uses;
@@ -1129,31 +1112,10 @@ WorkitemLoops::AddContextSaveRestore
           assert (incomingBB != NULL);
           contextRestoreLocation = incomingBB->getTerminator();
         }
-      llvm::Value *loadedValue = 
-        AddContextRestore
-        (user, alloca, contextRestoreLocation, isa<AllocaInst>(instruction));
-      user->replaceUsesOfWith(instruction, loadedValue);
-
-      // for GEP inst, we also need to replace the SourceElementType
-      GetElementPtrInst *gepInst = dyn_cast<GetElementPtrInst>(user);
-      if (gepInst) {
-#ifdef DEBUG_WORK_ITEM_LOOPS
-        Type *srcType = gepInst->getSourceElementType();
-        std::cerr << "GEP source elem type:\n";
-        srcType->dump();
-#endif
-        PointerType *ptrType =
-            cast<PointerType>(gepInst->getPointerOperandType());
-        Type *elemType = ptrType->getElementType();
-
-        gepInst->setSourceElementType(elemType);
-#ifdef DEBUG_WORK_ITEM_LOOPS
-        std::cerr << "GEP ptr elem type:\n";
-        elemType->dump();
-        std::cerr << "GEP with source elem type replaced:\n";
-        gepInst->dump();
-#endif
-      }
+        llvm::Value *loadedValue = AddContextRestore(
+            user, alloca, PoclWrapperStructAdded, contextRestoreLocation,
+            isa<AllocaInst>(instruction));
+        user->replaceUsesOfWith(instruction, loadedValue);
 
 #ifdef DEBUG_WORK_ITEM_LOOPS
       std::cerr << "### done, the user was converted to:" << std::endl;

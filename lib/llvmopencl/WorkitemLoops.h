@@ -94,11 +94,13 @@ namespace pocl {
                                   ParallelRegion *region);
     llvm::Instruction *AddContextSave(llvm::Instruction *instruction,
                                       llvm::Instruction *alloca);
-    llvm::Instruction *AddContextRestore
-        (llvm::Value *val, llvm::Instruction *alloca, 
-         llvm::Instruction *before=NULL, 
-         bool isAlloca=false);
-    llvm::Instruction *GetContextArray(llvm::Instruction *val);
+    llvm::Instruction *AddContextRestore(llvm::Value *val,
+                                         llvm::Instruction *alloca,
+                                         bool PoclWrapperStructAdded,
+                                         llvm::Instruction *before = NULL,
+                                         bool isAlloca = false);
+    llvm::Instruction *GetContextArray(llvm::Instruction *val,
+                                       bool &PoclWrapperStructAdded);
 
     std::pair<llvm::BasicBlock *, llvm::BasicBlock *>
     CreateLoopAround
