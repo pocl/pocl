@@ -47,7 +47,8 @@ set(PROGRAMS_TO_BUILD test_barrier_between_for_loops test_early_return
   test_undominated_variable test_setargs test_null_arg
   test_fors_with_var_iteration_counts test_issue_231 test_issue_445
   test_autolocals_in_constexprs test_issue_553 test_issue_577
-  test_flatten_barrier_subs test_alignment_with_dynamic_wg)
+  test_flatten_barrier_subs
+  test_alignment_with_dynamic_wg test_alignment_with_dynamic_wg2 test_alignment_with_dynamic_wg3)
 
 if (MSVC)
   add_compile_options(${OPENCL_CFLAGS})
@@ -129,6 +130,55 @@ set_tests_properties("regression/phi_nodes_not_replicated_REPL"
     PROCESSORS 1
     DEPENDS "pocl_version_check"
     LABELS "internal;regression")
+
+add_test_pocl(NAME "regression/test_alignment_with_dynamic_wg_114" COMMAND "test_alignment_with_dynamic_wg" 1 1 4)
+
+add_test_pocl(NAME "regression/test_alignment_with_dynamic_wg_117" COMMAND "test_alignment_with_dynamic_wg" 1 1 7)
+
+add_test_pocl(NAME "regression/test_alignment_with_dynamic_wg_225" COMMAND "test_alignment_with_dynamic_wg" 2 2 5)
+
+add_test_pocl(NAME "regression/test_alignment_with_dynamic_wg_173" COMMAND "test_alignment_with_dynamic_wg" 1 7 3)
+
+add_test_pocl(NAME "regression/test_alignment_with_dynamic_wg_183" COMMAND "test_alignment_with_dynamic_wg" 1 8 3)
+
+add_test_pocl(NAME "regression/test_alignment_with_dynamic_wg_283" COMMAND "test_alignment_with_dynamic_wg" 2 8 3)
+
+add_test_pocl(NAME "regression/test_alignment_with_dynamic_wg_332" COMMAND "test_alignment_with_dynamic_wg" 3 3 2)
+
+add_test_pocl(NAME "regression/test_alignment_with_dynamic_wg_323" COMMAND "test_alignment_with_dynamic_wg" 3 2 3)
+
+add_test_pocl(NAME "regression/test_alignment_with_dynamic_wg2" COMMAND "test_alignment_with_dynamic_wg2")
+
+add_test_pocl(NAME "regression/test_alignment_with_dynamic_wg3" COMMAND "test_alignment_with_dynamic_wg3")
+
+set_tests_properties(
+  "regression/test_alignment_with_dynamic_wg_114"
+
+  "regression/test_alignment_with_dynamic_wg_117"
+
+  "regression/test_alignment_with_dynamic_wg_225"
+
+  "regression/test_alignment_with_dynamic_wg_173"
+
+  "regression/test_alignment_with_dynamic_wg_183"
+
+  "regression/test_alignment_with_dynamic_wg_283"
+
+  "regression/test_alignment_with_dynamic_wg_332"
+
+  "regression/test_alignment_with_dynamic_wg_323"
+
+  "regression/test_alignment_with_dynamic_wg2"
+
+  "regression/test_alignment_with_dynamic_wg3"
+
+  PROPERTIES
+    ENVIRONMENT "POCL_WORK_GROUP_METHOD=workitemloops"
+    COST 1.5
+    PROCESSORS 1
+    DEPENDS "pocl_version_check"
+    LABELS "internal;regression")
+
 
 
 # loops
