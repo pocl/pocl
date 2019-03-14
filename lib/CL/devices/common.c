@@ -79,9 +79,10 @@
  */
 
 #ifdef OCS_AVAILABLE
-char *
-llvm_codegen (unsigned device_i, cl_kernel kernel, cl_device_id device,
-              size_t local_x, size_t local_y, size_t local_z)
+int
+llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
+              cl_device_id device, size_t local_x, size_t local_y,
+              size_t local_z)
 {
   POCL_MEASURE_START (llvm_codegen);
   int error = 0;
@@ -255,9 +256,12 @@ FINISH:
   POCL_MEASURE_FINISH (llvm_codegen);
 
   if (error)
-    return NULL;
+    return error;
   else
-    return strdup (final_binary_path);
+    {
+      memcpy (output, final_binary_path, POCL_FILENAME_LENGTH);
+      return 0;
+    }
 }
 #endif
 
@@ -933,48 +937,53 @@ pocl_check_kernel_disk_cache (_cl_command_node *cmd)
   cl_program p = k->program;
   unsigned dev_i = cmd->command.run.device_i;
 
-  if (p->binaries[dev_i] && !p->pocl_binaries[dev_i])
+  size_t x = cmd->command.run.local_x;
+  size_t y = cmd->command.run.local_y;
+  size_t z = cmd->command.run.local_z;
+
+  module_fn = malloc (POCL_FILENAME_LENGTH);
+  pocl_cache_final_binary_path (module_fn, p, dev_i, k, x, y, z);
+  if (pocl_exists (module_fn))
+    {
+      POCL_MSG_PRINT_INFO (
+          "For %zu x %zu x %zu, using static WG size binary: %s\n", x, y, z,
+          module_fn);
+      return module_fn;
+    }
+
+  if (p->binaries[dev_i])
     {
 #ifdef OCS_AVAILABLE
+
       POCL_LOCK (pocl_llvm_codegen_lock);
-      module_fn = (char *)llvm_codegen (dev_i,
-                                        cmd->command.run.kernel,
-                                        cmd->device,
-                                        cmd->command.run.local_x,
-                                        cmd->command.run.local_y,
-                                        cmd->command.run.local_z);
+      int error = llvm_codegen (module_fn, dev_i, cmd->command.run.kernel,
+                                cmd->device, x, y, z);
       POCL_UNLOCK (pocl_llvm_codegen_lock);
-      if (module_fn == NULL)
+      if (error)
         {
           POCL_ABORT ("Final linking of kernel %s failed.\n", k->name);
         }
-      POCL_MSG_PRINT_INFO("Using static WG size binary: %s\n", module_fn);
+      POCL_MSG_PRINT_INFO (
+          "For %zu x %zu x %zu, using static WG size binary: %s\n", x, y, z,
+          module_fn);
+      return module_fn;
 #else
-      POCL_ABORT("pocl built without online compiler support"
-                 " cannot compile LLVM IRs to machine code\n");
+      if (!p->pocl_binaries[dev_i])
+        POCL_ABORT ("pocl built without online compiler support"
+                    " cannot compile LLVM IRs to machine code\n");
 #endif
     }
-  else
-    {
-      module_fn = malloc (POCL_FILENAME_LENGTH);
-      /* First try to find a static WG binary for the local size as they
-         are always more efficient than the dynamic ones.  Also, in case
-         of reqd_wg_size, there might not be a dynamic sized one at all.  */
-      pocl_cache_final_binary_path (module_fn, p, dev_i, k,
-                                    cmd->command.run.local_x,
-                                    cmd->command.run.local_y,
-                                    cmd->command.run.local_z);
-      if (!pocl_exists (module_fn))
-        {
-          pocl_cache_final_binary_path (module_fn, p, dev_i, k, 0, 0, 0);
-          if (!pocl_exists (module_fn))
-            POCL_ABORT("Dynamic WG size binary does not exist\n");
-          POCL_MSG_PRINT_INFO("Using dynamic local size binary: %s\n",
-			      module_fn);
-        }
-      else
-        POCL_MSG_PRINT_INFO("Using static local size binary: %s\n", module_fn);
-    }
+
+  // pocl_binaries must exist
+  assert (p->pocl_binaries[dev_i]);
+
+  pocl_cache_final_binary_path (module_fn, p, dev_i, k, 0, 0, 0);
+  if (!pocl_exists (module_fn))
+    POCL_ABORT ("Can't find either static or dynamic WG size binary!\n");
+
+  POCL_MSG_PRINT_INFO (
+      "For %zu x %zu x %zu, using dynamic WG size binary: %s\n", x, y, z,
+      module_fn);
   return module_fn;
 }
 

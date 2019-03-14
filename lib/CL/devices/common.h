@@ -66,8 +66,9 @@ extern "C" {
 
 void pocl_init_cpu_device_infos (cl_device_id dev);
 
-char *llvm_codegen (unsigned device_i, cl_kernel kernel, cl_device_id device,
-                    size_t local_x, size_t local_y, size_t local_z);
+int llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
+                  cl_device_id device, size_t local_x, size_t local_y,
+                  size_t local_z);
 
 void fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg, 
                        cl_device_id device);
