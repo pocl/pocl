@@ -384,7 +384,7 @@ else()
   endfunction()
 endif()
 
-if(UNIX)
+if(UNIX AND (NOT CMAKE_CROSSCOMPILING))
   find_package(PkgConfig MODULE REQUIRED)
   find_package(Hwloc)
 
@@ -858,8 +858,10 @@ endif()
 ######################################################################################
 # LTTNG
 
-if((NOT MSVC) AND (NOT ANDROID))
-  pkg_check_modules(LTTNG_UST lttng-ust>=2.7)
+if(UNIX)
+  if(PKG_CONFIG_EXECUTABLE)
+    pkg_check_modules(LTTNG_UST lttng-ust>=2.7)
+  endif()
   if(LTTNG_UST_FOUND)
     set(HAVE_LTTNG_UST 1)
   else()
@@ -878,7 +880,9 @@ if (MSVC)
 else()
 
   # pkg-config doesn't work with cross-compiling
-  pkg_check_modules(OCL_ICD ocl-icd>=1.3)
+  if(PKG_CONFIG_EXECUTABLE)
+    pkg_check_modules(OCL_ICD ocl-icd>=1.3)
+  endif()
 
   if (NOT OCL_ICD_FOUND)
     find_path(OCL_ICD_INCLUDE_DIR
@@ -912,7 +916,9 @@ else()
 
       # fallback to other ICD loaders
       message(STATUS "ocl-icd not found -> trying fallback ICD implementations")
-      pkg_check_modules(OPENCL OpenCL>=1.2)
+      if(PKG_CONFIG_EXECUTABLE)
+        pkg_check_modules(OPENCL OpenCL>=1.2)
+      endif()
       if(NOT OPENCL_FOUND)
         find_library(OPENCL_LIBRARIES OpenCL)
         # version check the found library
