@@ -27,7 +27,7 @@ set(TS_NAME "ViennaCL")
 set(TS_BASEDIR "${TESTSUITE_BASEDIR}/${TS_NAME}")
 set(TS_BUILDDIR "${TS_BASEDIR}/src/${TS_NAME}-build")
 set(TS_SRCDIR "${TESTSUITE_SOURCE_BASEDIR}/${TS_NAME}")
-set(VIENNA "ViennaCL-1.7.0")
+set(VIENNA "ViennaCL-1.7.1")
 set(ViennaCL_TGZ "${TS_SRCDIR}/${VIENNA}.tar.gz")
 
 if(EXAMPLES_USE_GIT_MASTER)
