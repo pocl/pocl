@@ -209,7 +209,7 @@ main(void)
         }
         std::cout << "OK" << std::endl;
     }
-    catch (cl::Error err) {
+    catch (cl::Error &err) {
          std::cerr
              << "ERROR: "
              << err.what()

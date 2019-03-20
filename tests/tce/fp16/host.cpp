@@ -134,7 +134,7 @@ main(void)
             enqEvent.getProfilingInfo<CL_PROFILING_COMMAND_START>() << std::endl;
 #endif
     } 
-    catch (cl::Error err) {
+    catch (cl::Error &err) {
          std::cerr
              << "ERROR: "
              << err.what()

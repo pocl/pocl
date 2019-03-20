@@ -211,7 +211,7 @@ main(void)
                 unmapEvent.getProfilingInfo<CL_PROFILING_COMMAND_END>());
 
     } 
-    catch (cl::Error err) {
+    catch (cl::Error &err) {
          std::cerr
              << "ERROR: "
              << err.what()
