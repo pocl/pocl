@@ -241,23 +241,25 @@ static struct _cl_platform_id _platforms[1] = {{ 1 }};
  */ 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clGetPlatformIDs)(cl_uint           num_entries,
-                 cl_platform_id *  platforms,
-                 cl_uint *         num_platforms) CL_API_SUFFIX__VERSION_1_0
+                         cl_platform_id *  platforms,
+                         cl_uint *         num_platforms) CL_API_SUFFIX__VERSION_1_0
 {
-  const unsigned num = 1;
-  unsigned i;
-  
+  POCL_RETURN_ERROR_COND ((platforms == NULL && num_entries > 0),
+                          CL_INVALID_VALUE);
+
+  POCL_RETURN_ERROR_COND ((platforms != NULL && num_entries == 0),
+                          CL_INVALID_VALUE);
+
+  POCL_RETURN_ERROR_COND ((num_platforms == NULL && num_entries == 0),
+                          CL_INVALID_VALUE);
+
   if (platforms != NULL) {
-    if (num_entries < num)
-      return CL_INVALID_VALUE;
-    
-    for (i=0; i<num; ++i)
-      platforms[i] = &_platforms[i];
+      platforms[0] = &_platforms[0];
   }
   
   if (num_platforms != NULL)
-    *num_platforms = num;
-  
+    *num_platforms = 1;
+
   return CL_SUCCESS;
 }
 POsym(clGetPlatformIDs)

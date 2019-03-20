@@ -59,6 +59,8 @@ POname(clGetDeviceInfo)(cl_device_id   device,
                 void *         param_value,
                 size_t *       param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
+  POCL_RETURN_ERROR_COND ((device == NULL), CL_INVALID_DEVICE);
+
   switch (param_name)
   {
   case CL_DEVICE_IMAGE_SUPPORT:

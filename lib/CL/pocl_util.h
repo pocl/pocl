@@ -206,18 +206,21 @@ float half_to_float (uint16_t value);
  * code can be shared.
  */
 
-#define POCL_RETURN_GETINFO_INNER(__SIZE__, MEMASSIGN)                  \
-  do                                                                    \
-    {                                                                   \
-      if (param_value)                                                  \
-        {                                                               \
-          if (param_value_size < __SIZE__) return CL_INVALID_VALUE;     \
-          MEMASSIGN;                                                    \
-        }                                                               \
-      if (param_value_size_ret)                                         \
-        *param_value_size_ret = __SIZE__;                               \
-      return CL_SUCCESS;                                                \
-    }                                                                   \
+#define POCL_RETURN_GETINFO_INNER(__SIZE__, MEMASSIGN)                        \
+  do                                                                          \
+    {                                                                         \
+      if (param_value)                                                        \
+        {                                                                     \
+          POCL_RETURN_ERROR_ON (                                              \
+              (param_value_size < __SIZE__), CL_INVALID_VALUE,                \
+              "param_value_size (%zu) smaller than actual size (%zu)\n",      \
+              param_value_size, __SIZE__);                                    \
+          MEMASSIGN;                                                          \
+        }                                                                     \
+      if (param_value_size_ret)                                               \
+        *param_value_size_ret = __SIZE__;                                     \
+      return CL_SUCCESS;                                                      \
+    }                                                                         \
   while (0)
 
 #define POCL_RETURN_GETINFO_SIZE(__SIZE__, __POINTER__)                 \

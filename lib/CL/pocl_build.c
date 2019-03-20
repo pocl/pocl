@@ -458,7 +458,10 @@ clean_program_on_rebuild (cl_program program)
             {
               POCL_MEM_FREE (program->binaries[i]);
               program->binary_sizes[i] = 0;
-              POCL_MEM_FREE (program->llvm_irs[i]);
+#ifdef OCS_AVAILABLE
+              if (program->llvm_irs[i])
+                pocl_free_llvm_irs (program, i);
+#endif
               POCL_MEM_FREE (program->pocl_binaries[i]);
               program->pocl_binary_sizes[i] = 0;
             }
