@@ -138,12 +138,12 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
 
   POCL_LOCK_OBJ (buffer);
   DL_APPEND (buffer->mappings, mapping_info);
+  buffer->owning_device = command_queue->device;
   POCL_UNLOCK_OBJ (buffer);
 
   POCL_MSG_PRINT_MEMORY ("Buffer %p New Mapping: host_ptr %p offset %zu\n",
                          buffer, mapping_info->host_ptr, mapping_info->offset);
 
-  buffer->owning_device = command_queue->device;
   pocl_command_enqueue(command_queue, cmd);
 
   if (blocking_map)
