@@ -35,7 +35,7 @@ static const char cDigitsLut[200]
         '9', '1', '9', '2', '9', '3', '9', '4', '9', '5', '9', '6', '9', '7',
         '9', '8', '9', '9' };
 
-inline char *u32toa(cl_int value, char *buffer)
+static inline char *u32toa(cl_int value, char *buffer)
 {
         if (value < 10000)
         {
@@ -112,7 +112,7 @@ inline char *u32toa(cl_int value, char *buffer)
         return buffer;
 }
 
-inline char *u64toa(cl_long value, char *buffer)
+static inline char *u64toa(cl_long value, char *buffer)
 {
         const cl_long kTen8 = 100000000;
         const cl_long kTen9 = kTen8 * 10;
