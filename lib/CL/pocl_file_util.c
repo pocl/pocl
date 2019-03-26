@@ -20,6 +20,12 @@
 #include "pocl.h"
 #include "pocl_file_util.h"
 
+#ifdef __ANDROID__
+
+int pocl_mkstemp(char *path);
+
+#endif
+
 /*****************************************************************************/
 
 int
@@ -219,8 +225,8 @@ pocl_mk_tempname (char *output, const char *prefix, const char *suffix,
                   int *ret_fd)
 {
 #if defined(_MSC_VER) || defined(__MINGW32__)
-  assert (0);
-#elif defined(HAVE_MKOSTEMPS) || defined(HAVE_MKSTEMPS)
+#error "making temporary files on Windows not implemented"
+#elif defined(HAVE_MKOSTEMPS) || defined(HAVE_MKSTEMPS) || defined(__ANDROID__)
   /* using mkstemp() instead of tmpnam() has no real benefit
    * here, as we have to pass the filename to llvm,
    * but tmpnam() generates an annoying warning... */
@@ -230,6 +236,9 @@ pocl_mk_tempname (char *output, const char *prefix, const char *suffix,
   size_t len = strlen (prefix);
   strncpy (output + len, "_XXXXXX", (POCL_FILENAME_LENGTH - len));
 
+#ifdef __ANDROID__
+  fd = pocl_mkstemp (output);
+#else
   if (suffix)
     {
       len += 7;

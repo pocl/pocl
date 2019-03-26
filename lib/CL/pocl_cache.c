@@ -449,36 +449,6 @@ build_program_compute_hash (cl_program program, unsigned device_i,
 #endif
 
 
-#ifdef ANDROID
-static
-char* pocl_get_process_name()
-{
-    char tmpStr[64], cmdline[512], *processName=NULL;
-    FILE *statusFile;
-    size_t len, i, begin;
-
-    snprintf(tmpStr, 64, "/proc/%d/cmdline", getpid());
-    statusFile=fopen(tmpStr, "r");
-    if (statusFile == NULL)
-        return NULL;
-
-    if (fgets(cmdline, 511, statusFile) != NULL) {
-        len=strlen(cmdline);
-        begin=0;
-        for (i=len-1; i >= 0; i--) { /* Extract program-name after last '/' */
-            if (cmdline[i] == '/') {
-                begin=i + 1;
-                break;
-            }
-        }
-        processName=strdup(cmdline + begin);
-    }
-
-    fclose(statusFile);
-    return processName;
-}
-#endif
-
 /******************************************************************************/
 
 int
@@ -496,17 +466,10 @@ pocl_cache_init_topdir ()
   if (tmp_path)
     {
       needed = snprintf (cache_topdir, POCL_FILENAME_LENGTH, "%s", tmp_path);
-    } else     {
-#ifdef POCL_ANDROID
-        char* process_name = pocl_get_process_name();
-        needed = snprintf(cache_topdir, POCL_FILENAME_LENGTH,
-                          "/data/data/%s/cache/", process_name);
-        free(process_name);
+    } else {
+#ifdef __ANDROID__
+        POCL_ABORT ("Please set the POCL_CACHE_DIR env var to your app's cache directory (Context.getCacheDir())\n");
 
-        if (!pocl_exists(cache_topdir))
-            needed = snprintf(cache_topdir,
-                              POCL_FILENAME_LENGTH,
-                              "/sdcard/pocl/kcache");
 #elif defined(_MSC_VER) || defined(__MINGW32__)
         tmp_path = getenv("LOCALAPPDATA");
         if (!tmp_path)

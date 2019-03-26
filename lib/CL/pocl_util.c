@@ -226,7 +226,7 @@ pocl_memalign_alloc(size_t align_width, size_t size)
   void *ptr;
   int status;
 
-#ifdef POCL_ANDROID
+#ifdef __ANDROID__
   ptr = memalign (align_width, size);
   return ptr;
 #elif defined(HAVE_POSIX_MEMALIGN)

@@ -29,7 +29,7 @@
 #include <string.h>
 #include "pocl_cl.h"
 
-#if defined(HAVE_POSIX_MEMALIGN) || defined(POCL_ANDROID) \
+#if defined(HAVE_POSIX_MEMALIGN) || defined(__ANDROID__) \
      || (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L))
 #define HAVE_ALIGNED_ALLOC
 #else

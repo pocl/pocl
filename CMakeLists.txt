@@ -306,15 +306,6 @@ endif()
 
 ######################################################################################
 
-set(ANDROID_COMPILER 0)
-if(CMAKE_C_COMPILER MATCHES "android")
-  set(ANDROID_COMPILER 1)
-  add_definitions(-DPOCL_ANDROID)
-  add_definitions(-DPOCL_ANDROID_PREFIX="/data/data/org.pocl.libs/files")
-endif()
-
-######################################################################################
-
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
 find_package( Hwloc )
 
@@ -660,7 +651,7 @@ if(UNIX)
     else()
       set(DEFAULT_HOST_LD_FLAGS "-dylib -w -lm")
     endif()
-  elseif(ANDROID_COMPILER)
+  elseif(ANDROID)
     set(DEFAULT_HOST_LD_FLAGS "-L/system/lib/ -shared -ldl -lc /system/lib/crtbegin_so.o /system/lib/crtend_so.o")
   else()
     set(DEFAULT_HOST_LD_FLAGS "-shared")
@@ -755,7 +746,7 @@ endif()
 ######################################################################################
 # LTTNG
 
-if(NOT MSVC)
+if((NOT MSVC) AND (NOT ANDROID))
   pkg_check_modules(LTTNG_UST lttng-ust>=2.7)
   if(LTTNG_UST_FOUND)
     set(HAVE_LTTNG_UST 1)
@@ -808,17 +799,21 @@ else()
   else()
 
     set(HAVE_OCL_ICD 0 CACHE INTERNAL "ICL library is ocl-icd")
-    # fallback to other ICD loaders
-    message(STATUS "ocl-icd not found -> trying fallback ICD implementations")
-    pkg_check_modules(OPENCL OpenCL>=1.2)
-    if(NOT OPENCL_FOUND)
-      find_library(OPENCL_LIBRARIES OpenCL)
-      # version check the found library
-      if(OPENCL_LIBRARIES)
-        set(CMAKE_REQUIRED_LIBRARIES "${OPENCL_LIBRARIES}")
-        include(CheckFunctionExists)
-        unset (OPENCL_FOUND CACHE)
-        CHECK_FUNCTION_EXISTS("clEnqueueFillImage" OPENCL_FOUND)
+    unset (OPENCL_FOUND CACHE)
+
+    if (NOT CMAKE_CROSSCOMPILING)
+      # fallback to other ICD loaders
+      message(STATUS "ocl-icd not found -> trying fallback ICD implementations")
+      pkg_check_modules(OPENCL OpenCL>=1.2)
+      if(NOT OPENCL_FOUND)
+        find_library(OPENCL_LIBRARIES OpenCL)
+        # version check the found library
+        if(OPENCL_LIBRARIES)
+          set(CMAKE_REQUIRED_LIBRARIES "${OPENCL_LIBRARIES}")
+          include(CheckFunctionExists)
+          unset (OPENCL_FOUND CACHE)
+          CHECK_FUNCTION_EXISTS("clEnqueueFillImage" OPENCL_FOUND)
+        endif()
       endif()
     endif()
 

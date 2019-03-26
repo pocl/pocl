@@ -140,6 +140,10 @@ set(POCL_LIB_SOURCES  "clCreateContextFromType.c"
                    "clSetKernelArgSVMPointer.c" "clSetKernelExecInfo.c"
                    "pocl_binary.c" "pocl_opengl.c")
 
+if(ANDROID)
+  list(APPEND POCL_LIB_SOURCES "pocl_mkstemp.c")
+endif()
+
 set(LIBPOCL_OBJS "$<TARGET_OBJECTS:libpocl_unlinked_objs>"
                  "$<TARGET_OBJECTS:pocl_cache>"
                  ${POCL_DEVICES_OBJS})
@@ -203,7 +207,11 @@ endif()
 
 #################################################################
 
-add_library("${POCL_LIBRARY_NAME}" ${LIBPOCL_OBJS} )
+if(ANDROID)
+  add_library("${POCL_LIBRARY_NAME}" STATIC ${LIBPOCL_OBJS})
+else()
+  add_library("${POCL_LIBRARY_NAME}" ${LIBPOCL_OBJS})
+endif()
 
 set_target_properties("${POCL_LIBRARY_NAME}" PROPERTIES SOVERSION "${LIB_API_VERSION}"
   VERSION "${LIB_BUILD_VERSION}" 

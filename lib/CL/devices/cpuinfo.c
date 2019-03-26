@@ -233,36 +233,6 @@ pocl_cpuinfo_detect_compute_unit_count()
   return -1;  
 }
 
-#ifdef POCL_ANDROID
-
-#define SYSFS_CPU_NUM_CORES_NODE    "/sys/devices/system/cpu/possible"
-
-int
-pocl_sysfs_detect_compute_unit_count()
-{
-  int cores = -1;
-
-  FILE *fp = fopen(SYSFS_CPU_NUM_CORES_NODE, "r");
-
-  // cpu/possible will of format
-  // 0        : for single-core devices
-  // 0-(n-1)  : for n-core cpus
-  if (fp)
-    {
-      cores = fgetc(fp) - '0';
-      if (!feof(fp))         // If more than 1 cores
-        {
-          fgetc(fp);          // Ignore '-'
-          fscanf(fp, "%d", &cores);
-        }
-      fclose(fp);
-      cores ++;             // always printed as (n-1)
-    }
-
-  return cores;
-}
-#endif
-
 #if __arm__ || __aarch64__
 enum
 {
@@ -322,6 +292,7 @@ static const part_tuple_t part_list_apm[] =
 static void
 pocl_cpuinfo_get_cpu_name_and_vendor(cl_device_id device)
 {
+  size_t  i;
   /* If something fails here, have this as backup solution.
    * short_name is in the .data anyways.*/
   device->long_name = device->short_name;
@@ -359,7 +330,7 @@ pocl_cpuinfo_get_cpu_name_and_vendor(cl_device_id device)
 #if __arm__ || __aarch64__
     if (1 == sscanf (start, "%x", &vendor_id))
       {
-        for (size_t i = 0; i < sizeof (vendor_list) / sizeof (vendor_list[0]); ++i)
+        for (i = 0; i < sizeof (vendor_list) / sizeof (vendor_list[0]); ++i)
           {
             if (vendor_id == vendor_list[i].id)
               {
@@ -408,7 +379,7 @@ pocl_cpuinfo_get_cpu_name_and_vendor(cl_device_id device)
           break;
       }
 
-      for (size_t i = 0; i < part_count; ++i)
+      for (i = 0; i < part_count; ++i)
         {
           if (part_id == part_list[i].id)
             {
@@ -444,17 +415,11 @@ void
 pocl_cpuinfo_detect_device_info(cl_device_id device) 
 {
   int res;
-#ifdef POCL_ANDROID
-  /* sysfs node seems more suitable for android kernels
-     override the value provided by hwloc
-   */
-  device->max_compute_units = pocl_sysfs_detect_compute_unit_count();
-#else
+
   if (device->max_compute_units == 0) {
     res = pocl_cpuinfo_detect_compute_unit_count();
     device->max_compute_units = (res > 0) ? (cl_uint)res : 0;
   }
-#endif
 
   res = pocl_cpuinfo_detect_max_clock_frequency();
   device->max_clock_frequency = (res > 0) ? (cl_uint)res : 0;
