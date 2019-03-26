@@ -148,8 +148,8 @@ extern "C" {
 
     #define POCL_MSG_PRINT_F(FILTER, TYPE, ERRCODE, ...)                    \
         do {                                                                \
-          pocl_debug_output_lock ();                                        \
-            if (pocl_debug_messages_filter & POCL_DEBUG_FLAG_ ## FILTER) {  \
+          if (pocl_debug_messages_filter & POCL_DEBUG_FLAG_ ## FILTER) {    \
+            pocl_debug_output_lock ();                                      \
                 POCL_DEBUG_HEADER(FILTER, POCL_FILTER_TYPE_ ## TYPE)        \
                 if (stderr_is_a_tty)                                        \
                   fprintf (stderr, "%s", POCL_COLOR_BOLDRED                 \
@@ -157,19 +157,19 @@ extern "C" {
                 else                                                        \
                   fprintf (stderr, "%s", ERRCODE " ");                      \
                 fprintf (stderr, __VA_ARGS__);                              \
-            }                                                               \
-          pocl_debug_output_unlock ();                                      \
+            pocl_debug_output_unlock ();                                    \
+          }                                                                 \
         } while (0)
 
     #define POCL_MSG_PRINT2(FILTER, func, line, ...)                        \
         do {                                                                \
-          pocl_debug_output_lock ();                                        \
-            if (pocl_debug_messages_filter & POCL_DEBUG_FLAG_ ## FILTER) {  \
+          if (pocl_debug_messages_filter & POCL_DEBUG_FLAG_ ## FILTER) {    \
+            pocl_debug_output_lock ();                                      \
                 pocl_debug_print_header (func, line,                        \
                                  #FILTER, POCL_FILTER_TYPE_INFO);           \
                 fprintf  (stderr, __VA_ARGS__);                             \
-            }                                                               \
-          pocl_debug_output_unlock ();                                      \
+            pocl_debug_output_unlock ();                                    \
+          }                                                                 \
         } while (0)
 
 
