@@ -222,6 +222,7 @@ str_toupper(char *out, const char *in)
  * it's likely to ruin the performance.
  */
 
+#ifdef ENABLE_HOST_CPU_DEVICES
 #ifdef __linux__
 #ifdef __x86_64__
 
@@ -313,6 +314,7 @@ sigfpe_signal_handler (int signo, siginfo_t *si, void *data)
     }
 }
 
+#endif
 #endif
 #endif
 
@@ -457,6 +459,7 @@ pocl_init_devices ()
 
   pocl_event_tracing_init ();
 
+#ifdef ENABLE_HOST_CPU_DEVICES
 #ifdef __linux__
 #ifdef __x86_64__
 
@@ -485,6 +488,7 @@ pocl_init_devices ()
       assert (res == 0);
     }
 
+#endif
 #endif
 #endif
 
