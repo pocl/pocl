@@ -29,7 +29,7 @@ CL_API_ENTRY cl_int CL_API_CALL
 POname(clUnloadPlatformCompiler)(cl_platform_id platform)
 CL_API_SUFFIX__VERSION_1_2
 {
-#if defined(OCS_AVAILABLE)
+#if defined(ENABLE_LLVM)
   cl_platform_id pocl_id;
   POname (clGetPlatformIDs) (1, &pocl_id, NULL);
   if (platform == pocl_id)

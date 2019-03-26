@@ -50,7 +50,7 @@
 #include "pocl_runtime_config.h"
 #include "pocl_tracing.h"
 
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
 #endif
 
@@ -552,7 +552,7 @@ pocl_init_devices ()
   if (pocl_get_bool_option ("POCL_SIGFPE_HANDLER", 1))
     {
 
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
       /* This is required to force LLVM to register its signal
        * handlers, before pocl registers its own SIGFPE handler.
        * LLVM otherwise calls this via

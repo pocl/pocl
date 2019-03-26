@@ -51,7 +51,7 @@
 #include "pocl_util.h"
 #include "pocl_mem_management.h"
 
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
 #endif
 

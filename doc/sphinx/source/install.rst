@@ -268,7 +268,7 @@ The string after "HSTR:" is the device build hash.
 * now build the LLVM-less pocl. You will need the device build hash from
   previous step:
 
-  ``cmake -DOCS_AVAILABLE=0 -DHOST_DEVICE_BUILD_HASH=<something> ...``
+  ``cmake -DENABLE_LLVM=0 -DHOST_DEVICE_BUILD_HASH=<something> ...``
 
   This is required because pocl binaries contain a device hash, and the LLVM-less
   pocl needs to know which binaries it can load.

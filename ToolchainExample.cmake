@@ -14,7 +14,7 @@
 # 8) Install hwloc, ocl-icd for host and set `PKG_CONFIG_PATH` env variable to the paths
 #    eg: export PKG_CONFIG_PATH=/path/to/hwloc/prefix/lib/pkgconfig:/path/to/opencl/prefix/lib/pkgconfig
 # 9) run cmake like this:
-#          cmake -DHOST_DEVICE_BUILD_HASH=<SOME_HASH> -DOCS_AVAILABLE=<0 if LLVM-less, 1 if with LLVM>
+#          cmake -DHOST_DEVICE_BUILD_HASH=<SOME_HASH> -DENABLE_LLVM=<0 if LLVM-less, 1 if with LLVM>
 #           -DCMAKE_TOOLCHAIN_FILE=<path-to-this-file>
 #           -DCMAKE_PREFIX_PATH=$HOST_PREFIX
 #           -DLLC_TRIPLE=<your-triple (e.g.arm-gnueabihf-linux-gnu)

@@ -46,7 +46,7 @@
 #include "pocl_file_util.h"
 #include "pocl_workgroup_func.h"
 
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
 #endif
 

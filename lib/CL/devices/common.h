@@ -60,10 +60,6 @@
 extern "C" {
 #endif
 
-int llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
-                  cl_device_id device, _cl_command_node *command,
-                  int specialize);
-
 POCL_EXPORT
 void pocl_fill_dev_image_t (dev_image_t *di, struct pocl_argument *parg,
                             cl_device_id device);

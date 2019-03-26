@@ -184,7 +184,7 @@ set(LIBPOCL_OBJS "$<TARGET_OBJECTS:libpocl_unlinked_objs>"
 add_library("pocl_cache" OBJECT "pocl_cache.c")
 harden("pocl_cache")
 
-if (OCS_AVAILABLE)
+if (ENABLE_LLVM)
   include_directories(${LLVM_INCLUDE_DIRS})
   set(LLVM_API_SOURCES "pocl_llvm_build.cc" "pocl_llvm_metadata.cc" "pocl_llvm_utils.cc" "pocl_llvm_wg.cc")
   set_source_files_properties(${LLVM_API_SOURCES} PROPERTIES COMPILE_FLAGS "${LLVM_CXXFLAGS} -I\"${CMAKE_CURRENT_SOURCE_DIR}/../llvmopencl\"")

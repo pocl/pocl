@@ -53,14 +53,27 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
 
       POCL_RETURN_GETINFO_STR ("OpenCL " POCL_CL_VERSION
                                " pocl " PACKAGE_VERSION
-#ifdef OCS_AVAILABLE
+
+#if defined(_WIN32) || defined(__MINGW32__)
+   #if defined(_WIN64) || defined(__MINGW64__)
+                               "  Windows x86-64"
+   #else
+                               "  Windows x86"
+   #endif
+#elif defined(__ANDROID__)
+                               "  Android"
+#elif defined(__APPLE__)
+                               "  Apple"
+#elif defined(__linux__)
+                               "  Linux"
+#elif defined(__unix__) // all unices not caught above
+                               "  Unix"
+#else
+                               "  (Unknown OS)"
+#endif
                                ", " CMAKE_BUILD_TYPE
 #ifdef POCL_ASSERTS_BUILD
                                "+Asserts"
-#endif
-                               ", LLVM " LLVM_VERSION
-#ifdef LLVM_BUILD_MODE_DEBUG
-                               " - debug"
 #endif
 
 #ifdef ENABLE_RELOCATION
@@ -75,6 +88,12 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
                                ", SPIR-V"
 #endif
 
+#ifdef ENABLE_LLVM
+                               ", LLVM " LLVM_VERSION
+#ifdef LLVM_BUILD_MODE_DEBUG
+                               " - debug"
+#endif
+
 #ifdef ENABLE_SLEEF
                                ", SLEEF"
 #endif
@@ -83,8 +102,12 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
                                ", FP16"
 #endif
 
+#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
+                               ", DISTRO"
+#endif
+
 #else
-                               ", no online compiler support"
+                               ", without LLVM"
 #endif
 
 #ifdef ENABLE_ASAN
@@ -114,10 +137,6 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
 
 #ifdef HAVE_LTTNG_UST
                                ", LTTNG"
-#endif
-
-#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-                               ", DISTRO"
 #endif
 
 #ifdef POCL_DEBUG_MESSAGES

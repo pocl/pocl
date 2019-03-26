@@ -135,7 +135,7 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
 
   for (i = 0; i < num_devices; ++i)
     {
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
       /* LLVM IR */
       if (!strncmp((const char *)binaries[i], "BC", 2))
         {

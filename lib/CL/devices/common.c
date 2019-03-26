@@ -68,7 +68,7 @@
 #include <dlfcn.h>
 #endif
 
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
 #endif
 
@@ -89,8 +89,8 @@ uint64_t last_object_id = 0;
  * Uses an existing (cached) one, if available.
  */
 
-#ifdef OCS_AVAILABLE
-int
+#ifdef ENABLE_LLVM
+static int
 llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
               cl_device_id device, _cl_command_node *command, int specialize)
 {
@@ -957,7 +957,7 @@ pocl_check_kernel_disk_cache (_cl_command_node *command, int specialized)
    * (program.bc), try to compile a new parallel.bc and static binary */
   if (p->binaries[dev_i])
     {
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
       POCL_LOCK (pocl_llvm_codegen_lock);
       int error = llvm_codegen (module_fn, dev_i, k, command->device, command,
                                 specialized);
@@ -1413,7 +1413,7 @@ pocl_init_default_device_infos (cl_device_id dev)
       = dev->max_work_item_sizes[2] = dev->max_work_group_size = max_wg;
 
   dev->preferred_wg_size_multiple = 8;
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
   cpu_setup_vector_widths (dev);
 #else
   dev->preferred_vector_width_char = POCL_DEVICES_PREFERRED_VECTOR_WIDTH_CHAR;
@@ -1476,7 +1476,7 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->single_fp_config |= (CL_FP_DENORM | CL_FP_ROUND_TO_INF
                             | CL_FP_ROUND_TO_ZERO
                             | CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
   if (cpu_has_fma())
     dev->single_fp_config |= CL_FP_FMA;
 #endif
@@ -1565,7 +1565,7 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->autolocals_to_args = POCL_AUTOLOCALS_TO_ARGS_ALWAYS;
   dev->device_alloca_locals = 0;
 
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
 
   dev->llvm_target_triplet = OCL_KERNEL_TARGET;
 #ifdef HOST_CPU_FORCED
