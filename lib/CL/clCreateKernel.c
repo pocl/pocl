@@ -108,6 +108,8 @@ POname(clCreateKernel)(cl_program program,
   for (i = 0; i < program->num_devices; ++i)
     {
       cl_device_id device = program->devices[i];
+      if (device->available != CL_TRUE)
+        continue;
       if (device->ops->create_kernel)
         device->ops->create_kernel (device, program, kernel, i);
     }

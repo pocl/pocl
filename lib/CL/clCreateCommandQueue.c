@@ -39,6 +39,9 @@ POname(clCreateCommandQueue)(cl_context context,
 
   POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (device)), CL_INVALID_DEVICE);
 
+  POCL_GOTO_ERROR_ON ((device->available != CL_TRUE), CL_INVALID_DEVICE,
+                        "device is not available\n");
+
   POCL_MSG_PRINT_INFO("Create Command queue on device %d\n", device->dev_id);
 
   /* validate flags */

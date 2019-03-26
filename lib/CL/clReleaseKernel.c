@@ -49,6 +49,8 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
       for (i = 0; i < program->num_devices; ++i)
         {
           cl_device_id device = program->devices[i];
+          if (device->available != CL_TRUE)
+            continue;
           if (device->ops->free_kernel)
             device->ops->free_kernel (device, program, kernel, i);
         }

@@ -83,6 +83,8 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
               if (shared_mem_owner_dev == context->devices[i])
                  continue;
               dev = context->devices[i];
+              if (dev->available != CL_TRUE)
+                continue;
               if (memobj->device_ptrs[dev->dev_id].mem_ptr == NULL)
                 continue;
 
