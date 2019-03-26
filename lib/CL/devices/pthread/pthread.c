@@ -51,6 +51,10 @@
 #include "pocl_util.h"
 #include "pocl_mem_management.h"
 
+#ifndef HAVE_LTDL
+#error Pthread driver requires LTDL
+#endif
+
 #ifdef OCS_AVAILABLE
 #include "pocl_llvm.h"
 #endif
@@ -98,8 +102,6 @@ struct event_data {
 struct data {
   /* Currently loaded kernel. */
   cl_kernel current_kernel;
-  /* Loaded kernel dynamic library handle. */
-  lt_dlhandle current_dlhandle;
   volatile uint64_t total_cmd_exec_time;
 
 #ifdef CUSTOM_BUFFER_ALLOCATOR
@@ -203,7 +205,6 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   INIT_MEM_REGIONS;
 
   d->current_kernel = NULL;
-  d->current_dlhandle = 0;
   device->data = d;
 
   pocl_init_cpu_device_infos (device);
@@ -302,7 +303,6 @@ pocl_pthread_reinit (unsigned j, cl_device_id device)
   INIT_MEM_REGIONS;
 
   d->current_kernel = NULL;
-  d->current_dlhandle = 0;
   device->data = d;
 
   if (!scheduler_initialized)

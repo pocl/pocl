@@ -140,7 +140,6 @@ POname(clCreateContext)(const cl_context_properties * properties,
 
   int offline_compile = pocl_get_bool_option("POCL_OFFLINE_COMPILE", 0);
 
-  lt_dlinit();
   errcode = pocl_init_devices();
   /* clCreateContext cannot return CL_DEVICE_NOT_FOUND, which is what
    * pocl_init_devices() returns if no devices could be probed. Hence,

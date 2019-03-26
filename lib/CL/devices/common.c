@@ -37,6 +37,10 @@
 #include <unistd.h>
 #include <utlist.h>
 
+#ifdef HAVE_LTDL
+#include <ltdl.h>
+#endif
+
 #ifndef _MSC_VER
 #  include <sys/time.h>
 #  include <sys/resource.h>

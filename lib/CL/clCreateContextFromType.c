@@ -53,8 +53,6 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
 
   POCL_GOTO_ERROR_COND((pfn_notify == NULL && user_data != NULL), CL_INVALID_VALUE);
 
-  /* initialize libtool here, LT will be needed when loading the kernels */     
-  lt_dlinit();
   errcode = pocl_init_devices();
   /* see clCreateContext.c for explanation */
   POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), errcode,

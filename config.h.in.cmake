@@ -61,6 +61,8 @@
 
 #cmakedefine HAVE_LTTNG_UST
 
+#cmakedefine HAVE_LTDL
+
 #cmakedefine HAVE_OCL_ICD
 
 #cmakedefine HAVE_POSIX_MEMALIGN

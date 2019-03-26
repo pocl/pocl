@@ -29,9 +29,8 @@
 
 #include <assert.h>
 #include <stdio.h>
-#ifndef _MSC_VER
-#  include <ltdl.h>
-#else
+
+#ifdef _MSC_VER
 #  include "vccompat.hpp"
 #endif
 /* To get adaptive mutex type */

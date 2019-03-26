@@ -49,6 +49,10 @@
 #include "pocl_llvm.h"
 #endif
 
+#ifndef HAVE_LTDL
+#error Basic driver requires LTDL
+#endif
+
 /* default WG size in each dimension & total WG size.
  * this should be reasonable for CPU */
 #define DEFAULT_WG_SIZE 4096
@@ -56,8 +60,6 @@
 struct data {
   /* Currently loaded kernel. */
   cl_kernel current_kernel;
-  /* Loaded kernel dynamic library handle. */
-  lt_dlhandle current_dlhandle;
 
   /* List of commands ready to be executed */
   _cl_command_node * volatile ready_list;
@@ -406,7 +408,6 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
     return CL_OUT_OF_HOST_MEMORY;
 
   d->current_kernel = NULL;
-  d->current_dlhandle = 0;
   device->data = d;
 
   pocl_init_cpu_device_infos (device);
@@ -1094,7 +1095,6 @@ pocl_basic_reinit (unsigned j, cl_device_id device)
     return CL_OUT_OF_HOST_MEMORY;
 
   d->current_kernel = NULL;
-  d->current_dlhandle = 0;
 
   assert (device->printf_buffer_size > 0);
   d->printf_buffer = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,

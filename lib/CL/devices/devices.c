@@ -55,6 +55,11 @@
 #include "pocl_llvm.h"
 #endif
 
+#ifdef HAVE_LTDL
+#include <ltdl.h>
+#endif
+
+
 #if defined(TCE_AVAILABLE)
 #include "tce/ttasim/ttasim.h"
 #endif
@@ -427,6 +432,11 @@ pocl_init_devices ()
       errcode = pocl_num_devices ? CL_SUCCESS : CL_DEVICE_NOT_FOUND;
       goto ERROR;
     }
+
+  /* initialize libtool here, LT will be needed when loading the kernels */
+#ifdef HAVE_LTDL
+  lt_dlinit();
+#endif
 
   /* first time initialization */
 
