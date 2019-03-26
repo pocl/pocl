@@ -111,6 +111,7 @@ typedef struct
   int force_generic_wg_func;
   /* If set to 1, disallow "small grid" WG function specialization. */
   int force_large_grid_wg_func;
+  unsigned device_i;
 } _cl_command_run;
 
 // clEnqueueNativeKernel
@@ -355,14 +356,14 @@ struct _cl_command_node
 {
   _cl_command_t command;
   cl_command_type type;
-  _cl_command_node * volatile next; // for linked-list storage
-  _cl_command_node * volatile prev;
+  _cl_command_node *next; // for linked-list storage
+  _cl_command_node *prev;
   cl_event event;
-  const cl_event *volatile event_wait_list;
+  const cl_event *event_wait_list;
+  cl_device_id device;
   /* The index of the targeted device in the platform's device list. */
   unsigned device_i;
-  cl_device_id device;
-  volatile cl_int ready;
+  cl_int ready;
 };
 
 #ifndef LLVM_8_0

@@ -31,25 +31,25 @@
 #include "pocl_types.h"
 
 struct pocl_context32 {
-  uint work_dim;
   uint num_groups[3];
   uint global_offset[3];
   uint local_size[3];
   unsigned char *printf_buffer;
   uint *printf_buffer_position;
   uint printf_buffer_capacity;
+  uint work_dim;
 };
 
 /* The default pocl_context is 64b. It should be copied to a 32b one
    when launching a kernel for a 32b target. */
 struct pocl_context {
-  uint work_dim;
   ulong num_groups[3];
   ulong global_offset[3];
   ulong local_size[3];
   uchar *printf_buffer;
   uint *printf_buffer_position;
   uint printf_buffer_capacity;
+  uint work_dim;
 };
 
 /* Copy a 64b context struct to a 32b one. */

@@ -100,16 +100,15 @@ namespace llvm {
         {
 #ifdef LLVM_OLDER_THAN_5_0
         return StructType::get(
-            TypeBuilder<types::i<32>, xcompile>::get(Context),
             TypeBuilder<types::i<64>[3], xcompile>::get(Context),
             TypeBuilder<types::i<64>[3], xcompile>::get(Context),
             TypeBuilder<types::i<64>[3], xcompile>::get(Context),
             TypeBuilder<types::i<8> *, xcompile>::get(Context),
             TypeBuilder<types::i<32> *, xcompile>::get(Context),
+            TypeBuilder<types::i<32>, xcompile>::get(Context),
             TypeBuilder<types::i<32>, xcompile>::get(Context), NULL);
 #else
         SmallVector<Type *, 10> Elements;
-        Elements.push_back(TypeBuilder<types::i<32>, xcompile>::get(Context));
         Elements.push_back(
             TypeBuilder<types::i<64>[3], xcompile>::get(Context));
         Elements.push_back(
@@ -119,6 +118,7 @@ namespace llvm {
         Elements.push_back(TypeBuilder<types::i<8> *, xcompile>::get(Context));
         Elements.push_back(TypeBuilder<types::i<32> *, xcompile>::get(Context));
         Elements.push_back(TypeBuilder<types::i<32>, xcompile>::get(Context));
+        Elements.push_back(TypeBuilder<types::i<32>, xcompile>::get(Context));
         return StructType::get(Context, Elements);
 #endif
         }
@@ -126,17 +126,15 @@ namespace llvm {
         {
 #ifdef LLVM_OLDER_THAN_5_0
           return StructType::get(
-              TypeBuilder<types::i<32>, xcompile>::get(Context),
               TypeBuilder<types::i<32>[3], xcompile>::get(Context),
               TypeBuilder<types::i<32>[3], xcompile>::get(Context),
               TypeBuilder<types::i<32>[3], xcompile>::get(Context),
               TypeBuilder<types::i<8> *, xcompile>::get(Context),
               TypeBuilder<types::i<32> *, xcompile>::get(Context),
+              TypeBuilder<types::i<32>, xcompile>::get(Context),
               TypeBuilder<types::i<32>, xcompile>::get(Context), NULL);
 #else
           SmallVector<Type *, 10> Elements;
-          Elements.push_back(
-            TypeBuilder<types::i<32>, xcompile>::get(Context));
           Elements.push_back(
             TypeBuilder<types::i<32>[3], xcompile>::get(Context));
           Elements.push_back(
@@ -148,6 +146,8 @@ namespace llvm {
           Elements.push_back(
               TypeBuilder<types::i<32> *, xcompile>::get(Context));
           Elements.push_back(TypeBuilder<types::i<32>, xcompile>::get(Context));
+          Elements.push_back(
+            TypeBuilder<types::i<32>, xcompile>::get(Context));
 
           return StructType::get(Context, Elements);
 #endif
@@ -174,13 +174,13 @@ namespace llvm {
 #endif
 
 enum PoclContextStructFields {
-  PC_WORK_DIM,
   PC_NUM_GROUPS,
   PC_GLOBAL_OFFSET,
   PC_LOCAL_SIZE,
   PC_PRINTF_BUFFER,
   PC_PRINTF_BUFFER_POSITION,
-  PC_PRINTF_BUFFER_CAPACITY
+  PC_PRINTF_BUFFER_CAPACITY,
+  PC_WORK_DIM
 };
 
 char Workgroup::ID = 0;
@@ -214,13 +214,13 @@ Workgroup::runOnModule(Module &M) {
   llvm::Type *Int8T = Type::getInt8Ty(*C);
   PoclContextT =
     StructType::get(
-      Int32T, // WORK_DIM
       ArrayType::get(SizeT, 3), // NUM_GROUPS
       ArrayType::get(SizeT, 3), // GLOBAL_OFFSET
       ArrayType::get(SizeT, 3), // LOCAL_SIZE
       PointerType::get(Int8T, 0), // PRINTF_BUFFER
       PointerType::get(Int32T, 0), // PRINTF_BUFFER_POSITION
-      Int32T); // PRINTF_BUFFER_CAPACITY
+      Int32T, // PRINTF_BUFFER_CAPACITY
+      Int32T); // WORK_DIM
 
   LauncherFuncT = FunctionType::get(
       Type::getVoidTy(*C),
