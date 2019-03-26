@@ -1,15 +1,12 @@
+Changes updated until commit 42adbfe333 (Mar 25 2019).
+
 1.3 unreleased
 ==============
-
-Changes updated until 66876561ff6aa (Feb 12 2019).
 
 Highlights
 ----------
 - Support for Clang/LLVM 8.0.
 - Support ICD on OSX.
-- HSA: Initial experimental support for native-ISA compilation on top of HSA
-  runtime. Tested and works currently only on phsa-runtime. Can be enabled
-  with ENABLE_HSAIL=off cmake option.
 
 Misc.
 -----
@@ -30,15 +27,22 @@ Misc.
   also the previous version 6 format.
 - Allow local-size-specializing also SPMD-targeted kernels to enable compile
   time optimization of code depending on the local dimensions.
+- Support older GLIBC versions.
+- HSA: Initial experimental support for native-ISA compilation on top of HSA
+  runtime. Tested and works currently only on phsa-runtime. Can be enabled
+  with ENABLE_HSAIL=off cmake option.
+- Add option to disable installing of OpenCL headers.
 
 Notable Bug Fixes
 -----------------
 - Fixed kernel debug symbol generation.
 - HSA: fix kernel caching.
-- Fix issue #661: clCreateImage doesn't fail with unsupported image type
-- Fix issue #668: handle non-kernel functions with barriers properly
-- Fix issue #671: Unable to build pocl with CUDA support with LLVM 7 and host GCC 8.2
-- Fix image format/size handling with multiple devices in context
+- Fix issue #661: clCreateImage doesn't fail with unsupported image type.
+- Fix issue #668: handle non-kernel functions with barriers properly.
+- Fix issue #671: Unable to build pocl with CUDA support with LLVM 7 and host GCC 8.2.
+- Fix image format/size handling with multiple devices in context.
+- Fix padding issue with context arrays that manifested as unaligned
+  access errors after autovectorization.
 
 Notable Internal Changes
 ------------------------
