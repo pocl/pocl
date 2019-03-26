@@ -1,4 +1,4 @@
-/* pocl-hsa.h - HSA device declarations
+/* pocl-hsa.h - HSA driver callback prototypes
 
    Copyright (c) 2015 Pekka Jääskeläinen / Tampere University of Technology
 
@@ -29,9 +29,7 @@
 #include "config.h"
 
 #include "prototypes.inc"
-GEN_PROTOTYPES (hsa)
-
-#include "prototypes.inc"
 GEN_PROTOTYPES (basic)
+GEN_PROTOTYPES (hsa)
 
 #endif /* POCL_BASIC_H */

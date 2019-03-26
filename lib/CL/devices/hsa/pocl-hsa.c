@@ -1131,7 +1131,7 @@ compile_parallel_bc_to_brig (char *brigfile, _cl_command_node *cmd,
   else
     {
       // TODO call llvm via c++ interface like pocl_llvm_codegen()
-      POCL_MSG_PRINT_INFO("pocl-hsa: BRIG file not found,"
+      POCL_MSG_PRINT_HSA ("BRIG file not found,"
                           " compiling parallel.bc to brig file: \n%s\n",
                           parallel_bc_path);
 
@@ -1140,14 +1140,14 @@ compile_parallel_bc_to_brig (char *brigfile, _cl_command_node *cmd,
                         "-o", hsailfile, parallel_bc_path, NULL };
       if ((error = pocl_run_command (args1)))
         {
-          POCL_MSG_PRINT_INFO("pocl-hsa: llc exit status %i\n", error);
+          POCL_MSG_PRINT_HSA ("llc exit status %i\n", error);
           return error;
         }
 
       char* args2[] = { HSAIL_ASM, "-o", brigfile, hsailfile, NULL };
       if ((error = pocl_run_command (args2)))
         {
-          POCL_MSG_PRINT_INFO("pocl-hsa: HSAILasm exit status %i\n", error);
+          POCL_MSG_PRINT_HSA ("HSAILasm exit status %i\n", error);
           return error;
         }
     }
@@ -1357,14 +1357,14 @@ pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
   if (compile_parallel_bc_to_brig (brigfile, cmd, specialize))
     POCL_ABORT("Compiling LLVM IR -> HSAIL -> BRIG failed.\n");
 
-  POCL_MSG_PRINT_INFO("pocl-hsa: loading binary from file %s.\n", brigfile);
+  POCL_MSG_PRINT_HSA ("loading binary from file %s.\n", brigfile);
   uint64_t filesize = 0;
   int read = pocl_read_file(brigfile, &brig_blob, &filesize);
 
   if (read != 0)
     POCL_ABORT("pocl-hsa: could not read the binary.\n");
 
-  POCL_MSG_PRINT_INFO("pocl-hsa: BRIG binary size: %lu.\n", filesize);
+  POCL_MSG_PRINT_HSA ("BRIG binary size: %lu.\n", filesize);
 
   hsa_ext_module_t hsa_module = (hsa_ext_module_t)brig_blob;
 
@@ -1423,7 +1423,7 @@ pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
 
   strncat (symbol, kernel->name, kernel_name_length);
 
-  POCL_MSG_PRINT_INFO("pocl-hsa: getting kernel symbol %s.\n", symbol);
+  POCL_MSG_PRINT_HSA ("getting kernel symbol %s.\n", symbol);
 
   HSA_CHECK(hsa_executable_get_symbol
     (final_obj, NULL, symbol, d->agent, 0, &kernel_symbol));
@@ -1578,7 +1578,7 @@ pocl_hsa_join (cl_device_id device, cl_command_queue cq)
   if (cq->command_count == 0)
     {
       POCL_UNLOCK_OBJ (cq);
-      POCL_MSG_PRINT_INFO("pocl-hsa: device->join: empty queue\n");
+      POCL_MSG_PRINT_HSA ("device->join: empty queue\n");
       return;
     }
   cl_event event = cq->last_event.event;
@@ -1587,11 +1587,11 @@ pocl_hsa_join (cl_device_id device, cl_command_queue cq)
   POCL_RETAIN_OBJECT_UNLOCKED (event);
   POCL_UNLOCK_OBJ (cq);
 
-  POCL_MSG_PRINT_INFO("pocl-hsa: device->join on event %u\n", event->id);
+  POCL_MSG_PRINT_HSA ("device->join on event %u\n", event->id);
 
   if (event->status <= CL_COMPLETE)
     {
-      POCL_MSG_PRINT_INFO("pocl-hsa: device->join: last event (%u) in queue"
+      POCL_MSG_PRINT_HSA ("device->join: last event (%u) in queue"
                           " exists, but is complete\n", event->id);
       goto RETURN;
     }
@@ -1601,9 +1601,8 @@ pocl_hsa_join (cl_device_id device, cl_command_queue cq)
       pocl_hsa_event_data_t *e_d = (pocl_hsa_event_data_t *)event->data;
       PTHREAD_CHECK (pthread_cond_wait (&e_d->event_cond, &event->pocl_lock));
     }
-  POCL_MSG_PRINT_INFO ("pocl-hsa: device->join on event %u finished"
-                       " with status: %i\n",
-                       event->id, event->status);
+  POCL_MSG_PRINT_HSA ("device->join on event %u finished"
+                      " with status: %i\n", event->id, event->status);
 
 RETURN:
   assert (event->status <= CL_COMPLETE);
@@ -1625,7 +1624,7 @@ pocl_hsa_notify (cl_device_id device, cl_event event, cl_event finished)
   pocl_hsa_device_data_t *d = device->data;
   _cl_command_node *node = event->command;
   int added_to_readylist = 0;
-  POCL_MSG_PRINT_INFO("pocl-hsa: notify on event %u \n", event->id);
+  POCL_MSG_PRINT_HSA ("notify on event %u \n", event->id);
 
   if (finished->status < CL_COMPLETE)
     {
@@ -1673,18 +1672,18 @@ pocl_hsa_notify (cl_device_id device, cl_event event, cl_event finished)
 void
 pocl_hsa_broadcast (cl_event event)
 {
-  POCL_MSG_PRINT_INFO("pocl-hsa: broadcasting\n");
+  POCL_MSG_PRINT_HSA ("broadcasting\n");
   pocl_broadcast(event);
 }
 
 void
 pocl_hsa_wait_event(cl_device_id device, cl_event event)
 {
-  POCL_MSG_PRINT_INFO("pocl-hsa: device->wait_event on event %u\n", event->id);
+  POCL_MSG_PRINT_HSA ("device->wait_event on event %u\n", event->id);
   POCL_LOCK_OBJ (event);
   if (event->status <= CL_COMPLETE)
     {
-      POCL_MSG_PRINT_INFO("pocl-hsa: device->wain_event: last event"
+      POCL_MSG_PRINT_HSA ("device->wain_event: last event"
                           " (%u) in queue exists, but is complete\n", 
                           event->id);
       POCL_UNLOCK_OBJ(event);
@@ -1809,11 +1808,13 @@ pocl_hsa_launch (pocl_hsa_device_data_t *d, cl_event event)
 
   kernel_packet->group_segment_size = total_group_size;
 
-  POCL_MSG_PRINT_INFO ("pocl-hsa: kernel's total group mem size: %u\n",
-                       total_group_size);
-  POCL_MSG_PRINT_INFO ("pocl-hsa: kernel command grid size %u x %u x %u\n",
+  POCL_MSG_PRINT_HSA ("kernel's total group size: %u\n",
+                      total_group_size);
+  POCL_MSG_PRINT_INFO ("kernel command grid size %u x %u x %u\n",
                        kernel_packet->grid_size_x, kernel_packet->grid_size_y,
                        kernel_packet->grid_size_z);
+
+
   if (total_group_size > cmd->device->local_mem_size)
     POCL_ABORT ("pocl-hsa: required local memory > device local memory!\n");
 
@@ -1940,6 +1941,7 @@ pocl_hsa_run_ready_commands (pocl_hsa_device_data_t *d)
           POCL_MSG_PRINT_INFO ("running non-NDrange event %u,"
                                " remove from readylist\n", e->id);
           pocl_exec_command (e->command);
+          pocl_mem_manager_free_command (e->command);
         }
       check_running_signals (d);
       PTHREAD_CHECK (pthread_mutex_lock (&d->list_mutex));
@@ -1979,7 +1981,7 @@ pocl_hsa_driver_pthread (void *cldev)
   dd->running_list_size = 0;
   dd->last_queue = 0;
   dd->num_queues = d->hw_schedulers;  // TODO this is somewhat arbitrary.
-  POCL_MSG_PRINT_INFO("pocl-hsa: Queues: %" PRIuS "\n", dd->num_queues);
+  POCL_MSG_PRINT_HSA ("Queues: %" PRIuS "\n", dd->num_queues);
 
   dd->queues = (hsa_queue_t **) calloc (dd->num_queues, sizeof(hsa_queue_t*));
 
@@ -1991,7 +1993,7 @@ pocl_hsa_driver_pthread (void *cldev)
 
   uint32_t queue_size = 1 << ((__builtin_ctz(queue_min_size)
                                + __builtin_ctz(queue_max_size)) / 2);
-  POCL_MSG_PRINT_INFO("pocl-hsa: queue size: %" PRIu32 "\n", queue_size);
+  POCL_MSG_PRINT_HSA ("queue size: %" PRIu32 "\n", queue_size);
 
   for (i = 0; i < dd->num_queues; i++)
     {
@@ -2056,7 +2058,7 @@ pocl_hsa_driver_pthread (void *cldev)
 
 EXIT_PTHREAD:
   /* TODO wait for commands to finish... */
-  POCL_MSG_PRINT_INFO("pocl-hsa: driver pthread exiting, still "
+  POCL_MSG_PRINT_HSA ("driver pthread exiting, still "
                       "running evts: %" PRIuS "\n",
                       dd->running_list_size);
   assert(dd->running_list_size == 0);
