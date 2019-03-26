@@ -21,17 +21,25 @@
    THE SOFTWARE.
 */
 
-#include <pocl_cl.h>
-#include <hwloc.h>
 #include <stdlib.h>
 
+#include "config.h"
+
+#include <pocl_cl.h>
+#include <pocl_file_util.h>
+
+#include "pocl_topology.h"
+
+#ifdef ENABLE_HWLOC
+
+#include <hwloc.h>
 #if HWLOC_API_VERSION >= 0x00020000
 #define HWLOC_API_2
 #else
 #undef HWLOC_API_2
 #endif
 
-#include "pocl_topology.h"
+#endif
 
 /*
  * Sets up:
@@ -41,6 +49,8 @@
  *  global_mem_cacheline_size
  *  global_mem_cache_size
  */
+
+#ifdef ENABLE_HWLOC
 
 int
 pocl_topology_detect_device_info(cl_device_id device)
@@ -59,6 +69,7 @@ pocl_topology_detect_device_info(cl_device_id device)
 #endif
 
   /*
+
    * hwloc's OpenCL backend causes problems at the initialization stage
    * because it reloads libpocl.so via the ICD loader.
    *
@@ -164,4 +175,100 @@ exit_destroy:
 
 }
 
+// #ifdef HWLOC
+#elif defined(__linux__) || defined(__ANDROID__)
 
+#define L3_CACHE_SIZE "/sys/devices/system/cpu/cpu0/cache/index3/size"
+#define L2_CACHE_SIZE "/sys/devices/system/cpu/cpu0/cache/index2/size"
+#define CPUS "/sys/devices/system/cpu/possible"
+#define MEMINFO "/proc/meminfo"
+
+int
+pocl_topology_detect_device_info (cl_device_id device)
+{
+  device->global_mem_cacheline_size = HOST_CPU_CACHELINE_SIZE;
+  device->global_mem_cache_type
+      = 0x2; // CL_READ_WRITE_CACHE, without including all of CL/cl.h
+
+  /* global mem cache size */
+
+  char *content;
+  uint64_t filesize;
+
+  if (pocl_read_file (L3_CACHE_SIZE, &content, &filesize) == 0)
+    {
+      long val = atol (content);
+      device->global_mem_cache_size = val * 1024;
+      POCL_MEM_FREE (content);
+    }
+  else
+    {
+      if (pocl_read_file (L2_CACHE_SIZE, &content, &filesize) == 0)
+        {
+          long val = atol (content);
+          device->global_mem_cache_size = val * 1024;
+          POCL_MEM_FREE (content);
+        }
+      else
+        {
+          POCL_MSG_WARN (
+              "Could not figure out CPU cache size, using bogus value\n");
+          device->global_mem_cache_size = 1 << 20;
+        }
+    }
+
+  /* global_mem_size */
+  if (pocl_read_file (MEMINFO, &content, &filesize) == 0)
+    {
+      printf ("content 11: %s  FSIZE: %lu \n", content, filesize);
+      char *tmp = content;
+      unsigned long memsize_kb;
+      size_t i;
+
+      while (*tmp && (*tmp != '\n'))
+        ++tmp;
+      *tmp = 0;
+      printf ("content: %s \n", content);
+      tmp = content;
+      while (*tmp && (*tmp != 0x20))
+        ++tmp;
+      while (*tmp && (*tmp == 0x20))
+        ++tmp;
+      printf ("TMP: %s \n", tmp);
+      int items = sscanf (tmp, "%lu kB", &memsize_kb);
+      printf ("MEMSIZE: %lu   ITEMS: %i\n", memsize_kb, items);
+
+      assert (items == 1);
+
+      device->global_mem_size = memsize_kb * 1024;
+      POCL_MEM_FREE (content);
+    }
+  else
+    {
+      POCL_MSG_WARN ("Cannot get memory size\n");
+      device->global_mem_size = 256 << 20;
+    }
+
+  /* max_compute_units */
+  if (pocl_read_file (CPUS, &content, &filesize) == 0)
+    {
+      long start, end;
+      int items = sscanf (content, "%lu-%lu", &start, &end);
+      assert (items == 2);
+      device->max_compute_units = (unsigned)end + 1;
+      POCL_MEM_FREE (content);
+    }
+  else
+    {
+      POCL_MSG_WARN ("Cannot get logical CPU number\n");
+      device->max_compute_units = 1;
+    }
+
+  return 0;
+}
+
+#else
+
+#error Dont know how to get HWLOC-provided values on this system!
+
+#endif

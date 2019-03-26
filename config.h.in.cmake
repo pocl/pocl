@@ -27,6 +27,8 @@
 
 #cmakedefine ENABLE_CONFORMANCE
 
+#cmakedefine ENABLE_HWLOC
+
 #cmakedefine ENABLE_POCL_BUILDING
 
 #cmakedefine ENABLE_POCL_FLOAT_CONVERSION

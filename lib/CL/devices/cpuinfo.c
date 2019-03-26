@@ -305,6 +305,7 @@ pocl_cpuinfo_get_cpu_name_and_vendor(cl_device_id device)
   /* read contents of /proc/cpuinfo */
   if (access (cpuinfo, R_OK) != 0)
     return;
+
   FILE *f = fopen (cpuinfo, "r");
   char contents[MAX_CPUINFO_SIZE];
   int num_read = fread (contents, 1, MAX_CPUINFO_SIZE - 1, f);            

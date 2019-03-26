@@ -300,26 +300,39 @@ endif()
 
 ######################################################################################
 
-if(UNIX)
-  find_package(PkgConfig MODULE REQUIRED)
-endif()
 
 ######################################################################################
 
 set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake")
-find_package( Hwloc )
 
-if(NOT Hwloc_FOUND)
-  message(FATAL_ERROR "hwloc package is required!")
+if(UNIX AND (NOT CMAKE_CROSSCOMPILING))
+  find_package(PkgConfig MODULE REQUIRED)
+  find_package(Hwloc)
+
+  if(NOT Hwloc_FOUND)
+    message(WARNING "hwloc package not found")
+  else()
+      if("${Hwloc_VERSION}" VERSION_LESS "1.0")
+        message(FATAL_ERROR "Hwloc version must be >= 1.0 !")
+      endif()
+
+      message(STATUS "Hwloc_VERSION ${Hwloc_VERSION}")
+      message(STATUS "Hwloc_LDFLAGS ${Hwloc_LDFLAGS}")
+      message(STATUS "Hwloc_CFLAGS ${Hwloc_CFLAGS}")
+
+      set(ENABLE_HWLOC ON CACHE BOOL "Hwloc" FORCE)
+  endif()
+
+else()
+
+  message(STATUS "Not on UNIX or cross-compiling -> building without HWLOC")
+  set(ENABLE_HWLOC OFF CACHE BOOL "Hwloc" FORCE)
+
 endif()
 
-if("${Hwloc_VERSION}" VERSION_LESS "1.0")
-  message(FATAL_ERROR "Hwloc version must be >= 1.0 !")
-endif()
 
-message(STATUS "Hwloc_VERSION ${Hwloc_VERSION}")
-message(STATUS "Hwloc_LDFLAGS ${Hwloc_LDFLAGS}")
-message(STATUS "Hwloc_CFLAGS ${Hwloc_CFLAGS}")
+
+
 
 ######################################################################################
 
@@ -762,12 +775,14 @@ if(NOT DEFINED DEFAULT_ENABLE_ICD)
 if (MSVC)
   message(STATUS "Building ICD not yet supported on Windows.")
   set(DEFAULT_ENABLE_ICD 0 CACHE INTERNAL "Going to use ICD loader")
+
 else()
 
   # pkg-config doesn't work with cross-compiling
   if (NOT CMAKE_CROSSCOMPILING)
     pkg_check_modules(OCL_ICD ocl-icd>=1.3)
   endif()
+
   if (CMAKE_CROSSCOMPILING OR (NOT OCL_ICD_FOUND))
     find_path(OCL_ICD_INCLUDE_DIR
       NAMES
@@ -781,6 +796,7 @@ else()
       set(OCL_ICD_FOUND 1)
     endif()
   endif()
+
 
   if(OCL_ICD_FOUND)
 
