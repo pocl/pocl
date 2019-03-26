@@ -64,7 +64,7 @@
 #include <dlfcn.h>
 #endif
 
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
 #endif
 
@@ -83,8 +83,8 @@
  * Uses an existing (cached) one, if available.
  */
 
-#ifdef OCS_AVAILABLE
-int
+#ifdef ENABLE_LLVM
+static int
 llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
               cl_device_id device, _cl_command_node *command, int specialize,
               const char *specialization_suffix)
@@ -993,7 +993,7 @@ pocl_check_kernel_disk_cache (_cl_command_node *command, int specialize)
    * (program.bc), try to compile a new parallel.bc and static binary */
   if (p->binaries[dev_i])
     {
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
       POCL_LOCK (pocl_llvm_codegen_lock);
       int error = llvm_codegen (module_fn, dev_i, k, command->device,
                                 command, specialize, spec_suffix);

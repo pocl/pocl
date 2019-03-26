@@ -128,7 +128,12 @@ endif()
 
 ##################################################################################
 
-option(OCS_AVAILABLE "Online compiler support available to build pocl with. Default is available." ON)
+if(DEFINED OCS_AVAILABLE)
+  message(WARNING "The OCS_AVAILABLE option is deprecated, since it actually meant 'LLVM available', but LLVM is not the only way to get compiler support in a device. Please use ENABLE_LLVM if you want to enable/disable building pocl against LLVM.")
+  set(ENABLE_LLVM ${OCS_AVAILABLE} CACHE BOOL "build against LLVM" FORCE)
+else()
+  option(ENABLE_LLVM "Online compiler support available to build pocl with. Default is available." ON)
+endif()
 
 option(BUILD_SHARED_LIBS "ON=Build shared libs, OFF=static libs" ON)
 
@@ -406,7 +411,7 @@ endif()
 
 ######################################################################################
 
-if (OCS_AVAILABLE)
+if (ENABLE_LLVM)
 
   include(LLVM RESULT_VARIABLE RES)
   if(NOT RES)
@@ -576,7 +581,7 @@ endif()
 
 ######################################################################################
 
-if(UNIX AND OCS_AVAILABLE AND HAVE_DLADDR)
+if(UNIX AND ENABLE_LLVM AND HAVE_DLADDR)
     option(ENABLE_RELOCATION "make libpocl relocatable" ON)
 else()
     message(STATUS "Relocation not available")
@@ -676,12 +681,12 @@ endif()
 
 ######################################################################################
 
-if (OCS_AVAILABLE)
+if (ENABLE_LLVM)
 
   option(SINGLE_LLVM_LIB "When on, tries to link pocl to the single big libLLVM before falling back to LLVM_LIBFILES)." ON)
 
   if (DEFINED STATIC_LLVM)
-    message(AUTHOR_WARNING "STATIC_LLVM option was renamed, it wasn't really ensuring anything was static. Please see the SINGLE_LLVM_LIB option")
+    message(WARNING "STATIC_LLVM option was renamed, it wasn't really ensuring anything was static. Please see the SINGLE_LLVM_LIB option")
   endif()
 
   if(NOT SINGLE_LLVM_LIB)
@@ -706,7 +711,7 @@ endif()
 
 set(SPIRV OFF)
 
-if(OCS_AVAILABLE AND X86 AND (NOT KERNELLIB_HOST_CPU_VARIANTS STREQUAL "distro"))
+if(ENABLE_LLVM AND X86 AND (NOT KERNELLIB_HOST_CPU_VARIANTS STREQUAL "distro"))
   option(ENABLE_SPIR "Enable SPIR support (default ON when available)" ON)
 else()
   set(ENABLE_SPIR OFF CACHE INTERNAL "SPIR enabled" FORCE)
@@ -1227,7 +1232,7 @@ endif()
 
 ##########################################################
 
-if (OCS_AVAILABLE)
+if (ENABLE_LLVM)
   CHECK_ALIGNOF("double16" "typedef double double16  __attribute__((__ext_vector_type__(16)));" ALIGNOF_DOUBLE16)
 else()
   set(ALIGNOF_DOUBLE16 128)
@@ -1447,7 +1452,7 @@ MESSAGE(STATUS "POCL_INSTALL_PUBLIC_LIBDIR: ${POCL_INSTALL_PUBLIC_LIBDIR}")
 
 MESSAGE(STATUS " ")
 
-if (OCS_AVAILABLE)
+if (ENABLE_LLVM)
   MESSAGE(STATUS " ")
   MESSAGE(STATUS "******* LLVM Programs:")
   MESSAGE(STATUS " ")
@@ -1492,7 +1497,7 @@ MESSAGE(STATUS "final KERNEL_CXX_FLAGS: ${KERNEL_CXX_FLAGS}")
 MESSAGE(STATUS "final KERNEL_CL_FLAGS: ${KERNEL_CL_FLAGS}")
 MESSAGE(STATUS "final KERNEL_C_FLAGS: ${KERNEL_C_FLAGS}")
 
-if (OCS_AVAILABLE)
+if (ENABLE_LLVM)
   MESSAGE(STATUS "")
   MESSAGE(STATUS "CLANG_HAS_64B_MATH: ${CLANG_HAS_64B_MATH}")
   MESSAGE(STATUS "CLANG_HAS_128B_MATH: ${CLANG_HAS_128B_MATH}")
@@ -1536,7 +1541,7 @@ if (ENABLE_TCE)
 endif()
 MESSAGE(STATUS "")
 
-if (OCS_AVAILABLE)
+if (ENABLE_LLVM)
 MESSAGE(STATUS "----------- -------------------------------- --------")
 MESSAGE(STATUS "llvm libs libpocl will be linked to (POCL_LLVM_LIBS):")
 MESSAGE(STATUS "${POCL_LLVM_LIBS}")
@@ -1575,7 +1580,7 @@ MESSAGE(STATUS "ENABLE_POCL_BUILDING: ${ENABLE_POCL_BUILDING}")
 MESSAGE(STATUS "INSTALL_OPENCL_HEADERS (Install our headers): ${INSTALL_OPENCL_HEADERS}")
 MESSAGE(STATUS "OCL_DRIVERS (Drivers built): ${OCL_DRIVERS}")
 MESSAGE(STATUS "OCL_TARGETS (Targets built): ${OCL_TARGETS}")
-MESSAGE(STATUS "OCS_AVAILABLE: ${OCS_AVAILABLE}")
+MESSAGE(STATUS "ENABLE_LLVM: ${ENABLE_LLVM}")
 MESSAGE(STATUS "POCL_ICD_ABSOLUTE_PATH: ${POCL_ICD_ABSOLUTE_PATH}")
 MESSAGE(STATUS "POCL_ASSERTS_BUILD: ${POCL_ASSERTS_BUILD}")
 MESSAGE(STATUS "SINGLE_LLVM_LIB: ${SINGLE_LLVM_LIB}")

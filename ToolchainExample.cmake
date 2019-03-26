@@ -8,7 +8,7 @@
 # 3) copy the entire root filesystem of the board somewhere on your host,
      then set CMAKE_FIND_ROOT_PATH below to this path
 # 4) run cmake like this:
-#          cmake -DHOST_DEVICE_BUILD_HASH=<SOME_HASH> -DOCS_AVAILABLE=0
+#          cmake -DHOST_DEVICE_BUILD_HASH=<SOME_HASH> -DENABLE_LLVM=0
 #           -DCMAKE_TOOLCHAIN_FILE=<path-to-this-file>
 #           -DLLC_TRIPLE=<your-triple (e.g.arm-gnueabihf-linux-gnu)
 #           -DLLC_HOST_CPU=<your-cpu (e.g. armv7a)>

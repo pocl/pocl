@@ -55,7 +55,7 @@
 #error Pthread driver requires DL library
 #endif
 
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
 #endif
 

@@ -32,7 +32,7 @@
 
 static void get_binary_sizes(cl_program program, size_t *sizes)
 {
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
   if (program_compile_dynamic_wg_binaries (program) != CL_SUCCESS)
     {
       memset(sizes, 0, program->num_devices * sizeof(size_t));
@@ -53,7 +53,7 @@ static void get_binary_sizes(cl_program program, size_t *sizes)
 
 static void get_binaries(cl_program program, unsigned char **binaries)
 {
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
   if (program_compile_dynamic_wg_binaries (program) != CL_SUCCESS)
     {
       memset(binaries, 0, program->num_devices * sizeof(unsigned char*));

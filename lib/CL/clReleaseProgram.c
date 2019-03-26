@@ -108,7 +108,7 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
       POCL_MEM_FREE(program->build_hash);
       POCL_MEM_FREE(program->compiler_options);
 
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
       if (program->llvm_irs)
         for (i = 0; i < program->num_devices; ++i)
           pocl_free_llvm_irs (program, i);

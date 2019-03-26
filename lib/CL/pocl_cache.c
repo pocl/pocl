@@ -30,7 +30,7 @@
 #include "config.h"
 #include "pocl_build_timestamp.h"
 
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
 #include "kernellib_hash.h"
 #endif
 
@@ -299,7 +299,7 @@ int pocl_cache_append_to_buildlog(cl_program  program,
 
 /******************************************************************************/
 
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
 int
 pocl_cache_write_kernel_parallel_bc (void *bc, cl_program program,
                                      int device_i, cl_kernel kernel,
@@ -529,7 +529,7 @@ pocl_cache_create_program_cachedir(cl_program program,
 
     if (use_kernel_cache)
       {
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
         const char *hash_source = NULL;
         size_t hs_len = 0;
 

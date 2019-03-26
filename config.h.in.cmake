@@ -65,7 +65,7 @@
 
 #cmakedefine HAVE_UTIME
 
-#cmakedefine OCS_AVAILABLE
+#cmakedefine ENABLE_LLVM
 
 /* this is used all over the runtime code */
 #define HOST_CPU_CACHELINE_SIZE @HOST_CPU_CACHELINE_SIZE@
@@ -109,9 +109,6 @@
 #endif
 
 
-
-
-
 #define CMAKE_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
 
 #define LINK_COMMAND "@LINK_COMMAND@"
@@ -121,7 +118,7 @@
 
 
 
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
 
 #define KERNELLIB_HOST_CPU_VARIANTS "@KERNELLIB_HOST_CPU_VARIANTS@"
 

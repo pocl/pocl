@@ -35,7 +35,7 @@
 #else
 #  include "vccompat.hpp"
 #endif
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
 #endif
 #include "pocl_util.h"
@@ -111,7 +111,7 @@ static const char cl_parameters_not_yet_supported_by_clang[] =
     snprintf(program->main_build_log + l, (640 - l), __VA_ARGS__); \
   }
 
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
 cl_int
 program_compile_dynamic_wg_binaries (cl_program program)
 {
@@ -456,7 +456,7 @@ clean_program_on_rebuild (cl_program program)
             {
               POCL_MEM_FREE (program->binaries[i]);
               program->binary_sizes[i] = 0;
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
               if (program->llvm_irs[i])
                 pocl_free_llvm_irs (program, i);
 #endif
@@ -628,7 +628,7 @@ compile_and_link_program(int compile_program,
       /* clCreateProgramWithSource */
       else if (program->source)
         {
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
           if (device->compiler_available == CL_TRUE)
             {
               POCL_MSG_PRINT_INFO ("building from sources for device %d\n",
@@ -654,7 +654,7 @@ compile_and_link_program(int compile_program,
       else if (program->binaries[device_i]
                && (program->pocl_binaries[device_i] == NULL))
         {
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
           /* bitcode is now either plain LLVM IR or SPIR IR */
           int spir_binary = bitcode_is_spir ((char*)program->binaries[device_i],
                                              program->binary_sizes[device_i]);
@@ -705,7 +705,7 @@ compile_and_link_program(int compile_program,
       else if (program->pocl_binaries[device_i])
         {
           POCL_MSG_PRINT_INFO("having a poclbinary for device %d\n", device_i);
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
           if (program->binaries[device_i] == NULL)
             {
               POCL_MSG_WARN (
@@ -721,7 +721,7 @@ compile_and_link_program(int compile_program,
         }
       else if (link_program && (num_input_programs > 0))
         {
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
           /* just link binaries. */
           unsigned char *cur_device_binaries[num_input_programs];
           size_t cur_device_binary_sizes[num_input_programs];
@@ -761,7 +761,7 @@ compile_and_link_program(int compile_program,
                               "build the program\n", device->short_name);
         }
 
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
       /* Read binaries from program.bc to memory */
       if (program->binaries[device_i] == NULL)
         {
@@ -836,7 +836,7 @@ compile_and_link_program(int compile_program,
             }
           break;
         }
-#ifdef OCS_AVAILABLE
+#ifdef ENABLE_LLVM
       if (program->binaries[device_i])
         {
           program->num_kernels
