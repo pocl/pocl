@@ -4,19 +4,10 @@
 #cmakedefine BUILD_BASIC
 #cmakedefine BUILD_PTHREAD
 
-#cmakedefine ENABLE_HOST_CPU_DEVICES
-
 #define BUILDDIR "@BUILDDIR@"
 
 /* "Build with ICD" */
 #cmakedefine BUILD_ICD
-
-#define CLANG "@CLANG@"
-
-#define CLANG_RESOURCE_DIR "@CLANG_RESOURCE_DIR@"
-
-/* clang++ executable */
-#define CLANGXX "@CLANGXX@"
 
 #define CMAKE_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
 
@@ -28,6 +19,8 @@
 #cmakedefine ENABLE_CONFORMANCE
 
 #cmakedefine ENABLE_HWLOC
+
+#cmakedefine ENABLE_HOST_CPU_DEVICES
 
 #cmakedefine ENABLE_POCL_BUILDING
 
@@ -69,11 +62,14 @@
 
 #cmakedefine HAVE_UTIME
 
-#cmakedefine HAVE_HSA_EXT_AMD_H
+#cmakedefine OCS_AVAILABLE
 
-#define AMD_HSA @AMD_HSA@
+/* this is used all over the runtime code */
+#define HOST_CPU_CACHELINE_SIZE @HOST_CPU_CACHELINE_SIZE@
 
-#define HOST  "@HOST@"
+
+
+#ifdef ENABLE_HOST_CPU_DEVICES
 
 #define HOST_AS_FLAGS  "@HOST_AS_FLAGS@"
 
@@ -83,8 +79,6 @@
 
 #cmakedefine HOST_CPU_FORCED
 
-#define HOST_CPU_CACHELINE_SIZE @HOST_CPU_CACHELINE_SIZE@
-
 #define HOST_LD_FLAGS  "@HOST_LD_FLAGS@"
 
 #define HOST_LLC_FLAGS  "@HOST_LLC_FLAGS@"
@@ -93,15 +87,50 @@
 
 #define HOST_DEVICE_BUILD_HASH "@HOST_DEVICE_BUILD_HASH@"
 
+#endif
+
+
+
+#ifdef ENABLE_HSA
+
+#cmakedefine HAVE_HSA_EXT_AMD_H
+
+#define AMD_HSA @AMD_HSA@
+
 #define HSA_DEVICE_EXTENSIONS "@HSA_DEVICE_EXTENSIONS@"
 
 #define HSAIL_ASM "@HSAIL_ASM@"
 
 #define HSAIL_ENABLED @HSAIL_ENABLED@
 
+#endif
+
+
+
+
+
+#define CMAKE_BUILD_TYPE "@CMAKE_BUILD_TYPE@"
+
+#define LINK_COMMAND "@LINK_COMMAND@"
+
+#cmakedefine LINK_WITH_CLANG
+
+
+
+
+
+
+#ifdef OCS_AVAILABLE
+
 #define KERNELLIB_HOST_CPU_VARIANTS "@KERNELLIB_HOST_CPU_VARIANTS@"
 
 #cmakedefine KERNELLIB_HOST_DISTRO_VARIANTS
+
+#define CLANG "@CLANG@"
+
+#define CLANG_RESOURCE_DIR "@CLANG_RESOURCE_DIR@"
+
+#define CLANGXX "@CLANGXX@"
 
 #define LLVM_LLC "@LLVM_LLC@"
 
@@ -140,9 +169,10 @@
 #define LLVM_VERSION "@LLVM_VERSION_FULL@"
 #endif
 
-#define LINK_COMMAND "@LINK_COMMAND@"
 
-#cmakedefine LINK_WITH_CLANG
+#endif
+
+
 
 /* Defined to greatest expected alignment for extended types, in bytes. */
 #define MAX_EXTENDED_ALIGNMENT @MAX_EXTENDED_ALIGNMENT@
@@ -150,8 +180,6 @@
 /* used in lib/CL/devices/basic */
 #define OCL_KERNEL_TARGET  "@OCL_KERNEL_TARGET@"
 #define OCL_KERNEL_TARGET_CPU  "@OCL_KERNEL_TARGET_CPU@"
-
-#cmakedefine OCS_AVAILABLE
 
 #define PACKAGE_VERSION "@PACKAGE_VERSION@"
 
