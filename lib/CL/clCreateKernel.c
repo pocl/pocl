@@ -76,7 +76,7 @@ POname(clCreateKernel)(cl_program program,
       break;
 
   POCL_GOTO_ERROR_ON ((i >= program->num_kernels), CL_INVALID_KERNEL_NAME,
-                      "Can't find a the kernel with name %s in this program\n",
+                      "Can't find a kernel with name %s in this program\n",
                       kernel_name);
 
   kernel->meta = &program->kernel_meta[i];
