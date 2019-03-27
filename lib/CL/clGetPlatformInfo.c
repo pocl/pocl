@@ -23,6 +23,98 @@
 
 #include "pocl_util.h"
 
+static const char *pocl_version
+    = "OpenCL " POCL_CL_VERSION " pocl " PACKAGE_VERSION
+
+#if defined(_WIN32) || defined(__MINGW32__)
+   #if defined(_WIN64) || defined(__MINGW64__)
+      "  Windows x86-64"
+   #else
+      "  Windows x86"
+   #endif
+#elif defined(__ANDROID__)
+      "  Android"
+#elif defined(__APPLE__)
+      "  Apple"
+#elif defined(__linux__)
+      "  Linux"
+#elif defined(__unix__) // all unices not caught above
+      "  Unix"
+#else
+      "  (Unknown OS)"
+#endif
+      ", " CMAKE_BUILD_TYPE
+#ifdef POCL_ASSERTS_BUILD
+      "+Asserts"
+#endif
+
+#ifdef ENABLE_RELOCATION
+      ", RELOC"
+#endif
+
+#ifdef ENABLE_SPIR
+      ", SPIR"
+#endif
+
+#ifdef ENABLE_SPIRV
+      ", SPIR-V"
+#endif
+
+#ifdef ENABLE_LLVM
+      ", LLVM " LLVM_VERSION
+#ifdef LLVM_BUILD_MODE_DEBUG
+      " - debug"
+#endif
+
+#ifdef ENABLE_SLEEF
+      ", SLEEF"
+#endif
+
+#ifndef _CL_DISABLE_HALF
+      ", FP16"
+#endif
+
+#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
+      ", DISTRO"
+#endif
+
+#else
+      ", without LLVM"
+#endif
+
+#ifdef ENABLE_ASAN
+      ", ASAN"
+#endif
+#ifdef ENABLE_TSAN
+      ", TSAN"
+#endif
+#ifdef ENABLE_LSAN
+      ", LSAN"
+#endif
+#ifdef ENABLE_UBSAN
+      ", UBSAN"
+#endif
+
+#ifdef BUILD_CUDA
+      ", CUDA"
+#endif
+
+#ifdef BUILD_HSA
+      ", HSA"
+#endif
+
+#ifdef TCE_AVAILABLE
+      ", TCE"
+#endif
+
+#ifdef HAVE_LTTNG_UST
+      ", LTTNG"
+#endif
+
+#ifdef POCL_DEBUG_MESSAGES
+      ", POCL_DEBUG"
+#endif
+    ;
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clGetPlatformInfo)(cl_platform_id   platform,
@@ -31,118 +123,24 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
                   void *           param_value,
                   size_t *         param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
-  const char *ret;
-  size_t retlen;
   cl_platform_id tmp_platform;
 
-  // TODO: if we don't have ICD in use, platform==NULL should be valid & point to pocl
-  POCL_RETURN_ERROR_COND((platform == NULL), CL_INVALID_PLATFORM);
+  POCL_RETURN_ERROR_COND ((platform == NULL), CL_INVALID_PLATFORM);
 
-  POname(clGetPlatformIDs)(1, &tmp_platform, NULL);
-  POCL_RETURN_ERROR_ON((platform != tmp_platform), CL_INVALID_PLATFORM,
-    "Can only return info about the POCL platform\n");
+  POname (clGetPlatformIDs) (1, &tmp_platform, NULL);
+  POCL_RETURN_ERROR_ON ((platform != tmp_platform), CL_INVALID_PLATFORM,
+                        "Can only return info about the POCL platform\n");
 
   switch (param_name)
-  {
+    {
     case CL_PLATFORM_PROFILE:
       // TODO: figure this out depending on the native execution host.
       // assume FULL_PROFILE for now.
-      POCL_RETURN_GETINFO_STR("FULL_PROFILE");
+      POCL_RETURN_GETINFO_STR ("FULL_PROFILE");
 
     case CL_PLATFORM_VERSION:
 
-      POCL_RETURN_GETINFO_STR ("OpenCL " POCL_CL_VERSION
-                               " pocl " PACKAGE_VERSION
-
-#if defined(_WIN32) || defined(__MINGW32__)
-   #if defined(_WIN64) || defined(__MINGW64__)
-                               "  Windows x86-64"
-   #else
-                               "  Windows x86"
-   #endif
-#elif defined(__ANDROID__)
-                               "  Android"
-#elif defined(__APPLE__)
-                               "  Apple"
-#elif defined(__linux__)
-                               "  Linux"
-#elif defined(__unix__) // all unices not caught above
-                               "  Unix"
-#else
-                               "  (Unknown OS)"
-#endif
-                               ", " CMAKE_BUILD_TYPE
-#ifdef POCL_ASSERTS_BUILD
-                               "+Asserts"
-#endif
-
-#ifdef ENABLE_RELOCATION
-                               ", RELOC"
-#endif
-
-#ifdef ENABLE_SPIR
-                               ", SPIR"
-#endif
-
-#ifdef ENABLE_SPIRV
-                               ", SPIR-V"
-#endif
-
-#ifdef ENABLE_LLVM
-                               ", LLVM " LLVM_VERSION
-#ifdef LLVM_BUILD_MODE_DEBUG
-                               " - debug"
-#endif
-
-#ifdef ENABLE_SLEEF
-                               ", SLEEF"
-#endif
-
-#ifndef _CL_DISABLE_HALF
-                               ", FP16"
-#endif
-
-#ifdef KERNELLIB_HOST_DISTRO_VARIANTS
-                               ", DISTRO"
-#endif
-
-#else
-                               ", without LLVM"
-#endif
-
-#ifdef ENABLE_ASAN
-                               ", ASAN"
-#endif
-#ifdef ENABLE_TSAN
-                               ", TSAN"
-#endif
-#ifdef ENABLE_LSAN
-                               ", LSAN"
-#endif
-#ifdef ENABLE_UBSAN
-                               ", UBSAN"
-#endif
-
-#ifdef BUILD_CUDA
-                               ", CUDA"
-#endif
-
-#ifdef BUILD_HSA
-                               ", HSA"
-#endif
-
-#ifdef TCE_AVAILABLE
-                               ", TCE"
-#endif
-
-#ifdef HAVE_LTTNG_UST
-                               ", LTTNG"
-#endif
-
-#ifdef POCL_DEBUG_MESSAGES
-                               ", POCL_DEBUG"
-#endif
-      );
+      POCL_RETURN_GETINFO_STR (pocl_version);
 
     case CL_PLATFORM_NAME:
       POCL_RETURN_GETINFO_STR("Portable Computing Language");
@@ -165,21 +163,5 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
     default:
       return CL_INVALID_VALUE;
   }
-
-  // the OpenCL API docs *seem* to count the trailing NULL
-  retlen = strlen(ret) + 1;
-
-  if (param_value != NULL)
-  {
-    if (param_value_size < retlen)
-      return CL_INVALID_VALUE;
-
-    memcpy(param_value, ret, retlen);
-  }
-
-  if (param_value_size_ret != NULL)
-    *param_value_size_ret = retlen;
-
-  return CL_SUCCESS;
 }
 POsym(clGetPlatformInfo)

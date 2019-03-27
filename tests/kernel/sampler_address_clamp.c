@@ -21,6 +21,7 @@ int main(int argc, char **argv)
   cl_command_queue queue = NULL;
   cl_program program = NULL;
   cl_kernel kernel = NULL;
+  cl_mem image = NULL;
   cl_int result;
   int retval = -1;
 
@@ -87,8 +88,8 @@ int main(int argc, char **argv)
 
   /* Create image */
 
-  cl_mem image = clCreateImage (context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
-                                &image_format, &image_desc, imageData, &result);
+  image = clCreateImage (context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+                         &image_format, &image_desc, imageData, &result);
   if (result != CL_SUCCESS)
     {
       puts("image creation failed\n");

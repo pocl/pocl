@@ -114,18 +114,14 @@ POCL_EXPORT
 
     #define POCL_DEBUGGING_ON (pocl_debug_messages_filter)
 
-    #if __GNUC__ >= 2
-    #define __func__ __PRETTY_FUNCTION__
-    #else
-    #define __func__ __FUNCTION__
-    #endif
-
         #define POCL_DEBUG_HEADER(FILTER, FILTER_TYPE) \
             pocl_debug_print_header (__func__, __LINE__, #FILTER, FILTER_TYPE);
+
 POCL_EXPORT
-        extern void pocl_debug_output_lock ();
+        extern void pocl_debug_output_lock (void);
 POCL_EXPORT
-        extern void pocl_debug_output_unlock ();
+        extern void pocl_debug_output_unlock (void);
+POCL_EXPORT
         extern void pocl_debug_messages_setup (const char *debug);
 POCL_EXPORT
         extern void pocl_debug_print_header (const char * func, unsigned line,

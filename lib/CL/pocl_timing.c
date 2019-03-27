@@ -90,6 +90,7 @@ uint64_t pocl_gettimemono_ns() {
 
 #elif defined(_WIN32)
   FILETIME ft;
+  uint64_t res = 0;
   GetSystemTimeAsFileTime(&ft);
   res |= ft.dwHighDateTime;
   res <<= 32;
@@ -141,15 +142,20 @@ int pocl_gettimereal(int *year, int *mon, int *day, int *hour, int *min, int *se
   return 0;
 
 #elif defined(_WIN32)
-  FILETIME ft;
-  GetSystemTimeAsFileTime(&ft);
-  res |= ft.dwHighDateTime;
-  res <<= 32;
-  res |= ft.dwLowDateTime;
-  res -= 11644473600000000Ui64;
-  res /= 10;
-  // TODO finish this
-  return 1;
+  SYSTEMTIME st;
+  FILETIME t;
+  GetSystemTimeAsFileTime (&t);
+  FileTimeToSystemTime (&t, &st);
+  uint64_t st_nanosec = (t.dwLowDateTime % 10000000) * 100;
+
+  *year = (int)st.wYear;
+  *mon = (int)st.wMonth;
+  *day = (int)st.wDay;
+  *hour = (int)st.wHour;
+  *min = (int)st.wMinute;
+  *sec = (int)st.wSecond;
+  *nanosec = (long)st_nanosec;
+  return 0;
 #else
 #error Unknown system variant
 #endif

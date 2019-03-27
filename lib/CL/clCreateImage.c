@@ -68,7 +68,8 @@ CL_API_SUFFIX__VERSION_1_2
      * the minimum maximum image dimensions described in the table of allowed
      * values for param_name for clGetDeviceInfo FOR ALL DEVICES IN CONTEXT.
      */
-    device_image_support = calloc (context->num_devices, sizeof (int));
+    device_image_support = (int *)calloc (context->num_devices, sizeof (int));
+
     for (i = 0; i < context->num_devices; i++)
       {
         cl_device_id dev = context->devices[i];

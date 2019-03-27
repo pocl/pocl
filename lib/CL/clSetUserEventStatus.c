@@ -31,9 +31,9 @@ CL_API_SUFFIX__VERSION_1_1
 
   POCL_LOCK_OBJ (event);
   pocl_event_updated (event, execution_status);
-  pocl_user_event_data *p = event->data;
+  pocl_user_event_data *p = (pocl_user_event_data *)event->data;
   if (execution_status <= CL_COMPLETE)
-    pthread_cond_broadcast (&p->wakeup_cond);
+    POCL_BROADCAST_COND (p->wakeup_cond);
 
 ERROR:
   POCL_UNLOCK_OBJ (event);

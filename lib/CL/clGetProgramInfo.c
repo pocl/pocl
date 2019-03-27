@@ -106,7 +106,8 @@ POname(clGetProgramInfo)(cl_program program,
       POCL_RETURN_ERROR_COND(program->build_status != CL_BUILD_SUCCESS,
                              CL_INVALID_PROGRAM);
       size_t const value_size = sizeof(size_t) * program->num_devices;
-      POCL_RETURN_GETINFO_INNER(value_size, get_binary_sizes(program, param_value));
+      POCL_RETURN_GETINFO_INNER (
+          value_size, get_binary_sizes (program, (size_t *)param_value));
     }
 
   case CL_PROGRAM_BINARIES:
@@ -114,7 +115,8 @@ POname(clGetProgramInfo)(cl_program program,
       POCL_RETURN_ERROR_COND(program->build_status != CL_BUILD_SUCCESS,
                              CL_INVALID_PROGRAM);
       size_t const value_size = sizeof(unsigned char *) * program->num_devices;
-      POCL_RETURN_GETINFO_INNER(value_size, get_binaries(program, param_value));
+      POCL_RETURN_GETINFO_INNER (
+          value_size, get_binaries (program, (unsigned char **)param_value));
     }
 
   case CL_PROGRAM_IL:
@@ -203,7 +205,9 @@ POname(clGetProgramInfo)(cl_program program,
           for (i = 0; i < num_kernels; ++i)
             {
               if (i == 0)
-                strcpy (param_value, program->kernel_meta[i].name); /* copy including NULL */
+                strcpy (
+                    (char *)param_value,
+                    program->kernel_meta[i].name); /* copy including NULL */
               else
                 strcat ((char*)param_value, program->kernel_meta[i].name);
               if (i != num_kernels - 1)

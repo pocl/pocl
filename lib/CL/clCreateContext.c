@@ -117,7 +117,7 @@ int context_set_properties(cl_context                    context,
 }
 
 unsigned cl_context_count = 0;
-pocl_lock_t pocl_context_handling_lock = POCL_LOCK_INITIALIZER;
+pocl_lock_t pocl_context_handling_lock;
 
 CL_API_ENTRY cl_context CL_API_CALL
 POname(clCreateContext)(const cl_context_properties * properties,

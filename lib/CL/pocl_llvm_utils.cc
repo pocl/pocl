@@ -235,9 +235,14 @@ llvm::LLVMContext &GlobalContext() {
 /* The LLVM API interface functions are not at the moment not thread safe,
  * Pocl needs to ensure only one thread is using this layer at the time.
  */
-static pocl_lock_t kernelCompilerLock = POCL_LOCK_INITIALIZER;
+static pocl_lock_t kernelCompilerLock;
+static int kernelCompilerLockInitialized = 0;
 
 PoclCompilerMutexGuard::PoclCompilerMutexGuard(void *unused) {
+  if (kernelCompilerLockInitialized == 0) {
+    POCL_INIT_LOCK(kernelCompilerLock);
+    kernelCompilerLockInitialized = 1;
+  }
   POCL_LOCK(kernelCompilerLock);
 }
 

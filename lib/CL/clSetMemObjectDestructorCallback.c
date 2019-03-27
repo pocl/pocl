@@ -10,7 +10,8 @@ POname(clSetMemObjectDestructorCallback)(  cl_mem  memobj ,
   POCL_RETURN_ERROR_COND((memobj == NULL), CL_INVALID_MEM_OBJECT);
   POCL_RETURN_ERROR_COND((pfn_notify == NULL), CL_INVALID_VALUE);
 
-  callback = malloc (sizeof (mem_destructor_callback_t));
+  callback = (mem_destructor_callback_t *)malloc (
+      sizeof (mem_destructor_callback_t));
   if (callback == NULL)
     return CL_OUT_OF_HOST_MEMORY;
 

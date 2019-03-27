@@ -43,9 +43,11 @@
 #endif
 
 #include "common.h"
-#include "pocl_runtime_config.h"
+#include "devices.h"
+#include "pocl_cache.h"
 #include "pocl_debug.h"
 #include "pocl_runtime_config.h"
+#include "pocl_shared.h"
 #include "pocl_tracing.h"
 
 #ifdef ENABLE_LLVM
@@ -141,6 +143,9 @@ char pocl_device_types[POCL_NUM_DEVICE_TYPES][30] = {
 };
 
 static struct pocl_device_ops pocl_device_ops[POCL_NUM_DEVICE_TYPES];
+
+extern pocl_lock_t pocl_runtime_config_lock;
+extern pocl_lock_t pocl_context_handling_lock;
 
 // first setup
 static unsigned first_init_done = 0;
@@ -529,6 +534,11 @@ pocl_init_devices ()
         }
       errcode = pocl_num_devices ? CL_SUCCESS : CL_DEVICE_NOT_FOUND;
       goto ERROR;
+    }
+  else
+    {
+      POCL_INIT_LOCK (pocl_runtime_config_lock);
+      POCL_INIT_LOCK (pocl_context_handling_lock);
     }
 
   /* first time initialization */

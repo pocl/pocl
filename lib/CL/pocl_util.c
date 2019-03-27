@@ -239,6 +239,13 @@ pocl_size_ceil2_64 (uint64_t x)
   return ++x;
 }
 
+#if defined(WIN32) || defined(HAVE_POSIX_MEMALIGN) || defined(__ANDROID__)    \
+    || (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L))
+#define HAVE_ALIGNED_ALLOC
+#else
+#error aligned malloc unavailable
+#endif
+
 static void*
 pocl_memalign_alloc(size_t align_width, size_t size)
 {
@@ -404,7 +411,7 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
 
       if (num_buffers > 0)
         {
-          (*event)->mem_objs = malloc (num_buffers * sizeof(cl_mem));
+          (*event)->mem_objs = (cl_mem *)malloc (num_buffers * sizeof (cl_mem));
           memcpy ((*event)->mem_objs, buffers, num_buffers * sizeof(cl_mem));
         }
       (*event)->status = CL_QUEUED;
@@ -879,7 +886,7 @@ pocl_real_dev (const cl_device_id dev)
 cl_device_id * pocl_unique_device_list(const cl_device_id * in, cl_uint num, cl_uint *real)
 {
   cl_uint real_num = num;
-  cl_device_id * out = calloc(num, sizeof(cl_device_id));
+  cl_device_id *out = (cl_device_id *)calloc (num, sizeof (cl_device_id));
   if (!out)
     return NULL;
 
@@ -921,7 +928,8 @@ image_format_union (const cl_image_format *dev_formats,
   if ((*num_context_formats == 0) || (*context_formats == NULL))
     {
       // alloc & copy
-      *context_formats = malloc (sizeof (cl_image_format) * num_dev_formats);
+      *context_formats = (cl_image_format *)malloc (sizeof (cl_image_format)
+                                                    * num_dev_formats);
       memcpy (*context_formats, dev_formats,
               sizeof (cl_image_format) * num_dev_formats);
       *num_context_formats = num_dev_formats;
@@ -933,7 +941,7 @@ image_format_union (const cl_image_format *dev_formats,
       cl_uint ncf = *num_context_formats;
       size_t size = sizeof (cl_image_format) * (num_dev_formats + ncf);
       cl_image_format *ctf
-          = realloc (*context_formats, size );
+          = (cl_image_format *)realloc (*context_formats, size);
       assert (ctf);
       for (i = 0; i < num_dev_formats; ++i)
         {

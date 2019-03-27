@@ -113,8 +113,10 @@ poclu_get_multiple_devices (cl_platform_id *platform, cl_context *context,
   if (err != CL_SUCCESS)
     return err;
 
-  cl_device_id *devs = calloc (*num_devices, sizeof (cl_device_id));
-  cl_command_queue *ques = calloc (*num_devices, sizeof (cl_command_queue));
+  cl_device_id *devs
+      = (cl_device_id *)calloc (*num_devices, sizeof (cl_device_id));
+  cl_command_queue *ques
+      = (cl_command_queue *)calloc (*num_devices, sizeof (cl_command_queue));
 
   err = clGetDeviceIDs (*platform, CL_DEVICE_TYPE_ALL, *num_devices, devs,
                         NULL);

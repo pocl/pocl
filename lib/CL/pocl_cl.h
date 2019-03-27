@@ -35,12 +35,18 @@
 #endif
 /* To get adaptive mutex type */
 #ifndef __USE_GNU
-#define __USE_GNU
+  #define __USE_GNU
 #endif
+
 #include <pthread.h>
 #ifdef HAVE_CLOCK_GETTIME
-#include <time.h>
+  #include <time.h>
 #endif
+
+typedef pthread_mutex_t pocl_lock_t;
+typedef pthread_cond_t pocl_cond_t;
+typedef pthread_t pocl_thread_t;
+#define POCL_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
 
 #ifdef BUILD_ICD
 #  include "pocl_icd.h"
@@ -69,12 +75,20 @@
 #define POCL_ATOMIC_CAS(ptr, oldval, newval)                                  \
   __sync_val_compare_and_swap (ptr, oldval, newval)
 
+#elif defined(_WIN32)
+#define POCL_ATOMIC_INC(x) InterlockedIncrement64 (&x)
+#define POCL_ATOMIC_DEC(x) InterlockedDecrement64 (&x)
+#define POCL_ATOMIC_CAS(ptr, oldval, newval)                                  \
+  InterlockedCompareExchange64 (ptr, newval, oldval)
 #else
 #error Need atomic_inc() builtin for this compiler
 #endif
 
-typedef pthread_mutex_t pocl_lock_t;
-#define POCL_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
+#ifdef __linux__
+#define ALIGN_CACHE(x) x __attribute__ ((aligned (HOST_CPU_CACHELINE_SIZE)))
+#else
+#define ALIGN_CACHE(x) x
+#endif
 
 /* Generic functionality for handling different types of 
    OpenCL (host) objects. */
@@ -116,6 +130,7 @@ typedef pthread_mutex_t pocl_lock_t;
 #define POCL_FAST_LOCK_T pthread_mutex_t
 #define POCL_FAST_LOCK(l) POCL_LOCK(l)
 #define POCL_FAST_UNLOCK(l) POCL_UNLOCK(l)
+
 #ifdef PTHREAD_ADAPTIVE_MUTEX_INITIALIZER_NP
   #define POCL_FAST_INIT(l) \
     do { \
@@ -127,11 +142,25 @@ typedef pthread_mutex_t pocl_lock_t;
       pthread_mutexattr_destroy(&attrs);\
     } while (0)
 #else
-  #define POCL_FAST_INIT(l) pthread_mutex_init(&l, NULL);
+#define POCL_FAST_INIT(l) POCL_INIT_LOCK (&l, NULL)
 #endif
+
 #define POCL_FAST_DESTROY(l) POCL_DESTROY_LOCK(l)
 
+#define POCL_INIT_COND(c) pthread_cond_init (&c, NULL)
+#define POCL_DESTROY_COND(c) pthread_cond_destroy (&c)
+#define POCL_SIGNAL_COND(c) pthread_cond_signal (&c)
+#define POCL_BROADCAST_COND(c) pthread_cond_broadcast (&c)
+#define POCL_WAIT_COND(c, m) pthread_cond_wait (&c, &m)
+#define POCL_TIMEDWAIT_COND(c, m, t) pthread_cond_timedwait (&c, &m, &t)
 
+#define POCL_CREATE_THREAD(thr, func, arg)                                    \
+  pthread_create (&thr, NULL, func, arg)
+#define POCL_JOIN_THREAD(thr) pthread_join (thr, NULL)
+#define POCL_JOIN_THREAD2(thr, res_ptr) pthread_join (thr, res_ptr)
+#define POCL_EXIT_THREAD(res) pthread_exit (res)
+
+//############################################################################
 
 #define POCL_LOCK_OBJ(__OBJ__)                                                \
   do                                                                          \
@@ -216,9 +245,6 @@ extern uint64_t last_object_id;
   uint64_t id;                                                                \
   pocl_lock_t pocl_lock;                                                      \
   int pocl_refcount
-
-#define POCL_OBJECT_INIT \
-  POCL_LOCK_INITIALIZER, 0
 
 #ifdef __APPLE__
 /* Note: OSX doesn't support aliases because it doesn't use ELF */
@@ -1239,7 +1265,7 @@ struct _cl_kernel {
 typedef struct event_callback_item event_callback_item;
 struct event_callback_item
 {
-  void (*callback_function) (cl_event, cl_int, void*);
+  void(CL_CALLBACK *callback_function) (cl_event, cl_int, void *);
   void *user_data;
   cl_int trigger_status;
   struct event_callback_item *next;
@@ -1303,7 +1329,7 @@ struct _cl_event {
 
 typedef struct _pocl_user_event_data
 {
-  pthread_cond_t wakeup_cond;
+  pocl_cond_t wakeup_cond;
 } pocl_user_event_data;
 
 typedef struct _cl_sampler cl_sampler_t;

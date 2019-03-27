@@ -74,22 +74,22 @@ POname(clCreateKernel)(cl_program program,
                       kernel_name);
 
   kernel->meta = &program->kernel_meta[i];
-  kernel->data = calloc (program->num_devices, sizeof (void *));
+  kernel->data = (void **)calloc (program->num_devices, sizeof (void *));
   kernel->name = kernel->meta->name;
   kernel->context = program->context;
   kernel->program = program;
 
-  kernel->dyn_arguments
-      = calloc ((kernel->meta->num_args), sizeof (struct pocl_argument));
+  kernel->dyn_arguments = (pocl_argument *)calloc (
+      (kernel->meta->num_args), sizeof (struct pocl_argument));
   POCL_GOTO_ERROR_COND ((kernel->dyn_arguments == NULL),
                         CL_OUT_OF_HOST_MEMORY);
 
   if (kernel->meta->total_argument_storage_size)
     {
       kernel->dyn_argument_storage
-          = calloc (1, kernel->meta->total_argument_storage_size);
+          = (char *)calloc (1, kernel->meta->total_argument_storage_size);
       kernel->dyn_argument_offsets
-          = malloc (kernel->meta->num_args * sizeof (void *));
+          = (void **)malloc (kernel->meta->num_args * sizeof (void *));
 
       size_t offset = 0;
       for (i = 0; i < kernel->meta->num_args; ++i)

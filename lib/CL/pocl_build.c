@@ -493,8 +493,8 @@ setup_kernel_metadata (cl_program program, cl_uint num_devices,
               = pocl_binary_get_kernel_count (program, device_i);
           if (program->num_kernels)
             {
-              program->kernel_meta = calloc (program->num_kernels,
-                                             sizeof (pocl_kernel_metadata_t));
+              program->kernel_meta = (pocl_kernel_metadata_t *)calloc (
+                  program->num_kernels, sizeof (pocl_kernel_metadata_t));
               pocl_binary_get_kernels_metadata (program, device_i);
             }
           setup_successful = 1;
@@ -555,8 +555,8 @@ setup_device_hashes (cl_program program, cl_uint num_devices,
   assert (program->kernel_meta);
   for (i = 0; i < program->num_kernels; ++i)
     {
-      program->kernel_meta[i].build_hash
-          = calloc (program->num_devices, sizeof (pocl_kernel_hash_t));
+      program->kernel_meta[i].build_hash = (pocl_kernel_hash_t *)calloc (
+          program->num_devices, sizeof (pocl_kernel_hash_t));
     }
 
   for (device_i = 0; device_i < program->num_devices; device_i++)

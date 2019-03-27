@@ -1,7 +1,6 @@
 #include "config.h"
 
 #include <assert.h>
-#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
@@ -63,8 +62,8 @@ pocl_driver_copy (void *data, pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,
                   pocl_mem_identifier *src_mem_id, cl_mem src_buf,
                   size_t dst_offset, size_t src_offset, size_t size)
 {
-  char *__restrict__ src_ptr = src_mem_id->mem_ptr;
-  char *__restrict__ dst_ptr = dst_mem_id->mem_ptr;
+  char *__restrict__ src_ptr = (char *)src_mem_id->mem_ptr;
+  char *__restrict__ dst_ptr = (char *)dst_mem_id->mem_ptr;
   if ((src_ptr + src_offset) == (dst_ptr + dst_offset))
     return;
 

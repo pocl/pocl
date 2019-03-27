@@ -20,9 +20,10 @@ POname(clCreateUserEvent)(cl_context     context ,
       event->pocl_refcount = 1;
       event->status = CL_SUBMITTED;
       event->context = context;
-      pocl_user_event_data *p = malloc (sizeof (pocl_user_event_data));
+      pocl_user_event_data *p
+          = (pocl_user_event_data *)malloc (sizeof (pocl_user_event_data));
       assert (p);
-      pthread_cond_init (&p->wakeup_cond, NULL);
+      POCL_INIT_COND (p->wakeup_cond);
       event->data = p;
     }
 

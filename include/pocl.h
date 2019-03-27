@@ -130,7 +130,7 @@ typedef struct
 {
   void *args;
   size_t cb_args;
-  void (*user_func)(void *);
+  void(CL_CALLBACK *user_func) (void *);
 } _cl_command_native;
 
 // clEnqueueReadBuffer
@@ -294,7 +294,7 @@ typedef struct
 typedef struct
 {
   void* data;
-  void* queue;
+  cl_command_queue queue;
   unsigned  num_svm_pointers;
   void  **svm_pointers;
   void (CL_CALLBACK  *pfn_free_func) ( cl_command_queue queue,

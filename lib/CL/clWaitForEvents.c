@@ -66,14 +66,13 @@ POname(clWaitForEvents)(cl_uint              num_events ,
     {
       cl_event e = event_list[event_i];
       POCL_LOCK_OBJ (e);
-      pocl_user_event_data *p = e->data;
+      pocl_user_event_data *p = (pocl_user_event_data *)e->data;
       if (e->command_type == CL_COMMAND_USER)
         {
           while (e->status > CL_COMPLETE)
             {
               time_to_wait.tv_sec = time (NULL) + 1;
-              pthread_cond_timedwait (&p->wakeup_cond, &e->pocl_lock,
-                                      &time_to_wait);
+              POCL_TIMEDWAIT_COND (p->wakeup_cond, e->pocl_lock, time_to_wait);
             }
           if (e->status < 0)
             ret = CL_EXEC_STATUS_ERROR_FOR_EVENTS_IN_WAIT_LIST;

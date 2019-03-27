@@ -29,13 +29,6 @@
 #include <string.h>
 #include "pocl_cl.h"
 
-#if defined(HAVE_POSIX_MEMALIGN) || defined(__ANDROID__) \
-     || (defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L))
-#define HAVE_ALIGNED_ALLOC
-#else
-#error aligned malloc unavailable
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -53,13 +46,13 @@ unsigned pocl_save_rm ();
 POCL_EXPORT
 void pocl_set_default_rm ();
 
+
 /* sets the flush-denorms-to-zero flag on the CPU, if supported */
 POCL_EXPORT
 void pocl_set_ftz (unsigned ftz);
-
 /* saves / restores cpu flags*/
 POCL_EXPORT
-unsigned pocl_save_ftz ();
+unsigned pocl_save_ftz (void);
 POCL_EXPORT
 void pocl_restore_ftz (unsigned ftz);
 

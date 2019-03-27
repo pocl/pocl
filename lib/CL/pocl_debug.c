@@ -1,37 +1,35 @@
-#include "pocl_debug.h"
-#include "pocl_timing.h"
-
 #include <string.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <pthread.h>
-#include <unistd.h>
 #include <stdarg.h>
+
+#include "pocl_cl.h"
+#include "pocl_debug.h"
+#include "pocl_timing.h"
 
 #ifdef POCL_DEBUG_MESSAGES
 
 uint64_t pocl_debug_messages_filter; /* Bitfield */
 int pocl_stderr_is_a_tty;
 
-static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-  #if !defined(_MSC_VER) && !defined(__MINGW32__)
+static pocl_lock_t console_mutex;
 
     void
-    pocl_debug_output_lock ()
+    pocl_debug_output_lock (void)
     {
-      pthread_mutex_lock (&console_mutex);
+      POCL_LOCK (console_mutex);
     }
 
     void
-    pocl_debug_output_unlock ()
+    pocl_debug_output_unlock (void)
     {
-      pthread_mutex_unlock (&console_mutex);
+      POCL_UNLOCK (console_mutex);
     }
 
     void
     pocl_debug_messages_setup (const char* debug)
     {
+      POCL_INIT_LOCK (console_mutex);
       pocl_debug_messages_filter = 0;
       if (strlen (debug) == 1)
         {
@@ -199,35 +197,6 @@ static pthread_mutex_t console_mutex = PTHREAD_MUTEX_INITIALIZER;
       *finish = pocl_gettimemono_ns();
       pocl_debug_print_duration(func, line, msg, (*finish - *start) );
     }
-
-  #else
-
-/* Doesn't work, haven't been able to get it working.
- * Needs someone with experience in Win programming. */
-
-    #include <windows.h>
-    #include <stdio.h>
-
-    void pocl_debug_print_header(const char* func, unsigned line) {
-        SYSTEMTIME st;
-        FILETIME t;
-        unsigned long st_nanosec;
-        GetSystemTimeAsFileTime(&t);
-        FileTimeToSystemTime(&t, &st);
-        st_nanosec = (t.dwLowDateTime % 10000000) * 100;
-
-        fprintf(stderr,
-            "[%04u-%02u-%02u %02u:%02u:%02u.%09lu] POCL: "
-            "in fn %s at line %u:\n",
-            (unsigned int)st.wYear, (unsigned int)st.wMonth,
-            (unsigned int)st.wDay, (unsigned int)st.wHour,
-            (unsigned int)st.wMinute, (unsigned int)st.wSecond,
-            (unsigned long)st_nanosec, func, line);
-    }
-
-
-  #endif
-
 
 
 #endif

@@ -54,7 +54,7 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  new_mem_objects = calloc (sizeof (cl_mem), num_mem_objects);
+  new_mem_objects = (cl_mem *)calloc (sizeof (cl_mem), num_mem_objects);
 
   for (i = 0; i < num_mem_objects; ++i)
     {
