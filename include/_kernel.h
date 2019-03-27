@@ -241,6 +241,25 @@
 
 #if (__clang_major__ >= 4)
 
+#ifdef CL_DEVICE_ADDRESS_BITS
+
+/* If we wish to override the Clang set __SIZE_TYPE__ for this target,
+   let's do it here so the opencl-c.h sets size_t to the wanted type. */
+
+#ifdef __SIZE_TYPE__
+#undef __SIZE_TYPE__
+#endif
+
+#if CL_DEVICE_ADDRESS_BITS == 32
+#define __SIZE_TYPE__ uint
+#elif CL_DEVICE_ADDRESS_BITS == 64
+#define __SIZE_TYPE__ ulong
+#else
+#error Unsupported CL_DEVICE_ADDRESS_BITS value.
+#endif
+
+#endif
+
 #include "_clang_opencl.h"
 
 #else
