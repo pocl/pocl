@@ -17,6 +17,11 @@ the version control system:</p>
 
 <ul>
 
+<li><b>Version 1.3:</b> Supports LLVM 7.0 and 8.0.
+            <a href="https://github.com/pocl/pocl/archive/v1.3.tar.gz">pocl-1.3.tar.gz (1.4M)</a>,
+            <a href="/downloads/CHANGES">change log</a>,
+            <a href="pocl-1.3.html">release notes</a></li>
+
 <li><b>Version 1.2:</b> Supports LLVM 6.0 and 7.0.
             <a href="https://github.com/pocl/pocl/archive/v1.2.tar.gz">pocl-1.2.tar.gz (1.6M)</a>,
             <a href="/downloads/CHANGES">change log</a>,
