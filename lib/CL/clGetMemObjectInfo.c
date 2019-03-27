@@ -32,7 +32,8 @@ POname(clGetMemObjectInfo)(cl_mem      memobj ,
                    void *      param_value ,
                    size_t *    param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
-  POCL_RETURN_ERROR_COND((memobj == NULL), CL_INVALID_MEM_OBJECT);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (memobj)),
+                          CL_INVALID_MEM_OBJECT);
 
   switch (param_name) {
   case CL_MEM_TYPE:

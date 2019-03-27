@@ -17,10 +17,14 @@ POname(clEnqueueCopyImage)(cl_command_queue      command_queue ,
   cl_device_id device;
   unsigned i;
 
-  POCL_RETURN_ERROR_COND ((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                          CL_INVALID_COMMAND_QUEUE);
 
-  POCL_RETURN_ERROR_COND ((src_image == NULL), CL_INVALID_MEM_OBJECT);
-  POCL_RETURN_ERROR_COND ((dst_image == NULL), CL_INVALID_MEM_OBJECT);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (src_image)),
+                          CL_INVALID_MEM_OBJECT);
+
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (dst_image)),
+                          CL_INVALID_MEM_OBJECT);
 
   /* src_image, dst_image: Can be 1D, 2D, 3D image or a 1D, 2D image array
    * objects allowing us to perform the following actions */

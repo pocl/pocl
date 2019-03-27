@@ -35,9 +35,9 @@ POname(clCreateCommandQueue)(cl_context context,
   int errcode;
   cl_bool found = CL_FALSE;
 
-  POCL_GOTO_ERROR_COND ((context == NULL), CL_INVALID_CONTEXT);
+  POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (context)), CL_INVALID_CONTEXT);
 
-  POCL_GOTO_ERROR_COND ((device == NULL), CL_INVALID_DEVICE);
+  POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (device)), CL_INVALID_DEVICE);
 
   POCL_MSG_PRINT_INFO("Create Command queue on device %d\n", device->dev_id);
 

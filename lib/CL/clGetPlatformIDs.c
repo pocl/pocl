@@ -256,7 +256,7 @@ POname(clGetPlatformIDs)(cl_uint           num_entries,
   if (platforms != NULL) {
       platforms[0] = &_platforms[0];
   }
-  
+
   if (num_platforms != NULL)
     *num_platforms = 1;
 

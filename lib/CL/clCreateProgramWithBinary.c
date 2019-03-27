@@ -46,7 +46,7 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
   int errcode;
   cl_device_id *unique_devlist = NULL;
 
-  POCL_GOTO_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
+  POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (context)), CL_INVALID_CONTEXT);
 
   POCL_GOTO_ERROR_COND((device_list == NULL), CL_INVALID_VALUE);
 

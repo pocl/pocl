@@ -28,6 +28,8 @@ CL_API_ENTRY void CL_API_CALL
 POname(clSVMFree)(cl_context context,
                   void *svm_pointer) CL_API_SUFFIX__VERSION_2_0
 {
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (context)), );
+
   if (context == NULL)
   {
     POCL_MSG_WARN("Bad cl_context");

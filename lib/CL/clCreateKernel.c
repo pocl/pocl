@@ -47,7 +47,7 @@ POname(clCreateKernel)(cl_program program,
 
   POCL_GOTO_ERROR_COND((kernel_name == NULL), CL_INVALID_VALUE);
 
-  POCL_GOTO_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
+  POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (program)), CL_INVALID_PROGRAM);
 
   POCL_GOTO_ERROR_ON((program->num_devices == 0),
     CL_INVALID_PROGRAM, "Invalid program (has no devices assigned)\n");

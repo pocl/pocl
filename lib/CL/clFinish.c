@@ -33,8 +33,10 @@
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clFinish)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 {
-  /* Flush any pending command */
-  POname(clFlush) (command_queue);
+  /* Flush all pending commands */
+  int err = POname (clFlush) (command_queue);
+  if (err != CL_SUCCESS)
+    return err;
 
   command_queue->device->ops->join(command_queue->device, command_queue);
 

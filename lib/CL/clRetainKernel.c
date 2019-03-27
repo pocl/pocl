@@ -26,7 +26,8 @@
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clRetainKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
 {
-  POCL_RETURN_ERROR_COND((kernel == NULL), CL_INVALID_KERNEL);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (kernel)), CL_INVALID_KERNEL);
+
   int refc;
   POCL_RETAIN_OBJECT_REFCOUNT (kernel, refc);
   POCL_MSG_PRINT_REFCOUNTS ("Retain Kernel %p  : %d\n", kernel, refc);

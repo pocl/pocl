@@ -34,7 +34,8 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
   mem_mapping_t *mapping, *temp;
   mem_destructor_callback_t *callback, *next_callback;
 
-  POCL_RETURN_ERROR_COND((memobj == NULL), CL_INVALID_MEM_OBJECT);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (memobj)),
+                          CL_INVALID_MEM_OBJECT);
 
   cl_context context = memobj->context;
 

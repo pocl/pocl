@@ -9,7 +9,7 @@ POname(clSetEventCallback) (cl_event     event ,
 {
   event_callback_item *cb_ptr = NULL;
 
-  POCL_RETURN_ERROR_COND((event == NULL), CL_INVALID_EVENT);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (event)), CL_INVALID_EVENT);
 
   POCL_RETURN_ERROR_COND((pfn_notify == NULL), CL_INVALID_VALUE);
 

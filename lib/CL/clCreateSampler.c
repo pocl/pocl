@@ -37,7 +37,7 @@ CL_API_SUFFIX__VERSION_1_0
   int errcode = CL_SUCCESS;
   cl_sampler sampler = NULL;
 
-  POCL_GOTO_ERROR_COND ((context == NULL), CL_INVALID_CONTEXT);
+  POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (context)), CL_INVALID_CONTEXT);
 
   /* at least 1 device must support images */
   size_t i, any_device_has_images = 0;

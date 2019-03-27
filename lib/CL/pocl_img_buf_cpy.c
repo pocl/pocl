@@ -72,8 +72,8 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
       (event_wait_list != NULL && num_events_in_wait_list == 0),
       CL_INVALID_EVENT_WAIT_LIST);
 
-  POCL_RETURN_ERROR_COND((src == NULL), CL_INVALID_MEM_OBJECT);
-  POCL_RETURN_ERROR_COND((dst == NULL), CL_INVALID_MEM_OBJECT);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (src)), CL_INVALID_MEM_OBJECT);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (dst)), CL_INVALID_MEM_OBJECT);
   POCL_RETURN_ERROR_COND((src_origin == NULL), CL_INVALID_VALUE);
   POCL_RETURN_ERROR_COND((dst_origin == NULL), CL_INVALID_VALUE);
   POCL_RETURN_ERROR_COND((region == NULL), CL_INVALID_VALUE);

@@ -37,7 +37,8 @@ POname(clEnqueueSVMMemcpy) (cl_command_queue command_queue,
   unsigned i;
   cl_int errcode;
 
-  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                          CL_INVALID_COMMAND_QUEUE);
 
   POCL_RETURN_ERROR_ON((command_queue->context->svm_allocdev == NULL),
       CL_INVALID_CONTEXT, "None of the devices in this context is SVM-capable\n");

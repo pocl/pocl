@@ -28,7 +28,7 @@ POname(clReleaseSampler)(cl_sampler sampler)
 CL_API_SUFFIX__VERSION_1_0
 {
   unsigned i;
-  POCL_RETURN_ERROR_COND ((sampler == NULL), CL_INVALID_SAMPLER);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (sampler)), CL_INVALID_SAMPLER);
 
   int new_refcount;
   POCL_RELEASE_OBJECT (sampler, new_refcount);

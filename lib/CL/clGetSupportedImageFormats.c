@@ -33,7 +33,7 @@ POname(clGetSupportedImageFormats) (cl_context           context,
                                     cl_uint *            num_image_formats) 
 CL_API_SUFFIX__VERSION_1_0
 {
-  POCL_RETURN_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (context)), CL_INVALID_CONTEXT);
 
   POCL_RETURN_ERROR_COND((context->num_devices == 0), CL_INVALID_CONTEXT);
   

@@ -8,7 +8,7 @@ CL_API_SUFFIX__VERSION_1_1
 {
   int errcode = CL_SUCCESS;
   /* Must be a valid user event */
-  POCL_RETURN_ERROR_COND ((event == NULL), CL_INVALID_EVENT);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (event)), CL_INVALID_EVENT);
   /* Can only be set to CL_COMPLETE (0) or negative values */
   POCL_RETURN_ERROR_COND ((execution_status > CL_COMPLETE), CL_INVALID_VALUE);
 

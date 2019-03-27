@@ -48,7 +48,7 @@ CL_API_SUFFIX__VERSION_1_2
     cl_int image_type_idx;
     cl_mem_object_type image_type;
 
-    POCL_GOTO_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
+    POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (context)), CL_INVALID_CONTEXT);
 
     POCL_GOTO_ERROR_COND((image_format == NULL), CL_INVALID_IMAGE_FORMAT_DESCRIPTOR);
 

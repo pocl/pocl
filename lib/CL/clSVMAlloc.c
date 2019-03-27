@@ -33,7 +33,7 @@ POname(clSVMAlloc)(cl_context context,
   unsigned i;
   int p;
 
-  POCL_RETURN_ERROR_COND((context == NULL), NULL);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (context)), NULL);
 
   POCL_RETURN_ERROR_ON((!context->svm_allocdev), NULL,
                        "None of the devices in this context is SVM-capable\n");

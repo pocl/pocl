@@ -26,7 +26,8 @@
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clRetainCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 {
-  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                          CL_INVALID_COMMAND_QUEUE);
   int refc;
   POCL_RETAIN_OBJECT_REFCOUNT (command_queue, refc);
   POCL_MSG_PRINT_REFCOUNTS ("Retain Command Queue %p  : %d\n",

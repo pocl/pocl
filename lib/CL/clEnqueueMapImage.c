@@ -53,14 +53,15 @@ CL_API_SUFFIX__VERSION_1_0
   /* need to release the memobject before returning? */
   int must_release = 0;
 
-  POCL_GOTO_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+  POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                        CL_INVALID_COMMAND_QUEUE);
+
+  POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (image)), CL_INVALID_MEM_OBJECT);
 
   device = command_queue->device;
 
   POCL_GOTO_ERROR_ON((command_queue->context != image->context),
     CL_INVALID_CONTEXT, "image and command_queue are not from the same context\n");
-
-  POCL_GOTO_ERROR_COND((image == NULL), CL_INVALID_MEM_OBJECT);
 
   if (IS_IMAGE1D_BUFFER (image))
     {

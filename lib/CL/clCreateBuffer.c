@@ -39,7 +39,7 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
 
   POCL_GOTO_ERROR_COND((size == 0), CL_INVALID_BUFFER_SIZE);
 
-  POCL_GOTO_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
+  POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (context)), CL_INVALID_CONTEXT);
 
   if (flags == 0)
     flags = CL_MEM_READ_WRITE;
@@ -237,6 +237,7 @@ CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateBuffer) (
 
   mem = pocl_create_memobject (context, flags, size, CL_MEM_OBJECT_BUFFER,
                                NULL, host_ptr, errcode_ret);
+
   if (mem == NULL)
     return NULL;
 

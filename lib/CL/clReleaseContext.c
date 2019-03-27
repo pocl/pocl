@@ -34,6 +34,8 @@ extern pocl_lock_t pocl_context_handling_lock;
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
 {
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (context)), CL_INVALID_CONTEXT);
+
   int new_refcount;
   if (!context->valid)
     {

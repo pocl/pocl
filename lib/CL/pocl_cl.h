@@ -162,9 +162,18 @@ typedef pthread_t pocl_thread_t;
 
 //############################################################################
 
+#define POCL_MAGIC_1 0xBE8906A1A83D8D23ULL
+#define POCL_MAGIC_2 0x071AC830215FD807ULL
+
+#define IS_CL_OBJECT_VALID(__OBJ__)                                           \
+  (((__OBJ__) != NULL) && ((__OBJ__)->magic_1 == POCL_MAGIC_1)                \
+   && ((__OBJ__)->magic_2 == POCL_MAGIC_2))
+
 #define POCL_LOCK_OBJ(__OBJ__)                                                \
   do                                                                          \
     {                                                                         \
+      assert ((__OBJ__)->magic_1 == POCL_MAGIC_1);                            \
+      assert ((__OBJ__)->magic_2 == POCL_MAGIC_2);                            \
       POCL_LOCK ((__OBJ__)->pocl_lock);                                       \
       assert ((__OBJ__)->pocl_refcount > 0);                                  \
     }                                                                         \
@@ -172,6 +181,8 @@ typedef pthread_t pocl_thread_t;
 #define POCL_UNLOCK_OBJ(__OBJ__)                                              \
   do                                                                          \
     {                                                                         \
+      assert ((__OBJ__)->magic_1 == POCL_MAGIC_1);                            \
+      assert ((__OBJ__)->magic_2 == POCL_MAGIC_2);                            \
       assert ((__OBJ__)->pocl_refcount >= 0);                                 \
       POCL_UNLOCK ((__OBJ__)->pocl_lock);                                     \
     }                                                                         \
@@ -208,12 +219,16 @@ extern uint64_t last_object_id;
 
 /* The reference counter is initialized to 1,
    when it goes to 0 object can be freed. */
-#define POCL_INIT_OBJECT_NO_ICD(__OBJ__)         \
-  do {                                           \
-    POCL_INIT_LOCK ((__OBJ__)->pocl_lock);       \
-    (__OBJ__)->pocl_refcount = 1;                \
-    (__OBJ__)->id = POCL_ATOMIC_INC (last_object_id); \
-  } while (0)
+#define POCL_INIT_OBJECT_NO_ICD(__OBJ__)                                      \
+  do                                                                          \
+    {                                                                         \
+      (__OBJ__)->magic_1 = POCL_MAGIC_1;                                      \
+      (__OBJ__)->magic_2 = POCL_MAGIC_2;                                      \
+      (__OBJ__)->pocl_refcount = 1;                                           \
+      POCL_INIT_LOCK ((__OBJ__)->pocl_lock);                                  \
+      (__OBJ__)->id = POCL_ATOMIC_INC (last_object_id);                       \
+    }                                                                         \
+  while (0)
 
 #define POCL_MEM_FREE(F_PTR)                      \
   do {                                            \
@@ -236,14 +251,18 @@ extern uint64_t last_object_id;
 #define POCL_DESTROY_OBJECT(__OBJ__)                                          \
   do                                                                          \
     {                                                                         \
+      (__OBJ__)->magic_1 = 0;                                                 \
+      (__OBJ__)->magic_2 = 0;                                                 \
       POCL_DESTROY_LOCK ((__OBJ__)->pocl_lock);                               \
     }                                                                         \
   while (0)
 
 /* Declares the generic pocl object attributes inside a struct. */
 #define POCL_OBJECT                                                           \
+  uint64_t magic_1;                                                           \
   uint64_t id;                                                                \
   pocl_lock_t pocl_lock;                                                      \
+  uint64_t magic_2;                                                           \
   int pocl_refcount
 
 #ifdef __APPLE__

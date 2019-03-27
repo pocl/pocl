@@ -75,9 +75,10 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   cl_device_id realdev = NULL;
   _cl_command_node *command_node;
 
-  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                          CL_INVALID_COMMAND_QUEUE);
 
-  POCL_RETURN_ERROR_COND((kernel == NULL), CL_INVALID_KERNEL);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (kernel)), CL_INVALID_KERNEL);
 
   /* alloc from stack to avoid malloc. num_args is the absolute max needed */
   cl_mem mem_list[kernel->meta->num_args + 1];

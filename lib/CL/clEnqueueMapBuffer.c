@@ -48,9 +48,10 @@ POname(clEnqueueMapBuffer)(cl_command_queue command_queue,
   /* need to release the memobject before returning? */
   int must_release = 0;
 
-  POCL_GOTO_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+  POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                        CL_INVALID_COMMAND_QUEUE);
 
-  POCL_GOTO_ERROR_COND((buffer == NULL), CL_INVALID_MEM_OBJECT);
+  POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (buffer)), CL_INVALID_MEM_OBJECT);
 
   POCL_GOTO_ON_SUB_MISALIGN (buffer, command_queue);
 

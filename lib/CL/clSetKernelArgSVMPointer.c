@@ -31,7 +31,7 @@ POname(clSetKernelArgSVMPointer)(cl_kernel kernel,
                                  cl_uint arg_index,
                                  const void *arg_value) CL_API_SUFFIX__VERSION_2_0
 {
-  POCL_RETURN_ERROR_COND((kernel == NULL), CL_INVALID_VALUE);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (kernel)), CL_INVALID_KERNEL);
 
   POCL_RETURN_ERROR_ON((!kernel->context->svm_allocdev), CL_INVALID_CONTEXT,
                        "None of the devices in this context is SVM-capable\n");

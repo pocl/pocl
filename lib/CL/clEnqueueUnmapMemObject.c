@@ -40,9 +40,11 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
   mem_mapping_t *mapping = NULL;
   _cl_command_node *cmd = NULL;
 
-  POCL_RETURN_ERROR_COND((memobj == NULL), CL_INVALID_MEM_OBJECT);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                          CL_INVALID_COMMAND_QUEUE);
 
-  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (memobj)),
+                          CL_INVALID_MEM_OBJECT);
 
   POCL_RETURN_ERROR_ON((command_queue->context != memobj->context),
     CL_INVALID_CONTEXT, "memobj and command_queue are not from the same context\n");

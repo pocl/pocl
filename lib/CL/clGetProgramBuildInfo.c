@@ -38,9 +38,9 @@ POname(clGetProgramBuildInfo)(cl_program            program,
 {
   const char *str;
 
-  POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (program)), CL_INVALID_PROGRAM);
 
-  POCL_RETURN_ERROR_COND ((device == NULL), CL_INVALID_DEVICE);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (device)), CL_INVALID_DEVICE);
 
   int device_i = pocl_cl_device_to_index(program, device);
   POCL_RETURN_ERROR_ON((device_i < 0), CL_INVALID_DEVICE, "Program does not have "

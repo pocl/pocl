@@ -42,7 +42,7 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
   int new_refcount;
   unsigned i, j;
 
-  POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (program)), CL_INVALID_PROGRAM);
 
   POCL_RELEASE_OBJECT (program, new_refcount);
   POCL_MSG_PRINT_REFCOUNTS ("Release program %p, new refcount: %d, kernel #: %zu \n", program, new_refcount, program->num_kernels);

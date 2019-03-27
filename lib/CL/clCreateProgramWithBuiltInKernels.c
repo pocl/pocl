@@ -44,6 +44,11 @@ CL_API_SUFFIX__VERSION_1_2
   char *save_ptr;
   char *token;
 
+  POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (context)), CL_INVALID_CONTEXT);
+
+  POCL_GOTO_ERROR_COND ((device_list == NULL), CL_INVALID_VALUE);
+  POCL_GOTO_ERROR_COND ((num_devices == 0), CL_INVALID_VALUE);
+
   POCL_GOTO_ERROR_COND ((kernel_names == NULL), CL_INVALID_VALUE);
 
   kernel_names_copy = strdup (kernel_names);

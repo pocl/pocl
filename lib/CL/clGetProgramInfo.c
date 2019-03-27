@@ -82,8 +82,8 @@ POname(clGetProgramInfo)(cl_program program,
                  size_t *param_value_size_ret) CL_API_SUFFIX__VERSION_1_0
 {
   unsigned i;
-  
-  POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
+
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (program)), CL_INVALID_PROGRAM);
 
   switch (param_name)
   {

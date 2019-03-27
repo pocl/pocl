@@ -40,7 +40,7 @@ POname(clSetKernelArg)(cl_kernel kernel,
   struct pocl_argument *p;
   struct pocl_argument_info *pi;
 
-  POCL_RETURN_ERROR_COND((kernel == NULL), CL_INVALID_KERNEL);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (kernel)), CL_INVALID_KERNEL);
 
   POCL_RETURN_ERROR_ON ((arg_index >= kernel->meta->num_args),
                         CL_INVALID_ARG_INDEX,
@@ -52,6 +52,12 @@ POname(clSetKernelArg)(cl_kernel kernel,
 
   pi = &(kernel->meta->arg_info[arg_index]);
   int is_local = ARGP_IS_LOCAL (pi);
+
+  const void *ptr_value = NULL;
+  if (((pi->type == POCL_ARG_TYPE_POINTER)
+       || (pi->type == POCL_ARG_TYPE_IMAGE))
+      && arg_value)
+    ptr_value = *(const void **)arg_value;
 
   if (POCL_DEBUGGING_ON)
     {
@@ -81,7 +87,7 @@ POname(clSetKernelArg)(cl_kernel kernel,
 
   POCL_RETURN_ERROR_ON (
       ((arg_value != NULL) && is_local), CL_INVALID_ARG_VALUE,
-      "arg_value != NULl and arg %u is in local address space\n", arg_index);
+      "arg_value != NULL and arg %u is in local address space\n", arg_index);
 
   /* Trigger CL_INVALID_ARG_VALUE if arg_value specified is NULL
    * for an argument that is not declared with the __local qualifier. */
@@ -104,11 +110,20 @@ POname(clSetKernelArg)(cl_kernel kernel,
 
   if (pi->type == POCL_ARG_TYPE_POINTER || pi->type == POCL_ARG_TYPE_IMAGE
       || pi->type == POCL_ARG_TYPE_SAMPLER)
-    POCL_RETURN_ERROR_ON (((!is_local) && (arg_size != sizeof (cl_mem))),
-                          CL_INVALID_ARG_SIZE,
-                          "Arg %u is pointer/buffer/image, but arg_size is "
-                          "not sizeof(cl_mem)\n",
-                          arg_index);
+    {
+      POCL_RETURN_ERROR_ON (((!is_local) && (arg_size != sizeof (cl_mem))),
+                            CL_INVALID_ARG_SIZE,
+                            "Arg %u is pointer/buffer/image, but arg_size is "
+                            "not sizeof(cl_mem)\n",
+                            arg_index);
+      if (ptr_value)
+        {
+          POCL_RETURN_ERROR_ON (
+              !IS_CL_OBJECT_VALID ((const cl_mem)ptr_value),
+              CL_INVALID_ARG_VALUE,
+              "Arg %u is not a valid CL object\n", arg_index);
+        }
+    }
   else if (pi->type_size)
     {
       size_t as = arg_size;

@@ -39,7 +39,8 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
   _cl_command_node *cmd = NULL;
   cl_mem *new_mem_objects = NULL;
 
-  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                          CL_INVALID_COMMAND_QUEUE);
   POCL_RETURN_ERROR_COND((num_mem_objects == 0), CL_INVALID_VALUE);
   POCL_RETURN_ERROR_COND((mem_objects == NULL), CL_INVALID_VALUE);
 
@@ -58,7 +59,8 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
 
   for (i = 0; i < num_mem_objects; ++i)
     {
-      POCL_GOTO_ERROR_COND ((mem_objects[i] == NULL), CL_INVALID_MEM_OBJECT);
+      POCL_GOTO_ERROR_COND ((!IS_CL_OBJECT_VALID (mem_objects[i])),
+                            CL_INVALID_MEM_OBJECT);
 
       POCL_GOTO_ERROR_COND (
           (mem_objects[i]->context != command_queue->context),

@@ -1030,7 +1030,7 @@ pocl_check_event_wait_list (cl_command_queue command_queue,
       unsigned i;
       for (i = 0; i < num_events_in_wait_list; i++)
         {
-          POCL_RETURN_ERROR_COND ((event_wait_list[i] == NULL),
+          POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (event_wait_list[i])),
                                   CL_INVALID_EVENT_WAIT_LIST);
           POCL_RETURN_ERROR_COND (
               (event_wait_list[i]->context != command_queue->context),

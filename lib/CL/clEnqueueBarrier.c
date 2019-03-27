@@ -30,7 +30,8 @@ CL_API_SUFFIX__VERSION_1_0
 {
   _cl_command_node *cmd;
 
-  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                          CL_INVALID_COMMAND_QUEUE);
 
   POCL_RETURN_ERROR_COND((command_queue->device == NULL), CL_INVALID_COMMAND_QUEUE);
 

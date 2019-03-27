@@ -39,9 +39,11 @@ CL_API_SUFFIX__VERSION_1_2
   int errcode = CL_SUCCESS;
   _cl_command_node *cmd = NULL;
 
-  POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
+                          CL_INVALID_COMMAND_QUEUE);
 
-  POCL_RETURN_ERROR_COND((buffer == NULL), CL_INVALID_MEM_OBJECT);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (buffer)),
+                          CL_INVALID_MEM_OBJECT);
 
   POCL_RETURN_ERROR_ON((buffer->type != CL_MEM_OBJECT_BUFFER), CL_INVALID_MEM_OBJECT,
                        "buffer is not a CL_MEM_OBJECT_BUFFER\n");

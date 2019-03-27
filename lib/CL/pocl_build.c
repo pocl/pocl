@@ -614,7 +614,8 @@ compile_and_link_program(int compile_program,
   int build_error_code
       = (link_program ? CL_BUILD_PROGRAM_FAILURE : CL_COMPILE_PROGRAM_FAILURE);
 
-  POCL_GOTO_LABEL_COND (PFN_NOTIFY, (program == NULL), CL_INVALID_PROGRAM);
+  POCL_GOTO_LABEL_COND (PFN_NOTIFY, (!IS_CL_OBJECT_VALID (program)),
+                        CL_INVALID_PROGRAM);
 
   POCL_GOTO_LABEL_COND (PFN_NOTIFY, (num_devices > 0 && device_list == NULL),
                         CL_INVALID_VALUE);

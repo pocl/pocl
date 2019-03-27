@@ -17,7 +17,7 @@ POname(clCreateKernelsInProgram)(cl_program      program ,
 {
   unsigned idx;
 
-  POCL_RETURN_ERROR_COND((program == NULL), CL_INVALID_PROGRAM);
+  POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (program)), CL_INVALID_PROGRAM);
 
   POCL_RETURN_ERROR_ON((program->num_devices == 0),
     CL_INVALID_PROGRAM, "Invalid program (has no devices assigned)\n");
