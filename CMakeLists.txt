@@ -1394,7 +1394,7 @@ message(STATUS "OPENCL_LIBS: ${OPENCL_LIBS}")
 message(STATUS "OPENCL_CFLAGS: ${OPENCL_CFLAGS}")
 
 # for tests / examples
-set(POCLU_LINK_OPTIONS ${OPENCL_LIBS} ${LIBMATH} "poclu")
+set(POCLU_LINK_OPTIONS poclu ${OPENCL_LIBS} ${LIBMATH})
 message(STATUS "POCLU LINK OPTS: ${POCLU_LINK_OPTIONS}")
 
 # poclcc bin

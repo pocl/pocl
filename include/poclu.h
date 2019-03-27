@@ -91,6 +91,9 @@ POCLU_API cl_int POCLU_CALL poclu_get_any_device (cl_context *context,
                                                   cl_device_id *device,
                                                   cl_command_queue *queue);
 
+POCLU_API cl_int POCLU_CALL poclu_get_multiple_devices (
+    cl_platform_id *platform, cl_context *context, cl_uint *num_devices,
+    cl_device_id **devices, cl_command_queue **queues);
 /**
  * cl_half related helpers.
  */
@@ -114,11 +117,19 @@ int poclu_load_program (cl_context context, cl_device_id device,
                         const char *basename, int spir, int spirv, int poclbin,
                         const char *explicit_binary,
                         const char *extra_build_opts, cl_program *p);
-/* In case cl_err != CL_SUCCESS, prints out the error + function : line to stderr,
- * and returns 1, otherwise returns 0
+
+int poclu_load_program_multidev (cl_context context, cl_device_id *devices,
+                                 cl_uint num_devices, const char *basename,
+                                 int spir, int spirv, int poclbin,
+                                 const char *explicit_binary,
+                                 const char *extra_build_opts, cl_program *p);
+
+/* In case cl_err != CL_SUCCESS, prints out the error +
+ * function : line to stderr, and returns 1, otherwise
+ * returns 0
  */
-POCLU_API int POCLU_CALL
-check_cl_error(cl_int cl_err, int line, const char* func_name);
+POCLU_API int POCLU_CALL check_cl_error (cl_int cl_err, int line,
+                                         const char *func_name);
 
 #define _POCLU_CHECK_CL_ERROR_INNER(cond, func, line)                         \
   do                                                                          \

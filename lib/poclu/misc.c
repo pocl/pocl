@@ -93,6 +93,51 @@ poclu_get_any_device2 (cl_context *context, cl_device_id *device,
   return CL_SUCCESS;
 }
 
+cl_int
+poclu_get_multiple_devices (cl_platform_id *platform, cl_context *context,
+                            cl_uint *num_devices, cl_device_id **devices,
+                            cl_command_queue **queues)
+{
+  cl_int err;
+  *num_devices = 0;
+  size_t i;
+
+  if (context == NULL || devices == NULL || queues == NULL || platform == NULL)
+    return CL_INVALID_VALUE;
+
+  err = clGetPlatformIDs (1, platform, NULL);
+  if (err != CL_SUCCESS)
+    return err;
+
+  err = clGetDeviceIDs (*platform, CL_DEVICE_TYPE_ALL, 0, NULL, num_devices);
+  if (err != CL_SUCCESS)
+    return err;
+
+  cl_device_id *devs = calloc (*num_devices, sizeof (cl_device_id));
+  cl_command_queue *ques = calloc (*num_devices, sizeof (cl_command_queue));
+
+  err = clGetDeviceIDs (*platform, CL_DEVICE_TYPE_ALL, *num_devices, devs,
+                        NULL);
+  if (err != CL_SUCCESS)
+    return err;
+
+  *context = clCreateContext (NULL, *num_devices, devs, NULL, NULL, &err);
+  if (err != CL_SUCCESS)
+    return err;
+
+  for (i = 0; i < *num_devices; ++i)
+    {
+      ques[i] = clCreateCommandQueue (*context, devs[i],
+                                      CL_QUEUE_PROFILING_ENABLE, &err);
+      if (err != CL_SUCCESS)
+        return err;
+    }
+
+  *devices = devs;
+  *queues = ques;
+  return CL_SUCCESS;
+}
+
 char *
 poclu_read_binfile (const char *filename, size_t *len)
 {
@@ -229,9 +274,11 @@ check_cl_error (cl_int cl_err, int line, const char* func_name) {
 }
 
 int
-poclu_load_program (cl_context context, cl_device_id device,
-                    const char *basename, int spir, int spirv, int poclbin,
-                    const char *explicit_binary, const char *extra_build_opts, cl_program *p)
+poclu_load_program_multidev (cl_context context, cl_device_id *devices,
+                             cl_uint num_devices, const char *basename,
+                             int spir, int spirv, int poclbin,
+                             const char *explicit_binary,
+                             const char *extra_build_opts, cl_program *p)
 {
   cl_bool little_endian = 0;
   cl_uint address_bits = 0;
@@ -245,6 +292,10 @@ poclu_load_program (cl_context context, cl_device_id device,
   cl_int err = CL_SUCCESS;
 
   int from_source = (!spir && !spirv && !poclbin);
+  TEST_ASSERT (num_devices > 0);
+  cl_device_id device = devices[0];
+  if (num_devices > 1)
+    TEST_ASSERT (from_source);
 
   *p = NULL;
   final_opts[0] = 0;
@@ -253,6 +304,7 @@ poclu_load_program (cl_context context, cl_device_id device,
 
   if (spir || spirv)
     {
+      TEST_ASSERT (device != NULL);
       strcat (final_opts, " -x spir -spir-std=1.2");
       err = clGetDeviceInfo (device, CL_DEVICE_EXTENSIONS, 1024, extensions,
                              NULL);
@@ -333,12 +385,14 @@ poclu_load_program (cl_context context, cl_device_id device,
                                            NULL, &err);
       CHECK_OPENCL_ERROR_IN ("clCreateProgramWithSource");
 
-      err = clBuildProgram (program, 0, NULL, final_opts, NULL, NULL);
+      err = clBuildProgram (program, num_devices, devices, final_opts, NULL,
+                            NULL);
       CHECK_OPENCL_ERROR_IN ("clBuildProgram");
       free (src);
     }
   else
     {
+      TEST_ASSERT (device != NULL);
       binary = poclu_read_binfile (path, &binary_size);
       TEST_ASSERT (binary != NULL);
 
@@ -354,4 +408,15 @@ poclu_load_program (cl_context context, cl_device_id device,
 
   *p = program;
   return err;
+}
+
+int
+poclu_load_program (cl_context context, cl_device_id device,
+                    const char *basename, int spir, int spirv, int poclbin,
+                    const char *explicit_binary, const char *extra_build_opts,
+                    cl_program *p)
+{
+  return poclu_load_program_multidev (context, &device, 1, basename, spir,
+                                      spirv, poclbin, explicit_binary,
+                                      extra_build_opts, p);
 }
