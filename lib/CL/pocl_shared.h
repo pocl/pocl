@@ -24,6 +24,11 @@
 #ifndef POCL_SHARED_H
 #define POCL_SHARED_H
 
+#include "config.h"
+
+#include <CL/cl_gl.h>
+#include <CL/cl_egl.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -59,6 +64,16 @@ cl_program create_program_skeleton (cl_context context, cl_uint num_devices,
                                     cl_int *binary_status, cl_int *errcode_ret,
                                     int allow_empty_binaries);
 
+cl_mem pocl_create_image_internal (cl_context context, cl_mem_flags flags,
+                                   const cl_image_format *image_format,
+                                   const cl_image_desc *image_desc,
+                                   void *host_ptr, cl_int *errcode_ret,
+                                   cl_GLenum gl_target, cl_GLint gl_miplevel,
+                                   cl_GLuint gl_texture,
+                                   CLeglDisplayKHR egl_display,
+                                   CLeglImageKHR egl_image
+);
+
 cl_int
 compile_and_link_program(int compile_program,
                          int link_program,
@@ -75,9 +90,8 @@ compile_and_link_program(int compile_program,
                                                          void *user_data),
                          void *user_data);
 
-int context_set_properties(cl_context                    context,
-                           const cl_context_properties * properties,
-                           cl_int *                      errcode);
+int context_set_properties (cl_context context,
+                            const cl_context_properties *properties);
 
 cl_mem pocl_create_memobject (cl_context context, cl_mem_flags flags,
                               size_t size, cl_mem_object_type type, int *device_image_support, void *host_ptr,

@@ -187,7 +187,11 @@ option(ENABLE_HSA "Enable the HSA base profile runtime device driver" OFF)
 
 option(ENABLE_CUDA "Enable the CUDA device driver for NVIDIA devices" OFF)
 
-option(KERNEL_CACHE_DEFAULT "Default value for the kernel compile cache. If disabled, pocl will still use the kernel cache, but will delete cachefiles on exit. You can still enable keeping the files it at runtime with an env var." ON)
+option(ENABLE_PROXY_DEVICE "Enable proxy driver for proxying to another OpenCL implementation" OFF)
+
+option(ENABLE_PROXY_DEVICE_INTEROP "Enable OpenGL- or EGL-interop with the proxy driver" OFF)
+
+option(KERNEL_CACHE_DEFAULT "Default value for the kernel compile cache. If disabled, pocl will still use kernel cache for intermediate compilation files, but will clean up them on exit. You can still enable keeping the files it at runtime with an env var." ON)
 
 option(POCL_ICD_ABSOLUTE_PATH "Use absolute path in pocl.icd" ON)
 
@@ -912,6 +916,7 @@ else()
 
     set(HAVE_OCL_ICD 1 CACHE INTERNAL "ICL library is ocl-icd")
     set(OPENCL_FOUND 1 CACHE INTERNAL "opencl ICD/library found")
+ #   set(OPENCL_LIBRARY "${OCL_ICD_LIBRARIES}" CACHE INTERNAL "opencl library")
     # duh, why doesn't ocl-icd set this in its .pc file ??
     separate_arguments(OCL_LDFLAGS UNIX_COMMAND "${OCL_ICD_LDFLAGS}")
     list(APPEND OCL_LDFLAGS "OpenCL")
@@ -962,9 +967,13 @@ setup_cached_var(ENABLE_ICD "Using an ICD loader"
 if(ENABLE_ICD)
   # only meaningful to link tests with ocl-icd
   set(TESTS_USE_ICD ${HAVE_OCL_ICD})
-  set(POCL_LIBRARY_NAME "pocl")
 else()
   set(TESTS_USE_ICD 0)
+endif()
+
+if(ENABLE_ICD OR ENABLE_PROXY_DEVICE)
+  set(POCL_LIBRARY_NAME "pocl")
+else()
   set(POCL_LIBRARY_NAME "OpenCL")
 endif()
 
@@ -1150,6 +1159,34 @@ endif()
 
 if(DEFINED EXTRA_OCL_TARGETS)
   set(OCL_TARGETS "${OCL_TARGETS} ${EXTRA_OCL_TARGETS}")
+endif()
+
+
+if(ENABLE_PROXY_DEVICE)
+  # see doc/sphinx/source/proxy.rst
+  if (ENABLE_ICD)
+    message(FATAL_ERROR "Proxy driver cannot be used with ICD")
+  endif()
+  if (ENABLE_PROXY_DEVICE_INTEROP)
+    if (ANDROID)
+      set(ENABLE_OPENGL_INTEROP 0 CACHE BOOL "gl" FORCE)
+      set(ENABLE_EGL_INTEROP 1 CACHE BOOL "egl" FORCE)
+    else()
+      set(ENABLE_OPENGL_INTEROP 1 CACHE BOOL "gl" FORCE)
+      set(ENABLE_EGL_INTEROP 0 CACHE BOOL "egl" FORCE)
+    endif()
+
+    if(ENABLE_OPENGL_INTEROP)
+      set(CMAKE_REQUIRED_LIBRARIES "OpenCL")
+      include(CheckFunctionExists)
+      unset (ENABLE_CL_GET_GL_CONTEXT CACHE)
+      CHECK_FUNCTION_EXISTS("clGetGLContextInfoKHR" ENABLE_CL_GET_GL_CONTEXT)
+      unset(CMAKE_REQUIRED_LIBRARIES)
+    endif()
+
+  endif()
+  set(BUILD_PROXY 1)
+  set(OCL_DRIVERS "${OCL_DRIVERS} proxy")
 endif()
 
 
@@ -1434,6 +1471,9 @@ rename_if_different("${CMAKE_BINARY_DIR}/config.h.new" "${CMAKE_BINARY_DIR}/conf
 configure_file("config2.h.in.cmake" "config2.h.new")
 rename_if_different("${CMAKE_BINARY_DIR}/config2.h.new" "${CMAKE_BINARY_DIR}/config2.h")
 
+configure_file("pocl_opencl.h.in.cmake" "pocl_opencl.h.new")
+rename_if_different("${CMAKE_BINARY_DIR}/pocl_opencl.h.new" "${CMAKE_BINARY_DIR}/pocl_opencl.h")
+
 include_directories("${CMAKE_BINARY_DIR}")
 
 # This is used to generate the compiler feature detection header.
@@ -1482,12 +1522,23 @@ if(ENABLE_ASAN OR ENABLE_LSAN)
   set(SAN_EXTRA "set(ENV{LSAN_OPTIONS} \"suppressions=${CMAKE_BINARY_DIR}/lsan.supp\")")
 endif()
 
+# pointing OCL_ICD_VENDORS to pocl doesn't make sense with the proxy driver;
+# we want the driver to proxy to another OpenCL, so
+# we must let ocl-icd load it
+if(ENABLE_PROXY_DEVICE)
+file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/CTestCustom.cmake" CONTENT "
+  ${SAN_EXTRA}
+  set(ENV{POCL_ENABLE_UNINIT} \"1\")
+  set(ENV{POCL_BUILDING} \"1\")
+")
+else()
 file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/CTestCustom.cmake" CONTENT "
   ${SAN_EXTRA}
   set(ENV{POCL_ENABLE_UNINIT} \"1\")
   set(ENV{POCL_BUILDING} \"1\")
   set(ENV{OCL_ICD_VENDORS} \"${CMAKE_BINARY_DIR}/ocl-vendors\")
 ")
+endif()
 
 ##########################################################
 
@@ -1700,6 +1751,11 @@ MESSAGE(STATUS "ENABLE_TSAN (thread sanitizer): ${ENABLE_TSAN}")
 MESSAGE(STATUS "ENABLE_UBSAN (UB sanitizer): ${ENABLE_UBSAN}")
 MESSAGE(STATUS "ENABLE_POCL_FLOAT_CONVERSION: ${ENABLE_POCL_FLOAT_CONVERSION}")
 MESSAGE(STATUS "ENABLE_RELOCATION: ${ENABLE_RELOCATION}")
+MESSAGE(STATUS "ENABLE_PROXY_DEVICE: ${ENABLE_PROXY_DEVICE}")
+MESSAGE(STATUS "ENABLE_PROXY_DEVICE_INTEROP: ${ENABLE_PROXY_DEVICE_INTEROP}")
+MESSAGE(STATUS "ENABLE_CL_GET_GL_CONTEXT: ${ENABLE_CL_GET_GL_CONTEXT}")
+MESSAGE(STATUS "ENABLE_OPENGL_INTEROP: ${ENABLE_OPENGL_INTEROP}")
+MESSAGE(STATUS "ENABLE_EGL_INTEROP: ${ENABLE_EGL_INTEROP}")
 MESSAGE(STATUS "ENABLE_SLEEF: ${ENABLE_SLEEF}")
 MESSAGE(STATUS "ENABLE_SPIR: ${ENABLE_SPIR}")
 MESSAGE(STATUS "ENABLE_SPIRV: ${ENABLE_SPIRV}")

@@ -67,6 +67,9 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
           (mem_objects[i]->context != command_queue->context),
           CL_INVALID_CONTEXT);
 
+      POCL_GOTO_ERROR_ON ((mem_objects[i]->is_gl_texture),
+                          CL_INVALID_MEM_OBJECT, "mem_obj is a GL texture\n");
+
       if (mem_objects[i]->parent == NULL)
         new_mem_objects[i] = mem_objects[i];
       else
@@ -96,8 +99,6 @@ POname(clEnqueueMigrateMemObjects) (cl_command_queue command_queue,
 
 ERROR:
   POCL_MEM_FREE (new_mem_objects);
-  free (cmd);
-  free (event);
   return errcode;
 }
 POsym(clEnqueueMigrateMemObjects)

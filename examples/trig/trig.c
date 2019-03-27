@@ -25,7 +25,8 @@
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <CL/opencl.h>
+
+#include "pocl_opencl.h"
 
 #define N 8
 

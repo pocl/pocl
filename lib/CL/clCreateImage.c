@@ -28,14 +28,15 @@
 
 extern unsigned long image_c;
 
-extern CL_API_ENTRY cl_mem CL_API_CALL
-POname(clCreateImage) (cl_context              context,
-                       cl_mem_flags            flags,
-                       const cl_image_format * image_format,
-                       const cl_image_desc *   image_desc,
-                       void *                  host_ptr,
-                       cl_int *                errcode_ret)
-CL_API_SUFFIX__VERSION_1_2
+cl_mem
+pocl_create_image_internal (cl_context context, cl_mem_flags flags,
+                            const cl_image_format *image_format,
+                            const cl_image_desc *image_desc, void *host_ptr,
+                            cl_int *errcode_ret,
+                            cl_GLenum gl_target, cl_GLint gl_miplevel,
+                            cl_GLuint gl_texture,
+                            CLeglDisplayKHR egl_display,
+                            CLeglImageKHR egl_image)
 {
     cl_mem mem = NULL;
     unsigned i, num_devices_supporting_image = 0;
@@ -71,6 +72,16 @@ CL_API_SUFFIX__VERSION_1_2
      * values for param_name for clGetDeviceInfo FOR ALL DEVICES IN CONTEXT.
      */
     device_image_support = (int *)calloc (context->num_devices, sizeof (int));
+#ifdef ENABLE_OPENGL_INTEROP
+    unsigned is_gl_texture
+        = (unsigned)((intptr_t)gl_target | (intptr_t)gl_miplevel
+                     | (intptr_t)gl_texture);
+#elif defined(ENABLE_EGL_INTEROP)
+    unsigned is_gl_texture
+        = (unsigned)((intptr_t)egl_display | (intptr_t)egl_image);
+#else
+    unsigned is_gl_texture = 0;
+#endif
 
     for (i = 0; i < context->num_devices; i++)
       {
@@ -79,9 +90,9 @@ CL_API_SUFFIX__VERSION_1_2
           continue;
         else
           {
-            if (pocl_check_device_supports_image (dev, image_format,
-                                                  image_desc, image_type_idx,
-                                                  &device_image_support[i])
+            if (pocl_check_device_supports_image (
+                    dev, image_format, image_desc, image_type_idx,
+                    is_gl_texture, &device_image_support[i])
                 == CL_SUCCESS)
               {
                 /* can't break here as we need device_image_support[]
@@ -239,6 +250,17 @@ CL_API_SUFFIX__VERSION_1_2
 
     TP_CREATE_IMAGE (context->id, mem->id);
 
+    mem->is_gl_texture = is_gl_texture;
+    if (is_gl_texture)
+      {
+        mem->is_gl_acquired = 0;
+        mem->target = gl_target;
+        mem->miplevel = gl_miplevel;
+        mem->texture = gl_texture;
+        mem->egl_display = egl_display;
+        mem->egl_image = egl_image;
+      }
+
     POCL_RETAIN_OBJECT (context);
 
     POCL_MSG_PRINT_MEMORY (
@@ -258,5 +280,15 @@ CL_API_SUFFIX__VERSION_1_2
      }
 
    return mem;
+}
+
+extern CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateImage) (
+    cl_context context, cl_mem_flags flags,
+    const cl_image_format *image_format, const cl_image_desc *image_desc,
+    void *host_ptr, cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_2
+{
+  return pocl_create_image_internal (context, flags, image_format, image_desc,
+                                     host_ptr, errcode_ret,
+                                     0, 0, 0, NULL, NULL);
 }
 POsym(clCreateImage)

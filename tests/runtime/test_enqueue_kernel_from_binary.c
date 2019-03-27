@@ -21,12 +21,11 @@
    THE SOFTWARE.
 */
 
+#include "pocl_opencl.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <CL/opencl.h>
-
-#include "poclu.h"
 
 #define BUFFER_SIZE 1024
 

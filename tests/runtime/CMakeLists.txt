@@ -140,7 +140,7 @@ if(NOT ENABLE_ANYSAN)
 
   set_tests_properties("runtime/clFinish"
   PROPERTIES
-    PASS_REGULAR_EXPRESSION "ABABC")
+    PASS_REGULAR_EXPRESSION "ABABC;A\nB\nA\nB\nC\n")
 
   set_tests_properties("runtime/test_kernel_cache_includes"
   PROPERTIES PASS_REGULAR_EXPRESSION
@@ -186,3 +186,21 @@ set_property(TEST
   "runtime/test_user_event"
   "runtime/clSetMemObjectDestructorCallback"
   APPEND PROPERTY LABELS "hsa-native")
+
+set_property(TEST
+  "runtime/clGetDeviceInfo"
+  "runtime/clGetEventInfo"
+  "runtime/clCreateProgramWithBinary"
+  "runtime/clFinish"
+  "runtime/test_read-copy-write-buffer"
+  "runtime/test_fill-buffer"
+  "runtime/test_buffer-image-copy"
+  "runtime/clSetEventCallback"
+  "runtime/clGetSupportedImageFormats"
+  "runtime/clCreateKernelsInProgram"
+  "runtime/test_event_cycle"
+  "runtime/test_event_free"
+  "runtime/test_event_double_wait"
+  "runtime/test_user_event"
+  "runtime/clSetMemObjectDestructorCallback"
+  APPEND PROPERTY LABELS "proxy")

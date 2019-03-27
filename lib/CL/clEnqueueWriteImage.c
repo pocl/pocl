@@ -41,6 +41,8 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
 
   POCL_RETURN_ERROR_ON ((!image->is_image), CL_INVALID_MEM_OBJECT,
                         "image argument is not an image\n");
+  POCL_RETURN_ERROR_ON ((image->is_gl_texture), CL_INVALID_MEM_OBJECT,
+                        "image is a GL texture\n");
   POCL_RETURN_ON_UNSUPPORTED_IMAGE (image, command_queue->device);
 
   errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,

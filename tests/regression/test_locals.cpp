@@ -31,7 +31,7 @@
 #include <cstdlib>
 #include <iostream>
 
-#include "poclu.h"
+#include "pocl_opencl.h"
 
 #define WORK_ITEMS 2
 #define BUFFER_SIZE (WORK_ITEMS)

@@ -62,6 +62,9 @@ typedef pthread_t pocl_thread_t;
 #include "pocl_runtime_config.h"
 #include "common.h"
 
+#include <CL/cl_gl.h>
+#include <CL/cl_egl.h>
+
 #if __STDC_VERSION__ < 199901L
 # if __GNUC__ >= 2
 #  define __func__ __PRETTY_FUNCTION__
@@ -314,11 +317,17 @@ extern uint64_t last_object_id;
 #define POdeclsym(name) __typeof__ (name) PO##name;
 #  define POCL_ALIAS_OPENCL_SYMBOL(name)                                \
   __typeof__(name) name __attribute__((alias ("PO" #name), visibility("default")));
-#  define POsymAlways(name) POCL_ALIAS_OPENCL_SYMBOL(name)
-#  if !defined(BUILD_ICD)
+
+#  if !defined(BUILD_ICD) && !defined(BUILD_PROXY)
 #    define POsym(name) POCL_ALIAS_OPENCL_SYMBOL(name)
 #  else
 #    define POsym(name)
+#  endif
+
+#  if !defined(BUILD_PROXY)
+#    define POsymAlways(name) POCL_ALIAS_OPENCL_SYMBOL(name)
+#  else
+#    define POsymAlways(name)
 #  endif
 
 #endif
@@ -690,6 +699,11 @@ struct pocl_device_ops {
   int (*init_queue) (cl_device_id device, cl_command_queue queue);
   int (*free_queue) (cl_device_id device, cl_command_queue queue);
 
+  /* Optional. if the driver needs to use hardware resources
+   * for contexts, it should use these callbacks */
+  int (*init_context) (cl_device_id device, cl_context context);
+  int (*free_context) (cl_device_id device, cl_context context);
+
   /* clEnqueueNDRangeKernel */
   void (*run) (void *data, _cl_command_node *cmd);
   /* for clEnqueueNativeKernel. may be NULL */
@@ -794,6 +808,11 @@ struct pocl_device_ops {
   cl_int (*get_device_info_ext) (cl_device_id dev, cl_device_info param_name,
                                  size_t param_value_size, void * param_value,
                                  size_t * param_value_size_ret);
+
+  /* optional. Return CL_SUCCESS if the device can be, or is associated with
+   * the GL context described in properties. */
+  cl_int (*get_gl_context_assoc) (cl_device_id device, cl_gl_context_info type,
+                                  const cl_context_properties *properties);
 };
 
 typedef struct pocl_global_mem_t {
@@ -913,8 +932,8 @@ struct _cl_device_id {
   size_t num_partition_types;
   cl_device_partition_property *partition_type;
   size_t printf_buffer_size;
-  char *short_name;
-  char *long_name;
+  const char *short_name;
+  const char *long_name;
 
   const char *vendor;
   const char *driver_version;
@@ -945,6 +964,9 @@ struct _cl_device_id {
    * LLVM IR with "spir" triple, set this to 1,
    * and make sure device->ops->supports_binary returns 1 for SPIR-V */
   int consumes_il_directly;
+
+  /* whether this device supports OpenGL / EGL interop */
+  int has_gl_interop;
 
   /* Convert automatic local variables to kernel arguments? */
   pocl_autolocals_to_args_strategy autolocals_to_args;
@@ -1043,6 +1065,7 @@ struct _cl_context {
   /* queries */
   cl_device_id *devices;
   cl_context_properties *properties;
+  cl_bool gl_interop;
   /* implementation */
   unsigned num_devices;
   unsigned num_properties;
@@ -1084,6 +1107,10 @@ struct _cl_context {
 
 #ifdef ENABLE_LLVM
   void *llvm_context_data;
+#endif
+
+#ifdef BUILD_PROXY
+  cl_context proxied_context;
 #endif
 };
 
@@ -1139,9 +1166,12 @@ struct _cl_command_queue {
 
 #define DEVICE_IMAGE_SIZE_SUPPORT 1
 #define DEVICE_IMAGE_FORMAT_SUPPORT 2
+#define DEVICE_IMAGE_INTEROP_SUPPORT 4
 
 #define DEVICE_DOESNT_SUPPORT_IMAGE(mem, dev_i)                               \
-  (mem->device_supports_this_image[dev_i] == 0)
+  (mem->device_supports_this_image[dev_i]                                     \
+   != (DEVICE_IMAGE_SIZE_SUPPORT | DEVICE_IMAGE_FORMAT_SUPPORT                \
+       | DEVICE_IMAGE_INTEROP_SUPPORT))
 
 #define POCL_ON_UNSUPPORTED_IMAGE(mem, dev, operation)                        \
   do                                                                          \
@@ -1151,22 +1181,25 @@ struct _cl_command_queue {
         if (mem->context->devices[dev_i] == dev)                              \
           break;                                                              \
       assert (dev_i < mem->context->num_devices);                             \
-      operation (                                                  \
-          (mem->context->devices[dev_i]->image_support == CL_FALSE),          \
-          CL_INVALID_OPERATION, "Device %s does not support images\n",        \
-          mem->context->devices[dev_i]->long_name);                           \
-      operation (                                                  \
+      operation ((mem->context->devices[dev_i]->image_support == CL_FALSE),   \
+                 CL_INVALID_OPERATION, "Device %s does not support images\n", \
+                 mem->context->devices[dev_i]->long_name);                    \
+      operation (((mem->device_supports_this_image[dev_i]                     \
+                   & DEVICE_IMAGE_FORMAT_SUPPORT)                             \
+                  == 0),                                                      \
+                 CL_IMAGE_FORMAT_NOT_SUPPORTED,                               \
+                 "The image type is not supported by this device\n");         \
+      operation (((mem->device_supports_this_image[dev_i]                     \
+                   & DEVICE_IMAGE_SIZE_SUPPORT)                               \
+                  == 0),                                                      \
+                 CL_INVALID_IMAGE_SIZE,                                       \
+                 "The image size is not supported by this device\n");         \
+      operation (                                                             \
           ((mem->device_supports_this_image[dev_i]                            \
-            & DEVICE_IMAGE_FORMAT_SUPPORT)                                    \
+            & DEVICE_IMAGE_INTEROP_SUPPORT)                                   \
            == 0),                                                             \
-          CL_IMAGE_FORMAT_NOT_SUPPORTED,                                      \
-          "The image type is not supported by this device\n");                \
-      operation (                                                  \
-          ((mem->device_supports_this_image[dev_i]                            \
-            & DEVICE_IMAGE_SIZE_SUPPORT)                                      \
-           == 0),                                                             \
-          CL_INVALID_IMAGE_SIZE,                                              \
-          "The image size is not supported by this device\n");                \
+          CL_INVALID_GL_OBJECT,                                               \
+          "OpenGL/EGL/other interop is not supported by this device\n");      \
     }                                                                         \
   while (0)
 
@@ -1237,6 +1270,13 @@ struct _cl_mem {
   cl_mem size_buffer;
   cl_mem content_buffer;
 
+  /* OpenGL data */
+  cl_GLenum               target;
+  cl_GLint                miplevel;
+  cl_GLuint               texture;
+  CLeglDisplayKHR egl_display;
+  CLeglImageKHR egl_image;
+
   /* for images, a flag for each device in context,
    * whether that device supports this */
   int *device_supports_this_image;
@@ -1248,6 +1288,7 @@ struct _cl_mem {
 
   /* Image flags */
   cl_bool                 is_image;
+  cl_bool                 is_gl_texture;
   cl_channel_order        image_channel_order;
   cl_channel_type         image_channel_data_type;
   size_t                  image_width;
@@ -1261,6 +1302,7 @@ struct _cl_mem {
   cl_uint                 num_mip_levels;
   cl_uint                 num_samples;
   cl_mem                  buffer;
+  cl_uint                 is_gl_acquired;
 
   /* pipe flags */
   cl_bool                 is_pipe;

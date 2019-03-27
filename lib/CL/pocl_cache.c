@@ -242,6 +242,14 @@ pocl_cache_write_spirv (char *spirv_path,
                               spirv_content, file_size, NULL);
 }
 
+int
+pocl_cache_write_generic_objfile (char *objfile_path,
+                                  const char *objfile_content,
+                                  uint64_t objfile_size)
+{
+  return pocl_write_tempfile (objfile_path, tempfile_pattern, ".binary",
+                              objfile_content, objfile_size, NULL);
+}
 
 /******************************************************************************/
 

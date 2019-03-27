@@ -82,6 +82,8 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
     {
       POCL_RETURN_ERROR_ON ((!src->is_image), CL_INVALID_MEM_OBJECT,
                             "src is not an image\n");
+      POCL_RETURN_ERROR_ON ((src->is_gl_texture), CL_INVALID_MEM_OBJECT,
+                            "src is a GL texture\n");
       POCL_RETURN_ON_UNSUPPORTED_IMAGE (src, command_queue->device);
       POCL_RETURN_ERROR_ON((src->type == CL_MEM_OBJECT_IMAGE2D && src_origin[2] != 0),
         CL_INVALID_VALUE, "src_origin[2] must be 0 for 2D src_image\n");
@@ -100,6 +102,8 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
     {
       POCL_RETURN_ERROR_ON ((!dst->is_image), CL_INVALID_MEM_OBJECT,
                             "dst is not an image\n");
+      POCL_RETURN_ERROR_ON ((dst->is_gl_texture), CL_INVALID_MEM_OBJECT,
+                            "dst is a GL texture\n");
       POCL_RETURN_ON_UNSUPPORTED_IMAGE (dst, command_queue->device);
       POCL_RETURN_ERROR_ON((dst->type == CL_MEM_OBJECT_IMAGE2D && dst_origin[2] != 0),
         CL_INVALID_VALUE, "dst_origin[2] must be 0 for 2D dst_image\n");

@@ -5,6 +5,8 @@
 #cmakedefine BUILD_PTHREAD
 #cmakedefine BUILD_ACCEL
 
+#cmakedefine BUILD_PROXY
+
 #define BUILDDIR "@BUILDDIR@"
 
 /* "Build with ICD" */
@@ -30,6 +32,13 @@
 #cmakedefine ENABLE_POCL_FLOAT_CONVERSION
 
 #cmakedefine ENABLE_RELOCATION
+
+#cmakedefine ENABLE_EGL_INTEROP
+#cmakedefine ENABLE_OPENGL_INTEROP
+
+#ifdef ENABLE_OPENGL_INTEROP
+#cmakedefine ENABLE_CL_GET_GL_CONTEXT
+#endif
 
 #cmakedefine ENABLE_SLEEF
 

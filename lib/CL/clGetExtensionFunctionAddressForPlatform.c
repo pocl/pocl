@@ -35,21 +35,26 @@ CL_EXT_SUFFIX__VERSION_1_2
   POname (clGetPlatformIDs) (1, &pocl_platform, &actual_num);
   if (actual_num != 1)
     {
-      POCL_MSG_WARN ("Couldn't get the platform ID of Pocl platform\n");
+      POCL_MSG_WARN ("Couldn't get the platform ID of PoCL platform\n");
       return NULL;
     }
 
   assert (pocl_platform);
   if (platform != pocl_platform)
     {
-      POCL_MSG_PRINT_INFO ("Requested Function Address not "
-                           "for Pocl platform, ignoring\n");
+      POCL_MSG_WARN ("Requested Function Address not "
+                     "for PoCL platform, ignoring\n");
       return NULL;
     }
 
 #ifdef BUILD_ICD
   if (strcmp (func_name, "clIcdGetPlatformIDsKHR") == 0)
     return (void *)&POname(clIcdGetPlatformIDsKHR);
+#endif
+
+#ifdef BUILD_PROXY
+  if (strcmp (func_name, "clGetGLContextInfoKHR") == 0)
+    return (void *)&POname (clGetGLContextInfoKHR);
 #endif
 
   if (strcmp (func_name, "clSetContentSizeBufferPoCL") == 0)

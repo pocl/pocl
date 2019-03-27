@@ -21,25 +21,26 @@
    THE SOFTWARE.
 */
 
-#include "devices/devices.h"
+#include "devices.h"
 #include "pocl_cl.h"
-#include "pocl_util.h"
 #include "pocl_mem_management.h"
 #include "pocl_shared.h"
+#include "pocl_util.h"
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
 #endif
 
 extern unsigned long context_c;
 
-int context_set_properties(cl_context                    context,
-                           const cl_context_properties * properties,
-                           cl_int *                      errcode)
+int
+context_set_properties (cl_context context,
+                        const cl_context_properties *properties)
 {
   unsigned i;
   int num_properties = 0;
   
   context->properties = NULL;
+  context->gl_interop = CL_FALSE;
 
   /* verify if data in properties is valid
    * and set them */
@@ -62,8 +63,7 @@ int context_set_properties(cl_context                    context,
             if (q[0] == p[0])
               {
                 POCL_MSG_ERR("Duplicate properties: %lu\n", (unsigned long)q[0]);
-                *errcode = CL_INVALID_PROPERTY; 
-                return 0;
+                return CL_INVALID_PROPERTY;
               }
           
           switch (p[0])
@@ -79,17 +79,24 @@ int context_set_properties(cl_context                    context,
               if (platform_found == CL_FALSE)
                 {
                   POCL_MSG_ERR("Could not find platform %p\n", (void*)p[1]);
-                  *errcode = CL_INVALID_PLATFORM;
-                  return 0;
+                  return CL_INVALID_PLATFORM;
                 }
 
               p += 2;
               break;
 
+            case CL_CONTEXT_INTEROP_USER_SYNC:
+            case CL_GL_CONTEXT_KHR:
+            case CL_EGL_DISPLAY_KHR:
+            case CL_GLX_DISPLAY_KHR:
+            case CL_CGL_SHAREGROUP_KHR:
+              context->gl_interop = CL_TRUE;
+              p += 2;
+              break;
+
             default: 
               POCL_MSG_ERR("Unknown context property: %lu\n", (unsigned long)p[0]);
-              *errcode = CL_INVALID_PROPERTY;
-              return 0;
+              return CL_INVALID_PROPERTY;
             }
           num_properties++;
         }
@@ -98,28 +105,26 @@ int context_set_properties(cl_context                    context,
         ((num_properties * 2 + 1) * sizeof(cl_context_properties));
       if (context->properties == NULL)
         {
-          *errcode = CL_OUT_OF_HOST_MEMORY;
-          return 0;
+          return CL_OUT_OF_HOST_MEMORY;
         }
       
       memcpy(context->properties, properties, 
              (num_properties * 2 + 1) * sizeof(cl_context_properties));
       context->num_properties = num_properties;
 
-      *errcode = 0;
-      return num_properties;
+      return CL_SUCCESS;
     }
   else
     {
       context->properties     = NULL;
       context->num_properties = 0;
       
-      *errcode = 0;
       return 0;
     }
 }
 
 extern int pocl_offline_compile;
+
 unsigned cl_context_count = 0;
 pocl_lock_t pocl_context_handling_lock;
 
@@ -171,7 +176,7 @@ POname(clCreateContext)(const cl_context_properties * properties,
 
   POCL_INIT_OBJECT(context);
 
-  context_set_properties(context, properties, &errcode);
+  errcode = context_set_properties (context, properties);
   if (errcode)
     goto ERROR;
 

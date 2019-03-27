@@ -36,6 +36,9 @@
  * region which will cause assert to fail. Those incoming edges are coming from
  * duplicated latch blocks.
  */
+
+#include "pocl_opencl.h"
+
 #define CL_HPP_MINIMUM_OPENCL_VERSION 120
 #define CL_HPP_TARGET_OPENCL_VERSION 120
 #include <CL/cl2.hpp>

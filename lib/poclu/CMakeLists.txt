@@ -26,5 +26,6 @@
 if(MSVC)
   set_source_files_properties( bswap.c misc.c cl_half.c PROPERTIES LANGUAGE CXX )
 endif(MSVC)
+
 add_library("poclu" STATIC bswap.c misc.c cl_half.c)
 harden("poclu")

@@ -4,10 +4,11 @@
  * not run against an other installed OpenCL library.
  */
 
-#include "poclu.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+
+#include "poclu.h"
 #include "config.h"
 
 int main(void)

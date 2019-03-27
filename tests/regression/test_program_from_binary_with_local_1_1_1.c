@@ -22,8 +22,8 @@
    THE SOFTWARE.
 */
 
-#include "poclu.h"
-#include <CL/opencl.h>
+#include "pocl_opencl.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 

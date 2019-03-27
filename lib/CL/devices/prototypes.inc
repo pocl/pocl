@@ -89,6 +89,10 @@
                                    cl_command_queue queue);                   \
   int pocl_##__DRV__##_free_queue (cl_device_id device,                       \
                                    cl_command_queue queue);                   \
+  int pocl_##__DRV__##_init_context (cl_device_id device,                     \
+                                     cl_context context);                     \
+  int pocl_##__DRV__##_free_context (cl_device_id device,                     \
+                                     cl_context context);                     \
   int pocl_##__DRV__##_create_kernel (cl_device_id device, cl_program p,      \
                                       cl_kernel k, unsigned device_i);        \
   int pocl_##__DRV__##_free_kernel (cl_device_id device, cl_program p,        \
@@ -163,6 +167,10 @@
       void *data, cl_mem image, pocl_mem_identifier *mem_id,                  \
       const size_t *origin, const size_t *region,                             \
       cl_uint4 orig_pixel, pixel_t fill_pixel,  size_t pixel_size);           \
+  cl_int pocl_##__DRV__##_get_gl_context_assoc                                \
+         (cl_device_id device,              \
+          cl_gl_context_info type,                  \
+          const cl_context_properties *properties);      \
   void pocl_##__DRV__##_svm_free (cl_device_id dev, void *svm_ptr);           \
   void *pocl_##__DRV__##_svm_alloc (cl_device_id dev, cl_svm_mem_flags flags, \
                                     size_t size);                             \

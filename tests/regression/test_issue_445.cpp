@@ -1,7 +1,8 @@
-
 // 0.14rc1 introduced a regression where private kernel local variable (array)
 // was detected as an automatic local address space variable.
 // See https://github.com/pocl/pocl/issues/445
+
+#include "pocl_opencl.h"
 
 #define CL_HPP_ENABLE_EXCEPTIONS
 #define CL_HPP_MINIMUM_OPENCL_VERSION 120

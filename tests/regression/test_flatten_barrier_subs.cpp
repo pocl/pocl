@@ -21,12 +21,14 @@
    THE SOFTWARE.
 */
 
+#include "pocl_opencl.h"
+
 #define CL_HPP_TARGET_OPENCL_VERSION 120
 #define CL_HPP_MINIMUM_OPENCL_VERSION 120
+#include <CL/cl2.hpp>
 
 #include <iostream>
 #include <numeric>
-#include <CL/cl2.hpp>
 
 #ifdef _WIN32
 #  include "vccompat.hpp"

@@ -124,13 +124,15 @@ pocl_check_device_supports_image (cl_device_id device,
                                   const cl_image_format *image_format,
                                   const cl_image_desc *image_desc,
                                   cl_uint image_type_idx,
-                                  int *device_support)
+                                  cl_bool is_gl_texture, int *device_support)
 {
   cl_uint i;
   size_t m;
 
-  if (device_support)
-    *device_support = 0;
+  *device_support = 0;
+
+  if (device->has_gl_interop || (!is_gl_texture))
+    *device_support |= DEVICE_IMAGE_INTEROP_SUPPORT;
 
   POCL_RETURN_ERROR_ON((!device->image_support), CL_INVALID_OPERATION,
           "Device does not support images");
@@ -186,8 +188,7 @@ pocl_check_device_supports_image (cl_device_id device,
           "Image buffer size (width) > device.max_buffer_size\n");
     }
 
-  if (device_support)
-    *device_support |= DEVICE_IMAGE_SIZE_SUPPORT;
+  *device_support |= DEVICE_IMAGE_SIZE_SUPPORT;
 
   for (i = 0; i < device->num_image_formats[image_type_idx]; i++)
     {
@@ -198,8 +199,7 @@ pocl_check_device_supports_image (cl_device_id device,
           && p[i].image_channel_data_type
                  == image_format->image_channel_data_type)
         {
-          if (device_support)
-            *device_support |= DEVICE_IMAGE_FORMAT_SUPPORT;
+          *device_support |= DEVICE_IMAGE_FORMAT_SUPPORT;
 
           return CL_SUCCESS;
         }

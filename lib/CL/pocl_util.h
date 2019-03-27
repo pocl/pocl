@@ -161,7 +161,7 @@ typedef void (*empty_queue_callback) (cl_command_queue cq);
 void pocl_cl_mem_inherit_flags (cl_mem mem, cl_mem from_buffer,
                                 cl_mem_flags flags);
 
-void pocl_setup_context(cl_context context);
+int pocl_setup_context (cl_context context);
 
 /* Helpers for dealing with devices / subdevices */
 

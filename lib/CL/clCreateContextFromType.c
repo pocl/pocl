@@ -29,11 +29,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* in clCreateContext.c */
-int context_set_properties(cl_context                    ctx,
-                           const cl_context_properties * properties,
-                           cl_int *                      errcode_ret);
-
 CL_API_ENTRY cl_context CL_API_CALL
 POname(clCreateContextFromType)(const cl_context_properties *properties,
                         cl_device_type device_type,

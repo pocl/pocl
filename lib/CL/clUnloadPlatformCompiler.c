@@ -38,9 +38,6 @@ CL_API_SUFFIX__VERSION_1_2
           "clUnloadPlatformCompiler called with non-pocl platform! \n");
       return CL_INVALID_PLATFORM;
     }
-#else
-  POCL_MSG_WARN (
-      "clUnloadPlatformCompiler called with LLVM-less build of pocl! \n");
 #endif
   pocl_check_uninit_devices ();
   return CL_SUCCESS;

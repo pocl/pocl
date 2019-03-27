@@ -13,8 +13,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <CL/opencl.h>
-#include "poclu.h"
+#include "pocl_opencl.h"
 
 #undef SRCDIR
 #include "config.h"

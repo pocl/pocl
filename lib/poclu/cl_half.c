@@ -27,10 +27,9 @@
 #define _ISOC99_SOURCE
 
 #include <math.h>
-#include "poclu.h"
-#include <CL/opencl.h>
 #include <stdint.h>
-#include "config.h"
+
+#include "pocl_opencl.h"
 
 typedef union 
 {

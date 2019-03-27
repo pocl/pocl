@@ -21,12 +21,12 @@
    IN THE SOFTWARE.
 */
 
-#include <CL/opencl.h>
 #include <assert.h>
-#include <poclu.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+
+#include "poclu.h"
 
 #define N 128
 

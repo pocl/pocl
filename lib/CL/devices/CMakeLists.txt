@@ -86,6 +86,13 @@ if(ENABLE_TCE)
   endif()
 endif()
 
+if(ENABLE_PROXY_DEVICE)
+  add_subdirectory("proxy")
+  set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
+    "$<TARGET_OBJECTS:pocl-devices-proxy>")
+  list(APPEND POCL_DEVICES_LINK_LIST OpenCL)
+endif()
+
 if(ENABLE_HSA)
   include_directories(AFTER "${HSA_INCLUDES}")
   add_subdirectory("hsa")

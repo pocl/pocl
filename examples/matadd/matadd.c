@@ -24,8 +24,8 @@
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <CL/opencl.h>
-#include <poclu.h>
+
+#include "poclu.h"
 
 #define N (16*16)
 #define M (8*16)

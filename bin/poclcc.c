@@ -23,12 +23,16 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <CL/opencl.h>
 #include <assert.h>
 #include <string.h>
 #include <errno.h>
 
+#include "config.h"
+#ifdef BUILD_PROXY
+#include "rename_opencl.h"
+#endif
 #include "poclu.h"
+#include <CL/opencl.h>
 
 #define DEVICE_INFO_MAX_LENGTH 2048
 #define NUM_OF_DEVICE_ID 32

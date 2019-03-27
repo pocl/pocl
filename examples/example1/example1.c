@@ -27,8 +27,8 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <CL/opencl.h>
-#include <poclu.h>
+
+#include "poclu.h"
 
 #define N 4
 

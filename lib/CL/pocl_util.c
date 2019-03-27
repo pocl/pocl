@@ -1527,7 +1527,7 @@ image_format_union (const cl_image_format *dev_formats,
 }
 
 /* Setup certain info about context that comes up later in API calls */
-void
+int
 pocl_setup_context (cl_context context)
 {
   unsigned i, j;
@@ -1571,6 +1571,9 @@ pocl_setup_context (cl_context context)
                 &context->image_formats[j], &context->num_image_formats[j]);
         }
 
+      if (dev->ops->init_context)
+        dev->ops->init_context (dev, context);
+
       context->default_queues[i] = POname (clCreateCommandQueue) (
           context, dev,
           (CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_HIDDEN
@@ -1582,6 +1585,7 @@ pocl_setup_context (cl_context context)
 
   assert (alignment > 0);
   context->min_buffer_alignment = alignment;
+  return CL_SUCCESS;
 }
 
 int

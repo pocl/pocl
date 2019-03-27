@@ -78,6 +78,10 @@
 #include "accel/accel.h"
 #endif
 
+#ifdef BUILD_PROXY
+#include "proxy/pocl_proxy.h"
+#endif
+
 #define MAX_DEV_NAME_LEN 64
 
 #ifndef PATH_MAX
@@ -92,7 +96,7 @@
 #endif
 
 /* the enabled devices */
-static struct _cl_device_id* pocl_devices = NULL;
+struct _cl_device_id *pocl_devices = NULL;
 unsigned int pocl_num_devices = 0;
 
 #ifdef ENABLE_LOADABLE_DRIVERS
@@ -124,6 +128,9 @@ static init_device_ops pocl_devices_init_ops[] = {
 #ifdef BUILD_ACCEL
   INIT_DEV (accel),
 #endif
+#ifdef BUILD_PROXY
+  INIT_DEV (proxy),
+#endif
 };
 
 #define POCL_NUM_DEVICE_TYPES (sizeof(pocl_devices_init_ops) / sizeof((pocl_devices_init_ops)[0]))
@@ -146,6 +153,9 @@ char pocl_device_types[POCL_NUM_DEVICE_TYPES][30] = {
 #endif
 #ifdef BUILD_ACCEL
   "accel",
+#endif
+#ifdef BUILD_PROXY
+  "proxy",
 #endif
 };
 

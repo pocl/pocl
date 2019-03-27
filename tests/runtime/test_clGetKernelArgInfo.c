@@ -20,14 +20,14 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 */
-#include "poclu.h"
-#include <CL/cl.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include "poclu.h"
 #include "config.h"
-#include "pocl.h"
+// #include "pocl.h"
 
 char kernelSourceCode[] =
 "constant sampler_t samp =  CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;\n"

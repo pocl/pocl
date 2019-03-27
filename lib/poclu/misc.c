@@ -22,13 +22,14 @@
    THE SOFTWARE.
 */
 
-#include "poclu.h"
-#include <CL/opencl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 #include "config.h"
+
+#include "pocl_opencl.h"
 
 cl_context
 poclu_create_any_context ()

@@ -72,6 +72,8 @@ CL_API_SUFFIX__VERSION_1_0
 
   POCL_GOTO_ERROR_ON ((!image->is_image), CL_INVALID_MEM_OBJECT,
                       "image argument is not an image\n");
+  POCL_GOTO_ERROR_ON ((image->is_gl_texture), CL_INVALID_MEM_OBJECT,
+                      "image is a GL texture\n");
 
   POCL_GOTO_ON_UNSUPPORTED_IMAGE (image, command_queue->device);
 

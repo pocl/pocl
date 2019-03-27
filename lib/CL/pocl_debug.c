@@ -52,6 +52,8 @@ static pocl_lock_t console_mutex;
           pocl_debug_messages_filter |= POCL_DEBUG_FLAG_EVENTS;
         else if (strncmp (ptr, "cache", 5) == 0)
           pocl_debug_messages_filter |= POCL_DEBUG_FLAG_CACHE;
+        else if (strncmp (ptr, "proxy", 5) == 0)
+          pocl_debug_messages_filter |= POCL_DEBUG_FLAG_PROXY;
         else if (strncmp (ptr, "llvm", 4) == 0)
           pocl_debug_messages_filter |= POCL_DEBUG_FLAG_LLVM;
         else if (strncmp (ptr, "refc", 4) == 0)
@@ -82,8 +84,8 @@ static pocl_lock_t console_mutex;
 
       free (tokenize);
       if (pocl_debug_messages_filter)
-        fprintf (stderr, "** Final POCL_DEBUG flags: %" PRIX64 " \n",
-                 pocl_debug_messages_filter);
+        log_printf ("** Final POCL_DEBUG flags: %" PRIX64 " \n",
+                    pocl_debug_messages_filter);
     }
 
     void
@@ -115,25 +117,23 @@ static pocl_lock_t console_mutex;
           formatstring = "[%04i-%02i-%02i %02i:%02i:%02i.%09i] "
               "POCL: in fn %s at line %u:\n %s | %9s | ";
 
-        fprintf (stderr, formatstring, year, mon, day, hour, min, sec,
-                 nanosec, func, line, filter_type_str, filter);
+        log_printf (formatstring, year, mon, day, hour, min, sec, nanosec,
+                    func, line, filter_type_str, filter);
     }
 
     void pocl_debug_measure_start(uint64_t *start) {
       *start = pocl_gettimemono_ns();
     }
 
-    #define PRINT_DURATION(func, line, ...)                                   \
-      do                                                                      \
-        {                                                                     \
-          pocl_debug_output_lock ();                                          \
-          pocl_debug_print_header (func, line,                                \
-                                   "TIMING", POCL_FILTER_TYPE_INFO);          \
-          fprintf (stderr, __VA_ARGS__);                                      \
-          pocl_debug_output_unlock ();                                        \
-        }                                                                     \
-      while (0)
-
+#define PRINT_DURATION(func, line, ...)                                       \
+  do                                                                          \
+    {                                                                         \
+      pocl_debug_output_lock ();                                              \
+      pocl_debug_print_header (func, line, "TIMING", POCL_FILTER_TYPE_INFO);  \
+      log_printf (__VA_ARGS__);                                               \
+      pocl_debug_output_unlock ();                                            \
+    }                                                                         \
+  while (0)
 
     void pocl_debug_print_duration(const char* func, unsigned line,
                                    const char* msg, uint64_t nanosecs)

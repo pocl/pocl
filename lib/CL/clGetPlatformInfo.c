@@ -95,6 +95,10 @@ static const char *pocl_version
       ", UBSAN"
 #endif
 
+#ifdef BUILD_PROXY
+      ", PROXY"
+#endif
+
 #ifdef BUILD_CUDA
       ", CUDA"
 #endif
