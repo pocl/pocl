@@ -316,14 +316,9 @@ static void shared_copy(llvm::Module *program, const llvm::Module *lib,
   for (ai = lib->alias_begin(), ae = lib->alias_end(); ai != ae; ai++) {
     DB_PRINT(" %s\n", ai->getName().data());
     GlobalAlias *GA =
-#ifndef LLVM_3_7
       GlobalAlias::create(
         ai->getType(), ai->getType()->getAddressSpace(), ai->getLinkage(),
         ai->getName(), NULL, program);
-#else
-    GlobalAlias::create(
-        ai->getType(), ai->getLinkage(), ai->getName(), NULL, program);
-#endif
 
     GA->copyAttributesFrom(&*ai);
     vvm[&*ai]=GA;

@@ -42,11 +42,7 @@ struct BreakConstantGEPs : public FunctionPass {
   public:
     static char ID;
     BreakConstantGEPs() : FunctionPass(ID) {}
-#ifdef LLVM_OLDER_THAN_4_0
-    const char *getPassName() const {return "Remove Constant GEP Expressions";}
-#else
     llvm::StringRef getPassName() const override {return "Remove Constant GEP Expressions";}
-#endif
     virtual bool runOnFunction (Function & F) override;
     virtual void getAnalysisUsage(AnalysisUsage &AU) const override {
       // This pass does not modify the control-flow graph of the function

@@ -84,18 +84,10 @@ Flatten::runOnModule(Module &M)
     if (f->isDeclaration() ||
         AuxFuncs.find(f->getName().str()) != AuxFuncs.end()) continue;
     if (KernelName == f->getName() && pocl::Workgroup::isKernelToProcess(*f)) {
-#if LLVM_OLDER_THAN_5_0
-      AttributeSet Attrs;
-      f->removeAttributes(AttributeSet::FunctionIndex,
-                          Attrs.addAttribute(M.getContext(),
-                                             AttributeSet::FunctionIndex,
-                                             Attribute::AlwaysInline));
-#else
       AttributeSet Attrs;
       f->removeAttributes(AttributeList::FunctionIndex,
                           Attrs.addAttribute(M.getContext(),
                                              Attribute::AlwaysInline));
-#endif
 
       f->addFnAttr(Attribute::NoInline);
 
@@ -105,18 +97,10 @@ Flatten::runOnModule(Module &M)
       std::cerr << "### NoInline for " << f->getName().str() << std::endl;
 #endif
     } else {
-#if LLVM_OLDER_THAN_5_0
-      AttributeSet Attrs;
-      f->removeAttributes(AttributeSet::FunctionIndex,
-                          Attrs.addAttribute(M.getContext(),
-                                             AttributeSet::FunctionIndex,
-                                             Attribute::NoInline));
-#else
       AttributeSet Attrs;
       f->removeAttributes(AttributeList::FunctionIndex,
                           Attrs.addAttribute(M.getContext(),
                                              Attribute::NoInline));
-#endif
       f->addFnAttr(Attribute::AlwaysInline);
 
       f->setLinkage(llvm::GlobalValue::InternalLinkage);

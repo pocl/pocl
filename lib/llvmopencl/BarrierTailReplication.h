@@ -56,11 +56,7 @@ namespace pocl {
     llvm::DominatorTree *DT;
     llvm::DominatorTreeWrapperPass *DTP;
 
-#ifdef LLVM_OLDER_THAN_3_7
-    llvm::LoopInfo *LI;
-#else
     llvm::LoopInfoWrapperPass *LI;
-#endif
 
     bool ProcessFunction(llvm::Function &F);
     bool FindBarriersDFS(llvm::BasicBlock *bb,

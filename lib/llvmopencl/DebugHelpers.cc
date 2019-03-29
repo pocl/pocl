@@ -211,11 +211,7 @@ bool chopBBs(llvm::Function &F, llvm::Pass &) {
               ++splitPoint;
               ++count;
             }
-#ifdef LLVM_OLDER_THAN_3_7
-          SplitBlock(b, splitPoint, &P);
-#else
           SplitBlock(b, &*splitPoint);
-#endif
           fchanged = true;
           break;
         }

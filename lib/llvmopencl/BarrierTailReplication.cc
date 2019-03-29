@@ -61,13 +61,8 @@ BarrierTailReplication::getAnalysisUsage(AnalysisUsage &AU) const
 {
   AU.addRequired<DominatorTreeWrapperPass>();
   AU.addPreserved<DominatorTreeWrapperPass>();
-#ifdef LLVM_OLDER_THAN_3_7
-  AU.addRequired<LoopInfo>();
-  AU.addPreserved<LoopInfo>();
-#else
   AU.addRequired<LoopInfoWrapperPass>();
   AU.addPreserved<LoopInfoWrapperPass>();
-#endif
 
   AU.addPreserved<VariableUniformityAnalysis>();
 }
@@ -85,11 +80,7 @@ BarrierTailReplication::runOnFunction(Function &F)
   DTP = &getAnalysis<DominatorTreeWrapperPass>();
   DT = &DTP->getDomTree();
 
-#ifdef LLVM_OLDER_THAN_3_7
-  LI = &getAnalysis<LoopInfo>();
-#else
   LI = &getAnalysis<LoopInfoWrapperPass>();
-#endif
 
   bool changed = ProcessFunction(F);
 
@@ -419,13 +410,8 @@ BarrierTailReplication::UpdateReferences(const BasicBlockVector &graph,
     for (BasicBlock::iterator i2 = b->begin(), e2 = b->end();
          i2 != e2; ++i2) {
       Instruction *i = &*i2;
-#ifdef LLVM_OLDER_THAN_3_9
-      RemapInstruction(i, reference_map,
-                       RF_IgnoreMissingEntries | RF_NoModuleLevelChanges);
-#else
       RemapInstruction(i, reference_map,
                        RF_IgnoreMissingLocals | RF_NoModuleLevelChanges);
-#endif
     }
   }
 }

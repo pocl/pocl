@@ -69,29 +69,14 @@ VariableUniformityAnalysis::VariableUniformityAnalysis() : FunctionPass(ID) {
 
 void
 VariableUniformityAnalysis::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
-#ifdef LLVM_OLDER_THAN_3_9
-  AU.addRequired<PostDominatorTree>();
-  AU.addPreserved<PostDominatorTree>();
-#else
   AU.addRequired<PostDominatorTreeWrapperPass>();
   AU.addPreserved<PostDominatorTreeWrapperPass>();
-#endif
 
-#ifdef LLVM_OLDER_THAN_3_7
-  AU.addRequired<LoopInfo>();
-  AU.addPreserved<LoopInfo>();
-#else
   AU.addRequired<LoopInfoWrapperPass>();
   AU.addPreserved<LoopInfoWrapperPass>();
-#endif
   // required by LoopInfo:
   AU.addRequired<DominatorTreeWrapperPass>();
   AU.addPreserved<DominatorTreeWrapperPass>();
-
-#ifdef LLVM_OLDER_THAN_3_7
-  AU.addRequired<DataLayoutPass>();
-  AU.addPreserved<DataLayoutPass>();
-#endif
 }
 
 // Recursively mark the canonical induction variable PHI as uniform.
@@ -129,11 +114,7 @@ VariableUniformityAnalysis::runOnFunction(Function &F) {
      divergence analysis. */
   uniformityCache_[&F].clear();
 
-#ifdef LLVM_OLDER_THAN_3_7
-  llvm::LoopInfo &LI = getAnalysis<LoopInfo>();
-#else
   llvm::LoopInfo &LI = getAnalysis<LoopInfoWrapperPass>().getLoopInfo();
-#endif
 
   for (llvm::LoopInfo::iterator i = LI.begin(), e = LI.end(); i != e; ++i) {
     llvm::Loop *L = *i;
@@ -245,13 +226,8 @@ VariableUniformityAnalysis::analyzeBBDivergence
 
   // Condition b)
   if (FoundUniforms.size() == 0) {
-#ifdef LLVM_OLDER_THAN_3_9
-    llvm::PostDominatorTree *PDT = &getAnalysis<PostDominatorTree>();
-    if (PDT->dominates(bb, previousUniformBB)) {
-#else
     llvm::PostDominatorTreeWrapperPass *PDT = &getAnalysis<PostDominatorTreeWrapperPass>();
     if (PDT->getPostDomTree().dominates(bb, previousUniformBB)) {
-#endif
       setUniform(f, bb, true);
       FoundUniforms.push_back(bb);
     }

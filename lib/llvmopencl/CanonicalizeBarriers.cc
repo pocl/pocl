@@ -66,14 +66,8 @@ CanonicalizeBarriers::runOnFunction(Function &F)
 
   BasicBlock *entry = &F.getEntryBlock();
   if (!Barrier::hasOnlyBarrier(entry)) {
-#ifdef LLVM_OLDER_THAN_3_7
-    BasicBlock *effective_entry = SplitBlock(entry, 
-                                             &(entry->front()),
-                                             this);
-#else
     BasicBlock *effective_entry = SplitBlock(entry, 
                                              &(entry->front()));
-#endif
 
     effective_entry->takeName(entry);
     entry->setName("entry.barrier");
@@ -101,17 +95,9 @@ CanonicalizeBarriers::runOnFunction(Function &F)
          between the explicit barrier and the added one). */
       BasicBlock *exit; 
       if (Barrier::endsWithBarrier(b))
-#ifdef LLVM_OLDER_THAN_3_7
-        exit = SplitBlock(b, t->getPrevNode(), this);
-#else
         exit = SplitBlock(b, t->getPrevNode());
-#endif
       else
-#ifdef LLVM_OLDER_THAN_3_7
-        exit = SplitBlock(b, t, this);
-#else
         exit = SplitBlock(b, t);
-#endif
       exit->setName("exit.barrier");
       Barrier::Create(t);
     }
@@ -163,11 +149,7 @@ CanonicalizeBarriers::ProcessFunction(Function &F) {
       t->getPrevNode() != *i;
 
     if (HAS_NON_BRANCH_INSTRUCTIONS_AFTER_BARRIER) {
-#ifdef LLVM_OLDER_THAN_3_7
-      BasicBlock *new_b = SplitBlock(b, (*i)->getNextNode(), this);
-#else
       BasicBlock *new_b = SplitBlock(b, (*i)->getNextNode());
-#endif
       new_b->setName(b->getName() + ".postbarrier");
       changed = true;
     }
@@ -192,11 +174,7 @@ CanonicalizeBarriers::ProcessFunction(Function &F) {
     // (allow multiple predecessors, eases loop handling).
     // if (&b->front() == (*i))
     //   continue;
-#ifdef LLVM_OLDER_THAN_3_7
-    BasicBlock *new_b = SplitBlock(b, *i, this);
-#else
     BasicBlock *new_b = SplitBlock(b, *i);
-#endif
     new_b->takeName(b);
     b->setName(new_b->getName() + ".prebarrier");
     changed = true;

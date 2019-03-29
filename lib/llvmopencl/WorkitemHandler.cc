@@ -196,13 +196,8 @@ WorkitemHandler::fixUndominatedVariableUses(llvm::DominatorTreeWrapperPass *DT,
                 if (copy_i > 0)
                   alternativeName << ".pocl_" << copy_i;
 
-#ifdef LLVM_OLDER_THAN_4_0
-                alternative = 
-                  F.getValueSymbolTable().lookup(alternativeName.str());
-#else
                 alternative = 
                   F.getValueSymbolTable()->lookup(alternativeName.str());
-#endif
 
                 if (alternative != NULL)
                   {

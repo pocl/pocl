@@ -84,11 +84,7 @@ ParallelRegion::GenerateTempNames(llvm::BasicBlock *bb)
           name << ".pocl_temp." << tempCounter;
           ++tempCounter;
           tempName = name.str();
-#ifdef LLVM_OLDER_THAN_4_0
-      } while (bb->getParent()->getValueSymbolTable().lookup(tempName) != NULL);
-#else
       } while (bb->getParent()->getValueSymbolTable()->lookup(tempName) != NULL);
-#endif
       instr->setName(tempName);
     }
 }
@@ -169,13 +165,8 @@ ParallelRegion::remap(ValueToValueMapTy &map)
 
     for (BasicBlock::iterator ii = (*i)->begin(), ee = (*i)->end();
          ii != ee; ++ii)
-#ifdef LLVM_OLDER_THAN_3_9
-      RemapInstruction(&*ii, map,
-                       RF_IgnoreMissingEntries | RF_NoModuleLevelChanges);
-#else
       RemapInstruction(&*ii, map,
                        RF_IgnoreMissingLocals | RF_NoModuleLevelChanges);
-#endif
 
 #ifdef DEBUG_REMAP
     std::cerr << endl << "### block after remap: " << std::endl;
@@ -218,11 +209,7 @@ ParallelRegion::chainAfter(ParallelRegion *region)
   
   for (iterator i = begin(), e = end(); i != e; ++i)
 
-#ifdef LLVM_OLDER_THAN_3_8
-    bb_list.insertAfter(tail, *i);
-#else
     bb_list.insertAfter(tail->getIterator(), *i);
-#endif
   t->setSuccessor(0, entryBB());
 
   t = exitBB()->getTerminator();
@@ -668,11 +655,7 @@ ParallelRegion::InjectPrintF
        /*Name=*/"printf", M); 
     printfFunc->setCallingConv(CallingConv::C);
 
-#if LLVM_OLDER_THAN_5_0
-    AttributeSet func_printf_PAL;
-#else
     AttributeList func_printf_PAL;
-#endif
     {
       func_printf_PAL.addAttribute( M->getContext(), 1U, Attribute::NoCapture);
       func_printf_PAL.addAttribute( M->getContext(), 4294967295U, Attribute::NoUnwind);
@@ -686,15 +669,9 @@ ParallelRegion::InjectPrintF
   const_ptr_8_indices.push_back(const_int64_9);
   const_ptr_8_indices.push_back(const_int64_9);
   assert (isa<Constant>(stringArg));
-  #ifdef LLVM_OLDER_THAN_3_7
-  Constant* const_ptr_8 =
-    ConstantExpr::getGetElementPtr
-    (cast<Constant>(stringArg), const_ptr_8_indices);
-  #else
   Constant* const_ptr_8 =
     ConstantExpr::getGetElementPtr
     (PointerType::getUnqual(Type::getInt8Ty(M->getContext())), cast<Constant>(stringArg), const_ptr_8_indices);
-  #endif
 
   std::vector<Value*> args;
   args.push_back(const_ptr_8);

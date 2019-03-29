@@ -519,10 +519,8 @@ TargetAddressSpaces::runOnModule(llvm::Module &M) {
      TAS for now until we have the time to get rid off it completely.
   */
 
-#ifndef LLVM_OLDER_THAN_3_8
   if (arch.startswith("x86_64"))
     return false;
-#endif
 
   assert(!arch.startswith("nvptx"));
 

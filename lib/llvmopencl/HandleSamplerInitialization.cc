@@ -56,9 +56,6 @@ HandleSamplerInitialization::HandleSamplerInitialization() : FunctionPass(ID) {
 bool
 HandleSamplerInitialization::runOnFunction(Function &F) {
 
-#ifdef LLVM_OLDER_THAN_4_0
-  return false;
-#else
   // Collect the sampler init calls to handle first, do not remove them
   // instantly as it'd invalidate the iterators.
   std::set<CallInst*> Calls;
@@ -105,7 +102,6 @@ HandleSamplerInitialization::runOnFunction(Function &F) {
   }
 
   return Changed;
-#endif
 }
 
 void

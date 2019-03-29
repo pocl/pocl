@@ -75,17 +75,9 @@ char WorkitemLoops::ID = 0;
 void
 WorkitemLoops::getAnalysisUsage(AnalysisUsage &AU) const
 {
-#ifdef LLVM_OLDER_THAN_3_9
-  AU.addRequired<PostDominatorTree>();
-#else
   AU.addRequired<PostDominatorTreeWrapperPass>();
-#endif
 
-#ifdef LLVM_OLDER_THAN_3_7
-  AU.addRequired<LoopInfo>();
-#else
   AU.addRequired<LoopInfoWrapperPass>();
-#endif
   AU.addRequired<DominatorTreeWrapperPass>();
 
   AU.addRequired<VariableUniformityAnalysis>();
@@ -108,17 +100,9 @@ WorkitemLoops::runOnFunction(Function &F)
 
   DTP = &getAnalysis<DominatorTreeWrapperPass>();
   DT = &DTP->getDomTree();
-#ifdef LLVM_OLDER_THAN_3_7
-  LI = &getAnalysis<LoopInfo>();
-#else
   LI = &getAnalysis<LoopInfoWrapperPass>();
-#endif
 
-#ifdef LLVM_OLDER_THAN_3_9
-  PDT = &getAnalysis<PostDominatorTree>();
-#else
   PDT = &getAnalysis<PostDominatorTreeWrapperPass>();
-#endif
 
   tempInstructionIndex = 0;
 
@@ -383,11 +367,7 @@ WorkitemLoops::ProcessFunction(Function &F)
 
   releaseParallelRegions();
 
-#ifdef LLVM_OLDER_THAN_3_7
-  original_parallel_regions = K->getParallelRegions(LI);
-#else
   original_parallel_regions = K->getParallelRegions(&LI->getLoopInfo());
-#endif
 
 #ifdef DUMP_CFGS
   F.dump();
@@ -770,11 +750,7 @@ WorkitemLoops::AddContextSave
     }
 
   /* Save the produced variable to the array. */
-#ifdef LLVM_OLDER_THAN_3_8
-  BasicBlock::iterator definition = (dyn_cast<Instruction>(instruction));
-#else
   BasicBlock::iterator definition = (dyn_cast<Instruction>(instruction))->getIterator();
-#endif
   ++definition;
   while (isa<PHINode>(definition)) ++definition;
 

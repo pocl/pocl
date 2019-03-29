@@ -62,12 +62,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include "llvm/Support/Path.h"
 #include "llvm/Support/raw_os_ostream.h"
 
-#ifdef LLVM_OLDER_THAN_4_0
-#include "llvm/Bitcode/ReaderWriter.h"
-#else
 #include "llvm/Bitcode/BitcodeReader.h"
 #include "llvm/Bitcode/BitcodeWriter.h"
-#endif
 
 #include <llvm/Support/Errc.h>
 

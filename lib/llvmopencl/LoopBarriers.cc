@@ -183,11 +183,7 @@ LoopBarriers::ProcessLoop(Loop *L, LPPassManager &) {
   if (&preheader->front() != t)
     prev = t->getPrevNode();
   if (prev && isa<Barrier>(prev)) {
-#ifdef LLVM_OLDER_THAN_3_7
-      BasicBlock *new_b = SplitBlock(preheader, t, this);
-#else
       BasicBlock *new_b = SplitBlock(preheader, t);
-#endif
       new_b->setName(preheader->getName() + ".postbarrier_dummy");
       return true;
   }

@@ -59,13 +59,8 @@ char ImplicitConditionalBarriers::ID = 0;
 void
 ImplicitConditionalBarriers::getAnalysisUsage(AnalysisUsage &AU) const
 {
-#ifdef LLVM_OLDER_THAN_3_9
-  AU.addRequired<PostDominatorTree>();
-  AU.addPreserved<PostDominatorTree>();
-#else
   AU.addRequired<PostDominatorTreeWrapperPass>();
   AU.addPreserved<PostDominatorTreeWrapperPass>();
-#endif
   AU.addRequired<DominatorTreeWrapperPass>();
   AU.addPreserved<DominatorTreeWrapperPass>();
   AU.addPreserved<VariableUniformityAnalysis>();
@@ -98,11 +93,7 @@ ImplicitConditionalBarriers::runOnFunction(Function &F) {
   if (!Workgroup::hasWorkgroupBarriers(F))
     return false;
 
-#ifdef LLVM_OLDER_THAN_3_9
-  PDT = &getAnalysis<PostDominatorTree>();
-#else
   PDT = &getAnalysis<PostDominatorTreeWrapperPass>();
-#endif
 
   typedef std::vector<BasicBlock*> BarrierBlockIndex;
   BarrierBlockIndex conditionalBarriers;
@@ -111,11 +102,7 @@ ImplicitConditionalBarriers::runOnFunction(Function &F) {
     if (!Barrier::hasBarrier(b)) continue;
 
     // Unconditional barrier postdominates the entry node.
-#ifdef LLVM_OLDER_THAN_3_9
-    if (PDT->dominates(b, &F.getEntryBlock())) continue;
-#else
     if (PDT->getPostDomTree().dominates(b, &F.getEntryBlock())) continue;
-#endif
 
 #ifdef DEBUG_COND_BARRIERS
     std::cerr << "### found a conditional barrier";
@@ -145,11 +132,7 @@ ImplicitConditionalBarriers::runOnFunction(Function &F) {
     }
     BasicBlock *pred = firstNonBackedgePredecessor(b);
 
-#ifdef LLVM_OLDER_THAN_3_9
-    while (!Barrier::hasOnlyBarrier(pred) && PDT->dominates(b, pred)) {
-#else
     while (!Barrier::hasOnlyBarrier(pred) && PDT->getPostDomTree().dominates(b, pred)) {
-#endif
 
 #ifdef DEBUG_COND_BARRIERS
       std::cerr << "### looking at BB " << pred->getName().str() << std::endl;

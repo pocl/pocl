@@ -142,13 +142,8 @@ void IsolateRegions::addDummyAfter(llvm::Region *R, llvm::BasicBlock *bb) {
     if (R->contains(succ))
       regionSuccs.push_back(succ);
   }
-#ifdef LLVM_OLDER_THAN_3_7
-  llvm::BasicBlock* newEntry = 
-    SplitBlock(bb, bb->getTerminator(), this);
-#else
   llvm::BasicBlock* newEntry = 
     SplitBlock(bb, bb->getTerminator());
-#endif
   newEntry->setName(bb->getName() + ".r_entry");
   R->replaceEntry(newEntry);
 
@@ -171,12 +166,7 @@ IsolateRegions::addDummyBefore(llvm::Region *R, llvm::BasicBlock *bb) {
     if (R->contains(pred))
       regionPreds.push_back(pred);
   }
-#ifdef LLVM_OLDER_THAN_3_7
-  llvm::BasicBlock* newExit = 
-    SplitBlockPredecessors(bb, regionPreds, ".r_exit", this);
-#else
   llvm::BasicBlock* newExit = 
     SplitBlockPredecessors(bb, regionPreds, ".r_exit");
-#endif
   R->replaceExit(newExit);
 }

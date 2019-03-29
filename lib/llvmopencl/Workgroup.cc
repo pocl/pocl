@@ -50,7 +50,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
 #include <llvm/Transforms/Utils/Cloning.h>
-#ifdef LLVM_OLDER_THAN_7
+#ifdef LLVM_OLDER_THAN_7_0
 #include <llvm/Transforms/Utils/Local.h>
 #endif
 
@@ -98,16 +98,6 @@ namespace llvm {
     static StructType *get(LLVMContext &Context) {
       if (size_t_width == 64)
         {
-#ifdef LLVM_OLDER_THAN_5_0
-        return StructType::get(
-            TypeBuilder<types::i<64>[3], xcompile>::get(Context),
-            TypeBuilder<types::i<64>[3], xcompile>::get(Context),
-            TypeBuilder<types::i<64>[3], xcompile>::get(Context),
-            TypeBuilder<types::i<8> *, xcompile>::get(Context),
-            TypeBuilder<types::i<32> *, xcompile>::get(Context),
-            TypeBuilder<types::i<32>, xcompile>::get(Context),
-            TypeBuilder<types::i<32>, xcompile>::get(Context), NULL);
-#else
         SmallVector<Type *, 10> Elements;
         Elements.push_back(
             TypeBuilder<types::i<64>[3], xcompile>::get(Context));
@@ -120,20 +110,9 @@ namespace llvm {
         Elements.push_back(TypeBuilder<types::i<32>, xcompile>::get(Context));
         Elements.push_back(TypeBuilder<types::i<32>, xcompile>::get(Context));
         return StructType::get(Context, Elements);
-#endif
         }
       else if (size_t_width == 32)
         {
-#ifdef LLVM_OLDER_THAN_5_0
-          return StructType::get(
-              TypeBuilder<types::i<32>[3], xcompile>::get(Context),
-              TypeBuilder<types::i<32>[3], xcompile>::get(Context),
-              TypeBuilder<types::i<32>[3], xcompile>::get(Context),
-              TypeBuilder<types::i<8> *, xcompile>::get(Context),
-              TypeBuilder<types::i<32> *, xcompile>::get(Context),
-              TypeBuilder<types::i<32>, xcompile>::get(Context),
-              TypeBuilder<types::i<32>, xcompile>::get(Context), NULL);
-#else
           SmallVector<Type *, 10> Elements;
           Elements.push_back(
             TypeBuilder<types::i<32>[3], xcompile>::get(Context));
@@ -150,7 +129,6 @@ namespace llvm {
             TypeBuilder<types::i<32>, xcompile>::get(Context));
 
           return StructType::get(Context, Elements);
-#endif
         }
       else
         {
@@ -287,15 +265,9 @@ Workgroup::runOnModule(Module &M) {
     }
   }
 
-#if LLVM_OLDER_THAN_5_0
-  Function *barrier = cast<Function>
-    (M.getOrInsertFunction(BARRIER_FUNCTION_NAME,
-                           Type::getVoidTy(M.getContext()), NULL));
-#else
   Function *barrier = cast<Function>
     (M.getOrInsertFunction(BARRIER_FUNCTION_NAME,
                            Type::getVoidTy(M.getContext())));
-#endif
   BasicBlock *bb = BasicBlock::Create(M.getContext(), "", barrier);
   ReturnInst::Create(M.getContext(), 0, bb);
 
@@ -411,32 +383,21 @@ Workgroup::createLoadFromContext(
   IRBuilder<> &Builder, int StructFieldIndex, int FieldIndex=-1) {
 
   Value *GEP;
-#ifdef LLVM_OLDER_THAN_3_7
-  GEP = Builder.CreateStructGEP(ContextArg, StructFieldIndex);
-#else
   GEP = Builder.CreateStructGEP(ContextArg->getType()->getPointerElementType(),
                                 ContextArg, StructFieldIndex);
 
   llvm::LoadInst *Load = nullptr;
-#endif
   if (SizeTWidth == 64) {
     if (FieldIndex == -1)
       Load = Builder.CreateLoad(Builder.CreateConstGEP1_64(GEP, 0));
     else
       Load = Builder.CreateLoad(Builder.CreateConstGEP2_64(GEP, 0, FieldIndex));
   } else {
-#ifdef LLVM_OLDER_THAN_3_7
-    if (FieldIndex == -1)
-      Load = Builder.CreateLoad(Builder.CreateConstGEP1_32(GEP, 0));
-    else
-      Load = Builder.CreateLoad(Builder.CreateConstGEP2_32(GEP, 0, FieldIndex));
-#else
     if (FieldIndex == -1)
       Load = Builder.CreateLoad(Builder.CreateConstGEP1_32(GEP, 0));
     else
       Load = Builder.CreateLoad(Builder.CreateConstGEP2_32(
           GEP->getType()->getPointerElementType(), GEP, 0, FieldIndex));
-#endif
   }
   addRangeMetadataForPCField(Load, StructFieldIndex, FieldIndex);
   return Load;
@@ -688,22 +649,11 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
     ++ai;
   }
 
-#ifdef LLVM_OLDER_THAN_3_7
-  ContextArg = ai++;
-  GroupIdArgs.resize(3);
-  GroupIdArgs[0] = ai++;
-  GroupIdArgs[1] = ai++;
-  GroupIdArgs[2] = ai++;
-
-#else
-
   ContextArg = &*(ai++);
   GroupIdArgs.resize(3);
   GroupIdArgs[0] = &*(ai++);
   GroupIdArgs[1] = &*(ai++);
   GroupIdArgs[2] = &*(ai++);
-
-#endif
 
   // Copy the function attributes to transfer noalias etc. from the
   // original kernel which will be inlined into the launcher.
@@ -733,6 +683,13 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
   Builder.CreateRetVoid();
 
   std::set<CallInst *> CallsToRemove;
+
+  // At least with LLVM 4.0, the runtime of AddAliasScopeMetadata of
+  // llvm::InlineFunction explodes in case of kernels with restrict
+  // metadata and a lot of lifetime markers. The issue produces at
+  // least with EinsteinToolkit which has a lot of restrict kernel
+  // args). Remove them here before inlining to speed it up.
+  // TODO: Investigate the root cause.
 
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
     for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE; ++BI) {

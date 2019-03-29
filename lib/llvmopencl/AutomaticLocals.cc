@@ -68,16 +68,9 @@ char AutomaticLocals::ID = 0;
 static RegisterPass<AutomaticLocals> X("automatic-locals",
 				      "Processes automatic locals");
 
-#ifdef LLVM_OLDER_THAN_3_7
-void
-AutomaticLocals::getAnalysisUsage(AnalysisUsage &AU) const {
-  AU.addRequired<DataLayoutPass>();
-}
-#else
 void
 AutomaticLocals::getAnalysisUsage(AnalysisUsage &) const {
 }
-#endif
 
 bool
 AutomaticLocals::runOnModule(Module &M)

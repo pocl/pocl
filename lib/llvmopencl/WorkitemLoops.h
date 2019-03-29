@@ -37,11 +37,7 @@
 #include "ParallelRegion.h"
 
 namespace llvm {
-#ifdef LLVM_OLDER_THAN_3_9
-  struct PostDominatorTree;
-#else
   struct PostDominatorTreeWrapperPass;
-#endif
 }
 
 namespace pocl {
@@ -66,17 +62,9 @@ namespace pocl {
     typedef std::map<std::string, llvm::Instruction*> StrInstructionMap;
 
     llvm::DominatorTree *DT;
-#ifdef LLVM_OLDER_THAN_3_7
-    llvm::LoopInfo *LI;
-#else
     llvm::LoopInfoWrapperPass *LI;
-#endif
 
-#ifdef LLVM_OLDER_THAN_3_9
-    llvm::PostDominatorTree *PDT;
-#else
     llvm::PostDominatorTreeWrapperPass *PDT;
-#endif
 
     llvm::DominatorTreeWrapperPass *DTP;
 
