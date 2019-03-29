@@ -26,9 +26,6 @@
 #define __USE_GNU
 #include <sched.h>
 
-#include "pocl-pthread.h"
-#include "pocl-pthread_utils.h"
-#include "pocl-pthread_scheduler.h"
 #include <assert.h>
 #include <pthread.h>
 #include <string.h>
@@ -41,12 +38,15 @@
 #  include "vccompat.hpp"
 #endif
 
-#include "pocl_runtime_config.h"
+#include "config.h"
 #include "utlist.h"
+#include "pocl-pthread.h"
+#include "pocl-pthread_utils.h"
+#include "pocl-pthread_scheduler.h"
+#include "pocl_runtime_config.h"
 #include "cpuinfo.h"
 #include "topology/pocl_topology.h"
 #include "common.h"
-#include "config.h"
 #include "devices.h"
 #include "pocl_util.h"
 #include "pocl_mem_management.h"

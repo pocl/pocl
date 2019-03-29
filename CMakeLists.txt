@@ -37,8 +37,8 @@ if(UNIX)
   if((CMAKE_C_COMPILER_ID STREQUAL "GNU") OR
      (CMAKE_C_COMPILER_ID STREQUAL "Clang"))
 
-    set(FORBIT_IMPLICIT_FUNCTIONS "-Werror=implicit-function-declaration")
-    add_compile_options("${FORBIT_IMPLICIT_FUNCTIONS}")
+    set(FORBIT_IMPLICIT_FUNCTIONS "-Werror=implicit-function-declaration;-Werror=incompatible-pointer-types")
+    add_compile_options(${FORBIT_IMPLICIT_FUNCTIONS})
 
   else()
     message(WARNING "Don't know how to forbid this compiler from allowing implicit function declarations.")

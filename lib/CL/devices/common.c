@@ -28,18 +28,12 @@
 #define _DEFAULT_SOURCE
 #define _POSIX_C_SOURCE 200809L
 
-#include "common.h"
-#include "pocl_shared.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <utlist.h>
-
-#ifdef HAVE_LTDL
-#include <ltdl.h>
-#endif
 
 #ifndef _MSC_VER
 #  include <sys/time.h>
@@ -48,6 +42,9 @@
 #else
 #  include "vccompat.hpp"
 #endif
+
+#include "common.h"
+#include "pocl_shared.h"
 
 #include "config.h"
 #include "config2.h"
@@ -59,6 +56,10 @@
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
 #include "pocl_util.h"
+
+#ifdef HAVE_LTDL
+#include <ltdl.h>
+#endif
 
 #ifdef OCS_AVAILABLE
 #include "pocl_llvm.h"

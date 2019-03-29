@@ -22,14 +22,6 @@
    THE SOFTWARE.
 */
 
-#include "pocl_cl.h"
-#include "pocl_file_util.h"
-#include "pocl_cache.h"
-#ifdef OCS_AVAILABLE
-#include "pocl_llvm.h"
-#endif
-#include "pocl_binary.h"
-#include "pocl_util.h"
 #include <string.h>
 #include <sys/stat.h>
 #ifndef _MSC_VER
@@ -37,6 +29,12 @@
 #else
 #  include "vccompat.hpp"
 #endif
+
+#include "pocl_cl.h"
+#include "pocl_file_util.h"
+#include "pocl_cache.h"
+#include "pocl_binary.h"
+#include "pocl_util.h"
 
 CL_API_ENTRY cl_kernel CL_API_CALL
 POname(clCreateKernel)(cl_program program,

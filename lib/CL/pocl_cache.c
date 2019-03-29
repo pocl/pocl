@@ -414,10 +414,6 @@ build_program_compute_hash (cl_program program, unsigned device_i,
     pocl_SHA1_Update(&hash_ctx, (uint8_t*) wg_method, strlen(wg_method));
     pocl_SHA1_Update(&hash_ctx, (uint8_t*) PACKAGE_VERSION,
                      strlen(PACKAGE_VERSION));
-#ifdef POCL_KCACHE_SALT
-    pocl_SHA1_Update(&hash_ctx, (uint8_t*) POCL_KCACHE_SALT,
-                     strlen(POCL_KCACHE_SALT));
-#endif
     pocl_SHA1_Update(&hash_ctx, (uint8_t*) LLVM_VERSION,
                      strlen(LLVM_VERSION));
     pocl_SHA1_Update(&hash_ctx, (uint8_t*) POCL_BUILD_TIMESTAMP,

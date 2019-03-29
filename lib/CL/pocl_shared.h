@@ -24,8 +24,6 @@
 #ifndef POCL_SHARED_H
 #define POCL_SHARED_H
 
-#include "pocl_cl.h"
-
 #ifdef __cplusplus
 extern "C" {
 #endif
