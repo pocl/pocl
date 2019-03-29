@@ -23,8 +23,6 @@
 
 #include "templates.h"
 
-#ifndef LLVM_OLDER_THAN_3_8
-
 #define IMPLEMENT_GET_IMAGE_ARRAY_SIZE(__IMGTYPE__)             \
 size_t _CL_OVERLOADABLE get_image_array_size(__IMGTYPE__ image) \
 {                                                               \
@@ -36,15 +34,10 @@ size_t _CL_OVERLOADABLE get_image_array_size(__IMGTYPE__ image) \
 IMPLEMENT_GET_IMAGE_ARRAY_SIZE (IMG_RO_AQ image1d_array_t)
 IMPLEMENT_GET_IMAGE_ARRAY_SIZE (IMG_RO_AQ image2d_array_t)
 
-#ifdef CLANG_HAS_IMAGE_AS
 IMPLEMENT_GET_IMAGE_ARRAY_SIZE (IMG_WO_AQ image1d_array_t)
 IMPLEMENT_GET_IMAGE_ARRAY_SIZE (IMG_WO_AQ image2d_array_t)
-#endif
 
 #ifdef CLANG_HAS_RW_IMAGES
 IMPLEMENT_GET_IMAGE_ARRAY_SIZE (IMG_RW_AQ image1d_array_t)
 IMPLEMENT_GET_IMAGE_ARRAY_SIZE (IMG_RW_AQ image2d_array_t)
-#endif
-
-
 #endif

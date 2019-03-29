@@ -132,7 +132,7 @@ int pocl_ptx_gen(const char *BitcodeFilename, const char *PTXFilename,
   llvm::SmallVector<char, 4096> Data;
   llvm::raw_svector_ostream PTXStream(Data);
   if (Machine->addPassesToEmitFile(Passes, PTXStream,
-#if ! LLVM_OLDER_THAN_7_0
+#ifndef LLVM_OLDER_THAN_7_0
                                    nullptr,
 #endif
                                    llvm::TargetMachine::CGFT_AssemblyFile)) {
@@ -215,11 +215,7 @@ void fixPrintF(llvm::Module *Module) {
 
   // Create i32 to hold current argument index.
   llvm::AllocaInst *ArgIndexPtr =
-#if LLVM_OLDER_THAN_5_0
-      new llvm::AllocaInst(I32, llvm::ConstantInt::get(I32, 1));
-#else
       new llvm::AllocaInst(I32, 0, llvm::ConstantInt::get(I32, 1));
-#endif
   ArgIndexPtr->insertBefore(&*NewPrintF->begin()->begin());
   llvm::StoreInst *ArgIndexInit =
       new llvm::StoreInst(llvm::ConstantInt::get(I32, 0), ArgIndexPtr);
@@ -228,13 +224,9 @@ void fixPrintF(llvm::Module *Module) {
   // Replace calls to _cl_va_arg with reads from new i64 array argument.
   llvm::Function *VaArgFunc = Module->getFunction("__cl_va_arg");
   if (VaArgFunc) {
-#if LLVM_OLDER_THAN_5_0
-    llvm::Argument *ArgsIn = &*++NewPrintF->arg_begin();
-#else
     auto args = NewPrintF->arg_begin();
     args++;
     llvm::Argument *ArgsIn = args;
-#endif
     std::vector<llvm::Value *> VaArgCalls(VaArgFunc->user_begin(),
                                           VaArgFunc->user_end());
     for (auto &U : VaArgCalls) {
@@ -293,11 +285,7 @@ void fixPrintF(llvm::Module *Module) {
     // Allocate array for arguments.
     // TODO: Deal with vector arguments.
     llvm::AllocaInst *Args =
-#if LLVM_OLDER_THAN_5_0
-        new llvm::AllocaInst(I64, llvm::ConstantInt::get(I32, NumArgs));
-#else
         new llvm::AllocaInst(I64, 0, llvm::ConstantInt::get(I32, NumArgs));
-#endif
     Args->insertBefore(Call);
 
     // Loop over arguments (skipping format).

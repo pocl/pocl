@@ -192,22 +192,6 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
 
   POCL_MSG_PRINT_INFO ("Linking final module\n");
 
-#ifdef LLVM_OLDER_THAN_5_0
-  /* with older LLVMs, link by invoking ld or clang */
-  char *const args1[]
-#if defined(LINK_WITH_CLANG)
-      = { CLANG,
-#else
-      = { LINK_COMMAND,
-#endif
-          "-o",
-          tmp_module,
-          tmp_objfile,
-          HOST_LD_FLAGS_ARRAY,
-          NULL };
-  error = pocl_run_command (args1);
-
-#else
   /* Link through Clang driver interface who knows the correct toolchains
      for all of its targets.  */
   const char *cmd_line[64] =
@@ -217,7 +201,6 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   while ((*pos++ = *device_ld_arg++)) {}
 
   error = pocl_invoke_clang (device, cmd_line);
-#endif
 
   if (error)
     {

@@ -407,10 +407,6 @@ if (OCS_AVAILABLE)
     endif()
   endif()
 
-  if(ARM AND LLVM_3_9)
-    message(FATAL_ERROR "pocl does not build on ARM with LLVM 3.9 unless is was patched. Try LLVM 3.8 or (preferably) 4.0+")
-  endif()
-
   if(INTEL_SDE_AVX512)
     set(HOST_CPU_FORCED 1 CACHE INTERNAL "CPU is forced by user" FORCE)
     set(LLC_HOST_CPU "skylake-avx512" CACHE STRING "The Host CPU to use with llc" FORCE)
@@ -592,34 +588,6 @@ endif()
 
 ######################################################################################
 
-set(SPIRV OFF)
-
-if((NOT LLVM_OLDER_THAN_5_0) AND CLANG_IS_PATCHED_FOR_SPIR_CC AND X86 AND (NOT KERNELLIB_HOST_CPU_VARIANTS STREQUAL "distro"))
-
-  option(ENABLE_SPIR "Enable SPIR support (default ON when available)" ON)
-
-  if(ENABLE_SPIR)
-
-    message(WARNING "SPIR support is available but highly experimental; use at your own risk.")
-
-    if(LLVM_SPIRV AND (EXISTS "${LLVM_SPIRV}"))
-      message(WARNING "SPIR-V support enabled but highly experimental; you must use a llvm-spirv "
-                      "converter that produces bitcode FOR YOUR LLVM VERSION. "
-                      "E.g. if you're compiling pocl against LLVM 5 then using Khronos' "
-                      "llvm-spirv based on LLVM 3.6 branch WILL NOT WORK.")
-      set(SPIRV ON)
-    endif()
-
-  endif()
-
-else()
-  set(ENABLE_SPIR OFF CACHE INTERNAL "SPIR enabled" FORCE)
-endif()
-
-set(ENABLE_SPIRV ${SPIRV} CACHE INTERNAL "SPIR-V enabled" FORCE)
-
-######################################################################################
-
 # fully device-side printf on devices which support it (only CPU backend ATM), disabled by default.
 # this requires 128bit integer support because of the code in "errol" float-to-string conversion routine
 # the output is not 100% compatible with glibc's printf (%f with large argument prints zeroes after
@@ -723,6 +691,34 @@ if (OCS_AVAILABLE)
   endif()
 
 endif()
+
+######################################################################################
+
+set(SPIRV OFF)
+
+if(OCS_AVAILABLE AND X86 AND (NOT KERNELLIB_HOST_CPU_VARIANTS STREQUAL "distro"))
+  option(ENABLE_SPIR "Enable SPIR support (default ON when available)" ON)
+else()
+  set(ENABLE_SPIR OFF CACHE INTERNAL "SPIR enabled" FORCE)
+endif()
+
+if(ENABLE_SPIR)
+
+  message(WARNING "SPIR support is available but highly experimental; use at your own risk.")
+
+  if(LLVM_SPIRV AND (EXISTS "${LLVM_SPIRV}"))
+    message(WARNING "SPIR-V support enabled but highly experimental; you must use a llvm-spirv "
+      "converter that produces bitcode FOR YOUR LLVM VERSION. "
+      "E.g. if you're compiling pocl against LLVM 5 then using Khronos' "
+      "llvm-spirv based on LLVM 3.6 branch WILL NOT WORK.")
+    set(SPIRV ON)
+  endif()
+
+endif()
+
+set(ENABLE_SPIRV ${SPIRV} CACHE INTERNAL "SPIR-V enabled" FORCE)
+
+
 
 ######################################################################################
 
@@ -923,13 +919,7 @@ set(DEFAULT_HOST_CLANG_FLAGS "${CLANG_TARGET_OPTION}${LLC_TRIPLE}")
 set(DEFAULT_HOST_LLC_FLAGS "-relocation-model=pic -mtriple=${LLC_TRIPLE}")
 
 if(ARM)
-  # 32bit arm doesn't always support doubles,
-  # need to enable FP64 manually with LLVM < 4.0
-  if(LLVM_OLDER_THAN_4_0)
-    option(ENABLE_FP64 "Enable FP64 on ARM32 - disabled by default for LLVM < 4" OFF)
-  else()
-    option(ENABLE_FP64 "Enable FP64 on ARM32 - if you have at least VFP support for doubles, you can leave it ON" ON )
-  endif()
+  option(ENABLE_FP64 "Enable FP64 on ARM32 - if you have at least VFP support for doubles, you can leave it ON" ON )
 else()
   set(ENABLE_FP64 ON CACHE INTERNAL "FP64, always on except ARM")
 endif()
@@ -996,9 +986,7 @@ foreach(EXT ${TEMP_EXT})
   set(TEMP_CLEXT "${TEMP_CLEXT}+${EXT},")
 endforeach()
 
-if (NOT LLVM_OLDER_THAN_4_0)
-  set(HOST_DEVICE_EXTENSION_DEFINES "${HOST_DEVICE_EXTENSION_DEFINES} ${TEMP_CLEXT}")
-endif()
+set(HOST_DEVICE_EXTENSION_DEFINES "${HOST_DEVICE_EXTENSION_DEFINES} ${TEMP_CLEXT}")
 
 if(NOT DEFINED KERNELLIB_HOST_CPU_VARIANTS)
   set(KERNELLIB_HOST_CPU_VARIANTS "native")
@@ -1011,10 +999,7 @@ if(KERNELLIB_HOST_CPU_VARIANTS STREQUAL "distro")
     if(HOST_CPU_FORCED)
       message(FATAL_ERROR "Cannot build with CPU autodetection distro variants build, and enforce LLC_HOST_CPU at the same time. Please pick one")
     endif()
-    set(KERNELLIB_HOST_CPU_VARIANTS sse2 ssse3 sse41 avx avx_f16c avx_fma4 avx2)
-    if(NOT LLVM_OLDER_THAN_3_9)
-      list(APPEND KERNELLIB_HOST_CPU_VARIANTS avx512)
-    endif()
+    set(KERNELLIB_HOST_CPU_VARIANTS sse2 ssse3 sse41 avx avx_f16c avx_fma4 avx2 avx512)
   else()
     message(FATAL_ERROR "Don't know what CPU variants to use for kernel library on this platform.")
   endif()
@@ -1167,7 +1152,6 @@ if(ENABLE_TCE)
   endif()
 
 else()
-
   set(ENABLE_TCEMC 0)
 endif()
 

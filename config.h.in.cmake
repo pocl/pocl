@@ -139,24 +139,6 @@
 
 #define LLVM_SPIRV "@LLVM_SPIRV@"
 
-/* "Using LLVM 3.6" */
-#cmakedefine LLVM_3_6
-
-/* "Using LLVM 3.7" */
-#cmakedefine LLVM_3_7
-
-/* "Using LLVM 3.8" */
-#cmakedefine LLVM_3_8
-
-/* "Using LLVM 3.9" */
-#cmakedefine LLVM_3_9
-
-/* "Using LLVM 4.0" */
-#cmakedefine LLVM_4_0
-
-/* "Using LLVM 5.0" */
-#cmakedefine LLVM_5_0
-
 /* "Using LLVM 6.0" */
 #cmakedefine LLVM_6_0
 

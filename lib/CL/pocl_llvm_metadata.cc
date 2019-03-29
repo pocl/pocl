@@ -58,13 +58,9 @@ static int pocl_get_kernel_arg_module_metadata(llvm::Function *Kernel,
   llvm::NamedMDNode *opencl_kernels = input->getNamedMetadata("opencl.kernels");
   llvm::MDNode *kernel_metadata = nullptr;
 
-#ifdef LLVM_OLDER_THAN_3_9
-  assert(opencl_kernels && opencl_kernels->getNumOperands());
-#else
   if (!(opencl_kernels && opencl_kernels->getNumOperands()))
     // Perhaps it is a SPIR kernel without the "opencl.kernels" metadata
     return 1;
-#endif
 
   for (unsigned i = 0, e = opencl_kernels->getNumOperands(); i != e; ++i) {
     llvm::MDNode *kernel_iter = opencl_kernels->getOperand(i);
@@ -310,7 +306,6 @@ static std::map<std::string, unsigned> type_size_map = {
   {std::string("double16"), (8*16)}
 };
 
-#ifndef LLVM_OLDER_THAN_3_9
 // Clang 3.9 uses function metadata instead of module metadata for presenting
 // OpenCL kernel information.
 static int pocl_get_kernel_arg_function_metadata(llvm::Function *Kernel,
@@ -510,7 +505,6 @@ static int pocl_get_kernel_arg_function_metadata(llvm::Function *Kernel,
 
   return 0;
 }
-#endif
 
 /*****************************************************************************/
 
@@ -532,13 +526,8 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
   }
 
   DataLayout *TD = nullptr;
-#ifdef LLVM_OLDER_THAN_3_7
-  const std::string &ModuleDataLayout =
-      input->getDataLayout()->getStringRepresentation();
-#else
   const std::string &ModuleDataLayout =
       input->getDataLayout().getStringRepresentation();
-#endif
   assert(!ModuleDataLayout.empty());
   TD = new DataLayout(ModuleDataLayout);
 
@@ -582,15 +571,9 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
     meta->num_args = KernelFunction->arg_size();
     meta->name = strdup(KernelFunction->getName().str().c_str());
 
-#if defined(LLVM_OLDER_THAN_3_9)
-    if (pocl_get_kernel_arg_module_metadata(KernelFunction, input, meta)) {
-      return CL_INVALID_KERNEL;
-    }
-#else
     if (pocl_get_kernel_arg_function_metadata(KernelFunction, input, meta)) {
       return CL_INVALID_KERNEL;
     }
-#endif
 
 #ifdef DEBUG_POCL_LLVM_API
     printf("### fetching kernel metadata for kernel %s program %p "
@@ -652,28 +635,6 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
 
     size_t reqdx = 0, reqdy = 0, reqdz = 0;
 
-  #ifdef LLVM_OLDER_THAN_3_9
-    llvm::NamedMDNode *size_info =
-      KernelFunction->getParent()->getNamedMetadata("opencl.kernel_wg_size_info");
-    if (size_info) {
-      for (unsigned i = 0, e = size_info->getNumOperands(); i != e; ++i) {
-        llvm::MDNode *KernelSizeInfo = size_info->getOperand(i);
-        if (dyn_cast<ValueAsMetadata>(
-          KernelSizeInfo->getOperand(0).get())->getValue() != KernelFunction)
-          continue;
-        reqdx = (llvm::cast<ConstantInt>(
-                   llvm::dyn_cast<ConstantAsMetadata>(
-                     KernelSizeInfo->getOperand(1))->getValue()))->getLimitedValue();
-        reqdy = (llvm::cast<ConstantInt>(
-                   llvm::dyn_cast<ConstantAsMetadata>(
-                     KernelSizeInfo->getOperand(2))->getValue()))->getLimitedValue();
-        reqdz = (llvm::cast<ConstantInt>(
-                   llvm::dyn_cast<ConstantAsMetadata>(
-                     KernelSizeInfo->getOperand(3))->getValue()))->getLimitedValue();
-        break;
-      }
-    }
-  #else
     llvm::MDNode *ReqdWGSize =
         KernelFunction->getMetadata("reqd_work_group_size");
     if (ReqdWGSize != nullptr) {
@@ -687,7 +648,6 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
                  llvm::dyn_cast<ConstantAsMetadata>(
                    ReqdWGSize->getOperand(2))->getValue()))->getLimitedValue();
     }
-  #endif
 
     // TODO: implement vec_type_hint / work_group_size_hint attributes
     meta->reqd_wg_size[0] = reqdx;

@@ -62,11 +62,7 @@ write_float4_pixel (float4 color, void *data, size_t base_index, int type)
     }
   if (type == CLK_HALF_FLOAT)
     {
-#if !defined(LLVM_OLDER_THAN_3_8)
       vstorea_half4(color, base_index, data);
-#else
-      __builtin_trap ();
-#endif
     }
   const float4 f127 = ((float4) (SCHAR_MAX));
   const float4 f32767 = ((float4) (SHRT_MAX));

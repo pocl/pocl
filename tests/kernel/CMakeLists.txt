@@ -326,10 +326,3 @@ set_property(TEST
   "kernel/test_isnan"
   "kernel/test_short16"
   APPEND PROPERTY LABELS "hsa-native")
-
-if(LLVM_3_7)
-  set_tests_properties(
-  "kernel/test_rotate"
-  "kernel/test_printf"
-    PROPERTIES WILL_FAIL 1)
-endif()

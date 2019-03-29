@@ -126,9 +126,3 @@ set_tests_properties("workgroup/unbarriered_for_loops"
     LABELS "workgroup"
     DEPENDS "pocl_version_check"
     LABELS "internal;workgroup")
-
-
-if(LLVM_OLDER_THAN_4_0)
-  set_tests_properties("workgroup/issue_548_convergent_propagation"
-    PROPERTIES WILL_FAIL 1)
-endif()

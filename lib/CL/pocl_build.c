@@ -67,6 +67,9 @@ static const char cl_parameters[] =
   "-cl-std=CL1.1 "
   "-cl-std=CL2.0 "
   "-cl-kernel-arg-info "
+  "-cl-strict-aliasing "
+  "-cl-denorms-are-zero "
+  "-cl-no-signed-zeros "
   "-w "
   "-g "
   "-Werror ";
@@ -83,11 +86,6 @@ static const char cl_program_link_options[] =
   "-cl-unsafe-math-optimizations "
   "-cl-finite-math-only "
   "-cl-fast-relaxed-math ";
-
-static const char cl_parameters_supported_after_clang_3_9[] =
-  "-cl-strict-aliasing " /* deprecated after OCL1.0 */
-  "-cl-denorms-are-zero "
-  "-cl-no-signed-zeros ";
 
 static const char cl_parameters_not_yet_supported_by_clang[] =
   "-cl-uniform-work-group-size ";
@@ -265,19 +263,6 @@ process_options (const char *options, char *modded_options, char *link_options,
               /* the LLVM API call pushes the parameters directly to the
                  frontend without using -Xclang */
             }
-          else if (strstr (cl_parameters_supported_after_clang_3_9, token))
-            {
-#ifndef LLVM_OLDER_THAN_3_9
-/* the LLVM API call pushes the parameters directly to the
- * frontend without using -Xclang*/
-#else
-              APPEND_TO_MAIN_BUILD_LOG (
-                  "This build option is supported after clang3.9: %s\n",
-                  token);
-              token = strtok_r (NULL, " ", &saveptr);
-              continue;
-#endif
-            }
           else if (strstr (cl_parameters_not_yet_supported_by_clang, token))
             {
               APPEND_TO_MAIN_BUILD_LOG (
@@ -295,10 +280,8 @@ process_options (const char *options, char *modded_options, char *link_options,
         }
       else if (strncmp (token, "-g", 2) == 0)
         {
-#ifndef LLVM_OLDER_THAN_3_8
           token = "-dwarf-column-info -debug-info-kind=limited " \
 	    "-dwarf-version=4 -debugger-tuning=gdb";
-#endif
         }
       else if (strncmp (token, "-D", 2) == 0 || strncmp (token, "-I", 2) == 0)
         {

@@ -38,10 +38,7 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include <clang/Frontend/FrontendActions.h>
 #include <clang/Frontend/TextDiagnosticBuffer.h>
 #include <clang/Frontend/TextDiagnosticPrinter.h>
-
-#ifndef LLVM_OLDER_THAN_4_0
 #include "clang/Lex/PreprocessorOptions.h"
-#endif
 
 #include "llvm/LinkAllPasses.h"
 #include "llvm/Linker/Linker.h"
@@ -108,11 +105,7 @@ load_source(FrontendOptions &fe,
                        CL_OUT_OF_HOST_MEMORY, "Could not write program source");
 
   fe.Inputs.push_back
-#if LLVM_OLDER_THAN_5_0
-      (FrontendInputFile(source_file, clang::IK_OpenCL));
-#else
       (FrontendInputFile(source_file, clang::InputKind::OpenCL));
-#endif
 
   return 0;
 }
@@ -288,19 +281,15 @@ int pocl_llvm_build_program(cl_program program,
       llvm::StringRef tok = extensions.slice(e_start, e_end);
       e_start = e_end + 1;
       ss << "-D" << tok.str() << " ";
-#ifndef LLVM_OLDER_THAN_4_0
       cl_ext += "+";
       cl_ext += tok.str();
       cl_ext += ",";
-#endif
     }
   }
-#ifndef LLVM_OLDER_THAN_4_0
   if (!cl_ext.empty()) {
     cl_ext.back() = ' '; // replace last "," with space
     ss << "-cl-ext=-all," << cl_ext;
   }
-#endif
   /* temp dir takes preference */
   if (num_input_headers > 0)
     ss << "-I" << temp_include_dir << " ";
@@ -309,9 +298,7 @@ int pocl_llvm_build_program(cl_program program,
     ss << "-Dcl_khr_int64 ";
 
   ss << "-DPOCL_DEVICE_ADDRESS_BITS=" << device->address_bits << " ";
-#ifndef LLVM_OLDER_THAN_4_0
   ss << "-D__USE_CLANG_OPENCL_C_H ";
-#endif
 
   ss << "-xcl ";
   // Remove the inline keywords to force the user functions
@@ -408,18 +395,9 @@ int pocl_llvm_build_program(cl_program program,
   LangOptions *la = pocl_build.getLangOpts();
   PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
 
-#ifdef LLVM_OLDER_THAN_3_9
   pocl_build.setLangDefaults
-    (*la, clang::IK_OpenCL, clang::LangStandard::lang_opencl12);
-#else
-  pocl_build.setLangDefaults
-#if LLVM_OLDER_THAN_5_0
-      (*la, clang::IK_OpenCL, triple, po, clang::LangStandard::lang_opencl12);
-#else
       (*la, clang::InputKind::OpenCL, triple, po,
        clang::LangStandard::lang_opencl12);
-#endif
-#endif
 
   // LLVM 3.3 and older do not set that char is signed which is
   // defined by the OpenCL C specs (but not by C specs).
@@ -465,10 +443,8 @@ int pocl_llvm_build_program(cl_program program,
 
   po.Includes.push_back(PoclTypesH);
   po.Includes.push_back(BuiltinRenamesH);
-#ifndef LLVM_OLDER_THAN_4_0
   // Use Clang's opencl-c.h header.
   po.Includes.push_back(ClangResourceDir + "/include/opencl-c.h");
-#endif
   po.Includes.push_back(KernelH);
   clang::TargetOptions &ta = pocl_build.getTargetOpts();
   ta.Triple = device->llvm_target_triplet;
@@ -681,13 +657,8 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
 #endif
   } else {
 
-#ifdef LLVM_OLDER_THAN_3_8
-  llvm::Module *mod =
-      new llvm::Module(StringRef("linked_program"), GlobalContext());
-#else
   std::unique_ptr<llvm::Module> mod(
       new llvm::Module(StringRef("linked_program"), GlobalContext()));
-#endif
 
   for (i = 0; i < num_input_programs; i++) {
     assert(cur_device_binaries[i]);
@@ -698,10 +669,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
     llvm::Module *p = (llvm::Module *)cur_llvm_irs[i];
     assert(p);
 
-#ifdef LLVM_OLDER_THAN_3_8
-    if (Linker::LinkModules(mod, llvm::CloneModule(p))) {
-      delete mod;
-#elif LLVM_OLDER_THAN_7_0
+#ifdef LLVM_OLDER_THAN_7_0
     if (Linker::linkModules(*mod, llvm::CloneModule(p))) {
 #else
     if (Linker::linkModules(*mod, llvm::CloneModule(*p))) {
@@ -712,11 +680,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
     }
   }
 
-#ifdef LLVM_OLDER_THAN_3_8
-  linked_module = mod;
-#else
   linked_module = mod.release();
-#endif
   }
 
   if (linked_module == nullptr)
@@ -916,7 +880,6 @@ void cleanKernelLibrary() {
   kernelLibraryMap.clear();
 }
 
-#ifndef LLVM_OLDER_THAN_5_0
 /**
  * Invoke the Clang compiler through its Driver API.
  *
@@ -958,4 +921,3 @@ int pocl_invoke_clang(cl_device_id Device, const char** Args) {
   }
 
 }
-#endif

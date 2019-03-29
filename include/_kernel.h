@@ -118,29 +118,7 @@
 
 /************************ setup Clang version macros ******************/
 
-#if (__clang_major__ == 3)
-# if (__clang_minor__ == 7)
-# undef LLVM_3_7
-# define LLVM_3_7
-#elif (__clang_minor__ == 8)
-# undef LLVM_3_8
-# define LLVM_3_8
-#elif (__clang_minor__ == 9)
-# undef LLVM_3_9
-# define LLVM_3_9
-#endif
-
-#elif (__clang_major__ == 4)
-
-# undef LLVM_4_0
-# define LLVM_4_0
-
-#elif (__clang_major__ == 5)
-
-# undef LLVM_5_0
-# define LLVM_5_0
-
-#elif (__clang_major__ == 6)
+#if (__clang_major__ == 6)
 
 # undef LLVM_6_0
 # define LLVM_6_0
@@ -170,30 +148,6 @@
 #ifndef LLVM_6_0
 #define LLVM_OLDER_THAN_6_0 1
 
-#ifndef LLVM_5_0
-#define LLVM_OLDER_THAN_5_0 1
-
-#ifndef LLVM_4_0
-#define LLVM_OLDER_THAN_4_0 1
-
-#ifndef LLVM_3_9
-#define LLVM_OLDER_THAN_3_9 1
-
-#ifndef LLVM_3_8
-#define LLVM_OLDER_THAN_3_8 1
-
-#ifndef LLVM_3_7
-#define LLVM_OLDER_THAN_3_7 1
-
-#ifndef LLVM_3_6
-#define LLVM_OLDER_THAN_3_6 1
-
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
 #endif
 #endif
 #endif
@@ -209,19 +163,6 @@
 
 /****************************************************************************/
 
-/* before 3.9 all qualifiers are mapped to image write type */
-#if ((__clang_major__ < 4) && (__clang_minor__ < 9))
-
-#undef CLANG_HAS_IMAGE_AS
-#define IMG_WO_AQ
-#define IMG_RO_AQ
-#define IMG_RW_AQ
-
-#else
-
-/* 3.9 supports both read and write access qualifiers */
-
-#define CLANG_HAS_IMAGE_AS
 #define IMG_RO_AQ __read_only
 #define IMG_WO_AQ __write_only
 
@@ -233,13 +174,8 @@
 #define IMG_RW_AQ __RW_IMAGES_UNSUPPORTED_BEFORE_CL_20
 #endif
 
-#endif
-
 /****************************************************************************/
-/* if Clang opencl header is available, use it for definitions.
- * Otherwise fallback to old pocl header. */
-
-#if (__clang_major__ >= 4)
+/* use Clang opencl header for definitions. */
 
 #ifdef POCL_DEVICE_ADDRESS_BITS
 
@@ -261,16 +197,6 @@
 #endif
 
 #include "_clang_opencl.h"
-
-#else
-
-/* Language feature detection */
-/* must come after _enable_all_exts.h b/c of pocl_types.h*/
-#include "_kernel_c.h"
-
-#include "_pocl_opencl.h"
-
-#endif
 
 /****************************************************************************/
 

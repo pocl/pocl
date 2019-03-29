@@ -58,15 +58,10 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/PassRegistry.h>
 #include <llvm/PassInfo.h>
 
-#ifdef LLVM_OLDER_THAN_3_7
-#include <llvm/PassManager.h>
-#include <llvm/Target/TargetLibraryInfo.h>
-#else
 #include <llvm/Analysis/TargetLibraryInfo.h>
 #include <llvm/Analysis/TargetTransformInfo.h>
 #include <llvm/IR/LegacyPassManager.h>
 #define PassManager legacy::PassManager
-#endif
 
 #include "linker.h"
 
@@ -90,9 +85,6 @@ extern cl::opt<std::string> KernelName;
  * cl_program's options. */
 static llvm::TargetOptions GetTargetOptions() {
   llvm::TargetOptions Options;
-#ifdef LLVM_OLDER_THAN_3_9
-  Options.PositionIndependentExecutable = true;
-#endif
 #ifdef HOST_FLOAT_SOFT_ABI
   Options.FloatABIType = FloatABI::Soft;
 #else
@@ -180,36 +172,19 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
   Triple triple(device->llvm_target_triplet);
   TargetMachine *Machine = GetTargetMachine(device, triple);
 
-#ifdef LLVM_OLDER_THAN_3_7
-  // Add internal analysis passes from the target machine.
-  if (Machine)
-    Machine->addAnalysisPasses(*Passes);
-#else
   if (Machine)
     Passes->add(
         createTargetTransformInfoWrapperPass(Machine->getTargetIRAnalysis()));
-#endif
 
-  if (module_data_layout != "") {
-#if (defined LLVM_OLDER_THAN_3_7)
-    Passes->add(new DataLayoutPass());
-#endif
-  }
 
   /* Disables automated generation of libcalls from code patterns.
      TCE doesn't have a runtime linker which could link the libs later on.
      Also the libcalls might be harmful for WG autovectorization where we
      want to try to vectorize the code it converts to e.g. a memset or
      a memcpy */
-#ifdef LLVM_OLDER_THAN_3_7
-  TargetLibraryInfo *TLI = new TargetLibraryInfo(triple);
-  TLI->disableAllFunctions();
-  Passes->add(TLI);
-#else
   TargetLibraryInfoImpl TLII(triple);
   TLII.disableAllFunctions();
   Passes->add(new TargetLibraryInfoWrapperPass(TLII));
-#endif
 
   /* The kernel compiler passes to run, in order.
 
@@ -249,22 +224,15 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
     passes.push_back("flatten-globals");
     passes.push_back("flatten-barrier-subs");
     passes.push_back("always-inline");
-#ifndef LLVM_3_9
     passes.push_back("inline");
-#endif
   }
 
-#ifndef LLVM_OLDER_THAN_4_0
   // It should be now safe to run -O3 over the single work-item kernel
   // as the barrier has the attributes preventing illegal motions and
   // duplication. Let's do it to clean up the code for later passes.
   // Especially the WI context structures get needlessly bloated in case there
   // is dead code lying around.
   passes.push_back("STANDARD_OPTS");
-#else
-  // Just clean up any unused globals.
-  passes.push_back("globaldce");
-#endif
 
   if (!SPMDDevice) {
     passes.push_back("simplifycfg");
@@ -449,15 +417,9 @@ int pocl_llvm_generate_workgroup_function_nowrite(
 
   KernelName = Kernel->name;
 
-#ifdef LLVM_OLDER_THAN_3_7
-  kernel_compiler_passes(Device, ParallelBC,
-                         ParallelBC->getDataLayout()->getStringRepresentation())
-      .run(*ParallelBC);
-#else
   kernel_compiler_passes(Device, ParallelBC,
                          ParallelBC->getDataLayout().getStringRepresentation())
       .run(*ParallelBC);
-#endif
 
   assert(Output != NULL);
   *Output = (void *)ParallelBC;
@@ -634,11 +596,7 @@ int pocl_llvm_codegen(cl_device_id Device, void *Modp, char **Output,
                                   TargetMachine::CGFT_ObjectFile);
 #endif
 
-#ifdef LLVM_OLDER_THAN_5_0
-  LLVMGeneratesObjectFiles = true;
-#else
   LLVMGeneratesObjectFiles = !cannotEmitFile;
-#endif
 
   if (LLVMGeneratesObjectFiles) {
     POCL_MSG_PRINT_LLVM("Generating an object file directly.\n");
@@ -652,10 +610,6 @@ int pocl_llvm_codegen(cl_device_id Device, void *Modp, char **Output,
     return 0;
   }
 
-#ifdef LLVM_OLDER_THAN_5_0
-  return 0;
-#else
-
   PassManager PMAsm;
   initPassManagerForCodeGen(PMAsm, Device);
 
@@ -664,9 +618,6 @@ int pocl_llvm_codegen(cl_device_id Device, void *Modp, char **Output,
   // The LLVM target does not implement support for emitting object file directly.
   // Have to emit the text first and then call the assembler from the command line
   // to produce the binary.
-#ifdef LLVM_OLDER_THAN_3_7
-  POCL_ABORT("Assembly text output support not implemented for LLVM < 3.7.");
-#else
 #ifdef LLVM_OLDER_THAN_7_0
   if (Target->addPassesToEmitFile(PMAsm, SOS,
                                   TargetMachine::CGFT_AssemblyFile)) {
@@ -677,7 +628,6 @@ int pocl_llvm_codegen(cl_device_id Device, void *Modp, char **Output,
                                   TargetMachine::CGFT_AssemblyFile)) {
     POCL_ABORT("The target supports neither obj nor asm emission!");
   }
-#endif
 #endif
 
   // This produces the assembly text:
@@ -706,6 +656,5 @@ int pocl_llvm_codegen(cl_device_id Device, void *Modp, char **Output,
   pocl_remove(ObjFileName);
   return Res;
 
-#endif
 }
 /* vim: set ts=4 expandtab: */

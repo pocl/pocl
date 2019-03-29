@@ -53,25 +53,17 @@ if (EXISTS "${INTEL_ZIP}")
   set_target_properties(${TS_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
   add_dependencies(prepare_examples ${TS_NAME})
 
-  # LLVM 3.8 fails with
-  # error: Explicit load/store type does not match pointee type of pointer operand
-  # This seems to occur only with some LLVM built setups, so let's just skip
-  # the tests completely.
+  add_test(NAME intel_svm_coarse
+    COMMAND "${TS_BUILDDIR}/coarse" -p 0 -t default
+    WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/SVMBasicCoarseGrained")
+  add_test(NAME intel_svm_fine
+    COMMAND "${TS_BUILDDIR}/fine" -p 0 -t default
+    WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/SVMBasicFineGrained")
 
-  if(NOT LLVM_3_8)
-    add_test(NAME intel_svm_coarse
-      COMMAND "${TS_BUILDDIR}/coarse" -p 0 -t default
-      WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/SVMBasicCoarseGrained")
-    add_test(NAME intel_svm_fine
-      COMMAND "${TS_BUILDDIR}/fine" -p 0 -t default
-      WORKING_DIRECTORY "${TS_BASEDIR}/src/${TS_NAME}/SVMBasicFineGrained")
-
-    set_tests_properties(intel_svm_coarse intel_svm_fine
-      PROPERTIES  LABELS "IntelSVM;hsa")
-    set_tests_properties(intel_svm_coarse intel_svm_fine
-      PROPERTIES  PASS_REGULAR_EXPRESSION "PASSED")
-
-  endif()
+  set_tests_properties(intel_svm_coarse intel_svm_fine
+    PROPERTIES  LABELS "IntelSVM;hsa")
+  set_tests_properties(intel_svm_coarse intel_svm_fine
+    PROPERTIES  PASS_REGULAR_EXPRESSION "PASSED")
 
 else()
 

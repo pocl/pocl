@@ -182,7 +182,6 @@ test_program (cl_program program, int is_spir)
   TEST_ASSERT((kernel_arg.type==CL_KERNEL_ARG_TYPE_NONE) &&
 	      "type qualifier of arg of test_kernel is not NONE");
 
-#ifndef LLVM_OLDER_THAN_5_0
   if (!is_spir) {
 
     /* Clang versions before 5 added the const MD also for non-pointer
@@ -217,7 +216,6 @@ test_program (cl_program program, int is_spir)
     CHECK_OPENCL_ERROR_IN("clGetKernelArgInfo");
     TEST_ASSERT((kernel_arg.type == CL_KERNEL_ARG_TYPE_NONE));
   }
-#endif
 
   /* NAME tests */
   // constant char* msg, global volatile float* in, global float* out, const float j, local int* c

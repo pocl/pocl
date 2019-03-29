@@ -42,30 +42,20 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/Module.h>
 #include <llvm/IR/LLVMContext.h>
 #include <llvm/IR/DiagnosticPrinter.h>
-#ifndef LLVM_OLDER_THAN_6_0
 #include <llvm/IR/DiagnosticInfo.h>
-#endif
 
 #include <llvm/Target/TargetMachine.h>
 
 #include <llvm/IRReader/IRReader.h>
 
-#ifdef LLVM_OLDER_THAN_4_0
-#include <llvm/Bitcode/ReaderWriter.h>
-#else
 #include <llvm/Bitcode/BitcodeReader.h>
 #include <llvm/Bitcode/BitcodeWriter.h>
-#endif
 
 #include <llvm/Support/raw_os_ostream.h>
 #include <llvm/PassRegistry.h>
 
-#ifdef LLVM_OLDER_THAN_3_7
-#include <llvm/PassManager.h>
-#else
 #include <llvm/IR/LegacyPassManager.h>
 #define PassManager legacy::PassManager
-#endif
 
 using namespace llvm;
 
@@ -93,17 +83,10 @@ llvm::Module *parseModuleIRMem(const char *input_stream, size_t size) {
   std::unique_ptr<MemoryBuffer> buffer =
       MemoryBuffer::getMemBufferCopy(input_stream_ref);
 
-#ifdef LLVM_OLDER_THAN_3_8
-  llvm::ErrorOr<std::unique_ptr<llvm::Module>> parsed_module =
-      parseBitcodeFile(buffer->getMemBufferRef(), GlobalContext());
-  if (std::error_code ec = parsed_module.getError())
-    return nullptr;
-#else
   auto parsed_module =
       parseBitcodeFile(buffer->getMemBufferRef(), GlobalContext());
   if (!parsed_module)
     return nullptr;
-#endif
   return parsed_module.get().release();
 }
 
@@ -113,14 +96,10 @@ int getModuleTriple(const char *input_stream, size_t size,
   std::unique_ptr<MemoryBuffer> buffer =
       MemoryBuffer::getMemBufferCopy(input_stream_ref);
 
-#ifdef LLVM_OLDER_THAN_4_0
-  triple = getBitcodeTargetTriple(buffer->getMemBufferRef(), GlobalContext());
-#else
   auto triple_e = getBitcodeTargetTriple(buffer->getMemBufferRef());
   if (!triple_e)
     return -1;
   triple = triple_e.get();
-#endif
   return 0;
 }
 
@@ -129,13 +108,6 @@ get_llvm_cpu_name ()
 {
 
   StringRef r = llvm::sys::getHostCPUName();
-
-#ifdef LLVM_3_8
-  // https://github.com/pocl/pocl/issues/413
-  if (r.str() == "skylake") {
-    r = llvm::StringRef("haswell");
-  }
-#endif
 
 #ifndef KERNELLIB_HOST_DISTRO_VARIANTS
   if (r.str() == "generic") {
@@ -314,9 +286,6 @@ void InitializeLLVM() {
   initializeVectorization(Registry);
   initializeIPO(Registry);
   initializeAnalysis(Registry);
-#ifdef LLVM_OLDER_THAN_3_8
-  initializeIPA(Registry);
-#endif
   initializeTransformUtils(Registry);
   initializeInstCombine(Registry);
   initializeInstrumentation(Registry);
@@ -326,12 +295,7 @@ void InitializeLLVM() {
 // device can reset their own options. Now one cannot compile
 // with different options to different devices at one run.
 
-#ifdef LLVM_OLDER_THAN_3_7
-  StringMap<llvm::cl::Option *> opts;
-  llvm::cl::getRegisteredOptions(opts);
-#else
   StringMap<llvm::cl::Option *> &opts = llvm::cl::getRegisteredOptions();
-#endif
 
   llvm::cl::Option *O = nullptr;
 

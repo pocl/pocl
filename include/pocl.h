@@ -375,36 +375,9 @@ struct _cl_command_node
 #ifndef LLVM_6_0
 #define LLVM_OLDER_THAN_6_0 1
 
-#ifndef LLVM_5_0
-#define LLVM_OLDER_THAN_5_0 1
-
-#ifndef LLVM_4_0
-#define LLVM_OLDER_THAN_4_0 1
-
-#ifndef LLVM_3_9
-#define LLVM_OLDER_THAN_3_9 1
-
-#ifndef LLVM_3_8
-#define LLVM_OLDER_THAN_3_8 1
-
-#ifndef LLVM_3_7
-#define LLVM_OLDER_THAN_3_7 1
-
-#ifndef LLVM_3_6
-#define LLVM_OLDER_THAN_3_6 1
-
-#endif
-#endif
-#endif
-#endif
-#endif
-#endif
 #endif
 #endif
 #endif
 
-#if (defined LLVM_4_0)
-# define LLVM_OLDER_THAN_5_0 1
-#endif
 
 #endif /* POCL_H */

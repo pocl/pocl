@@ -150,31 +150,6 @@ typedef ulong ulong16 __attribute__((__ext_vector_type__(16)));
 
 /* Image support */
 
-/* Starting from Clang 3.3 the image and sampler are detected
-   as opaque types by the frontend. In order to define
-   the default builtins we use C functions which require
-   the typedefs to the actual underlying types.
-*/
-#if defined(__CBUILD__) && defined(LLVM_OLDER_THAN_3_9)
-typedef int sampler_t;
-
-/* Since some built-ins have different return types
- * (e.g. get_image_dim returns an int2 for 2D images and arrays,
- *  but an int4 for 3D images) we want each image type to
- * point to a different type which is actually always the same.
- * We do this by making it pointer to structs whose only element is a
- * dev_image_t. The structs are not anonymous to allow identification
- * by name.
- */
-
-typedef struct _pocl_image2d_t { dev_image_t base; }* image2d_t;
-typedef struct _pocl_image3d_t { dev_image_t base; }* image3d_t;
-typedef struct _pocl_image1d_t { dev_image_t base; }* image1d_t;
-typedef struct _pocl_image1d_buffer_t { dev_image_t base; }* image1d_buffer_t;
-typedef struct _pocl_image2d_array_t { dev_image_t base; }* image2d_array_t;
-typedef struct _pocl_image1d_array_t { dev_image_t base; }* image1d_array_t;
-#endif
-
 #ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
 /*
  * During pocl kernel compiler transformations we use the fixed address

@@ -67,11 +67,7 @@ get_float4_pixel (void *data, size_t base_index, int type)
     return ((float4 *)data)[base_index];
   if (type == CLK_HALF_FLOAT)
     {
-#if !defined(LLVM_OLDER_THAN_3_8)
       return vloada_half4(base_index, data);
-#else
-      __builtin_trap ();
-#endif
     }
   const float4 one_127th = (float4) (1.0f / 127.0f);
   const float4 one_32767th = (float4) (1.0f / 32767.0f);

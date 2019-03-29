@@ -170,27 +170,23 @@ endif()
 
 #############################################################
 
-if(NOT LLVM_OLDER_THAN_4_0)
+run_llvm_config(LLVM_HAS_RTTI --has-rtti)
 
-  run_llvm_config(LLVM_HAS_RTTI --has-rtti)
+run_llvm_config(LLVM_LIB_IS_SHARED --shared-mode)
 
-  run_llvm_config(LLVM_LIB_IS_SHARED --shared-mode)
-
-  if(LLVM_LIB_IS_SHARED MATCHES "shared")
-    set(LLVM_LIB_MODE --link-shared)
-  else()
-    set(LLVM_LIB_MODE --link-static)
-  endif()
-
-  unset(LLVM_LIBS)
-  run_llvm_config(LLVM_LIBS --libs ${LLVM_LIB_MODE})
-  # Convert LLVM_LIBS from string -> list format to make handling them easier
-  separate_arguments(LLVM_LIBS)
-
-  run_llvm_config(LLVM_SYSLIBS --system-libs ${LLVM_LIB_MODE})
-  string(STRIP "${LLVM_SYSLIBS}" LLVM_SYSLIBS)
-
+if(LLVM_LIB_IS_SHARED MATCHES "shared")
+  set(LLVM_LIB_MODE --link-shared)
+else()
+  set(LLVM_LIB_MODE --link-static)
 endif()
+
+unset(LLVM_LIBS)
+run_llvm_config(LLVM_LIBS --libs ${LLVM_LIB_MODE})
+# Convert LLVM_LIBS from string -> list format to make handling them easier
+separate_arguments(LLVM_LIBS)
+
+run_llvm_config(LLVM_SYSLIBS --system-libs ${LLVM_LIB_MODE})
+string(STRIP "${LLVM_SYSLIBS}" LLVM_SYSLIBS)
 
 ####################################################################
 
@@ -453,16 +449,8 @@ if(NOT DEFINED LINK_WITH_CLANG)
   set(CLANG_HAS_RTLIB ${RT64} CACHE INTERNAL "Clang's compiler-rt available with 64bit types")
   set(CLANG_HAS_RTLIB_128 ${RT128} CACHE INTERNAL "Clang's compiler-rt available with 128bit types")
 
-  if(LLVM_OLDER_THAN_5_0)
-    if(X86)
-      set(LINK_WITH_CLANG OFF CACHE INTERNAL "Link using Clang")
-    else()
-      set(LINK_WITH_CLANG ON CACHE INTERNAL "Link using Clang")
-    endif()
-  else()
-    # on LLVM 5.0+ we use the library API directly instead of forking
-    set(LINK_WITH_CLANG ON CACHE INTERNAL "Link using Clang")
-  endif()
+  # on LLVM 5.0+ we use the library API directly instead of forking
+  set(LINK_WITH_CLANG ON CACHE INTERNAL "Link using Clang")
 
 endif()
 
@@ -767,18 +755,10 @@ if(NOT DEFINED POCL_USE_FAKE_ADDR_SPACE_IDS)
     OUTPUT_VARIABLE AS_CHECK_RESULT)
 
   set(FAKEADDR 0)
-  if(LLVM_OLDER_THAN_3_9)
-    if(NOT AS_CHECK_RESULT MATCHES "!1 = !{!\"kernel_arg_addr_space\", i32 1, i32 2, i32 3}")
-      set(FAKEADDR 1)
-    else()
-      message(FATAL_ERROR "Detected a Clang <3.9 patched with the SPIR address space arg metadata. Unsupported mode. ")
-    endif()
+  if(NOT AS_CHECK_RESULT MATCHES "= !{i32 1, i32 2, i32 3}")
+    set(FAKEADDR 1)
   else()
-    if(NOT AS_CHECK_RESULT MATCHES "= !{i32 1, i32 2, i32 3}")
-      set(FAKEADDR 1)
-    else()
-      set(FAKEADDR 0)
-    endif()
+    set(FAKEADDR 0)
   endif()
 
   set(POCL_USE_FAKE_ADDR_SPACE_IDS ${FAKEADDR} CACHE INTERNAL "use fake address space IDs")
@@ -787,50 +767,8 @@ if(NOT DEFINED POCL_USE_FAKE_ADDR_SPACE_IDS)
 #  message(STATUS "Use fake address space IDs (cached): ${POCL_USE_FAKE_ADDR_SPACE_IDS}")
 endif()
 
+execute_process(COMMAND "${CLANG}" "--print-resource-dir" OUTPUT_VARIABLE RESOURCE_DIR)
+string(STRIP "${RESOURCE_DIR}" RESOURCE_DIR)
+set(CLANG_RESOURCE_DIR "${RESOURCE_DIR}" CACHE INTERNAL "Clang resource dir")
 
-
-if(NOT DEFINED CLANG_IS_PATCHED_FOR_SPIR_CC)
-
-  if(LLVM_OLDER_THAN_5_0)
-    set(RESOURCE_DIR "${LLVM_LIBDIR}/clang/${LLVM_VERSION_FULL}")
-  else()
-    execute_process(COMMAND "${CLANG}" "--print-resource-dir" OUTPUT_VARIABLE RESOURCE_DIR)
-    string(STRIP "${RESOURCE_DIR}" RESOURCE_DIR)
-  endif()
-
-  set(CLANG_RESOURCE_DIR "${RESOURCE_DIR}" CACHE INTERNAL "Clang resource dir")
-  if(LLVM_OLDER_THAN_5_0)
-
-    ######################################################################################
-    # Test for presence of Clang calling convention patch from
-    # https://github.com/pocl/pocl/issues/1
-
-    execute_process(
-      COMMAND
-      "${CLANG}" "-S" "-xcl" "-emit-llvm" "${CMAKE_SOURCE_DIR}/cmake/spir-cc-test-kernel.cl" "-o" "-"
-      OUTPUT_VARIABLE SPIR_PATCH_TEST_IR
-      ERROR_VARIABLE _DUMMY
-      RESULT_VARIABLE SPIR_CC_RES)
-
-    if(SPIR_CC_RES)
-      message(FATAL_ERROR "Clang exited with non-zero status when trying to compile calling convention test")
-    endif()
-
-    string(FIND "${SPIR_PATCH_TEST_IR}" "spir_kernel" SPIR_CC_RES)
-    if("${SPIR_CC_RES}" MATCHES "-1")
-      set(SPIRCC 0)
-      message(STATUS "Clang is NOT patched for SPIR CC")
-    else()
-      set(SPIRCC 1)
-      message(STATUS "Clang IS patched for SPIR CC")
-    endif()
-  else()
-    set(SPIRCC 1)
-    message(STATUS "Clang 5.0+ uses SPIR CC by default")
-  endif()
-
-  set(CLANG_IS_PATCHED_FOR_SPIR_CC ${SPIRCC} CACHE INTERNAL "Clang patched for SPIR CC")
-  message(STATUS "Clang patched for SPIR CC: ${CLANG_IS_PATCHED_FOR_SPIR_CC}")
-#else()
-#  message(STATUS "Clang patched for SPIR CC (cached): ${CLANG_IS_PATCHED_FOR_SPIR_CC}")
-endif()
+set(CLANG_IS_PATCHED_FOR_SPIR_CC ON CACHE INTERNAL "Clang patched for SPIR CC")

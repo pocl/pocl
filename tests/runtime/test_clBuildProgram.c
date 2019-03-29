@@ -455,7 +455,6 @@ main(void){
       CHECK_CL_ERROR(clReleaseProgram(program));
   }
 
-#if !(defined(LLVM_3_6) || defined(LLVM_3_7) ||  defined(LLVM_3_8))
   /* TEST 13: missing symbols: kernel referring nonexistent function */
   {
     size_t kernel_size = strlen (missing_symbol_kernel);
@@ -471,7 +470,6 @@ main(void){
 
     CHECK_CL_ERROR (clReleaseProgram (program));
   }
-#endif
 
   CHECK_CL_ERROR (clReleaseContext (context));
   CHECK_CL_ERROR (clUnloadCompiler ());
