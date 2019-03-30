@@ -141,7 +141,7 @@ main(void)
         for (col = 0; col < img_desc.image_width; ++col) {
           cl_ushort *img_pixel = (cl_ushort*)((char*)img_map + row*row_pitch) + col*4;
           cl_ushort *buf_pixel = host_buf + (row*img_desc.image_width + col)*4;
-#if 0 // debug
+
           if (memcmp(img_pixel, buf_pixel, pixel_size) != 0)
             printf("%zu %zu %zu : %x %x %x %x | %x %x %x %x\n",
               row, col, (size_t)(buf_pixel - host_buf),
@@ -153,7 +153,7 @@ main(void)
               img_pixel[1],
               img_pixel[2],
               img_pixel[3]);
-#endif
+
           TEST_ASSERT(memcmp(img_pixel, buf_pixel, pixel_size) == 0);
 
         }
