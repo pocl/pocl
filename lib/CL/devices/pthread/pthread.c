@@ -59,39 +59,6 @@
 #include "pocl_llvm.h"
 #endif
 
-#ifdef CUSTOM_BUFFER_ALLOCATOR
-
-#include "bufalloc.h"
-
-/* Instead of mallocing a buffer size for a region, try to allocate 
-   this many times the buffer size to hopefully avoid mallocs for 
-   the next buffer allocations.
-   
-   Falls back to single multiple allocation if fails to allocate a
-   larger region. */
-#define ALLOCATION_MULTIPLE 32
-
-/* To avoid memory hogging in case of larger buffers, limit the
-   extra allocation margin to this number of megabytes.
-   
-   The extra allocation should be done to avoid repetitive calls and
-   memory fragmentation for smaller buffers only. 
-*/
-#define ADDITIONAL_ALLOCATION_MAX_MB 100
-
-/* Always create regions with at least this size to avoid allocating
-   small regions when there are lots of small buffers, which would counter 
-   a purpose of having own buffer management. It would end up having a lot of
-   small regions with linear searches over them.  */
-#define NEW_REGION_MIN_MB 10
-
-/* Whether to immediately free a region in case the last chunk was
-   deallocated. If 0, it can reuse the same region over multiple kernels. */
-#define FREE_EMPTY_REGIONS 0
-
-/* CUSTOM_BUFFER_ALLOCATOR */
-#endif
-
 /**
  * Per event data.
  */
@@ -103,13 +70,6 @@ struct data {
   /* Currently loaded kernel. */
   cl_kernel current_kernel;
   volatile uint64_t total_cmd_exec_time;
-
-#ifdef CUSTOM_BUFFER_ALLOCATOR
-  /* Lock for protecting the mem_regions linked list. Held when new mem_regions
-     are created or old ones freed. */
-  mem_regions_management* mem_regions;
-#endif
-
 };
 
 void
@@ -167,26 +127,6 @@ pocl_pthread_probe (struct pocl_device_ops *ops)
 static cl_device_partition_property pthread_partition_properties[2]
     = { CL_DEVICE_PARTITION_EQUALLY, CL_DEVICE_PARTITION_BY_COUNTS };
 
-#ifdef CUSTOM_BUFFER_ALLOCATOR
-#define INIT_MEM_REGIONS                                                      \
-  do                                                                          \
-    {                                                                         \
-      mem_regions_management *mrm;                                            \
-      mrm = malloc (sizeof (mem_regions_management));                         \
-      if (mrm == NULL)                                                        \
-        {                                                                     \
-          free (d);                                                           \
-          return CL_OUT_OF_HOST_MEMORY;                                       \
-        }                                                                     \
-      BA_INIT_LOCK (mrm->mem_regions_lock);                                   \
-      mrm->mem_regions = NULL;                                                \
-      d->mem_regions = mrm;                                                   \
-    }                                                                         \
-  while (0)
-#else
-#define INIT_MEM_REGIONS NULL
-#endif
-
 #define FALLBACK_MAX_THREAD_COUNT 8
 
 char scheduler_initialized = 0;
@@ -201,8 +141,6 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   d = (struct data *) calloc (1, sizeof (struct data));
   if (d == NULL)
     return CL_OUT_OF_HOST_MEMORY;
-
-  INIT_MEM_REGIONS;
 
   d->current_kernel = NULL;
   device->data = d;
@@ -268,18 +206,6 @@ pocl_pthread_uninit (unsigned j, cl_device_id device)
 {
   struct data *d = (struct data*)device->data;
 
-#ifdef CUSTOM_BUFFER_ALLOCATOR
-  memory_region_t *region, *temp;
-  DL_FOREACH_SAFE(d->mem_regions->mem_regions, region, temp)
-    {
-      DL_DELETE(d->mem_regions->mem_regions, region);
-      free((void*)region->chunks->start_address);
-      region->chunks->start_address = 0;
-      POCL_MEM_FREE(region);
-    }
-  d->mem_regions->mem_regions = NULL;
-#endif
-
   if (scheduler_initialized)
     {
       pthread_scheduler_uninit ();
@@ -299,8 +225,6 @@ pocl_pthread_reinit (unsigned j, cl_device_id device)
   d = (struct data *)calloc (1, sizeof (struct data));
   if (d == NULL)
     return CL_OUT_OF_HOST_MEMORY;
-
-  INIT_MEM_REGIONS;
 
   d->current_kernel = NULL;
   device->data = d;
