@@ -1284,6 +1284,10 @@ struct _cl_sampler {
   POCL_UPDATE_EVENT_COMPLETE_INNER (__event,                                  \
                                     POCL_DEBUG_EVENT_TIME ((__event), msg))
 
+#define POCL_UPDATE_EVENT_COMPLETE_MSG2(__event, msg)                         \
+  POCL_UPDATE_EVENT_COMPLETE_INNER (__event,                                  \
+                                    POCL_DEBUG_EVENT_TIME2 ((__event), msg))
+
 #define CL_FAILED (-1)
 
 #define POCL_UPDATE_EVENT_FAILED(__event)                                     \

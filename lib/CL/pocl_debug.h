@@ -214,6 +214,11 @@ extern "C" {
       __func__, __LINE__, "Event " msg,                                       \
       (uint64_t) ((eventp)->time_end - (eventp)->time_start))
 
+#define POCL_DEBUG_EVENT_TIME2(eventp, msg)                                    \
+  pocl_debug_print_duration (                                                  \
+      __func__, __LINE__, msg,                                                 \
+      (uint64_t) ((eventp)->time_end - (eventp)->time_start))
+
 #else
 
     #define POCL_DEBUGGING_ON 0
