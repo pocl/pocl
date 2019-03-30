@@ -1134,7 +1134,7 @@ pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
   if (node != NULL && node->type == CL_COMMAND_NDRANGE_KERNEL)
     pocl_check_kernel_dlhandle_cache (node, 1, 1);
 
-  node->ready = 1;
+  node->was_submitted = 1;
   POCL_LOCK (d->cq_lock);
   pocl_command_push(node, &d->ready_list, &d->command_list);
 
@@ -1178,7 +1178,7 @@ pocl_basic_notify (cl_device_id device, cl_event event, cl_event finished)
       return;
     }
 
-  if (!node->ready)
+  if (!node->was_submitted)
     return;
 
   if (pocl_command_is_ready (event))

@@ -598,7 +598,7 @@ static void scheduleCommands(AccelData &D) {
 
 void pocl_accel_submit(_cl_command_node *Node, cl_command_queue /*CQ*/) {
 
-  Node->ready = 1;
+  Node->was_submitted = 1;
 
   struct AccelData *D = (AccelData *)Node->device->data;
   POCL_LOCK(D->CommandListLock);
@@ -630,7 +630,7 @@ void pocl_accel_notify(cl_device_id Device, cl_event Event, cl_event Finished) {
     return;
   }
 
-  if (!Node->ready)
+  if (!Node->was_submitted)
     return;
 
   if (pocl_command_is_ready(Event)) {

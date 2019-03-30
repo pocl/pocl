@@ -1556,7 +1556,7 @@ pocl_hsa_submit (_cl_command_node *node, cl_command_queue cq)
 
   PTHREAD_CHECK(pthread_mutex_lock(&d->list_mutex));
 
-  node->ready = 1;
+  node->was_submitted = 1;
   if (pocl_command_is_ready (node->event))
     {
       pocl_update_event_submitted (node->event);
@@ -1639,7 +1639,7 @@ pocl_hsa_notify (cl_device_id device, cl_event event, cl_event finished)
       return;
     }
 
-  if (!node->ready)
+  if (!node->was_submitted)
     return;
 
   if (pocl_command_is_ready (event))

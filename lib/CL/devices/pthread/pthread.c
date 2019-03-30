@@ -249,7 +249,8 @@ pocl_pthread_run (void *data, _cl_command_node *cmd)
 void
 pocl_pthread_submit (_cl_command_node *node, cl_command_queue cq)
 {
-  node->ready = 1;
+  node->was_submitted = 1;
+
   if (pocl_command_is_ready (node->event))
     {
       pocl_update_event_submitted (node->event);
@@ -297,7 +298,7 @@ pocl_pthread_notify (cl_device_id device, cl_event event, cl_event finished)
       return;
     }
 
-  if (!node->ready)
+  if (!node->was_submitted)
     return;
 
   if (pocl_command_is_ready (node->event))

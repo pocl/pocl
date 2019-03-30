@@ -362,7 +362,7 @@ struct _cl_command_node
   cl_device_id device;
   /* The index of the targeted device in the platform's device list. */
   unsigned device_i;
-  cl_int ready;
+  cl_int was_submitted;
 };
 
 #ifndef LLVM_10_0

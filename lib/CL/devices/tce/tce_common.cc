@@ -967,7 +967,7 @@ pocl_tce_submit (_cl_command_node *node, cl_command_queue /*cq*/)
 {
   TCEDevice *d = (TCEDevice*)node->device->data;
 
-  node->ready = 1;
+  node->was_submitted = 1;
   POCL_LOCK(d->cq_lock);
   pocl_command_push(node, &d->ready_list, &d->command_list);
   POCL_UNLOCK_OBJ(node->event);
@@ -1004,14 +1004,14 @@ void
 pocl_tce_notify (cl_device_id device, cl_event event, cl_event finished)
 {
   TCEDevice *d = (TCEDevice*)device->data;
-  _cl_command_node * volatile node = event->command;
+  _cl_command_node *node = event->command;
 
   if (finished->status < CL_COMPLETE) {
     pocl_update_event_failed(event);
     return;
   }
 
-  if (!node->ready)
+  if (!node->was_submitted)
     return;
 
   if (pocl_command_is_ready(event)) {
