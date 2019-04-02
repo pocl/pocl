@@ -58,6 +58,12 @@ __cl_printf(__attribute__((address_space(4))) char* restrict format, ...)
             vprintf("%d", arg_data);
             break;
           }
+          case 'x':
+          {
+            __cl_va_arg(ap, arg_data, 1);
+            vprintf("%x", arg_data);
+            break;
+          }
           case 'f':
           {
             __cl_va_arg(ap, arg_data, 2);
