@@ -276,6 +276,9 @@ endif()
 # for kernel-<target>.bc
 set(POCL_INSTALL_PRIVATE_DATADIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/pocl" CACHE PATH "POCL private datadir")
 
+option(ENABLE_POCL_RELOCATION NO "Enable pocl relocation when compiled by changing internal paths to relative paths")
+file(RELATIVE_PATH POCL_INSTALL_PRIVATE_DATADIR_REL ${POCL_INSTALL_PUBLIC_LIBDIR} ${POCL_INSTALL_PRIVATE_DATADIR})
+
 # for poclu.h
 set(POCL_INSTALL_PUBLIC_HEADER_DIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_INCLUDEDIR}" CACHE PATH "POCL public header dir")
 
@@ -1332,6 +1335,13 @@ if(UNIX)
   install(FILES "${CMAKE_BINARY_DIR}/pocl.pc"
          DESTINATION "${POCL_INSTALL_PKGCONFIG_DIR}")
 
+endif()
+
+##########################################################
+
+if(ENABLE_POCL_RELOCATION)
+  install(FILES "${CLANG_RESOURCE_DIR}/include/opencl-c.h"
+         DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}/include")
 endif()
 
 #############################################################
