@@ -961,6 +961,30 @@ align64(uint64_t value, unsigned alignment)
    return (value + alignment - 1) & ~((uint64_t)alignment - 1);
 }
 
+
+static bool
+isByValPtrArgument(llvm::Argument &Arg) {
+  return Arg.getType()->isPointerTy() && Arg.hasByValAttr();
+}
+
+static size_t
+getArgumentSize(llvm::Argument &Arg) {
+  llvm::Type *TypeInBuf = nullptr;
+  if (Arg.getType()->isPointerTy()) {
+    if (Arg.hasByValAttr()) {
+      TypeInBuf = Arg.getType()->getPointerElementType();
+    } else {
+      TypeInBuf = Arg.getType();
+    }
+  } else {
+    // Scalar argument.
+    TypeInBuf = Arg.getType();
+  }
+
+  const DataLayout &DL = Arg.getParent()->getParent()->getDataLayout();
+  return DL.getTypeStoreSize(TypeInBuf);
+}
+
 static void
 computeArgBufferOffsets(LLVMValueRef F, uint64_t *ArgBufferOffsets) {
 
@@ -969,8 +993,8 @@ computeArgBufferOffsets(LLVMValueRef F, uint64_t *ArgBufferOffsets) {
   LLVMModuleRef M = LLVMGetGlobalParent(F);
 
 #ifdef LLVM_OLDER_THAN_3_9
-  const char *str = LLVMGetDataLayout(M);
-  LLVMTargetDataRef DataLayout = LLVMCreateTargetData(str);
+  const char *Str = LLVMGetDataLayout(M);
+  LLVMTargetDataRef DataLayout = LLVMCreateTargetData(Str);
 #else
   LLVMTargetDataRef DataLayout = LLVMGetModuleDataLayout(M);
 #endif
@@ -981,10 +1005,10 @@ computeArgBufferOffsets(LLVMValueRef F, uint64_t *ArgBufferOffsets) {
     LLVMTypeRef ParamType = LLVMTypeOf(Param);
     // TODO: This is a target specific type? We would like to get the
     // natural size or the "packed size" instead...
-    uint64_t ByteSize = LLVMStoreSizeOfType(DataLayout, ParamType);
+    uint64_t ByteSize = getArgumentSize(cast<Argument>(*unwrap(Param)));
     uint64_t Alignment = ByteSize;
 
-    assert (ByteSize && "Arg type size is zero?");
+    assert(ByteSize > 0 && "Arg type size is zero?");
     Offset = align64(Offset, Alignment);
     ArgBufferOffsets[i] = Offset;
     Offset += ByteSize;
@@ -1007,10 +1031,18 @@ createArgBufferLoad(LLVMBuilderRef Builder, LLVMValueRef ArgBufferPtr,
     LLVMConstInt(LLVMInt32TypeInContext(LLVMContext), ArgPos, 0);
   LLVMValueRef ArgByteOffset =
     LLVMBuildGEP(Builder, ArgBufferPtr, &Offs, 1, "arg_byte_offset");
-  LLVMValueRef ArgOffsetBitcast =
-    LLVMBuildPointerCast(Builder, ArgByteOffset,
-                         LLVMPointerType(ParamType, 0), "arg_ptr");
-  return LLVMBuildLoad(Builder, ArgOffsetBitcast, "");
+
+  if (isByValPtrArgument(cast<Argument>(*unwrap(Param)))) {
+    // In case of byval arguments (private structs), the struct
+    // is in the arg buffer directly. Just refer to its address.
+    return LLVMBuildPointerCast(Builder, ArgByteOffset,
+                                ParamType, "inval_arg_ptr");
+  } else {
+    LLVMValueRef ArgOffsetBitcast =
+      LLVMBuildPointerCast(Builder, ArgByteOffset,
+                           LLVMPointerType(ParamType, 0), "arg_ptr");
+    return LLVMBuildLoad(Builder, ArgOffsetBitcast, "");
+  }
 }
 
 /**
