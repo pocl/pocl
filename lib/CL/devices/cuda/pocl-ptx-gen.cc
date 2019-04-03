@@ -308,6 +308,15 @@ void fixPrintF(llvm::Module *Module) {
       llvm::Value *Arg = Call->getArgOperand(A + 1);
       llvm::Type *ArgType = Arg->getType();
 
+      // Cast pointers to the generic address space.
+      if (ArgType->isPointerTy() && ArgType->getPointerAddressSpace() != 0) {
+        llvm::CastInst *AddrSpaceCast =llvm::CastInst::CreatePointerCast(
+          Arg, ArgType->getPointerElementType()->getPointerTo());
+        AddrSpaceCast->insertBefore(Call);
+        Arg = AddrSpaceCast;
+        ArgType = Arg->getType();
+      }
+
       // Get pointer to argument in i64 array.
       // TODO: promote arguments that are shorter than 32 bits.
       llvm::Constant *ArgIndex = llvm::ConstantInt::get(I32, A);
