@@ -1,6 +1,6 @@
 /* tce_common.cc - common functionality over the different TCE/TTA device drivers.
 
-   Copyright (c) 2012-2014 Pekka Jääskeläinen / Tampere University of Technology
+   Copyright (c) 2012-2019 Pekka Jääskeläinen / Tampere University of Technology
    
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
