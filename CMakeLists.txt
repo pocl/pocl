@@ -1356,6 +1356,10 @@ if(UNIX)
 
 endif()
 
+# For now always use a mirror copy of ocml, but allow overriding
+# this path later to point to an out-of-tree copy.
+set(OCML_SOURCE_DIR "${CMAKE_SOURCE_DIR}/lib/kernel/ocml")
+
 #############################################################
 
 add_subdirectory("include")

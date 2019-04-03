@@ -1,0 +1,11 @@
+This is a partial mirror copy of
+
+  https://github.com/RadeonOpenCompute/ROCm-Device-Libs/ocml
+
+Its purpose is to make it easy for device drivers to utilize
+these builtin implementations if desired.
+
+Please try to avoid modifications to the files under this
+directory, but instead push the changes to ROCm-Device-Libs
+first to keep the directory easier to synch with upstream.
+
