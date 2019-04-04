@@ -351,7 +351,7 @@ setup_agent_memory_regions_callback(hsa_region_t region, void* data)
 #define HSA_NUM_KNOWN_HSA_AGENTS 2
 
 static const char *default_native_final_linkage_flags[] =
-  {"-lm", "-nostartfiles", HOST_LD_FLAGS_ARRAY, NULL};
+  {"-nostartfiles", HOST_LD_FLAGS_ARRAY, NULL};
 
 static const char *phsa_native_device_aux_funcs[] =
   {"_pocl_run_all_wgs", "_pocl_finish_all_wgs", "_pocl_spawn_wg", NULL};

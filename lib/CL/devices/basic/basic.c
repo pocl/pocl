@@ -173,7 +173,7 @@ static cl_device_partition_property basic_partition_properties[1] = { 0 };
 
 
 static const char *final_ld_flags[] =
-  {"-lm", "-nostartfiles", HOST_LD_FLAGS_ARRAY, NULL};
+  {"-nostartfiles", HOST_LD_FLAGS_ARRAY, NULL};
 
 void
 pocl_init_cpu_device_infos (cl_device_id dev)
