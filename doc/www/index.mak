@@ -21,6 +21,8 @@ platform for issues in parallel programming of heterogeneous platforms.</p>
 
 <h1>News</h1>
 
+<h2>2019-04-04: <a href="pocl-1.3.html">Portable Computing Language (pocl) v1.3 released</a></h2>
+
 <h2>2019-02-07: <a href="pocl-in-think-silicon.html">pocl powering Think Silicon's ultra-low power GPGPUs</a>
 
 <h2>2018-09-25: <a href="pocl-1.2.html">Portable Computing Language (pocl) v1.2 released</a></h2>
@@ -49,35 +51,19 @@ University of Bristol. Read more about it <a href="cuda-backend.html">here</a>.
 
 <h2>Older news <a href="old_news.html">items here</a></h2>
 
-<h1>Current status</h1>
+<h1>Current Status</h1>
 
-<p>A lot of OpenCL programs, projects and test suites work out of the box, but there are still
-unimplemented OpenCL APIs. These will be added gradually as needed by new tested applications.</p>
+<p>Passes most of the tests in the Khronos OpenCL 1.2 conformance suite. Development towards
+2.x compliance started.</p>
 
-<p>Patch contributions welcomed, of course!</p>
-
-<p>The following OpenCL applications are known to work with pocl:</p>
-
+<h1>Feature Examples</h1>
 <ul>
-  <li><a href="http://viennacl.sourceforge.net/">ViennaCL</a> 1.5.1 examples</li>
-  <li><a href="http://lava.cs.virginia.edu/Rodinia/download_links.htm">Rodinia</a> 2.0.1</li>
-  <li><a href="http://impact.crhc.illinois.edu/parboil.aspx">Parboil</a> Benchmarks (most of them)</a>
-  <li><a href="https://code.google.com/p/opencl-book-samples/">OpenCL Programming Guide</a> book samples (most of them)</a>
-  <li><a href="http://developer.amd.com/tools/heterogeneous-computing/amd-accelerated-parallel-processing-app-sdk/">AMD APP SDK v2.9</a>
-  OpenCL samples (most of them)</a>
-  <li><a href="http://www.luxrender.net/wiki/LuxMark">Luxmark v2.0</a>
-  <li><a href="http://piglit.freedesktop.org/">piglit (97%+ of the tests pass)</a>
-  <li><a href="https://github.com/ThoughtWorksInc/Compute.scala/">Compute.scala</a> v0.3.2
-</ul>
- 
-<h1>Feature highlights</h1>
-<ul>
-  <li>portable kernel compiler with horizontal autovectorization of work-groups (experimental)</li>
-  <li>efficient math built-in libraries</li>
-  <li>core APIs implemented in C for improved portability to bare bone machines</li>
+  <li>portable kernel compiler with horizontal autovectorization of work-groups</li>
+  <li>core runtime APIs implemented in C for improved portability to bare bone machines</li>
+  <li>automated kernel compiler cache</li>
+  <li>driver framework that allows seamless integration of diversity of device types in
+  the same OpenCL context</li>
   <li>ICD support</li>
-  <li>HSA device support (experimental)</li>
-  <li>experimental Android support</li>
 </ul>
 
 <br />
