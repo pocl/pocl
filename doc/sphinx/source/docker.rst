@@ -22,8 +22,8 @@ start Pocl container
   run docker build with ``--build-arg GIT_COMMIT=<branch/commit>``
 
 
-Dockerfiles:
---------------
+Dockerfiles
+------------
 Many are split up into two or three build stages, in which you must build all
 but last stage with a proper tag (grep the dockerfiles for "FROM <TAG>").
 Dockerfiles are named according to what they build:
@@ -41,7 +41,6 @@ Dockerfiles are named according to what they build:
 Some additional notes:
 * Arch Dockerfiles are split up into two-stage builds
 * some (not all) Ubuntu Dockerfiles are split up into multi-stage builds
-* RHEL 7 was added, it's using unofficial LLVM 5.0 binaries from copr, since the
-  official RHEL 7 LLVM is too old.
+* RHEL 7 was added, it's using unofficial LLVM 5.0 binaries from copr, since the official RHEL 7 LLVM is too old.
 * TCE added - TCE is built using three stages (LLVM, TCE, pocl)
 * PHSA added - also built using three stages (LLVM, PHSA runtime, pocl)
