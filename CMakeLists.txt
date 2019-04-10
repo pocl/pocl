@@ -362,7 +362,7 @@ endif()
 
 ######################################################################################
 #
-# Find executables to few tools required during build 
+# Find executables to few tools required during build
 #
 
 find_program(PATCH_EXEC
@@ -847,7 +847,7 @@ else() # Undefined = auto -> check
     message(STATUS "OpenCL.h not found, installing our headers")
     set(IOH 1)
   endif()
-  set(INSTALL_OPENCL_HEADERS ${IOH} CACHE BOOL "Install POCL's OpenCL headers. (Ones from Kronos should be installed instead)")
+  set(INSTALL_OPENCL_HEADERS ${IOH} CACHE BOOL "Install POCL's OpenCL headers. (Ones from Khronos should be installed instead)")
 endif()
 
 ######################################################################################

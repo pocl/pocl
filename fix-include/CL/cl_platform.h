@@ -1,17 +1,17 @@
-/* cl_platform.h - fix for the Kronos header
+/* cl_platform.h - fix for the Khronos Group header
 
    Copyright (c) 2012 Vincent Danjean <Vincent.Danjean@ens-lyon.org>
-   
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights
    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
    copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -43,7 +43,7 @@
 #define CL_EXT_PREFIX__VERSION_1_1_DEPRECATED
 
 // What pocl provides on Apple platforms does not depend on the OS X
-// version, even if the Khronos headers say so:
+// version, even if the Khronos Group headers say so:
 #undef  AVAILABLE_MAC_OS_X_VERSION_10_6_AND_LATER
 #define AVAILABLE_MAC_OS_X_VERSION_10_6_AND_LATER
 #undef  AVAILABLE_MAC_OS_X_VERSION_10_7_AND_LATER
