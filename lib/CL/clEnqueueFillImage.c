@@ -38,9 +38,8 @@ POname(clEnqueueFillImage)(cl_command_queue  command_queue,
                            cl_event*         event) 
 CL_API_SUFFIX__VERSION_1_2
 {
-  int errcode = CL_SUCCESS;
+  int errcode;
   _cl_command_node *cmd = NULL;
-  void *fill_pixel = NULL;
 
   POCL_RETURN_ERROR_COND((command_queue == NULL), CL_INVALID_COMMAND_QUEUE);
 
@@ -65,12 +64,13 @@ CL_API_SUFFIX__VERSION_1_2
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  fill_pixel = malloc (4 * sizeof(int));
-  if (fill_pixel == NULL)
-    {
-      errcode = CL_OUT_OF_HOST_MEMORY;
-      goto ERROR_CLEAN;
-    }
+  cl_uint4 fill_color_vec = *(const cl_uint4 *)fill_color;
+
+  size_t px = image->image_elem_size * image->image_channels;
+  char fill_pattern[16];
+  pocl_write_pixel_zero (fill_pattern, fill_color_vec,
+                         image->image_channel_order, image->image_elem_size,
+                         image->image_channel_data_type);
 
   /* The fill color is:
    *
@@ -86,30 +86,22 @@ CL_API_SUFFIX__VERSION_1_2
    * The fill color will be converted to the appropriate
    * image channel format and order associated with image.
    */
-  pocl_write_pixel_zero (fill_pixel, fill_color, image->image_channel_order,
-                         image->image_elem_size,
-                         image->image_channel_data_type);
-
-  size_t px = image->image_elem_size * image->image_channels;
 
   if (IS_IMAGE1D_BUFFER (image))
     {
       return POname (clEnqueueFillBuffer) (
-          command_queue,
-          image->buffer,
-          fill_pixel, 16,
-          origin[0] * px,
-          region[0] * px,
-          num_events_in_wait_list, event_wait_list, event);
+          command_queue, image->buffer, fill_pattern, px, origin[0] * px,
+          region[0] * px, num_events_in_wait_list, event_wait_list, event);
     }
 
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_FILL_IMAGE,
                                  event, num_events_in_wait_list,
                                  event_wait_list, 1, &image);
   if (errcode != CL_SUCCESS)
-    goto ERROR_CLEAN;
+    return errcode;
 
-  cmd->command.fill_image.fill_pixel = fill_pixel;
+  memcpy (cmd->command.fill_image.fill_pixel, fill_pattern, 16);
+  cmd->command.fill_image.orig_pixel = fill_color_vec;
   cmd->command.fill_image.pixel_size = px;
 
   cmd->command.fill_image.mem_id
@@ -126,10 +118,6 @@ CL_API_SUFFIX__VERSION_1_2
   image->owning_device = command_queue->device;
   pocl_command_enqueue(command_queue, cmd);
 
-  return errcode;
-  
- ERROR_CLEAN:
-  POCL_MEM_FREE(fill_pixel);
-  return errcode;
+  return CL_SUCCESS;
 }
 POsym(clEnqueueFillImage)

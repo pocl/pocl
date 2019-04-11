@@ -1167,8 +1167,8 @@ cl_int pocl_basic_unmap_image(void *data,
 cl_int
 pocl_basic_fill_image (void *data, cl_mem image,
                        pocl_mem_identifier *image_data, const size_t *origin,
-                       const size_t *region,
-                       const void *__restrict__ fill_pixel, size_t pixel_size)
+                       const size_t *region, cl_uint4 orig_pixel,
+                       pixel_t fill_pixel, size_t pixel_size)
 {
    POCL_MSG_PRINT_MEMORY ("BASIC / FILL IMAGE \n"
                           "image %p data %p \n"

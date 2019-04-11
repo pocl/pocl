@@ -51,7 +51,7 @@ pocl_check_device_supports_image (cl_device_id device,
                                   const cl_image_desc *image_desc,
                                   cl_uint image_type_idx, int *device_support);
 
-void pocl_write_pixel_zero (void *data, const void *color_ptr, int order,
+void pocl_write_pixel_zero (void *data, const cl_uint4 input_color, int order,
                             int elem_size, int channel_type);
 
 cl_char4 convert_char4_sat (cl_float4 x);

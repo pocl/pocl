@@ -389,7 +389,7 @@ convert_ushort_sat_int (cl_uint x)
 /****************************************************/
 
 static cl_uint4
-map_channels (cl_uint4 color, int order)
+map_channels (const cl_uint4 color, int order)
 {
   switch (order)
     {
@@ -630,14 +630,10 @@ pocl_write_pixel_fast_i (cl_int4 color, int order, int elem_size, void *data)
  * Writes a four element pixel to an image pixel pointed by integer coords.
  */
 void
-pocl_write_pixel_zero (void *data, const void *color_ptr, int order,
+pocl_write_pixel_zero (void *data, const cl_uint4 input_color, int order,
                        int elem_size, int channel_type)
 {
-  cl_uint4 color;
-  FOR4
-    color.s[i] = ((cl_uint4 *)color_ptr)->s[i];
-
-  color = map_channels (color, order);
+  cl_uint4 in = map_channels (input_color, order);
 
   typedef union
   {
@@ -647,7 +643,7 @@ pocl_write_pixel_zero (void *data, const void *color_ptr, int order,
   } u;
 
   u ucolor;
-  ucolor.ui = color;
+  ucolor.ui = in;
 
   if ((channel_type == CL_SIGNED_INT8) || (channel_type == CL_SIGNED_INT16)
       || (channel_type == CL_SIGNED_INT32))

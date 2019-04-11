@@ -612,14 +612,10 @@ struct pocl_device_ops {
                          mem_mapping_t *map);
 
   /* fill image with pattern */
-  cl_int (*fill_image)(void *data,
-                       cl_mem image,
-                       pocl_mem_identifier *mem_id,
-                       const size_t *origin,
-                       const size_t *region,
-                       const void *__restrict__ fill_pixel,
-                       size_t pixel_size);
-
+  cl_int (*fill_image) (void *data, cl_mem image, pocl_mem_identifier *mem_id,
+                        const size_t *origin, const size_t *region,
+                        cl_uint4 orig_pixel, pixel_t fill_pixel,
+                        size_t pixel_size);
 
   /* custom device functionality */
 

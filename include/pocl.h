@@ -85,6 +85,8 @@ typedef struct _pocl_mem_identifier
   void *image_data;
 } pocl_mem_identifier;
 
+typedef char pixel_t[16];
+
 typedef struct _mem_destructor_callback mem_destructor_callback_t;
 /* represents a memory object destructor callback */
 struct _mem_destructor_callback
@@ -263,11 +265,12 @@ typedef struct
 /* clEnqueueFillImage */
 typedef struct
 {
+  pixel_t fill_pixel;
+  cl_uint4 orig_pixel;
+  size_t pixel_size;
   pocl_mem_identifier *mem_id;
   size_t origin[3];
   size_t region[3];
-  void *__restrict__ fill_pixel;
-  size_t pixel_size;
 } _cl_command_fill_image;
 
 /* clEnqueueMarkerWithWaitlist */

@@ -602,16 +602,12 @@ pocl_exec_command (_cl_command_node *node)
     case CL_COMMAND_FILL_IMAGE:
       pocl_update_event_running (event);
       assert (dev->ops->fill_image);
-      dev->ops->fill_image
-        (dev->data,
-         event->mem_objs[0],
-         cmd->fill_image.mem_id,
-         cmd->fill_image.origin,
-         cmd->fill_image.region,
-         cmd->fill_image.fill_pixel,
-         cmd->fill_image.pixel_size);
+      dev->ops->fill_image (dev->data, event->mem_objs[0],
+                            cmd->fill_image.mem_id, cmd->fill_image.origin,
+                            cmd->fill_image.region, cmd->fill_image.orig_pixel,
+                            cmd->fill_image.fill_pixel,
+                            cmd->fill_image.pixel_size);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Fill Image            ");
-      POCL_MEM_FREE (cmd->fill_image.fill_pixel);
       break;
 
     case CL_COMMAND_MAP_IMAGE:
