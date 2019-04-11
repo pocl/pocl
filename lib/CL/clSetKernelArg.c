@@ -24,10 +24,11 @@
 
 #include "config.h"
 #include "pocl_cl.h"
+#include "pocl_debug.h"
 #include "pocl_util.h"
 #include <assert.h>
-#include <string.h>
 #include <stdbool.h>
+#include <string.h>
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clSetKernelArg)(cl_kernel kernel,
@@ -53,7 +54,24 @@ POname(clSetKernelArg)(cl_kernel kernel,
   pi = &(kernel->meta->arg_info[arg_index]);
   int is_local = ARGP_IS_LOCAL (pi);
 
-  POCL_MSG_PRINT_INFO ("ARG TYPE: %s \n", pi->type_name);
+  if (POCL_DEBUGGING_ON)
+    {
+      const void *ptr_value = NULL;
+      if (((pi->type == POCL_ARG_TYPE_POINTER)
+           || (pi->type == POCL_ARG_TYPE_IMAGE))
+          && arg_value)
+        ptr_value = *(const void **)arg_value;
+
+      uint32_t uint32_value = 0;
+      if (arg_value && (arg_size == 4))
+        uint32_value = *(uint32_t *)arg_value;
+
+      POCL_MSG_PRINT_GENERAL ("Kernel %15s || SetArg idx %3u || %8s || "
+                              "Local %1i || Size %6zu || Value %p || "
+                              "*Value %p || *(uint32*)Value: %8u \n",
+                              kernel->name, arg_index, pi->type_name, is_local,
+                              arg_size, arg_value, ptr_value, uint32_value);
+    }
 
   POCL_RETURN_ERROR_ON (
       ((arg_value != NULL) && is_local), CL_INVALID_ARG_VALUE,
@@ -101,9 +119,8 @@ POname(clSetKernelArg)(cl_kernel kernel,
   POCL_LOCK_OBJ (kernel);
   p->is_set = 0;
 
-  if (arg_value != NULL && 
-      !(pi->type == POCL_ARG_TYPE_POINTER &&
-        *(const int*)arg_value == 0))
+  if (arg_value != NULL
+      && !(pi->type == POCL_ARG_TYPE_POINTER && *(const int *)arg_value == 0))
     {
       pocl_aligned_free (p->value);
       p->value = NULL;
@@ -114,6 +131,7 @@ POname(clSetKernelArg)(cl_kernel kernel,
       arg_alignment = pocl_size_ceil2(arg_size);
       if (arg_alignment >= MAX_EXTENDED_ALIGNMENT)
         arg_alignment = MAX_EXTENDED_ALIGNMENT;
+
       arg_alloc_size = arg_size;
       if (arg_alloc_size < arg_alignment)
         arg_alloc_size = arg_alignment;
@@ -124,9 +142,8 @@ POname(clSetKernelArg)(cl_kernel kernel,
         POCL_UNLOCK_OBJ (kernel);
         return CL_OUT_OF_HOST_MEMORY;
       }
-      
-      memcpy (value, arg_value, arg_size);
 
+      memcpy (value, arg_value, arg_size);
       p->value = value;
     }
   else
