@@ -18,6 +18,7 @@
 #include <string.h>
 
 #include "pocl.h"
+#include "pocl_debug.h"
 #include "pocl_file_util.h"
 
 #ifdef __ANDROID__
@@ -188,7 +189,10 @@ pocl_write_file(const char *path, const char* content,
         {
           int res = pocl_remove(path);
           if (res)
-            return res;
+            {
+              POCL_MSG_ERR ("pocl_remove(%s) failed\n", path);
+              return res;
+            }
         }
     }
   
@@ -197,22 +201,37 @@ pocl_write_file(const char *path, const char* content,
     f = fopen(path, "a");
   else
     f = fopen(path, "w");
-  
+
   if (f == NULL)
-    return -1;
-  
-  if (fwrite(content, 1, (size_t)count, f) < (size_t)count)
-    return -1;
+    {
+      POCL_MSG_ERR ("fopen(%s) failed\n", path);
+      return -1;
+    }
+
+  if (fwrite (content, 1, (size_t)count, f) < (size_t)count)
+    {
+      POCL_MSG_ERR ("fwrite(%s) failed\n", path);
+      return -1;
+    }
 
   if (fflush (f))
-    return errno;
+    {
+      POCL_MSG_ERR ("fflush() failed\n");
+      return errno;
+    }
 
 #ifdef HAVE_FDATASYNC
   if (fdatasync (fileno (f)))
-    return errno;
+    {
+      POCL_MSG_ERR ("fdatasync() failed\n");
+      return errno;
+    }
 #elif defined(HAVE_FSYNC)
   if (fsync (fileno (f)))
-    return errno;
+    {
+      POCL_MSG_ERR ("fsync() failed\n");
+      return errno;
+    }
 #endif
 
   return fclose(f);
@@ -259,17 +278,22 @@ pocl_mk_tempname (char *output, const char *prefix, const char *suffix,
 #else
     fd = mkstemp (output);
 #endif
+#endif
 
   if (fd < 0)
-    return errno;
+    {
+      POCL_MSG_ERR ("mkstemp() failed\n");
+      return errno;
+    }
 
+  int err = 0;
   if (ret_fd)
     *ret_fd = fd;
   else
-    close (fd);
+    err = close (fd);
 
-  return errno;
-#endif
+  return err ? errno : 0;
+
 #else
 #error mkostemps() / mkstemps() both unavailable
 #endif
@@ -307,28 +331,44 @@ pocl_write_tempfile (char *output_path, const char *prefix, const char *suffix,
 
   err = pocl_mk_tempname (output_path, prefix, suffix, &fd);
   if (err)
-    return err;
-
+    {
+      POCL_MSG_ERR ("pocl_mk_tempname() failed\n");
+      return err;
+    }
   size_t bytes = (size_t)count;
-  ssize_t res = write (fd, content, bytes);
-  if (res < 0)
-    return errno;
-
-  if ((size_t)res < bytes)
-    return -1;
+  ssize_t res;
+  do
+    {
+      res = write (fd, content, bytes);
+      if (res < 0)
+        {
+          POCL_MSG_ERR ("write(%s) failed\n", output_path);
+          return errno;
+        }
+      else
+        {
+          bytes -= res;
+          content += res;
+        }
+    }
+  while (bytes > 0);
 
 #ifdef HAVE_FDATASYNC
   if (fdatasync (fd))
-    return errno;
+    {
+      POCL_MSG_ERR ("fdatasync() failed\n");
+      return errno;
+    }
 #elif defined(HAVE_FSYNC)
   if (fsync (fd))
     return errno;
 #endif
 
+  err = 0;
   if (ret_fd)
     *ret_fd = fd;
   else
-    close (fd);
+    err = close (fd);
 
-  return errno;
+  return err ? errno : 0;
 }
