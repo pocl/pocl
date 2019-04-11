@@ -169,6 +169,11 @@ pocl.
  Defaults to 1. If set to 0, pocl will not install the SIGFPE handler.
  See :ref:`sigfpe-handler`
 
+- **POCL_STARTUP_DELAY**
+
+  Default 0. If set to an integer N > 0, libpocl will make a pause of N seconds
+  once, when it's loading. Useful e.g. to set up a LTTNG tracing session.
+
 - **POCL_TRACE_EVENT**, **POCL_TRACE_EVENT_OPT** and **POCL_TRACE_EVENT_FILTER**
 
  If POCL_TRACE_EVENT is set to some tracer name, then all events

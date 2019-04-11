@@ -61,6 +61,8 @@
 
 #cmakedefine HAVE_POSIX_MEMALIGN
 
+#cmakedefine HAVE_SLEEP
+
 #cmakedefine HAVE_UTIME
 
 #cmakedefine OCS_AVAILABLE

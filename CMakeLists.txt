@@ -494,6 +494,10 @@ if(UNIX)
                       "unistd.h"
                       HAVE_FSYNC)
 
+  CHECK_SYMBOL_EXISTS("sleep"
+                      "unistd.h"
+                      HAVE_SLEEP)
+
   CHECK_SYMBOL_EXISTS("utime"
                       "sys/types.h;utime.h"
                       HAVE_UTIME)
@@ -548,6 +552,7 @@ else()
   set(HAVE_CLOCK_GETTIME 0)
   set(HAVE_FDATASYNC 0)
   set(HAVE_FSYNC 0)
+  set(HAVE_SLEEP 0)
   set(HAVE_MKOSTEMPS 0)
   set(HAVE_MKSTEMPS 0)
   set(HAVE_MKDTEMP 0)

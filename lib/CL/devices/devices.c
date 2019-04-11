@@ -85,8 +85,11 @@ typedef void (*init_device_ops)(struct pocl_device_ops*);
 
 /* All init function for device operations available to pocl */
 static init_device_ops pocl_devices_init_ops[] = {
-#ifdef ENABLE_HOST_CPU_DEVICES
-  pocl_pthread_init_device_ops, pocl_basic_init_device_ops,
+#ifdef BUILD_BASIC
+  pocl_basic_init_device_ops,
+#endif
+#ifdef BUILD_PTHREAD
+  pocl_pthread_init_device_ops,
 #endif
 #if defined(TCE_AVAILABLE)
   pocl_ttasim_init_device_ops,
@@ -464,6 +467,13 @@ pocl_init_devices ()
                       "Cache directory initialization failed");
 
   pocl_event_tracing_init ();
+
+#ifdef HAVE_SLEEP
+  int delay = pocl_get_int_option ("POCL_STARTUP_DELAY", 0);
+  if (delay > 0)
+    sleep (delay);
+#endif
+
 
 #ifdef ENABLE_HOST_CPU_DEVICES
 #ifdef __linux__
