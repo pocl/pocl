@@ -220,6 +220,10 @@ pocl_write_file(const char *path, const char* content,
 
 /****************************************************************************/
 
+int pocl_rename(const char *oldpath, const char *newpath) {
+  return rename (oldpath, newpath);
+}
+
 int
 pocl_mk_tempname (char *output, const char *prefix, const char *suffix,
                   int *ret_fd)
