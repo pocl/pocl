@@ -39,10 +39,12 @@ TRACEPOINT_EVENT(
   pocl_trace,
   ndrange_kernel,
   TP_ARGS(
+    unsigned long, event_id,
     int, event_status,
-    char*, kernel_name
+    const char*, kernel_name
   ),
   TP_FIELDS(
+    ctf_integer(unsigned long, event_id, event_id)
     ctf_integer(int, event_status, event_status)
     ctf_string(kernel_name, kernel_name)
   )
@@ -55,11 +57,13 @@ TRACEPOINT_EVENT(
   pocl_trace,
   read_buffer,
   TP_ARGS(
+    unsigned long, event_id,
     int, event_status,
     const void *, host_ptr,
     size_t, buffer_size
   ),
   TP_FIELDS(
+    ctf_integer(unsigned long, event_id, event_id)
     ctf_integer(int, event_status, event_status)
     ctf_integer_hex(const void *, host_ptr, host_ptr)
     ctf_integer_hex(size_t, buffer_size, buffer_size)
@@ -70,11 +74,13 @@ TRACEPOINT_EVENT(
   pocl_trace,
   write_buffer,
   TP_ARGS(
+    unsigned long, event_id,
     int, event_status,
     const void *, host_ptr,
     size_t, buffer_size
   ),
   TP_FIELDS(
+    ctf_integer(unsigned long, event_id, event_id)
     ctf_integer(int, event_status, event_status)
     ctf_integer_hex(const void *, host_ptr, host_ptr)
     ctf_integer_hex(size_t, buffer_size, buffer_size)
@@ -88,10 +94,12 @@ TRACEPOINT_EVENT(
   pocl_trace,
   copy_buffer,
   TP_ARGS(
+    unsigned long, event_id,
     int, event_status,
     size_t, buffer_size
   ),
   TP_FIELDS(
+    ctf_integer(unsigned long, event_id, event_id)
     ctf_integer(int, event_status, event_status)
     ctf_integer_hex(size_t, buffer_size, buffer_size)
   )
@@ -104,10 +112,12 @@ TRACEPOINT_EVENT(
   pocl_trace,
   fill_buffer,
   TP_ARGS(
+    unsigned long, event_id,
     int, event_status,
     size_t, fill_size
   ),
   TP_FIELDS(
+      ctf_integer(unsigned long, event_id, event_id)
     ctf_integer(int, event_status, event_status)
     ctf_integer_hex(size_t, fill_size, fill_size)
   )
@@ -120,10 +130,12 @@ TRACEPOINT_EVENT(
   pocl_trace,
   map,
   TP_ARGS(
+    unsigned long, event_id,
     int, event_status,
     size_t, fill_size
   ),
   TP_FIELDS(
+    ctf_integer(unsigned long, event_id, event_id)
     ctf_integer(int, event_status, event_status)
     ctf_integer_hex(size_t, fill_size, fill_size)
   )
@@ -136,10 +148,12 @@ TRACEPOINT_EVENT(
   pocl_trace,
   command,
   TP_ARGS(
+    unsigned long, event_id,
     int, event_status,
     const char *, cmd_type
   ),
   TP_FIELDS(
+    ctf_integer(unsigned long, event_id, event_id)
     ctf_integer(int, event_status, event_status)
     ctf_string(cmd_type, cmd_type)
   )

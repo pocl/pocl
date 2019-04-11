@@ -27,7 +27,7 @@
 #include "pocl_tracing.h"
 #include "pocl_runtime_config.h"
 
-#ifdef LTTNG_UST_AVAILABLE
+#ifdef HAVE_LTTNG_UST
 #include "pocl_lttng.h"
 static const struct pocl_event_tracer lttng_tracer;
 #endif
@@ -41,7 +41,7 @@ static const struct pocl_event_tracer text_logger;
  */
 static const struct pocl_event_tracer *pocl_event_tracers[] = {
   &text_logger,
-#ifdef LTTNG_UST_AVAILABLE
+#ifdef HAVE_LTTNG_UST
   &lttng_tracer,
 #endif
 };
@@ -221,7 +221,7 @@ static const struct pocl_event_tracer text_logger = {
 };
 
 
-#ifdef LTTNG_UST_AVAILABLE
+#ifdef HAVE_LTTNG_UST
 
 /* LTTNG tracer
  */
@@ -243,29 +243,29 @@ lttng_tracer_event_updated (cl_event event, int status)
   switch (event->command_type)
     {
     case CL_COMMAND_NDRANGE_KERNEL:
-      tracepoint (pocl_trace, ndrange_kernel, status,
+      tracepoint (pocl_trace, ndrange_kernel, event->id, status,
                   node->command.run.kernel->name);
       break;
     case CL_COMMAND_READ_BUFFER:
-      tracepoint (pocl_trace, read_buffer, status,
-                  node->command.write.host_ptr, node->command.write.cb);
+      tracepoint (pocl_trace, read_buffer, event->id, status,
+                  node->command.read.dst_host_ptr, node->command.read.size);
       break;
     case CL_COMMAND_WRITE_BUFFER:
-      tracepoint (pocl_trace, write_buffer, status,
-                  node->command.write.host_ptr, node->command.write.cb);
+      tracepoint (pocl_trace, write_buffer, event->id, status,
+                  node->command.write.src_host_ptr, node->command.write.size);
       break;
     case CL_COMMAND_COPY_BUFFER:
-      tracepoint (pocl_trace, copy_buffer, status, node->command.copy.cb);
+      tracepoint (pocl_trace, copy_buffer, event->id, status, node->command.copy.size);
       break;
     case CL_COMMAND_FILL_BUFFER:
-      tracepoint (pocl_trace, fill_buffer, status, node->command.copy.cb);
+      tracepoint (pocl_trace, fill_buffer, event->id, status, node->command.copy.size);
       break;
     case CL_COMMAND_MAP_BUFFER:
     case CL_COMMAND_MAP_IMAGE:
-      tracepoint (pocl_trace, map, status, node->command.map.mapping->size);
+      tracepoint (pocl_trace, map, event->id, status, node->command.map.mapping->size);
       break;
     default:
-      tracepoint (pocl_trace, command, status,
+      tracepoint (pocl_trace, command, event->id, status,
                   pocl_command_to_str (event->command_type));
       break;
     }
