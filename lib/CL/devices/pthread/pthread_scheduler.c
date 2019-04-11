@@ -138,6 +138,8 @@ pthread_scheduler_uninit ()
   scheduler.thread_pool_shutdown_requested = 0;
 }
 
+/* push_command and push_kernel MUST use broadcast and wake up all threads,
+   because commands can be for subdevices (= not all threads) */
 void pthread_scheduler_push_command (_cl_command_node *cmd)
 {
   POCL_FAST_LOCK (scheduler.wq_lock_fast);
@@ -150,24 +152,17 @@ static void
 pthread_scheduler_push_kernel (kernel_run_command *run_cmd)
 {
   POCL_FAST_LOCK (scheduler.wq_lock_fast);
-  LL_APPEND (scheduler.kernel_queue, run_cmd);
+  DL_APPEND (scheduler.kernel_queue, run_cmd);
   pthread_cond_broadcast (&scheduler.wake_pool);
   POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
 }
 
-static int
-work_group_scheduler (kernel_run_command *k,
-                      struct pool_thread_data *thread_data);
-
-static void finalize_kernel_command (thread_data *thread_data,
-                              kernel_run_command *k);
-
 /* if subd is not a subdevice, returns 1
  * if subd is subdevice, takes a look at the subdevice CUs
  * and if they match the current driver thread, returns 1
- * otherwise set last ignored command to cmd and return 0 */
+ * otherwise returns 0 */
 static int
-shall_we_run_this (thread_data *td, cl_device_id subd, void *cmd)
+shall_we_run_this (thread_data *td, cl_device_id subd)
 {
 
   if (subd && subd->parent_device)
@@ -180,69 +175,6 @@ shall_we_run_this (thread_data *td, cl_device_id subd, void *cmd)
     }
   return 1;
 }
-
-static int
-pthread_scheduler_get_work (thread_data *td, _cl_command_node **cmd_ptr)
-{
-  _cl_command_node *cmd;
-  kernel_run_command *run_cmd;
-
-  /* execute kernel if available */
-  POCL_FAST_LOCK (scheduler.wq_lock_fast);
-  int do_exit = 0;
-
-RETRY:
-  do_exit = scheduler.thread_pool_shutdown_requested;
-
-  run_cmd = scheduler.kernel_queue;
-  /* execute kernel if available */
-  if (run_cmd && shall_we_run_this (td, run_cmd->device, run_cmd))
-    {
-      ++run_cmd->ref_count;
-      POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
-
-      work_group_scheduler (run_cmd, td);
-
-      POCL_FAST_LOCK (scheduler.wq_lock_fast);
-      if ((--run_cmd->ref_count) == 0)
-        {
-          POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
-          finalize_kernel_command (td, run_cmd);
-          POCL_FAST_LOCK (scheduler.wq_lock_fast);
-        }
-    }
-  else
-    run_cmd = NULL;
-
-  /* execute a command if available */
-  *cmd_ptr = NULL;
-  cmd = scheduler.work_queue;
-  if (cmd && shall_we_run_this (td, cmd->device, cmd))
-    {
-      DL_DELETE (scheduler.work_queue, cmd);
-      /* a pthread might go to sleep even if there are some commands in the queue
-       * (if those commands are not for the subdevice to which that thread belongs).
-       * In that case it's impossible to know for that pthread when the next
-       * command arrives, therefore after deleting a command from queue,
-       * awake all threads. */
-      pthread_cond_broadcast (&scheduler.wake_pool);
-      *cmd_ptr = cmd;
-    }
-  else
-    cmd = NULL;
-
-  /* if neither a command nor a kernel was available, sleep */
-  if ((cmd == NULL) && (run_cmd == NULL) && (do_exit == 0))
-  {
-    pthread_cond_wait (&scheduler.wake_pool, &scheduler.wq_lock_fast);
-    goto RETRY;
-  }
-
-  POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
-
-  return do_exit;
-}
-
 
 /* Maximum and minimum chunk sizes for get_wg_index_range().
  * Each pthread driver's thread fetches work from a kernel's WG pool in
@@ -353,7 +285,7 @@ work_group_scheduler (kernel_run_command *k,
       if (last_wgs)
         {
           POCL_FAST_LOCK (scheduler.wq_lock_fast);
-          LL_DELETE (scheduler.kernel_queue, k);
+          DL_DELETE (scheduler.kernel_queue, k);
           POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
         }
 
@@ -442,18 +374,121 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
   pthread_scheduler_push_kernel (run_cmd);
 }
 
-static void
-pocl_pthread_exec_command (_cl_command_node *cmd,
-                           struct pool_thread_data *td)
+/*
+  These two check the entire kernel/cmd queue. This is necessary
+  because of commands for subdevices. The old code only checked
+  the head of each queue; this can lead to a deadlock:
+
+  two driver threads, each assigned two subdevices A, B, one
+  driver queue C
+
+  cmd A1 for A arrives in C, A starts processing
+  cmd B1 for B arrives in C, B starts processing
+  cmds A2, A3, B2 are pushed to C
+  B finishes processing B1, checks queue head, A2 isn't for it, goes to sleep
+  A finishes processing A1, processes A2 + A3 but ignores B2, it's not for it
+  application calls clFinish to wait for queue
+
+  ...now B is sleeping and not possible to wake up
+  (since no new commands can arrive) and there's a B2 command
+  which will never be processed.
+
+  it's possible to workaround but it's cleaner to just check the whole queue.
+ */
+
+static _cl_command_node *
+check_cmd_queue_for_device (thread_data *td)
 {
-  if(cmd->type == CL_COMMAND_NDRANGE_KERNEL)
+  _cl_command_node *cmd;
+  DL_FOREACH (scheduler.work_queue, cmd)
+  {
+    cl_device_id subd = cmd->device;
+    if (shall_we_run_this (td, subd))
+      {
+        DL_DELETE (scheduler.work_queue, cmd)
+        return cmd;
+      }
+  }
+
+  return NULL;
+}
+
+static kernel_run_command *
+check_kernel_queue_for_device (thread_data *td)
+{
+  kernel_run_command *cmd;
+  DL_FOREACH (scheduler.kernel_queue, cmd)
+  {
+    cl_device_id subd = cmd->device;
+    if (shall_we_run_this (td, subd))
+      return cmd;
+  }
+
+  return NULL;
+}
+
+static int
+pthread_scheduler_get_work (thread_data *td)
+{
+  _cl_command_node *cmd;
+  kernel_run_command *run_cmd;
+
+  /* execute kernel if available */
+  POCL_FAST_LOCK (scheduler.wq_lock_fast);
+  int do_exit = 0;
+
+RETRY:
+  do_exit = scheduler.thread_pool_shutdown_requested;
+
+  run_cmd = check_kernel_queue_for_device (td);
+  /* execute kernel if available */
+  if (run_cmd)
     {
-      pocl_pthread_prepare_kernel (cmd->device->data, cmd);
+      ++run_cmd->ref_count;
+      POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
+
+      work_group_scheduler (run_cmd, td);
+
+      POCL_FAST_LOCK (scheduler.wq_lock_fast);
+      if ((--run_cmd->ref_count) == 0)
+        {
+          POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
+          finalize_kernel_command (td, run_cmd);
+          POCL_FAST_LOCK (scheduler.wq_lock_fast);
+        }
     }
-  else
+
+  /* execute a command if available */
+  cmd = check_cmd_queue_for_device (td);
+  if (cmd)
     {
-      pocl_exec_command(cmd);
+      POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
+
+      assert (pocl_command_is_ready (cmd->event));
+
+      if (cmd->type == CL_COMMAND_NDRANGE_KERNEL)
+        {
+          pocl_pthread_prepare_kernel (cmd->device->data, cmd);
+        }
+      else
+        {
+          pocl_exec_command (cmd);
+        }
+
+      POCL_FAST_LOCK (scheduler.wq_lock_fast);
+      ++td->executed_commands;
     }
+
+  /* if neither a command nor a kernel was available, sleep */
+  if ((cmd == NULL) && (run_cmd == NULL) && (do_exit == 0))
+    {
+      pthread_cond_wait (&scheduler.wake_pool, &scheduler.wq_lock_fast);
+      goto RETRY;
+    }
+
+  POCL_FAST_UNLOCK (scheduler.wq_lock_fast);
+
+  return do_exit;
 }
 
 
@@ -464,7 +499,6 @@ pocl_pthread_driver_thread (void *p)
   struct pool_thread_data *td = (struct pool_thread_data*)p;
   int do_exit = 0;
   assert (td);
-  _cl_command_node *cmd = NULL;
   /* some random value, doesn't matter as long as it's not a valid bool - to
    * force a first FTZ setup */
   td->current_ftz = 213;
@@ -489,15 +523,7 @@ pocl_pthread_driver_thread (void *p)
 
   while (1)
     {
-      do_exit = pthread_scheduler_get_work (td, &cmd);
-      if (cmd)
-        {
-          assert (pocl_command_is_ready(cmd->event));
-          assert (cmd->event->status == CL_SUBMITTED);
-          pocl_pthread_exec_command (cmd, td);
-          cmd = NULL;
-          ++td->executed_commands;
-        }
+      do_exit = pthread_scheduler_get_work (td);
       if (do_exit)
         {
           pocl_aligned_free (td->printf_buffer);

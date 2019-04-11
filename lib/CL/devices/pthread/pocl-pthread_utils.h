@@ -43,6 +43,7 @@ struct kernel_run_command
   _cl_command_node *cmd;
   pocl_workgroup_func workgroup;
   struct pocl_argument *kernel_args;
+  kernel_run_command *prev;
   kernel_run_command *next;
   unsigned long ref_count;
 
