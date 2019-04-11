@@ -195,7 +195,6 @@ int pocl_touch_file(const char* path) {
 }
 
 int pocl_rename(const char *oldpath, const char *newpath) {
-
     Twine op(oldpath);
     Twine np(newpath);
     std::error_code ec = sys::fs::rename(op, np);
@@ -359,12 +358,15 @@ int pocl_write_tempfile(char *output_path, const char *prefix,
   RETURN_IF_EC;
   assert(fd >= 0);
 
-  if (write(fd, content, (ssize_t)count) < (ssize_t)count)
+  ssize_t writeb = write(fd, content, (ssize_t)count);
+  if (writeb < (ssize_t)count) {
     return errno ? -errno : -1;
+  }
 
 #ifdef HAVE_FDATASYNC
-  if (fdatasync(fd))
+  if (fdatasync(fd)) {
     return errno ? -errno : -1;
+  }
 #elif defined(HAVE_FSYNC)
   if (fsync(fd))
     return errno ? -errno : -1;
