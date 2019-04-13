@@ -2,17 +2,18 @@
 
    Copyright (c) 2011 Erik Schnetter <eschnetter@perimeterinstitute.ca>
                       Perimeter Institute for Theoretical Physics
-   
+                 2019 Pekka Jääskeläinen
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights
    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
    copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -48,40 +49,61 @@
   {                                                     \
     return (VTYPE)(NAME(a.LO), NAME(a.HI));             \
   }
-#define DEFINE_BUILTIN_V_V(NAME)                        \
+
+/* Defines an OpenCL builtin function for half precision floating point
+   types using Clang scalar builtins. */
+
+#define DEFINE_HALF_BUILTIN_V_V(NAME, FUNC)		\
   __IF_FP16(                                            \
   half __attribute__ ((overloadable))                   \
   NAME(half a)                                          \
   {                                                     \
-    /* use float builtin */                             \
-    return __builtin_##NAME##f(a);                      \
+    return FUNC(a);					\
   }                                                     \
   IMPLEMENT_BUILTIN_V_V(NAME, half2   , lo, hi)         \
   IMPLEMENT_BUILTIN_V_V(NAME, half3   , lo, s2)         \
   IMPLEMENT_BUILTIN_V_V(NAME, half4   , lo, hi)         \
   IMPLEMENT_BUILTIN_V_V(NAME, half8   , lo, hi)         \
-  IMPLEMENT_BUILTIN_V_V(NAME, half16  , lo, hi))        \
+  IMPLEMENT_BUILTIN_V_V(NAME, half16  , lo, hi))
+
+/* Defines an OpenCL builtin function for single precision floating point
+   types using a scalar function. */
+
+#define DEFINE_FLOAT_BUILTIN_V_V(NAME, FUNC)		\
   float __attribute__ ((overloadable))                  \
   NAME(float a)                                         \
   {                                                     \
-    return __builtin_##NAME##f(a);                      \
+    return FUNC(a);					\
   }                                                     \
   IMPLEMENT_BUILTIN_V_V(NAME, float2  , lo, hi)         \
   IMPLEMENT_BUILTIN_V_V(NAME, float4  , lo, hi)         \
   IMPLEMENT_BUILTIN_V_V(NAME, float3  , lo, s2)         \
   IMPLEMENT_BUILTIN_V_V(NAME, float8  , lo, hi)         \
-  IMPLEMENT_BUILTIN_V_V(NAME, float16 , lo, hi)         \
+  IMPLEMENT_BUILTIN_V_V(NAME, float16 , lo, hi)
+
+/* Defines an OpenCL builtin function for double precision floating point
+   types using a scalar function. */
+
+#define DEFINE_DOUBLE_BUILTIN_V_V(NAME, FUNC)		\
   __IF_FP64(                                            \
   double __attribute__ ((overloadable))                 \
   NAME(double a)                                        \
   {                                                     \
-    return __builtin_##NAME(a);                         \
+    return FUNC(a);					\
   }                                                     \
   IMPLEMENT_BUILTIN_V_V(NAME, double2 , lo, hi)         \
   IMPLEMENT_BUILTIN_V_V(NAME, double3 , lo, s2)         \
   IMPLEMENT_BUILTIN_V_V(NAME, double4 , lo, hi)         \
   IMPLEMENT_BUILTIN_V_V(NAME, double8 , lo, hi)         \
-  IMPLEMENT_BUILTIN_V_V(NAME, double16, lo, hi)) 
+  IMPLEMENT_BUILTIN_V_V(NAME, double16, lo, hi))
+
+/* Defines an OpenCL builtin function for all floating point
+   gentypes using Clang scalar builtins. */
+
+#define DEFINE_BUILTIN_V_V(NAME)                        \
+  DEFINE_HALF_BUILTIN_V_V(NAME, __builtin_##NAME##f)	\
+  DEFINE_FLOAT_BUILTIN_V_V(NAME, __builtin_##NAME##f)	\
+  DEFINE_DOUBLE_BUILTIN_V_V(NAME, __builtin_##NAME)
 
 #define IMPLEMENT_BUILTIN_V_VV(NAME, VTYPE, LO, HI)     \
   VTYPE __attribute__ ((overloadable))                  \
