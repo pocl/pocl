@@ -909,9 +909,10 @@ pocl_hsa_copy (void *data,
 {
   void *__restrict__ dst_ptr = dst_mem_id->mem_ptr;
   void *__restrict__ src_ptr = src_mem_id->mem_ptr;
-  assert(src_offset == 0);
-  assert(dst_offset == 0);
-  HSA_CHECK (hsa_memory_copy (dst_ptr, src_ptr, size));
+  if ((src_ptr + src_offset) == (dst_ptr + dst_offset))
+    return;
+  HSA_CHECK (hsa_memory_copy (dst_ptr + dst_offset, src_ptr + src_offset,
+			      size));
 }
 
 cl_int
