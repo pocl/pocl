@@ -276,7 +276,6 @@ endif()
 # for kernel-<target>.bc
 set(POCL_INSTALL_PRIVATE_DATADIR "${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_DATADIR}/pocl" CACHE PATH "POCL private datadir")
 
-option(ENABLE_POCL_RELOCATION NO "Enable pocl relocation when compiled by changing internal paths to relative paths")
 file(RELATIVE_PATH POCL_INSTALL_PRIVATE_DATADIR_REL ${POCL_INSTALL_PUBLIC_LIBDIR} ${POCL_INSTALL_PRIVATE_DATADIR})
 
 # for poclu.h
@@ -646,9 +645,6 @@ if(UNIX)
     set(DEFAULT_HOST_LD_FLAGS "-L/system/lib/ -shared -ldl -lc /system/lib/crtbegin_so.o /system/lib/crtend_so.o")
   else()
     set(DEFAULT_HOST_LD_FLAGS "-shared")
-  endif()
-  if (NOT ENABLE_POCL_RELOCATION)
-    set(DEFAULT_HOST_LD_FLAGS "${DEFAULT_HOST_LD_FLAGS} -lm")
   endif()
   set(LIBMATH "-lm")
 elseif(WIN32)
@@ -1342,10 +1338,8 @@ endif()
 
 ##########################################################
 
-if(ENABLE_POCL_RELOCATION)
-  install(FILES "${CLANG_RESOURCE_DIR}/include/opencl-c.h"
+install(FILES "${CLANG_RESOURCE_DIR}/include/opencl-c.h"
          DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}/include")
-endif()
 
 #############################################################
 

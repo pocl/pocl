@@ -53,6 +53,13 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 
 #include "llvm/Support/MutexGuard.h"
 
+#if defined(__linux__)
+#include <dlfcn.h>
+#elif defined(__APPLE__)
+#define _DARWIN_C_SOURCE
+#include <dlfcn.h>
+#endif
+
 #include <iostream>
 #include <sstream>
 
@@ -182,7 +189,7 @@ static void get_build_log(cl_program program,
 static llvm::Module *getKernelLibrary(cl_device_id device);
 
 static std::string get_pocl_private_data_dir() {
-#if defined(ENABLE_POCL_RELOCATION) && (defined(__APPLE__) || defined(__linux__))
+#if defined(__APPLE__) || defined(__linux__)
     Dl_info info;
     if (dladdr((void*)get_pocl_private_data_dir, &info)) {
         char const * soname = info.dli_fname;
