@@ -34,7 +34,7 @@ line, as follows:
     cmake .... -DLLVM_ENABLE_RTTI=ON -DLLVM_ENABLE_EH=ON ....
 
 Supported LLVM versions
-~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~
 
   Note that pocl aims to support **the latest LLVM version** at the time
   of pocl release, **plus the previous** LLVM version. All older LLVM
@@ -59,10 +59,10 @@ To see the default detected values, run ``cmake ..`` without any options,
 it will produce a summary.
 
 CMake variables
-===============
+~~~~~~~~~~~~~~~~~~~~~~~~
 
-Since pocl is a compiler, it both compiles (producing code) and is
-compiled (it consists of code). This distinction typically called
+Since pocl includes a compiler for the kernels, it both compiles (producing
+code) and is compiled (it consists of code). This distinction typically called
 "host" and "target": The host is where pocl is running, the target is
 where the OpenCL code will be running. These two systems can be wildly
 different.
@@ -74,7 +74,7 @@ with (because the LLVM-related parts of pocl take LLVM's CXXFLAGS from
 llvm-config and pass them to the host compiler).
 
 CMake host flags
-----------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 Compile C:
   CMAKE_C_FLAGS
@@ -85,7 +85,8 @@ Compile C++:
   CMAKE_CXX_FLAGS_<build-type>
 
 Building kernels and the kernel library, i.e. target flags
-------------------------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 All of these empty by default. There are hardcoded defaults which may
 be overridden by setting these variables (rarely needed).
@@ -98,7 +99,8 @@ Extra parameters to clang
 
 Extra parameters to linker (links kernel to shared library
 which is then dlopened):
-   EXTRA_HOST_LD_FLAGS
+
+EXTRA_HOST_LD_FLAGS
 
 EXTRA_KERNEL_FLAGS
   is applied to all kernel library compilation commands, IOW it's for
@@ -110,7 +112,7 @@ EXTRA_KERNEL_{C,CL,CXX}_FLAGS
 
 
 CMake: other options & features
--------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Note that there are a few more packaging-related options described
 in ``README.packaging``.
@@ -225,12 +227,12 @@ use ";" as separator (you'll have to escape it for bash).
 
 
 LLVM-less build
----------------
+~~~~~~~~~~~~~~~~~~~~~~~~
  See :ref:`pocl-without-llvm`
 
 
 Known build-time issues
------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 There are unsolved issues and bugs in pocl. See the bug listing
 for a complete listing at https://github.com/pocl/pocl/issues

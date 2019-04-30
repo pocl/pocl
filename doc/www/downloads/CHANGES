@@ -1,5 +1,70 @@
-1.2  September
+Changes updated until commit 42adbfe333 (Mar 25 2019).
+
+1.3 April 2019
 ==============
+
+Highlights
+----------
+- Support for Clang/LLVM 8.0.
+- Support ICD on OSX.
+
+Misc.
+-----
+- Ability to have size_t (basically derived from the largest supported
+  object) smaller than CL_ADDRESS_BITS. This is an unofficial optional
+  extension as the OpenCL standard mandates it to be the same.
+- POCL_EXTRA_BUILD_FLAGS can be used to force add extra build flags such as
+  '-g' to all clBuildProgram() calls.
+- Allow building pocl without CPU backend drivers. When set to off,
+  CPU will not appear in the list of OpenCL devices reported by pocl.
+  Controllable via ENABLE_HOST_CPU_DEVICES=off cmake option.
+- Build logs are now produced also for illegal options passed to the kernel
+  build e.g. via the options parameter of clBuildProgram().
+- hsa-native: Device side printf-support and alternative < 1.2 non-standard
+  C99 printf exposing support.
+- pocl's binary format has been slightly updated (changes are listed in
+  the top of pocl_binary.c file) to version 7, but pocl can still read
+  also the previous version 6 format.
+- Allow local-size-specializing also SPMD-targeted kernels to enable compile
+  time optimization of code depending on the local dimensions.
+- Support older GLIBC versions.
+- HSA: Initial experimental support for native-ISA compilation on top of HSA
+  runtime. Tested and works currently only on phsa-runtime. Can be enabled
+  with ENABLE_HSAIL=off cmake option.
+- Add option to disable installing of OpenCL headers.
+
+Notable Bug Fixes
+-----------------
+- Fixed kernel debug symbol generation.
+- HSA: fix kernel caching.
+- Fix issue #661: clCreateImage doesn't fail with unsupported image type.
+- Fix issue #668: handle non-kernel functions with barriers properly.
+- Fix issue #671: Unable to build pocl with CUDA support with LLVM 7 and host GCC 8.2.
+- Fix image format/size handling with multiple devices in context.
+- Fix padding issue with context arrays that manifested as unaligned
+  access errors after autovectorization.
+
+Notable Internal Changes
+------------------------
+- Add group ids as hidden kernel arguments instead of digging them up
+  from the context struct.
+- Ability to generate the final binary via separate assembly text + assembler
+  call. Useful for supporting LLVM targets without direct binary emission
+  support.
+- Use Clang's Driver API for launching the final linkage step. This way we
+  utilize the toolchain registry with correct linkage steps required for
+  the target at hand.
+- Add 'device_aux_functions' to the driver layer attributes. This can be used
+  to retain device-specific functions required by the target across the
+  pruning of unused globals.
+- The "default kernels" hack which was used to store kernel metadata, has
+  been removed. Kernel metadata are now stored only once, in cl_program
+  struct; every new cl_kernel structs holds only a pointer.
+- Major 'pthread' CPU driver cleanup.
+- Major Workgroup.cc cleanup.
+
+1.2 September 2018
+==================
 
 - LLVM 7.0 is now supported.
 

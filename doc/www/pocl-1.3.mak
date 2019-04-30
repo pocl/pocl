@@ -3,14 +3,17 @@
 %>
 <%inherit file="basic_page.makt" />
 
-<h1>April Xth 2019: pocl v1.3 released</h2>
+<h1>April 4th 2019: pocl v1.3 released</h2>
 
 <h2>Release Highlights</h2>
 
 <ul>
 <li>Support for LLVM/Clang 8.0 and 7.0</li>
 <li>Support ICD on OSX</li>
+<li>A lot of major and minor bug fixes and internal code cleanups.</li>
 </ul>
+
+<p>A more detailed changelog <a href="http://portablecl.org/downloads/CHANGES">here</a>.
 
 <h2>Notes</h2>
 <ul>
@@ -32,8 +35,8 @@ that uses OpenCL to remain regression free in the future pocl releases.</p>
 <p>
 Most of the code that landed to the pocl code base during this release
 cycle was produced for the needs of research projects funded by various
-sources. Customized Parallel Computing research group of Tampere
-University, Finland likes to thank the Academy of Finland (funding
+sources. <a href="http://cpc.cs.tut.fi">Customized Parallel Computing</a> research group of
+<a href="http://www.tuni.fi">Tampere University</a>, Finland likes to thank the Academy of Finland (funding
 decision 297548), Business Finland (FiDiPro project StreamPro,
 1846/31/2014), ECSEL JU project FitOptiVis (project number 783162) and
 HSA Foundation for funding most of the development work in this release.
