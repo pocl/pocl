@@ -20,6 +20,18 @@ Misc.
 - hsa-native: Add support for byval (struct) argument passing.
 - hsa-native: Allow offsets in block copy.
 
+Notable Bug Fixes
+-----------------
+- Fix a race condition in device initialization, which
+  caused issues in applications that cause reinitialization
+  of pocl device drivers (Glow's OCLTest).
+
+Misc.
+-----
+- The online kernel compiler now passes only the launched
+  kernel to work-group generation and code gen, thus
+  speeding up the compilation process.
+
 1.3 April 2019
 ==============
 
