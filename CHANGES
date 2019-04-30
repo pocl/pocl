@@ -7,6 +7,17 @@ Kernel Compiler
 ---------------
 - Specialize work-group functions for global offset (0,0,0).
 
+Notable Bug Fixes
+-----------------
+- hsa-native: Fix device (re)initialization.
+
+Misc.
+-----
+- hsa-native: Downgraded the advertised version to 1.2
+  which is closer to the truth (fixes OCLTest of Glow).
+- hsa-native: Add support for byval (struct) argument passing.
+- hsa-native: Allow offsets in block copy.
+
 1.3 April 2019
 ==============
 
