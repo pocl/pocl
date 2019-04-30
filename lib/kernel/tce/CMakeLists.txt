@@ -32,7 +32,8 @@ include("bitcode_rules")
 list(REMOVE_ITEM SOURCES_GENERIC "printf.c" "printf_base.c" "atomics.cl")
 list(APPEND SOURCES_GENERIC "printf_constant.c")
 
-set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=${TCE_DEVICE_CL_VERSION} ${TCE_DEVICE_EXTENSION_DEFINES}" "-DPOCL_DEVICE_ADDRESS_BITS=32")
+set(DEVICE_CL_FLAGS "-D__OPENCL_VERSION__=${TCE_DEVICE_CL_VERSION} ${TCE_DEVICE_EXTENSION_DEFINES}"
+  "-DPOCL_DEVICE_ADDRESS_BITS=32" )
 
 separate_arguments(DEVICE_CL_FLAGS)
 separate_arguments(TCE_TARGET_CLANG_FLAGS)
@@ -45,7 +46,7 @@ if(POCL_USE_FAKE_ADDR_SPACE_IDS)
 set(EXTRA_TCE_CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-DPOCL_USE_FAKE_ADDR_SPACE_IDS")
 endif()
 
-set(KERNEL_CL_FLAGS "-D__OPENCL_C_VERSION__=${TCE_DEVICE_CL_VERSION}" "-Xclang" "-cl-std=CL${TCE_DEVICE_CL_STD}")
+set(KERNEL_CL_FLAGS "-D__OPENCL_C_VERSION__=${TCE_DEVICE_CL_VERSION}" "-Xclang" "-cl-std=CL${TCE_DEVICE_CL_STD}" "-DPOCL_DEVICE_ADDRESS_BITS=32")
 if(NOT LLVM_OLDER_THAN_4_0)
 list(APPEND KERNEL_CL_FLAGS "-Xclang" "-cl-ext=all,-cl_khr_fp64")
 endif()
@@ -54,7 +55,7 @@ endif()
 
 set(TCE_TARGET_TRIPLE "tce-tut-llvm")
 
-set(CLANG_FLAGS ${TCE_TARGET_CLANG_FLAGS} "-emit-llvm" "-ffp-contract=off" "-target" ${TCE_TARGET_TRIPLE} "-isystem" "${TCE_PREFIX}/tce-llvm/include" ${EXTRA_TCE_CLANG_FLAGS})
+set(CLANG_FLAGS ${TCE_TARGET_CLANG_FLAGS} "-emit-llvm" "-ffp-contract=off" "-target" ${TCE_TARGET_TRIPLE} "-isystem" "${TCE_PREFIX}/tce-llvm/include" ${EXTRA_TCE_CLANG_FLAGS} "-DPOCL_DEVICE_ADDRESS_BITS=32")
 
 make_kernel_bc(KERNEL_BC ${TCE_TARGET_TRIPLE} "tta" 0 0 0 ${SOURCES_GENERIC})
 
@@ -75,7 +76,7 @@ install(FILES "${KERNEL_BC}"
 
 set(TCE_TARGET_TRIPLE "tcele-tut-llvm")
 
-set(CLANG_FLAGS ${TCE_TARGET_CLANG_FLAGS} "-emit-llvm" "-ffp-contract=off" "-target" ${TCE_TARGET_TRIPLE} "-isystem" "${TCE_PREFIX}/tce-llvm/include" ${EXTRA_TCE_CLANG_FLAGS} "-DCL_DEVICE_ADDRESS_BITS=32")
+set(CLANG_FLAGS ${TCE_TARGET_CLANG_FLAGS} "-emit-llvm" "-ffp-contract=off" "-target" ${TCE_TARGET_TRIPLE} "-isystem" "${TCE_PREFIX}/tce-llvm/include" ${EXTRA_TCE_CLANG_FLAGS} "-DPOCL_DEVICE_ADDRESS_BITS=32")
 
 make_kernel_bc(KERNEL_BC_LE ${TCE_TARGET_TRIPLE} "tta-le" 0 0 0 ${SOURCES_GENERIC})
 
