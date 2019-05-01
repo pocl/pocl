@@ -30,7 +30,10 @@
 #include <assert.h>
 #include <stdio.h>
 #ifndef _MSC_VER
-#  include <ltdl.h>
+#if defined(__APPLE__)
+#define _DARWIN_C_SOURCE
+#endif
+#include <dlfcn.h>
 #else
 #  include "vccompat.hpp"
 #endif

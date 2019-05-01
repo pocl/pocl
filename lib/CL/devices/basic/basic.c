@@ -56,7 +56,7 @@ struct data {
   /* Currently loaded kernel. */
   cl_kernel current_kernel;
   /* Loaded kernel dynamic library handle. */
-  lt_dlhandle current_dlhandle;
+  void* current_dlhandle;
   
   /* List of commands ready to be executed */
   _cl_command_node * volatile ready_list;

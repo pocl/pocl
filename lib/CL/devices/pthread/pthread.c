@@ -99,7 +99,7 @@ struct data {
   /* Currently loaded kernel. */
   cl_kernel current_kernel;
   /* Loaded kernel dynamic library handle. */
-  lt_dlhandle current_dlhandle;
+  void* current_dlhandle;
   volatile uint64_t total_cmd_exec_time;
 
 #ifdef CUSTOM_BUFFER_ALLOCATOR

@@ -837,7 +837,7 @@ struct pocl_dlhandle_cache_item
   pocl_kernel_hash_t hash;
   size_t local_wgs[3];
   void *wg;
-  lt_dlhandle dlhandle;
+  void* dlhandle;
   pocl_dlhandle_cache_item *next;
   pocl_dlhandle_cache_item *prev;
   unsigned ref_count;
@@ -880,10 +880,10 @@ get_new_dlhandle_cache_item ()
   if ((handle_count >= MAX_CACHE_ITEMS) && ci && (ci != pocl_dlhandle_cache))
     {
       DL_DELETE (pocl_dlhandle_cache, ci);
-      lt_dlclose (ci->dlhandle);
-      dl_error = lt_dlerror ();
+      dlclose (ci->dlhandle);
+      dl_error = dlerror ();
       if (dl_error != NULL)
-        POCL_ABORT ("lt_dlclose() failed with error: %s\n", dl_error);
+        POCL_ABORT ("dlclose() failed with error: %s\n", dl_error);
       memset (ci, 0, sizeof (pocl_dlhandle_cache_item));
     }
   else
@@ -1059,24 +1059,24 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *cmd,
       }
     }
 
-    ci->dlhandle = lt_dlopen (module_fn);
-    dl_error = lt_dlerror ();
+    ci->dlhandle = dlopen (module_fn, RTLD_NOW|RTLD_LOCAL);
+    dl_error = dlerror ();
 
     if (ci->dlhandle != NULL && dl_error == NULL)
       {
         snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
                   "_pocl_kernel_%s_workgroup",
 		  cmd->command.run.kernel->name);
-        ci->wg = lt_dlsym (ci->dlhandle, workgroup_string);
-        dl_error = lt_dlerror ();
+        ci->wg = dlsym (ci->dlhandle, workgroup_string);
+        dl_error = dlerror ();
         if (ci->wg == NULL)
           {
             // Older osx dyld APIs need the name without the underscore
             snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
                       "pocl_kernel_%s_workgroup",
 		      cmd->command.run.kernel->name);
-            ci->wg = lt_dlsym (ci->dlhandle, workgroup_string);
-            dl_error = lt_dlerror ();
+            ci->wg = dlsym (ci->dlhandle, workgroup_string);
+            dl_error = dlerror ();
           }
 
         if (ci->wg != NULL && dl_error == NULL)
@@ -1093,7 +1093,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *cmd,
     if (ci->dlhandle == NULL || ci->wg == NULL || dl_error != NULL)
       {
         POCL_ABORT (
-            "pocl error: lt_dlopen(\"%s\") or lt_dlsym() failed with '%s'.\n"
+            "pocl error: dlopen(\"%s\") or dlsym() failed with '%s'.\n"
             "note: missing symbols in the kernel binary might be"
             " reported as 'file not found' errors.\n",
             module_fn, dl_error);

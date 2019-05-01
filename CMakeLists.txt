@@ -699,23 +699,22 @@ include_directories("fix-include" "include")
 ######################################################################################
 
 if(WIN32)
-    message(STATUS "Using LoadLibrary/FreeLibrary in Windows, libltdl not needed.")
+    message(STATUS "Using LoadLibrary/FreeLibrary in Windows, libdl not needed.")
 else()
-  find_library(LTDL_LIB "ltdl")
-  find_file(LTDL_H "ltdl.h")
-  if(LTDL_LIB AND LTDL_H)
-    message(STATUS "ltdl found")
+  find_library(DL_LIB "dl")
+  find_file(DL_H "dlfcn.h")
+  if(DL_LIB AND DL_H)
+    message(STATUS "libdl found")
 
-    get_filename_component(LTDL_H_INCLUDE_DIR "${LTDL_H}" DIRECTORY)
-    string(FIND "${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES}" "${LTDL_H_INCLUDE_DIR}" LTPOSITION)
-    # include the directory of ltdl.h, if its not in the default system include dirs
+    get_filename_component(DL_H_INCLUDE_DIR "${DL_H}" DIRECTORY)
+    string(FIND "${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES}" "${DL_H_INCLUDE_DIR}" LTPOSITION)
+    # include the directory of dlfcn.h, if its not in the default system include dirs
     # also when cross-compiling this includes <cross-compile-root>/usr/include, which screws things up
     if((LTPOSITION LESS "0") AND (NOT CMAKE_CROSSCOMPILING))
-      include_directories("${LTDL_H_INCLUDE_DIR}")
+      include_directories("${DL_H_INCLUDE_DIR}")
     endif()
-
   else()
-    message(FATAL_ERROR "Could not find LTDL library!")
+    message(FATAL_ERROR "Could not find DL library!")
   endif()
 endif()
 
