@@ -73,8 +73,8 @@
 
 #endif
 
-#ifndef HAVE_LTDL
-#error HSA driver requires LTDL
+#ifndef HAVE_LIBDL
+#error HSA driver requires DL library
 #endif
 
 #include "pocl-hsa.h"

@@ -724,33 +724,33 @@ include_directories("include")
 
 ######################################################################################
 
-set(HAVE_LTDL OFF CACHE BOOL "ltdl" FORCE)
+set(HAVE_LIBDL OFF CACHE BOOL "dlopen" FORCE)
 
 if(WIN32)
   message(STATUS "Using LoadLibrary/FreeLibrary in Windows, libltdl not needed.")
+
 elseif(UNIX)
 
   if (CMAKE_CROSSCOMPILING AND (NOT ENABLE_HOST_CPU_DEVICES) AND (NOT ENABLE_HSA))
-    message(STATUS "Cross-compiling without CPU/HSA devices -> skipping LTDL search")
+    message(STATUS "Cross-compiling without CPU/HSA devices -> skipping LIBDL search")
   else()
 
-      find_library(LTDL_LIB "ltdl")
-      find_file(LTDL_H "ltdl.h")
-      if(LTDL_LIB AND LTDL_H)
-        message(STATUS "ltdl found")
+    find_library(DL_LIB "dl")
+    find_file(DL_H "dlfcn.h")
+    if(DL_LIB AND DL_H)
+      message(STATUS "libdl found")
 
-        get_filename_component(LTDL_H_INCLUDE_DIR "${LTDL_H}" DIRECTORY)
-        string(FIND "${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES}" "${LTDL_H_INCLUDE_DIR}" LTPOSITION)
-        # include the directory of ltdl.h, if its not in the default system include dirs
-        # also when cross-compiling this includes <cross-compile-root>/usr/include, which screws things up
-        if((LTPOSITION LESS "0") AND (NOT CMAKE_CROSSCOMPILING))
-          include_directories("${LTDL_H_INCLUDE_DIR}")
-        endif()
-
-        set(HAVE_LTDL ON CACHE BOOL "ltdl" FORCE)
-      else()
-        message(FATAL_ERROR "Could not find LTDL library!")
+      get_filename_component(DL_H_INCLUDE_DIR "${DL_H}" DIRECTORY)
+      string(FIND "${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES}" "${DL_H_INCLUDE_DIR}" LTPOSITION)
+      # include the directory of dlfcn.h, if its not in the default system include dirs
+      # also when cross-compiling this includes <cross-compile-root>/usr/include, which screws things up
+      if((LTPOSITION LESS "0") AND (NOT CMAKE_CROSSCOMPILING))
+        include_directories("${DL_H_INCLUDE_DIR}")
       endif()
+      set(HAVE_LIBDL ON CACHE BOOL "dlopen" FORCE)
+    else()
+      message(FATAL_ERROR "Could not find DL library!")
+    endif()
   endif()
 
 else()

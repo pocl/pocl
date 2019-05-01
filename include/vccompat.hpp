@@ -62,25 +62,23 @@ static inline char* strtok_r(char *str, const char *delim, char **saveptr) {
 #include <sys/utime.h>
 #define utime _utime;
 
-/**
- * ltdl compatibility functions
- */
-typedef HMODULE lt_dlhandle;
+#define RTLD_NOW 1
+#define RTLD_LOCAL 1
 
-static inline lt_dlhandle lt_dlopen(const char* filename) {
-  return (lt_dlhandle)LoadLibrary(filename);
+/**
+ * dl compatibility functions
+ */
+
+static inline void* dlopen(const char* filename, int flags) {
+  return (void*)LoadLibrary(filename);
 }
 
-static inline int lt_dlerror(void) {
+static inline int dlerror(void) {
   return GetLastError();
 }
 
-static inline void *lt_dlsym(lt_dlhandle handle, const char *symbol) {
-  return GetProcAddress(handle, symbol);
-}
-
-static inline void lt_dlinit(void) {
-  // separate init not needed in windows
+static inline void *dlsym(void* handle, const char *symbol) {
+  return GetProcAddress((HMODULE)handle, symbol);
 }
 
 /**

@@ -49,8 +49,8 @@
 #include "pocl_llvm.h"
 #endif
 
-#ifndef HAVE_LTDL
-#error Basic driver requires LTDL
+#ifndef HAVE_LIBDL
+#error Basic driver requires DL library
 #endif
 
 /* default WG size in each dimension & total WG size.

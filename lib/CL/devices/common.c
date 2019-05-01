@@ -57,8 +57,11 @@
 #include "pocl_runtime_config.h"
 #include "pocl_util.h"
 
-#ifdef HAVE_LTDL
-#include <ltdl.h>
+#ifdef HAVE_LIBDL
+#if defined(__APPLE__)
+#define _DARWIN_C_SOURCE
+#endif
+#include <dlfcn.h>
 #endif
 
 #ifdef OCS_AVAILABLE
@@ -828,7 +831,7 @@ struct pocl_dlhandle_cache_item
   size_t max_grid_dim_width;
 
   void *wg;
-  lt_dlhandle dlhandle;
+  void *dlhandle;
   pocl_dlhandle_cache_item *next;
   pocl_dlhandle_cache_item *prev;
   unsigned ref_count;
@@ -871,10 +874,10 @@ get_new_dlhandle_cache_item ()
   if ((handle_count >= MAX_CACHE_ITEMS) && ci && (ci != pocl_dlhandle_cache))
     {
       DL_DELETE (pocl_dlhandle_cache, ci);
-      lt_dlclose (ci->dlhandle);
-      dl_error = lt_dlerror ();
+      dlclose (ci->dlhandle);
+      dl_error = dlerror ();
       if (dl_error != NULL)
-        POCL_ABORT ("lt_dlclose() failed with error: %s\n", dl_error);
+        POCL_ABORT ("dlclose() failed with error: %s\n", dl_error);
       memset (ci, 0, sizeof (pocl_dlhandle_cache_item));
     }
   else
@@ -1074,29 +1077,31 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
 
   char *module_fn = pocl_check_kernel_disk_cache (command, specialize);
 
-  ci->dlhandle = lt_dlopen (module_fn);
-  dl_error = lt_dlerror ();
+  ci->dlhandle = dlopen (module_fn, RTLD_NOW | RTLD_LOCAL);
+  dl_error = dlerror ();
 
   if (ci->dlhandle == NULL || dl_error != NULL)
-    POCL_ABORT ("lt_dlopen(\"%s\") failed with '%s'.\n"
+    POCL_ABORT ("dlopen(\"%s\") failed with '%s'.\n"
                 "note: missing symbols in the kernel binary might be"
                 " reported as 'file not found' errors.\n",
                 module_fn, dl_error);
 
   snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
             "_pocl_kernel_%s_workgroup", run_cmd->kernel->name);
-  ci->wg = lt_dlsym (ci->dlhandle, workgroup_string);
-  dl_error = lt_dlerror ();
+
+  ci->wg = dlsym (ci->dlhandle, workgroup_string);
+  dl_error = dlerror ();
+
   if (ci->wg == NULL || dl_error != NULL)
     {
       // Older OSX dyld APIs need the name without the underscore.
       snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
                 "pocl_kernel_%s_workgroup", run_cmd->kernel->name);
-      ci->wg = lt_dlsym (ci->dlhandle, workgroup_string);
-      dl_error = lt_dlerror ();
+      ci->wg = dlsym (ci->dlhandle, workgroup_string);
+      dl_error = dlerror ();
 
       if (ci->wg == NULL || dl_error != NULL)
-        POCL_ABORT ("lt_dlsym(\"%s\", \"%s\") failed with '%s'.\n"
+        POCL_ABORT ("dlsym(\"%s\", \"%s\") failed with '%s'.\n"
                     "note: missing symbols in the kernel binary might be"
                     " reported as 'file not found' errors.\n",
                     module_fn, workgroup_string, dl_error);

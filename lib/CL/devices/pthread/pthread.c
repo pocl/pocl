@@ -51,8 +51,8 @@
 #include "pocl_util.h"
 #include "pocl_mem_management.h"
 
-#ifndef HAVE_LTDL
-#error Pthread driver requires LTDL
+#ifndef HAVE_LIBDL
+#error Pthread driver requires DL library
 #endif
 
 #ifdef OCS_AVAILABLE

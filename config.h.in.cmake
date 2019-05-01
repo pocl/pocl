@@ -55,7 +55,7 @@
 
 #cmakedefine HAVE_LTTNG_UST
 
-#cmakedefine HAVE_LTDL
+#cmakedefine HAVE_LIBDL
 
 #cmakedefine HAVE_OCL_ICD
 
