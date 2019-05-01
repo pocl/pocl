@@ -637,9 +637,9 @@ if(UNIX)
     # ld: warning: -macosx_version_min not specificed, assuming 10.7
     # suppress them with -w.
     if(LINK_WITH_CLANG)
-      set(DEFAULT_HOST_LD_FLAGS "-dynamiclib -w")
+      set(DEFAULT_HOST_LD_FLAGS "-dynamiclib -w -lm")
     else()
-      set(DEFAULT_HOST_LD_FLAGS "-dylib -w")
+      set(DEFAULT_HOST_LD_FLAGS "-dylib -w -lm")
     endif()
   elseif(ANDROID_COMPILER)
     set(DEFAULT_HOST_LD_FLAGS "-L/system/lib/ -shared -ldl -lc /system/lib/crtbegin_so.o /system/lib/crtend_so.o")
