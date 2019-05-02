@@ -15,7 +15,7 @@ Highlights
 Kernel Compiler
 ---------------
 - Specialize work-group functions for global offset (0,0,0).
-- A pocl installation with clang, hwloc and libtool statically linked in
+- A pocl installation with clang, hwloc statically linked in
   is now relocatable.
 - Clang/LLVM versions older than 6.0 are no longer supported.
 - Create specialized work-group functions for small (defined by a device
@@ -39,6 +39,8 @@ Notable Internal Changes
   https://github.com/RadeonOpenCompute/ROCm-Device-Libs/tree/master/ocml
   was mirrored in lib/kernel and made it easy to cherry pick
   implementations to targets' kernel libary.
+
+- libltdl is replaced with libdl on UNIX platforms.
 
 Notable Bug Fixes
 -----------------
