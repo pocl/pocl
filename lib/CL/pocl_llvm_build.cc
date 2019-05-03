@@ -75,15 +75,6 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include "pocl_cache.h"
 #include "LLVMUtils.h"
 
-#if defined(ENABLE_POCL_RELOCATION)
-#if defined(__linux__)
-#include <dlfcn.h>
-#elif defined(__APPLE__)
-#define _DARWIN_C_SOURCE
-#include <dlfcn.h>
-#endif
-#endif
-
 using namespace clang;
 using namespace llvm;
 
