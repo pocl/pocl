@@ -14,7 +14,6 @@ tools:
   * development files for LLVM & Clang + their transitive dependencies
     (e.g. libclang-dev, libllvm-dev, zlib1g-dev, libtinfo-dev...)
   * GNU make or ninja
-  * libtool dlopen wrapper files (e.g. libltdl3-dev in Debian)
   * pthread (should be installed by default)
   * Optional: hwloc v1.0 or newer (e.g. libhwloc-dev)
   * pkg-config
