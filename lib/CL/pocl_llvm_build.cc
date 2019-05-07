@@ -53,11 +53,13 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 
 #include "llvm/Support/MutexGuard.h"
 
-#if defined(__linux__)
-#include <dlfcn.h>
-#elif defined(__APPLE__)
+#ifdef ENABLE_RELOCATION
+
+#if defined(__APPLE__)
 #define _DARWIN_C_SOURCE
+#endif
 #include <dlfcn.h>
+
 #endif
 
 #include <iostream>
@@ -179,10 +181,10 @@ static void get_build_log(cl_program program,
 
 static llvm::Module *getKernelLibrary(cl_device_id device);
 
-static std::string get_pocl_private_data_dir() {
-#if defined(__APPLE__) || defined(__linux__)
+static std::string getPoclPrivateDataDir() {
+#ifdef ENABLE_RELOCATION
     Dl_info info;
-    if (dladdr((void*)get_pocl_private_data_dir, &info)) {
+    if (dladdr((void*)getPoclPrivateDataDir, &info)) {
         char const * soname = info.dli_fname;
         std::string result = std::string(soname);
         size_t last_slash = result.rfind('/');
@@ -454,7 +456,7 @@ int pocl_llvm_build_program(cl_program program,
   if (0) {
 #endif
   } else {
-    IncludeRoot = get_pocl_private_data_dir();
+    IncludeRoot = getPoclPrivateDataDir();
     ClangResourceDir = IncludeRoot;
   }
   KernelH = IncludeRoot + "/include/_kernel.h";
@@ -864,7 +866,7 @@ static llvm::Module* getKernelLibrary(cl_device_id device)
     kernellib += subdir;
   } else // POCL_BUILDING == 0, use install dir
 #endif
-  kernellib = get_pocl_private_data_dir();
+  kernellib = getPoclPrivateDataDir();
   kernellib += "/kernel-";
   kernellib += device->llvm_target_triplet;
   if (is_host) {

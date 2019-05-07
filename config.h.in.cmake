@@ -31,6 +31,8 @@
 
 #cmakedefine ENABLE_POCL_FLOAT_CONVERSION
 
+#cmakedefine ENABLE_RELOCATION
+
 #cmakedefine ENABLE_SLEEF
 
 #cmakedefine ENABLE_SPIR
