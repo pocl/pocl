@@ -34,6 +34,8 @@ target_link_libraries("vecadd" ${POCLU_LINK_OPTIONS})
 
 add_test("examples/vecadd" "vecadd")
 
+add_test("examples/vecadd_large_grid" "vecadd" "128000" "128" "10000" "100" "1" "1")
+
 set_tests_properties( "examples/vecadd"
   PROPERTIES
     COST 3.0

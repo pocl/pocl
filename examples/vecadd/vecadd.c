@@ -1,6 +1,6 @@
 /* vecadd - Simple vector addition using work-items.
 
-   Copyright (c) 2018 Pekka Jääskeläinen
+   Copyright (c) 2018-2019 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -37,8 +37,9 @@
 
 extern CALLAPI int
 exec_vecadd_kernel (cl_context context, cl_device_id device,
-		    cl_command_queue cmd_queue, cl_program program, int n,
-		    cl_float *srcA, cl_float *srcB, cl_float *dst);
+                    cl_command_queue cmd_queue, cl_program program,
+                    int n, int wg_size, cl_float *srcA, cl_float *srcB,
+                    cl_float *dst);
 
 int
 main (int argc, char **argv)
@@ -57,40 +58,61 @@ main (int argc, char **argv)
   CHECK_OPENCL_ERROR_IN ("clCreateContext");
 
   const char *basename = "vecadd";
-  err = poclu_load_program (context, device, basename, 0, 0, 0,
-			    NULL, NULL, &program);
+  err = poclu_load_program (context, device, basename, 0, 0, 0, NULL, NULL,
+                            &program);
   if (err != CL_SUCCESS)
     goto FINISH;
 
-  srcA = (cl_float *) malloc (N * sizeof (cl_float));
-  srcB = (cl_float *) malloc (N * sizeof (cl_float));
-  dst = (cl_float *) malloc (N * sizeof (cl_float));
+  /* Allow the user to do multiple kernel launches in a row to stress
+     the WG function caching mechanism. */
+  int launches = 1;
+  if (argc > 2)
+    launches = (argc - 1) / 2;
 
-  for (i = 0; i < N; ++i)
+  for (int l = 0; l < launches; ++l)
     {
-      srcA[i] = (cl_float)i;
-      srcB[i] = (cl_float)(N - i);
-      dst[i] = (cl_float)i;
-    }
+      int vec_width = N;
+      int wg_size = N;
 
-  err = 0;
+      if (argc > l * 2 + 1)
+        vec_width = atoi(argv[l * 2 + 1]);
 
-  if (exec_vecadd_kernel (context, device, queue, program, N,
-			  srcA, srcB, dst))
-    {
-      printf ("Error running the tests\n");
-      err = 1;
-      goto FINISH;
-    }
+      if (argc > l * 2 + 2)
+        wg_size = atoi(argv[l * 2 + 2]);
 
-  for (i = 0; i < N; ++i)
-    {
-      if ((int)srcA[i] + (int)srcB[i] != (int)dst[i])
+      srcA = (cl_float *) malloc (vec_width * sizeof (cl_float));
+      srcB = (cl_float *) malloc (vec_width * sizeof (cl_float));
+      dst = (cl_float *) malloc (vec_width * sizeof (cl_float));
+
+      for (i = 0; i < vec_width; ++i)
         {
-          printf ("%d FAIL: %f + %f != %f\n", i, srcA[i], srcB[i], dst[i]);
+          srcA[i] = (cl_float)i;
+          srcB[i] = (cl_float)(vec_width - i);
+          dst[i] = (cl_float)i;
+        }
+
+      err = 0;
+
+      if (exec_vecadd_kernel (context, device, queue, program, vec_width,
+                              wg_size, srcA, srcB, dst))
+        {
+          printf ("Error running the tests\n");
           err = 1;
           goto FINISH;
         }
+
+      for (i = 0; i < vec_width; ++i)
+        {
+          if ((int)srcA[i] + (int)srcB[i] != (int)dst[i])
+            {
+              printf ("%d FAIL: %f + %f != %f\n", i, srcA[i], srcB[i], dst[i]);
+              err = 1;
+              goto FINISH;
+            }
+        }
+      free (srcA);
+      free (srcB);
+      free (dst);
     }
 
   printf ("OK\n");
