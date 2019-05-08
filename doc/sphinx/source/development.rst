@@ -83,12 +83,14 @@ generated to point to the pocl library in the build tree.
 Coding Style
 ------------
 
-The code base of pocl consists most of pure C sources and C++ sources (mostly
-the kernel compiler).
+The code base of pocl consists most of pure C sources and C++ sources.
 
-1) In the C sources, follow the GNU style.
+1) In the C sources, follow the GNU C style, but with spaces for indent.
 
-   http://www.gnu.org/prep/standards/html_node/Writing-C.html
+   The GNU C style guide is here: http://www.gnu.org/prep/standards/html_node/Writing-C.html
+
+   This guide should be followed except please use 2 spaces instead of the
+   confusing "smart" mix of tabs and spaces for indentation.
 
 2) In the C++ sources (mostly the LLVM passes), follow the LLVM coding
    guidelines so it is easier to upstream general code to the LLVM project
@@ -96,9 +98,35 @@ the kernel compiler).
 
    http://llvm.org/docs/CodingStandards.html
 
-It's acknowledged that the pocl code base does fully not adhere to these
-principles at the moment, but the aim is to gradually fix the style and any
-new code merged to master should adhere to them.
+It's acknowledged that the pocl code base does not fully adhere to these
+principles at the moment, but the aim is to gradually fix the style with
+every new commit improving the style.
+
+An example emacs configuration to help get the pocl code style correct::
+
+  (setq default-tab-width 2)
+  (setq-default indent-tabs-mode nil)
+  (setq-default show-trailing-whitespace t)
+  
+  (defun my-c-mode-common-hook ()
+    (c-set-style "gnu")
+    (setq tab-width 2)
+    (setq c-basic-offset 2)
+  )
+  (add-hook 'c-mode-common-hook 'my-c-mode-common-hook)
+  
+  (defun my-cpp-mode-common-hook ()
+    (c-set-style "stroustrup")
+    (setq tab-width 2)
+    (setq c-basic-offset 2)
+    )
+  (add-hook 'c++-mode-hook 'my-cpp-mode-common-hook)
+  
+  (add-to-list 'auto-mode-alist '("\\.cl$" . c-mode))
+  (add-to-list 'auto-mode-alist '("\\.icc$" . c++-mode))
+  (add-to-list 'auto-mode-alist '("\\.cc$" . c++-mode))
+
+
 
 Khronos ICD Loader
 ------------------
