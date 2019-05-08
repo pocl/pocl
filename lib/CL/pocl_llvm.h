@@ -1,7 +1,7 @@
 /* pocl_llvm.h: interface to call LLVM and Clang.
 
    Copyright (c) 2013 Kalle Raiskila and
-                 2013-2018 Pekka Jääskeläinen
+                 2013-2019 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -61,28 +61,27 @@ int pocl_llvm_build_program(cl_program program,
  */
 int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i);
 
-/* This function links the input kernel LLVM bitcode and the
- * OpenCL kernel runtime library into one LLVM module, then
- * runs pocl's kernel compiler passes on that module to produce
- * a function that executes all work-items in a work-group.
+/* This function links the input kernel LLVM bitcode and the OpenCL kernel runtime
+ * library into one LLVM module, then runs pocl's kernel compiler passes on that
+ * module to produce a function that executes all work-items in a work-group.
  *
- * Output is a LLVM bitcode file that contains a work-group function
- * and its associated launchers.
- *
- * TODO: this is not thread-safe, it changes the LLVM global options to
- * control the compilation. We should enforce only one compilations is done
- * at a time or control the options through thread safe methods.
+ * Output is a LLVM bitcode file that contains a work-group function and its
+ * associated launchers. If @param Specialize is set to true, generates a
+ * WG function that might be specialized according to the properties of
+ * the given Command.
  */
-int pocl_llvm_generate_workgroup_function (unsigned device_i,
-                                           cl_device_id device,
-                                           cl_kernel kernel, size_t local_x,
-                                           size_t local_y, size_t local_z,
-                                           int assume_zero_global_offset);
+int pocl_llvm_generate_workgroup_function(unsigned DeviceI,
+                                          cl_device_id Device,
+                                          cl_kernel Kernel,
+                                          _cl_command_node *Command,
+                                          int Specialize);
 
-int pocl_llvm_generate_workgroup_function_nowrite (
-    unsigned device_i, cl_device_id device, cl_kernel kernel, size_t local_x,
-    size_t local_y, size_t local_z, int assume_zero_global_offset,
-    void **output);
+int pocl_llvm_generate_workgroup_function_nowrite(unsigned DeviceI,
+                                                  cl_device_id Device,
+                                                  cl_kernel Kernel,
+                                                  _cl_command_node *Command,
+                                                  void **output,
+                                                  int Specialize);
 /**
  * Free the LLVM IR of a program for a given device
  */

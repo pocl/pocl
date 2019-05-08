@@ -88,6 +88,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <pthread.h>
+#include <limits.h>
 
 #ifndef _MSC_VER
 #  include <sys/wait.h>
@@ -146,6 +147,13 @@ typedef struct pocl_hsa_kernel_cache_s {
   uint64_t local_x;
   uint64_t local_y;
   uint64_t local_z;
+
+  /* If global offset must be zero for this WG function. */
+  int goffs_zero;
+
+  /* Maximum grid dimension this WG function works with. */
+  size_t max_grid_dim_width;
+
 } pocl_hsa_kernel_cache_t;
 
 /* data for driver pthread */
@@ -219,11 +227,11 @@ typedef struct pocl_hsa_device_data_s {
 
 void
 pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
-			       cl_device_id device);
+                               cl_device_id device, int specialize);
 
 void
 pocl_hsa_compile_kernel_native (_cl_command_node *cmd, cl_kernel kernel,
-				cl_device_id device);
+                                cl_device_id device, int specialize);
 
 static void*
 pocl_hsa_malloc_account(pocl_global_mem_t *mem, size_t size, hsa_region_t r);
@@ -705,6 +713,9 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->max_work_item_sizes[1] = wg_sizes[1];
   dev->max_work_item_sizes[2] = wg_sizes[2];
 
+  /* Specialize WG functions for grid dimensions of width <= USHRT_MAX. */
+  dev->grid_width_specialization_limit = USHRT_MAX;
+
   HSA_CHECK(hsa_agent_get_info
     (agent, HSA_AGENT_INFO_WORKGROUP_MAX_SIZE, &dev->max_work_group_size));
 
@@ -1095,15 +1106,17 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
 }
 
 static int
-compile_parallel_bc_to_brig (char *brigfile, cl_kernel kernel,
-                             cl_device_id device, unsigned device_i)
+compile_parallel_bc_to_brig (char *brigfile, _cl_command_node *cmd,
+                             int specialize)
 {
   int error;
   char hsailfile[POCL_FILENAME_LENGTH];
   char parallel_bc_path[POCL_FILENAME_LENGTH];
+  _cl_command_run *run_cmd = &cmd->command.run;
 
-  pocl_cache_work_group_function_path (parallel_bc_path, kernel->program,
-                                       device_i, kernel, 0, 0, 0, 0);
+  pocl_cache_work_group_function_path (parallel_bc_path, run_cmd->kernel->program,
+                                       cmd->device_i, run_cmd->kernel, cmd,
+                                       specialize);
 
   strcpy (brigfile, parallel_bc_path);
   strncat (brigfile, ".brig", POCL_FILENAME_LENGTH-1);
@@ -1142,24 +1155,26 @@ compile_parallel_bc_to_brig (char *brigfile, cl_kernel kernel,
 
 static pocl_hsa_kernel_cache_t *
 pocl_hsa_find_mem_cached_kernel (pocl_hsa_device_data_t *d,
-                                 _cl_command_node *cmd)
+                                 _cl_command_run *cmd)
 {
   size_t i;
   for (i = 0; i < HSA_KERNEL_CACHE_SIZE; i++)
     {
       if (((d->kernel_cache[i].kernel == NULL)
-           || (memcmp (d->kernel_cache[i].kernel_hash, cmd->command.run.hash,
+           || (memcmp (d->kernel_cache[i].kernel_hash, cmd->hash,
                        sizeof (pocl_kernel_hash_t))
                != 0)))
         continue;
 
-      if (d->device->spmd)
-        return &d->kernel_cache[i];
-      else if (d->kernel_cache[i].local_x == cmd->command.run.pc.local_size[0]
-               && d->kernel_cache[i].local_y
-                      == cmd->command.run.pc.local_size[1]
-               && d->kernel_cache[i].local_z
-                      == cmd->command.run.pc.local_size[2])
+      if (d->kernel_cache[i].local_x == cmd->pc.local_size[0]
+          && d->kernel_cache[i].local_y == cmd->pc.local_size[1]
+          && d->kernel_cache[i].local_z == cmd->pc.local_size[2]
+          && (!d->kernel_cache[i].goffs_zero ||
+              (cmd->pc.global_offset[0] == 0
+               && cmd->pc.global_offset[1] == 0
+               && cmd->pc.global_offset[2] == 0))
+          && pocl_cmd_max_grid_dim_width (cmd) <=
+          d->kernel_cache[i].max_grid_dim_width)
         return &d->kernel_cache[i];
     }
   return NULL;
@@ -1167,14 +1182,16 @@ pocl_hsa_find_mem_cached_kernel (pocl_hsa_device_data_t *d,
 
 void
 pocl_hsa_compile_kernel_native (_cl_command_node *cmd, cl_kernel kernel,
-                                cl_device_id device)
+                                cl_device_id device, int specialize)
 {
   pocl_hsa_device_data_t *d = (pocl_hsa_device_data_t*)device->data;
 
+  _cl_command_run *run_cmd = &cmd->command.run;
+
   POCL_LOCK (d->pocl_hsa_compilation_lock);
   assert (cmd->command.run.kernel == kernel);
-  char *binary_fn = pocl_check_kernel_disk_cache (cmd);
-  if (pocl_hsa_find_mem_cached_kernel (d, cmd) != NULL)
+  char *binary_fn = pocl_check_kernel_disk_cache (cmd, specialize);
+  if (pocl_hsa_find_mem_cached_kernel (d, &cmd->command.run) != NULL)
     {
         POCL_MSG_PRINT_INFO("built kernel found in mem cache\n");
         POCL_UNLOCK (d->pocl_hsa_compilation_lock);
@@ -1245,9 +1262,17 @@ pocl_hsa_compile_kernel_native (_cl_command_node *cmd, cl_kernel kernel,
       d->kernel_cache[i].kernel = kernel;
       memcpy (d->kernel_cache[i].kernel_hash, cmd->command.run.hash,
               sizeof (pocl_kernel_hash_t));
-      d->kernel_cache[i].local_x = cmd->command.run.pc.local_size[0];
-      d->kernel_cache[i].local_y = cmd->command.run.pc.local_size[1];
-      d->kernel_cache[i].local_z = cmd->command.run.pc.local_size[2];
+      d->kernel_cache[i].local_x = run_cmd->pc.local_size[0];
+      d->kernel_cache[i].local_y = run_cmd->pc.local_size[1];
+      d->kernel_cache[i].local_z = run_cmd->pc.local_size[2];
+      d->kernel_cache[i].goffs_zero =
+        run_cmd->pc.global_offset[0] == 0 && run_cmd->pc.global_offset[1] == 0
+        && run_cmd->pc.global_offset[2] == 0;
+
+      size_t max_grid_width = pocl_cmd_max_grid_dim_width (&cmd->command.run);
+      d->kernel_cache[i].max_grid_dim_width =
+        max_grid_width > device->grid_width_specialization_limit ?
+        SIZE_MAX : device->grid_width_specialization_limit;
       d->kernel_cache[i].hsa_exe.handle = exe.handle;
       d->kernel_cache_lastptr++;
     }
@@ -1296,7 +1321,7 @@ pocl_hsa_compile_kernel_native (_cl_command_node *cmd, cl_kernel kernel,
 
 void
 pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
-			       cl_device_id device)
+                               cl_device_id device, int specialize)
 {
   char brigfile[POCL_FILENAME_LENGTH];
   char *brig_blob;
@@ -1305,11 +1330,13 @@ pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
 
   hsa_executable_t final_obj;
 
+  _cl_command_run *run_cmd = &cmd->command.run;
+
   POCL_LOCK (d->pocl_hsa_compilation_lock);
 
-  int error = pocl_llvm_generate_workgroup_function (
-      cmd->device_i, device, kernel, cmd->command.run.pc.local_size[0],
-      cmd->command.run.pc.local_size[1], cmd->command.run.pc.local_size[2], 0);
+  int error =
+    pocl_llvm_generate_workgroup_function (cmd->device_i, device,
+                                           kernel, cmd, specialize);
   if (error)
     {
       POCL_MSG_PRINT_GENERAL ("HSA: pocl_llvm_generate_workgroup_function()"
@@ -1318,14 +1345,14 @@ pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
     }
 
   unsigned i;
-  if (pocl_hsa_find_mem_cached_kernel (d, cmd) != NULL)
+  if (pocl_hsa_find_mem_cached_kernel (d, run_cmd) != NULL)
     {
         POCL_MSG_PRINT_INFO("built kernel found in mem cache\n");
         POCL_UNLOCK (d->pocl_hsa_compilation_lock);
         return;
     }
 
-  if (compile_parallel_bc_to_brig (brigfile, kernel, device, cmd->device_i))
+  if (compile_parallel_bc_to_brig (brigfile, cmd, specialize))
     POCL_ABORT("Compiling LLVM IR -> HSAIL -> BRIG failed.\n");
 
   POCL_MSG_PRINT_INFO("pocl-hsa: loading binary from file %s.\n", brigfile);
@@ -1688,6 +1715,7 @@ pocl_hsa_launch (pocl_hsa_device_data_t *d, cl_event event)
 {
   POCL_LOCK_OBJ (event);
   _cl_command_node *cmd = event->command;
+  _cl_command_run *run_cmd = &cmd->command.run;
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
   hsa_kernel_dispatch_packet_t *kernel_packet;
@@ -1696,7 +1724,7 @@ pocl_hsa_launch (pocl_hsa_device_data_t *d, cl_event event)
 
   unsigned i;
   pocl_hsa_kernel_cache_t *cached_data =
-    pocl_hsa_find_mem_cached_kernel (d, cmd);
+    pocl_hsa_find_mem_cached_kernel (d, run_cmd);
   assert (cached_data);
 
   HSA_CHECK(hsa_memory_allocate (d->kernarg_region,
@@ -1739,10 +1767,10 @@ pocl_hsa_launch (pocl_hsa_device_data_t *d, cl_event event)
   else
     {
       /* Otherwise let the target processor take care of the SPMD grid
-	 execution. */
-      kernel_packet->workgroup_size_x = cmd->command.run.pc.local_size[0];
-      kernel_packet->workgroup_size_y = cmd->command.run.pc.local_size[1];
-      kernel_packet->workgroup_size_z = cmd->command.run.pc.local_size[2];
+         execution. */
+      kernel_packet->workgroup_size_x = run_cmd->pc.local_size[0];
+      kernel_packet->workgroup_size_y = run_cmd->pc.local_size[1];
+      kernel_packet->workgroup_size_z = run_cmd->pc.local_size[2];
     }
 
 
@@ -1753,9 +1781,9 @@ pocl_hsa_launch (pocl_hsa_device_data_t *d, cl_event event)
      uses the context struct. */
   if (!d->device->spmd || d->device->arg_buffer_launcher)
     {
-      pc->local_size[0] = cmd->command.run.pc.local_size[0];
-      pc->local_size[1] = cmd->command.run.pc.local_size[1];
-      pc->local_size[2] = cmd->command.run.pc.local_size[2];
+      pc->local_size[0] = run_cmd->pc.local_size[0];
+      pc->local_size[1] = run_cmd->pc.local_size[1];
+      pc->local_size[2] = run_cmd->pc.local_size[2];
     }
 
   kernel_packet->grid_size_x = kernel_packet->grid_size_y
@@ -1898,8 +1926,9 @@ pocl_hsa_run_ready_commands (pocl_hsa_device_data_t *d)
       PTHREAD_CHECK (pthread_mutex_unlock (&d->list_mutex));
       if (e->command->type == CL_COMMAND_NDRANGE_KERNEL)
         {
-          d->device->ops->compile_kernel (
-              e->command, e->command->command.run.kernel, e->queue->device);
+          d->device->ops->compile_kernel (e->command,
+                                          e->command->command.run.kernel,
+                                          e->queue->device, 1);
           pocl_hsa_launch (d, e);
           enqueued_ndrange = 1;
           POCL_MSG_PRINT_INFO ("NDrange event %u launched, remove"

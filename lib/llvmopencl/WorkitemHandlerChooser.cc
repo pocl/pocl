@@ -99,8 +99,9 @@ WorkitemHandlerChooser::runOnFunction(Function &F)
       {
         ReplThreshold = atoi(getenv("POCL_FULL_REPLICATION_THRESHOLD"));
       }
-      
-      if (WGLocalSizeX*WGLocalSizeY*WGLocalSizeZ <= ReplThreshold)
+
+      if (!WGDynamicLocalSize && WGLocalSizeX * WGLocalSizeY * WGLocalSizeZ
+          <= ReplThreshold)
         {
           chosenHandler_ = POCL_WIH_FULL_REPLICATION;
         }

@@ -85,7 +85,15 @@ add_test_pocl(NAME "workgroup/workgroup_sizes_work_items_get_wrong_ids"
 
 add_test_pocl(NAME "workgroup/issue_548_convergent_propagation"
               EXPECTED_OUTPUT "issue_548_1_2_1_1.stdout"
-              COMMAND "run_kernel" "issue_548.cl" 1 2 1 1)
+              COMMAND "run_kernel" "issue_548.cl" "1" "2" "1" "1")
+
+add_test_pocl(NAME "workgroup/range_md_small_grid"
+              EXPECTED_OUTPUT "range_md_small_grid.stdout"
+              COMMAND "run_kernel" "range_md.cl" "1" "10" "1" "1")
+
+add_test_pocl(NAME "workgroup/range_md_large_grid"
+              EXPECTED_OUTPUT ""
+              COMMAND "run_kernel" "range_md.cl" "1000" "128" "1" "1")
 
 # These tests are now always ran with the basic device with a predefined
 # work-group execution order. Their printout verification depends

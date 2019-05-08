@@ -78,8 +78,8 @@
 #ifdef OCS_AVAILABLE
 int
 llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
-              cl_device_id device, size_t local_x, size_t local_y,
-              size_t local_z, int assume_zero_global_offset)
+              cl_device_id device, _cl_command_node *command,
+              int specialize)
 {
   POCL_MEASURE_START (llvm_codegen);
   int error = 0;
@@ -98,23 +98,22 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   /* $/parallel.bc */
   char parallel_bc_path[POCL_FILENAME_LENGTH];
   pocl_cache_work_group_function_path (parallel_bc_path, program, device_i,
-                                       kernel, local_x, local_y, local_z,
-                                       assume_zero_global_offset);
+                                       kernel, command, specialize);
 
   /* $/kernel.so */
   char final_binary_path[POCL_FILENAME_LENGTH];
   pocl_cache_final_binary_path (final_binary_path, program, device_i, kernel,
-                                local_x, local_y, local_z,
-                                assume_zero_global_offset);
+                                command, specialize);
 
   if (pocl_exists (final_binary_path))
     goto FINISH;
 
   assert (strlen (final_binary_path) < (POCL_FILENAME_LENGTH - 3));
 
-  error = pocl_llvm_generate_workgroup_function_nowrite (
-      device_i, device, kernel, local_x, local_y, local_z,
-      assume_zero_global_offset, &llvm_module);
+  error =
+    pocl_llvm_generate_workgroup_function_nowrite (device_i, device, kernel,
+                                                   command, &llvm_module,
+                                                   specialize);
   if (error)
     {
       POCL_MSG_PRINT_LLVM ("pocl_llvm_generate_workgroup_function() failed"
@@ -127,16 +126,15 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   if (pocl_get_bool_option ("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
     {
       POCL_MSG_PRINT_LLVM ("Writing parallel.bc to %s.\n", parallel_bc_path);
-      error = pocl_cache_write_kernel_parallel_bc (
-          llvm_module, program, device_i, kernel, local_x, local_y, local_z,
-          assume_zero_global_offset);
+      error =
+        pocl_cache_write_kernel_parallel_bc (llvm_module, program, device_i,
+                                             kernel, command, specialize);
     }
   else
     {
       char kernel_parallel_path[POCL_FILENAME_LENGTH];
       pocl_cache_kernel_cachedir_path (kernel_parallel_path, program, device_i,
-                                       kernel, "", local_x, local_y, local_z,
-                                       assume_zero_global_offset);
+                                       kernel, "", command, specialize);
       error = pocl_mkdir_p (kernel_parallel_path);
     }
   if (error)
@@ -836,7 +834,15 @@ typedef struct pocl_dlhandle_cache_item pocl_dlhandle_cache_item;
 struct pocl_dlhandle_cache_item
 {
   pocl_kernel_hash_t hash;
+
+  /* The specialization properties. */
+  /* The local dimensions. */
   size_t local_wgs[3];
+  /* If global offset must be zero for this WG function version. */
+  int goffs_zero;
+  /* Maximum grid dimension this WG function works with. */
+  size_t max_grid_dim_width;
+
   void *wg;
   lt_dlhandle dlhandle;
   pocl_dlhandle_cache_item *next;
@@ -927,36 +933,29 @@ pocl_release_dlhandle_cache (_cl_command_node *cmd)
  * if not, builds the kernel, caches it, and returns the file name of the
  * end result.
  *
- * @param cmd The kernel command.
+ * @param command The kernel run command.
+ * @param specialized 1 if should check the per-command specialized one instead
+ * of the generic one.
  * @returns The filename of the built binary in the disk.
  */
 char *
-pocl_check_kernel_disk_cache (_cl_command_node *cmd)
+pocl_check_kernel_disk_cache (_cl_command_node *command, int specialized)
 {
   char *module_fn = NULL;
-  cl_kernel k = cmd->command.run.kernel;
+  _cl_command_run *run_cmd = &command->command.run;
+  cl_kernel k = run_cmd->kernel;
   cl_program p = k->program;
-  unsigned dev_i = cmd->device_i;
-
-  size_t x = cmd->command.run.pc.local_size[0];
-  size_t y = cmd->command.run.pc.local_size[1];
-  size_t z = cmd->command.run.pc.local_size[2];
-
-  int global_offset_is_zero = cmd->command.run.pc.global_offset[0] == 0
-                              && cmd->command.run.pc.global_offset[1] == 0
-                              && cmd->command.run.pc.global_offset[2] == 0;
+  unsigned dev_i = command->device_i;
 
   /* First try to find a static WG binary for the local size as they
      are always more efficient than the dynamic ones.  Also, in case
      of reqd_wg_size, there might not be a dynamic sized one at all.  */
   module_fn = malloc (POCL_FILENAME_LENGTH);
-  pocl_cache_final_binary_path (module_fn, p, dev_i, k, x, y, z,
-                                global_offset_is_zero);
+  pocl_cache_final_binary_path (module_fn, p, dev_i, k, command, specialized);
+
   if (pocl_exists (module_fn))
     {
-      POCL_MSG_PRINT_INFO (
-          "For %zu x %zu x %zu goffs0 %d, using static WG size binary: %s\n",
-          x, y, z, global_offset_is_zero, module_fn);
+      POCL_MSG_PRINT_INFO ("Using a cached WG function: %s\n", module_fn);
       return module_fn;
     }
 
@@ -965,18 +964,14 @@ pocl_check_kernel_disk_cache (_cl_command_node *cmd)
   if (p->binaries[dev_i])
     {
 #ifdef OCS_AVAILABLE
-
       POCL_LOCK (pocl_llvm_codegen_lock);
-      int error = llvm_codegen (module_fn, dev_i, cmd->command.run.kernel,
-                                cmd->device, x, y, z, global_offset_is_zero);
+      int error =
+        llvm_codegen (module_fn, dev_i, k, command->device, command,
+                      specialized);
       POCL_UNLOCK (pocl_llvm_codegen_lock);
       if (error)
-        {
-          POCL_ABORT ("Final linking of kernel %s failed.\n", k->name);
-        }
-      POCL_MSG_PRINT_INFO (
-          "For %zu x %zu x %zu, using static WG size binary: %s\n", x, y, z,
-          module_fn);
+        POCL_ABORT ("Final linking of kernel %s failed.\n", k->name);
+      POCL_MSG_PRINT_INFO ("Built a WG function: %s\n", module_fn);
       return module_fn;
 #else
       /* TODO: This should be caught earlier. */
@@ -985,18 +980,72 @@ pocl_check_kernel_disk_cache (_cl_command_node *cmd)
                     " cannot compile LLVM IRs to machine code!\n");
 #endif
     }
-  /* Fallback to the worst option (dynamic WG).
-   * This must exist at this point
-   * (at least one of binaries[i] or pocl_binaries[i] must be non-NULL) */
-  assert (p->pocl_binaries[dev_i]);
+  else
+    {
+      module_fn = malloc (POCL_FILENAME_LENGTH);
+      /* First try to find a specialized WG binary, if allowed by the
+         command. */
+      if (!run_cmd->force_generic_wg_func)
+        pocl_cache_final_binary_path (module_fn, p, dev_i, k, command, 0);
 
-  pocl_cache_final_binary_path (module_fn, p, dev_i, k, 0, 0, 0, 0);
-
-  if (!pocl_exists (module_fn))
-    POCL_ABORT ("Dynamic WG size binary does not exist\n");
-
-  POCL_MSG_PRINT_INFO ("Using dynamic local size binary: %s\n", module_fn);
+      if (run_cmd->force_generic_wg_func || !pocl_exists (module_fn))
+        {
+          /* Then check for a dynamic (non-specialized) kernel. */
+          pocl_cache_final_binary_path (module_fn, p, dev_i, k, command, 1);
+          if (!pocl_exists (module_fn))
+            POCL_ABORT("Generic WG function binary does not exist.\n");
+          POCL_MSG_PRINT_INFO("Using a cached generic WG function: %s\n",
+                              module_fn);
+        }
+      else
+        POCL_MSG_PRINT_INFO("Using a cached specialized WG function: %s\n",
+                            module_fn);
+    }
   return module_fn;
+}
+
+/* Returns the width of the widest dimension in the grid of the given
+   run command. */
+size_t
+pocl_cmd_max_grid_dim_width (_cl_command_run *cmd)
+{
+  return max (max (cmd->pc.local_size[0] * cmd->pc.num_groups[0],
+                   cmd->pc.local_size[1] * cmd->pc.num_groups[1]),
+              cmd->pc.local_size[2] * cmd->pc.local_size[2]);
+}
+
+/* Look for a dlhandle in the dlhandle cache for the given kernel command.
+   If found, push the handle up in the cache to improve cache hit speed,
+   and return it. Otherwise return NULL. The caller should hold
+   pocl_dlhandle_lock. */
+static pocl_dlhandle_cache_item *
+fetch_dlhandle_cache_item (_cl_command_run *run_cmd)
+{
+  pocl_dlhandle_cache_item *ci = NULL, *tmp = NULL;
+  size_t max_grid_width = pocl_cmd_max_grid_dim_width (run_cmd);
+  DL_FOREACH_SAFE (pocl_dlhandle_cache, ci, tmp)
+    {
+      if ((memcmp (ci->hash, run_cmd->hash, sizeof (pocl_kernel_hash_t))
+           == 0)
+          && (ci->local_wgs[0] == run_cmd->pc.local_size[0])
+          && (ci->local_wgs[1] == run_cmd->pc.local_size[1])
+          && (ci->local_wgs[2] == run_cmd->pc.local_size[2])
+          && (max_grid_width <= ci->max_grid_dim_width)
+          && (!ci->goffs_zero
+              || (run_cmd->pc.global_offset[0] == 0
+                  && run_cmd->pc.global_offset[1] == 0
+                  && run_cmd->pc.global_offset[2] == 0)))
+        {
+          /* move to the front of the line */
+          DL_DELETE (pocl_dlhandle_cache, ci);
+          DL_PREPEND (pocl_dlhandle_cache, ci);
+          ++ci->ref_count;
+          POCL_UNLOCK (pocl_dlhandle_lock);
+          run_cmd->wg = ci->wg;
+          return ci;
+        }
+    }
+  return NULL;
 }
 
 /**
@@ -1011,110 +1060,77 @@ pocl_check_kernel_disk_cache (_cl_command_node *cmd)
  * TODO: This function is really specific to CPU (host) drivers since dlhandles
  * imply program loading to the same process as the host. Move to basic.c? */
 void
-pocl_check_kernel_dlhandle_cache (_cl_command_node *cmd,
-				  unsigned initial_refcount)
+pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
+                                  unsigned initial_refcount,
+                                  int specialize)
 {
   char workgroup_string[WORKGROUP_STRING_LENGTH];
   pocl_dlhandle_cache_item *ci = NULL, *tmp = NULL;
   const char *dl_error = NULL;
+  _cl_command_run *run_cmd = &command->command.run;
 
   POCL_LOCK (pocl_dlhandle_lock);
-  DL_FOREACH_SAFE (pocl_dlhandle_cache, ci, tmp)
-  {
-    if ((memcmp (ci->hash, cmd->command.run.hash, sizeof (pocl_kernel_hash_t))
-         == 0)
-        && (ci->local_wgs[0] == cmd->command.run.pc.local_size[0])
-        && (ci->local_wgs[1] == cmd->command.run.pc.local_size[1])
-        && (ci->local_wgs[2] == cmd->command.run.pc.local_size[2]))
-      {
-        /* move to the front of the line */
-        DL_DELETE (pocl_dlhandle_cache, ci);
-        DL_PREPEND (pocl_dlhandle_cache, ci);
-        ++ci->ref_count;
-        POCL_UNLOCK (pocl_dlhandle_lock);
-        cmd->command.run.wg = ci->wg;
-        return;
-      }
-  }
-
-  ci = get_new_dlhandle_cache_item ();
-  POCL_UNLOCK (pocl_dlhandle_lock);
-
-  memcpy (ci->hash, cmd->command.run.hash, sizeof (pocl_kernel_hash_t));
-  ci->local_wgs[0] = cmd->command.run.pc.local_size[0];
-  ci->local_wgs[1] = cmd->command.run.pc.local_size[1];
-  ci->local_wgs[2] = cmd->command.run.pc.local_size[2];
-  ci->ref_count = initial_refcount;
-
-  char *module_fn = pocl_check_kernel_disk_cache (cmd);
-
-  POCL_LOCK (pocl_dlhandle_lock);
-
-  pocl_dlhandle_cache_item *ci2 = NULL;
-  DL_FOREACH_SAFE (pocl_dlhandle_cache, ci2, tmp)
-  {
-    if ((memcmp (ci->hash, ci2->hash, sizeof (pocl_kernel_hash_t)) == 0)
-        && (ci->local_wgs[0] == ci2->local_wgs[0])
-        && (ci->local_wgs[1] == ci2->local_wgs[1])
-        && (ci->local_wgs[2] == ci2->local_wgs[2]))
-      {
-        /* move to the front of the line */
-        if (pocl_dlhandle_cache != ci2)
-          {
-            DL_DELETE (pocl_dlhandle_cache, ci2);
-            DL_PREPEND (pocl_dlhandle_cache, ci2);
-          }
-        ++ci2->ref_count;
-        cmd->command.run.wg = ci2->wg;
-
-        POCL_MEM_FREE (ci);
-        POCL_UNLOCK (pocl_dlhandle_lock);
-        POCL_MEM_FREE (module_fn);
-        return;
-      }
+  ci = fetch_dlhandle_cache_item (run_cmd);
+  if (ci != NULL)
+    {
+      POCL_UNLOCK (pocl_dlhandle_lock);
+      return;
     }
 
-    ci->dlhandle = lt_dlopen (module_fn);
-    dl_error = lt_dlerror ();
+  /* Not found, build a new kernel and cache its dlhandle. */
+  ci = get_new_dlhandle_cache_item ();
+  memcpy (ci->hash, run_cmd->hash, sizeof (pocl_kernel_hash_t));
+  ci->local_wgs[0] = run_cmd->pc.local_size[0];
+  ci->local_wgs[1] = run_cmd->pc.local_size[1];
+  ci->local_wgs[2] = run_cmd->pc.local_size[2];
+  ci->ref_count = initial_refcount;
 
-    if (ci->dlhandle != NULL && dl_error == NULL)
-      {
-        snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
-                  "_pocl_kernel_%s_workgroup",
-		  cmd->command.run.kernel->name);
-        ci->wg = lt_dlsym (ci->dlhandle, workgroup_string);
-        dl_error = lt_dlerror ();
-        if (ci->wg == NULL)
-          {
-            // Older osx dyld APIs need the name without the underscore
-            snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
-                      "pocl_kernel_%s_workgroup",
-		      cmd->command.run.kernel->name);
-            ci->wg = lt_dlsym (ci->dlhandle, workgroup_string);
-            dl_error = lt_dlerror ();
-          }
+  ci->goffs_zero = run_cmd->pc.global_offset[0] == 0
+    && run_cmd->pc.global_offset[1] == 0
+    && run_cmd->pc.global_offset[2] == 0;
 
-        if (ci->wg != NULL && dl_error == NULL)
-          {
-            cmd->command.run.wg = ci->wg;
-            DL_PREPEND (pocl_dlhandle_cache, ci);
-          }
-      }
+  size_t max_grid_width = pocl_cmd_max_grid_dim_width (run_cmd);
+  ci->max_grid_dim_width = max_grid_width;
 
-    POCL_UNLOCK (pocl_dlhandle_lock);
-    /***************************************************************************/
-    POCL_MEM_FREE (module_fn);
+  char *module_fn = pocl_check_kernel_disk_cache (command, specialize);
 
-    if (ci->dlhandle == NULL || ci->wg == NULL || dl_error != NULL)
-      {
-        POCL_ABORT (
-            "pocl error: lt_dlopen(\"%s\") or lt_dlsym() failed with '%s'.\n"
-            "note: missing symbols in the kernel binary might be"
-            " reported as 'file not found' errors.\n",
-            module_fn, dl_error);
-      }
+  ci->dlhandle = lt_dlopen (module_fn);
+  dl_error = lt_dlerror ();
+
+  if (ci->dlhandle == NULL || dl_error != NULL)
+    POCL_ABORT ("lt_dlopen(\"%s\") failed with '%s'.\n"
+                "note: missing symbols in the kernel binary might be"
+                " reported as 'file not found' errors.\n",
+                module_fn, dl_error);
+
+  snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
+            "_pocl_kernel_%s_workgroup",
+            run_cmd->kernel->name);
+  ci->wg = lt_dlsym (ci->dlhandle, workgroup_string);
+  dl_error = lt_dlerror ();
+  if (ci->wg == NULL || dl_error != NULL)
+    {
+      // Older OSX dyld APIs need the name without the underscore.
+      snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
+                "pocl_kernel_%s_workgroup",
+                run_cmd->kernel->name);
+      ci->wg = lt_dlsym (ci->dlhandle, workgroup_string);
+      dl_error = lt_dlerror ();
+
+      if (ci->wg == NULL || dl_error != NULL)
+        POCL_ABORT ("lt_dlsym(\"%s\", \"%s\") failed with '%s'.\n"
+                    "note: missing symbols in the kernel binary might be"
+                    " reported as 'file not found' errors.\n",
+                    module_fn, workgroup_string, dl_error);
+    }
+
+  run_cmd->wg = ci->wg;
+  DL_PREPEND (pocl_dlhandle_cache, ci);
+
+  POCL_UNLOCK (pocl_dlhandle_lock);
+  /***************************************************************************/
+  POCL_MEM_FREE (module_fn);
 }
-
 
 #define MIN_MAX_MEM_ALLOC_SIZE (128*1024*1024)
 

@@ -408,7 +408,7 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
   cl_kernel kernel = cmd->command.run.kernel;
   struct pocl_context *pc = &cmd->command.run.pc;
 
-  pocl_check_kernel_dlhandle_cache (cmd, 1);
+  pocl_check_kernel_dlhandle_cache (cmd, 1, 1);
 
   size_t num_groups = pc->num_groups[0] * pc->num_groups[1] * pc->num_groups[2];
 

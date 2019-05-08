@@ -56,11 +56,12 @@ using namespace llvm;
 
    TODO: Something cleaner than a global value. */
 
+bool WGDynamicLocalSize = false;
 size_t WGLocalSizeX = 1;
 size_t WGLocalSizeY = 1;
 size_t WGLocalSizeZ = 1;
+size_t WGMaxGridDimWidth = 0;
 bool WGAssumeZeroGlobalOffset = false;
-bool WGDynamicLocalSize = false;
 
 cl::opt<bool> AddWIMetadata(
     "add-wi-metadata", cl::init(false), cl::Hidden,

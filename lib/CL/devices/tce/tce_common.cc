@@ -435,73 +435,68 @@ static void pocl_tce_write_kernel_descriptor(cl_device_id device,
 }
 
 void
-pocl_tce_compile_kernel(_cl_command_node *cmd,
-                        cl_kernel kernel, cl_device_id device)
+pocl_tce_compile_kernel(
+  _cl_command_node *Command, cl_kernel Kernel, cl_device_id Device,
+  int Specialize)
 {
-  if (cmd->type != CL_COMMAND_NDRANGE_KERNEL)
+  if (Command->type != CL_COMMAND_NDRANGE_KERNEL)
     return;
+  _cl_command_run *RunCommand = &Command->command.run;
 
-  void* data = cmd->device->data;
-  TCEDevice *d = (TCEDevice*)data;
+  void* Data = Command->device->data;
+  TCEDevice *Dev = (TCEDevice*)Data;
 
-  if (!kernel)
-    kernel = cmd->command.run.kernel;
-  if (!device)
-    device = cmd->device;
+  if (!Kernel)
+    Kernel = Command->command.run.kernel;
+  if (!Device)
+    Device = Command->device;
 
-  int goffs_is_zero = cmd->command.run.pc.global_offset[0] == 0 &&
-                      cmd->command.run.pc.global_offset[1] == 0 &&
-                      cmd->command.run.pc.global_offset[2] == 0;
-  POCL_LOCK(d->tce_compile_lock);
-  int error = pocl_llvm_generate_workgroup_function(
-      cmd->device_i, device, kernel, cmd->command.run.pc.local_size[0],
-      cmd->command.run.pc.local_size[1], cmd->command.run.pc.local_size[2],
-      goffs_is_zero);
+  POCL_LOCK(Dev->tce_compile_lock);
+  int Error = pocl_llvm_generate_workgroup_function(
+    Command->device_i, Device, Kernel, Command, Specialize);
 
-  if (error) {
-    POCL_UNLOCK(d->tce_compile_lock);
+  if (Error) {
+    POCL_UNLOCK(Dev->tce_compile_lock);
     POCL_MSG_PRINT_GENERAL("TCE: pocl_llvm_generate_workgroup_function()"
-                           " failed for kernel %s\n", kernel->name);
-    assert(error == 0);
+                           " failed for kernel %s\n", Kernel->name);
+    assert(Error == 0);
   }
 
   // 12 == strlen (POCL_PARALLEL_BC_FILENAME)
-  char bytecode[POCL_FILENAME_LENGTH + 13];
+  char ByteCode[POCL_FILENAME_LENGTH + 13];
 
-  assert(d != NULL);
-  assert(cmd->command.run.kernel);
+  assert(Dev != NULL);
+  assert(Command->command.run.kernel);
 
-  char cachedir[POCL_FILENAME_LENGTH];
+  char CacheDir[POCL_FILENAME_LENGTH];
   pocl_cache_kernel_cachedir_path(
-      cachedir, kernel->program, cmd->device_i, kernel, "",
-      cmd->command.run.pc.local_size[0], cmd->command.run.pc.local_size[1],
-      cmd->command.run.pc.local_size[2], goffs_is_zero);
-  cmd->command.run.device_data = strdup(cachedir);
+    CacheDir, Kernel->program, Command->device_i, Kernel, "", Command, 1);
+  RunCommand->device_data = strdup(CacheDir);
 
-  if (d->isNewKernel(&(cmd->command.run))) {
-    pocl_tce_write_kernel_descriptor(device, cmd->device_i, kernel);
+  if (Dev->isNewKernel(RunCommand)) {
 
-    std::string assemblyFileName(cachedir);
-    TCEString tempDir(cachedir);
-    assemblyFileName += "/parallel.tpef";
+    pocl_tce_write_kernel_descriptor(Device, Command->device_i, Kernel);
 
-    if (access (assemblyFileName.c_str(), F_OK) != 0)
-      {
-      error = snprintf(bytecode, POCL_FILENAME_LENGTH, "%s%s", cachedir,
+    std::string AssemblyFileName(CacheDir);
+    TCEString TempDir(CacheDir);
+    AssemblyFileName += "/parallel.tpef";
+
+    if (access(AssemblyFileName.c_str(), F_OK) != 0) {
+      Error = snprintf(ByteCode, POCL_FILENAME_LENGTH, "%s%s", CacheDir,
                        POCL_PARALLEL_BC_FILENAME);
-      TCEString buildCmd = d->tceccCommandLine(&cmd->command.run, tempDir,
-                                               bytecode, assemblyFileName);
+      TCEString BuildCmd =
+        Dev->tceccCommandLine(RunCommand, TempDir, ByteCode, AssemblyFileName);
 
 #ifdef DEBUG_TTA_DRIVER
-      std::cerr << "CMD: " << buildCmd << std::endl;
+      std::cerr << "CMD: " << BuildCmd << std::endl;
 #endif
-      error = system(buildCmd.c_str());
-      if (error != 0)
+      Error = system(BuildCmd.c_str());
+      if (Error != 0)
         POCL_ABORT("Error while running tcecc.\n");
-      }
+    }
   }
 
-  POCL_UNLOCK(d->tce_compile_lock);
+  POCL_UNLOCK(Dev->tce_compile_lock);
 }
 
 void
@@ -957,7 +952,7 @@ static void tce_command_scheduler (TCEDevice *d)
       POCL_UNLOCK(d->cq_lock);
       assert (node->event->status == CL_SUBMITTED);
       if (node->type == CL_COMMAND_NDRANGE_KERNEL)
-        pocl_tce_compile_kernel(node, NULL, NULL);
+        pocl_tce_compile_kernel(node, NULL, NULL, 1);
       pocl_exec_command(node);
       POCL_LOCK(d->cq_lock);
     }

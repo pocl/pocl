@@ -45,6 +45,7 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/DIBuilder.h>
 #include <llvm/IR/InstrTypes.h>
 #include <llvm/IR/InlineAsm.h>
+#include <llvm/IR/MDBuilder.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Transforms/Utils/BasicBlockUtils.h>
@@ -318,6 +319,92 @@ void Workgroup::addPlaceHolder(llvm::IRBuilder<> &Builder,
   Builder.CreateCall(DummyIA, Val);
 }
 
+// Adds Range metadata with range [Min, Max] to the given instruction.
+static
+void addRangeMetadata(llvm::Instruction *Instr, size_t Min, size_t Max) {
+  MDBuilder MDB(Instr->getContext());
+  size_t BitWidth = Instr->getType()->getIntegerBitWidth();
+  MDNode *Range =
+    MDB.createRange(APInt(BitWidth, Min), APInt(BitWidth, Max + 1));
+  Instr->setMetadata(LLVMContext::MD_range, Range);
+}
+
+static
+void addRangeMetadataForPCField(llvm::Instruction *Instr, int StructFieldIndex,
+                                int FieldIndex=-1) {
+  uint64_t Min = 0;
+  uint64_t Max = 0;
+  uint64_t LocalSizes[] = {WGLocalSizeX, WGLocalSizeY, WGLocalSizeZ};
+  switch (StructFieldIndex) {
+  case PC_WORK_DIM:
+    Min = 1;
+    Max = currentPoclDevice->max_work_item_dimensions;
+    break;
+  case PC_NUM_GROUPS:
+    Min = 1;
+    switch (FieldIndex) {
+    case 0:
+    case 1:
+    case 2: {
+      Max = WGMaxGridDimWidth > 0 ? WGMaxGridDimWidth : 0;
+      if (!WGDynamicLocalSize) {
+        // If we know also the local size, we can minimize the known max group
+        // count by dividing by it. Upwards rounding due to 2.0 partial WGs.
+        Max = (Max + LocalSizes[FieldIndex] - 1) / LocalSizes[FieldIndex];
+      }
+      break;
+    }
+    default:
+      llvm_unreachable("More than 3 grid dimensions unsupported.");
+    }
+    break;
+  case PC_GLOBAL_OFFSET:
+    switch (FieldIndex) {
+    case 0:
+    case 1:
+    case 2:
+      // WGAssumeZeroGlobalOffset will be used to convert to a constant 0, so
+      // here we just speculate on the range in case of non-zero offset.
+      Max = WGMaxGridDimWidth;
+      break;
+    default:
+      llvm_unreachable("More than 3 grid dimensions unsupported.");
+    }
+    break;
+  case PC_LOCAL_SIZE:
+    Min = 1;
+    switch (FieldIndex) {
+    case 0:
+    case 1:
+    case 2:
+      if (WGDynamicLocalSize) {
+        Max =
+          (WGMaxGridDimWidth > 0 ? WGMaxGridDimWidth :
+           min(currentPoclDevice->max_work_item_sizes[FieldIndex],
+               WGMaxGridDimWidth));
+      } else {
+        // The local size is converted to constant with static WGs, so this is
+        // actually useless.
+        Max = LocalSizes[FieldIndex];
+      }
+      break;
+    default:
+      llvm_unreachable("More than 3 grid dimensions unsupported.");
+    }
+    break;
+  default:
+    break;
+  }
+  if (Max > 0) {
+    addRangeMetadata(Instr, Min, Max);
+#if 0
+    std::cerr << "Added range [" << Min << ", " << Max << "] " << std::endl;
+    std::cerr << StructFieldIndex << " " << FieldIndex << std::endl;
+#endif
+  }
+  return;
+}
+
 // Creates a load from the hidden context structure argument for
 // the given element.
 llvm::Value *
@@ -330,27 +417,31 @@ Workgroup::createLoadFromContext(
 #else
   GEP = Builder.CreateStructGEP(ContextArg->getType()->getPointerElementType(),
                                 ContextArg, StructFieldIndex);
+
+  llvm::LoadInst *Load = nullptr;
 #endif
   if (SizeTWidth == 64) {
     if (FieldIndex == -1)
-      return Builder.CreateLoad(Builder.CreateConstGEP1_64(GEP, 0));
+      Load = Builder.CreateLoad(Builder.CreateConstGEP1_64(GEP, 0));
     else
-      return Builder.CreateLoad(Builder.CreateConstGEP2_64(GEP, 0, FieldIndex));
+      Load = Builder.CreateLoad(Builder.CreateConstGEP2_64(GEP, 0, FieldIndex));
   } else {
 #ifdef LLVM_OLDER_THAN_3_7
     if (FieldIndex == -1)
-      return Builder.CreateLoad(Builder.CreateConstGEP1_32(GEP, 0));
+      Load = Builder.CreateLoad(Builder.CreateConstGEP1_32(GEP, 0));
     else
-      return Builder.CreateLoad(Builder.CreateConstGEP2_32(GEP, 0, FieldIndex));
+      Load = Builder.CreateLoad(Builder.CreateConstGEP2_32(GEP, 0, FieldIndex));
 #else
     if (FieldIndex == -1)
-      return Builder.CreateLoad(Builder.CreateConstGEP1_32(GEP, 0));
+      Load = Builder.CreateLoad(Builder.CreateConstGEP1_32(GEP, 0));
     else
-      return Builder.CreateLoad(
+      Load = Builder.CreateLoad(
         Builder.CreateConstGEP2_32(
           GEP->getType()->getPointerElementType(), GEP, 0, FieldIndex));
 #endif
   }
+  addRangeMetadataForPCField(Load, StructFieldIndex, FieldIndex);
+  return Load;
 }
 
 // TODO we should use __cl_printf users instead of searching the call tree
@@ -643,35 +734,32 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
   CallInst *c = Builder.CreateCall(F, ArrayRef<Value*>(arguments));
   Builder.CreateRetVoid();
 
-#ifndef LLVM_OLDER_THAN_4_0
-  // At least with LLVM 4.0, the runtime of AddAliasScopeMetadata of
-  // llvm::InlineFunction explodes in case of kernels with restrict
-  // metadata and a lot of lifetime markers. The issue produces at
-  // least with EinsteinToolkit which has a lot of restrict kernel
-  // args). Remove them here before inlining to speed it up.
-  // TODO: Investigate the root cause.
-
-  std::set<CallInst*> Calls;
+  std::set<CallInst*> CallsToRemove;
 
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
     for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE; ++BI) {
       Instruction *Instr = dyn_cast<Instruction>(BI);
       if (!llvm::isa<CallInst>(Instr)) continue;
       CallInst *CallInstr = dyn_cast<CallInst>(Instr);
-      Function *oldF = CallInstr->getCalledFunction();
-      if (oldF != nullptr &&
-          (oldF->getName().startswith("llvm.lifetime.end") ||
-           oldF->getName().startswith("llvm.lifetime.start"))) {
-        Calls.insert(CallInstr);
+      Function *Callee = CallInstr->getCalledFunction();
+      // At least with LLVM 4.0, the runtime of AddAliasScopeMetadata of
+      // llvm::InlineFunction explodes in case of kernels with restrict
+      // metadata and a lot of lifetime markers. The issue produces at
+      // least with EinsteinToolkit which has a lot of restrict kernel
+      // args). Remove them here before inlining to speed it up.
+      // TODO: Investigate the root cause.
+      if (Callee != nullptr &&
+          (Callee->getName().startswith("llvm.lifetime.end") ||
+           Callee->getName().startswith("llvm.lifetime.start"))) {
+        CallsToRemove.insert(CallInstr);
+        continue;
       }
     }
   }
 
-  for (auto C : Calls) {
+  for (auto C : CallsToRemove) {
     C->eraseFromParent();
   }
-
-#endif
 
   // needed for printf
   InlineFunctionInfo IFI;
