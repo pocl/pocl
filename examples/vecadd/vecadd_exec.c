@@ -10,9 +10,9 @@ extern "C" {
 
 int
 exec_vecadd_kernel (cl_context context, cl_device_id device,
-		    cl_command_queue cmd_queue, cl_program program,
-		    int n, cl_float *srcA, cl_float *srcB,
-		    cl_float *dst)
+                    cl_command_queue cmd_queue, cl_program program, int n,
+                    int wg_size,
+                    cl_float *srcA, cl_float *srcB, cl_float *dst)
 {
   cl_kernel kernel = NULL;
   cl_mem memobjs[3] = { 0, 0, 0 };
@@ -51,7 +51,7 @@ exec_vecadd_kernel (cl_context context, cl_device_id device,
   CHECK_CL_ERROR2 (err);
 
   global_work_size[0] = n;
-  local_work_size[0] = 128;
+  local_work_size[0] = wg_size;
 
   err = clEnqueueNDRangeKernel (cmd_queue, kernel, 1, NULL, global_work_size,
 				local_work_size, 0, NULL, NULL);
