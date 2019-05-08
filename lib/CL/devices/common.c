@@ -949,7 +949,6 @@ pocl_check_kernel_disk_cache (_cl_command_node *cmd)
   /* First try to find a static WG binary for the local size as they
      are always more efficient than the dynamic ones.  Also, in case
      of reqd_wg_size, there might not be a dynamic sized one at all.  */
-
   int global_offset_is_zero =
     cmd->command.run.pc.global_offset[0] == 0 &&
     cmd->command.run.pc.global_offset[1] == 0 &&
@@ -966,7 +965,7 @@ pocl_check_kernel_disk_cache (_cl_command_node *cmd)
       return module_fn;
     }
 
-  if (p->binaries[dev_i])
+  if (p->binaries[dev_i] && !p->pocl_binaries[dev_i])
     {
 #ifdef OCS_AVAILABLE
 
@@ -988,13 +987,32 @@ pocl_check_kernel_disk_cache (_cl_command_node *cmd)
                     " cannot compile LLVM IRs to machine code\n");
 #endif
     }
+<<<<<<< HEAD
   assert (p->pocl_binaries[dev_i]);
 
+=======
+  // pocl_binaries must exist
+  assert (p->pocl_binaries[dev_i]);
+
+  module_fn = malloc (POCL_FILENAME_LENGTH);
+  /* First try to find a static WG binary for the local size as they
+     are always more efficient than the dynamic ones.  Also, in case
+     of reqd_wg_size, there might not be a dynamic sized one at all.  */
+  pocl_cache_final_binary_path (module_fn, p, dev_i, k,
+				cmd->command.run.local_x,
+				cmd->command.run.local_y,
+				cmd->command.run.local_z,
+				global_offset_is_zero);
+>>>>>>> 8c2a89b09c1f62630eb7f288668c4b31a49041b1
   if (!pocl_exists (module_fn))
     {
       pocl_cache_final_binary_path (module_fn, p, dev_i, k, 0, 0, 0, 0);
       if (!pocl_exists (module_fn))
+<<<<<<< HEAD
         POCL_ABORT("Dynamic WG size binary does not exist\n");
+=======
+	POCL_ABORT("Dynamic WG size binary does not exist\n");
+>>>>>>> 8c2a89b09c1f62630eb7f288668c4b31a49041b1
       POCL_MSG_PRINT_INFO("Using dynamic local size binary: %s\n",
 			  module_fn);
     }
