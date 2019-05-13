@@ -220,6 +220,12 @@ RETRY:
   if (cmd && shall_we_run_this (td, cmd->device, cmd))
     {
       DL_DELETE (scheduler.work_queue, cmd);
+      /* a pthread might go to sleep even if there are some commands in the queue
+       * (if those commands are not for the subdevice to which that thread belongs).
+       * In that case it's impossible to know for that pthread when the next
+       * command arrives, therefore after deleting a command from queue,
+       * awake all threads. */
+      pthread_cond_broadcast (&scheduler.wake_pool);
       *cmd_ptr = cmd;
     }
   else
