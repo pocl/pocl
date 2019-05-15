@@ -958,17 +958,14 @@ Workgroup::createDefaultWorkgroupLauncher(llvm::Function *F) {
 static inline uint64_t
 align64(uint64_t value, unsigned alignment)
 {
-   return (value + alignment - 1) & ~((uint64_t)alignment - 1);
+  return (value + alignment - 1) & ~((uint64_t)alignment - 1);
 }
 
-
-static bool
-isByValPtrArgument(llvm::Argument &Arg) {
+static bool isByValPtrArgument(llvm::Argument &Arg) {
   return Arg.getType()->isPointerTy() && Arg.hasByValAttr();
 }
 
-static size_t
-getArgumentSize(llvm::Argument &Arg) {
+static size_t getArgumentSize(llvm::Argument &Arg) {
   llvm::Type *TypeInBuf = nullptr;
   if (Arg.getType()->isPointerTy()) {
     if (Arg.hasByValAttr()) {
@@ -985,8 +982,8 @@ getArgumentSize(llvm::Argument &Arg) {
   return DL.getTypeStoreSize(TypeInBuf);
 }
 
-static void
-computeArgBufferOffsets(LLVMValueRef F, uint64_t *ArgBufferOffsets) {
+static void computeArgBufferOffsets(LLVMValueRef F,
+                                    uint64_t *ArgBufferOffsets) {
 
   uint64_t Offset = 0;
   uint64_t ArgCount = LLVMCountParams(F);
@@ -1028,19 +1025,18 @@ createArgBufferLoad(LLVMBuilderRef Builder, LLVMValueRef ArgBufferPtr,
 
   uint64_t ArgPos = ArgBufferOffsets[ParamIndex];
   LLVMValueRef Offs =
-    LLVMConstInt(LLVMInt32TypeInContext(LLVMContext), ArgPos, 0);
+      LLVMConstInt(LLVMInt32TypeInContext(LLVMContext), ArgPos, 0);
   LLVMValueRef ArgByteOffset =
-    LLVMBuildGEP(Builder, ArgBufferPtr, &Offs, 1, "arg_byte_offset");
+      LLVMBuildGEP(Builder, ArgBufferPtr, &Offs, 1, "arg_byte_offset");
 
   if (isByValPtrArgument(cast<Argument>(*unwrap(Param)))) {
     // In case of byval arguments (private structs), the struct
     // is in the arg buffer directly. Just refer to its address.
-    return LLVMBuildPointerCast(Builder, ArgByteOffset,
-                                ParamType, "inval_arg_ptr");
+    return LLVMBuildPointerCast(Builder, ArgByteOffset, ParamType,
+                                "inval_arg_ptr");
   } else {
-    LLVMValueRef ArgOffsetBitcast =
-      LLVMBuildPointerCast(Builder, ArgByteOffset,
-                           LLVMPointerType(ParamType, 0), "arg_ptr");
+    LLVMValueRef ArgOffsetBitcast = LLVMBuildPointerCast(
+        Builder, ArgByteOffset, LLVMPointerType(ParamType, 0), "arg_ptr");
     return LLVMBuildLoad(Builder, ArgOffsetBitcast, "");
   }
 }
