@@ -61,6 +61,10 @@ POname(clGetPlatformInfo)(cl_platform_id   platform,
                                " - debug"
 #endif
 
+#ifdef ENABLE_RELOCATION
+                               ", RELOC"
+#endif
+
 #ifdef ENABLE_SPIR
                                ", SPIR"
 #endif

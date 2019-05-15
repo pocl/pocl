@@ -53,6 +53,15 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 
 #include "llvm/Support/MutexGuard.h"
 
+#ifdef ENABLE_RELOCATION
+
+#if defined(__APPLE__)
+#define _DARWIN_C_SOURCE
+#endif
+#include <dlfcn.h>
+
+#endif
+
 #include <iostream>
 #include <sstream>
 
@@ -171,6 +180,23 @@ static void get_build_log(cl_program program,
 }
 
 static llvm::Module *getKernelLibrary(cl_device_id device);
+
+static std::string getPoclPrivateDataDir() {
+#ifdef ENABLE_RELOCATION
+    Dl_info info;
+    if (dladdr((void*)getPoclPrivateDataDir, &info)) {
+        char const * soname = info.dli_fname;
+        std::string result = std::string(soname);
+        size_t last_slash = result.rfind('/');
+        result = result.substr(0, last_slash+1);
+        if (result.size() > 0) {
+            result += POCL_INSTALL_PRIVATE_DATADIR_REL;
+            return result;
+        }
+    }
+#endif
+    return POCL_INSTALL_PRIVATE_DATADIR;
+}
 
 int pocl_llvm_build_program(cl_program program,
                             unsigned device_i,
@@ -420,15 +446,18 @@ int pocl_llvm_build_program(cl_program program,
   std::string KernelH;
   std::string BuiltinRenamesH;
   std::string PoclTypesH;
+  std::string ClangResourceDir;
 
 #ifdef ENABLE_POCL_BUILDING
   if (pocl_get_bool_option("POCL_BUILDING", 0)) {
     IncludeRoot = SRCDIR;
+    ClangResourceDir = CLANG_RESOURCE_DIR;
 #else
   if (0) {
 #endif
   } else {
-    IncludeRoot = POCL_INSTALL_PRIVATE_DATADIR;
+    IncludeRoot = getPoclPrivateDataDir();
+    ClangResourceDir = IncludeRoot;
   }
   KernelH = IncludeRoot + "/include/_kernel.h";
   BuiltinRenamesH = IncludeRoot + "/include/_builtin_renames.h";
@@ -438,7 +467,7 @@ int pocl_llvm_build_program(cl_program program,
   po.Includes.push_back(BuiltinRenamesH);
 #ifndef LLVM_OLDER_THAN_4_0
   // Use Clang's opencl-c.h header.
-  po.Includes.push_back(CLANG_RESOURCE_DIR "/include/opencl-c.h");
+  po.Includes.push_back(ClangResourceDir + "/include/opencl-c.h");
 #endif
   po.Includes.push_back(KernelH);
   clang::TargetOptions &ta = pocl_build.getTargetOpts();
@@ -837,7 +866,7 @@ static llvm::Module* getKernelLibrary(cl_device_id device)
     kernellib += subdir;
   } else // POCL_BUILDING == 0, use install dir
 #endif
-  kernellib = POCL_INSTALL_PRIVATE_DATADIR;
+  kernellib = getPoclPrivateDataDir();
   kernellib += "/kernel-";
   kernellib += device->llvm_target_triplet;
   if (is_host) {

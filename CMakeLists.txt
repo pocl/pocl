@@ -529,6 +529,11 @@ if(UNIX)
                       "stdlib.h"
                       HAVE_MKOSTEMPS)
 
+  set(CMAKE_REQUIRED_LIBRARIES "dl")
+  CHECK_SYMBOL_EXISTS("dlinfo"
+                      "dlfcn.h"
+                      HAVE_DLINFO)
+
   unset(CMAKE_REQUIRED_DEFINITIONS)
   unset(CMAKE_REQUIRED_FLAGS)
   unset(CMAKE_REQUIRED_LIBRARIES)
@@ -544,6 +549,23 @@ else()
   set(HAVE_FORK 0)
   set(HAVE_VFORK 0)
   set(HAVE_UTIME 0)
+  set(HAVE_DLINFO 0)
+endif()
+
+######################################################################################
+
+if(UNIX AND OCS_AVAILABLE AND HAVE_DLINFO)
+    option(ENABLE_RELOCATION "make libpocl relocatable" ON)
+else()
+    message(STATUS "Relocation not available")
+    set(ENABLE_RELOCATION OFF CACHE INTERNAL "libpocl relocatable" FORCE)
+endif()
+
+if(ENABLE_RELOCATION)
+  file(RELATIVE_PATH POCL_INSTALL_PRIVATE_DATADIR_REL ${POCL_INSTALL_PUBLIC_LIBDIR} ${POCL_INSTALL_PRIVATE_DATADIR})
+  message(STATUS "Private Datadir Relative path: ${POCL_INSTALL_PRIVATE_DATADIR_REL}")
+  install(FILES "${CLANG_RESOURCE_DIR}/include/opencl-c.h"
+          DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}/include")
 endif()
 
 
@@ -552,7 +574,6 @@ endif()
 option(ENABLE_SLEEF "Use SLEEF for kernel library" ON)
 
 option(ENABLE_CONFORMANCE "Enable conformance to OpenCL standard. Disabling this may enable slightly faster kernel library functions (at a price of range/precision). Note that enabling this does not guarantee conformance (depends on hardware)" ON)
-
 
 if(ENABLE_CONFORMANCE AND (NOT ENABLE_SLEEF))
   message(FATAL_ERROR "conformance needs enabled SLEEF")
@@ -640,9 +661,9 @@ if(UNIX)
       set(DEFAULT_HOST_LD_FLAGS "-dylib -w -lm")
     endif()
   elseif(ANDROID_COMPILER)
-    set(DEFAULT_HOST_LD_FLAGS "-L/system/lib/ -shared -ldl -lc -lm /system/lib/crtbegin_so.o /system/lib/crtend_so.o")
+    set(DEFAULT_HOST_LD_FLAGS "-L/system/lib/ -shared -ldl -lc /system/lib/crtbegin_so.o /system/lib/crtend_so.o")
   else()
-    set(DEFAULT_HOST_LD_FLAGS "-shared -lm")
+    set(DEFAULT_HOST_LD_FLAGS "-shared")
   endif()
   set(LIBMATH "-lm")
 elseif(WIN32)
@@ -1510,6 +1531,7 @@ MESSAGE(STATUS "ENABLE_LSAN (leak sanitizer): ${ENABLE_LSAN}")
 MESSAGE(STATUS "ENABLE_TSAN (thread sanitizer): ${ENABLE_TSAN}")
 MESSAGE(STATUS "ENABLE_UBSAN (UB sanitizer): ${ENABLE_UBSAN}")
 MESSAGE(STATUS "ENABLE_POCL_FLOAT_CONVERSION: ${ENABLE_POCL_FLOAT_CONVERSION}")
+MESSAGE(STATUS "ENABLE_RELOCATION: ${ENABLE_RELOCATION}")
 MESSAGE(STATUS "ENABLE_SLEEF: ${ENABLE_SLEEF}")
 MESSAGE(STATUS "ENABLE_SPIR: ${ENABLE_SPIR}")
 MESSAGE(STATUS "ENABLE_SPIRV: ${ENABLE_SPIRV}")

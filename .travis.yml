@@ -41,7 +41,7 @@ before_install:
       bash $MINICONDA_FILE -b;
       source $HOME/miniconda3/bin/activate root;
       conda config --add channels conda-forge;
-      conda install --yes --quiet llvmdev=${LLVM_VERSION}.* clangdev=${LLVM_VERSION}.* libcxx=${LLVM_VERSION}.* libhwloc=${HWLOC_VERSION}.*;
+      conda install --yes --quiet llvmdev=${LLVM_VERSION}.* clangdev=${LLVM_VERSION}.* libhwloc=${HWLOC_VERSION}.*;
       export LD_LIBRARY_PATH=$HOME/miniconda3/lib:$LD_LIBRARY_PATH;
     fi
 
