@@ -77,6 +77,13 @@ OpenCL function symbols from it.
 Refer examples/pocl-android-sample/ for hello-world android app that uses pocl.
 This app uses a third-party stub OpenCL library that does dlopen/dlsym on its behalf
 
+Using pocl on MacOSX
+--------------------
+
+On MacOSX, you can either link your program directly with pocl or link through an ICD loader.
+If you use an ICD loader, Apple OpenCL implementation will be invisible, unless you use a
+wrapper library to expose the Apple OpenCL implementation as an ICD.
+
 Wiki
 ----
 

@@ -376,14 +376,17 @@ namespace pocl {
 extern size_t WGLocalSizeX;
 extern size_t WGLocalSizeY;
 extern size_t WGLocalSizeZ;
+extern bool WGAssumeZeroGlobalOffset;
 extern bool WGDynamicLocalSize;
 }
 
 int pocl_update_program_llvm_irs_unlocked(cl_program program,
                                           unsigned device_i);
 
-int pocl_llvm_generate_workgroup_function_nowrite(unsigned device_i, cl_device_id device,
-  cl_kernel kernel, size_t local_x, size_t local_y, size_t local_z, void **output) {
+int pocl_llvm_generate_workgroup_function_nowrite(
+    unsigned device_i, cl_device_id device, cl_kernel kernel, size_t local_x,
+    size_t local_y, size_t local_z, int assume_zero_global_offset,
+    void **output) {
 
   cl_program program = kernel->program;
 
@@ -415,11 +418,14 @@ int pocl_llvm_generate_workgroup_function_nowrite(unsigned device_i, cl_device_i
 
   copyKernelFromBitcode(kernel->name, parallel_bc, program_bc);
 
-  /* Now finally run the set of passes assembled above
-   * TODO pass these as parameters instead, this is not thread safe! */
+  // Now finally run the set of passes assembled above.
+  // Parameter passing to the WG function passes via global variables.
+  // TODO: Figure out if there's a better way. Probably not by much
+  // as we want to reuse the passes for multiple kernels.
   pocl::WGLocalSizeX = local_x;
   pocl::WGLocalSizeY = local_y;
   pocl::WGLocalSizeZ = local_z;
+  pocl::WGAssumeZeroGlobalOffset = assume_zero_global_offset;
   KernelName = kernel->name;
 
 #ifdef LLVM_OLDER_THAN_3_7
@@ -438,35 +444,39 @@ int pocl_llvm_generate_workgroup_function_nowrite(unsigned device_i, cl_device_i
   return 0;
 }
 
-
-int pocl_llvm_generate_workgroup_function(unsigned device_i, cl_device_id device, cl_kernel kernel,
+int pocl_llvm_generate_workgroup_function(unsigned device_i,
+                                          cl_device_id device, cl_kernel kernel,
                                           size_t local_x, size_t local_y,
-                                          size_t local_z) {
+                                          size_t local_z,
+                                          int assume_zero_global_offset) {
 
   void *modp = NULL;
 
   char parallel_bc_path[POCL_FILENAME_LENGTH];
   pocl_cache_work_group_function_path(parallel_bc_path, kernel->program,
                                       device_i, kernel, local_x, local_y,
-                                      local_z);
+                                      local_z, assume_zero_global_offset);
 
   if (pocl_exists(parallel_bc_path))
     return CL_SUCCESS;
 
   char final_binary_path[POCL_FILENAME_LENGTH];
   pocl_cache_final_binary_path(final_binary_path, kernel->program, device_i,
-                               kernel, local_x, local_y, local_z);
+                               kernel, local_x, local_y, local_z,
+                               assume_zero_global_offset);
 
   if (pocl_exists(final_binary_path))
     return CL_SUCCESS;
 
   int error = pocl_llvm_generate_workgroup_function_nowrite(
-      device_i, device, kernel, local_x, local_y, local_z, &modp);
+      device_i, device, kernel, local_x, local_y, local_z,
+      assume_zero_global_offset, &modp);
   if (error)
     return error;
 
-  error = pocl_cache_write_kernel_parallel_bc(
-      modp, kernel->program, device_i, kernel, local_x, local_y, local_z);
+  error = pocl_cache_write_kernel_parallel_bc(modp, kernel->program, device_i,
+                                              kernel, local_x, local_y, local_z,
+                                              assume_zero_global_offset);
 
   if (error)
     {

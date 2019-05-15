@@ -786,7 +786,7 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
 
   /* Generate the parallel bitcode file linked with the kernel library */
   int error = pocl_llvm_generate_workgroup_function (device_i, device, kernel,
-                                                     0, 0, 0);
+                                                     0, 0, 0, !has_offsets);
   if (error)
     {
       POCL_MSG_PRINT_GENERAL ("pocl_llvm_generate_workgroup_function() failed"
@@ -796,12 +796,10 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
 
   char bc_filename[POCL_FILENAME_LENGTH];
   pocl_cache_work_group_function_path (bc_filename, kernel->program, device_i,
-                                       kernel, 0, 0, 0);
+                                       kernel, 0, 0, 0, !has_offsets);
 
   char ptx_filename[POCL_FILENAME_LENGTH];
   strcpy (ptx_filename, bc_filename);
-  if (has_offsets)
-    strncat (ptx_filename, ".offsets", POCL_FILENAME_LENGTH - 1);
   strncat (ptx_filename, ".ptx", POCL_FILENAME_LENGTH - 1);
 
   if (!pocl_exists (ptx_filename))
@@ -867,9 +865,8 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
   pocl_kernel_metadata_t *meta = kernel->meta;
 
   /* Check if we need to handle global work offsets */
-  int has_offsets = 0;
-  if (pc.global_offset[0] || pc.global_offset[1] || pc.global_offset[2])
-    has_offsets = 1;
+  int has_offsets =
+    (pc.global_offset[0] || pc.global_offset[1] || pc.global_offset[2]);
 
   /* Get kernel function */
   pocl_cuda_kernel_data_t *kdata

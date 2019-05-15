@@ -105,14 +105,15 @@ pocl source code
 Why C99 in host library?
 ^^^^^^^^^^^^^^^^^^^^^^^^
 
-The kernel compiler passes are in C++11 and it's much faster to implement
-things in C++11. Why use C99 in the host library?
+The kernel compiler passes and some of the driver implementations are in C++11
+and it's much faster to implement things in C++11. Why require using C99 in
+the host library?
 
 pocl is meant to be very portable to various type of devices, also
-to those with very little resources (no operating systems at all, simple
-runtime libraries). C has better portability to low end CPUs.
+to those with very little resources (no operating system at all and with pruned
+runtime libraries). C has better portability to low end CPUs and VMs.
 
 Thus, in order for a CPU to act as an OpenCL host without online kernel
-compilation support, now only C99 support is required from the target,
-no C++ compiler or C++ runtime is needed. Also, C programs are said to produce
-more "lightweight" binaries, but that is debatable.
+compilation support, only C99 support is required from the target,
+no C++ compiler, runtime or STL is needed. Also, C programs are said to
+sometimes produce more "lightweight" binaries, but that is debatable.

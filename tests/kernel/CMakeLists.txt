@@ -327,19 +327,6 @@ set_property(TEST
   "kernel/test_short16"
   APPEND PROPERTY LABELS "hsa-native")
 
-set_property(TEST
-  "kernel/test_local_struct_array"
-  "kernel/test_shuffle_char"
-  "kernel/test_shuffle_short"
-  "kernel/test_shuffle_ushort"
-  "kernel/test_shuffle_int"
-  "kernel/test_shuffle_uint"
-  "kernel/test_shuffle_float"
-  "kernel/test_shuffle_long"
-  "kernel/test_shuffle_ulong"
-  ${EXTRA_TESTS}
-  APPEND PROPERTY LABELS "hsa-unity")
-
 if(LLVM_3_7)
   set_tests_properties(
   "kernel/test_rotate"

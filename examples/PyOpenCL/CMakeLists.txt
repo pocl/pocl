@@ -40,7 +40,8 @@ else()
   set(FETCH_SOURCE URL "https://github.com/inducer/pyopencl/archive/v2017.2.tar.gz")
 endif()
 
-if(NOT TESTS_USE_ICD)
+# The ICD test is broken. Disable the check for now.
+if(FALSE) # NOT TESTS_USE_ICD)
   message(STATUS "Disabling testsuite ${TS_NAME}, requires ocl-icd")
 elseif(NOT BASH)
   message(STATUS "Disabling testsuite ${TS_NAME}, can't find bash shell")

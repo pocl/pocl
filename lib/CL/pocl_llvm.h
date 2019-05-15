@@ -73,13 +73,16 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i);
  * control the compilation. We should enforce only one compilations is done
  * at a time or control the options through thread safe methods.
  */
-int pocl_llvm_generate_workgroup_function(unsigned device_i, cl_device_id device,
-                                          cl_kernel kernel, size_t local_x,
-                                          size_t local_y, size_t local_z);
+int pocl_llvm_generate_workgroup_function (unsigned device_i,
+                                           cl_device_id device,
+                                           cl_kernel kernel, size_t local_x,
+                                           size_t local_y, size_t local_z,
+                                           int assume_zero_global_offset);
 
-int pocl_llvm_generate_workgroup_function_nowrite(unsigned device_i,
-    cl_device_id device, cl_kernel kernel, size_t local_x, size_t local_y,
-    size_t local_z, void **output);
+int pocl_llvm_generate_workgroup_function_nowrite (
+    unsigned device_i, cl_device_id device, cl_kernel kernel, size_t local_x,
+    size_t local_y, size_t local_z, int assume_zero_global_offset,
+    void **output);
 /**
  * Free the LLVM IR of a program for a given device
  */

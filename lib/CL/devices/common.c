@@ -82,7 +82,7 @@
 int
 llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
               cl_device_id device, size_t local_x, size_t local_y,
-              size_t local_z)
+              size_t local_z, int assume_zero_global_offset)
 {
   POCL_MEASURE_START (llvm_codegen);
   int error = 0;
@@ -101,12 +101,14 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   /* $/parallel.bc */
   char parallel_bc_path[POCL_FILENAME_LENGTH];
   pocl_cache_work_group_function_path (parallel_bc_path, program, device_i,
-                                       kernel, local_x, local_y, local_z);
+                                       kernel, local_x, local_y, local_z,
+                                       assume_zero_global_offset);
 
   /* $/kernel.so */
   char final_binary_path[POCL_FILENAME_LENGTH];
   pocl_cache_final_binary_path (final_binary_path, program, device_i, kernel,
-                                local_x, local_y, local_z);
+                                local_x, local_y, local_z,
+                                assume_zero_global_offset);
 
   if (pocl_exists (final_binary_path))
     goto FINISH;
@@ -114,7 +116,8 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   assert (strlen (final_binary_path) < (POCL_FILENAME_LENGTH - 3));
 
   error = pocl_llvm_generate_workgroup_function_nowrite (
-      device_i, device, kernel, local_x, local_y, local_z, &llvm_module);
+      device_i, device, kernel, local_x, local_y, local_z,
+      assume_zero_global_offset, &llvm_module);
   if (error)
     {
       POCL_MSG_PRINT_LLVM ("pocl_llvm_generate_workgroup_function() failed"
@@ -128,19 +131,20 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
     {
       POCL_MSG_PRINT_LLVM ("Writing parallel.bc to %s.\n", parallel_bc_path);
       error = pocl_cache_write_kernel_parallel_bc (
-          llvm_module, program, device_i, kernel, local_x, local_y, local_z);
+          llvm_module, program, device_i, kernel, local_x, local_y, local_z,
+          assume_zero_global_offset);
     }
   else
     {
       char kernel_parallel_path[POCL_FILENAME_LENGTH];
       pocl_cache_kernel_cachedir_path (kernel_parallel_path, program, device_i,
-                                       kernel, "", local_x, local_y, local_z);
+                                       kernel, "", local_x, local_y, local_z,
+                                       assume_zero_global_offset);
       error = pocl_mkdir_p (kernel_parallel_path);
     }
   if (error)
     {
-      POCL_MSG_PRINT_GENERAL ("writing parallel.bc failed"
-                              " for kernel %s\n",
+      POCL_MSG_PRINT_GENERAL ("writing parallel.bc failed for kernel %s\n",
                               kernel->name);
       goto FINISH;
     }
@@ -941,23 +945,33 @@ pocl_check_kernel_disk_cache (_cl_command_node *cmd)
   size_t y = cmd->command.run.local_y;
   size_t z = cmd->command.run.local_z;
 
+  int global_offset_is_zero = cmd->command.run.pc.global_offset[0] == 0
+                              && cmd->command.run.pc.global_offset[1] == 0
+                              && cmd->command.run.pc.global_offset[2] == 0;
+
+  /* First try to find a static WG binary for the local size as they
+     are always more efficient than the dynamic ones.  Also, in case
+     of reqd_wg_size, there might not be a dynamic sized one at all.  */
   module_fn = malloc (POCL_FILENAME_LENGTH);
-  pocl_cache_final_binary_path (module_fn, p, dev_i, k, x, y, z);
+  pocl_cache_final_binary_path (module_fn, p, dev_i, k, x, y, z,
+                                global_offset_is_zero);
   if (pocl_exists (module_fn))
     {
       POCL_MSG_PRINT_INFO (
-          "For %zu x %zu x %zu, using static WG size binary: %s\n", x, y, z,
-          module_fn);
+          "For %zu x %zu x %zu goffs0 %d, using static WG size binary: %s\n",
+          x, y, z, global_offset_is_zero, module_fn);
       return module_fn;
     }
 
+  /* static WG binary for the local size does not exist. If we have the LLVM IR
+   * (program.bc), try to compile a new parallel.bc and static binary */
   if (p->binaries[dev_i])
     {
 #ifdef OCS_AVAILABLE
 
       POCL_LOCK (pocl_llvm_codegen_lock);
       int error = llvm_codegen (module_fn, dev_i, cmd->command.run.kernel,
-                                cmd->device, x, y, z);
+                                cmd->device, x, y, z, global_offset_is_zero);
       POCL_UNLOCK (pocl_llvm_codegen_lock);
       if (error)
         {
@@ -973,17 +987,17 @@ pocl_check_kernel_disk_cache (_cl_command_node *cmd)
                     " cannot compile LLVM IRs to machine code\n");
 #endif
     }
-
-  // pocl_binaries must exist
+  /* Fallback to the worst option (dynamic WG).
+   * This must exist at this point
+   * (at least one of binaries[i] or pocl_binaries[i] must be non-NULL) */
   assert (p->pocl_binaries[dev_i]);
 
-  pocl_cache_final_binary_path (module_fn, p, dev_i, k, 0, 0, 0);
-  if (!pocl_exists (module_fn))
-    POCL_ABORT ("Can't find either static or dynamic WG size binary!\n");
+  pocl_cache_final_binary_path (module_fn, p, dev_i, k, 0, 0, 0, 0);
 
-  POCL_MSG_PRINT_INFO (
-      "For %zu x %zu x %zu, using dynamic WG size binary: %s\n", x, y, z,
-      module_fn);
+  if (!pocl_exists (module_fn))
+    POCL_ABORT ("Dynamic WG size binary does not exist\n");
+
+  POCL_MSG_PRINT_INFO ("Using dynamic local size binary: %s\n", module_fn);
   return module_fn;
 }
 
