@@ -76,16 +76,16 @@ DEFINE_PRINT_INTS (ulong, int64_t, uint64_t)
 
 /**************************************************************************/
 
-static const char *NANs[2] = { "nan", "NAN" };
-static const char *INFs[2] = { "inf", "INF" };
-
 /* Note: NANs are printed always positive.
  * This is required to pass 1.2 conformance test. */
 #define DEFINE_PRINT_FLOATS(FLOAT_TYPE)                                       \
   void __pocl_print_floats_##FLOAT_TYPE (param_t *p,                          \
                                          OCL_C_AS const void *vals, int n)    \
-  {                                                                           \
-    DEBUG_PRINTF (("[printf:floats:n=%d]\n", n));                            \
+  {                                                                     \
+    const char *NANs[2] = { "nan", "NAN" };                             \
+    const char *INFs[2] = { "inf", "INF" };                             \
+                                                                        \
+    DEBUG_PRINTF (("[printf:floats:n=%d]\n", n));                       \
     flags_t saved_user_flags = p->flags;                                      \
     for (int d = 0; d < n; ++d)                                               \
       {                                                                       \
