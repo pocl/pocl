@@ -1,4 +1,2 @@
-gid_x 0 after barrier at iteration 0
-gid_x 1 after barrier at iteration 0
-I am 0 and I break out from the loop.
-I am 1 and I also break out from the loop.
+0: 1000
+1: 2000

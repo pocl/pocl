@@ -78,3 +78,4 @@ pocl.files
 pocl.includes
 CMakeLists.txt.includes
 CMakeLists.txt.user
+/examples/CLBlast/CLBlast/

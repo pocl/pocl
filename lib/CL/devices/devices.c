@@ -314,16 +314,12 @@ sigfpe_signal_handler (int signo, siginfo_t *si, void *data)
 cl_int
 pocl_uninit_devices ()
 {
-  assert (first_init_done);
   cl_int retval = CL_SUCCESS;
 
-  if (!devices_active)
-    return retval;
-
-  if (pocl_num_devices == 0)
-    return CL_DEVICE_NOT_FOUND;
-
   POCL_LOCK (pocl_init_lock);
+  if ((!devices_active) || (pocl_num_devices == 0))
+    goto FINISH;
+
   POCL_MSG_PRINT_GENERAL ("UNINIT all devices\n");
 
   unsigned i, j, dev_index;
@@ -370,7 +366,6 @@ pocl_reinit_devices ()
   if (pocl_num_devices == 0)
     return CL_DEVICE_NOT_FOUND;
 
-  POCL_LOCK (pocl_init_lock);
   POCL_MSG_WARN ("REINIT all devices\n");
 
   unsigned i, j, dev_index;
@@ -402,38 +397,35 @@ pocl_reinit_devices ()
 FINISH:
 
   devices_active = 1;
-  POCL_UNLOCK (pocl_init_lock);
-
   return retval;
 }
 
 cl_int
 pocl_init_devices ()
 {
+  int errcode = CL_SUCCESS;
 
   /* This is a workaround to a nasty problem with libhwloc: When
      initializing basic, it calls libhwloc to query device info.
      In case libhwloc has the OpenCL plugin installed, it initializes
      it and it leads to initializing pocl again which leads to an
-     infinite loop. */
+     infinite loop. This only protects against recursive calls of
+     pocl_init_devices(), so must be done without pocl_init_lock held. */
+  if (init_in_progress)
+    return CL_SUCCESS; /* debatable, but what else can we do ? */
 
-  if (!first_init_done)
-    {
-      if (init_in_progress)
-        return CL_SUCCESS; /* debatable, but what else can we do ? */
-      init_in_progress = 1;
-      POCL_INIT_LOCK (pocl_init_lock);
-    }
-
-  POCL_LOCK(pocl_init_lock);
+  POCL_LOCK (pocl_init_lock);
+  init_in_progress = 1;
 
   if (first_init_done)
     {
-      POCL_UNLOCK(pocl_init_lock);
-      POCL_MSG_PRINT_GENERAL ("FIRST INIT done; REINIT all devices\n");
       if (!devices_active)
-        pocl_reinit_devices (); // TODO err check
-      return pocl_num_devices ? CL_SUCCESS : CL_DEVICE_NOT_FOUND;
+        {
+          POCL_MSG_PRINT_GENERAL ("FIRST INIT done; REINIT all devices\n");
+          pocl_reinit_devices (); // TODO err check
+        }
+      errcode = pocl_num_devices ? CL_SUCCESS : CL_DEVICE_NOT_FOUND;
+      goto ERROR;
     }
 
   /* first time initialization */
@@ -450,13 +442,9 @@ pocl_init_devices ()
   stderr_is_a_tty = isatty(fileno(stderr));
 #endif
 
-  if (pocl_cache_init_topdir ())
-    {
-      first_init_done = 1;
-      pocl_num_devices = 0;
-      POCL_UNLOCK (pocl_init_lock);
-      return CL_DEVICE_NOT_FOUND;
-    }
+  POCL_GOTO_ERROR_ON ((pocl_cache_init_topdir ()), CL_DEVICE_NOT_FOUND,
+                      "Cache directory initialization failed");
+
   pocl_event_tracing_init ();
 
 #ifdef __linux__
@@ -502,16 +490,13 @@ pocl_init_devices ()
       pocl_num_devices += device_count[i];
     }
 
-  if (pocl_num_devices == 0)
-    {
-      const char *dev_env = pocl_get_string_option ("POCL_DEVICES", NULL);
-      POCL_MSG_WARN ("no devices found. POCL_DEVICES=%s\n", dev_env);
-      return CL_DEVICE_NOT_FOUND;
-    }
+  const char *dev_env = pocl_get_string_option ("POCL_DEVICES", NULL);
+  POCL_GOTO_ERROR_ON ((pocl_num_devices == 0), CL_DEVICE_NOT_FOUND,
+                      "no devices found. POCL_DEVICES=%s\n", dev_env);
 
   pocl_devices = (struct _cl_device_id*) calloc(pocl_num_devices, sizeof(struct _cl_device_id));
-  POCL_RETURN_ERROR_ON ((pocl_devices == NULL), CL_OUT_OF_HOST_MEMORY,
-                        "Can not allocate memory for devices\n");
+  POCL_GOTO_ERROR_ON ((pocl_devices == NULL), CL_OUT_OF_HOST_MEMORY,
+                      "Can not allocate memory for devices\n");
 
   dev_index = 0;
   /* Init infos for each probed devices */
@@ -521,7 +506,6 @@ pocl_init_devices ()
       assert(pocl_device_ops[i].init);
       for (j = 0; j < device_count[i]; ++j)
         {
-          cl_int ret = CL_SUCCESS;
           cl_device_id dev = &pocl_devices[dev_index];
           dev->ops = &pocl_device_ops[i];
           dev->dev_id = dev_index;
@@ -538,20 +522,15 @@ pocl_init_devices ()
 
           /* Check if there are device-specific parameters set in the
              POCL_DEVICEn_PARAMETERS env. */
-          POCL_RETURN_ERROR_ON (
+          POCL_GOTO_ERROR_ON (
               (snprintf (env_name, 1024, "POCL_%s%d_PARAMETERS", dev_name, j)
                < 0),
               CL_OUT_OF_HOST_MEMORY, "Unable to generate the env string.");
-          ret = pocl_devices[dev_index].ops->init (j, &pocl_devices[dev_index], getenv(env_name));
-          switch (ret)
-          {
-          case CL_OUT_OF_HOST_MEMORY:
-            return ret;
-          case CL_SUCCESS:
-            break;
-          default:
-            pocl_devices[dev_index].available = 0;
-          }
+          errcode = pocl_devices[dev_index].ops->init (
+              j, &pocl_devices[dev_index], getenv (env_name));
+          POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), CL_DEVICE_NOT_AVAILABLE,
+                              "Device %i / %s initialization failed!", j,
+                              dev_name);
 
           ++dev_index;
         }
@@ -559,9 +538,10 @@ pocl_init_devices ()
 
   first_init_done = 1;
   devices_active = 1;
+ERROR:
   init_in_progress = 0;
-  POCL_UNLOCK(pocl_init_lock);
-  return CL_SUCCESS;
+  POCL_UNLOCK (pocl_init_lock);
+  return errcode;
 }
 
 int pocl_get_unique_global_mem_id ()

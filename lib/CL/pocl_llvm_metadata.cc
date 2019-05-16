@@ -723,7 +723,8 @@ unsigned pocl_llvm_get_kernel_count(cl_program program, unsigned device_i) {
 
   /* any device's module will do for metadata, just use first non-nullptr */
   llvm::Module *mod = (llvm::Module *)program->llvm_irs[device_i];
-
+  if (mod == nullptr)
+    return 0;
   llvm::NamedMDNode *md = mod->getNamedMetadata("opencl.kernels");
   if (md) {
     return md->getNumOperands();
