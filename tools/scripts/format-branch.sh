@@ -14,4 +14,4 @@ SCRIPTPATH=$( realpath "$0"  )
 RELPATH=$(dirname "$SCRIPTPATH")
 
 $RELPATH/clang-format-diff.py -regex '.*(\.h$|\.c$|\.cl$)' -i -p1 -style GNU <$PATCHY
-$RELPATH/clang-format-diff.py -regex '.*(\.hh$|\.cc$)' -i -p1 -style LLVM <$PATCHY
+$RELPATH/clang-format-diff.py -regex '(.*(\.hh$|\.cc$))|(lib/llvmopencl/.*\.h)' -i -p1 -style LLVM <$PATCHY
