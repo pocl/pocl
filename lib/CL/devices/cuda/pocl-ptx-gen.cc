@@ -793,11 +793,13 @@ void mapLibDeviceCalls(llvm::Module *Module) {
     {"llvm.pow.f32", "__nv_powf"},
     {"llvm.pow.f64", "__nv_pow"},
 
+    {"llvm.powi.f32", "__nv_powif"},
+    {"llvm.powi.f64", "__nv_powi"},
+
     // TODO: frexp
     // TODO: ldexp
     // TODO: lgamma_r
     // TODO: modf
-    // TODO: pown
     // TODO: remquo
     // TODO: rootn
   };
