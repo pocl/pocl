@@ -417,21 +417,21 @@ pocl_init_devices ()
   if (!first_init_done)
     {
       if (init_in_progress)
-	{
-	  POCL_UNLOCK (pocl_init_lock);
-	  return CL_SUCCESS; /* debatable, but what else can we do ? */
-	}
+        {
+          POCL_UNLOCK (pocl_init_lock);
+          return CL_SUCCESS; /* debatable, but what else can we do ? */
+        }
       init_in_progress = 1;
     }
 
   if (first_init_done)
     {
       if (!devices_active)
-	{
-	  POCL_MSG_PRINT_GENERAL ("FIRST INIT done; REINIT all devices\n");
-	  pocl_reinit_devices (); // TODO err check
-	}
-      POCL_UNLOCK(pocl_init_lock);
+        {
+          POCL_MSG_PRINT_GENERAL ("FIRST INIT done; REINIT all devices\n");
+          pocl_reinit_devices (); // TODO err check
+        }
+      POCL_UNLOCK (pocl_init_lock);
       return pocl_num_devices ? CL_SUCCESS : CL_DEVICE_NOT_FOUND;
     }
 
@@ -505,7 +505,7 @@ pocl_init_devices ()
     {
       const char *dev_env = pocl_get_string_option ("POCL_DEVICES", NULL);
       POCL_MSG_WARN ("no devices found. POCL_DEVICES=%s\n", dev_env);
-      POCL_UNLOCK(pocl_init_lock);
+      POCL_UNLOCK (pocl_init_lock);
       return CL_DEVICE_NOT_FOUND;
     }
 
@@ -546,7 +546,7 @@ pocl_init_devices ()
           switch (ret)
           {
           case CL_OUT_OF_HOST_MEMORY:
-	    POCL_UNLOCK (pocl_init_lock);
+            POCL_UNLOCK (pocl_init_lock);
             return ret;
           case CL_SUCCESS:
             break;

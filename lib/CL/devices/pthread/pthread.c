@@ -208,8 +208,8 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 
   pocl_init_cpu_device_infos (device);
 
-  device->on_host_queue_props = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE
-    | CL_QUEUE_PROFILING_ENABLE;
+  device->on_host_queue_props
+      = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE;
 
   /* hwloc probes OpenCL device info at its initialization in case
      the OpenCL extension is enabled. This causes to printout 
