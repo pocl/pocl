@@ -749,9 +749,8 @@ pocl_binary_get_kernels_metadata (cl_program program, unsigned device_i)
     {
       pocl_kernel_metadata_t *km = &program->kernel_meta[j];
 
-      POCL_RETURN_ERROR_ON ((pocl_binary_deserialize_kernel_from_buffer (
-                                 &b, &buffer, &k, km, NULL)
-                             == CL_SUCCESS),
+      POCL_RETURN_ERROR_ON (pocl_binary_deserialize_kernel_from_buffer (
+                                 &b, &buffer, &k, km, NULL),
                             CL_INVALID_PROGRAM,
                             "Can't deserialize kernel %u \n", j);
 
@@ -764,9 +763,10 @@ pocl_binary_get_kernels_metadata (cl_program program, unsigned device_i)
       km->data = (void **)calloc (program->num_devices, sizeof (void *));
       assert (km->name);
 
-      for (j = 0; j < OPENCL_MAX_DIMENSION; j++)
+      unsigned l;
+      for (l = 0; l < OPENCL_MAX_DIMENSION; l++)
         {
-          km->reqd_wg_size[j] = k.reqd_wg_size[j];
+          km->reqd_wg_size[l] = k.reqd_wg_size[l];
         }
     }
 
