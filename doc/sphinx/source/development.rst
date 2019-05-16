@@ -102,6 +102,13 @@ It's acknowledged that the pocl code base does not fully adhere to these
 principles at the moment, but the aim is to gradually fix the style with
 every new commit improving the style.
 
+There are clang-format scripts to help in getting the style gradually
+improved. Running ``tools/scripts/format-branch.sh`` in the root of
+the repository diffs against a ``master`` branch and formats the difference,
+and leaves the diff uncommitted in the working tree.
+``tools/scripts/format-last-commit.sh`` formats only the last commit and can be
+used in an interactive rebase session.
+
 An example emacs configuration to help get the pocl code style correct::
 
   (setq default-tab-width 2)
