@@ -1,7 +1,7 @@
 /* common.h - common code that can be reused between device driver
               implementations
 
-   Copyright (c) 2012-2018 Pekka Jääskeläinen
+   Copyright (c) 2012-2019 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
