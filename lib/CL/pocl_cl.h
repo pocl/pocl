@@ -743,6 +743,9 @@ struct _cl_device_id {
   unsigned local_as_id;
   unsigned constant_as_id;
 
+  /* The address space where the grid context data is passed. */
+  unsigned context_as_id;
+
   /* True if the device supports SVM. Then it has the responsibility of
      allocating shared buffers residing in Shared Virtual Memory areas. */
   cl_bool should_allocate_svm;

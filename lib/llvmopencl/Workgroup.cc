@@ -226,10 +226,12 @@ Workgroup::runOnModule(Module &M) {
   LauncherFuncT =
     FunctionType::get(
       Type::getVoidTy(*C),
-      {PointerType::get(
-          PointerType::get(Type::getInt8Ty(*C), 0), 0),
-          PointerType::get(PoclContextT, 0),
-          SizeT, SizeT, SizeT}, false);
+      {PointerType::get(PointerType::get(Type::getInt8Ty(*C),
+                                         currentPoclDevice->global_as_id),
+                        0),
+       PointerType::get(PoclContextT, currentPoclDevice->context_as_id), SizeT,
+       SizeT, SizeT},
+      false);
 #endif
 
   assert ((SizeTWidth == 64 || SizeTWidth == 32) &&
@@ -566,7 +568,7 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
   } else {
     // pocl_context
     sv.push_back(
-        PointerType::get(PoclContextT, currentPoclDevice->global_as_id));
+      PointerType::get(PoclContextT, currentPoclDevice->context_as_id));
     // group_x
     sv.push_back(SizeT);
     // group_y
