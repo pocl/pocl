@@ -658,7 +658,8 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->autolocals_to_args = CL_FALSE;
   dev->device_alloca_locals = CL_FALSE;
 
-  dev->context_as_id = dev->global_as_id = SPIR_ADDRESS_SPACE_GLOBAL;
+  dev->args_as_id = dev->context_as_id = dev->global_as_id =
+    SPIR_ADDRESS_SPACE_GLOBAL;
   dev->local_as_id = SPIR_ADDRESS_SPACE_LOCAL;
   dev->constant_as_id = SPIR_ADDRESS_SPACE_CONSTANT;
 

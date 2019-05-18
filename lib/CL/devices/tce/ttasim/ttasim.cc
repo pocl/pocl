@@ -566,6 +566,7 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->global_as_id = TTA_ASID_GLOBAL;
   dev->local_as_id = TTA_ASID_LOCAL;
   dev->constant_as_id = TTA_ASID_CONSTANT;
+  dev->context_as_id = 0;
 
   SETUP_DEVICE_CL_VERSION (TCE_DEVICE_CL_VERSION_MAJOR,
                            TCE_DEVICE_CL_VERSION_MINOR);

@@ -226,9 +226,8 @@ Workgroup::runOnModule(Module &M) {
   LauncherFuncT =
     FunctionType::get(
       Type::getVoidTy(*C),
-      {PointerType::get(PointerType::get(Type::getInt8Ty(*C),
-                                         currentPoclDevice->global_as_id),
-                        0),
+      {PointerType::get(PointerType::get(Type::getInt8Ty(*C), 0),
+                        currentPoclDevice->args_as_id),
        PointerType::get(PoclContextT, currentPoclDevice->context_as_id), SizeT,
        SizeT, SizeT},
       false);
@@ -563,7 +562,7 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
 
   if (!currentPoclDevice->arg_buffer_launcher && currentPoclDevice->spmd) {
     sv.push_back(
-      PointerType::get(PoclContextT, currentPoclDevice->global_as_id));
+      PointerType::get(PoclContextT, currentPoclDevice->context_as_id));
     HiddenArgs = 1;
   } else {
     // pocl_context
@@ -1082,7 +1081,11 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
   LLVMTypeRef Int32Type = LLVMInt32TypeInContext(LLVMContext);
   LLVMTypeRef Int64Type = LLVMInt64TypeInContext(LLVMContext);
 
-  LLVMTypeRef Int8PtrType = LLVMPointerType(Int8Type, 0);
+  LLVMTypeRef ArgsPtrType =
+    LLVMPointerType(Int8Type, currentPoclDevice->args_as_id);
+
+  LLVMTypeRef CtxPtrType =
+    LLVMPointerType(Int8Type, currentPoclDevice->context_as_id);
 
   std::ostringstream StrStr;
   StrStr << KernName;
@@ -1092,8 +1095,8 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
   const char *FunctionName = FName.c_str();
 
   LLVMTypeRef LauncherArgTypes[] = {
-    Int8PtrType, // args
-    Int8PtrType, // pocl_ctx
+    ArgsPtrType, // args
+    CtxPtrType, // pocl_ctx
     wrap(SizeT), // group_x
     wrap(SizeT), // group_y
     wrap(SizeT), // group_z
@@ -1187,7 +1190,6 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
   Args[i++] = LLVMGetParam(WrapperKernel, Arg++);
   Args[i++] = LLVMGetParam(WrapperKernel, Arg++);
   Args[i++] = LLVMGetParam(WrapperKernel, Arg++);
-
 
   assert (i == ArgCount);
 
