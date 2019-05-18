@@ -202,10 +202,10 @@ Workgroup::runOnModule(Module &M) {
       SizeTWidth == 32
           ? TypeBuilder<void(types::i<8> *[], PoclContext *, types::i<32>,
                              types::i<32>, types::i<32>),
-                        true>::get(M->getContext())
+                        true>::get(M.getContext())
           : TypeBuilder<void(types::i<8> *[], PoclContext *, types::i<64>,
                              types::i<64>, types::i<64>),
-                        true>::get(M->getContext());
+                        true>::get(M.getContext());
 #else
   // LLVM 8.0 dropped the TypeBuilder API. This is a cleaner version
   // anyways as it builds the context type using the SizeT directly.
@@ -1017,19 +1017,10 @@ static void computeArgBufferOffsets(LLVMValueRef F,
 
   uint64_t Offset = 0;
   uint64_t ArgCount = LLVMCountParams(F);
-  LLVMModuleRef M = LLVMGetGlobalParent(F);
-
-#ifdef LLVM_OLDER_THAN_3_9
-  const char *Str = LLVMGetDataLayout(M);
-  LLVMTargetDataRef DataLayout = LLVMCreateTargetData(Str);
-#else
-  LLVMTargetDataRef DataLayout = LLVMGetModuleDataLayout(M);
-#endif
 
   // Compute the byte offsets of arguments in the arg buffer.
   for (size_t i = 0; i < ArgCount; i++) {
     LLVMValueRef Param = LLVMGetParam(F, i);
-    LLVMTypeRef ParamType = LLVMTypeOf(Param);
     // TODO: This is a target specific type? We would like to get the
     // natural size or the "packed size" instead...
     uint64_t ByteSize = getArgumentSize(cast<Argument>(*unwrap(Param)));

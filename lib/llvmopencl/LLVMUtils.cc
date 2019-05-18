@@ -27,6 +27,7 @@
 #include <llvm/IR/Instructions.h>
 #include <llvm/IR/Module.h>
 #include <llvm/IR/Metadata.h>
+#include <llvm/IR/Constants.h>
 
 using namespace llvm;
 
@@ -110,7 +111,11 @@ void eraseFunctionAndCallers(llvm::Function *Function) {
 }
 
 int getConstantIntMDValue(Metadata *MD) {
+#ifdef LLVM_OLDER_THAN_7_0
+  ConstantInt *CI = mdconst::dyn_extract<ConstantInt>(MD);
+#else
   ConstantInt *CI = mdconst::extract<ConstantInt>(MD);
+#endif
   return CI->getLimitedValue();
 }
 
