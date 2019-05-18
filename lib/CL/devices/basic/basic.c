@@ -4,10 +4,10 @@
                  2011-2019 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
 
    The above copyright notice and this permission notice shall be included in
@@ -17,9 +17,9 @@
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 
 #include "config.h"
@@ -554,10 +554,8 @@ pocl_basic_write (void *data,
   memcpy ((char *)device_ptr + offset, host_ptr, size);
 }
 
-
 void
-pocl_basic_run (void *data,
-		_cl_command_node* cmd)
+pocl_basic_run (void *data, _cl_command_node *cmd)
 {
   struct data *d;
   struct pocl_argument *al;
@@ -621,8 +619,8 @@ pocl_basic_run (void *data,
           dev_image_t di;
           fill_dev_image_t (&di, al, cmd->device);
 
-          void* devptr =
-	    pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, sizeof(dev_image_t));
+          void *devptr = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT,
+                                              sizeof (dev_image_t));
           arguments[i] = malloc (sizeof (void *));
           *(void **)(arguments[i]) = devptr;
           memcpy (devptr, &di, sizeof (dev_image_t));
@@ -721,8 +719,7 @@ pocl_basic_run (void *data,
 }
 
 void
-pocl_basic_run_native (void *data,
-		       _cl_command_node* cmd)
+pocl_basic_run_native (void *data, _cl_command_node *cmd)
 {
   cmd->command.native.user_func(cmd->command.native.args);
 }

@@ -9,10 +9,10 @@
    the HSA runtime library sources (c) 2014 HSA Foundation Inc.
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
 
    The above copyright notice and this permission notice shall be included in
@@ -22,31 +22,33 @@
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
-/* Some example code snippets copied verbatim from vector_copy.c of HSA-Runtime-AMD: */
+/* Some example code snippets copied verbatim from vector_copy.c of
+ * HSA-Runtime-AMD: */
 /* Copyright 2014 HSA Foundation Inc.  All Rights Reserved.
  *
  * HSAF is granting you permission to use this software and documentation (if
  * any) (collectively, the "Materials") pursuant to the terms and conditions
  * of the Software License Agreement included with the Materials.  If you do
- * not have a copy of the Software License Agreement, contact the  HSA Foundation for a copy.
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * not have a copy of the Software License Agreement, contact the  HSA
+ * Foundation for a copy. Redistribution and use in source and binary forms,
+ * with or without modification, are permitted provided that the following
+ * conditions are met:
  * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
- * FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL THE
  * CONTRIBUTORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
- * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS WITH THE SOFTWARE.
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+ * WITH THE SOFTWARE.
  */
 
 #ifndef _BSD_SOURCE
@@ -357,77 +359,70 @@ static const char *phsa_native_device_aux_funcs[] =
 
 #define AMD_VENDOR_ID 0x1002
 
-static struct _cl_device_id
-supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS] =
-{
-  [0] =
-  {
-    .long_name = "Spectre",
-    .llvm_cpu = (HSAIL_ENABLED ? NULL : "kaveri"),
-    .llvm_target_triplet = (HSAIL_ENABLED ? "hsail64" : "amdgcn--amdhsa"),
-    .spmd = CL_TRUE,
-    .autolocals_to_args = CL_FALSE,
-    .device_alloca_locals = CL_FALSE,
-    .has_64bit_long = 1,
-    .vendor_id = AMD_VENDOR_ID,
-    .global_mem_cache_type = CL_READ_WRITE_CACHE,
-    .max_constant_buffer_size = 65536,
-    .local_mem_type = CL_LOCAL,
-    .endian_little = CL_TRUE,
-    .extensions = HSA_DEVICE_EXTENSIONS,
-    .device_side_printf = !HSAIL_ENABLED,
-    .printf_buffer_size = 16 * 1024 * 1024,
-    .preferred_wg_size_multiple = 64, // wavefront size on Kaveri
-    .preferred_vector_width_char = 4,
-    .preferred_vector_width_short = 2,
-    .preferred_vector_width_int = 1,
-    .preferred_vector_width_long = 1,
-    .preferred_vector_width_float = 1,
-    .preferred_vector_width_double = 1,
-    .native_vector_width_char = 4,
-    .native_vector_width_short = 2,
-    .native_vector_width_int = 1,
-    .native_vector_width_long = 1,
-    .native_vector_width_float = 1,
-    .native_vector_width_double = 1
-  },
-  [1] =
-  { .long_name = "phsa generic CPU agent",
-    .llvm_cpu = NULL,
-    .llvm_target_triplet = (HSAIL_ENABLED ? "hsail64" : NULL),
-    .spmd = CL_FALSE,
-    .autolocals_to_args = !HSAIL_ENABLED,
-    .device_alloca_locals = CL_TRUE,
-    .has_64bit_long = 1,
-    .vendor_id = 0xffff,
-    .global_mem_cache_type = CL_READ_WRITE_CACHE,
-    .max_constant_buffer_size = 65536,
-    .local_mem_type = CL_LOCAL,
-    .endian_little = !(WORDS_BIGENDIAN),
-    .extensions = HSA_DEVICE_EXTENSIONS,
-    .device_side_printf = !HSAIL_ENABLED,
-    .printf_buffer_size = 16 * 1024 * 1024,
-    .preferred_wg_size_multiple = 1,
-    /* We want to exploit the widest vector types in HSAIL
-       for the CPUs assuming they have some sort of SIMD ISE
-       which the finalizer than can more readily utilize.  */
-    .preferred_vector_width_char = 16,
-    .preferred_vector_width_short = 16,
-    .preferred_vector_width_int = 16,
-    .preferred_vector_width_long = 16,
-    .preferred_vector_width_float = 16,
-    .preferred_vector_width_double = 16,
-    .native_vector_width_char = 16,
-    .native_vector_width_short = 16,
-    .native_vector_width_int = 16,
-    .native_vector_width_long = 16,
-    .native_vector_width_float = 16,
-    .native_vector_width_double = 16,
-    .final_linkage_flags = default_native_final_linkage_flags,
-    .device_aux_functions =
-    (HSAIL_ENABLED ? NULL : phsa_native_device_aux_funcs)
-  }
-};
+static struct _cl_device_id supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS]
+    = { [0] = { .long_name = "Spectre",
+                .llvm_cpu = (HSAIL_ENABLED ? NULL : "kaveri"),
+                .llvm_target_triplet
+                = (HSAIL_ENABLED ? "hsail64" : "amdgcn--amdhsa"),
+                .spmd = CL_TRUE,
+                .autolocals_to_args = CL_FALSE,
+                .device_alloca_locals = CL_FALSE,
+                .has_64bit_long = 1,
+                .vendor_id = AMD_VENDOR_ID,
+                .global_mem_cache_type = CL_READ_WRITE_CACHE,
+                .max_constant_buffer_size = 65536,
+                .local_mem_type = CL_LOCAL,
+                .endian_little = CL_TRUE,
+                .extensions = HSA_DEVICE_EXTENSIONS,
+                .device_side_printf = !HSAIL_ENABLED,
+                .printf_buffer_size = 16 * 1024 * 1024,
+                .preferred_wg_size_multiple = 64, // wavefront size on Kaveri
+                .preferred_vector_width_char = 4,
+                .preferred_vector_width_short = 2,
+                .preferred_vector_width_int = 1,
+                .preferred_vector_width_long = 1,
+                .preferred_vector_width_float = 1,
+                .preferred_vector_width_double = 1,
+                .native_vector_width_char = 4,
+                .native_vector_width_short = 2,
+                .native_vector_width_int = 1,
+                .native_vector_width_long = 1,
+                .native_vector_width_float = 1,
+                .native_vector_width_double = 1 },
+        [1] = { .long_name = "phsa generic CPU agent",
+                .llvm_cpu = NULL,
+                .llvm_target_triplet = (HSAIL_ENABLED ? "hsail64" : NULL),
+                .spmd = CL_FALSE,
+                .autolocals_to_args = !HSAIL_ENABLED,
+                .device_alloca_locals = CL_TRUE,
+                .has_64bit_long = 1,
+                .vendor_id = 0xffff,
+                .global_mem_cache_type = CL_READ_WRITE_CACHE,
+                .max_constant_buffer_size = 65536,
+                .local_mem_type = CL_LOCAL,
+                .endian_little = !(WORDS_BIGENDIAN),
+                .extensions = HSA_DEVICE_EXTENSIONS,
+                .device_side_printf = !HSAIL_ENABLED,
+                .printf_buffer_size = 16 * 1024 * 1024,
+                .preferred_wg_size_multiple = 1,
+                /* We want to exploit the widest vector types in HSAIL
+                   for the CPUs assuming they have some sort of SIMD ISE
+                   which the finalizer than can more readily utilize.  */
+                .preferred_vector_width_char = 16,
+                .preferred_vector_width_short = 16,
+                .preferred_vector_width_int = 16,
+                .preferred_vector_width_long = 16,
+                .preferred_vector_width_float = 16,
+                .preferred_vector_width_double = 16,
+                .native_vector_width_char = 16,
+                .native_vector_width_short = 16,
+                .native_vector_width_int = 16,
+                .native_vector_width_long = 16,
+                .native_vector_width_float = 16,
+                .native_vector_width_double = 16,
+                .final_linkage_flags = default_native_final_linkage_flags,
+                .device_aux_functions
+                = (HSAIL_ENABLED ? NULL : phsa_native_device_aux_funcs) } };
 
 char *
 pocl_hsa_build_hash (cl_device_id device)
@@ -460,16 +455,17 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
 	  COPY_ATTR (llvm_target_triplet);
 	  COPY_ATTR (spmd);
 	  COPY_ATTR (autolocals_to_args);
-	  COPY_ATTR (device_alloca_locals);
-	  if (!HSAIL_ENABLED) {
-	    /* TODO: Add a CMake variable or HSA description string
-	       autodetection to control these. */
-	    if (dev->llvm_cpu == NULL)
-	      dev->llvm_cpu = get_llvm_cpu_name ();
-	    if (dev->llvm_target_triplet == NULL)
-	      dev->llvm_target_triplet = OCL_KERNEL_TARGET;
-	    dev->arg_buffer_launcher = CL_TRUE;
-	  }
+          COPY_ATTR (device_alloca_locals);
+          if (!HSAIL_ENABLED)
+            {
+              /* TODO: Add a CMake variable or HSA description string
+                 autodetection to control these. */
+              if (dev->llvm_cpu == NULL)
+                dev->llvm_cpu = get_llvm_cpu_name ();
+              if (dev->llvm_target_triplet == NULL)
+                dev->llvm_target_triplet = OCL_KERNEL_TARGET;
+              dev->arg_buffer_launcher = CL_TRUE;
+            }
           COPY_ATTR (has_64bit_long);
           COPY_ATTR (vendor_id);
           COPY_ATTR (global_mem_cache_type);
@@ -988,25 +984,25 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
         {
 	  size_t buf_size = ARG_IS_LOCAL (meta->arg_info[i]) ?
 	    al->size : meta->local_sizes[i - meta->num_args];
-	  if (d->device->device_alloca_locals)
-	    {
-	      /* Local buffers are allocated in the device side work-group
-		 launcher. Let's pass only the sizes of the local args in
-		 the arg buffer. */
-	      assert(sizeof (size_t) == 8);
-	      CHECK_AND_ALIGN_SPACE(sizeof (size_t));
-	      memcpy (write_pos, &buf_size, sizeof (size_t));
-	      write_pos += sizeof (size_t);
-	    }
-	  else if (HSAIL_ENABLED)
-	    {
-	      CHECK_AND_ALIGN_SPACE(sizeof (uint32_t));
-	      memcpy (write_pos, total_group_size, sizeof (uint32_t));
-	      *total_group_size += (uint32_t)buf_size;
-	      write_pos += sizeof (uint32_t);
-	    }
-	  else
-	    assert (0 && "Unsupported local mem allocation scheme.");
+          if (d->device->device_alloca_locals)
+            {
+              /* Local buffers are allocated in the device side work-group
+                 launcher. Let's pass only the sizes of the local args in
+                 the arg buffer. */
+              assert (sizeof (size_t) == 8);
+              CHECK_AND_ALIGN_SPACE (sizeof (size_t));
+              memcpy (write_pos, &buf_size, sizeof (size_t));
+              write_pos += sizeof (size_t);
+            }
+          else if (HSAIL_ENABLED)
+            {
+              CHECK_AND_ALIGN_SPACE (sizeof (uint32_t));
+              memcpy (write_pos, total_group_size, sizeof (uint32_t));
+              *total_group_size += (uint32_t)buf_size;
+              write_pos += sizeof (uint32_t);
+            }
+          else
+            assert (0 && "Unsupported local mem allocation scheme.");
         }
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
         {
