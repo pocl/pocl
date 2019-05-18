@@ -1,7 +1,7 @@
 /* OpenCL runtime library: clEnqueueNDRangeKernel()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos and
-                 2012-2018 Pekka Jääskeläinen / Tampere University of Technology
+                 2012-2019 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -546,13 +546,13 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
   command_node->type = CL_COMMAND_NDRANGE_KERNEL;
   command_node->command.run.kernel = kernel;
   command_node->command.run.pc = pc;
-  command_node->command.run.local_x = local_x;
-  command_node->command.run.local_y = local_y;
-  command_node->command.run.local_z = local_z;
+  command_node->command.run.pc.local_size[0] = local_x;
+  command_node->command.run.pc.local_size[1] = local_y;
+  command_node->command.run.pc.local_size[2] = local_z;
 
   int realdev_i = pocl_cl_device_to_index (kernel->program, realdev);
   assert (realdev_i >= 0);
-  command_node->command.run.device_i = (unsigned)realdev_i;
+  command_node->device_i = (unsigned)realdev_i;
   command_node->command.run.hash = kernel->meta->build_hash[realdev_i];
 
   /* Copy the currently set kernel arguments because the same kernel

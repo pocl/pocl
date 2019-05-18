@@ -238,7 +238,8 @@ pocl_init_cpu_device_infos (cl_device_id dev)
   dev->image_support = CL_TRUE;
   /* Use the minimum values until we get a more sensible upper limit from
      somewhere. */
-  dev->max_read_image_args = dev->max_write_image_args = dev->max_read_write_image_args = 128;
+  dev->max_read_image_args =
+    dev->max_write_image_args = dev->max_read_write_image_args = 128;
   dev->image2d_max_width = dev->image2d_max_height = 8192;
   dev->image3d_max_width = dev->image3d_max_height = dev->image3d_max_depth = 2048;
   dev->max_samplers = 16;
@@ -647,10 +648,6 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
         void *pp = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, s);
         *(void **)(arguments[j]) = pp;
       }
-
-  pc->local_size[0] = cmd->command.run.local_x;
-  pc->local_size[1] = cmd->command.run.local_y;
-  pc->local_size[2] = cmd->command.run.local_z;
 
   pc->printf_buffer = d->printf_buffer;
   assert (pc->printf_buffer != NULL);

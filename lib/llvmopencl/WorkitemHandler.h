@@ -1,7 +1,7 @@
 // Header for WorkitemHandler, a parent class for all implementations of
 // work item handling.
 //
-// Copyright (c) 2012-2018 Pekka Jääskeläinen
+// Copyright (c) 2012-2019 Pekka Jääskeläinen
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to

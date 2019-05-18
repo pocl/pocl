@@ -1,7 +1,7 @@
-// Header for CleanupWorkItemFuncCalls, an LLVM pass to optimize calls to work-item
+// OptimizeWorkItemFuncCalls is an LLVM pass to optimize calls to work-item
 // functions like get_local_size().
 //
-// Copyright (c) 2017 Pekka Jääskeläinen / Tampere University of Technology
+// Copyright (c) 2017-2019 Pekka Jääskeläinen
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -38,8 +38,7 @@ using namespace llvm;
 namespace {
   static
   RegisterPass<pocl::OptimizeWorkItemFuncCalls>
-  X("optimize-wi-func-calls",
-    "Optimize work-item function calls.");
+  X("optimize-wi-func-calls", "Optimize work-item function calls.");
 }
 
 char OptimizeWorkItemFuncCalls::ID = 0;
@@ -84,7 +83,8 @@ OptimizeWorkItemFuncCalls::runOnFunction(Function &F) {
         // The callee can be null in case of asm snippets (TCE).
         continue;
       }
-      auto FuncNameI = WIFuncNames.find(Call->getCalledFunction()->getName().str());
+      auto FuncNameI =
+        WIFuncNames.find(Call->getCalledFunction()->getName().str());
       if (FuncNameI == WIFuncNames.end())
         continue;
 

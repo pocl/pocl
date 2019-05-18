@@ -125,13 +125,9 @@ TCEDevice::readWordFromDevice(uint32_t addr) {
 void
 TCEDevice::findDataMemoryAddresses() {
   /* Figure out the locations of the shared data structures in
-     the device memories from the fully-linked program. 
-  */
+     the device memories from the fully-linked program. */
   const TTAProgram::Program* prog = currentProgram;
   assert (prog != NULL);
-
-  const TTAProgram::GlobalScope& globalScope = prog->globalScopeConst();
-
   commandQueueAddr = global_as->start() + TTA_UNALLOCATED_GLOBAL_SPACE;
 }
 
@@ -268,16 +264,16 @@ TCEString TCEDevice::tceccCommandLine(_cl_command_run *run_cmd,
   return cmdLine;
 }
 
-bool 
-TCEDevice::isNewKernel(const _cl_command_run* runCmd) 
+bool
+TCEDevice::isNewKernel(const _cl_command_run* runCmd)
 {
-  if (curKernel == NULL || runCmd->kernel != curKernel) 
+  if (curKernel == NULL || runCmd->kernel != curKernel)
     return true;
 
   bool newKernel = true;
-  if (runCmd->local_x != curLocalX ||
-      runCmd->local_y != curLocalY ||
-      runCmd->local_z != curLocalZ)
+  if (runCmd->pc.local_size[0] != curLocalX ||
+      runCmd->pc.local_size[1] != curLocalY ||
+      runCmd->pc.local_size[2] != curLocalZ)
     newKernel = true;
   else
     newKernel = false;
@@ -285,15 +281,15 @@ TCEDevice::isNewKernel(const _cl_command_run* runCmd)
 }
 
 
-void 
+void
 TCEDevice::updateCurrentKernel(const _cl_command_run* runCmd, 
                                uint32_t kernelAddr)
 {
   curKernelAddr = kernelAddr;
   curKernel = runCmd->kernel;
-  curLocalX = runCmd->local_x;
-  curLocalY = runCmd->local_y;
-  curLocalZ = runCmd->local_z;
+  curLocalX = runCmd->pc.local_size[0];
+  curLocalY = runCmd->pc.local_size[1];
+  curLocalZ = runCmd->pc.local_size[2];
 }
 
 void *
@@ -463,8 +459,9 @@ pocl_tce_compile_kernel(_cl_command_node *cmd,
                       cmd->command.run.pc.global_offset[2] == 0;
   POCL_LOCK(d->tce_compile_lock);
   int error = pocl_llvm_generate_workgroup_function(
-      cmd->command.run.device_i, device, kernel, cmd->command.run.local_x,
-      cmd->command.run.local_y, cmd->command.run.local_z, goffs_is_zero);
+      cmd->device_i, device, kernel, cmd->command.run.pc.local_size[0],
+      cmd->command.run.pc.local_size[1], cmd->command.run.pc.local_size[2],
+      goffs_is_zero);
 
   if (error) {
     POCL_UNLOCK(d->tce_compile_lock);
@@ -481,13 +478,13 @@ pocl_tce_compile_kernel(_cl_command_node *cmd,
 
   char cachedir[POCL_FILENAME_LENGTH];
   pocl_cache_kernel_cachedir_path(
-      cachedir, kernel->program, cmd->command.run.device_i, kernel, "",
-      cmd->command.run.local_x, cmd->command.run.local_y,
-      cmd->command.run.local_z, goffs_is_zero);
+      cachedir, kernel->program, cmd->device_i, kernel, "",
+      cmd->command.run.pc.local_size[0], cmd->command.run.pc.local_size[1],
+      cmd->command.run.pc.local_size[2], goffs_is_zero);
   cmd->command.run.device_data = strdup(cachedir);
 
   if (d->isNewKernel(&(cmd->command.run))) {
-    pocl_tce_write_kernel_descriptor(device, cmd->command.run.device_i, kernel);
+    pocl_tce_write_kernel_descriptor(device, cmd->device_i, kernel);
 
     std::string assemblyFileName(cachedir);
     TCEString tempDir(cachedir);

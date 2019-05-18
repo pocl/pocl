@@ -1,6 +1,6 @@
 /* OpenCL runtime library: caching functions
 
-   Copyright (c) 2015-2018 pocl developers
+   Copyright (c) 2015-2019 pocl developers
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -163,25 +163,24 @@ pocl_cache_final_binary_path (char *final_binary_path, cl_program program,
                               size_t local_x, size_t local_y, size_t local_z,
                               int assume_zero_global_offset)
 {
-  assert (kernel->name);
+    assert (kernel->name);
 
-  /* TODO this should be probably refactored to either
-   * get the binary name from the device itself, or
-   * let the device ops call pocl_llvm_generate_workgroup_function() on their
-   * own */
+    /* TODO: This should be probably refactored to either get the binary name
+       from the device itself, or let the device ops call
+       pocl_llvm_generate_workgroup_function() on their own */
 
   int bytes_written;
   char final_binary_name[POCL_FILENAME_LENGTH];
 
-  /* FIXME: Why different naming for SPMD and why the .brig suffix? */
-  if (program->devices[device_i]->spmd)
-    bytes_written = snprintf (final_binary_name, POCL_FILENAME_LENGTH,
-                              "%s.brig", POCL_PARALLEL_BC_FILENAME);
-  else
-    bytes_written = snprintf (final_binary_name, POCL_FILENAME_LENGTH,
-                              "/%s.so", kernel->name);
+    /* FIXME: Why different naming for SPMD and why the .brig suffix? */
+    if (kernel->program->devices[device_i]->spmd)
+        bytes_written = snprintf (final_binary_name, POCL_FILENAME_LENGTH,
+                                  "%s.brig", POCL_PARALLEL_BC_FILENAME);
+    else
+        bytes_written = snprintf (final_binary_name, POCL_FILENAME_LENGTH,
+                                  "/%s.so", kernel->name);
 
-  assert (bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
+    assert (bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
 
   pocl_cache_kernel_cachedir_path (final_binary_path, program, device_i,
                                    kernel, final_binary_name, local_x, local_y,
@@ -326,29 +325,28 @@ pocl_cache_write_kernel_parallel_bc (void *bc, cl_program program,
                                      size_t local_z,
                                      int assume_zero_global_offset)
 {
-  assert (bc);
+    assert (bc);
+    char kernel_parallel_path[POCL_FILENAME_LENGTH];
+    pocl_cache_kernel_cachedir_path(kernel_parallel_path, program, device_i,
+                                    kernel, "", local_x, local_y, local_z,
+				    assume_zero_global_offset);
+    int err = pocl_mkdir_p(kernel_parallel_path);
+    if (err)
+      return err;
 
-  char kernel_parallel_path[POCL_FILENAME_LENGTH];
-  pocl_cache_kernel_cachedir_path (kernel_parallel_path, program, device_i,
-                                   kernel, "", local_x, local_y, local_z,
-                                   assume_zero_global_offset);
-  int err = pocl_mkdir_p (kernel_parallel_path);
-  if (err)
-    return err;
-
-  assert (strlen (kernel_parallel_path)
-          < (POCL_FILENAME_LENGTH - strlen (POCL_PARALLEL_BC_FILENAME)));
-  strcat (kernel_parallel_path, POCL_PARALLEL_BC_FILENAME);
-  return pocl_write_module (bc, kernel_parallel_path, 0);
+    assert (strlen (kernel_parallel_path) <
+            (POCL_FILENAME_LENGTH - strlen (POCL_PARALLEL_BC_FILENAME)));
+    strcat (kernel_parallel_path, POCL_PARALLEL_BC_FILENAME);
+    return pocl_write_module (bc, kernel_parallel_path, 0);
 }
 
 /******************************************************************************/
 
 static inline void
-build_program_compute_hash(cl_program program,
-                           unsigned   device_i,
-                           const char*      preprocessed_source,
-                           size_t     source_len)
+build_program_compute_hash (cl_program program,
+                            unsigned device_i,
+                            const char* preprocessed_source,
+                            size_t source_len)
 {
     SHA1_CTX hash_ctx;
     unsigned i;

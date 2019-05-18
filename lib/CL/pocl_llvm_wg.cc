@@ -2,7 +2,7 @@
    optimization passes and codegen.
 
    Copyright (c) 2013 Kalle Raiskila
-                 2013-2018 Pekka Jääskeläinen
+                 2013-2019 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal

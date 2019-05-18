@@ -96,7 +96,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     }
   case CL_DEVICE_MAX_WORK_ITEM_SIZES:
     {
-      /* We allocate a 3-elementa array for this in pthread.c */
+      /* We allocate a 3-element array for this in pthread.c */
       typedef struct { size_t size[3]; } size_t_3;
       POCL_RETURN_GETINFO(size_t_3, *(size_t_3 const *)device->max_work_item_sizes);
     }

@@ -1,7 +1,7 @@
 /* OpenCL runtime library: compile_and_link_program()
 
    Copyright (c) 2011-2013 Universidad Rey Juan Carlos,
-                 2011-2018 Pekka Jääskeläinen
+                 2011-2019 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to
@@ -140,7 +140,7 @@ program_compile_dynamic_wg_binaries (cl_program program)
         continue;
 
       cmd.device = device;
-      cmd.command.run.device_i = device_i;
+      cmd.device_i = device_i;
 
       struct _cl_kernel fake_k;
       memset (&fake_k, 0, sizeof (fake_k));
@@ -166,9 +166,9 @@ program_compile_dynamic_wg_binaries (cl_program program)
               local_z = kernel->meta->reqd_wg_size[2];
             }
 
-          cmd.command.run.local_x = local_x;
-          cmd.command.run.local_y = local_y;
-          cmd.command.run.local_z = local_z;
+          cmd.command.run.pc.local_size[0] = local_x;
+          cmd.command.run.pc.local_size[1] = local_y;
+          cmd.command.run.pc.local_size[2] = local_z;
 
           cmd.command.run.kernel = kernel;
 

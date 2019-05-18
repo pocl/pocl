@@ -102,12 +102,9 @@ typedef struct
   void *hash;
   void *wg; /* The work group function ptr. Device specific. */
   cl_kernel kernel;
-  size_t local_x;
-  size_t local_y;
-  size_t local_z;
+  /* The launch data that can be passed to the kernel execution environment. */
   struct pocl_context pc;
   struct pocl_argument *arguments;
-  unsigned device_i;
   /* Can be used to store/cache arbitrary device-specific data. */
   void *device_data;
 } _cl_command_run;
@@ -358,6 +355,8 @@ struct _cl_command_node
   _cl_command_node * volatile prev;
   cl_event event;
   const cl_event *volatile event_wait_list;
+  /* The index of the targeted device in the platform's device list. */
+  unsigned device_i;
   cl_device_id device;
   volatile cl_int ready;
 };

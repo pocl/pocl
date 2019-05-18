@@ -1,8 +1,7 @@
-// LLVM function pass to convert the sampler initializer calls to a target
-// desired format
+// Lightweight bitcode linker to replace llvm::Linker.
 //
 // Copyright (c) 2014 Kalle Raiskila
-//               2016-2018 Pekka Jääskeläinen / Tampere University of Technology
+//               2016-2019 Pekka Jääskeläinen
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -22,15 +21,11 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
-/*
-   Lightweight bitcode linker to replace
-   llvm::Linker. Unlike the LLVM default linker, this
-   does not link in the entire given module, only
-   the called functions are cloned from the input.
-   This is to speed up the linking of the kernel lib
-   which is so big, that it takes seconds to clone it,
-   even on top-of-the line current processors
-*/
+/* Lightweight bitcode linker to replace llvm::Linker. Unlike the LLVM default
+   linker, this does not link in the entire given module, only the called
+   functions are cloned from the input. This is to speed up the linking of the
+   kernel lib which is so big, that it takes seconds to clone it,  even on
+   top-of-the line current processors. */
 
 #include <list>
 #include <iostream>

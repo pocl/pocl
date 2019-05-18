@@ -2,7 +2,7 @@
               implementations
 
    Copyright (c) 2011-2013 Universidad Rey Juan Carlos
-                 2011-2018 Pekka Jääskeläinen
+                 2011-2019 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -73,9 +73,6 @@
  * tools.
  *
  * Uses an existing (cached) one, if available.
- *
- * @param tmpdir The directory of the work-group function bitcode.
- * @param return the generated binary filename.
  */
 
 #ifdef OCS_AVAILABLE
@@ -910,9 +907,9 @@ pocl_release_dlhandle_cache (_cl_command_node *cmd)
   {
     if ((memcmp (ci->hash, cmd->command.run.hash, sizeof (pocl_kernel_hash_t))
          == 0)
-        && (ci->local_wgs[0] == cmd->command.run.local_x)
-        && (ci->local_wgs[1] == cmd->command.run.local_y)
-        && (ci->local_wgs[2] == cmd->command.run.local_z))
+        && (ci->local_wgs[0] == cmd->command.run.pc.local_size[0])
+        && (ci->local_wgs[1] == cmd->command.run.pc.local_size[1])
+        && (ci->local_wgs[2] == cmd->command.run.pc.local_size[2]))
       {
         found = ci;
         break;
@@ -939,11 +936,11 @@ pocl_check_kernel_disk_cache (_cl_command_node *cmd)
   char *module_fn = NULL;
   cl_kernel k = cmd->command.run.kernel;
   cl_program p = k->program;
-  unsigned dev_i = cmd->command.run.device_i;
+  unsigned dev_i = cmd->device_i;
 
-  size_t x = cmd->command.run.local_x;
-  size_t y = cmd->command.run.local_y;
-  size_t z = cmd->command.run.local_z;
+  size_t x = cmd->command.run.pc.local_size[0];
+  size_t y = cmd->command.run.pc.local_size[1];
+  size_t z = cmd->command.run.pc.local_size[2];
 
   int global_offset_is_zero = cmd->command.run.pc.global_offset[0] == 0
                               && cmd->command.run.pc.global_offset[1] == 0
@@ -982,9 +979,10 @@ pocl_check_kernel_disk_cache (_cl_command_node *cmd)
           module_fn);
       return module_fn;
 #else
+      /* TODO: This should be caught earlier. */
       if (!p->pocl_binaries[dev_i])
-        POCL_ABORT ("pocl built without online compiler support"
-                    " cannot compile LLVM IRs to machine code\n");
+        POCL_ABORT ("pocl device without online compilation support"
+                    " cannot compile LLVM IRs to machine code!\n");
 #endif
     }
   /* Fallback to the worst option (dynamic WG).
@@ -1008,7 +1006,10 @@ pocl_check_kernel_disk_cache (_cl_command_node *cmd)
  * caches.
  *
  * The initial refcount may be 0, in case we're just pre-compiling kernels
- * (or compiling them for binaries), and not actually need them immediately. */
+ * (or compiling them for binaries), and not actually need them immediately.
+ *
+ * TODO: This function is really specific to CPU (host) drivers since dlhandles
+ * imply program loading to the same process as the host. Move to basic.c? */
 void
 pocl_check_kernel_dlhandle_cache (_cl_command_node *cmd,
 				  unsigned initial_refcount)
@@ -1022,9 +1023,9 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *cmd,
   {
     if ((memcmp (ci->hash, cmd->command.run.hash, sizeof (pocl_kernel_hash_t))
          == 0)
-        && (ci->local_wgs[0] == cmd->command.run.local_x)
-        && (ci->local_wgs[1] == cmd->command.run.local_y)
-        && (ci->local_wgs[2] == cmd->command.run.local_z))
+        && (ci->local_wgs[0] == cmd->command.run.pc.local_size[0])
+        && (ci->local_wgs[1] == cmd->command.run.pc.local_size[1])
+        && (ci->local_wgs[2] == cmd->command.run.pc.local_size[2]))
       {
         /* move to the front of the line */
         DL_DELETE (pocl_dlhandle_cache, ci);
@@ -1040,9 +1041,9 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *cmd,
   POCL_UNLOCK (pocl_dlhandle_lock);
 
   memcpy (ci->hash, cmd->command.run.hash, sizeof (pocl_kernel_hash_t));
-  ci->local_wgs[0] = cmd->command.run.local_x;
-  ci->local_wgs[1] = cmd->command.run.local_y;
-  ci->local_wgs[2] = cmd->command.run.local_z;
+  ci->local_wgs[0] = cmd->command.run.pc.local_size[0];
+  ci->local_wgs[1] = cmd->command.run.pc.local_size[1];
+  ci->local_wgs[2] = cmd->command.run.pc.local_size[2];
   ci->ref_count = initial_refcount;
 
   char *module_fn = pocl_check_kernel_disk_cache (cmd);
@@ -1121,7 +1122,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *cmd,
 static pocl_global_mem_t system_memory = {POCL_LOCK_INITIALIZER, 0, 0, 0};
 
 void
-pocl_setup_device_for_system_memory(cl_device_id device)
+pocl_setup_device_for_system_memory (cl_device_id device)
 {
   int limit_memory_gb = pocl_get_int_option ("POCL_MEMORY_LIMIT", 0);
 
@@ -1311,7 +1312,8 @@ pocl_print_system_memory_stats()
 }
 
 /* Unique hash for a device + program build + kernel name combination.
- * NOTE: this does NOT take into account the local WG sizes. */
+   NOTE: this does NOT take into account the local WG sizes or other
+   specialization properties. */
 void
 pocl_calculate_kernel_hash (cl_program program, unsigned kernel_i,
                             unsigned device_i)

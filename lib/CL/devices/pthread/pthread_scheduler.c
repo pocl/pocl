@@ -1,6 +1,6 @@
 /* OpenCL native pthreaded device implementation.
 
-   Copyright (c) 2011-2018 pocl developers
+   Copyright (c) 2011-2019 pocl developers
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -402,9 +402,7 @@ finalize_kernel_command (struct pool_thread_data *thread_data,
 }
 
 static void
-pocl_pthread_prepare_kernel
-(void *data, 
- _cl_command_node* cmd)
+pocl_pthread_prepare_kernel (void *data, _cl_command_node* cmd)
 {
   kernel_run_command *run_cmd;
   cl_kernel kernel = cmd->command.run.kernel;
@@ -420,9 +418,6 @@ pocl_pthread_prepare_kernel
   run_cmd->device = cmd->device;
   run_cmd->pc = *pc;
   run_cmd->cmd = cmd;
-  run_cmd->pc.local_size[0] = cmd->command.run.local_x;
-  run_cmd->pc.local_size[1] = cmd->command.run.local_y;
-  run_cmd->pc.local_size[2] = cmd->command.run.local_z;
   run_cmd->pc.printf_buffer = NULL;
   run_cmd->pc.printf_buffer_capacity = scheduler.printf_buf_size;
   run_cmd->pc.printf_buffer_position = NULL;

@@ -70,7 +70,7 @@ int llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
                   cl_device_id device, size_t local_x, size_t local_y,
                   size_t local_z, int assume_zero_global_offset);
 
-void fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg, 
+void fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg,
                        cl_device_id device);
 
 void fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg);

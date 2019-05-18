@@ -1142,7 +1142,7 @@ compile_parallel_bc_to_brig (char *brigfile, cl_kernel kernel,
 
 static pocl_hsa_kernel_cache_t *
 pocl_hsa_find_mem_cached_kernel (pocl_hsa_device_data_t *d,
-				 _cl_command_node *cmd)
+                                 _cl_command_node *cmd)
 {
   size_t i;
   for (i = 0; i < HSA_KERNEL_CACHE_SIZE; i++)
@@ -1155,9 +1155,11 @@ pocl_hsa_find_mem_cached_kernel (pocl_hsa_device_data_t *d,
 
       if (d->device->spmd)
         return &d->kernel_cache[i];
-      else if (d->kernel_cache[i].local_x == cmd->command.run.local_x
-               && d->kernel_cache[i].local_y == cmd->command.run.local_y
-               && d->kernel_cache[i].local_z == cmd->command.run.local_z)
+      else if (d->kernel_cache[i].local_x == cmd->command.run.pc.local_size[0]
+               && d->kernel_cache[i].local_y ==
+               cmd->command.run.pc.local_size[1]
+               && d->kernel_cache[i].local_z ==
+               cmd->command.run.pc.local_size[2])
         return &d->kernel_cache[i];
     }
   return NULL;
@@ -1165,7 +1167,7 @@ pocl_hsa_find_mem_cached_kernel (pocl_hsa_device_data_t *d,
 
 void
 pocl_hsa_compile_kernel_native (_cl_command_node *cmd, cl_kernel kernel,
-				cl_device_id device)
+                                cl_device_id device)
 {
   pocl_hsa_device_data_t *d = (pocl_hsa_device_data_t*)device->data;
 
@@ -1180,14 +1182,14 @@ pocl_hsa_compile_kernel_native (_cl_command_node *cmd, cl_kernel kernel,
     }
 
   POCL_MSG_PRINT_INFO("pocl-hsa: loading native binary from file %s.\n",
-		      binary_fn);
+                      binary_fn);
 
   uint64_t elf_size;
   FILE *elf_file;
   elf_file = fopen(binary_fn, "rb");
   if (elf_file == NULL)
     POCL_ABORT ("pocl-hsa: could not get the file size of the native "
-		"binary\n");
+                "binary\n");
 
   /* This assumes phsa-runtime's deserialization input format
      which stores the following data: */
@@ -1227,7 +1229,7 @@ pocl_hsa_compile_kernel_native (_cl_command_node *cmd, cl_kernel kernel,
   hsa_code_object_t obj;
 
   HSA_CHECK(hsa_executable_create (d->agent_profile,
-				   HSA_EXECUTABLE_STATE_UNFROZEN, "", &exe));
+                                   HSA_EXECUTABLE_STATE_UNFROZEN, "", &exe));
 
   HSA_CHECK(hsa_code_object_deserialize (blob, blob_size, "", &obj));
 
@@ -1243,9 +1245,9 @@ pocl_hsa_compile_kernel_native (_cl_command_node *cmd, cl_kernel kernel,
       d->kernel_cache[i].kernel = kernel;
       memcpy (d->kernel_cache[i].kernel_hash, cmd->command.run.hash,
               sizeof (pocl_kernel_hash_t));
-      d->kernel_cache[i].local_x = cmd->command.run.local_x;
-      d->kernel_cache[i].local_y = cmd->command.run.local_y;
-      d->kernel_cache[i].local_z = cmd->command.run.local_z;
+      d->kernel_cache[i].local_x = cmd->command.run.pc.local_size[0];
+      d->kernel_cache[i].local_y = cmd->command.run.pc.local_size[1];
+      d->kernel_cache[i].local_z = cmd->command.run.pc.local_size[2];
       d->kernel_cache[i].hsa_exe.handle = exe.handle;
       d->kernel_cache_lastptr++;
     }
@@ -1260,17 +1262,17 @@ pocl_hsa_compile_kernel_native (_cl_command_node *cmd, cl_kernel kernel,
   char *symbol_name = malloc (launcher_name_length);
 
   snprintf (symbol_name, launcher_name_length, launcher_name_tmpl,
-	    kernel->name);
+            kernel->name);
 
-  POCL_MSG_PRINT_INFO("pocl-hsa: getting kernel symbol %s.\n", symbol_name);
+  POCL_MSG_PRINT_INFO ("pocl-hsa: getting kernel symbol %s.\n", symbol_name);
 
-  HSA_CHECK(hsa_executable_get_symbol (exe, NULL, symbol_name, d->agent, 0,
-				       &kernel_symbol));
-  free(symbol_name);
+  HSA_CHECK (hsa_executable_get_symbol (exe, NULL, symbol_name, d->agent, 0,
+                                        &kernel_symbol));
+  free (symbol_name);
 
   hsa_symbol_kind_t symtype;
-  HSA_CHECK(hsa_executable_symbol_get_info
-    (kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_TYPE, &symtype));
+  HSA_CHECK (hsa_executable_symbol_get_info
+             (kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_TYPE, &symtype));
   if (symtype != HSA_SYMBOL_KIND_KERNEL)
     POCL_ABORT ("pocl-hsa: the kernel function symbol resolves "
                 "to something else than a function\n");
@@ -1306,8 +1308,8 @@ pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
   POCL_LOCK (d->pocl_hsa_compilation_lock);
 
   int error = pocl_llvm_generate_workgroup_function (
-      cmd->command.run.device_i, device, kernel, cmd->command.run.local_x,
-      cmd->command.run.local_y, cmd->command.run.local_z, 0);
+      cmd->device_i, device, kernel, cmd->command.run.pc.local_size[0],
+      cmd->command.run.pc.local_size[1], cmd->command.run.pc.local_size[2], 0);
   if (error)
     {
       POCL_MSG_PRINT_GENERAL ("HSA: pocl_llvm_generate_workgroup_function()"
@@ -1324,7 +1326,7 @@ pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
     }
 
   if (compile_parallel_bc_to_brig (brigfile, kernel, device,
-                                   cmd->command.run.device_i))
+                                   cmd->device_i))
     POCL_ABORT("Compiling LLVM IR -> HSAIL -> BRIG failed.\n");
 
   POCL_MSG_PRINT_INFO("pocl-hsa: loading binary from file %s.\n", brigfile);
@@ -1739,9 +1741,9 @@ pocl_hsa_launch (pocl_hsa_device_data_t *d, cl_event event)
     {
       /* Otherwise let the target processor take care of the SPMD grid
 	 execution. */
-      kernel_packet->workgroup_size_x = cmd->command.run.local_x;
-      kernel_packet->workgroup_size_y = cmd->command.run.local_y;
-      kernel_packet->workgroup_size_z = cmd->command.run.local_z;
+      kernel_packet->workgroup_size_x = cmd->command.run.pc.local_size[0];
+      kernel_packet->workgroup_size_y = cmd->command.run.pc.local_size[1];
+      kernel_packet->workgroup_size_z = cmd->command.run.pc.local_size[2];
     }
 
 
@@ -1752,9 +1754,9 @@ pocl_hsa_launch (pocl_hsa_device_data_t *d, cl_event event)
      uses the context struct. */
   if (!d->device->spmd || d->device->arg_buffer_launcher)
     {
-      pc->local_size[0] = cmd->command.run.local_x;
-      pc->local_size[1] = cmd->command.run.local_y;
-      pc->local_size[2] = cmd->command.run.local_z;
+      pc->local_size[0] = cmd->command.run.pc.local_size[0];
+      pc->local_size[1] = cmd->command.run.pc.local_size[1];
+      pc->local_size[2] = cmd->command.run.pc.local_size[2];
     }
 
   kernel_packet->grid_size_x = kernel_packet->grid_size_y
@@ -1778,8 +1780,12 @@ pocl_hsa_launch (pocl_hsa_device_data_t *d, cl_event event)
 
   kernel_packet->group_segment_size = total_group_size;
 
-  POCL_MSG_PRINT_INFO ("pocl-hsa: kernel's total group size: %u\n",
+  POCL_MSG_PRINT_INFO ("pocl-hsa: kernel's total group mem size: %u\n",
                        total_group_size);
+  POCL_MSG_PRINT_INFO ("pocl-hsa: kernel command grid size %u x %u x %u\n",
+                       kernel_packet->grid_size_x,
+                       kernel_packet->grid_size_y,
+                       kernel_packet->grid_size_z);
   if (total_group_size > cmd->device->local_mem_size)
     POCL_ABORT ("pocl-hsa: required local memory > device local memory!\n");
 

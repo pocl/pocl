@@ -1,8 +1,8 @@
-// LLVM function pass to replicate the kernel body for all work items
-// in a work group.
+// Base class for passes that generate work-group functions out of a bunch
+// of work-items.
 //
 // Copyright (c) 2011-2012 Carlos Sánchez de La Lama / URJC and
-//               2012-2018 Pekka Jääskeläinen / TUT
+//               2012-2019 Pekka Jääskeläinen
 //
 // Permission is hereby granted, free of charge, to any person obtaining a copy
 // of this software and associated documentation files (the "Software"), to deal
@@ -45,12 +45,16 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 POP_COMPILER_DIAGS
 
 //#define DEBUG_REFERENCE_FIXING
-
 extern cl_device_id currentPoclDevice;
 
 namespace pocl {
 
 using namespace llvm;
+
+/* These are used to communicate the work-group function specialization
+   properites of the currently compiled kernel command.
+
+   TODO: Something cleaner than a global value. */
 
 size_t WGLocalSizeX = 1;
 size_t WGLocalSizeY = 1;
@@ -59,9 +63,10 @@ bool WGAssumeZeroGlobalOffset = false;
 bool WGDynamicLocalSize = false;
 
 cl::opt<bool>
-AddWIMetadata("add-wi-metadata", cl::init(false), cl::Hidden,
-  cl::desc("Adds a work item identifier to each of the instruction in work items."));
-
+AddWIMetadata(
+  "add-wi-metadata", cl::init(false), cl::Hidden,
+  cl::desc("Adds a work item identifier to each of the instruction in "
+           "work items."));
 
 WorkitemHandler::WorkitemHandler(char& ID) : FunctionPass(ID) {
 }
