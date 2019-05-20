@@ -39,6 +39,7 @@ Dockerfiles are named according to what they build:
 * `distro`: does a distribution-friendly build (enables runtime detection of CPU, etc)
 
 Some additional notes:
+
 * Arch Dockerfiles are split up into two-stage builds
 * some (not all) Ubuntu Dockerfiles are split up into multi-stage builds
 * RHEL 7 was added, it's using unofficial LLVM 5.0 binaries from copr, since the official RHEL 7 LLVM is too old.
