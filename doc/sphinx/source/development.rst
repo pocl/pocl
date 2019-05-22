@@ -124,8 +124,8 @@ An example emacs configuration to help get the pocl code style correct::
   
   (defun my-cpp-mode-common-hook ()
     (c-set-style "stroustrup")
-    (setq tab-width 2)
-    (setq c-basic-offset 2)
+    (setq tab-width 4)
+    (setq c-basic-offset 4)
     )
   (add-hook 'c++-mode-hook 'my-cpp-mode-common-hook)
   
