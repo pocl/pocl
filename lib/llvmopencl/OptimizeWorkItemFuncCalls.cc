@@ -36,9 +36,8 @@ namespace pocl {
 using namespace llvm;
 
 namespace {
-  static
-  RegisterPass<pocl::OptimizeWorkItemFuncCalls>
-  X("optimize-wi-func-calls", "Optimize work-item function calls.");
+static RegisterPass<pocl::OptimizeWorkItemFuncCalls>
+    X("optimize-wi-func-calls", "Optimize work-item function calls.");
 }
 
 char OptimizeWorkItemFuncCalls::ID = 0;
@@ -84,7 +83,7 @@ OptimizeWorkItemFuncCalls::runOnFunction(Function &F) {
         continue;
       }
       auto FuncNameI =
-        WIFuncNames.find(Call->getCalledFunction()->getName().str());
+          WIFuncNames.find(Call->getCalledFunction()->getName().str());
       if (FuncNameI == WIFuncNames.end())
         continue;
 

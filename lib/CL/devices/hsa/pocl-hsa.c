@@ -1156,10 +1156,10 @@ pocl_hsa_find_mem_cached_kernel (pocl_hsa_device_data_t *d,
       if (d->device->spmd)
         return &d->kernel_cache[i];
       else if (d->kernel_cache[i].local_x == cmd->command.run.pc.local_size[0]
-               && d->kernel_cache[i].local_y ==
-               cmd->command.run.pc.local_size[1]
-               && d->kernel_cache[i].local_z ==
-               cmd->command.run.pc.local_size[2])
+               && d->kernel_cache[i].local_y
+                      == cmd->command.run.pc.local_size[1]
+               && d->kernel_cache[i].local_z
+                      == cmd->command.run.pc.local_size[2])
         return &d->kernel_cache[i];
     }
   return NULL;
@@ -1181,8 +1181,8 @@ pocl_hsa_compile_kernel_native (_cl_command_node *cmd, cl_kernel kernel,
         return;
     }
 
-  POCL_MSG_PRINT_INFO("pocl-hsa: loading native binary from file %s.\n",
-                      binary_fn);
+  POCL_MSG_PRINT_INFO ("pocl-hsa: loading native binary from file %s.\n",
+                       binary_fn);
 
   uint64_t elf_size;
   FILE *elf_file;
@@ -1228,8 +1228,8 @@ pocl_hsa_compile_kernel_native (_cl_command_node *cmd, cl_kernel kernel,
   hsa_executable_t exe;
   hsa_code_object_t obj;
 
-  HSA_CHECK(hsa_executable_create (d->agent_profile,
-                                   HSA_EXECUTABLE_STATE_UNFROZEN, "", &exe));
+  HSA_CHECK (hsa_executable_create (d->agent_profile,
+                                    HSA_EXECUTABLE_STATE_UNFROZEN, "", &exe));
 
   HSA_CHECK(hsa_code_object_deserialize (blob, blob_size, "", &obj));
 
@@ -1271,8 +1271,8 @@ pocl_hsa_compile_kernel_native (_cl_command_node *cmd, cl_kernel kernel,
   free (symbol_name);
 
   hsa_symbol_kind_t symtype;
-  HSA_CHECK (hsa_executable_symbol_get_info
-             (kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_TYPE, &symtype));
+  HSA_CHECK (hsa_executable_symbol_get_info (
+      kernel_symbol, HSA_EXECUTABLE_SYMBOL_INFO_TYPE, &symtype));
   if (symtype != HSA_SYMBOL_KIND_KERNEL)
     POCL_ABORT ("pocl-hsa: the kernel function symbol resolves "
                 "to something else than a function\n");
@@ -1325,8 +1325,7 @@ pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
         return;
     }
 
-  if (compile_parallel_bc_to_brig (brigfile, kernel, device,
-                                   cmd->device_i))
+  if (compile_parallel_bc_to_brig (brigfile, kernel, device, cmd->device_i))
     POCL_ABORT("Compiling LLVM IR -> HSAIL -> BRIG failed.\n");
 
   POCL_MSG_PRINT_INFO("pocl-hsa: loading binary from file %s.\n", brigfile);
@@ -1783,8 +1782,7 @@ pocl_hsa_launch (pocl_hsa_device_data_t *d, cl_event event)
   POCL_MSG_PRINT_INFO ("pocl-hsa: kernel's total group mem size: %u\n",
                        total_group_size);
   POCL_MSG_PRINT_INFO ("pocl-hsa: kernel command grid size %u x %u x %u\n",
-                       kernel_packet->grid_size_x,
-                       kernel_packet->grid_size_y,
+                       kernel_packet->grid_size_x, kernel_packet->grid_size_y,
                        kernel_packet->grid_size_z);
   if (total_group_size > cmd->device->local_mem_size)
     POCL_ABORT ("pocl-hsa: required local memory > device local memory!\n");

@@ -709,8 +709,7 @@ Workgroup::globalHandlesToContextStructLoads(
       StructLoads[i] = nullptr;
       continue;
     }
-    StructLoads[i] =
-      createLoadFromContext(
+    StructLoads[i] = createLoadFromContext(
         Builder, StructFieldIndex, GlobalHandleNames.size() == 1 ? -1 : i);
   }
   return StructLoads;

@@ -39,11 +39,10 @@ using namespace llvm;
 using namespace pocl;
 
 namespace {
-  static
-  RegisterPass<WorkitemHandlerChooser> X(
-    "workitem-handler-chooser",
-    "Finds the best way to handle work-items to produce a multi-WG function.",
-    false, false);
+static RegisterPass<WorkitemHandlerChooser>
+    X("workitem-handler-chooser",
+      "Finds the best way to handle work-items to produce a multi-WG function.",
+      false, false);
 }
 
 namespace pocl {
