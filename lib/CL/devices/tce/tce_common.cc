@@ -264,9 +264,7 @@ TCEString TCEDevice::tceccCommandLine(_cl_command_run *run_cmd,
   return cmdLine;
 }
 
-bool
-TCEDevice::isNewKernel(const _cl_command_run* runCmd)
-{
+bool TCEDevice::isNewKernel(const _cl_command_run *runCmd) {
   if (curKernel == NULL || runCmd->kernel != curKernel)
     return true;
 
@@ -280,11 +278,8 @@ TCEDevice::isNewKernel(const _cl_command_run* runCmd)
   return newKernel;
 }
 
-
-void
-TCEDevice::updateCurrentKernel(const _cl_command_run* runCmd, 
-                               uint32_t kernelAddr)
-{
+void TCEDevice::updateCurrentKernel(const _cl_command_run *runCmd,
+                                    uint32_t kernelAddr) {
   curKernelAddr = kernelAddr;
   curKernel = runCmd->kernel;
   curLocalX = runCmd->pc.local_size[0];

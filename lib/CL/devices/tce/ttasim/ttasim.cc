@@ -1,4 +1,5 @@
-/* ttasim.cc - a pocl device driver for simulating TTA devices using TCE's ttasim
+/* ttasim.cc - a pocl device driver for simulating TTA devices using TCE's
+   ttasim
 
    Copyright (c) 2012-2019 Pekka Jääskeläinen / Tampere University
 
