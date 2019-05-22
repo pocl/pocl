@@ -106,7 +106,6 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   unsigned i;
   int errcode = 0;
   cl_device_id realdev = NULL;
-  struct pocl_context pc;
   _cl_command_node *command_node;
   /* alloc from stack to avoid malloc. num_args is the absolute max needed */
   cl_mem mem_list[kernel->meta->num_args + 1];
@@ -535,20 +534,19 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
-  pc.work_dim = work_dim;
-  pc.num_groups[0] = global_x / local_x;
-  pc.num_groups[1] = global_y / local_y;
-  pc.num_groups[2] = global_z / local_z;
-  pc.global_offset[0] = offset_x;
-  pc.global_offset[1] = offset_y;
-  pc.global_offset[2] = offset_z;
 
   command_node->type = CL_COMMAND_NDRANGE_KERNEL;
   command_node->command.run.kernel = kernel;
-  command_node->command.run.pc = pc;
   command_node->command.run.pc.local_size[0] = local_x;
   command_node->command.run.pc.local_size[1] = local_y;
   command_node->command.run.pc.local_size[2] = local_z;
+  command_node->command.run.pc.work_dim = work_dim;
+  command_node->command.run.pc.num_groups[0] = global_x / local_x;
+  command_node->command.run.pc.num_groups[1] = global_y / local_y;
+  command_node->command.run.pc.num_groups[2] = global_z / local_z;
+  command_node->command.run.pc.global_offset[0] = offset_x;
+  command_node->command.run.pc.global_offset[1] = offset_y;
+  command_node->command.run.pc.global_offset[2] = offset_z;
 
   int realdev_i = pocl_cl_device_to_index (kernel->program, realdev);
   assert (realdev_i >= 0);
