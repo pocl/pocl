@@ -40,8 +40,6 @@ else()
       "llvm-config-mp-8.0" "llvm-config-8.0" "llvm-config80"
       "llvm-config-mp-7.0" "llvm-config-7.0" "llvm-config70"
       "llvm-config-mp-6.0" "llvm-config-6.0" "llvm-config60"
-      "llvm-config-mp-5.0" "llvm-config-5.0" "llvm-config50"
-      "llvm-config-mp-4.0" "llvm-config-4.0" "llvm-config40"
     DOC "llvm-config executable")
 endif()
 
@@ -154,20 +152,7 @@ if(WIN32)
 endif(WIN32)
 
 # required for sources..
-if(LLVM_VERSION MATCHES "^4[.]0")
-  set(LLVM_MAJOR 4)
-  set(LLVM_4_0 1)
-  set(LLVM_OLDER_THAN_5_0 1)
-  set(LLVM_OLDER_THAN_6_0 1)
-  set(LLVM_OLDER_THAN_7_0 1)
-  set(LLVM_OLDER_THAN_8_0 1)
-elseif(LLVM_VERSION MATCHES "^5[.]0")
-  set(LLVM_MAJOR 5)
-  set(LLVM_5_0 1)
-  set(LLVM_OLDER_THAN_6_0 1)
-  set(LLVM_OLDER_THAN_7_0 1)
-  set(LLVM_OLDER_THAN_8_0 1)
-elseif(LLVM_VERSION MATCHES "^6[.]0")
+if(LLVM_VERSION MATCHES "^6[.]0")
   set(LLVM_MAJOR 6)
   set(LLVM_6_0 1)
   set(LLVM_OLDER_THAN_7_0 1)
@@ -180,7 +165,7 @@ elseif(LLVM_VERSION MATCHES "^8[.]")
   set(LLVM_MAJOR 8)
   set(LLVM_8_0 1)
 else()
-  message(FATAL_ERROR "LLVM version between 4.0 and 8.0 required, found: ${LLVM_VERSION}")
+  message(FATAL_ERROR "LLVM version between 6.0 and 8.0 required, found: ${LLVM_VERSION}")
 endif()
 
 #############################################################
