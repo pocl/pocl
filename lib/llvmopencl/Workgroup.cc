@@ -1306,6 +1306,8 @@ Workgroup::createGridLauncher(Function *KernFunc, Function *WGFunc,
 
   LLVMTypeRef Int8Type = LLVMInt8TypeInContext(LLVMContext);
   LLVMTypeRef Int8PtrType = LLVMPointerType(Int8Type, 0);
+  LLVMTypeRef ArgsPtrType =
+    LLVMPointerType(Int8Type, currentPoclDevice->args_as_id);
 
   std::ostringstream StrStr("phsa_kernel.", std::ios::ate);
   StrStr << KernName;
@@ -1317,7 +1319,7 @@ Workgroup::createGridLauncher(Function *KernFunc, Function *WGFunc,
   LLVMTypeRef LauncherArgTypes[] =
     {Int8PtrType /*phsactx0*/,
      Int8PtrType /*phsactx1*/,
-     Int8PtrType /*args*/};
+     ArgsPtrType /*args*/};
 
   LLVMTypeRef VoidType = LLVMVoidTypeInContext(LLVMContext);
   LLVMTypeRef LauncherFuncType =

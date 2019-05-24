@@ -375,6 +375,8 @@ static struct _cl_device_id supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS]
                 .spmd = CL_TRUE,
                 .autolocals_to_args = CL_FALSE,
                 .device_alloca_locals = CL_FALSE,
+                .context_as_id = SPIR_ADDRESS_SPACE_GLOBAL,
+                .args_as_id = SPIR_ADDRESS_SPACE_GLOBAL,
                 .has_64bit_long = 1,
                 .vendor_id = AMD_VENDOR_ID,
                 .global_mem_cache_type = CL_READ_WRITE_CACHE,
@@ -403,6 +405,8 @@ static struct _cl_device_id supported_hsa_devices[HSA_NUM_KNOWN_HSA_AGENTS]
                 .spmd = CL_FALSE,
                 .autolocals_to_args = !HSAIL_ENABLED,
                 .device_alloca_locals = CL_TRUE,
+                .context_as_id = SPIR_ADDRESS_SPACE_GLOBAL,
+                .args_as_id = SPIR_ADDRESS_SPACE_GLOBAL,
                 .has_64bit_long = 1,
                 .vendor_id = 0xffff,
                 .global_mem_cache_type = CL_READ_WRITE_CACHE,
@@ -464,6 +468,8 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
 	  COPY_ATTR (spmd);
 	  COPY_ATTR (autolocals_to_args);
           COPY_ATTR (device_alloca_locals);
+          COPY_ATTR (context_as_id);
+          COPY_ATTR (args_as_id);
           if (!HSAIL_ENABLED)
             {
               /* TODO: Add a CMake variable or HSA description string
@@ -662,8 +668,6 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
   dev->autolocals_to_args = CL_FALSE;
   dev->device_alloca_locals = CL_FALSE;
 
-  dev->args_as_id = dev->context_as_id = dev->global_as_id =
-    SPIR_ADDRESS_SPACE_GLOBAL;
   dev->local_as_id = SPIR_ADDRESS_SPACE_LOCAL;
   dev->constant_as_id = SPIR_ADDRESS_SPACE_CONSTANT;
 
