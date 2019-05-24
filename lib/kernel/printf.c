@@ -697,12 +697,12 @@ __pocl_printf (char *restrict __buffer, uint32_t *__buffer_index,
 
   va_list va;
   va_start (va, fmt);
-  __pocl_printf_format_full (fmt, &p, va);
+  int r = __pocl_printf_format_full (fmt, &p, va);
   va_end (va);
 
   *__buffer_index = p.printf_buffer_index;
 
-  return 0;
+  return r;
 }
 
 /**************************************************************************/
@@ -719,15 +719,22 @@ extern uint32_t _printf_buffer_capacity;
 int
 printf (const OCL_CONSTANT_AS char *restrict fmt, ...)
 {
+  param_t p = { 0 };
+
+  p.printf_buffer = _printf_buffer;
+  p.printf_buffer_capacity = _printf_buffer_capacity;
+  p.printf_buffer_index = *_printf_buffer_position;
+
   va_list va;
   va_start (va, fmt);
-  __pocl_printf_format_full (fmt, NULL, va);
+  int r = __pocl_printf_format_full (fmt, &p, va);
   va_end (va);
 
   __pocl_printf (_printf_buffer, _printf_buffer_position,
                  _printf_buffer_capacity, NULL);
 
-  return 0;
+  *_printf_buffer_position = p.printf_buffer_index;
+  return r;
 }
 
 /**************************************************************************/
