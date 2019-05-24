@@ -546,8 +546,14 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
     CallInst *CI = it.first;
     CallInst *newCI = it.second;
 
-    CI->replaceAllUsesWith(newCI);
-    ReplaceInstWithInst(CI, newCI);
+    // LLVM may modify the result type of the called function to void.
+    if (CI->getType()->isVoidTy()) {
+      newCI->insertBefore(CI);
+      CI->eraseFromParent();
+    } else {
+      CI->replaceAllUsesWith(newCI);
+      ReplaceInstWithInst(CI, newCI);
+    }
   }
 
   replaceCIMap.clear();
