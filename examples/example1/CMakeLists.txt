@@ -66,3 +66,19 @@ set_tests_properties( "examples/example1_dot_product" ${SPIREX}
 # devices which don't support SPIR
 set_property(TEST "examples/example1_dot_product"
   APPEND PROPERTY LABELS "tce;hsa;hsa-native")
+
+
+add_test(NAME "examples/example1_poclbin"
+         COMMAND ${CMAKE_COMMAND}
+            "-DCMD1=${CMAKE_BINARY_DIR}/bin/poclcc####-o####${CMAKE_BINARY_DIR}/example1.bin####${CMAKE_CURRENT_SOURCE_DIR}/example1.cl"
+            "-DCMD2=${CMAKE_BINARY_DIR}/examples/example1/example1####b####${CMAKE_BINARY_DIR}/example1.bin"
+            "-DCMD3=${CMAKE_COMMAND}####-E####remove####-f####${CMAKE_BINARY_DIR}/example1.bin"
+            -P ${CMAKE_SOURCE_DIR}/cmake/multi_exec_test.cmake)
+
+set_tests_properties( "examples/example1_poclbin"
+  PROPERTIES
+    COST 3.0
+    ${PROPS}
+    PROCESSORS 1
+    LABELS "poclbin;internal"
+    DEPENDS "pocl_version_check")

@@ -51,3 +51,18 @@ set_tests_properties( "examples/matrix1" "examples/matrix1_local" ${SPIREX}
     PROCESSORS 1
     LABELS "matrix"
     DEPENDS "pocl_version_check")
+
+add_test(NAME "examples/matrix1_poclbin"
+         COMMAND ${CMAKE_COMMAND}
+            "-DCMD1=${CMAKE_BINARY_DIR}/bin/poclcc####-o####${CMAKE_BINARY_DIR}/matrix1.bin####${CMAKE_CURRENT_SOURCE_DIR}/matrix1.cl"
+            "-DCMD2=${CMAKE_BINARY_DIR}/examples/matrix1/matrix1####256####-b####${CMAKE_BINARY_DIR}/matrix1.bin"
+            "-DCMD3=${CMAKE_COMMAND}####-E####remove####-f####${CMAKE_BINARY_DIR}/matrix1.bin"
+            -P ${CMAKE_SOURCE_DIR}/cmake/multi_exec_test.cmake)
+
+set_tests_properties( "examples/matrix1_poclbin"
+  PROPERTIES
+    COST 8.0
+    PASS_REGULAR_EXPRESSION "OK"
+    PROCESSORS 1
+    LABELS "poclbin;internal"
+    DEPENDS "pocl_version_check")
