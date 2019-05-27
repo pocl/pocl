@@ -85,10 +85,10 @@
 #include "pocl_spir.h"
 
 #include <assert.h>
-#include <string.h>
-#include <stdlib.h>
-#include <pthread.h>
 #include <limits.h>
+#include <pthread.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifndef _MSC_VER
 #  include <sys/wait.h>
@@ -225,13 +225,11 @@ typedef struct pocl_hsa_device_data_s {
 
 } pocl_hsa_device_data_t;
 
-void
-pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
-                               cl_device_id device, int specialize);
+void pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
+                                    cl_device_id device, int specialize);
 
-void
-pocl_hsa_compile_kernel_native (_cl_command_node *cmd, cl_kernel kernel,
-                                cl_device_id device, int specialize);
+void pocl_hsa_compile_kernel_native (_cl_command_node *cmd, cl_kernel kernel,
+                                     cl_device_id device, int specialize);
 
 static void*
 pocl_hsa_malloc_account(pocl_global_mem_t *mem, size_t size, hsa_region_t r);
@@ -1118,9 +1116,9 @@ compile_parallel_bc_to_brig (char *brigfile, _cl_command_node *cmd,
   char parallel_bc_path[POCL_FILENAME_LENGTH];
   _cl_command_run *run_cmd = &cmd->command.run;
 
-  pocl_cache_work_group_function_path (parallel_bc_path, run_cmd->kernel->program,
-                                       cmd->device_i, run_cmd->kernel, cmd,
-                                       specialize);
+  pocl_cache_work_group_function_path (parallel_bc_path,
+                                       run_cmd->kernel->program, cmd->device_i,
+                                       run_cmd->kernel, cmd, specialize);
 
   strcpy (brigfile, parallel_bc_path);
   strncat (brigfile, ".brig", POCL_FILENAME_LENGTH-1);
@@ -1173,12 +1171,12 @@ pocl_hsa_find_mem_cached_kernel (pocl_hsa_device_data_t *d,
       if (d->kernel_cache[i].local_x == cmd->pc.local_size[0]
           && d->kernel_cache[i].local_y == cmd->pc.local_size[1]
           && d->kernel_cache[i].local_z == cmd->pc.local_size[2]
-          && (!d->kernel_cache[i].goffs_zero ||
-              (cmd->pc.global_offset[0] == 0
-               && cmd->pc.global_offset[1] == 0
-               && cmd->pc.global_offset[2] == 0))
-          && pocl_cmd_max_grid_dim_width (cmd) <=
-          d->kernel_cache[i].max_grid_dim_width)
+          && (!d->kernel_cache[i].goffs_zero
+              || (cmd->pc.global_offset[0] == 0
+                  && cmd->pc.global_offset[1] == 0
+                  && cmd->pc.global_offset[2] == 0))
+          && pocl_cmd_max_grid_dim_width (cmd)
+                 <= d->kernel_cache[i].max_grid_dim_width)
         return &d->kernel_cache[i];
     }
   return NULL;
@@ -1269,14 +1267,15 @@ pocl_hsa_compile_kernel_native (_cl_command_node *cmd, cl_kernel kernel,
       d->kernel_cache[i].local_x = run_cmd->pc.local_size[0];
       d->kernel_cache[i].local_y = run_cmd->pc.local_size[1];
       d->kernel_cache[i].local_z = run_cmd->pc.local_size[2];
-      d->kernel_cache[i].goffs_zero =
-        run_cmd->pc.global_offset[0] == 0 && run_cmd->pc.global_offset[1] == 0
-        && run_cmd->pc.global_offset[2] == 0;
+      d->kernel_cache[i].goffs_zero = run_cmd->pc.global_offset[0] == 0
+                                      && run_cmd->pc.global_offset[1] == 0
+                                      && run_cmd->pc.global_offset[2] == 0;
 
       size_t max_grid_width = pocl_cmd_max_grid_dim_width (&cmd->command.run);
-      d->kernel_cache[i].max_grid_dim_width =
-        max_grid_width > device->grid_width_specialization_limit ?
-        SIZE_MAX : device->grid_width_specialization_limit;
+      d->kernel_cache[i].max_grid_dim_width
+          = max_grid_width > device->grid_width_specialization_limit
+                ? SIZE_MAX
+                : device->grid_width_specialization_limit;
       d->kernel_cache[i].hsa_exe.handle = exe.handle;
       d->kernel_cache_lastptr++;
     }
@@ -1338,9 +1337,8 @@ pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
 
   POCL_LOCK (d->pocl_hsa_compilation_lock);
 
-  int error =
-    pocl_llvm_generate_workgroup_function (cmd->device_i, device,
-                                           kernel, cmd, specialize);
+  int error = pocl_llvm_generate_workgroup_function (cmd->device_i, device,
+                                                     kernel, cmd, specialize);
   if (error)
     {
       POCL_MSG_PRINT_GENERAL ("HSA: pocl_llvm_generate_workgroup_function()"
@@ -1727,8 +1725,8 @@ pocl_hsa_launch (pocl_hsa_device_data_t *d, cl_event event)
   pocl_hsa_event_data_t *event_data = (pocl_hsa_event_data_t *)event->data;
 
   unsigned i;
-  pocl_hsa_kernel_cache_t *cached_data =
-    pocl_hsa_find_mem_cached_kernel (d, run_cmd);
+  pocl_hsa_kernel_cache_t *cached_data
+      = pocl_hsa_find_mem_cached_kernel (d, run_cmd);
   assert (cached_data);
 
   HSA_CHECK(hsa_memory_allocate (d->kernarg_region,
@@ -1930,9 +1928,8 @@ pocl_hsa_run_ready_commands (pocl_hsa_device_data_t *d)
       PTHREAD_CHECK (pthread_mutex_unlock (&d->list_mutex));
       if (e->command->type == CL_COMMAND_NDRANGE_KERNEL)
         {
-          d->device->ops->compile_kernel (e->command,
-                                          e->command->command.run.kernel,
-                                          e->queue->device, 1);
+          d->device->ops->compile_kernel (
+              e->command, e->command->command.run.kernel, e->queue->device, 1);
           pocl_hsa_launch (d, e);
           enqueued_ndrange = 1;
           POCL_MSG_PRINT_INFO ("NDrange event %u launched, remove"

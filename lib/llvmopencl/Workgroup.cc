@@ -43,8 +43,8 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/IR/TypeBuilder.h>
 #endif
 #include <llvm/IR/DIBuilder.h>
-#include <llvm/IR/InstrTypes.h>
 #include <llvm/IR/InlineAsm.h>
+#include <llvm/IR/InstrTypes.h>
 #include <llvm/IR/MDBuilder.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/raw_ostream.h>
@@ -320,18 +320,17 @@ void Workgroup::addPlaceHolder(llvm::IRBuilder<> &Builder,
 }
 
 // Adds Range metadata with range [Min, Max] to the given instruction.
-static
-void addRangeMetadata(llvm::Instruction *Instr, size_t Min, size_t Max) {
+static void addRangeMetadata(llvm::Instruction *Instr, size_t Min, size_t Max) {
   MDBuilder MDB(Instr->getContext());
   size_t BitWidth = Instr->getType()->getIntegerBitWidth();
   MDNode *Range =
-    MDB.createRange(APInt(BitWidth, Min), APInt(BitWidth, Max + 1));
+      MDB.createRange(APInt(BitWidth, Min), APInt(BitWidth, Max + 1));
   Instr->setMetadata(LLVMContext::MD_range, Range);
 }
 
-static
-void addRangeMetadataForPCField(llvm::Instruction *Instr, int StructFieldIndex,
-                                int FieldIndex=-1) {
+static void addRangeMetadataForPCField(llvm::Instruction *Instr,
+                                       int StructFieldIndex,
+                                       int FieldIndex = -1) {
   uint64_t Min = 0;
   uint64_t Max = 0;
   uint64_t LocalSizes[] = {WGLocalSizeX, WGLocalSizeY, WGLocalSizeZ};
@@ -378,10 +377,10 @@ void addRangeMetadataForPCField(llvm::Instruction *Instr, int StructFieldIndex,
     case 1:
     case 2:
       if (WGDynamicLocalSize) {
-        Max =
-          (WGMaxGridDimWidth > 0 ? WGMaxGridDimWidth :
-           min(currentPoclDevice->max_work_item_sizes[FieldIndex],
-               WGMaxGridDimWidth));
+        Max = (WGMaxGridDimWidth > 0
+                   ? WGMaxGridDimWidth
+                   : min(currentPoclDevice->max_work_item_sizes[FieldIndex],
+                         WGMaxGridDimWidth));
       } else {
         // The local size is converted to constant with static WGs, so this is
         // actually useless.
@@ -435,8 +434,7 @@ Workgroup::createLoadFromContext(
     if (FieldIndex == -1)
       Load = Builder.CreateLoad(Builder.CreateConstGEP1_32(GEP, 0));
     else
-      Load = Builder.CreateLoad(
-        Builder.CreateConstGEP2_32(
+      Load = Builder.CreateLoad(Builder.CreateConstGEP2_32(
           GEP->getType()->getPointerElementType(), GEP, 0, FieldIndex));
 #endif
   }
@@ -734,7 +732,7 @@ Workgroup::createWrapper(Function *F, FunctionMapping &printfCache) {
   CallInst *c = Builder.CreateCall(F, ArrayRef<Value*>(arguments));
   Builder.CreateRetVoid();
 
-  std::set<CallInst*> CallsToRemove;
+  std::set<CallInst *> CallsToRemove;
 
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
     for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE; ++BI) {
@@ -1307,7 +1305,7 @@ Workgroup::createGridLauncher(Function *KernFunc, Function *WGFunc,
   LLVMTypeRef Int8Type = LLVMInt8TypeInContext(LLVMContext);
   LLVMTypeRef Int8PtrType = LLVMPointerType(Int8Type, 0);
   LLVMTypeRef ArgsPtrType =
-    LLVMPointerType(Int8Type, currentPoclDevice->args_as_id);
+      LLVMPointerType(Int8Type, currentPoclDevice->args_as_id);
 
   std::ostringstream StrStr("phsa_kernel.", std::ios::ate);
   StrStr << KernName;
@@ -1316,10 +1314,8 @@ Workgroup::createGridLauncher(Function *KernFunc, Function *WGFunc,
   std::string FName = StrStr.str();
   const char *FunctionName = FName.c_str();
 
-  LLVMTypeRef LauncherArgTypes[] =
-    {Int8PtrType /*phsactx0*/,
-     Int8PtrType /*phsactx1*/,
-     ArgsPtrType /*args*/};
+  LLVMTypeRef LauncherArgTypes[] = {
+      Int8PtrType /*phsactx0*/, Int8PtrType /*phsactx1*/, ArgsPtrType /*args*/};
 
   LLVMTypeRef VoidType = LLVMVoidTypeInContext(LLVMContext);
   LLVMTypeRef LauncherFuncType =
@@ -1361,10 +1357,10 @@ Workgroup::createGridLauncher(Function *KernFunc, Function *WGFunc,
                         KernArgCount - HiddenArgs);
 
   LLVMValueRef Args[4] = {
-    LLVMBuildPointerCast(Builder, WGF, ArgTypes[0], "wg_func"),
-    LLVMBuildPointerCast(Builder, ArgBuffer, ArgTypes[1], "args"),
-    LLVMBuildPointerCast(Builder, PoclCtx, ArgTypes[2], "ctx"),
-    LLVMBuildPointerCast(Builder, AuxParam, ArgTypes[1], "aux")};
+      LLVMBuildPointerCast(Builder, WGF, ArgTypes[0], "wg_func"),
+      LLVMBuildPointerCast(Builder, ArgBuffer, ArgTypes[1], "args"),
+      LLVMBuildPointerCast(Builder, PoclCtx, ArgTypes[2], "ctx"),
+      LLVMBuildPointerCast(Builder, AuxParam, ArgTypes[1], "aux")};
 
   LLVMValueRef Call = LLVMBuildCall(Builder, RunnerFunc, Args, 4, "");
   LLVMBuildRetVoid(Builder);

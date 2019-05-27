@@ -90,17 +90,13 @@ int pocl_cache_write_descriptor(cl_program   program,
                                 size_t       size);
 
 void pocl_cache_kernel_cachedir_path (char *kernel_cachedir_path,
-                                      cl_program program,
-                                      unsigned device_i,
-                                      cl_kernel kernel,
-                                      const char *append_str,
+                                      cl_program program, unsigned device_i,
+                                      cl_kernel kernel, const char *append_str,
                                       _cl_command_node *command,
                                       int specialize);
 
-int pocl_cache_write_kernel_parallel_bc (void *bc,
-                                         cl_program program,
-                                         int device_i,
-                                         cl_kernel kernel,
+int pocl_cache_write_kernel_parallel_bc (void *bc, cl_program program,
+                                         int device_i, cl_kernel kernel,
                                          _cl_command_node *command,
                                          int specialize);
 
@@ -119,19 +115,15 @@ void pocl_cache_program_bc_path(char*       program_bc_path,
                                cl_program   program,
                                unsigned     device_i);
 
-void pocl_cache_work_group_function_path (char* parallel_bc_path,
+void pocl_cache_work_group_function_path (char *parallel_bc_path,
                                           cl_program program,
-                                          unsigned device_i,
-                                          cl_kernel kernel,
+                                          unsigned device_i, cl_kernel kernel,
                                           _cl_command_node *command,
                                           int specialize);
 
-void pocl_cache_final_binary_path (char* final_binary_path,
-                                   cl_program program,
-                                   unsigned device_i,
-                                   cl_kernel kernel,
-                                   _cl_command_node *command,
-                                   int specialize);
+void pocl_cache_final_binary_path (char *final_binary_path, cl_program program,
+                                   unsigned device_i, cl_kernel kernel,
+                                   _cl_command_node *command, int specialize);
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

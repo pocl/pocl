@@ -178,9 +178,9 @@ program_compile_dynamic_wg_binaries (cl_program program)
           /* Then generate a specialized one with goffset 0 since it's a very
              common case. */
 
-          cmd.command.run.pc.global_offset[0] =
-            cmd.command.run.pc.global_offset[1] =
-            cmd.command.run.pc.global_offset[2] = 0;
+          cmd.command.run.pc.global_offset[0]
+              = cmd.command.run.pc.global_offset[1]
+              = cmd.command.run.pc.global_offset[2] = 0;
           cmd.command.run.force_large_grid_wg_func = 1;
           device->ops->compile_kernel (&cmd, kernel, device, 1);
         }

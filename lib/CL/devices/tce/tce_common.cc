@@ -434,17 +434,14 @@ static void pocl_tce_write_kernel_descriptor(cl_device_id device,
                               content.str().c_str(), content.str().size());
 }
 
-void
-pocl_tce_compile_kernel(
-  _cl_command_node *Command, cl_kernel Kernel, cl_device_id Device,
-  int Specialize)
-{
+void pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
+                             cl_device_id Device, int Specialize) {
   if (Command->type != CL_COMMAND_NDRANGE_KERNEL)
     return;
   _cl_command_run *RunCommand = &Command->command.run;
 
-  void* Data = Command->device->data;
-  TCEDevice *Dev = (TCEDevice*)Data;
+  void *Data = Command->device->data;
+  TCEDevice *Dev = (TCEDevice *)Data;
 
   if (!Kernel)
     Kernel = Command->command.run.kernel;
@@ -453,12 +450,13 @@ pocl_tce_compile_kernel(
 
   POCL_LOCK(Dev->tce_compile_lock);
   int Error = pocl_llvm_generate_workgroup_function(
-    Command->device_i, Device, Kernel, Command, Specialize);
+      Command->device_i, Device, Kernel, Command, Specialize);
 
   if (Error) {
     POCL_UNLOCK(Dev->tce_compile_lock);
     POCL_MSG_PRINT_GENERAL("TCE: pocl_llvm_generate_workgroup_function()"
-                           " failed for kernel %s\n", Kernel->name);
+                           " failed for kernel %s\n",
+                           Kernel->name);
     assert(Error == 0);
   }
 
@@ -469,8 +467,8 @@ pocl_tce_compile_kernel(
   assert(Command->command.run.kernel);
 
   char CacheDir[POCL_FILENAME_LENGTH];
-  pocl_cache_kernel_cachedir_path(
-    CacheDir, Kernel->program, Command->device_i, Kernel, "", Command, 1);
+  pocl_cache_kernel_cachedir_path(CacheDir, Kernel->program, Command->device_i,
+                                  Kernel, "", Command, 1);
   RunCommand->device_data = strdup(CacheDir);
 
   if (Dev->isNewKernel(RunCommand)) {
@@ -484,8 +482,8 @@ pocl_tce_compile_kernel(
     if (access(AssemblyFileName.c_str(), F_OK) != 0) {
       Error = snprintf(ByteCode, POCL_FILENAME_LENGTH, "%s%s", CacheDir,
                        POCL_PARALLEL_BC_FILENAME);
-      TCEString BuildCmd =
-        Dev->tceccCommandLine(RunCommand, TempDir, ByteCode, AssemblyFileName);
+      TCEString BuildCmd = Dev->tceccCommandLine(RunCommand, TempDir, ByteCode,
+                                                 AssemblyFileName);
 
 #ifdef DEBUG_TTA_DRIVER
       std::cerr << "CMD: " << BuildCmd << std::endl;

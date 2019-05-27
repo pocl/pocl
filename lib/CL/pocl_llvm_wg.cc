@@ -390,12 +390,9 @@ extern bool WGAssumeZeroGlobalOffset;
 int pocl_update_program_llvm_irs_unlocked(cl_program program,
                                           unsigned device_i);
 
-int pocl_llvm_generate_workgroup_function_nowrite(unsigned DeviceI,
-                                                  cl_device_id Device,
-                                                  cl_kernel Kernel,
-                                                  _cl_command_node *Command,
-                                                  void **Output,
-                                                  int Specialize) {
+int pocl_llvm_generate_workgroup_function_nowrite(
+    unsigned DeviceI, cl_device_id Device, cl_kernel Kernel,
+    _cl_command_node *Command, void **Output, int Specialize) {
 
   _cl_command_run *RunCommand = &Command->command.run;
   cl_program Program = Kernel->program;
@@ -413,29 +410,28 @@ int pocl_llvm_generate_workgroup_function_nowrite(unsigned DeviceI,
   // Create an empty Module and copy only the kernel+callgraph from
   // program.bc.
   llvm::Module *ParallelBC =
-    new llvm::Module(StringRef("parallel_bc"), GlobalContext());
+      new llvm::Module(StringRef("parallel_bc"), GlobalContext());
 
   ParallelBC->setTargetTriple(ProgramBC->getTargetTriple());
   ParallelBC->setDataLayout(ProgramBC->getDataLayout());
 
   copyKernelFromBitcode(Kernel->name, ParallelBC, ProgramBC);
 
-
   // Set the specialization properties.
   if (Specialize) {
     pocl::WGLocalSizeX = RunCommand->pc.local_size[0];
     pocl::WGLocalSizeY = RunCommand->pc.local_size[1];
     pocl::WGLocalSizeZ = RunCommand->pc.local_size[2];
-    pocl::WGDynamicLocalSize =
-      pocl::WGLocalSizeX == 0 && pocl::WGLocalSizeY == 0 &&
-      pocl::WGLocalSizeZ == 0;
+    pocl::WGDynamicLocalSize = pocl::WGLocalSizeX == 0 &&
+                               pocl::WGLocalSizeY == 0 &&
+                               pocl::WGLocalSizeZ == 0;
     pocl::WGAssumeZeroGlobalOffset = RunCommand->pc.global_offset[0] == 0 &&
-      RunCommand->pc.global_offset[1] == 0 &&
-      RunCommand->pc.global_offset[2] == 0;
+                                     RunCommand->pc.global_offset[1] == 0 &&
+                                     RunCommand->pc.global_offset[2] == 0;
     // Compile a smallgrid version or a generic one?
     if (RunCommand->force_large_grid_wg_func ||
-        pocl_cmd_max_grid_dim_width (RunCommand) >=
-        Device->grid_width_specialization_limit) {
+        pocl_cmd_max_grid_dim_width(RunCommand) >=
+            Device->grid_width_specialization_limit) {
       pocl::WGMaxGridDimWidth = 0; // The generic / large / unlimited size one.
     } else {
       // Limited grid dimension width by the device specific limit.
@@ -443,7 +439,7 @@ int pocl_llvm_generate_workgroup_function_nowrite(unsigned DeviceI,
     }
   } else {
     pocl::WGDynamicLocalSize = true;
-    pocl::WGLocalSizeX = pocl::WGLocalSizeY =  pocl::WGLocalSizeZ = 0;
+    pocl::WGLocalSizeX = pocl::WGLocalSizeY = pocl::WGLocalSizeZ = 0;
     pocl::WGAssumeZeroGlobalOffset = false;
     pocl::WGMaxGridDimWidth = 0;
   }
@@ -466,8 +462,7 @@ int pocl_llvm_generate_workgroup_function_nowrite(unsigned DeviceI,
   return 0;
 }
 
-int pocl_llvm_generate_workgroup_function(unsigned DeviceI,
-                                          cl_device_id Device,
+int pocl_llvm_generate_workgroup_function(unsigned DeviceI, cl_device_id Device,
                                           cl_kernel Kernel,
                                           _cl_command_node *Command,
                                           int Specialize) {
@@ -476,34 +471,32 @@ int pocl_llvm_generate_workgroup_function(unsigned DeviceI,
   void *Module = NULL;
 
   char ParallelBCPath[POCL_FILENAME_LENGTH];
-  pocl_cache_work_group_function_path(
-    ParallelBCPath, Kernel->program, DeviceI, Kernel, Command, Specialize);
+  pocl_cache_work_group_function_path(ParallelBCPath, Kernel->program, DeviceI,
+                                      Kernel, Command, Specialize);
 
   if (pocl_exists(ParallelBCPath))
     return CL_SUCCESS;
 
   char FinalBinaryPath[POCL_FILENAME_LENGTH];
-  pocl_cache_final_binary_path(
-    FinalBinaryPath, Kernel->program, DeviceI, Kernel, Command, Specialize);
+  pocl_cache_final_binary_path(FinalBinaryPath, Kernel->program, DeviceI,
+                               Kernel, Command, Specialize);
 
   if (pocl_exists(FinalBinaryPath))
     return CL_SUCCESS;
 
   int Error = pocl_llvm_generate_workgroup_function_nowrite(
-    DeviceI, Device, Kernel, Command, &Module, Specialize);
+      DeviceI, Device, Kernel, Command, &Module, Specialize);
   if (Error)
     return Error;
 
-  Error =
-    pocl_cache_write_kernel_parallel_bc(
-      Module, Kernel->program, DeviceI, Kernel, Command, Specialize);
+  Error = pocl_cache_write_kernel_parallel_bc(Module, Kernel->program, DeviceI,
+                                              Kernel, Command, Specialize);
 
-  if (Error)
-    {
-      POCL_MSG_ERR ("pocl_cache_write_kernel_parallel_bc() failed with %i\n",
-                    Error);
-      return Error;
-    }
+  if (Error) {
+    POCL_MSG_ERR("pocl_cache_write_kernel_parallel_bc() failed with %i\n",
+                 Error);
+    return Error;
+  }
 
   pocl_destroy_llvm_module(Module);
   return Error;

@@ -33,12 +33,12 @@
 #include "pocl_util.h"
 
 #include <assert.h>
+#include <limits.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <utlist.h>
-#include <limits.h>
 
 #include "pocl_cache.h"
 #include "pocl_timing.h"

@@ -78,8 +78,7 @@
 #ifdef OCS_AVAILABLE
 int
 llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
-              cl_device_id device, _cl_command_node *command,
-              int specialize)
+              cl_device_id device, _cl_command_node *command, int specialize)
 {
   POCL_MEASURE_START (llvm_codegen);
   int error = 0;
@@ -110,10 +109,8 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
 
   assert (strlen (final_binary_path) < (POCL_FILENAME_LENGTH - 3));
 
-  error =
-    pocl_llvm_generate_workgroup_function_nowrite (device_i, device, kernel,
-                                                   command, &llvm_module,
-                                                   specialize);
+  error = pocl_llvm_generate_workgroup_function_nowrite (
+      device_i, device, kernel, command, &llvm_module, specialize);
   if (error)
     {
       POCL_MSG_PRINT_LLVM ("pocl_llvm_generate_workgroup_function() failed"
@@ -126,9 +123,8 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   if (pocl_get_bool_option ("POCL_LEAVE_KERNEL_COMPILER_TEMP_FILES", 0))
     {
       POCL_MSG_PRINT_LLVM ("Writing parallel.bc to %s.\n", parallel_bc_path);
-      error =
-        pocl_cache_write_kernel_parallel_bc (llvm_module, program, device_i,
-                                             kernel, command, specialize);
+      error = pocl_cache_write_kernel_parallel_bc (
+          llvm_module, program, device_i, kernel, command, specialize);
     }
   else
     {
@@ -965,9 +961,8 @@ pocl_check_kernel_disk_cache (_cl_command_node *command, int specialized)
     {
 #ifdef OCS_AVAILABLE
       POCL_LOCK (pocl_llvm_codegen_lock);
-      int error =
-        llvm_codegen (module_fn, dev_i, k, command->device, command,
-                      specialized);
+      int error = llvm_codegen (module_fn, dev_i, k, command->device, command,
+                                specialized);
       POCL_UNLOCK (pocl_llvm_codegen_lock);
       if (error)
         POCL_ABORT ("Final linking of kernel %s failed.\n", k->name);
@@ -993,13 +988,13 @@ pocl_check_kernel_disk_cache (_cl_command_node *command, int specialized)
           /* Then check for a dynamic (non-specialized) kernel. */
           pocl_cache_final_binary_path (module_fn, p, dev_i, k, command, 1);
           if (!pocl_exists (module_fn))
-            POCL_ABORT("Generic WG function binary does not exist.\n");
-          POCL_MSG_PRINT_INFO("Using a cached generic WG function: %s\n",
-                              module_fn);
+            POCL_ABORT ("Generic WG function binary does not exist.\n");
+          POCL_MSG_PRINT_INFO ("Using a cached generic WG function: %s\n",
+                               module_fn);
         }
       else
-        POCL_MSG_PRINT_INFO("Using a cached specialized WG function: %s\n",
-                            module_fn);
+        POCL_MSG_PRINT_INFO ("Using a cached specialized WG function: %s\n",
+                             module_fn);
     }
   return module_fn;
 }
@@ -1059,8 +1054,7 @@ fetch_dlhandle_cache_item (_cl_command_run *run_cmd)
  * imply program loading to the same process as the host. Move to basic.c? */
 void
 pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
-                                  unsigned initial_refcount,
-                                  int specialize)
+                                  unsigned initial_refcount, int specialize)
 {
   char workgroup_string[WORKGROUP_STRING_LENGTH];
   pocl_dlhandle_cache_item *ci = NULL, *tmp = NULL;
@@ -1084,8 +1078,8 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   ci->ref_count = initial_refcount;
 
   ci->goffs_zero = run_cmd->pc.global_offset[0] == 0
-    && run_cmd->pc.global_offset[1] == 0
-    && run_cmd->pc.global_offset[2] == 0;
+                   && run_cmd->pc.global_offset[1] == 0
+                   && run_cmd->pc.global_offset[2] == 0;
 
   size_t max_grid_width = pocl_cmd_max_grid_dim_width (run_cmd);
   ci->max_grid_dim_width = max_grid_width;
@@ -1102,16 +1096,14 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
                 module_fn, dl_error);
 
   snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
-            "_pocl_kernel_%s_workgroup",
-            run_cmd->kernel->name);
+            "_pocl_kernel_%s_workgroup", run_cmd->kernel->name);
   ci->wg = lt_dlsym (ci->dlhandle, workgroup_string);
   dl_error = lt_dlerror ();
   if (ci->wg == NULL || dl_error != NULL)
     {
       // Older OSX dyld APIs need the name without the underscore.
       snprintf (workgroup_string, WORKGROUP_STRING_LENGTH,
-                "pocl_kernel_%s_workgroup",
-                run_cmd->kernel->name);
+                "pocl_kernel_%s_workgroup", run_cmd->kernel->name);
       ci->wg = lt_dlsym (ci->dlhandle, workgroup_string);
       dl_error = lt_dlerror ();
 

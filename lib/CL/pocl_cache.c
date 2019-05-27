@@ -120,33 +120,32 @@ void pocl_cache_program_bc_path(char*        program_bc_path,
    - if the grid size in any dimension is smaller than a device
    specified limit ("smallgrid" specialization)
 */
-void pocl_cache_kernel_cachedir_path (char *kernel_cachedir_path,
-                                      cl_program program,
-                                      unsigned device_i,
-                                      cl_kernel kernel,
-                                      const char *append_str,
-                                      _cl_command_node *command,
-                                      int specialized)
+void
+pocl_cache_kernel_cachedir_path (char *kernel_cachedir_path,
+                                 cl_program program, unsigned device_i,
+                                 cl_kernel kernel, const char *append_str,
+                                 _cl_command_node *command, int specialized)
 {
   int bytes_written;
   _cl_command_run *run_cmd = &command->command.run;
   char tempstring[POCL_FILENAME_LENGTH];
   cl_device_id dev = command->device;
   size_t max_grid_width = pocl_cmd_max_grid_dim_width (run_cmd);
-  bytes_written = snprintf (tempstring, POCL_FILENAME_LENGTH,
-                            "/%s/%zu-%zu-%zu%s%s%s", kernel->name,
-                            !specialized ? 0 : run_cmd->pc.local_size[0],
-                            !specialized ? 0 : run_cmd->pc.local_size[1],
-                            !specialized ? 0 : run_cmd->pc.local_size[2],
-                            (specialized
-                             && run_cmd->pc.global_offset[0] == 0
-                             && run_cmd->pc.global_offset[1] == 0
-                             && run_cmd->pc.global_offset[2] == 0)
-                            ? "-goffs0" : "",
-                            specialized && !run_cmd->force_large_grid_wg_func
-                            && max_grid_width < dev->grid_width_specialization_limit
-                            ? "-smallgrid" : "",
-                            append_str);
+  bytes_written = snprintf (
+      tempstring, POCL_FILENAME_LENGTH, "/%s/%zu-%zu-%zu%s%s%s", kernel->name,
+      !specialized ? 0 : run_cmd->pc.local_size[0],
+      !specialized ? 0 : run_cmd->pc.local_size[1],
+      !specialized ? 0 : run_cmd->pc.local_size[2],
+      (specialized && run_cmd->pc.global_offset[0] == 0
+       && run_cmd->pc.global_offset[1] == 0
+       && run_cmd->pc.global_offset[2] == 0)
+          ? "-goffs0"
+          : "",
+      specialized && !run_cmd->force_large_grid_wg_func
+              && max_grid_width < dev->grid_width_specialization_limit
+          ? "-smallgrid"
+          : "",
+      append_str);
   assert (bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
 
   program_device_dir (kernel_cachedir_path, program, device_i, tempstring);
@@ -165,28 +164,26 @@ pocl_cache_kernel_cachedir (char *kernel_cachedir_path, cl_program program,
 }
 
 // required in llvm API
-void pocl_cache_work_group_function_path (char* parallel_bc_path,
-                                          cl_program program,
-                                          unsigned device_i, cl_kernel kernel,
-                                          _cl_command_node *command,
-                                          int specialize)
+void
+pocl_cache_work_group_function_path (char *parallel_bc_path,
+                                     cl_program program, unsigned device_i,
+                                     cl_kernel kernel,
+                                     _cl_command_node *command, int specialize)
 {
   assert (kernel->name);
 
-  pocl_cache_kernel_cachedir_path (parallel_bc_path, program, device_i,
-                                   kernel, POCL_PARALLEL_BC_FILENAME,
-                                   command, specialize);
+  pocl_cache_kernel_cachedir_path (parallel_bc_path, program, device_i, kernel,
+                                   POCL_PARALLEL_BC_FILENAME, command,
+                                   specialize);
 }
 
 /* Return the final binary path for the given work-group function.
    If specialized is 1, find the WG function specialized for the
    given command's properties, if 0, return the path to a generic version. */
-void pocl_cache_final_binary_path (char *final_binary_path,
-                                   cl_program program,
-                                   unsigned device_i,
-                                   cl_kernel kernel,
-                                   _cl_command_node *command,
-                                   int specialized)
+void
+pocl_cache_final_binary_path (char *final_binary_path, cl_program program,
+                              unsigned device_i, cl_kernel kernel,
+                              _cl_command_node *command, int specialized)
 {
   assert (kernel->name);
 
@@ -207,9 +204,9 @@ void pocl_cache_final_binary_path (char *final_binary_path,
 
   assert (bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
 
-  pocl_cache_kernel_cachedir_path (final_binary_path, program,
-                                   device_i, kernel, final_binary_name,
-                                   command, specialized);
+  pocl_cache_kernel_cachedir_path (final_binary_path, program, device_i,
+                                   kernel, final_binary_name, command,
+                                   specialized);
 }
 
 /******************************************************************************/
@@ -343,25 +340,23 @@ int pocl_cache_append_to_buildlog(cl_program  program,
 /******************************************************************************/
 
 #ifdef OCS_AVAILABLE
-int pocl_cache_write_kernel_parallel_bc (void *bc,
-                                         cl_program program,
-                                         int device_i,
-                                         cl_kernel kernel,
-                                         _cl_command_node *command,
-                                         int specialize)
+int
+pocl_cache_write_kernel_parallel_bc (void *bc, cl_program program,
+                                     int device_i, cl_kernel kernel,
+                                     _cl_command_node *command, int specialize)
 {
-    assert (bc);
-    char kernel_parallel_path[POCL_FILENAME_LENGTH];
-    pocl_cache_kernel_cachedir_path (kernel_parallel_path, program, device_i,
-                                     kernel, "", command, specialize);
-    int err = pocl_mkdir_p (kernel_parallel_path);
-    if (err)
-      return err;
+  assert (bc);
+  char kernel_parallel_path[POCL_FILENAME_LENGTH];
+  pocl_cache_kernel_cachedir_path (kernel_parallel_path, program, device_i,
+                                   kernel, "", command, specialize);
+  int err = pocl_mkdir_p (kernel_parallel_path);
+  if (err)
+    return err;
 
-    assert (strlen (kernel_parallel_path) <
-            (POCL_FILENAME_LENGTH - strlen (POCL_PARALLEL_BC_FILENAME)));
-    strcat (kernel_parallel_path, POCL_PARALLEL_BC_FILENAME);
-    return pocl_write_module (bc, kernel_parallel_path, 0);
+  assert (strlen (kernel_parallel_path)
+          < (POCL_FILENAME_LENGTH - strlen (POCL_PARALLEL_BC_FILENAME)));
+  strcat (kernel_parallel_path, POCL_PARALLEL_BC_FILENAME);
+  return pocl_write_module (bc, kernel_parallel_path, 0);
 }
 
 /******************************************************************************/
