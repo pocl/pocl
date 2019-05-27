@@ -1024,27 +1024,25 @@ fetch_dlhandle_cache_item (_cl_command_run *run_cmd)
   pocl_dlhandle_cache_item *ci = NULL, *tmp = NULL;
   size_t max_grid_width = pocl_cmd_max_grid_dim_width (run_cmd);
   DL_FOREACH_SAFE (pocl_dlhandle_cache, ci, tmp)
-    {
-      if ((memcmp (ci->hash, run_cmd->hash, sizeof (pocl_kernel_hash_t))
-           == 0)
-          && (ci->local_wgs[0] == run_cmd->pc.local_size[0])
-          && (ci->local_wgs[1] == run_cmd->pc.local_size[1])
-          && (ci->local_wgs[2] == run_cmd->pc.local_size[2])
-          && (max_grid_width <= ci->max_grid_dim_width)
-          && (!ci->goffs_zero
-              || (run_cmd->pc.global_offset[0] == 0
-                  && run_cmd->pc.global_offset[1] == 0
-                  && run_cmd->pc.global_offset[2] == 0)))
-        {
-          /* move to the front of the line */
-          DL_DELETE (pocl_dlhandle_cache, ci);
-          DL_PREPEND (pocl_dlhandle_cache, ci);
-          ++ci->ref_count;
-          POCL_UNLOCK (pocl_dlhandle_lock);
-          run_cmd->wg = ci->wg;
-          return ci;
-        }
-    }
+  {
+    if ((memcmp (ci->hash, run_cmd->hash, sizeof (pocl_kernel_hash_t)) == 0)
+        && (ci->local_wgs[0] == run_cmd->pc.local_size[0])
+        && (ci->local_wgs[1] == run_cmd->pc.local_size[1])
+        && (ci->local_wgs[2] == run_cmd->pc.local_size[2])
+        && (max_grid_width <= ci->max_grid_dim_width)
+        && (!ci->goffs_zero
+            || (run_cmd->pc.global_offset[0] == 0
+                && run_cmd->pc.global_offset[1] == 0
+                && run_cmd->pc.global_offset[2] == 0)))
+      {
+        /* move to the front of the line */
+        DL_DELETE (pocl_dlhandle_cache, ci);
+        DL_PREPEND (pocl_dlhandle_cache, ci);
+        ++ci->ref_count;
+        run_cmd->wg = ci->wg;
+        return ci;
+      }
+  }
   return NULL;
 }
 
