@@ -97,6 +97,7 @@ if(VIRTUALENV)
   set_tests_properties("PyOpenCL"
     PROPERTIES
       ENVIRONMENT "PYOPENCL_NO_CACHE=1;PYOPENCL_TEST=portable"
+      COST 400.0
       LABELS "PyOpenCL")
 
 else()

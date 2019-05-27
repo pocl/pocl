@@ -230,8 +230,8 @@ process_options (const char *options, char *modded_options, char *link_options,
   while (token != NULL)
     {
       /* check if parameter is supported compiler parameter */
-      if (memcmp (token, "-cl", 3) == 0 || memcmp (token, "-w", 2) == 0
-          || memcmp (token, "-Werror", 7) == 0)
+      if (strncmp (token, "-cl", 3) == 0 || strncmp (token, "-w", 2) == 0
+          || strncmp (token, "-Werror", 7) == 0)
         {
           if (strstr (cl_program_link_options, token))
             {
@@ -292,14 +292,14 @@ process_options (const char *options, char *modded_options, char *link_options,
               goto ERROR;
             }
         }
-      else if (memcmp (token, "-g", 2) == 0)
+      else if (strncmp (token, "-g", 2) == 0)
         {
 #ifndef LLVM_OLDER_THAN_3_8
           token = "-dwarf-column-info -debug-info-kind=limited " \
 	    "-dwarf-version=4 -debugger-tuning=gdb";
 #endif
         }
-      else if (memcmp (token, "-D", 2) == 0 || memcmp (token, "-I", 2) == 0)
+      else if (strncmp (token, "-D", 2) == 0 || strncmp (token, "-I", 2) == 0)
         {
           APPEND_TOKEN();
           /* if there is a space in between, then next token is part
@@ -312,11 +312,11 @@ process_options (const char *options, char *modded_options, char *link_options,
               continue;
             }
         }
-      else if (memcmp (token, "-x", 2) == 0 && strlen (token) == 2)
+      else if (strncmp (token, "-x", 2) == 0 && strlen (token) == 2)
         {
           /* only "-x spir" is valid for the "-x" option */
           token = strtok_r (NULL, " ", &saveptr);
-          if (!token || memcmp (token, "spir", 4) != 0)
+          if (!token || strncmp (token, "spir", 4) != 0)
             {
               APPEND_TO_MAIN_BUILD_LOG (
                   "Invalid parameter to -x build option\n");
@@ -336,7 +336,7 @@ process_options (const char *options, char *modded_options, char *link_options,
           token = strtok_r (NULL, " ", &saveptr);
           continue;
         }
-      else if (memcmp (token, "-spir-std=1.2", 13) == 0)
+      else if (strncmp (token, "-spir-std=1.2", 13) == 0)
         {
           /* "-spir-std=" flags are not valid when building from source */
           if (program->source)
@@ -351,7 +351,7 @@ process_options (const char *options, char *modded_options, char *link_options,
           token = strtok_r (NULL, " ", &saveptr);
           continue;
         }
-      else if (memcmp (token, "-create-library", 15) == 0)
+      else if (strncmp (token, "-create-library", 15) == 0)
         {
           if (!linking)
             {
@@ -364,7 +364,7 @@ process_options (const char *options, char *modded_options, char *link_options,
           token = strtok_r (NULL, " ", &saveptr);
           continue;
         }
-      else if (memcmp (token, "-enable-link-options", 20) == 0)
+      else if (strncmp (token, "-enable-link-options", 20) == 0)
         {
           if (!linking)
             {

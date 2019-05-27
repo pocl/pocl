@@ -445,9 +445,6 @@ add_test(NAME "${TS_NAME}_events_other"
 add_test(NAME "${TS_NAME}_geometrics"
          COMMAND "${TS_BUILDDIR}/geometrics/test_geometrics" )
 
-add_test(NAME "${TS_NAME}_gl"
-         COMMAND "${TS_BUILDDIR}/gl/test_gl" )
-
 add_test(NAME "${TS_NAME}_half"
          COMMAND "${TS_BUILDDIR}/half/Test_half" )
 
@@ -1019,7 +1016,6 @@ set_tests_properties(
     "${TS_NAME}_events_ooo"
     "${TS_NAME}_events_other"
     "${TS_NAME}_geometrics"
-    "${TS_NAME}_gl"
     "${TS_NAME}_half"
     "${TS_NAME}_cl_gl_h"
     "${TS_NAME}_cl_gl_h_c99"

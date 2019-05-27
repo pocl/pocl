@@ -8,6 +8,7 @@ Kernel Compiler
 - Specialize work-group functions for global offset (0,0,0).
 - A pocl installation with clang, hwloc and libtool statically linked in
   is now relocatable.
+- LLVM older than 6.0 is not supported
 
 Notable Bug Fixes
 -----------------
