@@ -172,16 +172,17 @@ program_compile_dynamic_wg_binaries (cl_program program)
 
           cmd.command.run.kernel = kernel;
 
-          /* First force generate a WG function with a dynamic global
-             offset to ensure generality. */
-          cmd.command.run.pc.global_offset[0] = 1;
-          device->ops->compile_kernel (&cmd, kernel, device);
+          /* Force generate a generic WG function to ensure generality. */
+          device->ops->compile_kernel (&cmd, kernel, device, 0);
 
-          /* Then generate a specialized one with goffset 0. */
+          /* Then generate a specialized one with goffset 0 since it's a very
+             common case. */
+
           cmd.command.run.pc.global_offset[0]
               = cmd.command.run.pc.global_offset[1]
               = cmd.command.run.pc.global_offset[2] = 0;
-          device->ops->compile_kernel (&cmd, kernel, device);
+          cmd.command.run.force_large_grid_wg_func = 1;
+          device->ops->compile_kernel (&cmd, kernel, device, 1);
         }
     }
 

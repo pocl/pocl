@@ -107,6 +107,10 @@ typedef struct
   struct pocl_argument *arguments;
   /* Can be used to store/cache arbitrary device-specific data. */
   void *device_data;
+  /* If set to 1, disallow any work-group function specialization. */
+  int force_generic_wg_func;
+  /* If set to 1, disallow "small grid" WG function specialization. */
+  int force_large_grid_wg_func;
 } _cl_command_run;
 
 // clEnqueueNativeKernel

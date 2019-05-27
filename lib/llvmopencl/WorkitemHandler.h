@@ -73,15 +73,17 @@ namespace pocl {
   extern llvm::cl::opt<bool> AddWIMetadata;
   extern llvm::cl::opt<int> LockStepSIMDWidth;
 
-  // Used to communicate the work-group dimensions of the currently
-  // compiled kernel command to the workitem loop.
-  // TODO: Something cleaner than a global value.
+  // If set to true, the next 3 parameters define the local size to specialize
+  // for.
+  extern bool WGDynamicLocalSize;
   extern size_t WGLocalSizeX;
   extern size_t WGLocalSizeY;
   extern size_t WGLocalSizeZ;
+  // If set to non-zero, assume each grid dimension is at most this
+  // work-items wide.
+  extern size_t WGMaxGridDimWidth;
   // Set to true to generate a global offset 0 specialized WG function.
   extern bool WGAssumeZeroGlobalOffset;
-  extern bool WGDynamicLocalSize;
 }
 
 #endif

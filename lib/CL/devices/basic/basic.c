@@ -33,6 +33,7 @@
 #include "pocl_util.h"
 
 #include <assert.h>
+#include <limits.h>
 #include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
@@ -234,6 +235,7 @@ pocl_init_cpu_device_infos (cl_device_id dev)
 
 #endif
 
+  dev->grid_width_specialization_limit = USHRT_MAX;
   dev->address_bits = HOST_DEVICE_ADDRESS_BITS;
   dev->image_support = CL_TRUE;
   /* Use the minimum values until we get a more sensible upper limit from
@@ -1129,7 +1131,7 @@ pocl_basic_submit (_cl_command_node *node, cl_command_queue cq)
   struct data *d = node->device->data;
 
   if (node != NULL && node->type == CL_COMMAND_NDRANGE_KERNEL)
-    pocl_check_kernel_dlhandle_cache (node, 1);
+    pocl_check_kernel_dlhandle_cache (node, 1, 1);
 
   node->ready = 1;
   POCL_LOCK (d->cq_lock);
@@ -1200,10 +1202,11 @@ pocl_basic_broadcast (cl_event event)
 }
 
 void
-pocl_basic_compile_kernel (_cl_command_node *cmd, cl_kernel kernel, cl_device_id device)
+pocl_basic_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
+                           cl_device_id device, int specialize)
 {
   if (cmd != NULL && cmd->type == CL_COMMAND_NDRANGE_KERNEL)
-    pocl_check_kernel_dlhandle_cache (cmd, 0);
+    pocl_check_kernel_dlhandle_cache (cmd, 0, specialize);
 }
 
 /*********************** IMAGES ********************************/

@@ -1,13 +1,13 @@
 /* pocl_llvm.h: interface to call LLVM and Clang.
 
    Copyright (c) 2013 Kalle Raiskila and
-                 2013-2018 Pekka Jääskeläinen
+                 2013-2019 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
-   of this software and associated documentation files (the "Software"), to deal
-   in the Software without restriction, including without limitation the rights
-   to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-   copies of the Software, and to permit persons to whom the Software is
+   of this software and associated documentation files (the "Software"), to
+   deal in the Software without restriction, including without limitation the
+   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+   sell copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
 
    The above copyright notice and this permission notice shall be included in
@@ -17,9 +17,9 @@
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-   OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-   THE SOFTWARE.
+   LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
+   IN THE SOFTWARE.
 */
 
 #pragma once
@@ -61,28 +61,25 @@ int pocl_llvm_build_program(cl_program program,
  */
 int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i);
 
-/* This function links the input kernel LLVM bitcode and the
- * OpenCL kernel runtime library into one LLVM module, then
- * runs pocl's kernel compiler passes on that module to produce
- * a function that executes all work-items in a work-group.
+/* This function links the input kernel LLVM bitcode and the OpenCL kernel
+ * runtime library into one LLVM module, then runs pocl's kernel compiler
+ * passes on that module to produce a function that executes all work-items in
+ * a work-group.
  *
- * Output is a LLVM bitcode file that contains a work-group function
- * and its associated launchers.
- *
- * TODO: this is not thread-safe, it changes the LLVM global options to
- * control the compilation. We should enforce only one compilations is done
- * at a time or control the options through thread safe methods.
+ * Output is a LLVM bitcode file that contains a work-group function and its
+ * associated launchers. If @param Specialize is set to true, generates a
+ * WG function that might be specialized according to the properties of
+ * the given Command.
  */
-int pocl_llvm_generate_workgroup_function (unsigned device_i,
-                                           cl_device_id device,
-                                           cl_kernel kernel, size_t local_x,
-                                           size_t local_y, size_t local_z,
-                                           int assume_zero_global_offset);
+int pocl_llvm_generate_workgroup_function (unsigned DeviceI,
+                                           cl_device_id Device,
+                                           cl_kernel Kernel,
+                                           _cl_command_node *Command,
+                                           int Specialize);
 
 int pocl_llvm_generate_workgroup_function_nowrite (
-    unsigned device_i, cl_device_id device, cl_kernel kernel, size_t local_x,
-    size_t local_y, size_t local_z, int assume_zero_global_offset,
-    void **output);
+    unsigned DeviceI, cl_device_id Device, cl_kernel Kernel,
+    _cl_command_node *Command, void **output, int Specialize);
 /**
  * Free the LLVM IR of a program for a given device
  */

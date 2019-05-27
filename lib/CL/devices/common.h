@@ -67,8 +67,8 @@ extern "C" {
 void pocl_init_cpu_device_infos (cl_device_id dev);
 
 int llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
-                  cl_device_id device, size_t local_x, size_t local_y,
-                  size_t local_z, int assume_zero_global_offset);
+                  cl_device_id device, _cl_command_node *command,
+                  int specialize);
 
 void fill_dev_image_t (dev_image_t *di, struct pocl_argument *parg,
                        cl_device_id device);
@@ -94,10 +94,13 @@ void pocl_broadcast (cl_event event);
 
 void pocl_init_dlhandle_cache ();
 
-char *pocl_check_kernel_disk_cache (_cl_command_node *cmd);
+char *pocl_check_kernel_disk_cache (_cl_command_node *cmd, int specialized);
 
-void pocl_check_kernel_dlhandle_cache (_cl_command_node *cmd,
-                                       unsigned initial_refcount);
+size_t pocl_cmd_max_grid_dim_width (_cl_command_run *cmd);
+
+void pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
+                                       unsigned initial_refcount,
+                                       int specialize);
 
 void pocl_release_dlhandle_cache (_cl_command_node *cmd);
 

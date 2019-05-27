@@ -476,12 +476,19 @@ struct pocl_device_ops {
                        cl_mem dst_buf,
                        mem_mapping_t *map);
 
-  /* compile the fully linked LLVM IR to target-specific binaries. */
-  void (*compile_kernel) (_cl_command_node* cmd, cl_kernel kernel, cl_device_id device);
+  /* Compile the fully linked LLVM IR to target-specific binaries.
+     If specialize is set to 1, allow specializing the final result
+     according to the properites of the given cmd. Typically
+     specialization is _not_ wanted only when creating a generic
+     WG function for storing in a binary. Local size of all zeros
+     forces dynamic local size work-group even if specializing
+     according to other properties. */
+  void (*compile_kernel) (_cl_command_node *cmd, cl_kernel kernel,
+                          cl_device_id device, int specialize);
   /* clEnqueueNDRangeKernel */
-  void (*run) (void *data, _cl_command_node* cmd);
+  void (*run) (void *data, _cl_command_node *cmd);
   /* for clEnqueueNativeKernel. may be NULL */
-  void (*run_native) (void *data, _cl_command_node* cmd);
+  void (*run_native) (void *data, _cl_command_node *cmd);
 
   /* The current device timer value in nanoseconds. */
   cl_ulong (*get_timer_value) (void *data);
@@ -721,6 +728,12 @@ struct _cl_device_id {
      having a disjoint physical local memory per work-group or having the
      runtime/driver allocate the local space. */
   int device_alloca_locals;
+
+  /* If > 0, specialized versions of the work-group functions are generated
+     which assume each grid dimension is of at most the given width. This
+     assumption can be then taken in account in IR optimization and codegen
+     to reduce address computation overheads etc. */
+  size_t grid_width_specialization_limit;
 
   /* Device-specific linker flags that should be appended to the clang's
      argument list for a final linkage call when producing the final binary

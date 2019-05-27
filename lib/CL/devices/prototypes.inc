@@ -83,8 +83,10 @@
       const size_t *dst_origin, const size_t *src_origin,                     \
       const size_t *region, size_t dst_row_pitch, size_t dst_slice_pitch,     \
       size_t src_row_pitch, size_t src_slice_pitch);                          \
-  void pocl_##__DRV__##_compile_kernel (                                      \
-      _cl_command_node *node, cl_kernel kernel, cl_device_id device);         \
+  void pocl_##__DRV__##_compile_kernel (_cl_command_node *node,               \
+                                        cl_kernel kernel,                     \
+                                        cl_device_id device,                  \
+                                        int specialize);                      \
   void pocl_##__DRV__##_memfill (void *data, pocl_mem_identifier *dst_mem_id, \
                                  cl_mem dst_buf, size_t size, size_t offset,  \
                                  const void *__restrict__ pattern,            \
