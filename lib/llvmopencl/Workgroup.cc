@@ -211,7 +211,11 @@ Workgroup::runOnModule(Module &M) {
           "Target has an unsupported pointer width.");
 
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
-    if (!i->isDeclaration())
+    // Don't internalize functions starting with "__wrap_" for the use of GNU
+    // linker's switch --wrap=symbol, where calls to the "symbol" are replaced
+    // with "__wrap_symbol" at link time.  These functions may not be referenced
+    // until final link and being deleted by LLVM optimizations before it.
+    if (!i->isDeclaration() && !i->getName().startswith("__wrap_"))
       i->setLinkage(Function::InternalLinkage);
   }
 
