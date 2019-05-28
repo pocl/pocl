@@ -5,7 +5,7 @@ Using cmake to build & install pocl
 -----------------------------------
 
 Most of the important stuff on using cmake is in the install document,
-see :ref:pocl-install
+see :ref:`pocl-install`
 
 A few additional items:
 
