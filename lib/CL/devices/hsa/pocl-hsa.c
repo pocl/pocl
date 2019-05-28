@@ -1761,14 +1761,6 @@ pocl_hsa_launch (pocl_hsa_device_data_t *d, cl_event event)
 	 a single-WI WG. */
       kernel_packet->workgroup_size_x = kernel_packet->workgroup_size_y =
 	kernel_packet->workgroup_size_z = 1;
-
-      if (d->device->device_side_printf)
-	{
-	  pc->printf_buffer = d->printf_buffer;
-	  pc->printf_buffer_capacity = d->device->printf_buffer_size;
-	  bzero (d->printf_write_pos, sizeof (size_t));
-	  pc->printf_buffer_position = d->printf_write_pos;
-	}
     }
   else
     {
@@ -1779,6 +1771,13 @@ pocl_hsa_launch (pocl_hsa_device_data_t *d, cl_event event)
       kernel_packet->workgroup_size_z = run_cmd->pc.local_size[2];
     }
 
+  if (d->device->device_side_printf)
+    {
+      pc->printf_buffer = d->printf_buffer;
+      pc->printf_buffer_capacity = d->device->printf_buffer_size;
+      bzero (d->printf_write_pos, sizeof (size_t));
+      pc->printf_buffer_position = d->printf_write_pos;
+    }
 
   /* TODO: Dynamic WG sizes. */
 
