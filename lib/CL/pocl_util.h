@@ -279,8 +279,8 @@ float half_to_float (uint16_t value);
              ? mem->buffer                                                    \
              : mem);
 
-#define IS_IMAGE1D_BUFFER(mem)                                                \
-  (mem->is_image && (mem->type == CL_MEM_OBJECT_IMAGE1D_BUFFER))
+#define IS_IMAGE1D_BUFFER(mem)                                        \
+  (mem && mem->is_image && (mem->type == CL_MEM_OBJECT_IMAGE1D_BUFFER))
 
 #define IMAGE1D_ORIG_REG_TO_BYTES(mem, o, r)                                  \
   size_t px = (mem->image_elem_size * mem->image_channels);                   \

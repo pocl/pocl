@@ -846,9 +846,8 @@ struct _cl_context {
 
 typedef struct _pocl_data_sync_item pocl_data_sync_item;
 struct _pocl_data_sync_item {
-  unsigned int volatile event_id;
-  cl_event volatile event;
-  pocl_data_sync_item *volatile next;
+  cl_event event;
+  pocl_data_sync_item *next;
 };
 
 struct _cl_event;

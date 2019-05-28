@@ -28,6 +28,8 @@
 #include <map>
 #include <string>
 
+typedef struct _cl_device_id *cl_device_id;
+
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)
 #endif
@@ -60,7 +62,6 @@ public:
 };
 
 
-typedef struct _cl_device_id *cl_device_id;
 extern cl_device_id currentPoclDevice;
 
 void InitializeLLVM();

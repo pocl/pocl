@@ -548,7 +548,6 @@ void pocl_command_enqueue (cl_command_queue command_queue,
     }
   DL_APPEND (command_queue->events, node->event);
   command_queue->last_event.event = node->event;
-  command_queue->last_event.event_id = node->event->id;
   POCL_UNLOCK_OBJ (command_queue);
 
   POCL_LOCK_OBJ (node->event);

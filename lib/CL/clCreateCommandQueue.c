@@ -72,7 +72,6 @@ POname(clCreateCommandQueue)(cl_context context,
   command_queue->events = NULL;
   command_queue->command_count = 0;
   command_queue->last_event.event = NULL;
-  command_queue->last_event.event_id = -1;
   command_queue->last_event.next = NULL;
 
   POCL_RETAIN_OBJECT(context);

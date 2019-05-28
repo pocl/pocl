@@ -25,7 +25,6 @@
 #include "pocl_cl.h"
 #include "pocl_util.h"
 
-/* NOTE: this function is untested! */
 CL_API_ENTRY cl_mem CL_API_CALL
 POname(clCreateSubBuffer)(cl_mem                   buffer,
                   cl_mem_flags             flags,
