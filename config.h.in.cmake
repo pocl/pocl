@@ -91,7 +91,7 @@
 
 
 
-#ifdef ENABLE_HSA
+#ifdef BUILD_HSA
 
 #cmakedefine HAVE_HSA_EXT_AMD_H
 
