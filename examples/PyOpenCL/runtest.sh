@@ -4,4 +4,7 @@ TS_BASEDIR="$1"
 TS_BUILDDIR="$2"
 TS_SRCDIR="$3"
 
-cd "${TS_SRCDIR}/test" && source "${TS_BUILDDIR}/bin/activate" && py.test -v --tb=native
+source "${TS_BUILDDIR}/bin/activate" 
+echo $PYTHONPATH
+which python3
+cd "${TS_SRCDIR}/test" && python3 /usr/bin/py.test-3 -v --tb=native

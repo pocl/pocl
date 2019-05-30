@@ -48,7 +48,7 @@ elseif(NOT BASH)
 else()
 
 find_program(VIRTUALENV NAMES "virtualenv")
-find_program(PYTHON_INTERP NAMES python3 python2 python)
+find_program(PYTHON_INTERP NAMES python3)
 
 if(VIRTUALENV)
 
