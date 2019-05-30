@@ -1945,7 +1945,6 @@ pocl_hsa_run_ready_commands (pocl_hsa_device_data_t *d)
           POCL_MSG_PRINT_INFO ("running non-NDrange event %u,"
                                " remove from readylist\n", e->id);
           pocl_exec_command (e->command);
-          pocl_mem_manager_free_command (e->command);
         }
       check_running_signals (d);
       PTHREAD_CHECK (pthread_mutex_lock (&d->list_mutex));
