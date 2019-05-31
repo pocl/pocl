@@ -32,6 +32,7 @@
 #    apt-get install libblas-dev liblapack-dev  liblapacke-dev  libatlas-base-dev libopenmpi-dev   subversion python-numpy python-mako
 #
 
+add_subdirectory("example0")
 add_subdirectory("example1")
 add_subdirectory("example2")
 add_subdirectory("example2a")
