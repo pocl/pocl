@@ -107,20 +107,6 @@ pocl_exists(const char* path)
   return !access(path, R_OK);
 }
 
-int
-pocl_filesize(const char* path, uint64_t* res) 
-{
-  FILE *f = fopen(path, "r");
-  if (f == NULL)
-    return -1;
-  
-  fseek(f, 0, SEEK_END);
-  *res = ftell(f);
-  
-  fclose(f);
-  return 0;
-}
-
 int 
 pocl_touch_file(const char* path) 
 {
@@ -134,37 +120,59 @@ pocl_touch_file(const char* path)
 }
 /****************************************************************************/
 
+#define CHUNK_SIZE (2 * 1024 * 1024)
+
 int
 pocl_read_file(const char* path, char** content, uint64_t *filesize) 
 {
   assert(content);
   assert(path);
   assert(filesize);
-  
   *content = NULL;
-  
-  int errcode = pocl_filesize(path, filesize);
-  ssize_t fsize = (ssize_t)(*filesize);
-  if (!errcode) 
+  *filesize = 0;
+
+  /* files in /proc return zero size, while
+     files in /sys return size larger than actual actual content size;
+     this reads the content sequentially. */
+  size_t total_size = 0;
+  size_t actually_read = 0;
+  char *ptr = (char *)malloc (CHUNK_SIZE + 1);
+  if (ptr == NULL)
+    return -1;
+
+  FILE *f = fopen (path, "r");
+  if (f == NULL) {
+    POCL_MSG_ERR ("fopen( %s ) failed\n", path);
+    goto ERROR;
+  }
+
+  do
     {
-      FILE *f = fopen(path, "r");
-      
-      *content = (char*)malloc(fsize+1);
-      
-      size_t rsize = fread(*content, 1, fsize, f);
-      (*content)[rsize] = '\0';
-      if (rsize < (size_t)fsize) 
-        {
-          errcode = -1;
-          fclose(f);
-        } 
-      else 
-        {
-          if (fclose(f))
-            errcode = -1;
-        }
+      char *reallocated = (char *)realloc (ptr, (total_size + CHUNK_SIZE + 1));
+      if (reallocated == NULL)
+        goto ERROR;
+      ptr = reallocated;
+
+      actually_read = fread (ptr + total_size, 1, CHUNK_SIZE, f);
+      total_size += actually_read;
     }
-  return errcode;
+  while (actually_read == CHUNK_SIZE);
+
+  if (ferror (f))
+    goto ERROR;
+
+  if (fclose (f))
+    goto ERROR;
+
+  /* add an extra NULL character for strings */
+  ptr[total_size] = 0;
+  *content = ptr;
+  *filesize = (uint64_t)total_size;
+  return 0;
+
+ERROR:
+  free (ptr);
+  return -1;
 }
 
 

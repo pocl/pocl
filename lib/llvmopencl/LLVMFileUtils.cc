@@ -163,13 +163,6 @@ pocl_exists(const char* path) {
 }
 
 
-int
-pocl_filesize(const char* path, uint64_t* res) {
-    Twine p(path);
-    std::error_code ec = sys::fs::file_size(p, *res);
-    return ec.default_error_condition().value();
-}
-
 int pocl_touch_file(const char* path) {
 #ifdef HAVE_UTIME
     int res = utime(path, NULL);
@@ -240,44 +233,60 @@ int pocl_mk_tempname(char *output, const char *prefix, const char *suffix,
 
 /****************************************************************************/
 
+#define CHUNK_SIZE (2 * 1024 * 1024)
+
 int
 pocl_read_file(const char* path, char** content, uint64_t *filesize) {
     assert(content);
     assert(path);
     assert(filesize);
+    *content = nullptr;
+    *filesize = 0;
 
     int fd;
     std::error_code ec;
     Twine p(path);
 
-    *content = NULL;
+    /* files in /proc return zero size, while
+       files in /sys return size larger than actual content size;
+       this reads the content sequentially.  */
+    ssize_t total_size = 0;
+    ssize_t actually_read = 0;
+    char *ptr = (char *)malloc(CHUNK_SIZE + 1);
+    if (ptr == nullptr)
+      return -1;
 
-    int errcode = pocl_filesize(path, filesize);
-    if (errcode)
-      return errcode;
+    ec = sys::fs::openFileForRead(p, fd);
+    if (ec)
+      goto ERROR;
 
-    size_t fsize = (size_t)(*filesize);
+    do {
+      char *reallocated = (char *)realloc(ptr, (total_size + CHUNK_SIZE + 1));
+      if (reallocated == NULL)
+        goto ERROR;
+      ptr = reallocated;
 
-    OPEN_FOR_READ;
-    RETURN_IF_EC;
+      actually_read = read(fd, ptr + total_size, CHUNK_SIZE);
+      if (actually_read > 0)
+        total_size += actually_read;
 
-    // +1 so we can later simply turn it into a C string, if needed
-    *content = (char *)malloc(fsize + 1);
+    } while (actually_read > 0);
 
-    ssize_t rsize = read(fd, *content, fsize);
-    if (rsize < 0)
-      return errno;
+    if (actually_read < 0)
+      goto ERROR;
 
-    (*content)[rsize] = '\0';
-    if ((size_t)rsize < fsize) {
-      errcode = errno ? -errno : -1;
-      close(fd);
-    } else {
-      if (close(fd))
-        errcode = errno ? -errno : -1;
-    }
+    if (close(fd))
+      goto ERROR;
 
-    return errcode;
+  /* add an extra NULL character for strings */
+    ptr[total_size] = 0;
+    *content = ptr;
+    *filesize = (uint64_t)total_size;
+    return 0;
+
+ERROR:
+    free (ptr);
+    return -1;
 }
 
 /* Atomic write - with rename() */

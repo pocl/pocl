@@ -48,8 +48,6 @@ int pocl_rename(const char *oldpath, const char *newpath);
 
 int pocl_exists(const char* path);
 
-int pocl_filesize(const char* path, uint64_t* res);
-
 /* Touch file to change last modified time. For portability, this
  * removes & creates the file. */
 int pocl_touch_file(const char* path);

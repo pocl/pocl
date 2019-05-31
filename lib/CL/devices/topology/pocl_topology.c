@@ -22,6 +22,7 @@
 */
 
 #include <stdlib.h>
+#include <assert.h>
 
 #include "config.h"
 
@@ -248,7 +249,9 @@ pocl_topology_detect_device_info (cl_device_id device)
   /* max_compute_units */
   if (pocl_read_file (CPUS, &content, &filesize) == 0)
     {
-      long start, end;
+      assert (content);
+      assert (filesize > 0);
+      unsigned long start, end;
       int items = sscanf (content, "%lu-%lu", &start, &end);
       assert (items == 2);
       device->max_compute_units = (unsigned)end + 1;
