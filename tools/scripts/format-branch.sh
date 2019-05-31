@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ ! -d .git ]; then
+if [ ! -e .git ]; then
   echo "must be run in git repo"
   exit 1
 fi
