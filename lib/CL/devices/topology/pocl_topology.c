@@ -220,7 +220,6 @@ pocl_topology_detect_device_info (cl_device_id device)
   /* global_mem_size */
   if (pocl_read_file (MEMINFO, &content, &filesize) == 0)
     {
-      printf ("content 11: %s  FSIZE: %lu \n", content, filesize);
       char *tmp = content;
       unsigned long memsize_kb;
       size_t i;
@@ -228,15 +227,12 @@ pocl_topology_detect_device_info (cl_device_id device)
       while (*tmp && (*tmp != '\n'))
         ++tmp;
       *tmp = 0;
-      printf ("content: %s \n", content);
       tmp = content;
       while (*tmp && (*tmp != 0x20))
         ++tmp;
       while (*tmp && (*tmp == 0x20))
         ++tmp;
-      printf ("TMP: %s \n", tmp);
       int items = sscanf (tmp, "%lu kB", &memsize_kb);
-      printf ("MEMSIZE: %lu   ITEMS: %i\n", memsize_kb, items);
 
       assert (items == 1);
 
