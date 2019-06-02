@@ -845,6 +845,7 @@ struct _cl_context {
   /* implementation */
   unsigned num_devices;
   unsigned num_properties;
+  size_t id;
   /* some OpenCL apps (AMD OpenCL SDK at least) use a trial-error 
      approach for creating a context with a device type, and call 
      clReleaseContext for the result regardless if it failed or not. 
@@ -893,6 +894,7 @@ struct _cl_command_queue {
   cl_device_id device;
   cl_command_queue_properties properties;
   /* implementation */
+  size_t id;
   cl_event events; /* events of the enqueued commands in enqueue order */
   struct _cl_event *barrier;
   unsigned long command_count; /* counter for unfinished command enqueued */
@@ -974,7 +976,7 @@ typedef struct _cl_mem cl_mem_t;
 struct _cl_mem {
   POCL_ICD_OBJECT
   POCL_OBJECT;
-  /* queries */
+  size_t id;
   cl_mem_object_type type;
   cl_mem_flags flags;
   size_t size;
@@ -1063,6 +1065,7 @@ struct _cl_program {
   /* queries */
   cl_context context;
   cl_uint num_devices;
+  size_t id;
   /* -cl-denorms-are-zero build option */
   unsigned flush_denorms;
   cl_device_id *devices;
@@ -1114,6 +1117,7 @@ struct _cl_kernel {
   /* -------- */
   cl_context context;
   cl_program program;
+  size_t id;
   pocl_kernel_metadata_t *meta;
   /* just a convenience pointer to meta->name */
   const char *name;
@@ -1148,7 +1152,7 @@ struct _cl_event {
   cl_command_queue queue;
   cl_command_type command_type;
   _cl_command_node *command;
-  unsigned int id;
+  size_t id;
 
   /* list of callback functions */
   event_callback_item *callback_list;
@@ -1187,6 +1191,7 @@ typedef struct _cl_sampler cl_sampler_t;
 struct _cl_sampler {
   POCL_ICD_OBJECT
   POCL_OBJECT;
+  size_t id;
   cl_context context;
   cl_bool             normalized_coords;
   cl_addressing_mode  addressing_mode;

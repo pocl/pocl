@@ -24,7 +24,7 @@ CL_API_SUFFIX__VERSION_1_1
 
   if (execution_status <= CL_COMPLETE)
     {
-      POCL_MSG_PRINT_EVENTS ("User event %u completed with status: %i\n",
+      POCL_MSG_PRINT_EVENTS ("User event %zu completed with status: %i\n",
                              event->id, execution_status);
       pocl_broadcast (event);
     }

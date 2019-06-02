@@ -27,6 +27,8 @@
 #include "common.h"
 #include "pocl_util.h"
 
+static unsigned long buffer_ids = 0;
+
 CL_API_ENTRY cl_mem CL_API_CALL
 POname(clCreateBuffer)(cl_context   context,
                        cl_mem_flags flags,
@@ -102,6 +104,7 @@ POname(clCreateBuffer)(cl_context   context,
                       size, context->max_mem_alloc_size);
 
   POCL_INIT_OBJECT(mem);
+  mem->id = ATOMIC_INC (buffer_ids);
   mem->parent = NULL;
   mem->map_count = 0;
   mem->mappings = NULL;
@@ -180,9 +183,10 @@ POname(clCreateBuffer)(cl_context   context,
 
   POCL_RETAIN_OBJECT(context);
 
-  POCL_MSG_PRINT_MEMORY (
-      "Created Buffer %p, HOST_PTR: %p, DEVICE_PTR[0]: %p SIZE %zu \n", mem,
-      mem->mem_host_ptr, mem->device_ptrs[0].mem_ptr, size);
+  POCL_MSG_PRINT_MEMORY ("Created Buffer ID %zu / %p, MEM_HOST_PTR: %p, "
+                         "DEVICE_PTR[0]: %p, SIZE %zu, FLAGS %zu \n",
+                         mem->id, mem, mem->mem_host_ptr,
+                         mem->device_ptrs[0].mem_ptr, size, flags);
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;

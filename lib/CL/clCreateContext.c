@@ -29,6 +29,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+static unsigned long context_ids = 0;
+
 int context_set_properties(cl_context                    context,
                            const cl_context_properties * properties,
                            cl_int *                      errcode)
@@ -37,7 +39,8 @@ int context_set_properties(cl_context                    context,
   int num_properties = 0;
   
   context->properties = NULL;
-  
+  context->id = ATOMIC_INC (context_ids);
+
   /* verify if data in properties is valid
    * and set them */
   if (properties)

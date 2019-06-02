@@ -81,6 +81,8 @@ int context_set_properties(cl_context                    context,
                            const cl_context_properties * properties,
                            cl_int *                      errcode);
 
+void set_program_id (cl_program program);
+
 #ifdef __GNUC__
 #pragma GCC visibility pop
 #endif

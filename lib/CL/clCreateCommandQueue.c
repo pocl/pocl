@@ -24,6 +24,8 @@
 #include "pocl_cl.h"
 #include "pocl_util.h"
 
+static unsigned long command_queue_ids = 0;
+
 CL_API_ENTRY cl_command_queue CL_API_CALL
 POname(clCreateCommandQueue)(cl_context context, 
                      cl_device_id device, 
@@ -64,6 +66,7 @@ POname(clCreateCommandQueue)(cl_context context,
   }
 
   POCL_INIT_OBJECT(command_queue);
+  command_queue->id = ATOMIC_INC (command_queue_ids);
 
   command_queue->context = context;
   command_queue->device = device;

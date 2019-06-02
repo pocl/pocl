@@ -23,6 +23,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_shared.h"
 #include "pocl_util.h"
 #include <string.h>
 
@@ -100,6 +101,7 @@ POname(clCreateProgramWithSource)(cl_context context,
   program->devices = context->devices;
   program->build_status = CL_BUILD_NONE;
   program->binary_type = CL_PROGRAM_BINARY_TYPE_NONE;
+  set_program_id (program);
 
   if ((program->binary_sizes =
        (size_t*) calloc (program->num_devices, sizeof(size_t))) == NULL ||

@@ -24,6 +24,9 @@
 #include "devices.h"
 #include "pocl_cl.h"
 #include "pocl_icd.h"
+#include "pocl_util.h"
+
+static unsigned long sampler_ids = 0;
 
 extern CL_API_ENTRY cl_sampler CL_API_CALL
 POname(clCreateSampler)(cl_context          context,
@@ -62,6 +65,7 @@ CL_API_SUFFIX__VERSION_1_0
   POCL_INIT_OBJECT (sampler);
   POname (clRetainContext) (context);
   sampler->context = context;
+  sampler->id = ATOMIC_INC (sampler_ids);
   sampler->normalized_coords = normalized_coords;
   sampler->addressing_mode = addressing_mode;
   sampler->filter_mode = filter_mode;

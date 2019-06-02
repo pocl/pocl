@@ -607,7 +607,7 @@ void pocl_ttasim_update_event (cl_device_id device, cl_event event, cl_int statu
         event->time_start = d->timeStamp();
       break;
     case CL_COMPLETE:
-      POCL_MSG_PRINT_INFO("TTA: Command complete, event %d\n", event->id);
+      POCL_MSG_PRINT_INFO("TTA: Command complete, event %zu\n", event->id);
       POCL_LOCK_OBJ (event);
       if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
         event->time_end = d->timeStamp();

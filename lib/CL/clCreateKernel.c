@@ -36,6 +36,8 @@
 #include "pocl_binary.h"
 #include "pocl_util.h"
 
+static unsigned long kernel_ids = 0;
+
 CL_API_ENTRY cl_kernel CL_API_CALL
 POname(clCreateKernel)(cl_program program,
                const char *kernel_name,
@@ -83,6 +85,7 @@ POname(clCreateKernel)(cl_program program,
   kernel->name = kernel->meta->name;
   kernel->context = program->context;
   kernel->program = program;
+  kernel->id = ATOMIC_INC (kernel_ids);
 
   kernel->dyn_arguments
       = calloc ((kernel->meta->num_args), sizeof (struct pocl_argument));

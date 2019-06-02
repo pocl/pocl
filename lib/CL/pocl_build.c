@@ -189,6 +189,13 @@ program_compile_dynamic_wg_binaries (cl_program program)
 
 #endif
 
+void
+set_program_id (cl_program program)
+{
+  static unsigned long program_ids = 0;
+  program->id = ATOMIC_INC (program_ids);
+}
+
 /* options must be non-NULL.
  * modded_options[size] + link_options are preallocated outputs
  */
