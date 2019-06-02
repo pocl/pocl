@@ -24,6 +24,7 @@
 #include "devices.h"
 #include "pocl_cl.h"
 #include "pocl_icd.h"
+#include "pocl_util.h"
 
 extern CL_API_ENTRY cl_sampler CL_API_CALL
 POname(clCreateSampler)(cl_context          context,

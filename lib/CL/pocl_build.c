@@ -196,6 +196,7 @@ program_compile_dynamic_wg_binaries (cl_program program)
 
 #endif
 
+
 /* options must be non-NULL.
  * modded_options[size] + link_options are preallocated outputs
  */

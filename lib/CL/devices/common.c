@@ -80,6 +80,8 @@
 
 #define WORKGROUP_STRING_LENGTH 1024
 
+uint64_t last_object_id = 0;
+
 /**
  * Generate code from the final bitcode using the LLVM
  * tools.

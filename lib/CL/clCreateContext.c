@@ -37,7 +37,7 @@ int context_set_properties(cl_context                    context,
   int num_properties = 0;
   
   context->properties = NULL;
-  
+
   /* verify if data in properties is valid
    * and set them */
   if (properties)

@@ -398,7 +398,8 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
       (*event)->id = POCL_ATOMIC_INC (event_id_counter);
       (*event)->num_buffers = num_buffers;
 
-      POCL_MSG_PRINT_EVENTS ("created event with id %d\n", (*event)->id);
+      POCL_MSG_PRINT_EVENTS ("created event with id %" PRIu64 "\n",
+                             (*event)->id);
 
       if (num_buffers > 0)
         {
@@ -420,7 +421,8 @@ pocl_create_event_sync (cl_event waiting_event, cl_event notifier_event)
   if (notifier_event == NULL)
     return CL_SUCCESS;
 
-  POCL_MSG_PRINT_EVENTS ("create event sync: waiting %d, notifier %d\n",
+  POCL_MSG_PRINT_EVENTS ("create event sync: waiting %" PRIu64
+                         " , notifier %" PRIu64 "\n",
                          waiting_event->id, notifier_event->id);
 
   pocl_lock_events_inorder (waiting_event, notifier_event);
@@ -516,7 +518,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
       cl_event wle = wait_list[i];
       pocl_create_event_sync ((*cmd)->event, wle);
     }
-  POCL_MSG_PRINT_EVENTS ("Created command struct (event %d, type %X)\n",
+  POCL_MSG_PRINT_EVENTS ("Created command struct (event %" PRIu64 " type %X)\n",
                          (*cmd)->event->id, command_type);
   return CL_SUCCESS;
 }
@@ -567,7 +569,7 @@ void pocl_command_enqueue (cl_command_queue command_queue,
     }
   DL_APPEND (command_queue->events, node->event);
 
-  POCL_MSG_PRINT_EVENTS ("Last event id %d to CQ.\n", node->event->id);
+  POCL_MSG_PRINT_EVENTS ("Last event id %" PRIu64 " to CQ.\n", node->event->id);
   command_queue->last_event.event = node->event;
   POCL_UNLOCK_OBJ (command_queue);
 
@@ -1239,16 +1241,16 @@ pocl_update_event_finished_msg (cl_int status, const char *func, unsigned line,
     ops->update_event (cq->device, event);
 
   if (status == CL_COMPLETE)
-    POCL_MSG_PRINT_EVENTS ("%s: Command complete, event %d\n",
+    POCL_MSG_PRINT_EVENTS ("%s: Command complete, event %" PRIu64 "\n",
                            cq->device->short_name, event->id);
   else
-    POCL_MSG_PRINT_EVENTS ("%s: Command FAILED, event %d\n",
+    POCL_MSG_PRINT_EVENTS ("%s: Command FAILED, event %" PRIu64 "\n",
                            cq->device->short_name, event->id);
 
   pocl_mem_objs_cleanup (event);
 
+  assert (cq->command_count > 0);
   --cq->command_count;
-  assert (cq->command_count >= 0);
   if (cq->barrier == event)
     cq->barrier = NULL;
   if (cq->last_event.event == event)

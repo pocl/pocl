@@ -180,9 +180,10 @@ POname(clCreateBuffer)(cl_context   context,
 
   POCL_RETAIN_OBJECT(context);
 
-  POCL_MSG_PRINT_MEMORY (
-      "Created Buffer %p, HOST_PTR: %p, DEVICE_PTR[0]: %p SIZE %zu \n", mem,
-      mem->mem_host_ptr, mem->device_ptrs[0].mem_ptr, size);
+  POCL_MSG_PRINT_MEMORY ("Created Buffer ID %" PRIu64 " / %p, MEM_HOST_PTR: %p, "
+                         "DEVICE_PTR[0]: %p, SIZE %zu, FLAGS " PRIu64 " \n",
+                         mem->id, mem, mem->mem_host_ptr,
+                         mem->device_ptrs[0].mem_ptr, size, flags);
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;

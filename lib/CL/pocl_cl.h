@@ -60,6 +60,19 @@
 # endif
 #endif
 
+#if defined(__GNUC__) || defined(__clang__)
+
+/* These return the new value. */
+/* See: https://gcc.gnu.org/onlinedocs/gcc-4.1.2/gcc/Atomic-Builtins.html */
+#define POCL_ATOMIC_INC(x) __sync_add_and_fetch (&x, 1)
+#define POCL_ATOMIC_DEC(x) __sync_sub_and_fetch (&x, 1)
+#define POCL_ATOMIC_CAS(ptr, oldval, newval)                                  \
+  __sync_val_compare_and_swap (ptr, oldval, newval)
+
+#else
+#error Need atomic_inc() builtin for this compiler
+#endif
+
 typedef struct pocl_kernel_metadata_s pocl_kernel_metadata_t;
 typedef pthread_mutex_t pocl_lock_t;
 #define POCL_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
@@ -162,12 +175,16 @@ typedef pthread_mutex_t pocl_lock_t;
     POCL_UNLOCK_OBJ (__OBJ__);                  \
   } while (0)
 
+
+extern uint64_t last_object_id;
+
 /* The reference counter is initialized to 1,
    when it goes to 0 object can be freed. */
 #define POCL_INIT_OBJECT_NO_ICD(__OBJ__)         \
   do {                                           \
-    POCL_INIT_LOCK ((__OBJ__)->pocl_lock);         \
-    (__OBJ__)->pocl_refcount = 1;                  \
+    POCL_INIT_LOCK ((__OBJ__)->pocl_lock);       \
+    (__OBJ__)->pocl_refcount = 1;                \
+    (__OBJ__)->id = POCL_ATOMIC_INC (last_object_id); \
   } while (0)
 
 #define POCL_MEM_FREE(F_PTR)                      \
@@ -659,6 +676,7 @@ typedef enum
 struct _cl_device_id {
   POCL_ICD_OBJECT
   POCL_OBJECT;
+  uint64_t id;
   /* queries */
   cl_device_type type;
   cl_uint vendor_id;
@@ -873,6 +891,7 @@ struct _cl_context {
   /* implementation */
   unsigned num_devices;
   unsigned num_properties;
+  uint64_t id;
   /* some OpenCL apps (AMD OpenCL SDK at least) use a trial-error 
      approach for creating a context with a device type, and call 
      clReleaseContext for the result regardless if it failed or not. 
@@ -921,6 +940,7 @@ struct _cl_command_queue {
   cl_device_id device;
   cl_command_queue_properties properties;
   /* implementation */
+  uint64_t id;
   cl_event events; /* events of the enqueued commands in enqueue order */
   struct _cl_event *barrier;
   unsigned long command_count; /* counter for unfinished command enqueued */
@@ -1002,7 +1022,7 @@ typedef struct _cl_mem cl_mem_t;
 struct _cl_mem {
   POCL_ICD_OBJECT
   POCL_OBJECT;
-  /* queries */
+  uint64_t id;
   cl_mem_object_type type;
   cl_mem_flags flags;
   size_t size;
@@ -1091,6 +1111,7 @@ struct _cl_program {
   /* queries */
   cl_context context;
   cl_uint num_devices;
+  uint64_t id;
   /* -cl-denorms-are-zero build option */
   unsigned flush_denorms;
   cl_device_id *devices;
@@ -1142,6 +1163,7 @@ struct _cl_kernel {
   /* -------- */
   cl_context context;
   cl_program program;
+  uint64_t id;
   pocl_kernel_metadata_t *meta;
   /* just a convenience pointer to meta->name */
   const char *name;
@@ -1184,7 +1206,7 @@ struct _cl_event {
   cl_command_queue queue;
   cl_command_type command_type;
   _cl_command_node *command;
-  unsigned int id;
+  uint64_t id;
 
   /* list of callback functions */
   event_callback_item *callback_list;
@@ -1227,6 +1249,7 @@ typedef struct _cl_sampler cl_sampler_t;
 struct _cl_sampler {
   POCL_ICD_OBJECT
   POCL_OBJECT;
+  uint64_t id;
   cl_context context;
   cl_bool             normalized_coords;
   cl_addressing_mode  addressing_mode;
