@@ -8,6 +8,11 @@
 #  include "vccompat.hpp"
 #endif
 
+#define W 2
+#define H 4
+#define D 8
+#define PIXELS (W * H * D)
+
 int main(int argc, char **argv)
 {
   /* test name */
@@ -32,21 +37,21 @@ int main(int argc, char **argv)
 
   memset(&image2_desc, 0, sizeof(cl_image_desc));
   image2_desc.image_type = CL_MEM_OBJECT_IMAGE2D;
-  image2_desc.image_width = 2;
-  image2_desc.image_height = 4;
+  image2_desc.image_width = W;
+  image2_desc.image_height = H;
 
   memset(&image3_desc, 0, sizeof(cl_image_desc));
   image3_desc.image_type = CL_MEM_OBJECT_IMAGE3D;
-  image3_desc.image_width = 2;
-  image3_desc.image_height = 4;
-  image3_desc.image_depth = 8;
+  image3_desc.image_width = W;
+  image3_desc.image_height = H;
+  image3_desc.image_depth = D;
 
   image_format.image_channel_order = CL_RGBA;
   image_format.image_channel_data_type = CL_UNSIGNED_INT8;
-  imageData = (cl_uchar4*)malloc (4 * 4 * sizeof(cl_uchar4));
+  imageData = (cl_uchar4 *)malloc (PIXELS * sizeof (cl_uchar4));
 
   TEST_ASSERT (imageData != NULL && "out of host memory\n");
-  memset (imageData, 1, 4*4*sizeof(cl_uchar4));
+  memset (imageData, 1, PIXELS * sizeof (cl_uchar4));
 
   /* determine file name of kernel source to load */
   srcdir_length = strlen(SRCDIR);
@@ -77,12 +82,12 @@ int main(int argc, char **argv)
 
   /* Create image */
   cl_mem image2
-      = clCreateImage (context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+      = clCreateImage (context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                        &image_format, &image2_desc, imageData, &err);
   CHECK_OPENCL_ERROR_IN ("clCreateImage image2");
 
   cl_mem image3
-      = clCreateImage (context, CL_MEM_READ_ONLY | CL_MEM_USE_HOST_PTR,
+      = clCreateImage (context, CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR,
                        &image_format, &image3_desc, imageData, &err);
   CHECK_OPENCL_ERROR_IN ("clCreateImage image3");
 
