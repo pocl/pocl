@@ -75,15 +75,17 @@
 
 #include "pocl-hsa.h"
 #include "common.h"
+#include "common_driver.h"
 #include "devices.h"
-#include "pocl_file_util.h"
+#include "pocl-hsa.h"
 #include "pocl_cache.h"
-#include "pocl_llvm.h"
-#include "pocl_util.h"
-#include "pocl_mem_management.h"
 #include "pocl_context.h"
+#include "pocl_file_util.h"
+#include "pocl_llvm.h"
+#include "pocl_mem_management.h"
 #include "pocl_spir.h"
 #include "pocl_local_size.h"
+#include "pocl_util.h"
 
 #include <assert.h>
 #include <limits.h>
@@ -237,13 +239,14 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->alloc_mem_obj = pocl_hsa_alloc_mem_obj;
   ops->free = pocl_hsa_free;
   ops->run = NULL;
-  ops->read = pocl_basic_read;
-  ops->read_rect = pocl_basic_read_rect;
-  ops->write = pocl_basic_write;
-  ops->write_rect = pocl_basic_write_rect;
-  ops->map_mem = pocl_basic_map_mem;
-  ops->unmap_mem = pocl_basic_unmap_mem;
-  ops->memfill = pocl_basic_memfill;
+
+  ops->read = pocl_driver_read;
+  ops->read_rect = pocl_driver_read_rect;
+  ops->write = pocl_driver_write;
+  ops->write_rect = pocl_driver_write_rect;
+  ops->map_mem = pocl_driver_map_mem;
+  ops->unmap_mem = pocl_driver_unmap_mem;
+  ops->memfill = pocl_driver_memfill;
   ops->copy = pocl_hsa_copy;
   ops->compute_local_size = pocl_default_local_size_optimizer;
 
@@ -261,11 +264,20 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->notify = pocl_hsa_notify;
   ops->broadcast = pocl_hsa_broadcast;
   ops->wait_event = pocl_hsa_wait_event;
+
+  ops->build_source = pocl_driver_build_source;
+  ops->link_program = pocl_driver_link_program;
+  ops->build_binary = pocl_driver_build_binary;
+  ops->free_program = pocl_driver_free_program;
+  ops->setup_metadata = pocl_driver_setup_metadata;
+  ops->supports_binary = pocl_driver_supports_binary;
+  ops->build_poclbinary = pocl_driver_build_poclbinary;
 #if HSAIL_ENABLED
   ops->compile_kernel = pocl_hsa_compile_kernel_hsail;
 #else
   ops->compile_kernel = pocl_hsa_compile_kernel_native;
 #endif
+
   ops->update_event = pocl_hsa_update_event;
   ops->notify_event_finished = pocl_hsa_notify_event_finished;
   ops->free_event_data = pocl_hsa_free_event_data;
@@ -633,6 +645,9 @@ init_dev_data (cl_device_id dev, int count)
 
   dev->profile = "FULL_PROFILE";
   dev->has_own_timer = CL_TRUE;
+
+  dev->compiler_available = CL_TRUE;
+  dev->linker_available = CL_TRUE;
 
   dev->profiling_timer_resolution = (size_t) (d->timestamp_unit) || 1;
 

@@ -55,6 +55,15 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
       /* there should be no kernels left when we're releasing the program */
       assert (program->kernels == NULL);
 
+      for (i = 0; i < program->num_devices; ++i)
+        {
+          cl_device_id device = program->devices[i];
+          if (device->ops->free_program)
+            {
+              device->ops->free_program (device, program, i);
+            }
+        }
+
       if (program->devices != program->context->devices)
         POCL_MEM_FREE(program->devices);
 
@@ -105,18 +114,12 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
           POCL_MEM_FREE (program->kernel_meta);
         }
 
-      POCL_MEM_FREE(program->build_hash);
-      POCL_MEM_FREE(program->compiler_options);
+      POCL_MEM_FREE (program->build_hash);
+      POCL_MEM_FREE (program->compiler_options);
+      POCL_MEM_FREE (program->data);
 
-#ifdef ENABLE_LLVM
-      if (program->llvm_irs)
-        for (i = 0; i < program->num_devices; ++i)
-          pocl_free_llvm_irs (program, i);
-#endif
-
-      POCL_MEM_FREE(program->llvm_irs);
       POCL_DESTROY_OBJECT (program);
-      POCL_MEM_FREE(program);
+      POCL_MEM_FREE (program);
 
       POname(clReleaseContext)(context);
     }

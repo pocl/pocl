@@ -399,17 +399,12 @@ struct pocl_device_ops {
    * the first initialization is done by 'init'. May be NULL */
   cl_int (*reinit) (unsigned j, cl_device_id device);
 
-  /* if the driver needs to use hardware resources for command queues, use this */
-  cl_int (*init_queue) (cl_command_queue queue);
-  void (*free_queue) (cl_command_queue queue);
-
   /* allocate a buffer in device memory */
   cl_int (*alloc_mem_obj) (cl_device_id device, cl_mem mem_obj, void* host_ptr);
   /* free a device buffer */
   void (*free) (cl_device_id device, cl_mem mem_obj);
 
-  /* clEnqueSVMfree - free a SVM memory pointer. May be NULL if device doesn't
-   * support SVM. */
+  /* SVM Ops */
   void (*svm_free) (cl_device_id dev, void *svm_ptr);
   void *(*svm_alloc) (cl_device_id dev, cl_svm_mem_flags flags, size_t size);
   void (*svm_map) (cl_device_id dev, void *svm_ptr);
@@ -506,15 +501,80 @@ struct pocl_device_ops {
                        cl_mem dst_buf,
                        mem_mapping_t *map);
 
-  /* Compile the fully linked LLVM IR to target-specific binaries.
-     If specialize is set to 1, allow specializing the final result
-     according to the properites of the given cmd. Typically
-     specialization is _not_ wanted only when creating a generic
-     WG function for storing in a binary. Local size of all zeros
-     forces dynamic local size work-group even if specializing
-     according to other properties. */
+  /* if the driver needs to do something at kernel create/destroy time */
+  int (*create_kernel) (cl_device_id device, cl_program program,
+                        cl_kernel kernel, unsigned program_device_i);
+  int (*free_kernel) (cl_device_id device, cl_program program,
+                      cl_kernel kernel, unsigned program_device_i);
+
+  /* program building callbacks */
+  int (*build_source) (
+      cl_program program, cl_uint device_i,
+
+      /* this is for optimization, driver may ignore it. It's the full list of
+         devices (sanitized) given to clCompile/BuildProgram(). */
+      cl_uint num_devices, const cl_device_id *device_list,
+
+      /* these are filled by clCompileProgram(), otherwise NULLs */
+      cl_uint num_input_headers, const cl_program *input_headers,
+      const char **header_include_names,
+
+      /* 1 = compile & link, 0 = compile only, linked later via clLinkProgram*/
+      int link_program);
+
+  int (*build_binary) (
+      cl_program program, cl_uint device_i,
+
+      /* this is for optimization, driver may ignore it. It's the full list of
+         devices (sanitized) given to clCompile/BuildProgram(). */
+      cl_uint num_devices, const cl_device_id *device_list,
+
+      /* 1 = compile & link, 0 = compile only, linked later via clLinkProgram*/
+      int link_program, int spir_build);
+
+  int (*link_program) (cl_program program, cl_uint device_i,
+
+                       cl_uint num_input_programs,
+                       const cl_program *input_programs,
+
+                       /* 1 = create library, 0 = create executable*/
+                       int create_library);
+
+  /* optional. called after build/link and after metadata setup. */
+  int (*post_build_program) (cl_program program, cl_uint device_i);
+  /* optional. Ensures that everything is built for
+   * returning a poclbinary to the user. E.g. for CPU driver this means
+   * building a dynamic WG sized parallel.bc */
+  int (*build_poclbinary) (cl_program program, cl_uint device_i);
+
+  /* Optional. If the driver uses the default build_poclbinary implementation
+   * from common_driver.c, that implementation calls this to compile a
+   * "dynamic WG size" kernel. */
   void (*compile_kernel) (_cl_command_node *cmd, cl_kernel kernel,
                           cl_device_id device, int specialize);
+
+  /* Optional. driver should free the content of "program->data" here,
+   * if it fills it. */
+  int (*free_program) (cl_device_id device, cl_program program,
+                       unsigned program_device_i);
+
+  /* Driver should setup kernel metadata here, if it can, and return non-zero
+   * on success. This is called after compilation/build/link. E.g. CPU driver
+   * parses the LLVM metadata. */
+  int (*setup_metadata) (cl_device_id device, cl_program program,
+                         unsigned program_device_i);
+
+  /* Driver should examine the binary and return non-zero if it can load it.
+   * Note that it's never called with pocl-binaries; those are automatically
+   * accepted if device-hash in the binary's header matches the device. */
+  int (*supports_binary) (cl_device_id device, const size_t length,
+                          const char *binary);
+
+  /* Optional. if the driver needs to use hardware resources
+   * for command queues, it should use these callbacks */
+  int (*init_queue) (cl_device_id device, cl_command_queue queue);
+  int (*free_queue) (cl_device_id device, cl_command_queue queue);
+
   /* clEnqueueNDRangeKernel */
   void (*run) (void *data, _cl_command_node *cmd);
   /* for clEnqueueNativeKernel. may be NULL */
@@ -537,12 +597,12 @@ struct pocl_device_ops {
    * If the device does not support images, all of these may be NULL. */
 
   /* creates a device-specific hardware resource for sampler. May be NULL */
-  void* (*create_sampler) (void *data,
-                           cl_sampler samp,
-                           cl_int *err);
-  cl_int (*free_sampler) (void *data,
-                          cl_sampler samp,
-                          void *sampler_data);
+  int (*create_sampler) (cl_device_id device,
+                         cl_sampler samp,
+                         unsigned context_device_i);
+  int (*free_sampler) (cl_device_id device,
+                       cl_sampler samp,
+                       unsigned context_device_i);
 
   /* copies image to image, on the same device (or same global memory). */
   cl_int (*copy_image_rect) (void *data,
@@ -610,11 +670,6 @@ struct pocl_device_ops {
 
   /* Check if the device supports the builtin kernel with the given name. */
   cl_int (*supports_builtin_kernel) (void *data, const char *kernel_name);
-
-  /* Loads the metadata for the kernel with the given name to the MD object
-     allocated at the given target. */
-  cl_int (*get_builtin_kernel_metadata) (void *data, const char *kernel_name,
-                                         pocl_kernel_metadata_t *target);
 
   /* The device can override this function to perform driver-specific
    * optimizations to the local size dimensions, whenever the decision
@@ -724,6 +779,7 @@ struct _cl_device_id {
   cl_bool endian_little;
   cl_bool available;
   cl_bool compiler_available;
+  cl_bool linker_available;
   /* Is the target a Single Program Multiple Data machine? If not,
      we need to generate work-item loops to execute all the work-items
      in the WG. For SPMD machines, the hardware spawns the WIs. */
@@ -1098,8 +1154,8 @@ struct _cl_program {
   char *source;
   /* The options in the last clBuildProgram call for this Program. */
   char *compiler_options;
-  /* The binaries for each device.  Currently the binary is directly the
-     sequential bitcode produced from the kernel sources.  */
+
+  /* per-device binaries, in device-specific format */
   size_t *binary_sizes;
   unsigned char **binaries;
 
@@ -1109,14 +1165,17 @@ struct _cl_program {
   char **builtin_kernel_names;
 
   /* Poclcc binary format.  */
+  /* per-device poclbinary-format binaries.  */
   size_t *pocl_binary_sizes;
   unsigned char **pocl_binaries;
+  /* device-specific data, per each device */
+  void **data;
 
   /* kernel number and the metadata for each kernel */
   size_t num_kernels;
   pocl_kernel_metadata_t *kernel_meta;
 
-  /* implementation */
+  /* list of attached cl_kernel instances */
   cl_kernel kernels;
   /* Per-device program hash after build */
   SHA1_digest_t* build_hash;
@@ -1124,8 +1183,6 @@ struct _cl_program {
   char** build_log;
   /* Per-program build log, for the case when we aren't yet building for devices */
   char main_build_log[640];
-  /* Used to store the llvm IR of the build to save disk I/O. */
-  void **llvm_irs;
   /* Use to store build status */
   cl_build_status build_status;
   /* Use to store binary type */
@@ -1143,6 +1200,10 @@ struct _cl_kernel {
   cl_context context;
   cl_program program;
   pocl_kernel_metadata_t *meta;
+  /* device-specific data, per each device. This is different from meta->data,
+   * as this is per-instance of cl_kernel, while there is just one meta->data
+   * for all instances of the kernel of the same name. */
+  void **data;
   /* just a convenience pointer to meta->name */
   const char *name;
 

@@ -179,7 +179,8 @@ endif()
 
 set(LIBPOCL_OBJS "$<TARGET_OBJECTS:libpocl_unlinked_objs>"
                  "$<TARGET_OBJECTS:pocl_cache>"
-                 ${POCL_DEVICES_OBJS})
+                 "$<TARGET_OBJECTS:pocl-devices>"
+                 "$<TARGET_OBJECTS:pocl-devices-topology>")
 
 add_library("pocl_cache" OBJECT "pocl_cache.c")
 harden("pocl_cache")

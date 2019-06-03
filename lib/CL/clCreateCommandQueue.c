@@ -57,7 +57,8 @@ POname(clCreateCommandQueue)(cl_context context,
   POCL_GOTO_ERROR_ON((found == CL_FALSE), CL_INVALID_DEVICE,
                                 "Could not find device in the context\n");
 
-  cl_command_queue command_queue = (cl_command_queue) malloc(sizeof(struct _cl_command_queue));
+  cl_command_queue command_queue
+      = (cl_command_queue)calloc (1, sizeof (struct _cl_command_queue));
   if (command_queue == NULL)
   {
     errcode = CL_OUT_OF_HOST_MEMORY;
@@ -69,17 +70,12 @@ POname(clCreateCommandQueue)(cl_context context,
   command_queue->context = context;
   command_queue->device = device;
   command_queue->properties = properties;
-  command_queue->barrier = NULL;
-  command_queue->events = NULL;
-  command_queue->command_count = 0;
-  command_queue->last_event.event = NULL;
-  command_queue->last_event.next = NULL;
 
   POname(clRetainContext) (context);
 
   errcode = CL_SUCCESS;
   if (device->ops->init_queue)
-    errcode = device->ops->init_queue (command_queue);
+    errcode = device->ops->init_queue (device, command_queue);
 
   if (errcode_ret != NULL)
     *errcode_ret = errcode;

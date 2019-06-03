@@ -101,20 +101,27 @@ POname(clCreateProgramWithSource)(cl_context context,
   program->build_status = CL_BUILD_NONE;
   program->binary_type = CL_PROGRAM_BINARY_TYPE_NONE;
 
-  if ((program->binary_sizes =
-       (size_t*) calloc (program->num_devices, sizeof(size_t))) == NULL ||
-      (program->binaries = (unsigned char**)
-       calloc (program->num_devices, sizeof(unsigned char*))) == NULL ||
-      (program->pocl_binaries = (unsigned char**)
-       calloc (program->num_devices, sizeof(unsigned char*))) == NULL ||
-      (program->pocl_binary_sizes =
-             (size_t*) calloc (program->num_devices, sizeof(size_t))) == NULL ||
-      (program->build_log = (char**)
-       calloc (program->num_devices, sizeof(char*))) == NULL ||
-      ((program->llvm_irs =
-        (void**) calloc (program->num_devices, sizeof(void*))) == NULL) ||
-      ((program->build_hash = (SHA1_digest_t*)
-        calloc (program->num_devices, sizeof(SHA1_digest_t))) == NULL))
+  if ((program->binary_sizes
+       = (size_t *)calloc (program->num_devices, sizeof (size_t)))
+          == NULL
+      || (program->binaries = (unsigned char **)calloc (
+              program->num_devices, sizeof (unsigned char *)))
+             == NULL
+      || (program->pocl_binaries = (unsigned char **)calloc (
+              program->num_devices, sizeof (unsigned char *)))
+             == NULL
+      || (program->pocl_binary_sizes
+          = (size_t *)calloc (program->num_devices, sizeof (size_t)))
+             == NULL
+      || (program->build_log
+          = (char **)calloc (program->num_devices, sizeof (char *)))
+             == NULL
+      || ((program->data
+           = (void **)calloc (program->num_devices, sizeof (void *)))
+          == NULL)
+      || ((program->build_hash = (SHA1_digest_t *)calloc (
+               program->num_devices, sizeof (SHA1_digest_t)))
+          == NULL))
     {
       errcode = CL_OUT_OF_HOST_MEMORY;
       goto ERROR;
@@ -129,7 +136,7 @@ POname(clCreateProgramWithSource)(cl_context context,
 ERROR:
   if (program) {
     POCL_MEM_FREE(program->build_hash);
-    POCL_MEM_FREE(program->llvm_irs);
+    POCL_MEM_FREE (program->data);
     POCL_MEM_FREE(program->build_log);
     POCL_MEM_FREE(program->binaries);
     POCL_MEM_FREE(program->binary_sizes);

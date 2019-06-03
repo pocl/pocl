@@ -24,6 +24,8 @@
 
 #include "ttasim.h"
 #include "bufalloc.h"
+#include "common.h"
+#include "common_driver.h"
 #include "pocl_device.h"
 #include "pocl_util.h"
 #include "common.h"
@@ -95,7 +97,16 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
   ops->flush = pocl_tce_flush;
   ops->join = pocl_tce_join;
   ops->submit = pocl_tce_submit;
+
+  ops->build_source = pocl_driver_build_source;
+  ops->link_program = pocl_driver_link_program;
+  ops->build_binary = pocl_driver_build_binary;
+  ops->free_program = pocl_driver_free_program;
+  ops->setup_metadata = pocl_driver_setup_metadata;
+  ops->supports_binary = pocl_driver_supports_binary;
+  ops->build_poclbinary = pocl_driver_build_poclbinary;
   ops->compile_kernel = pocl_tce_compile_kernel;
+
   ops->broadcast = pocl_broadcast;
   ops->notify = pocl_tce_notify;
   ops->build_hash = pocl_tce_build_hash;
@@ -550,7 +561,10 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->host_unified_memory = CL_FALSE;
 
   dev->available = CL_TRUE;
+#ifdef ENABLE_LLVM
   dev->compiler_available = CL_TRUE;
+  dev->linker_available = CL_TRUE;
+#endif
   dev->spmd = CL_FALSE;
   dev->workgroup_pass = CL_TRUE;
   dev->execution_capabilities = CL_EXEC_KERNEL;

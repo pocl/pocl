@@ -71,8 +71,7 @@ CL_API_SUFFIX__VERSION_1_0
     {
       cl_device_id dev = context->devices[i];
       if (dev->image_support == CL_TRUE && dev->ops->create_sampler)
-        sampler->device_data[dev->dev_id]
-            = dev->ops->create_sampler (dev->data, sampler, &errcode);
+        dev->ops->create_sampler (dev, sampler, dev->dev_id);
     }
 
 ERROR:

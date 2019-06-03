@@ -1115,11 +1115,6 @@ string(REGEX REPLACE "[\r\n\t ]+" "\", \"" HOST_LD_FLAGS_ARRAY "${HOST_LD_FLAGS_
 set(HOST_CLANG_FLAGS "${DEFAULT_HOST_CLANG_FLAGS} ${EXTRA_HOST_CLANG_FLAGS}")
 set(HOST_LLC_FLAGS "${DEFAULT_HOST_LLC_FLAGS} ${EXTRA_HOST_LLC_FLAGS}")
 
-# HSA and pthread drivers require basic driver
-if(ENABLE_HSA OR ENABLE_HOST_CPU_DEVICES)
-  set(BUILD_BASIC 1)
-endif()
-
 if(ENABLE_HOST_CPU_DEVICES)
   set(OCL_TARGETS "host")
   set(OCL_DRIVERS "basic pthreads")
@@ -1127,13 +1122,13 @@ if(ENABLE_HOST_CPU_DEVICES)
   # TODO OCL_KERNEL_TARGET_CPU -> OCL_KERNEL_TARGET_CPU
   set(OCL_KERNEL_TARGET "${LLC_TRIPLE}") #The kernel target triplet.
   set(OCL_KERNEL_TARGET_CPU "${LLC_HOST_CPU}") #The kernel target CPU variant.
+  set(BUILD_BASIC 1)
   set(BUILD_PTHREAD 1)
 endif()
 
 # The accel device could be built by default, but it's implemented in C++,
 # thus requires a C++ compiler, so let's not.
 if(ENABLE_ACCEL_DEVICE)
-  set(BUILD_BASIC 1)
   set(BUILD_ACCEL 1)
   set(OCL_DRIVERS "${OCL_DRIVERS} accel")
 endif()

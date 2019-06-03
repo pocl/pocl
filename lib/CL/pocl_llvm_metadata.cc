@@ -452,8 +452,8 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
   cl_device_id Device = program->devices[device_i];
   assert(Device->llvm_target_triplet && "Device has no target triple set");
 
-  if (program->llvm_irs != nullptr && program->llvm_irs[device_i] != nullptr)
-    input = static_cast<llvm::Module *>(program->llvm_irs[device_i]);
+  if (program->data != nullptr && program->data[device_i] != nullptr)
+    input = static_cast<llvm::Module *>(program->data[device_i]);
   else {
     return CL_INVALID_PROGRAM_EXECUTABLE;
   }
@@ -618,9 +618,10 @@ unsigned pocl_llvm_get_kernel_count(cl_program program, unsigned device_i) {
   InitializeLLVM();
 
   /* any device's module will do for metadata, just use first non-nullptr */
-  llvm::Module *mod = (llvm::Module *)program->llvm_irs[device_i];
+  llvm::Module *mod = (llvm::Module *)program->data[device_i];
   if (mod == nullptr)
     return 0;
+
   llvm::NamedMDNode *md = mod->getNamedMetadata("opencl.kernels");
   if (md) {
     return md->getNumOperands();

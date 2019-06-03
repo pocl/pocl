@@ -94,8 +94,8 @@ llvm::Module *parseModuleIRMem(const char *input_stream, size_t size) {
   return parsed_module.get().release();
 }
 
-int getModuleTriple(const char *input_stream, size_t size,
-                    std::string &triple) {
+static int getModuleTriple(const char *input_stream, size_t size,
+                           std::string &triple) {
   StringRef input_stream_ref(input_stream, size);
   std::unique_ptr<MemoryBuffer> buffer =
       MemoryBuffer::getMemBufferCopy(input_stream_ref);
@@ -130,11 +130,10 @@ get_llvm_cpu_name () {
   return cpu_name;
 }
 
-int bitcode_is_spir(const char *bitcode, size_t size) {
-  std::string triple;
-  int err = getModuleTriple(bitcode, size, triple);
-  if (!err)
-    return triple.find("spir") == 0;
+int bitcode_is_triple(const char *bitcode, size_t size, const char *triple) {
+  std::string Triple;
+  if (getModuleTriple(bitcode, size, Triple) == 0)
+    return Triple.find(triple) != std::string::npos;
   else
     return 0;
 }

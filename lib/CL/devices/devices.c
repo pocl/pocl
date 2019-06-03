@@ -263,7 +263,7 @@ pocl_get_devices(cl_device_type device_type, struct _cl_device_id **devices, uns
 unsigned int
 pocl_get_device_type_count(cl_device_type device_type)
 {
-  int count = 0;
+  unsigned int count = 0;
   unsigned int i;
 
   int offline_compile = pocl_get_bool_option("POCL_OFFLINE_COMPILE", 0);

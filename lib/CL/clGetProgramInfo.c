@@ -32,18 +32,15 @@
 
 static void get_binary_sizes(cl_program program, size_t *sizes)
 {
-#ifdef ENABLE_LLVM
-  if (program_compile_dynamic_wg_binaries (program) != CL_SUCCESS)
-    {
-      memset(sizes, 0, program->num_devices * sizeof(size_t));
-      return;
-    }
-#endif
   unsigned i;
   for (i=0; i < program->num_devices; i++)
     {
+      if (program->devices[i]->ops->build_poclbinary)
+        program->devices[i]->ops->build_poclbinary (program, i);
+
       if (!program->pocl_binaries[i] && program->binaries[i])
-        program->pocl_binary_sizes[i] = pocl_binary_sizeof_binary(program, i);
+        pocl_binary_sizeof_binary (program, i);
+
       if (program->pocl_binaries[i])
         sizes[i] = program->pocl_binary_sizes[i];
       else
@@ -53,17 +50,13 @@ static void get_binary_sizes(cl_program program, size_t *sizes)
 
 static void get_binaries(cl_program program, unsigned char **binaries)
 {
-#ifdef ENABLE_LLVM
-  if (program_compile_dynamic_wg_binaries (program) != CL_SUCCESS)
-    {
-      memset(binaries, 0, program->num_devices * sizeof(unsigned char*));
-      return;
-    }
-#endif
   unsigned i;
   size_t res;
   for (i=0; i < program->num_devices; i++)
     {
+      if (program->devices[i]->ops->build_poclbinary)
+        program->devices[i]->ops->build_poclbinary (program, i);
+
       if (!program->pocl_binaries[i] && program->binaries[i])
         {
           pocl_binary_serialize(program, i, &res);
@@ -71,6 +64,7 @@ static void get_binaries(cl_program program, unsigned char **binaries)
             assert(program->pocl_binary_sizes[i] == res);
           program->pocl_binary_sizes[i] = res;
         }
+
       if (program->pocl_binaries[i])
         memcpy(binaries[i], program->pocl_binaries[i], program->pocl_binary_sizes[i]);
       else

@@ -43,6 +43,7 @@
 #include "common.h"
 #include "pocl_shared.h"
 
+#include "common_driver.h"
 #include "config.h"
 #include "config2.h"
 #include "devices.h"
@@ -625,7 +626,6 @@ pocl_exec_command (_cl_command_node *node)
 
     case CL_COMMAND_UNMAP_MEM_OBJECT:
       pocl_update_event_running (event);
-      POCL_LOCK_OBJ (event->mem_objs[0]);
       if (event->mem_objs[0]->is_image == CL_FALSE
           || IS_IMAGE1D_BUFFER (event->mem_objs[0]))
         {
@@ -643,13 +643,8 @@ pocl_exec_command (_cl_command_node *node)
                                  event->mem_objs[0],
                                  cmd->unmap.mapping);
         }
-      assert ((cmd->unmap.mapping)->unmap_requested > 0);
-      DL_DELETE((event->mem_objs[0])->mappings,
-                cmd->unmap.mapping);
-      (event->mem_objs[0])->map_count--;
-      POCL_MEM_FREE (cmd->unmap.mapping);
-      POCL_UNLOCK_OBJ (event->mem_objs[0]);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Unmap Mem obj         ");
+      pocl_unmap_command_finished (event, cmd);
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Unmap Mem obj         ");
       break;
 
     case CL_COMMAND_NDRANGE_KERNEL:
@@ -816,7 +811,7 @@ pocl_fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg)
 
 /* CPU driver stuff */
 
-#ifdef HAVE_LIBDL
+#ifdef HAVE_DLFCN_H
 
 typedef struct pocl_dlhandle_cache_item pocl_dlhandle_cache_item;
 struct pocl_dlhandle_cache_item
@@ -1485,6 +1480,7 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->endian_little = !(WORDS_BIGENDIAN);
   dev->available = CL_TRUE;
   dev->compiler_available = CL_TRUE;
+  dev->linker_available = CL_TRUE;
   dev->spmd = CL_FALSE;
   dev->arg_buffer_launcher = CL_FALSE;
   dev->workgroup_pass = CL_TRUE;

@@ -38,8 +38,6 @@
   cl_int pocl_##__DRV__##_init (unsigned j, cl_device_id device,              \
                                 const char *parameters);                      \
   unsigned int pocl_##__DRV__##_probe (struct pocl_device_ops *ops);          \
-  cl_int pocl_##__DRV__##_init_queue (cl_command_queue queue);                \
-  void pocl_##__DRV__##_free_queue (cl_command_queue queue);                  \
   cl_int pocl_##__DRV__##_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, \
                                          void *host_ptr);                     \
   void pocl_##__DRV__##_free (cl_device_id device, cl_mem mem_obj);           \
@@ -76,8 +74,36 @@
       size_t src_row_pitch, size_t src_slice_pitch);                          \
   void pocl_##__DRV__##_compile_kernel (_cl_command_node *node,               \
                                         cl_kernel kernel,                     \
-                                        cl_device_id device,                  \
-                                        int specialize);                      \
+                                        cl_device_id device, int specialize); \
+  int pocl_##__DRV__##_init_queue (cl_device_id device,                       \
+                                   cl_command_queue queue);                   \
+  int pocl_##__DRV__##_free_queue (cl_device_id device,                       \
+                                   cl_command_queue queue);                   \
+  int pocl_##__DRV__##_create_kernel (cl_device_id device, cl_program p,      \
+                                      cl_kernel k, unsigned device_i);        \
+  int pocl_##__DRV__##_free_kernel (cl_device_id device, cl_program p,        \
+                                    cl_kernel k, unsigned device_i);          \
+  int pocl_##__DRV__##_build_source (                                         \
+      cl_program program, cl_uint device_i, cl_uint num_devices,              \
+      const cl_device_id *device_list, cl_uint num_input_headers,             \
+      const cl_program *input_headers, const char **header_include_names,     \
+      int link_program);                                                      \
+  int pocl_##__DRV__##_build_binary (                                         \
+      cl_program program, cl_uint device_i, cl_uint num_devices,              \
+      const cl_device_id *device_list, int link_program, int spir_build);     \
+  int pocl_##__DRV__##_link_program (                                         \
+      cl_program program, cl_uint device_i, cl_uint num_input_programs,       \
+      const cl_program *input_programs, int create_library);                  \
+  int pocl_##__DRV__##_post_build_program (cl_program program,                \
+                                           cl_uint device_i);                 \
+  int pocl_##__DRV__##_build_poclbinary (cl_program program,                  \
+                                         cl_uint device_i);                   \
+  int pocl_##__DRV__##_free_program (cl_device_id device, cl_program program, \
+                                     unsigned program_device_i);              \
+  int pocl_##__DRV__##_setup_metadata (                                       \
+      cl_device_id device, cl_program program, unsigned program_device_i);    \
+  int pocl_##__DRV__##_supports_binary (                                      \
+      cl_device_id device, const size_t length, const char *binary);          \
   void pocl_##__DRV__##_memfill (void *data, pocl_mem_identifier *dst_mem_id, \
                                  cl_mem dst_buf, size_t size, size_t offset,  \
                                  const void *__restrict__ pattern,            \
@@ -94,10 +120,10 @@
   char *pocl_##__DRV__##_build_hash (cl_device_id device);                    \
   void pocl_##__DRV__##_init_target_machine (void *data,                      \
                                              void *target_machine);           \
-  void *pocl_##__DRV__##_create_sampler (void *data, cl_sampler samp,         \
-                                         cl_int *err);                        \
-  cl_int pocl_##__DRV__##_free_sampler (void *data, cl_sampler samp,          \
-                                        void *sampler_data);                  \
+  int pocl_##__DRV__##_create_sampler (cl_device_id device, cl_sampler samp,  \
+                                       unsigned device_i);                    \
+  int pocl_##__DRV__##_free_sampler (cl_device_id device, cl_sampler samp,    \
+                                     unsigned device_i);                      \
   cl_int pocl_##__DRV__##_copy_image_rect (                                   \
       void *data, cl_mem src_image, cl_mem dst_image,                         \
       pocl_mem_identifier *src_mem_id, pocl_mem_identifier *dst_mem_id,       \
@@ -136,6 +162,4 @@
   void pocl_##__DRV__##_notify_event_finished (cl_event event);               \
   cl_int pocl_##__DRV__##_supports_builtin_kernel (void *data,                \
                                                    const char *kernel_name);  \
-  cl_int pocl_##__DRV__##_get_builtin_kernel_metadata (void *data,            \
-               const char *kernel_name, pocl_kernel_metadata_t *target);      \
 

@@ -205,8 +205,6 @@ static std::string getPoclPrivateDataDir() {
 
 int pocl_llvm_build_program(cl_program program,
                             unsigned device_i,
-                            const char *user_options_cstr,
-                            char *program_bc_path,
                             cl_uint num_input_headers,
                             const cl_program *input_headers,
                             const char **header_include_names,
@@ -214,14 +212,16 @@ int pocl_llvm_build_program(cl_program program,
 
 {
   char tempfile[POCL_FILENAME_LENGTH];
+  char program_bc_path[POCL_FILENAME_LENGTH];
   tempfile[0] = 0;
-  llvm::Module **mod = NULL;
+  llvm::Module *mod = nullptr;
   char temp_include_dir[POCL_FILENAME_LENGTH];
-  std::string user_options(user_options_cstr ? user_options_cstr : "");
+  std::string user_options(program->compiler_options ? program->compiler_options
+                                                     : "");
   size_t n = 0;
   int error;
 
-  PoclCompilerMutexGuard lockHolder(NULL);
+  PoclCompilerMutexGuard lockHolder(nullptr);
   InitializeLLVM();
 
   if (num_input_headers > 0) {
@@ -284,6 +284,13 @@ int pocl_llvm_build_program(cl_program program,
     }
 
   llvm::StringRef extensions(device->extensions);
+
+#if !(defined(__x86_64__) && defined(__GNUC__))
+  if (program->flush_denorms) {
+    POCL_MSG_WARN("flush to zero is currently only implemented for "
+                  "x86-64 & gcc/clang, ignoring flag\n");
+  }
+#endif
 
   std::string cl_ext;
   if (extensions.size() > 0) {
@@ -390,9 +397,6 @@ int pocl_llvm_build_program(cl_program program,
   std::cerr << "### options: " << ss.str()
             << "user_options: " << user_options << std::endl;
 #endif
-
-  if (program->build_log[device_i])
-    POCL_MEM_FREE(program->build_log[device_i]);
 
   if (!CompilerInvocation::CreateFromArgs(
           pocl_build,
@@ -561,8 +565,36 @@ int pocl_llvm_build_program(cl_program program,
 
   unlink_source(fe);
 
-  if (pocl_exists(program_bc_path))
+  if (pocl_exists(program_bc_path)) {
+    char *binary = nullptr;
+    uint64_t fsize;
+    /* Read binaries from program.bc to memory */
+    if (program->binaries[device_i] != nullptr) {
+      POCL_MEM_FREE(program->binaries[device_i]);
+      program->binary_sizes[device_i] = 0;
+    }
+    int r = pocl_read_file(program_bc_path, &binary, &fsize);
+    POCL_RETURN_ERROR_ON(r, CL_BUILD_ERROR,
+                         "Failed to read binaries from program.bc to "
+                         "memory: %s\n",
+                         program_bc_path);
+
+    program->binary_sizes[device_i] = (size_t)fsize;
+    program->binaries[device_i] = (unsigned char *)binary;
+
+    mod = (llvm::Module *)program->data[device_i];
+    if (mod != nullptr) {
+      delete mod;
+      program->data[device_i] = nullptr;
+      --numberOfIRs;
+    }
+
+    program->data[device_i] = parseModuleIR(program_bc_path);
+    assert(program->data[device_i]);
+    ++numberOfIRs;
+
     return CL_SUCCESS;
+  }
 
   // TODO: use pch: it is possible to disable the strict checking for
   // the compilation flags used to compile it and the current translation
@@ -576,24 +608,24 @@ int pocl_llvm_build_program(cl_program program,
   if (!success)
     return CL_BUILD_PROGRAM_FAILURE;
 
-  mod = (llvm::Module **)&program->llvm_irs[device_i];
-  if (*mod != NULL) {
-    delete *mod;
+  mod = (llvm::Module *)program->data[device_i];
+  if (mod != nullptr) {
+    delete mod;
     --numberOfIRs;
   }
 
-  *mod = EmitLLVM.takeModule().release();
-
-  if (*mod == NULL)
+  mod = EmitLLVM.takeModule().release();
+  if (mod == nullptr)
     return CL_BUILD_PROGRAM_FAILURE;
+  else
+    ++numberOfIRs;
 
-  ++numberOfIRs;
 
-  if ((*mod)->getModuleFlag("PIC Level") == nullptr)
-    (*mod)->setPICLevel(PICLevel::BigPIC);
+  if (mod->getModuleFlag("PIC Level") == nullptr)
+    mod->setPICLevel(PICLevel::BigPIC);
 #ifndef __PPC64__
-  if ((*mod)->getModuleFlag("PIE Level") == nullptr)
-    (*mod)->setPIELevel(PIELevel::Large);
+  if (mod->getModuleFlag("PIE Level") == nullptr)
+    mod->setPIELevel(PIELevel::Large);
 #endif
 
   // link w kernel lib, but not if we're called from clCompileProgram()
@@ -604,21 +636,23 @@ int pocl_llvm_build_program(cl_program program,
     llvm::Module *libmodule = getKernelLibrary(device);
     assert(libmodule != NULL);
     std::string log("Error(s) while linking: \n");
-    if (link(*mod, libmodule, log)) {
+    if (link(mod, libmodule, log)) {
       appendToProgramBuildLog(program, device_i, log);
       std::string msg = getDiagString();
       appendToProgramBuildLog(program, device_i, msg);
-      delete *mod;
-      *mod = nullptr;
+      delete mod;
+      mod = nullptr;
       --numberOfIRs;
       return CL_BUILD_PROGRAM_FAILURE;
     }
   }
 
+  program->data[device_i] = mod;
+
   POCL_MSG_PRINT_LLVM("Writing program.bc to %s.\n", program_bc_path);
 
-  /* Always retain program.bc. Its required in clBuildProgram */
-  error = pocl_write_module(*mod, program_bc_path, 0);
+  /* Always retain program.bc */
+  error = pocl_write_module(mod, program_bc_path, 0);
   if(error)
     return error;
 
@@ -626,7 +660,7 @@ int pocl_llvm_build_program(cl_program program,
    * save program->binaries[i]
    */
   std::string content;
-  writeModuleIR(*mod, content);
+  writeModuleIR(mod, content);
 
   if (program->binaries[device_i])
     POCL_MEM_FREE(program->binaries[device_i]);
@@ -640,16 +674,17 @@ int pocl_llvm_build_program(cl_program program,
 }
 
 int pocl_llvm_link_program(cl_program program, unsigned device_i,
-                           char *program_bc_path, cl_uint num_input_programs,
+                           cl_uint num_input_programs,
                            unsigned char **cur_device_binaries,
                            size_t *cur_device_binary_sizes, void **cur_llvm_irs,
-                           int create_library, int spir) {
+                           int link_program, int spir) {
 
+  char program_bc_path[POCL_FILENAME_LENGTH];
   std::string concated_binaries;
   llvm::Module *linked_module = nullptr;
   size_t n = 0, i;
   cl_device_id device = program->devices[device_i];
-  llvm::Module **modptr = (llvm::Module **)&program->llvm_irs[device_i];
+  llvm::Module **modptr = (llvm::Module **)&program->data[device_i];
   int error;
 
   currentPoclDevice = device;
@@ -661,13 +696,16 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
 
   if (spir) {
 #ifdef ENABLE_SPIR
-
+    assert(num_input_programs == 1);
     POCL_RETURN_ERROR_ON ((device->endian_little == CL_FALSE),
                          CL_LINK_PROGRAM_FAILURE,
                          "SPIR is only supported on little-endian devices\n");
 
-    linked_module = parseModuleIRMem((char *)program->binaries[device_i],
-                                     program->binary_sizes[device_i]);
+    concated_binaries.append((char *)cur_device_binaries[0],
+                             cur_device_binary_sizes[0]);
+
+    linked_module = parseModuleIRMem((char *)cur_device_binaries[0],
+                                     cur_device_binary_sizes[0]);
 
     const std::string &spir_triple = linked_module->getTargetTriple();
     size_t spir_addrbits = Triple(spir_triple).isArch64Bit() ? 64 : 32;
@@ -686,6 +724,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
      */
     linked_module->setTargetTriple(libmodule->getTargetTriple());
     linked_module->setDataLayout(libmodule->getDataLayout());
+
     if (linked_module->getModuleFlag("PIC Level") == nullptr)
       linked_module->setPICLevel(PICLevel::BigPIC);
 #ifndef __PPC64__
@@ -699,30 +738,30 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
 #endif
   } else {
 
-  std::unique_ptr<llvm::Module> mod(
-      new llvm::Module(StringRef("linked_program"), GlobalContext()));
+    std::unique_ptr<llvm::Module> mod(
+        new llvm::Module(StringRef("linked_program"), GlobalContext()));
 
-  for (i = 0; i < num_input_programs; i++) {
-    assert(cur_device_binaries[i]);
-    assert(cur_device_binary_sizes[i]);
-    concated_binaries.append(std::string((char *)cur_device_binaries[i],
-                                         cur_device_binary_sizes[i]));
+    for (i = 0; i < num_input_programs; i++) {
+      assert(cur_device_binaries[i]);
+      assert(cur_device_binary_sizes[i]);
+      concated_binaries.append((char *)cur_device_binaries[i],
+                               cur_device_binary_sizes[i]);
 
-    llvm::Module *p = (llvm::Module *)cur_llvm_irs[i];
-    assert(p);
+      llvm::Module *p = (llvm::Module *)cur_llvm_irs[i];
+      assert(p);
 
 #ifdef LLVM_OLDER_THAN_7_0
-    if (Linker::linkModules(*mod, llvm::CloneModule(p))) {
+      if (Linker::linkModules(*mod, llvm::CloneModule(p))) {
 #else
-    if (Linker::linkModules(*mod, llvm::CloneModule(*p))) {
+      if (Linker::linkModules(*mod, llvm::CloneModule(*p))) {
 #endif
-      std::string msg = getDiagString();
-      appendToProgramBuildLog(program, device_i, msg);
-      return CL_LINK_PROGRAM_FAILURE;
+        std::string msg = getDiagString();
+        appendToProgramBuildLog(program, device_i, msg);
+        return CL_LINK_PROGRAM_FAILURE;
+      }
     }
-  }
 
-  linked_module = mod.release();
+    linked_module = mod.release();
   }
 
   if (linked_module == nullptr)
@@ -734,7 +773,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
     *modptr = nullptr;
   }
 
-  if (!create_library) {
+  if (link_program) {
     // linked all the programs together, now link in the kernel library
     std::string log("Error(s) while linking: \n");
     if (link(linked_module, libmodule, log)) {
@@ -764,7 +803,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
 
   POCL_MSG_PRINT_LLVM("Writing program.bc to %s.\n", program_bc_path);
 
-  /* Always retain program.bc. Its required in clBuildProgram */
+  /* Always retain program.bc for metadata */
   error = pocl_write_module(linked_module, program_bc_path, 0);
   if (error)
     return error;

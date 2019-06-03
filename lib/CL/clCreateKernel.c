@@ -59,12 +59,6 @@ POname(clCreateKernel)(cl_program program,
   POCL_GOTO_ERROR_ON((program->build_status != CL_BUILD_SUCCESS),
     CL_INVALID_PROGRAM_EXECUTABLE, "Last BuildProgram() was not successful\n");
 
-  POCL_GOTO_ERROR_ON (
-      (program->builtin_kernel_names == NULL && program->llvm_irs == NULL),
-      CL_INVALID_PROGRAM_EXECUTABLE,
-      "No built binaries nor built-in kernels in program "
-      "(this shouldn't happen...)\n");
-
   kernel = (cl_kernel) calloc(1, sizeof(struct _cl_kernel));
   POCL_GOTO_ERROR_ON((kernel == NULL), CL_OUT_OF_HOST_MEMORY,
                      "clCreateKernel couldn't allocate memory");
@@ -80,6 +74,7 @@ POname(clCreateKernel)(cl_program program,
                       kernel_name);
 
   kernel->meta = &program->kernel_meta[i];
+  kernel->data = calloc (program->num_devices, sizeof (void *));
   kernel->name = kernel->meta->name;
   kernel->context = program->context;
   kernel->program = program;
@@ -88,6 +83,13 @@ POname(clCreateKernel)(cl_program program,
       = calloc ((kernel->meta->num_args), sizeof (struct pocl_argument));
   POCL_GOTO_ERROR_COND ((kernel->dyn_arguments == NULL),
                         CL_OUT_OF_HOST_MEMORY);
+
+  for (i = 0; i < program->num_devices; ++i)
+    {
+      cl_device_id device = program->devices[i];
+      if (device->ops->create_kernel)
+        device->ops->create_kernel (device, program, kernel, i);
+    }
 
   POCL_LOCK_OBJ (program);
   LL_PREPEND (program->kernels, kernel);
@@ -99,7 +101,10 @@ POname(clCreateKernel)(cl_program program,
 
 ERROR:
   if (kernel)
-    POCL_MEM_FREE (kernel->dyn_arguments);
+    {
+      POCL_MEM_FREE (kernel->dyn_arguments);
+      POCL_MEM_FREE (kernel->data);
+    }
   POCL_MEM_FREE (kernel);
   kernel = NULL;
 

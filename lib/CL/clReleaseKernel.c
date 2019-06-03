@@ -44,6 +44,13 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
       POCL_LOCK_OBJ (program);
       LL_DELETE (program->kernels, kernel);
 
+      for (i = 0; i < program->num_devices; ++i)
+        {
+          cl_device_id device = program->devices[i];
+          if (device->ops->free_kernel)
+            device->ops->free_kernel (device, program, kernel, i);
+        }
+
       if (kernel->dyn_arguments)
         for (i = 0; i < (kernel->meta->num_args); i++)
           {
@@ -52,6 +59,7 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
 
       kernel->name = NULL;
       kernel->meta = NULL;
+      POCL_MEM_FREE (kernel->data);
       POCL_MEM_FREE (kernel->dyn_arguments);
       POCL_DESTROY_OBJECT (kernel);
       POCL_MEM_FREE (kernel);

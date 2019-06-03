@@ -29,10 +29,6 @@ POname(clCreateKernelsInProgram)(cl_program      program ,
   POCL_RETURN_ERROR_ON((program->build_status != CL_BUILD_SUCCESS),
     CL_INVALID_PROGRAM_EXECUTABLE, "Last BuildProgram() was not successful\n");
 
-  POCL_RETURN_ERROR_ON((program->llvm_irs == NULL),
-    CL_INVALID_PROGRAM_EXECUTABLE, "No built binaries in program "
-    "(this shouldn't happen...)\n");
-
   POCL_RETURN_ERROR_ON(((kernels != NULL && num_kernels == 0)
                        || (kernels == NULL && num_kernels != 0)),
                        CL_INVALID_VALUE, "kernels & num_kernels must be "

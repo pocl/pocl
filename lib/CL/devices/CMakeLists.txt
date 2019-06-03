@@ -45,9 +45,6 @@ endif()
 
 add_subdirectory("topology")
 
-set(POCL_DEVICES_OBJS "$<TARGET_OBJECTS:pocl-devices>"
-  "$<TARGET_OBJECTS:pocl-devices-topology>")
-
 if(ENABLE_TCE)
   include_directories(AFTER "tce")
   add_subdirectory("tce")
@@ -64,16 +61,14 @@ endif()
 
 set(POCL_DEVICES_SOURCES
   devices.h  devices.c
-  bufalloc.c
-  common.h common.c
-  pocl_local_size.h pocl_local_size.c
-  bufalloc.h  cpuinfo.c cpuinfo.h)
+  bufalloc.c  bufalloc.h
+  common.h  common.c
+  pocl_local_size.h  pocl_local_size.c
+  common_driver.h  common_driver.c
+  cpuinfo.c  cpuinfo.h)
 
 if(MSVC)
   set_source_files_properties( ${POCL_DEVICES_SOURCES} PROPERTIES LANGUAGE CXX )
 endif(MSVC)
 add_library("pocl-devices" OBJECT ${POCL_DEVICES_SOURCES})
 harden("pocl-devices")
-
-set(POCL_DEVICES_LINK_LIST ${POCL_DEVICES_LINK_LIST} PARENT_SCOPE)
-set(POCL_DEVICES_OBJS ${POCL_DEVICES_OBJS} PARENT_SCOPE)

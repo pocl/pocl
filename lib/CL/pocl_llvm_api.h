@@ -76,7 +76,6 @@ extern long numberOfIRs;
 llvm::Module *parseModuleIR(const char *path);
 void writeModuleIR(const llvm::Module *mod, std::string &str);
 llvm::Module *parseModuleIRMem(const char *input_stream, size_t size);
-int getModuleTriple(const char *input_stream, size_t size, std::string &triple);
 std::string getDiagString();
 
 void clearKernelPasses();

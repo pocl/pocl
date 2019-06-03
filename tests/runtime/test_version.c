@@ -36,6 +36,7 @@ int main(void)
         if (strncmp (result, expected, strlen (expected)) != 0)
           {
             printf ("Error: platform is: %s\n", result);
+            printf ("Should be: %s\n", expected);
             return 2;
           }
 

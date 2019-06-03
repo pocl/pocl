@@ -43,8 +43,7 @@ CL_API_SUFFIX__VERSION_1_0
           cl_device_id dev = context->devices[i];
           if (dev->image_support == CL_TRUE && dev->ops->free_sampler)
             {
-              dev->ops->free_sampler (
-                  dev->data, sampler, sampler->device_data[dev->dev_id]);
+              dev->ops->free_sampler (dev, sampler, dev->dev_id);
               sampler->device_data[dev->dev_id] = NULL;
             }
         }

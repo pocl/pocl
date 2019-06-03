@@ -373,22 +373,23 @@ void pocl_pthread_free_event_data (cl_event event)
   event->data = NULL;
 }
 
-cl_int
-pocl_pthread_init_queue (cl_command_queue queue)
+int
+pocl_pthread_init_queue (cl_device_id device, cl_command_queue queue)
 {
   queue->data
       = pocl_aligned_malloc (HOST_CPU_CACHELINE_SIZE, sizeof (pthread_cond_t));
   pthread_cond_t *cond = (pthread_cond_t *)queue->data;
   int r = pthread_cond_init (cond, NULL);
   assert (r == 0);
-  return CL_BUILD_SUCCESS;
+  return CL_SUCCESS;
 }
 
-void
-pocl_pthread_free_queue (cl_command_queue queue)
+int
+pocl_pthread_free_queue (cl_device_id device, cl_command_queue queue)
 {
   pthread_cond_t *cond = (pthread_cond_t *)queue->data;
   int r = pthread_cond_destroy (cond);
   assert (r == 0);
   POCL_MEM_FREE (queue->data);
+  return CL_SUCCESS;
 }

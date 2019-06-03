@@ -123,7 +123,6 @@ typedef struct
   int force_generic_wg_func;
   /* If set to 1, disallow "small grid" WG function specialization. */
   int force_large_grid_wg_func;
-  unsigned device_i;
 } _cl_command_run;
 
 // clEnqueueNativeKernel

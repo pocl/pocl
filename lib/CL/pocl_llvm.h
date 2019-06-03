@@ -37,7 +37,7 @@ char *get_llvm_cpu_name ();
 /* Returns if the cpu supports FMA instruction (uses LLVM). */
 int cpu_has_fma();
 
-int bitcode_is_spir(const char *bitcode, size_t size);
+int bitcode_is_triple (const char *bitcode, size_t size, const char *triple);
 
 /* Sets up the native/preferred vector widths at runtime (using LLVM). */
 void cpu_setup_vector_widths(cl_device_id dev);
@@ -46,8 +46,6 @@ void cpu_setup_vector_widths(cl_device_id dev);
  */
 int pocl_llvm_build_program(cl_program program,
                             unsigned device_i,
-                            const char *user_options_cstr,
-                            char *program_bc_path,
                             cl_uint num_input_headers,
                             const cl_program *input_headers,
                             const char **header_include_names,
@@ -80,7 +78,7 @@ int pocl_llvm_generate_workgroup_function_nowrite (
 /**
  * Free the LLVM IR of a program for a given device
  */
-void pocl_free_llvm_irs(cl_program program, unsigned device_i);
+void pocl_llvm_free_llvm_irs (cl_program program, unsigned device_i);
 
 /* calls delete on the module. */
 void pocl_destroy_llvm_module(void *modp);
@@ -90,10 +88,10 @@ int pocl_llvm_remove_file_on_signal (const char *file);
 void pocl_llvm_release();
 /**
  * Update the program->binaries[] representation of the kernels
- * from the program->llvm_irs[] representation.
+ * from the program->data[] LLVM IR representation.
  * Also updates the 'program.bc' file in the POCL_TEMP_DIR cache.
  */
-void pocl_llvm_update_binaries (cl_program program);
+int pocl_llvm_update_binaries (cl_program program, cl_uint device_i);
 
 /**
  * Count the number of "__kernel" functions in 'program'.
@@ -109,17 +107,14 @@ int pocl_llvm_codegen(cl_device_id device, void *modp,
                       char **output, uint64_t *output_size);
 
 /* Parse program file and populate program's llvm_irs */
-int
-pocl_update_program_llvm_irs(cl_program program, unsigned device_i);
+int pocl_llvm_read_program_llvm_irs (cl_program program, unsigned device_i,
+                                     const char *path);
 
-
-int pocl_llvm_link_program(cl_program program,
-                           unsigned device_i,
-                           char *program_bc_path,
-                           cl_uint num_input_programs,
-                           unsigned char **cur_device_binaries,
-                           size_t *cur_device_binary_sizes,
-                           void **cur_llvm_irs, int create_library, int spir);
+int pocl_llvm_link_program (cl_program program, unsigned device_i,
+                            cl_uint num_input_programs,
+                            unsigned char **cur_device_binaries,
+                            size_t *cur_device_binary_sizes,
+                            void **cur_llvm_irs, int link_program, int spir);
 
 int pocl_invoke_clang(cl_device_id Device, const char** Args);
 

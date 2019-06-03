@@ -352,7 +352,10 @@ serialize_kernel_cachedir (cl_program program,
   pocl_cache_kernel_cachedir (path, program, device_i, kernel_name);
   POCL_MSG_PRINT_INFO ("Kernel %s: recur serializing cachedir %s\n",
                        kernel_name, path);
-  buffer = recursively_serialize_path (path, basedir_len, buffer);
+  if (pocl_exists (path))
+    buffer = recursively_serialize_path (path, basedir_len, buffer);
+  else
+    POCL_MSG_ERR ("CAN't serialize %s - doesn't exist \n", path);
 
   return buffer;
 }

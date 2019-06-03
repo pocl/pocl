@@ -609,6 +609,17 @@ pocl_command_push (_cl_command_node *node,
 }
 
 void
+pocl_unmap_command_finished (cl_event event, _cl_command_t *cmd)
+{
+  POCL_LOCK_OBJ (event->mem_objs[0]);
+  assert ((cmd->unmap.mapping)->unmap_requested > 0);
+  DL_DELETE ((event->mem_objs[0])->mappings, cmd->unmap.mapping);
+  (event->mem_objs[0])->map_count--;
+  POCL_MEM_FREE (cmd->unmap.mapping);
+  POCL_UNLOCK_OBJ (event->mem_objs[0]);
+}
+
+void
 pocl_cl_mem_inherit_flags (cl_mem mem, cl_mem from_buffer, cl_mem_flags flags)
 {
   if ((flags & CL_MEM_READ_WRITE) | (flags & CL_MEM_READ_ONLY)

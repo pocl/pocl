@@ -26,6 +26,7 @@
 #include "config.h"
 
 #include "common.h"
+#include "common_driver.h"
 #include "devices.h"
 #include "pocl.h"
 #include "pocl-cuda.h"
@@ -200,9 +201,10 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->init = pocl_cuda_init;
   ops->init_queue = pocl_cuda_init_queue;
   ops->free_queue = pocl_cuda_free_queue;
+
   ops->alloc_mem_obj = pocl_cuda_alloc_mem_obj;
   ops->free = pocl_cuda_free;
-  ops->compile_kernel = pocl_cuda_compile_kernel;
+
   ops->submit = pocl_cuda_submit;
   ops->notify = pocl_cuda_notify;
   ops->broadcast = pocl_broadcast;
@@ -217,6 +219,14 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->notify_event_finished = pocl_cuda_notify_event_finished;
 
   ops->get_device_info_ext = pocl_cuda_handle_cl_nv_device_attribute_query;
+  ops->build_source = pocl_driver_build_source;
+  ops->link_program = pocl_driver_link_program;
+  ops->build_binary = pocl_driver_build_binary;
+  ops->free_program = pocl_driver_free_program;
+  ops->setup_metadata = pocl_driver_setup_metadata;
+  ops->supports_binary = pocl_driver_supports_binary;
+  ops->build_poclbinary = pocl_driver_build_poclbinary;
+  ops->compile_kernel = pocl_cuda_compile_kernel;
 
   ops->read = NULL;
   ops->read_rect = NULL;
@@ -358,7 +368,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
       if (ret != CL_INVALID_DEVICE)
         {
           POCL_MSG_ERR ("[CUDA] failed to find libdevice library\n");
-          dev->compiler_available = 0;
+          dev->compiler_available = dev->linker_available = 0;
         }
     }
 
@@ -400,7 +410,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
 }
 
 cl_int
-pocl_cuda_init_queue (cl_command_queue queue)
+pocl_cuda_init_queue (cl_device_id device, cl_command_queue queue)
 {
   cuCtxSetCurrent (((pocl_cuda_device_data_t *)queue->device->data)->context);
 
@@ -442,8 +452,8 @@ pocl_cuda_init_queue (cl_command_queue queue)
   return CL_SUCCESS;
 }
 
-void
-pocl_cuda_free_queue (cl_command_queue queue)
+int
+pocl_cuda_free_queue (cl_device_id device, cl_command_queue queue)
 {
   pocl_cuda_queue_data_t *queue_data = (pocl_cuda_queue_data_t *)queue->data;
 
@@ -464,6 +474,7 @@ pocl_cuda_free_queue (cl_command_queue queue)
       pthread_join (queue_data->submit_thread, NULL);
       pthread_join (queue_data->finalize_thread, NULL);
     }
+  return CL_SUCCESS;
 }
 
 char *
@@ -957,7 +968,7 @@ void
 pocl_cuda_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
                           cl_device_id device, int specialize)
 {
-  load_or_generate_kernel (kernel, device, 0, cmd->command.run.device_i, cmd,
+  load_or_generate_kernel (kernel, device, 0, cmd->device_i, cmd,
                            specialize);
 }
 
@@ -977,7 +988,7 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
 
   /* Get kernel function */
   pocl_cuda_kernel_data_t *kdata = load_or_generate_kernel (
-      kernel, device, has_offsets, run.device_i, cmd, 1);
+      kernel, device, has_offsets, cmd->device_i, cmd, 1);
   CUmodule module = has_offsets ? kdata->module_offsets : kdata->module;
   CUfunction function = has_offsets ? kdata->kernel_offsets : kdata->kernel;
 
@@ -1437,17 +1448,9 @@ pocl_cuda_finalize_command (cl_device_id device, cl_event event)
   /* Clean up mapped memory allocations */
   if (event->command_type == CL_COMMAND_UNMAP_MEM_OBJECT)
     {
-      cl_mem buffer = event->mem_objs[0];
       mem_mapping_t *mapping = event->command->command.unmap.mapping;
-      if (mapping->host_ptr
-          && !(buffer->flags
-               & (CL_MEM_USE_HOST_PTR | CL_MEM_ALLOC_HOST_PTR)))
-        free (mapping->host_ptr);
-
-      POCL_LOCK_OBJ (buffer);
-      DL_DELETE (buffer->mappings, mapping);
-      buffer->map_count--;
-      POCL_UNLOCK_OBJ (buffer);
+      free (mapping->host_ptr);
+      pocl_unmap_command_finished (event, &event->command->command);
     }
 
   if (event->command_type == CL_COMMAND_NDRANGE_KERNEL

@@ -368,9 +368,6 @@ extern size_t WGMaxGridDimWidth;
 extern bool WGAssumeZeroGlobalOffset;
 }
 
-int pocl_update_program_llvm_irs_unlocked(cl_program program,
-                                          unsigned device_i);
-
 int pocl_llvm_generate_workgroup_function_nowrite(
     unsigned DeviceI, cl_device_id Device, cl_kernel Kernel,
     _cl_command_node *Command, void **Output, int Specialize) {
@@ -383,10 +380,14 @@ int pocl_llvm_generate_workgroup_function_nowrite(
   PoclCompilerMutexGuard LockHolder(NULL);
   InitializeLLVM();
 
-  if (Program->llvm_irs[DeviceI] == NULL)
-    pocl_update_program_llvm_irs_unlocked(Program, DeviceI);
+#ifdef DEBUG_POCL_LLVM_API
+  printf("### calling the kernel compiler for kernel %s local_x %zu "
+         "local_y %zu local_z %zu parallel_filename: %s\n",
+         kernel->name, local_x, local_y, local_z, parallel_bc_path);
+#endif
+  assert(Program->data[DeviceI] != nullptr);
 
-  llvm::Module *ProgramBC = (llvm::Module *)Program->llvm_irs[DeviceI];
+  llvm::Module *ProgramBC = (llvm::Module *)Program->data[DeviceI];
 
   // Create an empty Module and copy only the kernel+callgraph from
   // program.bc.
@@ -495,45 +496,42 @@ int pocl_llvm_generate_workgroup_function(unsigned DeviceI, cl_device_id Device,
   return Error;
 }
 
-int pocl_update_program_llvm_irs_unlocked(cl_program program,
-                                          unsigned device_i) {
-
-  char program_bc_path[POCL_FILENAME_LENGTH];
-  pocl_cache_program_bc_path(program_bc_path, program, device_i);
-
-  if (!pocl_exists(program_bc_path))
-    {
-      POCL_MSG_ERR ("%s does not exist!\n",
-                     program_bc_path);
-      return -1;
-    }
-
-  assert(program->llvm_irs[device_i] == nullptr);
-  program->llvm_irs[device_i] = parseModuleIR(program_bc_path);
-  ++numberOfIRs;
-  return 0;
-}
-
-int pocl_update_program_llvm_irs(cl_program program,
-                                 unsigned device_i) {
-  PoclCompilerMutexGuard lockHolder(NULL);
+/* Reads LLVM IR module from program->binaries[i], if program->data[device_i] is
+ * NULL */
+int pocl_llvm_read_program_llvm_irs(cl_program program, unsigned device_i,
+                                    const char *program_bc_path) {
+  PoclCompilerMutexGuard lockHolder(nullptr);
   InitializeLLVM();
 
-  return pocl_update_program_llvm_irs_unlocked(program, device_i);
+  if (program->data[device_i] != nullptr)
+    return CL_SUCCESS;
+
+  if (program->binaries[device_i])
+    program->data[device_i] = parseModuleIRMem(
+        (char *)program->binaries[device_i], program->binary_sizes[device_i]);
+  else {
+    // TODO
+    assert(program_bc_path);
+    program->data[device_i] = parseModuleIR(program_bc_path);
+  }
+  assert(program->data[device_i]);
+  ++numberOfIRs;
+  return CL_SUCCESS;
 }
 
-void pocl_free_llvm_irs(cl_program program, unsigned device_i) {
-  if (program->llvm_irs[device_i]) {
-    PoclCompilerMutexGuard lockHolder(NULL);
+void pocl_llvm_free_llvm_irs(cl_program program, unsigned device_i) {
+  if (program->data[device_i]) {
+    PoclCompilerMutexGuard lockHolder(nullptr);
     InitializeLLVM();
-    llvm::Module *mod = (llvm::Module *)program->llvm_irs[device_i];
+    llvm::Module *mod = (llvm::Module *)program->data[device_i];
     delete mod;
     --numberOfIRs;
-    program->llvm_irs[device_i] = NULL;
+    program->data[device_i] = nullptr;
   }
 }
 
-void pocl_llvm_update_binaries(cl_program program) {
+/* writes fresh program.bc and program->binaries[i] from LLVM IR module. */
+int pocl_llvm_update_binaries(cl_program program, cl_uint device_i) {
 
   PoclCompilerMutexGuard lockHolder(NULL);
   InitializeLLVM();
@@ -542,43 +540,41 @@ void pocl_llvm_update_binaries(cl_program program) {
   int error;
 
   // Dump the LLVM IR Modules to memory buffers.
-  assert(program->llvm_irs != NULL);
+  assert(program->data != NULL);
 #ifdef DEBUG_POCL_LLVM_API
   printf("### refreshing the binaries of the program %p\n", program);
 #endif
 
-  for (size_t i = 0; i < program->num_devices; ++i) {
-    assert(program->llvm_irs[i] != NULL);
-    if (program->binaries[i])
-      continue;
+  cl_uint i = device_i;
+  // LLVM IR
+  assert(program->data[i] != NULL);
 
-    pocl_cache_program_bc_path(program_bc_path, program, i);
-    error = pocl_write_module((llvm::Module *)program->llvm_irs[i],
-                              program_bc_path, 1);
-    assert(error == 0);
-    if (error)
-      {
-        POCL_MSG_ERR ("pocl_write_module(%s) failed!\n",
-                     program_bc_path);
-        continue;
-      }
+  POCL_MEM_FREE(program->binaries[i]);
 
-    std::string content;
-    writeModuleIR((llvm::Module *)program->llvm_irs[i], content);
+  pocl_cache_program_bc_path(program_bc_path, program, i);
+  error =
+      pocl_write_module((llvm::Module *)program->data[i], program_bc_path, 1);
+  assert(error == 0);
+  if (error) {
+    POCL_MSG_ERR("pocl_write_module(%s) failed!\n", program_bc_path);
+    return error;
+  }
 
-    size_t n = content.size();
-    if (n < program->binary_sizes[i])
-      POCL_ABORT("binary size doesn't match the expected value\n");
-    if (program->binaries[i])
-      POCL_MEM_FREE(program->binaries[i]);
-    program->binaries[i] = (unsigned char *)malloc(n);
-    std::memcpy(program->binaries[i], content.c_str(), n);
+  std::string content;
+  writeModuleIR((llvm::Module *)program->data[i], content);
+
+  size_t n = content.size();
+  if (n < program->binary_sizes[i])
+    POCL_ABORT("binary size doesn't match the expected value\n");
+
+  program->binaries[i] = (unsigned char *)malloc(n);
+  std::memcpy(program->binaries[i], content.c_str(), n);
 
 #ifdef DEBUG_POCL_LLVM_API
-    printf("### binary for device %zi was of size %zu\n", i,
-           program->binary_sizes[i]);
+  printf("### binary for device %zi was of size %zu\n", i,
+         program->binary_sizes[i]);
 #endif
-  }
+  return CL_SUCCESS;
 }
 
 static void initPassManagerForCodeGen(PassManager& PM, cl_device_id Device) {

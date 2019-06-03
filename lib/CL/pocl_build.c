@@ -24,17 +24,20 @@
    THE SOFTWARE.
 */
 
-#include "pocl_cl.h"
 #include <assert.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <stdarg.h>
+#include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
 #ifndef _MSC_VER
 #  include <unistd.h>
 #else
 #  include "vccompat.hpp"
 #endif
+
+#include "pocl_cl.h"
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
 #endif
@@ -50,8 +53,6 @@
   "-cl-fp32-correctly-rounded-divide-sqrt build option "                      \
   "was specified, but CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT "                   \
   "is not set for device"
-
-#define REQUIRES_SPIR_SUPPORT "SPIR support is not available for device "
 
 /* supported compiler parameters which should pass to the frontend directly
    by using -Xclang */
@@ -104,97 +105,55 @@ static const char cl_parameters_not_yet_supported_by_clang[] =
     }                                                                         \
   while (0)
 
-#define APPEND_TO_MAIN_BUILD_LOG(...)  \
-  POCL_MSG_ERR(__VA_ARGS__);   \
-  {                            \
-    size_t l = strlen(program->main_build_log); \
-    snprintf(program->main_build_log + l, (640 - l), __VA_ARGS__); \
-  }
+#define APPEND_TO_OPTION_BUILD_LOG(...)                                       \
+  do                                                                          \
+    {                                                                         \
+      POCL_MSG_ERR (__VA_ARGS__);                                             \
+      size_t l = strlen (program->main_build_log);                            \
+      if (l < 640)                                                            \
+        snprintf (program->main_build_log + l, (640 - l), __VA_ARGS__);       \
+    }                                                                         \
+  while (0)
 
-#ifdef ENABLE_LLVM
-cl_int
-program_compile_dynamic_wg_binaries (cl_program program)
+static void
+append_to_build_log (cl_program program, unsigned device_i, const char *format,
+                     ...)
 {
-  unsigned i, device_i;
-  _cl_command_node cmd;
-
-  assert(program->build_status == CL_BUILD_SUCCESS);
-  if (program->num_kernels == 0)
-    return CL_SUCCESS;
-
-  /* For binaries of other than Executable type (libraries, compiled but
-   * not linked programs, etc), do not attempt to compile the kernels. */
-  if (program->binary_type != CL_PROGRAM_BINARY_TYPE_EXECUTABLE)
-    return CL_SUCCESS;
-
-  memset(&cmd, 0, sizeof(_cl_command_node));
-  cmd.type = CL_COMMAND_NDRANGE_KERNEL;
-
-  POCL_LOCK_OBJ (program);
-
-  /* Build the dynamic WG sized parallel.bc and device specific code,
-     for each kernel & device combo.  */
-  for (device_i = 0; device_i < program->num_devices; ++device_i)
+  char temp[4096];
+  va_list args;
+  va_start (args, format);
+  ssize_t written = vsnprintf (temp, 4096, format, args);
+  va_end (args);
+  size_t l = 0;
+  if (written > 0)
     {
-      cl_device_id device = program->devices[device_i];
-
-      /* program may not be built for some of its devices */
-      if (program->pocl_binaries[device_i] || (!program->binaries[device_i]))
-        continue;
-
-      cmd.device = device;
-      cmd.device_i = device_i;
-
-      struct _cl_kernel fake_k;
-      memset (&fake_k, 0, sizeof (fake_k));
-      fake_k.context = program->context;
-      fake_k.program = program;
-      fake_k.next = NULL;
-      cl_kernel kernel = &fake_k;
-
-      for (i=0; i < program->num_kernels; i++)
-        {
-          fake_k.meta = &program->kernel_meta[i];
-          fake_k.name = fake_k.meta->name;
-          cmd.command.run.hash = fake_k.meta->build_hash[device_i];
-
-          size_t local_x = 0, local_y = 0, local_z = 0;
-
-          if (kernel->meta->reqd_wg_size[0] > 0
-              && kernel->meta->reqd_wg_size[1] > 0
-              && kernel->meta->reqd_wg_size[2] > 0)
-            {
-              local_x = kernel->meta->reqd_wg_size[0];
-              local_y = kernel->meta->reqd_wg_size[1];
-              local_z = kernel->meta->reqd_wg_size[2];
-            }
-
-          cmd.command.run.pc.local_size[0] = local_x;
-          cmd.command.run.pc.local_size[1] = local_y;
-          cmd.command.run.pc.local_size[2] = local_z;
-
-          cmd.command.run.kernel = kernel;
-
-          /* Force generate a generic WG function to ensure generality. */
-          device->ops->compile_kernel (&cmd, kernel, device, 0);
-
-          /* Then generate a specialized one with goffset 0 since it's a very
-             common case. */
-
-          cmd.command.run.pc.global_offset[0]
-              = cmd.command.run.pc.global_offset[1]
-              = cmd.command.run.pc.global_offset[2] = 0;
-          cmd.command.run.force_large_grid_wg_func = 1;
-          device->ops->compile_kernel (&cmd, kernel, device, 1);
-        }
+      if (written > 4096)
+        written = 4096;
+      if (program->build_log[device_i])
+        l = strlen (program->build_log[device_i]);
+      size_t newl = l + (size_t)written;
+      char *newp = (char *)realloc (program->build_log[device_i], newl + 1);
+      assert (newp);
+      memcpy (newp + l, temp, (size_t)written);
+      newp[newl] = 0;
+      program->build_log[device_i] = newp;
     }
-
-  POCL_UNLOCK_OBJ (program);
-
-  return CL_SUCCESS;
 }
 
-#endif
+#define APPEND_TO_BUILD_LOG_GOTO(err, ...)                                    \
+  do                                                                          \
+    {                                                                         \
+      append_to_build_log (program, device_i, __VA_ARGS__);                   \
+      if (err == CL_COMPILE_PROGRAM_FAILURE)                                  \
+        POCL_MSG_ERR2 ("CL_COMPILE_PROGRAM_FAILURE", __VA_ARGS__);            \
+      if (err == CL_BUILD_PROGRAM_FAILURE)                                    \
+        POCL_MSG_ERR2 ("CL_BUILD_PROGRAM_FAILURE", __VA_ARGS__);              \
+      else                                                                    \
+        POCL_MSG_ERR2 (#err, __VA_ARGS__);                                    \
+      errcode = err;                                                          \
+      goto ERROR;                                                             \
+    }                                                                         \
+  while (0)
 
 
 /* options must be non-NULL.
@@ -246,7 +205,7 @@ process_options (const char *options, char *modded_options, char *link_options,
                 {
                   if (!enable_link_options)
                     {
-                      APPEND_TO_MAIN_BUILD_LOG (
+                      APPEND_TO_OPTION_BUILD_LOG (
                           "Not compiling but link options were not enabled, "
                           "therefore %s is an invalid option\n",
                           token);
@@ -281,7 +240,7 @@ process_options (const char *options, char *modded_options, char *link_options,
             }
           else if (strstr (cl_parameters_not_yet_supported_by_clang, token))
             {
-              APPEND_TO_MAIN_BUILD_LOG (
+              APPEND_TO_OPTION_BUILD_LOG (
                   "This build option is not yet supported by clang: %s\n",
                   token);
               token = strtok_r (NULL, " ", &saveptr);
@@ -289,7 +248,7 @@ process_options (const char *options, char *modded_options, char *link_options,
             }
           else
             {
-              APPEND_TO_MAIN_BUILD_LOG("Invalid build option: %s\n", token);
+              APPEND_TO_OPTION_BUILD_LOG ("Invalid build option: %s\n", token);
               error = ret_error;
               goto ERROR;
             }
@@ -323,7 +282,7 @@ process_options (const char *options, char *modded_options, char *link_options,
           token = strtok_r (NULL, " ", &saveptr);
           if (!token || strncmp (token, "spir", 4) != 0)
             {
-              APPEND_TO_MAIN_BUILD_LOG (
+              APPEND_TO_OPTION_BUILD_LOG (
                   "Invalid parameter to -x build option\n");
               error = ret_error;
               goto ERROR;
@@ -331,7 +290,7 @@ process_options (const char *options, char *modded_options, char *link_options,
           /* "-x spir" is not valid if we are building from source */
           else if (program->source)
             {
-              APPEND_TO_MAIN_BUILD_LOG (
+              APPEND_TO_OPTION_BUILD_LOG (
                   "\"-x spir\" is not valid when building from source\n");
               error = ret_error;
               goto ERROR;
@@ -346,8 +305,8 @@ process_options (const char *options, char *modded_options, char *link_options,
           /* "-spir-std=" flags are not valid when building from source */
           if (program->source)
             {
-              APPEND_TO_MAIN_BUILD_LOG ("\"-spir-std=\" flag is not valid "
-                                        "when building from source\n");
+              APPEND_TO_OPTION_BUILD_LOG ("\"-spir-std=\" flag is not valid "
+                                          "when building from source\n");
               error = ret_error;
               goto ERROR;
             }
@@ -360,7 +319,7 @@ process_options (const char *options, char *modded_options, char *link_options,
         {
           if (!linking)
             {
-              APPEND_TO_MAIN_BUILD_LOG (
+              APPEND_TO_OPTION_BUILD_LOG (
                   "\"-create-library\" flag is only valid when linking\n");
               error = ret_error;
               goto ERROR;
@@ -373,16 +332,16 @@ process_options (const char *options, char *modded_options, char *link_options,
         {
           if (!linking)
             {
-              APPEND_TO_MAIN_BUILD_LOG ("\"-enable-link-options\" flag is "
-                                        "only valid when linking\n");
+              APPEND_TO_OPTION_BUILD_LOG ("\"-enable-link-options\" flag is "
+                                          "only valid when linking\n");
               error = ret_error;
               goto ERROR;
             }
           if (!(*create_library))
             {
-              APPEND_TO_MAIN_BUILD_LOG ("\"-enable-link-options\" flag is "
-                                        "only valid when -create-library "
-                                        "option was given\n");
+              APPEND_TO_OPTION_BUILD_LOG ("\"-enable-link-options\" flag is "
+                                          "only valid when -create-library "
+                                          "option was given\n");
               error = ret_error;
               goto ERROR;
             }
@@ -392,7 +351,7 @@ process_options (const char *options, char *modded_options, char *link_options,
         }
       else
         {
-          APPEND_TO_MAIN_BUILD_LOG ("Invalid build option: %s\n", token);
+          APPEND_TO_OPTION_BUILD_LOG ("Invalid build option: %s\n", token);
           error = ret_error;
           goto ERROR;
         }
@@ -466,44 +425,139 @@ free_meta (cl_program program)
 }
 
 static void
-clean_program_on_rebuild (cl_program program)
+clean_program_on_rebuild (cl_program program, int from_error)
 {
   /* if we're rebuilding the program, release the kernels and reset log/status
    */
-  size_t i;
-  if ((program->build_status != CL_BUILD_NONE) || program->num_kernels > 0)
+  cl_uint i;
+  if (!from_error && (program->build_status == CL_BUILD_NONE))
+    return;
+
+  /* CL_INVALID_OPERATION if there are kernel objects attached to program.
+     ...and we check for that earlier.
+   */
+  assert (program->kernels == NULL);
+
+  free_meta (program);
+
+  program->num_kernels = 0;
+  program->build_status = CL_BUILD_NONE;
+
+  for (i = 0; i < program->num_devices; ++i)
     {
-      /* Spec says:
-         CL_INVALID_OPERATION if there are kernel objects attached to program.
-         ...and we check for that earlier.
-       */
-      assert (program->kernels == NULL);
-
-      free_meta (program);
-
-      program->num_kernels = 0;
-      program->build_status = CL_BUILD_NONE;
-
-      for (i = 0; i < program->num_devices; ++i)
+      cl_device_id dev = program->devices[i];
+      if (!from_error)
+        POCL_MEM_FREE (program->build_log[i]);
+      memset (program->build_hash[i], 0, sizeof (SHA1_digest_t));
+      if (program->source)
         {
-          POCL_MEM_FREE (program->build_log[i]);
-          memset (program->build_hash[i], 0, sizeof (SHA1_digest_t));
-          if (program->source)
-            {
-              POCL_MEM_FREE (program->binaries[i]);
-              program->binary_sizes[i] = 0;
-#ifdef ENABLE_LLVM
-              if (program->llvm_irs[i])
-                pocl_free_llvm_irs (program, i);
-#endif
-              POCL_MEM_FREE (program->pocl_binaries[i]);
-              program->pocl_binary_sizes[i] = 0;
-            }
+          dev->ops->free_program (dev, program, i);
+          POCL_MEM_FREE (program->binaries[i]);
+          program->binary_sizes[i] = 0;
+          POCL_MEM_FREE (program->pocl_binaries[i]);
+          program->pocl_binary_sizes[i] = 0;
         }
-      program->main_build_log[0] = 0;
     }
+  if (!from_error)
+    program->main_build_log[0] = 0;
 }
 
+static int
+setup_kernel_metadata (cl_program program, cl_uint num_devices,
+                       const cl_device_id *device_list)
+{
+  size_t i, j;
+  cl_uint device_i;
+  assert (program->kernel_meta == NULL);
+  assert (program->num_kernels == 0);
+  int setup_successful = 0;
+
+  /* Get the kernel metadata, either from pocl binaries or device drivers */
+  for (device_i = 0; device_i < program->num_devices; device_i++)
+    {
+      cl_device_id device = program->devices[device_i];
+
+      /* find the device in the supplied devices-to-build-for list */
+      int found = 0;
+      for (i = 0; i < num_devices; ++i)
+        {
+          if (device_list[i] == device)
+            found = 1;
+        }
+      if (!found)
+        continue;
+
+      if (program->pocl_binaries[device_i])
+        {
+          program->num_kernels
+              = pocl_binary_get_kernel_count (program, device_i);
+          if (program->num_kernels)
+            {
+              program->kernel_meta = calloc (program->num_kernels,
+                                             sizeof (pocl_kernel_metadata_t));
+              pocl_binary_get_kernels_metadata (program, device_i);
+            }
+          setup_successful = 1;
+          break;
+        }
+      else
+        {
+          assert (program->source || program->binaries[device_i]);
+          cl_device_id device = program->devices[device_i];
+          if (device->ops->setup_metadata
+              && device->ops->setup_metadata (device, program, device_i))
+            {
+              setup_successful = 1;
+              break;
+            }
+        }
+    }
+
+  POCL_RETURN_ERROR_ON (
+      (setup_successful == 0), CL_INVALID_BINARY,
+      "Could not find kernel metadata in the built program\n");
+
+  return CL_SUCCESS;
+}
+
+static void
+setup_device_hashes (cl_program program, cl_uint num_devices,
+                     const cl_device_id *device_list)
+{
+  cl_uint i, device_i;
+
+  if ((program->builtin_kernel_names != NULL) || (program->num_kernels == 0)
+      || (num_devices == 0))
+    return;
+
+  assert (program->kernel_meta);
+  for (i = 0; i < program->num_kernels; ++i)
+    {
+      program->kernel_meta[i].build_hash
+          = calloc (program->num_devices, sizeof (pocl_kernel_hash_t));
+    }
+
+  for (device_i = 0; device_i < program->num_devices; device_i++)
+    {
+      cl_device_id device = program->devices[device_i];
+
+      /* find the device in the supplied devices-to-build-for list */
+      int found = 0;
+      for (i = 0; i < num_devices; ++i)
+        {
+          if (device_list[i] == device)
+            found = 1;
+        }
+      if (!found)
+        continue;
+
+      for (i = 0; i < program->num_kernels; ++i)
+        {
+          /* calculate device-specific kernel hashes. */
+          pocl_calculate_kernel_hash (program, i, device_i);
+        }
+    }
+}
 
 cl_int
 compile_and_link_program(int compile_program,
@@ -521,21 +575,20 @@ compile_and_link_program(int compile_program,
                                                          void *user_data),
                          void *user_data)
 {
-  char program_bc_path[POCL_FILENAME_LENGTH];
   char link_options[512];
   int errcode, error;
   int create_library = 0;
   int requires_cr_sqrt_div = 0;
   int spir_build = 0;
   unsigned flush_denorms = 0;
-  uint64_t fsize;
   cl_device_id *unique_devlist = NULL;
-  char *binary = NULL;
   unsigned device_i = 0, actually_built = 0;
-  size_t i, j;
+  size_t i;
   char *temp_options = NULL;
+
   const char *extra_build_options =
     pocl_get_string_option ("POCL_EXTRA_BUILD_FLAGS", NULL);
+
   int build_error_code
       = (link_program ? CL_BUILD_PROGRAM_FAILURE : CL_COMPILE_PROGRAM_FAILURE);
 
@@ -578,7 +631,6 @@ compile_and_link_program(int compile_program,
       size_t len = (options != NULL) ? strlen (options) : 0;
       len += strlen (extra_build_options) + 2;
       temp_options = (char *)malloc (len);
-
       temp_options[0] = 0;
       if (options != NULL)
         {
@@ -606,15 +658,8 @@ compile_and_link_program(int compile_program,
   POCL_MSG_PRINT_LLVM ("building program with options %s\n",
                        program->compiler_options);
 
-
   program->flush_denorms = flush_denorms;
-#if !(defined(__x86_64__) && defined(__GNUC__))
-  if (flush_denorms)
-    {
-      POCL_MSG_WARN ("flush to zero is currently only implemented for "
-                     "x86-64 & gcc/clang, ignoring flag\n");
-    }
-#endif
+  clean_program_on_rebuild (program, 0);
 
   /* DEVICE LIST */
   if (num_devices == 0)
@@ -632,7 +677,8 @@ compile_and_link_program(int compile_program,
       device_list = unique_devlist;
     }
 
-  clean_program_on_rebuild (program);
+  POCL_MSG_PRINT_LLVM ("building program for %u devs with options %s\n",
+                       num_devices, program->compiler_options);
 
   /* Build the fully linked non-parallel bitcode for all
          devices. */
@@ -648,12 +694,9 @@ compile_and_link_program(int compile_program,
 
       if (requires_cr_sqrt_div
           && !(device->single_fp_config & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT))
-        {
-          APPEND_TO_MAIN_BUILD_LOG (REQUIRES_CR_SQRT_DIV_ERR);
-          POCL_GOTO_ERROR_ON (1, build_error_code,
-                              REQUIRES_CR_SQRT_DIV_ERR " %s\n",
-                              device->short_name);
-        }
+        APPEND_TO_BUILD_LOG_GOTO (build_error_code,
+                                  REQUIRES_CR_SQRT_DIV_ERR " %s\n",
+                                  device->short_name);
       actually_built++;
 
       /* clCreateProgramWithBuiltinKernels */
@@ -661,165 +704,95 @@ compile_and_link_program(int compile_program,
       if (program->builtin_kernel_names)
         continue;
 
-      /* clCreateProgramWithSource */
+      if (compile_program && (device->compiler_available != CL_TRUE))
+        APPEND_TO_BUILD_LOG_GOTO (CL_COMPILER_NOT_AVAILABLE,
+                                  "Device %s cannot compile a program because "
+                                  "it does not have a compiler available\n",
+                                  device->long_name);
+
+      if (link_program && (device->linker_available != CL_TRUE))
+        APPEND_TO_BUILD_LOG_GOTO (CL_LINKER_NOT_AVAILABLE,
+                                  "Device %s cannot link a program because "
+                                  "it does not have a linker available\n",
+                                  device->long_name);
+
+      /* only link the program/library */
+      if (!compile_program && link_program)
+        {
+          assert (num_input_programs > 0);
+
+          if (device->ops->link_program == NULL)
+            APPEND_TO_BUILD_LOG_GOTO (CL_LINK_PROGRAM_FAILURE,
+                                      "%s device's driver does "
+                                      "not support linking programs\n",
+                                      device->long_name);
+
+          error = device->ops->link_program (program, device_i,
+                                             num_input_programs,
+                                             input_programs, create_library);
+          if (error != CL_SUCCESS)
+            APPEND_TO_BUILD_LOG_GOTO (CL_LINK_PROGRAM_FAILURE,
+                                      "Device %s failed to link the program\n",
+                                      device->long_name);
+        }
+      /* compile and/or link from source */
       else if (program->source)
         {
-#ifdef ENABLE_LLVM
-          if (device->compiler_available == CL_TRUE)
+          if (device->ops->build_source == NULL)
+            APPEND_TO_BUILD_LOG_GOTO (
+                build_error_code,
+                "%s device's driver does not "
+                "support building programs from source\n",
+                device->long_name);
+
+          error = device->ops->build_source (
+              program, device_i, num_devices, device_list, num_input_headers,
+              input_headers, header_include_names,
+              (create_library ? 0 : link_program));
+
+          if (error != CL_SUCCESS)
             {
-              POCL_MSG_PRINT_INFO ("building from sources for device %d\n",
-                                   device_i);
-              error = pocl_llvm_build_program (
-                  program, device_i, program->compiler_options,
-                  program_bc_path, num_input_headers, input_headers,
-                  header_include_names, (create_library ? 0 : link_program));
-              POCL_GOTO_ERROR_ON ((error != 0), build_error_code,
-                                  "pocl_llvm_build_program() failed\n");
-            }
-          else
-#endif
-            {
-              APPEND_TO_MAIN_BUILD_LOG (
-                  "Cannot build a program from sources with pocl "
-                  "that does not have online compiler support\n");
-              POCL_GOTO_ERROR_ON (1, CL_COMPILER_NOT_AVAILABLE, "%s",
-                                  program->main_build_log);
+              APPEND_TO_BUILD_LOG_GOTO (build_error_code,
+                                        "Device %s failed to build"
+                                        " the program, log: %s",
+                                        device->long_name,
+                                        program->build_log[device_i]);
             }
         }
-      /* clCreateProgramWithBinaries */
-      else if (program->binaries[device_i]
-               && (program->pocl_binaries[device_i] == NULL))
-        {
-#ifdef ENABLE_LLVM
-          /* bitcode is now either plain LLVM IR or SPIR IR */
-          int spir_binary = bitcode_is_spir ((char*)program->binaries[device_i],
-                                             program->binary_sizes[device_i]);
-          if (spir_binary)
-            POCL_MSG_PRINT_LLVM ("LLVM-SPIR binary detected\n");
-          else
-            POCL_MSG_PRINT_LLVM ("building from a BC binary for device %d\n",
-                                 device_i);
-
-          if (spir_binary)
-            {
-#ifdef ENABLE_SPIR
-              if (!strstr (device->extensions, "cl_khr_spir"))
-                {
-                  APPEND_TO_MAIN_BUILD_LOG (REQUIRES_SPIR_SUPPORT);
-                  POCL_GOTO_ERROR_ON (1, build_error_code,
-                                      REQUIRES_SPIR_SUPPORT " %s\n",
-                                      device->short_name);
-                }
-              if (!spir_build)
-                POCL_MSG_WARN (
-                    "SPIR binary provided, but no spir in build options\n");
-              /* SPIR binaries need to be explicitly linked to the kernel
-               * library. for non-SPIR binaries this happens as part of build
-               * process when program.bc is generated. */
-              error
-                  = pocl_llvm_link_program (program, device_i, program_bc_path,
-                                            0, NULL, NULL, NULL, 0, 1);
-
-              POCL_GOTO_ERROR_ON (error, CL_LINK_PROGRAM_FAILURE,
-                                  "Failed to link SPIR program.bc\n");
-#else
-              APPEND_TO_MAIN_BUILD_LOG (REQUIRES_SPIR_SUPPORT);
-              POCL_GOTO_ERROR_ON (1, build_error_code,
-                                  REQUIRES_SPIR_SUPPORT " %s\n",
-                                  device->short_name);
-#endif
-            }
-
-#else
-          APPEND_TO_MAIN_BUILD_LOG (
-              "Cannot build program from LLVM IR binaries with "
-              "pocl that does not have online compiler support\n");
-          POCL_GOTO_ERROR_ON (1, CL_COMPILER_NOT_AVAILABLE, "%s",
-                              program->main_build_log);
-#endif
-        }
-      else if (program->pocl_binaries[device_i])
-        {
-          POCL_MSG_PRINT_INFO("having a poclbinary for device %d\n", device_i);
-#ifdef ENABLE_LLVM
-          if (program->binaries[device_i] == NULL)
-            {
-              POCL_MSG_WARN (
-                  "pocl-binary for this device doesn't contain "
-                  "program.bc - you won't be able to rebuild/link it\n");
-              /* do not try to read program.bc or LLVM IRs
-               * TODO maybe read LLVM IRs ?*/
-              continue;
-            }
-#else
-          continue;
-#endif
-        }
-      else if (link_program && (num_input_programs > 0))
-        {
-#ifdef ENABLE_LLVM
-          /* just link binaries. */
-          unsigned char *cur_device_binaries[num_input_programs];
-          size_t cur_device_binary_sizes[num_input_programs];
-          void *cur_llvm_irs[num_input_programs];
-          for (j = 0; j < num_input_programs; j++)
-            {
-              assert (device == input_programs[j]->devices[device_i]);
-              cur_device_binaries[j] = input_programs[j]->binaries[device_i];
-
-              assert (cur_device_binaries[j]);
-              cur_device_binary_sizes[j]
-                  = input_programs[j]->binary_sizes[device_i];
-
-              if (input_programs[j]->llvm_irs[device_i] == NULL)
-                pocl_update_program_llvm_irs (input_programs[j], device_i);
-
-              cur_llvm_irs[j] = input_programs[j]->llvm_irs[device_i];
-              assert (cur_llvm_irs[j]);
-            }
-          error = pocl_llvm_link_program (
-              program, device_i, program_bc_path, num_input_programs,
-              cur_device_binaries, cur_device_binary_sizes, cur_llvm_irs,
-              create_library, 0);
-          POCL_GOTO_ERROR_ON ((error != CL_SUCCESS), CL_LINK_PROGRAM_FAILURE,
-                              "pocl_llvm_link_program() failed\n");
-#else
-          POCL_GOTO_ERROR_ON ((1), CL_LINK_PROGRAM_FAILURE,
-                              "clCompileProgram/clLinkProgram/clBuildProgram"
-                              " require a pocl built with LLVM\n");
-
-#endif
-        }
+      /* compile and/or link from binary */
       else
         {
-          POCL_GOTO_ERROR_ON (1, CL_INVALID_BINARY,
-                              "No sources nor binaries for device %s - can't "
-                              "build the program\n", device->short_name);
+          if (device->ops->build_binary == NULL)
+            APPEND_TO_BUILD_LOG_GOTO (build_error_code,
+                                      "%s device's driver does not support "
+                                      "building programs from binaries\n",
+                                      device->long_name);
+
+          if ((program->binary_sizes[device_i] == 0)
+              && (program->pocl_binary_sizes[device_i] == 0))
+            APPEND_TO_BUILD_LOG_GOTO (CL_INVALID_BINARY,
+                                      "No poclbinaries nor binaries "
+                                      "for device %s - can't build "
+                                      "the program\n",
+                                      device->short_name);
+
+          error = device->ops->build_binary (
+              program, device_i, num_devices, device_list,
+              (create_library ? 0 : link_program), spir_build);
+
+          if (error != CL_SUCCESS)
+            {
+              APPEND_TO_BUILD_LOG_GOTO (build_error_code,
+                                        "Device %s failed to build"
+                                        " the program, log: %s",
+                                        device->long_name,
+                                        program->build_log[device_i]);
+            }
         }
 
-#ifdef ENABLE_LLVM
-      /* Read binaries from program.bc to memory */
-      if (program->binaries[device_i] == NULL)
-        {
-          errcode = pocl_read_file (program_bc_path, &binary, &fsize);
-          POCL_GOTO_ERROR_ON (errcode, CL_BUILD_ERROR,
-                              "Failed to read binaries from program.bc to "
-                              "memory: %s\n",
-                              program_bc_path);
-
-          program->binary_sizes[device_i] = (size_t)fsize;
-          program->binaries[device_i] = (unsigned char *)binary;
-        }
-
-      if (program->llvm_irs[device_i] == NULL)
-        {
-          pocl_update_program_llvm_irs (program, device_i);
-        }
-#endif
-
-     /* Maintain a 'last_accessed' file in every program's
-      * cache directory. Will be useful for cache pruning script
-      * that flushes old directories based on LRU */
+      /* Maintain a 'last_accessed' file in every program's
+       * cache directory. Will be useful for cache pruning script
+       * that flushes old directories based on LRU */
       pocl_cache_update_program_last_access (program, device_i);
     }
 
@@ -827,7 +800,6 @@ compile_and_link_program(int compile_program,
                       "Some of the devices on the argument-supplied list are"
                       "not available for the program, or do not exist\n");
 
-  program->build_status = CL_BUILD_SUCCESS;
   program->binary_type = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
   /* if program will be compiled using clCompileProgram its binary_type
    * will be set to CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT.
@@ -845,93 +817,43 @@ compile_and_link_program(int compile_program,
 
   if (program->binary_type != CL_PROGRAM_BINARY_TYPE_EXECUTABLE)
     {
+      program->build_status = CL_BUILD_SUCCESS;
       errcode = CL_SUCCESS;
       goto FINISH;
     }
 
-  /* get non-device-specific kernel metadata. We can stop after finding
-   * the first method that works.*/
+  errcode = setup_kernel_metadata (program, num_devices, device_list);
+  if (errcode != CL_SUCCESS)
+    {
+      POCL_MSG_ERR ("Program build: kernel metadata setup failed\n");
+      goto ERROR;
+    }
+
+  if (program->builtin_kernel_names == NULL)
+    setup_device_hashes (program, num_devices, device_list);
+
   for (device_i = 0; device_i < program->num_devices; device_i++)
     {
-      if (program->builtin_kernel_names)
-        {
-          program->num_kernels = program->num_builtin_kernels;
-          if (program->num_kernels)
-            {
-              cl_device_id device = program->devices[device_i];
-              program->kernel_meta = calloc (program->num_kernels,
-                                             sizeof (pocl_kernel_metadata_t));
+      cl_device_id device = program->devices[device_i];
 
-              size_t i;
-              for (i = 0; i < program->num_kernels; ++i)
-                {
-                  device->ops->get_builtin_kernel_metadata (
-                      device->data, program->builtin_kernel_names[i],
-                      &program->kernel_meta[i]);
-                }
-            }
-          break;
-        }
-#ifdef ENABLE_LLVM
-      if (program->binaries[device_i])
-        {
-          program->num_kernels
-              = pocl_llvm_get_kernel_count (program, device_i);
-          if (program->num_kernels)
-            {
-              program->kernel_meta = calloc (program->num_kernels,
-                                             sizeof (pocl_kernel_metadata_t));
-              pocl_llvm_get_kernels_metadata (program, device_i);
-            }
-          break;
-        }
-#endif
-      if (program->pocl_binaries[device_i])
-        {
-          program->num_kernels
-              = pocl_binary_get_kernel_count (program, device_i);
-          if (program->num_kernels)
-            {
-              program->kernel_meta = calloc (program->num_kernels,
-                                             sizeof (pocl_kernel_metadata_t));
-              pocl_binary_get_kernels_metadata (program, device_i);
-            }
-          break;
-        }
+      /* find the device in the supplied devices-to-build-for list */
+      int found = 0;
+      for (i = 0; i < num_devices; ++i)
+        if (device_list[i] == device)
+          found = 1;
+      if (!found)
+        continue;
+
+      if (device->ops->post_build_program)
+        device->ops->post_build_program (program, device_i);
     }
 
-  POCL_GOTO_ERROR_ON ((device_i >= program->num_devices), CL_INVALID_BINARY,
-                      "Couldn't find kernel metadata in the built program\n");
-
-  /* calculate device-specific kernel hashes. */
-  for (j = 0; j < program->num_kernels; ++j)
-    {
-      program->kernel_meta[j].build_hash
-          = calloc (program->num_devices, sizeof (pocl_kernel_hash_t));
-
-      if (program->builtin_kernel_names == NULL)
-        for (device_i = 0; device_i < program->num_devices; device_i++)
-          {
-            pocl_calculate_kernel_hash (program, j, device_i);
-          }
-    }
-
+  program->build_status = CL_BUILD_SUCCESS;
   errcode = CL_SUCCESS;
   goto FINISH;
 
 ERROR:
-  free_meta (program);
-
-  program->kernels = NULL;
-
-  for (device_i = 0; device_i < program->num_devices; device_i++)
-    {
-      if (program->source)
-        {
-          POCL_MEM_FREE (program->binaries[device_i]);
-          program->binary_sizes[device_i] = 0;
-        }
-    }
+  clean_program_on_rebuild (program, 1);
 
 ERROR_CLEAN_OPTIONS:
   if (temp_options != options)

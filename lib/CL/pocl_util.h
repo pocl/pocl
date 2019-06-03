@@ -131,6 +131,8 @@ pocl_command_push (_cl_command_node *node,
                    _cl_command_node **ready_list,
                    _cl_command_node **pending_list);
 
+void pocl_unmap_command_finished (cl_event event, _cl_command_t *cmd);
+
 /**
  * Return true if a command is ready to execute (no more event in wait list
  * or false if not

@@ -315,7 +315,7 @@ void pocl_accel_init_device_ops(struct pocl_device_ops *ops) {
   ops->probe = pocl_accel_probe;
   ops->build_hash = pocl_accel_build_hash;
   ops->supports_builtin_kernel = pocl_accel_supports_builtin_kernel;
-  ops->get_builtin_kernel_metadata = pocl_accel_get_builtin_kernel_metadata;
+  ops->setup_metadata = pocl_accel_setup_metadata;
 
   /* TODO: Bufalloc-based allocation from the onchip memories. */
   ops->alloc_mem_obj = pocl_accel_alloc_mem_obj;
@@ -552,9 +552,9 @@ cl_int pocl_accel_supports_builtin_kernel(void *data, const char *kernel_name) {
   return 0;
 }
 
-cl_int pocl_accel_get_builtin_kernel_metadata(void *data,
-                                              const char *kernel_name,
-                                              pocl_kernel_metadata_t *target) {
+static cl_int
+pocl_accel_get_builtin_kernel_metadata(void *data, const char *kernel_name,
+                                       pocl_kernel_metadata_t *target) {
   AccelData *D = (AccelData *)data;
   BIKD *Desc = nullptr;
   for (size_t i = 0; i < sizeof(BIDescriptors) / sizeof(BIDescriptors[0]);
@@ -579,6 +579,25 @@ cl_int pocl_accel_get_builtin_kernel_metadata(void *data,
   return 0;
 }
 
+int pocl_accel_setup_metadata(cl_device_id device, cl_program program,
+                              unsigned program_device_i) {
+  if (program->builtin_kernel_names == nullptr)
+    return 0;
+
+  program->num_kernels = program->num_builtin_kernels;
+  if (program->num_kernels) {
+    program->kernel_meta = (pocl_kernel_metadata_t *)calloc(
+        program->num_kernels, sizeof(pocl_kernel_metadata_t));
+
+    for (size_t i = 0; i < program->num_kernels; ++i) {
+      pocl_accel_get_builtin_kernel_metadata(device->data,
+                                             program->builtin_kernel_names[i],
+                                             &program->kernel_meta[i]);
+    }
+  }
+
+  return 1;
+}
 
 static void scheduleCommands(AccelData &D) {
 

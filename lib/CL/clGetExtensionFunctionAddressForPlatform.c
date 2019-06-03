@@ -39,6 +39,7 @@ CL_EXT_SUFFIX__VERSION_1_2
       return NULL;
     }
 
+  assert (pocl_platform);
   if (platform != pocl_platform)
     {
       POCL_MSG_PRINT_INFO ("Requested Function Address not "
