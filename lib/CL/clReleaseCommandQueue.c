@@ -46,11 +46,8 @@ POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VER
       POCL_DESTROY_OBJECT (command_queue);
       POCL_MEM_FREE(command_queue);
 
-      POCL_RELEASE_OBJECT (context, new_refcount);
-      POCL_MSG_PRINT_REFCOUNTS ("Context refs after freeing CmdQueue: %d\n",
-                                new_refcount);
-      POname(clReleaseDevice)(device);
-
+      POname(clReleaseContext) (context);
+      POname(clReleaseDevice) (device);
     }
   return CL_SUCCESS;
 }

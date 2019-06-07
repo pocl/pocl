@@ -90,9 +90,7 @@ POname(clCreateKernel)(cl_program program,
                         CL_OUT_OF_HOST_MEMORY);
 
   POCL_LOCK_OBJ (program);
-  cl_kernel k = program->kernels;
-  program->kernels = kernel;
-  kernel->next = k;
+  LL_PREPEND (program->kernels, kernel);
   POCL_RETAIN_OBJECT_UNLOCKED (program);
   POCL_UNLOCK_OBJ (program);
 

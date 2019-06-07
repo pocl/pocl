@@ -28,7 +28,6 @@ CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
 {
   int new_refcount;
-  cl_kernel *pk;
   unsigned i;
 
   POCL_RETURN_ERROR_COND((kernel == NULL), CL_INVALID_KERNEL);
@@ -39,30 +38,11 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
     {
       POCL_MSG_PRINT_REFCOUNTS ("Free kernel %p\n", kernel);
       cl_program program = kernel->program;
-      /* default kernels are not put into the program->kernels linked list */
-      if (program != NULL)
-        {
-          /* Find the kernel in the program's linked list of kernels */
-          POCL_LOCK_OBJ (program);
-          for (pk = &program->kernels; *pk != NULL; pk = &(*pk)->next)
-            {
-              if (*pk == kernel)
-                break;
-            }
+      assert (program != NULL);
 
-          /* The kernel is not on the kernel's program's linked list
-             of kernels -- something is wrong */
-          assert (*pk != NULL);
-
-          /* Remove the kernel from the program's linked list of
-             kernels */
-          *pk = (*pk)->next;
-          POCL_RELEASE_OBJECT_UNLOCKED (program, new_refcount);
-          POCL_MSG_PRINT_REFCOUNTS ("Removed kernel %p from "
-                                    "program %p, which now has refs: %d \n",
-                                    kernel, kernel->program, new_refcount);
-          POCL_UNLOCK_OBJ (program);
-        }
+      /* Find the kernel in the program's linked list of kernels */
+      POCL_LOCK_OBJ (program);
+      LL_DELETE (program->kernels, kernel);
 
       if (kernel->dyn_arguments)
         for (i = 0; i < (kernel->meta->num_args); i++)
@@ -75,6 +55,9 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
       POCL_MEM_FREE (kernel->dyn_arguments);
       POCL_DESTROY_OBJECT (kernel);
       POCL_MEM_FREE (kernel);
+      POCL_UNLOCK_OBJ (program);
+
+      POname(clReleaseProgram) (program);
     }
   
   return CL_SUCCESS;
