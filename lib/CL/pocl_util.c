@@ -691,7 +691,7 @@ int pocl_buffer_boundcheck_3d(const size_t buffer_size,
                origin[1] * rp +
                origin[0];
 
-  size_t byte_offset_end = origin[0] + region[0]-1 +
+  size_t byte_offset_end = origin[0] + region[0] +
        rp * (origin[1] + region[1]-1) +
        sp * (origin[2] + region[2]-1);
 
