@@ -759,7 +759,8 @@ pocl_cuda_submit_unmap_mem (CUstream stream, pocl_mem_identifier *dst_mem_id,
 
 static pocl_cuda_kernel_data_t *
 load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
-                         int has_offsets, unsigned device_i)
+                         int has_offsets, unsigned device_i,
+                         _cl_command_node *command, int specialized)
 {
   CUresult result;
   pocl_kernel_metadata_t *meta = kernel->meta;
@@ -786,7 +787,7 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
 
   /* Generate the parallel bitcode file linked with the kernel library */
   int error = pocl_llvm_generate_workgroup_function (device_i, device, kernel,
-                                                     0, 0, 0, !has_offsets);
+                                                     command, specialized);
   if (error)
     {
       POCL_MSG_PRINT_GENERAL ("pocl_llvm_generate_workgroup_function() failed"
@@ -796,7 +797,7 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
 
   char bc_filename[POCL_FILENAME_LENGTH];
   pocl_cache_work_group_function_path (bc_filename, kernel->program, device_i,
-                                       kernel, 0, 0, 0, !has_offsets);
+                                       kernel, command, specialized);
 
   char ptx_filename[POCL_FILENAME_LENGTH];
   strcpy (ptx_filename, bc_filename);
@@ -850,15 +851,17 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
 
 void
 pocl_cuda_compile_kernel (_cl_command_node *cmd, cl_kernel kernel,
-                          cl_device_id device)
+                          cl_device_id device, int specialize)
 {
-  load_or_generate_kernel (kernel, device, 0, cmd->command.run.device_i);
+  load_or_generate_kernel (kernel, device, 0, cmd->command.run.device_i, cmd,
+                           specialize);
 }
 
 void
-pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
+pocl_cuda_submit_kernel (CUstream stream, _cl_command_node *cmd,
                          cl_device_id device, cl_event event)
 {
+  _cl_command_run run = cmd->command.run;
   cl_kernel kernel = run.kernel;
   pocl_argument *arguments = run.arguments;
   struct pocl_context pc = run.pc;
@@ -869,8 +872,8 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
     (pc.global_offset[0] || pc.global_offset[1] || pc.global_offset[2]);
 
   /* Get kernel function */
-  pocl_cuda_kernel_data_t *kdata
-      = load_or_generate_kernel (kernel, device, has_offsets, run.device_i);
+  pocl_cuda_kernel_data_t *kdata = load_or_generate_kernel (
+      kernel, device, has_offsets, run.device_i, cmd, 1);
   CUmodule module = has_offsets ? kdata->module_offsets : kdata->module;
   CUfunction function = has_offsets ? kdata->kernel_offsets : kdata->kernel;
 
@@ -1014,8 +1017,9 @@ pocl_cuda_submit_kernel (CUstream stream, _cl_command_run run,
 
   /* Launch kernel */
   result = cuLaunchKernel (function, pc.num_groups[0], pc.num_groups[1],
-                           pc.num_groups[2], run.local_x, run.local_y,
-                           run.local_z, sharedMemBytes, stream, params, NULL);
+                           pc.num_groups[2], pc.local_size[0],
+                           pc.local_size[1], pc.local_size[2], sharedMemBytes,
+                           stream, params, NULL);
   CUDA_CHECK (result, "cuLaunchKernel");
 }
 
@@ -1206,7 +1210,7 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
         break;
       }
     case CL_COMMAND_NDRANGE_KERNEL:
-      pocl_cuda_submit_kernel (stream, cmd->run, node->device, node->event);
+      pocl_cuda_submit_kernel (stream, node, node->device, node->event);
       break;
 
     case CL_COMMAND_MARKER:
