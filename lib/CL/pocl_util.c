@@ -691,14 +691,14 @@ int pocl_buffer_boundcheck_3d(const size_t buffer_size,
                origin[1] * rp +
                origin[0];
 
-  size_t byte_offset_end = origin[0] + region[0] +
+  size_t byte_offset_end = origin[0] + region[0]-1 +
        rp * (origin[1] + region[1]-1) +
        sp * (origin[2] + region[2]-1);
 
 
   POCL_RETURN_ERROR_ON((byte_offset_begin > buffer_size), CL_INVALID_VALUE,
             "%sorigin is outside the %sbuffer", prefix, prefix);
-  POCL_RETURN_ERROR_ON((byte_offset_end > buffer_size), CL_INVALID_VALUE,
+  POCL_RETURN_ERROR_ON((byte_offset_end >= buffer_size), CL_INVALID_VALUE,
             "%sorigin+region is outside the %sbuffer", prefix, prefix);
   return CL_SUCCESS;
 }
