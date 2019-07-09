@@ -34,6 +34,9 @@
 #include <vector>
 #include <iostream>
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
 #include <llvm/Support/Casting.h>
 #include <llvm/Support/MutexGuard.h>
 #include <llvm/Support/TargetRegistry.h>
@@ -467,7 +470,6 @@ int pocl_llvm_generate_workgroup_function(unsigned DeviceI, cl_device_id Device,
                                           _cl_command_node *Command,
                                           int Specialize) {
 
-  _cl_command_run *RunCmd = &Command->command.run;
   void *Module = NULL;
 
   char ParallelBCPath[POCL_FILENAME_LENGTH];

@@ -1,7 +1,8 @@
 /* OpenCL runtime library: clGetProgramBuildInfo()
 
-   Copyright (c) 2011 Kalle Raiskila 
-   
+   Copyright (c) 2011 Kalle Raiskila
+                 2011-2019 Pekka Jääskeläinen / Tampere University
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights
@@ -62,6 +63,10 @@ POname(clGetProgramBuildInfo)(cl_program            program,
       POCL_RETURN_ERROR_ON((program->build_status == CL_BUILD_NONE),
                            CL_INVALID_PROGRAM,
                            "Program was not built");
+      if (program->builtin_kernel_names != NULL)
+        {
+          POCL_RETURN_GETINFO_STR ("");
+        }
       if (program->main_build_log[0])
         {
           POCL_RETURN_GETINFO_STR (program->main_build_log);

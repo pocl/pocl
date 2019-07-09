@@ -30,6 +30,9 @@
 #include "pocl.h"
 #include "pocl_cl.h"
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/IR/ValueSymbolTable.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"

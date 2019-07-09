@@ -194,7 +194,7 @@ void dumpCFG(
   std::cout << "### dumped CFG to " << fname << std::endl;
 }
 
-bool chopBBs(llvm::Function &F, llvm::Pass &P) {
+bool chopBBs(llvm::Function &F, llvm::Pass &) {
   bool fchanged = false;
   const int MAX_INSTRUCTIONS_PER_BB = 70;
   do {
@@ -224,5 +224,4 @@ bool chopBBs(llvm::Function &F, llvm::Pass &P) {
   } while (fchanged);
   return fchanged;
 }
-    
 };

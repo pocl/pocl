@@ -150,6 +150,8 @@ option(EXAMPLES_USE_GIT_MASTER "If enabled, some of the external testsuites in e
 
 option(ENABLE_HOST_CPU_DEVICES "Add host CPUs as OpenCL devices (basic and pthread)." ON)
 
+option(ENABLE_ACCEL_DEVICE "Enable the generic hardware accelerator device driver." OFF)
+
 ####
 
 # currently only works with gcc as host compiler
@@ -1047,6 +1049,14 @@ if(ENABLE_HOST_CPU_DEVICES)
   set(BUILD_PTHREAD 1)
 endif()
 
+# The accel device could be built by default, but it's implemented in C++,
+# thus requires a C++ compiler, so let's not.
+if(ENABLE_ACCEL_DEVICE)
+  set(BUILD_BASIC 1)
+  set(BUILD_ACCEL 1)
+  set(OCL_DRIVERS "${OCL_DRIVERS} accel")
+endif()
+
 if(DEFINED EXTRA_OCL_TARGETS)
   set(OCL_TARGETS "${OCL_TARGETS} ${EXTRA_OCL_TARGETS}")
 endif()
@@ -1410,6 +1420,9 @@ else()
   add_subdirectory("examples/example2")
   add_subdirectory("examples/example2a")
   add_subdirectory("examples/matrix1")
+if(ENABLE_ACCEL_DEVICE)
+  add_subdirectory("examples/accel")
+endif()
 endif()
 
 # make check & make check_tier1

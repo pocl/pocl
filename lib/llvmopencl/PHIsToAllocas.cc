@@ -24,6 +24,9 @@
 
 #include "config.h"
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
 #include <llvm/IR/IRBuilder.h>
 
 #include "PHIsToAllocas.h"

@@ -25,6 +25,9 @@
 
 #include "config.h"
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/IR/Constants.h"
 #include "llvm/IR/Instructions.h"

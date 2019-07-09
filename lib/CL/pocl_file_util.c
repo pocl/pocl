@@ -269,6 +269,7 @@ pocl_mk_tempname (char *output, const char *prefix, const char *suffix,
     close (fd);
 
   return errno;
+#endif
 #else
 #error mkostemps() / mkstemps() both unavailable
 #endif

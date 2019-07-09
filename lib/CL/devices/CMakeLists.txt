@@ -31,6 +31,10 @@ if(BUILD_PTHREAD)
   add_subdirectory("pthread")
 endif()
 
+if(BUILD_ACCEL)
+  add_subdirectory("accel")
+endif()
+
 add_subdirectory("topology")
 if(Hwloc_LDFLAGS)
   set(POCL_DEVICES_LINK_LIST ${Hwloc_LDFLAGS})
@@ -49,6 +53,11 @@ endif()
 if(BUILD_PTHREAD)
   set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
     "$<TARGET_OBJECTS:pocl-devices-pthread>")
+endif()
+
+if(BUILD_ACCEL)
+  set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS}"
+    "$<TARGET_OBJECTS:pocl-devices-accel>")
 endif()
 
 if(ENABLE_TCE)

@@ -25,6 +25,9 @@
 
 #include <iostream>
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
 #include "llvm/Analysis/PostDominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 

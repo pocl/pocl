@@ -22,6 +22,9 @@
    THE SOFTWARE.
 */
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
 #include <llvm/Support/Casting.h>
 #include <llvm/Support/MutexGuard.h>
 #include <llvm/IR/Value.h>

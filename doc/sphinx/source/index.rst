@@ -25,6 +25,7 @@ Contents:
    cuda
    conformance
    docker
+   fixed_function
 
 Back to `pocl home page <http://pocl.sourceforge.net>`_.
 

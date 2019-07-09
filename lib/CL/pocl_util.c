@@ -1,6 +1,6 @@
 /* OpenCL runtime library: pocl_util utility functions
 
-   Copyright (c) 2012 Pekka Jääskeläinen / Tampere University of Technology
+   Copyright (c) 2012-2019 Pekka Jääskeläinen
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -358,10 +358,9 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
 {
   static unsigned int event_id_counter = 0;
 
-  POCL_MSG_PRINT_EVENTS ("creating event\n");
-
   if (context == NULL || !(context->valid))
     return CL_INVALID_CONTEXT;
+
   if (event != NULL)
     {
       *event = pocl_mem_manager_new_event ();
@@ -377,8 +376,11 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
         POname(clRetainCommandQueue) (command_queue);
 
       (*event)->command_type = command_type;
-      (*event)->id = ATOMIC_INC(event_id_counter);
+      (*event)->id = ATOMIC_INC (event_id_counter);
       (*event)->num_buffers = num_buffers;
+
+      POCL_MSG_PRINT_EVENTS ("created event with id %d\n", event_id_counter);
+
       if (num_buffers > 0)
         {
           (*event)->mem_objs = malloc (num_buffers * sizeof(cl_mem));
@@ -395,8 +397,7 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
 }
 
 static int
-pocl_create_event_sync(cl_event waiting_event,
-                       cl_event notifier_event)
+pocl_create_event_sync (cl_event waiting_event, cl_event notifier_event)
 {
   event_node * volatile notify_target = NULL;
   event_node * volatile wait_list_item = NULL;
@@ -404,9 +405,10 @@ pocl_create_event_sync(cl_event waiting_event,
   if (notifier_event == NULL)
     return CL_SUCCESS;
 
-  pocl_lock_events_inorder (waiting_event, notifier_event);
+  POCL_MSG_PRINT_INFO ("create event sync: waiting %d, notifier %d\n",
+                       waiting_event->id, notifier_event->id);
 
-  POCL_MSG_PRINT_INFO("create event sync: waiting %d, notifier %d\n", waiting_event->id, notifier_event->id);
+  pocl_lock_events_inorder (waiting_event, notifier_event);
 
   assert (notifier_event->pocl_refcount != 0);
   assert (waiting_event != notifier_event);
@@ -465,8 +467,8 @@ cl_int pocl_create_command (_cl_command_node **cmd,
 
   /* Even if user does not provide event pointer, create event anyway */
   event = &((*cmd)->event);
-  err = pocl_create_event(event, command_queue, 0, num_buffers, 
-                          buffers, command_queue->context);
+  err = pocl_create_event (event, command_queue, 0, num_buffers, buffers,
+                           command_queue->context);
 
   if (err != CL_SUCCESS)
     {
@@ -547,6 +549,8 @@ void pocl_command_enqueue (cl_command_queue command_queue,
         }
     }
   DL_APPEND (command_queue->events, node->event);
+
+  POCL_MSG_PRINT_INFO ("Last event id %d to CQ.\n", node->event->id);
   command_queue->last_event.event = node->event;
   POCL_UNLOCK_OBJ (command_queue);
 

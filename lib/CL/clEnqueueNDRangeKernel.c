@@ -156,8 +156,10 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
     CL_INVALID_GLOBAL_WORK_SIZE);
 
   max_local_x = command_queue->device->max_work_item_sizes[0];
-  max_local_y = command_queue->device->max_work_item_sizes[1];
-  max_local_z = command_queue->device->max_work_item_sizes[2];
+  max_local_y
+      = work_dim > 1 ? command_queue->device->max_work_item_sizes[1] : 1;
+  max_local_z
+      = work_dim > 2 ? command_queue->device->max_work_item_sizes[2] : 1;
   max_group_size = command_queue->device->max_work_group_size;
 
   if (local_work_size != NULL)
@@ -274,12 +276,23 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
 
       /*                      /------- K ------\  /-------- k' -------\  */
       local_x = upper_divisor (global_x / grain_x, max_local_x / grain_x);
-      local_y = upper_divisor (global_y / grain_y, max_local_y / grain_y);
-      local_z = upper_divisor (global_z / grain_z, max_local_z / grain_z);
-
       local_x *= grain_x;
-      local_y *= grain_y;
-      local_z *= grain_z;
+
+      if (work_dim > 1)
+        {
+          local_y = upper_divisor (global_y / grain_y, max_local_y / grain_y);
+          local_y *= grain_y;
+        }
+      else
+        local_y = 1;
+
+      if (work_dim > 2)
+        {
+          local_z = upper_divisor (global_z / grain_z, max_local_z / grain_z);
+          local_z *= grain_z;
+        }
+      else
+        local_z = 1;
 
       /* So we now have the largest possible local sizes that divide the global
        * sizes while being multiples of the grain size.
@@ -575,7 +588,7 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
           /* FIXME: this is a cludge to determine an acceptable alignment,
            * we should probably extract the argument alignment from the
            * LLVM bytecode during kernel header generation. */
-          size_t arg_alignment = pocl_size_ceil2(arg_alloc_size);
+          size_t arg_alignment = pocl_size_ceil2 (arg_alloc_size);
           if (arg_alignment >= MAX_EXTENDED_ALIGNMENT)
             arg_alignment = MAX_EXTENDED_ALIGNMENT;
           if (arg_alloc_size < arg_alignment)

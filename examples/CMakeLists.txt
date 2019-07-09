@@ -37,6 +37,9 @@ add_subdirectory("example2")
 add_subdirectory("example2a")
 add_subdirectory("matrix1")
 
+if(ENABLE_ACCEL_DEVICE)
+  add_subdirectory("accel")
+endif()
 
 add_subdirectory("poclcc")
 if(ENABLE_FP64)
