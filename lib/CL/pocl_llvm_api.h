@@ -24,6 +24,9 @@
 
 #include "pocl_llvm.h"
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING ("-Wunused-parameter")
+
 #include <llvm/IR/Module.h>
 #include <map>
 #include <string>

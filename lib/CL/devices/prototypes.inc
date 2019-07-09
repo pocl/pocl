@@ -147,4 +147,9 @@
   void pocl_##__DRV__##_svm_fill (                                            \
       cl_device_id dev, void *__restrict__ svm_ptr, size_t size,              \
       void *__restrict__ pattern, size_t pattern_size);                       \
+  cl_int pocl_##__DRV__##_supports_builtin_kernel (void *data,          \
+                                                   const char *kernel_name); \
+  cl_int pocl_##__DRV__##_get_builtin_kernel_metadata (void *data,      \
+                                                       const char *kernel_name, \
+                                                       pocl_kernel_metadata_t *target); \
   POP_VISIBILITY_HIDDEN

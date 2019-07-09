@@ -61,6 +61,7 @@
 # endif
 #endif
 
+typedef struct pocl_kernel_metadata_s pocl_kernel_metadata_t;
 typedef pthread_mutex_t pocl_lock_t;
 #define POCL_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
 
@@ -237,6 +238,14 @@ typedef pthread_mutex_t pocl_lock_t;
 #    define POsym(name)
 #  endif
 
+#endif
+
+#ifdef __cplusplus
+extern "C"
+{
+  CL_API_ENTRY cl_int CL_API_CALL POname (clReleaseEvent) (cl_event event)
+      CL_API_SUFFIX__VERSION_1_0;
+}
 #endif
 
 /* The ICD compatibility part. This must be first in the objects where
@@ -593,6 +602,15 @@ struct pocl_device_ops {
                        const void *__restrict__ fill_pixel,
                        size_t pixel_size);
 
+  /* custom device functionality */
+
+  /* Check if the device supports the builtin kernel with the given name. */
+  cl_int (*supports_builtin_kernel) (void *data, const char *kernel_name);
+
+  /* Loads the metadata for the kernel with the given name to the MD object
+     allocated at the given target. */
+  cl_int (*get_builtin_kernel_metadata) (void *data, const char *kernel_name,
+                                         pocl_kernel_metadata_t *target);
 };
 
 typedef struct pocl_global_mem_t {
@@ -1014,8 +1032,12 @@ typedef struct pocl_kernel_metadata_s
   /* array[program->num_devices] */
   pocl_kernel_hash_t *build_hash;
 
+  /* If this is a BI kernel descriptor, they are statically defined in
+     the custom device driver, thus should not be freed. */
+  cl_bitfield builtin_kernel;
   /* device-specific data, void* array[program->num_devices] */
   void **data;
+
 } pocl_kernel_metadata_t;
 
 struct _cl_program {
@@ -1035,6 +1057,11 @@ struct _cl_program {
      sequential bitcode produced from the kernel sources.  */
   size_t *binary_sizes;
   unsigned char **binaries;
+
+  /* If this is a program with built-in kernels, this is the list of kernel
+     names it contains. */
+  size_t num_builtin_kernels;
+  char **builtin_kernel_names;
 
   /* Poclcc binary format.  */
   size_t *pocl_binary_sizes;
@@ -1152,7 +1179,7 @@ struct _cl_sampler {
       if ((__event) != NULL)                                                  \
         {                                                                     \
           cl_command_queue __cq = (__event)->queue;                           \
-          if ((__cq)->device->ops->update_event)                              \
+          if ((__cq)->device->ops->update_event != (void *)0)                 \
             (__cq)->device->ops->update_event ((__cq)->device, (__event),     \
                                                CL_QUEUED);                    \
           else                                                                \
@@ -1174,7 +1201,7 @@ struct _cl_sampler {
         {                                                                     \
           assert ((__event)->status == CL_QUEUED);                            \
           cl_command_queue __cq = (__event)->queue;                           \
-          if ((__cq)->device->ops->update_event)                              \
+          if ((__cq)->device->ops->update_event != 0)                         \
             (__cq)->device->ops->update_event ((__cq)->device, (__event),     \
                                                CL_SUBMITTED);                 \
           else                                                                \
@@ -1196,7 +1223,7 @@ struct _cl_sampler {
         {                                                                     \
           assert ((__event)->status == CL_SUBMITTED);                         \
           cl_command_queue __cq = (__event)->queue;                           \
-          if ((__cq)->device->ops->update_event)                              \
+          if ((__cq)->device->ops->update_event != 0)                         \
             (__cq)->device->ops->update_event ((__cq)->device, (__event),     \
                                                CL_RUNNING);                   \
           else                                                                \

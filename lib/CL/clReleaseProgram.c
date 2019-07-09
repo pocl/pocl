@@ -92,9 +92,10 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
                   POCL_MEM_FREE (meta->arg_info[j].type_name);
                 }
               POCL_MEM_FREE (meta->arg_info);
-              for (j = 0; j < program->num_devices; ++j)
-                if (meta->data[j] != NULL)
-                  meta->data[j] = NULL; // TODO free data in driver callback
+              if (meta->data != NULL)
+                for (j = 0; j < program->num_devices; ++j)
+                  if (meta->data[j] != NULL)
+                    meta->data[j] = NULL; // TODO free data in driver callback
               POCL_MEM_FREE (meta->data);
               POCL_MEM_FREE (meta->local_sizes);
               POCL_MEM_FREE (meta->build_hash);

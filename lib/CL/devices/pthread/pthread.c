@@ -418,6 +418,8 @@ void pocl_pthread_update_event (cl_device_id device, cl_event event, cl_int stat
     {
       e_d = event->data;
     }
+  /* TODO: Refactor this to another function where it can be reused.
+     It should be common for most device drivers? */
   switch (status)
     {
     case CL_QUEUED:

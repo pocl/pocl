@@ -22,10 +22,13 @@
 
 #include "config.h"
 
+#include "RemoveOptnoneFromWIFunc.h"
+
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Instructions.h>
-
-#include "RemoveOptnoneFromWIFunc.h"
 
 #include <iostream>
 

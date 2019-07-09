@@ -132,7 +132,7 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->get_timer_value = pocl_gettimemono_ns;;
   ops->join = pocl_basic_join;
   ops->submit = pocl_basic_submit;
-  ops->broadcast = pocl_basic_broadcast;
+  ops->broadcast = pocl_broadcast;
   ops->notify = pocl_basic_notify;
   ops->flush = pocl_basic_flush;
   ops->build_hash = pocl_basic_build_hash;
@@ -1154,7 +1154,7 @@ void pocl_basic_flush (cl_device_id device, cl_command_queue cq)
 }
 
 void
-pocl_basic_join(cl_device_id device, cl_command_queue cq)
+pocl_basic_join (cl_device_id device, cl_command_queue cq)
 {
   struct data *d = (struct data*)device->data;
 
@@ -1193,12 +1193,6 @@ pocl_basic_notify (cl_device_id device, cl_event event, cl_event finished)
         }
       return;
     }
-}
-
-void
-pocl_basic_broadcast (cl_event event)
-{
-  pocl_broadcast (event);
 }
 
 void

@@ -90,7 +90,7 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
   POname(clRetainMemObject) (buffer);
   buffer->owning_device = command_queue->device;
 
-  pocl_command_enqueue(command_queue, cmd);
+  pocl_command_enqueue (command_queue, cmd);
 
   if (blocking_write)
     POname(clFinish) (command_queue);

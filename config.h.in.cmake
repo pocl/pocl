@@ -3,6 +3,7 @@
 #cmakedefine BUILD_CUDA
 #cmakedefine BUILD_BASIC
 #cmakedefine BUILD_PTHREAD
+#cmakedefine BUILD_ACCEL
 
 #define BUILDDIR "@BUILDDIR@"
 

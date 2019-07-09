@@ -3,6 +3,12 @@ Changes updated until commit 7288619eb1b (May 25, 2019).
 1.4 unreleased
 ==============
 
+Highlights
+----------
+- pocl-accel: An example driver and support infrastructure for OpenCL 1.2
+  CL_DEVICE_TYPE_CUSTOM hardware accelerators which implement a memory
+  mapped control interface.
+
 Kernel Compiler
 ---------------
 - Specialize work-group functions for global offset (0,0,0).

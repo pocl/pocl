@@ -70,6 +70,10 @@
 #include "cuda/pocl-cuda.h"
 #endif
 
+#if defined(BUILD_ACCEL)
+#include "accel/accel.h"
+#endif
+
 #define MAX_DEV_NAME_LEN 64
 
 /* the enabled devices */
@@ -82,8 +86,7 @@ typedef void (*init_device_ops)(struct pocl_device_ops*);
 /* All init function for device operations available to pocl */
 static init_device_ops pocl_devices_init_ops[] = {
 #ifdef ENABLE_HOST_CPU_DEVICES
-  pocl_pthread_init_device_ops,
-  pocl_basic_init_device_ops,
+  pocl_pthread_init_device_ops, pocl_basic_init_device_ops,
 #endif
 #if defined(TCE_AVAILABLE)
   pocl_ttasim_init_device_ops,
@@ -93,6 +96,9 @@ static init_device_ops pocl_devices_init_ops[] = {
 #endif
 #if defined(BUILD_CUDA)
   pocl_cuda_init_device_ops,
+#endif
+#if defined(BUILD_ACCEL)
+  pocl_accel_init_device_ops,
 #endif
 };
 

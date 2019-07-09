@@ -1,8 +1,8 @@
 /* OpenCL runtime library: clCreateKernel()
 
    Copyright (c) 2011 Universidad Rey Juan Carlos and
-                 2012 Pekka Jääskeläinen / Tampere Univ. of Technology
-   
+                 2012-2019 Pekka Jääskeläinen
+
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
    in the Software without restriction, including without limitation the rights
@@ -61,9 +61,11 @@ POname(clCreateKernel)(cl_program program,
   POCL_GOTO_ERROR_ON((program->build_status != CL_BUILD_SUCCESS),
     CL_INVALID_PROGRAM_EXECUTABLE, "Last BuildProgram() was not successful\n");
 
-  POCL_GOTO_ERROR_ON((program->llvm_irs == NULL),
-    CL_INVALID_PROGRAM_EXECUTABLE, "No built binaries in program "
-    "(this shouldn't happen...)\n");
+  POCL_GOTO_ERROR_ON (
+      (program->builtin_kernel_names == NULL && program->llvm_irs == NULL),
+      CL_INVALID_PROGRAM_EXECUTABLE,
+      "No built binaries nor built-in kernels in program "
+      "(this shouldn't happen...)\n");
 
   kernel = (cl_kernel) calloc(1, sizeof(struct _cl_kernel));
   POCL_GOTO_ERROR_ON((kernel == NULL), CL_OUT_OF_HOST_MEMORY,

@@ -27,6 +27,9 @@
 #include "pocl_llvm_api.h"
 #include "pocl_debug.h"
 
+#include "CompilerWarnings.h"
+IGNORE_COMPILER_WARNING("-Wunused-parameter")
+
 #include <llvm/ADT/StringRef.h>
 #include <llvm/ADT/StringMap.h>
 
