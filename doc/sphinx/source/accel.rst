@@ -150,14 +150,25 @@ in the ``clCreateProgramWithBuiltInKernels`` call:
 This list will be expanded in the future.
 
 There is an example program using the accel driver in ``examples/accel`` which
-also includes the VHDL code for synthesizing the accelerator. Driver arguments
-are used to tell pocl where the accelerator is and what functions it supports.
-To run this example manually, execute::
+also includes the VHDL code for synthesizing the accelerator. The accelerator
+has been developed with the `TCE toolset <http://openasip.org/>`_. In order to
+synthesize the accelerator for a Xilinx FPGA SoC, you can follow the
+instructions in the `TCE manual <http://openasip.org/user_manual/TCE.pdf/>`_,
+in the section titled System-on-a-Chip design with AlmaIF Integrator. Make sure
+to check the accelerator base address from Vivado.
+
+Driver arguments are used to tell pocl where the accelerator is and what
+functions it supports. To run this example manually, execute::
 
   POCL_DEVICES=accel POCL_ACCEL0_PARAMETERS=0x43C00000,1,2 ./accel_example
 
 The environment variables define an accelerator with base physical address of
-0x43C0_0000 that can execute pocl.add32 and pocl.mul32.
+0x43C0_0000 that can execute pocl.add32 and pocl.mul32. When running the
+example, verify that the address given in the parameter matches the base address
+of the accelerator.
 
 Note that as the driver requires write access to ``/dev/mem`` for memory
-mapping, you may need to execute the application with elevated privileges.
+mapping, you may need to execute the application with elevated privileges. In
+this case, note that ``sudo`` by default overrides your environment variables.
+You can either assign them in the same command, or use ``sudo`` with the
+``--preserve-env`` switch.
