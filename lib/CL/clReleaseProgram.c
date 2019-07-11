@@ -60,6 +60,8 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
 
       POCL_MEM_FREE(program->source);
 
+      POCL_MEM_FREE (program->program_il);
+
       POCL_MEM_FREE(program->binary_sizes);
       if (program->binaries)
         for (i = 0; i < program->num_devices; ++i)

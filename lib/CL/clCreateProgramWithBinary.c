@@ -43,7 +43,7 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
 {
   cl_program program;
   unsigned i,j;
-  int errcode, is_spirv_opencl;
+  int errcode;
   cl_device_id *unique_devlist = NULL;
 
   POCL_GOTO_ERROR_COND((context == NULL), CL_INVALID_CONTEXT);
@@ -134,6 +134,7 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
 
   for (i = 0; i < num_devices; ++i)
     {
+#ifdef OCS_AVAILABLE
       /* LLVM IR */
       if (!strncmp((const char *)binaries[i], "BC", 2))
         {
@@ -143,55 +144,10 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
           if (binary_status != NULL)
             binary_status[i] = CL_SUCCESS;
         }
-      /* SPIR-V binary needs to be converted, and requires
-       * linking of the converted BC */
-#ifdef OCS_AVAILABLE
-      else if (bitcode_is_spirv ((const char *)binaries[i], lengths[i], &is_spirv_opencl))
-        {
-          if (is_spirv_opencl == 0) {
-            // SPIR-V but not OpenCL-type.
-            POCL_GOTO_ERROR_ON (
-                1, CL_BUILD_PROGRAM_FAILURE,
-                "SPIR-V binary provided, but is not using Kernel mode."
-                "Pocl can't process this binary.\n");
-          }
-
-          int no_spir
-              = strstr (device_list[i]->extensions, "cl_khr_spir") == NULL;
-          POCL_GOTO_ERROR_ON (
-              no_spir, CL_BUILD_PROGRAM_FAILURE,
-              "SPIR binary provided, but device has no SPIR support");
-#ifdef ENABLE_SPIRV
-          POCL_MSG_PRINT_LLVM (
-              "SPIR-V binary detected, converting to LLVM SPIR\n");
-          char program_bc_spirv[POCL_FILENAME_LENGTH];
-          char program_bc_temp[POCL_FILENAME_LENGTH];
-          pocl_cache_write_spirv (program_bc_spirv, (const char *)binaries[i],
-                                  (uint64_t)lengths[i]);
-          pocl_cache_tempname (program_bc_temp, ".bc", NULL);
-
-          char *args[] = { LLVM_SPIRV,       "-r", "-o", program_bc_temp,
-                           program_bc_spirv, NULL };
-
-          errcode = pocl_run_command (args);
-          assert (errcode == 0);
-          /* load LLVM SPIR binary. */
-          uint64_t fsize;
-          char *content;
-          pocl_read_file (program_bc_temp, &content, &fsize);
-          program->binary_sizes[i] = fsize;
-          program->binaries[i] = (unsigned char *)content;
-          pocl_remove (program_bc_temp);
-#else
-          POCL_GOTO_ERROR_ON (
-              1, CL_BUILD_PROGRAM_FAILURE,
-              "SPIR binary provided, but this pocl has no SPIR-V support."
-              "SPIR-V support requires llvm-spirv converter binary.\n");
-#endif
-        }
+      else
 #endif
       /* Poclcc binary */
-      else if (pocl_binary_check_binary(device_list[i], binaries[i]))
+      if (pocl_binary_check_binary(device_list[i], binaries[i]))
         {
           program->pocl_binary_sizes[i] = lengths[i];
           program->pocl_binaries[i] = (unsigned char*) malloc (lengths[i]);
