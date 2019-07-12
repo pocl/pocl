@@ -283,9 +283,7 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
   if (currentWgMethod == "loopvec" && SPMDDevice)
     passes.push_back("scalarizer");
 
-  passes.push_back("instcombine");
   passes.push_back("STANDARD_OPTS");
-  passes.push_back("instcombine");
 
   // Due to unfortunate phase-ordering problems with store sinking,
   // loop deletion does not always apply when executing -O3 only
