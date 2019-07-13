@@ -302,10 +302,15 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
       Builder.SizeLevel = 0;
 
       // These need to be setup in addition to invoking the passes
-      // to get the vectorizers initialized properly.
-      if (currentWgMethod == "loopvec") {
+      // to get the vectorizers initialized properly. Assume SPMD
+      // devices do not want to vectorize intra work-item at this
+      // stage.
+      if (currentWgMethod == "loopvec" && !SPMDDevice) {
         Builder.LoopVectorize = true;
         Builder.SLPVectorize = true;
+      } else {
+        Builder.LoopVectorize = false;
+        Builder.SLPVectorize = false;
       }
       Builder.VerifyInput = true;
       Builder.VerifyOutput = true;
