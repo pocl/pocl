@@ -21,6 +21,20 @@ platform for issues in parallel programming of heterogeneous platforms.</p>
 
 <h1>News</h1>
 
+<h2>2019-07-15: Hardware Accelerators in POCL</h2>
+
+<p>POCL received support for CL_DEVICE_TYPE_CUSTOM via addition of a hardware accelerator framework.
+It consists of an example driver (pocl-accel) that relies on a "pocl standard" control interface and
+an enumeration of "pocl-known" built-in kernels.
+The example accelerator is generated using the <a href="http://openasip.org">TCE tools</a>.
+</p>
+
+<p>For more information, please read a
+<a href="https://www.computer.org/publications/tech-news/accelerator-framework-for-portable-computing-language">blog post</a>
+about it in the Heterogeneous System Architecture section of the IEEE Computer Society tech news or
+the usage instructions in the <a href="http://portablecl.org/docs/html/accel.html">user manual</a>.
+</p>
+
 <h2>2019-04-04: <a href="pocl-1.3.html">Portable Computing Language (pocl) v1.3 released</a></h2>
 
 <h2>2019-02-07: <a href="pocl-in-think-silicon.html">pocl powering Think Silicon's ultra-low power GPGPUs</a>

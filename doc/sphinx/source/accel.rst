@@ -153,7 +153,7 @@ There is an example program using the accel driver in ``examples/accel`` which
 also includes the VHDL code for synthesizing the accelerator. The accelerator
 has been developed with the `TCE toolset <http://openasip.org/>`_. In order to
 synthesize the accelerator for a Xilinx FPGA SoC, you can follow the
-instructions in the `TCE manual <http://openasip.org/user_manual/TCE.pdf/>`_,
+instructions in the `TCE manual <http://openasip.org/user_manual/TCE.pdf>`_,
 in the section titled System-on-a-Chip design with AlmaIF Integrator. Make sure
 to check the accelerator base address from Vivado.
 
