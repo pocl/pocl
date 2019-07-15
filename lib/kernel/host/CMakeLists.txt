@@ -136,6 +136,8 @@ vstore_half.cl
 wait_group_events.cl
 write_image.cl
 
+spir_wrapper.ll
+
 ###################################################################
 
 # from libclc
