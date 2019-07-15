@@ -368,6 +368,7 @@ pocl_init_cpu_device_infos (cl_device_id dev)
   dev->llvm_cpu = get_llvm_cpu_name ();
 #endif
 
+  dev->spirv_version = "SPIR-V_1.2";
 #else /* No compiler, no CPU info */
   dev->llvm_cpu = NULL;
   dev->llvm_target_triplet = "";

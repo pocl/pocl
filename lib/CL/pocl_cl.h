@@ -794,6 +794,8 @@ struct _cl_device_id {
   cl_uint dev_queue_max_size;
   cl_command_queue_properties on_dev_queue_props;
   cl_command_queue_properties on_host_queue_props;
+  /* OpenCL 2.1 */
+  char *spirv_version;
 
   /* image formats supported by the device, per image type */
   const cl_image_format *image_formats[NUM_OPENCL_IMAGE_TYPES];

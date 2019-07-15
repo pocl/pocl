@@ -123,6 +123,13 @@ POname(clGetProgramInfo)(cl_program program,
       POCL_RETURN_GETINFO_INNER(value_size, get_binaries(program, param_value));
     }
 
+  case CL_PROGRAM_IL:
+    {
+      POCL_RETURN_GETINFO_INNER (
+          program->program_il_size,
+          memcpy (param_value, program->program_il, program->program_il_size));
+    }
+
   case CL_PROGRAM_NUM_DEVICES:
     POCL_RETURN_GETINFO(cl_uint, program->num_devices);
 
