@@ -277,32 +277,6 @@ Some of them are listed in the following:
  types of local buffers, the ones passed as arguments and the ones instantiated
  in the kernel.
 
-* ``TargetAddressSpaces``
-
- Note: TargetAddressSpaces are now disabled by default when LLVM is >= 4.0,
- and pocl uses Clang's address spaces directly (see last paragraph).
- The following two paragraphs are therefore outdated.
-
- Internally pocl uses fixed address space ids to denote the different OpenCL
- address spaces.  That is, Clang generates LLVM IR that uses these address space
- ids, even with targets that have a single flat address space in reality.
- This is to differentiate the different type of pointers for treating locals
- correctly, and also for assisting alias analysis (different address spaces are
- disjoint, thus accesses to them won't alias each other).
-
- TargetAddressSpaces is a pass that converts these fake ids to the ones expected
- by the target.  This pass can be short cutted in case the backend for the target
- can flatten the ids safely.  However, recently (as of LLVM 3.7) there has been new
- problems with some optimizations (at least LoopVectorizer) that get confused with
- the fake ids.  Therefore it is recommended the ids are flattened even if not
- strictly needed for a target at hand to avoid these issues and make some LLVM
- optimizations more efficient.
-
- A more robust version of AS handling might be to rely on metadata when differentiating
- the pointers and already in Clang use the target's address spaces in the IR. This
- would ensure the LLVM IR passes would not get confused by the fake ids.
-
-
 .. _opencl-optimizations:
 
 Other OpenCL-specific optimizations

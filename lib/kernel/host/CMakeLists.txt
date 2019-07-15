@@ -465,11 +465,6 @@ separate_arguments(LLC_CPUFLAGS)
 set(CLANG_FLAGS ${HOST_CLANG_FLAGS} ${CLANG_CPUFLAGS}
                 "-emit-llvm" "-ffp-contract=off")
 
-if(POCL_USE_FAKE_ADDR_SPACE_IDS)
-list(APPEND CLANG_FLAGS "-Xclang" "-ffake-address-space-map"
-                        "-DPOCL_USE_FAKE_ADDR_SPACE_IDS")
-endif()
-
 set(LLC_FLAGS ${HOST_LLC_FLAGS} ${LLC_CPUFLAGS})
 
 if(ENABLE_SLEEF)

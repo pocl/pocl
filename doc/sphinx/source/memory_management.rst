@@ -7,9 +7,10 @@ host-side memory management of device memory.
 Multiple logical address spaces
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-By default, Clang (at least version 3.3 and older) converts the OpenCL C address space 
-qualifiers to *target specific* address space identifiers. That is, e.g., for the common CPU 
-targets with single uniform address space, all of the OpenCL address spaces are mapped to the
+By default, Clang (at least version 5 and older) converts the OpenCL C address space
+qualifiers to "language" address space identifiers, which are later converted to
+target-specific address spaces. That is, e.g., for the common CPU targets with
+single uniform address space, all of the OpenCL address spaces are mapped to the
 address space identifier 0 (the default C address space). For multiple address space
 LLVM backends such as AMD GPUs there are different ids produced for the OpenCL C address spaces,
 but they differ from those of the TCE backend, etc. Thus, after the Clang processing of
@@ -18,17 +19,6 @@ target specific, preventing or complicating the special treatment of the pointer
 to (logically) different address spaces (e.g. OpenCL disjoint address space alias analysis,
 see :ref:`opencl-optimizations`).
 
-pocl's kernel compiler needs to know the original logical address spaces in the kernel during
-some of its processing steps. In order to unify these parts of the kernel compiler, pocl 
-uses the "fake address space map" mechanism of Clang to force pocl-known *separate* ids to be 
-produced for each of the OpenCL C logical address spaces in the frontend. 
-
-Before the code generation, the forced OpenCL C logical address space ids should be mapped to 
-the backend understood ones. This can be done in the kernel compiler pass ``TargetAddressSpaces``. 
-It goes through all the memory references in the bitcode and maps their address space ids to the 
-target specific ones. In case it is known that the targeted backend either understands the logical
-address space ids (or simply maps everything to 0 there aswell), this processing is
-skipped (and left for the backend). 
 
 Managing the device memories
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^

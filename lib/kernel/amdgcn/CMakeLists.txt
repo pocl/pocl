@@ -39,10 +39,6 @@ endforeach()
 
 set(CLANG_FLAGS "-emit-llvm" "-target" "amdgcn--amdhsa" "-mcpu=kaveri")
 
-if(POCL_USE_FAKE_ADDR_SPACE_IDS)
-list(APPEND CLANG_FLAGS "-Xclang" "-ffake-address-space-map")
-endif()
-
 set(LLC_FLAGS "")
 
 make_kernel_bc(KERNEL_BC "amdgcn--amdhsa" "gcn" 0 0 0 ${KERNEL_SOURCES})

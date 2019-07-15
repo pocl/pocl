@@ -46,8 +46,6 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include "linker.h"
 
-#include "TargetAddressSpaces.h"
-
 using namespace llvm;
 
 //#include <cstdio>
@@ -88,13 +86,8 @@ static void fixOpenCLimageArguments(llvm::Function *Func) {
         if (t->isPointerTy() && t->getPointerElementType()->isStructTy()) {
             Type *pe_type = t->getPointerElementType();
             if (pe_type->getStructName().startswith("opencl.image"))  {
-#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
-              Type *new_t =
-                PointerType::get(pe_type, POCL_FAKE_AS_GLOBAL);
-#else
               Type *new_t =
                 PointerType::get(pe_type, currentPoclDevice->global_as_id);
-#endif
               j->mutateType(new_t);
             }
         }
@@ -123,17 +116,10 @@ CloneFuncFixOpenCLImageT(llvm::Module *Mod, llvm::Function *F)
           Type *pe_type = t->getPointerElementType();
           if (pe_type->getStructName().startswith("opencl.image")) {
 
-#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
-            if (t->getPointerAddressSpace() != POCL_FAKE_AS_GLOBAL) {
-              new_t = PointerType::get(pe_type, POCL_FAKE_AS_GLOBAL);
-              changed = 1;
-            }
-#else
             if (t->getPointerAddressSpace() != currentPoclDevice->global_as_id) {
               new_t = PointerType::get(pe_type, currentPoclDevice->global_as_id);
               changed = 1;
             }
-#endif
           }
         }
         sv.push_back(new_t);

@@ -344,15 +344,9 @@ set_property(TEST
   APPEND PROPERTY LABELS "hsa-native")
 
 
-if (NOT CLANG_IS_PATCHED_FOR_SPIR_CC)
-set_tests_properties("regression/struct_kernel_arguments"
-                      PROPERTIES  WILL_FAIL 1)
-
 if(ARM64)
   set_tests_properties("regression/vector_kernel_arguments"
     PROPERTIES  WILL_FAIL 1)
-endif()
-
 endif()
 
 ###################################################################

@@ -83,10 +83,6 @@ static int pocl_get_kernel_arg_module_metadata(llvm::Function *Kernel,
 
   assert(kernel_metadata && "kernel NOT found in opencl.kernels metadata");
 
-#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
-  int BitcodeIsSPIR = input->getTargetTriple().find("spir") == 0;
-#endif
-
   unsigned e = kernel_metadata->getNumOperands();
   for (unsigned i = 1; i != e; ++i) {
     llvm::MDNode *meta_node =
@@ -120,16 +116,8 @@ static int pocl_get_kernel_arg_module_metadata(llvm::Function *Kernel,
         // std::cout << "is ConstantInt /  kernel_arg_addr_space" << std::endl;
         llvm::ConstantInt *m = llvm::cast<ConstantInt>(meta_arg_value);
         unsigned long val = (unsigned long)m->getLimitedValue(UINT_MAX);
-        bool SPIRAddressSpaceIDs;
-#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
-        SPIRAddressSpaceIDs = BitcodeIsSPIR;
-#else
         // We have an LLVM fixed to produce always SPIR AS ids for the argument
         // info metadata.
-        SPIRAddressSpaceIDs = true;
-#endif
-
-        if (SPIRAddressSpaceIDs) {
           switch (val) {
           case 0:
             current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE;
@@ -144,30 +132,7 @@ static int pocl_get_kernel_arg_module_metadata(llvm::Function *Kernel,
             current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_CONSTANT;
             break;
           }
-        } else {
-          switch (val) {
-#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
-          case POCL_FAKE_AS_PRIVATE:
-            current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE;
-            break;
-          case POCL_FAKE_AS_GLOBAL:
-            current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_GLOBAL;
-            break;
-          case POCL_FAKE_AS_LOCAL:
-            current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_LOCAL;
-            break;
-          case POCL_FAKE_AS_CONSTANT:
-            current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_CONSTANT;
-            break;
-          case POCL_FAKE_AS_GENERIC:
-            current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE;
-            break;
-#endif
-          default:
-            POCL_MSG_ERR("Unknown address space ID %lu\n", val);
-            break;
-          }
-        }
+
       } else if (isa<MDString>(meta_node->getOperand(j))) {
         // std::cout << "is MDString" << std::endl;
         llvm::MDString *m = llvm::cast<MDString>(meta_node->getOperand(j));
@@ -351,15 +316,8 @@ static int pocl_get_kernel_arg_function_metadata(llvm::Function *Kernel,
     llvm::ConstantInt *m = llvm::cast<ConstantInt>(meta_arg_value);
     unsigned long val = (unsigned long)m->getLimitedValue(UINT_MAX);
 
-    bool SPIRAddressSpaceIDs;
-#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
-    SPIRAddressSpaceIDs = bitcode_is_spir;
-#else
     // We have an LLVM fixed to produce always SPIR AS ids for the argument
     // info metadata.
-    SPIRAddressSpaceIDs = true;
-#endif
-    if (SPIRAddressSpaceIDs) {
       switch (val) {
       case 0:
         current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE;
@@ -377,30 +335,6 @@ static int pocl_get_kernel_arg_function_metadata(llvm::Function *Kernel,
         POCL_MSG_ERR("Unknown address space ID %lu\n", val);
         break;
       }
-    } else {
-      switch (val) {
-#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
-      case POCL_FAKE_AS_PRIVATE:
-        current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE;
-        break;
-      case POCL_FAKE_AS_GLOBAL:
-        current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_GLOBAL;
-        break;
-      case POCL_FAKE_AS_LOCAL:
-        current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_LOCAL;
-        break;
-      case POCL_FAKE_AS_CONSTANT:
-        current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_CONSTANT;
-        break;
-      case POCL_FAKE_AS_GENERIC:
-        current_arg->address_qualifier = CL_KERNEL_ARG_ADDRESS_PRIVATE;
-        break;
-#endif
-      default:
-        POCL_MSG_ERR("Unknown address space ID %lu\n", val);
-        break;
-      }
-    }
   }
 
   // kernel_arg_access_qual

@@ -405,11 +405,7 @@ int pocl_llvm_build_program(cl_program program,
 
   // the per-file types don't seem to override this
   la->OpenCLVersion = cl_std_i;
-#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
-  la->FakeAddressSpaceMap = true;
-#else
   la->FakeAddressSpaceMap = false;
-#endif
   la->Blocks = true; //-fblocks
   la->MathErrno = false; // -fno-math-errno
   la->NoBuiltin = true;  // -fno-builtin
@@ -471,14 +467,7 @@ int pocl_llvm_build_program(cl_program program,
   // Lets leave vectorization to later compilation phase
   cg.VectorizeLoop = false;
   cg.VectorizeSLP = false;
-  // This workarounds a Frontend codegen issues with an illegal address
-  // space cast which is later flattened (and thus implicitly fixed) in
-  // the TargetAddressSpaces. See:  https://github.com/pocl/pocl/issues/195
-#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
-  cg.VerifyModule = false;
-#else
   cg.VerifyModule = true;
-#endif
 
   PreprocessorOutputOptions &poo = pocl_build.getPreprocessorOutputOpts();
   poo.ShowCPP = 1;

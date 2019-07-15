@@ -42,9 +42,6 @@ separate_arguments(TCE_TARGET_LLC_FLAGS)
 set(LLC_FLAGS ${TCE_TARGET_LLC_FLAGS})
 
 unset(EXTRA_TCE_CLANG_FLAGS)
-if(POCL_USE_FAKE_ADDR_SPACE_IDS)
-set(EXTRA_TCE_CLANG_FLAGS "-Xclang" "-ffake-address-space-map" "-DPOCL_USE_FAKE_ADDR_SPACE_IDS")
-endif()
 
 set(KERNEL_CL_FLAGS "-D__OPENCL_C_VERSION__=${TCE_DEVICE_CL_VERSION}" "-Xclang" "-cl-std=CL${TCE_DEVICE_CL_STD}" "-Xclang" "-cl-ext=all,-cl_khr_fp64")
 

@@ -138,11 +138,6 @@ set_tests_properties("kernel/test_min_max" "kernel/test_length_distance"
     DEPENDS "pocl_version_check"
     LABELS "internal;kernel")
 
-if(LLVM_ASSERTS_BUILD AND POCL_USE_FAKE_ADDR_SPACE_IDS)
-  set_tests_properties("kernel/test_local_struct_array"
-    PROPERTIES WILL_FAIL 1)
-endif()
-
 ######################################################################
 if(MSVC)
   set_source_files_properties( 

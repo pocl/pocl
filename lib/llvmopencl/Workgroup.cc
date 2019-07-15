@@ -68,8 +68,6 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <iostream>
 #include <sstream>
 
-#include "TargetAddressSpaces.h"
-
 #if _MSC_VER
 #  include "vccompat.hpp"
 #endif
@@ -1385,13 +1383,8 @@ Workgroup::createFastWorkgroupLauncher(llvm::Function *F) {
     Value *value;
 
     if (!ii->hasByValAttr() || ((PointerType*)t)->getAddressSpace() == 1)
-#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
-      value = builder.CreatePointerCast
-        (pointer, t->getPointerTo(POCL_FAKE_AS_GLOBAL));
-#else
       value = builder.CreatePointerCast
         (pointer, t->getPointerTo(currentPoclDevice->global_as_id));
-#endif
     else
       value = builder.CreatePointerCast(pointer, t->getPointerTo());
 

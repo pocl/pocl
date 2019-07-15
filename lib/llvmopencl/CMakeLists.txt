@@ -79,10 +79,6 @@ set(LLVMPASSES_SOURCES "AllocasToEntry.cc"
                        "WorkitemReplication.cc"
                        "WorkitemReplication.h")
 
-if(POCL_USE_FAKE_ADDR_SPACE_IDS)
-list(APPEND LLVMPASSES_SOURCES "TargetAddressSpaces.cc" "TargetAddressSpaces.h")
-endif()
-
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${LLVM_CFLAGS}")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${LLVM_CXXFLAGS}")
 

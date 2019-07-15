@@ -270,11 +270,6 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
   // dynamic stack which is problematic for some architectures.
   passes.push_back("allocastoentry");
 
-#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
-  // Convert the semantical OpenCL address space IDs to the ones of the target.
-  passes.push_back("target-address-spaces");
-#endif
-
   // Later passes might get confused (and expose possible bugs in them) due to
   // UNREACHABLE blocks left by repl. So let's clean up the CFG before running
   // the standard LLVM optimizations.
@@ -311,10 +306,8 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
         Builder.LoopVectorize = true;
         Builder.SLPVectorize = true;
       }
-#ifndef POCL_USE_FAKE_ADDR_SPACE_IDS
       Builder.VerifyInput = true;
       Builder.VerifyOutput = true;
-#endif
       Builder.populateModulePassManager(*Passes);
       continue;
     }

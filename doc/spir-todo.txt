@@ -1,11 +1,9 @@
-
 Note: pocl's behaviour WRT linking has changed recently. Before, the
 linking of kernel library happened between program.bc and parallel.bc,
 but now linking happens before program.bc is finished. This breaks with
 SPIR binaries since they need to be linked. The solution will require
 either converting SPIR to LLVM BC on input, or building the kernel library
-for SPIR target. The text below is somewhat outdated since pocl doesn't
-use fake addr spaces by default anymore (only enabled for pre-3.9 LLVMs).
+for SPIR target.
 
 bitcode linkage warning
 -----------------------
@@ -19,10 +17,12 @@ thus this should be OK.
 mangling of address spaces
 --------------------------
 
-pocl now uses the -ffake-addr-space-map ids internally and for the kernel
-builtin library. The IDs do not match the ones in SPIR, therefore the SPIR
-refers to overloaded versions which might not be found in the kernel library.
-SPIR specs requires adding the AS id to the mangling.
+pocl does not use the -ffake-addr-space-map anymore for the kernel
+builtin library. The AS IDs in the library are the target AS numbers,
+which may or may not match the SPIR AS numbers. Therefore SPIR could
+refer to overloaded versions which might not be found in the kernel library.
+Also, function name mangling is different when compiling for SPIR
+(the argument AS names are mangled differently).
 
 Alternative solutions:
 

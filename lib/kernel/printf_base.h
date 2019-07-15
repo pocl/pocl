@@ -35,11 +35,7 @@
  * For now assume that if we are not using the fake address space
  * ids then we have a single address space. This version of printf
  * doesn't work with multiple address spaces anyways. */
-#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
-#define OCL_CONSTANT_AS __attribute__ ((address_space (3)))
-#else
 #define OCL_CONSTANT_AS
-#endif
 
 typedef intptr_t ssize_t;
 

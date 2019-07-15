@@ -180,8 +180,6 @@
 
 #define POCL_INSTALL_PRIVATE_DATADIR_REL "@POCL_INSTALL_PRIVATE_DATADIR_REL@"
 
-#cmakedefine POCL_USE_FAKE_ADDR_SPACE_IDS
-
 #cmakedefine POCL_ASSERTS_BUILD
 
 /* these are *host* values */

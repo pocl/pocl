@@ -32,8 +32,6 @@
 #include <llvm/IR/Metadata.h>
 #include <llvm/IR/DerivedTypes.h>
 
-#include "TargetAddressSpaces.h"
-
 namespace llvm {
     class Module;
     class Function;
@@ -52,11 +50,6 @@ void eraseFunctionAndCallers(llvm::Function *Function);
 
 inline bool
 isAutomaticLocal(const std::string &FuncName, llvm::GlobalVariable &Var) {
-#ifdef POCL_USE_FAKE_ADDR_SPACE_IDS
-  return Var.getName().startswith(FuncName + ".") &&
-    llvm::isa<llvm::PointerType>(Var.getType()) &&
-    Var.getType()->getPointerAddressSpace() == POCL_FAKE_AS_LOCAL;
-#else
   // Without the fake address space IDs, there is no reliable way to figure out
   // if the address space is local from the bitcode. We could check its AS
   // against the device's local address space id, but for now lets rely on the
@@ -67,7 +60,6 @@ isAutomaticLocal(const std::string &FuncName, llvm::GlobalVariable &Var) {
   // detect them robstly without having logical address space info in the IR.
   return Var.getName().startswith(FuncName + ".") &&
     llvm::isa<llvm::PointerType>(Var.getType()) && !Var.isConstant();
-#endif
 }
 
 inline bool

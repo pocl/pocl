@@ -57,10 +57,6 @@ endforeach()
 
 set(CLANG_FLAGS "-emit-llvm" "-target" "hsail64" "-D_CL_DISABLE_HALF")
 
-if(POCL_USE_FAKE_ADDR_SPACE_IDS)
-list(APPEND CLANG_FLAGS "-Xclang" "-ffake-address-space-map")
-endif()
-
 set(KERNEL_CL_FLAGS "-Xclang" "-cl-std=CL${HSA_DEVICE_CL_STD}" "-D__OPENCL_C_VERSION__=${HSA_DEVICE_CL_VERSION}" ${KERNEL_CL_FLAGS})
 
 set(LLC_FLAGS "")

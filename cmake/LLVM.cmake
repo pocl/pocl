@@ -736,39 +736,6 @@ message(STATUS "FP16 is disabled: ${CL_DISABLE_HALF}")
 
 #####################################################################
 
-# Check if https://reviews.llvm.org/D26157 has been applied. That is,
-# if the argument info metadata always returns SPIR ids for the
-# address spaces. In that case we do not need to use the fake
-# address space map to transfer the OpenCL address space info to
-# pocl which saves us from many troubles caused by the TargetAddressSpaces
-# pass.
-
-# The patch is also available in
-# tools/patches/clang-4.0-kernel_arg_addr_space-always-spir-ids.patch
-
-if(NOT DEFINED POCL_USE_FAKE_ADDR_SPACE_IDS)
-
-  set(FILENAME "${CMAKE_BINARY_DIR}/compile_test_clang_as_check.cl")
-  file(WRITE "${FILENAME}" "kernel void K(global int *G, constant int* C, local int* L) {}")
-
-  execute_process(COMMAND "${CLANG}" "-target" "x86_64-unknown-unknown" "${FILENAME}" "-emit-llvm" "-c" "-S" "-o" "-"
-    OUTPUT_VARIABLE AS_CHECK_RESULT)
-
-  set(FAKEADDR 0)
-  if(NOT AS_CHECK_RESULT MATCHES "= !{i32 1, i32 2, i32 3}")
-    set(FAKEADDR 1)
-  else()
-    set(FAKEADDR 0)
-  endif()
-
-  set(POCL_USE_FAKE_ADDR_SPACE_IDS ${FAKEADDR} CACHE INTERNAL "use fake address space IDs")
-  message(STATUS "Use fake address space IDs: ${POCL_USE_FAKE_ADDR_SPACE_IDS}")
-#else()
-#  message(STATUS "Use fake address space IDs (cached): ${POCL_USE_FAKE_ADDR_SPACE_IDS}")
-endif()
-
 execute_process(COMMAND "${CLANG}" "--print-resource-dir" OUTPUT_VARIABLE RESOURCE_DIR)
 string(STRIP "${RESOURCE_DIR}" RESOURCE_DIR)
 set(CLANG_RESOURCE_DIR "${RESOURCE_DIR}" CACHE INTERNAL "Clang resource dir")
-
-set(CLANG_IS_PATCHED_FOR_SPIR_CC ON CACHE INTERNAL "Clang patched for SPIR CC")
