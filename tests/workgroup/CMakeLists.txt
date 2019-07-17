@@ -105,6 +105,8 @@ set_tests_properties( "workgroup/unconditional_barriers"
   "workgroup/b_loop_with_two_latches"
   "workgroup/workgroup_sizes_work_items_get_wrong_ids"
   "workgroup/issue_548_convergent_propagation"
+  "workgroup/range_md_small_grid"
+  "workgroup/range_md_large_grid"
   PROPERTIES
     COST 2.0
     PROCESSORS 1
