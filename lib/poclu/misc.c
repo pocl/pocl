@@ -390,6 +390,20 @@ poclu_load_program_multidev (cl_context context, cl_device_id *devices,
       CHECK_OPENCL_ERROR_IN ("clBuildProgram");
       free (src);
     }
+  else if (spirv)
+    {
+      TEST_ASSERT (device != NULL);
+      binary = poclu_read_binfile (path, &binary_size);
+      TEST_ASSERT (binary != NULL);
+
+      program = clCreateProgramWithIL (context, (const void *)binary,
+                                       binary_size, &err);
+      CHECK_OPENCL_ERROR_IN ("clCreateProgramWithIL");
+
+      err = clBuildProgram (program, 0, NULL, final_opts, NULL, NULL);
+      CHECK_OPENCL_ERROR_IN ("clBuildProgram");
+      free (binary);
+    }
   else
     {
       TEST_ASSERT (device != NULL);
