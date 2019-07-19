@@ -9,6 +9,9 @@ Highlights
   CL_DEVICE_TYPE_CUSTOM hardware accelerators which implement a memory
   mapped control interface.
 
+- Improved SPIR and SPIR-V support. clCreateProgramWithIL() implemented,
+  Kernel library (for CPU target) support for SPIR-mangling improved
+
 Kernel Compiler
 ---------------
 - Specialize work-group functions for global offset (0,0,0).
