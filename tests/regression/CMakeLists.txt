@@ -344,11 +344,6 @@ set_property(TEST
   APPEND PROPERTY LABELS "hsa-native")
 
 
-if(ARM64)
-  set_tests_properties("regression/vector_kernel_arguments"
-    PROPERTIES  WILL_FAIL 1)
-endif()
-
 ###################################################################
 
 # TODO infinite loop test: AT_SKIP_IF([ env | grep -q POCL_IMPLICIT_FINISH])
