@@ -60,16 +60,22 @@ namespace pocl {
       if (InsertBefore != &InsertBefore->getParent()->front() && 
           llvm::isa<Barrier>(InsertBefore->getPrevNode()))
         return llvm::cast<Barrier>(InsertBefore->getPrevNode());
-
+#ifdef LLVM_OLDER_THAN_9_0
       llvm::Function *F = llvm::cast<llvm::Function>
         (M->getOrInsertFunction(BARRIER_FUNCTION_NAME,
                                 llvm::Type::getVoidTy(M->getContext())));
+#else
+      llvm::FunctionCallee f =
+        M->getOrInsertFunction(BARRIER_FUNCTION_NAME,
+                                llvm::Type::getVoidTy(M->getContext()));
+      llvm::Function *F = llvm::cast<llvm::Function>(f.getCallee());
+#endif
       F->addFnAttr(llvm::Attribute::NoDuplicate);
       F->setLinkage(llvm::GlobalValue::LinkOnceAnyLinkage);
       return llvm::cast<pocl::Barrier>
         (llvm::CallInst::Create(F, "", InsertBefore));
     }
-    static bool classof(const Barrier *) { return true; };
+    static bool classof(const Barrier *) { return true; }
     static bool classof(const llvm::CallInst *C) {
       return C->getCalledFunction() != NULL &&
         C->getCalledFunction()->getName() == BARRIER_FUNCTION_NAME;

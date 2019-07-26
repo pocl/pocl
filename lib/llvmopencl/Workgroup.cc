@@ -263,9 +263,16 @@ Workgroup::runOnModule(Module &M) {
     }
   }
 
+#ifdef LLVM_OLDER_THAN_9_0
   Function *barrier = cast<Function>
     (M.getOrInsertFunction(BARRIER_FUNCTION_NAME,
                            Type::getVoidTy(M.getContext())));
+#else
+  FunctionCallee fc = M.getOrInsertFunction(BARRIER_FUNCTION_NAME,
+                             Type::getVoidTy(M.getContext()));
+  Function *barrier = cast<Function>(fc.getCallee());
+#endif
+
   BasicBlock *bb = BasicBlock::Create(M.getContext(), "", barrier);
   ReturnInst::Create(M.getContext(), 0, bb);
 
@@ -945,10 +952,16 @@ Workgroup::createDefaultWorkgroupLauncher(llvm::Function *F) {
   std::string FuncName = "";
   FuncName = F->getName().str();
 
-  Function *WorkGroup = dyn_cast<Function>(
-      M->getOrInsertFunction(FuncName + "_workgroup", LauncherFuncT));
-  assert(WorkGroup != nullptr);
+#ifdef LLVM_OLDER_THAN_9_0
+  Function *WorkGroup =
+    dyn_cast<Function>(M->getOrInsertFunction(
+                         FuncName + "_workgroup", LauncherFuncT));
+#else
+  FunctionCallee fc = M->getOrInsertFunction(FuncName + "_workgroup", LauncherFuncT);
+  Function *WorkGroup = dyn_cast<Function>(fc.getCallee());
+#endif
 
+  assert(WorkGroup != nullptr);
   BasicBlock *Block = BasicBlock::Create(M->getContext(), "", WorkGroup);
   Builder.SetInsertPoint(Block);
 
@@ -1344,14 +1357,21 @@ Workgroup::createFastWorkgroupLauncher(llvm::Function *F) {
 
   std::string funcName = "";
   funcName = F->getName().str();
-  Function *workgroup =
+
+#ifdef LLVM_OLDER_THAN_9_0
+  Function *WorkGroup =
     dyn_cast<Function>(M->getOrInsertFunction(
                          funcName + "_workgroup_fast", LauncherFuncT));
-  assert(workgroup != NULL);
+#else
+  FunctionCallee fc = M->getOrInsertFunction(
+                         funcName + "_workgroup_fast", LauncherFuncT);
+  Function *WorkGroup = dyn_cast<Function>(fc.getCallee());
+#endif
+  assert(WorkGroup != NULL);
 
-  builder.SetInsertPoint(BasicBlock::Create(M->getContext(), "", workgroup));
+  builder.SetInsertPoint(BasicBlock::Create(M->getContext(), "", WorkGroup));
 
-  Function::arg_iterator ai = workgroup->arg_begin();
+  Function::arg_iterator ai = WorkGroup->arg_begin();
 
   SmallVector<Value*, 8> arguments;
   size_t i = 0;
