@@ -148,6 +148,8 @@
 /* "Using LLVM 8.0" */
 #cmakedefine LLVM_8_0
 
+#cmakedefine LLVM_9_0
+
 #cmakedefine LLVM_BUILD_MODE_DEBUG
 
 #ifndef LLVM_VERSION

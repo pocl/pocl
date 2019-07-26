@@ -366,6 +366,9 @@ struct _cl_command_node
   cl_int ready;
 };
 
+#ifndef LLVM_9_0
+#define LLVM_OLDER_THAN_9_0 1
+
 #ifndef LLVM_8_0
 #define LLVM_OLDER_THAN_8_0 1
 
@@ -378,6 +381,6 @@ struct _cl_command_node
 #endif
 #endif
 #endif
-
+#endif
 
 #endif /* POCL_H */
