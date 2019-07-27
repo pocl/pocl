@@ -381,7 +381,7 @@ pocl_exec_command (_cl_command_node * volatile node)
   switch (node->type)
     {
     case CL_COMMAND_READ_BUFFER:
-      POCL_UPDATE_EVENT_RUNNING(event);
+      pocl_update_event_running (event);
       assert (dev->ops->read);
       dev->ops->read
         (dev->data,
@@ -390,11 +390,11 @@ pocl_exec_command (_cl_command_node * volatile node)
          event->mem_objs[0],
          cmd->read.offset,
          cmd->read.size);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Read Buffer           ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Read Buffer           ");
       break;
 
     case CL_COMMAND_WRITE_BUFFER:
-      POCL_UPDATE_EVENT_RUNNING(event);
+      pocl_update_event_running (event);
       assert (dev->ops->write);
       dev->ops->write
         (dev->data,
@@ -403,11 +403,11 @@ pocl_exec_command (_cl_command_node * volatile node)
          event->mem_objs[0],
          cmd->write.offset,
          cmd->write.size);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Write Buffer          ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Write Buffer          ");
       break;
 
     case CL_COMMAND_COPY_BUFFER:
-      POCL_UPDATE_EVENT_RUNNING(event);
+      pocl_update_event_running (event);
       assert (dev->ops->copy);
       dev->ops->copy
         (dev->data,
@@ -418,11 +418,11 @@ pocl_exec_command (_cl_command_node * volatile node)
          cmd->copy.dst_offset,
          cmd->copy.src_offset,
          cmd->copy.size);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Copy Buffer           ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Copy Buffer           ");
       break;
 
     case CL_COMMAND_FILL_BUFFER:
-      POCL_UPDATE_EVENT_RUNNING(event);
+      pocl_update_event_running (event);
       assert (dev->ops->memfill);
       dev->ops->memfill
         (dev->data,
@@ -432,12 +432,12 @@ pocl_exec_command (_cl_command_node * volatile node)
          cmd->memfill.offset,
          cmd->memfill.pattern,
          cmd->memfill.pattern_size);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Fill Buffer           ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Fill Buffer           ");
       pocl_aligned_free (cmd->memfill.pattern);
       break;
 
     case CL_COMMAND_READ_BUFFER_RECT:
-      POCL_UPDATE_EVENT_RUNNING(event);
+      pocl_update_event_running (event);
       assert (dev->ops->read_rect);
       dev->ops->read_rect
         (dev->data,
@@ -451,11 +451,11 @@ pocl_exec_command (_cl_command_node * volatile node)
          cmd->read_rect.buffer_slice_pitch,
          cmd->read_rect.host_row_pitch,
          cmd->read_rect.host_slice_pitch);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Read Buffer Rect      ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Read Buffer Rect      ");
       break;
 
     case CL_COMMAND_COPY_BUFFER_RECT:
-      POCL_UPDATE_EVENT_RUNNING(event);
+      pocl_update_event_running (event);
       assert (dev->ops->copy_rect);
       dev->ops->copy_rect
         (dev->data,
@@ -470,11 +470,11 @@ pocl_exec_command (_cl_command_node * volatile node)
          cmd->copy_rect.dst_slice_pitch,
          cmd->copy_rect.src_row_pitch,
          cmd->copy_rect.src_slice_pitch);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Copy Buffer Rect      ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Copy Buffer Rect      ");
       break;
 
     case CL_COMMAND_WRITE_BUFFER_RECT:
-      POCL_UPDATE_EVENT_RUNNING(event);
+      pocl_update_event_running (event);
       assert (dev->ops->write_rect);
       dev->ops->write_rect
         (dev->data,
@@ -488,17 +488,17 @@ pocl_exec_command (_cl_command_node * volatile node)
          cmd->write_rect.buffer_slice_pitch,
          cmd->write_rect.host_row_pitch,
          cmd->write_rect.host_slice_pitch);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Write Buffer Rect     ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Write Buffer Rect     ");
       break;
 
     case CL_COMMAND_MIGRATE_MEM_OBJECTS:
-      POCL_UPDATE_EVENT_RUNNING (event);
+      pocl_update_event_running (event);
       pocl_migrate_mem_objects (node);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Migrate Buffer        ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Migrate Buffer        ");
       break;
 
     case CL_COMMAND_MAP_BUFFER:
-      POCL_UPDATE_EVENT_RUNNING (event);
+      pocl_update_event_running (event);
       assert (dev->ops->map_mem);
       POCL_LOCK_OBJ (event->mem_objs[0]);
         dev->ops->map_mem (dev->data,
@@ -507,11 +507,11 @@ pocl_exec_command (_cl_command_node * volatile node)
                            cmd->map.mapping);
       (event->mem_objs[0])->map_count++;
       POCL_UNLOCK_OBJ (event->mem_objs[0]);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Map Buffer            ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Map Buffer            ");
       break;
 
     case CL_COMMAND_COPY_IMAGE_TO_BUFFER:
-      POCL_UPDATE_EVENT_RUNNING (event);
+      pocl_update_event_running (event);
       assert (dev->ops->read_image_rect);
       dev->ops->read_image_rect (
           dev->data,
@@ -524,11 +524,11 @@ pocl_exec_command (_cl_command_node * volatile node)
           cmd->read_image.dst_row_pitch,
           cmd->read_image.dst_slice_pitch,
           cmd->read_image.dst_offset);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "CopyImageToBuffer       ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event CopyImageToBuffer       ");
       break;
 
     case CL_COMMAND_READ_IMAGE:
-      POCL_UPDATE_EVENT_RUNNING(event);
+      pocl_update_event_running (event);
       assert (dev->ops->read_image_rect);
       dev->ops->read_image_rect (
           dev->data,
@@ -541,11 +541,11 @@ pocl_exec_command (_cl_command_node * volatile node)
           cmd->read_image.dst_row_pitch,
           cmd->read_image.dst_slice_pitch,
           cmd->read_image.dst_offset);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Read Image            ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Read Image            ");
       break;
 
     case CL_COMMAND_COPY_BUFFER_TO_IMAGE:
-      POCL_UPDATE_EVENT_RUNNING(event);
+      pocl_update_event_running (event);
       assert (dev->ops->write_image_rect);
       dev->ops->write_image_rect (
           dev->data,
@@ -558,11 +558,11 @@ pocl_exec_command (_cl_command_node * volatile node)
           cmd->write_image.src_row_pitch,
           cmd->write_image.src_slice_pitch,
           cmd->write_image.src_offset);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "CopyBufferToImage       ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event CopyBufferToImage       ");
       break;
 
     case CL_COMMAND_WRITE_IMAGE:
-        POCL_UPDATE_EVENT_RUNNING(event);
+        pocl_update_event_running (event);
         assert (dev->ops->write_image_rect);
         dev->ops->write_image_rect (
             dev->data,
@@ -575,11 +575,11 @@ pocl_exec_command (_cl_command_node * volatile node)
             cmd->write_image.src_row_pitch,
             cmd->write_image.src_slice_pitch,
             cmd->write_image.src_offset);
-        POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Write Image           ");
+        POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Write Image           ");
         break;
 
     case CL_COMMAND_COPY_IMAGE:
-        POCL_UPDATE_EVENT_RUNNING(event);
+        pocl_update_event_running (event);
         assert (dev->ops->copy_image_rect);
         dev->ops->copy_image_rect(
               dev->data,
@@ -590,11 +590,11 @@ pocl_exec_command (_cl_command_node * volatile node)
               cmd->copy_image.src_origin,
               cmd->copy_image.dst_origin,
               cmd->copy_image.region);
-        POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Copy Image            ");
+        POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Copy Image            ");
         break;
 
     case CL_COMMAND_FILL_IMAGE:
-      POCL_UPDATE_EVENT_RUNNING (event);
+      pocl_update_event_running (event);
       assert (dev->ops->fill_image);
       dev->ops->fill_image
         (dev->data,
@@ -604,12 +604,12 @@ pocl_exec_command (_cl_command_node * volatile node)
          cmd->fill_image.region,
          cmd->fill_image.fill_pixel,
          cmd->fill_image.pixel_size);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Fill Image            ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Fill Image            ");
       POCL_MEM_FREE (cmd->fill_image.fill_pixel);
       break;
 
     case CL_COMMAND_MAP_IMAGE:
-      POCL_UPDATE_EVENT_RUNNING(event);
+      pocl_update_event_running (event);
       POCL_LOCK_OBJ (event->mem_objs[0]);
       assert (dev->ops->map_image != NULL);
       dev->ops->map_image (dev->data,
@@ -618,11 +618,11 @@ pocl_exec_command (_cl_command_node * volatile node)
                            cmd->map.mapping);
      (event->mem_objs[0])->map_count++;
       POCL_UNLOCK_OBJ (event->mem_objs[0]);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Map Image             ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Map Image             ");
       break;
 
     case CL_COMMAND_UNMAP_MEM_OBJECT:
-      POCL_UPDATE_EVENT_RUNNING(event);
+      pocl_update_event_running (event);
       POCL_LOCK_OBJ (event->mem_objs[0]);
       if (event->mem_objs[0]->is_image == CL_FALSE
           || IS_IMAGE1D_BUFFER (event->mem_objs[0]))
@@ -647,38 +647,38 @@ pocl_exec_command (_cl_command_node * volatile node)
       (event->mem_objs[0])->map_count--;
       POCL_MEM_FREE (cmd->unmap.mapping);
       POCL_UNLOCK_OBJ (event->mem_objs[0]);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Unmap Mem obj         ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Unmap Mem obj         ");
       break;
 
     case CL_COMMAND_NDRANGE_KERNEL:
-      POCL_UPDATE_EVENT_RUNNING(event);
+      pocl_update_event_running (event);
       assert (event == node->event);
       assert (dev->ops->run);
       dev->ops->run (dev->data, node);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Enqueue NDRange       ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Enqueue NDRange       ");
       pocl_ndrange_node_cleanup(node);
       break;
 
     case CL_COMMAND_NATIVE_KERNEL:
-      POCL_UPDATE_EVENT_RUNNING(event);
+      pocl_update_event_running (event);
       assert (dev->ops->run_native);
       dev->ops->run_native (dev->data, node);
       POCL_MEM_FREE (node->command.native.args);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Native Kernel         ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Native Kernel         ");
       break;
 
     case CL_COMMAND_MARKER:
-      POCL_UPDATE_EVENT_RUNNING(event);
+      pocl_update_event_running (event);
       POCL_UPDATE_EVENT_COMPLETE(event);
       break;
 
     case CL_COMMAND_BARRIER:
-      POCL_UPDATE_EVENT_RUNNING(event);
+      pocl_update_event_running (event);
       POCL_UPDATE_EVENT_COMPLETE(event);
       break;
 
     case CL_COMMAND_SVM_FREE:
-      POCL_UPDATE_EVENT_RUNNING(event);
+      pocl_update_event_running (event);
       if (cmd->svm_free.pfn_free_func)
         cmd->svm_free.pfn_free_func(
            cmd->svm_free.queue,
@@ -688,11 +688,11 @@ pocl_exec_command (_cl_command_node * volatile node)
       else
         for (i = 0; i < cmd->svm_free.num_svm_pointers; i++)
           dev->ops->svm_free (dev, cmd->svm_free.svm_pointers[i]);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "SVM Free              ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM Free              ");
       break;
 
     case CL_COMMAND_SVM_MAP:
-      POCL_UPDATE_EVENT_RUNNING(event);
+      pocl_update_event_running (event);
       if (DEVICE_MMAP_IS_NOP (dev))
         ; // no-op
       else
@@ -700,11 +700,11 @@ pocl_exec_command (_cl_command_node * volatile node)
           assert (dev->ops->svm_map);
           dev->ops->svm_map (dev, cmd->svm_map.svm_ptr);
         }
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "SVM Map              ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM Map              ");
       break;
 
     case CL_COMMAND_SVM_UNMAP:
-      POCL_UPDATE_EVENT_RUNNING(event);
+      pocl_update_event_running (event);
       if (DEVICE_MMAP_IS_NOP (dev))
         ; // no-op
       else
@@ -712,28 +712,28 @@ pocl_exec_command (_cl_command_node * volatile node)
           assert (dev->ops->svm_unmap);
           dev->ops->svm_unmap (dev, cmd->svm_unmap.svm_ptr);
         }
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "SVM Unmap             ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM Unmap             ");
       break;
 
     case CL_COMMAND_SVM_MEMCPY:
-      POCL_UPDATE_EVENT_RUNNING(event);
+      pocl_update_event_running (event);
       assert (dev->ops->svm_copy);
       dev->ops->svm_copy (dev,
                           cmd->svm_memcpy.dst,
                           cmd->svm_memcpy.src,
                           cmd->svm_memcpy.size);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "SVM Memcpy            ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM Memcpy            ");
       break;
 
     case CL_COMMAND_SVM_MEMFILL:
-      POCL_UPDATE_EVENT_RUNNING(event);
+      pocl_update_event_running (event);
       assert (dev->ops->svm_fill);
       dev->ops->svm_fill (dev,
                           cmd->svm_fill.svm_ptr,
                           cmd->svm_fill.size,
                           cmd->svm_fill.pattern,
                           cmd->svm_fill.pattern_size);
-      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "SVM MemFill           ");
+      POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM MemFill           ");
       pocl_aligned_free (cmd->svm_fill.pattern);
       break;
 

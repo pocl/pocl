@@ -369,7 +369,7 @@ pocl_pthread_prepare_kernel (void *data, _cl_command_node *cmd)
 
   setup_kernel_arg_array (run_cmd);
 
-  POCL_UPDATE_EVENT_RUNNING (cmd->event);
+  pocl_update_event_running (cmd->event);
 
   pthread_scheduler_push_kernel (run_cmd);
 }

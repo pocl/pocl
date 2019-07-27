@@ -1003,7 +1003,7 @@ pocl_tce_notify (cl_device_id device, cl_event event, cl_event finished)
   _cl_command_node * volatile node = event->command;
 
   if (finished->status < CL_COMPLETE) {
-    POCL_UPDATE_EVENT_FAILED(event);
+    pocl_update_event_failed(event);
     return;
   }
 
@@ -1012,7 +1012,7 @@ pocl_tce_notify (cl_device_id device, cl_event event, cl_event finished)
 
   if (pocl_command_is_ready(event)) {
     if (event->status == CL_QUEUED) {
-      POCL_UPDATE_EVENT_SUBMITTED(event);
+      pocl_update_event_submitted(event);
       POCL_LOCK(d->cq_lock);
       CDL_DELETE(d->command_list, node);
       CDL_PREPEND(d->ready_list, node);

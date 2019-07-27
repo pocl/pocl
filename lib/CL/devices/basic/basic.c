@@ -129,7 +129,6 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->unmap_mem = pocl_basic_unmap_mem;
   ops->run = pocl_basic_run;
   ops->run_native = pocl_basic_run_native;
-  ops->get_timer_value = pocl_gettimemono_ns;;
   ops->join = pocl_basic_join;
   ops->submit = pocl_basic_submit;
   ops->broadcast = pocl_broadcast;
@@ -1174,7 +1173,7 @@ pocl_basic_notify (cl_device_id device, cl_event event, cl_event finished)
 
   if (finished->status < CL_COMPLETE)
     {
-      POCL_UPDATE_EVENT_FAILED (event);
+      pocl_update_event_failed (event);
       return;
     }
 
@@ -1185,7 +1184,7 @@ pocl_basic_notify (cl_device_id device, cl_event event, cl_event finished)
     {
       if (event->status == CL_QUEUED)
         {
-          POCL_UPDATE_EVENT_SUBMITTED (event);
+          pocl_update_event_submitted (event);
           POCL_LOCK (d->cq_lock);
           CDL_DELETE (d->command_list, node);
           CDL_PREPEND (d->ready_list, node);

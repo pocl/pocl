@@ -163,8 +163,22 @@ text_tracer_init ()
 static void
 text_tracer_event_updated (cl_event event, int status)
 {
-  cl_command_queue cq = event->queue;
-  cl_ulong ts = cq->device->ops->get_timer_value (cq->device->data);
+  cl_ulong ts;
+  switch (status)
+    {
+    case CL_QUEUED:
+      ts = event->time_queue;
+      break;
+    case CL_SUBMITTED:
+      ts = event->time_submit;
+      break;
+    case CL_RUNNING:
+      ts = event->time_start;
+      break;
+    case CL_COMPLETE:
+    default:
+      ts = event->time_end;
+    }
   _cl_command_node *node = event->command;
   char tmp_buffer[512];
   char *cur_buf = tmp_buffer;

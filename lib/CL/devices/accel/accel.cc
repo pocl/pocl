@@ -27,6 +27,7 @@
 #include "devices.h"
 #include "pocl_cl.h"
 #include "pocl_util.h"
+#include "common.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -321,11 +322,6 @@ void pocl_accel_init_device_ops(struct pocl_device_ops *ops) {
   ops->free = pocl_accel_free;
   ops->map_mem = pocl_accel_map_mem;
 
-  // For some reason this gets called in pocl_util.c: 554 or
-  // such even though the macro has a NULL check, so we have
-  // to provide an implementation here.
-  ops->update_event = pocl_accel_update_event;
-
   ops->submit = pocl_accel_submit;
   ops->flush = ops->join = pocl_accel_join;
 
@@ -343,7 +339,6 @@ void pocl_accel_init_device_ops(struct pocl_device_ops *ops) {
     ops->unmap_mem = pocl_accel_unmap_mem;
     ops->memfill = pocl_accel_memfill;
     ops->copy = pocl_accel_copy;
-    ops->get_timer_value = pocl_accel_get_timer_value;
 
     // new driver api (out-of-order): TODO implement these for accel
     ops->wait_event = pocl_accel_wait_event;
@@ -584,27 +579,6 @@ cl_int pocl_accel_get_builtin_kernel_metadata(void *data,
   return 0;
 }
 
-void pocl_accel_update_event(cl_device_id Device, cl_event Event,
-                             cl_int Status) {
-  // TODO: Refactor properly from pthread and call from the different
-  // drivers.
-  switch (Status) {
-  default:
-    Event->status = Status;
-    break;
-  case CL_COMPLETE:
-    POCL_MSG_PRINT_EVENTS("accel: Command complete, event %d\n", Event->id);
-    Event->status = CL_COMPLETE;
-
-    pocl_mem_objs_cleanup(Event);
-
-    POCL_UNLOCK_OBJ(Event);
-    Device->ops->broadcast(Event);
-    pocl_update_command_queue(Event, NULL);
-    POCL_LOCK_OBJ(Event);
-    break;
-  }
-}
 
 static void scheduleCommands(AccelData &D) {
 
@@ -652,7 +626,7 @@ void pocl_accel_notify(cl_device_id Device, cl_event Event, cl_event Finished) {
   _cl_command_node *volatile Node = Event->command;
 
   if (Finished->status < CL_COMPLETE) {
-    POCL_UPDATE_EVENT_FAILED(Event);
+    pocl_update_event_failed(Event);
     return;
   }
 
@@ -661,7 +635,7 @@ void pocl_accel_notify(cl_device_id Device, cl_event Event, cl_event Finished) {
 
   if (pocl_command_is_ready(Event)) {
     if (Event->status == CL_QUEUED) {
-      POCL_UPDATE_EVENT_SUBMITTED(Event);
+      pocl_update_event_submitted(Event);
       POCL_LOCK(D.CommandListLock);
       CDL_DELETE(D.CommandList, Node);
       CDL_PREPEND(D.ReadyList, Node);

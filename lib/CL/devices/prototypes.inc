@@ -38,8 +38,7 @@
                                 cl_event finished);                           \
   void pocl_##__DRV__##_broadcast (cl_event event);                           \
   void pocl_##__DRV__##_wait_event (cl_device_id device, cl_event event);     \
-  void pocl_##__DRV__##_update_event (cl_device_id device, cl_event event,    \
-                                      cl_int status);                         \
+  void pocl_##__DRV__##_update_event (cl_device_id device, cl_event event);   \
   void pocl_##__DRV__##_free_event_data (cl_event event);                     \
   void pocl_##__DRV__##_init_device_ops (struct pocl_device_ops *ops);        \
   cl_int pocl_##__DRV__##_uninit (unsigned j, cl_device_id device);           \
@@ -99,7 +98,6 @@
   cl_int pocl_##__DRV__##_unmap_mem (void *data,                              \
                                      pocl_mem_identifier *dst_mem_id,         \
                                      cl_mem dst_buf, mem_mapping_t *map);     \
-  cl_ulong pocl_##__DRV__##_get_timer_value (void *data);                     \
   char *pocl_##__DRV__##_init_build (void *data);                             \
   char *pocl_##__DRV__##_build_hash (cl_device_id device);                    \
   void pocl_##__DRV__##_init_target_machine (void *data,                      \
@@ -147,9 +145,10 @@
   void pocl_##__DRV__##_svm_fill (                                            \
       cl_device_id dev, void *__restrict__ svm_ptr, size_t size,              \
       void *__restrict__ pattern, size_t pattern_size);                       \
-  cl_int pocl_##__DRV__##_supports_builtin_kernel (void *data,          \
-                                                   const char *kernel_name); \
-  cl_int pocl_##__DRV__##_get_builtin_kernel_metadata (void *data,      \
-                                                       const char *kernel_name, \
-                                                       pocl_kernel_metadata_t *target); \
+  void pocl_##__DRV__##_notify_cmdq_finished (cl_command_queue cq);           \
+  void pocl_##__DRV__##_notify_event_finished (cl_event event);               \
+  cl_int pocl_##__DRV__##_supports_builtin_kernel (void *data,                \
+                                                   const char *kernel_name);  \
+  cl_int pocl_##__DRV__##_get_builtin_kernel_metadata (void *data,            \
+               const char *kernel_name, pocl_kernel_metadata_t *target);      \
   POP_VISIBILITY_HIDDEN

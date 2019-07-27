@@ -43,6 +43,7 @@
 #endif
 
 #include "pocl_util.h"
+#include "pocl_timing.h"
 #include "pocl_llvm.h"
 #include "utlist.h"
 #include "common.h"
@@ -555,7 +556,7 @@ void pocl_command_enqueue (cl_command_queue command_queue,
   POCL_UNLOCK_OBJ (command_queue);
 
   POCL_LOCK_OBJ (node->event);
-  POCL_UPDATE_EVENT_QUEUED (node->event);
+  pocl_update_event_queued (node->event);
   command_queue->device->ops->submit(node, command_queue);
   /* node->event is unlocked by device_ops->submit */
 
@@ -579,35 +580,13 @@ pocl_command_push (_cl_command_node *node,
     }
   if (pocl_command_is_ready(node->event))
     {
-      POCL_UPDATE_EVENT_SUBMITTED (node->event);
+      pocl_update_event_submitted (node->event);
       CDL_PREPEND ((*ready_list), node);
     }
   else
     {
       CDL_PREPEND ((*pending_list), node);
     }
-}
-
-/* call with both event->queue and event UNLOCKED */
-void pocl_update_command_queue (cl_event event, empty_queue_callback callback)
-{
-  POCL_LOCK_OBJ (event->queue);
-  POCL_LOCK_OBJ (event);
-  --event->queue->command_count;
-  if (event->queue->barrier == event)
-    event->queue->barrier = NULL;
-
-  if (event->queue->last_event.event == event)
-    event->queue->last_event.event = NULL;
-  assert (event->queue->command_count >= 0);
-
-  DL_DELETE (event->queue->events, event);
-
-  if (callback && (event->queue->command_count == 0))
-    callback (event->queue);
-
-  POCL_UNLOCK_OBJ (event);
-  POCL_UNLOCK_OBJ (event->queue);
 }
 
 void
@@ -1160,6 +1139,142 @@ pocl_run_command (char *const *args)
       else
         return EXIT_FAILURE;
     }
+}
+
+// event locked
+void
+pocl_update_event_queued (cl_event event)
+{
+  assert (event != NULL);
+
+  event->status = CL_QUEUED;
+  cl_command_queue cq = event->queue;
+  if ((cq->properties & CL_QUEUE_PROFILING_ENABLE)
+      && (cq->device->has_own_timer == 0))
+    event->time_queue = pocl_gettimemono_ns ();
+
+  if (cq->device->ops->update_event)
+    cq->device->ops->update_event (cq->device, event);
+  pocl_event_updated (event, CL_QUEUED);
+}
+
+// event locked
+void
+pocl_update_event_submitted (cl_event event)
+{
+  assert (event != NULL);
+  assert (event->status == CL_QUEUED);
+
+  cl_command_queue cq = event->queue;
+  event->status = CL_SUBMITTED;
+  if ((cq->properties & CL_QUEUE_PROFILING_ENABLE)
+      && (cq->device->has_own_timer == 0))
+    event->time_submit = pocl_gettimemono_ns ();
+
+  if (cq->device->ops->update_event)
+    cq->device->ops->update_event (cq->device, event);
+  pocl_event_updated (event, CL_SUBMITTED);
+}
+
+void
+pocl_update_event_running_unlocked (cl_event event)
+{
+  assert (event != NULL);
+  assert (event->status == CL_SUBMITTED);
+
+  cl_command_queue cq = event->queue;
+  event->status = CL_RUNNING;
+  if ((cq->properties & CL_QUEUE_PROFILING_ENABLE)
+      && (cq->device->has_own_timer == 0))
+    event->time_start = pocl_gettimemono_ns ();
+
+  if (cq->device->ops->update_event)
+    cq->device->ops->update_event (cq->device, event);
+  pocl_event_updated (event, CL_RUNNING);
+}
+
+void
+pocl_update_event_running (cl_event event)
+{
+  POCL_LOCK_OBJ (event);
+  pocl_update_event_running_unlocked (event);
+  POCL_UNLOCK_OBJ (event);
+}
+
+// status can be complete or failed (<0)
+void
+pocl_update_event_finished_msg (cl_int status, const char *func, unsigned line,
+                                cl_event event, const char *msg)
+{
+  assert (event != NULL);
+  assert (event->queue != NULL);
+  assert (event->status > CL_COMPLETE);
+
+  cl_command_queue cq = event->queue;
+  POCL_LOCK_OBJ (cq);
+  POCL_LOCK_OBJ (event);
+  if ((cq->properties & CL_QUEUE_PROFILING_ENABLE)
+      && (cq->device->has_own_timer == 0))
+    event->time_end = pocl_gettimemono_ns ();
+
+  struct pocl_device_ops *ops = cq->device->ops;
+  event->status = status;
+  if (cq->device->ops->update_event)
+    ops->update_event (cq->device, event);
+
+  if (status == CL_COMPLETE)
+    POCL_MSG_PRINT_EVENTS ("%s: Command complete, event %d\n",
+                           cq->device->short_name, event->id);
+  else
+    POCL_MSG_PRINT_EVENTS ("%s: Command FAILED, event %d\n",
+                           cq->device->short_name, event->id);
+
+  pocl_mem_objs_cleanup (event);
+
+  --cq->command_count;
+  assert (cq->command_count >= 0);
+  if (cq->barrier == event)
+    cq->barrier = NULL;
+  if (cq->last_event.event == event)
+    cq->last_event.event = NULL;
+  DL_DELETE (cq->events, event);
+
+  if (ops->notify_cmdq_finished && (cq->command_count == 0))
+    ops->notify_cmdq_finished (cq);
+
+  if (ops->notify_event_finished)
+    ops->notify_event_finished (event);
+
+  POCL_UNLOCK_OBJ (cq);
+  /* note that we must unlock the CmqQ before calling pocl_event_updated,
+   * because it calls event callbacks, which can have calls to
+   * clEnqueueSomething() */
+  pocl_event_updated (event, status);
+  POCL_UNLOCK_OBJ (event);
+  ops->broadcast (event);
+
+  if (msg != NULL)
+    {
+      pocl_debug_print_duration (
+          func, line, msg, (uint64_t) (event->time_end - event->time_start));
+    }
+
+  POname (clReleaseEvent) (event);
+}
+
+void
+pocl_update_event_failed (cl_event event)
+{
+  POCL_UNLOCK_OBJ (event);
+  pocl_update_event_finished_msg (CL_FAILED, NULL, 0, event, NULL);
+  POCL_LOCK_OBJ (event);
+}
+
+void
+pocl_update_event_complete_msg (const char *func, unsigned line,
+                                cl_event event, const char *msg)
+{
+  pocl_update_event_finished_msg (CL_COMPLETE, func, line, event, msg);
 }
 
 /*

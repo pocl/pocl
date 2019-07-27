@@ -145,8 +145,6 @@ pocl_command_is_ready(cl_event event)
 
 typedef void (*empty_queue_callback) (cl_command_queue cq);
 
-void pocl_update_command_queue (cl_event event, empty_queue_callback p);
-
 void pocl_cl_mem_inherit_flags (cl_mem mem, cl_mem from_buffer,
                                 cl_mem_flags flags);
 
@@ -178,6 +176,25 @@ void pocl_abort_on_pthread_error (int status, unsigned line, const char *func);
 
 #define PTHREAD_CHECK(code)                                                   \
   pocl_abort_on_pthread_error ((code), __LINE__, __FUNCTION__);
+
+void pocl_update_event_queued (cl_event event);
+
+void pocl_update_event_submitted (cl_event event);
+
+void pocl_update_event_running_unlocked (cl_event event);
+
+void pocl_update_event_running (cl_event event);
+
+void pocl_update_event_complete_msg (const char *func, unsigned line,
+                                     cl_event event, const char *msg);
+
+#define POCL_UPDATE_EVENT_COMPLETE_MSG(__event, msg)                          \
+  pocl_update_event_complete_msg (__func__, __LINE__, (__event), msg);
+
+#define POCL_UPDATE_EVENT_COMPLETE(__event)                                   \
+  pocl_update_event_complete_msg (__func__, __LINE__, (__event), NULL);
+
+void pocl_update_event_failed (cl_event event);
 
 const char*
 pocl_status_to_str (int status);

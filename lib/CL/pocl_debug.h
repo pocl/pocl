@@ -209,16 +209,6 @@ extern "C" {
     #define POCL_MSG_PRINT_GENERAL2(errcode, ...) POCL_MSG_PRINT_INFO_F(GENERAL, errcode, __VA_ARGS__)
     #define POCL_MSG_PRINT_GENERAL(...) POCL_MSG_PRINT_INFO_F(GENERAL, "", __VA_ARGS__)
 
-#define POCL_DEBUG_EVENT_TIME(eventp, msg)                                    \
-  pocl_debug_print_duration (                                                 \
-      __func__, __LINE__, "Event " msg,                                       \
-      (uint64_t) ((eventp)->time_end - (eventp)->time_start))
-
-#define POCL_DEBUG_EVENT_TIME2(eventp, msg)                                    \
-  pocl_debug_print_duration (                                                  \
-      __func__, __LINE__, msg,                                                 \
-      (uint64_t) ((eventp)->time_end - (eventp)->time_start))
-
 #else
 
     #define POCL_DEBUGGING_ON 0

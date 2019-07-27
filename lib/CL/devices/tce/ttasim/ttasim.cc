@@ -91,7 +91,6 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
   ops->map_mem = pocl_tce_map_mem;
   ops->unmap_mem = pocl_tce_unmap_mem;
   ops->run = pocl_tce_run;
-  ops->get_timer_value = pocl_ttasim_get_timer_value;
   ops->init_build = pocl_tce_init_build;
   ops->flush = pocl_tce_flush;
   ops->join = pocl_tce_join;
@@ -99,9 +98,7 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
   ops->compile_kernel = pocl_tce_compile_kernel;
   ops->broadcast = pocl_broadcast;
   ops->notify = pocl_tce_notify;
-  ops->update_event = NULL; //pocl_ttasim_update_event;
   ops->build_hash = pocl_tce_build_hash;
-
 }
 
 
@@ -592,49 +589,27 @@ pocl_ttasim_uninit (unsigned j, cl_device_id device)
   return CL_SUCCESS;
 }
 
-
-cl_ulong
-pocl_ttasim_get_timer_value (void *data) 
-{
-  TTASimDevice *d = (TTASimDevice*)data;
-  return d->timeStamp();
-}
-
 void pocl_ttasim_update_event (cl_device_id device, cl_event event, cl_int status)
 {
+  TTASimDevice *d = (TTASimDevice *)device->data;
   switch (status)
     {
     case CL_QUEUED:
-      event->status = status;
       if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-        event->time_queue = device->ops->get_timer_value(device->data);
+        event->time_queue = d->timeStamp();
       break;
     case CL_SUBMITTED:
-      event->status = status;
       if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-        event->time_submit = device->ops->get_timer_value(device->data);
+        event->time_submit = d->timeStamp();
       break;
     case CL_RUNNING:
-      event->status = status;
-      if (event->command_type == CL_COMMAND_NDRANGE_KERNEL)
-        break;
       if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-        event->time_start = device->ops->get_timer_value(device->data);
+        event->time_start = d->timeStamp();
       break;
     case CL_COMPLETE:
       POCL_MSG_PRINT_INFO("TTA: Command complete, event %d\n", event->id);
       POCL_LOCK_OBJ (event);
-      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE &&
-          event->command_type != CL_COMMAND_NDRANGE_KERNEL)
-        event->time_end = device->ops->get_timer_value(device->data);
-      device->ops->broadcast(event);
-      pocl_mem_objs_cleanup (event);
-      event->status = CL_COMPLETE;
-
-      POCL_UNLOCK_OBJ (event);
-      break;
-    default:
-      assert("Invalid event status\n");
-      break;
+      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
+        event->time_end = d->timeStamp();
     }
 }

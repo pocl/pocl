@@ -150,8 +150,6 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->flush = pocl_cuda_flush;
   // TODO
   ops->map_mem = pocl_cuda_map_mem;
-  // TODO return cuda event times
-  ops->get_timer_value = pocl_gettimemono_ns;;
 
   ops->read = NULL;
   ops->read_rect = NULL;
@@ -309,7 +307,7 @@ pocl_cuda_init (unsigned j, cl_device_id dev, const char *parameters)
       result = cuEventCreate (&data->epoch_event, CU_EVENT_DEFAULT);
       CUDA_CHECK_ERROR (result, "cuEventCreate");
 
-      data->epoch = dev->ops->get_timer_value (dev->data);
+      data->epoch = pocl_gettimemono_ns ();
 
       result = cuEventRecord (data->epoch_event, 0);
       result = cuEventSynchronize (data->epoch_event);
@@ -1098,7 +1096,7 @@ pocl_cuda_submit_node (_cl_command_node *node, cl_command_queue cq, int locked)
       CUDA_CHECK (result, "cuEventRecord");
     }
 
-  POCL_UPDATE_EVENT_SUBMITTED (node->event);
+  pocl_update_event_submitted (node->event);
 
   POCL_UNLOCK_OBJ (node->event);
 
@@ -1369,85 +1367,51 @@ pocl_cuda_finalize_command (cl_device_id device, cl_event event)
     }
 
   /* Handle failed events */
-  if (event->status < 0)
-    {
-      pocl_broadcast (event);
-      pocl_update_command_queue (event, NULL);
-      POname (clReleaseEvent) (event);
-      return;
-    }
 
-  POCL_UPDATE_EVENT_RUNNING (event);
-  POCL_UPDATE_EVENT_COMPLETE (event);
+
+  pocl_update_event_running (event);
+  if (event->status < 0)
+    pocl_update_event_failed (event);
+  else
+    POCL_UPDATE_EVENT_COMPLETE_MSG (event, "CUDA event");
 }
 
 void
-pocl_cuda_update_event (cl_device_id device, cl_event event, cl_int status)
+pocl_cuda_update_event (cl_device_id device, cl_event event)
 {
-  switch (status)
+  if ((event->status == CL_COMPLETE)
+      && (event->queue->properties & CL_QUEUE_PROFILING_ENABLE))
     {
-    case CL_QUEUED:
-      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-        event->time_queue = device->ops->get_timer_value (device->data);
-      event->status = status;
-      break;
-    case CL_SUBMITTED:
-      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-        event->time_submit = device->ops->get_timer_value (device->data);
-      event->status = status;
-      break;
-    case CL_RUNNING:
-      /* Wait until complete to get the timing from the CUDA events */
-      event->status = status;
-      break;
-    case CL_COMPLETE:
-      pocl_mem_objs_cleanup (event);
-
       /* Update timing info with CUDA event timers if profiling enabled */
-      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-        {
-          /* CUDA doesn't provide a way to get event timestamps directly,
-           * only the elapsed time between two events. We use the elapsed
-           * time from the epoch event enqueued on device creation to get
-           * the actual timestamps.
-           *
-           * Since the CUDA timer resolution is lower than the host timer,
-           * this can sometimes result in the start time being before the
-           * submit time, so we use max() to ensure the timestamps are
-           * sane. */
+      /* CUDA doesn't provide a way to get event timestamps directly,
+       * only the elapsed time between two events. We use the elapsed
+       * time from the epoch event enqueued on device creation to get
+       * the actual timestamps.
+       *
+       * Since the CUDA timer resolution is lower than the host timer,
+       * this can sometimes result in the start time being before the
+       * submit time, so we use max() to ensure the timestamps are
+       * sane. */
 
-          float diff;
-          CUresult result;
-          pocl_cuda_event_data_t *event_data
-              = (pocl_cuda_event_data_t *)event->data;
-          cl_ulong epoch = ((pocl_cuda_device_data_t *)device->data)->epoch;
+      float diff;
+      CUresult result;
+      pocl_cuda_event_data_t *event_data
+          = (pocl_cuda_event_data_t *)event->data;
+      cl_ulong epoch = ((pocl_cuda_device_data_t *)device->data)->epoch;
 
-          result = cuEventElapsedTime (
-              &diff, ((pocl_cuda_device_data_t *)device->data)->epoch_event,
-              event_data->start);
-          CUDA_CHECK (result, "cuEventElapsedTime");
-          event->time_start = (cl_ulong) (epoch + diff * 1e6);
-          event->time_start = max (event->time_start, event->time_submit + 1);
+      result = cuEventElapsedTime (
+          &diff, ((pocl_cuda_device_data_t *)device->data)->epoch_event,
+          event_data->start);
+      CUDA_CHECK (result, "cuEventElapsedTime");
+      event->time_start = (cl_ulong) (epoch + diff * 1e6);
+      event->time_start = max (event->time_start, event->time_submit + 1);
 
-          result = cuEventElapsedTime (
-              &diff, ((pocl_cuda_device_data_t *)device->data)->epoch_event,
-              event_data->end);
-          CUDA_CHECK (result, "cuEventElapsedTime");
-          event->time_end = (cl_ulong) (epoch + diff * 1e6);
-          event->time_end = max (event->time_end, event->time_start + 1);
-        }
-
-      event->status = CL_COMPLETE;
-
-      POCL_UNLOCK_OBJ (event);
-      device->ops->broadcast (event);
-      pocl_update_command_queue (event, NULL);
-      POCL_LOCK_OBJ (event);
-
-      break;
-    default:
-      assert (0 && "Invalid event status\n");
-      break;
+      result = cuEventElapsedTime (
+          &diff, ((pocl_cuda_device_data_t *)device->data)->epoch_event,
+          event_data->end);
+      CUDA_CHECK (result, "cuEventElapsedTime");
+      event->time_end = (cl_ulong) (epoch + diff * 1e6);
+      event->time_end = max (event->time_end, event->time_start + 1);
     }
 }
 

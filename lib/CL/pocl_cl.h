@@ -317,7 +317,8 @@ struct pocl_device_ops {
   void (*submit) (_cl_command_node *node, cl_command_queue cq);
 
   /* join is called by clFinish and this function blocks until all the enqueued
-     commands are finished. */
+     commands are finished. Called by the user thread; see notify_cmdq_finished
+     for the driver thread counterpart. */
   void (*join) (cl_device_id device, cl_command_queue cq);
 
   /* flush is called when clFlush is called. This function ensures that
@@ -340,23 +341,38 @@ struct pocl_device_ops {
      list of events waiting on 'event'. */
   void (*broadcast) (cl_event event);
 
-  /* wait_event is blocking the execution until the waited event is complete.
-     Called (and must return) with unlocked event. */
+  /* wait_event is called by clWaitForEvents() and blocks the execution until
+   * the waited event is complete or failed. Called by user threads; see the
+   * notify_event_finished() callback for driver thread counterpart.
+   * Called (and must return) with unlocked event. */
   void (*wait_event) (cl_device_id device, cl_event event);
 
-  /* update_event is an alternative way of handling event status changes if
-     something device specific needs to be done when the status of the event
-     changes.
-     This function is called via POCL_UPDATE_EVENT_* macros if available.
-     All POCL_UPDATE_EVENT_ (except COMPLETE) must be called with LOCKED event.
-     may be NULL, no need to implement if not needed.
-     Called (and must return) with locked event. */
-  void (*update_event) (cl_device_id device, cl_event event, cl_int status);
+  /* update_event is an extra callback called during handling of event status
+   * changes, useful if something device specific needs to be done. May be
+   * NULL; no need to implement if not needed.
+   *
+   * Called via pocl_update_event_* functions in pocl_util.c
+   * All pocl_update_event_* (except COMPLETE) must be called (and return)
+   * with LOCKED event.
+   */
+  void (*update_event) (cl_device_id device, cl_event event);
 
   /* free_event_data may be called when event is freed. Event data may only be
      used by the device driver owning the corresponding command.
      No need to implement this if the device does not need any event data. */
   void (*free_event_data) (cl_event event);
+
+  /* Called from driver threads to notify every user thread waiting on
+   * command queue finish. See join() for user counterpart.
+   * Driver may chose to not implement this, which will result in
+   * undefined behaviour in multi-threaded user programs. */
+  void (*notify_cmdq_finished) (cl_command_queue cq);
+
+  /* Called from driver threads to notify every user thread waiting on
+   * a specific event. See wait_event() for user counterpart.
+   * Driver may chose to not implement this, which will result in
+   * undefined behaviour in multi-threaded user programs. */
+  void (*notify_event_finished) (cl_event event);
 
   /* /New driver api extension */
 
@@ -495,9 +511,6 @@ struct pocl_device_ops {
   /* for clEnqueueNativeKernel. may be NULL */
   void (*run_native) (void *data, _cl_command_node *cmd);
 
-  /* The current device timer value in nanoseconds. */
-  cl_ulong (*get_timer_value) (void *data);
-
   /* Perform initialization steps and can return additional
      build options that are required for the device. The caller
      owns the returned string. may be NULL */
@@ -598,6 +611,7 @@ struct pocl_device_ops {
                        const size_t *region,
                        const void *__restrict__ fill_pixel,
                        size_t pixel_size);
+
 
   /* custom device functionality */
 
@@ -736,6 +750,10 @@ struct _cl_device_id {
   /* pointer to an accounting struct for global memory */
   pocl_global_mem_t *global_memory;
   int has_64bit_long;  /* Does the device have 64bit longs */
+  /* Does the device set the event times in update_event() callback ?
+   * if zero, the default event change handlers set the event times based on
+   * the host's system time (pocl_gettimemono_ns). */
+  int has_own_timer;
   /* Convert automatic local variables to kernel arguments? */
   int autolocals_to_args;
   /* Allocate local buffers device side in the work-group launcher instead of
@@ -1176,155 +1194,7 @@ struct _cl_sampler {
   void**              device_data;
 };
 
-#define POCL_UPDATE_EVENT_QUEUED(__event)                                     \
-  do                                                                          \
-    {                                                                         \
-      if ((__event) != NULL)                                                  \
-        {                                                                     \
-          cl_command_queue __cq = (__event)->queue;                           \
-          if ((__cq)->device->ops->update_event != (void *)0)                 \
-            (__cq)->device->ops->update_event ((__cq)->device, (__event),     \
-                                               CL_QUEUED);                    \
-          else                                                                \
-            {                                                                 \
-              (__event)->status = CL_QUEUED;                                  \
-              if (__cq && __cq->properties & CL_QUEUE_PROFILING_ENABLE)       \
-                (__event)->time_queue = __cq->device->ops->get_timer_value (  \
-                    __cq->device->data);                                      \
-            }                                                                 \
-          pocl_event_updated (__event, CL_QUEUED);                            \
-        }                                                                     \
-    }                                                                         \
-  while (0)
-
-#define POCL_UPDATE_EVENT_SUBMITTED(__event)                                  \
-  do                                                                          \
-    {                                                                         \
-      if ((__event) != NULL)                                                  \
-        {                                                                     \
-          assert ((__event)->status == CL_QUEUED);                            \
-          cl_command_queue __cq = (__event)->queue;                           \
-          if ((__cq)->device->ops->update_event != 0)                         \
-            (__cq)->device->ops->update_event ((__cq)->device, (__event),     \
-                                               CL_SUBMITTED);                 \
-          else                                                                \
-            {                                                                 \
-              (__event)->status = CL_SUBMITTED;                               \
-              if (__cq && __cq->properties & CL_QUEUE_PROFILING_ENABLE)       \
-                (__event)->time_submit = __cq->device->ops->get_timer_value ( \
-                    __cq->device->data);                                      \
-            }                                                                 \
-          pocl_event_updated (__event, CL_SUBMITTED);                         \
-        }                                                                     \
-    }                                                                         \
-  while (0)
-
-#define POCL_UPDATE_EVENT_RUNNING_UNLOCKED(__event)                           \
-  do                                                                          \
-    {                                                                         \
-      if (__event != NULL)                                                    \
-        {                                                                     \
-          assert ((__event)->status == CL_SUBMITTED);                         \
-          cl_command_queue __cq = (__event)->queue;                           \
-          if ((__cq)->device->ops->update_event != 0)                         \
-            (__cq)->device->ops->update_event ((__cq)->device, (__event),     \
-                                               CL_RUNNING);                   \
-          else                                                                \
-            {                                                                 \
-              (__event)->status = CL_RUNNING;                                 \
-              if (__cq && __cq->properties & CL_QUEUE_PROFILING_ENABLE)       \
-                (__event)->time_start = __cq->device->ops->get_timer_value (  \
-                    __cq->device->data);                                      \
-            }                                                                 \
-          pocl_event_updated (__event, CL_RUNNING);                           \
-        }                                                                     \
-    }                                                                         \
-  while (0)
-
-#define POCL_UPDATE_EVENT_RUNNING(__event)                                    \
-  POCL_LOCK_OBJ (__event);                                                    \
-  POCL_UPDATE_EVENT_RUNNING_UNLOCKED (__event);                               \
-  POCL_UNLOCK_OBJ (__event);
-
-#define POCL_UPDATE_EVENT_COMPLETE_INNER(__event, POST_EVENT)                 \
-  do                                                                          \
-    {                                                                         \
-      if ((__event) != NULL)                                                  \
-        {                                                                     \
-          assert ((__event)->status == CL_RUNNING);                           \
-          POCL_LOCK_OBJ (__event);                                            \
-          cl_command_queue __cq = (__event)->queue;                           \
-          if ((__cq)->device->ops->update_event)                              \
-            (__cq)->device->ops->update_event ((__cq)->device, (__event),     \
-                                               CL_COMPLETE);                  \
-          else                                                                \
-            {                                                                 \
-              pocl_mem_objs_cleanup (__event);                                \
-              (__event)->status = CL_COMPLETE;                                \
-              if ((__cq)->properties & CL_QUEUE_PROFILING_ENABLE)             \
-                {                                                             \
-                  (__event)->time_end                                         \
-                      = (__cq)->device->ops->get_timer_value (                \
-                          (__cq)->device->data);                              \
-                }                                                             \
-              POCL_UNLOCK_OBJ (__event);                                      \
-              pocl_update_command_queue (__event, NULL);                      \
-              (__cq)->device->ops->broadcast (__event);                       \
-              POCL_LOCK_OBJ (__event);                                        \
-            }                                                                 \
-          pocl_event_updated (__event, CL_COMPLETE);                          \
-          POST_EVENT;                                                         \
-          POCL_UNLOCK_OBJ (__event);                                          \
-          POname (clReleaseEvent) (__event);                                  \
-        }                                                                     \
-    }                                                                         \
-  while (0)
-
-#define POCL_UPDATE_EVENT_COMPLETE(__event)                                   \
-  POCL_UPDATE_EVENT_COMPLETE_INNER (__event, NULL)
-
-#define POCL_UPDATE_EVENT_COMPLETE_MSG(__event, msg)                          \
-  POCL_UPDATE_EVENT_COMPLETE_INNER (__event,                                  \
-                                    POCL_DEBUG_EVENT_TIME ((__event), msg))
-
-#define POCL_UPDATE_EVENT_COMPLETE_MSG2(__event, msg)                         \
-  POCL_UPDATE_EVENT_COMPLETE_INNER (__event,                                  \
-                                    POCL_DEBUG_EVENT_TIME2 ((__event), msg))
-
 #define CL_FAILED (-1)
-
-#define POCL_UPDATE_EVENT_FAILED(__event)                                     \
-  do                                                                          \
-    {                                                                         \
-      if ((__event) != NULL)                                                  \
-        {                                                                     \
-          cl_command_queue __cq = (__event)->queue;                           \
-          if ((__cq)->device->ops->update_event)                              \
-            (__cq)->device->ops->update_event ((__cq)->device, (__event),     \
-                                               CL_FAILED);                    \
-          else                                                                \
-            {                                                                 \
-              pocl_mem_objs_cleanup (__event);                                \
-              if ((__event)->status > CL_COMPLETE)                            \
-                (__event)->status = CL_FAILED;                                \
-              if ((__cq)->properties & CL_QUEUE_PROFILING_ENABLE)             \
-                {                                                             \
-                  (__event)->time_end                                         \
-                      = (__cq)->device->ops->get_timer_value (                \
-                          (__cq)->device->data);                              \
-                }                                                             \
-              POCL_UNLOCK_OBJ (__event);                                      \
-              pocl_update_command_queue (__event, NULL);                      \
-              (__cq)->device->ops->broadcast (__event);                       \
-              POCL_LOCK_OBJ (__event);                                        \
-            }                                                                 \
-          pocl_event_updated (__event, CL_FAILED);                            \
-          POCL_UNLOCK_OBJ (__event);                                          \
-          POname (clReleaseEvent) (__event);                                  \
-          POCL_LOCK_OBJ (__event);                                            \
-        }                                                                     \
-    }                                                                         \
-  while (0)
 
 #ifndef __cplusplus
 

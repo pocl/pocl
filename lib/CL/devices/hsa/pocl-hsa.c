@@ -258,7 +258,6 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->unmap_mem = pocl_basic_unmap_mem;
   ops->memfill = pocl_basic_memfill;
   ops->copy = pocl_hsa_copy;
-  ops->get_timer_value = pocl_hsa_get_timer_value;
 
   ops->svm_free = pocl_hsa_svm_free;
   ops->svm_alloc = pocl_hsa_svm_alloc;
@@ -278,6 +277,7 @@ pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
   ops->compile_kernel = pocl_hsa_compile_kernel_native;
 #endif
   ops->update_event = pocl_hsa_update_event;
+  ops->notify_event_finished = pocl_hsa_notify_event_finished;
   ops->free_event_data = pocl_hsa_free_event_data;
   ops->init_target_machine = NULL;
   ops->wait_event = pocl_hsa_wait_event;
@@ -639,6 +639,7 @@ init_dev_data (cl_device_id dev, int count)
   HSA_CHECK (hsa_agent_get_info (d->agent, HSA_AGENT_INFO_PROFILE,
                                  &d->agent_profile));
   dev->profile = "FULL_PROFILE";
+  dev->has_own_timer = CL_TRUE;
 
   dev->profiling_timer_resolution = (size_t) (d->timestamp_unit) || 1;
 
@@ -1556,7 +1557,7 @@ pocl_hsa_submit (_cl_command_node *node, cl_command_queue cq)
   node->ready = 1;
   if (pocl_command_is_ready (node->event))
     {
-      POCL_UPDATE_EVENT_SUBMITTED (node->event);
+      pocl_update_event_submitted (node->event);
       PN_ADD(d->ready_list, node->event);
       added_to_readylist = 1;
     }
@@ -1632,7 +1633,7 @@ pocl_hsa_notify (cl_device_id device, cl_event event, cl_event finished)
 
   if (finished->status < CL_COMPLETE)
     {
-      POCL_UPDATE_EVENT_FAILED (event);
+      pocl_update_event_failed (event);
       return;
     }
 
@@ -1643,7 +1644,7 @@ pocl_hsa_notify (cl_device_id device, cl_event event, cl_event finished)
     {
       if (event->status == CL_QUEUED)
         {
-          POCL_UPDATE_EVENT_SUBMITTED (event);
+          pocl_update_event_submitted (event);
           PTHREAD_CHECK(pthread_mutex_lock(&d->list_mutex));
 
           size_t i = 0;
@@ -1856,7 +1857,7 @@ pocl_hsa_launch (pocl_hsa_device_data_t *d, cl_event event)
         = kernel_packet->completion_signal.handle;
     }
 
-  POCL_UPDATE_EVENT_RUNNING_UNLOCKED (event);
+  pocl_update_event_running_unlocked (event);
   POCL_UNLOCK_OBJ (event);
 }
 
@@ -2076,11 +2077,18 @@ EXIT_PTHREAD:
 }
 
 void
-pocl_hsa_update_event (cl_device_id device, cl_event event, cl_int status)
+pocl_hsa_notify_event_finished (cl_event event)
+{
+  pocl_hsa_event_data_t *e_d = (pocl_hsa_event_data_t *)event->data;
+  pthread_cond_broadcast (&e_d->event_cond);
+}
+
+void
+pocl_hsa_update_event (cl_device_id device, cl_event event)
 {
   pocl_hsa_event_data_t *e_d = NULL;
 
-  if(event->data == NULL && status == CL_QUEUED)
+  if (event->data == NULL && event->status == CL_QUEUED)
     {
       pocl_hsa_event_data_t *e_d
           = (pocl_hsa_event_data_t *)malloc (sizeof (pocl_hsa_event_data_t));
@@ -2093,58 +2101,24 @@ pocl_hsa_update_event (cl_device_id device, cl_event event, cl_int status)
       e_d = event->data;
     }
 
-  switch (status)
+  switch (event->status)
     {
     case CL_QUEUED:
-      event->status = status;
       if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-        event->time_queue = device->ops->get_timer_value(device->data);
+        event->time_queue = pocl_hsa_get_timer_value (device->data);
       break;
     case CL_SUBMITTED:
-      event->status = status;
       if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-        event->time_submit = device->ops->get_timer_value(device->data);
+        event->time_submit = pocl_hsa_get_timer_value (device->data);
       break;
     case CL_RUNNING:
-      event->status = status;
       if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-        event->time_start = device->ops->get_timer_value(device->data);
+        event->time_start = pocl_hsa_get_timer_value (device->data);
       break;
+    case CL_FAILED:
     case CL_COMPLETE:
-      POCL_MSG_PRINT_INFO("HSA: Command complete, event %d\n", event->id);
-      event->status = CL_COMPLETE;
-
-      pocl_mem_objs_cleanup (event);
-
       if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-        event->time_end = device->ops->get_timer_value(device->data);
-
-      uint64_t ns = event->time_end - event->time_start;
-      pocl_debug_print_duration (__func__,__LINE__,
-                                 "HSA NDrange Kernel (host clock)", ns);
-
-      POCL_UNLOCK_OBJ (event);
-      device->ops->broadcast (event);
-      pocl_update_command_queue (event, NULL);
-      POCL_LOCK_OBJ (event);
-
-      pthread_cond_broadcast (&e_d->event_cond);
-      break;
-    default:
-      POCL_MSG_PRINT_INFO ("HSA: EVENT FAILED, event %d\n", event->id);
-      event->status = CL_FAILED;
-
-      pocl_mem_objs_cleanup (event);
-
-      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-        event->time_end = device->ops->get_timer_value (device->data);
-
-      POCL_UNLOCK_OBJ (event);
-      device->ops->broadcast (event);
-      pocl_update_command_queue (event, NULL);
-      POCL_LOCK_OBJ (event);
-
-      pthread_cond_broadcast (&e_d->event_cond);
+        event->time_end = pocl_hsa_get_timer_value (device->data);
       break;
     }
 }

@@ -91,6 +91,8 @@ pocl_pthread_init_device_ops(struct pocl_device_ops *ops)
   ops->broadcast = pocl_broadcast;
   ops->flush = pocl_pthread_flush;
   ops->wait_event = pocl_pthread_wait_event;
+  ops->notify_event_finished = pocl_pthread_notify_event_finished;
+  ops->notify_cmdq_finished = pocl_pthread_notify_cmdq_finished;
   ops->update_event = pocl_pthread_update_event;
   ops->free_event_data = pocl_pthread_free_event_data;
   ops->build_hash = pocl_pthread_build_hash;
@@ -250,7 +252,7 @@ pocl_pthread_submit (_cl_command_node *node, cl_command_queue cq)
   node->ready = 1;
   if (pocl_command_is_ready (node->event))
     {
-      POCL_UPDATE_EVENT_SUBMITTED (node->event);
+      pocl_update_event_submitted (node->event);
       pthread_scheduler_push_command (node);
     }
   POCL_UNLOCK_OBJ (node->event);
@@ -292,7 +294,7 @@ pocl_pthread_notify (cl_device_id device, cl_event event, cl_event finished)
 
   if (finished->status < CL_COMPLETE)
     {
-      POCL_UPDATE_EVENT_FAILED (event);
+      pocl_update_event_failed (event);
       return;
     }
 
@@ -303,7 +305,7 @@ pocl_pthread_notify (cl_device_id device, cl_event event, cl_event finished)
     {
       if (event->status == CL_QUEUED)
         {
-          POCL_UPDATE_EVENT_SUBMITTED (event);
+          pocl_update_event_submitted (event);
           wake_thread = 1;
         }
     }
@@ -314,8 +316,8 @@ pocl_pthread_notify (cl_device_id device, cl_event event, cl_event finished)
   return;
 }
 
-static void
-pthread_scheduler_release_host (cl_command_queue cq)
+void
+pocl_pthread_notify_cmdq_finished (cl_command_queue cq)
 {
   /* must be called with CQ already locked.
    * this must be a broadcast since there could be multiple
@@ -326,76 +328,24 @@ pthread_scheduler_release_host (cl_command_queue cq)
   assert (r == 0);
 }
 
-void pocl_pthread_update_event (cl_device_id device, cl_event event, cl_int status)
+void
+pocl_pthread_notify_event_finished (cl_event event)
+{
+  struct event_data *e_d = event->data;
+  pthread_cond_broadcast (&e_d->event_cond);
+}
+
+void
+pocl_pthread_update_event (cl_device_id device, cl_event event)
 {
   struct event_data *e_d = NULL;
-
-  if(event->data == NULL && status == CL_QUEUED)
+  if (event->data == NULL && event->status == CL_QUEUED)
     {
       e_d = malloc(sizeof(struct event_data));
       assert(e_d);
 
       pthread_cond_init(&e_d->event_cond, NULL);
       event->data = (void *) e_d;
-    }
-  else
-    {
-      e_d = event->data;
-    }
-  /* TODO: Refactor this to another function where it can be reused.
-     It should be common for most device drivers? */
-  switch (status)
-    {
-    case CL_QUEUED:
-      event->status = status;
-      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-        event->time_queue = device->ops->get_timer_value(device->data);
-      break;
-    case CL_SUBMITTED:
-      event->status = status;
-      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-        event->time_submit = device->ops->get_timer_value(device->data);
-      break;
-    case CL_RUNNING:
-      event->status = status;
-      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-        event->time_start = device->ops->get_timer_value(device->data);
-      break;
-    case CL_COMPLETE:
-      POCL_MSG_PRINT_EVENTS ("PTHREAD: Command complete, event %d\n",
-                             event->id);
-      event->status = CL_COMPLETE;
-
-      pocl_mem_objs_cleanup (event);
-
-      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-        event->time_end = device->ops->get_timer_value(device->data);
-
-      POCL_UNLOCK_OBJ (event);
-      device->ops->broadcast (event);
-      pocl_update_command_queue (event, pthread_scheduler_release_host);
-      POCL_LOCK_OBJ (event);
-
-      pthread_cond_broadcast(&e_d->event_cond);
-      break;
-
-    default:
-      POCL_MSG_PRINT_EVENTS ("setting FAIL status on event %u\n", event->id);
-
-      event->status = CL_FAILED;
-
-      pocl_mem_objs_cleanup (event);
-
-      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-        event->time_end = device->ops->get_timer_value (device->data);
-
-      POCL_UNLOCK_OBJ (event);
-      device->ops->broadcast (event);
-      pocl_update_command_queue (event, pthread_scheduler_release_host);
-      POCL_LOCK_OBJ (event);
-
-      pthread_cond_broadcast (&e_d->event_cond);
-      break;
     }
 }
 
