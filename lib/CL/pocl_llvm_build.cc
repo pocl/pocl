@@ -438,7 +438,16 @@ int pocl_llvm_build_program(cl_program program,
   po.Includes.push_back(BuiltinRenamesH);
 #ifndef LLVM_OLDER_THAN_4_0
   // Use Clang's opencl-c.h header.
-  po.Includes.push_back(CLANG_RESOURCE_DIR "/include/opencl-c.h");
+  {
+#if (!defined(LLVM_OLDER_THAN_8_0)) && (!defined(LLVM_8_0))
+      std::string ClangResourcesDir = driver::Driver::GetResourcesPath(CLANG);
+#else
+      DiagnosticsEngine Diags{new DiagnosticIDs, new DiagnosticOptions};
+      driver::Driver TheDriver(CLANG, "", Diags);
+      std::string ClangResourcesDir = TheDriver.ResourceDir;
+#endif
+      po.Includes.push_back(ClangResourcesDir + "/include/opencl-c.h");
+  }
 #endif
   po.Includes.push_back(KernelH);
   clang::TargetOptions &ta = pocl_build.getTargetOpts();
