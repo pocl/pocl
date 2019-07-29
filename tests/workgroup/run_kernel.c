@@ -53,13 +53,14 @@ int
 main (int argc, char **argv)
 {
   char *source;
-  cl_context context;
-  size_t cb;
-  cl_device_id *devices;
-  cl_command_queue cmd_queue;
-  cl_program program;
-  cl_int err;
-  cl_kernel kernel;
+  cl_context context = NULL;
+  size_t cb = 0;
+  cl_device_id *devices = NULL;
+  cl_command_queue cmd_queue = NULL;
+  cl_program program = NULL;
+  cl_int err = CL_SUCCESS;
+  cl_kernel kernel = NULL;
+  cl_mem outbuf = NULL;
   size_t global_work_size[3];
   size_t local_work_size[3];
   char kernel_path[2048];
@@ -78,104 +79,75 @@ main (int argc, char **argv)
   global_work_size[2] = local_work_size[2];
 
   context = poclu_create_any_context();
-  if (context == (cl_context)0)
-    return -1;
+  TEST_ASSERT (context != NULL && "clCreateContextFromType call failed\n");
 
-  clGetContextInfo (context, CL_CONTEXT_DEVICES, 0, NULL, &cb);
+  err = clGetContextInfo (context, CL_CONTEXT_DEVICES, 0, NULL, &cb);
+  CHECK_OPENCL_ERROR_IN ("clGetContextInfo 1\n");
   devices = (cl_device_id *) malloc(cb);
   clGetContextInfo (context, CL_CONTEXT_DEVICES, cb, devices, NULL);
+  CHECK_OPENCL_ERROR_IN ("clGetContextInfo 2\n");
 
-  cmd_queue = clCreateCommandQueue (context, devices[0], 0, NULL);
-  if (cmd_queue == (cl_command_queue)0)
-    {
-      clReleaseContext (context);
-      free (devices);
-      return -1;
-    }
-  free (devices);
+  cmd_queue = clCreateCommandQueue (context, devices[0], 0, &err);
+  CHECK_CL_ERROR2 (err);
 
   program = clCreateProgramWithSource (context, 1, (const char **)&source,
-                                       NULL, NULL);
-  if (program == (cl_program)0)
-    {
-      clReleaseCommandQueue (cmd_queue);
-      clReleaseContext (context);
-      return -1;
-    }
+                                       NULL, &err);
+  CHECK_CL_ERROR2 (err);
 
   err = clBuildProgram (program, 0, NULL, NULL, NULL, NULL);
-  if (err != CL_SUCCESS)
-    {
-      clReleaseProgram (program);
-      clReleaseCommandQueue (cmd_queue);
-      clReleaseContext (context);
-      return -1;
-    }
+  CHECK_CL_ERROR2 (err);
 
-  kernel = clCreateKernel (program, "test_kernel", NULL);
-  if (kernel == (cl_kernel)0)
-    {
-      clReleaseProgram (program);
-      clReleaseCommandQueue (cmd_queue);
-      clReleaseContext (context);
-      return -1;
-    }
+  kernel = clCreateKernel (program, "test_kernel", &err);
+  CHECK_CL_ERROR2 (err);
 
   cl_uint num_args = 0;
-  clGetKernelInfo (kernel, CL_KERNEL_NUM_ARGS, sizeof (num_args), &num_args,
-                   NULL);
+  err = clGetKernelInfo (kernel, CL_KERNEL_NUM_ARGS, sizeof (num_args),
+                         &num_args, NULL);
+  CHECK_CL_ERROR2 (err);
 
   size_t grid_size
       = global_work_size[0] * global_work_size[1] * global_work_size[2];
-  cl_mem outbuf;
   if (num_args == 1)
     {
       cl_int err;
       outbuf = clCreateBuffer (context, CL_MEM_READ_WRITE,
                                grid_size * sizeof (cl_int), NULL, &err);
-      if (err != CL_SUCCESS)
-        {
-          clReleaseKernel (kernel);
-          clReleaseProgram (program);
-          clReleaseCommandQueue (cmd_queue);
-          clReleaseContext (context);
-          return -1;
-        }
-      clSetKernelArg (kernel, 0, sizeof (outbuf), &outbuf);
+      CHECK_CL_ERROR2 (err);
+      err = clSetKernelArg (kernel, 0, sizeof (outbuf), &outbuf);
+      CHECK_CL_ERROR2 (err);
     }
   else if (num_args != 0)
     assert (num_args == 0 || num_args == 1);
 
   err = clEnqueueNDRangeKernel (cmd_queue, kernel, 3, NULL, global_work_size,
                                 local_work_size, 0, NULL, NULL);
-  if (err == CL_SUCCESS && num_args == 1)
+  CHECK_CL_ERROR2 (err);
+
+  if (num_args == 1)
     {
       cl_int kern_output[grid_size];
       err = clEnqueueReadBuffer (cmd_queue, outbuf, CL_TRUE, 0,
                                  grid_size * sizeof (cl_int), kern_output, 0,
                                  NULL, NULL);
+      CHECK_CL_ERROR2 (err);
       for (size_t i = 0; i < grid_size; ++i)
-        printf ("%lu: %d\n", i, kern_output[i]);
+        printf ("%zu: %d\n", i, kern_output[i]);
     }
 
-  if(err != CL_SUCCESS)
-    {
-      if (num_args == 1)
-        clReleaseMemObject (outbuf);
-      clReleaseKernel (kernel);
-      clReleaseProgram (program);
-      clReleaseCommandQueue (cmd_queue);
-      clReleaseContext (context);
-      return -1;
-    }
-  clFinish(cmd_queue);
+  err = clFinish (cmd_queue);
+  CHECK_CL_ERROR2 (err);
 
-  if (num_args == 1)
+ERROR:
+  if (outbuf)
     clReleaseMemObject (outbuf);
-  clReleaseKernel (kernel);
-  clReleaseProgram (program);
-  clReleaseCommandQueue (cmd_queue);
-  clReleaseContext (context);
+  if (kernel)
+    clReleaseKernel (kernel);
+  if (program)
+    clReleaseProgram (program);
+  if (cmd_queue)
+    clReleaseCommandQueue (cmd_queue);
+  if (context)
+    clReleaseContext (context);
 
-  return 0;
+  return (err == CL_SUCCESS) ? 0 : 1;
 }
