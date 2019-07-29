@@ -201,15 +201,12 @@ ERROR_CLEAN_PROGRAM_AND_BINARIES:
       POCL_MEM_FREE(program->pocl_binaries[i]);
   POCL_MEM_FREE(program->pocl_binaries);
   POCL_MEM_FREE(program->pocl_binary_sizes);
-/*ERROR_CLEAN_PROGRAM:*/
   POCL_MEM_FREE(program);
 ERROR:
   POCL_MEM_FREE(unique_devlist);
-    if(errcode_ret != NULL)
-      {
-        *errcode_ret = errcode;
-      }
-    return NULL;
+  if (errcode_ret != NULL)
+    *errcode_ret = errcode;
+  return NULL;
 }
 
 CL_API_ENTRY cl_program CL_API_CALL POname (clCreateProgramWithBinary) (
