@@ -35,7 +35,7 @@ set(PROGRAMS_TO_BUILD test_clFinish test_clGetDeviceInfo test_clGetEventInfo
   test_clCreateKernelsInProgram test_clCreateKernel test_clGetKernelArgInfo
   test_version test_kernel_cache_includes test_event_cycle test_link_error
   test_read-copy-write-buffer test_buffer-image-copy test_clCreateSubDevices test_event_free
-  test_event_double_wait test_buffer_migration
+  test_event_double_wait test_buffer_migration test_buffer_ping_pong
   test_enqueue_kernel_from_binary test_user_event test_fill-buffer
   test_clSetMemObjectDestructorCallback
   test_cl_pocl_content_size)
@@ -104,6 +104,8 @@ add_test_pocl(NAME "runtime/test_enqueue_kernel_from_binary" COMMAND "test_enque
 add_test_pocl(NAME "runtime/test_user_event" COMMAND  "test_user_event")
 
 add_test_pocl(NAME "runtime/test_buffer_migration" COMMAND  "test_buffer_migration")
+
+add_test_pocl(NAME "runtime/test_buffer_ping_pong" COMMAND  "test_buffer_ping_pong")
 
 add_test_pocl(NAME "runtime/clSetMemObjectDestructorCallback" COMMAND  "test_clSetMemObjectDestructorCallback")
 
