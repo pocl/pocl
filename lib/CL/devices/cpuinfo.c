@@ -292,7 +292,6 @@ static const part_tuple_t part_list_apm[] =
 static void
 pocl_cpuinfo_get_cpu_name_and_vendor(cl_device_id device)
 {
-  size_t  i;
   /* If something fails here, have this as backup solution.
    * short_name is in the .data anyways.*/
   device->long_name = device->short_name;
@@ -317,6 +316,7 @@ pocl_cpuinfo_get_cpu_name_and_vendor(cl_device_id device)
 
 #if __arm__ || __aarch64__
   unsigned vendor_id = -1;
+  size_t i;
 #endif
 #ifdef VENDORSTRING
   do {

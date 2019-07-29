@@ -205,8 +205,9 @@ pocl_check_device_supports_image (cl_device_id device,
         }
     }
 
-  POCL_RETURN_ERROR_ON (1, CL_INVALID_IMAGE_FORMAT_DESCRIPTOR,
-                        "The image format is not supported by the device\n");
+  POCL_MSG_ERR2 ("CL_INVALID_IMAGE_FORMAT_DESCRIPTOR",
+                 "The image format is not supported by the device\n");
+  return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
 }
 
 extern void

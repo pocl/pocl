@@ -33,7 +33,7 @@
 
 #ifdef __cplusplus
 #  define CALLAPI "C"
-#else 
+#else
 #  define CALLAPI
 #endif
 
@@ -45,8 +45,9 @@ exec_dot_product_kernel (cl_context context, cl_device_id device,
 int
 main (int argc, char **argv)
 {
-  cl_float4 *srcA, *srcB;
-  cl_float *dst;
+  cl_float4 *srcA = NULL;
+  cl_float4 *srcB = NULL;
+  cl_float *dst = NULL;
   int i, err, spir, spirv, poclbin;
 
   cl_context context = NULL;
@@ -120,6 +121,9 @@ FINISH:
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));
   CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
   CHECK_CL_ERROR (clReleaseContext (context));
+  free (srcA);
+  free (srcB);
+  free (dst);
 
   return err;
 }
