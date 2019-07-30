@@ -126,13 +126,6 @@ set_tests_properties("runtime/test_kernel_cache_includes"
   PROPERTIES PASS_REGULAR_EXPRESSION
   "function 1.*first include.*function 2.*second include")
 
-# event callback test changes shared variables in the callbacks
-# doesn't need fixing in test, but TSan inevitably complains
-if(ENABLE_TSAN)
-  set_tests_properties("runtime/clSetEventCallback"
-    PROPERTIES WILL_FAIL 1)
-endif()
-
 # Label tests that work with CUDA backend
 set_property(TEST
   "runtime/clGetDeviceInfo"

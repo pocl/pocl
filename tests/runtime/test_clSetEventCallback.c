@@ -26,17 +26,25 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include <pthread.h>
+
 #include "poclu.h"
 
-volatile int submit = 0;
-volatile int running = 0;
-volatile int complete = 0;
+int submit = 0;
+int running = 0;
+int complete = 0;
+
+pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+#define LOCK pthread_mutex_lock(&mutex)
+#define UNLOCK pthread_mutex_unlock(&mutex)
+
 
 void callback_function(cl_event event, 
                        cl_int   event_command_exec_status, 
                        void     *user_data)
 {
   printf("%s ", (const char *)user_data);
+  LOCK;
   if(event_command_exec_status == CL_SUBMITTED)
     {
       printf("CL_SUBMITTED\n");
@@ -47,12 +55,12 @@ void callback_function(cl_event event,
       printf("CL_RUNNING\n");
       running = 1;
     }
-
   if(event_command_exec_status == CL_COMPLETE)
     {
       printf("CL_COMPLETE\n");
       complete = 1;
     }
+  UNLOCK;
   fflush(stdout);
   return;
 }
@@ -126,7 +134,10 @@ int main()
   CHECK_CL_ERROR(clFinish(queue));
 
   i = 0;
-  while (!submit || !running || !complete)
+  LOCK;
+  int all_done = submit + running + complete;
+  UNLOCK;
+  while (all_done != 3)
     {
       sleep(1);
       ++i;
@@ -135,6 +146,9 @@ int main()
           puts("Callback functions were not called in 10s -> assume FAIL\n");
           return EXIT_FAILURE;
         }
+      LOCK;
+      all_done = submit + running + complete;
+      UNLOCK;
     }
 
   CHECK_CL_ERROR (clReleaseEvent (an_event));
