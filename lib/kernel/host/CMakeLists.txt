@@ -136,8 +136,6 @@ vstore_half.cl
 wait_group_events.cl
 write_image.cl
 
-spir_wrapper.ll
-
 ###################################################################
 
 # from libclc
@@ -238,6 +236,12 @@ sleef-pocl/sqrt.cl
 sleef-pocl/tgamma.cl
 sleef-pocl/trunc.cl
 )
+
+if(HOST_DEVICE_ADDRESS_BITS EQUAL 32)
+  list(APPEND SOURCES_WITH_SLEEF "host/spir_wrapper32.ll")
+else()
+  list(APPEND SOURCES_WITH_SLEEF "host/spir_wrapper64.ll")
+endif()
 
 if(ENABLE_POCL_FLOAT_CONVERSION)
   list(APPEND SOURCES_WITH_SLEEF "errol/errol.c")

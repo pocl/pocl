@@ -21,6 +21,8 @@
 #    is different for SPIR and some LLVM pass will remove the calls
 #    with mismatched calling conv.
 
+import sys
+
 POCL_LIB_PREFIX = "_cl_"
 
 SINGLE_ARG = [
@@ -221,11 +223,29 @@ def generate_function(name, arg_type, arg_type_ext, multiAS, *args):
 
 ##############################################################
 
-print("""; ModuleID = 'spir_wrapper.bc'
+SPIR_MODULE_PREFIX = {
+64:
+"""
+; ModuleID = 'spir_wrapper.bc'
 source_filename = "generate_spir_wrapper.py"
 target datalayout = "e-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256-v512:512-v1024:1024"
 target triple = "spir64-unknown-unknown"
-""")
+""",
+32:
+"""
+; ModuleID = 'spir_wrapper.bc'
+source_filename = "generate_spir_wrapper.py"
+target datalayout = "e-p:32:32-i64:64-v16:16-v24:32-v32:32-v48:64-v96:128-v192:256-v256:256-v512:512-v1024:1024"
+target triple = "spir-unknown-unknown"
+"""
+}
+
+
+triple = SPIR_MODULE_PREFIX[64]
+if (len(sys.argv) > 1) and (sys.argv[1] == "32"):
+	triple = SPIR_MODULE_PREFIX[32]
+
+print(triple)
 
 MANG_TYPES_32 = {
 	"f": "f",
