@@ -425,7 +425,13 @@ int pocl_llvm_build_program(cl_program program,
 #ifdef ENABLE_POCL_BUILDING
   if (pocl_get_bool_option("POCL_BUILDING", 0)) {
     IncludeRoot = SRCDIR;
-    ClangResourceDir = CLANG_RESOURCE_DIR;
+#ifndef LLVM_OLDER_THAN_9_0
+    ClangResourceDir = driver::Driver::GetResourcesPath(CLANG);
+#else
+    DiagnosticsEngine Diags{new DiagnosticIDs, new DiagnosticOptions};
+    driver::Driver TheDriver(CLANG, "", Diags);
+    ClangResourceDir = TheDriver.ResourceDir;
+#endif
 #else
   if (0) {
 #endif
