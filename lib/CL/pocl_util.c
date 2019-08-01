@@ -380,7 +380,7 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
       (*event)->id = ATOMIC_INC (event_id_counter);
       (*event)->num_buffers = num_buffers;
 
-      POCL_MSG_PRINT_EVENTS ("created event with id %d\n", event_id_counter);
+      POCL_MSG_PRINT_EVENTS ("created event with id %d\n", (*event)->id);
 
       if (num_buffers > 0)
         {
@@ -406,8 +406,8 @@ pocl_create_event_sync (cl_event waiting_event, cl_event notifier_event)
   if (notifier_event == NULL)
     return CL_SUCCESS;
 
-  POCL_MSG_PRINT_INFO ("create event sync: waiting %d, notifier %d\n",
-                       waiting_event->id, notifier_event->id);
+  POCL_MSG_PRINT_EVENTS ("create event sync: waiting %d, notifier %d\n",
+                         waiting_event->id, notifier_event->id);
 
   pocl_lock_events_inorder (waiting_event, notifier_event);
 
@@ -551,7 +551,7 @@ void pocl_command_enqueue (cl_command_queue command_queue,
     }
   DL_APPEND (command_queue->events, node->event);
 
-  POCL_MSG_PRINT_INFO ("Last event id %d to CQ.\n", node->event->id);
+  POCL_MSG_PRINT_EVENTS ("Last event id %d to CQ.\n", node->event->id);
   command_queue->last_event.event = node->event;
   POCL_UNLOCK_OBJ (command_queue);
 

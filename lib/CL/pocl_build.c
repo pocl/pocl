@@ -403,6 +403,7 @@ free_meta (cl_program program)
       for (i = 0; i < program->num_kernels; i++)
         {
           pocl_kernel_metadata_t *meta = &program->kernel_meta[i];
+          POCL_MEM_FREE (meta->build_hash);
           if (meta->builtin_kernel)
             continue;
           POCL_MEM_FREE (meta->attributes);
@@ -413,7 +414,6 @@ free_meta (cl_program program)
               meta->data[j] = NULL; // TODO free data in driver callback
           POCL_MEM_FREE (meta->data);
           POCL_MEM_FREE (meta->local_sizes);
-          POCL_MEM_FREE (meta->build_hash);
         }
       POCL_MEM_FREE (program->kernel_meta);
     }
@@ -511,7 +511,7 @@ compile_and_link_program(int compile_program,
       (program->source == NULL && program->binaries == NULL
        && program->builtin_kernel_names == NULL),
       CL_INVALID_PROGRAM,
-      "Program doesn't have sources, binaries nor builti-kernel names. You "
+      "Program doesn't have sources, binaries nor builtin-kernel names. You "
       "need "
       "to call clCreateProgramWith{Binary|Source|BuiltinKernels} first\n");
 
@@ -611,10 +611,10 @@ compile_and_link_program(int compile_program,
       actually_built++;
 
       /* clCreateProgramWithBuiltinKernels */
+      /* No build step supported at the moment for built-in kernels. */
       if (program->builtin_kernel_names)
-        {
-          /* No build step supported at the moment for built-in kernels. */
-        }
+        continue;
+
       /* clCreateProgramWithSource */
       else if (program->source)
         {
@@ -752,34 +752,30 @@ compile_and_link_program(int compile_program,
         }
 
 #ifdef OCS_AVAILABLE
-      if (program->builtin_kernel_names == NULL)
+      /* Read binaries from program.bc to memory */
+      if (program->binaries[device_i] == NULL)
         {
+          errcode = pocl_read_file (program_bc_path, &binary, &fsize);
+          POCL_GOTO_ERROR_ON (errcode, CL_BUILD_ERROR,
+                              "Failed to read binaries from program.bc to "
+                              "memory: %s\n",
+                              program_bc_path);
 
-          /* Read binaries from program.bc to memory */
-          if (program->binaries != NULL && program->binaries[device_i] == NULL)
-            {
-              errcode = pocl_read_file (program_bc_path, &binary, &fsize);
-              POCL_GOTO_ERROR_ON (errcode, CL_BUILD_ERROR,
-                                  "Failed to read binaries from program.bc to "
-                                  "memory: %s\n",
-                                  program_bc_path);
-
-              program->binary_sizes[device_i] = (size_t)fsize;
-              program->binaries[device_i] = (unsigned char *)binary;
-            }
-
-          if (program->llvm_irs[device_i] == NULL)
-            {
-              pocl_update_program_llvm_irs (program, device_i);
-            }
-          /* Maintain a 'last_accessed' file in every program's
-           * cache directory. Will be useful for cache pruning script
-           * that flushes old directories based on LRU */
-          pocl_cache_update_program_last_access (program, device_i);
+          program->binary_sizes[device_i] = (size_t)fsize;
+          program->binaries[device_i] = (unsigned char *)binary;
         }
-#endif
 
+      if (program->llvm_irs[device_i] == NULL)
+        {
+          pocl_update_program_llvm_irs (program, device_i);
+        }
+
+     /* Maintain a 'last_accessed' file in every program's
+      * cache directory. Will be useful for cache pruning script
+      * that flushes old directories based on LRU */
+      pocl_cache_update_program_last_access (program, device_i);
     }
+#endif
 
   POCL_GOTO_ERROR_ON ((actually_built < num_devices), build_error_code,
                       "Some of the devices on the argument-supplied list are"
@@ -852,20 +848,20 @@ compile_and_link_program(int compile_program,
     }
 
   POCL_GOTO_ERROR_ON ((device_i >= program->num_devices), CL_INVALID_BINARY,
-                      "Could find kernel metadata in the built program\n");
+                      "Couldn't find kernel metadata in the built program\n");
 
   /* calculate device-specific kernel hashes. */
-  if (program->builtin_kernel_names == NULL)
-    for (j = 0; j < program->num_kernels; ++j)
-      {
-        program->kernel_meta[j].build_hash
-            = calloc (program->num_devices, sizeof (pocl_kernel_hash_t));
+  for (j = 0; j < program->num_kernels; ++j)
+    {
+      program->kernel_meta[j].build_hash
+          = calloc (program->num_devices, sizeof (pocl_kernel_hash_t));
 
+      if (program->builtin_kernel_names == NULL)
         for (device_i = 0; device_i < program->num_devices; device_i++)
           {
             pocl_calculate_kernel_hash (program, j, device_i);
           }
-      }
+    }
 
   errcode = CL_SUCCESS;
   goto FINISH;
