@@ -32,6 +32,8 @@ extern "C" {
 #pragma GCC visibility push(hidden)
 #endif
 
+void pocl_check_uninit_devices ();
+
 cl_int pocl_rect_copy(cl_command_queue command_queue,
                       cl_command_type command_type,
                       cl_mem src,

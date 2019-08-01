@@ -23,6 +23,7 @@
 
 #include "pocl_cl.h"
 #include "pocl_llvm.h"
+#include "pocl_shared.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clUnloadPlatformCompiler)(cl_platform_id platform)
@@ -45,6 +46,7 @@ CL_API_SUFFIX__VERSION_1_2
   POCL_MSG_WARN (
       "clUnloadPlatformCompiler called with LLVM-less build of pocl! \n");
 #endif
+  pocl_check_uninit_devices ();
   return CL_SUCCESS;
 }
 POsym(clUnloadPlatformCompiler)

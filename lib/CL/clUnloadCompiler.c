@@ -23,6 +23,7 @@
 
 #include "pocl_cl.h"
 #include "pocl_llvm.h"
+#include "pocl_shared.h"
 
 CL_API_ENTRY cl_int CL_API_CALL POname (clUnloadCompiler) (void)
     CL_API_SUFFIX__VERSION_1_1
@@ -30,6 +31,7 @@ CL_API_ENTRY cl_int CL_API_CALL POname (clUnloadCompiler) (void)
 #ifdef OCS_AVAILABLE
   pocl_llvm_release ();
 #endif
+  pocl_check_uninit_devices ();
   return CL_SUCCESS;
 }
 POsym(clUnloadCompiler)
