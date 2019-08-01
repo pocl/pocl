@@ -137,5 +137,8 @@ main(void)
       CHECK_CL_ERROR (clReleaseContext (context));
     }
   }
+
+  CHECK_CL_ERROR (clUnloadCompiler ());
+
   return EXIT_SUCCESS;
 }

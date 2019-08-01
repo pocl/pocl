@@ -215,6 +215,8 @@ int main(int argc, char **argv)
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));
   CHECK_CL_ERROR (clReleaseContext (ctx));
 
+  CHECK_CL_ERROR (clUnloadCompiler ());
+
   return EXIT_SUCCESS;
 
 }

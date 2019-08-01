@@ -39,6 +39,9 @@ main(void)
   cl_device_id devices[MAX_DEVICES];
   cl_uint ndevices;
   cl_uint i, j;
+  cl_context context;
+  cl_command_queue queue;
+  cl_mem buf1, buf2;
 
   CHECK_CL_ERROR(clGetPlatformIDs(MAX_PLATFORMS, platforms, &nplatforms));
 
@@ -53,9 +56,9 @@ main(void)
 
     for (j = 0; j < ndevices; j++)
     {
-      cl_context context = clCreateContext(NULL, 1, &devices[j], NULL, NULL, &err);
+      context = clCreateContext (NULL, 1, &devices[j], NULL, NULL, &err);
       CHECK_OPENCL_ERROR_IN("clCreateContext");
-      cl_command_queue queue = clCreateCommandQueue(context, devices[j], 0, &err);
+      queue = clCreateCommandQueue (context, devices[j], 0, &err);
       CHECK_OPENCL_ERROR_IN("clCreateCommandQueue");
 
       cl_ulong alloc;
@@ -79,9 +82,9 @@ main(void)
       memset (host_buf1, 1, buf_size);
       memset (host_buf2, 2, buf_size);
 
-      cl_mem buf1 = clCreateBuffer(context, CL_MEM_READ_WRITE, buf_size, NULL, &err);
+      buf1 = clCreateBuffer (context, CL_MEM_READ_WRITE, buf_size, NULL, &err);
       CHECK_OPENCL_ERROR_IN("clCreateBuffer");
-      cl_mem buf2 = clCreateBuffer(context, CL_MEM_READ_WRITE, buf_size, NULL, &err);
+      buf2 = clCreateBuffer (context, CL_MEM_READ_WRITE, buf_size, NULL, &err);
       CHECK_OPENCL_ERROR_IN("clCreateBuffer");
 
       CHECK_CL_ERROR(clEnqueueWriteBuffer(queue, buf1, CL_TRUE, 0, buf_size, host_buf1, 0, NULL, NULL));
@@ -131,6 +134,8 @@ main(void)
       CHECK_CL_ERROR (clReleaseContext (context));
     }
   }
+
+  CHECK_CL_ERROR (clUnloadCompiler ());
 
   return EXIT_SUCCESS;
 }

@@ -45,5 +45,7 @@ main(void)
 
   free (img_formats);
 
+  CHECK_CL_ERROR (clUnloadCompiler ());
+
   return EXIT_SUCCESS;
 }

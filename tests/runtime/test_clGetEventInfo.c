@@ -15,6 +15,11 @@ main(void)
   cl_device_id devices[MAX_DEVICES];
   cl_uint ndevices;
   cl_uint i, j;
+  cl_context context;
+  cl_command_queue queue;
+  cl_mem buf;
+  cl_event buf_event;
+  cl_command_queue event_command_queue;
 
   CHECK_CL_ERROR(clGetPlatformIDs(MAX_PLATFORMS, platforms, &nplatforms));
 
@@ -25,17 +30,16 @@ main(void)
       
       for (j = 0; j < ndevices; j++)
         {
-          cl_context context = clCreateContext(NULL, 1, &devices[j], NULL, NULL, &err);
-          cl_command_queue queue = clCreateCommandQueue(context, devices[j], 0, &err);
-          
+          context = clCreateContext (NULL, 1, &devices[j], NULL, NULL, &err);
+          queue = clCreateCommandQueue (context, devices[j], 0, &err);
+
           const int buf_size = 1024;
           cl_int host_buf[buf_size];
-          
-          cl_mem buf = clCreateBuffer(context, CL_MEM_READ_WRITE, sizeof(cl_int) * buf_size, NULL, &err);
-          cl_event buf_event;
+
+          buf = clCreateBuffer (context, CL_MEM_READ_WRITE,
+                                sizeof (cl_int) * buf_size, NULL, &err);
           CHECK_CL_ERROR(clEnqueueReadBuffer(queue, buf, CL_TRUE, 0, sizeof(cl_int) * buf_size, &host_buf, 0, NULL, &buf_event));
           CHECK_CL_ERROR(clFinish(queue));
-          cl_command_queue event_command_queue;
           size_t param_val_size_ret;
           CHECK_CL_ERROR(clGetEventInfo(buf_event, CL_EVENT_COMMAND_QUEUE, sizeof(cl_command_queue), &event_command_queue, &param_val_size_ret));
           TEST_ASSERT(param_val_size_ret == sizeof(cl_command_queue));
@@ -60,6 +64,8 @@ main(void)
           CHECK_CL_ERROR (clReleaseContext (context));
         }
     }
+
+  CHECK_CL_ERROR (clUnloadCompiler ());
 
   printf ("OK\n");
   return EXIT_SUCCESS;
