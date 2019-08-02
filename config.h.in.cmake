@@ -116,8 +116,6 @@
 
 #define LINK_COMMAND "@LINK_COMMAND@"
 
-#cmakedefine LINK_WITH_CLANG
-
 
 
 

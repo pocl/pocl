@@ -592,17 +592,16 @@ endif()
 # this requires 128bit integer support because of the code in "errol" float-to-string conversion routine
 # the output is not 100% compatible with glibc's printf (%f with large argument prints zeroes after
 # last significant digit - 16-18th digit or so, unlike glibc which prints digits up to decimal point).
-if(CLANG_HAS_RTLIB_128)
+if(CLANG_HAS_128B_MATH)
   option(ENABLE_POCL_FLOAT_CONVERSION "Enable use of pocl's own float-to-decimal conversion code in OpenCL printf(). Defaults to OFF (uses snprintf from C library). Requires compiler-rt." OFF)
 else()
   set(ENABLE_POCL_FLOAT_CONVERSION OFF CACHE INTERNAL "pocl's own float-to-decimal conversion code")
 endif()
 
-unset(RTLIB_FLAG)
+unset(FLOATCONV_FLAG)
 if(ENABLE_POCL_FLOAT_CONVERSION)
   # force link with Clang; otherwise not needed on x86 but in this case we need rtlib
-  set(LINK_WITH_CLANG ON CACHE INTERNAL "Link using Clang")
-  set(RTLIB_FLAG "-DENABLE_POCL_FLOAT_CONVERSION")
+  set(FLOATCONV_FLAG "-DENABLE_POCL_FLOAT_CONVERSION")
 endif()
 
 ######################################################################################
@@ -614,9 +613,9 @@ endif()
 # constant addrspace variables, and stack protector likely slows
 # down the kernels, so it needs to be determined whether it's worth
 # the trouble.
-set(DEFAULT_KERNEL_CL_FLAGS  "-xcl -fno-stack-protector -fPIC ${RTLIB_FLAG}")
-set(DEFAULT_KERNEL_C_FLAGS "-xc -std=c11 -D__CBUILD__ -fno-math-errno -fno-stack-protector -fPIC ${RTLIB_FLAG}")
-set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector -fPIC ${RTLIB_FLAG}")
+set(DEFAULT_KERNEL_CL_FLAGS  "-xcl -fno-stack-protector -fPIC ${FLOATCONV_FLAG}")
+set(DEFAULT_KERNEL_C_FLAGS "-xc -std=c11 -D__CBUILD__ -fno-math-errno -fno-stack-protector -fPIC ${FLOATCONV_FLAG}")
+set(DEFAULT_KERNEL_CXX_FLAGS "-xc++ -std=c++11 -fno-stack-protector -fPIC ${FLOATCONV_FLAG}")
 
 set(EXTRA_KERNEL_FLAGS "" CACHE STRING "Extra arguments to all kernel compilation commands (defaults to empty)")
 set(EXTRA_KERNEL_CL_FLAGS "" CACHE STRING "Extra arguments to kernel CL compiler (defaults to empty)")
@@ -634,11 +633,7 @@ if(UNIX)
     # MacOS ld outputs useless warnings like
     # ld: warning: -macosx_version_min not specificed, assuming 10.7
     # suppress them with -w.
-    if(LINK_WITH_CLANG)
-      set(DEFAULT_HOST_LD_FLAGS "-dynamiclib -w -lm")
-    else()
-      set(DEFAULT_HOST_LD_FLAGS "-dylib -w -lm")
-    endif()
+    set(DEFAULT_HOST_LD_FLAGS "-dynamiclib -w -lm")
   elseif(ANDROID)
     set(DEFAULT_HOST_LD_FLAGS "-L/system/lib/ -shared -ldl -lc /system/lib/crtbegin_so.o /system/lib/crtend_so.o")
   else()
@@ -649,7 +644,7 @@ elseif(WIN32)
   set(LIBMATH)
 endif()
 
-if(LINK_WITH_CLANG AND (CLANG_HAS_RTLIB_128 OR CLANG_HAS_RTLIB))
+if(CLANG_NEEDS_RTLIB)
   set(DEFAULT_HOST_LD_FLAGS "${DEFAULT_HOST_LD_FLAGS} --rtlib=compiler-rt")
 endif()
 
@@ -1480,9 +1475,9 @@ MESSAGE(STATUS "final KERNEL_C_FLAGS: ${KERNEL_C_FLAGS}")
 
 if (OCS_AVAILABLE)
   MESSAGE(STATUS "")
-  MESSAGE(STATUS "CLANG_HAS_RTLIB: ${CLANG_HAS_RTLIB}")
-  MESSAGE(STATUS "CLANG_HAS_RTLIB_128: ${CLANG_HAS_RTLIB_128}")
-  MESSAGE(STATUS "LINK_WITH_CLANG: ${LINK_WITH_CLANG}")
+  MESSAGE(STATUS "CLANG_HAS_64B_MATH: ${CLANG_HAS_64B_MATH}")
+  MESSAGE(STATUS "CLANG_HAS_128B_MATH: ${CLANG_HAS_128B_MATH}")
+  MESSAGE(STATUS "CLANG_NEEDS_RTLIB: ${CLANG_NEEDS_RTLIB}")
   MESSAGE(STATUS "CLANG_MARCH_FLAG: ${CLANG_MARCH_FLAG}")
   MESSAGE(STATUS "CLANG_TARGET_OPTION: ${CLANG_TARGET_OPTION}")
   MESSAGE(STATUS "LLVM_VERSION: ${LLVM_VERSION}")

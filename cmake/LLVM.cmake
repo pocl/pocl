@@ -425,39 +425,58 @@ endif()
 ####################################################################
 ####################################################################
 
-if(NOT DEFINED LINK_WITH_CLANG)
+if(NOT DEFINED CLANG_NEEDS_RTLIB)
 
   set(RT128 OFF)
   set(RT64 OFF)
+  set(NEEDS_RTLIB_FLAG OFF)
 
   # on 32bit systems, we need 64bit emulation
   if(CMAKE_SIZEOF_VOID_P EQUAL 4)
     set(INC "#include <stdint.h>\n#include <stddef.h>")
     set(SRC "int64_t a = argc; int64_t b = argc-1; int64_t c = a / b; return (int)c; ")
-    custom_try_link_clang("${INC}" "${SRC}" RES "--rtlib=compiler-rt")
+    custom_try_link_clang("${INC}" "${SRC}" RES)
     if(NOT RES)
-      message(STATUS "compiler-rt available")
+      message(STATUS "64bit division compiles without extra flags")
       set(RT64 ON)
+    else()
+      custom_try_link_clang("${INC}" "${SRC}" RES "--rtlib=compiler-rt")
+      if(NOT RES)
+        message(STATUS "64bit division compiles WITH --rtlib=compiler-rt")
+        set(NEEDS_RTLIB_FLAG ON)
+        set(RT64 ON)
+      else()
+        message(WARNING "64bit division doesn't compile at all!")
+      endif()
     endif()
 
   else()
+
+    set(RT64 ON)
     # on 64bit systems, we need 128bit integers for Errol
     set(INC "extern __uint128_t __udivmodti4(__uint128_t a, __uint128_t b, __uint128_t* rem);")
     set(SRC "__uint128_t low, mid, tmp1, pow19 = (__uint128_t)1000000000; mid = __udivmodti4(low, pow19, &tmp1); return 0;")
-    custom_try_link_clang("${INC}" "${SRC}" RES "--rtlib=compiler-rt")
+    custom_try_link_clang("${INC}" "${SRC}" RES)
 
     if(NOT RES)
-      message(STATUS "compiler-rt available with 128bit types")
+      message(STATUS "udivmodti4 compiles without extra flags")
       set(RT128 ON)
+    else()
+      custom_try_link_clang("${INC}" "${SRC}" RES "--rtlib=compiler-rt")
+      if(NOT RES)
+        message(STATUS "udivmodti4 compiles WITH --rtlib=compiler-rt")
+        set(NEEDS_RTLIB_FLAG ON)
+        set(RT128 ON)
+      else()
+        message(WARNING "udivmodti4 doesn't compile at all!")
+      endif()
     endif()
 
   endif()
 
-  set(CLANG_HAS_RTLIB ${RT64} CACHE INTERNAL "Clang's compiler-rt available with 64bit types")
-  set(CLANG_HAS_RTLIB_128 ${RT128} CACHE INTERNAL "Clang's compiler-rt available with 128bit types")
-
-  # on LLVM 5.0+ we use the library API directly instead of forking
-  set(LINK_WITH_CLANG ON CACHE INTERNAL "Link using Clang")
+  set(CLANG_HAS_64B_MATH ${RT64} CACHE INTERNAL "Clang's available with 64bit math")
+  set(CLANG_HAS_128B_MATH ${RT128} CACHE INTERNAL "Clang's available with 128bit math")
+  set(CLANG_NEEDS_RTLIB ${NEEDS_RTLIB_FLAG} CACHE INTERNAL "Clang needs extra --rtlib flag for compiler-rt math")
 
 endif()
 
