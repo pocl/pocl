@@ -21,10 +21,11 @@
    THE SOFTWARE.
 */
 
+#include <CL/cl.h>
+#include <string.h>
+
 #include "pocl_util.h"
 #include "pocl_image_util.h"
-#include "cl_platform.h"
-#include <string.h>
 
 extern CL_API_ENTRY cl_int CL_API_CALL
 POname(clEnqueueFillImage)(cl_command_queue  command_queue,

@@ -13,19 +13,6 @@
 // rest of the file: ICD is enabled 
 #else
 
-// this define is a kludge!
-// The ICD loaders seem to require OCL 1.1, so we cannot (can we?) leave deprecated 
-// functions out
-// Answer: not really. ICD loader will call OCL 1.1 function throught the
-// function table, but the registered function can be then only stubs
-// (perhaps with a warning) or even NULL (in this case, a program using
-// OCL 1.1 function will crash: ICD Loaders does not do any check)
-#  define CL_USE_DEPRECATED_OPENCL_1_1_APIS
-
-#  ifndef CL_USE_DEPRECATED_OPENCL_1_1_APIS
-#    error CL_USE_DEPRECATED_OPENCL_1_1_APIS not in use
-#  endif
-
 extern struct _cl_icd_dispatch pocl_dispatch;  //from clGetPlatformIDs.c
 
 #  define POCL_DEVICE_ICD_DISPATCH &pocl_dispatch,

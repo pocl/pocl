@@ -27,7 +27,6 @@ if(SANITIZER_OPTIONS)
   add_compile_options(${SANITIZER_OPTIONS})
 endif()
 
-include_directories(BEFORE "../../fix-include/OpenCL")
 include_directories(AFTER "devices" ".")
 
 add_subdirectory("devices")

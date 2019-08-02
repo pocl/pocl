@@ -42,7 +42,6 @@
 #include <time.h>
 #endif
 
-#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
 #ifdef BUILD_ICD
 #  include "pocl_icd.h"
 #endif
