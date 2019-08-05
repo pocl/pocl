@@ -79,7 +79,7 @@ int pocl_llvm_generate_workgroup_function (unsigned DeviceI,
 
 int pocl_llvm_generate_workgroup_function_nowrite (
     unsigned DeviceI, cl_device_id Device, cl_kernel Kernel,
-    _cl_command_node *Command, void **output, int Specialize);
+    struct pocl_context *pc, void **output, int Specialize);
 /**
  * Free the LLVM IR of a program for a given device
  */

@@ -356,9 +356,8 @@ int pocl_update_program_llvm_irs_unlocked(cl_program program,
 
 int pocl_llvm_generate_workgroup_function_nowrite(
     unsigned DeviceI, cl_device_id Device, cl_kernel Kernel,
-    _cl_command_node *Command, void **Output, int Specialize) {
+    struct pocl_context *pc, void **Output, int Specialize) {
 
-  _cl_command_run *RunCommand = &Command->command.run;
   cl_program Program = Kernel->program;
 
   currentPoclDevice = Device;
@@ -383,18 +382,18 @@ int pocl_llvm_generate_workgroup_function_nowrite(
 
   // Set the specialization properties.
   if (Specialize) {
-    pocl::WGLocalSizeX = RunCommand->pc.local_size[0];
-    pocl::WGLocalSizeY = RunCommand->pc.local_size[1];
-    pocl::WGLocalSizeZ = RunCommand->pc.local_size[2];
+    pocl::WGLocalSizeX = pc->local_size[0];
+    pocl::WGLocalSizeY = pc->local_size[1];
+    pocl::WGLocalSizeZ = pc->local_size[2];
     pocl::WGDynamicLocalSize = pocl::WGLocalSizeX == 0 &&
                                pocl::WGLocalSizeY == 0 &&
                                pocl::WGLocalSizeZ == 0;
-    pocl::WGAssumeZeroGlobalOffset = RunCommand->pc.global_offset[0] == 0 &&
-                                     RunCommand->pc.global_offset[1] == 0 &&
-                                     RunCommand->pc.global_offset[2] == 0;
+    pocl::WGAssumeZeroGlobalOffset = pc->global_offset[0] == 0 &&
+                                     pc->global_offset[1] == 0 &&
+                                     pc->global_offset[2] == 0;
     // Compile a smallgrid version or a generic one?
-    if (RunCommand->force_large_grid_wg_func ||
-        pocl_cmd_max_grid_dim_width(RunCommand) >=
+    if (pocl::WGDynamicLocalSize ||
+        pocl_cmd_max_grid_dim_width(pc) >=
             Device->grid_width_specialization_limit) {
       pocl::WGMaxGridDimWidth = 0; // The generic / large / unlimited size one.
     } else {
@@ -442,7 +441,7 @@ int pocl_llvm_generate_workgroup_function(unsigned DeviceI, cl_device_id Device,
     return CL_SUCCESS;
 
   int Error = pocl_llvm_generate_workgroup_function_nowrite(
-      DeviceI, Device, Kernel, Command, &Module, Specialize);
+      DeviceI, Device, Kernel, &Command->command.run.pc, &Module, Specialize);
   if (Error)
     return Error;
 

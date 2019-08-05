@@ -118,7 +118,8 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
   assert (strlen (final_binary_path) < (POCL_FILENAME_LENGTH - 3));
 
   error = pocl_llvm_generate_workgroup_function_nowrite (
-      device_i, device, kernel, command, &llvm_module, specialize);
+      device_i, device, kernel, &command->command.run.pc, &llvm_module,
+      specialize);
   if (error)
     {
       POCL_MSG_PRINT_LLVM ("pocl_llvm_generate_workgroup_function() failed"
@@ -993,11 +994,11 @@ pocl_check_kernel_disk_cache (_cl_command_node *command, int specialized)
 /* Returns the width of the widest dimension in the grid of the given
    run command. */
 size_t
-pocl_cmd_max_grid_dim_width (_cl_command_run *cmd)
+pocl_cmd_max_grid_dim_width (struct pocl_context *pc)
 {
-  return max (max (cmd->pc.local_size[0] * cmd->pc.num_groups[0],
-                   cmd->pc.local_size[1] * cmd->pc.num_groups[1]),
-              cmd->pc.local_size[2] * cmd->pc.local_size[2]);
+  return max (max (pc->local_size[0] * pc->num_groups[0],
+                   pc->local_size[1] * pc->num_groups[1]),
+              pc->local_size[2] * pc->local_size[2]);
 }
 
 /* Look for a dlhandle in the dlhandle cache for the given kernel command.
@@ -1008,7 +1009,7 @@ static pocl_dlhandle_cache_item *
 fetch_dlhandle_cache_item (_cl_command_run *run_cmd)
 {
   pocl_dlhandle_cache_item *ci = NULL, *tmp = NULL;
-  size_t max_grid_width = pocl_cmd_max_grid_dim_width (run_cmd);
+  size_t max_grid_width = pocl_cmd_max_grid_dim_width (&run_cmd->pc);
   DL_FOREACH_SAFE (pocl_dlhandle_cache, ci, tmp)
   {
     if ((memcmp (ci->hash, run_cmd->hash, sizeof (pocl_kernel_hash_t)) == 0)
@@ -1072,7 +1073,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
                    && run_cmd->pc.global_offset[1] == 0
                    && run_cmd->pc.global_offset[2] == 0;
 
-  size_t max_grid_width = pocl_cmd_max_grid_dim_width (run_cmd);
+  size_t max_grid_width = pocl_cmd_max_grid_dim_width (&run_cmd->pc);
   ci->max_grid_dim_width = max_grid_width;
 
   char *module_fn = pocl_check_kernel_disk_cache (command, specialize);
