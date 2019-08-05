@@ -75,7 +75,7 @@ int pocl_llvm_generate_workgroup_function (unsigned DeviceI,
                                            cl_device_id Device,
                                            cl_kernel Kernel,
                                            _cl_command_node *Command,
-                                           int Specialize);
+                                           int Specialize, char *SpecSuffix);
 
 int pocl_llvm_generate_workgroup_function_nowrite (
     unsigned DeviceI, cl_device_id Device, cl_kernel Kernel,

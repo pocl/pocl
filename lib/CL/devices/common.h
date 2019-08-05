@@ -68,7 +68,7 @@ void pocl_init_cpu_device_infos (cl_device_id dev);
 
 int llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
                   cl_device_id device, _cl_command_node *command,
-                  int specialize);
+                  int specialize, const char *specialization_suffix);
 
 void fill_dev_image_t (dev_image_t *di, struct pocl_argument *parg,
                        cl_device_id device);
@@ -94,9 +94,12 @@ void pocl_broadcast (cl_event event);
 
 void pocl_init_dlhandle_cache ();
 
-char *pocl_check_kernel_disk_cache (_cl_command_node *cmd, int specialized);
+char *pocl_check_kernel_disk_cache (_cl_command_node *cmd, int specialize);
 
 size_t pocl_cmd_max_grid_dim_width (struct pocl_context *pc);
+
+void generate_spec_suffix (char *suffix, int specialized,
+                           struct pocl_context *pc, cl_device_id dev);
 
 void pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
                                        unsigned initial_refcount,

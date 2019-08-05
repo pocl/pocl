@@ -1114,7 +1114,7 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
 
 static int
 compile_parallel_bc_to_brig (char *brigfile, _cl_command_node *cmd,
-                             int specialize)
+                             const char *spec_suffix)
 {
   int error;
   char hsailfile[POCL_FILENAME_LENGTH];
@@ -1123,7 +1123,7 @@ compile_parallel_bc_to_brig (char *brigfile, _cl_command_node *cmd,
 
   pocl_cache_work_group_function_path (parallel_bc_path,
                                        run_cmd->kernel->program, cmd->device_i,
-                                       run_cmd->kernel, cmd, specialize);
+                                       run_cmd->kernel, spec_suffix);
 
   strcpy (brigfile, parallel_bc_path);
   strncat (brigfile, ".brig", POCL_FILENAME_LENGTH-1);
@@ -1332,6 +1332,7 @@ pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
                                cl_device_id device, int specialize)
 {
   char brigfile[POCL_FILENAME_LENGTH];
+  char spec_suffix[POCL_FILENAME_LENGTH];
   char *brig_blob;
 
   pocl_hsa_device_data_t *d = (pocl_hsa_device_data_t*)device->data;
@@ -1342,8 +1343,9 @@ pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
 
   POCL_LOCK (d->pocl_hsa_compilation_lock);
 
-  int error = pocl_llvm_generate_workgroup_function (cmd->device_i, device,
-                                                     kernel, cmd, specialize);
+  int error = pocl_llvm_generate_workgroup_function (
+      cmd->device_i, device, kernel, &cmd->command.run.pc, specialize,
+      spec_suffix);
   if (error)
     {
       POCL_MSG_PRINT_GENERAL ("HSA: pocl_llvm_generate_workgroup_function()"
@@ -1359,7 +1361,7 @@ pocl_hsa_compile_kernel_hsail (_cl_command_node *cmd, cl_kernel kernel,
         return;
     }
 
-  if (compile_parallel_bc_to_brig (brigfile, cmd, specialize))
+  if (compile_parallel_bc_to_brig (brigfile, cmd, spec_suffix))
     POCL_ABORT("Compiling LLVM IR -> HSAIL -> BRIG failed.\n");
 
   POCL_MSG_PRINT_HSA ("loading binary from file %s.\n", brigfile);

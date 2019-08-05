@@ -784,8 +784,9 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
   POCL_LOCK(ddata->compile_lock);
 
   /* Generate the parallel bitcode file linked with the kernel library */
-  int error = pocl_llvm_generate_workgroup_function (device_i, device, kernel,
-                                                     command, specialized);
+  char SpecSuffix[POCL_FILENAME_LENGTH];
+  int error = pocl_llvm_generate_workgroup_function (
+      device_i, device, kernel, command, specialized, SpecSuffix);
   if (error)
     {
       POCL_MSG_PRINT_GENERAL ("pocl_llvm_generate_workgroup_function() failed"
@@ -795,7 +796,7 @@ load_or_generate_kernel (cl_kernel kernel, cl_device_id device,
 
   char bc_filename[POCL_FILENAME_LENGTH];
   pocl_cache_work_group_function_path (bc_filename, kernel->program, device_i,
-                                       kernel, command, specialized);
+                                       kernel, SpecSuffix);
 
   char ptx_filename[POCL_FILENAME_LENGTH];
   strcpy (ptx_filename, bc_filename);

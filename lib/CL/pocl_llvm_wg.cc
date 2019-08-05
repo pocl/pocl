@@ -419,23 +419,29 @@ int pocl_llvm_generate_workgroup_function_nowrite(
   return 0;
 }
 
-int pocl_llvm_generate_workgroup_function(unsigned DeviceI, cl_device_id Device,
+/* SpecSuffix is an output parameter */
+int pocl_llvm_generate_workgroup_function(unsigned DeviceI,
+                                          cl_device_id Device,
                                           cl_kernel Kernel,
                                           _cl_command_node *Command,
-                                          int Specialize) {
+                                          int Specialize,
+                                          char *SpecSuffix) {
 
   void *Module = NULL;
 
+  generate_spec_suffix(SpecSuffix, Specialize, &Command->command.run.pc,
+                       Device);
+
   char ParallelBCPath[POCL_FILENAME_LENGTH];
   pocl_cache_work_group_function_path(ParallelBCPath, Kernel->program, DeviceI,
-                                      Kernel, Command, Specialize);
+                                      Kernel, SpecSuffix);
 
   if (pocl_exists(ParallelBCPath))
     return CL_SUCCESS;
 
   char FinalBinaryPath[POCL_FILENAME_LENGTH];
   pocl_cache_final_binary_path(FinalBinaryPath, Kernel->program, DeviceI,
-                               Kernel, Command, Specialize);
+                               Kernel, SpecSuffix);
 
   if (pocl_exists(FinalBinaryPath))
     return CL_SUCCESS;
@@ -446,7 +452,7 @@ int pocl_llvm_generate_workgroup_function(unsigned DeviceI, cl_device_id Device,
     return Error;
 
   Error = pocl_cache_write_kernel_parallel_bc(Module, Kernel->program, DeviceI,
-                                              Kernel, Command, Specialize);
+                                              Kernel, SpecSuffix);
 
   if (Error) {
     POCL_MSG_ERR("pocl_cache_write_kernel_parallel_bc() failed with %i\n",

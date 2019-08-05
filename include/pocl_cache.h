@@ -70,7 +70,6 @@ int pocl_cache_write_spirv (char *spirv_path,
 int pocl_cache_update_program_last_access(cl_program program,
                                           unsigned device_i);
 
-
 char* pocl_cache_read_buildlog(cl_program program, unsigned device_i);
 
 int pocl_cache_append_to_buildlog(cl_program  program,
@@ -90,14 +89,13 @@ int pocl_cache_write_descriptor(cl_program   program,
 
 void pocl_cache_kernel_cachedir_path (char *kernel_cachedir_path,
                                       cl_program program, unsigned device_i,
-                                      cl_kernel kernel, const char *append_str,
-                                      _cl_command_node *command,
-                                      int specialize);
+                                      const char *kernel_name,
+                                      const char *extra_suffix,
+                                      const char *append_str);
 
 int pocl_cache_write_kernel_parallel_bc (void *bc, cl_program program,
                                          int device_i, cl_kernel kernel,
-                                         _cl_command_node *command,
-                                         int specialize);
+                                         const char *extra_suffix);
 
 // required by pocl_binary.c
 
@@ -117,12 +115,11 @@ void pocl_cache_program_bc_path(char*       program_bc_path,
 void pocl_cache_work_group_function_path (char *parallel_bc_path,
                                           cl_program program,
                                           unsigned device_i, cl_kernel kernel,
-                                          _cl_command_node *command,
-                                          int specialize);
+                                          const char *extra_suffix);
 
 void pocl_cache_final_binary_path (char *final_binary_path, cl_program program,
                                    unsigned device_i, cl_kernel kernel,
-                                   _cl_command_node *command, int specialize);
+                                   const char *extra_suffix);
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

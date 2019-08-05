@@ -110,42 +110,20 @@ void pocl_cache_program_bc_path(char*        program_bc_path,
                        device_i, POCL_PROGRAM_BC_FILENAME);
 }
 
-/* Return the cache directory for the given work-group function.
-   If specialized = 1, specialization parameters are derived from run_cmd,
-   otherwise a generic directory name is returned.
-
-   The current specialization parameters are:
-   - local size
-   - if the global offset is zero (in all dimensions) or not
-   - if the grid size in any dimension is smaller than a device
-   specified limit ("smallgrid" specialization)
-*/
 void
 pocl_cache_kernel_cachedir_path (char *kernel_cachedir_path,
                                  cl_program program, unsigned device_i,
-                                 cl_kernel kernel, const char *append_str,
-                                 _cl_command_node *command, int specialized)
+                                 const char *kernel_name,
+                                 const char *extra_suffix,
+                                 const char *append_str)
 {
   int bytes_written;
-  _cl_command_run *run_cmd = &command->command.run;
   char tempstring[POCL_FILENAME_LENGTH];
-  cl_device_id dev = command->device;
-  size_t max_grid_width = pocl_cmd_max_grid_dim_width (run_cmd);
-  bytes_written = snprintf (
-      tempstring, POCL_FILENAME_LENGTH, "/%s/%zu-%zu-%zu%s%s%s", kernel->name,
-      !specialized ? 0 : run_cmd->pc.local_size[0],
-      !specialized ? 0 : run_cmd->pc.local_size[1],
-      !specialized ? 0 : run_cmd->pc.local_size[2],
-      (specialized && run_cmd->pc.global_offset[0] == 0
-       && run_cmd->pc.global_offset[1] == 0
-       && run_cmd->pc.global_offset[2] == 0)
-          ? "-goffs0"
-          : "",
-      specialized && !run_cmd->force_large_grid_wg_func
-              && max_grid_width < dev->grid_width_specialization_limit
-          ? "-smallgrid"
-          : "",
-      append_str);
+  if (!extra_suffix)
+    extra_suffix = "";
+
+  bytes_written = snprintf (tempstring, POCL_FILENAME_LENGTH, "/%s%s%s",
+                            kernel_name, extra_suffix, append_str);
   assert (bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
 
   program_device_dir (kernel_cachedir_path, program, device_i, tempstring);
@@ -168,45 +146,36 @@ void
 pocl_cache_work_group_function_path (char *parallel_bc_path,
                                      cl_program program, unsigned device_i,
                                      cl_kernel kernel,
-                                     _cl_command_node *command, int specialize)
+                                     const char *extra_suffix)
 {
   assert (kernel->name);
 
-  pocl_cache_kernel_cachedir_path (parallel_bc_path, program, device_i, kernel,
-                                   POCL_PARALLEL_BC_FILENAME, command,
-                                   specialize);
+  pocl_cache_kernel_cachedir_path (parallel_bc_path, program, device_i,
+                                   kernel->name, extra_suffix,
+                                   POCL_PARALLEL_BC_FILENAME);
 }
 
-/* Return the final binary path for the given work-group function.
-   If specialized is 1, find the WG function specialized for the
-   given command's properties, if 0, return the path to a generic version. */
+/* Return the final binary path for the given work-group function. */
+
 void
 pocl_cache_final_binary_path (char *final_binary_path, cl_program program,
                               unsigned device_i, cl_kernel kernel,
-                              _cl_command_node *command, int specialized)
+                              const char *extra_suffix)
 {
   assert (kernel->name);
-
-  /* TODO: This should be probably refactored to either get the binary name
-     from the device itself, or let the device ops call
-     pocl_llvm_generate_workgroup_function() on their own */
 
   int bytes_written;
   char final_binary_name[POCL_FILENAME_LENGTH];
 
   /* FIXME: Why different naming for SPMD and why the .brig suffix? */
-  if (kernel->program->devices[device_i]->spmd)
-    bytes_written = snprintf (final_binary_name, POCL_FILENAME_LENGTH,
-                              "%s.brig", POCL_PARALLEL_BC_FILENAME);
-  else
-    bytes_written = snprintf (final_binary_name, POCL_FILENAME_LENGTH,
-                              "/%s.so", kernel->name);
+  bytes_written = snprintf (final_binary_name, POCL_FILENAME_LENGTH,
+                            "/%s.so", kernel->name);
 
   assert (bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
 
   pocl_cache_kernel_cachedir_path (final_binary_path, program, device_i,
-                                   kernel, final_binary_name, command,
-                                   specialized);
+                                   kernel->name, extra_suffix,
+                                   final_binary_name);
 }
 
 /******************************************************************************/
@@ -285,22 +254,13 @@ int pocl_cache_write_descriptor(cl_program   program,
                                 const char*  kernel_name,
                                 const char*  content,
                                 size_t       size) {
-    char devdir[POCL_FILENAME_LENGTH];
-    program_device_dir(devdir, program, device_i, "");
 
-    char descriptor[POCL_FILENAME_LENGTH];
-    int bytes_written = snprintf(descriptor, POCL_FILENAME_LENGTH,
-                                 "%s/%s", devdir, kernel_name);
-    assert(bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
-    if (pocl_mkdir_p(descriptor))
-        return 1;
+  char descriptor_path[POCL_FILENAME_LENGTH];
+  pocl_cache_kernel_cachedir_path (descriptor_path, program, device_i,
+                                   kernel_name, "",
+                                   "/descriptor.so.kernel_obj.c");
 
-    bytes_written = snprintf(descriptor, POCL_FILENAME_LENGTH,
-                                 "%s/%s/descriptor.so.kernel_obj.c",
-                                 devdir, kernel_name);
-    assert(bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
-
-    return pocl_write_file(descriptor, content, size, 0, 1);
+  return pocl_write_file (descriptor_path, content, size, 0, 1);
 }
 
 /******************************************************************************/
@@ -343,12 +303,12 @@ int pocl_cache_append_to_buildlog(cl_program  program,
 int
 pocl_cache_write_kernel_parallel_bc (void *bc, cl_program program,
                                      int device_i, cl_kernel kernel,
-                                     _cl_command_node *command, int specialize)
+                                     const char *extra_suffix)
 {
   assert (bc);
   char kernel_parallel_path[POCL_FILENAME_LENGTH];
   pocl_cache_kernel_cachedir_path (kernel_parallel_path, program, device_i,
-                                   kernel, "", command, specialize);
+                                   kernel->name, extra_suffix, "");
   int err = pocl_mkdir_p (kernel_parallel_path);
   if (err)
     return err;

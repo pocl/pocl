@@ -436,6 +436,8 @@ static void pocl_tce_write_kernel_descriptor(cl_device_id device,
 
 void pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
                              cl_device_id Device, int Specialize) {
+  char SpecSuffix[POCL_FILENAME_LENGTH];
+
   if (Command->type != CL_COMMAND_NDRANGE_KERNEL)
     return;
   _cl_command_run *RunCommand = &Command->command.run;
@@ -450,7 +452,7 @@ void pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
 
   POCL_LOCK(Dev->tce_compile_lock);
   int Error = pocl_llvm_generate_workgroup_function(
-      Command->device_i, Device, Kernel, Command, Specialize);
+      Command->device_i, Device, Kernel, Command, Specialize, SpecSuffix);
 
   if (Error) {
     POCL_UNLOCK(Dev->tce_compile_lock);
@@ -468,7 +470,7 @@ void pocl_tce_compile_kernel(_cl_command_node *Command, cl_kernel Kernel,
 
   char CacheDir[POCL_FILENAME_LENGTH];
   pocl_cache_kernel_cachedir_path(CacheDir, Kernel->program, Command->device_i,
-                                  Kernel, "", Command, 1);
+                                  Kernel->name, SpecSuffix, "");
   RunCommand->device_data = strdup(CacheDir);
 
   if (Dev->isNewKernel(RunCommand)) {
