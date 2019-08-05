@@ -843,6 +843,10 @@ static pocl_lock_t pocl_llvm_codegen_lock;
 static pocl_lock_t pocl_dlhandle_lock;
 static int pocl_dlhandle_cache_initialized;
 
+/* If set to 1, disallow any work-group function specialization. */
+static int force_generic_wg_func;
+
+
 /* only to be called in basic/pthread/<other cpu driver> init */
 void
 pocl_init_dlhandle_cache ()
@@ -852,6 +856,7 @@ pocl_init_dlhandle_cache ()
       POCL_INIT_LOCK (pocl_llvm_codegen_lock);
       POCL_INIT_LOCK (pocl_dlhandle_lock);
       pocl_dlhandle_cache_initialized = 1;
+      force_generic_wg_func = pocl_get_bool_option("FORCE_GENERIC_WG_FUNC", 0);
    }
 }
 
