@@ -213,7 +213,7 @@ string(REGEX REPLACE "-W[^ ]*" "" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
 set(CLANG_LIBNAMES clangCodeGen clangFrontendTool clangFrontend clangDriver clangSerialization
     clangParse clangSema clangRewrite clangRewriteFrontend
     clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers
-    clangStaticAnalyzerCore clangAnalysis clangEdit clangAST clangLex clangBasic)
+    clangStaticAnalyzerCore clangAnalysis clangEdit clangAST clangASTMatchers clangLex clangBasic)
 
 foreach(LIBNAME ${CLANG_LIBNAMES})
   find_library(C_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
