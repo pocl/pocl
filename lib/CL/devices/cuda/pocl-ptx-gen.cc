@@ -181,13 +181,13 @@ void addKernelAnnotations(llvm::Module *Module, const char *KernelName) {
 // Essentially, the variadic list of arguments is replaced with a single array
 // instead.
 //
-// This function changes the prototype of __cl_printf to take an array instead
+// This function changes the prototype of printf to take an array instead
 // of a variadic argument list. It updates the function body to read from
 // this array to retrieve each argument instead of using the dummy __cl_va_arg
-// function. We then visit each __cl_printf callsite and generate the argument
+// function. We then visit each printf callsite and generate the argument
 // array to pass instead of the variadic list.
 void fixPrintF(llvm::Module *Module) {
-  llvm::Function *OldPrintF = Module->getFunction("__cl_printf");
+  llvm::Function *OldPrintF = Module->getFunction("printf");
   if (!OldPrintF)
     return;
 
@@ -201,7 +201,7 @@ void fixPrintF(llvm::Module *Module) {
   pocl::eraseFunctionAndCallers(Module->getFunction("llvm.va_start"));
   pocl::eraseFunctionAndCallers(Module->getFunction("llvm.va_end"));
 
-  // Create new non-variadic __cl_printf function.
+  // Create new non-variadic printf function.
   llvm::Type *ReturnType = OldPrintF->getReturnType();
   llvm::FunctionType *NewPrintfType =
       llvm::FunctionType::get(ReturnType, {FormatType, I64Ptr}, false);

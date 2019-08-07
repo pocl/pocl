@@ -408,7 +408,7 @@ Workgroup::createLoadFromContext(
   return Load;
 }
 
-// TODO we should use __cl_printf users instead of searching the call tree
+// TODO we should use printf users instead of searching the call tree
 static bool callsPrintf(Function *F) {
   for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
     for (BasicBlock::iterator BI = I->begin(), BE = I->end(); BI != BE; ++BI) {
@@ -420,7 +420,7 @@ static bool callsPrintf(Function *F) {
 
       if (callee->getName().startswith("llvm."))
         continue;
-      if (callee->getName().equals("__cl_printf"))
+      if (callee->getName().equals("printf"))
         return true;
       if (callee->getName().equals("__pocl_printf"))
         return true;
@@ -517,7 +517,7 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
       if (oldF == nullptr)
         continue;
 
-      if (oldF->getName().equals("__cl_printf")) {
+      if (oldF->getName().equals("printf")) {
         ops.clear();
         ops.push_back(pb);
         ops.push_back(pbp);

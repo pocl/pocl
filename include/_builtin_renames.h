@@ -178,21 +178,6 @@
 #define tgamma         _cl_tgamma
 #define trunc          _cl_trunc
 #define upsample       _cl_upsample
-
-#ifndef C99_PRINTF
-
-/* We provide our own OpenCL-compliant printf.  */
-int __cl_printf(__constant const char* format, ...);
-#define printf __cl_printf
-
-#else
-
-/* The target just links in the system printf (C99) in the final
-   linkage. This only works with flat address space targets and
-   of course does not support the format etc. extensions in OpenCL 1.2.  */
-
-#endif
-
 #define atom_add     atomic_add
 #define atom_sub     atomic_sub
 #define atom_xchg    atomic_xchg

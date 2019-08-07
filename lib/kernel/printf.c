@@ -717,7 +717,7 @@ extern uint32_t _printf_buffer_capacity;
  * here, so that the kernel library linker pulls them in. */
 
 int
-__cl_printf (const OCL_CONSTANT_AS char *restrict fmt, ...)
+printf (const OCL_CONSTANT_AS char *restrict fmt, ...)
 {
   va_list va;
   va_start (va, fmt);
