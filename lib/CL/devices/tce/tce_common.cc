@@ -21,6 +21,8 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 */
+#include "config.h"
+
 #include "tce_common.h"
 #include "pocl_util.h"
 #include "pocl_cache.h"
@@ -29,7 +31,6 @@
 #include "utlist.h"
 #include "common.h"
 
-#include "config.h"
 #include "pocl_runtime_config.h"
 #include "pocl_hash.h"
 #include "pocl_cache.h"
@@ -360,17 +361,12 @@ pocl_tce_write (void *data,
   printf ("host: write %p <- %lx / %zu\n", src_host_ptr, chunk->start_address + offset,
           size);
 #endif
-  d->copyHostToDevice (src_host_ptr, chunk->start_address + offset, size);
+  d->copyHostToDevice(src_host_ptr, chunk->start_address + offset, size);
 }
 
-void
-pocl_tce_read (void *data,
-               void *__restrict__ dst_host_ptr,
-               pocl_mem_identifier * src_mem_id,
-               cl_mem src_buf,
-               size_t offset,
-               size_t size)
-{
+void pocl_tce_read(void *data, void *__restrict__ dst_host_ptr,
+                   pocl_mem_identifier *src_mem_id, cl_mem src_buf,
+                   size_t offset, size_t size) {
   void *__restrict__ device_ptr = src_mem_id->mem_ptr;
   TCEDevice* d = (TCEDevice*)data;
   chunk_info_t *chunk = (chunk_info_t*)device_ptr;
@@ -378,7 +374,22 @@ pocl_tce_read (void *data,
   printf ("host: read %p -> %lx / %zu\n", dst_host_ptr,
           chunk->start_address + offset, size);
 #endif
-  d->copyDeviceToHost (chunk->start_address + offset, dst_host_ptr, size);
+  d->copyDeviceToHost(chunk->start_address + offset, dst_host_ptr, size);
+}
+
+void pocl_tce_copy(void *data, pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,
+                   pocl_mem_identifier *src_mem_id, cl_mem src_buf,
+                   size_t dst_offset, size_t src_offset, size_t size) {
+  void *__restrict__ dst_device_ptr = dst_mem_id->mem_ptr;
+  void *__restrict__ src_device_ptr = src_mem_id->mem_ptr;
+  TCEDevice *d = (TCEDevice *)data;
+  chunk_info_t *src_chunk = (chunk_info_t *)src_device_ptr;
+  chunk_info_t *dst_chunk = (chunk_info_t *)dst_device_ptr;
+#ifdef DEBUG_TTA_DRIVER
+  printf("device: copy %x %x %zu\n", src_chunk, dst_chunk, size);
+#endif
+  d->copyDeviceToDevice(src_chunk->start_address + src_offset,
+                        dst_chunk->start_address + dst_offset, size);
 }
 
 chunk_info_t*
@@ -598,6 +609,7 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
 #ifdef DEBUG_TTA_DRIVER
           printf ("host: copied value from %p to global argument memory\n", al->value);
 #endif
+
           dev_cmd.args[i] = byteswap_uint32_t (arg_space->start_address, d->needsByteSwap);
           tempChunks.push_back(arg_space);
         }
@@ -705,7 +717,12 @@ pocl_tce_map_mem (void *data,
     }
 
   /* Synch the device global region to the host memory. */
-  pocl_tce_read (data, map->host_ptr, src_mem_id, src_buf, map->offset, map->size);
+    if ((map->map_flags & CL_MAP_WRITE_INVALIDATE_REGION) == 0) {
+      POCL_MSG_PRINT_MEMORY("TCE_MAP_MEM copying\n");
+      pocl_tce_read(data, map->host_ptr, src_mem_id, src_buf, map->offset,
+                    map->size);
+    }
+
   return CL_SUCCESS;
 }
 
@@ -814,23 +831,6 @@ pocl_tce_build_hash (cl_device_id device)
 }
 
 void
-pocl_tce_copy (void */*data*/,
-               pocl_mem_identifier * dst_mem_id,
-               cl_mem dst_buf,
-               pocl_mem_identifier * src_mem_id,
-               cl_mem src_buf,
-               size_t dst_offset,
-               size_t src_offset,
-               size_t size)
-{
-  POCL_ABORT_UNIMPLEMENTED("Copy not yet supported in TCE driver.");
-  if (src_mem_id->mem_ptr == dst_mem_id->mem_ptr)
-    return;
-
-  memcpy (dst_mem_id->mem_ptr, src_mem_id->mem_ptr, size);
-}
-
-void
 pocl_tce_copy_rect (void *data,
                     pocl_mem_identifier * dst_mem_id,
                     cl_mem dst_buf,
@@ -876,28 +876,29 @@ pocl_tce_write_rect (void *data,
                      size_t const host_row_pitch,
                      size_t const host_slice_pitch)
 {
-  const void *__restrict__ const host_ptr = src_host_ptr;
-  void *__restrict__ const device_ptr = dst_mem_id->mem_ptr;
+  TCEDevice *d = (TCEDevice *)data;
+  chunk_info_t *dst_chunk = (chunk_info_t *)dst_mem_id->mem_ptr;
+  size_t adjusted_dst_ptr = dst_chunk->start_address + buffer_origin[0] +
+                            buffer_row_pitch * buffer_origin[1] +
+                            buffer_slice_pitch * buffer_origin[2];
 
   char const *__restrict__ const adjusted_host_ptr =
-    (char const*)host_ptr +
-    host_origin[0] + host_row_pitch * host_origin[1] + 
-    host_slice_pitch * host_origin[2];
-  
+      (char const *)src_host_ptr + host_origin[0] +
+      host_row_pitch * host_origin[1] + host_slice_pitch * host_origin[2];
+
   size_t j, k;
-  size_t base_offset = buffer_origin[0] + buffer_row_pitch * buffer_origin[1] 
-    + buffer_slice_pitch * buffer_origin[2];
+
   /* TODO: handle overlaping regions */
     
   for (k = 0; k < region[2]; ++k)
     for (j = 0; j < region[1]; ++j)
       {
-        char const *__restrict h_ptr = adjusted_host_ptr + host_row_pitch * j 
-          + host_slice_pitch * k;       
-        size_t offset = base_offset + buffer_row_pitch * j 
-          + buffer_slice_pitch * k;
-        pocl_tce_write (data, h_ptr, dst_mem_id, dst_buf, offset, region[0]);
-  
+      size_t s_offset = host_row_pitch * j + host_slice_pitch * k;
+
+      size_t d_offset = buffer_row_pitch * j + buffer_slice_pitch * k;
+
+      d->copyHostToDevice(adjusted_host_ptr + s_offset,
+                          adjusted_dst_ptr + d_offset, region[0]);
       }
 }
 
@@ -914,27 +915,28 @@ pocl_tce_read_rect (void *data,
                     size_t const host_row_pitch,
                     size_t const host_slice_pitch)
 {
-  void *__restrict__ const host_ptr = dst_host_ptr;
-  void *__restrict__ const device_ptr = src_mem_id->mem_ptr;
+  TCEDevice *d = (TCEDevice *)data;
+  chunk_info_t *src_chunk = (chunk_info_t *)src_mem_id->mem_ptr;
+  size_t adjusted_src_ptr = src_chunk->start_address + buffer_origin[0] +
+                            buffer_row_pitch * buffer_origin[1] +
+                            buffer_slice_pitch * buffer_origin[2];
 
-  char *__restrict__ const adjusted_host_ptr =
-    (char*)host_ptr +
-    host_origin[0] + host_row_pitch * host_origin[1] + 
-    host_slice_pitch * host_origin[2];
-  
+  char const *__restrict__ const adjusted_host_ptr =
+      (char const *)dst_host_ptr + host_origin[0] +
+      host_row_pitch * host_origin[1] + host_slice_pitch * host_origin[2];
+
   size_t j, k;
-  size_t base_offset = buffer_origin[0] + buffer_row_pitch * buffer_origin[1] 
-    + buffer_slice_pitch * buffer_origin[2];
-  /* TODO: handle overlaping regions */ 
-  
+
+  /* TODO: handle overlaping regions */
+
   for (k = 0; k < region[2]; ++k)
     for (j = 0; j < region[1]; ++j)
       {
-        char *__restrict__ h_ptr = adjusted_host_ptr + host_row_pitch * j 
-          + host_slice_pitch * k;       
-        size_t offset = base_offset + buffer_row_pitch * j 
-          + buffer_slice_pitch * k;
-        pocl_tce_read (data, h_ptr, src_mem_id, src_buf, offset, region[0]);
+      size_t d_offset = host_row_pitch * j + host_slice_pitch * k;
+      size_t s_offset = buffer_row_pitch * j + buffer_slice_pitch * k;
+
+      d->copyDeviceToHost(adjusted_src_ptr + s_offset,
+                          adjusted_host_ptr + d_offset, region[0]);
       }
 }
 
@@ -1019,10 +1021,4 @@ pocl_tce_notify (cl_device_id device, cl_event event, cl_event finished)
       POCL_UNLOCK(d->cq_lock);
     }
   }
-}
-
-void
-pocl_tce_broadcast (cl_event event)
-{
-  pocl_broadcast (event);
 }
