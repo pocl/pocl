@@ -45,6 +45,7 @@
 #include "pocl_util.h"
 #include "pocl_timing.h"
 #include "pocl_llvm.h"
+#include "pocl_tracing.h"
 #include "utlist.h"
 #include "common.h"
 #include "pocl_mem_management.h"
@@ -937,42 +938,37 @@ pocl_setup_context (cl_context context)
   unsigned i, j;
   size_t alignment = context->devices[0]->mem_base_addr_align;
   context->max_mem_alloc_size = 0;
-  context->svm_allocdev = NULL;
+  context->min_mem_alloc_size = SIZE_MAX;
+  context->svm_alloc_mem = NULL;
 
   memset (context->image_formats, 0, sizeof (void *) * NUM_OPENCL_IMAGE_TYPES);
   memset (context->num_image_formats, 0,
           sizeof (cl_uint) * NUM_OPENCL_IMAGE_TYPES);
 
-  for(i=0; i<context->num_devices; i++)
+  for (i = 0; i < context->num_devices; i++)
     {
-      if (context->devices[i]->should_allocate_svm)
-        context->svm_allocdev = context->devices[i];
+      cl_device_id dev = context->devices[i];
+      cl_ulong max_alloc = dev->global_memory->max_alloc;
+      if (dev->global_memory->is_svm)
+        context->svm_alloc_mem = dev->global_memory;
 
-      if (context->devices[i]->mem_base_addr_align < alignment)
-        alignment = context->devices[i]->mem_base_addr_align;
+      if (dev->mem_base_addr_align < alignment)
+        alignment = dev->mem_base_addr_align;
 
-      if (context->devices[i]->max_mem_alloc_size
-          > context->max_mem_alloc_size)
-        context->max_mem_alloc_size =
-            context->devices[i]->max_mem_alloc_size;
+      if (max_alloc > context->max_mem_alloc_size)
+        context->max_mem_alloc_size = max_alloc;
 
-      if (context->devices[i]->image_support == CL_TRUE)
+      if (max_alloc < context->min_mem_alloc_size)
+        context->min_mem_alloc_size = max_alloc;
+
+      if (dev->image_support == CL_TRUE)
         {
           for (j = 0; j < NUM_OPENCL_IMAGE_TYPES; ++j)
             image_format_union (
-                context->devices[i]->image_formats[j],
-                context->devices[i]->num_image_formats[j],
+                dev->image_formats[j], dev->num_image_formats[j],
                 &context->image_formats[j], &context->num_image_formats[j]);
         }
     }
-
-  if (context->svm_allocdev == NULL)
-    for(i=0; i<context->num_devices; i++)
-      if (DEVICE_IS_SVM_CAPABLE(context->devices[i]))
-        {
-          context->svm_allocdev = context->devices[i];
-          break;
-        }
 
   context->min_buffer_alignment = alignment;
 }

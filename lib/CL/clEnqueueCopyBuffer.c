@@ -63,13 +63,13 @@ CL_API_SUFFIX__VERSION_1_0
 
   POCL_CONVERT_SUBBUFFER_OFFSET (dst_buffer, dst_offset);
 
-  POCL_RETURN_ERROR_ON((src_buffer->size > command_queue->device->max_mem_alloc_size),
-                        CL_OUT_OF_RESOURCES,
-                        "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
+  POCL_RETURN_ERROR_ON (
+      (src_buffer->size > command_queue->device->global_memory->max_alloc),
+      CL_OUT_OF_RESOURCES, "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
 
-  POCL_RETURN_ERROR_ON((dst_buffer->size > command_queue->device->max_mem_alloc_size),
-                        CL_OUT_OF_RESOURCES,
-                        "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
+  POCL_RETURN_ERROR_ON (
+      (dst_buffer->size > command_queue->device->global_memory->max_alloc),
+      CL_OUT_OF_RESOURCES, "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
 
   POCL_RETURN_ERROR_ON(((command_queue->context != src_buffer->context) ||
       (command_queue->context != dst_buffer->context)), CL_INVALID_CONTEXT,
@@ -98,10 +98,10 @@ CL_API_SUFFIX__VERSION_1_0
   if (errcode != CL_SUCCESS)
     return errcode;
 
-  cmd->command.copy.src_mem_id = &src_buffer->device_ptrs[device->dev_id];
+  cmd->command.copy.src_mem_id = &src_buffer->gmem_ptrs[device->global_mem_id];
   cmd->command.copy.src_offset = src_offset;
 
-  cmd->command.copy.dst_mem_id = &dst_buffer->device_ptrs[device->dev_id];
+  cmd->command.copy.dst_mem_id = &dst_buffer->gmem_ptrs[device->global_mem_id];
   cmd->command.copy.dst_offset = dst_offset;
   cmd->command.copy.size = size;
 

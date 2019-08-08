@@ -102,7 +102,7 @@ POname(clGetDeviceInfo)(cl_device_id   device,
     }
   case CL_DEVICE_MAX_MEM_ALLOC_SIZE:
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK (cl_ulong,
-                                             device->max_mem_alloc_size);
+                                             device->global_memory->max_alloc);
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_CHAR:
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_uint, device->preferred_vector_width_char);
   case CL_DEVICE_PREFERRED_VECTOR_WIDTH_SHORT:
@@ -160,13 +160,14 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_SINGLE_FP_CONFIG                  :
     POCL_RETURN_GETINFO (cl_ulong, device->single_fp_config);
   case CL_DEVICE_GLOBAL_MEM_CACHE_TYPE             :
-    POCL_RETURN_GETINFO(cl_uint, device->global_mem_cache_type);
-  case CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE         : 
-    POCL_RETURN_GETINFO(cl_uint, device->global_mem_cacheline_size);
-  case CL_DEVICE_GLOBAL_MEM_CACHE_SIZE             : 
-    POCL_RETURN_GETINFO(cl_ulong, device->global_mem_cache_size);
+    POCL_RETURN_GETINFO (cl_uint, device->global_memory->cache_type);
+  case CL_DEVICE_GLOBAL_MEM_CACHELINE_SIZE         :
+    POCL_RETURN_GETINFO (cl_uint, device->global_memory->cacheline_size);
+  case CL_DEVICE_GLOBAL_MEM_CACHE_SIZE             :
+    POCL_RETURN_GETINFO (cl_ulong, device->global_memory->cache_size);
   case CL_DEVICE_GLOBAL_MEM_SIZE:
-    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->global_mem_size);
+    POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK (cl_ulong,
+                                             device->global_memory->size);
   case CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE          : 
     POCL_RETURN_DEVICE_INFO_WITH_IMPL_CHECK(cl_ulong, device->max_constant_buffer_size);
   case CL_DEVICE_MAX_CONSTANT_ARGS                 : 

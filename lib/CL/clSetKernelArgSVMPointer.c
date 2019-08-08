@@ -33,29 +33,27 @@ POname(clSetKernelArgSVMPointer)(cl_kernel kernel,
 {
   POCL_RETURN_ERROR_COND((kernel == NULL), CL_INVALID_VALUE);
 
-  POCL_RETURN_ERROR_ON((!kernel->context->svm_allocdev), CL_INVALID_CONTEXT,
-                       "None of the devices in this context is SVM-capable\n");
+  POCL_RETURN_ERROR_ON (
+      (!kernel->context->svm_alloc_mem), CL_INVALID_CONTEXT,
+      "None of the devices in this context is SVM-capable\n");
 
-  cl_mem mem = malloc(sizeof(struct _cl_mem));
-  POCL_INIT_OBJECT(mem);
-  mem->mem_host_ptr = (void*)arg_value;
-  mem->parent = NULL;
-  mem->map_count = 0;
-  mem->mappings = NULL;
-  mem->type = CL_MEM_OBJECT_BUFFER;
-  mem->flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE;
-  mem->device_ptrs = NULL;
-  mem->owning_device = NULL;
-  mem->is_image = CL_FALSE;
-  mem->is_pipe = 0;
-  mem->pipe_packet_size = 0;
-  mem->pipe_max_packets = 0;
-  mem->size = MAX_EXTENDED_ALIGNMENT;
-  mem->context = kernel->context;
+  size_t offset;
 
-  POCL_MSG_PRINT_INFO("Setting kernel ARG %i to SVM %p using cl_mem: %p\n", arg_index, arg_value, mem);
+  cl_mem mem = kernel->context->svm_alloc_mem->svm_pointer_to_clmem (
+      kernel->context->svm_alloc_mem, arg_value, &offset);
 
-  return POname(clSetKernelArg)(kernel, arg_index, sizeof(cl_mem), &mem);
+  POCL_RETURN_ERROR_ON ((mem == NULL), CL_INVALID_VALUE,
+                        "Invalid SVM pointer in arg_value");
 
+  POCL_MSG_PRINT_INFO ("Setting kernel ARG %i to SVM %p using cl_mem: %p\n",
+                       arg_index, arg_value, (void *)mem);
+
+  int retval
+      = POname (clSetKernelArg) (kernel, arg_index, sizeof (cl_mem), &mem);
+  if (retval == CL_SUCCESS && offset > 0)
+    {
+      kernel->dyn_arguments[arg_index].offset = offset;
+    }
+  return retval;
 }
 POsym(clSetKernelArgSVMPointer)

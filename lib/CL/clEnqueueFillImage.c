@@ -113,7 +113,7 @@ CL_API_SUFFIX__VERSION_1_2
   cmd->command.fill_image.pixel_size = px;
 
   cmd->command.fill_image.mem_id
-      = &image->device_ptrs[command_queue->device->dev_id];
+      = &image->gmem_ptrs[command_queue->device->global_mem_id];
 
   cmd->command.fill_image.origin[0] = origin[0];
   cmd->command.fill_image.origin[1] = origin[1];

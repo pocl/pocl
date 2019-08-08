@@ -491,19 +491,16 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
             {
               POCL_GOTO_ON_SUB_MISALIGN (buf, command_queue);
 
-              if (buf->parent != NULL)
-              {
-                  *(cl_mem *)(al->value) = buf->parent;
-                  al->offset = buf->origin;
-                  buf = buf->parent;
-              }
-              else
-                al->offset = 0;
+              // handled in clSetKernelArg
+              assert (buf->parent == NULL);
 
-              POCL_GOTO_ERROR_ON ((buf->size > command_queue->device->max_mem_alloc_size),
-                                    CL_OUT_OF_RESOURCES,
-                                    "ARG %u: buffer is larger than "
-                                    "device's MAX_MEM_ALLOC_SIZE\n", i);
+              POCL_GOTO_ERROR_ON (
+                  (buf->size
+                   > command_queue->device->global_memory->max_alloc),
+                  CL_OUT_OF_RESOURCES,
+                  "ARG %u: buffer is larger than "
+                  "device's MAX_MEM_ALLOC_SIZE\n",
+                  i);
             }
 
           mem_list[buffer_count++] = buf;

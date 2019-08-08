@@ -75,7 +75,7 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
 
   cl_device_id dev = command_queue->device;
 
-  cmd->command.write_image.dst_mem_id = &image->device_ptrs[dev->dev_id];
+  cmd->command.write_image.dst_mem_id = &image->gmem_ptrs[dev->global_mem_id];
   cmd->command.write_image.src_host_ptr = ptr;
   cmd->command.write_image.src_mem_id = NULL;
 

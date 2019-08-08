@@ -36,6 +36,8 @@
 #include "pocl_binary.h"
 #include "pocl_util.h"
 
+#include "utlist.h"
+
 static unsigned long kernel_ids = 0;
 
 CL_API_ENTRY cl_kernel CL_API_CALL

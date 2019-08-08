@@ -55,15 +55,17 @@ CL_API_SUFFIX__VERSION_1_0
 
   POCL_CONVERT_SUBBUFFER_OFFSET (src_buffer, src_offset);
 
-  POCL_RETURN_ERROR_ON((src_buffer->size > command_queue->device->max_mem_alloc_size),
-                        CL_OUT_OF_RESOURCES,
-                        "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
+  POCL_RETURN_ERROR_ON (
+      (src_buffer->size > command_queue->device->global_memory->max_alloc),
+      CL_OUT_OF_RESOURCES, "src is larger than device's MAX_MEM_ALLOC_SIZE\n");
 
   cl_device_id dev = command_queue->device;
 
-  cmd->command.write_image.dst_mem_id = &dst_image->device_ptrs[dev->dev_id];
+  cmd->command.write_image.dst_mem_id
+      = &dst_image->gmem_ptrs[dev->global_mem_id];
   cmd->command.write_image.src_host_ptr = NULL;
-  cmd->command.write_image.src_mem_id = &src_buffer->device_ptrs[dev->dev_id];
+  cmd->command.write_image.src_mem_id
+      = &src_buffer->gmem_ptrs[dev->global_mem_id];
 
   // TODO
   cmd->command.write_image.src_row_pitch = 0;   // dst_image->image_row_pitch;

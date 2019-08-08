@@ -37,12 +37,13 @@ POname(clSVMAlloc)(cl_context context,
 
   POCL_RETURN_ERROR_COND((context == NULL), NULL);
 
-  POCL_RETURN_ERROR_ON((!context->svm_allocdev), NULL,
-                       "None of the devices in this context is SVM-capable\n");
+  POCL_RETURN_ERROR_ON (
+      (!context->svm_alloc_mem), NULL,
+      "None of the devices in this context is SVM-capable\n");
 
   POCL_RETURN_ERROR_COND((size == 0), NULL);
 
-  POCL_RETURN_ERROR_ON ((size > context->max_mem_alloc_size), NULL,
+  POCL_RETURN_ERROR_ON ((size > context->min_mem_alloc_size), NULL,
                         "size(%zu) > CL_DEVICE_MAX_MEM_ALLOC_SIZE value "
                         "for some device in context\n",
                         size);
@@ -78,10 +79,8 @@ POname(clSVMAlloc)(cl_context context,
                            "One of the devices in the context doesn't support "
                            "SVM atomics buffers, and it's in flags\n");
 
-#define dev context->svm_allocdev
-
   if (alignment == 0)
-    alignment = dev->min_data_type_align_size;
+    alignment = context->min_buffer_alignment;
 
   /* alignment is not a power of two or the OpenCL implementation cannot support
    * the specified alignment for at least one device in context. */
@@ -93,7 +92,8 @@ POname(clSVMAlloc)(cl_context context,
                          NULL, "All devices must support the requested memory "
                          "aligment (%u) \n", alignment);
 
-  void *ptr = dev->ops->svm_alloc (dev, flags, size);
+  void *ptr = context->svm_alloc_mem->svm_alloc (context->svm_alloc_mem, flags,
+                                                 size);
   return ptr;
 }
 POsym(clSVMAlloc)

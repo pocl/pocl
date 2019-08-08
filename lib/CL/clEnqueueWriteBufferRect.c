@@ -86,15 +86,17 @@ POname(clEnqueueWriteBufferRect)(cl_command_queue command_queue,
   size_t dst_offset = 0;
   POCL_CONVERT_SUBBUFFER_OFFSET (buffer, dst_offset);
 
-  POCL_RETURN_ERROR_ON((buffer->size > command_queue->device->max_mem_alloc_size),
-                        CL_OUT_OF_RESOURCES,
-                        "buffer is larger than device's MAX_MEM_ALLOC_SIZE\n");
+  POCL_RETURN_ERROR_ON (
+      (buffer->size > command_queue->device->global_memory->max_alloc),
+      CL_OUT_OF_RESOURCES,
+      "buffer is larger than device's MAX_MEM_ALLOC_SIZE\n");
 
   pocl_create_command (&cmd, command_queue, CL_COMMAND_WRITE_BUFFER_RECT,
                        event, num_events_in_wait_list, event_wait_list, 1,
                        &buffer);
 
-  cmd->command.write_rect.dst_mem_id = &buffer->device_ptrs[device->dev_id];
+  cmd->command.write_rect.dst_mem_id
+      = &buffer->gmem_ptrs[device->global_mem_id];
   cmd->command.write_rect.src_host_ptr = ptr;
 
   cmd->command.write_rect.host_origin[0] = host_origin[0];

@@ -44,6 +44,7 @@
 #include "pocl_timing.h"
 #include "pocl_file_util.h"
 #include "pocl_workgroup_func.h"
+#include "pocl_runtime_config.h"
 
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
@@ -106,6 +107,7 @@ static const cl_image_format supported_image_formats[] = {
     { CL_BGRA, CL_UNSIGNED_INT8 }
  };
 
+static pocl_global_mem_t pocl_basic_global_memory;
 
 void
 pocl_basic_init_device_ops(struct pocl_device_ops *ops)
@@ -116,8 +118,6 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->uninit = pocl_basic_uninit;
   ops->reinit = pocl_basic_reinit;
   ops->init = pocl_basic_init;
-  ops->alloc_mem_obj = pocl_basic_alloc_mem_obj;
-  ops->free = pocl_basic_free;
   ops->read = pocl_basic_read;
   ops->read_rect = pocl_basic_read_rect;
   ops->write = pocl_basic_write;
@@ -137,8 +137,6 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->flush = pocl_basic_flush;
   ops->build_hash = pocl_basic_build_hash;
 
-  ops->svm_free = pocl_basic_svm_free;
-  ops->svm_alloc = pocl_basic_svm_alloc;
   /* no need to implement these two as they're noop
    * and pocl_exec_command takes care of it */
   ops->svm_map = NULL;
@@ -146,8 +144,6 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->svm_copy = pocl_basic_svm_copy;
   ops->svm_fill = pocl_basic_svm_fill;
 
-  ops->create_image = NULL;
-  ops->free_image = NULL;
   ops->create_sampler = NULL;
   ops->free_sampler = NULL;
   ops->copy_image_rect = pocl_basic_copy_image_rect;
@@ -258,7 +254,6 @@ pocl_init_cpu_device_infos (cl_device_id dev)
   dev->image_max_buffer_size = 65536;
   dev->image_max_array_size = 2048;
   dev->max_constant_args = 8;
-  dev->max_mem_alloc_size = 0;
   dev->max_parameter_size = 1024;
   dev->min_data_type_align_size = MAX_EXTENDED_ALIGNMENT;
   dev->mem_base_addr_align = MAX_EXTENDED_ALIGNMENT;
@@ -287,10 +282,6 @@ pocl_init_cpu_device_infos (cl_device_id dev)
   dev->double_fp_config |= CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT;
 #endif
 
-  dev->global_mem_cache_type = CL_NONE;
-  dev->global_mem_cacheline_size = 0;
-  dev->global_mem_cache_size = 0;
-  dev->global_mem_size = 0;
   dev->max_constant_buffer_size = 0;
   dev->max_constant_args = 8;
   dev->local_mem_type = CL_GLOBAL;
@@ -338,7 +329,6 @@ pocl_init_cpu_device_infos (cl_device_id dev)
 
   dev->global_as_id = dev->local_as_id = dev->constant_as_id = 0;
 
-  dev->should_allocate_svm = 0;
   /* OpenCL 2.0 properties */
   dev->svm_caps = CL_DEVICE_SVM_COARSE_GRAIN_BUFFER
                   | CL_DEVICE_SVM_FINE_GRAIN_BUFFER
@@ -376,6 +366,39 @@ pocl_init_cpu_device_infos (cl_device_id dev)
 
 }
 
+void
+pocl_init_cpu_global_mem (cl_device_id device)
+{
+
+  if (pocl_basic_global_memory.size == 0)
+    {
+      pocl_basic_global_memory.currently_allocated = 0;
+      pocl_basic_global_memory.is_svm = 1;
+      pocl_basic_global_memory.max_ever_allocated = 0;
+      pocl_basic_global_memory.svm_list = NULL;
+
+      POCL_INIT_LOCK (pocl_basic_global_memory.lock);
+
+      pocl_basic_global_memory.alloc_mem_obj = pocl_basic_alloc_mem_obj;
+      pocl_basic_global_memory.free_mem_obj = pocl_basic_free_mem_obj;
+      pocl_basic_global_memory.svm_alloc = pocl_basic_svm_alloc;
+      pocl_basic_global_memory.svm_free = pocl_basic_svm_free;
+      pocl_basic_global_memory.svm_pointer_to_clmem
+          = pocl_basic_svm_pointer_to_clmem;
+
+      pocl_topology_detect_globalmem_info (&pocl_basic_global_memory);
+    }
+
+  if (!pocl_svm_registered)
+    {
+      pocl_basic_global_memory.id = pocl_svm_id = pocl_num_global_mem++;
+      pocl_svm_registered = 1;
+    }
+
+  device->global_mem_id = pocl_svm_id;
+  device->global_memory = &pocl_basic_global_memory;
+}
+
 unsigned int
 pocl_basic_probe(struct pocl_device_ops *ops)
 {
@@ -389,20 +412,14 @@ pocl_basic_probe(struct pocl_device_ops *ops)
 }
 
 cl_int
-pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
+pocl_basic_init (unsigned j, cl_device_id device, const char *parameters)
 {
   struct data *d;
-  cl_int ret = CL_SUCCESS;
   int err;
-  static int first_basic_init = 1;
 
-  if (first_basic_init)
-    {
-      POCL_MSG_WARN ("INIT dlcache DOTO delete\n");
-      pocl_init_dlhandle_cache();
-      first_basic_init = 0;
-    }
-  device->global_mem_id = 0;
+  pocl_init_dlhandle_cache ();
+
+  pocl_init_cpu_global_mem (device);
 
   d = (struct data *) calloc (1, sizeof (struct data));
   if (d == NULL)
@@ -418,10 +435,9 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
      an unimplemented property error because hwloc is used to
      initialize global_mem_size which it is not yet. Just put 
      a nonzero there for now. */
-  device->global_mem_size = 1;
   err = pocl_topology_detect_device_info(device);
   if (err)
-    ret = CL_INVALID_DEVICE;
+    return CL_INVALID_DEVICE;
 
   POCL_INIT_LOCK (d->cq_lock);
 
@@ -448,94 +464,87 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
      using multiple OpenCL devices. */
   device->max_compute_units = 1;
 
-  return ret;
-}
-
-cl_int
-pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
-{
-  void *b = NULL;
-  cl_mem_flags flags = mem_obj->flags;
-  unsigned i;
-  POCL_MSG_PRINT_MEMORY (" mem %p, dev %d\n", mem_obj, device->dev_id);
-  /* check if some driver has already allocated memory for this mem_obj 
-     in our global address space, and use that*/
-  for (i = 0; i < mem_obj->context->num_devices; ++i)
-    {
-      if (!mem_obj->device_ptrs[i].available)
-        continue;
-
-      if (mem_obj->device_ptrs[i].global_mem_id == device->global_mem_id
-          && mem_obj->device_ptrs[i].mem_ptr != NULL)
-        {
-          mem_obj->device_ptrs[device->dev_id].mem_ptr =
-            mem_obj->device_ptrs[i].mem_ptr;
-          POCL_MSG_PRINT_MEMORY (
-              "mem %p dev %d, using already allocated mem\n", mem_obj,
-              device->dev_id);
-          return CL_SUCCESS;
-        }
-    }
-
-  /* memory for this global memory is not yet allocated -> do it */
-  if (flags & CL_MEM_USE_HOST_PTR)
-    {
-      // mem_host_ptr must be non-NULL
-      assert(host_ptr != NULL);
-      b = host_ptr;
-    }
-  else
-    {
-      POCL_MSG_PRINT_MEMORY ("!USE_HOST_PTR\n");
-      b = pocl_aligned_malloc_global_mem (device, MAX_EXTENDED_ALIGNMENT,
-                                          mem_obj->size);
-      if (b==NULL)
-        return CL_MEM_OBJECT_ALLOCATION_FAILURE;
-
-      mem_obj->shared_mem_allocation_owner = device;
-    }
-
-  /* use this dev mem allocation as host ptr */
-  if ((flags & CL_MEM_ALLOC_HOST_PTR) && (mem_obj->mem_host_ptr == NULL))
-    mem_obj->mem_host_ptr = b;
-
-  if (flags & CL_MEM_COPY_HOST_PTR)
-    {
-      POCL_MSG_PRINT_MEMORY ("COPY_HOST_PTR\n");
-      // mem_host_ptr must be non-NULL
-      assert(host_ptr != NULL);
-      memcpy (b, host_ptr, mem_obj->size);
-    }
-
-  mem_obj->device_ptrs[device->dev_id].mem_ptr = b;
-
   return CL_SUCCESS;
 }
 
-
-void
-pocl_basic_free (cl_device_id device, cl_mem memobj)
+int
+pocl_basic_alloc_mem_obj (pocl_global_mem_t *gmem, cl_mem mem,
+                          pocl_mem_identifier *p, void *host_ptr)
 {
-  cl_mem_flags flags = memobj->flags;
+  assert (p->mem_ptr == NULL);
+  int ret = CL_MEM_OBJECT_ALLOCATION_FAILURE;
 
-  /* aloocation owner executes freeing */
-  if (flags & CL_MEM_USE_HOST_PTR ||
-      memobj->shared_mem_allocation_owner != device)
-    return;
+  POCL_LOCK (gmem->lock);
+  p->device_size = mem->size;
+  if (!pocl_global_mem_can_allocate (gmem, p))
+    goto ERROR;
 
-  void* ptr = memobj->device_ptrs[device->dev_id].mem_ptr;
-  size_t size = memobj->size;
+  /* In case USE_HOST_PTR is true, don't allocate anything */
+  if (mem->flags & CL_MEM_USE_HOST_PTR)
+    {
+      assert (mem->mem_host_ptr != NULL);
+      p->mem_ptr = mem->mem_host_ptr;
+      POCL_MSG_PRINT_MEMORY ("Basic device USE_HOST_PTR %p / size %zu \n",
+                             p->mem_ptr, mem->size);
+      p->host_ptr = NULL;
+      goto END;
+    }
 
-  if (memobj->flags | CL_MEM_ALLOC_HOST_PTR)
-    memobj->mem_host_ptr = NULL;
-  pocl_free_global_mem(device, ptr, size);
+  /* ... else allocate. */
+  p->mem_ptr = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, p->device_size);
+  if (p->mem_ptr == NULL)
+    goto ERROR;
+
+  p->host_ptr = p->mem_ptr;
+  if (mem->mem_host_ptr == NULL)
+    mem->mem_host_ptr = p->mem_ptr;
+
+  if (mem->flags & CL_MEM_COPY_HOST_PTR)
+    {
+      assert (host_ptr != NULL);
+      memcpy (p->mem_ptr, host_ptr, mem->size);
+    }
+
+  POCL_MSG_PRINT_MEMORY ("Basic device ALLOC %p / size %zu \n", p->mem_ptr,
+                         mem->size);
+END:
+  pocl_global_mem_allocated (gmem, p);
+  ret = CL_SUCCESS;
+ERROR:
+  POCL_UNLOCK (gmem->lock);
+  return ret;
+}
+
+int
+pocl_basic_free_mem_obj (pocl_global_mem_t *gmem, cl_mem mem,
+                         pocl_mem_identifier *p)
+{
+  int ret = CL_SUCCESS;
+  POCL_LOCK (gmem->lock);
+
+  /* if we didn't allocate anything, return */
+  if (p->host_ptr == NULL)
+    {
+      p->mem_ptr = NULL;
+      goto END;
+    }
+
+  if (p->host_ptr == mem->mem_host_ptr)
+    mem->mem_host_ptr = NULL;
+
+  pocl_aligned_free (p->mem_ptr);
+  p->mem_ptr = NULL;
+  p->host_ptr = NULL;
+
+END:
+  pocl_global_mem_freed (gmem, p);
+  POCL_UNLOCK (gmem->lock);
+  return ret;
 }
 
 void
-pocl_basic_read (void *data,
-                 void *__restrict__ host_ptr,
-                 pocl_mem_identifier * src_mem_id,
-                 cl_mem src_buf,
+pocl_basic_read (void *data, void *__restrict__ host_ptr,
+                 pocl_mem_identifier *src_mem_id, cl_mem src_buf,
                  size_t offset, size_t size)
 {
   void *__restrict__ device_ptr = src_mem_id->mem_ptr;
@@ -546,10 +555,8 @@ pocl_basic_read (void *data,
 }
 
 void
-pocl_basic_write (void *data,
-                  const void *__restrict__  host_ptr,
-                  pocl_mem_identifier * dst_mem_id,
-                  cl_mem dst_buf,
+pocl_basic_write (void *data, const void *__restrict__ host_ptr,
+                  pocl_mem_identifier *dst_mem_id, cl_mem dst_buf,
                   size_t offset, size_t size)
 {
   void *__restrict__ device_ptr = dst_mem_id->mem_ptr;
@@ -615,7 +622,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
           else
             {
               cl_mem m = (*(cl_mem *)(al->value));
-              void *ptr = m->device_ptrs[cmd->device->dev_id].mem_ptr;
+              void *ptr = m->gmem_ptrs[cmd->device->global_mem_id].mem_ptr;
               *(void **)arguments[i] = (char *)ptr + al->offset;
             }
         }
@@ -722,6 +729,19 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
 void
 pocl_basic_run_native (void *data, _cl_command_node *cmd)
 {
+  cl_event ev = cmd->event;
+  cl_device_id dev = cmd->device;
+  size_t i;
+  for (i = 0; i < ev->num_buffers; i++)
+    {
+      void *arg_loc = cmd->command.native.arg_locs[i];
+      void *buf = ev->mem_objs[i]->gmem_ptrs[dev->global_mem_id].mem_ptr;
+      if (dev->address_bits == 32)
+        *((uint32_t *)arg_loc) = (uint32_t) (((uintptr_t)buf) & 0xFFFFFFFF);
+      else
+        *((uint64_t *)arg_loc) = (uint64_t) (uintptr_t)buf;
+    }
+
   cmd->command.native.user_func(cmd->command.native.args);
 }
 
@@ -1012,28 +1032,21 @@ pocl_basic_memfill (void *data, pocl_mem_identifier *dst_mem_id,
 }
 
 cl_int
-pocl_basic_map_mem (void *data,
-                    pocl_mem_identifier * src_mem_id,
-                    cl_mem src_buf,
-                    mem_mapping_t *map)
+pocl_basic_map_mem (void *data, pocl_mem_identifier *src_mem_id,
+                    cl_mem src_buf, mem_mapping_t *map)
 {
   void *__restrict__ src_device_ptr = src_mem_id->mem_ptr;
   void *host_ptr = map->host_ptr;
   size_t offset = map->offset;
   size_t size = map->size;
 
-  if (host_ptr == NULL)
-    {
-      map->host_ptr = ((char *)src_device_ptr + offset);
-      return CL_SUCCESS;
-    }
-
   if (map->map_flags & CL_MAP_WRITE_INVALIDATE_REGION)
     return CL_SUCCESS;
 
+  // TODO can this actually happen now ?
   /* If the buffer was allocated with CL_MEM_ALLOC_HOST_PTR |
    * CL_MEM_COPY_HOST_PTR,
-   * the dst_host_ptr is not the same memory as pocl's device_ptrs[], and we
+   * the dst_host_ptr is not the same memory as pocl's gmem_ptrs[], and we
    * need to copy pocl's buffer content back to dst_host_ptr. */
   if (host_ptr != (src_device_ptr + offset))
     {
@@ -1063,10 +1076,11 @@ pocl_basic_unmap_mem(void *data,
   size_t offset = map->offset;
   size_t size = map->size;
 
+  // TODO can this actually happen now ?
   /* If the buffer was allocated with CL_MEM_ALLOC_src_host_ptr |
    * CL_MEM_COPY_src_host_ptr,
-   * the src_host_ptr is not the same memory as pocl's device_ptrs[], and we
-   * need to copy src_host_ptr content back to  pocl's device_ptrs[]. */
+   * the src_host_ptr is not the same memory as pocl's gmem_ptrs[], and we
+   * need to copy src_host_ptr content back to  pocl's gmem_ptrs[]. */
   if (host_ptr != (dst_device_ptr + offset))
     {
       POCL_MSG_PRINT_MEMORY ("device: UNMAP memcpy() "
@@ -1435,18 +1449,90 @@ pocl_basic_fill_image (void *data, cl_mem image,
   return CL_SUCCESS;
 }
 
-void
-pocl_basic_svm_free (cl_device_id dev, void *svm_ptr)
+int
+pocl_basic_svm_free (pocl_global_mem_t *gmem, void *svm_ptr)
 {
-  /* TODO we should somehow figure out the size argument
-   * and call pocl_free_global_mem */
-  pocl_aligned_free (svm_ptr);
+  pocl_gmem_allocation_t *found = NULL, *tmp;
+  POCL_LOCK (gmem->lock);
+  DL_FOREACH (gmem->svm_list, tmp)
+  {
+    if (tmp->svm->mem_host_ptr == svm_ptr)
+      {
+        found = tmp;
+        break;
+      }
+  }
+
+  if (found)
+    {
+      DL_DELETE (gmem->svm_list, found);
+      assert (gmem->currently_allocated >= found->size);
+      gmem->currently_allocated -= found->size;
+      POCL_MEM_FREE (found->svm->gmem_ptrs);
+      POCL_MEM_FREE (found->svm->mem_host_ptr);
+      POCL_MEM_FREE (found->svm);
+      POCL_MEM_FREE (found);
+    }
+  POCL_UNLOCK (gmem->lock);
+  return found ? CL_SUCCESS : CL_FAILED;
 }
 
 void *
-pocl_basic_svm_alloc (cl_device_id dev, cl_svm_mem_flags flags, size_t size)
+pocl_basic_svm_alloc (pocl_global_mem_t *gmem, cl_svm_mem_flags flags,
+                      size_t size)
 {
-  return pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, size);
+  void *retval = NULL;
+
+  POCL_LOCK (gmem->lock);
+  if ((gmem->currently_allocated + size) > gmem->size)
+    goto ERROR;
+
+  retval = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, size);
+  if (retval)
+    {
+      gmem->currently_allocated += size;
+      if (gmem->currently_allocated > gmem->max_ever_allocated)
+        gmem->max_ever_allocated = gmem->currently_allocated;
+
+      pocl_gmem_allocation_t *all
+          = calloc (1, sizeof (pocl_gmem_allocation_t));
+      /* create a hidden cl_mem that'll be useful for clSetKernelArg */
+      all->svm = calloc (1, sizeof (struct _cl_mem));
+      POCL_INIT_OBJECT (all->svm);
+      all->svm->gmem_ptrs
+          = calloc (pocl_num_global_mem, sizeof (pocl_mem_identifier));
+      all->svm->size = all->size = size;
+      all->svm->mem_host_ptr = retval;
+      all->svm->gmem_ptrs[pocl_svm_id].mem_ptr = retval;
+      all->svm->gmem_ptrs[pocl_svm_id].device_size = size;
+
+      DL_PREPEND (gmem->svm_list, all);
+    }
+
+ERROR:
+  POCL_UNLOCK (gmem->lock);
+  return retval;
+}
+
+cl_mem
+pocl_basic_svm_pointer_to_clmem (pocl_global_mem_t *gmem, const void *ptr,
+                                 size_t *offset)
+{
+  pocl_gmem_allocation_t *tmp, *found = NULL;
+  POCL_LOCK (gmem->lock);
+  DL_FOREACH (gmem->svm_list, tmp)
+  {
+    const void *end = (const char *)tmp->svm->mem_host_ptr + tmp->size;
+    if ((ptr >= tmp->svm->mem_host_ptr) && (ptr < end))
+      {
+        found = tmp;
+        *offset = (const char *)ptr - (const char *)tmp->svm->mem_host_ptr;
+        break;
+      }
+  }
+
+  POCL_UNLOCK (gmem->lock);
+  return found ? found->svm : NULL;
 }
 
 void

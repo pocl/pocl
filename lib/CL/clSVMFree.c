@@ -34,17 +34,18 @@ POname(clSVMFree)(cl_context context,
     return;
   }
 
-  if (context->svm_allocdev==NULL)
-  {
-    POCL_MSG_WARN("None of the devices in this context is SVM-capable");
-    return;
-  }
+  if (context->svm_alloc_mem == NULL)
+    {
+      POCL_MSG_WARN ("None of the devices in this context is SVM-capable");
+      return;
+    }
 
   if (svm_pointer == NULL)
     return;
 
-  context->svm_allocdev->ops->svm_free (context->svm_allocdev, svm_pointer);
-
+  if (context->svm_alloc_mem->svm_free (context->svm_alloc_mem, svm_pointer)
+      != CL_SUCCESS)
+    POCL_MSG_WARN ("Invalid SVM pointer");
 }
 POsym(clSVMFree)
 

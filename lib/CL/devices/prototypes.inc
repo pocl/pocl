@@ -31,6 +31,17 @@
 
 #define GEN_PROTOTYPES(__DRV__)                                               \
   PUSH_VISIBILITY_HIDDEN                                                      \
+  int pocl_##__DRV__##_alloc_mem_obj (pocl_global_mem_t *gmem, cl_mem mem,        \
+                                      pocl_mem_identifier *p,                 \
+                                      void *host_ptr);                        \
+  int pocl_##__DRV__##_free_mem_obj (pocl_global_mem_t *gmem, cl_mem mem,         \
+                                     pocl_mem_identifier *p);                 \
+  void *pocl_##__DRV__##_svm_alloc (pocl_global_mem_t *gmem, cl_svm_mem_flags flags, \
+                                    size_t size);                             \
+  int pocl_##__DRV__##_svm_free (pocl_global_mem_t *gmem, void *svm_ptr);           \
+  cl_mem pocl_##__DRV__##_svm_pointer_to_clmem (pocl_global_mem_t *gmem, const void* ptr, size_t *offset); \
+  void* pocl_##__DRV__##_extra_alloc (pocl_global_mem_t *gmem, size_t size); \
+  int pocl_##__DRV__##_extra_free (pocl_global_mem_t *gmem, void* ptr); \
   void pocl_##__DRV__##_submit (_cl_command_node *node, cl_command_queue cq); \
   void pocl_##__DRV__##_join (cl_device_id device, cl_command_queue cq);      \
   void pocl_##__DRV__##_flush (cl_device_id device, cl_command_queue cq);     \
@@ -48,9 +59,6 @@
   unsigned int pocl_##__DRV__##_probe (struct pocl_device_ops *ops);          \
   cl_int pocl_##__DRV__##_init_queue (cl_command_queue queue);                \
   void pocl_##__DRV__##_free_queue (cl_command_queue queue);                  \
-  cl_int pocl_##__DRV__##_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, \
-                                         void *host_ptr);                     \
-  void pocl_##__DRV__##_free (cl_device_id device, cl_mem mem_obj);           \
   void pocl_##__DRV__##_read (void *data, void *__restrict__ dst_host_ptr,    \
                               pocl_mem_identifier *src_mem_id,                \
                               cl_mem src_buf, size_t offset, size_t size);    \
@@ -102,11 +110,6 @@
   char *pocl_##__DRV__##_build_hash (cl_device_id device);                    \
   void pocl_##__DRV__##_init_target_machine (void *data,                      \
                                              void *target_machine);           \
-  void *pocl_##__DRV__##_create_image (                                       \
-      void *data, const cl_image_format *image_format,                        \
-      const cl_image_desc *image_desc, cl_mem image, cl_int *err);            \
-  cl_int pocl_##__DRV__##_free_image (void *data, cl_mem image,               \
-                                      void *mem_id);                          \
   void *pocl_##__DRV__##_create_sampler (void *data, cl_sampler samp,         \
                                          cl_int *err);                        \
   cl_int pocl_##__DRV__##_free_sampler (void *data, cl_sampler samp,          \
@@ -135,9 +138,6 @@
       void *data, cl_mem image, pocl_mem_identifier *mem_id,                  \
       const size_t *origin, const size_t *region,                             \
       const void *__restrict__ fill_pixel, size_t pixel_size);                \
-  void pocl_##__DRV__##_svm_free (cl_device_id dev, void *svm_ptr);           \
-  void *pocl_##__DRV__##_svm_alloc (cl_device_id dev, cl_svm_mem_flags flags, \
-                                    size_t size);                             \
   void pocl_##__DRV__##_svm_map (cl_device_id dev, void *svm_ptr);            \
   void pocl_##__DRV__##_svm_unmap (cl_device_id dev, void *svm_ptr);          \
   void pocl_##__DRV__##_svm_copy (cl_device_id dev, void *__restrict__ dst,   \

@@ -88,9 +88,8 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
     goto ERROR;
 
   cmd->command.unmap.mapping = mapping;
-  cmd->command.unmap.mem_id = &memobj->device_ptrs[device->dev_id];
+  cmd->command.unmap.mem_id = &memobj->gmem_ptrs[device->global_mem_id];
 
-  POname(clRetainMemObject) (memobj);
   memobj->owning_device = command_queue->device;
   pocl_command_enqueue(command_queue, cmd);
 

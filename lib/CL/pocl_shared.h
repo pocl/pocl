@@ -83,6 +83,10 @@ int context_set_properties(cl_context                    context,
 
 void set_program_id (cl_program program);
 
+cl_mem pocl_create_memobject (cl_context context, cl_mem_flags flags,
+                              size_t size, void *host_ptr,
+                              cl_int *errcode_ret);
+
 #ifdef __GNUC__
 #pragma GCC visibility pop
 #endif

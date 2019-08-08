@@ -131,13 +131,12 @@ static cl_device_partition_property pthread_partition_properties[2]
 
 #define FALLBACK_MAX_THREAD_COUNT 8
 
-char scheduler_initialized = 0;
+static int scheduler_initialized = 0;
 
 cl_int
-pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
+pocl_pthread_init (unsigned j, cl_device_id device, const char *parameters)
 {
   struct data *d;
-  cl_int ret = CL_SUCCESS;
   int err;
 
   d = (struct data *) calloc (1, sizeof (struct data));
@@ -149,6 +148,8 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
 
   pocl_init_cpu_device_infos (device);
 
+  pocl_init_cpu_global_mem (device);
+
   device->on_host_queue_props
       = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE;
 
@@ -157,10 +158,9 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
      an unimplemented property error because hwloc is used to
      initialize global_mem_size which it is not yet. Just put 
      a nonzero there for now. */
-  device->global_mem_size = 1;
   err = pocl_topology_detect_device_info (device);
   if (err)
-    ret = CL_INVALID_DEVICE;
+    return CL_INVALID_DEVICE;
 
   /* device->max_compute_units was set up by topology_detect,
    * but if the user requests, lower it */
@@ -194,13 +194,11 @@ pocl_pthread_init (unsigned j, cl_device_id device, const char* parameters)
   if (!scheduler_initialized)
     {
       scheduler_initialized = 1;
-      pocl_init_dlhandle_cache();
-      pocl_init_kernel_run_command_manager();
+      pocl_init_dlhandle_cache ();
+      pocl_init_kernel_run_command_manager ();
       pthread_scheduler_init (device);
     }
-  /* system mem as global memory */
-  device->global_mem_id = 0;
-  return ret;
+  return CL_SUCCESS;
 }
 
 cl_int

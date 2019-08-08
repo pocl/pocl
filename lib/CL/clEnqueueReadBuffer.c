@@ -64,9 +64,10 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
 
   POCL_CONVERT_SUBBUFFER_OFFSET (buffer, offset);
 
-  POCL_RETURN_ERROR_ON((buffer->size > command_queue->device->max_mem_alloc_size),
-                        CL_OUT_OF_RESOURCES,
-                        "buffer is larger than device's MAX_MEM_ALLOC_SIZE\n");
+  POCL_RETURN_ERROR_ON (
+      (buffer->size > command_queue->device->global_memory->max_alloc),
+      CL_OUT_OF_RESOURCES,
+      "buffer is larger than device's MAX_MEM_ALLOC_SIZE\n");
 
   errcode = pocl_check_event_wait_list (command_queue, num_events_in_wait_list,
                                         event_wait_list);
@@ -83,7 +84,7 @@ POname(clEnqueueReadBuffer)(cl_command_queue command_queue,
     return errcode;
 
   cmd->command.read.dst_host_ptr = ptr;
-  cmd->command.read.src_mem_id = &buffer->device_ptrs[device->dev_id];
+  cmd->command.read.src_mem_id = &buffer->gmem_ptrs[device->global_mem_id];
   cmd->command.read.offset = offset;
   cmd->command.read.size = size;
 

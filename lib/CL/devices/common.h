@@ -26,7 +26,6 @@
 #define POCL_COMMON_H
 
 #include "pocl_cl.h"
-#include "utlist.h"
 
 #define __CBUILD__
 #include "pocl_image_types.h"
@@ -66,6 +65,19 @@ extern "C" {
 
 void pocl_init_cpu_device_infos (cl_device_id dev);
 
+void pocl_init_cpu_global_mem (cl_device_id dev);
+
+void pocl_bufalloc_init_global_mem (cl_device_id device, size_t size,
+                                    void *data, void *data2);
+void pocl_global_mem_print_stats (pocl_global_mem_t *gmem);
+int pocl_global_mem_can_allocate (pocl_global_mem_t *gmem,
+                                  pocl_mem_identifier *p);
+void pocl_global_mem_allocated (pocl_global_mem_t *gmem,
+                                pocl_mem_identifier *p);
+void pocl_global_mem_freed (pocl_global_mem_t *gmem, pocl_mem_identifier *p);
+uint64_t pocl_driver_memobj_device_size (cl_device_id dev,
+                                         uint64_t input_size);
+
 void fill_dev_image_t (dev_image_t *di, struct pocl_argument *parg,
                        cl_device_id device);
 
@@ -103,20 +115,7 @@ void pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
 
 void pocl_release_dlhandle_cache (_cl_command_node *cmd);
 
-void pocl_setup_device_for_system_memory(cl_device_id device);
-
-void pocl_reinit_system_memory();
-
 void pocl_set_buffer_image_limits(cl_device_id device);
-
-void* pocl_aligned_malloc_global_mem(cl_device_id device, size_t align, size_t size);
-
-void pocl_free_global_mem(cl_device_id device, void *ptr, size_t size);
-
-void pocl_print_system_memory_stats();
-
-void pocl_calculate_kernel_hash (cl_program program, unsigned kernel_i,
-                                 unsigned device_i);
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

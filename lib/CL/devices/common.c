@@ -273,7 +273,7 @@ fill_dev_image_t (dev_image_t* di, struct pocl_argument* parg,
                               &(di->_num_channels), &(di->_elem_size));
 
   IMAGE1D_TO_BUFFER (mem);
-  di->_data = (mem->device_ptrs[device->dev_id].mem_ptr);
+  di->_data = (mem->gmem_ptrs[device->global_mem_id].mem_ptr);
 }
 
 void
@@ -288,14 +288,10 @@ pocl_copy_mem_object (cl_device_id dest_dev, cl_mem dest,
   /* if source and destination are on the same global mem  */
   if (src_dev->global_mem_id == dest_dev->global_mem_id)
     {
-      src_dev->ops->copy 
-        (dest_dev->data, 
-         &dest->device_ptrs[dest_dev->dev_id],
-         dest,
-         &source->device_ptrs[src_dev->dev_id],
-         source,
-         dest_offset, source_offset,
-         cb);
+      src_dev->ops->copy (dest_dev->data,
+                          &dest->gmem_ptrs[dest_dev->global_mem_id], dest,
+                          &source->gmem_ptrs[src_dev->global_mem_id], source,
+                          dest_offset, source_offset, cb);
     }
   else
     {
@@ -310,17 +306,13 @@ pocl_copy_mem_object (cl_device_id dest_dev, cl_mem dest,
           tmp = malloc (dest->size);
           tofree = tmp;
         }
-      
-      src_dev->ops->read 
-        (src_dev->data, tmp, 
-          &source->device_ptrs[src_dev->dev_id],
-          source,
-          source_offset, cb);
-      dest_dev->ops->write 
-        (dest_dev->data, tmp, 
-         &dest->device_ptrs[dest_dev->dev_id],
-          dest, dest_offset,
-         cb);
+
+      src_dev->ops->read (src_dev->data, tmp,
+                          &source->gmem_ptrs[src_dev->global_mem_id], source,
+                          source_offset, cb);
+      dest_dev->ops->write (dest_dev->data, tmp,
+                            &dest->gmem_ptrs[dest_dev->global_mem_id], dest,
+                            dest_offset, cb);
       free (tofree);
     }
   return;
@@ -500,15 +492,13 @@ pocl_exec_command (_cl_command_node *node)
       break;
 
     case CL_COMMAND_MAP_BUFFER:
+      // TODO TEST - map write invalidate region
       pocl_update_event_running (event);
       assert (dev->ops->map_mem);
-      POCL_LOCK_OBJ (event->mem_objs[0]);
         dev->ops->map_mem (dev->data,
                            cmd->map.mem_id,
                            event->mem_objs[0],
                            cmd->map.mapping);
-      (event->mem_objs[0])->map_count++;
-      POCL_UNLOCK_OBJ (event->mem_objs[0]);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Map Buffer            ");
       break;
 
@@ -612,14 +602,11 @@ pocl_exec_command (_cl_command_node *node)
 
     case CL_COMMAND_MAP_IMAGE:
       pocl_update_event_running (event);
-      POCL_LOCK_OBJ (event->mem_objs[0]);
       assert (dev->ops->map_image != NULL);
       dev->ops->map_image (dev->data,
                            cmd->map.mem_id,
                            event->mem_objs[0],
                            cmd->map.mapping);
-     (event->mem_objs[0])->map_count++;
-      POCL_UNLOCK_OBJ (event->mem_objs[0]);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Map Image             ");
       break;
 
@@ -663,8 +650,11 @@ pocl_exec_command (_cl_command_node *node)
     case CL_COMMAND_NATIVE_KERNEL:
       pocl_update_event_running (event);
       assert (dev->ops->run_native);
+
       dev->ops->run_native (dev->data, node);
-      POCL_MEM_FREE (node->command.native.args);
+
+      POCL_MEM_FREE (cmd->native.args);
+      POCL_MEM_FREE (cmd->native.arg_locs);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Native Kernel         ");
       break;
 
@@ -688,7 +678,8 @@ pocl_exec_command (_cl_command_node *node)
            cmd->svm_free.data);
       else
         for (i = 0; i < cmd->svm_free.num_svm_pointers; i++)
-          dev->ops->svm_free (dev, cmd->svm_free.svm_pointers[i]);
+          dev->global_memory->svm_free (dev->global_memory,
+                                        cmd->svm_free.svm_pointers[i]);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event SVM Free              ");
       break;
 
@@ -1158,98 +1149,22 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
 
 #endif
 
-#define MIN_MAX_MEM_ALLOC_SIZE (128*1024*1024)
-
-/* accounting object for the main memory */
-static pocl_global_mem_t system_memory = {POCL_LOCK_INITIALIZER, 0, 0, 0};
-
-void
-pocl_setup_device_for_system_memory (cl_device_id device)
+uint64_t
+pocl_driver_memobj_device_size (cl_device_id dev, uint64_t input_size)
 {
-  int limit_memory_gb = pocl_get_int_option ("POCL_MEMORY_LIMIT", 0);
-
-  /* set up system memory limits, if required */
-  if (system_memory.total_alloc_limit == 0)
-  {
-      /* global_mem_size contains the entire memory size,
-       * and we need to leave some available for OS & other programs
-       * this sets it to 3/4 for systems with <=7gig mem,
-       * for >7 it sets to (total-2gigs)
-       */
-      size_t alloc_limit = device->global_mem_size;
-      if ((alloc_limit >> 20) > (7 << 10))
-        system_memory.total_alloc_limit = alloc_limit - (size_t)(1UL << 31);
-      else
-        {
-          size_t temp = (alloc_limit >> 2);
-          system_memory.total_alloc_limit = alloc_limit - temp;
-        }
-
-      system_memory.max_ever_allocated =
-          system_memory.currently_allocated = 0;
-  }
-
-  device->global_mem_size = system_memory.total_alloc_limit;
-
-  if (limit_memory_gb > 0)
+  uint64_t tmp = input_size;
+  if (tmp % dev->mem_base_addr_align)
     {
-      size_t limited_memory = (size_t)limit_memory_gb << 30;
-      if (device->global_mem_size > limited_memory)
-        device->global_mem_size = limited_memory;
-      else
-        POCL_MSG_WARN ("requested POCL_MEMORY_LIMIT %i GBs is larger than"
-                       " physical memory size (%zu) GBs, ignoring\n",
-                       limit_memory_gb,
-                       (size_t) (device->global_mem_size >> 30));
+      tmp = tmp | (dev->mem_base_addr_align - 1);
+      tmp += 1;
     }
-
-  if (device->global_mem_size < MIN_MAX_MEM_ALLOC_SIZE)
-    POCL_ABORT("Not enough memory to run on this device.\n");
-
-  /* Maximum allocation size: we don't have hardware limits, so we
-   * can potentially allocate the whole memory for a single buffer, unless
-   * of course there are limits set at the operating system level. Of course
-   * we still have to respect the OpenCL-commanded minimum */
-  size_t alloc_limit = SIZE_MAX;
-
-#ifndef _MSC_VER
-  // TODO getrlimit equivalent under Windows
-  struct rlimit limits;
-  int ret = getrlimit(RLIMIT_DATA, &limits);
-  if (ret == 0)
-    alloc_limit = limits.rlim_cur;
-  else
-#endif
-    alloc_limit = MIN_MAX_MEM_ALLOC_SIZE;
-
-  if (alloc_limit > device->global_mem_size)
-    alloc_limit = pocl_size_ceil2 (device->global_mem_size / 4);
-  if (alloc_limit > (device->global_mem_size / 2))
-    alloc_limit >>= 1;
-
-  if (alloc_limit < MIN_MAX_MEM_ALLOC_SIZE)
-    alloc_limit = MIN_MAX_MEM_ALLOC_SIZE;
-
-  // set up device properties..
-  device->global_memory = &system_memory;
-  device->max_mem_alloc_size = alloc_limit;
-
-  // TODO in theory now if alloc_limit was > rlim_cur and < rlim_max
-  // we should try and setrlimit to alloc_limit, or allocations might fail
-}
-
-void
-pocl_reinit_system_memory()
-{
-  system_memory.currently_allocated = 0;
-  system_memory.max_ever_allocated = 0;
+  return tmp;
 }
 
 /* set maximum allocation sizes for buffers and images */
 void
 pocl_set_buffer_image_limits(cl_device_id device)
 {
-  pocl_setup_device_for_system_memory(device);
   /* these aren't set up in pocl_setup_device_for_system_memory,
    * because some devices (HSA) set them up themselves
    *
@@ -1258,10 +1173,10 @@ pocl_set_buffer_image_limits(cl_device_id device)
    * while trying to fill them. */
 
   size_t s;
-  if (device->global_mem_cache_size > 0)
-    s = pocl_size_ceil2 (device->global_mem_cache_size / 2);
+  if (device->global_memory->cache_size > 0)
+    s = pocl_size_ceil2 (device->global_memory->cache_size / 2);
   else
-    s = pocl_size_ceil2 (device->global_mem_size / 256);
+    s = pocl_size_ceil2 (device->global_memory->size / 256);
 
   device->local_mem_size = device->max_constant_buffer_size = s;
 
@@ -1270,7 +1185,7 @@ pocl_set_buffer_image_limits(cl_device_id device)
    * that fix in max_mem_alloc_size. A single pixel can take up to 4 32-bit channels,
    * i.e. 16 bytes.
    */
-  size_t max_pixels = device->max_mem_alloc_size/16;
+  size_t max_pixels = device->global_memory->max_alloc / 16;
   if (max_pixels > device->image_max_buffer_size)
     device->image_max_buffer_size = max_pixels;
 
@@ -1302,75 +1217,61 @@ pocl_set_buffer_image_limits(cl_device_id device)
 
 }
 
-void*
-pocl_aligned_malloc_global_mem(cl_device_id device, size_t align, size_t size)
-{
-  pocl_global_mem_t *mem = device->global_memory;
-  void *retval = NULL;
-
-  POCL_LOCK (mem->pocl_lock);
-  if ((mem->total_alloc_limit - mem->currently_allocated) < size)
-    goto ERROR;
-
-  retval = pocl_aligned_malloc (align, size);
-  if (!retval)
-    goto ERROR;
-
-  mem->currently_allocated += size;
-  if (mem->max_ever_allocated < mem->currently_allocated)
-    mem->max_ever_allocated = mem->currently_allocated;
-  assert(mem->currently_allocated <= mem->total_alloc_limit);
-
-ERROR:
-  POCL_UNLOCK (mem->pocl_lock);
-
-  return retval;
-}
-
 void
-pocl_free_global_mem(cl_device_id device, void* ptr, size_t size)
+pocl_global_mem_print_stats (pocl_global_mem_t *gmem)
 {
-  pocl_global_mem_t *mem = device->global_memory;
-
-  POCL_LOCK (mem->pocl_lock);
-  assert(mem->currently_allocated >= size);
-  mem->currently_allocated -= size;
-  POCL_UNLOCK (mem->pocl_lock);
-
-  POCL_MEM_FREE(ptr);
-}
-
-
-void
-pocl_print_system_memory_stats()
-{
+  POCL_LOCK (gmem->lock);
   POCL_MSG_PRINT_F (MEMORY, INFO, "",
-  "____ Total available system memory  : %10zu KB\n"
-  " ____ Currently used system memory   : %10zu KB\n"
-  " ____ Max used system memory         : %10zu KB\n",
-  system_memory.total_alloc_limit >> 10,
-  system_memory.currently_allocated >> 10,
-  system_memory.max_ever_allocated >> 10);
+                    "____ Total available memory  : %10" PRIu64 " KB\n"
+                    " ____ Currently used memory   : %10" PRIu64 " KB\n"
+                    " ____ Max used memory         : %10" PRIu64 " KB\n",
+                    gmem->size >> 10, gmem->currently_allocated >> 10,
+                    gmem->max_ever_allocated >> 10);
+  POCL_UNLOCK (gmem->lock);
 }
 
-/* Unique hash for a device + program build + kernel name combination.
-   NOTE: this does NOT take into account the local WG sizes or other
-   specialization properties. */
-void
-pocl_calculate_kernel_hash (cl_program program, unsigned kernel_i,
-                            unsigned device_i)
+int
+pocl_global_mem_can_allocate (pocl_global_mem_t *gmem, pocl_mem_identifier *p)
 {
-  SHA1_CTX hash_ctx;
-  pocl_SHA1_Init (&hash_ctx);
+  return (gmem->currently_allocated + p->device_size) <= gmem->size;
+}
 
-  char *n = program->kernel_meta[kernel_i].name;
-  pocl_SHA1_Update (&hash_ctx, (uint8_t *)program->build_hash[device_i],
-                    sizeof (SHA1_digest_t));
-  pocl_SHA1_Update (&hash_ctx, (uint8_t *)n, strlen (n));
+void
+pocl_global_mem_allocated (pocl_global_mem_t *gmem, pocl_mem_identifier *p)
+{
+  gmem->currently_allocated += p->device_size;
+  if (gmem->currently_allocated > gmem->max_ever_allocated)
+    gmem->max_ever_allocated = gmem->currently_allocated;
+}
 
-  uint8_t digest[SHA1_DIGEST_SIZE];
-  pocl_SHA1_Final (&hash_ctx, digest);
+void
+pocl_global_mem_freed (pocl_global_mem_t *gmem, pocl_mem_identifier *p)
+{
+  assert (gmem->currently_allocated >= p->device_size);
+  gmem->currently_allocated -= p->device_size;
+}
 
-  memcpy (program->kernel_meta[kernel_i].build_hash[device_i], digest,
-          sizeof (pocl_kernel_hash_t));
+void
+pocl_bufalloc_init_global_mem (cl_device_id device, size_t size, void *data,
+                               void *data2)
+{
+
+  pocl_global_mem_t *gmem
+      = (pocl_global_mem_t *)calloc (1, sizeof (pocl_global_mem_t));
+
+  gmem->id = pocl_num_global_mem++;
+
+  gmem->size = size;
+  gmem->max_alloc = size;
+  gmem->cacheline_size = 0;
+  gmem->cache_size = 0;
+  gmem->cache_type = CL_NONE;
+  gmem->extra_list = NULL;
+  gmem->data = data;
+  gmem->data2 = data2;
+
+  POCL_INIT_LOCK (gmem->lock);
+
+  device->global_mem_id = gmem->id;
+  device->global_memory = gmem;
 }

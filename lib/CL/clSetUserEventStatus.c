@@ -1,5 +1,7 @@
 #include "pocl_cl.h"
 #include "pocl_timing.h"
+#include "pocl_tracing.h"
+#include "common.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clSetUserEventStatus)(cl_event event ,

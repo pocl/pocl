@@ -40,6 +40,7 @@
 #include "pocl_util.h"
 #include "common.h"
 #include "pocl_mem_management.h"
+#include "pocl_runtime_config.h"
 
 static void* pocl_pthread_driver_thread (void *p);
 

@@ -45,8 +45,6 @@
 #include "devices.h"
 #include "common.h"
 #include "pocl_runtime_config.h"
-#include "basic/basic.h"
-#include "pthread/pocl-pthread.h"
 #include "pocl_debug.h"
 #include "pocl_tracing.h"
 #include "pocl_cache.h"
@@ -55,13 +53,20 @@
 #include "pocl_llvm.h"
 #endif
 
-#if defined(TCE_AVAILABLE)
+#ifdef BUILD_BASIC
+#include "basic/basic.h"
+#endif
+#ifdef BUILD_PTHREAD
+#include "pthread/pocl-pthread.h"
+#endif
+
+#ifdef TCE_AVAILABLE
 #include "tce/ttasim/ttasim.h"
 #endif
 
 #include "hsa/pocl-hsa.h"
 
-#if defined(BUILD_CUDA)
+#ifdef BUILD_CUDA
 #include "cuda/pocl-cuda.h"
 #endif
 
@@ -74,6 +79,11 @@
 /* the enabled devices */
 static struct _cl_device_id* pocl_devices = NULL;
 unsigned int pocl_num_devices = 0;
+
+/* global mems of devices */
+unsigned int pocl_num_global_mem = 0;
+int pocl_svm_registered = 0;
+unsigned pocl_svm_id = 0;
 
 /* Init function prototype */
 typedef void (*init_device_ops)(struct pocl_device_ops*);
@@ -89,10 +99,10 @@ static init_device_ops pocl_devices_init_ops[] = {
 #if defined(TCE_AVAILABLE)
   pocl_ttasim_init_device_ops,
 #endif
-#if defined(BUILD_HSA)
+#ifdef BUILD_HSA
   pocl_hsa_init_device_ops,
 #endif
-#if defined(BUILD_CUDA)
+#ifdef BUILD_CUDA
   pocl_cuda_init_device_ops,
 #endif
 #if defined(BUILD_ACCEL)
@@ -517,6 +527,14 @@ pocl_init_devices ()
   POCL_GOTO_ERROR_ON ((pocl_devices == NULL), CL_OUT_OF_HOST_MEMORY,
                       "Can not allocate memory for devices\n");
 
+  /* temporary Hash of global memories, key = globalmem->id
+   * after a driver initializes its globalmem, we save the id -> pointer here.
+   * The last driver to initialize a globalmem with a particular ID "wins".
+   * all other drivers will have their globalmem set to that one.
+   */
+  pocl_global_mem_t **pocl_global_mems = (pocl_global_mem_t **)alloca (
+      pocl_num_devices * sizeof (pocl_global_mem_t *));
+
   dev_index = 0;
   /* Init infos for each probed devices */
   for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
@@ -532,12 +550,7 @@ pocl_init_devices ()
           dev->driver_version = PACKAGE_VERSION;
           if (dev->version == NULL)
             dev->version = "OpenCL 2.0 pocl";
-          dev->short_name = strdup (dev->ops->device_name);
-          /* The default value for the global memory space identifier is
-             the same as the device id. The device instance can then override
-             it to point to some other device's global memory id in case of
-             a shared global memory. */
-          pocl_devices[dev_index].global_mem_id = dev_index;
+          dev->short_name = dev->ops->device_name;
 
           /* Check if there are device-specific parameters set in the
              POCL_DEVICEn_PARAMETERS env. */
@@ -551,8 +564,22 @@ pocl_init_devices ()
                               "Device %i / %s initialization failed!", j,
                               dev_name);
 
+          pocl_global_mems[pocl_devices[dev_index].global_mem_id]
+              = pocl_devices[dev_index].global_memory;
+
           ++dev_index;
         }
+    }
+
+  /* replace the global memory pointers.
+   * for devices which have their own memory (not shared), this has no effect.
+   * for basic/pthread/HSA devices, this replaces their gmem pointers with the
+   * gmem pointer of last initialized (HSA if built, otherwise pthread/basic)
+   */
+  for (i = 0; i < pocl_num_devices; ++i)
+    {
+      pocl_devices[i].global_memory
+          = pocl_global_mems[pocl_devices[i].global_mem_id];
     }
 
   first_init_done = 1;

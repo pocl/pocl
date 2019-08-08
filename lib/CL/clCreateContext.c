@@ -21,13 +21,15 @@
    THE SOFTWARE.
 */
 
+#include <stdlib.h>
+#include <string.h>
+
 #include "devices/devices.h"
 #include "pocl_cl.h"
 #include "pocl_util.h"
 #include "pocl_mem_management.h"
 #include "pocl_shared.h"
-#include <stdlib.h>
-#include <string.h>
+#include "pocl_runtime_config.h"
 
 static unsigned long context_ids = 0;
 

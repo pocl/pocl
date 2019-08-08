@@ -38,6 +38,14 @@ extern "C" {
 /* The number of available devices. */
 extern unsigned int pocl_num_devices;
 
+/* The number of global memories (can be < num devices in case of SVM) */
+extern unsigned int pocl_num_global_mem;
+
+/* basic, pthread and HSA share a globalmem.
+ * "registered" flag set to 1 if it's been initialized, ID to valid number */
+extern int pocl_svm_registered;
+extern unsigned pocl_svm_id;
+
 /**
  * Populates the pocl_devices with the wanted device types.
  *

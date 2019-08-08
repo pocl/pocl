@@ -21,8 +21,9 @@
    THE SOFTWARE.
 */
 
-#include "utlist.h"
+#include "devices.h"
 #include "pocl_cl.h"
+#include "utlist.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
@@ -31,7 +32,6 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
   cl_device_id dev;
   cl_mem parent = NULL;
   unsigned i;
-  mem_mapping_t *mapping, *temp;
   mem_destructor_callback_t *callback, *next_callback;
 
   POCL_RETURN_ERROR_COND((memobj == NULL), CL_INVALID_MEM_OBJECT);
@@ -61,44 +61,38 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
           return err;
         }
 
-      POCL_MSG_PRINT_REFCOUNTS ("Free mem obj %p\n", memobj);
-      if (memobj->parent == NULL)
+      parent = memobj->parent;
+      if (parent == NULL)
         {
-          cl_device_id shared_mem_owner_dev =
-            memobj->shared_mem_allocation_owner;
+          assert (memobj->mappings == NULL);
+          assert (memobj->map_count == 0);
+
+          POCL_MSG_PRINT_REFCOUNTS ("Free mem obj %p FLAGS %" PRIu64 "\n",
+                                    memobj, memobj->flags);
 
           for (i = 0; i < context->num_devices; ++i)
             {
-              /* owner is called last */
-              if (shared_mem_owner_dev == context->devices[i])
-                 continue;
               dev = context->devices[i];
-              if (memobj->is_image && dev->image_support
-                  && dev->ops->free_image)
-                dev->ops->free_image (
-                    dev, memobj, memobj->device_ptrs[dev->dev_id].image_data);
-              dev->ops->free (dev, memobj);
-              memobj->device_ptrs[dev->dev_id].mem_ptr = NULL;
+              pocl_mem_identifier *p = &memobj->gmem_ptrs[dev->global_mem_id];
+              if (p->mem_ptr == NULL) // already free or never allocated
+                continue;
+
+              dev->global_memory->free_mem_obj (dev->global_memory, memobj, p);
             }
-          if (shared_mem_owner_dev)
-            shared_mem_owner_dev->ops->free (shared_mem_owner_dev, memobj);
 
-        }
-      DL_FOREACH_SAFE(memobj->mappings, mapping, temp)
-        {
-          POCL_MEM_FREE(mapping);
-        }
-      memobj->mappings = NULL;
+          /* Free host mem allocated by the runtime */
+          if (memobj->mem_host_ptr != NULL)
+            {
+              if (memobj->flags & CL_MEM_USE_HOST_PTR)
+                memobj->mem_host_ptr = NULL; // user allocated, do not free
+              else
+                POCL_MEM_FREE (memobj->mem_host_ptr);
+            }
 
-      parent = memobj->parent;
-
-      /* Free host mem allocated by the runtime (not for sub buffers) */
-      if (memobj->parent == NULL && (memobj->flags & CL_MEM_ALLOC_HOST_PTR)
-          && memobj->mem_host_ptr != NULL)
-        {
-          POCL_MEM_FREE(memobj->mem_host_ptr);
+          POCL_MEM_FREE (memobj->gmem_ptrs);
         }
-      POCL_MEM_FREE(memobj->device_ptrs);
+
+      assert (memobj->gmem_ptrs == NULL);
 
       /* Fire any registered destructor callbacks */
       callback = memobj->destructor_callbacks;
@@ -113,11 +107,14 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
       if (memobj->is_image)
         POCL_MEM_FREE (memobj->device_supports_this_image);
 
+      assert (memobj->mem_host_ptr == NULL);
+
       POCL_DESTROY_OBJECT (memobj);
       POCL_MEM_FREE(memobj);
 
       if (parent)
         POname(clReleaseMemObject)(parent);
+
       POname(clReleaseContext)(context);
     }
   return CL_SUCCESS;

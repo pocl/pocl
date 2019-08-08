@@ -47,36 +47,8 @@
 
 #define POCL_FILENAME_LENGTH 1024
 
-typedef struct _mem_mapping mem_mapping_t;
-/* represents a single buffer to host memory mapping */
-struct _mem_mapping {
-  void *host_ptr; /* the location of the mapped buffer chunk in the host memory */
-  size_t offset; /* offset to the beginning of the buffer */
-  size_t size;
-  mem_mapping_t *prev, *next;
-  /* This is required, because two clEnqueueMap() with the same buffer+size+offset,
-     will create two identical mappings in the buffer->mappings LL.
-     Without this flag, both corresponding clEnqUnmap()s will find
-     the same mapping (the first one in mappings LL), which will lead
-     to memory double-free corruption later. */
-  long unmap_requested;
-  cl_map_flags map_flags;
-  /* image mapping data */
-  size_t origin[3];
-  size_t region[3];
-  size_t row_pitch;
-  size_t slice_pitch;
-};
-
-/* memory identifier: id to point the global memory where memory resides
-                      + pointer to actual data */
-typedef struct _pocl_mem_identifier
-{
-  int available; /* ... in this mem objs context */
-  int global_mem_id;
-  void *mem_ptr;
-  void *image_data;
-} pocl_mem_identifier;
+typedef struct mem_mapping mem_mapping_t;
+typedef struct pocl_mem_identifier pocl_mem_identifier;
 
 typedef struct _mem_destructor_callback mem_destructor_callback_t;
 /* represents a memory object destructor callback */
@@ -118,6 +90,7 @@ typedef struct
 {
   void *args;
   size_t cb_args;
+  void **arg_locs;
   void (*user_func)(void *);
 } _cl_command_native;
 

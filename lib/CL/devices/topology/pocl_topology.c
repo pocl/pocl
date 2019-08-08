@@ -26,10 +26,11 @@
 
 #include "config.h"
 
-#include <pocl_cl.h>
-#include <pocl_file_util.h>
-
+#include "pocl_cl.h"
+#include "pocl_file_util.h"
 #include "pocl_topology.h"
+#include "pocl_util.h"
+#include "pocl_runtime_config.h"
 
 #ifdef ENABLE_HWLOC
 
@@ -51,11 +52,76 @@
  *  global_mem_cache_size
  */
 
+static cl_uint max_compute_units;
+static cl_device_mem_cache_type global_mem_cache_type;
+static cl_uint global_mem_cacheline_size;
+static cl_ulong global_mem_cache_size;
+static cl_ulong global_mem_size;
+static cl_ulong max_mem_alloc_size;
+static int topology_discovered = 0;
+
+// minimum by OpenCL spec
+#define MIN_MAX_MEM_ALLOC_SIZE (128 * 1024 * 1024)
+
+static int
+setup_global_mem_limits ()
+{
+  /* global_mem_size contains the entire memory size,
+   * and we need to leave some available for OS & other programs
+   * this sets it to 3/4 for systems with <=7gig mem,
+   * for >7 it sets to (total-2gigs)
+   */
+  if (global_mem_size > (7UL << 30))
+    global_mem_size -= (cl_ulong) (2UL << 30);
+  else
+    {
+      cl_ulong temp = (global_mem_size >> 2);
+      global_mem_size -= temp;
+    }
+
+  int limit_memory_gb = pocl_get_int_option ("POCL_MEMORY_LIMIT", 0);
+  if (limit_memory_gb > 0)
+    {
+      cl_ulong limit_in_bytes = (cl_ulong)limit_memory_gb << 30;
+      if (limit_in_bytes < global_mem_size)
+        global_mem_size = limit_in_bytes;
+      else
+        POCL_MSG_WARN ("requested POCL_MEMORY_LIMIT %i GBs is larger than"
+                       " physical memory size (%u) GBs, ignoring\n",
+                       limit_memory_gb, (unsigned)(global_mem_size >> 30));
+    }
+
+  if (global_mem_size < MIN_MAX_MEM_ALLOC_SIZE)
+    {
+      POCL_MSG_ERR ("Not enough host memory.\n");
+      return CL_FAILED;
+    }
+
+  /* Maximum allocation size: we don't have hardware limits, so we
+   * can potentially allocate the whole memory for a single buffer, unless
+   * of course there are limits set at the operating system level. Of course
+   * we still have to respect the OpenCL-commanded minimum */
+
+  max_mem_alloc_size = pocl_size_ceil2 (global_mem_size / 4);
+
+  if (max_mem_alloc_size > (global_mem_size / 2))
+    max_mem_alloc_size /= 2;
+
+  if (max_mem_alloc_size < MIN_MAX_MEM_ALLOC_SIZE)
+    max_mem_alloc_size = MIN_MAX_MEM_ALLOC_SIZE;
+
+  return CL_SUCCESS;
+}
+
 #ifdef ENABLE_HWLOC
 
-int
-pocl_topology_detect_device_info(cl_device_id device)
+static int
+pocl_topology_discover ()
 {
+  if (topology_discovered)
+    return CL_SUCCESS;
+  topology_discovered = 1;
+
   hwloc_topology_t pocl_topology;
   int ret = 0;
 
@@ -70,7 +136,6 @@ pocl_topology_detect_device_info(cl_device_id device)
 #endif
 
   /*
-
    * hwloc's OpenCL backend causes problems at the initialization stage
    * because it reloads libpocl.so via the ICD loader.
    *
@@ -115,17 +180,15 @@ pocl_topology_detect_device_info(cl_device_id device)
   }
 
 #ifdef HWLOC_API_2
-  device->global_mem_size =
-      hwloc_get_root_obj(pocl_topology)->total_memory;
+  global_mem_size = hwloc_get_root_obj (pocl_topology)->total_memory;
 #else
-  device->global_mem_size =
-      hwloc_get_root_obj(pocl_topology)->memory.total_memory;
+  global_mem_size = hwloc_get_root_obj (pocl_topology)->memory.total_memory;
 #endif
 
   // Try to get the number of CPU cores from topology
   int depth = hwloc_get_type_depth(pocl_topology, HWLOC_OBJ_PU);
   if(depth != HWLOC_TYPE_DEPTH_UNKNOWN)
-    device->max_compute_units = hwloc_get_nbobjs_by_depth(pocl_topology, depth);
+    max_compute_units = hwloc_get_nbobjs_by_depth (pocl_topology, depth);
 
   /* Find information about global memory cache by looking at the first
    * cache covering the first PU */
@@ -163,11 +226,13 @@ pocl_topology_detect_device_info(cl_device_id device)
       if (!cache_size || !cacheline_size)
         break;
 
-      device->global_mem_cache_type
+      global_mem_cache_type
           = 0x2; // CL_READ_WRITE_CACHE, without including all of CL/cl.h
-      device->global_mem_cacheline_size = cacheline_size;
-      device->global_mem_cache_size = cache_size;
+      global_mem_cacheline_size = cacheline_size;
+      global_mem_cache_size = cache_size;
   } while (0);
+
+  ret = setup_global_mem_limits ();
 
   // Destroy topology object and return
 exit_destroy:
@@ -184,11 +249,15 @@ exit_destroy:
 #define CPUS "/sys/devices/system/cpu/possible"
 #define MEMINFO "/proc/meminfo"
 
-int
-pocl_topology_detect_device_info (cl_device_id device)
+static int
+pocl_topology_discover ()
 {
-  device->global_mem_cacheline_size = HOST_CPU_CACHELINE_SIZE;
-  device->global_mem_cache_type
+  if (topology_discovered)
+    return CL_SUCCESS;
+  topology_discovered = 1;
+
+  global_mem_cacheline_size = HOST_CPU_CACHELINE_SIZE;
+  global_mem_cache_type
       = 0x2; // CL_READ_WRITE_CACHE, without including all of CL/cl.h
 
   /* global mem cache size */
@@ -199,7 +268,7 @@ pocl_topology_detect_device_info (cl_device_id device)
   if (pocl_read_file (L3_CACHE_SIZE, &content, &filesize) == 0)
     {
       long val = atol (content);
-      device->global_mem_cache_size = val * 1024;
+      global_mem_cache_size = val * 1024;
       POCL_MEM_FREE (content);
     }
   else
@@ -207,14 +276,14 @@ pocl_topology_detect_device_info (cl_device_id device)
       if (pocl_read_file (L2_CACHE_SIZE, &content, &filesize) == 0)
         {
           long val = atol (content);
-          device->global_mem_cache_size = val * 1024;
+          global_mem_cache_size = val * 1024;
           POCL_MEM_FREE (content);
         }
       else
         {
           POCL_MSG_WARN (
               "Could not figure out CPU cache size, using bogus value\n");
-          device->global_mem_cache_size = 1 << 20;
+          global_mem_cache_size = 1 << 20;
         }
     }
 
@@ -237,13 +306,13 @@ pocl_topology_detect_device_info (cl_device_id device)
 
       assert (items == 1);
 
-      device->global_mem_size = memsize_kb * 1024;
+      global_mem_size = memsize_kb * 1024;
       POCL_MEM_FREE (content);
     }
   else
     {
       POCL_MSG_WARN ("Cannot get memory size\n");
-      device->global_mem_size = 256 << 20;
+      global_mem_size = 256 << 20;
     }
 
   /* max_compute_units */
@@ -254,16 +323,16 @@ pocl_topology_detect_device_info (cl_device_id device)
       unsigned long start, end;
       int items = sscanf (content, "%lu-%lu", &start, &end);
       assert (items == 2);
-      device->max_compute_units = (unsigned)end + 1;
+      max_compute_units = (unsigned)end + 1;
       POCL_MEM_FREE (content);
     }
   else
     {
       POCL_MSG_WARN ("Cannot get logical CPU number\n");
-      device->max_compute_units = 1;
+      max_compute_units = 1;
     }
 
-  return 0;
+  return setup_global_mem_limits ();
 }
 
 #else
@@ -271,3 +340,25 @@ pocl_topology_detect_device_info (cl_device_id device)
 #error Dont know how to get HWLOC-provided values on this system!
 
 #endif
+
+int
+pocl_topology_detect_device_info (cl_device_id device)
+{
+  pocl_topology_discover ();
+
+  device->max_compute_units = max_compute_units;
+  return 0;
+}
+
+int
+pocl_topology_detect_globalmem_info (pocl_global_mem_t *gmem)
+{
+  pocl_topology_discover ();
+
+  gmem->size = global_mem_size;
+  gmem->cache_size = global_mem_cache_size;
+  gmem->cacheline_size = global_mem_cacheline_size;
+  gmem->cache_type = global_mem_cache_type;
+  gmem->max_alloc = max_mem_alloc_size;
+  return 0;
+}

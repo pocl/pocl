@@ -29,6 +29,8 @@
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #ifdef _MSC_VER
 #  include "vccompat.hpp"
@@ -46,11 +48,8 @@
 #  include "pocl_icd.h"
 #endif
 #include "pocl.h"
-#include "pocl_tracing.h"
 #include "pocl_debug.h"
 #include "pocl_hash.h"
-#include "pocl_runtime_config.h"
-#include "common.h"
 
 #if __STDC_VERSION__ < 199901L
 # if __GNUC__ >= 2
@@ -262,6 +261,9 @@ typedef pthread_mutex_t pocl_lock_t;
 
 typedef struct pocl_argument {
   uint64_t size;
+  /* The "offset" is used to simplify subbuffer handling.
+   * At enqueue time, subbuffers are converted to buffers + offset into them.
+   */
   uint64_t offset;
   void *value;
   /* 1 if this argument has been set by clSetKernelArg */
@@ -294,6 +296,59 @@ typedef struct pocl_argument_info {
   unsigned type_size;
 } pocl_argument_info;
 
+/* represents a single buffer to host memory mapping */
+typedef struct mem_mapping
+{
+  void *host_ptr; /* the location of the mapped buffer chunk in the host memory
+                   */
+  size_t offset;  /* offset to the beginning of the buffer */
+  size_t size;
+  mem_mapping_t *prev, *next;
+  /* This is required, because two clEnqueueMap() with the same
+     buffer+size+offset, will create two identical mappings in the
+     buffer->mappings LL. Without this flag, both corresponding clEnqUnmap()s
+     will find the same mapping (the first one in mappings LL), which will lead
+     to memory double-free corruption later. */
+  long unmap_requested;
+  cl_map_flags map_flags;
+  /* image mapping data */
+  size_t origin[3];
+  size_t region[3];
+  size_t row_pitch;
+  size_t slice_pitch;
+} mem_mapping_t;
+
+/* memory identifier:  */
+typedef struct pocl_mem_identifier
+{
+  /* device(or rather global memory)-specific pointer
+     to hardware resource that represents memory. This may be anything, but
+     must be non-NULL while the memory is actually allocated, and NULL when
+     it's not */
+  void *mem_ptr;
+
+  /* Extra pointer to handle host-memory-visible allocation.
+   *
+   * Some devices (e.g. CPU or HSA) can use user-provided memory
+   * (CL_MEM_USE_HOST_PTR) directly as backing memory for a buffer.
+   * In that case, p->mem_ptr would be equal to buffer->mem_host_ptr;
+   * but we want to recognize when mem_host_ptr was provided to the driver
+   * vs the driver allocated the backing memory and set up mem_host_ptr.
+   *
+   * Also in case there are >1 devices in context, only one device can set
+   * buffer->mem_host_ptr. This helps tracking who allocated it.
+   */
+  void *host_ptr;
+
+  /* the actual memory size consumed by a buffer may be different
+   * for each device - especially for images. Each device should set
+   * it up here. This value is used by
+   * pocl_create_command() to determine if the sum of all command's
+   * memobj sizes can fit on the device.
+   */
+  uint64_t device_size;
+
+} pocl_mem_identifier;
 
 struct pocl_device_ops {
   const char *device_name;
@@ -386,15 +441,7 @@ struct pocl_device_ops {
   cl_int (*init_queue) (cl_command_queue queue);
   void (*free_queue) (cl_command_queue queue);
 
-  /* allocate a buffer in device memory */
-  cl_int (*alloc_mem_obj) (cl_device_id device, cl_mem mem_obj, void* host_ptr);
-  /* free a device buffer */
-  void (*free) (cl_device_id device, cl_mem mem_obj);
-
-  /* clEnqueSVMfree - free a SVM memory pointer. May be NULL if device doesn't
-   * support SVM. */
-  void (*svm_free) (cl_device_id dev, void *svm_ptr);
-  void *(*svm_alloc) (cl_device_id dev, cl_svm_mem_flags flags, size_t size);
+  /* SVM Ops */
   void (*svm_map) (cl_device_id dev, void *svm_ptr);
   void (*svm_unmap) (cl_device_id dev, void *svm_ptr);
   /* we can use restrict here, because Spec says overlapping copy should return
@@ -519,18 +566,6 @@ struct pocl_device_ops {
    * IMAGE1D_BUFFER type (which is implemented as a buffer).
    * If the device does not support images, all of these may be NULL. */
 
-  /* returns a device specific pointer which may reference
-   * a hardware resource. May be NULL */
-  void* (*create_image) (void *data,
-                         const cl_image_format * image_format,
-                         const cl_image_desc *   image_desc,
-                         cl_mem image,
-                         cl_int *err);
-  /* free the device-specific pointer (image_data) from create_image() */
-  cl_int (*free_image) (void *data,
-                        cl_mem image,
-                        void *image_data);
-
   /* creates a device-specific hardware resource for sampler. May be NULL */
   void* (*create_sampler) (void *data,
                            cl_sampler samp,
@@ -616,12 +651,71 @@ struct pocl_device_ops {
                                          pocl_kernel_metadata_t *target);
 };
 
-typedef struct pocl_global_mem_t {
-  pocl_lock_t pocl_lock;
-  size_t max_ever_allocated;
-  size_t currently_allocated;
-  size_t total_alloc_limit;
-} pocl_global_mem_t;
+/* list of gmem allocations */
+typedef struct pocl_gmem_allocation_s
+{
+  struct pocl_gmem_allocation_s *next;
+  struct pocl_gmem_allocation_s *prev;
+  union
+  {
+    cl_mem svm;
+    void *ptr;
+  };
+  size_t size;
+} pocl_gmem_allocation_t;
+
+/* a device's global memory bookkeeping structure */
+typedef struct pocl_global_mem_t pocl_global_mem_t;
+struct pocl_global_mem_t
+{
+
+  uint64_t max_ever_allocated;
+  uint64_t currently_allocated;
+  uint64_t size;
+
+  // device attributes
+  cl_device_mem_cache_type cache_type;
+  cl_uint cacheline_size;
+  cl_ulong cache_size;
+  cl_ulong max_alloc;
+
+  pocl_lock_t lock;
+
+  // numeric ID
+  unsigned id;
+
+  // supports SVM allocations
+  unsigned is_svm;
+  /* list of SVM allocations */
+  pocl_gmem_allocation_t *svm_list;
+  // list of extra allocations (see extra_alloc below)
+  pocl_gmem_allocation_t *extra_list;
+  /* any extra data */
+  void *data, *data2;
+
+  /* The following two MUST be implemented. */
+  /* allocate a buffer / image in device memory */
+  int (*alloc_mem_obj) (pocl_global_mem_t *gmem, cl_mem mem,
+                        pocl_mem_identifier *p, void *host_ptr);
+  /* free a buffer / image */
+  int (*free_mem_obj) (pocl_global_mem_t *gmem, cl_mem mem,
+                       pocl_mem_identifier *p);
+
+  /* Optional - only if the driver supports SVM. */
+  void *(*svm_alloc) (pocl_global_mem_t *gmem, cl_svm_mem_flags flags,
+                      size_t size);
+  int (*svm_free) (pocl_global_mem_t *gmem, void *svm_ptr);
+  /* returns a "hidden" cl_mem for use by clSetKernelArg.
+   * The SVM pointer value specified as the argument value can be the pointer
+   * returned by clSVMAlloc or can be a pointer + offset into the SVM region.
+   */
+  cl_mem (*svm_pointer_to_clmem) (pocl_global_mem_t *gmem, const void *ptr,
+                                  size_t *offset);
+
+  /* Optional. Alloc/Free of memory for other purposes than cl_buffer/SVM. */
+  void *(*extra_alloc) (pocl_global_mem_t *gmem, size_t size);
+  int (*extra_free) (pocl_global_mem_t *gmem, void *ptr);
+};
 
 #define NUM_OPENCL_IMAGE_TYPES 6
 
@@ -664,7 +758,6 @@ struct _cl_device_id {
   cl_uint native_vector_width_half;
   cl_uint max_clock_frequency;
   cl_uint address_bits;
-  cl_ulong max_mem_alloc_size;
   cl_bool image_support;
   cl_uint max_read_image_args;
   cl_uint max_write_image_args;
@@ -683,10 +776,6 @@ struct _cl_device_id {
   cl_device_fp_config half_fp_config;
   cl_device_fp_config single_fp_config;
   cl_device_fp_config double_fp_config;
-  cl_device_mem_cache_type global_mem_cache_type;
-  cl_uint global_mem_cacheline_size;
-  cl_ulong global_mem_cache_size;
-  cl_ulong global_mem_size;
   size_t global_var_pref_size;
   size_t global_var_max_size;
   cl_ulong max_constant_buffer_size;
@@ -734,18 +823,24 @@ struct _cl_device_id {
   void *data;
   const char* llvm_target_triplet; /* the llvm target triplet to use */
   const char* llvm_cpu; /* the llvm CPU variant to use */
+
+  /* pointer to an accounting struct for global memory */
+  pocl_global_mem_t *global_memory;
+
   /* A running number (starting from zero) across all the device instances.
      Used for indexing arrays in data structures with device specific
      entries. */
-  int dev_id;
-  int global_mem_id; /* identifier for device global memory */
-  /* pointer to an accounting struct for global memory */
-  pocl_global_mem_t *global_memory;
-  int has_64bit_long;  /* Does the device have 64bit longs */
+  unsigned dev_id;
+  unsigned global_mem_id; /* identifier for device global memory */
+
   /* Does the device set the event times in update_event() callback ?
    * if zero, the default event change handlers set the event times based on
    * the host's system time (pocl_gettimemono_ns). */
   int has_own_timer;
+
+  /* Does the device have 64bit longs */
+  int has_64bit_long;
+
   /* Convert automatic local variables to kernel arguments? */
   int autolocals_to_args;
   /* Allocate local buffers device side in the work-group launcher instead of
@@ -787,9 +882,6 @@ struct _cl_device_id {
   unsigned context_as_id;
 
 
-  /* True if the device supports SVM. Then it has the responsibility of
-     allocating shared buffers residing in Shared Virtual Memory areas. */
-  cl_bool should_allocate_svm;
   /* OpenCL 2.0 properties */
   cl_device_svm_capabilities svm_caps;
   cl_uint max_events;
@@ -815,8 +907,6 @@ struct _cl_device_id {
 #define DEVICE_SVM_FINEGR(dev) (dev->svm_caps & (CL_DEVICE_SVM_FINE_GRAIN_BUFFER \
                                               | CL_DEVICE_SVM_FINE_GRAIN_SYSTEM))
 #define DEVICE_SVM_ATOM(dev) (dev->svm_caps & CL_DEVICE_SVM_ATOMICS)
-
-#define DEVICE_IS_SVM_CAPABLE(dev) (dev->svm_caps & CL_DEVICE_SVM_COARSE_GRAIN_BUFFER)
 
 #define DEVICE_MMAP_IS_NOP(dev) (DEVICE_SVM_FINEGR(dev) && DEVICE_SVM_ATOM(dev))
 
@@ -850,7 +940,9 @@ struct _cl_context {
    * they're calculated by pocl_setup_context() */
 
   /* The largest of max_mem_alloc_size of all devices in context */
-  size_t max_mem_alloc_size;
+  cl_ulong max_mem_alloc_size;
+  /* The smallest of max_mem_alloc_size of all devices in context */
+  cl_ulong min_mem_alloc_size;
 
   /* union of image formats supported by all of the devices in context,
    * per image-type (there are 6 image types)
@@ -859,9 +951,9 @@ struct _cl_context {
   cl_image_format *image_formats[NUM_OPENCL_IMAGE_TYPES];
   cl_uint num_image_formats[NUM_OPENCL_IMAGE_TYPES];
 
-  /* The device that should allocate SVM (might be == host)
+  /* The global mem that should allocate SVM (might be == host)
    * NULL if none of devices in the context is SVM capable */
-  cl_device_id svm_allocdev;
+  pocl_global_mem_t *svm_alloc_mem;
 
   /* The minimal required buffer alignment for all devices in the context.
    * E.g. for clCreateSubBuffer:
@@ -900,12 +992,13 @@ struct _cl_command_queue {
 #define POCL_ON_SUB_MISALIGN(mem, que, operation)                             \
   do                                                                          \
     {                                                                         \
-      if (mem->parent != NULL)  {                                             \
-        operation (                                                           \
-            (mem->origin % que->device->mem_base_addr_align != 0),            \
-            CL_MISALIGNED_SUB_BUFFER_OFFSET,                                  \
-            "SubBuffer is not "                                               \
-            "properly aligned for this device");                              \
+      if (mem->parent != NULL)                                                \
+        {                                                                     \
+          operation ((mem->origin % que->device->mem_base_addr_align != 0),   \
+                     CL_MISALIGNED_SUB_BUFFER_OFFSET,                         \
+                     "SubBuffer is not properly aligned for this device:"     \
+                     "ORIGIN: %zu   ADDR_ALIGN: %u",                          \
+                     mem->origin, que->device->mem_base_addr_align);          \
         }                                                                     \
     }                                                                         \
   while (0)
@@ -978,32 +1071,38 @@ struct _cl_mem {
   cl_uint map_count;
   cl_context context;
   /* implementation */
-  /* The device-specific pointers to the buffer for all
-     device ids the buffer was allocated to. This can be a
-     direct pointer to the memory of the buffer or a pointer to
-     a book keeping structure. This always contains
-     as many pointers as there are devices in the system, even
-     though the buffer was not allocated for all.
-     The location of the device's buffer ptr is determined by
-     the device's dev_id. */
-  pocl_mem_identifier *device_ptrs;
-  /* device that allocated, and is going to free, 
-     the shared system mem allocation */
-  cl_device_id shared_mem_allocation_owner;
+
+  /* Each device has a global memory. Some devices may share a single
+   * global memory.
+   *
+   * Each cl_buffer can be allocated on multiple globalmems at the same time.
+   * This stores the backing memory structures for each globalmem.
+
+     This is always allocated for as many structs as there are global memories
+     in the system, even if the buffer isn't allocated for every globalmem.
+     (pocl_num_global_mems)
+
+     Indexed by device->global_mem_id.
+   */
+  pocl_mem_identifier *gmem_ptrs;
+
   /* device where this mem obj resides */
   cl_device_id owning_device;
 
   /* A linked list of regions of the buffer mapped to the
      host memory */
   mem_mapping_t *mappings;
+
   /* in case this is a sub buffer, this points to the parent
      buffer */
   cl_mem_t *parent;
+
   /* A linked list of destructor callbacks */
   mem_destructor_callback_t *destructor_callbacks;
 
   /* for images, a flag for each device in context,
-   * whether that device supports this */
+   * whether that device supports this image. Merely an optimization
+   * to avoid doing the validation everytime a check is needed */
   int *device_supports_this_image;
 
   /* Image flags */

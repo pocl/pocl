@@ -23,6 +23,7 @@
 
 #include "pocl_cl.h"
 #include "devices/devices.h"
+#include "pocl_runtime_config.h"
 
 #include <unistd.h>
 

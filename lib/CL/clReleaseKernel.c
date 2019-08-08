@@ -23,6 +23,7 @@
 
 #include "pocl_cl.h"
 #include "pocl_util.h"
+#include "utlist.h"
 
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0

@@ -179,6 +179,7 @@ CL_API_SUFFIX__VERSION_1_2
 
         cl_mem b = image_desc->buffer;
         mem->buffer = b;
+        mem->device_supports_this_image = device_image_support;
 
         mem->size = size;
         mem->origin = 0;
@@ -196,31 +197,52 @@ CL_API_SUFFIX__VERSION_1_2
       }
     else
       {
-        mem = POname (clCreateBuffer) (context, flags, size, host_ptr,
-                                       &errcode);
-        POCL_GOTO_ERROR_ON ((mem == NULL), CL_OUT_OF_HOST_MEMORY,
-                            "clCreateBuffer (for backing the image) failed\n");
+        /* create & partially setup a buffer struct, but don't allocate yet */
+        mem = pocl_create_memobject (context, flags, size, host_ptr,
+                                     errcode_ret);
+        if (mem == NULL)
+          goto ERROR;
 
-        for (i = 0; i < context->num_devices; i++)
+        mem->device_supports_this_image = device_image_support;
+        // allocate on every device
+        for (i = 0; i < context->num_devices; ++i)
           {
+            if (DEVICE_DOESNT_SUPPORT_IMAGE (mem, i))
+              continue;
+
             cl_device_id dev = context->devices[i];
-            if (!dev->image_support)
-              {
-                continue;
-              } // image_data[i] = NULL
-            if (dev->ops->create_image)
-              mem->device_ptrs[dev->dev_id].image_data
-                  = dev->ops->create_image (dev, image_format, image_desc, mem,
-                                            &errcode);
-            if (errcode)
+            pocl_mem_identifier *p = &mem->gmem_ptrs[dev->global_mem_id];
+            if (p->mem_ptr != NULL)
+              continue;
+
+            assert (dev->global_memory->alloc_mem_obj);
+            errcode = dev->global_memory->alloc_mem_obj (dev->global_memory,
+                                                         mem, p, host_ptr);
+            if (errcode) // TODO release mems!!!!
               goto ERROR;
           }
 
-        mem->buffer = NULL;
+        // if no device has allocated host backing memory for the image,
+        // allocate it now.
+        if (mem->mem_host_ptr == NULL)
+          {
+            mem->mem_host_ptr
+                = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, size);
+            assert (mem->mem_host_ptr);
+
+            /* this needs to be separately for prealloc_memobj, since device
+             * may have its own image row/slice pitch, in which case the driver
+             * needs to handle the memory copy. */
+            if (flags & CL_MEM_COPY_HOST_PTR)
+              {
+                POCL_MSG_PRINT_MEMORY (
+                    "image NOT preallocated and we need to copy it\n");
+                memcpy (mem->mem_host_ptr, host_ptr, size);
+              }
+          }
       }
 
     mem->type = image_desc->image_type;
-    mem->device_supports_this_image = device_image_support;
     mem->is_image = CL_TRUE;
     mem->image_width = image_desc->image_width;
     if (image_desc->image_type == CL_MEM_OBJECT_IMAGE2D
@@ -247,24 +269,16 @@ CL_API_SUFFIX__VERSION_1_2
     mem->image_channels = channels;
     mem->image_elem_size = elem_size;
 
-#if 0
-    printf("flags = %X\n",mem->flags); 
-    printf("mem_image_width %d\n", mem->image_width);
-    printf("mem_image_height %d\n", mem->image_height);
-    printf("mem_image_depth %d\n", mem->image_depth);
-    printf("mem_image_array_size %d\n", mem->image_array_size);
-    printf("mem_image_row_pitch %d\n", mem->image_row_pitch);
-    printf("mem_image_slice_pitch %d\n", mem->image_slice_pitch);
-    printf("mem_host_ptr %u\n", mem->mem_host_ptr);
-    printf("mem_image_channel_data_type %x \n",mem->image_channel_data_type);
-    printf("device_ptrs[0] %x \n \n", mem->device_ptrs[0]);
-#endif
+    POCL_RETAIN_OBJECT (context);
+
+    POCL_MSG_PRINT_MEMORY ("Created Image %p, HOST_PTR: %p, SIZE %zu \n", mem,
+                           mem->mem_host_ptr, size);
 
     if (errcode_ret != NULL)
       *errcode_ret = CL_SUCCESS;
 
     return mem;
-    
+
  ERROR:
    POCL_MEM_FREE (device_image_support);
    if (errcode_ret)

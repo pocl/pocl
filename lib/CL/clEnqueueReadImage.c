@@ -103,7 +103,7 @@ CL_API_SUFFIX__VERSION_1_0
     }
 
   cl_device_id dev = command_queue->device;
-  cmd->command.read_image.src_mem_id = &image->device_ptrs[dev->dev_id];
+  cmd->command.read_image.src_mem_id = &image->gmem_ptrs[dev->global_mem_id];
   cmd->command.read_image.dst_host_ptr = ptr;
   cmd->command.read_image.dst_mem_id = NULL;
 

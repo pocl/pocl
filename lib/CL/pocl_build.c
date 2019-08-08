@@ -46,6 +46,7 @@
 #include "pocl_binary.h"
 #include "pocl_shared.h"
 
+
 #define REQUIRES_CR_SQRT_DIV_ERR                                              \
   "-cl-fp32-correctly-rounded-divide-sqrt build option "                      \
   "was specified, but CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT "                   \
@@ -395,7 +396,27 @@ ERROR:
   return error;
 }
 
-/*****************************************************************************/
+/* Unique hash for a device + program build + kernel name combination.
+   NOTE: this does NOT take into account the local WG sizes or other
+   specialization properties. */
+static void
+pocl_calculate_kernel_hash (cl_program program, unsigned kernel_i,
+                            unsigned device_i)
+{
+  SHA1_CTX hash_ctx;
+  pocl_SHA1_Init (&hash_ctx);
+
+  char *n = program->kernel_meta[kernel_i].name;
+  pocl_SHA1_Update (&hash_ctx, (uint8_t *)program->build_hash[device_i],
+                    sizeof (SHA1_digest_t));
+  pocl_SHA1_Update (&hash_ctx, (uint8_t *)n, strlen (n));
+
+  uint8_t digest[SHA1_DIGEST_SIZE];
+  pocl_SHA1_Final (&hash_ctx, digest);
+
+  memcpy (program->kernel_meta[kernel_i].build_hash[device_i], digest,
+          sizeof (pocl_kernel_hash_t));
+}
 
 static void
 free_meta (cl_program program)

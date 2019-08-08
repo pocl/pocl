@@ -27,6 +27,7 @@
 #include "pocl_device.h"
 #include "pocl_util.h"
 #include "common.h"
+#include "pocl_runtime_config.h"
 
 #include <assert.h>
 #include <string.h>
@@ -80,8 +81,6 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
   ops->uninit = pocl_ttasim_uninit;
   ops->reinit = NULL;
   ops->init = pocl_ttasim_init;
-  ops->alloc_mem_obj = pocl_tce_alloc_mem_obj;
-  ops->free = pocl_tce_free;
   ops->read = pocl_tce_read;
   ops->read_rect = pocl_tce_read_rect;
   ops->write = pocl_tce_write;
@@ -258,10 +257,10 @@ public:
         if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
           {
             if (al->value == NULL) continue;
-            unsigned start_addr = 
-              ((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[parent->dev_id].mem_ptr))->start_address;
-            unsigned size = 
-              ((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[parent->dev_id].mem_ptr))->size;
+            cl_mem m = *(cl_mem *)al->value;
+            void *chunk = m->gmem_ptrs[parent->global_mem_id].mem_ptr;
+            unsigned start_addr = ((chunk_info_t *)chunk)->start_address;
+            unsigned size = ((chunk_info_t *)chunk)->size;
 
             out << "__global__ char buffer_" << std::hex << start_addr 
                 << "[] = {" << std::endl << "\t";
@@ -341,9 +340,10 @@ public:
           }
         else if (meta->arg_info[a].type == POCL_ARG_TYPE_POINTER && dev_cmd.args[a] != 0)
           {
-            unsigned start_addr = 
-              ((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[parent->dev_id].mem_ptr))->start_address;
-            
+            cl_mem m = *(cl_mem *)al->value;
+            void *chunk = m->gmem_ptrs[parent->global_mem_id].mem_ptr;
+            unsigned start_addr = ((chunk_info_t *)chunk)->start_address;
+
             out << "(uint32_t)&buffer_" << std::hex << start_addr << "[0]";
           }
         else 
@@ -543,7 +543,6 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->image_support = CL_FALSE;
   dev->single_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
   dev->double_fp_config = CL_FP_ROUND_TO_NEAREST | CL_FP_INF_NAN;
-  dev->global_mem_cache_type = CL_NONE;
   dev->local_mem_type = CL_GLOBAL;
   dev->error_correction_support = CL_FALSE;
   dev->host_unified_memory = CL_FALSE;

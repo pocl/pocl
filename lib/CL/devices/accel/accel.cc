@@ -24,10 +24,11 @@
 
 #include "accel.h"
 #include "bufalloc.h"
+#include "common.h"
 #include "devices.h"
 #include "pocl_cl.h"
 #include "pocl_util.h"
-#include "common.h"
+#include "utlist.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -318,8 +319,6 @@ void pocl_accel_init_device_ops(struct pocl_device_ops *ops) {
   ops->get_builtin_kernel_metadata = pocl_accel_get_builtin_kernel_metadata;
 
   /* TODO: Bufalloc-based allocation from the onchip memories. */
-  ops->alloc_mem_obj = pocl_accel_alloc_mem_obj;
-  ops->free = pocl_accel_free;
   ops->map_mem = pocl_accel_map_mem;
 
   ops->submit = pocl_accel_submit;
@@ -369,42 +368,56 @@ void pocl_accel_read(void *data, void *__restrict__ dst_host_ptr,
   d->ParameterMemory.CopyFromMMAP(dst_host_ptr, src, size);
 }
 
-cl_int pocl_accel_alloc_mem_obj(cl_device_id device, cl_mem mem_obj,
-                                void *host_ptr) {
-  AccelData *data = (AccelData *)device->data;
+cl_int pocl_accel_alloc_mem_obj(pocl_global_mem_t *gmem, cl_mem mem,
+                                pocl_mem_identifier *p, void *host_ptr) {
+  assert(p->mem_ptr == NULL);
+  int ret = CL_MEM_OBJECT_ALLOCATION_FAILURE;
 
-  chunk_info_t *chunk = alloc_buffer(&data->AllocRegion, mem_obj->size);
+  memory_region_t *Region = (memory_region_t *)gmem->data;
+  MMAPRegion *ParamMemory = (MMAPRegion *)gmem->data2;
+  chunk_info_t *chunk = NULL;
+
+  POCL_LOCK(gmem->lock);
+  p->device_size = mem->size;
+  if (!pocl_global_mem_can_allocate(gmem, p))
+    goto ERROR;
+
+  chunk = alloc_buffer(Region, mem->size);
   if (chunk == NULL)
-    return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+    goto ERROR;
 
-  POCL_MSG_PRINT_INFO("accel: allocated 0x%zu bytes from 0x%zu\n",
-                      mem_obj->size, chunk->start_address);
-
-  if ((mem_obj->flags & CL_MEM_COPY_HOST_PTR) ||
-      ((mem_obj->flags & CL_MEM_USE_HOST_PTR) && host_ptr != NULL)) {
-    /* TODO:
-       CL_MEM_USE_HOST_PTR must synch the buffer after execution
-       back to the host's memory in case it's used as an output (?). */
-    data->ParameterMemory.CopyToMMAP(chunk->start_address, host_ptr,
-                                     mem_obj->size);
+  if (mem->flags & (CL_MEM_COPY_HOST_PTR | CL_MEM_USE_HOST_PTR)) {
+    ParamMemory->CopyToMMAP(chunk->start_address, host_ptr, mem->size);
   }
 
-  mem_obj->device_ptrs[device->dev_id].mem_ptr = (void *)chunk;
+  POCL_MSG_PRINT_MEMORY("accel: allocated 0x%zu bytes from 0x%zu\n", mem->size,
+                        chunk->start_address);
+  p->mem_ptr = chunk;
+
+  pocl_global_mem_allocated(gmem, p);
+  ret = CL_SUCCESS;
+
+ERROR:
+  POCL_UNLOCK(gmem->lock);
+  return ret;
+}
+
+int pocl_accel_free_mem_obj(pocl_global_mem_t *gmem, cl_mem mem,
+                            pocl_mem_identifier *p) {
+  assert(p->mem_ptr != NULL);
+
+  free_chunk((chunk_info_t *)p->mem_ptr);
+  p->mem_ptr = NULL;
+
+  POCL_LOCK(gmem->lock);
+  pocl_global_mem_freed(gmem, p);
+  POCL_UNLOCK(gmem->lock);
 
   return CL_SUCCESS;
 }
 
-void pocl_accel_free(cl_device_id device, cl_mem mem_obj) {
-  chunk_info_t *chunk =
-      (chunk_info_t *)mem_obj->device_ptrs[device->dev_id].mem_ptr;
-  free_chunk(chunk);
-}
-
 cl_int pocl_accel_map_mem(void *data, pocl_mem_identifier *src_mem_id,
                           cl_mem src_buf, mem_mapping_t *map) {
-  if (map->host_ptr == NULL) {
-    map->host_ptr = pocl_aligned_malloc(MAX_EXTENDED_ALIGNMENT, map->size);
-  }
 
   /* Synch the device global region to the host memory. */
   pocl_accel_read(data, map->host_ptr, src_mem_id, src_buf, map->offset,
@@ -422,7 +435,6 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
   dev->available = CL_TRUE;
   dev->extensions = "";
   dev->profile = "FULL_PROFILE";
-  dev->max_mem_alloc_size = 100 * 1024 * 1024;
 
   AccelData *D = new AccelData;
   dev->data = (void *)D;
@@ -488,6 +500,12 @@ cl_int pocl_accel_init(unsigned j, cl_device_id dev, const char *parameters) {
   D->ParameterMemory.Map(D->BaseAddress + 3 * max_region, pmem_size, mem_fd);
 
   init_mem_region(&D->AllocRegion, D->ParameterMemory.PhysAddress, pmem_size);
+
+  pocl_bufalloc_init_global_mem(dev, pmem_size, &D->AllocRegion,
+                                &D->ParameterMemory);
+
+  dev->global_memory->alloc_mem_obj = pocl_accel_alloc_mem_obj;
+  dev->global_memory->free_mem_obj = pocl_accel_free_mem_obj;
 
   // memory mapping done
   close(mem_fd);
@@ -763,7 +781,7 @@ void pocl_accel_run(void *data, _cl_command_node *cmd) {
       } else {
         cl_mem m = (*(cl_mem *)(al->value));
         auto chunk =
-            (chunk_info_t *)m->device_ptrs[cmd->device->dev_id].mem_ptr;
+            (chunk_info_t *)m->gmem_ptrs[cmd->device->global_mem_id].mem_ptr;
         size_t buffer = (size_t)chunk->start_address;
         size_t phys = buffer + al->offset;
         *(size_t *)current_arg = phys;

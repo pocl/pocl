@@ -28,6 +28,7 @@
 #include "pocl_cache.h"
 #include "pocl_llvm_api.h"
 #include "pocl_file_util.h"
+#include "common.h"
 
 #include <string>
 #include <map>
