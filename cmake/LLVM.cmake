@@ -36,11 +36,12 @@ if(DEFINED WITH_LLVM_CONFIG AND WITH_LLVM_CONFIG)
 else()
   # search for any version
   find_program(LLVM_CONFIG
-    NAMES "llvm-config"
-      "llvm-config-mp-9.0" "llvm-config-9.0" "llvm-config90"
-      "llvm-config-mp-8.0" "llvm-config-8.0" "llvm-config80"
-      "llvm-config-mp-7.0" "llvm-config-7.0" "llvm-config70"
+    NAMES
+      "llvm-config-mp-9.0" "llvm-config-9" "llvm-config90"
+      "llvm-config-mp-8.0" "llvm-config-8" "llvm-config80"
+      "llvm-config-mp-7.0" "llvm-config-7" "llvm-config70"
       "llvm-config-mp-6.0" "llvm-config-6.0" "llvm-config60"
+      "llvm-config"
     DOC "llvm-config executable")
 endif()
 
