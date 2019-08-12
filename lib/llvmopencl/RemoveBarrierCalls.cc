@@ -51,9 +51,6 @@ RemoveBarrierCalls::RemoveBarrierCalls() : FunctionPass(ID) {
 bool
 RemoveBarrierCalls::runOnFunction(Function &F) {
 
-  if (!Workgroup::isKernelToProcess(F))
-    return false;
-
   // Collect the barrier calls to be removed first, not remove them
   // instantly as it'd invalidate the iterators.
   std::set<Instruction*> BarriersToRemove;
