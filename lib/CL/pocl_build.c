@@ -769,13 +769,13 @@ compile_and_link_program(int compile_program,
         {
           pocl_update_program_llvm_irs (program, device_i);
         }
+#endif
 
      /* Maintain a 'last_accessed' file in every program's
       * cache directory. Will be useful for cache pruning script
       * that flushes old directories based on LRU */
       pocl_cache_update_program_last_access (program, device_i);
     }
-#endif
 
   POCL_GOTO_ERROR_ON ((actually_built < num_devices), build_error_code,
                       "Some of the devices on the argument-supplied list are"

@@ -1253,11 +1253,13 @@ pocl_update_event_finished_msg (cl_int status, const char *func, unsigned line,
   POCL_UNLOCK_OBJ (event);
   ops->broadcast (event);
 
+#ifdef POCL_DEBUG_MESSAGES
   if (msg != NULL)
     {
       pocl_debug_print_duration (
           func, line, msg, (uint64_t) (event->time_end - event->time_start));
     }
+#endif
 
   POname (clReleaseEvent) (event);
 }

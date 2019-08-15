@@ -34,7 +34,6 @@
 extern "C" {
 #endif
 
-#define CL_USE_DEPRECATED_OPENCL_1_1_APIS
 #include <CL/cl.h>
 
 #ifdef __GNUC__
