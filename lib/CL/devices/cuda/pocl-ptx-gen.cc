@@ -806,9 +806,14 @@ void mapLibDeviceCalls(llvm::Module *Module) {
       if (Call) {
         // Create function declaration for libdevice version.
         llvm::FunctionType *FunctionType = Function->getFunctionType();
+#ifdef LLVM_OLDER_THAN_9_0
         llvm::Constant *LibDeviceFunction = Module->getOrInsertFunction(
             Entry.LibDeviceFunctionName, FunctionType);
-
+#else
+        llvm::FunctionCallee FC = Module->getOrInsertFunction(
+            Entry.LibDeviceFunctionName, FunctionType);
+        llvm::Function *LibDeviceFunction = llvm::cast<llvm::Function>(FC.getCallee());
+#endif
         // Replace function with libdevice version.
         std::vector<llvm::Value *> Args(Call->arg_begin(), Call->arg_end());
         llvm::CallInst *NewCall =
