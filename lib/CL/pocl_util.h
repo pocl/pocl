@@ -129,9 +129,9 @@ check_copy_overlap(const size_t src_offset[3],
  * in pending_list if the command still has pending dependencies
  */
 void
-pocl_command_push (_cl_command_node *node, 
-                   _cl_command_node * volatile * ready_list, 
-                   _cl_command_node * volatile * pending_list);
+pocl_command_push (_cl_command_node *node,
+                   _cl_command_node **ready_list,
+                   _cl_command_node **pending_list);
 
 /**
  * Return true if a command is ready to execute (no more event in wait list

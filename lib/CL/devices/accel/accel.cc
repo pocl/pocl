@@ -297,9 +297,9 @@ struct AccelData {
 
   std::set<BIKD *> SupportedKernels;
   // List of commands ready to be executed.
-  _cl_command_node *volatile ReadyList;
+  _cl_command_node *ReadyList;
   // List of commands not yet ready to be executed.
-  _cl_command_node *volatile CommandList;
+  _cl_command_node *CommandList;
   // Lock for command list related operations.
   pocl_lock_t CommandListLock;
 

@@ -377,7 +377,7 @@ pocl_mem_objs_cleanup (cl_event event)
  * executes given command. Call with node->event UNLOCKED.
  */
 void
-pocl_exec_command (_cl_command_node * volatile node)
+pocl_exec_command (_cl_command_node *node)
 {
   unsigned i;
   /* because of POCL_UPDATE_EVENT_ */
