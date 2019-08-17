@@ -146,7 +146,7 @@ typedef pthread_mutex_t pocl_lock_t;
   while (0)
 
 #define POCL_RETAIN_OBJECT_UNLOCKED(__OBJ__)    \
-    ++((__OBJ__)->pocl_refcount);
+    ++((__OBJ__)->pocl_refcount)
 
 #define POCL_RETAIN_OBJECT_REFCOUNT(__OBJ__, R) \
   do {                                          \
@@ -236,13 +236,6 @@ typedef pthread_mutex_t pocl_lock_t;
 
 #endif
 
-#ifdef __cplusplus
-extern "C"
-{
-  CL_API_ENTRY cl_int CL_API_CALL POname (clReleaseEvent) (cl_event event)
-      CL_API_SUFFIX__VERSION_1_0;
-}
-#endif
 
 /* The ICD compatibility part. This must be first in the objects where
  * it is used (as the ICD loader assumes that)*/

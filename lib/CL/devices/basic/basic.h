@@ -37,8 +37,6 @@
 #define POCL_BASIC_H
 
 #include "pocl_cl.h"
-#include "pocl_icd.h"
-#include "config.h"
 
 #include "prototypes.inc"
 GEN_PROTOTYPES (basic)

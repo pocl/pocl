@@ -70,10 +70,6 @@
 
 #include "_kernel_constants.h"
 
-#if defined(__x86_64__) || defined(__i386__)
-#define CPU_IS_X86 1
-#endif
-
 #define WORKGROUP_STRING_LENGTH 1024
 
 /**
@@ -658,7 +654,6 @@ pocl_exec_command (_cl_command_node *node)
 
     case CL_COMMAND_NDRANGE_KERNEL:
       pocl_update_event_running (event);
-      assert (event == node->event);
       assert (dev->ops->run);
       dev->ops->run (dev->data, node);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Enqueue NDRange       ");
@@ -820,6 +815,9 @@ fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg)
 }
 
 /* CPU driver stuff */
+
+#ifdef HAVE_LIBDL
+
 typedef struct pocl_dlhandle_cache_item pocl_dlhandle_cache_item;
 struct pocl_dlhandle_cache_item
 {
@@ -1092,7 +1090,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
                                   int specialize)
 {
   char workgroup_string[WORKGROUP_STRING_LENGTH];
-  pocl_dlhandle_cache_item *ci = NULL, *tmp = NULL;
+  pocl_dlhandle_cache_item *ci = NULL;
   const char *dl_error = NULL;
   _cl_command_run *run_cmd = &command->command.run;
 
@@ -1155,9 +1153,10 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   DL_PREPEND (pocl_dlhandle_cache, ci);
 
   POCL_UNLOCK (pocl_dlhandle_lock);
-  /***************************************************************************/
   POCL_MEM_FREE (module_fn);
 }
+
+#endif
 
 #define MIN_MAX_MEM_ALLOC_SIZE (128*1024*1024)
 
