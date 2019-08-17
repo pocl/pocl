@@ -301,8 +301,7 @@ pocl_pthread_join(cl_device_id device, cl_command_queue cq)
 void
 pocl_pthread_notify (cl_device_id device, cl_event event, cl_event finished)
 {
-   int wake_thread = 0;
-  _cl_command_node * volatile node = event->command;
+  _cl_command_node *node = event->command;
 
   if (finished->status < CL_COMPLETE)
     {
@@ -318,13 +317,10 @@ pocl_pthread_notify (cl_device_id device, cl_event event, cl_event finished)
       if (event->status == CL_QUEUED)
         {
           pocl_update_event_submitted (event);
-          wake_thread = 1;
+          pthread_scheduler_push_command (node);
         }
     }
-  if (wake_thread)
-    {
-      pthread_scheduler_push_command (node);
-    }
+
   return;
 }
 

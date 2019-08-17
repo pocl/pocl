@@ -580,9 +580,9 @@ void pocl_command_enqueue (cl_command_queue command_queue,
 
 /* call (and return) with node->event locked */
 void
-pocl_command_push (_cl_command_node *node, 
-                   _cl_command_node *volatile *ready_list, 
-                   _cl_command_node *volatile *pending_list)
+pocl_command_push (_cl_command_node *node,
+                   _cl_command_node **ready_list,
+                   _cl_command_node **pending_list)
 {
   assert (node != NULL);
 

@@ -128,8 +128,8 @@ class TCEDevice {
 
   pthread_mutex_t cq_lock;
   pocl_lock_t tce_compile_lock;
-  _cl_command_node *volatile ready_list;
-  _cl_command_node *volatile command_list;
+  _cl_command_node *ready_list;
+  _cl_command_node *command_list;
 };
 
 #endif

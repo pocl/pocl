@@ -196,9 +196,9 @@ typedef pthread_mutex_t pocl_lock_t;
   while (0)
 
 /* Declares the generic pocl object attributes inside a struct. */
-#define POCL_OBJECT \
-  pocl_lock_t pocl_lock; \
-  volatile int pocl_refcount 
+#define POCL_OBJECT                                                           \
+  pocl_lock_t pocl_lock;                                                      \
+  int pocl_refcount
 
 #define POCL_OBJECT_INIT \
   POCL_LOCK_INITIALIZER, 0
@@ -922,11 +922,11 @@ struct _cl_command_queue {
   cl_command_queue_properties properties;
   /* implementation */
   cl_event events; /* events of the enqueued commands in enqueue order */
-  struct _cl_event * volatile barrier;
-  volatile int command_count; /* counter for unfinished command enqueued */
-  volatile pocl_data_sync_item last_event;
+  struct _cl_event *barrier;
+  unsigned long command_count; /* counter for unfinished command enqueued */
+  pocl_data_sync_item last_event;
 
-  /* backend specific data */
+  /* device specific data */
   void *data;
 };
 
@@ -1024,8 +1024,9 @@ struct _cl_mem {
      the shared system mem allocation */
   cl_device_id shared_mem_allocation_owner;
   /* device where this mem obj resides */
-  volatile cl_device_id owning_device;
-  /* A linked list of regions of the buffer mapped to the 
+  cl_device_id owning_device;
+
+  /* A linked list of regions of the buffer mapped to the
      host memory */
   mem_mapping_t *mappings;
   /* in case this is a sub buffer, this points to the parent
@@ -1164,7 +1165,7 @@ struct event_callback_item
 struct event_node
 {
   cl_event event;
-  event_node * volatile next;
+  event_node *next;
 };
 
 /* Optional metadata for events for improved profile data readability etc. */
@@ -1186,18 +1187,15 @@ struct _cl_event {
   unsigned int id;
 
   /* list of callback functions */
-  event_callback_item *volatile callback_list;
+  event_callback_item *callback_list;
 
   /* list of devices needing completion notification for this event */
-  event_node * volatile notify_list;
-  event_node * volatile wait_list;
+  event_node *notify_list;
+  event_node *wait_list;
 
   /* OoO doesn't use sync points -> put used buffers here */
-  cl_mem *mem_objs;
   size_t num_buffers;
-
-  /* The execution status of the command this event is monitoring. */
-  volatile cl_int status;
+  cl_mem *mem_objs;
 
   /* Profiling data: time stamps of the different phases of execution. */
   cl_ulong time_queue;  /* the enqueue time */
@@ -1205,15 +1203,19 @@ struct _cl_event {
   cl_ulong time_start;  /* the time the command actually started executing */
   cl_ulong time_end;    /* the finish time of the command */
 
-  void *data; /* Device specific data. */
+  /* Device specific data */
+  void *data;
 
   /* Additional (optional data) used to make profile data more readable etc. */
   pocl_event_md *meta_data;
 
-  /* Event for pocl's internal use, not visible to user. */
+  /* The execution status of the command this event is monitoring. */
+  cl_int status;
+  /* impicit event = an event for pocl's internal use, not visible to user */
   int implicit_event;
-  _cl_event * volatile next;
-  _cl_event * volatile prev;
+
+  _cl_event *next;
+  _cl_event *prev;
 };
 
 typedef struct _pocl_user_event_data

@@ -1000,7 +1000,7 @@ void
 pocl_tce_notify (cl_device_id device, cl_event event, cl_event finished)
 {
   TCEDevice *d = (TCEDevice*)device->data;
-  _cl_command_node * volatile node = event->command;
+  _cl_command_node *node = event->command;
 
   if (finished->status < CL_COMPLETE) {
     pocl_update_event_failed(event);
