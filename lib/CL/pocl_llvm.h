@@ -22,8 +22,10 @@
    IN THE SOFTWARE.
 */
 
-#pragma once
 #include "pocl_cl.h"
+
+#ifndef POCL_LLVM_H
+#define POCL_LLVM_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -126,4 +128,6 @@ int pocl_invoke_clang(cl_device_id Device, const char** Args);
 
 #ifdef __cplusplus
 }
+#endif
+
 #endif

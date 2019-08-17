@@ -117,11 +117,9 @@ void pocl_free_global_mem(cl_device_id device, void *ptr, size_t size);
 
 void pocl_print_system_memory_stats();
 
-void pocl_calculate_kernel_hash (cl_program program, unsigned kernel_i,
-                                 unsigned device_i);
-
 POCL_EXPORT
 void pocl_init_default_device_infos (cl_device_id dev);
+
 
 #ifdef __cplusplus
 }

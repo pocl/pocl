@@ -24,14 +24,15 @@
 
 #include "pocl_llvm.h"
 
+#ifndef POCL_LLVM_API_H
+#define POCL_LLVM_API_H
+
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING ("-Wunused-parameter")
 
 #include <llvm/IR/Module.h>
 #include <map>
 #include <string>
-
-typedef struct _cl_device_id *cl_device_id;
 
 #ifdef __GNUC__
 #pragma GCC visibility push(hidden)
@@ -86,4 +87,6 @@ extern std::string currentWgMethod;
 
 #ifdef __GNUC__
 #pragma GCC visibility pop
+#endif
+
 #endif

@@ -43,9 +43,7 @@
 #endif
 
 #include "common.h"
-#include "config.h"
-#include "devices.h"
-#include "pocl_cache.h"
+#include "pocl_runtime_config.h"
 #include "pocl_debug.h"
 #include "pocl_runtime_config.h"
 #include "pocl_tracing.h"
@@ -54,11 +52,24 @@
 #include "pocl_llvm.h"
 #endif
 
-#if defined(TCE_AVAILABLE)
+#ifdef BUILD_BASIC
+#include "basic/basic.h"
+#endif
+#ifdef BUILD_PTHREAD
+#include "pthread/pocl-pthread.h"
+#endif
+
+#ifdef TCE_AVAILABLE
 #include "tce/ttasim/ttasim.h"
 #endif
 
+#ifdef BUILD_HSA
 #include "hsa/pocl-hsa.h"
+#endif
+
+#ifdef BUILD_CUDA
+#include "cuda/pocl-cuda.h"
+#endif
 
 #if defined(BUILD_ACCEL)
 #include "accel/accel.h"
@@ -92,16 +103,16 @@ static init_device_ops pocl_devices_init_ops[] = {
 #ifdef BUILD_PTHREAD
   NULL,
 #endif
-#if defined(TCE_AVAILABLE)
+#ifdef TCE_AVAILABLE
   NULL,
 #endif
-#if defined(BUILD_HSA)
+#ifdef BUILD_HSA
   NULL,
 #endif
-#if defined(BUILD_CUDA)
+#ifdef BUILD_CUDA
   NULL,
 #endif
-#if defined(BUILD_ACCEL)
+#ifdef BUILD_ACCEL
   NULL,
 #endif
 };

@@ -421,7 +421,7 @@ do {                                                                            
       (head)->prev = (head);                                                                   \
       (head)->next = NULL;                                                                     \
   }                                                                                            \
-} while (0);
+} while (0)
 
 #define DL_CONCAT(head1,head2)                                                                 \
 do {                                                                                           \

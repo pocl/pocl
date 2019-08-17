@@ -74,10 +74,6 @@
 
 #include "_kernel_constants.h"
 
-#if defined(__x86_64__) || defined(__i386__)
-#define CPU_IS_X86 1
-#endif
-
 #define WORKGROUP_STRING_LENGTH 1024
 
 uint64_t last_object_id = 0;
@@ -662,7 +658,6 @@ pocl_exec_command (_cl_command_node *node)
 
     case CL_COMMAND_NDRANGE_KERNEL:
       pocl_update_event_running (event);
-      assert (event == node->event);
       assert (dev->ops->run);
       dev->ops->run (dev->data, node);
       POCL_UPDATE_EVENT_COMPLETE_MSG (event, "Event Enqueue NDRange       ");
@@ -824,6 +819,9 @@ pocl_fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg)
 }
 
 /* CPU driver stuff */
+
+#ifdef HAVE_LIBDL
+
 typedef struct pocl_dlhandle_cache_item pocl_dlhandle_cache_item;
 struct pocl_dlhandle_cache_item
 {
@@ -1055,7 +1053,7 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
                                   unsigned initial_refcount, int specialize)
 {
   char workgroup_string[WORKGROUP_STRING_LENGTH];
-  pocl_dlhandle_cache_item *ci = NULL, *tmp = NULL;
+  pocl_dlhandle_cache_item *ci = NULL;
   const char *dl_error = NULL;
   _cl_command_run *run_cmd = &command->command.run;
 
@@ -1120,9 +1118,10 @@ pocl_check_kernel_dlhandle_cache (_cl_command_node *command,
   DL_PREPEND (pocl_dlhandle_cache, ci);
 
   POCL_UNLOCK (pocl_dlhandle_lock);
-  /***************************************************************************/
   POCL_MEM_FREE (module_fn);
 }
+
+#endif
 
 #define MIN_MAX_MEM_ALLOC_SIZE (128*1024*1024)
 
@@ -1320,27 +1319,6 @@ pocl_print_system_memory_stats()
                     system_memory.max_ever_allocated >> 10);
 }
 
-/* Unique hash for a device + program build + kernel name combination.
-   NOTE: this does NOT take into account the local WG sizes or other
-   specialization properties. */
-void
-pocl_calculate_kernel_hash (cl_program program, unsigned kernel_i,
-                            unsigned device_i)
-{
-  SHA1_CTX hash_ctx;
-  pocl_SHA1_Init (&hash_ctx);
-
-  char *n = program->kernel_meta[kernel_i].name;
-  pocl_SHA1_Update (&hash_ctx, (uint8_t *)program->build_hash[device_i],
-                    sizeof (SHA1_digest_t));
-  pocl_SHA1_Update (&hash_ctx, (uint8_t *)n, strlen (n));
-
-  uint8_t digest[SHA1_DIGEST_SIZE];
-  pocl_SHA1_Final (&hash_ctx, digest);
-
-  memcpy (program->kernel_meta[kernel_i].build_hash[device_i], digest,
-          sizeof (pocl_kernel_hash_t));
-}
 
 /* default WG size in each dimension & total WG size.
  * this should be reasonable for CPU */

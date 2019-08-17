@@ -73,7 +73,6 @@
 #error Need atomic_inc() builtin for this compiler
 #endif
 
-typedef struct pocl_kernel_metadata_s pocl_kernel_metadata_t;
 typedef pthread_mutex_t pocl_lock_t;
 #define POCL_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
 
@@ -159,7 +158,7 @@ typedef pthread_mutex_t pocl_lock_t;
   while (0)
 
 #define POCL_RETAIN_OBJECT_UNLOCKED(__OBJ__)    \
-    ++((__OBJ__)->pocl_refcount);
+    ++((__OBJ__)->pocl_refcount)
 
 #define POCL_RETAIN_OBJECT_REFCOUNT(__OBJ__, R) \
   do {                                          \
@@ -253,13 +252,6 @@ extern uint64_t last_object_id;
 
 #endif
 
-#ifdef __cplusplus
-extern "C"
-{
-  CL_API_ENTRY cl_int CL_API_CALL POname (clReleaseEvent) (cl_event event)
-      CL_API_SUFFIX__VERSION_1_0;
-}
-#endif
 
 /* The ICD compatibility part. This must be first in the objects where
  * it is used (as the ICD loader assumes that)*/
