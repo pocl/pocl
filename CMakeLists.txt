@@ -1172,9 +1172,8 @@ endif()
 
 if(ENABLE_CUDA)
 
-  # Require LLVM 4.0 or newer
-  if ("${LLVM_MAJOR}" STRLESS "4")
-    message(FATAL_ERROR "The CUDA backend requires LLVM 4.0 or newer")
+  if(NOT "${LLVM_ALL_TARGETS}" MATCHES "NVPTX")
+    message(FATAL_ERROR "CUDA build requested but LLVM does not support NVPTX target!")
   endif()
 
   set(OCL_DRIVERS "${OCL_DRIVERS} cuda")
