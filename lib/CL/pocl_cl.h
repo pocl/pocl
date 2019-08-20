@@ -1139,6 +1139,14 @@ struct event_node
   event_node * volatile next;
 };
 
+/* Optional metadata for events for improved profile data readability etc. */
+typedef struct _pocl_event_md
+{
+  /* The kernel executed by the NDRange command associated with the event,
+     if any. */
+  cl_kernel kernel;
+} pocl_event_md;
+
 typedef struct _cl_event _cl_event;
 struct _cl_event {
   POCL_ICD_OBJECT
@@ -1169,9 +1177,12 @@ struct _cl_event {
   cl_ulong time_start;  /* the time the command actually started executing */
   cl_ulong time_end;    /* the finish time of the command */
 
-  void *data; /* Device specific data */  
+  void *data; /* Device specific data. */
 
-  /* impicit event = an event for pocl's internal use, not visible to user */
+  /* Additional (optional data) used to make profile data more readable etc. */
+  pocl_event_md *meta_data;
+
+  /* Event for pocl's internal use, not visible to user. */
   int implicit_event;
   _cl_event * volatile next;
   _cl_event * volatile prev;

@@ -23,6 +23,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include "pocl_cq_profiling.h"
 #include "pocl_util.h"
 #include "pocl_tracing.h"
 #include "pocl_runtime_config.h"
@@ -36,6 +37,7 @@ static int tracing_initialized = 0;
 static uint8_t event_trace_filter = 0xF;
 
 static const struct pocl_event_tracer text_logger;
+static const struct pocl_event_tracer cq_profiler;
 
 /* List of tracers
  */
@@ -44,20 +46,21 @@ static const struct pocl_event_tracer *pocl_event_tracers[] = {
 #ifdef HAVE_LTTNG_UST
   &lttng_tracer,
 #endif
+  &cq_profiler
 };
 
 #define POCL_TRACER_COUNT (sizeof(pocl_event_tracers) / sizeof((pocl_event_tracers)[0]))
 
 static const struct pocl_event_tracer *event_tracer = NULL;
 
-/* called with event locked, and must also return with locked event */
+/* Called with event locked, and must also return with a locked event. */
 void
 pocl_event_updated (cl_event event, int status)
 {
   event_callback_item *cb_ptr;
 
-  /* event callback handling just call functions in the same order
-   * they were added if the status match the specified one */
+  /* Event callback handling calls functions in the same order
+     they were added if the status matches the specified one. */
   for (cb_ptr = event->callback_list; cb_ptr; cb_ptr = cb_ptr->next)
     {
       if (cb_ptr->trigger_status == status)
@@ -69,7 +72,8 @@ pocl_event_updated (cl_event event, int status)
         }
     }
 
-  if (event_tracer && ((1 << status) & event_trace_filter))
+  if (event_tracer && event_tracer->event_updated &&
+      ((1 << status) & event_trace_filter))
     event_tracer->event_updated (event, status);
 }
 
@@ -79,7 +83,7 @@ pocl_parse_event_filter ()
   const char *trace_filter;
   char *tmp_str, *save_ptr, *token;
 
-  trace_filter = pocl_get_string_option ("POCL_TRACE_EVENT_FILTER", NULL);
+  trace_filter = pocl_get_string_option ("POCL_TRACING_FILTER", NULL);
   if (trace_filter == NULL)
     return;
 
@@ -110,7 +114,7 @@ PARSE_OUT:
 }
 
 void
-pocl_event_tracing_init ()
+pocl_tracing_init ()
 {
   const char *trace_env;
   unsigned i;
@@ -118,7 +122,7 @@ pocl_event_tracing_init ()
   if (tracing_initialized)
     return;
 
-  trace_env = pocl_get_string_option ("POCL_TRACE_EVENT", NULL);
+  trace_env = pocl_get_string_option ("POCL_TRACING", NULL);
   if (trace_env == NULL)
     goto EVENT_INIT_OUT;
 
@@ -153,7 +157,7 @@ text_tracer_init ()
 {
   const char *text_tracer_output;
 
-  text_tracer_output = pocl_get_string_option ("POCL_TRACE_EVENT_OPT",
+  text_tracer_output = pocl_get_string_option ("POCL_TRACING_OPT",
                                           "pocl_trace_events.log");
   text_tracer_file = fopen (text_tracer_output, "w");
   if (!text_tracer_file)
@@ -223,6 +227,11 @@ text_tracer_event_updated (cl_event event, int status)
       text_size++;
     }
 
+  /* TODO: Make text_logger less intrusive by merging it with cq_profiler.
+     Now it actually sprintfs after every event change which has a significant
+     footprint. It could just use the collected events and sprintf the log
+     after N events or atexit() to avoid the printing affecting the profile. */
+
   POCL_LOCK (text_tracer_lock);
   fwrite (tmp_buffer, text_size, 1, text_tracer_file);
   POCL_UNLOCK (text_tracer_lock);
@@ -234,6 +243,14 @@ static const struct pocl_event_tracer text_logger = {
   text_tracer_event_updated,
 };
 
+static const struct pocl_event_tracer cq_profiler = {
+  "cq",
+  pocl_cq_profiling_init,
+  /* Avoid a callback after every event change to minimize impact to the profiling run.
+     Instead just store the event timestamps with as little impact as possible for
+     later collection/analysis. */
+  NULL
+};
 
 #ifdef HAVE_LTTNG_UST
 
@@ -290,5 +307,6 @@ static const struct pocl_event_tracer lttng_tracer = {
   lttng_tracer_init,
   lttng_tracer_event_updated,
 };
+
 
 #endif

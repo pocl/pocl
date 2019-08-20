@@ -1581,7 +1581,7 @@ pocl_hsa_submit (_cl_command_node *node, cl_command_queue cq)
   pocl_hsa_device_data_t *d = device->data;
   unsigned added_to_readylist = 0;
 
-  PTHREAD_CHECK (pthread_mutex_lock(&d->list_mutex));
+  PTHREAD_CHECK (pthread_mutex_lock (&d->list_mutex));
 
   node->ready = 1;
   if (pocl_command_is_ready (node->event))

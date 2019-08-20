@@ -51,6 +51,8 @@ extern "C" {
 /* See: https://gcc.gnu.org/onlinedocs/gcc-4.1.2/gcc/Atomic-Builtins.html */
 #define POCL_ATOMIC_INC(x) __sync_add_and_fetch (&x, 1)
 #define POCL_ATOMIC_DEC(x) __sync_sub_and_fetch (&x, 1)
+#define POCL_ATOMIC_CAS(ptr, oldval, newval)                                  \
+  __sync_val_compare_and_swap (ptr, oldval, newval)
 
 #else
 #error Need basic atomics builtin support in the compiler.

@@ -38,23 +38,21 @@ extern "C"
 {
 #endif
 
-  void pocl_event_updated (cl_event event, int new_status);
+void pocl_event_updated (cl_event event, int new_status);
 
-/* Initializes event tracing system 
- */
-  void pocl_event_tracing_init ();
+/* Initializes the event tracing system selected with POCL_TRACING. */
+void pocl_tracing_init ();
 
-/* Struct of trace handlers
- */
-  struct pocl_event_tracer
-  {
-    /* Tracer name used to match POCL_TRACE_EVENT=xxx env var */
-    const char *name;
-    /* Init function called when the tracer is matched */
-    void (*init) ();
-    /* Callback called when an event has been updated */
-    void (*event_updated) (cl_event /* event */ , int /* status */ );
-  };
+/* Struct of trace handlers. */
+struct pocl_event_tracer
+{
+  /* Tracer name used to match POCL_TRACING=xxx env var */
+  const char *name;
+  /* Init function called when the tracer is matched */
+  void (*init) ();
+  /* Callback called when an event has been updated */
+  void (*event_updated) (cl_event /* event */ , int /* status */ );
+};
 
 #ifdef __cplusplus
 }
