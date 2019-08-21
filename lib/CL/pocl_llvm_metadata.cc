@@ -380,10 +380,13 @@ static int pocl_get_kernel_arg_function_metadata(llvm::Function *Kernel,
     current_arg = &kernel_meta->arg_info[j];
     kernel_meta->has_arg_metadata |= POCL_HAS_KERNEL_ARG_TYPE_NAME;
     current_arg->type_name = (char *)malloc(val.size() + 1);
-    if (type_size_map.find(val) != type_size_map.end())
+    if (current_arg->address_qualifier != CL_KERNEL_ARG_ADDRESS_PRIVATE) {
+      current_arg->type_size = sizeof(void *);
+    } else if (type_size_map.find(val) != type_size_map.end()) {
       current_arg->type_size = type_size_map[val];
-    else
+    } else {
       current_arg->type_size = 0;
+    }
     std::strcpy(current_arg->type_name, val.c_str());
   }
 

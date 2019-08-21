@@ -84,6 +84,25 @@ POname(clCreateKernel)(cl_program program,
   POCL_GOTO_ERROR_COND ((kernel->dyn_arguments == NULL),
                         CL_OUT_OF_HOST_MEMORY);
 
+  if (kernel->meta->total_argument_storage_size)
+    {
+      kernel->dyn_argument_storage
+          = calloc (1, kernel->meta->total_argument_storage_size);
+      kernel->dyn_argument_offsets
+          = malloc (kernel->meta->num_args * sizeof (void *));
+
+      size_t offset = 0;
+      for (i = 0; i < kernel->meta->num_args; ++i)
+        {
+          kernel->dyn_argument_offsets[i]
+              = kernel->dyn_argument_storage + offset;
+          unsigned type_size = kernel->meta->arg_info[i].type_size;
+          assert (type_size > 0);
+          offset += type_size;
+        }
+      assert (offset == kernel->meta->total_argument_storage_size);
+    }
+
   for (i = 0; i < program->num_devices; ++i)
     {
       cl_device_id device = program->devices[i];
@@ -104,6 +123,8 @@ ERROR:
     {
       POCL_MEM_FREE (kernel->dyn_arguments);
       POCL_MEM_FREE (kernel->data);
+      POCL_MEM_FREE (kernel->dyn_argument_storage);
+      POCL_MEM_FREE (kernel->dyn_argument_offsets);
     }
   POCL_MEM_FREE (kernel);
   kernel = NULL;

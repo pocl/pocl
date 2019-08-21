@@ -1130,6 +1130,10 @@ typedef struct pocl_kernel_metadata_s
   cl_bitfield has_arg_metadata;
   size_t reqd_wg_size[OPENCL_MAX_DIMENSION];
 
+  /* if we know the size of _every_ kernel argument, we store
+   * the total size here. see struct _cl_kernel on why */
+  size_t total_argument_storage_size;
+
   /* array[program->num_devices] */
   pocl_kernel_hash_t *build_hash;
 
@@ -1210,6 +1214,25 @@ struct _cl_kernel {
   /* The kernel arguments that are set with clSetKernelArg().
      These are copied to the command queue command at enqueue. */
   struct pocl_argument *dyn_arguments;
+
+  /* if total_argument_storage_size is known, we preallocate storage for
+   * actual kernel arguments here, instead of allocating it by one for
+   * each argument separately. The "offsets" store pointers calculated as
+   * "dyn_argument_storage + offset-of-argument-N".
+   *
+   * The pointer to actual value for argument N, used by drivers, is stored
+   * in dyn_arguments[N].value; if total_argument_storage_size is not known,
+   * the .value must be allocated separately for every argument in
+   * clSetKernelArg; if it is known, clSetKernelArg sets the .value to
+   * dyn_argument_offsets[N] and copies the value there.
+   *
+   * We must keep both ways, because not every driver can know kernel
+   * argument sizes beforehand.
+   */
+  char *dyn_argument_storage;
+  void **dyn_argument_offsets;
+
+  /* for program's linked list of kernels */
   struct _cl_kernel *next;
 };
 

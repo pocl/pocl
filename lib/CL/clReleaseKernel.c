@@ -51,12 +51,18 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
             device->ops->free_kernel (device, program, kernel, i);
         }
 
-      if (kernel->dyn_arguments)
-        for (i = 0; i < (kernel->meta->num_args); i++)
-          {
-            pocl_aligned_free (kernel->dyn_arguments[i].value);
-          }
-
+      if (kernel->meta->total_argument_storage_size)
+        {
+          POCL_MEM_FREE (kernel->dyn_argument_storage);
+          POCL_MEM_FREE (kernel->dyn_argument_offsets);
+        }
+      else
+        {
+          for (i = 0; i < (kernel->meta->num_args); i++)
+            {
+              pocl_aligned_free (kernel->dyn_arguments[i].value);
+            }
+        }
       kernel->name = NULL;
       kernel->meta = NULL;
       POCL_MEM_FREE (kernel->data);

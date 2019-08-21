@@ -39,7 +39,6 @@ POname(clSetKernelArg)(cl_kernel kernel,
   size_t arg_alignment, arg_alloc_size;
   struct pocl_argument *p;
   struct pocl_argument_info *pi;
-  void *value;
 
   POCL_RETURN_ERROR_COND((kernel == NULL), CL_INVALID_KERNEL);
 
@@ -122,33 +121,38 @@ POname(clSetKernelArg)(cl_kernel kernel,
           pi->type_name, pi->type_name, pi->type_size);
     }
 
-  p = &(kernel->dyn_arguments[arg_index]); 
-  POCL_LOCK_OBJ (kernel);
+  p = &(kernel->dyn_arguments[arg_index]);
+  if (kernel->dyn_argument_storage == NULL)
+    pocl_aligned_free (p->value);
+  p->value = NULL;
   p->is_set = 0;
 
   if (arg_value != NULL
-      && !(pi->type == POCL_ARG_TYPE_POINTER && *(const int *)arg_value == 0))
+      && !(pi->type == POCL_ARG_TYPE_POINTER
+           && *(const intptr_t *)arg_value == 0))
     {
-      pocl_aligned_free (p->value);
-      p->value = NULL;
+      void *value;
+      if (kernel->dyn_argument_storage != NULL)
+        value = kernel->dyn_argument_offsets[arg_index];
+      else
+        {
+          /* FIXME: this is a cludge to determine an acceptable alignment,
+           * we should probably extract the argument alignment from the
+           * LLVM bytecode during kernel header generation. */
+          arg_alignment = pocl_size_ceil2 (arg_size);
+          if (arg_alignment >= MAX_EXTENDED_ALIGNMENT)
+            arg_alignment = MAX_EXTENDED_ALIGNMENT;
 
-      /* FIXME: this is a cludge to determine an acceptable alignment,
-       * we should probably extract the argument alignment from the
-       * LLVM bytecode during kernel header generation. */
-      arg_alignment = pocl_size_ceil2(arg_size);
-      if (arg_alignment >= MAX_EXTENDED_ALIGNMENT)
-        arg_alignment = MAX_EXTENDED_ALIGNMENT;
+          arg_alloc_size = arg_size;
+          if (arg_alloc_size < arg_alignment)
+            arg_alloc_size = arg_alignment;
 
-      arg_alloc_size = arg_size;
-      if (arg_alloc_size < arg_alignment)
-        arg_alloc_size = arg_alignment;
-
-      value = pocl_aligned_malloc (arg_alignment, arg_alloc_size);
-      if (value == NULL)
-      {
-        POCL_UNLOCK_OBJ (kernel);
-        return CL_OUT_OF_HOST_MEMORY;
-      }
+          value = pocl_aligned_malloc (arg_alignment, arg_alloc_size);
+          if (value == NULL)
+            {
+              return CL_OUT_OF_HOST_MEMORY;
+            }
+        }
 
       if ((pi->type == POCL_ARG_TYPE_POINTER) && (arg_value != NULL))
         {
@@ -168,11 +172,6 @@ POname(clSetKernelArg)(cl_kernel kernel,
         memcpy (value, arg_value, arg_size);
       p->value = value;
     }
-  else
-    {
-      pocl_aligned_free (p->value);
-      p->value = NULL;
-    }
 
 #if 0
   printf(
@@ -183,7 +182,6 @@ POname(clSetKernelArg)(cl_kernel kernel,
   p->size = arg_size;
   p->is_set = 1;
 
-  POCL_UNLOCK_OBJ (kernel);
   return CL_SUCCESS;
 }
 POsym(clSetKernelArg)
