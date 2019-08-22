@@ -1,7 +1,7 @@
 .. _pocl-conformance:
 
 =======================
-Pocl OpenCL conformance
+OpenCL conformance
 =======================
 
 Conformance related CMake options
@@ -12,7 +12,7 @@ Conformance related CMake options
   be conformant on x86). Defaults to ON. This option by itself does not
   guarantee OpenCL-conformant build; it merely ensures that a build fails
   if some options which would result in non-conformant kernel library
-  (-DENABLE_SLEEF=OFF) are given.
+  are given.
 
   Non-conformant kernel library might be somewhat faster, at the expense of
   precision and/or range. Note that conformance was tested **only** on certain
@@ -32,25 +32,20 @@ label, which takes about 20-30 minutes on slow hardware.
 
 To run the full conformance testsuite, run: ``ctest -L conformance_suite_full``
 Note that this can take a week to finish on slow hardware, and about a day
-on fast hardware (6C/12T Intel or equivalent).
+on relatively fast hardware (6C/12T Intel or equivalent).
 
 Known issues with the conformance testsuite
 -------------------------------------------
 
-- the "not" operator test (``math_brute_force/bruteforce not``) may fail to
-  compile with LLVM 4.0 with certain vector sizes on some hardware.
-  This does not seem to affect the rest of the testsuite in any way, and
-  appears to be fixed with LLVM 5.0
-
 - a few tests from ``basic/test_basic`` may fail / segfault because they
   request a huge amount of memory for buffers.
 
-- a few tests from ``conversions/test_conversions`` may report failures when
-  compiled with -O2. This is likely a bug in the test; the same test from branch
+- a few tests from ``conversions/test_conversions`` may report failures.
+  This is likely a bug in the test; the same test from branch
   cl20_trunk of CTS passes.
 
 - math_brute_force tests may occasionally fail with an empty build log,
-  see pocl issue #614.
+  this is a bug in CTS. See pocl issue #614.
 
 - a few tests may run much faster if you limit the reported Global memory size
   with POCL_MEMORY_LIMIT env var. In particular, "kernel_image_methods" test

@@ -1,58 +1,14 @@
-Supported OpenCL features
-=========================
+Supported features and devices
+===============================
 
-All mandatory features for OpenCL 1.2 are supported
-on x86-64+Linux, see :ref:`pocl-conformance` for details.
+Pocl currently supports CPUs (x86-64 with full 1.2 conformance, ARM 32b/64b ligthly tested),
+NVidia GPUs via CUDA backend, HSA devices, TCE devices and fixed-function accelerators.
 
-Known unsupported OpenCL features
-=================================
+.. toctree::
+   :maxdepth: 2
 
-The known unsupported OpenCL (both 1.x and 2.x) features are
-listed here as encountered.
-
-Frontend/Clang
---------------
-
-* OpenCL 1.x
-
-  * OpenGL interoperability extension
-  * SPIR extension (partially available, see below)
-
-* OpenCL 2.0
-
-  * generic address space (recognized by LLVM 3.8+ but incomplete)
-  * pipes (WIP)
-  * device-side enqueue
-
-* cl_khr_f16: half precision support (with the exception of  vload_half / vstore_half)
-
-Unimplemented host side functions
----------------------------------
-
-All 1.2 API call should be implemented. The list of unimplemented
-2.0 calls can be seen as the NULLs in the ICD dispatch struct in
-https://github.com/pocl/pocl/blob/master/lib/CL/clGetPlatformIDs.c
-
-SPIR support
-------------
-
-There is some experimental support available for SPIR, with LLVM 5 and newer.
-There is some even more experimental support available for loading SPIR-V
-binaries, but this depends on functional llvm-spirv converter. The converter
-must produce LLVM IR in format which pocl's LLVM can consume, so e.g. using
-llvm-spirv builf from branch "spirv-3.6.1" against pocl built with LLVM 5 is
-unlikely to work. However, here is now a "spirv-6.0" branch in the official
-SPIRV-LLVM Khronos repository, and its llvm-spirv + pocl + LLVM 6 seem to
-pass some quick tests.
-
-Compiling from OpenCL sources to SPIR:
-
-     clang -D_CL_DISABLE_HALF -Xclang -cl-std=CL1.2 -D__OPENCL_C_VERSION__=120
-     -D__OPENCL_VERSION__=120 -Dcl_khr_int64 -Dcl_khr_byte_addressable_store
-     -Dcl_khr_global_int32_base_atomics -Dcl_khr_global_int32_extended_atomics
-     -Dcl_khr_local_int32_base_atomics -Dcl_khr_local_int32_extended_atomics
-     -Dcl_khr_3d_image_writes -Dcl_khr_fp64 -Dcl_khr_int64_base_atomics
-     -Dcl_khr_int64_extended_atomics -emit-llvm -target spir64-unknown-unknown
-     -o SPIR_OUTPUT.bc -x cl -c SOURCE.cl
-     -include <POCL_SOURCE_DIR>/include/_kernel.h
-     -include <POCL_SOURCE_DIR>/include/_enable_all_exts.h
+   opencl_status
+   conformance
+   hsa
+   cuda
+   accel

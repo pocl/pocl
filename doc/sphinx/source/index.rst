@@ -13,19 +13,10 @@ Contents:
 
    install
    using
-   env_variables
+   features
    faq
    development
-   releasing
-   maintainer-policy
    design
-   features
-   hsa
-   hsa_status
-   cuda
-   conformance
-   docker
-   accel
 
 Back to `pocl home page <http://pocl.sourceforge.net>`_.
 

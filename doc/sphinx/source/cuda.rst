@@ -25,8 +25,7 @@ Building pocl with CUDA support
   search path, and/or the library directory containing ``libcuda.{so,dylib}`` to
   your library search path.
 
-  The CUDA backend requires LLVM 4.0 or newer, and LLVM must have been built
-  with the NVPTX backend enabled.
+  The CUDA backend requires LLVM built with the NVPTX backend enabled.
 
 2) Build pocl
 ~~~~~~~~~~~~~

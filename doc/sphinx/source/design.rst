@@ -1,5 +1,5 @@
-Design notes
-============
+Notes on internal design
+===========================
 
 Higher-level notes of pocl software design and implementation are collected 
 to this part.
