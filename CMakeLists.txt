@@ -1379,7 +1379,7 @@ if(ENABLE_ICD)
 endif()
 
 if(ENABLE_ASAN OR ENABLE_LSAN)
-  file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/lsan.supp" CONTENT "leak:${LLVM_SRC_ROOT}/lib/Support/Unix/Signals.inc")
+  file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/lsan.supp" CONTENT "leak:${LLVM_SRC_ROOT}/lib/Support/Unix/Signals.inc\nleak:${LLVM_SHARED_LIB_FILE}\n")
   set(SAN_EXTRA "set(ENV{LSAN_OPTIONS} \"suppressions=${CMAKE_BINARY_DIR}/lsan.supp\")")
 endif()
 
