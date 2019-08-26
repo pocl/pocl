@@ -521,8 +521,6 @@ pocl_binary_deserialize_kernel_from_buffer (pocl_binary *b,
 
   if (meta)
     {
-      *buf = *buf + kernel->struct_size;
-
       if (b->version < 7)
         {
           for (i = 0; i < kernel->num_args; i++)
@@ -584,12 +582,12 @@ pocl_binary_deserialize_kernel_from_buffer (pocl_binary *b,
     {
       /* skip the arg_info and all kernel metadata */
       buffer = *buf + (kernel->struct_size - kernel->binaries_size);
-      buffer =
-        deserialize_kernel_cachedir (basedir, buffer, kernel->binaries_size);
+      deserialize_kernel_cachedir (basedir, buffer, kernel->binaries_size);
       POCL_MEM_FREE (kernel->kernel_name);
     }
 
-  *buf = buffer;
+  /* always skip to the next kernel */
+  *buf = *buf + kernel->struct_size;
   return CL_SUCCESS;
 
 }
