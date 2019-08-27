@@ -387,12 +387,13 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
         return CL_OUT_OF_HOST_MEMORY;
 
       (*event)->context = context;
-      POname(clRetainContext) (context);
       (*event)->queue = command_queue;
 
       /* user events have a NULL command queue, don't retain it */
       if (command_queue)
         POname(clRetainCommandQueue) (command_queue);
+      else
+        POname(clRetainContext) (context);
 
       (*event)->command_type = command_type;
       (*event)->id = POCL_ATOMIC_INC (event_id_counter);

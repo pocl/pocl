@@ -76,7 +76,6 @@ POname(clCreateCommandQueue)(cl_context context,
   command_queue->last_event.next = NULL;
 
   POname(clRetainContext) (context);
-  POname(clRetainDevice) (device);
 
   errcode = CL_SUCCESS;
   if (device->ops->init_queue)
