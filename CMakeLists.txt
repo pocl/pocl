@@ -67,6 +67,8 @@ if(UNIX)
       add_compile_options("$<$<COMPILE_LANGUAGE:C>:-Wincompatible-pointer-types>")
     endif()
 
+    add_compile_options("-Wno-ignored-attributes")
+
   else()
     message(WARNING "Don't know how to forbid this compiler from allowing implicit function declarations.")
   endif()
@@ -553,7 +555,7 @@ if(UNIX)
   include(CheckSymbolExists)
 
   # don't allow implicit function declarations
-  set(CMAKE_REQUIRED_FLAGS "-std=c99 ${FORBIT_IMPLICIT_FUNCTIONS}")
+  set(CMAKE_REQUIRED_FLAGS "-std=c99")
   if (CMAKE_SYSTEM_NAME MATCHES "Linux")
     set(CMAKE_REQUIRED_LIBRARIES "rt")
   endif ()

@@ -26,6 +26,8 @@
 add_compile_options(${TCE_INCLUDES})
 add_compile_options(${TCE_CXXFLAGS})
 
+add_compile_options("-Wno-deprecated" "-Wno-unused-parameter")
+
 install(FILES "tta_device_main.c"
         DESTINATION ${POCL_INSTALL_PRIVATE_HEADER_DIR} COMPONENT "dev")
 
