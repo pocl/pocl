@@ -46,6 +46,8 @@ if(UNIX)
     endif()
     add_compile_options(${FORBIT_IMPLICIT_FUNCTIONS})
 
+    add_compile_options("-Wno-ignored-attributes")
+
   else()
     message(WARNING "Don't know how to forbid this compiler from allowing implicit function declarations.")
   endif()

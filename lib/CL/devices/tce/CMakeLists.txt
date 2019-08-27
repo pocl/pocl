@@ -26,6 +26,8 @@
 add_compile_options(${TCE_INCLUDES})
 add_compile_options(${TCE_CXXFLAGS})
 
+add_compile_options("-Wno-deprecated" "-Wno-unused-parameter")
+
 if(ENABLE_TCE)
   add_subdirectory("ttasim")
 endif()
