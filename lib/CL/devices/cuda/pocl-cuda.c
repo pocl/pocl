@@ -81,6 +81,7 @@ typedef struct pocl_cuda_event_data_s
   CUevent end;
   volatile int events_ready;
   cl_int *ext_event_flag;
+  pthread_cond_t event_cond;
   volatile unsigned num_ext_events;
 } pocl_cuda_event_data_t;
 
@@ -150,6 +151,7 @@ pocl_cuda_init_device_ops (struct pocl_device_ops *ops)
   ops->flush = pocl_cuda_flush;
   // TODO
   ops->map_mem = pocl_cuda_map_mem;
+  ops->notify_event_finished = pocl_cuda_notify_event_finished;
 
   ops->read = NULL;
   ops->read_rect = NULL;
@@ -1251,11 +1253,14 @@ void
 pocl_cuda_submit (_cl_command_node *node, cl_command_queue cq)
 {
   /* Allocate CUDA event data */
-  node->event->data
+  pocl_cuda_event_data_t *p
       = (pocl_cuda_event_data_t *)calloc (1, sizeof (pocl_cuda_event_data_t));
+  node->event->data = p;
 
   if (((pocl_cuda_queue_data_t *)cq->data)->use_threads)
     {
+
+      pthread_cond_init (&p->event_cond, NULL);
       /* Add command to work queue */
       POCL_UNLOCK_OBJ (node->event);
       pocl_cuda_queue_data_t *queue_data = (pocl_cuda_queue_data_t *)cq->data;
@@ -1426,13 +1431,28 @@ pocl_cuda_wait_event_recurse (cl_device_id device, cl_event event)
 }
 
 void
+pocl_cuda_notify_event_finished (cl_event event)
+{
+  pocl_cuda_event_data_t *e_d = (pocl_cuda_event_data_t *)event->data;
+
+  if (((pocl_cuda_queue_data_t *)event->queue->data)->use_threads)
+    pthread_cond_broadcast (&e_d->event_cond);
+}
+
+void
 pocl_cuda_wait_event (cl_device_id device, cl_event event)
 {
+  pocl_cuda_event_data_t *e_d = (pocl_cuda_event_data_t *)event->data;
+
   if (((pocl_cuda_queue_data_t *)event->queue->data)->use_threads)
     {
       /* Wait until background thread marks command as complete */
+      POCL_LOCK_OBJ (event);
       while (event->status > CL_COMPLETE)
-        ;
+        {
+          pthread_cond_wait (&e_d->event_cond, &event->pocl_lock);
+        }
+      POCL_UNLOCK_OBJ (event);
     }
   else
     {
@@ -1448,7 +1468,7 @@ pocl_cuda_free_event_data (cl_event event)
     {
       pocl_cuda_event_data_t *event_data
           = (pocl_cuda_event_data_t *)event->data;
-
+      pthread_cond_destroy (&event_data->event_cond);
       if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
         cuEventDestroy (event_data->start);
       cuEventDestroy (event_data->end);
