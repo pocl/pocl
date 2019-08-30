@@ -26,8 +26,6 @@
 #include "pocl_util.h"
 #include "pocl_mem_management.h"
 #include "pocl_shared.h"
-#include <stdlib.h>
-#include <string.h>
 
 int context_set_properties(cl_context                    context,
                            const cl_context_properties * properties,
@@ -116,6 +114,7 @@ int context_set_properties(cl_context                    context,
     }
 }
 
+extern int pocl_offline_compile;
 unsigned cl_context_count = 0;
 pocl_lock_t pocl_context_handling_lock;
 
@@ -127,8 +126,7 @@ POname(clCreateContext)(const cl_context_properties * properties,
                 void *                        user_data,
                 cl_int *                      errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
-  unsigned i;
-  cl_device_id device_ptr;
+  unsigned i = 0;
   cl_int errcode = 0;
   cl_context context = NULL;
 
@@ -137,8 +135,6 @@ POname(clCreateContext)(const cl_context_properties * properties,
   POCL_GOTO_ERROR_COND((devices == NULL || num_devices == 0), CL_INVALID_VALUE);
 
   POCL_GOTO_ERROR_COND((pfn_notify == NULL && user_data != NULL), CL_INVALID_VALUE);
-
-  int offline_compile = pocl_get_bool_option("POCL_OFFLINE_COMPILE", 0);
 
   errcode = pocl_init_devices();
   /* clCreateContext cannot return CL_DEVICE_NOT_FOUND, which is what
@@ -171,48 +167,30 @@ POname(clCreateContext)(const cl_context_properties * properties,
 
   context->devices = pocl_unique_device_list(devices, num_devices,
                                              &context->num_devices);
-  if (context->devices == NULL)
-    {
-      errcode = CL_OUT_OF_HOST_MEMORY;
-      goto ERROR;
-    }
-  
-  i = 0;
-  while (i < context->num_devices)
-    {
-      device_ptr = context->devices[i++];
-      if (device_ptr == NULL)
-        {
-          POCL_MSG_ERR("one of the devices in device list is NULL\n");
-          errcode = CL_INVALID_DEVICE;
-          goto ERROR_CLEAN_CONTEXT_AND_DEVICES;
-        }
-      
-      if (!offline_compile && (device_ptr->available != CL_TRUE))
-        {
-          POCL_MSG_WARN("Offline compilation disabled - dropping unavailable device: %s\n", device_ptr->long_name);
-          context->devices[i] = context->devices[--context->num_devices];
-        }
-      else if((device_ptr->compiler_available != CL_TRUE) && (device_ptr->available != CL_TRUE))
-        {
-          POCL_MSG_WARN("Device unavailable and device compiler unavailable - dropping device: %s\n", device_ptr->long_name);
-          context->devices[i] = context->devices[--context->num_devices];
-        }
-      else
-        POname(clRetainDevice)(device_ptr);
-    }
+  POCL_GOTO_ERROR_COND ((context->devices == NULL), CL_OUT_OF_HOST_MEMORY);
+  POCL_GOTO_ERROR_ON ((context->num_devices == 0), CL_INVALID_DEVICE,
+                      "Zero devices\n");
 
-  if (context->num_devices == 0)
+  for (i = 0; i < context->num_devices; ++i)
     {
-      POCL_MSG_ERR ("Zero devices after dropping the unavailable ones\n");
-      errcode = CL_INVALID_DEVICE;
-      goto ERROR_CLEAN_CONTEXT_AND_DEVICES;
+      cl_device_id dev = context->devices[i];
+      POCL_GOTO_ERROR_ON (
+          (!pocl_offline_compile && (dev->available == CL_FALSE)),
+          CL_INVALID_DEVICE,
+          "Device unavailable and offline compilation "
+          "disabled: %s\n",
+          dev->long_name);
     }
-
-  pocl_setup_context(context);
 
   pocl_init_mem_manager ();
-  
+
+  /* only required for online context */
+  if (!pocl_offline_compile)
+    pocl_setup_context (context);
+
+  for (i = 0; i < context->num_devices; ++i)
+    POname (clRetainDevice) (context->devices[i]);
+
   if (errcode_ret)
     *errcode_ret = CL_SUCCESS;
   context->valid = 1;
@@ -222,11 +200,12 @@ POname(clCreateContext)(const cl_context_properties * properties,
 
   return context;
   
-ERROR_CLEAN_CONTEXT_AND_DEVICES:
-  POCL_MEM_FREE(context->devices);
- /*ERROR_CLEAN_CONTEXT_AND_PROPERTIES:*/
-  POCL_MEM_FREE(context->properties);
 ERROR:
+  if (context)
+    {
+      POCL_MEM_FREE(context->devices);
+      POCL_MEM_FREE(context->properties);
+    }
   POCL_MEM_FREE(context);
   if(errcode_ret != NULL)
     {

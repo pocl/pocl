@@ -147,6 +147,8 @@ static struct pocl_device_ops pocl_device_ops[POCL_NUM_DEVICE_TYPES];
 extern pocl_lock_t pocl_runtime_config_lock;
 extern pocl_lock_t pocl_context_handling_lock;
 
+int pocl_offline_compile = 0;
+
 // first setup
 static unsigned first_init_done = 0;
 static unsigned init_in_progress = 0;
@@ -235,11 +237,9 @@ pocl_get_devices(cl_device_type device_type, struct _cl_device_id **devices, uns
 {
   unsigned int i, dev_added = 0;
 
-  int offline_compile = pocl_get_bool_option("POCL_OFFLINE_COMPILE", 0);
-
   for (i = 0; i < pocl_num_devices; ++i)
     {
-      if (!offline_compile && (pocl_devices[i].available != CL_TRUE))
+      if (!pocl_offline_compile && (pocl_devices[i].available == CL_FALSE))
         continue;
 
       if (device_type == CL_DEVICE_TYPE_DEFAULT)
@@ -271,11 +271,9 @@ pocl_get_device_type_count(cl_device_type device_type)
   unsigned int count = 0;
   unsigned int i;
 
-  int offline_compile = pocl_get_bool_option("POCL_OFFLINE_COMPILE", 0);
-
   for (i = 0; i < pocl_num_devices; ++i)
     {
-      if (!offline_compile && (pocl_devices[i].available != CL_TRUE))
+      if (!pocl_offline_compile && (pocl_devices[i].available == CL_FALSE))
         continue;
 
       if (device_type == CL_DEVICE_TYPE_DEFAULT)
@@ -598,6 +596,8 @@ pocl_init_devices ()
 #endif
 #endif
 #endif
+
+  pocl_offline_compile = pocl_get_bool_option ("POCL_OFFLINE_COMPILE", 0);
 
   /* Init operations */
   for (i = 0; i < POCL_NUM_DEVICE_TYPES; ++i)
