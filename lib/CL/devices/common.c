@@ -360,20 +360,6 @@ pocl_ndrange_node_cleanup(_cl_command_node *node)
   POname(clReleaseKernel)(node->command.run.kernel);
 }
 
-void
-pocl_mem_objs_cleanup (cl_event event)
-{
-  size_t i;
-  for (i = 0; i < event->num_buffers; ++i)
-    {
-      assert(event->mem_objs[i] != NULL);
-      POname(clReleaseMemObject) (event->mem_objs[i]);
-    }
-  free (event->mem_objs);
-  event->mem_objs = NULL;
-  event->num_buffers = 0;
-}
-
 /**
  * executes given command. Call with node->event UNLOCKED.
  */

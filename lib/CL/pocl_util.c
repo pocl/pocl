@@ -1267,8 +1267,6 @@ pocl_update_event_finished_msg (cl_int status, const char *func, unsigned line,
     POCL_MSG_PRINT_EVENTS ("%s: Command FAILED, event %" PRIu64 "\n",
                            cq->device->short_name, event->id);
 
-  pocl_mem_objs_cleanup (event);
-
   assert (cq->command_count > 0);
   --cq->command_count;
   if (cq->barrier == event)
@@ -1298,6 +1296,11 @@ pocl_update_event_finished_msg (cl_int status, const char *func, unsigned line,
           func, line, msg, (uint64_t) (event->time_end - event->time_start));
     }
 #endif
+
+  size_t i;
+  for (i = 0; i < event->num_buffers; ++i)
+    POname (clReleaseMemObject) (event->mem_objs[i]);
+  POCL_MEM_FREE (event->mem_objs);
 
   POname (clReleaseEvent) (event);
 }
