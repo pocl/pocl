@@ -26,6 +26,21 @@
 #cl.hpp: $(top_srcdir)/include/CL/cl.hpp.in $(top_srcdir)/tools/patches/khronos_cl.hpp.patch
 
 if(INSTALL_OPENCL_HEADERS)
-  install(FILES cl.h cl.hpp cl2.hpp cl_ext.h cl_egl.h cl_gl.h cl_gl_ext.h cl_platform.h opencl.h
+  install(FILES cl.h
+                cl.hpp
+                cl2.hpp
+                cl_d3d10.h
+                cl_d3d11.h
+                cl_dx9_media_sharing.h
+                cl_dx9_media_sharing_intel.h
+                cl_ext.h
+                cl_egl.h
+                cl_ext_intel.h
+                cl_gl.h
+                cl_gl_ext.h
+                cl_platform.h
+                cl_va_api_media_sharing_intel.h
+                cl_version.h
+                opencl.h
           DESTINATION "${POCL_INSTALL_OPENCL_HEADER_DIR}")
 endif()
