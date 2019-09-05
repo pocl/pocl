@@ -122,6 +122,11 @@ program_compile_dynamic_wg_binaries (cl_program program)
   if (program->num_kernels == 0)
     return CL_SUCCESS;
 
+  /* For binaries of other than Executable type (libraries, compiled but
+   * not linked programs, etc), do not attempt to compile the kernels. */
+  if (program->binary_type != CL_PROGRAM_BINARY_TYPE_EXECUTABLE)
+    return CL_SUCCESS;
+
   memset(&cmd, 0, sizeof(_cl_command_node));
   cmd.type = CL_COMMAND_NDRANGE_KERNEL;
 
@@ -796,6 +801,12 @@ compile_and_link_program(int compile_program,
     program->binary_type = CL_PROGRAM_BINARY_TYPE_COMPILED_OBJECT;
 
   assert(program->num_kernels == 0);
+
+  if (program->binary_type != CL_PROGRAM_BINARY_TYPE_EXECUTABLE)
+    {
+      errcode = CL_SUCCESS;
+      goto FINISH;
+    }
 
   /* get non-device-specific kernel metadata. We can stop after finding
    * the first method that works.*/
