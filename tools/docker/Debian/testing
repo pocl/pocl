@@ -8,4 +8,7 @@ RUN apt install -y build-essential ocl-icd-libopencl1 cmake git gcc g++ libhwloc
 RUN cd /home ; git clone https://github.com/pocl/pocl.git ; cd /home/pocl ; git checkout $GIT_COMMIT
 RUN cd /home/pocl ; mkdir b ; cd b; cmake -G Ninja ..
 RUN cd /home/pocl/b ; ninja
+
+ENV OCL_ICD_VENDORS=/home/pocl/b/ocl-vendors
+ENV POCL_BUILDING=1
 CMD cd /home/pocl/b ; clinfo ; ctest -j4 --output-on-failure -L internal
