@@ -33,7 +33,9 @@
 #ifndef POCL_H
 #define POCL_H
 
+#ifndef CL_TARGET_OPENCL_VERSION
 #define CL_TARGET_OPENCL_VERSION 220
+#endif
 #include <CL/opencl.h>
 
 #include "config.h"

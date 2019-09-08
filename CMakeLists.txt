@@ -720,6 +720,9 @@ set(ENABLE_SPIRV ${SPIRV} CACHE INTERNAL "SPIR-V enabled" FORCE)
 add_definitions(-DCL_USE_DEPRECATED_OPENCL_1_0_APIS -DCL_USE_DEPRECATED_OPENCL_1_1_APIS
                 -DCL_USE_DEPRECATED_OPENCL_1_2_APIS -DCL_USE_DEPRECATED_OPENCL_2_0_APIS
                 -DCL_USE_DEPRECATED_OPENCL_2_1_APIS )
+
+add_definitions(-DCL_TARGET_OPENCL_VERSION=220)
+
 include_directories("include")
 
 ######################################################################################
