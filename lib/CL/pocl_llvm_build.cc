@@ -446,6 +446,9 @@ int pocl_llvm_build_program(cl_program program,
   po.Includes.push_back(PoclTypesH);
   po.Includes.push_back(BuiltinRenamesH);
   // Use Clang's opencl-c.h header.
+#ifndef LLVM_OLDER_THAN_9_0
+  po.Includes.push_back(ClangResourceDir + "/include/opencl-c-base.h");
+#endif
   po.Includes.push_back(ClangResourceDir + "/include/opencl-c.h");
   po.Includes.push_back(KernelH);
   clang::TargetOptions &ta = pocl_build.getTargetOpts();

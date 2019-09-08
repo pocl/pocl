@@ -766,3 +766,8 @@ message(STATUS "FP16 is disabled: ${CL_DISABLE_HALF}")
 execute_process(COMMAND "${CLANG}" "--print-resource-dir" OUTPUT_VARIABLE RESOURCE_DIR)
 string(STRIP "${RESOURCE_DIR}" RESOURCE_DIR)
 set(CLANG_RESOURCE_DIR "${RESOURCE_DIR}" CACHE INTERNAL "Clang resource dir")
+
+set(CLANG_OPENCL_HEADERS "${CLANG_RESOURCE_DIR}/include/opencl-c.h")
+if(NOT LLVM_OLDER_THAN_9_0)
+  list(APPEND CLANG_OPENCL_HEADERS "${CLANG_RESOURCE_DIR}/include/opencl-c-base.h")
+endif()
