@@ -536,9 +536,9 @@ if(UNIX)
                       HAVE_MKOSTEMPS)
 
   set(CMAKE_REQUIRED_LIBRARIES "dl")
-  CHECK_SYMBOL_EXISTS("dlinfo"
+  CHECK_SYMBOL_EXISTS("dladdr"
                       "dlfcn.h"
-                      HAVE_DLINFO)
+                      HAVE_DLADDR)
 
   unset(CMAKE_REQUIRED_DEFINITIONS)
   unset(CMAKE_REQUIRED_FLAGS)
@@ -556,12 +556,12 @@ else()
   set(HAVE_FORK 0)
   set(HAVE_VFORK 0)
   set(HAVE_UTIME 0)
-  set(HAVE_DLINFO 0)
+  set(HAVE_DLADDR 0)
 endif()
 
 ######################################################################################
 
-if(UNIX AND OCS_AVAILABLE AND HAVE_DLINFO)
+if(UNIX AND OCS_AVAILABLE AND HAVE_DLADDR)
     option(ENABLE_RELOCATION "make libpocl relocatable" ON)
 else()
     message(STATUS "Relocation not available")
