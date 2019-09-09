@@ -69,7 +69,8 @@ main (int argc, char **argv)
   if (argc > 2)
     launches = (argc - 1) / 2;
 
-  for (int l = 0; l < launches; ++l)
+  int l;
+  for (l = 0; l < launches; ++l)
     {
       int vec_width = N;
       int wg_size = N;

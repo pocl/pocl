@@ -51,7 +51,8 @@ CL_API_SUFFIX__VERSION_1_2
   while (token != NULL)
     {
       unsigned num_supported = 0;
-      for (cl_uint i = 0; i < num_devices; ++i)
+      cl_uint i;
+      for (i = 0; i < num_devices; ++i)
         {
           cl_device_id dev = device_list[i];
           if (dev->ops->supports_builtin_kernel == NULL)
@@ -72,7 +73,8 @@ CL_API_SUFFIX__VERSION_1_2
 
   kernel_names_copy = strdup (kernel_names);
   token = strtok_r (kernel_names_copy, ";", &save_ptr);
-  for (unsigned i = 0; token != NULL; ++i)
+  unsigned i;
+  for (i = 0; token != NULL; ++i)
     {
       builtin_names[i] = strdup (token);
       token = strtok_r (NULL, ";", &save_ptr);

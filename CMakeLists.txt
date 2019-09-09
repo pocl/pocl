@@ -32,12 +32,18 @@ if(POLICY CMP0025)
   cmake_policy(SET CMP0025 NEW)
 endif()
 
+include(CheckCCompilerFlag)
+
 # don't allow implicit function declarations
 if(UNIX)
   if((CMAKE_C_COMPILER_ID STREQUAL "GNU") OR
      (CMAKE_C_COMPILER_ID STREQUAL "Clang"))
 
-    set(FORBIT_IMPLICIT_FUNCTIONS "-Werror=implicit-function-declaration;-Werror=incompatible-pointer-types")
+    check_c_compiler_flag("-Wincompatible-pointer-types" HAVE_WARN_INCOMPATIBLE_POINTER_TYPES)
+    set(FORBIT_IMPLICIT_FUNCTIONS "-Werror=implicit-function-declaration")
+    if (HAVE_WARN_INCOMPATIBLE_POINTER_TYPES)
+      set(FORBIT_IMPLICIT_FUNCTIONS ${FORBIT_IMPLICIT_FUNCTIONS} "-Werror=incompatible-pointer-types")
+    endif()
     add_compile_options(${FORBIT_IMPLICIT_FUNCTIONS})
 
   else()

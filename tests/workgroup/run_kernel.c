@@ -130,7 +130,8 @@ main (int argc, char **argv)
                                  grid_size * sizeof (cl_int), kern_output, 0,
                                  NULL, NULL);
       CHECK_CL_ERROR2 (err);
-      for (size_t i = 0; i < grid_size; ++i)
+      size_t i;
+      for (i = 0; i < grid_size; ++i)
         printf ("%zu: %d\n", i, kern_output[i]);
     }
 

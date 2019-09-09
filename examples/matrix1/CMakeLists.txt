@@ -23,7 +23,7 @@
 #
 #=============================================================================
 
-add_compile_options(${OPENCL_CFLAGS})
+add_compile_options(${OPENCL_CFLAGS} -std=c99)
 
 if (MSVC)
   set_source_files_properties( matrix1.c PROPERTIES LANGUAGE CXX )
