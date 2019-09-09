@@ -95,7 +95,11 @@ pocl_check_uninit_devices ()
 
   usleep (100000);
 
-  if (cl_context_count == 0)
+  POCL_LOCK (pocl_context_handling_lock);
+  int do_cleanup = (cl_context_count == 0);
+  POCL_UNLOCK (pocl_context_handling_lock);
+
+  if (do_cleanup)
     {
       POCL_MSG_PRINT_REFCOUNTS (
           "Zero contexts left, calling pocl_uninit_devices\n");
