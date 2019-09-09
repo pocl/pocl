@@ -821,7 +821,8 @@ compile_and_link_program(int compile_program,
               program->kernel_meta = calloc (program->num_kernels,
                                              sizeof (pocl_kernel_metadata_t));
 
-              for (size_t i = 0; i < program->num_kernels; ++i)
+              size_t i;
+              for (i = 0; i < program->num_kernels; ++i)
                 {
                   device->ops->get_builtin_kernel_metadata (
                       device->data, program->builtin_kernel_names[i],
