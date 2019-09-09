@@ -283,8 +283,8 @@ Install Docker
   required storage for standard pocl build is about 1.5 GB per container,
   and more than 10GB for TCE/PHSA builds)
 
-start Pocl container
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Build & start Pocl container
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 * create an empty directory <D>
 * copy Dockerfile of your choice (any file from tools/docker/) to ``<D>/Dockerfile``
@@ -293,28 +293,25 @@ start Pocl container
 * this will by default use master branch of pocl git; to use a different branch/commit,
   run docker build with ``--build-arg GIT_COMMIT=<branch/commit>``
 
-
 Dockerfiles
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Many are split up into two or three build stages, in which you must build all
-but last stage with a proper tag (grep the dockerfiles for "FROM <TAG>").
-Dockerfiles are named according to what they build:
+Note that some images (e.g. RHEL and PHSA) may be impossible to build,
+due to not having a sufficiently new version of LLVM available.
 
-* `base`: the first stage in multi-stage Docker builds. Downloads dependencies
-   and clones pocl git repo but does nothing more.
+Dockerfiles are named according to what they build, or the release they're based on:
+
 * `default`: builds pocl, then runs the internal tests from build dir.
    Uses latest release of a distribution, with whatever is the default version of LLVM.
+* `distro`: does a distribution-friendly build: enables runtime detection of CPU,
+   installs pocl into system path, then runs the internal tests
 * `<release>`: same as above, except uses specific release and specific LLVM version
   (the latest available in that release).
-* `default.32bit`: same as default but sets up i386 environment
-* `test_install`: builds & installs pocl into system path, then runs the internal tests
-* `distro`: does a distribution-friendly build (enables runtime detection of CPU, etc)
+* `X.32bit`: same as X but sets up i386 environment
+* `conformance`: builds & installs Pocl, then runs conformance test suite
+  (the shortest version of it)
 
 Some additional notes:
 
-* Arch Dockerfiles are split up into two-stage builds
-* some (not all) Ubuntu Dockerfiles are split up into multi-stage builds
-* RHEL 7 was added, it's using unofficial LLVM 5.0 binaries from copr, since the official RHEL 7 LLVM is too old.
-* TCE added - TCE is built using three stages (LLVM, TCE, pocl)
-* PHSA added - also built using three stages (LLVM, PHSA runtime, pocl)
+* TCE is built using three stages (LLVM, TCE, pocl)
+* PHSA built using three stages (LLVM, PHSA runtime, pocl)

@@ -1,4 +1,0 @@
-FROM ubuntu_default64
-
-RUN cd /home/pocl/b ; ninja install
-CMD cd /home/pocl/b ; rm CTestCustom.cmake ; clinfo ; ctest -j4 --output-on-failure -L internal

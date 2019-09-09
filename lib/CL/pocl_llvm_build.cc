@@ -425,6 +425,16 @@ int pocl_llvm_build_program(cl_program program,
 #ifdef ENABLE_POCL_BUILDING
   if (pocl_get_bool_option("POCL_BUILDING", 0)) {
     IncludeRoot = SRCDIR;
+#else
+  if (0) {
+#endif
+  } else {
+    IncludeRoot = getPoclPrivateDataDir();
+#ifdef ENABLE_RELOCATION
+    ClangResourceDir = IncludeRoot;
+#endif
+  }
+  if (ClangResourceDir.empty()) {     
 #ifndef LLVM_OLDER_THAN_9_0
     ClangResourceDir = driver::Driver::GetResourcesPath(CLANG);
 #else
@@ -432,12 +442,6 @@ int pocl_llvm_build_program(cl_program program,
     driver::Driver TheDriver(CLANG, "", Diags);
     ClangResourceDir = TheDriver.ResourceDir;
 #endif
-#else
-  if (0) {
-#endif
-  } else {
-    IncludeRoot = getPoclPrivateDataDir();
-    ClangResourceDir = IncludeRoot;
   }
   KernelH = IncludeRoot + "/include/_kernel.h";
   BuiltinRenamesH = IncludeRoot + "/include/_builtin_renames.h";
@@ -446,6 +450,9 @@ int pocl_llvm_build_program(cl_program program,
   po.Includes.push_back(PoclTypesH);
   po.Includes.push_back(BuiltinRenamesH);
   // Use Clang's opencl-c.h header.
+#ifndef LLVM_OLDER_THAN_9_0
+  po.Includes.push_back(ClangResourceDir + "/include/opencl-c-base.h");
+#endif
   po.Includes.push_back(ClangResourceDir + "/include/opencl-c.h");
   po.Includes.push_back(KernelH);
   clang::TargetOptions &ta = pocl_build.getTargetOpts();

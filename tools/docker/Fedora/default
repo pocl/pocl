@@ -1,11 +1,13 @@
 FROM fedora:latest
 ARG GIT_COMMIT=master
 LABEL git-commit=$GIT_COMMIT vendor=pocl distro=Fedora version=1.0
-RUN dnf upgrade -y ; echo "almost done"
-RUN dnf upgrade -y ; echo "done"
-RUN dnf install -y gcc gcc-c++ hwloc-devel hwloc-libs cmake git-core pkgconfig make ninja-build ocl-icd ocl-icd-devel clang clang-devel clang-libs llvm llvm-devel llvm-libs patch redhat-rpm-config findutils libtool-ltdl libtool-ltdl-devel
+RUN dnf upgrade -y
+RUN dnf install -y gcc gcc-c++ clinfo hwloc-devel hwloc-libs cmake git-core pkgconfig make ninja-build ocl-icd ocl-icd-devel clang clang-devel clang-libs llvm llvm-devel llvm-libs patch redhat-rpm-config findutils libtool-ltdl libtool-ltdl-devel
 
 RUN cd /home ; git clone https://github.com/pocl/pocl.git ; cd /home/pocl ; git checkout $GIT_COMMIT
 RUN cd /home/pocl ; mkdir b ; cd b; cmake -G Ninja ..
 RUN cd /home/pocl/b ; ninja
-CMD cd /home/pocl/b ; ctest -j4 --output-on-failure -L internal
+
+ENV OCL_ICD_VENDORS=/home/pocl/b/ocl-vendors
+ENV POCL_BUILDING=1
+CMD cd /home/pocl/b ; clinfo ; ctest -j4 --output-on-failure -L internal

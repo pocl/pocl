@@ -1,6 +1,6 @@
-FROM debian:stretch
+FROM debian:buster
 ARG GIT_COMMIT=master
-ARG LLVM_VERSION=6.0
+ARG LLVM_VERSION=7
 LABEL git-commit=$GIT_COMMIT vendor=pocl distro=Debian version=1.0
 
 RUN echo 'deb http://ftp.debian.org/debian stretch-backports main' >/etc/apt/sources.list.d/backports.list

@@ -62,8 +62,6 @@ if(SANITIZER_OPTIONS)
   string(REPLACE ";" " " SANITIZER_OPTIONS_STR "${SANITIZER_OPTIONS}")
 endif()
 
-add_definitions(-DCL_TARGET_OPENCL_VERSION=220)
-
 add_subdirectory("CL")
 
 #############################################################

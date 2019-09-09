@@ -536,9 +536,9 @@ if(UNIX)
                       HAVE_MKOSTEMPS)
 
   set(CMAKE_REQUIRED_LIBRARIES "dl")
-  CHECK_SYMBOL_EXISTS("dlinfo"
+  CHECK_SYMBOL_EXISTS("dladdr"
                       "dlfcn.h"
-                      HAVE_DLINFO)
+                      HAVE_DLADDR)
 
   unset(CMAKE_REQUIRED_DEFINITIONS)
   unset(CMAKE_REQUIRED_FLAGS)
@@ -556,12 +556,12 @@ else()
   set(HAVE_FORK 0)
   set(HAVE_VFORK 0)
   set(HAVE_UTIME 0)
-  set(HAVE_DLINFO 0)
+  set(HAVE_DLADDR 0)
 endif()
 
 ######################################################################################
 
-if(UNIX AND OCS_AVAILABLE AND HAVE_DLINFO)
+if(UNIX AND OCS_AVAILABLE AND HAVE_DLADDR)
     option(ENABLE_RELOCATION "make libpocl relocatable" ON)
 else()
     message(STATUS "Relocation not available")
@@ -571,7 +571,7 @@ endif()
 if(ENABLE_RELOCATION)
   file(RELATIVE_PATH POCL_INSTALL_PRIVATE_DATADIR_REL ${POCL_INSTALL_PUBLIC_LIBDIR} ${POCL_INSTALL_PRIVATE_DATADIR})
   message(STATUS "Private Datadir Relative path: ${POCL_INSTALL_PRIVATE_DATADIR_REL}")
-  install(FILES "${CLANG_RESOURCE_DIR}/include/opencl-c.h"
+  install(FILES ${CLANG_OPENCL_HEADERS}
           DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}/include")
 endif()
 
@@ -720,6 +720,9 @@ set(ENABLE_SPIRV ${SPIRV} CACHE INTERNAL "SPIR-V enabled" FORCE)
 add_definitions(-DCL_USE_DEPRECATED_OPENCL_1_0_APIS -DCL_USE_DEPRECATED_OPENCL_1_1_APIS
                 -DCL_USE_DEPRECATED_OPENCL_1_2_APIS -DCL_USE_DEPRECATED_OPENCL_2_0_APIS
                 -DCL_USE_DEPRECATED_OPENCL_2_1_APIS )
+
+add_definitions(-DCL_TARGET_OPENCL_VERSION=220)
+
 include_directories("include")
 
 ######################################################################################

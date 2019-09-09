@@ -1,9 +1,0 @@
-FROM ubuntu_base64
-
-ARG GIT_COMMIT=master
-LABEL git-commit=$GIT_COMMIT vendor=pocl distro=Ubuntu version=1.0
-ENV TERM dumb
-
-RUN cd /home/pocl ; mkdir b ; cd b; cmake -DCMAKE_INSTALL_PREFIX=/usr -G Ninja ..
-RUN cd /home/pocl/b ; ninja
-CMD cd /home/pocl/b ; clinfo ; ctest -j4 --output-on-failure -L internal
