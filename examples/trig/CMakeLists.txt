@@ -36,11 +36,17 @@ target_link_libraries("trig" ${POCLU_LINK_OPTIONS})
 
 add_test("examples/trig" "trig")
 
+set(PROPS)
+if(NOT ENABLE_ANYSAN)
+  set(PROPS
+    PASS_REGULAR_EXPRESSION "OK")
+endif()
+
 set_tests_properties(
   "examples/trig"
   PROPERTIES
     COST 3.0
-    PASS_REGULAR_EXPRESSION "OK\n"
+    ${PROPS}
     PROCESSORS 1
     LABELS "internal;cuda;hsa-native"
     DEPENDS "pocl_version_check")

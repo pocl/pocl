@@ -44,14 +44,20 @@ if (ENABLE_SPIRV)
   list(APPEND SPIREX "examples/example1_spirv")
 endif()
 
-set_tests_properties( "examples/example1_dot_product" ${SPIREX}
-  PROPERTIES
-    COST 3.0
+set(PROPS)
+if(NOT ENABLE_ANYSAN)
+  set(PROPS
     PASS_REGULAR_EXPRESSION "[(]0[.]000000, 0[.]000000, 0[.]000000, 0[.]000000[)] [.] [(]0[.]000000, 0[.]000000, 0[.]000000, 0[.]000000[)] = 0[.]000000
 [(]1[.]000000, 1[.]000000, 1[.]000000, 1[.]000000[)] [.] [(]1[.]000000, 1[.]000000, 1[.]000000, 1[.]000000[)] = 4[.]000000
 [(]2[.]000000, 2[.]000000, 2[.]000000, 2[.]000000[)] [.] [(]2[.]000000, 2[.]000000, 2[.]000000, 2[.]000000[)] = 16[.]000000
 [(]3[.]000000, 3[.]000000, 3[.]000000, 3[.]000000[)] [.] [(]3[.]000000, 3[.]000000, 3[.]000000, 3[.]000000[)] = 36[.]000000
-OK"
+OK")
+endif()
+
+set_tests_properties( "examples/example1_dot_product" ${SPIREX}
+  PROPERTIES
+    COST 3.0
+    ${PROPS}
     PROCESSORS 1
     ENVIRONMENT "POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE.adf"
     LABELS "internal;hsa;tce;cuda"

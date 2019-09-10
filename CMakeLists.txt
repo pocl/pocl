@@ -187,6 +187,15 @@ else()
   set(ENABLE_TSAN OFF CACHE INTERNAL "Enable ThreadSanitizer")
 endif()
 
+# Unfortunately the way CMake tests work, if they're given
+# a pass/fail expression, they don't check for exit status.
+# This was causing some false negatives with ASan (test was
+# returning with 1, but CMake reported it as pass because
+# the pass expression was present in output).
+if(ENABLE_ASAN OR ENABLE_TSAN OR ENABLE_UBSAN OR ENABLE_LSAN)
+  set(ENABLE_ANYSAN 1)
+endif()
+
 ##########################################################
 
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)

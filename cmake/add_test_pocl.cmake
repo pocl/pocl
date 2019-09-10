@@ -69,8 +69,10 @@ function(add_test_pocl)
   list(APPEND POCL_TEST_ARGLIST "-P" "${CMAKE_SOURCE_DIR}/cmake/run_test.cmake")
 
   add_test(${POCL_TEST_ARGLIST} )
-  set_tests_properties("${POCL_TEST_NAME}" PROPERTIES
-                       PASS_REGULAR_EXPRESSION "OK"
-                       FAIL_REGULAR_EXPRESSION "FAIL")
+  if(NOT ENABLE_ANYSAN)
+    set_tests_properties("${POCL_TEST_NAME}" PROPERTIES
+                         PASS_REGULAR_EXPRESSION "OK"
+                         FAIL_REGULAR_EXPRESSION "FAIL")
+  endif()
 
 endfunction()

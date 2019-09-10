@@ -36,10 +36,16 @@ add_test("examples/vecadd" "vecadd")
 
 add_test("examples/vecadd_large_grid" "vecadd" "128000" "128" "10000" "100" "1" "1")
 
+set(PROPS)
+if(NOT ENABLE_ANYSAN)
+  set(PROPS
+    PASS_REGULAR_EXPRESSION "OK")
+endif()
+
 set_tests_properties( "examples/vecadd"
   PROPERTIES
     COST 3.0
-    PASS_REGULAR_EXPRESSION "OK"
+    ${PROPS}
     PROCESSORS 1
     LABELS "internal;"
     DEPENDS "pocl_version_check")

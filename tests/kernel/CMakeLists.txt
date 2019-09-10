@@ -59,17 +59,24 @@ add_test_pocl(NAME "kernel/test_hadd_loopvec"
 add_test_pocl(NAME "kernel/test_hadd_loops"
               COMMAND "kernel" "test_hadd")
 
+set(PROPS "")
+if(NOT ENABLE_ANYSAN)
+  set(PROPS
+    FAIL_REGULAR_EXPRESSION "FAIL"
+    PASS_REGULAR_EXPRESSION "OK\n")
+endif()
+
 set_tests_properties( "kernel/test_as_type" "kernel/test_bitselect"
   "kernel/test_convert_type_1" "kernel/test_convert_type_2" "kernel/test_convert_type_4"
   "kernel/test_convert_type_8" "kernel/test_convert_type_16"
   "kernel/test_hadd_loops" "kernel/test_hadd_loopvec"
   PROPERTIES
     COST 40.0
-    FAIL_REGULAR_EXPRESSION "FAIL"
-    PASS_REGULAR_EXPRESSION "\nOK\n"
+    ${PROPS}
     PROCESSORS 1
     DEPENDS "pocl_version_check"
     LABELS "kernel")
+
 
 # convert_type_{4,8,16} on some machines takes >1 hour,
 # so only add convert_type_1/2 to internal tests to keep them reasonably fast.
@@ -132,8 +139,7 @@ set_tests_properties("kernel/test_min_max" "kernel/test_length_distance"
   "kernel/test_frexp_modf"
   PROPERTIES
     COST 4.0
-    FAIL_REGULAR_EXPRESSION "FAIL"
-    PASS_REGULAR_EXPRESSION "\nOK\n"
+    ${PROPS}
     PROCESSORS 1
     DEPENDS "pocl_version_check"
     LABELS "internal;kernel")
@@ -235,7 +241,7 @@ set_tests_properties("kernel/test_shuffle_char"
 
   PROPERTIES
     COST 77
-    PASS_REGULAR_EXPRESSION "OK\n"
+    ${PROPS}
     PROCESSORS 1
     DEPENDS "pocl_version_check"
     LABELS "internal;kernel")
