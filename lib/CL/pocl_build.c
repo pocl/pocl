@@ -413,6 +413,11 @@ free_meta (cl_program program)
             continue;
           POCL_MEM_FREE (meta->attributes);
           POCL_MEM_FREE (meta->name);
+          for (j = 0; j < meta->num_args; ++j)
+            {
+              POCL_MEM_FREE (meta->arg_info[j].name);
+              POCL_MEM_FREE (meta->arg_info[j].type_name);
+            }
           POCL_MEM_FREE (meta->arg_info);
           for (j = 0; j < program->num_devices; ++j)
             if (meta->data[j] != NULL)
