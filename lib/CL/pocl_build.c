@@ -413,6 +413,11 @@ free_meta (cl_program program)
             continue;
           POCL_MEM_FREE (meta->attributes);
           POCL_MEM_FREE (meta->name);
+          for (j = 0; j < meta->num_args; ++j)
+            {
+              POCL_MEM_FREE (meta->arg_info[j].name);
+              POCL_MEM_FREE (meta->arg_info[j].type_name);
+            }
           POCL_MEM_FREE (meta->arg_info);
           for (j = 0; j < program->num_devices; ++j)
             if (meta->data[j] != NULL)
@@ -821,7 +826,8 @@ compile_and_link_program(int compile_program,
               program->kernel_meta = calloc (program->num_kernels,
                                              sizeof (pocl_kernel_metadata_t));
 
-              for (size_t i = 0; i < program->num_kernels; ++i)
+              size_t i;
+              for (i = 0; i < program->num_kernels; ++i)
                 {
                   device->ops->get_builtin_kernel_metadata (
                       device->data, program->builtin_kernel_names[i],

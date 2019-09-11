@@ -21,6 +21,9 @@
    IN THE SOFTWARE.
 */
 
+// For srandom
+#define _BSD_SOURCE
+
 #include <CL/opencl.h>
 #include <assert.h>
 #include <errno.h>

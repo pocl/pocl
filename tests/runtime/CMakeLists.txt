@@ -114,17 +114,19 @@ set_tests_properties("runtime/clGetSupportedImageFormats"
   PROPERTIES
     ENVIRONMENT "POCL_DEVICES=pthread\ pthread")
 
-set_tests_properties("runtime/clCreateKernelsInProgram"
+if(NOT ENABLE_ANYSAN)
+  set_tests_properties("runtime/clCreateKernelsInProgram"
   PROPERTIES
     PASS_REGULAR_EXPRESSION "Hello\nWorld")
 
-set_tests_properties("runtime/clFinish"
+  set_tests_properties("runtime/clFinish"
   PROPERTIES
     PASS_REGULAR_EXPRESSION "ABABC")
 
-set_tests_properties("runtime/test_kernel_cache_includes"
+  set_tests_properties("runtime/test_kernel_cache_includes"
   PROPERTIES PASS_REGULAR_EXPRESSION
   "function 1.*first include.*function 2.*second include")
+endif()
 
 # Label tests that work with CUDA backend
 set_property(TEST

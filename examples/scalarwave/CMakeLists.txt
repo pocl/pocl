@@ -36,10 +36,16 @@ target_link_libraries("scalarwave" ${POCLU_LINK_OPTIONS})
 
 add_test_pocl(NAME "examples/scalarwave" COMMAND "scalarwave" EXPECTED_OUTPUT "scalarwave_expout.txt")
 
+set(PROPS)
+if(NOT ENABLE_ANYSAN)
+  set(PROPS
+    PASS_REGULAR_EXPRESSION "Done.\n")
+endif()
+
 set_tests_properties( "examples/scalarwave"
   PROPERTIES
     COST 3.0
-    PASS_REGULAR_EXPRESSION "Done.\n"
+    ${PROPS}
     PROCESSORS 1
     LABELS "internal;cuda;hsa-native"
     DEPENDS "pocl_version_check")

@@ -32,12 +32,18 @@ if(POLICY CMP0025)
   cmake_policy(SET CMP0025 NEW)
 endif()
 
+include(CheckCCompilerFlag)
+
 # don't allow implicit function declarations
 if(UNIX)
   if((CMAKE_C_COMPILER_ID STREQUAL "GNU") OR
      (CMAKE_C_COMPILER_ID STREQUAL "Clang"))
 
-    set(FORBIT_IMPLICIT_FUNCTIONS "-Werror=implicit-function-declaration;-Werror=incompatible-pointer-types")
+    check_c_compiler_flag("-Wincompatible-pointer-types" HAVE_WARN_INCOMPATIBLE_POINTER_TYPES)
+    set(FORBIT_IMPLICIT_FUNCTIONS "-Werror=implicit-function-declaration")
+    if (HAVE_WARN_INCOMPATIBLE_POINTER_TYPES)
+      set(FORBIT_IMPLICIT_FUNCTIONS ${FORBIT_IMPLICIT_FUNCTIONS} "-Werror=incompatible-pointer-types")
+    endif()
     add_compile_options(${FORBIT_IMPLICIT_FUNCTIONS})
 
   else()
@@ -179,6 +185,15 @@ if (CMAKE_C_COMPILER_ID STREQUAL "GNU")
 else()
   set(ENABLE_ASAN OFF CACHE INTERNAL "Enable AddressSanitizer")
   set(ENABLE_TSAN OFF CACHE INTERNAL "Enable ThreadSanitizer")
+endif()
+
+# Unfortunately the way CMake tests work, if they're given
+# a pass/fail expression, they don't check for exit status.
+# This was causing some false negatives with ASan (test was
+# returning with 1, but CMake reported it as pass because
+# the pass expression was present in output).
+if(ENABLE_ASAN OR ENABLE_TSAN OR ENABLE_UBSAN OR ENABLE_LSAN)
+  set(ENABLE_ANYSAN 1)
 endif()
 
 ##########################################################

@@ -34,10 +34,16 @@ target_link_libraries("boxadd" ${POCLU_LINK_OPTIONS})
 
 add_test("examples/boxadd" "boxadd")
 
+set(PROPS)
+if(NOT ENABLE_ANYSAN)
+  set(PROPS
+    PASS_REGULAR_EXPRESSION "OK")
+endif()
+
 set_tests_properties( "examples/boxadd"
   PROPERTIES
     COST 3.0
-    PASS_REGULAR_EXPRESSION "OK"
+    ${PROPS}
     PROCESSORS 1
     LABELS "internal;"
     DEPENDS "pocl_version_check")

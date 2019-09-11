@@ -44,11 +44,21 @@ if (ENABLE_SPIRV)
   list(APPEND SPIREX "examples/example0_spirv")
 endif()
 
+set(PROPS)
+if(NOT ENABLE_ANYSAN)
+  set(PROPS
+    PASS_REGULAR_EXPRESSION "OK")
+endif()
+
 set_tests_properties( "examples/example0" ${SPIREX}
   PROPERTIES
     COST 3.0
-    PASS_REGULAR_EXPRESSION "OK"
+    ${PROPS}
     PROCESSORS 1
     ENVIRONMENT "POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE.adf"
-    LABELS "internal;hsa;tce;cuda"
+    LABELS "internal;cuda"
     DEPENDS "pocl_version_check")
+
+# devices which don't support SPIR
+set_property(TEST "examples/example0"
+  APPEND PROPERTY LABELS "tce;hsa;hsa-native")
