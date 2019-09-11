@@ -60,10 +60,9 @@ set_tests_properties( "examples/example1_dot_product" ${SPIREX}
     ${PROPS}
     PROCESSORS 1
     ENVIRONMENT "POCL_TTASIM0_PARAMETERS=${CMAKE_SOURCE_DIR}/tools/data/test_machine_LE.adf"
-    LABELS "internal;hsa;tce;cuda"
+    LABELS "internal;cuda"
     DEPENDS "pocl_version_check")
 
-set_tests_properties( "examples/example1_dot_product"
-  PROPERTIES
-    LABELS "hsa-native"
-    DEPENDS "pocl_version_check")
+# devices which don't support SPIR
+set_property(TEST "examples/example1_dot_product"
+  APPEND PROPERTY LABELS "tce;hsa;hsa-native")
