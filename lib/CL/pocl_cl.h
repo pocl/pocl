@@ -782,11 +782,18 @@ struct _cl_device_id {
   int global_mem_id; /* identifier for device global memory */
   /* pointer to an accounting struct for global memory */
   pocl_global_mem_t *global_memory;
-  int has_64bit_long;  /* Does the device have 64bit longs */
+  /* Does the device have 64bit longs */
+  int has_64bit_long;
   /* Does the device set the event times in update_event() callback ?
    * if zero, the default event change handlers set the event times based on
    * the host's system time (pocl_gettimemono_ns). */
   int has_own_timer;
+
+  /* If the driver wants SPIR-V input directly, without translation to
+   * LLVM IR with "spir" triple, set this to 1,
+   * and make sure device->ops->supports_binary returns 1 for SPIR-V */
+  int consumes_il_directly;
+
   /* Convert automatic local variables to kernel arguments? */
   pocl_autolocals_to_args_strategy autolocals_to_args;
   /* Allocate local buffers device side in the work-group launcher instead of
