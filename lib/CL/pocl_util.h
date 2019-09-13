@@ -211,6 +211,8 @@ uint16_t float_to_half (float value);
 
 float half_to_float (uint16_t value);
 
+int bitcode_is_spirv_kernel (const char *bitcode, size_t size);
+
 #ifdef __cplusplus
 }
 #endif

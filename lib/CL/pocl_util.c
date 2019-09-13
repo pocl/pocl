@@ -1379,3 +1379,43 @@ float_to_half (float value)
   v.si ^= ((v.si - minD) ^ v.si) & -(v.si > subC);
   return v.ui | sign;
 }
+
+/* SPIR-V magic header */
+#define SPIRV_MAGIC 0x07230203U
+/* Opcode for capability used by module */
+#define OpCapab 0x00020011
+/* execution model = Kernel is used by OpenCL SPIR-V modules */
+#define KernelExecModel 0x6
+
+int
+bitcode_is_spirv_kernel (const char *bitcode, size_t size)
+{
+  const uint32_t *bc32 = (const uint32_t *)bitcode;
+  unsigned location = 0;
+  uint32_t header_magic = htole32 (bc32[location++]);
+
+  if ((size < 20) || (header_magic != SPIRV_MAGIC))
+    return 0;
+
+  // skip version, generator, bound, schema
+  location += 4;
+  int is_opencl = 0;
+  uint32_t instruction, value;
+  do
+    {
+      instruction = htole32 (bc32[location++]);
+      value = htole32 (bc32[location++]);
+      if (value == KernelExecModel)
+        is_opencl = 1;
+    }
+  while (instruction == OpCapab);
+
+  /* SPIR-V but not OpenCL-type. */
+  if (!is_opencl)
+    {
+      POCL_MSG_ERR ("SPIR-V binary provided, but is not using Kernel mode."
+                    "Pocl can't process this binary.\n");
+    }
+
+  return is_opencl;
+}
