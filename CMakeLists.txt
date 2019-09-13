@@ -75,7 +75,6 @@ if(UNIX)
 
 endif()
 
-
 set(MAJOR_VERSION 1)
 set(MINOR_VERSION 8)
 set(VERSION_SUFFIX_FIXED_TEXT "-pre")
@@ -659,6 +658,31 @@ if(ENABLE_RELOCATION)
 endif()
 
 file(RELATIVE_PATH POCL_INSTALL_PRIVATE_LIBDIR_REL ${POCL_INSTALL_PUBLIC_LIBDIR} ${POCL_INSTALL_PRIVATE_LIBDIR})
+
+######################################################################################
+
+# IPO support for runtime library
+if(POLICY CMP0069)
+  cmake_policy(SET CMP0069 NEW)
+endif()
+
+if(NOT DEFINED DEFAULT_ENABLE_IPO)
+  set(DEFAULT_ENABLE_IPO OFF CACHE BOOL "IPO" FORCE)
+
+  if(NOT CMAKE_VERSION VERSION_LESS "3.9")
+
+    include(CheckIPOSupported)
+    check_ipo_supported(RESULT IPO OUTPUT IPO_OUTPUT)
+    set(DEFAULT_ENABLE_IPO ${IPO} CACHE BOOL "IPO" FORCE)
+
+    message(STATUS "Compiler supports IPO: ${DEFAULT_ENABLE_IPO}")
+    #message(STATUS "IPO check message: ${IPO_OUTPUT}")
+  endif()
+endif()
+
+setup_cached_var(ENABLE_IPO "Enable Link-Time Optimization (IPO) while building pocl runtime"
+  "Requested build with IPO, but IPO is not available"
+  "IPO available, but requested build without it")
 
 ######################################################################################
 
@@ -1647,6 +1671,7 @@ MESSAGE(STATUS "ENABLE_CONFORMANCE: ${ENABLE_CONFORMANCE}")
 if(ARM)
 MESSAGE(STATUS "ENABLE_FP64: ${ENABLE_FP64}")
 endif()
+MESSAGE(STATUS "ENABLE_IPO: ${ENABLE_IPO}")
 MESSAGE(STATUS "ENABLE_ICD: ${ENABLE_ICD}")
 MESSAGE(STATUS "ENABLE_TCE: ${ENABLE_TCE}")
 MESSAGE(STATUS "ENABLE_TCEMC: ${ENABLE_TCEMC}")

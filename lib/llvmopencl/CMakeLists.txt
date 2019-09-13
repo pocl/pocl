@@ -136,3 +136,8 @@ install(TARGETS "llvmopencl"
         ARCHIVE DESTINATION ${POCL_INSTALL_PRIVATE_LIBDIR}/static
         COMPONENT "dev"
 )
+
+if(ENABLE_IPO)
+  set_property(TARGET "llvmpasses" PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+  set_property(TARGET "llvmopencl" PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
