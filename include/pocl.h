@@ -369,6 +369,9 @@ struct _cl_command_node
   cl_int ready;
 };
 
+#ifndef LLVM_10_0
+#define LLVM_OLDER_THAN_10_0 1
+
 #ifndef LLVM_9_0
 #define LLVM_OLDER_THAN_9_0 1
 
@@ -381,6 +384,7 @@ struct _cl_command_node
 #ifndef LLVM_6_0
 #define LLVM_OLDER_THAN_6_0 1
 
+#endif
 #endif
 #endif
 #endif
