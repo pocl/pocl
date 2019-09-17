@@ -487,15 +487,6 @@ if(NOT DEFINED CLANG_NEEDS_RTLIB)
 endif()
 
 ####################################################################
-#X86 has -march and -mcpu reversed, for clang
-
-if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "(powerpc|arm|aarch64)")
-  set(CLANG_MARCH_FLAG "-mcpu=")
-else()
-  set(CLANG_MARCH_FLAG "-march=")
-endif()
-
-####################################################################
 
 macro(CHECK_ALIGNOF TYPE TYPEDEF OUT_VAR)
 
@@ -698,6 +689,26 @@ else()
   set(HOST_CPU_FORCED 0 CACHE INTERNAL "CPU is forced by user")
 endif()
 
+
+####################################################################
+# Some architectures have -march and -mcpu reversed
+
+if(NOT DEFINED ${CLANG_MARCH_FLAG})
+  message(STATUS "Checking clang -march vs. -mcpu flag")
+  custom_try_compile_clang_silent("" "return 0;" RES ${CLANG_TARGET_OPTION}${LLC_TRIPLE} -march=${LLC_HOST_CPU})
+  if(NOT RES)
+    set(CLANG_MARCH_FLAG "-march=")
+  else()
+    custom_try_compile_clang_silent("" "return 0;" RES ${CLANG_TARGET_OPTION}${LLC_TRIPLE} -mcpu=${LLC_HOST_CPU})
+    if(NOT RES)
+      set(CLANG_MARCH_FLAG "-mcpu=")
+    else()
+      message(FATAL_ERROR "Could not determine whether to use -march or -mcpu with clang")
+    endif()
+  endif()
+
+  set(CLANG_MARCH_FLAG ${CLANG_MARCH_FLAG} CACHE INTERNAL "Clang option used to specify the target cpu")
+endif()
 
 ####################################################################
 
