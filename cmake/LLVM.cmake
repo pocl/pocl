@@ -219,7 +219,7 @@ set(CLANG_LIBNAMES clangCodeGen clangFrontendTool clangFrontend clangDriver clan
 foreach(LIBNAME ${CLANG_LIBNAMES})
   find_library(C_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
   list(APPEND CLANG_LIBFILES "${C_LIBFILE_${LIBNAME}}")
-  if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+  if(UNIX AND (NOT APPLE))
     set(LLVM_LDFLAGS "${LLVM_LDFLAGS} -Wl,--exclude-libs,lib${LIBNAME}")
   endif()
 endforeach()
