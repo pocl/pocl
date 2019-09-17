@@ -333,6 +333,11 @@ macro(custom_try_compile_clang SOURCE1 SOURCE2 RES_VAR)
   custom_try_compile_c_cxx("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" ${RES_VAR}  "-c" ${ARGN})
 endmacro()
 
+# clang++ try-compile macro
+macro(custom_try_compile_clang_silent SOURCE1 SOURCE2 RES_VAR)
+  custom_try_compile_c_cxx_silent("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" ${RES_VAR} "-c" ${ARGN})
+endmacro()
+
 # clang++ try-link macro
 macro(custom_try_link_clang SOURCE1 SOURCE2 RES_VAR)
   set(RANDOM_FILENAME "${CMAKE_BINARY_DIR}/compile_test_${RNDNAME}.${SUFFIX}")
@@ -752,7 +757,7 @@ endif()
 if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED ${CL_DISABLE_HALF})
   set(CL_DISABLE_HALF 0)
   message(STATUS "Checking fp16 support")
-  custom_try_compile_c_cxx_silent("${CLANG}" "c" "__fp16 callfp16(__fp16 a) { return a * (__fp16)1.8; };" "__fp16 x=callfp16((__fp16)argc);" RESV -c ${CLANG_TARGET_OPTION}${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${LLC_HOST_CPU})
+  custom_try_compile_clang_silent("__fp16 callfp16(__fp16 a) { return a * (__fp16)1.8; };" "__fp16 x=callfp16((__fp16)argc);" RESV ${CLANG_TARGET_OPTION}${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${LLC_HOST_CPU})
   if(RESV)
     set(CL_DISABLE_HALF 1)
   endif()
