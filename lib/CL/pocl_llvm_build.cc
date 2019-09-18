@@ -403,7 +403,8 @@ int pocl_llvm_build_program(cl_program program,
           itemcstrs.data(), itemcstrs.data() + itemcstrs.size(),
 #endif
           diags)) {
-    pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
+    pocl_cache_create_program_cachedir(program, device_i, program->source,
+                                       strlen(program->source),
                                        program_bc_path);
     get_build_log(program, device_i, ss_build_log, diagsBuffer,
                   CI.hasSourceManager() ? &CI.getSourceManager() : nullptr);
@@ -545,7 +546,8 @@ int pocl_llvm_build_program(cl_program program,
   }
 
   if (PreprocessedOut == nullptr) {
-    pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
+    pocl_cache_create_program_cachedir(program, device_i, program->source,
+                                       strlen(program->source),
                                        program_bc_path);
     get_build_log(program, device_i, ss_build_log, diagsBuffer,
                   CI.hasSourceManager() ? &CI.getSourceManager() : nullptr);

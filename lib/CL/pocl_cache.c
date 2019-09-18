@@ -358,68 +358,49 @@ pocl_cache_write_kernel_parallel_bc (void *bc, cl_program program,
   strcat (kernel_parallel_path, POCL_PARALLEL_BC_FILENAME);
   return pocl_write_module (bc, kernel_parallel_path, 0);
 }
+#endif
 
 /******************************************************************************/
 
 static inline void
 build_program_compute_hash (cl_program program, unsigned device_i,
-                            const char *preprocessed_source, size_t source_len)
+                            const char *hash_source, size_t source_len)
 {
     SHA1_CTX hash_ctx;
     unsigned i;
     cl_device_id device = program->devices[device_i];
 
-    pocl_SHA1_Init(&hash_ctx);
+    static const char *builtin_seed = PACKAGE_VERSION POCL_BUILD_TIMESTAMP
+#ifdef ENABLE_LLVM
+        LLVM_VERSION POCL_KERNELLIB_SHA1
+#endif
+        ;
 
-    if (program->source) {
-        assert(preprocessed_source);
-        assert(source_len > 0);
-        pocl_SHA1_Update(&hash_ctx, (uint8_t*)preprocessed_source,
-                         source_len);
-    } else if (program->pocl_binary_sizes[device_i] > 0) {
-      /* Program was created with clCreateProgramWithBinary() with
-	 a pocl binary */
-      assert(program->pocl_binaries[device_i]);
-      pocl_SHA1_Update(&hash_ctx,
-		       (uint8_t*) program->pocl_binaries[device_i],
-		       program->pocl_binary_sizes[device_i]);
-      }
-    else if (program->binary_sizes[device_i] > 0)
-      {
-        /* Program was created with clCreateProgramWithBinary() with an LLVM IR
-         * binary */
-        assert (program->binaries[device_i]);
-        pocl_SHA1_Update (&hash_ctx, (uint8_t *)program->binaries[device_i],
-                          program->binary_sizes[device_i]);
-      }
-    else
-      {
-        /* Program is linked from binaries, has no source or binary */
-        // assert(program->binary_type == CL_PROGRAM_BIN)
-        assert (preprocessed_source);
-        assert (source_len > 0);
-        pocl_SHA1_Update (&hash_ctx, (uint8_t *)preprocessed_source,
-                          source_len);
-      }
+    pocl_SHA1_Init(&hash_ctx);
+    pocl_SHA1_Update (&hash_ctx, (uint8_t *)builtin_seed,
+                      strlen (builtin_seed));
+
+    assert (hash_source);
+    assert (source_len > 0);
+    pocl_SHA1_Update (&hash_ctx, (uint8_t *)hash_source, source_len);
 
     if (program->compiler_options)
         pocl_SHA1_Update(&hash_ctx, (uint8_t*) program->compiler_options,
                          strlen(program->compiler_options));
 
+#ifdef ENABLE_LLVM
     /* The kernel compiler work-group function method affects the
        produced binary heavily. */
-    const char *wg_method=
-        pocl_get_string_option("POCL_WORK_GROUP_METHOD", "");
+    if (device->llvm_target_triplet)
+      {
+        const char *wg_method
+            = pocl_get_string_option ("POCL_WORK_GROUP_METHOD", NULL);
+        if (wg_method)
+          pocl_SHA1_Update (&hash_ctx, (uint8_t *)wg_method,
+                            strlen (wg_method));
+      }
+#endif
 
-    pocl_SHA1_Update(&hash_ctx, (uint8_t*) wg_method, strlen(wg_method));
-    pocl_SHA1_Update(&hash_ctx, (uint8_t*) PACKAGE_VERSION,
-                     strlen(PACKAGE_VERSION));
-    pocl_SHA1_Update(&hash_ctx, (uint8_t*) LLVM_VERSION,
-                     strlen(LLVM_VERSION));
-    pocl_SHA1_Update(&hash_ctx, (uint8_t*) POCL_BUILD_TIMESTAMP,
-                     strlen(POCL_BUILD_TIMESTAMP));
-    pocl_SHA1_Update(&hash_ctx, (const uint8_t *)POCL_KERNELLIB_SHA1,
-                     strlen(POCL_KERNELLIB_SHA1));
     /*devices may include their own information to hash */
     if (device->ops->build_hash)
       {
@@ -440,9 +421,7 @@ build_program_compute_hash (cl_program program, unsigned device_i,
     *hashstr = 0;
 
     program->build_hash[device_i][2] = '/';
-
 }
-#endif
 
 
 /******************************************************************************/
@@ -559,38 +538,33 @@ pocl_cache_init_topdir ()
  */
 
 int
-pocl_cache_create_program_cachedir(cl_program program,
-                                   unsigned device_i,
-                                   const char* preprocessed_source,
-                                   size_t source_len,
-                                   char* program_bc_path)
+pocl_cache_create_program_cachedir (cl_program program, unsigned device_i,
+                                    const char *hash_source,
+                                    size_t hash_source_len,
+                                    char *program_bc_path)
 {
     assert(cache_topdir_initialized);
 
-    if (use_kernel_cache)
+    /* NULL is used only in one place, clCreateWithBinary,
+     * and we want to keep the original hash value in that case */
+    if (hash_source == NULL)
       {
-#ifdef ENABLE_LLVM
-        const char *hash_source = NULL;
-        size_t hs_len = 0;
+        assert (buildhash_is_valid (program, device_i));
+        program_device_dir (program_bc_path, program, device_i, "");
 
-        if (program->source && preprocessed_source==NULL) {
-            hash_source = program->source;
-            hs_len = strlen(program->source);
-        } else {
-            hash_source = preprocessed_source;
-            hs_len = source_len;
-        }
+        if (pocl_mkdir_p (program_bc_path))
+          return 1;
+      }
+    else if (use_kernel_cache)
+      {
+        build_program_compute_hash (program, device_i, hash_source,
+                                    hash_source_len);
+        assert (buildhash_is_valid (program, device_i));
 
-        build_program_compute_hash(program, device_i, hash_source, hs_len);
+        program_device_dir (program_bc_path, program, device_i, "");
 
-#else
-        assert(buildhash_is_valid(program, device_i));
-#endif
-
-        program_device_dir(program_bc_path, program, device_i, "");
-
-        if (pocl_mkdir_p(program_bc_path))
-            return 1;
+        if (pocl_mkdir_p (program_bc_path))
+          return 1;
       }
     else
       {
