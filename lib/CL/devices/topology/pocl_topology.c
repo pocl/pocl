@@ -102,7 +102,7 @@ setup_global_mem_limits ()
    * of course there are limits set at the operating system level. Of course
    * we still have to respect the OpenCL-commanded minimum */
 
-  max_mem_alloc_size = pocl_size_ceil2 (global_mem_size / 4);
+  max_mem_alloc_size = pocl_size_ceil2_64 (global_mem_size / 4);
 
   if (max_mem_alloc_size > (global_mem_size / 2))
     max_mem_alloc_size /= 2;
