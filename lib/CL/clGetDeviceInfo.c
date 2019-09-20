@@ -321,7 +321,10 @@ POname(clGetDeviceInfo)(cl_device_id   device,
   case CL_DEVICE_MAX_GLOBAL_VARIABLE_SIZE:
     POCL_RETURN_GETINFO(size_t, device->global_var_max_size);
   case CL_DEVICE_IL_VERSION:
-    POCL_RETURN_GETINFO_STR (device->spirv_version);
+    if (device->spirv_version)
+      POCL_RETURN_GETINFO_STR (device->spirv_version);
+    else
+      POCL_RETURN_GETINFO_STR ("");
   }
 
   if(device->ops->get_device_info_ext != NULL) {
