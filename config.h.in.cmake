@@ -45,6 +45,8 @@
 
 #cmakedefine HAVE_FSYNC
 
+#cmakedefine HAVE_GETRLIMIT
+
 #cmakedefine HAVE_MKOSTEMPS
 
 #cmakedefine HAVE_MKSTEMPS

@@ -625,9 +625,9 @@ struct pocl_device_ops {
 
 typedef struct pocl_global_mem_t {
   pocl_lock_t pocl_lock;
-  size_t max_ever_allocated;
-  size_t currently_allocated;
-  size_t total_alloc_limit;
+  cl_ulong max_ever_allocated;
+  cl_ulong currently_allocated;
+  cl_ulong total_alloc_limit;
 } pocl_global_mem_t;
 
 #define NUM_OPENCL_IMAGE_TYPES 6

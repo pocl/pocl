@@ -227,7 +227,7 @@ set(CLANG_LIBNAMES clangCodeGen clangFrontendTool clangFrontend clangDriver clan
 foreach(LIBNAME ${CLANG_LIBNAMES})
   find_library(C_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
   list(APPEND CLANG_LIBFILES "${C_LIBFILE_${LIBNAME}}")
-  if(CMAKE_SYSTEM_NAME MATCHES "Linux")
+  if(UNIX AND (NOT APPLE))
     set(LLVM_LDFLAGS "${LLVM_LDFLAGS} -Wl,--exclude-libs,lib${LIBNAME}")
   endif()
 endforeach()
@@ -339,6 +339,11 @@ endmacro()
 # clang++ try-compile macro
 macro(custom_try_compile_clang SOURCE1 SOURCE2 RES_VAR)
   custom_try_compile_c_cxx("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" ${RES_VAR}  "-c" ${ARGN})
+endmacro()
+
+# clang++ try-compile macro
+macro(custom_try_compile_clang_silent SOURCE1 SOURCE2 RES_VAR)
+  custom_try_compile_c_cxx_silent("${CLANG}" "c" "${SOURCE1}" "${SOURCE2}" ${RES_VAR} "-c" ${ARGN})
 endmacro()
 
 # clang++ try-link macro
@@ -487,15 +492,6 @@ if(NOT DEFINED CLANG_NEEDS_RTLIB)
   set(CLANG_HAS_128B_MATH ${RT128} CACHE INTERNAL "Clang's available with 128bit math")
   set(CLANG_NEEDS_RTLIB ${NEEDS_RTLIB_FLAG} CACHE INTERNAL "Clang needs extra --rtlib flag for compiler-rt math")
 
-endif()
-
-####################################################################
-#X86 has -march and -mcpu reversed, for clang
-
-if(CMAKE_HOST_SYSTEM_PROCESSOR MATCHES "(powerpc|arm|aarch64)")
-  set(CLANG_MARCH_FLAG "-mcpu=")
-else()
-  set(CLANG_MARCH_FLAG "-march=")
 endif()
 
 ####################################################################
@@ -703,6 +699,26 @@ endif()
 
 
 ####################################################################
+# Some architectures have -march and -mcpu reversed
+
+if(NOT DEFINED ${CLANG_MARCH_FLAG})
+  message(STATUS "Checking clang -march vs. -mcpu flag")
+  custom_try_compile_clang_silent("" "return 0;" RES ${CLANG_TARGET_OPTION}${LLC_TRIPLE} -march=${LLC_HOST_CPU})
+  if(NOT RES)
+    set(CLANG_MARCH_FLAG "-march=")
+  else()
+    custom_try_compile_clang_silent("" "return 0;" RES ${CLANG_TARGET_OPTION}${LLC_TRIPLE} -mcpu=${LLC_HOST_CPU})
+    if(NOT RES)
+      set(CLANG_MARCH_FLAG "-mcpu=")
+    else()
+      message(FATAL_ERROR "Could not determine whether to use -march or -mcpu with clang")
+    endif()
+  endif()
+
+  set(CLANG_MARCH_FLAG ${CLANG_MARCH_FLAG} CACHE INTERNAL "Clang option used to specify the target cpu")
+endif()
+
+####################################################################
 
 # This tests that we can actually link to the llvm libraries.
 # Mostly to catch issues like #295 - cannot find -ledit
@@ -760,7 +776,7 @@ endif()
 if(ENABLE_HOST_CPU_DEVICES AND NOT DEFINED ${CL_DISABLE_HALF})
   set(CL_DISABLE_HALF 0)
   message(STATUS "Checking fp16 support")
-  custom_try_compile_c_cxx_silent("${CLANG}" "c" "__fp16 callfp16(__fp16 a) { return a * (__fp16)1.8; };" "__fp16 x=callfp16((__fp16)argc);" RESV -c ${CLANG_TARGET_OPTION}${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${LLC_HOST_CPU})
+  custom_try_compile_clang_silent("__fp16 callfp16(__fp16 a) { return a * (__fp16)1.8; };" "__fp16 x=callfp16((__fp16)argc);" RESV ${CLANG_TARGET_OPTION}${LLC_TRIPLE} ${CLANG_MARCH_FLAG}${LLC_HOST_CPU})
   if(RESV)
     set(CL_DISABLE_HALF 1)
   endif()

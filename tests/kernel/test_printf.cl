@@ -179,4 +179,9 @@ kernel void test_printf()
   printf("|%s|%4s|%-4s|%4s|%.4s|\n", "aa", "bb", "cc", "dddddddddd", "eeeeee");
   printf("|%p|%12p|%-12p|\n", (void*)0x2349aacc, (void*)0xdeaddeed, (void*)0x92820384);
 
+  printf ("\nPARAMETER PASSING\n\n");
+
+  printf("%c %#v2hhx %#v2hhx %c\n", '*', (char2)(0xFA, 0xFB), (char2)(0xFC, 0xFD), '.');
+  printf("%c %#v2hx %#v2hx %c\n", '*', (short2)(0x1234, 0x8765), (short2)(0xBEEF, 0xF00D), '.');
+  printf("%c %#v2hlx %#v2hlx %c\n", '*', (int2)(0x12345678, 0x87654321), (int2)(0x2468ACE0, 0xFDB97531), '.');
 }

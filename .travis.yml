@@ -14,18 +14,9 @@ matrix:
       compiler: gcc
       env: LLVM_VERSION=6.0 HWLOC_VERSION=1.11 DOCKERFILE=Ubuntu/16_04.64bit
 
-    - os: linux
-      compiler: gcc
-      env: LLVM_VERSION=6.0 HWLOC_VERSION=2.0 CONDA=True
-
     - os: osx
       compiler: clang
       env: LLVM_VERSION=6.0 HWLOC_VERSION=2.0 CONDA=True
-
-    - os: osx
-      compiler: gcc
-      env: LLVM_VERSION=4.0 HWLOC_VERSION=1.11 CONDA=True
-
 
 before_install:
   - if [ "$TRAVIS_OS_NAME" = "osx" ] ; then
