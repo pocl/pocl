@@ -27,6 +27,16 @@ cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 
 project(pocl)
 
+set(LATEST_KNOWN_CXX_STD_VERSION "20")
+set(SUPPORTED_CXX_STD_VERSION "11")
+
+option(ENABLE_LATEST_CXX_STD "Upgrade C++ standard version to ${LATEST_KNOWN_CXX_STD_VERSION}. Required to get rid of unused variables warnings in compilers not supporting [[gnu::*]] attributes. Can bring other benefits, including performance and efficiency ones. Before a pull request build with this disabled." OFF)
+if(ENABLE_LATEST_CXX_STD)
+	set(CMAKE_CXX_STANDARD "${LATEST_KNOWN_CXX_STD_VERSION}")
+else()
+	set(CMAKE_CXX_STANDARD "${SUPPORTED_CXX_STD_VERSION}")
+endif()
+
 # Fix behavior of CMAKE_CXX_STANDARD when targeting macOS.
 if(POLICY CMP0025)
   cmake_policy(SET CMP0025 NEW)

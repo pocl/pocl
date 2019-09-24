@@ -28,6 +28,10 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include <llvm/IR/Function.h>
 
+#ifndef LLVM_OLDER_THAN_10_0
+#include <llvm/Pass.h>
+#endif
+
 POP_COMPILER_DIAGS
 
 

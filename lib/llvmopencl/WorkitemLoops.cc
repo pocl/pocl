@@ -988,10 +988,18 @@ WorkitemLoops::GetContextArray(llvm::Instruction *instruction,
      accesses to them. Also, LLVM 3.3 seems to produce illegal
      code at least with Core i5 when aligned only at the element
      size. */
-  Alloca->setAlignment(CONTEXT_ARRAY_ALIGN);
+    Alloca->setAlignment(
+#ifndef LLVM_OLDER_THAN_10_0
+        llvm::MaybeAlign(
+#endif
+            CONTEXT_ARRAY_ALIGN
+#ifndef LLVM_OLDER_THAN_10_0
+            )
+#endif
+    );
 
-  contextArrays[varName] = Alloca;
-  return Alloca;
+    contextArrays[varName] = Alloca;
+    return Alloca;
 }
 
 /**

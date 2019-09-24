@@ -59,5 +59,15 @@
 
 #endif
 
+#if __cplusplus >= 201703
+	#define IGNORE_UNUSED [[maybe_unused]]
+#else
+	#if defined(__clang__) || defined(__GNUC__)
+		#define IGNORE_UNUSED [[gnu::unused]]
+	#else
+		#define IGNORE_UNUSED 
+	#endif
+#endif
+
 #endif
 

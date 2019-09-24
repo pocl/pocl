@@ -40,6 +40,10 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include <clang/Frontend/TextDiagnosticPrinter.h>
 #include "clang/Lex/PreprocessorOptions.h"
 
+#ifdef LLVM_OLDER_THAN_10_0
+#include "llvm/ADT/ArrayRef.h"
+#endif
+
 #include "llvm/LinkAllPasses.h"
 #include "llvm/Linker/Linker.h"
 
@@ -47,8 +51,6 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
-
-#include "llvm/Support/MutexGuard.h"
 
 #ifdef ENABLE_RELOCATION
 
@@ -104,8 +106,14 @@ load_source(FrontendOptions &fe,
   POCL_RETURN_ERROR_ON(pocl_cache_write_program_source(source_file, program),
                        CL_OUT_OF_HOST_MEMORY, "Could not write program source");
 
-  fe.Inputs.push_back
-      (FrontendInputFile(source_file, clang::InputKind::OpenCL));
+  fe.Inputs.push_back(
+      FrontendInputFile(source_file,
+#ifndef LLVM_OLDER_THAN_10_0
+                        clang::InputKind(clang::Language::OpenCL)
+#else
+                        clang::InputKind::OpenCL
+#endif
+                            ));
 
   return 0;
 }
@@ -382,9 +390,15 @@ int pocl_llvm_build_program(cl_program program,
   if (program->build_log[device_i])
     POCL_MEM_FREE(program->build_log[device_i]);
 
-  if (!CompilerInvocation::CreateFromArgs
-      (pocl_build, itemcstrs.data(), itemcstrs.data() + itemcstrs.size(),
-       diags)) {
+  if (!CompilerInvocation::CreateFromArgs(
+          pocl_build,
+#ifndef LLVM_OLDER_THAN_10_0
+          ArrayRef<const char *>(itemcstrs.data(),
+                                 itemcstrs.data() + itemcstrs.size()),
+#else
+          itemcstrs.data(), itemcstrs.data() + itemcstrs.size(),
+#endif
+          diags)) {
     pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
                                        program_bc_path);
     get_build_log(program, device_i, ss_build_log, diagsBuffer,
@@ -395,9 +409,13 @@ int pocl_llvm_build_program(cl_program program,
   LangOptions *la = pocl_build.getLangOpts();
   PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
 
-  pocl_build.setLangDefaults
-      (*la, clang::InputKind::OpenCL, triple, po,
-       clang::LangStandard::lang_opencl12);
+  pocl_build.setLangDefaults(*la,
+#ifndef LLVM_OLDER_THAN_10_0
+                             clang::InputKind(clang::Language::OpenCL),
+#else
+                             clang::InputKind::OpenCL,
+#endif
+                             triple, po, clang::LangStandard::lang_opencl12);
 
   // LLVM 3.3 and older do not set that char is signed which is
   // defined by the OpenCL C specs (but not by C specs).
