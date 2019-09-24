@@ -35,12 +35,8 @@
 #include <unistd.h>
 #include <utlist.h>
 
-#ifndef _MSC_VER
-#  include <sys/time.h>
-#  include <sys/resource.h>
-#  include <unistd.h>
-#else
-#  include "vccompat.hpp"
+#ifdef _MSC_VER
+#include "vccompat.hpp"
 #endif
 
 #include "common.h"
@@ -56,6 +52,12 @@
 #include "pocl_mem_management.h"
 #include "pocl_runtime_config.h"
 #include "pocl_util.h"
+
+#ifdef HAVE_GETRLIMIT
+#include <sys/time.h>
+#include <sys/resource.h>
+#include <unistd.h>
+#endif
 
 #ifdef HAVE_LIBDL
 #if defined(__APPLE__)
@@ -1123,8 +1125,6 @@ static pocl_global_mem_t system_memory = {POCL_LOCK_INITIALIZER, 0, 0, 0};
 void
 pocl_setup_device_for_system_memory (cl_device_id device)
 {
-  int limit_memory_gb = pocl_get_int_option ("POCL_MEMORY_LIMIT", 0);
-
   /* set up system memory limits, if required */
   if (system_memory.total_alloc_limit == 0)
   {
@@ -1133,31 +1133,46 @@ pocl_setup_device_for_system_memory (cl_device_id device)
        * this sets it to 3/4 for systems with <=7gig mem,
        * for >7 it sets to (total-2gigs)
        */
-      size_t alloc_limit = device->global_mem_size;
-      if ((alloc_limit >> 20) > (7 << 10))
-        system_memory.total_alloc_limit = alloc_limit - (size_t)(1UL << 31);
+      cl_ulong alloc_limit = device->global_mem_size;
+      if (alloc_limit > ((cl_ulong)7 << 30))
+        system_memory.total_alloc_limit = alloc_limit - ((cl_ulong)2 << 30);
       else
         {
-          size_t temp = (alloc_limit >> 2);
+          cl_ulong temp = (alloc_limit >> 2);
           system_memory.total_alloc_limit = alloc_limit - temp;
         }
 
       system_memory.max_ever_allocated =
           system_memory.currently_allocated = 0;
+
+      /* in some cases (e.g. ARM32 pocl on ARM64 system with >4G ram),
+       * global memory is correctly reported but larger than can be
+       * used; limit to pointer size */
+      if (system_memory.total_alloc_limit > UINTPTR_MAX)
+        system_memory.total_alloc_limit = UINTPTR_MAX;
+
+      /* apply rlimit settings */
+#ifdef HAVE_GETRLIMIT
+      struct rlimit limits;
+      int ret = getrlimit (RLIMIT_DATA, &limits);
+      if ((ret == 0) && (system_memory.total_alloc_limit > limits.rlim_cur))
+        system_memory.total_alloc_limit = limits.rlim_cur;
+#endif
   }
 
   device->global_mem_size = system_memory.total_alloc_limit;
 
+  int limit_memory_gb = pocl_get_int_option ("POCL_MEMORY_LIMIT", 0);
   if (limit_memory_gb > 0)
     {
-      size_t limited_memory = (size_t)limit_memory_gb << 30;
+      cl_ulong limited_memory = (cl_ulong)limit_memory_gb << 30;
       if (device->global_mem_size > limited_memory)
         device->global_mem_size = limited_memory;
       else
         POCL_MSG_WARN ("requested POCL_MEMORY_LIMIT %i GBs is larger than"
-                       " physical memory size (%zu) GBs, ignoring\n",
+                       " physical memory size (%u) GBs, ignoring\n",
                        limit_memory_gb,
-                       (size_t) (device->global_mem_size >> 30));
+                       (unsigned)(device->global_mem_size >> 30));
     }
 
   if (device->global_mem_size < MIN_MAX_MEM_ALLOC_SIZE)
@@ -1167,22 +1182,8 @@ pocl_setup_device_for_system_memory (cl_device_id device)
    * can potentially allocate the whole memory for a single buffer, unless
    * of course there are limits set at the operating system level. Of course
    * we still have to respect the OpenCL-commanded minimum */
-  size_t alloc_limit = SIZE_MAX;
 
-#ifndef _MSC_VER
-  // TODO getrlimit equivalent under Windows
-  struct rlimit limits;
-  int ret = getrlimit(RLIMIT_DATA, &limits);
-  if (ret == 0)
-    alloc_limit = limits.rlim_cur;
-  else
-#endif
-    alloc_limit = MIN_MAX_MEM_ALLOC_SIZE;
-
-  if (alloc_limit > device->global_mem_size)
-    alloc_limit = pocl_size_ceil2 (device->global_mem_size / 4);
-  if (alloc_limit > (device->global_mem_size / 2))
-    alloc_limit >>= 1;
+  cl_ulong alloc_limit = pocl_size_ceil2_64 (device->global_mem_size / 4);
 
   if (alloc_limit < MIN_MAX_MEM_ALLOC_SIZE)
     alloc_limit = MIN_MAX_MEM_ALLOC_SIZE;
@@ -1214,11 +1215,11 @@ pocl_set_buffer_image_limits(cl_device_id device)
    * try to allocate max size constant objects and run out of memory
    * while trying to fill them. */
 
-  size_t s;
+  cl_ulong s;
   if (device->global_mem_cache_size > 0)
-    s = pocl_size_ceil2 (device->global_mem_cache_size / 2);
+    s = pocl_size_ceil2_64 (device->global_mem_cache_size / 2);
   else
-    s = pocl_size_ceil2 (device->global_mem_size / 256);
+    s = pocl_size_ceil2_64 (device->global_mem_size / 256);
 
   device->local_mem_size = device->max_constant_buffer_size = s;
 
@@ -1302,12 +1303,13 @@ void
 pocl_print_system_memory_stats()
 {
   POCL_MSG_PRINT_F (MEMORY, INFO, "",
-  "____ Total available system memory  : %10zu KB\n"
-  " ____ Currently used system memory   : %10zu KB\n"
-  " ____ Max used system memory         : %10zu KB\n",
-  system_memory.total_alloc_limit >> 10,
-  system_memory.currently_allocated >> 10,
-  system_memory.max_ever_allocated >> 10);
+                    "____ Total available system memory  : %10" PRIu64 " KB\n"
+                    " ____ Currently used system memory   : %10" PRIu64 " KB\n"
+                    " ____ Max used system memory         : %10" PRIu64
+                    " KB\n",
+                    system_memory.total_alloc_limit >> 10,
+                    system_memory.currently_allocated >> 10,
+                    system_memory.max_ever_allocated >> 10);
 }
 
 /* Unique hash for a device + program build + kernel name combination.

@@ -509,6 +509,10 @@ if(UNIX)
                       "unistd.h"
                       HAVE_SLEEP)
 
+  CHECK_SYMBOL_EXISTS("getrlimit"
+                      "sys/time.h;sys/resource.h"
+                      HAVE_GETRLIMIT)
+
   CHECK_SYMBOL_EXISTS("utime"
                       "sys/types.h;utime.h"
                       HAVE_UTIME)
@@ -569,6 +573,7 @@ else()
   set(HAVE_MKDTEMP 0)
   set(HAVE_FUTIMENS 0)
   set(HAVE_FORK 0)
+  set(HAVE_GETRLIMIT 0)
   set(HAVE_VFORK 0)
   set(HAVE_UTIME 0)
   set(HAVE_DLADDR 0)

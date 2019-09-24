@@ -69,7 +69,8 @@ unsigned pocl_save_ftz ();
 void pocl_restore_ftz (unsigned ftz);
 
 /* Finds the next highest power of two of the given value. */
-size_t pocl_size_ceil2(size_t x);
+size_t pocl_size_ceil2 (size_t x);
+uint64_t pocl_size_ceil2_64 (uint64_t x);
 
 /* Allocates aligned blocks of memory.
  *
