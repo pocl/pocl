@@ -19,8 +19,19 @@ tools:
   * pkg-config
   * cmake
 
+Installing requirements for Ubuntu::
 
-There are Dockerfiles available for a few most common linux
+    apt install -y build-essential ocl-icd-libopencl1 cmake git pkg-config libclang-dev clang llvm make ninja-build ocl-icd-libopencl1 ocl-icd-dev ocl-icd-opencl-dev libhwloc-dev zlib1g zlib1g-dev clinfo dialog apt-utils
+
+Installing requirements for Arch Linux::
+
+    pacman -S gcc patch hwloc cmake git pkg-config make ninja ocl-icd clang llvm llvm-libs clinfo opencl-headers
+
+Installing requirements for Fedora::
+
+    dnf install gcc gcc-c++ clinfo hwloc-devel hwloc-libs cmake git-core pkgconfig make ninja-build ocl-icd ocl-icd-devel clang clang-devel clang-libs llvm llvm-devel llvm-libs patch redhat-rpm-config findutils
+
+There are also Dockerfiles available for a few most common linux
 distributions in ``tools/docker``, looking into them might be helpful.
 
 Clang / LLVM Notes
@@ -224,6 +235,7 @@ use ";" as separator (you'll have to escape it for bash).
   the LLVM host CPU is forcibly set to 'skylake-avx512', and the internal
   tests are run through the Emulator. Mostly useful to test AVX512.
 
+.. _pocl-without-llvm:
 
 LLVM-less build
 ~~~~~~~~~~~~~~~~~~~~~~~~

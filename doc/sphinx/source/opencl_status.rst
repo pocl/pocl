@@ -36,7 +36,11 @@ and clEnqueueSVM* calls.
 SPIR support
 ------------
 
-There is some experimental support available for SPIR.
+There is some experimental support available for SPIR. In particular,
+for the CPU device, most non-vectorized variants of the kernel library
+functions should work with SPIR bitcode; the rest is not implemented yet.
+SPIR on TCE,CUDA and other devices is currently untested.
+
 There is some even more experimental support available for loading SPIR-V
 binaries, but this depends on functional llvm-spirv translator.
 The translator can be downloaded & built here:
