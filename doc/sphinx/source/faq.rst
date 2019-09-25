@@ -33,6 +33,17 @@ to build pocl, as the one that was used to build the 2nd compiler. Note that
 while most Linux distributions use gcc to build their clang/llvm,
 the official downloads from llvm.org are built using clang.
 
+Pocl is not listed by clinfo / is not found
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Occasionally, proprietary implementations rewrite the ICD loader by their own
+version. E.g. Intel SDK installer silently replaces
+``/usr/lib/x86_64-linux-gnu/libOpenCL.so`` with a link to
+``/etc/alternatives/opencl-libOpenCL.so`` which itself is a link to the intel's
+libOpenCL implementation. The fix is to remove the symlinks manually
+and reinstall the ICD loader after which both pocl and the Intel SDK
+can be used through the ICD loader.
+
 Deadlocks (freezes) on FreeBSD
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
