@@ -370,6 +370,7 @@ pocl_mem_objs_cleanup (cl_event event)
     }
   free (event->mem_objs);
   event->mem_objs = NULL;
+  event->num_buffers = 0;
 }
 
 /**
