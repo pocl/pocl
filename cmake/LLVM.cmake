@@ -219,10 +219,16 @@ string(REPLACE " -pedantic" "" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
 string(REGEX REPLACE "-W[^ ]*" "" LLVM_CXXFLAGS "${LLVM_CXXFLAGS}")
 
 # Llvm-config does not include clang libs
-set(CLANG_LIBNAMES clangCodeGen clangFrontendTool clangFrontend clangDriver clangSerialization
-    clangParse clangSema clangRewrite clangRewriteFrontend
-    clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers
-    clangStaticAnalyzerCore clangAnalysis clangEdit clangAST clangASTMatchers clangLex clangBasic)
+if(8 LESS LLVM_MAJOR AND LLVM_LIB_IS_SHARED MATCHES "shared")
+  # Link against a single shared library instead of multiple component shared
+  # libraries.
+  set(CLANG_LIBNAMES clang-cpp)
+else()
+  set(CLANG_LIBNAMES clangCodeGen clangFrontendTool clangFrontend clangDriver clangSerialization
+      clangParse clangSema clangRewrite clangRewriteFrontend
+      clangStaticAnalyzerFrontend clangStaticAnalyzerCheckers
+      clangStaticAnalyzerCore clangAnalysis clangEdit clangAST clangASTMatchers clangLex clangBasic)
+endif()
 
 foreach(LIBNAME ${CLANG_LIBNAMES})
   find_library(C_LIBFILE_${LIBNAME} NAMES "${LIBNAME}" HINTS "${LLVM_LIBDIR}")
