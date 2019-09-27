@@ -26,6 +26,22 @@
 separate_arguments(HOST_CLANG_FLAGS)
 separate_arguments(HOST_LLC_FLAGS)
 
+cpack_add_component("lib")
+
+set("CPACK_DEBIAN_LIB_PACKAGE_NAME" "libpocl2")
+set(CPACK_DEBIAN_LIB_PACKAGE_DEPENDS "libgcc1;libc6")
+if(ENABLE_HWLOC)
+	list(APPEND CPACK_DEBIAN_LIB_PACKAGE_DEPENDS "libhwloc5 (>= ${Hwloc_VERSION}~)")
+endif()
+if(OCS_AVAILABLE)
+	list(APPEND CPACK_DEBIAN_LIB_PACKAGE_DEPENDS "libllvm${LLVM_VERSION_MAJOR} (>= ${LLVM_VERSION_MAJOR}~);clang-${LLVM_VERSION_MAJOR} (>= ${LLVM_VERSION_MAJOR}~)")
+endif()
+string(REPLACE ";" ", " CPACK_DEBIAN_LIB_PACKAGE_DEPENDS "${CPACK_DEBIAN_LIB_PACKAGE_DEPENDS}")
+set(CPACK_DEBIAN_LIB_PACKAGE_RECOMMENDS "pocl-opencl-icd")
+set(CPACK_DEBIAN_LIB_PACKAGE_BREAKS "libpocl1-common (<< 0.13-9)")
+set(CPACK_DEBIAN_LIB_PACKAGE_REPLACES "libpocl1-common (<< 0.13-9)")
+ 
+
 if (OCS_AVAILABLE)
   add_subdirectory("kernel")
   add_subdirectory("llvmopencl")
@@ -106,3 +122,4 @@ set(SANITIZER_OPTIONS_STR "${SANITIZER_OPTIONS_STR}" PARENT_SCOPE)
 
 add_subdirectory("poclu")
 
+pass_through_cpack_vars()

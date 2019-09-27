@@ -28,4 +28,9 @@ add_executable(poclcc poclcc.c "${CMAKE_SOURCE_DIR}/lib/poclu/misc.c")
 target_link_libraries(poclcc ${OPENCL_LIBS})
 
 install(TARGETS "poclcc" RUNTIME
-        DESTINATION "${POCL_INSTALL_PUBLIC_BINDIR}")
+        DESTINATION "${POCL_INSTALL_PUBLIC_BINDIR}" COMPONENT "poclcc")
+
+set("CPACK_DEBIAN_POCLCC_PACKAGE_NAME" "poclcc")
+list(APPEND CPACK_DEBIAN_POCLCC_PACKAGE_DEPENDS "opencl-icd")
+
+pass_through_cpack_vars()

@@ -1,0 +1,1 @@
+Portable Computing Language is an open source implementation of the OpenCL standard which can be easily adapted for new targets. One of the goals of the project is improving performance portability of OpenCL programs, avoiding the need for target-dependent manual optimizations. A "native" target is included, which allows running OpenCL kernels on the host (CPU).

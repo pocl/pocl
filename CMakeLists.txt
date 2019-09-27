@@ -26,6 +26,7 @@
 cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
 
 project(pocl)
+set(CMAKE_PROJECT_DESCRIPTION "pocl is a portable OpenCl runtime.")
 
 set(LATEST_KNOWN_CXX_STD_VERSION "20")
 set(SUPPORTED_CXX_STD_VERSION "11")
@@ -43,6 +44,16 @@ if(POLICY CMP0025)
 endif()
 
 include(CheckCCompilerFlag)
+include(CPackComponent)
+macro(pass_through_cpack_vars)
+  get_cmake_property(cpackVarsToPassthrough VARIABLES)
+  foreach(varName ${cpackVarsToPassthrough})
+    if(varName MATCHES "^CPACK_DEBIAN_")
+      message(STATUS "${varName}")
+      set("${varName}" "${${varName}}" PARENT_SCOPE)
+    endif()
+  endforeach()
+endmacro()
 
 # don't allow implicit function declarations
 if(UNIX)
@@ -65,7 +76,8 @@ endif()
 
 set(MAJOR_VERSION 1)
 set(MINOR_VERSION 5)
-set(VERSION_SUFFIX "-pre")
+set(VERSION_SUFFIX_FIXED_TEXT "-pre")
+set(VERSION_SUFFIX "${VERSION_SUFFIX_FIXED_TEXT}")
 set(VERSION_STRING ${MAJOR_VERSION}.${MINOR_VERSION}${VERSION_SUFFIX})
 set(POCL_VERSION ${VERSION_STRING})
 
@@ -134,6 +146,15 @@ if(HAVE_GIT AND (VERSION_SUFFIX MATCHES "pre"))
   set(POCL_VERSION ${VERSION_STRING})
 else()
   message(STATUS "No git and/or not a prerelease -> not adding git commit to version.")
+endif()
+
+set(CPACK_PACKAGE_NAME pocl)
+set(CPACK_PACKAGE_VENDOR pocl)
+set(CPACK_PACKAGE_VERSION_MAJOR "${MAJOR_VERSION}")
+set(CPACK_PACKAGE_VERSION_MINOR "${MINOR_VERSION}")
+set(CPACK_PACKAGE_VERSION "${MAJOR_VERSION}.${MINOR_VERSION}~${VERSION_SUFFIX_FIXED_TEXT}")
+if(HAVE_GIT)
+	set(CPACK_PACKAGE_VERSION "${CPACK_PACKAGE_VERSION}.${GIT_COMMIT}")
 endif()
 
 ##################################################################################
@@ -602,7 +623,7 @@ if(ENABLE_RELOCATION)
   file(RELATIVE_PATH POCL_INSTALL_PRIVATE_DATADIR_REL ${POCL_INSTALL_PUBLIC_LIBDIR} ${POCL_INSTALL_PRIVATE_DATADIR})
   message(STATUS "Private Datadir Relative path: ${POCL_INSTALL_PRIVATE_DATADIR_REL}")
   install(FILES ${CLANG_OPENCL_HEADERS}
-          DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}/include")
+          DESTINATION "${POCL_INSTALL_PRIVATE_DATADIR}/include" COMPONENT "dev")
 endif()
 
 
@@ -713,6 +734,9 @@ if (OCS_AVAILABLE)
       set(POCL_LLVM_LIBS ${LLVM_LIBFILES})
       set(SINGLE_LLVM_LIB OFF CACHE BOOL "single big libLLVM")
     endif()
+    string(REPLACE "." ";" LLVM_VERSION_PARSED "${LLVM_VERSION}")
+    list(GET LLVM_VERSION_PARSED 0 LLVM_VERSION_MAJOR)
+    list(GET LLVM_VERSION_PARSED 1 LLVM_VERSION_MINOR)
   endif()
 
 endif()
@@ -752,6 +776,8 @@ add_definitions(-DCL_USE_DEPRECATED_OPENCL_1_0_APIS -DCL_USE_DEPRECATED_OPENCL_1
                 -DCL_USE_DEPRECATED_OPENCL_2_1_APIS )
 
 add_definitions(-DCL_TARGET_OPENCL_VERSION=220)
+
+cpack_add_component("dev")
 
 include_directories("include")
 
@@ -1381,11 +1407,17 @@ if(ENABLE_ICD)
   endif()
   file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/pocl.icd" CONTENT "${CONTENT}" CONDITION 1)
   install(FILES "${CMAKE_BINARY_DIR}/pocl.icd"
-         DESTINATION "${POCL_INSTALL_ICD_VENDORDIR}")
+         DESTINATION "${POCL_INSTALL_ICD_VENDORDIR}" COMPONENT "icd")
 
   # write icd file for pocl testing
   file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/ocl-vendors")
   file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/ocl-vendors/pocl-tests.icd" CONTENT "$<TARGET_FILE:pocl>" CONDITION 1)
+  
+  cpack_add_component("icd")
+  set("CPACK_DEBIAN_ICD_PACKAGE_NAME" "pocl-opencl-icd")
+  list(APPEND CPACK_DEBIAN_ICD_PACKAGE_DEPENDS "libpocl2 (>= ${CPACK_PACKAGE_VERSION}~)")
+  set(CPACK_DEBIAN_ICD_PACKAGE_PROVIDES "opencl-icd,opencl-icd-1.1-1,opencl-icd-1.2-1")
+  set(CPACK_DEBIAN_ICD_PACKAGE_RECOMMENDS "poclcc")
 endif()
 
 if(ENABLE_ASAN OR ENABLE_LSAN)
@@ -1406,7 +1438,7 @@ if(UNIX)
 
   configure_file("${CMAKE_SOURCE_DIR}/pocl.pc.in.cmake" "${CMAKE_BINARY_DIR}/pocl.pc" @ONLY)
   install(FILES "${CMAKE_BINARY_DIR}/pocl.pc"
-         DESTINATION "${POCL_INSTALL_PKGCONFIG_DIR}")
+         DESTINATION "${POCL_INSTALL_PKGCONFIG_DIR}" COMPONENT "dev")
 
 endif()
 
@@ -1441,6 +1473,26 @@ add_subdirectory("examples")
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
 add_custom_target(check_tier1 COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -L "'internal|amdsdk_30|piglit|PyOpenCL|conformance_suite_micro'" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
 
+set(CPACK_PACKAGE_DESCRIPTION_FILE "${CMAKE_SOURCE_DIR}/CPack.pocl.description.txt")
+set(CPACK_PACKAGE_ICON "${CMAKE_SOURCE_DIR}/doc/www/img/pocl-80x60.png")
+set(CPACK_PACKAGE_HOMEPAGE_URL "https://github.com/pocl/pocl")
+set(CPACK_PACKAGE_CONTACT "https://github.com/pocl/pocl")
+set(CPACK_PACKAGE_CHECKSUM "SHA512")
+set(CPACK_RESOURCE_FILE_README "${CMAKE_SOURCE_DIR}/README")
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_SOURCE_DIR}/COPYING")
+set(CPACK_GENERATOR "DEB")
+
+set("CPACK_DEBIAN_DEV_PACKAGE_NAME" "libpocl-dev")
+list(APPEND CPACK_DEBIAN_DEV_PACKAGE_DEPENDS "libpocl2 (>= ${CPACK_PACKAGE_VERSION}~)")
+set(CPACK_DEBIAN_DEV_PACKAGE_BREAKS "libpocl1-common (<< 0.13-9)")
+set(CPACK_DEBIAN_DEV_PACKAGE_REPLACES "libpocl1-common (<< 0.13-9)")
+
+set(CPACK_RPM_COMPONENT_INSTALL ON)
+set(CPACK_DEB_COMPONENT_INSTALL ON)
+
+include(CPack)
+
+
 ##########################################################
 
 MESSAGE(STATUS " ")
@@ -1449,6 +1501,7 @@ MESSAGE(STATUS " ")
 MESSAGE(STATUS "******* Directories:")
 MESSAGE(STATUS " ")
 
+MESSAGE(STATUS "CMAKE_INSTALL_PREFIX: ${CMAKE_INSTALL_PREFIX}")
 MESSAGE(STATUS "POCL_INSTALL_CMAKE_CONFIG_DIR: ${POCL_INSTALL_CMAKE_CONFIG_DIR}")
 MESSAGE(STATUS "POCL_INSTALL_ICD_VENDORDIR: ${POCL_INSTALL_ICD_VENDORDIR}")
 MESSAGE(STATUS "POCL_INSTALL_OPENCL_HEADER_DIR: ${POCL_INSTALL_OPENCL_HEADER_DIR}")

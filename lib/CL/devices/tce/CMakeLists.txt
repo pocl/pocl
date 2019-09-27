@@ -39,4 +39,4 @@ set(POCL_DEVICES_OBJS "${POCL_DEVICES_OBJS};$<TARGET_OBJECTS:pocl-devices-tce>" 
 
 # dist_pkgdata_DATA = tta_device_main.c
 install(FILES "tta_device_main.c"
-        DESTINATION ${POCL_INSTALL_PRIVATE_HEADER_DIR})
+        DESTINATION ${POCL_INSTALL_PRIVATE_HEADER_DIR} COMPONENT "dev")
