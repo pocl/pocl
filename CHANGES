@@ -1,14 +1,13 @@
-1.4 September 2019
-==============
+1.4 October 2019
+================
 
 Highlights
 ----------
+- Improved SPIR and SPIR-V support. clCreateProgramWithIL() implemented,
+  Kernel library (for CPU target) support for SPIR-mangling improved
 - pocl-accel: An example driver and support infrastructure for OpenCL 1.2
   CL_DEVICE_TYPE_CUSTOM hardware accelerators which implement a memory
   mapped control interface.
-
-- Improved SPIR and SPIR-V support. clCreateProgramWithIL() implemented,
-  Kernel library (for CPU target) support for SPIR-mangling improved
 
 Kernel Compiler
 ---------------
@@ -37,7 +36,6 @@ Notable Internal Changes
   https://github.com/RadeonOpenCompute/ROCm-Device-Libs/tree/master/ocml
   was mirrored in lib/kernel and made it easy to cherry pick
   implementations to targets' kernel libary.
-
 - libltdl is replaced with libdl on UNIX platforms.
 
 Notable Bug Fixes

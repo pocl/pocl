@@ -8,18 +8,18 @@ goal of this project is improving performance portability of OpenCL programs
 with the kernel compiler and the task runtime, reducing the need for
 target-dependent manual optimizations.
 
-Upstream pocl currently supports various CPU devices, NVIDIA GPUs via libcuda,
+Upstream pocl currently supports various CPUs, NVIDIA GPUs via libcuda,
 HSA-supported GPUs and TCE ASIPs (experimental, see http://openasip.org),
 with various known private adopters as well.
 
 Release Highlights
 ------------------
 
-* Support for Clang/LLVM 9.0
-* Support for LLVM older than 6.0 has been removed.
-* It's possible to build relocatable Pocl
-* Improved SPIR and SPIR-V support for CPU device
-
+* Support for Clang/LLVM 9.0 (support for older than 6.0 dropped).
+* It's possible to build relocatable Pocl.
+* Improved SPIR and SPIR-V support for CPU device.
+* Initial implementation of a custom device / accelerator interface
+  (pocl-accel).
 
 Please note that there's an official pocl "maintenance policy" in place.
 This text describes the policy and how you can get your favourite project
