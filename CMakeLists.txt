@@ -1429,7 +1429,7 @@ add_subdirectory("examples")
 # make check & make check_tier1
 
 add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
-add_custom_target(check_tier1 COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -L "'internal|amdsdk_30|piglit|PyOpenCL|conformance_suite_micro'" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
+add_custom_target(check_tier1 COMMAND ${CMAKE_CTEST_COMMAND} "--output-on-failure" -L "'internal|amdsdk_30|piglit|PyOpenCL|conformance_suite_micro|Glow'" -j ${CORECOUNT} ${COMMAND_USES_TERMINAL})
 
 ##########################################################
 

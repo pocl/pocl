@@ -226,6 +226,7 @@ Currently (2017-03-16) the following are included in the tier-1 test suites:
 * AMD SDK 3.0 test suite
 * PyOpenCL test suite
 * piglit test suite
+* pytorch/Glow 'ninja check' (mostly)
 * conformance_suite_micro test suite
 * CLBlast tests (excluding the longest running ones)
 * HSA test suite (uses the LLVM 3.7 with an HSAIL backend and targets an AMD Kaveri GPU)

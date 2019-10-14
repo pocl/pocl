@@ -59,7 +59,7 @@ set(ALL_TESTSUITES
     conformance CloverLeaf Halide IntelSVM
     opencl-book-samples OpenCV
     Parboil piglit PyOpenCL
-    Rodinia VexCL ViennaCL)
+    Rodinia VexCL ViennaCL Glow)
 
 if("${ENABLE_TESTSUITES}" STREQUAL "all")
   set(ENABLE_TESTSUITES ${ALL_TESTSUITES})
@@ -67,7 +67,7 @@ endif()
 
 if("${ENABLE_TESTSUITES}" MATCHES "tier1")
   list(REMOVE_ITEM ENABLE_TESTSUITES "tier1")
-  list(APPEND ENABLE_TESTSUITES "AMDSDK3.0" "piglit" "conformance" "CLBlast")
+  list(APPEND ENABLE_TESTSUITES "AMDSDK3.0" "piglit" "conformance" "CLBlast" "Glow")
 endif()
 
 include(ExternalProject)
