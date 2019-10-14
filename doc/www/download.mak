@@ -17,12 +17,12 @@ the version control system:</p>
 
 <ul>
 
-<li><b>Version 1.4:</b> Supports LLVM 8.0 and 9.0.
-            <a href="https://github.com/pocl/pocl/archive/v1.4.tar.gz">pocl-1.4.tar.gz</a>,
+<li><b>Version 1.4:</b> Supports LLVM versions 6.0 to 9.0.
+            <a href="https://github.com/pocl/pocl/archive/v1.4.tar.gz">pocl-1.4.tar.gz</a> (1.5M),
             <a href="/downloads/CHANGES">change log</a>,
             <a href="pocl-1.4.html">release notes</a></li>
 
-<li><b>Version 1.3:</b> Supports LLVM 7.0 and 8.0.
+<li><b>Version 1.3:</b> Supports LLVM versions 6.0 to 8.0.
             <a href="https://github.com/pocl/pocl/archive/v1.3.tar.gz">pocl-1.3.tar.gz (1.4M)</a>,
             <a href="/downloads/CHANGES">change log</a>,
             <a href="pocl-1.3.html">release notes</a></li>

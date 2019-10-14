@@ -21,6 +21,8 @@ platform for issues in parallel programming of heterogeneous platforms.</p>
 
 <h1>News</h1>
 
+<h2>2019-10-14: <a href="pocl-1.4.html">Portable Computing Language (pocl) v1.4 released</a></h2>
+
 <h2>2019-07-15: Hardware Accelerators in POCL</h2>
 
 <p>POCL received support for CL_DEVICE_TYPE_CUSTOM via addition of a hardware accelerator framework.

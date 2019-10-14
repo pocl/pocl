@@ -1,4 +1,55 @@
-Changes updated until commit 42adbfe333 (Mar 25 2019).
+1.4 October 2019
+================
+
+Highlights
+----------
+- Improved SPIR and SPIR-V support. clCreateProgramWithIL() implemented,
+  Kernel library (for CPU target) support for SPIR-mangling improved
+- pocl-accel: An example driver and support infrastructure for OpenCL 1.2
+  CL_DEVICE_TYPE_CUSTOM hardware accelerators which implement a memory
+  mapped control interface.
+
+Kernel Compiler
+---------------
+- Specialize work-group functions for global offset (0,0,0).
+- A pocl installation with clang, hwloc statically linked in
+  is now relocatable.
+- Clang/LLVM versions older than 6.0 are no longer supported.
+- Create specialized work-group functions for small (defined by a device
+  driver specific limit) grid dimensions.
+- Add Range Metadata to various ID queries etc. to improve vectorizing
+  index computation to smaller lane widths and other optimizations.
+- Passes only the launched kernel to work-group generation and code gen, thus
+  speeding up the compilation process.
+
+Misc.
+-----
+- hsa-native: Downgraded the advertised version to 1.2
+  which is closer to the truth (fixes OCLTest of Glow).
+- hsa-native: Add support for byval (struct) argument passing.
+- hsa-native: Allow offsets in block copy.
+
+Notable Internal Changes
+------------------------
+- Allow devices to utilize the ROCm-Device-Libs ocml
+  builtins for their builtin libraries if seen fit.
+  https://github.com/RadeonOpenCompute/ROCm-Device-Libs/tree/master/ocml
+  was mirrored in lib/kernel and made it easy to cherry pick
+  implementations to targets' kernel libary.
+- libltdl is replaced with libdl on UNIX platforms.
+
+Notable Bug Fixes
+-----------------
+- Fix a race condition in device initialization, which
+  caused issues in applications that cause reinitialization
+  of pocl device drivers (appeared in Glow's OCLTest).
+
+Device Driver Specific
+----------------------
+- hsa-native: Downgraded the advertised version to 1.2
+  which is closer to the truth (fixes OCLTest of Glow).
+- hsa-native: Add support for byval (struct) argument passing.
+- hsa-native: Allow offsets in block copy.
 
 1.3 April 2019
 ==============
