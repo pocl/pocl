@@ -73,11 +73,11 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
               if (shared_mem_owner_dev == context->devices[i])
                  continue;
               dev = context->devices[i];
-              if (memobj->is_image && dev->image_support
-                  && dev->ops->free_image)
-                dev->ops->free_image (
-                    dev, memobj, memobj->device_ptrs[dev->dev_id].image_data);
+              if (memobj->device_ptrs[dev->dev_id].mem_ptr == NULL)
+                continue;
+
               dev->ops->free (dev, memobj);
+
               memobj->device_ptrs[dev->dev_id].mem_ptr = NULL;
             }
           if (shared_mem_owner_dev)

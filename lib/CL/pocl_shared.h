@@ -81,6 +81,10 @@ int context_set_properties(cl_context                    context,
                            const cl_context_properties * properties,
                            cl_int *                      errcode);
 
+cl_mem pocl_create_memobject (cl_context context, cl_mem_flags flags,
+                              size_t size, cl_mem_object_type type, int *device_image_support, void *host_ptr,
+                              cl_int *errcode_ret);
+
 #ifdef __GNUC__
 #pragma GCC visibility pop
 #endif

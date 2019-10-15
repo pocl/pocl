@@ -20,6 +20,7 @@
    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
    THE SOFTWARE.
 */
+
 #include "pocl_cl.h"
 #include "pocl_image_util.h"
 #include "pocl_shared.h"
@@ -178,6 +179,9 @@ CL_API_SUFFIX__VERSION_1_2
         POCL_INIT_OBJECT (mem);
 
         cl_mem b = image_desc->buffer;
+        mem->is_image = CL_TRUE;
+        mem->type = CL_MEM_OBJECT_IMAGE1D_BUFFER;
+        mem->device_supports_this_image = device_image_support;
         mem->buffer = b;
 
         mem->size = size;
@@ -197,32 +201,14 @@ CL_API_SUFFIX__VERSION_1_2
       }
     else
       {
-        mem = POname (clCreateBuffer) (context, flags, size, host_ptr,
-                                       &errcode);
-        POCL_GOTO_ERROR_ON ((mem == NULL), CL_OUT_OF_HOST_MEMORY,
-                            "clCreateBuffer (for backing the image) failed\n");
-
-        for (i = 0; i < context->num_devices; i++)
-          {
-            cl_device_id dev = context->devices[i];
-            if (!dev->image_support)
-              {
-                continue;
-              } // image_data[i] = NULL
-            if (dev->ops->create_image)
-              mem->device_ptrs[dev->dev_id].image_data
-                  = dev->ops->create_image (dev, image_format, image_desc, mem,
-                                            &errcode);
-            if (errcode)
-              goto ERROR;
-          }
-
-        mem->buffer = NULL;
+        mem = pocl_create_memobject (context, flags, size,
+                                     image_desc->image_type,
+                                     device_image_support,
+                                     host_ptr, &errcode);
+        if (mem == NULL)
+          goto ERROR;
       }
 
-    mem->type = image_desc->image_type;
-    mem->device_supports_this_image = device_image_support;
-    mem->is_image = CL_TRUE;
     mem->image_width = image_desc->image_width;
     if (image_desc->image_type == CL_MEM_OBJECT_IMAGE2D
         || image_desc->image_type == CL_MEM_OBJECT_IMAGE2D_ARRAY
@@ -248,30 +234,19 @@ CL_API_SUFFIX__VERSION_1_2
     mem->image_channels = channels;
     mem->image_elem_size = elem_size;
 
-#if 0
-    printf("flags = %X\n",mem->flags); 
-    printf("mem_image_width %d\n", mem->image_width);
-    printf("mem_image_height %d\n", mem->image_height);
-    printf("mem_image_depth %d\n", mem->image_depth);
-    printf("mem_image_array_size %d\n", mem->image_array_size);
-    printf("mem_image_row_pitch %d\n", mem->image_row_pitch);
-    printf("mem_image_slice_pitch %d\n", mem->image_slice_pitch);
-    printf("mem_host_ptr %u\n", mem->mem_host_ptr);
-    printf("mem_image_channel_data_type %x \n",mem->image_channel_data_type);
-    printf("device_ptrs[0] %x \n \n", mem->device_ptrs[0]);
-#endif
+    POCL_RETAIN_OBJECT (context);
 
-    if (errcode_ret != NULL)
-      *errcode_ret = CL_SUCCESS;
+    POCL_MSG_PRINT_MEMORY ("Created Image %p, HOST_PTR: %p, SIZE %zu \n", mem,
+                           mem->mem_host_ptr, size);
 
-    return mem;
-    
  ERROR:
-   POCL_MEM_FREE (device_image_support);
+   if (errcode != CL_SUCCESS)
+     POCL_MEM_FREE (device_image_support);
+
    if (errcode_ret)
      {
        *errcode_ret = errcode;
      }
-   return NULL;
+   return mem;
 }
 POsym(clCreateImage)

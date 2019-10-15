@@ -107,8 +107,6 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->svm_copy = pocl_basic_svm_copy;
   ops->svm_fill = pocl_basic_svm_fill;
 
-  ops->create_image = NULL;
-  ops->free_image = NULL;
   ops->create_sampler = NULL;
   ops->free_sampler = NULL;
   ops->copy_image_rect = pocl_basic_copy_image_rect;
@@ -218,6 +216,7 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
   return ret;
 }
 
+
 cl_int
 pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
 {
@@ -248,8 +247,8 @@ pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
   if (flags & CL_MEM_USE_HOST_PTR)
     {
       // mem_host_ptr must be non-NULL
-      assert(host_ptr != NULL);
-      b = host_ptr;
+      assert(mem_obj->mem_host_ptr != NULL);
+      b = mem_obj->mem_host_ptr;
     }
   else
     {
@@ -262,19 +261,17 @@ pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
       mem_obj->shared_mem_allocation_owner = device;
     }
 
+  mem_obj->device_ptrs[device->dev_id].mem_ptr = b;
   /* use this dev mem allocation as host ptr */
-  if ((flags & CL_MEM_ALLOC_HOST_PTR) && (mem_obj->mem_host_ptr == NULL))
+  if (mem_obj->mem_host_ptr == NULL)
     mem_obj->mem_host_ptr = b;
 
   if (flags & CL_MEM_COPY_HOST_PTR)
     {
       POCL_MSG_PRINT_MEMORY ("COPY_HOST_PTR\n");
-      // mem_host_ptr must be non-NULL
       assert(host_ptr != NULL);
       memcpy (b, host_ptr, mem_obj->size);
     }
-
-  mem_obj->device_ptrs[device->dev_id].mem_ptr = b;
 
   return CL_SUCCESS;
 }
@@ -292,9 +289,9 @@ pocl_basic_free (cl_device_id device, cl_mem memobj)
 
   void* ptr = memobj->device_ptrs[device->dev_id].mem_ptr;
   size_t size = memobj->size;
-
-  if (memobj->flags | CL_MEM_ALLOC_HOST_PTR)
+  if (memobj->mem_host_ptr == ptr)
     memobj->mem_host_ptr = NULL;
+
   pocl_free_global_mem(device, ptr, size);
 }
 

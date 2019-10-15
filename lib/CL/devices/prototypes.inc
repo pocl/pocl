@@ -94,11 +94,6 @@
   char *pocl_##__DRV__##_build_hash (cl_device_id device);                    \
   void pocl_##__DRV__##_init_target_machine (void *data,                      \
                                              void *target_machine);           \
-  void *pocl_##__DRV__##_create_image (                                       \
-      void *data, const cl_image_format *image_format,                        \
-      const cl_image_desc *image_desc, cl_mem image, cl_int *err);            \
-  cl_int pocl_##__DRV__##_free_image (void *data, cl_mem image,               \
-                                      void *mem_id);                          \
   void *pocl_##__DRV__##_create_sampler (void *data, cl_sampler samp,         \
                                          cl_int *err);                        \
   cl_int pocl_##__DRV__##_free_sampler (void *data, cl_sampler samp,          \

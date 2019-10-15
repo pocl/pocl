@@ -535,18 +535,6 @@ struct pocl_device_ops {
    * IMAGE1D_BUFFER type (which is implemented as a buffer).
    * If the device does not support images, all of these may be NULL. */
 
-  /* returns a device specific pointer which may reference
-   * a hardware resource. May be NULL */
-  void* (*create_image) (void *data,
-                         const cl_image_format * image_format,
-                         const cl_image_desc *   image_desc,
-                         cl_mem image,
-                         cl_int *err);
-  /* free the device-specific pointer (image_data) from create_image() */
-  cl_int (*free_image) (void *data,
-                        cl_mem image,
-                        void *image_data);
-
   /* creates a device-specific hardware resource for sampler. May be NULL */
   void* (*create_sampler) (void *data,
                            cl_sampler samp,
