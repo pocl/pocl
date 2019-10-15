@@ -61,15 +61,18 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Analysis/TargetLibraryInfo.h>
 #include <llvm/Analysis/TargetTransformInfo.h>
 #include <llvm/IR/LegacyPassManager.h>
-#include <llvm/IR/PassTimingInfo.h>
 
 #define PassManager legacy::PassManager
 
 #include "linker.h"
 
 // Enable to get the LLVM pass execution timing report dumped to console after
-// each work-group IR function generation.
+// each work-group IR function generation. Requires LLVM > 7.
 // #define DUMP_LLVM_PASS_TIMINGS
+
+#ifdef DUMP_LLVM_PASS_TIMINGS
+#include <llvm/IR/PassTimingInfo.h>
+#endif
 
 using namespace llvm;
 
