@@ -150,7 +150,22 @@ POname(clSetKernelArg)(cl_kernel kernel,
         return CL_OUT_OF_HOST_MEMORY;
       }
 
-      memcpy (value, arg_value, arg_size);
+      if ((pi->type == POCL_ARG_TYPE_POINTER) && (arg_value != NULL))
+        {
+          cl_mem buf = *(const cl_mem *)arg_value;
+          if (buf->parent != NULL)
+            {
+              p->offset = buf->origin;
+              buf = buf->parent;
+            }
+          else
+            {
+              p->offset = 0;
+            }
+          memcpy (value, &buf, arg_size);
+        }
+      else
+        memcpy (value, arg_value, arg_size);
       p->value = value;
     }
   else

@@ -241,25 +241,25 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
 
           if (a->type == POCL_ARG_TYPE_IMAGE)
             {
-              POCL_GOTO_ON_UNSUPPORTED_IMAGE (buf, command_queue->device);
+              POCL_GOTO_ON_UNSUPPORTED_IMAGE (buf, realdev);
             }
           else
             {
-              POCL_GOTO_ON_SUB_MISALIGN (buf, command_queue);
+              /* subbuffers are handled in clSetKernelArg */
+              assert (buf->parent == NULL);
 
-              if (buf->parent != NULL)
-              {
-                  *(cl_mem *)(al->value) = buf->parent;
-                  al->offset = buf->origin;
-                  buf = buf->parent;
-              }
-              else
-                al->offset = 0;
+              if (al->offset > 0)
+                POCL_GOTO_ERROR_ON (
+                    (al->offset % realdev->mem_base_addr_align != 0),
+                    CL_MISALIGNED_SUB_BUFFER_OFFSET,
+                    "SubBuffer is not properly aligned for this device");
 
-              POCL_GOTO_ERROR_ON ((buf->size > command_queue->device->max_mem_alloc_size),
-                                    CL_OUT_OF_RESOURCES,
-                                    "ARG %u: buffer is larger than "
-                                    "device's MAX_MEM_ALLOC_SIZE\n", i);
+              POCL_GOTO_ERROR_ON (
+                  (buf->size > realdev->max_mem_alloc_size),
+                  CL_OUT_OF_RESOURCES,
+                  "ARG %u: buffer is larger than "
+                  "device's MAX_MEM_ALLOC_SIZE\n",
+                  i);
             }
 
           mem_list[buffer_count++] = buf;
