@@ -238,7 +238,8 @@ int pocl_device_get_env_count(const char *dev_type)
 }
 
 unsigned int
-pocl_get_devices(cl_device_type device_type, struct _cl_device_id **devices, unsigned int num_devices)
+pocl_get_devices (cl_device_type device_type, cl_device_id *devices,
+                  unsigned int num_devices)
 {
   unsigned int i, dev_added = 0;
 
@@ -688,16 +689,16 @@ pocl_init_devices ()
           cl_device_id dev = &pocl_devices[dev_index];
           dev->ops = &pocl_device_ops[i];
           dev->dev_id = dev_index;
+          /* The default value for the global memory space identifier is
+             the same as the device id. The device instance can then override
+             it to point to some other device's global memory id in case of
+             a shared global memory. */
+          dev->global_mem_id = dev_index;
           POCL_INIT_OBJECT (dev);
           dev->driver_version = PACKAGE_VERSION;
           if (dev->version == NULL)
             dev->version = "OpenCL 2.0 pocl";
           dev->short_name = strdup (dev->ops->device_name);
-          /* The default value for the global memory space identifier is
-             the same as the device id. The device instance can then override
-             it to point to some other device's global memory id in case of
-             a shared global memory. */
-          pocl_devices[dev_index].global_mem_id = dev_index;
 
           /* Check if there are device-specific parameters set in the
              POCL_DEVICEn_PARAMETERS env. */

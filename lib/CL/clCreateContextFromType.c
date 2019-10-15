@@ -29,9 +29,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-extern unsigned cl_context_count;
-extern pocl_lock_t pocl_context_handling_lock;
-
 /* in clCreateContext.c */
 int context_set_properties(cl_context                    ctx,
                            const cl_context_properties * properties,
@@ -44,36 +41,14 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
                         void *user_data,
                         cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
-  cl_uint i, num_devices;
-  cl_context context = NULL;
   int errcode;
-  cl_device_id device_ptr;
-
-  POCL_LOCK (pocl_context_handling_lock);
-
-  POCL_GOTO_ERROR_COND((pfn_notify == NULL && user_data != NULL), CL_INVALID_VALUE);
 
   errcode = pocl_init_devices();
   /* see clCreateContext.c for explanation */
-  POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), errcode,
+  POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), CL_INVALID_DEVICE,
                       "Could not initialize devices\n");
 
-  context = (cl_context)calloc (1, sizeof (struct _cl_context));
-  if (context == NULL)
-  {
-    errcode = CL_OUT_OF_HOST_MEMORY;
-    goto ERROR;
-  }
-
-  POCL_INIT_OBJECT(context);
-
-  context_set_properties(context, properties, &errcode);
-  if (errcode)
-    {
-      goto ERROR;
-    }
-
-  num_devices = pocl_get_device_type_count(device_type);
+  unsigned num_devices = pocl_get_device_type_count (device_type);
 
   if (num_devices == 0)
     {
@@ -85,54 +60,27 @@ POname(clCreateContextFromType)(const cl_context_properties *properties,
          works. This fixes AMD SDK OpenCL samples to work (as of 2012-12-05). */
       POCL_MSG_WARN("Couldn't find any device of type %lu; returning "
                     "a dummy context with 0 devices\n", (unsigned long)device_type);
-      POCL_UNLOCK (pocl_context_handling_lock);
+
+      cl_context context = (cl_context)calloc (1, sizeof (struct _cl_context));
+      POCL_GOTO_ERROR_COND ((context == NULL), CL_OUT_OF_HOST_MEMORY);
+      POCL_INIT_OBJECT (context);
       return context;
     }
 
-  context->num_devices = num_devices;
-  context->devices = (cl_device_id *) calloc(num_devices, sizeof(cl_device_id));
-  if (context->devices == NULL)
-    {
-        errcode = CL_OUT_OF_HOST_MEMORY;
-        goto ERROR_CLEAN_CONTEXT_AND_PROPERTIES;
-    }
+  cl_device_id *devs
+      = (cl_device_id *)alloca (num_devices * sizeof (cl_device_id));
 
-  pocl_get_devices(device_type, context->devices, num_devices);
+  pocl_get_devices (device_type, devs, num_devices);
 
-  for (i = 0; i < num_devices; ++i)
-    {
-      device_ptr = context->devices[i];
-      if (device_ptr == NULL)
-        {
-          break;
-        }
+  return POname (clCreateContext) (properties, num_devices, devs, pfn_notify,
+                                   user_data, errcode_ret);
 
-      POname(clRetainDevice)(device_ptr);
-    }
-
-  pocl_setup_context(context);
-
-  pocl_init_mem_manager ();
-
-  if (errcode_ret != NULL)
-    *errcode_ret = CL_SUCCESS;
-  context->valid = 1;
-
-  cl_context_count += 1;
-  POCL_UNLOCK (pocl_context_handling_lock);
-
-  return context;
-
-ERROR_CLEAN_CONTEXT_AND_PROPERTIES:
-  POCL_MEM_FREE (context->devices);
-  POCL_MEM_FREE(context->properties);
 ERROR:
-  POCL_MEM_FREE (context);
-  if(errcode_ret)
-  {
-    *errcode_ret = errcode;
-  }
-  POCL_UNLOCK (pocl_context_handling_lock);
+  if (errcode_ret != NULL)
+    {
+      *errcode_ret = errcode;
+    }
+
   return NULL;
 }
 POsym(clCreateContextFromType)

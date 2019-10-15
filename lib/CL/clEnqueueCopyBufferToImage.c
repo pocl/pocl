@@ -63,10 +63,11 @@ CL_API_SUFFIX__VERSION_1_0
 
   cl_device_id dev = command_queue->device;
 
-  cmd->command.write_image.dst_mem_id = &dst_image->device_ptrs[dev->dev_id];
+  cmd->command.write_image.dst_mem_id = &dst_image->device_ptrs[dev->global_mem_id];
   cmd->command.write_image.dst = dst_image;
+
   cmd->command.write_image.src_host_ptr = NULL;
-  cmd->command.write_image.src_mem_id = &src_buffer->device_ptrs[dev->dev_id];
+  cmd->command.write_image.src_mem_id = &src_buffer->device_ptrs[dev->global_mem_id];
   cmd->command.write_image.src = src_buffer;
 
   // TODO
@@ -80,11 +81,6 @@ CL_API_SUFFIX__VERSION_1_0
   cmd->command.write_image.region[0] = region[0];
   cmd->command.write_image.region[1] = region[1];
   cmd->command.write_image.region[2] = region[2];
-
-  POname (clRetainMemObject) (dst_image);
-  dst_image->owning_device = dev;
-  POname (clRetainMemObject) (src_buffer);
-  src_buffer->owning_device = dev;
 
   pocl_command_enqueue (command_queue, cmd);
 

@@ -54,35 +54,58 @@
 #define CL_KHRONOS_VENDOR_ID_POCL 0x10006
 #endif
 
-typedef struct _mem_mapping mem_mapping_t;
 /* represents a single buffer to host memory mapping */
-struct _mem_mapping {
-  void *host_ptr; /* the location of the mapped buffer chunk in the host memory */
-  size_t offset; /* offset to the beginning of the buffer */
+typedef struct mem_mapping
+{
+  void *host_ptr; /* the location of the mapped buffer chunk in the host memory
+                   */
+  size_t offset;  /* offset to the beginning of the buffer */
   size_t size;
-  mem_mapping_t *prev, *next;
-  /* This is required, because two clEnqueueMap() with the same buffer+size+offset,
-     will create two identical mappings in the buffer->mappings LL.
-     Without this flag, both corresponding clEnqUnmap()s will find
-     the same mapping (the first one in mappings LL), which will lead
+  struct mem_mapping *prev, *next;
+
+  /* This is required, because two clEnqueueMap() with the same
+     buffer+size+offset, will create two identical mappings in the
+     buffer->mappings LL. Without this flag, both corresponding clEnqUnmap()s
+     will find the same mapping (the first one in mappings LL), which will lead
      to memory double-free corruption later. */
-  long unmap_requested;
+  int unmap_requested;
+
   cl_map_flags map_flags;
   /* image mapping data */
   size_t origin[3];
   size_t region[3];
   size_t row_pitch;
   size_t slice_pitch;
-};
+} mem_mapping_t;
 
-/* memory identifier: id to point the global memory where memory resides
-                      + pointer to actual data */
-typedef struct _pocl_mem_identifier
+/* memory identifier:  */
+typedef struct pocl_mem_identifier
 {
-  int available; /* ... in this mem objs context */
-  int global_mem_id;
+  /* global-memory-specific pointer
+     to hardware resource that represents memory. This may be anything, but
+     must be non-NULL while the memory is actually allocated, and NULL when
+     it's not */
   void *mem_ptr;
-  void *image_data;
+
+  /* Content version tracking. Every write use (clEnqWriteBuffer,
+   * clMapBuffer(CL_MAP_WRITE), write_only image, read/write buffers as kernel
+   * args etc) increases the version; read uses do not. At command enqueue
+   * time, the last version across all global mems AND mem_host_ptr
+   * is found and migrated to the destination device's global mem.
+   *
+   * In theory, a simple bool of "valid/invalid could be used;
+   * the only difference is that version saves history
+   * (so we could in future do semi-intelligent memory GC, as in "i see the
+   * buffer on this device hasn't been used for 100 versions, i can free it").
+   */
+  uint64_t version;
+
+  /* Extra pointer for drivers to use for anything
+   *
+   * Currently CUDA uses it to track ALLOC_HOST_PTR allocations.
+   */
+  void *extra_ptr;
+
 } pocl_mem_identifier;
 
 typedef char pixel_t[16];
@@ -102,8 +125,6 @@ struct _build_program_callback
     void (CL_CALLBACK * callback_function) (cl_program, void*); /* callback function */
     void *user_data; /* user supplied data passed to callback function */
 };
-
-// Command Queue datatypes
 
 #define POCL_KERNEL_DIGEST_SIZE 16
 typedef uint8_t pocl_kernel_hash_t[POCL_KERNEL_DIGEST_SIZE];
@@ -130,6 +151,7 @@ typedef struct
 {
   void *args;
   size_t cb_args;
+  void **arg_locs;
   void(CL_CALLBACK *user_func) (void *);
 } _cl_command_native;
 
@@ -237,8 +259,8 @@ typedef struct
 typedef struct
 {
   pocl_mem_identifier *src_mem_id;
-  void *__restrict__ dst_host_ptr;
   pocl_mem_identifier *dst_mem_id;
+  void *__restrict__ dst_host_ptr;
   cl_mem src;
   cl_mem dst;
   size_t dst_offset;
@@ -251,8 +273,8 @@ typedef struct
 typedef struct
 {
   pocl_mem_identifier *dst_mem_id;
-  const void *__restrict__ src_host_ptr;
   pocl_mem_identifier *src_mem_id;
+  const void *__restrict__ src_host_ptr;
   cl_mem src;
   cl_mem dst;
   size_t src_offset;
@@ -294,13 +316,21 @@ typedef struct
 /* clEnqueueBarrierWithWaitlist */
 typedef _cl_command_marker _cl_command_barrier;
 
+typedef enum pocl_migration_type_e {
+  ENQUEUE_MIGRATE_TYPE_NOP,
+  ENQUEUE_MIGRATE_TYPE_D2H,
+  ENQUEUE_MIGRATE_TYPE_H2D,
+  ENQUEUE_MIGRATE_TYPE_D2D
+} pocl_migration_type_t;
+
 /* clEnqueueMigrateMemObjects */
 typedef struct
 {
-  void *data;
-  size_t num_mem_objects;
-  cl_mem *mem_objects;
-  cl_device_id *source_devices;
+  pocl_migration_type_t type;
+  cl_device_id src_device;
+  pocl_mem_identifier *src_id;
+  pocl_mem_identifier *dst_id;
+  pocl_mem_identifier *mem_id;
 } _cl_command_migrate;
 
 typedef struct

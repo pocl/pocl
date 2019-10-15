@@ -68,8 +68,8 @@ POname(clEnqueueSVMMap) (cl_command_queue command_queue,
   _cl_command_node *cmd = NULL;
 
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_SVM_MAP,
-                                     event, num_events_in_wait_list,
-                                     event_wait_list, 0, NULL);
+                                 event, num_events_in_wait_list,
+                                 event_wait_list, 0, NULL, NULL);
 
   if (errcode != CL_SUCCESS)
     {

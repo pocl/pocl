@@ -49,61 +49,57 @@ POname(clEnqueueNativeKernel)(cl_command_queue   command_queue ,
   if (errcode != CL_SUCCESS)
     return errcode;
 
+  char *rdonly = (char *)alloca (num_mem_objects);
+  cl_mem *ml = (cl_mem *)alloca (num_mem_objects * sizeof (cl_mem));
+  memcpy (ml, mem_list, num_mem_objects * sizeof (cl_mem));
 
-  errcode = pocl_create_command (&command_node, command_queue,
-                               CL_COMMAND_NATIVE_KERNEL,
-                               event, num_events_in_wait_list,
-                               event_wait_list, num_mem_objects, mem_list);
-  if (errcode != CL_SUCCESS)
-    return errcode;
+  for (i = 0; i < num_mem_objects; i++)
+    {
+      POCL_RETURN_ERROR_ON ((!IS_CL_OBJECT_VALID (ml[i])),
+                            CL_INVALID_MEM_OBJECT,
+                            "The %i-th mem object is invalid\n", i);
 
-  command_node->command.native.user_func = user_func;
+      if (ml[i]->parent != NULL)
+        ml[i] = ml[i]->parent;
+
+      rdonly[i] = (ml[i]->flags & CL_MEM_READ_ONLY) ? 1 : 0;
+    }
 
   /* Specification specifies that args passed to user_func is a copy of the
    * one passed to this function */
   if (cb_args)
     {
       args_copy = malloc (cb_args);
-      if (args_copy == NULL)
-      {
-        POCL_MEM_FREE(command_node);
-        return CL_OUT_OF_HOST_MEMORY;
-      }
+      POCL_RETURN_ERROR_COND ((args_copy == NULL), CL_OUT_OF_HOST_MEMORY);
       memcpy (args_copy, args, cb_args);
     }
 
+  void **arg_locs = (void **)calloc (num_mem_objects, sizeof (void *));
+  POCL_RETURN_ERROR_COND ((arg_locs == NULL), CL_OUT_OF_HOST_MEMORY);
+
   for (i = 0; i < num_mem_objects; i++)
     {
-      void *buf;
-      const char *loc = (const char *) args_mem_loc[i];
       void *arg_loc;
 
-      if (mem_list[i] == NULL)
-        {
-          POCL_MEM_FREE(args_copy);
-          POCL_MEM_FREE(command_node);
-          return CL_INVALID_MEM_OBJECT;
-        }
-
-      cl_mem m = mem_list[i];
-      if (m->parent != NULL)
-        m = m->parent;
-
-      /* put the device ptr of the clmem in the argument */
-      buf = m->device_ptrs[command_queue->device->dev_id].mem_ptr;
-      m->owning_device = command_queue->device;
-      POname (clRetainMemObject) (m);
-      /* args_mem_loc is a pointer relative to the original args, since we
-       * recopy them, we must do some relocation */
-      ptrdiff_t offset = (uintptr_t) loc - (uintptr_t) args;
-
-      arg_loc = (void *) ((uintptr_t) args_copy + (uintptr_t)offset);
-
-      if (command_queue->device->address_bits == 32)
-          *((uint32_t *) arg_loc) = (uint32_t) (((uintptr_t) buf) & 0xFFFFFFFF);
-      else
-          *((uint64_t *) arg_loc) = (uint64_t) (uintptr_t) buf;
+      /* args_mem_loc is a pointer relative to the original args;
+       * since we recopy them, must also relocate them against copy.
+       * Note that we cannot use device_ptr pointers here directly,
+       * because of lazy memory allocation/migration. */
+      assert ((uintptr_t)args_mem_loc[i] >= (uintptr_t)args);
+      uintptr_t offset = (uintptr_t)args_mem_loc[i] - (uintptr_t)args;
+      arg_loc = (void *)((uintptr_t)args_copy + offset);
+      arg_locs[i] = arg_loc;
     }
+
+  errcode = pocl_create_command (
+      &command_node, command_queue, CL_COMMAND_NATIVE_KERNEL, event,
+      num_events_in_wait_list, event_wait_list, num_mem_objects, ml, rdonly);
+
+  if (errcode != CL_SUCCESS)
+    return errcode;
+
+  command_node->command.native.user_func = user_func;
+  command_node->command.native.arg_locs = arg_locs;
   command_node->command.native.args = args_copy;
   command_node->command.native.cb_args = cb_args;
 

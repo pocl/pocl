@@ -92,6 +92,8 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
   ops->copy_rect = pocl_tce_copy_rect;
   ops->map_mem = pocl_tce_map_mem;
   ops->unmap_mem = pocl_tce_unmap_mem;
+  ops->get_mapping_ptr = pocl_driver_get_mapping_ptr;
+  ops->free_mapping_ptr = pocl_driver_free_mapping_ptr;
   ops->run = pocl_tce_run;
   ops->init_build = pocl_tce_init_build;
   ops->flush = pocl_tce_flush;
@@ -592,6 +594,9 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
       dev->num_partition_properties, sizeof (cl_device_partition_property));
   dev->num_partition_types = 0;
   dev->partition_type = NULL;
+
+  dev->mem_base_addr_align =
+      dev->min_data_type_align_size = 16;
 
   new TTASimDevice(dev, parameters);
   return CL_SUCCESS;

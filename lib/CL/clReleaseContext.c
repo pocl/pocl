@@ -37,12 +37,6 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (context)), CL_INVALID_CONTEXT);
 
   int new_refcount;
-  if (!context->valid)
-    {
-      POCL_MEM_FREE (context);
-      return CL_SUCCESS;
-    }
-
   POCL_LOCK (pocl_context_handling_lock);
 
   POCL_MSG_PRINT_REFCOUNTS ("Release Context \n");
@@ -57,8 +51,11 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
       unsigned i;
       for (i = 0; i < context->num_devices; ++i)
         {
+          if (context->default_queues && context->default_queues[i])
+            POname (clReleaseCommandQueue) (context->default_queues[i]);
           POname(clReleaseDevice) (context->devices[i]);
         }
+      POCL_MEM_FREE (context->default_queues);
       POCL_MEM_FREE(context->devices);
       POCL_MEM_FREE(context->properties);
 

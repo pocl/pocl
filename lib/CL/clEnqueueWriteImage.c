@@ -66,9 +66,11 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
   if (errcode != CL_SUCCESS)
     return errcode;
 
+  char rdonly = 0;
+
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_WRITE_IMAGE,
-                                event, num_events_in_wait_list, 
-                                event_wait_list, 1, &image);
+                                 event, num_events_in_wait_list,
+                                 event_wait_list, 1, &image, &rdonly);
   if (errcode != CL_SUCCESS)
     {
       return errcode;
@@ -77,7 +79,8 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
 
   cl_device_id dev = command_queue->device;
 
-  cmd->command.write_image.dst_mem_id = &image->device_ptrs[dev->dev_id];
+  cmd->command.write_image.dst_mem_id = &image->device_ptrs[dev->global_mem_id];
+  cmd->command.write_image.dst = image;
   cmd->command.write_image.src_host_ptr = ptr;
   cmd->command.write_image.src_mem_id = NULL;
 
@@ -92,8 +95,6 @@ POname(clEnqueueWriteImage)(cl_command_queue    command_queue,
   cmd->command.write_image.src_slice_pitch = input_slice_pitch;
   cmd->command.write_image.src_offset = 0;
 
-  POname(clRetainMemObject) (image);
-  image->owning_device = command_queue->device;
   pocl_command_enqueue(command_queue, cmd);
 
   if (blocking_write)

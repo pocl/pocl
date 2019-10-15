@@ -288,64 +288,53 @@ void TCEDevice::updateCurrentKernel(const _cl_command_run *runCmd,
   curLocalZ = runCmd->pc.local_size[2];
 }
 
-void *
-pocl_tce_malloc (void *device_data, cl_mem_flags flags,
-                 size_t size, void *host_ptr)
-{
-  TCEDevice *d = (TCEDevice*)device_data;
-
-  chunk_info_t *chunk = alloc_buffer (&d->global_mem, size);
-  if (chunk == NULL) return NULL;
-
-#ifdef DEBUG_TTA_DRIVER
-  printf("host: malloc %p : %lu / %zu\n", host_ptr, chunk->start_address, size);
-#endif
-
-  if ((flags & CL_MEM_COPY_HOST_PTR) ||  
-      ((flags & CL_MEM_USE_HOST_PTR) && host_ptr != NULL))
-    {
-      /* TODO: 
-         CL_MEM_USE_HOST_PTR must synch the buffer after execution 
-         back to the host's memory in case it's used as an output (?). */
-      d->copyHostToDevice(host_ptr, chunk->start_address, size);
-      return (void*) chunk;
-    }
-  return (void*) chunk;
-}
-
 cl_int
-pocl_tce_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
+pocl_tce_alloc_mem_obj (cl_device_id device, cl_mem mem, void* host_ptr)
 {
-  void *b = NULL;
-  cl_int flags = mem_obj->flags;
-  unsigned i;
+  TCEDevice *d = (TCEDevice*)device->data;
+  pocl_mem_identifier *p = &mem->device_ptrs[device->dev_id];
+  assert (p->mem_ptr == NULL);
+  chunk_info_t *chunk = NULL;
+  int err = CL_MEM_OBJECT_ALLOCATION_FAILURE;
 
-  /* check if some driver has already allocated memory for this mem_obj 
-     in our global address space, and use that*/
-  for (i = 0; i < mem_obj->context->num_devices; ++i)
-    {
-      if (!mem_obj->device_ptrs[i].available)
-        continue;
+  /* TCE driver doesn't preallocate */
+  if ((mem->flags & CL_MEM_ALLOC_HOST_PTR) && (mem->mem_host_ptr == NULL))
+    goto ERROR;
 
-      if (mem_obj->device_ptrs[i].global_mem_id == device->global_mem_id
-          && mem_obj->device_ptrs[i].mem_ptr != NULL)
-        {
-          mem_obj->device_ptrs[device->dev_id].mem_ptr =
-            mem_obj->device_ptrs[i].mem_ptr;
+  chunk = alloc_buffer_from_region(&d->global_mem, mem->size);
+  if (chunk == NULL)
+    goto ERROR;
 
-          return CL_SUCCESS;
-        }
-    }
+  POCL_MSG_PRINT_MEMORY ("TCE: alloc 0x%zu bytes from 0x%zu\n",
+                          mem->size, chunk->start_address);
 
-  b = pocl_tce_malloc
-    (device->data, flags, mem_obj->size, host_ptr);
-  if (b == NULL) return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+  p->mem_ptr = chunk;
+  p->version = 0;
+  err = CL_SUCCESS;
 
-  mem_obj->device_ptrs[device->dev_id].mem_ptr = b;
-
-  return CL_SUCCESS;
-
+ERROR:
+  return err;
 }
+
+void
+pocl_tce_free (cl_device_id device, cl_mem mem) {
+
+  TCEDevice *d = (TCEDevice*)device->data;
+  pocl_mem_identifier *p = &mem->device_ptrs[device->dev_id];
+  assert (p->mem_ptr != NULL);
+
+  chunk_info_t *chunk =
+      (chunk_info_t *)p->mem_ptr;
+
+  POCL_MSG_PRINT_MEMORY ("TCE: freed 0x%zu bytes from 0x%zu\n",
+                          mem->size, chunk->start_address);
+
+  free_chunk (chunk);
+
+  p->mem_ptr = NULL;
+  p->version = 0;
+}
+
 
 void
 pocl_tce_write (void *data,
@@ -396,15 +385,9 @@ chunk_info_t*
 pocl_tce_malloc_local (void *device_data, size_t size) 
 {
   TCEDevice *d = (TCEDevice*)device_data;
-  return alloc_buffer (&d->local_mem, size);
+  return alloc_buffer_from_region(&d->local_mem, size);
 }
 
-void
-pocl_tce_free (cl_device_id device, cl_mem mem_obj)
-{
-  void* ptr = mem_obj->device_ptrs[device->dev_id].mem_ptr;
-  free_chunk ((chunk_info_t*) ptr);
-}
 
 static void pocl_tce_write_kernel_descriptor(cl_device_id device,
                                              unsigned device_i,
@@ -557,7 +540,7 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
   __kernel_exec_cmd dev_cmd;
   dev_cmd.kernel = byteswap_uint32_t (kernelAddr, d->needsByteSwap);
 
-  struct pocl_argument *al;  
+  struct pocl_argument *al;
 
   typedef std::vector<chunk_info_t*> ChunkVector;
   /* Chunks to be freed after the kernel finishes. */
@@ -593,23 +576,23 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
           else
             {
               cl_mem m = (*(cl_mem *)(al->value));
-              void *p = m->device_ptrs[d->parent->dev_id].mem_ptr;
+              chunk_info_t *p = (chunk_info_t*)m->device_ptrs[d->parent->dev_id].mem_ptr;
               dev_cmd.args[i] = byteswap_uint32_t (
-                  ((chunk_info_t *)p)->start_address + al->offset,
+                  p->start_address + al->offset,
                   d->needsByteSwap);
             }
         }
       else /* The scalar values should be byteswapped by the user. */
         {
           /* Copy the scalar argument data to the shared memory. */
-          chunk_info_t* arg_space = 
-            (chunk_info_t*)pocl_tce_malloc (d, CL_MEM_COPY_HOST_PTR, al->size, al->value);
+          chunk_info_t* arg_space =
+              alloc_buffer (&d->global_mem, al->size);
           if (arg_space == NULL)
             POCL_ABORT ("Could not allocate memory from the device argument space. Out of global mem?\n");
+          d->copyHostToDevice (al->value, arg_space->start_address, al->size );
 #ifdef DEBUG_TTA_DRIVER
           printf ("host: copied value from %p to global argument memory\n", al->value);
 #endif
-
           dev_cmd.args[i] = byteswap_uint32_t (arg_space->start_address, d->needsByteSwap);
           tempChunks.push_back(arg_space);
         }
@@ -630,6 +613,7 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
 #endif      
       tempChunks.push_back(local_chunk);
     }
+
   dev_cmd.work_dim = byteswap_uint32_t (cmd->command.run.pc.work_dim, d->needsByteSwap);
   dev_cmd.num_groups[0] = byteswap_uint32_t (cmd->command.run.pc.num_groups[0], d->needsByteSwap);
   dev_cmd.num_groups[1] = byteswap_uint32_t (cmd->command.run.pc.num_groups[1], d->needsByteSwap);
@@ -674,13 +658,15 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
   printf("host: waiting for the command to get executed.\n");
 #endif
   /* Wait until the command has executed. */
+  unsigned long ticks = 0;
   do {
 #ifdef DEBUG_TTA_DRIVER
-      printf("host: commmand queue status: %x\n",
+      if ((ticks & 50) == 0)
+        printf("host: commmand queue status: %x\n",
              d->readWordFromDevice(d->commandQueueAddr));
-      sleep(1);
 #endif
-  usleep(20000);
+      usleep(20000);
+      ++ticks;
   } while (d->readWordFromDevice(d->commandQueueAddr) != POCL_KST_FINISHED);
 
 #ifdef DEBUG_TTA_DRIVER
@@ -689,7 +675,7 @@ pocl_tce_run(void *data, _cl_command_node* cmd)
   /* We are done with this kernel, free the command queue entry. */
   d->writeWordToDevice(d->commandQueueAddr, POCL_KST_FREE);
 
-  for (ChunkVector::iterator i = tempChunks.begin(); 
+  for (ChunkVector::iterator i = tempChunks.begin();
        i != tempChunks.end(); ++i) 
     free_chunk (*i);
 
@@ -710,18 +696,9 @@ pocl_tce_map_mem (void *data,
                   cl_mem src_buf,
                   mem_mapping_t *map)
 {
-  if (map->host_ptr == NULL)
-    {
-      map->host_ptr = pocl_aligned_malloc (ALIGNMENT, map->size);
-      return CL_SUCCESS;
-    }
-
   /* Synch the device global region to the host memory. */
-    if ((map->map_flags & CL_MAP_WRITE_INVALIDATE_REGION) == 0) {
-      POCL_MSG_PRINT_MEMORY("TCE_MAP_MEM copying\n");
-      pocl_tce_read(data, map->host_ptr, src_mem_id, src_buf, map->offset,
-                    map->size);
-    }
+  pocl_tce_read(data, map->host_ptr, src_mem_id, src_buf, map->offset,
+                map->size);
 
   return CL_SUCCESS;
 }
@@ -732,14 +709,10 @@ pocl_tce_unmap_mem (void *data,
                     cl_mem dst_buf,
                     mem_mapping_t *map)
 {
-  if (map->map_flags != CL_MAP_READ)
+  if (map->map_flags != CL_MAP_READ) {
     /* Synch the device global region to the host memory. */
     pocl_tce_write (data, map->host_ptr, dst_mem_id, dst_buf, map->offset, map->size);
-
-  if (map->host_ptr != ((char *)dst_buf->mem_host_ptr + map->offset))
-    {
-      pocl_aligned_free (map->host_ptr);
-    }
+  }
 
   return CL_SUCCESS;
 }

@@ -65,7 +65,16 @@ POCL_EXPORT
 POCL_EXPORT
   cl_int pocl_driver_unmap_mem (void *data, pocl_mem_identifier *dst_mem_id,
                                 cl_mem dst_buf, mem_mapping_t *map);
-POCL_EXPORT
+
+  POCL_EXPORT
+  cl_int pocl_driver_get_mapping_ptr (void *data, pocl_mem_identifier *mem_id,
+                                      cl_mem mem, mem_mapping_t *map);
+
+  POCL_EXPORT
+  cl_int pocl_driver_free_mapping_ptr (void *data, pocl_mem_identifier *mem_id,
+                                       cl_mem mem, mem_mapping_t *map);
+
+  POCL_EXPORT
   int pocl_driver_build_source (cl_program program, cl_uint device_i,
                                 cl_uint num_input_headers,
                                 const cl_program *input_headers,

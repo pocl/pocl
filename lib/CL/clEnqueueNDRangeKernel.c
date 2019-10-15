@@ -69,11 +69,18 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
    * since we are going to access them repeatedly */
   size_t max_group_size;
 
-  int b_migrate_count, buffer_count;
-  unsigned i;
+  unsigned i, j;
   int errcode = 0;
   cl_device_id realdev = NULL;
   _cl_command_node *command_node;
+
+  /* no need for malloc, pocl_create_event will memcpy anyway.
+   * num_args is the absolute max needed */
+  cl_mem *memobj_list
+      = (cl_mem *)alloca (kernel->meta->num_args * sizeof (cl_mem));
+  size_t memobj_count = 0;
+  char *readonly_flag_list
+      = (char *)alloca (kernel->meta->num_args * sizeof (char));
 
   POCL_RETURN_ERROR_COND ((!IS_CL_OBJECT_VALID (command_queue)),
                           CL_INVALID_COMMAND_QUEUE);
@@ -220,19 +227,13 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   assert (global_y % local_y == 0);
   assert (global_z % local_z == 0);
 
-  b_migrate_count = 0;
-  buffer_count = 0;
-
-  /* count mem objects and enqueue needed mem migrations */
   for (i = 0; i < kernel->meta->num_args; ++i)
     {
       struct pocl_argument_info *a = &kernel->meta->arg_info[i];
       struct pocl_argument *al = &(kernel->dyn_arguments[i]);
 
-      POCL_GOTO_ERROR_ON ((!al->is_set),
-                            CL_INVALID_KERNEL_ARGS,
+      POCL_RETURN_ERROR_ON ((!al->is_set), CL_INVALID_KERNEL_ARGS,
                             "The %i-th kernel argument is not set!\n", i);
-
 
       if (a->type == POCL_ARG_TYPE_IMAGE
           || (!ARGP_IS_LOCAL (a) && a->type == POCL_ARG_TYPE_POINTER
@@ -242,7 +243,7 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
 
           if (a->type == POCL_ARG_TYPE_IMAGE)
             {
-              POCL_GOTO_ON_UNSUPPORTED_IMAGE (buf, realdev);
+              POCL_RETURN_ON_UNSUPPORTED_IMAGE (buf, realdev);
             }
           else
             {
@@ -250,12 +251,12 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
               assert (buf->parent == NULL);
 
               if (al->offset > 0)
-                POCL_GOTO_ERROR_ON (
+                POCL_RETURN_ERROR_ON (
                     (al->offset % realdev->mem_base_addr_align != 0),
                     CL_MISALIGNED_SUB_BUFFER_OFFSET,
                     "SubBuffer is not properly aligned for this device");
 
-              POCL_GOTO_ERROR_ON (
+              POCL_RETURN_ERROR_ON (
                   (buf->size > realdev->max_mem_alloc_size),
                   CL_OUT_OF_RESOURCES,
                   "ARG %u: buffer is larger than "
@@ -263,47 +264,30 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
                   i);
             }
 
-          mem_list[buffer_count++] = buf;
-          POname(clRetainMemObject) (buf);
-          /* if buffer has no owner,
-             it has not been used yet -> just claim it */
-          if (buf->owning_device == NULL)
-            buf->owning_device = realdev;
-          /* If buffer is located located in another global memory
-             (other device), it needs to be migrated before this kernel
-             may be executed */
-          if (buf->owning_device != NULL &&
-              buf->owning_device->global_mem_id !=
-              command_queue->device->global_mem_id)
+          if (al->is_readonly || (buf->flags & CL_MEM_READ_ONLY))
             {
-#if DEBUG_NDRANGE
-              printf("mem migrate needed: owning dev = %d, target dev = %d\n",
-                     buf->owning_device->global_mem_id,
-                     command_queue->device->global_mem_id);
-#endif
-              POname(clEnqueueMigrateMemObjects)
-                (command_queue, 1, &buf, 0, 0, NULL,
-                 &new_event_wait_list[b_migrate_count++]);
+              if (al->is_readonly == 0)
+                POCL_MSG_WARN ("readonly buffer used as kernel arg, but arg "
+                               "type is not const\n");
+              readonly_flag_list[memobj_count] = 1;
             }
-          buf->owning_device = realdev;
+          else
+            readonly_flag_list[memobj_count] = 0;
+
+          memobj_list[memobj_count++] = buf;
         }
     }
 
-  if (num_events_in_wait_list)
-    {
-      memcpy (&new_event_wait_list[b_migrate_count], event_wait_list,
-              sizeof(cl_event) * num_events_in_wait_list);
-    }
+  errcode = pocl_create_command (
+      &command_node, command_queue, CL_COMMAND_NDRANGE_KERNEL, event,
+      num_events_in_wait_list, event_wait_list, memobj_count, memobj_list,
+      readonly_flag_list);
 
-  errcode = pocl_create_command (&command_node, command_queue,
-                               CL_COMMAND_NDRANGE_KERNEL, event,
-                               num_events_in_wait_list + b_migrate_count,
-                               (num_events_in_wait_list + b_migrate_count)?
-                               new_event_wait_list : NULL,
-                               buffer_count, mem_list);
   if (errcode != CL_SUCCESS)
-    goto ERROR;
-
+    {
+      POCL_MSG_ERR ("Failed to create command: %i\n", errcode);
+      return errcode;
+    }
 
   command_node->type = CL_COMMAND_NDRANGE_KERNEL;
   command_node->command.run.kernel = kernel;
@@ -337,16 +321,11 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
   for (i = 0; i < kernel->meta->num_args; ++i)
     {
       struct pocl_argument *arg = &command_node->command.run.arguments[i];
-      size_t arg_alloc_size = kernel->dyn_arguments[i].size;
-      arg->size = arg_alloc_size;
-      arg->offset = kernel->dyn_arguments[i].offset;
+      memcpy (arg, &kernel->dyn_arguments[i], sizeof (pocl_argument));
 
-      if (kernel->dyn_arguments[i].value == NULL)
+      if (arg->value != NULL)
         {
-          arg->value = NULL;
-        }
-      else
-        {
+          size_t arg_alloc_size = arg->size;
           /* FIXME: this is a cludge to determine an acceptable alignment,
            * we should probably extract the argument alignment from the
            * LLVM bytecode during kernel header generation. */
@@ -373,10 +352,6 @@ POname(clEnqueueNDRangeKernel)(cl_command_queue command_queue,
     }
 
   pocl_command_enqueue (command_queue, command_node);
-  errcode = CL_SUCCESS;
-
-ERROR:
-  return errcode;
-
+  return CL_SUCCESS;
 }
 POsym(clEnqueueNDRangeKernel)

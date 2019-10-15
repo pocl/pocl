@@ -8,6 +8,9 @@
 #include "pocl_cl.h"
 #include "utlist.h"
 
+// for pocl_aligned_malloc
+#include "pocl_util.h"
+
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
 #endif
@@ -356,32 +359,19 @@ cl_int
 pocl_driver_map_mem (void *data, pocl_mem_identifier *src_mem_id,
                      cl_mem src_buf, mem_mapping_t *map)
 {
-  void *__restrict__ src_device_ptr = src_mem_id->mem_ptr;
-  void *host_ptr = map->host_ptr;
-  size_t offset = map->offset;
-  size_t size = map->size;
+  char *__restrict__ src_device_ptr = (char *)src_mem_id->mem_ptr;
+  assert (map->host_ptr);
 
-  if (host_ptr == NULL)
+  if (map->map_flags & CL_MAP_WRITE_INVALIDATE_REGION)
     {
-      map->host_ptr = ((char *)src_device_ptr + offset);
       return CL_SUCCESS;
     }
 
-  if (map->map_flags & CL_MAP_WRITE_INVALIDATE_REGION)
-    return CL_SUCCESS;
+  if (map->host_ptr == (src_device_ptr + map->offset))
+    NULL;
+  else
+    memcpy (map->host_ptr, src_device_ptr + map->offset, map->size);
 
-  /* If the buffer was allocated with CL_MEM_ALLOC_HOST_PTR |
-   * CL_MEM_COPY_HOST_PTR,
-   * the dst_host_ptr is not the same memory as pocl's device_ptrs[], and we
-   * need to copy pocl's buffer content back to dst_host_ptr. */
-  if (host_ptr != (src_device_ptr + offset))
-    {
-      POCL_MSG_PRINT_MEMORY ("device: MAP memcpy() "
-                             "src_device_ptr %p + offset %zu"
-                             "to dst_host_ptr %p\n",
-                             src_device_ptr, offset, host_ptr);
-      memcpy ((char *)host_ptr, (char *)src_device_ptr + offset, size);
-    }
   return CL_SUCCESS;
 }
 
@@ -389,28 +379,54 @@ cl_int
 pocl_driver_unmap_mem (void *data, pocl_mem_identifier *dst_mem_id,
                        cl_mem dst_buf, mem_mapping_t *map)
 {
-  void *__restrict__ dst_device_ptr = dst_mem_id->mem_ptr;
-  /* it could be CL_MAP_READ | CL_MAP_WRITE(..invalidate) which has to be
-   * handled like a write */
-  if (map->map_flags == CL_MAP_READ)
+  char *__restrict__ dst_device_ptr = (char *)dst_mem_id->mem_ptr;
+  assert (map->host_ptr);
+
+  if (map->host_ptr == (dst_device_ptr + map->offset))
+    NULL;
+  else
+    {
+      if (map->map_flags != CL_MAP_READ)
+        memcpy (dst_device_ptr + map->offset, map->host_ptr, map->size);
+    }
+
+  return CL_SUCCESS;
+}
+
+cl_int
+pocl_driver_get_mapping_ptr (void *data, pocl_mem_identifier *mem_id,
+                             cl_mem mem, mem_mapping_t *map)
+{
+  char *__restrict__ src_device_ptr = (char *)mem_id->mem_ptr;
+  assert (mem->size > 0);
+  assert (map->size > 0);
+
+  if (mem->mem_host_ptr != NULL)
+    {
+      map->host_ptr = mem->mem_host_ptr + map->offset;
+    }
+  else
+    {
+      map->host_ptr = pocl_aligned_malloc (16, map->size);
+    }
+
+  assert (map->host_ptr);
+  return CL_SUCCESS;
+}
+
+cl_int
+pocl_driver_free_mapping_ptr (void *data, pocl_mem_identifier *mem_id,
+                              cl_mem mem, mem_mapping_t *map)
+{
+  char *__restrict__ src_device_ptr = (char *)mem_id->mem_ptr;
+  if (map->host_ptr == NULL)
     return CL_SUCCESS;
 
-  void *host_ptr = map->host_ptr;
-  assert (host_ptr != NULL);
-  size_t offset = map->offset;
-  size_t size = map->size;
+  if ((mem->mem_host_ptr != NULL)
+      && map->host_ptr != (mem->mem_host_ptr + map->offset))
+    pocl_aligned_free (map->host_ptr);
 
-  /* If the buffer was allocated with CL_MEM_ALLOC_src_host_ptr |
-   * CL_MEM_COPY_src_host_ptr,
-   * the src_host_ptr is not the same memory as pocl's device_ptrs[], and we
-   * need to copy src_host_ptr content back to  pocl's device_ptrs[]. */
-  if (host_ptr != (dst_device_ptr + offset))
-    {
-      POCL_MSG_PRINT_MEMORY ("device: UNMAP memcpy() "
-                             "host_ptr %p to buf_ptr %p + offset %zu\n",
-                             host_ptr, dst_device_ptr, offset);
-      memcpy ((char *)dst_device_ptr + offset, (char *)host_ptr, size);
-    }
+  map->host_ptr = NULL;
   return CL_SUCCESS;
 }
 

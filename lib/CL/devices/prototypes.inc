@@ -41,6 +41,11 @@
   cl_int pocl_##__DRV__##_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, \
                                          void *host_ptr);                     \
   void pocl_##__DRV__##_free (cl_device_id device, cl_mem mem_obj);           \
+  int pocl_##__DRV__##_can_migrate_d2d (cl_device_id dest,                    \
+                                        cl_device_id source);                 \
+  int pocl_##__DRV__##_migrate_d2d (                                          \
+      cl_device_id src_dev, cl_device_id dst_dev, cl_mem mem,                 \
+      pocl_mem_identifier *src_mem_id, pocl_mem_identifier *dst_mem_id);      \
   void pocl_##__DRV__##_read (void *data, void *__restrict__ dst_host_ptr,    \
                               pocl_mem_identifier *src_mem_id,                \
                               cl_mem src_buf, size_t offset, size_t size);    \
@@ -120,6 +125,12 @@
   cl_int pocl_##__DRV__##_unmap_mem (void *data,                              \
                                      pocl_mem_identifier *dst_mem_id,         \
                                      cl_mem dst_buf, mem_mapping_t *map);     \
+  cl_int pocl_##__DRV__##_get_mapping_ptr (cl_mem mem,                        \
+                            pocl_mem_identifier *mem_id,                      \
+                            mem_mapping_t *map);                              \
+  cl_int pocl_##__DRV__##_free_mapping_ptr (cl_mem mem,                       \
+                            pocl_mem_identifier *mem_id,                      \
+                            mem_mapping_t *map);                              \
   char *pocl_##__DRV__##_init_build (void *data);                             \
   char *pocl_##__DRV__##_build_hash (cl_device_id device);                    \
   void pocl_##__DRV__##_init_target_machine (void *data,                      \

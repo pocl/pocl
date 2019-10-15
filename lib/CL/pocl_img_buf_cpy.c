@@ -186,9 +186,11 @@ cl_int pocl_rect_copy(cl_command_queue command_queue,
 
   POCL_CHECK_DEV_IN_CMDQ;
 
-  errcode = pocl_create_command (cmd, command_queue, command_type,
-                                 event, num_events_in_wait_list,
-                                 event_wait_list, 2, buffers);
+  char rdonly[] = { 1, 0 };
+
+  errcode = pocl_create_command (cmd, command_queue, command_type, event,
+                                 num_events_in_wait_list, event_wait_list, 2,
+                                 buffers, rdonly);
 
   /* for CL_COMMAND_COPY_BUFFER_RECT, we also need to setup
    * the output row/slice pitch parameters. */

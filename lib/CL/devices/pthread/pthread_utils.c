@@ -136,7 +136,7 @@ setup_kernel_arg_array (kernel_run_command *k)
             {
               cl_mem m = *(cl_mem *)al->value;
               if (m->device_ptrs)
-                arguments2[i] = m->device_ptrs[k->device->dev_id].mem_ptr;
+                arguments2[i] = m->device_ptrs[k->device->global_mem_id].mem_ptr;
               else
                 arguments2[i] = m->mem_host_ptr;
 

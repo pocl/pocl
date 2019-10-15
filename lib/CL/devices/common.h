@@ -67,18 +67,8 @@ void pocl_fill_dev_image_t (dev_image_t *di, struct pocl_argument *parg,
 POCL_EXPORT
 void pocl_fill_dev_sampler_t (dev_sampler_t *ds, struct pocl_argument *parg);
 
-void pocl_copy_mem_object (cl_device_id dest_dev, cl_mem dest,
-                           size_t dest_offset,
-                           cl_device_id source_dev, cl_mem source,
-                           size_t source_offset, size_t cb);
-
-void pocl_migrate_mem_objects (_cl_command_node *node);
-
-void pocl_scheduler (_cl_command_node * volatile * ready_list,
-                     pthread_mutex_t *lock_ptr);
-
 POCL_EXPORT
-void pocl_exec_command (_cl_command_node * volatile node);
+void pocl_exec_command (_cl_command_node *node);
 
 POCL_EXPORT
 void pocl_ndrange_node_cleanup(_cl_command_node *node);

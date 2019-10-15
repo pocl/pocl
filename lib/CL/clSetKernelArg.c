@@ -169,6 +169,25 @@ POname(clSetKernelArg)(cl_kernel kernel,
     pocl_aligned_free (p->value);
   p->value = NULL;
   p->is_set = 0;
+  p->is_readonly = 0;
+
+  /* Even if the buffer/image is read-write, the kernel might be using it as
+   * read-only */
+  if ((kernel->meta->has_arg_metadata & POCL_HAS_KERNEL_ARG_ACCESS_QUALIFIER)
+      && (pi->address_qualifier == CL_KERNEL_ARG_ADDRESS_GLOBAL))
+    {
+      if (pi->type == POCL_ARG_TYPE_IMAGE)
+        {
+          p->is_readonly
+              = (pi->access_qualifier & CL_KERNEL_ARG_ACCESS_READ_ONLY ? 1
+                                                                       : 0);
+        }
+      if (pi->type == POCL_ARG_TYPE_POINTER)
+        {
+          p->is_readonly
+              = (pi->type_qualifier & CL_KERNEL_ARG_TYPE_CONST ? 1 : 0);
+        }
+    }
 
   if (arg_value != NULL
       && !(pi->type == POCL_ARG_TYPE_POINTER

@@ -336,6 +336,9 @@ extern uint64_t last_object_id;
 #define POCL_HAS_KERNEL_ARG_TYPE_QUALIFIER     8
 #define POCL_HAS_KERNEL_ARG_NAME               16
 
+/* pocl specific flag, for "hidden" default queues allocated in each context */
+#define CL_QUEUE_HIDDEN (1 << 10)
+
 typedef struct pocl_argument {
   uint64_t size;
   /* The "offset" is used to simplify subbuffer handling.
@@ -345,8 +348,10 @@ typedef struct pocl_argument {
   void *value;
   /* 1 if this argument has been set by clSetKernelArg */
   int is_set;
+  /* 1 if the argument is read-only according to kernel metadata. So either
+   * a buffer with "const" qualifier, or an image with read_only qualifier  */
+  int is_readonly;
 } pocl_argument;
-
 
 typedef struct event_node event_node;
 
@@ -373,6 +378,7 @@ typedef struct pocl_argument_info {
   unsigned type_size;
 } pocl_argument_info;
 
+/* represents a single buffer to host memory mapping */
 
 struct pocl_device_ops {
   const char *device_name;
@@ -465,6 +471,16 @@ struct pocl_device_ops {
   cl_int (*alloc_mem_obj) (cl_device_id device, cl_mem mem_obj, void* host_ptr);
   /* free a device buffer */
   void (*free) (cl_device_id device, cl_mem mem_obj);
+
+  /* return >0 if driver can migrate directly between devices.
+   * Priority between devices signalled by larger numbers. */
+  int (*can_migrate_d2d) (cl_device_id dest, cl_device_id source);
+  /* migrate buffer content directly between devices */
+  int (*migrate_d2d) (cl_device_id src_dev,
+                      cl_device_id dst_dev,
+                      cl_mem mem,
+                      pocl_mem_identifier *src_mem_id,
+                      pocl_mem_identifier *dst_mem_id);
 
   /* SVM Ops */
   void (*svm_free) (cl_device_id dev, void *svm_ptr);
@@ -574,6 +590,16 @@ struct pocl_device_ops {
                        pocl_mem_identifier * dst_mem_id,
                        cl_mem dst_buf,
                        mem_mapping_t *map);
+
+  /* these don't actually do the mapping, only return a pointer
+   * where the driver will map in future. Separate API from map/unmap
+   * because 1) unlike other driver ops, this is called from the user thread,
+   * so it can be called in parallel with map/unmap or any command executing
+   * in the driver; 2) most drivers can share the code for these */
+  cl_int (*get_mapping_ptr) (void *data, pocl_mem_identifier *mem_id,
+                             cl_mem mem, mem_mapping_t *map);
+  cl_int (*free_mapping_ptr) (void *data, pocl_mem_identifier *mem_id,
+                              cl_mem mem, mem_mapping_t *map);
 
   /* if the driver needs to do something at kernel create/destroy time */
   int (*create_kernel) (cl_device_id device, cl_program program,
@@ -999,11 +1025,6 @@ struct _cl_context {
   /* implementation */
   unsigned num_devices;
   unsigned num_properties;
-  /* some OpenCL apps (AMD OpenCL SDK at least) use a trial-error 
-     approach for creating a context with a device type, and call 
-     clReleaseContext for the result regardless if it failed or not. 
-     Returns a valid = 0 context in that case.  */
-  char valid;
 
   /*********************************************************************/
   /* these values depend on which devices are in context;
@@ -1023,6 +1044,15 @@ struct _cl_context {
    * NULL if none of devices in the context is SVM capable */
   cl_device_id svm_allocdev;
 
+  /* for enqueueing migration commands. Two reasons:
+   * 1) since migration commands can execute in parallel
+   * to other commands, we can increase paralelism
+   * 2) in some cases (migration between 2 devices through
+   * host memory), we need to put two commands in two queues,
+   * and the clEnqueueX only gives us one (on the destination
+   * device). */
+  cl_command_queue *default_queues;
+
   /* The minimal required buffer alignment for all devices in the context.
    * E.g. for clCreateSubBuffer:
    * CL_MISALIGNED_SUB_BUFFER_OFFSET is returned in errcode_ret if there are no
@@ -1030,6 +1060,7 @@ struct _cl_context {
    * is aligned to the CL_DEVICE_MEM_BASE_ADDR_ALIGN value.
    */
   size_t min_buffer_alignment;
+
 };
 
 typedef struct _pocl_data_sync_item pocl_data_sync_item;
@@ -1128,32 +1159,49 @@ typedef struct _cl_mem cl_mem_t;
 struct _cl_mem {
   POCL_ICD_OBJECT
   POCL_OBJECT;
+  cl_context context;
   cl_mem_object_type type;
   cl_mem_flags flags;
+
   size_t size;
   size_t origin; /* for sub-buffers */
+
+  /* host backing memory for a buffer.
+   *
+   * This is either user provided host-ptr, or driver allocated,
+   * or temporary allocation by a migration command. Since it
+   * can have multiple users, it's refcounted. */
   void *mem_host_ptr;
-  cl_uint map_count;
-  cl_context context;
-  /* implementation */
-  /* The device-specific pointers to the buffer for all
-     device ids the buffer was allocated to. This can be a
-     direct pointer to the memory of the buffer or a pointer to
-     a book keeping structure. This always contains
-     as many pointers as there are devices in the system, even
-     though the buffer was not allocated for all.
-     The location of the device's buffer ptr is determined by
-     the device's dev_id. */
+  /* version of buffer content in mem_host_ptr */
+  uint64_t mem_host_ptr_version;
+  /* reference count; when it reaches 0,
+   * the mem_host_ptr is automatically freed */
+  uint mem_host_ptr_refcount;
+
+  /* array of device-specific memory bookkeeping structs.
+     The location of some device's struct is determined by
+     the device's global_mem_id. */
   pocl_mem_identifier *device_ptrs;
-  /* device that allocated, and is going to free, 
+  /* device that allocated, and is going to free,
      the shared system mem allocation */
   cl_device_id shared_mem_allocation_owner;
-  /* device where this mem obj resides */
-  cl_device_id owning_device;
+
+  /* for content tracking;
+   *
+   * this is the valid (highest) version of the buffer's content;
+   * if any device has lower version in device_ptrs[]->version,
+   * the buffer content on that device is invalid */
+  uint64_t latest_version;
+  /* the event that last changed (written to) the buffer, this
+   * is used as a "from "dependency for any migration commands */
+  cl_event last_event;
+
 
   /* A linked list of regions of the buffer mapped to the
      host memory */
   mem_mapping_t *mappings;
+  size_t map_count;
+
   /* in case this is a sub buffer, this points to the parent
      buffer */
   cl_mem_t *parent;
@@ -1217,9 +1265,9 @@ typedef struct pocl_kernel_metadata_s
   /* If this is a BI kernel descriptor, they are statically defined in
      the custom device driver, thus should not be freed. */
   cl_bitfield builtin_kernel;
-  /* device-specific data, void* array[program->num_devices] */
-  void **data;
 
+  /* device-specific METAdata, void* array[program->num_devices] */
+  void **data;
 } pocl_kernel_metadata_t;
 
 struct _cl_program {
@@ -1383,7 +1431,10 @@ struct _cl_event {
   /* The execution status of the command this event is monitoring. */
   cl_int status;
   /* impicit event = an event for pocl's internal use, not visible to user */
-  int implicit_event;
+  short implicit_event;
+  /* if set, at the completion of event, the mem_host_ptr_refcount should be
+   * lowered and memory freed if it's 0 */
+  short release_mem_host_ptr_after;
 
   _cl_event *next;
   _cl_event *prev;

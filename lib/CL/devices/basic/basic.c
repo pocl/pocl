@@ -41,8 +41,9 @@
 #include <utlist.h>
 
 #include "pocl_cache.h"
-#include "pocl_timing.h"
 #include "pocl_file_util.h"
+#include "pocl_mem_management.h"
+#include "pocl_timing.h"
 #include "pocl_workgroup_func.h"
 
 #include "common_driver.h"
@@ -89,6 +90,11 @@ pocl_basic_init_device_ops(struct pocl_device_ops *ops)
   ops->memfill = pocl_driver_memfill;
   ops->map_mem = pocl_driver_map_mem;
   ops->unmap_mem = pocl_driver_unmap_mem;
+  ops->get_mapping_ptr = pocl_driver_get_mapping_ptr;
+  ops->free_mapping_ptr = pocl_driver_free_mapping_ptr;
+
+  ops->can_migrate_d2d = NULL;
+  ops->migrate_d2d = NULL;
 
   ops->run = pocl_basic_run;
   ops->run_native = pocl_basic_run_native;
@@ -173,7 +179,6 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
       pocl_init_dlhandle_cache();
       first_basic_init = 0;
     }
-  device->global_mem_id = 0;
 
   d = (struct data *) calloc (1, sizeof (struct data));
   if (d == NULL)
@@ -234,80 +239,33 @@ pocl_basic_init (unsigned j, cl_device_id device, const char* parameters)
 
 
 cl_int
-pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void* host_ptr)
+pocl_basic_alloc_mem_obj (cl_device_id device, cl_mem mem, void* host_ptr)
 {
-  void *b = NULL;
-  cl_mem_flags flags = mem_obj->flags;
-  unsigned i;
-  POCL_MSG_PRINT_MEMORY (" mem %p, dev %d\n", mem_obj, device->dev_id);
-  /* check if some driver has already allocated memory for this mem_obj 
-     in our global address space, and use that*/
-  for (i = 0; i < mem_obj->context->num_devices; ++i)
-    {
-      if (!mem_obj->device_ptrs[i].available)
-        continue;
+  pocl_mem_identifier *p = &mem->device_ptrs[device->global_mem_id];
 
-      if (mem_obj->device_ptrs[i].global_mem_id == device->global_mem_id
-          && mem_obj->device_ptrs[i].mem_ptr != NULL)
-        {
-          mem_obj->device_ptrs[device->dev_id].mem_ptr =
-            mem_obj->device_ptrs[i].mem_ptr;
-          POCL_MSG_PRINT_MEMORY (
-              "mem %p dev %d, using already allocated mem\n", mem_obj,
-              device->dev_id);
-          return CL_SUCCESS;
-        }
-    }
+  /* let other drivers preallocate */
+  if ((mem->flags & CL_MEM_ALLOC_HOST_PTR) && (mem->mem_host_ptr == NULL))
+    return CL_MEM_OBJECT_ALLOCATION_FAILURE;
 
-  /* memory for this global memory is not yet allocated -> do it */
-  if (flags & CL_MEM_USE_HOST_PTR)
-    {
-      // mem_host_ptr must be non-NULL
-      assert(mem_obj->mem_host_ptr != NULL);
-      b = mem_obj->mem_host_ptr;
-    }
-  else
-    {
-      POCL_MSG_PRINT_MEMORY ("!USE_HOST_PTR\n");
-      b = pocl_aligned_malloc_global_mem (device, MAX_EXTENDED_ALIGNMENT,
-                                          mem_obj->size);
-      if (b==NULL)
-        return CL_MEM_OBJECT_ALLOCATION_FAILURE;
+  /* malloc mem_host_ptr then increase refcount */
+  pocl_alloc_or_retain_mem_host_ptr (mem);
+  p->version = mem->mem_host_ptr_version;
+  p->mem_ptr = mem->mem_host_ptr;
 
-      mem_obj->shared_mem_allocation_owner = device;
-    }
-
-  mem_obj->device_ptrs[device->dev_id].mem_ptr = b;
-  /* use this dev mem allocation as host ptr */
-  if (mem_obj->mem_host_ptr == NULL)
-    mem_obj->mem_host_ptr = b;
-
-  if (flags & CL_MEM_COPY_HOST_PTR)
-    {
-      POCL_MSG_PRINT_MEMORY ("COPY_HOST_PTR\n");
-      assert(host_ptr != NULL);
-      memcpy (b, host_ptr, mem_obj->size);
-    }
+  POCL_MSG_PRINT_MEMORY ("Basic device ALLOC %p / size %zu \n", p->mem_ptr,
+                         mem->size);
 
   return CL_SUCCESS;
 }
 
+
 void
-pocl_basic_free (cl_device_id device, cl_mem memobj)
+pocl_basic_free (cl_device_id device, cl_mem mem)
 {
-  cl_mem_flags flags = memobj->flags;
-
-  /* allocation owner executes freeing */
-  if (flags & CL_MEM_USE_HOST_PTR ||
-      memobj->shared_mem_allocation_owner != device)
-    return;
-
-  void* ptr = memobj->device_ptrs[device->dev_id].mem_ptr;
-  size_t size = memobj->size;
-  if (memobj->mem_host_ptr == ptr)
-    memobj->mem_host_ptr = NULL;
-
-  pocl_free_global_mem(device, ptr, size);
+  pocl_mem_identifier *p = &mem->device_ptrs[device->global_mem_id];
+  pocl_release_mem_host_ptr (mem);
+  p->mem_ptr = NULL;
+  p->version = 0;
 }
 
 void
@@ -366,7 +324,7 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
           else
             {
               cl_mem m = (*(cl_mem *)(al->value));
-              void *ptr = m->device_ptrs[cmd->device->dev_id].mem_ptr;
+              void *ptr = m->device_ptrs[cmd->device->global_mem_id].mem_ptr;
               *(void **)arguments[i] = (char *)ptr + al->offset;
             }
         }
@@ -473,7 +431,22 @@ pocl_basic_run (void *data, _cl_command_node *cmd)
 void
 pocl_basic_run_native (void *data, _cl_command_node *cmd)
 {
+  cl_event ev = cmd->event;
+  cl_device_id dev = cmd->device;
+  size_t i;
+  for (i = 0; i < ev->num_buffers; i++)
+    {
+      void *arg_loc = cmd->command.native.arg_locs[i];
+      void *buf = ev->mem_objs[i]->device_ptrs[dev->global_mem_id].mem_ptr;
+      if (dev->address_bits == 32)
+        *((uint32_t *)arg_loc) = (uint32_t) (((uintptr_t)buf) & 0xFFFFFFFF);
+      else
+        *((uint64_t *)arg_loc) = (uint64_t) (uintptr_t)buf;
+    }
+
   cmd->command.native.user_func(cmd->command.native.args);
+
+  POCL_MEM_FREE (cmd->command.native.arg_locs);
 }
 
 cl_int
@@ -739,11 +712,7 @@ cl_int pocl_basic_map_image (void *data,
                              cl_mem src_image,
                              mem_mapping_t *map)
 {
-  if (map->host_ptr == NULL)
-    {
-      map->host_ptr = (char *)mem_id->mem_ptr + map->offset;
-      return CL_SUCCESS;
-    }
+  assert (map->host_ptr != NULL);
 
   if (map->map_flags & CL_MAP_WRITE_INVALIDATE_REGION)
     return CL_SUCCESS;
@@ -823,6 +792,7 @@ pocl_basic_svm_free (cl_device_id dev, void *svm_ptr)
 
 void *
 pocl_basic_svm_alloc (cl_device_id dev, cl_svm_mem_flags flags, size_t size)
+
 {
   return pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, size);
 }

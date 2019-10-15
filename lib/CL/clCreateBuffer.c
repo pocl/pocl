@@ -118,20 +118,13 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
       pocl_num_devices, sizeof (pocl_mem_identifier));
   POCL_GOTO_ERROR_COND ((mem->device_ptrs == NULL), CL_OUT_OF_HOST_MEMORY);
 
-  /* init dev pointer structure to ease inter device pointer sharing
-     in ops->alloc_mem_obj */
-  for (i = 0; i < context->num_devices; ++i)
-    {
-      int dev_id = context->devices[i]->dev_id;
-
-      mem->device_ptrs[dev_id].global_mem_id =
-        context->devices[i]->global_mem_id;
-      mem->device_ptrs[i].available = 1;
-    }
-
   mem->size = size;
   mem->context = context;
   mem->is_image = (type != CL_MEM_OBJECT_PIPE && type != CL_MEM_OBJECT_BUFFER);
+
+  mem->mem_host_ptr_version = 0;
+  mem->latest_version = 0;
+
   /* https://www.khronos.org/registry/OpenCL/sdk/2.0/docs/man/xhtml/dataTypes.html
    *
    * The user is responsible for ensuring that data passed into and out of
@@ -154,44 +147,47 @@ pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
                          "This can cause various problems later.\n",
                          host_ptr, context->min_buffer_alignment);
         }
+      mem->mem_host_ptr_version = 1;
+      mem->mem_host_ptr_refcount = 1;
+      mem->latest_version = 1;
     }
 
-  /* if there is a "special needs" device (hsa) operating in the host memory
-     let it alloc memory first for shared memory use */
-  if (context->svm_allocdev)
+  /* If ALLOC flag is present, try to pre-allocate host-visible
+   * memory from a driver (could be pinned memory).
+   * First driver to allocate wins; if none of the drivers
+   * do it, we allocate it via malloc */
+  if (flags & CL_MEM_ALLOC_HOST_PTR)
     {
-      errcode = context->svm_allocdev->ops->alloc_mem_obj
-          (context->svm_allocdev, mem, host_ptr);
-      POCL_GOTO_ERROR_ON( (errcode != CL_SUCCESS),
-                           CL_MEM_OBJECT_ALLOCATION_FAILURE,
-                           "SVM device failed to allocate memory");
+      unsigned i;
+      for (i = 0; i < context->num_devices; ++i)
+        {
+          cl_device_id dev = context->devices[i];
+          assert (dev->ops->alloc_mem_obj != NULL);
+          // skip already allocated
+          if (mem->device_ptrs[dev->global_mem_id].mem_ptr != NULL)
+            continue;
+          int err = dev->ops->alloc_mem_obj (dev, mem, host_ptr);
+          if ((err == CL_SUCCESS) && (mem->mem_host_ptr))
+            break;
+        }
+
+      POCL_GOTO_ERROR_ON ((pocl_alloc_or_retain_mem_host_ptr (mem) != 0),
+                          CL_OUT_OF_HOST_MEMORY,
+                          "Cannot allocate backing memory!\n");
+      mem->mem_host_ptr_version = 0;
+      mem->latest_version = 0;
     }
 
-  /* allocate on every device memory */
-  for (i = 0; i < context->num_devices; ++i)
+  /* if COPY_HOST_PTR is present but no copying happened,
+   * do the copy here */
+  if ((flags & CL_MEM_COPY_HOST_PTR) && (mem->mem_host_ptr_version == 0))
     {
-      cl_device_id dev = context->devices[i];
-
-      /* some devices might not support this image format */
-      if (mem->is_image && (mem->device_supports_this_image[i] == 0))
-        continue;
-
-      /* this is already handled if available */
-      if (context->svm_allocdev == context->devices[i])
-        continue;
-
-      assert (dev->ops->alloc_mem_obj != NULL);
-      errcode = dev->ops->alloc_mem_obj (dev, mem, host_ptr);
-      POCL_GOTO_ERROR_COND ((errcode != CL_SUCCESS),
-                            CL_MEM_OBJECT_ALLOCATION_FAILURE);
-    }
-
-  /* Some device driver may already have allocated host accessible memory */
-  if ((flags & CL_MEM_ALLOC_HOST_PTR) && (mem->mem_host_ptr == NULL))
-    {
-      assert(mem->shared_mem_allocation_owner == NULL);
-      mem->mem_host_ptr = pocl_aligned_malloc (MAX_EXTENDED_ALIGNMENT, size);
-      POCL_GOTO_ERROR_COND ((mem->mem_host_ptr == NULL), CL_OUT_OF_HOST_MEMORY);
+      POCL_GOTO_ERROR_ON ((pocl_alloc_or_retain_mem_host_ptr (mem) != 0),
+                          CL_OUT_OF_HOST_MEMORY,
+                          "Cannot allocate backing memory!\n");
+      memcpy (mem->mem_host_ptr, host_ptr, size);
+      mem->mem_host_ptr_version = 1;
+      mem->latest_version = 1;
     }
 
   goto SUCCESS;
@@ -204,7 +200,7 @@ ERROR:
       for (i = 0; i < context->num_devices; ++i)
         {
           cl_device_id dev = context->devices[i];
-          pocl_mem_identifier *p = &mem->device_ptrs[dev->dev_id];
+          pocl_mem_identifier *p = &mem->device_ptrs[dev->global_mem_id];
           if (p->mem_ptr)
             dev->ops->free (dev, mem);
         }
@@ -228,18 +224,18 @@ SUCCESS:
 
 
 
-
 CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateBuffer) (
     cl_context context, cl_mem_flags flags, size_t size, void *host_ptr,
     cl_int *errcode_ret) CL_API_SUFFIX__VERSION_1_0
 {
   cl_mem mem = NULL;
+  int errcode = CL_SUCCESS;
 
   mem = pocl_create_memobject (context, flags, size, CL_MEM_OBJECT_BUFFER,
-                               NULL, host_ptr, errcode_ret);
+                               NULL, host_ptr, &errcode);
 
   if (mem == NULL)
-    return NULL;
+    goto ERROR;
 
   TP_CREATE_BUFFER (context->id, mem->id);
 
@@ -249,6 +245,10 @@ CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateBuffer) (
                          "device_ptrs[0]: %p, SIZE %zu, FLAGS %" PRIu64 " \n",
                          mem->id, mem, mem->mem_host_ptr,
                          mem->device_ptrs[0].mem_ptr, size, flags);
+
+ERROR:
+  if (errcode_ret)
+    *errcode_ret = errcode;
 
   return mem;
 }

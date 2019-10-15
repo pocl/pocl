@@ -96,9 +96,11 @@ CL_API_SUFFIX__VERSION_1_2
           region[0] * px, num_events_in_wait_list, event_wait_list, event);
     }
 
+  char rdonly = 0;
+
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_FILL_IMAGE,
                                  event, num_events_in_wait_list,
-                                 event_wait_list, 1, &image);
+                                 event_wait_list, 1, &image, &rdonly);
   if (errcode != CL_SUCCESS)
     return errcode;
 
@@ -107,7 +109,7 @@ CL_API_SUFFIX__VERSION_1_2
   cmd->command.fill_image.pixel_size = px;
 
   cmd->command.fill_image.mem_id
-      = &image->device_ptrs[command_queue->device->dev_id];
+      = &image->device_ptrs[command_queue->device->global_mem_id];
 
   cmd->command.fill_image.origin[0] = origin[0];
   cmd->command.fill_image.origin[1] = origin[1];
@@ -115,9 +117,6 @@ CL_API_SUFFIX__VERSION_1_2
   cmd->command.fill_image.region[0] = region[0];
   cmd->command.fill_image.region[1] = region[1];
   cmd->command.fill_image.region[2] = region[2];
-
-  POname(clRetainMemObject) (image);
-  image->owning_device = command_queue->device;
   pocl_command_enqueue(command_queue, cmd);
 
   return CL_SUCCESS;

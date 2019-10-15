@@ -150,26 +150,32 @@ POname(clCreateContext)(const cl_context_properties * properties,
   POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), errcode,
                       "Could not initialize devices\n");
 
-  context = (cl_context)calloc (1, sizeof (struct _cl_context));
-  if (context == NULL)
+  for (i = 0; i < num_devices; ++i)
     {
-      errcode = CL_OUT_OF_HOST_MEMORY;
-      goto ERROR;
+      POCL_GOTO_ERROR_ON ((devices[i] == NULL), CL_INVALID_DEVICE,
+                          "one of the devices in device list is NULL\n");
     }
+
+  context = (cl_context)calloc (1, sizeof (struct _cl_context));
+  POCL_GOTO_ERROR_COND ((context == NULL), CL_OUT_OF_HOST_MEMORY);
 
   POCL_INIT_OBJECT(context);
 
   context_set_properties(context, properties, &errcode);
   if (errcode)
-    {
-      goto ERROR;
-    }
+    goto ERROR;
 
   context->devices = pocl_unique_device_list(devices, num_devices,
                                              &context->num_devices);
   POCL_GOTO_ERROR_COND ((context->devices == NULL), CL_OUT_OF_HOST_MEMORY);
+
   POCL_GOTO_ERROR_ON ((context->num_devices == 0), CL_INVALID_DEVICE,
                       "Zero devices\n");
+
+  context->default_queues
+      = (cl_command_queue *)calloc (num_devices, sizeof (cl_command_queue));
+  POCL_GOTO_ERROR_COND ((context->default_queues == NULL),
+                        CL_OUT_OF_HOST_MEMORY);
 
   for (i = 0; i < context->num_devices; ++i)
     {
@@ -193,7 +199,6 @@ POname(clCreateContext)(const cl_context_properties * properties,
 
   if (errcode_ret)
     *errcode_ret = CL_SUCCESS;
-  context->valid = 1;
 
   cl_context_count += 1;
   POCL_UNLOCK (pocl_context_handling_lock);
@@ -203,8 +208,22 @@ POname(clCreateContext)(const cl_context_properties * properties,
 ERROR:
   if (context)
     {
-      POCL_MEM_FREE(context->devices);
-      POCL_MEM_FREE(context->properties);
+      for (i = 0; i < context->num_devices; i++)
+        {
+          if (context->default_queues && context->default_queues[i])
+            {
+              POname (clReleaseCommandQueue) (context->default_queues[i]);
+            }
+          if (context->devices && context->devices[i])
+            {
+              POname (clReleaseDevice) (context->devices[i]);
+            }
+        }
+      for (i = 0; i < NUM_OPENCL_IMAGE_TYPES; ++i)
+        POCL_MEM_FREE (context->image_formats[i]);
+      POCL_MEM_FREE (context->default_queues);
+      POCL_MEM_FREE (context->devices);
+      POCL_MEM_FREE (context->properties);
     }
   POCL_MEM_FREE(context);
   if(errcode_ret != NULL)

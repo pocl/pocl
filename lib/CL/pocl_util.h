@@ -87,13 +87,26 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
 cl_int pocl_create_command (_cl_command_node **cmd,
                             cl_command_queue command_queue,
                             cl_command_type command_type, cl_event *event,
-                            cl_int num_events, const cl_event *wait_list,
-                            size_t num_buffers, const cl_mem *buffers);
+                            cl_uint num_events, const cl_event *wait_list,
+                            size_t num_buffers, cl_mem *buffers,
+                            char *readonly_flags);
 
+cl_int pocl_create_command_migrate (_cl_command_node **cmd,
+                                    cl_command_queue command_queue,
+                                    cl_mem_migration_flags flags,
+                                    cl_event *event_p,
+                                    cl_uint num_events,
+                                    const cl_event *wait_list,
+                                    size_t num_buffers,
+                                    cl_mem *buffers,
+                                    char *readonly_flags);
 
 void pocl_command_enqueue (cl_command_queue command_queue,
                           _cl_command_node *node);
 
+int pocl_alloc_or_retain_mem_host_ptr (cl_mem mem);
+
+int pocl_release_mem_host_ptr (cl_mem mem);
 
 /* does several sanity checks on buffer & given memory region */
 int pocl_buffer_boundcheck(cl_mem buffer, size_t offset, size_t size);
@@ -124,7 +137,11 @@ pocl_command_push (_cl_command_node *node,
                    _cl_command_node **ready_list,
                    _cl_command_node **pending_list);
 
-void pocl_unmap_command_finished (cl_event event, _cl_command_t *cmd);
+void pocl_unmap_command_finished (cl_device_id dev,
+                                  pocl_mem_identifier *mem_id, cl_mem mem,
+                                  mem_mapping_t *map);
+
+void pocl_unmap_command_finished2 (cl_event event, _cl_command_t *cmd);
 
 /**
  * Return true if a command is ready to execute (no more event in wait list

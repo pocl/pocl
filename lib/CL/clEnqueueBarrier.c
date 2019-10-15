@@ -38,9 +38,8 @@ CL_API_SUFFIX__VERSION_1_0
   POCL_RETURN_ERROR_COND((command_queue->context == NULL), CL_INVALID_COMMAND_QUEUE);
 
   /* Even if we do not need to create a full command, the runtime requires it */
-  pocl_create_command (&cmd, command_queue, 
-                       CL_COMMAND_BARRIER, NULL, 
-                       0, NULL, 0, NULL);
+  pocl_create_command (&cmd, command_queue, CL_COMMAND_BARRIER, NULL, 0, NULL,
+                       0, NULL, NULL);
 
   pocl_command_enqueue(command_queue, cmd);
 

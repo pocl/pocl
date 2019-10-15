@@ -69,7 +69,7 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
   DL_FOREACH (memobj->mappings, mapping)
     {
       POCL_MSG_PRINT_MEMORY (
-          "UnMap %p search Mapping: host_ptr %p offset %zu requested: %lu\n", mapped_ptr,
+          "UnMap %p search Mapping: host_ptr %p offset %zu requested: %i\n", mapped_ptr,
           mapping->host_ptr, mapping->offset, mapping->unmap_requested);
 
       if (mapping->host_ptr == mapped_ptr && mapping->unmap_requested == 0)
@@ -81,19 +81,18 @@ POname(clEnqueueUnmapMemObject)(cl_command_queue command_queue,
   POCL_RETURN_ERROR_ON((mapping == NULL), CL_INVALID_VALUE,
       "Could not find mapping of this memobj\n");
 
-  errcode = pocl_create_command (&cmd, command_queue, 
-                                 CL_COMMAND_UNMAP_MEM_OBJECT,
-                                 event, num_events_in_wait_list, 
-                                 event_wait_list, 1, &memobj);
+  char rdonly = (mapping->map_flags & CL_MAP_READ);
+
+  errcode = pocl_create_command (
+      &cmd, command_queue, CL_COMMAND_UNMAP_MEM_OBJECT, event,
+      num_events_in_wait_list, event_wait_list, 1, &memobj, &rdonly);
 
   if (errcode != CL_SUCCESS)
     goto ERROR;
 
   cmd->command.unmap.mapping = mapping;
-  cmd->command.unmap.mem_id = &memobj->device_ptrs[device->dev_id];
+  cmd->command.unmap.mem_id = &memobj->device_ptrs[device->global_mem_id];
 
-  POname(clRetainMemObject) (memobj);
-  memobj->owning_device = command_queue->device;
   pocl_command_enqueue(command_queue, cmd);
 
   return CL_SUCCESS;

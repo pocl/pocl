@@ -85,23 +85,22 @@ CL_API_SUFFIX__VERSION_1_2
                         CL_OUT_OF_RESOURCES,
                         "buffer is larger than device's MAX_MEM_ALLOC_SIZE\n");
 
+  char rdonly = 0;
+
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_FILL_BUFFER,
                                  event, num_events_in_wait_list,
-                                 event_wait_list, 1, &buffer);
+                                 event_wait_list, 1, &buffer, &rdonly);
   if (errcode != CL_SUCCESS)
     return errcode;
 
   cmd->command.memfill.dst_mem_id
-      = &buffer->device_ptrs[command_queue->device->dev_id];
+      = &buffer->device_ptrs[command_queue->device->global_mem_id];
   cmd->command.memfill.size = size;
   cmd->command.memfill.offset = offset;
   void *p = pocl_aligned_malloc(pattern_size, pattern_size);
   memcpy(p, pattern, pattern_size);
   cmd->command.memfill.pattern = p;
   cmd->command.memfill.pattern_size = pattern_size;
-
-  POname(clRetainMemObject) (buffer);
-  buffer->owning_device = command_queue->device;
 
   pocl_command_enqueue(command_queue, cmd);
 

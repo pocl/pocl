@@ -77,20 +77,21 @@ POname(clEnqueueWriteBuffer)(cl_command_queue command_queue,
 
   POCL_CHECK_DEV_IN_CMDQ;
 
-  errcode = pocl_create_command (&cmd, command_queue, 
-                                 CL_COMMAND_WRITE_BUFFER, 
-                                 event, num_events_in_wait_list, 
-                                 event_wait_list, 1, &buffer);
+  char rdonly = 0;
+
+  errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_WRITE_BUFFER,
+                                 event, num_events_in_wait_list,
+                                 event_wait_list, 1, &buffer, &rdonly);
   if (errcode != CL_SUCCESS)
-    return errcode;
+    {
+      POCL_MSG_ERR ("create command failed \n");
+      return errcode;
+    }
 
   cmd->command.write.src_host_ptr = ptr;
-  cmd->command.write.dst_mem_id = &buffer->device_ptrs[device->dev_id];
+  cmd->command.write.dst_mem_id = &buffer->device_ptrs[device->global_mem_id];
   cmd->command.write.offset = offset;
   cmd->command.write.size = size;
-
-  POname(clRetainMemObject) (buffer);
-  buffer->owning_device = command_queue->device;
 
   pocl_command_enqueue (command_queue, cmd);
 

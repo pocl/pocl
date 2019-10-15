@@ -63,8 +63,8 @@ POname(clEnqueueSVMMemcpy) (cl_command_queue command_queue,
     POCL_ABORT_UNIMPLEMENTED("Blocking memcpy");
 
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_SVM_MEMCPY,
-                                     event, num_events_in_wait_list,
-                                     event_wait_list, 0, NULL);
+                                 event, num_events_in_wait_list,
+                                 event_wait_list, 0, NULL, NULL);
 
   const char *s = (const char *)src_ptr;
   char *d = (char *)dst_ptr;

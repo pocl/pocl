@@ -94,10 +94,12 @@ CL_API_SUFFIX__VERSION_1_0
   errcode = pocl_check_image_origin_region (image, origin, region);
   if (errcode != CL_SUCCESS)
     return errcode;
-  
+
+  char rdonly = 1;
+
   errcode = pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_IMAGE,
-                                event, num_events_in_wait_list, 
-                                event_wait_list, 1, &image);
+                                 event, num_events_in_wait_list,
+                                 event_wait_list, 1, &image, &rdonly);
   if (errcode != CL_SUCCESS)
     {
       POCL_MEM_FREE(cmd);
@@ -105,9 +107,10 @@ CL_API_SUFFIX__VERSION_1_0
     }
 
   cl_device_id dev = command_queue->device;
-  cmd->command.read_image.src_mem_id = &image->device_ptrs[dev->dev_id];
+  cmd->command.read_image.src_mem_id = &image->device_ptrs[dev->global_mem_id];
   cmd->command.read_image.dst_host_ptr = ptr;
   cmd->command.read_image.dst_mem_id = NULL;
+  cmd->command.read_image.src = image;
 
   cmd->command.read_image.origin[0] = origin[0];
   cmd->command.read_image.origin[1] = origin[1];
@@ -120,8 +123,6 @@ CL_API_SUFFIX__VERSION_1_0
   cmd->command.read_image.dst_slice_pitch = slice_pitch;
   cmd->command.read_image.dst_offset = 0;
 
-  POname(clRetainMemObject) (image);  
-  image->owning_device = command_queue->device;
   pocl_command_enqueue(command_queue, cmd);
 
   if (blocking_read)

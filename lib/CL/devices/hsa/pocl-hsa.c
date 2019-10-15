@@ -922,7 +922,7 @@ void
 pocl_hsa_free (cl_device_id device, cl_mem memobj)
 {
   cl_mem_flags flags = memobj->flags;
-  void* ptr = memobj->device_ptrs[device->dev_id].mem_ptr;
+  void* ptr = memobj->device_ptrs[device->global_mem_id].mem_ptr;
   size_t size = memobj->size;
 
   if (flags & CL_MEM_USE_HOST_PTR ||
@@ -978,9 +978,9 @@ pocl_hsa_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void *host_ptr)
       if (mem_obj->device_ptrs[i].global_mem_id == device->global_mem_id
           && mem_obj->device_ptrs[i].mem_ptr != NULL)
         {
-          mem_obj->device_ptrs[device->dev_id].mem_ptr =
+          mem_obj->device_ptrs[device->global_mem_id].mem_ptr =
             mem_obj->device_ptrs[i].mem_ptr;
-          hsa_memory_register (mem_obj->device_ptrs[device->dev_id].mem_ptr,
+          hsa_memory_register (mem_obj->device_ptrs[device->global_mem_id].mem_ptr,
 			       mem_obj->size);
           POCL_MSG_PRINT_INFO ("HSA: alloc_mem_obj, use already"
                                " allocated memory\n");
@@ -997,7 +997,7 @@ pocl_hsa_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void *host_ptr)
   if (~flags & CL_MEM_USE_HOST_PTR)
     mem_obj->shared_mem_allocation_owner = device;
 
-  mem_obj->device_ptrs[device->dev_id].mem_ptr = b;
+  mem_obj->device_ptrs[device->global_mem_id].mem_ptr = b;
 
   if (flags & CL_MEM_ALLOC_HOST_PTR)
     mem_obj->mem_host_ptr = b;

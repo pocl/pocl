@@ -239,8 +239,10 @@ CL_API_SUFFIX__VERSION_1_2
 
     POCL_RETAIN_OBJECT (context);
 
-    POCL_MSG_PRINT_MEMORY ("Created Image %p, HOST_PTR: %p, SIZE %zu \n", mem,
-                           mem->mem_host_ptr, size);
+    POCL_MSG_PRINT_MEMORY (
+        "Created Image %p, HOST_PTR: %p, SIZE %zu RP %zu SP %zu FLAGS %u \n",
+        mem, mem->mem_host_ptr, size, mem->image_row_pitch,
+        mem->image_slice_pitch, (unsigned)flags);
 
  ERROR:
    if (errcode != CL_SUCCESS)
@@ -250,6 +252,7 @@ CL_API_SUFFIX__VERSION_1_2
      {
        *errcode_ret = errcode;
      }
+
    return mem;
 }
 POsym(clCreateImage)

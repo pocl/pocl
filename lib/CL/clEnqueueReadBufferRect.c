@@ -94,11 +94,13 @@ POname(clEnqueueReadBufferRect)(cl_command_queue command_queue,
                         CL_OUT_OF_RESOURCES,
                         "buffer is larger than device's MAX_MEM_ALLOC_SIZE\n");
 
-  pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_BUFFER_RECT,
-                       event, num_events_in_wait_list, event_wait_list, 1, 
-                       &buffer);
+  char rdonly = 1;
 
-  cmd->command.read_rect.src_mem_id = &buffer->device_ptrs[device->dev_id];
+  pocl_create_command (&cmd, command_queue, CL_COMMAND_READ_BUFFER_RECT, event,
+                       num_events_in_wait_list, event_wait_list, 1, &buffer,
+                       &rdonly);
+
+  cmd->command.read_rect.src_mem_id = &buffer->device_ptrs[device->global_mem_id];
   cmd->command.read_rect.dst_host_ptr = ptr;
 
   cmd->command.read_rect.host_origin[0] = host_origin[0];
@@ -115,9 +117,6 @@ POname(clEnqueueReadBufferRect)(cl_command_queue command_queue,
   cmd->command.read_rect.host_slice_pitch = host_slice_pitch;
   cmd->command.read_rect.buffer_row_pitch = buffer_row_pitch;
   cmd->command.read_rect.buffer_slice_pitch = buffer_slice_pitch;
-
-  POname (clRetainMemObject) (buffer);
-  buffer->owning_device = device;
 
   pocl_command_enqueue (command_queue, cmd);
 

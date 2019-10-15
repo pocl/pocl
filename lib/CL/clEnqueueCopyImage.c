@@ -50,9 +50,9 @@ POname(clEnqueueCopyImage)(cl_command_queue      command_queue ,
   if (err != CL_SUCCESS)
     return err;
 
-  cmd->command.copy_image.src_mem_id = &src_image->device_ptrs[device->dev_id];
+  cmd->command.copy_image.src_mem_id = &src_image->device_ptrs[device->global_mem_id];
   cmd->command.copy_image.src = src_image;
-  cmd->command.copy_image.dst_mem_id = &dst_image->device_ptrs[device->dev_id];
+  cmd->command.copy_image.dst_mem_id = &dst_image->device_ptrs[device->global_mem_id];
   cmd->command.copy_image.dst = dst_image;
 
   cmd->command.copy_image.src_origin[0] = src_origin[0];
@@ -64,11 +64,6 @@ POname(clEnqueueCopyImage)(cl_command_queue      command_queue ,
   cmd->command.copy_image.region[0] = region[0];
   cmd->command.copy_image.region[1] = region[1];
   cmd->command.copy_image.region[2] = region[2];
-
-  POname (clRetainMemObject) (src_image);
-  src_image->owning_device = device;
-  POname (clRetainMemObject) (dst_image);
-  dst_image->owning_device = device;
 
   pocl_command_enqueue (command_queue, cmd);
 

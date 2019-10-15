@@ -45,8 +45,12 @@ POname(clCreateCommandQueue)(cl_context context,
   POCL_MSG_PRINT_INFO("Create Command queue on device %d\n", device->dev_id);
 
   /* validate flags */
-  POCL_GOTO_ERROR_ON((properties > (1<<2)-1), CL_INVALID_VALUE,
-            "Properties must be <= 3 (there are only 2)\n");
+  cl_command_queue_properties all_properties
+      = CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE | CL_QUEUE_PROFILING_ENABLE
+        | CL_QUEUE_ON_DEVICE | CL_QUEUE_ON_DEVICE_DEFAULT | CL_QUEUE_HIDDEN;
+
+  POCL_GOTO_ERROR_ON ((properties & (~all_properties)), CL_INVALID_VALUE,
+                      "Unknown properties requested\n");
 
   if (POCL_DEBUGGING_ON || pocl_cq_profiling_enabled)
     properties |= CL_QUEUE_PROFILING_ENABLE;
@@ -74,7 +78,9 @@ POname(clCreateCommandQueue)(cl_context context,
   command_queue->device = device;
   command_queue->properties = properties;
 
-  POname(clRetainContext) (context);
+  /* hidden queues don't retain the context. */
+  if ((properties & CL_QUEUE_HIDDEN) == 0)
+    POname (clRetainContext) (context);
 
   TP_CREATE_QUEUE (context->id, command_queue->id);
 
