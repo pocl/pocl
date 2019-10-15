@@ -61,9 +61,15 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
 #include <llvm/Analysis/TargetLibraryInfo.h>
 #include <llvm/Analysis/TargetTransformInfo.h>
 #include <llvm/IR/LegacyPassManager.h>
+#include <llvm/IR/PassTimingInfo.h>
+
 #define PassManager legacy::PassManager
 
 #include "linker.h"
+
+// Enable to get the LLVM pass execution timing report dumped to console after
+// each work-group IR function generation.
+// #define DUMP_LLVM_PASS_TIMINGS
 
 using namespace llvm;
 
@@ -280,17 +286,14 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
   passes.push_back("dot-cfg");
 #endif
 
-  if (currentWgMethod == "loopvec" && SPMDDevice)
-    passes.push_back("scalarizer");
-
-  passes.push_back("instcombine");
   passes.push_back("STANDARD_OPTS");
-  passes.push_back("instcombine");
 
   // Due to unfortunate phase-ordering problems with store sinking,
   // loop deletion does not always apply when executing -O3 only
   // once. Cherry pick the optimization to rerun here.
   passes.push_back("loop-deletion");
+
+  passes.push_back("remove-barriers");
 
   // Now actually add the listed passes to the PassManager.
   for (unsigned i = 0; i < passes.size(); ++i) {
@@ -301,10 +304,15 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
       Builder.SizeLevel = 0;
 
       // These need to be setup in addition to invoking the passes
-      // to get the vectorizers initialized properly.
-      if (currentWgMethod == "loopvec") {
+      // to get the vectorizers initialized properly. Assume SPMD
+      // devices do not want to vectorize intra work-item at this
+      // stage.
+      if (currentWgMethod == "loopvec" && !SPMDDevice) {
         Builder.LoopVectorize = true;
         Builder.SLPVectorize = true;
+      } else {
+        Builder.LoopVectorize = false;
+        Builder.SLPVectorize = false;
       }
       Builder.VerifyInput = true;
       Builder.VerifyOutput = true;
@@ -410,9 +418,23 @@ int pocl_llvm_generate_workgroup_function_nowrite(
 
   KernelName = Kernel->name;
 
+#ifdef DUMP_LLVM_PASS_TIMINGS
+  llvm::TimePassesIsEnabled = true;
+#endif
+  POCL_MEASURE_START(llvm_workgroup_ir_func_gen);
+#ifdef LLVM_OLDER_THAN_3_7
+  kernel_compiler_passes(Device, ParallelBC,
+                         ParallelBC->getDataLayout()->getStringRepresentation())
+      .run(*ParallelBC);
+#else
   kernel_compiler_passes(Device, ParallelBC,
                          ParallelBC->getDataLayout().getStringRepresentation())
       .run(*ParallelBC);
+#endif
+  POCL_MEASURE_FINISH(llvm_workgroup_ir_func_gen);
+#ifdef DUMP_LLVM_PASS_TIMINGS
+  llvm::reportAndResetTimings();
+#endif
 
   assert(Output != NULL);
   *Output = (void *)ParallelBC;
@@ -593,7 +615,13 @@ int pocl_llvm_codegen(cl_device_id Device, void *Modp, char **Output,
 
   if (LLVMGeneratesObjectFiles) {
     POCL_MSG_PRINT_LLVM("Generating an object file directly.\n");
+#ifdef DUMP_LLVM_PASS_TIMINGS
+    llvm::TimePassesIsEnabled = true;
+#endif
     PMObj.run(*Input);
+#ifdef DUMP_LLVM_PASS_TIMINGS
+    llvm::reportAndResetTimings();
+#endif
     std::string O = SOS.str(); // flush
     const char *Cstr = O.c_str();
     size_t S = O.size();
@@ -623,8 +651,14 @@ int pocl_llvm_codegen(cl_device_id Device, void *Modp, char **Output,
   }
 #endif
 
+#ifdef DUMP_LLVM_PASS_TIMINGS
+  llvm::TimePassesIsEnabled = true;
+#endif
   // This produces the assembly text:
   PMAsm.run(*Input);
+#ifdef DUMP_LLVM_PASS_TIMINGS
+  llvm::reportAndResetTimings();
+#endif
 
   // Next call the target's assembler via the Toolchain API indirectly through
   // the Driver API.

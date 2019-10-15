@@ -211,7 +211,11 @@ Workgroup::runOnModule(Module &M) {
           "Target has an unsupported pointer width.");
 
   for (Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
-    if (!i->isDeclaration())
+    // Don't internalize functions starting with "__wrap_" for the use of GNU
+    // linker's switch --wrap=symbol, where calls to the "symbol" are replaced
+    // with "__wrap_symbol" at link time.  These functions may not be referenced
+    // until final link and being deleted by LLVM optimizations before it.
+    if (!i->isDeclaration() && !i->getName().startswith("__wrap_"))
       i->setLinkage(Function::InternalLinkage);
   }
 
@@ -262,20 +266,6 @@ Workgroup::runOnModule(Module &M) {
         old_kernel->eraseFromParent();
     }
   }
-
-#ifdef LLVM_OLDER_THAN_9_0
-  Function *barrier = cast<Function>
-    (M.getOrInsertFunction(BARRIER_FUNCTION_NAME,
-                           Type::getVoidTy(M.getContext())));
-#else
-  FunctionCallee fc = M.getOrInsertFunction(BARRIER_FUNCTION_NAME,
-                             Type::getVoidTy(M.getContext()));
-  Function *barrier = cast<Function>(fc.getCallee());
-#endif
-
-  BasicBlock *bb = BasicBlock::Create(M.getContext(), "", barrier);
-  ReturnInst::Create(M.getContext(), 0, bb);
-
   return true;
 }
 
@@ -546,8 +536,14 @@ static void replacePrintfCalls(Value *pb, Value *pbp, Value *pbc, bool isKernel,
     CallInst *CI = it.first;
     CallInst *newCI = it.second;
 
-    CI->replaceAllUsesWith(newCI);
-    ReplaceInstWithInst(CI, newCI);
+    // LLVM may modify the result type of the called function to void.
+    if (CI->getType()->isVoidTy()) {
+      newCI->insertBefore(CI);
+      CI->eraseFromParent();
+    } else {
+      CI->replaceAllUsesWith(newCI);
+      ReplaceInstWithInst(CI, newCI);
+    }
   }
 
   replaceCIMap.clear();

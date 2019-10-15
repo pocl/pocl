@@ -21,8 +21,8 @@
    IN THE SOFTWARE.
 */
 
-// For srandom
-#define _BSD_SOURCE
+/* For srandom. */
+#define _DEFAULT_SOURCE
 
 #include <CL/opencl.h>
 #include <assert.h>
@@ -33,6 +33,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+#define min(X, Y) X < Y ? X : Y
 
 int
 exec_matrix_kernel (cl_context context, cl_device_id device,
@@ -120,6 +122,9 @@ exec_matrix_kernel (cl_context context, cl_device_id device,
   CHECK_CL_ERROR2 (err);
 
   cl_event ev;
+
+  printf ("gws: %lu %lu lws: %lu %lu\n", global_work_size[0],
+          global_work_size[1], local_work_size[0], local_work_size[1]);
   err = clEnqueueNDRangeKernel (cmd_queue, kernel, 2, NULL, global_work_size,
                                 local_work_size, 0, NULL, &ev);
   CHECK_CL_ERROR2 (err);
@@ -290,12 +295,9 @@ main (int argc, char **argv)
     }
   else
     {
-      printf ("Autodetected local_wg: %u \n", local_wg);
+      printf ("Autodetected local_wg: %u max wg size: %lu\n", local_wg,
+              max_wg_size);
     }
-
-  float div = (float)matrix_size / (float)local_wg;
-  assert ((matrix_size % ((unsigned)div) == 0)
-          && "matrix size must be power-of-4");
 
   /**************************************************************************/
 
@@ -433,6 +435,9 @@ main (int argc, char **argv)
   printf ("\nExpected sum of all elements: %lu \n", sum);
 
   err = 0;
+
+  local_work_size[0] = min (global_work_size[0], local_work_size[0]);
+  local_work_size[1] = min (global_work_size[1], local_work_size[1]);
 
   if (exec_matrix_kernel (context, device, queue, program, matrix_size, srcA,
                           srcB, dst, kernel_name, global_work_size,

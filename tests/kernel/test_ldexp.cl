@@ -24,7 +24,7 @@ DEFINE_BODY_V (
             }
           else
             {
-              goodres.s[n] = val.s[n] * (stype) (16.0);
+              goodres.s[n] = val.s[n] * (stype) (16.0f);
             }
           equal = equal && ISEQ (res.s[n], goodres.s[n]);
         }

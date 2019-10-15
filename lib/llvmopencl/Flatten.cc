@@ -81,8 +81,9 @@ Flatten::runOnModule(Module &M)
 
   for (llvm::Module::iterator i = M.begin(), e = M.end(); i != e; ++i) {
     llvm::Function *f = &*i;
-    if (f->isDeclaration() ||
-        AuxFuncs.find(f->getName().str()) != AuxFuncs.end()) continue;
+    if (f->isDeclaration() || f->getName().startswith("__pocl_print") ||
+        AuxFuncs.find(f->getName().str()) != AuxFuncs.end())
+      continue;
     if (KernelName == f->getName() && pocl::Workgroup::isKernelToProcess(*f)) {
       AttributeSet Attrs;
       f->removeAttributes(AttributeList::FunctionIndex,
