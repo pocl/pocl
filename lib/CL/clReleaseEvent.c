@@ -35,6 +35,7 @@ POname(clReleaseEvent)(cl_event event) CL_API_SUFFIX__VERSION_1_0
   
   if (new_refcount == 0)
     {
+      VG_REFC_ZERO (event);
       event_callback_item *cb_ptr = NULL;
       event_callback_item *next = NULL;
       for (cb_ptr = event->callback_list; cb_ptr; cb_ptr = next)
@@ -63,6 +64,10 @@ POname(clReleaseEvent)(cl_event event) CL_API_SUFFIX__VERSION_1_0
 
       POCL_DESTROY_OBJECT (event);
       pocl_mem_manager_free_event (event);
+    }
+  else
+    {
+      VG_REFC_NONZERO (event);
     }
 
   return CL_SUCCESS;

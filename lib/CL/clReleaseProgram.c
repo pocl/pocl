@@ -49,6 +49,7 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
 
   if (new_refcount == 0)
     {
+      VG_REFC_ZERO (program);
       cl_context context = program->context;
       POCL_MSG_PRINT_REFCOUNTS ("Free program %p\n", program);
       TP_FREE_PROGRAM (context->id, program->id);
@@ -129,6 +130,10 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
       POCL_MEM_FREE (program);
 
       POname(clReleaseContext)(context);
+    }
+  else
+    {
+      VG_REFC_NONZERO (program);
     }
 
   return CL_SUCCESS;

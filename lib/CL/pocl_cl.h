@@ -30,6 +30,10 @@
 #include <assert.h>
 #include <stdio.h>
 
+#ifdef HAVE_VALGRIND
+#include <valgrind/helgrind.h>
+#endif
+
 #ifdef _MSC_VER
 #  include "vccompat.hpp"
 #endif
@@ -82,6 +86,16 @@ typedef pthread_t pocl_thread_t;
   InterlockedCompareExchange64 (ptr, newval, oldval)
 #else
 #error Need atomic_inc() builtin for this compiler
+#endif
+
+#ifdef HAVE_VALGRIND
+#define VG_REFC_ZERO(var)                                                     \
+  ANNOTATE_HAPPENS_AFTER (&var->pocl_refcount);                               \
+  ANNOTATE_HAPPENS_BEFORE_FORGET_ALL (&var->pocl_refcount)
+#define VG_REFC_NONZERO(var) ANNOTATE_HAPPENS_BEFORE (&var->pocl_refcount)
+#else
+#define VG_REFC_ZERO(var) (void)0
+#define VG_REFC_NONZERO(var) (void)0
 #endif
 
 #ifdef __linux__
@@ -324,6 +338,9 @@ extern uint64_t last_object_id;
 
 typedef struct pocl_argument {
   uint64_t size;
+  /* The "offset" is used to simplify subbuffer handling.
+   * At enqueue time, subbuffers are converted to buffers + offset into them.
+   */
   uint64_t offset;
   void *value;
   /* 1 if this argument has been set by clSetKernelArg */

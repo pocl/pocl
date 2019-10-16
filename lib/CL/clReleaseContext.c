@@ -49,6 +49,7 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
   POCL_RELEASE_OBJECT(context, new_refcount);
   if (new_refcount == 0)
     {
+      VG_REFC_ZERO (context);
       POCL_MSG_PRINT_REFCOUNTS ("Free Context %p\n", context);
       /* The context holds references to all its devices,
          memory objects, command-queues etc. Release the
@@ -69,6 +70,10 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
 
       /* see below on why we don't call uninit_devices here anymore */
       --cl_context_count;
+    }
+  else
+    {
+      VG_REFC_NONZERO (context);
     }
 
   POCL_UNLOCK (pocl_context_handling_lock);

@@ -37,7 +37,10 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
 
   if (new_refcount == 0)
     {
+      VG_REFC_ZERO (kernel);
+
       TP_FREE_KERNEL (kernel->context->id, kernel->id, kernel->name);
+
       POCL_MSG_PRINT_REFCOUNTS ("Free kernel %p\n", kernel);
       cl_program program = kernel->program;
       assert (program != NULL);
@@ -75,7 +78,11 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
 
       POname(clReleaseProgram) (program);
     }
-  
+  else
+    {
+      VG_REFC_NONZERO (kernel);
+    }
+
   return CL_SUCCESS;
 }
 POsym(clReleaseKernel)

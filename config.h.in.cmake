@@ -67,6 +67,8 @@
 
 #cmakedefine HAVE_UTIME
 
+#cmakedefine HAVE_VALGRIND
+
 #cmakedefine ENABLE_LLVM
 
 /* this is used all over the runtime code */

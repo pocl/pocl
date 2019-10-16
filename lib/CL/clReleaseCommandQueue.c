@@ -40,6 +40,8 @@ POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VER
 
   if (new_refcount == 0)
     {
+      VG_REFC_ZERO (command_queue);
+
       TP_FREE_QUEUE (context->id, command_queue->id);
 
       assert (command_queue->command_count == 0);
@@ -50,6 +52,10 @@ POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VER
       POCL_MEM_FREE(command_queue);
 
       POname(clReleaseContext) (context);
+    }
+  else
+    {
+      VG_REFC_NONZERO (command_queue);
     }
   return CL_SUCCESS;
 }

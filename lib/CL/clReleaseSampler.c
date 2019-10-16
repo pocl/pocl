@@ -37,6 +37,7 @@ CL_API_SUFFIX__VERSION_1_0
 
   if (new_refcount == 0)
     {
+      VG_REFC_ZERO (sampler);
       cl_context context = sampler->context;
       TP_FREE_SAMPLER (context->id, sampler->id);
       for (i = 0; i < context->num_devices; ++i)
@@ -54,6 +55,10 @@ CL_API_SUFFIX__VERSION_1_0
       POCL_DESTROY_OBJECT (sampler);
       POCL_MEM_FREE (sampler);
       POname (clReleaseContext) (context);
+    }
+  else
+    {
+      VG_REFC_NONZERO (sampler);
     }
 
   return CL_SUCCESS;

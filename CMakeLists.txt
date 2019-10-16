@@ -579,6 +579,10 @@ if(UNIX)
                       "sys/types.h;utime.h"
                       HAVE_UTIME)
 
+  CHECK_SYMBOL_EXISTS("ANNOTATE_HAPPENS_BEFORE"
+                      "valgrind/helgrind.h"
+                      HAVE_VALGRIND)
+
   set(CMAKE_REQUIRED_DEFINITIONS "-D_POSIX_C_SOURCE=200809L")
   CHECK_SYMBOL_EXISTS("futimens"
                       "fcntl.h;sys/stat.h"
@@ -639,6 +643,7 @@ else()
   set(HAVE_VFORK 0)
   set(HAVE_UTIME 0)
   set(HAVE_DLADDR 0)
+  set(HAVE_VALGRIND 0)
 endif()
 
 ######################################################################################

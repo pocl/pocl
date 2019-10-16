@@ -53,6 +53,8 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
 
   if (new_refcount == 0)
     {
+      VG_REFC_ZERO (memobj);
+
       if (memobj->is_image)
         {
           TP_FREE_IMAGE (context->id, memobj->id)
@@ -132,6 +134,11 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
         POname(clReleaseMemObject)(parent);
       POname(clReleaseContext)(context);
     }
+  else
+    {
+      VG_REFC_NONZERO (memobj);
+    }
+
   return CL_SUCCESS;
 }
 POsym(clReleaseMemObject)
