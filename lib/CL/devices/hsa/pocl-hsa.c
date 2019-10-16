@@ -127,7 +127,10 @@
 #define EVENT_LIST_SIZE 511
 
 typedef struct pocl_hsa_event_data_s {
-  void* actual_kernargs;
+  /* Address of the space where this kernel launch's arguments were stored. */
+  void *kernargs;
+  /* The location of the pocl context struct in the Agent's global mem. */
+  void *context;
   pthread_cond_t event_cond;
 } pocl_hsa_event_data_t;
 
@@ -236,7 +239,8 @@ void pocl_hsa_compile_kernel_native (_cl_command_node *cmd, cl_kernel kernel,
                                      cl_device_id device, int specialize);
 
 static void*
-pocl_hsa_malloc_account(pocl_global_mem_t *mem, size_t size, hsa_region_t r);
+pocl_hsa_malloc_account(pocl_global_mem_t *mem, size_t size, hsa_region_t r,
+                        int full_profile_agent);
 
 void
 pocl_hsa_init_device_ops(struct pocl_device_ops *ops)
@@ -597,7 +601,6 @@ init_dev_data (cl_device_id dev, int count)
   /* TODO check at runtime */
   d->have_wait_any = 1;
 #endif
-  HSA_CHECK (hsa_signal_create (1, 1, &d->agent, &d->nudge_driver_thread));
 
 #if AMD_HSA == 1
   if (dev->vendor_id == AMD_VENDOR_ID)
@@ -626,8 +629,6 @@ init_dev_data (cl_device_id dev, int count)
   if (dev->global_mem_size > 16 * 1024 * 1024 * (uint64_t)1024)
     dev->global_mem_size = dev->max_mem_alloc_size;
 
-  pocl_setup_device_for_system_memory (dev);
-
   HSA_CHECK (
       hsa_region_get_info (d->group_region, HSA_REGION_INFO_SIZE, &sizearg));
   dev->local_mem_size = sizearg;
@@ -638,6 +639,10 @@ init_dev_data (cl_device_id dev, int count)
 
   HSA_CHECK (hsa_agent_get_info (d->agent, HSA_AGENT_INFO_PROFILE,
                                  &d->agent_profile));
+
+  if (d->agent_profile == HSA_PROFILE_FULL)
+    pocl_setup_device_for_system_memory (dev);
+
   dev->profile = "FULL_PROFILE";
   dev->has_own_timer = CL_TRUE;
 
@@ -645,10 +650,13 @@ init_dev_data (cl_device_id dev, int count)
 
   if (dev->device_side_printf)
     {
-      d->printf_buffer = pocl_hsa_malloc_account (
-          dev->global_memory, dev->printf_buffer_size, d->global_region);
-      d->printf_write_pos = pocl_hsa_malloc_account (
-          dev->global_memory, sizeof (size_t), d->global_region);
+      d->printf_buffer = pocl_hsa_malloc_account
+        (dev->global_memory, dev->printf_buffer_size, d->global_region,
+         d->agent_profile == HSA_PROFILE_FULL);
+
+      d->printf_write_pos = pocl_hsa_malloc_account
+        (dev->global_memory, sizeof (size_t), d->global_region,
+         d->agent_profile == HSA_PROFILE_FULL);
     }
 
   d->exit_driver_thread = 0;
@@ -810,25 +818,32 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
 }
 
 static void*
-pocl_hsa_malloc_account(pocl_global_mem_t *mem, size_t size, hsa_region_t r)
+pocl_hsa_malloc_account(pocl_global_mem_t *mem, size_t size, hsa_region_t r,
+                        int full_profile_agent)
 {
-  void *b = NULL;
-  if ((mem->total_alloc_limit - mem->currently_allocated) < size)
-    {
-      POCL_MSG_PRINT_INFO ("total alloc limit reached!");
-      return NULL;
-    }
+/* With full profile agents, we must account for other allocations from
+   the the same virtual memory space. With base profile, we can assume the
+   global memory chunk reported by the HSA runtime is an isolated area. */
 
-  if (hsa_memory_allocate(r, size, &b) != HSA_STATUS_SUCCESS)
+  void *b = NULL;
+  if (full_profile_agent)
+    {
+      if (mem->total_alloc_limit - mem->currently_allocated < size)
+        {
+          POCL_MSG_PRINT_INFO ("total alloc limit reached!");
+          return NULL;
+        }
+      /* FIXME: Not thread safe! */
+      mem->currently_allocated += size;
+      if (mem->max_ever_allocated < mem->currently_allocated)
+        mem->max_ever_allocated = mem->currently_allocated;
+      assert(mem->currently_allocated <= mem->total_alloc_limit);
+    }
+  else if (hsa_memory_allocate(r, size, &b) != HSA_STATUS_SUCCESS)
     {
       POCL_MSG_PRINT_INFO ("hsa_memory_allocate failed");
       return NULL;
     }
-
-  mem->currently_allocated += size;
-  if (mem->max_ever_allocated < mem->currently_allocated)
-    mem->max_ever_allocated = mem->currently_allocated;
-  assert(mem->currently_allocated <= mem->total_alloc_limit);
 
   if (b)
     POCL_MSG_PRINT_INFO("HSA malloc'ed : size %" PRIuS " @ %p\n", size, b);
@@ -855,19 +870,21 @@ pocl_hsa_malloc (cl_device_id device, cl_mem_flags flags, size_t size,
     {
       assert(host_ptr != NULL);
       if (d->agent_profile == HSA_PROFILE_FULL)
-	{
-	  POCL_MSG_PRINT_INFO
-	    ("HSA: CL_MEM_USE_HOST_PTR FULL profile: hsa_memory_register()\n");
-	  /* TODO bookkeeping of mem registrations. */
-	  hsa_memory_register(host_ptr, size);
-	  return host_ptr;
-	}
+        {
+          POCL_MSG_PRINT_INFO
+            ("HSA: CL_MEM_USE_HOST_PTR FULL profile: hsa_memory_register()\n");
+          /* TODO bookkeeping of mem registrations. */
+          hsa_memory_register(host_ptr, size);
+          return host_ptr;
+        }
       else
-	{
-	  POCL_MSG_PRINT_INFO
-	    ("HSA: CL_MEM_USE_HOST_PTR BASE profile: cached device copy\n");
-	  return pocl_hsa_malloc_account(mem, size, d->global_region);
-	}
+        {
+          POCL_MSG_PRINT_INFO
+            ("HSA: CL_MEM_USE_HOST_PTR BASE profile: cached device copy\n");
+          return pocl_hsa_malloc_account
+              (mem, size, d->global_region,
+               d->agent_profile == HSA_PROFILE_FULL);
+        }
     }
 
   if (flags & CL_MEM_COPY_HOST_PTR)
@@ -876,7 +893,10 @@ pocl_hsa_malloc (cl_device_id device, cl_mem_flags flags, size_t size,
                           " (CL_MEM_COPY_HOST_PTR)\n");
       assert(host_ptr != NULL);
 
-      b = pocl_hsa_malloc_account(mem, size, d->global_region);
+      void *b = NULL;
+      /* See above (*). */
+      b = pocl_hsa_malloc_account(mem, size, d->global_region,
+                                  d->agent_profile == HSA_PROFILE_FULL);
       if (b)
         hsa_memory_copy(b, host_ptr, size);
       return b;
@@ -884,7 +904,8 @@ pocl_hsa_malloc (cl_device_id device, cl_mem_flags flags, size_t size,
 
   assert(host_ptr == NULL);
   //POCL_MSG_PRINT_INFO("HSA: hsa_memory_allocate (ALLOC_HOST_PTR)\n");
-  return pocl_hsa_malloc_account(mem, size, d->global_region);
+  return pocl_hsa_malloc_account(mem, size, d->global_region,
+                                 d->agent_profile == HSA_PROFILE_FULL);
 }
 
 void
@@ -899,9 +920,13 @@ pocl_hsa_free (cl_device_id device, cl_mem memobj)
     hsa_memory_deregister(ptr, size);
   else
     {
-      pocl_global_mem_t *mem = device->global_memory;
-      assert(mem->currently_allocated >= size);
-      mem->currently_allocated -= size;
+      pocl_hsa_device_data_t *d = (pocl_hsa_device_data_t*)device->data;
+      if (d->agent_profile == HSA_PROFILE_FULL)
+        {
+          pocl_global_mem_t *mem = device->global_memory;
+          assert(mem->currently_allocated >= size);
+          mem->currently_allocated -= size;
+        }
       hsa_memory_free(ptr);
     }
   if (memobj->flags | CL_MEM_ALLOC_HOST_PTR)
@@ -974,12 +999,12 @@ pocl_hsa_alloc_mem_obj (cl_device_id device, cl_mem mem_obj, void *host_ptr)
 static void
 setup_kernel_args (pocl_hsa_device_data_t *d,
                    _cl_command_node *cmd,
-                   char *arg_space,
+                   pocl_hsa_event_data_t *event_data,
                    size_t max_args_size,
                    uint32_t *total_group_size)
 {
-  char *write_pos = arg_space;
-  const char *last_pos = arg_space + max_args_size;
+  char *write_pos = event_data->kernargs;
+  const char *last_pos = event_data->kernargs + max_args_size;
   cl_kernel kernel = cmd->command.run.kernel;
   pocl_kernel_metadata_t *meta = kernel->meta;
 
@@ -1062,7 +1087,7 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
           POCL_MSG_PRINT_INFO (
               "arg %lu (global ptr) written to %lx val %lx arg offs %d\n", i,
               (uint64_t)write_pos, *(uint64_t *)write_pos,
-              (int)(write_pos - arg_space));
+              (int)(write_pos - (char*)event_data->kernargs));
           write_pos += sizeof (uint64_t);
         }
       else if (meta->arg_info[i].type == POCL_ARG_TYPE_IMAGE)
@@ -1083,32 +1108,33 @@ setup_kernel_args (pocl_hsa_device_data_t *d,
           POCL_MSG_PRINT_INFO (
               "arg %lu (scalar) written to %lx val %x offs %d\n", i,
               (uint64_t)write_pos, *(uint32_t *)al->value,
-              (int)(write_pos - arg_space));
+              (int)(write_pos - (char*)event_data->kernargs));
           write_pos += al->size;
         }
     }
 
   CHECK_AND_ALIGN_SPACE(sizeof (uint64_t));
 
-  /* Need to copy the context object to HSA allocated global memory
-     to ensure Base profile agents can access it. */
+  /* Copy the context object to HSA allocated global memory to ensure Base
+     profile agents can access it. */
 
-  void *ctx_ptr = pocl_hsa_malloc_account
+  event_data->context = pocl_hsa_malloc_account
     (d->device->global_memory, POCL_CONTEXT_SIZE (d->device->address_bits),
-     d->global_region);
+     d->global_region, d->agent_profile == HSA_PROFILE_FULL);
 
   if (d->device->address_bits == 64)
-    memcpy (ctx_ptr, &cmd->command.run.pc, sizeof (struct pocl_context));
+    memcpy (event_data->context, &cmd->command.run.pc, sizeof (struct pocl_context));
   else
-    POCL_CONTEXT_COPY64TO32 (ctx_ptr, &cmd->command.run.pc);
+    POCL_CONTEXT_COPY64TO32 (event_data->context, &cmd->command.run.pc);
 
-  memcpy (write_pos, &ctx_ptr, sizeof (ctx_ptr));
+  memcpy (write_pos, &event_data->context, sizeof (event_data->context));
   POCL_MSG_PRINT_INFO ("A %d-bit context object was written at %p offs %d\n",
-                       d->device->address_bits, ctx_ptr,
-                       (int)(write_pos - arg_space));
+                       d->device->address_bits, event_data->context,
+                       (int)(write_pos - (char*)event_data->kernargs));
   write_pos += sizeof (uint64_t);
 
-  /* MUST TODO: free the local buffers and ctx obj after finishing the kernel!
+  /* MUST TODO: free the local buffers after finishing the kernel in case of
+     host side allocation.
    */
 }
 
@@ -1481,7 +1507,10 @@ pocl_hsa_uninit (unsigned j, cl_device_id device)
     }
 
   if (device->device_side_printf)
-    hsa_memory_free (d->printf_buffer);
+    {
+      hsa_memory_free (d->printf_buffer);
+      hsa_memory_free (d->printf_write_pos);
+    }
 
   unsigned i;
   for (i = 0; i < HSA_KERNEL_CACHE_SIZE; i++)
@@ -1735,7 +1764,7 @@ pocl_hsa_launch (pocl_hsa_device_data_t *d, cl_event event)
 
   HSA_CHECK(hsa_memory_allocate (d->kernarg_region,
 				 cached_data->args_segment_size,
-				 &event_data->actual_kernargs));
+				 &event_data->kernargs));
 
   dd->last_queue = (dd->last_queue + 1) % dd->num_queues;
   hsa_queue_t* last_queue = dd->queues[dd->last_queue];
@@ -1807,7 +1836,7 @@ pocl_hsa_launch (pocl_hsa_device_data_t *d, cl_event event)
   HSA_CHECK (
       hsa_signal_create (1, 1, &d->agent, &kernel_packet->completion_signal));
 
-  setup_kernel_args (d, cmd, (char *)event_data->actual_kernargs,
+  setup_kernel_args (d, cmd, event_data,
                      cached_data->args_segment_size, &total_group_size);
 
   kernel_packet->group_segment_size = total_group_size;
@@ -1822,7 +1851,7 @@ pocl_hsa_launch (pocl_hsa_device_data_t *d, cl_event event)
   if (total_group_size > cmd->device->local_mem_size)
     POCL_ABORT ("pocl-hsa: required local memory > device local memory!\n");
 
-  kernel_packet->kernarg_address = event_data->actual_kernargs;
+  kernel_packet->kernarg_address = event_data->kernargs;
 
   typedef union {
     uint32_t header_setup;
@@ -1889,7 +1918,8 @@ pocl_hsa_ndrange_event_finished (pocl_hsa_device_data_t *d, size_t i)
   hsa_signal_destroy (dd->running_signals[i]);
   dd->running_signals[i] = dd->running_signals[dd->running_list_size];
 
-  hsa_memory_free (event_data->actual_kernargs);
+  hsa_memory_free (event_data->kernargs);
+  hsa_memory_free (event_data->context);
 
   POCL_UNLOCK_OBJ (event);
 

@@ -116,9 +116,6 @@ add_test(NAME clblast_test_xtpmv
 add_test(NAME clblast_test_xtrsv
   COMMAND "${TS_BUILDDIR}/clblast_test_xtrsv")
 
-#add_test(NAME clblast_test_xger
-#  COMMAND "${TS_BUILDDIR}/clblast_test_xger")
-
 add_test(NAME clblast_test_xgeru
   COMMAND "${TS_BUILDDIR}/clblast_test_xgeru")
 
@@ -137,14 +134,8 @@ add_test(NAME clblast_test_xher2
 add_test(NAME clblast_test_xhpr2
   COMMAND "${TS_BUILDDIR}/clblast_test_xhpr2")
 
-#add_test(NAME clblast_test_xsyr
-#  COMMAND "${TS_BUILDDIR}/clblast_test_xsyr")
-
 add_test(NAME clblast_test_xspr
   COMMAND "${TS_BUILDDIR}/clblast_test_xspr")
-
-#add_test(NAME clblast_test_xsyr2
-#  COMMAND "${TS_BUILDDIR}/clblast_test_xsyr2")
 
 add_test(NAME clblast_test_xspr2
   COMMAND "${TS_BUILDDIR}/clblast_test_xspr2")
@@ -253,10 +244,31 @@ set_property(TEST
   clblast_test_override_parameters
   APPEND PROPERTY LABELS "hsa-nat-slow")
 
-# Skipped some of the slowest test cases:
-# clblast_test_xtbmv clblast_test_xtpmv clblast_test_xgemm
-# clblast_test_xgbmv clblast_test_xhbmv clblast_test_xsbmv
-# clblast_test_xtrmv clblast_test_xsymm clblast_test_xhemm
-# clblast_test_xtrmm clblast_test_xtrsm clblast_test_xhad
-# clblast_test_xgemmbatched clblast_test_xgemmstridedbatched
-# clblast_test_override_parameters
+set_property(TEST
+  clblast_test_xswap clblast_test_xscal clblast_test_xcopy
+  clblast_test_xdot clblast_test_xdotu clblast_test_xdotc
+  clblast_test_xnrm2 clblast_test_xasum clblast_test_xamax clblast_test_xgemv
+  clblast_test_xhemv clblast_test_xhpmv clblast_test_xsymv clblast_test_xspmv
+  clblast_test_xtrsv clblast_test_xgeru clblast_test_xgerc clblast_test_xher
+  clblast_test_xhpr clblast_test_xher2 clblast_test_xhpr2 clblast_test_xspr
+  clblast_test_xspr2 clblast_test_xim2col clblast_test_xaxpybatched
+  clblast_test_retrieve_parameters clblast_test_preprocessor
+  APPEND PROPERTY LABELS "hsa-native")
+
+# These produce wrong some results with hsa and native compilation (but not
+# with straight pthread, which is a bit weird):
+#        131 - clblast_test_xaxpy (Failed)
+#        164 - clblast_test_xsyrk (Failed)
+#        165 - clblast_test_xherk (Failed)
+#        166 - clblast_test_xsyr2k (Failed)
+#        167 - clblast_test_xher2k (Failed)
+#        171 - clblast_test_xomatcopy (Failed)
+
+set_property(TEST
+  clblast_test_xtbmv clblast_test_xtpmv
+  clblast_test_xgbmv clblast_test_xhbmv clblast_test_xsbmv
+  clblast_test_xtrmv clblast_test_xsymm clblast_test_xhemm
+  clblast_test_xtrmm clblast_test_xtrsm
+  clblast_test_xgemmbatched clblast_test_xgemmstridedbatched
+  clblast_test_override_parameters
+  APPEND PROPERTY LABELS "hsa-nat-slow")
