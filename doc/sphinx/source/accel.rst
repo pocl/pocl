@@ -123,7 +123,14 @@ Usage
 
 To enable this driver, simply add ``-DENABLE_ACCEL_DEVICE=1`` to the cmake
 arguments. On small FPGA SoCs and other relatively low performance hosts, you
-may wish to follow the instructions in :ref:`pocl-without-llvm`.
+may wish to follow the instructions in :ref:`pocl-without-llvm`. In fact, to
+build a version of pocl that is only capable of launching fixed-function
+accelerators, we can give a dummy value for the HOST_DEVICE_BUILD_HASH
+because we are never compiling any kernels. Therefore we also don't have to
+build pocl with LLVM on any machine. So minimal CMake
+arguments would look like this:
+``DENABLE_ACCEL_DEVICE=1 DOCS_AVAILABLE=0 DHOST_DEVICE_BUILD_HASH=dummy``
+(Tested on Zynq-7020 SoC).
 
 The fixed-function accelerators need to be told what kernel to execute. For
 this, the accel driver has a list of builtin kernels that can be referred to
