@@ -74,7 +74,7 @@
 
 
 
-#ifdef ENABLE_HOST_CPU_DEVICES
+#if defined(BUILD_BASIC) || defined(BUILD_PTHREAD)
 
 #define HOST_AS_FLAGS  "@HOST_AS_FLAGS@"
 

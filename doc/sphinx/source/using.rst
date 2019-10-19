@@ -246,18 +246,24 @@ pocl.
   Default 0. If set to an integer N > 0, libpocl will make a pause of N seconds
   once, when it's loading. Useful e.g. to set up a LTTNG tracing session.
 
-- **POCL_TRACE_EVENT**, **POCL_TRACE_EVENT_OPT** and **POCL_TRACE_EVENT_FILTER**
+- **POCL_TRACING**, **POCL_TRACING_OPT** and **POCL_TRACING_FILTER**
 
- If POCL_TRACE_EVENT is set to some tracer name, then all events
+ If POCL_TRACING is set to some tracer name, then all events
  will be traced automatically. Depending on the backend, traces
- may be output in different formats.
- POCL_TRACE_EVENT_FILTER is a comma separated list of string to
+ may be output in different formats and collected in a different way.
+ POCL_TRACING_FILTER is a comma separated list of string to
  indicate which event status should be filtered. For instance to trace
- complete and running events POCL_TRACE_EVENT_FILTER should be set
+ complete and running events POCL_TRACING_FILTER should be set
  to "complete,running". Default behavior is to trace all events.
 
+    cq -- Dumps a simple per-kernel execution time statistics at the
+          program exit time which is collected from command queue
+          start and finish time stamps. Useful for quick and easy profiling
+          purposes with accurate kernel execution time stamps produced
+          in a per device way. Currently only tracks kernel timings, and
+          POCL_TRACING_FILTER has no effect.
     text   -- Basic text logger for each events state
-              Use POCL_TRACE_EVENT_OPT=<file> to set the
+              Use POCL_TRACING_OPT=<file> to set the
               output file. If not specified, it defaults to
               pocl_trace_event.log
     lttng  -- LTTNG tracepoint support. When activated, a lttng session

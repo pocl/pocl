@@ -1,8 +1,22 @@
+Changes updated until commit 7288619eb1b (May 25, 2019).
+
 1.5 unreleased
 ==============
 
+Notable User Facing Changes
+---------------------------
+- POCL_TRACE_EVENT, POCL_TRACE_EVENT_OPT and POCL_TRACE_EVENT_FILTER
+  environment variables were renamed to
+  POCL_TRACING, POCL_TRACING_OPT and POCL_TRACING_FILTER, respectively.
+
+Usability
+---------
+- A simple per-kernel execution time statistics atexit() for quick and easy
+  low-impact per-device profiling purposes (relies on event time stamps purely).
+  It can be enabled by setting POCL_TRACING env to 'cq'.
+
 1.4 September 2019
-==============
+==================
 
 Highlights
 ----------

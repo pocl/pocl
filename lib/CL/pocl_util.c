@@ -395,7 +395,7 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
         POname(clRetainCommandQueue) (command_queue);
 
       (*event)->command_type = command_type;
-      (*event)->id = ATOMIC_INC (event_id_counter);
+      (*event)->id = POCL_ATOMIC_INC (event_id_counter);
       (*event)->num_buffers = num_buffers;
 
       POCL_MSG_PRINT_EVENTS ("created event with id %d\n", (*event)->id);
@@ -406,12 +406,8 @@ cl_int pocl_create_event (cl_event *event, cl_command_queue command_queue,
           memcpy ((*event)->mem_objs, buffers, num_buffers * sizeof(cl_mem));
         }
       (*event)->status = CL_QUEUED;
-
-      /* user events do not have cq */
-      if (!command_queue)
-        return CL_SUCCESS;
-
     }
+
   return CL_SUCCESS;
 }
 
@@ -484,7 +480,7 @@ cl_int pocl_create_command (_cl_command_node **cmd,
 
   (*cmd)->type = command_type;
 
-  /* Even if user does not provide event pointer, create event anyway */
+  /* If user does not provide an event pointer, create an implicit one. */
   event = &((*cmd)->event);
   err = pocl_create_event (event, command_queue, 0, num_buffers, buffers,
                            command_queue->context);

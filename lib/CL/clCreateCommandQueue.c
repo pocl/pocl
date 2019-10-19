@@ -8,10 +8,10 @@
    to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
    copies of the Software, and to permit persons to whom the Software is
    furnished to do so, subject to the following conditions:
-   
+
    The above copyright notice and this permission notice shall be included in
    all copies or substantial portions of the Software.
-   
+
    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -22,6 +22,7 @@
 */
 
 #include "pocl_cl.h"
+#include "pocl_cq_profiling.h"
 #include "pocl_util.h"
 
 CL_API_ENTRY cl_command_queue CL_API_CALL
@@ -44,7 +45,7 @@ POname(clCreateCommandQueue)(cl_context context,
   POCL_GOTO_ERROR_ON((properties > (1<<2)-1), CL_INVALID_VALUE,
             "Properties must be <= 3 (there are only 2)\n");
 
-  if (POCL_DEBUGGING_ON)
+  if (POCL_DEBUGGING_ON || pocl_cq_profiling_enabled)
     properties |= CL_QUEUE_PROFILING_ENABLE;
 
   for (i=0; i<context->num_devices; i++)

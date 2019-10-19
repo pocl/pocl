@@ -23,13 +23,14 @@
 */
 
 #include "config.h"
+#include "pocl_binary.h"
+#include "pocl_cache.h"
 #include "pocl_cl.h"
+#include "pocl_context.h"
+#include "pocl_cq_profiling.h"
 #include "pocl_llvm.h"
 #include "pocl_util.h"
-#include "pocl_cache.h"
 #include "utlist.h"
-#include "pocl_binary.h"
-#include "pocl_context.h"
 
 #ifndef _MSC_VER
 #  include <unistd.h>
@@ -602,6 +603,13 @@ if (local_##c1 > 1 && local_##c1 <= local_##c2 && local_##c1 <= local_##c3 && \
   command_node->next = NULL;
 
   POname(clRetainKernel) (kernel);
+
+  if (pocl_cq_profiling_enabled)
+    {
+      pocl_cq_profiling_register_event (command_node->event);
+      clRetainKernel (kernel);
+      command_node->event->meta_data->kernel = kernel;
+    }
 
   pocl_command_enqueue (command_queue, command_node);
   errcode = CL_SUCCESS;
