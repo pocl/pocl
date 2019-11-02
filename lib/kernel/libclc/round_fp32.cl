@@ -1,4 +1,4 @@
-/* OpenCL built-in library: pocl_fma()
+/* OpenCL built-in library: frexp()
 
    Copyright (c) 2017 Michal Babej / Tampere University of Technology
 
@@ -21,19 +21,14 @@
    THE SOFTWARE.
 */
 
-#if defined(ENABLE_SLEEF)
+#define FAST_TRUNC(x) convert_vtype(convert_itype(x))
 
-_CL_OVERLOADABLE vtype pocl_fma(vtype x, vtype y, vtype z) { return fma(x, y, z); }
-
-#else
-
-#if __has_builtin(__builtin_fma)
-_CL_OVERLOADABLE vtype pocl_fma(vtype x, vtype y, vtype z) { return (x*y + z); }
-_CL_OVERLOADABLE vtype fma(vtype x, vtype y, vtype z) { return (x*y + z); }
-// _CL_OVERLOADABLE vtype fma(vtype x, vtype y, vtype z) { return __builtin_fma(x,y,z); }
-#else
-_CL_OVERLOADABLE vtype pocl_fma(vtype x, vtype y, vtype z) { return (x*y + z); }
-_CL_OVERLOADABLE vtype fma(vtype x, vtype y, vtype z) { return (x*y + z); }
-#endif
-
-#endif
+_CL_OVERLOADABLE vtype round(vtype d)
+{
+  vtype x = d + (vtype)0.5f;
+  vtype fr = x - FAST_TRUNC(x);
+  x = (fr == (vtype)0 && x <= (vtype)0) ? (x - (vtype)(1.0f)) : x;
+  fr = (fr < (vtype)0) ? fr+(vtype)(1.0f) : fr;
+  x = (d == 0.4999999701976776123f) ? (vtype)(0) : x;  // nextafterf(0.5, 0)
+  return (isinf(d) || fabs(d) >= (vtype)(1UL << 23)) ? d : copysign(x - fr, d);
+}

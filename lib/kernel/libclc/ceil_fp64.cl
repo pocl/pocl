@@ -1,4 +1,4 @@
-/* OpenCL built-in library: pocl_fma()
+/* OpenCL built-in library: frexp()
 
    Copyright (c) 2017 Michal Babej / Tampere University of Technology
 
@@ -21,19 +21,12 @@
    THE SOFTWARE.
 */
 
-#if defined(ENABLE_SLEEF)
+#define FAST_TRUNC(x) convert_vtype(convert_itype(x))
 
-_CL_OVERLOADABLE vtype pocl_fma(vtype x, vtype y, vtype z) { return fma(x, y, z); }
-
-#else
-
-#if __has_builtin(__builtin_fma)
-_CL_OVERLOADABLE vtype pocl_fma(vtype x, vtype y, vtype z) { return (x*y + z); }
-_CL_OVERLOADABLE vtype fma(vtype x, vtype y, vtype z) { return (x*y + z); }
-// _CL_OVERLOADABLE vtype fma(vtype x, vtype y, vtype z) { return __builtin_fma(x,y,z); }
-#else
-_CL_OVERLOADABLE vtype pocl_fma(vtype x, vtype y, vtype z) { return (x*y + z); }
-_CL_OVERLOADABLE vtype fma(vtype x, vtype y, vtype z) { return (x*y + z); }
-#endif
-
-#endif
+_CL_OVERLOADABLE vtype floor(vtype x)
+{
+  vtype fr = x - (vtype)(1UL << 31) * FAST_TRUNC(x * (1.0 / (1UL << 31)));
+  fr = fr - FAST_TRUNC(fr);
+  fr = (fr <= 0) ? fr : fr-1.0;
+  return (isinf(x) || fabs(x) >= (vtype)(1LL << 52)) ? x : copysign(x - fr, x);
+}

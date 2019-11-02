@@ -20,64 +20,65 @@
  * THE SOFTWARE.
  */
 
-_CL_OVERLOADABLE float log1p(float x)
+_CL_OVERLOADABLE vtype log1p(vtype x)
 {
-    float w = x;
-    uint ux = as_uint(x);
-    uint ax = ux & EXSIGNBIT_SP32;
+    vtype w = x;
+    utype ux = as_utype(x);
+    utype ax = ux & (utype)EXSIGNBIT_SP32;
 
     // |x| < 2^-4
-    float u2 = MATH_DIVIDE(x, 2.0f + x);
-    float u = u2 + u2;
-    float v = u * u;
+    vtype u2 = MATH_DIVIDE(x, (vtype)2.0f + x);
+    vtype u = u2 + u2;
+    vtype v = u * u;
     // 2/(5 * 2^5), 2/(3 * 2^3)
-    float zsmall = pocl_fma(-u2, x, pocl_fma(v, 0x1.99999ap-7f, 0x1.555556p-4f) * v * u) + x;
+    vtype zsmall = pocl_fma(-u2, x, pocl_fma(v, (vtype)0x1.99999ap-7f, (vtype)0x1.555556p-4f) * v * u) + x;
 
     // |x| >= 2^-4
-    ux = as_uint(x + 1.0f);
+    ux = as_utype(x + 1.0f);
 
-    int m = (int)((ux >> EXPSHIFTBITS_SP32) & 0xff) - EXPBIAS_SP32;
-    float mf = (float)m;
-    uint indx = (ux & 0x007f0000) + ((ux & 0x00008000) << 1);
-    float F = as_float(indx | 0x3f000000);
+    itype m = as_itype((ux >> EXPSHIFTBITS_SP32) & (utype)0xff) - (itype)EXPBIAS_SP32;
+    vtype mf = convert_vtype(m);
+    utype indx = (ux & (utype)0x007f0000) + ((ux & (utype)0x00008000) << 1);
+    vtype F = as_vtype(indx | (utype)0x3f000000);
 
     // x > 2^24
-    float fg24 = F - as_float(0x3f000000 | (ux & MANTBITS_SP32));
+    vtype fg24 = F - as_vtype((utype)0x3f000000 | (ux & (utype)MANTBITS_SP32));
 
     // x <= 2^24
-    uint xhi = ux & 0xffff8000;
-    float xh = as_float(xhi);
-    float xt = (1.0f - xh) + w;
-    uint xnm = ((~(xhi & 0x7f800000)) - 0x00800000) & 0x7f800000;
-    xt = xt * as_float(xnm) * 0.5f;
-    float fl24 = F - as_float(0x3f000000 | (xhi & MANTBITS_SP32)) - xt;
+    utype xhi = ux & (utype)0xffff8000;
+    vtype xh = as_vtype(xhi);
+    vtype xt = ((vtype)1.0f - xh) + w;
+    utype xnm = ((~(xhi & (utype)0x7f800000)) - (utype)0x00800000) & (utype)0x7f800000;
+    xt = xt * as_vtype(xnm) * 0.5f;
+    vtype fl24 = F - as_vtype((utype)0x3f000000 | (xhi & (utype)MANTBITS_SP32)) - xt;
 
-    float f = mf > 24.0f ? fg24 : fl24;
+    vtype f = (mf > (vtype)24.0f) ? fg24 : fl24;
 
     indx = indx >> 16;
-    float r = f * USE_TABLE(log_inv_tbl, indx);
+    vtype r = f * USE_VTABLE(log_inv_tbl, indx);
 
     // 1/3, 1/2
-    float poly = pocl_fma(pocl_fma(r, 0x1.555556p-2f, 0x1.0p-1f), r*r, r);
+    vtype poly = pocl_fma(pocl_fma(r, (vtype)0x1.555556p-2f, (vtype)0x1.0p-1f), r*r, r);
 
-    const float LOG2_HEAD = 0x1.62e000p-1f;   // 0.693115234
-    const float LOG2_TAIL = 0x1.0bfbe8p-15f;  // 0.0000319461833
+    const vtype LOG2_HEAD = (vtype)0x1.62e000p-1f;   // 0.693115234
+    const vtype LOG2_TAIL = (vtype)0x1.0bfbe8p-15f;  // 0.0000319461833
 
-    float2 tv = USE_TABLE(loge_tbl, indx);
-    float z1 = pocl_fma(mf, LOG2_HEAD, tv.s0);
-    float z2 = pocl_fma(mf, LOG2_TAIL, -poly) + tv.s1;
-    float z = z1 + z2;
+    v2type tv = USE_VTABLE(loge_tbl, indx);
+    vtype s0 = tv.lo;
+    vtype s1 = tv.hi;
 
-    z = ax < 0x3d800000U ? zsmall : z;
+    vtype z1 = pocl_fma(mf, LOG2_HEAD, s0);
+    vtype z2 = pocl_fma(mf, LOG2_TAIL, -poly) + s1;
+    vtype z = z1 + z2;
 
-
+    z = (ax < (utype)0x3d800000U) ? zsmall : z;
 
     // Edge cases
-    z = ax >= PINFBITPATT_SP32 ? w : z;
-    z = w  < -1.0f ? as_float(QNANBITPATT_SP32) : z;
-    z = w == -1.0f ? as_float(NINFBITPATT_SP32) : z;
-        //fix subnormals
-        z = ax  < 0x33800000 ? x : z;
+    z = (ax >= (utype)PINFBITPATT_SP32) ? w : z;
+    z = (w  < (vtype)-1.0f) ? as_vtype((utype)QNANBITPATT_SP32) : z;
+    z = (w == (vtype)-1.0f) ? as_vtype((utype)NINFBITPATT_SP32) : z;
+    //fix subnormals
+    z = (ax < (utype)0x33800000) ? x : z;
 
     return z;
 }

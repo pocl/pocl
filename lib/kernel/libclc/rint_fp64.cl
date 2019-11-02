@@ -1,4 +1,4 @@
-/* OpenCL built-in library: pocl_fma()
+/* OpenCL built-in library: frexp()
 
    Copyright (c) 2017 Michal Babej / Tampere University of Technology
 
@@ -21,19 +21,19 @@
    THE SOFTWARE.
 */
 
-#if defined(ENABLE_SLEEF)
+#define FAST_TRUNC(x) convert_vtype(convert_itype(x))
 
-_CL_OVERLOADABLE vtype pocl_fma(vtype x, vtype y, vtype z) { return fma(x, y, z); }
+_CL_OVERLOADABLE vtype rint(vtype d)
+{
+  vtype x = d + (vtype)0.5f;
+  vtype fr = x - (vtype)(1UL << 31) * FAST_TRUNC(x * (1.0 / (1UL << 31)));
+  itype isodd = ((itype)1 & convert_itype(fr)) ? (itype)-1 : (itype)0;
+  fr = fr - FAST_TRUNC(fr);
 
-#else
+  fr = ((fr < (vtype)0) | ((fr == (vtype)0) & isodd)) ? fr+(vtype)(1.0f) : fr;
 
-#if __has_builtin(__builtin_fma)
-_CL_OVERLOADABLE vtype pocl_fma(vtype x, vtype y, vtype z) { return (x*y + z); }
-_CL_OVERLOADABLE vtype fma(vtype x, vtype y, vtype z) { return (x*y + z); }
-// _CL_OVERLOADABLE vtype fma(vtype x, vtype y, vtype z) { return __builtin_fma(x,y,z); }
-#else
-_CL_OVERLOADABLE vtype pocl_fma(vtype x, vtype y, vtype z) { return (x*y + z); }
-_CL_OVERLOADABLE vtype fma(vtype x, vtype y, vtype z) { return (x*y + z); }
-#endif
+  x = (d == (vtype)0.50000000000000011102) ? (vtype)(0.0f) : x;  // nextafterf(0.5, 1)
 
-#endif
+  return (isinf(d) || fabs(d) >= (vtype)(1UL << 52)) ? d : copysign(x - fr, d);
+
+}

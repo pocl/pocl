@@ -1,4 +1,4 @@
-/* OpenCL built-in library: pocl_fma()
+/* OpenCL built-in library: frexp()
 
    Copyright (c) 2017 Michal Babej / Tampere University of Technology
 
@@ -21,19 +21,12 @@
    THE SOFTWARE.
 */
 
-#if defined(ENABLE_SLEEF)
+_CL_OVERLOADABLE vtype fmin(vtype x, vtype y)
+{
+  return y != y ? x : (x < y ? x : y);
+}
 
-_CL_OVERLOADABLE vtype pocl_fma(vtype x, vtype y, vtype z) { return fma(x, y, z); }
-
-#else
-
-#if __has_builtin(__builtin_fma)
-_CL_OVERLOADABLE vtype pocl_fma(vtype x, vtype y, vtype z) { return (x*y + z); }
-_CL_OVERLOADABLE vtype fma(vtype x, vtype y, vtype z) { return (x*y + z); }
-// _CL_OVERLOADABLE vtype fma(vtype x, vtype y, vtype z) { return __builtin_fma(x,y,z); }
-#else
-_CL_OVERLOADABLE vtype pocl_fma(vtype x, vtype y, vtype z) { return (x*y + z); }
-_CL_OVERLOADABLE vtype fma(vtype x, vtype y, vtype z) { return (x*y + z); }
-#endif
-
-#endif
+_CL_OVERLOADABLE vtype fmax(vtype x, vtype y)
+{
+  return y != y ? x : (x > y ? x : y);
+}

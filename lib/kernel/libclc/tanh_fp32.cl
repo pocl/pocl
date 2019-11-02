@@ -44,7 +44,7 @@ _CL_OVERLOADABLE vtype tanh(vtype x)
 #else
     // 3.0 ULP
     const vtype large_threshold1 = (vtype)0x1.0a2b24p+3f;
-    const vtype retval_threshold1 = (vtype)0x1.fffffep-1;
+    const vtype retval_threshold1 = (vtype)0x1.fffffep-1f;
 #endif
     utype ux = as_utype(x);
     utype aux = ux & (utype)EXSIGNBIT_SP32;

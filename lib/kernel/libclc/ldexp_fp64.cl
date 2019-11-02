@@ -1,8 +1,6 @@
 /*
  * Copyright (c) 2014 Advanced Micro Devices, Inc.
  *
- * Copyright (c) 2017 Michal Babej / Tampere University of Technology
- *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
  * in the Software without restriction, including without limitation the rights
@@ -22,26 +20,35 @@
  * THE SOFTWARE.
  */
 
-_CL_OVERLOADABLE vtype cos(vtype x)
-{
-    itype ix = as_itype(x);
-    itype ax = ix & (itype)EXSIGNBIT_SP32;
-    vtype dx = as_vtype(ax);
 
-    vtype r0, r1;
-    itype regn = __pocl_argReductionS(&r0, &r1, dx);
 
-    vtype ss = -__pocl_sinf_piby4(r0, r1);
-    vtype cc =  __pocl_cosf_piby4(r0, r1);
+_CL_OVERLOADABLE vtype ldexp(vtype x, itype n) {
 
-    vtype c = (regn << 31) ? ss : cc;
-    itype t = ((regn >> 1) << 31);
-    c = as_vtype(as_itype(c) ^ t);
+	itype l = as_itype(x);
+	itype e = (l >> 52) & (itype)0x7ff;
+	itype s = l & (itype)0x8000000000000000;
 
-    c = (ax >= (itype)PINFBITPATT_SP32) ? as_vtype((utype)QNANBITPATT_SP32) : c;
+	utype ux = as_utype(x * (vtype)0x1.0p+53);
+	itype de = (as_itype(ux >> 52) & (itype)0x7ff) - (itype)53;
+	itype c = (e == (itype)0);
+	e = c ? de: e;
 
-    //Subnormals
-    c = (x == (vtype)0.0f) ? (vtype)1.0f : c;
+	ux = c ? ux : l;
 
-    return c;
+	itype v = e + n;
+	v = clamp(v, (itype)-0x7ff, (itype)0x7ff);
+
+	ux &= (utype)(~EXPBITS_DP64);
+
+	vtype mr = as_vtype(ux | ((utype)(v+(itype)53) << 52));
+	mr = mr * (vtype)0x1.0p-53;
+
+	mr = (v > (itype)0)  ? as_vtype(ux | ((utype)v << 52)) : mr;
+
+	mr = (v == (itype)0x7ff) ? as_vtype(s | (itype)PINFBITPATT_DP64) : mr;
+	mr = (v < (itype)-53) ? as_vtype(s) : mr;
+
+	mr  = ((n == (itype)0) | isinf(x) | (x == (vtype)0) ) ? x : mr;
+	return mr;
+
 }

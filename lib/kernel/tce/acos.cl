@@ -1,6 +1,5 @@
-/* OpenCL built-in library: pocl_fma()
+/* OpenCL built-in library: acos()
 
-   Copyright (c) 2017 Michal Babej / Tampere University of Technology
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -21,19 +20,6 @@
    THE SOFTWARE.
 */
 
-#if defined(ENABLE_SLEEF)
+#include "../templates.h"
 
-_CL_OVERLOADABLE vtype pocl_fma(vtype x, vtype y, vtype z) { return fma(x, y, z); }
-
-#else
-
-#if __has_builtin(__builtin_fma)
-_CL_OVERLOADABLE vtype pocl_fma(vtype x, vtype y, vtype z) { return (x*y + z); }
-_CL_OVERLOADABLE vtype fma(vtype x, vtype y, vtype z) { return (x*y + z); }
-// _CL_OVERLOADABLE vtype fma(vtype x, vtype y, vtype z) { return __builtin_fma(x,y,z); }
-#else
-_CL_OVERLOADABLE vtype pocl_fma(vtype x, vtype y, vtype z) { return (x*y + z); }
-_CL_OVERLOADABLE vtype fma(vtype x, vtype y, vtype z) { return (x*y + z); }
-#endif
-
-#endif
+DEFINE_EXPR_F_F(acos, 2*atan2(sqrt(1-a), sqrt(1+a)))

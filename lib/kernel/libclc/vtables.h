@@ -58,6 +58,7 @@ VTABLE_FUNCTION_DECL(float, exp_tbl);
 
 VTABLE_FUNCTION_DECL(v2float, loge_tbl);
 VTABLE_FUNCTION_DECL(v2float, log2_tbl);
+VTABLE_FUNCTION_DECL(v2float, log10_tbl);
 VTABLE_FUNCTION_DECL(v2float, sinhcosh_tbl);
 VTABLE_FUNCTION_DECL(v2float, cbrt_tbl);
 VTABLE_FUNCTION_DECL(v2float, exp_tbl_ep);

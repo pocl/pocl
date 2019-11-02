@@ -22,26 +22,16 @@
  * THE SOFTWARE.
  */
 
-_CL_OVERLOADABLE vtype cos(vtype x)
+
+
+#include "exp_helper.h"
+
+_CL_OVERLOADABLE vtype exp2(vtype x)
 {
-    itype ix = as_itype(x);
-    itype ax = ix & (itype)EXSIGNBIT_SP32;
-    vtype dx = as_vtype(ax);
+    const vtype R_LN2 = (vtype)0x1.62e42fefa39efp-1; // ln(2)
+    const vtype R_1_BY_64 = (vtype)(-1.0 / 64.0);
 
-    vtype r0, r1;
-    itype regn = __pocl_argReductionS(&r0, &r1, dx);
-
-    vtype ss = -__pocl_sinf_piby4(r0, r1);
-    vtype cc =  __pocl_cosf_piby4(r0, r1);
-
-    vtype c = (regn << 31) ? ss : cc;
-    itype t = ((regn >> 1) << 31);
-    c = as_vtype(as_itype(c) ^ t);
-
-    c = (ax >= (itype)PINFBITPATT_SP32) ? as_vtype((utype)QNANBITPATT_SP32) : c;
-
-    //Subnormals
-    c = (x == (vtype)0.0f) ? (vtype)1.0f : c;
-
-    return c;
+    inttype n = convert_inttype(x * 64.0);
+    vtype r = R_LN2 * pocl_fma(R_1_BY_64, (vtype)n, x);
+    return __clc_exp_helper(x, -1074.0, 1024.0, r, n);
 }

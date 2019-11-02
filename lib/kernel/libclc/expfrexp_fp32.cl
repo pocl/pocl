@@ -26,13 +26,15 @@ _CL_OVERLOADABLE _CL_ALWAYSINLINE itype
 _cl_expfrexp(vtype x)
 {
   itype ret = (itype)0;
+
   // denorms
   itype cond = (fabs(x) < (vtype)FLT_MIN);
   x = cond ? (x * 0x1p30f) : x;
   ret = cond ? (ret - (itype)30) : ret;
 
-  //ret += (as_itype((as_utype(x) >> 23) & (utype)0xFF) - (itype)0x7E);
-  ret += (as_itype( (as_utype(x) << 1) >> 23 ) - (itype)0x7E);
+//  ret += (as_itype((as_utype(x) >> 23) & (utype)0xFF) - (itype)0x7E);
+
+  ret += (as_itype( (as_utype(x) << 1) >> 24 ) - (itype)0x7E);
 
   ret = (x == (vtype)0.0f) ? (itype)0 : ret;
   ret = (isnan(x) | isinf(x)) ? (itype)0 : ret;

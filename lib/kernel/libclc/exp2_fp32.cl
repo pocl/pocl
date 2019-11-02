@@ -22,26 +22,44 @@
  * THE SOFTWARE.
  */
 
-_CL_OVERLOADABLE vtype cos(vtype x)
+
+
+_CL_OVERLOADABLE vtype exp2(vtype x)
 {
-    itype ix = as_itype(x);
-    itype ax = ix & (itype)EXSIGNBIT_SP32;
-    vtype dx = as_vtype(ax);
+    // Reduce x
+    const vtype ln2HI = (vtype)0x1.62e300p-1f;
+    const vtype ln2LO = (vtype)0x1.2fefa2p-17f;
 
-    vtype r0, r1;
-    itype regn = __pocl_argReductionS(&r0, &r1, dx);
+    vtype t = rint(x);
+    itype p = convert_itype(t);
+    vtype tt = x - t;
+    vtype hi = tt * ln2HI;
+    vtype lo = tt * ln2LO;
 
-    vtype ss = -__pocl_sinf_piby4(r0, r1);
-    vtype cc =  __pocl_cosf_piby4(r0, r1);
+    // Evaluate poly
+    t = hi + lo;
+    tt  = t*t;
+    vtype v = mad(tt,
+                  -mad(tt,
+                      mad(tt,
+                          mad(tt,
+                             mad(tt, (vtype)0x1.637698p-25f,
+                                  (vtype)-0x1.bbd41cp-20f),
+                               (vtype)0x1.1566aap-14f),
+                           (vtype)-0x1.6c16c2p-9f),
+                       (vtype)0x1.555556p-3f),
+                  t);
 
-    vtype c = (regn << 31) ? ss : cc;
-    itype t = ((regn >> 1) << 31);
-    c = as_vtype(as_itype(c) ^ t);
+    vtype y = (vtype)1.0f - (((-lo) - MATH_DIVIDE(t * v,
+                                            (vtype)2.0f - v)) - hi);
 
-    c = (ax >= (itype)PINFBITPATT_SP32) ? as_vtype((utype)QNANBITPATT_SP32) : c;
+    // Scale by 2^p
+    vtype r =  as_vtype(as_itype(y) + (p << 23));
 
-    //Subnormals
-    c = (x == (vtype)0.0f) ? (vtype)1.0f : c;
+    const vtype ulim = (vtype)128.0f;
+    const vtype llim = (vtype)-126.0f;
 
-    return c;
+    r = x < llim ? (vtype)0.0f : r;
+    r = x < ulim ? r : as_vtype((utype)EXPBITS_SP32);
+    return isnan(x) ? x : r;
 }

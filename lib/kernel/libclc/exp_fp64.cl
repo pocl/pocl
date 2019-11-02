@@ -1,4 +1,4 @@
-/*
+
  * Copyright (c) 2014 Advanced Micro Devices, Inc.
  *
  * Copyright (c) 2017 Michal Babej / Tampere University of Technology
@@ -22,26 +22,18 @@
  * THE SOFTWARE.
  */
 
-_CL_OVERLOADABLE vtype cos(vtype x)
+
+#include "exp_helper.h"
+
+_CL_OVERLOADABLE vtype exp(vtype x)
 {
-    itype ix = as_itype(x);
-    itype ax = ix & (itype)EXSIGNBIT_SP32;
-    vtype dx = as_vtype(ax);
+    const vtype X_MIN = -(vtype)0x1.74910d52d3051p+9; // -1075*ln(2)
+    const vtype X_MAX = (vtype)0x1.62e42fefa39efp+9; // 1024*ln(2)
+    const vtype R_64_BY_LOG2 = (vtype)0x1.71547652b82fep+6; // 64/ln(2)
+    const vtype R_LOG2_BY_64_LD = (vtype)-0x1.62e42fefa0000p-7; // head ln(2)/64
+    const vtype R_LOG2_BY_64_TL = (vtype)-0x1.cf79abc9e3b39p-46; // tail ln(2)/64
 
-    vtype r0, r1;
-    itype regn = __pocl_argReductionS(&r0, &r1, dx);
-
-    vtype ss = -__pocl_sinf_piby4(r0, r1);
-    vtype cc =  __pocl_cosf_piby4(r0, r1);
-
-    vtype c = (regn << 31) ? ss : cc;
-    itype t = ((regn >> 1) << 31);
-    c = as_vtype(as_itype(c) ^ t);
-
-    c = (ax >= (itype)PINFBITPATT_SP32) ? as_vtype((utype)QNANBITPATT_SP32) : c;
-
-    //Subnormals
-    c = (x == (vtype)0.0f) ? (vtype)1.0f : c;
-
-    return c;
+    inttype n = convert_inttype(x * R_64_BY_LOG2);
+    vtype r = pocl_fma(R_LOG2_BY_64_TL, (vtype)n, pocl_fma(R_LOG2_BY_64_LD, (vtype)n, x));
+    return __clc_exp_helper(x, X_MIN, X_MAX, r, n);
 }
