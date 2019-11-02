@@ -89,7 +89,7 @@ add_test_pocl(NAME "workgroup/issue_548_convergent_propagation"
 
 add_test_pocl(NAME "workgroup/range_md_small_grid"
               EXPECTED_OUTPUT "range_md_small_grid.stdout"
-              COMMAND "run_kernel" "range_md.cl" "1" "10" "1" "1")
+              COMMAND "run_kernel" "range_md.cl" "1" "13" "1" "1")
 
 add_test_pocl(NAME "workgroup/range_md_large_grid"
               EXPECTED_OUTPUT ""

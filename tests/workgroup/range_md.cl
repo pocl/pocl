@@ -15,6 +15,9 @@ test_kernel (global int *output)
       output[7] = get_global_offset (0);
       output[8] = get_global_offset (1);
       output[9] = get_global_offset (2);
+      output[10] = get_group_id (0);
+      output[11] = get_group_id (1);
+      output[12] = get_group_id (2);
     }
   else if (get_global_id (0) > 9)
     output[get_global_id (0)] = 0;
