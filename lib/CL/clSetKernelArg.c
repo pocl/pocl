@@ -30,6 +30,25 @@
 #include <stdbool.h>
 #include <string.h>
 
+static char hex[] = { '0', '1', '2', '3', '4', '5', '6', '7', '8',
+                      '9', 'A', 'B', 'C', 'D', 'E', 'F', 'X', 'Y' };
+
+static void
+dump_hex (const char *data, size_t size, char *buffer)
+{
+  size_t j = 0;
+  for (size_t i = 0; i < size; ++i)
+    {
+      if (i % 4 == 0)
+        buffer[j++] = ' ';
+      char c = data[i];
+      buffer[j] = hex[(c & 0xF0) >> 4];
+      buffer[j + 1] = hex[c & 0x0F];
+      j += 2;
+    }
+  buffer[j] = 0;
+}
+
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clSetKernelArg)(cl_kernel kernel,
                cl_uint arg_index,
@@ -77,12 +96,21 @@ POname(clSetKernelArg)(cl_kernel kernel,
           if (arg_value && (arg_size == 8))
             uint64_value = *(uint64_t *)arg_value;
         }
-      POCL_MSG_PRINT_GENERAL (
-          "Kernel %15s || SetArg idx %3u || %8s || "
-          "Local %1i || Size %6zu || Value %p || "
-          "*Value %p || *(uint32*)Value: %8u || *(uint64*)Value: %8lu ||\n",
-          kernel->name, arg_index, pi->type_name, is_local, arg_size,
-          arg_value, ptr_value, uint32_value, uint64_value);
+
+      char *hexval = NULL;
+      if (arg_value && (arg_size < 1024))
+        {
+          hexval = (char *)alloca ((arg_size * 2) + (arg_size / 4) + 8);
+          dump_hex (arg_value, arg_size, hexval);
+        }
+
+      POCL_MSG_PRINT_GENERAL ("Kernel %15s || SetArg idx %3u || %8s || "
+                              "Local %1i || Size %6zu || Value %p || "
+                              "Pointer %p || *(uint32*)Value: %8u || "
+                              "*(uint64*)Value: %8lu ||\nHex Value: %s\n",
+                              kernel->name, arg_index, pi->type_name, is_local,
+                              arg_size, arg_value, ptr_value, uint32_value,
+                              uint64_value, hexval);
     }
 
   POCL_RETURN_ERROR_ON (
