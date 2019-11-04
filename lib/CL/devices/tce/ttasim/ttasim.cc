@@ -43,14 +43,7 @@
 #endif
 
 /* Supress some warnings because of including tce_config.h after pocl's config.h. */
-#undef PACKAGE
-#undef PACKAGE_BUGREPORT
-#undef PACKAGE_NAME
-#undef PACKAGE_STRING
-#undef PACKAGE_TARNAME
-#undef PACKAGE_VERSION
-#undef VERSION
-#undef SIZEOF_DOUBLE
+#undef LLVM_VERSION
 
 #include <SimpleSimulatorFrontend.hh>
 #include <Machine.hh>
@@ -66,8 +59,12 @@
 
 #include "tce_common.h"
 #include "devices.h"
+#include "pocl_file_util.h"
+#include "pocl_hash.h"
 
-#define DEFAULT_WG_SIZE 8192
+#include "common_driver.h"
+
+#define DEFAULT_WG_SIZE 64
 
 using namespace TTAMachine;
 
@@ -80,10 +77,13 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
 
   ops->probe = pocl_ttasim_probe;
   ops->uninit = pocl_ttasim_uninit;
-  ops->reinit = NULL;
+  ops->reinit = pocl_ttasim_reinit;
   ops->init = pocl_ttasim_init;
+  ops->init_build = pocl_tce_init_build;
+
   ops->alloc_mem_obj = pocl_tce_alloc_mem_obj;
   ops->free = pocl_tce_free;
+
   ops->read = pocl_tce_read;
   ops->read_rect = pocl_tce_read_rect;
   ops->write = pocl_tce_write;
@@ -95,10 +95,6 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
   ops->get_mapping_ptr = pocl_driver_get_mapping_ptr;
   ops->free_mapping_ptr = pocl_driver_free_mapping_ptr;
   ops->run = pocl_tce_run;
-  ops->init_build = pocl_tce_init_build;
-  ops->flush = pocl_tce_flush;
-  ops->join = pocl_tce_join;
-  ops->submit = pocl_tce_submit;
 
   ops->build_source = pocl_driver_build_source;
   ops->link_program = pocl_driver_link_program;
@@ -109,10 +105,21 @@ pocl_ttasim_init_device_ops(struct pocl_device_ops *ops)
   ops->build_poclbinary = pocl_driver_build_poclbinary;
   ops->compile_kernel = pocl_tce_compile_kernel;
 
+  // new driver api
+  ops->join = pocl_tce_join;
+  ops->submit = pocl_tce_submit;
   ops->broadcast = pocl_broadcast;
   ops->notify = pocl_tce_notify;
+  ops->flush = pocl_tce_flush;
+  ops->wait_event = pocl_tce_wait_event;
+  ops->free_event_data = pocl_tce_free_event_data;
+  ops->notify_cmdq_finished = pocl_tce_notify_cmdq_finished;
+  ops->notify_event_finished = pocl_tce_notify_event_finished;
   ops->build_hash = pocl_tce_build_hash;
   ops->get_device_info_ext = NULL;
+
+  ops->init_queue = pocl_tce_init_queue;
+  ops->free_queue = pocl_tce_free_queue;
 }
 
 
@@ -127,13 +134,56 @@ pocl_ttasim_probe(struct pocl_device_ops *ops)
   return env_count;
 }
 
+/* This is a version number that should be increased when there is
+ * a change in TCE drivers that makes previous pocl-binaries incompatible
+ * (e.g. a change in generated device image file names, etc) */
+#define POCL_TCE_BINARY_VERSION "1"
+
+int
+pocl_tce_device_hash (const char *adf_file, const char *llvm_triplet,
+                             char *output)
+{
+
+  SHA1_CTX ctx;
+  uint8_t bin_dig[SHA1_DIGEST_SIZE];
+
+  char *content;
+  uint64_t size;
+  int err = pocl_read_file (adf_file, &content, &size);
+  if (err || (content == NULL) || (size == 0))
+    POCL_ABORT ("Can't find ADF file %s \n", adf_file);
+
+  pocl_SHA1_Init (&ctx);
+  pocl_SHA1_Update (&ctx, (const uint8_t *)POCL_TCE_BINARY_VERSION, 1);
+  pocl_SHA1_Update (&ctx, (const uint8_t *)llvm_triplet, strlen (llvm_triplet));
+  pocl_SHA1_Update (&ctx, (const uint8_t *)content, size);
+
+  if (pocl_is_option_set ("POCL_TCECC_EXTRA_FLAGS"))
+    {
+      const char *extra_flags
+          = pocl_get_string_option ("POCL_TCECC_EXTRA_FLAGS", "");
+      pocl_SHA1_Update (&ctx, (const uint8_t *)extra_flags, strlen (extra_flags));
+    }
+
+  pocl_SHA1_Final (&ctx, bin_dig);
+
+  unsigned i;
+  for (i = 0; i < SHA1_DIGEST_SIZE; i++)
+    {
+      *output++ = (bin_dig[i] & 0x0F) + 65;
+      *output++ = ((bin_dig[i] & 0xF0) >> 4) + 65;
+    }
+  *output = 0;
+  return 0;
+}
+
 
 class TTASimDevice : public TCEDevice {
 public:
-  TTASimDevice(cl_device_id dev, const char* adfName) :
-    TCEDevice(dev, adfName), simulator(adfName, false), 
-    simulatorCLI(simulator.frontend()), debuggerRequested(false),
-    shutdownRequested(false), produceStandAloneProgram_(true) {
+  TTASimDevice(cl_device_id dev, const char *adfName)
+      : TCEDevice(dev, adfName), simulator(adfName, false),
+        simulatorCLI(simulator.frontend()), debuggerRequested(false) {
+
     char dev_name[256];
 
     const char *adf = strrchr(adfName, '/');
@@ -145,6 +195,9 @@ public:
 
     SigINTHandler* ctrlcHandler = new SigINTHandler(this);
     Application::setSignalHandler(SIGINT, *ctrlcHandler);
+
+    produceStandAloneProgram_ =
+        pocl_get_bool_option("POCL_TCE_STANDALONE", 0) != 0;
 
     setMachine(simulator.machine());
     if (machine_->isLittleEndian()) {
@@ -161,18 +214,31 @@ public:
     needsByteSwap = ((dev->endian_little == CL_TRUE) ? false : true);
 #endif
 
+    SHA1_digest_t digest;
+    pocl_tce_device_hash(adfName, dev->llvm_target_triplet,
+                         (char *)digest);
+    this->build_hash = (char *)digest;
+
     initMemoryManagement(simulator.machine());
 
-    pthread_mutex_init (&lock, NULL);
-    pthread_cond_init (&simulation_start_cond, NULL);
+    POCL_INIT_LOCK(lock);
+    POCL_INIT_COND(simulation_start_cond);
     pthread_create (&ttasim_thread, NULL, pocl_ttasim_thread, this);
+    pthread_create(&driver_thread, NULL, pocl_tce_driver_thread, this);
   }
 
   ~TTASimDevice() {
     shutdownRequested = true;
     simulator.stop();
-    pthread_cond_signal (&simulation_start_cond);
-    pthread_join (ttasim_thread, NULL);
+    POCL_LOCK(lock);
+    POCL_SIGNAL_COND(simulation_start_cond);
+    POCL_UNLOCK(lock);
+    POCL_JOIN_THREAD(ttasim_thread);
+
+    POCL_FAST_LOCK(wq_lock);
+    POCL_SIGNAL_COND(wakeup_cond);
+    POCL_FAST_UNLOCK(wq_lock);
+    POCL_JOIN_THREAD(driver_thread);
   }
 
   virtual void copyHostToDevice(const void *host_ptr, uint32_t dest_addr, size_t count) {
@@ -188,7 +254,7 @@ public:
     MemorySystem &mems = simulator.memorySystem();
     MemorySystem::MemoryPtr globalMem = mems.memory (*global_as);
     for (std::size_t i = 0; i < count; ++i) {
-      unsigned char val =  globalMem->read (src_addr + i);
+      Memory::MAU val = globalMem->read(src_addr + i);
       globalMem->write (dest_addr + i, (Memory::MAU)(val));
     }
   }
@@ -228,11 +294,15 @@ public:
   }
 
   virtual void restartProgram() {
-    pthread_cond_signal (&simulation_start_cond);
+    POCL_LOCK(lock);
+    POCL_SIGNAL_COND(simulation_start_cond);
+    POCL_UNLOCK(lock);
   }
 
-  virtual void notifyKernelRunCommandSent
-  (__kernel_exec_cmd& dev_cmd, _cl_command_run *run_cmd) {
+  virtual void notifyKernelRunCommandSent(__kernel_exec_cmd &dev_cmd,
+                                          _cl_command_run *run_cmd,
+                                          uint32_t *gmem_ptr_positions,
+                                          uint32_t gmem_count) {
     if (!produceStandAloneProgram_) return;
 
     static int runCounter = 0;
@@ -242,154 +312,164 @@ public:
 
     TCEString buildScriptFname = baseFname + "_build";
     TCEString fname = baseFname + ".c";
+    TCEString parallel_bc = tempDir + "/parallel.bc";
 
     std::ofstream out(fname.c_str());
 
-    out << " <lwpr.h>" << std::endl;
     out << "#include <pocl_device.h>" << std::endl << std::endl;
 
+    out << "#undef ALIGN4" << std::endl;
+    out << "#define ALIGN4 __attribute__ ((aligned (4)))" << std::endl;
     out << "#define __local__ __attribute__((address_space(" <<  TTA_ASID_LOCAL<< ")))" << std::endl;
     out << "#define __global__ __attribute__((address_space(" << TTA_ASID_GLOBAL << ")))" << std::endl;
-    out << "#define __constant__ __attribute__((address_space( " << TTA_ASID_CONSTANT << " )))" << std::endl << std::endl;
+    out << "#define __constant__ __attribute__((address_space("
+        << TTA_ASID_CONSTANT << ")))" << std::endl
+        << std::endl;
     out << "typedef volatile __global__ __kernel_exec_cmd kernel_exec_cmd;" << std::endl;
 
     /* Need to byteswap back as we are writing C code. */
 #define BSWAP(__X) byteswap_uint32_t (__X, needsByteSwap)
 
     /* The standalone binary shall have the same input data as in the original
-       kernel host-device kernel launch command. The data is put into initialized 
-       global arrays to easily exclude the initialization time from the execution
-       time. Otherwise, the same command data is used for reproducing the execution.
-       For example, the local memory allocations (addresses) are the same as in
-       the original one. */
+       kernel host-device kernel launch command. The data is put into
+       initialized global arrays to easily exclude the initialization time from
+       the execution time. Otherwise, the same command data is used for
+       reproducing the execution. For example, the local memory allocations
+       (addresses) are the same as in the original one. */
 
     /* Create the global buffers along with their initialization data. */
     cl_kernel kernel = run_cmd->kernel;
     pocl_kernel_metadata_t *meta = kernel->meta;
+    uint32_t total_gmems = 0;
+    /* store addresses used for buffer names later*/
+    uint32_t gmem_startaddrs[1024];
+
     for (size_t i = 0; i < meta->num_args; ++i)
       {
         struct pocl_argument *al = &(run_cmd->arguments[i]);
         if (meta->arg_info[i].type == POCL_ARG_TYPE_POINTER)
           {
             if (al->value == NULL) continue;
-            unsigned start_addr = 
-              ((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[parent->dev_id].mem_ptr))->start_address;
-            unsigned size = 
-              ((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[parent->dev_id].mem_ptr))->size;
 
-            out << "__global__ char buffer_" << std::hex << start_addr 
-                << "[] = {" << std::endl << "\t";
+            cl_mem m = *(cl_mem *)(al->value);
+            void *p = m->device_ptrs[parent->global_mem_id].mem_ptr;
+            chunk_info_t *ci = (chunk_info_t *)p;
+            unsigned start_addr = ci->start_address + al->offset;
+            unsigned size = ci->size;
 
-            MemorySystem &mems = simulator.memorySystem();
-            MemorySystem::MemoryPtr globalMem = mems.memory (*global_as);
-            for (std::size_t c = 0; c < size; ++c) {
-              unsigned char val = globalMem->read (start_addr + c);
-              out << "0x" << std::hex << (unsigned int)val;
-              if (c + 1 < size) out << ", ";
-              if (c % 32 == 31) out << std::endl << "\t";
-            }
-            out << std::endl << "}; " << std::endl << std::endl;
-          }
-        else if (!ARG_IS_LOCAL (meta->arg_info[i]))
-          {
-            /* Scalars are stored to global buffers automatically. Dump them to buffers. */
-            unsigned start_addr = BSWAP(dev_cmd.args[i]);
-            unsigned size = al->size;
+            out << "__global__ ALIGN4 char buffer_" << std::hex << start_addr
+                << "[] = {\n";
 
-            out << "__global__ char scalar_arg_" << std::dec << i 
-                << "[] = {" << std::endl << "\t";
+            gmem_startaddrs[total_gmems++] = start_addr;
 
             MemorySystem &mems = simulator.memorySystem();
             MemorySystem::MemoryPtr globalMem = mems.memory (*global_as);
             for (std::size_t c = 0; c < size; ++c) {
+              if (c % 32 == 0)
+                out << std::endl << "\t";
               unsigned char val = globalMem->read (start_addr + c);
               out << "0x" << std::hex << (unsigned int)val;
               if (c + 1 < size) out << ", ";
-              if (c % 32 == 31) out << std::endl << "\t";
             }
-            out << std::endl << "}; " << std::endl << std::endl;
+            out << std::endl << "};" << std::endl << std::endl;
           }
       }
-    
-    /* Setup the kernel command initialization values, pointing to the
-       global buffers for the buffer arguments, and using the original values
-       for the rest. */       
+      assert(total_gmems == gmem_count);
 
-    TCEString kernelMdSymbolName = "_";
-    kernelMdSymbolName += run_cmd->kernel->name;
-    kernelMdSymbolName += "_md";
-
-    out << "extern __global__ __kernel_metadata " << kernelMdSymbolName << ";" << std::endl << std::endl;
-
-    out << "kernel_exec_cmd kernel_command = {" << std::endl
-        << "\t.status = " << std::hex << "(uint32_t)0x" << BSWAP(dev_cmd.status) 
-        << "," << std::endl
-        << "\t.work_dim = " << std::dec << BSWAP(dev_cmd.work_dim) 
-        << ", " << std::endl
-        << "\t.num_groups = {" 
-        << std::dec << BSWAP(dev_cmd.num_groups[0]) << ", "
-        << std::dec << BSWAP(dev_cmd.num_groups[1]) << ", "
-        << std::dec << BSWAP(dev_cmd.num_groups[2]) << "}," << std::endl
-        << "\t.global_offset = {"
-        << std::dec << BSWAP(dev_cmd.global_offset[0]) << ", "
-        << std::dec << BSWAP(dev_cmd.global_offset[1]) << ", "
-        << std::dec << BSWAP(dev_cmd.global_offset[2]) << "}" << std::endl
-        << "};" << std::endl;
-
-    out << std::endl;
-    out << "__attribute__((noinline))" << std::endl;
-    out << "void initialize_kernel_launch() {" << std::endl;
-
-    out << "\tkernel_command.kernel = (uint32_t)&" << kernelMdSymbolName << ";" << std::endl;
-    size_t a = 0;
-    for (; a < meta->num_args; ++a)
+      /* Scalars (+addresses of global/local buffers) are stored to a single
+       * global buffer. */
       {
-        struct pocl_argument *al = &(run_cmd->arguments[a]);
-        out << "\tkernel_command.args[" << std::dec << a << "] = ";
+        unsigned start_addr = BSWAP(dev_cmd.args);
+        unsigned size = BSWAP(dev_cmd.args_size);
 
-        if (ARG_IS_LOCAL (meta->arg_info[a]))
-          {
-            /* Local buffers are managed by the host so the local
-               addresses are already valid. */
-            out << "(uint32_t)" << "0x" << std::hex << BSWAP(dev_cmd.args[a]);
-          }
-        else if (meta->arg_info[a].type == POCL_ARG_TYPE_POINTER && dev_cmd.args[a] != 0)
-          {
-            unsigned start_addr = 
-              ((chunk_info_t*)((*(cl_mem *) (al->value))->device_ptrs[parent->dev_id].mem_ptr))->start_address;
-            
-            out << "(uint32_t)&buffer_" << std::hex << start_addr << "[0]";
-          }
-        else 
-          {
-            /* Scalars have been stored to global memory automatically. Point
-               to the generated buffers.
-             */
-            out << "(uint32_t)&scalar_arg_" << std::dec << a;
-          }
-        out << ";" << std::endl;
-    }   
-    
-    for (; a < meta->num_locals; ++a)
+        out << "__global__ ALIGN4 char arg_buffer[] = {" << std::endl << "\t";
+
+        MemorySystem &mems = simulator.memorySystem();
+        MemorySystem::MemoryPtr globalMem = mems.memory(*global_as);
+        for (std::size_t c = 0; c < size; ++c) {
+          unsigned char val = globalMem->read(start_addr + c);
+          out << "0x" << std::hex << (unsigned int)val;
+          if (c + 1 < size)
+            out << ", ";
+          if (c % 32 == 31)
+            out << std::endl << "\t";
+        }
+        out << std::endl << "};" << std::endl << std::endl;
+      }
+
+      /* pocl_context is stored in a global buffer too; copy it. */
       {
-        out << "\tkernel_command.args[" << std::dec << (meta->num_args + a) << "] = ";
-        out << "(uint32_t)" << "0x" << std::hex << BSWAP(dev_cmd.args[meta->num_args + a]);
+        unsigned start_addr = BSWAP(dev_cmd.ctx);
+        unsigned size = BSWAP(dev_cmd.ctx_size);
+
+        out << "__global__ ALIGN4 char ctx_buffer[] = {" << std::endl << "\t";
+
+        MemorySystem &mems = simulator.memorySystem();
+        MemorySystem::MemoryPtr globalMem = mems.memory(*global_as);
+        for (std::size_t c = 0; c < size; ++c) {
+          unsigned char val = globalMem->read(start_addr + c);
+          out << "0x" << std::hex << (unsigned int)val;
+          if (c + 1 < size)
+            out << ", ";
+          if (c % 32 == 31)
+            out << std::endl << "\t";
+        }
+        out << std::endl << "};" << std::endl << std::endl;
+      }
+
+      /* Setup the kernel command initialization values, pointing to the
+         global buffers for the buffer arguments, and using the original values
+         for the rest. */
+
+      TCEString kernelMdSymbolName = "_";
+      kernelMdSymbolName += run_cmd->kernel->name;
+      kernelMdSymbolName += "_md";
+
+      out << "extern __global__ __kernel_metadata " << kernelMdSymbolName << ";"
+          << std::endl
+          << std::endl;
+
+      out << "ALIGN4 kernel_exec_cmd kernel_command = {" << std::endl
+          << "\t.status = " << std::hex << "(uint32_t)0x"
+          << BSWAP(dev_cmd.status) << ",\n"
+          << "\t.args_size = " << std::hex << "(uint32_t)0x"
+          << BSWAP(dev_cmd.args_size) << ",\n"
+          << "\t.ctx_size = " << std::hex << "(uint32_t)0x"
+          << BSWAP(dev_cmd.ctx_size) << ",\n"
+          << "};" << std::endl;
+
+      out << std::endl;
+      out << "__attribute__((noinline))" << std::endl;
+      out << "void initialize_kernel_launch() {" << std::endl;
+
+      // update the args and ctx pointers with actual addresses
+      out << "\tkernel_command.args = (uint32_t)&arg_buffer;\n";
+      out << "\tkernel_command.ctx = (uint32_t)&ctx_buffer;\n";
+      out << "\tkernel_command.kernel_meta = (uint32_t)&" << kernelMdSymbolName
+          << ";\n";
+
+      out << "\tchar* kernargs = (char*)kernel_command.args;\n";
+      out << "\tchar* temp = 0;\n\tuint32_t *tmp = 0;\n";
+      for (size_t i = 0; i < gmem_count; ++i) {
+        out << "\ttemp = kernargs + " << std::dec << gmem_ptr_positions[i]
+            << ";\n";
+        out << "\ttmp = (uint32_t*)temp;\n";
+        out << "\t*tmp = (uint32_t)&buffer_" << std::hex << gmem_startaddrs[i]
+            << "[0]";
         out << ";" << std::endl;
       }
 
-    //    out << "\tlwpr_print_str(\"tta: initialized the standalone kernel lauch\\n\");" << std::endl;
-    out << "}" << std::endl;     
-    out.close();
+      out << "}" << std::endl;
+      out.close();
 
-    // Create the build script.
+      // Create the build script.
+      TCEString inputFiles = fname + " " + parallel_bc;
+      std::ofstream scriptout(buildScriptFname.c_str());
+      scriptout << tceccCommandLine(run_cmd, tempDir, inputFiles.c_str(),
+                                    "standalone.tpef", " -D_STANDALONE_MODE=1");
+      scriptout.close();
 
-    std::ofstream scriptout(buildScriptFname.c_str());
-    scriptout 
-        << tceccCommandLine(run_cmd, fname + " " + tempDir + "/parallel.bc", 
-                            "standalone.tpef", " -D_STANDALONE_MODE=1");
-    scriptout.close();
-
-    ++runCounter;
+      ++runCounter;
   }
 
 
@@ -397,11 +477,11 @@ public:
   /* A Command Line Interface for debugging. */
   SimulatorCLI simulatorCLI;
   volatile bool debuggerRequested;
-  volatile bool shutdownRequested;
 
-  pthread_t ttasim_thread;
-  pthread_cond_t simulation_start_cond;
-  pthread_mutex_t lock;
+  pocl_thread_t ttasim_thread;
+  pocl_thread_t driver_thread;
+  pocl_cond_t simulation_start_cond;
+  pocl_lock_t lock;
 
 private:
 
@@ -458,23 +538,31 @@ pocl_ttasim_thread (void *p)
 {
   TTASimDevice *d = (TTASimDevice*)p;
   do {
-    if (d->shutdownRequested) pthread_exit(NULL);
+    if (d->shutdownRequested)
+      goto EXIT;
+    POCL_LOCK(d->lock);
     pthread_cond_wait (&d->simulation_start_cond, &d->lock);
-    if (d->shutdownRequested) pthread_exit(NULL);
-    do {
-        d->simulator.run();
-        if (d->debuggerRequested) {
-            d->debuggerRequested = false;
-            d->simulatorCLI.run();
-            continue;
-        }
+    POCL_UNLOCK(d->lock);
+    if (d->shutdownRequested)
+      goto EXIT;
 
-        if (d->simulator.hadRuntimeError()) {
-            d->simulatorCLI.run();
-            POCL_ABORT("Runtime error in a ttasim device.\n");
-        }
-    } while (false);
+    d->simulator.run();
+
+    if (d->debuggerRequested) {
+      d->debuggerRequested = false;
+      d->simulatorCLI.run();
+      continue;
+    }
+
+    if (d->simulator.hadRuntimeError()) {
+      //            POCL_MSG_ERR ("Runtime error in a ttasim device! Launching
+      //            debugger CLI \n"); d->simulatorCLI.run();
+      POCL_ABORT("Runtime error in a ttasim device.\n");
+    }
+
   } while (true);
+
+EXIT:
   return NULL;
 }
 
@@ -510,6 +598,10 @@ private:
   TTASimDevice* d_;
 };
 
+static const char *tta_native_device_aux_funcs[] = {"_pocl_memcpy_1",
+                                                    "_pocl_memcpy_4", NULL};
+
+static const char *tce_params[256];
 
 cl_int
 pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
@@ -522,6 +614,7 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->max_compute_units = 1;
   dev->max_work_item_dimensions = 3;
   dev->device_side_printf = 0;
+  tce_params[j] = parameters;
 
   int max_wg
       = pocl_get_int_option ("POCL_MAX_WORK_GROUP_SIZE", DEFAULT_WG_SIZE);
@@ -581,7 +674,8 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->global_as_id = TTA_ASID_GLOBAL;
   dev->local_as_id = TTA_ASID_LOCAL;
   dev->constant_as_id = TTA_ASID_CONSTANT;
-  dev->context_as_id = 0;
+  dev->args_as_id = TTA_ASID_GLOBAL;
+  dev->context_as_id = TTA_ASID_GLOBAL;
 
   SETUP_DEVICE_CL_VERSION (TCE_DEVICE_CL_VERSION_MAJOR,
                            TCE_DEVICE_CL_VERSION_MINOR);
@@ -598,38 +692,28 @@ pocl_ttasim_init (unsigned j, cl_device_id dev, const char* parameters)
   dev->mem_base_addr_align =
       dev->min_data_type_align_size = 16;
 
-  new TTASimDevice(dev, parameters);
+  dev->data = new TTASimDevice(dev, parameters);
+
+  dev->arg_buffer_launcher = CL_TRUE;
+  dev->grid_launcher = CL_FALSE;
+  dev->device_aux_functions = tta_native_device_aux_funcs;
+
+  dev->mem_base_addr_align = 128;
+  dev->min_data_type_align_size = 128;
+
   return CL_SUCCESS;
 }
 
 cl_int
 pocl_ttasim_uninit (unsigned j, cl_device_id device)
 {
-  delete (TTASimDevice*)device->data;
+  POCL_MSG_PRINT_TCE("DEV UNINIT \n");
+  delete (TTASimDevice *)device->data;
   return CL_SUCCESS;
 }
 
-void pocl_ttasim_update_event (cl_device_id device, cl_event event, cl_int status)
-{
-  TTASimDevice *d = (TTASimDevice *)device->data;
-  switch (status)
-    {
-    case CL_QUEUED:
-      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-        event->time_queue = d->timeStamp();
-      break;
-    case CL_SUBMITTED:
-      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-        event->time_submit = d->timeStamp();
-      break;
-    case CL_RUNNING:
-      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-        event->time_start = d->timeStamp();
-      break;
-    case CL_COMPLETE:
-      POCL_MSG_PRINT_INFO("TTA: Command complete, event %zu\n", event->id);
-      POCL_LOCK_OBJ (event);
-      if (event->queue->properties & CL_QUEUE_PROFILING_ENABLE)
-        event->time_end = d->timeStamp();
-    }
+cl_int pocl_ttasim_reinit(unsigned j, cl_device_id device) {
+  POCL_MSG_PRINT_TCE("DEV REINIT \n");
+  device->data = new TTASimDevice(device, tce_params[j]);
+  return CL_SUCCESS;
 }

@@ -170,6 +170,8 @@ Workgroup::runOnModule(Module &M) {
   getModuleIntMetadata(M, "device_address_bits", address_bits);
   getModuleBoolMetadata(M, "device_arg_buffer_launcher",
                         DeviceUsingArgBufferLauncher);
+  getModuleBoolMetadata(M, "device_grid_launcher",
+                        DeviceUsingGridLauncher);
   getModuleBoolMetadata(M, "device_is_spmd", DeviceIsSPMD);
 
   getModuleStringMetadata(M, "KernelName", KernelName);
@@ -267,7 +269,8 @@ Workgroup::runOnModule(Module &M) {
       L->addFnAttr(Attribute::NoInline);
       L->removeFnAttr(Attribute::AlwaysInline);
       WGLauncher->addFnAttr(Attribute::AlwaysInline);
-      createGridLauncher(L, WGLauncher, OrigKernel.getName().str());
+      if (DeviceUsingGridLauncher)
+        createGridLauncher(L, WGLauncher, OrigKernel.getName().str());
     } else if (DeviceIsSPMD) {
       // For SPMD machines there is no need for a WG launcher, the device will
       // call/handle the single-WI kernel function directly.

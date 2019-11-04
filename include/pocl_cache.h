@@ -79,11 +79,9 @@ int pocl_cache_append_to_buildlog(cl_program  program,
 int pocl_cache_device_cachedir_exists(cl_program   program,
                                       unsigned device_i);
 
-int pocl_cache_write_descriptor(cl_program   program,
-                                unsigned     device_i,
-                                const char*  kernel_name,
-                                const char*  content,
-                                size_t       size);
+int pocl_cache_write_descriptor (_cl_command_node *Command, cl_kernel kernel,
+                                 int Specialize, const char *content,
+                                 size_t size);
 
 void pocl_cache_kernel_cachedir_path (char *kernel_cachedir_path,
                                       cl_program program, unsigned device_i,

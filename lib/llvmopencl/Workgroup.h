@@ -114,6 +114,7 @@ namespace pocl {
     bool WGAssumeZeroGlobalOffset;
     bool WGDynamicLocalSize;
     bool DeviceUsingArgBufferLauncher;
+    bool DeviceUsingGridLauncher;
     bool DeviceIsSPMD;
     unsigned long WGLocalSizeX;
     unsigned long WGLocalSizeY;

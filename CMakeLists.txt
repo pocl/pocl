@@ -471,7 +471,17 @@ endif()
 
 ######################################################################################
 
-if (ENABLE_LLVM)
+if(ENABLE_LLVM)
+
+  # this must be done before including LLVM,
+  # so we can check that TCE's LLVM and the found LLVM is the same.
+  if(NOT WITH_TCE)
+    set(WITH_TCE ENV PATH)
+  endif()
+
+  find_program(TCE_CONFIG NAMES "tce-config" HINTS ${WITH_TCE})
+  find_program(TCECC NAMES "tcecc" HINTS ${WITH_TCE})
+  find_program(TTASIM NAMES "ttasim" HINTS ${WITH_TCE})
 
   include(LLVM RESULT_VARIABLE RES)
   if(NOT RES)
@@ -1199,17 +1209,9 @@ if(NOT DEFINED DEFAULT_ENABLE_TCE)
   set(HAVE_TCE 0)
   set(HAVE_TCEMC 0)
 
-  if (NOT WITH_TCE)
-    set(WITH_TCE ENV PATH)
-  endif()
-
   # THESE are only used in makefile.am & scripts/pocl*
   set(TCE_TARGET_CLANG_FLAGS "" CACHE STRING "Extra parameters to Clang for TCE compilation.")
   set(TCE_TARGET_LLC_FLAGS "" CACHE STRING "Extra parameters to LLVM's llc for TCE compilation.")
-
-  find_program(TCE_CONFIG NAMES "tce-config" HINTS ${WITH_TCE})
-  find_program(TCECC NAMES "tcecc" HINTS ${WITH_TCE})
-  find_program(TTASIM NAMES "ttasim" HINTS ${WITH_TCE})
 
   if(TCE_CONFIG AND TCECC AND TTASIM)
 
@@ -1280,7 +1282,7 @@ if(ENABLE_TCE)
     set(ENABLE_TCEMC 1)
     set(OCL_DRIVERS "${OCL_DRIVERS} tcemc") # TCEMC is a "superset" of TCE (lp:tce) features.
   endif()
-  set(TCE_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_global_int32_base_atomics cl_khr_global_int32_extended_atomics cl_khr_local_int32_base_atomics cl_khr_local_int32_extended_atomics cl_khr_fp16 cl_khr_spir")
+  set(TCE_DEVICE_EXTENSIONS "cl_khr_byte_addressable_store cl_khr_fp16 cl_khr_spir")
   set(TEMP_EXT "${TCE_DEVICE_EXTENSIONS}")
   set(TCE_DEVICE_EXTENSION_DEFINES "")
   separate_arguments(TEMP_EXT)
@@ -1463,7 +1465,6 @@ set(BUILD_HSA ${ENABLE_HSA})
 set(TCE_AVAILABLE ${ENABLE_TCE})
 set(TCEMC_AVAILABLE ${ENABLE_TCEMC})
 set(_CL_DISABLE_HALF ${CL_DISABLE_HALF})
-set(PACKAGE_VERSION "${POCL_VERSION}")
 
 configure_file("config.h.in.cmake" "config.h.new" ESCAPE_QUOTES)
 rename_if_different("${CMAKE_BINARY_DIR}/config.h.new" "${CMAKE_BINARY_DIR}/config.h")

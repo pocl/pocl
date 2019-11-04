@@ -277,27 +277,28 @@ int pocl_cache_device_cachedir_exists(cl_program   program,
 
 /******************************************************************************/
 
-int pocl_cache_write_descriptor(cl_program   program,
-                                unsigned     device_i,
-                                const char*  kernel_name,
-                                const char*  content,
-                                size_t       size) {
-    char devdir[POCL_FILENAME_LENGTH];
-    program_device_dir(devdir, program, device_i, "");
+int
+pocl_cache_write_descriptor (_cl_command_node *command, cl_kernel kernel,
+                             int specialize, const char *content, size_t size)
+{
+  char dirr[POCL_FILENAME_LENGTH];
 
-    char descriptor[POCL_FILENAME_LENGTH];
-    int bytes_written = snprintf(descriptor, POCL_FILENAME_LENGTH,
-                                 "%s/%s", devdir, kernel_name);
-    assert(bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
-    if (pocl_mkdir_p(descriptor))
-        return 1;
+  pocl_cache_kernel_cachedir_path (dirr, kernel->program, command->device_i,
+                                   kernel, "", command, specialize);
 
-    bytes_written = snprintf(descriptor, POCL_FILENAME_LENGTH,
-                                 "%s/%s/descriptor.so.kernel_obj.c",
-                                 devdir, kernel_name);
-    assert(bytes_written > 0 && bytes_written < POCL_FILENAME_LENGTH);
+  char descriptor[POCL_FILENAME_LENGTH];
 
-    return pocl_write_file(descriptor, content, size, 0, 1);
+  pocl_cache_kernel_cachedir_path (
+      descriptor, kernel->program, command->device_i, kernel,
+      "/../descriptor.so.kernel_obj.c", command, specialize);
+
+  if (pocl_exists (descriptor))
+    return 0;
+
+  if (pocl_mkdir_p (dirr))
+    return -1;
+
+  return pocl_write_file (descriptor, content, size, 0, 1);
 }
 
 /******************************************************************************/

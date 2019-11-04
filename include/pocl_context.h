@@ -34,8 +34,8 @@ struct pocl_context32 {
   uint num_groups[3];
   uint global_offset[3];
   uint local_size[3];
-  unsigned char *printf_buffer;
-  uint *printf_buffer_position;
+  uint printf_buffer;
+  uint printf_buffer_position;
   uint printf_buffer_capacity;
   uint work_dim;
 };

@@ -110,7 +110,6 @@ void pocl_print_system_memory_stats();
 POCL_EXPORT
 void pocl_init_default_device_infos (cl_device_id dev);
 
-
 #ifdef __cplusplus
 }
 #endif

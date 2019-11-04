@@ -441,6 +441,8 @@ int pocl_llvm_generate_workgroup_function_nowrite(
   setModuleIntMetadata(ParallelBC, "device_address_bits", Device->address_bits);
   setModuleBoolMetadata(ParallelBC, "device_arg_buffer_launcher",
                         Device->arg_buffer_launcher);
+  setModuleBoolMetadata(ParallelBC, "device_grid_launcher",
+                        Device->grid_launcher);
   setModuleBoolMetadata(ParallelBC, "device_is_spmd", Device->spmd);
 
   setModuleStringMetadata(ParallelBC, "KernelName", Kernel->name);

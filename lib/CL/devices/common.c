@@ -1280,7 +1280,6 @@ pocl_print_system_memory_stats()
                     system_memory.max_ever_allocated >> 10);
 }
 
-
 /* default WG size in each dimension & total WG size.
  * this should be reasonable for CPU */
 #define DEFAULT_WG_SIZE 4096
@@ -1453,6 +1452,7 @@ pocl_init_default_device_infos (cl_device_id dev)
   dev->linker_available = CL_TRUE;
   dev->spmd = CL_FALSE;
   dev->arg_buffer_launcher = CL_FALSE;
+  dev->grid_launcher = CL_FALSE;
   dev->workgroup_pass = CL_TRUE;
   dev->execution_capabilities = CL_EXEC_KERNEL | CL_EXEC_NATIVE_KERNEL;
   dev->platform = 0;

@@ -918,6 +918,8 @@ struct _cl_device_id {
   /* The device uses an HSA-like kernel ABI with a single argument buffer as
      an input. */
   cl_bool arg_buffer_launcher;
+  /* The device uses a GRID launcher */
+  cl_bool grid_launcher;
   /* The Workgroup pass creates launcher functions and replaces work-item
      placeholder global variables (e.g. _local_size_, _global_offset_ etc) with
      loads from the context struct passed as a kernel argument. This flag

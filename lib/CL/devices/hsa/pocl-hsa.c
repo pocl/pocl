@@ -489,6 +489,7 @@ get_hsa_device_features(char* dev_name, struct _cl_device_id* dev)
               if (dev->llvm_target_triplet == NULL)
                 dev->llvm_target_triplet = OCL_KERNEL_TARGET;
               dev->arg_buffer_launcher = CL_TRUE;
+              dev->grid_launcher = CL_TRUE;
             }
           COPY_ATTR (has_64bit_long);
           COPY_ATTR (vendor_id);
@@ -681,6 +682,7 @@ pocl_hsa_init (unsigned j, cl_device_id dev, const char *parameters)
 
   dev->spmd = CL_TRUE;
   dev->arg_buffer_launcher = CL_FALSE;
+  dev->grid_launcher = CL_FALSE;
   dev->autolocals_to_args = POCL_AUTOLOCALS_TO_ARGS_NEVER;
   dev->device_alloca_locals = CL_FALSE;
 

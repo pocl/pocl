@@ -876,7 +876,7 @@ static llvm::Module *getKernelLibrary(cl_device_id device,
   bool is_host = true;
   // TODO: move this to the device layer, a property to ask for
   // the kernel builtin bitcode library name, including its subdir
-#ifdef TCE_AVAILABLE
+#if defined(TCE_AVAILABLE)
   if (triple.getArch() == Triple::tce || triple.getArch() == Triple::tcele) {
     subdir = "tce";
     is_host = false;
@@ -922,7 +922,8 @@ static llvm::Module *getKernelLibrary(cl_device_id device,
     kernellib_fallback = kernellib;
     kernellib_fallback += OCL_KERNEL_TARGET_CPU;
     kernellib_fallback += ".bc";
-    kernellib += device->llvm_cpu;
+    if (device->llvm_cpu)
+      kernellib += device->llvm_cpu;
 #endif
   }
   kernellib += ".bc";
