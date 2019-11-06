@@ -240,7 +240,7 @@ llvm_codegen (char *output, unsigned device_i, cl_kernel kernel,
     }
 
 FINISH:
-  pocl_destroy_llvm_module (llvm_module);
+  pocl_destroy_llvm_module (llvm_module, kernel->context);
   POCL_MEM_FREE (objfile);
   POCL_MEASURE_FINISH (llvm_codegen);
 

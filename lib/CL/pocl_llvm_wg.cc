@@ -163,9 +163,7 @@ static TargetMachine *GetTargetMachine(cl_device_id device, Triple &triple) {
 }
 /* helpers copied from LLVM opt END */
 
-static PassManager &
-kernel_compiler_passes(cl_device_id device, llvm::Module *input,
-                       const std::string &module_data_layout) {
+static PassManager &kernel_compiler_passes(cl_device_id device) {
 
   PassManager *Passes = nullptr;
   PassRegistry *Registry = nullptr;
@@ -346,15 +344,15 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
   return *Passes;
 }
 
-void pocl_destroy_llvm_module(void *modp) {
+void pocl_destroy_llvm_module(void *modp, cl_context ctx) {
 
   PoclCompilerMutexGuard lockHolder(NULL);
-  InitializeLLVM();
+  PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
 
   llvm::Module *mod = (llvm::Module *)modp;
   if (mod) {
     delete mod;
-    --numberOfIRs;
+    --llvm_ctx->number_of_IRs;
   }
 }
 
@@ -375,11 +373,12 @@ int pocl_llvm_generate_workgroup_function_nowrite(
 
   _cl_command_run *RunCommand = &Command->command.run;
   cl_program Program = Kernel->program;
+  cl_context ctx = Program->context;
+  PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
 
   currentPoclDevice = Device;
 
   PoclCompilerMutexGuard LockHolder(NULL);
-  InitializeLLVM();
 
 #ifdef DEBUG_POCL_LLVM_API
   printf("### calling the kernel compiler for kernel %s local_x %zu "
@@ -393,7 +392,7 @@ int pocl_llvm_generate_workgroup_function_nowrite(
   // Create an empty Module and copy only the kernel+callgraph from
   // program.bc.
   llvm::Module *ParallelBC =
-      new llvm::Module(StringRef("parallel_bc"), GlobalContext());
+      new llvm::Module(StringRef("parallel_bc"), *llvm_ctx->Context);
 
   ParallelBC->setTargetTriple(ProgramBC->getTargetTriple());
   ParallelBC->setDataLayout(ProgramBC->getDataLayout());
@@ -433,15 +432,7 @@ int pocl_llvm_generate_workgroup_function_nowrite(
   llvm::TimePassesIsEnabled = true;
 #endif
   POCL_MEASURE_START(llvm_workgroup_ir_func_gen);
-#ifdef LLVM_OLDER_THAN_3_7
-  kernel_compiler_passes(Device, ParallelBC,
-                         ParallelBC->getDataLayout()->getStringRepresentation())
-      .run(*ParallelBC);
-#else
-  kernel_compiler_passes(Device, ParallelBC,
-                         ParallelBC->getDataLayout().getStringRepresentation())
-      .run(*ParallelBC);
-#endif
+  kernel_compiler_passes(Device).run(*ParallelBC);
   POCL_MEASURE_FINISH(llvm_workgroup_ir_func_gen);
 #ifdef DUMP_LLVM_PASS_TIMINGS
   llvm::reportAndResetTimings();
@@ -449,12 +440,12 @@ int pocl_llvm_generate_workgroup_function_nowrite(
 
   // Print loop vectorizer remarks if enabled.
   if (pocl_get_bool_option("POCL_VECTORIZER_REMARKS", 0) == 1) {
-    std::cout << getDiagString();
+    std::cout << getDiagString(ctx);
   }
 
   assert(Output != NULL);
   *Output = (void *)ParallelBC;
-  ++numberOfIRs;
+  ++llvm_ctx->number_of_IRs;
   return 0;
 }
 
@@ -462,7 +453,7 @@ int pocl_llvm_generate_workgroup_function(unsigned DeviceI, cl_device_id Device,
                                           cl_kernel Kernel,
                                           _cl_command_node *Command,
                                           int Specialize) {
-
+  cl_context ctx = Kernel->context;
   void *Module = NULL;
 
   char ParallelBCPath[POCL_FILENAME_LENGTH];
@@ -493,7 +484,7 @@ int pocl_llvm_generate_workgroup_function(unsigned DeviceI, cl_device_id Device,
     return Error;
   }
 
-  pocl_destroy_llvm_module(Module);
+  pocl_destroy_llvm_module(Module, ctx);
   return Error;
 }
 
@@ -502,31 +493,34 @@ int pocl_llvm_generate_workgroup_function(unsigned DeviceI, cl_device_id Device,
 int pocl_llvm_read_program_llvm_irs(cl_program program, unsigned device_i,
                                     const char *program_bc_path) {
   PoclCompilerMutexGuard lockHolder(nullptr);
-  InitializeLLVM();
+  cl_context ctx = program->context;
+  PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
 
   if (program->data[device_i] != nullptr)
     return CL_SUCCESS;
 
   if (program->binaries[device_i])
-    program->data[device_i] = parseModuleIRMem(
-        (char *)program->binaries[device_i], program->binary_sizes[device_i]);
+    program->data[device_i] =
+        parseModuleIRMem((char *)program->binaries[device_i],
+                         program->binary_sizes[device_i], ctx);
   else {
     // TODO
     assert(program_bc_path);
-    program->data[device_i] = parseModuleIR(program_bc_path);
+    program->data[device_i] = parseModuleIR(program_bc_path, llvm_ctx->Context);
   }
   assert(program->data[device_i]);
-  ++numberOfIRs;
+  ++llvm_ctx->number_of_IRs;
   return CL_SUCCESS;
 }
 
 void pocl_llvm_free_llvm_irs(cl_program program, unsigned device_i) {
+  cl_context ctx = program->context;
+  PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
   if (program->data[device_i]) {
     PoclCompilerMutexGuard lockHolder(nullptr);
-    InitializeLLVM();
     llvm::Module *mod = (llvm::Module *)program->data[device_i];
     delete mod;
-    --numberOfIRs;
+    --llvm_ctx->number_of_IRs;
     program->data[device_i] = nullptr;
   }
 }
@@ -535,7 +529,6 @@ void pocl_llvm_free_llvm_irs(cl_program program, unsigned device_i) {
 int pocl_llvm_update_binaries(cl_program program, cl_uint device_i) {
 
   PoclCompilerMutexGuard lockHolder(NULL);
-  InitializeLLVM();
 
   char program_bc_path[POCL_FILENAME_LENGTH];
   int error;
@@ -594,7 +587,6 @@ int pocl_llvm_codegen(cl_device_id Device, void *Modp, char **Output,
                       uint64_t *OutputSize) {
 
   PoclCompilerMutexGuard LockHolder(nullptr);
-  InitializeLLVM();
 
   llvm::Module *Input = (llvm::Module *)Modp;
   assert(Input);

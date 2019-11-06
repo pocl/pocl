@@ -31,93 +31,96 @@
 extern "C" {
 #endif
 
-/* Returns the cpu name as reported by LLVM. */
-POCL_EXPORT
-char *get_llvm_cpu_name ();
-/* Returns if the cpu supports FMA instruction (uses LLVM). */
-int cpu_has_fma();
+  void InitializeLLVM ();
+  void UnInitializeLLVM ();
 
-int bitcode_is_triple (const char *bitcode, size_t size, const char *triple);
+  /* Returns the cpu name as reported by LLVM. */
+  POCL_EXPORT
+  char *get_llvm_cpu_name ();
+  /* Returns if the cpu supports FMA instruction (uses LLVM). */
+  int cpu_has_fma ();
 
-/* Sets up the native/preferred vector widths at runtime (using LLVM). */
-void cpu_setup_vector_widths(cl_device_id dev);
+  int bitcode_is_triple (const char *bitcode, size_t size, const char *triple);
 
-/* Compiles an .cl file into LLVM IR.
- */
-int pocl_llvm_build_program(cl_program program,
-                            unsigned device_i,
-                            cl_uint num_input_headers,
-                            const cl_program *input_headers,
-                            const char **header_include_names,
-                            int linking_program);
+  /* Sets up the native/preferred vector widths at runtime (using LLVM). */
+  void cpu_setup_vector_widths (cl_device_id dev);
 
-/* Retrieve metadata of the given kernel in the program to populate the
- * cl_kernel object.
- */
-int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i);
+  /* Compiles an .cl file into LLVM IR.
+   */
+  int pocl_llvm_build_program (cl_program program, unsigned device_i,
+                               cl_uint num_input_headers,
+                               const cl_program *input_headers,
+                               const char **header_include_names,
+                               int linking_program);
 
-/* This function links the input kernel LLVM bitcode and the OpenCL kernel
- * runtime library into one LLVM module, then runs pocl's kernel compiler
- * passes on that module to produce a function that executes all work-items in
- * a work-group.
- *
- * Output is a LLVM bitcode file that contains a work-group function and its
- * associated launchers. If @param Specialize is set to true, generates a
- * WG function that might be specialized according to the properties of
- * the given Command.
- */
-int pocl_llvm_generate_workgroup_function (unsigned DeviceI,
-                                           cl_device_id Device,
-                                           cl_kernel Kernel,
-                                           _cl_command_node *Command,
-                                           int Specialize);
+  /* Retrieve metadata of the given kernel in the program to populate the
+   * cl_kernel object.
+   */
+  int pocl_llvm_get_kernels_metadata (cl_program program, unsigned device_i);
 
-int pocl_llvm_generate_workgroup_function_nowrite (
-    unsigned DeviceI, cl_device_id Device, cl_kernel Kernel,
-    _cl_command_node *Command, void **output, int Specialize);
-/**
- * Free the LLVM IR of a program for a given device
- */
-void pocl_llvm_free_llvm_irs (cl_program program, unsigned device_i);
+  /* This function links the input kernel LLVM bitcode and the OpenCL kernel
+   * runtime library into one LLVM module, then runs pocl's kernel compiler
+   * passes on that module to produce a function that executes all work-items
+   * in a work-group.
+   *
+   * Output is a LLVM bitcode file that contains a work-group function and its
+   * associated launchers. If @param Specialize is set to true, generates a
+   * WG function that might be specialized according to the properties of
+   * the given Command.
+   */
+  int pocl_llvm_generate_workgroup_function (unsigned DeviceI,
+                                             cl_device_id Device,
+                                             cl_kernel Kernel,
+                                             _cl_command_node *Command,
+                                             int Specialize);
 
-/* calls delete on the module. */
-void pocl_destroy_llvm_module(void *modp);
+  int pocl_llvm_generate_workgroup_function_nowrite (
+      unsigned DeviceI, cl_device_id Device, cl_kernel Kernel,
+      _cl_command_node *Command, void **output, int Specialize);
+  /**
+   * Free the LLVM IR of a program for a given device
+   */
+  void pocl_llvm_free_llvm_irs (cl_program program, unsigned device_i);
 
-int pocl_llvm_remove_file_on_signal (const char *file);
+  /* calls delete on the module. */
+  void pocl_destroy_llvm_module (void *modp, cl_context ctx);
 
-void pocl_llvm_release();
-/**
- * Update the program->binaries[] representation of the kernels
- * from the program->data[] LLVM IR representation.
- * Also updates the 'program.bc' file in the POCL_TEMP_DIR cache.
- */
-int pocl_llvm_update_binaries (cl_program program, cl_uint device_i);
+  int pocl_llvm_remove_file_on_signal (const char *file);
 
-/**
- * Count the number of "__kernel" functions in 'program'.
- *
- * Results are valid as long as program binary is not modified.
- */
-unsigned pocl_llvm_get_kernel_count(cl_program program, unsigned device_i);
+  void pocl_llvm_create_context (cl_context ctx);
+  void pocl_llvm_release_context (cl_context ctx);
 
-/** Compile the kernel in infile from LLVM bitcode to native object file for
- * device, into outfile.
- */
-int pocl_llvm_codegen(cl_device_id device, void *modp,
-                      char **output, uint64_t *output_size);
+  /**
+   * Update the program->binaries[] representation of the kernels
+   * from the program->data[] LLVM IR representation.
+   * Also updates the 'program.bc' file in the POCL_TEMP_DIR cache.
+   */
+  int pocl_llvm_update_binaries (cl_program program, cl_uint device_i);
 
-/* Parse program file and populate program's llvm_irs */
-int pocl_llvm_read_program_llvm_irs (cl_program program, unsigned device_i,
-                                     const char *path);
+  /**
+   * Count the number of "__kernel" functions in 'program'.
+   *
+   * Results are valid as long as program binary is not modified.
+   */
+  unsigned pocl_llvm_get_kernel_count (cl_program program, unsigned device_i);
 
-int pocl_llvm_link_program (cl_program program, unsigned device_i,
-                            cl_uint num_input_programs,
-                            unsigned char **cur_device_binaries,
-                            size_t *cur_device_binary_sizes,
-                            void **cur_llvm_irs, int link_program, int spir);
+  /** Compile the kernel in infile from LLVM bitcode to native object file for
+   * device, into outfile.
+   */
+  int pocl_llvm_codegen (cl_device_id device, void *modp, char **output,
+                         uint64_t *output_size);
 
-int pocl_invoke_clang(cl_device_id Device, const char** Args);
+  /* Parse program file and populate program's llvm_irs */
+  int pocl_llvm_read_program_llvm_irs (cl_program program, unsigned device_i,
+                                       const char *path);
 
+  int pocl_llvm_link_program (cl_program program, unsigned device_i,
+                              cl_uint num_input_programs,
+                              unsigned char **cur_device_binaries,
+                              size_t *cur_device_binary_sizes,
+                              void **cur_llvm_irs, int link_program, int spir);
+
+  int pocl_invoke_clang (cl_device_id Device, const char **Args);
 
 #ifdef __cplusplus
 }

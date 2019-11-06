@@ -447,7 +447,6 @@ static int pocl_get_kernel_arg_function_metadata(llvm::Function *Kernel,
 int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
 
   PoclCompilerMutexGuard lockHolder(nullptr);
-  InitializeLLVM();
 
   unsigned i,j;
   llvm::Module *input = nullptr;
@@ -618,7 +617,6 @@ int pocl_llvm_get_kernels_metadata(cl_program program, unsigned device_i) {
 unsigned pocl_llvm_get_kernel_count(cl_program program, unsigned device_i) {
 
   PoclCompilerMutexGuard lockHolder(nullptr);
-  InitializeLLVM();
 
   /* any device's module will do for metadata, just use first non-nullptr */
   llvm::Module *mod = (llvm::Module *)program->data[device_i];

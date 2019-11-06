@@ -1401,6 +1401,7 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
   llvm::CallInst *CallI = llvm::dyn_cast<llvm::CallInst>(llvm::unwrap(Call));
   CallI->setCallingConv(Func->getCallingConv());
 
+  LLVMDisposeBuilder(Builder);
   return llvm::dyn_cast<llvm::Function>(llvm::unwrap(WrapperKernel));
 }
 

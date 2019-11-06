@@ -32,11 +32,7 @@ CL_API_SUFFIX__VERSION_1_2
 #if defined(ENABLE_LLVM)
   cl_platform_id pocl_id;
   POname (clGetPlatformIDs) (1, &pocl_id, NULL);
-  if (platform == pocl_id)
-    {
-      pocl_llvm_release ();
-    }
-  else
+  if (platform != pocl_id)
     {
       POCL_MSG_WARN (
           "clUnloadPlatformCompiler called with non-pocl platform! \n");

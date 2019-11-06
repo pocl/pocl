@@ -159,7 +159,7 @@ static void get_build_log(cl_program program,
   appendToProgramBuildLog(program, device_i, log);
 }
 
-static llvm::Module *getKernelLibrary(cl_device_id device);
+static llvm::Module *getKernelLibrary(cl_device_id device, cl_context ctx);
 
 static std::string getPoclPrivateDataDir() {
 #ifdef ENABLE_RELOCATION
@@ -195,9 +195,9 @@ int pocl_llvm_build_program(cl_program program,
                                                      : "");
   size_t n = 0;
   int error;
+  cl_context ctx = program->context;
 
   PoclCompilerMutexGuard lockHolder(nullptr);
-  InitializeLLVM();
 
   if (num_input_headers > 0) {
     error = pocl_cache_create_tempdir(temp_include_dir);
@@ -557,6 +557,8 @@ int pocl_llvm_build_program(cl_program program,
 
   unlink_source(fe);
 
+  PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
+
   if (pocl_exists(program_bc_path)) {
     char *binary = nullptr;
     uint64_t fsize;
@@ -578,12 +580,12 @@ int pocl_llvm_build_program(cl_program program,
     if (mod != nullptr) {
       delete mod;
       program->data[device_i] = nullptr;
-      --numberOfIRs;
+      --llvm_ctx->number_of_IRs;
     }
 
-    program->data[device_i] = parseModuleIR(program_bc_path);
+    program->data[device_i] = parseModuleIR(program_bc_path, llvm_ctx->Context);
     assert(program->data[device_i]);
-    ++numberOfIRs;
+    ++llvm_ctx->number_of_IRs;
 
     return CL_SUCCESS;
   }
@@ -591,8 +593,7 @@ int pocl_llvm_build_program(cl_program program,
   // TODO: use pch: it is possible to disable the strict checking for
   // the compilation flags used to compile it and the current translation
   // unit via the preprocessor options directly.
-  llvm::LLVMContext &c = GlobalContext();
-  clang::EmitLLVMOnlyAction EmitLLVM(&c);
+  clang::EmitLLVMOnlyAction EmitLLVM(llvm_ctx->Context);
   success = CI.ExecuteAction(EmitLLVM);
 
   get_build_log(program, device_i, ss_build_log, diagsBuffer, &CI.getSourceManager());
@@ -603,15 +604,14 @@ int pocl_llvm_build_program(cl_program program,
   mod = (llvm::Module *)program->data[device_i];
   if (mod != nullptr) {
     delete mod;
-    --numberOfIRs;
+    --llvm_ctx->number_of_IRs;
   }
 
   mod = EmitLLVM.takeModule().release();
   if (mod == nullptr)
     return CL_BUILD_PROGRAM_FAILURE;
   else
-    ++numberOfIRs;
-
+    ++llvm_ctx->number_of_IRs;
 
   if (mod->getModuleFlag("PIC Level") == nullptr)
     mod->setPICLevel(PICLevel::BigPIC);
@@ -625,16 +625,16 @@ int pocl_llvm_build_program(cl_program program,
   // and/or bitcode for each kernel.
   if (linking_program) {
     currentPoclDevice = device;
-    llvm::Module *libmodule = getKernelLibrary(device);
+    llvm::Module *libmodule = getKernelLibrary(device, ctx);
     assert(libmodule != NULL);
     std::string log("Error(s) while linking: \n");
     if (link(mod, libmodule, log)) {
       appendToProgramBuildLog(program, device_i, log);
-      std::string msg = getDiagString();
+      std::string msg = getDiagString(ctx);
       appendToProgramBuildLog(program, device_i, msg);
       delete mod;
       mod = nullptr;
-      --numberOfIRs;
+      --llvm_ctx->number_of_IRs;
       return CL_BUILD_PROGRAM_FAILURE;
     }
   }
@@ -678,13 +678,15 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
   cl_device_id device = program->devices[device_i];
   llvm::Module **modptr = (llvm::Module **)&program->data[device_i];
   int error;
+  cl_context ctx = program->context;
+  PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
 
   currentPoclDevice = device;
-  llvm::Module *libmodule = getKernelLibrary(device);
+  llvm::Module *libmodule =
+      getKernelLibrary(device, llvm_ctx->Context, llvm_ctx->kernelLibraryMap);
   assert(libmodule != NULL);
 
   PoclCompilerMutexGuard lockHolder(NULL);
-  InitializeLLVM();
 
   if (spir) {
 #ifdef ENABLE_SPIR
@@ -697,7 +699,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
                              cur_device_binary_sizes[0]);
 
     linked_module = parseModuleIRMem((char *)cur_device_binaries[0],
-                                     cur_device_binary_sizes[0]);
+                                     cur_device_binary_sizes[0], ctx);
 
     const std::string &spir_triple = linked_module->getTargetTriple();
     size_t spir_addrbits = Triple(spir_triple).isArch64Bit() ? 64 : 32;
@@ -731,7 +733,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
   } else {
 
     std::unique_ptr<llvm::Module> mod(
-        new llvm::Module(StringRef("linked_program"), GlobalContext()));
+        new llvm::Module(StringRef("linked_program"), *c));
 
     for (i = 0; i < num_input_programs; i++) {
       assert(cur_device_binaries[i]);
@@ -747,7 +749,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
 #else
       if (Linker::linkModules(*mod, llvm::CloneModule(*p))) {
 #endif
-        std::string msg = getDiagString();
+        std::string msg = getDiagString(ctx);
         appendToProgramBuildLog(program, device_i, msg);
         return CL_LINK_PROGRAM_FAILURE;
       }
@@ -761,7 +763,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
 
   if (*modptr != nullptr) {
     delete *modptr;
-    --numberOfIRs;
+    --llvm_ctx->number_of_IRs;
     *modptr = nullptr;
   }
 
@@ -770,7 +772,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
     std::string log("Error(s) while linking: \n");
     if (link(linked_module, libmodule, log)) {
       appendToProgramBuildLog(program, device_i, log);
-      std::string msg = getDiagString();
+      std::string msg = getDiagString(ctx);
       appendToProgramBuildLog(program, device_i, msg);
       delete linked_module;
       return CL_BUILD_PROGRAM_FAILURE;
@@ -778,7 +780,7 @@ int pocl_llvm_link_program(cl_program program, unsigned device_i,
   }
 
   *modptr = linked_module;
-  ++numberOfIRs;
+  ++llvm_ctx->number_of_IRs;
 
   /* TODO currently cached on concated binary contents (in undefined order),
      this is not terribly useful (but we have to store it somewhere..) */
@@ -857,18 +859,17 @@ const char *getX86KernelLibName() {
 #endif
 
 
-static std::map<cl_device_id, llvm::Module *> kernelLibraryMap;
-
 /**
  * Return the OpenCL C built-in function library bitcode
  * for the given device.
  */
-static llvm::Module* getKernelLibrary(cl_device_id device)
-{
+static llvm::Module *getKernelLibrary(cl_device_id device,
+                                      llvm::Context *llvmContext,
+                                      kernelLibraryMapTy *kernelLibraryMap) {
   Triple triple(device->llvm_target_triplet);
 
-  if (kernelLibraryMap.find(device) != kernelLibraryMap.end())
-    return kernelLibraryMap[device];
+  if (kernelLibraryMap->find(device) != kernelLibraryMap->end())
+    return kernelLibraryMap->at(device);
 
   const char *subdir = "host";
   bool is_host = true;
@@ -930,7 +931,7 @@ static llvm::Module* getKernelLibrary(cl_device_id device)
   if (pocl_exists(kernellib.c_str()))
     {
       POCL_MSG_PRINT_LLVM("Using %s as the built-in lib.\n", kernellib.c_str());
-      lib = parseModuleIR(kernellib.c_str());
+      lib = parseModuleIR(kernellib.c_str(), llvmContext);
     }
   else
     {
@@ -939,24 +940,16 @@ static llvm::Module* getKernelLibrary(cl_device_id device)
         {
           POCL_MSG_WARN("Using fallback %s as the built-in lib.\n",
                         kernellib_fallback.c_str());
-          lib = parseModuleIR(kernellib_fallback.c_str());
+          lib = parseModuleIR(kernellib_fallback.c_str(), llvmContext);
         }
       else
 #endif
         POCL_ABORT("Kernel library file %s doesn't exist.\n", kernellib.c_str());
     }
   assert (lib != NULL);
-  kernelLibraryMap[device] = lib;
+  kernelLibraryMap->insert(std::make_pair(device, lib));
 
   return lib;
-}
-
-void cleanKernelLibrary() {
-  for (auto i = kernelLibraryMap.begin(), e = kernelLibraryMap.end();
-       i != e; ++i) {
-    delete (llvm::Module *)i->second;
-  }
-  kernelLibraryMap.clear();
 }
 
 /**

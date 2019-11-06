@@ -1064,6 +1064,9 @@ struct _cl_context {
    */
   size_t min_buffer_alignment;
 
+#ifdef ENABLE_LLVM
+  void *llvm_context_data;
+#endif
 };
 
 typedef struct _pocl_data_sync_item pocl_data_sync_item;

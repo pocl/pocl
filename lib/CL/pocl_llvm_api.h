@@ -30,7 +30,10 @@
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING ("-Wunused-parameter")
 
+#include <llvm/IR/DiagnosticPrinter.h>
 #include <llvm/IR/Module.h>
+#include <llvm/Support/raw_os_ostream.h>
+
 #include <map>
 #include <string>
 
@@ -65,24 +68,30 @@ public:
   ~PoclCompilerMutexGuard();
 };
 
-
 POCL_EXPORT
 extern cl_device_id currentPoclDevice;
 
-void InitializeLLVM();
-llvm::LLVMContext &GlobalContext();
-extern long numberOfIRs;
-
-llvm::Module *parseModuleIR(const char *path);
+llvm::Module *parseModuleIR (const char *path, LLVMContext *c);
 void writeModuleIR(const llvm::Module *mod, std::string &str);
-llvm::Module *parseModuleIRMem(const char *input_stream, size_t size);
-std::string getDiagString();
+llvm::Module *parseModuleIRMem (const char *input_stream, size_t size,
+                                LLVMContext *c);
+std::string getDiagString (cl_context ctx);
 
 void clearKernelPasses();
 void clearTargetMachines();
-void cleanKernelLibrary();
 
 extern std::string currentWgMethod;
+
+typedef std::map<cl_device_id, llvm::Module *> kernelLibraryMapTy;
+struct PoclLLVMContextData
+{
+  llvm::LLVMContext *Context;
+  unsigned number_of_IRs;
+  std::string *poclDiagString;
+  llvm::raw_string_ostream *poclDiagStream;
+  llvm::DiagnosticPrinterRawOStream *poclDiagPrinter;
+  kernelLibraryMapTy *kernelLibraryMap;
+};
 
 #ifdef __GNUC__
 #pragma GCC visibility pop

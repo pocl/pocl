@@ -26,6 +26,9 @@
 #include "pocl_util.h"
 #include "pocl_mem_management.h"
 #include "pocl_shared.h"
+#ifdef ENABLE_LLVM
+#include "pocl_llvm.h"
+#endif
 
 int context_set_properties(cl_context                    context,
                            const cl_context_properties * properties,
@@ -132,6 +135,10 @@ POname(clCreateContext)(const cl_context_properties * properties,
 
   POCL_LOCK (pocl_context_handling_lock);
 
+#ifdef ENABLE_LLVM
+  InitializeLLVM ();
+#endif
+
   POCL_GOTO_ERROR_COND((devices == NULL || num_devices == 0), CL_INVALID_VALUE);
 
   POCL_GOTO_ERROR_COND((pfn_notify == NULL && user_data != NULL), CL_INVALID_VALUE);
@@ -145,6 +152,7 @@ POname(clCreateContext)(const cl_context_properties * properties,
    * CL_DEVICE_NOT_FOUND already from clGetDeviceIDs. Still, no reason
    * not to handle it.
    */
+
   if (errcode == CL_DEVICE_NOT_FOUND)
     errcode = CL_INVALID_DEVICE;
   POCL_GOTO_ERROR_ON ((errcode != CL_SUCCESS), errcode,
@@ -199,6 +207,10 @@ POname(clCreateContext)(const cl_context_properties * properties,
 
   if (errcode_ret)
     *errcode_ret = CL_SUCCESS;
+
+#ifdef ENABLE_LLVM
+  pocl_llvm_create_context (context);
+#endif
 
   cl_context_count += 1;
   POCL_UNLOCK (pocl_context_handling_lock);

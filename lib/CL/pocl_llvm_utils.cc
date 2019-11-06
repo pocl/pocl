@@ -23,9 +23,10 @@
 */
 
 #include "config.h"
-#include "pocl_runtime_config.h"
-#include "pocl_llvm_api.h"
 #include "pocl_debug.h"
+#include "pocl_llvm.h"
+#include "pocl_llvm_api.h"
+#include "pocl_runtime_config.h"
 
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
@@ -60,15 +61,16 @@ IGNORE_COMPILER_WARNING("-Wunused-parameter")
   #include <llvm/InitializePasses.h>
   #include <llvm/Support/CommandLine.h>
 #endif
+#include <llvm-c/Core.h>
 
 using namespace llvm;
 
 #include <string>
 #include <map>
 
-llvm::Module *parseModuleIR(const char *path) {
+llvm::Module *parseModuleIR(const char *path, LLVMContext *c) {
   SMDiagnostic Err;
-  return parseIRFile(path, Err, GlobalContext()).release();
+  return parseIRFile(path, Err, *c).release();
 }
 
 
@@ -82,13 +84,13 @@ void writeModuleIR(const Module *mod, std::string &str) {
   sos.str(); // flush
 }
 
-llvm::Module *parseModuleIRMem(const char *input_stream, size_t size) {
+llvm::Module *parseModuleIRMem(const char *input_stream, size_t size,
+                               LLVMContext *c) {
   StringRef input_stream_ref(input_stream, size);
   std::unique_ptr<MemoryBuffer> buffer =
       MemoryBuffer::getMemBufferCopy(input_stream_ref);
 
-  auto parsed_module =
-      parseBitcodeFile(buffer->getMemBufferRef(), GlobalContext());
+  auto parsed_module = parseBitcodeFile(buffer->getMemBufferRef(), *c);
   if (!parsed_module)
     return nullptr;
   return parsed_module.get().release();
@@ -201,36 +203,23 @@ int pocl_llvm_remove_file_on_signal(const char *file) {
  * Freeing/deleting the context crashes LLVM 3.2 (at program exit), as a
  * work-around, allocate this from heap.
  */
-static LLVMContext *globalContext = NULL;
-static bool LLVMInitialized = false;
 
-static std::string poclDiagString;
-static llvm::raw_string_ostream poclDiagStream(poclDiagString);
-static DiagnosticPrinterRawOStream poclDiagPrinter(poclDiagStream);
-
-static void diagHandler(const DiagnosticInfo &DI, void *Context) {
-  DI.print(poclDiagPrinter);
-  poclDiagPrinter << "\n";
+static void diagHandler(LLVMDiagnosticInfoRef DI, void *diagprinter) {
+  assert(diagprinter);
+  DiagnosticPrinterRawOStream *poclDiagPrinter =
+      (DiagnosticPrinterRawOStream *)diagprinter;
+  unwrap(DI)->print(*poclDiagPrinter);
 }
 
-std::string getDiagString() {
-  poclDiagStream.flush();
-  std::string ret(std::move(poclDiagString));
-  poclDiagString.clear();
+std::string getDiagString(cl_context ctx) {
+  PoclLLVMContextData *llvm_ctx = (PoclLLVMContextData *)ctx->llvm_context_data;
+
+  llvm_ctx->poclDiagStream->flush();
+  std::string ret(*llvm_ctx->poclDiagString);
+  llvm_ctx->poclDiagString->clear();
   return ret;
 }
 
-llvm::LLVMContext &GlobalContext() {
-  if (globalContext == NULL) {
-    globalContext = new LLVMContext();
-#ifdef LLVM_OLDER_THAN_6_0
-    globalContext->setDiagnosticHandler(diagHandler, globalContext);
-#else
-    globalContext->setDiagnosticHandlerCallBack(diagHandler, globalContext);
-#endif
-  }
-  return *globalContext;
-}
 
 /* The LLVM API interface functions are not at the moment not thread safe,
  * Pocl needs to ensure only one thread is using this layer at the time.
@@ -252,121 +241,175 @@ PoclCompilerMutexGuard::~PoclCompilerMutexGuard() {
 
 std::string currentWgMethod;
 
+static bool LLVMInitialized = false;
+static bool LLVMOptionsInitialized = false;
+
 /* must be called with kernelCompilerLock locked */
 void InitializeLLVM() {
 
-  if (LLVMInitialized)
-    return;
-  // We have not initialized any pass managers for any device yet.
-  // Run the global LLVM pass initialization functions.
-  InitializeAllTargets();
-  InitializeAllTargetMCs();
-  InitializeAllAsmPrinters();
-  InitializeAllAsmParsers();
+  if (!LLVMInitialized) {
 
-  PassRegistry &Registry = *PassRegistry::getPassRegistry();
+    LLVMInitialized = true;
+    // We have not initialized any pass managers for any device yet.
+    // Run the global LLVM pass initialization functions.
+    InitializeAllTargets();
+    InitializeAllTargetMCs();
+    InitializeAllAsmPrinters();
+    InitializeAllAsmParsers();
 
-  initializeCore(Registry);
-  initializeScalarOpts(Registry);
-  initializeVectorization(Registry);
-  initializeIPO(Registry);
-  initializeAnalysis(Registry);
-  initializeTransformUtils(Registry);
-  initializeInstCombine(Registry);
-  initializeInstrumentation(Registry);
-  initializeTarget(Registry);
+    PassRegistry &Registry = *PassRegistry::getPassRegistry();
 
-// Set the options only once. TODO: fix it so that each
-// device can reset their own options. Now one cannot compile
-// with different options to different devices at one run.
+    initializeCore(Registry);
+    initializeScalarOpts(Registry);
+    initializeVectorization(Registry);
+    initializeIPO(Registry);
+    initializeAnalysis(Registry);
+    initializeTransformUtils(Registry);
+    initializeInstCombine(Registry);
+    initializeInstrumentation(Registry);
+    initializeTarget(Registry);
+  }
 
-  StringMap<llvm::cl::Option *> &opts = llvm::cl::getRegisteredOptions();
+  // Set the options only once. TODO: fix it so that each
+  // device can reset their own options. Now one cannot compile
+  // with different options to different devices at one run.
 
-  llvm::cl::Option *O = nullptr;
+  if (!LLVMOptionsInitialized) {
 
-  currentWgMethod = pocl_get_string_option("POCL_WORK_GROUP_METHOD", "loopvec");
+    LLVMOptionsInitialized = true;
 
-  if (currentWgMethod == "loopvec") {
+    StringMap<llvm::cl::Option *> &opts = llvm::cl::getRegisteredOptions();
 
-    O = opts["scalarize-load-store"];
-    assert(O && "could not find LLVM option 'scalarize-load-store'");
-    O->addOccurrence(1, StringRef("scalarize-load-store"), StringRef("1"),
-                     false);
+    llvm::cl::Option *O = nullptr;
 
-    // LLVM inner loop vectorizer does not check whether the loop inside
-    // another loop, in which case even a small trip count loops might be
-    // worthwhile to vectorize.
-    O = opts["vectorizer-min-trip-count"];
-    assert(O && "could not find LLVM option 'vectorizer-min-trip-count'");
-    O->addOccurrence(1, StringRef("vectorizer-min-trip-count"), StringRef("2"),
-                     false);
+    currentWgMethod =
+        pocl_get_string_option("POCL_WORK_GROUP_METHOD", "loopvec");
 
-    // Disable jump threading optimization with following two options from
-    // duplicating blocks. Using jump threading will mess up parallel region
-    // construction especially when kernel contains barriers.
-    // TODO: If enabled then parallel region construction code needs
-    // improvements and make sure it doesn't disallow other optimizations like
-    // vectorization.
-    O = opts["jump-threading-threshold"];
-    assert(O && "could not find LLVM option 'jump-threading-threshold'");
-    O->addOccurrence(1, StringRef("jump-threading-threshold"), StringRef("0"),
-                     false);
-    O = opts["jump-threading-implication-search-threshold"];
-    assert(O && "could not find LLVM option 'jump-threading-implication-search-threshold'");
-    O->addOccurrence(1, StringRef("jump-threading-implication-search-threshold"), StringRef("0"),
-                     false);
+    if (currentWgMethod == "loopvec") {
 
-    if (pocl_get_bool_option("POCL_VECTORIZER_REMARKS", 0) == 1) {
-      // Enable diagnostics from the loop vectorizer.
-      O = opts["pass-remarks-missed"];
-      assert(O && "could not find LLVM option 'pass-remarks-missed'");
-      O->addOccurrence(1, StringRef("pass-remarks-missed"),
-                       StringRef("loop-vectorize"), false);
+      O = opts["scalarize-load-store"];
+      assert(O && "could not find LLVM option 'scalarize-load-store'");
+      O->addOccurrence(1, StringRef("scalarize-load-store"), StringRef("1"),
+                       false);
 
-      O = opts["pass-remarks-analysis"];
-      assert(O && "could not find LLVM option 'pass-remarks-analysis'");
-      O->addOccurrence(1, StringRef("pass-remarks-analysis"),
-                       StringRef("loop-vectorize"), false);
+      // LLVM inner loop vectorizer does not check whether the loop inside
+      // another loop, in which case even a small trip count loops might be
+      // worthwhile to vectorize.
+      O = opts["vectorizer-min-trip-count"];
+      assert(O && "could not find LLVM option 'vectorizer-min-trip-count'");
+      O->addOccurrence(1, StringRef("vectorizer-min-trip-count"),
+                       StringRef("2"), false);
 
-      O = opts["pass-remarks"];
-      assert(O && "could not find LLVM option 'pass-remarks'");
-      O->addOccurrence(1, StringRef("pass-remarks"),
-                       StringRef("loop-vectorize"), false);
+      // Disable jump threading optimization with following two options from
+      // duplicating blocks. Using jump threading will mess up parallel region
+      // construction especially when kernel contains barriers.
+      // TODO: If enabled then parallel region construction code needs
+      // improvements and make sure it doesn't disallow other optimizations like
+      // vectorization.
+      O = opts["jump-threading-threshold"];
+      assert(O && "could not find LLVM option 'jump-threading-threshold'");
+      O->addOccurrence(1, StringRef("jump-threading-threshold"), StringRef("0"),
+                       false);
+      O = opts["jump-threading-implication-search-threshold"];
+      assert(O && "could not find LLVM option "
+                  "'jump-threading-implication-search-threshold'");
+      O->addOccurrence(1,
+                       StringRef("jump-threading-implication-search-threshold"),
+                       StringRef("0"), false);
+
+      if (pocl_get_bool_option("POCL_VECTORIZER_REMARKS", 0) == 1) {
+        // Enable diagnostics from the loop vectorizer.
+        O = opts["pass-remarks-missed"];
+        assert(O && "could not find LLVM option 'pass-remarks-missed'");
+        O->addOccurrence(1, StringRef("pass-remarks-missed"),
+                         StringRef("loop-vectorize"), false);
+
+        O = opts["pass-remarks-analysis"];
+        assert(O && "could not find LLVM option 'pass-remarks-analysis'");
+        O->addOccurrence(1, StringRef("pass-remarks-analysis"),
+                         StringRef("loop-vectorize"), false);
+
+        O = opts["pass-remarks"];
+        assert(O && "could not find LLVM option 'pass-remarks'");
+        O->addOccurrence(1, StringRef("pass-remarks"),
+                         StringRef("loop-vectorize"), false);
+      }
+    }
+    if (pocl_get_bool_option("POCL_DEBUG_LLVM_PASSES", 0) == 1) {
+      O = opts["debug"];
+      assert(O && "could not find LLVM option 'debug'");
+      O->addOccurrence(1, StringRef("debug"), StringRef("true"), false);
     }
   }
-  if (pocl_get_bool_option("POCL_DEBUG_LLVM_PASSES", 0) == 1) {
-    O = opts["debug"];
-    assert(O && "could not find LLVM option 'debug'");
-    O->addOccurrence(1, StringRef("debug"), StringRef("true"), false);
-  }
-
-  LLVMInitialized = true;
 }
 
+/* re-initialization causes errors like this:
+clang: for the   --scalarize-load-store option: may only occur zero or one
+times! clang: for the   --vectorizer-min-trip-count option: may only occur zero
+or one times! clang: for the   --unroll-threshold option: may only occur zero or
+one times!
+*/
 
-// TODO FIXME currently pocl_llvm_release() only works when
-// there are zero programs with IRs, because
-// programs hold references to LLVM IRs
-long numberOfIRs = 0;
+void UnInitializeLLVM() {
+  clearKernelPasses();
+  clearTargetMachines();
+  LLVMInitialized = false;
+}
 
-void pocl_llvm_release() {
+void pocl_llvm_create_context(cl_context ctx) {
+  PoclCompilerMutexGuard lockHolder(NULL);
+
+  POCL_MSG_PRINT_LLVM("creating LLVM context\n");
+
+  PoclLLVMContextData *data = new PoclLLVMContextData;
+  assert(data);
+
+  data->Context = new llvm::LLVMContext();
+  assert(data->Context);
+  data->number_of_IRs = 0;
+  data->poclDiagString = new std::string;
+  data->poclDiagStream = new llvm::raw_string_ostream(*data->poclDiagString);
+  data->poclDiagPrinter =
+      new DiagnosticPrinterRawOStream(*data->poclDiagStream);
+
+  data->kernelLibraryMap = new kernelLibraryMapTy;
+  assert(data->kernelLibraryMap);
+
+  LLVMContextSetDiagnosticHandler(wrap(data->Context),
+                                  (LLVMDiagnosticHandler)diagHandler,
+                                  (void *)data->poclDiagPrinter);
+  assert(ctx->llvm_context_data == nullptr);
+  ctx->llvm_context_data = data;
+}
+
+void pocl_llvm_release_context(cl_context ctx) {
 
   PoclCompilerMutexGuard lockHolder(NULL);
 
-  assert(numberOfIRs >= 0);
+  PoclLLVMContextData *data = (PoclLLVMContextData *)ctx->llvm_context_data;
+  assert(data);
 
-  if (numberOfIRs > 0) {
-    POCL_MSG_PRINT_LLVM("still have references to IRs - not releasing LLVM\n");
-    return;
-  } else {
-    POCL_MSG_PRINT_LLVM("releasing LLVM\n");
+  POCL_MSG_PRINT_LLVM("releasing LLVM context\n");
+
+  if (data->number_of_IRs > 0) {
+    POCL_ABORT("still have references to IRs - can't release LLVM context !\n");
   }
 
-  clearKernelPasses();
-  clearTargetMachines();
-  cleanKernelLibrary();
+  delete data->poclDiagPrinter;
+  delete data->poclDiagStream;
+  delete data->poclDiagString;
 
-  delete globalContext;
-  globalContext = nullptr;
-  LLVMInitialized = false;
+  assert(data->kernelLibraryMap);
+  // void cleanKernelLibrary(cl_context ctx) {
+  for (auto i = data->kernelLibraryMap->begin(),
+            e = data->kernelLibraryMap->end();
+       i != e; ++i) {
+    delete (llvm::Module *)i->second;
+  }
+  data->kernelLibraryMap->clear();
+  delete data->kernelLibraryMap;
+
+  delete data->Context;
+  delete data;
+  ctx->llvm_context_data = nullptr;
 }
