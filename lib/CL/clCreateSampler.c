@@ -26,6 +26,8 @@
 #include "pocl_icd.h"
 #include "pocl_util.h"
 
+extern unsigned long sampler_c;
+
 extern CL_API_ENTRY cl_sampler CL_API_CALL
 POname(clCreateSampler)(cl_context          context,
                 cl_bool             normalized_coords, 
@@ -69,6 +71,8 @@ CL_API_SUFFIX__VERSION_1_0
   sampler->device_data = (void **)calloc (pocl_num_devices, sizeof (void *));
 
   TP_CREATE_SAMPLER (context->id, sampler->id);
+
+  POCL_ATOMIC_INC (sampler_c);
 
   for (i = 0; i < context->num_devices; ++i)
     {

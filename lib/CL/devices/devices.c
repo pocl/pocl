@@ -49,6 +49,7 @@
 #include "pocl_runtime_config.h"
 #include "pocl_shared.h"
 #include "pocl_tracing.h"
+#include "pocl_util.h"
 
 #ifdef ENABLE_LLVM
 #include "pocl_llvm.h"
@@ -305,119 +306,6 @@ str_toupper(char *out, const char *in)
   out[i] = '\0';
 }
 
-/* This ugly hack is required because:
- *
- * OpenCL 1.2 specification, 6.3 Operators :
- *
- * A divide by zero with integer types does not cause an exception
- * but will result in an unspecified value. Division by zero for
- * floating-point types will result in ±infinity or NaN as
- * prescribed by the IEEE-754 standard.
- *
- * FPU exceptions are masked by default on x86 linux, but integer divide
- * is not and there doesn't seem any sane way to mask it.
- *
- * This *might* be possible to fix with a LLVM pass (either check divisor
- * for 0, or perhaps some vector extension has a suitable instruction), but
- * it's likely to ruin the performance.
- */
-
-#ifdef ENABLE_HOST_CPU_DEVICES
-#ifdef __linux__
-#ifdef __x86_64__
-
-#define DIV_OPCODE_SIZE 1
-#define DIV_OPCODE_MASK 0xf6
-
-/* F6 /6, F6 /7, F7 /6, F7 /7 */
-#define DIV_OPCODE_1 0xf6
-#define DIV_OPCODE_2 0xf7
-#define DIV_MODRM_OPCODE_EXT_1 0x38 //  /7
-#define DIV_MODRM_OPCODE_EXT_2 0x30 //  /6
-
-#define MODRM_SIZE 1
-#define MODRM_MASK 0xC0
-#define REG2_MASK 0x38
-#define REG1_MASK 0x07
-#define ADDR_MODE_INDIRECT_ONE_BYTE_OFFSET 0x40
-#define ADDR_MODE_INDIRECT_FOUR_BYTE_OFFSET 0x80
-#define ADDR_MODE_INDIRECT 0x0
-#define ADDR_MODE_REGISTER_ONLY 0xC0
-#define REG_SP 0x4
-#define REG_BP 0x5
-#define SIB_BYTE 1
-#define IP_RELATIVE_INDEXING 4
-
-static struct sigaction sigfpe_action, old_sigfpe_action;
-
-static void
-sigfpe_signal_handler (int signo, siginfo_t *si, void *data)
-{
-  ucontext_t *uc;
-  uc = (ucontext_t *)data;
-  unsigned char *eip = (unsigned char *)(uc->uc_mcontext.gregs[REG_RIP]);
-
-  if ((signo == SIGFPE)
-      && ((si->si_code == FPE_INTDIV) || (si->si_code == FPE_INTOVF)))
-    {
-      /* Luckily for us, div-by-0 exceptions do NOT advance the IP register,
-       * so we have to disassemble the instruction (to know its length)
-       * and move IP past it. */
-      unsigned n = 0;
-
-      /* skip all prefixes */
-      while ((n < 4) && ((eip[n] & DIV_OPCODE_MASK) != DIV_OPCODE_MASK))
-        ++n;
-
-      /* too much prefixes = decoding failed */
-      if (n >= 4)
-        goto ORIGINAL_HANDLER;
-
-      /* check opcode */
-      unsigned opcode = eip[n];
-      if ((opcode != DIV_OPCODE_1) && (opcode != DIV_OPCODE_2))
-        goto ORIGINAL_HANDLER;
-      n += DIV_OPCODE_SIZE;
-
-      unsigned modrm = eip[n];
-      unsigned modmask = modrm & MODRM_MASK;
-      unsigned reg1mask = modrm & REG1_MASK;
-      unsigned reg2mask = modrm & REG2_MASK;
-      /* check opcode extension in ModR/M reg2 */
-      if ((reg2mask != DIV_MODRM_OPCODE_EXT_1)
-          && (reg2mask != DIV_MODRM_OPCODE_EXT_2))
-        goto ORIGINAL_HANDLER;
-      n += MODRM_SIZE;
-
-      /* handle immediates/registers */
-      if (modmask == ADDR_MODE_INDIRECT_ONE_BYTE_OFFSET)
-        n += 1;
-      if (modmask == ADDR_MODE_INDIRECT_FOUR_BYTE_OFFSET)
-        n += 4;
-      if (modmask == ADDR_MODE_INDIRECT)
-        n += 0;
-      if (modmask != ADDR_MODE_REGISTER_ONLY)
-        {
-          if (reg1mask == REG_SP)
-            n += SIB_BYTE;
-          if (reg1mask == REG_BP)
-            n += IP_RELATIVE_INDEXING;
-        }
-
-      uc->uc_mcontext.gregs[REG_RIP] += n;
-      return;
-    }
-  else
-    {
-    ORIGINAL_HANDLER:
-      (*old_sigfpe_action.sa_sigaction) (signo, si, data);
-    }
-}
-
-#endif
-#endif
-#endif
-
 cl_int
 pocl_uninit_devices ()
 {
@@ -570,37 +458,19 @@ pocl_init_devices ()
 #endif
 
 
-#ifdef ENABLE_HOST_CPU_DEVICES
 #ifdef __linux__
-#ifdef __x86_64__
 
+#ifdef ENABLE_HOST_CPU_DEVICES
   if (pocl_get_bool_option ("POCL_SIGFPE_HANDLER", 1))
     {
-
-#ifdef ENABLE_LLVM
-      /* This is required to force LLVM to register its signal
-       * handlers, before pocl registers its own SIGFPE handler.
-       * LLVM otherwise calls this via
-       *    pocl_llvm_build_program ->
-       *    clang::PrintPreprocessedAction ->
-       *    CreateOutputFile -> RemoveFileOnSignal
-       * Registering our handlers before LLVM creates its sigaltstack
-       * leads to interesting crashes & bugs later.
-       */
-      char random_empty_file[POCL_FILENAME_LENGTH];
-      pocl_cache_tempname (random_empty_file, NULL, NULL);
-      pocl_llvm_remove_file_on_signal (random_empty_file);
-#endif
-
-      POCL_MSG_PRINT_GENERAL ("Installing SIGFPE handler...\n");
-      sigfpe_action.sa_flags = SA_RESTART | SA_SIGINFO;
-      sigfpe_action.sa_sigaction = sigfpe_signal_handler;
-      int res = sigaction (SIGFPE, &sigfpe_action, &old_sigfpe_action);
-      assert (res == 0);
+      pocl_install_sigfpe_handler ();
     }
+#endif
 
-#endif
-#endif
+  if (pocl_get_bool_option ("POCL_SIGUSR2_HANDLER", 0))
+    {
+      pocl_install_sigusr2_handler ();
+    }
 #endif
 
   pocl_offline_compile = pocl_get_bool_option ("POCL_OFFLINE_COMPILE", 0);

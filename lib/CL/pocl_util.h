@@ -56,6 +56,9 @@ unsigned pocl_save_ftz (void);
 POCL_EXPORT
 void pocl_restore_ftz (unsigned ftz);
 
+void pocl_install_sigfpe_handler ();
+void pocl_install_sigusr2_handler ();
+
 /* Finds the next highest power of two of the given value. */
 size_t pocl_size_ceil2 (size_t x);
 uint64_t pocl_size_ceil2_64 (uint64_t x);

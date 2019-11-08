@@ -30,6 +30,8 @@
 #include "pocl_llvm.h"
 #endif
 
+extern unsigned long context_c;
+
 int context_set_properties(cl_context                    context,
                            const cl_context_properties * properties,
                            cl_int *                      errcode)
@@ -211,6 +213,8 @@ POname(clCreateContext)(const cl_context_properties * properties,
 #ifdef ENABLE_LLVM
   pocl_llvm_create_context (context);
 #endif
+
+  POCL_ATOMIC_INC (context_c);
 
   cl_context_count += 1;
   POCL_UNLOCK (pocl_context_handling_lock);

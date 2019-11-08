@@ -36,6 +36,8 @@
 #include "pocl_binary.h"
 #include "pocl_util.h"
 
+extern unsigned long kernel_c;
+
 CL_API_ENTRY cl_kernel CL_API_CALL
 POname(clCreateKernel)(cl_program program,
                const char *kernel_name,
@@ -115,6 +117,8 @@ POname(clCreateKernel)(cl_program program,
   LL_PREPEND (program->kernels, kernel);
   POCL_RETAIN_OBJECT_UNLOCKED (program);
   POCL_UNLOCK_OBJ (program);
+
+  POCL_ATOMIC_INC (kernel_c);
 
   errcode = CL_SUCCESS;
   goto SUCCESS;

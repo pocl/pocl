@@ -36,6 +36,8 @@
 #include "pocl_llvm.h"
 #include "devices.h"
 
+extern unsigned long program_c;
+
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
 {
@@ -50,6 +52,9 @@ POname(clReleaseProgram)(cl_program program) CL_API_SUFFIX__VERSION_1_0
   if (new_refcount == 0)
     {
       VG_REFC_ZERO (program);
+
+      POCL_ATOMIC_DEC (program_c);
+
       cl_context context = program->context;
       POCL_MSG_PRINT_REFCOUNTS ("Free program %p\n", program);
       TP_FREE_PROGRAM (context->id, program->id);

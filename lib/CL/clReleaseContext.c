@@ -32,6 +32,8 @@
 
 #include <unistd.h>
 
+extern unsigned long context_c;
+
 extern unsigned cl_context_count;
 extern pocl_lock_t pocl_context_handling_lock;
 
@@ -48,6 +50,9 @@ POname(clReleaseContext)(cl_context context) CL_API_SUFFIX__VERSION_1_0
   if (new_refcount == 0)
     {
       VG_REFC_ZERO (context);
+
+      POCL_ATOMIC_DEC (context_c);
+
       POCL_MSG_PRINT_REFCOUNTS ("Free Context %p\n", context);
 
       if (context->num_devices == 0)

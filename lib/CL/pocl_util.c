@@ -441,6 +441,9 @@ sort_and_uniq (cl_mem *objs, char *readonly_flags, size_t *num_objs)
   *num_objs = k;
 }
 
+extern unsigned long event_c;
+extern unsigned long uevent_c;
+
 cl_int
 pocl_create_event (cl_event *event, cl_command_queue command_queue,
                    cl_command_type command_type, size_t num_buffers,
@@ -474,6 +477,11 @@ pocl_create_event (cl_event *event, cl_command_queue command_queue,
       memcpy ((*event)->mem_objs, buffers, num_buffers * sizeof (cl_mem));
     }
   (*event)->status = CL_QUEUED;
+
+  if (command_type == CL_COMMAND_USER)
+    POCL_ATOMIC_INC (uevent_c);
+  else
+    POCL_ATOMIC_INC (event_c);
 
   POCL_MSG_PRINT_EVENTS ("Created event %p / ID %" PRIu64 " / Command %s\n",
                          (*event), (*event)->id,

@@ -25,6 +25,10 @@
 #include "pocl_cl.h"
 #include "utlist.h"
 
+extern unsigned long buffer_c;
+
+extern unsigned long image_c;
+
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
 {
@@ -57,11 +61,13 @@ POname(clReleaseMemObject)(cl_mem memobj) CL_API_SUFFIX__VERSION_1_0
 
       if (memobj->is_image)
         {
-          TP_FREE_IMAGE (context->id, memobj->id)
+          TP_FREE_IMAGE (context->id, memobj->id);
+          POCL_ATOMIC_DEC (image_c);
         }
       else
         {
           TP_FREE_BUFFER (context->id, memobj->id);
+          POCL_ATOMIC_DEC (buffer_c);
         }
 
       if (memobj->is_image && (memobj->type == CL_MEM_OBJECT_IMAGE1D_BUFFER))

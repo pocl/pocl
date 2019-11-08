@@ -67,6 +67,10 @@ set(POCL_DEVICES_SOURCES
   common_driver.h  common_driver.c
   cpuinfo.c  cpuinfo.h)
 
+if(UNIX AND (CMAKE_SYSTEM_NAME MATCHES "Linux"))
+  list(APPEND POCL_DEVICES_SOURCES signal_handlers.c)
+endif()
+
 if(MSVC)
   set_source_files_properties( ${POCL_DEVICES_SOURCES} PROPERTIES LANGUAGE CXX )
 endif(MSVC)

@@ -25,6 +25,8 @@
 #include "pocl_cq_profiling.h"
 #include "pocl_util.h"
 
+extern unsigned long queue_c;
+
 CL_API_ENTRY cl_command_queue CL_API_CALL
 POname(clCreateCommandQueue)(cl_context context, 
                      cl_device_id device, 
@@ -87,6 +89,8 @@ POname(clCreateCommandQueue)(cl_context context,
   errcode = CL_SUCCESS;
   if (device->ops->init_queue)
     errcode = device->ops->init_queue (device, command_queue);
+
+  POCL_ATOMIC_INC (queue_c);
 
   if (errcode_ret != NULL)
     *errcode_ret = errcode;

@@ -28,6 +28,8 @@
 #include "pocl_shared.h"
 #include "pocl_util.h"
 
+extern unsigned long buffer_c;
+
 cl_mem
 pocl_create_memobject (cl_context context, cl_mem_flags flags, size_t size,
                        cl_mem_object_type type, int* device_image_support,
@@ -244,6 +246,8 @@ CL_API_ENTRY cl_mem CL_API_CALL POname (clCreateBuffer) (
                          "device_ptrs[0]: %p, SIZE %zu, FLAGS %" PRIu64 " \n",
                          mem->id, mem, mem->mem_host_ptr,
                          mem->device_ptrs[0].mem_ptr, size, flags);
+
+  POCL_ATOMIC_INC (buffer_c);
 
 ERROR:
   if (errcode_ret)

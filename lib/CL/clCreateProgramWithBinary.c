@@ -30,6 +30,8 @@
 #include "pocl_util.h"
 #include <string.h>
 
+extern unsigned long program_c;
+
 /* creates either a program with binaries, or an empty program. The latter
  * is useful for clLinkProgram() which needs an empty program to put the
  * compiled results in.
@@ -198,6 +200,8 @@ create_program_skeleton (cl_context context, cl_uint num_devices,
 
 SUCCESS:
   POCL_RETAIN_OBJECT(context);
+
+  POCL_ATOMIC_INC (program_c);
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;

@@ -24,6 +24,9 @@
 #include "pocl_cl.h"
 #include "pocl_mem_management.h"
 
+extern unsigned long uevent_c;
+extern unsigned long event_c;
+
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseEvent)(cl_event event) CL_API_SUFFIX__VERSION_1_0
 {
@@ -46,10 +49,13 @@ POname(clReleaseEvent)(cl_event event) CL_API_SUFFIX__VERSION_1_0
 
       if (event->command_type == CL_COMMAND_USER)
         {
+          POCL_ATOMIC_DEC (uevent_c);
           pocl_user_event_data *p = (pocl_user_event_data *)event->data;
           POCL_DESTROY_COND (p->wakeup_cond);
           POCL_MEM_FREE (p);
         }
+      else
+        POCL_ATOMIC_DEC (event_c);
 
       POCL_MSG_PRINT_REFCOUNTS ("Free event %" PRIu64 " | %p\n",
                                 event->id, event);

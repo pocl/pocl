@@ -24,6 +24,8 @@
 #include "pocl_cl.h"
 #include "pocl_util.h"
 
+extern unsigned long kernel_c;
+
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
 {
@@ -38,6 +40,8 @@ POname(clReleaseKernel)(cl_kernel kernel) CL_API_SUFFIX__VERSION_1_0
   if (new_refcount == 0)
     {
       VG_REFC_ZERO (kernel);
+
+      POCL_ATOMIC_DEC (kernel_c);
 
       TP_FREE_KERNEL (kernel->context->id, kernel->id, kernel->name);
 

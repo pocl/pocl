@@ -111,6 +111,12 @@ pocl.
  error,warning,general,memory,llvm,events,cache,locking,refcounts,timing,hsa,tce,all.
  Note: setting POCL_DEBUG to 1 still works and equals error+warning+general.
 
+- **POCL_SIGUSR2_HANDLER**
+
+ When set to 1 (default 0), pocl installs a SIGUSR2 handler that will print
+ some debugging information. Currently it prints the count of live cl_* objects
+ by type (buffers, events, etc).
+
 - **POCL_DEBUG_LLVM_PASSES**
 
  When set to 1, enables debug output from LLVM passes during optimization.

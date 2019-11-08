@@ -26,6 +26,8 @@
 #include "pocl_util.h"
 #include <string.h>
 
+extern unsigned long program_c;
+
 CL_API_ENTRY cl_program CL_API_CALL
 POname(clCreateProgramWithSource)(cl_context context,
                           cl_uint count,
@@ -133,6 +135,8 @@ POname(clCreateProgramWithSource)(cl_context context,
   POCL_RETAIN_OBJECT(context);
 
   TP_CREATE_PROGRAM (context->id, program->id);
+
+  POCL_ATOMIC_INC (program_c);
 
   if (errcode_ret != NULL)
     *errcode_ret = CL_SUCCESS;

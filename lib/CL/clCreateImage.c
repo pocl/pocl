@@ -26,6 +26,8 @@
 #include "pocl_shared.h"
 #include "pocl_util.h"
 
+extern unsigned long image_c;
+
 extern CL_API_ENTRY cl_mem CL_API_CALL
 POname(clCreateImage) (cl_context              context,
                        cl_mem_flags            flags,
@@ -243,6 +245,8 @@ CL_API_SUFFIX__VERSION_1_2
         "Created Image %p, HOST_PTR: %p, SIZE %zu RP %zu SP %zu FLAGS %u \n",
         mem, mem->mem_host_ptr, size, mem->image_row_pitch,
         mem->image_slice_pitch, (unsigned)flags);
+
+    POCL_ATOMIC_INC (image_c);
 
  ERROR:
    if (errcode != CL_SUCCESS)

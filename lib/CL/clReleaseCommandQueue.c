@@ -24,6 +24,8 @@
 #include "pocl_cl.h"
 #include "pocl_util.h"
 
+extern unsigned long queue_c;
+
 CL_API_ENTRY cl_int CL_API_CALL
 POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VERSION_1_0
 {
@@ -43,6 +45,8 @@ POname(clReleaseCommandQueue)(cl_command_queue command_queue) CL_API_SUFFIX__VER
       VG_REFC_ZERO (command_queue);
 
       TP_FREE_QUEUE (context->id, command_queue->id);
+
+      POCL_ATOMIC_DEC (queue_c);
 
       /* hidden queues don't retain the context. */
       if ((command_queue->properties & CL_QUEUE_HIDDEN) == 0)
