@@ -30,10 +30,11 @@
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
+#include <llvm/InitializePasses.h>
 #include <llvm/ADT/StringRef.h>
 #include <llvm/ADT/StringMap.h>
 
-#include <llvm/Support/MutexGuard.h>
+#include <llvm/Support/Mutex.h>
 #include <llvm/Support/Host.h>
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/Support/SourceMgr.h>

@@ -48,7 +48,7 @@ IGNORE_COMPILER_WARNING("-Wstrict-aliasing")
 #include "llvm/IR/Function.h"
 #include "llvm/IR/Module.h"
 
-#include "llvm/Support/MutexGuard.h"
+#include "llvm/Support/Mutex.h"
 
 #ifdef ENABLE_RELOCATION
 
@@ -105,7 +105,7 @@ load_source(FrontendOptions &fe,
                        CL_OUT_OF_HOST_MEMORY, "Could not write program source");
 
   fe.Inputs.push_back
-      (FrontendInputFile(source_file, clang::InputKind::OpenCL));
+      (FrontendInputFile(source_file, InputKind(clang::Language::OpenCL)));
 
   return 0;
 }
@@ -383,7 +383,7 @@ int pocl_llvm_build_program(cl_program program,
     POCL_MEM_FREE(program->build_log[device_i]);
 
   if (!CompilerInvocation::CreateFromArgs
-      (pocl_build, itemcstrs.data(), itemcstrs.data() + itemcstrs.size(),
+      (pocl_build, ArrayRef<const char *>(itemcstrs),
        diags)) {
     pocl_cache_create_program_cachedir(program, device_i, NULL, 0,
                                        program_bc_path);
@@ -396,7 +396,7 @@ int pocl_llvm_build_program(cl_program program,
   PreprocessorOptions &po = pocl_build.getPreprocessorOpts();
 
   pocl_build.setLangDefaults
-      (*la, clang::InputKind::OpenCL, triple, po,
+      (*la, InputKind(clang::Language::OpenCL), triple, po,
        clang::LangStandard::lang_opencl12);
 
   // LLVM 3.3 and older do not set that char is signed which is

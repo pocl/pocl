@@ -116,9 +116,9 @@ WorkItemAAResult WorkItemAA::run(Function &F, AnalysisManager<Function> *AM) {
     return WorkItemAAResult(AM->getResult<WorkItemAA>(F));
 }
 
-bool WorkItemAliasAnalysis::runOnFunction(llvm::Function &) {
+bool WorkItemAliasAnalysis::runOnFunction(llvm::Function &F) {
     auto &TLIWP = getAnalysis<TargetLibraryInfoWrapperPass>();
-    Result.reset(new WorkItemAAResult(TLIWP.getTLI()));
+    Result.reset(new WorkItemAAResult(TLIWP.getTLI(F)));
     return false;
 }
 

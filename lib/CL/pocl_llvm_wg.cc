@@ -38,7 +38,7 @@
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include <llvm/Support/Casting.h>
-#include <llvm/Support/MutexGuard.h>
+#include <llvm/Support/Mutex.h>
 #include <llvm/Support/TargetRegistry.h>
 #include <llvm/Support/SourceMgr.h>
 #include <llvm/Support/CommandLine.h>
@@ -608,10 +608,10 @@ int pocl_llvm_codegen(cl_device_id Device, void *Modp, char **Output,
 
 #ifdef LLVM_OLDER_THAN_7_0
   cannotEmitFile = Target->addPassesToEmitFile(PMObj, SOS,
-                                  TargetMachine::CGFT_ObjectFile);
+                                  CodeGenFileType::CGFT_ObjectFile);
 #else
   cannotEmitFile = Target->addPassesToEmitFile(PMObj, SOS, nullptr,
-                                  TargetMachine::CGFT_ObjectFile);
+                                  CodeGenFileType::CGFT_ObjectFile);
 #endif
 
   LLVMGeneratesObjectFiles = !cannotEmitFile;
@@ -644,12 +644,12 @@ int pocl_llvm_codegen(cl_device_id Device, void *Modp, char **Output,
   // to produce the binary.
 #ifdef LLVM_OLDER_THAN_7_0
   if (Target->addPassesToEmitFile(PMAsm, SOS,
-                                  TargetMachine::CGFT_AssemblyFile)) {
+                                  CodeGenFileType::CGFT_AssemblyFile)) {
     POCL_ABORT("The target supports neither obj nor asm emission!");
   }
 #else
   if (Target->addPassesToEmitFile(PMAsm, SOS, nullptr,
-                                  TargetMachine::CGFT_AssemblyFile)) {
+                                  CodeGenFileType::CGFT_AssemblyFile)) {
     POCL_ABORT("The target supports neither obj nor asm emission!");
   }
 #endif

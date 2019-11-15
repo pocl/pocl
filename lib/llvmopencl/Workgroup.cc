@@ -988,7 +988,7 @@ Workgroup::createDefaultWorkgroupLauncher(llvm::Function *F) {
         Arg =
             new llvm::AllocaInst(ArgElementType, ParamType->getAddressSpace(),
                                  ConstantInt::get(IntegerType::get(*C, 32), 1),
-                                 MAX_EXTENDED_ALIGNMENT, "local_auto", Block);
+                                 MaybeAlign(MAX_EXTENDED_ALIGNMENT), "local_auto", Block);
       } else {
         // Dynamic (runtime-set) size local argument.
 
@@ -1002,7 +1002,7 @@ Workgroup::createDefaultWorkgroupLauncher(llvm::Function *F) {
         Value *ElementCount = Builder.CreateUDiv(
             LocalArgByteSize, ConstantInt::get(SizeIntType, ElementSize));
         Arg = new llvm::AllocaInst(ArgElementType, ParamType->getAddressSpace(),
-                                   ElementCount, MAX_EXTENDED_ALIGNMENT,
+                                   ElementCount, MaybeAlign(MAX_EXTENDED_ALIGNMENT),
                                    "local_arg", Block);
       }
     } else {
@@ -1195,7 +1195,7 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
         // Known static local size (converted automatic local).
         LocalArgAlloca = wrap(new llvm::AllocaInst(
             unwrap(ArgElementType), LLVMGetPointerAddressSpace(ParamType),
-            unwrap(LLVMConstInt(Int32Type, 1, 0)), MAX_EXTENDED_ALIGNMENT,
+            unwrap(LLVMConstInt(Int32Type, 1, 0)), MaybeAlign(MAX_EXTENDED_ALIGNMENT),
             "local_auto", unwrap(Block)));
       } else {
 
@@ -1223,7 +1223,7 @@ Workgroup::createArgBufferWorkgroupLauncher(Function *Func,
         LocalArgAlloca = wrap(new llvm::AllocaInst(
             unwrap(LLVMGetElementType(ParamType)),
             LLVMGetPointerAddressSpace(ParamType), unwrap(ElementCount),
-            MAX_EXTENDED_ALIGNMENT, "local_arg", unwrap(Block)));
+            MaybeAlign(MAX_EXTENDED_ALIGNMENT), "local_arg", unwrap(Block)));
       }
       Args[i] = LocalArgAlloca;
     } else {

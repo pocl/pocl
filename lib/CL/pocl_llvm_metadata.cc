@@ -26,7 +26,7 @@
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
 #include <llvm/Support/Casting.h>
-#include <llvm/Support/MutexGuard.h>
+#include <llvm/Support/Mutex.h>
 #include <llvm/IR/Value.h>
 #include <llvm/IR/Constants.h>
 #include <llvm/IR/Type.h>

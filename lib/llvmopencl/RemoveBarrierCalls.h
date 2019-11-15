@@ -26,6 +26,7 @@
 #include "CompilerWarnings.h"
 IGNORE_COMPILER_WARNING("-Wunused-parameter")
 
+#include <llvm/Pass.h>
 #include <llvm/IR/Function.h>
 
 POP_COMPILER_DIAGS
