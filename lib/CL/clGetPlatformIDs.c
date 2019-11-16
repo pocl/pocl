@@ -251,7 +251,7 @@ POname(clGetPlatformIDs)(cl_uint           num_entries,
                           CL_INVALID_VALUE);
 
   POCL_RETURN_ERROR_COND ((num_platforms == NULL && num_entries == 0),
-                          CL_INVALID_VALUE);
+                          CL_SUCCESS);
 
   if (platforms != NULL) {
       platforms[0] = &_platforms[0];
