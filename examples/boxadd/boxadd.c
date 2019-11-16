@@ -109,8 +109,8 @@ main (int argc, char **argv)
 FINISH:
   CHECK_CL_ERROR (clReleaseProgram (program));
   CHECK_CL_ERROR (clReleaseCommandQueue (queue));
-  CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
   CHECK_CL_ERROR (clReleaseContext (context));
+  CHECK_CL_ERROR (clUnloadPlatformCompiler (platform));
 
   return err;
 }

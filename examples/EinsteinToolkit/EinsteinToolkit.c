@@ -633,8 +633,8 @@ void cleanup() {
   clReleaseProgram(program2);
 
   clReleaseCommandQueue(cmd_queue);
-  clUnloadPlatformCompiler(platform_id);
   clReleaseContext(context);
+  clUnloadPlatformCompiler (platform_id);
 }
 
 void init(cGH              * const cctkGH,

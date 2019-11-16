@@ -133,6 +133,7 @@ int main(int argc, char **argv)
   CHECK_CL_ERROR (clReleaseSampler (external_sampler));
   CHECK_CL_ERROR (clReleaseContext (context));
   CHECK_CL_ERROR (clUnloadCompiler ());
+
   free (source);
   free (filename);
   free (imageData);

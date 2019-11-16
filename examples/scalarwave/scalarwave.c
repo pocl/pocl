@@ -223,8 +223,8 @@ main(void)
   clReleaseCommandQueue (cmd_queue);
   cl_platform_id pocl;
   clGetPlatformIDs (1, &pocl, NULL);
-  clUnloadPlatformCompiler (pocl);
   clReleaseContext (context);
+  clUnloadPlatformCompiler (pocl);
 
   for (int i=0; i<NX; ++i) {
     int const j = i;

@@ -110,6 +110,7 @@ error:
   }
   if (context) {
     clReleaseContext (context);
+    clUnloadCompiler ();
   }
   if (source) {
     free(source);

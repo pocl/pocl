@@ -162,6 +162,7 @@ error:
   if (context) 
     {
       clReleaseContext (context);
+      clUnloadCompiler ();
     }
   if (source) 
     {
