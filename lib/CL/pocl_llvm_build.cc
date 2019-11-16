@@ -97,31 +97,6 @@ cl_device_id currentPoclDevice = NULL;
 #endif
 
 
-// Read input source to clang::FrontendOptions.
-// The source is contained in the program->source array,
-// but if debugging option is enabled in the kernel compiler
-// we need to dump the file to disk first for the debugger
-// to find it.
-static inline int
-load_source(FrontendOptions &fe,
-            cl_program program)
-{
-  char source_file[POCL_FILENAME_LENGTH];
-  POCL_RETURN_ERROR_ON(pocl_cache_write_program_source(source_file, program),
-                       CL_OUT_OF_HOST_MEMORY, "Could not write program source");
-
-  fe.Inputs.push_back(
-      FrontendInputFile(source_file,
-#ifndef LLVM_OLDER_THAN_10_0
-                        clang::InputKind(clang::Language::OpenCL)
-#else
-                        clang::InputKind::OpenCL
-#endif
-                            ));
-
-  return 0;
-}
-
 // Unlink input sources
 static inline int
 unlink_source(FrontendOptions &fe)
@@ -309,6 +284,7 @@ int pocl_llvm_build_program(cl_program program,
     cl_ext.back() = ' '; // replace last "," with space
     ss << "-cl-ext=-all," << cl_ext;
   }
+
   /* temp dir takes preference */
   if (num_input_headers > 0)
     ss << "-I" << temp_include_dir << " ";
@@ -505,8 +481,23 @@ int pocl_llvm_build_program(cl_program program,
   FrontendOptions &fe = pocl_build.getFrontendOpts();
   // The CreateFromArgs created an stdin input which we should remove first.
   fe.Inputs.clear();
-  if (load_source(fe, program) != 0)
-    return CL_OUT_OF_HOST_MEMORY;
+
+  // Read input source to clang::FrontendOptions.
+  // The source is contained in the program->source array,
+  // but if debugging option is enabled in the kernel compiler
+  // we need to dump the file to disk first for the debugger
+  // to find it.
+  char source_file[POCL_FILENAME_LENGTH];
+  POCL_RETURN_ERROR_ON(pocl_cache_write_program_source(source_file, program),
+                       CL_OUT_OF_HOST_MEMORY, "Could not write program source");
+  fe.Inputs.push_back(
+      FrontendInputFile(source_file,
+#ifndef LLVM_OLDER_THAN_10_0
+                        clang::InputKind(clang::Language::OpenCL)
+#else
+                        clang::InputKind::OpenCL
+#endif
+                            ));
 
   CodeGenOptions &cg = pocl_build.getCodeGenOpts();
   cg.EmitOpenCLArgMetadata = true;
@@ -529,8 +520,9 @@ int pocl_llvm_build_program(cl_program program,
   poo.ShowMacros = 1;
   poo.RewriteIncludes = 0;
 
-  pocl_cache_tempname(tempfile, ".preproc.cl", NULL);
-  fe.OutputFile.assign(tempfile);
+  error = pocl_cache_tempname(tempfile, ".preproc.cl", NULL);
+  assert(error == 0);
+  fe.OutputFile.assign((const char *)tempfile);
 
   bool success = true;
   clang::PrintPreprocessedAction Preprocess;
