@@ -481,8 +481,6 @@ pocl_driver_build_binary (cl_program program, cl_uint device_i,
                           cl_uint num_devices, const cl_device_id *device_list,
                           int link_program, int spir_build)
 {
-  assert (program->devices[device_i]->compiler_available == CL_TRUE);
-  assert (program->devices[device_i]->linker_available == CL_TRUE);
 
 #ifdef ENABLE_LLVM
   /* poclbinary doesn't need special handling */

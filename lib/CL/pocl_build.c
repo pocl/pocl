@@ -729,18 +729,6 @@ compile_and_link_program(int compile_program,
       if (program->builtin_kernel_names)
         continue;
 
-      if (compile_program && (device->compiler_available != CL_TRUE))
-        APPEND_TO_BUILD_LOG_GOTO (CL_COMPILER_NOT_AVAILABLE,
-                                  "Device %s cannot compile a program because "
-                                  "it does not have a compiler available\n",
-                                  device->long_name);
-
-      if (link_program && (device->linker_available != CL_TRUE))
-        APPEND_TO_BUILD_LOG_GOTO (CL_LINKER_NOT_AVAILABLE,
-                                  "Device %s cannot link a program because "
-                                  "it does not have a linker available\n",
-                                  device->long_name);
-
       /* only link the program/library */
       if (!compile_program && link_program)
         {
