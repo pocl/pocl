@@ -220,6 +220,7 @@ kernel_compiler_passes(cl_device_id device, llvm::Module *input,
      PHI). */
 
   std::vector<std::string> passes;
+  passes.push_back("inline-kernels");
   passes.push_back("remove-optnone");
   passes.push_back("optimize-wi-func-calls");
   passes.push_back("handle-samplers");
