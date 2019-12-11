@@ -37,7 +37,8 @@ int64_types = ['long', 'ulong']
 float16_types = ['half']
 float64_types = ['double']
 vector_sizes = ['', '2', '3', '4', '8', '16']
-half_sizes = [('2',''), ('4','2'), ('8','4'), ('16','8')]
+numvec_sizes = [2, 3, 4, 8, 16]
+vector_lanes = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', 'a', 'b', 'c', 'd', 'e', 'f']
 
 saturation = ['','_sat']
 rounding_modes = ['_rtz','_rte','_rtp','_rtn']
@@ -229,20 +230,16 @@ def generate_default_conversion(src, dst, mode):
 """.format(SRC=src, DST=dst, M=mode))
 
   # vector conversions, done through decomposition to components
-  for size, half_size in half_sizes:
+  for size in numvec_sizes:
     print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
 {DST}{N} convert_{DST}{N}{M}({SRC}{N} x)
 {{
-  return ({DST}{N})(convert_{DST}{H}(x.lo), convert_{DST}{H}(x.hi));
+  return ({DST}{N})(""".format(SRC=src, DST=dst, N=size, M=mode))
+    for i in range (0, size - 1):
+      print("""    ({DST})x.s{LANE},""".format(DST=dst, LANE=vector_lanes[i]))
+    print("""    ({DST})x.s{LANE});
 }}
-""".format(SRC=src, DST=dst, N=size, H=half_size, M=mode))
-
-  # 3-component vector conversions
-  print("""_CL_ALWAYSINLINE _CL_OVERLOADABLE _CL_READNONE
-{DST}3 convert_{DST}3{M}({SRC}3 x)
-{{
-  return ({DST}3)(convert_{DST}2(x.s01), convert_{DST}(x.s2));
-}}""".format(SRC=src, DST=dst, M=mode))
+""".format(DST=dst, LANE=vector_lanes[size - 1]))
 
   if close_conditional:
     print("#endif")
